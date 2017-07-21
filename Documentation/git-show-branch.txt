@@ -60,7 +60,7 @@ OPTIONS
         are shown before their parents).
 
 --date-order::
-	This option is similar to '--topo-order' in the sense that no
+	This option is similar to `--topo-order` in the sense that no
 	parent comes before all of its children, but otherwise commits
 	are ordered according to their commit date.
 

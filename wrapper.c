@@ -2,6 +2,7 @@
  * Various trivial helper wrappers around standard functions
  */
 #include "cache.h"
+#include "config.h"
 
 static void do_nothing(size_t size)
 {
@@ -152,6 +153,9 @@ void *xcalloc(size_t nmemb, size_t size)
 {
 	void *ret;
 
+	if (unsigned_mult_overflows(nmemb, size))
+		die("data too large to fit into virtual memory space");
+
 	memory_limit_check(size * nmemb, 0);
 	ret = calloc(nmemb, size);
 	if (!ret && (!nmemb || !size))
@@ -189,6 +193,59 @@ void *xcalloc(size_t nmemb, size_t size)
 # endif
 #endif
 
+/**
+ * xopen() is the same as open(), but it die()s if the open() fails.
+ */
+int xopen(const char *path, int oflag, ...)
+{
+	mode_t mode = 0;
+	va_list ap;
+
+	/*
+	 * va_arg() will have undefined behavior if the specified type is not
+	 * compatible with the argument type. Since integers are promoted to
+	 * ints, we fetch the next argument as an int, and then cast it to a
+	 * mode_t to avoid undefined behavior.
+	 */
+	va_start(ap, oflag);
+	if (oflag & O_CREAT)
+		mode = va_arg(ap, int);
+	va_end(ap);
+
+	for (;;) {
+		int fd = open(path, oflag, mode);
+		if (fd >= 0)
+			return fd;
+		if (errno == EINTR)
+			continue;
+
+		if ((oflag & O_RDWR) == O_RDWR)
+			die_errno(_("could not open '%s' for reading and writing"), path);
+		else if ((oflag & O_WRONLY) == O_WRONLY)
+			die_errno(_("could not open '%s' for writing"), path);
+		else
+			die_errno(_("could not open '%s' for reading"), path);
+	}
+}
+
+static int handle_nonblock(int fd, short poll_events, int err)
+{
+	struct pollfd pfd;
+
+	if (err != EAGAIN && err != EWOULDBLOCK)
+		return 0;
+
+	pfd.fd = fd;
+	pfd.events = poll_events;
+
+	/*
+	 * no need to check for errors, here;
+	 * a subsequent read/write will detect unrecoverable errors
+	 */
+	poll(&pfd, 1, -1);
+	return 1;
+}
+
 /*
  * xread() is the same a read(), but it automatically restarts read()
  * operations with a recoverable error (EAGAIN and EINTR). xread()
@@ -201,8 +258,12 @@ ssize_t xread(int fd, void *buf, size_t len)
 	    len = MAX_IO_SIZE;
 	while (1) {
 		nr = read(fd, buf, len);
-		if ((nr < 0) && (errno == EAGAIN || errno == EINTR))
-			continue;
+		if (nr < 0) {
+			if (errno == EINTR)
+				continue;
+			if (handle_nonblock(fd, POLLIN, errno))
+				continue;
+		}
 		return nr;
 	}
 }
@@ -219,8 +280,13 @@ ssize_t xwrite(int fd, const void *buf, size_t len)
 	    len = MAX_IO_SIZE;
 	while (1) {
 		nr = write(fd, buf, len);
-		if ((nr < 0) && (errno == EAGAIN || errno == EINTR))
-			continue;
+		if (nr < 0) {
+			if (errno == EINTR)
+				continue;
+			if (handle_nonblock(fd, POLLOUT, errno))
+				continue;
+		}
+
 		return nr;
 	}
 }
@@ -311,12 +377,72 @@ int xdup(int fd)
 	return ret;
 }
 
+/**
+ * xfopen() is the same as fopen(), but it die()s if the fopen() fails.
+ */
+FILE *xfopen(const char *path, const char *mode)
+{
+	for (;;) {
+		FILE *fp = fopen(path, mode);
+		if (fp)
+			return fp;
+		if (errno == EINTR)
+			continue;
+
+		if (*mode && mode[1] == '+')
+			die_errno(_("could not open '%s' for reading and writing"), path);
+		else if (*mode == 'w' || *mode == 'a')
+			die_errno(_("could not open '%s' for writing"), path);
+		else
+			die_errno(_("could not open '%s' for reading"), path);
+	}
+}
+
 FILE *xfdopen(int fd, const char *mode)
 {
 	FILE *stream = fdopen(fd, mode);
 	if (stream == NULL)
 		die_errno("Out of memory? fdopen failed");
 	return stream;
+}
+
+FILE *fopen_for_writing(const char *path)
+{
+	FILE *ret = fopen(path, "w");
+
+	if (!ret && errno == EPERM) {
+		if (!unlink(path))
+			ret = fopen(path, "w");
+		else
+			errno = EPERM;
+	}
+	return ret;
+}
+
+static void warn_on_inaccessible(const char *path)
+{
+	warning_errno(_("unable to access '%s'"), path);
+}
+
+int warn_on_fopen_errors(const char *path)
+{
+	if (errno != ENOENT && errno != ENOTDIR) {
+		warn_on_inaccessible(path);
+		return -1;
+	}
+
+	return 0;
+}
+
+FILE *fopen_or_warn(const char *path, const char *mode)
+{
+	FILE *fp = fopen(path, mode);
+
+	if (fp)
+		return fp;
+
+	warn_on_fopen_errors(path);
+	return NULL;
 }
 
 int xmkstemp(char *template)
@@ -339,40 +465,6 @@ int xmkstemp(char *template)
 			nonrelative_template);
 	}
 	return fd;
-}
-
-/* git_mkstemp() - create tmp file honoring TMPDIR variable */
-int git_mkstemp(char *path, size_t len, const char *template)
-{
-	const char *tmp;
-	size_t n;
-
-	tmp = getenv("TMPDIR");
-	if (!tmp)
-		tmp = "/tmp";
-	n = snprintf(path, len, "%s/%s", tmp, template);
-	if (len <= n) {
-		errno = ENAMETOOLONG;
-		return -1;
-	}
-	return mkstemp(path);
-}
-
-/* git_mkstemps() - create tmp file with suffix honoring TMPDIR variable. */
-int git_mkstemps(char *path, size_t len, const char *template, int suffix_len)
-{
-	const char *tmp;
-	size_t n;
-
-	tmp = getenv("TMPDIR");
-	if (!tmp)
-		tmp = "/tmp";
-	n = snprintf(path, len, "%s/%s", tmp, template);
-	if (len <= n) {
-		errno = ENAMETOOLONG;
-		return -1;
-	}
-	return mkstemps(path, suffix_len);
 }
 
 /* Adapted from libiberty's mkstemp.c. */
@@ -449,13 +541,6 @@ int git_mkstemp_mode(char *pattern, int mode)
 	return git_mkstemps_mode(pattern, 0, mode);
 }
 
-#ifdef NO_MKSTEMPS
-int gitmkstemps(char *pattern, int suffix_len)
-{
-	return git_mkstemps_mode(pattern, suffix_len, 0600);
-}
-#endif
-
 int xmkstemp_mode(char *template, int mode)
 {
 	int fd;
@@ -484,7 +569,7 @@ static int warn_if_unremovable(const char *op, const char *file, int rc)
 	if (!rc || errno == ENOENT)
 		return 0;
 	err = errno;
-	warning("unable to %s %s: %s", op, file, strerror(errno));
+	warning_errno("unable to %s %s", op, file);
 	errno = err;
 	return rc;
 }
@@ -518,15 +603,10 @@ int remove_or_warn(unsigned int mode, const char *file)
 	return S_ISGITLINK(mode) ? rmdir_or_warn(file) : unlink_or_warn(file);
 }
 
-void warn_on_inaccessible(const char *path)
-{
-	warning(_("unable to access '%s': %s"), path, strerror(errno));
-}
-
 static int access_error_is_ok(int err, unsigned flag)
 {
-	return err == ENOENT || err == ENOTDIR ||
-		((flag & ACCESS_EACCES_OK) && err == EACCES);
+	return (is_missing_file_error(err) ||
+		((flag & ACCESS_EACCES_OK) && err == EACCES));
 }
 
 int access_or_warn(const char *path, int mode, unsigned flag)
@@ -545,18 +625,6 @@ int access_or_die(const char *path, int mode, unsigned flag)
 	return ret;
 }
 
-struct passwd *xgetpwuid_self(void)
-{
-	struct passwd *pw;
-
-	errno = 0;
-	pw = getpwuid(getuid());
-	if (!pw)
-		die(_("unable to look up current user in the passwd file: %s"),
-		    errno ? strerror(errno) : _("no such user"));
-	return pw;
-}
-
 char *xgetcwd(void)
 {
 	struct strbuf sb = STRBUF_INIT;
@@ -565,38 +633,60 @@ char *xgetcwd(void)
 	return strbuf_detach(&sb, NULL);
 }
 
-int write_file(const char *path, int fatal, const char *fmt, ...)
+int xsnprintf(char *dst, size_t max, const char *fmt, ...)
 {
-	struct strbuf sb = STRBUF_INIT;
+	va_list ap;
+	int len;
+
+	va_start(ap, fmt);
+	len = vsnprintf(dst, max, fmt, ap);
+	va_end(ap);
+
+	if (len < 0)
+		die("BUG: your snprintf is broken");
+	if (len >= max)
+		die("BUG: attempt to snprintf into too-small buffer");
+	return len;
+}
+
+void write_file_buf(const char *path, const char *buf, size_t len)
+{
+	int fd = xopen(path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+	if (write_in_full(fd, buf, len) != len)
+		die_errno(_("could not write to %s"), path);
+	if (close(fd))
+		die_errno(_("could not close %s"), path);
+}
+
+void write_file(const char *path, const char *fmt, ...)
+{
 	va_list params;
-	int fd = open(path, O_RDWR | O_CREAT | O_TRUNC, 0666);
-	if (fd < 0) {
-		if (fatal)
-			die_errno(_("could not open %s for writing"), path);
-		return -1;
-	}
+	struct strbuf sb = STRBUF_INIT;
+
 	va_start(params, fmt);
 	strbuf_vaddf(&sb, fmt, params);
 	va_end(params);
-	if (write_in_full(fd, sb.buf, sb.len) != sb.len) {
-		int err = errno;
-		close(fd);
-		strbuf_release(&sb);
-		errno = err;
-		if (fatal)
-			die_errno(_("could not write to %s"), path);
-		return -1;
-	}
+
+	strbuf_complete_line(&sb);
+
+	write_file_buf(path, sb.buf, sb.len);
 	strbuf_release(&sb);
-	if (close(fd)) {
-		if (fatal)
-			die_errno(_("could not close %s"), path);
-		return -1;
-	}
-	return 0;
 }
 
 void sleep_millisec(int millisec)
 {
 	poll(NULL, 0, millisec);
+}
+
+int xgethostname(char *buf, size_t len)
+{
+	/*
+	 * If the full hostname doesn't fit in buf, POSIX does not
+	 * specify whether the buffer will be null-terminated, so to
+	 * be safe, do it ourselves.
+	 */
+	int ret = gethostname(buf, len);
+	if (!ret)
+		buf[len - 1] = 0;
+	return ret;
 }

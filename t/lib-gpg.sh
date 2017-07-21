@@ -1,9 +1,8 @@
 #!/bin/sh
 
 gpg_version=$(gpg --version 2>&1)
-if test $? = 127; then
-	say "You do not seem to have gpg installed"
-else
+if test $? != 127
+then
 	# As said here: http://www.gnupg.org/documentation/faqs.html#q6.19
 	# the gpg version 1.0.6 didn't parse trust packets correctly, so for
 	# that version, creation of signed tags using the generated key fails.

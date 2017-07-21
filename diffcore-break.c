@@ -57,8 +57,8 @@ static int should_break(struct diff_filespec *src,
 		return 1; /* even their types are different */
 	}
 
-	if (src->sha1_valid && dst->sha1_valid &&
-	    !hashcmp(src->sha1, dst->sha1))
+	if (src->oid_valid && dst->oid_valid &&
+	    !oidcmp(&src->oid, &dst->oid))
 		return 0; /* they are the same */
 
 	if (diff_populate_filespec(src, 0) || diff_populate_filespec(dst, 0))
@@ -73,7 +73,6 @@ static int should_break(struct diff_filespec *src,
 
 	if (diffcore_count_changes(src, dst,
 				   &src->cnt_data, &dst->cnt_data,
-				   0,
 				   &src_copied, &literal_added))
 		return 0;
 

@@ -24,4 +24,4 @@ link:user-manual.html[The Git User's Manual]
 
 GIT
 ---
-Part of the linkgit:git[1] suite.
+Part of the linkgit:git[1] suite

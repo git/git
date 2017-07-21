@@ -27,6 +27,19 @@ struct object_entry {
 	unsigned no_try_delta:1;
 	unsigned tagged:1; /* near the very tip of refs */
 	unsigned filled:1; /* assigned write-order */
+
+	/*
+	 * State flags for depth-first search used for analyzing delta cycles.
+	 *
+	 * The depth is measured in delta-links to the base (so if A is a delta
+	 * against B, then A has a depth of 1, and B a depth of 0).
+	 */
+	enum {
+		DFS_NONE = 0,
+		DFS_ACTIVE,
+		DFS_DONE
+	} dfs_state;
+	int depth;
 };
 
 struct packing_data {

@@ -29,6 +29,7 @@ test_expect_success 'status when conflicts unresolved' '
 On branch conflicts
 You have unmerged paths.
   (fix conflicts and run "git commit")
+  (use "git merge --abort" to abort the merge)
 
 Unmerged paths:
   (use "git add <file>..." to mark resolution)
@@ -940,6 +941,25 @@ You are currently editing a commit while rebasing branch '\''several_commits'\''
 nothing to commit (use -u to show untracked files)
 EOF
 	git status --untracked-files=no >actual &&
+	test_i18ncmp expected actual
+'
+
+test_expect_success 'status: handle not-yet-started rebase -i gracefully' '
+	ONTO=$(git rev-parse --short HEAD^) &&
+	COMMIT=$(git rev-parse --short HEAD) &&
+	EDITOR="git status --untracked-files=no >actual" git rebase -i HEAD^ &&
+	cat >expected <<EOF &&
+On branch several_commits
+No commands done.
+Next command to do (1 remaining command):
+   pick $COMMIT four_commit
+  (use "git rebase --edit-todo" to view and edit)
+You are currently editing a commit while rebasing branch '\''several_commits'\'' on '\''$ONTO'\''.
+  (use "git commit --amend" to amend the current commit)
+  (use "git rebase --continue" once you are satisfied with your changes)
+
+nothing to commit (use -u to show untracked files)
+EOF
 	test_i18ncmp expected actual
 '
 

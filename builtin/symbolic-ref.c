@@ -1,4 +1,5 @@
 #include "builtin.h"
+#include "config.h"
 #include "cache.h"
 #include "refs.h"
 #include "parse-options.h"
@@ -56,7 +57,9 @@ int cmd_symbolic_ref(int argc, const char **argv, const char *prefix)
 		ret = check_symref(argv[0], 1, 0, 0);
 		if (ret)
 			die("Cannot delete %s, not a symbolic ref", argv[0]);
-		return delete_ref(argv[0], NULL, REF_NODEREF);
+		if (!strcmp(argv[0], "HEAD"))
+			die("deleting '%s' is not allowed", argv[0]);
+		return delete_ref(NULL, argv[0], NULL, REF_NODEREF);
 	}
 
 	switch (argc) {
@@ -67,7 +70,7 @@ int cmd_symbolic_ref(int argc, const char **argv, const char *prefix)
 		if (!strcmp(argv[0], "HEAD") &&
 		    !starts_with(argv[1], "refs/"))
 			die("Refusing to point HEAD outside of refs/");
-		create_symref(argv[0], argv[1], msg);
+		ret = !!create_symref(argv[0], argv[1], msg);
 		break;
 	default:
 		usage_with_options(git_symbolic_ref_usage, options);

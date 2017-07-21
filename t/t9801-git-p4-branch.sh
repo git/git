@@ -300,7 +300,7 @@ test_expect_success 'git p4 clone complex branches' '
 		test_path_is_file file2 &&
 		test_path_is_file file3 &&
 		! grep update file2 &&
-		test_path_is_missing .git/git-p4-tmp
+		test_must_fail git show-ref --verify refs/git-p4-tmp
 	)
 '
 
@@ -352,7 +352,7 @@ test_expect_success 'git p4 sync changes to two branches in the same changelist'
 		test_path_is_file file2 &&
 		test_path_is_file file3 &&
 		! grep update file2 &&
-		test_path_is_missing .git/git-p4-tmp
+		test_must_fail git show-ref --verify refs/git-p4-tmp
 	)
 '
 

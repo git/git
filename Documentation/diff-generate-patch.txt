@@ -2,11 +2,11 @@ Generating patches with -p
 --------------------------
 
 When "git-diff-index", "git-diff-tree", or "git-diff-files" are run
-with a '-p' option, "git diff" without the '--raw' option, or
+with a `-p` option, "git diff" without the `--raw` option, or
 "git log" with the "-p" option, they
 do not produce the output described above; instead they produce a
 patch file.  You can customize the creation of such patches via the
-GIT_EXTERNAL_DIFF and the GIT_DIFF_OPTS environment variables.
+`GIT_EXTERNAL_DIFF` and the `GIT_DIFF_OPTS` environment variables.
 
 What the -p option produces is slightly different from the traditional
 diff format:
@@ -53,10 +53,9 @@ The index line includes the SHA-1 checksum before and after the change.
 The <mode> is included if the file mode does not change; otherwise,
 separate lines indicate the old and the new mode.
 
-3.  TAB, LF, double quote and backslash characters in pathnames
-    are represented as `\t`, `\n`, `\"` and `\\`, respectively.
-    If there is need for such substitution then the whole
-    pathname is put in double quotes.
+3.  Pathnames with "unusual" characters are quoted as explained for
+    the configuration variable `core.quotePath` (see
+    linkgit:git-config[1]).
 
 4.  All the `file1` files in the output refer to files before the
     commit, and all the `file2` files refer to files after the commit.
@@ -114,11 +113,11 @@ index fabadb8,cc95eb0..4866510
 ------------
 
 1.   It is preceded with a "git diff" header, that looks like
-     this (when '-c' option is used):
+     this (when `-c` option is used):
 
        diff --combined file
 +
-or like this (when '--cc' option is used):
+or like this (when `--cc` option is used):
 
        diff --cc file
 

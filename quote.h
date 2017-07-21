@@ -25,10 +25,13 @@ struct strbuf;
  * sq_quote_buf() writes to an existing buffer of specified size; it
  * will return the number of characters that would have been written
  * excluding the final null regardless of the buffer size.
+ *
+ * sq_quotef() quotes the entire formatted string as a single result.
  */
 
 extern void sq_quote_buf(struct strbuf *, const char *src);
 extern void sq_quote_argv(struct strbuf *, const char **argv, size_t maxlen);
+extern void sq_quotef(struct strbuf *, const char *fmt, ...);
 
 /* This unwraps what sq_quote() produces in place, but returns
  * NULL if the input does not look like what sq_quote would have
@@ -67,5 +70,6 @@ extern char *quote_path_relative(const char *in, const char *prefix,
 extern void perl_quote_buf(struct strbuf *sb, const char *src);
 extern void python_quote_buf(struct strbuf *sb, const char *src);
 extern void tcl_quote_buf(struct strbuf *sb, const char *src);
+extern void basic_regex_quote_buf(struct strbuf *sb, const char *src);
 
 #endif

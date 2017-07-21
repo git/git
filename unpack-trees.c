@@ -1,5 +1,6 @@
 #define NO_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
+#include "config.h"
 #include "dir.h"
 #include "tree.h"
 #include "tree-walk.h"
@@ -10,6 +11,8 @@
 #include "attr.h"
 #include "split-index.h"
 #include "dir.h"
+#include "submodule.h"
+#include "submodule-config.h"
 
 /*
  * Error messages expected by scripts out of plumbing commands such as
@@ -45,6 +48,9 @@ static const char *unpack_plumbing_errors[NB_UNPACK_TREES_ERROR_TYPES] = {
 
 	/* ERROR_WOULD_LOSE_ORPHANED_REMOVED */
 	"Working tree file '%s' would be removed by sparse checkout update.",
+
+	/* ERROR_WOULD_LOSE_SUBMODULE */
+	"Submodule '%s' cannot checkout new HEAD.",
 };
 
 #define ERRORMSG(o,type) \
@@ -52,46 +58,117 @@ static const char *unpack_plumbing_errors[NB_UNPACK_TREES_ERROR_TYPES] = {
 	  ? ((o)->msgs[(type)])      \
 	  : (unpack_plumbing_errors[(type)]) )
 
+static const char *super_prefixed(const char *path)
+{
+	/*
+	 * It is necessary and sufficient to have two static buffers
+	 * here, as the return value of this function is fed to
+	 * error() using the unpack_*_errors[] templates we see above.
+	 */
+	static struct strbuf buf[2] = {STRBUF_INIT, STRBUF_INIT};
+	static int super_prefix_len = -1;
+	static unsigned idx = ARRAY_SIZE(buf) - 1;
+
+	if (super_prefix_len < 0) {
+		const char *super_prefix = get_super_prefix();
+		if (!super_prefix) {
+			super_prefix_len = 0;
+		} else {
+			int i;
+			for (i = 0; i < ARRAY_SIZE(buf); i++)
+				strbuf_addstr(&buf[i], super_prefix);
+			super_prefix_len = buf[0].len;
+		}
+	}
+
+	if (!super_prefix_len)
+		return path;
+
+	if (++idx >= ARRAY_SIZE(buf))
+		idx = 0;
+
+	strbuf_setlen(&buf[idx], super_prefix_len);
+	strbuf_addstr(&buf[idx], path);
+
+	return buf[idx].buf;
+}
+
 void setup_unpack_trees_porcelain(struct unpack_trees_options *opts,
 				  const char *cmd)
 {
 	int i;
 	const char **msgs = opts->msgs;
 	const char *msg;
-	const char *cmd2 = strcmp(cmd, "checkout") ? cmd : "switch branches";
 
-	if (advice_commit_before_merge)
-		msg = "Your local changes to the following files would be overwritten by %s:\n%%s"
-			"Please, commit your changes or stash them before you can %s.";
+	if (!strcmp(cmd, "checkout"))
+		msg = advice_commit_before_merge
+		      ? _("Your local changes to the following files would be overwritten by checkout:\n%%s"
+			  "Please commit your changes or stash them before you switch branches.")
+		      : _("Your local changes to the following files would be overwritten by checkout:\n%%s");
+	else if (!strcmp(cmd, "merge"))
+		msg = advice_commit_before_merge
+		      ? _("Your local changes to the following files would be overwritten by merge:\n%%s"
+			  "Please commit your changes or stash them before you merge.")
+		      : _("Your local changes to the following files would be overwritten by merge:\n%%s");
 	else
-		msg = "Your local changes to the following files would be overwritten by %s:\n%%s";
+		msg = advice_commit_before_merge
+		      ? _("Your local changes to the following files would be overwritten by %s:\n%%s"
+			  "Please commit your changes or stash them before you %s.")
+		      : _("Your local changes to the following files would be overwritten by %s:\n%%s");
 	msgs[ERROR_WOULD_OVERWRITE] = msgs[ERROR_NOT_UPTODATE_FILE] =
-		xstrfmt(msg, cmd, cmd2);
+		xstrfmt(msg, cmd, cmd);
 
 	msgs[ERROR_NOT_UPTODATE_DIR] =
-		"Updating the following directories would lose untracked files in it:\n%s";
+		_("Updating the following directories would lose untracked files in them:\n%s");
 
-	if (advice_commit_before_merge)
-		msg = "The following untracked working tree files would be %s by %s:\n%%s"
-			"Please move or remove them before you can %s.";
+	if (!strcmp(cmd, "checkout"))
+		msg = advice_commit_before_merge
+		      ? _("The following untracked working tree files would be removed by checkout:\n%%s"
+			  "Please move or remove them before you switch branches.")
+		      : _("The following untracked working tree files would be removed by checkout:\n%%s");
+	else if (!strcmp(cmd, "merge"))
+		msg = advice_commit_before_merge
+		      ? _("The following untracked working tree files would be removed by merge:\n%%s"
+			  "Please move or remove them before you merge.")
+		      : _("The following untracked working tree files would be removed by merge:\n%%s");
 	else
-		msg = "The following untracked working tree files would be %s by %s:\n%%s";
+		msg = advice_commit_before_merge
+		      ? _("The following untracked working tree files would be removed by %s:\n%%s"
+			  "Please move or remove them before you %s.")
+		      : _("The following untracked working tree files would be removed by %s:\n%%s");
+	msgs[ERROR_WOULD_LOSE_UNTRACKED_REMOVED] = xstrfmt(msg, cmd, cmd);
 
-	msgs[ERROR_WOULD_LOSE_UNTRACKED_REMOVED] = xstrfmt(msg, "removed", cmd, cmd2);
-	msgs[ERROR_WOULD_LOSE_UNTRACKED_OVERWRITTEN] = xstrfmt(msg, "overwritten", cmd, cmd2);
+	if (!strcmp(cmd, "checkout"))
+		msg = advice_commit_before_merge
+		      ? _("The following untracked working tree files would be overwritten by checkout:\n%%s"
+			  "Please move or remove them before you switch branches.")
+		      : _("The following untracked working tree files would be overwritten by checkout:\n%%s");
+	else if (!strcmp(cmd, "merge"))
+		msg = advice_commit_before_merge
+		      ? _("The following untracked working tree files would be overwritten by merge:\n%%s"
+			  "Please move or remove them before you merge.")
+		      : _("The following untracked working tree files would be overwritten by merge:\n%%s");
+	else
+		msg = advice_commit_before_merge
+		      ? _("The following untracked working tree files would be overwritten by %s:\n%%s"
+			  "Please move or remove them before you %s.")
+		      : _("The following untracked working tree files would be overwritten by %s:\n%%s");
+	msgs[ERROR_WOULD_LOSE_UNTRACKED_OVERWRITTEN] = xstrfmt(msg, cmd, cmd);
 
 	/*
 	 * Special case: ERROR_BIND_OVERLAP refers to a pair of paths, we
 	 * cannot easily display it as a list.
 	 */
-	msgs[ERROR_BIND_OVERLAP] = "Entry '%s' overlaps with '%s'.  Cannot bind.";
+	msgs[ERROR_BIND_OVERLAP] = _("Entry '%s' overlaps with '%s'.  Cannot bind.");
 
 	msgs[ERROR_SPARSE_NOT_UPTODATE_FILE] =
-		"Cannot update sparse checkout: the following entries are not up-to-date:\n%s";
+		_("Cannot update sparse checkout: the following entries are not up-to-date:\n%s");
 	msgs[ERROR_WOULD_LOSE_ORPHANED_OVERWRITTEN] =
-		"The following Working tree files would be overwritten by sparse checkout update:\n%s";
+		_("The following working tree files would be overwritten by sparse checkout update:\n%s");
 	msgs[ERROR_WOULD_LOSE_ORPHANED_REMOVED] =
-		"The following Working tree files would be removed by sparse checkout update:\n%s";
+		_("The following working tree files would be removed by sparse checkout update:\n%s");
+	msgs[ERROR_WOULD_LOSE_SUBMODULE] =
+		_("Cannot update submodule:\n%s");
 
 	opts->show_all_errors = 1;
 	/* rejected paths may not have a static buffer */
@@ -138,7 +215,7 @@ static int add_rejected_path(struct unpack_trees_options *o,
 			     const char *path)
 {
 	if (!o->show_all_errors)
-		return error(ERRORMSG(o, e), path);
+		return error(ERRORMSG(o, e), super_prefixed(path));
 
 	/*
 	 * Otherwise, insert in a list for future display by
@@ -162,13 +239,65 @@ static void display_error_msgs(struct unpack_trees_options *o)
 			something_displayed = 1;
 			for (i = 0; i < rejects->nr; i++)
 				strbuf_addf(&path, "\t%s\n", rejects->items[i].string);
-			error(ERRORMSG(o, e), path.buf);
+			error(ERRORMSG(o, e), super_prefixed(path.buf));
 			strbuf_release(&path);
 		}
 		string_list_clear(rejects, 0);
 	}
 	if (something_displayed)
-		fprintf(stderr, "Aborting\n");
+		fprintf(stderr, _("Aborting\n"));
+}
+
+static int check_submodule_move_head(const struct cache_entry *ce,
+				     const char *old_id,
+				     const char *new_id,
+				     struct unpack_trees_options *o)
+{
+	unsigned flags = SUBMODULE_MOVE_HEAD_DRY_RUN;
+	const struct submodule *sub = submodule_from_ce(ce);
+	if (!sub)
+		return 0;
+
+	if (o->reset)
+		flags |= SUBMODULE_MOVE_HEAD_FORCE;
+
+	switch (sub->update_strategy.type) {
+	case SM_UPDATE_UNSPECIFIED:
+	case SM_UPDATE_CHECKOUT:
+		if (submodule_move_head(ce->name, old_id, new_id, flags))
+			return o->gently ? -1 :
+				add_rejected_path(o, ERROR_WOULD_LOSE_SUBMODULE, ce->name);
+		return 0;
+	case SM_UPDATE_NONE:
+		return 0;
+	case SM_UPDATE_REBASE:
+	case SM_UPDATE_MERGE:
+	case SM_UPDATE_COMMAND:
+	default:
+		warning(_("submodule update strategy not supported for submodule '%s'"), ce->name);
+		return -1;
+	}
+}
+
+static void reload_gitmodules_file(struct index_state *index,
+				   struct checkout *state)
+{
+	int i;
+	for (i = 0; i < index->cache_nr; i++) {
+		struct cache_entry *ce = index->cache[i];
+		if (ce->ce_flags & CE_UPDATE) {
+			int r = strcmp(ce->name, ".gitmodules");
+			if (r < 0)
+				continue;
+			else if (r == 0) {
+				submodule_free();
+				checkout_entry(ce, state, NULL);
+				gitmodules_config();
+				git_config(submodule_config, NULL);
+			} else
+				break;
+		}
+	}
 }
 
 /*
@@ -177,6 +306,22 @@ static void display_error_msgs(struct unpack_trees_options *o)
  */
 static void unlink_entry(const struct cache_entry *ce)
 {
+	const struct submodule *sub = submodule_from_ce(ce);
+	if (sub) {
+		switch (sub->update_strategy.type) {
+		case SM_UPDATE_UNSPECIFIED:
+		case SM_UPDATE_CHECKOUT:
+		case SM_UPDATE_REBASE:
+		case SM_UPDATE_MERGE:
+			/* state.force is set at the caller. */
+			submodule_move_head(ce->name, "HEAD", NULL,
+					    SUBMODULE_MOVE_HEAD_FORCE);
+			break;
+		case SM_UPDATE_NONE:
+		case SM_UPDATE_COMMAND:
+			return; /* Do not touch the submodule. */
+		}
+	}
 	if (!check_leading_path(ce->name, ce_namelen(ce)))
 		return;
 	if (remove_or_warn(ce->ce_mode, ce->name))
@@ -184,29 +329,42 @@ static void unlink_entry(const struct cache_entry *ce)
 	schedule_dir_for_removal(ce->name, ce_namelen(ce));
 }
 
-static struct checkout state;
-static int check_updates(struct unpack_trees_options *o)
+static struct progress *get_progress(struct unpack_trees_options *o)
 {
 	unsigned cnt = 0, total = 0;
-	struct progress *progress = NULL;
 	struct index_state *index = &o->result;
-	int i;
-	int errs = 0;
 
-	if (o->update && o->verbose_update) {
-		for (total = cnt = 0; cnt < index->cache_nr; cnt++) {
-			const struct cache_entry *ce = index->cache[cnt];
-			if (ce->ce_flags & (CE_UPDATE | CE_WT_REMOVE))
-				total++;
-		}
+	if (!o->update || !o->verbose_update)
+		return NULL;
 
-		progress = start_progress_delay(_("Checking out files"),
-						total, 50, 1);
-		cnt = 0;
+	for (; cnt < index->cache_nr; cnt++) {
+		const struct cache_entry *ce = index->cache[cnt];
+		if (ce->ce_flags & (CE_UPDATE | CE_WT_REMOVE))
+			total++;
 	}
 
+	return start_progress_delay(_("Checking out files"),
+				    total, 50, 1);
+}
+
+static int check_updates(struct unpack_trees_options *o)
+{
+	unsigned cnt = 0;
+	int errs = 0;
+	struct progress *progress = NULL;
+	struct index_state *index = &o->result;
+	struct checkout state = CHECKOUT_INIT;
+	int i;
+
+	state.force = 1;
+	state.quiet = 1;
+	state.refresh_cache = 1;
+	state.istate = index;
+
+	progress = get_progress(o);
+
 	if (o->update)
-		git_attr_set_direction(GIT_ATTR_CHECKOUT, &o->result);
+		git_attr_set_direction(GIT_ATTR_CHECKOUT, index);
 	for (i = 0; i < index->cache_nr; i++) {
 		const struct cache_entry *ce = index->cache[i];
 
@@ -214,11 +372,13 @@ static int check_updates(struct unpack_trees_options *o)
 			display_progress(progress, ++cnt);
 			if (o->update && !o->dry_run)
 				unlink_entry(ce);
-			continue;
 		}
 	}
-	remove_marked_cache_entries(&o->result);
+	remove_marked_cache_entries(index);
 	remove_scheduled_dirs();
+
+	if (should_update_submodules() && o->update && !o->dry_run)
+		reload_gitmodules_file(index, &state);
 
 	for (i = 0; i < index->cache_nr; i++) {
 		struct cache_entry *ce = index->cache[i];
@@ -450,12 +610,18 @@ static int switch_cache_bottom(struct traverse_info *info)
 	return ret;
 }
 
+static inline int are_same_oid(struct name_entry *name_j, struct name_entry *name_k)
+{
+	return name_j->oid && name_k->oid && !oidcmp(name_j->oid, name_k->oid);
+}
+
 static int traverse_trees_recursive(int n, unsigned long dirmask,
 				    unsigned long df_conflicts,
 				    struct name_entry *names,
 				    struct traverse_info *info)
 {
 	int i, ret, bottom;
+	int nr_buf = 0;
 	struct tree_desc t[MAX_UNPACK_TREES];
 	void *buf[MAX_UNPACK_TREES];
 	struct traverse_info newinfo;
@@ -472,18 +638,40 @@ static int traverse_trees_recursive(int n, unsigned long dirmask,
 	newinfo.pathlen += tree_entry_len(p) + 1;
 	newinfo.df_conflicts |= df_conflicts;
 
+	/*
+	 * Fetch the tree from the ODB for each peer directory in the
+	 * n commits.
+	 *
+	 * For 2- and 3-way traversals, we try to avoid hitting the
+	 * ODB twice for the same OID.  This should yield a nice speed
+	 * up in checkouts and merges when the commits are similar.
+	 *
+	 * We don't bother doing the full O(n^2) search for larger n,
+	 * because wider traversals don't happen that often and we
+	 * avoid the search setup.
+	 *
+	 * When 2 peer OIDs are the same, we just copy the tree
+	 * descriptor data.  This implicitly borrows the buffer
+	 * data from the earlier cell.
+	 */
 	for (i = 0; i < n; i++, dirmask >>= 1) {
-		const unsigned char *sha1 = NULL;
-		if (dirmask & 1)
-			sha1 = names[i].sha1;
-		buf[i] = fill_tree_descriptor(t+i, sha1);
+		if (i > 0 && are_same_oid(&names[i], &names[i - 1]))
+			t[i] = t[i - 1];
+		else if (i > 1 && are_same_oid(&names[i], &names[i - 2]))
+			t[i] = t[i - 2];
+		else {
+			const unsigned char *sha1 = NULL;
+			if (dirmask & 1)
+				sha1 = names[i].oid->hash;
+			buf[nr_buf++] = fill_tree_descriptor(t+i, sha1);
+		}
 	}
 
 	bottom = switch_cache_bottom(&newinfo);
 	ret = traverse_trees(n, t, &newinfo);
 	restore_cache_bottom(&newinfo, bottom);
 
-	for (i = 0; i < n; i++)
+	for (i = 0; i < nr_buf; i++)
 		free(buf[i]);
 
 	return ret;
@@ -498,13 +686,14 @@ static int traverse_trees_recursive(int n, unsigned long dirmask,
  * itself - the caller needs to do the final check for the cache
  * entry having more data at the end!
  */
-static int do_compare_entry(const struct cache_entry *ce, const struct traverse_info *info, const struct name_entry *n)
+static int do_compare_entry_piecewise(const struct cache_entry *ce, const struct traverse_info *info, const struct name_entry *n)
 {
 	int len, pathlen, ce_len;
 	const char *ce_name;
 
 	if (info->prev) {
-		int cmp = do_compare_entry(ce, info->prev, &info->name);
+		int cmp = do_compare_entry_piecewise(ce, info->prev,
+						     &info->name);
 		if (cmp)
 			return cmp;
 	}
@@ -512,6 +701,39 @@ static int do_compare_entry(const struct cache_entry *ce, const struct traverse_
 	ce_len = ce_namelen(ce);
 
 	/* If ce_len < pathlen then we must have previously hit "name == directory" entry */
+	if (ce_len < pathlen)
+		return -1;
+
+	ce_len -= pathlen;
+	ce_name = ce->name + pathlen;
+
+	len = tree_entry_len(n);
+	return df_name_compare(ce_name, ce_len, S_IFREG, n->path, len, n->mode);
+}
+
+static int do_compare_entry(const struct cache_entry *ce,
+			    const struct traverse_info *info,
+			    const struct name_entry *n)
+{
+	int len, pathlen, ce_len;
+	const char *ce_name;
+	int cmp;
+
+	/*
+	 * If we have not precomputed the traverse path, it is quicker
+	 * to avoid doing so.  But if we have precomputed it,
+	 * it is quicker to use the precomputed version.
+	 */
+	if (!info->traverse_path)
+		return do_compare_entry_piecewise(ce, info, n);
+
+	cmp = strncmp(ce->name, info->traverse_path, info->pathlen);
+	if (cmp)
+		return cmp;
+
+	pathlen = info->pathlen;
+	ce_len = ce_namelen(ce);
+
 	if (ce_len < pathlen)
 		return -1;
 
@@ -557,7 +779,7 @@ static struct cache_entry *create_ce_entry(const struct traverse_info *info, con
 	ce->ce_mode = create_ce_mode(n->mode);
 	ce->ce_flags = create_ce_flags(stage);
 	ce->ce_namelen = len;
-	hashcpy(ce->sha1, n->sha1);
+	oidcpy(&ce->oid, n->oid);
 	make_traverse_path(ce->name, info, n);
 
 	return ce;
@@ -661,8 +883,19 @@ static int find_cache_pos(struct traverse_info *info,
 				++o->cache_bottom;
 			continue;
 		}
-		if (!ce_in_traverse_path(ce, info))
+		if (!ce_in_traverse_path(ce, info)) {
+			/*
+			 * Check if we can skip future cache checks
+			 * (because we're already past all possible
+			 * entries in the traverse path).
+			 */
+			if (info->traverse_path) {
+				if (strncmp(ce->name, info->traverse_path,
+					    info->pathlen) > 0)
+					break;
+			}
 			continue;
+		}
 		ce_name = ce->name + pfxlen;
 		ce_slash = strchr(ce_name, '/');
 		if (ce_slash)
@@ -841,7 +1074,7 @@ static int clear_ce_flags_dir(struct cache_entry **cache, int nr,
 	struct cache_entry **cache_end;
 	int dtype = DT_DIR;
 	int ret = is_excluded_from_list(prefix->buf, prefix->len,
-					basename, &dtype, el);
+					basename, &dtype, el, &the_index);
 	int rc;
 
 	strbuf_addch(prefix, '/');
@@ -944,7 +1177,7 @@ static int clear_ce_flags_1(struct cache_entry **cache, int nr,
 		/* Non-directory */
 		dtype = ce_to_dtype(ce);
 		ret = is_excluded_from_list(ce->name, ce_namelen(ce),
-					    name, &dtype, el);
+					    name, &dtype, el, &the_index);
 		if (ret < 0)
 			ret = defval;
 		if (ret > 0)
@@ -1018,21 +1251,17 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 
 	if (len > MAX_UNPACK_TREES)
 		die("unpack_trees takes at most %d trees", MAX_UNPACK_TREES);
-	memset(&state, 0, sizeof(state));
-	state.base_dir = "";
-	state.force = 1;
-	state.quiet = 1;
-	state.refresh_cache = 1;
-	state.istate = &o->result;
 
 	memset(&el, 0, sizeof(el));
 	if (!core_apply_sparse_checkout || !o->update)
 		o->skip_sparse_checkout = 1;
 	if (!o->skip_sparse_checkout) {
-		if (add_excludes_from_file_to_list(git_path("info/sparse-checkout"), "", 0, &el, 0) < 0)
+		char *sparse = git_pathdup("info/sparse-checkout");
+		if (add_excludes_from_file_to_list(sparse, "", 0, &el, NULL) < 0)
 			o->skip_sparse_checkout = 1;
 		else
 			o->el = &el;
+		free(sparse);
 	}
 
 	memset(&o->result, 0, sizeof(o->result));
@@ -1160,6 +1389,15 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 	o->src_index = NULL;
 	ret = check_updates(o) ? (-2) : 0;
 	if (o->dst_index) {
+		if (!ret) {
+			if (!o->result.cache_tree)
+				o->result.cache_tree = cache_tree();
+			if (!cache_tree_fully_valid(o->result.cache_tree))
+				cache_tree_update(&o->result,
+						  WRITE_TREE_SILENT |
+						  WRITE_TREE_REPAIR);
+		}
+		move_index_extensions(&o->result, o->dst_index);
 		discard_index(o->dst_index);
 		*o->dst_index = o->result;
 	} else {
@@ -1198,7 +1436,7 @@ static int same(const struct cache_entry *a, const struct cache_entry *b)
 	if ((a->ce_flags | b->ce_flags) & CE_CONFLICTED)
 		return 0;
 	return a->ce_mode == b->ce_mode &&
-	       !hashcmp(a->sha1, b->sha1);
+	       !oidcmp(&a->oid, &b->oid);
 }
 
 
@@ -1228,17 +1466,26 @@ static int verify_uptodate_1(const struct cache_entry *ce,
 	if (!lstat(ce->name, &st)) {
 		int flags = CE_MATCH_IGNORE_VALID|CE_MATCH_IGNORE_SKIP_WORKTREE;
 		unsigned changed = ie_match_stat(o->src_index, ce, &st, flags);
+
+		if (submodule_from_ce(ce)) {
+			int r = check_submodule_move_head(ce,
+				"HEAD", oid_to_hex(&ce->oid), o);
+			if (r)
+				return o->gently ? -1 :
+					add_rejected_path(o, error_type, ce->name);
+			return 0;
+		}
+
 		if (!changed)
 			return 0;
 		/*
-		 * NEEDSWORK: the current default policy is to allow
-		 * submodule to be out of sync wrt the superproject
-		 * index.  This needs to be tightened later for
-		 * submodules that are marked to be automatically
-		 * checked out.
+		 * Historic default policy was to allow submodule to be out
+		 * of sync wrt the superproject index. If the submodule was
+		 * not considered interesting above, we don't care here.
 		 */
 		if (S_ISGITLINK(ce->ce_mode))
 			return 0;
+
 		errno = 0;
 	}
 	if (errno == ENOENT)
@@ -1277,11 +1524,16 @@ static void invalidate_ce_path(const struct cache_entry *ce,
  * Currently, git does not checkout subprojects during a superproject
  * checkout, so it is not going to overwrite anything.
  */
-static int verify_clean_submodule(const struct cache_entry *ce,
+static int verify_clean_submodule(const char *old_sha1,
+				  const struct cache_entry *ce,
 				  enum unpack_trees_error_types error_type,
 				  struct unpack_trees_options *o)
 {
-	return 0;
+	if (!submodule_from_ce(ce))
+		return 0;
+
+	return check_submodule_move_head(ce, old_sha1,
+					 oid_to_hex(&ce->oid), o);
 }
 
 static int verify_clean_subdirectory(const struct cache_entry *ce,
@@ -1297,16 +1549,18 @@ static int verify_clean_subdirectory(const struct cache_entry *ce,
 	struct dir_struct d;
 	char *pathbuf;
 	int cnt = 0;
-	unsigned char sha1[20];
 
-	if (S_ISGITLINK(ce->ce_mode) &&
-	    resolve_gitlink_ref(ce->name, "HEAD", sha1) == 0) {
-		/* If we are not going to update the submodule, then
+	if (S_ISGITLINK(ce->ce_mode)) {
+		unsigned char sha1[20];
+		int sub_head = resolve_gitlink_ref(ce->name, "HEAD", sha1);
+		/*
+		 * If we are not going to update the submodule, then
 		 * we don't care.
 		 */
-		if (!hashcmp(sha1, ce->sha1))
+		if (!sub_head && !hashcmp(sha1, ce->oid.hash))
 			return 0;
-		return verify_clean_submodule(ce, error_type, o);
+		return verify_clean_submodule(sub_head ? NULL : sha1_to_hex(sha1),
+					      ce, error_type, o);
 	}
 
 	/*
@@ -1340,14 +1594,12 @@ static int verify_clean_subdirectory(const struct cache_entry *ce,
 	 * Then we need to make sure that we do not lose a locally
 	 * present file that is not ignored.
 	 */
-	pathbuf = xmalloc(namelen + 2);
-	memcpy(pathbuf, ce->name, namelen);
-	strcpy(pathbuf+namelen, "/");
+	pathbuf = xstrfmt("%.*s/", namelen, ce->name);
 
 	memset(&d, 0, sizeof(d));
 	if (o->dir)
 		d.exclude_per_dir = o->dir->exclude_per_dir;
-	i = read_directory(&d, pathbuf, namelen+1, NULL);
+	i = read_directory(&d, &the_index, pathbuf, namelen+1, NULL);
 	if (i)
 		return o->gently ? -1 :
 			add_rejected_path(o, ERROR_NOT_UPTODATE_DIR, ce->name);
@@ -1389,7 +1641,7 @@ static int check_ok_to_remove(const char *name, int len, int dtype,
 		return 0;
 
 	if (o->dir &&
-	    is_excluded(o->dir, name, &dtype))
+	    is_excluded(o->dir, &the_index, name, &dtype))
 		/*
 		 * ce->name is explicitly excluded, so it is Ok to
 		 * overwrite it.
@@ -1441,21 +1693,32 @@ static int verify_absent_1(const struct cache_entry *ce,
 	if (!len)
 		return 0;
 	else if (len > 0) {
-		char path[PATH_MAX + 1];
-		memcpy(path, ce->name, len);
-		path[len] = 0;
-		if (lstat(path, &st))
-			return error("cannot stat '%s': %s", path,
-					strerror(errno));
+		char *path;
+		int ret;
 
-		return check_ok_to_remove(path, len, DT_UNKNOWN, NULL, &st,
-				error_type, o);
+		path = xmemdupz(ce->name, len);
+		if (lstat(path, &st))
+			ret = error_errno("cannot stat '%s'", path);
+		else {
+			if (submodule_from_ce(ce))
+				ret = check_submodule_move_head(ce,
+								oid_to_hex(&ce->oid),
+								NULL, o);
+			else
+				ret = check_ok_to_remove(path, len, DT_UNKNOWN, NULL,
+							 &st, error_type, o);
+		}
+		free(path);
+		return ret;
 	} else if (lstat(ce->name, &st)) {
 		if (errno != ENOENT)
-			return error("cannot stat '%s': %s", ce->name,
-				     strerror(errno));
+			return error_errno("cannot stat '%s'", ce->name);
 		return 0;
 	} else {
+		if (submodule_from_ce(ce))
+			return check_submodule_move_head(ce, oid_to_hex(&ce->oid),
+							 NULL, o);
+
 		return check_ok_to_remove(ce->name, ce_namelen(ce),
 					  ce_to_dtype(ce), ce, &st,
 					  error_type, o);
@@ -1511,6 +1774,15 @@ static int merged_entry(const struct cache_entry *ce,
 			return -1;
 		}
 		invalidate_ce_path(merge, o);
+
+		if (submodule_from_ce(ce)) {
+			int ret = check_submodule_move_head(ce, NULL,
+							    oid_to_hex(&ce->oid),
+							    o);
+			if (ret)
+				return ret;
+		}
+
 	} else if (!(old->ce_flags & CE_CONFLICTED)) {
 		/*
 		 * See if we can re-use the old CE directly?
@@ -1530,6 +1802,14 @@ static int merged_entry(const struct cache_entry *ce,
 			/* Migrate old flags over */
 			update |= old->ce_flags & (CE_SKIP_WORKTREE | CE_NEW_SKIP_WORKTREE);
 			invalidate_ce_path(old, o);
+		}
+
+		if (submodule_from_ce(ce)) {
+			int ret = check_submodule_move_head(ce, oid_to_hex(&old->oid),
+							    oid_to_hex(&ce->oid),
+							    o);
+			if (ret)
+				return ret;
 		}
 	} else {
 		/*
@@ -1577,7 +1857,7 @@ static void show_stage_entry(FILE *o,
 		fprintf(o, "%s%06o %s %d\t%s\n",
 			label,
 			ce->ce_mode,
-			sha1_to_hex(ce->sha1),
+			oid_to_hex(&ce->oid),
 			ce_stage(ce),
 			ce->name);
 }
@@ -1831,7 +2111,9 @@ int bind_merge(const struct cache_entry * const *src,
 			     o->merge_size);
 	if (a && old)
 		return o->gently ? -1 :
-			error(ERRORMSG(o, ERROR_BIND_OVERLAP), a->name, old->name);
+			error(ERRORMSG(o, ERROR_BIND_OVERLAP),
+			      super_prefixed(a->name),
+			      super_prefixed(old->name));
 	if (!a)
 		return keep_entry(old, o);
 	else

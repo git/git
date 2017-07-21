@@ -24,15 +24,30 @@ run_one_dir () {
 
 unpack_git_rev () {
 	rev=$1
+	echo "=== Unpacking $rev in build/$rev ==="
 	mkdir -p build/$rev
 	(cd "$(git rev-parse --show-cdup)" && git archive --format=tar $rev) |
 	(cd build/$rev && tar x)
 }
 build_git_rev () {
 	rev=$1
-	cp ../../config.mak build/$rev/config.mak
-	(cd build/$rev && make $GIT_PERF_MAKE_OPTS) ||
-	die "failed to build revision '$mydir'"
+	for config in config.mak config.mak.autogen config.status
+	do
+		if test -e "../../$config"
+		then
+			cp "../../$config" "build/$rev/"
+		fi
+	done
+	echo "=== Building $rev ==="
+	(
+		cd build/$rev &&
+		if test -n "$GIT_PERF_MAKE_COMMAND"
+		then
+			sh -c "$GIT_PERF_MAKE_COMMAND"
+		else
+			make $GIT_PERF_MAKE_OPTS
+		fi
+	) || die "failed to build revision '$mydir'"
 }
 
 run_dirs_helper () {
@@ -57,6 +72,9 @@ run_dirs_helper () {
 		unset GIT_TEST_INSTALLED
 	else
 		GIT_TEST_INSTALLED="$mydir/bin-wrappers"
+		# Older versions of git lacked bin-wrappers; fallback to the
+		# files in the root.
+		test -d "$GIT_TEST_INSTALLED" || GIT_TEST_INSTALLED=$mydir
 		export GIT_TEST_INSTALLED
 	fi
 	run_one_dir "$@"

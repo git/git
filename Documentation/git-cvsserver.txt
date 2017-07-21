@@ -54,7 +54,7 @@ Print usage information and exit
 You can specify a list of allowed directories. If no directories
 are given, all are allowed. This is an additional restriction, gitcvs
 access still needs to be enabled by the `gitcvs.enabled` config option
-unless '--export-all' was given, too.
+unless `--export-all` was given, too.
 
 
 DESCRIPTION
@@ -332,7 +332,7 @@ To get a checkout with the Eclipse CVS client:
 3. Browse the 'modules' available. It will give you a list of the heads in
    the repository. You will not be able to browse the tree from there. Only
    the heads.
-4. Pick 'HEAD' when it asks what branch/tag to check out. Untick the
+4. Pick `HEAD` when it asks what branch/tag to check out. Untick the
    "launch commit wizard" to avoid committing the .project file.
 
 Protocol notes: If you are using anonymous access via pserver, just select that.
@@ -402,12 +402,12 @@ Exports and tagging (tags and branches) are not supported at this stage.
 CRLF Line Ending Conversions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-By default the server leaves the '-k' mode blank for all files,
+By default the server leaves the `-k` mode blank for all files,
 which causes the CVS client to treat them as a text files, subject
 to end-of-line conversion on some platforms.
 
 You can make the server use the end-of-line conversion attributes to
-set the '-k' modes for files by setting the `gitcvs.usecrlfattr`
+set the `-k` modes for files by setting the `gitcvs.usecrlfattr`
 config variable.  See linkgit:gitattributes[5] for more information
 about end-of-line conversion.
 
@@ -415,9 +415,9 @@ Alternatively, if `gitcvs.usecrlfattr` config is not enabled
 or the attributes do not allow automatic detection for a filename, then
 the server uses the `gitcvs.allBinary` config for the default setting.
 If `gitcvs.allBinary` is set, then file not otherwise
-specified will default to '-kb' mode. Otherwise the '-k' mode
+specified will default to '-kb' mode. Otherwise the `-k` mode
 is left blank. But if `gitcvs.allBinary` is set to "guess", then
-the correct '-k' mode will be guessed based on the contents of
+the correct `-k` mode will be guessed based on the contents of
 the file.
 
 For best consistency with 'cvs', it is probably best to override the

@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "config.h"
 #include "xdiff-interface.h"
 #include "xdiff/xtypes.h"
 #include "xdiff/xdiffi.h"
@@ -100,18 +101,15 @@ static int xdiff_outf(void *priv_, mmbuffer_t *mb, int nbuf)
 
 /*
  * Trim down common substring at the end of the buffers,
- * but leave at least ctx lines at the end.
+ * but end on a complete line.
  */
-static void trim_common_tail(mmfile_t *a, mmfile_t *b, long ctx)
+static void trim_common_tail(mmfile_t *a, mmfile_t *b)
 {
 	const int blk = 1024;
 	long trimmed = 0, recovered = 0;
 	char *ap = a->ptr + a->size;
 	char *bp = b->ptr + b->size;
 	long smaller = (a->size < b->size) ? a->size : b->size;
-
-	if (ctx)
-		return;
 
 	while (blk + trimmed <= smaller && !memcmp(ap - blk, bp - blk, blk)) {
 		trimmed += blk;
@@ -131,7 +129,11 @@ int xdi_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp, xdemitconf_t co
 	mmfile_t a = *mf1;
 	mmfile_t b = *mf2;
 
-	trim_common_tail(&a, &b, xecfg->ctxlen);
+	if (mf1->size > MAX_XDIFF_SIZE || mf2->size > MAX_XDIFF_SIZE)
+		return -1;
+
+	if (!xecfg->ctxlen && !(xecfg->flags & XDL_EMIT_FUNCCONTEXT))
+		trim_common_tail(&a, &b);
 
 	return xdl_diff(&a, &b, xpp, xecfg, xecb);
 }
@@ -163,9 +165,9 @@ int read_mmfile(mmfile_t *ptr, const char *filename)
 	size_t sz;
 
 	if (stat(filename, &st))
-		return error("Could not stat %s", filename);
+		return error_errno("Could not stat %s", filename);
 	if ((f = fopen(filename, "rb")) == NULL)
-		return error("Could not open %s", filename);
+		return error_errno("Could not open %s", filename);
 	sz = xsize_t(st.st_size);
 	ptr->ptr = xmalloc(sz ? sz : 1);
 	if (sz && fread(ptr->ptr, sz, 1, f) != 1) {
@@ -177,20 +179,20 @@ int read_mmfile(mmfile_t *ptr, const char *filename)
 	return 0;
 }
 
-void read_mmblob(mmfile_t *ptr, const unsigned char *sha1)
+void read_mmblob(mmfile_t *ptr, const struct object_id *oid)
 {
 	unsigned long size;
 	enum object_type type;
 
-	if (!hashcmp(sha1, null_sha1)) {
+	if (!oidcmp(oid, &null_oid)) {
 		ptr->ptr = xstrdup("");
 		ptr->size = 0;
 		return;
 	}
 
-	ptr->ptr = read_sha1_file(sha1, &type, &size);
+	ptr->ptr = read_sha1_file(oid->hash, &type, &size);
 	if (!ptr->ptr || type != OBJ_BLOB)
-		die("unable to read blob object %s", sha1_to_hex(sha1));
+		die("unable to read blob object %s", oid_to_hex(oid));
 	ptr->size = size;
 }
 
@@ -213,11 +215,10 @@ struct ff_regs {
 static long ff_regexp(const char *line, long len,
 		char *buffer, long buffer_size, void *priv)
 {
-	char *line_buffer;
 	struct ff_regs *regs = priv;
 	regmatch_t pmatch[2];
 	int i;
-	int result = -1;
+	int result;
 
 	/* Exclude terminating newline (and cr) from matching */
 	if (len > 0 && line[len-1] == '\n') {
@@ -227,18 +228,16 @@ static long ff_regexp(const char *line, long len,
 			len--;
 	}
 
-	line_buffer = xstrndup(line, len); /* make NUL terminated */
-
 	for (i = 0; i < regs->nr; i++) {
 		struct ff_reg *reg = regs->array + i;
-		if (!regexec(&reg->re, line_buffer, 2, pmatch, 0)) {
+		if (!regexec_buf(&reg->re, line, len, 2, pmatch, 0)) {
 			if (reg->negate)
-				goto fail;
+				return -1;
 			break;
 		}
 	}
 	if (regs->nr <= i)
-		goto fail;
+		return -1;
 	i = pmatch[1].rm_so >= 0 ? 1 : 0;
 	line += pmatch[i].rm_so;
 	result = pmatch[i].rm_eo - pmatch[i].rm_so;
@@ -247,8 +246,6 @@ static long ff_regexp(const char *line, long len,
 	while (result > 0 && (isspace(line[result - 1])))
 		result--;
 	memcpy(buffer, line, result);
- fail:
-	free(line_buffer);
 	return result;
 }
 
@@ -262,7 +259,7 @@ void xdiff_set_find_func(xdemitconf_t *xecfg, const char *value, int cflags)
 	for (i = 0, regs->nr = 1; value[i]; i++)
 		if (value[i] == '\n')
 			regs->nr++;
-	regs->array = xmalloc(regs->nr * sizeof(struct ff_reg));
+	ALLOC_ARRAY(regs->array, regs->nr);
 	for (i = 0; i < regs->nr; i++) {
 		struct ff_reg *reg = regs->array + i;
 		const char *ep = strchr(value, '\n'), *expression;

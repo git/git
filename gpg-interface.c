@@ -1,8 +1,10 @@
 #include "cache.h"
+#include "config.h"
 #include "run-command.h"
 #include "strbuf.h"
 #include "gpg-interface.h"
 #include "sigchain.h"
+#include "tempfile.h"
 
 static char *configured_signing_key;
 static const char *gpg_program = "gpg";
@@ -12,16 +14,11 @@ static const char *gpg_program = "gpg";
 
 void signature_check_clear(struct signature_check *sigc)
 {
-	free(sigc->payload);
-	free(sigc->gpg_output);
-	free(sigc->gpg_status);
-	free(sigc->signer);
-	free(sigc->key);
-	sigc->payload = NULL;
-	sigc->gpg_output = NULL;
-	sigc->gpg_status = NULL;
-	sigc->signer = NULL;
-	sigc->key = NULL;
+	FREE_AND_NULL(sigc->payload);
+	FREE_AND_NULL(sigc->gpg_output);
+	FREE_AND_NULL(sigc->gpg_status);
+	FREE_AND_NULL(sigc->signer);
+	FREE_AND_NULL(sigc->key);
 }
 
 static struct {
@@ -32,6 +29,10 @@ static struct {
 	{ 'B', "\n[GNUPG:] BADSIG " },
 	{ 'U', "\n[GNUPG:] TRUST_NEVER" },
 	{ 'U', "\n[GNUPG:] TRUST_UNDEFINED" },
+	{ 'E', "\n[GNUPG:] ERRSIG "},
+	{ 'X', "\n[GNUPG:] EXPSIG "},
+	{ 'Y', "\n[GNUPG:] EXPKEYSIG "},
+	{ 'R', "\n[GNUPG:] REVKEYSIG "},
 };
 
 void parse_gpg_output(struct signature_check *sigc)
@@ -53,9 +54,12 @@ void parse_gpg_output(struct signature_check *sigc)
 		/* The trust messages are not followed by key/signer information */
 		if (sigc->result != 'U') {
 			sigc->key = xmemdupz(found, 16);
-			found += 17;
-			next = strchrnul(found, '\n');
-			sigc->signer = xmemdupz(found, next - found);
+			/* The ERRSIG message is not followed by signer information */
+			if (sigc-> result != 'E') {
+				found += 17;
+				next = strchrnul(found, '\n');
+				sigc->signer = xmemdupz(found, next - found);
+			}
 		}
 	}
 }
@@ -150,42 +154,30 @@ const char *get_signing_key(void)
 int sign_buffer(struct strbuf *buffer, struct strbuf *signature, const char *signing_key)
 {
 	struct child_process gpg = CHILD_PROCESS_INIT;
-	const char *args[4];
-	ssize_t len;
+	int ret;
 	size_t i, j, bottom;
+	struct strbuf gpg_status = STRBUF_INIT;
 
-	gpg.argv = args;
-	gpg.in = -1;
-	gpg.out = -1;
-	args[0] = gpg_program;
-	args[1] = "-bsau";
-	args[2] = signing_key;
-	args[3] = NULL;
+	argv_array_pushl(&gpg.args,
+			 gpg_program,
+			 "--status-fd=2",
+			 "-bsau", signing_key,
+			 NULL);
 
-	if (start_command(&gpg))
-		return error(_("could not run gpg."));
+	bottom = signature->len;
 
 	/*
 	 * When the username signingkey is bad, program could be terminated
 	 * because gpg exits without reading and then write gets SIGPIPE.
 	 */
 	sigchain_push(SIGPIPE, SIG_IGN);
-
-	if (write_in_full(gpg.in, buffer->buf, buffer->len) != buffer->len) {
-		close(gpg.in);
-		close(gpg.out);
-		finish_command(&gpg);
-		return error(_("gpg did not accept the data"));
-	}
-	close(gpg.in);
-
-	bottom = signature->len;
-	len = strbuf_read(signature, gpg.out, 1024);
-	close(gpg.out);
-
+	ret = pipe_command(&gpg, buffer->buf, buffer->len,
+			   signature, 1024, &gpg_status, 0);
 	sigchain_pop(SIGPIPE);
 
-	if (finish_command(&gpg) || !len || len < 0)
+	ret |= !strstr(gpg_status.buf, "\n[GNUPG:] SIG_CREATED ");
+	strbuf_release(&gpg_status);
+	if (ret)
 		return error(_("gpg failed to sign the data"));
 
 	/* Strip CR from the line endings, in case we are on Windows. */
@@ -210,50 +202,39 @@ int verify_signed_buffer(const char *payload, size_t payload_size,
 			 struct strbuf *gpg_output, struct strbuf *gpg_status)
 {
 	struct child_process gpg = CHILD_PROCESS_INIT;
-	const char *args_gpg[] = {NULL, "--status-fd=1", "--verify", "FILE", "-", NULL};
-	char path[PATH_MAX];
+	static struct tempfile temp;
 	int fd, ret;
 	struct strbuf buf = STRBUF_INIT;
-	struct strbuf *pbuf = &buf;
 
-	args_gpg[0] = gpg_program;
-	fd = git_mkstemp(path, PATH_MAX, ".git_vtag_tmpXXXXXX");
+	fd = mks_tempfile_t(&temp, ".git_vtag_tmpXXXXXX");
 	if (fd < 0)
-		return error(_("could not create temporary file '%s': %s"),
-			     path, strerror(errno));
-	if (write_in_full(fd, signature, signature_size) < 0)
-		return error(_("failed writing detached signature to '%s': %s"),
-			     path, strerror(errno));
+		return error_errno(_("could not create temporary file"));
+	if (write_in_full(fd, signature, signature_size) < 0) {
+		error_errno(_("failed writing detached signature to '%s'"),
+			    temp.filename.buf);
+		delete_tempfile(&temp);
+		return -1;
+	}
 	close(fd);
 
-	gpg.argv = args_gpg;
-	gpg.in = -1;
-	gpg.out = -1;
-	if (gpg_output)
-		gpg.err = -1;
-	args_gpg[3] = path;
-	if (start_command(&gpg)) {
-		unlink(path);
-		return error(_("could not run gpg."));
-	}
+	argv_array_pushl(&gpg.args,
+			 gpg_program,
+			 "--status-fd=1",
+			 "--keyid-format=long",
+			 "--verify", temp.filename.buf, "-",
+			 NULL);
 
-	write_in_full(gpg.in, payload, payload_size);
-	close(gpg.in);
+	if (!gpg_status)
+		gpg_status = &buf;
 
-	if (gpg_output) {
-		strbuf_read(gpg_output, gpg.err, 0);
-		close(gpg.err);
-	}
-	if (gpg_status)
-		pbuf = gpg_status;
-	strbuf_read(pbuf, gpg.out, 0);
-	close(gpg.out);
+	sigchain_push(SIGPIPE, SIG_IGN);
+	ret = pipe_command(&gpg, payload, payload_size,
+			   gpg_status, 0, gpg_output, 0);
+	sigchain_pop(SIGPIPE);
 
-	ret = finish_command(&gpg);
+	delete_tempfile(&temp);
 
-	unlink_or_warn(path);
-
-	ret |= !strstr(pbuf->buf, "\n[GNUPG:] GOODSIG ");
+	ret |= !strstr(gpg_status->buf, "\n[GNUPG:] GOODSIG ");
 	strbuf_release(&buf); /* no matter it was used or not */
 
 	return ret;

@@ -115,7 +115,7 @@ proc write_update_indexinfo {fd pathList totalCnt batch after} {
 		set info [lindex $s 2]
 		if {$info eq {}} continue
 
-		puts -nonewline $fd "$info\t[encoding convertto $path]\0"
+		puts -nonewline $fd "$info\t[encoding convertto utf-8 $path]\0"
 		display_file $path $new
 	}
 
@@ -186,7 +186,7 @@ proc write_update_index {fd pathList totalCnt batch after} {
 		?M {set new M_}
 		?? {continue}
 		}
-		puts -nonewline $fd "[encoding convertto $path]\0"
+		puts -nonewline $fd "[encoding convertto utf-8 $path]\0"
 		display_file $path $new
 	}
 
@@ -247,7 +247,7 @@ proc write_checkout_index {fd pathList totalCnt batch after} {
 		?M -
 		?T -
 		?D {
-			puts -nonewline $fd "[encoding convertto $path]\0"
+			puts -nonewline $fd "[encoding convertto utf-8 $path]\0"
 			display_file $path ?_
 		}
 		}
@@ -291,7 +291,7 @@ proc do_unstage_selection {} {
 
 	if {[array size selected_paths] > 0} {
 		unstage_helper \
-			{Unstaging selected files from commit} \
+			[mc "Unstaging selected files from commit"] \
 			[array names selected_paths]
 	} elseif {$current_diff_path ne {}} {
 		unstage_helper \
@@ -343,7 +343,7 @@ proc do_add_selection {} {
 
 	if {[array size selected_paths] > 0} {
 		add_helper \
-			{Adding selected files} \
+			[mc "Adding selected files"] \
 			[array names selected_paths]
 	} elseif {$current_diff_path ne {}} {
 		add_helper \
@@ -385,7 +385,7 @@ proc do_add_all {} {
 			set paths [concat $paths $untracked_paths]
 		}
 	}
-	add_helper {Adding all changed files} $paths
+	add_helper [mc "Adding all changed files"] $paths
 }
 
 proc revert_helper {txt paths} {

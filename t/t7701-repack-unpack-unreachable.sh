@@ -122,4 +122,32 @@ test_expect_success 'keep packed objects found only in index' '
 	git cat-file blob :file
 '
 
+test_expect_success 'repack -k keeps unreachable packed objects' '
+	# create packed-but-unreachable object
+	sha1=$(echo unreachable-packed | git hash-object -w --stdin) &&
+	pack=$(echo $sha1 | git pack-objects .git/objects/pack/pack) &&
+	git prune-packed &&
+
+	# -k should keep it
+	git repack -adk &&
+	git cat-file -p $sha1 &&
+
+	# and double check that without -k it would have been removed
+	git repack -ad &&
+	test_must_fail git cat-file -p $sha1
+'
+
+test_expect_success 'repack -k packs unreachable loose objects' '
+	# create loose unreachable object
+	sha1=$(echo would-be-deleted-loose | git hash-object -w --stdin) &&
+	objpath=.git/objects/$(echo $sha1 | sed "s,..,&/,") &&
+	test_path_is_file $objpath &&
+
+	# and confirm that the loose object goes away, but we can
+	# still access it (ergo, it is packed)
+	git repack -adk &&
+	test_path_is_missing $objpath &&
+	git cat-file -p $sha1
+'
+
 test_done

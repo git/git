@@ -7,7 +7,7 @@ test_description='Per branch config variables affects "git fetch".
 
 . ./test-lib.sh
 
-D=`pwd`
+D=$(pwd)
 
 test_bundle_object_count () {
 	git verify-pack -v "$1" >verify.out &&
@@ -64,8 +64,8 @@ test_expect_success "fetch test" '
 	cd two &&
 	git fetch &&
 	test -f .git/refs/heads/one &&
-	mine=`git rev-parse refs/heads/one` &&
-	his=`cd ../one && git rev-parse refs/heads/master` &&
+	mine=$(git rev-parse refs/heads/one) &&
+	his=$(cd ../one && git rev-parse refs/heads/master) &&
 	test "z$mine" = "z$his"
 '
 
@@ -75,8 +75,8 @@ test_expect_success "fetch test for-merge" '
 	git fetch &&
 	test -f .git/refs/heads/two &&
 	test -f .git/refs/heads/one &&
-	master_in_two=`cd ../two && git rev-parse master` &&
-	one_in_two=`cd ../two && git rev-parse one` &&
+	master_in_two=$(cd ../two && git rev-parse master) &&
+	one_in_two=$(cd ../two && git rev-parse one) &&
 	{
 		echo "$one_in_two	"
 		echo "$master_in_two	not-for-merge"
@@ -313,42 +313,6 @@ test_expect_success 'bundle should be able to create a full history' '
 	git bundle create bundle4 v1.0
 
 '
-
-! rsync --help > /dev/null 2> /dev/null &&
-say 'Skipping rsync tests because rsync was not found' || {
-test_expect_success 'fetch via rsync' '
-	git pack-refs &&
-	mkdir rsynced &&
-	(cd rsynced &&
-	 git init --bare &&
-	 git fetch "rsync:../.git" master:refs/heads/master &&
-	 git gc --prune &&
-	 test $(git rev-parse master) = $(cd .. && git rev-parse master) &&
-	 git fsck --full)
-'
-
-test_expect_success 'push via rsync' '
-	mkdir rsynced2 &&
-	(cd rsynced2 &&
-	 git init) &&
-	(cd rsynced &&
-	 git push "rsync:../rsynced2/.git" master) &&
-	(cd rsynced2 &&
-	 git gc --prune &&
-	 test $(git rev-parse master) = $(cd .. && git rev-parse master) &&
-	 git fsck --full)
-'
-
-test_expect_success 'push via rsync' '
-	mkdir rsynced3 &&
-	(cd rsynced3 &&
-	 git init) &&
-	git push --all "rsync:rsynced3/.git" &&
-	(cd rsynced3 &&
-	 test $(git rev-parse master) = $(cd .. && git rev-parse master) &&
-	 git fsck --full)
-'
-}
 
 test_expect_success 'fetch with a non-applying branch.<name>.merge' '
 	git config branch.master.remote yeti &&
@@ -680,7 +644,7 @@ test_expect_success 'fetch --prune prints the remotes url' '
 		git fetch --prune origin 2>&1 | head -n1 >../actual
 	) &&
 	echo "From ${D}/." >expect &&
-	test_cmp expect actual
+	test_i18ncmp expect actual
 '
 
 test_expect_success 'branchname D/F conflict resolved by --prune' '
@@ -706,6 +670,52 @@ test_expect_success 'fetching a one-level ref works' '
 		cd one-level &&
 		git fetch .. HEAD refs/foo
 	)
+'
+
+test_expect_success 'fetching with auto-gc does not lock up' '
+	write_script askyesno <<-\EOF &&
+	echo "$*" &&
+	false
+	EOF
+	git clone "file://$D" auto-gc &&
+	test_commit test2 &&
+	(
+		cd auto-gc &&
+		git config gc.autoPackLimit 1 &&
+		git config gc.autoDetach false &&
+		GIT_ASK_YESNO="$D/askyesno" git fetch >fetch.out 2>&1 &&
+		! grep "Should I try again" fetch.out
+	)
+'
+
+test_expect_success C_LOCALE_OUTPUT 'fetch aligned output' '
+	git clone . full-output &&
+	test_commit looooooooooooong-tag &&
+	(
+		cd full-output &&
+		git -c fetch.output=full fetch origin 2>&1 | \
+			grep -e "->" | cut -c 22- >../actual
+	) &&
+	cat >expect <<-\EOF &&
+	master               -> origin/master
+	looooooooooooong-tag -> looooooooooooong-tag
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success C_LOCALE_OUTPUT 'fetch compact output' '
+	git clone . compact &&
+	test_commit extraaa &&
+	(
+		cd compact &&
+		git -c fetch.output=compact fetch origin 2>&1 | \
+			grep -e "->" | cut -c 22- >../actual
+	) &&
+	cat >expect <<-\EOF &&
+	master     -> origin/*
+	extraaa    -> *
+	EOF
+	test_cmp expect actual
 '
 
 test_done

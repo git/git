@@ -97,6 +97,9 @@ test_expect_success 'show-ref -d' '
 	git show-ref -d refs/tags/A refs/tags/C >actual &&
 	test_cmp expect actual &&
 
+	git show-ref --verify -d refs/tags/A refs/tags/C >actual &&
+	test_cmp expect actual &&
+
 	echo $(git rev-parse refs/heads/master) refs/heads/master >expect &&
 	git show-ref -d master >actual &&
 	test_cmp expect actual &&
@@ -116,6 +119,12 @@ test_expect_success 'show-ref -d' '
 	test_cmp expect actual &&
 
 	test_must_fail git show-ref -d --verify heads/master >actual &&
+	test_cmp expect actual &&
+
+	test_must_fail git show-ref --verify -d A C >actual &&
+	test_cmp expect actual &&
+
+	test_must_fail git show-ref --verify -d tags/A tags/C >actual &&
 	test_cmp expect actual
 
 '
@@ -162,6 +171,39 @@ test_expect_success 'show-ref --heads, --tags, --head, pattern' '
 	} >expect &&
 	git show-ref --head -d B >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'show-ref --verify HEAD' '
+	echo $(git rev-parse HEAD) HEAD >expect &&
+	git show-ref --verify HEAD >actual &&
+	test_cmp expect actual &&
+
+	>expect &&
+
+	git show-ref --verify -q HEAD >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'show-ref --verify with dangling ref' '
+	sha1_file() {
+		echo "$*" | sed "s#..#.git/objects/&/#"
+	} &&
+
+	remove_object() {
+		file=$(sha1_file "$*") &&
+		test -e "$file" &&
+		rm -f "$file"
+	} &&
+
+	test_when_finished "rm -rf dangling" &&
+	(
+		git init dangling &&
+		cd dangling &&
+		test_commit dangling &&
+		sha=$(git rev-parse refs/tags/dangling) &&
+		remove_object $sha &&
+		test_must_fail git show-ref --verify refs/tags/dangling
+	)
 '
 
 test_done

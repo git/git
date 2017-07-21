@@ -46,11 +46,11 @@ That is, from the left to the right:
 . sha1 for "dst"; 0\{40\} if creation, unmerged or "look at work tree".
 . a space.
 . status, followed by optional "score" number.
-. a tab or a NUL when '-z' option is used.
+. a tab or a NUL when `-z` option is used.
 . path for "src"
-. a tab or a NUL when '-z' option is used; only exists for C or R.
+. a tab or a NUL when `-z` option is used; only exists for C or R.
 . path for "dst"; only exists for C or R.
-. an LF or a NUL when '-z' option is used, to terminate the record.
+. an LF or a NUL when `-z` option is used, to terminate the record.
 
 Possible status letters are:
 
@@ -78,15 +78,16 @@ Example:
 :100644 100644 5be4a4...... 000000...... M file.c
 ------------------------------------------------
 
-When `-z` option is not used, TAB, LF, and backslash characters
-in pathnames are represented as `\t`, `\n`, and `\\`,
-respectively.
+Without the `-z` option, pathnames with "unusual" characters are
+quoted as explained for the configuration variable `core.quotePath`
+(see linkgit:git-config[1]).  Using `-z` the filename is output
+verbatim and the line is terminated by a NUL byte.
 
 diff format for merges
 ----------------------
 
 "git-diff-tree", "git-diff-files" and "git-diff --raw"
-can take '-c' or '--cc' option
+can take `-c` or `--cc` option
 to generate diff output also for merge commits.  The output differs
 from the format described above in the following way:
 

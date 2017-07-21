@@ -10,8 +10,10 @@ SYNOPSIS
 [verse]
 'git branch' [--color[=<when>] | --no-color] [-r | -a]
 	[--list] [-v [--abbrev=<length> | --no-abbrev]]
-	[--column[=<options>] | --no-column]
-	[(--merged | --no-merged | --contains) [<commit>]] [<pattern>...]
+	[--column[=<options>] | --no-column] [--sort=<key>]
+	[(--merged | --no-merged) [<commit>]]
+	[--contains [<commit]] [--no-contains [<commit>]]
+	[--points-at <object>] [--format=<format>] [<pattern>...]
 'git branch' [--set-upstream | --track | --no-track] [-l] [-f] <branchname> [<start-point>]
 'git branch' (--set-upstream-to=<upstream> | -u <upstream>) [<branchname>]
 'git branch' --unset-upstream [<branchname>]
@@ -34,14 +36,15 @@ as branch creation.
 
 With `--contains`, shows only the branches that contain the named commit
 (in other words, the branches whose tip commits are descendants of the
-named commit).  With `--merged`, only branches merged into the named
-commit (i.e. the branches whose tip commits are reachable from the named
-commit) will be listed.  With `--no-merged` only branches not merged into
-the named commit will be listed.  If the <commit> argument is missing it
-defaults to 'HEAD' (i.e. the tip of the current branch).
+named commit), `--no-contains` inverts it. With `--merged`, only branches
+merged into the named commit (i.e. the branches whose tip commits are
+reachable from the named commit) will be listed.  With `--no-merged` only
+branches not merged into the named commit will be listed.  If the <commit>
+argument is missing it defaults to `HEAD` (i.e. the tip of the current
+branch).
 
 The command's second form creates a new branch head named <branchname>
-which points to the current 'HEAD', or <start-point> if given.
+which points to the current `HEAD`, or <start-point> if given.
 
 Note that this will create the new branch, but it will not switch the
 working tree to it; use "git checkout <newbranch>" to switch to the
@@ -90,6 +93,9 @@ OPTIONS
 	based sha1 expressions such as "<branchname>@\{yesterday}".
 	Note that in non-bare repositories, reflogs are usually
 	enabled by default by the `core.logallrefupdates` config option.
+	The negated form `--no-create-reflog` only overrides an earlier
+	`--create-reflog`, but currently does not negate the setting of
+	`core.logallrefupdates`.
 
 -f::
 --force::
@@ -117,6 +123,10 @@ OPTIONS
 	default to color output.
 	Same as `--color=never`.
 
+-i::
+--ignore-case::
+	Sorting and filtering branches are case insensitive.
+
 --column[=<options>]::
 --no-column::
 	Display branch listing in columns. See configuration variable
@@ -134,8 +144,13 @@ This option is only applicable in non-verbose mode.
 	List both remote-tracking branches and local branches.
 
 --list::
-	Activate the list mode. `git branch <pattern>` would try to create a branch,
-	use `git branch --list <pattern>` to list matching branches.
+	List branches.  With optional `<pattern>...`, e.g. `git
+	branch --list 'maint-*'`, list only the branches that match
+	the pattern(s).
++
+This should not be confused with `git branch -l <branchname>`,
+which creates a branch named `<branchname>` with a reflog.
+See `--create-reflog` above for details.
 
 -v::
 -vv::
@@ -171,7 +186,7 @@ This option is only applicable in non-verbose mode.
 +
 This behavior is the default when the start point is a remote-tracking branch.
 Set the branch.autoSetupMerge configuration variable to `false` if you
-want `git checkout` and `git branch` to always behave as if '--no-track'
+want `git checkout` and `git branch` to always behave as if `--no-track`
 were given. Set it to `always` if you want this behavior when the
 start-point is either a local or remote-tracking branch.
 
@@ -197,19 +212,27 @@ start-point is either a local or remote-tracking branch.
 
 --edit-description::
 	Open an editor and edit the text to explain what the branch is
-	for, to be used by various other commands (e.g. `request-pull`).
+	for, to be used by various other commands (e.g. `format-patch`,
+	`request-pull`, and `merge` (if enabled)). Multi-line explanations
+	may be used.
 
 --contains [<commit>]::
 	Only list branches which contain the specified commit (HEAD
 	if not specified). Implies `--list`.
 
+--no-contains [<commit>]::
+	Only list branches which don't contain the specified commit
+	(HEAD if not specified). Implies `--list`.
+
 --merged [<commit>]::
 	Only list branches whose tips are reachable from the
-	specified commit (HEAD if not specified). Implies `--list`.
+	specified commit (HEAD if not specified). Implies `--list`,
+	incompatible with `--no-merged`.
 
 --no-merged [<commit>]::
 	Only list branches whose tips are not reachable from the
-	specified commit (HEAD if not specified). Implies `--list`.
+	specified commit (HEAD if not specified). Implies `--list`,
+	incompatible with `--merged`.
 
 <branchname>::
 	The name of the branch to create or delete.
@@ -229,6 +252,24 @@ start-point is either a local or remote-tracking branch.
 	The new name for an existing branch. The same restrictions as for
 	<branchname> apply.
 
+--sort=<key>::
+	Sort based on the key given. Prefix `-` to sort in descending
+	order of the value. You may use the --sort=<key> option
+	multiple times, in which case the last key becomes the primary
+	key. The keys supported are the same as those in `git
+	for-each-ref`. Sort order defaults to sorting based on the
+	full refname (including `refs/...` prefix). This lists
+	detached HEAD (if present) first, then local branches and
+	finally remote-tracking branches.
+
+
+--points-at <object>::
+	Only list branches of the given object.
+
+--format <format>::
+	A string that interpolates `%(fieldname)` from the object
+	pointed at by a ref being shown.  The format is the same as
+	that of linkgit:git-for-each-ref[1].
 
 Examples
 --------
@@ -268,12 +309,15 @@ If you are creating a branch that you want to checkout immediately, it is
 easier to use the git checkout command with its `-b` option to create
 a branch and check it out with a single command.
 
-The options `--contains`, `--merged` and `--no-merged` serve three related
-but different purposes:
+The options `--contains`, `--no-contains`, `--merged` and `--no-merged`
+serve four related but different purposes:
 
 - `--contains <commit>` is used to find all branches which will need
   special attention if <commit> were to be rebased or amended, since those
   branches contain the specified <commit>.
+
+- `--no-contains <commit>` is the inverse of that, i.e. branches that don't
+  contain the specified <commit>.
 
 - `--merged` is used to find all branches which can be safely deleted,
   since those branches are fully contained by HEAD.

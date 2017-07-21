@@ -1,4 +1,5 @@
 #include "builtin.h"
+#include "config.h"
 #include "commit.h"
 #include "refs.h"
 #include "pkt-line.h"
@@ -12,25 +13,45 @@
 #include "version.h"
 #include "sha1-array.h"
 #include "gpg-interface.h"
+#include "cache.h"
 
-static int feed_object(const unsigned char *sha1, int fd, int negative)
+int option_parse_push_signed(const struct option *opt,
+			     const char *arg, int unset)
 {
-	char buf[42];
+	if (unset) {
+		*(int *)(opt->value) = SEND_PACK_PUSH_CERT_NEVER;
+		return 0;
+	}
+	switch (git_parse_maybe_bool(arg)) {
+	case 1:
+		*(int *)(opt->value) = SEND_PACK_PUSH_CERT_ALWAYS;
+		return 0;
+	case 0:
+		*(int *)(opt->value) = SEND_PACK_PUSH_CERT_NEVER;
+		return 0;
+	}
+	if (!strcasecmp("if-asked", arg)) {
+		*(int *)(opt->value) = SEND_PACK_PUSH_CERT_IF_ASKED;
+		return 0;
+	}
+	die("bad %s argument: %s", opt->long_name, arg);
+}
 
+static void feed_object(const unsigned char *sha1, FILE *fh, int negative)
+{
 	if (negative && !has_sha1_file(sha1))
-		return 1;
+		return;
 
-	memcpy(buf + negative, sha1_to_hex(sha1), 40);
 	if (negative)
-		buf[0] = '^';
-	buf[40 + negative] = '\n';
-	return write_or_whine(fd, buf, 41 + negative, "send-pack: send refs");
+		putc('^', fh);
+	fputs(sha1_to_hex(sha1), fh);
+	putc('\n', fh);
 }
 
 /*
  * Make a pack stream and spit it out into file descriptor fd
  */
-static int pack_objects(int fd, struct ref *refs, struct sha1_array *extra, struct send_pack_args *args)
+static int pack_objects(int fd, struct ref *refs, struct oid_array *extra, struct send_pack_args *args)
 {
 	/*
 	 * The child becomes pack-objects --revs; we feed
@@ -50,7 +71,9 @@ static int pack_objects(int fd, struct ref *refs, struct sha1_array *extra, stru
 		NULL,
 	};
 	struct child_process po = CHILD_PROCESS_INIT;
+	FILE *po_in;
 	int i;
+	int rc;
 
 	i = 4;
 	if (args->use_thin_pack)
@@ -74,21 +97,22 @@ static int pack_objects(int fd, struct ref *refs, struct sha1_array *extra, stru
 	 * We feed the pack-objects we just spawned with revision
 	 * parameters by writing to the pipe.
 	 */
+	po_in = xfdopen(po.in, "w");
 	for (i = 0; i < extra->nr; i++)
-		if (!feed_object(extra->sha1[i], po.in, 1))
-			break;
+		feed_object(extra->oid[i].hash, po_in, 1);
 
 	while (refs) {
-		if (!is_null_sha1(refs->old_sha1) &&
-		    !feed_object(refs->old_sha1, po.in, 1))
-			break;
-		if (!is_null_sha1(refs->new_sha1) &&
-		    !feed_object(refs->new_sha1, po.in, 0))
-			break;
+		if (!is_null_oid(&refs->old_oid))
+			feed_object(refs->old_oid.hash, po_in, 1);
+		if (!is_null_oid(&refs->new_oid))
+			feed_object(refs->new_oid.hash, po_in, 0);
 		refs = refs->next;
 	}
 
-	close(po.in);
+	fflush(po_in);
+	if (ferror(po_in))
+		die_errno("error writing to pack-objects");
+	fclose(po_in);
 
 	if (args->stateless_rpc) {
 		char *buf = xmalloc(LARGE_PACKET_MAX);
@@ -103,27 +127,44 @@ static int pack_objects(int fd, struct ref *refs, struct sha1_array *extra, stru
 		po.out = -1;
 	}
 
-	if (finish_command(&po))
+	rc = finish_command(&po);
+	if (rc) {
+		/*
+		 * For a normal non-zero exit, we assume pack-objects wrote
+		 * something useful to stderr. For death by signal, though,
+		 * we should mention it to the user. The exception is SIGPIPE
+		 * (141), because that's a normal occurrence if the remote end
+		 * hangs up (and we'll report that by trying to read the unpack
+		 * status).
+		 */
+		if (rc > 128 && rc != 141)
+			error("pack-objects died of signal %d", rc - 128);
 		return -1;
+	}
+	return 0;
+}
+
+static int receive_unpack_status(int in)
+{
+	const char *line = packet_read_line(in, NULL);
+	if (!skip_prefix(line, "unpack ", &line))
+		return error(_("unable to parse remote unpack status: %s"), line);
+	if (strcmp(line, "ok"))
+		return error(_("remote unpack failed: %s"), line);
 	return 0;
 }
 
 static int receive_status(int in, struct ref *refs)
 {
 	struct ref *hint;
-	int ret = 0;
-	char *line = packet_read_line(in, NULL);
-	if (!starts_with(line, "unpack "))
-		return error("did not receive remote status");
-	if (strcmp(line, "unpack ok")) {
-		error("unpack failed: %s", line + 7);
-		ret = -1;
-	}
+	int ret;
+
 	hint = NULL;
+	ret = receive_unpack_status(in);
 	while (1) {
 		char *refname;
 		char *msg;
-		line = packet_read_line(in, NULL);
+		char *line = packet_read_line(in, NULL);
 		if (!line)
 			break;
 		if (!starts_with(line, "ok ") && !starts_with(line, "ng ")) {
@@ -159,8 +200,7 @@ static int receive_status(int in, struct ref *refs)
 			hint->status = REF_STATUS_REMOTE_REJECT;
 			ret = -1;
 		}
-		if (msg)
-			hint->remote_status = xstrdup(msg);
+		hint->remote_status = xstrdup_or_null(msg);
 		/* start our next search from the next ref */
 		hint = hint->next;
 	}
@@ -238,12 +278,13 @@ static int generate_push_cert(struct strbuf *req_buf,
 			      const char *push_cert_nonce)
 {
 	const struct ref *ref;
+	struct string_list_item *item;
 	char *signing_key = xstrdup(get_signing_key());
 	const char *cp, *np;
 	struct strbuf cert = STRBUF_INIT;
 	int update_seen = 0;
 
-	strbuf_addf(&cert, "certificate version 0.1\n");
+	strbuf_addstr(&cert, "certificate version 0.1\n");
 	strbuf_addf(&cert, "pusher %s ", signing_key);
 	datestamp(&cert);
 	strbuf_addch(&cert, '\n');
@@ -254,6 +295,9 @@ static int generate_push_cert(struct strbuf *req_buf,
 	}
 	if (push_cert_nonce[0])
 		strbuf_addf(&cert, "nonce %s\n", push_cert_nonce);
+	if (args->push_options)
+		for_each_string_list_item(item, args->push_options)
+			strbuf_addf(&cert, "push-option %s\n", item->string);
 	strbuf_addstr(&cert, "\n");
 
 	for (ref = remote_refs; ref; ref = ref->next) {
@@ -261,8 +305,8 @@ static int generate_push_cert(struct strbuf *req_buf,
 			continue;
 		update_seen = 1;
 		strbuf_addf(&cert, "%s %s %s\n",
-			    sha1_to_hex(ref->old_sha1),
-			    sha1_to_hex(ref->new_sha1),
+			    oid_to_hex(&ref->old_oid),
+			    oid_to_hex(&ref->new_oid),
 			    ref->name);
 	}
 	if (!update_seen)
@@ -333,7 +377,7 @@ static void reject_invalid_nonce(const char *nonce, int len)
 int send_pack(struct send_pack_args *args,
 	      int fd[], struct child_process *conn,
 	      struct ref *remote_refs,
-	      struct sha1_array *extra_have)
+	      struct oid_array *extra_have)
 {
 	int in = fd[0];
 	int out = fd[1];
@@ -348,6 +392,8 @@ int send_pack(struct send_pack_args *args,
 	int agent_supported = 0;
 	int use_atomic = 0;
 	int atomic_supported = 0;
+	int use_push_options = 0;
+	int push_options_supported = 0;
 	unsigned cmds_sent = 0;
 	int ret;
 	struct async demux;
@@ -370,14 +416,22 @@ int send_pack(struct send_pack_args *args,
 		args->use_thin_pack = 0;
 	if (server_supports("atomic"))
 		atomic_supported = 1;
-	if (args->push_cert) {
-		int len;
+	if (server_supports("push-options"))
+		push_options_supported = 1;
 
+	if (args->push_cert != SEND_PACK_PUSH_CERT_NEVER) {
+		int len;
 		push_cert_nonce = server_feature_value("push-cert", &len);
-		if (!push_cert_nonce)
+		if (push_cert_nonce) {
+			reject_invalid_nonce(push_cert_nonce, len);
+			push_cert_nonce = xmemdupz(push_cert_nonce, len);
+		} else if (args->push_cert == SEND_PACK_PUSH_CERT_ALWAYS) {
 			die(_("the receiving end does not support --signed push"));
-		reject_invalid_nonce(push_cert_nonce, len);
-		push_cert_nonce = xmemdupz(push_cert_nonce, len);
+		} else if (args->push_cert == SEND_PACK_PUSH_CERT_IF_ASKED) {
+			warning(_("not sending a push certificate since the"
+				  " receiving end does not support --signed"
+				  " push"));
+		}
 	}
 
 	if (!remote_refs) {
@@ -390,6 +444,11 @@ int send_pack(struct send_pack_args *args,
 
 	use_atomic = atomic_supported && args->atomic;
 
+	if (args->push_options && !push_options_supported)
+		die(_("the receiving end does not support push options"));
+
+	use_push_options = push_options_supported && args->push_options;
+
 	if (status_report)
 		strbuf_addstr(&cap_buf, " report-status");
 	if (use_sideband)
@@ -398,6 +457,8 @@ int send_pack(struct send_pack_args *args,
 		strbuf_addstr(&cap_buf, " quiet");
 	if (use_atomic)
 		strbuf_addstr(&cap_buf, " atomic");
+	if (use_push_options)
+		strbuf_addstr(&cap_buf, " push-options");
 	if (agent_supported)
 		strbuf_addf(&cap_buf, " agent=%s", git_user_agent_sanitized());
 
@@ -413,7 +474,7 @@ int send_pack(struct send_pack_args *args,
 	if (!args->dry_run)
 		advertise_shallow_grafts_buf(&req_buf);
 
-	if (!args->dry_run && args->push_cert)
+	if (!args->dry_run && push_cert_nonce)
 		cmds_sent = generate_push_cert(&req_buf, remote_refs, args,
 					       cap_buf.buf, push_cert_nonce);
 
@@ -452,14 +513,14 @@ int send_pack(struct send_pack_args *args,
 	for (ref = remote_refs; ref; ref = ref->next) {
 		char *old_hex, *new_hex;
 
-		if (args->dry_run || args->push_cert)
+		if (args->dry_run || push_cert_nonce)
 			continue;
 
 		if (check_to_send_update(ref, args) < 0)
 			continue;
 
-		old_hex = sha1_to_hex(ref->old_sha1);
-		new_hex = sha1_to_hex(ref->new_sha1);
+		old_hex = oid_to_hex(&ref->old_oid);
+		new_hex = oid_to_hex(&ref->new_oid);
 		if (!cmds_sent) {
 			packet_buf_write(&req_buf,
 					 "%s %s %s%c%s",
@@ -470,6 +531,14 @@ int send_pack(struct send_pack_args *args,
 			packet_buf_write(&req_buf, "%s %s %s",
 					 old_hex, new_hex, ref->name);
 		}
+	}
+
+	if (use_push_options) {
+		struct string_list_item *item;
+
+		packet_buf_flush(&req_buf);
+		for_each_string_list_item(item, args->push_options)
+			packet_buf_write(&req_buf, "%s", item->string);
 	}
 
 	if (args->stateless_rpc) {
@@ -489,6 +558,7 @@ int send_pack(struct send_pack_args *args,
 		demux.proc = sideband_demux;
 		demux.data = fd;
 		demux.out = -1;
+		demux.isolate_sigpipe = 1;
 		if (start_async(&demux))
 			die("send-pack: unable to fork off sideband demultiplexer");
 		in = demux.out;
@@ -502,8 +572,18 @@ int send_pack(struct send_pack_args *args,
 				close(out);
 			if (git_connection_is_socket(conn))
 				shutdown(fd[0], SHUT_WR);
-			if (use_sideband)
+
+			/*
+			 * Do not even bother with the return value; we know we
+			 * are failing, and just want the error() side effects.
+			 */
+			if (status_report)
+				receive_unpack_status(in);
+
+			if (use_sideband) {
+				close(demux.out);
 				finish_async(&demux);
+			}
 			fd[1] = -1;
 			return -1;
 		}
@@ -522,11 +602,11 @@ int send_pack(struct send_pack_args *args,
 		packet_flush(out);
 
 	if (use_sideband && cmds_sent) {
+		close(demux.out);
 		if (finish_async(&demux)) {
 			error("error in sideband demultiplexer");
 			ret = -1;
 		}
-		close(demux.out);
 	}
 
 	if (ret < 0)

@@ -4,13 +4,12 @@ diff_cmd () {
 }
 
 merge_cmd () {
-	touch "$BACKUP"
 	case "$1" in
 	gvimdiff|vimdiff)
 		if $base_present
 		then
-			"$merge_tool_path" -f -d -c 'wincmd J' \
-				"$MERGED" "$LOCAL" "$BASE" "$REMOTE"
+			"$merge_tool_path" -f -d -c '4wincmd w | wincmd J' \
+				"$LOCAL" "$BASE" "$REMOTE" "$MERGED"
 		else
 			"$merge_tool_path" -f -d -c 'wincmd l' \
 				"$LOCAL" "$MERGED" "$REMOTE"
@@ -31,7 +30,6 @@ merge_cmd () {
 		fi
 		;;
 	esac
-	check_unchanged
 }
 
 translate_merge_tool_path() {
@@ -43,4 +41,8 @@ translate_merge_tool_path() {
 		echo vim
 		;;
 	esac
+}
+
+exit_code_trustable () {
+	true
 }

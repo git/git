@@ -33,6 +33,8 @@ test_perf 'export a weird var' '
 	test_export bar
 '
 
+test_perf 'éḿíẗ ńöń-ÁŚĆÍÍ ćḧáŕáćẗéŕś' 'true'
+
 test_expect_success 'test_export works with weird vars' '
 	echo "$bar" &&
 	test "$bar" = "weird # variable"

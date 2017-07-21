@@ -1,6 +1,8 @@
 #include "cache.h"
+#include "config.h"
 #include "builtin.h"
 #include "exec_cmd.h"
+#include "run-command.h"
 #include "levenshtein.h"
 #include "help.h"
 #include "common-cmds.h"
@@ -8,14 +10,13 @@
 #include "column.h"
 #include "version.h"
 #include "refs.h"
+#include "parse-options.h"
 
 void add_cmdname(struct cmdnames *cmds, const char *name, int len)
 {
-	struct cmdname *ent = xmalloc(sizeof(*ent) + len + 1);
-
+	struct cmdname *ent;
+	FLEX_ALLOC_MEM(ent, name, name, len);
 	ent->len = len;
-	memcpy(ent->name, name, len);
-	ent->name[len] = 0;
 
 	ALLOC_GROW(cmds->names, cmds->cnt + 1, cmds->alloc);
 	cmds->names[cmds->cnt++] = ent;
@@ -98,33 +99,6 @@ static void pretty_print_cmdnames(struct cmdnames *cmds, unsigned int colopts)
 	string_list_clear(&list, 0);
 }
 
-static int is_executable(const char *name)
-{
-	struct stat st;
-
-	if (stat(name, &st) || /* stat, not lstat */
-	    !S_ISREG(st.st_mode))
-		return 0;
-
-#if defined(GIT_WINDOWS_NATIVE)
-{	/* cannot trust the executable bit, peek into the file instead */
-	char buf[3] = { 0 };
-	int n;
-	int fd = open(name, O_RDONLY);
-	st.st_mode &= ~S_IXUSR;
-	if (fd >= 0) {
-		n = read(fd, buf, 2);
-		if (n == 2)
-			/* DOS executables start with "MZ" */
-			if (!strcmp(buf, "#!") || !strcmp(buf, "MZ"))
-				st.st_mode |= S_IXUSR;
-		close(fd);
-	}
-}
-#endif
-	return st.st_mode & S_IXUSR;
-}
-
 static void list_commands_in_dir(struct cmdnames *cmds,
 					 const char *path,
 					 const char *prefix)
@@ -172,8 +146,7 @@ void load_command_list(const char *prefix,
 
 	if (exec_path) {
 		list_commands_in_dir(main_cmds, exec_path, prefix);
-		qsort(main_cmds->names, main_cmds->cnt,
-		      sizeof(*main_cmds->names), cmdname_compare);
+		QSORT(main_cmds->names, main_cmds->cnt, cmdname_compare);
 		uniq(main_cmds);
 	}
 
@@ -192,8 +165,7 @@ void load_command_list(const char *prefix,
 		}
 		free(paths);
 
-		qsort(other_cmds->names, other_cmds->cnt,
-		      sizeof(*other_cmds->names), cmdname_compare);
+		QSORT(other_cmds->names, other_cmds->cnt, cmdname_compare);
 		uniq(other_cmds);
 	}
 	exclude_cmds(other_cmds, main_cmds);
@@ -240,8 +212,7 @@ void list_common_cmds_help(void)
 			longest = strlen(common_cmds[i].name);
 	}
 
-	qsort(common_cmds, ARRAY_SIZE(common_cmds),
-		sizeof(common_cmds[0]), cmd_group_cmp);
+	QSORT(common_cmds, ARRAY_SIZE(common_cmds), cmd_group_cmp);
 
 	puts(_("These are common Git commands used in various situations:"));
 
@@ -298,9 +269,8 @@ static void add_cmd_list(struct cmdnames *cmds, struct cmdnames *old)
 
 	for (i = 0; i < old->cnt; i++)
 		cmds->names[cmds->cnt++] = old->names[i];
-	free(old->names);
+	FREE_AND_NULL(old->names);
 	old->cnt = 0;
-	old->names = NULL;
 }
 
 /* An empirically derived magic number */
@@ -320,14 +290,13 @@ const char *help_unknown_cmd(const char *cmd)
 	memset(&other_cmds, 0, sizeof(other_cmds));
 	memset(&aliases, 0, sizeof(aliases));
 
-	git_config(git_unknown_cmd_config, NULL);
+	read_early_config(git_unknown_cmd_config, NULL);
 
 	load_command_list("git-", &main_cmds, &other_cmds);
 
 	add_cmd_list(&main_cmds, &aliases);
 	add_cmd_list(&main_cmds, &other_cmds);
-	qsort(main_cmds.names, main_cmds.cnt,
-	      sizeof(*main_cmds.names), cmdname_compare);
+	QSORT(main_cmds.names, main_cmds.cnt, cmdname_compare);
 	uniq(&main_cmds);
 
 	/* This abuses cmdname->len for levenshtein distance */
@@ -361,8 +330,7 @@ const char *help_unknown_cmd(const char *cmd)
 			levenshtein(cmd, candidate, 0, 2, 1, 3) + 1;
 	}
 
-	qsort(main_cmds.names, main_cmds.cnt,
-	      sizeof(*main_cmds.names), levenshtein_compare);
+	QSORT(main_cmds.names, main_cmds.cnt, levenshtein_compare);
 
 	if (!main_cmds.cnt)
 		die(_("Uh oh. Your system reports no Git commands at all."));
@@ -388,12 +356,18 @@ const char *help_unknown_cmd(const char *cmd)
 		clean_cmdnames(&main_cmds);
 		fprintf_ln(stderr,
 			   _("WARNING: You called a Git command named '%s', "
-			     "which does not exist.\n"
-			     "Continuing under the assumption that you meant '%s'"),
-			cmd, assumed);
-		if (autocorrect > 0) {
-			fprintf_ln(stderr, _("in %0.1f seconds automatically..."),
-				(float)autocorrect/10.0);
+			     "which does not exist."),
+			   cmd);
+		if (autocorrect < 0)
+			fprintf_ln(stderr,
+				   _("Continuing under the assumption that "
+				     "you meant '%s'."),
+				   assumed);
+		else {
+			fprintf_ln(stderr,
+				   _("Continuing in %0.1f seconds, "
+				     "assuming that you meant '%s'."),
+				   (float)autocorrect/10.0, assumed);
 			sleep_millisec(autocorrect * 100);
 		}
 		return assumed;
@@ -403,8 +377,8 @@ const char *help_unknown_cmd(const char *cmd)
 
 	if (SIMILAR_ENOUGH(best_similarity)) {
 		fprintf_ln(stderr,
-			   Q_("\nDid you mean this?",
-			      "\nDid you mean one of these?",
+			   Q_("\nThe most similar command is",
+			      "\nThe most similar commands are",
 			   n));
 
 		for (i = 0; i < n; i++)
@@ -416,11 +390,31 @@ const char *help_unknown_cmd(const char *cmd)
 
 int cmd_version(int argc, const char **argv, const char *prefix)
 {
+	int build_options = 0;
+	const char * const usage[] = {
+		N_("git version [<options>]"),
+		NULL
+	};
+	struct option options[] = {
+		OPT_BOOL(0, "build-options", &build_options,
+			 "also print build options"),
+		OPT_END()
+	};
+
+	argc = parse_options(argc, argv, prefix, options, usage, 0);
+
 	/*
 	 * The format of this string should be kept stable for compatibility
 	 * with external projects that rely on the output of "git version".
+	 *
+	 * Always show the version, even if other options are given.
 	 */
 	printf("git version %s\n", git_version_string);
+
+	if (build_options) {
+		printf("sizeof-long: %d\n", (int)sizeof(long));
+		/* NEEDSWORK: also save and output GIT-BUILD_OPTIONS? */
+	}
 	return 0;
 }
 

@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "exec_cmd.h"
 #include "quote.h"
+#include "argv-array.h"
 #define MAX_ARGS	32
 
 static const char *argv_exec_path;
@@ -37,23 +38,17 @@ char *system_path(const char *path)
 	return strbuf_detach(&d, NULL);
 }
 
-const char *git_extract_argv0_path(const char *argv0)
+void git_extract_argv0_path(const char *argv0)
 {
 	const char *slash;
 
 	if (!argv0 || !*argv0)
-		return NULL;
-	slash = argv0 + strlen(argv0);
+		return;
 
-	while (argv0 <= slash && !is_dir_sep(*slash))
-		slash--;
+	slash = find_last_dir_sep(argv0);
 
-	if (slash >= argv0) {
+	if (slash)
 		argv0_path = xstrndup(argv0, slash - argv0);
-		return slash + 1;
-	}
-
-	return argv0;
 }
 
 void git_set_argv_exec_path(const char *exec_path)
@@ -69,17 +64,19 @@ void git_set_argv_exec_path(const char *exec_path)
 /* Returns the highest-priority, location to look for git programs. */
 const char *git_exec_path(void)
 {
-	const char *env;
+	static char *cached_exec_path;
 
 	if (argv_exec_path)
 		return argv_exec_path;
 
-	env = getenv(EXEC_PATH_ENVIRONMENT);
-	if (env && *env) {
-		return env;
+	if (!cached_exec_path) {
+		const char *env = getenv(EXEC_PATH_ENVIRONMENT);
+		if (env && *env)
+			cached_exec_path = xstrdup(env);
+		else
+			cached_exec_path = system_path(GIT_EXEC_PATH);
 	}
-
-	return system_path(GIT_EXEC_PATH);
+	return cached_exec_path;
 }
 
 static void add_path(struct strbuf *out, const char *path)
@@ -107,32 +104,25 @@ void setup_path(void)
 	strbuf_release(&new_path);
 }
 
-const char **prepare_git_cmd(const char **argv)
+const char **prepare_git_cmd(struct argv_array *out, const char **argv)
 {
-	int argc;
-	const char **nargv;
-
-	for (argc = 0; argv[argc]; argc++)
-		; /* just counting */
-	nargv = xmalloc(sizeof(*nargv) * (argc + 2));
-
-	nargv[0] = "git";
-	for (argc = 0; argv[argc]; argc++)
-		nargv[argc + 1] = argv[argc];
-	nargv[argc + 1] = NULL;
-	return nargv;
+	argv_array_push(out, "git");
+	argv_array_pushv(out, argv);
+	return out->argv;
 }
 
 int execv_git_cmd(const char **argv) {
-	const char **nargv = prepare_git_cmd(argv);
-	trace_argv_printf(nargv, "trace: exec:");
+	struct argv_array nargv = ARGV_ARRAY_INIT;
+
+	prepare_git_cmd(&nargv, argv);
+	trace_argv_printf(nargv.argv, "trace: exec:");
 
 	/* execvp() can only ever return if it fails */
-	sane_execvp("git", (char **)nargv);
+	sane_execvp("git", (char **)nargv.argv);
 
 	trace_printf("trace: exec failed: %s\n", strerror(errno));
 
-	free(nargv);
+	argv_array_clear(&nargv);
 	return -1;
 }
 

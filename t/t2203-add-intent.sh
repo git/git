@@ -5,10 +5,24 @@ test_description='Intent to add'
 . ./test-lib.sh
 
 test_expect_success 'intent to add' '
+	test_commit 1 &&
+	git rm 1.t &&
+	echo hello >1.t &&
 	echo hello >file &&
 	echo hello >elif &&
 	git add -N file &&
-	git add elif
+	git add elif &&
+	git add -N 1.t
+'
+
+test_expect_success 'git status' '
+	git status --porcelain | grep -v actual >actual &&
+	cat >expect <<-\EOF &&
+	DA 1.t
+	A  elif
+	 A file
+	EOF
+	test_cmp expect actual
 '
 
 test_expect_success 'check result of "add -N"' '
@@ -43,7 +57,9 @@ test_expect_success 'i-t-a entry is simply ignored' '
 	git add -N nitfol &&
 	git commit -m second &&
 	test $(git ls-tree HEAD -- nitfol | wc -l) = 0 &&
-	test $(git diff --name-only HEAD -- nitfol | wc -l) = 1
+	test $(git diff --name-only HEAD -- nitfol | wc -l) = 1 &&
+	test $(git diff --name-only --ita-invisible-in-index HEAD -- nitfol | wc -l) = 0 &&
+	test $(git diff --name-only --ita-invisible-in-index -- nitfol | wc -l) = 1
 '
 
 test_expect_success 'can commit with an unrelated i-t-a entry in index' '
@@ -80,6 +96,58 @@ test_expect_success 'cache-tree invalidates i-t-a paths' '
 	git diff --cached --name-only >actual &&
 	echo dir/bar >expect &&
 	test_cmp expect actual
+'
+
+test_expect_success 'cache-tree does not ignore dir that has i-t-a entries' '
+	git init ita-in-dir &&
+	(
+		cd ita-in-dir &&
+		mkdir 2 &&
+		for f in 1 2/1 2/2 3
+		do
+			echo "$f" >"$f"
+		done &&
+		git add 1 2/2 3 &&
+		git add -N 2/1 &&
+		git commit -m committed &&
+		git ls-tree -r HEAD >actual &&
+		grep 2/2 actual
+	)
+'
+
+test_expect_success 'cache-tree does skip dir that becomes empty' '
+	rm -fr ita-in-dir &&
+	git init ita-in-dir &&
+	(
+		cd ita-in-dir &&
+		mkdir -p 1/2/3 &&
+		echo 4 >1/2/3/4 &&
+		git add -N 1/2/3/4 &&
+		git write-tree >actual &&
+		echo $EMPTY_TREE >expected &&
+		test_cmp expected actual
+	)
+'
+
+test_expect_success 'commit: ita entries ignored in empty initial commit check' '
+	git init empty-initial-commit &&
+	(
+		cd empty-initial-commit &&
+		: >one &&
+		git add -N one &&
+		test_must_fail git commit -m nothing-new-here
+	)
+'
+
+test_expect_success 'commit: ita entries ignored in empty commit check' '
+	git init empty-subsequent-commit &&
+	(
+		cd empty-subsequent-commit &&
+		test_commit one &&
+		: >two &&
+		git add -N two &&
+		test_must_fail git commit -m nothing-new-here
+	)
 '
 
 test_done

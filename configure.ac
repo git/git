@@ -250,24 +250,66 @@ AS_HELP_STRING([--with-openssl],[use OpenSSL library (default is YES)])
 AS_HELP_STRING([],              [ARG can be prefix for openssl library and headers]),
 GIT_PARSE_WITH([openssl]))
 
-# Define USE_LIBPCRE if you have and want to use libpcre. git-grep will be
-# able to use Perl-compatible regular expressions.
+# Define USE_LIBPCRE if you have and want to use libpcre. Various
+# commands such as log and grep offer runtime options to use
+# Perl-compatible regular expressions instead of standard or extended
+# POSIX regular expressions.
 #
-# Define LIBPCREDIR=/foo/bar if your libpcre header and library files are in
+# Currently USE_LIBPCRE is a synonym for USE_LIBPCRE1, define
+# USE_LIBPCRE2 instead if you'd like to use version 2 of the PCRE
+# library. The USE_LIBPCRE flag will likely be changed to mean v2 by
+# default in future releases.
+#
+# Define LIBPCREDIR=/foo/bar if your PCRE header and library files are in
 # /foo/bar/include and /foo/bar/lib directories.
 #
 AC_ARG_WITH(libpcre,
-AS_HELP_STRING([--with-libpcre],[support Perl-compatible regexes (default is NO)])
-AS_HELP_STRING([],           [ARG can be also prefix for libpcre library and headers]),
+AS_HELP_STRING([--with-libpcre],[synonym for --with-libpcre1]),
     if test "$withval" = "no"; then
-	USE_LIBPCRE=
+	USE_LIBPCRE1=
     elif test "$withval" = "yes"; then
-	USE_LIBPCRE=YesPlease
+	USE_LIBPCRE1=YesPlease
     else
-	USE_LIBPCRE=YesPlease
+	USE_LIBPCRE1=YesPlease
 	LIBPCREDIR=$withval
 	AC_MSG_NOTICE([Setting LIBPCREDIR to $LIBPCREDIR])
-        dnl USE_LIBPCRE can still be modified below, so don't substitute
+        dnl USE_LIBPCRE1 can still be modified below, so don't substitute
+        dnl it yet.
+	GIT_CONF_SUBST([LIBPCREDIR])
+    fi)
+
+AC_ARG_WITH(libpcre1,
+AS_HELP_STRING([--with-libpcre1],[support Perl-compatible regexes via libpcre1 (default is NO)])
+AS_HELP_STRING([],           [ARG can be also prefix for libpcre library and headers]),
+    if test "$withval" = "no"; then
+	USE_LIBPCRE1=
+    elif test "$withval" = "yes"; then
+	USE_LIBPCRE1=YesPlease
+    else
+	USE_LIBPCRE1=YesPlease
+	LIBPCREDIR=$withval
+	AC_MSG_NOTICE([Setting LIBPCREDIR to $LIBPCREDIR])
+        dnl USE_LIBPCRE1 can still be modified below, so don't substitute
+        dnl it yet.
+	GIT_CONF_SUBST([LIBPCREDIR])
+    fi)
+
+AC_ARG_WITH(libpcre2,
+AS_HELP_STRING([--with-libpcre2],[support Perl-compatible regexes via libpcre2 (default is NO)])
+AS_HELP_STRING([],           [ARG can be also prefix for libpcre library and headers]),
+    if test -n "$USE_LIBPCRE1"; then
+        AC_MSG_ERROR([Only supply one of --with-libpcre1 or --with-libpcre2!])
+    fi
+
+    if test "$withval" = "no"; then
+	USE_LIBPCRE2=
+    elif test "$withval" = "yes"; then
+	USE_LIBPCRE2=YesPlease
+    else
+	USE_LIBPCRE2=YesPlease
+	LIBPCREDIR=$withval
+	AC_MSG_NOTICE([Setting LIBPCREDIR to $LIBPCREDIR])
+        dnl USE_LIBPCRE2 can still be modified below, so don't substitute
         dnl it yet.
 	GIT_CONF_SUBST([LIBPCREDIR])
     fi)
@@ -471,6 +513,13 @@ if test -n "$ASCIIDOC"; then
 	esac
 fi
 
+if grep -a ascii configure.ac >/dev/null; then
+  AC_MSG_RESULT([Using 'grep -a' for sane_grep])
+  SANE_TEXT_GREP=-a
+else
+  SANE_TEXT_GREP=
+fi
+GIT_CONF_SUBST([SANE_TEXT_GREP])
 
 ## Checks for libraries.
 AC_MSG_NOTICE([CHECKS for libraries])
@@ -492,11 +541,11 @@ GIT_CONF_SUBST([NEEDS_SSL_WITH_CRYPTO])
 GIT_CONF_SUBST([NO_OPENSSL])
 
 #
-# Define USE_LIBPCRE if you have and want to use libpcre. git-grep will be
-# able to use Perl-compatible regular expressions.
+# Handle the USE_LIBPCRE1 and USE_LIBPCRE2 options potentially set
+# above.
 #
 
-if test -n "$USE_LIBPCRE"; then
+if test -n "$USE_LIBPCRE1"; then
 
 GIT_STASH_FLAGS($LIBPCREDIR)
 
@@ -506,7 +555,22 @@ AC_CHECK_LIB([pcre], [pcre_version],
 
 GIT_UNSTASH_FLAGS($LIBPCREDIR)
 
-GIT_CONF_SUBST([USE_LIBPCRE])
+GIT_CONF_SUBST([USE_LIBPCRE1])
+
+fi
+
+
+if test -n "$USE_LIBPCRE2"; then
+
+GIT_STASH_FLAGS($LIBPCREDIR)
+
+AC_CHECK_LIB([pcre2-8], [pcre2_config_8],
+[USE_LIBPCRE2=YesPlease],
+[USE_LIBPCRE2=])
+
+GIT_UNSTASH_FLAGS($LIBPCREDIR)
+
+GIT_CONF_SUBST([USE_LIBPCRE2])
 
 fi
 
@@ -524,6 +588,30 @@ AC_CHECK_LIB([curl], [curl_global_init],
 GIT_UNSTASH_FLAGS($CURLDIR)
 
 GIT_CONF_SUBST([NO_CURL])
+
+if test -z "$NO_CURL"; then
+
+AC_CHECK_PROG([CURL_CONFIG], [curl-config],
+[curl-config],
+[no])
+
+if test $CURL_CONFIG != no; then
+    GIT_CONF_SUBST([CURL_CONFIG])
+    if test -z "${NO_OPENSSL}"; then
+      AC_MSG_CHECKING([if Curl supports SSL])
+      if test $(curl-config --features|grep SSL) = SSL; then
+         NEEDS_SSL_WITH_CURL=YesPlease
+         AC_MSG_RESULT([yes])
+      else
+         NEEDS_SSL_WITH_CURL=
+         AC_MSG_RESULT([no])
+      fi
+      GIT_CONF_SUBST([NEEDS_SSL_WITH_CURL])
+    fi
+fi
+
+fi
+
 
 #
 # Define NO_EXPAT if you do not have expat installed.  git-http-push is
@@ -767,13 +855,6 @@ elif test x$ac_cv_member_struct_stat_st_mtim_tv_nsec != xyes; then
 	GIT_CONF_SUBST([NO_NSEC])
 fi
 #
-# Define NO_D_INO_IN_DIRENT if you don't have d_ino in your struct dirent.
-AC_CHECK_MEMBER(struct dirent.d_ino,
-[NO_D_INO_IN_DIRENT=],
-[NO_D_INO_IN_DIRENT=YesPlease],
-[#include <dirent.h>])
-GIT_CONF_SUBST([NO_D_INO_IN_DIRENT])
-#
 # Define NO_D_TYPE_IN_DIRENT if your platform defines DT_UNKNOWN but lacks
 # d_type in struct dirent (latest Cygwin -- will be fixed soonish).
 AC_CHECK_MEMBER(struct dirent.d_type,
@@ -812,9 +893,10 @@ AC_CHECK_TYPE([struct addrinfo],[
 ])
 GIT_CONF_SUBST([NO_IPV6])
 #
-# Define NO_REGEX if you have no or inferior regex support in your C library.
-AC_CACHE_CHECK([whether the platform regex can handle null bytes],
- [ac_cv_c_excellent_regex], [
+# Define NO_REGEX if your C library lacks regex support with REG_STARTEND
+# feature.
+AC_CACHE_CHECK([whether the platform regex supports REG_STARTEND],
+ [ac_cv_c_regex_with_reg_startend], [
 AC_EGREP_CPP(yippeeyeswehaveit,
 	AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT
 #include <regex.h>
@@ -823,10 +905,10 @@ AC_EGREP_CPP(yippeeyeswehaveit,
 yippeeyeswehaveit
 #endif
 ]),
-	[ac_cv_c_excellent_regex=yes],
-	[ac_cv_c_excellent_regex=no])
+	[ac_cv_c_regex_with_reg_startend=yes],
+	[ac_cv_c_regex_with_reg_startend=no])
 ])
-if test $ac_cv_c_excellent_regex = yes; then
+if test $ac_cv_c_regex_with_reg_startend = yes; then
 	NO_REGEX=
 else
 	NO_REGEX=YesPlease
@@ -840,9 +922,9 @@ AC_CACHE_CHECK([whether system succeeds to read fopen'ed directory],
 [
 AC_RUN_IFELSE(
 	[AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT],
-		[[char c;
+		[[
 		FILE *f = fopen(".", "r");
-		return f && fread(&c, 1, 1, f)]])],
+		return f)]])],
 	[ac_cv_fread_reads_directories=no],
 	[ac_cv_fread_reads_directories=yes])
 ])
@@ -947,10 +1029,6 @@ AC_CHECK_LIB([iconv], [locale_charset],
                      [CHARSET_LIB=-lcharset])])
 GIT_CONF_SUBST([CHARSET_LIB])
 #
-# Define NO_HMAC_CTX_CLEANUP=YesPlease if HMAC_CTX_cleanup is missing.
-AC_CHECK_LIB([crypto], [HMAC_CTX_cleanup],
-	[], [GIT_CONF_SUBST([NO_HMAC_CTX_CLEANUP], [YesPlease])])
-#
 # Define HAVE_CLOCK_GETTIME=YesPlease if clock_gettime is available.
 GIT_CHECK_FUNC(clock_gettime,
 	[HAVE_CLOCK_GETTIME=YesPlease],
@@ -1029,12 +1107,6 @@ GIT_CHECK_FUNC(mkdtemp,
 [NO_MKDTEMP=YesPlease])
 GIT_CONF_SUBST([NO_MKDTEMP])
 #
-# Define NO_MKSTEMPS if you don't have mkstemps in the C library.
-GIT_CHECK_FUNC(mkstemps,
-[NO_MKSTEMPS=],
-[NO_MKSTEMPS=YesPlease])
-GIT_CONF_SUBST([NO_MKSTEMPS])
-#
 # Define NO_INITGROUPS if you don't have initgroups in the C library.
 GIT_CHECK_FUNC(initgroups,
 [NO_INITGROUPS=],
@@ -1089,14 +1161,19 @@ GIT_CONF_SUBST([HAVE_BSD_SYSCTL])
 AC_DEFUN([PTHREADTEST_SRC], [
 AC_LANG_PROGRAM([[
 #include <pthread.h>
+static void *noop(void *ignore) { return ignore; }
 ]], [[
 	pthread_mutex_t test_mutex;
 	pthread_key_t test_key;
+	pthread_t th;
 	int retcode = 0;
+	void *ret = (void *)0;
 	retcode |= pthread_key_create(&test_key, (void *)0);
 	retcode |= pthread_mutex_init(&test_mutex,(void *)0);
 	retcode |= pthread_mutex_lock(&test_mutex);
 	retcode |= pthread_mutex_unlock(&test_mutex);
+	retcode |= pthread_create(&th, ret, noop, ret);
+	retcode |= pthread_join(th, &ret);
 	return retcode;
 ]])])
 
@@ -1126,7 +1203,12 @@ elif test -z "$PTHREAD_CFLAGS"; then
   # would then trigger compiler warnings on every single file we compile.
   for opt in "" -mt -pthread -lpthread; do
      old_CFLAGS="$CFLAGS"
-     CFLAGS="$opt $CFLAGS"
+     old_LIBS="$LIBS"
+     case "$opt" in
+        -l*)  LIBS="$opt $LIBS" ;;
+        *)    CFLAGS="$opt $CFLAGS" ;;
+     esac
+
      AC_MSG_CHECKING([for POSIX Threads with '$opt'])
      AC_LINK_IFELSE([PTHREADTEST_SRC],
 	[AC_MSG_RESULT([yes])
@@ -1138,6 +1220,7 @@ elif test -z "$PTHREAD_CFLAGS"; then
 	],
 	[AC_MSG_RESULT([no])])
       CFLAGS="$old_CFLAGS"
+      LIBS="$old_LIBS"
   done
   if test $threads_found != yes; then
     AC_CHECK_LIB([pthread], [pthread_create],

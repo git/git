@@ -15,7 +15,7 @@ make_tree() {
 make_bare() {
 	git init --bare "$1" &&
 	(cd "$1" &&
-	 tree=`git hash-object -w -t tree /dev/null` &&
+	 tree=$(git hash-object -w -t tree /dev/null) &&
 	 commit=$(echo "$1" | git commit-tree $tree) &&
 	 git update-ref HEAD $commit
 	)

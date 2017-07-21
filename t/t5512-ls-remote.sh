@@ -85,8 +85,15 @@ test_expect_success 'use branch.<name>.remote if possible' '
 '
 
 test_expect_success 'confuses pattern as remote when no remote specified' '
-	cat >exp <<-\EOF &&
-	fatal: '\''refs*master'\'' does not appear to be a git repository
+	if test_have_prereq MINGW
+	then
+		# Windows does not like asterisks in pathname
+		does_not_exist=master
+	else
+		does_not_exist="refs*master"
+	fi &&
+	cat >exp <<-EOF &&
+	fatal: '\''$does_not_exist'\'' does not appear to be a git repository
 	fatal: Could not read from remote repository.
 
 	Please make sure you have the correct access rights
@@ -98,8 +105,8 @@ test_expect_success 'confuses pattern as remote when no remote specified' '
 	# fetch <branch>.
 	# We could just as easily have used "master"; the "*" emphasizes its
 	# role as a pattern.
-	test_must_fail git ls-remote refs*master >actual 2>&1 &&
-	test_cmp exp actual
+	test_must_fail git ls-remote "$does_not_exist" >actual 2>&1 &&
+	test_i18ncmp exp actual
 '
 
 test_expect_success 'die with non-2 for wrong repository even with --exit-code' '
@@ -128,6 +135,11 @@ test_expect_success 'Report match with --exit-code' '
 	test_cmp expect actual
 '
 
+test_expect_success 'set up some extra tags for ref hiding' '
+	git tag magic/one &&
+	git tag magic/two
+'
+
 for configsection in transfer uploadpack
 do
 	test_expect_success "Hide some refs with $configsection.hiderefs" '
@@ -138,6 +150,118 @@ do
 		sed -e "/	refs\/tags\//d" >expect &&
 		test_cmp expect actual
 	'
+
+	test_expect_success "Override hiding of $configsection.hiderefs" '
+		test_when_finished "test_unconfig $configsection.hiderefs" &&
+		git config --add $configsection.hiderefs refs/tags &&
+		git config --add $configsection.hiderefs "!refs/tags/magic" &&
+		git config --add $configsection.hiderefs refs/tags/magic/one &&
+		git ls-remote . >actual &&
+		grep refs/tags/magic/two actual &&
+		! grep refs/tags/magic/one actual
+	'
+
 done
+
+test_expect_success 'overrides work between mixed transfer/upload-pack hideRefs' '
+	test_config uploadpack.hiderefs refs/tags &&
+	test_config transfer.hiderefs "!refs/tags/magic" &&
+	git ls-remote . >actual &&
+	grep refs/tags/magic actual
+'
+
+test_expect_success 'ls-remote --symref' '
+	cat >expect <<-\EOF &&
+	ref: refs/heads/master	HEAD
+	1bd44cb9d13204b0fe1958db0082f5028a16eb3a	HEAD
+	1bd44cb9d13204b0fe1958db0082f5028a16eb3a	refs/heads/master
+	1bd44cb9d13204b0fe1958db0082f5028a16eb3a	refs/remotes/origin/HEAD
+	1bd44cb9d13204b0fe1958db0082f5028a16eb3a	refs/remotes/origin/master
+	1bd44cb9d13204b0fe1958db0082f5028a16eb3a	refs/tags/mark
+	EOF
+	git ls-remote --symref >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'ls-remote with filtered symref (refname)' '
+	cat >expect <<-\EOF &&
+	ref: refs/heads/master	HEAD
+	1bd44cb9d13204b0fe1958db0082f5028a16eb3a	HEAD
+	EOF
+	git ls-remote --symref . HEAD >actual &&
+	test_cmp expect actual
+'
+
+test_expect_failure 'ls-remote with filtered symref (--heads)' '
+	git symbolic-ref refs/heads/foo refs/tags/mark &&
+	cat >expect <<-\EOF &&
+	ref: refs/tags/mark	refs/heads/foo
+	1bd44cb9d13204b0fe1958db0082f5028a16eb3a	refs/heads/foo
+	1bd44cb9d13204b0fe1958db0082f5028a16eb3a	refs/heads/master
+	EOF
+	git ls-remote --symref --heads . >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'ls-remote --symref omits filtered-out matches' '
+	cat >expect <<-\EOF &&
+	1bd44cb9d13204b0fe1958db0082f5028a16eb3a	refs/heads/foo
+	1bd44cb9d13204b0fe1958db0082f5028a16eb3a	refs/heads/master
+	EOF
+	git ls-remote --symref --heads . >actual &&
+	test_cmp expect actual &&
+	git ls-remote --symref . "refs/heads/*" >actual &&
+	test_cmp expect actual
+'
+
+test_lazy_prereq GIT_DAEMON '
+	test_tristate GIT_TEST_GIT_DAEMON &&
+	test "$GIT_TEST_GIT_DAEMON" != false
+'
+
+# This test spawns a daemon, so run it only if the user would be OK with
+# testing with git-daemon.
+test_expect_success PIPE,JGIT,GIT_DAEMON 'indicate no refs in standards-compliant empty remote' '
+	JGIT_DAEMON_PORT=${JGIT_DAEMON_PORT-${this_test#t}} &&
+	JGIT_DAEMON_PID= &&
+	git init --bare empty.git &&
+	>empty.git/git-daemon-export-ok &&
+	mkfifo jgit_daemon_output &&
+	{
+		jgit daemon --port="$JGIT_DAEMON_PORT" . >jgit_daemon_output &
+		JGIT_DAEMON_PID=$!
+	} &&
+	test_when_finished kill "$JGIT_DAEMON_PID" &&
+	{
+		read line &&
+		case $line in
+		Exporting*)
+			;;
+		*)
+			echo "Expected: Exporting" &&
+			false;;
+		esac &&
+		read line &&
+		case $line in
+		"Listening on"*)
+			;;
+		*)
+			echo "Expected: Listening on" &&
+			false;;
+		esac
+	} <jgit_daemon_output &&
+	# --exit-code asks the command to exit with 2 when no
+	# matching refs are found.
+	test_expect_code 2 git ls-remote --exit-code git://localhost:$JGIT_DAEMON_PORT/empty.git
+'
+
+test_expect_success 'ls-remote works outside repository' '
+	# It is important for this repo to be inside the nongit
+	# area, as we want a repo name that does not include
+	# slashes (because those inhibit some of our configuration
+	# lookups).
+	nongit git init --bare dst.git &&
+	nongit git ls-remote dst.git
+'
 
 test_done

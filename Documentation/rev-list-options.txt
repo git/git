@@ -58,9 +58,11 @@ endif::git-rev-list[]
 	more than one `--grep=<pattern>`, commits whose message
 	matches any of the given patterns are chosen (but see
 	`--all-match`).
+ifndef::git-rev-list[]
 +
 When `--show-notes` is in effect, the message from the notes is
 matched as if it were part of the log message.
+endif::git-rev-list[]
 
 --all-match::
 	Limit the commits output to ones that match all given `--grep`,
@@ -89,9 +91,14 @@ matched as if it were part of the log message.
 	Consider the limiting patterns to be fixed strings (don't interpret
 	pattern as a regular expression).
 
+-P::
 --perl-regexp::
-	Consider the limiting patterns to be Perl-compatible regular expressions.
-	Requires libpcre to be compiled in.
+	Consider the limiting patterns to be Perl-compatible regular
+	expressions.
++
+Support for these types of regular expressions is an optional
+compile-time dependency. If Git wasn't compiled with support for them
+providing this option will cause it to die.
 
 --remove-empty::
 	Stop when a given path disappears from the tree.
@@ -131,8 +138,8 @@ parents) and `--max-parents=-1` (negative numbers denote no upper limit).
 	for all following revision specifiers, up to the next `--not`.
 
 --all::
-	Pretend as if all the refs in `refs/` are listed on the
-	command line as '<commit>'.
+	Pretend as if all the refs in `refs/`, along with `HEAD`, are
+	listed on the command line as '<commit>'.
 
 --branches[=<pattern>]::
 	Pretend as if all the refs in `refs/heads` are listed
@@ -191,7 +198,7 @@ endif::git-rev-list[]
 
 --stdin::
 	In addition to the '<commit>' listed on the command
-	line, read them from the standard input. If a '--' separator is
+	line, read them from the standard input. If a `--` separator is
 	seen, stop reading commits and start reading paths to limit the
 	result.
 
@@ -223,7 +230,7 @@ excluded from the output.
 
 --left-only::
 --right-only::
-	List only commits on the respective side of a symmetric range,
+	List only commits on the respective side of a symmetric difference,
 	i.e. only those which would be marked `<` resp. `>` by
 	`--left-right`.
 +
@@ -250,10 +257,25 @@ list.
 +
 With `--pretty` format other than `oneline` (for obvious reasons),
 this causes the output to have two extra lines of information
-taken from the reflog.  By default, 'commit@\{Nth}' notation is
-used in the output.  When the starting commit is specified as
-'commit@\{now}', output also uses 'commit@\{timestamp}' notation
-instead.  Under `--pretty=oneline`, the commit message is
+taken from the reflog.  The reflog designator in the output may be shown
+as `ref@{Nth}` (where `Nth` is the reverse-chronological index in the
+reflog) or as `ref@{timestamp}` (with the timestamp for that entry),
+depending on a few rules:
++
+--
+1. If the starting point is specified as `ref@{Nth}`, show the index
+format.
++
+2. If the starting point was specified as `ref@{now}`, show the
+timestamp format.
++
+3. If neither was used, but `--date` was given on the command line, show
+the timestamp in the format requested by `--date`.
++
+4. Otherwise, show the index format.
+--
++
+Under `--pretty=oneline`, the commit message is
 prefixed with this information on the same line.
 This option cannot be combined with `--reverse`.
 See also linkgit:git-reflog[1].
@@ -272,6 +294,10 @@ ifdef::git-rev-list[]
 	Try to speed up the traversal using the pack bitmap index (if
 	one is available). Note that when traversing with `--objects`,
 	trees and blobs will not have their associated path printed.
+
+--progress=<header>::
+	Show progress reports on stderr as objects are considered. The
+	`<header>` text will be printed with each progress update.
 endif::git-rev-list[]
 
 --
@@ -636,8 +662,9 @@ avoid showing the commits from two parallel development track mixed
 together.
 
 --reverse::
-	Output the commits in reverse order.
-	Cannot be combined with `--walk-reflogs`.
+	Output the commits chosen to be shown (see Commit Limiting
+	section above) in reverse order. Cannot be combined with
+	`--walk-reflogs`.
 
 Object Traversal
 ~~~~~~~~~~~~~~~~
@@ -699,15 +726,19 @@ include::pretty-options.txt[]
 --relative-date::
 	Synonym for `--date=relative`.
 
---date=(relative|local|default|iso|iso-strict|rfc|short|raw)::
+--date=<format>::
 	Only takes effect for dates shown in human-readable format, such
 	as when using `--pretty`. `log.date` config variable sets a default
-	value for the log command's `--date` option.
+	value for the log command's `--date` option. By default, dates
+	are shown in the original time zone (either committer's or
+	author's). If `-local` is appended to the format (e.g.,
+	`iso-local`), the user's local time zone is used instead.
 +
 `--date=relative` shows dates relative to the current time,
-e.g. ``2 hours ago''.
+e.g. ``2 hours ago''. The `-local` option has no effect for
+`--date=relative`.
 +
-`--date=local` shows timestamps in user's local time zone.
+`--date=local` is an alias for `--date=default-local`.
 +
 `--date=iso` (or `--date=iso8601`) shows timestamps in a ISO 8601-like format.
 The differences to the strict ISO 8601 format are:
@@ -725,15 +756,32 @@ format, often found in email messages.
 +
 `--date=short` shows only the date, but not the time, in `YYYY-MM-DD` format.
 +
-`--date=raw` shows the date in the internal raw Git format `%s %z` format.
+`--date=raw` shows the date as seconds since the epoch (1970-01-01
+00:00:00 UTC), followed by a space, and then the timezone as an offset
+from UTC (a `+` or `-` with four digits; the first two are hours, and
+the second two are minutes). I.e., as if the timestamp were formatted
+with `strftime("%s %z")`).
+Note that the `-local` option does not affect the seconds-since-epoch
+value (which is always measured in UTC), but does switch the accompanying
+timezone value.
 +
-`--date=format:...` feeds the format `...` to your system `strftime`.
+`--date=unix` shows the date as a Unix epoch timestamp (seconds since
+1970).  As with `--raw`, this is always in UTC and therefore `-local`
+has no effect.
++
+`--date=format:...` feeds the format `...` to your system `strftime`,
+except for %z and %Z, which are handled internally.
 Use `--date=format:%c` to show the date in your system locale's
 preferred format.  See the `strftime` manual for a complete list of
-format placeholders.
+format placeholders. When using `-local`, the correct syntax is
+`--date=format-local:...`.
 +
-`--date=default` shows timestamps in the original time zone
-(either committer's or author's).
+`--date=default` is the default format, and is similar to
+`--date=rfc2822`, with a few exceptions:
+
+	- there is no comma after the day-of-week
+
+	- the time zone is omitted when the local time zone is used
 
 ifdef::git-rev-list[]
 --header::
@@ -755,7 +803,7 @@ ifdef::git-rev-list[]
 endif::git-rev-list[]
 
 --left-right::
-	Mark which side of a symmetric diff a commit is reachable from.
+	Mark which side of a symmetric difference a commit is reachable from.
 	Commits from the left side are prefixed with `<` and those from
 	the right with `>`.  If combined with `--boundary`, those
 	commits are prefixed with `-`.

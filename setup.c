@@ -1,10 +1,15 @@
 #include "cache.h"
+#include "repository.h"
+#include "config.h"
 #include "dir.h"
 #include "string-list.h"
 
 static int inside_git_dir = -1;
 static int inside_work_tree = -1;
 static int work_tree_config_is_bogus;
+
+static struct startup_info the_startup_info;
+struct startup_info *startup_info = &the_startup_info;
 
 /*
  * The input parameter must contain an absolute path, and it must already be
@@ -87,7 +92,7 @@ char *prefix_path_gently(const char *prefix, int len,
 	const char *orig = path;
 	char *sanitized;
 	if (is_absolute_path(orig)) {
-		sanitized = xmalloc(strlen(path) + 1);
+		sanitized = xmallocz(strlen(path));
 		if (remaining_prefix)
 			*remaining_prefix = 0;
 		if (normalize_path_copy_len(sanitized, path, remaining_prefix)) {
@@ -99,10 +104,7 @@ char *prefix_path_gently(const char *prefix, int len,
 			return NULL;
 		}
 	} else {
-		sanitized = xmalloc(len + strlen(path) + 1);
-		if (len)
-			memcpy(sanitized, prefix, len);
-		strcpy(sanitized + len, path);
+		sanitized = xstrfmt("%.*s%s", len, len ? prefix : "", path);
 		if (remaining_prefix)
 			*remaining_prefix = len;
 		if (normalize_path_copy_len(sanitized, sanitized, remaining_prefix)) {
@@ -134,23 +136,30 @@ int path_inside_repo(const char *prefix, const char *path)
 
 int check_filename(const char *prefix, const char *arg)
 {
-	const char *name;
+	char *to_free = NULL;
 	struct stat st;
 
-	if (starts_with(arg, ":/")) {
-		if (arg[2] == '\0') /* ":/" is root dir, always exists */
+	if (skip_prefix(arg, ":/", &arg)) {
+		if (!*arg) /* ":/" is root dir, always exists */
 			return 1;
-		name = arg + 2;
-	} else if (!no_wildcard(arg))
-		return 1;
-	else if (prefix)
-		name = prefix_filename(prefix, strlen(prefix), arg);
-	else
-		name = arg;
-	if (!lstat(name, &st))
+		prefix = NULL;
+	} else if (skip_prefix(arg, ":!", &arg) ||
+		   skip_prefix(arg, ":^", &arg)) {
+		if (!*arg) /* excluding everything is silly, but allowed */
+			return 1;
+	}
+
+	if (prefix)
+		arg = to_free = prefix_filename(prefix, arg);
+
+	if (!lstat(arg, &st)) {
+		free(to_free);
 		return 1; /* file exists */
-	if (errno == ENOENT || errno == ENOTDIR)
+	}
+	if (is_missing_file_error(errno)) {
+		free(to_free);
 		return 0; /* file does not exist */
+	}
 	die_errno("failed to stat '%s'", arg);
 }
 
@@ -159,8 +168,8 @@ static void NORETURN die_verify_filename(const char *prefix,
 					 int diagnose_misspelt_rev)
 {
 	if (!diagnose_misspelt_rev)
-		die("%s: no such path in the working tree.\n"
-		    "Use 'git <command> -- <path>...' to specify paths that do not exist locally.",
+		die(_("%s: no such path in the working tree.\n"
+		      "Use 'git <command> -- <path>...' to specify paths that do not exist locally."),
 		    arg);
 	/*
 	 * Saying "'(icase)foo' does not exist in the index" when the
@@ -172,10 +181,28 @@ static void NORETURN die_verify_filename(const char *prefix,
 		maybe_die_on_misspelt_object_name(arg, prefix);
 
 	/* ... or fall back the most general message. */
-	die("ambiguous argument '%s': unknown revision or path not in the working tree.\n"
-	    "Use '--' to separate paths from revisions, like this:\n"
-	    "'git <command> [<revision>...] -- [<file>...]'", arg);
+	die(_("ambiguous argument '%s': unknown revision or path not in the working tree.\n"
+	      "Use '--' to separate paths from revisions, like this:\n"
+	      "'git <command> [<revision>...] -- [<file>...]'"), arg);
 
+}
+
+/*
+ * Check for arguments that don't resolve as actual files,
+ * but which look sufficiently like pathspecs that we'll consider
+ * them such for the purposes of rev/pathspec DWIM parsing.
+ */
+static int looks_like_pathspec(const char *arg)
+{
+	/* anything with a wildcard character */
+	if (!no_wildcard(arg))
+		return 1;
+
+	/* long-form pathspec magic */
+	if (starts_with(arg, ":("))
+		return 1;
+
+	return 0;
 }
 
 /*
@@ -204,7 +231,7 @@ void verify_filename(const char *prefix,
 {
 	if (*arg == '-')
 		die("bad flag '%s' used after filename", arg);
-	if (check_filename(prefix, arg))
+	if (looks_like_pathspec(arg) || check_filename(prefix, arg))
 		return;
 	die_verify_filename(prefix, arg, diagnose_misspelt_rev);
 }
@@ -222,21 +249,28 @@ void verify_non_filename(const char *prefix, const char *arg)
 		return; /* flag */
 	if (!check_filename(prefix, arg))
 		return;
-	die("ambiguous argument '%s': both revision and filename\n"
-	    "Use '--' to separate paths from revisions, like this:\n"
-	    "'git <command> [<revision>...] -- [<file>...]'", arg);
+	die(_("ambiguous argument '%s': both revision and filename\n"
+	      "Use '--' to separate paths from revisions, like this:\n"
+	      "'git <command> [<revision>...] -- [<file>...]'"), arg);
 }
 
 int get_common_dir(struct strbuf *sb, const char *gitdir)
 {
+	const char *git_env_common_dir = getenv(GIT_COMMON_DIR_ENVIRONMENT);
+	if (git_env_common_dir) {
+		strbuf_addstr(sb, git_env_common_dir);
+		return 1;
+	} else {
+		return get_common_dir_noenv(sb, gitdir);
+	}
+}
+
+int get_common_dir_noenv(struct strbuf *sb, const char *gitdir)
+{
 	struct strbuf data = STRBUF_INIT;
 	struct strbuf path = STRBUF_INIT;
-	const char *git_common_dir = getenv(GIT_COMMON_DIR_ENVIRONMENT);
 	int ret = 0;
-	if (git_common_dir) {
-		strbuf_addstr(sb, git_common_dir);
-		return 1;
-	}
+
 	strbuf_addf(&path, "%s/commondir", gitdir);
 	if (file_exists(path.buf)) {
 		if (strbuf_read_file(&data, path.buf, 0) <= 0)
@@ -249,10 +283,12 @@ int get_common_dir(struct strbuf *sb, const char *gitdir)
 		if (!is_absolute_path(data.buf))
 			strbuf_addf(&path, "%s/", gitdir);
 		strbuf_addbuf(&path, &data);
-		strbuf_addstr(sb, real_path(path.buf));
+		strbuf_add_real_path(sb, path.buf);
 		ret = 1;
-	} else
+	} else {
 		strbuf_addstr(sb, gitdir);
+	}
+
 	strbuf_release(&data);
 	strbuf_release(&path);
 	return ret;
@@ -307,6 +343,23 @@ done:
 	return ret;
 }
 
+int is_nonbare_repository_dir(struct strbuf *path)
+{
+	int ret = 0;
+	int gitfile_error;
+	size_t orig_path_len = path->len;
+	assert(orig_path_len != 0);
+	strbuf_complete(path, '/');
+	strbuf_addstr(path, ".git");
+	if (read_gitfile_gently(path->buf, &gitfile_error) || is_git_directory(path->buf))
+		ret = 1;
+	if (gitfile_error == READ_GITFILE_ERR_OPEN_FAILED ||
+	    gitfile_error == READ_GITFILE_ERR_READ_FAILED)
+		ret = 1;
+	strbuf_setlen(path, orig_path_len);
+	return ret;
+}
+
 int is_inside_git_dir(void)
 {
 	if (inside_git_dir < 0)
@@ -346,66 +399,149 @@ void setup_work_tree(void)
 	if (getenv(GIT_WORK_TREE_ENVIRONMENT))
 		setenv(GIT_WORK_TREE_ENVIRONMENT, ".", 1);
 
+	/*
+	 * NEEDSWORK: this call can essentially be set_git_dir(get_git_dir())
+	 * which can cause some problems when trying to free the old value of
+	 * gitdir.
+	 */
 	set_git_dir(remove_leading_path(git_dir, work_tree));
 	initialized = 1;
 }
 
-static int check_repo_format(const char *var, const char *value, void *cb)
+static int check_repo_format(const char *var, const char *value, void *vdata)
 {
+	struct repository_format *data = vdata;
+	const char *ext;
+
 	if (strcmp(var, "core.repositoryformatversion") == 0)
-		repository_format_version = git_config_int(var, value);
-	else if (strcmp(var, "core.sharedrepository") == 0)
-		shared_repository = git_config_perm(var, value);
+		data->version = git_config_int(var, value);
+	else if (skip_prefix(var, "extensions.", &ext)) {
+		/*
+		 * record any known extensions here; otherwise,
+		 * we fall through to recording it as unknown, and
+		 * check_repository_format will complain
+		 */
+		if (!strcmp(ext, "noop"))
+			;
+		else if (!strcmp(ext, "preciousobjects"))
+			data->precious_objects = git_config_bool(var, value);
+		else
+			string_list_append(&data->unknown_extensions, ext);
+	} else if (strcmp(var, "core.bare") == 0) {
+		data->is_bare = git_config_bool(var, value);
+	} else if (strcmp(var, "core.worktree") == 0) {
+		if (!value)
+			return config_error_nonbool(var);
+		data->work_tree = xstrdup(value);
+	}
 	return 0;
 }
 
 static int check_repository_format_gently(const char *gitdir, int *nongit_ok)
 {
 	struct strbuf sb = STRBUF_INIT;
-	const char *repo_config;
-	config_fn_t fn;
-	int ret = 0;
+	struct strbuf err = STRBUF_INIT;
+	struct repository_format candidate;
+	int has_common;
 
-	if (get_common_dir(&sb, gitdir))
-		fn = check_repo_format;
-	else
-		fn = check_repository_format_version;
+	has_common = get_common_dir(&sb, gitdir);
 	strbuf_addstr(&sb, "/config");
-	repo_config = sb.buf;
+	read_repository_format(&candidate, sb.buf);
+	strbuf_release(&sb);
 
 	/*
-	 * git_config() can't be used here because it calls git_pathdup()
-	 * to get $GIT_CONFIG/config. That call will make setup_git_env()
-	 * set git_dir to ".git".
-	 *
-	 * We are in gitdir setup, no git dir has been found useable yet.
-	 * Use a gentler version of git_config() to check if this repo
-	 * is a good one.
+	 * For historical use of check_repository_format() in git-init,
+	 * we treat a missing config as a silent "ok", even when nongit_ok
+	 * is unset.
 	 */
-	git_config_early(fn, NULL, repo_config);
-	if (GIT_REPO_VERSION < repository_format_version) {
-		if (!nongit_ok)
-			die ("Expected git repo version <= %d, found %d",
-			     GIT_REPO_VERSION, repository_format_version);
-		warning("Expected git repo version <= %d, found %d",
-			GIT_REPO_VERSION, repository_format_version);
-		warning("Please upgrade Git");
-		*nongit_ok = -1;
-		ret = -1;
+	if (candidate.version < 0)
+		return 0;
+
+	if (verify_repository_format(&candidate, &err) < 0) {
+		if (nongit_ok) {
+			warning("%s", err.buf);
+			strbuf_release(&err);
+			*nongit_ok = -1;
+			return -1;
+		}
+		die("%s", err.buf);
 	}
-	strbuf_release(&sb);
-	return ret;
+
+	repository_format_precious_objects = candidate.precious_objects;
+	string_list_clear(&candidate.unknown_extensions, 0);
+	if (!has_common) {
+		if (candidate.is_bare != -1) {
+			is_bare_repository_cfg = candidate.is_bare;
+			if (is_bare_repository_cfg == 1)
+				inside_work_tree = -1;
+		}
+		if (candidate.work_tree) {
+			free(git_work_tree_cfg);
+			git_work_tree_cfg = candidate.work_tree;
+			inside_work_tree = -1;
+		}
+	} else {
+		free(candidate.work_tree);
+	}
+
+	return 0;
 }
 
-static void update_linked_gitdir(const char *gitfile, const char *gitdir)
+int read_repository_format(struct repository_format *format, const char *path)
 {
-	struct strbuf path = STRBUF_INIT;
-	struct stat st;
+	memset(format, 0, sizeof(*format));
+	format->version = -1;
+	format->is_bare = -1;
+	string_list_init(&format->unknown_extensions, 1);
+	git_config_from_file(check_repo_format, path, format);
+	return format->version;
+}
 
-	strbuf_addf(&path, "%s/gitfile", gitdir);
-	if (stat(path.buf, &st) || st.st_mtime + 24 * 3600 < time(NULL))
-		write_file(path.buf, 0, "%s\n", gitfile);
-	strbuf_release(&path);
+int verify_repository_format(const struct repository_format *format,
+			     struct strbuf *err)
+{
+	if (GIT_REPO_VERSION_READ < format->version) {
+		strbuf_addf(err, _("Expected git repo version <= %d, found %d"),
+			    GIT_REPO_VERSION_READ, format->version);
+		return -1;
+	}
+
+	if (format->version >= 1 && format->unknown_extensions.nr) {
+		int i;
+
+		strbuf_addstr(err, _("unknown repository extensions found:"));
+
+		for (i = 0; i < format->unknown_extensions.nr; i++)
+			strbuf_addf(err, "\n\t%s",
+				    format->unknown_extensions.items[i].string);
+		return -1;
+	}
+
+	return 0;
+}
+
+void read_gitfile_error_die(int error_code, const char *path, const char *dir)
+{
+	switch (error_code) {
+	case READ_GITFILE_ERR_STAT_FAILED:
+	case READ_GITFILE_ERR_NOT_A_FILE:
+		/* non-fatal; follow return path */
+		break;
+	case READ_GITFILE_ERR_OPEN_FAILED:
+		die_errno("Error opening '%s'", path);
+	case READ_GITFILE_ERR_TOO_LARGE:
+		die("Too large to be a .git file: '%s'", path);
+	case READ_GITFILE_ERR_READ_FAILED:
+		die("Error reading %s", path);
+	case READ_GITFILE_ERR_INVALID_FORMAT:
+		die("Invalid gitfile format: %s", path);
+	case READ_GITFILE_ERR_NO_PATH:
+		die("No path in gitfile: %s", path);
+	case READ_GITFILE_ERR_NOT_A_REPO:
+		die("Not a git repository: %s", dir);
+	default:
+		die("BUG: unknown error code");
+	}
 }
 
 /*
@@ -429,6 +565,7 @@ const char *read_gitfile_gently(const char *path, int *return_error_code)
 	ssize_t len;
 
 	if (stat(path, &st)) {
+		/* NEEDSWORK: discern between ENOENT vs other errors */
 		error_code = READ_GITFILE_ERR_STAT_FAILED;
 		goto cleanup_return;
 	}
@@ -445,14 +582,13 @@ const char *read_gitfile_gently(const char *path, int *return_error_code)
 		error_code = READ_GITFILE_ERR_OPEN_FAILED;
 		goto cleanup_return;
 	}
-	buf = xmalloc(st.st_size + 1);
+	buf = xmallocz(st.st_size);
 	len = read_in_full(fd, buf, st.st_size);
 	close(fd);
 	if (len != st.st_size) {
 		error_code = READ_GITFILE_ERR_READ_FAILED;
 		goto cleanup_return;
 	}
-	buf[len] = '\0';
 	if (!starts_with(buf, "gitdir: ")) {
 		error_code = READ_GITFILE_ERR_INVALID_FORMAT;
 		goto cleanup_return;
@@ -468,11 +604,8 @@ const char *read_gitfile_gently(const char *path, int *return_error_code)
 
 	if (!is_absolute_path(dir) && (slash = strrchr(path, '/'))) {
 		size_t pathlen = slash+1 - path;
-		size_t dirlen = pathlen + len - 8;
-		dir = xmalloc(dirlen + 1);
-		strncpy(dir, path, pathlen);
-		strncpy(dir + pathlen, buf + 8, len - 8);
-		dir[dirlen] = '\0';
+		dir = xstrfmt("%.*s%.*s", (int)pathlen, path,
+			      (int)(len - 8), buf + 8);
 		free(buf);
 		buf = dir;
 	}
@@ -480,34 +613,13 @@ const char *read_gitfile_gently(const char *path, int *return_error_code)
 		error_code = READ_GITFILE_ERR_NOT_A_REPO;
 		goto cleanup_return;
 	}
-	update_linked_gitdir(path, dir);
 	path = real_path(dir);
 
 cleanup_return:
 	if (return_error_code)
 		*return_error_code = error_code;
-	else if (error_code) {
-		switch (error_code) {
-		case READ_GITFILE_ERR_STAT_FAILED:
-		case READ_GITFILE_ERR_NOT_A_FILE:
-			/* non-fatal; follow return path */
-			break;
-		case READ_GITFILE_ERR_OPEN_FAILED:
-			die_errno("Error opening '%s'", path);
-		case READ_GITFILE_ERR_TOO_LARGE:
-			die("Too large to be a .git file: '%s'", path);
-		case READ_GITFILE_ERR_READ_FAILED:
-			die("Error reading %s", path);
-		case READ_GITFILE_ERR_INVALID_FORMAT:
-			die("Invalid gitfile format: %s", path);
-		case READ_GITFILE_ERR_NO_PATH:
-			die("No path in gitfile: %s", path);
-		case READ_GITFILE_ERR_NOT_A_REPO:
-			die("Not a git repository: %s", dir);
-		default:
-			assert(0);
-		}
-	}
+	else if (error_code)
+		read_gitfile_error_die(error_code, path, dir);
 
 	free(buf);
 	return error_code ? NULL : path;
@@ -620,11 +732,16 @@ static const char *setup_discovered_git_dir(const char *gitdir,
 
 	/* --work-tree is set without --git-dir; use discovered one */
 	if (getenv(GIT_WORK_TREE_ENVIRONMENT) || git_work_tree_cfg) {
+		char *to_free = NULL;
+		const char *ret;
+
 		if (offset != cwd->len && !is_absolute_path(gitdir))
-			gitdir = xstrdup(real_path(gitdir));
+			gitdir = to_free = real_pathdup(gitdir, 1);
 		if (chdir(cwd->buf))
 			die_errno("Could not come back to cwd");
-		return setup_explicit_git_dir(gitdir, cwd, nongit_ok);
+		ret = setup_explicit_git_dir(gitdir, cwd, nongit_ok);
+		free(to_free);
+		return ret;
 	}
 
 	/* #16.2, #17.2, #20.2, #21.2, #24, #25, #28, #29 (see t1510) */
@@ -644,8 +761,10 @@ static const char *setup_discovered_git_dir(const char *gitdir,
 	if (offset == cwd->len)
 		return NULL;
 
-	/* Make "offset" point to past the '/', and add a '/' at the end */
-	offset++;
+	/* Make "offset" point past the '/' (already the case for root dirs) */
+	if (offset != offset_1st_component(cwd->buf))
+		offset++;
+	/* Add a '/' at the end */
 	strbuf_addch(cwd, '/');
 	return cwd->buf + offset;
 }
@@ -663,7 +782,7 @@ static const char *setup_bare_git_dir(struct strbuf *cwd, int offset,
 
 	/* --work-tree is set without --git-dir; use discovered one */
 	if (getenv(GIT_WORK_TREE_ENVIRONMENT) || git_work_tree_cfg) {
-		const char *gitdir;
+		static const char *gitdir;
 
 		gitdir = offset == cwd->len ? "." : xmemdupz(cwd->buf, offset);
 		if (chdir(cwd->buf))
@@ -688,9 +807,9 @@ static const char *setup_bare_git_dir(struct strbuf *cwd, int offset,
 static const char *setup_nongit(const char *cwd, int *nongit_ok)
 {
 	if (!nongit_ok)
-		die("Not a git repository (or any of the parent directories): %s", DEFAULT_GIT_DIR_ENVIRONMENT);
+		die(_("Not a git repository (or any of the parent directories): %s"), DEFAULT_GIT_DIR_ENVIRONMENT);
 	if (chdir(cwd))
-		die_errno("Cannot come back to cwd");
+		die_errno(_("Cannot come back to cwd"));
 	*nongit_ok = 1;
 	return NULL;
 }
@@ -729,29 +848,186 @@ static int canonicalize_ceiling_entry(struct string_list_item *item,
 		/* Keep entry but do not canonicalize it */
 		return 1;
 	} else {
-		const char *real_path = real_path_if_valid(ceil);
-		if (!real_path)
+		char *real_path = real_pathdup(ceil, 0);
+		if (!real_path) {
 			return 0;
+		}
 		free(item->string);
-		item->string = xstrdup(real_path);
+		item->string = real_path;
 		return 1;
 	}
 }
 
+enum discovery_result {
+	GIT_DIR_NONE = 0,
+	GIT_DIR_EXPLICIT,
+	GIT_DIR_DISCOVERED,
+	GIT_DIR_BARE,
+	/* these are errors */
+	GIT_DIR_HIT_CEILING = -1,
+	GIT_DIR_HIT_MOUNT_POINT = -2,
+	GIT_DIR_INVALID_GITFILE = -3
+};
+
 /*
  * We cannot decide in this function whether we are in the work tree or
  * not, since the config can only be read _after_ this function was called.
+ *
+ * Also, we avoid changing any global state (such as the current working
+ * directory) to allow early callers.
+ *
+ * The directory where the search should start needs to be passed in via the
+ * `dir` parameter; upon return, the `dir` buffer will contain the path of
+ * the directory where the search ended, and `gitdir` will contain the path of
+ * the discovered .git/ directory, if any. If `gitdir` is not absolute, it
+ * is relative to `dir` (i.e. *not* necessarily the cwd).
  */
-static const char *setup_git_directory_gently_1(int *nongit_ok)
+static enum discovery_result setup_git_directory_gently_1(struct strbuf *dir,
+							  struct strbuf *gitdir,
+							  int die_on_error)
 {
 	const char *env_ceiling_dirs = getenv(CEILING_DIRECTORIES_ENVIRONMENT);
 	struct string_list ceiling_dirs = STRING_LIST_INIT_DUP;
-	static struct strbuf cwd = STRBUF_INIT;
-	const char *gitdirenv, *ret;
-	char *gitfile;
-	int offset, offset_parent, ceil_offset = -1;
+	const char *gitdirenv;
+	int ceil_offset = -1, min_offset = has_dos_drive_prefix(dir->buf) ? 3 : 1;
 	dev_t current_device = 0;
 	int one_filesystem = 1;
+
+	/*
+	 * If GIT_DIR is set explicitly, we're not going
+	 * to do any discovery, but we still do repository
+	 * validation.
+	 */
+	gitdirenv = getenv(GIT_DIR_ENVIRONMENT);
+	if (gitdirenv) {
+		strbuf_addstr(gitdir, gitdirenv);
+		return GIT_DIR_EXPLICIT;
+	}
+
+	if (env_ceiling_dirs) {
+		int empty_entry_found = 0;
+
+		string_list_split(&ceiling_dirs, env_ceiling_dirs, PATH_SEP, -1);
+		filter_string_list(&ceiling_dirs, 0,
+				   canonicalize_ceiling_entry, &empty_entry_found);
+		ceil_offset = longest_ancestor_length(dir->buf, &ceiling_dirs);
+		string_list_clear(&ceiling_dirs, 0);
+	}
+
+	if (ceil_offset < 0)
+		ceil_offset = min_offset - 2;
+
+	/*
+	 * Test in the following order (relative to the dir):
+	 * - .git (file containing "gitdir: <path>")
+	 * - .git/
+	 * - ./ (bare)
+	 * - ../.git
+	 * - ../.git/
+	 * - ../ (bare)
+	 * - ../../.git/
+	 *   etc.
+	 */
+	one_filesystem = !git_env_bool("GIT_DISCOVERY_ACROSS_FILESYSTEM", 0);
+	if (one_filesystem)
+		current_device = get_device_or_die(dir->buf, NULL, 0);
+	for (;;) {
+		int offset = dir->len, error_code = 0;
+
+		if (offset > min_offset)
+			strbuf_addch(dir, '/');
+		strbuf_addstr(dir, DEFAULT_GIT_DIR_ENVIRONMENT);
+		gitdirenv = read_gitfile_gently(dir->buf, die_on_error ?
+						NULL : &error_code);
+		if (!gitdirenv) {
+			if (die_on_error ||
+			    error_code == READ_GITFILE_ERR_NOT_A_FILE) {
+				/* NEEDSWORK: fail if .git is not file nor dir */
+				if (is_git_directory(dir->buf))
+					gitdirenv = DEFAULT_GIT_DIR_ENVIRONMENT;
+			} else if (error_code != READ_GITFILE_ERR_STAT_FAILED)
+				return GIT_DIR_INVALID_GITFILE;
+		}
+		strbuf_setlen(dir, offset);
+		if (gitdirenv) {
+			strbuf_addstr(gitdir, gitdirenv);
+			return GIT_DIR_DISCOVERED;
+		}
+
+		if (is_git_directory(dir->buf)) {
+			strbuf_addstr(gitdir, ".");
+			return GIT_DIR_BARE;
+		}
+
+		if (offset <= min_offset)
+			return GIT_DIR_HIT_CEILING;
+
+		while (--offset > ceil_offset && !is_dir_sep(dir->buf[offset]))
+			; /* continue */
+		if (offset <= ceil_offset)
+			return GIT_DIR_HIT_CEILING;
+
+		strbuf_setlen(dir, offset > min_offset ?  offset : min_offset);
+		if (one_filesystem &&
+		    current_device != get_device_or_die(dir->buf, NULL, offset))
+			return GIT_DIR_HIT_MOUNT_POINT;
+	}
+}
+
+int discover_git_directory(struct strbuf *commondir,
+			   struct strbuf *gitdir)
+{
+	struct strbuf dir = STRBUF_INIT, err = STRBUF_INIT;
+	size_t gitdir_offset = gitdir->len, cwd_len;
+	size_t commondir_offset = commondir->len;
+	struct repository_format candidate;
+
+	if (strbuf_getcwd(&dir))
+		return -1;
+
+	cwd_len = dir.len;
+	if (setup_git_directory_gently_1(&dir, gitdir, 0) <= 0) {
+		strbuf_release(&dir);
+		return -1;
+	}
+
+	/*
+	 * The returned gitdir is relative to dir, and if dir does not reflect
+	 * the current working directory, we simply make the gitdir absolute.
+	 */
+	if (dir.len < cwd_len && !is_absolute_path(gitdir->buf + gitdir_offset)) {
+		/* Avoid a trailing "/." */
+		if (!strcmp(".", gitdir->buf + gitdir_offset))
+			strbuf_setlen(gitdir, gitdir_offset);
+		else
+			strbuf_addch(&dir, '/');
+		strbuf_insert(gitdir, gitdir_offset, dir.buf, dir.len);
+	}
+
+	get_common_dir(commondir, gitdir->buf + gitdir_offset);
+
+	strbuf_reset(&dir);
+	strbuf_addf(&dir, "%s/config", commondir->buf + commondir_offset);
+	read_repository_format(&candidate, dir.buf);
+	strbuf_release(&dir);
+
+	if (verify_repository_format(&candidate, &err) < 0) {
+		warning("ignoring git dir '%s': %s",
+			gitdir->buf + gitdir_offset, err.buf);
+		strbuf_release(&err);
+		strbuf_setlen(commondir, commondir_offset);
+		strbuf_setlen(gitdir, gitdir_offset);
+		return -1;
+	}
+
+	return 0;
+}
+
+const char *setup_git_directory_gently(int *nongit_ok)
+{
+	static struct strbuf cwd = STRBUF_INIT;
+	struct strbuf dir = STRBUF_INIT, gitdir = STRBUF_INIT;
+	const char *prefix, *env_prefix;
 
 	/*
 	 * We may have read an incomplete configuration before
@@ -771,108 +1047,86 @@ static const char *setup_git_directory_gently_1(int *nongit_ok)
 		*nongit_ok = 0;
 
 	if (strbuf_getcwd(&cwd))
-		die_errno("Unable to read current working directory");
-	offset = cwd.len;
+		die_errno(_("Unable to read current working directory"));
+	strbuf_addbuf(&dir, &cwd);
 
-	/*
-	 * If GIT_DIR is set explicitly, we're not going
-	 * to do any discovery, but we still do repository
-	 * validation.
-	 */
-	gitdirenv = getenv(GIT_DIR_ENVIRONMENT);
-	if (gitdirenv)
-		return setup_explicit_git_dir(gitdirenv, &cwd, nongit_ok);
-
-	if (env_ceiling_dirs) {
-		int empty_entry_found = 0;
-
-		string_list_split(&ceiling_dirs, env_ceiling_dirs, PATH_SEP, -1);
-		filter_string_list(&ceiling_dirs, 0,
-				   canonicalize_ceiling_entry, &empty_entry_found);
-		ceil_offset = longest_ancestor_length(cwd.buf, &ceiling_dirs);
-		string_list_clear(&ceiling_dirs, 0);
+	switch (setup_git_directory_gently_1(&dir, &gitdir, 1)) {
+	case GIT_DIR_NONE:
+		prefix = NULL;
+		break;
+	case GIT_DIR_EXPLICIT:
+		prefix = setup_explicit_git_dir(gitdir.buf, &cwd, nongit_ok);
+		break;
+	case GIT_DIR_DISCOVERED:
+		if (dir.len < cwd.len && chdir(dir.buf))
+			die(_("Cannot change to '%s'"), dir.buf);
+		prefix = setup_discovered_git_dir(gitdir.buf, &cwd, dir.len,
+						  nongit_ok);
+		break;
+	case GIT_DIR_BARE:
+		if (dir.len < cwd.len && chdir(dir.buf))
+			die(_("Cannot change to '%s'"), dir.buf);
+		prefix = setup_bare_git_dir(&cwd, dir.len, nongit_ok);
+		break;
+	case GIT_DIR_HIT_CEILING:
+		prefix = setup_nongit(cwd.buf, nongit_ok);
+		break;
+	case GIT_DIR_HIT_MOUNT_POINT:
+		if (nongit_ok) {
+			*nongit_ok = 1;
+			strbuf_release(&cwd);
+			strbuf_release(&dir);
+			return NULL;
+		}
+		die(_("Not a git repository (or any parent up to mount point %s)\n"
+		      "Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set)."),
+		    dir.buf);
+	default:
+		die("BUG: unhandled setup_git_directory_1() result");
 	}
 
-	if (ceil_offset < 0 && has_dos_drive_prefix(cwd.buf))
-		ceil_offset = 1;
-
 	/*
-	 * Test in the following order (relative to the cwd):
-	 * - .git (file containing "gitdir: <path>")
-	 * - .git/
-	 * - ./ (bare)
-	 * - ../.git
-	 * - ../.git/
-	 * - ../ (bare)
-	 * - ../../.git/
-	 *   etc.
+	 * NEEDSWORK: This was a hack in order to get ls-files and grep to have
+	 * properly formated output when recursing submodules.  Once ls-files
+	 * and grep have been changed to perform this recursing in-process this
+	 * needs to be removed.
 	 */
-	one_filesystem = !git_env_bool("GIT_DISCOVERY_ACROSS_FILESYSTEM", 0);
-	if (one_filesystem)
-		current_device = get_device_or_die(".", NULL, 0);
-	for (;;) {
-		gitfile = (char*)read_gitfile(DEFAULT_GIT_DIR_ENVIRONMENT);
-		if (gitfile)
-			gitdirenv = gitfile = xstrdup(gitfile);
-		else {
-			if (is_git_directory(DEFAULT_GIT_DIR_ENVIRONMENT))
-				gitdirenv = DEFAULT_GIT_DIR_ENVIRONMENT;
-		}
+	env_prefix = getenv(GIT_TOPLEVEL_PREFIX_ENVIRONMENT);
+	if (env_prefix)
+		prefix = env_prefix;
 
-		if (gitdirenv) {
-			ret = setup_discovered_git_dir(gitdirenv,
-						       &cwd, offset,
-						       nongit_ok);
-			free(gitfile);
-			return ret;
-		}
-		free(gitfile);
-
-		if (is_git_directory("."))
-			return setup_bare_git_dir(&cwd, offset, nongit_ok);
-
-		offset_parent = offset;
-		while (--offset_parent > ceil_offset && cwd.buf[offset_parent] != '/');
-		if (offset_parent <= ceil_offset)
-			return setup_nongit(cwd.buf, nongit_ok);
-		if (one_filesystem) {
-			dev_t parent_device = get_device_or_die("..", cwd.buf,
-								offset);
-			if (parent_device != current_device) {
-				if (nongit_ok) {
-					if (chdir(cwd.buf))
-						die_errno("Cannot come back to cwd");
-					*nongit_ok = 1;
-					return NULL;
-				}
-				strbuf_setlen(&cwd, offset);
-				die("Not a git repository (or any parent up to mount point %s)\n"
-				"Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set).",
-				    cwd.buf);
-			}
-		}
-		if (chdir("..")) {
-			strbuf_setlen(&cwd, offset);
-			die_errno("Cannot change to '%s/..'", cwd.buf);
-		}
-		offset = offset_parent;
-	}
-}
-
-const char *setup_git_directory_gently(int *nongit_ok)
-{
-	const char *prefix;
-
-	prefix = setup_git_directory_gently_1(nongit_ok);
 	if (prefix)
 		setenv(GIT_PREFIX_ENVIRONMENT, prefix, 1);
 	else
 		setenv(GIT_PREFIX_ENVIRONMENT, "", 1);
 
-	if (startup_info) {
-		startup_info->have_repository = !nongit_ok || !*nongit_ok;
-		startup_info->prefix = prefix;
+	startup_info->have_repository = !nongit_ok || !*nongit_ok;
+	startup_info->prefix = prefix;
+
+	/*
+	 * Not all paths through the setup code will call 'set_git_dir()' (which
+	 * directly sets up the environment) so in order to guarantee that the
+	 * environment is in a consistent state after setup, explicitly setup
+	 * the environment if we have a repository.
+	 *
+	 * NEEDSWORK: currently we allow bogus GIT_DIR values to be set in some
+	 * code paths so we also need to explicitly setup the environment if
+	 * the user has set GIT_DIR.  It may be beneficial to disallow bogus
+	 * GIT_DIR values at some point in the future.
+	 */
+	if (startup_info->have_repository || getenv(GIT_DIR_ENVIRONMENT)) {
+		if (!the_repository->gitdir) {
+			const char *gitdir = getenv(GIT_DIR_ENVIRONMENT);
+			if (!gitdir)
+				gitdir = DEFAULT_GIT_DIR_ENVIRONMENT;
+			repo_set_gitdir(the_repository, gitdir);
+			setup_git_env();
+		}
 	}
+
+	strbuf_release(&dir);
+	strbuf_release(&gitdir);
+
 	return prefix;
 }
 
@@ -916,9 +1170,9 @@ int git_config_perm(const char *var, const char *value)
 	/* A filemode value was given: 0xxx */
 
 	if ((i & 0600) != 0600)
-		die("Problem with core.sharedRepository filemode value "
+		die(_("Problem with core.sharedRepository filemode value "
 		    "(0%.3o).\nThe owner of files must always have "
-		    "read and write permissions.", i);
+		    "read and write permissions."), i);
 
 	/*
 	 * Mask filemode value. Others can not get write permission.
@@ -927,28 +1181,10 @@ int git_config_perm(const char *var, const char *value)
 	return -(i & 0666);
 }
 
-int check_repository_format_version(const char *var, const char *value, void *cb)
+void check_repository_format(void)
 {
-	int ret = check_repo_format(var, value, cb);
-	if (ret)
-		return ret;
-	if (strcmp(var, "core.bare") == 0) {
-		is_bare_repository_cfg = git_config_bool(var, value);
-		if (is_bare_repository_cfg == 1)
-			inside_work_tree = -1;
-	} else if (strcmp(var, "core.worktree") == 0) {
-		if (!value)
-			return config_error_nonbool(var);
-		free(git_work_tree_cfg);
-		git_work_tree_cfg = xstrdup(value);
-		inside_work_tree = -1;
-	}
-	return 0;
-}
-
-int check_repository_format(void)
-{
-	return check_repository_format_gently(get_git_dir(), NULL);
+	check_repository_format_gently(get_git_dir(), NULL);
+	startup_info->have_repository = 1;
 }
 
 /*
@@ -962,11 +1198,11 @@ const char *setup_git_directory(void)
 	return setup_git_directory_gently(NULL);
 }
 
-const char *resolve_gitdir(const char *suspect)
+const char *resolve_gitdir_gently(const char *suspect, int *return_error_code)
 {
 	if (is_git_directory(suspect))
 		return suspect;
-	return read_gitfile(suspect);
+	return read_gitfile_gently(suspect, return_error_code);
 }
 
 /* if any standard file descriptor is missing open it to /dev/null */

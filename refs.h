@@ -1,6 +1,12 @@
 #ifndef REFS_H
 #define REFS_H
 
+struct object_id;
+struct ref_store;
+struct strbuf;
+struct string_list;
+struct worktree;
+
 /*
  * Resolve a reference, recursively following symbolic refererences.
  *
@@ -52,19 +58,57 @@
 #define RESOLVE_REF_NO_RECURSE 0x02
 #define RESOLVE_REF_ALLOW_BAD_NAME 0x04
 
-extern const char *resolve_ref_unsafe(const char *refname, int resolve_flags,
-				      unsigned char *sha1, int *flags);
+const char *refs_resolve_ref_unsafe(struct ref_store *refs,
+				    const char *refname,
+				    int resolve_flags,
+				    unsigned char *sha1,
+				    int *flags);
+const char *resolve_ref_unsafe(const char *refname, int resolve_flags,
+			       unsigned char *sha1, int *flags);
 
-extern char *resolve_refdup(const char *refname, int resolve_flags,
-			    unsigned char *sha1, int *flags);
+char *refs_resolve_refdup(struct ref_store *refs,
+			  const char *refname, int resolve_flags,
+			  unsigned char *sha1, int *flags);
+char *resolve_refdup(const char *refname, int resolve_flags,
+		     unsigned char *sha1, int *flags);
 
-extern int read_ref_full(const char *refname, int resolve_flags,
-			 unsigned char *sha1, int *flags);
-extern int read_ref(const char *refname, unsigned char *sha1);
+int refs_read_ref_full(struct ref_store *refs, const char *refname,
+		       int resolve_flags, unsigned char *sha1, int *flags);
+int read_ref_full(const char *refname, int resolve_flags,
+		  unsigned char *sha1, int *flags);
+int read_ref(const char *refname, unsigned char *sha1);
 
-extern int ref_exists(const char *refname);
+/*
+ * Return 0 if a reference named refname could be created without
+ * conflicting with the name of an existing reference. Otherwise,
+ * return a negative value and write an explanation to err. If extras
+ * is non-NULL, it is a list of additional refnames with which refname
+ * is not allowed to conflict. If skip is non-NULL, ignore potential
+ * conflicts with refs in skip (e.g., because they are scheduled for
+ * deletion in the same operation). Behavior is undefined if the same
+ * name is listed in both extras and skip.
+ *
+ * Two reference names conflict if one of them exactly matches the
+ * leading components of the other; e.g., "foo/bar" conflicts with
+ * both "foo" and with "foo/bar/baz" but not with "foo/bar" or
+ * "foo/barbados".
+ *
+ * extras and skip must be sorted.
+ */
 
-extern int is_branch(const char *refname);
+int refs_verify_refname_available(struct ref_store *refs,
+				  const char *refname,
+				  const struct string_list *extras,
+				  const struct string_list *skip,
+				  struct strbuf *err);
+
+int ref_exists(const char *refname);
+
+int should_autocreate_reflog(const char *refname);
+
+int is_branch(const char *refname);
+
+extern int refs_init_db(struct strbuf *err);
 
 /*
  * If refname is a non-symbolic reference that refers to a tag object,
@@ -74,45 +118,96 @@ extern int is_branch(const char *refname);
  * Symbolic references are considered unpeelable, even if they
  * ultimately resolve to a peelable tag.
  */
-extern int peel_ref(const char *refname, unsigned char *sha1);
+int refs_peel_ref(struct ref_store *refs, const char *refname,
+		  unsigned char *sha1);
+int peel_ref(const char *refname, unsigned char *sha1);
 
 /**
- * Resolve refname in the nested "gitlink" repository that is located
- * at path.  If the resolution is successful, return 0 and set sha1 to
- * the name of the object; otherwise, return a non-zero value.
+ * Resolve refname in the nested "gitlink" repository in the specified
+ * submodule (which must be non-NULL). If the resolution is
+ * successful, return 0 and set sha1 to the name of the object;
+ * otherwise, return a non-zero value.
  */
-extern int resolve_gitlink_ref(const char *path, const char *refname, unsigned char *sha1);
+int resolve_gitlink_ref(const char *submodule, const char *refname,
+			unsigned char *sha1);
 
 /*
  * Return true iff abbrev_name is a possible abbreviation for
  * full_name according to the rules defined by ref_rev_parse_rules in
  * refs.c.
  */
-extern int refname_match(const char *abbrev_name, const char *full_name);
+int refname_match(const char *abbrev_name, const char *full_name);
 
-extern int dwim_ref(const char *str, int len, unsigned char *sha1, char **ref);
-extern int dwim_log(const char *str, int len, unsigned char *sha1, char **ref);
+int expand_ref(const char *str, int len, unsigned char *sha1, char **ref);
+int dwim_ref(const char *str, int len, unsigned char *sha1, char **ref);
+int dwim_log(const char *str, int len, unsigned char *sha1, char **ref);
 
 /*
- * A ref_transaction represents a collection of ref updates
- * that should succeed or fail together.
+ * A ref_transaction represents a collection of reference updates that
+ * should succeed or fail together.
  *
  * Calling sequence
  * ----------------
+ *
  * - Allocate and initialize a `struct ref_transaction` by calling
  *   `ref_transaction_begin()`.
  *
- * - List intended ref updates by calling functions like
- *   `ref_transaction_update()` and `ref_transaction_create()`.
+ * - Specify the intended ref updates by calling one or more of the
+ *   following functions:
+ *   - `ref_transaction_update()`
+ *   - `ref_transaction_create()`
+ *   - `ref_transaction_delete()`
+ *   - `ref_transaction_verify()`
  *
- * - Call `ref_transaction_commit()` to execute the transaction.
- *   If this succeeds, the ref updates will have taken place and
- *   the transaction cannot be rolled back.
+ * - Then either:
  *
- * - At any time call `ref_transaction_free()` to discard the
- *   transaction and free associated resources.  In particular,
- *   this rolls back the transaction if it has not been
- *   successfully committed.
+ *   - Optionally call `ref_transaction_prepare()` to prepare the
+ *     transaction. This locks all references, checks preconditions,
+ *     etc. but doesn't finalize anything. If this step fails, the
+ *     transaction has been closed and can only be freed. If this step
+ *     succeeds, then `ref_transaction_commit()` is almost certain to
+ *     succeed. However, you can still call `ref_transaction_abort()`
+ *     if you decide not to commit the transaction after all.
+ *
+ *   - Call `ref_transaction_commit()` to execute the transaction,
+ *     make the changes permanent, and release all locks. If you
+ *     haven't already called `ref_transaction_prepare()`, then
+ *     `ref_transaction_commit()` calls it for you.
+ *
+ *   Or
+ *
+ *   - Call `initial_ref_transaction_commit()` if the ref database is
+ *     known to be empty and have no other writers (e.g. during
+ *     clone). This is likely to be much faster than
+ *     `ref_transaction_commit()`. `ref_transaction_prepare()` should
+ *     *not* be called before `initial_ref_transaction_commit()`.
+ *
+ * - Then finally, call `ref_transaction_free()` to free the
+ *   `ref_transaction` data structure.
+ *
+ * At any time before calling `ref_transaction_commit()`, you can call
+ * `ref_transaction_abort()` to abort the transaction, rollback any
+ * locks, and free any associated resources (including the
+ * `ref_transaction` data structure).
+ *
+ * Putting it all together, a complete reference update looks like
+ *
+ *         struct ref_transaction *transaction;
+ *         struct strbuf err = STRBUF_INIT;
+ *         int ret = 0;
+ *
+ *         transaction = ref_store_transaction_begin(refs, &err);
+ *         if (!transaction ||
+ *             ref_transaction_update(...) ||
+ *             ref_transaction_create(...) ||
+ *             ...etc... ||
+ *             ref_transaction_commit(transaction, &err)) {
+ *                 error("%s", err.buf);
+ *                 ret = -1;
+ *         }
+ *         ref_transaction_free(transaction);
+ *         strbuf_release(&err);
+ *         return ret;
  *
  * Error handling
  * --------------
@@ -124,11 +219,21 @@ extern int dwim_log(const char *str, int len, unsigned char *sha1, char **ref);
  *
  * The message is appended to err without first clearing err.
  * err will not be '\n' terminated.
+ *
+ * Caveats
+ * -------
+ *
+ * Note that no locks are taken, and no refs are read, until
+ * `ref_transaction_prepare()` or `ref_transaction_commit()` is
+ * called. So, for example, `ref_transaction_verify()` won't report a
+ * verification failure until the commit is attempted.
  */
 struct ref_transaction;
 
 /*
- * Bit values set in the flags argument passed to each_ref_fn():
+ * Bit values set in the flags argument passed to each_ref_fn() and
+ * stored in ref_iterator::flags. Other bits are for internal use
+ * only:
  */
 
 /* Reference is a symbolic reference. */
@@ -168,39 +273,62 @@ typedef int each_ref_fn(const char *refname,
  * it is not safe to modify references while an iteration is in
  * progress, unless the same callback function invocation that
  * modifies the reference also returns a nonzero value to immediately
- * stop the iteration.
+ * stop the iteration. Returned references are sorted.
  */
-extern int head_ref(each_ref_fn fn, void *cb_data);
-extern int for_each_ref(each_ref_fn fn, void *cb_data);
-extern int for_each_ref_in(const char *prefix, each_ref_fn fn, void *cb_data);
-extern int for_each_tag_ref(each_ref_fn fn, void *cb_data);
-extern int for_each_branch_ref(each_ref_fn fn, void *cb_data);
-extern int for_each_remote_ref(each_ref_fn fn, void *cb_data);
-extern int for_each_replace_ref(each_ref_fn fn, void *cb_data);
-extern int for_each_glob_ref(each_ref_fn fn, const char *pattern, void *cb_data);
-extern int for_each_glob_ref_in(each_ref_fn fn, const char *pattern, const char *prefix, void *cb_data);
+int refs_for_each_ref(struct ref_store *refs,
+		      each_ref_fn fn, void *cb_data);
+int refs_for_each_ref_in(struct ref_store *refs, const char *prefix,
+			 each_ref_fn fn, void *cb_data);
+int refs_for_each_tag_ref(struct ref_store *refs,
+			  each_ref_fn fn, void *cb_data);
+int refs_for_each_branch_ref(struct ref_store *refs,
+			     each_ref_fn fn, void *cb_data);
+int refs_for_each_remote_ref(struct ref_store *refs,
+			     each_ref_fn fn, void *cb_data);
 
-extern int head_ref_submodule(const char *submodule, each_ref_fn fn, void *cb_data);
-extern int for_each_ref_submodule(const char *submodule, each_ref_fn fn, void *cb_data);
-extern int for_each_ref_in_submodule(const char *submodule, const char *prefix,
-		each_ref_fn fn, void *cb_data);
-extern int for_each_tag_ref_submodule(const char *submodule, each_ref_fn fn, void *cb_data);
-extern int for_each_branch_ref_submodule(const char *submodule, each_ref_fn fn, void *cb_data);
-extern int for_each_remote_ref_submodule(const char *submodule, each_ref_fn fn, void *cb_data);
+int head_ref(each_ref_fn fn, void *cb_data);
+int for_each_ref(each_ref_fn fn, void *cb_data);
+int for_each_ref_in(const char *prefix, each_ref_fn fn, void *cb_data);
+int for_each_fullref_in(const char *prefix, each_ref_fn fn, void *cb_data,
+			unsigned int broken);
+int for_each_tag_ref(each_ref_fn fn, void *cb_data);
+int for_each_branch_ref(each_ref_fn fn, void *cb_data);
+int for_each_remote_ref(each_ref_fn fn, void *cb_data);
+int for_each_replace_ref(each_ref_fn fn, void *cb_data);
+int for_each_glob_ref(each_ref_fn fn, const char *pattern, void *cb_data);
+int for_each_glob_ref_in(each_ref_fn fn, const char *pattern,
+			 const char *prefix, void *cb_data);
 
-extern int head_ref_namespaced(each_ref_fn fn, void *cb_data);
-extern int for_each_namespaced_ref(each_ref_fn fn, void *cb_data);
+int head_ref_submodule(const char *submodule, each_ref_fn fn, void *cb_data);
+int for_each_ref_submodule(const char *submodule,
+			   each_ref_fn fn, void *cb_data);
+int for_each_ref_in_submodule(const char *submodule, const char *prefix,
+			      each_ref_fn fn, void *cb_data);
+int for_each_fullref_in_submodule(const char *submodule, const char *prefix,
+				  each_ref_fn fn, void *cb_data,
+				  unsigned int broken);
+int for_each_tag_ref_submodule(const char *submodule,
+			       each_ref_fn fn, void *cb_data);
+int for_each_branch_ref_submodule(const char *submodule,
+				  each_ref_fn fn, void *cb_data);
+int for_each_remote_ref_submodule(const char *submodule,
+				  each_ref_fn fn, void *cb_data);
+
+int head_ref_namespaced(each_ref_fn fn, void *cb_data);
+int for_each_namespaced_ref(each_ref_fn fn, void *cb_data);
 
 /* can be used to learn about broken ref and symref */
-extern int for_each_rawref(each_ref_fn fn, void *cb_data);
+int refs_for_each_rawref(struct ref_store *refs, each_ref_fn fn, void *cb_data);
+int for_each_rawref(each_ref_fn fn, void *cb_data);
 
 static inline const char *has_glob_specials(const char *pattern)
 {
 	return strpbrk(pattern, "?*[");
 }
 
-extern void warn_dangling_symref(FILE *fp, const char *msg_fmt, const char *refname);
-extern void warn_dangling_symrefs(FILE *fp, const char *msg_fmt, const struct string_list *refnames);
+void warn_dangling_symref(FILE *fp, const char *msg_fmt, const char *refname);
+void warn_dangling_symrefs(FILE *fp, const char *msg_fmt,
+			   const struct string_list *refnames);
 
 /*
  * Flags for controlling behaviour of pack_refs()
@@ -214,7 +342,7 @@ extern void warn_dangling_symrefs(FILE *fp, const char *msg_fmt, const struct st
  * Write a packed-refs file for the current repository.
  * flags: Combination of the above PACK_REFS_* flags.
  */
-int pack_refs(unsigned int flags);
+int refs_pack_refs(struct ref_store *refs, unsigned int flags);
 
 /*
  * Flags controlling ref_transaction_update(), ref_transaction_create(), etc.
@@ -229,47 +357,71 @@ int pack_refs(unsigned int flags);
 /*
  * Setup reflog before using. Fill in err and return -1 on failure.
  */
+int refs_create_reflog(struct ref_store *refs, const char *refname,
+		       int force_create, struct strbuf *err);
 int safe_create_reflog(const char *refname, int force_create, struct strbuf *err);
 
 /** Reads log for the value of ref during at_time. **/
-extern int read_ref_at(const char *refname, unsigned int flags,
-		       unsigned long at_time, int cnt,
-		       unsigned char *sha1, char **msg,
-		       unsigned long *cutoff_time, int *cutoff_tz, int *cutoff_cnt);
+int read_ref_at(const char *refname, unsigned int flags,
+		timestamp_t at_time, int cnt,
+		unsigned char *sha1, char **msg,
+		timestamp_t *cutoff_time, int *cutoff_tz, int *cutoff_cnt);
 
 /** Check if a particular reflog exists */
-extern int reflog_exists(const char *refname);
+int refs_reflog_exists(struct ref_store *refs, const char *refname);
+int reflog_exists(const char *refname);
 
 /*
  * Delete the specified reference. If old_sha1 is non-NULL, then
  * verify that the current value of the reference is old_sha1 before
  * deleting it. If old_sha1 is NULL, delete the reference if it
  * exists, regardless of its old value. It is an error for old_sha1 to
- * be NULL_SHA1. flags is passed through to ref_transaction_delete().
+ * be NULL_SHA1. msg and flags are passed through to
+ * ref_transaction_delete().
  */
-extern int delete_ref(const char *refname, const unsigned char *old_sha1,
-		      unsigned int flags);
+int refs_delete_ref(struct ref_store *refs, const char *msg,
+		    const char *refname,
+		    const unsigned char *old_sha1,
+		    unsigned int flags);
+int delete_ref(const char *msg, const char *refname,
+	       const unsigned char *old_sha1, unsigned int flags);
 
 /*
  * Delete the specified references. If there are any problems, emit
  * errors but attempt to keep going (i.e., the deletes are not done in
- * an all-or-nothing transaction).
+ * an all-or-nothing transaction). msg and flags are passed through to
+ * ref_transaction_delete().
  */
-extern int delete_refs(struct string_list *refnames);
+int refs_delete_refs(struct ref_store *refs, const char *msg,
+		     struct string_list *refnames, unsigned int flags);
+int delete_refs(const char *msg, struct string_list *refnames,
+		unsigned int flags);
 
 /** Delete a reflog */
-extern int delete_reflog(const char *refname);
+int refs_delete_reflog(struct ref_store *refs, const char *refname);
+int delete_reflog(const char *refname);
 
 /* iterate over reflog entries */
-typedef int each_reflog_ent_fn(unsigned char *osha1, unsigned char *nsha1, const char *, unsigned long, int, const char *, void *);
+typedef int each_reflog_ent_fn(
+		struct object_id *old_oid, struct object_id *new_oid,
+		const char *committer, timestamp_t timestamp,
+		int tz, const char *msg, void *cb_data);
+
+int refs_for_each_reflog_ent(struct ref_store *refs, const char *refname,
+			     each_reflog_ent_fn fn, void *cb_data);
+int refs_for_each_reflog_ent_reverse(struct ref_store *refs,
+				     const char *refname,
+				     each_reflog_ent_fn fn,
+				     void *cb_data);
 int for_each_reflog_ent(const char *refname, each_reflog_ent_fn fn, void *cb_data);
 int for_each_reflog_ent_reverse(const char *refname, each_reflog_ent_fn fn, void *cb_data);
 
 /*
  * Calls the specified function for each reflog file until it returns nonzero,
- * and returns the value
+ * and returns the value. Reflog file order is unspecified.
  */
-extern int for_each_reflog(each_ref_fn, void *);
+int refs_for_each_reflog(struct ref_store *refs, each_ref_fn fn, void *cb_data);
+int for_each_reflog(each_ref_fn fn, void *cb_data);
 
 #define REFNAME_ALLOW_ONELEVEL 1
 #define REFNAME_REFSPEC_PATTERN 2
@@ -282,16 +434,20 @@ extern int for_each_reflog(each_ref_fn, void *);
  * allow a single "*" wildcard character in the refspec. No leading or
  * repeated slashes are accepted.
  */
-extern int check_refname_format(const char *refname, int flags);
+int check_refname_format(const char *refname, int flags);
 
-extern const char *prettify_refname(const char *refname);
+const char *prettify_refname(const char *refname);
 
-extern char *shorten_unambiguous_ref(const char *refname, int strict);
+char *shorten_unambiguous_ref(const char *refname, int strict);
 
 /** rename ref, return 0 on success **/
-extern int rename_ref(const char *oldref, const char *newref, const char *logmsg);
+int refs_rename_ref(struct ref_store *refs, const char *oldref,
+		    const char *newref, const char *logmsg);
+int rename_ref(const char *oldref, const char *newref, const char *logmsg);
 
-extern int create_symref(const char *ref, const char *refs_heads_master, const char *logmsg);
+int refs_create_symref(struct ref_store *refs, const char *refname,
+		       const char *target, const char *logmsg);
+int create_symref(const char *refname, const char *target, const char *logmsg);
 
 enum action_on_err {
 	UPDATE_REFS_MSG_ON_ERR,
@@ -303,6 +459,8 @@ enum action_on_err {
  * Begin a reference transaction.  The reference transaction must
  * be freed by calling ref_transaction_free().
  */
+struct ref_transaction *ref_store_transaction_begin(struct ref_store *refs,
+						    struct strbuf *err);
 struct ref_transaction *ref_transaction_begin(struct strbuf *err);
 
 /*
@@ -316,6 +474,19 @@ struct ref_transaction *ref_transaction_begin(struct strbuf *err);
  *
  *     refname -- the name of the reference to be affected.
  *
+ *     new_sha1 -- the SHA-1 that should be set to be the new value of
+ *         the reference. Some functions allow this parameter to be
+ *         NULL, meaning that the reference is not changed, or
+ *         null_sha1, meaning that the reference should be deleted. A
+ *         copy of this value is made in the transaction.
+ *
+ *     old_sha1 -- the SHA-1 value that the reference must have before
+ *         the update. Some functions allow this parameter to be NULL,
+ *         meaning that the old value of the reference is not checked,
+ *         or null_sha1, meaning that the reference must not exist
+ *         before the update. A copy of this value is made in the
+ *         transaction.
+ *
  *     flags -- flags affecting the update, passed to
  *         update_ref_lock(). Can be REF_NODEREF, which means that
  *         symbolic references should not be followed.
@@ -323,7 +494,7 @@ struct ref_transaction *ref_transaction_begin(struct strbuf *err);
  *     msg -- a message describing the change (for the reflog).
  *
  *     err -- a strbuf for receiving a description of any error that
- *         might have occured.
+ *         might have occurred.
  *
  * The functions make internal copies of refname and msg, so the
  * caller retains ownership of these parameters.
@@ -397,18 +568,46 @@ int ref_transaction_verify(struct ref_transaction *transaction,
 			   unsigned int flags,
 			   struct strbuf *err);
 
-/*
- * Commit all of the changes that have been queued in transaction, as
- * atomically as possible.
- *
- * Returns 0 for success, or one of the below error codes for errors.
- */
 /* Naming conflict (for example, the ref names A and A/B conflict). */
 #define TRANSACTION_NAME_CONFLICT -1
 /* All other errors. */
 #define TRANSACTION_GENERIC_ERROR -2
+
+/*
+ * Perform the preparatory stages of committing `transaction`. Acquire
+ * any needed locks, check preconditions, etc.; basically, do as much
+ * as possible to ensure that the transaction will be able to go
+ * through, stopping just short of making any irrevocable or
+ * user-visible changes. The updates that this function prepares can
+ * be finished up by calling `ref_transaction_commit()` or rolled back
+ * by calling `ref_transaction_abort()`.
+ *
+ * On success, return 0 and leave the transaction in "prepared" state.
+ * On failure, abort the transaction, write an error message to `err`,
+ * and return one of the `TRANSACTION_*` constants.
+ *
+ * Callers who don't need such fine-grained control over committing
+ * reference transactions should just call `ref_transaction_commit()`.
+ */
+int ref_transaction_prepare(struct ref_transaction *transaction,
+			    struct strbuf *err);
+
+/*
+ * Commit all of the changes that have been queued in transaction, as
+ * atomically as possible. On success, return 0 and leave the
+ * transaction in "closed" state. On failure, roll back the
+ * transaction, write an error message to `err`, and return one of the
+ * `TRANSACTION_*` constants
+ */
 int ref_transaction_commit(struct ref_transaction *transaction,
 			   struct strbuf *err);
+
+/*
+ * Abort `transaction`, which has been begun and possibly prepared,
+ * but not yet committed.
+ */
+int ref_transaction_abort(struct ref_transaction *transaction,
+			  struct strbuf *err);
 
 /*
  * Like ref_transaction_commit(), but optimized for creating
@@ -425,7 +624,7 @@ int initial_ref_transaction_commit(struct ref_transaction *transaction,
 				   struct strbuf *err);
 
 /*
- * Free an existing transaction and all associated data.
+ * Free `*transaction` and all associated data.
  */
 void ref_transaction_free(struct ref_transaction *transaction);
 
@@ -437,13 +636,35 @@ void ref_transaction_free(struct ref_transaction *transaction);
  * ref_transaction_update(). Handle errors as requested by the `onerr`
  * argument.
  */
+int refs_update_ref(struct ref_store *refs, const char *msg, const char *refname,
+		    const unsigned char *new_sha1, const unsigned char *old_sha1,
+		    unsigned int flags, enum action_on_err onerr);
 int update_ref(const char *msg, const char *refname,
 	       const unsigned char *new_sha1, const unsigned char *old_sha1,
 	       unsigned int flags, enum action_on_err onerr);
+int update_ref_oid(const char *msg, const char *refname,
+	       const struct object_id *new_oid, const struct object_id *old_oid,
+	       unsigned int flags, enum action_on_err onerr);
 
-extern int parse_hide_refs_config(const char *var, const char *value, const char *);
+int parse_hide_refs_config(const char *var, const char *value, const char *);
 
-extern int ref_is_hidden(const char *);
+/*
+ * Check whether a ref is hidden. If no namespace is set, both the first and
+ * the second parameter point to the full ref name. If a namespace is set and
+ * the ref is inside that namespace, the first parameter is a pointer to the
+ * name of the ref with the namespace prefix removed. If a namespace is set and
+ * the ref is outside that namespace, the first parameter is NULL. The second
+ * parameter always points to the full ref name.
+ */
+int ref_is_hidden(const char *, const char *);
+
+enum ref_type {
+	REF_TYPE_PER_WORKTREE,
+	REF_TYPE_PSEUDOREF,
+	REF_TYPE_NORMAL,
+};
+
+enum ref_type ref_type(const char *refname);
 
 enum expire_reflog_flags {
 	EXPIRE_REFLOGS_DRY_RUN = 1 << 0,
@@ -469,12 +690,12 @@ enum expire_reflog_flags {
  *     unlocked again.
  */
 typedef void reflog_expiry_prepare_fn(const char *refname,
-				      const unsigned char *sha1,
+				      const struct object_id *oid,
 				      void *cb_data);
-typedef int reflog_expiry_should_prune_fn(unsigned char *osha1,
-					  unsigned char *nsha1,
+typedef int reflog_expiry_should_prune_fn(struct object_id *ooid,
+					  struct object_id *noid,
 					  const char *email,
-					  unsigned long timestamp, int tz,
+					  timestamp_t timestamp, int tz,
 					  const char *message, void *cb_data);
 typedef void reflog_expiry_cleanup_fn(void *cb_data);
 
@@ -484,11 +705,35 @@ typedef void reflog_expiry_cleanup_fn(void *cb_data);
  * enum expire_reflog_flags. The three function pointers are described
  * above. On success, return zero.
  */
-extern int reflog_expire(const char *refname, const unsigned char *sha1,
-			 unsigned int flags,
-			 reflog_expiry_prepare_fn prepare_fn,
-			 reflog_expiry_should_prune_fn should_prune_fn,
-			 reflog_expiry_cleanup_fn cleanup_fn,
-			 void *policy_cb_data);
+int refs_reflog_expire(struct ref_store *refs,
+		       const char *refname,
+		       const unsigned char *sha1,
+		       unsigned int flags,
+		       reflog_expiry_prepare_fn prepare_fn,
+		       reflog_expiry_should_prune_fn should_prune_fn,
+		       reflog_expiry_cleanup_fn cleanup_fn,
+		       void *policy_cb_data);
+int reflog_expire(const char *refname, const unsigned char *sha1,
+		  unsigned int flags,
+		  reflog_expiry_prepare_fn prepare_fn,
+		  reflog_expiry_should_prune_fn should_prune_fn,
+		  reflog_expiry_cleanup_fn cleanup_fn,
+		  void *policy_cb_data);
+
+int ref_storage_backend_exists(const char *name);
+
+struct ref_store *get_main_ref_store(void);
+/*
+ * Return the ref_store instance for the specified submodule. For the
+ * main repository, use submodule==NULL; such a call cannot fail. For
+ * a submodule, the submodule must exist and be a nonbare repository,
+ * otherwise return NULL. If the requested reference store has not yet
+ * been initialized, initialize it first.
+ *
+ * For backwards compatibility, submodule=="" is treated the same as
+ * submodule==NULL.
+ */
+struct ref_store *get_submodule_ref_store(const char *submodule);
+struct ref_store *get_worktree_ref_store(const struct worktree *wt);
 
 #endif /* REFS_H */

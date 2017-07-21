@@ -61,22 +61,4 @@ For a simple local test, you can use linkgit:git-remote-ext[1]:
 git clone ext::'git --namespace=foo %s /tmp/prefixed.git'
 ----------
 
-SECURITY
---------
-
-Anyone with access to any namespace within a repository can potentially
-access objects from any other namespace stored in the same repository.
-You can't directly say "give me object ABCD" if you don't have a ref to
-it, but you can do some other sneaky things like:
-
-. Claiming to push ABCD, at which point the server will optimize out the
-  need for you to actually send it. Now you have a ref to ABCD and can
-  fetch it (claiming not to have it, of course).
-
-. Requesting other refs, claiming that you have ABCD, at which point the
-  server may generate deltas against ABCD.
-
-None of this causes a problem if you only host public repositories, or
-if everyone who may read one namespace may also read everything in every
-other namespace (for instance, if everyone in an organization has read
-permission to every repository).
+include::transfer-data-leaks.txt[]

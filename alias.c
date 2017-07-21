@@ -1,13 +1,29 @@
 #include "cache.h"
+#include "config.h"
+
+struct config_alias_data {
+	const char *alias;
+	char *v;
+};
+
+static int config_alias_cb(const char *key, const char *value, void *d)
+{
+	struct config_alias_data *data = d;
+	const char *p;
+
+	if (skip_prefix(key, "alias.", &p) && !strcasecmp(p, data->alias))
+		return git_config_string((const char **)&data->v, key, value);
+
+	return 0;
+}
 
 char *alias_lookup(const char *alias)
 {
-	char *v = NULL;
-	struct strbuf key = STRBUF_INIT;
-	strbuf_addf(&key, "alias.%s", alias);
-	git_config_get_string(key.buf, &v);
-	strbuf_release(&key);
-	return v;
+	struct config_alias_data data = { alias, NULL };
+
+	read_early_config(config_alias_cb, &data);
+
+	return data.v;
 }
 
 #define SPLIT_CMDLINE_BAD_ENDING 1
@@ -22,7 +38,7 @@ int split_cmdline(char *cmdline, const char ***argv)
 	int src, dst, count = 0, size = 16;
 	char quoted = 0;
 
-	*argv = xmalloc(sizeof(**argv) * size);
+	ALLOC_ARRAY(*argv, size);
 
 	/* split alias_string */
 	(*argv)[count++] = cmdline;
@@ -46,8 +62,7 @@ int split_cmdline(char *cmdline, const char ***argv)
 				src++;
 				c = cmdline[src];
 				if (!c) {
-					free(*argv);
-					*argv = NULL;
+					FREE_AND_NULL(*argv);
 					return -SPLIT_CMDLINE_BAD_ENDING;
 				}
 			}
@@ -59,8 +74,7 @@ int split_cmdline(char *cmdline, const char ***argv)
 	cmdline[dst] = 0;
 
 	if (quoted) {
-		free(*argv);
-		*argv = NULL;
+		FREE_AND_NULL(*argv);
 		return -SPLIT_CMDLINE_UNCLOSED_QUOTE;
 	}
 

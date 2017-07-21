@@ -31,20 +31,20 @@ error: The following untracked working tree files would be overwritten by merge:
 	four
 	three
 	two
-Please move or remove them before you can merge.
+Please move or remove them before you merge.
 Aborting
 EOF
 
 test_expect_success 'untracked files overwritten by merge (fast and non-fast forward)' '
 	test_must_fail git merge branch 2>out &&
-	test_cmp out expect &&
+	test_i18ncmp out expect &&
 	git commit --allow-empty -m empty &&
 	(
 		GIT_MERGE_VERBOSITY=0 &&
 		export GIT_MERGE_VERBOSITY &&
 		test_must_fail git merge branch 2>out2
 	) &&
-	test_cmp out2 expect &&
+	test_i18ncmp out2 expect &&
 	git reset --hard HEAD^
 '
 
@@ -53,10 +53,10 @@ error: Your local changes to the following files would be overwritten by merge:
 	four
 	three
 	two
-Please, commit your changes or stash them before you can merge.
+Please commit your changes or stash them before you merge.
 error: The following untracked working tree files would be overwritten by merge:
 	five
-Please move or remove them before you can merge.
+Please move or remove them before you merge.
 Aborting
 EOF
 
@@ -65,14 +65,14 @@ test_expect_success 'untracked files or local changes ovewritten by merge' '
 	git add three &&
 	git add four &&
 	test_must_fail git merge branch 2>out &&
-	test_cmp out expect
+	test_i18ncmp out expect
 '
 
 cat >expect <<\EOF
 error: Your local changes to the following files would be overwritten by checkout:
 	rep/one
 	rep/two
-Please, commit your changes or stash them before you can switch branches.
+Please commit your changes or stash them before you switch branches.
 Aborting
 EOF
 
@@ -87,25 +87,25 @@ test_expect_success 'cannot switch branches because of local changes' '
 	echo uno >rep/one &&
 	echo dos >rep/two &&
 	test_must_fail git checkout branch 2>out &&
-	test_cmp out expect
+	test_i18ncmp out expect
 '
 
 cat >expect <<\EOF
 error: Your local changes to the following files would be overwritten by checkout:
 	rep/one
 	rep/two
-Please, commit your changes or stash them before you can switch branches.
+Please commit your changes or stash them before you switch branches.
 Aborting
 EOF
 
 test_expect_success 'not uptodate file porcelain checkout error' '
 	git add rep/one rep/two &&
 	test_must_fail git checkout branch 2>out &&
-	test_cmp out expect
+	test_i18ncmp out expect
 '
 
 cat >expect <<\EOF
-error: Updating the following directories would lose untracked files in it:
+error: Updating the following directories would lose untracked files in them:
 	rep
 	rep2
 
@@ -132,7 +132,7 @@ test_expect_success 'not_uptodate_dir porcelain checkout error' '
 	>rep/untracked-file &&
 	>rep2/untracked-file &&
 	test_must_fail git checkout branch 2>out &&
-	test_cmp out ../expect
+	test_i18ncmp out ../expect
 '
 
 test_done

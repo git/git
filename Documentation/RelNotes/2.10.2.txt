@@ -1,0 +1,111 @@
+Git v2.10.2 Release Notes
+=========================
+
+Fixes since v2.10.1
+-------------------
+
+ * The code that parses the format parameter of for-each-ref command
+   has seen a micro-optimization.
+
+ * The "graph" API used in "git log --graph" miscounted the number of
+   output columns consumed so far when drawing a padding line, which
+   has been fixed; this did not affect any existing code as nobody
+   tried to write anything after the padding on such a line, though.
+
+ * Almost everybody uses DEFAULT_ABBREV to refer to the default
+   setting for the abbreviation, but "git blame" peeked into
+   underlying variable bypassing the macro for no good reason.
+
+ * Doc update to clarify what "log -3 --reverse" does.
+
+ * An author name, that spelled a backslash-quoted double quote in the
+   human readable part "My \"double quoted\" name", was not unquoted
+   correctly while applying a patch from a piece of e-mail.
+
+ * The original command line syntax for "git merge", which was "git
+   merge <msg> HEAD <parent>...", has been deprecated for quite some
+   time, and "git gui" was the last in-tree user of the syntax.  This
+   is finally fixed, so that we can move forward with the deprecation.
+
+ * Codepaths that read from an on-disk loose object were too loose in
+   validating what they are reading is a proper object file and
+   sometimes read past the data they read from the disk, which has
+   been corrected.  H/t to Gustavo Grieco for reporting.
+
+ * "git worktree", even though it used the default_abbrev setting that
+   ought to be affected by core.abbrev configuration variable, ignored
+   the variable setting.  The command has been taught to read the
+   default set of configuration variables to correct this.
+
+ * A low-level function verify_packfile() was meant to show errors
+   that were detected without dying itself, but under some conditions
+   it didn't and died instead, which has been fixed.
+
+ * When "git fetch" tries to find where the history of the repository
+   it runs in has diverged from what the other side has, it has a
+   mechanism to avoid digging too deep into irrelevant side branches.
+   This however did not work well over the "smart-http" transport due
+   to a design bug, which has been fixed.
+
+ * When we started cURL to talk to imap server when a new enough
+   version of cURL library is available, we forgot to explicitly add
+   imap(s):// before the destination.  To some folks, that didn't work
+   and the library tried to make HTTP(s) requests instead.
+
+ * The ./configure script generated from configure.ac was taught how
+   to detect support of SSL by libcurl better.
+
+ * http.emptyauth configuration is a way to allow an empty username to
+   pass when attempting to authenticate using mechanisms like
+   Kerberos.  We took an unspecified (NULL) username and sent ":"
+   (i.e. no username, no password) to CURLOPT_USERPWD, but did not do
+   the same when the username is explicitly set to an empty string.
+
+ * "git clone" of a local repository can be done at the filesystem
+   level, but the codepath did not check errors while copying and
+   adjusting the file that lists alternate object stores.
+
+ * Documentation for "git commit" was updated to clarify that "commit
+   -p <paths>" adds to the current contents of the index to come up
+   with what to commit.
+
+ * A stray symbolic link in $GIT_DIR/refs/ directory could make name
+   resolution loop forever, which has been corrected.
+
+ * The "submodule.<name>.path" stored in .gitmodules is never copied
+   to .git/config and such a key in .git/config has no meaning, but
+   the documentation described it and submodule.<name>.url next to
+   each other as if both belong to .git/config.  This has been fixed.
+
+ * Recent git allows submodule.<name>.branch to use a special token
+   "." instead of the branch name; the documentation has been updated
+   to describe it.
+
+ * In a worktree connected to a repository elsewhere, created via "git
+   worktree", "git checkout" attempts to protect users from confusion
+   by refusing to check out a branch that is already checked out in
+   another worktree.  However, this also prevented checking out a
+   branch, which is designated as the primary branch of a bare
+   reopsitory, in a worktree that is connected to the bare
+   repository.  The check has been corrected to allow it.
+
+ * "git rebase" immediately after "git clone" failed to find the fork
+   point from the upstream.
+
+ * When fetching from a remote that has many tags that are irrelevant
+   to branches we are following, we used to waste way too many cycles
+   when checking if the object pointed at by a tag (that we are not
+   going to fetch!) exists in our repository too carefully.
+
+ * The Travis CI configuration we ship ran the tests with --verbose
+   option but this risks non-TAP output that happens to be "ok" to be
+   misinterpreted as TAP signalling a test that passed.  This resulted
+   in unnecessary failure.  This has been corrected by introducing a
+   new mode to run our tests in the test harness to send the verbose
+   output separately to the log file.
+
+ * Some AsciiDoc formatter mishandles a displayed illustration with
+   tabs in it.  Adjust a few of them in merge-base documentation to
+   work around them.
+
+Also contains minor documentation updates and code clean-ups.

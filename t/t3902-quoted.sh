@@ -12,6 +12,7 @@ GN='純'
 HT='	'
 DQ='"'
 
+test_have_prereq MINGW ||
 echo foo 2>/dev/null > "Name and an${HT}HT"
 if ! test -f "Name and an${HT}HT"
 then

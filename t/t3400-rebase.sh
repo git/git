@@ -136,8 +136,8 @@ test_expect_success 'setup: recover' '
 test_expect_success 'Show verbose error when HEAD could not be detached' '
 	>B &&
 	test_must_fail git rebase topic 2>output.err >output.out &&
-	grep "The following untracked working tree files would be overwritten by checkout:" output.err &&
-	grep B output.err
+	test_i18ngrep "The following untracked working tree files would be overwritten by checkout:" output.err &&
+	test_i18ngrep B output.err
 '
 rm -f B
 

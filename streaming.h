@@ -12,6 +12,6 @@ extern struct git_istream *open_istream(const unsigned char *, enum object_type 
 extern int close_istream(struct git_istream *);
 extern ssize_t read_istream(struct git_istream *, void *, size_t);
 
-extern int stream_blob_to_fd(int fd, const unsigned char *, struct stream_filter *, int can_seek);
+extern int stream_blob_to_fd(int fd, const struct object_id *, struct stream_filter *, int can_seek);
 
 #endif /* STREAMING_H */

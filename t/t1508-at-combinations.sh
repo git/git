@@ -35,7 +35,10 @@ test_expect_success 'setup' '
 	git checkout -b upstream-branch &&
 	test_commit upstream-one &&
 	test_commit upstream-two &&
-	git checkout -b @/at-test &&
+	if test_have_prereq !MINGW
+	then
+		git checkout -b @/at-test
+	fi &&
 	git checkout -b @@/at-test &&
 	git checkout -b @at-test &&
 	git checkout -b old-branch &&
@@ -64,6 +67,7 @@ check "@{-1}@{u}@{1}" commit master-one
 check "@" commit new-two
 check "@@{u}" ref refs/heads/upstream-branch
 check "@@/at-test" ref refs/heads/@@/at-test
+test_have_prereq MINGW ||
 check "@/at-test" ref refs/heads/@/at-test
 check "@at-test" ref refs/heads/@at-test
 nonsense "@{u}@{-1}"

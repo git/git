@@ -7,6 +7,20 @@ test_description='Test of git add, including the -- option.'
 
 . ./test-lib.sh
 
+# Test the file mode "$1" of the file "$2" in the index.
+test_mode_in_index () {
+	case "$(git ls-files -s "$2")" in
+	"$1 "*"	$2")
+		echo pass
+		;;
+	*)
+		echo fail
+		git ls-files -s "$2"
+		return 1
+		;;
+	esac
+}
+
 test_expect_success \
     'Test of git add' \
     'touch foo && git add foo'
@@ -25,18 +39,12 @@ test_expect_success \
 	 echo foo >xfoo1 &&
 	 chmod 755 xfoo1 &&
 	 git add xfoo1 &&
-	 case "`git ls-files --stage xfoo1`" in
-	 100644" "*xfoo1) echo pass;;
-	 *) echo fail; git ls-files --stage xfoo1; (exit 1);;
-	 esac'
+	 test_mode_in_index 100644 xfoo1'
 
 test_expect_success 'git add: filemode=0 should not get confused by symlink' '
 	rm -f xfoo1 &&
 	test_ln_s_add foo xfoo1 &&
-	case "`git ls-files --stage xfoo1`" in
-	120000" "*xfoo1) echo pass;;
-	*) echo fail; git ls-files --stage xfoo1; (exit 1);;
-	esac
+	test_mode_in_index 120000 xfoo1
 '
 
 test_expect_success \
@@ -45,28 +53,19 @@ test_expect_success \
 	 echo foo >xfoo2 &&
 	 chmod 755 xfoo2 &&
 	 git update-index --add xfoo2 &&
-	 case "`git ls-files --stage xfoo2`" in
-	 100644" "*xfoo2) echo pass;;
-	 *) echo fail; git ls-files --stage xfoo2; (exit 1);;
-	 esac'
+	 test_mode_in_index 100644 xfoo2'
 
 test_expect_success 'git add: filemode=0 should not get confused by symlink' '
 	rm -f xfoo2 &&
 	test_ln_s_add foo xfoo2 &&
-	case "`git ls-files --stage xfoo2`" in
-	120000" "*xfoo2) echo pass;;
-	*) echo fail; git ls-files --stage xfoo2; (exit 1);;
-	esac
+	test_mode_in_index 120000 xfoo2
 '
 
 test_expect_success \
 	'git update-index --add: Test that executable bit is not used...' \
 	'git config core.filemode 0 &&
 	 test_ln_s_add xfoo2 xfoo3 &&	# runs git update-index --add
-	 case "`git ls-files --stage xfoo3`" in
-	 120000" "*xfoo3) echo pass;;
-	 *) echo fail; git ls-files --stage xfoo3; (exit 1);;
-	 esac'
+	 test_mode_in_index 120000 xfoo3'
 
 test_expect_success '.gitignore test setup' '
 	echo "*.ig" >.gitignore &&
@@ -173,14 +172,14 @@ test_expect_success 'git add with filemode=0, symlinks=0 prefers stage 2 over st
 
 test_expect_success 'git add --refresh' '
 	>foo && git add foo && git commit -a -m "commit all" &&
-	test -z "`git diff-index HEAD -- foo`" &&
+	test -z "$(git diff-index HEAD -- foo)" &&
 	git read-tree HEAD &&
-	case "`git diff-index HEAD -- foo`" in
+	case "$(git diff-index HEAD -- foo)" in
 	:100644" "*"M	foo") echo pass;;
 	*) echo fail; (exit 1);;
 	esac &&
 	git add --refresh -- foo &&
-	test -z "`git diff-index HEAD -- foo`"
+	test -z "$(git diff-index HEAD -- foo)"
 '
 
 test_expect_success 'git add --refresh with pathspec' '
@@ -330,6 +329,78 @@ test_expect_success 'git add --dry-run --ignore-missing of non-existing file' '
 test_expect_success 'git add --dry-run --ignore-missing of non-existing file output' '
 	test_i18ncmp expect.out actual.out &&
 	test_i18ncmp expect.err actual.err
+'
+
+test_expect_success 'git add empty string should invoke warning' '
+	git add "" 2>output &&
+	test_i18ngrep "warning: empty strings" output
+'
+
+test_expect_success 'git add --chmod=[+-]x stages correctly' '
+	rm -f foo1 &&
+	echo foo >foo1 &&
+	git add --chmod=+x foo1 &&
+	test_mode_in_index 100755 foo1 &&
+	git add --chmod=-x foo1 &&
+	test_mode_in_index 100644 foo1
+'
+
+test_expect_success POSIXPERM,SYMLINKS 'git add --chmod=+x with symlinks' '
+	git config core.filemode 1 &&
+	git config core.symlinks 1 &&
+	rm -f foo2 &&
+	echo foo >foo2 &&
+	git add --chmod=+x foo2 &&
+	test_mode_in_index 100755 foo2
+'
+
+test_expect_success 'git add --chmod=[+-]x changes index with already added file' '
+	rm -f foo3 xfoo3 &&
+	echo foo >foo3 &&
+	git add foo3 &&
+	git add --chmod=+x foo3 &&
+	test_mode_in_index 100755 foo3 &&
+	echo foo >xfoo3 &&
+	chmod 755 xfoo3 &&
+	git add xfoo3 &&
+	git add --chmod=-x xfoo3 &&
+	test_mode_in_index 100644 xfoo3
+'
+
+test_expect_success POSIXPERM 'git add --chmod=[+-]x does not change the working tree' '
+	echo foo >foo4 &&
+	git add foo4 &&
+	git add --chmod=+x foo4 &&
+	! test -x foo4
+'
+
+test_expect_success 'no file status change if no pathspec is given' '
+	>foo5 &&
+	>foo6 &&
+	git add foo5 foo6 &&
+	git add --chmod=+x &&
+	test_mode_in_index 100644 foo5 &&
+	test_mode_in_index 100644 foo6
+'
+
+test_expect_success 'no file status change if no pathspec is given in subdir' '
+	mkdir -p sub &&
+	(
+		cd sub &&
+		>sub-foo1 &&
+		>sub-foo2 &&
+		git add . &&
+		git add --chmod=+x &&
+		test_mode_in_index 100644 sub-foo1 &&
+		test_mode_in_index 100644 sub-foo2
+	)
+'
+
+test_expect_success 'all statuses changed in folder if . is given' '
+	git add --chmod=+x . &&
+	test $(git ls-files --stage | grep ^100644 | wc -l) -eq 0 &&
+	git add --chmod=-x . &&
+	test $(git ls-files --stage | grep ^100755 | wc -l) -eq 0
 '
 
 test_done

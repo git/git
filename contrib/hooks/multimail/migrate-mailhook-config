@@ -1,4 +1,4 @@
-#! /usr/bin/env python2
+#! /usr/bin/env python
 
 """Migrate a post-receive-email configuration to be usable with git_multimail.py.
 

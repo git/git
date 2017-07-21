@@ -46,6 +46,13 @@ Functions
 	The argument dir corresponds the member .dir. The argument env
 	corresponds to the member .env.
 
+`child_process_clear`::
+
+	Release the memory associated with the struct child_process.
+	Most users of the run-command API don't need to call this
+	function explicitly because `start_command` invokes it on
+	failure and `finish_command` calls it automatically already.
+
 The functions above do the following:
 
 . If a system call failed, errno is set and -1 is returned. A diagnostic

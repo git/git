@@ -48,11 +48,26 @@ static inline char *reencode_string(const char *in,
 int mbs_chrlen(const char **text, size_t *remainder_p, const char *encoding);
 
 /*
- * Returns true if the the path would match ".git" after HFS case-folding.
+ * Returns true if the path would match ".git" after HFS case-folding.
  * The path should be NUL-terminated, but we will match variants of both ".git\0"
  * and ".git/..." (but _not_ ".../.git"). This makes it suitable for both fsck
  * and verify_path().
  */
 int is_hfs_dotgit(const char *path);
+
+typedef enum {
+	ALIGN_LEFT,
+	ALIGN_MIDDLE,
+	ALIGN_RIGHT
+} align_type;
+
+/*
+ * Align the string given and store it into a strbuf as per the
+ * 'position' and 'width'. If the given string length is larger than
+ * 'width' than then the input string is not truncated and no
+ * alignment is done.
+ */
+void strbuf_utf8_align(struct strbuf *buf, align_type position, unsigned int width,
+		       const char *s);
 
 #endif

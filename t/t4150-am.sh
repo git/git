@@ -551,6 +551,25 @@ test_expect_success 'am -3 -p0 can read --no-prefix patch' '
 	git diff --exit-code lorem
 '
 
+test_expect_success 'am with config am.threeWay falls back to 3-way merge' '
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
+	git checkout -b lorem4 base3way &&
+	test_config am.threeWay 1 &&
+	git am lorem-move.patch &&
+	test_path_is_missing .git/rebase-apply &&
+	git diff --exit-code lorem
+'
+
+test_expect_success 'am with config am.threeWay overridden by --no-3way' '
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
+	git checkout -b lorem5 base3way &&
+	test_config am.threeWay 1 &&
+	test_must_fail git am --no-3way lorem-move.patch &&
+	test_path_is_dir .git/rebase-apply
+'
+
 test_expect_success 'am can rename a file' '
 	grep "^rename from" rename.patch &&
 	rm -fr .git/rebase-apply &&
@@ -852,6 +871,135 @@ test_expect_success 'am --message-id -s signs off after the message id' '
 	git cat-file commit HEAD | tail -n2 | head -n1 >actual &&
 	grep Message-Id patch1.eml >expected &&
 	test_cmp expected actual
+'
+
+test_expect_success 'am -3 works with rerere' '
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
+
+	# make patches one->two and two->three...
+	test_commit one file &&
+	test_commit two file &&
+	test_commit three file &&
+	git format-patch -2 --stdout >seq.patch &&
+
+	# and create a situation that conflicts...
+	git reset --hard one &&
+	test_commit other file &&
+
+	# enable rerere...
+	test_config rerere.enabled true &&
+	test_when_finished "rm -rf .git/rr-cache" &&
+
+	# ...and apply. Our resolution is to skip the first
+	# patch, and the rerere the second one.
+	test_must_fail git am -3 seq.patch &&
+	test_must_fail git am --skip &&
+	echo resolved >file &&
+	git add file &&
+	git am --resolved &&
+
+	# now apply again, and confirm that rerere engaged (we still
+	# expect failure from am because rerere does not auto-commit
+	# for us).
+	git reset --hard other &&
+	test_must_fail git am -3 seq.patch &&
+	test_must_fail git am --skip &&
+	echo resolved >expect &&
+	test_cmp expect file
+'
+
+test_expect_success 'am -s unexpected trailer block' '
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
+	echo signed >file &&
+	git add file &&
+	cat >msg <<-EOF &&
+	subject here
+
+	Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>
+	[jc: tweaked log message]
+	Signed-off-by: J C H <j@c.h>
+	EOF
+	git commit -F msg &&
+	git cat-file commit HEAD | sed -e '1,/^$/d' >original &&
+	git format-patch --stdout -1 >patch &&
+
+	git reset --hard HEAD^ &&
+	git am -s patch &&
+	(
+		cat original &&
+		echo "Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>"
+	) >expect &&
+	git cat-file commit HEAD | sed -e '1,/^$/d' >actual &&
+	test_cmp expect actual &&
+
+	cat >msg <<-\EOF &&
+	subject here
+
+	We make sure that there is a blank line between the log
+	message proper and Signed-off-by: line added.
+	EOF
+	git reset HEAD^ &&
+	git commit -F msg file &&
+	git cat-file commit HEAD | sed -e '1,/^$/d' >original &&
+	git format-patch --stdout -1 >patch &&
+
+	git reset --hard HEAD^ &&
+	git am -s patch &&
+
+	(
+		cat original &&
+		echo &&
+		echo "Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>"
+	) >expect &&
+	git cat-file commit HEAD | sed -e '1,/^$/d' >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'am --patch-format=mboxrd handles mboxrd' '
+	rm -fr .git/rebase-apply &&
+	git checkout -f first &&
+	echo mboxrd >>file &&
+	git add file &&
+	cat >msg <<-\INPUT_END &&
+	mboxrd should escape the body
+
+	From could trip up a loose mbox parser
+	>From extra escape for reversibility
+	INPUT_END
+	git commit -F msg &&
+	git format-patch --pretty=mboxrd --stdout -1 >mboxrd1 &&
+	grep "^>From could trip up a loose mbox parser" mboxrd1 &&
+	git checkout -f first &&
+	git am --patch-format=mboxrd mboxrd1 &&
+	git cat-file commit HEAD | tail -n4 >out &&
+	test_cmp msg out
+'
+
+test_expect_success 'am works with multi-line in-body headers' '
+	FORTY="String that has a length of more than forty characters" &&
+	LONG="$FORTY $FORTY" &&
+	rm -fr .git/rebase-apply &&
+	git checkout -f first &&
+	echo one >> file &&
+	git commit -am "$LONG
+
+    Body test" --author="$LONG <long@example.com>" &&
+	git format-patch --stdout -1 >patch &&
+	# bump from, date, and subject down to in-body header
+	perl -lpe "
+		if (/^From:/) {
+			print \"From: x <x\@example.com>\";
+			print \"Date: Sat, 1 Jan 2000 00:00:00 +0000\";
+			print \"Subject: x\n\";
+		}
+	" patch >msg &&
+	git checkout HEAD^ &&
+	git am msg &&
+	# Ensure that the author and full message are present
+	git cat-file commit HEAD | grep "^author.*long@example.com" &&
+	git cat-file commit HEAD | grep "^$LONG$"
 '
 
 test_done

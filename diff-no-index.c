@@ -65,8 +65,7 @@ static int populate_from_stdin(struct diff_filespec *s)
 	size_t size = 0;
 
 	if (strbuf_read(&buf, 0, 0) < 0)
-		return error("error while reading from stdin %s",
-				     strerror(errno));
+		return error_errno("error while reading from stdin");
 
 	s->should_munmap = 0;
 	s->data = strbuf_detach(&buf, &size);
@@ -83,7 +82,7 @@ static struct diff_filespec *noindex_filespec(const char *name, int mode)
 	if (!name)
 		name = "/dev/null";
 	s = alloc_filespec(name);
-	fill_filespec(s, null_sha1, 0, mode);
+	fill_filespec(s, &null_oid, 0, mode);
 	if (name == file_from_standard_input)
 		populate_from_stdin(s);
 	return s;
@@ -136,15 +135,13 @@ static int queue_diff(struct diff_options *o,
 
 		if (name1) {
 			strbuf_addstr(&buffer1, name1);
-			if (buffer1.len && buffer1.buf[buffer1.len - 1] != '/')
-				strbuf_addch(&buffer1, '/');
+			strbuf_complete(&buffer1, '/');
 			len1 = buffer1.len;
 		}
 
 		if (name2) {
 			strbuf_addstr(&buffer2, name2);
-			if (buffer2.len && buffer2.buf[buffer2.len - 1] != '/')
-				strbuf_addch(&buffer2, '/');
+			strbuf_complete(&buffer2, '/');
 			len2 = buffer2.len;
 		}
 
@@ -188,10 +185,8 @@ static int queue_diff(struct diff_options *o,
 		struct diff_filespec *d1, *d2;
 
 		if (DIFF_OPT_TST(o, REVERSE_DIFF)) {
-			unsigned tmp;
-			const char *tmp_c;
-			tmp = mode1; mode1 = mode2; mode2 = tmp;
-			tmp_c = name1; name1 = name2; name2 = tmp_c;
+			SWAP(mode1, mode2);
+			SWAP(name1, name2);
 		}
 
 		d1 = noindex_filespec(name1, mode1);
@@ -239,12 +234,12 @@ static void fixup_paths(const char **path, struct strbuf *replacement)
 }
 
 void diff_no_index(struct rev_info *revs,
-		   int argc, const char **argv,
-		   const char *prefix)
+		   int argc, const char **argv)
 {
-	int i, prefixlen;
+	int i;
 	const char *paths[2];
 	struct strbuf replacement = STRBUF_INIT;
+	const char *prefix = revs->prefix;
 
 	diff_setup(&revs->diffopt);
 	for (i = 1; i < argc - 2; ) {
@@ -254,14 +249,14 @@ void diff_no_index(struct rev_info *revs,
 		else if (!strcmp(argv[i], "--"))
 			i++;
 		else {
-			j = diff_opt_parse(&revs->diffopt, argv + i, argc - i);
+			j = diff_opt_parse(&revs->diffopt, argv + i, argc - i,
+					   revs->prefix);
 			if (j <= 0)
 				die("invalid diff option/value: %s", argv[i]);
 			i += j;
 		}
 	}
 
-	prefixlen = prefix ? strlen(prefix) : 0;
 	for (i = 0; i < 2; i++) {
 		const char *p = argv[argc - 2 + i];
 		if (!strcmp(p, "-"))
@@ -270,8 +265,8 @@ void diff_no_index(struct rev_info *revs,
 			 * path that is "-", spell it as "./-".
 			 */
 			p = file_from_standard_input;
-		else if (prefixlen)
-			p = xstrdup(prefix_filename(prefix, prefixlen, p));
+		else if (prefix)
+			p = prefix_filename(prefix, p);
 		paths[i] = p;
 	}
 
@@ -282,6 +277,9 @@ void diff_no_index(struct rev_info *revs,
 		revs->diffopt.output_format = DIFF_FORMAT_PATCH;
 
 	DIFF_OPT_SET(&revs->diffopt, NO_INDEX);
+
+	DIFF_OPT_SET(&revs->diffopt, RELATIVE_NAME);
+	revs->diffopt.prefix = prefix;
 
 	revs->max_count = -2;
 	diff_setup_done(&revs->diffopt);

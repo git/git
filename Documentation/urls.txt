@@ -7,9 +7,8 @@ Depending on the transport protocol, some of this information may be
 absent.
 
 Git supports ssh, git, http, and https protocols (in addition, ftp,
-and ftps can be used for fetching and rsync can be used for fetching
-and pushing, but these are inefficient and deprecated; do not use
-them).
+and ftps can be used for fetching, but this is inefficient and
+deprecated; do not use it).
 
 The native transport (i.e. git:// URL) does no authentication and
 should be used with caution on unsecured networks.
@@ -20,7 +19,6 @@ The following syntaxes may be used with them:
 - git://host.xz{startsb}:port{endsb}/path/to/repo.git/
 - http{startsb}s{endsb}://host.xz{startsb}:port{endsb}/path/to/repo.git/
 - ftp{startsb}s{endsb}://host.xz{startsb}:port{endsb}/path/to/repo.git/
-- rsync://host.xz/path/to/repo.git/
 
 An alternative scp-like syntax may also be used with the ssh protocol:
 

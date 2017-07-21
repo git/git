@@ -12,7 +12,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Validates the gpg signature created by 'git commit -S'.
+Validates the GPG signature created by 'git commit -S'.
 
 OPTIONS
 -------

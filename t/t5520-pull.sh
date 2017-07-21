@@ -9,6 +9,24 @@ modify () {
 	mv "$2.x" "$2"
 }
 
+test_pull_autostash () {
+	git reset --hard before-rebase &&
+	echo dirty >new_file &&
+	git add new_file &&
+	git pull "$@" . copy &&
+	test_cmp_rev HEAD^ copy &&
+	test "$(cat new_file)" = dirty &&
+	test "$(cat file)" = "modified again"
+}
+
+test_pull_autostash_fail () {
+	git reset --hard before-rebase &&
+	echo dirty >new_file &&
+	git add new_file &&
+	test_must_fail git pull "$@" . copy 2>err &&
+	test_i18ngrep "uncommitted changes." err
+}
+
 test_expect_success setup '
 	echo file >file &&
 	git add file &&
@@ -193,7 +211,7 @@ test_expect_success 'fail if the index has unresolved entries' '
 	test -n "$(git ls-files -u)" &&
 	cp file expected &&
 	test_must_fail git pull . second 2>err &&
-	test_i18ngrep "Pull is not possible because you have unmerged files" err &&
+	test_i18ngrep "Pulling is not possible because you have unmerged files." err &&
 	test_cmp expected file &&
 	git add file &&
 	test -z "$(git ls-files -u)" &&
@@ -237,6 +255,73 @@ test_expect_success '--rebase' '
 	test new = "$(git show HEAD:file2)"
 '
 
+test_expect_success '--rebase fast forward' '
+	git reset --hard before-rebase &&
+	git checkout -b ff &&
+	echo another modification >file &&
+	git commit -m third file &&
+
+	git checkout to-rebase &&
+	git pull --rebase . ff &&
+	test "$(git rev-parse HEAD)" = "$(git rev-parse ff)" &&
+
+	# The above only validates the result.  Did we actually bypass rebase?
+	git reflog -1 >reflog.actual &&
+	sed "s/^[0-9a-f][0-9a-f]*/OBJID/" reflog.actual >reflog.fuzzy &&
+	echo "OBJID HEAD@{0}: pull --rebase . ff: Fast-forward" >reflog.expected &&
+	test_cmp reflog.expected reflog.fuzzy
+'
+
+test_expect_success '--rebase --autostash fast forward' '
+	test_when_finished "
+		git reset --hard
+		git checkout to-rebase
+		git branch -D to-rebase-ff
+		git branch -D behind" &&
+	git branch behind &&
+	git checkout -b to-rebase-ff &&
+	echo another modification >>file &&
+	git add file &&
+	git commit -m mod &&
+
+	git checkout behind &&
+	echo dirty >file &&
+	git pull --rebase --autostash . to-rebase-ff &&
+	test "$(git rev-parse HEAD)" = "$(git rev-parse to-rebase-ff)"
+'
+
+test_expect_success '--rebase with conflicts shows advice' '
+	test_when_finished "git rebase --abort; git checkout -f to-rebase" &&
+	git checkout -b seq &&
+	test_seq 5 >seq.txt &&
+	git add seq.txt &&
+	test_tick &&
+	git commit -m "Add seq.txt" &&
+	echo 6 >>seq.txt &&
+	test_tick &&
+	git commit -m "Append to seq.txt" seq.txt &&
+	git checkout -b with-conflicts HEAD^ &&
+	echo conflicting >>seq.txt &&
+	test_tick &&
+	git commit -m "Create conflict" seq.txt &&
+	test_must_fail git pull --rebase . seq 2>err >out &&
+	test_i18ngrep "When you have resolved this problem" out
+'
+
+test_expect_success 'failed --rebase shows advice' '
+	test_when_finished "git rebase --abort; git checkout -f to-rebase" &&
+	git checkout -b diverging &&
+	test_commit attributes .gitattributes "* text=auto" attrs &&
+	sha1="$(printf "1\\r\\n" | git hash-object -w --stdin)" &&
+	git update-index --cacheinfo 0644 $sha1 file &&
+	git commit -m v1-with-cr &&
+	# force checkout because `git reset --hard` will not leave clean `file`
+	git checkout -f -b fails-to-rebase HEAD^ &&
+	test_commit v2-without-cr file "2" file2-lf &&
+	test_must_fail git pull --rebase . diverging 2>err >out &&
+	test_i18ngrep "When you have resolved this problem" out
+'
+
 test_expect_success '--rebase fails with multiple branches' '
 	git reset --hard before-rebase &&
 	test_must_fail git pull --rebase . copy master 2>err &&
@@ -245,12 +330,65 @@ test_expect_success '--rebase fails with multiple branches' '
 	test modified = "$(git show HEAD:file)"
 '
 
+test_expect_success 'pull --rebase succeeds with dirty working directory and rebase.autostash set' '
+	test_config rebase.autostash true &&
+	test_pull_autostash --rebase
+'
+
+test_expect_success 'pull --rebase --autostash & rebase.autostash=true' '
+	test_config rebase.autostash true &&
+	test_pull_autostash --rebase --autostash
+'
+
+test_expect_success 'pull --rebase --autostash & rebase.autostash=false' '
+	test_config rebase.autostash false &&
+	test_pull_autostash --rebase --autostash
+'
+
+test_expect_success 'pull --rebase --autostash & rebase.autostash unset' '
+	test_unconfig rebase.autostash &&
+	test_pull_autostash --rebase --autostash
+'
+
+test_expect_success 'pull --rebase --no-autostash & rebase.autostash=true' '
+	test_config rebase.autostash true &&
+	test_pull_autostash_fail --rebase --no-autostash
+'
+
+test_expect_success 'pull --rebase --no-autostash & rebase.autostash=false' '
+	test_config rebase.autostash false &&
+	test_pull_autostash_fail --rebase --no-autostash
+'
+
+test_expect_success 'pull --rebase --no-autostash & rebase.autostash unset' '
+	test_unconfig rebase.autostash &&
+	test_pull_autostash_fail --rebase --no-autostash
+'
+
+for i in --autostash --no-autostash
+do
+	test_expect_success "pull $i (without --rebase) is illegal" '
+		test_must_fail git pull $i . copy 2>err &&
+		test_i18ngrep "only valid with --rebase" err
+	'
+done
+
 test_expect_success 'pull.rebase' '
 	git reset --hard before-rebase &&
 	test_config pull.rebase true &&
 	git pull . copy &&
 	test "$(git rev-parse HEAD^)" = "$(git rev-parse copy)" &&
 	test new = "$(git show HEAD:file2)"
+'
+
+test_expect_success 'pull --autostash & pull.rebase=true' '
+	test_config pull.rebase true &&
+	test_pull_autostash --autostash
+'
+
+test_expect_success 'pull --no-autostash & pull.rebase=true' '
+	test_config pull.rebase true &&
+	test_pull_autostash_fail --no-autostash
 '
 
 test_expect_success 'branch.to-rebase.rebase' '
@@ -268,6 +406,22 @@ test_expect_success 'branch.to-rebase.rebase should override pull.rebase' '
 	git pull . copy &&
 	test "$(git rev-parse HEAD^)" != "$(git rev-parse copy)" &&
 	test new = "$(git show HEAD:file2)"
+'
+
+test_expect_success "pull --rebase warns on --verify-signatures" '
+	git reset --hard before-rebase &&
+	git pull --rebase --verify-signatures . copy 2>err &&
+	test "$(git rev-parse HEAD^)" = "$(git rev-parse copy)" &&
+	test new = "$(git show HEAD:file2)" &&
+	test_i18ngrep "ignoring --verify-signatures for rebase" err
+'
+
+test_expect_success "pull --rebase does not warn on --no-verify-signatures" '
+	git reset --hard before-rebase &&
+	git pull --rebase --no-verify-signatures . copy 2>err &&
+	test "$(git rev-parse HEAD^)" = "$(git rev-parse copy)" &&
+	test new = "$(git show HEAD:file2)" &&
+	test_i18ngrep ! "verify-signatures" err
 '
 
 # add a feature branch, keep-merge, that is merged into master, so the
@@ -313,6 +467,16 @@ test_expect_success 'pull.rebase=preserve rebases and merges keep-merge' '
 	git pull . copy &&
 	test "$(git rev-parse HEAD^^)" = "$(git rev-parse copy)" &&
 	test "$(git rev-parse HEAD^2)" = "$(git rev-parse keep-merge)"
+'
+
+test_expect_success 'pull.rebase=interactive' '
+	write_script "$TRASH_DIRECTORY/fake-editor" <<-\EOF &&
+	echo I was here >fake.out &&
+	false
+	EOF
+	test_set_editor "$TRASH_DIRECTORY/fake-editor" &&
+	test_must_fail git pull --rebase=interactive . copy &&
+	test "I was here" = "$(cat fake.out)"
 '
 
 test_expect_success 'pull.rebase=invalid fails' '

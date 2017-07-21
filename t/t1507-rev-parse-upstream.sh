@@ -46,11 +46,14 @@ error_message () {
 }
 
 test_expect_success '@{upstream} resolves to correct full name' '
-	test refs/remotes/origin/master = "$(full_name @{upstream})"
+	test refs/remotes/origin/master = "$(full_name @{upstream})" &&
+	test refs/remotes/origin/master = "$(full_name @{UPSTREAM})" &&
+	test refs/remotes/origin/master = "$(full_name @{UpSTReam})"
 '
 
 test_expect_success '@{u} resolves to correct full name' '
-	test refs/remotes/origin/master = "$(full_name @{u})"
+	test refs/remotes/origin/master = "$(full_name @{u})" &&
+	test refs/remotes/origin/master = "$(full_name @{U})"
 '
 
 test_expect_success 'my-side@{upstream} resolves to correct full name' '
@@ -60,6 +63,8 @@ test_expect_success 'my-side@{upstream} resolves to correct full name' '
 test_expect_success 'upstream of branch with @ in middle' '
 	full_name fun@ny@{u} >actual &&
 	echo refs/remotes/origin/side >expect &&
+	test_cmp expect actual &&
+	full_name fun@ny@{U} >actual &&
 	test_cmp expect actual
 '
 
@@ -96,12 +101,14 @@ test_expect_success 'not-tracking@{u} fails' '
 test_expect_success '<branch>@{u}@{1} resolves correctly' '
 	test_commit 6 &&
 	(cd clone && git fetch) &&
-	test 5 = $(commit_subject my-side@{u}@{1})
+	test 5 = $(commit_subject my-side@{u}@{1}) &&
+	test 5 = $(commit_subject my-side@{U}@{1})
 '
 
 test_expect_success '@{u} without specifying branch fails on a detached HEAD' '
 	git checkout HEAD^0 &&
-	test_must_fail git rev-parse @{u}
+	test_must_fail git rev-parse @{u} &&
+	test_must_fail git rev-parse @{U}
 '
 
 test_expect_success 'checkout -b new my-side@{u} forks from the same' '

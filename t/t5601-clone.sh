@@ -4,6 +4,9 @@ test_description=clone
 
 . ./test-lib.sh
 
+X=
+test_have_prereq !MINGW || X=.exe
+
 test_expect_success setup '
 
 	rm -fr .git &&
@@ -62,6 +65,29 @@ test_expect_success 'clone respects GIT_WORK_TREE' '
 	GIT_WORK_TREE=worktree git clone src bare &&
 	test -f bare/config &&
 	test -f worktree/file
+
+'
+
+test_expect_success 'clone from hooks' '
+
+	test_create_repo r0 &&
+	cd r0 &&
+	test_commit initial &&
+	cd .. &&
+	git init r1 &&
+	cd r1 &&
+	cat >.git/hooks/pre-commit <<-\EOF &&
+	#!/bin/sh
+	git clone ../r0 ../r2
+	exit 1
+	EOF
+	chmod u+x .git/hooks/pre-commit &&
+	: >file &&
+	git add file &&
+	test_must_fail git commit -m invoke-hook &&
+	cd .. &&
+	test_cmp r0/.git/HEAD r2/.git/HEAD &&
+	test_cmp r0/initial.t r2/initial.t
 
 '
 
@@ -125,7 +151,7 @@ test_expect_success 'clone --mirror does not repeat tags' '
 	git clone --mirror src mirror2 &&
 	(cd mirror2 &&
 	 git show-ref 2> clone.err > clone.out) &&
-	test_must_fail grep Duplicate mirror2/clone.err &&
+	! grep Duplicate mirror2/clone.err &&
 	grep some-tag mirror2/clone.out
 
 '
@@ -221,7 +247,7 @@ test_expect_success 'clone separate gitdir' '
 '
 
 test_expect_success 'clone separate gitdir: output' '
-	echo "gitdir: `pwd`/realgitdir" >expected &&
+	echo "gitdir: $(pwd)/realgitdir" >expected &&
 	test_cmp expected dst/.git
 '
 
@@ -282,14 +308,9 @@ test_expect_success 'clone checking out a tag' '
 
 setup_ssh_wrapper () {
 	test_expect_success 'setup ssh wrapper' '
-		write_script "$TRASH_DIRECTORY/ssh-wrapper" <<-\EOF &&
-		echo >>"$TRASH_DIRECTORY/ssh-output" "ssh: $*" &&
-		# throw away all but the last argument, which should be the
-		# command
-		while test $# -gt 1; do shift; done
-		eval "$1"
-		EOF
-		GIT_SSH="$TRASH_DIRECTORY/ssh-wrapper" &&
+		cp "$GIT_BUILD_DIR/t/helper/test-fake-ssh$X" \
+			"$TRASH_DIRECTORY/ssh-wrapper$X" &&
+		GIT_SSH="$TRASH_DIRECTORY/ssh-wrapper$X" &&
 		export GIT_SSH &&
 		export TRASH_DIRECTORY &&
 		>"$TRASH_DIRECTORY"/ssh-output
@@ -297,8 +318,8 @@ setup_ssh_wrapper () {
 }
 
 copy_ssh_wrapper_as () {
-	cp "$TRASH_DIRECTORY/ssh-wrapper" "$1" &&
-	GIT_SSH="$1" &&
+	cp "$TRASH_DIRECTORY/ssh-wrapper$X" "${1%$X}$X" &&
+	GIT_SSH="${1%$X}$X" &&
 	export GIT_SSH
 }
 
@@ -363,6 +384,53 @@ test_expect_success 'tortoiseplink is like putty, with extra arguments' '
 	copy_ssh_wrapper_as "$TRASH_DIRECTORY/tortoiseplink" &&
 	git clone "[myhost:123]:src" ssh-bracket-clone-plink-2 &&
 	expect_ssh "-batch -P 123" myhost src
+'
+
+test_expect_success 'double quoted plink.exe in GIT_SSH_COMMAND' '
+	copy_ssh_wrapper_as "$TRASH_DIRECTORY/plink.exe" &&
+	GIT_SSH_COMMAND="\"$TRASH_DIRECTORY/plink.exe\" -v" \
+		git clone "[myhost:123]:src" ssh-bracket-clone-plink-3 &&
+	expect_ssh "-v -P 123" myhost src
+'
+
+SQ="'"
+test_expect_success 'single quoted plink.exe in GIT_SSH_COMMAND' '
+	copy_ssh_wrapper_as "$TRASH_DIRECTORY/plink.exe" &&
+	GIT_SSH_COMMAND="$SQ$TRASH_DIRECTORY/plink.exe$SQ -v" \
+		git clone "[myhost:123]:src" ssh-bracket-clone-plink-4 &&
+	expect_ssh "-v -P 123" myhost src
+'
+
+test_expect_success 'GIT_SSH_VARIANT overrides plink detection' '
+	copy_ssh_wrapper_as "$TRASH_DIRECTORY/plink" &&
+	GIT_SSH_VARIANT=ssh \
+	git clone "[myhost:123]:src" ssh-bracket-clone-variant-1 &&
+	expect_ssh "-p 123" myhost src
+'
+
+test_expect_success 'ssh.variant overrides plink detection' '
+	copy_ssh_wrapper_as "$TRASH_DIRECTORY/plink" &&
+	git -c ssh.variant=ssh \
+		clone "[myhost:123]:src" ssh-bracket-clone-variant-2 &&
+	expect_ssh "-p 123" myhost src
+'
+
+test_expect_success 'GIT_SSH_VARIANT overrides plink detection to plink' '
+	GIT_SSH_VARIANT=plink \
+	git clone "[myhost:123]:src" ssh-bracket-clone-variant-3 &&
+	expect_ssh "-P 123" myhost src
+'
+
+test_expect_success 'GIT_SSH_VARIANT overrides plink to tortoiseplink' '
+	GIT_SSH_VARIANT=tortoiseplink \
+	git clone "[myhost:123]:src" ssh-bracket-clone-variant-4 &&
+	expect_ssh "-batch -P 123" myhost src
+'
+
+test_expect_success 'clean failure on broken quoting' '
+	test_must_fail \
+		env GIT_SSH_COMMAND="${SQ}plink.exe -v" \
+		git clone "[myhost:123]:src" sq-failure
 '
 
 # Reset the GIT_SSH environment variable for clone tests.
@@ -445,7 +513,7 @@ test_expect_success 'clone ssh://host.xz:22/~repo' '
 #IPv6
 for tuah in ::1 [::1] [::1]: user@::1 user@[::1] user@[::1]: [user@::1] [user@::1]:
 do
-	ehost=$(echo $tuah | sed -e "s/1]:/1]/ "| tr -d "[]")
+	ehost=$(echo $tuah | sed -e "s/1]:/1]/" | tr -d "[]")
 	test_expect_success "clone ssh://$tuah/home/user/repo" "
 	  test_clone_url ssh://$tuah/home/user/repo $ehost /home/user/repo
 	"

@@ -248,7 +248,8 @@ EOF
 	git rm -r src/move/unchanged &&
 	git rm -r src/move/changed &&
 	git rm -r src/move/rearranged &&
-	git commit -m "changes"
+	git commit -m "changes" &&
+	git config diff.renames false
 '
 
 cat <<EOF >expect_diff_stat

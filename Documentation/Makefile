@@ -31,6 +31,7 @@ MAN7_TXT += giteveryday.txt
 MAN7_TXT += gitglossary.txt
 MAN7_TXT += gitnamespaces.txt
 MAN7_TXT += gitrevisions.txt
+MAN7_TXT += gitsubmodules.txt
 MAN7_TXT += gittutorial-2.txt
 MAN7_TXT += gittutorial.txt
 MAN7_TXT += gitworkflows.txt
@@ -76,6 +77,7 @@ TECH_DOCS += technical/protocol-common
 TECH_DOCS += technical/racy-git
 TECH_DOCS += technical/send-pack-pipeline
 TECH_DOCS += technical/shallow
+TECH_DOCS += technical/signature-format
 TECH_DOCS += technical/trivial-merge
 SP_ARTICLES += $(TECH_DOCS)
 SP_ARTICLES += technical/api-index
@@ -119,6 +121,7 @@ INSTALL_INFO = install-info
 DOCBOOK2X_TEXI = docbook2x-texi
 DBLATEX = dblatex
 ASCIIDOC_DBLATEX_DIR = /etc/asciidoc/dblatex
+DBLATEX_COMMON = -p $(ASCIIDOC_DBLATEX_DIR)/asciidoc-dblatex.xsl -s $(ASCIIDOC_DBLATEX_DIR)/asciidoc-dblatex.sty
 ifndef PERL_PATH
 	PERL_PATH = /usr/bin/perl
 endif
@@ -146,7 +149,7 @@ else
 	ASCIIDOC_EXTRA += -a git-asciidoc-no-roff
 	endif
 endif
-ifdef MAN_BOLD_LITERAL
+ifndef NO_MAN_BOLD_LITERAL
 XMLTO_EXTRA += -m manpage-bold-literal.xsl
 endif
 ifdef DOCBOOK_SUPPRESS_SP
@@ -170,6 +173,16 @@ XMLTO_EXTRA += -m manpage-base-url.xsl
 # apostrophes.  Unfortunately does not work with non-GNU roff.
 ifdef GNU_ROFF
 XMLTO_EXTRA += -m manpage-quote-apos.xsl
+endif
+
+ifdef USE_ASCIIDOCTOR
+ASCIIDOC = asciidoctor
+ASCIIDOC_CONF =
+ASCIIDOC_HTML = xhtml5
+ASCIIDOC_DOCBOOK = docbook45
+ASCIIDOC_EXTRA += -I. -rasciidoctor-extensions
+ASCIIDOC_EXTRA += -alitdd='&\#x2d;&\#x2d;'
+DBLATEX_COMMON =
 endif
 
 SHELL_PATH ?= $(SHELL)
@@ -204,6 +217,7 @@ ifndef V
 	QUIET_DBLATEX	= @echo '   ' DBLATEX $@;
 	QUIET_XSLTPROC	= @echo '   ' XSLTPROC $@;
 	QUIET_GEN	= @echo '   ' GEN $@;
+	QUIET_LINT	= @echo '   ' LINT $@;
 	QUIET_STDERR	= 2> /dev/null
 	QUIET_SUBDIR0	= +@subdir=
 	QUIET_SUBDIR1	= ;$(NO_SUBDIR) echo '   ' SUBDIR $$subdir; \
@@ -335,7 +349,7 @@ manpage-base-url.xsl: manpage-base-url.xsl.in
 
 user-manual.xml: user-manual.txt user-manual.conf
 	$(QUIET_ASCIIDOC)$(RM) $@+ $@ && \
-	$(TXT_TO_XML) -d article -o $@+ $< && \
+	$(TXT_TO_XML) -d book -o $@+ $< && \
 	mv $@+ $@
 
 technical/api-index.txt: technical/api-index-skel.txt \
@@ -366,13 +380,14 @@ user-manual.texi: user-manual.xml
 
 user-manual.pdf: user-manual.xml
 	$(QUIET_DBLATEX)$(RM) $@+ $@ && \
-	$(DBLATEX) -o $@+ -p $(ASCIIDOC_DBLATEX_DIR)/asciidoc-dblatex.xsl -s $(ASCIIDOC_DBLATEX_DIR)/asciidoc-dblatex.sty $< && \
+	$(DBLATEX) -o $@+ $(DBLATEX_COMMON) $< && \
 	mv $@+ $@
 
-gitman.texi: $(MAN_XML) cat-texi.perl
+gitman.texi: $(MAN_XML) cat-texi.perl texi.xsl
 	$(QUIET_DB2TEXI)$(RM) $@+ $@ && \
-	($(foreach xml,$(MAN_XML),$(DOCBOOK2X_TEXI) --encoding=UTF-8 \
-		--to-stdout $(xml) &&) true) > $@++ && \
+	($(foreach xml,$(sort $(MAN_XML)),xsltproc -o $(xml)+ texi.xsl $(xml) && \
+		$(DOCBOOK2X_TEXI) --encoding=UTF-8 --to-stdout $(xml)+ && \
+		rm $(xml)+ &&) true) > $@++ && \
 	$(PERL_PATH) cat-texi.perl $@ <$@++ >$@+ && \
 	rm $@++ && \
 	mv $@+ $@
@@ -426,5 +441,8 @@ quick-install-html: require-htmlrepo
 
 print-man1:
 	@for i in $(MAN1_TXT); do echo $$i; done
+
+lint-docs::
+	$(QUIET_LINT)$(PERL_PATH) lint-gitlink.perl
 
 .PHONY: FORCE

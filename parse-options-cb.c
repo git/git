@@ -5,6 +5,7 @@
 #include "color.h"
 #include "string-list.h"
 #include "argv-array.h"
+#include "sha1-array.h"
 
 /*----- some often used options -----*/
 
@@ -30,14 +31,14 @@ int parse_opt_abbrev_cb(const struct option *opt, const char *arg, int unset)
 int parse_opt_approxidate_cb(const struct option *opt, const char *arg,
 			     int unset)
 {
-	*(unsigned long *)(opt->value) = approxidate(arg);
+	*(timestamp_t *)(opt->value) = approxidate(arg);
 	return 0;
 }
 
 int parse_opt_expiry_date_cb(const struct option *opt, const char *arg,
 			     int unset)
 {
-	return parse_expiry_date(arg, (unsigned long *)opt->value);
+	return parse_expiry_date(arg, (timestamp_t *)opt->value);
 }
 
 int parse_opt_color_flag_cb(const struct option *opt, const char *arg,
@@ -77,19 +78,35 @@ int parse_opt_verbosity_cb(const struct option *opt, const char *arg,
 	return 0;
 }
 
-int parse_opt_with_commit(const struct option *opt, const char *arg, int unset)
+int parse_opt_commits(const struct option *opt, const char *arg, int unset)
 {
-	unsigned char sha1[20];
+	struct object_id oid;
 	struct commit *commit;
 
 	if (!arg)
 		return -1;
-	if (get_sha1(arg, sha1))
+	if (get_oid(arg, &oid))
 		return error("malformed object name %s", arg);
-	commit = lookup_commit_reference(sha1);
+	commit = lookup_commit_reference(&oid);
 	if (!commit)
 		return error("no such commit %s", arg);
 	commit_list_insert(commit, opt->value);
+	return 0;
+}
+
+int parse_opt_object_name(const struct option *opt, const char *arg, int unset)
+{
+	struct object_id oid;
+
+	if (unset) {
+		oid_array_clear(opt->value);
+		return 0;
+	}
+	if (!arg)
+		return -1;
+	if (get_oid(arg, &oid))
+		return error(_("malformed object name '%s'"), arg);
+	oid_array_append(opt->value, &oid);
 	return 0;
 }
 
@@ -100,19 +117,24 @@ int parse_opt_tertiary(const struct option *opt, const char *arg, int unset)
 	return 0;
 }
 
-int parse_options_concat(struct option *dst, size_t dst_size, struct option *src)
+struct option *parse_options_concat(struct option *a, struct option *b)
 {
-	int i, j;
+	struct option *ret;
+	size_t i, a_len = 0, b_len = 0;
 
-	for (i = 0; i < dst_size; i++)
-		if (dst[i].type == OPTION_END)
-			break;
-	for (j = 0; i < dst_size; i++, j++) {
-		dst[i] = src[j];
-		if (src[j].type == OPTION_END)
-			return 0;
-	}
-	return -1;
+	for (i = 0; a[i].type != OPTION_END; i++)
+		a_len++;
+	for (i = 0; b[i].type != OPTION_END; i++)
+		b_len++;
+
+	ALLOC_ARRAY(ret, st_add3(a_len, b_len, 1));
+	for (i = 0; i < a_len; i++)
+		ret[i] = a[i];
+	for (i = 0; i < b_len; i++)
+		ret[a_len + i] = b[i];
+	ret[a_len + b_len] = b[b_len]; /* final OPTION_END */
+
+	return ret;
 }
 
 int parse_opt_string_list(const struct option *opt, const char *arg, int unset)
@@ -127,13 +149,25 @@ int parse_opt_string_list(const struct option *opt, const char *arg, int unset)
 	if (!arg)
 		return -1;
 
-	string_list_append(v, xstrdup(arg));
+	string_list_append(v, arg);
 	return 0;
 }
 
 int parse_opt_noop_cb(const struct option *opt, const char *arg, int unset)
 {
 	return 0;
+}
+
+/**
+ * Report that the option is unknown, so that other code can handle
+ * it. This can be used as a callback together with
+ * OPTION_LOWLEVEL_CALLBACK to allow an option to be documented in the
+ * "-h" output even if it's not being handled directly by
+ * parse_options().
+ */
+int parse_opt_unknown_cb(const struct option *opt, const char *arg, int unset)
+{
+	return -2;
 }
 
 /**
@@ -177,8 +211,7 @@ int parse_opt_passthru(const struct option *opt, const char *arg, int unset)
 	if (recreate_opt(&sb, opt, arg, unset) < 0)
 		return -1;
 
-	if (*opt_value)
-		free(*opt_value);
+	free(*opt_value);
 
 	*opt_value = strbuf_detach(&sb, NULL);
 

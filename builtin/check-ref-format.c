@@ -20,7 +20,7 @@ static const char builtin_check_ref_format_usage[] =
  */
 static char *collapse_slashes(const char *refname)
 {
-	char *ret = xmalloc(strlen(refname) + 1);
+	char *ret = xmallocz(strlen(refname));
 	char ch;
 	char prev = '/';
 	char *cp = ret;

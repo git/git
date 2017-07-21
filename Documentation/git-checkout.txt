@@ -107,6 +107,12 @@ OPTIONS
 --quiet::
 	Quiet, suppress feedback messages.
 
+--[no-]progress::
+	Progress status is reported on the standard error stream
+	by default when it is attached to a terminal, unless `--quiet`
+	is specified. This flag enables progress reporting even if not
+	attached to a terminal, regardless of `--quiet`.
+
 -f::
 --force::
 	When switching branches, proceed even if the index or the
@@ -151,7 +157,7 @@ of it").
 	When creating a new branch, set up "upstream" configuration. See
 	"--track" in linkgit:git-branch[1] for details.
 +
-If no '-b' option is given, the name of the new branch will be
+If no `-b` option is given, the name of the new branch will be
 derived from the remote-tracking branch, by looking at the local part of
 the refspec configured for the corresponding remote, and then stripping
 the initial part up to the "*".
@@ -159,7 +165,7 @@ This would tell us to use "hack" as the local branch when branching
 off of "origin/hack" (or "remotes/origin/hack", or even
 "refs/remotes/origin/hack").  If the given name has no slash, or the above
 guessing results in an empty name, the guessing is aborted.  You can
-explicitly give a name with '-b' in such a case.
+explicitly give a name with `-b` in such a case.
 
 --no-track::
 	Do not set up "upstream" configuration, even if the
@@ -249,6 +255,13 @@ section of linkgit:git-add[1] to learn how to operate the `--patch` mode.
 	out by another worktree. This option makes it check the ref
 	out anyway. In other words, the ref can be held by more than one
 	worktree.
+
+--[no-]recurse-submodules::
+	Using --recurse-submodules will update the content of all initialized
+	submodules according to the commit recorded in the superproject. If
+	local modifications in a submodule would be overwritten the checkout
+	will fail unless `-f` is used. If nothing (or --no-recurse-submodules)
+	is used, the work trees of submodules will not be updated.
 
 <branch>::
 	Branch to checkout; if it refers to a branch (i.e., a name that,
@@ -412,6 +425,18 @@ can use either of these commands:
 $ git reflog -2 HEAD # or
 $ git log -g -2 HEAD
 ------------
+
+ARGUMENT DISAMBIGUATION
+-----------------------
+
+When there is only one argument given and it is not `--` (e.g. "git
+checkout abc"), and when the argument is both a valid `<tree-ish>`
+(e.g. a branch "abc" exists) and a valid `<pathspec>` (e.g. a file
+or a directory whose name is "abc" exists), Git would usually ask
+you to disambiguate.  Because checking out a branch is so common an
+operation, however, "git checkout abc" takes "abc" as a `<tree-ish>`
+in such a situation.  Use `git checkout -- <pathspec>` if you want
+to checkout these paths out of the index.
 
 EXAMPLES
 --------

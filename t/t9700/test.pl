@@ -17,6 +17,12 @@ BEGIN {
 use Cwd;
 use File::Basename;
 
+sub adjust_dirsep {
+	my $path = shift;
+	$path =~ s{\\}{/}g;
+	return $path;
+}
+
 BEGIN { use_ok('Git') }
 
 # set up
@@ -33,7 +39,7 @@ is($r->config_int("test.int"), 2048, "config_int: integer");
 is($r->config_int("test.nonexistent"), undef, "config_int: nonexistent");
 ok($r->config_bool("test.booltrue"), "config_bool: true");
 ok(!$r->config_bool("test.boolfalse"), "config_bool: false");
-is($r->config_path("test.path"), $r->config("test.pathexpanded"),
+is(adjust_dirsep($r->config_path("test.path")), $r->config("test.pathexpanded"),
    "config_path: ~/foo expansion");
 is_deeply([$r->config_path("test.pathmulti")], ["foo", "bar"],
    "config_path: multiple values");
@@ -126,6 +132,13 @@ is($r3->cat_blob($file1hash, \*TEMPFILE3), 15, "cat_blob(outside): size");
 close TEMPFILE3;
 unlink $tmpfile3;
 chdir($abs_repo_dir);
+
+# unquoting paths
+is(Git::unquote_path('abc'), 'abc', 'unquote unquoted path');
+is(Git::unquote_path('"abc def"'), 'abc def', 'unquote simple quoted path');
+is(Git::unquote_path('"abc\"\\\\ \a\b\t\n\v\f\r\001\040"'),
+		     "abc\"\\ \x07\x08\x09\x0a\x0b\x0c\x0d\x01 ",
+		     'unquote escape sequences');
 
 printf "1..%d\n", Test::More->builder->current_test;
 

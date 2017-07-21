@@ -82,7 +82,7 @@ test_expect_success 'am -3 --abort removes otherfile-4' '
 	test 4 = "$(cat otherfile-4)" &&
 	git am --abort &&
 	test_cmp_rev initial HEAD &&
-	test -z $(git ls-files -u) &&
+	test -z "$(git ls-files -u)" &&
 	test_path_is_missing otherfile-4
 '
 
@@ -166,6 +166,30 @@ test_expect_success 'am --abort on unborn branch will keep local commits intact'
 	git am --abort &&
 	git rev-parse HEAD >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'am --skip leaves index stat info alone' '
+	git checkout -f --orphan skip-stat-info &&
+	git reset &&
+	test_commit skip-should-be-untouched &&
+	test-chmtime =0 skip-should-be-untouched.t &&
+	git update-index --refresh &&
+	git diff-files --exit-code --quiet &&
+	test_must_fail git am 0001-*.patch &&
+	git am --skip &&
+	git diff-files --exit-code --quiet
+'
+
+test_expect_success 'am --abort leaves index stat info alone' '
+	git checkout -f --orphan abort-stat-info &&
+	git reset &&
+	test_commit abort-should-be-untouched &&
+	test-chmtime =0 abort-should-be-untouched.t &&
+	git update-index --refresh &&
+	git diff-files --exit-code --quiet &&
+	test_must_fail git am 0001-*.patch &&
+	git am --abort &&
+	git diff-files --exit-code --quiet
 '
 
 test_done

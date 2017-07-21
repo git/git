@@ -5,6 +5,7 @@
  * Copyright (C) Junio C Hamano, 2005
  */
 #include "builtin.h"
+#include "config.h"
 #include "blob.h"
 #include "quote.h"
 #include "parse-options.h"
@@ -58,27 +59,28 @@ static void hash_object(const char *path, const char *type, const char *vpath,
 static void hash_stdin_paths(const char *type, int no_filters, unsigned flags,
 			     int literally)
 {
-	struct strbuf buf = STRBUF_INIT, nbuf = STRBUF_INIT;
+	struct strbuf buf = STRBUF_INIT;
+	struct strbuf unquoted = STRBUF_INIT;
 
-	while (strbuf_getline(&buf, stdin, '\n') != EOF) {
+	while (strbuf_getline(&buf, stdin) != EOF) {
 		if (buf.buf[0] == '"') {
-			strbuf_reset(&nbuf);
-			if (unquote_c_style(&nbuf, buf.buf, NULL))
+			strbuf_reset(&unquoted);
+			if (unquote_c_style(&unquoted, buf.buf, NULL))
 				die("line is badly quoted");
-			strbuf_swap(&buf, &nbuf);
+			strbuf_swap(&buf, &unquoted);
 		}
 		hash_object(buf.buf, type, no_filters ? NULL : buf.buf, flags,
 			    literally);
 	}
 	strbuf_release(&buf);
-	strbuf_release(&nbuf);
+	strbuf_release(&unquoted);
 }
 
 int cmd_hash_object(int argc, const char **argv, const char *prefix)
 {
 	static const char * const hash_object_usage[] = {
 		N_("git hash-object [-t <type>] [-w] [--path=<file> | --no-filters] [--stdin] [--] <file>..."),
-		N_("git hash-object  --stdin-paths < <list-of-paths>"),
+		N_("git hash-object  --stdin-paths"),
 		NULL
 	};
 	const char *type = blob_type;
@@ -86,6 +88,7 @@ int cmd_hash_object(int argc, const char **argv, const char *prefix)
 	int stdin_paths = 0;
 	int no_filters = 0;
 	int literally = 0;
+	int nongit = 0;
 	unsigned flags = HASH_FORMAT_CHECK;
 	const char *vpath = NULL;
 	const struct option hash_object_options[] = {
@@ -100,18 +103,18 @@ int cmd_hash_object(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 	int i;
-	int prefix_length = -1;
 	const char *errstr = NULL;
 
 	argc = parse_options(argc, argv, NULL, hash_object_options,
 			     hash_object_usage, 0);
 
-	if (flags & HASH_WRITE_OBJECT) {
+	if (flags & HASH_WRITE_OBJECT)
 		prefix = setup_git_directory();
-		prefix_length = prefix ? strlen(prefix) : 0;
-		if (vpath && prefix)
-			vpath = prefix_filename(prefix, prefix_length, vpath);
-	}
+	else
+		prefix = setup_git_directory_gently(&nongit);
+
+	if (vpath && prefix)
+		vpath = xstrdup(prefix_filename(prefix, vpath));
 
 	git_config(git_default_config, NULL);
 
@@ -140,11 +143,13 @@ int cmd_hash_object(int argc, const char **argv, const char *prefix)
 
 	for (i = 0 ; i < argc; i++) {
 		const char *arg = argv[i];
+		char *to_free = NULL;
 
-		if (0 <= prefix_length)
-			arg = prefix_filename(prefix, prefix_length, arg);
+		if (prefix)
+			arg = to_free = prefix_filename(prefix, arg);
 		hash_object(arg, type, no_filters ? NULL : vpath ? vpath : arg,
 			    flags, literally);
+		free(to_free);
 	}
 
 	if (stdin_paths)

@@ -184,10 +184,25 @@ test_expect_success 'rerere updates postimage timestamp' '
 '
 
 test_expect_success 'rerere clear' '
-	rm $rr/postimage &&
+	mv $rr/postimage .git/post-saved &&
 	echo "$sha1	a1" | perl -pe "y/\012/\000/" >.git/MERGE_RR &&
 	git rerere clear &&
 	! test -d $rr
+'
+
+test_expect_success 'leftover directory' '
+	git reset --hard &&
+	mkdir -p $rr &&
+	test_must_fail git merge first &&
+	test -f $rr/preimage
+'
+
+test_expect_success 'missing preimage' '
+	git reset --hard &&
+	mkdir -p $rr &&
+	cp .git/post-saved $rr/postimage &&
+	test_must_fail git merge first &&
+	test -f $rr/preimage
 '
 
 test_expect_success 'set up for garbage collection tests' '
@@ -389,6 +404,159 @@ test_expect_success 'rerere --no-no-rerere-autoupdate' '
 test_expect_success 'rerere -h' '
 	test_must_fail git rerere -h >help &&
 	test_i18ngrep [Uu]sage help
+'
+
+concat_insert () {
+	last=$1
+	shift
+	cat early && printf "%s\n" "$@" && cat late "$last"
+}
+
+count_pre_post () {
+	find .git/rr-cache/ -type f -name "preimage*" >actual &&
+	test_line_count = "$1" actual &&
+	find .git/rr-cache/ -type f -name "postimage*" >actual &&
+	test_line_count = "$2" actual
+}
+
+test_expect_success 'rerere gc' '
+	find .git/rr-cache -type f >original &&
+	xargs test-chmtime -172800 <original &&
+
+	git -c gc.rerereresolved=5 -c gc.rerereunresolved=5 rerere gc &&
+	find .git/rr-cache -type f >actual &&
+	test_cmp original actual &&
+
+	git -c gc.rerereresolved=5 -c gc.rerereunresolved=0 rerere gc &&
+	find .git/rr-cache -type f >actual &&
+	test_cmp original actual &&
+
+	git -c gc.rerereresolved=0 -c gc.rerereunresolved=0 rerere gc &&
+	find .git/rr-cache -type f >actual &&
+	>expect &&
+	test_cmp expect actual
+'
+
+merge_conflict_resolve () {
+	git reset --hard &&
+	test_must_fail git merge six.1 &&
+	# Resolution is to replace 7 with 6.1 and 6.2 (i.e. take both)
+	concat_insert short 6.1 6.2 >file1 &&
+	concat_insert long 6.1 6.2 >file2
+}
+
+test_expect_success 'multiple identical conflicts' '
+	git reset --hard &&
+
+	test_seq 1 6 >early &&
+	>late &&
+	test_seq 11 15 >short &&
+	test_seq 111 120 >long &&
+	concat_insert short >file1 &&
+	concat_insert long >file2 &&
+	git add file1 file2 &&
+	git commit -m base &&
+	git tag base &&
+	git checkout -b six.1 &&
+	concat_insert short 6.1 >file1 &&
+	concat_insert long 6.1 >file2 &&
+	git add file1 file2 &&
+	git commit -m 6.1 &&
+	git checkout -b six.2 HEAD^ &&
+	concat_insert short 6.2 >file1 &&
+	concat_insert long 6.2 >file2 &&
+	git add file1 file2 &&
+	git commit -m 6.2 &&
+
+	# At this point, six.1 and six.2
+	# - derive from common ancestor that has two files
+	#   1...6 7 11..15 (file1) and 1...6 7 111..120 (file2)
+	# - six.1 replaces these 7s with 6.1
+	# - six.2 replaces these 7s with 6.2
+
+	merge_conflict_resolve &&
+
+	# Check that rerere knows that file1 and file2 have conflicts
+
+	printf "%s\n" file1 file2 >expect &&
+	git ls-files -u | sed -e "s/^.*	//" | sort -u >actual &&
+	test_cmp expect actual &&
+
+	git rerere status | sort >actual &&
+	test_cmp expect actual &&
+
+	git rerere remaining >actual &&
+	test_cmp expect actual &&
+
+	count_pre_post 2 0 &&
+
+	# Pretend that the conflicts were made quite some time ago
+	find .git/rr-cache/ -type f | xargs test-chmtime -172800 &&
+
+	# Unresolved entries have not expired yet
+	git -c gc.rerereresolved=5 -c gc.rerereunresolved=5 rerere gc &&
+	count_pre_post 2 0 &&
+
+	# Unresolved entries have expired
+	git -c gc.rerereresolved=5 -c gc.rerereunresolved=1 rerere gc &&
+	count_pre_post 0 0 &&
+
+	# Recreate the conflicted state
+	merge_conflict_resolve &&
+	count_pre_post 2 0 &&
+
+	# Clear it
+	git rerere clear &&
+	count_pre_post 0 0 &&
+
+	# Recreate the conflicted state
+	merge_conflict_resolve &&
+	count_pre_post 2 0 &&
+
+	# We resolved file1 and file2
+	git rerere &&
+	>expect &&
+	git rerere remaining >actual &&
+	test_cmp expect actual &&
+
+	# We must have recorded both of them
+	count_pre_post 2 2 &&
+
+	# Now we should be able to resolve them both
+	git reset --hard &&
+	test_must_fail git merge six.1 &&
+	git rerere &&
+
+	>expect &&
+	git rerere remaining >actual &&
+	test_cmp expect actual &&
+
+	concat_insert short 6.1 6.2 >file1.expect &&
+	concat_insert long 6.1 6.2 >file2.expect &&
+	test_cmp file1.expect file1 &&
+	test_cmp file2.expect file2 &&
+
+	# Forget resolution for file2
+	git rerere forget file2 &&
+	echo file2 >expect &&
+	git rerere status >actual &&
+	test_cmp expect actual &&
+	count_pre_post 2 1 &&
+
+	# file2 already has correct resolution, so record it again
+	git rerere &&
+
+	# Pretend that the resolutions are old again
+	find .git/rr-cache/ -type f | xargs test-chmtime -172800 &&
+
+	# Resolved entries have not expired yet
+	git -c gc.rerereresolved=5 -c gc.rerereunresolved=5 rerere gc &&
+
+	count_pre_post 2 2 &&
+
+	# Resolved entries have expired
+	git -c gc.rerereresolved=1 -c gc.rerereunresolved=5 rerere gc &&
+	count_pre_post 0 0
 '
 
 test_done

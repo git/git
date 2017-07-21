@@ -43,12 +43,21 @@ cat >exp <<EOF
 < Content-Type: application/x-git-upload-pack-result
 EOF
 test_expect_success 'clone http repository' '
-	GIT_CURL_VERBOSE=1 git clone --quiet $HTTPD_URL/smart/repo.git clone 2>err &&
+	GIT_TRACE_CURL=true git clone --quiet $HTTPD_URL/smart/repo.git clone 2>err &&
 	test_cmp file clone/file &&
 	tr '\''\015'\'' Q <err |
 	sed -e "
 		s/Q\$//
 		/^[*] /d
+		/^== Info:/d
+		/^=> Send header, /d
+		/^=> Send header:$/d
+		/^<= Recv header, /d
+		/^<= Recv header:$/d
+		s/=> Send header: //
+		s/= Recv header://
+		/^<= Recv data/d
+		/^=> Send data/d
 		/^$/d
 		/^< $/d
 
@@ -108,6 +117,10 @@ test_expect_success 'follow redirects (302)' '
 
 test_expect_success 'redirects re-root further requests' '
 	git clone $HTTPD_URL/smart-redir-limited/repo.git repo-redir-limited
+'
+
+test_expect_success 're-rooting dies on insane schemes' '
+	test_must_fail git clone $HTTPD_URL/insane-redir/repo.git insane
 '
 
 test_expect_success 'clone from password-protected repository' '
@@ -261,10 +274,62 @@ test_expect_success CMDLINE_LIMIT \
 '
 
 test_expect_success 'large fetch-pack requests can be split across POSTs' '
-	GIT_CURL_VERBOSE=1 git -c http.postbuffer=65536 \
+	GIT_TRACE_CURL=true git -c http.postbuffer=65536 \
 		clone --bare "$HTTPD_URL/smart/repo.git" split.git 2>err &&
-	grep "^> POST" err >posts &&
+	grep "^=> Send header: POST" err >posts &&
 	test_line_count = 2 posts
+'
+
+test_expect_success 'test allowreachablesha1inwant' '
+	test_when_finished "rm -rf test_reachable.git" &&
+	server="$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
+	master_sha=$(git -C "$server" rev-parse refs/heads/master) &&
+	git -C "$server" config uploadpack.allowreachablesha1inwant 1 &&
+
+	git init --bare test_reachable.git &&
+	git -C test_reachable.git remote add origin "$HTTPD_URL/smart/repo.git" &&
+	git -C test_reachable.git fetch origin "$master_sha"
+'
+
+test_expect_success 'test allowreachablesha1inwant with unreachable' '
+	test_when_finished "rm -rf test_reachable.git; git reset --hard $(git rev-parse HEAD)" &&
+
+	#create unreachable sha
+	echo content >file2 &&
+	git add file2 &&
+	git commit -m two &&
+	git push public HEAD:refs/heads/doomed &&
+	git push public :refs/heads/doomed &&
+
+	server="$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
+	master_sha=$(git -C "$server" rev-parse refs/heads/master) &&
+	git -C "$server" config uploadpack.allowreachablesha1inwant 1 &&
+
+	git init --bare test_reachable.git &&
+	git -C test_reachable.git remote add origin "$HTTPD_URL/smart/repo.git" &&
+	test_must_fail git -C test_reachable.git fetch origin "$(git rev-parse HEAD)"
+'
+
+test_expect_success 'test allowanysha1inwant with unreachable' '
+	test_when_finished "rm -rf test_reachable.git; git reset --hard $(git rev-parse HEAD)" &&
+
+	#create unreachable sha
+	echo content >file2 &&
+	git add file2 &&
+	git commit -m two &&
+	git push public HEAD:refs/heads/doomed &&
+	git push public :refs/heads/doomed &&
+
+	server="$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
+	master_sha=$(git -C "$server" rev-parse refs/heads/master) &&
+	git -C "$server" config uploadpack.allowreachablesha1inwant 1 &&
+
+	git init --bare test_reachable.git &&
+	git -C test_reachable.git remote add origin "$HTTPD_URL/smart/repo.git" &&
+	test_must_fail git -C test_reachable.git fetch origin "$(git rev-parse HEAD)" &&
+
+	git -C "$server" config uploadpack.allowanysha1inwant 1 &&
+	git -C test_reachable.git fetch origin "$(git rev-parse HEAD)"
 '
 
 test_expect_success EXPENSIVE 'http can handle enormous ref negotiation' '
@@ -280,6 +345,23 @@ test_expect_success EXPENSIVE 'http can handle enormous ref negotiation' '
 	git -C too-many-refs fetch -q --tags &&
 	git -C too-many-refs for-each-ref refs/tags >tags &&
 	test_line_count = 100000 tags
+'
+
+test_expect_success 'custom http headers' '
+	test_must_fail git -c http.extraheader="x-magic-two: cadabra" \
+		fetch "$HTTPD_URL/smart_headers/repo.git" &&
+	git -c http.extraheader="x-magic-one: abra" \
+	    -c http.extraheader="x-magic-two: cadabra" \
+	    fetch "$HTTPD_URL/smart_headers/repo.git" &&
+	git update-index --add --cacheinfo 160000,$(git rev-parse HEAD),sub &&
+	git config -f .gitmodules submodule.sub.path sub &&
+	git config -f .gitmodules submodule.sub.url \
+		"$HTTPD_URL/smart_headers/repo.git" &&
+	git submodule init sub &&
+	test_must_fail git submodule update sub &&
+	git -c http.extraheader="x-magic-one: abra" \
+	    -c http.extraheader="x-magic-two: cadabra" \
+		submodule update sub
 '
 
 stop_httpd

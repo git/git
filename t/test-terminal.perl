@@ -5,15 +5,17 @@ use warnings;
 use IO::Pty;
 use File::Copy;
 
-# Run @$argv in the background with stdio redirected to $out and $err.
+# Run @$argv in the background with stdio redirected to $in, $out and $err.
 sub start_child {
-	my ($argv, $out, $err) = @_;
+	my ($argv, $in, $out, $err) = @_;
 	my $pid = fork;
 	if (not defined $pid) {
 		die "fork failed: $!"
 	} elsif ($pid == 0) {
+		open STDIN, "<&", $in;
 		open STDOUT, ">&", $out;
 		open STDERR, ">&", $err;
+		close $in;
 		close $out;
 		exec(@$argv) or die "cannot exec '$argv->[0]': $!"
 	}
@@ -49,6 +51,17 @@ sub xsendfile {
 	copy($in, $out, 4096) or $!{EIO} or die "cannot copy from child: $!";
 }
 
+sub copy_stdin {
+	my ($in) = @_;
+	my $pid = fork;
+	if (!$pid) {
+		xsendfile($in, \*STDIN);
+		exit 0;
+	}
+	close($in);
+	return $pid;
+}
+
 sub copy_stdio {
 	my ($out, $err) = @_;
 	my $pid = fork;
@@ -67,14 +80,25 @@ sub copy_stdio {
 if ($#ARGV < 1) {
 	die "usage: test-terminal program args";
 }
+my $master_in = new IO::Pty;
 my $master_out = new IO::Pty;
 my $master_err = new IO::Pty;
+$master_in->set_raw();
 $master_out->set_raw();
 $master_err->set_raw();
+$master_in->slave->set_raw();
 $master_out->slave->set_raw();
 $master_err->slave->set_raw();
-my $pid = start_child(\@ARGV, $master_out->slave, $master_err->slave);
+my $pid = start_child(\@ARGV, $master_in->slave, $master_out->slave, $master_err->slave);
+close $master_in->slave;
 close $master_out->slave;
 close $master_err->slave;
+my $in_pid = copy_stdin($master_in);
 copy_stdio($master_out, $master_err);
-exit(finish_child($pid));
+my $ret = finish_child($pid);
+# If the child process terminates before our copy_stdin() process is able to
+# write all of its data to $master_in, the copy_stdin() process could stall.
+# Send SIGTERM to it to ensure it terminates.
+kill 'TERM', $in_pid;
+finish_child($in_pid);
+exit($ret);

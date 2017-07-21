@@ -63,8 +63,10 @@ automatic consolidation of packs.
 --prune=<date>::
 	Prune loose objects older than date (default is 2 weeks ago,
 	overridable by the config variable `gc.pruneExpire`).
-	--prune=all prunes loose objects regardless of their age.
-	--prune is on by default.
+	--prune=all prunes loose objects regardless of their age and
+	increases the risk of corruption if another process is writing to
+	the repository concurrently; see "NOTES" below. --prune is on by
+	default.
 
 --no-prune::
 	Do not prune any loose objects.
@@ -79,13 +81,13 @@ automatic consolidation of packs.
 Configuration
 -------------
 
-The optional configuration variable 'gc.reflogExpire' can be
+The optional configuration variable `gc.reflogExpire` can be
 set to indicate how long historical entries within each branch's
 reflog should remain available in this repository.  The setting is
 expressed as a length of time, for example '90 days' or '3 months'.
 It defaults to '90 days'.
 
-The optional configuration variable 'gc.reflogExpireUnreachable'
+The optional configuration variable `gc.reflogExpireUnreachable`
 can be set to indicate how long historical reflog entries which
 are not part of the current branch should remain available in
 this repository.  These types of entries are generally created as
@@ -104,30 +106,30 @@ branches:
 	reflogExpireUnreachable = 3 days
 ------------
 
-The optional configuration variable 'gc.rerereResolved' indicates
+The optional configuration variable `gc.rerereResolved` indicates
 how long records of conflicted merge you resolved earlier are
 kept.  This defaults to 60 days.
 
-The optional configuration variable 'gc.rerereUnresolved' indicates
+The optional configuration variable `gc.rerereUnresolved` indicates
 how long records of conflicted merge you have not resolved are
 kept.  This defaults to 15 days.
 
-The optional configuration variable 'gc.packRefs' determines if
+The optional configuration variable `gc.packRefs` determines if
 'git gc' runs 'git pack-refs'. This can be set to "notbare" to enable
 it within all non-bare repos or it can be set to a boolean value.
 This defaults to true.
 
-The optional configuration variable 'gc.aggressiveWindow' controls how
+The optional configuration variable `gc.aggressiveWindow` controls how
 much time is spent optimizing the delta compression of the objects in
 the repository when the --aggressive option is specified.  The larger
 the value, the more time is spent optimizing the delta compression.  See
 the documentation for the --window' option in linkgit:git-repack[1] for
 more details.  This defaults to 250.
 
-Similarly, the optional configuration variable 'gc.aggressiveDepth'
-controls --depth option in linkgit:git-repack[1]. This defaults to 250.
+Similarly, the optional configuration variable `gc.aggressiveDepth`
+controls --depth option in linkgit:git-repack[1]. This defaults to 50.
 
-The optional configuration variable 'gc.pruneExpire' controls how old
+The optional configuration variable `gc.pruneExpire` controls how old
 the unreferenced loose objects have to be before they are pruned.  The
 default is "2 weeks ago".
 
@@ -135,16 +137,35 @@ default is "2 weeks ago".
 Notes
 -----
 
-'git gc' tries very hard to be safe about the garbage it collects. In
+'git gc' tries very hard not to delete objects that are referenced
+anywhere in your repository. In
 particular, it will keep not only objects referenced by your current set
 of branches and tags, but also objects referenced by the index,
 remote-tracking branches, refs saved by 'git filter-branch' in
 refs/original/, or reflogs (which may reference commits in branches
 that were later amended or rewound).
-
-If you are expecting some objects to be collected and they aren't, check
+If you are expecting some objects to be deleted and they aren't, check
 all of those locations and decide whether it makes sense in your case to
 remove those references.
+
+On the other hand, when 'git gc' runs concurrently with another process,
+there is a risk of it deleting an object that the other process is using
+but hasn't created a reference to. This may just cause the other process
+to fail or may corrupt the repository if the other process later adds a
+reference to the deleted object. Git has two features that significantly
+mitigate this problem:
+
+. Any object with modification time newer than the `--prune` date is kept,
+  along with everything reachable from it.
+
+. Most operations that add an object to the database update the
+  modification time of the object if it is already present so that #1
+  applies.
+
+However, these features fall short of a complete solution, so users who
+run commands concurrently have to live with some risk of corruption (which
+seems to be low in practice) unless they turn off automatic garbage
+collection with 'git config gc.auto 0'.
 
 HOOKS
 -----

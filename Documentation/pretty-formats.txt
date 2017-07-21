@@ -139,14 +139,28 @@ The placeholders are:
 - '%f': sanitized subject line, suitable for a filename
 - '%b': body
 - '%B': raw body (unwrapped subject and body)
+ifndef::git-rev-list[]
 - '%N': commit notes
+endif::git-rev-list[]
 - '%GG': raw verification message from GPG for a signed commit
-- '%G?': show "G" for a Good signature, "B" for a Bad signature, "U" for a good,
-  untrusted signature and "N" for no signature
+- '%G?': show "G" for a good (valid) signature,
+  "B" for a bad signature,
+  "U" for a good signature with unknown validity,
+  "X" for a good signature that has expired,
+  "Y" for a good signature made by an expired key,
+  "R" for a good signature made by a revoked key,
+  "E" if the signature cannot be checked (e.g. missing key)
+  and "N" for no signature
 - '%GS': show the name of the signer for a signed commit
 - '%GK': show the key used to sign a signed commit
-- '%gD': reflog selector, e.g., `refs/stash@{1}`
-- '%gd': shortened reflog selector, e.g., `stash@{1}`
+- '%gD': reflog selector, e.g., `refs/stash@{1}` or
+  `refs/stash@{2 minutes ago`}; the format follows the rules described
+  for the `-g` option. The portion before the `@` is the refname as
+  given on the command line (so `git log -g refs/heads/master` would
+  yield `refs/heads/master@{0}`).
+- '%gd': shortened reflog selector; same as `%gD`, but the refname
+  portion is shortened for human readability (so `refs/heads/master`
+  becomes just `master`).
 - '%gn': reflog identity name
 - '%gN': reflog identity name (respecting .mailmap, see
   linkgit:git-shortlog[1] or linkgit:git-blame[1])
@@ -158,13 +172,15 @@ The placeholders are:
 - '%Cgreen': switch color to green
 - '%Cblue': switch color to blue
 - '%Creset': reset color
-- '%C(...)': color specification, as described in color.branch.* config option;
-  adding `auto,` at the beginning will emit color only when colors are
-  enabled for log output (by `color.diff`, `color.ui`, or `--color`, and
-  respecting the `auto` settings of the former if we are going to a
-  terminal). `auto` alone (i.e. `%C(auto)`) will turn on auto coloring
-  on the next placeholders until the color is switched again.
-- '%m': left, right or boundary mark
+- '%C(...)': color specification, as described under Values in the
+  "CONFIGURATION FILE" section of linkgit:git-config[1];
+  adding `auto,` at the beginning (e.g. `%C(auto,red)`) will emit
+  color only when colors are enabled for log output (by `color.diff`,
+  `color.ui`, or `--color`, and respecting the `auto` settings of the
+  former if we are going to a terminal). `auto` alone (i.e.
+  `%C(auto)`) will turn on auto coloring on the next placeholders
+  until the color is switched again.
+- '%m': left (`<`), right (`>`) or boundary (`-`) mark
 - '%n': newline
 - '%%': a raw '%'
 - '%x00': print a byte from a hex code
@@ -184,6 +200,8 @@ The placeholders are:
   than given and there are spaces on its left, use those spaces
 - '%><(<N>)', '%><|(<N>)': similar to '% <(<N>)', '%<|(<N>)'
   respectively, but padding both sides (i.e. the text is centered)
+- %(trailers): display the trailers of the body as interpreted by
+  linkgit:git-interpret-trailers[1]
 
 NOTE: Some placeholders may depend on other options given to the
 revision traversal engine. For example, the `%g*` reflog options will
@@ -196,8 +214,8 @@ If you add a `+` (plus sign) after '%' of a placeholder, a line-feed
 is inserted immediately before the expansion if and only if the
 placeholder expands to a non-empty string.
 
-If you add a `-` (minus sign) after '%' of a placeholder, line-feeds that
-immediately precede the expansion are deleted if and only if the
+If you add a `-` (minus sign) after '%' of a placeholder, all consecutive
+line-feeds immediately preceding the expansion are deleted if and only if the
 placeholder expands to an empty string.
 
 If you add a ` ` (space) after '%' of a placeholder, a space

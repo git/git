@@ -100,4 +100,18 @@ test_expect_success '--bisect and --first-parent can not be combined' '
 	test_must_fail git rev-list --bisect --first-parent HEAD
 '
 
+test_expect_success '--header shows a NUL after each commit' '
+	# We know that there is no Q in the true payload; names and
+	# addresses of the authors and the committers do not have
+	# any, and object names or header names do not, either.
+	git rev-list --header --max-count=2 HEAD |
+	nul_to_q |
+	grep "^Q" >actual &&
+	cat >expect <<-EOF &&
+	Q$(git rev-parse HEAD~1)
+	Q
+	EOF
+	test_cmp expect actual
+'
+
 test_done

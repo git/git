@@ -115,8 +115,8 @@ test_expect_success 'push with transfer.fsckobjects' '
 	test_cmp exp act
 '
 
-cat >bogus-commit <<\EOF
-tree 4b825dc642cb6eb9a060e54bf8d69288fbee4904
+cat >bogus-commit <<EOF
+tree $EMPTY_TREE
 author Bugs Bunny 1234567890 +0000
 committer Bugs Bunny <bugs@bun.ni> 1234567890 +0000
 
@@ -152,7 +152,7 @@ test_expect_success 'push with receive.fsck.missingEmail=warn' '
 	git --git-dir=dst/.git config --add \
 		receive.fsck.badDate warn &&
 	git push --porcelain dst bogus >act 2>&1 &&
-	test_must_fail grep "missingEmail" act
+	! grep "missingEmail" act
 '
 
 test_expect_success \

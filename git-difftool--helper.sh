@@ -44,10 +44,10 @@ launch_merge_tool () {
 			"$GIT_DIFF_PATH_TOTAL" "$MERGED"
 		if use_ext_cmd
 		then
-			printf "Launch '%s' [Y/n]: " \
+			printf "Launch '%s' [Y/n]? " \
 				"$GIT_DIFFTOOL_EXTCMD"
 		else
-			printf "Launch '%s' [Y/n]: " "$merge_tool"
+			printf "Launch '%s' [Y/n]? " "$merge_tool"
 		fi
 		read ans || return
 		if test "$ans" = n
@@ -86,6 +86,13 @@ else
 	do
 		launch_merge_tool "$1" "$2" "$5"
 		status=$?
+		if test $status -ge 126
+		then
+			# Command not found (127), not executable (126) or
+			# exited via a signal (>= 128).
+			exit $status
+		fi
+
 		if test "$status" != 0 &&
 			test "$GIT_DIFFTOOL_TRUST_EXIT_CODE" = true
 		then

@@ -9,7 +9,7 @@ git-describe - Describe a commit using the most recent tag reachable from it
 SYNOPSIS
 --------
 [verse]
-'git describe' [--all] [--tags] [--contains] [--abbrev=<n>] <commit-ish>...
+'git describe' [--all] [--tags] [--contains] [--abbrev=<n>] [<commit-ish>...]
 'git describe' [--all] [--tags] [--contains] [--abbrev=<n>] --dirty[=<mark>]
 
 DESCRIPTION
@@ -27,12 +27,17 @@ see the -a and -s options to linkgit:git-tag[1].
 OPTIONS
 -------
 <commit-ish>...::
-	Commit-ish object names to describe.
+	Commit-ish object names to describe.  Defaults to HEAD if omitted.
 
 --dirty[=<mark>]::
-	Describe the working tree.
-	It means describe HEAD and appends <mark> (`-dirty` by
-	default) if the working tree is dirty.
+--broken[=<mark>]::
+	Describe the state of the working tree.  When the working
+	tree matches HEAD, the output is the same as "git describe
+	HEAD".  If the working tree has local modification "-dirty"
+	is appended to it.  If a repository is corrupt and Git
+	cannot determine if there is local modification, Git will
+	error out, unless `--broken' is given, which appends
+	the suffix "-broken" instead.
 
 --all::
 	Instead of using only the annotated tags, use any ref
@@ -83,7 +88,20 @@ OPTIONS
 --match <pattern>::
 	Only consider tags matching the given `glob(7)` pattern,
 	excluding the "refs/tags/" prefix.  This can be used to avoid
-	leaking private tags from the repository.
+	leaking private tags from the repository. If given multiple times, a
+	list of patterns will be accumulated, and tags matching any of the
+	patterns will be considered. Use `--no-match` to clear and reset the
+	list of patterns.
+
+--exclude <pattern>::
+	Do not consider tags matching the given `glob(7)` pattern, excluding
+	the "refs/tags/" prefix. This can be used to narrow the tag space and
+	find only tags matching some meaningful criteria. If given multiple
+	times, a list of patterns will be accumulated and tags matching any
+	of the patterns will be excluded. When combined with --match a tag will
+	be considered when it matches at least one --match pattern and does not
+	match any of the --exclude patterns. Use `--no-exclude` to clear and
+	reset the list of patterns.
 
 --always::
 	Show uniquely abbreviated commit object as fallback.
@@ -154,7 +172,7 @@ is found, its name will be output and searching will stop.
 If an exact match was not found, 'git describe' will walk back
 through the commit history to locate an ancestor commit which
 has been tagged.  The ancestor's tag will be output along with an
-abbreviation of the input commit-ish's SHA-1. If '--first-parent' was
+abbreviation of the input commit-ish's SHA-1. If `--first-parent` was
 specified then the walk will only consider the first parent of each
 commit.
 

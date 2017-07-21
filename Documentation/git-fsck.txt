@@ -11,7 +11,8 @@ SYNOPSIS
 [verse]
 'git fsck' [--tags] [--root] [--unreachable] [--cache] [--no-reflogs]
 	 [--[no-]full] [--strict] [--verbose] [--lost-found]
-	 [--[no-]dangling] [--[no-]progress] [--connectivity-only] [<object>*]
+	 [--[no-]dangling] [--[no-]progress] [--connectivity-only]
+	 [--[no-]name-objects] [<object>*]
 
 DESCRIPTION
 -----------
@@ -82,6 +83,12 @@ index file, all SHA-1 references in `refs` namespace, and all reflogs
 	a blob, the contents are written into the file, rather than
 	its object name.
 
+--name-objects::
+	When displaying names of reachable objects, in addition to the
+	SHA-1 also display a name that describes *how* they are reachable,
+	compatible with linkgit:git-rev-parse[1], e.g.
+	`HEAD@{1234567890}~25^2:src/`.
+
 --[no-]progress::
 	Progress status is reported on the standard error stream by
 	default when it is attached to a terminal, unless
@@ -95,7 +102,7 @@ DISCUSSION
 git-fsck tests SHA-1 and general object sanity, and it does full tracking
 of the resulting reachability and everything else. It prints out any
 corruption it finds (missing or bad objects), and if you use the
-'--unreachable' flag it will also print out objects that exist but that
+`--unreachable` flag it will also print out objects that exist but that
 aren't reachable from any of the specified head nodes (or the default
 set, as mentioned above).
 

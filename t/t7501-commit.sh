@@ -18,7 +18,7 @@ test_expect_success 'initial status' '
 	echo bongo bongo >file &&
 	git add file &&
 	git status >actual &&
-	test_i18ngrep "Initial commit" actual
+	test_i18ngrep "No commits yet" actual
 '
 
 test_expect_success 'fail initial amend' '
@@ -155,6 +155,15 @@ test_expect_success 'amend --only ignores staged contents' '
 	git diff --exit-code
 '
 
+test_expect_success 'allow-empty --only ignores staged contents' '
+	echo changed-again >file &&
+	git add file &&
+	git commit --allow-empty --only -m "empty" &&
+	git cat-file blob HEAD:file >file.actual &&
+	test_cmp file.expect file.actual &&
+	git diff --exit-code
+'
+
 test_expect_success 'set up editor' '
 	cat >editor <<-\EOF &&
 	#!/bin/sh
@@ -197,6 +206,26 @@ test_expect_success '--amend --edit of empty message' '
 	EDITOR=./replace git commit --edit --amend &&
 	git diff-tree -s --format=%s HEAD >msg &&
 	./replace expect &&
+	test_cmp expect msg
+'
+
+test_expect_success '--amend to set message to empty' '
+	echo bata >file &&
+	git add file &&
+	git commit -m "unamended" &&
+	git commit --amend --allow-empty-message -m "" &&
+	git diff-tree -s --format=%s HEAD >msg &&
+	echo "" >expect &&
+	test_cmp expect msg
+'
+
+test_expect_success '--amend to set empty message needs --allow-empty-message' '
+	echo conga >file &&
+	git add file &&
+	git commit -m "unamended" &&
+	test_must_fail git commit --amend -m "" &&
+	git diff-tree -s --format=%s HEAD >msg &&
+	echo "unamended" >expect &&
 	test_cmp expect msg
 '
 
@@ -440,6 +469,42 @@ $alt" &&
 	test_cmp expected actual
 '
 
+test_expect_success 'signoff respects trailer config' '
+
+	echo 5 >positive &&
+	git add positive &&
+	git commit -s -m "subject
+
+non-trailer line
+Myfooter: x" &&
+	git cat-file commit HEAD | sed -e "1,/^\$/d" > actual &&
+	(
+		echo subject
+		echo
+		echo non-trailer line
+		echo Myfooter: x
+		echo
+		echo "Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>"
+	) >expected &&
+	test_cmp expected actual &&
+
+	echo 6 >positive &&
+	git add positive &&
+	git -c "trailer.Myfooter.ifexists=add" commit -s -m "subject
+
+non-trailer line
+Myfooter: x" &&
+	git cat-file commit HEAD | sed -e "1,/^\$/d" > actual &&
+	(
+		echo subject
+		echo
+		echo non-trailer line
+		echo Myfooter: x
+		echo "Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>"
+	) >expected &&
+	test_cmp expected actual
+'
+
 test_expect_success 'multiple -m' '
 
 	>negative &&
@@ -585,6 +650,26 @@ test_expect_success '--only works on to-be-born branch' '
 	echo newfile >expected &&
 	git ls-tree -r --name-only HEAD >actual &&
 	test_cmp expected actual
+'
+
+test_expect_success '--dry-run with conflicts fixed from a merge' '
+	# setup two branches with conflicting information
+	# in the same file, resolve the conflict,
+	# call commit with --dry-run
+	echo "Initial contents, unimportant" >test-file &&
+	git add test-file &&
+	git commit -m "Initial commit" &&
+	echo "commit-1-state" >test-file &&
+	git commit -m "commit 1" -i test-file &&
+	git tag commit-1 &&
+	git checkout -b branch-2 HEAD^1 &&
+	echo "commit-2-state" >test-file &&
+	git commit -m "commit 2" -i test-file &&
+	! $(git merge --no-commit commit-1) &&
+	echo "commit-2-state" >test-file &&
+	git add test-file &&
+	git commit --dry-run &&
+	git commit -m "conflicts fixed from merge."
 '
 
 test_done

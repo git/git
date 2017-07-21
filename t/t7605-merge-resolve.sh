@@ -27,7 +27,7 @@ test_expect_success 'setup' '
 	git tag c3
 '
 
-test_expect_success 'merge c1 to c2' '
+merge_c1_to_c2_cmds='
 	git reset --hard c1 &&
 	git merge -s resolve c2 &&
 	test "$(git rev-parse c1)" != "$(git rev-parse HEAD)" &&
@@ -40,6 +40,10 @@ test_expect_success 'merge c1 to c2' '
 	test 3 = $(git ls-tree -r HEAD | wc -l) &&
 	test 3 = $(git ls-files | wc -l)
 '
+
+test_expect_success 'merge c1 to c2'        "$merge_c1_to_c2_cmds"
+
+test_expect_success 'merge c1 to c2, again' "$merge_c1_to_c2_cmds"
 
 test_expect_success 'merge c2 to c3 (fails)' '
 	git reset --hard c2 &&

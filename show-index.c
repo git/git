@@ -2,16 +2,14 @@
 #include "pack.h"
 
 static const char show_index_usage[] =
-"git show-index < <packed archive index>";
+"git show-index";
 
-int main(int argc, char **argv)
+int cmd_main(int argc, const char **argv)
 {
 	int i;
 	unsigned nr;
 	unsigned int version;
 	static unsigned int top_index[256];
-
-	git_setup_gettext();
 
 	if (argc != 1)
 		usage(show_index_usage);
@@ -50,7 +48,8 @@ int main(int argc, char **argv)
 			unsigned char sha1[20];
 			uint32_t crc;
 			uint32_t off;
-		} *entries = xmalloc(nr * sizeof(entries[0]));
+		} *entries;
+		ALLOC_ARRAY(entries, nr);
 		for (i = 0; i < nr; i++)
 			if (fread(entries[i].sha1, 20, 1, stdin) != 1)
 				die("unable to read sha1 %u/%u", i, nr);

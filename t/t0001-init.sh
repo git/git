@@ -87,6 +87,21 @@ test_expect_success 'plain nested in bare through aliased command' '
 	check_config bare-ancestor-aliased.git/plain-nested/.git false unset
 '
 
+test_expect_success 'No extra GIT_* on alias scripts' '
+	write_script script <<-\EOF &&
+	env |
+		sed -n \
+			-e "/^GIT_PREFIX=/d" \
+			-e "/^GIT_TEXTDOMAINDIR=/d" \
+			-e "/^GIT_/s/=.*//p" |
+		sort
+	EOF
+	./script >expected &&
+	git config alias.script \!./script &&
+	( mkdir sub && cd sub && git script >../actual ) &&
+	test_cmp expected actual
+'
+
 test_expect_success 'plain with GIT_WORK_TREE' '
 	mkdir plain-wt &&
 	test_must_fail env GIT_WORK_TREE="$(pwd)/plain-wt" git init plain-wt
@@ -202,8 +217,8 @@ test_expect_success 'init honors global core.sharedRepository' '
 	x$(git config -f shared-honor-global/.git/config core.sharedRepository)
 '
 
-test_expect_success 'init rejects insanely long --template' '
-	test_must_fail git init --template=$(printf "x%09999dx" 1) test
+test_expect_success 'init allows insanely long --template' '
+	git init --template=$(printf "x%09999dx" 1) test
 '
 
 test_expect_success 'init creates a new directory' '
@@ -243,6 +258,9 @@ test_expect_success POSIXPERM 'init creates a new deep directory (umask vs. shar
 	(
 		# Leading directories should honor umask while
 		# the repository itself should follow "shared"
+		mkdir newdir &&
+		# Remove a default ACL if possible.
+		(setfacl -k newdir 2>/dev/null || true) &&
 		umask 002 &&
 		git init --bare --shared=0660 newdir/a/b/c &&
 		test_path_is_dir newdir/a/b/c/refs &&
@@ -297,6 +315,20 @@ test_expect_success 'init with separate gitdir' '
 	test_path_is_dir realgitdir/refs
 '
 
+test_expect_success 'init in long base path' '
+	# exceed initial buffer size of strbuf_getcwd()
+	component=123456789abcdef &&
+	test_when_finished "chmod 0700 $component; rm -rf $component" &&
+	p31=$component/$component &&
+	p127=$p31/$p31/$p31/$p31 &&
+	mkdir -p $p127 &&
+	chmod 0111 $component &&
+	(
+		cd $p127 &&
+		git init newdir
+	)
+'
+
 test_expect_success 're-init on .git file' '
 	( cd newdir && git init )
 '
@@ -337,6 +369,62 @@ test_expect_success SYMLINKS 're-init to move gitdir symlink' '
 	test_cmp expected newdir/.git &&
 	test_cmp expected newdir/here &&
 	test_path_is_dir realgitdir/refs
+'
+
+# Tests for the hidden file attribute on windows
+is_hidden () {
+	# Use the output of `attrib`, ignore the absolute path
+	case "$(attrib "$1")" in *H*?:*) return 0;; esac
+	return 1
+}
+
+test_expect_success MINGW '.git hidden' '
+	rm -rf newdir &&
+	(
+		unset GIT_DIR GIT_WORK_TREE
+		mkdir newdir &&
+		cd newdir &&
+		git init &&
+		is_hidden .git
+	) &&
+	check_config newdir/.git false unset
+'
+
+test_expect_success MINGW 'bare git dir not hidden' '
+	rm -rf newdir &&
+	(
+		unset GIT_DIR GIT_WORK_TREE GIT_CONFIG
+		mkdir newdir &&
+		cd newdir &&
+		git --bare init
+	) &&
+	! is_hidden newdir
+'
+
+test_expect_success 'remote init from does not use config from cwd' '
+	rm -rf newdir &&
+	test_config core.logallrefupdates true &&
+	git init newdir &&
+	echo true >expect &&
+	git -C newdir config --bool core.logallrefupdates >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 're-init from a linked worktree' '
+	git init main-worktree &&
+	(
+		cd main-worktree &&
+		test_commit first &&
+		git worktree add ../linked-worktree &&
+		mv .git/info/exclude expected-exclude &&
+		cp .git/config expected-config &&
+		find .git/worktrees -print | sort >expected &&
+		git -C ../linked-worktree init &&
+		test_cmp expected-exclude .git/info/exclude &&
+		test_cmp expected-config .git/config &&
+		find .git/worktrees -print | sort >actual &&
+		test_cmp expected actual
+	)
 '
 
 test_done

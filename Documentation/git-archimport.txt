@@ -96,7 +96,7 @@ OPTIONS
 	pruned.
 
 -a::
-	Attempt to auto-register archives at http://mirrors.sourcecontrol.net
+	Attempt to auto-register archives at `http://mirrors.sourcecontrol.net`
 	This is particularly useful with the -D option.
 
 -t <tmpdir>::

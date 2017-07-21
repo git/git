@@ -51,7 +51,7 @@ If your description starts to get too long, that's a sign that you
 probably need to split up your commit to finer grained pieces.
 That being said, patches which plainly describe the things that
 help reviewers check the patch, and future maintainers understand
-the code, are the most beautiful patches.  Descriptions that summarise
+the code, are the most beautiful patches.  Descriptions that summarize
 the point in the subject well, and describe the motivation for the
 change, the approach taken by the change, and if relevant how this
 differs substantially from the prior version, are all good things
@@ -61,28 +61,33 @@ Make sure that you have tests for the bug you are fixing.  See
 t/README for guidance.
 
 When adding a new feature, make sure that you have new tests to show
-the feature triggers the new behaviour when it should, and to show the
-feature does not trigger when it shouldn't.  Also make sure that the
-test suite passes after your commit.  Do not forget to update the
-documentation to describe the updated behaviour.
+the feature triggers the new behavior when it should, and to show the
+feature does not trigger when it shouldn't.  After any code change, make
+sure that the entire test suite passes.
 
-Speaking of the documentation, it is currently a liberal mixture of US
-and UK English norms for spelling and grammar, which is somewhat
-unfortunate.  A huge patch that touches the files all over the place
-only to correct the inconsistency is not welcome, though.  Potential
-clashes with other changes that can result from such a patch are not
-worth it.  We prefer to gradually reconcile the inconsistencies in
-favor of US English, with small and easily digestible patches, as a
-side effect of doing some other real work in the vicinity (e.g.
-rewriting a paragraph for clarity, while turning en_UK spelling to
-en_US).  Obvious typographical fixes are much more welcomed ("teh ->
-"the"), preferably submitted as independent patches separate from
-other documentation changes.
+If you have an account at GitHub (and you can get one for free to work
+on open source projects), you can use their Travis CI integration to
+test your changes on Linux, Mac (and hopefully soon Windows).  See
+GitHub-Travis CI hints section for details.
+
+Do not forget to update the documentation to describe the updated
+behavior and make sure that the resulting documentation set formats
+well. It is currently a liberal mixture of US and UK English norms for
+spelling and grammar, which is somewhat unfortunate.  A huge patch that
+touches the files all over the place only to correct the inconsistency
+is not welcome, though.  Potential clashes with other changes that can
+result from such a patch are not worth it.  We prefer to gradually
+reconcile the inconsistencies in favor of US English, with small and
+easily digestible patches, as a side effect of doing some other real
+work in the vicinity (e.g. rewriting a paragraph for clarity, while
+turning en_UK spelling to en_US).  Obvious typographical fixes are much
+more welcomed ("teh -> "the"), preferably submitted as independent
+patches separate from other documentation changes.
 
 Oh, another thing.  We are picky about whitespaces.  Make sure your
 changes do not trigger errors with the sample pre-commit hook shipped
 in templates/hooks--pre-commit.  To help ensure this does not happen,
-run git diff --check on your changes before you commit.
+run "git diff --check" on your changes before you commit.
 
 
 (2) Describe your changes well.
@@ -93,18 +98,23 @@ should skip the full stop.  It is also conventional in most cases to
 prefix the first line with "area: " where the area is a filename or
 identifier for the general area of the code being modified, e.g.
 
-  . archive: ustar header checksum is computed unsigned
-  . git-cherry-pick.txt: clarify the use of revision range notation
+  . doc: clarify distinction between sign-off and pgp-signing
+  . githooks.txt: improve the intro section
 
 If in doubt which identifier to use, run "git log --no-merges" on the
 files you are modifying to see the current conventions.
 
+It's customary to start the remainder of the first line after "area: "
+with a lower-case letter. E.g. "doc: clarify...", not "doc:
+Clarify...", or "githooks.txt: improve...", not "githooks.txt:
+Improve...".
+
 The body should provide a meaningful commit message, which:
 
-  . explains the problem the change tries to solve, iow, what is wrong
+  . explains the problem the change tries to solve, i.e. what is wrong
     with the current code without the change.
 
-  . justifies the way the change solves the problem, iow, why the
+  . justifies the way the change solves the problem, i.e. why the
     result with the change is better.
 
   . alternate solutions considered but discarded, if any.
@@ -112,10 +122,21 @@ The body should provide a meaningful commit message, which:
 Describe your changes in imperative mood, e.g. "make xyzzy do frotz"
 instead of "[This patch] makes xyzzy do frotz" or "[I] changed xyzzy
 to do frotz", as if you are giving orders to the codebase to change
-its behaviour.  Try to make sure your explanation can be understood
+its behavior.  Try to make sure your explanation can be understood
 without external resources. Instead of giving a URL to a mailing list
 archive, summarize the relevant points of the discussion.
 
+If you want to reference a previous commit in the history of a stable
+branch, use the format "abbreviated sha1 (subject, date)",
+with the subject enclosed in a pair of double-quotes, like this:
+
+    Commit f86a374 ("pack-bitmap.c: fix a memleak", 2015-03-30)
+    noticed that ...
+
+The "Copy commit summary" command of gitk can be used to obtain this
+format, or this invocation of "git show":
+
+    git show -s --date=short --pretty='format:%h ("%s", %ad)' <commit>
 
 (3) Generate your patch using Git tools out of your commits.
 
@@ -201,12 +222,11 @@ that it will be postponed.
 Exception:  If your mailer is mangling patches then someone may ask
 you to re-send them using MIME, that is OK.
 
-Do not PGP sign your patch, at least for now.  Most likely, your
-maintainer or other people on the list would not have your PGP
-key and would not bother obtaining it anyway.  Your patch is not
-judged by who you are; a good patch from an unknown origin has a
-far better chance of being accepted than a patch from a known,
-respected origin that is done poorly or does incorrect things.
+Do not PGP sign your patch. Most likely, your maintainer or other people on the
+list would not have your PGP key and would not bother obtaining it anyway.
+Your patch is not judged by who you are; a good patch from an unknown origin
+has a far better chance of being accepted than a patch from a known, respected
+origin that is done poorly or does incorrect things.
 
 If you really really really really want to do a PGP signed
 patch, format it as "multipart/signed", not a text/plain message
@@ -231,7 +251,7 @@ patch.
      *2* The mailing list: git@vger.kernel.org
 
 
-(5) Sign your work
+(5) Certify your work by adding your "Signed-off-by: " line
 
 To improve tracking of who did what, we've borrowed the
 "sign-off" procedure from the Linux kernel project on patches
@@ -241,7 +261,7 @@ smaller project it is a good discipline to follow it.
 The sign-off is a simple line at the end of the explanation for
 the patch, which certifies that you wrote it or otherwise have
 the right to pass it on as a open-source patch.  The rules are
-pretty simple: if you can certify the below:
+pretty simple: if you can certify the below D-C-O:
 
         Developer's Certificate of Origin 1.1
 
@@ -369,6 +389,47 @@ Know the status of your patch after submission
 * Read the Git mailing list, the maintainer regularly posts messages
   entitled "What's cooking in git.git" and "What's in git.git" giving
   the status of various proposed changes.
+
+--------------------------------------------------
+GitHub-Travis CI hints
+
+With an account at GitHub (you can get one for free to work on open
+source projects), you can use Travis CI to test your changes on Linux,
+Mac (and hopefully soon Windows).  You can find a successful example
+test build here: https://travis-ci.org/git/git/builds/120473209
+
+Follow these steps for the initial setup:
+
+ (1) Fork https://github.com/git/git to your GitHub account.
+     You can find detailed instructions how to fork here:
+     https://help.github.com/articles/fork-a-repo/
+
+ (2) Open the Travis CI website: https://travis-ci.org
+
+ (3) Press the "Sign in with GitHub" button.
+
+ (4) Grant Travis CI permissions to access your GitHub account.
+     You can find more information about the required permissions here:
+     https://docs.travis-ci.com/user/github-oauth-scopes
+
+ (5) Open your Travis CI profile page: https://travis-ci.org/profile
+
+ (6) Enable Travis CI builds for your Git fork.
+
+After the initial setup, Travis CI will run whenever you push new changes
+to your fork of Git on GitHub.  You can monitor the test state of all your
+branches here: https://travis-ci.org/<Your GitHub handle>/git/branches
+
+If a branch did not pass all test cases then it is marked with a red
+cross.  In that case you can click on the failing Travis CI job and
+scroll all the way down in the log.  Find the line "<-- Click here to see
+detailed test output!" and click on the triangle next to the log line
+number to expand the detailed test output.  Here is such a failing
+example: https://travis-ci.org/git/git/jobs/122676187
+
+Fix the problem and push your fix to your Git fork.  This will trigger
+a new Travis CI build to ensure all tests pass.
+
 
 ------------------------------------------------
 MUA specific hints

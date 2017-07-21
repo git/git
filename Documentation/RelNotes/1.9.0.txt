@@ -177,7 +177,7 @@ Performance, Internal Implementation, etc.
  * The naming convention of the packfiles has been updated; it used to
    be based on the enumeration of names of the objects that are
    contained in the pack, but now it also depends on how the packed
-   result is represented---packing the same set of objects using
+   result is represented--packing the same set of objects using
    different settings (or delta order) would produce a pack with
    different name.
 

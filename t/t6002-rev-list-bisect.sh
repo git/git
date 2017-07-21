@@ -27,9 +27,9 @@ test_bisection_diff()
 	# Test if bisection size is close to half of list size within
 	# tolerance.
 	#
-	_bisect_err=`expr $_list_size - $_bisection_size \* 2`
-	test "$_bisect_err" -lt 0 && _bisect_err=`expr 0 - $_bisect_err`
-	_bisect_err=`expr $_bisect_err / 2` ; # floor
+	_bisect_err=$(expr $_list_size - $_bisection_size \* 2)
+	test "$_bisect_err" -lt 0 && _bisect_err=$(expr 0 - $_bisect_err)
+	_bisect_err=$(expr $_bisect_err / 2) ; # floor
 
 	test_expect_success \
 	"bisection diff $_bisect_option $_head $* <= $_max_diff" \
@@ -235,4 +235,18 @@ test_sequence "--bisect"
 
 #
 #
+
+test_expect_success '--bisect can default to good/bad refs' '
+	git update-ref refs/bisect/bad c3 &&
+	good=$(git rev-parse b1) &&
+	git update-ref refs/bisect/good-$good $good &&
+	good=$(git rev-parse c1) &&
+	git update-ref refs/bisect/good-$good $good &&
+
+	# the only thing between c3 and c1 is c2
+	git rev-parse c2 >expect &&
+	git rev-list --bisect >actual &&
+	test_cmp expect actual
+'
+
 test_done

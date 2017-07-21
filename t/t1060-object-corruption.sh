@@ -21,6 +21,14 @@ test_expect_success 'setup corrupt repo' '
 		cd bit-error &&
 		test_commit content &&
 		corrupt_byte HEAD:content.t 10
+	) &&
+	git init no-bit-error &&
+	(
+		# distinct commit from bit-error, but containing a
+		# non-corrupted version of the same blob
+		cd no-bit-error &&
+		test_tick &&
+		test_commit content
 	)
 '
 
@@ -50,6 +58,13 @@ test_expect_success 'streaming a corrupt blob fails' '
 	(
 		cd bit-error &&
 		test_must_fail git cat-file blob HEAD:content.t
+	)
+'
+
+test_expect_success 'getting type of a corrupt blob fails' '
+	(
+		cd bit-error &&
+		test_must_fail git cat-file -s HEAD:content.t
 	)
 '
 
@@ -99,6 +114,15 @@ test_expect_success 'clone --local detects missing objects' '
 
 test_expect_failure 'clone --local detects misnamed objects' '
 	test_must_fail git clone --local misnamed misnamed-checkout
+'
+
+test_expect_success 'fetch into corrupted repo with index-pack' '
+	(
+		cd bit-error &&
+		test_must_fail git -c transfer.unpackLimit=1 \
+			fetch ../no-bit-error 2>stderr &&
+		test_i18ngrep ! -i collision stderr
+	)
 '
 
 test_done

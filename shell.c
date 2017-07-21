@@ -13,7 +13,7 @@ static int do_generic_cmd(const char *me, char *arg)
 	const char *my_argv[4];
 
 	setup_path();
-	if (!arg || !(arg = sq_dequote(arg)))
+	if (!arg || !(arg = sq_dequote(arg)) || *arg == '-')
 		die("bad argument");
 	if (!starts_with(me, "git-"))
 		die("bad command");
@@ -88,7 +88,7 @@ static void run_shell(void)
 		int count;
 
 		fprintf(stderr, "git> ");
-		if (strbuf_getline(&line, stdin, '\n') == EOF) {
+		if (strbuf_getline_lf(&line, stdin) == EOF) {
 			fprintf(stderr, "\n");
 			strbuf_release(&line);
 			break;
@@ -138,23 +138,12 @@ static struct commands {
 	{ NULL },
 };
 
-int main(int argc, char **argv)
+int cmd_main(int argc, const char **argv)
 {
 	char *prog;
 	const char **user_argv;
 	struct commands *cmd;
 	int count;
-
-	git_setup_gettext();
-
-	git_extract_argv0_path(argv[0]);
-
-	/*
-	 * Always open file descriptors 0/1/2 to avoid clobbering files
-	 * in die().  It also avoids messing up when the pipes are dup'ed
-	 * onto stdin/stdout/stderr in the child processes we spawn.
-	 */
-	sanitize_stdfds();
 
 	/*
 	 * Special hack to pretend to be a CVS server

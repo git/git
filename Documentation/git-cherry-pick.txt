@@ -9,7 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git cherry-pick' [--edit] [-n] [-m parent-number] [-s] [-x] [--ff]
-		  [-S[<key-id>]] <commit>...
+		  [-S[<keyid>]] <commit>...
 'git cherry-pick' --continue
 'git cherry-pick' --quit
 'git cherry-pick' --abort
@@ -47,7 +47,7 @@ OPTIONS
 	For a more complete list of ways to spell commits, see
 	linkgit:gitrevisions[7].
 	Sets of commits can be passed but no traversal is done by
-	default, as if the '--no-walk' option was specified, see
+	default, as if the `--no-walk` option was specified, see
 	linkgit:git-rev-list[1]. Note that specifying a range will
 	feed all <commit>... arguments to a single revision walk
 	(see a later example that uses 'maint master..next').
@@ -100,10 +100,13 @@ effect to your index in a row.
 -s::
 --signoff::
 	Add Signed-off-by line at the end of the commit message.
+	See the signoff option in linkgit:git-commit[1] for more information.
 
--S[<key-id>]::
---gpg-sign[=<key-id>]::
-	GPG-sign commits.
+-S[<keyid>]::
+--gpg-sign[=<keyid>]::
+	GPG-sign commits. The `keyid` argument is optional and
+	defaults to the committer identity; if specified, it must be
+	stuck to the option without a space.
 
 --ff::
 	If the current HEAD is the same as the parent of the
@@ -125,7 +128,7 @@ effect to your index in a row.
 
 --allow-empty-message::
 	By default, cherry-picking a commit with an empty message will fail.
-	This option overrides that behaviour, allowing commits with empty
+	This option overrides that behavior, allowing commits with empty
 	messages to be cherry picked.
 
 --keep-redundant-commits::

@@ -19,7 +19,7 @@ test_expect_success 'load svk depot' "
 uuid=b48289b2-9c08-4d72-af37-0358a40b9c15
 
 test_expect_success 'svk merges were represented coming in' "
-	[ `git cat-file commit HEAD | grep parent | wc -l` -eq 2 ]
+	[ $(git cat-file commit HEAD | grep parent | wc -l) -eq 2 ]
 	"
 
 test_done

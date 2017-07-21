@@ -23,6 +23,7 @@ familiar command name for people coming from other SCM systems.
 OPTIONS
 -------
 include::blame-options.txt[]
+include::diff-heuristic-options.txt[]
 
 SEE ALSO
 --------

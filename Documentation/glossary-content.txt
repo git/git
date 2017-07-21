@@ -145,7 +145,7 @@ current branch integrates with) obviously do not work, as there is no
 	A fast-forward is a special type of <<def_merge,merge>> where you have a
 	<<def_revision,revision>> and you are "merging" another
 	<<def_branch,branch>>'s changes that happen to be a descendant of what
-	you have. In such these cases, you do not make a new <<def_merge,merge>>
+	you have. In such a case, you do not make a new <<def_merge,merge>>
 	<<def_commit,commit>> but instead just update to his
 	revision. This will happen frequently on a
 	<<def_remote_tracking_branch,remote-tracking branch>> of a remote
@@ -384,10 +384,33 @@ full pathname may have special meaning:
 +
 Glob magic is incompatible with literal magic.
 
+attr;;
+After `attr:` comes a space separated list of "attribute
+requirements", all of which must be met in order for the
+path to be considered a match; this is in addition to the
+usual non-magic pathspec pattern matching.
+See linkgit:gitattributes[5].
++
+Each of the attribute requirements for the path takes one of
+these forms:
+
+- "`ATTR`" requires that the attribute `ATTR` be set.
+
+- "`-ATTR`" requires that the attribute `ATTR` be unset.
+
+- "`ATTR=VALUE`" requires that the attribute `ATTR` be
+  set to the string `VALUE`.
+
+- "`!ATTR`" requires that the attribute `ATTR` be
+  unspecified.
++
+
 exclude;;
 	After a path matches any non-exclude pathspec, it will be run
-	through all exclude pathspec (magic signature: `!`). If it
-	matches, the path is ignored.
+	through all exclude pathspec (magic signature: `!` or its
+	synonym `^`). If it matches, the path is ignored.  When there
+	is no non-exclude pathspec, the exclusion is applied to the
+	result set as if invoked without any pathspec.
 --
 
 [[def_parent]]parent::
@@ -410,6 +433,28 @@ exclude;;
 	<<def_core_git,core Git>>, presenting a high level access to
 	core Git. Porcelains expose more of a <<def_SCM,SCM>>
 	interface than the <<def_plumbing,plumbing>>.
+
+[[def_per_worktree_ref]]per-worktree ref::
+	Refs that are per-<<def_working_tree,worktree>>, rather than
+	global.  This is presently only <<def_HEAD,HEAD>> and any refs
+	that start with `refs/bisect/`, but might later include other
+	unusual refs.
+
+[[def_pseudoref]]pseudoref::
+	Pseudorefs are a class of files under `$GIT_DIR` which behave
+	like refs for the purposes of rev-parse, but which are treated
+	specially by git.  Pseudorefs both have names that are all-caps,
+	and always start with a line consisting of a
+	<<def_SHA1,SHA-1>> followed by whitespace.  So, HEAD is not a
+	pseudoref, because it is sometimes a symbolic ref.  They might
+	optionally contain some additional data.  `MERGE_HEAD` and
+	`CHERRY_PICK_HEAD` are examples.  Unlike
+	<<def_per_worktree_ref,per-worktree refs>>, these files cannot
+	be symbolic refs, and never have reflogs.  They also cannot be
+	updated through the normal ref update machinery.  Instead,
+	they are updated by directly writing to the files.  However,
+	they can be read as if they were refs, so `git rev-parse
+	MERGE_HEAD` will work.
 
 [[def_pull]]pull::
 	Pulling a <<def_branch,branch>> means to <<def_fetch,fetch>> it and
@@ -509,6 +554,11 @@ The most notable example is `HEAD`.
 	"Secure Hash Algorithm 1"; a cryptographic hash function.
 	In the context of Git used as a synonym for <<def_object_name,object name>>.
 
+[[def_shallow_clone]]shallow clone::
+	Mostly a synonym to <<def_shallow_repository,shallow repository>>
+	but the phrase makes it more explicit that it was created by
+	running `git clone --depth=...` command.
+
 [[def_shallow_repository]]shallow repository::
 	A shallow <<def_repository,repository>> has an incomplete
 	history some of whose <<def_commit,commits>> have <<def_parent,parents>> cauterized away (in other
@@ -519,6 +569,10 @@ The most notable example is `HEAD`.
 	upstream is much larger. A shallow repository
 	is created by giving the `--depth` option to linkgit:git-clone[1], and
 	its history can be later deepened with linkgit:git-fetch[1].
+
+[[def_stash]]stash entry::
+	An <<def_object,object>> used to temporarily store the contents of a
+	<<def_dirty,dirty>> working directory and the index for future reuse.
 
 [[def_submodule]]submodule::
 	A <<def_repository,repository>> that holds the history of a

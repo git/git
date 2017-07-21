@@ -1,9 +1,11 @@
 #include "git-compat-util.h"
 #include "cache.h"
+#include "config.h"
 #include "branch.h"
 #include "refs.h"
 #include "remote.h"
 #include "commit.h"
+#include "worktree.h"
 
 struct tracking {
 	struct refspec spec;
@@ -23,8 +25,7 @@ static int find_tracked_branch(struct remote *remote, void *priv)
 		} else {
 			free(tracking->spec.src);
 			if (tracking->src) {
-				free(tracking->src);
-				tracking->src = NULL;
+				FREE_AND_NULL(tracking->src);
 			}
 		}
 		tracking->spec.src = NULL;
@@ -48,7 +49,13 @@ static int should_setup_rebase(const char *origin)
 	return 0;
 }
 
-void install_branch_config(int flag, const char *local, const char *origin, const char *remote)
+static const char tracking_advice[] =
+N_("\n"
+"After fixing the error cause you may try to fix up\n"
+"the remote tracking information by invoking\n"
+"\"git branch --set-upstream-to=%s%s%s\".");
+
+int install_branch_config(int flag, const char *local, const char *origin, const char *remote)
 {
 	const char *shortname = NULL;
 	struct strbuf key = STRBUF_INIT;
@@ -59,20 +66,23 @@ void install_branch_config(int flag, const char *local, const char *origin, cons
 	    && !origin) {
 		warning(_("Not setting branch %s as its own upstream."),
 			local);
-		return;
+		return 0;
 	}
 
 	strbuf_addf(&key, "branch.%s.remote", local);
-	git_config_set(key.buf, origin ? origin : ".");
+	if (git_config_set_gently(key.buf, origin ? origin : ".") < 0)
+		goto out_err;
 
 	strbuf_reset(&key);
 	strbuf_addf(&key, "branch.%s.merge", local);
-	git_config_set(key.buf, remote);
+	if (git_config_set_gently(key.buf, remote) < 0)
+		goto out_err;
 
 	if (rebasing) {
 		strbuf_reset(&key);
 		strbuf_addf(&key, "branch.%s.rebase", local);
-		git_config_set(key.buf, "true");
+		if (git_config_set_gently(key.buf, "true") < 0)
+			goto out_err;
 	}
 	strbuf_release(&key);
 
@@ -101,6 +111,19 @@ void install_branch_config(int flag, const char *local, const char *origin, cons
 					  local, remote);
 		}
 	}
+
+	return 0;
+
+out_err:
+	strbuf_release(&key);
+	error(_("Unable to write upstream branch configuration"));
+
+	advise(_(tracking_advice),
+	       origin ? origin : "",
+	       origin ? "/" : "",
+	       shortname ? shortname : remote);
+
+	return -1;
 }
 
 /*
@@ -108,8 +131,8 @@ void install_branch_config(int flag, const char *local, const char *origin, cons
  * to infer the settings for branch.<new_ref>.{remote,merge} from the
  * config.
  */
-static int setup_tracking(const char *new_ref, const char *orig_ref,
-			  enum branch_track track, int quiet)
+static void setup_tracking(const char *new_ref, const char *orig_ref,
+			   enum branch_track track, int quiet)
 {
 	struct tracking tracking;
 	int config_flags = quiet ? 0 : BRANCH_CONFIG_VERBOSE;
@@ -117,7 +140,7 @@ static int setup_tracking(const char *new_ref, const char *orig_ref,
 	memset(&tracking, 0, sizeof(tracking));
 	tracking.spec.dst = (char *)orig_ref;
 	if (for_each_remote(find_tracked_branch, &tracking))
-		return 1;
+		return;
 
 	if (!tracking.matches)
 		switch (track) {
@@ -126,18 +149,18 @@ static int setup_tracking(const char *new_ref, const char *orig_ref,
 		case BRANCH_TRACK_OVERRIDE:
 			break;
 		default:
-			return 1;
+			return;
 		}
 
 	if (tracking.matches > 1)
-		return error(_("Not tracking: ambiguous information for ref %s"),
-				orig_ref);
+		die(_("Not tracking: ambiguous information for ref %s"),
+		    orig_ref);
 
-	install_branch_config(config_flags, new_ref, tracking.remote,
-			      tracking.src ? tracking.src : orig_ref);
+	if (install_branch_config(config_flags, new_ref, tracking.remote,
+			      tracking.src ? tracking.src : orig_ref) < 0)
+		exit(-1);
 
 	free(tracking.src);
-	return 0;
 }
 
 int read_branch_desc(struct strbuf *buf, const char *branch_name)
@@ -168,9 +191,9 @@ int validate_new_branchname(const char *name, struct strbuf *ref,
 
 	if (!attr_only) {
 		const char *head;
-		unsigned char sha1[20];
+		struct object_id oid;
 
-		head = resolve_ref_unsafe("HEAD", 0, sha1, NULL);
+		head = resolve_ref_unsafe("HEAD", 0, oid.hash, NULL);
 		if (!is_bare_repository() && head && !strcmp(head, ref->buf))
 			die(_("Cannot force update the current branch."));
 	}
@@ -205,14 +228,13 @@ N_("\n"
 "will track its remote counterpart, you may want to use\n"
 "\"git push -u\" to set the upstream config as you push.");
 
-void create_branch(const char *head,
-		   const char *name, const char *start_name,
+void create_branch(const char *name, const char *start_name,
 		   int force, int reflog, int clobber_head,
 		   int quiet, enum branch_track track)
 {
 	struct commit *commit;
-	unsigned char sha1[20];
-	char *real_ref, msg[PATH_MAX + 20];
+	struct object_id oid;
+	char *real_ref;
 	struct strbuf ref = STRBUF_INIT;
 	int forcing = 0;
 	int dont_change_ref = 0;
@@ -231,7 +253,7 @@ void create_branch(const char *head,
 	}
 
 	real_ref = NULL;
-	if (get_sha1(start_name, sha1)) {
+	if (get_oid(start_name, &oid)) {
 		if (explicit_tracking) {
 			if (advice_set_upstream_failure) {
 				error(_(upstream_missing), start_name);
@@ -243,7 +265,7 @@ void create_branch(const char *head,
 		die(_("Not a valid object name: '%s'."), start_name);
 	}
 
-	switch (dwim_ref(start_name, strlen(start_name), sha1, &real_ref)) {
+	switch (dwim_ref(start_name, strlen(start_name), oid.hash, &real_ref)) {
 	case 0:
 		/* Not branching from any existing branch */
 		if (explicit_tracking)
@@ -264,33 +286,33 @@ void create_branch(const char *head,
 		break;
 	}
 
-	if ((commit = lookup_commit_reference(sha1)) == NULL)
+	if ((commit = lookup_commit_reference(&oid)) == NULL)
 		die(_("Not a valid branch point: '%s'."), start_name);
-	hashcpy(sha1, commit->object.sha1);
-
-	if (forcing)
-		snprintf(msg, sizeof msg, "branch: Reset to %s",
-			 start_name);
-	else if (!dont_change_ref)
-		snprintf(msg, sizeof msg, "branch: Created from %s",
-			 start_name);
+	oidcpy(&oid, &commit->object.oid);
 
 	if (reflog)
-		log_all_ref_updates = 1;
+		log_all_ref_updates = LOG_REFS_NORMAL;
 
 	if (!dont_change_ref) {
 		struct ref_transaction *transaction;
 		struct strbuf err = STRBUF_INIT;
+		char *msg;
+
+		if (forcing)
+			msg = xstrfmt("branch: Reset to %s", start_name);
+		else
+			msg = xstrfmt("branch: Created from %s", start_name);
 
 		transaction = ref_transaction_begin(&err);
 		if (!transaction ||
 		    ref_transaction_update(transaction, ref.buf,
-					   sha1, forcing ? NULL : null_sha1,
+					   oid.hash, forcing ? NULL : null_sha1,
 					   0, msg, &err) ||
 		    ref_transaction_commit(transaction, &err))
 			die("%s", err.buf);
 		ref_transaction_free(transaction);
 		strbuf_release(&err);
+		free(msg);
 	}
 
 	if (real_ref && track)
@@ -302,11 +324,49 @@ void create_branch(const char *head,
 
 void remove_branch_state(void)
 {
-	unlink(git_path("CHERRY_PICK_HEAD"));
-	unlink(git_path("REVERT_HEAD"));
-	unlink(git_path("MERGE_HEAD"));
-	unlink(git_path("MERGE_RR"));
-	unlink(git_path("MERGE_MSG"));
-	unlink(git_path("MERGE_MODE"));
-	unlink(git_path("SQUASH_MSG"));
+	unlink(git_path_cherry_pick_head());
+	unlink(git_path_revert_head());
+	unlink(git_path_merge_head());
+	unlink(git_path_merge_rr());
+	unlink(git_path_merge_msg());
+	unlink(git_path_merge_mode());
+	unlink(git_path_squash_msg());
+}
+
+void die_if_checked_out(const char *branch, int ignore_current_worktree)
+{
+	const struct worktree *wt;
+
+	wt = find_shared_symref("HEAD", branch);
+	if (!wt || (ignore_current_worktree && wt->is_current))
+		return;
+	skip_prefix(branch, "refs/heads/", &branch);
+	die(_("'%s' is already checked out at '%s'"),
+	    branch, wt->path);
+}
+
+int replace_each_worktree_head_symref(const char *oldref, const char *newref,
+				      const char *logmsg)
+{
+	int ret = 0;
+	struct worktree **worktrees = get_worktrees(0);
+	int i;
+
+	for (i = 0; worktrees[i]; i++) {
+		struct ref_store *refs;
+
+		if (worktrees[i]->is_detached)
+			continue;
+		if (worktrees[i]->head_ref &&
+		    strcmp(oldref, worktrees[i]->head_ref))
+			continue;
+
+		refs = get_worktree_ref_store(worktrees[i]);
+		if (refs_create_symref(refs, "HEAD", newref, logmsg))
+			ret = error(_("HEAD of working tree %s is not updated"),
+				    worktrees[i]->path);
+	}
+
+	free_worktrees(worktrees);
+	return ret;
 }

@@ -11,7 +11,7 @@ SYNOPSIS
 'git add' [--verbose | -v] [--dry-run | -n] [--force | -f] [--interactive | -i] [--patch | -p]
 	  [--edit | -e] [--[no-]all | --[no-]ignore-removal | [--update | -u]]
 	  [--intent-to-add | -N] [--refresh] [--ignore-errors] [--ignore-missing]
-	  [--] [<pathspec>...]
+	  [--chmod=(+|-)x] [--] [<pathspec>...]
 
 DESCRIPTION
 -----------
@@ -24,7 +24,7 @@ remove paths that do not exist in the working tree anymore.
 
 The "index" holds a snapshot of the content of the working tree, and it
 is this snapshot that is taken as the contents of the next commit.  Thus
-after making any changes to the working directory, and before running
+after making any changes to the working tree, and before running
 the commit command, you must use the `add` command to add any new or
 modified files to the index.
 
@@ -164,6 +164,18 @@ for "git add --no-all <pathspec>...", i.e. ignored removed files.
 	this option the user can check if any of the given files would
 	be ignored, no matter if they are already present in the work
 	tree or not.
+
+--no-warn-embedded-repo::
+	By default, `git add` will warn when adding an embedded
+	repository to the index without using `git submodule add` to
+	create an entry in `.gitmodules`. This option will suppress the
+	warning (e.g., if you are manually performing operations on
+	submodules).
+
+--chmod=(+|-)x::
+	Override the executable bit of the added files.  The executable
+	bit is only changed in the index, the files on disk are left
+	unchanged.
 
 \--::
 	This option can be used to separate command-line options from

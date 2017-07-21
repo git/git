@@ -163,4 +163,27 @@ test_expect_success 'tracking count is accurate after orphan check' '
 	test_i18ncmp expect stdout
 '
 
+test_expect_success 'no advice given for explicit detached head state' '
+	# baseline
+	test_config advice.detachedHead true &&
+	git checkout child && git checkout HEAD^0 >expect.advice 2>&1 &&
+	test_config advice.detachedHead false &&
+	git checkout child && git checkout HEAD^0 >expect.no-advice 2>&1 &&
+	test_unconfig advice.detachedHead &&
+	# without configuration, the advice.* variables default to true
+	git checkout child && git checkout HEAD^0 >actual 2>&1 &&
+	test_cmp expect.advice actual &&
+
+	# with explicit --detach
+	# no configuration
+	test_unconfig advice.detachedHead &&
+	git checkout child && git checkout --detach HEAD^0 >actual 2>&1 &&
+	test_cmp expect.no-advice actual &&
+
+	# explicitly decline advice
+	test_config advice.detachedHead false &&
+	git checkout child && git checkout --detach HEAD^0 >actual 2>&1 &&
+	test_cmp expect.no-advice actual
+'
+
 test_done

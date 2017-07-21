@@ -25,7 +25,7 @@ you want to understand Git's internals.
 The core Git is often called "plumbing", with the prettier user
 interfaces on top of it called "porcelain". You may not want to use the
 plumbing directly very often, but it can be good to know what the
-plumbing does for when the porcelain isn't flushing.
+plumbing does when the porcelain isn't flushing.
 
 Back when this document was originally written, many porcelain
 commands were shell scripts. For simplicity, it still uses them as
@@ -710,7 +710,7 @@ files).
 Again, this can all be simplified with
 
 ----------------
-$ git clone rsync://rsync.kernel.org/pub/scm/git/git.git/ my-git
+$ git clone git://git.kernel.org/pub/scm/git/git.git/ my-git
 $ cd my-git
 $ git checkout
 ----------------
@@ -949,7 +949,7 @@ for details.
 [NOTE]
 If there were more commits on the 'master' branch after the merge, the
 merge commit itself would not be shown by 'git show-branch' by
-default.  You would need to provide '--sparse' option to make the
+default.  You would need to provide `--sparse` option to make the
 merge commit visible in this case.
 
 Now, let's pretend you are the one who did all the work in
@@ -1010,20 +1010,6 @@ $ git fetch <remote-repository>
 
 One of the following transports can be used to name the
 repository to download from:
-
-Rsync::
-	`rsync://remote.machine/path/to/repo.git/`
-+
-Rsync transport is usable for both uploading and downloading,
-but is completely unaware of what git does, and can produce
-unexpected results when you download from the public repository
-while the repository owner is uploading into it via `rsync`
-transport.  Most notably, it could update the files under
-`refs/` which holds the object name of the topmost commits
-before uploading the files in `objects/` -- the downloader would
-obtain head commit object name while that object itself is still
-not available in the repository.  For this reason, it is
-considered deprecated.
 
 SSH::
 	`remote.machine:/path/to/repo.git/` or
@@ -1382,7 +1368,7 @@ $ git repack
 will do it for you. If you followed the tutorial examples, you
 would have accumulated about 17 objects in `.git/objects/??/`
 directories by now. 'git repack' tells you how many objects it
-packed, and stores the packed file in `.git/objects/pack`
+packed, and stores the packed file in the `.git/objects/pack`
 directory.
 
 [NOTE]
@@ -1430,7 +1416,7 @@ while, depending on how active your project is.
 
 When a repository is synchronized via `git push` and `git pull`
 objects packed in the source repository are usually stored
-unpacked in the destination, unless rsync transport is used.
+unpacked in the destination.
 While this allows you to use different packing strategies on
 both ends, it also means you may need to repack both
 repositories every once in a while.
@@ -1443,7 +1429,7 @@ Although Git is a truly distributed system, it is often
 convenient to organize your project with an informal hierarchy
 of developers. Linux kernel development is run this way. There
 is a nice illustration (page 17, "Merges to Mainline") in
-http://www.xenotime.net/linux/mentor/linux-mentoring-2006.pdf[Randy Dunlap's presentation].
+https://web.archive.org/web/20120915203609/http://www.xenotime.net/linux/mentor/linux-mentoring-2006.pdf[Randy Dunlap's presentation].
 
 It should be stressed that this hierarchy is purely *informal*.
 There is nothing fundamental in Git that enforces the "chain of
@@ -1492,7 +1478,7 @@ You can repack this private repository whenever you feel like.
 A recommended work cycle for a "subsystem maintainer" who works
 on that project and has an own "public repository" goes like this:
 
-1. Prepare your work repository, by 'git clone' the public
+1. Prepare your work repository, by running 'git clone' on the public
    repository of the "project lead". The URL used for the
    initial cloning is stored in the remote.origin.url
    configuration variable.
@@ -1557,9 +1543,9 @@ like this:
 Working with Others, Shared Repository Style
 --------------------------------------------
 
-If you are coming from CVS background, the style of cooperation
+If you are coming from a CVS background, the style of cooperation
 suggested in the previous section may be new to you. You do not
-have to worry. Git supports "shared public repository" style of
+have to worry. Git supports the "shared public repository" style of
 cooperation you are probably more familiar with as well.
 
 See linkgit:gitcvs-migration[7] for the details.
@@ -1649,7 +1635,7 @@ $ git show-branch
 ++* [master~2] Pretty-print messages.
 ------------
 
-Note that you should not do Octopus because you can.  An octopus
+Note that you should not do Octopus just because you can.  An octopus
 is a valid thing to do and often makes it easier to view the
 commit history if you are merging more than two independent
 changes at the same time.  However, if you have merge conflicts
@@ -1672,4 +1658,4 @@ link:user-manual.html[The Git User's Manual]
 
 GIT
 ---
-Part of the linkgit:git[1] suite.
+Part of the linkgit:git[1] suite

@@ -257,7 +257,7 @@ test_expect_success 'rev-list accumulates multiple --exclude' '
 
 
 # "git rev-list<ENTER>" is likely to be a bug in the calling script and may
-# deserve an error message, but do cases where set of refs programatically
+# deserve an error message, but do cases where set of refs programmatically
 # given using globbing and/or --stdin need to fail with the same error, or
 # are we better off reporting a success with no output?  The following few
 # tests document the current behaviour to remind us that we might want to

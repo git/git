@@ -10,3 +10,7 @@ merge_cmd () {
 		"$merge_tool_path" -o "$MERGED" "$LOCAL" "$REMOTE"
 	fi
 }
+
+exit_code_trustable () {
+	true
+}

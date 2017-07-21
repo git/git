@@ -231,7 +231,7 @@ $tag_content
        | git cat-file --batch)"
 '
 
-test_expect_success "--batch-check for an emtpy line" '
+test_expect_success "--batch-check for an empty line" '
     test " missing" = "$(echo | git cat-file --batch-check)"
 '
 

@@ -139,6 +139,22 @@ test_expect_success 'submit with master branch name from argv' '
 	)
 '
 
+test_expect_success 'allow submit from branch with same revision but different name' '
+	test_when_finished cleanup_git &&
+	git p4 clone --dest="$git" //depot &&
+	(
+		cd "$git" &&
+		test_commit "file8" &&
+		git checkout -b branch1 &&
+		git checkout -b branch2 &&
+		git config git-p4.skipSubmitEdit true &&
+		git config git-p4.allowSubmit "branch1" &&
+		test_must_fail git p4 submit &&
+		git checkout branch1 &&
+		git p4 submit
+	)
+'
+
 #
 # Basic submit tests, the five handled cases
 #
@@ -389,7 +405,7 @@ test_expect_success 'description with Jobs section and bogus following text' '
 	(
 		cd "$cli" &&
 		p4 revert desc6 &&
-		rm desc6
+		rm -f desc6
 	)
 '
 
@@ -410,6 +426,75 @@ test_expect_success 'submit --prepare-p4-only' '
 		cd "$cli" &&
 		test_path_is_file prep-only-add &&
 		p4 fstat -T action prep-only-add | grep -w add
+	)
+'
+
+test_expect_success 'submit --shelve' '
+	test_when_finished cleanup_git &&
+	git p4 clone --dest="$git" //depot &&
+	(
+		cd "$cli" &&
+		p4 revert ... &&
+		cd "$git" &&
+		git config git-p4.skipSubmitEdit true &&
+		test_commit "shelveme1" &&
+		git p4 submit --origin=HEAD^ &&
+
+		echo 654321 >shelveme2.t &&
+		echo 123456 >>shelveme1.t &&
+		git add shelveme* &&
+		git commit -m"shelvetest" &&
+		git p4 submit --shelve --origin=HEAD^ &&
+
+		test_path_is_file shelveme1.t &&
+		test_path_is_file shelveme2.t
+	) &&
+	(
+		cd "$cli" &&
+		change=$(p4 -G changes -s shelved -m 1 //depot/... | \
+			 marshal_dump change) &&
+		p4 describe -S $change | grep shelveme2 &&
+		p4 describe -S $change | grep 123456 &&
+		test_path_is_file shelveme1.t &&
+		test_path_is_missing shelveme2.t
+	)
+'
+
+# Update an existing shelved changelist
+
+test_expect_success 'submit --update-shelve' '
+	test_when_finished cleanup_git &&
+	git p4 clone --dest="$git" //depot &&
+	(
+		cd "$cli" &&
+		p4 revert ... &&
+		cd "$git" &&
+		git config git-p4.skipSubmitEdit true &&
+		test_commit "test-update-shelved-change" &&
+		git p4 submit --origin=HEAD^ --shelve &&
+
+		shelf_cl=$(p4 -G changes -s shelved -m 1 |\
+			marshal_dump change) &&
+		test -n $shelf_cl &&
+		echo "updating shelved change list $shelf_cl" &&
+
+		echo "updated-line" >>shelf.t &&
+		echo added-file.t >added-file.t &&
+		git add shelf.t added-file.t &&
+		git rm -f test-update-shelved-change.t &&
+		git commit --amend -C HEAD &&
+		git show --stat HEAD &&
+		git p4 submit -v --origin HEAD^ --update-shelve $shelf_cl &&
+		echo "done git p4 submit"
+	) &&
+	(
+		cd "$cli" &&
+		change=$(p4 -G changes -s shelved -m 1 //depot/... | \
+			 marshal_dump change) &&
+		p4 unshelve -c $change -s $change &&
+		grep -q updated-line shelf.t &&
+		p4 describe -S $change | grep added-file.t &&
+		test_path_is_missing test-update-shelved-change.t
 	)
 '
 

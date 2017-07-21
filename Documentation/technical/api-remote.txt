@@ -51,6 +51,10 @@ struct remote
 
 	The proxy to use for curl (http, https, ftp, etc.) URLs.
 
+`http_proxy_authmethod`::
+
+	The method used for authenticating against `http_proxy`.
+
 struct remotes can be found by name with remote_get(), and iterated
 through with for_each_remote(). remote_get(NULL) will return the
 default remote, given the current branch and configuration.

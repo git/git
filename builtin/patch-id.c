@@ -1,4 +1,5 @@
 #include "builtin.h"
+#include "config.h"
 
 static void flush_current_id(int patchlen, struct object_id *id, struct object_id *result)
 {
@@ -55,7 +56,7 @@ static int scan_hunk_header(const char *p, int *p_before, int *p_after)
 
 static void flush_one_hunk(struct object_id *result, git_SHA_CTX *ctx)
 {
-	unsigned char hash[GIT_SHA1_RAWSZ];
+	unsigned char hash[GIT_MAX_RAWSZ];
 	unsigned short carry = 0;
 	int i;
 
@@ -81,16 +82,13 @@ static int get_one_patchid(struct object_id *next_oid, struct object_id *result,
 
 	while (strbuf_getwholeline(line_buf, stdin, '\n') != EOF) {
 		char *line = line_buf->buf;
-		char *p = line;
+		const char *p = line;
 		int len;
 
-		if (!memcmp(line, "diff-tree ", 10))
-			p += 10;
-		else if (!memcmp(line, "commit ", 7))
-			p += 7;
-		else if (!memcmp(line, "From ", 5))
-			p += 5;
-		else if (!memcmp(line, "\\ ", 2) && 12 < strlen(line))
+		if (!skip_prefix(line, "diff-tree ", &p) &&
+		    !skip_prefix(line, "commit ", &p) &&
+		    !skip_prefix(line, "From ", &p) &&
+		    starts_with(line, "\\ ") && 12 < strlen(line))
 			continue;
 
 		if (!get_oid_hex(p, next_oid)) {
@@ -99,14 +97,14 @@ static int get_one_patchid(struct object_id *next_oid, struct object_id *result,
 		}
 
 		/* Ignore commit comments */
-		if (!patchlen && memcmp(line, "diff ", 5))
+		if (!patchlen && !starts_with(line, "diff "))
 			continue;
 
 		/* Parsing diff header?  */
 		if (before == -1) {
-			if (!memcmp(line, "index ", 6))
+			if (starts_with(line, "index "))
 				continue;
-			else if (!memcmp(line, "--- ", 4))
+			else if (starts_with(line, "--- "))
 				before = after = 1;
 			else if (!isalpha(line[0]))
 				break;
@@ -114,14 +112,14 @@ static int get_one_patchid(struct object_id *next_oid, struct object_id *result,
 
 		/* Looking for a valid hunk header?  */
 		if (before == 0 && after == 0) {
-			if (!memcmp(line, "@@ -", 4)) {
+			if (starts_with(line, "@@ -")) {
 				/* Parse next hunk, but ignore line numbers.  */
 				scan_hunk_header(line, &before, &after);
 				continue;
 			}
 
 			/* Split at the end of the patch.  */
-			if (memcmp(line, "diff ", 5))
+			if (!starts_with(line, "diff "))
 				break;
 
 			/* Else we're parsing another header.  */
@@ -165,7 +163,7 @@ static void generate_id_list(int stable)
 	strbuf_release(&line_buf);
 }
 
-static const char patch_id_usage[] = "git patch-id [--stable | --unstable] < patch";
+static const char patch_id_usage[] = "git patch-id [--stable | --unstable]";
 
 static int git_patch_id_config(const char *var, const char *value, void *cb)
 {

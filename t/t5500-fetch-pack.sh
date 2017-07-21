@@ -14,7 +14,7 @@ test_description='Testing multi_ack pack fetching'
 add () {
 	name=$1 &&
 	text="$@" &&
-	branch=`echo $name | sed -e 's/^\(.\).*$/\1/'` &&
+	branch=$(echo $name | sed -e 's/^\(.\).*$/\1/') &&
 	parents="" &&
 
 	shift &&
@@ -50,18 +50,18 @@ pull_to_client () {
 			case "$heads" in *B*)
 			    echo $BTIP > .git/refs/heads/B;;
 			esac &&
-			git symbolic-ref HEAD refs/heads/`echo $heads \
-				| sed -e "s/^\(.\).*$/\1/"` &&
+			git symbolic-ref HEAD refs/heads/$(echo $heads \
+				| sed -e "s/^\(.\).*$/\1/") &&
 
 			git fsck --full &&
 
 			mv .git/objects/pack/pack-* . &&
-			p=`ls -1 pack-*.pack` &&
+			p=$(ls -1 pack-*.pack) &&
 			git unpack-objects <$p &&
 			git fsck --full &&
 
-			idx=`echo pack-*.idx` &&
-			pack_count=`git show-index <$idx | wc -l` &&
+			idx=$(echo pack-*.idx) &&
+			pack_count=$(git show-index <$idx | wc -l) &&
 			test $pack_count = $count &&
 			rm -f pack-*
 		)
@@ -132,13 +132,13 @@ test_expect_success 'single given branch clone' '
 
 test_expect_success 'clone shallow depth 1' '
 	git clone --no-single-branch --depth 1 "file://$(pwd)/." shallow0 &&
-	test "`git --git-dir=shallow0/.git rev-list --count HEAD`" = 1
+	test "$(git --git-dir=shallow0/.git rev-list --count HEAD)" = 1
 '
 
 test_expect_success 'clone shallow depth 1 with fsck' '
 	git config --global fetch.fsckobjects true &&
 	git clone --no-single-branch --depth 1 "file://$(pwd)/." shallow0fsck &&
-	test "`git --git-dir=shallow0fsck/.git rev-list --count HEAD`" = 1 &&
+	test "$(git --git-dir=shallow0fsck/.git rev-list --count HEAD)" = 1 &&
 	git config --global --unset fetch.fsckobjects
 '
 
@@ -147,7 +147,7 @@ test_expect_success 'clone shallow' '
 '
 
 test_expect_success 'clone shallow depth count' '
-	test "`git --git-dir=shallow/.git rev-list --count HEAD`" = 2
+	test "$(git --git-dir=shallow/.git rev-list --count HEAD)" = 2
 '
 
 test_expect_success 'clone shallow object count' '
@@ -259,7 +259,8 @@ test_expect_success 'clone shallow object count' '
 test_expect_success 'pull in shallow repo with missing merge base' '
 	(
 		cd shallow &&
-		test_must_fail git pull --depth 4 .. A
+		git fetch --depth 4 .. A
+		test_must_fail git merge --allow-unrelated-histories FETCH_HEAD
 	)
 '
 
@@ -273,15 +274,16 @@ test_expect_success 'additional simple shallow deepenings' '
 '
 
 test_expect_success 'clone shallow depth count' '
-	test "`git --git-dir=shallow/.git rev-list --count HEAD`" = 11
+	test "$(git --git-dir=shallow/.git rev-list --count HEAD)" = 11
 '
 
 test_expect_success 'clone shallow object count' '
 	(
 		cd shallow &&
+		git prune &&
 		git count-objects -v
 	) > count.shallow &&
-	grep "^count: 55" count.shallow
+	grep "^count: 54" count.shallow
 '
 
 test_expect_success 'fetch --no-shallow on full repo' '
@@ -482,7 +484,7 @@ test_expect_success 'test lonely missing ref' '
 		cd client &&
 		test_must_fail git fetch-pack --no-progress .. refs/heads/xyzzy
 	) >/dev/null 2>error-m &&
-	test_cmp expect-error error-m
+	test_i18ncmp expect-error error-m
 '
 
 test_expect_success 'test missing ref after existing' '
@@ -490,7 +492,7 @@ test_expect_success 'test missing ref after existing' '
 		cd client &&
 		test_must_fail git fetch-pack --no-progress .. refs/heads/A refs/heads/xyzzy
 	) >/dev/null 2>error-em &&
-	test_cmp expect-error error-em
+	test_i18ncmp expect-error error-em
 '
 
 test_expect_success 'test missing ref before existing' '
@@ -498,7 +500,7 @@ test_expect_success 'test missing ref before existing' '
 		cd client &&
 		test_must_fail git fetch-pack --no-progress .. refs/heads/xyzzy refs/heads/A
 	) >/dev/null 2>error-me &&
-	test_cmp expect-error error-me
+	test_i18ncmp expect-error error-me
 '
 
 test_expect_success 'test --all, --depth, and explicit head' '
@@ -531,6 +533,55 @@ test_expect_success 'shallow fetch with tags does not break the repository' '
 		git fsck
 	)
 '
+
+test_expect_success 'fetch-pack can fetch a raw sha1' '
+	git init hidden &&
+	(
+		cd hidden &&
+		test_commit 1 &&
+		test_commit 2 &&
+		git update-ref refs/hidden/one HEAD^ &&
+		git config transfer.hiderefs refs/hidden &&
+		git config uploadpack.allowtipsha1inwant true
+	) &&
+	git fetch-pack hidden $(git -C hidden rev-parse refs/hidden/one)
+'
+
+test_expect_success 'fetch-pack can fetch a raw sha1 that is advertised as a ref' '
+	rm -rf server client &&
+	git init server &&
+	test_commit -C server 1 &&
+
+	git init client &&
+	git -C client fetch-pack ../server \
+		$(git -C server rev-parse refs/heads/master)
+'
+
+test_expect_success 'fetch-pack can fetch a raw sha1 overlapping a named ref' '
+	rm -rf server client &&
+	git init server &&
+	test_commit -C server 1 &&
+	test_commit -C server 2 &&
+
+	git init client &&
+	git -C client fetch-pack ../server \
+		$(git -C server rev-parse refs/tags/1) refs/tags/1
+'
+
+test_expect_success 'fetch-pack cannot fetch a raw sha1 that is not advertised as a ref' '
+	rm -rf server &&
+
+	git init server &&
+	test_commit -C server 5 &&
+	git -C server tag -d 5 &&
+	test_commit -C server 6 &&
+
+	git init client &&
+	test_must_fail git -C client fetch-pack ../server \
+		$(git -C server rev-parse refs/heads/master^) 2>err &&
+	test_i18ngrep "Server does not allow request for unadvertised object" err
+'
+
 check_prot_path () {
 	cat >expected <<-EOF &&
 	Diag: url=$1
@@ -542,7 +593,6 @@ check_prot_path () {
 }
 
 check_prot_host_port_path () {
-	local diagport
 	case "$2" in
 		*ssh*)
 		pp=ssh
@@ -635,6 +685,74 @@ test_expect_success MINGW 'fetch-pack --diag-url file://c:/repo' '
 '
 test_expect_success MINGW 'fetch-pack --diag-url c:repo' '
 	check_prot_path c:repo file c:repo
+'
+
+test_expect_success 'clone shallow since ...' '
+	test_create_repo shallow-since &&
+	(
+	cd shallow-since &&
+	GIT_COMMITTER_DATE="100000000 +0700" git commit --allow-empty -m one &&
+	GIT_COMMITTER_DATE="200000000 +0700" git commit --allow-empty -m two &&
+	GIT_COMMITTER_DATE="300000000 +0700" git commit --allow-empty -m three &&
+	git clone --shallow-since "300000000 +0700" "file://$(pwd)/." ../shallow11 &&
+	git -C ../shallow11 log --pretty=tformat:%s HEAD >actual &&
+	echo three >expected &&
+	test_cmp expected actual
+	)
+'
+
+test_expect_success 'fetch shallow since ...' '
+	git -C shallow11 fetch --shallow-since "200000000 +0700" origin &&
+	git -C shallow11 log --pretty=tformat:%s origin/master >actual &&
+	cat >expected <<-\EOF &&
+	three
+	two
+	EOF
+	test_cmp expected actual
+'
+
+test_expect_success 'shallow clone exclude tag two' '
+	test_create_repo shallow-exclude &&
+	(
+	cd shallow-exclude &&
+	test_commit one &&
+	test_commit two &&
+	test_commit three &&
+	git clone --shallow-exclude two "file://$(pwd)/." ../shallow12 &&
+	git -C ../shallow12 log --pretty=tformat:%s HEAD >actual &&
+	echo three >expected &&
+	test_cmp expected actual
+	)
+'
+
+test_expect_success 'fetch exclude tag one' '
+	git -C shallow12 fetch --shallow-exclude one origin &&
+	git -C shallow12 log --pretty=tformat:%s origin/master >actual &&
+	test_write_lines three two >expected &&
+	test_cmp expected actual
+'
+
+test_expect_success 'fetching deepen' '
+	test_create_repo shallow-deepen &&
+	(
+	cd shallow-deepen &&
+	test_commit one &&
+	test_commit two &&
+	test_commit three &&
+	git clone --depth 1 "file://$(pwd)/." deepen &&
+	test_commit four &&
+	git -C deepen log --pretty=tformat:%s master >actual &&
+	echo three >expected &&
+	test_cmp expected actual &&
+	git -C deepen fetch --deepen=1 &&
+	git -C deepen log --pretty=tformat:%s origin/master >actual &&
+	cat >expected <<-\EOF &&
+	four
+	three
+	two
+	EOF
+	test_cmp expected actual
+	)
 '
 
 test_done

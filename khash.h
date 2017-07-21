@@ -117,7 +117,7 @@ static const double __ac_HASH_UPPER = 0.77;
 			if (new_n_buckets < 4) new_n_buckets = 4;					\
 			if (h->size >= (khint_t)(new_n_buckets * __ac_HASH_UPPER + 0.5)) j = 0;	/* requested size is too small */ \
 			else { /* hash table size to be changed (shrink or expand); rehash */ \
-				new_flags = (khint32_t*)xmalloc(__ac_fsize(new_n_buckets) * sizeof(khint32_t));	\
+				ALLOC_ARRAY(new_flags, __ac_fsize(new_n_buckets)); \
 				if (!new_flags) return -1;								\
 				memset(new_flags, 0xaa, __ac_fsize(new_n_buckets) * sizeof(khint32_t)); \
 				if (h->n_buckets < new_n_buckets) {	/* expand */		\

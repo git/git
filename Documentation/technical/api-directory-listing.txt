@@ -33,6 +33,12 @@ The notable options are:
 	Similar to `DIR_SHOW_IGNORED`, but return ignored files in `ignored[]`
 	in addition to untracked files in `entries[]`.
 
+`DIR_KEEP_UNTRACKED_CONTENTS`:::
+
+	Only has meaning if `DIR_SHOW_IGNORED_TOO` is also set; if this is set, the
+	untracked contents of untracked directories are also returned in
+	`entries[]`.
+
 `DIR_COLLECT_IGNORED`:::
 
 	Special mode for git-add. Return ignored files in `ignored[]` and

@@ -136,7 +136,7 @@ static int dowild(const uchar *p, const uchar *text, unsigned int flags)
 				/*
 				 * Try to advance faster when an asterisk is
 				 * followed by a literal. We know in this case
-				 * that the the string before the literal
+				 * that the string before the literal
 				 * must belong to "*".
 				 * If match_slash is false, do not look past
 				 * the first slash as it cannot belong to '*'.
@@ -272,8 +272,7 @@ static int dowild(const uchar *p, const uchar *text, unsigned int flags)
 }
 
 /* Match the "pattern" against the "text" string. */
-int wildmatch(const char *pattern, const char *text,
-	      unsigned int flags, struct wildopts *wo)
+int wildmatch(const char *pattern, const char *text, unsigned int flags)
 {
 	return dowild((const uchar*)pattern, (const uchar*)text, flags);
 }

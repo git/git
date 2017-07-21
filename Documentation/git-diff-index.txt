@@ -40,13 +40,13 @@ include::diff-format.txt[]
 Operating Modes
 ---------------
 You can choose whether you want to trust the index file entirely
-(using the '--cached' flag) or ask the diff logic to show any files
+(using the `--cached` flag) or ask the diff logic to show any files
 that don't match the stat state as being "tentatively changed".  Both
 of these operations are very useful indeed.
 
 Cached Mode
 -----------
-If '--cached' is specified, it allows you to ask:
+If `--cached` is specified, it allows you to ask:
 
 	show me the differences between HEAD and the current index
 	contents (the ones I'd write using 'git write-tree')

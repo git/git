@@ -10,10 +10,11 @@ SYNOPSIS
 --------
 [verse]
 'git merge' [-n] [--stat] [--no-commit] [--squash] [--[no-]edit]
-	[-s <strategy>] [-X <strategy-option>] [-S[<key-id>]]
+	[-s <strategy>] [-X <strategy-option>] [-S[<keyid>]]
+	[--[no-]allow-unrelated-histories]
 	[--[no-]rerere-autoupdate] [-m <msg>] [<commit>...]
-'git merge' <msg> HEAD <commit>...
 'git merge' --abort
+'git merge' --continue
 
 DESCRIPTION
 -----------
@@ -44,11 +45,7 @@ a log message from the user describing the changes.
     D---E---F---G---H master
 ------------
 
-The second syntax (<msg> `HEAD` <commit>...) is supported for
-historical reasons.  Do not use it from the command line or in
-new scripts.  It is the same as `git merge -m <msg> <commit>...`.
-
-The third syntax ("`git merge --abort`") can only be run after the
+The second syntax ("`git merge --abort`") can only be run after the
 merge has resulted in conflicts. 'git merge --abort' will abort the
 merge process and try to reconstruct the pre-merge state. However,
 if there were uncommitted changes when the merge started (and
@@ -60,6 +57,8 @@ reconstruct the original (pre-merge) changes. Therefore:
 discouraged: while possible, it may leave you in a state that is hard to
 back out of in the case of a conflict.
 
+The fourth syntax ("`git merge --continue`") can only be run after the
+merge has resulted in conflicts.
 
 OPTIONS
 -------
@@ -67,7 +66,9 @@ include::merge-options.txt[]
 
 -S[<keyid>]::
 --gpg-sign[=<keyid>]::
-	GPG-sign the resulting merge commit.
+	GPG-sign the resulting merge commit. The `keyid` argument is
+	optional and defaults to the committer identity; if specified,
+	it must be stuck to the option without a space.
 
 -m <msg>::
 	Set the commit message to be used for the merge commit (in
@@ -78,7 +79,7 @@ will be appended to the specified message.
 +
 The 'git fmt-merge-msg' command can be
 used to give a good default for automated 'git merge'
-invocations.
+invocations. The automated message can include the branch description.
 
 --[no-]rerere-autoupdate::
 	Allow the rerere mechanism to update the index with the
@@ -95,6 +96,11 @@ commit or stash your changes before running 'git merge'.
 +
 'git merge --abort' is equivalent to 'git reset --merge' when
 `MERGE_HEAD` is present.
+
+--continue::
+	After a 'git merge' stops due to conflicts you can conclude the
+	merge by running 'git merge --continue' (see "HOW TO RESOLVE
+	CONFLICTS" section below).
 
 <commit>...::
 	Commits, usually other branch heads, to merge into our branch.

@@ -1,8 +1,12 @@
+#define NO_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
+#include "config.h"
 #include "attr.h"
 #include "run-command.h"
 #include "quote.h"
 #include "sigchain.h"
+#include "pkt-line.h"
+#include "sub-process.h"
 
 /*
  * convert.c - convert a file when checking it out and checking it in.
@@ -13,18 +17,25 @@
  * translation when the "text" attribute or "auto_crlf" option is set.
  */
 
+/* Stat bits: When BIN is set, the txt bits are unset */
+#define CONVERT_STAT_BITS_TXT_LF    0x1
+#define CONVERT_STAT_BITS_TXT_CRLF  0x2
+#define CONVERT_STAT_BITS_BIN       0x4
+
 enum crlf_action {
-	CRLF_GUESS = -1,
-	CRLF_BINARY = 0,
+	CRLF_UNDEFINED,
+	CRLF_BINARY,
 	CRLF_TEXT,
-	CRLF_INPUT,
-	CRLF_CRLF,
-	CRLF_AUTO
+	CRLF_TEXT_INPUT,
+	CRLF_TEXT_CRLF,
+	CRLF_AUTO,
+	CRLF_AUTO_INPUT,
+	CRLF_AUTO_CRLF
 };
 
 struct text_stat {
 	/* NUL, CR, LF and CRLF counts */
-	unsigned nul, cr, lf, crlf;
+	unsigned nul, lonecr, lonelf, crlf;
 
 	/* These are just approximations! */
 	unsigned printable, nonprintable;
@@ -39,13 +50,15 @@ static void gather_stats(const char *buf, unsigned long size, struct text_stat *
 	for (i = 0; i < size; i++) {
 		unsigned char c = buf[i];
 		if (c == '\r') {
-			stats->cr++;
-			if (i+1 < size && buf[i+1] == '\n')
+			if (i+1 < size && buf[i+1] == '\n') {
 				stats->crlf++;
+				i++;
+			} else
+				stats->lonecr++;
 			continue;
 		}
 		if (c == '\n') {
-			stats->lf++;
+			stats->lonelf++;
 			continue;
 		}
 		if (c == 127)
@@ -75,23 +88,85 @@ static void gather_stats(const char *buf, unsigned long size, struct text_stat *
 
 /*
  * The same heuristics as diff.c::mmfile_is_binary()
+ * We treat files with bare CR as binary
  */
-static int is_binary(unsigned long size, struct text_stat *stats)
+static int convert_is_binary(unsigned long size, const struct text_stat *stats)
 {
-
+	if (stats->lonecr)
+		return 1;
 	if (stats->nul)
 		return 1;
 	if ((stats->printable >> 7) < stats->nonprintable)
 		return 1;
-	/*
-	 * Other heuristics? Average line length might be relevant,
-	 * as might LF vs CR vs CRLF counts..
-	 *
-	 * NOTE! It might be normal to have a low ratio of CRLF to LF
-	 * (somebody starts with a LF-only file and edits it with an editor
-	 * that adds CRLF only to lines that are added..). But do  we
-	 * want to support CR-only? Probably not.
-	 */
+	return 0;
+}
+
+static unsigned int gather_convert_stats(const char *data, unsigned long size)
+{
+	struct text_stat stats;
+	int ret = 0;
+	if (!data || !size)
+		return 0;
+	gather_stats(data, size, &stats);
+	if (convert_is_binary(size, &stats))
+		ret |= CONVERT_STAT_BITS_BIN;
+	if (stats.crlf)
+		ret |= CONVERT_STAT_BITS_TXT_CRLF;
+	if (stats.lonelf)
+		ret |=  CONVERT_STAT_BITS_TXT_LF;
+
+	return ret;
+}
+
+static const char *gather_convert_stats_ascii(const char *data, unsigned long size)
+{
+	unsigned int convert_stats = gather_convert_stats(data, size);
+
+	if (convert_stats & CONVERT_STAT_BITS_BIN)
+		return "-text";
+	switch (convert_stats) {
+	case CONVERT_STAT_BITS_TXT_LF:
+		return "lf";
+	case CONVERT_STAT_BITS_TXT_CRLF:
+		return "crlf";
+	case CONVERT_STAT_BITS_TXT_LF | CONVERT_STAT_BITS_TXT_CRLF:
+		return "mixed";
+	default:
+		return "none";
+	}
+}
+
+const char *get_cached_convert_stats_ascii(const struct index_state *istate,
+					   const char *path)
+{
+	const char *ret;
+	unsigned long sz;
+	void *data = read_blob_data_from_index(istate, path, &sz);
+	ret = gather_convert_stats_ascii(data, sz);
+	free(data);
+	return ret;
+}
+
+const char *get_wt_convert_stats_ascii(const char *path)
+{
+	const char *ret = "";
+	struct strbuf sb = STRBUF_INIT;
+	if (strbuf_read_file(&sb, path, 0) >= 0)
+		ret = gather_convert_stats_ascii(sb.buf, sb.len);
+	strbuf_release(&sb);
+	return ret;
+}
+
+static int text_eol_is_crlf(void)
+{
+	if (auto_crlf == AUTO_CRLF_TRUE)
+		return 1;
+	else if (auto_crlf == AUTO_CRLF_INPUT)
+		return 0;
+	if (core_eol == EOL_CRLF)
+		return 1;
+	if (core_eol == EOL_UNSET && EOL_NATIVE == EOL_CRLF)
+		return 1;
 	return 0;
 }
 
@@ -100,64 +175,58 @@ static enum eol output_eol(enum crlf_action crlf_action)
 	switch (crlf_action) {
 	case CRLF_BINARY:
 		return EOL_UNSET;
-	case CRLF_CRLF:
+	case CRLF_TEXT_CRLF:
 		return EOL_CRLF;
-	case CRLF_INPUT:
+	case CRLF_TEXT_INPUT:
 		return EOL_LF;
-	case CRLF_GUESS:
-		if (!auto_crlf)
-			return EOL_UNSET;
-		/* fall through */
+	case CRLF_UNDEFINED:
+	case CRLF_AUTO_CRLF:
+		return EOL_CRLF;
+	case CRLF_AUTO_INPUT:
+		return EOL_LF;
 	case CRLF_TEXT:
 	case CRLF_AUTO:
-		if (auto_crlf == AUTO_CRLF_TRUE)
-			return EOL_CRLF;
-		else if (auto_crlf == AUTO_CRLF_INPUT)
-			return EOL_LF;
-		else if (core_eol == EOL_UNSET)
-			return EOL_NATIVE;
+		/* fall through */
+		return text_eol_is_crlf() ? EOL_CRLF : EOL_LF;
 	}
+	warning("Illegal crlf_action %d\n", (int)crlf_action);
 	return core_eol;
 }
 
 static void check_safe_crlf(const char *path, enum crlf_action crlf_action,
-                            struct text_stat *stats, enum safe_crlf checksafe)
+			    struct text_stat *old_stats, struct text_stat *new_stats,
+			    enum safe_crlf checksafe)
 {
-	if (!checksafe)
-		return;
-
-	if (output_eol(crlf_action) == EOL_LF) {
+	if (old_stats->crlf && !new_stats->crlf ) {
 		/*
-		 * CRLFs would not be restored by checkout:
-		 * check if we'd remove CRLFs
+		 * CRLFs would not be restored by checkout
 		 */
-		if (stats->crlf) {
-			if (checksafe == SAFE_CRLF_WARN)
-				warning("CRLF will be replaced by LF in %s.\nThe file will have its original line endings in your working directory.", path);
-			else /* i.e. SAFE_CRLF_FAIL */
-				die("CRLF would be replaced by LF in %s.", path);
-		}
-	} else if (output_eol(crlf_action) == EOL_CRLF) {
+		if (checksafe == SAFE_CRLF_WARN)
+			warning(_("CRLF will be replaced by LF in %s.\n"
+				  "The file will have its original line"
+				  " endings in your working directory."), path);
+		else /* i.e. SAFE_CRLF_FAIL */
+			die(_("CRLF would be replaced by LF in %s."), path);
+	} else if (old_stats->lonelf && !new_stats->lonelf ) {
 		/*
-		 * CRLFs would be added by checkout:
-		 * check if we have "naked" LFs
+		 * CRLFs would be added by checkout
 		 */
-		if (stats->lf != stats->crlf) {
-			if (checksafe == SAFE_CRLF_WARN)
-				warning("LF will be replaced by CRLF in %s.\nThe file will have its original line endings in your working directory.", path);
-			else /* i.e. SAFE_CRLF_FAIL */
-				die("LF would be replaced by CRLF in %s", path);
-		}
+		if (checksafe == SAFE_CRLF_WARN)
+			warning(_("LF will be replaced by CRLF in %s.\n"
+				  "The file will have its original line"
+				  " endings in your working directory."), path);
+		else /* i.e. SAFE_CRLF_FAIL */
+			die(_("LF would be replaced by CRLF in %s"), path);
 	}
 }
 
-static int has_cr_in_index(const char *path)
+static int has_cr_in_index(const struct index_state *istate, const char *path)
 {
 	unsigned long sz;
 	void *data;
 	int has_cr;
 
-	data = read_blob_data_from_cache(path, &sz);
+	data = read_blob_data_from_index(istate, path, &sz);
 	if (!data)
 		return 0;
 	has_cr = memchr(data, '\r', sz) != NULL;
@@ -165,15 +234,38 @@ static int has_cr_in_index(const char *path)
 	return has_cr;
 }
 
-static int crlf_to_git(const char *path, const char *src, size_t len,
+static int will_convert_lf_to_crlf(size_t len, struct text_stat *stats,
+				   enum crlf_action crlf_action)
+{
+	if (output_eol(crlf_action) != EOL_CRLF)
+		return 0;
+	/* No "naked" LF? Nothing to convert, regardless. */
+	if (!stats->lonelf)
+		return 0;
+
+	if (crlf_action == CRLF_AUTO || crlf_action == CRLF_AUTO_INPUT || crlf_action == CRLF_AUTO_CRLF) {
+		/* If we have any CR or CRLF line endings, we do not touch it */
+		/* This is the new safer autocrlf-handling */
+		if (stats->lonecr || stats->crlf)
+			return 0;
+
+		if (convert_is_binary(len, stats))
+			return 0;
+	}
+	return 1;
+
+}
+
+static int crlf_to_git(const struct index_state *istate,
+		       const char *path, const char *src, size_t len,
 		       struct strbuf *buf,
 		       enum crlf_action crlf_action, enum safe_crlf checksafe)
 {
 	struct text_stat stats;
 	char *dst;
+	int convert_crlf_into_lf;
 
 	if (crlf_action == CRLF_BINARY ||
-	    (crlf_action == CRLF_GUESS && auto_crlf == AUTO_CRLF_FALSE) ||
 	    (src && !len))
 		return 0;
 
@@ -185,36 +277,39 @@ static int crlf_to_git(const char *path, const char *src, size_t len,
 		return 1;
 
 	gather_stats(src, len, &stats);
+	/* Optimization: No CRLF? Nothing to convert, regardless. */
+	convert_crlf_into_lf = !!stats.crlf;
 
-	if (crlf_action == CRLF_AUTO || crlf_action == CRLF_GUESS) {
-		/*
-		 * We're currently not going to even try to convert stuff
-		 * that has bare CR characters. Does anybody do that crazy
-		 * stuff?
-		 */
-		if (stats.cr != stats.crlf)
+	if (crlf_action == CRLF_AUTO || crlf_action == CRLF_AUTO_INPUT || crlf_action == CRLF_AUTO_CRLF) {
+		if (convert_is_binary(len, &stats))
 			return 0;
-
 		/*
-		 * And add some heuristics for binary vs text, of course...
+		 * If the file in the index has any CR in it, do not
+		 * convert.  This is the new safer autocrlf handling,
+		 * unless we want to renormalize in a merge or
+		 * cherry-pick.
 		 */
-		if (is_binary(len, &stats))
-			return 0;
-
-		if (crlf_action == CRLF_GUESS) {
-			/*
-			 * If the file in the index has any CR in it, do not convert.
-			 * This is the new safer autocrlf handling.
-			 */
-			if (has_cr_in_index(path))
-				return 0;
-		}
+		if ((checksafe != SAFE_CRLF_RENORMALIZE) &&
+		    has_cr_in_index(istate, path))
+			convert_crlf_into_lf = 0;
 	}
-
-	check_safe_crlf(path, crlf_action, &stats, checksafe);
-
-	/* Optimization: No CR? Nothing to convert, regardless. */
-	if (!stats.cr)
+	if ((checksafe == SAFE_CRLF_WARN ||
+	    (checksafe == SAFE_CRLF_FAIL)) && len) {
+		struct text_stat new_stats;
+		memcpy(&new_stats, &stats, sizeof(new_stats));
+		/* simulate "git add" */
+		if (convert_crlf_into_lf) {
+			new_stats.lonelf += new_stats.crlf;
+			new_stats.crlf = 0;
+		}
+		/* simulate "git checkout" */
+		if (will_convert_lf_to_crlf(len, &new_stats, crlf_action)) {
+			new_stats.crlf += new_stats.lonelf;
+			new_stats.lonelf = 0;
+		}
+		check_safe_crlf(path, crlf_action, &stats, &new_stats, checksafe);
+	}
+	if (!convert_crlf_into_lf)
 		return 0;
 
 	/*
@@ -228,7 +323,7 @@ static int crlf_to_git(const char *path, const char *src, size_t len,
 	if (strbuf_avail(buf) + buf->len < len)
 		strbuf_grow(buf, len - buf->len);
 	dst = buf->buf;
-	if (crlf_action == CRLF_AUTO || crlf_action == CRLF_GUESS) {
+	if (crlf_action == CRLF_AUTO || crlf_action == CRLF_AUTO_INPUT || crlf_action == CRLF_AUTO_CRLF) {
 		/*
 		 * If we guessed, we already know we rejected a file with
 		 * lone CR, and we can strip a CR without looking at what
@@ -260,36 +355,14 @@ static int crlf_to_worktree(const char *path, const char *src, size_t len,
 		return 0;
 
 	gather_stats(src, len, &stats);
-
-	/* No LF? Nothing to convert, regardless. */
-	if (!stats.lf)
+	if (!will_convert_lf_to_crlf(len, &stats, crlf_action))
 		return 0;
-
-	/* Was it already in CRLF format? */
-	if (stats.lf == stats.crlf)
-		return 0;
-
-	if (crlf_action == CRLF_AUTO || crlf_action == CRLF_GUESS) {
-		if (crlf_action == CRLF_GUESS) {
-			/* If we have any CR or CRLF line endings, we do not touch it */
-			/* This is the new safer autocrlf-handling */
-			if (stats.cr > 0 || stats.crlf > 0)
-				return 0;
-		}
-
-		/* If we have any bare CR characters, we're not going to touch it */
-		if (stats.cr != stats.crlf)
-			return 0;
-
-		if (is_binary(len, &stats))
-			return 0;
-	}
 
 	/* are we "faking" in place editing ? */
 	if (src == buf->buf)
 		to_free = strbuf_detach(buf, NULL);
 
-	strbuf_grow(buf, len + stats.lf - stats.crlf);
+	strbuf_grow(buf, len + stats.lonelf);
 	for (;;) {
 		const char *nl = memchr(src, '\n', len);
 		if (!nl)
@@ -351,7 +424,7 @@ static int filter_buffer_or_fd(int in, int out, void *data)
 	child_process.out = out;
 
 	if (start_command(&child_process))
-		return error("cannot fork to run external filter %s", params->cmd);
+		return error("cannot fork to run external filter '%s'", params->cmd);
 
 	sigchain_push(SIGPIPE, SIG_IGN);
 
@@ -369,19 +442,19 @@ static int filter_buffer_or_fd(int in, int out, void *data)
 	if (close(child_process.in))
 		write_err = 1;
 	if (write_err)
-		error("cannot feed the input to external filter %s", params->cmd);
+		error("cannot feed the input to external filter '%s'", params->cmd);
 
 	sigchain_pop(SIGPIPE);
 
 	status = finish_command(&child_process);
 	if (status)
-		error("external filter %s failed %d", params->cmd, status);
+		error("external filter '%s' failed %d", params->cmd, status);
 
 	strbuf_release(&cmd);
 	return (write_err || status);
 }
 
-static int apply_filter(const char *path, const char *src, size_t len, int fd,
+static int apply_single_file_filter(const char *path, const char *src, size_t len, int fd,
                         struct strbuf *dst, const char *cmd)
 {
 	/*
@@ -390,16 +463,10 @@ static int apply_filter(const char *path, const char *src, size_t len, int fd,
 	 *
 	 * (child --> cmd) --> us
 	 */
-	int ret = 1;
+	int err = 0;
 	struct strbuf nbuf = STRBUF_INIT;
 	struct async async;
 	struct filter_params params;
-
-	if (!cmd)
-		return 0;
-
-	if (!dst)
-		return 1;
 
 	memset(&async, 0, sizeof(async));
 	async.proc = filter_buffer_or_fd;
@@ -416,23 +483,209 @@ static int apply_filter(const char *path, const char *src, size_t len, int fd,
 		return 0;	/* error was already reported */
 
 	if (strbuf_read(&nbuf, async.out, len) < 0) {
-		error("read from external filter %s failed", cmd);
-		ret = 0;
+		err = error("read from external filter '%s' failed", cmd);
 	}
 	if (close(async.out)) {
-		error("read from external filter %s failed", cmd);
-		ret = 0;
+		err = error("read from external filter '%s' failed", cmd);
 	}
 	if (finish_async(&async)) {
-		error("external filter %s failed", cmd);
-		ret = 0;
+		err = error("external filter '%s' failed", cmd);
 	}
 
-	if (ret) {
+	if (!err) {
 		strbuf_swap(dst, &nbuf);
 	}
 	strbuf_release(&nbuf);
-	return ret;
+	return !err;
+}
+
+#define CAP_CLEAN    (1u<<0)
+#define CAP_SMUDGE   (1u<<1)
+
+struct cmd2process {
+	struct subprocess_entry subprocess; /* must be the first member! */
+	unsigned int supported_capabilities;
+};
+
+static int subprocess_map_initialized;
+static struct hashmap subprocess_map;
+
+static int start_multi_file_filter_fn(struct subprocess_entry *subprocess)
+{
+	int err;
+	struct cmd2process *entry = (struct cmd2process *)subprocess;
+	struct string_list cap_list = STRING_LIST_INIT_NODUP;
+	char *cap_buf;
+	const char *cap_name;
+	struct child_process *process = &subprocess->process;
+	const char *cmd = subprocess->cmd;
+
+	sigchain_push(SIGPIPE, SIG_IGN);
+
+	err = packet_writel(process->in, "git-filter-client", "version=2", NULL);
+	if (err)
+		goto done;
+
+	err = strcmp(packet_read_line(process->out, NULL), "git-filter-server");
+	if (err) {
+		error("external filter '%s' does not support filter protocol version 2", cmd);
+		goto done;
+	}
+	err = strcmp(packet_read_line(process->out, NULL), "version=2");
+	if (err)
+		goto done;
+	err = packet_read_line(process->out, NULL) != NULL;
+	if (err)
+		goto done;
+
+	err = packet_writel(process->in, "capability=clean", "capability=smudge", NULL);
+
+	for (;;) {
+		cap_buf = packet_read_line(process->out, NULL);
+		if (!cap_buf)
+			break;
+		string_list_split_in_place(&cap_list, cap_buf, '=', 1);
+
+		if (cap_list.nr != 2 || strcmp(cap_list.items[0].string, "capability"))
+			continue;
+
+		cap_name = cap_list.items[1].string;
+		if (!strcmp(cap_name, "clean")) {
+			entry->supported_capabilities |= CAP_CLEAN;
+		} else if (!strcmp(cap_name, "smudge")) {
+			entry->supported_capabilities |= CAP_SMUDGE;
+		} else {
+			warning(
+				"external filter '%s' requested unsupported filter capability '%s'",
+				cmd, cap_name
+			);
+		}
+
+		string_list_clear(&cap_list, 0);
+	}
+
+done:
+	sigchain_pop(SIGPIPE);
+
+	return err;
+}
+
+static int apply_multi_file_filter(const char *path, const char *src, size_t len,
+				   int fd, struct strbuf *dst, const char *cmd,
+				   const unsigned int wanted_capability)
+{
+	int err;
+	struct cmd2process *entry;
+	struct child_process *process;
+	struct strbuf nbuf = STRBUF_INIT;
+	struct strbuf filter_status = STRBUF_INIT;
+	const char *filter_type;
+
+	if (!subprocess_map_initialized) {
+		subprocess_map_initialized = 1;
+		hashmap_init(&subprocess_map, (hashmap_cmp_fn) cmd2process_cmp,
+			     NULL, 0);
+		entry = NULL;
+	} else {
+		entry = (struct cmd2process *)subprocess_find_entry(&subprocess_map, cmd);
+	}
+
+	fflush(NULL);
+
+	if (!entry) {
+		entry = xmalloc(sizeof(*entry));
+		entry->supported_capabilities = 0;
+
+		if (subprocess_start(&subprocess_map, &entry->subprocess, cmd, start_multi_file_filter_fn)) {
+			free(entry);
+			return 0;
+		}
+	}
+	process = &entry->subprocess.process;
+
+	if (!(wanted_capability & entry->supported_capabilities))
+		return 0;
+
+	if (CAP_CLEAN & wanted_capability)
+		filter_type = "clean";
+	else if (CAP_SMUDGE & wanted_capability)
+		filter_type = "smudge";
+	else
+		die("unexpected filter type");
+
+	sigchain_push(SIGPIPE, SIG_IGN);
+
+	assert(strlen(filter_type) < LARGE_PACKET_DATA_MAX - strlen("command=\n"));
+	err = packet_write_fmt_gently(process->in, "command=%s\n", filter_type);
+	if (err)
+		goto done;
+
+	err = strlen(path) > LARGE_PACKET_DATA_MAX - strlen("pathname=\n");
+	if (err) {
+		error("path name too long for external filter");
+		goto done;
+	}
+
+	err = packet_write_fmt_gently(process->in, "pathname=%s\n", path);
+	if (err)
+		goto done;
+
+	err = packet_flush_gently(process->in);
+	if (err)
+		goto done;
+
+	if (fd >= 0)
+		err = write_packetized_from_fd(fd, process->in);
+	else
+		err = write_packetized_from_buf(src, len, process->in);
+	if (err)
+		goto done;
+
+	err = subprocess_read_status(process->out, &filter_status);
+	if (err)
+		goto done;
+
+	err = strcmp(filter_status.buf, "success");
+	if (err)
+		goto done;
+
+	err = read_packetized_to_strbuf(process->out, &nbuf) < 0;
+	if (err)
+		goto done;
+
+	err = subprocess_read_status(process->out, &filter_status);
+	if (err)
+		goto done;
+
+	err = strcmp(filter_status.buf, "success");
+
+done:
+	sigchain_pop(SIGPIPE);
+
+	if (err) {
+		if (!strcmp(filter_status.buf, "error")) {
+			/* The filter signaled a problem with the file. */
+		} else if (!strcmp(filter_status.buf, "abort")) {
+			/*
+			 * The filter signaled a permanent problem. Don't try to filter
+			 * files with the same command for the lifetime of the current
+			 * Git process.
+			 */
+			 entry->supported_capabilities &= ~wanted_capability;
+		} else {
+			/*
+			 * Something went wrong with the protocol filter.
+			 * Force shutdown and restart if another blob requires filtering.
+			 */
+			error("external filter '%s' failed", cmd);
+			subprocess_stop(&subprocess_map, &entry->subprocess);
+			free(entry);
+		}
+	} else {
+		strbuf_swap(dst, &nbuf);
+	}
+	strbuf_release(&nbuf);
+	return !err;
 }
 
 static struct convert_driver {
@@ -440,8 +693,34 @@ static struct convert_driver {
 	struct convert_driver *next;
 	const char *smudge;
 	const char *clean;
+	const char *process;
 	int required;
 } *user_convert, **user_convert_tail;
+
+static int apply_filter(const char *path, const char *src, size_t len,
+			int fd, struct strbuf *dst, struct convert_driver *drv,
+			const unsigned int wanted_capability)
+{
+	const char *cmd = NULL;
+
+	if (!drv)
+		return 0;
+
+	if (!dst)
+		return 1;
+
+	if ((CAP_CLEAN & wanted_capability) && !drv->process && drv->clean)
+		cmd = drv->clean;
+	else if ((CAP_SMUDGE & wanted_capability) && !drv->process && drv->smudge)
+		cmd = drv->smudge;
+
+	if (cmd && *cmd)
+		return apply_single_file_filter(path, src, len, fd, dst, cmd);
+	else if (drv->process && *drv->process)
+		return apply_multi_file_filter(path, src, len, fd, dst, drv->process, wanted_capability);
+
+	return 0;
+}
 
 static int read_convert_config(const char *var, const char *value, void *cb)
 {
@@ -479,6 +758,9 @@ static int read_convert_config(const char *var, const char *value, void *cb)
 
 	if (!strcmp("clean", key))
 		return git_config_string(&drv->clean, var, value);
+
+	if (!strcmp("process", key))
+		return git_config_string(&drv->process, var, value);
 
 	if (!strcmp("required", key)) {
 		drv->required = git_config_bool(var, value);
@@ -657,7 +939,7 @@ static int ident_to_worktree(const char *path, const char *src, size_t len,
 	return 1;
 }
 
-static enum crlf_action git_path_check_crlf(const char *path, struct git_attr_check *check)
+static enum crlf_action git_path_check_crlf(struct attr_check_item *check)
 {
 	const char *value = check->value;
 
@@ -668,13 +950,13 @@ static enum crlf_action git_path_check_crlf(const char *path, struct git_attr_ch
 	else if (ATTR_UNSET(value))
 		;
 	else if (!strcmp(value, "input"))
-		return CRLF_INPUT;
+		return CRLF_TEXT_INPUT;
 	else if (!strcmp(value, "auto"))
 		return CRLF_AUTO;
-	return CRLF_GUESS;
+	return CRLF_UNDEFINED;
 }
 
-static enum eol git_path_check_eol(const char *path, struct git_attr_check *check)
+static enum eol git_path_check_eol(struct attr_check_item *check)
 {
 	const char *value = check->value;
 
@@ -687,8 +969,7 @@ static enum eol git_path_check_eol(const char *path, struct git_attr_check *chec
 	return EOL_UNSET;
 }
 
-static struct convert_driver *git_path_check_convert(const char *path,
-					     struct git_attr_check *check)
+static struct convert_driver *git_path_check_convert(struct attr_check_item *check)
 {
 	const char *value = check->value;
 	struct convert_driver *drv;
@@ -701,61 +982,64 @@ static struct convert_driver *git_path_check_convert(const char *path,
 	return NULL;
 }
 
-static int git_path_check_ident(const char *path, struct git_attr_check *check)
+static int git_path_check_ident(struct attr_check_item *check)
 {
 	const char *value = check->value;
 
 	return !!ATTR_TRUE(value);
 }
 
-static enum crlf_action input_crlf_action(enum crlf_action text_attr, enum eol eol_attr)
-{
-	if (text_attr == CRLF_BINARY)
-		return CRLF_BINARY;
-	if (eol_attr == EOL_LF)
-		return CRLF_INPUT;
-	if (eol_attr == EOL_CRLF)
-		return CRLF_CRLF;
-	return text_attr;
-}
-
 struct conv_attrs {
 	struct convert_driver *drv;
-	enum crlf_action crlf_action;
-	enum eol eol_attr;
+	enum crlf_action attr_action; /* What attr says */
+	enum crlf_action crlf_action; /* When no attr is set, use core.autocrlf */
 	int ident;
 };
 
-static const char *conv_attr_name[] = {
-	"crlf", "ident", "filter", "eol", "text",
-};
-#define NUM_CONV_ATTRS ARRAY_SIZE(conv_attr_name)
-
 static void convert_attrs(struct conv_attrs *ca, const char *path)
 {
-	int i;
-	static struct git_attr_check ccheck[NUM_CONV_ATTRS];
+	static struct attr_check *check;
 
-	if (!ccheck[0].attr) {
-		for (i = 0; i < NUM_CONV_ATTRS; i++)
-			ccheck[i].attr = git_attr(conv_attr_name[i]);
+	if (!check) {
+		check = attr_check_initl("crlf", "ident", "filter",
+					 "eol", "text", NULL);
 		user_convert_tail = &user_convert;
 		git_config(read_convert_config, NULL);
 	}
 
-	if (!git_check_attr(path, NUM_CONV_ATTRS, ccheck)) {
-		ca->crlf_action = git_path_check_crlf(path, ccheck + 4);
-		if (ca->crlf_action == CRLF_GUESS)
-			ca->crlf_action = git_path_check_crlf(path, ccheck + 0);
-		ca->ident = git_path_check_ident(path, ccheck + 1);
-		ca->drv = git_path_check_convert(path, ccheck + 2);
-		ca->eol_attr = git_path_check_eol(path, ccheck + 3);
+	if (!git_check_attr(path, check)) {
+		struct attr_check_item *ccheck = check->items;
+		ca->crlf_action = git_path_check_crlf(ccheck + 4);
+		if (ca->crlf_action == CRLF_UNDEFINED)
+			ca->crlf_action = git_path_check_crlf(ccheck + 0);
+		ca->attr_action = ca->crlf_action;
+		ca->ident = git_path_check_ident(ccheck + 1);
+		ca->drv = git_path_check_convert(ccheck + 2);
+		if (ca->crlf_action != CRLF_BINARY) {
+			enum eol eol_attr = git_path_check_eol(ccheck + 3);
+			if (ca->crlf_action == CRLF_AUTO && eol_attr == EOL_LF)
+				ca->crlf_action = CRLF_AUTO_INPUT;
+			else if (ca->crlf_action == CRLF_AUTO && eol_attr == EOL_CRLF)
+				ca->crlf_action = CRLF_AUTO_CRLF;
+			else if (eol_attr == EOL_LF)
+				ca->crlf_action = CRLF_TEXT_INPUT;
+			else if (eol_attr == EOL_CRLF)
+				ca->crlf_action = CRLF_TEXT_CRLF;
+		}
+		ca->attr_action = ca->crlf_action;
 	} else {
 		ca->drv = NULL;
-		ca->crlf_action = CRLF_GUESS;
-		ca->eol_attr = EOL_UNSET;
+		ca->crlf_action = CRLF_UNDEFINED;
 		ca->ident = 0;
 	}
+	if (ca->crlf_action == CRLF_TEXT)
+		ca->crlf_action = text_eol_is_crlf() ? CRLF_TEXT_CRLF : CRLF_TEXT_INPUT;
+	if (ca->crlf_action == CRLF_UNDEFINED && auto_crlf == AUTO_CRLF_FALSE)
+		ca->crlf_action = CRLF_BINARY;
+	if (ca->crlf_action == CRLF_UNDEFINED && auto_crlf == AUTO_CRLF_TRUE)
+		ca->crlf_action = CRLF_AUTO_CRLF;
+	if (ca->crlf_action == CRLF_UNDEFINED && auto_crlf == AUTO_CRLF_INPUT)
+		ca->crlf_action = CRLF_AUTO_INPUT;
 }
 
 int would_convert_to_git_filter_fd(const char *path)
@@ -774,33 +1058,53 @@ int would_convert_to_git_filter_fd(const char *path)
 	if (!ca.drv->required)
 		return 0;
 
-	return apply_filter(path, NULL, 0, -1, NULL, ca.drv->clean);
+	return apply_filter(path, NULL, 0, -1, NULL, ca.drv, CAP_CLEAN);
 }
 
-int convert_to_git(const char *path, const char *src, size_t len,
-                   struct strbuf *dst, enum safe_crlf checksafe)
+const char *get_convert_attr_ascii(const char *path)
 {
-	int ret = 0;
-	const char *filter = NULL;
-	int required = 0;
 	struct conv_attrs ca;
 
 	convert_attrs(&ca, path);
-	if (ca.drv) {
-		filter = ca.drv->clean;
-		required = ca.drv->required;
+	switch (ca.attr_action) {
+	case CRLF_UNDEFINED:
+		return "";
+	case CRLF_BINARY:
+		return "-text";
+	case CRLF_TEXT:
+		return "text";
+	case CRLF_TEXT_INPUT:
+		return "text eol=lf";
+	case CRLF_TEXT_CRLF:
+		return "text eol=crlf";
+	case CRLF_AUTO:
+		return "text=auto";
+	case CRLF_AUTO_CRLF:
+		return "text=auto eol=crlf";
+	case CRLF_AUTO_INPUT:
+		return "text=auto eol=lf";
 	}
+	return "";
+}
 
-	ret |= apply_filter(path, src, len, -1, dst, filter);
-	if (!ret && required)
+int convert_to_git(const struct index_state *istate,
+		   const char *path, const char *src, size_t len,
+                   struct strbuf *dst, enum safe_crlf checksafe)
+{
+	int ret = 0;
+	struct conv_attrs ca;
+
+	convert_attrs(&ca, path);
+
+	ret |= apply_filter(path, src, len, -1, dst, ca.drv, CAP_CLEAN);
+	if (!ret && ca.drv && ca.drv->required)
 		die("%s: clean filter '%s' failed", path, ca.drv->name);
 
 	if (ret && dst) {
 		src = dst->buf;
 		len = dst->len;
 	}
-	ca.crlf_action = input_crlf_action(ca.crlf_action, ca.eol_attr);
-	ret |= crlf_to_git(path, src, len, dst, ca.crlf_action, checksafe);
+	ret |= crlf_to_git(istate, path, src, len, dst, ca.crlf_action, checksafe);
 	if (ret && dst) {
 		src = dst->buf;
 		len = dst->len;
@@ -808,20 +1112,20 @@ int convert_to_git(const char *path, const char *src, size_t len,
 	return ret | ident_to_git(path, src, len, dst, ca.ident);
 }
 
-void convert_to_git_filter_fd(const char *path, int fd, struct strbuf *dst,
+void convert_to_git_filter_fd(const struct index_state *istate,
+			      const char *path, int fd, struct strbuf *dst,
 			      enum safe_crlf checksafe)
 {
 	struct conv_attrs ca;
 	convert_attrs(&ca, path);
 
 	assert(ca.drv);
-	assert(ca.drv->clean);
+	assert(ca.drv->clean || ca.drv->process);
 
-	if (!apply_filter(path, NULL, 0, fd, dst, ca.drv->clean))
+	if (!apply_filter(path, NULL, 0, fd, dst, ca.drv, CAP_CLEAN))
 		die("%s: clean filter '%s' failed", path, ca.drv->name);
 
-	ca.crlf_action = input_crlf_action(ca.crlf_action, ca.eol_attr);
-	crlf_to_git(path, dst->buf, dst->len, dst, ca.crlf_action, checksafe);
+	crlf_to_git(istate, path, dst->buf, dst->len, dst, ca.crlf_action, checksafe);
 	ident_to_git(path, dst->buf, dst->len, dst, ca.ident);
 }
 
@@ -830,15 +1134,9 @@ static int convert_to_working_tree_internal(const char *path, const char *src,
 					    int normalizing)
 {
 	int ret = 0, ret_filter = 0;
-	const char *filter = NULL;
-	int required = 0;
 	struct conv_attrs ca;
 
 	convert_attrs(&ca, path);
-	if (ca.drv) {
-		filter = ca.drv->smudge;
-		required = ca.drv->required;
-	}
 
 	ret |= ident_to_worktree(path, src, len, dst, ca.ident);
 	if (ret) {
@@ -847,10 +1145,10 @@ static int convert_to_working_tree_internal(const char *path, const char *src,
 	}
 	/*
 	 * CRLF conversion can be skipped if normalizing, unless there
-	 * is a smudge filter.  The filter might expect CRLFs.
+	 * is a smudge or process filter (even if the process filter doesn't
+	 * support smudge).  The filters might expect CRLFs.
 	 */
-	if (filter || !normalizing) {
-		ca.crlf_action = input_crlf_action(ca.crlf_action, ca.eol_attr);
+	if ((ca.drv && (ca.drv->smudge || ca.drv->process)) || !normalizing) {
 		ret |= crlf_to_worktree(path, src, len, dst, ca.crlf_action);
 		if (ret) {
 			src = dst->buf;
@@ -858,8 +1156,8 @@ static int convert_to_working_tree_internal(const char *path, const char *src,
 		}
 	}
 
-	ret_filter = apply_filter(path, src, len, -1, dst, filter);
-	if (!ret_filter && required)
+	ret_filter = apply_filter(path, src, len, -1, dst, ca.drv, CAP_SMUDGE);
+	if (!ret_filter && ca.drv && ca.drv->required)
 		die("%s: smudge filter %s failed", path, ca.drv->name);
 
 	return ret | ret_filter;
@@ -870,14 +1168,15 @@ int convert_to_working_tree(const char *path, const char *src, size_t len, struc
 	return convert_to_working_tree_internal(path, src, len, dst, 0);
 }
 
-int renormalize_buffer(const char *path, const char *src, size_t len, struct strbuf *dst)
+int renormalize_buffer(const struct index_state *istate, const char *path,
+		       const char *src, size_t len, struct strbuf *dst)
 {
 	int ret = convert_to_working_tree_internal(path, src, len, dst, 1);
 	if (ret) {
 		src = dst->buf;
 		len = dst->len;
 	}
-	return ret | convert_to_git(path, src, len, dst, SAFE_CRLF_FALSE);
+	return ret | convert_to_git(istate, path, src, len, dst, SAFE_CRLF_RENORMALIZE);
 }
 
 /*****************************************************************
@@ -1289,7 +1588,8 @@ static struct stream_filter *ident_filter(const unsigned char *sha1)
 {
 	struct ident_filter *ident = xmalloc(sizeof(*ident));
 
-	sprintf(ident->ident, ": %s $", sha1_to_hex(sha1));
+	xsnprintf(ident->ident, sizeof(ident->ident),
+		  ": %s $", sha1_to_hex(sha1));
 	strbuf_init(&ident->left, 0);
 	ident->filter.vtbl = &ident_vtbl;
 	ident->state = 0;
@@ -1307,26 +1607,22 @@ static struct stream_filter *ident_filter(const unsigned char *sha1)
 struct stream_filter *get_stream_filter(const char *path, const unsigned char *sha1)
 {
 	struct conv_attrs ca;
-	enum crlf_action crlf_action;
 	struct stream_filter *filter = NULL;
 
 	convert_attrs(&ca, path);
+	if (ca.drv && (ca.drv->process || ca.drv->smudge || ca.drv->clean))
+		return NULL;
 
-	if (ca.drv && (ca.drv->smudge || ca.drv->clean))
-		return filter;
+	if (ca.crlf_action == CRLF_AUTO || ca.crlf_action == CRLF_AUTO_CRLF)
+		return NULL;
 
 	if (ca.ident)
 		filter = ident_filter(sha1);
 
-	crlf_action = input_crlf_action(ca.crlf_action, ca.eol_attr);
-
-	if ((crlf_action == CRLF_BINARY) || (crlf_action == CRLF_INPUT) ||
-	    (crlf_action == CRLF_GUESS && auto_crlf == AUTO_CRLF_FALSE))
-		filter = cascade_filter(filter, &null_filter_singleton);
-
-	else if (output_eol(crlf_action) == EOL_CRLF &&
-		 !(crlf_action == CRLF_AUTO || crlf_action == CRLF_GUESS))
+	if (output_eol(ca.crlf_action) == EOL_CRLF)
 		filter = cascade_filter(filter, lf_to_crlf_filter());
+	else
+		filter = cascade_filter(filter, &null_filter_singleton);
 
 	return filter;
 }

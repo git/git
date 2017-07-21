@@ -17,7 +17,7 @@ constructor dialog {} {
 
 	make_dialog top w
 	wm withdraw $top
-	wm title $top [append "[appname] ([reponame]): " [mc "Add Remote"]]
+	wm title $top [mc "%s (%s): Add Remote" [appname] [reponame]]
 	if {$top ne {.}} {
 		wm geometry $top "+[winfo rootx .]+[winfo rooty .]"
 	}

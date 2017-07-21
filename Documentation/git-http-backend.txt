@@ -21,7 +21,7 @@ pushing using the smart HTTP protocol.
 It verifies that the directory has the magic file
 "git-daemon-export-ok", and it will refuse to export any Git directory
 that hasn't explicitly been marked for export this way (unless the
-GIT_HTTP_EXPORT_ALL environmental variable is set).
+`GIT_HTTP_EXPORT_ALL` environmental variable is set).
 
 By default, only the `upload-pack` service is enabled, which serves
 'git fetch-pack' and 'git ls-remote' clients, which are invoked from
@@ -241,7 +241,7 @@ $HTTP["url"] =~ "^/git/private" {
 
 ENVIRONMENT
 -----------
-'git http-backend' relies upon the CGI environment variables set
+'git http-backend' relies upon the `CGI` environment variables set
 by the invoking web server, including:
 
 * PATH_INFO (if GIT_PROJECT_ROOT is set, otherwise PATH_TRANSLATED)
@@ -251,7 +251,7 @@ by the invoking web server, including:
 * QUERY_STRING
 * REQUEST_METHOD
 
-The GIT_HTTP_EXPORT_ALL environmental variable may be passed to
+The `GIT_HTTP_EXPORT_ALL` environmental variable may be passed to
 'git-http-backend' to bypass the check for the "git-daemon-export-ok"
 file in each repository before allowing export of that repository.
 
@@ -269,7 +269,7 @@ GIT_COMMITTER_EMAIL to '$\{REMOTE_USER}@http.$\{REMOTE_ADDR\}',
 ensuring that any reflogs created by 'git-receive-pack' contain some
 identifying information of the remote user who performed the push.
 
-All CGI environment variables are available to each of the hooks
+All `CGI` environment variables are available to each of the hooks
 invoked by the 'git-receive-pack'.
 
 GIT

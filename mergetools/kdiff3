@@ -21,3 +21,7 @@ merge_cmd () {
 		>/dev/null 2>&1
 	fi
 }
+
+exit_code_trustable () {
+	true
+}

@@ -54,7 +54,7 @@ test_expect_success SYMLINKS 'pulling from real subdir' '
 # git rev-parse --show-cdup printed a path relative to
 # clone-repo/subdir/, not subdir-link/.  Git rev-parse --show-cdup
 # used the correct .git, but when the git pull shell script did
-# "cd `git rev-parse --show-cdup`", it ended up in the wrong
+# "cd $(git rev-parse --show-cdup)", it ended up in the wrong
 # directory.  A POSIX shell's "cd" works a little differently
 # than chdir() in C; "cd -P" is much closer to chdir().
 #

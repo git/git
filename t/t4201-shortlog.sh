@@ -115,7 +115,13 @@ EOF
 '
 
 test_expect_success !MINGW 'shortlog from non-git directory' '
-	git log HEAD >log &&
+	git log --no-expand-tabs HEAD >log &&
+	GIT_DIR=non-existing git shortlog -w <log >out &&
+	test_cmp expect out
+'
+
+test_expect_success !MINGW 'shortlog can read --format=raw output' '
+	git log --format=raw HEAD >log &&
 	GIT_DIR=non-existing git shortlog -w <log >out &&
 	test_cmp expect out
 '
@@ -172,26 +178,35 @@ test_expect_success !MINGW 'shortlog encoding' '
 	git shortlog HEAD~2.. > out &&
 test_cmp expect out'
 
-test_expect_success 'shortlog ignores commits with missing authors' '
-	git commit --allow-empty -m normal &&
-	git commit --allow-empty -m soon-to-be-broken &&
-	git cat-file commit HEAD >commit.tmp &&
-	sed "/^author/d" commit.tmp >broken.tmp &&
-	commit=$(git hash-object -w -t commit --stdin <broken.tmp) &&
-	git update-ref HEAD $commit &&
-	cat >expect <<-\EOF &&
-	A U Thor (1):
-	      normal
-
-	EOF
-	git shortlog HEAD~2.. >actual &&
-	test_cmp expect actual
-'
-
 test_expect_success 'shortlog with revision pseudo options' '
 	git shortlog --all &&
 	git shortlog --branches &&
 	git shortlog --exclude=refs/heads/m* --all
+'
+
+test_expect_success 'shortlog with --output=<file>' '
+	git shortlog --output=shortlog -1 master >output &&
+	test ! -s output &&
+	test_line_count = 3 shortlog
+'
+
+test_expect_success 'shortlog --committer (internal)' '
+	git checkout --orphan side &&
+	git commit --allow-empty -m one &&
+	git commit --allow-empty -m two &&
+	GIT_COMMITTER_NAME="Sin Nombre" git commit --allow-empty -m three &&
+
+	cat >expect <<-\EOF &&
+	     2	C O Mitter
+	     1	Sin Nombre
+	EOF
+	git shortlog -nsc HEAD >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'shortlog --committer (external)' '
+	git log --format=full | git shortlog -nsc >actual &&
+	test_cmp expect actual
 '
 
 test_done

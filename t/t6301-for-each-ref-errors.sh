@@ -20,8 +20,8 @@ test_expect_success 'Broken refs are reported correctly' '
 	test_when_finished "rm -f .git/$r" &&
 	echo "warning: ignoring broken ref $r" >broken-err &&
 	git for-each-ref >out 2>err &&
-	test_cmp full-list out &&
-	test_cmp broken-err err
+	test_i18ncmp full-list out &&
+	test_i18ncmp broken-err err
 '
 
 test_expect_success 'NULL_SHA1 refs are reported correctly' '
@@ -31,10 +31,10 @@ test_expect_success 'NULL_SHA1 refs are reported correctly' '
 	echo "warning: ignoring broken ref $r" >zeros-err &&
 	git for-each-ref >out 2>err &&
 	test_cmp full-list out &&
-	test_cmp zeros-err err &&
+	test_i18ncmp zeros-err err &&
 	git for-each-ref --format="%(objectname) %(refname)" >brief-out 2>brief-err &&
 	test_cmp brief-list brief-out &&
-	test_cmp zeros-err brief-err
+	test_i18ncmp zeros-err brief-err
 '
 
 test_expect_success 'Missing objects are reported correctly' '
@@ -43,7 +43,7 @@ test_expect_success 'Missing objects are reported correctly' '
 	test_when_finished "rm -f .git/$r" &&
 	echo "fatal: missing object $MISSING for $r" >missing-err &&
 	test_must_fail git for-each-ref 2>err &&
-	test_cmp missing-err err &&
+	test_i18ncmp missing-err err &&
 	(
 		cat brief-list &&
 		echo "$MISSING $r"

@@ -23,7 +23,7 @@ git update-index symlink'
 
 test_expect_success \
 'the index entry must still be a symbolic link' '
-case "`git ls-files --stage --cached symlink`" in
+case "$(git ls-files --stage --cached symlink)" in
 120000" "*symlink) echo pass;;
 *) echo fail; git ls-files --stage --cached symlink; (exit 1);;
 esac'

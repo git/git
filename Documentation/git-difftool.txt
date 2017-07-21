@@ -86,10 +86,11 @@ instead.  `--no-symlinks` is the default on Windows.
 	Additionally, `$BASE` is set in the environment.
 
 -g::
---gui::
+--[no-]gui::
 	When 'git-difftool' is invoked with the `-g` or `--gui` option
 	the default diff tool will be read from the configured
-	`diff.guitool` variable instead of `diff.tool`.
+	`diff.guitool` variable instead of `diff.tool`. The `--no-gui`
+	option can be used to override this setting.
 
 --[no-]trust-exit-code::
 	'git-difftool' invokes a diff tool individually on each file.
@@ -98,7 +99,7 @@ instead.  `--no-symlinks` is the default on Windows.
 	invoked diff tool returns a non-zero exit code.
 +
 'git-difftool' will forward the exit code of the invoked tool when
-'--trust-exit-code' is used.
+`--trust-exit-code` is used.
 
 See linkgit:git-diff[1] for the full list of supported options.
 

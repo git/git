@@ -1,8 +1,9 @@
 #ifndef GPG_INTERFACE_H
 #define GPG_INTERFACE_H
 
-#define GPG_VERIFY_VERBOSE	1
-#define GPG_VERIFY_RAW		2
+#define GPG_VERIFY_VERBOSE		1
+#define GPG_VERIFY_RAW			2
+#define GPG_VERIFY_OMIT_STATUS	4
 
 struct signature_check {
 	char *payload;

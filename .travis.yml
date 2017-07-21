@@ -1,0 +1,168 @@
+language: c
+
+sudo: false
+
+cache:
+  directories:
+    - $HOME/travis-cache
+
+os:
+  - linux
+  - osx
+
+compiler:
+  - clang
+  - gcc
+
+addons:
+  apt:
+    packages:
+    - language-pack-is
+    - git-svn
+    - apache2
+
+env:
+  global:
+    - DEVELOPER=1
+    # The Linux build installs the defined dependency versions below.
+    # The OS X build installs the latest available versions. Keep that
+    # in mind when you encounter a broken OS X build!
+    - LINUX_P4_VERSION="16.2"
+    - LINUX_GIT_LFS_VERSION="1.5.2"
+    - DEFAULT_TEST_TARGET=prove
+    - GIT_PROVE_OPTS="--timer --jobs 3 --state=failed,slow,save"
+    - GIT_TEST_OPTS="--verbose-log"
+    - GIT_TEST_CLONE_2GB=YesPlease
+    # t9810 occasionally fails on Travis CI OS X
+    # t9816 occasionally fails with "TAP out of sequence errors" on Travis CI OS X
+    - GIT_SKIP_TESTS="t9810 t9816"
+
+matrix:
+  include:
+    - env: GETTEXT_POISON=YesPlease
+      os: linux
+      compiler:
+      addons:
+      before_install:
+    - env: Windows
+      os: linux
+      compiler:
+      addons:
+      before_install:
+      before_script:
+      script:
+        - >
+          test "$TRAVIS_REPO_SLUG" != "git/git" ||
+          ci/run-windows-build.sh $TRAVIS_BRANCH $(git rev-parse HEAD)
+      after_failure:
+    - env: Linux32
+      os: linux
+      compiler:
+      services:
+        - docker
+      before_install:
+        - docker pull daald/ubuntu32:xenial
+      before_script:
+      script:
+        - >
+          docker run
+          --interactive
+          --env DEVELOPER
+          --env DEFAULT_TEST_TARGET
+          --env GIT_PROVE_OPTS
+          --env GIT_TEST_OPTS
+          --env GIT_TEST_CLONE_2GB
+          --volume "${PWD}:/usr/src/git"
+          daald/ubuntu32:xenial
+          /usr/src/git/ci/run-linux32-build.sh $(id -u $USER)
+        # Use the following command to debug the docker build locally:
+        # $ docker run -itv "${PWD}:/usr/src/git" --entrypoint /bin/bash daald/ubuntu32:xenial
+        # root@container:/# /usr/src/git/ci/run-linux32-build.sh
+    - env: Static Analysis
+      os: linux
+      compiler:
+      addons:
+        apt:
+          packages:
+          - coccinelle
+      before_install:
+      script:
+        # "before_script" that builds Git is inherited from base job
+        - make coccicheck
+      after_failure:
+    - env: Documentation
+      os: linux
+      compiler:
+      addons:
+        apt:
+          packages:
+          - asciidoc
+          - xmlto
+      before_install:
+      before_script: gem install asciidoctor
+      script: ci/test-documentation.sh
+      after_failure:
+
+before_install:
+  - >
+    case "${TRAVIS_OS_NAME:-linux}" in
+    linux)
+      export GIT_TEST_HTTPD=YesPlease
+
+      mkdir --parents custom/p4
+      pushd custom/p4
+        wget --quiet http://filehost.perforce.com/perforce/r$LINUX_P4_VERSION/bin.linux26x86_64/p4d
+        wget --quiet http://filehost.perforce.com/perforce/r$LINUX_P4_VERSION/bin.linux26x86_64/p4
+        chmod u+x p4d
+        chmod u+x p4
+        export PATH="$(pwd):$PATH"
+      popd
+      mkdir --parents custom/git-lfs
+      pushd custom/git-lfs
+        wget --quiet https://github.com/github/git-lfs/releases/download/v$LINUX_GIT_LFS_VERSION/git-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz
+        tar --extract --gunzip --file "git-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz"
+        cp git-lfs-$LINUX_GIT_LFS_VERSION/git-lfs .
+        export PATH="$(pwd):$PATH"
+      popd
+      ;;
+    osx)
+      brew update --quiet
+      # Uncomment this if you want to run perf tests:
+      # brew install gnu-time
+      brew install git-lfs gettext
+      brew link --force gettext
+      brew install caskroom/cask/perforce
+      ;;
+    esac;
+    echo "$(tput setaf 6)Perforce Server Version$(tput sgr0)";
+    p4d -V | grep Rev.;
+    echo "$(tput setaf 6)Perforce Client Version$(tput sgr0)";
+    p4 -V | grep Rev.;
+    echo "$(tput setaf 6)Git-LFS Version$(tput sgr0)";
+    git-lfs version;
+
+before_script: make --jobs=2
+
+script:
+  - >
+    mkdir -p $HOME/travis-cache;
+    ln -s $HOME/travis-cache/.prove t/.prove;
+    make --quiet test;
+
+after_failure:
+  - >
+    : '<-- Click here to see detailed test output!                                                        ';
+    for TEST_EXIT in t/test-results/*.exit;
+    do
+      if [ "$(cat "$TEST_EXIT")" != "0" ];
+      then
+        TEST_OUT="${TEST_EXIT%exit}out";
+        echo "------------------------------------------------------------------------";
+        echo "$(tput setaf 1)${TEST_OUT}...$(tput sgr0)";
+        echo "------------------------------------------------------------------------";
+        cat "${TEST_OUT}";
+      fi;
+    done;
+
+notifications:
+  email: false

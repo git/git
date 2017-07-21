@@ -4,6 +4,7 @@
  * Copyright (c) 2006 Junio C Hamano
  */
 #include "cache.h"
+#include "config.h"
 #include "lockfile.h"
 #include "color.h"
 #include "commit.h"
@@ -20,55 +21,51 @@
 #define DIFF_NO_INDEX_EXPLICIT 1
 #define DIFF_NO_INDEX_IMPLICIT 2
 
-struct blobinfo {
-	unsigned char sha1[20];
-	const char *name;
-	unsigned mode;
-};
-
 static const char builtin_diff_usage[] =
 "git diff [<options>] [<commit> [<commit>]] [--] [<path>...]";
 
+static const char *blob_path(struct object_array_entry *entry)
+{
+	return entry->path ? entry->path : entry->name;
+}
+
 static void stuff_change(struct diff_options *opt,
 			 unsigned old_mode, unsigned new_mode,
-			 const unsigned char *old_sha1,
-			 const unsigned char *new_sha1,
-			 int old_sha1_valid,
-			 int new_sha1_valid,
-			 const char *old_name,
-			 const char *new_name)
+			 const struct object_id *old_oid,
+			 const struct object_id *new_oid,
+			 int old_oid_valid,
+			 int new_oid_valid,
+			 const char *old_path,
+			 const char *new_path)
 {
 	struct diff_filespec *one, *two;
 
-	if (!is_null_sha1(old_sha1) && !is_null_sha1(new_sha1) &&
-	    !hashcmp(old_sha1, new_sha1) && (old_mode == new_mode))
+	if (!is_null_oid(old_oid) && !is_null_oid(new_oid) &&
+	    !oidcmp(old_oid, new_oid) && (old_mode == new_mode))
 		return;
 
 	if (DIFF_OPT_TST(opt, REVERSE_DIFF)) {
-		unsigned tmp;
-		const unsigned char *tmp_u;
-		const char *tmp_c;
-		tmp = old_mode; old_mode = new_mode; new_mode = tmp;
-		tmp_u = old_sha1; old_sha1 = new_sha1; new_sha1 = tmp_u;
-		tmp_c = old_name; old_name = new_name; new_name = tmp_c;
+		SWAP(old_mode, new_mode);
+		SWAP(old_oid, new_oid);
+		SWAP(old_path, new_path);
 	}
 
 	if (opt->prefix &&
-	    (strncmp(old_name, opt->prefix, opt->prefix_length) ||
-	     strncmp(new_name, opt->prefix, opt->prefix_length)))
+	    (strncmp(old_path, opt->prefix, opt->prefix_length) ||
+	     strncmp(new_path, opt->prefix, opt->prefix_length)))
 		return;
 
-	one = alloc_filespec(old_name);
-	two = alloc_filespec(new_name);
-	fill_filespec(one, old_sha1, old_sha1_valid, old_mode);
-	fill_filespec(two, new_sha1, new_sha1_valid, new_mode);
+	one = alloc_filespec(old_path);
+	two = alloc_filespec(new_path);
+	fill_filespec(one, old_oid, old_oid_valid, old_mode);
+	fill_filespec(two, new_oid, new_oid_valid, new_mode);
 
 	diff_queue(&diff_queued_diff, one, two);
 }
 
 static int builtin_diff_b_f(struct rev_info *revs,
 			    int argc, const char **argv,
-			    struct blobinfo *blob)
+			    struct object_array_entry **blob)
 {
 	/* Blob vs file in the working tree*/
 	struct stat st;
@@ -87,14 +84,15 @@ static int builtin_diff_b_f(struct rev_info *revs,
 
 	diff_set_mnemonic_prefix(&revs->diffopt, "o/", "w/");
 
-	if (blob[0].mode == S_IFINVALID)
-		blob[0].mode = canon_mode(st.st_mode);
+	if (blob[0]->mode == S_IFINVALID)
+		blob[0]->mode = canon_mode(st.st_mode);
 
 	stuff_change(&revs->diffopt,
-		     blob[0].mode, canon_mode(st.st_mode),
-		     blob[0].sha1, null_sha1,
+		     blob[0]->mode, canon_mode(st.st_mode),
+		     &blob[0]->item->oid, &null_oid,
 		     1, 0,
-		     path, path);
+		     blob[0]->path ? blob[0]->path : path,
+		     path);
 	diffcore_std(&revs->diffopt);
 	diff_flush(&revs->diffopt);
 	return 0;
@@ -102,24 +100,24 @@ static int builtin_diff_b_f(struct rev_info *revs,
 
 static int builtin_diff_blobs(struct rev_info *revs,
 			      int argc, const char **argv,
-			      struct blobinfo *blob)
+			      struct object_array_entry **blob)
 {
 	unsigned mode = canon_mode(S_IFREG | 0644);
 
 	if (argc > 1)
 		usage(builtin_diff_usage);
 
-	if (blob[0].mode == S_IFINVALID)
-		blob[0].mode = mode;
+	if (blob[0]->mode == S_IFINVALID)
+		blob[0]->mode = mode;
 
-	if (blob[1].mode == S_IFINVALID)
-		blob[1].mode = mode;
+	if (blob[1]->mode == S_IFINVALID)
+		blob[1]->mode = mode;
 
 	stuff_change(&revs->diffopt,
-		     blob[0].mode, blob[1].mode,
-		     blob[0].sha1, blob[1].sha1,
+		     blob[0]->mode, blob[1]->mode,
+		     &blob[0]->item->oid, &blob[1]->item->oid,
 		     1, 1,
-		     blob[0].name, blob[1].name);
+		     blob_path(blob[0]), blob_path(blob[1]));
 	diffcore_std(&revs->diffopt);
 	diff_flush(&revs->diffopt);
 	return 0;
@@ -163,7 +161,7 @@ static int builtin_diff_tree(struct rev_info *revs,
 			     struct object_array_entry *ent0,
 			     struct object_array_entry *ent1)
 {
-	const unsigned char *(sha1[2]);
+	const struct object_id *(oid[2]);
 	int swap = 0;
 
 	if (argc > 1)
@@ -175,9 +173,9 @@ static int builtin_diff_tree(struct rev_info *revs,
 	 */
 	if (ent1->item->flags & UNINTERESTING)
 		swap = 1;
-	sha1[swap] = ent0->item->sha1;
-	sha1[1 - swap] = ent1->item->sha1;
-	diff_tree_sha1(sha1[0], sha1[1], "", &revs->diffopt);
+	oid[swap] = &ent0->item->oid;
+	oid[1 - swap] = &ent1->item->oid;
+	diff_tree_oid(oid[0], oid[1], "", &revs->diffopt);
 	log_tree_diff_flush(revs);
 	return 0;
 }
@@ -187,7 +185,7 @@ static int builtin_diff_combined(struct rev_info *revs,
 				 struct object_array_entry *ent,
 				 int ents)
 {
-	struct sha1_array parents = SHA1_ARRAY_INIT;
+	struct oid_array parents = OID_ARRAY_INIT;
 	int i;
 
 	if (argc > 1)
@@ -196,10 +194,10 @@ static int builtin_diff_combined(struct rev_info *revs,
 	if (!revs->dense_combined_merges && !revs->combine_merges)
 		revs->dense_combined_merges = revs->combine_merges = 1;
 	for (i = 1; i < ents; i++)
-		sha1_array_append(&parents, ent[i].item->sha1);
-	diff_tree_combined(ent[0].item->sha1, &parents,
+		oid_array_append(&parents, &ent[i].item->oid);
+	diff_tree_combined(&ent[0].item->oid, &parents,
 			   revs->dense_combined_merges, revs);
-	sha1_array_clear(&parents);
+	oid_array_clear(&parents);
 	return 0;
 }
 
@@ -262,7 +260,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	struct rev_info rev;
 	struct object_array ent = OBJECT_ARRAY_INIT;
 	int blobs = 0, paths = 0;
-	struct blobinfo blob[2];
+	struct object_array_entry *blob[2];
 	int nongit = 0, no_index = 0;
 	int result = 0;
 
@@ -301,24 +299,27 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 			break;
 	}
 
-	if (!no_index)
-		prefix = setup_git_directory_gently(&nongit);
+	prefix = setup_git_directory_gently(&nongit);
 
-	/*
-	 * Treat git diff with at least one path outside of the
-	 * repo the same as if the command would have been executed
-	 * outside of a git repository.  In this case it behaves
-	 * the same way as "git diff --no-index <a> <b>", which acts
-	 * as a colourful "diff" replacement.
-	 */
-	if (nongit || ((argc == i + 2) &&
-		       (!path_inside_repo(prefix, argv[i]) ||
-			!path_inside_repo(prefix, argv[i + 1]))))
-		no_index = DIFF_NO_INDEX_IMPLICIT;
+	if (!no_index) {
+		/*
+		 * Treat git diff with at least one path outside of the
+		 * repo the same as if the command would have been executed
+		 * outside of a git repository.  In this case it behaves
+		 * the same way as "git diff --no-index <a> <b>", which acts
+		 * as a colourful "diff" replacement.
+		 */
+		if (nongit || ((argc == i + 2) &&
+			       (!path_inside_repo(prefix, argv[i]) ||
+				!path_inside_repo(prefix, argv[i + 1]))))
+			no_index = DIFF_NO_INDEX_IMPLICIT;
+	}
 
 	if (!no_index)
 		gitmodules_config();
+	init_diff_ui_defaults();
 	git_config(git_diff_ui_config, NULL);
+	precompose_argv(argc, argv);
 
 	init_revisions(&rev, prefix);
 
@@ -341,7 +342,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	}
 	if (no_index)
 		/* If this is a no-index diff, just run it and exit there. */
-		diff_no_index(&rev, argc, argv, prefix);
+		diff_no_index(&rev, argc, argv);
 
 	/* Otherwise, we are doing the usual "git" diff */
 	rev.diffopt.skip_stat_unmatch = !!diff_auto_refresh_index;
@@ -381,7 +382,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 				add_head_to_pending(&rev);
 				if (!rev.pending.nr) {
 					struct tree *tree;
-					tree = lookup_tree(EMPTY_TREE_SHA1_BIN);
+					tree = lookup_tree(&empty_tree_oid);
 					add_pending_object(&rev, &tree->object, "HEAD");
 				}
 				break;
@@ -395,7 +396,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 		const char *name = entry->name;
 		int flags = (obj->flags & UNINTERESTING);
 		if (!obj->parsed)
-			obj = parse_object(obj->sha1);
+			obj = parse_object(&obj->oid);
 		obj = deref_tag(obj, NULL, 0);
 		if (!obj)
 			die(_("invalid object '%s' given."), name);
@@ -408,9 +409,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 		} else if (obj->type == OBJ_BLOB) {
 			if (2 <= blobs)
 				die(_("more than two blobs given: '%s'"), name);
-			hashcpy(blob[blobs].sha1, obj->sha1);
-			blob[blobs].name = name;
-			blob[blobs].mode = entry->mode;
+			blob[blobs] = entry;
 			blobs++;
 
 		} else {

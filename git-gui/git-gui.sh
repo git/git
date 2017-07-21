@@ -275,6 +275,10 @@ proc is_Cygwin {} {
 				set _iscygwin 0
 			} else {
 				set _iscygwin 1
+				# Handle MSys2 which is only cygwin when MSYSTEM is MSYS.
+				if {[info exists ::env(MSYSTEM)] && $::env(MSYSTEM) ne "MSYS"} {
+					set _iscygwin 0
+				}
 			}
 		} else {
 			set _iscygwin 0
@@ -530,28 +534,10 @@ proc _lappend_nice {cmd_var} {
 }
 
 proc git {args} {
-	set opt [list]
-
-	while {1} {
-		switch -- [lindex $args 0] {
-		--nice {
-			_lappend_nice opt
-		}
-
-		default {
-			break
-		}
-
-		}
-
-		set args [lrange $args 1 end]
-	}
-
-	set cmdp [_git_cmd [lindex $args 0]]
-	set args [lrange $args 1 end]
-
-	_trace_exec [concat $opt $cmdp $args]
-	set result [eval exec $opt $cmdp $args]
+	set fd [eval [list git_read] $args]
+	fconfigure $fd -translation binary -encoding utf-8
+	set result [string trimright [read $fd] "\n"]
+	close $fd
 	if {$::_trace} {
 		puts stderr "< $result"
 	}
@@ -1107,7 +1093,7 @@ git-version proc _parse_config {arr_name args} {
 				[list git_read config] \
 				$args \
 				[list --null --list]]
-			fconfigure $fd_rc -translation binary
+			fconfigure $fd_rc -translation binary -encoding utf-8
 			set buf [read $fd_rc]
 			close $fd_rc
 		}
@@ -1616,11 +1602,13 @@ proc run_prepare_commit_msg_hook {} {
 	if {[file isfile [gitdir MERGE_MSG]]} {
 		set pcm_source "merge"
 		set fd_mm [open [gitdir MERGE_MSG] r]
+		fconfigure $fd_mm -encoding utf-8
 		puts -nonewline $fd_pcm [read $fd_mm]
 		close $fd_mm
 	} elseif {[file isfile [gitdir SQUASH_MSG]]} {
 		set pcm_source "squash"
 		set fd_sm [open [gitdir SQUASH_MSG] r]
+		fconfigure $fd_sm -encoding utf-8
 		puts -nonewline $fd_pcm [read $fd_sm]
 		close $fd_sm
 	} else {
@@ -1685,7 +1673,7 @@ proc read_diff_index {fd after} {
 		set i [split [string range $buf_rdi $c [expr {$z1 - 2}]] { }]
 		set p [string range $buf_rdi $z1 [expr {$z2 - 1}]]
 		merge_state \
-			[encoding convertfrom $p] \
+			[encoding convertfrom utf-8 $p] \
 			[lindex $i 4]? \
 			[list [lindex $i 0] [lindex $i 2]] \
 			[list]
@@ -1718,7 +1706,7 @@ proc read_diff_files {fd after} {
 		set i [split [string range $buf_rdf $c [expr {$z1 - 2}]] { }]
 		set p [string range $buf_rdf $z1 [expr {$z2 - 1}]]
 		merge_state \
-			[encoding convertfrom $p] \
+			[encoding convertfrom utf-8 $p] \
 			?[lindex $i 4] \
 			[list] \
 			[list [lindex $i 0] [lindex $i 2]]
@@ -1741,7 +1729,7 @@ proc read_ls_others {fd after} {
 	set pck [split $buf_rlo "\0"]
 	set buf_rlo [lindex $pck end]
 	foreach p [lrange $pck 0 end-1] {
-		set p [encoding convertfrom $p]
+		set p [encoding convertfrom utf-8 $p]
 		if {[string index $p end] eq {/}} {
 			set p [string range $p 0 end-1]
 		}
@@ -2505,13 +2493,28 @@ proc force_first_diff {after} {
 	}
 }
 
-proc toggle_or_diff {w x y} {
+proc toggle_or_diff {mode w args} {
 	global file_states file_lists current_diff_path ui_index ui_workdir
 	global last_clicked selected_paths
 
-	set pos [split [$w index @$x,$y] .]
-	set lno [lindex $pos 0]
-	set col [lindex $pos 1]
+	if {$mode eq "click"} {
+		foreach {x y} $args break
+		set pos [split [$w index @$x,$y] .]
+		foreach {lno col} $pos break
+	} else {
+		if {$last_clicked ne {}} {
+			set lno [lindex $last_clicked 1]
+		} else {
+			set lno [expr {int([lindex [$w tag ranges in_diff] 0])}]
+		}
+		if {$mode eq "toggle"} {
+			set col 0; set y 2
+		} else {
+			incr lno [expr {$mode eq "up" ? -1 : 1}]
+			set col 1
+		}
+	}
+
 	set path [lindex $file_lists($w) [expr {$lno - 1}]]
 	if {$path eq {}} {
 		set last_clicked {}
@@ -2519,6 +2522,7 @@ proc toggle_or_diff {w x y} {
 	}
 
 	set last_clicked [list $w $lno]
+	focus $w
 	array unset selected_paths
 	$ui_index tag remove in_sel 0.0 end
 	$ui_workdir tag remove in_sel 0.0 end
@@ -2598,7 +2602,7 @@ proc add_range_to_selection {w x y} {
 	global file_lists last_clicked selected_paths
 
 	if {[lindex $last_clicked 0] ne $w} {
-		toggle_or_diff $w $x $y
+		toggle_or_diff click $w $x $y
 		return
 	}
 
@@ -3007,7 +3011,7 @@ bind all <$M1B-Key-W> {destroy [winfo toplevel %W]}
 
 set subcommand_args {}
 proc usage {} {
-	set s "usage: $::argv0 $::subcommand $::subcommand_args"
+	set s "[mc usage:] $::argv0 $::subcommand $::subcommand_args"
 	if {[tk windowingsystem] eq "win32"} {
 		wm withdraw .
 		tk_messageBox -icon info -message $s \
@@ -3139,7 +3143,7 @@ gui {
 	# fall through to setup UI for commits
 }
 default {
-	set err "usage: $argv0 \[{blame|browser|citool}\]"
+	set err "[mc usage:] $argv0 \[{blame|browser|citool}\]"
 	if {[tk windowingsystem] eq "win32"} {
 		wm withdraw .
 		tk_messageBox -icon error -message $err \
@@ -3178,36 +3182,16 @@ if {$use_ttk} {
 }
 pack .vpane -anchor n -side top -fill both -expand 1
 
-# -- Index File List
-#
-${NS}::frame .vpane.files.index -height 100 -width 200
-tlabel .vpane.files.index.title \
-	-text [mc "Staged Changes (Will Commit)"] \
-	-background lightgreen -foreground black
-text $ui_index -background white -foreground black \
-	-borderwidth 0 \
-	-width 20 -height 10 \
-	-wrap none \
-	-cursor $cursor_ptr \
-	-xscrollcommand {.vpane.files.index.sx set} \
-	-yscrollcommand {.vpane.files.index.sy set} \
-	-state disabled
-${NS}::scrollbar .vpane.files.index.sx -orient h -command [list $ui_index xview]
-${NS}::scrollbar .vpane.files.index.sy -orient v -command [list $ui_index yview]
-pack .vpane.files.index.title -side top -fill x
-pack .vpane.files.index.sx -side bottom -fill x
-pack .vpane.files.index.sy -side right -fill y
-pack $ui_index -side left -fill both -expand 1
-
 # -- Working Directory File List
-#
-${NS}::frame .vpane.files.workdir -height 100 -width 200
+
+textframe .vpane.files.workdir -height 100 -width 200
 tlabel .vpane.files.workdir.title -text [mc "Unstaged Changes"] \
 	-background lightsalmon -foreground black
-text $ui_workdir -background white -foreground black \
+ttext $ui_workdir -background white -foreground black \
 	-borderwidth 0 \
 	-width 20 -height 10 \
 	-wrap none \
+	-takefocus 1 -highlightthickness 1\
 	-cursor $cursor_ptr \
 	-xscrollcommand {.vpane.files.workdir.sx set} \
 	-yscrollcommand {.vpane.files.workdir.sy set} \
@@ -3219,6 +3203,30 @@ pack .vpane.files.workdir.sx -side bottom -fill x
 pack .vpane.files.workdir.sy -side right -fill y
 pack $ui_workdir -side left -fill both -expand 1
 
+# -- Index File List
+#
+textframe .vpane.files.index -height 100 -width 200
+tlabel .vpane.files.index.title \
+	-text [mc "Staged Changes (Will Commit)"] \
+	-background lightgreen -foreground black
+ttext $ui_index -background white -foreground black \
+	-borderwidth 0 \
+	-width 20 -height 10 \
+	-wrap none \
+	-takefocus 1 -highlightthickness 1\
+	-cursor $cursor_ptr \
+	-xscrollcommand {.vpane.files.index.sx set} \
+	-yscrollcommand {.vpane.files.index.sy set} \
+	-state disabled
+${NS}::scrollbar .vpane.files.index.sx -orient h -command [list $ui_index xview]
+${NS}::scrollbar .vpane.files.index.sy -orient v -command [list $ui_index yview]
+pack .vpane.files.index.title -side top -fill x
+pack .vpane.files.index.sx -side bottom -fill x
+pack .vpane.files.index.sy -side right -fill y
+pack $ui_index -side left -fill both -expand 1
+
+# -- Insert the workdir and index into the panes
+#
 .vpane.files add .vpane.files.workdir
 .vpane.files add .vpane.files.index
 if {!$use_ttk} {
@@ -3301,7 +3309,7 @@ if {![is_enabled nocommit]} {
 #
 ${NS}::frame .vpane.lower.commarea.buffer
 ${NS}::frame .vpane.lower.commarea.buffer.header
-set ui_comm .vpane.lower.commarea.buffer.t
+set ui_comm .vpane.lower.commarea.buffer.frame.t
 set ui_coml .vpane.lower.commarea.buffer.header.l
 
 if {![is_enabled nocommit]} {
@@ -3344,20 +3352,25 @@ if {![is_enabled nocommit]} {
 	pack .vpane.lower.commarea.buffer.header.new -side right
 }
 
-text $ui_comm -background white -foreground black \
+textframe .vpane.lower.commarea.buffer.frame
+ttext $ui_comm -background white -foreground black \
 	-borderwidth 1 \
 	-undo true \
 	-maxundo 20 \
 	-autoseparators true \
+	-takefocus 1 \
+	-highlightthickness 1 \
 	-relief sunken \
 	-width $repo_config(gui.commitmsgwidth) -height 9 -wrap none \
 	-font font_diff \
-	-yscrollcommand {.vpane.lower.commarea.buffer.sby set}
-${NS}::scrollbar .vpane.lower.commarea.buffer.sby \
+	-yscrollcommand {.vpane.lower.commarea.buffer.frame.sby set}
+${NS}::scrollbar .vpane.lower.commarea.buffer.frame.sby \
 	-command [list $ui_comm yview]
-pack .vpane.lower.commarea.buffer.header -side top -fill x
-pack .vpane.lower.commarea.buffer.sby -side right -fill y
+
+pack .vpane.lower.commarea.buffer.frame.sby -side right -fill y
 pack $ui_comm -side left -fill y
+pack .vpane.lower.commarea.buffer.header -side top -fill x
+pack .vpane.lower.commarea.buffer.frame -side left -fill y
 pack .vpane.lower.commarea.buffer -side left -fill y
 
 # -- Commit Message Buffer Context Menu
@@ -3455,12 +3468,13 @@ bind_button3 .vpane.lower.diff.header.path "tk_popup $ctxm %X %Y"
 
 # -- Diff Body
 #
-${NS}::frame .vpane.lower.diff.body
+textframe .vpane.lower.diff.body
 set ui_diff .vpane.lower.diff.body.t
-text $ui_diff -background white -foreground black \
+ttext $ui_diff -background white -foreground black \
 	-borderwidth 0 \
 	-width 80 -height 5 -wrap none \
 	-font font_diff \
+	-takefocus 1 -highlightthickness 1 \
 	-xscrollcommand {.vpane.lower.diff.body.sbx set} \
 	-yscrollcommand {.vpane.lower.diff.body.sby set} \
 	-state disabled
@@ -3815,10 +3829,10 @@ bind .   <$M1B-Key-r> ui_do_rescan
 bind .   <$M1B-Key-R> ui_do_rescan
 bind .   <$M1B-Key-s> do_signoff
 bind .   <$M1B-Key-S> do_signoff
-bind .   <$M1B-Key-t> do_add_selection
-bind .   <$M1B-Key-T> do_add_selection
-bind .   <$M1B-Key-u> do_unstage_selection
-bind .   <$M1B-Key-U> do_unstage_selection
+bind .   <$M1B-Key-t> { toggle_or_diff toggle %W }
+bind .   <$M1B-Key-T> { toggle_or_diff toggle %W }
+bind .   <$M1B-Key-u> { toggle_or_diff toggle %W }
+bind .   <$M1B-Key-U> { toggle_or_diff toggle %W }
 bind .   <$M1B-Key-j> do_revert_selection
 bind .   <$M1B-Key-J> do_revert_selection
 bind .   <$M1B-Key-i> do_add_all
@@ -3830,9 +3844,11 @@ bind .   <$M1B-Key-plus> {show_more_context;break}
 bind .   <$M1B-Key-KP_Add> {show_more_context;break}
 bind .   <$M1B-Key-Return> do_commit
 foreach i [list $ui_index $ui_workdir] {
-	bind $i <Button-1>       "toggle_or_diff         $i %x %y; break"
-	bind $i <$M1B-Button-1>  "add_one_to_selection   $i %x %y; break"
-	bind $i <Shift-Button-1> "add_range_to_selection $i %x %y; break"
+	bind $i <Button-1>       { toggle_or_diff click %W %x %y; break }
+	bind $i <$M1B-Button-1>  { add_one_to_selection %W %x %y; break }
+	bind $i <Shift-Button-1> { add_range_to_selection %W %x %y; break }
+	bind $i <Key-Up>         { toggle_or_diff up %W; break }
+	bind $i <Key-Down>       { toggle_or_diff down %W; break }
 }
 unset i
 

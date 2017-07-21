@@ -17,7 +17,7 @@ test_expect_success 'initialize repo' '
 test_expect_success 'mirror via git svn' '
 	git svn init "$svnrepo" &&
 	git svn fetch &&
-	git checkout -f -b test-rmdir ${remotes_git_svn}
+	git checkout -f -b test-rmdir remotes/git-svn
 	'
 
 test_expect_success 'Try a commit on rmdir' '

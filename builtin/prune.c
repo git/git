@@ -13,7 +13,7 @@ static const char * const prune_usage[] = {
 };
 static int show_only;
 static int verbose;
-static unsigned long expire;
+static timestamp_t expire;
 static int show_progress = -1;
 
 static int prune_tmp_file(const char *fullpath)
@@ -30,7 +30,7 @@ static int prune_tmp_file(const char *fullpath)
 	return 0;
 }
 
-static int prune_object(const unsigned char *sha1, const char *fullpath,
+static int prune_object(const struct object_id *oid, const char *fullpath,
 			void *data)
 {
 	struct stat st;
@@ -39,7 +39,7 @@ static int prune_object(const unsigned char *sha1, const char *fullpath,
 	 * Do we know about this object?
 	 * It must have been reachable
 	 */
-	if (lookup_object(sha1))
+	if (lookup_object(oid->hash))
 		return 0;
 
 	if (lstat(fullpath, &st)) {
@@ -50,8 +50,8 @@ static int prune_object(const unsigned char *sha1, const char *fullpath,
 	if (st.st_mtime > expire)
 		return 0;
 	if (show_only || verbose) {
-		enum object_type type = sha1_object_info(sha1, NULL);
-		printf("%s %s\n", sha1_to_hex(sha1),
+		enum object_type type = sha1_object_info(oid->hash, NULL);
+		printf("%s %s\n", oid_to_hex(oid),
 		       (type > 0) ? typename(type) : "unknown");
 	}
 	if (!show_only)
@@ -68,7 +68,7 @@ static int prune_cruft(const char *basename, const char *path, void *data)
 	return 0;
 }
 
-static int prune_subdir(int nr, const char *path, void *data)
+static int prune_subdir(unsigned int nr, const char *path, void *data)
 {
 	if (!show_only)
 		rmdir(path);
@@ -111,7 +111,7 @@ int cmd_prune(int argc, const char **argv, const char *prefix)
 	};
 	char *s;
 
-	expire = ULONG_MAX;
+	expire = TIME_MAX;
 	save_commit_buffer = 0;
 	check_replace_refs = 0;
 	ref_paranoia = 1;
@@ -119,12 +119,16 @@ int cmd_prune(int argc, const char **argv, const char *prefix)
 
 	argc = parse_options(argc, argv, prefix, options, prune_usage, 0);
 
+	if (repository_format_precious_objects)
+		die(_("cannot prune in a precious-objects repo"));
+
 	while (argc--) {
-		unsigned char sha1[20];
+		struct object_id oid;
 		const char *name = *argv++;
 
-		if (!get_sha1(name, sha1)) {
-			struct object *object = parse_object_or_die(sha1, name);
+		if (!get_oid(name, &oid)) {
+			struct object *object = parse_object_or_die(&oid,
+								    name);
 			add_pending_object(&revs, object, "");
 		}
 		else

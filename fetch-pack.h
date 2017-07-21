@@ -4,12 +4,15 @@
 #include "string-list.h"
 #include "run-command.h"
 
-struct sha1_array;
+struct oid_array;
 
 struct fetch_pack_args {
 	const char *uploadpack;
 	int unpacklimit;
 	int depth;
+	const char *deepen_since;
+	const struct string_list *deepen_not;
+	unsigned deepen_relative:1;
 	unsigned quiet:1;
 	unsigned keep_pack:1;
 	unsigned lock_pack:1;
@@ -25,6 +28,7 @@ struct fetch_pack_args {
 	unsigned self_contained_and_connected:1;
 	unsigned cloning:1;
 	unsigned update_shallow:1;
+	unsigned deepen:1;
 };
 
 /*
@@ -38,7 +42,13 @@ struct ref *fetch_pack(struct fetch_pack_args *args,
 		       const char *dest,
 		       struct ref **sought,
 		       int nr_sought,
-		       struct sha1_array *shallow,
+		       struct oid_array *shallow,
 		       char **pack_lockfile);
+
+/*
+ * Print an appropriate error message for each sought ref that wasn't
+ * matched.  Return 0 if all sought refs were matched, otherwise 1.
+ */
+int report_unmatched_refs(struct ref **sought, int nr_sought);
 
 #endif

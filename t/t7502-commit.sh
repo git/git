@@ -527,11 +527,6 @@ try_commit_status_combo () {
 		test_i18ngrep "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
 
-	test_expect_success 'commit' '
-		try_commit "" &&
-		test_i18ngrep "^# Changes to be committed:" .git/COMMIT_EDITMSG
-	'
-
 	test_expect_success 'commit --status' '
 		try_commit --status &&
 		test_i18ngrep "^# Changes to be committed:" .git/COMMIT_EDITMSG

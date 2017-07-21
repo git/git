@@ -5,6 +5,7 @@
 #include "hashmap.h"
 
 enum {
+	REMOTE_UNCONFIGURED = 0,
 	REMOTE_CONFIG,
 	REMOTE_REMOTES,
 	REMOTE_BRANCHES
@@ -14,7 +15,7 @@ struct remote {
 	struct hashmap_entry ent;  /* must be first */
 
 	const char *name;
-	int origin;
+	int origin, configured_in_repo;
 
 	const char *foreign_vcs;
 
@@ -54,11 +55,12 @@ struct remote {
 	 * for curl remotes only
 	 */
 	char *http_proxy;
+	char *http_proxy_authmethod;
 };
 
 struct remote *remote_get(const char *name);
 struct remote *pushremote_get(const char *name);
-int remote_is_configured(const char *name);
+int remote_is_configured(struct remote *remote, int in_repo);
 
 typedef int each_remote_fn(struct remote *remote, void *priv);
 int for_each_remote(each_remote_fn fn, void *priv);
@@ -79,17 +81,21 @@ extern const struct refspec *tag_refspec;
 
 struct ref {
 	struct ref *next;
-	unsigned char old_sha1[20];
-	unsigned char new_sha1[20];
-	unsigned char old_sha1_expect[20]; /* used by expect-old */
+	struct object_id old_oid;
+	struct object_id new_oid;
+	struct object_id old_oid_expect; /* used by expect-old */
 	char *symref;
 	unsigned int
 		force:1,
 		forced_update:1,
 		expect_old_sha1:1,
-		expect_old_no_trackback:1,
-		deletion:1,
-		matched:1;
+		deletion:1;
+
+	enum {
+		REF_NOT_MATCHED = 0, /* initial value */
+		REF_MATCHED,
+		REF_UNADVERTISED_NOT_ALLOWED
+	} match_status;
 
 	/*
 	 * Order is important here, as we write to FETCH_HEAD
@@ -143,14 +149,14 @@ int check_ref_type(const struct ref *ref, int flags);
  */
 void free_refs(struct ref *ref);
 
-struct sha1_array;
+struct oid_array;
 extern struct ref **get_remote_heads(int in, char *src_buf, size_t src_len,
 				     struct ref **list, unsigned int flags,
-				     struct sha1_array *extra_have,
-				     struct sha1_array *shallow);
+				     struct oid_array *extra_have,
+				     struct oid_array *shallow);
 
 int resolve_remote_symref(struct ref *ref, struct ref *list);
-int ref_newer(const unsigned char *new_sha1, const unsigned char *old_sha1);
+int ref_newer(const struct object_id *new_oid, const struct object_id *old_oid);
 
 /*
  * Remove and free all but the first of any entries in the input list
@@ -163,6 +169,7 @@ struct ref *ref_remove_duplicates(struct ref *ref_map);
 
 int valid_fetch_refspec(const char *refspec);
 struct refspec *parse_fetch_refspec(int nr_refspec, const char **refspec);
+extern struct refspec *parse_push_refspec(int nr_refspec, const char **refspec);
 
 void free_refspec(int nr_refspec, struct refspec *refspec);
 
@@ -284,7 +291,6 @@ struct push_cas_option {
 };
 
 extern int parseopt_push_cas_option(const struct option *, const char *arg, int unset);
-extern int parse_push_cas_option(struct push_cas_option *, const char *arg, int unset);
 
 extern int is_empty_cas(const struct push_cas_option *);
 void apply_push_cas(struct push_cas_option *, struct remote *, struct ref *);

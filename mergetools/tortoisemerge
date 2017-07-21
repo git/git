@@ -5,7 +5,6 @@ can_diff () {
 merge_cmd () {
 	if $base_present
 	then
-		touch "$BACKUP"
 		basename="$(basename "$merge_tool_path" .exe)"
 		if test "$basename" = "tortoisegitmerge"
 		then
@@ -17,7 +16,6 @@ merge_cmd () {
 				-base:"$BASE" -mine:"$LOCAL" \
 				-theirs:"$REMOTE" -merged:"$MERGED"
 		fi
-		check_unchanged
 	else
 		echo "$merge_tool_path cannot be used without a base" 1>&2
 		return 1

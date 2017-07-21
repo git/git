@@ -9,7 +9,7 @@ git-unpack-objects - Unpack objects from a packed archive
 SYNOPSIS
 --------
 [verse]
-'git unpack-objects' [-n] [-q] [-r] [--strict] < <packfile>
+'git unpack-objects' [-n] [-q] [-r] [--strict]
 
 
 DESCRIPTION
@@ -43,6 +43,9 @@ OPTIONS
 
 --strict::
 	Don't write objects with broken content or links.
+
+--max-input-size=<size>::
+	Die, if the pack is larger than <size>.
 
 GIT
 ---

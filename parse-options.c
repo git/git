@@ -1,13 +1,10 @@
 #include "git-compat-util.h"
 #include "parse-options.h"
 #include "cache.h"
+#include "config.h"
 #include "commit.h"
 #include "color.h"
 #include "utf8.h"
-
-static int parse_options_usage(struct parse_opt_ctx_t *ctx,
-			       const char * const *usagestr,
-			       const struct option *opts, int err);
 
 #define OPT_SHORT 1
 #define OPT_UNSET 2
@@ -44,7 +41,7 @@ static void fix_filename(const char *prefix, const char **file)
 	if (!file || !*file || !prefix || is_absolute_path(*file)
 	    || !strcmp("-", *file))
 		return;
-	*file = xstrdup(prefix_filename(prefix, strlen(prefix), *file));
+	*file = prefix_filename(prefix, *file);
 }
 
 static int opt_command_mode_error(const struct option *opt,
@@ -114,6 +111,8 @@ static int get_value(struct parse_opt_ctx_t *p,
 		return 0;
 
 	case OPTION_COUNTUP:
+		if (*(int *)opt->value < 0)
+			*(int *)opt->value = 0;
 		*(int *)opt->value = unset ? 0 : *(int *)opt->value + 1;
 		return 0;
 
@@ -414,7 +413,7 @@ void parse_options_start(struct parse_opt_ctx_t *ctx,
 			 const struct option *options, int flags)
 {
 	memset(ctx, 0, sizeof(*ctx));
-	ctx->argc = argc - 1;
+	ctx->argc = ctx->total = argc - 1;
 	ctx->argv = argv + 1;
 	ctx->out  = argv;
 	ctx->prefix = prefix;
@@ -435,6 +434,7 @@ int parse_options_step(struct parse_opt_ctx_t *ctx,
 		       const char * const usagestr[])
 {
 	int internal_help = !(ctx->flags & PARSE_OPT_NO_INTERNAL_HELP);
+	int err = 0;
 
 	/* we must reset ->opt, unknown short option leave it dangling */
 	ctx->opt = NULL;
@@ -451,27 +451,32 @@ int parse_options_step(struct parse_opt_ctx_t *ctx,
 			continue;
 		}
 
+		/* lone -h asks for help */
+		if (internal_help && ctx->total == 1 && !strcmp(arg + 1, "h"))
+			goto show_usage;
+
 		if (arg[1] != '-') {
 			ctx->opt = arg + 1;
-			if (internal_help && *ctx->opt == 'h')
-				return parse_options_usage(ctx, usagestr, options, 0);
 			switch (parse_short_opt(ctx, options)) {
 			case -1:
-				return parse_options_usage(ctx, usagestr, options, 1);
+				goto show_usage_error;
 			case -2:
 				if (ctx->opt)
 					check_typos(arg + 1, options);
+				if (internal_help && *ctx->opt == 'h')
+					goto show_usage;
 				goto unknown;
 			}
 			if (ctx->opt)
 				check_typos(arg + 1, options);
 			while (ctx->opt) {
-				if (internal_help && *ctx->opt == 'h')
-					return parse_options_usage(ctx, usagestr, options, 0);
 				switch (parse_short_opt(ctx, options)) {
 				case -1:
-					return parse_options_usage(ctx, usagestr, options, 1);
+					goto show_usage_error;
 				case -2:
+					if (internal_help && *ctx->opt == 'h')
+						goto show_usage;
+
 					/* fake a short option thing to hide the fact that we may have
 					 * started to parse aggregated stuff
 					 *
@@ -496,10 +501,10 @@ int parse_options_step(struct parse_opt_ctx_t *ctx,
 		if (internal_help && !strcmp(arg + 2, "help-all"))
 			return usage_with_options_internal(ctx, usagestr, options, 1, 0);
 		if (internal_help && !strcmp(arg + 2, "help"))
-			return parse_options_usage(ctx, usagestr, options, 0);
+			goto show_usage;
 		switch (parse_long_opt(ctx, arg + 2, options)) {
 		case -1:
-			return parse_options_usage(ctx, usagestr, options, 1);
+			goto show_usage_error;
 		case -2:
 			goto unknown;
 		}
@@ -511,6 +516,11 @@ unknown:
 		ctx->opt = NULL;
 	}
 	return PARSE_OPT_DONE;
+
+ show_usage_error:
+	err = 1;
+ show_usage:
+	return usage_with_options_internal(ctx, usagestr, options, 0, err);
 }
 
 int parse_options_end(struct parse_opt_ctx_t *ctx)
@@ -580,8 +590,10 @@ static int usage_with_options_internal(struct parse_opt_ctx_t *ctx,
 
 	fprintf_ln(outfile, _("usage: %s"), _(*usagestr++));
 	while (*usagestr && **usagestr)
-		/* TRANSLATORS: the colon here should align with the
-		   one in "usage: %s" translation */
+		/*
+		 * TRANSLATORS: the colon here should align with the
+		 * one in "usage: %s" translation.
+		 */
 		fprintf_ln(outfile, _("   or: %s"), _(*usagestr++));
 	while (*usagestr) {
 		if (**usagestr)
@@ -652,15 +664,8 @@ void NORETURN usage_msg_opt(const char *msg,
 		   const char * const *usagestr,
 		   const struct option *options)
 {
-	fprintf(stderr, "%s\n\n", msg);
+	fprintf(stderr, "fatal: %s\n\n", msg);
 	usage_with_options(usagestr, options);
-}
-
-static int parse_options_usage(struct parse_opt_ctx_t *ctx,
-			       const char * const *usagestr,
-			       const struct option *opts, int err)
-{
-	return usage_with_options_internal(ctx, usagestr, opts, 0, err);
 }
 
 #undef opterror

@@ -8,7 +8,7 @@
  *
  * After including this header file, using:
  *
- * define_commit_slab(indegee, int);
+ * define_commit_slab(indegree, int);
  *
  * will let you call the following functions:
  *
@@ -82,8 +82,7 @@ static MAYBE_UNUSED void clear_ ##slabname(struct slabname *s)		\
 	for (i = 0; i < s->slab_count; i++)				\
 		free(s->slab[i]);					\
 	s->slab_count = 0;						\
-	free(s->slab);							\
-	s->slab = NULL;							\
+	FREE_AND_NULL(s->slab);						\
 }									\
 									\
 static MAYBE_UNUSED elemtype *slabname## _at_peek(struct slabname *s,	\
@@ -126,16 +125,16 @@ static MAYBE_UNUSED elemtype *slabname## _peek(struct slabname *s,	\
 	return slabname##_at_peek(s, c, 0);				\
 }									\
 									\
-static int stat_ ##slabname## realloc
+struct slabname
 
 /*
- * Note that this seemingly redundant second declaration is required
+ * Note that this redundant forward declaration is required
  * to allow a terminating semicolon, which makes instantiations look
  * like function declarations.  I.e., the expansion of
  *
  *    define_commit_slab(indegree, int);
  *
- * ends in 'static int stat_indegreerealloc;'.  This would otherwise
+ * ends in 'struct indegree;'.  This would otherwise
  * be a syntax error according (at least) to ISO C.  It's hard to
  * catch because GCC silently parses it by default.
  */

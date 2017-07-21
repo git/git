@@ -3,7 +3,7 @@ git-rebase(1)
 
 NAME
 ----
-git-rebase - Forward-port local commits to the updated upstream head
+git-rebase - Reapply commits on top of another base tip
 
 SYNOPSIS
 --------
@@ -12,7 +12,7 @@ SYNOPSIS
 	[<upstream> [<branch>]]
 'git rebase' [-i | --interactive] [options] [--exec <cmd>] [--onto <newbase>]
 	--root [<branch>]
-'git rebase' --continue | --skip | --abort | --edit-todo
+'git rebase' --continue | --skip | --abort | --quit | --edit-todo
 
 DESCRIPTION
 -----------
@@ -208,10 +208,10 @@ rebase.stat::
 	rebase. False by default.
 
 rebase.autoSquash::
-	If set to true enable '--autosquash' option by default.
+	If set to true enable `--autosquash` option by default.
 
 rebase.autoStash::
-	If set to true enable '--autostash' option by default.
+	If set to true enable `--autostash` option by default.
 
 rebase.missingCommitsCheck::
 	If set to "warn", print warnings about removed commits in
@@ -220,7 +220,7 @@ rebase.missingCommitsCheck::
 	done. "ignore" by default.
 
 rebase.instructionFormat::
-	Custom commit list format to use during an '--interactive' rebase.
+	Custom commit list format to use during an `--interactive` rebase.
 
 OPTIONS
 -------
@@ -251,6 +251,11 @@ leave out at most one of A and B, in which case it defaults to HEAD.
 	started, then HEAD will be reset to <branch>. Otherwise HEAD
 	will be reset to where it was when the rebase operation was
 	started.
+
+--quit::
+	Abort the rebase operation but HEAD is not reset back to the
+	original branch. The index and working tree are also left
+	unchanged as a result.
 
 --keep-empty::
 	Keep the commits that do not change anything from its
@@ -294,7 +299,9 @@ which makes little sense.
 
 -S[<keyid>]::
 --gpg-sign[=<keyid>]::
-	GPG-sign commits.
+	GPG-sign commits. The `keyid` argument is optional and
+	defaults to the committer identity; if specified, it must be
+	stuck to the option without a space.
 
 -q::
 --quiet::
@@ -363,6 +370,11 @@ default is `--no-fork-point`, otherwise the default is `--fork-point`.
 	of the rebased commits (see linkgit:git-am[1]).
 	Incompatible with the --interactive option.
 
+--signoff::
+	This flag is passed to 'git am' to sign off all the rebased
+	commits (see linkgit:git-am[1]). Incompatible with the
+	--interactive option.
+
 -i::
 --interactive::
 	Make a list of the commits which are about to be rebased.  Let the
@@ -389,9 +401,6 @@ idea unless you know what you are doing (see BUGS below).
 	final history. <cmd> will be interpreted as one or more shell
 	commands.
 +
-This option can only be used with the `--interactive` option
-(see INTERACTIVE MODE below).
-+
 You may execute several commands by either using one instance of `--exec`
 with several commands:
 +
@@ -404,6 +413,9 @@ or by giving more than one `--exec`:
 If `--autosquash` is used, "exec" lines will not be appended for
 the intermediate commits, and will only appear at the end of each
 squash/fixup series.
++
+This uses the `--interactive` machinery internally, but it can be run
+without an explicit `--interactive`.
 
 --root::
 	Rebase all commits reachable from <branch>, instead of
@@ -426,14 +438,15 @@ squash/fixup series.
 	"fixup! " or "squash! " after the first, in case you referred to an
 	earlier fixup/squash with `git commit --fixup/--squash`.
 +
-This option is only valid when the '--interactive' option is used.
+This option is only valid when the `--interactive` option is used.
 +
-If the '--autosquash' option is enabled by default using the
+If the `--autosquash` option is enabled by default using the
 configuration variable `rebase.autoSquash`, this option can be
 used to override and disable this setting.
 
---[no-]autostash::
-	Automatically create a temporary stash before the operation
+--autostash::
+--no-autostash::
+	Automatically create a temporary stash entry before the operation
 	begins, and apply it after the operation ends.  This means
 	that you can run rebase on a dirty worktree.  However, use
 	with care: the final stash application after a successful
@@ -662,7 +675,7 @@ on this 'subsystem'.  You might end up with a history like the
 following:
 
 ------------
-    o---o---o---o---o---o---o---o---o  master
+    o---o---o---o---o---o---o---o  master
 	 \
 	  o---o---o---o---o  subsystem
 			   \

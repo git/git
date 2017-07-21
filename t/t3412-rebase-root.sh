@@ -133,7 +133,7 @@ test_expect_success 'set up second root and merge' '
 	rm A B C &&
 	test_commit 6 D &&
 	git checkout other &&
-	git merge third
+	git merge --allow-unrelated-histories third
 '
 
 cat > expect-third <<'EOF'

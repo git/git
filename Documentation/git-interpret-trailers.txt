@@ -8,7 +8,7 @@ git-interpret-trailers - help add structured information into commit messages
 SYNOPSIS
 --------
 [verse]
-'git interpret-trailers' [--trim-empty] [(--trailer <token>[(=|:)<value>])...] [<file>...]
+'git interpret-trailers' [--in-place] [--trim-empty] [(--trailer <token>[(=|:)<value>])...] [<file>...]
 
 DESCRIPTION
 -----------
@@ -48,26 +48,32 @@ with only spaces at the end of the commit message part, one blank line
 will be added before the new trailer.
 
 Existing trailers are extracted from the input message by looking for
-a group of one or more lines that contain a colon (by default), where
-the group is preceded by one or more empty (or whitespace-only) lines.
+a group of one or more lines that (i) are all trailers, or (ii) contains at
+least one Git-generated or user-configured trailer and consists of at
+least 25% trailers.
+The group must be preceded by one or more empty (or whitespace-only) lines.
 The group must either be at the end of the message or be the last
 non-whitespace lines before a line that starts with '---'. Such three
 minus signs start the patch part of the message.
 
-When reading trailers, there can be whitespaces before and after the
+When reading trailers, there can be whitespaces after the
 token, the separator and the value. There can also be whitespaces
-inside the token and the value.
+inside the token and the value. The value may be split over multiple lines with
+each subsequent line starting with whitespace, like the "folding" in RFC 822.
 
 Note that 'trailers' do not follow and are not intended to follow many
-rules for RFC 822 headers. For example they do not follow the line
-folding rules, the encoding rules and probably many other rules.
+rules for RFC 822 headers. For example they do not follow
+the encoding rules and probably many other rules.
 
 OPTIONS
 -------
+--in-place::
+	Edit the files in place.
+
 --trim-empty::
 	If the <value> part of any trailer contains only whitespace,
 	the whole trailer will be removed from the resulting message.
-	This apply to existing trailers as well as new trailers.
+	This applies to existing trailers as well as new trailers.
 
 --trailer <token>[(=|:)<value>]::
 	Specify a (<token>, <value>) pair that should be applied as a
@@ -117,7 +123,7 @@ trailer.ifexists::
 	same <token> in the message.
 +
 The valid values for this option are: `addIfDifferentNeighbor` (this
-is the default), `addIfDifferent`, `add`, `overwrite` or `doNothing`.
+is the default), `addIfDifferent`, `add`, `replace` or `doNothing`.
 +
 With `addIfDifferentNeighbor`, a new trailer will be added only if no
 trailer with the same (<token>, <value>) pair is above or below the line
@@ -214,6 +220,25 @@ message
 
 Signed-off-by: Alice <alice@example.com>
 Signed-off-by: Bob <bob@example.com>
+------------
+
+* Use the `--in-place` option to edit a message file in place:
++
+------------
+$ cat msg.txt
+subject
+
+message
+
+Signed-off-by: Bob <bob@example.com>
+$ git interpret-trailers --trailer 'Acked-by: Alice <alice@example.com>' --in-place msg.txt
+$ cat msg.txt
+subject
+
+message
+
+Signed-off-by: Bob <bob@example.com>
+Acked-by: Alice <alice@example.com>
 ------------
 
 * Extract the last commit as a patch, and add a 'Cc' and a

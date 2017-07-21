@@ -4,6 +4,7 @@ test_description='ext::cmd remote "connect" helper'
 . ./test-lib.sh
 
 test_expect_success setup '
+	git config --global protocol.ext.allow user &&
 	test_tick &&
 	git commit --allow-empty -m initial &&
 	test_tick &&
@@ -67,6 +68,34 @@ test_expect_success 'update backfilled tag without primary transfer' '
 		git for-each-ref refs/heads/ refs/tags/ >../actual
 	) &&
 	test_cmp expect actual
+'
+
+
+test_expect_success 'set up fake git-daemon' '
+	mkdir remote &&
+	git init --bare remote/one.git &&
+	mkdir remote/host &&
+	git init --bare remote/host/two.git &&
+	write_script fake-daemon <<-\EOF &&
+	git daemon --inetd \
+		--informative-errors \
+		--export-all \
+		--base-path="$TRASH_DIRECTORY/remote" \
+		--interpolated-path="$TRASH_DIRECTORY/remote/%H%D" \
+		"$TRASH_DIRECTORY/remote"
+	EOF
+	export TRASH_DIRECTORY &&
+	PATH=$TRASH_DIRECTORY:$PATH
+'
+
+test_expect_success 'ext command can connect to git daemon (no vhost)' '
+	rm -rf dst &&
+	git clone "ext::fake-daemon %G/one.git" dst
+'
+
+test_expect_success 'ext command can connect to git daemon (vhost)' '
+	rm -rf dst &&
+	git clone "ext::fake-daemon %G/two.git %Vhost" dst
 '
 
 test_done

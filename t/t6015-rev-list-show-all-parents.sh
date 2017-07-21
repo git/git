@@ -6,11 +6,11 @@ test_description='--show-all --parents does not rewrite TREESAME commits'
 
 test_expect_success 'set up --show-all --parents test' '
 	test_commit one foo.txt &&
-	commit1=`git rev-list -1 HEAD` &&
+	commit1=$(git rev-list -1 HEAD) &&
 	test_commit two bar.txt &&
-	commit2=`git rev-list -1 HEAD` &&
+	commit2=$(git rev-list -1 HEAD) &&
 	test_commit three foo.txt &&
-	commit3=`git rev-list -1 HEAD`
+	commit3=$(git rev-list -1 HEAD)
 	'
 
 test_expect_success '--parents rewrites TREESAME parents correctly' '

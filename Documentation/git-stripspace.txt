@@ -9,14 +9,15 @@ git-stripspace - Remove unnecessary whitespace
 SYNOPSIS
 --------
 [verse]
-'git stripspace' [-s | --strip-comments] < input
-'git stripspace' [-c | --comment-lines] < input
+'git stripspace' [-s | --strip-comments]
+'git stripspace' [-c | --comment-lines]
 
 DESCRIPTION
 -----------
 
-Clean the input in the manner used by Git for text such as commit
-messages, notes, tags and branch descriptions.
+Read text, such as commit messages, notes, tags and branch
+descriptions, from the standard input and clean it in the manner
+used by Git.
 
 With no arguments, this will:
 

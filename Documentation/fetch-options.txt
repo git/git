@@ -8,10 +8,25 @@
 	option old data in `.git/FETCH_HEAD` will be overwritten.
 
 --depth=<depth>::
-	Deepen or shorten the history of a 'shallow' repository created by
-	`git clone` with `--depth=<depth>` option (see linkgit:git-clone[1])
-	to the specified number of commits from the tip of each remote
-	branch history. Tags for the deepened commits are not fetched.
+	Limit fetching to the specified number of commits from the tip of
+	each remote branch history. If fetching to a 'shallow' repository
+	created by `git clone` with `--depth=<depth>` option (see
+	linkgit:git-clone[1]), deepen or shorten the history to the specified
+	number of commits. Tags for the deepened commits are not fetched.
+
+--deepen=<depth>::
+	Similar to --depth, except it specifies the number of commits
+	from the current shallow boundary instead of from the tip of
+	each remote branch history.
+
+--shallow-since=<date>::
+	Deepen or shorten the history of a shallow repository to
+	include all reachable commits after <date>.
+
+--shallow-exclude=<revision>::
+	Deepen or shorten the history of a shallow repository to
+	exclude commits reachable from a specified remote branch or tag.
+	This option can be specified multiple times.
 
 --unshallow::
 	If the source repository is complete, convert a shallow
@@ -51,7 +66,7 @@ ifndef::git-pull[]
 
 -p::
 --prune::
-	After fetching, remove any remote-tracking references that no
+	Before fetching, remove any remote-tracking references that no
 	longer exist on the remote.  Tags are not subject to pruning
 	if they are fetched only because of the default tag
 	auto-following or due to a --tags option.  However, if tags
@@ -87,7 +102,7 @@ ifndef::git-pull[]
 	to whatever else would otherwise be fetched.  Using this
 	option alone does not subject tags to pruning, even if --prune
 	is used (though tags may be pruned anyway if they are also the
-	destination of an explicit refspec; see '--prune').
+	destination of an explicit refspec; see `--prune`).
 
 --recurse-submodules[=yes|on-demand|no]::
 	This option controls if and under what conditions new commits of
@@ -100,9 +115,16 @@ ifndef::git-pull[]
 	reference to a commit that isn't already in the local submodule
 	clone.
 
+-j::
+--jobs=<n>::
+	Number of parallel children to be used for fetching submodules.
+	Each will fetch from different submodules, such that fetching many
+	submodules will be faster. By default submodules will be fetched
+	one at a time.
+
 --no-recurse-submodules::
 	Disable recursive fetching of submodules (this has the same effect as
-	using the '--recurse-submodules=no' option).
+	using the `--recurse-submodules=no` option).
 
 --submodule-prefix=<path>::
 	Prepend <path> to paths printed in informative messages
@@ -129,7 +151,7 @@ endif::git-pull[]
 
 --upload-pack <upload-pack>::
 	When given, and the repository to fetch from is handled
-	by 'git fetch-pack', '--exec=<upload-pack>' is passed to
+	by 'git fetch-pack', `--exec=<upload-pack>` is passed to
 	the command to specify non-default path for the command
 	run on the other end.
 
@@ -150,3 +172,11 @@ endif::git-pull[]
 	by default when it is attached to a terminal, unless -q
 	is specified. This flag forces progress status even if the
 	standard error stream is not directed to a terminal.
+
+-4::
+--ipv4::
+	Use IPv4 addresses only, ignoring IPv6 addresses.
+
+-6::
+--ipv6::
+	Use IPv6 addresses only, ignoring IPv4 addresses.

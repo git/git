@@ -64,7 +64,7 @@ static void note_variables (const char *string);
 static void subst_from_stdin (void);
 
 int
-main (int argc, char *argv[])
+cmd_main (int argc, const char *argv[])
 {
   /* Default values for command line options.  */
   /* unsigned short int show_variables = 0; */
@@ -230,8 +230,7 @@ cmp_string (const void *pstr1, const void *pstr2)
 static inline void
 string_list_sort (string_list_ty *slp)
 {
-  if (slp->nitems > 0)
-    qsort (slp->item, slp->nitems, sizeof (slp->item[0]), cmp_string);
+  QSORT(slp->item, slp->nitems, cmp_string);
 }
 
 /* Test whether a sorted string list contains a given string.  */

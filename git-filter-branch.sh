@@ -46,6 +46,8 @@ git_commit_non_empty_tree()
 {
 	if test $# = 3 && test "$1" = $(git rev-parse "$3^{tree}"); then
 		map "$3"
+	elif test $# = 1 && test "$1" = 4b825dc642cb6eb9a060e54bf8d69288fbee4904; then
+		:
 	else
 		git commit-tree "$@"
 	fi
@@ -79,12 +81,13 @@ set_ident () {
 	finish_ident COMMITTER
 }
 
-USAGE="[--env-filter <command>] [--tree-filter <command>]
-	[--index-filter <command>] [--parent-filter <command>]
-	[--msg-filter <command>] [--commit-filter <command>]
-	[--tag-name-filter <command>] [--subdirectory-filter <directory>]
-	[--original <namespace>] [-d <directory>] [-f | --force]
-	[<rev-list options>...]"
+USAGE="[--setup <command>] [--env-filter <command>]
+	[--tree-filter <command>] [--index-filter <command>]
+	[--parent-filter <command>] [--msg-filter <command>]
+	[--commit-filter <command>] [--tag-name-filter <command>]
+	[--subdirectory-filter <directory>] [--original <namespace>]
+	[-d <directory>] [-f | --force]
+	[--] [<rev-list options>...]"
 
 OPTIONS_SPEC=
 . git-sh-setup
@@ -94,6 +97,7 @@ if [ "$(is_bare_repository)" = false ]; then
 fi
 
 tempdir=.git-rewrite
+filter_setup=
 filter_env=
 filter_tree=
 filter_index=
@@ -145,6 +149,9 @@ do
 	case "$ARG" in
 	-d)
 		tempdir="$OPTARG"
+		;;
+	--setup)
+		filter_setup="$OPTARG"
 		;;
 	--env-filter)
 		filter_env="$OPTARG"
@@ -237,7 +244,7 @@ git rev-parse --no-flags --revs-only --symbolic-full-name \
 sed -e '/^^/d' "$tempdir"/raw-heads >"$tempdir"/heads
 
 test -s "$tempdir"/heads ||
-	die "Which ref do you want to rewrite?"
+	die "You must specify a ref to rewrite."
 
 GIT_INDEX_FILE="$(pwd)/../index"
 export GIT_INDEX_FILE
@@ -275,15 +282,60 @@ commits=$(wc -l <../revs | tr -d " ")
 test $commits -eq 0 && die "Found nothing to rewrite"
 
 # Rewrite the commits
+report_progress ()
+{
+	if test -n "$progress" &&
+		test $git_filter_branch__commit_count -gt $next_sample_at
+	then
+		count=$git_filter_branch__commit_count
+
+		now=$(date +%s)
+		elapsed=$(($now - $start_timestamp))
+		remaining=$(( ($commits - $count) * $elapsed / $count ))
+		if test $elapsed -gt 0
+		then
+			next_sample_at=$(( ($elapsed + 1) * $count / $elapsed ))
+		else
+			next_sample_at=$(($next_sample_at + 1))
+		fi
+		progress=" ($elapsed seconds passed, remaining $remaining predicted)"
+	fi
+	printf "\rRewrite $commit ($count/$commits)$progress    "
+}
 
 git_filter_branch__commit_count=0
+
+progress= start_timestamp=
+if date '+%s' 2>/dev/null | grep -q '^[0-9][0-9]*$'
+then
+	next_sample_at=0
+	progress="dummy to ensure this is not empty"
+	start_timestamp=$(date '+%s')
+fi
+
+if test -n "$filter_index" ||
+   test -n "$filter_tree" ||
+   test -n "$filter_subdir"
+then
+	need_index=t
+else
+	need_index=
+fi
+
+eval "$filter_setup" < /dev/null ||
+	die "filter setup failed: $filter_setup"
+
 while read commit parents; do
 	git_filter_branch__commit_count=$(($git_filter_branch__commit_count+1))
-	printf "\rRewrite $commit ($git_filter_branch__commit_count/$commits)"
+
+	report_progress
 
 	case "$filter_subdir" in
 	"")
-		GIT_ALLOW_NULL_SHA1=1 git read-tree -i -m $commit
+		if test -n "$need_index"
+		then
+			GIT_ALLOW_NULL_SHA1=1 git read-tree -i -m $commit
+		fi
 		;;
 	*)
 		# The commit may not have the subdirectory at all
@@ -319,7 +371,7 @@ while read commit parents; do
 			die "tree filter failed: $filter_tree"
 
 		(
-			git diff-index -r --name-only --ignore-submodules $commit &&
+			git diff-index -r --name-only --ignore-submodules $commit -- &&
 			git ls-files --others
 		) > "$tempdir"/tree-state || exit
 		git update-index --add --replace --remove --stdin \
@@ -347,7 +399,7 @@ while read commit parents; do
 	fi
 
 	{
-		while read -r header_line && test -n "$header_line"
+		while IFS='' read -r header_line && test -n "$header_line"
 		do
 			# skip header lines...
 			:;
@@ -357,8 +409,15 @@ while read commit parents; do
 	} <../commit |
 		eval "$filter_msg" > ../message ||
 			die "msg filter failed: $filter_msg"
+
+	if test -n "$need_index"
+	then
+		tree=$(git write-tree)
+	else
+		tree=$(git rev-parse "$commit^{tree}")
+	fi
 	workdir=$workdir @SHELL_PATH@ -c "$filter_commit" "git commit-tree" \
-		$(git write-tree) $parentstr < ../message > ../map/$commit ||
+		"$tree" $parentstr < ../message > ../map/$commit ||
 			die "could not write rewritten commit"
 done <../revs
 

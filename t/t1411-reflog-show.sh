@@ -138,7 +138,7 @@ test_expect_success '--date magic does not override explicit @{0} syntax' '
 : >expect
 test_expect_success 'empty reflog file' '
 	git branch empty &&
-	: >.git/logs/refs/heads/empty &&
+	git reflog expire --expire=all refs/heads/empty &&
 
 	git log -g empty >actual &&
 	test_cmp expect actual
@@ -169,6 +169,16 @@ test_expect_success 'git log -g -p shows diffs vs. parents' '
 test_expect_success 'reflog exists works' '
 	git reflog exists refs/heads/master &&
 	! git reflog exists refs/heads/nonexistent
+'
+
+# The behavior with two reflogs is buggy and the output is in flux; for now
+# we're just checking that the program works at all without segfaulting.
+test_expect_success 'showing multiple reflogs works' '
+	git log -g HEAD HEAD >actual
+'
+
+test_expect_success 'showing multiple reflogs with an old date' '
+	git log -g HEAD@{1979-01-01} HEAD >actual
 '
 
 test_done

@@ -18,11 +18,12 @@ struct url_info {
 	size_t passwd_len;	/* length of passwd; if passwd_off != 0 but
 				   passwd_len == 0, an empty passwd was given */
 	size_t host_off;	/* offset into url to start of host name (0 => none) */
-	size_t host_len;	/* length of host name; this INCLUDES any ':portnum';
+	size_t host_len;	/* length of host name;
 				 * file urls may have host_len == 0 */
-	size_t port_len;	/* if a portnum is present (port_len != 0), it has
-				 * this length (excluding the leading ':') at the
-				 * end of the host name (always 0 for file urls) */
+	size_t port_off;	/* offset into url to start of port number (0 => none) */
+	size_t port_len;	/* if a portnum is present (port_off != 0), it has
+				 * this length (excluding the leading ':') starting
+				 * from port_off (always 0 for file urls) */
 	size_t path_off;	/* offset into url to the start of the url path;
 				 * this will always point to a '/' character
 				 * after the url has been normalized */
@@ -33,7 +34,8 @@ struct url_info {
 extern char *url_normalize(const char *, struct url_info *);
 
 struct urlmatch_item {
-	size_t matched_len;
+	size_t hostmatch_len;
+	size_t pathmatch_len;
 	char user_matched;
 };
 

@@ -174,6 +174,18 @@ test_expect_success 'checkout of branch with a file having the same name fails' 
 	test_branch master
 '
 
+test_expect_success 'checkout of branch with a file in subdir having the same name fails' '
+	git checkout -B master &&
+	test_might_fail git branch -D spam &&
+
+	>spam &&
+	mkdir sub &&
+	mv spam sub/spam &&
+	test_must_fail git -C sub checkout spam &&
+	test_must_fail git rev-parse --verify refs/heads/spam &&
+	test_branch master
+'
+
 test_expect_success 'checkout <branch> -- succeeds, even if a file with the same name exists' '
 	git checkout -B master &&
 	test_might_fail git branch -D spam &&

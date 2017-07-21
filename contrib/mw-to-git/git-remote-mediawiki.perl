@@ -857,7 +857,7 @@ sub mw_import_revids {
 
 	my $n = 0;
 	my $n_actual = 0;
-	my $last_timestamp = 0; # Placeholer in case $rev->timestamp is undefined
+	my $last_timestamp = 0; # Placeholder in case $rev->timestamp is undefined
 
 	foreach my $pagerevid (@{$revision_ids}) {
 	        # Count page even if we skip it, since we display
@@ -963,7 +963,7 @@ sub mw_upload_file {
 		print {*STDERR} "Check the configuration of file uploads in your mediawiki.\n";
 		return $newrevid;
 	}
-	# Deleting and uploading a file requires a priviledged user
+	# Deleting and uploading a file requires a privileged user
 	if ($file_deleted) {
 		$mediawiki = connect_maybe($mediawiki, $remotename, $url);
 		my $query = {

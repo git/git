@@ -20,7 +20,7 @@ update_repos() {
 }
 
 repo_fetched() {
-	if test "`git log -1 --pretty=format:%s $1 --`" = "`cat mark`"; then
+	if test "$(git log -1 --pretty=format:%s $1 --)" = "$(cat mark)"; then
 		echo >&2 "repo was fetched: $1"
 		return 0
 	fi

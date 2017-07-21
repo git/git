@@ -1616,7 +1616,7 @@ sub esc_path {
 	return $str;
 }
 
-# Sanitize for use in XHTML + application/xml+xhtm (valid XML 1.0)
+# Sanitize for use in XHTML + application/xml+xhtml (valid XML 1.0)
 sub sanitize {
 	my $str = shift;
 
@@ -2036,10 +2036,24 @@ sub format_log_line_html {
 	my $line = shift;
 
 	$line = esc_html($line, -nbsp=>1);
-	$line =~ s{\b([0-9a-fA-F]{8,40})\b}{
+	$line =~ s{
+        \b
+        (
+            # The output of "git describe", e.g. v2.10.0-297-gf6727b0
+            # or hadoop-20160921-113441-20-g094fb7d
+            (?<!-) # see strbuf_check_tag_ref(). Tags can't start with -
+            [A-Za-z0-9.-]+
+            (?!\.) # refs can't end with ".", see check_refname_format()
+            -g[0-9a-fA-F]{7,40}
+            |
+            # Just a normal looking Git SHA1
+            [0-9a-fA-F]{7,40}
+        )
+        \b
+    }{
 		$cgi->a({-href => href(action=>"object", hash=>$1),
 					-class => "text"}, $1);
-	}eg;
+	}egx;
 
 	return $line;
 }
@@ -2090,7 +2104,7 @@ sub format_ref_marker {
 				-href => href(
 					action=>$dest_action,
 					hash=>$dest
-				)}, $name);
+				)}, esc_html($name));
 
 			$markers .= " <span class=\"".esc_attr($class)."\" title=\"".esc_attr($ref)."\">" .
 				$link . "</span>";
@@ -3111,7 +3125,7 @@ sub git_get_projects_list {
 	return @list;
 }
 
-# written with help of Tree::Trie module (Perl Artistic License, GPL compatibile)
+# written with help of Tree::Trie module (Perl Artistic License, GPL compatible)
 # as side effects it sets 'forks' field to list of forks for forked projects
 sub filter_forks_from_projects_list {
 	my $projects = shift;
@@ -3913,7 +3927,7 @@ sub blob_contenttype {
 # guess file syntax for syntax highlighting; return undef if no highlighting
 # the name of syntax can (in the future) depend on syntax highlighter used
 sub guess_file_syntax {
-	my ($highlight, $mimetype, $file_name) = @_;
+	my ($highlight, $file_name) = @_;
 	return undef unless ($highlight && defined $file_name);
 	my $basename = basename($file_name, '.in');
 	return $highlight_basename{$basename}
@@ -3931,12 +3945,16 @@ sub guess_file_syntax {
 # or return original FD if no highlighting
 sub run_highlighter {
 	my ($fd, $highlight, $syntax) = @_;
-	return $fd unless ($highlight && defined $syntax);
+	return $fd unless ($highlight);
 
 	close $fd;
+	my $syntax_arg = (defined $syntax) ? "--syntax $syntax" : "--force";
 	open $fd, quote_command(git_cmd(), "cat-file", "blob", $hash)." | ".
+	          quote_command($^X, '-CO', '-MEncode=decode,FB_DEFAULT', '-pse',
+	            '$_ = decode($fe, $_, FB_DEFAULT) if !utf8::decode($_);',
+	            '--', "-fe=$fallback_encoding")." | ".
 	          quote_command($highlight_bin).
-	          " --replace-tabs=8 --fragment --syntax $syntax |"
+	          " --replace-tabs=8 --fragment $syntax_arg |"
 		or die_error(500, "Couldn't open file or run syntax highlighter");
 	return $fd;
 }
@@ -4358,7 +4376,7 @@ sub git_print_page_nav {
 	      "</div>\n";
 }
 
-# returns a submenu for the nagivation of the refs views (tags, heads,
+# returns a submenu for the navigation of the refs views (tags, heads,
 # remotes) with the current view disabled and the remotes view only
 # available if the feature is enabled
 sub format_ref_views {
@@ -7059,9 +7077,8 @@ sub git_blob {
 	$have_blame &&= ($mimetype =~ m!^text/!);
 
 	my $highlight = gitweb_check_feature('highlight');
-	my $syntax = guess_file_syntax($highlight, $mimetype, $file_name);
-	$fd = run_highlighter($fd, $highlight, $syntax)
-		if $syntax;
+	my $syntax = guess_file_syntax($highlight, $file_name);
+	$fd = run_highlighter($fd, $highlight, $syntax);
 
 	git_header_html(undef, $expires);
 	my $formats_nav = '';
@@ -7114,7 +7131,7 @@ sub git_blob {
 			$line = untabify($line);
 			printf qq!<div class="pre"><a id="l%i" href="%s#l%i" class="linenr">%4i</a> %s</div>\n!,
 			       $nr, esc_attr(href(-replay => 1)), $nr, $nr,
-			       $syntax ? sanitize($line) : esc_html($line, -nbsp=>1);
+			       $highlight ? sanitize($line) : esc_html($line, -nbsp=>1);
 		}
 	}
 	close $fd
@@ -7576,7 +7593,7 @@ sub git_object {
 			git_cmd(), 'cat-file', '-t', $object_id) . ' 2> /dev/null'
 			or die_error(404, "Object does not exist");
 		$type = <$fd>;
-		chomp $type;
+		defined $type && chomp $type;
 		close $fd
 			or die_error(404, "Object does not exist");
 
@@ -8068,7 +8085,7 @@ sub git_search_help {
 <p><strong>Pattern</strong> is by default a normal string that is matched precisely (but without
 regard to case, except in the case of pickaxe). However, when you check the <em>re</em> checkbox,
 the pattern entered is recognized as the POSIX extended
-<a href="http://en.wikipedia.org/wiki/Regular_expression">regular expression</a> (also case
+<a href="https://en.wikipedia.org/wiki/Regular_expression">regular expression</a> (also case
 insensitive).</p>
 <dl>
 <dt><b>commit</b></dt>

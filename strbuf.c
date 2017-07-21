@@ -187,7 +187,7 @@ void strbuf_insert(struct strbuf *sb, size_t pos, const void *data, size_t len)
 
 void strbuf_remove(struct strbuf *sb, size_t pos, size_t len)
 {
-	strbuf_splice(sb, pos, len, NULL, 0);
+	strbuf_splice(sb, pos, len, "", 0);
 }
 
 void strbuf_add(struct strbuf *sb, const void *data, size_t len)
@@ -197,11 +197,11 @@ void strbuf_add(struct strbuf *sb, const void *data, size_t len)
 	strbuf_setlen(sb, sb->len + len);
 }
 
-void strbuf_adddup(struct strbuf *sb, size_t pos, size_t len)
+void strbuf_addbuf(struct strbuf *sb, const struct strbuf *sb2)
 {
-	strbuf_grow(sb, len);
-	memcpy(sb->buf + sb->len, sb->buf + pos, len);
-	strbuf_setlen(sb, sb->len + len);
+	strbuf_grow(sb, sb2->len);
+	memcpy(sb->buf + sb->len, sb2->buf, sb2->len);
+	strbuf_setlen(sb, sb->len + sb2->len);
 }
 
 void strbuf_addchars(struct strbuf *sb, int c, size_t n)
@@ -245,8 +245,8 @@ void strbuf_add_commented_lines(struct strbuf *out, const char *buf, size_t size
 	static char prefix2[2];
 
 	if (prefix1[0] != comment_line_char) {
-		sprintf(prefix1, "%c ", comment_line_char);
-		sprintf(prefix2, "%c", comment_line_char);
+		xsnprintf(prefix1, sizeof(prefix1), "%c ", comment_line_char);
+		xsnprintf(prefix2, sizeof(prefix2), "%c", comment_line_char);
 	}
 	add_lines(out, prefix1, prefix2, buf, size);
 }
@@ -364,25 +364,42 @@ ssize_t strbuf_read(struct strbuf *sb, int fd, size_t hint)
 
 	strbuf_grow(sb, hint ? hint : 8192);
 	for (;;) {
-		ssize_t cnt;
+		ssize_t want = sb->alloc - sb->len - 1;
+		ssize_t got = read_in_full(fd, sb->buf + sb->len, want);
 
-		cnt = xread(fd, sb->buf + sb->len, sb->alloc - sb->len - 1);
-		if (cnt < 0) {
+		if (got < 0) {
 			if (oldalloc == 0)
 				strbuf_release(sb);
 			else
 				strbuf_setlen(sb, oldlen);
 			return -1;
 		}
-		if (!cnt)
+		sb->len += got;
+		if (got < want)
 			break;
-		sb->len += cnt;
 		strbuf_grow(sb, 8192);
 	}
 
 	sb->buf[sb->len] = '\0';
 	return sb->len - oldlen;
 }
+
+ssize_t strbuf_read_once(struct strbuf *sb, int fd, size_t hint)
+{
+	ssize_t cnt;
+
+	strbuf_grow(sb, hint ? hint : 8192);
+	cnt = xread(fd, sb->buf + sb->len, sb->alloc - sb->len - 1);
+	if (cnt > 0)
+		strbuf_setlen(sb, sb->len + cnt);
+	return cnt;
+}
+
+ssize_t strbuf_write(struct strbuf *sb, FILE *f)
+{
+	return sb->len ? fwrite(sb->buf, 1, sb->len, f) : 0;
+}
+
 
 #define STRBUF_MAXLINK (2*PATH_MAX)
 
@@ -425,6 +442,17 @@ int strbuf_getcwd(struct strbuf *sb)
 			strbuf_setlen(sb, strlen(sb->buf));
 			return 0;
 		}
+
+		/*
+		 * If getcwd(3) is implemented as a syscall that falls
+		 * back to a regular lookup using readdir(3) etc. then
+		 * we may be able to avoid EACCES by providing enough
+		 * space to the syscall as it's not necessarily bound
+		 * to the same restrictions as the fallback.
+		 */
+		if (errno == EACCES && guessed_len < PATH_MAX)
+			continue;
+
 		if (errno != ERANGE)
 			break;
 	}
@@ -470,9 +498,15 @@ int strbuf_getwholeline(struct strbuf *sb, FILE *fp, int term)
 	if (errno == ENOMEM)
 		die("Out of memory, getdelim failed");
 
-	/* Restore slopbuf that we moved out of the way before */
+	/*
+	 * Restore strbuf invariants; if getdelim left us with a NULL pointer,
+	 * we can just re-init, but otherwise we should make sure that our
+	 * length is empty, and that the result is NUL-terminated.
+	 */
 	if (!sb->buf)
 		strbuf_init(sb, 0);
+	else
+		strbuf_reset(sb);
 	return EOF;
 }
 #else
@@ -501,13 +535,35 @@ int strbuf_getwholeline(struct strbuf *sb, FILE *fp, int term)
 }
 #endif
 
-int strbuf_getline(struct strbuf *sb, FILE *fp, int term)
+static int strbuf_getdelim(struct strbuf *sb, FILE *fp, int term)
 {
 	if (strbuf_getwholeline(sb, fp, term))
 		return EOF;
-	if (sb->buf[sb->len-1] == term)
-		strbuf_setlen(sb, sb->len-1);
+	if (sb->buf[sb->len - 1] == term)
+		strbuf_setlen(sb, sb->len - 1);
 	return 0;
+}
+
+int strbuf_getline(struct strbuf *sb, FILE *fp)
+{
+	if (strbuf_getwholeline(sb, fp, '\n'))
+		return EOF;
+	if (sb->buf[sb->len - 1] == '\n') {
+		strbuf_setlen(sb, sb->len - 1);
+		if (sb->len && sb->buf[sb->len - 1] == '\r')
+			strbuf_setlen(sb, sb->len - 1);
+	}
+	return 0;
+}
+
+int strbuf_getline_lf(struct strbuf *sb, FILE *fp)
+{
+	return strbuf_getdelim(sb, fp, '\n');
+}
+
+int strbuf_getline_nul(struct strbuf *sb, FILE *fp)
+{
+	return strbuf_getdelim(sb, fp, '\0');
 }
 
 int strbuf_getwholeline_fd(struct strbuf *sb, int fd, int term)
@@ -655,6 +711,17 @@ void strbuf_add_absolute_path(struct strbuf *sb, const char *path)
 	strbuf_addstr(sb, path);
 }
 
+void strbuf_add_real_path(struct strbuf *sb, const char *path)
+{
+	if (sb->len) {
+		struct strbuf resolved = STRBUF_INIT;
+		strbuf_realpath(&resolved, path, 1);
+		strbuf_addbuf(sb, &resolved);
+		strbuf_release(&resolved);
+	} else
+		strbuf_realpath(sb, path, 1);
+}
+
 int printf_ln(const char *fmt, ...)
 {
 	int ret;
@@ -685,7 +752,7 @@ char *xstrdup_tolower(const char *string)
 	size_t len, i;
 
 	len = strlen(string);
-	result = xmalloc(len + 1);
+	result = xmallocz(len);
 	for (i = 0; i < len; i++)
 		result[i] = tolower(string[i]);
 	result[i] = '\0';
@@ -711,13 +778,46 @@ char *xstrfmt(const char *fmt, ...)
 	return ret;
 }
 
-void strbuf_addftime(struct strbuf *sb, const char *fmt, const struct tm *tm)
+void strbuf_addftime(struct strbuf *sb, const char *fmt, const struct tm *tm,
+		     int tz_offset, int suppress_tz_name)
 {
+	struct strbuf munged_fmt = STRBUF_INIT;
 	size_t hint = 128;
 	size_t len;
 
 	if (!*fmt)
 		return;
+
+	/*
+	 * There is no portable way to pass timezone information to
+	 * strftime, so we handle %z and %Z here.
+	 */
+	for (;;) {
+		const char *percent = strchrnul(fmt, '%');
+		strbuf_add(&munged_fmt, fmt, percent - fmt);
+		if (!*percent)
+			break;
+		fmt = percent + 1;
+		switch (*fmt) {
+		case '%':
+			strbuf_addstr(&munged_fmt, "%%");
+			fmt++;
+			break;
+		case 'z':
+			strbuf_addf(&munged_fmt, "%+05d", tz_offset);
+			fmt++;
+			break;
+		case 'Z':
+			if (suppress_tz_name) {
+				fmt++;
+				break;
+			}
+			/* FALLTHROUGH */
+		default:
+			strbuf_addch(&munged_fmt, '%');
+		}
+	}
+	fmt = munged_fmt.buf;
 
 	strbuf_grow(sb, hint);
 	len = strftime(sb->buf + sb->len, sb->alloc - sb->len, fmt, tm);
@@ -730,16 +830,110 @@ void strbuf_addftime(struct strbuf *sb, const char *fmt, const struct tm *tm)
 		 * output contains at least one character, and then drop the extra
 		 * character before returning.
 		 */
-		struct strbuf munged_fmt = STRBUF_INIT;
-		strbuf_addf(&munged_fmt, "%s ", fmt);
+		strbuf_addch(&munged_fmt, ' ');
 		while (!len) {
 			hint *= 2;
 			strbuf_grow(sb, hint);
 			len = strftime(sb->buf + sb->len, sb->alloc - sb->len,
 				       munged_fmt.buf, tm);
 		}
-		strbuf_release(&munged_fmt);
 		len--; /* drop munged space */
 	}
+	strbuf_release(&munged_fmt);
 	strbuf_setlen(sb, sb->len + len);
+}
+
+void strbuf_add_unique_abbrev(struct strbuf *sb, const unsigned char *sha1,
+			      int abbrev_len)
+{
+	int r;
+	strbuf_grow(sb, GIT_SHA1_HEXSZ + 1);
+	r = find_unique_abbrev_r(sb->buf + sb->len, sha1, abbrev_len);
+	strbuf_setlen(sb, sb->len + r);
+}
+
+/*
+ * Returns the length of a line, without trailing spaces.
+ *
+ * If the line ends with newline, it will be removed too.
+ */
+static size_t cleanup(char *line, size_t len)
+{
+	while (len) {
+		unsigned char c = line[len - 1];
+		if (!isspace(c))
+			break;
+		len--;
+	}
+
+	return len;
+}
+
+/*
+ * Remove empty lines from the beginning and end
+ * and also trailing spaces from every line.
+ *
+ * Turn multiple consecutive empty lines between paragraphs
+ * into just one empty line.
+ *
+ * If the input has only empty lines and spaces,
+ * no output will be produced.
+ *
+ * If last line does not have a newline at the end, one is added.
+ *
+ * Enable skip_comments to skip every line starting with comment
+ * character.
+ */
+void strbuf_stripspace(struct strbuf *sb, int skip_comments)
+{
+	int empties = 0;
+	size_t i, j, len, newlen;
+	char *eol;
+
+	/* We may have to add a newline. */
+	strbuf_grow(sb, 1);
+
+	for (i = j = 0; i < sb->len; i += len, j += newlen) {
+		eol = memchr(sb->buf + i, '\n', sb->len - i);
+		len = eol ? eol - (sb->buf + i) + 1 : sb->len - i;
+
+		if (skip_comments && len && sb->buf[i] == comment_line_char) {
+			newlen = 0;
+			continue;
+		}
+		newlen = cleanup(sb->buf + i, len);
+
+		/* Not just an empty line? */
+		if (newlen) {
+			if (empties > 0 && j > 0)
+				sb->buf[j++] = '\n';
+			empties = 0;
+			memmove(sb->buf + j, sb->buf + i, newlen);
+			sb->buf[newlen + j++] = '\n';
+		} else {
+			empties++;
+		}
+	}
+
+	strbuf_setlen(sb, j);
+}
+
+int strbuf_normalize_path(struct strbuf *src)
+{
+	struct strbuf dst = STRBUF_INIT;
+
+	strbuf_grow(&dst, src->len);
+	if (normalize_path_copy(dst.buf, src->buf) < 0) {
+		strbuf_release(&dst);
+		return -1;
+	}
+
+	/*
+	 * normalize_path does not tell us the new length, so we have to
+	 * compute it by looking for the new NUL it placed
+	 */
+	strbuf_setlen(&dst, strlen(dst.buf));
+	strbuf_swap(src, &dst);
+	strbuf_release(&dst);
+	return 0;
 }

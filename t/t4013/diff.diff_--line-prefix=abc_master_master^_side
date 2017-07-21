@@ -1,0 +1,29 @@
+$ git diff --line-prefix=abc master master^ side
+abcdiff --cc dir/sub
+abcindex cead32e,7289e35..992913c
+abc--- a/dir/sub
+abc+++ b/dir/sub
+abc@@@ -1,6 -1,4 +1,8 @@@
+abc  A
+abc  B
+abc +C
+abc +D
+abc +E
+abc +F
+abc+ 1
+abc+ 2
+abcdiff --cc file0
+abcindex b414108,f4615da..10a8a9f
+abc--- a/file0
+abc+++ b/file0
+abc@@@ -1,6 -1,6 +1,9 @@@
+abc  1
+abc  2
+abc  3
+abc +4
+abc +5
+abc +6
+abc+ A
+abc+ B
+abc+ C
+$

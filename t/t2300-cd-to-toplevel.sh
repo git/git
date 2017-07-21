@@ -4,11 +4,20 @@ test_description='cd_to_toplevel'
 
 . ./test-lib.sh
 
+EXEC_PATH="$(git --exec-path)"
+test_have_prereq !MINGW ||
+case "$EXEC_PATH" in
+[A-Za-z]:/*)
+	EXEC_PATH="/${EXEC_PATH%%:*}${EXEC_PATH#?:}"
+	;;
+esac
+
 test_cd_to_toplevel () {
 	test_expect_success $3 "$2" '
 		(
 			cd '"'$1'"' &&
-			. "$(git --exec-path)"/git-sh-setup &&
+			PATH="$EXEC_PATH:$PATH" &&
+			. git-sh-setup &&
 			cd_to_toplevel &&
 			[ "$(pwd -P)" = "$TOPLEVEL" ]
 		)

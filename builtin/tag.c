@@ -7,6 +7,7 @@
  */
 
 #include "cache.h"
+#include "config.h"
 #include "builtin.h"
 #include "refs.h"
 #include "tag.h"
@@ -17,320 +18,105 @@
 #include "gpg-interface.h"
 #include "sha1-array.h"
 #include "column.h"
+#include "ref-filter.h"
 
 static const char * const git_tag_usage[] = {
 	N_("git tag [-a | -s | -u <key-id>] [-f] [-m <msg> | -F <file>] <tagname> [<head>]"),
 	N_("git tag -d <tagname>..."),
-	N_("git tag -l [-n[<num>]] [--contains <commit>] [--points-at <object>]"
-		"\n\t\t[<pattern>...]"),
-	N_("git tag -v <tagname>..."),
+	N_("git tag -l [-n[<num>]] [--contains <commit>] [--no-contains <commit>] [--points-at <object>]"
+		"\n\t\t[--format=<format>] [--[no-]merged [<commit>]] [<pattern>...]"),
+	N_("git tag -v [--format=<format>] <tagname>..."),
 	NULL
 };
 
-#define STRCMP_SORT     0	/* must be zero */
-#define VERCMP_SORT     1
-#define SORT_MASK       0x7fff
-#define REVERSE_SORT    0x8000
-
-static int tag_sort;
-
-struct tag_filter {
-	const char **patterns;
-	int lines;
-	int sort;
-	struct string_list tags;
-	struct commit_list *with_commit;
-};
-
-static struct sha1_array points_at;
 static unsigned int colopts;
+static int force_sign_annotate;
 
-static int match_pattern(const char **patterns, const char *ref)
+static int list_tags(struct ref_filter *filter, struct ref_sorting *sorting, const char *format)
 {
-	/* no pattern means match everything */
-	if (!*patterns)
-		return 1;
-	for (; *patterns; patterns++)
-		if (!wildmatch(*patterns, ref, 0, NULL))
-			return 1;
-	return 0;
-}
-
-static const unsigned char *match_points_at(const char *refname,
-					    const unsigned char *sha1)
-{
-	const unsigned char *tagged_sha1 = NULL;
-	struct object *obj;
-
-	if (sha1_array_lookup(&points_at, sha1) >= 0)
-		return sha1;
-	obj = parse_object(sha1);
-	if (!obj)
-		die(_("malformed object at '%s'"), refname);
-	if (obj->type == OBJ_TAG)
-		tagged_sha1 = ((struct tag *)obj)->tagged->sha1;
-	if (tagged_sha1 && sha1_array_lookup(&points_at, tagged_sha1) >= 0)
-		return tagged_sha1;
-	return NULL;
-}
-
-static int in_commit_list(const struct commit_list *want, struct commit *c)
-{
-	for (; want; want = want->next)
-		if (!hashcmp(want->item->object.sha1, c->object.sha1))
-			return 1;
-	return 0;
-}
-
-enum contains_result {
-	CONTAINS_UNKNOWN = -1,
-	CONTAINS_NO = 0,
-	CONTAINS_YES = 1
-};
-
-/*
- * Test whether the candidate or one of its parents is contained in the list.
- * Do not recurse to find out, though, but return -1 if inconclusive.
- */
-static enum contains_result contains_test(struct commit *candidate,
-			    const struct commit_list *want)
-{
-	/* was it previously marked as containing a want commit? */
-	if (candidate->object.flags & TMP_MARK)
-		return 1;
-	/* or marked as not possibly containing a want commit? */
-	if (candidate->object.flags & UNINTERESTING)
-		return 0;
-	/* or are we it? */
-	if (in_commit_list(want, candidate)) {
-		candidate->object.flags |= TMP_MARK;
-		return 1;
-	}
-
-	if (parse_commit(candidate) < 0)
-		return 0;
-
-	return -1;
-}
-
-/*
- * Mimicking the real stack, this stack lives on the heap, avoiding stack
- * overflows.
- *
- * At each recursion step, the stack items points to the commits whose
- * ancestors are to be inspected.
- */
-struct stack {
-	int nr, alloc;
-	struct stack_entry {
-		struct commit *commit;
-		struct commit_list *parents;
-	} *stack;
-};
-
-static void push_to_stack(struct commit *candidate, struct stack *stack)
-{
-	int index = stack->nr++;
-	ALLOC_GROW(stack->stack, stack->nr, stack->alloc);
-	stack->stack[index].commit = candidate;
-	stack->stack[index].parents = candidate->parents;
-}
-
-static enum contains_result contains(struct commit *candidate,
-		const struct commit_list *want)
-{
-	struct stack stack = { 0, 0, NULL };
-	int result = contains_test(candidate, want);
-
-	if (result != CONTAINS_UNKNOWN)
-		return result;
-
-	push_to_stack(candidate, &stack);
-	while (stack.nr) {
-		struct stack_entry *entry = &stack.stack[stack.nr - 1];
-		struct commit *commit = entry->commit;
-		struct commit_list *parents = entry->parents;
-
-		if (!parents) {
-			commit->object.flags |= UNINTERESTING;
-			stack.nr--;
-		}
-		/*
-		 * If we just popped the stack, parents->item has been marked,
-		 * therefore contains_test will return a meaningful 0 or 1.
-		 */
-		else switch (contains_test(parents->item, want)) {
-		case CONTAINS_YES:
-			commit->object.flags |= TMP_MARK;
-			stack.nr--;
-			break;
-		case CONTAINS_NO:
-			entry->parents = parents->next;
-			break;
-		case CONTAINS_UNKNOWN:
-			push_to_stack(parents->item, &stack);
-			break;
-		}
-	}
-	free(stack.stack);
-	return contains_test(candidate, want);
-}
-
-static void show_tag_lines(const struct object_id *oid, int lines)
-{
+	struct ref_array array;
+	char *to_free = NULL;
 	int i;
-	unsigned long size;
-	enum object_type type;
-	char *buf, *sp, *eol;
-	size_t len;
 
-	buf = read_sha1_file(oid->hash, &type, &size);
-	if (!buf)
-		die_errno("unable to read object %s", oid_to_hex(oid));
-	if (type != OBJ_COMMIT && type != OBJ_TAG)
-		goto free_return;
-	if (!size)
-		die("an empty %s object %s?",
-		    typename(type), oid_to_hex(oid));
+	memset(&array, 0, sizeof(array));
 
-	/* skip header */
-	sp = strstr(buf, "\n\n");
-	if (!sp)
-		goto free_return;
+	if (filter->lines == -1)
+		filter->lines = 0;
 
-	/* only take up to "lines" lines, and strip the signature from a tag */
-	if (type == OBJ_TAG)
-		size = parse_signature(buf, size);
-	for (i = 0, sp += 2; i < lines && sp < buf + size; i++) {
-		if (i)
-			printf("\n    ");
-		eol = memchr(sp, '\n', size - (sp - buf));
-		len = eol ? eol - sp : size - (sp - buf);
-		fwrite(sp, len, 1, stdout);
-		if (!eol)
-			break;
-		sp = eol + 1;
-	}
-free_return:
-	free(buf);
-}
-
-static int show_reference(const char *refname, const struct object_id *oid,
-			  int flag, void *cb_data)
-{
-	struct tag_filter *filter = cb_data;
-
-	if (match_pattern(filter->patterns, refname)) {
-		if (filter->with_commit) {
-			struct commit *commit;
-
-			commit = lookup_commit_reference_gently(oid->hash, 1);
-			if (!commit)
-				return 0;
-			if (!contains(commit, filter->with_commit))
-				return 0;
-		}
-
-		if (points_at.nr && !match_points_at(refname, oid->hash))
-			return 0;
-
-		if (!filter->lines) {
-			if (filter->sort)
-				string_list_append(&filter->tags, refname);
-			else
-				printf("%s\n", refname);
-			return 0;
-		}
-		printf("%-15s ", refname);
-		show_tag_lines(oid, filter->lines);
-		putchar('\n');
+	if (!format) {
+		if (filter->lines) {
+			to_free = xstrfmt("%s %%(contents:lines=%d)",
+					  "%(align:15)%(refname:lstrip=2)%(end)",
+					  filter->lines);
+			format = to_free;
+		} else
+			format = "%(refname:lstrip=2)";
 	}
 
-	return 0;
-}
+	verify_ref_format(format);
+	filter->with_commit_tag_algo = 1;
+	filter_refs(&array, filter, FILTER_REFS_TAGS);
+	ref_array_sort(sorting, &array);
 
-static int sort_by_version(const void *a_, const void *b_)
-{
-	const struct string_list_item *a = a_;
-	const struct string_list_item *b = b_;
-	return versioncmp(a->string, b->string);
-}
+	for (i = 0; i < array.nr; i++)
+		show_ref_array_item(array.items[i], format, 0);
+	ref_array_clear(&array);
+	free(to_free);
 
-static int list_tags(const char **patterns, int lines,
-		     struct commit_list *with_commit, int sort)
-{
-	struct tag_filter filter;
-
-	filter.patterns = patterns;
-	filter.lines = lines;
-	filter.sort = sort;
-	filter.with_commit = with_commit;
-	memset(&filter.tags, 0, sizeof(filter.tags));
-	filter.tags.strdup_strings = 1;
-
-	for_each_tag_ref(show_reference, (void *)&filter);
-	if (sort) {
-		int i;
-		if ((sort & SORT_MASK) == VERCMP_SORT)
-			qsort(filter.tags.items, filter.tags.nr,
-			      sizeof(struct string_list_item), sort_by_version);
-		if (sort & REVERSE_SORT)
-			for (i = filter.tags.nr - 1; i >= 0; i--)
-				printf("%s\n", filter.tags.items[i].string);
-		else
-			for (i = 0; i < filter.tags.nr; i++)
-				printf("%s\n", filter.tags.items[i].string);
-		string_list_clear(&filter.tags, 0);
-	}
 	return 0;
 }
 
 typedef int (*each_tag_name_fn)(const char *name, const char *ref,
-				const unsigned char *sha1);
+				const struct object_id *oid, const void *cb_data);
 
-static int for_each_tag_name(const char **argv, each_tag_name_fn fn)
+static int for_each_tag_name(const char **argv, each_tag_name_fn fn,
+			     const void *cb_data)
 {
 	const char **p;
-	char ref[PATH_MAX];
+	struct strbuf ref = STRBUF_INIT;
 	int had_error = 0;
-	unsigned char sha1[20];
+	struct object_id oid;
 
 	for (p = argv; *p; p++) {
-		if (snprintf(ref, sizeof(ref), "refs/tags/%s", *p)
-					>= sizeof(ref)) {
-			error(_("tag name too long: %.*s..."), 50, *p);
-			had_error = 1;
-			continue;
-		}
-		if (read_ref(ref, sha1)) {
+		strbuf_reset(&ref);
+		strbuf_addf(&ref, "refs/tags/%s", *p);
+		if (read_ref(ref.buf, oid.hash)) {
 			error(_("tag '%s' not found."), *p);
 			had_error = 1;
 			continue;
 		}
-		if (fn(*p, ref, sha1))
+		if (fn(*p, ref.buf, &oid, cb_data))
 			had_error = 1;
 	}
+	strbuf_release(&ref);
 	return had_error;
 }
 
 static int delete_tag(const char *name, const char *ref,
-				const unsigned char *sha1)
+		      const struct object_id *oid, const void *cb_data)
 {
-	if (delete_ref(ref, sha1, 0))
+	if (delete_ref(NULL, ref, oid->hash, 0))
 		return 1;
-	printf(_("Deleted tag '%s' (was %s)\n"), name, find_unique_abbrev(sha1, DEFAULT_ABBREV));
+	printf(_("Deleted tag '%s' (was %s)\n"), name, find_unique_abbrev(oid->hash, DEFAULT_ABBREV));
 	return 0;
 }
 
 static int verify_tag(const char *name, const char *ref,
-				const unsigned char *sha1)
+		      const struct object_id *oid, const void *cb_data)
 {
-	const char *argv_verify_tag[] = {"verify-tag",
-					"-v", "SHA1_HEX", NULL};
-	argv_verify_tag[2] = sha1_to_hex(sha1);
+	int flags;
+	const char *fmt_pretty = cb_data;
+	flags = GPG_VERIFY_VERBOSE;
 
-	if (run_command_v_opt(argv_verify_tag, RUN_GIT_CMD))
-		return error(_("could not verify the tag '%s'"), name);
+	if (fmt_pretty)
+		flags = GPG_VERIFY_OMIT_STATUS;
+
+	if (gpg_verify_tag(oid->hash, name, flags))
+		return -1;
+
+	if (fmt_pretty)
+		pretty_print_ref(name, oid->hash, fmt_pretty);
+
 	return 0;
 }
 
@@ -348,35 +134,26 @@ static const char tag_template_nocleanup[] =
 	"Lines starting with '%c' will be kept; you may remove them"
 	" yourself if you want to.\n");
 
-/*
- * Parse a sort string, and return 0 if parsed successfully. Will return
- * non-zero when the sort string does not parse into a known type. If var is
- * given, the error message becomes a warning and includes information about
- * the configuration value.
- */
-static int parse_sort_string(const char *var, const char *arg, int *sort)
+/* Parse arg given and add it the ref_sorting array */
+static int parse_sorting_string(const char *arg, struct ref_sorting **sorting_tail)
 {
-	int type = 0, flags = 0;
+	struct ref_sorting *s;
+	int len;
 
-	if (skip_prefix(arg, "-", &arg))
-		flags |= REVERSE_SORT;
+	s = xcalloc(1, sizeof(*s));
+	s->next = *sorting_tail;
+	*sorting_tail = s;
 
-	if (skip_prefix(arg, "version:", &arg) || skip_prefix(arg, "v:", &arg))
-		type = VERCMP_SORT;
-	else
-		type = STRCMP_SORT;
-
-	if (strcmp(arg, "refname")) {
-		if (!var)
-			return error(_("unsupported sort specification '%s'"), arg);
-		else {
-			warning(_("unsupported sort specification '%s' in variable '%s'"),
-				var, arg);
-			return -1;
-		}
+	if (*arg == '-') {
+		s->reverse = 1;
+		arg++;
 	}
+	if (skip_prefix(arg, "version:", &arg) ||
+	    skip_prefix(arg, "v:", &arg))
+		s->version = 1;
 
-	*sort = (type | flags);
+	len = strlen(arg);
+	s->atom = parse_ref_filter_atom(arg, arg+len);
 
 	return 0;
 }
@@ -384,29 +161,35 @@ static int parse_sort_string(const char *var, const char *arg, int *sort)
 static int git_tag_config(const char *var, const char *value, void *cb)
 {
 	int status;
+	struct ref_sorting **sorting_tail = (struct ref_sorting **)cb;
 
 	if (!strcmp(var, "tag.sort")) {
 		if (!value)
 			return config_error_nonbool(var);
-		parse_sort_string(var, value, &tag_sort);
+		parse_sorting_string(value, sorting_tail);
 		return 0;
 	}
 
 	status = git_gpg_config(var, value, cb);
 	if (status)
 		return status;
+	if (!strcmp(var, "tag.forcesignannotated")) {
+		force_sign_annotate = git_config_bool(var, value);
+		return 0;
+	}
+
 	if (starts_with(var, "column."))
 		return git_column_config(var, value, "tag", &colopts);
 	return git_default_config(var, value, cb);
 }
 
-static void write_tag_body(int fd, const unsigned char *sha1)
+static void write_tag_body(int fd, const struct object_id *oid)
 {
 	unsigned long size;
 	enum object_type type;
 	char *buf, *sp;
 
-	buf = read_sha1_file(sha1, &type, &size);
+	buf = read_sha1_file(oid->hash, &type, &size);
 	if (!buf)
 		return;
 	/* skip header */
@@ -422,11 +205,11 @@ static void write_tag_body(int fd, const unsigned char *sha1)
 	free(buf);
 }
 
-static int build_tag_object(struct strbuf *buf, int sign, unsigned char *result)
+static int build_tag_object(struct strbuf *buf, int sign, struct object_id *result)
 {
 	if (sign && do_sign(buf) < 0)
 		return error(_("unable to sign the tag"));
-	if (write_sha1_file(buf->buf, buf->len, tag_type, result) < 0)
+	if (write_sha1_file(buf->buf, buf->len, tag_type, result->hash) < 0)
 		return error(_("unable to write tag file"));
 	return 0;
 }
@@ -441,31 +224,27 @@ struct create_tag_options {
 	} cleanup_mode;
 };
 
-static void create_tag(const unsigned char *object, const char *tag,
+static void create_tag(const struct object_id *object, const char *tag,
 		       struct strbuf *buf, struct create_tag_options *opt,
-		       unsigned char *prev, unsigned char *result)
+		       struct object_id *prev, struct object_id *result)
 {
 	enum object_type type;
-	char header_buf[1024];
-	int header_len;
+	struct strbuf header = STRBUF_INIT;
 	char *path = NULL;
 
-	type = sha1_object_info(object, NULL);
+	type = sha1_object_info(object->hash, NULL);
 	if (type <= OBJ_NONE)
 	    die(_("bad object type."));
 
-	header_len = snprintf(header_buf, sizeof(header_buf),
-			  "object %s\n"
-			  "type %s\n"
-			  "tag %s\n"
-			  "tagger %s\n\n",
-			  sha1_to_hex(object),
-			  typename(type),
-			  tag,
-			  git_committer_info(IDENT_STRICT));
-
-	if (header_len > sizeof(header_buf) - 1)
-		die(_("tag header too big."));
+	strbuf_addf(&header,
+		    "object %s\n"
+		    "type %s\n"
+		    "tag %s\n"
+		    "tagger %s\n\n",
+		    oid_to_hex(object),
+		    typename(type),
+		    tag,
+		    git_committer_info(IDENT_STRICT));
 
 	if (!opt->message_given) {
 		int fd;
@@ -476,7 +255,7 @@ static void create_tag(const unsigned char *object, const char *tag,
 		if (fd < 0)
 			die_errno(_("could not create file '%s'"), path);
 
-		if (!is_null_sha1(prev)) {
+		if (!is_null_oid(prev)) {
 			write_tag_body(fd, prev);
 		} else {
 			struct strbuf buf = STRBUF_INIT;
@@ -498,12 +277,13 @@ static void create_tag(const unsigned char *object, const char *tag,
 	}
 
 	if (opt->cleanup_mode != CLEANUP_NONE)
-		stripspace(buf, opt->cleanup_mode == CLEANUP_ALL);
+		strbuf_stripspace(buf, opt->cleanup_mode == CLEANUP_ALL);
 
 	if (!opt->message_given && !buf->len)
 		die(_("no tag message?"));
 
-	strbuf_insert(buf, 0, header_buf, header_len);
+	strbuf_insert(buf, 0, header.buf, header.len);
+	strbuf_release(&header);
 
 	if (build_tag_object(buf, opt->sign, result) < 0) {
 		if (path)
@@ -515,6 +295,54 @@ static void create_tag(const unsigned char *object, const char *tag,
 		unlink_or_warn(path);
 		free(path);
 	}
+}
+
+static void create_reflog_msg(const struct object_id *oid, struct strbuf *sb)
+{
+	enum object_type type;
+	struct commit *c;
+	char *buf;
+	unsigned long size;
+	int subject_len = 0;
+	const char *subject_start;
+
+	char *rla = getenv("GIT_REFLOG_ACTION");
+	if (rla) {
+		strbuf_addstr(sb, rla);
+	} else {
+		strbuf_addstr(sb, "tag: tagging ");
+		strbuf_add_unique_abbrev(sb, oid->hash, DEFAULT_ABBREV);
+	}
+
+	strbuf_addstr(sb, " (");
+	type = sha1_object_info(oid->hash, NULL);
+	switch (type) {
+	default:
+		strbuf_addstr(sb, "object of unknown type");
+		break;
+	case OBJ_COMMIT:
+		if ((buf = read_sha1_file(oid->hash, &type, &size)) != NULL) {
+			subject_len = find_commit_subject(buf, &subject_start);
+			strbuf_insert(sb, sb->len, subject_start, subject_len);
+		} else {
+			strbuf_addstr(sb, "commit object");
+		}
+		free(buf);
+
+		if ((c = lookup_commit_reference(oid)) != NULL)
+			strbuf_addf(sb, ", %s", show_date(c->date, 0, DATE_MODE(SHORT)));
+		break;
+	case OBJ_TREE:
+		strbuf_addstr(sb, "tree object");
+		break;
+	case OBJ_BLOB:
+		strbuf_addstr(sb, "blob object");
+		break;
+	case OBJ_TAG:
+		strbuf_addstr(sb, "other tag object");
+		break;
+	}
+	strbuf_addch(sb, ')');
 }
 
 struct msg_arg {
@@ -546,49 +374,29 @@ static int strbuf_check_tag_ref(struct strbuf *sb, const char *name)
 	return check_refname_format(sb->buf, 0);
 }
 
-static int parse_opt_points_at(const struct option *opt __attribute__((unused)),
-			const char *arg, int unset)
-{
-	unsigned char sha1[20];
-
-	if (unset) {
-		sha1_array_clear(&points_at);
-		return 0;
-	}
-	if (!arg)
-		return error(_("switch 'points-at' requires an object"));
-	if (get_sha1(arg, sha1))
-		return error(_("malformed object name '%s'"), arg);
-	sha1_array_append(&points_at, sha1);
-	return 0;
-}
-
-static int parse_opt_sort(const struct option *opt, const char *arg, int unset)
-{
-	int *sort = opt->value;
-
-	return parse_sort_string(NULL, arg, sort);
-}
-
 int cmd_tag(int argc, const char **argv, const char *prefix)
 {
 	struct strbuf buf = STRBUF_INIT;
 	struct strbuf ref = STRBUF_INIT;
-	unsigned char object[20], prev[20];
+	struct strbuf reflog_msg = STRBUF_INIT;
+	struct object_id object, prev;
 	const char *object_ref, *tag;
 	struct create_tag_options opt;
 	char *cleanup_arg = NULL;
-	int annotate = 0, force = 0, lines = -1;
 	int create_reflog = 0;
-	int cmdmode = 0;
+	int annotate = 0, force = 0;
+	int cmdmode = 0, create_tag_object = 0;
 	const char *msgfile = NULL, *keyid = NULL;
 	struct msg_arg msg = { 0, STRBUF_INIT };
-	struct commit_list *with_commit = NULL;
 	struct ref_transaction *transaction;
 	struct strbuf err = STRBUF_INIT;
+	struct ref_filter filter;
+	static struct ref_sorting *sorting = NULL, **sorting_tail = &sorting;
+	const char *format = NULL;
+	int icase = 0;
 	struct option options[] = {
 		OPT_CMDMODE('l', "list", &cmdmode, N_("list tag names"), 'l'),
-		{ OPTION_INTEGER, 'n', NULL, &lines, N_("n"),
+		{ OPTION_INTEGER, 'n', NULL, &filter.lines, N_("n"),
 				N_("print <n> lines of each tag message"),
 				PARSE_OPT_OPTARG, NULL, 1 },
 		OPT_CMDMODE('d', "delete", &cmdmode, N_("delete tags"), 'd'),
@@ -606,36 +414,35 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 		OPT_STRING('u', "local-user", &keyid, N_("key-id"),
 					N_("use another key to sign the tag")),
 		OPT__FORCE(&force, N_("replace the tag if exists")),
-		OPT_BOOL(0, "create-reflog", &create_reflog, N_("create_reflog")),
+		OPT_BOOL(0, "create-reflog", &create_reflog, N_("create a reflog")),
 
 		OPT_GROUP(N_("Tag listing options")),
 		OPT_COLUMN(0, "column", &colopts, N_("show tag list in columns")),
+		OPT_CONTAINS(&filter.with_commit, N_("print only tags that contain the commit")),
+		OPT_NO_CONTAINS(&filter.no_commit, N_("print only tags that don't contain the commit")),
+		OPT_WITH(&filter.with_commit, N_("print only tags that contain the commit")),
+		OPT_WITHOUT(&filter.no_commit, N_("print only tags that don't contain the commit")),
+		OPT_MERGED(&filter, N_("print only tags that are merged")),
+		OPT_NO_MERGED(&filter, N_("print only tags that are not merged")),
+		OPT_CALLBACK(0 , "sort", sorting_tail, N_("key"),
+			     N_("field name to sort on"), &parse_opt_ref_sorting),
 		{
-			OPTION_CALLBACK, 0, "sort", &tag_sort, N_("type"), N_("sort tags"),
-			PARSE_OPT_NONEG, parse_opt_sort
+			OPTION_CALLBACK, 0, "points-at", &filter.points_at, N_("object"),
+			N_("print only tags of the object"), PARSE_OPT_LASTARG_DEFAULT,
+			parse_opt_object_name, (intptr_t) "HEAD"
 		},
-		{
-			OPTION_CALLBACK, 0, "contains", &with_commit, N_("commit"),
-			N_("print only tags that contain the commit"),
-			PARSE_OPT_LASTARG_DEFAULT,
-			parse_opt_with_commit, (intptr_t)"HEAD",
-		},
-		{
-			OPTION_CALLBACK, 0, "with", &with_commit, N_("commit"),
-			N_("print only tags that contain the commit"),
-			PARSE_OPT_HIDDEN | PARSE_OPT_LASTARG_DEFAULT,
-			parse_opt_with_commit, (intptr_t)"HEAD",
-		},
-		{
-			OPTION_CALLBACK, 0, "points-at", NULL, N_("object"),
-			N_("print only tags of the object"), 0, parse_opt_points_at
-		},
+		OPT_STRING(  0 , "format", &format, N_("format"), N_("format to use for the output")),
+		OPT_BOOL('i', "ignore-case", &icase, N_("sorting and filtering are case insensitive")),
 		OPT_END()
 	};
 
-	git_config(git_tag_config, NULL);
+	setup_ref_filter_porcelain_msg();
+
+	git_config(git_tag_config, sorting_tail);
 
 	memset(&opt, 0, sizeof(opt));
+	memset(&filter, 0, sizeof(filter));
+	filter.lines = -1;
 
 	argc = parse_options(argc, argv, prefix, options, git_tag_usage, 0);
 
@@ -643,20 +450,30 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 		opt.sign = 1;
 		set_signing_key(keyid);
 	}
-	if (opt.sign)
-		annotate = 1;
-	if (argc == 0 && !cmdmode)
-		cmdmode = 'l';
+	create_tag_object = (opt.sign || annotate || msg.given || msgfile);
 
-	if ((annotate || msg.given || msgfile || force) && (cmdmode != 0))
+	if (!cmdmode) {
+		if (argc == 0)
+			cmdmode = 'l';
+		else if (filter.with_commit || filter.no_commit ||
+			 filter.points_at.nr || filter.merge_commit ||
+			 filter.lines != -1)
+			cmdmode = 'l';
+	}
+
+	if ((create_tag_object || force) && (cmdmode != 0))
 		usage_with_options(git_tag_usage, options);
 
 	finalize_colopts(&colopts, -1);
-	if (cmdmode == 'l' && lines != -1) {
+	if (cmdmode == 'l' && filter.lines != -1) {
 		if (explicitly_enable_column(colopts))
 			die(_("--column and -n are incompatible"));
 		colopts = 0;
 	}
+	if (!sorting)
+		sorting = ref_default_sorting();
+	sorting->ignore_case = icase;
+	filter.ignore_case = icase;
 	if (cmdmode == 'l') {
 		int ret;
 		if (column_active(colopts)) {
@@ -665,28 +482,33 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 			copts.padding = 2;
 			run_column_filter(colopts, &copts);
 		}
-		if (lines != -1 && tag_sort)
-			die(_("--sort and -n are incompatible"));
-		ret = list_tags(argv, lines == -1 ? 0 : lines, with_commit, tag_sort);
+		filter.name_patterns = argv;
+		ret = list_tags(&filter, sorting, format);
 		if (column_active(colopts))
 			stop_column_filter();
 		return ret;
 	}
-	if (lines != -1)
-		die(_("-n option is only allowed with -l."));
-	if (with_commit)
-		die(_("--contains option is only allowed with -l."));
-	if (points_at.nr)
-		die(_("--points-at option is only allowed with -l."));
+	if (filter.lines != -1)
+		die(_("-n option is only allowed in list mode"));
+	if (filter.with_commit)
+		die(_("--contains option is only allowed in list mode"));
+	if (filter.no_commit)
+		die(_("--no-contains option is only allowed in list mode"));
+	if (filter.points_at.nr)
+		die(_("--points-at option is only allowed in list mode"));
+	if (filter.merge_commit)
+		die(_("--merged and --no-merged options are only allowed in list mode"));
 	if (cmdmode == 'd')
-		return for_each_tag_name(argv, delete_tag);
-	if (cmdmode == 'v')
-		return for_each_tag_name(argv, verify_tag);
+		return for_each_tag_name(argv, delete_tag, NULL);
+	if (cmdmode == 'v') {
+		if (format)
+			verify_ref_format(format);
+		return for_each_tag_name(argv, verify_tag, format);
+	}
 
 	if (msg.given || msgfile) {
 		if (msg.given && msgfile)
 			die(_("only one -F or -m option is allowed."));
-		annotate = 1;
 		if (msg.given)
 			strbuf_addbuf(&buf, &(msg.buf));
 		else {
@@ -707,14 +529,14 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	if (argc > 2)
 		die(_("too many params"));
 
-	if (get_sha1(object_ref, object))
+	if (get_oid(object_ref, &object))
 		die(_("Failed to resolve '%s' as a valid ref."), object_ref);
 
 	if (strbuf_check_tag_ref(&ref, tag))
 		die(_("'%s' is not a valid tag name."), tag);
 
-	if (read_ref(ref.buf, prev))
-		hashclr(prev);
+	if (read_ref(ref.buf, prev.hash))
+		oidclr(&prev);
 	else if (!force)
 		die(_("tag '%s' already exists"), tag);
 
@@ -729,22 +551,28 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	else
 		die(_("Invalid cleanup mode %s"), cleanup_arg);
 
-	if (annotate)
-		create_tag(object, tag, &buf, &opt, prev, object);
+	create_reflog_msg(&object, &reflog_msg);
+
+	if (create_tag_object) {
+		if (force_sign_annotate && !annotate)
+			opt.sign = 1;
+		create_tag(&object, tag, &buf, &opt, &prev, &object);
+	}
 
 	transaction = ref_transaction_begin(&err);
 	if (!transaction ||
-	    ref_transaction_update(transaction, ref.buf, object, prev,
+	    ref_transaction_update(transaction, ref.buf, object.hash, prev.hash,
 				   create_reflog ? REF_FORCE_CREATE_REFLOG : 0,
-				   NULL, &err) ||
+				   reflog_msg.buf, &err) ||
 	    ref_transaction_commit(transaction, &err))
 		die("%s", err.buf);
 	ref_transaction_free(transaction);
-	if (force && !is_null_sha1(prev) && hashcmp(prev, object))
-		printf(_("Updated tag '%s' (was %s)\n"), tag, find_unique_abbrev(prev, DEFAULT_ABBREV));
+	if (force && !is_null_oid(&prev) && oidcmp(&prev, &object))
+		printf(_("Updated tag '%s' (was %s)\n"), tag, find_unique_abbrev(prev.hash, DEFAULT_ABBREV));
 
 	strbuf_release(&err);
 	strbuf_release(&buf);
 	strbuf_release(&ref);
+	strbuf_release(&reflog_msg);
 	return 0;
 }

@@ -60,7 +60,7 @@ static void mark_base_index_entries(struct index_state *base)
 	 * To keep track of the shared entries between
 	 * istate->base->cache[] and istate->cache[], base entry
 	 * position is stored in each base entry. All positions start
-	 * from 1 instead of 0, which is resrved to say "this is a new
+	 * from 1 instead of 0, which is reserved to say "this is a new
 	 * entry".
 	 */
 	for (i = 0; i < base->cache_nr; i++)
@@ -83,8 +83,7 @@ void move_cache_to_base_index(struct index_state *istate)
 	si->base->timestamp = istate->timestamp;
 	ALLOC_GROW(si->base->cache, istate->cache_nr, si->base->cache_alloc);
 	si->base->cache_nr = istate->cache_nr;
-	memcpy(si->base->cache, istate->cache,
-	       sizeof(*istate->cache) * istate->cache_nr);
+	COPY_ARRAY(si->base->cache, istate->cache, istate->cache_nr);
 	mark_base_index_entries(si->base);
 	for (i = 0; i < si->base->cache_nr; i++)
 		si->base->cache[i]->ce_flags &= ~CE_UPDATE_IN_BASE;
@@ -141,8 +140,7 @@ void merge_base_index(struct index_state *istate)
 	istate->cache	    = NULL;
 	istate->cache_alloc = 0;
 	ALLOC_GROW(istate->cache, istate->cache_nr, istate->cache_alloc);
-	memcpy(istate->cache, si->base->cache,
-	       sizeof(*istate->cache) * istate->cache_nr);
+	COPY_ARRAY(istate->cache, si->base->cache, istate->cache_nr);
 
 	si->nr_deletions = 0;
 	si->nr_replacements = 0;
@@ -169,10 +167,9 @@ void merge_base_index(struct index_state *istate)
 
 	ewah_free(si->delete_bitmap);
 	ewah_free(si->replace_bitmap);
-	free(si->saved_cache);
+	FREE_AND_NULL(si->saved_cache);
 	si->delete_bitmap  = NULL;
 	si->replace_bitmap = NULL;
-	si->saved_cache	   = NULL;
 	si->saved_cache_nr = 0;
 }
 
@@ -189,7 +186,7 @@ void prepare_to_write_split_index(struct index_state *istate)
 		/* Go through istate->cache[] and mark CE_MATCHED to
 		 * entry with positive index. We'll go through
 		 * base->cache[] later to delete all entries in base
-		 * that are not marked eith either CE_MATCHED or
+		 * that are not marked with either CE_MATCHED or
 		 * CE_UPDATE_IN_BASE. If istate->cache[i] is a
 		 * duplicate, deduplicate it.
 		 */
@@ -317,5 +314,27 @@ void replace_index_entry_in_base(struct index_state *istate,
 		if (old != istate->split_index->base->cache[new->index - 1])
 			free(istate->split_index->base->cache[new->index - 1]);
 		istate->split_index->base->cache[new->index - 1] = new;
+	}
+}
+
+void add_split_index(struct index_state *istate)
+{
+	if (!istate->split_index) {
+		init_split_index(istate);
+		istate->cache_changed |= SPLIT_INDEX_ORDERED;
+	}
+}
+
+void remove_split_index(struct index_state *istate)
+{
+	if (istate->split_index) {
+		/*
+		 * can't discard_split_index(&the_index); because that
+		 * will destroy split_index->base->cache[], which may
+		 * be shared with the_index.cache[]. So yeah we're
+		 * leaking a bit here.
+		 */
+		istate->split_index = NULL;
+		istate->cache_changed |= SOMETHING_CHANGED;
 	}
 }

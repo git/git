@@ -134,11 +134,7 @@ int ewah_read_mmap(struct ewah_bitmap *self, const void *map, size_t len)
 	self->buffer_size = self->alloc_size = get_be32(ptr);
 	ptr += sizeof(uint32_t);
 
-	self->buffer = ewah_realloc(self->buffer,
-		self->alloc_size * sizeof(eword_t));
-
-	if (!self->buffer)
-		return -1;
+	REALLOC_ARRAY(self->buffer, self->alloc_size);
 
 	/*
 	 * Copy the raw data for the bitmap as a whole chunk;
@@ -146,8 +142,8 @@ int ewah_read_mmap(struct ewah_bitmap *self, const void *map, size_t len)
 	 * the endianness conversion in a separate pass to ensure
 	 * we're loading 8-byte aligned words.
 	 */
-	memcpy(self->buffer, ptr, self->buffer_size * sizeof(uint64_t));
-	ptr += self->buffer_size * sizeof(uint64_t);
+	memcpy(self->buffer, ptr, self->buffer_size * sizeof(eword_t));
+	ptr += self->buffer_size * sizeof(eword_t);
 
 	for (i = 0; i < self->buffer_size; ++i)
 		self->buffer[i] = ntohll(self->buffer[i]);
@@ -180,11 +176,7 @@ int ewah_deserialize(struct ewah_bitmap *self, int fd)
 		return -1;
 
 	self->buffer_size = self->alloc_size = (size_t)ntohl(word_count);
-	self->buffer = ewah_realloc(self->buffer,
-		self->alloc_size * sizeof(eword_t));
-
-	if (!self->buffer)
-		return -1;
+	REALLOC_ARRAY(self->buffer, self->alloc_size);
 
 	/** 64 bit x N -- compressed words */
 	buffer = self->buffer;

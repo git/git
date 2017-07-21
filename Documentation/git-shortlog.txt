@@ -47,6 +47,10 @@ OPTIONS
 
 	Each pretty-printed commit will be rewrapped before it is shown.
 
+-c::
+--committer::
+	Collect and show committer identities instead of authors.
+
 -w[<width>[,<indent1>[,<indent2>]]]::
 	Linewrap the output by wrapping each line at `width`.  The first
 	line of each entry is indented by `indent1` spaces, and the second

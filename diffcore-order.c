@@ -52,7 +52,7 @@ static void prepare_order(const char *orderfile)
 		}
 		if (pass == 0) {
 			order_cnt = cnt;
-			order = xmalloc(sizeof(*order) * cnt);
+			ALLOC_ARRAY(order, cnt);
 		}
 	}
 }
@@ -67,7 +67,7 @@ static int match_order(const char *path)
 		strbuf_addstr(&p, path);
 		while (p.buf[0]) {
 			char *cp;
-			if (!wildmatch(order[i], p.buf, 0, NULL))
+			if (!wildmatch(order[i], p.buf, 0))
 				return i;
 			cp = strrchr(p.buf, '/');
 			if (!cp)
@@ -101,7 +101,7 @@ void order_objects(const char *orderfile, obj_path_fn_t obj_path,
 		objs[i].orig_order = i;
 		objs[i].order = match_order(obj_path(objs[i].obj));
 	}
-	qsort(objs, nr, sizeof(*objs), compare_objs_order);
+	QSORT(objs, nr, compare_objs_order);
 }
 
 static const char *pair_pathtwo(void *obj)
@@ -120,7 +120,7 @@ void diffcore_order(const char *orderfile)
 	if (!q->nr)
 		return;
 
-	o = xmalloc(sizeof(*o) * q->nr);
+	ALLOC_ARRAY(o, q->nr);
 	for (i = 0; i < q->nr; i++)
 		o[i].obj = q->queue[i];
 	order_objects(orderfile, pair_pathtwo, o, q->nr);

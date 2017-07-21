@@ -69,7 +69,7 @@ as appropriate to mark resolution and make a commit.")"
 die_merge () {
     if [ $(git config --bool --get advice.resolveConflict || echo true) = "true" ]; then
 	die "$(gettext "You have not concluded your merge (MERGE_HEAD exists).
-Please, commit your changes before you can merge.")"
+Please, commit your changes before merging.")"
     else
 	die "$(gettext "You have not concluded your merge (MERGE_HEAD exists).")"
     fi
@@ -295,7 +295,7 @@ test true = "$rebase" && {
 }
 orig_head=$(git rev-parse -q --verify HEAD)
 git fetch $verbosity $progress $dry_run $recurse_submodules $all $append \
-$upload_pack $force $tags $prune $keep $depth $unshallow $update_shallow \
+${upload_pack:+"$upload_pack"} $force $tags $prune $keep $depth $unshallow $update_shallow \
 $refmap --update-head-ok "$@" || exit 1
 test -z "$dry_run" || exit 0
 

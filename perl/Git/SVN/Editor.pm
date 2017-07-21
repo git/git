@@ -7,7 +7,9 @@ use SVN::Delta;
 use Carp qw/croak/;
 use Git qw/command command_oneline command_noisy command_output_pipe
            command_input_pipe command_close_pipe
-           command_bidi_pipe command_close_bidi_pipe/;
+           command_bidi_pipe command_close_bidi_pipe
+           get_record/;
+
 BEGIN {
 	@ISA = qw(SVN::Delta::Editor);
 }
@@ -41,6 +43,7 @@ sub new {
 	                       "$self->{svn_path}/" : '';
 	$self->{config} = $opts->{config};
 	$self->{mergeinfo} = $opts->{mergeinfo};
+	$self->{pathnameencoding} = Git::config('svn.pathnameencoding');
 	return $self;
 }
 
@@ -56,11 +59,9 @@ sub generate_diff {
 	push @diff_tree, "-l$_rename_limit" if defined $_rename_limit;
 	push @diff_tree, $tree_a, $tree_b;
 	my ($diff_fh, $ctx) = command_output_pipe(@diff_tree);
-	local $/ = "\0";
 	my $state = 'meta';
 	my @mods;
-	while (<$diff_fh>) {
-		chomp $_; # this gets rid of the trailing "\0"
+	while (defined($_ = get_record($diff_fh, "\0"))) {
 		if ($state eq 'meta' && /^:(\d{6})\s(\d{6})\s
 					($::sha1)\s($::sha1)\s
 					([MTCRAD])\d*$/xo) {
@@ -143,11 +144,12 @@ sub repo_path {
 
 sub url_path {
 	my ($self, $path) = @_;
+	$path = $self->repo_path($path);
 	if ($self->{url} =~ m#^https?://#) {
 		# characters are taken from subversion/libsvn_subr/path.c
 		$path =~ s#([^~a-zA-Z0-9_./!$&'()*+,-])#sprintf("%%%02X",ord($1))#eg;
 	}
-	$self->{url} . '/' . $self->repo_path($path);
+	$self->{url} . '/' . $path;
 }
 
 sub rmdirs {
@@ -171,9 +173,7 @@ sub rmdirs {
 
 	my ($fh, $ctx) = command_output_pipe(qw/ls-tree --name-only -r -z/,
 	                                     $self->{tree_b});
-	local $/ = "\0";
-	while (<$fh>) {
-		chomp;
+	while (defined($_ = get_record($fh, "\0"))) {
 		my @dn = split m#/#, $_;
 		while (pop @dn) {
 			delete $rm->{join '/', @dn};

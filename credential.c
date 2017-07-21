@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "config.h"
 #include "credential.h"
 #include "string-list.h"
 #include "run-command.h"
@@ -63,9 +64,12 @@ static int credential_config_callback(const char *var, const char *value,
 		key = dot + 1;
 	}
 
-	if (!strcmp(key, "helper"))
-		string_list_append(&c->helpers, value);
-	else if (!strcmp(key, "username")) {
+	if (!strcmp(key, "helper")) {
+		if (*value)
+			string_list_append(&c->helpers, value);
+		else
+			string_list_clear(&c->helpers, 0);
+	} else if (!strcmp(key, "username")) {
 		if (!c->username)
 			c->username = xstrdup(value);
 	}
@@ -90,8 +94,7 @@ static void credential_apply_config(struct credential *c)
 	c->configured = 1;
 
 	if (!c->use_http_path && proto_is_http(c->protocol)) {
-		free(c->path);
-		c->path = NULL;
+		FREE_AND_NULL(c->path);
 	}
 }
 
@@ -142,7 +145,7 @@ int credential_read(struct credential *c, FILE *fp)
 {
 	struct strbuf line = STRBUF_INIT;
 
-	while (strbuf_getline(&line, fp, '\n') != EOF) {
+	while (strbuf_getline_lf(&line, fp) != EOF) {
 		char *key = line.buf;
 		char *value = strchr(key, '=');
 
@@ -311,10 +314,8 @@ void credential_reject(struct credential *c)
 	for (i = 0; i < c->helpers.nr; i++)
 		credential_do(c, c->helpers.items[i].string, "erase");
 
-	free(c->username);
-	c->username = NULL;
-	free(c->password);
-	c->password = NULL;
+	FREE_AND_NULL(c->username);
+	FREE_AND_NULL(c->password);
 	c->approved = 0;
 }
 

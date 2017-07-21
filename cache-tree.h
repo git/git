@@ -1,6 +1,7 @@
 #ifndef CACHE_TREE_H
 #define CACHE_TREE_H
 
+#include "cache.h"
 #include "tree.h"
 #include "tree-walk.h"
 
@@ -15,7 +16,7 @@ struct cache_tree_sub {
 
 struct cache_tree {
 	int entry_count; /* negative means "invalid" */
-	unsigned char sha1[20];
+	struct object_id oid;
 	int subtree_nr;
 	int subtree_alloc;
 	struct cache_tree_sub **down;
@@ -46,6 +47,7 @@ int update_main_cache_tree(int);
 #define WRITE_TREE_UNMERGED_INDEX (-2)
 #define WRITE_TREE_PREFIX_ERROR (-3)
 
+int write_index_as_tree(unsigned char *sha1, struct index_state *index_state, const char *index_path, int flags, const char *prefix);
 int write_cache_as_tree(unsigned char *sha1, int flags, const char *prefix);
 void prime_cache_tree(struct index_state *, struct tree *);
 

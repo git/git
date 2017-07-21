@@ -127,6 +127,9 @@ proc show_diff {path w {lno {}} {scroll_pos {}} {callback {}}} {
 	} else {
 		start_show_diff $cont_info
 	}
+
+	global current_diff_path selected_paths
+	set selected_paths($current_diff_path) 1
 }
 
 proc show_unmerged_diff {cont_info} {
@@ -220,10 +223,9 @@ proc show_other_diff {path w m cont_info} {
 		}
 		$ui_diff conf -state normal
 		if {$type eq {submodule}} {
-			$ui_diff insert end [append \
-				"* " \
-				[mc "Git Repository (subproject)"] \
-				"\n"] d_info
+			$ui_diff insert end \
+				"* [mc "Git Repository (subproject)"]\n" \
+				d_info
 		} elseif {![catch {set type [exec file $path]}]} {
 			set n [string length $path]
 			if {[string equal -length $n $path $type]} {
@@ -608,7 +610,7 @@ proc apply_hunk {x y} {
 		puts -nonewline $p $current_diff_header
 		puts -nonewline $p [$ui_diff get $s_lno $e_lno]
 		close $p} err]} {
-		error_popup [append $failed_msg "\n\n$err"]
+		error_popup "$failed_msg\n\n$err"
 		unlock_index
 		return
 	}
@@ -826,7 +828,7 @@ proc apply_range_or_line {x y} {
 		puts -nonewline $p $current_diff_header
 		puts -nonewline $p $wholepatch
 		close $p} err]} {
-		error_popup [append $failed_msg "\n\n$err"]
+		error_popup "$failed_msg\n\n$err"
 	}
 
 	unlock_index

@@ -30,11 +30,11 @@ test_expect_success 'patch-id output is well-formed' '
 
 #calculate patch id. Make sure output is not empty.
 calc_patch_id () {
-	name="$1"
+	patch_name="$1"
 	shift
 	git patch-id "$@" |
-	sed "s/ .*//" >patch-id_"$name" &&
-	test_line_count -gt 0 patch-id_"$name"
+	sed "s/ .*//" >patch-id_"$patch_name" &&
+	test_line_count -gt 0 patch-id_"$patch_name"
 }
 
 get_top_diff () {
@@ -141,6 +141,20 @@ test_expect_success 'patch-id supports git-format-patch MIME output' '
 	git checkout same &&
 	git format-patch -1 --attach --stdout | calc_patch_id same &&
 	test_cmp patch-id_master patch-id_same
+'
+
+test_expect_success 'patch-id respects config from subdir' '
+	test_config patchid.stable true &&
+	mkdir subdir &&
+
+	# copy these because test_patch_id() looks for them in
+	# the current directory
+	cp bar-then-foo foo-then-bar subdir &&
+
+	(
+		cd subdir &&
+		test_patch_id irrelevant patchid.stable=true
+	)
 '
 
 cat >nonl <<\EOF

@@ -32,7 +32,7 @@ OPTIONS
 --batch::
 	Allow building of more than one tree object before exiting.  Each
 	tree is separated by as single blank line. The final new-line is
-	optional.  Note - if the '-z' option is used, lines are terminated
+	optional.  Note - if the `-z` option is used, lines are terminated
 	with NUL.
 
 GIT

@@ -1,0 +1,19 @@
+From mboxrd Mon Sep 17 00:00:00 2001
+From: mboxrd writer <mboxrd@example.com>
+Date: Fri, 9 Jun 2006 00:44:16 -0700
+Subject: [PATCH] a commit with escaped From lines
+
+>From the beginning, mbox should have been mboxrd
+>>From escaped
+From not mangled but this line should have been escaped
+
+From mboxrd Mon Sep 17 00:00:00 2001
+From: mboxrd writer <mboxrd@example.com>
+Date: Fri, 9 Jun 2006 00:44:16 -0700
+Subject: [PATCH 2/2] another with fake From lines
+
+ >From unchanged
+ From also unchanged
+no trailing space, no escaping necessary and '>' was intended:
+>From
+

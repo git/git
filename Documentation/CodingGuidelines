@@ -24,7 +24,7 @@ code.  For Git in general, a few rough rules are:
 
    "Once it _is_ in the tree, it's not really worth the patch noise to
    go and fix it up."
-   Cf. http://article.gmane.org/gmane.linux.kernel/943020
+   Cf. http://lkml.iu.edu/hypermail/linux/kernel/1001.3/01069.html
 
 Make your code readable and sensible, and don't try to be clever.
 
@@ -171,6 +171,11 @@ For C programs:
 
  - We try to keep to at most 80 characters per line.
 
+ - As a Git developer we assume you have a reasonably modern compiler
+   and we recommend you to enable the DEVELOPER makefile knob to
+   ensure your patch is clear of all compiler warnings we care about,
+   by e.g. "echo DEVELOPER=1 >>config.mak".
+
  - We try to support a wide range of C compilers to compile Git with,
    including old ones. That means that you should not use C99
    initializers, even if a lot of compilers grok it.
@@ -201,11 +206,38 @@ For C programs:
 		x = 1;
 	}
 
-   is frowned upon.  A gray area is when the statement extends
-   over a few lines, and/or you have a lengthy comment atop of
-   it.  Also, like in the Linux kernel, if there is a long list
-   of "else if" statements, it can make sense to add braces to
-   single line blocks.
+   is frowned upon. But there are a few exceptions:
+
+	- When the statement extends over a few lines (e.g., a while loop
+	  with an embedded conditional, or a comment). E.g.:
+
+		while (foo) {
+			if (x)
+				one();
+			else
+				two();
+		}
+
+		if (foo) {
+			/*
+			 * This one requires some explanation,
+			 * so we're better off with braces to make
+			 * it obvious that the indentation is correct.
+			 */
+			doit();
+		}
+
+	- When there are multiple arms to a conditional and some of them
+	  require braces, enclose even a single line block in braces for
+	  consistency. E.g.:
+
+		if (foo) {
+			doit();
+		} else {
+			one();
+			two();
+			three();
+		}
 
  - We try to avoid assignments in the condition of an "if" statement.
 
@@ -224,12 +256,12 @@ For C programs:
 
    Note however that a comment that explains a translatable string to
    translators uses a convention of starting with a magic token
-   "TRANSLATORS: " immediately after the opening delimiter, even when
-   it spans multiple lines.  We do not add an asterisk at the beginning
-   of each line, either.  E.g.
+   "TRANSLATORS: ", e.g.
 
-	/* TRANSLATORS: here is a comment that explains the string
-	   to be translated, that follows immediately after it */
+	/*
+	 * TRANSLATORS: here is a comment that explains the string to
+	 * be translated, that follows immediately after it.
+	 */
 	_("Here is a translatable string explained by the above.");
 
  - Double negation is often harder to understand than no negation
@@ -521,12 +553,20 @@ Writing Documentation:
  modifying paragraphs or option/command explanations that contain options
  or commands:
 
- Literal examples (e.g. use of command-line options, command names, and
- configuration variables) are typeset in monospace, and if you can use
- `backticks around word phrases`, do so.
+ Literal examples (e.g. use of command-line options, command names,
+ branch names, configuration and environment variables) must be
+ typeset in monospace (i.e. wrapped with backticks):
    `--pretty=oneline`
    `git rev-list`
    `remote.pushDefault`
+   `GIT_DIR`
+   `HEAD`
+
+ An environment variable must be prefixed with "$" only when referring to its
+ value and not when referring to the variable itself, in this case there is
+ nothing to add except the backticks:
+   `GIT_DIR` is specified
+   `$GIT_DIR/hooks/pre-receive`
 
  Word phrases enclosed in `backtick characters` are rendered literally
  and will not be further expanded. The use of `backticks` to achieve the

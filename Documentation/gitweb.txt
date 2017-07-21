@@ -84,7 +84,7 @@ separator (rules for Perl's "`split(" ", $line)`").
 
 * Fields use modified URI encoding, defined in RFC 3986, section 2.1
 (Percent-Encoding), or rather "Query string encoding" (see
-http://en.wikipedia.org/wiki/Query_string#URL_encoding[]), the difference
+https://en.wikipedia.org/wiki/Query_string#URL_encoding[]), the difference
 being that SP (" ") can be encoded as "{plus}" (and therefore "{plus}" has to be
 also percent-encoded).
 +
@@ -206,8 +206,8 @@ $export_auth_hook = sub {
 Per-repository gitweb configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 You can configure individual repositories shown in gitweb by creating file
-in the 'GIT_DIR' of Git repository, or by setting some repo configuration
-variable (in 'GIT_DIR/config', see linkgit:git-config[1]).
+in the `GIT_DIR` of Git repository, or by setting some repo configuration
+variable (in `GIT_DIR/config`, see linkgit:git-config[1]).
 
 You can use the following files in repository:
 

@@ -81,9 +81,17 @@ no-renormalize;;
 	Disables the `renormalize` option.  This overrides the
 	`merge.renormalize` configuration variable.
 
+no-renames;;
+	Turn off rename detection.
+	See also linkgit:git-diff[1] `--no-renames`.
+
+find-renames[=<n>];;
+	Turn on rename detection, optionally setting the similarity
+	threshold.  This is the default.
+	See also linkgit:git-diff[1] `--find-renames`.
+
 rename-threshold=<n>;;
-	Controls the similarity threshold used for rename detection.
-	See also linkgit:git-diff[1] `-M`.
+	Deprecated synonym for `find-renames=<n>`.
 
 subtree[=<path>];;
 	This option is a more advanced form of 'subtree' strategy, where

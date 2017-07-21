@@ -430,9 +430,11 @@ test_expect_success 'deleted submodule' '
 	test_cmp expected actual
 '
 
-test_create_repo sm2 &&
-head7=$(add_file sm2 foo8 foo9) &&
-git add sm2
+test_expect_success 'create second submodule' '
+	test_create_repo sm2 &&
+	head7=$(add_file sm2 foo8 foo9) &&
+	git add sm2
+'
 
 test_expect_success 'multiple submodules' '
 	git diff-index -p --submodule=log HEAD >actual &&

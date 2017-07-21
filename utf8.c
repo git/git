@@ -489,6 +489,28 @@ char *reencode_string_iconv(const char *in, size_t insz, iconv_t conv, int *outs
 	return out;
 }
 
+static const char *fallback_encoding(const char *name)
+{
+	/*
+	 * Some platforms do not have the variously spelled variants of
+	 * UTF-8, so let's fall back to trying the most official
+	 * spelling. We do so only as a fallback in case the platform
+	 * does understand the user's spelling, but not our official
+	 * one.
+	 */
+	if (is_encoding_utf8(name))
+		return "UTF-8";
+
+	/*
+	 * Even though latin-1 is still seen in e-mail
+	 * headers, some platforms only install ISO-8859-1.
+	 */
+	if (!strcasecmp(name, "latin-1"))
+		return "ISO-8859-1";
+
+	return name;
+}
+
 char *reencode_string_len(const char *in, int insz,
 			  const char *out_encoding, const char *in_encoding,
 			  int *outsz)
@@ -501,17 +523,9 @@ char *reencode_string_len(const char *in, int insz,
 
 	conv = iconv_open(out_encoding, in_encoding);
 	if (conv == (iconv_t) -1) {
-		/*
-		 * Some platforms do not have the variously spelled variants of
-		 * UTF-8, so let's fall back to trying the most official
-		 * spelling. We do so only as a fallback in case the platform
-		 * does understand the user's spelling, but not our official
-		 * one.
-		 */
-		if (is_encoding_utf8(in_encoding))
-			in_encoding = "UTF-8";
-		if (is_encoding_utf8(out_encoding))
-			out_encoding = "UTF-8";
+		in_encoding = fallback_encoding(in_encoding);
+		out_encoding = fallback_encoding(out_encoding);
+
 		conv = iconv_open(out_encoding, in_encoding);
 		if (conv == (iconv_t) -1)
 			return NULL;
@@ -643,4 +657,25 @@ int skip_utf8_bom(char **text, size_t len)
 		return 0;
 	*text += strlen(utf8_bom);
 	return 1;
+}
+
+void strbuf_utf8_align(struct strbuf *buf, align_type position, unsigned int width,
+		       const char *s)
+{
+	int slen = strlen(s);
+	int display_len = utf8_strnwidth(s, slen, 0);
+	int utf8_compensation = slen - display_len;
+
+	if (display_len >= width) {
+		strbuf_addstr(buf, s);
+		return;
+	}
+
+	if (position == ALIGN_LEFT)
+		strbuf_addf(buf, "%-*s", width + utf8_compensation, s);
+	else if (position == ALIGN_MIDDLE) {
+		int left = (width - display_len) / 2;
+		strbuf_addf(buf, "%*s%-*s", left, "", width - left + utf8_compensation, s);
+	} else if (position == ALIGN_RIGHT)
+		strbuf_addf(buf, "%*s", width + utf8_compensation, s);
 }

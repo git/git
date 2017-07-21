@@ -59,7 +59,7 @@ test_expect_success 'git branch -l d/e/f should create a branch and a log' '
 test_expect_success 'git branch -d d/e/f should delete a branch and a log' '
 	git branch -d d/e/f &&
 	test_path_is_missing .git/refs/heads/d/e/f &&
-	test_path_is_missing .git/logs/refs/heads/d/e/f
+	test_must_fail git reflog exists refs/heads/d/e/f
 '
 
 test_expect_success 'git branch j/k should work after branch j has been deleted' '
@@ -79,16 +79,42 @@ test_expect_success 'git branch -m dumps usage' '
 	test_i18ngrep "branch name required" err
 '
 
+test_expect_success 'git branch -m m broken_symref should work' '
+	test_when_finished "git branch -D broken_symref" &&
+	git branch -l m &&
+	git symbolic-ref refs/heads/broken_symref refs/heads/i_am_broken &&
+	git branch -m m broken_symref &&
+	git reflog exists refs/heads/broken_symref &&
+	test_must_fail git reflog exists refs/heads/i_am_broken
+'
+
 test_expect_success 'git branch -m m m/m should work' '
 	git branch -l m &&
 	git branch -m m m/m &&
-	test_path_is_file .git/logs/refs/heads/m/m
+	git reflog exists refs/heads/m/m
 '
 
 test_expect_success 'git branch -m n/n n should work' '
 	git branch -l n/n &&
 	git branch -m n/n n &&
-	test_path_is_file .git/logs/refs/heads/n
+	git reflog exists refs/heads/n
+'
+
+# The topmost entry in reflog for branch bbb is about branch creation.
+# Hence, we compare bbb@{1} (instead of bbb@{0}) with aaa@{0}.
+
+test_expect_success 'git branch -m bbb should rename checked out branch' '
+	test_when_finished git branch -D bbb &&
+	test_when_finished git checkout master &&
+	git checkout -b aaa &&
+	git commit --allow-empty -m "a new commit" &&
+	git rev-parse aaa@{0} >expect &&
+	git branch -m bbb &&
+	git rev-parse bbb@{1} >actual &&
+	test_cmp expect actual &&
+	git symbolic-ref HEAD >actual &&
+	echo refs/heads/bbb >expect &&
+	test_cmp expect actual
 '
 
 test_expect_success 'git branch -m o/o o should fail when o/p exists' '
@@ -126,7 +152,45 @@ test_expect_success 'git branch -M foo bar should fail when bar is checked out' 
 test_expect_success 'git branch -M baz bam should succeed when baz is checked out' '
 	git checkout -b baz &&
 	git branch bam &&
-	git branch -M baz bam
+	git branch -M baz bam &&
+	test $(git rev-parse --abbrev-ref HEAD) = bam
+'
+
+test_expect_success 'git branch -M baz bam should add entries to .git/logs/HEAD' '
+	msg="Branch: renamed refs/heads/baz to refs/heads/bam" &&
+	grep " 0\{40\}.*$msg$" .git/logs/HEAD &&
+	grep "^0\{40\}.*$msg$" .git/logs/HEAD
+'
+
+test_expect_success 'resulting reflog can be shown by log -g' '
+	oid=$(git rev-parse HEAD) &&
+	cat >expect <<-EOF &&
+	HEAD@{0} $oid $msg
+	HEAD@{1} $oid $msg
+	HEAD@{2} $oid checkout: moving from foo to baz
+	EOF
+	git log -g --format="%gd %H %gs" -3 HEAD >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'git branch -M baz bam should succeed when baz is checked out as linked working tree' '
+	git checkout master &&
+	git worktree add -b baz bazdir &&
+	git worktree add -f bazdir2 baz &&
+	git branch -M baz bam &&
+	test $(git -C bazdir rev-parse --abbrev-ref HEAD) = bam &&
+	test $(git -C bazdir2 rev-parse --abbrev-ref HEAD) = bam
+'
+
+test_expect_success 'git branch -M baz bam should succeed within a worktree in which baz is checked out' '
+	git checkout -b baz &&
+	git worktree add -f bazdir3 baz &&
+	(
+		cd bazdir3 &&
+		git branch -M baz bam &&
+		test $(git rev-parse --abbrev-ref HEAD) = bam
+	) &&
+	test $(git rev-parse --abbrev-ref HEAD) = bam
 '
 
 test_expect_success 'git branch -M master should work when master is checked out' '
@@ -175,6 +239,31 @@ test_expect_success 'git branch --list -d t should fail' '
 	test_must_fail git branch --list -d t &&
 	git branch -d t &&
 	test_path_is_missing .git/refs/heads/t
+'
+
+test_expect_success 'git branch --list -v with --abbrev' '
+	test_when_finished "git branch -D t" &&
+	git branch t &&
+	git branch -v --list t >actual.default &&
+	git branch -v --list --abbrev t >actual.abbrev &&
+	test_cmp actual.default actual.abbrev &&
+
+	git branch -v --list --no-abbrev t >actual.noabbrev &&
+	git branch -v --list --abbrev=0 t >actual.0abbrev &&
+	test_cmp actual.noabbrev actual.0abbrev &&
+
+	git branch -v --list --abbrev=36 t >actual.36abbrev &&
+	# how many hexdigits are used?
+	read name objdefault rest <actual.abbrev &&
+	read name obj36 rest <actual.36abbrev &&
+	objfull=$(git rev-parse --verify t) &&
+
+	# are we really getting abbreviations?
+	test "$obj36" != "$objdefault" &&
+	expr "$obj36" : "$objdefault" >/dev/null &&
+	test "$objfull" != "$obj36" &&
+	expr "$objfull" : "$obj36" >/dev/null
+
 '
 
 test_expect_success 'git branch --column' '
@@ -267,17 +356,17 @@ git config branch.s/s.dummy Hello
 
 test_expect_success 'git branch -m s/s s should work when s/t is deleted' '
 	git branch -l s/s &&
-	test_path_is_file .git/logs/refs/heads/s/s &&
+	git reflog exists refs/heads/s/s &&
 	git branch -l s/t &&
-	test_path_is_file .git/logs/refs/heads/s/t &&
+	git reflog exists refs/heads/s/t &&
 	git branch -d s/t &&
 	git branch -m s/s s &&
-	test_path_is_file .git/logs/refs/heads/s
+	git reflog exists refs/heads/s
 '
 
 test_expect_success 'config information was renamed, too' '
 	test $(git config branch.s.dummy) = Hello &&
-	test_must_fail git config branch.s/s/dummy
+	test_must_fail git config branch.s/s.dummy
 '
 
 test_expect_success 'deleting a symref' '
@@ -403,6 +492,12 @@ test_expect_success 'test deleting branch without config' '
 	test_i18ncmp expect actual
 '
 
+test_expect_success 'deleting currently checked out branch fails' '
+	git worktree add -b my7 my7 &&
+	test_must_fail git -C my7 branch -d my7 &&
+	test_must_fail git branch -d my7
+'
+
 test_expect_success 'test --track without .fetch entries' '
 	git branch --track my8 &&
 	test "$(git config branch.my8.remote)" &&
@@ -446,6 +541,13 @@ test_expect_success '--set-upstream-to fails on a non-ref' '
 	test_must_fail git branch --set-upstream-to HEAD^{}
 '
 
+test_expect_success '--set-upstream-to fails on locked config' '
+	test_when_finished "rm -f .git/config.lock" &&
+	>.git/config.lock &&
+	git branch locked &&
+	test_must_fail git branch --set-upstream-to locked
+'
+
 test_expect_success 'use --set-upstream-to modify HEAD' '
 	test_config branch.master.remote foo &&
 	test_config branch.master.merge foo &&
@@ -464,6 +566,13 @@ test_expect_success 'use --set-upstream-to modify a particular branch' '
 
 test_expect_success '--unset-upstream should fail if given a non-existent branch' '
 	test_must_fail git branch --unset-upstream i-dont-exist
+'
+
+test_expect_success '--unset-upstream should fail if config is locked' '
+	test_when_finished "rm -f .git/config.lock" &&
+	git branch --set-upstream-to locked &&
+	>.git/config.lock &&
+	test_must_fail git branch --unset-upstream
 '
 
 test_expect_success 'test --unset-upstream on HEAD' '
@@ -509,7 +618,7 @@ If you wanted to make '"'master'"' track '"'origin/master'"', do this:
     git branch -d origin/master
     git branch --set-upstream-to origin/master
 EOF
-	test_cmp expected actual
+	test_i18ncmp expected actual
 '
 
 test_expect_success '--set-upstream with two args only shows the deprecation message' '
@@ -518,7 +627,7 @@ test_expect_success '--set-upstream with two args only shows the deprecation mes
 	cat >expected <<EOF &&
 The --set-upstream flag is deprecated and will be removed. Consider using --track or --set-upstream-to
 EOF
-	test_cmp expected actual
+	test_i18ncmp expected actual
 '
 
 test_expect_success '--set-upstream with one arg only shows the deprecation message if the branch existed' '
@@ -527,7 +636,7 @@ test_expect_success '--set-upstream with one arg only shows the deprecation mess
 	cat >expected <<EOF &&
 The --set-upstream flag is deprecated and will be removed. Consider using --track or --set-upstream-to
 EOF
-	test_cmp expected actual
+	test_i18ncmp expected actual
 '
 
 test_expect_success '--set-upstream-to notices an error to set branch as own upstream' '
@@ -579,7 +688,7 @@ test_expect_success 'avoid ambiguous track' '
 	git config remote.ambi1.fetch refs/heads/lalala:refs/heads/master &&
 	git config remote.ambi2.url lilili &&
 	git config remote.ambi2.fetch refs/heads/lilili:refs/heads/master &&
-	git branch all1 master &&
+	test_must_fail git branch all1 master &&
 	test -z "$(git config branch.all1.merge)"
 '
 
@@ -895,6 +1004,10 @@ test_expect_success 'refuse --edit-description on unborn branch for now' '
 
 test_expect_success '--merged catches invalid object names' '
 	test_must_fail git branch --merged 0000000000000000000000000000000000000000
+'
+
+test_expect_success '--merged is incompatible with --no-merged' '
+	test_must_fail git branch --merged HEAD --no-merged HEAD
 '
 
 test_expect_success 'tracking with unexpected .fetch refspec' '

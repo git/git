@@ -118,21 +118,21 @@ test_expect_success 'not preserving user with mixed authorship' '
 		make_change_by_user usernamefile3 Derek derek@example.com &&
 		P4EDITOR=cat P4USER=alice P4PASSWD=secret &&
 		export P4EDITOR P4USER P4PASSWD &&
-		git p4 commit |\
-		grep "git author derek@example.com does not match" &&
+		git p4 commit >actual &&
+		grep "git author derek@example.com does not match" actual &&
 
 		make_change_by_user usernamefile3 Charlie charlie@example.com &&
-		git p4 commit |\
-		grep "git author charlie@example.com does not match" &&
+		git p4 commit >actual &&
+		grep "git author charlie@example.com does not match" actual &&
 
 		make_change_by_user usernamefile3 alice alice@example.com &&
-		git p4 commit |\
-		test_must_fail grep "git author.*does not match" &&
+		git p4 commit >actual &&
+		! grep "git author.*does not match" actual &&
 
 		git config git-p4.skipUserNameCheck true &&
 		make_change_by_user usernamefile3 Charlie charlie@example.com &&
-		git p4 commit |\
-		test_must_fail grep "git author.*does not match" &&
+		git p4 commit >actual &&
+		! grep "git author.*does not match" actual &&
 
 		p4_check_commit_author usernamefile3 alice
 	)

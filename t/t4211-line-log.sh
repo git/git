@@ -99,4 +99,21 @@ test_expect_success '-L with --first-parent and a merge' '
 	git log --first-parent -L 1,1:b.c
 '
 
+test_expect_success '-L with --output' '
+	git checkout parallel-change &&
+	git log --output=log -L :main:b.c >output &&
+	test ! -s output &&
+	test_line_count = 70 log
+'
+
+test_expect_success 'range_set_union' '
+	test_seq 500 > c.c &&
+	git add c.c &&
+	git commit -m "many lines" &&
+	test_seq 1000 > c.c &&
+	git add c.c &&
+	git commit -m "modify many lines" &&
+	git log $(for x in $(test_seq 200); do echo -L $((2*x)),+1:c.c; done)
+'
+
 test_done
