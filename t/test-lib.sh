@@ -1082,7 +1082,7 @@ else # normal case, use ../bin-wrappers only unless $with_dashes:
 	GIT_EXEC_PATH=$GIT_BUILD_DIR
 	if test -n "$with_dashes"
 	then
-		PATH="$GIT_BUILD_DIR$PATH_SEP$PATH"
+		PATH="$GIT_BUILD_DIR$PATH_SEP$GIT_BUILD_DIR/t/helper$PATH_SEP$PATH"
 	fi
 fi
 GIT_TEMPLATE_DIR="$GIT_BUILD_DIR"/templates/blt
