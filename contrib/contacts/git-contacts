@@ -11,7 +11,7 @@ use IPC::Open2;
 
 my $since = '5-years-ago';
 my $min_percent = 10;
-my $labels_rx = qr/Signed-off-by|Reviewed-by|Acked-by|Cc/i;
+my $labels_rx = qr/Signed-off-by|Reviewed-by|Acked-by|Cc|Reported-by/i;
 my %seen;
 
 sub format_contact {
