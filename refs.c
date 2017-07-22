@@ -1066,7 +1066,7 @@ int ref_is_hidden(const char *refname, const char *refname_full)
 		const char *match = hide_refs->items[i].string;
 		const char *subject;
 		int neg = 0;
-		int len;
+		const char *p;
 
 		if (*match == '!') {
 			neg = 1;
@@ -1081,10 +1081,9 @@ int ref_is_hidden(const char *refname, const char *refname_full)
 		}
 
 		/* refname can be NULL when namespaces are used. */
-		if (!subject || !starts_with(subject, match))
-			continue;
-		len = strlen(match);
-		if (!subject[len] || subject[len] == '/')
+		if (subject &&
+		    skip_prefix(subject, match, &p) &&
+		    (!*p || *p == '/'))
 			return !neg;
 	}
 	return 0;
