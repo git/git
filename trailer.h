@@ -1,6 +1,28 @@
 #ifndef TRAILER_H
 #define TRAILER_H
 
+enum trailer_where {
+	WHERE_END,
+	WHERE_AFTER,
+	WHERE_BEFORE,
+	WHERE_START
+};
+enum trailer_if_exists {
+	EXISTS_ADD_IF_DIFFERENT_NEIGHBOR,
+	EXISTS_ADD_IF_DIFFERENT,
+	EXISTS_ADD,
+	EXISTS_REPLACE,
+	EXISTS_DO_NOTHING
+};
+enum trailer_if_missing {
+	MISSING_ADD,
+	MISSING_DO_NOTHING
+};
+
+int trailer_set_where(enum trailer_where *item, const char *value);
+int trailer_set_if_exists(enum trailer_if_exists *item, const char *value);
+int trailer_set_if_missing(enum trailer_if_missing *item, const char *value);
+
 struct trailer_info {
 	/*
 	 * True if there is a blank line before the location pointed to by
