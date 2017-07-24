@@ -1664,7 +1664,7 @@ static struct commit *find_single_final(struct rev_info *revs,
 		name = revs->pending.objects[i].name;
 	}
 	if (name_p)
-		*name_p = name;
+		*name_p = xstrdup_or_null(name);
 	return found;
 }
 
@@ -1736,7 +1736,7 @@ static struct commit *find_single_initial(struct rev_info *revs,
 		die("No commit to dig up from?");
 
 	if (name_p)
-		*name_p = name;
+		*name_p = xstrdup(name);
 	return found;
 }
 
@@ -1844,6 +1844,8 @@ void setup_scoreboard(struct blame_scoreboard *sb, const char *path, struct blam
 
 	if (orig)
 		*orig = o;
+
+	free((char *)final_commit_name);
 }
 
 
