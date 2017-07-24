@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jul 2017, #06; Thu, 20)
-X-master-at: 981adb928e5ebe8bbf84d80a8f8fb3a4cbc30afd
-X-next-at: 6ee059e2f3ee8b8553e8fe6adb297897e619ac91
+Subject: What's cooking in git.git (Jul 2017, #07; Mon, 24)
+X-master-at: 5800c63717ae35286a1441f14ffff753e01f7e2b
+X-next-at: 8e98c6e5c05367936b792dc40ed7cc7876e9d4c7
 
-What's cooking in git.git (Jul 2017, #06; Thu, 20)
+What's cooking in git.git (Jul 2017, #07; Mon, 24)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,11 +12,14 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-Tagging of -rc1 is delayed, waiting for a resolution on the l10n
-issues around '"%"PRItime' custome format specifier, which naturally
-cannot be handled by gettext(1) suite nicely.  I think what is queued
-on 'pu' based on Dscho's suggestion is a usable workaround, and I
-plan to use it unless I hear better ideas in the comint 10+ hours.
+With help from Jiang, Dscho and Jean-Noël, we agreed on the way to
+handle i18n issues around our custom timestamp_t type and its format
+PRItime, and tagging of -rc1 has been delayed a bit.  But now it has
+happened.  There is a small unrelated change still cooking somewhere
+else that may have to go in the final release, but other than that
+one, no topic is expected to go from 'next' to 'master' until the
+final.  Regression fixes and reverts are possible but let's hope
+there are no need for them.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -26,71 +29,9 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ew/fd-cloexec-fix (2017-07-17) 1 commit
-  (merged to 'next' on 2017-07-18 at a3de1b1998)
- + set FD_CLOEXEC properly when O_CLOEXEC is not supported
-
- Portability/fallback fix.
-
-
-* jk/build-with-asan (2017-07-17) 1 commit
-  (merged to 'next' on 2017-07-18 at f92636c616)
- + Makefile: allow combining UBSan with other sanitizers
-
- A recent update made it easier to use "-fsanitize=" option while
- compiling but supported only one sanitize option.  Allow more than
- one to be combined, joined with a comma, like "make SANITIZE=foo,bar".
-
-
-* jk/test-copy-bytes-fix (2017-07-17) 1 commit
-  (merged to 'next' on 2017-07-18 at c32c264e96)
- + t: handle EOF in test_copy_bytes()
-
- A test fix.
-
-
-* js/alias-case-sensitivity (2017-07-17) 2 commits
-  (merged to 'next' on 2017-07-18 at 31641a39f2)
- + alias: compare alias name *case-insensitively*
- + t1300: demonstrate that CamelCased aliases regressed
-
- A recent update broke an alias that contained an uppercase letter.
-
-
-* mt/p4-parse-G-output (2017-07-13) 3 commits
-  (merged to 'next' on 2017-07-18 at e065b689d4)
- + git-p4: filter for {'code':'info'} in p4CmdList
- + git-p4: parse marshal output "p4 -G" in p4 changes
- + git-p4: git-p4 tests with p4 triggers
-
- Use "p4 -G" to make "p4 changes" output more Python-friendly
- to parse.
-
---------------------------------------------------
-[New Topics]
-
-* bw/push-options-recursively-to-submodules (2017-07-20) 1 commit
- - submodule--helper: teach push-check to handle HEAD
-
- "git push --recurse-submodules $there HEAD:$target" was not
- propagated down to the submodules, but now it is.
-
- Will merge to and cook in 'next'.
-
-
-* jc/http-sslkey-and-ssl-cert-are-paths (2017-07-20) 1 commit
-  (merged to 'next' on 2017-07-20 at 5489304b99)
- + http.c: http.sslcert and http.sslkey are both pathnames
-
- The http.{sslkey,sslCert} configuration variables are to be
- interpreted as a pathname that honors "~[username]/" prefix, but
- weren't, which has been fixed.
-
- Will cook in 'next'.
-
-
 * jc/po-pritime-fix (2017-07-20) 1 commit
- - Makefile: help gettext tools to cope with our custom PRItime format
+  (merged to 'next' on 2017-07-21 at 61f0e3b37f)
+ + Makefile: help gettext tools to cope with our custom PRItime format
 
  We started using "%" PRItime, imitating "%" PRIuMAX and friends, as
  a way to format the internal timestamp value, but this does not
@@ -98,37 +39,47 @@ of the repositories listed at
  that is run by the l10n coordinator to create a broken po/git.pot
  file.  This is a possible workaround for that problem.
 
- Will fast-track to 2.14-rc1 once we hear positive result.
+
+* ks/doc-fixes (2017-07-18) 2 commits
+  (merged to 'next' on 2017-07-20 at c34b00d0a0)
+ + doc: reformat the paragraph containing the 'cut-line'
+ + doc: camelCase the i18n config variables to improve readability
+
+ Doc clean-up.
 
 
-* jt/fsck-code-cleanup (2017-07-20) 2 commits
-  (merged to 'next' on 2017-07-20 at f7045a8c47)
- + object: remove "used" field from struct object
- + fsck: remove redundant parse_tree() invocation
+* rj/cygwin-fread-reads-directories (2017-07-21) 1 commit
+  (merged to 'next' on 2017-07-21 at 28694cf254)
+ + config.mak.uname: set FREAD_READS_DIRECTORIES for cygwin
 
- Code clean-up.
+ It turns out that Cygwin also needs the fopen() wrapper that
+ returns failure when a directory is opened for reading.
 
- Will cook in 'next'.
+--------------------------------------------------
+[New Topics]
+
+* js/run-process-parallel-api-fix (2017-07-21) 1 commit
+ - run_processes_parallel: change confusing task_cb convention
+
+ API fix.
+
+ Will merge to and cook in 'next'.
 
 
-* rs/pack-objects-pbase-cleanup (2017-07-20) 1 commit
-  (merged to 'next' on 2017-07-20 at a6b618559b)
- + pack-objects: remove unnecessary NULL check
+* cc/ref-is-hidden-microcleanup (2017-07-24) 1 commit
+ - refs: use skip_prefix() in ref_is_hidden()
 
- Code clean-up.
+ Code cleanup.
 
- Will cook in 'next'.
+ Will merge to and cook in 'next'.
 
 
-* st/lib-gpg-kill-stray-agent (2017-07-20) 1 commit
-  (merged to 'next' on 2017-07-20 at 8ea68c483f)
- + t: lib-gpg: flush gpg agent on startup
+* js/blame-lib (2017-07-24) 1 commit
+ - blame: fix memory corruption scrambling revision name in error message
 
- Some versions of GnuPG fails to kill gpg-agent it auto-spawned
- and such a left-over agent can interfere with a test.  Work it
- around by attempting to kill one before starting a new test.
+ A hotfix to a topic already in 'master'.
 
- Will cook in 'next'.
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -196,6 +147,56 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* bw/push-options-recursively-to-submodules (2017-07-20) 1 commit
+ - submodule--helper: teach push-check to handle HEAD
+
+ "git push --recurse-submodules $there HEAD:$target" was not
+ propagated down to the submodules, but now it is.
+
+ Will merge to and cook in 'next'.
+
+
+* jc/http-sslkey-and-ssl-cert-are-paths (2017-07-20) 1 commit
+  (merged to 'next' on 2017-07-20 at 5489304b99)
+ + http.c: http.sslcert and http.sslkey are both pathnames
+
+ The http.{sslkey,sslCert} configuration variables are to be
+ interpreted as a pathname that honors "~[username]/" prefix, but
+ weren't, which has been fixed.
+
+ Will cook in 'next'.
+
+
+* jt/fsck-code-cleanup (2017-07-20) 2 commits
+  (merged to 'next' on 2017-07-20 at f7045a8c47)
+ + object: remove "used" field from struct object
+ + fsck: remove redundant parse_tree() invocation
+
+ Code clean-up.
+
+ Will cook in 'next'.
+
+
+* rs/pack-objects-pbase-cleanup (2017-07-20) 1 commit
+  (merged to 'next' on 2017-07-20 at a6b618559b)
+ + pack-objects: remove unnecessary NULL check
+
+ Code clean-up.
+
+ Will cook in 'next'.
+
+
+* st/lib-gpg-kill-stray-agent (2017-07-20) 1 commit
+  (merged to 'next' on 2017-07-20 at 8ea68c483f)
+ + t: lib-gpg: flush gpg agent on startup
+
+ Some versions of GnuPG fails to kill gpg-agent it auto-spawned
+ and such a left-over agent can interfere with a test.  Work it
+ around by attempting to kill one before starting a new test.
+
+ Will cook in 'next'.
+
+
 * jk/c99 (2017-07-18) 2 commits
   (merged to 'next' on 2017-07-18 at 1cfc30f7c1)
  + clean.c: use designated initializer
@@ -247,16 +248,6 @@ of the repositories listed at
  corrected.
 
  Will merge to and cook in 'next'.
-
-
-* ks/doc-fixes (2017-07-18) 2 commits
-  (merged to 'next' on 2017-07-20 at c34b00d0a0)
- + doc: reformat the paragraph containing the 'cut-line'
- + doc: camelCase the i18n config variables to improve readability
-
- Doc clean-up.
-
- Will merge to 'master'.
 
 
 * rs/bswap-ubsan-fix (2017-07-17) 2 commits
