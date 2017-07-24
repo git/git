@@ -4,7 +4,7 @@
 # Alex Henrie <alexhenrie24@gmail.com>, 2014-2016.
 # Jordi Mas i Hernàndez <jmas@softcatala.org>, 2016-2017
 #
-# Terminologia i criteris utilitzats 
+# Terminologia i criteris utilitzats
 #
 #   Anglès           |  Català
 #   -----------------+---------------------------------
@@ -14,10 +14,12 @@
 #   delta            |  diferència
 #   dry              |  simulació
 #   deprecated       |  en desús
+#   fatal            |  fatal
 #   hunk             |  tros
 #   not supported    |  no està admès
 #   repository       |  dipòsit
 #   skip             |  ometre
+#   squelch          |  silenciar
 #   token            |  testimoni
 #
 # Alguns termes que són comandes específiques del git i d'àmbit molt tècnic
@@ -42,7 +44,7 @@ msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
 "POT-Creation-Date: 2017-05-05 09:35+0800\n"
-"PO-Revision-Date: 2017-05-07 19:55+0100\n"
+"PO-Revision-Date: 2017-07-18 20:41+0200\n"
 "Last-Translator: Jordi Mas <jmas@softcatala.org>\n"
 "Language-Team: Catalan\n"
 "Language: ca\n"
@@ -50,7 +52,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 1.8.9\n"
+"X-Generator: Poedit 2.0.1\n"
 
 #: advice.c:55
 #, c-format
@@ -59,28 +61,28 @@ msgstr "pista: %.*s\n"
 
 #: advice.c:83
 msgid "Cherry-picking is not possible because you have unmerged files."
-msgstr "Fer «cherry pick» no és possible perquè teniu fitxers no fusionats."
+msgstr "Fer «cherry pick» no és possible perquè teniu fitxers sense fusionar."
 
 #: advice.c:85
 msgid "Committing is not possible because you have unmerged files."
-msgstr "Cometre no és possible perquè teniu fitxers no fusionats."
+msgstr "Cometre no és possible perquè teniu fitxers sense fusionar."
 
 #: advice.c:87
 msgid "Merging is not possible because you have unmerged files."
-msgstr "Fusionar no és possible perquè teniu fitxers no fusionats."
+msgstr "Fusionar no és possible perquè teniu fitxers sense fusionar."
 
 #: advice.c:89
 msgid "Pulling is not possible because you have unmerged files."
-msgstr "Baixar no és possible perquè teniu fitxers no fusionats."
+msgstr "Baixar no és possible perquè teniu fitxers sense fusionar."
 
 #: advice.c:91
 msgid "Reverting is not possible because you have unmerged files."
-msgstr "Revertir no és possible perquè teniu fitxers no fusionats."
+msgstr "Revertir no és possible perquè teniu fitxers sense fusionar."
 
 #: advice.c:93
 #, c-format
 msgid "It is not possible to %s because you have unmerged files."
-msgstr "No és possible %s perquè teniu fitxers no fusionats."
+msgstr "No és possible %s perquè teniu fitxers sense fusionar."
 
 #: advice.c:101
 msgid ""
@@ -182,20 +184,17 @@ msgstr "no s'ha pogut trobar el nom de fitxer en el pedaç a la línia %d"
 #: apply.c:977
 #, c-format
 msgid "git apply: bad git-diff - expected /dev/null, got %s on line %d"
-msgstr ""
-"git apply: git-diff dolent - /dev/null esperat, %s rebut en la línia %d"
+msgstr "git apply: git-diff dolent - /dev/null esperat, %s rebut en la línia %d"
 
 #: apply.c:983
 #, c-format
 msgid "git apply: bad git-diff - inconsistent new filename on line %d"
-msgstr ""
-"git apply: git-diff dolent - nom de fitxer nou inconsistent en la línia %d"
+msgstr "git apply: git-diff dolent - nom de fitxer nou inconsistent en la línia %d"
 
 #: apply.c:984
 #, c-format
 msgid "git apply: bad git-diff - inconsistent old filename on line %d"
-msgstr ""
-"git apply: git-diff dolent - nom de fitxer antic inconsistent en la línia %d"
+msgstr "git apply: git-diff dolent - nom de fitxer antic inconsistent en la línia %d"
 
 #: apply.c:990
 #, c-format
@@ -215,23 +214,20 @@ msgstr "fragment de pedaç sense capçalera a la línia %d: %.*s"
 #: apply.c:1577
 #, c-format
 msgid ""
-"git diff header lacks filename information when removing %d leading pathname "
-"component (line %d)"
+"git diff header lacks filename information when removing %d leading pathname component (line %d)"
 msgid_plural ""
-"git diff header lacks filename information when removing %d leading pathname "
-"components (line %d)"
+"git diff header lacks filename information when removing %d leading pathname components (line %d)"
 msgstr[0] ""
-"a la capçalera de git diff li manca informació de nom de fitxer en eliminar "
-"%d component de nom de camí inicial (línia %d)"
+"a la capçalera de git diff li manca informació de nom de fitxer en eliminar %d component de nom "
+"de camí inicial (línia %d)"
 msgstr[1] ""
-"a la capçalera de git diff li manca informació de nom de fitxer en eliminar "
-"%d components de nom de camí inicial (línia %d)"
+"a la capçalera de git diff li manca informació de nom de fitxer en eliminar %d components de nom "
+"de camí inicial (línia %d)"
 
 #: apply.c:1589
 #, c-format
 msgid "git diff header lacks filename information (line %d)"
-msgstr ""
-"a la capçalera de git diff li manca informació de nom de fitxer (línia %d)"
+msgstr "a la capçalera de git diff li manca informació de nom de fitxer (línia %d)"
 
 #: apply.c:1759
 msgid "new file depends on old contents"
@@ -325,16 +321,12 @@ msgstr "no es pot aplicar al revés un pedaç binari sense el tros revés a '%s'
 #: apply.c:3135
 #, c-format
 msgid "cannot apply binary patch to '%s' without full index line"
-msgstr ""
-"no es pot aplicar un pedaç binari a '%s' sense la línia d'índex completa"
+msgstr "no es pot aplicar un pedaç binari a '%s' sense la línia d'índex completa"
 
 #: apply.c:3145
 #, c-format
-msgid ""
-"the patch applies to '%s' (%s), which does not match the current contents."
-msgstr ""
-"el pedaç s'aplica a '%s' (%s), el qual no coincideix amb els continguts "
-"actuals."
+msgid "the patch applies to '%s' (%s), which does not match the current contents."
+msgstr "el pedaç s'aplica a '%s' (%s), el qual no coincideix amb els continguts actuals."
 
 #: apply.c:3153
 #, c-format
@@ -354,8 +346,7 @@ msgstr "el pedaç binari no s'aplica a '%s'"
 #: apply.c:3190
 #, c-format
 msgid "binary patch to '%s' creates incorrect result (expecting %s, got %s)"
-msgstr ""
-"el pedaç binari a '%s' crea un resultat incorrecte (esperant %s, %s rebut)"
+msgstr "el pedaç binari a '%s' crea un resultat incorrecte (esperant %s, %s rebut)"
 
 #: apply.c:3211
 #, c-format
@@ -394,8 +385,7 @@ msgstr "%s: no coincideix amb l'índex"
 
 #: apply.c:3545
 msgid "repository lacks the necessary blob to fall back on 3-way merge."
-msgstr ""
-"al dipòsit li manca el blob necessari per a retrocedir a una fusió de 3 vies."
+msgstr "al dipòsit li manca el blob necessari per a retrocedir a una fusió de 3 vies."
 
 #: apply.c:3548
 #, c-format
@@ -524,9 +514,7 @@ msgstr "no s'ha pogut fer stat al fitxer novament creat '%s'"
 #: apply.c:4282
 #, c-format
 msgid "unable to create backing store for newly created file %s"
-msgstr ""
-"no s'ha pogut crear un magatzem de recolzament per al fitxer novament creat "
-"%s"
+msgstr "no s'ha pogut crear un magatzem de recolzament per al fitxer novament creat %s"
 
 #: apply.c:4288 apply.c:4432
 #, c-format
@@ -606,8 +594,8 @@ msgstr "no es pot obrir el pedaç '%s': %s"
 #, c-format
 msgid "squelched %d whitespace error"
 msgid_plural "squelched %d whitespace errors"
-msgstr[0] "s'ha omès %d error d'espai en blanc"
-msgstr[1] "s'han omès %d errors d'espai en blanc"
+msgstr[0] "s'ha silenciat %d error d'espai en blanc"
+msgstr[1] "s'han silenciat %d errors d'espai en blanc"
 
 #: apply.c:4856 apply.c:4871
 #, c-format
@@ -620,21 +608,17 @@ msgstr[1] "%d línies afegeixen errors d'espai en blanc."
 #, c-format
 msgid "%d line applied after fixing whitespace errors."
 msgid_plural "%d lines applied after fixing whitespace errors."
-msgstr[0] ""
-"S'ha aplicat %d línia després d'arreglar els errors d'espai en blanc."
-msgstr[1] ""
-"S'han aplicat %d línies després d'arreglar els errors d'espai en blanc."
+msgstr[0] "S'ha aplicat %d línia després d'arreglar els errors d'espai en blanc."
+msgstr[1] "S'han aplicat %d línies després d'arreglar els errors d'espai en blanc."
 
 #: apply.c:4880 builtin/add.c:463 builtin/mv.c:298 builtin/rm.c:391
 msgid "Unable to write new index file"
 msgstr "No s'ha pogut escriure un fitxer d'índex nou"
 
-#: apply.c:4911 apply.c:4914 builtin/am.c:2276 builtin/am.c:2279
-#: builtin/clone.c:113 builtin/fetch.c:98 builtin/pull.c:180
-#: builtin/submodule--helper.c:304 builtin/submodule--helper.c:629
-#: builtin/submodule--helper.c:632 builtin/submodule--helper.c:973
-#: builtin/submodule--helper.c:976 builtin/submodule--helper.c:1161
-#: git-add--interactive.perl:239
+#: apply.c:4911 apply.c:4914 builtin/am.c:2276 builtin/am.c:2279 builtin/clone.c:113
+#: builtin/fetch.c:98 builtin/pull.c:180 builtin/submodule--helper.c:304
+#: builtin/submodule--helper.c:629 builtin/submodule--helper.c:632 builtin/submodule--helper.c:973
+#: builtin/submodule--helper.c:976 builtin/submodule--helper.c:1161 git-add--interactive.perl:239
 msgid "path"
 msgstr "camí"
 
@@ -652,9 +636,7 @@ msgstr "número"
 
 #: apply.c:4918
 msgid "remove <num> leading slashes from traditional diff paths"
-msgstr ""
-"elimina <nombre> barres obliqües inicials dels camins de diferència "
-"tradicionals"
+msgstr "elimina <nombre> barres obliqües inicials dels camins de diferència tradicionals"
 
 #: apply.c:4921
 msgid "ignore additions made by the patch"
@@ -662,8 +644,7 @@ msgstr "ignora afegiments fets pel pedaç"
 
 #: apply.c:4923
 msgid "instead of applying the patch, output diffstat for the input"
-msgstr ""
-"en lloc d'aplicar el pedaç, emet les estadístiques de diferència de l'entrada"
+msgstr "en lloc d'aplicar el pedaç, emet les estadístiques de diferència de l'entrada"
 
 #: apply.c:4927
 msgid "show number of added and deleted lines in decimal notation"
@@ -715,8 +696,7 @@ msgstr "acció"
 
 #: apply.c:4950
 msgid "detect new or modified lines that have whitespace errors"
-msgstr ""
-"detecta les línies noves o modificades que tinguin errors d'espai en blanc"
+msgstr "detecta les línies noves o modificades que tinguin errors d'espai en blanc"
 
 #: apply.c:4953 apply.c:4956
 msgid "ignore changes in whitespace when finding context"
@@ -738,9 +718,9 @@ msgstr "deixa els trossos rebutjats en fitxers *.rej corresponents"
 msgid "allow overlapping hunks"
 msgstr "permet trossos encavalcants"
 
-#: apply.c:4966 builtin/add.c:267 builtin/check-ignore.c:19
-#: builtin/commit.c:1337 builtin/count-objects.c:94 builtin/fsck.c:651
-#: builtin/log.c:1867 builtin/mv.c:122 builtin/read-tree.c:134
+#: apply.c:4966 builtin/add.c:267 builtin/check-ignore.c:19 builtin/commit.c:1337
+#: builtin/count-objects.c:94 builtin/fsck.c:651 builtin/log.c:1867 builtin/mv.c:122
+#: builtin/read-tree.c:134
 msgid "be verbose"
 msgstr "sigues detallat"
 
@@ -769,11 +749,8 @@ msgid "git archive --list"
 msgstr "git archive --list"
 
 #: archive.c:14
-msgid ""
-"git archive --remote <repo> [--exec <cmd>] [<options>] <tree-ish> [<path>...]"
-msgstr ""
-"git archive --remote <dipòsit> [--exec <ordre>] [<opcions>] <arbre> "
-"[<camí>...]"
+msgid "git archive --remote <repo> [--exec <cmd>] [<options>] <tree-ish> [<path>...]"
+msgstr "git archive --remote <dipòsit> [--exec <ordre>] [<opcions>] <arbre> [<camí>...]"
 
 #: archive.c:15
 msgid "git archive --remote <repo> [--exec <cmd>] --list"
@@ -802,9 +779,8 @@ msgstr "anteposa el prefix a cada nom de camí en l'arxiu"
 
 #: archive.c:420 builtin/blame.c:2598 builtin/blame.c:2599 builtin/config.c:60
 #: builtin/fast-export.c:987 builtin/fast-export.c:989 builtin/grep.c:1061
-#: builtin/hash-object.c:101 builtin/ls-files.c:549 builtin/ls-files.c:552
-#: builtin/notes.c:401 builtin/notes.c:564 builtin/read-tree.c:129
-#: parse-options.h:153
+#: builtin/hash-object.c:101 builtin/ls-files.c:549 builtin/ls-files.c:552 builtin/notes.c:401
+#: builtin/notes.c:564 builtin/read-tree.c:129 parse-options.h:153
 msgid "file"
 msgstr "fitxer"
 
@@ -876,7 +852,7 @@ msgid "Argument not supported for format '%s': -%d"
 msgstr "Paràmetre no admès per al format '%s': -%d"
 
 #: attr.c:212
-#, , c-format
+#, c-format
 msgid "%.*s is not a valid attribute name"
 msgstr "%.*s no és un nom d'atribut vàlid"
 
@@ -954,8 +930,7 @@ msgid ""
 "We continue anyway."
 msgstr ""
 "s'ha d'ometre la base de fusió entre %s i [%s].\n"
-"Llavors, no podem estar segurs de que la primera comissió %s sigui entre %s "
-"i %s.\n"
+"Llavors, no podem estar segurs de que la primera comissió %s sigui entre %s i %s.\n"
 "Continuem de totes maneres."
 
 #: bisect.c:800
@@ -1033,9 +1008,7 @@ msgstr "No s'està establint la branca %s com a la seva pròpia font."
 #: branch.c:93
 #, c-format
 msgid "Branch %s set up to track remote branch %s from %s by rebasing."
-msgstr ""
-"La branca %s està configurada per a seguir la branca remota %s de %s per "
-"rebasar."
+msgstr "La branca %s està configurada per a seguir la branca remota %s de %s per rebasar."
 
 #: branch.c:94
 #, c-format
@@ -1045,8 +1018,7 @@ msgstr "La branca %s està configurada per a seguir la branca remota %s de %s."
 #: branch.c:98
 #, c-format
 msgid "Branch %s set up to track local branch %s by rebasing."
-msgstr ""
-"La branca %s està configurada per a seguir la branca local %s per rebasar."
+msgstr "La branca %s està configurada per a seguir la branca local %s per rebasar."
 
 #: branch.c:99
 #, c-format
@@ -1056,9 +1028,7 @@ msgstr "La branca %s està configurada per a seguir la branca local %s."
 #: branch.c:104
 #, c-format
 msgid "Branch %s set up to track remote ref %s by rebasing."
-msgstr ""
-"La branca %s està configurada per a seguir la referència remota %s per "
-"rebasar."
+msgstr "La branca %s està configurada per a seguir la referència remota %s per rebasar."
 
 #: branch.c:105
 #, c-format
@@ -1068,9 +1038,7 @@ msgstr "La branca %s està configurada per a seguir la referència remota %s."
 #: branch.c:109
 #, c-format
 msgid "Branch %s set up to track local ref %s by rebasing."
-msgstr ""
-"La branca %s està configurada per a seguir la referència local %s per "
-"rebasar."
+msgstr "La branca %s està configurada per a seguir la referència local %s per rebasar."
 
 #: branch.c:110
 #, c-format
@@ -1103,9 +1071,7 @@ msgstr "No es pot actualitzar la branca actual a la força."
 #: branch.c:218
 #, c-format
 msgid "Cannot setup tracking information; starting point '%s' is not a branch."
-msgstr ""
-"No es pot configurar la informació de seguiment; el punt inicial '%s' no és "
-"una branca."
+msgstr "No es pot configurar la informació de seguiment; el punt inicial '%s' no és una branca."
 
 #: branch.c:220
 #, c-format
@@ -1177,10 +1143,9 @@ msgstr "no s'ha pogut obrir '%s'"
 msgid "Repository lacks these prerequisite commits:"
 msgstr "Al dipòsit li manquen aquestes comissions prerequisits:"
 
-#: bundle.c:163 ref-filter.c:1852 sequencer.c:1162 sequencer.c:2321
-#: builtin/blame.c:2811 builtin/commit.c:1061 builtin/log.c:353
-#: builtin/log.c:897 builtin/log.c:1347 builtin/log.c:1673 builtin/log.c:1916
-#: builtin/merge.c:359 builtin/shortlog.c:176
+#: bundle.c:163 ref-filter.c:1852 sequencer.c:1162 sequencer.c:2321 builtin/blame.c:2811
+#: builtin/commit.c:1061 builtin/log.c:353 builtin/log.c:897 builtin/log.c:1347 builtin/log.c:1673
+#: builtin/log.c:1916 builtin/merge.c:359 builtin/shortlog.c:176
 msgid "revision walk setup failed"
 msgstr "la configuració del passeig per revisions ha fallat"
 
@@ -1242,8 +1207,8 @@ msgstr "L'index-pack s'ha mort"
 msgid "invalid color value: %.*s"
 msgstr "valor de color no vàlid: %.*s"
 
-#: commit.c:40 sequencer.c:1579 builtin/am.c:419 builtin/am.c:455
-#: builtin/am.c:1489 builtin/am.c:2126
+#: commit.c:40 sequencer.c:1579 builtin/am.c:419 builtin/am.c:455 builtin/am.c:1489
+#: builtin/am.c:2126
 #, c-format
 msgid "could not parse %s"
 msgstr "no s'ha pogut analitzar %s"
@@ -1328,22 +1293,17 @@ msgstr "valor de configuració numèric '%s' erroni per '%s' en el fitxer %s: %s
 #: config.c:876
 #, c-format
 msgid "bad numeric config value '%s' for '%s' in standard input: %s"
-msgstr ""
-"valor de configuració numèric '%s' erroni per '%s' en l'entrada estàndard: %s"
+msgstr "valor de configuració numèric '%s' erroni per '%s' en l'entrada estàndard: %s"
 
 #: config.c:879
 #, c-format
 msgid "bad numeric config value '%s' for '%s' in submodule-blob %s: %s"
-msgstr ""
-"valor de configuració numèric '%s' erroni' per '%s' en el blob de submòdul "
-"%s: %s"
+msgstr "valor de configuració numèric '%s' erroni' per '%s' en el blob de submòdul %s: %s"
 
 #: config.c:882
 #, c-format
 msgid "bad numeric config value '%s' for '%s' in command line %s: %s"
-msgstr ""
-"valor de configuració numèric '%s' erroni per '%s' en la línia d'ordres %s: "
-"%s"
+msgstr "valor de configuració numèric '%s' erroni per '%s' en la línia d'ordres %s: %s"
 
 #: config.c:885
 #, c-format
@@ -1462,8 +1422,7 @@ msgid ""
 "The file will have its original line endings in your working directory."
 msgstr ""
 "LF reemplaçarà CRLF en %s.\n"
-"El fitxer tindrà els seus terminadors de línia originals en el vostre "
-"directori de treball."
+"El fitxer tindrà els seus terminadors de línia originals en el vostre directori de treball."
 
 #: convert.c:205
 #, c-format
@@ -1477,8 +1436,7 @@ msgid ""
 "The file will have its original line endings in your working directory."
 msgstr ""
 "CRLF reemplaçarà LF en %s.\n"
-"El fitxer tindrà els seus terminadors de línia originals en el vostre "
-"directori de treball."
+"El fitxer tindrà els seus terminadors de línia originals en el vostre directori de treball."
 
 #: convert.c:215
 #, c-format
@@ -1570,9 +1528,7 @@ msgstr "l'opció '%s' requereix un valor"
 #: diff.c:124
 #, c-format
 msgid "  Failed to parse dirstat cut-off percentage '%s'\n"
-msgstr ""
-"  S'ha produït un error en analitzar el percentatge limitant de dirstat "
-"'%s'\n"
+msgstr "  S'ha produït un error en analitzar el percentatge limitant de dirstat '%s'\n"
 
 #: diff.c:129
 #, c-format
@@ -1582,8 +1538,7 @@ msgstr "  Paràmetre de dirstat desconegut '%s'\n"
 #: diff.c:281
 #, c-format
 msgid "Unknown value for 'diff.submodule' config variable: '%s'"
-msgstr ""
-"Valor desconegut de la variable de configuració de 'diff.submodule': '%s'"
+msgstr "Valor desconegut de la variable de configuració de 'diff.submodule': '%s'"
 
 #: diff.c:344
 #, c-format
@@ -1619,8 +1574,7 @@ msgstr ""
 #: diff.c:3695
 #, c-format
 msgid "Failed to parse --submodule option parameter: '%s'"
-msgstr ""
-"S'ha produït un error en analitzar el paràmetre d'opció de --submodule: '%s'"
+msgstr "S'ha produït un error en analitzar el paràmetre d'opció de --submodule: '%s'"
 
 #: diff.c:4719
 msgid "inexact rename detection was skipped due to too many files."
@@ -1628,16 +1582,12 @@ msgstr "s'ha omès la detecció de canvi de nom a causa de massa fitxers."
 
 #: diff.c:4722
 msgid "only found copies from modified paths due to too many files."
-msgstr ""
-"només s'han trobat còpies des de camins modificats a causa de massa fitxers."
+msgstr "només s'han trobat còpies des de camins modificats a causa de massa fitxers."
 
 #: diff.c:4725
 #, c-format
-msgid ""
-"you may want to set your %s variable to at least %d and retry the command."
-msgstr ""
-"potser voleu establir la vostra variable %s a almenys %d i tornar a intentar "
-"l'ordre."
+msgid "you may want to set your %s variable to at least %d and retry the command."
+msgstr "potser voleu establir la vostra variable %s a almenys %d i tornar a intentar l'ordre."
 
 #: dir.c:1899
 msgid "failed to get kernel name and information"
@@ -1645,8 +1595,7 @@ msgstr "s'ha produït un error en obtenir el nombre i la informació del nucli"
 
 #: dir.c:2018
 msgid "Untracked cache is disabled on this system or location."
-msgstr ""
-"La memòria cau no seguida està inhabilitada en aquest sistema o ubicació."
+msgstr "La memòria cau no seguida està inhabilitada en aquest sistema o ubicació."
 
 #: dir.c:2776 dir.c:2781
 #, c-format
@@ -1836,7 +1785,7 @@ msgid "no matching remote head"
 msgstr "no hi ha cap HEAD remot coincident"
 
 #: fetch-pack.c:1149
-#,  c-format
+#, c-format
 msgid "no such remote ref %s"
 msgstr "no existeix la referència remota %s"
 
@@ -1889,8 +1838,7 @@ msgstr "ordres de git disponibles d'altres llocs en el vostre $PATH"
 
 #: help.c:256
 msgid "These are common Git commands used in various situations:"
-msgstr ""
-"Aquestes són ordres del Git habitualment usades en diverses situacions:"
+msgstr "Aquestes són ordres del Git habitualment usades en diverses situacions:"
 
 #: help.c:321
 #, c-format
@@ -1911,8 +1859,7 @@ msgid ""
 "WARNING: You called a Git command named '%s', which does not exist.\n"
 "Continuing under the assumption that you meant '%s'"
 msgstr ""
-"ADVERTÈNCIA: Heu invocat una ordre de Git amb nom '%s', la qual no "
-"existeix.\n"
+"ADVERTÈNCIA: Heu invocat una ordre de Git amb nom '%s', la qual no existeix.\n"
 "S'està continuant sota l'assumpció que volíeu dir '%s'"
 
 #: help.c:403
@@ -2031,8 +1978,8 @@ msgstr "No s'ha pogut crear '%s.lock': %s"
 msgid "failed to read the cache"
 msgstr "s'ha produït un error en llegir la memòria cau"
 
-#: merge.c:96 builtin/am.c:1999 builtin/am.c:2034 builtin/checkout.c:393
-#: builtin/checkout.c:607 builtin/clone.c:749
+#: merge.c:96 builtin/am.c:1999 builtin/am.c:2034 builtin/checkout.c:393 builtin/checkout.c:607
+#: builtin/clone.c:749
 msgid "unable to write new index file"
 msgstr "no s'ha pogut escriure un fitxer d'índex nou"
 
@@ -2104,39 +2051,32 @@ msgstr "No s'ha pogut afegir %s a la base de dades"
 
 #: merge-recursive.c:1092
 #, c-format
-msgid ""
-"CONFLICT (%s/delete): %s deleted in %s and %s in %s. Version %s of %s left "
-"in tree."
+msgid "CONFLICT (%s/delete): %s deleted in %s and %s in %s. Version %s of %s left in tree."
 msgstr ""
-"CONFLICTE: (%s/supressió): %s suprimit en %s i %s en %s. La versió %s de %s "
-"s'ha deixat en l'arbre."
+"CONFLICTE: (%s/supressió): %s suprimit en %s i %s en %s. La versió %s de %s s'ha deixat en "
+"l'arbre."
 
 #: merge-recursive.c:1097
 #, c-format
-msgid ""
-"CONFLICT (%s/delete): %s deleted in %s and %s to %s in %s. Version %s of %s "
-"left in tree."
+msgid "CONFLICT (%s/delete): %s deleted in %s and %s to %s in %s. Version %s of %s left in tree."
 msgstr ""
-"CONFLICTE: (%s/supressió): %s suprimit en %s i %s a %s en %s. La versió %s de %s "
-"s'ha deixat en l'arbre."
+"CONFLICTE: (%s/supressió): %s suprimit en %s i %s a %s en %s. La versió %s de %s s'ha deixat en "
+"l'arbre."
 
 #: merge-recursive.c:1104
 #, c-format
-msgid ""
-"CONFLICT (%s/delete): %s deleted in %s and %s in %s. Version %s of %s left "
-"in tree at %s."
+msgid "CONFLICT (%s/delete): %s deleted in %s and %s in %s. Version %s of %s left in tree at %s."
 msgstr ""
-"CONFLICTE: (%s/supressió): %s suprimit en %s i %s en %s. La versió %s de %s "
-"s'ha deixat en l'arbre a %s."
+"CONFLICTE: (%s/supressió): %s suprimit en %s i %s en %s. La versió %s de %s s'ha deixat en "
+"l'arbre a %s."
 
 #: merge-recursive.c:1109
 #, c-format
 msgid ""
-"CONFLICT (%s/delete): %s deleted in %s and %s to %s in %s. Version %s of %s "
-"left in tree at %s."
+"CONFLICT (%s/delete): %s deleted in %s and %s to %s in %s. Version %s of %s left in tree at %s."
 msgstr ""
-"CONFLICTE: (%s/supressió): %s suprimit en %s i %s a %s en %s. La versió %s de %s "
-"s'ha deixat en l'arbre a %s."
+"CONFLICTE: (%s/supressió): %s suprimit en %s i %s a %s en %s. La versió %s de %s s'ha deixat en "
+"l'arbre a %s."
 
 #: merge-recursive.c:1143
 msgid "rename"
@@ -2154,11 +2094,11 @@ msgstr "%s és un directori en %s; s'està afegint com a %s en lloc d'això"
 #: merge-recursive.c:1225
 #, c-format
 msgid ""
-"CONFLICT (rename/rename): Rename \"%s\"->\"%s\" in branch \"%s\" rename \"%s"
-"\"->\"%s\" in \"%s\"%s"
+"CONFLICT (rename/rename): Rename \"%s\"->\"%s\" in branch \"%s\" rename \"%s\"->\"%s\" in \"%s"
+"\"%s"
 msgstr ""
-"CONFLICTE (canvi de nom/canvi de nom): Canvi de nom \"%s\"->\"%s\" en la "
-"branca \"%s\" canvi de nom \"%s\"->\"%s\" en \"%s\"%s"
+"CONFLICTE (canvi de nom/canvi de nom): Canvi de nom \"%s\"->\"%s\" en la branca \"%s\" canvi de "
+"nom \"%s\"->\"%s\" en \"%s\"%s"
 
 #: merge-recursive.c:1230
 msgid " (left unresolved)"
@@ -2168,8 +2108,7 @@ msgstr " (deixat sense resolució)"
 #, c-format
 msgid "CONFLICT (rename/rename): Rename %s->%s in %s. Rename %s->%s in %s"
 msgstr ""
-"CONFLICTE (canvi de nom/canvi de nom): Canvi de nom %s->%s en %s. Canvi de "
-"nom %s->%s en %s"
+"CONFLICTE (canvi de nom/canvi de nom): Canvi de nom %s->%s en %s. Canvi de nom %s->%s en %s"
 
 #: merge-recursive.c:1325
 #, c-format
@@ -2179,9 +2118,7 @@ msgstr "S'està canviant el nom de %s a %s i %s a %s en lloc d'això"
 #: merge-recursive.c:1528
 #, c-format
 msgid "CONFLICT (rename/add): Rename %s->%s in %s. %s added in %s"
-msgstr ""
-"CONFLICTE (canvi de nom/afegiment): Canvi de nom %s->%s en %s. %s afegit en "
-"%s"
+msgstr "CONFLICTE (canvi de nom/afegiment): Canvi de nom %s->%s en %s. %s afegit en %s"
 
 #: merge-recursive.c:1543
 #, c-format
@@ -2254,9 +2191,7 @@ msgstr "directori/fitxer"
 #: merge-recursive.c:1883
 #, c-format
 msgid "CONFLICT (%s): There is a directory with name %s in %s. Adding %s as %s"
-msgstr ""
-"CONFLICTE (%s): Hi ha un directori amb nom %s en %s. S'està afegint %s com a "
-"%s"
+msgstr "CONFLICTE (%s): Hi ha un directori amb nom %s en %s. S'està afegint %s com a %s"
 
 #: merge-recursive.c:1892
 #, c-format
@@ -2300,12 +2235,12 @@ msgstr "No s'ha pogut escriure l'índex."
 #, c-format
 msgid ""
 "You have not concluded your previous notes merge (%s exists).\n"
-"Please, use 'git notes merge --commit' or 'git notes merge --abort' to "
-"commit/abort the previous merge before you start a new notes merge."
+"Please, use 'git notes merge --commit' or 'git notes merge --abort' to commit/abort the previous "
+"merge before you start a new notes merge."
 msgstr ""
 "No heu acabat la vostra fusió de notes prèvia (%s existeix).\n"
-"Si us plau, useu 'git notes merge --commit' o 'git notes merge --abort' per "
-"a cometre/avortar la fusió prèvia abans de començar una fusió de notes nova."
+"Si us plau, useu 'git notes merge --commit' o 'git notes merge --abort' per a cometre/avortar la "
+"fusió prèvia abans de començar una fusió de notes nova."
 
 #: notes-merge.c:280
 #, c-format
@@ -2392,17 +2327,13 @@ msgstr "nom d'atribut no vàlid %s"
 
 #: pathspec.c:254
 msgid "global 'glob' and 'noglob' pathspec settings are incompatible"
-msgstr ""
-"els ajusts d'especificació de camí 'glob' i 'noglob' globals són "
-"incompatibles"
+msgstr "els ajusts d'especificació de camí 'glob' i 'noglob' globals són incompatibles"
 
 #: pathspec.c:261
-msgid ""
-"global 'literal' pathspec setting is incompatible with all other global "
-"pathspec settings"
+msgid "global 'literal' pathspec setting is incompatible with all other global pathspec settings"
 msgstr ""
-"l'ajust d'especificació de camí 'literal' global és incompatible amb tots "
-"els altres ajusts d'especificació de camí globals"
+"l'ajust d'especificació de camí 'literal' global és incompatible amb tots els altres ajusts "
+"d'especificació de camí globals"
 
 #: pathspec.c:301
 msgid "invalid parameter for pathspec magic 'prefix'"
@@ -2446,17 +2377,15 @@ msgstr "'%s' (mnemònic: '%c')"
 #: pathspec.c:594
 #, c-format
 msgid "%s: pathspec magic not supported by this command: %s"
-msgstr ""
-"%s: aquesta ordre no està admesa amb la màgia d'especificació de camí: %s"
+msgstr "%s: aquesta ordre no està admesa amb la màgia d'especificació de camí: %s"
 
 #: pathspec.c:644
 msgid ""
-"empty strings as pathspecs will be made invalid in upcoming releases. please "
-"use . instead if you meant to match all paths"
+"empty strings as pathspecs will be made invalid in upcoming releases. please use . instead if "
+"you meant to match all paths"
 msgstr ""
-"es faran no vàlides les cadenes buides com especificacions de camí en "
-"versions futures. Si us plau, useu . en lloc d'això si volíeu coincidir amb "
-"tots els camins"
+"es faran no vàlides les cadenes buides com especificacions de camí en versions futures. Si us "
+"plau, useu . en lloc d'això si volíeu coincidir amb tots els camins"
 
 #: pathspec.c:668
 #, c-format
@@ -2554,7 +2483,7 @@ msgid "unrecognized color: %%(color:%s)"
 msgstr "color no reconegut: %%(color:%s)"
 
 #: ref-filter.c:120
-#, e, c-format
+#, c-format
 msgid "Integer value expected refname:lstrip=%s"
 msgstr "valor enter esperat pel nom de referència:lstrip=%s"
 
@@ -2594,9 +2523,9 @@ msgid "unrecognized %%(contents) argument: %s"
 msgstr "paràmetre %%(contents) no reconegut: %s"
 
 #: ref-filter.c:214
-#, fuzzy, c-format
+#, c-format
 msgid "positive value expected objectname:short=%s"
-msgstr "valor positiu esperat conté:lines=%s"
+msgstr "valor positiu esperat nom d'objecte:curt=%s"
 
 #: ref-filter.c:218
 #, c-format
@@ -2644,39 +2573,39 @@ msgid "unknown field name: %.*s"
 msgstr "nom de camp desconegut: %.*s"
 
 #: ref-filter.c:501
-#, fuzzy, c-format
+#, c-format
 msgid "format: %%(if) atom used without a %%(then) atom"
-msgstr "format: s'ha usat l'àtom %%(end) sense l'àtom corresponent"
+msgstr "format: s'ha usat l'àtom %%(if) sense un àtom %%(then)"
 
 #: ref-filter.c:561
-#, fuzzy, c-format
+#, c-format
 msgid "format: %%(then) atom used without an %%(if) atom"
-msgstr "format: s'ha usat l'àtom %%(end) sense l'àtom corresponent"
+msgstr "format: s'ha usat l'àtom %%(then) sense un àtom %%(if)"
 
 #: ref-filter.c:563
-#, fuzzy, c-format
+#, c-format
 msgid "format: %%(then) atom used more than once"
-msgstr "format: s'ha usat l'àtom %%(end) sense l'àtom corresponent"
+msgstr "format: s'ha usat l'àtom %%(then) més d'un cop"
 
 #: ref-filter.c:565
-#, fuzzy, c-format
+#, c-format
 msgid "format: %%(then) atom used after %%(else)"
-msgstr "format: manca l'àtom %%(end)"
+msgstr "format: s'ha usat l'àtom %%(then) després de %%(else)"
 
 #: ref-filter.c:591
-#, fuzzy, c-format
+#, c-format
 msgid "format: %%(else) atom used without an %%(if) atom"
-msgstr "format: s'ha usat l'àtom %%(end) sense l'àtom corresponent"
+msgstr "format: s'ha usat l'àtom %%(else) sense un àtom %%(if)"
 
 #: ref-filter.c:593
-#, fuzzy, c-format
+#, c-format
 msgid "format: %%(else) atom used without a %%(then) atom"
-msgstr "format: s'ha usat l'àtom %%(end) sense l'àtom corresponent"
+msgstr "format: s'ha usat l'àtom %%(else) sense un àtom %%(then)"
 
 #: ref-filter.c:595
-#, fuzzy, c-format
+#, c-format
 msgid "format: %%(else) atom used more than once"
-msgstr "format: s'ha usat l'àtom %%(end) sense l'àtom corresponent"
+msgstr "format: s'ha usat l'àtom %%(else) més d'un cop"
 
 #: ref-filter.c:608
 #, c-format
@@ -2792,8 +2721,7 @@ msgstr "la branca font '%s' no s'emmagatzema com a branca amb seguiment remot"
 #: remote.c:1718
 #, c-format
 msgid "push destination '%s' on remote '%s' has no local tracking branch"
-msgstr ""
-"el destí de pujada '%s' en el remot '%s' no té cap branca seguidora local"
+msgstr "el destí de pujada '%s' en el remot '%s' no té cap branca amb seguiment remot"
 
 #: remote.c:1730
 #, c-format
@@ -2841,14 +2769,9 @@ msgstr "  (useu \"git push\" per a publicar les vostres comissions locals)\n"
 #: remote.c:2101
 #, c-format
 msgid "Your branch is behind '%s' by %d commit, and can be fast-forwarded.\n"
-msgid_plural ""
-"Your branch is behind '%s' by %d commits, and can be fast-forwarded.\n"
-msgstr[0] ""
-"La vostra branca està darrere de '%s' per %d comissió, i pot avançar-se "
-"ràpidament.\n"
-msgstr[1] ""
-"La vostra branca està darrere de '%s' per %d comissions, i pot avançar-se "
-"ràpidament.\n"
+msgid_plural "Your branch is behind '%s' by %d commits, and can be fast-forwarded.\n"
+msgstr[0] "La vostra branca està darrere de '%s' per %d comissió, i pot avançar-se ràpidament.\n"
+msgstr[1] "La vostra branca està darrere de '%s' per %d comissions, i pot avançar-se ràpidament.\n"
 
 #: remote.c:2109
 msgid "  (use \"git pull\" to update your local branch)\n"
@@ -2863,10 +2786,10 @@ msgid_plural ""
 "Your branch and '%s' have diverged,\n"
 "and have %d and %d different commits each, respectively.\n"
 msgstr[0] ""
-"La vostra branca i '%s' s'han divergit,\n"
+"La vostra branca i '%s' han divergit,\n"
 "i tenen %d i %d comissió distinta cada una, respectivament.\n"
 msgstr[1] ""
-"La vostra branca i '%s' s'han divergit,\n"
+"La vostra branca i '%s' han divergit,\n"
 "i tenen %d i %d comissions distintes cada una, respectivament.\n"
 
 #: remote.c:2122
@@ -2914,12 +2837,9 @@ msgid "the receiving end does not support --signed push"
 msgstr "el destí receptor no admet pujar --signed"
 
 #: send-pack.c:430
-msgid ""
-"not sending a push certificate since the receiving end does not support --"
-"signed push"
+msgid "not sending a push certificate since the receiving end does not support --signed push"
 msgstr ""
-"no s'està enviant una certificació de pujada perquè el destí receptor no "
-"admet pujar --signed"
+"no s'està enviant una certificació de pujada perquè el destí receptor no admet pujar --signed"
 
 #: send-pack.c:442
 msgid "the receiving end does not support --atomic push"
@@ -2984,8 +2904,8 @@ msgstr "no s'ha pogut escriure el terminador de línia a '%s'"
 msgid "failed to finalize '%s'."
 msgstr "s'ha produït un error en finalitzar '%s'."
 
-#: sequencer.c:329 sequencer.c:814 sequencer.c:1586 builtin/am.c:257
-#: builtin/commit.c:749 builtin/merge.c:1018
+#: sequencer.c:329 sequencer.c:814 sequencer.c:1586 builtin/am.c:257 builtin/commit.c:749
+#: builtin/merge.c:1018
 #, c-format
 msgid "could not read '%s'"
 msgstr "no s'ha pogut llegir '%s'"
@@ -3037,8 +2957,7 @@ msgid ""
 "  git rebase --continue\n"
 msgstr ""
 "teniu canvis «staged» en el vostre arbre de treball\n"
-"Si aquests canvis estan pensats per fer «squash» a la comissió prèvia, "
-"executeu:\n"
+"Si aquests canvis estan pensats per fer «squash» a la comissió prèvia, executeu:\n"
 "\n"
 "  git commit --amend %s\n"
 "\n"
@@ -3145,8 +3064,7 @@ msgstr "la comissió %s no té pare %d"
 #: sequencer.c:982
 #, c-format
 msgid "mainline was specified but commit %s is not a merge."
-msgstr ""
-"s'ha especificat la línia principal però la comissió %s no és una fusió."
+msgstr "s'ha especificat la línia principal però la comissió %s no és una fusió."
 
 #: sequencer.c:988
 #, c-format
@@ -3446,8 +3364,7 @@ msgid ""
 "Use 'git <command> -- <path>...' to specify paths that do not exist locally."
 msgstr ""
 "%s: no hi ha tal camí en l'arbre de treball.\n"
-"Useu 'git <ordre> -- <camí>...' per a especificar camins que no existeixin "
-"localment."
+"Useu 'git <ordre> -- <camí>...' per a especificar camins que no existeixin localment."
 
 #: setup.c:178
 #, c-format
@@ -3505,8 +3422,7 @@ msgid ""
 "Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set)."
 msgstr ""
 "No un dipòsit de git (ni cap pare fins al punt de muntatge %s)\n"
-"S'atura a la frontera de sistema de fitxers (GIT_DISCOVERY_ACROSS_FILESYSTEM "
-"no està establert)."
+"S'atura a la frontera de sistema de fitxers (GIT_DISCOVERY_ACROSS_FILESYSTEM no està establert)."
 
 #: setup.c:1106
 #, c-format
@@ -3514,10 +3430,8 @@ msgid ""
 "Problem with core.sharedRepository filemode value (0%.3o).\n"
 "The owner of files must always have read and write permissions."
 msgstr ""
-"Hi ha un problema amb el valor de mode de fitxer core.sharedRepository "
-"(0%.3o).\n"
-"El propietari dels fitxers sempre ha de tenir permisos de lectura i "
-"escriptura."
+"Hi ha un problema amb el valor de mode de fitxer core.sharedRepository (0%.3o).\n"
+"El propietari dels fitxers sempre ha de tenir permisos de lectura i escriptura."
 
 #: sha1_file.c:559
 #, c-format
@@ -3527,8 +3441,7 @@ msgstr "el camí '%s' no existeix"
 #: sha1_file.c:585
 #, c-format
 msgid "reference repository '%s' as a linked checkout is not supported yet."
-msgstr ""
-"Encara no se suporta el dipòsit de referència '%s' com a agafament enllaçat."
+msgstr "Encara no se suporta el dipòsit de referència '%s' com a agafament enllaçat."
 
 #: sha1_file.c:591
 #, c-format
@@ -3552,14 +3465,12 @@ msgstr "desplaçament abans de la fi del fitxer de paquet (.idx trencat?)"
 #: sha1_file.c:2721
 #, c-format
 msgid "offset before start of pack index for %s (corrupt index?)"
-msgstr ""
-"desplaçament abans d'inici d'índex de paquet per a %s (índex corromput?)"
+msgstr "desplaçament abans d'inici d'índex de paquet per a %s (índex corromput?)"
 
 #: sha1_file.c:2725
 #, c-format
 msgid "offset beyond end of pack index for %s (truncated index?)"
-msgstr ""
-"desplaçament més enllà de la fi d'índex de paquet per a %s (índex truncat?)"
+msgstr "desplaçament més enllà de la fi d'índex de paquet per a %s (índex truncat?)"
 
 #: sha1_name.c:409
 #, c-format
@@ -3596,9 +3507,7 @@ msgstr ""
 
 #: submodule.c:67 submodule.c:101
 msgid "Cannot change unmerged .gitmodules, resolve merge conflicts first"
-msgstr ""
-"No es pot canviar un .gitmodules no fusionat, primer resoleu els conflictes "
-"de fusió"
+msgstr "No es pot canviar un .gitmodules no fusionat, primer resoleu els conflictes de fusió"
 
 #: submodule.c:71 submodule.c:105
 #, c-format
@@ -3645,19 +3554,15 @@ msgstr "el submòdul '%s' té l'índex brut"
 
 #: submodule.c:1678
 #, c-format
-msgid ""
-"relocate_gitdir for submodule '%s' with more than one worktree not supported"
-msgstr ""
-"no està admès relocate_gitdir per al submòdul '%s' amb més d'un arbre de "
-"treball"
+msgid "relocate_gitdir for submodule '%s' with more than one worktree not supported"
+msgstr "no està admès relocate_gitdir per al submòdul '%s' amb més d'un arbre de treball"
 
 #: submodule.c:1690 submodule.c:1746
 #, c-format
 msgid "could not lookup name for submodule '%s'"
 msgstr "no s'ha trobat el nom pel submòdul '%s'"
 
-#: submodule.c:1694 builtin/submodule--helper.c:678
-#: builtin/submodule--helper.c:688
+#: submodule.c:1694 builtin/submodule--helper.c:678 builtin/submodule--helper.c:688
 #, c-format
 msgid "could not create directory '%s'"
 msgstr "no s'ha pogut crear el directori '%s'"
@@ -3701,8 +3606,7 @@ msgstr "valor no vàlid per a %s"
 msgid "running trailer command '%s' failed"
 msgstr "l'execució de l'ordre de remolc '%s' ha fallat"
 
-#: trailer.c:473 trailer.c:477 trailer.c:481 trailer.c:535 trailer.c:539
-#: trailer.c:543
+#: trailer.c:473 trailer.c:477 trailer.c:481 trailer.c:535 trailer.c:539 trailer.c:543
 #, c-format
 msgid "unknown value '%s' for key '%s'"
 msgstr "valor desconegut '%s' per a la clau '%s'"
@@ -3826,10 +3730,8 @@ msgid ""
 "Your local changes to the following files would be overwritten by checkout:\n"
 "%%sPlease commit your changes or stash them before you switch branches."
 msgstr ""
-"Els vostres canvis locals als fitxers següents se sobreescriurien per "
-"agafar:\n"
-"%%sSi us plau, cometeu els vostres canvis o emmagatzemeu-los abans de "
-"canviar de branca."
+"Els vostres canvis locals als fitxers següents se sobreescriurien per agafar:\n"
+"%%sSi us plau, cometeu els vostres canvis o emmagatzemeu-los abans de canviar de branca."
 
 #: unpack-trees.c:106
 #, c-format
@@ -3837,8 +3739,7 @@ msgid ""
 "Your local changes to the following files would be overwritten by checkout:\n"
 "%%s"
 msgstr ""
-"Els vostres canvis locals als fitxers següents se sobreescriurien per "
-"agafar:\n"
+"Els vostres canvis locals als fitxers següents se sobreescriurien per agafar:\n"
 "%%s"
 
 #: unpack-trees.c:109
@@ -3847,10 +3748,8 @@ msgid ""
 "Your local changes to the following files would be overwritten by merge:\n"
 "%%sPlease commit your changes or stash them before you merge."
 msgstr ""
-"Els vostres canvis locals als fitxers següents se sobreescriurien per "
-"fusionar:\n"
-"%%sSi us plau, cometeu els vostres canvis o emmagatzemeu-los abans de "
-"fusionar."
+"Els vostres canvis locals als fitxers següents se sobreescriurien per fusionar:\n"
+"%%sSi us plau, cometeu els vostres canvis o emmagatzemeu-los abans de fusionar."
 
 #: unpack-trees.c:111
 #, c-format
@@ -3858,8 +3757,7 @@ msgid ""
 "Your local changes to the following files would be overwritten by merge:\n"
 "%%s"
 msgstr ""
-"Els vostres canvis locals als fitxers següents se sobreescriurien per "
-"fusionar:\n"
+"Els vostres canvis locals als fitxers següents se sobreescriurien per fusionar:\n"
 "%%s"
 
 #: unpack-trees.c:114
@@ -3895,8 +3793,7 @@ msgid ""
 "The following untracked working tree files would be removed by checkout:\n"
 "%%sPlease move or remove them before you switch branches."
 msgstr ""
-"Els següents fitxers no seguits en l'arbre de treball s'eliminarien per "
-"agafar:\n"
+"Els següents fitxers no seguits en l'arbre de treball s'eliminarien per agafar:\n"
 "%%sSi us plau, moveu-los o elimineu-los abans de canviar de branca."
 
 #: unpack-trees.c:127
@@ -3905,8 +3802,7 @@ msgid ""
 "The following untracked working tree files would be removed by checkout:\n"
 "%%s"
 msgstr ""
-"Els següents fitxers no seguits en l'arbre de treball s'eliminarien per "
-"agafar:\n"
+"Els següents fitxers no seguits en l'arbre de treball s'eliminarien per agafar:\n"
 "%%s"
 
 #: unpack-trees.c:130
@@ -3915,8 +3811,7 @@ msgid ""
 "The following untracked working tree files would be removed by merge:\n"
 "%%sPlease move or remove them before you merge."
 msgstr ""
-"Els següents fitxers no seguits en l'arbre de treball s'eliminarien per "
-"fusionar:\n"
+"Els següents fitxers no seguits en l'arbre de treball s'eliminarien per fusionar:\n"
 "%%sSi us plau, moveu-los o elimineu-los abans de fusionar."
 
 #: unpack-trees.c:132
@@ -3925,8 +3820,7 @@ msgid ""
 "The following untracked working tree files would be removed by merge:\n"
 "%%s"
 msgstr ""
-"Els següents fitxers no seguits en l'arbre de treball s'eliminarien per "
-"fusionar:\n"
+"Els següents fitxers no seguits en l'arbre de treball s'eliminarien per fusionar:\n"
 "%%s"
 
 #: unpack-trees.c:135
@@ -3950,23 +3844,19 @@ msgstr ""
 #: unpack-trees.c:142
 #, c-format
 msgid ""
-"The following untracked working tree files would be overwritten by "
-"checkout:\n"
+"The following untracked working tree files would be overwritten by checkout:\n"
 "%%sPlease move or remove them before you switch branches."
 msgstr ""
-"Els següents fitxers no seguits en l'arbre de treball se sobreescriurien per "
-"agafar:\n"
+"Els següents fitxers no seguits en l'arbre de treball se sobreescriurien per agafar:\n"
 "%%sSi us plau, moveu-los o elimineu-los abans de canviar de branca."
 
 #: unpack-trees.c:144
 #, c-format
 msgid ""
-"The following untracked working tree files would be overwritten by "
-"checkout:\n"
+"The following untracked working tree files would be overwritten by checkout:\n"
 "%%s"
 msgstr ""
-"Els següents fitxers no seguits en l'arbre de treball se sobreescriurien per "
-"agafar:\n"
+"Els següents fitxers no seguits en l'arbre de treball se sobreescriurien per agafar:\n"
 "%%s"
 
 #: unpack-trees.c:147
@@ -3975,8 +3865,7 @@ msgid ""
 "The following untracked working tree files would be overwritten by merge:\n"
 "%%sPlease move or remove them before you merge."
 msgstr ""
-"Els següents fitxers no seguits en l'arbre de treball se sobreescriurien per "
-"fusionar:\n"
+"Els següents fitxers no seguits en l'arbre de treball se sobreescriurien per fusionar:\n"
 "%%sSi us plau, moveu-los o elimineu-los abans de fusionar."
 
 #: unpack-trees.c:149
@@ -3985,8 +3874,7 @@ msgid ""
 "The following untracked working tree files would be overwritten by merge:\n"
 "%%s"
 msgstr ""
-"Els següents fitxers no seguits en l'arbre de treball se sobreescriurien per "
-"fusionar:\n"
+"Els següents fitxers no seguits en l'arbre de treball se sobreescriurien per fusionar:\n"
 "%%s"
 
 #: unpack-trees.c:152
@@ -3995,8 +3883,7 @@ msgid ""
 "The following untracked working tree files would be overwritten by %s:\n"
 "%%sPlease move or remove them before you %s."
 msgstr ""
-"Els següents fitxers no seguits en l'arbre de treball se sobreescriurien per "
-"%s:\n"
+"Els següents fitxers no seguits en l'arbre de treball se sobreescriurien per %s:\n"
 "%%sSi us plau, moveu-los o elimineu-los abans de %s."
 
 #: unpack-trees.c:154
@@ -4005,8 +3892,7 @@ msgid ""
 "The following untracked working tree files would be overwritten by %s:\n"
 "%%s"
 msgstr ""
-"Els següents fitxers no seguits en l'arbre de treball se sobreescriurien per "
-"%s:\n"
+"Els següents fitxers no seguits en l'arbre de treball se sobreescriurien per %s:\n"
 "%%s"
 
 #: unpack-trees.c:161
@@ -4020,30 +3906,26 @@ msgid ""
 "Cannot update sparse checkout: the following entries are not up-to-date:\n"
 "%s"
 msgstr ""
-"No es pot actualitzar l'agafament parcial: les entrades següents no estan al "
-"dia:\n"
+"No es pot actualitzar l'agafament parcial: les entrades següents no estan al dia:\n"
 "%s"
 
 #: unpack-trees.c:166
 #, c-format
 msgid ""
-"The following working tree files would be overwritten by sparse checkout "
-"update:\n"
+"The following working tree files would be overwritten by sparse checkout update:\n"
 "%s"
 msgstr ""
-"Els fitxers següents en l'arbre de treball se sobreescriurien per "
-"actualitzar l'agafament parcial:\n"
+"Els fitxers següents en l'arbre de treball se sobreescriurien per actualitzar l'agafament "
+"parcial:\n"
 "%s"
 
 #: unpack-trees.c:168
 #, c-format
 msgid ""
-"The following working tree files would be removed by sparse checkout "
-"update:\n"
+"The following working tree files would be removed by sparse checkout update:\n"
 "%s"
 msgstr ""
-"Els fitxers següents en l'arbre de treball s'eliminarien per actualitzar "
-"l'agafament parcial:\n"
+"Els fitxers següents en l'arbre de treball s'eliminarien per actualitzar l'agafament parcial:\n"
 "%s"
 
 #: unpack-trees.c:170
@@ -4113,9 +3995,8 @@ msgstr "no s'ha pogut obrir '%s' per a lectura i escriptura"
 msgid "could not open '%s' for writing"
 msgstr "no s'ha pogut obrir '%s' per a escriptura"
 
-#: wrapper.c:226 wrapper.c:396 builtin/am.c:318 builtin/am.c:757
-#: builtin/am.c:849 builtin/commit.c:1700 builtin/merge.c:1015
-#: builtin/pull.c:341
+#: wrapper.c:226 wrapper.c:396 builtin/am.c:318 builtin/am.c:757 builtin/am.c:849
+#: builtin/commit.c:1700 builtin/merge.c:1015 builtin/pull.c:341
 #, c-format
 msgid "could not open '%s' for reading"
 msgstr "no s'ha pogut obrir '%s' per a lectura"
@@ -4158,9 +4039,7 @@ msgstr "  (useu \"git add <fitxer>...\" per a senyalar resolució)"
 
 #: wt-status.c:186 wt-status.c:190
 msgid "  (use \"git add/rm <file>...\" as appropriate to mark resolution)"
-msgstr ""
-"  (useu \"git add/rm <fitxer>...\" segons sigui apropiat per a senyalar "
-"resolució)"
+msgstr "  (useu \"git add/rm <fitxer>...\" segons sigui apropiat per a senyalar resolució)"
 
 #: wt-status.c:188
 msgid "  (use \"git rm <file>...\" to mark resolution)"
@@ -4172,7 +4051,7 @@ msgstr "Canvis a cometre:"
 
 #: wt-status.c:217 wt-status.c:967
 msgid "Changes not staged for commit:"
-msgstr "Canvis no «stage» per a cometre:"
+msgstr "Canvis no «staged» per a cometre:"
 
 #: wt-status.c:221
 msgid "  (use \"git add <file>...\" to update what will be committed)"
@@ -4183,21 +4062,18 @@ msgid "  (use \"git add/rm <file>...\" to update what will be committed)"
 msgstr "  (useu \"git add/rm <fitxer>...\" per a actualitzar què es cometrà)"
 
 #: wt-status.c:224
-msgid ""
-"  (use \"git checkout -- <file>...\" to discard changes in working directory)"
+msgid "  (use \"git checkout -- <file>...\" to discard changes in working directory)"
 msgstr ""
-"  (useu \"git checkout -- <fitxer>...\" per a descartar els canvis en el "
-"directori de treball)"
+"  (useu \"git checkout -- <fitxer>...\" per a descartar els canvis en el directori de treball)"
 
 #: wt-status.c:226
 msgid "  (commit or discard the untracked or modified content in submodules)"
-msgstr ""
-"  (cometeu o descarteu el contingut modificat o no seguit en els submòduls)"
+msgstr "  (cometeu o descarteu el contingut modificat o no seguit en els submòduls)"
 
 #: wt-status.c:238
 #, c-format
 msgid "  (use \"git %s <file>...\" to include in what will be committed)"
-msgstr "  (useu \"git %s <fitxer>...\" per a incloure-ho en el què es cometrà)"
+msgstr "  (useu \"git %s <fitxer>...\" per a incloure-ho en el qual es cometrà)"
 
 #: wt-status.c:253
 msgid "both deleted:"
@@ -4373,8 +4249,7 @@ msgstr "Actualment esteu rebasant."
 
 #: wt-status.c:1253
 msgid "  (fix conflicts and then run \"git rebase --continue\")"
-msgstr ""
-"  (arregleu els conflictes i després executeu \"git rebase --continue\")"
+msgstr "  (arregleu els conflictes i després executeu \"git rebase --continue\")"
 
 #: wt-status.c:1255
 msgid "  (use \"git rebase --skip\" to skip this patch)"
@@ -4386,15 +4261,12 @@ msgstr "  (useu \"git rebase --abort\" per a agafar la branca original)"
 
 #: wt-status.c:1263
 msgid "  (all conflicts fixed: run \"git rebase --continue\")"
-msgstr ""
-"  (tots els conflictes estan arreglats: executeu \"git rebase --continue\")"
+msgstr "  (tots els conflictes estan arreglats: executeu \"git rebase --continue\")"
 
 #: wt-status.c:1267
 #, c-format
-msgid ""
-"You are currently splitting a commit while rebasing branch '%s' on '%s'."
-msgstr ""
-"Actualment esteu dividint una comissió mentre rebaseu la branca '%s' en '%s'."
+msgid "You are currently splitting a commit while rebasing branch '%s' on '%s'."
+msgstr "Actualment esteu dividint una comissió mentre rebaseu la branca '%s' en '%s'."
 
 #: wt-status.c:1272
 msgid "You are currently splitting a commit during a rebase."
@@ -4403,15 +4275,12 @@ msgstr "Actualment esteu dividint una comissió durant un rebasament."
 #: wt-status.c:1275
 msgid "  (Once your working directory is clean, run \"git rebase --continue\")"
 msgstr ""
-"  (Una vegada que el vostre directori de treball sigui net, executeu \"git "
-"rebase --continue\")"
+"  (Una vegada que el vostre directori de treball sigui net, executeu \"git rebase --continue\")"
 
 #: wt-status.c:1279
 #, c-format
 msgid "You are currently editing a commit while rebasing branch '%s' on '%s'."
-msgstr ""
-"Actualment esteu editant una comissió mentre es fa «rebase» de la branca "
-"'%s' en '%s'."
+msgstr "Actualment esteu editant una comissió mentre es fa «rebase» de la branca '%s' en '%s'."
 
 #: wt-status.c:1284
 msgid "You are currently editing a commit during a rebase."
@@ -4422,11 +4291,8 @@ msgid "  (use \"git commit --amend\" to amend the current commit)"
 msgstr "  (useu \"git commit --amend\" per a esmenar la comissió actual)"
 
 #: wt-status.c:1289
-msgid ""
-"  (use \"git rebase --continue\" once you are satisfied with your changes)"
-msgstr ""
-"  (useu \"git rebase --continue\" una vegada que estigueu satisfet amb els "
-"vostres canvis)"
+msgid "  (use \"git rebase --continue\" once you are satisfied with your changes)"
+msgstr "  (useu \"git rebase --continue\" una vegada que estigueu satisfet amb els vostres canvis)"
 
 #: wt-status.c:1299
 #, c-format
@@ -4439,15 +4305,11 @@ msgstr "  (arregleu els conflictes i executeu \"git cherry-pick --continue\")"
 
 #: wt-status.c:1307
 msgid "  (all conflicts fixed: run \"git cherry-pick --continue\")"
-msgstr ""
-"  (tots els conflictes estan arreglats: executeu \"git cherry-pick --continue"
-"\")"
+msgstr "  (tots els conflictes estan arreglats: executeu \"git cherry-pick --continue\")"
 
 #: wt-status.c:1309
 msgid "  (use \"git cherry-pick --abort\" to cancel the cherry-pick operation)"
-msgstr ""
-"  (useu \"git cherry-pick --abort\" per a cancel·lar l'operació de «cherry "
-"pick»)"
+msgstr "  (useu \"git cherry-pick --abort\" per a cancel·lar l'operació de «cherry pick»)"
 
 #: wt-status.c:1318
 #, c-format
@@ -4460,13 +4322,11 @@ msgstr "  (arregleu els conflictes i executeu \"git revert --continue\")"
 
 #: wt-status.c:1326
 msgid "  (all conflicts fixed: run \"git revert --continue\")"
-msgstr ""
-"  (tots els conflictes estan arreglats: executeu \"git revert --continue\")"
+msgstr "  (tots els conflictes estan arreglats: executeu \"git revert --continue\")"
 
 #: wt-status.c:1328
 msgid "  (use \"git revert --abort\" to cancel the revert operation)"
-msgstr ""
-"  (useu \"git revert --abort\" per a cancel·lar l'operació de reversió)"
+msgstr "  (useu \"git revert --abort\" per a cancel·lar l'operació de reversió)"
 
 #: wt-status.c:1339
 #, c-format
@@ -4545,8 +4405,7 @@ msgstr "Sense canvis"
 #: wt-status.c:1618
 #, c-format
 msgid "no changes added to commit (use \"git add\" and/or \"git commit -a\")\n"
-msgstr ""
-"no hi ha canvis afegits a cometre (useu \"git add\" o \"git commit -a\")\n"
+msgstr "no hi ha canvis afegits a cometre (useu \"git add\" o \"git commit -a\")\n"
 
 #: wt-status.c:1621
 #, c-format
@@ -4555,12 +4414,10 @@ msgstr "no hi ha canvis afegits a cometre\n"
 
 #: wt-status.c:1624
 #, c-format
-msgid ""
-"nothing added to commit but untracked files present (use \"git add\" to "
-"track)\n"
+msgid "nothing added to commit but untracked files present (use \"git add\" to track)\n"
 msgstr ""
-"no hi ha res afegit a cometre però existeixen fitxers no seguits (useu \"git "
-"add\" per a seguir-los)\n"
+"no hi ha res afegit a cometre però existeixen fitxers no seguits (useu \"git add\" per a seguir-"
+"los)\n"
 
 #: wt-status.c:1627
 #, c-format
@@ -4570,9 +4427,7 @@ msgstr "no hi ha res afegit a cometre però existeixen fitxer no seguits\n"
 #: wt-status.c:1630
 #, c-format
 msgid "nothing to commit (create/copy files and use \"git add\" to track)\n"
-msgstr ""
-"no hi ha res a cometre (creeu/copieu fitxers i useu \"git add\" per a seguir-"
-"los)\n"
+msgstr "no hi ha res a cometre (creeu/copieu fitxers i useu \"git add\" per a seguir-los)\n"
 
 #: wt-status.c:1633 wt-status.c:1638
 #, c-format
@@ -4582,8 +4437,7 @@ msgstr "no hi ha res a cometre\n"
 #: wt-status.c:1636
 #, c-format
 msgid "nothing to commit (use -u to show untracked files)\n"
-msgstr ""
-"no hi ha res a cometre (useu -u per a mostrar els fitxers no seguits)\n"
+msgstr "no hi ha res a cometre (useu -u per a mostrar els fitxers no seguits)\n"
 
 #: wt-status.c:1640
 #, c-format
@@ -4681,12 +4535,11 @@ msgstr "No s'ha pogut aplicar '%s'"
 
 #: builtin/add.c:247
 msgid "The following paths are ignored by one of your .gitignore files:\n"
-msgstr ""
-"Els camins següents s'ignoren per un dels vostres fitxers .gitignore:\n"
+msgstr "Els camins següents s'ignoren per un dels vostres fitxers .gitignore:\n"
 
 #: builtin/add.c:266 builtin/clean.c:876 builtin/fetch.c:115 builtin/mv.c:123
-#: builtin/prune-packed.c:55 builtin/pull.c:198 builtin/push.c:524
-#: builtin/remote.c:1328 builtin/rm.c:241 builtin/send-pack.c:163
+#: builtin/prune-packed.c:55 builtin/pull.c:198 builtin/push.c:524 builtin/remote.c:1328
+#: builtin/rm.c:241 builtin/send-pack.c:163
 msgid "dry run"
 msgstr "marxa en sec"
 
@@ -4720,8 +4573,7 @@ msgstr "afegeix els canvis de tots els fitxers seguits i no seguits"
 
 #: builtin/add.c:278
 msgid "ignore paths removed in the working tree (same as --no-all)"
-msgstr ""
-"ignora els camins eliminats en l'arbre de treball (el mateix que --no-all)"
+msgstr "ignora els camins eliminats en l'arbre de treball (el mateix que --no-all)"
 
 #: builtin/add.c:280
 msgid "don't add, only refresh the index"
@@ -4733,8 +4585,7 @@ msgstr "només omet els fitxers que no es poden afegir a causa d'errors"
 
 #: builtin/add.c:282
 msgid "check if - even missing - files are ignored in dry run"
-msgstr ""
-"comproveu si els fitxers - fins i tot els absents - s'ignoren en marxa en sec"
+msgstr "comproveu si els fitxers - fins i tot els absents - s'ignoren en marxa en sec"
 
 #: builtin/add.c:283 builtin/update-index.c:951
 msgid "(+/-)x"
@@ -4776,9 +4627,8 @@ msgstr "No s'ha especificat res, no s'ha afegit res.\n"
 msgid "Maybe you wanted to say 'git add .'?\n"
 msgstr "Potser volíeu dir 'git add .'?\n"
 
-#: builtin/add.c:380 builtin/check-ignore.c:172 builtin/checkout.c:298
-#: builtin/checkout.c:491 builtin/clean.c:920 builtin/commit.c:350
-#: builtin/mv.c:143 builtin/reset.c:235 builtin/rm.c:271
+#: builtin/add.c:380 builtin/check-ignore.c:172 builtin/checkout.c:298 builtin/checkout.c:491
+#: builtin/clean.c:920 builtin/commit.c:350 builtin/mv.c:143 builtin/reset.c:235 builtin/rm.c:271
 #: builtin/submodule--helper.c:244
 msgid "index file corrupt"
 msgstr "fitxer d'índex malmès"
@@ -4852,15 +4702,12 @@ msgstr "Quan hàgiu resolt aquest problema, executeu \"%s --continue\"."
 #: builtin/am.c:1179
 #, c-format
 msgid "If you prefer to skip this patch, run \"%s --skip\" instead."
-msgstr ""
-"Si preferiu ometre aquest pedaç, executeu \"%s --skip\" en lloc d'això."
+msgstr "Si preferiu ometre aquest pedaç, executeu \"%s --skip\" en lloc d'això."
 
 #: builtin/am.c:1180
 #, c-format
 msgid "To restore the original branch and stop patching, run \"%s --abort\"."
-msgstr ""
-"Per a restaurar la branca original i deixar d'apedaçar, executeu \"%s --abort"
-"\"."
+msgstr "Per a restaurar la branca original i deixar d'apedaçar, executeu \"%s --abort\"."
 
 #: builtin/am.c:1315
 msgid "Patch is empty. Was it split wrong?"
@@ -4878,9 +4725,7 @@ msgstr "no s'ha pogut analitzar la comissió %s"
 
 #: builtin/am.c:1606
 msgid "Repository lacks necessary blobs to fall back on 3-way merge."
-msgstr ""
-"Al dipòsit li manquen els blobs necessaris per a retrocedir a una fusió de 3 "
-"vies."
+msgstr "Al dipòsit li manquen els blobs necessaris per a retrocedir a una fusió de 3 vies."
 
 #: builtin/am.c:1608
 msgid "Using index info to reconstruct a base tree..."
@@ -4910,8 +4755,7 @@ msgstr "git write-tree ha fallat en escriure un arbre"
 msgid "applying to an empty history"
 msgstr "s'està aplicant a una història buida"
 
-#: builtin/am.c:1702 builtin/commit.c:1764 builtin/merge.c:802
-#: builtin/merge.c:827
+#: builtin/am.c:1702 builtin/commit.c:1764 builtin/merge.c:802 builtin/merge.c:827
 msgid "failed to write commit object"
 msgstr "s'ha produït un error en escriure l'objecte de comissió"
 
@@ -4922,8 +4766,7 @@ msgstr "no es pot reprendre: %s no existeix."
 
 #: builtin/am.c:1755
 msgid "cannot be interactive without stdin connected to a terminal."
-msgstr ""
-"no es pot ser interactiu sense que stdin estigui connectada a un terminal."
+msgstr "no es pot ser interactiu sense que stdin estigui connectada a un terminal."
 
 #: builtin/am.c:1760
 msgid "Commit Body is:"
@@ -4935,9 +4778,7 @@ msgstr "El cos de la comissió és:"
 #.
 #: builtin/am.c:1770
 msgid "Apply? [y]es/[n]o/[e]dit/[v]iew patch/[a]ccept all: "
-msgstr ""
-"Voleu aplicar-lo? [y]es/[n]o/[e]dita/[v]isualitza el pedaç/[a]ccepta'ls "
-"tots: "
+msgstr "Voleu aplicar-lo? [y]es/[n]o/[e]dita/[v]isualitza el pedaç/[a]ccepta'ls tots: "
 
 #: builtin/am.c:1820
 #, c-format
@@ -4981,8 +4822,7 @@ msgstr ""
 "Encara teniu camins sense fusionar en el vostre índex.\n"
 "Heu oblidat d'usar 'git add'?"
 
-#: builtin/am.c:2050 builtin/am.c:2054 builtin/am.c:2066 builtin/reset.c:308
-#: builtin/reset.c:316
+#: builtin/am.c:2050 builtin/am.c:2054 builtin/am.c:2066 builtin/reset.c:308 builtin/reset.c:316
 #, c-format
 msgid "Could not parse object '%s'."
 msgstr "No s'ha pogut analitzar l'objecte '%s'."
@@ -5024,8 +4864,7 @@ msgstr "opció històrica -- no-op"
 msgid "allow fall back on 3way merging if needed"
 msgstr "permet retrocedir a una fusió de 3 vies si és necessari"
 
-#: builtin/am.c:2244 builtin/init-db.c:483 builtin/prune-packed.c:57
-#: builtin/repack.c:178
+#: builtin/am.c:2244 builtin/init-db.c:483 builtin/prune-packed.c:57 builtin/repack.c:178
 msgid "be quiet"
 msgstr "silenciós"
 
@@ -5055,29 +4894,26 @@ msgstr "passa la bandera --keep-cr al git-mailsplit per al format mbox"
 
 #: builtin/am.c:2260
 msgid "do not pass --keep-cr flag to git-mailsplit independent of am.keepcr"
-msgstr ""
-"no passis la bandera --keep-cr al git-mailsplit independent de am.keepcr"
+msgstr "no passis la bandera --keep-cr al git-mailsplit independent de am.keepcr"
 
 #: builtin/am.c:2263
 msgid "strip everything before a scissors line"
 msgstr "elimina tot abans d'una línia de tisores"
 
-#: builtin/am.c:2265 builtin/am.c:2268 builtin/am.c:2271 builtin/am.c:2274
-#: builtin/am.c:2277 builtin/am.c:2280 builtin/am.c:2283 builtin/am.c:2286
-#: builtin/am.c:2292
+#: builtin/am.c:2265 builtin/am.c:2268 builtin/am.c:2271 builtin/am.c:2274 builtin/am.c:2277
+#: builtin/am.c:2280 builtin/am.c:2283 builtin/am.c:2286 builtin/am.c:2292
 msgid "pass it through git-apply"
 msgstr "passa-ho a través del git-apply"
 
-#: builtin/am.c:2282 builtin/fmt-merge-msg.c:662 builtin/fmt-merge-msg.c:665
-#: builtin/grep.c:1045 builtin/merge.c:201 builtin/pull.c:135
-#: builtin/pull.c:194 builtin/repack.c:187 builtin/repack.c:191
-#: builtin/show-branch.c:637 builtin/show-ref.c:169 builtin/tag.c:398
+#: builtin/am.c:2282 builtin/fmt-merge-msg.c:662 builtin/fmt-merge-msg.c:665 builtin/grep.c:1045
+#: builtin/merge.c:201 builtin/pull.c:135 builtin/pull.c:194 builtin/repack.c:187
+#: builtin/repack.c:191 builtin/show-branch.c:637 builtin/show-ref.c:169 builtin/tag.c:398
 #: parse-options.h:132 parse-options.h:134 parse-options.h:245
 msgid "n"
 msgstr "n"
 
-#: builtin/am.c:2288 builtin/branch.c:592 builtin/for-each-ref.c:37
-#: builtin/replace.c:443 builtin/tag.c:433 builtin/verify-tag.c:38
+#: builtin/am.c:2288 builtin/branch.c:592 builtin/for-each-ref.c:37 builtin/replace.c:443
+#: builtin/tag.c:433 builtin/verify-tag.c:38
 msgid "format"
 msgstr "format"
 
@@ -5087,8 +4923,7 @@ msgstr "el format en el qual estan els pedaços"
 
 #: builtin/am.c:2295
 msgid "override error message when patch failure occurs"
-msgstr ""
-"passa per alt el missatge d'error quan s'ocorre una fallada en apedaçar"
+msgstr "passa per alt el missatge d'error quan s'ocorre una fallada en apedaçar"
 
 #: builtin/am.c:2297
 msgid "continue applying patches after resolving a conflict"
@@ -5114,8 +4949,8 @@ msgstr "menteix sobre la data del comitent"
 msgid "use current timestamp for author date"
 msgstr "usa el marc de temps actual per la data d'autor"
 
-#: builtin/am.c:2314 builtin/commit.c:1600 builtin/merge.c:232
-#: builtin/pull.c:165 builtin/revert.c:111 builtin/tag.c:413
+#: builtin/am.c:2314 builtin/commit.c:1600 builtin/merge.c:232 builtin/pull.c:165
+#: builtin/revert.c:111 builtin/tag.c:413
 msgid "key-id"
 msgstr "ID de clau"
 
@@ -5142,9 +4977,7 @@ msgstr "S'ha produït un error en llegir l'índex"
 #: builtin/am.c:2355
 #, c-format
 msgid "previous rebase directory %s still exists but mbox given."
-msgstr ""
-"un directori de rebasament anterior %s encara existeix però s'ha donat una "
-"bústia."
+msgstr "un directori de rebasament anterior %s encara existeix però s'ha donat una bústia."
 
 #: builtin/am.c:2379
 #, c-format
@@ -5223,14 +5056,11 @@ msgstr "Mostra les entrades «blame» mentre les trobem, incrementalment"
 
 #: builtin/blame.c:2574
 msgid "Show blank SHA-1 for boundary commits (Default: off)"
-msgstr ""
-"Mostra un SHA-1 en blanc per les comissions de frontera (Per defecte: "
-"desactivat)"
+msgstr "Mostra un SHA-1 en blanc per les comissions de frontera (Per defecte: desactivat)"
 
 #: builtin/blame.c:2575
 msgid "Do not treat root commits as boundaries (Default: off)"
-msgstr ""
-"No tractis les comissions d'arrel com a límits (Per defecte: desactivat)"
+msgstr "No tractis les comissions d'arrel com a límits (Per defecte: desactivat)"
 
 #: builtin/blame.c:2576
 msgid "Show work cost statistics"
@@ -5262,8 +5092,7 @@ msgstr "Mostra el format de porcellana amb informació de comissió per línia"
 
 #: builtin/blame.c:2583
 msgid "Use the same output mode as git-annotate (Default: off)"
-msgstr ""
-"Usa el mateix mode de sortida que git-annotate (Per defecte: desactivat)"
+msgstr "Usa el mateix mode de sortida que git-annotate (Per defecte: desactivat)"
 
 #: builtin/blame.c:2584
 msgid "Show raw timestamp (Default: off)"
@@ -5279,9 +5108,7 @@ msgstr "Omet el nom d'autor i la marca de temps (Per defecte: desactivat)"
 
 #: builtin/blame.c:2587
 msgid "Show author email instead of name (Default: off)"
-msgstr ""
-"Mostra l'adreça de correu electrònic de l'autor en lloc del nom (Per "
-"defecte: desactivat)"
+msgstr "Mostra l'adreça de correu electrònic de l'autor en lloc del nom (Per defecte: desactivat)"
 
 #: builtin/blame.c:2588
 msgid "Ignore whitespace differences"
@@ -5325,8 +5152,7 @@ msgstr "Processa només el rang de línies n,m, comptant des d'1"
 
 #: builtin/blame.c:2649
 msgid "--progress can't be used with --incremental or porcelain formats"
-msgstr ""
-"no es pot usar --progress amb els formats --incremental o de porcellana"
+msgstr "no es pot usar --progress amb els formats --incremental o de porcellana"
 
 #. TRANSLATORS: This string is used to tell us the maximum
 #. display width for a relative timestamp in "git blame"
@@ -5348,16 +5174,11 @@ msgstr "no es pot usar --contents amb el nom d'objecte de la comissió final"
 
 #: builtin/blame.c:2802
 msgid "--reverse and --first-parent together require specified latest commit"
-msgstr ""
-"--reverse i --first-parent-together requereixen una última comissió "
-"especificada"
+msgstr "--reverse i --first-parent-together requereixen una última comissió especificada"
 
 #: builtin/blame.c:2829
-msgid ""
-"--reverse --first-parent together require range along first-parent chain"
-msgstr ""
-"--reverse --first-parent junts requereixen un rang de la cadena de mares "
-"primeres"
+msgid "--reverse --first-parent together require range along first-parent chain"
+msgstr "--reverse --first-parent junts requereixen un rang de la cadena de mares primeres"
 
 #: builtin/blame.c:2840
 #, c-format
@@ -5516,9 +5337,7 @@ msgstr "S'ha canviat el nom de la branca a %s, però HEAD no està actualitzat!"
 
 #: builtin/branch.c:502
 msgid "Branch is renamed, but update of config-file failed"
-msgstr ""
-"La branca està canviada de nom, però l'actualització del fitxer de "
-"configuració ha fallat"
+msgstr "La branca està canviada de nom, però l'actualització del fitxer de configuració ha fallat"
 
 #: builtin/branch.c:518
 #, c-format
@@ -5639,9 +5458,8 @@ msgstr "clau"
 msgid "field name to sort on"
 msgstr "nom del camp en el qual ordenar"
 
-#: builtin/branch.c:588 builtin/for-each-ref.c:41 builtin/notes.c:404
-#: builtin/notes.c:407 builtin/notes.c:567 builtin/notes.c:570
-#: builtin/tag.c:429
+#: builtin/branch.c:588 builtin/for-each-ref.c:41 builtin/notes.c:404 builtin/notes.c:407
+#: builtin/notes.c:567 builtin/notes.c:570 builtin/tag.c:429
 msgid "object"
 msgstr "objecte"
 
@@ -5653,8 +5471,7 @@ msgstr "imprimeix només les branques de l'objecte"
 msgid "sorting and filtering are case insensitive"
 msgstr "l'ordenació i el filtratge distingeixen entre majúscules i minúscules"
 
-#: builtin/branch.c:592 builtin/for-each-ref.c:37 builtin/tag.c:433
-#: builtin/verify-tag.c:38
+#: builtin/branch.c:592 builtin/for-each-ref.c:37 builtin/tag.c:433 builtin/verify-tag.c:38
 msgid "format to use for the output"
 msgstr "format a usar en la sortida"
 
@@ -5702,10 +5519,8 @@ msgstr "hi ha massa branques per a establir una nova font"
 
 #: builtin/branch.c:716
 #, c-format
-msgid ""
-"could not set upstream of HEAD to %s when it does not point to any branch."
-msgstr ""
-"no s'ha pogut establir la font de HEAD com a %s quan no assenyala cap branca."
+msgid "could not set upstream of HEAD to %s when it does not point to any branch."
+msgstr "no s'ha pogut establir la font de HEAD com a %s quan no assenyala cap branca."
 
 #: builtin/branch.c:719 builtin/branch.c:741 builtin/branch.c:762
 #, c-format
@@ -5723,8 +5538,7 @@ msgstr "hi ha massa branques per a desestablir la font"
 
 #: builtin/branch.c:739
 msgid "could not unset upstream of HEAD when it does not point to any branch."
-msgstr ""
-"no s'ha pogut desestablir la font de HEAD perquè no assenyala cap branca."
+msgstr "no s'ha pogut desestablir la font de HEAD perquè no assenyala cap branca."
 
 #: builtin/branch.c:745
 #, c-format
@@ -5737,17 +5551,16 @@ msgstr "no té sentit crear 'HEAD' manualment"
 
 #: builtin/branch.c:765
 msgid "-a and -r options to 'git branch' do not make sense with a branch name"
-msgstr ""
-"les opcions -a i -r a 'git branch' no tenen sentit amb un nom de branca"
+msgstr "les opcions -a i -r a 'git branch' no tenen sentit amb un nom de branca"
 
 #: builtin/branch.c:768
 #, c-format
 msgid ""
-"The --set-upstream flag is deprecated and will be removed. Consider using --"
-"track or --set-upstream-to\n"
+"The --set-upstream flag is deprecated and will be removed. Consider using --track or --set-"
+"upstream-to\n"
 msgstr ""
-"La bandera --set-upstream està en desús i s'eliminarà. Considereu usar --"
-"track o --set-upstream-to\n"
+"La bandera --set-upstream està en desús i s'eliminarà. Considereu usar --track o --set-upstream-"
+"to\n"
 
 #: builtin/branch.c:785
 #, c-format
@@ -5775,19 +5588,15 @@ msgstr "Cal un dipòsit per a desfer un farcell."
 
 #: builtin/cat-file.c:513
 msgid ""
-"git cat-file (-t [--allow-unknown-type] | -s [--allow-unknown-type] | -e | -"
-"p | <type> | --textconv | --filters) [--path=<path>] <object>"
+"git cat-file (-t [--allow-unknown-type] | -s [--allow-unknown-type] | -e | -p | <type> | --"
+"textconv | --filters) [--path=<path>] <object>"
 msgstr ""
-"git cat-file (-t [--allow-unknown-type] | -s [--allow-unknown-type] | -e | -"
-"p | <tipus> | --textconv | --filters [--path=<camí>]) <objecte>"
+"git cat-file (-t [--allow-unknown-type] | -s [--allow-unknown-type] | -e | -p | <tipus> | --"
+"textconv | --filters [--path=<camí>]) <objecte>"
 
 #: builtin/cat-file.c:514
-msgid ""
-"git cat-file (--batch | --batch-check) [--follow-symlinks] [--textconv | --"
-"filters]"
-msgstr ""
-"git cat-file (--batch | --batch-check) [--follow-symlinks] [--textconv | --"
-"filters]"
+msgid "git cat-file (--batch | --batch-check) [--follow-symlinks] [--textconv | --filters]"
+msgstr "git cat-file (--batch | --batch-check) [--follow-symlinks] [--textconv | --filters]"
 
 #: builtin/cat-file.c:551
 msgid "<type> can be one of: blob, tree, commit, tag"
@@ -5815,8 +5624,7 @@ msgstr "en els objectes de blob, executa textconv en el contingut de l'objecte"
 
 #: builtin/cat-file.c:560
 msgid "for blob objects, run filters on object's content"
-msgstr ""
-"en els objectes de blob, executa els filtres en el contingut de l'objecte"
+msgstr "en els objectes de blob, executa els filtres en el contingut de l'objecte"
 
 #: builtin/cat-file.c:561 git-submodule.sh:943
 msgid "blob"
@@ -5836,8 +5644,7 @@ msgstr "posa la sortida de --batch en memòria intermèdia"
 
 #: builtin/cat-file.c:567
 msgid "show info and content of objects fed from the standard input"
-msgstr ""
-"mostra la informació i contingut dels objectes rebuts de l'entrada estàndard"
+msgstr "mostra la informació i contingut dels objectes rebuts de l'entrada estàndard"
 
 #: builtin/cat-file.c:570
 msgid "show info about objects fed from the standard input"
@@ -5845,8 +5652,7 @@ msgstr "mostra informació sobre els objectes rebuts de l'entrada estàndard"
 
 #: builtin/cat-file.c:573
 msgid "follow in-tree symlinks (used with --batch or --batch-check)"
-msgstr ""
-"segueix els enllaços simbòlics en l'arbre (s'usa amb --batch o --batch-check)"
+msgstr "segueix els enllaços simbòlics en l'arbre (s'usa amb --batch o --batch-check)"
 
 #: builtin/cat-file.c:575
 msgid "show all objects with --batch or --batch-check"
@@ -5947,8 +5753,7 @@ msgstr "força la sobreescriptura de fitxers existents"
 
 #: builtin/checkout-index.c:163
 msgid "no warning for existing files and files not in index"
-msgstr ""
-"cap advertència per a fitxers existents i fitxers que no siguin a l'índex"
+msgstr "cap advertència per a fitxers existents i fitxers que no siguin a l'índex"
 
 #: builtin/checkout-index.c:165
 msgid "don't checkout new files"
@@ -5966,9 +5771,8 @@ msgstr "llegeix la llista de camins des de l'entrada estàndard"
 msgid "write the content to temporary files"
 msgstr "escriu el contingut a fitxers temporals"
 
-#: builtin/checkout-index.c:174 builtin/column.c:30
-#: builtin/submodule--helper.c:635 builtin/submodule--helper.c:638
-#: builtin/submodule--helper.c:644 builtin/submodule--helper.c:980
+#: builtin/checkout-index.c:174 builtin/column.c:30 builtin/submodule--helper.c:635
+#: builtin/submodule--helper.c:638 builtin/submodule--helper.c:644 builtin/submodule--helper.c:980
 #: builtin/worktree.c:477
 msgid "string"
 msgstr "cadena"
@@ -6019,8 +5823,7 @@ msgstr "camí '%s': no es pot fusionar"
 msgid "Unable to add merge result for '%s'"
 msgstr "No s'ha pogut afegir el resultat de fusió per a '%s'"
 
-#: builtin/checkout.c:269 builtin/checkout.c:272 builtin/checkout.c:275
-#: builtin/checkout.c:278
+#: builtin/checkout.c:269 builtin/checkout.c:272 builtin/checkout.c:275 builtin/checkout.c:278
 #, c-format
 msgid "'%s' cannot be used with updating paths"
 msgstr "'%s' no es pot usar amb actualització de camins"
@@ -6033,8 +5836,7 @@ msgstr "'%s' no es pot usar amb %s"
 #: builtin/checkout.c:287
 #, c-format
 msgid "Cannot update paths and switch to branch '%s' at the same time."
-msgstr ""
-"No es poden actualitzar els camins i canviar a la branca '%s' a la vegada."
+msgstr "No es poden actualitzar els camins i canviar a la branca '%s' a la vegada."
 
 #: builtin/checkout.c:358 builtin/checkout.c:365
 #, c-format
@@ -6174,8 +5976,7 @@ msgstr "els camins no es poden usar amb canvi de branca"
 msgid "'%s' cannot be used with switching branches"
 msgstr "'%s' no es pot usar amb canvi de branca"
 
-#: builtin/checkout.c:1110 builtin/checkout.c:1113 builtin/checkout.c:1118
-#: builtin/checkout.c:1121
+#: builtin/checkout.c:1110 builtin/checkout.c:1113 builtin/checkout.c:1118 builtin/checkout.c:1121
 #, c-format
 msgid "'%s' cannot be used with '%s'"
 msgstr "'%s' no es pot usar amb '%s'"
@@ -6185,9 +5986,8 @@ msgstr "'%s' no es pot usar amb '%s'"
 msgid "Cannot switch branch to a non-commit '%s'"
 msgstr "No es pot canviar la branca a la no comissió '%s'"
 
-#: builtin/checkout.c:1159 builtin/checkout.c:1161 builtin/clone.c:111
-#: builtin/remote.c:165 builtin/remote.c:167 builtin/worktree.c:329
-#: builtin/worktree.c:331
+#: builtin/checkout.c:1159 builtin/checkout.c:1161 builtin/clone.c:111 builtin/remote.c:165
+#: builtin/remote.c:167 builtin/worktree.c:329 builtin/worktree.c:331
 msgid "branch"
 msgstr "branca"
 
@@ -6259,9 +6059,8 @@ msgstr "dubta 'git checkout <cap-branca-així>'"
 msgid "do not check if another worktree is holding the given ref"
 msgstr "no comprovis si altre arbre de treball té la referència donada"
 
-#: builtin/checkout.c:1187 builtin/clone.c:78 builtin/fetch.c:119
-#: builtin/merge.c:231 builtin/pull.c:117 builtin/push.c:539
-#: builtin/send-pack.c:172
+#: builtin/checkout.c:1187 builtin/clone.c:78 builtin/fetch.c:119 builtin/merge.c:231
+#: builtin/pull.c:117 builtin/push.c:539 builtin/send-pack.c:172
 msgid "force progress reporting"
 msgstr "força l'informe de progrés"
 
@@ -6304,10 +6103,8 @@ msgstr ""
 "agafar de l'índex."
 
 #: builtin/clean.c:25
-msgid ""
-"git clean [-d] [-f] [-i] [-n] [-q] [-e <pattern>] [-x | -X] [--] <paths>..."
-msgstr ""
-"git clean [-d] [-f] [-i] [-n] [-q] [-e <patró>] [-x | -X] [--] <camins>..."
+msgid "git clean [-d] [-f] [-i] [-n] [-q] [-e <pattern>] [-x | -X] [--] <paths>..."
+msgstr "git clean [-d] [-f] [-i] [-n] [-q] [-e <patró>] [-x | -X] [--] <camins>..."
 
 #: builtin/clean.c:29
 #, c-format
@@ -6368,8 +6165,7 @@ msgstr ""
 "*          - tria tots els ítems\n"
 "           - (buit) finalitza la selecció\n"
 
-#: builtin/clean.c:517 git-add--interactive.perl:589
-#: git-add--interactive.perl:594
+#: builtin/clean.c:517 git-add--interactive.perl:589 git-add--interactive.perl:594
 #, c-format, perl-format
 msgid "Huh (%s)?\n"
 msgstr "Perdó (%s)?\n"
@@ -6451,9 +6247,8 @@ msgstr "neteja interactiva"
 msgid "remove whole directories"
 msgstr "elimina directoris sencers"
 
-#: builtin/clean.c:881 builtin/describe.c:449 builtin/describe.c:451
-#: builtin/grep.c:1063 builtin/ls-files.c:546 builtin/name-rev.c:348
-#: builtin/name-rev.c:350 builtin/show-ref.c:176
+#: builtin/clean.c:881 builtin/describe.c:449 builtin/describe.c:451 builtin/grep.c:1063
+#: builtin/ls-files.c:546 builtin/name-rev.c:348 builtin/name-rev.c:350 builtin/show-ref.c:176
 msgid "pattern"
 msgstr "patró"
 
@@ -6474,20 +6269,14 @@ msgid "-x and -X cannot be used together"
 msgstr "-x i -X no es poden usar junts"
 
 #: builtin/clean.c:907
-msgid ""
-"clean.requireForce set to true and neither -i, -n, nor -f given; refusing to "
-"clean"
+msgid "clean.requireForce set to true and neither -i, -n, nor -f given; refusing to clean"
 msgstr ""
-"clean.requireForce està establerta a veritat i ni -i, -n ni -f s'han "
-"indicat; refusant netejar"
+"clean.requireForce està establerta a veritat i ni -i, -n ni -f s'han indicat; refusant netejar"
 
 #: builtin/clean.c:910
-msgid ""
-"clean.requireForce defaults to true and neither -i, -n, nor -f given; "
-"refusing to clean"
+msgid "clean.requireForce defaults to true and neither -i, -n, nor -f given; refusing to clean"
 msgstr ""
-"clean.requireForce és per defecte veritat i ni -i, -n ni -f s'han indicat; "
-"refusant netejar"
+"clean.requireForce és per defecte veritat i ni -i, -n ni -f s'han indicat; refusant netejar"
 
 #: builtin/clone.c:37
 msgid "git clone [<options>] [--] <repo> [<dir>]"
@@ -6562,8 +6351,7 @@ msgstr "agafa <branca> en lloc del HEAD del remot"
 msgid "path to git-upload-pack on the remote"
 msgstr "camí a git-upload-pack en el remot"
 
-#: builtin/clone.c:115 builtin/fetch.c:120 builtin/grep.c:1006
-#: builtin/pull.c:202
+#: builtin/clone.c:115 builtin/fetch.c:120 builtin/grep.c:1006 builtin/pull.c:202
 msgid "depth"
 msgstr "profunditat"
 
@@ -6571,8 +6359,7 @@ msgstr "profunditat"
 msgid "create a shallow clone of that depth"
 msgstr "crea un clon superficial de tal profunditat"
 
-#: builtin/clone.c:117 builtin/fetch.c:122 builtin/pack-objects.c:2918
-#: parse-options.h:142
+#: builtin/clone.c:117 builtin/fetch.c:122 builtin/pack-objects.c:2918 parse-options.h:142
 msgid "time"
 msgstr "hora"
 
@@ -6690,9 +6477,7 @@ msgstr "no s'ha pogut actualitzar %s"
 
 #: builtin/clone.c:715
 msgid "remote HEAD refers to nonexistent ref, unable to checkout.\n"
-msgstr ""
-"el HEAD remot es refereix a una referència que no existeix; no s'ha pogut "
-"agafar.\n"
+msgstr "el HEAD remot es refereix a una referència que no existeix; no s'ha pogut agafar.\n"
 
 #: builtin/clone.c:746
 msgid "unable to checkout working tree"
@@ -6747,8 +6532,8 @@ msgstr "el camí destí '%s' ja existeix i no és un directori buit."
 msgid "working tree '%s' already exists."
 msgstr "l'arbre de treball '%s' ja existeix."
 
-#: builtin/clone.c:958 builtin/clone.c:969 builtin/difftool.c:252
-#: builtin/worktree.c:221 builtin/worktree.c:251
+#: builtin/clone.c:958 builtin/clone.c:969 builtin/difftool.c:252 builtin/worktree.c:221
+#: builtin/worktree.c:251
 #, c-format
 msgid "could not create leading directories of '%s'"
 msgstr "no s'han pogut crear els directoris inicials de '%s'"
@@ -6769,12 +6554,8 @@ msgid "Cloning into '%s'...\n"
 msgstr "S'està clonant a '%s'...\n"
 
 #: builtin/clone.c:999
-msgid ""
-"clone --recursive is not compatible with both --reference and --reference-if-"
-"able"
-msgstr ""
-"clone --recursive no és compatible amb ambdós --reference i --reference-if-"
-"able"
+msgid "clone --recursive is not compatible with both --reference and --reference-if-able"
+msgstr "clone --recursive no és compatible amb ambdós --reference i --reference-if-able"
 
 #: builtin/clone.c:1055
 msgid "--depth is ignored in local clones; use file:// instead."
@@ -6782,13 +6563,11 @@ msgstr "--depth s'ignora en els clons locals; useu file:// en lloc d'això."
 
 #: builtin/clone.c:1057
 msgid "--shallow-since is ignored in local clones; use file:// instead."
-msgstr ""
-"--shallow-since s'ignora en els clons locals; useu file:// en lloc d'això."
+msgstr "--shallow-since s'ignora en els clons locals; useu file:// en lloc d'això."
 
 #: builtin/clone.c:1059
 msgid "--shallow-exclude is ignored in local clones; use file:// instead."
-msgstr ""
-"--shallow-exclude s'ignora en els clons locals; useu file:// en lloc d'això."
+msgstr "--shallow-exclude s'ignora en els clons locals; useu file:// en lloc d'això."
 
 #: builtin/clone.c:1062
 msgid "source repository is shallow, ignoring --local"
@@ -6923,8 +6702,7 @@ msgid ""
 "    git commit --allow-empty\n"
 "\n"
 msgstr ""
-"El «cherry pick» previ ja està buit, possiblement a causa de resolució de "
-"conflicte.\n"
+"El «cherry pick» previ ja està buit, possiblement a causa de resolució de conflicte.\n"
 "Si el voleu cometre de totes maneres, useu:\n"
 "\n"
 "    git commit --allow-empty\n"
@@ -7180,9 +6958,7 @@ msgstr "--include/--only no té sentit sense camí."
 
 #: builtin/commit.c:1212
 msgid "Explicit paths specified without -i or -o; assuming --only paths..."
-msgstr ""
-"S'han especificat camins explícits sense -i o -o; s'està presumint --only "
-"camins..."
+msgstr "S'han especificat camins explícits sense -i o -o; s'està presumint --only camins..."
 
 #: builtin/commit.c:1224 builtin/tag.c:551
 #, c-format
@@ -7205,8 +6981,7 @@ msgstr "mostra la informació de branca"
 msgid "version"
 msgstr "versió"
 
-#: builtin/commit.c:1343 builtin/commit.c:1616 builtin/push.c:525
-#: builtin/worktree.c:448
+#: builtin/commit.c:1343 builtin/commit.c:1616 builtin/push.c:525 builtin/worktree.c:448
 msgid "machine-readable output"
 msgstr "sortida llegible per màquina"
 
@@ -7218,16 +6993,14 @@ msgstr "mostra l'estat en format llarg (per defecte)"
 msgid "terminate entries with NUL"
 msgstr "acaba les entrades amb NUL"
 
-#: builtin/commit.c:1351 builtin/commit.c:1624 builtin/fast-export.c:981
-#: builtin/fast-export.c:984 builtin/tag.c:411
+#: builtin/commit.c:1351 builtin/commit.c:1624 builtin/fast-export.c:981 builtin/fast-export.c:984
+#: builtin/tag.c:411
 msgid "mode"
 msgstr "mode"
 
 #: builtin/commit.c:1352 builtin/commit.c:1624
 msgid "show untracked files, optional modes: all, normal, no. (Default: all)"
-msgstr ""
-"mostra els fitxers no seguits, modes opcionals: all, normal, no. (Per "
-"defecte: all)"
+msgstr "mostra els fitxers no seguits, modes opcionals: all, normal, no. (Per defecte: all)"
 
 #: builtin/commit.c:1355
 msgid "show ignored files"
@@ -7238,12 +7011,8 @@ msgid "when"
 msgstr "quan"
 
 #: builtin/commit.c:1357
-msgid ""
-"ignore changes to submodules, optional when: all, dirty, untracked. "
-"(Default: all)"
-msgstr ""
-"ignora els canvis als submòduls, opcional quan: all, dirty, untracked. (Per "
-"defecte: all)"
+msgid "ignore changes to submodules, optional when: all, dirty, untracked. (Default: all)"
+msgstr "ignora els canvis als submòduls, opcional quan: all, dirty, untracked. (Per defecte: all)"
 
 #: builtin/commit.c:1359
 msgid "list untracked files in columns"
@@ -7297,8 +7066,8 @@ msgstr "data"
 msgid "override date for commit"
 msgstr "data corregida de la comissió"
 
-#: builtin/commit.c:1589 builtin/merge.c:221 builtin/notes.c:398
-#: builtin/notes.c:561 builtin/tag.c:407
+#: builtin/commit.c:1589 builtin/merge.c:221 builtin/notes.c:398 builtin/notes.c:561
+#: builtin/tag.c:407
 msgid "message"
 msgstr "missatge"
 
@@ -7306,8 +7075,8 @@ msgstr "missatge"
 msgid "commit message"
 msgstr "missatge de comissió"
 
-#: builtin/commit.c:1590 builtin/commit.c:1591 builtin/commit.c:1592
-#: builtin/commit.c:1593 parse-options.h:257 ref-filter.h:77
+#: builtin/commit.c:1590 builtin/commit.c:1591 builtin/commit.c:1592 builtin/commit.c:1593
+#: parse-options.h:257 ref-filter.h:77
 msgid "commit"
 msgstr "comissió"
 
@@ -7321,15 +7090,11 @@ msgstr "reusa el missatge de la comissió especificada"
 
 #: builtin/commit.c:1592
 msgid "use autosquash formatted message to fixup specified commit"
-msgstr ""
-"usa el missatge formatat de «squash» automàtic per a corregir la comissió "
-"especificada"
+msgstr "usa el missatge formatat de «squash» automàtic per a corregir la comissió especificada"
 
 #: builtin/commit.c:1593
 msgid "use autosquash formatted message to squash specified commit"
-msgstr ""
-"usa el missatge formatat de «squash» automàtic per a «squash» a la comissió "
-"especificada"
+msgstr "usa el missatge formatat de «squash» automàtic per a «squash» a la comissió especificada"
 
 #: builtin/commit.c:1594
 msgid "the commit is authored by me now (used with -C/-c/--amend)"
@@ -7359,8 +7124,7 @@ msgstr "com suprimir els espais i #comentaris del missatge"
 msgid "include status in commit message template"
 msgstr "inclou l'estat en la plantilla de missatge de comissió"
 
-#: builtin/commit.c:1601 builtin/merge.c:233 builtin/pull.c:166
-#: builtin/revert.c:112
+#: builtin/commit.c:1601 builtin/merge.c:233 builtin/pull.c:166 builtin/revert.c:112
 msgid "GPG sign commit"
 msgstr "signa la comissió amb GPG"
 
@@ -7505,8 +7269,7 @@ msgstr "obtén el valor específic per a l'URL: secció[.variable] URL"
 
 #: builtin/config.c:67
 msgid "replace all matching variables: name value [value_regex]"
-msgstr ""
-"reemplaça totes les variables que coincideixen: nom valor [regex_de_valors]"
+msgstr "reemplaça totes les variables que coincideixen: nom valor [regex_de_valors]"
 
 #: builtin/config.c:68
 msgid "add a new variable: name value"
@@ -7582,9 +7345,7 @@ msgstr "respecta les directives d'inclusió en cercar"
 
 #: builtin/config.c:86
 msgid "show origin of config (file, standard input, blob, command line)"
-msgstr ""
-"mostra l'origen de la configuració (fitxer, entrada estàndard, blob, línia "
-"d'ordres)"
+msgstr "mostra l'origen de la configuració (fitxer, entrada estàndard, blob, línia d'ordres)"
 
 #: builtin/config.c:328
 msgid "unable to parse default color value"
@@ -7894,13 +7655,10 @@ msgstr "utilitza l'eina de diff especificada"
 
 #: builtin/difftool.c:683
 msgid "print a list of diff tools that may be used with `--tool`"
-msgstr ""
-"imprimeix una llista de totes les eines diff que es podeu usar amb `--tool`"
+msgstr "imprimeix una llista de totes les eines diff que podeu usar amb `--tool`"
 
 #: builtin/difftool.c:686
-msgid ""
-"make 'git-difftool' exit when an invoked diff tool returns a non - zero exit "
-"code"
+msgid "make 'git-difftool' exit when an invoked diff tool returns a non - zero exit code"
 msgstr ""
 
 #: builtin/difftool.c:688
@@ -8105,8 +7863,7 @@ msgstr "no es pot obtenir en la branca actual"
 msgid "[tag update]"
 msgstr "[actualització d'etiqueta]"
 
-#: builtin/fetch.c:634 builtin/fetch.c:667 builtin/fetch.c:683
-#: builtin/fetch.c:698
+#: builtin/fetch.c:634 builtin/fetch.c:667 builtin/fetch.c:683 builtin/fetch.c:698
 msgid "unable to update local ref"
 msgstr "no s'ha pogut actualitzar la referència local"
 
@@ -8138,8 +7895,7 @@ msgstr "%s no ha enviat tots els objectes necessaris\n"
 #: builtin/fetch.c:768
 #, c-format
 msgid "reject %s because shallow roots are not allowed to be updated"
-msgstr ""
-"rebutja %s perquè no es permet que les arrels superficials s'actualitzin"
+msgstr "rebutja %s perquè no es permet que les arrels superficials s'actualitzin"
 
 #: builtin/fetch.c:855 builtin/fetch.c:951
 #, c-format
@@ -8250,10 +8006,8 @@ msgid "Fetching a group and specifying refspecs does not make sense"
 msgstr "Obtenir un grup i especificar referències no té sentit"
 
 #: builtin/fmt-merge-msg.c:14
-msgid ""
-"git fmt-merge-msg [-m <message>] [--log[=<n>] | --no-log] [--file <file>]"
-msgstr ""
-"git fmt-merge-msg [-m <missatge>] [--log[=<n>] | --no-log] [--file <fitxer>]"
+msgid "git fmt-merge-msg [-m <message>] [--log[=<n>] | --no-log] [--file <file>]"
+msgstr "git fmt-merge-msg [-m <missatge>] [--log[=<n>] | --no-log] [--file <fitxer>]"
 
 #: builtin/fmt-merge-msg.c:663
 msgid "populate log with at most <n> entries from shortlog"
@@ -8293,9 +8047,7 @@ msgstr "git for-each-ref [--contains  [<comissió>]] [--no-contains [<comissió>
 
 #: builtin/for-each-ref.c:27
 msgid "quote placeholders suitably for shells"
-msgstr ""
-"posa els marcadors de posició de forma adequada per a "
-"intèrprets d'ordres"
+msgstr "posa els marcadors de posició de forma adequada per a intèrprets d'ordres"
 
 #: builtin/for-each-ref.c:29
 msgid "quote placeholders suitably for perl"
@@ -8398,7 +8150,7 @@ msgid "git gc [<options>]"
 msgstr "git gc [<opcions>]"
 
 #: builtin/gc.c:78
-#, , c-format
+#, c-format
 msgid "Failed to fstat %s: %s"
 msgstr "S'ha produït un error en fer fstat %s: %s"
 
@@ -8446,9 +8198,7 @@ msgstr "No s'ha pogut analitzar el valor gc.logexpiry %s"
 #: builtin/gc.c:407
 #, c-format
 msgid "Auto packing the repository in background for optimum performance.\n"
-msgstr ""
-"S'està empaquetant el dipòsit automàticament en el fons per rendiment "
-"òptim.\n"
+msgstr "S'està empaquetant el dipòsit automàticament en el fons per rendiment òptim.\n"
 
 #: builtin/gc.c:409
 #, c-format
@@ -8462,17 +8212,12 @@ msgstr "Vegeu \"git help gc\" per neteja manual.\n"
 
 #: builtin/gc.c:431
 #, c-format
-msgid ""
-"gc is already running on machine '%s' pid %<PRIuMAX> (use --force if not)"
-msgstr ""
-"gc ja s'està executant en la màquina '%s' pid %<PRIuMAX> (useu --force si no)"
+msgid "gc is already running on machine '%s' pid %<PRIuMAX> (use --force if not)"
+msgstr "gc ja s'està executant en la màquina '%s' pid %<PRIuMAX> (useu --force si no)"
 
 #: builtin/gc.c:475
-msgid ""
-"There are too many unreachable loose objects; run 'git prune' to remove them."
-msgstr ""
-"Hi ha massa objectes solts inabastables; executeu 'git prune' per a eliminar-"
-"los."
+msgid "There are too many unreachable loose objects; run 'git prune' to remove them."
+msgstr "Hi ha massa objectes solts inabastables; executeu 'git prune' per a eliminar-los."
 
 #: builtin/grep.c:25
 msgid "git grep [<options>] [-e] <pattern> [<rev>...] [[--] <path>...]"
@@ -8621,9 +8366,7 @@ msgstr "imprimeix una línia buida entre coincidències de fitxers distints"
 
 #: builtin/grep.c:1043
 msgid "show filename only once above matches from same file"
-msgstr ""
-"mostra el nom de fitxer només una vegada a dalt de les coincidències del "
-"mateix fitxer"
+msgstr "mostra el nom de fitxer només una vegada a dalt de les coincidències del mateix fitxer"
 
 #: builtin/grep.c:1046
 msgid "show <n> context lines before and after matches"
@@ -8671,9 +8414,7 @@ msgstr "indica coincidència amb estat de sortida sense sortida textual"
 
 #: builtin/grep.c:1080
 msgid "show only matches from files that match all patterns"
-msgstr ""
-"mostra només les coincidències dels fitxers que coincideixin amb tots els "
-"patrons"
+msgstr "mostra només les coincidències dels fitxers que coincideixin amb tots els patrons"
 
 #: builtin/grep.c:1082
 msgid "show parse tree for grep expression"
@@ -8730,12 +8471,9 @@ msgid "both --cached and trees are given."
 msgstr "s'han donat ambdós --caches i arbres."
 
 #: builtin/hash-object.c:81
-msgid ""
-"git hash-object [-t <type>] [-w] [--path=<file> | --no-filters] [--stdin] "
-"[--] <file>..."
+msgid "git hash-object [-t <type>] [-w] [--path=<file> | --no-filters] [--stdin] [--] <file>..."
 msgstr ""
-"git hash-object [-t <tipus>] [-w] [--path=<fitxer> | --no-filters] [--stdin] "
-"[--] <fitxer>..."
+"git hash-object [-t <tipus>] [-w] [--path=<fitxer> | --no-filters] [--stdin] [--] <fitxer>..."
 
 #: builtin/hash-object.c:82
 msgid "git hash-object  --stdin-paths"
@@ -8762,11 +8500,8 @@ msgid "store file as is without filters"
 msgstr "emmagatzema el fitxer tal com és sense filtres"
 
 #: builtin/hash-object.c:100
-msgid ""
-"just hash any random garbage to create corrupt objects for debugging Git"
-msgstr ""
-"només suma qualsevol brossa aleatòria per a crear objectes malmesos per a "
-"depurar al Git"
+msgid "just hash any random garbage to create corrupt objects for debugging Git"
+msgstr "només suma qualsevol brossa aleatòria per a crear objectes malmesos per a depurar al Git"
 
 #: builtin/hash-object.c:101
 msgid "process file as it were from this path"
@@ -8978,8 +8713,7 @@ msgstr "la inflació ha retornat %d"
 
 #: builtin/index-pack.c:528
 msgid "offset value overflow for delta base object"
-msgstr ""
-"desbordament de valor de desplaçament per a l'objecte base de diferències"
+msgstr "desbordament de valor de desplaçament per a l'objecte base de diferències"
 
 #: builtin/index-pack.c:536
 msgid "delta base offset is out of bound"
@@ -8999,8 +8733,7 @@ msgstr "no es pot fer pread en el fitxer de paquet"
 msgid "premature end of pack file, %<PRIuMAX> byte missing"
 msgid_plural "premature end of pack file, %<PRIuMAX> bytes missing"
 msgstr[0] "el final del fitxer de paquet és prematur, manca %<PRIuMAX> octet"
-msgstr[1] ""
-"el final del fitxer de paquet és prematur, manquen %<PRIuMAX> octets"
+msgstr[1] "el final del fitxer de paquet és prematur, manquen %<PRIuMAX> octets"
 
 #: builtin/index-pack.c:603
 msgid "serious inflate inconsistency"
@@ -9012,8 +8745,7 @@ msgstr "hi ha una inconsistència seriosa d'inflació"
 msgid "SHA1 COLLISION FOUND WITH %s !"
 msgstr "S'HA TROBAT UNA COL·LISIÓ SHA1 AMB %s !"
 
-#: builtin/index-pack.c:752 builtin/pack-objects.c:164
-#: builtin/pack-objects.c:257
+#: builtin/index-pack.c:752 builtin/pack-objects.c:164 builtin/pack-objects.c:257
 #, c-format
 msgid "unable to read %s"
 msgstr "no s'ha pogut llegir %s"
@@ -9021,7 +8753,7 @@ msgstr "no s'ha pogut llegir %s"
 #: builtin/index-pack.c:814
 #, c-format
 msgid "cannot read existing object info %s"
-msgstr "no es pot llegir la informació de objecte existent %s"
+msgstr "no es pot llegir la informació d'objecte existent %s"
 
 #: builtin/index-pack.c:822
 #, c-format
@@ -9178,8 +8910,8 @@ msgstr[1] "longitud de cadena = %d: %lu objectes"
 msgid "packfile name '%s' does not end with '.pack'"
 msgstr "el nom del fitxer de paquet '%s' no acaba amb '.pack'"
 
-#: builtin/index-pack.c:1698 builtin/index-pack.c:1701
-#: builtin/index-pack.c:1717 builtin/index-pack.c:1721
+#: builtin/index-pack.c:1698 builtin/index-pack.c:1701 builtin/index-pack.c:1717
+#: builtin/index-pack.c:1721
 #, c-format
 msgid "bad %s"
 msgstr "%s dolent"
@@ -9278,11 +9010,11 @@ msgstr "S'ha inicialitzat un dipòsit buit del Git en %s%s\n"
 
 #: builtin/init-db.c:457
 msgid ""
-"git init [-q | --quiet] [--bare] [--template=<template-directory>] [--"
-"shared[=<permissions>]] [<directory>]"
+"git init [-q | --quiet] [--bare] [--template=<template-directory>] [--shared[=<permissions>]] "
+"[<directory>]"
 msgstr ""
-"git init [-q | --quiet] [--bare] [--template=<directori-de-plantilla>] [--"
-"shared[=<permisos>]] [<directori>]"
+"git init [-q | --quiet] [--bare] [--template=<directori-de-plantilla>] [--shared[=<permisos>]] "
+"[<directori>]"
 
 #: builtin/init-db.c:480
 msgid "permissions"
@@ -9305,11 +9037,8 @@ msgstr "no es pot canviar de directori a %s"
 #: builtin/init-db.c:545
 #, c-format
 msgid ""
-"%s (or --work-tree=<directory>) not allowed without specifying %s (or --git-"
-"dir=<directory>)"
-msgstr ""
-"no es permet %s (o --work-tree=<directori>) sense especificar %s (o --git-"
-"dir=<directori>)"
+"%s (or --work-tree=<directory>) not allowed without specifying %s (or --git-dir=<directory>)"
+msgstr "no es permet %s (o --work-tree=<directori>) sense especificar %s (o --git-dir=<directori>)"
 
 #: builtin/init-db.c:573
 #, c-format
@@ -9318,11 +9047,11 @@ msgstr "No es pot accedir a l'arbre de treball '%s'"
 
 #: builtin/interpret-trailers.c:15
 msgid ""
-"git interpret-trailers [--in-place] [--trim-empty] [(--trailer "
-"<token>[(=|:)<value>])...] [<file>...]"
+"git interpret-trailers [--in-place] [--trim-empty] [(--trailer <token>[(=|:)<value>])...] "
+"[<file>...]"
 msgstr ""
-"git interpret-trailers [--in-place] [--trim-empty] [(--trailer "
-"<testimoni>[(=|:)<valor>])...] [<fitxer>...]"
+"git interpret-trailers [--in-place] [--trim-empty] [(--trailer <testimoni>[(=|:)<valor>])...] "
+"[<fitxer>...]"
 
 #: builtin/interpret-trailers.c:26
 msgid "edit files in place"
@@ -9455,10 +9184,9 @@ msgid ""
 "please use git branch --set-upstream-to to track a remote branch.\n"
 "Or you could specify base commit by --base=<base-commit-id> manually."
 msgstr ""
-"S'ha produït un error en obtenir la font. Si voleu registrar la comissió "
-"base\n"
+"S'ha produït un error en obtenir la font. Si voleu registrar la comissió base\n"
 "automàticament, si us plau, useu git branch --set-upstream-to per a\n"
-"seguir una branca remot. O podeu especificar la comissió base manualment\n"
+"seguir una branca remota. O podeu especificar la comissió base manualment\n"
 "amb --base=<id-de-comissió-base>."
 
 #: builtin/log.c:1294
@@ -9543,8 +9271,7 @@ msgstr "no incloguis pedaços que coincideixin amb comissions a la font"
 
 #: builtin/log.c:1452
 msgid "show patch format instead of default (patch + stat)"
-msgstr ""
-"mostra el format de pedaç en lloc del per defecte (pedaç + estadístiques)"
+msgstr "mostra el format de pedaç en lloc del per defecte (pedaç + estadístiques)"
 
 #: builtin/log.c:1454
 msgid "Messaging"
@@ -9576,8 +9303,7 @@ msgstr "identitat"
 
 #: builtin/log.c:1462
 msgid "set From address to <ident> (or committer ident if absent)"
-msgstr ""
-"estableix l'adreça From a <identitat> (o la identitat del comitent si manca)"
+msgstr "estableix l'adreça From a <identitat> (o la identitat del comitent si manca)"
 
 #: builtin/log.c:1464
 msgid "message-id"
@@ -9671,11 +9397,9 @@ msgstr "git cherry [-v] [<font> [<cap> [<límit>]]]"
 
 #: builtin/log.c:1887
 #, c-format
-msgid ""
-"Could not find a tracked remote branch, please specify <upstream> manually.\n"
+msgid "Could not find a tracked remote branch, please specify <upstream> manually.\n"
 msgstr ""
-"No s'ha pogut trobar una branca remota seguida. Si us plau, especifiqueu "
-"<font> manualment.\n"
+"No s'ha pogut trobar una branca remota seguida. Si us plau, especifiqueu <font> manualment.\n"
 
 #: builtin/ls-files.c:468
 msgid "git ls-files [<options>] [<file>...]"
@@ -9691,8 +9415,7 @@ msgstr "usa lletres minúscules per als fitxers 'assume unchanged'"
 
 #: builtin/ls-files.c:521
 msgid "show cached files in the output (default)"
-msgstr ""
-"mostra en la sortida els fitxers desats en la memòria cau (per defecte)"
+msgstr "mostra en la sortida els fitxers desats en la memòria cau (per defecte)"
 
 #: builtin/ls-files.c:523
 msgid "show deleted files in the output"
@@ -9772,8 +9495,7 @@ msgstr "arbre"
 
 #: builtin/ls-files.c:565
 msgid "pretend that paths removed since <tree-ish> are still present"
-msgstr ""
-"pretén que els camins eliminats després de <arbre> encara siguin presents"
+msgstr "pretén que els camins eliminats després de <arbre> encara siguin presents"
 
 #: builtin/ls-files.c:567
 msgid "show debugging data"
@@ -9860,8 +9582,7 @@ msgstr "usa els noms de camí complets"
 
 #: builtin/ls-tree.c:143
 msgid "list entire tree; not just current directory (implies --full-name)"
-msgstr ""
-"llista l'arbre sencer; no només el directori actual (implica --full-name)"
+msgstr "llista l'arbre sencer; no només el directori actual (implica --full-name)"
 
 #: builtin/merge.c:46
 msgid "git merge [<options>] [<commit>...]"
@@ -9908,9 +9629,7 @@ msgstr "(sinònim de --stat)"
 
 #: builtin/merge.c:202 builtin/pull.c:136
 msgid "add (at most <n>) entries from shortlog to merge commit message"
-msgstr ""
-"afegeix (com a màxim <n>) entrades del registre curt al missatge de comissió "
-"de fusió"
+msgstr "afegeix (com a màxim <n>) entrades del registre curt al missatge de comissió de fusió"
 
 #: builtin/merge.c:205 builtin/pull.c:139
 msgid "create a single commit instead of doing a merge"
@@ -9936,8 +9655,7 @@ msgstr "avorta si l'avanç ràpid no és possible"
 msgid "verify that the named commit has a valid GPG signature"
 msgstr "verifica que la comissió anomenada tingui una signatura GPG vàlida"
 
-#: builtin/merge.c:217 builtin/notes.c:773 builtin/pull.c:158
-#: builtin/revert.c:108
+#: builtin/merge.c:217 builtin/notes.c:773 builtin/pull.c:158 builtin/revert.c:108
 msgid "strategy"
 msgstr "estratègia"
 
@@ -10032,8 +9750,7 @@ msgstr "No s'ha pogut llegir de '%s'"
 #: builtin/merge.c:746
 #, c-format
 msgid "Not committing merge; use 'git commit' to complete the merge.\n"
-msgstr ""
-"No s'està cometent la fusió; useu 'git commit' per a completar la fusió.\n"
+msgstr "No s'està cometent la fusió; useu 'git commit' per a completar la fusió.\n"
 
 #: builtin/merge.c:752
 #, c-format
@@ -10063,9 +9780,7 @@ msgstr "Meravellós.\n"
 #: builtin/merge.c:851
 #, c-format
 msgid "Automatic merge failed; fix conflicts and then commit the result.\n"
-msgstr ""
-"La fusió automàtica ha fallat; arregleu els conflictes i després cometeu el "
-"resultat.\n"
+msgstr "La fusió automàtica ha fallat; arregleu els conflictes i després cometeu el resultat.\n"
 
 #: builtin/merge.c:890
 msgid "No current branch."
@@ -10145,9 +9860,7 @@ msgstr "No podeu combinar --squash amb --no-ff."
 
 #: builtin/merge.c:1209
 msgid "No commit specified and merge.defaultToUpstream not set."
-msgstr ""
-"No hi ha una comissió especificada i merge.defaultToUpstream no està "
-"establert."
+msgstr "No hi ha una comissió especificada i merge.defaultToUpstream no està establert."
 
 #: builtin/merge.c:1226
 msgid "Squash commit into empty head not supported yet"
@@ -10245,9 +9958,7 @@ msgstr "S'està usant el %s per a preparar la resolució a mà.\n"
 #: builtin/merge.c:1554
 #, c-format
 msgid "Automatic merge went well; stopped before committing as requested\n"
-msgstr ""
-"La fusió automàtica ha sortit bé; s'ha aturat abans de cometre com s'havia "
-"demanat\n"
+msgstr "La fusió automàtica ha sortit bé; s'ha aturat abans de cometre com s'havia demanat\n"
 
 #: builtin/merge-base.c:29
 msgid "git merge-base [-a | --all] <commit> <commit>..."
@@ -10287,16 +9998,14 @@ msgstr "és la primera un avantpassat de l'altre?"
 
 #: builtin/merge-base.c:225
 msgid "find where <commit> forked from reflog of <ref>"
-msgstr ""
-"troba on <comissió> s'ha bifurcat del registre de referències de <referència>"
+msgstr "troba on <comissió> s'ha bifurcat del registre de referències de <referència>"
 
 #: builtin/merge-file.c:8
 msgid ""
-"git merge-file [<options>] [-L <name1> [-L <orig> [-L <name2>]]] <file1> "
-"<orig-file> <file2>"
+"git merge-file [<options>] [-L <name1> [-L <orig> [-L <name2>]]] <file1> <orig-file> <file2>"
 msgstr ""
-"git merge-file [<opcions>] [-L <nom1> [-L <original> [-L <nom2>]]] <fitxer1> "
-"<fitxer-original> <fitxer2>"
+"git merge-file [<opcions>] [-L <nom1> [-L <original> [-L <nom2>]]] <fitxer1> <fitxer-original> "
+"<fitxer2>"
 
 #: builtin/merge-file.c:32
 msgid "send results to standard output"
@@ -10389,8 +10098,7 @@ msgstr "El directori %s és en l'índex i no hi ha cap submòdul?"
 #: builtin/mv.c:84 builtin/rm.c:290
 msgid "Please stage your changes to .gitmodules or stash them to proceed"
 msgstr ""
-"Si us plau, «stage» els vostres canvis a .gitmodules o feu «stage» dels "
-"mateixos per a procedir"
+"Si us plau, «stage» els vostres canvis a .gitmodules o feu «stage» dels mateixos per a procedir"
 
 #: builtin/mv.c:102
 #, c-format
@@ -10521,40 +10229,36 @@ msgstr "git notes [--ref <referència-de-notes>] [llista [<objecte>]]"
 
 #: builtin/notes.c:26
 msgid ""
-"git notes [--ref <notes-ref>] add [-f] [--allow-empty] [-m <msg> | -F <file> "
-"| (-c | -C) <object>] [<object>]"
+"git notes [--ref <notes-ref>] add [-f] [--allow-empty] [-m <msg> | -F <file> | (-c | -C) "
+"<object>] [<object>]"
 msgstr ""
-"git notes [--ref <referència-de-notes>] add [-f] [--allow-empty] [-m "
-"<missatge> | -F <fitxer> | (-c | -C) <objecte>] [<objecte>]"
+"git notes [--ref <referència-de-notes>] add [-f] [--allow-empty] [-m <missatge> | -F <fitxer> | "
+"(-c | -C) <objecte>] [<objecte>]"
 
 #: builtin/notes.c:27
 msgid "git notes [--ref <notes-ref>] copy [-f] <from-object> <to-object>"
-msgstr ""
-"git notes [--ref <referència-de-notes>] copy [-f] <d'objecte> <a-objecte>"
+msgstr "git notes [--ref <referència-de-notes>] copy [-f] <d'objecte> <a-objecte>"
 
 #: builtin/notes.c:28
 msgid ""
-"git notes [--ref <notes-ref>] append [--allow-empty] [-m <msg> | -F <file> | "
-"(-c | -C) <object>] [<object>]"
+"git notes [--ref <notes-ref>] append [--allow-empty] [-m <msg> | -F <file> | (-c | -C) <object>] "
+"[<object>]"
 msgstr ""
-"git notes [--ref <referència-de-notes>] append [--allow-empty] [-m "
-"<missatge> | -F <fitxer> | (-c | -C) <objecte>] [<objecte>]"
+"git notes [--ref <referència-de-notes>] append [--allow-empty] [-m <missatge> | -F <fitxer> | (-"
+"c | -C) <objecte>] [<objecte>]"
 
 #: builtin/notes.c:29
 msgid "git notes [--ref <notes-ref>] edit [--allow-empty] [<object>]"
-msgstr ""
-"git notes [--ref <referència-de-notes>] edit [--allow-empty] [<objecte>]"
+msgstr "git notes [--ref <referència-de-notes>] edit [--allow-empty] [<objecte>]"
 
 #: builtin/notes.c:30
 msgid "git notes [--ref <notes-ref>] show [<object>]"
 msgstr "git notes [--ref <referència-de-notes>] show [<objecte>]"
 
 #: builtin/notes.c:31
-msgid ""
-"git notes [--ref <notes-ref>] merge [-v | -q] [-s <strategy>] <notes-ref>"
+msgid "git notes [--ref <notes-ref>] merge [-v | -q] [-s <strategy>] <notes-ref>"
 msgstr ""
-"git notes [--ref <referència-de-notes>] merge [-v | -q] [-s <estratègia>] "
-"<referència-de-notes>"
+"git notes [--ref <referència-de-notes>] merge [-v | -q] [-s <estratègia>] <referència-de-notes>"
 
 #: builtin/notes.c:32
 msgid "git notes merge --commit [-v | -q]"
@@ -10648,9 +10352,7 @@ msgstr "S'ha produït un error en finalitzar 'show' per a l'objecte '%s'"
 
 #: builtin/notes.c:194
 msgid "please supply the note contents using either -m or -F option"
-msgstr ""
-"si us plau, proveïu els continguts de la nota fent servir l'opció -m o "
-"l'opció -F"
+msgstr "si us plau, proveïu els continguts de la nota fent servir l'opció -m o l'opció -F"
 
 #: builtin/notes.c:203
 msgid "unable to write note object"
@@ -10671,9 +10373,9 @@ msgstr "no es pot llegir '%s'"
 msgid "could not open or read '%s'"
 msgstr "no s'ha pogut obrir o llegir '%s'"
 
-#: builtin/notes.c:254 builtin/notes.c:305 builtin/notes.c:307
-#: builtin/notes.c:372 builtin/notes.c:427 builtin/notes.c:513
-#: builtin/notes.c:518 builtin/notes.c:596 builtin/notes.c:658
+#: builtin/notes.c:254 builtin/notes.c:305 builtin/notes.c:307 builtin/notes.c:372
+#: builtin/notes.c:427 builtin/notes.c:513 builtin/notes.c:518 builtin/notes.c:596
+#: builtin/notes.c:658
 #, c-format
 msgid "failed to resolve '%s' as a valid ref."
 msgstr "s'ha produït un error en resoldre '%s' com a referència vàlida."
@@ -10705,9 +10407,9 @@ msgstr "s'ha produït un error en copiar les notes de '%s' a '%s'"
 msgid "refusing to %s notes in %s (outside of refs/notes/)"
 msgstr "s'està refusant %s les notes en %s (fora de refs/notes/)"
 
-#: builtin/notes.c:365 builtin/notes.c:420 builtin/notes.c:496
-#: builtin/notes.c:508 builtin/notes.c:584 builtin/notes.c:651
-#: builtin/notes.c:801 builtin/notes.c:948 builtin/notes.c:969
+#: builtin/notes.c:365 builtin/notes.c:420 builtin/notes.c:496 builtin/notes.c:508
+#: builtin/notes.c:584 builtin/notes.c:651 builtin/notes.c:801 builtin/notes.c:948
+#: builtin/notes.c:969
 msgid "too many parameters"
 msgstr "massa paràmetres"
 
@@ -10742,12 +10444,10 @@ msgstr "reemplaça les notes existents"
 
 #: builtin/notes.c:437
 #, c-format
-msgid ""
-"Cannot add notes. Found existing notes for object %s. Use '-f' to overwrite "
-"existing notes"
+msgid "Cannot add notes. Found existing notes for object %s. Use '-f' to overwrite existing notes"
 msgstr ""
-"No es poden afegir les notes. S'han trobat notes existents de l'objecte %s. "
-"Useu '-f' per a sobreescriure les notes existents."
+"No es poden afegir les notes. S'han trobat notes existents de l'objecte %s. Useu '-f' per a "
+"sobreescriure les notes existents."
 
 #: builtin/notes.c:452 builtin/notes.c:531
 #, c-format
@@ -10765,8 +10465,7 @@ msgstr "llegeix els objectes des d'stdin"
 
 #: builtin/notes.c:486
 msgid "load rewriting config for <command> (implies --stdin)"
-msgstr ""
-"carrega la configuració de reescriptura per a <ordre> (implica --stdin)"
+msgstr "carrega la configuració de reescriptura per a <ordre> (implica --stdin)"
 
 #: builtin/notes.c:504
 msgid "too few parameters"
@@ -10774,12 +10473,10 @@ msgstr "hi ha massa pocs paràmetres"
 
 #: builtin/notes.c:525
 #, c-format
-msgid ""
-"Cannot copy notes. Found existing notes for object %s. Use '-f' to overwrite "
-"existing notes"
+msgid "Cannot copy notes. Found existing notes for object %s. Use '-f' to overwrite existing notes"
 msgstr ""
-"No es poden copiar les notes. S'han trobat notes existents de l'objecte %s. "
-"Useu '-f' per a sobreescriure les notes existents."
+"No es poden copiar les notes. S'han trobat notes existents de l'objecte %s. Useu '-f' per a "
+"sobreescriure les notes existents."
 
 #: builtin/notes.c:537
 #, c-format
@@ -10805,8 +10502,7 @@ msgstr "s'ha produït un error en suprimir la referència NOTES_MERGE_REF"
 
 #: builtin/notes.c:688
 msgid "failed to remove 'git notes merge' worktree"
-msgstr ""
-"s'ha produït un error en eliminar l'arbre de treball de 'git notes merge'"
+msgstr "s'ha produït un error en eliminar l'arbre de treball de 'git notes merge'"
 
 #: builtin/notes.c:708
 msgid "failed to read ref NOTES_MERGE_PARTIAL"
@@ -10842,12 +10538,9 @@ msgid "Merge options"
 msgstr "Opcions de fusió"
 
 #: builtin/notes.c:774
-msgid ""
-"resolve notes conflicts using the given strategy (manual/ours/theirs/union/"
-"cat_sort_uniq)"
+msgid "resolve notes conflicts using the given strategy (manual/ours/theirs/union/cat_sort_uniq)"
 msgstr ""
-"resol els conflictes de nota usant l'estratègia donada (manual/ours/theirs/"
-"union/cat_sort_uniq)"
+"resol els conflictes de nota usant l'estratègia donada (manual/ours/theirs/union/cat_sort_uniq)"
 
 #: builtin/notes.c:776
 msgid "Committing unmerged notes"
@@ -10886,20 +10579,16 @@ msgstr "una fusió de notes a %s ja està en curs a %s"
 #: builtin/notes.c:862
 #, c-format
 msgid "failed to store link to current notes ref (%s)"
-msgstr ""
-"s'ha produït un error en emmagatzemar l'enllaç a la referència de notes "
-"actual (%s)"
+msgstr "s'ha produït un error en emmagatzemar l'enllaç a la referència de notes actual (%s)"
 
 #: builtin/notes.c:864
 #, c-format
 msgid ""
-"Automatic notes merge failed. Fix conflicts in %s and commit the result with "
-"'git notes merge --commit', or abort the merge with 'git notes merge --"
-"abort'.\n"
+"Automatic notes merge failed. Fix conflicts in %s and commit the result with 'git notes merge --"
+"commit', or abort the merge with 'git notes merge --abort'.\n"
 msgstr ""
-"La fusió de notes automàtica ha fallat. Arregleu els conflictes en %s i "
-"cometeu el resultat amb 'git notes merge --commit', o avorteu la fusió amb "
-"'git notes merge --abort'.\n"
+"La fusió de notes automàtica ha fallat. Arregleu els conflictes en %s i cometeu el resultat amb "
+"'git notes merge --commit', o avorteu la fusió amb 'git notes merge --abort'.\n"
 
 #: builtin/notes.c:886
 #, c-format
@@ -10936,18 +10625,14 @@ msgid "unknown subcommand: %s"
 msgstr "subordre desconeguda: %s"
 
 #: builtin/pack-objects.c:29
-msgid ""
-"git pack-objects --stdout [<options>...] [< <ref-list> | < <object-list>]"
+msgid "git pack-objects --stdout [<options>...] [< <ref-list> | < <object-list>]"
 msgstr ""
-"git pack-objects --stdout [<opcions>...] [< <llista-de-referències> | < "
-"<llista-de-objectes>]"
+"git pack-objects --stdout [<opcions>...] [< <llista-de-referències> | < <llista-de-objectes>]"
 
 #: builtin/pack-objects.c:30
-msgid ""
-"git pack-objects [<options>...] <base-name> [< <ref-list> | < <object-list>]"
+msgid "git pack-objects [<options>...] <base-name> [< <ref-list> | < <object-list>]"
 msgstr ""
-"git pack-objects [<opcions>...] <nom-base> [< <llista-de-referències> | < "
-"<llista-de-objectes>]"
+"git pack-objects [<opcions>...] <nom-base> [< <llista-de-referències> | < <llista-de-objectes>]"
 
 #: builtin/pack-objects.c:177 builtin/pack-objects.c:180
 #, c-format
@@ -10957,8 +10642,8 @@ msgstr "error de deflació (%d)"
 #: builtin/pack-objects.c:770
 msgid "disabling bitmap writing, packs are split due to pack.packSizeLimit"
 msgstr ""
-"s'està inhabilitant l'escriptura de mapes de bits, es divideixen els paquets "
-"a causa de pack.packSizeLimit"
+"s'està inhabilitant l'escriptura de mapes de bits, es divideixen els paquets a causa de pack."
+"packSizeLimit"
 
 #: builtin/pack-objects.c:783
 msgid "Writing objects"
@@ -10966,9 +10651,7 @@ msgstr "S'estan escrivint els objectes"
 
 #: builtin/pack-objects.c:1063
 msgid "disabling bitmap writing, as some objects are not being packed"
-msgstr ""
-"s'està inhabilitant l'escriptura de mapes de bits, perquè alguns objectes no "
-"s'empaqueten"
+msgstr "s'està inhabilitant l'escriptura de mapes de bits, perquè alguns objectes no s'empaqueten"
 
 #: builtin/pack-objects.c:2426
 msgid "Compressing objects"
@@ -11006,9 +10689,7 @@ msgstr "versió[,desplaçament]"
 
 #: builtin/pack-objects.c:2872
 msgid "write the pack index file in the specified idx format version"
-msgstr ""
-"escriu el fitxer d'índex de paquet en la versió de format d'índex "
-"especificada"
+msgstr "escriu el fitxer d'índex de paquet en la versió de format d'índex especificada"
 
 #: builtin/pack-objects.c:2875
 msgid "maximum size of each output pack file"
@@ -11016,8 +10697,7 @@ msgstr "mida màxima de cada fitxer de paquet de sortida"
 
 #: builtin/pack-objects.c:2877
 msgid "ignore borrowed objects from alternate object store"
-msgstr ""
-"ignora els objectes prestats d'un emmagatzemament d'objectes alternatiu"
+msgstr "ignora els objectes prestats d'un emmagatzemament d'objectes alternatiu"
 
 #: builtin/pack-objects.c:2879
 msgid "ignore packed objects"
@@ -11029,13 +10709,11 @@ msgstr "limita la finestra d'empaquetament per objectes"
 
 #: builtin/pack-objects.c:2883
 msgid "limit pack window by memory in addition to object limit"
-msgstr ""
-"limita la finestra d'empaquetament per memòria a més del límit d'objectes"
+msgstr "limita la finestra d'empaquetament per memòria a més del límit d'objectes"
 
 #: builtin/pack-objects.c:2885
 msgid "maximum length of delta chain allowed in the resulting pack"
-msgstr ""
-"longitud màxima de la cadena de diferències permesa en el paquet resultant"
+msgstr "longitud màxima de la cadena de diferències permesa en el paquet resultant"
 
 #: builtin/pack-objects.c:2887
 msgid "reuse existing deltas"
@@ -11071,9 +10749,7 @@ msgstr "inclou els objectes abastables de qualsevol referència"
 
 #: builtin/pack-objects.c:2905
 msgid "include objects referred by reflog entries"
-msgstr ""
-"inclou els objectes als quals facin referència les entrades del registre de "
-"referències"
+msgstr "inclou els objectes als quals facin referència les entrades del registre de referències"
 
 #: builtin/pack-objects.c:2908
 msgid "include objects referred to by the index"
@@ -11085,8 +10761,7 @@ msgstr "emet el paquet a stdout"
 
 #: builtin/pack-objects.c:2913
 msgid "include tag objects that refer to objects to be packed"
-msgstr ""
-"inclou els objectes d'etiqueta que facin referència als objectes a empaquetar"
+msgstr "inclou els objectes d'etiqueta que facin referència als objectes a empaquetar"
 
 #: builtin/pack-objects.c:2915
 msgid "keep unreachable objects"
@@ -11122,9 +10797,7 @@ msgstr "no amaguis les comissions per empelt"
 
 #: builtin/pack-objects.c:2932
 msgid "use a bitmap index if available to speed up counting objects"
-msgstr ""
-"usa un índex de mapa de bits, si està disponible, per a accelerar el "
-"recompte d'objectes"
+msgstr "usa un índex de mapa de bits, si està disponible, per a accelerar el recompte d'objectes"
 
 #: builtin/pack-objects.c:2934
 msgid "write a bitmap index together with the pack index"
@@ -11209,18 +10882,12 @@ msgid "Invalid value for pull.ff: %s"
 msgstr "Valor no vàlid per a pull.ff: %s"
 
 #: builtin/pull.c:397
-msgid ""
-"There is no candidate for rebasing against among the refs that you just "
-"fetched."
-msgstr ""
-"No hi ha cap candidat sobre el qual rebasar entre les referències que acabeu "
-"d'obtenir."
+msgid "There is no candidate for rebasing against among the refs that you just fetched."
+msgstr "No hi ha cap candidat sobre el qual rebasar entre les referències que acabeu d'obtenir."
 
 #: builtin/pull.c:399
-msgid ""
-"There are no candidates for merging among the refs that you just fetched."
-msgstr ""
-"No hi ha candidats per a fusionar entre les referències que acabeu d'obtenir."
+msgid "There are no candidates for merging among the refs that you just fetched."
+msgstr "No hi ha candidats per a fusionar entre les referències que acabeu d'obtenir."
 
 #: builtin/pull.c:400
 msgid ""
@@ -11257,8 +10924,7 @@ msgstr "Si us plau, especifiqueu amb què branca voleu fusionar."
 msgid "See git-pull(1) for details."
 msgstr "Vegeu git-pull(1) per detalls."
 
-#: builtin/pull.c:415 builtin/pull.c:421 builtin/pull.c:430
-#: git-parse-remote.sh:64
+#: builtin/pull.c:415 builtin/pull.c:421 builtin/pull.c:430 git-parse-remote.sh:64
 msgid "<remote>"
 msgstr "<remot>"
 
@@ -11272,11 +10938,8 @@ msgid "There is no tracking information for the current branch."
 msgstr "No hi ha cap informació de seguiment per a la branca actual."
 
 #: builtin/pull.c:432 git-parse-remote.sh:95
-msgid ""
-"If you wish to set tracking information for this branch you can do so with:"
-msgstr ""
-"Si voleu establir informació de seguiment per a aquesta branca, podeu fer-ho "
-"amb:"
+msgid "If you wish to set tracking information for this branch you can do so with:"
+msgstr "Si voleu establir informació de seguiment per a aquesta branca, podeu fer-ho amb:"
 
 #: builtin/pull.c:437
 #, c-format
@@ -11297,8 +10960,7 @@ msgstr "l'opció --[no-]-autostash és vàlid només amb --rebase."
 
 #: builtin/pull.c:809
 msgid "Updating an unborn branch with changes added to the index."
-msgstr ""
-"S'està actualitzant una branca no nascuda amb canvis afegits a l'índex."
+msgstr "S'està actualitzant una branca no nascuda amb canvis afegits a l'índex."
 
 #: builtin/pull.c:812
 msgid "pull with rebase"
@@ -11330,8 +10992,7 @@ msgid ""
 "to recover."
 msgstr ""
 "No es pot avançar ràpidament el vostre arbre de treball.\n"
-"Després d'assegurar que hàgiu desat qualsevol cosa preciosa de la sortida "
-"de\n"
+"Després d'assegurar que hàgiu desat qualsevol cosa preciosa de la sortida de\n"
 "$ git diff %s\n"
 "executeu\n"
 "$ git reset --hard\n"
@@ -11363,8 +11024,7 @@ msgid ""
 "To choose either option permanently, see push.default in 'git help config'."
 msgstr ""
 "\n"
-"Per a triar qualsevol opció permanentment, vegeu push.default a 'git help "
-"config'."
+"Per a triar qualsevol opció permanentment, vegeu push.default a 'git help config'."
 
 #: builtin/push.c:146
 #, c-format
@@ -11422,8 +11082,7 @@ msgstr ""
 #: builtin/push.c:183
 #, c-format
 msgid "The current branch %s has multiple upstream branches, refusing to push."
-msgstr ""
-"La branca actual %s té múltiples branques fonts, s'està refusant pujar."
+msgstr "La branca actual %s té múltiples branques fonts, s'està refusant pujar."
 
 #: builtin/push.c:186
 #, c-format
@@ -11437,11 +11096,8 @@ msgstr ""
 "quina branca remota."
 
 #: builtin/push.c:245
-msgid ""
-"You didn't specify any refspecs to push, and push.default is \"nothing\"."
-msgstr ""
-"No heu especificat cap especificació de referència a pujar, i push.default "
-"és \"nothing\"."
+msgid "You didn't specify any refspecs to push, and push.default is \"nothing\"."
+msgstr "No heu especificat cap especificació de referència a pujar, i push.default és \"nothing\"."
 
 #: builtin/push.c:252
 msgid ""
@@ -11485,8 +11141,7 @@ msgstr ""
 
 #: builtin/push.c:271
 msgid "Updates were rejected because the tag already exists in the remote."
-msgstr ""
-"S'han rebutjat les actualitzacions perquè l'etiqueta ja existeix en el remot."
+msgstr "S'han rebutjat les actualitzacions perquè l'etiqueta ja existeix en el remot."
 
 #: builtin/push.c:274
 msgid ""
@@ -11517,8 +11172,7 @@ msgstr "dipòsit dolent '%s'"
 #: builtin/push.c:370
 msgid ""
 "No configured push destination.\n"
-"Either specify the URL from the command-line or configure a remote "
-"repository using\n"
+"Either specify the URL from the command-line or configure a remote repository using\n"
 "\n"
 "    git remote add <name> <url>\n"
 "\n"
@@ -11527,8 +11181,7 @@ msgid ""
 "    git push <name>\n"
 msgstr ""
 "No hi ha cap destí de pujada configurat.\n"
-"Especifiqueu l'URL des de la línia d'ordres o bé configureu un dipòsit remot "
-"fent servir\n"
+"Especifiqueu l'URL des de la línia d'ordres o bé configureu un dipòsit remot fent servir\n"
 "\n"
 "    git remote add <nom> <url>\n"
 "\n"
@@ -11596,8 +11249,7 @@ msgstr "controla la pujada recursiva dels submòduls"
 msgid "use thin pack"
 msgstr "usa el paquet prim"
 
-#: builtin/push.c:535 builtin/push.c:536 builtin/send-pack.c:159
-#: builtin/send-pack.c:160
+#: builtin/push.c:535 builtin/push.c:536 builtin/send-pack.c:159 builtin/send-pack.c:160
 msgid "receive pack program"
 msgstr "programa que rep els paquets"
 
@@ -11647,13 +11299,13 @@ msgstr "les opcions de pujada no han de tenir caràcters de línia nova"
 
 #: builtin/read-tree.c:40
 msgid ""
-"git read-tree [(-m [--trivial] [--aggressive] | --reset | --prefix=<prefix>) "
-"[-u [--exclude-per-directory=<gitignore>] | -i]] [--no-sparse-checkout] [--"
-"index-output=<file>] (--empty | <tree-ish1> [<tree-ish2> [<tree-ish3>]])"
+"git read-tree [(-m [--trivial] [--aggressive] | --reset | --prefix=<prefix>) [-u [--exclude-per-"
+"directory=<gitignore>] | -i]] [--no-sparse-checkout] [--index-output=<file>] (--empty | <tree-"
+"ish1> [<tree-ish2> [<tree-ish3>]])"
 msgstr ""
-"git read-tree [(-m [--trivial] [--aggressive] | --reset | --prefix=<prefix>) "
-"[-u [--exclude-per-directory=<ignoral-de-git>] | -i]] [--no-sparse-checkout] "
-"[--index-output=<fitxer>] (--empty | <arbre1> [<arbre2> [<arbre3>]])"
+"git read-tree [(-m [--trivial] [--aggressive] | --reset | --prefix=<prefix>) [-u [--exclude-per-"
+"directory=<ignoral-de-git>] | -i]] [--no-sparse-checkout] [--index-output=<fitxer>] (--empty | "
+"<arbre1> [<arbre2> [<arbre3>]])"
 
 #: builtin/read-tree.c:130
 msgid "write resulting index to <file>"
@@ -11812,11 +11464,11 @@ msgstr "git remote [-v | --verbose]"
 
 #: builtin/remote.c:13
 msgid ""
-"git remote add [-t <branch>] [-m <master>] [-f] [--tags | --no-tags] [--"
-"mirror=<fetch|push>] <name> <url>"
+"git remote add [-t <branch>] [-m <master>] [-f] [--tags | --no-tags] [--mirror=<fetch|push>] "
+"<name> <url>"
 msgstr ""
-"git remote add [-t <branca>] [-m <mestra>] [-f] [--tags | --no-tags] [--"
-"mirror=<fetch|push>] <nom> <url>"
+"git remote add [-t <branca>] [-m <mestra>] [-f] [--tags | --no-tags] [--mirror=<fetch|push>] "
+"<nom> <url>"
 
 #: builtin/remote.c:14 builtin/remote.c:34
 msgid "git remote rename <old> <new>"
@@ -11839,10 +11491,8 @@ msgid "git remote prune [-n | --dry-run] <name>"
 msgstr "git remote prune [-n | --dry-run] <nom>"
 
 #: builtin/remote.c:19
-msgid ""
-"git remote [-v | --verbose] update [-p | --prune] [(<group> | <remote>)...]"
-msgstr ""
-"git remote [-v | --verbose] update [-p | --prune] [(<grup> | <remot>)...]"
+msgid "git remote [-v | --verbose] update [-p | --prune] [(<group> | <remote>)...]"
+msgstr "git remote [-v | --verbose] update [-p | --prune] [(<grup> | <remot>)...]"
 
 #: builtin/remote.c:20
 msgid "git remote set-branches [--add] <name> <branch>..."
@@ -11941,8 +11591,7 @@ msgstr "especificar una branca mestra no té sentit amb --mirror"
 
 #: builtin/remote.c:183
 msgid "specifying branches to track makes sense only with fetch mirrors"
-msgstr ""
-"especificar les branques a seguir té sentit només amb miralls d'obtenció"
+msgstr "especificar les branques a seguir té sentit només amb miralls d'obtenció"
 
 #: builtin/remote.c:190 builtin/remote.c:629
 #, c-format
@@ -11962,8 +11611,7 @@ msgstr "No s'ha pogut configurar la mestra '%s'"
 #: builtin/remote.c:336
 #, c-format
 msgid "Could not get fetch map for refspec %s"
-msgstr ""
-"No s'ha pogut obtenir el mapa d'obtenció de l'especificació de referència %s"
+msgstr "No s'ha pogut obtenir el mapa d'obtenció de l'especificació de referència %s"
 
 #: builtin/remote.c:437 builtin/remote.c:445
 msgid "(matching)"
@@ -11990,8 +11638,7 @@ msgid ""
 "\t%s\n"
 "\tPlease update the configuration manually if necessary."
 msgstr ""
-"No s'està actualitzant l'especificació de referències d'obtenció no per "
-"defecte\n"
+"No s'està actualitzant l'especificació de referències d'obtenció no per defecte\n"
 "\t%s\n"
 "\tSi us plau, actualitzeu la configuració manualment si és necessari."
 
@@ -12016,8 +11663,7 @@ msgstr[0] ""
 "Nota: Una branca fora de la jerarquia refs/remotes/ no s'ha eliminat;\n"
 "per a suprimir-la, useu:"
 msgstr[1] ""
-"Nota: Algunes branques fora de la jerarquia refs/remotes/ no s'han "
-"eliminat;\n"
+"Nota: Algunes branques fora de la jerarquia refs/remotes/ no s'han eliminat;\n"
 "per a suprimir-les, useu:"
 
 #: builtin/remote.c:808
@@ -12152,10 +11798,8 @@ msgstr "(desconegut)"
 
 #: builtin/remote.c:1166
 #, c-format
-msgid ""
-"  HEAD branch (remote HEAD is ambiguous, may be one of the following):\n"
-msgstr ""
-"  Branca de HEAD (el HEAD remot és ambigu, pot ser un dels següents):\n"
+msgid "  HEAD branch (remote HEAD is ambiguous, may be one of the following):\n"
+msgstr "  Branca de HEAD (el HEAD remot és ambigu, pot ser un dels següents):\n"
 
 #: builtin/remote.c:1178
 #, c-format
@@ -12199,9 +11843,7 @@ msgstr "No es pot determinar el HEAD remot"
 
 #: builtin/remote.c:1244
 msgid "Multiple remote HEAD branches. Please choose one explicitly with:"
-msgstr ""
-"Múltiples branques de HEAD remotes. Si us plau, trieu-ne una explícitament "
-"amb:"
+msgstr "Múltiples branques de HEAD remotes. Si us plau, trieu-ne una explícitament amb:"
 
 #: builtin/remote.c:1254
 #, c-format
@@ -12381,9 +12023,7 @@ msgstr "octets"
 
 #: builtin/repack.c:190
 msgid "same as the above, but limit memory size instead of entries count"
-msgstr ""
-"el mateix que l'anterior, però limita la mida de memòria en lloc del nombre "
-"d'entrades"
+msgstr "el mateix que l'anterior, però limita la mida de memòria en lloc del nombre d'entrades"
 
 #: builtin/repack.c:192
 msgid "limits the maximum delta depth"
@@ -12448,11 +12088,10 @@ msgstr "etiqueta de fusió mal formada en la comissió '%s'"
 #: builtin/replace.c:373
 #, c-format
 msgid ""
-"original commit '%s' contains mergetag '%s' that is discarded; use --edit "
-"instead of --graft"
+"original commit '%s' contains mergetag '%s' that is discarded; use --edit instead of --graft"
 msgstr ""
-"la comissió original '%s' conté l'etiqueta de fusió '%s' que es descarta; "
-"useu --edit en lloc de --graft"
+"la comissió original '%s' conté l'etiqueta de fusió '%s' que es descarta; useu --edit en lloc de "
+"--graft"
 
 #: builtin/replace.c:406
 #, c-format
@@ -12505,10 +12144,8 @@ msgid "register clean resolutions in index"
 msgstr "registra les resolucions netes en l'índex"
 
 #: builtin/reset.c:26
-msgid ""
-"git reset [--mixed | --soft | --hard | --merge | --keep] [-q] [<commit>]"
-msgstr ""
-"git reset [--mixed | --soft | --hard | --merge | --keep] [-q] [<comissió>]"
+msgid "git reset [--mixed | --soft | --hard | --merge | --keep] [-q] [<commit>]"
+msgstr "git reset [--mixed | --soft | --hard | --merge | --keep] [-q] [<comissió>]"
 
 #: builtin/reset.c:27
 msgid "git reset [-q] [<tree-ish>] [--] <paths>..."
@@ -12601,9 +12238,7 @@ msgstr "--patch és incompatible amb --{hard,mixed,soft}"
 
 #: builtin/reset.c:331
 msgid "--mixed with paths is deprecated; use 'git reset -- <paths>' instead."
-msgstr ""
-"--mixed amb camins està en desús; useu 'git reset -- <camins>' en lloc "
-"d'això."
+msgstr "--mixed amb camins està en desús; useu 'git reset -- <camins>' en lloc d'això."
 
 #: builtin/reset.c:333
 #, c-format
@@ -12664,8 +12299,7 @@ msgstr ""
 "   or: git rev-parse --sq-quote [<paràmetre>...]\n"
 "   or: git rev-parse [<opcions>] [<paràmetre>...]\n"
 "\n"
-"Executeu \"git rev-parse --parseopt -h\" per més informació sobre l'ús "
-"inicial."
+"Executeu \"git rev-parse --parseopt -h\" per més informació sobre l'ús inicial."
 
 #: builtin/revert.c:22
 msgid "git revert [<options>] <commit-ish>..."
@@ -12835,14 +12469,12 @@ msgstr "no s'ha pogut suprimir '%s'"
 
 #: builtin/send-pack.c:18
 msgid ""
-"git send-pack [--all | --mirror] [--dry-run] [--force] [--receive-pack=<git-"
-"receive-pack>] [--verbose] [--thin] [--atomic] [<host>:]<directory> "
-"[<ref>...]\n"
+"git send-pack [--all | --mirror] [--dry-run] [--force] [--receive-pack=<git-receive-pack>] [--"
+"verbose] [--thin] [--atomic] [<host>:]<directory> [<ref>...]\n"
 "  --all and explicit <ref> specification are mutually exclusive."
 msgstr ""
-"git send-pack [--all | --mirror] [--dry-run] [--force] [--receive-"
-"pack=<paquet-del-git-receive>] [--verbose] [--thin] [--atomic] "
-"[<màquina>:]<directori> [<referència>...]\n"
+"git send-pack [--all | --mirror] [--dry-run] [--force] [--receive-pack=<paquet-del-git-receive>] "
+"[--verbose] [--thin] [--atomic] [<màquina>:]<directori> [<referència>...]\n"
 "  --all i especificació <referència> explícita són mutualment exclusius."
 
 #: builtin/send-pack.c:161
@@ -12875,8 +12507,7 @@ msgstr "ordena la sortida segons el nombre de comissions per autor"
 
 #: builtin/shortlog.c:252
 msgid "Suppress commit descriptions, only provides commit count"
-msgstr ""
-"Omet les descripcions de comissió, només proveeix el recompte de comissions"
+msgstr "Omet les descripcions de comissió, només proveeix el recompte de comissions"
 
 #: builtin/shortlog.c:254
 msgid "Show the email address of each author"
@@ -12940,7 +12571,7 @@ msgstr "sinònim de more=-1"
 
 #: builtin/show-branch.c:641
 msgid "suppress naming strings"
-msgstr "omet l'anomenament de cadenes"
+msgstr "omet l'anomenar cadenes"
 
 #: builtin/show-branch.c:643
 msgid "include the current branch"
@@ -12983,10 +12614,8 @@ msgid "show <n> most recent ref-log entries starting at base"
 msgstr "mostra les <n> entrades més recents començant a la base"
 
 #: builtin/show-branch.c:696
-msgid ""
-"--reflog is incompatible with --all, --remotes, --independent or --merge-base"
-msgstr ""
-"--reflog és incompatible amb --all, --remotes, --independent o --merge-base"
+msgid "--reflog is incompatible with --all, --remotes, --independent or --merge-base"
+msgstr "--reflog és incompatible amb --all, --remotes, --independent o --merge-base"
 
 #: builtin/show-branch.c:720
 msgid "no branches given, and HEAD is not valid"
@@ -13027,11 +12656,11 @@ msgstr "no es pot trobar la comissió %s (%s)"
 
 #: builtin/show-ref.c:10
 msgid ""
-"git show-ref [-q | --quiet] [--verify] [--head] [-d | --dereference] [-s | --"
-"hash[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [<pattern>...]"
+"git show-ref [-q | --quiet] [--verify] [--head] [-d | --dereference] [-s | --hash[=<n>]] [--"
+"abbrev[=<n>]] [--tags] [--heads] [--] [<pattern>...]"
 msgstr ""
-"git show-ref [-q | --quiet] [--verify] [--head] [-d | --dereference] [-s | --"
-"hash[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [<patró>...]"
+"git show-ref [-q | --quiet] [--verify] [--head] [-d | --dereference] [-s | --hash[=<n>]] [--"
+"abbrev[=<n>]] [--tags] [--heads] [--] [<patró>...]"
 
 #: builtin/show-ref.c:11
 msgid "git show-ref --exclude-existing[=<pattern>]"
@@ -13047,9 +12676,7 @@ msgstr "mostra només els caps (es pot combinar amb tags)"
 
 #: builtin/show-ref.c:161
 msgid "stricter reference checking, requires exact ref path"
-msgstr ""
-"comprovació de referència més estricta, requereix el camí de referència "
-"exacte"
+msgstr "comprovació de referència més estricta, requereix el camí de referència exacte"
 
 #: builtin/show-ref.c:164 builtin/show-ref.c:166
 msgid "show the HEAD reference, even if it would be filtered out"
@@ -13081,8 +12708,7 @@ msgstr "git stripspace [-c | --comment-lines]"
 
 #: builtin/stripspace.c:35
 msgid "skip and remove all lines starting with comment character"
-msgstr ""
-"omet i elimina totes les línies que comencin amb el caràcter de comentari"
+msgstr "omet i elimina totes les línies que comencin amb el caràcter de comentari"
 
 #: builtin/stripspace.c:38
 msgid "prepend comment character and space to each line"
@@ -13119,8 +12745,7 @@ msgstr "No s'ha trobat cap url per al camí de submòdul '%s' a .gitmodules"
 #: builtin/submodule--helper.c:395
 #, c-format
 msgid ""
-"could not lookup configuration '%s'. Assuming this repository is its own "
-"authoritative upstream."
+"could not lookup configuration '%s'. Assuming this repository is its own authoritative upstream."
 msgstr ""
 
 #: builtin/submodule--helper.c:406
@@ -13136,16 +12761,12 @@ msgstr "S'ha registrat el submòdul '%s' (%s) per al camí '%s'\n"
 #: builtin/submodule--helper.c:420
 #, c-format
 msgid "warning: command update mode suggested for submodule '%s'\n"
-msgstr ""
-"advertència: se suggereix el mode d'actualització per ordre per al submòdul "
-"'%s'\n"
+msgstr "advertència: se suggereix el mode d'actualització per ordre per al submòdul '%s'\n"
 
 #: builtin/submodule--helper.c:427
 #, c-format
 msgid "Failed to register update mode for submodule path '%s'"
-msgstr ""
-"S'ha produït un error en registrar el mode d'actualització per al camí de "
-"submòdul '%s'"
+msgstr "S'ha produït un error en registrar el mode d'actualització per al camí de submòdul '%s'"
 
 #: builtin/submodule--helper.c:443
 msgid "Suppress output for initializing a submodule"
@@ -13201,11 +12822,11 @@ msgstr "força el progrés del clonatge"
 
 #: builtin/submodule--helper.c:653
 msgid ""
-"git submodule--helper clone [--prefix=<path>] [--quiet] [--reference "
-"<repository>] [--name <name>] [--depth <depth>] --url <url> --path <path>"
+"git submodule--helper clone [--prefix=<path>] [--quiet] [--reference <repository>] [--name "
+"<name>] [--depth <depth>] --url <url> --path <path>"
 msgstr ""
-"git submodule--helper clone [--prefix=<camí>] [--quiet] [--reference "
-"<dipòsit>] [--name <nom>] [--depth <profunditat>] --url <url> --path <camí>"
+"git submodule--helper clone [--prefix=<camí>] [--quiet] [--reference <dipòsit>] [--name <nom>] "
+"[--depth <profunditat>] --url <url> --path <camí>"
 
 #: builtin/submodule--helper.c:684
 #, c-format
@@ -13285,11 +12906,11 @@ msgstr "valor dolent per al paràmetre update"
 #: builtin/submodule--helper.c:1079
 #, c-format
 msgid ""
-"Submodule (%s) branch configured to inherit branch from superproject, but "
-"the superproject is not on any branch"
+"Submodule (%s) branch configured to inherit branch from superproject, but the superproject is "
+"not on any branch"
 msgstr ""
-"La branca de submòdul (%s) està configurada per a heretar la branca del "
-"superprojecte, però el superprojecte no és en cap branca"
+"La branca de submòdul (%s) està configurada per a heretar la branca del superprojecte, però el "
+"superprojecte no és en cap branca"
 
 #: builtin/submodule--helper.c:1163
 msgid "recurse into submodules"
@@ -13342,27 +12963,22 @@ msgid "reason of the update"
 msgstr "raó de l'actualització"
 
 #: builtin/tag.c:23
-msgid ""
-"git tag [-a | -s | -u <key-id>] [-f] [-m <msg> | -F <file>] <tagname> "
-"[<head>]"
+msgid "git tag [-a | -s | -u <key-id>] [-f] [-m <msg> | -F <file>] <tagname> [<head>]"
 msgstr ""
-"git tag [-a | -s | -u <id-de-clau>] [-f] [-m <missatge> | -F <fitxer>] <nom-"
-"d'etiqueta> [<cap>]"
+"git tag [-a | -s | -u <id-de-clau>] [-f] [-m <missatge> | -F <fitxer>] <nom-d'etiqueta> [<cap>]"
 
 #: builtin/tag.c:24
 msgid "git tag -d <tagname>..."
 msgstr "git tag -d <nom-d'etiqueta>..."
 
 #: builtin/tag.c:25
-#, fuzzy
 msgid ""
-"git tag -l [-n[<num>]] [--contains <commit>] [--no-contains <commit>] [--"
-"points-at <object>]\n"
+"git tag -l [-n[<num>]] [--contains <commit>] [--no-contains <commit>] [--points-at <object>]\n"
 "\t\t[--format=<format>] [--[no-]merged [<commit>]] [<pattern>...]"
 msgstr ""
-"git tag -l [-n[<nombre>]] [--contains <comissió>]\n"
-"\t\t[--points-at <objecte>] [--format=<format>]\n"
-"\t\t[--[no-]merged [<comissió>]] [<patró>...]"
+"git tag -l [-n[<nombre>]] [--contains <comissió>] [--no-contains <comissió>] [--points-at "
+"<objecte>]\n"
+"\t\t[--format=<format>] [--[no-]merged [<comissió>]] [<patró>...]"
 
 #: builtin/tag.c:27
 msgid "git tag -v [--format=<format>] <tagname>..."
@@ -13397,14 +13013,12 @@ msgid ""
 "\n"
 "Write a message for tag:\n"
 "  %s\n"
-"Lines starting with '%c' will be kept; you may remove them yourself if you "
-"want to.\n"
+"Lines starting with '%c' will be kept; you may remove them yourself if you want to.\n"
 msgstr ""
 "\n"
 "Escriviu el missatge de l'etiqueta:\n"
 "  %s\n"
-"Les línies que comencin amb '%c' es retindran; podeu eliminar-les per vós "
-"mateix si voleu.\n"
+"Les línies que comencin amb '%c' es retindran; podeu eliminar-les per vós mateix si voleu.\n"
 
 #: builtin/tag.c:210
 msgid "unable to sign the tag"
@@ -13582,34 +13196,27 @@ msgstr "S'està provant mtime en '%s' "
 
 #: builtin/update-index.c:149
 msgid "directory stat info does not change after adding a new file"
-msgstr ""
-"la informació d'stat de directori no canvia després d'afegir un fitxer nou"
+msgstr "la informació d'stat de directori no canvia després d'afegir un fitxer nou"
 
 #: builtin/update-index.c:162
 msgid "directory stat info does not change after adding a new directory"
-msgstr ""
-"la informació d'stat de directori no canvia després d'afegir un directori nou"
+msgstr "la informació d'stat de directori no canvia després d'afegir un directori nou"
 
 #: builtin/update-index.c:175
 msgid "directory stat info changes after updating a file"
-msgstr ""
-"la informació d'stat de directori canvia després d'actualitzar un fitxer"
+msgstr "la informació d'stat de directori canvia després d'actualitzar un fitxer"
 
 #: builtin/update-index.c:186
 msgid "directory stat info changes after adding a file inside subdirectory"
-msgstr ""
-"la informació d'stat de directori canvia després d'afegir un fitxer dins "
-"d'un subdirectori"
+msgstr "la informació d'stat de directori canvia després d'afegir un fitxer dins d'un subdirectori"
 
 #: builtin/update-index.c:197
 msgid "directory stat info does not change after deleting a file"
-msgstr ""
-"la informació d'stat de directori no canvia després de suprimir un fitxer"
+msgstr "la informació d'stat de directori no canvia després de suprimir un fitxer"
 
 #: builtin/update-index.c:210
 msgid "directory stat info does not change after deleting a directory"
-msgstr ""
-"la informació d'stat de directori no canvia després de suprimir un directori"
+msgstr "la informació d'stat de directori no canvia després de suprimir un directori"
 
 #: builtin/update-index.c:217
 msgid " OK"
@@ -13621,8 +13228,7 @@ msgstr "git update-index [<opcions>] [--] [<fitxer>...]"
 
 #: builtin/update-index.c:923
 msgid "continue refresh even when index needs update"
-msgstr ""
-"continua l'actualització encara que l'índex necessiti una actualització"
+msgstr "continua l'actualització encara que l'índex necessiti una actualització"
 
 #: builtin/update-index.c:926
 msgid "refresh: ignore submodules"
@@ -13678,15 +13284,11 @@ msgstr "neteja el bit skip-worktree"
 
 #: builtin/update-index.c:968
 msgid "add to index only; do not add content to object database"
-msgstr ""
-"només afegeix a l'índex; no afegeixis el contingut a la base de dades "
-"d'objectes"
+msgstr "només afegeix a l'índex; no afegeixis el contingut a la base de dades d'objectes"
 
 #: builtin/update-index.c:970
 msgid "remove named paths even if present in worktree"
-msgstr ""
-"elimina els camins anomenats encara que estiguin presents en l'arbre de "
-"treball"
+msgstr "elimina els camins anomenats encara que estiguin presents en l'arbre de treball"
 
 #: builtin/update-index.c:972
 msgid "with --stdin: input lines are terminated by null bytes"
@@ -13742,27 +13344,25 @@ msgstr "habilita la memòria cau no seguida sense provar el sistema de fitxers"
 
 #: builtin/update-index.c:1107
 msgid ""
-"core.splitIndex is set to false; remove or change it, if you really want to "
-"enable split index"
+"core.splitIndex is set to false; remove or change it, if you really want to enable split index"
 msgstr ""
-"core.splitIndex està establert a fals; elimineu-lo o canviar-lo, si "
-"realment voleu habilitar l'index dividit"
+"core.splitIndex està establert a fals; elimineu-lo o canviar-lo, si realment voleu habilitar "
+"l'índex dividit"
 
 #: builtin/update-index.c:1116
 msgid ""
-"core.splitIndex is set to true; remove or change it, if you really want to "
-"disable split index"
+"core.splitIndex is set to true; remove or change it, if you really want to disable split index"
 msgstr ""
-"core.splitIndex està establert a cert; elimineu-lo o canvieu-lo, si "
-"realment voleu inhabilitar l'index dividit"
+"core.splitIndex està establert a cert; elimineu-lo o canvieu-lo, si realment voleu inhabilitar "
+"l'índex dividit"
 
 #: builtin/update-index.c:1127
 msgid ""
-"core.untrackedCache is set to true; remove or change it, if you e want "
-"to disable the untracked cache"
+"core.untrackedCache is set to true; remove or change it, if you e want to disable the untracked "
+"cache"
 msgstr ""
-"core.untrackedCache està establert a cert; elimineu-lo o canvieu-lo, si "
-"realment voleu inhabilitar el cau no seguit"
+"core.untrackedCache està establert a cert; elimineu-lo o canvieu-lo, si realment voleu "
+"inhabilitar el cau no seguit"
 
 #: builtin/update-index.c:1131
 msgid "Untracked cache disabled"
@@ -13770,11 +13370,11 @@ msgstr "La memòria cau no seguida està inhabilitada"
 
 #: builtin/update-index.c:1139
 msgid ""
-"core.untrackedCache is set to false; remove or change it, if you really want "
-"to enable the untracked cache"
+"core.untrackedCache is set to false; remove or change it, if you really want to enable the "
+"untracked cache"
 msgstr ""
-"core.untrackedCache està establert a fals; elimineu-lo o canviar-lo, si "
-"realment voleu habilitar el cau no seguit"
+"core.untrackedCache està establert a fals; elimineu-lo o canviar-lo, si realment voleu habilitar "
+"el cau no seguit"
 
 #: builtin/update-index.c:1143
 #, c-format
@@ -13787,8 +13387,7 @@ msgstr "git update-ref [<opcions>] -d <nom-de-referència> [<valor-antic>]"
 
 #: builtin/update-ref.c:10
 msgid "git update-ref [<options>]    <refname> <new-val> [<old-val>]"
-msgstr ""
-"git update-ref [<opcions>]    <nom-de-referència> <valor-nou> [<valor-antic>]"
+msgstr "git update-ref [<opcions>]    <nom-de-referència> <valor-nou> [<valor-antic>]"
 
 #: builtin/update-ref.c:11
 msgid "git update-ref [<options>] --stdin [-z]"
@@ -13893,9 +13492,7 @@ msgstr "Eliminació de worktrees/%s: fitxer gitdir no vàlid"
 #: builtin/worktree.c:81
 #, c-format
 msgid "Removing worktrees/%s: gitdir file points to non-existent location"
-msgstr ""
-"Eliminació de worktrees/%s: el fitxer gitdir es refereix a una ubicació no "
-"existent"
+msgstr "Eliminació de worktrees/%s: el fitxer gitdir es refereix a una ubicació no existent"
 
 #: builtin/worktree.c:128
 msgid "report pruned working trees"
@@ -14002,8 +13599,7 @@ msgstr "surt immediatament després de l'anunci inicial de referència"
 
 #: upload-pack.c:1044
 msgid "do not try <directory>/.git/ if <directory> is no Git directory"
-msgstr ""
-"no intentis <directori>/.git/ si <directori> no és cap directori del Git"
+msgstr "no intentis <directori>/.git/ si <directori> no és cap directori del Git"
 
 #: upload-pack.c:1046
 msgid "interrupt transfer after <n> seconds of inactivity"
@@ -14112,8 +13708,7 @@ msgstr "Registra els canvis al dipòsit"
 
 #: common-cmds.h:23
 msgid "Show changes between commits, commit and working tree, etc"
-msgstr ""
-"Mostra els canvis entre comissions, la comissió i l'arbre de treball, etc."
+msgstr "Mostra els canvis entre comissions, la comissió i l'arbre de treball, etc."
 
 #: common-cmds.h:24
 msgid "Download objects and refs from another repository"
@@ -14145,8 +13740,7 @@ msgstr "Obtén i integra amb un altre dipòsit o una branca local"
 
 #: common-cmds.h:31
 msgid "Update remote refs along with associated objects"
-msgstr ""
-"Actualitza les referències remotes juntament amb els objectes associats"
+msgstr "Actualitza les referències remotes juntament amb els objectes associats"
 
 #: common-cmds.h:32
 msgid "Reapply commits on top of another base tip"
@@ -14170,8 +13764,7 @@ msgstr "Mostra l'estat de l'arbre de treball"
 
 #: common-cmds.h:37
 msgid "Create, list, delete or verify a tag object signed with GPG"
-msgstr ""
-"Crea, llista, suprimeix o verifica un objecte d'etiqueta signat amb GPG"
+msgstr "Crea, llista, suprimeix o verifica un objecte d'etiqueta signat amb GPG"
 
 #: parse-options.h:145
 msgid "expiry-date"
@@ -14195,8 +13788,7 @@ msgstr "usa <n> xifres per presentar els SHA-1"
 
 #: rerere.h:40
 msgid "update the index with reused conflict resolution if possible"
-msgstr ""
-"actualitza l'índex amb la resolució de conflicte reusada si és possible"
+msgstr "actualitza l'índex amb la resolució de conflicte reusada si és possible"
 
 #: git-bisect.sh:54
 msgid "You need to start by \"git bisect start\""
@@ -14225,11 +13817,8 @@ msgstr "HEAD dolent - Cal un HEAD"
 
 #: git-bisect.sh:167
 #, sh-format
-msgid ""
-"Checking out '$start_head' failed. Try 'git bisect reset <valid-branch>'."
-msgstr ""
-"L'agafament de '$start_head' ha fallat. Proveu 'git bisect reset <branca-"
-"vàlida>'."
+msgid "Checking out '$start_head' failed. Try 'git bisect reset <valid-branch>'."
+msgstr "L'agafament de '$start_head' ha fallat. Proveu 'git bisect reset <branca-vàlida>'."
 
 #: git-bisect.sh:177
 msgid "won't bisect on cg-seek'ed tree"
@@ -14380,8 +13969,7 @@ msgstr "no es pot canviar el significat del terme '$term'"
 #: git-bisect.sh:606
 #, sh-format
 msgid "Invalid command: you're currently in a $TERM_BAD/$TERM_GOOD bisect."
-msgstr ""
-"Ordre no vàlida: actualment esteu en una bisecció $TERM_BAD/$TERM_GOOD."
+msgstr "Ordre no vàlida: actualment esteu en una bisecció $TERM_BAD/$TERM_GOOD."
 
 #: git-bisect.sh:636
 msgid "no terms defined"
@@ -14397,12 +13985,8 @@ msgstr ""
 "Les opcions admeses són: --term-good|--term-old i --term-bad|--term-new."
 
 #: git-merge-octopus.sh:46
-msgid ""
-"Error: Your local changes to the following files would be overwritten by "
-"merge"
-msgstr ""
-"Error: Els vostres canvis locals als fitxers següents se sobreescriurien per "
-"fusionar"
+msgid "Error: Your local changes to the following files would be overwritten by merge"
+msgstr "Error: Els vostres canvis locals als fitxers següents se sobreescriurien per fusionar"
 
 #: git-merge-octopus.sh:61
 msgid "Automated merge did not work."
@@ -14434,21 +14018,17 @@ msgstr "S'està intentant una fusió simple amb $pretty_name"
 
 #: git-merge-octopus.sh:102
 msgid "Simple merge did not work, trying automatic merge."
-msgstr ""
-"La fusió simple no ha funcionat, s'està intentant una fusió automàtica."
+msgstr "La fusió simple no ha funcionat, s'està intentant una fusió automàtica."
 
 #: git-rebase.sh:58
 msgid ""
 "When you have resolved this problem, run \"git rebase --continue\".\n"
 "If you prefer to skip this patch, run \"git rebase --skip\" instead.\n"
-"To check out the original branch and stop rebasing, run \"git rebase --abort"
-"\"."
+"To check out the original branch and stop rebasing, run \"git rebase --abort\"."
 msgstr ""
 "Quan hàgiu resolt aquest problema, executeu \"git rebase --continue\".\n"
-"Si preferiu ometre aquest pedaç, executeu \"git rebase --skip\" en lloc "
-"d'això.\n"
-"Per a agafar la branca original i deixar de fer «rebase», executeu \"git "
-"rebase --abort\"."
+"Si preferiu ometre aquest pedaç, executeu \"git rebase --skip\" en lloc d'això.\n"
+"Per a agafar la branca original i deixar de fer «rebase», executeu \"git rebase --abort\"."
 
 #: git-rebase.sh:158 git-rebase.sh:397
 #, sh-format
@@ -14564,9 +14144,7 @@ msgstr "Canvis de $mb a $onto:"
 
 #: git-rebase.sh:615
 msgid "First, rewinding head to replay your work on top of it..."
-msgstr ""
-"Primer, s'està rebobinant el cap per a reproduir el vostre treball al "
-"damunt..."
+msgstr "Primer, s'està rebobinant el cap per a reproduir el vostre treball al damunt..."
 
 #: git-rebase.sh:625
 #, sh-format
@@ -14735,9 +14313,7 @@ msgstr "(Per restaurar-les teclegeu \"git stash apply\")"
 
 #: git-submodule.sh:181
 msgid "Relative path can only be used from the toplevel of the working tree"
-msgstr ""
-"El camí relatiu només es pot usar des del nivell superior de l'arbre de "
-"treball"
+msgstr "El camí relatiu només es pot usar des del nivell superior de l'arbre de treball"
 
 #: git-submodule.sh:191
 #, sh-format
@@ -14778,31 +14354,25 @@ msgstr "'$sm_path' ja existeix i no és un dipòsit de git vàlid"
 #: git-submodule.sh:246
 #, sh-format
 msgid "A git directory for '$sm_name' is found locally with remote(s):"
-msgstr ""
-"Es troba un directori de git per a '$sm_name' localment amb els remots:"
+msgstr "Es troba un directori de git per a '$sm_name' localment amb els remots:"
 
 #: git-submodule.sh:248
 #, sh-format
 msgid ""
 "If you want to reuse this local git directory instead of cloning again from\n"
 "  $realrepo\n"
-"use the '--force' option. If the local git directory is not the correct "
-"repo\n"
-"or you are unsure what this means choose another name with the '--name' "
-"option."
+"use the '--force' option. If the local git directory is not the correct repo\n"
+"or you are unsure what this means choose another name with the '--name' option."
 msgstr ""
 "Si voleu reusar aquest directori de git local en lloc de clonar de nou de\n"
 "  $realrepo\n"
-"useu l'opció '--force'. Si el directori de git local no és el dipòsit "
-"correcte\n"
-"o no esteu segur de què vol dir això, trieu un altre nom amb l'opció '--"
-"name'."
+"useu l'opció '--force'. Si el directori de git local no és el dipòsit correcte\n"
+"o no esteu segur de què vol dir això, trieu un altre nom amb l'opció '--name'."
 
 #: git-submodule.sh:254
 #, sh-format
 msgid "Reactivating local git directory for submodule '$sm_name'."
-msgstr ""
-"S'està reactivant el directori de git local per al submòdul '$sm_name'."
+msgstr "S'està reactivant el directori de git local per al submòdul '$sm_name'."
 
 #: git-submodule.sh:266
 #, sh-format
@@ -14827,8 +14397,7 @@ msgstr "S'està entrant '$displaypath'"
 #: git-submodule.sh:361
 #, sh-format
 msgid "Stopping at '$displaypath'; script returned non-zero status."
-msgstr ""
-"S'està aturant a '$displaypath'; l'script ha retornat un estat no zero."
+msgstr "S'està aturant a '$displaypath'; l'script ha retornat un estat no zero."
 
 #: git-submodule.sh:432
 #, sh-format
@@ -14851,12 +14420,10 @@ msgstr ""
 
 #: git-submodule.sh:465
 #, sh-format
-msgid ""
-"Submodule work tree '$displaypath' contains local modifications; use '-f' to "
-"discard them"
+msgid "Submodule work tree '$displaypath' contains local modifications; use '-f' to discard them"
 msgstr ""
-"L'arbre de treball de submòdul '$displaypath' conté modificacions locals; "
-"useu '-f' per a descartar-les"
+"L'arbre de treball de submòdul '$displaypath' conté modificacions locals; useu '-f' per a "
+"descartar-les"
 
 #: git-submodule.sh:468
 #, sh-format
@@ -14881,8 +14448,7 @@ msgstr "Submòdul '$name' ($url) no registrat per al camí '$displaypath'"
 #: git-submodule.sh:637
 #, sh-format
 msgid "Unable to find current revision in submodule path '$displaypath'"
-msgstr ""
-"No s'ha pogut trobar la revisió actual en el camí de submòdul '$displaypath'"
+msgstr "No s'ha pogut trobar la revisió actual en el camí de submòdul '$displaypath'"
 
 #: git-submodule.sh:647
 #, sh-format
@@ -14891,12 +14457,10 @@ msgstr "No s'ha pogut obtenir en el camí de submòdul '$sm_path'"
 
 #: git-submodule.sh:652
 #, sh-format
-msgid ""
-"Unable to find current ${remote_name}/${branch} revision in submodule path "
-"'$sm_path'"
+msgid "Unable to find current ${remote_name}/${branch} revision in submodule path '$sm_path'"
 msgstr ""
-"No s'ha pogut trobar la revisió actual de ${remote_name}/${branch} en el "
-"camí de submòdul '$sm_path'"
+"No s'ha pogut trobar la revisió actual de ${remote_name}/${branch} en el camí de submòdul "
+"'$sm_path'"
 
 #: git-submodule.sh:670
 #, sh-format
@@ -14906,11 +14470,11 @@ msgstr "No s'ha pogut obtenir en el camí de submòdul '$displaypath'"
 #: git-submodule.sh:676
 #, sh-format
 msgid ""
-"Fetched in submodule path '$displaypath', but it did not contain $sha1. "
-"Direct fetching of that commit failed."
+"Fetched in submodule path '$displaypath', but it did not contain $sha1. Direct fetching of that "
+"commit failed."
 msgstr ""
-"S'ha obtingut en el camí de submòdul '$displaypath', però no contenia $sha1. "
-"L'obtenció directa d'aquella comissió ha fallat."
+"S'ha obtingut en el camí de submòdul '$displaypath', però no contenia $sha1. L'obtenció directa "
+"d'aquella comissió ha fallat."
 
 #: git-submodule.sh:683
 #, sh-format
@@ -14925,8 +14489,7 @@ msgstr "Camí de submòdul '$displaypath': s'ha agafat '$sha1'"
 #: git-submodule.sh:688
 #, sh-format
 msgid "Unable to rebase '$sha1' in submodule path '$displaypath'"
-msgstr ""
-"No s'ha pogut fer «rebase» '$sha1' en el camí de submòdul '$displaypath'"
+msgstr "No s'ha pogut fer «rebase» '$sha1' en el camí de submòdul '$displaypath'"
 
 #: git-submodule.sh:689
 #, sh-format
@@ -14946,9 +14509,7 @@ msgstr "Camí de submòdul '$displaypath': s'ha fusionat en '$sha1'"
 #: git-submodule.sh:700
 #, sh-format
 msgid "Execution of '$command $sha1' failed in submodule path '$displaypath'"
-msgstr ""
-"L'execució de '$command $sha1' ha fallat en el camí de submòdul "
-"'$displaypath'"
+msgstr "L'execució de '$command $sha1' ha fallat en el camí de submòdul '$displaypath'"
 
 #: git-submodule.sh:701
 #, sh-format
@@ -14958,9 +14519,7 @@ msgstr "Camí de submòdul '$displaypath': '$command $sha1'"
 #: git-submodule.sh:732
 #, sh-format
 msgid "Failed to recurse into submodule path '$displaypath'"
-msgstr ""
-"S'ha produït un error en recorre recursivament dins del camí de submòdul "
-"'$displaypath'"
+msgstr "S'ha produït un error en recorre recursivament dins del camí de submòdul '$displaypath'"
 
 #: git-submodule.sh:840
 msgid "The --cached option cannot be used with the --files option"
@@ -14989,8 +14548,7 @@ msgstr "  Avís: $display_name no conté les comissions $sha1_src i $sha1_dst"
 #: git-submodule.sh:1064
 #, sh-format
 msgid "Failed to recurse into submodule path '$sm_path'"
-msgstr ""
-"S'ha produït un error en cercar recursivament al camí de submòdul '$sm_path'"
+msgstr "S'ha produït un error en cercar recursivament al camí de submòdul '$sm_path'"
 
 #: git-submodule.sh:1136
 #, sh-format
@@ -15027,10 +14585,8 @@ msgstr ""
 " r, reword = usa la comissió, però edita el missatge de comissió\n"
 " e, edit = usa la comissió, però atura't per a esmenar\n"
 " s, squash = usa la comissió, però fusiona'l a la comissió prèvia\n"
-" f, fixup = com \"squash\", però descarta el missatge de registre d'aquesta "
-"comissió\n"
-" x, exec = executa l'ordre (el reste de la línia) usant l'intèrpret "
-"d'ordres\n"
+" f, fixup = com \"squash\", però descarta el missatge de registre d'aquesta comissió\n"
+" x, exec = executa l'ordre (el reste de la línia) usant l'intèrpret d'ordres\n"
 " d, drop = elimina la comissió\n"
 "\n"
 "Es pot canviar l'ordre d'aquestes línies; s'executen de dalt a baix.\n"
@@ -15041,8 +14597,7 @@ msgid ""
 "Do not remove any line. Use 'drop' explicitly to remove a commit.\n"
 msgstr ""
 "\n"
-"No elimineu cap línia. Useu 'drop' explícitament per a eliminar una "
-"comissió.\n"
+"No elimineu cap línia. Useu 'drop' explícitament per a eliminar una comissió.\n"
 
 #: git-rebase--interactive.sh:175
 msgid ""
@@ -15141,8 +14696,7 @@ msgstr "No es pot escriure $fixup_msg"
 msgid "This is a combination of 2 commits."
 msgstr "Això és una combinació de 2 comissions."
 
-#: git-rebase--interactive.sh:485 git-rebase--interactive.sh:528
-#: git-rebase--interactive.sh:531
+#: git-rebase--interactive.sh:485 git-rebase--interactive.sh:528 git-rebase--interactive.sh:531
 #, sh-format
 msgid "Could not apply $sha1... $rest"
 msgstr "No s'ha pogut aplicar $sha1... $rest"
@@ -15152,12 +14706,10 @@ msgstr "No s'ha pogut aplicar $sha1... $rest"
 msgid ""
 "Could not amend commit after successfully picking $sha1... $rest\n"
 "This is most likely due to an empty commit message, or the pre-commit hook\n"
-"failed. If the pre-commit hook failed, you may need to resolve the issue "
-"before\n"
+"failed. If the pre-commit hook failed, you may need to resolve the issue before\n"
 "you are able to reword the commit."
 msgstr ""
-"No s'ha pogut esmenar la comissió després d'escollir amb èxit $sha1... "
-"$rest\n"
+"No s'ha pogut esmenar la comissió després d'escollir amb èxit $sha1... $rest\n"
 "Això és probablement a causa d'un missatge de comissió buit, o el ganxo de\n"
 "precomissió ha fallat. Si el ganxo de precomissió ha fallat, pot ser que\n"
 "necessiteu resoldre el problema abans que pugueu canviar el missatge de\n"
@@ -15258,41 +14810,30 @@ msgid ""
 "Warning: some commits may have been dropped accidentally.\n"
 "Dropped commits (newer to older):"
 msgstr ""
-"Advertència: pot ser que algunes comissions s'hagin descartat "
-"accidentalment.\n"
+"Advertència: pot ser que algunes comissions s'hagin descartat accidentalment.\n"
 "Les comissions descartades (més nova a més vella):"
 
 #: git-rebase--interactive.sh:1026
 msgid ""
 "To avoid this message, use \"drop\" to explicitly remove a commit.\n"
 "\n"
-"Use 'git config rebase.missingCommitsCheck' to change the level of "
-"warnings.\n"
+"Use 'git config rebase.missingCommitsCheck' to change the level of warnings.\n"
 "The possible behaviours are: ignore, warn, error."
 msgstr ""
-"Per a evitar aquest missatge, useu \"drop\" per a eliminar explícitament una "
-"comissió.\n"
+"Per a evitar aquest missatge, useu \"drop\" per a eliminar explícitament una comissió.\n"
 "\n"
-"Useu 'git config rebase.missingCommitsCheck' per a canviar el nivell "
-"d'advertències.\n"
+"Useu 'git config rebase.missingCommitsCheck' per a canviar el nivell d'advertències.\n"
 "Els comportaments possibles són: ignore, warn, error."
 
 #: git-rebase--interactive.sh:1037
 #, sh-format
-msgid ""
-"Unrecognized setting $check_level for option rebase.missingCommitsCheck. "
-"Ignoring."
+msgid "Unrecognized setting $check_level for option rebase.missingCommitsCheck. Ignoring."
 msgstr ""
-"No s'ha reconegut l'ajust $check_level per a l'opció rebase."
-"missingCommitsCheck. S'està ignorant."
+"No s'ha reconegut l'ajust $check_level per a l'opció rebase.missingCommitsCheck. S'està ignorant."
 
 #: git-rebase--interactive.sh:1054
-msgid ""
-"You can fix this with 'git rebase --edit-todo' and then run 'git rebase --"
-"continue'."
-msgstr ""
-"Podeu arreglar això amb 'git rebase --edit-todo' i després 'git rebase --"
-"continue'."
+msgid "You can fix this with 'git rebase --edit-todo' and then run 'git rebase --continue'."
+msgstr "Podeu arreglar això amb 'git rebase --edit-todo' i després 'git rebase --continue'."
 
 #: git-rebase--interactive.sh:1055
 msgid "Or you can abort the rebase with 'git rebase --abort'."
@@ -15335,9 +14876,7 @@ msgstr ""
 
 #: git-rebase--interactive.sh:1105
 msgid "Error trying to find the author identity to amend commit"
-msgstr ""
-"Hi ha hagut un error en intentar trobar la identitat d'autor per a esmenar "
-"la comissió"
+msgstr "Hi ha hagut un error en intentar trobar la identitat d'autor per a esmenar la comissió"
 
 #: git-rebase--interactive.sh:1110
 msgid ""
@@ -15420,9 +14959,7 @@ msgstr "ús: $dashless $USAGE"
 #: git-sh-setup.sh:190
 #, sh-format
 msgid "Cannot chdir to $cdup, the toplevel of the working tree"
-msgstr ""
-"No es pot canviar de directori a $cdup, el nivell superior de l'arbre de "
-"treball"
+msgstr "No es pot canviar de directori a $cdup, el nivell superior de l'arbre de treball"
 
 #: git-sh-setup.sh:199 git-sh-setup.sh:206
 #, sh-format
@@ -15452,8 +14989,7 @@ msgstr "No es pot fer «rebase»: El vostre índex conté canvis sense cometre."
 
 #: git-sh-setup.sh:245
 msgid "Cannot pull with rebase: Your index contains uncommitted changes."
-msgstr ""
-"No es pot baixar fent «rebase»: El vostre índex conté canvis sense cometre."
+msgstr "No es pot baixar fent «rebase»: El vostre índex conté canvis sense cometre."
 
 #: git-sh-setup.sh:248
 #, sh-format
@@ -15466,8 +15002,7 @@ msgstr "Addicionalment, el vostre índex conté canvis sense cometre."
 
 #: git-sh-setup.sh:372
 msgid "You need to run this command from the toplevel of the working tree."
-msgstr ""
-"Heu d'executar aquesta ordre des del nivell superior de l'arbre de treball."
+msgstr "Heu d'executar aquesta ordre des del nivell superior de l'arbre de treball."
 
 #: git-sh-setup.sh:377
 msgid "Unable to determine absolute path of git directory"
@@ -15595,8 +15130,7 @@ msgstr "s'ha produït un error en escriure al fitxer d'edició del tros: %s"
 
 #: git-add--interactive.perl:1059
 msgid "Manual hunk edit mode -- see bottom for a quick guide.\n"
-msgstr ""
-"Mode d'edició de trossos manual - vegeu més avall per una guia ràpida.\n"
+msgstr "Mode d'edició de trossos manual - vegeu més avall per una guia ràpida.\n"
 
 #: git-add--interactive.perl:1065
 #, perl-format
@@ -15619,8 +15153,7 @@ msgid ""
 "aborted and the hunk is left unchanged.\n"
 msgstr ""
 "Si no s'aplica correctament, tindreu una oportunitat per editar-lo\n"
-"de nou. Si totes les línies del tros se suprimeixen, llavors l'edició "
-"s'avorta\n"
+"de nou. Si totes les línies del tros se suprimeixen, llavors l'edició s'avorta\n"
 "i el tros es deixa sense cap canvi.\n"
 
 #: git-add--interactive.perl:1087
@@ -15635,11 +15168,8 @@ msgstr "s'ha produït un error en llegir al fitxer d'edició del tros: %s"
 #. (saying "n" for "no" discards!) if the translation
 #. of the word "no" does not start with n.
 #: git-add--interactive.perl:1178
-msgid ""
-"Your edited hunk does not apply. Edit again (saying \"no\" discards!) [y/n]? "
-msgstr ""
-"El tros editat no s'ha aplica. Editeu-lo de nou (si responeu \"no\" es "
-"descartarà) [y/n]? "
+msgid "Your edited hunk does not apply. Edit again (saying \"no\" discards!) [y/n]? "
+msgstr "El tros editat no s'aplica. Editeu-lo de nou (si responeu \"no\" es descartarà) [y/n]? "
 
 #: git-add--interactive.perl:1187
 msgid ""
@@ -15824,8 +15354,7 @@ msgstr "Aplica aquest tros a l'índex [y,n,q,a,d,/%s,?]? "
 #: git-add--interactive.perl:1369
 #, perl-format
 msgid "Discard mode change from worktree [y,n,q,a,d,/%s,?]? "
-msgstr ""
-"Descarta el canvi de mode des de l'arbre de treball [y,n,q,a,d,/%s,?]? "
+msgstr "Descarta el canvi de mode des de l'arbre de treball [y,n,q,a,d,/%s,?]? "
 
 #: git-add--interactive.perl:1370
 #, perl-format
@@ -15840,27 +15369,22 @@ msgstr "Descarta aquest tros des de l'arbre de treball  [y,n,q,a,d,/%s,?]?"
 #: git-add--interactive.perl:1374
 #, perl-format
 msgid "Discard mode change from index and worktree [y,n,q,a,d,/%s,?]? "
-msgstr ""
-"Descarta el canvi de mode des de l'índex i l'arbre de treball [y,n,q,a,d,/"
-"%s,?]? "
+msgstr "Descarta el canvi de mode des de l'índex i l'arbre de treball [y,n,q,a,d,/%s,?]? "
 
 #: git-add--interactive.perl:1375
 #, perl-format
 msgid "Discard deletion from index and worktree [y,n,q,a,d,/%s,?]? "
-msgstr ""
-"Descarta la supressió des de l'índex i l'arbre de treball [y,n,q,a,d,/%s,?]? "
+msgstr "Descarta la supressió des de l'índex i l'arbre de treball [y,n,q,a,d,/%s,?]? "
 
 #: git-add--interactive.perl:1376
 #, perl-format
 msgid "Discard this hunk from index and worktree [y,n,q,a,d,/%s,?]? "
-msgstr ""
-"Descarta aquest tros des de l'índex i l'arbre de treball [y,n,q,a,d,/%s,?]? "
+msgstr "Descarta aquest tros des de l'índex i l'arbre de treball [y,n,q,a,d,/%s,?]? "
 
 #: git-add--interactive.perl:1379
 #, perl-format
 msgid "Apply mode change to index and worktree [y,n,q,a,d,/%s,?]? "
-msgstr ""
-"Aplica el canvi de mode a l'índex i l'arbre de treball [y,n,q,a,d,/%s,?]? "
+msgstr "Aplica el canvi de mode a l'índex i l'arbre de treball [y,n,q,a,d,/%s,?]? "
 
 #: git-add--interactive.perl:1380
 #, perl-format
@@ -15933,13 +15457,11 @@ msgid ""
 "revert        - revert staged set of changes back to the HEAD version\n"
 "patch         - pick hunks and update selectively\n"
 "diff          - view diff between HEAD and index\n"
-"add untracked - add contents of untracked files to the staged set of "
-"changes\n"
+"add untracked - add contents of untracked files to the staged set of changes\n"
 msgstr ""
 
-#: git-add--interactive.perl:1685 git-add--interactive.perl:1690
-#: git-add--interactive.perl:1693 git-add--interactive.perl:1700
-#: git-add--interactive.perl:1704 git-add--interactive.perl:1710
+#: git-add--interactive.perl:1685 git-add--interactive.perl:1690 git-add--interactive.perl:1693
+#: git-add--interactive.perl:1700 git-add--interactive.perl:1704 git-add--interactive.perl:1710
 msgid "missing --"
 msgstr "manca --"
 
@@ -15967,14 +15489,13 @@ msgstr "l'editor no ha sortit correctament, avortant-ho tot"
 
 #: git-send-email.perl:282
 #, perl-format
-msgid ""
-"'%s' contains an intermediate version of the email you were composing.\n"
-msgstr ""
+msgid "'%s' contains an intermediate version of the email you were composing.\n"
+msgstr "'%s' conté una versió intermèdia del correu que estàveu redactant.\n"
 
 #: git-send-email.perl:287
 #, perl-format
 msgid "'%s.final' contains the composed email.\n"
-msgstr ""
+msgstr "'%s.final' conté el correu redactat.\n"
 
 #: git-send-email.perl:305
 msgid "--dump-aliases incompatible with other options\n"
@@ -16023,6 +15544,11 @@ msgid ""
 "    * Saying \"./%s\" if you mean a file; or\n"
 "    * Giving --format-patch option if you mean a range.\n"
 msgstr ""
+"El fitxer '%s' existeix però també pot ser un rang de comissions\n"
+"per produir pedaços. Desambigüeu...\n"
+"\n"
+"    * Dient \"./%s\" si volíeu especificar aquest fitxer; o\n"
+"    * Proporcionant l'opció --format-patch si volíeu especificar un rang.\n"
 
 #: git-send-email.perl:610
 #, perl-format
@@ -16035,7 +15561,7 @@ msgid ""
 "fatal: %s: %s\n"
 "warning: no patches were sent\n"
 msgstr ""
-"greu: %s: %s\n"
+"fatal: %s: %s\n"
 "avís: no s'han enviat pedaços\n"
 
 #: git-send-email.perl:645
@@ -16051,7 +15577,7 @@ msgstr ""
 #: git-send-email.perl:658
 #, perl-format
 msgid "No subject line in %s?"
-msgstr "Sense assumpte a: %s"
+msgstr "Sense assumpte a %s?"
 
 #: git-send-email.perl:668
 #, perl-format
@@ -16066,6 +15592,11 @@ msgid ""
 "\n"
 "Clear the body content if you don't wish to send a summary.\n"
 msgstr ""
+"Se suprimiran les línies que comencen amb \"GIT:\".\n"
+"Considereu incloure un diffstat global o una taula de continguts\n"
+"per cada pedaç que esteu escrivint.\n"
+"\n"
+"Netegeu el contingut del cos si no voleu enviar un resum.\n"
 
 #: git-send-email.perl:701
 #, perl-format
@@ -16092,10 +15623,8 @@ msgid "Are you sure you want to use <%s> [y/N]? "
 msgstr "Esteu segur que voleu usar <%s> [y/N]? "
 
 #: git-send-email.perl:809
-msgid ""
-"The following files are 8bit, but do not declare a Content-Transfer-"
-"Encoding.\n"
-msgstr ""
+msgid "The following files are 8bit, but do not declare a Content-Transfer-Encoding.\n"
+msgstr "Els fitxers següents són 8bit, però no declaren un Content-Transfer-Encoding.\n"
 
 #: git-send-email.perl:814
 msgid "Which 8bit encoding should I declare [UTF-8]? "
@@ -16106,23 +15635,21 @@ msgstr "Quina codificació de 8 bits hauria de declarar [UTF-8]? "
 msgid ""
 "Refusing to send because the patch\n"
 "\t%s\n"
-"has the template subject '*** SUBJECT HERE ***'. Pass --force if you really "
-"want to send.\n"
+"has the template subject '*** SUBJECT HERE ***'. Pass --force if you really want to send.\n"
 msgstr ""
 
 #: git-send-email.perl:841
 msgid "To whom should the emails be sent (if anyone)?"
-msgstr ""
-"A qui s'haurien d'enviar els correus electrònics (si s'han d'enviar a algú)?"
+msgstr "A qui s'haurien d'enviar els correus electrònics (si s'han d'enviar a algú)?"
 
 #: git-send-email.perl:859
 #, perl-format
 msgid "fatal: alias '%s' expands to itself\n"
-msgstr ""
+msgstr "fatal: l'àlias '%s' s'espandeix a si mateix\n"
 
 #: git-send-email.perl:871
 msgid "Message-ID to be used as In-Reply-To for the first email (if any)? "
-msgstr ""
+msgstr "S'ha d'usar el Message-ID com a In-Reply-To pel primer correu (si n'hi ha cap)? "
 
 #: git-send-email.perl:921 git-send-email.perl:929
 #, perl-format
@@ -16154,6 +15681,16 @@ msgid ""
 "    run 'git config --global sendemail.confirm auto'.\n"
 "\n"
 msgstr ""
+"    La llista de Cc de sobre s'ha estès amb adreces addicionals\n"
+"    trobades al missatge de la comissió del pedaç. Per defecte, \n"
+"    send-email pregunta abans d'enviar el missatge quan això succeix.\n"
+"    Aquest comportament està controlat pel paràmetre de configuració\n"
+"    sendemail.confirm.\n"
+"\n"
+"    Per a informació addicional, executeu 'git send-email --help'.\n"
+"    Per mantenir el comportament actual, però silenciar aquest\n"
+"    missatge, executeu 'git config --global sendemail.confirm auto'.\n"
+"\n"
 
 #. TRANSLATORS: Make sure to include [y] [n] [q] [a] in your
 #. translation. The program will only accept English input
@@ -16178,8 +15715,7 @@ msgstr "El servidor no admet STARTTLS! %s"
 #: git-send-email.perl:1403
 msgid "Unable to initialize SMTP properly. Check config and use --smtp-debug."
 msgstr ""
-"No s'ha pogut inicialitzar SMTP correctament. Comproveu-ho la configuració i "
-"useu --smtp-debug."
+"No s'ha pogut inicialitzar SMTP correctament. Comproveu-ho la configuració i useu --smtp-debug."
 
 #: git-send-email.perl:1421
 #, perl-format
@@ -16363,14 +15899,11 @@ msgstr "Esteu segur que voleu enviar %s? [y|N]: "
 #~ "If the patch applies cleanly, the edited hunk will immediately be\n"
 #~ "marked for discarding"
 #~ msgstr ""
-#~ "Si el pedaç s'aplica correctament, el tros editat es marcarà "
-#~ "immediatament\n"
+#~ "Si el pedaç s'aplica correctament, el tros editat es marcarà immediatament\n"
 #~ "per descartar-se."
 
 #~ msgid "Use an experimental blank-line-based heuristic to improve diffs"
-#~ msgstr ""
-#~ "Usa un heurístic experimental basat en línies en blanc per a millorar les "
-#~ "diferències"
+#~ msgstr "Usa un heurístic experimental basat en línies en blanc per a millorar les diferències"
 
 #~ msgid "Clever... amending the last one with dirty index."
 #~ msgstr "Intel·ligent... s'està esmenant l'últim amb índex brut."
@@ -16390,9 +15923,7 @@ msgstr "Esteu segur que voleu enviar %s? [y|N]: "
 
 #~ msgid ""
 #~ "\n"
-#~ "(use 'rm -rf' if you really want to remove it including all of its "
-#~ "history)"
+#~ "(use 'rm -rf' if you really want to remove it including all of its history)"
 #~ msgstr ""
 #~ "\n"
-#~ "(useu 'rm -rf' si realment voleu eliminar-lo, incloent tota la seva "
-#~ "història)"
+#~ "(useu 'rm -rf' si realment voleu eliminar-lo, incloent tota la seva història)"
