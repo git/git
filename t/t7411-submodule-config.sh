@@ -31,6 +31,21 @@ test_expect_success 'submodule config cache setup' '
 	)
 '
 
+test_expect_success 'configuration parsing with error' '
+	test_when_finished "rm -rf repo" &&
+	test_create_repo repo &&
+	cat >repo/.gitmodules <<-\EOF &&
+	[submodule "s"]
+		path
+		ignore
+	EOF
+	(
+		cd repo &&
+		test_must_fail test-submodule-config "" s 2>actual &&
+		test_i18ngrep "bad config" actual
+	)
+'
+
 cat >super/expect <<EOF
 Submodule name: 'a' for path 'a'
 Submodule name: 'a' for path 'b'
