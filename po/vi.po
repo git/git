@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git v2.14.0\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2017-07-15 11:57+0800\n"
-"PO-Revision-Date: 2017-07-15 13:51+0700\n"
+"POT-Creation-Date: 2017-07-24 21:54+0800\n"
+"PO-Revision-Date: 2017-07-25 07:06+0700\n"
 "Last-Translator: Trần Ngọc Quân <vnwildman@gmail.com>\n"
 "Language-Team: Vietnamese <translation-team-vi@lists.sourceforge.net>\n"
 "Language: vi\n"
@@ -1476,19 +1476,62 @@ msgstr "LF nên thay bằng CRLF trong %s"
 
 #: date.c:116
 msgid "in the future"
-msgstr "trong tương lai"
+msgstr "ở thời tương lai"
 
-#: date.c:122 date.c:129 date.c:136 date.c:143 date.c:149 date.c:156 date.c:167
-#: date.c:175 date.c:180
-msgid "%"
-msgid_plural "%"
-msgstr[0] "%"
+#: date.c:122
+#, c-format
+msgid "%<PRIuMAX> second ago"
+msgid_plural "%<PRIuMAX> seconds ago"
+msgstr[0] "%<PRIuMAX> giây trước"
+
+#: date.c:129
+#, c-format
+msgid "%<PRIuMAX> minute ago"
+msgid_plural "%<PRIuMAX> minutes ago"
+msgstr[0] "%<PRIuMAX> phút trước"
+
+#: date.c:136
+#, c-format
+msgid "%<PRIuMAX> hour ago"
+msgid_plural "%<PRIuMAX> hours ago"
+msgstr[0] "%<PRIuMAX> giờ trước"
+
+#: date.c:143
+#, c-format
+msgid "%<PRIuMAX> day ago"
+msgid_plural "%<PRIuMAX> days ago"
+msgstr[0] "%<PRIuMAX> ngày trước"
+
+#: date.c:149
+#, c-format
+msgid "%<PRIuMAX> week ago"
+msgid_plural "%<PRIuMAX> weeks ago"
+msgstr[0] "%<PRIuMAX> tuần trước"
+
+#: date.c:156
+#, c-format
+msgid "%<PRIuMAX> month ago"
+msgid_plural "%<PRIuMAX> months ago"
+msgstr[0] "%<PRIuMAX> tháng trước"
+
+#: date.c:167
+#, c-format
+msgid "%<PRIuMAX> year"
+msgid_plural "%<PRIuMAX> years"
+msgstr[0] "%<PRIuMAX> năm"
 
 #. TRANSLATORS: "%s" is "<n> years"
 #: date.c:170
-msgid "%s, %"
-msgid_plural "%s, %"
-msgstr[0] "%s, %"
+#, c-format
+msgid "%s, %<PRIuMAX> month ago"
+msgid_plural "%s, %<PRIuMAX> months ago"
+msgstr[0] "%s, %<PRIuMAX> tháng trước"
+
+#: date.c:175 date.c:180
+#, c-format
+msgid "%<PRIuMAX> year ago"
+msgid_plural "%<PRIuMAX> years ago"
+msgstr[0] "%<PRIuMAX> năm trước"
 
 #: diffcore-order.c:24
 #, c-format
@@ -1662,7 +1705,7 @@ msgstr "lần chuyển giao %s không hợp lệ"
 msgid "giving up"
 msgstr "chịu thua"
 
-#: fetch-pack.c:533 progress.c:235
+#: fetch-pack.c:533 progress.c:237
 msgid "done"
 msgstr "xong"
 
@@ -8471,7 +8514,7 @@ msgstr "Tự động đóng gói kho chứa để tối ưu hóa hiệu suất l
 msgid "See \"git help gc\" for manual housekeeping.\n"
 msgstr "Xem \"git help gc\" để có hướng dẫn cụ thể về cách dọn dẹp kho git.\n"
 
-#: builtin/gc.c:432
+#: builtin/gc.c:436
 #, c-format
 msgid ""
 "gc is already running on machine '%s' pid %<PRIuMAX> (use --force if not)"
@@ -8479,7 +8522,7 @@ msgstr ""
 "gc đang được thực hiện trên máy “%s” pid %<PRIuMAX> (dùng --force nếu không "
 "phải thế)"
 
-#: builtin/gc.c:476
+#: builtin/gc.c:480
 msgid ""
 "There are too many unreachable loose objects; run 'git prune' to remove them."
 msgstr ""
@@ -16331,44 +16374,16 @@ msgstr "Bỏ qua %s với hậu tố sao lưu dự phòng “%s”.\n"
 msgid "Do you really want to send %s? [y|N]: "
 msgstr "Bạn có thực sự muốn gửi %s? [y|N]: "
 
+#~ msgid "%"
+#~ msgid_plural "%"
+#~ msgstr[0] "%"
+
+#~ msgid "%s, %"
+#~ msgid_plural "%s, %"
+#~ msgstr[0] "%s, %"
+
 #~ msgid "Could not open file '%s'"
 #~ msgstr "Không thể mở tập tin “%s”"
-
-#~ msgid "%lu second ago"
-#~ msgid_plural "%lu seconds ago"
-#~ msgstr[0] "%lu giây trước"
-
-#~ msgid "%lu minute ago"
-#~ msgid_plural "%lu minutes ago"
-#~ msgstr[0] "%lu phút trước"
-
-#~ msgid "%lu hour ago"
-#~ msgid_plural "%lu hours ago"
-#~ msgstr[0] "%lu giờ trước"
-
-#~ msgid "%lu day ago"
-#~ msgid_plural "%lu days ago"
-#~ msgstr[0] "%lu ngày trước"
-
-#~ msgid "%lu week ago"
-#~ msgid_plural "%lu weeks ago"
-#~ msgstr[0] "%lu tuần trước"
-
-#~ msgid "%lu month ago"
-#~ msgid_plural "%lu months ago"
-#~ msgstr[0] "%lu tháng trước"
-
-#~ msgid "%lu year"
-#~ msgid_plural "%lu years"
-#~ msgstr[0] "%lu năm"
-
-#~ msgid "%s, %lu month ago"
-#~ msgid_plural "%s, %lu months ago"
-#~ msgstr[0] "%s, %lu tháng trước"
-
-#~ msgid "%lu year ago"
-#~ msgid_plural "%lu years ago"
-#~ msgstr[0] "%lu năm trước"
 
 #~ msgid "in %0.1f seconds automatically..."
 #~ msgstr "trong %0.1f giây một cách tự động…"
