@@ -94,8 +94,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git master\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2017-07-15 11:57+0800\n"
-"PO-Revision-Date: 2017-07-14 10:54+0200\n"
+"POT-Creation-Date: 2017-07-24 21:54+0800\n"
+"PO-Revision-Date: 2017-07-24 17:26+0200\n"
 "Last-Translator: Alexander Shopov <ash@kambanaria.org>\n"
 "Language-Team: Bulgarian <dict@fsa-bg.org>\n"
 "Language: bg\n"
@@ -1585,19 +1585,69 @@ msgstr ""
 msgid "in the future"
 msgstr "в бъдещето"
 
-#: date.c:122 date.c:129 date.c:136 date.c:143 date.c:149 date.c:156 date.c:167
-#: date.c:175 date.c:180
-msgid "%"
-msgid_plural "%"
-msgstr[0] "%"
-msgstr[1] "%"
+#: date.c:122
+#, c-format
+msgid "%<PRIuMAX> second ago"
+msgid_plural "%<PRIuMAX> seconds ago"
+msgstr[0] "преди %<PRIuMAX> секунда"
+msgstr[1] "преди %<PRIuMAX> секунди"
+
+#: date.c:129
+#, c-format
+msgid "%<PRIuMAX> minute ago"
+msgid_plural "%<PRIuMAX> minutes ago"
+msgstr[0] "преди %<PRIuMAX> минута"
+msgstr[1] "преди %<PRIuMAX> минути"
+
+#: date.c:136
+#, c-format
+msgid "%<PRIuMAX> hour ago"
+msgid_plural "%<PRIuMAX> hours ago"
+msgstr[0] "преди %<PRIuMAX> час"
+msgstr[1] "преди %<PRIuMAX> часа"
+
+#: date.c:143
+#, c-format
+msgid "%<PRIuMAX> day ago"
+msgid_plural "%<PRIuMAX> days ago"
+msgstr[0] "преди %<PRIuMAX> ден"
+msgstr[1] "преди %<PRIuMAX> дена"
+
+#: date.c:149
+#, c-format
+msgid "%<PRIuMAX> week ago"
+msgid_plural "%<PRIuMAX> weeks ago"
+msgstr[0] "преди %<PRIuMAX> седмица"
+msgstr[1] "преди %<PRIuMAX> седмици"
+
+#: date.c:156
+#, c-format
+msgid "%<PRIuMAX> month ago"
+msgid_plural "%<PRIuMAX> months ago"
+msgstr[0] "преди %<PRIuMAX> месец"
+msgstr[1] "преди %<PRIuMAX> месеца"
+
+#: date.c:167
+#, c-format
+msgid "%<PRIuMAX> year"
+msgid_plural "%<PRIuMAX> years"
+msgstr[0] "%<PRIuMAX> година"
+msgstr[1] "%<PRIuMAX> години"
 
 #. TRANSLATORS: "%s" is "<n> years"
 #: date.c:170
-msgid "%s, %"
-msgid_plural "%s, %"
-msgstr[0] "%s, %"
-msgstr[1] "%s, %"
+#, c-format
+msgid "%s, %<PRIuMAX> month ago"
+msgid_plural "%s, %<PRIuMAX> months ago"
+msgstr[0] "преди %s и %<PRIuMAX> месец"
+msgstr[1] "преди %s и %<PRIuMAX> месеца"
+
+#: date.c:175 date.c:180
+#, c-format
+msgid "%<PRIuMAX> year ago"
+msgid_plural "%<PRIuMAX> years ago"
+msgstr[0] "преди %<PRIuMAX> година"
+msgstr[1] "преди %<PRIuMAX> години"
 
 #: diffcore-order.c:24
 #, c-format
@@ -1776,7 +1826,7 @@ msgstr "неправилно подаване: „%s“"
 msgid "giving up"
 msgstr "преустановяване"
 
-#: fetch-pack.c:533 progress.c:235
+#: fetch-pack.c:533 progress.c:237
 msgid "done"
 msgstr "действието завърши"
 
@@ -3196,12 +3246,12 @@ msgstr "съобщението за подаване към „%s“ не мож
 #: sequencer.c:879
 #, c-format
 msgid "This is the commit message #%d:"
-msgstr "Това е съобщение при подаване №${%d}:"
+msgstr "Това е съобщение при подаване №%d:"
 
 #: sequencer.c:884
 #, c-format
 msgid "The commit message #%d will be skipped:"
-msgstr "Съобщение при подаване №${%d} ще бъде прескочено:"
+msgstr "Съобщение при подаване №%d ще бъде прескочено:"
 
 #: sequencer.c:889
 #, c-format
@@ -8664,7 +8714,7 @@ msgstr ""
 "Погледнете ръководството за повече информация как да изпълните „git help "
 "gc“.\n"
 
-#: builtin/gc.c:432
+#: builtin/gc.c:436
 #, c-format
 msgid ""
 "gc is already running on machine '%s' pid %<PRIuMAX> (use --force if not)"
@@ -8673,7 +8723,7 @@ msgstr ""
 "процеса: %<PRIuMAX> (ако сте сигурни, че това не е вярно, това използвайте\n"
 "опцията „--force“)"
 
-#: builtin/gc.c:476
+#: builtin/gc.c:480
 msgid ""
 "There are too many unreachable loose objects; run 'git prune' to remove them."
 msgstr ""
