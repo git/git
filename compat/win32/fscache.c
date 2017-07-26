@@ -49,16 +49,18 @@ struct fsentry {
 /*
  * Compares the paths of two fsentry structures for equality.
  */
-static int fsentry_cmp(const struct fsentry *fse1, const struct fsentry *fse2)
+static int fsentry_cmp(void *unused_cmp_data,
+		       const struct fsentry *fse1, const struct fsentry *fse2,
+		       void *unused_keydata)
 {
 	int res;
 	if (fse1 == fse2)
 		return 0;
 
 	/* compare the list parts first */
-	if (fse1->list != fse2->list && (res = fsentry_cmp(
-			fse1->list ? fse1->list : fse1,
-			fse2->list ? fse2->list	: fse2)))
+	if (fse1->list != fse2->list &&
+	    (res = fsentry_cmp(NULL, fse1->list ? fse1->list : fse1,
+			       fse2->list ? fse2->list	: fse2, NULL)))
 		return res;
 
 	/* if list parts are equal, compare len and name */
@@ -244,7 +246,7 @@ static void fscache_add(struct fsentry *fse)
 static void fscache_clear(void)
 {
 	hashmap_free(&map, 1);
-	hashmap_init(&map, (hashmap_cmp_fn)fsentry_cmp, 0);
+	hashmap_init(&map, (hashmap_cmp_fn)fsentry_cmp, NULL, 0);
 }
 
 /*
@@ -386,7 +388,7 @@ int fscache_enable(int enable)
 			return 0;
 
 		InitializeCriticalSection(&mutex);
-		hashmap_init(&map, (hashmap_cmp_fn) fsentry_cmp, 0);
+		hashmap_init(&map, (hashmap_cmp_fn) fsentry_cmp, NULL, 0);
 		initialized = 1;
 	}
 
