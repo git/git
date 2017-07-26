@@ -660,7 +660,7 @@ static struct option fsck_opts[] = {
 
 int cmd_fsck(int argc, const char **argv, const char *prefix)
 {
-	int i, heads;
+	int i;
 	struct alternate_object_database *alt;
 
 	errors_found = 0;
@@ -728,7 +728,6 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 		}
 	}
 
-	heads = 0;
 	for (i = 0; i < argc; i++) {
 		const char *arg = argv[i];
 		unsigned char sha1[20];
@@ -746,7 +745,6 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 				add_decoration(fsck_walk_options.object_names,
 					obj, xstrdup(arg));
 			mark_object_reachable(obj);
-			heads++;
 			continue;
 		}
 		error("invalid parameter: expected sha1, got '%s'", arg);
