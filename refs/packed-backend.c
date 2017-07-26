@@ -611,19 +611,27 @@ int commit_packed_refs(struct ref_store *ref_store, struct strbuf *err)
 	struct packed_ref_cache *packed_ref_cache =
 		get_packed_ref_cache(refs);
 	int ok;
+	int ret = -1;
 	struct strbuf sb = STRBUF_INIT;
 	FILE *out;
 	struct ref_iterator *iter;
+	char *packed_refs_path;
 
 	if (!is_lock_file_locked(&refs->lock))
 		die("BUG: commit_packed_refs() called when unlocked");
 
-	strbuf_addf(&sb, "%s.new", refs->path);
+	/*
+	 * If packed-refs is a symlink, we want to overwrite the
+	 * symlinked-to file, not the symlink itself. Also, put the
+	 * staging file next to it:
+	 */
+	packed_refs_path = get_locked_file_path(&refs->lock);
+	strbuf_addf(&sb, "%s.new", packed_refs_path);
 	if (create_tempfile(&refs->tempfile, sb.buf) < 0) {
 		strbuf_addf(err, "unable to create file %s: %s",
 			    sb.buf, strerror(errno));
 		strbuf_release(&sb);
-		return -1;
+		goto out;
 	}
 	strbuf_release(&sb);
 
@@ -661,17 +669,21 @@ int commit_packed_refs(struct ref_store *ref_store, struct strbuf *err)
 		goto error;
 	}
 
-	if (rename_tempfile(&refs->tempfile, refs->path)) {
+	if (rename_tempfile(&refs->tempfile, packed_refs_path)) {
 		strbuf_addf(err, "error replacing %s: %s",
 			    refs->path, strerror(errno));
-		return -1;
+		goto out;
 	}
 
-	return 0;
+	ret = 0;
+	goto out;
 
 error:
 	delete_tempfile(&refs->tempfile);
-	return -1;
+
+out:
+	free(packed_refs_path);
+	return ret;
 }
 
 /*
