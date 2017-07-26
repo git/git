@@ -88,8 +88,8 @@ EOF
 test_expect_success 'status --column' '
 	cat >expect <<\EOF &&
 # On branch master
-# Your branch and '\''upstream'\'' have diverged,
-# and have 1 and 2 different commits each, respectively.
+# Your branch and '\''upstream'\'' have diverged.
+# They have 1 and 2 different commits, respectively.
 #   (use "git pull" to merge the remote branch into yours)
 #
 # Changes to be committed:
@@ -122,8 +122,8 @@ test_expect_success 'status --column status.displayCommentPrefix=false' '
 
 cat >expect <<\EOF
 # On branch master
-# Your branch and 'upstream' have diverged,
-# and have 1 and 2 different commits each, respectively.
+# Your branch and 'upstream' have diverged.
+# They have 1 and 2 different commits, respectively.
 #   (use "git pull" to merge the remote branch into yours)
 #
 # Changes to be committed:
@@ -199,8 +199,8 @@ test_expect_success 'commit ignores status.displayCommentPrefix=false in COMMIT_
 
 cat >expect <<\EOF
 On branch master
-Your branch and 'upstream' have diverged,
-and have 1 and 2 different commits each, respectively.
+Your branch and 'upstream' have diverged.
+They have 1 and 2 different commits, respectively.
 
 Changes to be committed:
 	new file:   dir2/added
@@ -272,8 +272,8 @@ test_expect_success 'status with gitignore' '
 
 	cat >expect <<\EOF &&
 On branch master
-Your branch and '\''upstream'\'' have diverged,
-and have 1 and 2 different commits each, respectively.
+Your branch and '\''upstream'\'' have diverged.
+They have 1 and 2 different commits, respectively.
   (use "git pull" to merge the remote branch into yours)
 
 Changes to be committed:
@@ -341,8 +341,8 @@ test_expect_success 'status with gitignore (nothing untracked)' '
 
 	cat >expect <<\EOF &&
 On branch master
-Your branch and '\''upstream'\'' have diverged,
-and have 1 and 2 different commits each, respectively.
+Your branch and '\''upstream'\'' have diverged.
+They have 1 and 2 different commits, respectively.
   (use "git pull" to merge the remote branch into yours)
 
 Changes to be committed:
@@ -414,8 +414,8 @@ test_expect_success 'setup dir3' '
 test_expect_success 'status -uno' '
 	cat >expect <<EOF &&
 On branch master
-Your branch and '\''upstream'\'' have diverged,
-and have 1 and 2 different commits each, respectively.
+Your branch and '\''upstream'\'' have diverged.
+They have 1 and 2 different commits, respectively.
   (use "git pull" to merge the remote branch into yours)
 
 Changes to be committed:
@@ -444,8 +444,8 @@ test_expect_success 'status (status.showUntrackedFiles no)' '
 test_expect_success 'status -uno (advice.statusHints false)' '
 	cat >expect <<EOF &&
 On branch master
-Your branch and '\''upstream'\'' have diverged,
-and have 1 and 2 different commits each, respectively.
+Your branch and '\''upstream'\'' have diverged.
+They have 1 and 2 different commits, respectively.
 
 Changes to be committed:
 	new file:   dir2/added
@@ -478,8 +478,8 @@ test_expect_success 'status -s (status.showUntrackedFiles no)' '
 test_expect_success 'status -unormal' '
 	cat >expect <<EOF &&
 On branch master
-Your branch and '\''upstream'\'' have diverged,
-and have 1 and 2 different commits each, respectively.
+Your branch and '\''upstream'\'' have diverged.
+They have 1 and 2 different commits, respectively.
   (use "git pull" to merge the remote branch into yours)
 
 Changes to be committed:
@@ -536,8 +536,8 @@ test_expect_success 'status -s (status.showUntrackedFiles normal)' '
 test_expect_success 'status -uall' '
 	cat >expect <<EOF &&
 On branch master
-Your branch and '\''upstream'\'' have diverged,
-and have 1 and 2 different commits each, respectively.
+Your branch and '\''upstream'\'' have diverged.
+They have 1 and 2 different commits, respectively.
   (use "git pull" to merge the remote branch into yours)
 
 Changes to be committed:
@@ -599,8 +599,8 @@ test_expect_success 'status -s (status.showUntrackedFiles all)' '
 test_expect_success 'status with relative paths' '
 	cat >expect <<\EOF &&
 On branch master
-Your branch and '\''upstream'\'' have diverged,
-and have 1 and 2 different commits each, respectively.
+Your branch and '\''upstream'\'' have diverged.
+They have 1 and 2 different commits, respectively.
   (use "git pull" to merge the remote branch into yours)
 
 Changes to be committed:
@@ -670,8 +670,8 @@ test_expect_success 'setup unique colors' '
 test_expect_success 'status with color.ui' '
 	cat >expect <<\EOF &&
 On branch <GREEN>master<RESET>
-Your branch and '\''upstream'\'' have diverged,
-and have 1 and 2 different commits each, respectively.
+Your branch and '\''upstream'\'' have diverged.
+They have 1 and 2 different commits, respectively.
   (use "git pull" to merge the remote branch into yours)
 
 Changes to be committed:
@@ -796,8 +796,8 @@ test_expect_success 'status --porcelain respects -b' '
 test_expect_success 'status without relative paths' '
 	cat >expect <<\EOF &&
 On branch master
-Your branch and '\''upstream'\'' have diverged,
-and have 1 and 2 different commits each, respectively.
+Your branch and '\''upstream'\'' have diverged.
+They have 1 and 2 different commits, respectively.
   (use "git pull" to merge the remote branch into yours)
 
 Changes to be committed:
@@ -846,8 +846,8 @@ test_expect_success 'status -s without relative paths' '
 test_expect_success 'dry-run of partial commit excluding new file in index' '
 	cat >expect <<EOF &&
 On branch master
-Your branch and '\''upstream'\'' have diverged,
-and have 1 and 2 different commits each, respectively.
+Your branch and '\''upstream'\'' have diverged.
+They have 1 and 2 different commits, respectively.
   (use "git pull" to merge the remote branch into yours)
 
 Changes to be committed:
@@ -890,8 +890,8 @@ test_expect_success 'setup status submodule summary' '
 test_expect_success 'status submodule summary is disabled by default' '
 	cat >expect <<EOF &&
 On branch master
-Your branch and '\''upstream'\'' have diverged,
-and have 1 and 2 different commits each, respectively.
+Your branch and '\''upstream'\'' have diverged.
+They have 1 and 2 different commits, respectively.
   (use "git pull" to merge the remote branch into yours)
 
 Changes to be committed:
@@ -950,8 +950,8 @@ head=$(cd sm && git rev-parse --short=7 --verify HEAD)
 test_expect_success 'status submodule summary' '
 	cat >expect <<EOF &&
 On branch master
-Your branch and '\''upstream'\'' have diverged,
-and have 1 and 2 different commits each, respectively.
+Your branch and '\''upstream'\'' have diverged.
+They have 1 and 2 different commits, respectively.
   (use "git pull" to merge the remote branch into yours)
 
 Changes to be committed:
@@ -1012,8 +1012,8 @@ test_expect_success 'status -s submodule summary' '
 test_expect_success 'status submodule summary (clean submodule): commit' '
 	cat >expect <<EOF &&
 On branch master
-Your branch and '\''upstream'\'' have diverged,
-and have 2 and 2 different commits each, respectively.
+Your branch and '\''upstream'\'' have diverged.
+They have 2 and 2 different commits, respectively.
   (use "git pull" to merge the remote branch into yours)
 
 Changes not staged for commit:
@@ -1062,8 +1062,8 @@ test_expect_success 'status -z implies porcelain' '
 test_expect_success 'commit --dry-run submodule summary (--amend)' '
 	cat >expect <<EOF &&
 On branch master
-Your branch and '\''upstream'\'' have diverged,
-and have 2 and 2 different commits each, respectively.
+Your branch and '\''upstream'\'' have diverged.
+They have 2 and 2 different commits, respectively.
   (use "git pull" to merge the remote branch into yours)
 
 Changes to be committed:
@@ -1119,8 +1119,8 @@ touch .gitmodules
 test_expect_success '--ignore-submodules=untracked suppresses submodules with untracked content' '
 	cat > expect << EOF &&
 On branch master
-Your branch and '\''upstream'\'' have diverged,
-and have 2 and 2 different commits each, respectively.
+Your branch and '\''upstream'\'' have diverged.
+They have 2 and 2 different commits, respectively.
   (use "git pull" to merge the remote branch into yours)
 
 Changes to be committed:
@@ -1231,8 +1231,8 @@ test_expect_success '.git/config ignore=dirty suppresses submodules with modifie
 test_expect_success "--ignore-submodules=untracked doesn't suppress submodules with modified content" '
 	cat > expect << EOF &&
 On branch master
-Your branch and '\''upstream'\'' have diverged,
-and have 2 and 2 different commits each, respectively.
+Your branch and '\''upstream'\'' have diverged.
+They have 2 and 2 different commits, respectively.
   (use "git pull" to merge the remote branch into yours)
 
 Changes to be committed:
@@ -1291,8 +1291,8 @@ head2=$(cd sm && git commit -q -m "2nd commit" foo && git rev-parse --short=7 --
 test_expect_success "--ignore-submodules=untracked doesn't suppress submodule summary" '
 	cat > expect << EOF &&
 On branch master
-Your branch and '\''upstream'\'' have diverged,
-and have 2 and 2 different commits each, respectively.
+Your branch and '\''upstream'\'' have diverged.
+They have 2 and 2 different commits, respectively.
   (use "git pull" to merge the remote branch into yours)
 
 Changes to be committed:
@@ -1375,8 +1375,8 @@ test_expect_success ".git/config ignore=dirty doesn't suppress submodule summary
 
 cat > expect << EOF
 ; On branch master
-; Your branch and 'upstream' have diverged,
-; and have 2 and 2 different commits each, respectively.
+; Your branch and 'upstream' have diverged.
+; They have 2 and 2 different commits, respectively.
 ;   (use "git pull" to merge the remote branch into yours)
 ;
 ; Changes to be committed:
@@ -1426,8 +1426,8 @@ test_expect_success "status (core.commentchar with two chars with submodule summ
 test_expect_success "--ignore-submodules=all suppresses submodule summary" '
 	cat > expect << EOF &&
 On branch master
-Your branch and '\''upstream'\'' have diverged,
-and have 2 and 2 different commits each, respectively.
+Your branch and '\''upstream'\'' have diverged.
+They have 2 and 2 different commits, respectively.
   (use "git pull" to merge the remote branch into yours)
 
 Changes not staged for commit:
@@ -1454,8 +1454,8 @@ EOF
 test_expect_success '.gitmodules ignore=all suppresses unstaged submodule summary' '
 	cat > expect << EOF &&
 On branch master
-Your branch and '\''upstream'\'' have diverged,
-and have 2 and 2 different commits each, respectively.
+Your branch and '\''upstream'\'' have diverged.
+They have 2 and 2 different commits, respectively.
   (use "git pull" to merge the remote branch into yours)
 
 Changes to be committed:
@@ -1577,8 +1577,8 @@ test_expect_success 'git commit --dry-run will show a staged but ignored submodu
 	git add sm &&
 	cat >expect << EOF &&
 On branch master
-Your branch and '\''upstream'\'' have diverged,
-and have 2 and 2 different commits each, respectively.
+Your branch and '\''upstream'\'' have diverged.
+They have 2 and 2 different commits, respectively.
   (use "git pull" to merge the remote branch into yours)
 
 Changes to be committed:
