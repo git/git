@@ -1615,13 +1615,9 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 
 	strace_env = getenv("GIT_STRACE_COMMANDS");
 	if (strace_env) {
-		char **path = get_path_split();
-		char *p = path_lookup("strace.exe", path, 1);
-		if (!p) {
-			free_path_split(path);
+		char *p = path_lookup("strace.exe", 1);
+		if (!p)
 			return error("strace not found!");
-		}
-		free_path_split(path);
 		if (xutftowcs_path(wcmd, p) < 0) {
 			free(p);
 			return -1;
