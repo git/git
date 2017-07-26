@@ -238,4 +238,19 @@ test_expect_success 'retry acquiring packed-refs.lock' '
 	git -c core.packedrefstimeout=3000 pack-refs --all --prune
 '
 
+test_expect_success SYMLINKS 'pack symlinked packed-refs' '
+	# First make sure that symlinking works when reading:
+	git update-ref refs/heads/loosy refs/heads/master &&
+	git for-each-ref >all-refs-before &&
+	mv .git/packed-refs .git/my-deviant-packed-refs &&
+	ln -s my-deviant-packed-refs .git/packed-refs &&
+	git for-each-ref >all-refs-linked &&
+	test_cmp all-refs-before all-refs-linked &&
+	git pack-refs --all --prune &&
+	git for-each-ref >all-refs-packed &&
+	test_cmp all-refs-before all-refs-packed &&
+	test -h .git/packed-refs &&
+	test "$(readlink .git/packed-refs)" = "my-deviant-packed-refs"
+'
+
 test_done
