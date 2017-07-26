@@ -513,78 +513,17 @@ static struct hashmap subprocess_map;
 
 static int start_multi_file_filter_fn(struct subprocess_entry *subprocess)
 {
-	int err, i;
-	struct cmd2process *entry = (struct cmd2process *)subprocess;
-	struct string_list cap_list = STRING_LIST_INIT_NODUP;
-	char *cap_buf;
-	const char *cap_name;
-	struct child_process *process = &subprocess->process;
-	const char *cmd = subprocess->cmd;
-
-	static const struct {
-		const char *name;
-		unsigned int cap;
-	} known_caps[] = {
+	static int versions[] = {2, 0};
+	static struct subprocess_capability capabilities[] = {
 		{ "clean",  CAP_CLEAN  },
 		{ "smudge", CAP_SMUDGE },
 		{ "delay",  CAP_DELAY  },
+		{ NULL, 0 }
 	};
-
-	sigchain_push(SIGPIPE, SIG_IGN);
-
-	err = packet_writel(process->in, "git-filter-client", "version=2", NULL);
-	if (err)
-		goto done;
-
-	err = strcmp(packet_read_line(process->out, NULL), "git-filter-server");
-	if (err) {
-		error("external filter '%s' does not support filter protocol version 2", cmd);
-		goto done;
-	}
-	err = strcmp(packet_read_line(process->out, NULL), "version=2");
-	if (err)
-		goto done;
-	err = packet_read_line(process->out, NULL) != NULL;
-	if (err)
-		goto done;
-
-	for (i = 0; i < ARRAY_SIZE(known_caps); ++i) {
-		err = packet_write_fmt_gently(
-			process->in, "capability=%s\n", known_caps[i].name);
-		if (err)
-			goto done;
-	}
-	err = packet_flush_gently(process->in);
-	if (err)
-		goto done;
-
-	for (;;) {
-		cap_buf = packet_read_line(process->out, NULL);
-		if (!cap_buf)
-			break;
-		string_list_split_in_place(&cap_list, cap_buf, '=', 1);
-
-		if (cap_list.nr != 2 || strcmp(cap_list.items[0].string, "capability"))
-			continue;
-
-		cap_name = cap_list.items[1].string;
-		i = ARRAY_SIZE(known_caps) - 1;
-		while (i >= 0 && strcmp(cap_name, known_caps[i].name))
-			i--;
-
-		if (i >= 0)
-			entry->supported_capabilities |= known_caps[i].cap;
-		else
-			warning("external filter '%s' requested unsupported filter capability '%s'",
-			cmd, cap_name);
-
-		string_list_clear(&cap_list, 0);
-	}
-
-done:
-	sigchain_pop(SIGPIPE);
-
-	return err;
+	struct cmd2process *entry = (struct cmd2process *)subprocess;
+	return subprocess_handshake(subprocess, "git-filter", versions, NULL,
+				    capabilities,
+				    &entry->supported_capabilities);
 }
 
 static void handle_filter_error(const struct strbuf *filter_status,

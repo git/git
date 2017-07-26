@@ -29,6 +29,16 @@ struct subprocess_entry {
 	struct child_process process;
 };
 
+struct subprocess_capability {
+	const char *name;
+
+	/*
+	 * subprocess_handshake will "|=" this value to supported_capabilities
+	 * if the server reports that it supports this capability.
+	 */
+	unsigned int flag;
+};
+
 /* subprocess functions */
 
 /* Function to test two subprocess hashmap entries for equality. */
@@ -61,6 +71,22 @@ static inline struct child_process *subprocess_get_child_process(
 {
 	return &entry->process;
 }
+
+/*
+ * Perform the version and capability negotiation as described in the "Long
+ * Running Filter Process" section of the gitattributes documentation using the
+ * given requested versions and capabilities. The "versions" and "capabilities"
+ * parameters are arrays terminated by a 0 or blank struct.
+ *
+ * This function is typically called when a subprocess is started (as part of
+ * the "startfn" passed to subprocess_start).
+ */
+int subprocess_handshake(struct subprocess_entry *entry,
+			 const char *welcome_prefix,
+			 int *versions,
+			 int *chosen_version,
+			 struct subprocess_capability *capabilities,
+			 unsigned int *supported_capabilities);
 
 /*
  * Helper function that will read packets looking for "status=<foo>"
