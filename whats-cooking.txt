@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jul 2017, #07; Mon, 24)
+Subject: What's cooking in git.git (Jul 2017, #08; Thu, 27)
 X-master-at: 5800c63717ae35286a1441f14ffff753e01f7e2b
-X-next-at: 8e98c6e5c05367936b792dc40ed7cc7876e9d4c7
+X-next-at: d1ce394fe289eaefa273394076e591331beea529
 
-What's cooking in git.git (Jul 2017, #07; Mon, 24)
+What's cooking in git.git (Jul 2017, #08; Thu, 27)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,74 +12,161 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-With help from Jiang, Dscho and Jean-Noël, we agreed on the way to
-handle i18n issues around our custom timestamp_t type and its format
-PRItime, and tagging of -rc1 has been delayed a bit.  But now it has
-happened.  There is a small unrelated change still cooking somewhere
-else that may have to go in the final release, but other than that
-one, no topic is expected to go from 'next' to 'master' until the
-final.  Regression fixes and reverts are possible but let's hope
-there are no need for them.
-
 You can find the changes described here in the integration branches
 of the repositories listed at
 
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* jc/po-pritime-fix (2017-07-20) 1 commit
-  (merged to 'next' on 2017-07-21 at 61f0e3b37f)
- + Makefile: help gettext tools to cope with our custom PRItime format
-
- We started using "%" PRItime, imitating "%" PRIuMAX and friends, as
- a way to format the internal timestamp value, but this does not
- play well with gettext(1) i18n framework, and causes "make pot"
- that is run by the l10n coordinator to create a broken po/git.pot
- file.  This is a possible workaround for that problem.
-
-
-* ks/doc-fixes (2017-07-18) 2 commits
-  (merged to 'next' on 2017-07-20 at c34b00d0a0)
- + doc: reformat the paragraph containing the 'cut-line'
- + doc: camelCase the i18n config variables to improve readability
-
- Doc clean-up.
-
-
-* rj/cygwin-fread-reads-directories (2017-07-21) 1 commit
-  (merged to 'next' on 2017-07-21 at 28694cf254)
- + config.mak.uname: set FREAD_READS_DIRECTORIES for cygwin
-
- It turns out that Cygwin also needs the fopen() wrapper that
- returns failure when a directory is opened for reading.
-
---------------------------------------------------
 [New Topics]
 
-* js/run-process-parallel-api-fix (2017-07-21) 1 commit
- - run_processes_parallel: change confusing task_cb convention
+* ah/doc-wserrorhighlight (2017-07-25) 1 commit
+  (merged to 'next' on 2017-07-27 at cd1bb28d95)
+ + doc: add missing values "none" and "default" for diff.wsErrorHighlight
 
- API fix.
+ Doc update.
 
- Will merge to and cook in 'next'.
+ Will cook in 'next'.
 
 
-* cc/ref-is-hidden-microcleanup (2017-07-24) 1 commit
- - refs: use skip_prefix() in ref_is_hidden()
+* dc/fmt-merge-msg-microcleanup (2017-07-25) 1 commit
+  (merged to 'next' on 2017-07-27 at 6df06eb788)
+ + fmt-merge-msg: fix coding style
+
+ Code cleanup.
+
+ Will cook in 'next'.
+
+
+* js/git-gui-msgfmt-on-windows (2017-07-25) 7 commits
+ - Merge branch 'js/msgfmt-on-windows' of ../git-gui into js/git-gui-msgfmt-on-windows
+ - git-gui (MinGW): make use of MSys2's msgfmt
+ - Merge remote-tracking branch 'philoakley/dup-gui'
+ - git gui: allow for a long recentrepo list
+ - git gui: de-dup selected repo from recentrepo history
+ - git gui: cope with duplicates in _get_recentrepo
+ - git-gui: remove duplicate entries from .gitconfig's gui.recentrepo
+
+ Because recent Git for Windows do come with a real msgfmt, the
+ build procedure for git-gui has been updated to use it instead of a
+ hand-rolled substitute.
+
+
+* jt/subprocess-handshake (2017-07-26) 3 commits
+ - sub-process: refactor handshake to common function
+ - Documentation: migrate sub-process docs to header
+ - Merge branch 'ls/filter-process-delayed' into jt/subprocess-handshake
+ (this branch uses ls/filter-process-delayed.)
 
  Code cleanup.
 
  Will merge to and cook in 'next'.
 
 
-* js/blame-lib (2017-07-24) 1 commit
- - blame: fix memory corruption scrambling revision name in error message
+* lg/merge-signoff (2017-07-25) 1 commit
+ - merge: add a --signoff flag
 
- A hotfix to a topic already in 'master'.
+ "git merge" learned a "--signoff" option to add the Signed-off-by:
+ trailer with the committer's name.
 
- Will merge to 'next'.
+
+* pb/trailers-from-command-line (2017-07-25) 4 commits
+ - SQUASH???
+ - interpret-trailers: add options for actions
+ - trailers: introduce struct new_trailer_item
+ - trailers: export action enums and corresponding lookup functions
+
+ "git interpret-trailers" learned to take the trailer specifications
+ from the command line that overrides the configured values.
+
+ Expecting a reroll for compilation fix.
+
+
+* sb/submodule-recursive-checkout-detach-head (2017-07-25) 1 commit
+ - recursive submodules: detach HEAD from new state
+
+ "git checkout --recursive" may overwrite and rewind the history of
+ the branch that happens to be checked out in submodule
+ repositories, which might not be desirable.  Detach the HEAD but
+ still allow the recursive checkout to succeed in such a case.
+
+ Undecided.
+ This needs justification in a larger picture; it is unclear why
+ this is better than rejecting recursive checkout, for example.
+
+
+* ti/external-sha1dc (2017-07-25) 1 commit
+  (merged to 'next' on 2017-07-27 at d1ce394fe2)
+ + hash: allow building with the external sha1dc library
+
+ Platforms that ship with a separate sha1 with collision detection
+ library can link to it instead of using the copy we ship as part of
+ our source tree.
+
+ Will cook in 'next'.
+
+
+* bw/submodule-config-cleanup (2017-07-26) 17 commits
+ - submodule: remove gitmodules_config
+ - unpack-trees: improve loading of .gitmodules
+ - submodule-config: lazy-load a repository's .gitmodules file
+ - submodule-config: move submodule-config functions to submodule-config.c
+ - submodule-config: remove support for overlaying repository config
+ - diff: stop allowing diff to have submodules configured in .git/config
+ - submodule: remove submodule_config callback routine
+ - unpack-trees: don't rely on overlayed config
+ - submodule: don't rely on overlayed config when setting diffopts
+ - fetch: don't overlay config with submodule-config
+ - submodule--helper: don't overlay config in update-clone
+ - submodule--helper: don't overlay config in remote_submodule_branch
+ - add, reset: ensure submodules can be added or reset
+ - submodule: don't use submodule_from_name
+ - t7411: check configuration parsing errors
+ - Merge branch 'bc/object-id' into bw/submodule-config-cleanup
+ - Merge branch 'bw/grep-recurse-submodules' into bw/submodule-config-cleanup
+ (this branch uses bc/object-id, bw/grep-recurse-submodules and sb/object-id.)
+
+ Code clean-up to avoid mixing values read from the .gitmodules file
+ and values read from the .git/config file.
+
+
+* jb/t8008-cleanup (2017-07-26) 1 commit
+ - t8008: rely on rev-parse'd HEAD instead of sha1 value
+
+ Code clean-up.
+
+ Will merge to and cook in 'next'.
+
+
+* rg/rerere-train-overwrite (2017-07-26) 1 commit
+ - contrib/rerere-train: optionally overwrite existing resolutions
+
+ The "rerere-train" script (in contrib/) learned the "--overwrite"
+ option to allow overwriting existing recorded resolutions.
+
+ Will merge to and cook in 'next'.
+
+
+* dl/credential-cache-socket-in-xdg-cache (2017-07-27) 1 commit
+ - credential-cache: interpret an ECONNRESET as an EOF
+
+ A recently added test for the "credential-cache" helper revealed
+ that EOF detection done around the time the connection to the cache
+ daemon is torn down were flaky.  This was fixed by reacting to
+ ECONNRESET and behaving as if we got an EOF.
+
+ Will merge to and cook in 'next'.
+
+
+* eb/contacts-reported-by (2017-07-27) 1 commit
+ - git-contacts: also recognise "Reported-by:"
+
+ "git contacts" (in contrib/) now lists the address on the
+ "Reported-by:" trailer to its output, in addition to those on
+ S-o-b: and other trailers, to make it easier to notify (and thank)
+ the original bug reporter.
+
+ Will merge to and cook in 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -125,7 +212,7 @@ of the repositories listed at
  cf. <xmqqmv8zhdap.fsf@gitster.mtv.corp.google.com>
 
 
-* js/rebase-i-final (2017-06-15) 10 commits
+* js/rebase-i-final (2017-07-27) 10 commits
  - rebase -i: rearrange fixup/squash lines using the rebase--helper
  - t3415: test fixup with wrapped oneline
  - rebase -i: skip unnecessary picks using the rebase--helper
@@ -141,19 +228,59 @@ of the repositories listed at
  the shell script to C.
 
  Expecting a reroll.
- This is at its v5.
- cf. <cover.1497444257.git.johannes.schindelin@gmx.de>
+
+
+* bp/fsmonitor (2017-06-12) 6 commits
+ - fsmonitor: add a sample query-fsmonitor hook script for Watchman
+ - fsmonitor: add documentation for the fsmonitor extension.
+ - fsmonitor: add test cases for fsmonitor extension
+ - fsmonitor: teach git to optionally utilize a file system monitor to speed up detecting new or changed files.
+ - dir: make lookup_untracked() available outside of dir.c
+ - bswap: add 64 bit endianness helper get_be64
+
+ We learned to talk to watchman to speed up "git status".
+
+ Expecting a reroll.
+ cf. <bade1166-e646-b05a-f65b-adb8da8ba0a7@gmail.com>
 
 --------------------------------------------------
 [Cooking]
 
+* js/run-process-parallel-api-fix (2017-07-21) 1 commit
+  (merged to 'next' on 2017-07-27 at 4b54b69172)
+ + run_processes_parallel: change confusing task_cb convention
+
+ API fix.
+
+ Will cook in 'next'.
+
+
+* cc/ref-is-hidden-microcleanup (2017-07-24) 1 commit
+  (merged to 'next' on 2017-07-27 at 37af544e1c)
+ + refs: use skip_prefix() in ref_is_hidden()
+
+ Code cleanup.
+
+ Will cook in 'next'.
+
+
+* js/blame-lib (2017-07-24) 1 commit
+  (merged to 'next' on 2017-07-26 at db0d081012)
+ + blame: fix memory corruption scrambling revision name in error message
+
+ A hotfix to a topic already in 'master'.
+
+ Will merge to 'master'.
+
+
 * bw/push-options-recursively-to-submodules (2017-07-20) 1 commit
- - submodule--helper: teach push-check to handle HEAD
+  (merged to 'next' on 2017-07-27 at 26b3af2544)
+ + submodule--helper: teach push-check to handle HEAD
 
  "git push --recurse-submodules $there HEAD:$target" was not
  propagated down to the submodules, but now it is.
 
- Will merge to and cook in 'next'.
+ Will cook in 'next'.
 
 
 * jc/http-sslkey-and-ssl-cert-are-paths (2017-07-20) 1 commit
@@ -167,7 +294,9 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* jt/fsck-code-cleanup (2017-07-20) 2 commits
+* jt/fsck-code-cleanup (2017-07-26) 3 commits
+  (merged to 'next' on 2017-07-26 at 7a17e279da)
+ + fsck: cleanup unused variable
   (merged to 'next' on 2017-07-20 at f7045a8c47)
  + object: remove "used" field from struct object
  + fsck: remove redundant parse_tree() invocation
@@ -227,6 +356,7 @@ of the repositories listed at
  - cache.h: add GITMODULES_FILE macro
  - repository: have the_repository use the_index
  - repo_read_index: don't discard the index
+ (this branch is used by bw/submodule-config-cleanup.)
 
 
 * bw/object-id (2017-07-17) 3 commits
@@ -241,13 +371,14 @@ of the repositories listed at
 
 
 * ks/commit-abort-on-empty-message-fix (2017-07-17) 1 commit
- - commit: check for empty message before the check for untouched template
+  (merged to 'next' on 2017-07-27 at e81ad4c1dc)
+ + commit: check for empty message before the check for untouched template
 
  "git commit" when seeing an totally empty message said "you did not
  edit the message", which is clearly wrong.  The message has been
  corrected.
 
- Will merge to and cook in 'next'.
+ Will cook in 'next'.
 
 
 * rs/bswap-ubsan-fix (2017-07-17) 2 commits
@@ -285,18 +416,20 @@ of the repositories listed at
   (merged to 'next' on 2017-07-20 at c78e758b23)
  + rebase: make resolve message clearer for inexperienced users
 
- Code clean-up.
+ The advice message given when "git rebase" stops for conflicting
+ changes has been improved.
 
  Will cook in 'next'.
 
 
 * hb/gitweb-project-list (2017-07-18) 1 commit
- - gitweb: skip unreadable subdirectories
+  (merged to 'next' on 2017-07-27 at c25d65ca25)
+ + gitweb: skip unreadable subdirectories
 
  When a directory is not readable, "gitweb" fails to build the
  project list.  Work this around by skipping such a directory.
 
- Undecided.
+ Will cook in 'next'.
 
  It might end up hiding a problem under the rug and a better
  solution might be to loudly complain to the administrator pointing
@@ -334,7 +467,7 @@ of the repositories listed at
   (merged to 'next' on 2017-07-18 at e4df0ba3b1)
  + tag: convert gpg_verify_tag to use struct object_id
  + commit: convert lookup_commit_graft to struct object_id
- (this branch is used by bc/object-id.)
+ (this branch is used by bc/object-id and bw/submodule-config-cleanup.)
 
  Conversion from uchar[20] to struct object_id continues.
 
@@ -376,7 +509,6 @@ of the repositories listed at
  possibly turn `--force` into `--force-with-lease`.
 
  Undecided.
-
  Independent from disabling the feature by default, this stirred up
  a discussion to replace the DWIM heuristics with a better one, which
  deserves to be its own topic.
@@ -397,7 +529,7 @@ of the repositories listed at
  + submodule: convert submodule config lookup to use object_id
  + builtin/merge-tree: convert remaining caller of get_sha1 to object_id
  + builtin/fsck: convert remaining caller of get_sha1 to object_id
- (this branch uses sb/object-id.)
+ (this branch is used by bw/submodule-config-cleanup; uses sb/object-id.)
 
  Conversion from uchar[20] to struct object_id continues.
 
@@ -461,7 +593,9 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* mh/packed-ref-store (2017-07-03) 30 commits
+* mh/packed-ref-store (2017-07-27) 31 commits
+  (merged to 'next' on 2017-07-27 at 857dcb8cba)
+ + packed_ref_store: handle a packed-refs file that is a symlink
   (merged to 'next' on 2017-07-05 at 6c68c603cc)
  + read_packed_refs(): die if `packed-refs` contains bogus data
  + t3210: add some tests of bogus packed-refs file contents
@@ -497,7 +631,6 @@ of the repositories listed at
  The "ref-store" code reorganization continues.
 
  Will cook in 'next'.
- cf. <CAGZ79kY=N5H2q1SB9ZEtt1EvuAQg+bqVBZNoXE6nLgtoUd2txA@mail.gmail.com>
 
 
 * sd/branch-copy (2017-06-18) 3 commits
@@ -526,25 +659,12 @@ of the repositories listed at
  + t0021: write "OUT <size>" only on success
  + t0021: make debug log file name configurable
  + t0021: keep filter log files on comparison
+ (this branch is used by jt/subprocess-handshake.)
 
  The filter-process interface learned to allow a process with long
  latency give a "delayed" response.
 
  Will cook in 'next'.
-
-
-* bp/fsmonitor (2017-06-12) 6 commits
- - fsmonitor: add a sample query-fsmonitor hook script for Watchman
- - fsmonitor: add documentation for the fsmonitor extension.
- - fsmonitor: add test cases for fsmonitor extension
- - fsmonitor: teach git to optionally utilize a file system monitor to speed up detecting new or changed files.
- - dir: make lookup_untracked() available outside of dir.c
- - bswap: add 64 bit endianness helper get_be64
-
- We learned to talk to watchman to speed up "git status".
-
- Expecting a reroll.
- cf. <bade1166-e646-b05a-f65b-adb8da8ba0a7@gmail.com>
 
 
 * sb/diff-color-move (2017-06-30) 26 commits
