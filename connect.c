@@ -754,7 +754,7 @@ struct child_process *git_connect(int fd[2], const char *url,
 				return NULL;
 			}
 
-			if (ssh_host[0] == '-')
+			if (looks_like_command_line_option(ssh_host))
 				die("strange hostname '%s' blocked", ssh_host);
 
 			ssh = getenv("GIT_SSH_COMMAND");
