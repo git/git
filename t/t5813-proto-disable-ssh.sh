@@ -17,4 +17,13 @@ test_proto "host:path" ssh "remote:repo.git"
 test_proto "ssh://" ssh "ssh://remote$PWD/remote/repo.git"
 test_proto "git+ssh://" ssh "git+ssh://remote$PWD/remote/repo.git"
 
+# Don't even bother setting up a "-remote" directory, as ssh would generally
+# complain about the bogus option rather than completing our request. Our
+# fake wrapper actually _can_ handle this case, but it's more robust to
+# simply confirm from its output that it did not run at all.
+test_expect_success 'hostnames starting with dash are rejected' '
+	test_must_fail git clone ssh://-remote/repo.git dash-host 2>stderr &&
+	! grep ^ssh: stderr
+'
+
 test_done
