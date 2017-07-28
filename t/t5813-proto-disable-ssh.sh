@@ -26,4 +26,18 @@ test_expect_success 'hostnames starting with dash are rejected' '
 	! grep ^ssh: stderr
 '
 
+test_expect_success 'setup repo with dash' '
+	git init --bare remote/-repo.git &&
+	git push remote/-repo.git HEAD
+'
+
+test_expect_success 'repo names starting with dash are rejected' '
+	test_must_fail git clone remote:-repo.git dash-path 2>stderr &&
+	! grep ^ssh: stderr
+'
+
+test_expect_success 'full paths still work' '
+	git clone "remote:$PWD/remote/-repo.git" dash-path
+'
+
 test_done

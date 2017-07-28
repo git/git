@@ -727,6 +727,9 @@ struct child_process *git_connect(int fd[2], const char *url,
 		conn = xmalloc(sizeof(*conn));
 		child_process_init(conn);
 
+		if (looks_like_command_line_option(path))
+			die("strange pathname '%s' blocked", path);
+
 		strbuf_addstr(&cmd, prog);
 		strbuf_addch(&cmd, ' ');
 		sq_quote_buf(&cmd, path);
