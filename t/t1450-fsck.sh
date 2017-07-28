@@ -608,6 +608,22 @@ test_expect_success 'fsck errors in packed objects' '
 	! grep corrupt out
 '
 
+test_expect_success 'fsck fails on corrupt packfile' '
+	hsh=$(git commit-tree -m mycommit HEAD^{tree}) &&
+	pack=$(echo $hsh | git pack-objects .git/objects/pack/pack) &&
+
+	# Corrupt the first byte of the first object. (It contains 3 type bits,
+	# at least one of which is not zero, so setting the first byte to 0 is
+	# sufficient.)
+	chmod a+w .git/objects/pack/pack-$pack.pack &&
+	printf '\0' | dd of=.git/objects/pack/pack-$pack.pack bs=1 conv=notrunc seek=12 &&
+
+	test_when_finished "rm -f .git/objects/pack/pack-$pack.*" &&
+	remove_object $hsh &&
+	test_must_fail git fsck 2>out &&
+	test_i18ngrep "checksum mismatch" out
+'
+
 test_expect_success 'fsck finds problems in duplicate loose objects' '
 	rm -rf broken-duplicate &&
 	git init broken-duplicate &&
