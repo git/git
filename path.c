@@ -1257,6 +1257,11 @@ int is_ntfs_dotgit(const char *name)
 		}
 }
 
+int looks_like_command_line_option(const char *str)
+{
+	return str && str[0] == '-';
+}
+
 char *xdg_config_home(const char *filename)
 {
 	const char *home, *config_home;
