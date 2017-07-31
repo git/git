@@ -95,6 +95,27 @@ test_expect_success 'background auto gc does not run if gc.log is present and re
 	test_line_count = 1 packs
 '
 
+test_expect_success 'background auto gc respects lock for all operations' '
+	# make sure we run a background auto-gc
+	test_commit make-pack &&
+	git repack &&
+	test_config gc.autopacklimit 1 &&
+	test_config gc.autodetach true &&
+
+	# create a ref whose loose presence we can use to detect a pack-refs run
+	git update-ref refs/heads/should-be-loose HEAD &&
+	test_path_is_file .git/refs/heads/should-be-loose &&
+
+	# now fake a concurrent gc that holds the lock; we can use our
+	# shell pid so that it looks valid.
+	hostname=$(hostname || echo unknown) &&
+	printf "$$ %s" "$hostname" >.git/gc.pid &&
+
+	# our gc should exit zero without doing anything
+	run_and_wait_for_auto_gc &&
+	test_path_is_file .git/refs/heads/should-be-loose
+'
+
 # DO NOT leave a detached auto gc process running near the end of the
 # test script: it can run long enough in the background to racily
 # interfere with the cleanup in 'test_done'.
