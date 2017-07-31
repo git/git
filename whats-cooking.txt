@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jul 2017, #08; Thu, 27)
-X-master-at: 5800c63717ae35286a1441f14ffff753e01f7e2b
-X-next-at: d1ce394fe289eaefa273394076e591331beea529
+Subject: What's cooking in git.git (Jul 2017, #09; Mon, 31)
+X-master-at: e2d9c46130247dd31d0421d2b2fc4bfd014c085e
+X-next-at: c4a70dcba25ee98fc8ee2906dbd251ddf5551c27
 
-What's cooking in git.git (Jul 2017, #08; Thu, 27)
+What's cooking in git.git (Jul 2017, #09; Mon, 31)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,161 +12,31 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
+Even though -rc2 was scheduled for today, I'll wait for a few days
+so that we can tag with updated l10n; there isn't much change since
+the first release candidate.
+
 You can find the changes described here in the integration branches
 of the repositories listed at
 
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
+[Graduated to "master"]
+
+* js/blame-lib (2017-07-24) 1 commit
+  (merged to 'next' on 2017-07-26 at db0d081012)
+ + blame: fix memory corruption scrambling revision name in error message
+
+ A hotfix to a topic already in 'master'.
+
+--------------------------------------------------
 [New Topics]
 
-* ah/doc-wserrorhighlight (2017-07-25) 1 commit
-  (merged to 'next' on 2017-07-27 at cd1bb28d95)
- + doc: add missing values "none" and "default" for diff.wsErrorHighlight
+* as/diff-options-grammofix (2017-07-31) 1 commit
+ - diff-options doc: grammar fix
 
- Doc update.
-
- Will cook in 'next'.
-
-
-* dc/fmt-merge-msg-microcleanup (2017-07-25) 1 commit
-  (merged to 'next' on 2017-07-27 at 6df06eb788)
- + fmt-merge-msg: fix coding style
-
- Code cleanup.
-
- Will cook in 'next'.
-
-
-* js/git-gui-msgfmt-on-windows (2017-07-25) 7 commits
- - Merge branch 'js/msgfmt-on-windows' of ../git-gui into js/git-gui-msgfmt-on-windows
- - git-gui (MinGW): make use of MSys2's msgfmt
- - Merge remote-tracking branch 'philoakley/dup-gui'
- - git gui: allow for a long recentrepo list
- - git gui: de-dup selected repo from recentrepo history
- - git gui: cope with duplicates in _get_recentrepo
- - git-gui: remove duplicate entries from .gitconfig's gui.recentrepo
-
- Because recent Git for Windows do come with a real msgfmt, the
- build procedure for git-gui has been updated to use it instead of a
- hand-rolled substitute.
-
-
-* jt/subprocess-handshake (2017-07-26) 3 commits
- - sub-process: refactor handshake to common function
- - Documentation: migrate sub-process docs to header
- - Merge branch 'ls/filter-process-delayed' into jt/subprocess-handshake
- (this branch uses ls/filter-process-delayed.)
-
- Code cleanup.
-
- Will merge to and cook in 'next'.
-
-
-* lg/merge-signoff (2017-07-25) 1 commit
- - merge: add a --signoff flag
-
- "git merge" learned a "--signoff" option to add the Signed-off-by:
- trailer with the committer's name.
-
-
-* pb/trailers-from-command-line (2017-07-25) 4 commits
- - SQUASH???
- - interpret-trailers: add options for actions
- - trailers: introduce struct new_trailer_item
- - trailers: export action enums and corresponding lookup functions
-
- "git interpret-trailers" learned to take the trailer specifications
- from the command line that overrides the configured values.
-
- Expecting a reroll for compilation fix.
-
-
-* sb/submodule-recursive-checkout-detach-head (2017-07-25) 1 commit
- - recursive submodules: detach HEAD from new state
-
- "git checkout --recursive" may overwrite and rewind the history of
- the branch that happens to be checked out in submodule
- repositories, which might not be desirable.  Detach the HEAD but
- still allow the recursive checkout to succeed in such a case.
-
- Undecided.
- This needs justification in a larger picture; it is unclear why
- this is better than rejecting recursive checkout, for example.
-
-
-* ti/external-sha1dc (2017-07-25) 1 commit
-  (merged to 'next' on 2017-07-27 at d1ce394fe2)
- + hash: allow building with the external sha1dc library
-
- Platforms that ship with a separate sha1 with collision detection
- library can link to it instead of using the copy we ship as part of
- our source tree.
-
- Will cook in 'next'.
-
-
-* bw/submodule-config-cleanup (2017-07-26) 17 commits
- - submodule: remove gitmodules_config
- - unpack-trees: improve loading of .gitmodules
- - submodule-config: lazy-load a repository's .gitmodules file
- - submodule-config: move submodule-config functions to submodule-config.c
- - submodule-config: remove support for overlaying repository config
- - diff: stop allowing diff to have submodules configured in .git/config
- - submodule: remove submodule_config callback routine
- - unpack-trees: don't rely on overlayed config
- - submodule: don't rely on overlayed config when setting diffopts
- - fetch: don't overlay config with submodule-config
- - submodule--helper: don't overlay config in update-clone
- - submodule--helper: don't overlay config in remote_submodule_branch
- - add, reset: ensure submodules can be added or reset
- - submodule: don't use submodule_from_name
- - t7411: check configuration parsing errors
- - Merge branch 'bc/object-id' into bw/submodule-config-cleanup
- - Merge branch 'bw/grep-recurse-submodules' into bw/submodule-config-cleanup
- (this branch uses bc/object-id, bw/grep-recurse-submodules and sb/object-id.)
-
- Code clean-up to avoid mixing values read from the .gitmodules file
- and values read from the .git/config file.
-
-
-* jb/t8008-cleanup (2017-07-26) 1 commit
- - t8008: rely on rev-parse'd HEAD instead of sha1 value
-
- Code clean-up.
-
- Will merge to and cook in 'next'.
-
-
-* rg/rerere-train-overwrite (2017-07-26) 1 commit
- - contrib/rerere-train: optionally overwrite existing resolutions
-
- The "rerere-train" script (in contrib/) learned the "--overwrite"
- option to allow overwriting existing recorded resolutions.
-
- Will merge to and cook in 'next'.
-
-
-* dl/credential-cache-socket-in-xdg-cache (2017-07-27) 1 commit
- - credential-cache: interpret an ECONNRESET as an EOF
-
- A recently added test for the "credential-cache" helper revealed
- that EOF detection done around the time the connection to the cache
- daemon is torn down were flaky.  This was fixed by reacting to
- ECONNRESET and behaving as if we got an EOF.
-
- Will merge to and cook in 'next'.
-
-
-* eb/contacts-reported-by (2017-07-27) 1 commit
- - git-contacts: also recognise "Reported-by:"
-
- "git contacts" (in contrib/) now lists the address on the
- "Reported-by:" trailer to its output, in addition to those on
- S-o-b: and other trailers, to make it easier to notify (and thank)
- the original bug reporter.
-
- Will merge to and cook in 'next'.
+ A grammofix.
 
 --------------------------------------------------
 [Stalled]
@@ -246,6 +116,157 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* ah/doc-wserrorhighlight (2017-07-25) 1 commit
+  (merged to 'next' on 2017-07-27 at cd1bb28d95)
+ + doc: add missing values "none" and "default" for diff.wsErrorHighlight
+
+ Doc update.
+
+ Will cook in 'next'.
+
+
+* dc/fmt-merge-msg-microcleanup (2017-07-25) 1 commit
+  (merged to 'next' on 2017-07-27 at 6df06eb788)
+ + fmt-merge-msg: fix coding style
+
+ Code cleanup.
+
+ Will cook in 'next'.
+
+
+* js/git-gui-msgfmt-on-windows (2017-07-25) 7 commits
+ - Merge branch 'js/msgfmt-on-windows' of ../git-gui into js/git-gui-msgfmt-on-windows
+ - git-gui (MinGW): make use of MSys2's msgfmt
+ - Merge remote-tracking branch 'philoakley/dup-gui'
+ - git gui: allow for a long recentrepo list
+ - git gui: de-dup selected repo from recentrepo history
+ - git gui: cope with duplicates in _get_recentrepo
+ - git-gui: remove duplicate entries from .gitconfig's gui.recentrepo
+
+ Because recent Git for Windows do come with a real msgfmt, the
+ build procedure for git-gui has been updated to use it instead of a
+ hand-rolled substitute.
+
+
+* jt/subprocess-handshake (2017-07-26) 3 commits
+ - sub-process: refactor handshake to common function
+ - Documentation: migrate sub-process docs to header
+ - Merge branch 'ls/filter-process-delayed' into jt/subprocess-handshake
+ (this branch uses ls/filter-process-delayed.)
+
+ Code cleanup.
+
+ Will merge to and cook in 'next'.
+
+
+* lg/merge-signoff (2017-07-25) 1 commit
+ - merge: add a --signoff flag
+
+ "git merge" learned a "--signoff" option to add the Signed-off-by:
+ trailer with the committer's name.
+
+
+* pb/trailers-from-command-line (2017-07-25) 4 commits
+ - SQUASH???
+ - interpret-trailers: add options for actions
+ - trailers: introduce struct new_trailer_item
+ - trailers: export action enums and corresponding lookup functions
+
+ "git interpret-trailers" learned to take the trailer specifications
+ from the command line that overrides the configured values.
+
+ Expecting a reroll for compilation fix.
+
+
+* sb/submodule-recursive-checkout-detach-head (2017-07-28) 2 commits
+ - Documentation/checkout: clarify submodule HEADs to be detached
+ - recursive submodules: detach HEAD from new state
+
+ "git checkout --recursive" may overwrite and rewind the history of
+ the branch that happens to be checked out in submodule
+ repositories, which might not be desirable.  Detach the HEAD but
+ still allow the recursive checkout to succeed in such a case.
+
+ Undecided.
+ This needs justification in a larger picture; it is unclear why
+ this is better than rejecting recursive checkout, for example.
+
+
+* ti/external-sha1dc (2017-07-25) 1 commit
+  (merged to 'next' on 2017-07-27 at d1ce394fe2)
+ + hash: allow building with the external sha1dc library
+
+ Platforms that ship with a separate sha1 with collision detection
+ library can link to it instead of using the copy we ship as part of
+ our source tree.
+
+ Waiting for review to conclude
+ cf. <CACBZZX7M=H8tNkZXpHBvv0rbY58EJk4dkoUzGKMftWoKUqF8sA@mail.gmail.com>
+
+
+* bw/submodule-config-cleanup (2017-07-26) 17 commits
+ - submodule: remove gitmodules_config
+ - unpack-trees: improve loading of .gitmodules
+ - submodule-config: lazy-load a repository's .gitmodules file
+ - submodule-config: move submodule-config functions to submodule-config.c
+ - submodule-config: remove support for overlaying repository config
+ - diff: stop allowing diff to have submodules configured in .git/config
+ - submodule: remove submodule_config callback routine
+ - unpack-trees: don't rely on overlayed config
+ - submodule: don't rely on overlayed config when setting diffopts
+ - fetch: don't overlay config with submodule-config
+ - submodule--helper: don't overlay config in update-clone
+ - submodule--helper: don't overlay config in remote_submodule_branch
+ - add, reset: ensure submodules can be added or reset
+ - submodule: don't use submodule_from_name
+ - t7411: check configuration parsing errors
+ - Merge branch 'bc/object-id' into bw/submodule-config-cleanup
+ - Merge branch 'bw/grep-recurse-submodules' into bw/submodule-config-cleanup
+ (this branch uses bc/object-id, bw/grep-recurse-submodules and sb/object-id.)
+
+ Code clean-up to avoid mixing values read from the .gitmodules file
+ and values read from the .git/config file.
+
+
+* jb/t8008-cleanup (2017-07-26) 1 commit
+ - t8008: rely on rev-parse'd HEAD instead of sha1 value
+
+ Code clean-up.
+
+ Will merge to and cook in 'next'.
+
+
+* rg/rerere-train-overwrite (2017-07-26) 1 commit
+ - contrib/rerere-train: optionally overwrite existing resolutions
+
+ The "rerere-train" script (in contrib/) learned the "--overwrite"
+ option to allow overwriting existing recorded resolutions.
+
+ Will merge to and cook in 'next'.
+
+
+* dl/credential-cache-socket-in-xdg-cache (2017-07-27) 1 commit
+ - credential-cache: interpret an ECONNRESET as an EOF
+
+ A recently added test for the "credential-cache" helper revealed
+ that EOF detection done around the time the connection to the cache
+ daemon is torn down were flaky.  This was fixed by reacting to
+ ECONNRESET and behaving as if we got an EOF.
+
+ Will merge to and cook in 'next'.
+
+
+* eb/contacts-reported-by (2017-07-27) 1 commit
+ - git-contacts: also recognise "Reported-by:"
+
+ "git contacts" (in contrib/) now lists the address on the
+ "Reported-by:" trailer to its output, in addition to those on
+ S-o-b: and other trailers, to make it easier to notify (and thank)
+ the original bug reporter.
+
+ Will merge to and cook in 'next'.
+
+
 * js/run-process-parallel-api-fix (2017-07-21) 1 commit
   (merged to 'next' on 2017-07-27 at 4b54b69172)
  + run_processes_parallel: change confusing task_cb convention
@@ -262,15 +283,6 @@ of the repositories listed at
  Code cleanup.
 
  Will cook in 'next'.
-
-
-* js/blame-lib (2017-07-24) 1 commit
-  (merged to 'next' on 2017-07-26 at db0d081012)
- + blame: fix memory corruption scrambling revision name in error message
-
- A hotfix to a topic already in 'master'.
-
- Will merge to 'master'.
 
 
 * bw/push-options-recursively-to-submodules (2017-07-20) 1 commit
