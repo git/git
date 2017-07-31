@@ -392,7 +392,7 @@ endif::git-log[]
 	the diff between the preimage and `/dev/null`. The resulting patch
 	is not meant to be applied with `patch` or `git apply`; this is
 	solely for people who want to just concentrate on reviewing the
-	text after the change. In addition, the output obviously lack
+	text after the change. In addition, the output obviously lacks
 	enough information to apply such a patch in reverse, even manually,
 	hence the name of the option.
 +
