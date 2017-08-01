@@ -577,6 +577,11 @@ static struct child_process *git_proxy_connect(int fd[2], char *host)
 
 	get_host_and_port(&host, &port);
 
+	if (looks_like_command_line_option(host))
+		die("strange hostname '%s' blocked", host);
+	if (looks_like_command_line_option(port))
+		die("strange port '%s' blocked", port);
+
 	proxy = xmalloc(sizeof(*proxy));
 	child_process_init(proxy);
 	argv_array_push(&proxy->args, git_proxy_command);
@@ -823,6 +828,9 @@ struct child_process *git_connect(int fd[2], const char *url,
 		conn = xmalloc(sizeof(*conn));
 		child_process_init(conn);
 
+		if (looks_like_command_line_option(path))
+			die("strange pathname '%s' blocked", path);
+
 		strbuf_addstr(&cmd, prog);
 		strbuf_addch(&cmd, ' ');
 		sq_quote_buf(&cmd, path);
@@ -855,6 +863,9 @@ struct child_process *git_connect(int fd[2], const char *url,
 				free(conn);
 				return NULL;
 			}
+
+			if (looks_like_command_line_option(ssh_host))
+				die("strange hostname '%s' blocked", ssh_host);
 
 			ssh = get_ssh_command();
 			if (ssh)
