@@ -669,9 +669,8 @@ static void add_arg_item(struct list_head *arg_head, char *tok, char *val,
 }
 
 static void process_command_line_args(struct list_head *arg_head,
-				      struct string_list *trailers)
+				      struct list_head *new_trailer_head)
 {
-	struct string_list_item *tr;
 	struct arg_item *item;
 	struct strbuf tok = STRBUF_INIT;
 	struct strbuf val = STRBUF_INIT;
@@ -695,17 +694,20 @@ static void process_command_line_args(struct list_head *arg_head,
 	}
 
 	/* Add an arg item for each trailer on the command line */
-	for_each_string_list_item(tr, trailers) {
-		int separator_pos = find_separator(tr->string, cl_separators);
+	list_for_each(pos, new_trailer_head) {
+		struct new_trailer_item *tr =
+			list_entry(pos, struct new_trailer_item, list);
+		int separator_pos = find_separator(tr->text, cl_separators);
+
 		if (separator_pos == 0) {
 			struct strbuf sb = STRBUF_INIT;
-			strbuf_addstr(&sb, tr->string);
+			strbuf_addstr(&sb, tr->text);
 			strbuf_trim(&sb);
 			error(_("empty trailer token in trailer '%.*s'"),
 			      (int) sb.len, sb.buf);
 			strbuf_release(&sb);
 		} else {
-			parse_trailer(&tok, &val, &conf, tr->string,
+			parse_trailer(&tok, &val, &conf, tr->text,
 				      separator_pos);
 			add_arg_item(arg_head,
 				     strbuf_detach(&tok, NULL),
@@ -969,7 +971,8 @@ static FILE *create_in_place_tempfile(const char *file)
 	return outfile;
 }
 
-void process_trailers(const char *file, int in_place, int trim_empty, struct string_list *trailers)
+void process_trailers(const char *file, int in_place, int trim_empty,
+		      struct list_head *new_trailer_head)
 {
 	LIST_HEAD(head);
 	LIST_HEAD(arg_head);
@@ -987,7 +990,7 @@ void process_trailers(const char *file, int in_place, int trim_empty, struct str
 	/* Print the lines before the trailers */
 	trailer_end = process_input_file(outfile, sb.buf, &head);
 
-	process_command_line_args(&arg_head, trailers);
+	process_command_line_args(&arg_head, new_trailer_head);
 
 	process_trailers_lists(&head, &arg_head);
 

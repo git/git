@@ -1,6 +1,8 @@
 #ifndef TRAILER_H
 #define TRAILER_H
 
+#include "list.h"
+
 enum trailer_where {
 	WHERE_END,
 	WHERE_AFTER,
@@ -44,8 +46,18 @@ struct trailer_info {
 	size_t trailer_nr;
 };
 
+/*
+ * A list that represents newly-added trailers, such as those provided
+ * with the --trailer command line option of git-interpret-trailers.
+ */
+struct new_trailer_item {
+	struct list_head list;
+
+	const char *text;
+};
+
 void process_trailers(const char *file, int in_place, int trim_empty,
-		      struct string_list *trailers);
+		      struct list_head *new_trailer_head);
 
 void trailer_info_get(struct trailer_info *info, const char *str);
 
