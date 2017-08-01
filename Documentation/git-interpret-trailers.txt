@@ -193,8 +193,8 @@ trailer.<token>.where::
 	configuration variable and it overrides what is specified by
 	that option for trailers with the specified <token>.
 
-trailer.<token>.ifexist::
-	This option takes the same values as the 'trailer.ifexist'
+trailer.<token>.ifexists::
+	This option takes the same values as the 'trailer.ifexists'
 	configuration variable and it overrides what is specified by
 	that option for trailers with the specified <token>.
 
