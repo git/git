@@ -295,6 +295,9 @@ static void apply_arg_if_exists(struct trailer_item *in_tok,
 		else
 			free_arg_item(arg_tok);
 		break;
+	default:
+		die("BUG: trailer.c: unhandled value %d",
+		    arg_tok->conf.if_exists);
 	}
 }
 
@@ -316,6 +319,10 @@ static void apply_arg_if_missing(struct list_head *head,
 			list_add_tail(&to_add->list, head);
 		else
 			list_add(&to_add->list, head);
+		break;
+	default:
+		die("BUG: trailer.c: unhandled value %d",
+		    arg_tok->conf.if_missing);
 	}
 }
 
@@ -370,7 +377,9 @@ static void process_trailers_lists(struct list_head *head,
 
 int trailer_set_where(enum trailer_where *item, const char *value)
 {
-	if (!strcasecmp("after", value))
+	if (!value)
+		*item = WHERE_DEFAULT;
+	else if (!strcasecmp("after", value))
 		*item = WHERE_AFTER;
 	else if (!strcasecmp("before", value))
 		*item = WHERE_BEFORE;
@@ -385,7 +394,9 @@ int trailer_set_where(enum trailer_where *item, const char *value)
 
 int trailer_set_if_exists(enum trailer_if_exists *item, const char *value)
 {
-	if (!strcasecmp("addIfDifferent", value))
+	if (!value)
+		*item = EXISTS_DEFAULT;
+	else if (!strcasecmp("addIfDifferent", value))
 		*item = EXISTS_ADD_IF_DIFFERENT;
 	else if (!strcasecmp("addIfDifferentNeighbor", value))
 		*item = EXISTS_ADD_IF_DIFFERENT_NEIGHBOR;
@@ -402,7 +413,9 @@ int trailer_set_if_exists(enum trailer_if_exists *item, const char *value)
 
 int trailer_set_if_missing(enum trailer_if_missing *item, const char *value)
 {
-	if (!strcasecmp("doNothing", value))
+	if (!value)
+		*item = MISSING_DEFAULT;
+	else if (!strcasecmp("doNothing", value))
 		*item = MISSING_DO_NOTHING;
 	else if (!strcasecmp("add", value))
 		*item = MISSING_ADD;
@@ -659,12 +672,21 @@ static struct trailer_item *add_trailer_item(struct list_head *head, char *tok,
 }
 
 static void add_arg_item(struct list_head *arg_head, char *tok, char *val,
-			 const struct conf_info *conf)
+			 const struct conf_info *conf,
+			 const struct new_trailer_item *new_trailer_item)
 {
 	struct arg_item *new = xcalloc(sizeof(*new), 1);
 	new->token = tok;
 	new->value = val;
 	duplicate_conf(&new->conf, conf);
+	if (new_trailer_item) {
+		if (new_trailer_item->where != WHERE_DEFAULT)
+			new->conf.where = new_trailer_item->where;
+		if (new_trailer_item->if_exists != EXISTS_DEFAULT)
+			new->conf.if_exists = new_trailer_item->if_exists;
+		if (new_trailer_item->if_missing != MISSING_DEFAULT)
+			new->conf.if_missing = new_trailer_item->if_missing;
+	}
 	list_add_tail(&new->list, arg_head);
 }
 
@@ -690,7 +712,7 @@ static void process_command_line_args(struct list_head *arg_head,
 			add_arg_item(arg_head,
 				     xstrdup(token_from_item(item, NULL)),
 				     xstrdup(""),
-				     &item->conf);
+				     &item->conf, NULL);
 	}
 
 	/* Add an arg item for each trailer on the command line */
@@ -712,7 +734,7 @@ static void process_command_line_args(struct list_head *arg_head,
 			add_arg_item(arg_head,
 				     strbuf_detach(&tok, NULL),
 				     strbuf_detach(&val, NULL),
-				     conf);
+				     conf, tr);
 		}
 	}
 

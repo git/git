@@ -16,6 +16,28 @@ static const char * const git_interpret_trailers_usage[] = {
 	NULL
 };
 
+static enum trailer_where where;
+static enum trailer_if_exists if_exists;
+static enum trailer_if_missing if_missing;
+
+static int option_parse_where(const struct option *opt,
+			      const char *arg, int unset)
+{
+	return trailer_set_where(&where, arg);
+}
+
+static int option_parse_if_exists(const struct option *opt,
+				  const char *arg, int unset)
+{
+	return trailer_set_if_exists(&if_exists, arg);
+}
+
+static int option_parse_if_missing(const struct option *opt,
+				   const char *arg, int unset)
+{
+	return trailer_set_if_missing(&if_missing, arg);
+}
+
 static void new_trailers_clear(struct list_head *trailers)
 {
 	struct list_head *pos, *tmp;
@@ -44,6 +66,9 @@ static int option_parse_trailer(const struct option *opt,
 
 	item = xmalloc(sizeof(*item));
 	item->text = arg;
+	item->where = where;
+	item->if_exists = if_exists;
+	item->if_missing = if_missing;
 	list_add_tail(&item->list, trailers);
 	return 0;
 }
@@ -57,6 +82,13 @@ int cmd_interpret_trailers(int argc, const char **argv, const char *prefix)
 	struct option options[] = {
 		OPT_BOOL(0, "in-place", &in_place, N_("edit files in place")),
 		OPT_BOOL(0, "trim-empty", &trim_empty, N_("trim empty trailers")),
+
+		OPT_CALLBACK(0, "where", NULL, N_("action"),
+			     N_("where to place the new trailer"), option_parse_where),
+		OPT_CALLBACK(0, "if-exists", NULL, N_("action"),
+			     N_("action if trailer already exists"), option_parse_if_exists),
+		OPT_CALLBACK(0, "if-missing", NULL, N_("action"),
+			     N_("action if trailer is missing"), option_parse_if_missing),
 
 		OPT_CALLBACK(0, "trailer", &trailers, N_("trailer"),
 				N_("trailer(s) to add"), option_parse_trailer),
