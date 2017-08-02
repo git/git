@@ -201,7 +201,7 @@ test_expect_success TTY 'git tag -a respects --paginate' '
 	test -e paginated.out
 '
 
-test_expect_failure TTY 'git tag as alias ignores pager.tag with -a' '
+test_expect_success TTY 'git tag as alias ignores pager.tag with -a' '
 	test_when_finished "git tag -d newtag" &&
 	rm -f paginated.out &&
 	test_terminal git -c pager.tag -c alias.t=tag t -am message newtag &&
