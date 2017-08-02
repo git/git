@@ -55,6 +55,14 @@
  *
  *	The built-in supports `--super-prefix`.
  *
+ * `DELAY_PAGER_CONFIG`:
+ *
+ *	If RUN_SETUP or RUN_SETUP_GENTLY is set, git.c normally handles
+ *	the `pager.<cmd>`-configuration. If this flag is used, git.c
+ *	will skip that step, instead allowing the built-in to make a
+ *	more informed decision, e.g., by ignoring `pager.<cmd>` for
+ *	certain subcommands.
+ *
  * . Add `builtin/foo.o` to `BUILTIN_OBJS` in `Makefile`.
  *
  * Additionally, if `foo` is a new command, there are 4 more things to do:
