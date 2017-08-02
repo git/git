@@ -22,7 +22,6 @@
 
 static int config_fetch_recurse_submodules = RECURSE_SUBMODULES_ON_DEMAND;
 static int config_update_recurse_submodules = RECURSE_SUBMODULES_OFF;
-static int parallel_jobs = 1;
 static struct string_list changed_submodule_paths = STRING_LIST_INIT_DUP;
 static int initialized_fetch_ref_tips;
 static struct oid_array ref_tips_before_fetch;
@@ -159,12 +158,7 @@ void set_diffopt_flags_from_submodule_config(struct diff_options *diffopt,
 /* For loading from the .gitmodules file. */
 static int git_modules_config(const char *var, const char *value, void *cb)
 {
-	if (!strcmp(var, "submodule.fetchjobs")) {
-		parallel_jobs = git_config_int(var, value);
-		if (parallel_jobs < 0)
-			die(_("negative values not allowed for submodule.fetchJobs"));
-		return 0;
-	} else if (starts_with(var, "submodule."))
+	if (starts_with(var, "submodule."))
 		return parse_submodule_config_option(var, value);
 	else if (!strcmp(var, "fetch.recursesubmodules")) {
 		config_fetch_recurse_submodules = parse_fetch_recurse_submodules_arg(var, value);
@@ -1303,9 +1297,6 @@ int fetch_populated_submodules(const struct argv_array *options,
 	argv_array_push(&spf.args, "--recurse-submodules-default");
 	/* default value, "--submodule-prefix" and its value are added later */
 
-	if (max_parallel_jobs < 0)
-		max_parallel_jobs = parallel_jobs;
-
 	calculate_changed_submodule_paths();
 	run_processes_parallel(max_parallel_jobs,
 			       get_next_submodule,
@@ -1823,11 +1814,6 @@ int merge_submodule(struct object_id *result, const char *path,
 
 	free(merges.objects);
 	return 0;
-}
-
-int parallel_submodules(void)
-{
-	return parallel_jobs;
 }
 
 /*

@@ -39,7 +39,7 @@ static int prune = -1; /* unspecified */
 static int all, append, dry_run, force, keep, multiple, update_head_ok, verbosity, deepen_relative;
 static int progress = -1;
 static int tags = TAGS_DEFAULT, unshallow, update_shallow, deepen;
-static int max_children = -1;
+static int max_children = 1;
 static enum transport_family family;
 static const char *depth;
 static const char *deepen_since;
@@ -68,7 +68,22 @@ static int git_fetch_config(const char *k, const char *v, void *cb)
 		recurse_submodules = r;
 	}
 
+	if (!strcmp(k, "submodule.fetchjobs")) {
+		max_children = parse_submodule_fetchjobs(k, v);
+		return 0;
+	}
+
 	return git_default_config(k, v, cb);
+}
+
+static int gitmodules_fetch_config(const char *var, const char *value, void *cb)
+{
+	if (!strcmp(var, "submodule.fetchjobs")) {
+		max_children = parse_submodule_fetchjobs(var, value);
+		return 0;
+	}
+
+	return 0;
 }
 
 static int parse_refmap_arg(const struct option *opt, const char *arg, int unset)
@@ -1311,6 +1326,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 	for (i = 1; i < argc; i++)
 		strbuf_addf(&default_rla, " %s", argv[i]);
 
+	config_from_gitmodules(gitmodules_fetch_config, NULL);
 	git_config(git_fetch_config, NULL);
 
 	argc = parse_options(argc, argv, prefix,
