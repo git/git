@@ -63,7 +63,7 @@ int update_path_in_gitmodules(const char *oldpath, const char *newpath)
 	struct strbuf entry = STRBUF_INIT;
 	const struct submodule *submodule;
 
-	if (!file_exists(".gitmodules")) /* Do nothing without .gitmodules */
+	if (!file_exists(GITMODULES_FILE)) /* Do nothing without .gitmodules */
 		return -1;
 
 	if (gitmodules_is_unmerged)
@@ -77,7 +77,7 @@ int update_path_in_gitmodules(const char *oldpath, const char *newpath)
 	strbuf_addstr(&entry, "submodule.");
 	strbuf_addstr(&entry, submodule->name);
 	strbuf_addstr(&entry, ".path");
-	if (git_config_set_in_file_gently(".gitmodules", entry.buf, newpath) < 0) {
+	if (git_config_set_in_file_gently(GITMODULES_FILE, entry.buf, newpath) < 0) {
 		/* Maybe the user already did that, don't error out here */
 		warning(_("Could not update .gitmodules entry %s"), entry.buf);
 		strbuf_release(&entry);
@@ -97,7 +97,7 @@ int remove_path_from_gitmodules(const char *path)
 	struct strbuf sect = STRBUF_INIT;
 	const struct submodule *submodule;
 
-	if (!file_exists(".gitmodules")) /* Do nothing without .gitmodules */
+	if (!file_exists(GITMODULES_FILE)) /* Do nothing without .gitmodules */
 		return -1;
 
 	if (gitmodules_is_unmerged)
@@ -110,7 +110,7 @@ int remove_path_from_gitmodules(const char *path)
 	}
 	strbuf_addstr(&sect, "submodule.");
 	strbuf_addstr(&sect, submodule->name);
-	if (git_config_rename_section_in_file(".gitmodules", sect.buf, NULL) < 0) {
+	if (git_config_rename_section_in_file(GITMODULES_FILE, sect.buf, NULL) < 0) {
 		/* Maybe the user already did that, don't error out here */
 		warning(_("Could not remove .gitmodules entry for %s"), path);
 		strbuf_release(&sect);
@@ -122,7 +122,7 @@ int remove_path_from_gitmodules(const char *path)
 
 void stage_updated_gitmodules(void)
 {
-	if (add_file_to_cache(".gitmodules", 0))
+	if (add_file_to_cache(GITMODULES_FILE, 0))
 		die(_("staging updated .gitmodules failed"));
 }
 
@@ -230,21 +230,21 @@ void gitmodules_config(void)
 		struct strbuf gitmodules_path = STRBUF_INIT;
 		int pos;
 		strbuf_addstr(&gitmodules_path, work_tree);
-		strbuf_addstr(&gitmodules_path, "/.gitmodules");
+		strbuf_addstr(&gitmodules_path, "/" GITMODULES_FILE);
 		if (read_cache() < 0)
 			die("index file corrupt");
-		pos = cache_name_pos(".gitmodules", 11);
+		pos = cache_name_pos(GITMODULES_FILE, 11);
 		if (pos < 0) { /* .gitmodules not found or isn't merged */
 			pos = -1 - pos;
 			if (active_nr > pos) {  /* there is a .gitmodules */
 				const struct cache_entry *ce = active_cache[pos];
 				if (ce_namelen(ce) == 11 &&
-				    !memcmp(ce->name, ".gitmodules", 11))
+				    !memcmp(ce->name, GITMODULES_FILE, 11))
 					gitmodules_is_unmerged = 1;
 			}
 		} else if (pos < active_nr) {
 			struct stat st;
-			if (lstat(".gitmodules", &st) == 0 &&
+			if (lstat(GITMODULES_FILE, &st) == 0 &&
 			    ce_match_stat(active_cache[pos], &st, 0) & DATA_CHANGED)
 				gitmodules_is_modified = 1;
 		}
@@ -264,7 +264,7 @@ static int gitmodules_cb(const char *var, const char *value, void *data)
 
 void repo_read_gitmodules(struct repository *repo)
 {
-	char *gitmodules_path = repo_worktree_path(repo, ".gitmodules");
+	char *gitmodules_path = repo_worktree_path(repo, GITMODULES_FILE);
 
 	git_config_from_file(gitmodules_cb, gitmodules_path, repo);
 	free(gitmodules_path);

@@ -286,7 +286,7 @@ static void reload_gitmodules_file(struct index_state *index,
 	for (i = 0; i < index->cache_nr; i++) {
 		struct cache_entry *ce = index->cache[i];
 		if (ce->ce_flags & CE_UPDATE) {
-			int r = strcmp(ce->name, ".gitmodules");
+			int r = strcmp(ce->name, GITMODULES_FILE);
 			if (r < 0)
 				continue;
 			else if (r == 0) {
