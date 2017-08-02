@@ -462,7 +462,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	}
 
 	if (cmdmode == 'l')
-		setup_auto_pager("tag", 0);
+		setup_auto_pager("tag", 1);
 
 	if ((create_tag_object || force) && (cmdmode != 0))
 		usage_with_options(git_tag_usage, options);

@@ -134,16 +134,16 @@ test_expect_success TTY 'configuration can enable pager (from subdir)' '
 	}
 '
 
-test_expect_success TTY 'git tag -l defaults to not paging' '
+test_expect_success TTY 'git tag -l defaults to paging' '
 	rm -f paginated.out &&
 	test_terminal git tag -l &&
-	! test -e paginated.out
+	test -e paginated.out
 '
 
 test_expect_success TTY 'git tag -l respects pager.tag' '
 	rm -f paginated.out &&
-	test_terminal git -c pager.tag tag -l &&
-	test -e paginated.out
+	test_terminal git -c pager.tag=false tag -l &&
+	! test -e paginated.out
 '
 
 test_expect_success TTY 'git tag -l respects --no-pager' '
@@ -152,32 +152,32 @@ test_expect_success TTY 'git tag -l respects --no-pager' '
 	! test -e paginated.out
 '
 
-test_expect_success TTY 'git tag with no args defaults to not paging' '
+test_expect_success TTY 'git tag with no args defaults to paging' '
 	# no args implies -l so this should page like -l
 	rm -f paginated.out &&
 	test_terminal git tag &&
-	! test -e paginated.out
+	test -e paginated.out
 '
 
 test_expect_success TTY 'git tag with no args respects pager.tag' '
 	# no args implies -l so this should page like -l
 	rm -f paginated.out &&
-	test_terminal git -c pager.tag tag &&
-	test -e paginated.out
+	test_terminal git -c pager.tag=false tag &&
+	! test -e paginated.out
 '
 
-test_expect_success TTY 'git tag --contains defaults to not paging' '
+test_expect_success TTY 'git tag --contains defaults to paging' '
 	# --contains implies -l so this should page like -l
 	rm -f paginated.out &&
 	test_terminal git tag --contains &&
-	! test -e paginated.out
+	test -e paginated.out
 '
 
 test_expect_success TTY 'git tag --contains respects pager.tag' '
 	# --contains implies -l so this should page like -l
 	rm -f paginated.out &&
-	test_terminal git -c pager.tag tag --contains &&
-	test -e paginated.out
+	test_terminal git -c pager.tag=false tag --contains &&
+	! test -e paginated.out
 '
 
 test_expect_success TTY 'git tag -a defaults to not paging' '
@@ -210,8 +210,8 @@ test_expect_failure TTY 'git tag as alias ignores pager.tag with -a' '
 
 test_expect_success TTY 'git tag as alias respects pager.tag with -l' '
 	rm -f paginated.out &&
-	test_terminal git -c pager.tag -c alias.t=tag t -l &&
-	test -e paginated.out
+	test_terminal git -c pager.tag=false -c alias.t=tag t -l &&
+	! test -e paginated.out
 '
 
 # A colored commit log will begin with an appropriate ANSI escape
