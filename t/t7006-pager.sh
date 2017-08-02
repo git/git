@@ -187,7 +187,7 @@ test_expect_success TTY 'git tag -a defaults to not paging' '
 	! test -e paginated.out
 '
 
-test_expect_failure TTY 'git tag -a ignores pager.tag' '
+test_expect_success TTY 'git tag -a ignores pager.tag' '
 	test_when_finished "git tag -d newtag" &&
 	rm -f paginated.out &&
 	test_terminal git -c pager.tag tag -am message newtag &&
@@ -198,6 +198,19 @@ test_expect_success TTY 'git tag -a respects --paginate' '
 	test_when_finished "git tag -d newtag" &&
 	rm -f paginated.out &&
 	test_terminal git --paginate tag -am message newtag &&
+	test -e paginated.out
+'
+
+test_expect_failure TTY 'git tag as alias ignores pager.tag with -a' '
+	test_when_finished "git tag -d newtag" &&
+	rm -f paginated.out &&
+	test_terminal git -c pager.tag -c alias.t=tag t -am message newtag &&
+	! test -e paginated.out
+'
+
+test_expect_success TTY 'git tag as alias respects pager.tag with -l' '
+	rm -f paginated.out &&
+	test_terminal git -c pager.tag -c alias.t=tag t -l &&
 	test -e paginated.out
 '
 
