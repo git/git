@@ -281,7 +281,7 @@ pick_one () {
 
 	test -d "$rewritten" &&
 		pick_one_preserving_merges "$@" && return
-	output eval git cherry-pick \
+	output eval git cherry-pick $allow_rerere_autoupdate \
 			${gpg_sign_opt:+$(git rev-parse --sq-quote "$gpg_sign_opt")} \
 			"$strategy_args" $empty_args $ff "$@"
 
@@ -393,7 +393,8 @@ pick_one_preserving_merges () {
 			merge_args="--no-log --no-ff"
 			if ! do_with_author output eval \
 			'git merge ${gpg_sign_opt:+"$gpg_sign_opt"} \
-				$merge_args $strategy_args -m "$msg_content" $new_parents'
+				$allow_rerere_autoupdate $merge_args \
+				$strategy_args -m "$msg_content" $new_parents'
 			then
 				printf "%s\n" "$msg_content" > "$GIT_DIR"/MERGE_MSG
 				die_with_patch $sha1 "$(eval_gettext "Error redoing merge \$sha1")"
@@ -401,7 +402,7 @@ pick_one_preserving_merges () {
 			echo "$sha1 $(git rev-parse HEAD^0)" >> "$rewritten_list"
 			;;
 		*)
-			output eval git cherry-pick \
+			output eval git cherry-pick $allow_rerere_autoupdate \
 				${gpg_sign_opt:+$(git rev-parse --sq-quote "$gpg_sign_opt")} \
 				"$strategy_args" "$@" ||
 				die_with_patch $sha1 "$(eval_gettext "Could not pick \$sha1")"

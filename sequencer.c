@@ -127,6 +127,7 @@ static GIT_PATH_FUNC(rebase_path_onto, "rebase-merge/onto")
 static GIT_PATH_FUNC(rebase_path_autostash, "rebase-merge/autostash")
 static GIT_PATH_FUNC(rebase_path_strategy, "rebase-merge/strategy")
 static GIT_PATH_FUNC(rebase_path_strategy_opts, "rebase-merge/strategy_opts")
+static GIT_PATH_FUNC(rebase_path_allow_rerere_autoupdate, "rebase-merge/allow_rerere_autoupdate")
 
 static inline int is_rebase_i(const struct replay_opts *opts)
 {
@@ -1479,6 +1480,15 @@ static int read_populate_opts(struct replay_opts *opts)
 				free(opts->gpg_sign);
 				opts->gpg_sign = xstrdup(buf.buf + 2);
 			}
+			strbuf_reset(&buf);
+		}
+
+		if (read_oneliner(&buf, rebase_path_allow_rerere_autoupdate(), 1)) {
+			if (!strcmp(buf.buf, "--rerere-autoupdate"))
+				opts->allow_rerere_auto = RERERE_AUTOUPDATE;
+			else if (!strcmp(buf.buf, "--no-rerere-autoupdate"))
+				opts->allow_rerere_auto = RERERE_NOAUTOUPDATE;
+			strbuf_reset(&buf);
 		}
 
 		if (file_exists(rebase_path_verbose()))

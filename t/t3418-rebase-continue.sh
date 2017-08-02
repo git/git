@@ -141,5 +141,8 @@ test_rerere_autoupdate () {
 
 test_rerere_autoupdate
 test_rerere_autoupdate -m
+GIT_SEQUENCE_EDITOR=: && export GIT_SEQUENCE_EDITOR
+test_rerere_autoupdate -i
+test_rerere_autoupdate --preserve-merges
 
 test_done
