@@ -65,6 +65,19 @@ test_expect_success 'cherry-pick conflict with --no-rerere-autoupdate' '
 	git reset --hard bar-dev
 '
 
+test_expect_success 'cherry-pick --continue rejects --rerere-autoupdate' '
+	test_must_fail git cherry-pick --rerere-autoupdate foo..bar-master &&
+	test_cmp foo-expect foo &&
+	git diff-files --quiet &&
+	test_must_fail git cherry-pick --continue --rerere-autoupdate >actual 2>&1 &&
+	echo "fatal: cherry-pick: --rerere-autoupdate cannot be used with --continue" >expect &&
+	test_i18ncmp expect actual &&
+	test_must_fail git cherry-pick --continue --no-rerere-autoupdate >actual 2>&1 &&
+	echo "fatal: cherry-pick: --no-rerere-autoupdate cannot be used with --continue" >expect &&
+	test_i18ncmp expect actual &&
+	git cherry-pick --abort
+'
+
 test_expect_success 'cherry-pick --rerere-autoupdate more than once' '
 	test_must_fail git cherry-pick --rerere-autoupdate --rerere-autoupdate foo..bar-master &&
 	test_cmp foo-expect foo &&
