@@ -960,10 +960,19 @@ static int update_clone_task_finished(int result,
 	return 0;
 }
 
+static int gitmodules_update_clone_config(const char *var, const char *value,
+					  void *cb)
+{
+	int *max_jobs = cb;
+	if (!strcmp(var, "submodule.fetchjobs"))
+		*max_jobs = parse_submodule_fetchjobs(var, value);
+	return 0;
+}
+
 static int update_clone(int argc, const char **argv, const char *prefix)
 {
 	const char *update = NULL;
-	int max_jobs = -1;
+	int max_jobs = 1;
 	struct string_list_item *item;
 	struct pathspec pathspec;
 	struct submodule_update_clone suc = SUBMODULE_UPDATE_CLONE_INIT;
@@ -1000,6 +1009,9 @@ static int update_clone(int argc, const char **argv, const char *prefix)
 	};
 	suc.prefix = prefix;
 
+	config_from_gitmodules(gitmodules_update_clone_config, &max_jobs);
+	git_config(gitmodules_update_clone_config, &max_jobs);
+
 	argc = parse_options(argc, argv, prefix, module_update_clone_options,
 			     git_submodule_helper_usage, 0);
 
@@ -1016,9 +1028,6 @@ static int update_clone(int argc, const char **argv, const char *prefix)
 	/* Overlay the parsed .gitmodules file with .git/config */
 	gitmodules_config();
 	git_config(submodule_config, NULL);
-
-	if (max_jobs < 0)
-		max_jobs = parallel_submodules();
 
 	run_processes_parallel(max_jobs,
 			       update_clone_get_next_task,

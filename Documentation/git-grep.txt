@@ -95,13 +95,6 @@ OPTIONS
 	<tree> option the prefix of all submodule output will be the name of
 	the parent project's <tree> object.
 
---parent-basename <basename>::
-	For internal use only.  In order to produce uniform output with the
-	--recurse-submodules option, this option can be used to provide the
-	basename of a parent's <tree> object to a submodule so the submodule
-	can prefix its output with the parent's name rather than the SHA1 of
-	the submodule.
-
 -a::
 --text::
 	Process binary files as if they were text.
