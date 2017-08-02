@@ -27,14 +27,25 @@ static struct oid_array ref_tips_before_fetch;
 static struct oid_array ref_tips_after_fetch;
 
 /*
- * The following flag is set if the .gitmodules file is unmerged. We then
- * disable recursion for all submodules where .git/config doesn't have a
- * matching config entry because we can't guess what might be configured in
- * .gitmodules unless the user resolves the conflict. When a command line
- * option is given (which always overrides configuration) this flag will be
- * ignored.
+ * Check if the .gitmodules file is unmerged. Parsing of the .gitmodules file
+ * will be disabled because we can't guess what might be configured in
+ * .gitmodules unless the user resolves the conflict.
  */
-static int gitmodules_is_unmerged;
+int is_gitmodules_unmerged(const struct index_state *istate)
+{
+	int pos = index_name_pos(istate, GITMODULES_FILE, strlen(GITMODULES_FILE));
+	if (pos < 0) { /* .gitmodules not found or isn't merged */
+		pos = -1 - pos;
+		if (istate->cache_nr > pos) {  /* there is a .gitmodules */
+			const struct cache_entry *ce = istate->cache[pos];
+			if (ce_namelen(ce) == strlen(GITMODULES_FILE) &&
+			    !strcmp(ce->name, GITMODULES_FILE))
+				return 1;
+		}
+	}
+
+	return 0;
+}
 
 /*
  * Check if the .gitmodules file has unstaged modifications.  This must be
@@ -71,7 +82,7 @@ int update_path_in_gitmodules(const char *oldpath, const char *newpath)
 	if (!file_exists(GITMODULES_FILE)) /* Do nothing without .gitmodules */
 		return -1;
 
-	if (gitmodules_is_unmerged)
+	if (is_gitmodules_unmerged(&the_index))
 		die(_("Cannot change unmerged .gitmodules, resolve merge conflicts first"));
 
 	submodule = submodule_from_path(null_sha1, oldpath);
@@ -105,7 +116,7 @@ int remove_path_from_gitmodules(const char *path)
 	if (!file_exists(GITMODULES_FILE)) /* Do nothing without .gitmodules */
 		return -1;
 
-	if (gitmodules_is_unmerged)
+	if (is_gitmodules_unmerged(&the_index))
 		die(_("Cannot change unmerged .gitmodules, resolve merge conflicts first"));
 
 	submodule = submodule_from_path(null_sha1, path);
@@ -156,7 +167,7 @@ void set_diffopt_flags_from_submodule_config(struct diff_options *diffopt,
 	if (submodule) {
 		if (submodule->ignore)
 			handle_ignore_submodules_arg(diffopt, submodule->ignore);
-		else if (gitmodules_is_unmerged)
+		else if (is_gitmodules_unmerged(&the_index))
 			DIFF_OPT_SET(diffopt, IGNORE_SUBMODULES);
 	}
 }
@@ -224,23 +235,12 @@ void gitmodules_config(void)
 	const char *work_tree = get_git_work_tree();
 	if (work_tree) {
 		struct strbuf gitmodules_path = STRBUF_INIT;
-		int pos;
 		strbuf_addstr(&gitmodules_path, work_tree);
 		strbuf_addstr(&gitmodules_path, "/" GITMODULES_FILE);
 		if (read_cache() < 0)
 			die("index file corrupt");
-		pos = cache_name_pos(GITMODULES_FILE, 11);
-		if (pos < 0) { /* .gitmodules not found or isn't merged */
-			pos = -1 - pos;
-			if (active_nr > pos) {  /* there is a .gitmodules */
-				const struct cache_entry *ce = active_cache[pos];
-				if (ce_namelen(ce) == 11 &&
-				    !memcmp(ce->name, GITMODULES_FILE, 11))
-					gitmodules_is_unmerged = 1;
-			}
-		}
 
-		if (!gitmodules_is_unmerged)
+		if (!is_gitmodules_unmerged(&the_index))
 			git_config_from_file(git_modules_config,
 				gitmodules_path.buf, NULL);
 		strbuf_release(&gitmodules_path);
@@ -1198,8 +1198,7 @@ static int get_next_submodule(struct child_process *cp,
 					default_argv = "on-demand";
 				}
 			} else {
-				if ((spf->default_option == RECURSE_SUBMODULES_OFF) ||
-				    gitmodules_is_unmerged)
+				if (spf->default_option == RECURSE_SUBMODULES_OFF)
 					continue;
 				if (spf->default_option == RECURSE_SUBMODULES_ON_DEMAND) {
 					if (!unsorted_string_list_lookup(&changed_submodule_paths, ce->name))
