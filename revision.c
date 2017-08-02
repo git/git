@@ -1168,6 +1168,7 @@ static void init_all_refs_cb(struct all_refs_cb *cb, struct rev_info *revs,
 {
 	cb->all_revs = revs;
 	cb->all_flags = flags;
+	revs->rev_input_given = 1;
 }
 
 void clear_ref_exclusion(struct string_list **ref_excludes_p)
