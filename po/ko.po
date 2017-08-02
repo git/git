@@ -58,8 +58,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2017-07-15 11:57+0800\n"
-"PO-Revision-Date: 2017-07-19 17:11+0900\n"
+"POT-Creation-Date: 2017-07-24 21:54+0800\n"
+"PO-Revision-Date: 2017-08-01 12:26+0900\n"
 "Last-Translator: Changwoo Ryu <cwryu@debian.org>\n"
 "Language-Team: Git Korean translation <http://github.com/changwoo/git-l10n-"
 "ko>\n"
@@ -1505,17 +1505,60 @@ msgstr "%s에서 LF는 CRLF로 바뀝니다."
 msgid "in the future"
 msgstr "미래에"
 
-#: date.c:122 date.c:129 date.c:136 date.c:143 date.c:149 date.c:156 date.c:167
-#: date.c:175 date.c:180
-msgid "%"
-msgid_plural "%"
-msgstr[0] "%"
+#: date.c:122
+#, c-format
+msgid "%<PRIuMAX> second ago"
+msgid_plural "%<PRIuMAX> seconds ago"
+msgstr[0] "%<PRIuMAX>초 전"
+
+#: date.c:129
+#, c-format
+msgid "%<PRIuMAX> minute ago"
+msgid_plural "%<PRIuMAX> minutes ago"
+msgstr[0] "%<PRIuMAX>분 전"
+
+#: date.c:136
+#, c-format
+msgid "%<PRIuMAX> hour ago"
+msgid_plural "%<PRIuMAX> hours ago"
+msgstr[0] "%<PRIuMAX>시간 전"
+
+#: date.c:143
+#, c-format
+msgid "%<PRIuMAX> day ago"
+msgid_plural "%<PRIuMAX> days ago"
+msgstr[0] "%<PRIuMAX>일 전"
+
+#: date.c:149
+#, c-format
+msgid "%<PRIuMAX> week ago"
+msgid_plural "%<PRIuMAX> weeks ago"
+msgstr[0] "%<PRIuMAX>주 전"
+
+#: date.c:156
+#, c-format
+msgid "%<PRIuMAX> month ago"
+msgid_plural "%<PRIuMAX> months ago"
+msgstr[0] "%<PRIuMAX>달 전"
+
+#: date.c:167
+#, c-format
+msgid "%<PRIuMAX> year"
+msgid_plural "%<PRIuMAX> years"
+msgstr[0] "%<PRIuMAX>년"
 
 #. TRANSLATORS: "%s" is "<n> years"
 #: date.c:170
-msgid "%s, %"
-msgid_plural "%s, %"
-msgstr[0] "%s, %"
+#, c-format
+msgid "%s, %<PRIuMAX> month ago"
+msgid_plural "%s, %<PRIuMAX> months ago"
+msgstr[0] "%s, %<PRIuMAX>달 전"
+
+#: date.c:175 date.c:180
+#, c-format
+msgid "%<PRIuMAX> year ago"
+msgid_plural "%<PRIuMAX> years ago"
+msgstr[0] "%<PRIuMAX>년 전"
 
 #: diffcore-order.c:24
 #, c-format
@@ -1686,7 +1729,7 @@ msgstr "잘못된 커밋 %s"
 msgid "giving up"
 msgstr "포기함"
 
-#: fetch-pack.c:533 progress.c:235
+#: fetch-pack.c:533 progress.c:237
 msgid "done"
 msgstr "완료"
 
@@ -8363,7 +8406,7 @@ msgstr "최적 성능을 위해 자동으로 저장소의 묶음을 만듭니다
 msgid "See \"git help gc\" for manual housekeeping.\n"
 msgstr "수동 관리 작업은 \"git help gc\" 내용을 참고하십시오.\n"
 
-#: builtin/gc.c:432
+#: builtin/gc.c:436
 #, c-format
 msgid ""
 "gc is already running on machine '%s' pid %<PRIuMAX> (use --force if not)"
@@ -8371,7 +8414,7 @@ msgstr ""
 "가비지컬렉터가 이미 '%s' 컴퓨터에서 %<PRIuMAX> PID로 실행 중입니다 (아니면 --"
 "force를 사용하십시오)"
 
-#: builtin/gc.c:476
+#: builtin/gc.c:480
 msgid ""
 "There are too many unreachable loose objects; run 'git prune' to remove them."
 msgstr ""
