@@ -2316,7 +2316,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 		opt->tweak(revs, opt);
 	if (revs->show_merge)
 		prepare_show_merge(revs);
-	if (revs->def && !revs->pending.nr && !got_rev_arg) {
+	if (revs->def && !revs->pending.nr && !revs->rev_input_given && !got_rev_arg) {
 		struct object_id oid;
 		struct object *object;
 		struct object_context oc;
