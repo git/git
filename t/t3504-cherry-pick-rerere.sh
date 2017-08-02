@@ -5,14 +5,11 @@ test_description='cherry-pick should rerere for conflicts'
 . ./test-lib.sh
 
 test_expect_success setup '
-	echo foo >foo &&
-	git add foo && test_tick && git commit -q -m 1 &&
-	echo foo-master >foo &&
-	git add foo && test_tick && git commit -q -m 2 &&
+	test_commit foo &&
+	test_commit foo-master foo &&
 
-	git checkout -b dev HEAD^ &&
-	echo foo-dev >foo &&
-	git add foo && test_tick && git commit -q -m 3 &&
+	git checkout -b dev foo &&
+	test_commit foo-dev foo &&
 	git config rerere.enabled true
 '
 
@@ -21,10 +18,10 @@ test_expect_success 'conflicting merge' '
 '
 
 test_expect_success 'fixup' '
-	echo foo-dev >foo &&
-	git add foo && test_tick && git commit -q -m 4 &&
-	git reset --hard HEAD^ &&
-	echo foo-dev >expect
+	echo foo-resolved >foo &&
+	git commit -am resolved &&
+	cp foo expect &&
+	git reset --hard HEAD^
 '
 
 test_expect_success 'cherry-pick conflict' '
