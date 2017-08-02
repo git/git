@@ -134,6 +134,73 @@ test_expect_success TTY 'configuration can enable pager (from subdir)' '
 	}
 '
 
+test_expect_success TTY 'git tag -l defaults to not paging' '
+	rm -f paginated.out &&
+	test_terminal git tag -l &&
+	! test -e paginated.out
+'
+
+test_expect_success TTY 'git tag -l respects pager.tag' '
+	rm -f paginated.out &&
+	test_terminal git -c pager.tag tag -l &&
+	test -e paginated.out
+'
+
+test_expect_success TTY 'git tag -l respects --no-pager' '
+	rm -f paginated.out &&
+	test_terminal git -c pager.tag --no-pager tag -l &&
+	! test -e paginated.out
+'
+
+test_expect_success TTY 'git tag with no args defaults to not paging' '
+	# no args implies -l so this should page like -l
+	rm -f paginated.out &&
+	test_terminal git tag &&
+	! test -e paginated.out
+'
+
+test_expect_success TTY 'git tag with no args respects pager.tag' '
+	# no args implies -l so this should page like -l
+	rm -f paginated.out &&
+	test_terminal git -c pager.tag tag &&
+	test -e paginated.out
+'
+
+test_expect_success TTY 'git tag --contains defaults to not paging' '
+	# --contains implies -l so this should page like -l
+	rm -f paginated.out &&
+	test_terminal git tag --contains &&
+	! test -e paginated.out
+'
+
+test_expect_success TTY 'git tag --contains respects pager.tag' '
+	# --contains implies -l so this should page like -l
+	rm -f paginated.out &&
+	test_terminal git -c pager.tag tag --contains &&
+	test -e paginated.out
+'
+
+test_expect_success TTY 'git tag -a defaults to not paging' '
+	test_when_finished "git tag -d newtag" &&
+	rm -f paginated.out &&
+	test_terminal git tag -am message newtag &&
+	! test -e paginated.out
+'
+
+test_expect_failure TTY 'git tag -a ignores pager.tag' '
+	test_when_finished "git tag -d newtag" &&
+	rm -f paginated.out &&
+	test_terminal git -c pager.tag tag -am message newtag &&
+	! test -e paginated.out
+'
+
+test_expect_success TTY 'git tag -a respects --paginate' '
+	test_when_finished "git tag -d newtag" &&
+	rm -f paginated.out &&
+	test_terminal git --paginate tag -am message newtag &&
+	test -e paginated.out
+'
+
 # A colored commit log will begin with an appropriate ANSI escape
 # for the first color; the text "commit" comes later.
 colorful() {
