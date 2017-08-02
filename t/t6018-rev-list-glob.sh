@@ -261,13 +261,13 @@ test_expect_failure 'rev-list should succeed with empty output on empty stdin' '
 	test_cmp expect actual
 '
 
-test_expect_failure 'rev-list should succeed with empty output with all refs excluded' '
+test_expect_success 'rev-list should succeed with empty output with all refs excluded' '
 	>expect &&
 	git rev-list --exclude=* --all >actual &&
 	test_cmp expect actual
 '
 
-test_expect_failure 'rev-list should succeed with empty output with empty --all' '
+test_expect_success 'rev-list should succeed with empty output with empty --all' '
 	(
 		test_create_repo empty &&
 		cd empty &&
@@ -277,7 +277,7 @@ test_expect_failure 'rev-list should succeed with empty output with empty --all'
 	)
 '
 
-test_expect_failure 'rev-list should succeed with empty output with empty glob' '
+test_expect_success 'rev-list should succeed with empty output with empty glob' '
 	>expect &&
 	git rev-list --glob=does-not-match-anything >actual &&
 	test_cmp expect actual

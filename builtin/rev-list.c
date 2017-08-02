@@ -350,7 +350,8 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 
 	if ((!revs.commits &&
 	     (!(revs.tag_objects || revs.tree_objects || revs.blob_objects) &&
-	      !revs.pending.nr)) ||
+	      !revs.pending.nr) &&
+	     !revs.rev_input_given) ||
 	    revs.diff)
 		usage(rev_list_usage);
 
