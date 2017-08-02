@@ -286,7 +286,7 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 		list.entry[list.nr].name = xstrdup(ce->name);
 		list.entry[list.nr].is_submodule = S_ISGITLINK(ce->ce_mode);
 		if (list.entry[list.nr++].is_submodule &&
-		    !is_staging_gitmodules_ok())
+		    !is_staging_gitmodules_ok(&the_index))
 			die (_("Please stage your changes to .gitmodules or stash them to proceed"));
 	}
 
