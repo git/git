@@ -1283,38 +1283,37 @@ struct object_context {
 	 */
 	struct strbuf symlink_path;
 	/*
-	 * If GET_SHA1_RECORD_PATH is set, this will record path (if any)
+	 * If GET_OID_RECORD_PATH is set, this will record path (if any)
 	 * found when resolving the name. The caller is responsible for
 	 * releasing the memory.
 	 */
 	char *path;
 };
 
-#define GET_SHA1_QUIETLY           01
-#define GET_SHA1_COMMIT            02
-#define GET_SHA1_COMMITTISH        04
-#define GET_SHA1_TREE             010
-#define GET_SHA1_TREEISH          020
-#define GET_SHA1_BLOB             040
-#define GET_SHA1_FOLLOW_SYMLINKS 0100
-#define GET_SHA1_RECORD_PATH     0200
-#define GET_SHA1_ONLY_TO_DIE    04000
+#define GET_OID_QUIETLY           01
+#define GET_OID_COMMIT            02
+#define GET_OID_COMMITTISH        04
+#define GET_OID_TREE             010
+#define GET_OID_TREEISH          020
+#define GET_OID_BLOB             040
+#define GET_OID_FOLLOW_SYMLINKS 0100
+#define GET_OID_RECORD_PATH     0200
+#define GET_OID_ONLY_TO_DIE    04000
 
-#define GET_SHA1_DISAMBIGUATORS \
-	(GET_SHA1_COMMIT | GET_SHA1_COMMITTISH | \
-	GET_SHA1_TREE | GET_SHA1_TREEISH | \
-	GET_SHA1_BLOB)
-
-extern int get_sha1(const char *str, unsigned char *sha1);
-extern int get_sha1_commit(const char *str, unsigned char *sha1);
-extern int get_sha1_committish(const char *str, unsigned char *sha1);
-extern int get_sha1_tree(const char *str, unsigned char *sha1);
-extern int get_sha1_treeish(const char *str, unsigned char *sha1);
-extern int get_sha1_blob(const char *str, unsigned char *sha1);
-extern void maybe_die_on_misspelt_object_name(const char *name, const char *prefix);
-extern int get_sha1_with_context(const char *str, unsigned flags, unsigned char *sha1, struct object_context *oc);
+#define GET_OID_DISAMBIGUATORS \
+	(GET_OID_COMMIT | GET_OID_COMMITTISH | \
+	GET_OID_TREE | GET_OID_TREEISH | \
+	GET_OID_BLOB)
 
 extern int get_oid(const char *str, struct object_id *oid);
+extern int get_oid_commit(const char *str, struct object_id *oid);
+extern int get_oid_committish(const char *str, struct object_id *oid);
+extern int get_oid_tree(const char *str, struct object_id *oid);
+extern int get_oid_treeish(const char *str, struct object_id *oid);
+extern int get_oid_blob(const char *str, struct object_id *oid);
+extern void maybe_die_on_misspelt_object_name(const char *name, const char *prefix);
+extern int get_oid_with_context(const char *str, unsigned flags, struct object_id *oid, struct object_context *oc);
+
 
 typedef int each_abbrev_fn(const struct object_id *oid, void *);
 extern int for_each_abbrev(const char *prefix, each_abbrev_fn, void *);

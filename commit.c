@@ -59,7 +59,7 @@ struct commit *lookup_commit_reference_by_name(const char *name)
 	struct object_id oid;
 	struct commit *commit;
 
-	if (get_sha1_committish(name, oid.hash))
+	if (get_oid_committish(name, &oid))
 		return NULL;
 	commit = lookup_commit_reference(&oid);
 	if (parse_commit(commit))
@@ -199,11 +199,11 @@ static void prepare_commit_graft(void)
 	commit_graft_prepared = 1;
 }
 
-struct commit_graft *lookup_commit_graft(const unsigned char *sha1)
+struct commit_graft *lookup_commit_graft(const struct object_id *oid)
 {
 	int pos;
 	prepare_commit_graft();
-	pos = commit_graft_pos(sha1);
+	pos = commit_graft_pos(oid->hash);
 	if (pos < 0)
 		return NULL;
 	return commit_graft[pos];
@@ -335,7 +335,7 @@ int parse_commit_buffer(struct commit *item, const void *buffer, unsigned long s
 	bufptr += tree_entry_len + 1; /* "tree " + "hex sha1" + "\n" */
 	pptr = &item->parents;
 
-	graft = lookup_commit_graft(item->object.oid.hash);
+	graft = lookup_commit_graft(&item->object.oid);
 	while (bufptr + parent_entry_len < tail && !memcmp(bufptr, "parent ", 7)) {
 		struct commit *new_parent;
 
@@ -1587,7 +1587,7 @@ struct commit *get_merge_parent(const char *name)
 	struct object *obj;
 	struct commit *commit;
 	struct object_id oid;
-	if (get_sha1(name, oid.hash))
+	if (get_oid(name, &oid))
 		return NULL;
 	obj = parse_object(&oid);
 	commit = (struct commit *)peel_to_type(name, 0, obj, OBJ_COMMIT);

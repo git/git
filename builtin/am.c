@@ -1131,7 +1131,7 @@ static int index_has_changes(struct strbuf *sb)
 	struct object_id head;
 	int i;
 
-	if (!get_sha1_tree("HEAD", head.hash)) {
+	if (!get_oid_tree("HEAD", &head)) {
 		struct diff_options opt;
 
 		diff_setup(&opt);
@@ -1432,7 +1432,7 @@ static void write_index_patch(const struct am_state *state)
 	struct rev_info rev_info;
 	FILE *fp;
 
-	if (!get_sha1_tree("HEAD", head.hash))
+	if (!get_oid_tree("HEAD", &head))
 		tree = lookup_tree(&head);
 	else
 		tree = lookup_tree(&empty_tree_oid);
@@ -1661,7 +1661,7 @@ static void do_commit(const struct am_state *state)
 	if (write_cache_as_tree(tree.hash, 0, NULL))
 		die(_("git write-tree failed to write a tree"));
 
-	if (!get_sha1_commit("HEAD", parent.hash)) {
+	if (!get_oid_commit("HEAD", &parent)) {
 		old_oid = &parent;
 		commit_list_insert(lookup_commit(&parent), &parents);
 	} else {
