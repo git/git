@@ -10,6 +10,7 @@
 #   - Thynson <lanxingcan AT gmail.com>
 #   - ws3389 <willsmith3389 AT gmail.com>
 #   - Wang Sheng <wangsheng2008love AT 163.com>
+#   - 依云 <lilydjwg AT gmail.com>
 #   - Yichao Yu <yyc1992 AT gmail.com>
 #   - Zhuang Ya <zhuangya AT me.com>
 #
@@ -136,7 +137,7 @@ msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
 "POT-Creation-Date: 2017-07-24 21:54+0800\n"
-"PO-Revision-Date: 2017-08-01 09:21+0800\n"
+"PO-Revision-Date: 2017-08-02 08:00+0800\n"
 "Last-Translator: Jiang Xin <worldhello.net@gmail.com>\n"
 "Language-Team: GitHub <https://github.com/jiangxin/git/>\n"
 "Language: zh_CN\n"
@@ -1981,17 +1982,17 @@ msgstr "唉呀，您的系统中未发现 Git 命令。"
 #: help.c:358
 #, c-format
 msgid "WARNING: You called a Git command named '%s', which does not exist."
-msgstr "警告：您运行一个 Git 命令 '%s'，但是并不存在。"
+msgstr "警告：您运行了一个并不存在的 Git 命令 '%s'。"
 
 #: help.c:363
 #, c-format
 msgid "Continuing under the assumption that you meant '%s'."
-msgstr "继续运行，假定你想要的是 '%s'。"
+msgstr "假定你想要的是 '%s' 并继续。"
 
 #: help.c:368
 #, c-format
 msgid "Continuing in %0.1f seconds, assuming that you meant '%s'."
-msgstr "在 %0.1f 秒钟后继续，假定你想要的是 '%s'。"
+msgstr "假定你想要的是 '%2$s'，在 %1$0.1f 秒钟后继续。"
 
 #: help.c:376
 #, c-format
@@ -11150,7 +11151,7 @@ msgstr "允许快进式"
 
 #: builtin/pull.c:164
 msgid "automatically stash/stash pop before and after rebase"
-msgstr "变基操作前后执行自动贮藏和 stash pop"
+msgstr "变基操作前后执行自动贮藏和弹出贮藏"
 
 #: builtin/pull.c:180
 msgid "Options related to fetching"
@@ -11254,7 +11255,7 @@ msgstr "变基式拉取"
 
 #: builtin/pull.c:852
 msgid "please commit or stash them."
-msgstr "请提交或为贮藏修改。"
+msgstr "请提交或贮藏它们。"
 
 #: builtin/pull.c:877
 #, c-format
