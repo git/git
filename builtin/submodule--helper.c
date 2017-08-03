@@ -1066,17 +1066,24 @@ static int resolve_relative_path(int argc, const char **argv, const char *prefix
 static const char *remote_submodule_branch(const char *path)
 {
 	const struct submodule *sub;
+	const char *branch = NULL;
+	char *key;
+
 	gitmodules_config();
-	git_config(submodule_config, NULL);
 
 	sub = submodule_from_path(&null_oid, path);
 	if (!sub)
 		return NULL;
 
-	if (!sub->branch)
+	key = xstrfmt("submodule.%s.branch", sub->name);
+	if (repo_config_get_string_const(the_repository, key, &branch))
+		branch = sub->branch;
+	free(key);
+
+	if (!branch)
 		return "master";
 
-	if (!strcmp(sub->branch, ".")) {
+	if (!strcmp(branch, ".")) {
 		unsigned char sha1[20];
 		const char *refname = resolve_ref_unsafe("HEAD", 0, sha1, NULL);
 
@@ -1094,7 +1101,7 @@ static const char *remote_submodule_branch(const char *path)
 		return refname;
 	}
 
-	return sub->branch;
+	return branch;
 }
 
 static int resolve_remote_submodule_branch(int argc, const char **argv,
