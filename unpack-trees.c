@@ -1,5 +1,6 @@
 #define NO_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
+#include "repository.h"
 #include "config.h"
 #include "dir.h"
 #include "tree.h"
@@ -268,22 +269,28 @@ static int check_submodule_move_head(const struct cache_entry *ce,
 	return 0;
 }
 
-static void reload_gitmodules_file(struct index_state *index,
-				   struct checkout *state)
+/*
+ * Preform the loading of the repository's gitmodules file.  This function is
+ * used by 'check_update()' to perform loading of the gitmodules file in two
+ * differnt situations:
+ * (1) before removing entries from the working tree if the gitmodules file has
+ *     been marked for removal.  This situation is specified by 'state' == NULL.
+ * (2) before checking out entries to the working tree if the gitmodules file
+ *     has been marked for update.  This situation is specified by 'state' != NULL.
+ */
+static void load_gitmodules_file(struct index_state *index,
+				 struct checkout *state)
 {
-	int i;
-	for (i = 0; i < index->cache_nr; i++) {
-		struct cache_entry *ce = index->cache[i];
-		if (ce->ce_flags & CE_UPDATE) {
-			int r = strcmp(ce->name, GITMODULES_FILE);
-			if (r < 0)
-				continue;
-			else if (r == 0) {
-				submodule_free();
-				checkout_entry(ce, state, NULL);
-				gitmodules_config();
-			} else
-				break;
+	int pos = index_name_pos(index, GITMODULES_FILE, strlen(GITMODULES_FILE));
+
+	if (pos >= 0) {
+		struct cache_entry *ce = index->cache[pos];
+		if (!state && ce->ce_flags & CE_WT_REMOVE) {
+			repo_read_gitmodules(the_repository);
+		} else if (state && (ce->ce_flags & CE_UPDATE)) {
+			submodule_free();
+			checkout_entry(ce, state, NULL);
+			repo_read_gitmodules(the_repository);
 		}
 	}
 }
@@ -343,6 +350,10 @@ static int check_updates(struct unpack_trees_options *o)
 
 	if (o->update)
 		git_attr_set_direction(GIT_ATTR_CHECKOUT, index);
+
+	if (should_update_submodules() && o->update && !o->dry_run)
+		load_gitmodules_file(index, NULL);
+
 	for (i = 0; i < index->cache_nr; i++) {
 		const struct cache_entry *ce = index->cache[i];
 
@@ -356,7 +367,7 @@ static int check_updates(struct unpack_trees_options *o)
 	remove_scheduled_dirs();
 
 	if (should_update_submodules() && o->update && !o->dry_run)
-		reload_gitmodules_file(index, &state);
+		load_gitmodules_file(index, &state);
 
 	for (i = 0; i < index->cache_nr; i++) {
 		struct cache_entry *ce = index->cache[i];
