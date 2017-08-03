@@ -62,6 +62,7 @@ extern void die_in_unpopulated_submodule(const struct index_state *istate,
 					 const char *prefix);
 extern void die_path_inside_submodule(const struct index_state *istate,
 				      const struct pathspec *ps);
+extern enum submodule_update_type parse_submodule_update_type(const char *value);
 extern int parse_submodule_update_strategy(const char *value,
 		struct submodule_update_strategy *dst);
 extern const char *submodule_strategy_to_string(const struct submodule_update_strategy *s);

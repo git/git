@@ -398,24 +398,38 @@ void die_path_inside_submodule(const struct index_state *istate,
 	}
 }
 
+enum submodule_update_type parse_submodule_update_type(const char *value)
+{
+	if (!strcmp(value, "none"))
+		return SM_UPDATE_NONE;
+	else if (!strcmp(value, "checkout"))
+		return SM_UPDATE_CHECKOUT;
+	else if (!strcmp(value, "rebase"))
+		return SM_UPDATE_REBASE;
+	else if (!strcmp(value, "merge"))
+		return SM_UPDATE_MERGE;
+	else if (*value == '!')
+		return SM_UPDATE_COMMAND;
+	else
+		return SM_UPDATE_UNSPECIFIED;
+}
+
 int parse_submodule_update_strategy(const char *value,
 		struct submodule_update_strategy *dst)
 {
+	enum submodule_update_type type;
+
 	free((void*)dst->command);
 	dst->command = NULL;
-	if (!strcmp(value, "none"))
-		dst->type = SM_UPDATE_NONE;
-	else if (!strcmp(value, "checkout"))
-		dst->type = SM_UPDATE_CHECKOUT;
-	else if (!strcmp(value, "rebase"))
-		dst->type = SM_UPDATE_REBASE;
-	else if (!strcmp(value, "merge"))
-		dst->type = SM_UPDATE_MERGE;
-	else if (skip_prefix(value, "!", &value)) {
-		dst->type = SM_UPDATE_COMMAND;
-		dst->command = xstrdup(value);
-	} else
+
+	type = parse_submodule_update_type(value);
+	if (type == SM_UPDATE_UNSPECIFIED)
 		return -1;
+
+	dst->type = type;
+	if (type == SM_UPDATE_COMMAND)
+		dst->command = xstrdup(value + 1);
+
 	return 0;
 }
 
