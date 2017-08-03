@@ -1362,7 +1362,6 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 
 	if (recurse_submodules != RECURSE_SUBMODULES_OFF) {
 		gitmodules_config();
-		git_config(submodule_config, NULL);
 	}
 
 	if (all) {

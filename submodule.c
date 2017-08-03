@@ -1194,14 +1194,24 @@ static int get_next_submodule(struct child_process *cp,
 
 		default_argv = "yes";
 		if (spf->command_line_option == RECURSE_SUBMODULES_DEFAULT) {
-			if (submodule &&
-			    submodule->fetch_recurse !=
-						RECURSE_SUBMODULES_NONE) {
-				if (submodule->fetch_recurse ==
-						RECURSE_SUBMODULES_OFF)
+			int fetch_recurse = RECURSE_SUBMODULES_NONE;
+
+			if (submodule) {
+				char *key;
+				const char *value;
+
+				fetch_recurse = submodule->fetch_recurse;
+				key = xstrfmt("submodule.%s.fetchRecurseSubmodules", submodule->name);
+				if (!repo_config_get_string_const(the_repository, key, &value)) {
+					fetch_recurse = parse_fetch_recurse_submodules_arg(key, value);
+				}
+				free(key);
+			}
+
+			if (fetch_recurse != RECURSE_SUBMODULES_NONE) {
+				if (fetch_recurse == RECURSE_SUBMODULES_OFF)
 					continue;
-				if (submodule->fetch_recurse ==
-						RECURSE_SUBMODULES_ON_DEMAND) {
+				if (fetch_recurse == RECURSE_SUBMODULES_ON_DEMAND) {
 					if (!unsorted_string_list_lookup(&changed_submodule_paths, ce->name))
 						continue;
 					default_argv = "on-demand";
