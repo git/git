@@ -19,6 +19,7 @@
 #include "pathspec.h"
 #include "run-command.h"
 #include "submodule.h"
+#include "submodule-config.h"
 
 static int abbrev;
 static int show_deleted;

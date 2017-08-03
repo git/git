@@ -47,8 +47,6 @@ int option_parse_recurse_submodules_worktree_updater(const struct option *opt,
 						     const char *arg, int unset);
 void load_submodule_cache(void);
 extern void gitmodules_config(void);
-extern void repo_read_gitmodules(struct repository *repo);
-extern void gitmodules_config_oid(const struct object_id *commit_oid);
 extern int is_submodule_active(struct repository *repo, const char *path);
 /*
  * Determine if a submodule has been populated at a given 'path' by checking if

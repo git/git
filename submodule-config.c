@@ -449,9 +449,9 @@ static int parse_config(const char *var, const char *value, void *data)
 	return ret;
 }
 
-int gitmodule_oid_from_commit(const struct object_id *treeish_name,
-				      struct object_id *gitmodules_oid,
-				      struct strbuf *rev)
+static int gitmodule_oid_from_commit(const struct object_id *treeish_name,
+				     struct object_id *gitmodules_oid,
+				     struct strbuf *rev)
 {
 	int ret = 0;
 
@@ -552,9 +552,9 @@ static void submodule_cache_check_init(struct repository *repo)
 	submodule_cache_init(repo->submodule_cache);
 }
 
-int submodule_config_option(struct repository *repo,
-			    const char *var, const char *value)
+static int gitmodules_cb(const char *var, const char *value, void *data)
 {
+	struct repository *repo = data;
 	struct parse_config_parameter parameter;
 
 	submodule_cache_check_init(repo);
@@ -567,9 +567,33 @@ int submodule_config_option(struct repository *repo,
 	return parse_config(var, value, &parameter);
 }
 
-int parse_submodule_config_option(const char *var, const char *value)
+void repo_read_gitmodules(struct repository *repo)
 {
-	return submodule_config_option(the_repository, var, value);
+	if (repo->worktree) {
+		char *gitmodules;
+
+		if (repo_read_index(repo) < 0)
+			return;
+
+		gitmodules = repo_worktree_path(repo, GITMODULES_FILE);
+
+		if (!is_gitmodules_unmerged(repo->index))
+			git_config_from_file(gitmodules_cb, gitmodules, repo);
+
+		free(gitmodules);
+	}
+}
+
+void gitmodules_config_oid(const struct object_id *commit_oid)
+{
+	struct strbuf rev = STRBUF_INIT;
+	struct object_id oid;
+
+	if (gitmodule_oid_from_commit(commit_oid, &oid, &rev)) {
+		git_config_from_blob_oid(gitmodules_cb, rev.buf,
+					 &oid, the_repository);
+	}
+	strbuf_release(&rev);
 }
 
 const struct submodule *submodule_from_name(const struct object_id *treeish_name,

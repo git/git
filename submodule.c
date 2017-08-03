@@ -216,44 +216,9 @@ void load_submodule_cache(void)
 	gitmodules_config();
 }
 
-static int gitmodules_cb(const char *var, const char *value, void *data)
-{
-	struct repository *repo = data;
-	return submodule_config_option(repo, var, value);
-}
-
-void repo_read_gitmodules(struct repository *repo)
-{
-	if (repo->worktree) {
-		char *gitmodules;
-
-		if (repo_read_index(repo) < 0)
-			return;
-
-		gitmodules = repo_worktree_path(repo, GITMODULES_FILE);
-
-		if (!is_gitmodules_unmerged(repo->index))
-			git_config_from_file(gitmodules_cb, gitmodules, repo);
-
-		free(gitmodules);
-	}
-}
-
 void gitmodules_config(void)
 {
 	repo_read_gitmodules(the_repository);
-}
-
-void gitmodules_config_oid(const struct object_id *commit_oid)
-{
-	struct strbuf rev = STRBUF_INIT;
-	struct object_id oid;
-
-	if (gitmodule_oid_from_commit(commit_oid, &oid, &rev)) {
-		git_config_from_blob_oid(gitmodules_cb, rev.buf,
-					 &oid, the_repository);
-	}
-	strbuf_release(&rev);
 }
 
 /*
