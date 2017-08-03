@@ -110,7 +110,6 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 
 	git_config(git_diff_basic_config, NULL); /* no "diff" UI options */
 	init_revisions(opt, prefix);
-	gitmodules_config();
 	opt->abbrev = 0;
 	opt->diff = 1;
 	opt->disable_stdin = 1;

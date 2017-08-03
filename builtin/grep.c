@@ -1048,10 +1048,6 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	}
 #endif
 
-	if (recurse_submodules) {
-		gitmodules_config();
-	}
-
 	if (show_in_pager && (cached || list.nr))
 		die(_("--open-files-in-pager only works on the worktree"));
 

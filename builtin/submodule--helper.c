@@ -275,8 +275,6 @@ static void module_list_active(struct module_list *list)
 	int i;
 	struct module_list active_modules = MODULE_LIST_INIT;
 
-	gitmodules_config();
-
 	for (i = 0; i < list->nr; i++) {
 		const struct cache_entry *ce = list->entries[i];
 
@@ -336,9 +334,6 @@ static void init_submodule(const char *path, const char *prefix, int quiet)
 	const struct submodule *sub;
 	struct strbuf sb = STRBUF_INIT;
 	char *upd = NULL, *url = NULL, *displaypath;
-
-	/* Only loads from .gitmodules, no overlay with .git/config */
-	gitmodules_config();
 
 	if (prefix && get_super_prefix())
 		die("BUG: cannot have prefix and superprefix");
@@ -475,7 +470,6 @@ static int module_name(int argc, const char **argv, const char *prefix)
 	if (argc != 2)
 		usage(_("git submodule--helper name <path>"));
 
-	gitmodules_config();
 	sub = submodule_from_path(&null_oid, argv[1]);
 
 	if (!sub)
@@ -1042,8 +1036,6 @@ static int update_clone(int argc, const char **argv, const char *prefix)
 	if (pathspec.nr)
 		suc.warn_if_uninitialized = 1;
 
-	gitmodules_config();
-
 	run_processes_parallel(max_jobs,
 			       update_clone_get_next_task,
 			       update_clone_start_failure,
@@ -1083,8 +1075,6 @@ static const char *remote_submodule_branch(const char *path)
 	const struct submodule *sub;
 	const char *branch = NULL;
 	char *key;
-
-	gitmodules_config();
 
 	sub = submodule_from_path(&null_oid, path);
 	if (!sub)
@@ -1204,8 +1194,6 @@ static int absorb_git_dirs(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix, embed_gitdir_options,
 			     git_submodule_helper_usage, 0);
 
-	gitmodules_config();
-
 	if (module_list_compute(argc, argv, prefix, &pathspec, &list) < 0)
 		return 1;
 
@@ -1220,8 +1208,6 @@ static int is_active(int argc, const char **argv, const char *prefix)
 {
 	if (argc != 2)
 		die("submodule--helper is-active takes exactly 1 argument");
-
-	gitmodules_config();
 
 	return !is_submodule_active(the_repository, argv[1]);
 }

@@ -32,7 +32,6 @@ int cmd_main(int argc, const char **argv)
 		die_usage(argc, argv, "Wrong number of arguments.");
 
 	setup_git_directory();
-	gitmodules_config();
 
 	while (*arg) {
 		struct object_id commit_oid;
