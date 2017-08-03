@@ -180,27 +180,6 @@ void set_diffopt_flags_from_submodule_config(struct diff_options *diffopt,
 	}
 }
 
-/* For loading from the .gitmodules file. */
-static int git_modules_config(const char *var, const char *value, void *cb)
-{
-	if (starts_with(var, "submodule."))
-		return parse_submodule_config_option(var, value);
-	return 0;
-}
-
-/* Loads all submodule settings from the config. */
-int submodule_config(const char *var, const char *value, void *cb)
-{
-	if (!strcmp(var, "submodule.recurse")) {
-		int v = git_config_bool(var, value) ?
-			RECURSE_SUBMODULES_ON : RECURSE_SUBMODULES_OFF;
-		config_update_recurse_submodules = v;
-		return 0;
-	} else {
-		return git_modules_config(var, value, cb);
-	}
-}
-
 /* Cheap function that only determines if we're interested in submodules at all */
 int git_default_submodule_config(const char *var, const char *value, void *cb)
 {
@@ -271,8 +250,8 @@ void gitmodules_config_oid(const struct object_id *commit_oid)
 	struct object_id oid;
 
 	if (gitmodule_oid_from_commit(commit_oid, &oid, &rev)) {
-		git_config_from_blob_oid(submodule_config, rev.buf,
-					 &oid, NULL);
+		git_config_from_blob_oid(gitmodules_cb, rev.buf,
+					 &oid, the_repository);
 	}
 	strbuf_release(&rev);
 }
