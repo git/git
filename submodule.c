@@ -165,8 +165,16 @@ void set_diffopt_flags_from_submodule_config(struct diff_options *diffopt,
 {
 	const struct submodule *submodule = submodule_from_path(&null_oid, path);
 	if (submodule) {
-		if (submodule->ignore)
-			handle_ignore_submodules_arg(diffopt, submodule->ignore);
+		const char *ignore;
+		char *key;
+
+		key = xstrfmt("submodule.%s.ignore", submodule->name);
+		if (repo_config_get_string_const(the_repository, key, &ignore))
+			ignore = submodule->ignore;
+		free(key);
+
+		if (ignore)
+			handle_ignore_submodules_arg(diffopt, ignore);
 		else if (is_gitmodules_unmerged(&the_index))
 			DIFF_OPT_SET(diffopt, IGNORE_SUBMODULES);
 	}
