@@ -235,7 +235,6 @@ void load_submodule_cache(void)
 		return;
 
 	gitmodules_config();
-	git_config(submodule_config, NULL);
 }
 
 static int gitmodules_cb(const char *var, const char *value, void *data)

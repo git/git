@@ -858,7 +858,7 @@ static int git_checkout_config(const char *var, const char *value, void *cb)
 	}
 
 	if (starts_with(var, "submodule."))
-		return submodule_config(var, value, NULL);
+		return git_default_submodule_config(var, value, NULL);
 
 	return git_xmerge_config(var, value, NULL);
 }

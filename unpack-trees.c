@@ -255,28 +255,17 @@ static int check_submodule_move_head(const struct cache_entry *ce,
 {
 	unsigned flags = SUBMODULE_MOVE_HEAD_DRY_RUN;
 	const struct submodule *sub = submodule_from_ce(ce);
+
 	if (!sub)
 		return 0;
 
 	if (o->reset)
 		flags |= SUBMODULE_MOVE_HEAD_FORCE;
 
-	switch (sub->update_strategy.type) {
-	case SM_UPDATE_UNSPECIFIED:
-	case SM_UPDATE_CHECKOUT:
-		if (submodule_move_head(ce->name, old_id, new_id, flags))
-			return o->gently ? -1 :
-				add_rejected_path(o, ERROR_WOULD_LOSE_SUBMODULE, ce->name);
-		return 0;
-	case SM_UPDATE_NONE:
-		return 0;
-	case SM_UPDATE_REBASE:
-	case SM_UPDATE_MERGE:
-	case SM_UPDATE_COMMAND:
-	default:
-		warning(_("submodule update strategy not supported for submodule '%s'"), ce->name);
-		return -1;
-	}
+	if (submodule_move_head(ce->name, old_id, new_id, flags))
+		return o->gently ? -1 :
+				   add_rejected_path(o, ERROR_WOULD_LOSE_SUBMODULE, ce->name);
+	return 0;
 }
 
 static void reload_gitmodules_file(struct index_state *index,
@@ -293,7 +282,6 @@ static void reload_gitmodules_file(struct index_state *index,
 				submodule_free();
 				checkout_entry(ce, state, NULL);
 				gitmodules_config();
-				git_config(submodule_config, NULL);
 			} else
 				break;
 		}
@@ -308,19 +296,9 @@ static void unlink_entry(const struct cache_entry *ce)
 {
 	const struct submodule *sub = submodule_from_ce(ce);
 	if (sub) {
-		switch (sub->update_strategy.type) {
-		case SM_UPDATE_UNSPECIFIED:
-		case SM_UPDATE_CHECKOUT:
-		case SM_UPDATE_REBASE:
-		case SM_UPDATE_MERGE:
-			/* state.force is set at the caller. */
-			submodule_move_head(ce->name, "HEAD", NULL,
-					    SUBMODULE_MOVE_HEAD_FORCE);
-			break;
-		case SM_UPDATE_NONE:
-		case SM_UPDATE_COMMAND:
-			return; /* Do not touch the submodule. */
-		}
+		/* state.force is set at the caller. */
+		submodule_move_head(ce->name, "HEAD", NULL,
+				    SUBMODULE_MOVE_HEAD_FORCE);
 	}
 	if (!check_leading_path(ce->name, ce_namelen(ce)))
 		return;
