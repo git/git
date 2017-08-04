@@ -469,14 +469,12 @@ notes for details).
    set does.
 
  * Code clean-up to fix possible buffer over-reading.
-   (merge 2d105451c0 rs/apply-avoid-over-reading later to maint).
 
  * A few tests that tried to verify the contents of push certificates
    did not use 'git rev-parse' to formulate the line to look for in
    the certificate correctly.
 
  * Update the character width tables.
-   (merge 7560aacd7c bb/unicode-10.0 later to maint).
 
  * After "git branch --move" of the currently checked out branch, the
    code to walk the reflog of HEAD via "log -g" and friends
@@ -495,33 +493,25 @@ notes for details).
    ought to mean a repository on a network share that can be accessed
    locally, but this did not work correctly due to stripping the double
    slashes at the beginning.
-   (merge 496f256989 tb/push-to-cygwin-unc-path later to maint).
 
  * The progress meter did not give a useful output when we haven't had
    0.5 seconds to measure the throughput during the interval.  Instead
    show the overall throughput rate at the end, which is a much more
    useful number.
-   (merge 0fae1e072a rs/progress-overall-throughput-at-the-end later to maint).
 
  * Code clean-up, that makes us in sync with Debian by one patch.
-   (merge 8db1ae5740 jn/hooks-pre-rebase-sample-fix later to maint).
 
  * We run an early part of "git gc" that deals with refs before
    daemonising (and not under lock) even when running a background
    auto-gc, which caused multiple gc processes attempting to run the
    early part at the same time.  This is now prevented by running the
    early part also under the GC lock.
-   (merge c45af94dbc jk/gc-pre-detach-under-hook later to maint).
 
  * A recent update broke an alias that contained an uppercase letter.
-   (merge 643df7e234 js/alias-case-sensitivity later to maint).
 
  * Other minor doc, test and build updates and code cleanups.
-   (merge 3f9c637ec7 pw/unquote-path-in-git-pm later to maint).
    (merge 5053313562 rs/urlmatch-cleanup later to maint).
    (merge 42c78a216e rs/use-div-round-up later to maint).
    (merge 5e8d2729ae rs/wt-status-cleanup later to maint).
-   (merge 01826066b0 ks/fix-rebase-doc-picture later to maint).
-   (merge f7f6dc340e jk/test-copy-bytes-fix later to maint).
-   (merge 9fb9495dae ew/fd-cloexec-fix later to maint).
-   (merge 3a33fe5c97 ks/doc-fixes later to maint).
+   (merge bc9b7e207f as/diff-options-grammofix later to maint).
+   (merge ac05222b31 ah/patch-id-doc later to maint).
