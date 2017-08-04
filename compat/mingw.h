@@ -446,6 +446,9 @@ extern int (*lstat)(const char *file_name, struct stat *buf);
 
 int mingw_utime(const char *file_name, const struct utimbuf *times);
 #define utime mingw_utime
+size_t mingw_strftime(char *s, size_t max,
+		   const char *format, const struct tm *tm);
+#define strftime mingw_strftime
 
 pid_t mingw_spawnvpe(const char *cmd, const char **argv, char **env,
 		     const char *dir,
