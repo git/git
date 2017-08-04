@@ -552,7 +552,8 @@ for further details.
 
 `GIT_CONFIG_NOSYSTEM`::
 	Whether to skip reading settings from the system-wide
-	`$(prefix)/etc/gitconfig` file.  This environment variable can
+	`$(prefix)/etc/gitconfig` file (and on Windows, also from the
+	`%PROGRAMDATA%\Git\config` file).  This environment variable can
 	be used along with `$HOME` and `$XDG_CONFIG_HOME` to create a
 	predictable environment for a picky script, or you can set it
 	temporarily to avoid using a buggy `/etc/gitconfig` file while
