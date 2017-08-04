@@ -58,7 +58,7 @@ PATH="$GIT_BUILD_DIR/$MSVC_DEPS/bin:$PATH"
 
 ################################################################
 # It appears that people try to run tests without building...
-"$GIT_BUILD_DIR/git$X" >/dev/null
+test -n "$GIT_TEST_INSTALLED" || "$GIT_BUILD_DIR/git$X" >/dev/null ||
 if test $? != 1
 then
 	echo >&2 'error: you do not seem to have built git yet.'
