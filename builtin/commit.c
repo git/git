@@ -1367,7 +1367,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 		OPT_BOOL(0, "no-lock-index", &no_lock_index,
 			 N_("do not lock the index")),
 		OPT_BOOL(0, "show-ignored-directory", &show_ignored_directory,
-		N_("Only show directories that match an ignore pattern name.")),
+		N_("(EXPERIMENTAL) Only show directories that match an ignore pattern name.")),
 		OPT_END(),
 	};
 
