@@ -1146,6 +1146,14 @@ char *strip_path_suffix(const char *path, const char *suffix);
 int daemon_avoid_alias(const char *path);
 extern int is_ntfs_dotgit(const char *name);
 
+/*
+ * Returns true iff "str" could be confused as a command-line option when
+ * passed to a sub-program like "ssh". Note that this has nothing to do with
+ * shell-quoting, which should be handled separately; we're assuming here that
+ * the string makes it verbatim to the sub-program.
+ */
+int looks_like_command_line_option(const char *str);
+
 /**
  * Return a newly allocated string with the evaluation of
  * "$XDG_CONFIG_HOME/git/$filename" if $XDG_CONFIG_HOME is non-empty, otherwise
