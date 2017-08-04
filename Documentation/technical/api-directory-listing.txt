@@ -36,7 +36,7 @@ The notable options are:
 `DIR_SHOW_IGNORED_DIRECTORY`:::
 
 
-	If this is set, non-empty directories that match an ignore pattern are
+	(EXPERIMENTAL) If this is set, non-empty directories that match an ignore pattern are
 	returned. The individual files contained in ignored directories are not
 	included.
 
