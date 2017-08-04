@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jul 2017, #09; Mon, 31)
-X-master-at: e2d9c46130247dd31d0421d2b2fc4bfd014c085e
-X-next-at: c4a70dcba25ee98fc8ee2906dbd251ddf5551c27
+Subject: What's cooking in git.git (Aug 2017, #01; Fri, 4)
+X-master-at: 4384e3cde2ce8ecd194202e171ae16333d241326
+X-next-at: 98096fd7a85b93626db8757f944f2d8ffdf7e96a
 
-What's cooking in git.git (Jul 2017, #09; Mon, 31)
+What's cooking in git.git (Aug 2017, #01; Fri, 4)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,9 +12,14 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-Even though -rc2 was scheduled for today, I'll wait for a few days
-so that we can tag with updated l10n; there isn't much change since
-the first release candidate.
+The 2.14-rc2 was a bit delayed for various reasons and then there
+wasn't any last-minite regressions discovered and fixed during that
+timeframe, so I just decided to skip the second release candidate
+and go straight to tag the final, which was done a few minutes ago.
+
+I expect that the tree to stay a bit quiet for a week until the first
+maintenance release for 2.14 series is tagged, perhaps by the end of
+the next week.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -23,6 +28,20 @@ of the repositories listed at
 
 --------------------------------------------------
 [Graduated to "master"]
+
+* ah/patch-id-doc (2017-07-28) 1 commit
+  (merged to 'next' on 2017-08-04 at 7808b7abd3)
+ + doc: remove unsupported parameter from patch-id
+
+ Docfix.
+
+
+* as/diff-options-grammofix (2017-07-31) 1 commit
+  (merged to 'next' on 2017-08-01 at bfc60e3ec5)
+ + diff-options doc: grammar fix
+
+ A grammofix.
+
 
 * js/blame-lib (2017-07-24) 1 commit
   (merged to 'next' on 2017-07-26 at db0d081012)
@@ -33,10 +52,73 @@ of the repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* as/diff-options-grammofix (2017-07-31) 1 commit
- - diff-options doc: grammar fix
+* jk/rev-list-empty-input (2017-08-02) 4 commits
+  (merged to 'next' on 2017-08-04 at cb4f9b84e0)
+ + revision: do not fallback to default when rev_input_given is set
+ + rev-list: don't show usage when we see empty ref patterns
+ + revision: add rev_input_given flag
+ + t6018: flesh out empty input/output rev-list tests
 
- A grammofix.
+ "git log --tag=no-such-tag" showed log starting from HEAD, which
+ has been fixed---it now shows nothing.
+
+ Will cook in 'next'.
+
+
+* jt/t1450-fsck-corrupt-packfile (2017-07-28) 1 commit
+  (merged to 'next' on 2017-08-04 at 44d09da2fc)
+ + tests: ensure fsck fails on corrupt packfiles
+
+ A test update.
+
+ Will cook in 'next'.
+
+
+* ma/pager-per-subcommand-action (2017-08-03) 7 commits
+  (merged to 'next' on 2017-08-04 at 0f760bcf5d)
+ + git.c: ignore pager.* when launching builtin as dashed external
+ + tag: change default of `pager.tag` to "on"
+ + tag: respect `pager.tag` in list-mode only
+ + t7006: add tests for how git tag paginates
+ + git.c: provide setup_auto_pager()
+ + git.c: let builtins opt for handling `pager.foo` themselves
+ + builtin.h: take over documentation from api-builtin.txt
+
+ The "tag.pager" configuration variable was useless for those who
+ actually create tag objects, as it interfered with the use of an
+ editor.  A new mechanism has been introduced for commands to enable
+ pager depending on what operation is being carried out to fix this,
+ and then "git tag -l" is made to run pager by default.
+
+ Will cook in 'next'.
+
+ If this works out OK, I think there are low-hanging fruits in
+ other commands like "git branch" that outputs long list in one mode
+ while taking input in another.
+
+
+* pw/sequence-rerere-autoupdate (2017-08-02) 6 commits
+ - cherry-pick/revert: reject --rerere-autoupdate when continuing
+ - cherry-pick/revert: remember --rerere-autoupdate
+ - t3504: use test_commit
+ - rebase -i: honor --rerere-autoupdate
+ - rebase: honor --rerere-autoupdate
+ - am: remember --rerere-autoupdate setting
+
+ Commands like "git rebase" accepted the --rerere-autoupdate option
+ from the command line, but did not always use it.  This has been
+ fixed.
+
+ Will merge to and cook in 'next'.
+
+
+* bw/clone-recursive-quiet (2017-08-04) 1 commit
+ - clone: teach recursive clones to respect -q
+
+ "git clone --recurse-submodules --quiet" did not pass the quiet
+ option down to submodules.
+
+ Will merge to and cook in 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -135,28 +217,34 @@ of the repositories listed at
 
 
 * js/git-gui-msgfmt-on-windows (2017-07-25) 7 commits
- - Merge branch 'js/msgfmt-on-windows' of ../git-gui into js/git-gui-msgfmt-on-windows
- - git-gui (MinGW): make use of MSys2's msgfmt
- - Merge remote-tracking branch 'philoakley/dup-gui'
- - git gui: allow for a long recentrepo list
- - git gui: de-dup selected repo from recentrepo history
- - git gui: cope with duplicates in _get_recentrepo
- - git-gui: remove duplicate entries from .gitconfig's gui.recentrepo
+  (merged to 'next' on 2017-08-01 at 219577a73e)
+ + Merge branch 'js/msgfmt-on-windows' of ../git-gui into js/git-gui-msgfmt-on-windows
+ + git-gui (MinGW): make use of MSys2's msgfmt
+ + Merge remote-tracking branch 'philoakley/dup-gui'
+ + git gui: allow for a long recentrepo list
+ + git gui: de-dup selected repo from recentrepo history
+ + git gui: cope with duplicates in _get_recentrepo
+ + git-gui: remove duplicate entries from .gitconfig's gui.recentrepo
 
  Because recent Git for Windows do come with a real msgfmt, the
  build procedure for git-gui has been updated to use it instead of a
  hand-rolled substitute.
 
+ Will cook in 'next'.
+ As we haven't heard from Pat, let's advance the update to 'next'
+ ourselves.
+
 
 * jt/subprocess-handshake (2017-07-26) 3 commits
- - sub-process: refactor handshake to common function
- - Documentation: migrate sub-process docs to header
- - Merge branch 'ls/filter-process-delayed' into jt/subprocess-handshake
+  (merged to 'next' on 2017-08-01 at a0f78deffd)
+ + sub-process: refactor handshake to common function
+ + Documentation: migrate sub-process docs to header
+ + Merge branch 'ls/filter-process-delayed' into jt/subprocess-handshake
  (this branch uses ls/filter-process-delayed.)
 
  Code cleanup.
 
- Will merge to and cook in 'next'.
+ Will cook in 'next'.
 
 
 * lg/merge-signoff (2017-07-25) 1 commit
@@ -204,7 +292,7 @@ of the repositories listed at
  cf. <CACBZZX7M=H8tNkZXpHBvv0rbY58EJk4dkoUzGKMftWoKUqF8sA@mail.gmail.com>
 
 
-* bw/submodule-config-cleanup (2017-07-26) 17 commits
+* bw/submodule-config-cleanup (2017-08-03) 17 commits
  - submodule: remove gitmodules_config
  - unpack-trees: improve loading of .gitmodules
  - submodule-config: lazy-load a repository's .gitmodules file
@@ -212,7 +300,7 @@ of the repositories listed at
  - submodule-config: remove support for overlaying repository config
  - diff: stop allowing diff to have submodules configured in .git/config
  - submodule: remove submodule_config callback routine
- - unpack-trees: don't rely on overlayed config
+ - unpack-trees: don't respect submodule.update
  - submodule: don't rely on overlayed config when setting diffopts
  - fetch: don't overlay config with submodule-config
  - submodule--helper: don't overlay config in update-clone
@@ -229,42 +317,46 @@ of the repositories listed at
 
 
 * jb/t8008-cleanup (2017-07-26) 1 commit
- - t8008: rely on rev-parse'd HEAD instead of sha1 value
+  (merged to 'next' on 2017-08-01 at f979c9340d)
+ + t8008: rely on rev-parse'd HEAD instead of sha1 value
 
  Code clean-up.
 
- Will merge to and cook in 'next'.
+ Will cook in 'next'.
 
 
 * rg/rerere-train-overwrite (2017-07-26) 1 commit
- - contrib/rerere-train: optionally overwrite existing resolutions
+  (merged to 'next' on 2017-08-01 at 7fcd42974c)
+ + contrib/rerere-train: optionally overwrite existing resolutions
 
  The "rerere-train" script (in contrib/) learned the "--overwrite"
  option to allow overwriting existing recorded resolutions.
 
- Will merge to and cook in 'next'.
+ Will cook in 'next'.
 
 
 * dl/credential-cache-socket-in-xdg-cache (2017-07-27) 1 commit
- - credential-cache: interpret an ECONNRESET as an EOF
+  (merged to 'next' on 2017-08-01 at 87687ae1d4)
+ + credential-cache: interpret an ECONNRESET as an EOF
 
  A recently added test for the "credential-cache" helper revealed
  that EOF detection done around the time the connection to the cache
  daemon is torn down were flaky.  This was fixed by reacting to
  ECONNRESET and behaving as if we got an EOF.
 
- Will merge to and cook in 'next'.
+ Will cook in 'next'.
 
 
 * eb/contacts-reported-by (2017-07-27) 1 commit
- - git-contacts: also recognise "Reported-by:"
+  (merged to 'next' on 2017-08-01 at cca9972d6b)
+ + git-contacts: also recognise "Reported-by:"
 
  "git contacts" (in contrib/) now lists the address on the
  "Reported-by:" trailer to its output, in addition to those on
  S-o-b: and other trailers, to make it easier to notify (and thank)
  the original bug reporter.
 
- Will merge to and cook in 'next'.
+ Will cook in 'next'.
 
 
 * js/run-process-parallel-api-fix (2017-07-21) 1 commit
@@ -357,18 +449,25 @@ of the repositories listed at
  cf. <20170717172709.GL93855@aiede.mtv.corp.google.com>
 
 
-* bw/grep-recurse-submodules (2017-07-18) 10 commits
- - grep: recurse in-process using 'struct repository'
- - submodule: merge repo_read_gitmodules and gitmodules_config
- - submodule: check for unmerged .gitmodules outside of config parsing
- - submodule: check for unstaged .gitmodules outside of config parsing
- - submodule: remove fetch.recursesubmodules from submodule-config parsing
- - submodule: remove submodule.fetchjobs from submodule-config parsing
- - config: add config_from_gitmodules
- - cache.h: add GITMODULES_FILE macro
- - repository: have the_repository use the_index
- - repo_read_index: don't discard the index
+* bw/grep-recurse-submodules (2017-08-02) 10 commits
+  (merged to 'next' on 2017-08-04 at 4e60c34bad)
+ + grep: recurse in-process using 'struct repository'
+ + submodule: merge repo_read_gitmodules and gitmodules_config
+ + submodule: check for unmerged .gitmodules outside of config parsing
+ + submodule: check for unstaged .gitmodules outside of config parsing
+ + submodule: remove fetch.recursesubmodules from submodule-config parsing
+ + submodule: remove submodule.fetchjobs from submodule-config parsing
+ + config: add config_from_gitmodules
+ + cache.h: add GITMODULES_FILE macro
+ + repository: have the_repository use the_index
+ + repo_read_index: don't discard the index
  (this branch is used by bw/submodule-config-cleanup.)
+
+ "git grep --recurse-submodules" has been reworked to give a more
+ consistent output across submodule boundary (and do its thing
+ without having to fork a separate process).
+
+ Will cook in 'next'.
 
 
 * bw/object-id (2017-07-17) 3 commits
