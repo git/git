@@ -291,6 +291,29 @@ static int http_options(const char *var, const char *value, void *cb)
 		curl_ssl_try = git_config_bool(var, value);
 		return 0;
 	}
+#if LIBCURL_VERSION_NUM >= 0x073800 || \
+		defined(CURL_WITH_EXPERIMENTAL_SSL_BACKEND_SUPPORT)
+	if (!strcmp("http.sslbackend", var)) {
+		const curl_ssl_backend **backends;
+		struct strbuf buf = STRBUF_INIT;
+		int i;
+
+		switch (curl_global_sslset(-1, value, &backends)) {
+		case CURLSSLSET_UNKNOWN_BACKEND:
+			strbuf_addf(&buf, _("Unsupported SSL backend '%s'. "
+					    "Supported SSL backends:"), value);
+			for (i = 0; backends[i]; i++)
+				strbuf_addf(&buf, "\n\t%s", backends[i]->name);
+			die(buf.buf);
+		case CURLSSLSET_TOO_LATE:
+			die(_("Could not set SSL backend to '%s': already set"),
+			    value);
+		case CURLSSLSET_OK:
+			break; /* Okay! */
+		}
+	}
+#endif
+
 	if (!strcmp("http.minsessions", var)) {
 		min_curl_sessions = git_config_int(var, value);
 #ifndef USE_CURL_MULTI
