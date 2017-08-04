@@ -4,8 +4,8 @@ test_description='blob conversion via gitattributes'
 
 . ./test-lib.sh
 
-TEST_ROOT="$PWD"
-PATH=$TEST_ROOT$PATH_SEP$PATH
+TEST_ROOT="$(pwd)"
+PATH=$PWD$PATH_SEP$PATH
 
 write_script <<\EOF "$TEST_ROOT/rot13.sh"
 tr \
