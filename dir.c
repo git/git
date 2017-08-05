@@ -1417,9 +1417,9 @@ static enum path_treatment treat_directory(struct dir_struct *dir,
 		return exclude ? path_excluded : path_untracked;
 
 	untracked = lookup_untracked(dir->untracked, untracked,
-			dirname + baselen, len - baselen);
+				     dirname + baselen, len - baselen);
 	return read_directory_recursive(dir, istate, dirname, len,
-			untracked, 1, 0, pathspec);
+					untracked, 1, 0, pathspec);
 }
 
 
