@@ -1,5 +1,6 @@
 t[0-9][0-9][0-9][0-9]/* -whitespace
 /diff-lib/* eol=lf
+/diff-lib/*.png binary
 /t0110/url-* binary
 /t3900/*.txt eol=lf
 /t3901/*.txt eol=lf
