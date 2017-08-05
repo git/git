@@ -20,7 +20,7 @@ test_expect_success 'prepare repository' '
 	echo AIT >a && echo BIT >b && echo CIT >c && echo DIT >d &&
 	git update-index --add a b c d &&
 	echo git >a &&
-	cat "$TEST_DIRECTORY"/test-binary-1.png >b &&
+	cat "$TEST_DIRECTORY"/lib-diff/test-binary-1.png >b &&
 	echo git >c &&
 	cat b b >d
 '
