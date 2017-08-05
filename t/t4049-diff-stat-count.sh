@@ -34,7 +34,7 @@ test_expect_success 'binary changes do not count in lines' '
 	git reset --hard &&
 	echo a >a &&
 	echo c >c &&
-	cat "$TEST_DIRECTORY"/test-binary-1.png >d &&
+	cat "$TEST_DIRECTORY"/lib-diff/test-binary-1.png >d &&
 	cat >expect <<-\EOF &&
 	 a | 1 +
 	 c | 1 +
