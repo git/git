@@ -332,13 +332,13 @@ expect_ssh () {
 		1)
 			;;
 		2)
-			echo "ssh: $1 git-upload-pack '$2'"
+			echo "ssh: $1 git upload-pack '$2'"
 			;;
 		3)
-			echo "ssh: $1 $2 git-upload-pack '$3'"
+			echo "ssh: $1 $2 git upload-pack '$3'"
 			;;
 		*)
-			echo "ssh: $1 $2 git-upload-pack '$3' $4"
+			echo "ssh: $1 $2 git upload-pack '$3' $4"
 		esac
 	} >"$TRASH_DIRECTORY/ssh-expect" &&
 	(cd "$TRASH_DIRECTORY" && test_cmp ssh-expect ssh-output)
