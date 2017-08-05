@@ -252,7 +252,7 @@ test_expect_success "expected conflict markers" '
 
 test_expect_success 'binary files cannot be merged' '
 	test_must_fail git merge-file -p \
-		orig.txt "$TEST_DIRECTORY"/test-binary-1.png new1.txt 2> merge.err &&
+		orig.txt "$TEST_DIRECTORY"/lib-diff/test-binary-1.png new1.txt 2> merge.err &&
 	grep "Cannot merge binary files" merge.err
 '
 
