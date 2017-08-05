@@ -26,7 +26,7 @@ test_expect_success 'example 1: notes to add an Acked-by line' '
 '
 
 test_expect_success 'example 2: binary notes' '
-	cp "$TEST_DIRECTORY"/test-binary-1.png . &&
+	cp "$TEST_DIRECTORY"/diff-lib/test-binary-1.png . &&
 	git checkout B &&
 	blob=$(git hash-object -w test-binary-1.png) &&
 	git notes --ref=logo add -C "$blob" &&
