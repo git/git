@@ -4,8 +4,8 @@ test_description='blob conversion via gitattributes'
 
 . ./test-lib.sh
 
-TEST_ROOT="$PWD"
-PATH=$TEST_ROOT:$PATH
+TEST_ROOT="$(pwd)"
+PATH=$PWD$PATH_SEP$PATH
 
 write_script <<\EOF "$TEST_ROOT/rot13.sh"
 tr \
@@ -276,7 +276,7 @@ test_expect_success 'filter that does not read is fine' '
 	test_cmp expect actual
 '
 
-test_expect_success EXPENSIVE 'filter large file' '
+test_expect_success EXPENSIVE,!MINGW 'filter large file' '
 	test_config filter.largefile.smudge cat &&
 	test_config filter.largefile.clean cat &&
 	for i in $(test_seq 1 2048); do printf "%1048576d" 1; done >2GB &&

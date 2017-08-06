@@ -573,7 +573,7 @@ apply_stash () {
 
 	if test -n "$u_tree"
 	then
-		GIT_INDEX_FILE="$TMPindex" git-read-tree "$u_tree" &&
+		GIT_INDEX_FILE="$TMPindex" git read-tree "$u_tree" &&
 		GIT_INDEX_FILE="$TMPindex" git checkout-index --all &&
 		rm -f "$TMPindex" ||
 		die "$(gettext "Could not restore untracked files from stash entry")"

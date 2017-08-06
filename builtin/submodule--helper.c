@@ -930,7 +930,7 @@ static int update_clone_task_finished(int result,
 	const struct cache_entry *ce;
 	struct submodule_update_clone *suc = suc_cb;
 
-	int *idxP = *(int**)idx_task_cb;
+	int *idxP = idx_task_cb;
 	int idx = *idxP;
 	free(idxP);
 
