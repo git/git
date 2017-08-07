@@ -825,9 +825,6 @@ struct child_process *git_connect(int fd[2], const char *url,
 		child_process_init(conn);
 
 		strbuf_addstr(&cmd, prog);
-		/* Prefer the builtin */
-		if (starts_with(prog, "git-"))
-			cmd.buf[3] = ' ';
 		strbuf_addch(&cmd, ' ');
 		sq_quote_buf(&cmd, path);
 
