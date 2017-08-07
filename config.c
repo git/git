@@ -1617,7 +1617,7 @@ int git_configset_get_maybe_bool(struct config_set *cs, const char *key, int *de
 {
 	const char *value;
 	if (!git_configset_get_value(cs, key, &value)) {
-		*dest = git_config_maybe_bool(key, value);
+		*dest = git_parse_maybe_bool(value);
 		if (*dest == -1)
 			return -1;
 		return 0;
