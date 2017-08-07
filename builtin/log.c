@@ -52,7 +52,7 @@ struct line_opt_callback_data {
 	struct string_list args;
 };
 
-static int parse_decoration_style(const char *var, const char *value)
+static int parse_decoration_style(const char *value)
 {
 	switch (git_parse_maybe_bool(value)) {
 	case 1:
@@ -76,7 +76,7 @@ static int decorate_callback(const struct option *opt, const char *arg, int unse
 	if (unset)
 		decoration_style = 0;
 	else if (arg)
-		decoration_style = parse_decoration_style("command line", arg);
+		decoration_style = parse_decoration_style(arg);
 	else
 		decoration_style = DECORATE_SHORT_REFS;
 
@@ -401,7 +401,7 @@ static int git_log_config(const char *var, const char *value, void *cb)
 	if (!strcmp(var, "log.date"))
 		return git_config_string(&default_date_mode, var, value);
 	if (!strcmp(var, "log.decorate")) {
-		decoration_style = parse_decoration_style(var, value);
+		decoration_style = parse_decoration_style(value);
 		if (decoration_style < 0)
 			decoration_style = 0; /* maybe warn? */
 		return 0;
