@@ -35,7 +35,6 @@ enum apply_verbosity {
 
 struct apply_state {
 	const char *prefix;
-	int prefix_length;
 
 	/* These are lock_file related */
 	struct lock_file *lock_file;
