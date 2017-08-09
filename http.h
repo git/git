@@ -10,6 +10,10 @@
 #include "remote.h"
 #include "url.h"
 
+#if LIBCURL_VERSION_NUM < 0x071304
+#error "your libcurl version is too old; Git requires curl >= 7.19.4"
+#endif
+
 #define DEFAULT_MAX_REQUESTS 5
 
 struct slot_results {
