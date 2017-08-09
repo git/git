@@ -12,10 +12,6 @@
 
 #define DEFAULT_MAX_REQUESTS 5
 
-#if LIBCURL_VERSION_NUM == 0x071000
-#define NO_CURL_EASY_DUPHANDLE
-#endif
-
 /*
  * CURLOPT_USE_SSL was known as CURLOPT_FTP_SSL up to 7.16.4,
  * and the constants were known as CURLFTPSSL_*
