@@ -10,24 +10,10 @@
 #include "remote.h"
 #include "url.h"
 
-/*
- * We detect based on the cURL version if multi-transfer is
- * usable in this implementation and define this symbol accordingly.
- * This shouldn't be set by the Makefile or by the user (e.g. via CFLAGS).
- */
-#undef USE_CURL_MULTI
-
-#if LIBCURL_VERSION_NUM >= 0x071000
-#define USE_CURL_MULTI
 #define DEFAULT_MAX_REQUESTS 5
-#endif
 
-#if (LIBCURL_VERSION_NUM < 0x070c04) || (LIBCURL_VERSION_NUM == 0x071000)
+#if LIBCURL_VERSION_NUM == 0x071000
 #define NO_CURL_EASY_DUPHANDLE
-#endif
-
-#if LIBCURL_VERSION_NUM < 0x070c03
-#define NO_CURL_IOCTL
 #endif
 
 /*
@@ -67,9 +53,7 @@ struct buffer {
 extern size_t fread_buffer(char *ptr, size_t eltsize, size_t nmemb, void *strbuf);
 extern size_t fwrite_buffer(char *ptr, size_t eltsize, size_t nmemb, void *strbuf);
 extern size_t fwrite_null(char *ptr, size_t eltsize, size_t nmemb, void *strbuf);
-#ifndef NO_CURL_IOCTL
 extern curlioerr ioctl_buffer(CURL *handle, int cmd, void *clientp);
-#endif
 
 /* Slot lifecycle functions */
 extern struct active_request_slot *get_active_slot(void);
@@ -86,11 +70,9 @@ extern void finish_all_active_slots(void);
 int run_one_slot(struct active_request_slot *slot,
 		 struct slot_results *results);
 
-#ifdef USE_CURL_MULTI
 extern void fill_active_slots(void);
 extern void add_fill_function(void *data, int (*fill)(void *));
 extern void step_active_slots(void);
-#endif
 
 extern void http_init(struct remote *remote, const char *url,
 		      int proactive_auth);
