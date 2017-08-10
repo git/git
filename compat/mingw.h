@@ -12,6 +12,7 @@ typedef _sigset_t sigset_t;
 #endif
 
 extern int core_fscache;
+extern int core_long_paths;
 
 extern int mingw_core_config(const char *var, const char *value);
 #define platform_core_config mingw_core_config
@@ -450,6 +451,42 @@ int mingw_offset_1st_component(const char *path);
 #endif
 
 /**
+ * Max length of long paths (exceeding MAX_PATH). The actual maximum supported
+ * by NTFS is 32,767 (* sizeof(wchar_t)), but we choose an arbitrary smaller
+ * value to limit required stack memory.
+ */
+#define MAX_LONG_PATH 4096
+
+/**
+ * Handles paths that would exceed the MAX_PATH limit of Windows Unicode APIs.
+ *
+ * With expand == false, the function checks for over-long paths and fails
+ * with ENAMETOOLONG. The path parameter is not modified, except if cwd + path
+ * exceeds max_path, but the resulting absolute path doesn't (e.g. due to
+ * eliminating '..' components). The path parameter must point to a buffer
+ * of max_path wide characters.
+ *
+ * With expand == true, an over-long path is automatically converted in place
+ * to an absolute path prefixed with '\\?\', and the new length is returned.
+ * The path parameter must point to a buffer of MAX_LONG_PATH wide characters.
+ *
+ * Parameters:
+ * path: path to check and / or convert
+ * len: size of path on input (number of wide chars without \0)
+ * max_path: max short path length to check (usually MAX_PATH = 260, but just
+ * 248 for CreateDirectoryW)
+ * expand: false to only check the length, true to expand the path to a
+ * '\\?\'-prefixed absolute path
+ *
+ * Return:
+ * length of the resulting path, or -1 on failure
+ *
+ * Errors:
+ * ENAMETOOLONG if path is too long
+ */
+int handle_long_path(wchar_t *path, int len, int max_path, int expand);
+
+/**
  * Converts UTF-8 encoded string to UTF-16LE.
  *
  * To support repositories with legacy-encoded file names, invalid UTF-8 bytes
@@ -507,16 +544,44 @@ static inline int xutftowcs(wchar_t *wcs, const char *utf, size_t wcslen)
 }
 
 /**
+ * Simplified file system specific wrapper of xutftowcsn and handle_long_path.
+ * Converts ERANGE to ENAMETOOLONG. If expand is true, wcs must be at least
+ * MAX_LONG_PATH wide chars (see handle_long_path).
+ */
+static inline int xutftowcs_path_ex(wchar_t *wcs, const char *utf,
+		size_t wcslen, int utflen, int max_path, int expand)
+{
+	int result = xutftowcsn(wcs, utf, wcslen, utflen);
+	if (result < 0 && errno == ERANGE)
+		errno = ENAMETOOLONG;
+	if (result >= 0)
+		result = handle_long_path(wcs, result, max_path, expand);
+	return result;
+}
+
+/**
  * Simplified file system specific variant of xutftowcsn, assumes output
  * buffer size is MAX_PATH wide chars and input string is \0-terminated,
- * fails with ENAMETOOLONG if input string is too long.
+ * fails with ENAMETOOLONG if input string is too long. Typically used for
+ * Windows APIs that don't support long paths, e.g. SetCurrentDirectory,
+ * LoadLibrary, CreateProcess...
  */
 static inline int xutftowcs_path(wchar_t *wcs, const char *utf)
 {
-	int result = xutftowcsn(wcs, utf, MAX_PATH, -1);
-	if (result < 0 && errno == ERANGE)
-		errno = ENAMETOOLONG;
-	return result;
+	return xutftowcs_path_ex(wcs, utf, MAX_PATH, -1, MAX_PATH, 0);
+}
+
+/**
+ * Simplified file system specific variant of xutftowcsn for Windows APIs
+ * that support long paths via '\\?\'-prefix, assumes output buffer size is
+ * MAX_LONG_PATH wide chars, fails with ENAMETOOLONG if input string is too
+ * long. The 'core.longpaths' git-config option controls whether the path
+ * is only checked or expanded to a long path.
+ */
+static inline int xutftowcs_long_path(wchar_t *wcs, const char *utf)
+{
+	return xutftowcs_path_ex(wcs, utf, MAX_LONG_PATH, -1, MAX_PATH,
+			core_long_paths);
 }
 
 /**
