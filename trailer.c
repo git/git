@@ -967,7 +967,9 @@ static FILE *create_in_place_tempfile(const char *file)
 	return outfile;
 }
 
-void process_trailers(const char *file, int in_place, int trim_empty, struct string_list *trailers)
+void process_trailers(const char *file,
+		      const struct process_trailer_options *opts,
+		      struct string_list *trailers)
 {
 	LIST_HEAD(head);
 	LIST_HEAD(arg_head);
@@ -979,7 +981,7 @@ void process_trailers(const char *file, int in_place, int trim_empty, struct str
 
 	read_input_file(&sb, file);
 
-	if (in_place)
+	if (opts->in_place)
 		outfile = create_in_place_tempfile(file);
 
 	/* Print the lines before the trailers */
@@ -989,14 +991,14 @@ void process_trailers(const char *file, int in_place, int trim_empty, struct str
 
 	process_trailers_lists(&head, &arg_head);
 
-	print_all(outfile, &head, trim_empty);
+	print_all(outfile, &head, opts->trim_empty);
 
 	free_all(&head);
 
 	/* Print the lines after the trailers as is */
 	fwrite(sb.buf + trailer_end, 1, sb.len - trailer_end, outfile);
 
-	if (in_place)
+	if (opts->in_place)
 		if (rename_tempfile(&trailers_tempfile, file))
 			die_errno(_("could not rename temporary file to %s"), file);
 

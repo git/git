@@ -22,7 +22,15 @@ struct trailer_info {
 	size_t trailer_nr;
 };
 
-void process_trailers(const char *file, int in_place, int trim_empty,
+struct process_trailer_options {
+	int in_place;
+	int trim_empty;
+};
+
+#define PROCESS_TRAILER_OPTIONS_INIT {0}
+
+void process_trailers(const char *file,
+		      const struct process_trailer_options *opts,
 		      struct string_list *trailers);
 
 void trailer_info_get(struct trailer_info *info, const char *str);
