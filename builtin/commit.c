@@ -1378,6 +1378,11 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	finalize_colopts(&s.colopts, -1);
 	finalize_deferred_config(&s);
 
+	if (no_lock_index)
+		setenv("GIT_LOCK_INDEX", "false", 1);
+	else if (!git_parse_maybe_bool(getenv("GIT_LOCK_INDEX")))
+		no_lock_index = 1;
+
 	handle_untracked_files_arg(&s);
 	if (show_ignored_in_status)
 		s.show_ignored_files = 1;
