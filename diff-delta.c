@@ -452,6 +452,9 @@ create_delta(const struct delta_index *index,
 			moff += msize;
 			msize = left;
 
+			if (moff > 0xffffffff)
+				msize = 0;
+
 			if (msize < 4096) {
 				int j;
 				val = 0;
