@@ -6,6 +6,7 @@
 #include "../strbuf.h"
 #include "../run-command.h"
 #include "../cache.h"
+#include "win32/exit-process.h"
 
 #define HCAST(type, handle) ((type)(intptr_t)handle)
 
@@ -1460,10 +1461,44 @@ struct pinfo_t {
 static struct pinfo_t *pinfo = NULL;
 CRITICAL_SECTION pinfo_cs;
 
+#ifndef SIGRTMAX
+#define SIGRTMAX 63
+#endif
+
+static void kill_child_processes_on_signal(void)
+{
+	DWORD status;
+
+	/*
+	 * Only continue if the process was terminated by a signal, as
+	 * indicated by the exit status (128 + sig_no).
+	 *
+	 * As we are running in an atexit() handler, the exit code has been
+	 * set at this stage by the ExitProcess() function already.
+	 */
+	if (!GetExitCodeProcess(GetCurrentProcess(), &status) ||
+	    status <= 128 || status > 128 + SIGRTMAX)
+		return;
+
+	EnterCriticalSection(&pinfo_cs);
+
+	while (pinfo) {
+		struct pinfo_t *info = pinfo;
+		pinfo = pinfo->next;
+		if (exit_process(info->proc, status))
+			/* the handle is still valid in case of error */
+			CloseHandle(info->proc);
+		free(info);
+	}
+
+	LeaveCriticalSection(&pinfo_cs);
+}
+
 static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaenv,
 			      const char *dir,
 			      int prepend_cmd, int fhin, int fhout, int fherr)
 {
+	static int atexit_handler_initialized;
 	STARTUPINFOW si;
 	PROCESS_INFORMATION pi;
 	struct strbuf args;
@@ -1472,6 +1507,17 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 	BOOL ret;
 	HANDLE cons;
 	const char *strace_env;
+
+	if (!atexit_handler_initialized) {
+		atexit_handler_initialized = 1;
+		/*
+		 * On Windows, there is no POSIX signaling. Instead, we inject
+		 * a thread calling ExitProcess(128 + sig_no); and that calls
+		 * the *atexit* handlers. Catch this condition and kill child
+		 * processes with the same signal.
+		 */
+		atexit(kill_child_processes_on_signal);
+	}
 
 	do_unset_environment_variables();
 
@@ -1703,16 +1749,28 @@ int mingw_execvp(const char *cmd, char *const *argv)
 int mingw_kill(pid_t pid, int sig)
 {
 	if (pid > 0 && sig == SIGTERM) {
-		HANDLE h = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
+		HANDLE h = OpenProcess(PROCESS_CREATE_THREAD |
+				       PROCESS_QUERY_INFORMATION |
+				       PROCESS_VM_OPERATION | PROCESS_VM_WRITE |
+				       PROCESS_VM_READ | PROCESS_TERMINATE,
+				       FALSE, pid);
+		int ret;
 
-		if (TerminateProcess(h, -1)) {
-			CloseHandle(h);
-			return 0;
+		if (h)
+			ret = exit_process(h, 128 + sig);
+		else {
+			h = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
+			if (!h) {
+				errno = err_win_to_posix(GetLastError());
+				return -1;
+			}
+			ret = terminate_process_tree(h, 128 + sig);
 		}
-
-		errno = err_win_to_posix(GetLastError());
-		CloseHandle(h);
-		return -1;
+		if (ret) {
+			errno = err_win_to_posix(GetLastError());
+			CloseHandle(h);
+		}
+		return ret;
 	} else if (pid > 0 && sig == 0) {
 		HANDLE h = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, pid);
 		if (h) {
