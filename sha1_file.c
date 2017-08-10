@@ -2462,8 +2462,8 @@ void *unpack_entry(struct packed_git *p, off_t obj_offset,
 				error("bad packed object CRC for %s",
 				      sha1_to_hex(sha1));
 				mark_bad_packed_object(p, sha1);
-				unuse_pack(&w_curs);
-				return NULL;
+				data = NULL;
+				goto out;
 			}
 		}
 
@@ -2599,6 +2599,7 @@ void *unpack_entry(struct packed_git *p, off_t obj_offset,
 	*final_type = type;
 	*final_size = size;
 
+out:
 	unuse_pack(&w_curs);
 
 	if (delta_stack != small_delta_stack)
