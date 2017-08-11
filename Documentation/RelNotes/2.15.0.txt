@@ -1,0 +1,133 @@
+Git 2.15 Release Notes
+======================
+
+Backward compatibility notes and other notable changes.
+
+ * Use of an empty string as a pathspec element that is used for
+   'everything matches' is still warned and Git asks users to use a
+   more explicit '.' for that instead.  The hope is that existing
+   users will not mind this change, and eventually the warning can be
+   turned into a hard error, upgrading the deprecation into removal of
+   this (mis)feature.  That is now scheduled to happen in the upcoming
+   release.
+
+ * Git now avoids blindly falling back to ".git" when the setup
+   sequence said we are _not_ in Git repository.  A corner case that
+   happens to work right now may be broken by a call to die("BUG").
+   We've tried hard to locate such cases and fixed them, but there
+   might still be cases that need to be addressed--bug reports are
+   greatly appreciated.
+
+
+Updates since v2.14
+-------------------
+
+UI, Workflows & Features
+
+ * An example that is now obsolete has been removed from a sample hook,
+   and an old example in it that added a sign-off manually has been
+   improved to use the interpret-trailers command.
+
+ * The advice message given when "git rebase" stops for conflicting
+   changes has been improved.
+
+ * The "rerere-train" script (in contrib/) learned the "--overwrite"
+   option to allow overwriting existing recorded resolutions.
+   (merge ad53bf79aa rg/rerere-train-overwrite later to maint).
+
+ * "git contacts" (in contrib/) now lists the address on the
+   "Reported-by:" trailer to its output, in addition to those on
+   S-o-b: and other trailers, to make it easier to notify (and thank)
+   the original bug reporter.
+   (merge 09ac673788 eb/contacts-reported-by later to maint).
+
+
+Performance, Internal Implementation, Development Support etc.
+
+ * Conversion from uchar[20] to struct object_id continues.
+
+ * Start using selected c99 constructs in small, stable and
+   essentialpart of the system to catch people who care about
+   older compilers that do not grok them.
+
+ * The filter-process interface learned to allow a process with long
+   latency give a "delayed" response.
+
+ * Many uses of comparision callback function the hashmap API uses
+   cast the callback function type when registering it to
+   hashmap_init(), which defeats the compile time type checking when
+   the callback interface changes (e.g. gaining more parameters).
+   The callback implementations have been updated to take "void *"
+   pointers and cast them to the type they expect instead.
+
+ * Because recent Git for Windows do come with a real msgfmt, the
+   build procedure for git-gui has been updated to use it instead of a
+   hand-rolled substitute.
+   (merge 90dbf226ba js/git-gui-msgfmt-on-windows later to maint).
+
+
+Also contains various documentation updates and code clean-ups.
+
+
+Fixes since v2.14
+-----------------
+
+ * "%C(color name)" in the pretty print format always produced ANSI
+   color escape codes, which was an early design mistake.  They now
+   honor the configuration (e.g. "color.ui = never") and also tty-ness
+   of the output medium.
+   (merge 11b087adfd jk/ref-filter-colors later to maint).
+
+ * The http.{sslkey,sslCert} configuration variables are to be
+   interpreted as a pathname that honors "~[username]/" prefix, but
+   weren't, which has been fixed.
+   (merge 8d1549643e jc/http-sslkey-and-ssl-cert-are-paths later to maint).
+
+ * Numerous bugs in walking of reflogs via "log -g" and friends have
+   been fixed.
+   (merge de239446b6 jk/reflog-walk later to maint).
+
+ * "git commit" when seeing an totally empty message said "you did not
+   edit the message", which is clearly wrong.  The message has been
+   corrected.
+   (merge bc17f35f8c ks/commit-abort-on-empty-message-fix later to maint).
+
+ * When a directory is not readable, "gitweb" fails to build the
+   project list.  Work this around by skipping such a directory.
+   (merge 46a13857fc hb/gitweb-project-list later to maint).
+
+ * Some versions of GnuPG fails to kill gpg-agent it auto-spawned
+   and such a left-over agent can interfere with a test.  Work it
+   around by attempting to kill one before starting a new test.
+   (merge 29ff1f8f74 st/lib-gpg-kill-stray-agent later to maint).
+
+ * A recently added test for the "credential-cache" helper revealed
+   that EOF detection done around the time the connection to the cache
+   daemon is torn down were flaky.  This was fixed by reacting to
+   ECONNRESET and behaving as if we got an EOF.
+   (merge 1f180e5eb9 dl/credential-cache-socket-in-xdg-cache later to maint).
+
+ * "git log --tag=no-such-tag" showed log starting from HEAD, which
+   has been fixed---it now shows nothing.
+   (merge 5d34d1ac06 jk/rev-list-empty-input later to maint).
+
+ * The "tag.pager" configuration variable was useless for those who
+   actually create tag objects, as it interfered with the use of an
+   editor.  A new mechanism has been introduced for commands to enable
+   pager depending on what operation is being carried out to fix this,
+   and then "git tag -l" is made to run pager by default.
+   (merge 595d59e2b5 ma/pager-per-subcommand-action later to maint).
+
+ * Other minor doc, test and build updates and code cleanups.
+   (merge 5b114f3bb0 rs/bswap-ubsan-fix later to maint).
+   (merge 168e63554c rs/move-array later to maint).
+   (merge 268ba20110 rs/stat-data-unaligned-reads-fix later to maint).
+   (merge 78e7b98f45 jt/fsck-code-cleanup later to maint).
+   (merge c7b0780545 rs/pack-objects-pbase-cleanup later to maint).
+   (merge c1e860f1dc js/run-process-parallel-api-fix later to maint).
+   (merge 7a40a95eb4 cc/ref-is-hidden-microcleanup later to maint).
+   (merge c0bb6d9cef ah/doc-wserrorhighlight later to maint).
+   (merge edd64ef4f7 dc/fmt-merge-msg-microcleanup later to maint).
+   (merge fa64a2fdbe jt/subprocess-handshake later to maint).
+   (merge 0ba9c9a0fb jb/t8008-cleanup later to maint).
+   (merge a7c28a2161 jt/t1450-fsck-corrupt-packfile later to maint).
