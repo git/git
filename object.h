@@ -38,6 +38,7 @@ struct object_array {
  * http-push.c:                            16-----19
  * commit.c:                               16-----19
  * sha1_name.c:                                     20
+ * builtin/fsck.c:  0--3
  */
 #define FLAG_BITS  27
 
@@ -46,7 +47,6 @@ struct object_array {
  */
 struct object {
 	unsigned parsed : 1;
-	unsigned used : 1;
 	unsigned type : TYPE_BITS;
 	unsigned flags : FLAG_BITS;
 	struct object_id oid;

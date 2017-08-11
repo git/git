@@ -141,7 +141,6 @@ void *create_object(const unsigned char *sha1, void *o)
 	struct object *obj = o;
 
 	obj->parsed = 0;
-	obj->used = 0;
 	obj->flags = 0;
 	hashcpy(obj->oid.hash, sha1);
 
