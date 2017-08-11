@@ -33,6 +33,16 @@ static void commit_pager_choice(void) {
 	}
 }
 
+void setup_auto_pager(const char *cmd, int def)
+{
+	if (use_pager != -1 || pager_in_use())
+		return;
+	use_pager = check_pager_config(cmd);
+	if (use_pager == -1)
+		use_pager = def;
+	commit_pager_choice();
+}
+
 static int handle_options(const char ***argv, int *argc, int *envchanged)
 {
 	const char **orig_argv = *argv;
@@ -283,6 +293,7 @@ static int handle_alias(int *argcp, const char ***argv)
  */
 #define NEED_WORK_TREE		(1<<3)
 #define SUPPORT_SUPER_PREFIX	(1<<4)
+#define DELAY_PAGER_CONFIG	(1<<5)
 
 struct cmd_struct {
 	const char *cmd;
@@ -306,7 +317,8 @@ static int run_builtin(struct cmd_struct *p, int argc, const char **argv)
 			prefix = setup_git_directory_gently(&nongit_ok);
 		}
 
-		if (use_pager == -1 && p->option & (RUN_SETUP | RUN_SETUP_GENTLY))
+		if (use_pager == -1 && p->option & (RUN_SETUP | RUN_SETUP_GENTLY) &&
+		    !(p->option & DELAY_PAGER_CONFIG))
 			use_pager = check_pager_config(p->cmd);
 		if (use_pager == -1 && p->option & USE_PAGER)
 			use_pager = 1;
@@ -454,7 +466,7 @@ static struct cmd_struct commands[] = {
 	{ "stripspace", cmd_stripspace },
 	{ "submodule--helper", cmd_submodule__helper, RUN_SETUP | SUPPORT_SUPER_PREFIX},
 	{ "symbolic-ref", cmd_symbolic_ref, RUN_SETUP },
-	{ "tag", cmd_tag, RUN_SETUP },
+	{ "tag", cmd_tag, RUN_SETUP | DELAY_PAGER_CONFIG },
 	{ "unpack-file", cmd_unpack_file, RUN_SETUP },
 	{ "unpack-objects", cmd_unpack_objects, RUN_SETUP },
 	{ "update-index", cmd_update_index, RUN_SETUP },
@@ -547,7 +559,7 @@ static void execv_dashed_external(const char **argv)
 	if (get_super_prefix())
 		die("%s doesn't support --super-prefix", argv[0]);
 
-	if (use_pager == -1)
+	if (use_pager == -1 && !is_builtin(argv[0]))
 		use_pager = check_pager_config(argv[0]);
 	commit_pager_choice();
 
