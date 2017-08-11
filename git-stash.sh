@@ -300,6 +300,12 @@ push_stash () {
 
 	if test -z "$patch_mode"
 	then
+		test "$untracked" = "all" && CLEAN_X_OPTION=-x || CLEAN_X_OPTION=
+		if test -n "$untracked"
+		then
+			git clean --force --quiet -d $CLEAN_X_OPTION -- "$@"
+		fi
+
 		if test $# != 0
 		then
 			git reset -q -- "$@"
@@ -308,11 +314,6 @@ push_stash () {
 			git clean --force -q -d -- "$@"
 		else
 			git reset --hard -q
-		fi
-		test "$untracked" = "all" && CLEAN_X_OPTION=-x || CLEAN_X_OPTION=
-		if test -n "$untracked"
-		then
-			git clean --force --quiet -d $CLEAN_X_OPTION -- "$@"
 		fi
 
 		if test "$keep_index" = "t" && test -n "$i_tree"

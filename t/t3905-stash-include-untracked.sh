@@ -211,4 +211,21 @@ test_expect_success 'stash push with $IFS character' '
 	test_path_is_file bar
 '
 
+cat > .gitignore <<EOF
+ignored
+ignored.d/*
+EOF
+
+test_expect_success 'stash previously ignored file' '
+	git reset HEAD &&
+	git add .gitignore &&
+	git commit -m "Add .gitignore" &&
+	>ignored.d/foo &&
+	echo "!ignored.d/foo" >> .gitignore &&
+	git stash save --include-untracked &&
+	test_path_is_missing ignored.d/foo &&
+	git stash pop &&
+	test_path_is_file ignored.d/foo
+'
+
 test_done
