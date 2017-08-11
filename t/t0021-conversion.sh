@@ -697,7 +697,7 @@ test_expect_success PERL 'invalid process filter must fail (and not hang!)' '
 
 		cp "$TEST_ROOT/test.o" test.r &&
 		test_must_fail git add . 2>git-stderr.log &&
-		grep "does not support filter protocol version" git-stderr.log
+		grep "expected git-filter-server" git-stderr.log
 	)
 '
 
