@@ -72,6 +72,21 @@ struct ref_filter {
 		verbose;
 };
 
+struct ref_format {
+	/*
+	 * Set these to define the format; make sure you call
+	 * verify_ref_format() afterwards to finalize.
+	 */
+	const char *format;
+	int quote_style;
+	int use_color;
+
+	/* Internal state to ref-filter */
+	int need_color_reset_at_eol;
+};
+
+#define REF_FORMAT_INIT { NULL, 0, -1 }
+
 /*  Macros for checking --merged and --no-merged options */
 #define _OPT_MERGED_NO_MERGED(option, filter, h) \
 	{ OPTION_CALLBACK, 0, option, (filter), N_("commit"), (h), \
@@ -90,17 +105,18 @@ struct ref_filter {
 int filter_refs(struct ref_array *array, struct ref_filter *filter, unsigned int type);
 /*  Clear all memory allocated to ref_array */
 void ref_array_clear(struct ref_array *array);
-/*  Parse format string and sort specifiers */
-int parse_ref_filter_atom(const char *atom, const char *ep);
 /*  Used to verify if the given format is correct and to parse out the used atoms */
-int verify_ref_format(const char *format);
+int verify_ref_format(struct ref_format *format);
 /*  Sort the given ref_array as per the ref_sorting provided */
 void ref_array_sort(struct ref_sorting *sort, struct ref_array *array);
 /*  Based on the given format and quote_style, fill the strbuf */
-void format_ref_array_item(struct ref_array_item *info, const char *format,
-			   int quote_style, struct strbuf *final_buf);
+void format_ref_array_item(struct ref_array_item *info,
+			   const struct ref_format *format,
+			   struct strbuf *final_buf);
 /*  Print the ref using the given format and quote_style */
-void show_ref_array_item(struct ref_array_item *info, const char *format, int quote_style);
+void show_ref_array_item(struct ref_array_item *info, const struct ref_format *format);
+/*  Parse a single sort specifier and add it to the list */
+void parse_ref_sorting(struct ref_sorting **sorting_tail, const char *atom);
 /*  Callback function for parsing the sort option */
 int parse_opt_ref_sorting(const struct option *opt, const char *arg, int unset);
 /*  Default sort option based on refname */
@@ -117,6 +133,6 @@ void setup_ref_filter_porcelain_msg(void);
  * name must be a fully qualified refname.
  */
 void pretty_print_ref(const char *name, const unsigned char *sha1,
-		const char *format);
+		      const struct ref_format *format);
 
 #endif /*  REF_FILTER_H  */

@@ -2,6 +2,7 @@
 
 test_description='git branch display tests'
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-terminal.sh
 
 test_expect_success 'make commits' '
 	echo content >file &&
@@ -237,6 +238,36 @@ test_expect_success 'git branch --format option' '
 	EOF
 	git branch --format="Refname is %(refname)" >actual &&
 	test_i18ncmp expect actual
+'
+
+test_expect_success "set up color tests" '
+	echo "<RED>master<RESET>" >expect.color &&
+	echo "master" >expect.bare &&
+	color_args="--format=%(color:red)%(refname:short) --list master"
+'
+
+test_expect_success '%(color) omitted without tty' '
+	TERM=vt100 git branch $color_args >actual.raw &&
+	test_decode_color <actual.raw >actual &&
+	test_cmp expect.bare actual
+'
+
+test_expect_success TTY '%(color) present with tty' '
+	test_terminal env TERM=vt100 git branch $color_args >actual.raw &&
+	test_decode_color <actual.raw >actual &&
+	test_cmp expect.color actual
+'
+
+test_expect_success 'color.branch=always overrides auto-color' '
+	git -c color.branch=always branch $color_args >actual.raw &&
+	test_decode_color <actual.raw >actual &&
+	test_cmp expect.color actual
+'
+
+test_expect_success '--color overrides auto-color' '
+	git branch --color $color_args >actual.raw &&
+	test_decode_color <actual.raw >actual &&
+	test_cmp expect.color actual
 '
 
 test_done

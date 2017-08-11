@@ -156,8 +156,10 @@ HEAD::
 	otherwise.
 
 color::
-	Change output color.  Followed by `:<colorname>`, where names
-	are described in `color.branch.*`.
+	Change output color. Followed by `:<colorname>`, where color
+	names are described under Values in the "CONFIGURATION FILE"
+	section of linkgit:git-config[1].  For example,
+	`%(color:bold red)`.
 
 align::
 	Left-, middle-, or right-align the content between

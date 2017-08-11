@@ -16,6 +16,7 @@
 #include "string-list.h"
 #include "utf8.h"
 #include "dir.h"
+#include "color.h"
 
 struct config_source {
 	struct config_source *prev;
@@ -1349,6 +1350,9 @@ int git_default_config(const char *var, const char *value, void *dummy)
 
 	if (starts_with(var, "advice."))
 		return git_default_advice_config(var, value);
+
+	if (git_color_config(var, value, dummy) < 0)
+		return -1;
 
 	if (!strcmp(var, "pager.color") || !strcmp(var, "color.pager")) {
 		pager_use_color = git_config_bool(var,value);
