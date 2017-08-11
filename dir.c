@@ -2398,7 +2398,8 @@ struct ondisk_untracked_cache {
 	char exclude_per_dir[FLEX_ARRAY];
 };
 
-#define ouc_size(len) (offsetof(struct ondisk_untracked_cache, exclude_per_dir) + len + 1)
+#define ouc_offset(x) offsetof(struct ondisk_untracked_cache, x)
+#define ouc_size(len) (ouc_offset(exclude_per_dir) + len + 1)
 
 struct write_data {
 	int index;	   /* number of written untracked_cache_dir */
@@ -2560,17 +2561,18 @@ struct read_data {
 	const unsigned char *end;
 };
 
-static void stat_data_from_disk(struct stat_data *to, const struct stat_data *from)
+static void stat_data_from_disk(struct stat_data *to, const unsigned char *data)
 {
-	to->sd_ctime.sec  = get_be32(&from->sd_ctime.sec);
-	to->sd_ctime.nsec = get_be32(&from->sd_ctime.nsec);
-	to->sd_mtime.sec  = get_be32(&from->sd_mtime.sec);
-	to->sd_mtime.nsec = get_be32(&from->sd_mtime.nsec);
-	to->sd_dev	  = get_be32(&from->sd_dev);
-	to->sd_ino	  = get_be32(&from->sd_ino);
-	to->sd_uid	  = get_be32(&from->sd_uid);
-	to->sd_gid	  = get_be32(&from->sd_gid);
-	to->sd_size	  = get_be32(&from->sd_size);
+	memcpy(to, data, sizeof(*to));
+	to->sd_ctime.sec  = ntohl(to->sd_ctime.sec);
+	to->sd_ctime.nsec = ntohl(to->sd_ctime.nsec);
+	to->sd_mtime.sec  = ntohl(to->sd_mtime.sec);
+	to->sd_mtime.nsec = ntohl(to->sd_mtime.nsec);
+	to->sd_dev	  = ntohl(to->sd_dev);
+	to->sd_ino	  = ntohl(to->sd_ino);
+	to->sd_uid	  = ntohl(to->sd_uid);
+	to->sd_gid	  = ntohl(to->sd_gid);
+	to->sd_size	  = ntohl(to->sd_size);
 }
 
 static int read_one_dir(struct untracked_cache_dir **untracked_,
@@ -2645,7 +2647,7 @@ static void read_stat(size_t pos, void *cb)
 		rd->data = rd->end + 1;
 		return;
 	}
-	stat_data_from_disk(&ud->stat_data, (struct stat_data *)rd->data);
+	stat_data_from_disk(&ud->stat_data, rd->data);
 	rd->data += sizeof(struct stat_data);
 	ud->valid = 1;
 }
@@ -2663,22 +2665,22 @@ static void read_sha1(size_t pos, void *cb)
 }
 
 static void load_sha1_stat(struct sha1_stat *sha1_stat,
-			   const struct stat_data *stat,
+			   const unsigned char *data,
 			   const unsigned char *sha1)
 {
-	stat_data_from_disk(&sha1_stat->stat, stat);
+	stat_data_from_disk(&sha1_stat->stat, data);
 	hashcpy(sha1_stat->sha1, sha1);
 	sha1_stat->valid = 1;
 }
 
 struct untracked_cache *read_untracked_extension(const void *data, unsigned long sz)
 {
-	const struct ondisk_untracked_cache *ouc;
 	struct untracked_cache *uc;
 	struct read_data rd;
 	const unsigned char *next = data, *end = (const unsigned char *)data + sz;
 	const char *ident;
 	int ident_len, len;
+	const char *exclude_per_dir;
 
 	if (sz <= 1 || end[-1] != '\0')
 		return NULL;
@@ -2690,21 +2692,23 @@ struct untracked_cache *read_untracked_extension(const void *data, unsigned long
 	ident = (const char *)next;
 	next += ident_len;
 
-	ouc = (const struct ondisk_untracked_cache *)next;
 	if (next + ouc_size(0) > end)
 		return NULL;
 
 	uc = xcalloc(1, sizeof(*uc));
 	strbuf_init(&uc->ident, ident_len);
 	strbuf_add(&uc->ident, ident, ident_len);
-	load_sha1_stat(&uc->ss_info_exclude, &ouc->info_exclude_stat,
-		       ouc->info_exclude_sha1);
-	load_sha1_stat(&uc->ss_excludes_file, &ouc->excludes_file_stat,
-		       ouc->excludes_file_sha1);
-	uc->dir_flags = get_be32(&ouc->dir_flags);
-	uc->exclude_per_dir = xstrdup(ouc->exclude_per_dir);
+	load_sha1_stat(&uc->ss_info_exclude,
+		       next + ouc_offset(info_exclude_stat),
+		       next + ouc_offset(info_exclude_sha1));
+	load_sha1_stat(&uc->ss_excludes_file,
+		       next + ouc_offset(excludes_file_stat),
+		       next + ouc_offset(excludes_file_sha1));
+	uc->dir_flags = get_be32(next + ouc_offset(dir_flags));
+	exclude_per_dir = (const char *)next + ouc_offset(exclude_per_dir);
+	uc->exclude_per_dir = xstrdup(exclude_per_dir);
 	/* NUL after exclude_per_dir is covered by sizeof(*ouc) */
-	next += ouc_size(strlen(ouc->exclude_per_dir));
+	next += ouc_size(strlen(exclude_per_dir));
 	if (next >= end)
 		goto done2;
 
