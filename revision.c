@@ -1166,6 +1166,7 @@ static void init_all_refs_cb(struct all_refs_cb *cb, struct rev_info *revs,
 {
 	cb->all_revs = revs;
 	cb->all_flags = flags;
+	revs->rev_input_given = 1;
 }
 
 void clear_ref_exclusion(struct string_list **ref_excludes_p)
@@ -2313,7 +2314,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 		opt->tweak(revs, opt);
 	if (revs->show_merge)
 		prepare_show_merge(revs);
-	if (revs->def && !revs->pending.nr && !got_rev_arg) {
+	if (revs->def && !revs->pending.nr && !revs->rev_input_given && !got_rev_arg) {
 		struct object_id oid;
 		struct object *object;
 		struct object_context oc;

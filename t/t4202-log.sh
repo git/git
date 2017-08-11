@@ -1523,6 +1523,12 @@ test_expect_success 'log diagnoses bogus HEAD' '
 	test_i18ngrep broken stderr
 '
 
+test_expect_success 'log does not default to HEAD when rev input is given' '
+	>expect &&
+	git log --branches=does-not-exist >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'set up --source tests' '
 	git checkout --orphan source-a &&
 	test_commit one &&
