@@ -898,7 +898,7 @@ static void mark_color_as_moved(struct diff_options *o,
 		if (!match) {
 			if (block_length < COLOR_MOVED_MIN_BLOCK_LENGTH &&
 			    o->color_moved != COLOR_MOVED_PLAIN) {
-				for (i = 0; i < block_length + 1; i++) {
+				for (i = 1; i < block_length + 1; i++) {
 					l = &o->emitted_symbols->buf[n - i];
 					l->flags &= ~DIFF_SYMBOL_MOVED_LINE;
 				}
