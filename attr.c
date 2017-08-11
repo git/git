@@ -76,18 +76,20 @@ struct attr_hash_entry {
 };
 
 /* attr_hashmap comparison function */
-static int attr_hash_entry_cmp(void *unused_cmp_data,
-			       const struct attr_hash_entry *a,
-			       const struct attr_hash_entry *b,
-			       void *unused_keydata)
+static int attr_hash_entry_cmp(const void *unused_cmp_data,
+			       const void *entry,
+			       const void *entry_or_key,
+			       const void *unused_keydata)
 {
+	const struct attr_hash_entry *a = entry;
+	const struct attr_hash_entry *b = entry_or_key;
 	return (a->keylen != b->keylen) || strncmp(a->key, b->key, a->keylen);
 }
 
 /* Initialize an 'attr_hashmap' object */
 static void attr_hashmap_init(struct attr_hashmap *map)
 {
-	hashmap_init(&map->map, (hashmap_cmp_fn) attr_hash_entry_cmp, NULL, 0);
+	hashmap_init(&map->map, attr_hash_entry_cmp, NULL, 0);
 }
 
 /*

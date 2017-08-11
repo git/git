@@ -55,10 +55,13 @@ static const char *prio_names[] = {
 };
 
 static int commit_name_cmp(const void *unused_cmp_data,
-			   const struct commit_name *cn1,
-			   const struct commit_name *cn2,
+			   const void *entry,
+			   const void *entry_or_key,
 			   const void *peeled)
 {
+	const struct commit_name *cn1 = entry;
+	const struct commit_name *cn2 = entry_or_key;
+
 	return oidcmp(&cn1->peeled, peeled ? peeled : &cn2->peeled);
 }
 
@@ -503,7 +506,7 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 		return cmd_name_rev(args.argc, args.argv, prefix);
 	}
 
-	hashmap_init(&names, (hashmap_cmp_fn) commit_name_cmp, NULL, 0);
+	hashmap_init(&names, commit_name_cmp, NULL, 0);
 	for_each_rawref(get_name, NULL);
 	if (!names.size && !always)
 		die(_("No names found, cannot describe anything."));
