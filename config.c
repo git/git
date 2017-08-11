@@ -1460,9 +1460,9 @@ int git_config_from_mem(config_fn_t fn, const enum config_origin_type origin_typ
 	return do_config_from(&top, fn, data);
 }
 
-int git_config_from_blob_sha1(config_fn_t fn,
+int git_config_from_blob_oid(config_fn_t fn,
 			      const char *name,
-			      const unsigned char *sha1,
+			      const struct object_id *oid,
 			      void *data)
 {
 	enum object_type type;
@@ -1470,7 +1470,7 @@ int git_config_from_blob_sha1(config_fn_t fn,
 	unsigned long size;
 	int ret;
 
-	buf = read_sha1_file(sha1, &type, &size);
+	buf = read_sha1_file(oid->hash, &type, &size);
 	if (!buf)
 		return error("unable to load config blob object '%s'", name);
 	if (type != OBJ_BLOB) {
@@ -1488,11 +1488,11 @@ static int git_config_from_blob_ref(config_fn_t fn,
 				    const char *name,
 				    void *data)
 {
-	unsigned char sha1[20];
+	struct object_id oid;
 
-	if (get_sha1(name, sha1) < 0)
+	if (get_oid(name, &oid) < 0)
 		return error("unable to resolve config blob '%s'", name);
-	return git_config_from_blob_sha1(fn, name, sha1, data);
+	return git_config_from_blob_oid(fn, name, &oid, data);
 }
 
 const char *git_etc_gitconfig(void)
