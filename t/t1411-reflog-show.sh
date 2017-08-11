@@ -171,14 +171,4 @@ test_expect_success 'reflog exists works' '
 	! git reflog exists refs/heads/nonexistent
 '
 
-# The behavior with two reflogs is buggy and the output is in flux; for now
-# we're just checking that the program works at all without segfaulting.
-test_expect_success 'showing multiple reflogs works' '
-	git log -g HEAD HEAD >actual
-'
-
-test_expect_success 'showing multiple reflogs with an old date' '
-	git log -g HEAD@{1979-01-01} HEAD >actual
-'
-
 test_done
