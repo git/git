@@ -91,7 +91,7 @@ static struct {
 	 * here, too
 	 */
 };
-#if LIBCURL_VERSION_NUM >= 0x071600
+#ifdef CURLGSSAPI_DELEGATION_FLAG
 static const char *curl_deleg;
 static struct {
 	const char *name;
@@ -352,7 +352,7 @@ static int http_options(const char *var, const char *value, void *cb)
 	}
 
 	if (!strcmp("http.delegation", var)) {
-#if LIBCURL_VERSION_NUM >= 0x071600
+#ifdef CURLGSSAPI_DELEGATION_FLAG
 		return git_config_string(&curl_deleg, var, value);
 #else
 		warning(_("Delegation control is not supported with cURL < 7.22.0"));
@@ -719,7 +719,7 @@ static CURL *get_curl_handle(void)
 	curl_easy_setopt(result, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
 #endif
 
-#if LIBCURL_VERSION_NUM >= 0x071600
+#ifdef CURLGSSAPI_DELEGATION_FLAG
 	if (curl_deleg) {
 		int i;
 		for (i = 0; i < ARRAY_SIZE(curl_deleg_levels); i++) {
