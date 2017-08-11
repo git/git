@@ -68,7 +68,7 @@ struct strbuf {
 };
 
 extern char strbuf_slopbuf[];
-#define STRBUF_INIT  { 0, 0, strbuf_slopbuf }
+#define STRBUF_INIT  { .alloc = 0, .len = 0, .buf = strbuf_slopbuf }
 
 /**
  * Life Cycle Functions

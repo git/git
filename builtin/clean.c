@@ -33,15 +33,6 @@ static const char *msg_skip_git_dir = N_("Skipping repository %s\n");
 static const char *msg_would_skip_git_dir = N_("Would skip repository %s\n");
 static const char *msg_warn_remove_failed = N_("failed to remove %s");
 
-static int clean_use_color = -1;
-static char clean_colors[][COLOR_MAXLEN] = {
-	GIT_COLOR_RESET,
-	GIT_COLOR_NORMAL,	/* PLAIN */
-	GIT_COLOR_BOLD_BLUE,	/* PROMPT */
-	GIT_COLOR_BOLD,		/* HEADER */
-	GIT_COLOR_BOLD_RED,	/* HELP */
-	GIT_COLOR_BOLD_RED,	/* ERROR */
-};
 enum color_clean {
 	CLEAN_COLOR_RESET = 0,
 	CLEAN_COLOR_PLAIN = 1,
@@ -49,6 +40,16 @@ enum color_clean {
 	CLEAN_COLOR_HEADER = 3,
 	CLEAN_COLOR_HELP = 4,
 	CLEAN_COLOR_ERROR = 5
+};
+
+static int clean_use_color = -1;
+static char clean_colors[][COLOR_MAXLEN] = {
+	[CLEAN_COLOR_ERROR] = GIT_COLOR_BOLD_RED,
+	[CLEAN_COLOR_HEADER] = GIT_COLOR_BOLD,
+	[CLEAN_COLOR_HELP] = GIT_COLOR_BOLD_RED,
+	[CLEAN_COLOR_PLAIN] = GIT_COLOR_NORMAL,
+	[CLEAN_COLOR_PROMPT] = GIT_COLOR_BOLD_BLUE,
+	[CLEAN_COLOR_RESET] = GIT_COLOR_RESET,
 };
 
 #define MENU_OPTS_SINGLETON		01

@@ -472,4 +472,14 @@ test_expect_success 'git clean -id with prefix and path (ask)' '
 
 '
 
+test_expect_success 'git clean -i paints the header in HEADER color' '
+	>a.out &&
+	echo q |
+	git -c color.ui=always clean -i |
+	test_decode_color |
+	head -n 1 >header &&
+	# not i18ngrep
+	grep "^<BOLD>" header
+'
+
 test_done
