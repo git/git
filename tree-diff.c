@@ -421,8 +421,9 @@ static struct combine_diff_path *ll_diff_tree_paths(
 	 *   diff_tree_oid(parent, commit) )
 	 */
 	for (i = 0; i < nparent; ++i)
-		tptree[i] = fill_tree_descriptor(&tp[i], parents_oid[i]->hash);
-	ttree = fill_tree_descriptor(&t, oid->hash);
+		tptree[i] = fill_tree_descriptor(&tp[i],
+				parents_oid[i] ? parents_oid[i]->hash : NULL);
+	ttree = fill_tree_descriptor(&t, oid ? oid->hash : NULL);
 
 	/* Enable recursion indefinitely */
 	opt->pathspec.recursive = DIFF_OPT_TST(opt, RECURSIVE);
