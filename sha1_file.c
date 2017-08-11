@@ -2444,6 +2444,9 @@ int packed_object_info(struct packed_git *p, off_t obj_offset,
 			hashclr(oi->delta_base_sha1);
 	}
 
+	oi->whence = in_delta_base_cache(p, obj_offset) ? OI_DBCACHED :
+							  OI_PACKED;
+
 out:
 	unuse_pack(&w_curs);
 	return type;
@@ -2973,6 +2976,7 @@ static int sha1_loose_object_info(const unsigned char *sha1,
 	if (oi->sizep == &size_scratch)
 		oi->sizep = NULL;
 	strbuf_release(&hdrbuf);
+	oi->whence = OI_LOOSE;
 	return (status < 0) ? status : 0;
 }
 
@@ -3010,10 +3014,8 @@ int sha1_object_info_extended(const unsigned char *sha1, struct object_info *oi,
 
 	if (!find_pack_entry(real, &e)) {
 		/* Most likely it's a loose object. */
-		if (!sha1_loose_object_info(real, oi, flags)) {
-			oi->whence = OI_LOOSE;
+		if (!sha1_loose_object_info(real, oi, flags))
 			return 0;
-		}
 
 		/* Not a loose object; someone else may have just packed it. */
 		if (flags & OBJECT_INFO_QUICK) {
@@ -3036,10 +3038,7 @@ int sha1_object_info_extended(const unsigned char *sha1, struct object_info *oi,
 	if (rtype < 0) {
 		mark_bad_packed_object(e.p, real);
 		return sha1_object_info_extended(real, oi, 0);
-	} else if (in_delta_base_cache(e.p, e.offset)) {
-		oi->whence = OI_DBCACHED;
-	} else {
-		oi->whence = OI_PACKED;
+	} else if (oi->whence == OI_PACKED) {
 		oi->u.packed.offset = e.offset;
 		oi->u.packed.pack = e.p;
 		oi->u.packed.is_delta = (rtype == OBJ_REF_DELTA ||
