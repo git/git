@@ -162,19 +162,29 @@ static inline uint64_t git_bswap64(uint64_t x)
 
 #else
 
-#define get_be16(p)	( \
-	(*((unsigned char *)(p) + 0) << 8) | \
-	(*((unsigned char *)(p) + 1) << 0) )
-#define get_be32(p)	( \
-	(*((unsigned char *)(p) + 0) << 24) | \
-	(*((unsigned char *)(p) + 1) << 16) | \
-	(*((unsigned char *)(p) + 2) <<  8) | \
-	(*((unsigned char *)(p) + 3) <<  0) )
-#define put_be32(p, v)	do { \
-	unsigned int __v = (v); \
-	*((unsigned char *)(p) + 0) = __v >> 24; \
-	*((unsigned char *)(p) + 1) = __v >> 16; \
-	*((unsigned char *)(p) + 2) = __v >>  8; \
-	*((unsigned char *)(p) + 3) = __v >>  0; } while (0)
+static inline uint16_t get_be16(const void *ptr)
+{
+	const unsigned char *p = ptr;
+	return	(uint16_t)p[0] << 8 |
+		(uint16_t)p[1] << 0;
+}
+
+static inline uint32_t get_be32(const void *ptr)
+{
+	const unsigned char *p = ptr;
+	return	(uint32_t)p[0] << 24 |
+		(uint32_t)p[1] << 16 |
+		(uint32_t)p[2] <<  8 |
+		(uint32_t)p[3] <<  0;
+}
+
+static inline void put_be32(void *ptr, uint32_t value)
+{
+	unsigned char *p = ptr;
+	p[0] = value >> 24;
+	p[1] = value >> 16;
+	p[2] = value >>  8;
+	p[3] = value >>  0;
+}
 
 #endif
