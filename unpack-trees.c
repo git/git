@@ -662,10 +662,10 @@ static int traverse_trees_recursive(int n, unsigned long dirmask,
 		else if (i > 1 && are_same_oid(&names[i], &names[i - 2]))
 			t[i] = t[i - 2];
 		else {
-			const unsigned char *sha1 = NULL;
+			const struct object_id *oid = NULL;
 			if (dirmask & 1)
-				sha1 = names[i].oid->hash;
-			buf[nr_buf++] = fill_tree_descriptor(t+i, sha1);
+				oid = names[i].oid;
+			buf[nr_buf++] = fill_tree_descriptor(t + i, oid);
 		}
 	}
 
