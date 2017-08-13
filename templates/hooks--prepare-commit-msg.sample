@@ -34,7 +34,7 @@ SHA1=$3
 #  *) ;;
 # esac
 
-# SOB=$(git var GIT_AUTHOR_IDENT | sed -n 's/^\(.*>\).*$/Signed-off-by: \1/p')
+# SOB=$(git var GIT_COMMITTER_IDENT | sed -n 's/^\(.*>\).*$/Signed-off-by: \1/p')
 # git interpret-trailers --in-place --trailer "$SOB" "$COMMIT_MSG_FILE"
 # if test -z "$COMMIT_SOURCE"
 # then
