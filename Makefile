@@ -2440,6 +2440,10 @@ $(SP_OBJ): %.sp: %.c GIT-CFLAGS FORCE
 .PHONY: sparse $(SP_OBJ)
 sparse: $(SP_OBJ)
 
+.PHONY: style
+style:
+	git clang-format --style file --diff --extensions c,h
+
 check: common-cmds.h
 	@if sparse; \
 	then \
