@@ -43,9 +43,16 @@ no_changes () {
 }
 
 untracked_files () {
+	if test "$1" = "-z"
+	then
+		shift
+		z=-z
+	else
+		z=
+	fi
 	excl_opt=--exclude-standard
 	test "$untracked" = "all" && excl_opt=
-	git ls-files -o -z $excl_opt -- "$@"
+	git ls-files -o $z $excl_opt -- "$@"
 }
 
 clear_stash () {
@@ -114,7 +121,7 @@ create_stash () {
 		# Untracked files are stored by themselves in a parentless commit, for
 		# ease of unpacking later.
 		u_commit=$(
-			untracked_files "$@" | (
+			untracked_files -z "$@" | (
 				GIT_INDEX_FILE="$TMPindex" &&
 				export GIT_INDEX_FILE &&
 				rm -f "$TMPindex" &&
