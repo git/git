@@ -1,23 +1,16 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Aug 2017, #02; Fri, 11)
+Subject: What's cooking in git.git (Aug 2017, #03; Mon, 14)
 X-master-at: b3622a4ee94e4916cd05e6d96e41eeb36b941182
-X-next-at: b18f417b8938ccf4d9dfc9a6ecca90dcaa2868f7
+X-next-at: 24db08a6e8fed761d3bace7f2d5997806e20b9f7
 
-What's cooking in git.git (Aug 2017, #02; Fri, 11)
+What's cooking in git.git (Aug 2017, #03; Mon, 14)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
-
-The first batch of 32 topics (not counting the v2.14.1 update which
-was a security fix), which are the ones that have been cooking in
-'next' during the pre-release freeze period, have now been merged to
-'master'.  I have not really started pickng up new topics posted to
-the list yet and yet to rewind and rebuild the 'next' branch to
-start a new cycle.  Hopefully it can happen early next week.
 
 The top part of the draft release notes for the next cycle, which I
 tentatively called Git 2.15, declares that "git add ''" will still
@@ -387,6 +380,14 @@ of the repositories listed at
 --------------------------------------------------
 [New Topics]
 
+* ks/prepare-commit-msg-sample-fix (2017-08-14) 1 commit
+ - hook: use correct logical variable
+
+ An "oops" fix to a topic that is already in 'master'.
+
+ Will merge to 'next'.
+
+
 * ab/ref-filter-no-contains (2017-08-07) 1 commit
  - tests: don't give unportable ">" to "test" built-in, use -gt
 
@@ -427,7 +428,7 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* rs/freebsd-getcwd-workaround (2017-08-07) 1 commit
+* rs/obsd-getcwd-workaround (2017-08-07) 1 commit
  - t0001: skip test with restrictive permissions if getpwd(3) respects them
 
  Test portability fix for BSDs.
@@ -460,11 +461,22 @@ of the repositories listed at
 
 
 * jk/drop-ancient-curl (2017-08-09) 5 commits
- . http: #error on too-old curl
- . curl: remove ifdef'd code never used with curl >=7.19.4
- . http: drop support for curl < 7.19.4
- . http: drop support for curl < 7.16.0
- . http: drop support for curl < 7.11.1
+ - http: #error on too-old curl
+ - curl: remove ifdef'd code never used with curl >=7.19.4
+ - http: drop support for curl < 7.19.4
+ - http: drop support for curl < 7.16.0
+ - http: drop support for curl < 7.11.1
+
+
+* tc/curl-with-backports (2017-08-11) 2 commits
+ - http: use a feature check to enable GSSAPI delegation control
+ - http: fix handling of missing CURLPROTO_*
+
+ Updates to the HTTP layer we made recently unconditionally used
+ features of libCurl without checking the existence of them, causing
+ compilation errors, which has been fixed.  Also migrate the code to
+ check feature macros, not version numbers, to cope better with
+ libCurl that vendor ships with backported features.
 
 
 * jk/drop-sha1-entry-pos (2017-08-09) 1 commit
@@ -490,6 +502,12 @@ of the repositories listed at
  - interpret-trailers: add an option to show only the trailers
  - trailer: put process_trailers() options into a struct
 
+ "git interpret-trailers" has been taught a "--parse" and a few
+ other options to make it easier for scripts to grab existing
+ trailer lines from a commit log message.
+
+ Will merge to 'next'.
+
 
 * mk/use-size-t-in-zlib (2017-08-10) 1 commit
  - zlib.c: use size_t for size
@@ -498,7 +516,10 @@ of the repositories listed at
  "unsigned long" for sizes of regions in memory, which have been
  updated to use "size_t".
 
- Will merge to 'next'.
+ Needs review.
+
+ There were some concerns raised around s/off_t/size_t/ in this
+ change.
 
 
 * pw/am-signoff (2017-08-08) 1 commit
@@ -612,7 +633,7 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* kw/rebase-progress (2017-08-11) 2 commits
+* kw/rebase-progress (2017-08-14) 2 commits
  - rebase: turn on progress option by default for format-patch
  - format-patch: have progress option while generating patches
 
@@ -622,9 +643,7 @@ of the repositories listed at
  long time preparing these many changes to replay (which would give
  the user a chance to abort with ^C).
 
- Waiting for a response.
- cf. <20170810232033.46ujnozvnodkguog@sigill.intra.peff.net>
- cf. <xmqqshgxycal.fsf@gitster.mtv.corp.google.com>
+ Will merge to 'next'.
 
 
 * mk/diff-delta-avoid-large-offset (2017-08-11) 1 commit
@@ -649,15 +668,56 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* tc/curl-with-backports (2017-08-11) 2 commits
- - http: use a feature check to enable GSSAPI delegation control
- - http: fix handling of missing CURLPROTO_*
+* rs/object-id (2017-08-14) 1 commit
+ - tree-walk: convert fill_tree_descriptor() to object_id
 
- Updates to the HTTP layer we made recently unconditionally used
- features of libCurl without checking the existence of them, causing
- compilation errors, which has been fixed.  Also migrate the code to
- check feature macros, not version numbers, to cope better with
- libCurl that vendor ships with backported features.
+ Conversion from uchar[20] to struct object_id continues.
+
+ Will merge to 'next'.
+
+
+* ah/doc-empty-string-is-false (2017-08-14) 1 commit
+ - doc: clarify "config --bool" behaviour with empty string
+
+ Doc update.
+
+ Will merge to 'next'.
+
+
+* jt/diff-color-move-fix (2017-08-14) 3 commits
+ - diff: check MIN_BLOCK_LENGTH at start of new block
+ - diff: respect MIN_BLOCK_LENGTH for last block
+ - diff: avoid redundantly clearing a flag
+ (this branch uses sb/diff-color-move.)
+
+ A handful of bugfixes to "diff --color-moved".
+
+
+* kd/stash-with-bash-4.4 (2017-08-14) 1 commit
+ - stash: prevent warning about null bytes in input
+
+ bash 4.4 or newer gave a warning on NUL byte in command
+ substitution done in "git stash"; this has been squelched.
+
+ Will merge to 'next'.
+
+
+* kw/commit-keep-index-when-pre-commit-is-not-run (2017-08-14) 1 commit
+ - commit: skip discarding the index if there is no pre-commit hook
+
+ "git commit" used to discard the index and re-read from the filesystem
+ just in case the pre-commit hook has updated it in the middle; this
+ has been optimized out when we know we do not run the pre-commit hook.
+
+ Will merge to 'next'.
+
+
+* bw/git-clang-format (2017-08-14) 2 commits
+ - Makefile: add style build rule
+ - clang-format: outline the git project's coding style
+
+ "make style" runs git-clang-format to help developers by pointing
+ out coding style issues.
 
 --------------------------------------------------
 [Stalled]
@@ -738,7 +798,7 @@ of the repositories listed at
 [Cooking]
 
 * pw/sequence-rerere-autoupdate (2017-08-02) 6 commits
-  (merged to 'next' on 2017-08-11 at cd2d165be2)
+  (merged to 'next' on 2017-08-14 at 010cbb0cbe)
  + cherry-pick/revert: reject --rerere-autoupdate when continuing
  + cherry-pick/revert: remember --rerere-autoupdate
  + t3504: use test_commit
@@ -754,7 +814,7 @@ of the repositories listed at
 
 
 * bw/clone-recursive-quiet (2017-08-04) 1 commit
-  (merged to 'next' on 2017-08-11 at f49ac463f7)
+  (merged to 'next' on 2017-08-14 at fbd4473ce4)
  + clone: teach recursive clones to respect -q
 
  "git clone --recurse-submodules --quiet" did not pass the quiet
@@ -770,16 +830,14 @@ of the repositories listed at
  trailer with the committer's name.
 
 
-* pb/trailers-from-command-line (2017-07-25) 4 commits
- - SQUASH???
+* pb/trailers-from-command-line (2017-08-14) 4 commits
+ - interpret-trailers: fix documentation typo
  - interpret-trailers: add options for actions
  - trailers: introduce struct new_trailer_item
  - trailers: export action enums and corresponding lookup functions
 
  "git interpret-trailers" learned to take the trailer specifications
  from the command line that overrides the configured values.
-
- Expecting a reroll for compilation fix.
 
 
 * sb/submodule-recursive-checkout-detach-head (2017-07-28) 2 commits
@@ -797,8 +855,7 @@ of the repositories listed at
 
 
 * ti/external-sha1dc (2017-07-25) 1 commit
-  (merged to 'next' on 2017-07-27 at d1ce394fe2)
- + hash: allow building with the external sha1dc library
+ - hash: allow building with the external sha1dc library
 
  Platforms that ship with a separate sha1 with collision detection
  library can link to it instead of using the copy we ship as part of
@@ -833,7 +890,7 @@ of the repositories listed at
 
 
 * bw/push-options-recursively-to-submodules (2017-07-20) 1 commit
-  (merged to 'next' on 2017-07-27 at 26b3af2544)
+  (merged to 'next' on 2017-08-14 at 421dc09fd0)
  + submodule--helper: teach push-check to handle HEAD
 
  "git push --recurse-submodules $there HEAD:$target" was not
@@ -850,7 +907,7 @@ of the repositories listed at
 
 
 * bw/grep-recurse-submodules (2017-08-02) 10 commits
-  (merged to 'next' on 2017-08-04 at 4e60c34bad)
+  (merged to 'next' on 2017-08-14 at dcfcfc94af)
  + grep: recurse in-process using 'struct repository'
  + submodule: merge repo_read_gitmodules and gitmodules_config
  + submodule: check for unmerged .gitmodules outside of config parsing
@@ -898,7 +955,7 @@ of the repositories listed at
 
 
 * ex/deprecate-empty-pathspec-as-match-all (2017-06-23) 2 commits
-  (merged to 'next' on 2017-06-26 at d026281517)
+  (merged to 'next' on 2017-08-14 at 24db08a6e8)
  + pathspec: die on empty strings as pathspec
  + t0027: do not use an empty string as a pathspec element
 
@@ -914,9 +971,8 @@ of the repositories listed at
 
 
 * mh/packed-ref-store (2017-07-27) 31 commits
-  (merged to 'next' on 2017-07-27 at 857dcb8cba)
+  (merged to 'next' on 2017-08-14 at 987b76d302)
  + packed_ref_store: handle a packed-refs file that is a symlink
-  (merged to 'next' on 2017-07-05 at 6c68c603cc)
  + read_packed_refs(): die if `packed-refs` contains bogus data
  + t3210: add some tests of bogus packed-refs file contents
  + repack_without_refs(): don't lock or unlock the packed refs
@@ -954,15 +1010,12 @@ of the repositories listed at
 
 
 * sd/branch-copy (2017-06-18) 3 commits
-  (merged to 'next' on 2017-07-18 at 5e3b9357ea)
- + branch: add a --copy (-c) option to go with --move (-m)
- + branch: add test for -m renaming multiple config sections
- + config: create a function to format section headers
+ - branch: add a --copy (-c) option to go with --move (-m)
+ - branch: add test for -m renaming multiple config sections
+ - config: create a function to format section headers
 
  "git branch" learned "-c/-C" to create and switch to a new branch
  by copying an existing one.
-
- Will merge to 'master'.
 
  I personally do not think "branch --copy master backup" while on
  "master" that switches to "backup" is a good UI, and I *will* say
@@ -971,39 +1024,37 @@ of the repositories listed at
 
 
 * sb/diff-color-move (2017-06-30) 26 commits
-  (merged to 'next' on 2017-07-06 at 758ed40e4f)
- + diff: document the new --color-moved setting
- + diff.c: add dimming to moved line detection
- + diff.c: color moved lines differently, plain mode
- + diff.c: color moved lines differently
- + diff.c: buffer all output if asked to
- + diff.c: emit_diff_symbol learns about DIFF_SYMBOL_SUMMARY
- + diff.c: emit_diff_symbol learns about DIFF_SYMBOL_STAT_SEP
- + diff.c: convert word diffing to use emit_diff_symbol
- + diff.c: convert show_stats to use emit_diff_symbol
- + diff.c: convert emit_binary_diff_body to use emit_diff_symbol
- + submodule.c: migrate diff output to use emit_diff_symbol
- + diff.c: emit_diff_symbol learns DIFF_SYMBOL_REWRITE_DIFF
- + diff.c: emit_diff_symbol learns about DIFF_SYMBOL_BINARY_FILES
- + diff.c: emit_diff_symbol learns DIFF_SYMBOL_HEADER
- + diff.c: emit_diff_symbol learns DIFF_SYMBOL_FILEPAIR_{PLUS, MINUS}
- + diff.c: emit_diff_symbol learns DIFF_SYMBOL_CONTEXT_INCOMPLETE
- + diff.c: emit_diff_symbol learns DIFF_SYMBOL_WORDS[_PORCELAIN]
- + diff.c: migrate emit_line_checked to use emit_diff_symbol
- + diff.c: emit_diff_symbol learns DIFF_SYMBOL_NO_LF_EOF
- + diff.c: emit_diff_symbol learns DIFF_SYMBOL_CONTEXT_FRAGINFO
- + diff.c: emit_diff_symbol learns DIFF_SYMBOL_CONTEXT_MARKER
- + diff.c: introduce emit_diff_symbol
- + diff.c: factor out diff_flush_patch_all_file_pairs
- + diff.c: move line ending check into emit_hunk_header
- + diff.c: readability fix
- + Merge branch 'sb/hashmap-customize-comparison' into sb/diff-color-move
+ - diff: document the new --color-moved setting
+ - diff.c: add dimming to moved line detection
+ - diff.c: color moved lines differently, plain mode
+ - diff.c: color moved lines differently
+ - diff.c: buffer all output if asked to
+ - diff.c: emit_diff_symbol learns about DIFF_SYMBOL_SUMMARY
+ - diff.c: emit_diff_symbol learns about DIFF_SYMBOL_STAT_SEP
+ - diff.c: convert word diffing to use emit_diff_symbol
+ - diff.c: convert show_stats to use emit_diff_symbol
+ - diff.c: convert emit_binary_diff_body to use emit_diff_symbol
+ - submodule.c: migrate diff output to use emit_diff_symbol
+ - diff.c: emit_diff_symbol learns DIFF_SYMBOL_REWRITE_DIFF
+ - diff.c: emit_diff_symbol learns about DIFF_SYMBOL_BINARY_FILES
+ - diff.c: emit_diff_symbol learns DIFF_SYMBOL_HEADER
+ - diff.c: emit_diff_symbol learns DIFF_SYMBOL_FILEPAIR_{PLUS, MINUS}
+ - diff.c: emit_diff_symbol learns DIFF_SYMBOL_CONTEXT_INCOMPLETE
+ - diff.c: emit_diff_symbol learns DIFF_SYMBOL_WORDS[_PORCELAIN]
+ - diff.c: migrate emit_line_checked to use emit_diff_symbol
+ - diff.c: emit_diff_symbol learns DIFF_SYMBOL_NO_LF_EOF
+ - diff.c: emit_diff_symbol learns DIFF_SYMBOL_CONTEXT_FRAGINFO
+ - diff.c: emit_diff_symbol learns DIFF_SYMBOL_CONTEXT_MARKER
+ - diff.c: introduce emit_diff_symbol
+ - diff.c: factor out diff_flush_patch_all_file_pairs
+ - diff.c: move line ending check into emit_hunk_header
+ - diff.c: readability fix
+ - Merge branch 'sb/hashmap-customize-comparison' into sb/diff-color-move
+ (this branch is used by jt/diff-color-move-fix.)
 
  "git diff" has been taught to optionally paint new lines that are
  the same as deleted lines elsewhere differently from genuinely new
  lines.
-
- Will merge to 'master'.
 
 --------------------------------------------------
 [Discarded]
