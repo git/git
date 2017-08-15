@@ -870,16 +870,6 @@ const char *format_subject(struct strbuf *sb, const char *msg,
 	return msg;
 }
 
-static void format_trailers(struct strbuf *sb, const char *msg)
-{
-	struct trailer_info info;
-
-	trailer_info_get(&info, msg);
-	strbuf_add(sb, info.trailer_start,
-		   info.trailer_end - info.trailer_start);
-	trailer_info_release(&info);
-}
-
 static void parse_commit_message(struct format_commit_context *c)
 {
 	const char *msg = c->message + c->message_off;
@@ -1273,7 +1263,8 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 	}
 
 	if (starts_with(placeholder, "(trailers)")) {
-		format_trailers(sb, msg + c->subject_off);
+		struct process_trailer_options opts = PROCESS_TRAILER_OPTIONS_INIT;
+		format_trailers_from_commit(sb, msg + c->subject_off, &opts);
 		return strlen("(trailers)");
 	}
 

@@ -1090,3 +1090,21 @@ void trailer_info_release(struct trailer_info *info)
 		free(info->trailers[i]);
 	free(info->trailers);
 }
+
+static void format_trailer_info(struct strbuf *out,
+				const struct trailer_info *info,
+				const struct process_trailer_options *opts)
+{
+	strbuf_add(out, info->trailer_start,
+		   info->trailer_end - info->trailer_start);
+}
+
+void format_trailers_from_commit(struct strbuf *out, const char *msg,
+				 const struct process_trailer_options *opts)
+{
+	struct trailer_info info;
+
+	trailer_info_get(&info, msg);
+	format_trailer_info(out, &info, opts);
+	trailer_info_release(&info);
+}
