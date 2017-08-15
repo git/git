@@ -1044,6 +1044,7 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 	const struct commit *commit = c->commit;
 	const char *msg = c->message;
 	struct commit_list *p;
+	const char *arg;
 	int ch;
 
 	/* these are independent of the commit */
@@ -1262,10 +1263,18 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 		return 1;
 	}
 
-	if (starts_with(placeholder, "(trailers)")) {
+	if (skip_prefix(placeholder, "(trailers", &arg)) {
 		struct process_trailer_options opts = PROCESS_TRAILER_OPTIONS_INIT;
-		format_trailers_from_commit(sb, msg + c->subject_off, &opts);
-		return strlen("(trailers)");
+		while (*arg == ':') {
+			if (skip_prefix(arg, ":only", &arg))
+				opts.only_trailers = 1;
+			else if (skip_prefix(arg, ":unfold", &arg))
+				opts.unfold = 1;
+		}
+		if (*arg == ')') {
+			format_trailers_from_commit(sb, msg + c->subject_off, &opts);
+			return arg - placeholder + 1;
+		}
 	}
 
 	return 0;	/* unknown placeholder */

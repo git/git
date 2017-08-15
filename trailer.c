@@ -1095,8 +1095,36 @@ static void format_trailer_info(struct strbuf *out,
 				const struct trailer_info *info,
 				const struct process_trailer_options *opts)
 {
-	strbuf_add(out, info->trailer_start,
-		   info->trailer_end - info->trailer_start);
+	int i;
+
+	/* If we want the whole block untouched, we can take the fast path. */
+	if (!opts->only_trailers && !opts->unfold) {
+		strbuf_add(out, info->trailer_start,
+			   info->trailer_end - info->trailer_start);
+		return;
+	}
+
+	for (i = 0; i < info->trailer_nr; i++) {
+		char *trailer = info->trailers[i];
+		int separator_pos = find_separator(trailer, separators);
+
+		if (separator_pos >= 1) {
+			struct strbuf tok = STRBUF_INIT;
+			struct strbuf val = STRBUF_INIT;
+
+			parse_trailer(&tok, &val, NULL, trailer, separator_pos);
+			if (opts->unfold)
+				unfold_value(&val);
+
+			strbuf_addf(out, "%s: %s\n", tok.buf, val.buf);
+			strbuf_release(&tok);
+			strbuf_release(&val);
+
+		} else if (!opts->only_trailers) {
+			strbuf_addstr(out, trailer);
+		}
+	}
+
 }
 
 void format_trailers_from_commit(struct strbuf *out, const char *msg,

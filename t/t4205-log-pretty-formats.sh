@@ -543,6 +543,10 @@ Signed-off-by: A U Thor
   <author@example.com>
 EOF
 
+unfold () {
+	perl -0pe 's/\n\s+/ /'
+}
+
 test_expect_success 'set up trailer tests' '
 	echo "Some contents" >trailerfile &&
 	git add trailerfile &&
@@ -560,6 +564,35 @@ test_expect_success 'pretty format %(trailers) shows trailers' '
 	git log --no-walk --pretty="%(trailers)" >actual &&
 	{
 		cat trailers &&
+		echo
+	} >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success '%(trailers:only) shows only "key: value" trailers' '
+	git log --no-walk --pretty="%(trailers:only)" >actual &&
+	{
+		grep -v patch.description <trailers &&
+		echo
+	} >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success '%(trailers:unfold) unfolds trailers' '
+	git log --no-walk --pretty="%(trailers:unfold)" >actual &&
+	{
+		unfold <trailers &&
+		echo
+	} >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success ':only and :unfold work together' '
+	git log --no-walk --pretty="%(trailers:only:unfold)" >actual &&
+	git log --no-walk --pretty="%(trailers:unfold:only)" >reverse &&
+	test_cmp actual reverse &&
+	{
+		grep -v patch.description <trailers | unfold &&
 		echo
 	} >expect &&
 	test_cmp expect actual
