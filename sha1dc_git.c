@@ -1,8 +1,8 @@
-/*
- * This code is included at the end of sha1dc/sha1.c with the
- * SHA1DC_CUSTOM_TRAILING_INCLUDE_SHA1_C macro.
- */
+#include "cache.h"
 
+/*
+ * Same as SHA1DCFinal, but convert collision attack case into a verbose die().
+ */
 void git_SHA1DCFinal(unsigned char hash[20], SHA1_CTX *ctx)
 {
 	if (!SHA1DCFinal(hash, ctx))
@@ -11,6 +11,9 @@ void git_SHA1DCFinal(unsigned char hash[20], SHA1_CTX *ctx)
 	    sha1_to_hex(hash));
 }
 
+/*
+ * Same as SHA1DCUpdate, but adjust types to match git's usual interface.
+ */
 void git_SHA1DCUpdate(SHA1_CTX *ctx, const void *vdata, unsigned long len)
 {
 	const char *data = vdata;
