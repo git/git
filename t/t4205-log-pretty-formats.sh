@@ -539,25 +539,29 @@ cat >trailers <<EOF
 Signed-off-by: A U Thor <author@example.com>
 Acked-by: A U Thor <author@example.com>
 [ v2 updated patch description ]
-Signed-off-by: A U Thor <author@example.com>
+Signed-off-by: A U Thor
+  <author@example.com>
 EOF
 
-test_expect_success 'pretty format %(trailers) shows trailers' '
+test_expect_success 'set up trailer tests' '
 	echo "Some contents" >trailerfile &&
 	git add trailerfile &&
-	git commit -F - <<-EOF &&
+	git commit -F - <<-EOF
 	trailers: this commit message has trailers
 
 	This commit is a test commit with trailers at the end. We parse this
-	message and display the trailers using %bT
+	message and display the trailers using %(trailers).
 
 	$(cat trailers)
 	EOF
+'
+
+test_expect_success 'pretty format %(trailers) shows trailers' '
 	git log --no-walk --pretty="%(trailers)" >actual &&
-	cat >expect <<-EOF &&
-	$(cat trailers)
-
-	EOF
+	{
+		cat trailers &&
+		echo
+	} >expect &&
 	test_cmp expect actual
 '
 
