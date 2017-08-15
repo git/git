@@ -1330,4 +1330,25 @@ test_expect_success 'only input' '
 	test_cmp expected actual
 '
 
+test_expect_success 'unfold' '
+	cat >expected <<-\EOF &&
+		foo: continued across several lines
+	EOF
+	# pass through tr to make leading and trailing whitespace more obvious
+	tr _ " " <<-\EOF |
+		my subject
+
+		my body
+
+		foo:_
+		__continued
+		___across
+		____several
+		_____lines
+		___
+	EOF
+	git interpret-trailers --only-trailers --only-input --unfold >actual &&
+	test_cmp expected actual
+'
+
 test_done

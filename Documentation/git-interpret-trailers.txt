@@ -88,6 +88,10 @@ OPTIONS
 	from the command-line or by following configured `trailer.*`
 	rules.
 
+--unfold::
+	Remove any whitespace-continuation in trailers, so that each
+	trailer appears on a line by itself with its full content.
+
 CONFIGURATION VARIABLES
 -----------------------
 

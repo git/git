@@ -886,6 +886,33 @@ static int ends_with_blank_line(const char *buf, size_t len)
 	return is_blank_line(buf + ll);
 }
 
+static void unfold_value(struct strbuf *val)
+{
+	struct strbuf out = STRBUF_INIT;
+	size_t i;
+
+	strbuf_grow(&out, val->len);
+	i = 0;
+	while (i < val->len) {
+		char c = val->buf[i++];
+		if (c == '\n') {
+			/* Collapse continuation down to a single space. */
+			while (i < val->len && isspace(val->buf[i]))
+				i++;
+			strbuf_addch(&out, ' ');
+		} else {
+			strbuf_addch(&out, c);
+		}
+	}
+
+	/* Empty lines may have left us with whitespace cruft at the edges */
+	strbuf_trim(&out);
+
+	/* output goes back to val as if we modified it in-place */
+	strbuf_swap(&out, val);
+	strbuf_release(&out);
+}
+
 static int process_input_file(FILE *outfile,
 			      const char *str,
 			      struct list_head *head,
@@ -914,6 +941,8 @@ static int process_input_file(FILE *outfile,
 		if (separator_pos >= 1) {
 			parse_trailer(&tok, &val, NULL, trailer,
 				      separator_pos);
+			if (opts->unfold)
+				unfold_value(&val);
 			add_trailer_item(head,
 					 strbuf_detach(&tok, NULL),
 					 strbuf_detach(&val, NULL));

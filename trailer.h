@@ -27,6 +27,7 @@ struct process_trailer_options {
 	int trim_empty;
 	int only_trailers;
 	int only_input;
+	int unfold;
 };
 
 #define PROCESS_TRAILER_OPTIONS_INIT {0}
