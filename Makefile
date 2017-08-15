@@ -162,6 +162,11 @@ all::
 # algorithm. This is slower, but may detect attempted collision attacks.
 # Takes priority over other *_SHA1 knobs.
 #
+# Define DC_SHA1_EXTERNAL in addition to DC_SHA1 if you want to build / link
+# git with the external SHA1 collision-detect library.
+# Without this option, i.e. the default behavior is to build git with its
+# own built-in code (or submodule).
+#
 # Define DC_SHA1_SUBMODULE in addition to DC_SHA1 to use the
 # sha1collisiondetection shipped as a submodule instead of the
 # non-submodule copy in sha1dc/. This is an experimental option used
@@ -1474,6 +1479,13 @@ else
 	DC_SHA1 := YesPlease
 	BASIC_CFLAGS += -DSHA1_DC
 	LIB_OBJS += sha1dc_git.o
+ifdef DC_SHA1_EXTERNAL
+	ifdef DC_SHA1_SUBMODULE
+$(error Only set DC_SHA1_EXTERNAL or DC_SHA1_SUBMODULE, not both)
+	endif
+	BASIC_CFLAGS += -DDC_SHA1_EXTERNAL
+	EXTLIBS += -lsha1detectcoll
+else
 ifdef DC_SHA1_SUBMODULE
 	LIB_OBJS += sha1collisiondetection/lib/sha1.o
 	LIB_OBJS += sha1collisiondetection/lib/ubc_check.o
@@ -1487,6 +1499,7 @@ endif
 		-DSHA1DC_INIT_SAFE_HASH_DEFAULT=0 \
 		-DSHA1DC_CUSTOM_INCLUDE_SHA1_C="\"cache.h\"" \
 		-DSHA1DC_CUSTOM_INCLUDE_UBC_CHECK_C="\"git-compat-util.h\""
+endif
 endif
 endif
 endif

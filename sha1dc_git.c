@@ -1,5 +1,16 @@
 #include "cache.h"
 
+#ifdef DC_SHA1_EXTERNAL
+/*
+ * Same as SHA1DCInit, but with default save_hash=0
+ */
+void git_SHA1DCInit(SHA1_CTX *ctx)
+{
+	SHA1DCInit(ctx);
+	SHA1DCSetSafeHash(ctx, 0);
+}
+#endif
+
 /*
  * Same as SHA1DCFinal, but convert collision attack case into a verbose die().
  */
