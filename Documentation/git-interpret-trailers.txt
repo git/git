@@ -80,6 +80,9 @@ OPTIONS
 	trailer to the input messages. See the description of this
 	command.
 
+--only-trailers::
+	Output only the trailers, not any other parts of the input.
+
 CONFIGURATION VARIABLES
 -----------------------
 

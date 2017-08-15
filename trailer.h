@@ -25,6 +25,7 @@ struct trailer_info {
 struct process_trailer_options {
 	int in_place;
 	int trim_empty;
+	int only_trailers;
 };
 
 #define PROCESS_TRAILER_OPTIONS_INIT {0}
