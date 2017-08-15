@@ -976,7 +976,6 @@ void process_trailers(const char *file,
 		      struct string_list *trailers)
 {
 	LIST_HEAD(head);
-	LIST_HEAD(arg_head);
 	struct strbuf sb = STRBUF_INIT;
 	int trailer_end;
 	FILE *outfile = stdout;
@@ -991,9 +990,11 @@ void process_trailers(const char *file,
 	/* Print the lines before the trailers */
 	trailer_end = process_input_file(outfile, sb.buf, &head, opts);
 
-	process_command_line_args(&arg_head, trailers);
-
-	process_trailers_lists(&head, &arg_head);
+	if (!opts->only_input) {
+		LIST_HEAD(arg_head);
+		process_command_line_args(&arg_head, trailers);
+		process_trailers_lists(&head, &arg_head);
+	}
 
 	print_all(outfile, &head, opts);
 

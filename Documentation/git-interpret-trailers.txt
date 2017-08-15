@@ -83,6 +83,11 @@ OPTIONS
 --only-trailers::
 	Output only the trailers, not any other parts of the input.
 
+--only-input::
+	Output only trailers that exist in the input; do not add any
+	from the command-line or by following configured `trailer.*`
+	rules.
+
 CONFIGURATION VARIABLES
 -----------------------
 
