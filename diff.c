@@ -861,6 +861,26 @@ static int shrink_potential_moved_blocks(struct moved_entry **pmb,
 	return rp + 1;
 }
 
+/*
+ * If o->color_moved is COLOR_MOVED_PLAIN, this function does nothing.
+ *
+ * Otherwise, if the last block has fewer lines than
+ * COLOR_MOVED_MIN_BLOCK_LENGTH, unset DIFF_SYMBOL_MOVED_LINE on all lines in
+ * that block.
+ *
+ * The last block consists of the (n - block_length)'th line up to but not
+ * including the nth line.
+ */
+static void adjust_last_block(struct diff_options *o, int n, int block_length)
+{
+	int i;
+	if (block_length >= COLOR_MOVED_MIN_BLOCK_LENGTH ||
+	    o->color_moved == COLOR_MOVED_PLAIN)
+		return;
+	for (i = 1; i < block_length + 1; i++)
+		o->emitted_symbols->buf[n - i].flags &= ~DIFF_SYMBOL_MOVED_LINE;
+}
+
 /* Find blocks of moved code, delegate actual coloring decision to helper */
 static void mark_color_as_moved(struct diff_options *o,
 				struct hashmap *add_lines,
@@ -896,13 +916,7 @@ static void mark_color_as_moved(struct diff_options *o,
 		}
 
 		if (!match) {
-			if (block_length < COLOR_MOVED_MIN_BLOCK_LENGTH &&
-			    o->color_moved != COLOR_MOVED_PLAIN) {
-				for (i = 1; i < block_length + 1; i++) {
-					l = &o->emitted_symbols->buf[n - i];
-					l->flags &= ~DIFF_SYMBOL_MOVED_LINE;
-				}
-			}
+			adjust_last_block(o, n, block_length);
 			pmb_nr = 0;
 			block_length = 0;
 			continue;
@@ -944,6 +958,7 @@ static void mark_color_as_moved(struct diff_options *o,
 		if (flipped_block)
 			l->flags |= DIFF_SYMBOL_MOVED_LINE_ALT;
 	}
+	adjust_last_block(o, n, block_length);
 
 	free(pmb);
 }
