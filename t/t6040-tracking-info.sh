@@ -188,35 +188,29 @@ test_expect_success 'fail to track annotated tags' '
 	test_must_fail git checkout heavytrack
 '
 
-test_expect_success 'setup tracking with branch --set-upstream on existing branch' '
+test_expect_success '--set-upstream-to does not change branch' '
 	git branch from-master master &&
-	test_must_fail git config branch.from-master.merge > actual &&
-	git branch --set-upstream from-master master &&
-	git config branch.from-master.merge > actual &&
-	grep -q "^refs/heads/master$" actual
-'
-
-test_expect_success '--set-upstream does not change branch' '
+	git branch --set-upstream-to master from-master &&
 	git branch from-master2 master &&
 	test_must_fail git config branch.from-master2.merge > actual &&
 	git rev-list from-master2 &&
 	git update-ref refs/heads/from-master2 from-master2^ &&
 	git rev-parse from-master2 >expect2 &&
-	git branch --set-upstream from-master2 master &&
+	git branch --set-upstream-to master from-master2 &&
 	git config branch.from-master.merge > actual &&
 	git rev-parse from-master2 >actual2 &&
 	grep -q "^refs/heads/master$" actual &&
 	cmp expect2 actual2
 '
 
-test_expect_success '--set-upstream @{-1}' '
-	git checkout from-master &&
+test_expect_success '--set-upstream-to @{-1}' '
+	git checkout follower &&
 	git checkout from-master2 &&
 	git config branch.from-master2.merge > expect2 &&
-	git branch --set-upstream @{-1} follower &&
+	git branch --set-upstream-to @{-1} from-master &&
 	git config branch.from-master.merge > actual &&
 	git config branch.from-master2.merge > actual2 &&
-	git branch --set-upstream from-master follower &&
+	git branch --set-upstream-to follower from-master &&
 	git config branch.from-master.merge > expect &&
 	test_cmp expect2 actual2 &&
 	test_cmp expect actual
