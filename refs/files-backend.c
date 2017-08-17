@@ -632,11 +632,11 @@ retry:
 
 		/*
 		 * If the ref did not exist and we are creating it,
-		 * make sure there is no existing ref that conflicts
-		 * with refname:
+		 * make sure there is no existing packed ref that
+		 * conflicts with refname:
 		 */
 		if (refs_verify_refname_available(
-				    &refs->base, refname,
+				    refs->packed_ref_store, refname,
 				    extras, skip, err))
 			goto error_return;
 	}
@@ -939,7 +939,7 @@ static struct ref_lock *lock_ref_sha1_basic(struct files_ref_store *refs,
 	 * our refname.
 	 */
 	if (is_null_oid(&lock->old_oid) &&
-	    refs_verify_refname_available(&refs->base, refname,
+	    refs_verify_refname_available(refs->packed_ref_store, refname,
 					  extras, skip, err)) {
 		last_errno = ENOTDIR;
 		goto error_return;
