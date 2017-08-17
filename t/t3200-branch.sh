@@ -559,6 +559,7 @@ test_expect_success 'use --set-upstream-to modify HEAD' '
 test_expect_success 'use --set-upstream-to modify a particular branch' '
 	git branch my13 &&
 	git branch --set-upstream-to master my13 &&
+	test_when_finished "git branch --unset-upstream my13" &&
 	test "$(git config branch.my13.remote)" = "." &&
 	test "$(git config branch.my13.merge)" = "refs/heads/master"
 '
