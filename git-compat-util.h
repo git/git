@@ -749,8 +749,6 @@ const char *inet_ntop(int af, const void *src, char *dst, size_t size);
 extern int git_atexit(void (*handler)(void));
 #endif
 
-extern void release_pack_memory(size_t);
-
 typedef void (*try_to_free_t)(size_t);
 extern try_to_free_t set_try_to_free_routine(try_to_free_t);
 

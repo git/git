@@ -43,4 +43,8 @@ extern void pack_report(void);
  */
 extern int open_pack_index(struct packed_git *);
 
+extern int unuse_one_window(struct packed_git *current);
+
+extern void release_pack_memory(size_t);
+
 #endif
