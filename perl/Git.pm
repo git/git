@@ -532,7 +532,7 @@ If TIME is not supplied, the current local time is used.
 =cut
 
 sub get_tz_offset {
-	# some systmes don't handle or mishandle %z, so be creative.
+	# some systems don't handle or mishandle %z, so be creative.
 	my $t = shift || time;
 	my $gm = timegm(localtime($t));
 	my $sign = qw( + + - )[ $gm <=> $t ];
