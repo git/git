@@ -3,6 +3,7 @@
  */
 #include "cache.h"
 #include "streaming.h"
+#include "packfile.h"
 
 enum input_source {
 	stream_error = -1,

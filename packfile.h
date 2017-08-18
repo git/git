@@ -24,14 +24,7 @@ extern char *sha1_pack_name(const unsigned char *sha1);
  */
 extern char *sha1_pack_index_name(const unsigned char *sha1);
 
-extern unsigned int pack_used_ctr;
-extern unsigned int pack_mmap_calls;
-extern unsigned int peak_pack_open_windows;
-extern unsigned int pack_open_windows;
 extern unsigned int pack_open_fds;
-extern unsigned int pack_max_fds;
-extern size_t peak_pack_mapped;
-extern size_t pack_mapped;
 
 extern struct packed_git *parse_pack_index(unsigned char *sha1, const char *idx_path);
 
@@ -49,13 +42,12 @@ extern int open_pack_index(struct packed_git *);
  */
 extern void close_pack_index(struct packed_git *);
 
+extern unsigned char *use_pack(struct packed_git *, struct pack_window **, off_t, unsigned long *);
 extern void close_pack_windows(struct packed_git *);
 extern void close_all_packs(void);
 
-extern int close_pack_fd(struct packed_git *);
-
-extern int unuse_one_window(struct packed_git *current);
-
 extern void release_pack_memory(size_t);
+
+extern int open_packed_git(struct packed_git *p);
 
 #endif
