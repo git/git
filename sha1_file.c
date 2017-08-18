@@ -1631,12 +1631,6 @@ int has_pack_index(const unsigned char *sha1)
 	return 1;
 }
 
-int has_sha1_pack(const unsigned char *sha1)
-{
-	struct pack_entry e;
-	return find_pack_entry(sha1, &e);
-}
-
 int has_sha1_file_with_flags(const unsigned char *sha1, int flags)
 {
 	if (!startup_info->have_repository)

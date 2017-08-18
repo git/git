@@ -20,6 +20,7 @@
 #include "string-list.h"
 #include "argv-array.h"
 #include "graph.h"
+#include "packfile.h"
 
 #ifdef NO_FAST_WORKING_DIRECTORY
 #define FAST_WORKING_DIRECTORY 0

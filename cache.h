@@ -1191,8 +1191,6 @@ extern int check_sha1_signature(const unsigned char *sha1, void *buf, unsigned l
 
 extern int finalize_object_file(const char *tmpfile, const char *filename);
 
-extern int has_sha1_pack(const unsigned char *sha1);
-
 /*
  * Open the loose object at path, check its sha1, and return the contents,
  * type, and size. If the object is a blob, then "contents" may return NULL,
