@@ -1623,14 +1623,6 @@ int force_object_loose(const unsigned char *sha1, time_t mtime)
 	return ret;
 }
 
-int has_pack_index(const unsigned char *sha1)
-{
-	struct stat st;
-	if (stat(sha1_pack_index_name(sha1), &st))
-		return 0;
-	return 1;
-}
-
 int has_sha1_file_with_flags(const unsigned char *sha1, int flags)
 {
 	if (!startup_info->have_repository)

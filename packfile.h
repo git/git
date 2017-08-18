@@ -122,4 +122,6 @@ extern int find_pack_entry(const unsigned char *sha1, struct pack_entry *e);
 
 extern int has_sha1_pack(const unsigned char *sha1);
 
+extern int has_pack_index(const unsigned char *sha1);
+
 #endif
