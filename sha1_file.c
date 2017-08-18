@@ -30,9 +30,6 @@
 #include "quote.h"
 #include "packfile.h"
 
-#define SZ_FMT PRIuMAX
-static inline uintmax_t sz_fmt(size_t s) { return s; }
-
 const unsigned char null_sha1[20];
 const struct object_id null_oid;
 const struct object_id empty_tree_oid = {
@@ -682,27 +679,6 @@ int has_loose_object_nonlocal(const unsigned char *sha1)
 static int has_loose_object(const unsigned char *sha1)
 {
 	return check_and_freshen(sha1, 0);
-}
-
-void pack_report(void)
-{
-	fprintf(stderr,
-		"pack_report: getpagesize()            = %10" SZ_FMT "\n"
-		"pack_report: core.packedGitWindowSize = %10" SZ_FMT "\n"
-		"pack_report: core.packedGitLimit      = %10" SZ_FMT "\n",
-		sz_fmt(getpagesize()),
-		sz_fmt(packed_git_window_size),
-		sz_fmt(packed_git_limit));
-	fprintf(stderr,
-		"pack_report: pack_used_ctr            = %10u\n"
-		"pack_report: pack_mmap_calls          = %10u\n"
-		"pack_report: pack_open_windows        = %10u / %10u\n"
-		"pack_report: pack_mapped              = "
-			"%10" SZ_FMT " / %10" SZ_FMT "\n",
-		pack_used_ctr,
-		pack_mmap_calls,
-		pack_open_windows, peak_pack_open_windows,
-		sz_fmt(pack_mapped), sz_fmt(peak_pack_mapped));
 }
 
 /*

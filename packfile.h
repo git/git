@@ -33,4 +33,6 @@ extern unsigned int pack_max_fds;
 extern size_t peak_pack_mapped;
 extern size_t pack_mapped;
 
+extern void pack_report(void);
+
 #endif
