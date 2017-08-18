@@ -42,6 +42,9 @@ extern void install_packed_git(struct packed_git *pack);
  */
 unsigned long approximate_object_count(void);
 
+extern struct packed_git *find_sha1_pack(const unsigned char *sha1,
+					 struct packed_git *packs);
+
 extern void pack_report(void);
 
 /*

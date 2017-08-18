@@ -11,6 +11,7 @@
 #include "list-objects.h"
 #include "sigchain.h"
 #include "argv-array.h"
+#include "packfile.h"
 
 #ifdef EXPAT_NEEDS_XMLPARSE_H
 #include <xmlparse.h>
