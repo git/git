@@ -315,18 +315,44 @@ test_expect_success 'init with separate gitdir' '
 	test_path_is_dir realgitdir/refs
 '
 
-test_expect_success 'init in long base path' '
+test_lazy_prereq GETCWD_IGNORES_PERMS '
+	base=GETCWD_TEST_BASE_DIR &&
+	mkdir -p $base/dir &&
+	chmod 100 $base ||
+	error "bug in test script: cannot prepare $base"
+
+	(cd $base/dir && /bin/pwd -P)
+	status=$?
+
+	chmod 700 $base &&
+	rm -rf $base ||
+	error "bug in test script: cannot clean $base"
+	return $status
+'
+
+check_long_base_path () {
 	# exceed initial buffer size of strbuf_getcwd()
 	component=123456789abcdef &&
 	test_when_finished "chmod 0700 $component; rm -rf $component" &&
 	p31=$component/$component &&
 	p127=$p31/$p31/$p31/$p31 &&
 	mkdir -p $p127 &&
-	chmod 0111 $component &&
+	if test $# = 1
+	then
+		chmod $1 $component
+	fi &&
 	(
 		cd $p127 &&
 		git init newdir
 	)
+}
+
+test_expect_success 'init in long base path' '
+	check_long_base_path
+'
+
+test_expect_success GETCWD_IGNORES_PERMS 'init in long restricted base path' '
+	check_long_base_path 0111
 '
 
 test_expect_success 're-init on .git file' '
