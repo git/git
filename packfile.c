@@ -1787,3 +1787,56 @@ struct packed_git *find_sha1_pack(const unsigned char *sha1,
 	return NULL;
 
 }
+
+static int fill_pack_entry(const unsigned char *sha1,
+			   struct pack_entry *e,
+			   struct packed_git *p)
+{
+	off_t offset;
+
+	if (p->num_bad_objects) {
+		unsigned i;
+		for (i = 0; i < p->num_bad_objects; i++)
+			if (!hashcmp(sha1, p->bad_object_sha1 + 20 * i))
+				return 0;
+	}
+
+	offset = find_pack_entry_one(sha1, p);
+	if (!offset)
+		return 0;
+
+	/*
+	 * We are about to tell the caller where they can locate the
+	 * requested object.  We better make sure the packfile is
+	 * still here and can be accessed before supplying that
+	 * answer, as it may have been deleted since the index was
+	 * loaded!
+	 */
+	if (!is_pack_valid(p))
+		return 0;
+	e->offset = offset;
+	e->p = p;
+	hashcpy(e->sha1, sha1);
+	return 1;
+}
+
+/*
+ * Iff a pack file contains the object named by sha1, return true and
+ * store its location to e.
+ */
+int find_pack_entry(const unsigned char *sha1, struct pack_entry *e)
+{
+	struct mru_entry *p;
+
+	prepare_packed_git();
+	if (!packed_git)
+		return 0;
+
+	for (p = packed_git_mru->head; p; p = p->next) {
+		if (fill_pack_entry(sha1, e, p->item)) {
+			mru_mark(packed_git_mru, p);
+			return 1;
+		}
+	}
+	return 0;
+}
