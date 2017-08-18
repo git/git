@@ -60,8 +60,10 @@ extern unsigned char *use_pack(struct packed_git *, struct pack_window **, off_t
 extern void close_pack_windows(struct packed_git *);
 extern void close_all_packs(void);
 extern void unuse_pack(struct pack_window **);
+extern void clear_delta_base_cache(void);
 extern struct packed_git *add_packed_git(const char *path, size_t path_len, int local);
 
+extern void *unpack_entry(struct packed_git *, off_t, enum object_type *, unsigned long *);
 extern unsigned long unpack_object_header_buffer(const unsigned char *buf, unsigned long len, enum object_type *type, unsigned long *sizep);
 extern unsigned long get_size_from_delta(struct packed_git *, struct pack_window **, off_t);
 extern int unpack_object_header(struct packed_git *, struct pack_window **, off_t *, unsigned long *);
@@ -69,5 +71,13 @@ extern int unpack_object_header(struct packed_git *, struct pack_window **, off_
 extern void release_pack_memory(size_t);
 
 extern int open_packed_git(struct packed_git *p);
+
+/* global flag to enable extra checks when accessing packed objects */
+extern int do_check_packed_object_crc;
+
+extern int packed_object_info(struct packed_git *pack, off_t offset, struct object_info *);
+
+extern void mark_bad_packed_object(struct packed_git *p, const unsigned char *sha1);
+extern const struct packed_git *has_packed_and_bad(const unsigned char *sha1);
 
 #endif
