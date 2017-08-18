@@ -2788,7 +2788,7 @@ off_t find_pack_entry_one(const unsigned char *sha1,
 		printf("%02x%02x%02x... lo %u hi %u nr %"PRIu32"\n",
 		       sha1[0], sha1[1], sha1[2], lo, hi, p->num_objects);
 
-	do {
+	while (lo < hi) {
 		unsigned mi = (lo + hi) / 2;
 		int cmp = hashcmp(index + mi * stride, sha1);
 
@@ -2801,7 +2801,7 @@ off_t find_pack_entry_one(const unsigned char *sha1,
 			hi = mi;
 		else
 			lo = mi+1;
-	} while (lo < hi);
+	}
 	return 0;
 }
 
