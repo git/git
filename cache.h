@@ -1605,21 +1605,6 @@ struct pack_entry {
 	struct packed_git *p;
 };
 
-/* A hook to report invalid files in pack directory */
-#define PACKDIR_FILE_PACK 1
-#define PACKDIR_FILE_IDX 2
-#define PACKDIR_FILE_GARBAGE 4
-extern void (*report_garbage)(unsigned seen_bits, const char *path);
-
-extern void prepare_packed_git(void);
-extern void reprepare_packed_git(void);
-
-/*
- * Give a rough count of objects in the repository. This sacrifices accuracy
- * for speed.
- */
-unsigned long approximate_object_count(void);
-
 extern struct packed_git *find_sha1_pack(const unsigned char *sha1,
 					 struct packed_git *packs);
 

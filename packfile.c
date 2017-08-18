@@ -1,6 +1,9 @@
 #include "cache.h"
 #include "mru.h"
 #include "pack.h"
+#include "dir.h"
+#include "mergesort.h"
+#include "packfile.h"
 
 char *odb_pack_name(struct strbuf *buf,
 		    const unsigned char *sha1,
@@ -666,4 +669,218 @@ void install_packed_git(struct packed_git *pack)
 
 	pack->next = packed_git;
 	packed_git = pack;
+}
+
+void (*report_garbage)(unsigned seen_bits, const char *path);
+
+static void report_helper(const struct string_list *list,
+			  int seen_bits, int first, int last)
+{
+	if (seen_bits == (PACKDIR_FILE_PACK|PACKDIR_FILE_IDX))
+		return;
+
+	for (; first < last; first++)
+		report_garbage(seen_bits, list->items[first].string);
+}
+
+static void report_pack_garbage(struct string_list *list)
+{
+	int i, baselen = -1, first = 0, seen_bits = 0;
+
+	if (!report_garbage)
+		return;
+
+	string_list_sort(list);
+
+	for (i = 0; i < list->nr; i++) {
+		const char *path = list->items[i].string;
+		if (baselen != -1 &&
+		    strncmp(path, list->items[first].string, baselen)) {
+			report_helper(list, seen_bits, first, i);
+			baselen = -1;
+			seen_bits = 0;
+		}
+		if (baselen == -1) {
+			const char *dot = strrchr(path, '.');
+			if (!dot) {
+				report_garbage(PACKDIR_FILE_GARBAGE, path);
+				continue;
+			}
+			baselen = dot - path + 1;
+			first = i;
+		}
+		if (!strcmp(path + baselen, "pack"))
+			seen_bits |= 1;
+		else if (!strcmp(path + baselen, "idx"))
+			seen_bits |= 2;
+	}
+	report_helper(list, seen_bits, first, list->nr);
+}
+
+static void prepare_packed_git_one(char *objdir, int local)
+{
+	struct strbuf path = STRBUF_INIT;
+	size_t dirnamelen;
+	DIR *dir;
+	struct dirent *de;
+	struct string_list garbage = STRING_LIST_INIT_DUP;
+
+	strbuf_addstr(&path, objdir);
+	strbuf_addstr(&path, "/pack");
+	dir = opendir(path.buf);
+	if (!dir) {
+		if (errno != ENOENT)
+			error_errno("unable to open object pack directory: %s",
+				    path.buf);
+		strbuf_release(&path);
+		return;
+	}
+	strbuf_addch(&path, '/');
+	dirnamelen = path.len;
+	while ((de = readdir(dir)) != NULL) {
+		struct packed_git *p;
+		size_t base_len;
+
+		if (is_dot_or_dotdot(de->d_name))
+			continue;
+
+		strbuf_setlen(&path, dirnamelen);
+		strbuf_addstr(&path, de->d_name);
+
+		base_len = path.len;
+		if (strip_suffix_mem(path.buf, &base_len, ".idx")) {
+			/* Don't reopen a pack we already have. */
+			for (p = packed_git; p; p = p->next) {
+				size_t len;
+				if (strip_suffix(p->pack_name, ".pack", &len) &&
+				    len == base_len &&
+				    !memcmp(p->pack_name, path.buf, len))
+					break;
+			}
+			if (p == NULL &&
+			    /*
+			     * See if it really is a valid .idx file with
+			     * corresponding .pack file that we can map.
+			     */
+			    (p = add_packed_git(path.buf, path.len, local)) != NULL)
+				install_packed_git(p);
+		}
+
+		if (!report_garbage)
+			continue;
+
+		if (ends_with(de->d_name, ".idx") ||
+		    ends_with(de->d_name, ".pack") ||
+		    ends_with(de->d_name, ".bitmap") ||
+		    ends_with(de->d_name, ".keep"))
+			string_list_append(&garbage, path.buf);
+		else
+			report_garbage(PACKDIR_FILE_GARBAGE, path.buf);
+	}
+	closedir(dir);
+	report_pack_garbage(&garbage);
+	string_list_clear(&garbage, 0);
+	strbuf_release(&path);
+}
+
+static int approximate_object_count_valid;
+
+/*
+ * Give a fast, rough count of the number of objects in the repository. This
+ * ignores loose objects completely. If you have a lot of them, then either
+ * you should repack because your performance will be awful, or they are
+ * all unreachable objects about to be pruned, in which case they're not really
+ * interesting as a measure of repo size in the first place.
+ */
+unsigned long approximate_object_count(void)
+{
+	static unsigned long count;
+	if (!approximate_object_count_valid) {
+		struct packed_git *p;
+
+		prepare_packed_git();
+		count = 0;
+		for (p = packed_git; p; p = p->next) {
+			if (open_pack_index(p))
+				continue;
+			count += p->num_objects;
+		}
+	}
+	return count;
+}
+
+static void *get_next_packed_git(const void *p)
+{
+	return ((const struct packed_git *)p)->next;
+}
+
+static void set_next_packed_git(void *p, void *next)
+{
+	((struct packed_git *)p)->next = next;
+}
+
+static int sort_pack(const void *a_, const void *b_)
+{
+	const struct packed_git *a = a_;
+	const struct packed_git *b = b_;
+	int st;
+
+	/*
+	 * Local packs tend to contain objects specific to our
+	 * variant of the project than remote ones.  In addition,
+	 * remote ones could be on a network mounted filesystem.
+	 * Favor local ones for these reasons.
+	 */
+	st = a->pack_local - b->pack_local;
+	if (st)
+		return -st;
+
+	/*
+	 * Younger packs tend to contain more recent objects,
+	 * and more recent objects tend to get accessed more
+	 * often.
+	 */
+	if (a->mtime < b->mtime)
+		return 1;
+	else if (a->mtime == b->mtime)
+		return 0;
+	return -1;
+}
+
+static void rearrange_packed_git(void)
+{
+	packed_git = llist_mergesort(packed_git, get_next_packed_git,
+				     set_next_packed_git, sort_pack);
+}
+
+static void prepare_packed_git_mru(void)
+{
+	struct packed_git *p;
+
+	mru_clear(packed_git_mru);
+	for (p = packed_git; p; p = p->next)
+		mru_append(packed_git_mru, p);
+}
+
+static int prepare_packed_git_run_once = 0;
+void prepare_packed_git(void)
+{
+	struct alternate_object_database *alt;
+
+	if (prepare_packed_git_run_once)
+		return;
+	prepare_packed_git_one(get_object_directory(), 1);
+	prepare_alt_odb();
+	for (alt = alt_odb_list; alt; alt = alt->next)
+		prepare_packed_git_one(alt->path, 0);
+	rearrange_packed_git();
+	prepare_packed_git_mru();
+	prepare_packed_git_run_once = 1;
+}
+
+void reprepare_packed_git(void)
+{
+	approximate_object_count_valid = 0;
+	prepare_packed_git_run_once = 0;
+	prepare_packed_git();
 }

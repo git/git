@@ -17,6 +17,7 @@
 #include "prio-queue.h"
 #include "sha1-array.h"
 #include "oidset.h"
+#include "packfile.h"
 
 static int transfer_unpack_limit = -1;
 static int fetch_unpack_limit = -1;
