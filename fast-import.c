@@ -167,6 +167,7 @@ Format of STDIN stream:
 #include "quote.h"
 #include "dir.h"
 #include "run-command.h"
+#include "packfile.h"
 
 #define PACK_ID_BITS 16
 #define MAX_PACK_ID ((1<<PACK_ID_BITS)-1)

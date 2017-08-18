@@ -11,6 +11,7 @@
 #include "pkt-line.h"
 #include "gettext.h"
 #include "transport.h"
+#include "packfile.h"
 
 static struct trace_key trace_curl = TRACE_KEY_INIT(CURL);
 #if LIBCURL_VERSION_NUM >= 0x070a08
