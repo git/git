@@ -1621,22 +1621,6 @@ extern int odb_mkstemp(struct strbuf *template, const char *pattern);
 extern int odb_pack_keep(const char *name);
 
 /*
- * Make sure that a pointer access into an mmap'd index file is within bounds,
- * and can provide at least 8 bytes of data.
- *
- * Note that this is only necessary for variable-length segments of the file
- * (like the 64-bit extended offset table), as we compare the size to the
- * fixed-length parts when we open the file.
- */
-extern void check_pack_index_ptr(const struct packed_git *p, const void *ptr);
-
-/*
- * Return the offset of the nth object within the specified packfile.
- * The index must already be opened.
- */
-extern off_t nth_packed_object_offset(const struct packed_git *, uint32_t n);
-
-/*
  * If the object named sha1 is present in the specified packfile,
  * return its offset within the packfile; otherwise, return 0.
  */
