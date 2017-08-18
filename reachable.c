@@ -9,6 +9,7 @@
 #include "cache-tree.h"
 #include "progress.h"
 #include "list-objects.h"
+#include "packfile.h"
 
 struct connectivity_progress {
 	struct progress *progress;

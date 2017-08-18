@@ -12,6 +12,7 @@
 #include "streaming.h"
 #include "tree-walk.h"
 #include "sha1-array.h"
+#include "packfile.h"
 
 struct batch_options {
 	int enabled;

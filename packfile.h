@@ -124,4 +124,15 @@ extern int has_sha1_pack(const unsigned char *sha1);
 
 extern int has_pack_index(const unsigned char *sha1);
 
+/*
+ * Iterate over packed objects in both the local
+ * repository and any alternates repositories (unless the
+ * FOR_EACH_OBJECT_LOCAL_ONLY flag, defined in cache.h, is set).
+ */
+typedef int each_packed_object_fn(const struct object_id *oid,
+				  struct packed_git *pack,
+				  uint32_t pos,
+				  void *data);
+extern int for_each_packed_object(each_packed_object_fn, void *, unsigned flags);
+
 #endif
