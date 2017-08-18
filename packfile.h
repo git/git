@@ -43,6 +43,17 @@ extern void pack_report(void);
  */
 extern int open_pack_index(struct packed_git *);
 
+/*
+ * munmap the index file for the specified packfile (if it is
+ * currently mmapped).
+ */
+extern void close_pack_index(struct packed_git *);
+
+extern void close_pack_windows(struct packed_git *);
+extern void close_all_packs(void);
+
+extern int close_pack_fd(struct packed_git *);
+
 extern int unuse_one_window(struct packed_git *current);
 
 extern void release_pack_memory(size_t);
