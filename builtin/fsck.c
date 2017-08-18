@@ -15,6 +15,7 @@
 #include "progress.h"
 #include "streaming.h"
 #include "decorate.h"
+#include "packfile.h"
 
 #define REACHABLE 0x0001
 #define SEEN      0x0002

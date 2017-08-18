@@ -9,6 +9,7 @@
 #include "pack-bitmap.h"
 #include "pack-revindex.h"
 #include "pack-objects.h"
+#include "packfile.h"
 
 /*
  * An entry on the bitmap index, representing the bitmap for a given
