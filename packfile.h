@@ -24,4 +24,13 @@ extern char *sha1_pack_name(const unsigned char *sha1);
  */
 extern char *sha1_pack_index_name(const unsigned char *sha1);
 
+extern unsigned int pack_used_ctr;
+extern unsigned int pack_mmap_calls;
+extern unsigned int peak_pack_open_windows;
+extern unsigned int pack_open_windows;
+extern unsigned int pack_open_fds;
+extern unsigned int pack_max_fds;
+extern size_t peak_pack_mapped;
+extern size_t pack_mapped;
+
 #endif
