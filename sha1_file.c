@@ -719,15 +719,6 @@ void *xmmap(void *start, size_t length,
 	return ret;
 }
 
-void unuse_pack(struct pack_window **w_cursor)
-{
-	struct pack_window *w = *w_cursor;
-	if (w) {
-		w->inuse_cnt--;
-		*w_cursor = NULL;
-	}
-}
-
 static struct packed_git *alloc_packed_git(int extra)
 {
 	struct packed_git *p = xmalloc(st_add(sizeof(*p), extra));
