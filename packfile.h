@@ -28,6 +28,8 @@ extern unsigned int pack_open_fds;
 
 extern struct packed_git *parse_pack_index(unsigned char *sha1, const char *idx_path);
 
+extern void install_packed_git(struct packed_git *pack);
+
 extern void pack_report(void);
 
 /*

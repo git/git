@@ -28,7 +28,7 @@ static unsigned int pack_used_ctr;
 static unsigned int pack_mmap_calls;
 static unsigned int peak_pack_open_windows;
 static unsigned int pack_open_windows;
-unsigned int pack_open_fds;
+static unsigned int pack_open_fds;
 static unsigned int pack_max_fds;
 static size_t peak_pack_mapped;
 static size_t pack_mapped;
@@ -657,4 +657,13 @@ struct packed_git *add_packed_git(const char *path, size_t path_len, int local)
 	if (path_len < 40 || get_sha1_hex(path + path_len - 40, p->sha1))
 		hashclr(p->sha1);
 	return p;
+}
+
+void install_packed_git(struct packed_git *pack)
+{
+	if (pack->pack_fd != -1)
+		pack_open_fds++;
+
+	pack->next = packed_git;
+	packed_git = pack;
 }
