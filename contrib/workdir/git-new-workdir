@@ -24,7 +24,7 @@ new_workdir=$2
 branch=$3
 
 # want to make sure that what is pointed to has a .git directory ...
-git_dir=$(cd "$orig_git" 2>/dev/null &&
+git_dir=$(cd "$orig_git" >/dev/null 2>/dev/null &&
   git rev-parse --git-dir 2>/dev/null) ||
   die "Not a git repository: \"$orig_git\""
 
@@ -53,7 +53,7 @@ then
 fi
 
 # make sure the links in the workdir have full paths to the original repo
-git_dir=$(cd "$git_dir" && pwd) || exit 1
+git_dir=$(cd "$git_dir" >/dev/null && pwd) || exit 1
 
 # don't recreate a workdir over an existing directory, unless it's empty
 if test -d "$new_workdir"
@@ -68,7 +68,7 @@ else
 fi
 
 mkdir -p "$new_workdir/.git" || failed
-cleandir=$(cd "$cleandir" && pwd) || failed
+cleandir=$(cd "$cleandir" >/dev/null && pwd) || failed
 
 cleanup () {
 	rm -rf "$cleandir"
@@ -92,7 +92,7 @@ do
 done
 
 # commands below this are run in the context of the new workdir
-cd "$new_workdir" || failed
+cd "$new_workdir" >/dev/null || failed
 
 # copy the HEAD from the original repository as a default branch
 cp "$git_dir/HEAD" .git/HEAD || failed
