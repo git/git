@@ -481,7 +481,7 @@ static int git_push_config(const char *k, const char *v, void *cb)
 	} else if (!strcmp(k, "push.gpgsign")) {
 		const char *value;
 		if (!git_config_get_value("push.gpgsign", &value)) {
-			switch (git_config_maybe_bool("push.gpgsign", value)) {
+			switch (git_parse_maybe_bool(value)) {
 			case 0:
 				set_push_cert_flags(flags, SEND_PACK_PUSH_CERT_NEVER);
 				break;

@@ -105,7 +105,7 @@ static int send_pack_config(const char *k, const char *v, void *cb)
 	if (!strcmp(k, "push.gpgsign")) {
 		const char *value;
 		if (!git_config_get_value("push.gpgsign", &value)) {
-			switch (git_config_maybe_bool("push.gpgsign", value)) {
+			switch (git_parse_maybe_bool(value)) {
 			case 0:
 				args.push_cert = SEND_PACK_PUSH_CERT_NEVER;
 				break;

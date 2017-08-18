@@ -12,7 +12,7 @@ SYNOPSIS
 'git push' [--all | --mirror | --tags] [--follow-tags] [--atomic] [-n | --dry-run] [--receive-pack=<git-receive-pack>]
 	   [--repo=<repository>] [-f | --force] [-d | --delete] [--prune] [-v | --verbose]
 	   [-u | --set-upstream] [--push-option=<string>]
-	   [--[no-]signed|--sign=(true|false|if-asked)]
+	   [--[no-]signed|--signed=(true|false|if-asked)]
 	   [--force-with-lease[=<refname>[:<expect>]]]
 	   [--no-verify] [<repository> [<refspec>...]]
 
@@ -141,7 +141,7 @@ already exists on the remote side.
 	information, see `push.followTags` in linkgit:git-config[1].
 
 --[no-]signed::
---sign=(true|false|if-asked)::
+--signed=(true|false|if-asked)::
 	GPG-sign the push request to update refs on the receiving
 	side, to allow it to be checked by the hooks and/or be
 	logged.  If `false` or `--no-signed`, no signing will be
