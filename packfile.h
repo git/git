@@ -93,14 +93,19 @@ extern const struct object_id *nth_packed_object_oid(struct object_id *, struct 
  */
 extern off_t nth_packed_object_offset(const struct packed_git *, uint32_t n);
 
+/*
+ * If the object named sha1 is present in the specified packfile,
+ * return its offset within the packfile; otherwise, return 0.
+ */
+extern off_t find_pack_entry_one(const unsigned char *sha1, struct packed_git *);
+
+extern int is_pack_valid(struct packed_git *);
 extern void *unpack_entry(struct packed_git *, off_t, enum object_type *, unsigned long *);
 extern unsigned long unpack_object_header_buffer(const unsigned char *buf, unsigned long len, enum object_type *type, unsigned long *sizep);
 extern unsigned long get_size_from_delta(struct packed_git *, struct pack_window **, off_t);
 extern int unpack_object_header(struct packed_git *, struct pack_window **, off_t *, unsigned long *);
 
 extern void release_pack_memory(size_t);
-
-extern int open_packed_git(struct packed_git *p);
 
 /* global flag to enable extra checks when accessing packed objects */
 extern int do_check_packed_object_crc;
