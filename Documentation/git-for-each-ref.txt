@@ -38,8 +38,8 @@ OPTIONS
 	key.
 
 <format>::
-	A string that interpolates `%(fieldname)` from the
-	object pointed at by a ref being shown.  If `fieldname`
+	A string that interpolates `%(fieldname)` from a ref being shown
+	and the object it points at.  If `fieldname`
 	is prefixed with an asterisk (`*`) and the ref points
 	at a tag object, the value for the field in the object
 	tag refers is used.  When unspecified, defaults to

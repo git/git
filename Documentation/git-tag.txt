@@ -188,8 +188,8 @@ This option is only applicable when listing tags without annotation lines.
 	Defaults to HEAD.
 
 <format>::
-	A string that interpolates `%(fieldname)` from the object
-	pointed at by a ref being shown.  The format is the same as
+	A string that interpolates `%(fieldname)` from a tag ref being shown
+	and the object it points at.  The format is the same as
 	that of linkgit:git-for-each-ref[1].  When unspecified,
 	defaults to `%(refname:strip=2)`.
 
