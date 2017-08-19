@@ -656,6 +656,20 @@ test_expect_success 'stash branch should not drop the stash if the branch exists
 	git rev-parse stash@{0} --
 '
 
+test_expect_success 'stash branch should not drop the stash if the apply fails' '
+	git stash clear &&
+	git reset HEAD~1 --hard &&
+	echo foo >file &&
+	git add file &&
+	git commit -m initial &&
+	echo bar >file &&
+	git stash &&
+	echo baz >file &&
+	test_when_finished "git checkout master" &&
+	test_must_fail git stash branch new_branch stash@{0} &&
+	git rev-parse stash@{0} --
+'
+
 test_expect_success 'stash apply shows status same as git status (relative to current directory)' '
 	git stash clear &&
 	echo 1 >subdir/subfile1 &&
