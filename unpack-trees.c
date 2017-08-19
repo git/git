@@ -343,8 +343,7 @@ static struct progress *get_progress(struct unpack_trees_options *o)
 			total++;
 	}
 
-	return start_progress_delay(_("Checking out files"),
-				    total, 50, 1);
+	return start_delayed_progress(_("Checking out files"), total);
 }
 
 static int check_updates(struct unpack_trees_options *o)
