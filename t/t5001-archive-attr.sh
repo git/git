@@ -76,7 +76,7 @@ test_expect_exists	archive-pathspec/ignored-by-worktree
 test_expect_missing	archive-pathspec/excluded-by-pathspec.d failure
 test_expect_missing	archive-pathspec/excluded-by-pathspec.d/file
 
-test_expect_failure 'git archive with wildcard pathspec' '
+test_expect_success 'git archive with wildcard pathspec' '
 	git archive HEAD ":!excluded-by-p*" >archive-pathspec-wildcard.tar &&
 	extract_tar_to_dir archive-pathspec-wildcard
 '
@@ -85,7 +85,7 @@ test_expect_missing	archive-pathspec-wildcard/ignored
 test_expect_missing	archive-pathspec-wildcard/ignored-by-tree
 test_expect_missing	archive-pathspec-wildcard/ignored-by-tree.d
 test_expect_missing	archive-pathspec-wildcard/ignored-by-tree.d/file
-test_expect_exists	archive-pathspec-wildcard/ignored-by-worktree failure
+test_expect_exists	archive-pathspec-wildcard/ignored-by-worktree
 test_expect_missing	archive-pathspec-wildcard/excluded-by-pathspec.d
 test_expect_missing	archive-pathspec-wildcard/excluded-by-pathspec.d/file
 
