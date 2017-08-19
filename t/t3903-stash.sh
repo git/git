@@ -822,6 +822,18 @@ test_expect_success 'create with multiple arguments for the message' '
 	test_cmp expect actual
 '
 
+test_expect_success 'create in a detached state' '
+	test_when_finished "git checkout master" &&
+	git checkout HEAD~1 &&
+	>foo &&
+	git add foo &&
+	STASH_ID=$(git stash create) &&
+	HEAD_ID=$(git rev-parse --short HEAD) &&
+	echo "WIP on (no branch): ${HEAD_ID} initial" >expect &&
+	git show --pretty=%s -s ${STASH_ID} >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'stash -- <pathspec> stashes and restores the file' '
 	>foo &&
 	>bar &&
