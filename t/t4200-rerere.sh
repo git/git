@@ -274,6 +274,8 @@ rerere_gc_custom_expiry_test () {
 
 rerere_gc_custom_expiry_test 5 0
 
+rerere_gc_custom_expiry_test 5.days.ago now
+
 test_expect_success 'setup: file2 added differently in two branches' '
 	git reset --hard &&
 
