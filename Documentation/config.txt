@@ -216,15 +216,15 @@ boolean::
        synonyms are accepted for 'true' and 'false'; these are all
        case-insensitive.
 
-       true;; Boolean true can be spelled as `yes`, `on`, `true`,
-		or `1`.  Also, a variable defined without `= <value>`
+	true;; Boolean true literals are `yes`, `on`, `true`,
+		and `1`.  Also, a variable defined without `= <value>`
 		is taken as true.
 
-       false;; Boolean false can be spelled as `no`, `off`,
-		`false`, or `0`.
+	false;; Boolean false literals are `no`, `off`, `false`,
+		`0` and the empty string.
 +
 When converting value to the canonical form using `--bool` type
-specifier; 'git config' will ensure that the output is "true" or
+specifier, 'git config' will ensure that the output is "true" or
 "false" (spelled in lowercase).
 
 integer::
