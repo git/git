@@ -374,6 +374,11 @@ test_expect_success 'grep -L -C' '
 	test_cmp expected actual
 '
 
+test_expect_success 'grep --files-without-match --quiet' '
+	git grep --files-without-match --quiet nonexistent_string >actual &&
+	test_cmp /dev/null actual
+'
+
 cat >expected <<EOF
 file:foo mmap bar_mmap
 EOF
