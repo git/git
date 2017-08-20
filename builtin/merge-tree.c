@@ -213,11 +213,11 @@ static void unresolved_directory(const struct traverse_info *info,
 
 	newbase = traverse_path(info, p);
 
-#define ENTRY_SHA1(e) (((e)->mode && S_ISDIR((e)->mode)) ? (e)->oid->hash : NULL)
-	buf0 = fill_tree_descriptor(t+0, ENTRY_SHA1(n + 0));
-	buf1 = fill_tree_descriptor(t+1, ENTRY_SHA1(n + 1));
-	buf2 = fill_tree_descriptor(t+2, ENTRY_SHA1(n + 2));
-#undef ENTRY_SHA1
+#define ENTRY_OID(e) (((e)->mode && S_ISDIR((e)->mode)) ? (e)->oid : NULL)
+	buf0 = fill_tree_descriptor(t + 0, ENTRY_OID(n + 0));
+	buf1 = fill_tree_descriptor(t + 1, ENTRY_OID(n + 1));
+	buf2 = fill_tree_descriptor(t + 2, ENTRY_OID(n + 2));
+#undef ENTRY_OID
 
 	merge_trees(t, newbase);
 
@@ -352,7 +352,7 @@ static void *get_tree_descriptor(struct tree_desc *desc, const char *rev)
 
 	if (get_oid(rev, &oid))
 		die("unknown rev %s", rev);
-	buf = fill_tree_descriptor(desc, oid.hash);
+	buf = fill_tree_descriptor(desc, &oid);
 	if (!buf)
 		die("%s is not a tree", rev);
 	return buf;
