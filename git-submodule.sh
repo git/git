@@ -611,7 +611,6 @@ cmd_update()
 		die_if_unmatched "$mode" "$sha1"
 
 		name=$(git submodule--helper name "$sm_path") || exit
-		url=$(git config submodule."$name".url)
 		if ! test -z "$update"
 		then
 			update_module=$update
