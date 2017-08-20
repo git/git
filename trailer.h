@@ -63,11 +63,36 @@ struct new_trailer_item {
 	enum trailer_if_missing if_missing;
 };
 
-void process_trailers(const char *file, int in_place, int trim_empty,
+struct process_trailer_options {
+	int in_place;
+	int trim_empty;
+	int only_trailers;
+	int only_input;
+	int unfold;
+};
+
+#define PROCESS_TRAILER_OPTIONS_INIT {0}
+
+void process_trailers(const char *file,
+		      const struct process_trailer_options *opts,
 		      struct list_head *new_trailer_head);
 
 void trailer_info_get(struct trailer_info *info, const char *str);
 
 void trailer_info_release(struct trailer_info *info);
+
+/*
+ * Format the trailers from the commit msg "msg" into the strbuf "out".
+ * Note two caveats about "opts":
+ *
+ *   - this is primarily a helper for pretty.c, and not
+ *     all of the flags are supported.
+ *
+ *   - this differs from process_trailers slightly in that we always format
+ *     only the trailer block itself, even if the "only_trailers" option is not
+ *     set.
+ */
+void format_trailers_from_commit(struct strbuf *out, const char *msg,
+				 const struct process_trailer_options *opts);
 
 #endif /* TRAILER_H */
