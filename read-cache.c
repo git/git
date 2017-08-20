@@ -689,7 +689,7 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 		return 0;
 	}
 	if (!intent_only) {
-		if (index_path(ce->oid.hash, path, st, HASH_WRITE_OBJECT)) {
+		if (index_path(&ce->oid, path, st, HASH_WRITE_OBJECT)) {
 			free(ce);
 			return error("unable to index file %s", path);
 		}

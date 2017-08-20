@@ -3686,7 +3686,7 @@ int index_fd(unsigned char *sha1, int fd, struct stat *st,
 	return ret;
 }
 
-int index_path(unsigned char *sha1, const char *path, struct stat *st, unsigned flags)
+int index_path(struct object_id *oid, const char *path, struct stat *st, unsigned flags)
 {
 	int fd;
 	struct strbuf sb = STRBUF_INIT;
@@ -3696,7 +3696,7 @@ int index_path(unsigned char *sha1, const char *path, struct stat *st, unsigned 
 		fd = open(path, O_RDONLY);
 		if (fd < 0)
 			return error_errno("open(\"%s\")", path);
-		if (index_fd(sha1, fd, st, OBJ_BLOB, path, flags) < 0)
+		if (index_fd(oid->hash, fd, st, OBJ_BLOB, path, flags) < 0)
 			return error("%s: failed to insert into database",
 				     path);
 		break;
@@ -3704,14 +3704,14 @@ int index_path(unsigned char *sha1, const char *path, struct stat *st, unsigned 
 		if (strbuf_readlink(&sb, path, st->st_size))
 			return error_errno("readlink(\"%s\")", path);
 		if (!(flags & HASH_WRITE_OBJECT))
-			hash_sha1_file(sb.buf, sb.len, blob_type, sha1);
-		else if (write_sha1_file(sb.buf, sb.len, blob_type, sha1))
+			hash_sha1_file(sb.buf, sb.len, blob_type, oid->hash);
+		else if (write_sha1_file(sb.buf, sb.len, blob_type, oid->hash))
 			return error("%s: failed to insert into database",
 				     path);
 		strbuf_release(&sb);
 		break;
 	case S_IFDIR:
-		return resolve_gitlink_ref(path, "HEAD", sha1);
+		return resolve_gitlink_ref(path, "HEAD", oid->hash);
 	default:
 		return error("%s: unsupported file type", path);
 	}
