@@ -254,13 +254,11 @@ plain::
 	moved line, but it is not very useful in a review to determine
 	if a block of code was moved without permutation.
 zebra::
-	Blocks of moved code are detected greedily. The detected blocks are
+	Blocks of moved text of at least 20 alphanumeric characters
+	are detected greedily. The detected blocks are
 	painted using either the 'color.diff.{old,new}Moved' color or
 	'color.diff.{old,new}MovedAlternative'. The change between
-	the two colors indicates that a new block was detected. If there
-	are fewer than 3 adjacent moved lines, they are not marked up
-	as moved, but the regular colors 'color.diff.{old,new}' will be
-	used.
+	the two colors indicates that a new block was detected.
 dimmed_zebra::
 	Similar to 'zebra', but additional dimming of uninteresting parts
 	of moved code is performed. The bordering lines of two adjacent

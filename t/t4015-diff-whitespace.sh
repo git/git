@@ -1101,9 +1101,9 @@ test_expect_success 'detect malicious moved code, inside file' '
 	<BRED>-{<RESET>
 	<BLUE>-if (!u->is_allowed_foo)<RESET>
 	<BLUE>-return;<RESET>
-	<BRED>-foo(u);<RESET>
-	<BLUE>-}<RESET>
-	<BLUE>-<RESET>
+	<RED>-foo(u);<RESET>
+	<RED>-}<RESET>
+	<RED>-<RESET>
 	 int main()<RESET>
 	 {<RESET>
 	 foo();<RESET>
@@ -1117,11 +1117,11 @@ test_expect_success 'detect malicious moved code, inside file' '
 	 <RESET>
 	<BGREEN>+<RESET><BGREEN>int secure_foo(struct user *u)<RESET>
 	<BGREEN>+<RESET><BGREEN>{<RESET>
-	<YELLOW>+<RESET><YELLOW>foo(u);<RESET>
+	<GREEN>+<RESET><GREEN>foo(u);<RESET>
 	<BGREEN>+<RESET><BGREEN>if (!u->is_allowed_foo)<RESET>
 	<BGREEN>+<RESET><BGREEN>return;<RESET>
-	<YELLOW>+<RESET><YELLOW>}<RESET>
-	<YELLOW>+<RESET>
+	<GREEN>+<RESET><GREEN>}<RESET>
+	<GREEN>+<RESET>
 	 int another_function()<RESET>
 	 {<RESET>
 	 bar();<RESET>
@@ -1182,9 +1182,9 @@ test_expect_success 'plain moved code, inside file' '
 test_expect_success 'detect permutations inside moved code -- dimmed_zebra' '
 	git reset --hard &&
 	cat <<-\EOF >lines.txt &&
-		line 1
-		line 2
-		line 3
+		long line 1
+		long line 2
+		long line 3
 		line 4
 		line 5
 		line 6
@@ -1195,9 +1195,9 @@ test_expect_success 'detect permutations inside moved code -- dimmed_zebra' '
 		line 11
 		line 12
 		line 13
-		line 14
-		line 15
-		line 16
+		long line 14
+		long line 15
+		long line 16
 	EOF
 	git add lines.txt &&
 	git commit -m "add poetry" &&
@@ -1208,12 +1208,12 @@ test_expect_success 'detect permutations inside moved code -- dimmed_zebra' '
 		line 7
 		line 8
 		line 9
-		line 1
-		line 2
-		line 3
-		line 14
-		line 15
-		line 16
+		long line 1
+		long line 2
+		long line 3
+		long line 14
+		long line 15
+		long line 16
 		line 10
 		line 11
 		line 12
@@ -1227,35 +1227,36 @@ test_expect_success 'detect permutations inside moved code -- dimmed_zebra' '
 	test_config color.diff.newMovedDimmed "normal cyan" &&
 	test_config color.diff.oldMovedAlternativeDimmed "normal blue" &&
 	test_config color.diff.newMovedAlternativeDimmed "normal yellow" &&
-	git diff HEAD --no-renames --color-moved=dimmed_zebra| test_decode_color >actual &&
+	git diff HEAD --no-renames --color-moved=dimmed_zebra |
+		grep -v "index" |
+		test_decode_color >actual &&
 	cat <<-\EOF >expected &&
 	<BOLD>diff --git a/lines.txt b/lines.txt<RESET>
-	<BOLD>index 47ea9c3..ba96a38 100644<RESET>
 	<BOLD>--- a/lines.txt<RESET>
 	<BOLD>+++ b/lines.txt<RESET>
 	<CYAN>@@ -1,16 +1,16 @@<RESET>
-	<BMAGENTA>-line 1<RESET>
-	<BMAGENTA>-line 2<RESET>
-	<BMAGENTA>-line 3<RESET>
+	<BMAGENTA>-long line 1<RESET>
+	<BMAGENTA>-long line 2<RESET>
+	<BMAGENTA>-long line 3<RESET>
 	 line 4<RESET>
 	 line 5<RESET>
 	 line 6<RESET>
 	 line 7<RESET>
 	 line 8<RESET>
 	 line 9<RESET>
-	<BCYAN>+<RESET><BCYAN>line 1<RESET>
-	<BCYAN>+<RESET><BCYAN>line 2<RESET>
-	<CYAN>+<RESET><CYAN>line 3<RESET>
-	<YELLOW>+<RESET><YELLOW>line 14<RESET>
-	<BYELLOW>+<RESET><BYELLOW>line 15<RESET>
-	<BYELLOW>+<RESET><BYELLOW>line 16<RESET>
+	<BCYAN>+<RESET><BCYAN>long line 1<RESET>
+	<BCYAN>+<RESET><BCYAN>long line 2<RESET>
+	<CYAN>+<RESET><CYAN>long line 3<RESET>
+	<YELLOW>+<RESET><YELLOW>long line 14<RESET>
+	<BYELLOW>+<RESET><BYELLOW>long line 15<RESET>
+	<BYELLOW>+<RESET><BYELLOW>long line 16<RESET>
 	 line 10<RESET>
 	 line 11<RESET>
 	 line 12<RESET>
 	 line 13<RESET>
-	<BMAGENTA>-line 14<RESET>
-	<BMAGENTA>-line 15<RESET>
-	<BMAGENTA>-line 16<RESET>
+	<BMAGENTA>-long line 14<RESET>
+	<BMAGENTA>-long line 15<RESET>
+	<BMAGENTA>-long line 16<RESET>
 	EOF
 	test_cmp expected actual
 '
@@ -1270,35 +1271,36 @@ test_expect_success 'cmd option assumes configured colored-moved' '
 	test_config color.diff.oldMovedAlternativeDimmed "normal blue" &&
 	test_config color.diff.newMovedAlternativeDimmed "normal yellow" &&
 	test_config diff.colorMoved zebra &&
-	git diff HEAD --no-renames --color-moved| test_decode_color >actual &&
+	git diff HEAD --no-renames --color-moved |
+		grep -v "index" |
+		test_decode_color >actual &&
 	cat <<-\EOF >expected &&
 	<BOLD>diff --git a/lines.txt b/lines.txt<RESET>
-	<BOLD>index 47ea9c3..ba96a38 100644<RESET>
 	<BOLD>--- a/lines.txt<RESET>
 	<BOLD>+++ b/lines.txt<RESET>
 	<CYAN>@@ -1,16 +1,16 @@<RESET>
-	<MAGENTA>-line 1<RESET>
-	<MAGENTA>-line 2<RESET>
-	<MAGENTA>-line 3<RESET>
+	<MAGENTA>-long line 1<RESET>
+	<MAGENTA>-long line 2<RESET>
+	<MAGENTA>-long line 3<RESET>
 	 line 4<RESET>
 	 line 5<RESET>
 	 line 6<RESET>
 	 line 7<RESET>
 	 line 8<RESET>
 	 line 9<RESET>
-	<CYAN>+<RESET><CYAN>line 1<RESET>
-	<CYAN>+<RESET><CYAN>line 2<RESET>
-	<CYAN>+<RESET><CYAN>line 3<RESET>
-	<YELLOW>+<RESET><YELLOW>line 14<RESET>
-	<YELLOW>+<RESET><YELLOW>line 15<RESET>
-	<YELLOW>+<RESET><YELLOW>line 16<RESET>
+	<CYAN>+<RESET><CYAN>long line 1<RESET>
+	<CYAN>+<RESET><CYAN>long line 2<RESET>
+	<CYAN>+<RESET><CYAN>long line 3<RESET>
+	<YELLOW>+<RESET><YELLOW>long line 14<RESET>
+	<YELLOW>+<RESET><YELLOW>long line 15<RESET>
+	<YELLOW>+<RESET><YELLOW>long line 16<RESET>
 	 line 10<RESET>
 	 line 11<RESET>
 	 line 12<RESET>
 	 line 13<RESET>
-	<MAGENTA>-line 14<RESET>
-	<MAGENTA>-line 15<RESET>
-	<MAGENTA>-line 16<RESET>
+	<MAGENTA>-long line 14<RESET>
+	<MAGENTA>-long line 15<RESET>
+	<MAGENTA>-long line 16<RESET>
 	EOF
 	test_cmp expected actual
 '
@@ -1324,16 +1326,16 @@ line 1
 line 2
 line 3
 line 4
-line 5
-line 6
-line 7
+long line 5
+long line 6
+long line 7
 EOF
 	git add lines.txt &&
 	git commit -m "add poetry" &&
 	cat <<\EOF >lines.txt &&
-	line 5
-	line 6
-	line 7
+	long line 5
+	long line 6
+	long line 7
 line 1
 line 2
 line 3
@@ -1341,44 +1343,167 @@ line 4
 EOF
 	test_config color.diff.oldMoved "magenta" &&
 	test_config color.diff.newMoved "cyan" &&
-	git diff HEAD --no-renames --color-moved| test_decode_color >actual &&
+	git diff HEAD --no-renames --color-moved |
+		grep -v "index" |
+		test_decode_color >actual &&
 	cat <<-\EOF >expected &&
 	<BOLD>diff --git a/lines.txt b/lines.txt<RESET>
-	<BOLD>index 734156d..eb89ead 100644<RESET>
 	<BOLD>--- a/lines.txt<RESET>
 	<BOLD>+++ b/lines.txt<RESET>
 	<CYAN>@@ -1,7 +1,7 @@<RESET>
-	<GREEN>+<RESET>	<GREEN>line 5<RESET>
-	<GREEN>+<RESET>	<GREEN>line 6<RESET>
-	<GREEN>+<RESET>	<GREEN>line 7<RESET>
+	<GREEN>+<RESET>	<GREEN>long line 5<RESET>
+	<GREEN>+<RESET>	<GREEN>long line 6<RESET>
+	<GREEN>+<RESET>	<GREEN>long line 7<RESET>
 	 line 1<RESET>
 	 line 2<RESET>
 	 line 3<RESET>
 	 line 4<RESET>
-	<RED>-line 5<RESET>
-	<RED>-line 6<RESET>
-	<RED>-line 7<RESET>
+	<RED>-long line 5<RESET>
+	<RED>-long line 6<RESET>
+	<RED>-long line 7<RESET>
 	EOF
 	test_cmp expected actual &&
 
-	git diff HEAD --no-renames -w --color-moved| test_decode_color >actual &&
+	git diff HEAD --no-renames -w --color-moved |
+		grep -v "index" |
+		test_decode_color >actual &&
 	cat <<-\EOF >expected &&
 	<BOLD>diff --git a/lines.txt b/lines.txt<RESET>
-	<BOLD>index 734156d..eb89ead 100644<RESET>
 	<BOLD>--- a/lines.txt<RESET>
 	<BOLD>+++ b/lines.txt<RESET>
 	<CYAN>@@ -1,7 +1,7 @@<RESET>
-	<CYAN>+<RESET>	<CYAN>line 5<RESET>
-	<CYAN>+<RESET>	<CYAN>line 6<RESET>
-	<CYAN>+<RESET>	<CYAN>line 7<RESET>
+	<CYAN>+<RESET>	<CYAN>long line 5<RESET>
+	<CYAN>+<RESET>	<CYAN>long line 6<RESET>
+	<CYAN>+<RESET>	<CYAN>long line 7<RESET>
 	 line 1<RESET>
 	 line 2<RESET>
 	 line 3<RESET>
 	 line 4<RESET>
-	<MAGENTA>-line 5<RESET>
-	<MAGENTA>-line 6<RESET>
-	<MAGENTA>-line 7<RESET>
+	<MAGENTA>-long line 5<RESET>
+	<MAGENTA>-long line 6<RESET>
+	<MAGENTA>-long line 7<RESET>
 	EOF
+	test_cmp expected actual
+'
+
+test_expect_success '--color-moved block at end of diff output respects MIN_ALNUM_COUNT' '
+	git reset --hard &&
+	>bar &&
+	cat <<-\EOF >foo &&
+	irrelevant_line
+	line1
+	EOF
+	git add foo bar &&
+	git commit -m x &&
+
+	cat <<-\EOF >bar &&
+	line1
+	EOF
+	cat <<-\EOF >foo &&
+	irrelevant_line
+	EOF
+
+	git diff HEAD --color-moved=zebra --no-renames |
+		grep -v "index" |
+		test_decode_color >actual &&
+	cat >expected <<-\EOF &&
+	<BOLD>diff --git a/bar b/bar<RESET>
+	<BOLD>--- a/bar<RESET>
+	<BOLD>+++ b/bar<RESET>
+	<CYAN>@@ -0,0 +1 @@<RESET>
+	<GREEN>+<RESET><GREEN>line1<RESET>
+	<BOLD>diff --git a/foo b/foo<RESET>
+	<BOLD>--- a/foo<RESET>
+	<BOLD>+++ b/foo<RESET>
+	<CYAN>@@ -1,2 +1 @@<RESET>
+	 irrelevant_line<RESET>
+	<RED>-line1<RESET>
+	EOF
+
+	test_cmp expected actual
+'
+
+test_expect_success '--color-moved respects MIN_ALNUM_COUNT' '
+	git reset --hard &&
+	cat <<-\EOF >foo &&
+	nineteen chars 456789
+	irrelevant_line
+	twenty chars 234567890
+	EOF
+	>bar &&
+	git add foo bar &&
+	git commit -m x &&
+
+	cat <<-\EOF >foo &&
+	irrelevant_line
+	EOF
+	cat <<-\EOF >bar &&
+	twenty chars 234567890
+	nineteen chars 456789
+	EOF
+
+	git diff HEAD --color-moved=zebra --no-renames |
+		grep -v "index" |
+		test_decode_color >actual &&
+	cat >expected <<-\EOF &&
+	<BOLD>diff --git a/bar b/bar<RESET>
+	<BOLD>--- a/bar<RESET>
+	<BOLD>+++ b/bar<RESET>
+	<CYAN>@@ -0,0 +1,2 @@<RESET>
+	<BOLD;CYAN>+<RESET><BOLD;CYAN>twenty chars 234567890<RESET>
+	<GREEN>+<RESET><GREEN>nineteen chars 456789<RESET>
+	<BOLD>diff --git a/foo b/foo<RESET>
+	<BOLD>--- a/foo<RESET>
+	<BOLD>+++ b/foo<RESET>
+	<CYAN>@@ -1,3 +1 @@<RESET>
+	<RED>-nineteen chars 456789<RESET>
+	 irrelevant_line<RESET>
+	<BOLD;MAGENTA>-twenty chars 234567890<RESET>
+	EOF
+
+	test_cmp expected actual
+'
+
+test_expect_success '--color-moved treats adjacent blocks as separate for MIN_ALNUM_COUNT' '
+	git reset --hard &&
+	cat <<-\EOF >foo &&
+	7charsA
+	irrelevant_line
+	7charsB
+	7charsC
+	EOF
+	>bar &&
+	git add foo bar &&
+	git commit -m x &&
+
+	cat <<-\EOF >foo &&
+	irrelevant_line
+	EOF
+	cat <<-\EOF >bar &&
+	7charsB
+	7charsC
+	7charsA
+	EOF
+
+	git diff HEAD --color-moved=zebra --no-renames | grep -v "index" | test_decode_color >actual &&
+	cat >expected <<-\EOF &&
+	<BOLD>diff --git a/bar b/bar<RESET>
+	<BOLD>--- a/bar<RESET>
+	<BOLD>+++ b/bar<RESET>
+	<CYAN>@@ -0,0 +1,3 @@<RESET>
+	<GREEN>+<RESET><GREEN>7charsB<RESET>
+	<GREEN>+<RESET><GREEN>7charsC<RESET>
+	<GREEN>+<RESET><GREEN>7charsA<RESET>
+	<BOLD>diff --git a/foo b/foo<RESET>
+	<BOLD>--- a/foo<RESET>
+	<BOLD>+++ b/foo<RESET>
+	<CYAN>@@ -1,4 +1 @@<RESET>
+	<RED>-7charsA<RESET>
+	 irrelevant_line<RESET>
+	<RED>-7charsB<RESET>
+	<RED>-7charsC<RESET>
+	EOF
+
 	test_cmp expected actual
 '
 
