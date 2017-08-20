@@ -21,7 +21,7 @@ This command reads some patches or commit messages from either the
 <file> arguments or the standard input if no <file> is specified. If
 `--parse` is specified, the output consists of the parsed trailers.
 
-Otherwise, the this command applies the arguments passed using the
+Otherwise, this command applies the arguments passed using the
 `--trailer` option, if any, to the commit message part of each input
 file. The result is emitted on the standard output.
 
