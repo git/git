@@ -161,7 +161,7 @@ static int ce_compare_data(const struct cache_entry *ce, struct stat *st)
 
 	if (fd >= 0) {
 		struct object_id oid;
-		if (!index_fd(oid.hash, fd, st, OBJ_BLOB, ce->name, 0))
+		if (!index_fd(&oid, fd, st, OBJ_BLOB, ce->name, 0))
 			match = oidcmp(&oid, &ce->oid);
 		/* index_fd() closed the file descriptor already */
 	}

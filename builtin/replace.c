@@ -269,7 +269,7 @@ static void import_object(struct object_id *oid, enum object_type type,
 
 		if (fstat(fd, &st) < 0)
 			die_errno("unable to fstat %s", filename);
-		if (index_fd(oid->hash, fd, &st, type, NULL, flags) < 0)
+		if (index_fd(oid, fd, &st, type, NULL, flags) < 0)
 			die("unable to write object to database");
 		/* index_fd close()s fd for us */
 	}

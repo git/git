@@ -3662,7 +3662,7 @@ static int index_stream(unsigned char *sha1, int fd, size_t size,
 	return index_bulk_checkin(sha1, fd, size, type, path, flags);
 }
 
-int index_fd(unsigned char *sha1, int fd, struct stat *st,
+int index_fd(struct object_id *oid, int fd, struct stat *st,
 	     enum object_type type, const char *path, unsigned flags)
 {
 	int ret;
@@ -3672,15 +3672,15 @@ int index_fd(unsigned char *sha1, int fd, struct stat *st,
 	 * die() for large files.
 	 */
 	if (type == OBJ_BLOB && path && would_convert_to_git_filter_fd(path))
-		ret = index_stream_convert_blob(sha1, fd, path, flags);
+		ret = index_stream_convert_blob(oid->hash, fd, path, flags);
 	else if (!S_ISREG(st->st_mode))
-		ret = index_pipe(sha1, fd, type, path, flags);
+		ret = index_pipe(oid->hash, fd, type, path, flags);
 	else if (st->st_size <= big_file_threshold || type != OBJ_BLOB ||
 		 (path && would_convert_to_git(&the_index, path)))
-		ret = index_core(sha1, fd, xsize_t(st->st_size), type, path,
+		ret = index_core(oid->hash, fd, xsize_t(st->st_size), type, path,
 				 flags);
 	else
-		ret = index_stream(sha1, fd, xsize_t(st->st_size), type, path,
+		ret = index_stream(oid->hash, fd, xsize_t(st->st_size), type, path,
 				   flags);
 	close(fd);
 	return ret;
@@ -3696,7 +3696,7 @@ int index_path(struct object_id *oid, const char *path, struct stat *st, unsigne
 		fd = open(path, O_RDONLY);
 		if (fd < 0)
 			return error_errno("open(\"%s\")", path);
-		if (index_fd(oid->hash, fd, st, OBJ_BLOB, path, flags) < 0)
+		if (index_fd(oid, fd, st, OBJ_BLOB, path, flags) < 0)
 			return error("%s: failed to insert into database",
 				     path);
 		break;
