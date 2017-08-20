@@ -38,11 +38,12 @@ OPTIONS
 	key.
 
 <format>::
-	A string that interpolates `%(fieldname)` from the
-	object pointed at by a ref being shown.  If `fieldname`
+	A string that interpolates `%(fieldname)` from a ref being shown
+	and the object it points at.  If `fieldname`
 	is prefixed with an asterisk (`*`) and the ref points
-	at a tag object, the value for the field in the object
-	tag refers is used.  When unspecified, defaults to
+	at a tag object, use the value for the field in the object
+	which the tag object refers to (instead of the field in the tag object).
+	When unspecified, `<format>` defaults to
 	`%(objectname) SPC %(objecttype) TAB %(refname)`.
 	It also interpolates `%%` to `%`, and `%xx` where `xx`
 	are hex digits interpolates to character with hex code
