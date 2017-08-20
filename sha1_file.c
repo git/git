@@ -3437,7 +3437,7 @@ int write_sha1_file(const void *buf, unsigned long len, const char *type, unsign
 }
 
 int hash_sha1_file_literally(const void *buf, unsigned long len, const char *type,
-			     unsigned char *sha1, unsigned flags)
+			     struct object_id *oid, unsigned flags)
 {
 	char *header;
 	int hdrlen, status = 0;
@@ -3445,13 +3445,13 @@ int hash_sha1_file_literally(const void *buf, unsigned long len, const char *typ
 	/* type string, SP, %lu of the length plus NUL must fit this */
 	hdrlen = strlen(type) + 32;
 	header = xmalloc(hdrlen);
-	write_sha1_file_prepare(buf, len, type, sha1, header, &hdrlen);
+	write_sha1_file_prepare(buf, len, type, oid->hash, header, &hdrlen);
 
 	if (!(flags & HASH_WRITE_OBJECT))
 		goto cleanup;
-	if (freshen_packed_object(sha1) || freshen_loose_object(sha1))
+	if (freshen_packed_object(oid->hash) || freshen_loose_object(oid->hash))
 		goto cleanup;
-	status = write_loose_object(sha1, header, hdrlen, buf, len, 0);
+	status = write_loose_object(oid->hash, header, hdrlen, buf, len, 0);
 
 cleanup:
 	free(header);
