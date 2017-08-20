@@ -80,6 +80,29 @@ OPTIONS
 	trailer to the input messages. See the description of this
 	command.
 
+--where <placement>::
+--no-where::
+	Specify where all new trailers will be added.  A setting
+	provided with '--where' overrides all configuration variables
+	and applies to all '--trailer' options until the next occurrence of
+	'--where' or '--no-where'.
+
+--if-exists <action>::
+--no-if-exists::
+	Specify what action will be performed when there is already at
+	least one trailer with the same <token> in the message.  A setting
+	provided with '--if-exists' overrides all configuration variables
+	and applies to all '--trailer' options until the next occurrence of
+	'--if-exists' or '--no-if-exists'.
+
+--if-missing <action>::
+--no-if-missing::
+	Specify what action will be performed when there is no other
+	trailer with the same <token> in the message.  A setting
+	provided with '--if-missing' overrides all configuration variables
+	and applies to all '--trailer' options until the next occurrence of
+	'--if-missing' or '--no-if-missing'.
+
 CONFIGURATION VARIABLES
 -----------------------
 
@@ -170,8 +193,8 @@ trailer.<token>.where::
 	configuration variable and it overrides what is specified by
 	that option for trailers with the specified <token>.
 
-trailer.<token>.ifexist::
-	This option takes the same values as the 'trailer.ifexist'
+trailer.<token>.ifexists::
+	This option takes the same values as the 'trailer.ifexists'
 	configuration variable and it overrides what is specified by
 	that option for trailers with the specified <token>.
 

@@ -1,6 +1,33 @@
 #ifndef TRAILER_H
 #define TRAILER_H
 
+#include "list.h"
+
+enum trailer_where {
+	WHERE_DEFAULT,
+	WHERE_END,
+	WHERE_AFTER,
+	WHERE_BEFORE,
+	WHERE_START
+};
+enum trailer_if_exists {
+	EXISTS_DEFAULT,
+	EXISTS_ADD_IF_DIFFERENT_NEIGHBOR,
+	EXISTS_ADD_IF_DIFFERENT,
+	EXISTS_ADD,
+	EXISTS_REPLACE,
+	EXISTS_DO_NOTHING
+};
+enum trailer_if_missing {
+	MISSING_DEFAULT,
+	MISSING_ADD,
+	MISSING_DO_NOTHING
+};
+
+int trailer_set_where(enum trailer_where *item, const char *value);
+int trailer_set_if_exists(enum trailer_if_exists *item, const char *value);
+int trailer_set_if_missing(enum trailer_if_missing *item, const char *value);
+
 struct trailer_info {
 	/*
 	 * True if there is a blank line before the location pointed to by
@@ -22,8 +49,22 @@ struct trailer_info {
 	size_t trailer_nr;
 };
 
+/*
+ * A list that represents newly-added trailers, such as those provided
+ * with the --trailer command line option of git-interpret-trailers.
+ */
+struct new_trailer_item {
+	struct list_head list;
+
+	const char *text;
+
+	enum trailer_where where;
+	enum trailer_if_exists if_exists;
+	enum trailer_if_missing if_missing;
+};
+
 void process_trailers(const char *file, int in_place, int trim_empty,
-		      struct string_list *trailers);
+		      struct list_head *new_trailer_head);
 
 void trailer_info_get(struct trailer_info *info, const char *str);
 
