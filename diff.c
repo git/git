@@ -464,8 +464,6 @@ static struct diff_tempfile {
 	struct tempfile tempfile;
 } diff_temp[2];
 
-typedef unsigned long (*sane_truncate_fn)(char *line, unsigned long len);
-
 struct emit_callback {
 	int color_diff;
 	unsigned ws_rule;
@@ -473,7 +471,6 @@ struct emit_callback {
 	int blank_at_eof_in_postimage;
 	int lno_in_preimage;
 	int lno_in_postimage;
-	sane_truncate_fn truncate;
 	const char **label_path;
 	struct diff_words_data *diff_words;
 	struct diff_options *opt;
@@ -1999,8 +1996,6 @@ static unsigned long sane_truncate_line(struct emit_callback *ecb, char *line, u
 	unsigned long allot;
 	size_t l = len;
 
-	if (ecb->truncate)
-		return ecb->truncate(line, len);
 	cp = line;
 	allot = l;
 	while (0 < l) {
