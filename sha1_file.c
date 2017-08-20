@@ -3655,11 +3655,11 @@ static int index_core(unsigned char *sha1, int fd, size_t size,
  * binary blobs, they generally do not want to get any conversion, and
  * callers should avoid this code path when filters are requested.
  */
-static int index_stream(unsigned char *sha1, int fd, size_t size,
+static int index_stream(struct object_id *oid, int fd, size_t size,
 			enum object_type type, const char *path,
 			unsigned flags)
 {
-	return index_bulk_checkin(sha1, fd, size, type, path, flags);
+	return index_bulk_checkin(oid->hash, fd, size, type, path, flags);
 }
 
 int index_fd(struct object_id *oid, int fd, struct stat *st,
@@ -3680,7 +3680,7 @@ int index_fd(struct object_id *oid, int fd, struct stat *st,
 		ret = index_core(oid->hash, fd, xsize_t(st->st_size), type, path,
 				 flags);
 	else
-		ret = index_stream(oid->hash, fd, xsize_t(st->st_size), type, path,
+		ret = index_stream(oid, fd, xsize_t(st->st_size), type, path,
 				   flags);
 	close(fd);
 	return ret;
