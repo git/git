@@ -40,7 +40,7 @@ WINBASEAPI VOID WINAPI
 WakeConditionVariable(PCONDITION_VARIABLE ConditionVariable);
 WINBASEAPI VOID WINAPI
 WakeAllConditionVariable(PCONDITION_VARIABLE ConditionVariable);
-WINBASEAPI WINBOOL WINAPI
+WINBASEAPI BOOL WINAPI
 SleepConditionVariableCS(PCONDITION_VARIABLE ConditionVariable,
                          PCRITICAL_SECTION CriticalSection,
                          DWORD dwMilliseconds);
