@@ -143,7 +143,7 @@ REM ================================================================
 
 :not_2015
    REM TODO....
-   echo TODO support older versions of VS.
+   echo TODO support older versions of VS. >&2
    EXIT /B 1
 
 REM ================================================================
