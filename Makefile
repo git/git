@@ -2713,6 +2713,7 @@ ifdef MSVC
 	$(RM) $(patsubst %.exe,%.pdb,$(OTHER_PROGRAMS))
 	$(RM) $(patsubst %.exe,%.pdb,$(PROGRAMS))
 	$(RM) $(patsubst %.exe,%.pdb,$(TEST_PROGRAMS))
+	$(RM) GIT-MSVC-GEN
 endif
 
 .PHONY: all install profile-clean clean strip
