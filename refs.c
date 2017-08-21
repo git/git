@@ -561,6 +561,21 @@ enum ref_type ref_type(const char *refname)
        return REF_TYPE_NORMAL;
 }
 
+long get_files_ref_lock_timeout_ms(void)
+{
+	static int configured = 0;
+
+	/* The default timeout is 100 ms: */
+	static int timeout_ms = 100;
+
+	if (!configured) {
+		git_config_get_int("core.filesreflocktimeout", &timeout_ms);
+		configured = 1;
+	}
+
+	return timeout_ms;
+}
+
 static int write_pseudoref(const char *pseudoref, const unsigned char *sha1,
 			   const unsigned char *old_sha1, struct strbuf *err)
 {
@@ -573,7 +588,9 @@ static int write_pseudoref(const char *pseudoref, const unsigned char *sha1,
 	strbuf_addf(&buf, "%s\n", sha1_to_hex(sha1));
 
 	filename = git_path("%s", pseudoref);
-	fd = hold_lock_file_for_update(&lock, filename, LOCK_DIE_ON_ERROR);
+	fd = hold_lock_file_for_update_timeout(&lock, filename,
+					       LOCK_DIE_ON_ERROR,
+					       get_files_ref_lock_timeout_ms());
 	if (fd < 0) {
 		strbuf_addf(err, "could not open '%s' for writing: %s",
 			    filename, strerror(errno));
@@ -616,8 +633,9 @@ static int delete_pseudoref(const char *pseudoref, const unsigned char *old_sha1
 		int fd;
 		unsigned char actual_old_sha1[20];
 
-		fd = hold_lock_file_for_update(&lock, filename,
-					       LOCK_DIE_ON_ERROR);
+		fd = hold_lock_file_for_update_timeout(
+				&lock, filename, LOCK_DIE_ON_ERROR,
+				get_files_ref_lock_timeout_ms());
 		if (fd < 0)
 			die_errno(_("Could not open '%s' for writing"), filename);
 		if (read_ref(pseudoref, actual_old_sha1))

@@ -855,7 +855,9 @@ retry:
 	if (!lock->lk)
 		lock->lk = xcalloc(1, sizeof(struct lock_file));
 
-	if (hold_lock_file_for_update(lock->lk, ref_file.buf, LOCK_NO_DEREF) < 0) {
+	if (hold_lock_file_for_update_timeout(
+			    lock->lk, ref_file.buf, LOCK_NO_DEREF,
+			    get_files_ref_lock_timeout_ms()) < 0) {
 		if (errno == ENOENT && --attempts_remaining > 0) {
 			/*
 			 * Maybe somebody just deleted one of the
@@ -1181,7 +1183,9 @@ static int create_reflock(const char *path, void *cb)
 {
 	struct lock_file *lk = cb;
 
-	return hold_lock_file_for_update(lk, path, LOCK_NO_DEREF) < 0 ? -1 : 0;
+	return hold_lock_file_for_update_timeout(
+			lk, path, LOCK_NO_DEREF,
+			get_files_ref_lock_timeout_ms()) < 0 ? -1 : 0;
 }
 
 /*
