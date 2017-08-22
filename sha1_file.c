@@ -2759,7 +2759,6 @@ off_t find_pack_entry_one(const unsigned char *sha1,
 	const uint32_t *level1_ofs = p->index_data;
 	const unsigned char *index = p->index_data;
 	unsigned hi, lo, stride;
-	static int use_lookup = -1;
 	static int debug_lookup = -1;
 
 	if (debug_lookup < 0)
@@ -2788,16 +2787,6 @@ off_t find_pack_entry_one(const unsigned char *sha1,
 	if (debug_lookup)
 		printf("%02x%02x%02x... lo %u hi %u nr %"PRIu32"\n",
 		       sha1[0], sha1[1], sha1[2], lo, hi, p->num_objects);
-
-	if (use_lookup < 0)
-		use_lookup = !!getenv("GIT_USE_LOOKUP");
-	if (use_lookup) {
-		int pos = sha1_entry_pos(index, stride, 0,
-					 lo, hi, p->num_objects, sha1);
-		if (pos < 0)
-			return 0;
-		return nth_packed_object_offset(p, pos);
-	}
 
 	do {
 		unsigned mi = (lo + hi) / 2;
