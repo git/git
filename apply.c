@@ -80,7 +80,6 @@ int init_apply_state(struct apply_state *state,
 {
 	memset(state, 0, sizeof(*state));
 	state->prefix = prefix;
-	state->prefix_length = state->prefix ? strlen(state->prefix) : 0;
 	state->lock_file = lock_file;
 	state->newfd = -1;
 	state->apply = 1;
@@ -786,11 +785,11 @@ static int guess_p_value(struct apply_state *state, const char *nameline)
 		 * Does it begin with "a/$our-prefix" and such?  Then this is
 		 * very likely to apply to our directory.
 		 */
-		if (!strncmp(name, state->prefix, state->prefix_length))
+		if (starts_with(name, state->prefix))
 			val = count_slashes(state->prefix);
 		else {
 			cp++;
-			if (!strncmp(cp, state->prefix, state->prefix_length))
+			if (starts_with(cp, state->prefix))
 				val = count_slashes(state->prefix) + 1;
 		}
 	}
@@ -2089,10 +2088,9 @@ static int use_patch(struct apply_state *state, struct patch *p)
 	int i;
 
 	/* Paths outside are not touched regardless of "--include" */
-	if (0 < state->prefix_length) {
-		int pathlen = strlen(pathname);
-		if (pathlen <= state->prefix_length ||
-		    memcmp(state->prefix, pathname, state->prefix_length))
+	if (state->prefix && *state->prefix) {
+		const char *rest;
+		if (!skip_prefix(pathname, state->prefix, &rest) || !*rest)
 			return 0;
 	}
 
