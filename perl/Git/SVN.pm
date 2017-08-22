@@ -1416,7 +1416,7 @@ sub parse_svn_date {
 			delete $ENV{TZ};
 		}
 
-		my $our_TZ = get_tz_offset();
+		my $our_TZ = get_tz_offset($epoch_in_UTC);
 
 		# This converts $epoch_in_UTC into our local timezone.
 		my ($sec, $min, $hour, $mday, $mon, $year,
