@@ -179,7 +179,7 @@ static int traverse_reachable(void)
 	unsigned int nr = 0;
 	int result = 0;
 	if (show_progress)
-		progress = start_progress_delay(_("Checking connectivity"), 0, 0, 2);
+		progress = start_delayed_progress(_("Checking connectivity"), 0);
 	while (pending.nr) {
 		struct object_array_entry *entry;
 		struct object *obj;

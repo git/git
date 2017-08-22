@@ -34,7 +34,7 @@ struct progress {
 	unsigned total;
 	unsigned last_percent;
 	unsigned delay;
-	unsigned delayed_percent_treshold;
+	unsigned delayed_percent_threshold;
 	struct throughput *throughput;
 	uint64_t start_ns;
 };
@@ -88,7 +88,7 @@ static int display(struct progress *progress, unsigned n, const char *done)
 			return 0;
 		if (progress->total) {
 			unsigned percent = n * 100 / progress->total;
-			if (percent > progress->delayed_percent_treshold) {
+			if (percent > progress->delayed_percent_threshold) {
 				/* inhibit this progress report entirely */
 				clear_progress_signal();
 				progress->delay = -1;
@@ -205,8 +205,8 @@ int display_progress(struct progress *progress, unsigned n)
 	return progress ? display(progress, n, NULL) : 0;
 }
 
-struct progress *start_progress_delay(const char *title, unsigned total,
-				       unsigned percent_treshold, unsigned delay)
+static struct progress *start_progress_delay(const char *title, unsigned total,
+					     unsigned percent_threshold, unsigned delay)
 {
 	struct progress *progress = malloc(sizeof(*progress));
 	if (!progress) {
@@ -219,12 +219,17 @@ struct progress *start_progress_delay(const char *title, unsigned total,
 	progress->total = total;
 	progress->last_value = -1;
 	progress->last_percent = -1;
-	progress->delayed_percent_treshold = percent_treshold;
+	progress->delayed_percent_threshold = percent_threshold;
 	progress->delay = delay;
 	progress->throughput = NULL;
 	progress->start_ns = getnanotime();
 	set_progress_signal();
 	return progress;
+}
+
+struct progress *start_delayed_progress(const char *title, unsigned total)
+{
+	return start_progress_delay(title, total, 0, 2);
 }
 
 struct progress *start_progress(const char *title, unsigned total)
