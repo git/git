@@ -155,6 +155,8 @@ static int run_sequencer(int argc, const char **argv, struct replay_opts *opts)
 				"--strategy-option", opts->xopts ? 1 : 0,
 				"-x", opts->record_origin,
 				"--ff", opts->allow_ff,
+				"--rerere-autoupdate", opts->allow_rerere_auto == RERERE_AUTOUPDATE,
+				"--no-rerere-autoupdate", opts->allow_rerere_auto == RERERE_NOAUTOUPDATE,
 				NULL);
 	}
 
