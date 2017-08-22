@@ -1391,7 +1391,7 @@ msgstr "сбой закрытия стандартного ввода у rev-lis
 msgid ""
 "CRLF will be replaced by LF in %s.\n"
 "The file will have its original line endings in your working directory."
-msgstr "CRLF будет заменен на LF в %s.\nФайл будет иметь свои оригинальные концы строк в рашей рабочей копии."
+msgstr "CRLF будет заменен на LF в %s.\nФайл будет иметь свои оригинальные концы строк в вашей рабочей копии."
 
 #: convert.c:209
 #, c-format
@@ -1403,7 +1403,7 @@ msgstr "CRLF будет заменен на LF в %s."
 msgid ""
 "LF will be replaced by CRLF in %s.\n"
 "The file will have its original line endings in your working directory."
-msgstr "LF будет заменен на CRLF в %s.\nФайл будет иметь свои оригинальные концы строк в рашей рабочей копии."
+msgstr "LF будет заменен на CRLF в %s.\nФайл будет иметь свои оригинальные концы строк в вашей рабочей копии."
 
 #: convert.c:219
 #, c-format
