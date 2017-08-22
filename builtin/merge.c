@@ -566,7 +566,7 @@ static int git_merge_config(const char *k, const char *v, void *cb)
 	else if (!strcmp(k, "merge.renormalize"))
 		option_renormalize = git_config_bool(k, v);
 	else if (!strcmp(k, "merge.ff")) {
-		int boolval = git_config_maybe_bool(k, v);
+		int boolval = git_parse_maybe_bool(v);
 		if (0 <= boolval) {
 			fast_forward = boolval ? FF_ALLOW : FF_NO;
 		} else if (v && !strcmp(v, "only")) {
@@ -940,7 +940,7 @@ static int default_edit_option(void)
 		return 0;
 
 	if (e) {
-		int v = git_config_maybe_bool(name, e);
+		int v = git_parse_maybe_bool(e);
 		if (v < 0)
 			die(_("Bad value '%s' in environment '%s'"), e, name);
 		return v;

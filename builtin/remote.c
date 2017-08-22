@@ -301,7 +301,7 @@ static int config_read_branches(const char *key, const char *value, void *cb)
 			}
 			string_list_append(&info->merge, xstrdup(value));
 		} else {
-			int v = git_config_maybe_bool(orig_key, value);
+			int v = git_parse_maybe_bool(value);
 			if (v >= 0)
 				info->rebase = v;
 			else if (!strcmp(value, "preserve"))

@@ -71,6 +71,13 @@ test_expect_success 'push --signed fails with a receiver without push certificat
 	test_i18ngrep "the receiving end does not support" err
 '
 
+test_expect_success 'push --signed=1 is accepted' '
+	prepare_dst &&
+	mkdir -p dst/.git/hooks &&
+	test_must_fail git push --signed=1 dst noop ff +noff 2>err &&
+	test_i18ngrep "the receiving end does not support" err
+'
+
 test_expect_success GPG 'no certificate for a signed push with no update' '
 	prepare_dst &&
 	mkdir -p dst/.git/hooks &&
