@@ -8,7 +8,7 @@
 #include "repo_tree.h"
 #include "fast_export.h"
 
-const char *repo_read_path(const char *path, uint32_t *mode_out)
+const char *svn_repo_read_path(const char *path, uint32_t *mode_out)
 {
 	int err;
 	static struct strbuf buf = STRBUF_INIT;
@@ -25,7 +25,7 @@ const char *repo_read_path(const char *path, uint32_t *mode_out)
 	return buf.buf;
 }
 
-void repo_copy(uint32_t revision, const char *src, const char *dst)
+void svn_repo_copy(uint32_t revision, const char *src, const char *dst)
 {
 	int err;
 	uint32_t mode;
@@ -42,7 +42,7 @@ void repo_copy(uint32_t revision, const char *src, const char *dst)
 	fast_export_modify(dst, mode, data.buf);
 }
 
-void repo_delete(const char *path)
+void svn_repo_delete(const char *path)
 {
 	fast_export_delete(path);
 }
