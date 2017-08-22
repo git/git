@@ -1027,7 +1027,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 {
 	static struct strbuf cwd = STRBUF_INIT;
 	struct strbuf dir = STRBUF_INIT, gitdir = STRBUF_INIT;
-	const char *prefix, *env_prefix;
+	const char *prefix;
 
 	/*
 	 * We may have read an incomplete configuration before
@@ -1084,16 +1084,6 @@ const char *setup_git_directory_gently(int *nongit_ok)
 	default:
 		die("BUG: unhandled setup_git_directory_1() result");
 	}
-
-	/*
-	 * NEEDSWORK: This was a hack in order to get ls-files and grep to have
-	 * properly formated output when recursing submodules.  Once ls-files
-	 * and grep have been changed to perform this recursing in-process this
-	 * needs to be removed.
-	 */
-	env_prefix = getenv(GIT_TOPLEVEL_PREFIX_ENVIRONMENT);
-	if (env_prefix)
-		prefix = env_prefix;
 
 	if (prefix)
 		setenv(GIT_PREFIX_ENVIRONMENT, prefix, 1);

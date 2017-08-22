@@ -20,37 +20,53 @@
 #include "worktree.h"
 #include "parse-options.h"
 
-static int config_fetch_recurse_submodules = RECURSE_SUBMODULES_ON_DEMAND;
 static int config_update_recurse_submodules = RECURSE_SUBMODULES_OFF;
-static int parallel_jobs = 1;
 static struct string_list changed_submodule_paths = STRING_LIST_INIT_DUP;
 static int initialized_fetch_ref_tips;
 static struct oid_array ref_tips_before_fetch;
 static struct oid_array ref_tips_after_fetch;
 
 /*
- * The following flag is set if the .gitmodules file is unmerged. We then
- * disable recursion for all submodules where .git/config doesn't have a
- * matching config entry because we can't guess what might be configured in
- * .gitmodules unless the user resolves the conflict. When a command line
- * option is given (which always overrides configuration) this flag will be
- * ignored.
+ * Check if the .gitmodules file is unmerged. Parsing of the .gitmodules file
+ * will be disabled because we can't guess what might be configured in
+ * .gitmodules unless the user resolves the conflict.
  */
-static int gitmodules_is_unmerged;
+int is_gitmodules_unmerged(const struct index_state *istate)
+{
+	int pos = index_name_pos(istate, GITMODULES_FILE, strlen(GITMODULES_FILE));
+	if (pos < 0) { /* .gitmodules not found or isn't merged */
+		pos = -1 - pos;
+		if (istate->cache_nr > pos) {  /* there is a .gitmodules */
+			const struct cache_entry *ce = istate->cache[pos];
+			if (ce_namelen(ce) == strlen(GITMODULES_FILE) &&
+			    !strcmp(ce->name, GITMODULES_FILE))
+				return 1;
+		}
+	}
+
+	return 0;
+}
 
 /*
- * This flag is set if the .gitmodules file had unstaged modifications on
- * startup. This must be checked before allowing modifications to the
- * .gitmodules file with the intention to stage them later, because when
- * continuing we would stage the modifications the user didn't stage herself
- * too. That might change in a future version when we learn to stage the
- * changes we do ourselves without staging any previous modifications.
+ * Check if the .gitmodules file has unstaged modifications.  This must be
+ * checked before allowing modifications to the .gitmodules file with the
+ * intention to stage them later, because when continuing we would stage the
+ * modifications the user didn't stage herself too. That might change in a
+ * future version when we learn to stage the changes we do ourselves without
+ * staging any previous modifications.
  */
-static int gitmodules_is_modified;
-
-int is_staging_gitmodules_ok(void)
+int is_staging_gitmodules_ok(const struct index_state *istate)
 {
-	return !gitmodules_is_modified;
+	int pos = index_name_pos(istate, GITMODULES_FILE, strlen(GITMODULES_FILE));
+
+	if ((pos >= 0) && (pos < istate->cache_nr)) {
+		struct stat st;
+		if (lstat(GITMODULES_FILE, &st) == 0 &&
+		    ce_match_stat(istate->cache[pos], &st, 0) & DATA_CHANGED)
+			return 0;
+	}
+
+	return 1;
 }
 
 /*
@@ -63,10 +79,10 @@ int update_path_in_gitmodules(const char *oldpath, const char *newpath)
 	struct strbuf entry = STRBUF_INIT;
 	const struct submodule *submodule;
 
-	if (!file_exists(".gitmodules")) /* Do nothing without .gitmodules */
+	if (!file_exists(GITMODULES_FILE)) /* Do nothing without .gitmodules */
 		return -1;
 
-	if (gitmodules_is_unmerged)
+	if (is_gitmodules_unmerged(&the_index))
 		die(_("Cannot change unmerged .gitmodules, resolve merge conflicts first"));
 
 	submodule = submodule_from_path(&null_oid, oldpath);
@@ -77,7 +93,7 @@ int update_path_in_gitmodules(const char *oldpath, const char *newpath)
 	strbuf_addstr(&entry, "submodule.");
 	strbuf_addstr(&entry, submodule->name);
 	strbuf_addstr(&entry, ".path");
-	if (git_config_set_in_file_gently(".gitmodules", entry.buf, newpath) < 0) {
+	if (git_config_set_in_file_gently(GITMODULES_FILE, entry.buf, newpath) < 0) {
 		/* Maybe the user already did that, don't error out here */
 		warning(_("Could not update .gitmodules entry %s"), entry.buf);
 		strbuf_release(&entry);
@@ -97,10 +113,10 @@ int remove_path_from_gitmodules(const char *path)
 	struct strbuf sect = STRBUF_INIT;
 	const struct submodule *submodule;
 
-	if (!file_exists(".gitmodules")) /* Do nothing without .gitmodules */
+	if (!file_exists(GITMODULES_FILE)) /* Do nothing without .gitmodules */
 		return -1;
 
-	if (gitmodules_is_unmerged)
+	if (is_gitmodules_unmerged(&the_index))
 		die(_("Cannot change unmerged .gitmodules, resolve merge conflicts first"));
 
 	submodule = submodule_from_path(&null_oid, path);
@@ -110,7 +126,7 @@ int remove_path_from_gitmodules(const char *path)
 	}
 	strbuf_addstr(&sect, "submodule.");
 	strbuf_addstr(&sect, submodule->name);
-	if (git_config_rename_section_in_file(".gitmodules", sect.buf, NULL) < 0) {
+	if (git_config_rename_section_in_file(GITMODULES_FILE, sect.buf, NULL) < 0) {
 		/* Maybe the user already did that, don't error out here */
 		warning(_("Could not remove .gitmodules entry for %s"), path);
 		strbuf_release(&sect);
@@ -122,7 +138,7 @@ int remove_path_from_gitmodules(const char *path)
 
 void stage_updated_gitmodules(void)
 {
-	if (add_file_to_cache(".gitmodules", 0))
+	if (add_file_to_cache(GITMODULES_FILE, 0))
 		die(_("staging updated .gitmodules failed"));
 }
 
@@ -151,7 +167,7 @@ void set_diffopt_flags_from_submodule_config(struct diff_options *diffopt,
 	if (submodule) {
 		if (submodule->ignore)
 			handle_ignore_submodules_arg(diffopt, submodule->ignore);
-		else if (gitmodules_is_unmerged)
+		else if (is_gitmodules_unmerged(&the_index))
 			DIFF_OPT_SET(diffopt, IGNORE_SUBMODULES);
 	}
 }
@@ -159,17 +175,8 @@ void set_diffopt_flags_from_submodule_config(struct diff_options *diffopt,
 /* For loading from the .gitmodules file. */
 static int git_modules_config(const char *var, const char *value, void *cb)
 {
-	if (!strcmp(var, "submodule.fetchjobs")) {
-		parallel_jobs = git_config_int(var, value);
-		if (parallel_jobs < 0)
-			die(_("negative values not allowed for submodule.fetchJobs"));
-		return 0;
-	} else if (starts_with(var, "submodule."))
+	if (starts_with(var, "submodule."))
 		return parse_submodule_config_option(var, value);
-	else if (!strcmp(var, "fetch.recursesubmodules")) {
-		config_fetch_recurse_submodules = parse_fetch_recurse_submodules_arg(var, value);
-		return 0;
-	}
 	return 0;
 }
 
@@ -223,39 +230,6 @@ void load_submodule_cache(void)
 	git_config(submodule_config, NULL);
 }
 
-void gitmodules_config(void)
-{
-	const char *work_tree = get_git_work_tree();
-	if (work_tree) {
-		struct strbuf gitmodules_path = STRBUF_INIT;
-		int pos;
-		strbuf_addstr(&gitmodules_path, work_tree);
-		strbuf_addstr(&gitmodules_path, "/.gitmodules");
-		if (read_cache() < 0)
-			die("index file corrupt");
-		pos = cache_name_pos(".gitmodules", 11);
-		if (pos < 0) { /* .gitmodules not found or isn't merged */
-			pos = -1 - pos;
-			if (active_nr > pos) {  /* there is a .gitmodules */
-				const struct cache_entry *ce = active_cache[pos];
-				if (ce_namelen(ce) == 11 &&
-				    !memcmp(ce->name, ".gitmodules", 11))
-					gitmodules_is_unmerged = 1;
-			}
-		} else if (pos < active_nr) {
-			struct stat st;
-			if (lstat(".gitmodules", &st) == 0 &&
-			    ce_match_stat(active_cache[pos], &st, 0) & DATA_CHANGED)
-				gitmodules_is_modified = 1;
-		}
-
-		if (!gitmodules_is_unmerged)
-			git_config_from_file(git_modules_config,
-				gitmodules_path.buf, NULL);
-		strbuf_release(&gitmodules_path);
-	}
-}
-
 static int gitmodules_cb(const char *var, const char *value, void *data)
 {
 	struct repository *repo = data;
@@ -264,10 +238,24 @@ static int gitmodules_cb(const char *var, const char *value, void *data)
 
 void repo_read_gitmodules(struct repository *repo)
 {
-	char *gitmodules_path = repo_worktree_path(repo, ".gitmodules");
+	if (repo->worktree) {
+		char *gitmodules;
 
-	git_config_from_file(gitmodules_cb, gitmodules_path, repo);
-	free(gitmodules_path);
+		if (repo_read_index(repo) < 0)
+			return;
+
+		gitmodules = repo_worktree_path(repo, GITMODULES_FILE);
+
+		if (!is_gitmodules_unmerged(repo->index))
+			git_config_from_file(gitmodules_cb, gitmodules, repo);
+
+		free(gitmodules);
+	}
+}
+
+void gitmodules_config(void)
+{
+	repo_read_gitmodules(the_repository);
 }
 
 void gitmodules_config_oid(const struct object_id *commit_oid)
@@ -718,11 +706,6 @@ done:
 		clear_commit_marks(left, ~0);
 	if (right)
 		clear_commit_marks(right, ~0);
-}
-
-void set_config_fetch_recurse_submodules(int value)
-{
-	config_fetch_recurse_submodules = value;
 }
 
 int should_update_submodules(void)
@@ -1182,10 +1165,11 @@ struct submodule_parallel_fetch {
 	const char *work_tree;
 	const char *prefix;
 	int command_line_option;
+	int default_option;
 	int quiet;
 	int result;
 };
-#define SPF_INIT {0, ARGV_ARRAY_INIT, NULL, NULL, 0, 0, 0}
+#define SPF_INIT {0, ARGV_ARRAY_INIT, NULL, NULL, 0, 0, 0, 0}
 
 static int get_next_submodule(struct child_process *cp,
 			      struct strbuf *err, void *data, void **task_cb)
@@ -1223,10 +1207,9 @@ static int get_next_submodule(struct child_process *cp,
 					default_argv = "on-demand";
 				}
 			} else {
-				if ((config_fetch_recurse_submodules == RECURSE_SUBMODULES_OFF) ||
-				    gitmodules_is_unmerged)
+				if (spf->default_option == RECURSE_SUBMODULES_OFF)
 					continue;
-				if (config_fetch_recurse_submodules == RECURSE_SUBMODULES_ON_DEMAND) {
+				if (spf->default_option == RECURSE_SUBMODULES_ON_DEMAND) {
 					if (!unsorted_string_list_lookup(&changed_submodule_paths, ce->name))
 						continue;
 					default_argv = "on-demand";
@@ -1293,6 +1276,7 @@ static int fetch_finish(int retvalue, struct strbuf *err,
 
 int fetch_populated_submodules(const struct argv_array *options,
 			       const char *prefix, int command_line_option,
+			       int default_option,
 			       int quiet, int max_parallel_jobs)
 {
 	int i;
@@ -1300,6 +1284,7 @@ int fetch_populated_submodules(const struct argv_array *options,
 
 	spf.work_tree = get_git_work_tree();
 	spf.command_line_option = command_line_option;
+	spf.default_option = default_option;
 	spf.quiet = quiet;
 	spf.prefix = prefix;
 
@@ -1314,9 +1299,6 @@ int fetch_populated_submodules(const struct argv_array *options,
 		argv_array_push(&spf.args, options->argv[i]);
 	argv_array_push(&spf.args, "--recurse-submodules-default");
 	/* default value, "--submodule-prefix" and its value are added later */
-
-	if (max_parallel_jobs < 0)
-		max_parallel_jobs = parallel_jobs;
 
 	calculate_changed_submodule_paths();
 	run_processes_parallel(max_parallel_jobs,
@@ -1835,11 +1817,6 @@ int merge_submodule(struct object_id *result, const char *path,
 
 	free(merges.objects);
 	return 0;
-}
-
-int parallel_submodules(void)
-{
-	return parallel_jobs;
 }
 
 /*

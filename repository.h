@@ -92,6 +92,14 @@ extern int repo_submodule_init(struct repository *submodule,
 			       const char *path);
 extern void repo_clear(struct repository *repo);
 
+/*
+ * Populates the repository's index from its index_file, an index struct will
+ * be allocated if needed.
+ *
+ * Return the number of index entries in the populated index or a value less
+ * than zero if an error occured.  If the repository's index has already been
+ * populated then the number of entries will simply be returned.
+ */
 extern int repo_read_index(struct repository *repo);
 
 #endif /* REPOSITORY_H */

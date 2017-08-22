@@ -2059,6 +2059,23 @@ int git_config_get_pathname(const char *key, const char **dest)
 	return repo_config_get_pathname(the_repository, key, dest);
 }
 
+/*
+ * Note: This function exists solely to maintain backward compatibility with
+ * 'fetch' and 'update_clone' storing configuration in '.gitmodules' and should
+ * NOT be used anywhere else.
+ *
+ * Runs the provided config function on the '.gitmodules' file found in the
+ * working directory.
+ */
+void config_from_gitmodules(config_fn_t fn, void *data)
+{
+	if (the_repository->worktree) {
+		char *file = repo_worktree_path(the_repository, GITMODULES_FILE);
+		git_config_from_file(fn, file, data);
+		free(file);
+	}
+}
+
 int git_config_get_expiry(const char *key, const char **output)
 {
 	int ret = git_config_get_string_const(key, output);
