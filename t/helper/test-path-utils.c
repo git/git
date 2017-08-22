@@ -38,6 +38,20 @@ struct test_data {
 	const char *alternative; /* output: ... or this.      */
 };
 
+/*
+ * Compatibility wrappers for OpenBSD, whose basename(3) and dirname(3)
+ * have const parameters.
+ */
+static char *posix_basename(char *path)
+{
+	return basename(path);
+}
+
+static char *posix_dirname(char *path)
+{
+	return dirname(path);
+}
+
 static int test_function(struct test_data *data, char *(*func)(char *input),
 	const char *funcname)
 {
@@ -251,10 +265,10 @@ int cmd_main(int argc, const char **argv)
 	}
 
 	if (argc == 2 && !strcmp(argv[1], "basename"))
-		return test_function(basename_data, basename, argv[1]);
+		return test_function(basename_data, posix_basename, argv[1]);
 
 	if (argc == 2 && !strcmp(argv[1], "dirname"))
-		return test_function(dirname_data, dirname, argv[1]);
+		return test_function(dirname_data, posix_dirname, argv[1]);
 
 	fprintf(stderr, "%s: unknown function name: %s\n", argv[0],
 		argv[1] ? argv[1] : "(there was none)");
