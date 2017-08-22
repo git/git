@@ -239,6 +239,33 @@ test_expect_success 'old records rest in peace' '
 	! test -f $rr2/preimage
 '
 
+test_expect_success 'rerere gc with custom expiry' '
+	rm -fr .git/rr-cache &&
+	rr=.git/rr-cache/$_z40 &&
+	mkdir -p "$rr" &&
+	>"$rr/preimage" &&
+	>"$rr/postimage" &&
+
+	two_days_ago=$((-2*86400)) &&
+	test-chmtime =$two_days_ago "$rr/preimage" &&
+	test-chmtime =$two_days_ago "$rr/postimage" &&
+
+	find .git/rr-cache -type f | sort >original &&
+
+	git -c gc.rerereresolved=5 -c gc.rerereunresolved=5 rerere gc &&
+	find .git/rr-cache -type f | sort >actual &&
+	test_cmp original actual &&
+
+	git -c gc.rerereresolved=5 -c gc.rerereunresolved=0 rerere gc &&
+	find .git/rr-cache -type f | sort >actual &&
+	test_cmp original actual &&
+
+	git -c gc.rerereresolved=0 -c gc.rerereunresolved=0 rerere gc &&
+	find .git/rr-cache -type f | sort >actual &&
+	>expect &&
+	test_cmp expect actual
+'
+
 test_expect_success 'setup: file2 added differently in two branches' '
 	git reset --hard &&
 
@@ -418,33 +445,6 @@ count_pre_post () {
 	find .git/rr-cache/ -type f -name "postimage*" >actual &&
 	test_line_count = "$2" actual
 }
-
-test_expect_success 'rerere gc' '
-	rm -fr .git/rr-cache &&
-	rr=.git/rr-cache/$_z40 &&
-	mkdir -p "$rr" &&
-	>"$rr/preimage" &&
-	>"$rr/postimage" &&
-
-	two_days_ago=$((-2*86400)) &&
-	test-chmtime =$two_days_ago "$rr/preimage" &&
-	test-chmtime =$two_days_ago "$rr/postimage" &&
-
-	find .git/rr-cache -type f | sort >original &&
-
-	git -c gc.rerereresolved=5 -c gc.rerereunresolved=5 rerere gc &&
-	find .git/rr-cache -type f | sort >actual &&
-	test_cmp original actual &&
-
-	git -c gc.rerereresolved=5 -c gc.rerereunresolved=0 rerere gc &&
-	find .git/rr-cache -type f | sort >actual &&
-	test_cmp original actual &&
-
-	git -c gc.rerereresolved=0 -c gc.rerereunresolved=0 rerere gc &&
-	find .git/rr-cache -type f | sort >actual &&
-	>expect &&
-	test_cmp expect actual
-'
 
 merge_conflict_resolve () {
 	git reset --hard &&
