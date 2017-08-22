@@ -65,6 +65,17 @@ Performance, Internal Implementation, Development Support etc.
    hand-rolled substitute.
    (merge 90dbf226ba js/git-gui-msgfmt-on-windows later to maint).
 
+ * "git grep --recurse-submodules" has been reworked to give a more
+   consistent output across submodule boundary (and do its thing
+   without having to fork a separate process).
+
+ * A helper function to read a single whole line into strbuf
+   mistakenly triggered OOM error at EOF under certain conditions,
+   which has been fixed.
+   (merge 642956cf45 rs/strbuf-getwholeline-fix later to maint).
+
+ * The "ref-store" code reorganization continues.
+
 
 Also contains various documentation updates and code clean-ups.
 
@@ -118,6 +129,41 @@ Fixes since v2.14
    and then "git tag -l" is made to run pager by default.
    (merge 595d59e2b5 ma/pager-per-subcommand-action later to maint).
 
+ * "git push --recurse-submodules $there HEAD:$target" was not
+   propagated down to the submodules, but now it is.
+   (merge c7be7201a7 bw/push-options-recursively-to-submodules later to maint).
+
+ * Commands like "git rebase" accepted the --rerere-autoupdate option
+   from the command line, but did not always use it.  This has been
+   fixed.
+   (merge f826fb799e pw/sequence-rerere-autoupdate later to maint).
+
+ * "git clone --recurse-submodules --quiet" did not pass the quiet
+   option down to submodules.
+   (merge 03c004c581 bw/clone-recursive-quiet later to maint).
+
+ * Test portability fix for OBSD.
+   (merge bed67874e2 rs/obsd-getcwd-workaround later to maint).
+   (merge 4c7fda8fc1 rs/t4062-obsd later to maint).
+
+ * Portability fix for OBSD.
+   (merge 29c2eda80b rs/in-obsd-basename-dirname-take-const later to maint).
+
+ * "git am -s" has been taught that some input may end with a trailer
+   block that is not Signed-off-by: and it should refrain from adding
+   an extra blank line before adding a new sign-off in such a case.
+   (merge 735285b403 pw/am-signoff later to maint).
+
+ * "git svn" used with "--localtime" option did not compute the tz
+   offset for the timestamp in question and instead always used the
+   current time, which has been corrected.
+   (merge 1adc4b9a58 ur/svn-local-zone later to maint).
+
+ * Memory leak in an error codepath has been plugged.
+   (merge 83cd6f9017 rs/fsck-obj-leakfix later to maint).
+   (merge 896dca3ab7 rs/unpack-entry-leakfix later to maint).
+   (merge 149d8cbb2e rs/win32-syslog-leakfix later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge 5b114f3bb0 rs/bswap-ubsan-fix later to maint).
    (merge 168e63554c rs/move-array later to maint).
@@ -131,3 +177,14 @@ Fixes since v2.14
    (merge fa64a2fdbe jt/subprocess-handshake later to maint).
    (merge 0ba9c9a0fb jb/t8008-cleanup later to maint).
    (merge a7c28a2161 jt/t1450-fsck-corrupt-packfile later to maint).
+   (merge dff2813391 ab/ref-filter-no-contains later to maint).
+   (merge f094b89a4d ma/parse-maybe-bool later to maint).
+   (merge 974ce8078c mf/no-dashed-subcommands later to maint).
+   (merge f81935cc4d jc/perl-git-comment-typofix later to maint).
+   (merge 57ea241ef0 rs/t3700-clean-leftover later to maint).
+   (merge f1068efefe jk/drop-sha1-entry-pos later to maint).
+   (merge 0b006014c8 jk/hashcmp-memcmp later to maint).
+   (merge 1e22a9917b rj/add-chmod-error-message later to maint).
+   (merge 881529c846 rs/apply-lose-prefix-length later to maint).
+   (merge 6355a76802 rs/find-pack-entry-bisection later to maint).
+   (merge de3ce210ed rs/merge-microcleanup later to maint).
