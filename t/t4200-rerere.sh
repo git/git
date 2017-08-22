@@ -239,32 +239,40 @@ test_expect_success 'old records rest in peace' '
 	! test -f $rr2/preimage
 '
 
-test_expect_success 'rerere gc with custom expiry' '
-	rm -fr .git/rr-cache &&
-	rr=.git/rr-cache/$_z40 &&
-	mkdir -p "$rr" &&
-	>"$rr/preimage" &&
-	>"$rr/postimage" &&
+rerere_gc_custom_expiry_test () {
+	five_days="$1" right_now="$2"
+	test_expect_success "rerere gc with custom expiry ($five_days, $right_now)" '
+		rm -fr .git/rr-cache &&
+		rr=.git/rr-cache/$_z40 &&
+		mkdir -p "$rr" &&
+		>"$rr/preimage" &&
+		>"$rr/postimage" &&
 
-	two_days_ago=$((-2*86400)) &&
-	test-chmtime =$two_days_ago "$rr/preimage" &&
-	test-chmtime =$two_days_ago "$rr/postimage" &&
+		two_days_ago=$((-2*86400)) &&
+		test-chmtime =$two_days_ago "$rr/preimage" &&
+		test-chmtime =$two_days_ago "$rr/postimage" &&
 
-	find .git/rr-cache -type f | sort >original &&
+		find .git/rr-cache -type f | sort >original &&
 
-	git -c gc.rerereresolved=5 -c gc.rerereunresolved=5 rerere gc &&
-	find .git/rr-cache -type f | sort >actual &&
-	test_cmp original actual &&
+		git -c "gc.rerereresolved=$five_days" \
+		    -c "gc.rerereunresolved=$five_days" rerere gc &&
+		find .git/rr-cache -type f | sort >actual &&
+		test_cmp original actual &&
 
-	git -c gc.rerereresolved=5 -c gc.rerereunresolved=0 rerere gc &&
-	find .git/rr-cache -type f | sort >actual &&
-	test_cmp original actual &&
+		git -c "gc.rerereresolved=$five_days" \
+		    -c "gc.rerereunresolved=$right_now" rerere gc &&
+		find .git/rr-cache -type f | sort >actual &&
+		test_cmp original actual &&
 
-	git -c gc.rerereresolved=0 -c gc.rerereunresolved=0 rerere gc &&
-	find .git/rr-cache -type f | sort >actual &&
-	>expect &&
-	test_cmp expect actual
-'
+		git -c "gc.rerereresolved=$right_now" \
+		    -c "gc.rerereunresolved=$right_now" rerere gc &&
+		find .git/rr-cache -type f | sort >actual &&
+		>expect &&
+		test_cmp expect actual
+	'
+}
+
+rerere_gc_custom_expiry_test 5 0
 
 test_expect_success 'setup: file2 added differently in two branches' '
 	git reset --hard &&
