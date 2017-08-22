@@ -446,6 +446,8 @@ merge_conflict_resolve () {
 }
 
 test_expect_success 'multiple identical conflicts' '
+	rm -fr .git/rr-cache &&
+	mkdir .git/rr-cache &&
 	git reset --hard &&
 
 	test_seq 1 6 >early &&
