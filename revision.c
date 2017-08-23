@@ -148,16 +148,14 @@ static void add_pending_object_with_path(struct rev_info *revs,
 	if (revs->reflog_info && obj->type == OBJ_COMMIT) {
 		struct strbuf buf = STRBUF_INIT;
 		int len = interpret_branch_name(name, 0, &buf, 0);
-		int st;
 
 		if (0 < len && name[len] && buf.len)
 			strbuf_addstr(&buf, name + len);
-		st = add_reflog_for_walk(revs->reflog_info,
-					 (struct commit *)obj,
-					 buf.buf[0] ? buf.buf: name);
+		add_reflog_for_walk(revs->reflog_info,
+				    (struct commit *)obj,
+				    buf.buf[0] ? buf.buf: name);
 		strbuf_release(&buf);
-		if (st)
-			return;
+		return; /* do not add the commit itself */
 	}
 	add_object_array_with_path(obj, name, &revs->pending, mode, path);
 }
@@ -2364,6 +2362,8 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 
 	if (revs->reverse && revs->reflog_info)
 		die("cannot combine --reverse with --walk-reflogs");
+	if (revs->reflog_info && revs->limited)
+		die("cannot combine --walk-reflogs with history-limiting options");
 	if (revs->rewrite_parents && revs->children.name)
 		die("cannot combine --parents and --children");
 
@@ -2963,6 +2963,18 @@ static inline int want_ancestry(const struct rev_info *revs)
 	return (revs->rewrite_parents || revs->children.name);
 }
 
+/*
+ * Return a timestamp to be used for --since/--until comparisons for this
+ * commit, based on the revision options.
+ */
+static timestamp_t comparison_date(const struct rev_info *revs,
+				   struct commit *commit)
+{
+	return revs->reflog_info ?
+		get_reflog_timestamp(revs->reflog_info) :
+		commit->date;
+}
+
 enum commit_action get_commit_action(struct rev_info *revs, struct commit *commit)
 {
 	if (commit->object.flags & SHOWN)
@@ -2973,8 +2985,9 @@ enum commit_action get_commit_action(struct rev_info *revs, struct commit *commi
 		return commit_show;
 	if (commit->object.flags & UNINTERESTING)
 		return commit_ignore;
-	if (revs->min_age != -1 && (commit->date > revs->min_age))
-		return commit_ignore;
+	if (revs->min_age != -1 &&
+	    comparison_date(revs, commit) > revs->min_age)
+			return commit_ignore;
 	if (revs->min_parents || (revs->max_parents >= 0)) {
 		int n = commit_list_count(commit->parents);
 		if ((n < revs->min_parents) ||
@@ -3107,17 +3120,19 @@ static void track_linear(struct rev_info *revs, struct commit *commit)
 
 static struct commit *get_revision_1(struct rev_info *revs)
 {
-	if (!revs->commits)
-		return NULL;
+	while (1) {
+		struct commit *commit;
 
-	do {
-		struct commit *commit = pop_commit(&revs->commits);
+		if (revs->reflog_info)
+			commit = next_reflog_entry(revs->reflog_info);
+		else
+			commit = pop_commit(&revs->commits);
 
-		if (revs->reflog_info) {
-			save_parents(revs, commit);
-			fake_reflog_parent(revs->reflog_info, commit);
+		if (!commit)
+			return NULL;
+
+		if (revs->reflog_info)
 			commit->object.flags &= ~(ADDED | SEEN | SHOWN);
-		}
 
 		/*
 		 * If we haven't done the list limiting, we need to look at
@@ -3126,9 +3141,12 @@ static struct commit *get_revision_1(struct rev_info *revs)
 		 */
 		if (!revs->limited) {
 			if (revs->max_age != -1 &&
-			    (commit->date < revs->max_age))
+			    comparison_date(revs, commit) < revs->max_age)
 				continue;
-			if (add_parents_to_list(revs, commit, &revs->commits, NULL) < 0) {
+
+			if (revs->reflog_info)
+				try_to_simplify_commit(revs, commit);
+			else if (add_parents_to_list(revs, commit, &revs->commits, NULL) < 0) {
 				if (!revs->ignore_missing_links)
 					die("Failed to traverse parents of commit %s",
 						oid_to_hex(&commit->object.oid));
@@ -3146,8 +3164,7 @@ static struct commit *get_revision_1(struct rev_info *revs)
 				track_linear(revs, commit);
 			return commit;
 		}
-	} while (revs->commits);
-	return NULL;
+	}
 }
 
 /*

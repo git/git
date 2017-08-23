@@ -166,10 +166,9 @@ test_expect_success 'resulting reflog can be shown by log -g' '
 	oid=$(git rev-parse HEAD) &&
 	cat >expect <<-EOF &&
 	HEAD@{0} $oid $msg
-	HEAD@{1} $oid $msg
 	HEAD@{2} $oid checkout: moving from foo to baz
 	EOF
-	git log -g --format="%gd %H %gs" -3 HEAD >actual &&
+	git log -g --format="%gd %H %gs" -2 HEAD >actual &&
 	test_cmp expect actual
 '
 
