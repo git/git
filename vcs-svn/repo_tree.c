@@ -41,8 +41,3 @@ void svn_repo_copy(uint32_t revision, const char *src, const char *dst)
 	}
 	fast_export_modify(dst, mode, data.buf);
 }
-
-void svn_repo_delete(const char *path)
-{
-	fast_export_delete(path);
-}
