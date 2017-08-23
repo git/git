@@ -155,7 +155,6 @@ sub format_2822_time {
 }
 
 my $have_email_valid = eval { require Email::Valid; 1 };
-my $have_mail_address = eval { require Mail::Address; 1 };
 my $smtp;
 my $auth;
 my $num_sent = 0;
@@ -490,11 +489,7 @@ my ($repoauthor, $repocommitter);
 ($repocommitter) = Git::ident_person(@repo, 'committer');
 
 sub parse_address_line {
-	if ($have_mail_address) {
-		return map { $_->format } Mail::Address->parse($_[0]);
-	} else {
-		return Git::parse_mailboxes($_[0]);
-	}
+	return Git::parse_mailboxes($_[0]);
 }
 
 sub split_addrs {
