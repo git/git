@@ -304,16 +304,6 @@ int for_each_glob_ref(each_ref_fn fn, const char *pattern, void *cb_data);
 int for_each_glob_ref_in(each_ref_fn fn, const char *pattern,
 			 const char *prefix, void *cb_data);
 
-int head_ref_submodule(const char *submodule, each_ref_fn fn, void *cb_data);
-int for_each_ref_submodule(const char *submodule,
-			   each_ref_fn fn, void *cb_data);
-int for_each_ref_in_submodule(const char *submodule, const char *prefix,
-			      each_ref_fn fn, void *cb_data);
-int for_each_tag_ref_submodule(const char *submodule,
-			       each_ref_fn fn, void *cb_data);
-int for_each_branch_ref_submodule(const char *submodule,
-				  each_ref_fn fn, void *cb_data);
-
 int head_ref_namespaced(each_ref_fn fn, void *cb_data);
 int for_each_namespaced_ref(each_ref_fn fn, void *cb_data);
 

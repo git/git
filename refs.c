@@ -336,12 +336,6 @@ int for_each_tag_ref(each_ref_fn fn, void *cb_data)
 	return refs_for_each_tag_ref(get_main_ref_store(), fn, cb_data);
 }
 
-int for_each_tag_ref_submodule(const char *submodule, each_ref_fn fn, void *cb_data)
-{
-	return refs_for_each_tag_ref(get_submodule_ref_store(submodule),
-				     fn, cb_data);
-}
-
 int refs_for_each_branch_ref(struct ref_store *refs, each_ref_fn fn, void *cb_data)
 {
 	return refs_for_each_ref_in(refs, "refs/heads/", fn, cb_data);
@@ -350,12 +344,6 @@ int refs_for_each_branch_ref(struct ref_store *refs, each_ref_fn fn, void *cb_da
 int for_each_branch_ref(each_ref_fn fn, void *cb_data)
 {
 	return refs_for_each_branch_ref(get_main_ref_store(), fn, cb_data);
-}
-
-int for_each_branch_ref_submodule(const char *submodule, each_ref_fn fn, void *cb_data)
-{
-	return refs_for_each_branch_ref(get_submodule_ref_store(submodule),
-					fn, cb_data);
 }
 
 int refs_for_each_remote_ref(struct ref_store *refs, each_ref_fn fn, void *cb_data)
@@ -1254,15 +1242,6 @@ int refs_head_ref(struct ref_store *refs, each_ref_fn fn, void *cb_data)
 	return 0;
 }
 
-int head_ref_submodule(const char *submodule, each_ref_fn fn, void *cb_data)
-{
-	struct ref_store *refs = get_submodule_ref_store(submodule);
-
-	if (!refs)
-		return -1;
-	return refs_head_ref(refs, fn, cb_data);
-}
-
 int head_ref(each_ref_fn fn, void *cb_data)
 {
 	return refs_head_ref(get_main_ref_store(), fn, cb_data);
@@ -1323,11 +1302,6 @@ int for_each_ref(each_ref_fn fn, void *cb_data)
 	return refs_for_each_ref(get_main_ref_store(), fn, cb_data);
 }
 
-int for_each_ref_submodule(const char *submodule, each_ref_fn fn, void *cb_data)
-{
-	return refs_for_each_ref(get_submodule_ref_store(submodule), fn, cb_data);
-}
-
 int refs_for_each_ref_in(struct ref_store *refs, const char *prefix,
 			 each_ref_fn fn, void *cb_data)
 {
@@ -1347,13 +1321,6 @@ int for_each_fullref_in(const char *prefix, each_ref_fn fn, void *cb_data, unsig
 		flag = DO_FOR_EACH_INCLUDE_BROKEN;
 	return do_for_each_ref(get_main_ref_store(),
 			       prefix, fn, 0, flag, cb_data);
-}
-
-int for_each_ref_in_submodule(const char *submodule, const char *prefix,
-			      each_ref_fn fn, void *cb_data)
-{
-	return refs_for_each_ref_in(get_submodule_ref_store(submodule),
-				    prefix, fn, cb_data);
 }
 
 int refs_for_each_fullref_in(struct ref_store *refs, const char *prefix,
