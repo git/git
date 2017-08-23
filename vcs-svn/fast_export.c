@@ -210,7 +210,7 @@ static long apply_delta(off_t len, struct line_buffer *input,
 			die("invalid cat-blob response: %s", response);
 		check_preimage_overflow(preimage.max_off, 1);
 	}
-	if (old_mode == REPO_MODE_LNK) {
+	if (old_mode == S_IFLNK) {
 		strbuf_addstr(&preimage.buf, "link ");
 		check_preimage_overflow(preimage.max_off, strlen("link "));
 		preimage.max_off += strlen("link ");
@@ -244,7 +244,7 @@ void fast_export_buf_to_data(const struct strbuf *data)
 void fast_export_data(uint32_t mode, off_t len, struct line_buffer *input)
 {
 	assert(len >= 0);
-	if (mode == REPO_MODE_LNK) {
+	if (mode == S_IFLNK) {
 		/* svn symlink blobs start with "link " */
 		if (len < 5)
 			die("invalid dump: symlink too short for \"link\" prefix");
@@ -320,7 +320,7 @@ void fast_export_blob_delta(uint32_t mode,
 
 	assert(len >= 0);
 	postimage_len = apply_delta(len, input, old_data, old_mode);
-	if (mode == REPO_MODE_LNK) {
+	if (mode == S_IFLNK) {
 		buffer_skip_bytes(&postimage, strlen("link "));
 		postimage_len -= strlen("link ");
 	}
