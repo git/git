@@ -300,15 +300,14 @@ ifndef::git-format-patch[]
 	with --exit-code.
 
 --ws-error-highlight=<kind>::
-	Highlight whitespace errors on lines specified by <kind>
-	in the color specified by `color.diff.whitespace`.  <kind>
-	is a comma separated list of `old`, `new`, `context`.  When
-	this option is not given, only whitespace errors in `new`
-	lines are highlighted.  E.g. `--ws-error-highlight=new,old`
-	highlights whitespace errors on both deleted and added lines.
-	`all` can be used as a short-hand for `old,new,context`.
-	The `diff.wsErrorHighlight` configuration variable can be
-	used to specify the default behaviour.
+	Highlight whitespace errors in the `context`, `old` or `new`
+	lines of the diff.  Multiple values are separated by comma,
+	`none` resets previous values, `default` reset the list to
+	`new` and `all` is a shorthand for `old,new,context`.  When
+	this option is not given, and the configuration variable
+	`diff.wsErrorHighlight` is not set, only whitespace errors in
+	`new` lines are highlighted. The whitespace errors are colored
+	whith `color.diff.whitespace`.
 
 endif::git-format-patch[]
 
