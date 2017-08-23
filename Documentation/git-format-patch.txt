@@ -23,6 +23,7 @@ SYNOPSIS
 		   [(--reroll-count|-v) <n>]
 		   [--to=<email>] [--cc=<email>]
 		   [--[no-]cover-letter] [--quiet] [--notes[=<ref>]]
+		   [--progress]
 		   [<common diff options>]
 		   [ <since> | <revision range> ]
 
@@ -282,6 +283,9 @@ you can use `--suffix=-patch` to get `0001-description-of-my-change-patch`.
 	<since>).  Note that root commits included in the specified
 	range are always formatted as creation patches, independently
 	of this flag.
+
+--progress::
+	Show progress reports on stderr as patches are generated.
 
 CONFIGURATION
 -------------

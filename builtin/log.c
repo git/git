@@ -27,6 +27,7 @@
 #include "version.h"
 #include "mailmap.h"
 #include "gpg-interface.h"
+#include "progress.h"
 
 /* Set a default date-time format for git log ("log.date" config variable) */
 static const char *default_date_mode = NULL;
@@ -1422,6 +1423,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	char *branch_name = NULL;
 	char *base_commit = NULL;
 	struct base_tree_info bases;
+	int show_progress = 0;
+	struct progress *progress = NULL;
 
 	const struct option builtin_format_patch_options[] = {
 		{ OPTION_CALLBACK, 'n', "numbered", &numbered, NULL,
@@ -1493,6 +1496,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		OPT_FILENAME(0, "signature-file", &signature_file,
 				N_("add a signature from a file")),
 		OPT__QUIET(&quiet, N_("don't print the patch filenames")),
+		OPT_BOOL(0, "progress", &show_progress,
+			 N_("show progress while generating patches")),
 		OPT_END()
 	};
 
@@ -1752,8 +1757,12 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		start_number--;
 	}
 	rev.add_signoff = do_signoff;
+
+	if (show_progress)
+		progress = start_progress_delay(_("Generating patches"), total, 0, 2);
 	while (0 <= --nr) {
 		int shown;
+		display_progress(progress, total - nr);
 		commit = list[nr];
 		rev.nr = total - nr + (start_number - 1);
 		/* Make the second and subsequent mails replies to the first */
@@ -1818,6 +1827,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		if (!use_stdout)
 			fclose(rev.diffopt.file);
 	}
+	stop_progress(&progress);
 	free(list);
 	free(branch_name);
 	string_list_clear(&extra_to, 0);
