@@ -99,8 +99,7 @@ static struct notes_merge_pair *find_notes_merge_pair_pos(
 	else {
 		*occupied = 0;
 		if (insert_new && i < len) {
-			memmove(list + i + 1, list + i,
-				(len - i) * sizeof(struct notes_merge_pair));
+			MOVE_ARRAY(list + i + 1, list + i, len - i);
 			memset(list + i, 0, sizeof(struct notes_merge_pair));
 		}
 	}

@@ -1298,9 +1298,8 @@ static int check_pbase_path(unsigned hash)
 		   done_pbase_paths_alloc);
 	done_pbase_paths_num++;
 	if (pos < done_pbase_paths_num)
-		memmove(done_pbase_paths + pos + 1,
-			done_pbase_paths + pos,
-			(done_pbase_paths_num - pos - 1) * sizeof(unsigned));
+		MOVE_ARRAY(done_pbase_paths + pos + 1, done_pbase_paths + pos,
+			   done_pbase_paths_num - pos - 1);
 	done_pbase_paths[pos] = hash;
 	return 0;
 }
