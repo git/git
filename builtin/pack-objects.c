@@ -1289,7 +1289,7 @@ static int done_pbase_path_pos(unsigned hash)
 
 static int check_pbase_path(unsigned hash)
 {
-	int pos = (!done_pbase_paths) ? -1 : done_pbase_path_pos(hash);
+	int pos = done_pbase_path_pos(hash);
 	if (0 <= pos)
 		return 1;
 	pos = -pos - 1;
