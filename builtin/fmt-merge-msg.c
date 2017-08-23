@@ -408,7 +408,8 @@ static void shortlog(const char *name,
 }
 
 static void fmt_merge_msg_title(struct strbuf *out,
-	const char *current_branch) {
+				const char *current_branch)
+{
 	int i = 0;
 	char *sep = "";
 
