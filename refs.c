@@ -1636,7 +1636,6 @@ struct ref_store *get_submodule_ref_store(const char *submodule)
 {
 	struct strbuf submodule_sb = STRBUF_INIT;
 	struct ref_store *refs;
-	int ret;
 
 	if (!submodule || !*submodule) {
 		/*
@@ -1648,19 +1647,14 @@ struct ref_store *get_submodule_ref_store(const char *submodule)
 
 	refs = lookup_ref_store_map(&submodule_ref_stores, submodule);
 	if (refs)
-		return refs;
+		goto done;
 
 	strbuf_addstr(&submodule_sb, submodule);
-	ret = is_nonbare_repository_dir(&submodule_sb);
-	strbuf_release(&submodule_sb);
-	if (!ret)
-		return NULL;
+	if (!is_nonbare_repository_dir(&submodule_sb))
+		goto done;
 
-	ret = submodule_to_gitdir(&submodule_sb, submodule);
-	if (ret) {
-		strbuf_release(&submodule_sb);
-		return NULL;
-	}
+	if (submodule_to_gitdir(&submodule_sb, submodule))
+		goto done;
 
 	/* assume that add_submodule_odb() has been called */
 	refs = ref_store_init(submodule_sb.buf,
@@ -1668,6 +1662,7 @@ struct ref_store *get_submodule_ref_store(const char *submodule)
 	register_ref_store_map(&submodule_ref_stores, "submodule",
 			       refs, submodule);
 
+done:
 	strbuf_release(&submodule_sb);
 	return refs;
 }
