@@ -1590,13 +1590,11 @@ struct ref_store *get_submodule_ref_store(const char *submodule)
 	if (!submodule)
 		return NULL;
 
-	if (submodule) {
-		len = strlen(submodule);
-		while (len && is_dir_sep(submodule[len - 1]))
-			len--;
-		if (!len)
-			return NULL;
-	}
+	len = strlen(submodule);
+	while (len && is_dir_sep(submodule[len - 1]))
+		len--;
+	if (!len)
+		return NULL;
 
 	if (submodule[len])
 		/* We need to strip off one or more trailing slashes */
