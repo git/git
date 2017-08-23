@@ -173,13 +173,17 @@ endif::git-rev-list[]
 - '%Cblue': switch color to blue
 - '%Creset': reset color
 - '%C(...)': color specification, as described under Values in the
-  "CONFIGURATION FILE" section of linkgit:git-config[1];
-  adding `auto,` at the beginning (e.g. `%C(auto,red)`) will emit
-  color only when colors are enabled for log output (by `color.diff`,
-  `color.ui`, or `--color`, and respecting the `auto` settings of the
-  former if we are going to a terminal). `auto` alone (i.e.
-  `%C(auto)`) will turn on auto coloring on the next placeholders
-  until the color is switched again.
+  "CONFIGURATION FILE" section of linkgit:git-config[1].
+  By default, colors are shown only when enabled for log output (by
+  `color.diff`, `color.ui`, or `--color`, and respecting the `auto`
+  settings of the former if we are going to a terminal). `%C(auto,...)`
+  is accepted as a historical synonym for the default (e.g.,
+  `%C(auto,red)`). Specifying `%C(always,...) will show the colors
+  even when color is not otherwise enabled (though consider
+  just using `--color=always` to enable color for the whole output,
+  including this format and anything else git might color).  `auto`
+  alone (i.e. `%C(auto)`) will turn on auto coloring on the next
+  placeholders until the color is switched again.
 - '%m': left (`<`), right (`>`) or boundary (`-`) mark
 - '%n': newline
 - '%%': a raw '%'
