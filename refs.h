@@ -291,6 +291,9 @@ int refs_for_each_remote_ref(struct ref_store *refs,
 int head_ref(each_ref_fn fn, void *cb_data);
 int for_each_ref(each_ref_fn fn, void *cb_data);
 int for_each_ref_in(const char *prefix, each_ref_fn fn, void *cb_data);
+int refs_for_each_fullref_in(struct ref_store *refs, const char *prefix,
+			     each_ref_fn fn, void *cb_data,
+			     unsigned int broken);
 int for_each_fullref_in(const char *prefix, each_ref_fn fn, void *cb_data,
 			unsigned int broken);
 int for_each_tag_ref(each_ref_fn fn, void *cb_data);
@@ -306,9 +309,6 @@ int for_each_ref_submodule(const char *submodule,
 			   each_ref_fn fn, void *cb_data);
 int for_each_ref_in_submodule(const char *submodule, const char *prefix,
 			      each_ref_fn fn, void *cb_data);
-int for_each_fullref_in_submodule(const char *submodule, const char *prefix,
-				  each_ref_fn fn, void *cb_data,
-				  unsigned int broken);
 int for_each_tag_ref_submodule(const char *submodule,
 			       each_ref_fn fn, void *cb_data);
 int for_each_branch_ref_submodule(const char *submodule,
