@@ -3403,7 +3403,7 @@ int write_sha1_file(const void *buf, unsigned long len, const char *type, unsign
 }
 
 int hash_sha1_file_literally(const void *buf, unsigned long len, const char *type,
-			     unsigned char *sha1, unsigned flags)
+			     struct object_id *oid, unsigned flags)
 {
 	char *header;
 	int hdrlen, status = 0;
@@ -3411,13 +3411,13 @@ int hash_sha1_file_literally(const void *buf, unsigned long len, const char *typ
 	/* type string, SP, %lu of the length plus NUL must fit this */
 	hdrlen = strlen(type) + 32;
 	header = xmalloc(hdrlen);
-	write_sha1_file_prepare(buf, len, type, sha1, header, &hdrlen);
+	write_sha1_file_prepare(buf, len, type, oid->hash, header, &hdrlen);
 
 	if (!(flags & HASH_WRITE_OBJECT))
 		goto cleanup;
-	if (freshen_packed_object(sha1) || freshen_loose_object(sha1))
+	if (freshen_packed_object(oid->hash) || freshen_loose_object(oid->hash))
 		goto cleanup;
-	status = write_loose_object(sha1, header, hdrlen, buf, len, 0);
+	status = write_loose_object(oid->hash, header, hdrlen, buf, len, 0);
 
 cleanup:
 	free(header);
@@ -3621,14 +3621,14 @@ static int index_core(unsigned char *sha1, int fd, size_t size,
  * binary blobs, they generally do not want to get any conversion, and
  * callers should avoid this code path when filters are requested.
  */
-static int index_stream(unsigned char *sha1, int fd, size_t size,
+static int index_stream(struct object_id *oid, int fd, size_t size,
 			enum object_type type, const char *path,
 			unsigned flags)
 {
-	return index_bulk_checkin(sha1, fd, size, type, path, flags);
+	return index_bulk_checkin(oid->hash, fd, size, type, path, flags);
 }
 
-int index_fd(unsigned char *sha1, int fd, struct stat *st,
+int index_fd(struct object_id *oid, int fd, struct stat *st,
 	     enum object_type type, const char *path, unsigned flags)
 {
 	int ret;
@@ -3638,21 +3638,21 @@ int index_fd(unsigned char *sha1, int fd, struct stat *st,
 	 * die() for large files.
 	 */
 	if (type == OBJ_BLOB && path && would_convert_to_git_filter_fd(path))
-		ret = index_stream_convert_blob(sha1, fd, path, flags);
+		ret = index_stream_convert_blob(oid->hash, fd, path, flags);
 	else if (!S_ISREG(st->st_mode))
-		ret = index_pipe(sha1, fd, type, path, flags);
+		ret = index_pipe(oid->hash, fd, type, path, flags);
 	else if (st->st_size <= big_file_threshold || type != OBJ_BLOB ||
 		 (path && would_convert_to_git(&the_index, path)))
-		ret = index_core(sha1, fd, xsize_t(st->st_size), type, path,
+		ret = index_core(oid->hash, fd, xsize_t(st->st_size), type, path,
 				 flags);
 	else
-		ret = index_stream(sha1, fd, xsize_t(st->st_size), type, path,
+		ret = index_stream(oid, fd, xsize_t(st->st_size), type, path,
 				   flags);
 	close(fd);
 	return ret;
 }
 
-int index_path(unsigned char *sha1, const char *path, struct stat *st, unsigned flags)
+int index_path(struct object_id *oid, const char *path, struct stat *st, unsigned flags)
 {
 	int fd;
 	struct strbuf sb = STRBUF_INIT;
@@ -3662,7 +3662,7 @@ int index_path(unsigned char *sha1, const char *path, struct stat *st, unsigned 
 		fd = open(path, O_RDONLY);
 		if (fd < 0)
 			return error_errno("open(\"%s\")", path);
-		if (index_fd(sha1, fd, st, OBJ_BLOB, path, flags) < 0)
+		if (index_fd(oid, fd, st, OBJ_BLOB, path, flags) < 0)
 			return error("%s: failed to insert into database",
 				     path);
 		break;
@@ -3670,14 +3670,14 @@ int index_path(unsigned char *sha1, const char *path, struct stat *st, unsigned 
 		if (strbuf_readlink(&sb, path, st->st_size))
 			return error_errno("readlink(\"%s\")", path);
 		if (!(flags & HASH_WRITE_OBJECT))
-			hash_sha1_file(sb.buf, sb.len, blob_type, sha1);
-		else if (write_sha1_file(sb.buf, sb.len, blob_type, sha1))
+			hash_sha1_file(sb.buf, sb.len, blob_type, oid->hash);
+		else if (write_sha1_file(sb.buf, sb.len, blob_type, oid->hash))
 			return error("%s: failed to insert into database",
 				     path);
 		strbuf_release(&sb);
 		break;
 	case S_IFDIR:
-		return resolve_gitlink_ref(path, "HEAD", sha1);
+		return resolve_gitlink_ref(path, "HEAD", oid->hash);
 	default:
 		return error("%s: unsupported file type", path);
 	}

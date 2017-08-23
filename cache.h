@@ -684,8 +684,8 @@ extern int ie_modified(const struct index_state *, const struct cache_entry *, s
 
 #define HASH_WRITE_OBJECT 1
 #define HASH_FORMAT_CHECK 2
-extern int index_fd(unsigned char *sha1, int fd, struct stat *st, enum object_type type, const char *path, unsigned flags);
-extern int index_path(unsigned char *sha1, const char *path, struct stat *st, unsigned flags);
+extern int index_fd(struct object_id *oid, int fd, struct stat *st, enum object_type type, const char *path, unsigned flags);
+extern int index_path(struct object_id *oid, const char *path, struct stat *st, unsigned flags);
 
 /*
  * Record to sd the data from st that we use to check whether a file
@@ -1192,7 +1192,7 @@ static inline const unsigned char *lookup_replace_object(const unsigned char *sh
 extern int sha1_object_info(const unsigned char *, unsigned long *);
 extern int hash_sha1_file(const void *buf, unsigned long len, const char *type, unsigned char *sha1);
 extern int write_sha1_file(const void *buf, unsigned long len, const char *type, unsigned char *return_sha1);
-extern int hash_sha1_file_literally(const void *buf, unsigned long len, const char *type, unsigned char *sha1, unsigned flags);
+extern int hash_sha1_file_literally(const void *buf, unsigned long len, const char *type, struct object_id *oid, unsigned flags);
 extern int pretend_sha1_file(void *, unsigned long, enum object_type, unsigned char *);
 extern int force_object_loose(const unsigned char *sha1, time_t mtime);
 extern int git_open_cloexec(const char *name, int flags);

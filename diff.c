@@ -4011,7 +4011,7 @@ static void diff_fill_oid_info(struct diff_filespec *one)
 			}
 			if (lstat(one->path, &st) < 0)
 				die_errno("stat '%s'", one->path);
-			if (index_path(one->oid.hash, one->path, &st, 0))
+			if (index_path(&one->oid, one->path, &st, 0))
 				die("cannot hash %s", one->path);
 		}
 	}

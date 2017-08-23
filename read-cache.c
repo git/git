@@ -160,9 +160,9 @@ static int ce_compare_data(const struct cache_entry *ce, struct stat *st)
 	int fd = git_open_cloexec(ce->name, O_RDONLY);
 
 	if (fd >= 0) {
-		unsigned char sha1[20];
-		if (!index_fd(sha1, fd, st, OBJ_BLOB, ce->name, 0))
-			match = hashcmp(sha1, ce->oid.hash);
+		struct object_id oid;
+		if (!index_fd(&oid, fd, st, OBJ_BLOB, ce->name, 0))
+			match = oidcmp(&oid, &ce->oid);
 		/* index_fd() closed the file descriptor already */
 	}
 	return match;
@@ -689,7 +689,7 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 		return 0;
 	}
 	if (!intent_only) {
-		if (index_path(ce->oid.hash, path, st, HASH_WRITE_OBJECT)) {
+		if (index_path(&ce->oid, path, st, HASH_WRITE_OBJECT)) {
 			free(ce);
 			return error("unable to index file %s", path);
 		}
