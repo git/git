@@ -347,6 +347,7 @@ static int alt_odb_usable(struct strbuf *path, const char *normalized_objdir)
  * SHA1, an extra slash for the first level indirection, and the
  * terminating NUL.
  */
+static void read_info_alternates(const char * relative_base, int depth);
 static int link_alt_odb_entry(const char *entry, const char *relative_base,
 	int depth, const char *normalized_objdir)
 {
@@ -448,7 +449,7 @@ static void link_alt_odb_entries(const char *alt, int len, int sep,
 	strbuf_release(&objdirbuf);
 }
 
-void read_info_alternates(const char * relative_base, int depth)
+static void read_info_alternates(const char * relative_base, int depth)
 {
 	char *map;
 	size_t mapsz;
