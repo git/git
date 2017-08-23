@@ -66,7 +66,7 @@ OPTIONS
 	disables it is in effect), make sure the patch is
 	applicable to what the current index file records.  If
 	the file to be patched in the working tree is not
-	up-to-date, it is flagged as an error.  This flag also
+	up to date, it is flagged as an error.  This flag also
 	causes the index file to be updated.
 
 --cached::
@@ -259,7 +259,7 @@ treats these changes as follows.
 If `--index` is specified (explicitly or implicitly), then the submodule
 commits must match the index exactly for the patch to apply.  If any
 of the submodules are checked-out, then these check-outs are completely
-ignored, i.e., they are not required to be up-to-date or clean and they
+ignored, i.e., they are not required to be up to date or clean and they
 are not updated.
 
 If `--index` is not specified, then the submodule commits in the patch

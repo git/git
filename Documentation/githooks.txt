@@ -369,7 +369,7 @@ them.
 
 When enabled, the default 'post-update' hook runs
 'git update-server-info' to keep the information used by dumb
-transports (e.g., HTTP) up-to-date.  If you are publishing
+transports (e.g., HTTP) up to date.  If you are publishing
 a Git repository that is accessible via HTTP, you should
 probably enable this hook.
 

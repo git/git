@@ -100,7 +100,7 @@ test_expect_success 'checkout (up-to-date with upstream)' '
 	(
 		cd test && git checkout b6
 	) >actual &&
-	test_i18ngrep "Your branch is up-to-date with .origin/master" actual
+	test_i18ngrep "Your branch is up to date with .origin/master" actual
 '
 
 test_expect_success 'status (diverged from upstream)' '
@@ -130,7 +130,7 @@ test_expect_success 'status (up-to-date with upstream)' '
 		# reports nothing to commit
 		test_must_fail git commit --dry-run
 	) >actual &&
-	test_i18ngrep "Your branch is up-to-date with .origin/master" actual
+	test_i18ngrep "Your branch is up to date with .origin/master" actual
 '
 
 cat >expect <<\EOF

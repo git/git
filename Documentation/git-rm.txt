@@ -146,7 +146,7 @@ the submodule's history. If it exists the submodule.<name> section
 in the linkgit:gitmodules[5] file will also be removed and that file
 will be staged (unless --cached or -n are used).
 
-A submodule is considered up-to-date when the HEAD is the same as
+A submodule is considered up to date when the HEAD is the same as
 recorded in the index, no tracked files are modified and no untracked
 files that aren't ignored are present in the submodules work tree.
 Ignored files are deemed expendable and won't stop a submodule's work

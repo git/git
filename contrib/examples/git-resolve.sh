@@ -41,7 +41,7 @@ fi
 
 case "$common" in
 "$merge")
-	echo "Already up-to-date. Yeeah!"
+	echo "Already up to date. Yeeah!"
 	dropheads
 	exit 0
 	;;

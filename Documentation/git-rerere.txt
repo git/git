@@ -205,7 +205,7 @@ development on the topic branch:
 ------------
 
 you could run `git rebase master topic`, to bring yourself
-up-to-date before your topic is ready to be sent upstream.
+up to date before your topic is ready to be sent upstream.
 This would result in falling back to a three-way merge, and it
 would conflict the same way as the test merge you resolved earlier.
 'git rerere' will be run by 'git rebase' to help you resolve this

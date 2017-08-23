@@ -334,7 +334,7 @@ which makes little sense.
 
 -f::
 --force-rebase::
-	Force a rebase even if the current branch is up-to-date and
+	Force a rebase even if the current branch is up to date and
 	the command without `--force` would return without doing anything.
 +
 You may find this (or --no-ff with an interactive rebase) helpful after
