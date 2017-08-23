@@ -313,8 +313,6 @@ int for_each_tag_ref_submodule(const char *submodule,
 			       each_ref_fn fn, void *cb_data);
 int for_each_branch_ref_submodule(const char *submodule,
 				  each_ref_fn fn, void *cb_data);
-int for_each_remote_ref_submodule(const char *submodule,
-				  each_ref_fn fn, void *cb_data);
 
 int head_ref_namespaced(each_ref_fn fn, void *cb_data);
 int for_each_namespaced_ref(each_ref_fn fn, void *cb_data);
