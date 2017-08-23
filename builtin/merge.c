@@ -906,7 +906,7 @@ static int setup_with_upstream(const char ***argv)
 	return i;
 }
 
-static void write_merge_state(struct commit_list *remoteheads)
+static void write_merge_heads(struct commit_list *remoteheads)
 {
 	struct commit_list *j;
 	struct strbuf buf = STRBUF_INIT;
@@ -922,13 +922,18 @@ static void write_merge_state(struct commit_list *remoteheads)
 		strbuf_addf(&buf, "%s\n", oid_to_hex(oid));
 	}
 	write_file_buf(git_path_merge_head(), buf.buf, buf.len);
-	strbuf_addch(&merge_msg, '\n');
-	write_file_buf(git_path_merge_msg(), merge_msg.buf, merge_msg.len);
 
 	strbuf_reset(&buf);
 	if (fast_forward == FF_NO)
 		strbuf_addstr(&buf, "no-ff");
 	write_file_buf(git_path_merge_mode(), buf.buf, buf.len);
+}
+
+static void write_merge_state(struct commit_list *remoteheads)
+{
+	write_merge_heads(remoteheads);
+	strbuf_addch(&merge_msg, '\n');
+	write_file_buf(git_path_merge_msg(), merge_msg.buf, merge_msg.len);
 }
 
 static int default_edit_option(void)
