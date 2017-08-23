@@ -8,7 +8,6 @@
  */
 
 #include "cache.h"
-#include "repo_tree.h"
 #include "fast_export.h"
 #include "line_buffer.h"
 #include "strbuf.h"
@@ -233,7 +232,7 @@ static void handle_node(void)
 		node_ctx.action = NODEACT_ADD;
 	}
 	if (node_ctx.srcRev) {
-		svn_repo_copy(node_ctx.srcRev, node_ctx.src.buf, node_ctx.dst.buf);
+		fast_export_copy(node_ctx.srcRev, node_ctx.src.buf, node_ctx.dst.buf);
 		if (node_ctx.action == NODEACT_ADD)
 			node_ctx.action = NODEACT_CHANGE;
 	}
@@ -249,7 +248,7 @@ static void handle_node(void)
 		old_data = NULL;
 	} else if (node_ctx.action == NODEACT_CHANGE) {
 		uint32_t mode;
-		old_data = svn_repo_read_path(node_ctx.dst.buf, &mode);
+		old_data = fast_export_read_path(node_ctx.dst.buf, &mode);
 		if (mode == S_IFDIR && type != S_IFDIR)
 			die("invalid dump: cannot modify a directory into a file");
 		if (mode != S_IFDIR && type == S_IFDIR)
