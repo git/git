@@ -1587,20 +1587,15 @@ struct ref_store *get_submodule_ref_store(const char *submodule)
 	char *to_free = NULL;
 	size_t len;
 
+	if (!submodule)
+		return NULL;
+
 	if (submodule) {
 		len = strlen(submodule);
 		while (len && is_dir_sep(submodule[len - 1]))
 			len--;
 		if (!len)
 			return NULL;
-	}
-
-	if (!submodule || !*submodule) {
-		/*
-		 * FIXME: This case is ideally not allowed. But that
-		 * can't happen until we clean up all the callers.
-		 */
-		return get_main_ref_store();
 	}
 
 	if (submodule[len])
