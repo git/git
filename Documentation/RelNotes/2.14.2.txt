@@ -1,0 +1,35 @@
+Git v2.14.2 Release Notes
+=========================
+
+Fixes since v2.14.1
+-------------------
+
+ * Because recent Git for Windows do come with a real msgfmt, the
+   build procedure for git-gui has been updated to use it instead of a
+   hand-rolled substitute.
+
+ * "%C(color name)" in the pretty print format always produced ANSI
+   color escape codes, which was an early design mistake.  They now
+   honor the configuration (e.g. "color.ui = never") and also tty-ness
+   of the output medium.
+
+ * The http.{sslkey,sslCert} configuration variables are to be
+   interpreted as a pathname that honors "~[username]/" prefix, but
+   weren't, which has been fixed.
+
+ * Numerous bugs in walking of reflogs via "log -g" and friends have
+   been fixed.
+
+ * "git commit" when seeing an totally empty message said "you did not
+   edit the message", which is clearly wrong.  The message has been
+   corrected.
+
+ * When a directory is not readable, "gitweb" fails to build the
+   project list.  Work this around by skipping such a directory.
+
+ * A recently added test for the "credential-cache" helper revealed
+   that EOF detection done around the time the connection to the cache
+   daemon is torn down were flaky.  This was fixed by reacting to
+   ECONNRESET and behaving as if we got an EOF.
+
+Also contains various documentation updates and code clean-ups.
