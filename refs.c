@@ -1507,7 +1507,7 @@ int resolve_gitlink_ref(const char *submodule, const char *refname,
 	struct ref_store *refs;
 	int flags;
 
-	while (len && submodule[len - 1] == '/')
+	while (len && is_dir_sep(submodule[len - 1]))
 		len--;
 
 	if (!len)
