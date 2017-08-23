@@ -774,4 +774,19 @@ test_expect_success 'merge can be completed with --continue' '
 	verify_parents $c0 $c1
 '
 
+write_script .git/FAKE_EDITOR <<EOF
+# kill -TERM command added below.
+EOF
+
+test_expect_success EXECKEEPSPID 'killed merge can be completed with --continue' '
+	git reset --hard c0 &&
+	! "$SHELL_PATH" -c '\''
+	  echo kill -TERM $$ >> .git/FAKE_EDITOR
+	  GIT_EDITOR=.git/FAKE_EDITOR
+	  export GIT_EDITOR
+	  exec git merge --no-ff --edit c1'\'' &&
+	git merge --continue &&
+	verify_parents $c0 $c1
+'
+
 test_done
