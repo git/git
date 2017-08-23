@@ -148,6 +148,8 @@ cat >expected-cc <<\EOF
 !two@example.com!
 !three@example.com!
 !four@example.com!
+!five@example.com!
+!six@example.com!
 EOF
 "
 
@@ -161,6 +163,8 @@ test_expect_success $PREREQ 'cc trailer with various syntax' '
 	Cc: <two@example.com> # trailing comments are ignored
 	Cc: <three@example.com>, <not.four@example.com> one address per line
 	Cc: "Some # Body" <four@example.com> [ <also.a.comment> ]
+	Cc: five@example.com # not.six@example.com
+	Cc: six@example.com, not.seven@example.com
 	EOF
 	clean_fake_sendmail &&
 	git send-email -1 --to=recipient@example.com \
