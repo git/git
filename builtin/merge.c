@@ -761,6 +761,8 @@ static void prepare_to_commit(struct commit_list *remoteheads)
 	struct strbuf msg = STRBUF_INIT;
 	strbuf_addbuf(&msg, &merge_msg);
 	strbuf_addch(&msg, '\n');
+	if (squash)
+		BUG("the control must not reach here under --squash");
 	if (0 < option_edit)
 		strbuf_commented_addf(&msg, _(merge_editor_comment), comment_line_char);
 	write_file_buf(git_path_merge_msg(), msg.buf, msg.len);
