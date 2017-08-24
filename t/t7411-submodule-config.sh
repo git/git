@@ -31,6 +31,21 @@ test_expect_success 'submodule config cache setup' '
 	)
 '
 
+test_expect_success 'configuration parsing with error' '
+	test_when_finished "rm -rf repo" &&
+	test_create_repo repo &&
+	cat >repo/.gitmodules <<-\EOF &&
+	[submodule "s"]
+		path
+		ignore
+	EOF
+	(
+		cd repo &&
+		test_must_fail test-submodule-config "" s 2>actual &&
+		test_i18ngrep "bad config" actual
+	)
+'
+
 cat >super/expect <<EOF
 Submodule name: 'a' for path 'a'
 Submodule name: 'a' for path 'b'
@@ -104,78 +119,6 @@ test_expect_success 'using different treeishs works' '
 		test-submodule-config new_tag b >actual.2 &&
 		test_cmp expect actual.1 &&
 		test_cmp expect actual.2
-	)
-'
-
-cat >super/expect_url <<EOF
-Submodule url: 'git@somewhere.else.net:a.git' for path 'b'
-Submodule url: 'git@somewhere.else.net:submodule.git' for path 'submodule'
-EOF
-
-cat >super/expect_local_path <<EOF
-Submodule name: 'a' for path 'c'
-Submodule name: 'submodule' for path 'submodule'
-EOF
-
-test_expect_success 'reading of local configuration' '
-	(cd super &&
-		old_a=$(git config submodule.a.url) &&
-		old_submodule=$(git config submodule.submodule.url) &&
-		git config submodule.a.url git@somewhere.else.net:a.git &&
-		git config submodule.submodule.url git@somewhere.else.net:submodule.git &&
-		test-submodule-config --url \
-			"" b \
-			"" submodule \
-				>actual &&
-		test_cmp expect_url actual &&
-		git config submodule.a.path c &&
-		test-submodule-config \
-			"" c \
-			"" submodule \
-				>actual &&
-		test_cmp expect_local_path actual &&
-		git config submodule.a.url "$old_a" &&
-		git config submodule.submodule.url "$old_submodule" &&
-		git config --unset submodule.a.path c
-	)
-'
-
-cat >super/expect_url <<EOF
-Submodule url: '../submodule' for path 'b'
-Submodule url: 'git@somewhere.else.net:submodule.git' for path 'submodule'
-EOF
-
-test_expect_success 'reading of local configuration for uninitialized submodules' '
-	(
-		cd super &&
-		git submodule deinit -f b &&
-		old_submodule=$(git config submodule.submodule.url) &&
-		git config submodule.submodule.url git@somewhere.else.net:submodule.git &&
-		test-submodule-config --url \
-			"" b \
-			"" submodule \
-				>actual &&
-		test_cmp expect_url actual &&
-		git config submodule.submodule.url "$old_submodule" &&
-		git submodule init b
-	)
-'
-
-cat >super/expect_fetchrecurse_die.err <<EOF
-fatal: bad submodule.submodule.fetchrecursesubmodules argument: blabla
-EOF
-
-test_expect_success 'local error in fetchrecursesubmodule dies early' '
-	(cd super &&
-		git config submodule.submodule.fetchrecursesubmodules blabla &&
-		test_must_fail test-submodule-config \
-			"" b \
-			"" submodule \
-				>actual.out 2>actual.err &&
-		touch expect_fetchrecurse_die.out &&
-		test_cmp expect_fetchrecurse_die.out actual.out  &&
-		test_cmp expect_fetchrecurse_die.err actual.err  &&
-		git config --unset submodule.submodule.fetchrecursesubmodules
 	)
 '
 

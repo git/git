@@ -255,7 +255,6 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 	struct pathspec pathspec;
 	char *seen;
 
-	gitmodules_config();
 	git_config(git_default_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, builtin_rm_options,

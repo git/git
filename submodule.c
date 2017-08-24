@@ -165,31 +165,18 @@ void set_diffopt_flags_from_submodule_config(struct diff_options *diffopt,
 {
 	const struct submodule *submodule = submodule_from_path(&null_oid, path);
 	if (submodule) {
-		if (submodule->ignore)
-			handle_ignore_submodules_arg(diffopt, submodule->ignore);
+		const char *ignore;
+		char *key;
+
+		key = xstrfmt("submodule.%s.ignore", submodule->name);
+		if (repo_config_get_string_const(the_repository, key, &ignore))
+			ignore = submodule->ignore;
+		free(key);
+
+		if (ignore)
+			handle_ignore_submodules_arg(diffopt, ignore);
 		else if (is_gitmodules_unmerged(&the_index))
 			DIFF_OPT_SET(diffopt, IGNORE_SUBMODULES);
-	}
-}
-
-/* For loading from the .gitmodules file. */
-static int git_modules_config(const char *var, const char *value, void *cb)
-{
-	if (starts_with(var, "submodule."))
-		return parse_submodule_config_option(var, value);
-	return 0;
-}
-
-/* Loads all submodule settings from the config. */
-int submodule_config(const char *var, const char *value, void *cb)
-{
-	if (!strcmp(var, "submodule.recurse")) {
-		int v = git_config_bool(var, value) ?
-			RECURSE_SUBMODULES_ON : RECURSE_SUBMODULES_OFF;
-		config_update_recurse_submodules = v;
-		return 0;
-	} else {
-		return git_modules_config(var, value, cb);
 	}
 }
 
@@ -219,55 +206,6 @@ int option_parse_recurse_submodules_worktree_updater(const struct option *opt,
 		config_update_recurse_submodules = RECURSE_SUBMODULES_ON;
 
 	return 0;
-}
-
-void load_submodule_cache(void)
-{
-	if (config_update_recurse_submodules == RECURSE_SUBMODULES_OFF)
-		return;
-
-	gitmodules_config();
-	git_config(submodule_config, NULL);
-}
-
-static int gitmodules_cb(const char *var, const char *value, void *data)
-{
-	struct repository *repo = data;
-	return submodule_config_option(repo, var, value);
-}
-
-void repo_read_gitmodules(struct repository *repo)
-{
-	if (repo->worktree) {
-		char *gitmodules;
-
-		if (repo_read_index(repo) < 0)
-			return;
-
-		gitmodules = repo_worktree_path(repo, GITMODULES_FILE);
-
-		if (!is_gitmodules_unmerged(repo->index))
-			git_config_from_file(gitmodules_cb, gitmodules, repo);
-
-		free(gitmodules);
-	}
-}
-
-void gitmodules_config(void)
-{
-	repo_read_gitmodules(the_repository);
-}
-
-void gitmodules_config_oid(const struct object_id *commit_oid)
-{
-	struct strbuf rev = STRBUF_INIT;
-	struct object_id oid;
-
-	if (gitmodule_oid_from_commit(commit_oid, &oid, &rev)) {
-		git_config_from_blob_oid(submodule_config, rev.buf,
-					 &oid, NULL);
-	}
-	strbuf_release(&rev);
 }
 
 /*
@@ -398,24 +336,38 @@ void die_path_inside_submodule(const struct index_state *istate,
 	}
 }
 
+enum submodule_update_type parse_submodule_update_type(const char *value)
+{
+	if (!strcmp(value, "none"))
+		return SM_UPDATE_NONE;
+	else if (!strcmp(value, "checkout"))
+		return SM_UPDATE_CHECKOUT;
+	else if (!strcmp(value, "rebase"))
+		return SM_UPDATE_REBASE;
+	else if (!strcmp(value, "merge"))
+		return SM_UPDATE_MERGE;
+	else if (*value == '!')
+		return SM_UPDATE_COMMAND;
+	else
+		return SM_UPDATE_UNSPECIFIED;
+}
+
 int parse_submodule_update_strategy(const char *value,
 		struct submodule_update_strategy *dst)
 {
+	enum submodule_update_type type;
+
 	free((void*)dst->command);
 	dst->command = NULL;
-	if (!strcmp(value, "none"))
-		dst->type = SM_UPDATE_NONE;
-	else if (!strcmp(value, "checkout"))
-		dst->type = SM_UPDATE_CHECKOUT;
-	else if (!strcmp(value, "rebase"))
-		dst->type = SM_UPDATE_REBASE;
-	else if (!strcmp(value, "merge"))
-		dst->type = SM_UPDATE_MERGE;
-	else if (skip_prefix(value, "!", &value)) {
-		dst->type = SM_UPDATE_COMMAND;
-		dst->command = xstrdup(value);
-	} else
+
+	type = parse_submodule_update_type(value);
+	if (type == SM_UPDATE_UNSPECIFIED)
 		return -1;
+
+	dst->type = type;
+	if (type == SM_UPDATE_COMMAND)
+		dst->command = xstrdup(value + 1);
+
 	return 0;
 }
 
@@ -1130,7 +1082,6 @@ int submodule_touches_in_range(struct object_id *excl_oid,
 	struct argv_array args = ARGV_ARRAY_INIT;
 	int ret;
 
-	gitmodules_config();
 	/* No need to check if there are no submodules configured */
 	if (!submodule_from_path(NULL, NULL))
 		return 0;
@@ -1179,19 +1130,27 @@ static int get_next_submodule(struct child_process *cp,
 			continue;
 
 		submodule = submodule_from_path(&null_oid, ce->name);
-		if (!submodule)
-			submodule = submodule_from_name(&null_oid, ce->name);
 
 		default_argv = "yes";
 		if (spf->command_line_option == RECURSE_SUBMODULES_DEFAULT) {
-			if (submodule &&
-			    submodule->fetch_recurse !=
-						RECURSE_SUBMODULES_NONE) {
-				if (submodule->fetch_recurse ==
-						RECURSE_SUBMODULES_OFF)
+			int fetch_recurse = RECURSE_SUBMODULES_NONE;
+
+			if (submodule) {
+				char *key;
+				const char *value;
+
+				fetch_recurse = submodule->fetch_recurse;
+				key = xstrfmt("submodule.%s.fetchRecurseSubmodules", submodule->name);
+				if (!repo_config_get_string_const(the_repository, key, &value)) {
+					fetch_recurse = parse_fetch_recurse_submodules_arg(key, value);
+				}
+				free(key);
+			}
+
+			if (fetch_recurse != RECURSE_SUBMODULES_NONE) {
+				if (fetch_recurse == RECURSE_SUBMODULES_OFF)
 					continue;
-				if (submodule->fetch_recurse ==
-						RECURSE_SUBMODULES_ON_DEMAND) {
+				if (fetch_recurse == RECURSE_SUBMODULES_ON_DEMAND) {
 					if (!unsorted_string_list_lookup(&changed_submodule_paths, ce->name))
 						continue;
 					default_argv = "on-demand";
@@ -2029,7 +1988,6 @@ int submodule_to_gitdir(struct strbuf *buf, const char *submodule)
 		strbuf_addstr(buf, git_dir);
 	}
 	if (!is_git_directory(buf->buf)) {
-		gitmodules_config();
 		sub = submodule_from_path(&null_oid, submodule);
 		if (!sub) {
 			ret = -1;
