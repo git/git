@@ -33,19 +33,20 @@ UI, Workflows & Features
 
  * The "rerere-train" script (in contrib/) learned the "--overwrite"
    option to allow overwriting existing recorded resolutions.
-   (merge ad53bf79aa rg/rerere-train-overwrite later to maint).
 
  * "git contacts" (in contrib/) now lists the address on the
    "Reported-by:" trailer to its output, in addition to those on
    S-o-b: and other trailers, to make it easier to notify (and thank)
    the original bug reporter.
-   (merge 09ac673788 eb/contacts-reported-by later to maint).
 
  * "git rebase", especially when it is run by mistake and ends up
    trying to replay many changes, spent long time in silence.  The
    command has been taught to show progress report when it spends
    long time preparing these many changes to replay (which would give
    the user a chance to abort with ^C).
+
+ * "git merge" learned a "--signoff" option to add the Signed-off-by:
+   trailer with the committer's name.
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -69,7 +70,6 @@ Performance, Internal Implementation, Development Support etc.
  * Because recent Git for Windows do come with a real msgfmt, the
    build procedure for git-gui has been updated to use it instead of a
    hand-rolled substitute.
-   (merge 90dbf226ba js/git-gui-msgfmt-on-windows later to maint).
 
  * "git grep --recurse-submodules" has been reworked to give a more
    consistent output across submodule boundary (and do its thing
@@ -87,6 +87,15 @@ Performance, Internal Implementation, Development Support etc.
    has been optimized out when we know we do not run the pre-commit hook.
    (merge 680ee550d7 kw/commit-keep-index-when-pre-commit-is-not-run later to maint).
 
+ * Updates to the HTTP layer we made recently unconditionally used
+   features of libCurl without checking the existence of them, causing
+   compilation errors, which has been fixed.  Also migrate the code to
+   check feature macros, not version numbers, to cope better with
+   libCurl that vendor ships with backported features.
+
+ * The API to start showing progress meter after a short delay has
+   been simplified.
+   (merge 8aade107dd jc/simplify-progress later to maint).
 
 Also contains various documentation updates and code clean-ups.
 
@@ -98,25 +107,20 @@ Fixes since v2.14
    color escape codes, which was an early design mistake.  They now
    honor the configuration (e.g. "color.ui = never") and also tty-ness
    of the output medium.
-   (merge 11b087adfd jk/ref-filter-colors later to maint).
 
  * The http.{sslkey,sslCert} configuration variables are to be
    interpreted as a pathname that honors "~[username]/" prefix, but
    weren't, which has been fixed.
-   (merge 8d1549643e jc/http-sslkey-and-ssl-cert-are-paths later to maint).
 
  * Numerous bugs in walking of reflogs via "log -g" and friends have
    been fixed.
-   (merge de239446b6 jk/reflog-walk later to maint).
 
  * "git commit" when seeing an totally empty message said "you did not
    edit the message", which is clearly wrong.  The message has been
    corrected.
-   (merge bc17f35f8c ks/commit-abort-on-empty-message-fix later to maint).
 
  * When a directory is not readable, "gitweb" fails to build the
    project list.  Work this around by skipping such a directory.
-   (merge 46a13857fc hb/gitweb-project-list later to maint).
 
  * Some versions of GnuPG fails to kill gpg-agent it auto-spawned
    and such a left-over agent can interfere with a test.  Work it
@@ -127,7 +131,6 @@ Fixes since v2.14
    that EOF detection done around the time the connection to the cache
    daemon is torn down were flaky.  This was fixed by reacting to
    ECONNRESET and behaving as if we got an EOF.
-   (merge 1f180e5eb9 dl/credential-cache-socket-in-xdg-cache later to maint).
 
  * "git log --tag=no-such-tag" showed log starting from HEAD, which
    has been fixed---it now shows nothing.
@@ -188,19 +191,12 @@ Fixes since v2.14
    codes; this has been corrected.
    (merge e1f68c66d5 as/grep-quiet-no-match-exit-code-fix later to maint).
 
+ * When handshake with a subprocess filter notices that the process
+   asked for an unknown capability, Git did not report what program
+   the offending subprocess was running.  This has been corrected.
+   (merge d3ba566342 cc/subprocess-handshake-missing-capabilities later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
-   (merge 5b114f3bb0 rs/bswap-ubsan-fix later to maint).
-   (merge 168e63554c rs/move-array later to maint).
-   (merge 268ba20110 rs/stat-data-unaligned-reads-fix later to maint).
-   (merge 78e7b98f45 jt/fsck-code-cleanup later to maint).
-   (merge c7b0780545 rs/pack-objects-pbase-cleanup later to maint).
-   (merge c1e860f1dc js/run-process-parallel-api-fix later to maint).
-   (merge 7a40a95eb4 cc/ref-is-hidden-microcleanup later to maint).
-   (merge c0bb6d9cef ah/doc-wserrorhighlight later to maint).
-   (merge edd64ef4f7 dc/fmt-merge-msg-microcleanup later to maint).
-   (merge fa64a2fdbe jt/subprocess-handshake later to maint).
-   (merge 0ba9c9a0fb jb/t8008-cleanup later to maint).
-   (merge a7c28a2161 jt/t1450-fsck-corrupt-packfile later to maint).
    (merge dff2813391 ab/ref-filter-no-contains later to maint).
    (merge f094b89a4d ma/parse-maybe-bool later to maint).
    (merge 974ce8078c mf/no-dashed-subcommands later to maint).
@@ -218,3 +214,5 @@ Fixes since v2.14
    (merge 2aac933c62 hv/t5526-andand-chain-fix later to maint).
    (merge c8d0c4fe9b sb/submodule-parallel-update later to maint).
    (merge 794b7e1674 mg/format-ref-doc-fix later to maint).
+   (merge 24da8a26a9 rs/commit-h-single-parent-cleanup later to maint).
+   (merge 4e36907fa3 jk/doc-the-this later to maint).
