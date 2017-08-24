@@ -2,6 +2,7 @@
 #include "pack.h"
 #include "pack-revindex.h"
 #include "progress.h"
+#include "packfile.h"
 
 struct idx_entry {
 	off_t                offset;

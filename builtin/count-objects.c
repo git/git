@@ -10,6 +10,7 @@
 #include "builtin.h"
 #include "parse-options.h"
 #include "quote.h"
+#include "packfile.h"
 
 static unsigned long garbage;
 static off_t size_garbage;

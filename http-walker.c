@@ -4,6 +4,7 @@
 #include "http.h"
 #include "list.h"
 #include "transport.h"
+#include "packfile.h"
 
 struct alt_base {
 	char *base;

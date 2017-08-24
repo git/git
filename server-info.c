@@ -3,6 +3,7 @@
 #include "object.h"
 #include "commit.h"
 #include "tag.h"
+#include "packfile.h"
 
 /*
  * Create the file "path" by writing to a temporary file and renaming

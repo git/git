@@ -9,6 +9,7 @@
 #include "string-list.h"
 #include "url.h"
 #include "argv-array.h"
+#include "packfile.h"
 
 static const char content_type[] = "Content-Type";
 static const char content_length[] = "Content-Length";

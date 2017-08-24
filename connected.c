@@ -3,6 +3,7 @@
 #include "sigchain.h"
 #include "connected.h"
 #include "transport.h"
+#include "packfile.h"
 
 /*
  * If we feed all the commits we want to verify to this command

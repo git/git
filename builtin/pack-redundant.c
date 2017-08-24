@@ -7,6 +7,7 @@
 */
 
 #include "builtin.h"
+#include "packfile.h"
 
 #define BLKSIZE 512
 
