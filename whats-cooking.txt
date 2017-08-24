@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Aug 2017, #05; Tue, 22)
-X-master-at: f0294f474e16840f4efb3f4da3329ba46f53efa7
-X-next-at: 238414bde168866658281957364b80816e9be329
+Subject: What's cooking in git.git (Aug 2017, #06; Thu, 24)
+X-master-at: 3dc57ebfbd1bf30b9a6987f551af9b74641382a9
+X-next-at: eb51544efa2177e71821426b32f8c0299705a996
 
-What's cooking in git.git (Aug 2017, #05; Tue, 22)
+What's cooking in git.git (Aug 2017, #06; Thu, 24)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,13 +12,12 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-The second batch of topics are in.  This cycle is going a bit slower
-than the previous one (as of mid-week #3 of this cycle, we have
-about 200 patches on 'master' since v2.14, compared to about 300
-patches in the cycle towards v2.14 at a similar point in the cycle),
-but hopefully we can catch up eventually.  
-
-I am planning to be offline most of the next week, by the way.
+As I am preparing to go offline next week for about a week, a
+handful of topics have been merged to 'master' and 'next' is getting
+thinner.  There are a few topics of importance that are still only
+on the mailing list archive and not in my tree that I'd like to
+review them and help them get into a reasonable shape, but that
+hasn't happened yet.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -28,340 +27,130 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ab/ref-filter-no-contains (2017-08-07) 1 commit
-  (merged to 'next' on 2017-08-18 at 7ec9d3d3a2)
- + tests: don't give unportable ">" to "test" built-in, use -gt
+* ah/doc-empty-string-is-false (2017-08-14) 1 commit
+  (merged to 'next' on 2017-08-19 at df47ffeffa)
+ + doc: clarify "config --bool" behaviour with empty string
 
- A test fix.
-
-
-* bw/clone-recursive-quiet (2017-08-04) 1 commit
-  (merged to 'next' on 2017-08-14 at fbd4473ce4)
- + clone: teach recursive clones to respect -q
-
- "git clone --recurse-submodules --quiet" did not pass the quiet
- option down to submodules.
+ Doc update.
 
 
-* bw/grep-recurse-submodules (2017-08-02) 10 commits
-  (merged to 'next' on 2017-08-14 at dcfcfc94af)
- + grep: recurse in-process using 'struct repository'
- + submodule: merge repo_read_gitmodules and gitmodules_config
- + submodule: check for unmerged .gitmodules outside of config parsing
- + submodule: check for unstaged .gitmodules outside of config parsing
- + submodule: remove fetch.recursesubmodules from submodule-config parsing
- + submodule: remove submodule.fetchjobs from submodule-config parsing
- + config: add config_from_gitmodules
- + cache.h: add GITMODULES_FILE macro
- + repository: have the_repository use the_index
- + repo_read_index: don't discard the index
- (this branch is used by bw/submodule-config-cleanup.)
+* as/grep-quiet-no-match-exit-code-fix (2017-08-17) 1 commit
+  (merged to 'next' on 2017-08-19 at 362f88fb41)
+ + git-grep: correct exit code with --quiet and -L
 
- "git grep --recurse-submodules" has been reworked to give a more
- consistent output across submodule boundary (and do its thing
- without having to fork a separate process).
+ "git grep -L" and "git grep --quiet -L" reported different exit
+ codes; this has been corrected.
 
 
-* bw/push-options-recursively-to-submodules (2017-07-20) 1 commit
-  (merged to 'next' on 2017-08-14 at 421dc09fd0)
- + submodule--helper: teach push-check to handle HEAD
+* cc/subprocess-handshake-missing-capabilities (2017-08-16) 1 commit
+  (merged to 'next' on 2017-08-19 at c512710fda)
+ + sub-process: print the cmd when a capability is unsupported
 
- "git push --recurse-submodules $there HEAD:$target" was not
- propagated down to the submodules, but now it is.
+ When handshake with a subprocess filter notices that the process
+ asked for an unknown capability, Git did not report what program
+ the offending subprocess was running.  This has been corrected.
 
-
-* jc/perl-git-comment-typofix (2017-08-07) 1 commit
-  (merged to 'next' on 2017-08-18 at b2ad043e6a)
- + perl/Git.pm: typofix in a comment
-
- A comment fix.
+ We may want a follow-up fix to tighten the error checking, though.
 
 
-* jk/drop-sha1-entry-pos (2017-08-09) 1 commit
-  (merged to 'next' on 2017-08-18 at 3a4d9bcf12)
- + sha1_file: drop experimental GIT_USE_LOOKUP search
- (this branch is used by jt/packmigrate.)
+* hv/t5526-andand-chain-fix (2017-08-17) 1 commit
+  (merged to 'next' on 2017-08-19 at fa95053653)
+ + t5526: fix some broken && chains
+
+ Test fix.
+
+
+* jc/diff-sane-truncate-no-more (2017-08-17) 1 commit
+  (merged to 'next' on 2017-08-19 at 3ba3980eed)
+ + diff: retire sane_truncate_fn
 
  Code clean-up.
-
-
-* jk/hashcmp-memcmp (2017-08-09) 1 commit
-  (merged to 'next' on 2017-08-18 at 27c4aa5520)
- + hashcmp: use memcmp instead of open-coded loop
-
- Code clean-up.
-
-
-* ma/parse-maybe-bool (2017-08-07) 6 commits
-  (merged to 'next' on 2017-08-18 at ba22bb836c)
- + parse_decoration_style: drop unused argument `var`
- + treewide: deprecate git_config_maybe_bool, use git_parse_maybe_bool
- + config: make git_{config,parse}_maybe_bool equivalent
- + config: introduce git_parse_maybe_bool_text
- + t5334: document that git push --signed=1 does not work
- + Doc/git-{push,send-pack}: correct --sign= to --signed=
-
- Code clean-up.
-
-
-* mf/no-dashed-subcommands (2017-08-07) 1 commit
-  (merged to 'next' on 2017-08-18 at 05365af2ff)
- + scripts: use "git foo" not "git-foo"
-
- Code clean-up.
-
-
-* mh/packed-ref-store (2017-08-17) 32 commits
-  (merged to 'next' on 2017-08-18 at 14c58936e1)
- + files-backend: cheapen refname_available check when locking refs
-  (merged to 'next' on 2017-08-14 at 987b76d302)
- + packed_ref_store: handle a packed-refs file that is a symlink
- + read_packed_refs(): die if `packed-refs` contains bogus data
- + t3210: add some tests of bogus packed-refs file contents
- + repack_without_refs(): don't lock or unlock the packed refs
- + commit_packed_refs(): remove call to `packed_refs_unlock()`
- + clear_packed_ref_cache(): don't protest if the lock is held
- + packed_refs_unlock(), packed_refs_is_locked(): new functions
- + packed_refs_lock(): report errors via a `struct strbuf *err`
- + packed_refs_lock(): function renamed from lock_packed_refs()
- + commit_packed_refs(): use a staging file separate from the lockfile
- + commit_packed_refs(): report errors rather than dying
- + packed_ref_store: make class into a subclass of `ref_store`
- + packed-backend: new module for handling packed references
- + packed_read_raw_ref(): new function, replacing `resolve_packed_ref()`
- + packed_ref_store: support iteration
- + packed_peel_ref(): new function, extracted from `files_peel_ref()`
- + repack_without_refs(): take a `packed_ref_store *` parameter
- + get_packed_ref(): take a `packed_ref_store *` parameter
- + rollback_packed_refs(): take a `packed_ref_store *` parameter
- + commit_packed_refs(): take a `packed_ref_store *` parameter
- + lock_packed_refs(): take a `packed_ref_store *` parameter
- + add_packed_ref(): take a `packed_ref_store *` parameter
- + get_packed_refs(): take a `packed_ref_store *` parameter
- + get_packed_ref_cache(): take a `packed_ref_store *` parameter
- + validate_packed_ref_cache(): take a `packed_ref_store *` parameter
- + clear_packed_ref_cache(): take a `packed_ref_store *` parameter
- + packed_ref_store: move `packed_refs_lock` member here
- + packed_ref_store: move `packed_refs_path` here
- + packed_ref_store: new struct
- + add_packed_ref(): teach function to overwrite existing refs
- + t1408: add a test of stale packed refs covered by loose refs
-
- The "ref-store" code reorganization continues.
-
-
-* pw/am-signoff (2017-08-08) 1 commit
-  (merged to 'next' on 2017-08-18 at 7678ed822c)
- + am: fix signoff when other trailers are present
-
- "git am -s" has been taught that some input may end with a trailer
- block that is not Signed-off-by: and it should refrain from adding
- an extra blank line before adding a new sign-off in such a case.
-
-
-* pw/sequence-rerere-autoupdate (2017-08-02) 6 commits
-  (merged to 'next' on 2017-08-14 at 010cbb0cbe)
- + cherry-pick/revert: reject --rerere-autoupdate when continuing
- + cherry-pick/revert: remember --rerere-autoupdate
- + t3504: use test_commit
- + rebase -i: honor --rerere-autoupdate
- + rebase: honor --rerere-autoupdate
- + am: remember --rerere-autoupdate setting
-
- Commands like "git rebase" accepted the --rerere-autoupdate option
- from the command line, but did not always use it.  This has been
- fixed.
-
-
-* rj/add-chmod-error-message (2017-08-09) 1 commit
-  (merged to 'next' on 2017-08-18 at ba2afb696a)
- + builtin/add: add detail to a 'cannot chmod' error message
-
- Message fix.
-
-
-* rs/apply-lose-prefix-length (2017-08-09) 1 commit
-  (merged to 'next' on 2017-08-18 at 6ce0dbb3f0)
- + apply: remove prefix_length member from apply_state
-
- Code clean-up.
-
-
-* rs/find-pack-entry-bisection (2017-08-09) 1 commit
-  (merged to 'next' on 2017-08-18 at b4130177a9)
- + sha1_file: avoid comparison if no packed hash matches the first byte
- (this branch is used by jt/packmigrate.)
-
- Code clean-up.
-
-
-* rs/fsck-obj-leakfix (2017-08-10) 1 commit
-  (merged to 'next' on 2017-08-18 at 77e3d111ef)
- + fsck: free buffers on error in fsck_obj()
-
- Memory leak in an error codepath has been plugged.
-
-
-* rs/in-obsd-basename-dirname-take-const (2017-08-07) 1 commit
-  (merged to 'next' on 2017-08-18 at c739077e3b)
- + test-path-utils: handle const parameter of basename and dirname
-
- Portability fix.
-
-
-* rs/merge-microcleanup (2017-08-10) 1 commit
-  (merged to 'next' on 2017-08-18 at 79ba7d301d)
- + merge: use skip_prefix()
-
- Code clean-up.
-
-
-* rs/obsd-getcwd-workaround (2017-08-07) 1 commit
-  (merged to 'next' on 2017-08-18 at adb98cfe0c)
- + t0001: skip test with restrictive permissions if getpwd(3) respects them
-
- Test portability fix for BSDs.
-
-
-* rs/strbuf-getwholeline-fix (2017-08-10) 1 commit
-  (merged to 'next' on 2017-08-18 at 5f879d8261)
- + strbuf: clear errno before calling getdelim(3)
-
- A helper function to read a single whole line into strbuf
- mistakenly triggered OOM error at EOF under certain conditions,
- which has been fixed.
-
-
-* rs/t3700-clean-leftover (2017-08-08) 1 commit
-  (merged to 'next' on 2017-08-18 at 12232a8cd3)
- + t3700: fix broken test under !POSIXPERM
-
- A test fix.
-
-
-* rs/t4062-obsd (2017-08-09) 1 commit
-  (merged to 'next' on 2017-08-18 at 02bff42d86)
- + t4062: use less than 256 repetitions in regex
-
- Test portability fix.
-
-
-* rs/unpack-entry-leakfix (2017-08-10) 1 commit
-  (merged to 'next' on 2017-08-18 at 1e7d8f54b1)
- + sha1_file: release delta_stack on error in unpack_entry()
- (this branch is used by jt/packmigrate.)
-
- Memory leak in an error codepath has been plugged.
-
-
-* rs/win32-syslog-leakfix (2017-08-10) 1 commit
-  (merged to 'next' on 2017-08-18 at 011eccb7bd)
- + win32: plug memory leak on realloc() failure in syslog()
-
- Memory leak in an error codepath has been plugged.
-
-
-* sb/retire-t1200 (2017-08-10) 1 commit
-  (merged to 'next' on 2017-08-18 at d436f9bbce)
- + t1200: remove t1200-tutorial.sh
-
- A test script that outlived its usefulness has been removed.
-
-
-* ur/svn-local-zone (2017-08-08) 1 commit
-  (merged to 'next' on 2017-08-18 at f222bb6db0)
- + git svn fetch: Create correct commit timestamp when using --localtime
-
- "git svn" used with "--localtime" option did not compute the tz
- offset for the timestamp in question and instead always used the
- current time, which has been corrected.
-
---------------------------------------------------
-[New Topics]
-
-* jt/packmigrate (2017-08-19) 27 commits
- - pack: move for_each_packed_object()
- - pack: move has_pack_index()
- - pack: move has_sha1_pack()
- - pack: move find_pack_entry() and make it global
- - pack: move find_sha1_pack()
- - pack: move find_pack_entry_one(), is_pack_valid()
- - pack: move check_pack_index_ptr(), nth_packed_object_offset()
- - pack: move nth_packed_object_{sha1,oid}
- - pack: move clear_delta_base_cache(), packed_object_info(), unpack_entry()
- - pack: move unpack_object_header()
- - pack: move get_size_from_delta()
- - pack: move unpack_object_header_buffer()
- - pack: move {,re}prepare_packed_git and approximate_object_count
- - pack: move install_packed_git()
- - pack: move add_packed_git()
- - pack: move unuse_pack()
- - pack: move use_pack()
- - pack: move pack-closing functions
- - pack: move release_pack_memory()
- - pack: move open_pack_index(), parse_pack_index()
- - pack: move pack_report()
- - pack: move static state variables
- - pack: move pack name-related functions
- - Merge branch 'rs/unpack-entry-leakfix' into HEAD
- - Merge branch 'jt/sha1-file-cleanup' into HEAD
- - Merge branch 'jk/drop-sha1-entry-pos' into HEAD
- - Merge branch 'rs/find-pack-entry-bisection' into HEAD
- (this branch uses jt/sha1-file-cleanup.)
-
- Code movement to make it easier to hack later.
-
- Rebase this on the master after jt/sha1-file-cleanup graduates and
- merge it to 'next' (if reviewers found this a good change, that
- is).
-
-
-* jc/cutoff-config (2017-08-19) 2 commits
- - rerere: allow approxidate in gc.rerereResolved/gc.rerereUnresolved
- - rerere: represent time duration in timestamp_t internally
-
- "[gc] rerereResolved = 5.days" used to be invalid, as the variable
- is defined to take an integer counting the number of days.  It now
- is allowed.
-
- Needs reroll.
- cf. <xmqqa82t7ov1.fsf@gitster.mtv.corp.google.com>
 
 
 * jc/simplify-progress (2017-08-19) 1 commit
- - progress: simplify "delayed" progress API
+  (merged to 'next' on 2017-08-22 at 9077ff6912)
+ + progress: simplify "delayed" progress API
 
  The API to start showing progress meter after a short delay has
  been simplified.
 
- Will merge to 'next'.
+
+* jk/doc-the-this (2017-08-20) 1 commit
+  (merged to 'next' on 2017-08-22 at 6625e50025)
+ + doc: fix typo in sendemail.identity
+
+ Doc clean-up.
 
 
-* jt/stash-tests (2017-08-19) 3 commits
-  (merged to 'next' on 2017-08-22 at 0b022697aa)
- + stash: add a test for stashing in a detached state
- + stash: add a test for when apply fails during stash branch
- + stash: add a test for stash create with no files
+* jt/sha1-file-cleanup (2017-08-11) 2 commits
+  (merged to 'next' on 2017-08-19 at 93f4c94578)
+ + sha1_file: remove read_packed_sha1()
+ + sha1_file: set whence in storage-specific info fn
+ (this branch is used by jt/packmigrate.)
 
- Test update to improve coverage for "git stash" operations.
-
- Will merge to 'master'.
+ Preparatory code clean-up.
 
 
-* rs/archive-excluded-directory (2017-08-19) 3 commits
- - archive: don't queue excluded directories
- - archive: factor out helper functions for handling attributes
- - t5001: add tests for export-ignore attributes and exclude pathspecs
+* kd/stash-with-bash-4.4 (2017-08-14) 1 commit
+  (merged to 'next' on 2017-08-19 at 79b2c4b052)
+ + stash: prevent warning about null bytes in input
 
- "git archive" did not work well with pathspecs and the
- export-ignore attribute.
+ bash 4.4 or newer gave a warning on NUL byte in command
+ substitution done in "git stash"; this has been squelched.
 
- Will merge to 'next'.
 
- We may want to resurrect the "we don't archive an empty directory"
- bonus patch, but I do not mind merging the above early to 'next'
- and leave it as a separate follow-up enhancement.
- cf. <20170820090629.tumvqwzkromcykjf@sigill.intra.peff.net>
+* ks/prepare-commit-msg-sample-fix (2017-08-14) 1 commit
+  (merged to 'next' on 2017-08-19 at e75c30de64)
+ + hook: use correct logical variable
+
+ An "oops" fix to a topic that is already in 'master'.
+
+
+* kw/commit-keep-index-when-pre-commit-is-not-run (2017-08-16) 1 commit
+  (merged to 'next' on 2017-08-19 at 2b5a25e5ae)
+ + commit: skip discarding the index if there is no pre-commit hook
+
+ "git commit" used to discard the index and re-read from the filesystem
+ just in case the pre-commit hook has updated it in the middle; this
+ has been optimized out when we know we do not run the pre-commit hook.
+
+
+* kw/rebase-progress (2017-08-14) 2 commits
+  (merged to 'next' on 2017-08-19 at 1958f378dd)
+ + rebase: turn on progress option by default for format-patch
+ + format-patch: have progress option while generating patches
+
+ "git rebase", especially when it is run by mistake and ends up
+ trying to replay many changes, spent long time in silence.  The
+ command has been taught to show progress report when it spends
+ long time preparing these many changes to replay (which would give
+ the user a chance to abort with ^C).
+
+
+* lg/merge-signoff (2017-07-25) 1 commit
+  (merged to 'next' on 2017-08-19 at cb53d7b026)
+ + merge: add a --signoff flag
+
+ "git merge" learned a "--signoff" option to add the Signed-off-by:
+ trailer with the committer's name.
+
+
+* mg/format-ref-doc-fix (2017-08-18) 2 commits
+  (merged to 'next' on 2017-08-19 at 6490525c54)
+ + Documentation/git-for-each-ref: clarify peeling of tags for --format
+ + Documentation: use proper wording for ref format strings
+
+ Doc fix.
+
+
+* nm/stash-untracked (2017-08-11) 1 commit
+  (merged to 'next' on 2017-08-19 at 70990d7eb3)
+ + stash: clean untracked files before reset
+
+ "git stash -u" used the contents of the committed version of the
+ ".gitignore" file to decide which paths are ignored, even when the
+ file has local changes.  The command has been taught to instead use
+ the locally modified contents.
 
 
 * rs/commit-h-single-parent-cleanup (2017-08-19) 1 commit
@@ -370,66 +159,112 @@ of the repositories listed at
 
  Code clean-up.
 
- Will merge to 'master'.
+
+* rs/object-id (2017-08-14) 1 commit
+  (merged to 'next' on 2017-08-19 at 0f7283cd19)
+ + tree-walk: convert fill_tree_descriptor() to object_id
+
+ Conversion from uchar[20] to struct object_id continues.
 
 
-* bc/hash-algo (2017-08-20) 5 commits
- - hash-algo: switch empty tree and blob lookups to use hash abstraction
- - hash-algo: integrate hash algorithm support with repo setup
- - hash-algo: add structure representing hash algorithm
- - setup: expose enumerated repo info
- - Merge branch 'bc/vcs-svn-cleanup' into bc/hash-algo
- (this branch uses bc/vcs-svn-cleanup.)
+* rs/t1002-do-not-use-sum (2017-08-15) 1 commit
+  (merged to 'next' on 2017-08-19 at 15b2a5f21b)
+ + t1002: stop using sum(1)
+
+ Test simplification.
 
 
-* bc/vcs-svn-cleanup (2017-08-20) 2 commits
- - vcs-svn: rename repo functions to "svn_repo"
- - vcs-svn: remove unused prototypes
- (this branch is used by bc/hash-algo.)
+* sb/sha1-file-cleanup (2017-08-15) 1 commit
+  (merged to 'next' on 2017-08-19 at 85898d1e7c)
+ + sha1_file: make read_info_alternates static
 
  Code clean-up.
 
+
+* sb/submodule-parallel-update (2017-08-17) 1 commit
+  (merged to 'next' on 2017-08-19 at c023a834f0)
+ + submodule.sh: remove unused variable
+
+ Code clean-up.
+
+
+* tc/curl-with-backports (2017-08-11) 2 commits
+  (merged to 'next' on 2017-08-22 at 06c21e1eb9)
+ + http: use a feature check to enable GSSAPI delegation control
+ + http: fix handling of missing CURLPROTO_*
+
+ Updates to the HTTP layer we made recently unconditionally used
+ features of libCurl without checking the existence of them, causing
+ compilation errors, which has been fixed.  Also migrate the code to
+ check feature macros, not version numbers, to cope better with
+ libCurl that vendor ships with backported features.
+
+--------------------------------------------------
+[New Topics]
+
+* js/gitweb-raw-blob-link-in-history (2017-08-22) 1 commit
+  (merged to 'next' on 2017-08-23 at 16258266e2)
+ + gitweb: add 'raw' blob_plain link in history overview
+
+ "gitweb" shows a link to visit the 'raw' contents of blbos in the
+ history overview page.
+
+ Will merge to 'master'.
+
+
+* jn/vcs-svn-cleanup (2017-08-23) 4 commits
+  (merged to 'next' on 2017-08-24 at c184f08f5f)
+ + vcs-svn: move remaining repo_tree functions to fast_export.h
+ + vcs-svn: remove repo_delete wrapper function
+ + vcs-svn: remove custom mode constants
+ + vcs-svn: remove more unused prototypes and declarations
+ (this branch uses bc/vcs-svn-cleanup; is tangled with bc/hash-algo.)
+
+ Code clean-up.
+
+ Will merge to 'master'.
+
+
+* jt/doc-pack-objects-fix (2017-08-23) 1 commit
+  (merged to 'next' on 2017-08-24 at 7e4c3c0c9f)
+ + Doc: clarify that pack-objects makes packs, plural
+
+ Doc updates.
+
+ Will merge to 'master'.
+
+
+* ma/ts-cleanups (2017-08-23) 4 commits
+ - ThreadSanitizer: add suppressions
+ - strbuf_setlen: don't write to strbuf_slopbuf
+ - pack-objects: take lock before accessing `remaining`
+ - convert: always initialize attr_action in convert_attrs
+
+ Assorted bugfixes and clean-ups.
+
  Will merge to 'next'.
 
 
-* jk/doc-the-this (2017-08-20) 1 commit
- - doc: fix typo in sendemail.identity
+* ma/up-to-date (2017-08-23) 2 commits
+ - treewide: correct several "up-to-date" to "up to date"
+ - Documentation/user-manual: update outdated example output
 
- Doc clean-up.
-
- Will merge to 'next'.
-
-
-* kw/write-index-reduce-alloc (2017-08-21) 3 commits
- - read-cache: avoid allocating every ondisk entry when writing
- - read-cache: fix memory leak in do_write_index
- - perf: add test for writing the index
-
-
-* mg/killed-merge (2017-08-21) 3 commits
- - merge: save merge state earlier
- - merge: split write_merge_state in two
- - Documentation/git-merge: explain --continue
-
- Killing "git merge --edit" before the editor returns control left
- the repository in a state with MERGE_MSG but without MERGE_HEAD,
- which incorrectly tells the subsequent "git commit" that there was
- a squash merge in progress.  This has been fixed.
-
- Looked mostly good with minor nits.
- cf. <36bea69b-010a-9542-ec87-38b00d2bb009@grubix.eu>
-
-
-* po/object-id (2017-08-20) 6 commits
- - sha1_file: convert index_stream to struct object_id
- - sha1_file: convert hash_sha1_file_literally to struct object_id
- - sha1_file: convert index_fd to struct object_id
- - sha1_file: convert index_path to struct object_id
- - read-cache: convert to struct object_id
- - builtin/hash-object: convert to struct object_id
+ Message and doc updates.
 
  Will merge to 'next'.
 
+
+* mh/ref-lock-entry (2017-08-23) 1 commit
+  (merged to 'next' on 2017-08-24 at 67760267f4)
+ + refs: retry acquiring reference locks for 100ms
+
+ The code to acquire a lock on a reference (e.g. while accepting a
+ push from a client) used to immediately fail when the reference is
+ already locked---now it waits for a very short while and retries,
+ which can make it succeed if the lock holder was holding it during
+ a read-only operation.
+
+ Will merge to 'master'.
 
 --------------------------------------------------
 [Stalled]
@@ -509,17 +344,139 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* cc/subprocess-handshake-missing-capabilities (2017-08-16) 1 commit
-  (merged to 'next' on 2017-08-19 at c512710fda)
- + sub-process: print the cmd when a capability is unsupported
+* jt/packmigrate (2017-08-23) 23 commits
+  (merged to 'next' on 2017-08-24 at 34a628ae6c)
+ + pack: move for_each_packed_object()
+ + pack: move has_pack_index()
+ + pack: move has_sha1_pack()
+ + pack: move find_pack_entry() and make it global
+ + pack: move find_sha1_pack()
+ + pack: move find_pack_entry_one(), is_pack_valid()
+ + pack: move check_pack_index_ptr(), nth_packed_object_offset()
+ + pack: move nth_packed_object_{sha1,oid}
+ + pack: move clear_delta_base_cache(), packed_object_info(), unpack_entry()
+ + pack: move unpack_object_header()
+ + pack: move get_size_from_delta()
+ + pack: move unpack_object_header_buffer()
+ + pack: move {,re}prepare_packed_git and approximate_object_count
+ + pack: move install_packed_git()
+ + pack: move add_packed_git()
+ + pack: move unuse_pack()
+ + pack: move use_pack()
+ + pack: move pack-closing functions
+ + pack: move release_pack_memory()
+ + pack: move open_pack_index(), parse_pack_index()
+ + pack: move pack_report()
+ + pack: move static state variables
+ + pack: move pack name-related functions
 
- When handshake with a subprocess filter notices that the process
- asked for an unknown capability, Git did not report what program
- the offending subprocess was running.  This has been corrected.
+ Code movement to make it easier to hack later.
 
  Will merge to 'master'.
 
- We may want a follow-up fix to tighten the error checking, though.
+
+* jc/cutoff-config (2017-08-22) 6 commits
+  (merged to 'next' on 2017-08-24 at 2dcbf9ae04)
+ + rerere: allow approxidate in gc.rerereResolved/gc.rerereUnresolved
+ + rerere: represent time duration in timestamp_t internally
+ + t4200: parameterize "rerere gc" custom expiry test
+ + t4200: gather "rerere gc" together
+ + t4200: make "rerere gc" test more robust
+ + t4200: give us a clean slate after "rerere gc" tests
+
+ "[gc] rerereResolved = 5.days" used to be invalid, as the variable
+ is defined to take an integer counting the number of days.  It now
+ is allowed.
+
+ Will merge to 'master'.
+
+
+* jt/stash-tests (2017-08-19) 3 commits
+  (merged to 'next' on 2017-08-22 at 0b022697aa)
+ + stash: add a test for stashing in a detached state
+ + stash: add a test for when apply fails during stash branch
+ + stash: add a test for stash create with no files
+
+ Test update to improve coverage for "git stash" operations.
+
+ Will merge to 'master'.
+
+
+* rs/archive-excluded-directory (2017-08-19) 3 commits
+  (merged to 'next' on 2017-08-22 at 1853597c35)
+ + archive: don't queue excluded directories
+ + archive: factor out helper functions for handling attributes
+ + t5001: add tests for export-ignore attributes and exclude pathspecs
+
+ "git archive" did not work well with pathspecs and the
+ export-ignore attribute.
+
+ Will merge to 'master'.
+
+ We may want to resurrect the "we don't archive an empty directory"
+ bonus patch, but I do not mind merging the above early to 'next'
+ and leave it as a separate follow-up enhancement.
+ cf. <20170820090629.tumvqwzkromcykjf@sigill.intra.peff.net>
+
+
+* bc/hash-algo (2017-08-20) 5 commits
+ - hash-algo: switch empty tree and blob lookups to use hash abstraction
+ - hash-algo: integrate hash algorithm support with repo setup
+ - hash-algo: add structure representing hash algorithm
+ - setup: expose enumerated repo info
+ - Merge branch 'bc/vcs-svn-cleanup' into bc/hash-algo
+ (this branch uses bc/vcs-svn-cleanup; is tangled with jn/vcs-svn-cleanup.)
+
+
+* bc/vcs-svn-cleanup (2017-08-20) 2 commits
+  (merged to 'next' on 2017-08-22 at d8494b5d5b)
+ + vcs-svn: rename repo functions to "svn_repo"
+ + vcs-svn: remove unused prototypes
+ (this branch is used by bc/hash-algo and jn/vcs-svn-cleanup.)
+
+ Code clean-up.
+
+ Will merge to 'master'.
+
+
+* kw/write-index-reduce-alloc (2017-08-21) 3 commits
+  (merged to 'next' on 2017-08-24 at 29f7daad85)
+ + read-cache: avoid allocating every ondisk entry when writing
+ + read-cache: fix memory leak in do_write_index
+ + perf: add test for writing the index
+
+ We used to spend more than necessary cycles allocating and freeing
+ piece of memory while writing each index entry out.  This has been
+ optimized.
+
+ Will merge to 'master'.
+
+
+* mg/killed-merge (2017-08-23) 4 commits
+  (merged to 'next' on 2017-08-24 at 5db37fc192)
+ + merge: save merge state earlier
+ + merge: split write_merge_state in two
+ + merge: clarify call chain
+ + Documentation/git-merge: explain --continue
+
+ Killing "git merge --edit" before the editor returns control left
+ the repository in a state with MERGE_MSG but without MERGE_HEAD,
+ which incorrectly tells the subsequent "git commit" that there was
+ a squash merge in progress.  This has been fixed.
+
+ Will merge to 'master'.
+
+
+* po/object-id (2017-08-20) 6 commits
+  (merged to 'next' on 2017-08-23 at 0faff383a8)
+ + sha1_file: convert index_stream to struct object_id
+ + sha1_file: convert hash_sha1_file_literally to struct object_id
+ + sha1_file: convert index_fd to struct object_id
+ + sha1_file: convert index_path to struct object_id
+ + read-cache: convert to struct object_id
+ + builtin/hash-object: convert to struct object_id
+
+ Will merge to 'master'.
 
 
 * tb/apply-with-crlf (2017-08-19) 2 commits
@@ -539,69 +496,14 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* rs/t1002-do-not-use-sum (2017-08-15) 1 commit
-  (merged to 'next' on 2017-08-19 at 15b2a5f21b)
- + t1002: stop using sum(1)
-
- Test simplification.
-
- Will merge to 'master'.
-
-
-* sb/sha1-file-cleanup (2017-08-15) 1 commit
-  (merged to 'next' on 2017-08-19 at 85898d1e7c)
- + sha1_file: make read_info_alternates static
-
- Code clean-up.
-
- Will merge to 'master'.
-
-
-* as/grep-quiet-no-match-exit-code-fix (2017-08-17) 1 commit
-  (merged to 'next' on 2017-08-19 at 362f88fb41)
- + git-grep: correct exit code with --quiet and -L
-
- "git grep -L" and "git grep --quiet -L" reported different exit
- codes; this has been corrected.
-
- Will merge to 'master'.
-
-
-* hv/t5526-andand-chain-fix (2017-08-17) 1 commit
-  (merged to 'next' on 2017-08-19 at fa95053653)
- + t5526: fix some broken && chains
-
- Test fix.
-
- Will merge to 'master'.
-
-
-* jc/diff-sane-truncate-no-more (2017-08-17) 1 commit
-  (merged to 'next' on 2017-08-19 at 3ba3980eed)
- + diff: retire sane_truncate_fn
-
- Code clean-up.
-
- Will merge to 'master'.
-
-
 * ks/branch-set-upstream (2017-08-17) 3 commits
- - branch: quote branch/ref names to improve readability
- - builtin/branch: stop supporting the "--set-upstream" option
- - t3200: cleanup cruft of a test
+  (merged to 'next' on 2017-08-22 at 10fd938390)
+ + branch: quote branch/ref names to improve readability
+ + builtin/branch: stop supporting the "--set-upstream" option
+ + t3200: cleanup cruft of a test
 
  "branch --set-upstream" that has been deprecated in Git 1.8 has
  finally been retired.
-
- Will merge to 'next'.
-
-
-* mg/format-ref-doc-fix (2017-08-18) 2 commits
-  (merged to 'next' on 2017-08-19 at 6490525c54)
- + Documentation/git-for-each-ref: clarify peeling of tags for --format
- + Documentation: use proper wording for ref format strings
-
- Doc fix.
 
  Will merge to 'master'.
 
@@ -616,24 +518,6 @@ of the repositories listed at
  Conversion from uchar[20] to struct object_id continues; this is to
  ensure that we do not assume sizeof(struct object_id) is the same
  as the length of SHA-1 hash (or length of longest hash we support).
-
- Will merge to 'master'.
-
-
-* sb/submodule-parallel-update (2017-08-17) 1 commit
-  (merged to 'next' on 2017-08-19 at c023a834f0)
- + submodule.sh: remove unused variable
-
- Code clean-up.
-
- Will merge to 'master'.
-
-
-* ks/prepare-commit-msg-sample-fix (2017-08-14) 1 commit
-  (merged to 'next' on 2017-08-19 at e75c30de64)
- + hook: use correct logical variable
-
- An "oops" fix to a topic that is already in 'master'.
 
  Will merge to 'master'.
 
@@ -660,19 +544,6 @@ of the repositories listed at
  Some code in http.c that has bitrot is being removed.
 
  Will be rerolled after tc/curl-with-backports stabilizes.
-
-
-* tc/curl-with-backports (2017-08-11) 2 commits
- - http: use a feature check to enable GSSAPI delegation control
- - http: fix handling of missing CURLPROTO_*
-
- Updates to the HTTP layer we made recently unconditionally used
- features of libCurl without checking the existence of them, causing
- compilation errors, which has been fixed.  Also migrate the code to
- check feature macros, not version numbers, to cope better with
- libCurl that vendor ships with backported features.
-
- Will merge to 'next'.
 
 
 * jk/trailers-parse (2017-08-20) 9 commits
@@ -708,31 +579,6 @@ of the repositories listed at
  cf. <1502914591-26215-1-git-send-email-martin@mail.zuhause>
 
 
-* jt/sha1-file-cleanup (2017-08-11) 2 commits
-  (merged to 'next' on 2017-08-19 at 93f4c94578)
- + sha1_file: remove read_packed_sha1()
- + sha1_file: set whence in storage-specific info fn
- (this branch is used by jt/packmigrate.)
-
- Preparatory code clean-up.
-
- Will merge to 'master'.
-
-
-* kw/rebase-progress (2017-08-14) 2 commits
-  (merged to 'next' on 2017-08-19 at 1958f378dd)
- + rebase: turn on progress option by default for format-patch
- + format-patch: have progress option while generating patches
-
- "git rebase", especially when it is run by mistake and ends up
- trying to replay many changes, spent long time in silence.  The
- command has been taught to show progress report when it spends
- long time preparing these many changes to replay (which would give
- the user a chance to abort with ^C).
-
- Will merge to 'master'.
-
-
 * mk/diff-delta-avoid-large-offset (2017-08-11) 1 commit
  . diff-delta: do not allow delta offset truncation
 
@@ -743,36 +589,6 @@ of the repositories listed at
 
  Dropped, as it was rerolled for review as part of a larger series.
  cf. <1502914591-26215-1-git-send-email-martin@mail.zuhause>
-
-
-* nm/stash-untracked (2017-08-11) 1 commit
-  (merged to 'next' on 2017-08-19 at 70990d7eb3)
- + stash: clean untracked files before reset
-
- "git stash -u" used the contents of the committed version of the
- ".gitignore" file to decide which paths are ignored, even when the
- file has local changes.  The command has been taught to instead use
- the locally modified contents.
-
- Will merge to 'master'.
-
-
-* rs/object-id (2017-08-14) 1 commit
-  (merged to 'next' on 2017-08-19 at 0f7283cd19)
- + tree-walk: convert fill_tree_descriptor() to object_id
-
- Conversion from uchar[20] to struct object_id continues.
-
- Will merge to 'master'.
-
-
-* ah/doc-empty-string-is-false (2017-08-14) 1 commit
-  (merged to 'next' on 2017-08-19 at df47ffeffa)
- + doc: clarify "config --bool" behaviour with empty string
-
- Doc update.
-
- Will merge to 'master'.
 
 
 * jt/diff-color-move-fix (2017-08-16) 3 commits
@@ -787,43 +603,12 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* kd/stash-with-bash-4.4 (2017-08-14) 1 commit
-  (merged to 'next' on 2017-08-19 at 79b2c4b052)
- + stash: prevent warning about null bytes in input
-
- bash 4.4 or newer gave a warning on NUL byte in command
- substitution done in "git stash"; this has been squelched.
-
- Will merge to 'master'.
-
-
-* kw/commit-keep-index-when-pre-commit-is-not-run (2017-08-16) 1 commit
-  (merged to 'next' on 2017-08-19 at 2b5a25e5ae)
- + commit: skip discarding the index if there is no pre-commit hook
-
- "git commit" used to discard the index and re-read from the filesystem
- just in case the pre-commit hook has updated it in the middle; this
- has been optimized out when we know we do not run the pre-commit hook.
-
- Will merge to 'master'.
-
-
 * bw/git-clang-format (2017-08-14) 2 commits
  - Makefile: add style build rule
  - clang-format: outline the git project's coding style
 
  "make style" runs git-clang-format to help developers by pointing
  out coding style issues.
-
-
-* lg/merge-signoff (2017-07-25) 1 commit
-  (merged to 'next' on 2017-08-19 at cb53d7b026)
- + merge: add a --signoff flag
-
- "git merge" learned a "--signoff" option to add the Signed-off-by:
- trailer with the committer's name.
-
- Will merge to 'master'.
 
 
 * pb/trailers-from-command-line (2017-08-14) 4 commits
@@ -866,27 +651,29 @@ of the repositories listed at
 
 
 * bw/submodule-config-cleanup (2017-08-03) 17 commits
- - submodule: remove gitmodules_config
- - unpack-trees: improve loading of .gitmodules
- - submodule-config: lazy-load a repository's .gitmodules file
- - submodule-config: move submodule-config functions to submodule-config.c
- - submodule-config: remove support for overlaying repository config
- - diff: stop allowing diff to have submodules configured in .git/config
- - submodule: remove submodule_config callback routine
- - unpack-trees: don't respect submodule.update
- - submodule: don't rely on overlayed config when setting diffopts
- - fetch: don't overlay config with submodule-config
- - submodule--helper: don't overlay config in update-clone
- - submodule--helper: don't overlay config in remote_submodule_branch
- - add, reset: ensure submodules can be added or reset
- - submodule: don't use submodule_from_name
- - t7411: check configuration parsing errors
- - Merge branch 'bc/object-id' into bw/submodule-config-cleanup
- - Merge branch 'bw/grep-recurse-submodules' into bw/submodule-config-cleanup
+  (merged to 'next' on 2017-08-24 at e35d58c4c6)
+ + submodule: remove gitmodules_config
+ + unpack-trees: improve loading of .gitmodules
+ + submodule-config: lazy-load a repository's .gitmodules file
+ + submodule-config: move submodule-config functions to submodule-config.c
+ + submodule-config: remove support for overlaying repository config
+ + diff: stop allowing diff to have submodules configured in .git/config
+ + submodule: remove submodule_config callback routine
+ + unpack-trees: don't respect submodule.update
+ + submodule: don't rely on overlayed config when setting diffopts
+ + fetch: don't overlay config with submodule-config
+ + submodule--helper: don't overlay config in update-clone
+ + submodule--helper: don't overlay config in remote_submodule_branch
+ + add, reset: ensure submodules can be added or reset
+ + submodule: don't use submodule_from_name
+ + t7411: check configuration parsing errors
+ + Merge branch 'bc/object-id' into bw/submodule-config-cleanup
+ + Merge branch 'bw/grep-recurse-submodules' into bw/submodule-config-cleanup
 
  Code clean-up to avoid mixing values read from the .gitmodules file
  and values read from the .git/config file.
 
+ Will merge to 'master'.
  So, after the recent discussion around submodule.<name>.update (and
  its resolution "use submodule.<name>.active; "reset --hard" must
  ignore the .update thing"), this is now good to go, I presume?
