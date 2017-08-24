@@ -776,6 +776,12 @@ core.commentChar::
 If set to "auto", `git-commit` would select a character that is not
 the beginning character of any line in existing commit messages.
 
+core.filesRefLockTimeout::
+	The length of time, in milliseconds, to retry when trying to
+	lock an individual reference. Value 0 means not to retry at
+	all; -1 means to try indefinitely. Default is 100 (i.e.,
+	retry for 100ms).
+
 core.packedRefsTimeout::
 	The length of time, in milliseconds, to retry when trying to
 	lock the `packed-refs` file. Value 0 means not to retry at

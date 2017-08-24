@@ -62,6 +62,12 @@
 #define REF_DELETED_LOOSE 0x200
 
 /*
+ * Return the length of time to retry acquiring a loose reference lock
+ * before giving up, in milliseconds:
+ */
+long get_files_ref_lock_timeout_ms(void);
+
+/*
  * Return true iff refname is minimally safe. "Safe" here means that
  * deleting a loose reference by this name will not do any damage, for
  * example by causing a file that is not a reference to be deleted.
