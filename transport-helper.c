@@ -1117,6 +1117,13 @@ int transport_helper_init(struct transport *transport, const char *name)
 __attribute__((format (printf, 1, 2)))
 static void transfer_debug(const char *fmt, ...)
 {
+	/*
+	 * NEEDSWORK: This function is sometimes used from multiple threads, and
+	 * we end up using debug_enabled racily. That "should not matter" since
+	 * we always write the same value, but it's still wrong. This function
+	 * is listed in .tsan-suppressions for the time being.
+	 */
+
 	va_list args;
 	char msgbuf[PBUFFERSIZE];
 	static int debug_enabled = -1;
