@@ -141,7 +141,7 @@ exception is when the changed index entries are in the state that
 would result from the merge already.)
 
 If all named commits are already ancestors of `HEAD`, 'git merge'
-will exit early with the message "Already up-to-date."
+will exit early with the message "Already up to date."
 
 FAST-FORWARD MERGE
 ------------------

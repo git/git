@@ -71,7 +71,7 @@ objects/info/packs::
 	This file is to help dumb transports discover what packs
 	are available in this object store.  Whenever a pack is
 	added or removed, `git update-server-info` should be run
-	to keep this file up-to-date if the repository is
+	to keep this file up to date if the repository is
 	published for dumb transports.  'git repack' does this
 	by default.
 

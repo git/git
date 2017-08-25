@@ -39,7 +39,7 @@ set to `no` at the beginning of them.
 
 --ff-only::
 	Refuse to merge and exit with a non-zero status unless the
-	current `HEAD` is already up-to-date or the merge can be
+	current `HEAD` is already up to date or the merge can be
 	resolved as a fast-forward.
 
 --log[=<n>]::

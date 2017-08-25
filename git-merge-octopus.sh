@@ -74,7 +74,7 @@ do
 
 	case "$LF$common$LF" in
 	*"$LF$SHA1$LF"*)
-		eval_gettextln "Already up-to-date with \$pretty_name"
+		eval_gettextln "Already up to date with \$pretty_name"
 		continue
 		;;
 	esac

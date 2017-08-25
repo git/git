@@ -2084,7 +2084,7 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb)
 				_("  (use \"git branch --unset-upstream\" to fixup)\n"));
 	} else if (!ours && !theirs) {
 		strbuf_addf(sb,
-			_("Your branch is up-to-date with '%s'.\n"),
+			_("Your branch is up to date with '%s'.\n"),
 			base);
 	} else if (!theirs) {
 		strbuf_addf(sb,

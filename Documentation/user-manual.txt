@@ -2044,10 +2044,12 @@ If a push would not result in a <<fast-forwards,fast-forward>> of the
 remote branch, then it will fail with an error like:
 
 -------------------------------------------------
-error: remote 'refs/heads/master' is not an ancestor of
- local  'refs/heads/master'.
- Maybe you are not up-to-date and need to pull first?
-error: failed to push to 'ssh://yourserver.com/~you/proj.git'
+ ! [rejected]        master -> master (non-fast-forward)
+error: failed to push some refs to '...'
+hint: Updates were rejected because the tip of your current branch is behind
+hint: its remote counterpart. Integrate the remote changes (e.g.
+hint: 'git pull ...') before pushing again.
+hint: See the 'Note about fast-forwards' in 'git push --help' for details.
 -------------------------------------------------
 
 This can happen, for example, if you:
@@ -2193,7 +2195,7 @@ $ cd work
 Linus's tree will be stored in the remote-tracking branch named origin/master,
 and can be updated using linkgit:git-fetch[1]; you can track other
 public trees using linkgit:git-remote[1] to set up a "remote" and
-linkgit:git-fetch[1] to keep them up-to-date; see
+linkgit:git-fetch[1] to keep them up to date; see
 <<repositories-and-branches>>.
 
 Now create the branches in which you are going to work; these start out
