@@ -5,6 +5,7 @@
 #include "packed-backend.h"
 #include "../iterator.h"
 #include "../lockfile.h"
+#include "../config.h"
 
 struct packed_ref_cache {
 	struct ref_cache *cache;
