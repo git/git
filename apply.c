@@ -812,9 +812,7 @@ static int has_epoch_timestamp(const char *nameline)
 	 * 1970-01-01, and the seconds part must be "00".
 	 */
 	const char stamp_regexp[] =
-		"^(1969-12-31|1970-01-01)"
-		" "
-		"[0-2][0-9]:[0-5][0-9]:00(\\.0+)?"
+		"^[0-2][0-9]:([0-5][0-9]):00(\\.0+)?"
 		" "
 		"([-+][0-2][0-9]:?[0-5][0-9])\n";
 	const char *timestamp = NULL, *cp, *colon;
@@ -834,9 +832,9 @@ static int has_epoch_timestamp(const char *nameline)
 	 * YYYY-MM-DD hh:mm:ss must be from either 1969-12-31
 	 * (west of GMT) or 1970-01-01 (east of GMT)
 	 */
-	if (starts_with(timestamp, "1969-12-31"))
+	if (skip_prefix(timestamp, "1969-12-31 ", &timestamp))
 		epoch_hour = 24;
-	else if (starts_with(timestamp, "1970-01-01"))
+	else if (skip_prefix(timestamp, "1970-01-01 ", &timestamp))
 		epoch_hour = 0;
 	else
 		return 0;
@@ -858,8 +856,8 @@ static int has_epoch_timestamp(const char *nameline)
 		return 0;
 	}
 
-	hour = strtol(timestamp + 11, NULL, 10);
-	minute = strtol(timestamp + 14, NULL, 10);
+	hour = strtol(timestamp, NULL, 10);
+	minute = strtol(timestamp + m[1].rm_so, NULL, 10);
 
 	zoneoffset = strtol(timestamp + m[3].rm_so + 1, (char **) &colon, 10);
 	if (*colon == ':')
