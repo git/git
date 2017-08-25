@@ -383,8 +383,8 @@ static int check_updates(struct unpack_trees_options *o)
 			}
 		}
 	}
-	errs |= finish_delayed_checkout(&state);
 	stop_progress(&progress);
+	errs |= finish_delayed_checkout(&state);
 	if (o->update)
 		git_attr_set_direction(GIT_ATTR_CHECKIN, NULL);
 	return errs != 0;

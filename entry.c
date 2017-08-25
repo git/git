@@ -3,6 +3,7 @@
 #include "dir.h"
 #include "streaming.h"
 #include "submodule.h"
+#include "progress.h"
 
 static void create_directories(const char *path, int path_len,
 			       const struct checkout *state)
@@ -161,16 +162,22 @@ static int remove_available_paths(struct string_list_item *item, void *cb_data)
 int finish_delayed_checkout(struct checkout *state)
 {
 	int errs = 0;
+	unsigned delayed_object_count;
+	off_t filtered_bytes = 0;
 	struct string_list_item *filter, *path;
+	struct progress *progress;
 	struct delayed_checkout *dco = state->delayed_checkout;
 
 	if (!state->delayed_checkout)
 		return errs;
 
 	dco->state = CE_RETRY;
+	delayed_object_count = dco->paths.nr;
+	progress = start_delayed_progress(_("Filtering content"), delayed_object_count);
 	while (dco->filters.nr > 0) {
 		for_each_string_list_item(filter, &dco->filters) {
 			struct string_list available_paths = STRING_LIST_INIT_NODUP;
+			display_progress(progress, delayed_object_count - dco->paths.nr);
 
 			if (!async_query_available_blobs(filter->string, &available_paths)) {
 				/* Filter reported an error */
@@ -216,11 +223,17 @@ int finish_delayed_checkout(struct checkout *state)
 				}
 				ce = index_file_exists(state->istate, path->string,
 						       strlen(path->string), 0);
-				errs |= (ce ? checkout_entry(ce, state, NULL) : 1);
+				if (ce) {
+					errs |= checkout_entry(ce, state, NULL);
+					filtered_bytes += ce->ce_stat_data.sd_size;
+					display_throughput(progress, filtered_bytes);
+				} else
+					errs = 1;
 			}
 		}
 		string_list_remove_empty_items(&dco->filters, 0);
 	}
+	stop_progress(&progress);
 	string_list_clear(&dco->filters, 0);
 
 	/* At this point we should not have any delayed paths anymore. */
