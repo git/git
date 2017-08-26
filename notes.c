@@ -449,6 +449,11 @@ static void load_subtree(struct notes_tree *t, struct leaf_node *subtree,
 			oidcpy(&l->val_oid, entry.oid);
 		} else if (path_len == 2) {
 			/* This is potentially an internal node */
+
+			if (!S_ISDIR(entry.mode))
+				/* internal nodes must be trees */
+				goto handle_non_note;
+
 			if (get_oid_hex_segment(entry.path, 2,
 						object_oid.hash + prefix_len,
 						GIT_SHA1_RAWSZ - prefix_len) < 0)
@@ -459,8 +464,6 @@ static void load_subtree(struct notes_tree *t, struct leaf_node *subtree,
 				xcalloc(1, sizeof(struct leaf_node));
 			oidcpy(&l->key_oid, &object_oid);
 			oidcpy(&l->val_oid, entry.oid);
-			if (!S_ISDIR(entry.mode))
-				goto handle_non_note; /* not subtree */
 			l->key_oid.hash[KEY_INDEX] = (unsigned char) (prefix_len + 1);
 		} else {
 			/* This can't be part of a note */
