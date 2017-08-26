@@ -447,10 +447,6 @@ static void load_subtree(struct notes_tree *t, struct leaf_node *subtree,
 				goto handle_non_note; /* entry.path is not a SHA1 */
 
 			type = PTR_TYPE_NOTE;
-			l = (struct leaf_node *)
-				xcalloc(1, sizeof(struct leaf_node));
-			oidcpy(&l->key_oid, &object_oid);
-			oidcpy(&l->val_oid, entry.oid);
 		} else if (path_len == 2) {
 			/* This is potentially an internal node */
 
@@ -463,17 +459,17 @@ static void load_subtree(struct notes_tree *t, struct leaf_node *subtree,
 						GIT_SHA1_RAWSZ - prefix_len))
 				goto handle_non_note; /* entry.path is not a SHA1 */
 
+			object_oid.hash[KEY_INDEX] = (unsigned char) (prefix_len + 1);
+
 			type = PTR_TYPE_SUBTREE;
-			l = (struct leaf_node *)
-				xcalloc(1, sizeof(struct leaf_node));
-			oidcpy(&l->key_oid, &object_oid);
-			oidcpy(&l->val_oid, entry.oid);
-			l->key_oid.hash[KEY_INDEX] = (unsigned char) (prefix_len + 1);
 		} else {
 			/* This can't be part of a note */
 			goto handle_non_note;
 		}
 
+		l = xcalloc(1, sizeof(*l));
+		oidcpy(&l->key_oid, &object_oid);
+		oidcpy(&l->val_oid, entry.oid);
 		if (note_tree_insert(t, node, n, l, type,
 				     combine_notes_concatenate))
 			die("Failed to load %s %s into notes tree "
