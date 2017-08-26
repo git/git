@@ -721,10 +721,12 @@ install-mingit-test-artifacts:
 	(cd '$(DESTDIR_SQ)/test-git/po/build/locale' && $(TAR) xf -)
 
 	# git-daemon.exe for t5802, git-http-backend.exe for t5560
+	install -m755 -d '$(DESTDIR_SQ)/$(MINGW_PREFIX)/bin'
 	install -m755 git-daemon.exe git-http-backend.exe \
 		'$(DESTDIR_SQ)/$(MINGW_PREFIX)/bin'
 
 	# git-remote-testgit for t5801
+	install -m755 -d '$(DESTDIR_SQ)/$(MINGW_PREFIX)/libexec/git-core'
 	install -m755 git-remote-testgit \
 		'$(DESTDIR_SQ)/$(MINGW_PREFIX)/libexec/git-core'
 endif
