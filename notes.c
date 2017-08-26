@@ -468,23 +468,13 @@ static void load_subtree(struct notes_tree *t, struct leaf_node *subtree,
 
 handle_non_note:
 		/*
-		 * Determine full path for this non-note entry:
-		 * The filename is already found in entry.path, but the
-		 * directory part of the path must be deduced from the subtree
-		 * containing this entry. We assume here that the overall notes
-		 * tree follows a strict byte-based progressive fanout
-		 * structure (i.e. using 2/38, 2/2/36, etc. fanouts, and not
-		 * e.g. 4/36 fanout). This means that if a non-note is found at
-		 * path "dead/beef", the following code will register it as
-		 * being found on "de/ad/beef".
-		 * On the other hand, if you use such non-obvious non-note
-		 * paths in the middle of a notes tree, you deserve what's
-		 * coming to you ;). Note that for non-notes that are not
-		 * SHA1-like at the top level, there will be no problems.
-		 *
-		 * To conclude, it is strongly advised to make sure non-notes
-		 * have at least one non-hex character in the top-level path
-		 * component.
+		 * Determine full path for this non-note entry. The
+		 * filename is already found in entry.path, but the
+		 * directory part of the path must be deduced from the
+		 * subtree containing this entry based on our
+		 * knowledge that the overall notes tree follows a
+		 * strict byte-based progressive fanout structure
+		 * (i.e. using 2/38, 2/2/36, etc. fanouts).
 		 */
 		{
 			struct strbuf non_note_path = STRBUF_INIT;
