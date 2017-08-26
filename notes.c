@@ -406,7 +406,7 @@ static void load_subtree(struct notes_tree *t, struct leaf_node *subtree,
 		struct int_node *node, unsigned int n)
 {
 	struct object_id object_oid;
-	unsigned int prefix_len;
+	size_t prefix_len;
 	void *buf;
 	struct tree_desc desc;
 	struct name_entry entry;
@@ -422,7 +422,7 @@ static void load_subtree(struct notes_tree *t, struct leaf_node *subtree,
 	while (tree_entry(&desc, &entry)) {
 		unsigned char type;
 		struct leaf_node *l;
-		int path_len = strlen(entry.path);
+		size_t path_len = strlen(entry.path);
 
 		if (path_len == 2 * (GIT_SHA1_RAWSZ - prefix_len)) {
 			/* This is potentially the remainder of the SHA-1 */
@@ -486,7 +486,7 @@ handle_non_note:
 		{
 			struct strbuf non_note_path = STRBUF_INIT;
 			const char *q = oid_to_hex(&subtree->key_oid);
-			int i;
+			size_t i;
 			for (i = 0; i < prefix_len; i++) {
 				strbuf_addch(&non_note_path, *q++);
 				strbuf_addch(&non_note_path, *q++);
