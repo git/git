@@ -339,15 +339,14 @@ static void note_tree_free(struct int_node *tree)
  * - hex      - Partial SHA1 segment in ASCII hex format
  * - hex_len  - Length of above segment. Must be multiple of 2 between 0 and 40
  * - oid      - Partial SHA1 value is written here
- * - oid_len  - Max #bytes to store in sha1, Must be >= hex_len / 2, and < 20
  * Return 0 on success or -1 on error (invalid arguments or input not
- * in hex format). Pad oid with NULs up to oid_len.
+ * in hex format).
  */
 static int get_oid_hex_segment(const char *hex, unsigned int hex_len,
-		unsigned char *oid, unsigned int oid_len)
+		unsigned char *oid)
 {
 	unsigned int i, len = hex_len >> 1;
-	if (hex_len % 2 != 0 || len > oid_len)
+	if (hex_len % 2 != 0)
 		return -1;
 	for (i = 0; i < len; i++) {
 		unsigned int val = (hexval(hex[0]) << 4) | hexval(hex[1]);
@@ -356,8 +355,6 @@ static int get_oid_hex_segment(const char *hex, unsigned int hex_len,
 		*oid++ = val;
 		hex += 2;
 	}
-	for (; i < oid_len; i++)
-		*oid++ = 0;
 	return 0;
 }
 
@@ -442,24 +439,29 @@ static void load_subtree(struct notes_tree *t, struct leaf_node *subtree,
 				goto handle_non_note;
 
 			if (get_oid_hex_segment(entry.path, path_len,
-						object_oid.hash + prefix_len,
-						GIT_SHA1_RAWSZ - prefix_len))
+						object_oid.hash + prefix_len))
 				goto handle_non_note; /* entry.path is not a SHA1 */
 
 			type = PTR_TYPE_NOTE;
 		} else if (path_len == 2) {
 			/* This is potentially an internal node */
+			size_t len = prefix_len;
 
 			if (!S_ISDIR(entry.mode))
 				/* internal nodes must be trees */
 				goto handle_non_note;
 
 			if (get_oid_hex_segment(entry.path, 2,
-						object_oid.hash + prefix_len,
-						GIT_SHA1_RAWSZ - prefix_len))
+						object_oid.hash + len++))
 				goto handle_non_note; /* entry.path is not a SHA1 */
 
-			object_oid.hash[KEY_INDEX] = (unsigned char) (prefix_len + 1);
+			/*
+			 * Pad the rest of the SHA-1 with zeros,
+			 * except for the last byte, where we write
+			 * the length:
+			 */
+			memset(object_oid.hash + len, 0, GIT_SHA1_RAWSZ - len - 1);
+			object_oid.hash[KEY_INDEX] = (unsigned char)len;
 
 			type = PTR_TYPE_SUBTREE;
 		} else {
