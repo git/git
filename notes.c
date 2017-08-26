@@ -437,6 +437,11 @@ static void load_subtree(struct notes_tree *t, struct leaf_node *subtree,
 
 		if (path_len == 2 * (GIT_SHA1_RAWSZ - prefix_len)) {
 			/* This is potentially the remainder of the SHA-1 */
+
+			if (!S_ISREG(entry.mode))
+				/* notes must be blobs */
+				goto handle_non_note;
+
 			if (get_oid_hex_segment(entry.path, path_len,
 						object_oid.hash + prefix_len,
 						GIT_SHA1_RAWSZ - prefix_len) < 0)
