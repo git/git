@@ -701,22 +701,6 @@ install-mingit-test-artifacts:
 		"@cd `echo "$(DESTDIR_WINDOWS)" | sed 's/^.://'`\\test-git\\t" \
 		"@echo Now, run 'helper\\test-run-command testsuite'"
 
-	install -m755 -d '$(DESTDIR_SQ)/$(MINGW_PREFIX)/bin'
-	install -m755 git.exe git-credential-store.exe git-fast-import.exe \
-		git-http-fetch.exe git-http-push.exe git-receive-pack.exe \
-		git-remote-http.exe git-remote-https.exe \
-		git-sh-i18n--envsubst.exe git-show-index.exe \
-		git-upload-pack.exe '$(DESTDIR_SQ)/$(MINGW_PREFIX)/bin'
-
-	install -m755 -d '$(DESTDIR_SQ)/$(MINGW_PREFIX)/libexec/git-core'
-	cp git-bisect git-difftool--helper git-filter-branch git-instaweb \
-		git-merge-octopus git-merge-one-file git-merge-resolve \
-		git-mergetool git-mergetool--lib git-parse-remote \
-		git-quiltimport git-rebase git-rebase--am \
-		git-rebase--interactive git-rebase--merge git-request-pull \
-		git-sh-i18n git-sh-setup git-stash git-submodule \
-		git-web--browse '$(DESTDIR_SQ)/$(MINGW_PREFIX)/libexec/git-core'
-
 	install -m755 -d '$(DESTDIR_SQ)/test-git'
 	sed 's/^\(NO_PERL\|NO_PYTHON\)=.*/\1=YesPlease/' \
 		<GIT-BUILD-OPTIONS >'$(DESTDIR_SQ)/test-git/GIT-BUILD-OPTIONS'
