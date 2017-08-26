@@ -433,30 +433,40 @@ static void load_subtree(struct notes_tree *t, struct leaf_node *subtree,
 	while (tree_entry(&desc, &entry)) {
 		unsigned char type;
 		struct leaf_node *l;
-		int len, path_len = strlen(entry.path);
+		int path_len = strlen(entry.path);
 
-		len = get_oid_hex_segment(entry.path, path_len,
-				object_oid.hash + prefix_len, GIT_SHA1_RAWSZ - prefix_len);
-		if (len < 0)
-			goto handle_non_note; /* entry.path is not a SHA1 */
-		len += prefix_len;
+		if (path_len == 2 * (GIT_SHA1_RAWSZ - prefix_len)) {
+			/* This is potentially the remainder of the SHA-1 */
+			if (get_oid_hex_segment(entry.path, path_len,
+						object_oid.hash + prefix_len,
+						GIT_SHA1_RAWSZ - prefix_len) < 0)
+				goto handle_non_note; /* entry.path is not a SHA1 */
 
-		/*
-		 * If object SHA1 is complete (len == 20), assume note object
-		 * If object SHA1 is incomplete (len < 20), and current
-		 * component consists of 2 hex chars, assume note subtree
-		 */
-		type = PTR_TYPE_NOTE;
-		l = (struct leaf_node *)
-			xcalloc(1, sizeof(struct leaf_node));
-		oidcpy(&l->key_oid, &object_oid);
-		oidcpy(&l->val_oid, entry.oid);
-		if (len < GIT_SHA1_RAWSZ) {
-			if (!S_ISDIR(entry.mode) || path_len != 2)
-				goto handle_non_note; /* not subtree */
-			l->key_oid.hash[KEY_INDEX] = (unsigned char) len;
+			type = PTR_TYPE_NOTE;
+			l = (struct leaf_node *)
+				xcalloc(1, sizeof(struct leaf_node));
+			oidcpy(&l->key_oid, &object_oid);
+			oidcpy(&l->val_oid, entry.oid);
+		} else if (path_len == 2) {
+			/* This is potentially an internal node */
+			if (get_oid_hex_segment(entry.path, 2,
+						object_oid.hash + prefix_len,
+						GIT_SHA1_RAWSZ - prefix_len) < 0)
+				goto handle_non_note; /* entry.path is not a SHA1 */
+
 			type = PTR_TYPE_SUBTREE;
+			l = (struct leaf_node *)
+				xcalloc(1, sizeof(struct leaf_node));
+			oidcpy(&l->key_oid, &object_oid);
+			oidcpy(&l->val_oid, entry.oid);
+			if (!S_ISDIR(entry.mode))
+				goto handle_non_note; /* not subtree */
+			l->key_oid.hash[KEY_INDEX] = (unsigned char) (prefix_len + 1);
+		} else {
+			/* This can't be part of a note */
+			goto handle_non_note;
 		}
+
 		if (note_tree_insert(t, node, n, l, type,
 				     combine_notes_concatenate))
 			die("Failed to load %s %s into notes tree "
