@@ -143,7 +143,7 @@ test_expect_success 'rebase -s funny -Xopt' '
 	git checkout -b test-funny master^ &&
 	test_commit funny &&
 	(
-		PATH=./test-bin:$PATH
+		PATH=./test-bin$PATH_SEP$PATH
 		git rebase -s funny -Xopt master
 	) &&
 	test -f funny.was.run
