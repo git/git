@@ -18,8 +18,9 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Reads list of objects from the standard input, and writes a packed
-archive with specified base-name, or to the standard output.
+Reads list of objects from the standard input, and writes either one or
+more packed archives with the specified base-name to disk, or a packed
+archive to the standard output.
 
 A packed archive is an efficient way to transfer a set of objects
 between two repositories as well as an access efficient archival
@@ -47,9 +48,9 @@ transport by their peers.
 OPTIONS
 -------
 base-name::
-	Write into a pair of files (.pack and .idx), using
+	Write into pairs of files (.pack and .idx), using
 	<base-name> to determine the name of the created file.
-	When this option is used, the two files are written in
+	When this option is used, the two files in a pair are written in
 	<base-name>-<SHA-1>.{pack,idx} files.  <SHA-1> is a hash
 	based on the pack content and is written to the standard
 	output of the command.
@@ -108,9 +109,13 @@ base-name::
 	is taken from the `pack.windowMemory` configuration variable.
 
 --max-pack-size=<n>::
-	Maximum size of each output pack file. The size can be suffixed with
+	In unusual scenarios, you may not be able to create files
+	larger than a certain size on your filesystem, and this option
+	can be used to tell the command to split the output packfile
+	into multiple independent packfiles, each not larger than the
+	given size. The size can be suffixed with
 	"k", "m", or "g". The minimum size allowed is limited to 1 MiB.
-	If specified, multiple packfiles may be created, which also
+	This option
 	prevents the creation of a bitmap index.
 	The default is unlimited, unless the config variable
 	`pack.packSizeLimit` is set.
