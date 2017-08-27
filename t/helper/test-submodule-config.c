@@ -10,11 +10,6 @@ static void die_usage(int argc, const char **argv, const char *msg)
 	exit(1);
 }
 
-static int git_test_config(const char *var, const char *value, void *cb)
-{
-	return parse_submodule_config_option(var, value);
-}
-
 int cmd_main(int argc, const char **argv)
 {
 	const char **arg = argv;
@@ -37,8 +32,6 @@ int cmd_main(int argc, const char **argv)
 		die_usage(argc, argv, "Wrong number of arguments.");
 
 	setup_git_directory();
-	gitmodules_config();
-	git_config(git_test_config, NULL);
 
 	while (*arg) {
 		struct object_id commit_oid;

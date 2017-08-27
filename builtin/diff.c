@@ -315,8 +315,6 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 			no_index = DIFF_NO_INDEX_IMPLICIT;
 	}
 
-	if (!no_index)
-		gitmodules_config();
 	init_diff_ui_defaults();
 	git_config(git_diff_ui_config, NULL);
 	precompose_argv(argc, argv);

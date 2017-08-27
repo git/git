@@ -861,7 +861,7 @@ static int git_checkout_config(const char *var, const char *value, void *cb)
 	}
 
 	if (starts_with(var, "submodule."))
-		return submodule_config(var, value, NULL);
+		return git_default_submodule_config(var, value, NULL);
 
 	return git_xmerge_config(var, value, NULL);
 }
@@ -1182,7 +1182,6 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 	opts.prefix = prefix;
 	opts.show_progress = -1;
 
-	gitmodules_config();
 	git_config(git_checkout_config, &opts);
 
 	opts.track = BRANCH_TRACK_UNSPECIFIED;

@@ -1,5 +1,6 @@
 #define NO_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
+#include "repository.h"
 #include "config.h"
 #include "dir.h"
 #include "tree.h"
@@ -255,47 +256,41 @@ static int check_submodule_move_head(const struct cache_entry *ce,
 {
 	unsigned flags = SUBMODULE_MOVE_HEAD_DRY_RUN;
 	const struct submodule *sub = submodule_from_ce(ce);
+
 	if (!sub)
 		return 0;
 
 	if (o->reset)
 		flags |= SUBMODULE_MOVE_HEAD_FORCE;
 
-	switch (sub->update_strategy.type) {
-	case SM_UPDATE_UNSPECIFIED:
-	case SM_UPDATE_CHECKOUT:
-		if (submodule_move_head(ce->name, old_id, new_id, flags))
-			return o->gently ? -1 :
-				add_rejected_path(o, ERROR_WOULD_LOSE_SUBMODULE, ce->name);
-		return 0;
-	case SM_UPDATE_NONE:
-		return 0;
-	case SM_UPDATE_REBASE:
-	case SM_UPDATE_MERGE:
-	case SM_UPDATE_COMMAND:
-	default:
-		warning(_("submodule update strategy not supported for submodule '%s'"), ce->name);
-		return -1;
-	}
+	if (submodule_move_head(ce->name, old_id, new_id, flags))
+		return o->gently ? -1 :
+				   add_rejected_path(o, ERROR_WOULD_LOSE_SUBMODULE, ce->name);
+	return 0;
 }
 
-static void reload_gitmodules_file(struct index_state *index,
-				   struct checkout *state)
+/*
+ * Preform the loading of the repository's gitmodules file.  This function is
+ * used by 'check_update()' to perform loading of the gitmodules file in two
+ * differnt situations:
+ * (1) before removing entries from the working tree if the gitmodules file has
+ *     been marked for removal.  This situation is specified by 'state' == NULL.
+ * (2) before checking out entries to the working tree if the gitmodules file
+ *     has been marked for update.  This situation is specified by 'state' != NULL.
+ */
+static void load_gitmodules_file(struct index_state *index,
+				 struct checkout *state)
 {
-	int i;
-	for (i = 0; i < index->cache_nr; i++) {
-		struct cache_entry *ce = index->cache[i];
-		if (ce->ce_flags & CE_UPDATE) {
-			int r = strcmp(ce->name, GITMODULES_FILE);
-			if (r < 0)
-				continue;
-			else if (r == 0) {
-				submodule_free();
-				checkout_entry(ce, state, NULL);
-				gitmodules_config();
-				git_config(submodule_config, NULL);
-			} else
-				break;
+	int pos = index_name_pos(index, GITMODULES_FILE, strlen(GITMODULES_FILE));
+
+	if (pos >= 0) {
+		struct cache_entry *ce = index->cache[pos];
+		if (!state && ce->ce_flags & CE_WT_REMOVE) {
+			repo_read_gitmodules(the_repository);
+		} else if (state && (ce->ce_flags & CE_UPDATE)) {
+			submodule_free();
+			checkout_entry(ce, state, NULL);
+			repo_read_gitmodules(the_repository);
 		}
 	}
 }
@@ -308,19 +303,9 @@ static void unlink_entry(const struct cache_entry *ce)
 {
 	const struct submodule *sub = submodule_from_ce(ce);
 	if (sub) {
-		switch (sub->update_strategy.type) {
-		case SM_UPDATE_UNSPECIFIED:
-		case SM_UPDATE_CHECKOUT:
-		case SM_UPDATE_REBASE:
-		case SM_UPDATE_MERGE:
-			/* state.force is set at the caller. */
-			submodule_move_head(ce->name, "HEAD", NULL,
-					    SUBMODULE_MOVE_HEAD_FORCE);
-			break;
-		case SM_UPDATE_NONE:
-		case SM_UPDATE_COMMAND:
-			return; /* Do not touch the submodule. */
-		}
+		/* state.force is set at the caller. */
+		submodule_move_head(ce->name, "HEAD", NULL,
+				    SUBMODULE_MOVE_HEAD_FORCE);
 	}
 	if (!check_leading_path(ce->name, ce_namelen(ce)))
 		return;
@@ -364,6 +349,10 @@ static int check_updates(struct unpack_trees_options *o)
 
 	if (o->update)
 		git_attr_set_direction(GIT_ATTR_CHECKOUT, index);
+
+	if (should_update_submodules() && o->update && !o->dry_run)
+		load_gitmodules_file(index, NULL);
+
 	for (i = 0; i < index->cache_nr; i++) {
 		const struct cache_entry *ce = index->cache[i];
 
@@ -377,7 +366,7 @@ static int check_updates(struct unpack_trees_options *o)
 	remove_scheduled_dirs();
 
 	if (should_update_submodules() && o->update && !o->dry_run)
-		reload_gitmodules_file(index, &state);
+		load_gitmodules_file(index, &state);
 
 	enable_delayed_checkout(&state);
 	for (i = 0; i < index->cache_nr; i++) {

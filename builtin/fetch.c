@@ -1360,11 +1360,6 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 	if (depth || deepen_since || deepen_not.nr)
 		deepen = 1;
 
-	if (recurse_submodules != RECURSE_SUBMODULES_OFF) {
-		gitmodules_config();
-		git_config(submodule_config, NULL);
-	}
-
 	if (all) {
 		if (argc == 1)
 			die(_("fetch --all does not take a repository argument"));

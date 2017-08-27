@@ -23,7 +23,6 @@ int cmd_diff_index(int argc, const char **argv, const char *prefix)
 
 	git_config(git_diff_basic_config, NULL); /* no "diff" UI options */
 	init_revisions(&rev, prefix);
-	gitmodules_config();
 	rev.abbrev = 0;
 	precompose_argv(argc, argv);
 

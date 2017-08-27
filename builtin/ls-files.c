@@ -19,6 +19,7 @@
 #include "pathspec.h"
 #include "run-command.h"
 #include "submodule.h"
+#include "submodule-config.h"
 
 static int abbrev;
 static int show_deleted;
@@ -209,8 +210,6 @@ static void show_submodule(struct repository *superproject,
 
 	if (repo_read_index(&submodule) < 0)
 		die("index file corrupt");
-
-	repo_read_gitmodules(&submodule);
 
 	show_files(&submodule, dir);
 
@@ -608,9 +607,6 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 
 	if (require_work_tree && !is_inside_work_tree())
 		setup_work_tree();
-
-	if (recurse_submodules)
-		repo_read_gitmodules(the_repository);
 
 	if (recurse_submodules &&
 	    (show_stage || show_deleted || show_others || show_unmerged ||

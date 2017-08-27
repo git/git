@@ -401,9 +401,6 @@ int git_diff_basic_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
-	if (starts_with(var, "submodule."))
-		return parse_submodule_config_option(var, value);
-
 	if (git_diff_heuristic_config(var, value, cb) < 0)
 		return -1;
 
