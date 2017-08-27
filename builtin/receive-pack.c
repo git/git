@@ -23,6 +23,7 @@
 #include "fsck.h"
 #include "tmp-objdir.h"
 #include "oidset.h"
+#include "packfile.h"
 
 static const char * const receive_pack_usage[] = {
 	N_("git receive-pack <git-dir>"),

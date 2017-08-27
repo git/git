@@ -17,6 +17,7 @@
 #include "connected.h"
 #include "argv-array.h"
 #include "utf8.h"
+#include "packfile.h"
 
 static const char * const builtin_fetch_usage[] = {
 	N_("git fetch [<options>] [<repository> [<refspec>...]]"),

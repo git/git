@@ -19,6 +19,7 @@
 #include "dir.h"
 #include "cache-tree.h"
 #include "bisect.h"
+#include "packfile.h"
 
 volatile show_early_output_fn_t show_early_output;
 

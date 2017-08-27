@@ -9,6 +9,7 @@
 #include "worktree.h"
 #include "submodule-config.h"
 #include "path.h"
+#include "packfile.h"
 
 static int get_st_mode_bits(const char *path, int *mode)
 {
