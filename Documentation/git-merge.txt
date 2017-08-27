@@ -288,7 +288,10 @@ After seeing a conflict, you can do two things:
 
  * Resolve the conflicts.  Git will mark the conflicts in
    the working tree.  Edit the files into shape and
-   'git add' them to the index.  Use 'git commit' to seal the deal.
+   'git add' them to the index.  Use 'git commit' or
+   'git merge --continue' to seal the deal. The latter command
+   checks whether there is a (interrupted) merge in progress
+   before calling 'git commit'.
 
 You can work through the conflict with a number of tools:
 
