@@ -64,7 +64,7 @@ struct non_note {
 #define CLR_PTR_TYPE(ptr)       ((void *) ((uintptr_t) (ptr) & ~3))
 #define SET_PTR_TYPE(ptr, type) ((void *) ((uintptr_t) (ptr) | (type)))
 
-#define GET_NIBBLE(n, sha1) (((sha1[(n) >> 1]) >> ((~(n) & 0x01) << 2)) & 0x0f)
+#define GET_NIBBLE(n, sha1) ((((sha1)[(n) >> 1]) >> ((~(n) & 0x01) << 2)) & 0x0f)
 
 #define KEY_INDEX (GIT_SHA1_RAWSZ - 1)
 #define FANOUT_PATH_SEPARATORS ((GIT_SHA1_HEXSZ / 2) - 1)
@@ -335,31 +335,20 @@ static void note_tree_free(struct int_node *tree)
 }
 
 /*
- * Convert a partial SHA1 hex string to the corresponding partial SHA1 value.
- * - hex      - Partial SHA1 segment in ASCII hex format
- * - hex_len  - Length of above segment. Must be multiple of 2 between 0 and 40
- * - sha1     - Partial SHA1 value is written here
- * - sha1_len - Max #bytes to store in sha1, Must be >= hex_len / 2, and < 20
- * Returns -1 on error (invalid arguments or invalid SHA1 (not in hex format)).
- * Otherwise, returns number of bytes written to sha1 (i.e. hex_len / 2).
- * Pads sha1 with NULs up to sha1_len (not included in returned length).
+ * Read `len` pairs of hexadecimal digits from `hex` and write the
+ * values to `binary` as `len` bytes. Return 0 on success, or -1 if
+ * the input does not consist of hex digits).
  */
-static int get_oid_hex_segment(const char *hex, unsigned int hex_len,
-		unsigned char *oid, unsigned int oid_len)
+static int hex_to_bytes(unsigned char *binary, const char *hex, size_t len)
 {
-	unsigned int i, len = hex_len >> 1;
-	if (hex_len % 2 != 0 || len > oid_len)
-		return -1;
-	for (i = 0; i < len; i++) {
+	for (; len; len--, hex += 2) {
 		unsigned int val = (hexval(hex[0]) << 4) | hexval(hex[1]);
+
 		if (val & ~0xff)
 			return -1;
-		*oid++ = val;
-		hex += 2;
+		*binary++ = val;
 	}
-	for (; i < oid_len; i++)
-		*oid++ = 0;
-	return len;
+	return 0;
 }
 
 static int non_note_cmp(const struct non_note *a, const struct non_note *b)
@@ -417,13 +406,10 @@ static void load_subtree(struct notes_tree *t, struct leaf_node *subtree,
 		struct int_node *node, unsigned int n)
 {
 	struct object_id object_oid;
-	unsigned int prefix_len;
+	size_t prefix_len;
 	void *buf;
 	struct tree_desc desc;
 	struct name_entry entry;
-	int len, path_len;
-	unsigned char type;
-	struct leaf_node *l;
 
 	buf = fill_tree_descriptor(&desc, &subtree->val_oid);
 	if (!buf)
@@ -434,63 +420,73 @@ static void load_subtree(struct notes_tree *t, struct leaf_node *subtree,
 	assert(prefix_len * 2 >= n);
 	memcpy(object_oid.hash, subtree->key_oid.hash, prefix_len);
 	while (tree_entry(&desc, &entry)) {
-		path_len = strlen(entry.path);
-		len = get_oid_hex_segment(entry.path, path_len,
-				object_oid.hash + prefix_len, GIT_SHA1_RAWSZ - prefix_len);
-		if (len < 0)
-			goto handle_non_note; /* entry.path is not a SHA1 */
-		len += prefix_len;
+		unsigned char type;
+		struct leaf_node *l;
+		size_t path_len = strlen(entry.path);
 
-		/*
-		 * If object SHA1 is complete (len == 20), assume note object
-		 * If object SHA1 is incomplete (len < 20), and current
-		 * component consists of 2 hex chars, assume note subtree
-		 */
-		if (len <= GIT_SHA1_RAWSZ) {
+		if (path_len == 2 * (GIT_SHA1_RAWSZ - prefix_len)) {
+			/* This is potentially the remainder of the SHA-1 */
+
+			if (!S_ISREG(entry.mode))
+				/* notes must be blobs */
+				goto handle_non_note;
+
+			if (hex_to_bytes(object_oid.hash + prefix_len, entry.path,
+					 GIT_SHA1_RAWSZ - prefix_len))
+				goto handle_non_note; /* entry.path is not a SHA1 */
+
 			type = PTR_TYPE_NOTE;
-			l = (struct leaf_node *)
-				xcalloc(1, sizeof(struct leaf_node));
-			oidcpy(&l->key_oid, &object_oid);
-			oidcpy(&l->val_oid, entry.oid);
-			if (len < GIT_SHA1_RAWSZ) {
-				if (!S_ISDIR(entry.mode) || path_len != 2)
-					goto handle_non_note; /* not subtree */
-				l->key_oid.hash[KEY_INDEX] = (unsigned char) len;
-				type = PTR_TYPE_SUBTREE;
-			}
-			if (note_tree_insert(t, node, n, l, type,
-					     combine_notes_concatenate))
-				die("Failed to load %s %s into notes tree "
-				    "from %s",
-				    type == PTR_TYPE_NOTE ? "note" : "subtree",
-				    oid_to_hex(&l->key_oid), t->ref);
+		} else if (path_len == 2) {
+			/* This is potentially an internal node */
+			size_t len = prefix_len;
+
+			if (!S_ISDIR(entry.mode))
+				/* internal nodes must be trees */
+				goto handle_non_note;
+
+			if (hex_to_bytes(object_oid.hash + len++, entry.path, 1))
+				goto handle_non_note; /* entry.path is not a SHA1 */
+
+			/*
+			 * Pad the rest of the SHA-1 with zeros,
+			 * except for the last byte, where we write
+			 * the length:
+			 */
+			memset(object_oid.hash + len, 0, GIT_SHA1_RAWSZ - len - 1);
+			object_oid.hash[KEY_INDEX] = (unsigned char)len;
+
+			type = PTR_TYPE_SUBTREE;
+		} else {
+			/* This can't be part of a note */
+			goto handle_non_note;
 		}
+
+		l = xcalloc(1, sizeof(*l));
+		oidcpy(&l->key_oid, &object_oid);
+		oidcpy(&l->val_oid, entry.oid);
+		if (note_tree_insert(t, node, n, l, type,
+				     combine_notes_concatenate))
+			die("Failed to load %s %s into notes tree "
+			    "from %s",
+			    type == PTR_TYPE_NOTE ? "note" : "subtree",
+			    oid_to_hex(&l->key_oid), t->ref);
+
 		continue;
 
 handle_non_note:
 		/*
-		 * Determine full path for this non-note entry:
-		 * The filename is already found in entry.path, but the
-		 * directory part of the path must be deduced from the subtree
-		 * containing this entry. We assume here that the overall notes
-		 * tree follows a strict byte-based progressive fanout
-		 * structure (i.e. using 2/38, 2/2/36, etc. fanouts, and not
-		 * e.g. 4/36 fanout). This means that if a non-note is found at
-		 * path "dead/beef", the following code will register it as
-		 * being found on "de/ad/beef".
-		 * On the other hand, if you use such non-obvious non-note
-		 * paths in the middle of a notes tree, you deserve what's
-		 * coming to you ;). Note that for non-notes that are not
-		 * SHA1-like at the top level, there will be no problems.
-		 *
-		 * To conclude, it is strongly advised to make sure non-notes
-		 * have at least one non-hex character in the top-level path
-		 * component.
+		 * Determine full path for this non-note entry. The
+		 * filename is already found in entry.path, but the
+		 * directory part of the path must be deduced from the
+		 * subtree containing this entry based on our
+		 * knowledge that the overall notes tree follows a
+		 * strict byte-based progressive fanout structure
+		 * (i.e. using 2/38, 2/2/36, etc. fanouts).
 		 */
 		{
 			struct strbuf non_note_path = STRBUF_INIT;
 			const char *q = oid_to_hex(&subtree->key_oid);
-			int i;
+			size_t i;
 			for (i = 0; i < prefix_len; i++) {
 				strbuf_addch(&non_note_path, *q++);
 				strbuf_addch(&non_note_path, *q++);
