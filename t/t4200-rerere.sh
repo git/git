@@ -239,6 +239,43 @@ test_expect_success 'old records rest in peace' '
 	! test -f $rr2/preimage
 '
 
+rerere_gc_custom_expiry_test () {
+	five_days="$1" right_now="$2"
+	test_expect_success "rerere gc with custom expiry ($five_days, $right_now)" '
+		rm -fr .git/rr-cache &&
+		rr=.git/rr-cache/$_z40 &&
+		mkdir -p "$rr" &&
+		>"$rr/preimage" &&
+		>"$rr/postimage" &&
+
+		two_days_ago=$((-2*86400)) &&
+		test-chmtime =$two_days_ago "$rr/preimage" &&
+		test-chmtime =$two_days_ago "$rr/postimage" &&
+
+		find .git/rr-cache -type f | sort >original &&
+
+		git -c "gc.rerereresolved=$five_days" \
+		    -c "gc.rerereunresolved=$five_days" rerere gc &&
+		find .git/rr-cache -type f | sort >actual &&
+		test_cmp original actual &&
+
+		git -c "gc.rerereresolved=$five_days" \
+		    -c "gc.rerereunresolved=$right_now" rerere gc &&
+		find .git/rr-cache -type f | sort >actual &&
+		test_cmp original actual &&
+
+		git -c "gc.rerereresolved=$right_now" \
+		    -c "gc.rerereunresolved=$right_now" rerere gc &&
+		find .git/rr-cache -type f | sort >actual &&
+		>expect &&
+		test_cmp expect actual
+	'
+}
+
+rerere_gc_custom_expiry_test 5 0
+
+rerere_gc_custom_expiry_test 5.days.ago now
+
 test_expect_success 'setup: file2 added differently in two branches' '
 	git reset --hard &&
 
@@ -419,24 +456,6 @@ count_pre_post () {
 	test_line_count = "$2" actual
 }
 
-test_expect_success 'rerere gc' '
-	find .git/rr-cache -type f >original &&
-	xargs test-chmtime -172800 <original &&
-
-	git -c gc.rerereresolved=5 -c gc.rerereunresolved=5 rerere gc &&
-	find .git/rr-cache -type f >actual &&
-	test_cmp original actual &&
-
-	git -c gc.rerereresolved=5 -c gc.rerereunresolved=0 rerere gc &&
-	find .git/rr-cache -type f >actual &&
-	test_cmp original actual &&
-
-	git -c gc.rerereresolved=0 -c gc.rerereunresolved=0 rerere gc &&
-	find .git/rr-cache -type f >actual &&
-	>expect &&
-	test_cmp expect actual
-'
-
 merge_conflict_resolve () {
 	git reset --hard &&
 	test_must_fail git merge six.1 &&
@@ -446,6 +465,8 @@ merge_conflict_resolve () {
 }
 
 test_expect_success 'multiple identical conflicts' '
+	rm -fr .git/rr-cache &&
+	mkdir .git/rr-cache &&
 	git reset --hard &&
 
 	test_seq 1 6 >early &&

@@ -1133,14 +1133,14 @@ int rerere_forget(struct pathspec *pathspec)
  * Garbage collection support
  */
 
-static time_t rerere_created_at(struct rerere_id *id)
+static timestamp_t rerere_created_at(struct rerere_id *id)
 {
 	struct stat st;
 
 	return stat(rerere_path(id, "preimage"), &st) ? (time_t) 0 : st.st_mtime;
 }
 
-static time_t rerere_last_used_at(struct rerere_id *id)
+static timestamp_t rerere_last_used_at(struct rerere_id *id)
 {
 	struct stat st;
 
@@ -1157,11 +1157,11 @@ static void unlink_rr_item(struct rerere_id *id)
 	id->collection->status[id->variant] = 0;
 }
 
-static void prune_one(struct rerere_id *id, time_t now,
-		      int cutoff_resolve, int cutoff_noresolve)
+static void prune_one(struct rerere_id *id,
+		      timestamp_t cutoff_resolve, timestamp_t cutoff_noresolve)
 {
-	time_t then;
-	int cutoff;
+	timestamp_t then;
+	timestamp_t cutoff;
 
 	then = rerere_last_used_at(id);
 	if (then)
@@ -1172,7 +1172,7 @@ static void prune_one(struct rerere_id *id, time_t now,
 			return;
 		cutoff = cutoff_noresolve;
 	}
-	if (then < now - cutoff * 86400)
+	if (then < cutoff)
 		unlink_rr_item(id);
 }
 
@@ -1182,15 +1182,15 @@ void rerere_gc(struct string_list *rr)
 	DIR *dir;
 	struct dirent *e;
 	int i;
-	time_t now = time(NULL);
-	int cutoff_noresolve = 15;
-	int cutoff_resolve = 60;
+	timestamp_t now = time(NULL);
+	timestamp_t cutoff_noresolve = now - 15 * 86400;
+	timestamp_t cutoff_resolve = now - 60 * 86400;
 
 	if (setup_rerere(rr, 0) < 0)
 		return;
 
-	git_config_get_int("gc.rerereresolved", &cutoff_resolve);
-	git_config_get_int("gc.rerereunresolved", &cutoff_noresolve);
+	git_config_get_expiry_in_days("gc.rerereresolved", &cutoff_resolve, now);
+	git_config_get_expiry_in_days("gc.rerereunresolved", &cutoff_noresolve, now);
 	git_config(git_default_config, NULL);
 	dir = opendir(git_path("rr-cache"));
 	if (!dir)
@@ -1211,7 +1211,7 @@ void rerere_gc(struct string_list *rr)
 		for (id.variant = 0, id.collection = rr_dir;
 		     id.variant < id.collection->status_nr;
 		     id.variant++) {
-			prune_one(&id, now, cutoff_resolve, cutoff_noresolve);
+			prune_one(&id, cutoff_resolve, cutoff_noresolve);
 			if (id.collection->status[id.variant])
 				now_empty = 0;
 		}

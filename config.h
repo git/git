@@ -215,6 +215,9 @@ extern int git_config_get_max_percent_split_change(void);
 /* This dies if the configured or default date is in the future */
 extern int git_config_get_expiry(const char *key, const char **output);
 
+/* parse either "this many days" integer, or "5.days.ago" approxidate */
+extern int git_config_get_expiry_in_days(const char *key, timestamp_t *, timestamp_t now);
+
 struct key_value_info {
 	const char *filename;
 	int linenr;
