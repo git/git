@@ -231,6 +231,42 @@ ifdef::git-diff[]
 endif::git-diff[]
 	It is the same as `--color=never`.
 
+--color-moved[=<mode>]::
+	Moved lines of code are colored differently.
+ifdef::git-diff[]
+	It can be changed by the `diff.colorMoved` configuration setting.
+endif::git-diff[]
+	The <mode> defaults to 'no' if the option is not given
+	and to 'zebra' if the option with no mode is given.
+	The mode must be one of:
++
+--
+no::
+	Moved lines are not highlighted.
+default::
+	Is a synonym for `zebra`. This may change to a more sensible mode
+	in the future.
+plain::
+	Any line that is added in one location and was removed
+	in another location will be colored with 'color.diff.newMoved'.
+	Similarly 'color.diff.oldMoved' will be used for removed lines
+	that are added somewhere else in the diff. This mode picks up any
+	moved line, but it is not very useful in a review to determine
+	if a block of code was moved without permutation.
+zebra::
+	Blocks of moved code are detected greedily. The detected blocks are
+	painted using either the 'color.diff.{old,new}Moved' color or
+	'color.diff.{old,new}MovedAlternative'. The change between
+	the two colors indicates that a new block was detected. If there
+	are fewer than 3 adjacent moved lines, they are not marked up
+	as moved, but the regular colors 'color.diff.{old,new}' will be
+	used.
+dimmed_zebra::
+	Similar to 'zebra', but additional dimming of uninteresting parts
+	of moved code is performed. The bordering lines of two adjacent
+	blocks are considered interesting, the rest is uninteresting.
+--
+
 --word-diff[=<mode>]::
 	Show a word diff, using the <mode> to delimit changed words.
 	By default, words are delimited by whitespace; see
