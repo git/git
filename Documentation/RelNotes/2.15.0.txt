@@ -48,6 +48,29 @@ UI, Workflows & Features
  * "git merge" learned a "--signoff" option to add the Signed-off-by:
    trailer with the committer's name.
 
+ * "git diff" learned to optionally paint new lines that are the same
+   as deleted lines elsewhere differently from genuinely new lines.
+
+ * "git interpret-trailers" learned to take the trailer specifications
+   from the command line that overrides the configured values.
+
+ * "git interpret-trailers" has been taught a "--parse" and a few
+   other options to make it easier for scripts to grab existing
+   trailer lines from a commit log message.
+
+ * "gitweb" shows a link to visit the 'raw' contents of blbos in the
+   history overview page.
+
+ * "[gc] rerereResolved = 5.days" used to be invalid, as the variable
+   is defined to take an integer counting the number of days.  It now
+   is allowed.
+
+ * The code to acquire a lock on a reference (e.g. while accepting a
+   push from a client) used to immediately fail when the reference is
+   already locked---now it waits for a very short while and retries,
+   which can make it succeed if the lock holder was holding it during
+   a read-only operation.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -96,6 +119,13 @@ Performance, Internal Implementation, Development Support etc.
  * The API to start showing progress meter after a short delay has
    been simplified.
    (merge 8aade107dd jc/simplify-progress later to maint).
+
+ * Code clean-up to avoid mixing values read from the .gitmodules file
+   and values read from the .git/config file.
+
+ * We used to spend more than necessary cycles allocating and freeing
+   piece of memory while writing each index entry out.  This has been
+   optimized.
 
 Also contains various documentation updates and code clean-ups.
 
@@ -196,13 +226,28 @@ Fixes since v2.14
    the offending subprocess was running.  This has been corrected.
    (merge d3ba566342 cc/subprocess-handshake-missing-capabilities later to maint).
 
+ * "git apply" that is used as a better "patch -p1" failed to apply a
+   taken from a file with CRLF line endings to a file with CRLF line
+   endings.  The root cause was because it misused convert_to_git()
+   that tried to do "safe-crlf" processing by looking at the index
+   entry at the same path, which is a nonsense---in that mode, "apply"
+   is not working on the data in (or derived from) the index at all.
+   This has been fixed.
+   (merge c24f3abace tb/apply-with-crlf later to maint).
+
+ * Killing "git merge --edit" before the editor returns control left
+   the repository in a state with MERGE_MSG but without MERGE_HEAD,
+   which incorrectly tells the subsequent "git commit" that there was
+   a squash merge in progress.  This has been fixed.
+   (merge 9d89b35526 mg/killed-merge later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge dff2813391 ab/ref-filter-no-contains later to maint).
    (merge f094b89a4d ma/parse-maybe-bool later to maint).
    (merge 974ce8078c mf/no-dashed-subcommands later to maint).
    (merge f81935cc4d jc/perl-git-comment-typofix later to maint).
    (merge 57ea241ef0 rs/t3700-clean-leftover later to maint).
-   (merge f1068efefe jk/drop-sha1-entry-pos later to maint).
+   (merge 39b00fa4d4 jk/drop-sha1-entry-pos later to maint).
    (merge 0b006014c8 jk/hashcmp-memcmp later to maint).
    (merge 1e22a9917b rj/add-chmod-error-message later to maint).
    (merge 881529c846 rs/apply-lose-prefix-length later to maint).
@@ -216,3 +261,6 @@ Fixes since v2.14
    (merge 794b7e1674 mg/format-ref-doc-fix later to maint).
    (merge 24da8a26a9 rs/commit-h-single-parent-cleanup later to maint).
    (merge 4e36907fa3 jk/doc-the-this later to maint).
+   (merge 15d1d0951e bc/vcs-svn-cleanup later to maint).
+   (merge b8f43b120b jn/vcs-svn-cleanup later to maint).
+   (merge 4a4becfb23 jt/doc-pack-objects-fix later to maint).
