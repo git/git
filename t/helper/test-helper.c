@@ -51,7 +51,7 @@ static int iconv_(int argc, const char **argv)
 {
 	struct strbuf buf = STRBUF_INIT;
 	char *from = NULL, *to = NULL, *p;
-	int len, ret;
+	int len, ret = 0;
 	const char * const iconv_usage[] = {
 		N_("test-helper --iconv [<options>]"),
 		NULL
@@ -77,7 +77,8 @@ static int iconv_(int argc, const char **argv)
 	p = reencode_string_len(buf.buf, buf.len, to, from, &len);
 	if (!p)
 		die_errno("Could not reencode");
-	ret = write(1, p, len);
+	if (write(1, p, len) < 0)
+		ret = !!error_errno("Could not write %d bytes", len);
 
 	strbuf_release(&buf);
 	free(p);
