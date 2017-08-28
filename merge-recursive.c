@@ -1956,7 +1956,7 @@ int merge_trees(struct merge_options *o,
 		re_merge = get_renames(o, merge, common, head, merge, entries);
 		clean = process_renames(o, re_head, re_merge);
 		if (clean < 0)
-			return clean;
+			goto cleanup;
 		for (i = entries->nr-1; 0 <= i; i--) {
 			const char *path = entries->items[i].string;
 			struct stage_data *e = entries->items[i].util;
@@ -1964,8 +1964,10 @@ int merge_trees(struct merge_options *o,
 				int ret = process_entry(o, path, e);
 				if (!ret)
 					clean = 0;
-				else if (ret < 0)
-					return ret;
+				else if (ret < 0) {
+					clean = ret;
+					goto cleanup;
+				}
 			}
 		}
 		for (i = 0; i < entries->nr; i++) {
@@ -1975,6 +1977,7 @@ int merge_trees(struct merge_options *o,
 				    entries->items[i].string);
 		}
 
+cleanup:
 		string_list_clear(re_merge, 0);
 		string_list_clear(re_head, 0);
 		string_list_clear(entries, 1);
@@ -1982,6 +1985,9 @@ int merge_trees(struct merge_options *o,
 		free(re_merge);
 		free(re_head);
 		free(entries);
+
+		if (clean < 0)
+			return clean;
 	}
 	else
 		clean = 1;
