@@ -957,6 +957,8 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 
 	struct argv_array ref_prefixes = ARGV_ARRAY_INIT;
 
+	git_config(platform_core_config, NULL);
+
 	packet_trace_identity("clone");
 	argc = parse_options(argc, argv, prefix, builtin_clone_options,
 			     builtin_clone_usage, 0);

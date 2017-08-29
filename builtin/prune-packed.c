@@ -4,6 +4,7 @@
 #include "parse-options.h"
 #include "packfile.h"
 #include "object-store.h"
+#include "config.h"
 
 static const char * const prune_packed_usage[] = {
 	N_("git prune-packed [-n | --dry-run] [-q | --quiet]"),
@@ -60,6 +61,7 @@ int cmd_prune_packed(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
+	git_config(git_default_config, NULL);
 	argc = parse_options(argc, argv, prefix, prune_packed_options,
 			     prune_packed_usage, 0);
 
