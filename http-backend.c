@@ -783,6 +783,7 @@ int cmd_main(int argc, const char **argv)
 	setup_path();
 	if (!enter_repo(dir, 0))
 		not_found(&hdr, "Not a git repository: '%s'", dir);
+	git_config(git_default_config, NULL);
 	if (!getenv("GIT_HTTP_EXPORT_ALL") &&
 	    access("git-daemon-export-ok", F_OK) )
 		not_found(&hdr, "Repository not exported: '%s'", dir);
