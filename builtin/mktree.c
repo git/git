@@ -7,6 +7,7 @@
 #include "quote.h"
 #include "tree.h"
 #include "parse-options.h"
+#include "config.h"
 
 static struct treeent {
 	unsigned mode;
@@ -156,6 +157,7 @@ int cmd_mktree(int ac, const char **av, const char *prefix)
 		OPT_END()
 	};
 
+	git_config(git_default_config, NULL);
 	ac = parse_options(ac, av, prefix, option, mktree_usage, 0);
 	getline_fn = nul_term_line ? strbuf_getline_nul : strbuf_getline_lf;
 
