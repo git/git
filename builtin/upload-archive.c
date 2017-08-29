@@ -8,6 +8,7 @@
 #include "sideband.h"
 #include "run-command.h"
 #include "strvec.h"
+#include "config.h"
 
 static const char upload_archive_usage[] =
 	"git upload-archive <repo>";
@@ -28,6 +29,7 @@ int cmd_upload_archive_writer(int argc, const char **argv, const char *prefix)
 	if (!enter_repo(argv[1], 0))
 		die("'%s' does not appear to be a git repository", argv[1]);
 
+	git_config(git_default_config, NULL);
 	init_archivers();
 
 	/* put received options in sent_argv[] */
@@ -79,6 +81,7 @@ int cmd_upload_archive(int argc, const char **argv, const char *prefix)
 {
 	struct child_process writer = { argv };
 
+	git_config(git_default_config, NULL);
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage(upload_archive_usage);
 
