@@ -1316,7 +1316,7 @@ int parse_hide_refs_config(const char *var, const char *value, const char *secti
 		}
 		string_list_append(hide_refs, ref);
 	}
-	return 0;
+	return git_default_config(var, value, NULL);
 }
 
 int ref_is_hidden(const char *refname, const char *refname_full)
