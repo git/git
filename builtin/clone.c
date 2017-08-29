@@ -981,6 +981,8 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 
 	struct strvec ref_prefixes = STRVEC_INIT;
 
+	git_config(platform_core_config, NULL);
+
 	packet_trace_identity("clone");
 
 	git_config(git_clone_config, NULL);
