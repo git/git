@@ -238,6 +238,17 @@ enum hide_dotfiles_type {
 	HIDE_DOTFILES_DOTGITONLY
 };
 
+#define ASSERT_CORE_CONFIG_WAS_READ
+#ifdef ASSERT_CORE_CONFIG_WAS_READ
+int core_config_was_read;
+
+static void assert_core_config_was_read(void)
+{
+	if (!core_config_was_read)
+		die("core.* were not read ('%S')!", GetCommandLineW());
+}
+#endif
+
 static enum hide_dotfiles_type hide_dotfiles = HIDE_DOTFILES_DOTGITONLY;
 static char *unset_environment_variables;
 int core_fscache;
@@ -245,6 +256,9 @@ int core_long_paths;
 
 int mingw_core_config(const char *var, const char *value, void *cb)
 {
+#ifdef ASSERT_CORE_CONFIG_WAS_READ
+	core_config_was_read = 1;
+#endif
 	if (!strcmp(var, "core.hidedotfiles")) {
 		if (value && !strcasecmp(value, "dotgitonly"))
 			hide_dotfiles = HIDE_DOTFILES_DOTGITONLY;
@@ -3379,6 +3393,10 @@ void mingw_startup(void)
 	char *buffer;
 	wchar_t **wenv, **wargv;
 	_startupinfo si;
+
+#ifdef ASSERT_CORE_CONFIG_WAS_READ
+	atexit(assert_core_config_was_read);
+#endif
 
 	maybe_redirect_std_handles();
 	adjust_symlink_flags();

@@ -58,16 +58,20 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 				git_set_argv_exec_path(cmd + 1);
 			else {
 				puts(git_exec_path());
+{ extern int core_config_was_read; core_config_was_read = 1; }
 				exit(0);
 			}
 		} else if (!strcmp(cmd, "--html-path")) {
 			puts(system_path(GIT_HTML_PATH));
+{ extern int core_config_was_read; core_config_was_read = 1; }
 			exit(0);
 		} else if (!strcmp(cmd, "--man-path")) {
 			puts(system_path(GIT_MAN_PATH));
+{ extern int core_config_was_read; core_config_was_read = 1; }
 			exit(0);
 		} else if (!strcmp(cmd, "--info-path")) {
 			puts(system_path(GIT_INFO_PATH));
+{ extern int core_config_was_read; core_config_was_read = 1; }
 			exit(0);
 		} else if (!strcmp(cmd, "-p") || !strcmp(cmd, "--paginate")) {
 			use_pager = 1;
@@ -193,6 +197,7 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 			(*argc)--;
 		} else if (!strcmp(cmd, "--list-builtins")) {
 			list_builtins();
+{ extern int core_config_was_read; core_config_was_read = 1; }
 			exit(0);
 		} else {
 			fprintf(stderr, "Unknown option: %s\n", cmd);
@@ -231,7 +236,9 @@ static int handle_alias(int *argcp, const char ***argv)
 
 			ret = run_command(&child);
 			if (ret >= 0)   /* normal exit */
+{ { extern int core_config_was_read; core_config_was_read = 1; }
 				exit(ret);
+}
 
 			die_errno("While expanding alias '%s': '%s'",
 			    alias_command, alias_string + 1);
@@ -566,6 +573,7 @@ static void execv_dashed_external(const char **argv)
 	 * the program.
 	 */
 	status = run_command(&cmd);
+{ extern int core_config_was_read; core_config_was_read = 1; }
 	if (status >= 0)
 		exit(status);
 	else if (errno != ENOENT)
@@ -612,7 +620,9 @@ static int run_argv(int *argcp, const char ***argv)
 			i = run_command_v_opt(args.argv, RUN_SILENT_EXEC_FAILURE |
 					      RUN_CLEAN_ON_EXIT);
 			if (i >= 0 || errno != ENOENT)
+{ { extern int core_config_was_read; core_config_was_read = 1; }
 				exit(i);
+}
 			die("could not execute builtin %s", **argv);
 		}
 
@@ -678,6 +688,7 @@ int cmd_main(int argc, const char **argv)
 		printf("usage: %s\n\n", git_usage_string);
 		list_common_cmds_help();
 		printf("\n%s\n", _(git_more_info_string));
+{ extern int core_config_was_read; core_config_was_read = 1; }
 		exit(1);
 	}
 	cmd = argv[0];
@@ -698,6 +709,7 @@ int cmd_main(int argc, const char **argv)
 			fprintf(stderr, "Expansion of alias '%s' failed; "
 				"'%s' is not a git command\n",
 				cmd, argv[0]);
+{ extern int core_config_was_read; core_config_was_read = 1; }
 			exit(1);
 		}
 		if (!done_help) {

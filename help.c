@@ -402,6 +402,7 @@ int cmd_version(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
+{ extern int core_config_was_read; core_config_was_read = 1; }
 	argc = parse_options(argc, argv, prefix, options, usage, 0);
 
 	/*

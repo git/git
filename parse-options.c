@@ -582,6 +582,7 @@ static int usage_with_options_internal(struct parse_opt_ctx_t *ctx,
 {
 	FILE *outfile = err ? stderr : stdout;
 
+{ extern int core_config_was_read; core_config_was_read = 1; }
 	if (!usagestr)
 		return PARSE_OPT_HELP;
 

@@ -483,6 +483,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 	int nongit = !startup_info->have_repository;
 	char *value;
 
+{ extern int core_config_was_read; core_config_was_read = 1; }
 	given_config_source.file = getenv(CONFIG_ENVIRONMENT);
 
 	argc = parse_options(argc, argv, prefix, builtin_config_options,

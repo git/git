@@ -516,6 +516,7 @@ static int cmd_sq_quote(int argc, const char **argv)
 {
 	struct strbuf buf = STRBUF_INIT;
 
+{ extern int core_config_was_read; core_config_was_read = 1; }
 	if (argc)
 		sq_quote_argv(&buf, argv, 0);
 	printf("%s\n", buf.buf);
@@ -602,6 +603,7 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 		return 0;
 	}
 
+{ extern int core_config_was_read; core_config_was_read = 1; }
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 

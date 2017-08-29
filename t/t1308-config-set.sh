@@ -237,7 +237,7 @@ test_expect_success 'error on modifying repo config without repo' '
 '
 
 cmdline_config="'foo.bar=from-cmdline'"
-test_expect_success 'iteration shows correct origins' '
+test_expect_success !MINGW 'iteration shows correct origins' '
 	echo "[foo]bar = from-repo" >.git/config &&
 	echo "[foo]bar = from-home" >.gitconfig &&
 	if test_have_prereq MINGW

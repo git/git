@@ -48,7 +48,12 @@ void git_extract_argv0_path(const char *argv0)
 	slash = find_last_dir_sep(argv0);
 
 	if (slash)
+{ if (starts_with(slash + 1, "test-")) {
+	extern int core_config_was_read;
+	core_config_was_read = 1;
+}
 		argv0_path = xstrndup(argv0, slash - argv0);
+}
 }
 
 void git_set_argv_exec_path(const char *exec_path)

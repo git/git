@@ -663,6 +663,7 @@ int cmd_main(int argc, const char **argv)
 	int i;
 	struct strbuf hdr = STRBUF_INIT;
 
+{ extern int core_config_was_read; core_config_was_read = 1; }
 	set_die_routine(die_webcgi);
 	set_die_is_recursing_routine(die_webcgi_recursing);
 

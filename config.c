@@ -1701,9 +1701,13 @@ static int configset_add_value(struct config_set *cs, const char *key, const cha
 	l_item->e = e;
 	l_item->value_index = e->value_list.nr - 1;
 
+#if 1
+	if (cf && cf->name) {
+#else
 	if (!cf)
 		die("BUG: configset_add_value has no source");
 	if (cf->name) {
+#endif
 		kv_info->filename = strintern(cf->name);
 		kv_info->linenr = cf->linenr;
 		kv_info->origin_type = cf->origin_type;
@@ -2001,6 +2005,7 @@ int repo_config_get_pathname(struct repository *repo,
 void git_config(config_fn_t fn, void *data)
 {
 	repo_config(the_repository, fn, data);
+fn("core.WE_SAW_THE_CONFIG", "Yes", data);
 }
 
 void git_config_clear(void)
@@ -2878,7 +2883,11 @@ const char *current_config_origin_type(void)
 	else if(cf)
 		type = cf->origin_type;
 	else
+#if 1
+		type = CONFIG_ORIGIN_BLOB;
+#else
 		die("BUG: current_config_origin_type called outside config callback");
+#endif
 
 	switch (type) {
 	case CONFIG_ORIGIN_BLOB:
@@ -2904,7 +2913,11 @@ const char *current_config_name(void)
 	else if (cf)
 		name = cf->name;
 	else
+#if 1
+		return "";
+#else
 		die("BUG: current_config_name called outside config callback");
+#endif
 	return name ? name : "";
 }
 

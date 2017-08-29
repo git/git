@@ -1063,6 +1063,7 @@ int cmd_main(int argc, const char **argv)
 
 	dir = argv[0];
 
+{ extern int core_config_was_read; core_config_was_read = 1; }
 	if (!enter_repo(dir, strict))
 		die("'%s' does not appear to be a git repository", dir);
 

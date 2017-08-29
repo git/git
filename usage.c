@@ -105,6 +105,7 @@ void NORETURN usagef(const char *err, ...)
 {
 	va_list params;
 
+{ extern int core_config_was_read; core_config_was_read = 1; }
 	va_start(params, err);
 	usage_routine(err, params);
 	va_end(params);
