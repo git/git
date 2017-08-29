@@ -9,6 +9,7 @@
 #include "parse-options.h"
 #include "pkt-line.h"
 #include "sideband.h"
+#include "config.h"
 
 static void create_output_file(const char *output_file)
 {
@@ -93,6 +94,7 @@ int cmd_archive(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
+	git_config(git_default_config, NULL);
 	argc = parse_options(argc, argv, prefix, local_opts, NULL,
 			     PARSE_OPT_KEEP_ALL);
 

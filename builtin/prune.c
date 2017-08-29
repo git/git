@@ -9,6 +9,7 @@
 #include "prune-packed.h"
 #include "object-store.h"
 #include "shallow.h"
+#include "config.h"
 
 static const char * const prune_usage[] = {
 	N_("git prune [-n] [-v] [--progress] [--expire <time>] [--] [<head>...]"),
@@ -151,6 +152,8 @@ int cmd_prune(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 	char *s;
+
+	git_config(git_default_config, NULL);
 
 	expire = TIME_MAX;
 	save_commit_buffer = 0;
