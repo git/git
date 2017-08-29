@@ -8,6 +8,7 @@
 #include "builtin.h"
 #include "string-list.h"
 #include "strbuf.h"
+#include "config.h"
 
 static const char git_mailsplit_usage[] =
 "git mailsplit [-d<prec>] [-f<n>] [-b] [--keep-cr] -o<directory> [(<mbox>|<Maildir>)...]";
@@ -277,6 +278,7 @@ int cmd_mailsplit(int argc, const char **argv, const char *prefix)
 	const char **argp;
 	static const char *stdin_only[] = { "-", NULL };
 
+	git_config(git_default_config, NULL);
 	for (argp = argv+1; *argp; argp++) {
 		const char *arg = *argp;
 
