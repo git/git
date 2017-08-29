@@ -12,6 +12,7 @@
 #include "exec-cmd.h"
 #include "merge-blobs.h"
 #include "quote.h"
+#include "config.h"
 
 static int line_termination = '\n';
 
@@ -507,6 +508,8 @@ int cmd_merge_tree(int argc, const char **argv, const char *prefix)
 			   PARSE_OPT_NONEG),
 		OPT_END()
 	};
+
+	git_config(git_default_config, NULL);
 
 	/* Parse arguments */
 	original_argc = argc - 1; /* ignoring argv[0] */
