@@ -897,6 +897,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 
 	struct refspec_item refspec;
 
+	git_config(platform_core_config, NULL);
 	fetch_if_missing = 0;
 
 	packet_trace_identity("clone");
