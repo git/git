@@ -723,6 +723,7 @@ static const char reflog_usage[] =
 
 int cmd_reflog(int argc, const char **argv, const char *prefix)
 {
+	git_config(git_default_config, NULL);
 	if (argc > 1 && !strcmp(argv[1], "-h"))
 		usage(reflog_usage);
 
