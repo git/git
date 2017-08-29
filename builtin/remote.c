@@ -1688,6 +1688,7 @@ int cmd_remote(int argc, const char **argv, const char *prefix)
 	};
 	int result;
 
+	git_config(git_default_config, NULL);
 	argc = parse_options(argc, argv, prefix, options, builtin_remote_usage,
 		PARSE_OPT_STOP_AT_NON_OPTION);
 
