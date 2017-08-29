@@ -3,6 +3,7 @@
 #include "parse-options.h"
 #include "refs.h"
 #include "repository.h"
+#include "config.h"
 
 static char const * const pack_refs_usage[] = {
 	N_("git pack-refs [<options>]"),
