@@ -6,6 +6,7 @@
 #include "tag.h"
 #include "string-list.h"
 #include "parse-options.h"
+#include "config.h"
 
 static const char * const show_ref_usage[] = {
 	N_("git show-ref [-q | --quiet] [--verify] [--head] [-d | --dereference] [-s | --hash[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [<pattern>...]"),
@@ -182,6 +183,7 @@ static const struct option show_ref_options[] = {
 
 int cmd_show_ref(int argc, const char **argv, const char *prefix)
 {
+	git_config(git_default_config, NULL);
 	argc = parse_options(argc, argv, prefix, show_ref_options,
 			     show_ref_usage, 0);
 
