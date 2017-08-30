@@ -928,6 +928,7 @@ again:
 			error("Detected mismatched boundaries, can't recover");
 			mi->input_error = -1;
 			mi->content_top = mi->content;
+			strbuf_release(&newline);
 			return 0;
 		}
 		handle_filter(mi, &newline);
