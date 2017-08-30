@@ -72,6 +72,7 @@ static void insert_one_record(struct shortlog *log,
 		strbuf_addf(&namemailbuf, " <%.*s>", (int)maillen, mailbuf);
 
 	item = string_list_insert(&log->list, namemailbuf.buf);
+	strbuf_release(&namemailbuf);
 
 	if (log->summary)
 		item->util = (void *)(UTIL_TO_INT(item) + 1);
