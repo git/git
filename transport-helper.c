@@ -604,6 +604,7 @@ static int process_connect_service(struct transport *transport,
 			cmdbuf.buf);
 
 exit:
+	strbuf_release(&cmdbuf);
 	fclose(input);
 	return ret;
 }
