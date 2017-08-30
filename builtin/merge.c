@@ -253,6 +253,7 @@ static int save_state(struct object_id *stash)
 	struct child_process cp = CHILD_PROCESS_INIT;
 	struct strbuf buffer = STRBUF_INIT;
 	const char *argv[] = {"stash", "create", NULL};
+	int rc = -1;
 
 	cp.argv = argv;
 	cp.out = -1;
@@ -266,11 +267,14 @@ static int save_state(struct object_id *stash)
 	if (finish_command(&cp) || len < 0)
 		die(_("stash failed"));
 	else if (!len)		/* no changes */
-		return -1;
+		goto out;
 	strbuf_setlen(&buffer, buffer.len-1);
 	if (get_oid(buffer.buf, stash))
 		die(_("not a valid object: %s"), buffer.buf);
-	return 0;
+	rc = 0;
+out:
+	strbuf_release(&buffer);
+	return rc;
 }
 
 static void read_empty(unsigned const char *sha1, int verbose)
