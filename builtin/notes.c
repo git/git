@@ -328,6 +328,7 @@ static int notes_copy_from_stdin(int force, const char *rewrite_cmd)
 	} else {
 		finish_copy_notes_for_rewrite(c, msg);
 	}
+	strbuf_release(&buf);
 	return ret;
 }
 
