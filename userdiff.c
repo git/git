@@ -293,6 +293,7 @@ struct userdiff_driver *userdiff_get_textconv(struct userdiff_driver *driver)
 		strbuf_addf(&name, "textconv/%s", driver->name);
 		notes_cache_init(c, name.buf, driver->textconv);
 		driver->textconv_cache = c;
+		strbuf_release(&name);
 	}
 
 	return driver;
