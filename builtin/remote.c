@@ -571,6 +571,7 @@ static int read_remote_branches(const char *refname,
 		else
 			item->util = NULL;
 	}
+	strbuf_release(&buf);
 
 	return 0;
 }
