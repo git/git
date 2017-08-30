@@ -596,6 +596,7 @@ static int migrate_file(struct remote *remote)
 		unlink_or_warn(git_path("remotes/%s", remote->name));
 	else if (remote->origin == REMOTE_BRANCHES)
 		unlink_or_warn(git_path("branches/%s", remote->name));
+	strbuf_release(&buf);
 
 	return 0;
 }
