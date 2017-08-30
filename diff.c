@@ -2583,6 +2583,7 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 	}
 
 	print_stat_summary_inserts_deletes(options, total_files, adds, dels);
+	strbuf_release(&out);
 }
 
 static void show_shortstats(struct diffstat_t *data, struct diff_options *options)
