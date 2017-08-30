@@ -5314,6 +5314,7 @@ static void diff_summary(struct diff_options *opt, struct diff_filepair *p)
 			strbuf_addf(&sb, " (%d%%)\n", similarity_index(p));
 			emit_diff_symbol(opt, DIFF_SYMBOL_SUMMARY,
 					 sb.buf, sb.len, 0);
+			strbuf_release(&sb);
 		}
 		show_mode_change(opt, p, !p->score);
 		break;
