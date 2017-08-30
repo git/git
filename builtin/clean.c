@@ -167,7 +167,7 @@ static int remove_dirs(struct strbuf *path, const char *prefix, int force_flag,
 		}
 
 		*dir_gone = 0;
-		return 0;
+		goto out;
 	}
 
 	dir = opendir(path->buf);
@@ -181,7 +181,8 @@ static int remove_dirs(struct strbuf *path, const char *prefix, int force_flag,
 			warning_errno(_(msg_warn_remove_failed), quoted.buf);
 			*dir_gone = 0;
 		}
-		return res;
+		ret = res;
+		goto out;
 	}
 
 	strbuf_complete(path, '/');
@@ -249,6 +250,8 @@ static int remove_dirs(struct strbuf *path, const char *prefix, int force_flag,
 		for (i = 0; i < dels.nr; i++)
 			printf(dry_run ?  _(msg_would_remove) : _(msg_remove), dels.items[i].string);
 	}
+out:
+	strbuf_release(&quoted);
 	string_list_clear(&dels, 0);
 	return ret;
 }
