@@ -1328,13 +1328,13 @@ static int git_default_mailmap_config(const char *var, const char *value)
 	return 0;
 }
 
-int git_default_config(const char *var, const char *value, void *dummy)
+int git_default_config(const char *var, const char *value, void *cb)
 {
 	if (starts_with(var, "core."))
 		return git_default_core_config(var, value);
 
 	if (starts_with(var, "user."))
-		return git_ident_config(var, value, dummy);
+		return git_ident_config(var, value, cb);
 
 	if (starts_with(var, "i18n."))
 		return git_default_i18n_config(var, value);
@@ -1351,7 +1351,7 @@ int git_default_config(const char *var, const char *value, void *dummy)
 	if (starts_with(var, "advice."))
 		return git_default_advice_config(var, value);
 
-	if (git_color_config(var, value, dummy) < 0)
+	if (git_color_config(var, value, cb) < 0)
 		return -1;
 
 	if (!strcmp(var, "pager.color") || !strcmp(var, "color.pager")) {
