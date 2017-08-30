@@ -671,9 +671,7 @@ static int detect_patch_format(const char **paths)
 		goto done;
 	}
 
-	strbuf_reset(&l2);
 	strbuf_getline(&l2, fp);
-	strbuf_reset(&l3);
 	strbuf_getline(&l3, fp);
 
 	/*
@@ -696,6 +694,8 @@ static int detect_patch_format(const char **paths)
 done:
 	fclose(fp);
 	strbuf_release(&l1);
+	strbuf_release(&l2);
+	strbuf_release(&l3);
 	return ret;
 }
 
