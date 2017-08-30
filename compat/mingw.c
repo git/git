@@ -243,7 +243,7 @@ static char *unset_environment_variables;
 int core_fscache;
 int core_long_paths;
 
-int mingw_core_config(const char *var, const char *value)
+int mingw_core_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "core.hidedotfiles")) {
 		if (value && !strcasecmp(value, "dotgitonly"))

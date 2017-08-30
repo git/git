@@ -14,7 +14,7 @@ typedef _sigset_t sigset_t;
 extern int core_fscache;
 extern int core_long_paths;
 
-extern int mingw_core_config(const char *var, const char *value);
+extern int mingw_core_config(const char *var, const char *value, void *cb);
 #define platform_core_config mingw_core_config
 
 /*
