@@ -1026,6 +1026,7 @@ static void wt_longstatus_print_tracking(struct wt_status *s)
 				 comment_line_char);
 	else
 		fputs("\n", s->fp);
+	strbuf_release(&sb);
 }
 
 static int has_unmerged(struct wt_status *s)
