@@ -1565,9 +1565,7 @@ static int set_url(int argc, const char **argv)
 						       "^$", 0);
 		else
 			git_config_set(name_buf.buf, newurl);
-		strbuf_release(&name_buf);
-
-		return 0;
+		goto out;
 	}
 
 	/* Old URL specified. Demand that one matches. */
@@ -1590,6 +1588,8 @@ static int set_url(int argc, const char **argv)
 		git_config_set_multivar(name_buf.buf, newurl, oldurl, 0);
 	else
 		git_config_set_multivar(name_buf.buf, NULL, oldurl, 1);
+out:
+	strbuf_release(&name_buf);
 	return 0;
 }
 
