@@ -1193,6 +1193,7 @@ static int read_rebase_todolist(const char *fname, struct string_list *lines)
 		string_list_append(lines, line.buf);
 	}
 	fclose(f);
+	strbuf_release(&line);
 	return 0;
 }
 
