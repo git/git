@@ -131,6 +131,7 @@ static void exec_woman_emacs(const char *path, const char *page)
 		strbuf_addf(&man_page, "(woman \"%s\")", page);
 		execlp(path, "emacsclient", "-e", man_page.buf, (char *)NULL);
 		warning_errno(_("failed to exec '%s'"), path);
+		strbuf_release(&man_page);
 	}
 }
 
