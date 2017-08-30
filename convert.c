@@ -423,8 +423,10 @@ static int filter_buffer_or_fd(int in, int out, void *data)
 	child_process.in = -1;
 	child_process.out = out;
 
-	if (start_command(&child_process))
+	if (start_command(&child_process)) {
+		strbuf_release(&cmd);
 		return error("cannot fork to run external filter '%s'", params->cmd);
+	}
 
 	sigchain_push(SIGPIPE, SIG_IGN);
 
