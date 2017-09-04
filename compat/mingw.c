@@ -16,6 +16,7 @@
 #include "win32.h"
 #include "win32/lazyload.h"
 #include "wrapper.h"
+#include "write-or-die.h"
 #include <aclapi.h>
 #include <conio.h>
 #include <sddl.h>
@@ -3325,6 +3326,7 @@ int wmain(int argc, const wchar_t **wargv)
 #endif
 
 	maybe_redirect_std_handles();
+	fsync_object_files = 1;
 
 	/* determine size of argv and environ conversion buffer */
 	maxlen = wcslen(wargv[0]);
