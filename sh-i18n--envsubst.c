@@ -69,7 +69,6 @@ cmd_main (int argc, const char *argv[])
   /* Default values for command line options.  */
   /* unsigned short int show_variables = 0; */
 
-{ extern int core_config_was_read; core_config_was_read = 1; }
   switch (argc)
 	{
 	case 1:
