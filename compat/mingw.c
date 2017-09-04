@@ -3295,6 +3295,7 @@ void mingw_startup(void)
 
 	maybe_redirect_std_handles();
 	adjust_symlink_flags();
+	fsync_object_files = 1;
 
 	/* get wide char arguments and environment */
 	si.newmode = 0;
