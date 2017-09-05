@@ -96,7 +96,7 @@ static void prepare_tempfile_object(struct tempfile *tempfile)
 	}
 
 	if (is_tempfile_active(tempfile))
-		die("BUG: prepare_tempfile_object called for active object");
+		BUG("prepare_tempfile_object called for active object");
 	if (!tempfile->on_list) {
 		/* Initialize *tempfile and add it to tempfile_list: */
 		tempfile->fd = -1;
@@ -109,7 +109,7 @@ static void prepare_tempfile_object(struct tempfile *tempfile)
 		tempfile->on_list = 1;
 	} else if (tempfile->filename.len) {
 		/* This shouldn't happen, but better safe than sorry. */
-		die("BUG: prepare_tempfile_object called for improperly-reset object");
+		BUG("prepare_tempfile_object called for improperly-reset object");
 	}
 }
 
@@ -205,9 +205,9 @@ int xmks_tempfile_m(struct tempfile *tempfile, const char *template, int mode)
 FILE *fdopen_tempfile(struct tempfile *tempfile, const char *mode)
 {
 	if (!is_tempfile_active(tempfile))
-		die("BUG: fdopen_tempfile() called for inactive object");
+		BUG("fdopen_tempfile() called for inactive object");
 	if (tempfile->fp)
-		die("BUG: fdopen_tempfile() called for open object");
+		BUG("fdopen_tempfile() called for open object");
 
 	tempfile->fp = fdopen(tempfile->fd, mode);
 	return tempfile->fp;
@@ -216,21 +216,21 @@ FILE *fdopen_tempfile(struct tempfile *tempfile, const char *mode)
 const char *get_tempfile_path(struct tempfile *tempfile)
 {
 	if (!is_tempfile_active(tempfile))
-		die("BUG: get_tempfile_path() called for inactive object");
+		BUG("get_tempfile_path() called for inactive object");
 	return tempfile->filename.buf;
 }
 
 int get_tempfile_fd(struct tempfile *tempfile)
 {
 	if (!is_tempfile_active(tempfile))
-		die("BUG: get_tempfile_fd() called for inactive object");
+		BUG("get_tempfile_fd() called for inactive object");
 	return tempfile->fd;
 }
 
 FILE *get_tempfile_fp(struct tempfile *tempfile)
 {
 	if (!is_tempfile_active(tempfile))
-		die("BUG: get_tempfile_fp() called for inactive object");
+		BUG("get_tempfile_fp() called for inactive object");
 	return tempfile->fp;
 }
 
@@ -265,9 +265,9 @@ int close_tempfile_gently(struct tempfile *tempfile)
 int reopen_tempfile(struct tempfile *tempfile)
 {
 	if (!is_tempfile_active(tempfile))
-		die("BUG: reopen_tempfile called for an inactive object");
+		BUG("reopen_tempfile called for an inactive object");
 	if (0 <= tempfile->fd)
-		die("BUG: reopen_tempfile called for an open object");
+		BUG("reopen_tempfile called for an open object");
 	tempfile->fd = open(tempfile->filename.buf, O_WRONLY);
 	return tempfile->fd;
 }
@@ -275,7 +275,7 @@ int reopen_tempfile(struct tempfile *tempfile)
 int rename_tempfile(struct tempfile *tempfile, const char *path)
 {
 	if (!is_tempfile_active(tempfile))
-		die("BUG: rename_tempfile called for inactive object");
+		BUG("rename_tempfile called for inactive object");
 
 	if (close_tempfile_gently(tempfile)) {
 		delete_tempfile(tempfile);
