@@ -95,7 +95,7 @@ static void prepare_tempfile_object(struct tempfile *tempfile)
 		atexit(remove_tempfiles_on_exit);
 	}
 
-	if (tempfile->active)
+	if (is_tempfile_active(tempfile))
 		die("BUG: prepare_tempfile_object called for active object");
 	if (!tempfile->on_list) {
 		/* Initialize *tempfile and add it to tempfile_list: */
@@ -204,7 +204,7 @@ int xmks_tempfile_m(struct tempfile *tempfile, const char *template, int mode)
 
 FILE *fdopen_tempfile(struct tempfile *tempfile, const char *mode)
 {
-	if (!tempfile->active)
+	if (!is_tempfile_active(tempfile))
 		die("BUG: fdopen_tempfile() called for inactive object");
 	if (tempfile->fp)
 		die("BUG: fdopen_tempfile() called for open object");
@@ -215,21 +215,21 @@ FILE *fdopen_tempfile(struct tempfile *tempfile, const char *mode)
 
 const char *get_tempfile_path(struct tempfile *tempfile)
 {
-	if (!tempfile->active)
+	if (!is_tempfile_active(tempfile))
 		die("BUG: get_tempfile_path() called for inactive object");
 	return tempfile->filename.buf;
 }
 
 int get_tempfile_fd(struct tempfile *tempfile)
 {
-	if (!tempfile->active)
+	if (!is_tempfile_active(tempfile))
 		die("BUG: get_tempfile_fd() called for inactive object");
 	return tempfile->fd;
 }
 
 FILE *get_tempfile_fp(struct tempfile *tempfile)
 {
-	if (!tempfile->active)
+	if (!is_tempfile_active(tempfile))
 		die("BUG: get_tempfile_fp() called for inactive object");
 	return tempfile->fp;
 }
@@ -264,7 +264,7 @@ int reopen_tempfile(struct tempfile *tempfile)
 {
 	if (0 <= tempfile->fd)
 		die("BUG: reopen_tempfile called for an open object");
-	if (!tempfile->active)
+	if (!is_tempfile_active(tempfile))
 		die("BUG: reopen_tempfile called for an inactive object");
 	tempfile->fd = open(tempfile->filename.buf, O_WRONLY);
 	return tempfile->fd;
@@ -272,7 +272,7 @@ int reopen_tempfile(struct tempfile *tempfile)
 
 int rename_tempfile(struct tempfile *tempfile, const char *path)
 {
-	if (!tempfile->active)
+	if (!is_tempfile_active(tempfile))
 		die("BUG: rename_tempfile called for inactive object");
 
 	if (close_tempfile_gently(tempfile)) {
@@ -294,7 +294,7 @@ int rename_tempfile(struct tempfile *tempfile, const char *path)
 
 void delete_tempfile(struct tempfile *tempfile)
 {
-	if (!tempfile->active)
+	if (!is_tempfile_active(tempfile))
 		return;
 
 	close_tempfile_gently(tempfile);
