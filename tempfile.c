@@ -42,8 +42,7 @@
  *     states in which this condition doesn't hold). Client code should
  *     *not* rely on the filename being empty in this state.
  *   - `fd` is -1 and `fp` is `NULL`
- *   - the object is left registered in the `tempfile_list`, and
- *     `on_list` is set.
+ *   - the object is removed from `tempfile_list` (but could be used again)
  *
  * A temporary file is owned by the process that created it. The
  * `tempfile` has an `owner` field that records the owner's PID. This
@@ -92,36 +91,30 @@ static void remove_tempfiles_on_signal(int signo)
 	raise(signo);
 }
 
-/*
- * Initialize *tempfile if necessary and add it to tempfile_list.
- */
 static void prepare_tempfile_object(struct tempfile *tempfile)
 {
-	if (volatile_list_empty(&tempfile_list)) {
-		/* One-time initialization */
-		sigchain_push_common(remove_tempfiles_on_signal);
-		atexit(remove_tempfiles_on_exit);
-	}
-
-	if (is_tempfile_active(tempfile))
-		BUG("prepare_tempfile_object called for active object");
-	if (!tempfile->on_list) {
-		/* Initialize *tempfile and add it to tempfile_list: */
-		tempfile->fd = -1;
-		tempfile->fp = NULL;
-		tempfile->active = 0;
-		tempfile->owner = 0;
-		strbuf_init(&tempfile->filename, 0);
-		volatile_list_add(&tempfile->list, &tempfile_list);
-		tempfile->on_list = 1;
-	} else if (tempfile->filename.len) {
-		/* This shouldn't happen, but better safe than sorry. */
-		BUG("prepare_tempfile_object called for improperly-reset object");
-	}
+	tempfile->fd = -1;
+	tempfile->fp = NULL;
+	tempfile->active = 0;
+	tempfile->owner = 0;
+	INIT_LIST_HEAD(&tempfile->list);
+	strbuf_init(&tempfile->filename, 0);
 }
 
 static void activate_tempfile(struct tempfile *tempfile)
 {
+	static int initialized;
+
+	if (is_tempfile_active(tempfile))
+		BUG("activate_tempfile called for active object");
+
+	if (!initialized) {
+		sigchain_push_common(remove_tempfiles_on_signal);
+		atexit(remove_tempfiles_on_exit);
+		initialized = 1;
+	}
+
+	volatile_list_add(&tempfile->list, &tempfile_list);
 	tempfile->owner = getpid();
 	tempfile->active = 1;
 }
@@ -130,6 +123,7 @@ static void deactivate_tempfile(struct tempfile *tempfile)
 {
 	tempfile->active = 0;
 	strbuf_release(&tempfile->filename);
+	volatile_list_del(&tempfile->list);
 }
 
 /* Make sure errno contains a meaningful value on error */

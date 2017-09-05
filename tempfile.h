@@ -17,12 +17,9 @@
  *
  * The caller:
  *
- * * Allocates a `struct tempfile` either as a static variable or on
- *   the heap, initialized to zeros. Once you use the structure to
- *   call `create_tempfile()`, it belongs to the tempfile subsystem
- *   and its storage must remain valid throughout the life of the
- *   program (i.e. you cannot use an on-stack variable to hold this
- *   structure).
+ * * Allocates a `struct tempfile`. Once the structure is passed to
+ *   `create_tempfile()`, its storage must remain valid until
+ *   `delete_tempfile()` or `rename_tempfile()` is called on it.
  *
  * * Attempts to create a temporary file by calling
  *   `create_tempfile()`.
@@ -52,9 +49,8 @@
  *   temporary file by calling `close_tempfile_gently()`, and later call
  *   `delete_tempfile()` or `rename_tempfile()`.
  *
- * Even after the temporary file is renamed or deleted, the `tempfile`
- * object must not be freed or altered by the caller. However, it may
- * be reused; just pass it to another call of `create_tempfile()`.
+ * After the temporary file is renamed or deleted, the `tempfile`
+ * object may be reused or freed.
  *
  * If the program exits before `rename_tempfile()` or
  * `delete_tempfile()` is called, an `atexit(3)` handler will close
@@ -88,7 +84,6 @@ struct tempfile {
 	volatile int fd;
 	FILE *volatile fp;
 	volatile pid_t owner;
-	char on_list;
 	struct strbuf filename;
 };
 
