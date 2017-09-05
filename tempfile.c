@@ -113,6 +113,12 @@ static void prepare_tempfile_object(struct tempfile *tempfile)
 	}
 }
 
+static void activate_tempfile(struct tempfile *tempfile)
+{
+	tempfile->owner = getpid();
+	tempfile->active = 1;
+}
+
 /* Make sure errno contains a meaningful value on error */
 int create_tempfile(struct tempfile *tempfile, const char *path)
 {
@@ -129,8 +135,7 @@ int create_tempfile(struct tempfile *tempfile, const char *path)
 		strbuf_reset(&tempfile->filename);
 		return -1;
 	}
-	tempfile->owner = getpid();
-	tempfile->active = 1;
+	activate_tempfile(tempfile);
 	if (adjust_shared_perm(tempfile->filename.buf)) {
 		int save_errno = errno;
 		error("cannot fix permission bits on %s", tempfile->filename.buf);
@@ -145,8 +150,7 @@ void register_tempfile(struct tempfile *tempfile, const char *path)
 {
 	prepare_tempfile_object(tempfile);
 	strbuf_add_absolute_path(&tempfile->filename, path);
-	tempfile->owner = getpid();
-	tempfile->active = 1;
+	activate_tempfile(tempfile);
 }
 
 int mks_tempfile_sm(struct tempfile *tempfile,
@@ -160,8 +164,7 @@ int mks_tempfile_sm(struct tempfile *tempfile,
 		strbuf_reset(&tempfile->filename);
 		return -1;
 	}
-	tempfile->owner = getpid();
-	tempfile->active = 1;
+	activate_tempfile(tempfile);
 	return tempfile->fd;
 }
 
@@ -182,8 +185,7 @@ int mks_tempfile_tsm(struct tempfile *tempfile,
 		strbuf_reset(&tempfile->filename);
 		return -1;
 	}
-	tempfile->owner = getpid();
-	tempfile->active = 1;
+	activate_tempfile(tempfile);
 	return tempfile->fd;
 }
 
