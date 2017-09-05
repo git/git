@@ -120,7 +120,7 @@ static int send_pack_config(const char *k, const char *v, void *cb)
 			}
 		}
 	}
-	return 0;
+	return git_default_config(k, v, cb);
 }
 
 int cmd_send_pack(int argc, const char **argv, const char *prefix)

@@ -155,7 +155,7 @@ static int git_init_db_config(const char *k, const char *v, void *cb)
 		return git_config_pathname(&init_db_template_dir, k, v);
 
 	if (starts_with(k, "core."))
-		return platform_core_config(k, v);
+		return platform_core_config(k, v, cb);
 
 	return 0;
 }
