@@ -12,7 +12,7 @@
 
 struct ref_lock {
 	char *ref_name;
-	struct lock_file *lk;
+	struct lock_file lk;
 	struct object_id old_oid;
 };
 
@@ -418,9 +418,7 @@ out:
 
 static void unlock_ref(struct ref_lock *lock)
 {
-	/* Do not free lock->lk -- atexit() still looks at them */
-	if (lock->lk)
-		rollback_lock_file(lock->lk);
+	rollback_lock_file(&lock->lk);
 	free(lock->ref_name);
 	free(lock);
 }
@@ -534,11 +532,8 @@ retry:
 		goto error_return;
 	}
 
-	if (!lock->lk)
-		lock->lk = xcalloc(1, sizeof(struct lock_file));
-
 	if (hold_lock_file_for_update_timeout(
-			    lock->lk, ref_file.buf, LOCK_NO_DEREF,
+			    &lock->lk, ref_file.buf, LOCK_NO_DEREF,
 			    get_files_ref_lock_timeout_ms()) < 0) {
 		if (errno == ENOENT && --attempts_remaining > 0) {
 			/*
@@ -949,11 +944,9 @@ static struct ref_lock *lock_ref_sha1_basic(struct files_ref_store *refs,
 		goto error_return;
 	}
 
-	lock->lk = xcalloc(1, sizeof(struct lock_file));
-
 	lock->ref_name = xstrdup(refname);
 
-	if (raceproof_create_file(ref_file.buf, create_reflock, lock->lk)) {
+	if (raceproof_create_file(ref_file.buf, create_reflock, &lock->lk)) {
 		last_errno = errno;
 		unable_to_lock_message(ref_file.buf, errno, err);
 		goto error_return;
@@ -1404,14 +1397,14 @@ static int files_rename_ref(struct ref_store *ref_store,
 
 static int close_ref_gently(struct ref_lock *lock)
 {
-	if (close_lock_file_gently(lock->lk))
+	if (close_lock_file_gently(&lock->lk))
 		return -1;
 	return 0;
 }
 
 static int commit_ref(struct ref_lock *lock)
 {
-	char *path = get_locked_file_path(lock->lk);
+	char *path = get_locked_file_path(&lock->lk);
 	struct stat st;
 
 	if (!lstat(path, &st) && S_ISDIR(st.st_mode)) {
@@ -1435,7 +1428,7 @@ static int commit_ref(struct ref_lock *lock)
 		free(path);
 	}
 
-	if (commit_lock_file(lock->lk))
+	if (commit_lock_file(&lock->lk))
 		return -1;
 	return 0;
 }
@@ -1627,12 +1620,12 @@ static int write_ref_to_lockfile(struct ref_lock *lock,
 		unlock_ref(lock);
 		return -1;
 	}
-	fd = get_lock_file_fd(lock->lk);
+	fd = get_lock_file_fd(&lock->lk);
 	if (write_in_full(fd, oid_to_hex(oid), GIT_SHA1_HEXSZ) != GIT_SHA1_HEXSZ ||
 	    write_in_full(fd, &term, 1) != 1 ||
 	    close_ref_gently(lock) < 0) {
 		strbuf_addf(err,
-			    "couldn't write '%s'", get_lock_file_path(lock->lk));
+			    "couldn't write '%s'", get_lock_file_path(&lock->lk));
 		unlock_ref(lock);
 		return -1;
 	}
@@ -1709,7 +1702,7 @@ static int create_ref_symlink(struct ref_lock *lock, const char *target)
 {
 	int ret = -1;
 #ifndef NO_SYMLINK_HEAD
-	char *ref_path = get_locked_file_path(lock->lk);
+	char *ref_path = get_locked_file_path(&lock->lk);
 	unlink(ref_path);
 	ret = symlink(target, ref_path);
 	free(ref_path);
@@ -1745,14 +1738,14 @@ static int create_symref_locked(struct files_ref_store *refs,
 		return 0;
 	}
 
-	if (!fdopen_lock_file(lock->lk, "w"))
+	if (!fdopen_lock_file(&lock->lk, "w"))
 		return error("unable to fdopen %s: %s",
-			     lock->lk->tempfile->filename.buf, strerror(errno));
+			     lock->lk.tempfile->filename.buf, strerror(errno));
 
 	update_symref_reflog(refs, lock, refname, target, logmsg);
 
 	/* no error check; commit_ref will check ferror */
-	fprintf(lock->lk->tempfile->fp, "ref: %s\n", target);
+	fprintf(lock->lk.tempfile->fp, "ref: %s\n", target);
 	if (commit_ref(lock) < 0)
 		return error("unable to write symref for %s: %s", refname,
 			     strerror(errno));
@@ -2853,12 +2846,12 @@ static int files_reflog_expire(struct ref_store *ref_store,
 					strerror(errno));
 			rollback_lock_file(&reflog_lock);
 		} else if (update &&
-			   (write_in_full(get_lock_file_fd(lock->lk),
+			   (write_in_full(get_lock_file_fd(&lock->lk),
 				oid_to_hex(&cb.last_kept_oid), GIT_SHA1_HEXSZ) != GIT_SHA1_HEXSZ ||
-			    write_str_in_full(get_lock_file_fd(lock->lk), "\n") != 1 ||
+			    write_str_in_full(get_lock_file_fd(&lock->lk), "\n") != 1 ||
 			    close_ref_gently(lock) < 0)) {
 			status |= error("couldn't write %s",
-					get_lock_file_path(lock->lk));
+					get_lock_file_path(&lock->lk));
 			rollback_lock_file(&reflog_lock);
 		} else if (commit_lock_file(&reflog_lock)) {
 			status |= error("unable to write reflog '%s' (%s)",
