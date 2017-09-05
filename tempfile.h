@@ -1,6 +1,8 @@
 #ifndef TEMPFILE_H
 #define TEMPFILE_H
 
+#include "list.h"
+
 /*
  * Handle temporary files.
  *
@@ -81,7 +83,7 @@
  */
 
 struct tempfile {
-	struct tempfile *volatile next;
+	volatile struct volatile_list_head list;
 	volatile sig_atomic_t active;
 	volatile int fd;
 	FILE *volatile fp;

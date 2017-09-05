@@ -55,14 +55,16 @@
 #include "tempfile.h"
 #include "sigchain.h"
 
-static struct tempfile *volatile tempfile_list;
+static VOLATILE_LIST_HEAD(tempfile_list);
 
 static void remove_tempfiles(int in_signal_handler)
 {
 	pid_t me = getpid();
-	struct tempfile *volatile p;
+	volatile struct volatile_list_head *pos;
 
-	for (p = tempfile_list; p; p = p->next) {
+	list_for_each(pos, &tempfile_list) {
+		struct tempfile *p = list_entry(pos, struct tempfile, list);
+
 		if (!is_tempfile_active(p) || p->owner != me)
 			continue;
 
@@ -95,7 +97,7 @@ static void remove_tempfiles_on_signal(int signo)
  */
 static void prepare_tempfile_object(struct tempfile *tempfile)
 {
-	if (!tempfile_list) {
+	if (volatile_list_empty(&tempfile_list)) {
 		/* One-time initialization */
 		sigchain_push_common(remove_tempfiles_on_signal);
 		atexit(remove_tempfiles_on_exit);
@@ -110,8 +112,7 @@ static void prepare_tempfile_object(struct tempfile *tempfile)
 		tempfile->active = 0;
 		tempfile->owner = 0;
 		strbuf_init(&tempfile->filename, 0);
-		tempfile->next = tempfile_list;
-		tempfile_list = tempfile;
+		volatile_list_add(&tempfile->list, &tempfile_list);
 		tempfile->on_list = 1;
 	} else if (tempfile->filename.len) {
 		/* This shouldn't happen, but better safe than sorry. */
