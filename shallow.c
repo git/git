@@ -295,10 +295,10 @@ const char *setup_temporary_shallow(const struct oid_array *extra)
 	if (write_shallow_commits(&sb, 0, extra)) {
 		fd = xmks_tempfile(&temp, git_path("shallow_XXXXXX"));
 
-		if (write_in_full(fd, sb.buf, sb.len) != sb.len)
+		if (write_in_full(fd, sb.buf, sb.len) != sb.len ||
+		    close_tempfile(&temp) < 0)
 			die_errno("failed to write to %s",
 				  get_tempfile_path(&temp));
-		close_tempfile(&temp);
 		strbuf_release(&sb);
 		return get_tempfile_path(&temp);
 	}
