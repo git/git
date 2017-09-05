@@ -128,7 +128,7 @@ static void activate_tempfile(struct tempfile *tempfile)
 static void deactivate_tempfile(struct tempfile *tempfile)
 {
 	tempfile->active = 0;
-	strbuf_reset(&tempfile->filename);
+	strbuf_release(&tempfile->filename);
 }
 
 /* Make sure errno contains a meaningful value on error */
