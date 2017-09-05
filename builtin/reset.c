@@ -44,10 +44,11 @@ static inline int is_merge(void)
 
 static int reset_index(const struct object_id *oid, int reset_type, int quiet)
 {
-	int nr = 0;
+	int i, nr = 0;
 	struct tree_desc desc[2];
 	struct tree *tree;
 	struct unpack_trees_options opts;
+	int ret = -1;
 
 	memset(&opts, 0, sizeof(opts));
 	opts.head_idx = 1;
@@ -81,19 +82,26 @@ static int reset_index(const struct object_id *oid, int reset_type, int quiet)
 		opts.fn = twoway_merge;
 	}
 
-	if (!fill_tree_descriptor(desc + nr, oid))
-		return error(_("Failed to find tree of %s."), oid_to_hex(oid));
+	if (!fill_tree_descriptor(desc + nr, oid)) {
+		error(_("Failed to find tree of %s."), oid_to_hex(oid));
+		goto out;
+	}
 	nr++;
 
 	if (unpack_trees(nr, desc, &opts))
-		return -1;
+		goto out;
 
 	if (reset_type == MIXED || reset_type == HARD) {
 		tree = parse_tree_indirect(oid);
 		prime_cache_tree(&the_index, tree);
 	}
 
-	return 0;
+	ret = 0;
+
+out:
+	for (i = 0; i < nr; i++)
+		free((void *)desc[i].buffer);
+	return ret;
 }
 
 static void print_new_head_line(struct commit *commit)
