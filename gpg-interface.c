@@ -215,7 +215,7 @@ int verify_signed_buffer(const char *payload, size_t payload_size,
 		delete_tempfile(&temp);
 		return -1;
 	}
-	close(fd);
+	close_tempfile(&temp);
 
 	argv_array_pushl(&gpg.args,
 			 gpg_program,
