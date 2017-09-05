@@ -37,12 +37,12 @@
  *
  * The caller:
  *
- * * Allocates a `struct lock_file` either as a static variable or on
- *   the heap, initialized to zeros. Once you use the structure to
- *   call the `hold_lock_file_for_*()` family of functions, it belongs
- *   to the lockfile subsystem and its storage must remain valid
- *   throughout the life of the program (i.e. you cannot use an
- *   on-stack variable to hold this structure).
+ * * Allocates a `struct lock_file` with whatever storage duration you
+ *   desire. The struct does not have to be initialized before being
+ *   used, but it is good practice to do so using by setting it to
+ *   all-zeros (or using the LOCK_INIT macro). This puts the object in a
+ *   consistent state that allows you to call rollback_lock_file() even
+ *   if the lock was never taken (in which case it is a noop).
  *
  * * Attempts to create a lockfile by calling `hold_lock_file_for_update()`.
  *
@@ -73,10 +73,8 @@
  *   `commit_lock_file()`, `commit_lock_file_to()`,
  *   `rollback_lock_file()`, or `reopen_lock_file()`.
  *
- * Even after the lockfile is committed or rolled back, the
- * `lock_file` object must not be freed or altered by the caller.
- * However, it may be reused; just pass it to another call of
- * `hold_lock_file_for_update()`.
+ * After the lockfile is committed or rolled back, the `lock_file`
+ * object can be discarded or reused.
  *
  * If the program exits before `commit_lock_file()`,
  * `commit_lock_file_to()`, or `rollback_lock_file()` is called, the
@@ -113,6 +111,8 @@
 struct lock_file {
 	struct tempfile *tempfile;
 };
+
+#define LOCK_INIT { NULL }
 
 /* String appended to a filename to derive the lockfile name: */
 #define LOCK_SUFFIX ".lock"
