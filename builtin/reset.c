@@ -44,7 +44,7 @@ static inline int is_merge(void)
 
 static int reset_index(const struct object_id *oid, int reset_type, int quiet)
 {
-	int nr = 1;
+	int nr = 0;
 	struct tree_desc desc[2];
 	struct tree *tree;
 	struct unpack_trees_options opts;
@@ -75,14 +75,16 @@ static int reset_index(const struct object_id *oid, int reset_type, int quiet)
 		struct object_id head_oid;
 		if (get_oid("HEAD", &head_oid))
 			return error(_("You do not have a valid HEAD."));
-		if (!fill_tree_descriptor(desc, &head_oid))
+		if (!fill_tree_descriptor(desc + nr, &head_oid))
 			return error(_("Failed to find tree of HEAD."));
 		nr++;
 		opts.fn = twoway_merge;
 	}
 
-	if (!fill_tree_descriptor(desc + nr - 1, oid))
+	if (!fill_tree_descriptor(desc + nr, oid))
 		return error(_("Failed to find tree of %s."), oid_to_hex(oid));
+	nr++;
+
 	if (unpack_trees(nr, desc, &opts))
 		return -1;
 
