@@ -246,7 +246,13 @@ extern char *get_locked_file_path(struct lock_file *lk);
  */
 static inline int close_lock_file(struct lock_file *lk)
 {
-	return close_tempfile(&lk->tempfile);
+	int ret = close_tempfile_gently(&lk->tempfile);
+	if (ret) {
+		int saved_errno = errno;
+		delete_tempfile(&lk->tempfile);
+		errno = saved_errno;
+	}
+	return ret;
 }
 
 /*

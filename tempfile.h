@@ -47,7 +47,7 @@
  *   control of the file.
  *
  * * Close the file descriptor without removing or renaming the
- *   temporary file by calling `close_tempfile()`, and later call
+ *   temporary file by calling `close_tempfile_gently()`, and later call
  *   `delete_tempfile()` or `rename_tempfile()`.
  *
  * Even after the temporary file is renamed or deleted, the `tempfile`
@@ -59,7 +59,7 @@
  * and remove the temporary file.
  *
  * If you need to close the file descriptor yourself, do so by calling
- * `close_tempfile()`. You should never call `close(2)` or `fclose(3)`
+ * `close_tempfile_gently()`. You should never call `close(2)` or `fclose(3)`
  * yourself, otherwise the `struct tempfile` structure would still
  * think that the file descriptor needs to be closed, and a later
  * cleanup would result in duplicate calls to `close(2)`. Worse yet,
@@ -74,9 +74,10 @@
  * `create_tempfile()` returns a file descriptor on success or -1 on
  * failure. On errors, `errno` describes the reason for failure.
  *
- * `delete_tempfile()`, `rename_tempfile()`, and `close_tempfile()`
- * return 0 on success. On failure they set `errno` appropriately, do
- * their best to delete the temporary file, and return -1.
+ * `delete_tempfile()`, `rename_tempfile()`, and `close_tempfile_gently()`
+ * return 0 on success. On failure they set `errno` appropriately and return
+ * -1. `delete` and `rename` (but not `close`) do their best to delete the
+ * temporary file before returning.
  */
 
 struct tempfile {
@@ -203,7 +204,7 @@ static inline int xmks_tempfile(struct tempfile *tempfile,
 /*
  * Associate a stdio stream with the temporary file (which must still
  * be open). Return `NULL` (*without* deleting the file) on error. The
- * stream is closed automatically when `close_tempfile()` is called or
+ * stream is closed automatically when `close_tempfile_gently()` is called or
  * when the file is deleted or renamed.
  */
 extern FILE *fdopen_tempfile(struct tempfile *tempfile, const char *mode);
@@ -226,20 +227,20 @@ extern FILE *get_tempfile_fp(struct tempfile *tempfile);
  * If the temporary file is still open, close it (and the file pointer
  * too, if it has been opened using `fdopen_tempfile()`) without
  * deleting the file. Return 0 upon success. On failure to `close(2)`,
- * return a negative value and delete the file. Usually
- * `delete_tempfile()` or `rename_tempfile()` should eventually be
- * called if `close_tempfile()` succeeds.
+ * return a negative value. Usually `delete_tempfile()` or `rename_tempfile()`
+ * should eventually be called regardless of whether `close_tempfile_gently()`
+ * succeeds.
  */
-extern int close_tempfile(struct tempfile *tempfile);
+extern int close_tempfile_gently(struct tempfile *tempfile);
 
 /*
  * Re-open a temporary file that has been closed using
- * `close_tempfile()` but not yet deleted or renamed. This can be used
+ * `close_tempfile_gently()` but not yet deleted or renamed. This can be used
  * to implement a sequence of operations like the following:
  *
  * * Create temporary file.
  *
- * * Write new contents to file, then `close_tempfile()` to cause the
+ * * Write new contents to file, then `close_tempfile_gently()` to cause the
  *   contents to be written to disk.
  *
  * * Pass the name of the temporary file to another program to allow

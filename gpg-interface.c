@@ -210,7 +210,7 @@ int verify_signed_buffer(const char *payload, size_t payload_size,
 	if (fd < 0)
 		return error_errno(_("could not create temporary file"));
 	if (write_in_full(fd, signature, signature_size) < 0 ||
-	    close_tempfile(&temp) < 0) {
+	    close_tempfile_gently(&temp) < 0) {
 		error_errno(_("failed writing detached signature to '%s'"),
 			    temp.filename.buf);
 		delete_tempfile(&temp);

@@ -30,13 +30,12 @@
  *     `fdopen_tempfile()` has been called on the object
  *   - `owner` holds the PID of the process that created the file
  *
- * - Active, file closed (after successful `close_tempfile()`). Same
+ * - Active, file closed (after `close_tempfile_gently()`). Same
  *   as the previous state, except that the temporary file is closed,
  *   `fd` is -1, and `fp` is `NULL`.
  *
- * - Inactive (after `delete_tempfile()`, `rename_tempfile()`, a
- *   failed attempt to create a temporary file, or a failed
- *   `close_tempfile()`). In this state:
+ * - Inactive (after `delete_tempfile()`, `rename_tempfile()`, or a
+ *   failed attempt to create a temporary file). In this state:
  *
  *   - `active` is unset
  *   - `filename` is empty (usually, though there are transitory
@@ -235,7 +234,7 @@ FILE *get_tempfile_fp(struct tempfile *tempfile)
 	return tempfile->fp;
 }
 
-int close_tempfile(struct tempfile *tempfile)
+int close_tempfile_gently(struct tempfile *tempfile)
 {
 	int fd = tempfile->fd;
 	FILE *fp = tempfile->fp;
@@ -258,14 +257,7 @@ int close_tempfile(struct tempfile *tempfile)
 		err = close(fd);
 	}
 
-	if (err) {
-		int save_errno = errno;
-		delete_tempfile(tempfile);
-		errno = save_errno;
-		return -1;
-	}
-
-	return 0;
+	return err ? -1 : 0;
 }
 
 int reopen_tempfile(struct tempfile *tempfile)
@@ -283,8 +275,10 @@ int rename_tempfile(struct tempfile *tempfile, const char *path)
 	if (!tempfile->active)
 		die("BUG: rename_tempfile called for inactive object");
 
-	if (close_tempfile(tempfile))
+	if (close_tempfile_gently(tempfile)) {
+		delete_tempfile(tempfile);
 		return -1;
+	}
 
 	if (rename(tempfile->filename.buf, path)) {
 		int save_errno = errno;
@@ -303,9 +297,8 @@ void delete_tempfile(struct tempfile *tempfile)
 	if (!tempfile->active)
 		return;
 
-	if (!close_tempfile(tempfile)) {
-		unlink_or_warn(tempfile->filename.buf);
-		tempfile->active = 0;
-		strbuf_reset(&tempfile->filename);
-	}
+	close_tempfile_gently(tempfile);
+	unlink_or_warn(tempfile->filename.buf);
+	tempfile->active = 0;
+	strbuf_reset(&tempfile->filename);
 }
