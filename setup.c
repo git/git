@@ -399,11 +399,6 @@ void setup_work_tree(void)
 	if (getenv(GIT_WORK_TREE_ENVIRONMENT))
 		setenv(GIT_WORK_TREE_ENVIRONMENT, ".", 1);
 
-	/*
-	 * NEEDSWORK: this call can essentially be set_git_dir(get_git_dir())
-	 * which can cause some problems when trying to free the old value of
-	 * gitdir.
-	 */
 	set_git_dir(remove_leading_path(git_dir, work_tree));
 	initialized = 1;
 }
