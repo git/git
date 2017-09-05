@@ -307,7 +307,7 @@ const char *setup_temporary_shallow(const struct oid_array *extra)
 	 * is_repository_shallow() sees empty string as "no shallow
 	 * file".
 	 */
-	return get_tempfile_path(&temporary_shallow);
+	return "";
 }
 
 void setup_alternate_shallow(struct lock_file *shallow_lock,
