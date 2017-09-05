@@ -603,16 +603,10 @@ static struct cache_tree *cache_tree_find(struct cache_tree *it, const char *pat
 int write_index_as_tree(unsigned char *sha1, struct index_state *index_state, const char *index_path, int flags, const char *prefix)
 {
 	int entries, was_valid, newfd;
-	struct lock_file *lock_file;
+	struct lock_file lock_file = LOCK_INIT;
 	int ret = 0;
 
-	/*
-	 * We can't free this memory, it becomes part of a linked list
-	 * parsed atexit()
-	 */
-	lock_file = xcalloc(1, sizeof(struct lock_file));
-
-	newfd = hold_lock_file_for_update(lock_file, index_path, LOCK_DIE_ON_ERROR);
+	newfd = hold_lock_file_for_update(&lock_file, index_path, LOCK_DIE_ON_ERROR);
 
 	entries = read_index_from(index_state, index_path);
 	if (entries < 0) {
@@ -632,7 +626,7 @@ int write_index_as_tree(unsigned char *sha1, struct index_state *index_state, co
 			goto out;
 		}
 		if (0 <= newfd) {
-			if (!write_locked_index(index_state, lock_file, COMMIT_LOCK))
+			if (!write_locked_index(index_state, &lock_file, COMMIT_LOCK))
 				newfd = -1;
 		}
 		/* Not being able to write is fine -- we are only interested
@@ -657,7 +651,7 @@ int write_index_as_tree(unsigned char *sha1, struct index_state *index_state, co
 
 out:
 	if (0 <= newfd)
-		rollback_lock_file(lock_file);
+		rollback_lock_file(&lock_file);
 	return ret;
 }
 
