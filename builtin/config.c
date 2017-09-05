@@ -518,10 +518,13 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 			die("$HOME not set");
 
 		if (access_or_warn(user_config, R_OK, 0) &&
-		    xdg_config && !access_or_warn(xdg_config, R_OK, 0))
+		    xdg_config && !access_or_warn(xdg_config, R_OK, 0)) {
 			given_config_source.file = xdg_config;
-		else
+			free(user_config);
+		} else {
 			given_config_source.file = user_config;
+			free(xdg_config);
+		}
 	}
 	else if (use_system_config)
 		given_config_source.file = git_etc_gitconfig();
