@@ -75,7 +75,7 @@ struct packed_ref_store {
 	 * "packed-refs" file. Note that this (and thus the enclosing
 	 * `packed_ref_store`) must not be freed.
 	 */
-	struct tempfile tempfile;
+	struct tempfile *tempfile;
 };
 
 struct ref_store *packed_ref_store_create(const char *path,
@@ -628,7 +628,8 @@ int commit_packed_refs(struct ref_store *ref_store, struct strbuf *err)
 	 */
 	packed_refs_path = get_locked_file_path(&refs->lock);
 	strbuf_addf(&sb, "%s.new", packed_refs_path);
-	if (create_tempfile(&refs->tempfile, sb.buf) < 0) {
+	refs->tempfile = create_tempfile(sb.buf);
+	if (!refs->tempfile) {
 		strbuf_addf(err, "unable to create file %s: %s",
 			    sb.buf, strerror(errno));
 		strbuf_release(&sb);
@@ -636,7 +637,7 @@ int commit_packed_refs(struct ref_store *ref_store, struct strbuf *err)
 	}
 	strbuf_release(&sb);
 
-	out = fdopen_tempfile(&refs->tempfile, "w");
+	out = fdopen_tempfile(refs->tempfile, "w");
 	if (!out) {
 		strbuf_addf(err, "unable to fdopen packed-refs tempfile: %s",
 			    strerror(errno));
@@ -645,7 +646,7 @@ int commit_packed_refs(struct ref_store *ref_store, struct strbuf *err)
 
 	if (fprintf(out, "%s", PACKED_REFS_HEADER) < 0) {
 		strbuf_addf(err, "error writing to %s: %s",
-			    get_tempfile_path(&refs->tempfile), strerror(errno));
+			    get_tempfile_path(refs->tempfile), strerror(errno));
 		goto error;
 	}
 
@@ -657,7 +658,7 @@ int commit_packed_refs(struct ref_store *ref_store, struct strbuf *err)
 		if (write_packed_entry(out, iter->refname, iter->oid->hash,
 				       peel_error ? NULL : peeled.hash)) {
 			strbuf_addf(err, "error writing to %s: %s",
-				    get_tempfile_path(&refs->tempfile),
+				    get_tempfile_path(refs->tempfile),
 				    strerror(errno));
 			ref_iterator_abort(iter);
 			goto error;

@@ -17,22 +17,18 @@
  *
  * The caller:
  *
- * * Allocates a `struct tempfile`. Once the structure is passed to
- *   `create_tempfile()`, its storage must remain valid until
- *   `delete_tempfile()` or `rename_tempfile()` is called on it.
- *
  * * Attempts to create a temporary file by calling
- *   `create_tempfile()`.
+ *   `create_tempfile()`. The resources used for the temporary file are
+ *   managed by the tempfile API.
  *
  * * Writes new content to the file by either:
  *
- *   * writing to the file descriptor returned by `create_tempfile()`
- *     (also available via `tempfile->fd`).
+ *   * writing to the `tempfile->fd` file descriptor
  *
  *   * calling `fdopen_tempfile()` to get a `FILE` pointer for the
  *     open file and writing to the file using stdio.
  *
- *   Note that the file descriptor returned by create_tempfile()
+ *   Note that the file descriptor created by create_tempfile()
  *   is marked O_CLOEXEC, so the new contents must be written by
  *   the current process, not any spawned one.
  *
@@ -50,7 +46,7 @@
  *   `delete_tempfile()` or `rename_tempfile()`.
  *
  * After the temporary file is renamed or deleted, the `tempfile`
- * object may be reused or freed.
+ * object is no longer valid and should not be reused.
  *
  * If the program exits before `rename_tempfile()` or
  * `delete_tempfile()` is called, an `atexit(3)` handler will close
@@ -69,8 +65,8 @@
  * Error handling
  * --------------
  *
- * `create_tempfile()` returns a file descriptor on success or -1 on
- * failure. On errors, `errno` describes the reason for failure.
+ * `create_tempfile()` returns an allocated tempfile on success or NULL
+ * on failure. On errors, `errno` describes the reason for failure.
  *
  * `delete_tempfile()`, `rename_tempfile()`, and `close_tempfile_gently()`
  * return 0 on success. On failure they set `errno` appropriately and return
@@ -89,10 +85,10 @@ struct tempfile {
 
 /*
  * Attempt to create a temporary file at the specified `path`. Return
- * a file descriptor for writing to it, or -1 on error. It is an error
- * if a file already exists at that path.
+ * a tempfile (whose "fd" member can be used for writing to it), or
+ * NULL on error. It is an error if a file already exists at that path.
  */
-extern int create_tempfile(struct tempfile *tempfile, const char *path);
+extern struct tempfile *create_tempfile(const char *path);
 
 /*
  * Register an existing file as a tempfile, meaning that it will be
@@ -100,7 +96,7 @@ extern int create_tempfile(struct tempfile *tempfile, const char *path);
  * but it can be worked with like any other closed tempfile (for
  * example, it can be opened using reopen_tempfile()).
  */
-extern void register_tempfile(struct tempfile *tempfile, const char *path);
+extern struct tempfile *register_tempfile(const char *path);
 
 
 /*
@@ -132,70 +128,65 @@ extern void register_tempfile(struct tempfile *tempfile, const char *path);
  * know the (absolute) path of the file that was created, it can be
  * read from tempfile->filename.
  *
- * On success, the functions return a file descriptor that is open for
- * writing the temporary file. On errors, they return -1 and set errno
- * appropriately (except for the "x" variants, which die() on errors).
+ * On success, the functions return a tempfile whose "fd" member is open
+ * for writing the temporary file. On errors, they return NULL and set
+ * errno appropriately (except for the "x" variants, which die() on
+ * errors).
  */
 
 /* See "mks_tempfile functions" above. */
-extern int mks_tempfile_sm(struct tempfile *tempfile,
-			   const char *template, int suffixlen, int mode);
+extern struct tempfile *mks_tempfile_sm(const char *template,
+					int suffixlen, int mode);
 
 /* See "mks_tempfile functions" above. */
-static inline int mks_tempfile_s(struct tempfile *tempfile,
-				 const char *template, int suffixlen)
+static inline struct tempfile *mks_tempfile_s(const char *template,
+					      int suffixlen)
 {
-	return mks_tempfile_sm(tempfile, template, suffixlen, 0600);
+	return mks_tempfile_sm(template, suffixlen, 0600);
 }
 
 /* See "mks_tempfile functions" above. */
-static inline int mks_tempfile_m(struct tempfile *tempfile,
-				 const char *template, int mode)
+static inline struct tempfile *mks_tempfile_m(const char *template, int mode)
 {
-	return mks_tempfile_sm(tempfile, template, 0, mode);
+	return mks_tempfile_sm(template, 0, mode);
 }
 
 /* See "mks_tempfile functions" above. */
-static inline int mks_tempfile(struct tempfile *tempfile,
-			       const char *template)
+static inline struct tempfile *mks_tempfile(const char *template)
 {
-	return mks_tempfile_sm(tempfile, template, 0, 0600);
+	return mks_tempfile_sm(template, 0, 0600);
 }
 
 /* See "mks_tempfile functions" above. */
-extern int mks_tempfile_tsm(struct tempfile *tempfile,
-			    const char *template, int suffixlen, int mode);
+extern struct tempfile *mks_tempfile_tsm(const char *template,
+					 int suffixlen, int mode);
 
 /* See "mks_tempfile functions" above. */
-static inline int mks_tempfile_ts(struct tempfile *tempfile,
-				  const char *template, int suffixlen)
+static inline struct tempfile *mks_tempfile_ts(const char *template,
+					       int suffixlen)
 {
-	return mks_tempfile_tsm(tempfile, template, suffixlen, 0600);
+	return mks_tempfile_tsm(template, suffixlen, 0600);
 }
 
 /* See "mks_tempfile functions" above. */
-static inline int mks_tempfile_tm(struct tempfile *tempfile,
-				  const char *template, int mode)
+static inline struct tempfile *mks_tempfile_tm(const char *template, int mode)
 {
-	return mks_tempfile_tsm(tempfile, template, 0, mode);
+	return mks_tempfile_tsm(template, 0, mode);
 }
 
 /* See "mks_tempfile functions" above. */
-static inline int mks_tempfile_t(struct tempfile *tempfile,
-				 const char *template)
+static inline struct tempfile *mks_tempfile_t(const char *template)
 {
-	return mks_tempfile_tsm(tempfile, template, 0, 0600);
+	return mks_tempfile_tsm(template, 0, 0600);
 }
 
 /* See "mks_tempfile functions" above. */
-extern int xmks_tempfile_m(struct tempfile *tempfile,
-			   const char *template, int mode);
+extern struct tempfile *xmks_tempfile_m(const char *template, int mode);
 
 /* See "mks_tempfile functions" above. */
-static inline int xmks_tempfile(struct tempfile *tempfile,
-				const char *template)
+static inline struct tempfile *xmks_tempfile(const char *template)
 {
-	return xmks_tempfile_m(tempfile, template, 0600);
+	return xmks_tempfile_m(template, 0600);
 }
 
 /*
@@ -257,7 +248,7 @@ extern int reopen_tempfile(struct tempfile *tempfile);
  * `delete_tempfile()` for a `tempfile` object that has already been
  * deleted or renamed.
  */
-extern void delete_tempfile(struct tempfile *tempfile);
+extern void delete_tempfile(struct tempfile **tempfile_p);
 
 /*
  * Close the file descriptor and/or file pointer if they are still
@@ -268,6 +259,6 @@ extern void delete_tempfile(struct tempfile *tempfile);
  * `rename(2)`. It is a bug to call `rename_tempfile()` for a
  * `tempfile` object that is not currently active.
  */
-extern int rename_tempfile(struct tempfile *tempfile, const char *path);
+extern int rename_tempfile(struct tempfile **tempfile_p, const char *path);
 
 #endif /* TEMPFILE_H */

@@ -91,14 +91,16 @@ static void remove_tempfiles_on_signal(int signo)
 	raise(signo);
 }
 
-static void prepare_tempfile_object(struct tempfile *tempfile)
+static struct tempfile *new_tempfile(void)
 {
+	struct tempfile *tempfile = xmalloc(sizeof(*tempfile));
 	tempfile->fd = -1;
 	tempfile->fp = NULL;
 	tempfile->active = 0;
 	tempfile->owner = 0;
 	INIT_LIST_HEAD(&tempfile->list);
 	strbuf_init(&tempfile->filename, 0);
+	return tempfile;
 }
 
 static void activate_tempfile(struct tempfile *tempfile)
@@ -124,12 +126,13 @@ static void deactivate_tempfile(struct tempfile *tempfile)
 	tempfile->active = 0;
 	strbuf_release(&tempfile->filename);
 	volatile_list_del(&tempfile->list);
+	free(tempfile);
 }
 
 /* Make sure errno contains a meaningful value on error */
-int create_tempfile(struct tempfile *tempfile, const char *path)
+struct tempfile *create_tempfile(const char *path)
 {
-	prepare_tempfile_object(tempfile);
+	struct tempfile *tempfile = new_tempfile();
 
 	strbuf_add_absolute_path(&tempfile->filename, path);
 	tempfile->fd = open(tempfile->filename.buf,
@@ -140,47 +143,46 @@ int create_tempfile(struct tempfile *tempfile, const char *path)
 				    O_RDWR | O_CREAT | O_EXCL, 0666);
 	if (tempfile->fd < 0) {
 		deactivate_tempfile(tempfile);
-		return -1;
+		return NULL;
 	}
 	activate_tempfile(tempfile);
 	if (adjust_shared_perm(tempfile->filename.buf)) {
 		int save_errno = errno;
 		error("cannot fix permission bits on %s", tempfile->filename.buf);
-		delete_tempfile(tempfile);
+		delete_tempfile(&tempfile);
 		errno = save_errno;
-		return -1;
+		return NULL;
 	}
-	return tempfile->fd;
+
+	return tempfile;
 }
 
-void register_tempfile(struct tempfile *tempfile, const char *path)
+struct tempfile *register_tempfile(const char *path)
 {
-	prepare_tempfile_object(tempfile);
+	struct tempfile *tempfile = new_tempfile();
 	strbuf_add_absolute_path(&tempfile->filename, path);
 	activate_tempfile(tempfile);
+	return tempfile;
 }
 
-int mks_tempfile_sm(struct tempfile *tempfile,
-		    const char *template, int suffixlen, int mode)
+struct tempfile *mks_tempfile_sm(const char *template, int suffixlen, int mode)
 {
-	prepare_tempfile_object(tempfile);
+	struct tempfile *tempfile = new_tempfile();
 
 	strbuf_add_absolute_path(&tempfile->filename, template);
 	tempfile->fd = git_mkstemps_mode(tempfile->filename.buf, suffixlen, mode);
 	if (tempfile->fd < 0) {
 		deactivate_tempfile(tempfile);
-		return -1;
+		return NULL;
 	}
 	activate_tempfile(tempfile);
-	return tempfile->fd;
+	return tempfile;
 }
 
-int mks_tempfile_tsm(struct tempfile *tempfile,
-		     const char *template, int suffixlen, int mode)
+struct tempfile *mks_tempfile_tsm(const char *template, int suffixlen, int mode)
 {
+	struct tempfile *tempfile = new_tempfile();
 	const char *tmpdir;
-
-	prepare_tempfile_object(tempfile);
 
 	tmpdir = getenv("TMPDIR");
 	if (!tmpdir)
@@ -190,25 +192,25 @@ int mks_tempfile_tsm(struct tempfile *tempfile,
 	tempfile->fd = git_mkstemps_mode(tempfile->filename.buf, suffixlen, mode);
 	if (tempfile->fd < 0) {
 		deactivate_tempfile(tempfile);
-		return -1;
+		return NULL;
 	}
 	activate_tempfile(tempfile);
-	return tempfile->fd;
+	return tempfile;
 }
 
-int xmks_tempfile_m(struct tempfile *tempfile, const char *template, int mode)
+struct tempfile *xmks_tempfile_m(const char *template, int mode)
 {
-	int fd;
+	struct tempfile *tempfile;
 	struct strbuf full_template = STRBUF_INIT;
 
 	strbuf_add_absolute_path(&full_template, template);
-	fd = mks_tempfile_m(tempfile, full_template.buf, mode);
-	if (fd < 0)
+	tempfile = mks_tempfile_m(full_template.buf, mode);
+	if (!tempfile)
 		die_errno("Unable to create temporary file '%s'",
 			  full_template.buf);
 
 	strbuf_release(&full_template);
-	return fd;
+	return tempfile;
 }
 
 FILE *fdopen_tempfile(struct tempfile *tempfile, const char *mode)
@@ -281,33 +283,39 @@ int reopen_tempfile(struct tempfile *tempfile)
 	return tempfile->fd;
 }
 
-int rename_tempfile(struct tempfile *tempfile, const char *path)
+int rename_tempfile(struct tempfile **tempfile_p, const char *path)
 {
+	struct tempfile *tempfile = *tempfile_p;
+
 	if (!is_tempfile_active(tempfile))
 		BUG("rename_tempfile called for inactive object");
 
 	if (close_tempfile_gently(tempfile)) {
-		delete_tempfile(tempfile);
+		delete_tempfile(tempfile_p);
 		return -1;
 	}
 
 	if (rename(tempfile->filename.buf, path)) {
 		int save_errno = errno;
-		delete_tempfile(tempfile);
+		delete_tempfile(tempfile_p);
 		errno = save_errno;
 		return -1;
 	}
 
 	deactivate_tempfile(tempfile);
+	*tempfile_p = NULL;
 	return 0;
 }
 
-void delete_tempfile(struct tempfile *tempfile)
+void delete_tempfile(struct tempfile **tempfile_p)
 {
+	struct tempfile *tempfile = *tempfile_p;
+
 	if (!is_tempfile_active(tempfile))
 		return;
 
 	close_tempfile_gently(tempfile);
 	unlink_or_warn(tempfile->filename.buf);
 	deactivate_tempfile(tempfile);
+	*tempfile_p = NULL;
 }
