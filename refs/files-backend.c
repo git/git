@@ -1402,9 +1402,9 @@ static int files_rename_ref(struct ref_store *ref_store,
 	return ret;
 }
 
-static int close_ref(struct ref_lock *lock)
+static int close_ref_gently(struct ref_lock *lock)
 {
-	if (close_lock_file(lock->lk))
+	if (close_lock_file_gently(lock->lk))
 		return -1;
 	return 0;
 }
@@ -1630,7 +1630,7 @@ static int write_ref_to_lockfile(struct ref_lock *lock,
 	fd = get_lock_file_fd(lock->lk);
 	if (write_in_full(fd, oid_to_hex(oid), GIT_SHA1_HEXSZ) != GIT_SHA1_HEXSZ ||
 	    write_in_full(fd, &term, 1) != 1 ||
-	    close_ref(lock) < 0) {
+	    close_ref_gently(lock) < 0) {
 		strbuf_addf(err,
 			    "couldn't write '%s'", get_lock_file_path(lock->lk));
 		unlock_ref(lock);
@@ -2372,7 +2372,7 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 		 * the lockfile is still open. Close it to
 		 * free up the file descriptor:
 		 */
-		if (close_ref(lock)) {
+		if (close_ref_gently(lock)) {
 			strbuf_addf(err, "couldn't close '%s.lock'",
 				    update->refname);
 			return TRANSACTION_GENERIC_ERROR;
@@ -2848,14 +2848,15 @@ static int files_reflog_expire(struct ref_store *ref_store,
 			!(type & REF_ISSYMREF) &&
 			!is_null_oid(&cb.last_kept_oid);
 
-		if (close_lock_file(&reflog_lock)) {
+		if (close_lock_file_gently(&reflog_lock)) {
 			status |= error("couldn't write %s: %s", log_file,
 					strerror(errno));
+			rollback_lock_file(&reflog_lock);
 		} else if (update &&
 			   (write_in_full(get_lock_file_fd(lock->lk),
 				oid_to_hex(&cb.last_kept_oid), GIT_SHA1_HEXSZ) != GIT_SHA1_HEXSZ ||
 			    write_str_in_full(get_lock_file_fd(lock->lk), "\n") != 1 ||
-			    close_ref(lock) < 0)) {
+			    close_ref_gently(lock) < 0)) {
 			status |= error("couldn't write %s",
 					get_lock_file_path(lock->lk));
 			rollback_lock_file(&reflog_lock);

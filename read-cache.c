@@ -2345,7 +2345,7 @@ static int do_write_locked_index(struct index_state *istate, struct lock_file *l
 	if (flags & COMMIT_LOCK)
 		return commit_locked_index(lock);
 	else if (flags & CLOSE_LOCK)
-		return close_lock_file(lock);
+		return close_lock_file_gently(lock);
 	else
 		return ret;
 }

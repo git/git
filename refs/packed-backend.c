@@ -545,8 +545,9 @@ int packed_refs_lock(struct ref_store *ref_store, int flags, struct strbuf *err)
 		return -1;
 	}
 
-	if (close_lock_file(&refs->lock)) {
+	if (close_lock_file_gently(&refs->lock)) {
 		strbuf_addf(err, "unable to close %s: %s", refs->path, strerror(errno));
+		rollback_lock_file(&refs->lock);
 		return -1;
 	}
 
