@@ -236,13 +236,15 @@ FILE *get_tempfile_fp(struct tempfile *tempfile)
 
 int close_tempfile_gently(struct tempfile *tempfile)
 {
-	int fd = tempfile->fd;
-	FILE *fp = tempfile->fp;
+	int fd;
+	FILE *fp;
 	int err;
 
-	if (fd < 0)
+	if (!is_tempfile_active(tempfile) || tempfile->fd < 0)
 		return 0;
 
+	fd = tempfile->fd;
+	fp = tempfile->fp;
 	tempfile->fd = -1;
 	if (fp) {
 		tempfile->fp = NULL;
@@ -262,10 +264,10 @@ int close_tempfile_gently(struct tempfile *tempfile)
 
 int reopen_tempfile(struct tempfile *tempfile)
 {
-	if (0 <= tempfile->fd)
-		die("BUG: reopen_tempfile called for an open object");
 	if (!is_tempfile_active(tempfile))
 		die("BUG: reopen_tempfile called for an inactive object");
+	if (0 <= tempfile->fd)
+		die("BUG: reopen_tempfile called for an open object");
 	tempfile->fd = open(tempfile->filename.buf, O_WRONLY);
 	return tempfile->fd;
 }

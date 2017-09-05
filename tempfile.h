@@ -211,7 +211,7 @@ extern FILE *fdopen_tempfile(struct tempfile *tempfile, const char *mode);
 
 static inline int is_tempfile_active(struct tempfile *tempfile)
 {
-	return tempfile->active;
+	return tempfile && tempfile->active;
 }
 
 /*
