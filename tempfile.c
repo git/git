@@ -57,18 +57,24 @@
 
 static struct tempfile *volatile tempfile_list;
 
-static void remove_tempfiles(int skip_fclose)
+static void remove_tempfiles(int in_signal_handler)
 {
 	pid_t me = getpid();
+	struct tempfile *volatile p;
 
-	while (tempfile_list) {
-		if (tempfile_list->owner == me) {
-			/* fclose() is not safe to call in a signal handler */
-			if (skip_fclose)
-				tempfile_list->fp = NULL;
-			delete_tempfile(tempfile_list);
-		}
-		tempfile_list = tempfile_list->next;
+	for (p = tempfile_list; p; p = p->next) {
+		if (!is_tempfile_active(p) || p->owner != me)
+			continue;
+
+		if (p->fd >= 0)
+			close(p->fd);
+
+		if (in_signal_handler)
+			unlink(p->filename.buf);
+		else
+			unlink_or_warn(p->filename.buf);
+
+		p->active = 0;
 	}
 }
 
