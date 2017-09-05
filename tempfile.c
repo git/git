@@ -119,6 +119,12 @@ static void activate_tempfile(struct tempfile *tempfile)
 	tempfile->active = 1;
 }
 
+static void deactivate_tempfile(struct tempfile *tempfile)
+{
+	tempfile->active = 0;
+	strbuf_reset(&tempfile->filename);
+}
+
 /* Make sure errno contains a meaningful value on error */
 int create_tempfile(struct tempfile *tempfile, const char *path)
 {
@@ -132,7 +138,7 @@ int create_tempfile(struct tempfile *tempfile, const char *path)
 		tempfile->fd = open(tempfile->filename.buf,
 				    O_RDWR | O_CREAT | O_EXCL, 0666);
 	if (tempfile->fd < 0) {
-		strbuf_reset(&tempfile->filename);
+		deactivate_tempfile(tempfile);
 		return -1;
 	}
 	activate_tempfile(tempfile);
@@ -161,7 +167,7 @@ int mks_tempfile_sm(struct tempfile *tempfile,
 	strbuf_add_absolute_path(&tempfile->filename, template);
 	tempfile->fd = git_mkstemps_mode(tempfile->filename.buf, suffixlen, mode);
 	if (tempfile->fd < 0) {
-		strbuf_reset(&tempfile->filename);
+		deactivate_tempfile(tempfile);
 		return -1;
 	}
 	activate_tempfile(tempfile);
@@ -182,7 +188,7 @@ int mks_tempfile_tsm(struct tempfile *tempfile,
 	strbuf_addf(&tempfile->filename, "%s/%s", tmpdir, template);
 	tempfile->fd = git_mkstemps_mode(tempfile->filename.buf, suffixlen, mode);
 	if (tempfile->fd < 0) {
-		strbuf_reset(&tempfile->filename);
+		deactivate_tempfile(tempfile);
 		return -1;
 	}
 	activate_tempfile(tempfile);
@@ -291,8 +297,7 @@ int rename_tempfile(struct tempfile *tempfile, const char *path)
 		return -1;
 	}
 
-	tempfile->active = 0;
-	strbuf_reset(&tempfile->filename);
+	deactivate_tempfile(tempfile);
 	return 0;
 }
 
@@ -303,6 +308,5 @@ void delete_tempfile(struct tempfile *tempfile)
 
 	close_tempfile_gently(tempfile);
 	unlink_or_warn(tempfile->filename.buf);
-	tempfile->active = 0;
-	strbuf_reset(&tempfile->filename);
+	deactivate_tempfile(tempfile);
 }
