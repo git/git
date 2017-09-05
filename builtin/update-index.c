@@ -287,8 +287,10 @@ static int add_one_path(const struct cache_entry *old, const char *path, int len
 	}
 	option = allow_add ? ADD_CACHE_OK_TO_ADD : 0;
 	option |= allow_replace ? ADD_CACHE_OK_TO_REPLACE : 0;
-	if (add_cache_entry(ce, option))
+	if (add_cache_entry(ce, option)) {
+		free(ce);
 		return error("%s: cannot add to the index - missing --add option?", path);
+	}
 	return 0;
 }
 
