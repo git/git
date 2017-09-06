@@ -5,9 +5,9 @@
 #define MAX_ARGS	32
 
 static const char *argv_exec_path;
-static const char *argv0_path;
 
 #ifdef RUNTIME_PREFIX
+static const char *argv0_path;
 
 static const char *system_prefix(void)
 {
@@ -27,11 +27,29 @@ static const char *system_prefix(void)
 	}
 	return prefix;
 }
+
+void git_extract_argv0_path(const char *argv0)
+{
+	const char *slash;
+
+	if (!argv0 || !*argv0)
+		return;
+
+	slash = find_last_dir_sep(argv0);
+
+	if (slash)
+		argv0_path = xstrndup(argv0, slash - argv0);
+}
+
 #else
 
 static const char *system_prefix(void)
 {
 	return PREFIX;
+}
+
+void git_extract_argv0_path(const char *argv0)
+{
 }
 
 #endif /* RUNTIME_PREFIX */
@@ -45,19 +63,6 @@ char *system_path(const char *path)
 
 	strbuf_addf(&d, "%s/%s", system_prefix(), path);
 	return strbuf_detach(&d, NULL);
-}
-
-void git_extract_argv0_path(const char *argv0)
-{
-	const char *slash;
-
-	if (!argv0 || !*argv0)
-		return;
-
-	slash = find_last_dir_sep(argv0);
-
-	if (slash)
-		argv0_path = xstrndup(argv0, slash - argv0);
 }
 
 void git_set_argv_exec_path(const char *exec_path)
