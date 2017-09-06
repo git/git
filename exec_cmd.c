@@ -7,19 +7,12 @@
 static const char *argv_exec_path;
 static const char *argv0_path;
 
-char *system_path(const char *path)
+#ifdef RUNTIME_PREFIX
+
+static const char *system_prefix(void)
 {
-#ifdef RUNTIME_PREFIX
 	static const char *prefix;
-#else
-	static const char *prefix = PREFIX;
-#endif
-	struct strbuf d = STRBUF_INIT;
 
-	if (is_absolute_path(path))
-		return xstrdup(path);
-
-#ifdef RUNTIME_PREFIX
 	assert(argv0_path);
 	assert(is_absolute_path(argv0_path));
 
@@ -32,9 +25,25 @@ char *system_path(const char *path)
 				"but prefix computation failed.  "
 				"Using static fallback '%s'.\n", prefix);
 	}
-#endif
+	return prefix;
+}
+#else
 
-	strbuf_addf(&d, "%s/%s", prefix, path);
+static const char *system_prefix(void)
+{
+	return PREFIX;
+}
+
+#endif /* RUNTIME_PREFIX */
+
+char *system_path(const char *path)
+{
+	struct strbuf d = STRBUF_INIT;
+
+	if (is_absolute_path(path))
+		return xstrdup(path);
+
+	strbuf_addf(&d, "%s/%s", system_prefix(), path);
 	return strbuf_detach(&d, NULL);
 }
 
