@@ -18,6 +18,9 @@ Backward compatibility notes and other notable changes.
    might still be cases that need to be addressed--bug reports are
    greatly appreciated.
 
+ * "branch --set-upstream" that has been deprecated in Git 1.8 has
+   finally been retired.
+
 
 Updates since v2.14
 -------------------
@@ -70,6 +73,9 @@ UI, Workflows & Features
    already locked---now it waits for a very short while and retries,
    which can make it succeed if the lock holder was holding it during
    a read-only operation.
+
+ * "branch --set-upstream" that has been deprecated in Git 1.8 has
+   finally been retired.
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -240,6 +246,10 @@ Fixes since v2.14
    which incorrectly tells the subsequent "git commit" that there was
    a squash merge in progress.  This has been fixed.
    (merge 9d89b35526 mg/killed-merge later to maint).
+
+ * "git archive" did not work well with pathspecs and the
+   export-ignore attribute.
+   (merge 5ff247ac0c rs/archive-excluded-directory later to maint).
 
  * Other minor doc, test and build updates and code cleanups.
    (merge dff2813391 ab/ref-filter-no-contains later to maint).
