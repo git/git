@@ -815,6 +815,8 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 	if (!getenv("GIT_REFLOG_ACTION"))
 		set_reflog_message(argc, argv);
 
+	git_config(git_pull_config, NULL);
+
 	argc = parse_options(argc, argv, prefix, pull_options, pull_usage, 0);
 
 	parse_repo_refspecs(argc, argv, &repo, &refspecs);
@@ -824,8 +826,6 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 
 	if (opt_rebase < 0)
 		opt_rebase = config_get_rebase();
-
-	git_config(git_pull_config, NULL);
 
 	if (read_cache_unmerged())
 		die_resolve_conflict("pull");
