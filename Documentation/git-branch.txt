@@ -195,10 +195,8 @@ start-point is either a local or remote-tracking branch.
 	branch.autoSetupMerge configuration variable is true.
 
 --set-upstream::
-	If specified branch does not exist yet or if `--force` has been
-	given, acts exactly like `--track`. Otherwise sets up configuration
-	like `--track` would when creating the branch, except that where
-	branch points to is not changed.
+	As this option had confusing syntax, it is no longer supported.
+	Please use `--track` or `--set-upstream-to` instead.
 
 -u <upstream>::
 --set-upstream-to=<upstream>::
