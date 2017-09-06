@@ -30,7 +30,7 @@
 #include "quote.h"
 #include "packfile.h"
 
-const unsigned char null_sha1[20];
+const unsigned char null_sha1[GIT_MAX_RAWSZ];
 const struct object_id null_oid;
 const struct object_id empty_tree_oid = {
 	EMPTY_TREE_SHA1_BIN_LITERAL
