@@ -275,6 +275,7 @@ test_expect_success 'describe chokes on severely broken submodules' '
 '
 test_expect_success 'describe ignoring a borken submodule' '
 	git describe --broken >out &&
+	test_when_finished "mv .git/modules/sub_moved .git/modules/sub1" &&
 	grep broken out
 '
 
