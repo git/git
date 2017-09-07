@@ -279,4 +279,35 @@ test_expect_success 'describe ignoring a borken submodule' '
 	grep broken out
 '
 
+# we require ulimit, this excludes Windows
+test_expect_failure ULIMIT_STACK_SIZE 'name-rev works in a deep repo' '
+	i=1 &&
+	while test $i -lt 8000
+	do
+		echo "commit refs/heads/master
+committer A U Thor <author@example.com> $((1000000000 + $i * 100)) +0200
+data <<EOF
+commit #$i
+EOF"
+		test $i = 1 && echo "from refs/heads/master^0"
+		i=$(($i + 1))
+	done | git fast-import &&
+	git checkout master &&
+	git tag far-far-away HEAD^ &&
+	echo "HEAD~4000 tags/far-far-away~3999" >expect &&
+	git name-rev HEAD~4000 >actual &&
+	test_cmp expect actual &&
+	run_with_limited_stack git name-rev HEAD~4000 >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success ULIMIT_STACK_SIZE 'describe works in a deep repo' '
+	git tag -f far-far-away HEAD~7999 &&
+	echo "far-far-away" >expect &&
+	git describe --tags --abbrev=0 HEAD~4000 >actual &&
+	test_cmp expect actual &&
+	run_with_limited_stack git describe --tags --abbrev=0 HEAD~4000 >actual &&
+	test_cmp expect actual
+'
+
 test_done
