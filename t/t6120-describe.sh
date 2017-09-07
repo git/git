@@ -198,6 +198,31 @@ test_expect_success 'name-rev with exact tags' '
 	test_cmp expect actual
 '
 
+test_expect_success 'name-rev --all' '
+	>expect.unsorted &&
+	for rev in $(git rev-list --all)
+	do
+		git name-rev $rev >>expect.unsorted
+	done &&
+	sort <expect.unsorted >expect &&
+	git name-rev --all >actual.unsorted &&
+	sort <actual.unsorted >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'name-rev --stdin' '
+	>expect.unsorted &&
+	for rev in $(git rev-list --all)
+	do
+		name=$(git name-rev --name-only $rev) &&
+		echo "$rev ($name)" >>expect.unsorted
+	done &&
+	sort <expect.unsorted >expect &&
+	git rev-list --all | git name-rev --stdin >actual.unsorted &&
+	sort <actual.unsorted >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'describe --contains with the exact tags' '
 	echo "A^0" >expect &&
 	tag_object=$(git rev-parse refs/tags/A) &&
