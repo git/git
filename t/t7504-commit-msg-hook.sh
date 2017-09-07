@@ -101,6 +101,10 @@ cat > "$HOOK" <<EOF
 exit 1
 EOF
 
+commit_msg_is () {
+	test "$(git log --pretty=format:%s%b -1)" = "$1"
+}
+
 test_expect_success 'with failing hook' '
 
 	echo "another" >> file &&
@@ -134,6 +138,32 @@ test_expect_success '--no-verify with failing hook (editor)' '
 	GIT_EDITOR="\"\$FAKE_EDITOR\"" git commit --no-verify
 
 '
+
+test_expect_success 'merge fails with failing hook' '
+
+	test_when_finished "git branch -D newbranch" &&
+	test_when_finished "git checkout -f master" &&
+	git checkout --orphan newbranch &&
+	: >file2 &&
+	git add file2 &&
+	git commit --no-verify file2 -m in-side-branch &&
+	test_must_fail git merge --allow-unrelated-histories master &&
+	commit_msg_is "in-side-branch" # HEAD before merge
+
+'
+
+test_expect_success 'merge bypasses failing hook with --no-verify' '
+
+	test_when_finished "git branch -D newbranch" &&
+	test_when_finished "git checkout -f master" &&
+	git checkout --orphan newbranch &&
+	: >file2 &&
+	git add file2 &&
+	git commit --no-verify file2 -m in-side-branch &&
+	git merge --no-verify --allow-unrelated-histories master &&
+	commit_msg_is "Merge branch '\''master'\'' into newbranch"
+'
+
 
 chmod -x "$HOOK"
 test_expect_success POSIXPERM 'with non-executable hook' '
@@ -178,10 +208,6 @@ exit 0
 EOF
 chmod +x "$HOOK"
 
-commit_msg_is () {
-	test "$(git log --pretty=format:%s%b -1)" = "$1"
-}
-
 test_expect_success 'hook edits commit message' '
 
 	echo "additional" >> file &&
@@ -217,7 +243,36 @@ test_expect_success "hook doesn't edit commit message (editor)" '
 	echo "more plus" > FAKE_MSG &&
 	GIT_EDITOR="\"\$FAKE_EDITOR\"" git commit --no-verify &&
 	commit_msg_is "more plus"
+'
 
+test_expect_success 'hook called in git-merge picks up commit message' '
+	test_when_finished "git branch -D newbranch" &&
+	test_when_finished "git checkout -f master" &&
+	git checkout --orphan newbranch &&
+	: >file2 &&
+	git add file2 &&
+	git commit --no-verify file2 -m in-side-branch &&
+	git merge --allow-unrelated-histories master &&
+	commit_msg_is "new message"
+'
+
+test_expect_failure 'merge --continue remembers --no-verify' '
+	test_when_finished "git branch -D newbranch" &&
+	test_when_finished "git checkout -f master" &&
+	git checkout master &&
+	echo a >file2 &&
+	git add file2 &&
+	git commit --no-verify -m "add file2 to master" &&
+	git checkout -b newbranch master^ &&
+	echo b >file2 &&
+	git add file2 &&
+	git commit --no-verify file2 -m in-side-branch &&
+	git merge --no-verify -m not-rewritten-by-hook master &&
+	# resolve conflict:
+	echo c >file2 &&
+	git add file2 &&
+	git merge --continue &&
+	commit_msg_is not-rewritten-by-hook
 '
 
 # set up fake editor to replace `pick` by `reword`
@@ -236,5 +291,6 @@ test_expect_success 'hook is called for reword during `rebase -i`' '
 	commit_msg_is "new message"
 
 '
+
 
 test_done
