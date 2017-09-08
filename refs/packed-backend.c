@@ -525,7 +525,6 @@ int packed_refs_lock(struct ref_store *ref_store, int flags, struct strbuf *err)
 				"packed_refs_lock");
 	static int timeout_configured = 0;
 	static int timeout_value = 1000;
-	struct packed_ref_cache *packed_ref_cache;
 
 	if (!timeout_configured) {
 		git_config_get_int("core.packedrefstimeout", &timeout_value);
@@ -560,9 +559,11 @@ int packed_refs_lock(struct ref_store *ref_store, int flags, struct strbuf *err)
 	 */
 	validate_packed_ref_cache(refs);
 
-	packed_ref_cache = get_packed_ref_cache(refs);
-	/* Increment the reference count to prevent it from being freed: */
-	acquire_packed_ref_cache(packed_ref_cache);
+	/*
+	 * Now make sure that the packed-refs file as it exists in the
+	 * locked state is loaded into the cache:
+	 */
+	get_packed_ref_cache(refs);
 	return 0;
 }
 
@@ -576,7 +577,6 @@ void packed_refs_unlock(struct ref_store *ref_store)
 	if (!is_lock_file_locked(&refs->lock))
 		die("BUG: packed_refs_unlock() called when not locked");
 	rollback_lock_file(&refs->lock);
-	release_packed_ref_cache(refs->cache);
 }
 
 int packed_refs_is_locked(struct ref_store *ref_store)
