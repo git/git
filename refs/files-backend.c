@@ -2637,6 +2637,27 @@ static int files_transaction_finish(struct ref_store *ref_store,
 	}
 
 	/*
+	 * Now that updates are safely completed, we can perform
+	 * deletes. First delete the reflogs of any references that
+	 * will be deleted, since (in the unexpected event of an
+	 * error) leaving a reference without a reflog is less bad
+	 * than leaving a reflog without a reference (the latter is a
+	 * mildly invalid repository state):
+	 */
+	for (i = 0; i < transaction->nr; i++) {
+		struct ref_update *update = transaction->updates[i];
+		if (update->flags & REF_DELETING &&
+		    !(update->flags & REF_LOG_ONLY) &&
+		    !(update->flags & REF_ISPRUNING)) {
+			strbuf_reset(&sb);
+			files_reflog_path(refs, &sb, update->refname);
+			if (!unlink_or_warn(sb.buf))
+				try_remove_empty_parents(refs, update->refname,
+							 REMOVE_EMPTY_PARENTS_REFLOG);
+		}
+	}
+
+	/*
 	 * Perform deletes now that updates are safely completed.
 	 *
 	 * First delete any packed versions of the references, while
@@ -2669,20 +2690,6 @@ static int files_transaction_finish(struct ref_store *ref_store,
 				}
 				update->flags |= REF_DELETED_LOOSE;
 			}
-		}
-	}
-
-	/* Delete the reflogs of any references that were deleted: */
-	for (i = 0; i < transaction->nr; i++) {
-		struct ref_update *update = transaction->updates[i];
-		if (update->flags & REF_DELETING &&
-		    !(update->flags & REF_LOG_ONLY) &&
-		    !(update->flags & REF_ISPRUNING)) {
-			strbuf_reset(&sb);
-			files_reflog_path(refs, &sb, update->refname);
-			if (!unlink_or_warn(sb.buf))
-				try_remove_empty_parents(refs, update->refname,
-							 REMOVE_EMPTY_PARENTS_REFLOG);
 		}
 	}
 
