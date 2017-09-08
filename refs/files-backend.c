@@ -1100,6 +1100,11 @@ static int files_pack_refs(struct ref_store *ref_store, unsigned int flags)
 	int ok;
 	struct ref_to_prune *refs_to_prune = NULL;
 	struct strbuf err = STRBUF_INIT;
+	struct ref_transaction *transaction;
+
+	transaction = ref_store_transaction_begin(refs->packed_ref_store, &err);
+	if (!transaction)
+		return -1;
 
 	packed_refs_lock(refs->packed_ref_store, LOCK_DIE_ON_ERROR, &err);
 
@@ -1115,12 +1120,14 @@ static int files_pack_refs(struct ref_store *ref_store, unsigned int flags)
 			continue;
 
 		/*
-		 * Create an entry in the packed-refs cache equivalent
-		 * to the one from the loose ref cache, except that
-		 * we don't copy the peeled status, because we want it
-		 * to be re-peeled.
+		 * Add a reference creation for this reference to the
+		 * packed-refs transaction:
 		 */
-		add_packed_ref(refs->packed_ref_store, iter->refname, iter->oid);
+		if (ref_transaction_update(transaction, iter->refname,
+					   iter->oid->hash, NULL,
+					   REF_NODEREF, NULL, &err))
+			die("failure preparing to create packed reference %s: %s",
+			    iter->refname, err.buf);
 
 		/* Schedule the loose reference for pruning if requested. */
 		if ((flags & PACK_REFS_PRUNE)) {
@@ -1134,8 +1141,11 @@ static int files_pack_refs(struct ref_store *ref_store, unsigned int flags)
 	if (ok != ITER_DONE)
 		die("error while iterating over references");
 
-	if (commit_packed_refs(refs->packed_ref_store, &err))
-		die("unable to overwrite old ref-pack file: %s", err.buf);
+	if (ref_transaction_commit(transaction, &err))
+		die("unable to write new packed-refs: %s", err.buf);
+
+	ref_transaction_free(transaction);
+
 	packed_refs_unlock(refs->packed_ref_store);
 
 	prune_refs(refs, refs_to_prune);
