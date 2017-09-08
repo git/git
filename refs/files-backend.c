@@ -2669,6 +2669,7 @@ static int files_initial_transaction_commit(struct ref_store *ref_store,
 	size_t i;
 	int ret = 0;
 	struct string_list affected_refnames = STRING_LIST_INIT_NODUP;
+	struct ref_transaction *packed_transaction = NULL;
 
 	assert(err);
 
@@ -2701,6 +2702,12 @@ static int files_initial_transaction_commit(struct ref_store *ref_store,
 				 &affected_refnames))
 		die("BUG: initial ref transaction called with existing refs");
 
+	packed_transaction = ref_store_transaction_begin(refs->packed_ref_store, err);
+	if (!packed_transaction) {
+		ret = TRANSACTION_GENERIC_ERROR;
+		goto cleanup;
+	}
+
 	for (i = 0; i < transaction->nr; i++) {
 		struct ref_update *update = transaction->updates[i];
 
@@ -2713,6 +2720,15 @@ static int files_initial_transaction_commit(struct ref_store *ref_store,
 			ret = TRANSACTION_NAME_CONFLICT;
 			goto cleanup;
 		}
+
+		/*
+		 * Add a reference creation for this reference to the
+		 * packed-refs transaction:
+		 */
+		ref_transaction_add_update(packed_transaction, update->refname,
+					   update->flags & ~REF_HAVE_OLD,
+					   update->new_oid.hash, update->old_oid.hash,
+					   NULL);
 	}
 
 	if (packed_refs_lock(refs->packed_ref_store, 0, err)) {
@@ -2720,21 +2736,14 @@ static int files_initial_transaction_commit(struct ref_store *ref_store,
 		goto cleanup;
 	}
 
-	for (i = 0; i < transaction->nr; i++) {
-		struct ref_update *update = transaction->updates[i];
-
-		if ((update->flags & REF_HAVE_NEW) &&
-		    !is_null_oid(&update->new_oid))
-			add_packed_ref(refs->packed_ref_store, update->refname,
-				       &update->new_oid);
-	}
-
-	if (commit_packed_refs(refs->packed_ref_store, err)) {
+	if (initial_ref_transaction_commit(packed_transaction, err)) {
 		ret = TRANSACTION_GENERIC_ERROR;
 		goto cleanup;
 	}
 
 cleanup:
+	if (packed_transaction)
+		ref_transaction_free(packed_transaction);
 	packed_refs_unlock(refs->packed_ref_store);
 	transaction->state = REF_TRANSACTION_CLOSED;
 	string_list_clear(&affected_refnames, 0);
