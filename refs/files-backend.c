@@ -2397,13 +2397,22 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 	return 0;
 }
 
+struct files_transaction_backend_data {
+	struct ref_transaction *packed_transaction;
+	int packed_refs_locked;
+};
+
 /*
  * Unlock any references in `transaction` that are still locked, and
  * mark the transaction closed.
  */
-static void files_transaction_cleanup(struct ref_transaction *transaction)
+static void files_transaction_cleanup(struct files_ref_store *refs,
+				      struct ref_transaction *transaction)
 {
 	size_t i;
+	struct files_transaction_backend_data *backend_data =
+		transaction->backend_data;
+	struct strbuf err = STRBUF_INIT;
 
 	for (i = 0; i < transaction->nr; i++) {
 		struct ref_update *update = transaction->updates[i];
@@ -2414,6 +2423,17 @@ static void files_transaction_cleanup(struct ref_transaction *transaction)
 			update->backend_data = NULL;
 		}
 	}
+
+	if (backend_data->packed_transaction &&
+	    ref_transaction_abort(backend_data->packed_transaction, &err)) {
+		error("error aborting transaction: %s", err.buf);
+		strbuf_release(&err);
+	}
+
+	if (backend_data->packed_refs_locked)
+		packed_refs_unlock(refs->packed_ref_store);
+
+	free(backend_data);
 
 	transaction->state = REF_TRANSACTION_CLOSED;
 }
@@ -2431,11 +2451,16 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 	char *head_ref = NULL;
 	int head_type;
 	struct object_id head_oid;
+	struct files_transaction_backend_data *backend_data;
+	struct ref_transaction *packed_transaction = NULL;
 
 	assert(err);
 
 	if (!transaction->nr)
 		goto cleanup;
+
+	backend_data = xcalloc(1, sizeof(*backend_data));
+	transaction->backend_data = backend_data;
 
 	/*
 	 * Fail if a refname appears more than once in the
@@ -2503,6 +2528,41 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 					  head_ref, &affected_refnames, err);
 		if (ret)
 			break;
+
+		if (update->flags & REF_DELETING &&
+		    !(update->flags & REF_LOG_ONLY) &&
+		    !(update->flags & REF_ISPRUNING)) {
+			/*
+			 * This reference has to be deleted from
+			 * packed-refs if it exists there.
+			 */
+			if (!packed_transaction) {
+				packed_transaction = ref_store_transaction_begin(
+						refs->packed_ref_store, err);
+				if (!packed_transaction) {
+					ret = TRANSACTION_GENERIC_ERROR;
+					goto cleanup;
+				}
+
+				backend_data->packed_transaction =
+					packed_transaction;
+			}
+
+			ref_transaction_add_update(
+					packed_transaction, update->refname,
+					update->flags & ~REF_HAVE_OLD,
+					update->new_oid.hash, update->old_oid.hash,
+					NULL);
+		}
+	}
+
+	if (packed_transaction) {
+		if (packed_refs_lock(refs->packed_ref_store, 0, err)) {
+			ret = TRANSACTION_GENERIC_ERROR;
+			goto cleanup;
+		}
+		backend_data->packed_refs_locked = 1;
+		ret = ref_transaction_prepare(packed_transaction, err);
 	}
 
 cleanup:
@@ -2510,7 +2570,7 @@ cleanup:
 	string_list_clear(&affected_refnames, 0);
 
 	if (ret)
-		files_transaction_cleanup(transaction);
+		files_transaction_cleanup(refs, transaction);
 	else
 		transaction->state = REF_TRANSACTION_PREPARED;
 
@@ -2525,9 +2585,10 @@ static int files_transaction_finish(struct ref_store *ref_store,
 		files_downcast(ref_store, 0, "ref_transaction_finish");
 	size_t i;
 	int ret = 0;
-	struct string_list refs_to_delete = STRING_LIST_INIT_NODUP;
-	struct string_list_item *ref_to_delete;
 	struct strbuf sb = STRBUF_INIT;
+	struct files_transaction_backend_data *backend_data;
+	struct ref_transaction *packed_transaction;
+
 
 	assert(err);
 
@@ -2535,6 +2596,9 @@ static int files_transaction_finish(struct ref_store *ref_store,
 		transaction->state = REF_TRANSACTION_CLOSED;
 		return 0;
 	}
+
+	backend_data = transaction->backend_data;
+	packed_transaction = backend_data->packed_transaction;
 
 	/* Perform updates first so live commits remain referenced */
 	for (i = 0; i < transaction->nr; i++) {
@@ -2571,7 +2635,23 @@ static int files_transaction_finish(struct ref_store *ref_store,
 			}
 		}
 	}
-	/* Perform deletes now that updates are safely completed */
+
+	/*
+	 * Perform deletes now that updates are safely completed.
+	 *
+	 * First delete any packed versions of the references, while
+	 * retaining the packed-refs lock:
+	 */
+	if (packed_transaction) {
+		ret = ref_transaction_commit(packed_transaction, err);
+		ref_transaction_free(packed_transaction);
+		packed_transaction = NULL;
+		backend_data->packed_transaction = NULL;
+		if (ret)
+			goto cleanup;
+	}
+
+	/* Now delete the loose versions of the references: */
 	for (i = 0; i < transaction->nr; i++) {
 		struct ref_update *update = transaction->updates[i];
 		struct ref_lock *lock = update->backend_data;
@@ -2589,39 +2669,27 @@ static int files_transaction_finish(struct ref_store *ref_store,
 				}
 				update->flags |= REF_DELETED_LOOSE;
 			}
-
-			if (!(update->flags & REF_ISPRUNING))
-				string_list_append(&refs_to_delete,
-						   lock->ref_name);
 		}
 	}
 
-	if (packed_refs_lock(refs->packed_ref_store, 0, err)) {
-		ret = TRANSACTION_GENERIC_ERROR;
-		goto cleanup;
-	}
-
-	if (repack_without_refs(refs->packed_ref_store, &refs_to_delete, err)) {
-		ret = TRANSACTION_GENERIC_ERROR;
-		packed_refs_unlock(refs->packed_ref_store);
-		goto cleanup;
-	}
-
-	packed_refs_unlock(refs->packed_ref_store);
-
 	/* Delete the reflogs of any references that were deleted: */
-	for_each_string_list_item(ref_to_delete, &refs_to_delete) {
-		strbuf_reset(&sb);
-		files_reflog_path(refs, &sb, ref_to_delete->string);
-		if (!unlink_or_warn(sb.buf))
-			try_remove_empty_parents(refs, ref_to_delete->string,
-						 REMOVE_EMPTY_PARENTS_REFLOG);
+	for (i = 0; i < transaction->nr; i++) {
+		struct ref_update *update = transaction->updates[i];
+		if (update->flags & REF_DELETING &&
+		    !(update->flags & REF_LOG_ONLY) &&
+		    !(update->flags & REF_ISPRUNING)) {
+			strbuf_reset(&sb);
+			files_reflog_path(refs, &sb, update->refname);
+			if (!unlink_or_warn(sb.buf))
+				try_remove_empty_parents(refs, update->refname,
+							 REMOVE_EMPTY_PARENTS_REFLOG);
+		}
 	}
 
 	clear_loose_ref_cache(refs);
 
 cleanup:
-	files_transaction_cleanup(transaction);
+	files_transaction_cleanup(refs, transaction);
 
 	for (i = 0; i < transaction->nr; i++) {
 		struct ref_update *update = transaction->updates[i];
@@ -2639,7 +2707,6 @@ cleanup:
 	}
 
 	strbuf_release(&sb);
-	string_list_clear(&refs_to_delete, 0);
 	return ret;
 }
 
@@ -2647,7 +2714,10 @@ static int files_transaction_abort(struct ref_store *ref_store,
 				   struct ref_transaction *transaction,
 				   struct strbuf *err)
 {
-	files_transaction_cleanup(transaction);
+	struct files_ref_store *refs =
+		files_downcast(ref_store, 0, "ref_transaction_abort");
+
+	files_transaction_cleanup(refs, transaction);
 	return 0;
 }
 
