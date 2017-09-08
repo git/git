@@ -52,26 +52,8 @@ static void insert_one_record(struct shortlog *log,
 			      const char *oneline)
 {
 	struct string_list_item *item;
-	const char *mailbuf, *namebuf;
-	size_t namelen, maillen;
-	struct strbuf namemailbuf = STRBUF_INIT;
-	struct ident_split ident;
 
-	if (split_ident_line(&ident, author, strlen(author)))
-		return;
-
-	namebuf = ident.name_begin;
-	mailbuf = ident.mail_begin;
-	namelen = ident.name_end - ident.name_begin;
-	maillen = ident.mail_end - ident.mail_begin;
-
-	map_user(&log->mailmap, &mailbuf, &maillen, &namebuf, &namelen);
-	strbuf_add(&namemailbuf, namebuf, namelen);
-
-	if (log->email)
-		strbuf_addf(&namemailbuf, " <%.*s>", (int)maillen, mailbuf);
-
-	item = string_list_insert(&log->list, namemailbuf.buf);
+	item = string_list_insert(&log->list, author);
 
 	if (log->summary)
 		item->util = (void *)(UTIL_TO_INT(item) + 1);
@@ -114,9 +96,33 @@ static void insert_one_record(struct shortlog *log,
 	}
 }
 
+static int parse_stdin_author(struct shortlog *log,
+			       struct strbuf *out, const char *in)
+{
+	const char *mailbuf, *namebuf;
+	size_t namelen, maillen;
+	struct ident_split ident;
+
+	if (split_ident_line(&ident, in, strlen(in)))
+		return -1;
+
+	namebuf = ident.name_begin;
+	mailbuf = ident.mail_begin;
+	namelen = ident.name_end - ident.name_begin;
+	maillen = ident.mail_end - ident.mail_begin;
+
+	map_user(&log->mailmap, &mailbuf, &maillen, &namebuf, &namelen);
+	strbuf_add(out, namebuf, namelen);
+	if (log->email)
+		strbuf_addf(out, " <%.*s>", (int)maillen, mailbuf);
+
+	return 0;
+}
+
 static void read_from_stdin(struct shortlog *log)
 {
 	struct strbuf author = STRBUF_INIT;
+	struct strbuf mapped_author = STRBUF_INIT;
 	struct strbuf oneline = STRBUF_INIT;
 	static const char *author_match[2] = { "Author: ", "author " };
 	static const char *committer_match[2] = { "Commit: ", "committer " };
@@ -134,9 +140,15 @@ static void read_from_stdin(struct shortlog *log)
 		while (strbuf_getline_lf(&oneline, stdin) != EOF &&
 		       !oneline.len)
 			; /* discard blanks */
-		insert_one_record(log, v, oneline.buf);
+
+		strbuf_reset(&mapped_author);
+		if (parse_stdin_author(log, &mapped_author, v) < 0)
+			continue;
+
+		insert_one_record(log, mapped_author.buf, oneline.buf);
 	}
 	strbuf_release(&author);
+	strbuf_release(&mapped_author);
 	strbuf_release(&oneline);
 }
 
@@ -153,7 +165,9 @@ void shortlog_add_commit(struct shortlog *log, struct commit *commit)
 	ctx.date_mode.type = DATE_NORMAL;
 	ctx.output_encoding = get_log_output_encoding();
 
-	fmt = log->committer ? "%cn <%ce>" : "%an <%ae>";
+	fmt = log->committer ?
+		(log->email ? "%cN <%cE>" : "%cN") :
+		(log->email ? "%aN <%aE>" : "%aN");
 
 	format_commit_message(commit, fmt, &author, &ctx);
 	if (!log->summary) {
