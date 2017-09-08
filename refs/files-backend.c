@@ -1157,7 +1157,7 @@ static int files_delete_refs(struct ref_store *ref_store, const char *msg,
 	if (packed_refs_lock(refs->packed_ref_store, 0, &err))
 		goto error;
 
-	if (repack_without_refs(refs->packed_ref_store, refnames, &err)) {
+	if (refs_delete_refs(refs->packed_ref_store, msg, refnames, flags)) {
 		packed_refs_unlock(refs->packed_ref_store);
 		goto error;
 	}
