@@ -1057,11 +1057,17 @@ static void prune_ref(struct files_ref_store *refs, struct ref_to_prune *r)
 	strbuf_release(&err);
 }
 
-static void prune_refs(struct files_ref_store *refs, struct ref_to_prune *r)
+/*
+ * Prune the loose versions of the references in the linked list
+ * `*refs_to_prune`, freeing the entries in the list as we go.
+ */
+static void prune_refs(struct files_ref_store *refs, struct ref_to_prune **refs_to_prune)
 {
-	while (r) {
+	while (*refs_to_prune) {
+		struct ref_to_prune *r = *refs_to_prune;
+		*refs_to_prune = r->next;
 		prune_ref(refs, r);
-		r = r->next;
+		free(r);
 	}
 }
 
@@ -1148,7 +1154,7 @@ static int files_pack_refs(struct ref_store *ref_store, unsigned int flags)
 
 	packed_refs_unlock(refs->packed_ref_store);
 
-	prune_refs(refs, refs_to_prune);
+	prune_refs(refs, &refs_to_prune);
 	strbuf_release(&err);
 	return 0;
 }
