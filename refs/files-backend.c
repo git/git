@@ -2801,7 +2801,7 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 					strbuf_addf(err, "cannot lock ref '%s': "
 						    "error reading reference",
 						    original_update_refname(update));
-					ret = -1;
+					ret = TRANSACTION_GENERIC_ERROR;
 					goto out;
 				}
 			} else if (check_old_oid(update, &lock->old_oid, err)) {
