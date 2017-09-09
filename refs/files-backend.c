@@ -2634,13 +2634,12 @@ static int split_symref_update(struct files_ref_store *refs,
 
 	/*
 	 * First make sure that referent is not already in the
-	 * transaction. This insertion is O(N) in the transaction
+	 * transaction. This check is O(lg N) in the transaction
 	 * size, but it happens at most once per symref in a
 	 * transaction.
 	 */
-	item = string_list_insert(affected_refnames, referent);
-	if (item->util) {
-		/* An entry already existed */
+	if (string_list_has_string(affected_refnames, referent)) {
+		/* An entry already exists */
 		strbuf_addf(err,
 			    "multiple updates for '%s' (including one "
 			    "via symref '%s') are not allowed",
@@ -2675,6 +2674,17 @@ static int split_symref_update(struct files_ref_store *refs,
 	update->flags |= REF_LOG_ONLY | REF_NODEREF;
 	update->flags &= ~REF_HAVE_OLD;
 
+	/*
+	 * Add the referent. This insertion is O(N) in the transaction
+	 * size, but it happens at most once per symref in a
+	 * transaction. Make sure to add new_update->refname, which will
+	 * be valid as long as affected_refnames is in use, and NOT
+	 * referent, which might soon be freed by our caller.
+	 */
+	item = string_list_insert(affected_refnames, new_update->refname);
+	if (item->util)
+		BUG("%s unexpectedly found in affected_refnames",
+		    new_update->refname);
 	item->util = new_update;
 
 	return 0;
