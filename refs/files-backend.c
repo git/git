@@ -2589,11 +2589,10 @@ static int split_head_update(struct ref_update *update,
 
 	/*
 	 * First make sure that HEAD is not already in the
-	 * transaction. This insertion is O(N) in the transaction
+	 * transaction. This check is O(lg N) in the transaction
 	 * size, but it happens at most once per transaction.
 	 */
-	item = string_list_insert(affected_refnames, "HEAD");
-	if (item->util) {
+	if (string_list_has_string(affected_refnames, "HEAD")) {
 		/* An entry already existed */
 		strbuf_addf(err,
 			    "multiple updates for 'HEAD' (including one "
@@ -2608,6 +2607,14 @@ static int split_head_update(struct ref_update *update,
 			update->new_oid.hash, update->old_oid.hash,
 			update->msg);
 
+	/*
+	 * Add "HEAD". This insertion is O(N) in the transaction
+	 * size, but it happens at most once per transaction.
+	 * Add new_update->refname instead of a literal "HEAD".
+	 */
+	if (strcmp(new_update->refname, "HEAD"))
+		BUG("%s unexpectedly not 'HEAD'", new_update->refname);
+	item = string_list_insert(affected_refnames, new_update->refname);
 	item->util = new_update;
 
 	return 0;
