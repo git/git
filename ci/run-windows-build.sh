@@ -6,6 +6,8 @@
 # supported) and a commit hash.
 #
 
+. ${0%/*}/lib-travisci.sh
+
 test $# -ne 2 && echo "Unexpected number of parameters" && exit 1
 test -z "$GFW_CI_TOKEN" && echo "GFW_CI_TOKEN not defined" && exit
 
