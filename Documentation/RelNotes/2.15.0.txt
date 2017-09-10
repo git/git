@@ -77,6 +77,9 @@ UI, Workflows & Features
  * "branch --set-upstream" that has been deprecated in Git 1.8 has
    finally been retired.
 
+ * The codepath to call external process filter for smudge/clean
+   operation learned to show the progress meter.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -161,7 +164,6 @@ Fixes since v2.14
  * Some versions of GnuPG fails to kill gpg-agent it auto-spawned
    and such a left-over agent can interfere with a test.  Work it
    around by attempting to kill one before starting a new test.
-   (merge 29ff1f8f74 st/lib-gpg-kill-stray-agent later to maint).
 
  * A recently added test for the "credential-cache" helper revealed
    that EOF detection done around the time the connection to the cache
@@ -170,49 +172,36 @@ Fixes since v2.14
 
  * "git log --tag=no-such-tag" showed log starting from HEAD, which
    has been fixed---it now shows nothing.
-   (merge 5d34d1ac06 jk/rev-list-empty-input later to maint).
 
  * The "tag.pager" configuration variable was useless for those who
    actually create tag objects, as it interfered with the use of an
    editor.  A new mechanism has been introduced for commands to enable
    pager depending on what operation is being carried out to fix this,
    and then "git tag -l" is made to run pager by default.
-   (merge 595d59e2b5 ma/pager-per-subcommand-action later to maint).
 
  * "git push --recurse-submodules $there HEAD:$target" was not
    propagated down to the submodules, but now it is.
-   (merge c7be7201a7 bw/push-options-recursively-to-submodules later to maint).
 
  * Commands like "git rebase" accepted the --rerere-autoupdate option
    from the command line, but did not always use it.  This has been
    fixed.
-   (merge f826fb799e pw/sequence-rerere-autoupdate later to maint).
 
  * "git clone --recurse-submodules --quiet" did not pass the quiet
    option down to submodules.
-   (merge 03c004c581 bw/clone-recursive-quiet later to maint).
 
  * Test portability fix for OBSD.
-   (merge bed67874e2 rs/obsd-getcwd-workaround later to maint).
-   (merge 4c7fda8fc1 rs/t4062-obsd later to maint).
 
  * Portability fix for OBSD.
-   (merge 29c2eda80b rs/in-obsd-basename-dirname-take-const later to maint).
 
  * "git am -s" has been taught that some input may end with a trailer
    block that is not Signed-off-by: and it should refrain from adding
    an extra blank line before adding a new sign-off in such a case.
-   (merge 735285b403 pw/am-signoff later to maint).
 
  * "git svn" used with "--localtime" option did not compute the tz
    offset for the timestamp in question and instead always used the
    current time, which has been corrected.
-   (merge 1adc4b9a58 ur/svn-local-zone later to maint).
 
  * Memory leak in an error codepath has been plugged.
-   (merge 83cd6f9017 rs/fsck-obj-leakfix later to maint).
-   (merge 896dca3ab7 rs/unpack-entry-leakfix later to maint).
-   (merge 149d8cbb2e rs/win32-syslog-leakfix later to maint).
 
  * "git stash -u" used the contents of the committed version of the
    ".gitignore" file to decide which paths are ignored, even when the
@@ -221,16 +210,13 @@ Fixes since v2.14
 
  * bash 4.4 or newer gave a warning on NUL byte in command
    substitution done in "git stash"; this has been squelched.
-   (merge 5fc92f8828 kd/stash-with-bash-4.4 later to maint).
 
  * "git grep -L" and "git grep --quiet -L" reported different exit
    codes; this has been corrected.
-   (merge e1f68c66d5 as/grep-quiet-no-match-exit-code-fix later to maint).
 
  * When handshake with a subprocess filter notices that the process
    asked for an unknown capability, Git did not report what program
    the offending subprocess was running.  This has been corrected.
-   (merge d3ba566342 cc/subprocess-handshake-missing-capabilities later to maint).
 
  * "git apply" that is used as a better "patch -p1" failed to apply a
    taken from a file with CRLF line endings to a file with CRLF line
@@ -239,38 +225,29 @@ Fixes since v2.14
    entry at the same path, which is a nonsense---in that mode, "apply"
    is not working on the data in (or derived from) the index at all.
    This has been fixed.
-   (merge c24f3abace tb/apply-with-crlf later to maint).
 
  * Killing "git merge --edit" before the editor returns control left
    the repository in a state with MERGE_MSG but without MERGE_HEAD,
    which incorrectly tells the subsequent "git commit" that there was
    a squash merge in progress.  This has been fixed.
-   (merge 9d89b35526 mg/killed-merge later to maint).
 
  * "git archive" did not work well with pathspecs and the
    export-ignore attribute.
-   (merge 5ff247ac0c rs/archive-excluded-directory later to maint).
+
+ * In addition to "cc: <a@dd.re.ss> # cruft", "cc: a@dd.re.ss # cruft"
+   was taught to "git send-email" as a valid way to tell it that it
+   needs to also send a carbon copy to <a@dd.re.ss> in the trailer
+   section.
+   (merge cc90750677 mm/send-email-cc-cruft later to maint).
+
+ * "git branch -M a b" while on a branch that is completely unrelated
+   to either branch a or branch b misbehaved when multiple worktree
+   was in use.  This has been fixed.
+   (merge 31824d180d nd/worktree-kill-parse-ref later to maint).
 
  * Other minor doc, test and build updates and code cleanups.
-   (merge dff2813391 ab/ref-filter-no-contains later to maint).
    (merge f094b89a4d ma/parse-maybe-bool later to maint).
-   (merge 974ce8078c mf/no-dashed-subcommands later to maint).
-   (merge f81935cc4d jc/perl-git-comment-typofix later to maint).
-   (merge 57ea241ef0 rs/t3700-clean-leftover later to maint).
    (merge 39b00fa4d4 jk/drop-sha1-entry-pos later to maint).
-   (merge 0b006014c8 jk/hashcmp-memcmp later to maint).
-   (merge 1e22a9917b rj/add-chmod-error-message later to maint).
-   (merge 881529c846 rs/apply-lose-prefix-length later to maint).
-   (merge 6355a76802 rs/find-pack-entry-bisection later to maint).
-   (merge de3ce210ed rs/merge-microcleanup later to maint).
-   (merge 7f0a02be2f ah/doc-empty-string-is-false later to maint).
-   (merge 70ec6bd63b rs/t1002-do-not-use-sum later to maint).
-   (merge 2456990dfd sb/sha1-file-cleanup later to maint).
-   (merge 2aac933c62 hv/t5526-andand-chain-fix later to maint).
-   (merge c8d0c4fe9b sb/submodule-parallel-update later to maint).
-   (merge 794b7e1674 mg/format-ref-doc-fix later to maint).
-   (merge 24da8a26a9 rs/commit-h-single-parent-cleanup later to maint).
-   (merge 4e36907fa3 jk/doc-the-this later to maint).
-   (merge 15d1d0951e bc/vcs-svn-cleanup later to maint).
-   (merge b8f43b120b jn/vcs-svn-cleanup later to maint).
-   (merge 4a4becfb23 jt/doc-pack-objects-fix later to maint).
+   (merge 6cdf8a7929 ma/ts-cleanups later to maint).
+   (merge 7560f547e6 ma/up-to-date later to maint).
+   (merge 0db3dc75f3 rs/apply-epoch later to maint).
