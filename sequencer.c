@@ -127,6 +127,7 @@ static GIT_PATH_FUNC(rebase_path_onto, "rebase-merge/onto")
 static GIT_PATH_FUNC(rebase_path_autostash, "rebase-merge/autostash")
 static GIT_PATH_FUNC(rebase_path_strategy, "rebase-merge/strategy")
 static GIT_PATH_FUNC(rebase_path_strategy_opts, "rebase-merge/strategy_opts")
+static GIT_PATH_FUNC(rebase_path_allow_rerere_autoupdate, "rebase-merge/allow_rerere_autoupdate")
 
 static inline int is_rebase_i(const struct replay_opts *opts)
 {
@@ -1438,7 +1439,11 @@ static int populate_opts_cb(const char *key, const char *value, void *data)
 	else if (!strcmp(key, "options.strategy-option")) {
 		ALLOC_GROW(opts->xopts, opts->xopts_nr + 1, opts->xopts_alloc);
 		opts->xopts[opts->xopts_nr++] = xstrdup(value);
-	} else
+	} else if (!strcmp(key, "options.allow-rerere-auto"))
+		opts->allow_rerere_auto =
+			git_config_bool_or_int(key, value, &error_flag) ?
+				RERERE_AUTOUPDATE : RERERE_NOAUTOUPDATE;
+	else
 		return error(_("invalid key: %s"), key);
 
 	if (!error_flag)
@@ -1479,6 +1484,15 @@ static int read_populate_opts(struct replay_opts *opts)
 				free(opts->gpg_sign);
 				opts->gpg_sign = xstrdup(buf.buf + 2);
 			}
+			strbuf_reset(&buf);
+		}
+
+		if (read_oneliner(&buf, rebase_path_allow_rerere_autoupdate(), 1)) {
+			if (!strcmp(buf.buf, "--rerere-autoupdate"))
+				opts->allow_rerere_auto = RERERE_AUTOUPDATE;
+			else if (!strcmp(buf.buf, "--no-rerere-autoupdate"))
+				opts->allow_rerere_auto = RERERE_NOAUTOUPDATE;
+			strbuf_reset(&buf);
 		}
 
 		if (file_exists(rebase_path_verbose()))
@@ -1742,6 +1756,10 @@ static int save_opts(struct replay_opts *opts)
 							"options.strategy-option",
 							opts->xopts[i], "^$", 0);
 	}
+	if (opts->allow_rerere_auto)
+		res |= git_config_set_in_file_gently(opts_file, "options.allow-rerere-auto",
+						     opts->allow_rerere_auto == RERERE_AUTOUPDATE ?
+						     "true" : "false");
 	return res;
 }
 
