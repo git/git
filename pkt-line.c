@@ -136,9 +136,10 @@ static void format_packet(struct strbuf *out, const char *fmt, va_list args)
 static int packet_write_fmt_1(int fd, int gently,
 			      const char *fmt, va_list args)
 {
-	struct strbuf buf = STRBUF_INIT;
+	static struct strbuf buf = STRBUF_INIT;
 	ssize_t count;
 
+	strbuf_reset(&buf);
 	format_packet(&buf, fmt, args);
 	count = write_in_full(fd, buf.buf, buf.len);
 	if (count == buf.len)
