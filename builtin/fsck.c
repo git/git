@@ -326,6 +326,8 @@ static void check_connectivity(void)
 
 static int fsck_obj(struct object *obj)
 {
+	int err;
+
 	if (obj->flags & SEEN)
 		return 0;
 	obj->flags |= SEEN;
@@ -336,19 +338,12 @@ static int fsck_obj(struct object *obj)
 
 	if (fsck_walk(obj, NULL, &fsck_obj_options))
 		objerror(obj, "broken links");
-	if (fsck_object(obj, NULL, 0, &fsck_obj_options))
-		return -1;
-
-	if (obj->type == OBJ_TREE) {
-		struct tree *item = (struct tree *) obj;
-
-		free_tree_buffer(item);
-	}
+	err = fsck_object(obj, NULL, 0, &fsck_obj_options);
+	if (err)
+		goto out;
 
 	if (obj->type == OBJ_COMMIT) {
 		struct commit *commit = (struct commit *) obj;
-
-		free_commit_buffer(commit);
 
 		if (!commit->parents && show_root)
 			printf("root %s\n", describe_object(&commit->object));
@@ -365,7 +360,12 @@ static int fsck_obj(struct object *obj)
 		}
 	}
 
-	return 0;
+out:
+	if (obj->type == OBJ_TREE)
+		free_tree_buffer((struct tree *)obj);
+	if (obj->type == OBJ_COMMIT)
+		free_commit_buffer((struct commit *)obj);
+	return err;
 }
 
 static int fsck_obj_buffer(const struct object_id *oid, enum object_type type,
