@@ -1289,4 +1289,10 @@ test_expect_success 'init properly sets the config' '
 	test_must_fail git -C multisuper_clone config --get submodule.sub1.active
 '
 
+test_expect_success 'recursive clone respects -q' '
+	test_when_finished "rm -rf multisuper_clone" &&
+	git clone -q --recurse-submodules multisuper multisuper_clone >actual &&
+	test_must_be_empty actual
+'
+
 test_done

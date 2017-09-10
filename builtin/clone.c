@@ -768,6 +768,9 @@ static int checkout(int submodule_progress)
 		if (submodule_progress)
 			argv_array_push(&args, "--progress");
 
+		if (option_verbosity < 0)
+			argv_array_push(&args, "--quiet");
+
 		err = run_command_v_opt(args.argv, RUN_GIT_CMD);
 		argv_array_clear(&args);
 	}
