@@ -417,7 +417,10 @@ static void load_subtree(struct notes_tree *t, struct leaf_node *subtree,
 		     oid_to_hex(&subtree->val_oid));
 
 	prefix_len = subtree->key_oid.hash[KEY_INDEX];
-	assert(prefix_len * 2 >= n);
+	if (prefix_len >= GIT_SHA1_RAWSZ)
+		BUG("prefix_len (%"PRIuMAX") is out of range", (uintmax_t)prefix_len);
+	if (prefix_len * 2 < n)
+		BUG("prefix_len (%"PRIuMAX") is too small", (uintmax_t)prefix_len);
 	memcpy(object_oid.hash, subtree->key_oid.hash, prefix_len);
 	while (tree_entry(&desc, &entry)) {
 		unsigned char type;
