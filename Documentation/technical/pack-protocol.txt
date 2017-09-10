@@ -199,7 +199,7 @@ After reference and capabilities discovery, the client can decide to
 terminate the connection by sending a flush-pkt, telling the server it can
 now gracefully terminate, and disconnect, when it does not need any pack
 data. This can happen with the ls-remote command, and also can happen when
-the client already is up-to-date.
+the client already is up to date.
 
 Otherwise, it enters the negotiation phase, where the client and
 server determine what the minimal packfile necessary for transport is,

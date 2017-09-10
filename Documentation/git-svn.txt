@@ -424,7 +424,7 @@ Any other arguments are passed directly to 'git log'
 'set-tree'::
 	You should consider using 'dcommit' instead of this command.
 	Commit specified commit or tree objects to SVN.  This relies on
-	your imported fetch data being up-to-date.  This makes
+	your imported fetch data being up to date.  This makes
 	absolutely no attempts to do patching when committing to SVN, it
 	simply overwrites files with those specified in the tree or
 	commit.  All merging is assumed to have taken place

@@ -1359,7 +1359,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		 * If head can reach all the merge then we are up to date.
 		 * but first the most common case of merging one remote.
 		 */
-		finish_up_to_date(_("Already up-to-date."));
+		finish_up_to_date(_("Already up to date."));
 		goto done;
 	} else if (fast_forward != FF_NO && !remoteheads->next &&
 			!common->next &&
@@ -1442,7 +1442,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			}
 		}
 		if (up_to_date) {
-			finish_up_to_date(_("Already up-to-date. Yeeah!"));
+			finish_up_to_date(_("Already up to date. Yeeah!"));
 			goto done;
 		}
 	}

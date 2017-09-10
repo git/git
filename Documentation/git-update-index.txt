@@ -214,7 +214,7 @@ will remove the intended effect of the option.
 Using --refresh
 ---------------
 `--refresh` does not calculate a new sha1 file or bring the index
-up-to-date for mode/content changes. But what it *does* do is to
+up to date for mode/content changes. But what it *does* do is to
 "re-match" the stat information of a file with the index, so that you
 can refresh the index for a file that hasn't been changed but where
 the stat entry is out of date.
