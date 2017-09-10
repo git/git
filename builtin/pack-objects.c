@@ -2171,7 +2171,10 @@ static void *threaded_find_deltas(void *arg)
 {
 	struct thread_params *me = arg;
 
+	progress_lock();
 	while (me->remaining) {
+		progress_unlock();
+
 		find_deltas(me->list, &me->remaining,
 			    me->window, me->depth, me->processed);
 
@@ -2193,7 +2196,10 @@ static void *threaded_find_deltas(void *arg)
 			pthread_cond_wait(&me->cond, &me->mutex);
 		me->data_ready = 0;
 		pthread_mutex_unlock(&me->mutex);
+
+		progress_lock();
 	}
+	progress_unlock();
 	/* leave ->working 1 so that this doesn't get more work assigned */
 	return NULL;
 }
