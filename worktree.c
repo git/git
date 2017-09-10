@@ -30,7 +30,7 @@ static void add_head_info(struct worktree *wt)
 
 	target = refs_resolve_ref_unsafe(get_worktree_ref_store(wt),
 					 "HEAD",
-					 RESOLVE_REF_READING,
+					 0,
 					 wt->head_sha1, &flags);
 	if (!target)
 		return;
