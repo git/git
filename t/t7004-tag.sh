@@ -1888,7 +1888,7 @@ EOF"
 	run_with_limited_stack git tag --contains HEAD >actual &&
 	test_cmp expect actual &&
 	run_with_limited_stack git tag --no-contains HEAD >actual &&
-	test_line_count ">" 10 actual
+	test_line_count "-gt" 10 actual
 '
 
 test_expect_success '--format should list tags as per format given' '
