@@ -1821,7 +1821,7 @@ static int grep_source_1(struct grep_opt *opt, struct grep_source *gs, int colle
 		return 0;
 
 	if (opt->status_only)
-		return 0;
+		return opt->unmatch_name_only;
 	if (opt->unmatch_name_only) {
 		/* We did not see any hit, so we want to show this */
 		show_name(opt, gs->name);
