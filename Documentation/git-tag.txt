@@ -205,6 +205,9 @@ it in the repository configuration as follows:
     signingKey = <gpg-keyid>
 -------------------------------------
 
+`pager.tag` is only respected when listing tags, i.e., when `-l` is
+used or implied. The default is to use a pager.
+See linkgit:git-config[1].
 
 DISCUSSION
 ----------
