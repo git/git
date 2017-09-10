@@ -1015,7 +1015,8 @@ static int push_submodule(const char *path,
  * Perform a check in the submodule to see if the remote and refspec work.
  * Die if the submodule can't be pushed.
  */
-static void submodule_push_check(const char *path, const struct remote *remote,
+static void submodule_push_check(const char *path, const char *head,
+				 const struct remote *remote,
 				 const char **refspec, int refspec_nr)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
@@ -1023,6 +1024,7 @@ static void submodule_push_check(const char *path, const struct remote *remote,
 
 	argv_array_push(&cp.args, "submodule--helper");
 	argv_array_push(&cp.args, "push-check");
+	argv_array_push(&cp.args, head);
 	argv_array_push(&cp.args, remote->name);
 
 	for (i = 0; i < refspec_nr; i++)
@@ -1061,10 +1063,20 @@ int push_unpushed_submodules(struct oid_array *commits,
 	 * won't be propagated due to the remote being unconfigured (e.g. a URL
 	 * instead of a remote name).
 	 */
-	if (remote->origin != REMOTE_UNCONFIGURED)
+	if (remote->origin != REMOTE_UNCONFIGURED) {
+		char *head;
+		struct object_id head_oid;
+
+		head = resolve_refdup("HEAD", 0, head_oid.hash, NULL);
+		if (!head)
+			die(_("Failed to resolve HEAD as a valid ref."));
+
 		for (i = 0; i < needs_pushing.nr; i++)
 			submodule_push_check(needs_pushing.items[i].string,
-					     remote, refspec, refspec_nr);
+					     head, remote,
+					     refspec, refspec_nr);
+		free(head);
+	}
 
 	/* Actually push the submodules */
 	for (i = 0; i < needs_pushing.nr; i++) {
