@@ -71,6 +71,13 @@ struct rev_info {
 	const char *def;
 	struct pathspec prune_data;
 
+	/*
+	 * Whether the arguments parsed by setup_revisions() included any
+	 * "input" revisions that might still have yielded an empty pending
+	 * list (e.g., patterns like "--all" or "--glob").
+	 */
+	int rev_input_given;
+
 	/* topo-sort */
 	enum rev_sort_order sort_order;
 

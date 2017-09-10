@@ -255,27 +255,19 @@ test_expect_success 'rev-list accumulates multiple --exclude' '
 	compare rev-list "--exclude=refs/remotes/* --exclude=refs/tags/* --all" --branches
 '
 
-
-# "git rev-list<ENTER>" is likely to be a bug in the calling script and may
-# deserve an error message, but do cases where set of refs programmatically
-# given using globbing and/or --stdin need to fail with the same error, or
-# are we better off reporting a success with no output?  The following few
-# tests document the current behaviour to remind us that we might want to
-# think about this issue.
-
-test_expect_failure 'rev-list may want to succeed with empty output on no input (1)' '
+test_expect_failure 'rev-list should succeed with empty output on empty stdin' '
 	>expect &&
 	git rev-list --stdin <expect >actual &&
 	test_cmp expect actual
 '
 
-test_expect_failure 'rev-list may want to succeed with empty output on no input (2)' '
+test_expect_success 'rev-list should succeed with empty output with all refs excluded' '
 	>expect &&
 	git rev-list --exclude=* --all >actual &&
 	test_cmp expect actual
 '
 
-test_expect_failure 'rev-list may want to succeed with empty output on no input (3)' '
+test_expect_success 'rev-list should succeed with empty output with empty --all' '
 	(
 		test_create_repo empty &&
 		cd empty &&
@@ -283,6 +275,12 @@ test_expect_failure 'rev-list may want to succeed with empty output on no input 
 		git rev-list --all >actual &&
 		test_cmp expect actual
 	)
+'
+
+test_expect_success 'rev-list should succeed with empty output with empty glob' '
+	>expect &&
+	git rev-list --glob=does-not-match-anything >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'shortlog accepts --glob/--tags/--remotes' '
