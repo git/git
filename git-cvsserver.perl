@@ -356,7 +356,7 @@ sub req_Root
        return 0;
     }
 
-    my @gitvars = `git config -l`;
+    my @gitvars = safe_pipe_capture(qw(git config -l));
     if ($?) {
        print "E problems executing git-config on the server -- this is not a git repository or the PATH is not set correctly.\n";
         print "E \n";
@@ -943,7 +943,7 @@ sub req_co
 
     # Provide list of modules, if -c was used.
     if (exists $state->{opt}{c}) {
-        my $showref = `git show-ref --heads`;
+        my $showref = safe_pipe_capture(qw(git show-ref --heads));
         for my $line (split '\n', $showref) {
             if ( $line =~ m% refs/heads/(.*)$% ) {
                 print "M $1\t$1\n";
@@ -1181,7 +1181,7 @@ sub req_update
     # projects (heads in this case) to checkout.
     #
     if ($state->{module} eq '') {
-        my $showref = `git show-ref --heads`;
+        my $showref = safe_pipe_capture(qw(git show-ref --heads));
         print "E cvs update: Updating .\n";
         for my $line (split '\n', $showref) {
             if ( $line =~ m% refs/heads/(.*)$% ) {
@@ -1687,7 +1687,7 @@ sub req_ci
         return;
     }
 
-    my $treehash = `git write-tree`;
+    my $treehash = safe_pipe_capture(qw(git write-tree));
     chomp $treehash;
 
     $log->debug("Treehash : $treehash, Parenthash : $parenthash");
