@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Sep 2017, #01; Wed, 6)
-X-master-at: 3ec7d702a89c647ddf42a59bc3539361367de9d5
-X-next-at: 1a2e63c10015eb714409797caf56c3d4ae975672
+Subject: What's cooking in git.git (Sep 2017, #02; Mon, 11)
+X-master-at: 6867272d5b5615bd74ec97bf35b4c4a8d9fe3a51
+X-next-at: bb1197296efa678ff409ab67d32a984cae7b07a6
 
-What's cooking in git.git (Sep 2017, #01; Wed, 6)
+What's cooking in git.git (Sep 2017, #02; Mon, 11)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,9 +12,10 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-We are at week #5 of this cycle.  It seems that people had a
+We are at week #6 of this cycle.  It seems that people had a
 productive week while I was away, which I am reasonably happy about
-;-)
+;-)  Quite a many topics that have been in 'master' are now also
+merged to 'maint', so perhaps I should tag 2.14.2 soonish.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -24,92 +25,354 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ks/branch-set-upstream (2017-08-17) 3 commits
-  (merged to 'next' on 2017-08-22 at 10fd938390)
- + branch: quote branch/ref names to improve readability
- + builtin/branch: stop supporting the "--set-upstream" option
- + t3200: cleanup cruft of a test
+* jk/drop-sha1-entry-pos (2017-08-25) 1 commit
+  (merged to 'next' on 2017-08-25 at 7ef03bb281)
+ + sha1-lookup: remove sha1_entry_pos() from header file
 
- "branch --set-upstream" that has been deprecated in Git 1.8 has
- finally been retired.
+ Code clean-up.
 
 
-* po/read-graft-line (2017-08-18) 4 commits
-  (merged to 'next' on 2017-08-22 at 1e3fe0d3a1)
- + commit: rewrite read_graft_line
- + commit: allocate array using object_id size
- + commit: replace the raw buffer with strbuf in read_graft_line
- + sha1_file: fix definition of null_sha1
+* ls/convert-filter-progress (2017-08-24) 1 commit
+  (merged to 'next' on 2017-08-25 at ce0bb30e8f)
+ + convert: display progress for filtered objects that have been delayed
 
- Conversion from uchar[20] to struct object_id continues; this is to
- ensure that we do not assume sizeof(struct object_id) is the same
- as the length of SHA-1 hash (or length of longest hash we support).
+ The codepath to call external process filter for smudge/clean
+ operation learned to show the progress meter.
 
 
-* rs/archive-excluded-directory (2017-08-19) 3 commits
-  (merged to 'next' on 2017-08-22 at 1853597c35)
- + archive: don't queue excluded directories
- + archive: factor out helper functions for handling attributes
- + t5001: add tests for export-ignore attributes and exclude pathspecs
+* ma/ts-cleanups (2017-08-23) 4 commits
+  (merged to 'next' on 2017-08-25 at e0e8cc53ec)
+ + ThreadSanitizer: add suppressions
+ + strbuf_setlen: don't write to strbuf_slopbuf
+ + pack-objects: take lock before accessing `remaining`
+ + convert: always initialize attr_action in convert_attrs
 
- "git archive" did not work well with pathspecs and the
- export-ignore attribute.
+ Assorted bugfixes and clean-ups.
 
- We may want to resurrect the "we don't archive an empty directory"
- bonus patch, but I do not mind merging the above early to 'next'
- and leave it as a separate follow-up enhancement.
- cf. <20170820090629.tumvqwzkromcykjf@sigill.intra.peff.net>
+
+* ma/up-to-date (2017-08-23) 2 commits
+  (merged to 'next' on 2017-08-25 at 902f6e9140)
+ + treewide: correct several "up-to-date" to "up to date"
+ + Documentation/user-manual: update outdated example output
+
+ Message and doc updates.
+
+
+* mm/send-email-cc-cruft (2017-08-24) 2 commits
+  (merged to 'next' on 2017-08-25 at 65933523ab)
+ + send-email: don't use Mail::Address, even if available
+ + send-email: fix garbage removal after address
+
+ In addition to "cc: <a@dd.re.ss> # cruft", "cc: a@dd.re.ss # cruft"
+ was taught to "git send-email" as a valid way to tell it that it
+ needs to also send a carbon copy to <a@dd.re.ss> in the trailer
+ section.
+
+
+* nd/worktree-kill-parse-ref (2017-08-24) 1 commit
+  (merged to 'next' on 2017-08-25 at a5da82b2ea)
+ + branch: fix branch renaming not updating HEADs correctly
+
+ "git branch -M a b" while on a branch that is completely unrelated
+ to either branch a or branch b misbehaved when multiple worktree
+ was in use.  This has been fixed.
+
+
+* rs/apply-epoch (2017-08-25) 2 commits
+  (merged to 'next' on 2017-08-26 at c2bf5ceca3)
+ + apply: remove epoch date from regex
+ + apply: check date of potential epoch timestamps first
+
+ Code simplification.
 
 --------------------------------------------------
 [New Topics]
 
-* dw/diff-highlight-makefile-fix (2017-09-06) 1 commit
- - diff-highlight: add clean target to Makefile
+* bb/doc-eol-dirty (2017-09-07) 1 commit
+ - Documentation: mention that `eol` can change the dirty status of paths
 
- Build clean-up.
-
- Will merge to 'next'.
-
-
-* jk/config-lockfile-leak-fix (2017-09-06) 1 commit
- - config: use a static lock_file struct
-
- A leakfix.
+ Doc update.
 
  Will merge to 'next'.
 
 
-* kw/merge-recursive-cleanup (2017-09-06) 4 commits
- - SQUASH???
- - merge-recursive: change current file dir string_lists to hashmap
- - merge-recursive: remove return value from get_files_dirs
- - merge-recursive: fix memory leak
+* jh/hashmap-disable-counting (2017-09-07) 1 commit
+ - hashmap: add API to disable item counting when threaded
 
- A leakfix and code clean-up.
-
-
-* ma/pkt-line-leakfix (2017-09-06) 1 commit
- - pkt-line: re-'static'-ify buffer in packet_write_fmt_1()
-
- A leakfix.
+ Our hashmap implementation in hashmap.[ch] is not thread-safe when
+ adding a new item needs to expand the hashtable by rehashing; add
+ an API to disable the automatic rehashing to work it around.
 
  Will merge to 'next'.
 
 
-* ma/split-symref-update-fix (2017-09-06) 3 commits
- - refs/files-backend: correct return value in lock_ref_for_update
- - refs/files-backend: fix memory leak in lock_ref_for_update
- - refs/files-backend: add longer-scoped copy of string to list
+* jk/incore-lockfile-removal (2017-09-06) 20 commits
+ - stop leaking lock structs in some simple cases
+ - ref_lock: stop leaking lock_files
+ - lockfile: update lifetime requirements in documentation
+ - tempfile: auto-allocate tempfiles on heap
+ - tempfile: remove deactivated list entries
+ - tempfile: use list.h for linked list
+ - tempfile: release deactivated strbufs instead of resetting
+ - tempfile: robustify cleanup handler
+ - tempfile: factor out deactivation
+ - tempfile: factor out activation
+ - tempfile: replace die("BUG") with BUG()
+ - tempfile: handle NULL tempfile pointers gracefully
+ - tempfile: prefer is_tempfile_active to bare access
+ - lockfile: do not rollback lock on failed close
+ - tempfile: do not delete tempfile on failed close
+ - always check return value of close_tempfile
+ - verify_signed_buffer: prefer close_tempfile() to close()
+ - setup_temporary_shallow: move tempfile struct into function
+ - setup_temporary_shallow: avoid using inactive tempfile
+ - write_index_as_tree: cleanup tempfile on error
 
- A leakfix.
+ The long-standing rule that an in-core lockfile instance, once it
+ is used, must not be freed, has been lifted and the lockfile and
+ tempfile APIs have been updated to reduce the chance of programming
+ errors.
 
  Will merge to 'next'.
 
 
-* mg/timestamp-t-fix (2017-09-06) 1 commit
- - name-rev: change ULONG_MAX to TIME_MAX
+* jk/leak-checkers (2017-09-08) 10 commits
+ - add UNLEAK annotation for reducing leak false positives
+ - set_git_dir: handle feeding gitdir to itself
+ - repository: free fields before overwriting them
+ - reset: free allocated tree buffers
+ - reset: make tree counting less confusing
+ - config: plug user_config leak
+ - update-index: fix cache entry leak in add_one_file()
+ - add: free leaked pathspec after add_files_to_cache()
+ - test-lib: set LSAN_OPTIONS to abort by default
+ - test-lib: --valgrind should not override --verbose-log
 
- A mismerge fix.
+ Many of our programs consider that it is OK to release dynamic
+ storage that is used throughout the life of the program by simply
+ exiting, but this makes it harder to leak detection tools to avoid
+ reporting false positives.  Plug many existing leaks and introduce
+ a mechanism for developers to mark that the region of memory
+ pointed by a pointer is not lost/leaking to help these tools.
+
+ Will merge to 'next'.
+
+
+* jk/system-path-cleanup (2017-09-07) 2 commits
+ - git_extract_argv0_path: do nothing without RUNTIME_PREFIX
+ - system_path: move RUNTIME_PREFIX to a sub-function
+
+ Code clean-up.
+
+ Will merge to 'next'.
+
+
+* jn/per-repo-obj-store (2017-09-07) 39 commits
+ - pack: allow sha1_loose_object_info to handle arbitrary repositories
+ - pack: allow map_sha1_file to handle arbitrary repositories
+ - pack: allow map_sha1_file_1 to handle arbitrary repositories
+ - pack: allow open_sha1_file to handle arbitrary repositories
+ - pack: allow stat_sha1_file to handle arbitrary repositories
+ - pack: allow sha1_file_name to handle arbitrary repositories
+ - pack: allow reprepare_packed_git to handle arbitrary repositories
+ - pack: allow prepare_packed_git to handle arbitrary repositories
+ - pack: allow prepare_packed_git_one to handle arbitrary repositories
+ - pack: allow prepare_packed_git_mru to handle arbitrary repositories
+ - pack: allow rearrange_packed_git to handle arbitrary repositories
+ - pack: allow install_packed_git to handle arbitrary repositories
+ - object-store: allow foreach_alt_odb to handle arbitrary repositories
+ - object-store: allow prepare_alt_odb to handle arbitrary repositories
+ - sha1_file: allow alt_odb_usable to handle arbitrary repositories
+ - pack: add repository argument to map_sha1_file
+ - pack: add repository argument to sha1_file_name
+ - pack: add repository argument to reprepare_packed_git
+ - pack: add repository argument to prepare_packed_git
+ - pack: add repository argument to prepare_packed_git_mru
+ - pack: add repository argument to rearrange_packed_git
+ - pack: add repository argument to prepare_packed_git_one
+ - pack: add repository argument to install_packed_git
+ - object-store: add repository argument to foreach_alt_odb
+ - object-store: add repository argument to prepare_alt_odb
+ - sha1_file: add repository argument to sha1_loose_object_info
+ - sha1_file: add repository argument to map_sha1_file_1
+ - sha1_file: add repository argument to open_sha1_file
+ - sha1_file: add repository argument to stat_sha1_file
+ - sha1_file: add repository argument to link_alt_odb_entries
+ - sha1_file: add repository argument to read_info_alternates
+ - sha1_file: add repository argument to link_alt_odb_entry
+ - sha1_file: add repository argument to alt_odb_usable
+ - pack: move approximate object count to object store
+ - pack: move prepare_packed_git_run_once to object store
+ - object-store: move packed_git and packed_git_mru to object store
+ - object-store: move alt_odb_list and alt_odb_tail to object store
+ - repository: introduce object store field
+ - pack: make packed_git_mru global a value instead of a pointer
+
+ We now can have separate instances of in-core object store per
+ repository we visit.
+
+ Will be rerolled.
+
+
+* jt/packmigrate (2017-09-06) 1 commit
+ - Remove inadvertently added outgoing/packfile.h
+
+ An oops fix.
+
+ Will merge to 'next'.
+
+
+* kd/doc-for-each-ref (2017-09-07) 1 commit
+ - doc/for-each-ref: explicitly specify option names
+
+ Expecting a reroll.
+ cf. <20170901231933.GC143138@aiede.mtv.corp.google.com>
+
+
+* kw/write-index-reduce-alloc (2017-09-08) 2 commits
+ - read-cache: fix index corruption with index v4
+ - Add t/helper/test-write-cache to .gitignore
+
+ Expecting a reroll.
+ cf. <CALgYhfNYgmCJqptNQLKaQpCs9mAgqZHUrDS3BVEqCv_f+WX-qg@mail.gmail.com>
+
+
+* ma/remove-config-maybe-bool (2017-09-07) 1 commit
+ - config: remove git_config_maybe_bool
+
+ Finishing touches to a recent topic.
+
+ Will merge to 'next'.
+
+
+* mh/packed-ref-store-prep (2017-09-07) 1 commit
+ - rev-parse: don't trim bisect refnames
+
+ Finishing touches to a recent topic.
+
+ Will merge to 'next'.
+
+
+* mh/packed-ref-transactions (2017-09-09) 11 commits
+ - files_transaction_finish(): delete reflogs before references
+ - packed-backend: rip out some now-unused code
+ - files_ref_store: use a transaction to update packed refs
+ - t1404: demonstrate two problems with reference transactions
+ - files_initial_transaction_commit(): use a transaction for packed refs
+ - prune_refs(): also free the linked list
+ - files_pack_refs(): use a reference transaction to write packed refs
+ - packed_delete_refs(): implement method
+ - packed_ref_store: implement reference transactions
+ - struct ref_transaction: add a place for backends to store data
+ - packed-backend: don't adjust the reference count on lock/unlock
+
+ Implement transactional update to the packed-ref representation of
+ references.
+
+ Will merge to 'next'.
+
+
+* nm/pull-submodule-recurse-config (2017-09-07) 2 commits
+ - pull: honor submodule.recurse config option
+ - pull: fix cli and config option parsing order
+
+ "git -c submodule.recurse=yes pull" did not work as if the
+ "--recurse-submodules" option was given from the command line.
+ This has been corrected.
+
+ Will merge to 'next'.
+
+
+* rs/strbuf-leakfix (2017-09-10) 34 commits
+ - wt-status: release strbuf after use in wt_longstatus_print_tracking()
+ - wt-status: release strbuf after use in read_rebase_todolist()
+ - vcs-svn: release strbuf after use in end_revision()
+ - utf8: release strbuf on error return in strbuf_utf8_replace()
+ - userdiff: release strbuf after use in userdiff_get_textconv()
+ - transport-helper: release strbuf after use in process_connect_service()
+ - sequencer: release strbuf after use in save_head()
+ - shortlog: release strbuf after use in insert_one_record()
+ - sha1_file: release strbuf on error return in index_path()
+ - send-pack: release strbuf on error return in send_pack()
+ - remote: release strbuf after use in set_url()
+ - remote: release strbuf after use in migrate_file()
+ - remote: release strbuf after use in read_remote_branches()
+ - refs: release strbuf on error return in write_pseudoref()
+ - notes: release strbuf after use in notes_copy_from_stdin()
+ - merge: release strbuf after use in write_merge_heads()
+ - merge: release strbuf after use in save_state()
+ - mailinfo: release strbuf on error return in handle_boundary()
+ - mailinfo: release strbuf after use in handle_from()
+ - help: release strbuf on error return in exec_woman_emacs()
+ - help: release strbuf on error return in exec_man_man()
+ - help: release strbuf on error return in exec_man_konqueror()
+ - diff: release strbuf after use in show_stats()
+ - diff: release strbuf after use in show_rename_copy()
+ - diff: release strbuf after use in diff_summary()
+ - convert: release strbuf on error return in filter_buffer_or_fd()
+ - connect: release strbuf on error return in git_connect()
+ - commit: release strbuf on error return in commit_tree_extended()
+ - clone: release strbuf after use in remove_junk()
+ - clean: release strbuf after use in remove_dirs()
+ - check-ref-format: release strbuf after use in check_ref_format_branch()
+ - am: release strbuf after use in safe_to_abort()
+ - am: release strbuf on error return in hg_patch_to_mail()
+ - am: release strbufs after use in detect_patch_format()
+
+ Many leaks of strbuf have been fixed.
+
+ Will merge to 'next'.
+
+
+* jk/shortlog-ident-cleanup (2017-09-09) 1 commit
+ - shortlog: skip format/parse roundtrip for internal traversal
+
+ Code clean-up.
+
+ Will merge to 'next'.
+
+
+* mg/name-rev-tests-with-short-stack (2017-09-08) 4 commits
+ - t6120: test describe and name-rev with deep repos
+ - t6120: clean up state after breaking repo
+ - t6120: test name-rev --all and --stdin
+ - t7004: move limited stack prereq to test-lib
+
+ A handful of tests to demonstrates a recursive implementation of
+ "name-rev" hurts.
+
+ Will merge to 'next'.
+
+
+* rk/commit-tree-make-F-verbatim (2017-09-10) 1 commit
+ - commit-tree: do not complete line in -F input
+
+ Unlike "git commit-tree < file", "git commit-tree -F file" did not
+ pass the contents of the file verbatim and instead completed an
+ incomplete line at the end, if exists.  The latter has been updated
+ to match the behaviour of the former.
+
+ Will merge to 'next'.
+
+
+* sb/merge-commit-msg-hook (2017-09-08) 1 commit
+ - builtin/merge: honor commit-msg hook for merges
+
+ As "git commit" to conclude a conflicted "git merge" honors the
+ commit-msg hook, "git merge" that recoreds a merge commit that
+ cleanly auto-merges should, but it didn't.
+
+ Will merge to 'next'.
+
+
+* ls/travis-scriptify (2017-09-11) 3 commits
+ - travis: dedent a few scripts that are indented overly deeply
+ - travis-ci: skip a branch build if equal tag is present
+ - travis-ci: move Travis CI code into dedicated scripts
+
+ The scripts to drive TravisCI has been reorganized and then an
+ optimization to avoid spending cycles on a branch whose tip is
+ tagged has been implemented.
 
  Will merge to 'next'.
 
@@ -191,45 +454,60 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* jk/drop-sha1-entry-pos (2017-08-25) 1 commit
-  (merged to 'next' on 2017-08-25 at 7ef03bb281)
- + sha1-lookup: remove sha1_entry_pos() from header file
+* dw/diff-highlight-makefile-fix (2017-09-06) 1 commit
+  (merged to 'next' on 2017-09-10 at 8dfda480ac)
+ + diff-highlight: add clean target to Makefile
 
- Code clean-up.
-
- Will merge to 'master'.
-
-
-* ls/convert-filter-progress (2017-08-24) 1 commit
-  (merged to 'next' on 2017-08-25 at ce0bb30e8f)
- + convert: display progress for filtered objects that have been delayed
-
- The codepath to call external process filter for smudge/clean
- operation learned to show the progress meter.
+ Build clean-up.
 
  Will merge to 'master'.
 
 
-* mm/send-email-cc-cruft (2017-08-24) 2 commits
-  (merged to 'next' on 2017-08-25 at 65933523ab)
- + send-email: don't use Mail::Address, even if available
- + send-email: fix garbage removal after address
+* jk/config-lockfile-leak-fix (2017-09-06) 1 commit
+  (merged to 'next' on 2017-09-10 at 7b91d71749)
+ + config: use a static lock_file struct
 
- In addition to "cc: <a@dd.re.ss> # cruft", "cc: a@dd.re.ss # cruft"
- was taught to "git send-email" as a valid way to tell it that it
- needs to also send a carbon copy to <a@dd.re.ss> in the trailer
- section.
+ A leakfix.
 
  Will merge to 'master'.
 
 
-* nd/worktree-kill-parse-ref (2017-08-24) 1 commit
-  (merged to 'next' on 2017-08-25 at a5da82b2ea)
- + branch: fix branch renaming not updating HEADs correctly
+* kw/merge-recursive-cleanup (2017-09-08) 3 commits
+ - merge-recursive: change current file dir string_lists to hashmap
+ - merge-recursive: remove return value from get_files_dirs
+ - merge-recursive: fix memory leak
 
- "git branch -M a b" while on a branch that is completely unrelated
- to either branch a or branch b misbehaved when multiple worktree
- was in use.  This has been fixed.
+ A leakfix and code clean-up.
+
+ Will merge to 'next'.
+
+
+* ma/pkt-line-leakfix (2017-09-06) 1 commit
+  (merged to 'next' on 2017-09-10 at f0d9994319)
+ + pkt-line: re-'static'-ify buffer in packet_write_fmt_1()
+
+ A leakfix.
+
+ Will merge to 'master'.
+
+
+* ma/split-symref-update-fix (2017-09-10) 4 commits
+  (merged to 'next' on 2017-09-10 at 96c403fca7)
+ + refs/files-backend: add `refname`, not "HEAD", to list
+ + refs/files-backend: correct return value in lock_ref_for_update
+ + refs/files-backend: fix memory leak in lock_ref_for_update
+ + refs/files-backend: add longer-scoped copy of string to list
+
+ A leakfix.
+
+ Will merge to 'master'.
+
+
+* mg/timestamp-t-fix (2017-09-06) 1 commit
+  (merged to 'next' on 2017-09-10 at a5df4d5b3e)
+ + name-rev: change ULONG_MAX to TIME_MAX
+
+ A mismerge fix.
 
  Will merge to 'master'.
 
@@ -250,17 +528,9 @@ of the repositories listed at
  blank lines in its help text, which has been reduced.
 
 
-* rs/apply-epoch (2017-08-25) 2 commits
-  (merged to 'next' on 2017-08-26 at c2bf5ceca3)
- + apply: remove epoch date from regex
- + apply: check date of potential epoch timestamps first
-
- Code simplification.
-
- Will merge to 'master'.
-
-
-* mh/notes-cleanup (2017-08-26) 12 commits
+* mh/notes-cleanup (2017-09-09) 13 commits
+  (merged to 'next' on 2017-09-10 at cb1d725504)
+ + load_subtree(): check that `prefix_len` is in the expected range
   (merged to 'next' on 2017-08-26 at 2d6df46966)
  + load_subtree(): declare some variables to be `size_t`
  + hex_to_bytes(): simpler replacement for `get_oid_hex_segment()`
@@ -304,27 +574,7 @@ of the repositories listed at
  objects that are in use only in other worktrees to be subject to
  garbage collection.
 
-
-* ma/ts-cleanups (2017-08-23) 4 commits
-  (merged to 'next' on 2017-08-25 at e0e8cc53ec)
- + ThreadSanitizer: add suppressions
- + strbuf_setlen: don't write to strbuf_slopbuf
- + pack-objects: take lock before accessing `remaining`
- + convert: always initialize attr_action in convert_attrs
-
- Assorted bugfixes and clean-ups.
-
- Will merge to 'master'.
-
-
-* ma/up-to-date (2017-08-23) 2 commits
-  (merged to 'next' on 2017-08-25 at 902f6e9140)
- + treewide: correct several "up-to-date" to "up to date"
- + Documentation/user-manual: update outdated example output
-
- Message and doc updates.
-
- Will merge to 'master'.
+ Will merge to 'next'.
 
 
 * bc/hash-algo (2017-08-20) 5 commits
