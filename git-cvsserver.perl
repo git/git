@@ -3406,6 +3406,22 @@ sub refHashEqual
     return $out;
 }
 
+# an alternative to `command` that allows input to be passed as an array
+# to work around shell problems with weird characters in arguments
+
+sub safe_pipe_capture {
+
+    my @output;
+
+    if (my $pid = open my $child, '-|') {
+        @output = (<$child>);
+        close $child or die join(' ',@_).": $! $?";
+    } else {
+        exec(@_) or die "$! $?"; # exec() can fail the executable can't be found
+    }
+    return wantarray ? @output : join('',@output);
+}
+
 
 package GITCVS::log;
 
@@ -3882,7 +3898,7 @@ sub update
                     # several candidate merge bases. let's assume
                     # that the first one is the best one.
 		    my $base = eval {
-			    safe_pipe_capture('git', 'merge-base',
+			    ::safe_pipe_capture('git', 'merge-base',
 						 $lastpicked, $parent);
 		    };
 		    # The two branches may not be related at all,
@@ -4749,7 +4765,7 @@ sub getMetaFromCommithash
         return $retVal;
     }
 
-    my($fileHash)=safe_pipe_capture("git","rev-parse","$revCommit:$filename");
+    my($fileHash) = ::safe_pipe_capture("git","rev-parse","$revCommit:$filename");
     chomp $fileHash;
     if(!($fileHash=~/^[0-9a-f]{40}$/))
     {
@@ -4844,8 +4860,8 @@ sub lookupCommitRef
         return $commitHash;
     }
 
-    $commitHash=safe_pipe_capture("git","rev-parse","--verify","--quiet",
-                                  $self->unescapeRefName($ref));
+    $commitHash = ::safe_pipe_capture("git","rev-parse","--verify","--quiet",
+				      $self->unescapeRefName($ref));
     $commitHash=~s/\s*$//;
     if(!($commitHash=~/^[0-9a-f]{40}$/))
     {
@@ -4854,7 +4870,7 @@ sub lookupCommitRef
 
     if( defined($commitHash) )
     {
-        my $type=safe_pipe_capture("git","cat-file","-t",$commitHash);
+        my $type = ::safe_pipe_capture("git","cat-file","-t",$commitHash);
         if( ! ($type=~/^commit\s*$/ ) )
         {
             $commitHash=undef;
@@ -4907,7 +4923,7 @@ sub commitmessage
         return $message;
     }
 
-    my @lines = safe_pipe_capture("git", "cat-file", "commit", $commithash);
+    my @lines = ::safe_pipe_capture("git", "cat-file", "commit", $commithash);
     shift @lines while ( $lines[0] =~ /\S/ );
     $message = join("",@lines);
     $message .= " " if ( $message =~ /\n$/ );
@@ -5054,25 +5070,6 @@ sub in_array
         }
     }
     return $retval;
-}
-
-=head2 safe_pipe_capture
-
-an alternative to `command` that allows input to be passed as an array
-to work around shell problems with weird characters in arguments
-
-=cut
-sub safe_pipe_capture {
-
-    my @output;
-
-    if (my $pid = open my $child, '-|') {
-        @output = (<$child>);
-        close $child or die join(' ',@_).": $! $?";
-    } else {
-        exec(@_) or die "$! $?"; # exec() can fail the executable can't be found
-    }
-    return wantarray ? @output : join('',@output);
 }
 
 =head2 mangle_dirname
