@@ -45,6 +45,14 @@ int sequencer_continue(struct replay_opts *opts);
 int sequencer_rollback(struct replay_opts *opts);
 int sequencer_remove_state(struct replay_opts *opts);
 
+int sequencer_make_script(int keep_empty, FILE *out,
+		int argc, const char **argv);
+
+int transform_todo_ids(int shorten_sha1s);
+int check_todo_list(void);
+int skip_unnecessary_picks(void);
+int rearrange_squash(void);
+
 extern const char sign_off_header[];
 
 void append_signoff(struct strbuf *msgbuf, int ignore_footer, unsigned flag);
