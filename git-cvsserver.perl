@@ -841,7 +841,7 @@ sub req_Modified
     # Save the file data in $state
     $state->{entries}{$state->{directory}.$data}{modified_filename} = $filename;
     $state->{entries}{$state->{directory}.$data}{modified_mode} = $mode;
-    $state->{entries}{$state->{directory}.$data}{modified_hash} = `git hash-object $filename`;
+    $state->{entries}{$state->{directory}.$data}{modified_hash} = safe_pipe_capture('git','hash-object',$filename);
     $state->{entries}{$state->{directory}.$data}{modified_hash} =~ s/\s.*$//s;
 
     #$log->debug("req_Modified : file=$data mode=$mode size=$size");
@@ -1463,7 +1463,7 @@ sub req_update
                 # transmit file, format is single integer on a line by itself (file
                 # size) followed by the file contents
                 # TODO : we should copy files in blocks
-                my $data = `cat $mergedFile`;
+                my $data = safe_pipe_capture('cat', $mergedFile);
                 $log->debug("File size : " . length($data));
                 print length($data) . "\n";
                 print $data;
@@ -1579,7 +1579,7 @@ sub req_ci
                 $branchRef = "refs/heads/$stickyInfo->{tag}";
             }
 
-            $parenthash = `git show-ref -s $branchRef`;
+            $parenthash = safe_pipe_capture('git', 'show-ref', '-s', $branchRef);
             chomp $parenthash;
             if ($parenthash !~ /^[0-9a-f]{40}$/)
             {
@@ -1704,7 +1704,7 @@ sub req_ci
     }
     close $msg_fh;
 
-    my $commithash = `git commit-tree $treehash -p $parenthash < $msg_filename`;
+    my $commithash = safe_pipe_capture('git', 'commit-tree', $treehash, '-p', $parenthash, '-F', $msg_filename);
     chomp($commithash);
     $log->info("Commit hash : $commithash");
 
@@ -2854,12 +2854,12 @@ sub transmitfile
 
     die "Need filehash" unless ( defined ( $filehash ) and $filehash =~ /^[a-zA-Z0-9]{40}$/ );
 
-    my $type = `git cat-file -t $filehash`;
+    my $type = safe_pipe_capture('git', 'cat-file', '-t', $filehash);
     chomp $type;
 
     die ( "Invalid type '$type' (expected 'blob')" ) unless ( defined ( $type ) and $type eq "blob" );
 
-    my $size = `git cat-file -s $filehash`;
+    my $size = safe_pipe_capture('git', 'cat-file', '-s', $filehash);
     chomp $size;
 
     $log->debug("transmitfile($filehash) size=$size, type=$type");
@@ -3040,7 +3040,7 @@ sub ensureWorkTree
     chdir $work->{emptyDir} or
         die "Unable to chdir to $work->{emptyDir}\n";
 
-    my $ver = `git show-ref -s refs/heads/$state->{module}`;
+    my $ver = safe_pipe_capture('git', 'show-ref', '-s', "refs/heads/$state->{module}");
     chomp $ver;
     if ($ver !~ /^[0-9a-f]{40}$/)
     {
@@ -3287,7 +3287,7 @@ sub open_blob_or_die
             die "Need filehash\n";
         }
 
-        my $type = `git cat-file -t $name`;
+        my $type = safe_pipe_capture('git', 'cat-file', '-t', $name);
         chomp $type;
 
         unless ( defined ( $type ) and $type eq "blob" )
@@ -3296,7 +3296,7 @@ sub open_blob_or_die
             die ( "Invalid type '$type' (expected 'blob')" )
         }
 
-        my $size = `git cat-file -s $name`;
+        my $size = safe_pipe_capture('git', 'cat-file', '-s', $name);
         chomp $size;
 
         $log->debug("open_blob_or_die($name) size=$size, type=$type");
@@ -3813,10 +3813,10 @@ sub update
     # first lets get the commit list
     $ENV{GIT_DIR} = $self->{git_path};
 
-    my $commitsha1 = `git rev-parse $self->{module}`;
+    my $commitsha1 = ::safe_pipe_capture('git', 'rev-parse', $self->{module});
     chomp $commitsha1;
 
-    my $commitinfo = `git cat-file commit $self->{module} 2>&1`;
+    my $commitinfo = ::safe_pipe_capture('git', 'cat-file', 'commit', $self->{module});
     unless ( $commitinfo =~ /tree\s+[a-zA-Z0-9]{40}/ )
     {
         die("Invalid module '$self->{module}'");
