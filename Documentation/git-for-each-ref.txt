@@ -10,8 +10,9 @@ SYNOPSIS
 [verse]
 'git for-each-ref' [--count=<count>] [--shell|--perl|--python|--tcl]
 		   [(--sort=<key>)...] [--format=<format>] [<pattern>...]
-		   [--points-at <object>] [(--merged | --no-merged) [<object>]]
-		   [--contains [<object>]] [--no-contains [<object>]]
+		   [--points-at=<object>]
+		   (--merged[=<object>] | --no-merged[=<object>])
+		   [--contains[=<object>]] [--no-contains[=<object>]]
 
 DESCRIPTION
 -----------
@@ -65,24 +66,24 @@ OPTIONS
 	the specified host language.  This is meant to produce
 	a scriptlet that can directly be `eval`ed.
 
---points-at <object>::
+--points-at=<object>::
 	Only list refs which points at the given object.
 
---merged [<object>]::
+--merged[=<object>]::
 	Only list refs whose tips are reachable from the
 	specified commit (HEAD if not specified),
 	incompatible with `--no-merged`.
 
---no-merged [<object>]::
+--no-merged[=<object>]::
 	Only list refs whose tips are not reachable from the
 	specified commit (HEAD if not specified),
 	incompatible with `--merged`.
 
---contains [<object>]::
+--contains[=<object>]::
 	Only list refs which contain the specified commit (HEAD if not
 	specified).
 
---no-contains [<object>]::
+--no-contains[=<object>]::
 	Only list refs which don't contain the specified commit (HEAD
 	if not specified).
 
