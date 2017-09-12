@@ -171,7 +171,7 @@ OPTIONS
 	object that does not have notes attached to it.
 
 --stdin::
-	Also read the object names to remove notes from from the standard
+	Also read the object names to remove notes from the standard
 	input (there is no reason you cannot combine this with object
 	names from the command line).
 

@@ -38,7 +38,7 @@ $ git checkout -b <branch> --track <remote>/<branch>
 ------------
 +
 You could omit <branch>, in which case the command degenerates to
-"check out the current branch", which is a glorified no-op with a
+"check out the current branch", which is a glorified no-op with
 rather expensive side-effects to show only the tracking information,
 if exists, for the current branch.
 
