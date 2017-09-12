@@ -4,6 +4,7 @@
 #include "git-compat-util.h"
 #include "strbuf.h"
 #include "hashmap.h"
+#include "mru.h"
 #include "advice.h"
 #include "gettext.h"
 #include "convert.h"
@@ -1589,8 +1590,7 @@ extern struct packed_git {
  * A most-recently-used ordered version of the packed_git list, which can
  * be iterated instead of packed_git (and marked via mru_mark).
  */
-struct mru;
-extern struct mru *packed_git_mru;
+extern struct mru packed_git_mru;
 
 struct pack_entry {
 	off_t offset;
