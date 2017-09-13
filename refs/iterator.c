@@ -287,6 +287,20 @@ struct prefix_ref_iterator {
 	int trim;
 };
 
+/* Return -1, 0, 1 if refname is before, inside, or after the prefix. */
+static int compare_prefix(const char *refname, const char *prefix)
+{
+	while (*prefix) {
+		if (*refname != *prefix)
+			return ((unsigned char)*refname < (unsigned char)*prefix) ? -1 : +1;
+
+		refname++;
+		prefix++;
+	}
+
+	return 0;
+}
+
 static int prefix_ref_iterator_advance(struct ref_iterator *ref_iterator)
 {
 	struct prefix_ref_iterator *iter =
@@ -294,8 +308,24 @@ static int prefix_ref_iterator_advance(struct ref_iterator *ref_iterator)
 	int ok;
 
 	while ((ok = ref_iterator_advance(iter->iter0)) == ITER_OK) {
-		if (!starts_with(iter->iter0->refname, iter->prefix))
+		int cmp = compare_prefix(iter->iter0->refname, iter->prefix);
+
+		if (cmp < 0)
 			continue;
+
+		if (cmp > 0) {
+			/*
+			 * If the source iterator is ordered, then we
+			 * can stop the iteration as soon as we see a
+			 * refname that comes after the prefix:
+			 */
+			if (iter->iter0->ordered) {
+				ok = ref_iterator_abort(iter->iter0);
+				break;
+			} else {
+				continue;
+			}
+		}
 
 		if (iter->trim) {
 			/*
