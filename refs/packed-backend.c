@@ -215,8 +215,12 @@ static NORETURN void die_invalid_line(const char *path,
  */
 static struct packed_ref_cache *read_packed_refs(struct packed_ref_store *refs)
 {
-	FILE *f;
 	struct packed_ref_cache *packed_refs = xcalloc(1, sizeof(*packed_refs));
+	int fd;
+	struct stat st;
+	size_t size;
+	char *buf;
+	const char *pos, *eol, *eof;
 	struct ref_entry *last = NULL;
 	struct strbuf line = STRBUF_INIT;
 	enum { PEELED_NONE, PEELED_TAGS, PEELED_FULLY } peeled = PEELED_NONE;
@@ -227,8 +231,8 @@ static struct packed_ref_cache *read_packed_refs(struct packed_ref_store *refs)
 	packed_refs->cache = create_ref_cache(NULL, NULL);
 	packed_refs->cache->root->flag &= ~REF_INCOMPLETE;
 
-	f = fopen(refs->path, "r");
-	if (!f) {
+	fd = open(refs->path, O_RDONLY);
+	if (fd < 0) {
 		if (errno == ENOENT) {
 			/*
 			 * This is OK; it just means that no
@@ -241,16 +245,27 @@ static struct packed_ref_cache *read_packed_refs(struct packed_ref_store *refs)
 		}
 	}
 
-	stat_validity_update(&packed_refs->validity, fileno(f));
+	stat_validity_update(&packed_refs->validity, fd);
+
+	if (fstat(fd, &st) < 0)
+		die_errno("couldn't stat %s", refs->path);
+
+	size = xsize_t(st.st_size);
+	buf = xmmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
+	pos = buf;
+	eof = buf + size;
 
 	dir = get_ref_dir(packed_refs->cache->root);
-	while (strbuf_getwholeline(&line, f, '\n') != EOF) {
+	while (pos < eof) {
 		struct object_id oid;
 		const char *refname;
 		const char *traits;
 
-		if (!line.len || line.buf[line.len - 1] != '\n')
-			die_unterminated_line(refs->path, line.buf, line.len);
+		eol = memchr(pos, '\n', eof - pos);
+		if (!eol)
+			die_unterminated_line(refs->path, pos, eof - pos);
+
+		strbuf_add(&line, pos, eol + 1 - pos);
 
 		if (skip_prefix(line.buf, "# pack-refs with:", &traits)) {
 			if (strstr(traits, " fully-peeled "))
@@ -258,7 +273,7 @@ static struct packed_ref_cache *read_packed_refs(struct packed_ref_store *refs)
 			else if (strstr(traits, " peeled "))
 				peeled = PEELED_TAGS;
 			/* perhaps other traits later as well */
-			continue;
+			goto next_line;
 		}
 
 		refname = parse_ref_line(&line, &oid);
@@ -291,11 +306,18 @@ static struct packed_ref_cache *read_packed_refs(struct packed_ref_store *refs)
 		} else {
 			die_invalid_line(refs->path, line.buf, line.len);
 		}
+
+	next_line:
+		/* The "+ 1" is for the LF character. */
+		pos = eol + 1;
+		strbuf_reset(&line);
 	}
 
-	fclose(f);
-	strbuf_release(&line);
+	if (munmap(buf, size))
+		die_errno("error ummapping packed-refs file");
+	close(fd);
 
+	strbuf_release(&line);
 	return packed_refs;
 }
 
