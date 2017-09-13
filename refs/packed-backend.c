@@ -161,6 +161,29 @@ static const char *parse_ref_line(struct strbuf *line, struct object_id *oid)
 	return ref;
 }
 
+static NORETURN void die_unterminated_line(const char *path,
+					   const char *p, size_t len)
+{
+	if (len < 80)
+		die("unterminated line in %s: %.*s", path, (int)len, p);
+	else
+		die("unterminated line in %s: %.75s...", path, p);
+}
+
+static NORETURN void die_invalid_line(const char *path,
+				      const char *p, size_t len)
+{
+	const char *eol = memchr(p, '\n', len);
+
+	if (!eol)
+		die_unterminated_line(path, p, len);
+	else if (eol - p < 80)
+		die("unexpected line in %s: %.*s", path, (int)(eol - p), p);
+	else
+		die("unexpected line in %s: %.75s...", path, p);
+
+}
+
 /*
  * Read from the `packed-refs` file into a newly-allocated
  * `packed_ref_cache` and return it. The return value will already
@@ -227,7 +250,7 @@ static struct packed_ref_cache *read_packed_refs(struct packed_ref_store *refs)
 		const char *traits;
 
 		if (!line.len || line.buf[line.len - 1] != '\n')
-			die("unterminated line in %s: %s", refs->path, line.buf);
+			die_unterminated_line(refs->path, line.buf, line.len);
 
 		if (skip_prefix(line.buf, "# pack-refs with:", &traits)) {
 			if (strstr(traits, " fully-peeled "))
@@ -266,8 +289,7 @@ static struct packed_ref_cache *read_packed_refs(struct packed_ref_store *refs)
 			 */
 			last->flag |= REF_KNOWS_PEELED;
 		} else {
-			strbuf_setlen(&line, line.len - 1);
-			die("unexpected line in %s: %s", refs->path, line.buf);
+			die_invalid_line(refs->path, line.buf, line.len);
 		}
 	}
 
