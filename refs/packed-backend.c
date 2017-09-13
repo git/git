@@ -7,7 +7,15 @@
 #include "../iterator.h"
 #include "../lockfile.h"
 
+struct packed_ref_store;
+
 struct packed_ref_cache {
+	/*
+	 * A back-pointer to the packed_ref_store with which this
+	 * cache is associated:
+	 */
+	struct packed_ref_store *refs;
+
 	struct ref_cache *cache;
 
 	/*
@@ -154,7 +162,7 @@ static const char *parse_ref_line(struct strbuf *line, struct object_id *oid)
 }
 
 /*
- * Read from `packed_refs_file` into a newly-allocated
+ * Read from the `packed-refs` file into a newly-allocated
  * `packed_ref_cache` and return it. The return value will already
  * have its reference count incremented.
  *
@@ -182,7 +190,7 @@ static const char *parse_ref_line(struct strbuf *line, struct object_id *oid)
  *      compatibility with older clients, but we do not require it
  *      (i.e., "peeled" is a no-op if "fully-peeled" is set).
  */
-static struct packed_ref_cache *read_packed_refs(const char *packed_refs_file)
+static struct packed_ref_cache *read_packed_refs(struct packed_ref_store *refs)
 {
 	FILE *f;
 	struct packed_ref_cache *packed_refs = xcalloc(1, sizeof(*packed_refs));
@@ -191,11 +199,12 @@ static struct packed_ref_cache *read_packed_refs(const char *packed_refs_file)
 	enum { PEELED_NONE, PEELED_TAGS, PEELED_FULLY } peeled = PEELED_NONE;
 	struct ref_dir *dir;
 
+	packed_refs->refs = refs;
 	acquire_packed_ref_cache(packed_refs);
 	packed_refs->cache = create_ref_cache(NULL, NULL);
 	packed_refs->cache->root->flag &= ~REF_INCOMPLETE;
 
-	f = fopen(packed_refs_file, "r");
+	f = fopen(refs->path, "r");
 	if (!f) {
 		if (errno == ENOENT) {
 			/*
@@ -205,7 +214,7 @@ static struct packed_ref_cache *read_packed_refs(const char *packed_refs_file)
 			 */
 			return packed_refs;
 		} else {
-			die_errno("couldn't read %s", packed_refs_file);
+			die_errno("couldn't read %s", refs->path);
 		}
 	}
 
@@ -218,7 +227,7 @@ static struct packed_ref_cache *read_packed_refs(const char *packed_refs_file)
 		const char *traits;
 
 		if (!line.len || line.buf[line.len - 1] != '\n')
-			die("unterminated line in %s: %s", packed_refs_file, line.buf);
+			die("unterminated line in %s: %s", refs->path, line.buf);
 
 		if (skip_prefix(line.buf, "# pack-refs with:", &traits)) {
 			if (strstr(traits, " fully-peeled "))
@@ -258,7 +267,7 @@ static struct packed_ref_cache *read_packed_refs(const char *packed_refs_file)
 			last->flag |= REF_KNOWS_PEELED;
 		} else {
 			strbuf_setlen(&line, line.len - 1);
-			die("unexpected line in %s: %s", packed_refs_file, line.buf);
+			die("unexpected line in %s: %s", refs->path, line.buf);
 		}
 	}
 
@@ -293,7 +302,7 @@ static struct packed_ref_cache *get_packed_ref_cache(struct packed_ref_store *re
 		validate_packed_ref_cache(refs);
 
 	if (!refs->cache)
-		refs->cache = read_packed_refs(refs->path);
+		refs->cache = read_packed_refs(refs);
 
 	return refs->cache;
 }
