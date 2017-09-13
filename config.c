@@ -2251,10 +2251,11 @@ static int write_error(const char *filename)
 	return 4;
 }
 
-static int store_write_section(int fd, const char *key)
+static ssize_t write_section(int fd, const char *key)
 {
 	const char *dot;
-	int i, success;
+	int i;
+	ssize_t ret;
 	struct strbuf sb = STRBUF_INIT;
 
 	dot = memchr(key, '.', store.baselen);
@@ -2270,15 +2271,16 @@ static int store_write_section(int fd, const char *key)
 		strbuf_addf(&sb, "[%.*s]\n", store.baselen, key);
 	}
 
-	success = write_in_full(fd, sb.buf, sb.len) == sb.len;
+	ret = write_in_full(fd, sb.buf, sb.len);
 	strbuf_release(&sb);
 
-	return success;
+	return ret;
 }
 
-static int store_write_pair(int fd, const char *key, const char *value)
+static ssize_t write_pair(int fd, const char *key, const char *value)
 {
-	int i, success;
+	int i;
+	ssize_t ret;
 	int length = strlen(key + store.baselen + 1);
 	const char *quote = "";
 	struct strbuf sb = STRBUF_INIT;
@@ -2318,10 +2320,10 @@ static int store_write_pair(int fd, const char *key, const char *value)
 		}
 	strbuf_addf(&sb, "%s\n", quote);
 
-	success = write_in_full(fd, sb.buf, sb.len) == sb.len;
+	ret = write_in_full(fd, sb.buf, sb.len);
 	strbuf_release(&sb);
 
-	return success;
+	return ret;
 }
 
 static ssize_t find_beginning_of_line(const char *contents, size_t size,
@@ -2451,8 +2453,8 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 		}
 
 		store.key = (char *)key;
-		if (!store_write_section(fd, key) ||
-		    !store_write_pair(fd, key, value))
+		if (write_section(fd, key) < 0 ||
+		    write_pair(fd, key, value) < 0)
 			goto write_err_out;
 	} else {
 		struct stat st;
@@ -2574,10 +2576,10 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 		/* write the pair (value == NULL means unset) */
 		if (value != NULL) {
 			if (store.state == START) {
-				if (!store_write_section(fd, key))
+				if (write_section(fd, key) < 0)
 					goto write_err_out;
 			}
-			if (!store_write_pair(fd, key, value))
+			if (write_pair(fd, key, value) < 0)
 				goto write_err_out;
 		}
 
@@ -2770,7 +2772,7 @@ int git_config_rename_section_in_file(const char *config_filename,
 					continue;
 				}
 				store.baselen = strlen(new_name);
-				if (!store_write_section(out_fd, new_name)) {
+				if (write_section(out_fd, new_name) < 0) {
 					ret = write_error(get_lock_file_path(lock));
 					goto out;
 				}
