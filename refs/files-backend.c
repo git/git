@@ -2039,7 +2039,7 @@ static int log_ref_write_fd(int fd, const struct object_id *old_oid,
 
 	written = len <= maxlen ? write_in_full(fd, logrec, len) : -1;
 	free(logrec);
-	if (written != len)
+	if (written < 0)
 		return -1;
 
 	return 0;
