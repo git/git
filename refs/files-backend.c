@@ -762,7 +762,7 @@ static struct ref_iterator *files_ref_iterator_begin(
 		const char *prefix, unsigned int flags)
 {
 	struct files_ref_store *refs;
-	struct ref_iterator *loose_iter, *packed_iter;
+	struct ref_iterator *loose_iter, *packed_iter, *overlay_iter;
 	struct files_ref_iterator *iter;
 	struct ref_iterator *ref_iterator;
 	unsigned int required_flags = REF_STORE_READ;
@@ -771,10 +771,6 @@ static struct ref_iterator *files_ref_iterator_begin(
 		required_flags |= REF_STORE_ODB;
 
 	refs = files_downcast(ref_store, required_flags, "ref_iterator_begin");
-
-	iter = xcalloc(1, sizeof(*iter));
-	ref_iterator = &iter->base;
-	base_ref_iterator_init(ref_iterator, &files_ref_iterator_vtable);
 
 	/*
 	 * We must make sure that all loose refs are read before
@@ -811,7 +807,13 @@ static struct ref_iterator *files_ref_iterator_begin(
 			refs->packed_ref_store, prefix, 0,
 			DO_FOR_EACH_INCLUDE_BROKEN);
 
-	iter->iter0 = overlay_ref_iterator_begin(loose_iter, packed_iter);
+	overlay_iter = overlay_ref_iterator_begin(loose_iter, packed_iter);
+
+	iter = xcalloc(1, sizeof(*iter));
+	ref_iterator = &iter->base;
+	base_ref_iterator_init(ref_iterator, &files_ref_iterator_vtable,
+			       overlay_iter->ordered);
+	iter->iter0 = overlay_iter;
 	iter->flags = flags;
 
 	return ref_iterator;
@@ -2084,7 +2086,7 @@ static struct ref_iterator *files_reflog_iterator_begin(struct ref_store *ref_st
 	struct ref_iterator *ref_iterator = &iter->base;
 	struct strbuf sb = STRBUF_INIT;
 
-	base_ref_iterator_init(ref_iterator, &files_reflog_iterator_vtable);
+	base_ref_iterator_init(ref_iterator, &files_reflog_iterator_vtable, 0);
 	files_reflog_path(refs, &sb, NULL);
 	iter->dir_iterator = dir_iterator_begin(sb.buf);
 	iter->ref_store = ref_store;

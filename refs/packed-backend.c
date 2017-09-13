@@ -437,7 +437,7 @@ static struct ref_iterator *packed_ref_iterator_begin(
 
 	iter = xcalloc(1, sizeof(*iter));
 	ref_iterator = &iter->base;
-	base_ref_iterator_init(ref_iterator, &packed_ref_iterator_vtable);
+	base_ref_iterator_init(ref_iterator, &packed_ref_iterator_vtable, 1);
 
 	/*
 	 * Note that get_packed_ref_cache() internally checks whether

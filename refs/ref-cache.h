@@ -245,7 +245,8 @@ struct ref_entry *find_ref_entry(struct ref_dir *dir, const char *refname);
  * Start iterating over references in `cache`. If `prefix` is
  * specified, only include references whose names start with that
  * prefix. If `prime_dir` is true, then fill any incomplete
- * directories before beginning the iteration.
+ * directories before beginning the iteration. The output is ordered
+ * by refname.
  */
 struct ref_iterator *cache_ref_iterator_begin(struct ref_cache *cache,
 					      const char *prefix,
