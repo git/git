@@ -255,10 +255,8 @@ static struct packed_ref_cache *read_packed_refs(struct packed_ref_store *refs)
 	pos = buf;
 	eof = buf + size;
 
-	dir = get_ref_dir(packed_refs->cache->root);
-	while (pos < eof) {
-		struct object_id oid;
-		const char *refname;
+	/* If the file has a header line, process it: */
+	if (pos < eof && *pos == '#') {
 		const char *traits;
 
 		eol = memchr(pos, '\n', eof - pos);
@@ -267,14 +265,30 @@ static struct packed_ref_cache *read_packed_refs(struct packed_ref_store *refs)
 
 		strbuf_add(&line, pos, eol + 1 - pos);
 
-		if (skip_prefix(line.buf, "# pack-refs with:", &traits)) {
-			if (strstr(traits, " fully-peeled "))
-				peeled = PEELED_FULLY;
-			else if (strstr(traits, " peeled "))
-				peeled = PEELED_TAGS;
-			/* perhaps other traits later as well */
-			goto next_line;
-		}
+		if (!skip_prefix(line.buf, "# pack-refs with:", &traits))
+			die_invalid_line(refs->path, pos, eof - pos);
+
+		if (strstr(traits, " fully-peeled "))
+			peeled = PEELED_FULLY;
+		else if (strstr(traits, " peeled "))
+			peeled = PEELED_TAGS;
+		/* perhaps other traits later as well */
+
+		/* The "+ 1" is for the LF character. */
+		pos = eol + 1;
+		strbuf_reset(&line);
+	}
+
+	dir = get_ref_dir(packed_refs->cache->root);
+	while (pos < eof) {
+		struct object_id oid;
+		const char *refname;
+
+		eol = memchr(pos, '\n', eof - pos);
+		if (!eol)
+			die_unterminated_line(refs->path, pos, eof - pos);
+
+		strbuf_add(&line, pos, eol + 1 - pos);
 
 		refname = parse_ref_line(&line, &oid);
 		if (refname) {
@@ -307,7 +321,6 @@ static struct packed_ref_cache *read_packed_refs(struct packed_ref_store *refs)
 			die_invalid_line(refs->path, line.buf, line.len);
 		}
 
-	next_line:
 		/* The "+ 1" is for the LF character. */
 		pos = eol + 1;
 		strbuf_reset(&line);
