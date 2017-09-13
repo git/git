@@ -2565,7 +2565,7 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 						  copy_end - copy_begin) < 0)
 					goto write_err_out;
 				if (new_line &&
-				    write_str_in_full(fd, "\n") != 1)
+				    write_str_in_full(fd, "\n") < 0)
 					goto write_err_out;
 			}
 			copy_begin = store.offset[i];
@@ -2796,7 +2796,7 @@ int git_config_rename_section_in_file(const char *config_filename,
 		if (remove)
 			continue;
 		length = strlen(output);
-		if (write_in_full(out_fd, output, length) != length) {
+		if (write_in_full(out_fd, output, length) < 0) {
 			ret = write_error(get_lock_file_path(lock));
 			goto out;
 		}
