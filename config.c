@@ -2562,8 +2562,7 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 			/* write the first part of the config */
 			if (copy_end > copy_begin) {
 				if (write_in_full(fd, contents + copy_begin,
-						  copy_end - copy_begin) <
-				    copy_end - copy_begin)
+						  copy_end - copy_begin) < 0)
 					goto write_err_out;
 				if (new_line &&
 				    write_str_in_full(fd, "\n") != 1)
@@ -2585,8 +2584,7 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 		/* write the rest of the config */
 		if (copy_begin < contents_sz)
 			if (write_in_full(fd, contents + copy_begin,
-					  contents_sz - copy_begin) <
-			    contents_sz - copy_begin)
+					  contents_sz - copy_begin) < 0)
 				goto write_err_out;
 
 		munmap(contents, contents_sz);
