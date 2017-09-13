@@ -257,25 +257,30 @@ static struct packed_ref_cache *read_packed_refs(struct packed_ref_store *refs)
 
 	/* If the file has a header line, process it: */
 	if (pos < eof && *pos == '#') {
-		const char *traits;
+		char *p;
+		struct string_list traits = STRING_LIST_INIT_NODUP;
 
 		eol = memchr(pos, '\n', eof - pos);
 		if (!eol)
 			die_unterminated_line(refs->path, pos, eof - pos);
 
-		strbuf_add(&line, pos, eol + 1 - pos);
+		strbuf_add(&line, pos, eol - pos);
 
-		if (!skip_prefix(line.buf, "# pack-refs with:", &traits))
+		if (!skip_prefix(line.buf, "# pack-refs with:", (const char **)&p))
 			die_invalid_line(refs->path, pos, eof - pos);
 
-		if (strstr(traits, " fully-peeled "))
+		string_list_split_in_place(&traits, p, ' ', -1);
+
+		if (unsorted_string_list_has_string(&traits, "fully-peeled"))
 			peeled = PEELED_FULLY;
-		else if (strstr(traits, " peeled "))
+		else if (unsorted_string_list_has_string(&traits, "peeled"))
 			peeled = PEELED_TAGS;
 		/* perhaps other traits later as well */
 
 		/* The "+ 1" is for the LF character. */
 		pos = eol + 1;
+
+		string_list_clear(&traits, 0);
 		strbuf_reset(&line);
 	}
 
@@ -610,7 +615,11 @@ int packed_refs_is_locked(struct ref_store *ref_store)
 
 /*
  * The packed-refs header line that we write out.  Perhaps other
- * traits will be added later.  The trailing space is required.
+ * traits will be added later.
+ *
+ * Note that earlier versions of Git used to parse these traits by
+ * looking for " trait " in the line. For this reason, the space after
+ * the colon and the trailing space are required.
  */
 static const char PACKED_REFS_HEADER[] =
 	"# pack-refs with: peeled fully-peeled \n";
