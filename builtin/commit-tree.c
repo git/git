@@ -102,7 +102,6 @@ int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 			if (fd && close(fd))
 				die_errno("git commit-tree: failed to close '%s'",
 					  argv[i]);
-			strbuf_complete_line(&buffer);
 			continue;
 		}
 
