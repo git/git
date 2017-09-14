@@ -262,8 +262,9 @@ test_expect_success 'using reflog to find the fork point' '
 
 test_expect_success '--fork-point works with empty reflog' '
 	git -c core.logallrefupdates=false branch no-reflog base &&
-	git merge-base --fork-point no-reflog derived &&
-	test_cmp expect3 actual
+	git rev-parse base >expect &&
+	git merge-base --fork-point no-reflog derived >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'merge-base --octopus --all for complex tree' '
