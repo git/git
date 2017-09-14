@@ -673,5 +673,6 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 		return bad ? 1 : 0;
 	}
 
+	UNLEAK(dir);
 	return 0;
 }

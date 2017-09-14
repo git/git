@@ -119,6 +119,7 @@ int add_files_to_cache(const char *prefix,
 	rev.diffopt.flags |= DIFF_OPT_OVERRIDE_SUBMODULE_CONFIG;
 	rev.max_count = 0; /* do not compare unmerged paths with stage #2 */
 	run_diff_files(&rev, DIFF_RACY_IS_MODIFIED);
+	clear_pathspec(&rev.prune_data);
 	return !!data.add_errors;
 }
 
@@ -514,5 +515,7 @@ finish:
 			die(_("Unable to write new index file"));
 	}
 
+	UNLEAK(pathspec);
+	UNLEAK(dir);
 	return exit_status;
 }
