@@ -926,6 +926,25 @@ static int auth_cram_md5(struct imap_store *ctx, struct imap_cmd *cmd, const cha
 	return 0;
 }
 
+static void server_fill_credential(struct imap_server_conf *srvc, struct credential *cred)
+{
+	if (srvc->user && srvc->pass)
+		return;
+
+	cred->protocol = xstrdup(srvc->use_ssl ? "imaps" : "imap");
+	cred->host = xstrdup(srvc->host);
+
+	cred->username = xstrdup_or_null(srvc->user);
+	cred->password = xstrdup_or_null(srvc->pass);
+
+	credential_fill(cred);
+
+	if (!srvc->user)
+		srvc->user = xstrdup(cred->username);
+	if (!srvc->pass)
+		srvc->pass = xstrdup(cred->password);
+}
+
 static struct imap_store *imap_open_store(struct imap_server_conf *srvc, char *folder)
 {
 	struct credential cred = CREDENTIAL_INIT;
@@ -1078,20 +1097,7 @@ static struct imap_store *imap_open_store(struct imap_server_conf *srvc, char *f
 		}
 #endif
 		imap_info("Logging in...\n");
-		if (!srvc->user || !srvc->pass) {
-			cred.protocol = xstrdup(srvc->use_ssl ? "imaps" : "imap");
-			cred.host = xstrdup(srvc->host);
-
-			cred.username = xstrdup_or_null(srvc->user);
-			cred.password = xstrdup_or_null(srvc->pass);
-
-			credential_fill(&cred);
-
-			if (!srvc->user)
-				srvc->user = xstrdup(cred.username);
-			if (!srvc->pass)
-				srvc->pass = xstrdup(cred.password);
-		}
+		server_fill_credential(srvc, &cred);
 
 		if (srvc->auth_method) {
 			struct imap_cmd_cb cb;
