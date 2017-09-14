@@ -286,28 +286,26 @@ int write_shallow_commits(struct strbuf *out, int use_pack_protocol,
 	return write_shallow_commits_1(out, use_pack_protocol, extra, 0);
 }
 
-static struct tempfile temporary_shallow;
-
 const char *setup_temporary_shallow(const struct oid_array *extra)
 {
+	struct tempfile *temp;
 	struct strbuf sb = STRBUF_INIT;
-	int fd;
 
 	if (write_shallow_commits(&sb, 0, extra)) {
-		fd = xmks_tempfile(&temporary_shallow, git_path("shallow_XXXXXX"));
+		temp = xmks_tempfile(git_path("shallow_XXXXXX"));
 
-		if (write_in_full(fd, sb.buf, sb.len) != sb.len)
+		if (write_in_full(temp->fd, sb.buf, sb.len) != sb.len ||
+		    close_tempfile_gently(temp) < 0)
 			die_errno("failed to write to %s",
-				  get_tempfile_path(&temporary_shallow));
-		close_tempfile(&temporary_shallow);
+				  get_tempfile_path(temp));
 		strbuf_release(&sb);
-		return get_tempfile_path(&temporary_shallow);
+		return get_tempfile_path(temp);
 	}
 	/*
 	 * is_repository_shallow() sees empty string as "no shallow
 	 * file".
 	 */
-	return get_tempfile_path(&temporary_shallow);
+	return "";
 }
 
 void setup_alternate_shallow(struct lock_file *shallow_lock,

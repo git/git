@@ -459,7 +459,7 @@ static struct diff_tempfile {
 	 * If this diff_tempfile instance refers to a temporary file,
 	 * this tempfile object is used to manage its lifetime.
 	 */
-	struct tempfile tempfile;
+	struct tempfile *tempfile;
 } diff_temp[2];
 
 struct emit_callback {
@@ -1414,7 +1414,7 @@ static void remove_tempfile(void)
 {
 	int i;
 	for (i = 0; i < ARRAY_SIZE(diff_temp); i++) {
-		if (is_tempfile_active(&diff_temp[i].tempfile))
+		if (is_tempfile_active(diff_temp[i].tempfile))
 			delete_tempfile(&diff_temp[i].tempfile);
 		diff_temp[i].name = NULL;
 	}
@@ -3720,7 +3720,6 @@ static void prep_temp_blob(const char *path, struct diff_tempfile *temp,
 			   const struct object_id *oid,
 			   int mode)
 {
-	int fd;
 	struct strbuf buf = STRBUF_INIT;
 	struct strbuf template = STRBUF_INIT;
 	char *path_dup = xstrdup(path);
@@ -3730,18 +3729,18 @@ static void prep_temp_blob(const char *path, struct diff_tempfile *temp,
 	strbuf_addstr(&template, "XXXXXX_");
 	strbuf_addstr(&template, base);
 
-	fd = mks_tempfile_ts(&temp->tempfile, template.buf, strlen(base) + 1);
-	if (fd < 0)
+	temp->tempfile = mks_tempfile_ts(template.buf, strlen(base) + 1);
+	if (!temp->tempfile)
 		die_errno("unable to create temp-file");
 	if (convert_to_working_tree(path,
 			(const char *)blob, (size_t)size, &buf)) {
 		blob = buf.buf;
 		size = buf.len;
 	}
-	if (write_in_full(fd, blob, size) != size)
+	if (write_in_full(temp->tempfile->fd, blob, size) != size ||
+	    close_tempfile_gently(temp->tempfile))
 		die_errno("unable to write temp-file");
-	close_tempfile(&temp->tempfile);
-	temp->name = get_tempfile_path(&temp->tempfile);
+	temp->name = get_tempfile_path(temp->tempfile);
 	oid_to_hex_r(temp->hex, oid);
 	xsnprintf(temp->mode, sizeof(temp->mode), "%06o", mode);
 	strbuf_release(&buf);

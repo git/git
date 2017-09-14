@@ -2450,7 +2450,7 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 {
 	int fd = -1, in_fd = -1;
 	int ret;
-	static struct lock_file lock;
+	struct lock_file lock = LOCK_INIT;
 	char *filename_buf = NULL;
 	char *contents = NULL;
 	size_t contents_sz;
