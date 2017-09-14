@@ -1165,13 +1165,19 @@ run_with_limited_cmdline () {
 	(ulimit -s 128 && "$@")
 }
 
-test_lazy_prereq CMDLINE_LIMIT 'run_with_limited_cmdline true'
+test_lazy_prereq CMDLINE_LIMIT '
+	test_have_prereq !MINGW,!CYGWIN &&
+	run_with_limited_cmdline true
+'
 
 run_with_limited_stack () {
 	(ulimit -s 128 && "$@")
 }
 
-test_lazy_prereq ULIMIT_STACK_SIZE 'run_with_limited_stack true'
+test_lazy_prereq ULIMIT_STACK_SIZE '
+	test_have_prereq !MINGW,!CYGWIN &&
+	run_with_limited_stack true
+'
 
 build_option () {
 	git version --build-options |
