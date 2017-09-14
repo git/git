@@ -757,8 +757,8 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				continue;
 			}
 			if (!strcmp(arg, "--bisect")) {
-				for_each_ref_in("refs/bisect/bad", show_reference, NULL);
-				for_each_ref_in("refs/bisect/good", anti_reference, NULL);
+				for_each_fullref_in("refs/bisect/bad", show_reference, NULL, 0);
+				for_each_fullref_in("refs/bisect/good", anti_reference, NULL, 0);
 				continue;
 			}
 			if (opt_with_value(arg, "--branches", &arg)) {
