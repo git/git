@@ -74,7 +74,7 @@ msgstr ""
 "Project-Id-Version: git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
 "POT-Creation-Date: 2017-07-24 21:54+0800\n"
-"PO-Revision-Date: 2017-07-23 04:35+0200\n"
+"PO-Revision-Date: 2017-09-14 14:01+0200\n"
 "Last-Translator: Jean-Noël Avila <jn.avila@free.fr>\n"
 "Language-Team: Jean-Noël Avila <jn.avila@free.fr>\n"
 "Language: fr\n"
@@ -5465,7 +5465,7 @@ msgstr "Supprimer le nom de l'auteur et l'horodatage (Défaut : désactivé)"
 
 #: builtin/blame.c:682
 msgid "Show author email instead of name (Default: off)"
-msgstr "Afficher l'courriel de l'auteur au lieu du nom (Défaut : désactivé)"
+msgstr "Afficher le courriel de l'auteur au lieu du nom (Défaut : désactivé)"
 
 #: builtin/blame.c:683
 msgid "Ignore whitespace differences"
@@ -5537,7 +5537,7 @@ msgstr[1] "le fichier %s n'a que %lu lignes"
 
 #: builtin/blame.c:928
 msgid "Blaming lines"
-msgstr "Assignation de blâme au lignes"
+msgstr "Assignation de blâme aux lignes"
 
 #: builtin/branch.c:27
 msgid "git branch [<options>] [-r | -a] [--merged | --no-merged]"
@@ -6762,9 +6762,7 @@ msgstr "cloner seulement une branche, HEAD ou --branch"
 
 #: builtin/clone.c:126
 msgid "don't clone any tags, and make later fetches not to follow them"
-msgstr ""
-"ne pas cloner les tags et indiquer au récupérations futures de ne pas le "
-"faire"
+msgstr "ne pas cloner les tags et indiquer aux récupérations futures de ne pas le faire"
 
 #: builtin/clone.c:128
 msgid "any cloned submodules will be shallow"
@@ -9771,7 +9769,7 @@ msgstr "en-tête"
 
 #: builtin/log.c:1466
 msgid "add email header"
-msgstr "ajouter l'en-tête d'courriel"
+msgstr "ajouter l'en-tête de courriel"
 
 #: builtin/log.c:1467 builtin/log.c:1469
 msgid "email"
