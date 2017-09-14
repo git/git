@@ -45,6 +45,7 @@ static int check_ref_format_branch(const char *arg)
 	if (strbuf_check_branch_ref(&sb, arg))
 		die("'%s' is not a valid branch name", arg);
 	printf("%s\n", sb.buf + 11);
+	strbuf_release(&sb);
 	return 0;
 }
 

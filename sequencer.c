@@ -1565,6 +1565,7 @@ static int save_head(const char *head)
 	static struct lock_file head_lock;
 	struct strbuf buf = STRBUF_INIT;
 	int fd;
+	ssize_t written;
 
 	fd = hold_lock_file_for_update(&head_lock, git_path_head_file(), 0);
 	if (fd < 0) {
@@ -1572,7 +1573,9 @@ static int save_head(const char *head)
 		return error_errno(_("could not lock HEAD"));
 	}
 	strbuf_addf(&buf, "%s\n", head);
-	if (write_in_full(fd, buf.buf, buf.len) < 0) {
+	written = write_in_full(fd, buf.buf, buf.len);
+	strbuf_release(&buf);
+	if (written < 0) {
 		rollback_lock_file(&head_lock);
 		return error_errno(_("could not write to '%s'"),
 				   git_path_head_file());

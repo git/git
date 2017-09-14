@@ -2583,6 +2583,7 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 	}
 
 	print_stat_summary_inserts_deletes(options, total_files, adds, dels);
+	strbuf_release(&out);
 }
 
 static void show_shortstats(struct diffstat_t *data, struct diff_options *options)
@@ -5288,6 +5289,7 @@ static void show_rename_copy(struct diff_options *opt, const char *renamecopy,
 	emit_diff_symbol(opt, DIFF_SYMBOL_SUMMARY,
 				 sb.buf, sb.len, 0);
 	show_mode_change(opt, p, 0);
+	strbuf_release(&sb);
 }
 
 static void diff_summary(struct diff_options *opt, struct diff_filepair *p)
@@ -5313,6 +5315,7 @@ static void diff_summary(struct diff_options *opt, struct diff_filepair *p)
 			strbuf_addf(&sb, " (%d%%)\n", similarity_index(p));
 			emit_diff_symbol(opt, DIFF_SYMBOL_SUMMARY,
 					 sb.buf, sb.len, 0);
+			strbuf_release(&sb);
 		}
 		show_mode_change(opt, p, !p->score);
 		break;

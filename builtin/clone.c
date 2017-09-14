@@ -507,8 +507,8 @@ static void remove_junk(void)
 	if (junk_work_tree) {
 		strbuf_addstr(&sb, junk_work_tree);
 		remove_dir_recursively(&sb, 0);
-		strbuf_reset(&sb);
 	}
+	strbuf_release(&sb);
 }
 
 static void remove_junk_on_signal(int signo)
