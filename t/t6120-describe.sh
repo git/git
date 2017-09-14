@@ -198,6 +198,31 @@ test_expect_success 'name-rev with exact tags' '
 	test_cmp expect actual
 '
 
+test_expect_success 'name-rev --all' '
+	>expect.unsorted &&
+	for rev in $(git rev-list --all)
+	do
+		git name-rev $rev >>expect.unsorted
+	done &&
+	sort <expect.unsorted >expect &&
+	git name-rev --all >actual.unsorted &&
+	sort <actual.unsorted >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'name-rev --stdin' '
+	>expect.unsorted &&
+	for rev in $(git rev-list --all)
+	do
+		name=$(git name-rev --name-only $rev) &&
+		echo "$rev ($name)" >>expect.unsorted
+	done &&
+	sort <expect.unsorted >expect &&
+	git rev-list --all | git name-rev --stdin >actual.unsorted &&
+	sort <actual.unsorted >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'describe --contains with the exact tags' '
 	echo "A^0" >expect &&
 	tag_object=$(git rev-parse refs/tags/A) &&
@@ -250,7 +275,39 @@ test_expect_success 'describe chokes on severely broken submodules' '
 '
 test_expect_success 'describe ignoring a borken submodule' '
 	git describe --broken >out &&
+	test_when_finished "mv .git/modules/sub_moved .git/modules/sub1" &&
 	grep broken out
+'
+
+# we require ulimit, this excludes Windows
+test_expect_failure ULIMIT_STACK_SIZE 'name-rev works in a deep repo' '
+	i=1 &&
+	while test $i -lt 8000
+	do
+		echo "commit refs/heads/master
+committer A U Thor <author@example.com> $((1000000000 + $i * 100)) +0200
+data <<EOF
+commit #$i
+EOF"
+		test $i = 1 && echo "from refs/heads/master^0"
+		i=$(($i + 1))
+	done | git fast-import &&
+	git checkout master &&
+	git tag far-far-away HEAD^ &&
+	echo "HEAD~4000 tags/far-far-away~3999" >expect &&
+	git name-rev HEAD~4000 >actual &&
+	test_cmp expect actual &&
+	run_with_limited_stack git name-rev HEAD~4000 >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success ULIMIT_STACK_SIZE 'describe works in a deep repo' '
+	git tag -f far-far-away HEAD~7999 &&
+	echo "far-far-away" >expect &&
+	git describe --tags --abbrev=0 HEAD~4000 >actual &&
+	test_cmp expect actual &&
+	run_with_limited_stack git describe --tags --abbrev=0 HEAD~4000 >actual &&
+	test_cmp expect actual
 '
 
 test_done
