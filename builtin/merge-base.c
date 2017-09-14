@@ -174,7 +174,7 @@ static int handle_fork_point(int argc, const char **argv)
 	revs.initial = 1;
 	for_each_reflog_ent(refname, collect_one_reflog_ent, &revs);
 
-	if (!revs.nr && !get_oid(refname, &oid))
+	if (!get_oid(refname, &oid))
 		add_one_commit(&oid, &revs);
 
 	for (i = 0; i < revs.nr; i++)

@@ -275,6 +275,14 @@ test_expect_success '--fork-point works with merge-base outside reflog' '
 	test_cmp expect actual
 '
 
+test_expect_success '--fork-point works with merge-base outside partial reflog' '
+	git -c core.logallrefupdates=true branch partial-reflog base &&
+	git rev-parse no-reflog >.git/refs/heads/partial-reflog &&
+	git rev-parse no-reflog >expect &&
+	git merge-base --fork-point partial-reflog no-reflog >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'merge-base --octopus --all for complex tree' '
 	# Best common ancestor for JE, JAA and JDD is JC
 	#             JE
