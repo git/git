@@ -61,23 +61,8 @@ matrix:
       services:
         - docker
       before_install:
-        - docker pull daald/ubuntu32:xenial
       before_script:
-      script:
-        - >
-          docker run
-          --interactive
-          --env DEVELOPER
-          --env DEFAULT_TEST_TARGET
-          --env GIT_PROVE_OPTS
-          --env GIT_TEST_OPTS
-          --env GIT_TEST_CLONE_2GB
-          --volume "${PWD}:/usr/src/git"
-          daald/ubuntu32:xenial
-          /usr/src/git/ci/run-linux32-build.sh $(id -u $USER)
-        # Use the following command to debug the docker build locally:
-        # $ docker run -itv "${PWD}:/usr/src/git" --entrypoint /bin/bash daald/ubuntu32:xenial
-        # root@container:/# /usr/src/git/ci/run-linux32-build.sh
+      script: ci/run-linux32-docker.sh
     - env: Static Analysis
       os: linux
       compiler:
@@ -86,9 +71,8 @@ matrix:
           packages:
           - coccinelle
       before_install:
-      script:
-        # "before_script" that builds Git is inherited from base job
-        - make coccicheck
+      # "before_script" that builds Git is inherited from base job
+      script: ci/run-static-analysis.sh
       after_failure:
     - env: Documentation
       os: linux
@@ -99,70 +83,14 @@ matrix:
           - asciidoc
           - xmlto
       before_install:
-      before_script: gem install asciidoctor
+      before_script:
       script: ci/test-documentation.sh
       after_failure:
 
-before_install:
-  - >
-    case "${TRAVIS_OS_NAME:-linux}" in
-    linux)
-      export GIT_TEST_HTTPD=YesPlease
-
-      mkdir --parents custom/p4
-      pushd custom/p4
-        wget --quiet http://filehost.perforce.com/perforce/r$LINUX_P4_VERSION/bin.linux26x86_64/p4d
-        wget --quiet http://filehost.perforce.com/perforce/r$LINUX_P4_VERSION/bin.linux26x86_64/p4
-        chmod u+x p4d
-        chmod u+x p4
-        export PATH="$(pwd):$PATH"
-      popd
-      mkdir --parents custom/git-lfs
-      pushd custom/git-lfs
-        wget --quiet https://github.com/github/git-lfs/releases/download/v$LINUX_GIT_LFS_VERSION/git-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz
-        tar --extract --gunzip --file "git-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz"
-        cp git-lfs-$LINUX_GIT_LFS_VERSION/git-lfs .
-        export PATH="$(pwd):$PATH"
-      popd
-      ;;
-    osx)
-      brew update --quiet
-      # Uncomment this if you want to run perf tests:
-      # brew install gnu-time
-      brew install git-lfs gettext
-      brew link --force gettext
-      brew install caskroom/cask/perforce
-      ;;
-    esac;
-    echo "$(tput setaf 6)Perforce Server Version$(tput sgr0)";
-    p4d -V | grep Rev.;
-    echo "$(tput setaf 6)Perforce Client Version$(tput sgr0)";
-    p4 -V | grep Rev.;
-    echo "$(tput setaf 6)Git-LFS Version$(tput sgr0)";
-    git-lfs version;
-
-before_script: make --jobs=2
-
-script:
-  - >
-    mkdir -p $HOME/travis-cache;
-    ln -s $HOME/travis-cache/.prove t/.prove;
-    make --quiet test;
-
-after_failure:
-  - >
-    : '<-- Click here to see detailed test output!                                                        ';
-    for TEST_EXIT in t/test-results/*.exit;
-    do
-      if [ "$(cat "$TEST_EXIT")" != "0" ];
-      then
-        TEST_OUT="${TEST_EXIT%exit}out";
-        echo "------------------------------------------------------------------------";
-        echo "$(tput setaf 1)${TEST_OUT}...$(tput sgr0)";
-        echo "------------------------------------------------------------------------";
-        cat "${TEST_OUT}";
-      fi;
-    done;
+before_install: ci/install-dependencies.sh
+before_script: ci/run-build.sh
+script: ci/run-tests.sh
+after_failure: ci/print-test-failures.sh
 
 notifications:
   email: false
