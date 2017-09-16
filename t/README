@@ -265,12 +265,12 @@ or:
 
     $ sh ./t9200-git-cvsexport-commit.sh --run='-3 21'
 
-As noted above, the test set is built going though items left to
-right, so this:
+As noted above, the test set is built by going through the items
+from left to right, so this:
 
     $ sh ./t9200-git-cvsexport-commit.sh --run='1-4 !3'
 
-will run tests 1, 2, and 4.  Items that comes later have higher
+will run tests 1, 2, and 4.  Items that come later have higher
 precedence.  It means that this:
 
     $ sh ./t9200-git-cvsexport-commit.sh --run='!3 1-4'
