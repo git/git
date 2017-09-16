@@ -192,7 +192,6 @@ test_expect_success 'checkout -b <describe>' '
 test_expect_success 'checkout -B to the current branch works' '
 	git checkout branch1 &&
 	git checkout -B branch1-scratch &&
-
 	setup_dirty_mergeable &&
 	git checkout -B branch1-scratch initial &&
 	test_dirty_mergeable
