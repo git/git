@@ -434,7 +434,7 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 	/* parse: (<short>|<short>,<long>|<long>)[*=?!]*<arghint>? SP+ <help> */
 	while (strbuf_getline(&sb, stdin) != EOF) {
 		const char *s;
-		const char *help;
+		char *help;
 		struct option *o;
 
 		if (!sb.len)
@@ -451,8 +451,10 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 			continue;
 		}
 
+		*help = '\0';
+
 		o->type = OPTION_CALLBACK;
-		o->help = xstrdup(skipspaces(help));
+		o->help = xstrdup(skipspaces(help+1));
 		o->value = &parsed;
 		o->flags = PARSE_OPT_NOARG;
 		o->callback = &parseopt_dump;

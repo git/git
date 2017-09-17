@@ -85,12 +85,12 @@ set -- --foo --bar 'ham' -b --aswitch -- 'arg'
 EOF
 "
 
-test_expect_failure 'test --parseopt' '
+test_expect_success 'test --parseopt' '
 	git rev-parse --parseopt -- --foo --bar=ham --baz --aswitch arg < optionspec > output &&
 	test_cmp expect output
 '
 
-test_expect_failure 'test --parseopt with mixed options and arguments' '
+test_expect_success 'test --parseopt with mixed options and arguments' '
 	git rev-parse --parseopt -- --foo arg --bar=ham --baz --aswitch < optionspec > output &&
 	test_cmp expect output
 '
