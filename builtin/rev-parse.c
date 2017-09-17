@@ -387,6 +387,14 @@ static const char *skipspaces(const char *s)
 	return s;
 }
 
+static char *findspace(const char *s)
+{
+	for (; *s; s++)
+		if (isspace(*s))
+			return (char*)s;
+	return NULL;
+}
+
 static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 {
 	static int keep_dashdash = 0, stop_at_non_option = 0;
@@ -444,8 +452,8 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 		memset(opts + onb, 0, sizeof(opts[onb]));
 
 		o = &opts[onb++];
-		help = strchr(sb.buf, ' ');
-		if (!help || *sb.buf == ' ') {
+		help = findspace(sb.buf);
+		if (!help || sb.buf == help) {
 			o->type = OPTION_GROUP;
 			o->help = xstrdup(skipspaces(sb.buf));
 			continue;

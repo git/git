@@ -38,7 +38,7 @@ test_expect_success 'setup optionspec' '
 EOF
 '
 
-test_expect_failure 'test --parseopt help output' '
+test_expect_success 'test --parseopt help output' '
 	sed -e "s/^|//" >expect <<\END_EXPECT &&
 |cat <<\EOF
 |usage: some-command [options] <args>...
