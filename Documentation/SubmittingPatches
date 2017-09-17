@@ -395,8 +395,9 @@ GitHub-Travis CI hints
 
 With an account at GitHub (you can get one for free to work on open
 source projects), you can use Travis CI to test your changes on Linux,
-Mac (and hopefully soon Windows).  You can find a successful example
-test build here: https://travis-ci.org/git/git/builds/120473209
+Mac.  Though Travis CI doesn't support Windows we have worked around
+that temporarily!  You can find a successful example test build
+here: https://travis-ci.org/git/git/builds/264560175
 
 Follow these steps for the initial setup:
 
