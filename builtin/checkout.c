@@ -1284,7 +1284,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 		int force = opts.new_branch_force != NULL;
 
 		opts.branch_exists = validate_branch_update(opts.new_branch, &buf,
-							    force, force);
+							    force, force, 0);
 
 		strbuf_release(&buf);
 	}

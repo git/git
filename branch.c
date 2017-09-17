@@ -178,28 +178,40 @@ int read_branch_desc(struct strbuf *buf, const char *branch_name)
 	return 0;
 }
 
-int validate_branch_update(const char *name, struct strbuf *ref,
-			   int could_exist, int clobber_head)
+int validate_branch_update(const char *name, struct strbuf *ref, int could_exist,
+			   int clobber_head, unsigned dont_fail)
 {
-	if (strbuf_check_branch_ref(ref, name))
-		die(_("'%s' is not a valid branch name."), name);
+	if (strbuf_check_branch_ref(ref, name)) {
+		if (dont_fail)
+			return INVALID_BRANCH_NAME;
+		else
+			die(_("'%s' is not a valid branch name."), name);
+	}
 
 	if (!ref_exists(ref->buf))
-		return 0;
+		return VALID_BRANCH_NAME;
 
-	if (!could_exist)
-		die(_("A branch named '%s' already exists."), ref->buf + strlen("refs/heads/"));
+	if (!could_exist) {
+		if (dont_fail)
+			return BRANCH_EXISTS;
+		else
+			die(_("A branch named '%s' already exists."), ref->buf + strlen("refs/heads/"));
+	}
 
 	if (!clobber_head) {
 		const char *head;
 		struct object_id oid;
 
 		head = resolve_ref_unsafe("HEAD", 0, oid.hash, NULL);
-		if (!is_bare_repository() && head && !strcmp(head, ref->buf))
-			die(_("Cannot force update the current branch."));
+		if (!is_bare_repository() && head && !strcmp(head, ref->buf)) {
+			if (dont_fail)
+				return CANNOT_FORCE_UPDATE_CURRENT_BRANCH;
+			else
+				die(_("Cannot force update the current branch."));
+		}
 	}
 
-	return 1;
+	return FORCE_UPDATING_BRANCH;
 }
 
 /*
@@ -268,7 +280,7 @@ void create_branch(const char *name, const char *start_name,
 		validate_existing_branch(name, &ref);
 		dont_change_ref = 1;
 	} else {
-		forcing = validate_branch_update(name, &ref, force, clobber_head);
+		forcing = validate_branch_update(name, &ref, force, clobber_head, 0);
 	}
 
 	real_ref = NULL;

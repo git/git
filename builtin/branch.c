@@ -483,7 +483,7 @@ static void rename_branch(const char *oldname, const char *newname, int force)
 	 */
 	clobber_head_ok = !strcmp(oldname, newname);
 
-	validate_branch_update(newname, &newref, force, clobber_head_ok);
+	validate_branch_update(newname, &newref, force, clobber_head_ok, 0);
 
 	reject_rebase_or_bisect_branch(oldref.buf);
 
