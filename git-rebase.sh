@@ -348,6 +348,9 @@ do
 		shift
 		break
 		;;
+	*)
+		usage
+		;;
 	esac
 	shift
 done
