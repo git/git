@@ -116,6 +116,21 @@ test_expect_success 'git-path inside sub-dir' '
 	test_cmp expect actual
 '
 
+test_expect_success 'rev-parse --is-shallow-repository in shallow repo' '
+	test_commit test_commit &&
+	echo true >expect &&
+	git clone --depth 1 --no-local . shallow &&
+	test_when_finished "rm -rf shallow" &&
+	git -C shallow rev-parse --is-shallow-repository >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rev-parse --is-shallow-repository in non-shallow repo' '
+	echo false >expect &&
+	git rev-parse --is-shallow-repository >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'showing the superproject correctly' '
 	git rev-parse --show-superproject-working-tree >out &&
 	test_must_be_empty out &&
