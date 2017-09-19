@@ -178,18 +178,19 @@ int read_branch_desc(struct strbuf *buf, const char *branch_name)
 	return 0;
 }
 
-int validate_new_branchname(const char *name, struct strbuf *ref,
-			    int force, int attr_only)
+int validate_branch_update(const char *name, struct strbuf *ref,
+			   int could_exist, int clobber_head)
 {
 	if (strbuf_check_branch_ref(ref, name))
 		die(_("'%s' is not a valid branch name."), name);
 
 	if (!ref_exists(ref->buf))
 		return 0;
-	else if (!force && !attr_only)
+
+	if (!could_exist)
 		die(_("A branch named '%s' already exists."), ref->buf + strlen("refs/heads/"));
 
-	if (!attr_only) {
+	if (!clobber_head) {
 		const char *head;
 		struct object_id oid;
 
@@ -197,7 +198,27 @@ int validate_new_branchname(const char *name, struct strbuf *ref,
 		if (!is_bare_repository() && head && !strcmp(head, ref->buf))
 			die(_("Cannot force update the current branch."));
 	}
+
 	return 1;
+}
+
+/*
+ * Validates whether the branch with the given name exists, returning the
+ * interpreted ref in ref.
+ *
+ * This method is invoked if the caller merely wants to know if it is OK
+ * to change some attribute for the named branch (e.g. tracking upstream).
+ *
+ */
+static void validate_existing_branch(const char *name, struct strbuf *ref)
+{
+	if (strbuf_check_branch_ref(ref, name))
+		die(_("'%s' is not a valid branch name."), name);
+
+	if (ref_exists(ref->buf))
+		return;
+	else
+		die(_("branch '%s' doesn't exist"), name);
 }
 
 static int check_tracking_branch(struct remote *remote, void *cb_data)
@@ -243,13 +264,11 @@ void create_branch(const char *name, const char *start_name,
 	if (track == BRANCH_TRACK_EXPLICIT || track == BRANCH_TRACK_OVERRIDE)
 		explicit_tracking = 1;
 
-	if (validate_new_branchname(name, &ref, force,
-				    track == BRANCH_TRACK_OVERRIDE ||
-				    clobber_head)) {
-		if (!force)
-			dont_change_ref = 1;
-		else
-			forcing = 1;
+	if (track == BRANCH_TRACK_OVERRIDE) {
+		validate_existing_branch(name, &ref);
+		dont_change_ref = 1;
+	} else {
+		forcing = validate_branch_update(name, &ref, force, clobber_head);
 	}
 
 	real_ref = NULL;

@@ -1283,8 +1283,8 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 		struct strbuf buf = STRBUF_INIT;
 		int force = opts.new_branch_force != NULL;
 
-		opts.branch_exists = validate_new_branchname(opts.new_branch, &buf,
-							     force, force);
+		opts.branch_exists = validate_branch_update(opts.new_branch, &buf,
+							    force, force);
 
 		strbuf_release(&buf);
 	}
