@@ -192,7 +192,7 @@ newline. The available atoms are:
 	The 40-hex object name of the object.
 
 `objecttype`::
-	The type of of the object (the same as `cat-file -t` reports).
+	The type of the object (the same as `cat-file -t` reports).
 
 `objectsize`::
 	The size, in bytes, of the object (the same as `cat-file -s`
