@@ -136,6 +136,38 @@ Performance, Internal Implementation, Development Support etc.
    piece of memory while writing each index entry out.  This has been
    optimized.
 
+ * Platforms that ship with a separate sha1 with collision detection
+   library can link to it instead of using the copy we ship as part of
+   our source tree.
+
+ * Code around "notes" have been cleaned up.
+   (merge 3964281524 mh/notes-cleanup later to maint).
+
+ * The long-standing rule that an in-core lockfile instance, once it
+   is used, must not be freed, has been lifted and the lockfile and
+   tempfile APIs have been updated to reduce the chance of programming
+   errors.
+
+ * Our hashmap implementation in hashmap.[ch] is not thread-safe when
+   adding a new item needs to expand the hashtable by rehashing; add
+   an API to disable the automatic rehashing to work it around.
+
+ * Many of our programs consider that it is OK to release dynamic
+   storage that is used throughout the life of the program by simply
+   exiting, but this makes it harder to leak detection tools to avoid
+   reporting false positives.  Plug many existing leaks and introduce
+   a mechanism for developers to mark that the region of memory
+   pointed by a pointer is not lost/leaking to help these tools.
+
+ * As "git commit" to conclude a conflicted "git merge" honors the
+   commit-msg hook, "git merge" that records a merge commit that
+   cleanly auto-merges should, but it didn't.
+
+ * The codepath for "git merge-recursive" has been cleaned up.
+
+ * Many leaks of strbuf have been fixed.
+
+
 Also contains various documentation updates and code clean-ups.
 
 
@@ -245,9 +277,35 @@ Fixes since v2.14
    was in use.  This has been fixed.
    (merge 31824d180d nd/worktree-kill-parse-ref later to maint).
 
+ * "git gc" and friends when multiple worktrees are used off of a
+   single repository did not consider the index and per-worktree refs
+   of other worktrees as the root for reachability traversal, making
+   objects that are in use only in other worktrees to be subject to
+   garbage collection.
+
+ * A regression to "gitk --bisect" by a recent update has been fixed.
+   (merge 1d0538e486 mh/packed-ref-store-prep later to maint).
+
+ * "git -c submodule.recurse=yes pull" did not work as if the
+   "--recurse-submodules" option was given from the command line.
+   This has been corrected.
+
+ * Unlike "git commit-tree < file", "git commit-tree -F file" did not
+   pass the contents of the file verbatim and instead completed an
+   incomplete line at the end, if exists.  The latter has been updated
+   to match the behaviour of the former.
+   (merge c818e74332 rk/commit-tree-make-F-verbatim later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge f094b89a4d ma/parse-maybe-bool later to maint).
    (merge 39b00fa4d4 jk/drop-sha1-entry-pos later to maint).
    (merge 6cdf8a7929 ma/ts-cleanups later to maint).
    (merge 7560f547e6 ma/up-to-date later to maint).
    (merge 0db3dc75f3 rs/apply-epoch later to maint).
+   (merge 74f1bd912b dw/diff-highlight-makefile-fix later to maint).
+   (merge f991761eb8 jk/config-lockfile-leak-fix later to maint).
+   (merge 150efef1e7 ma/pkt-line-leakfix later to maint).
+   (merge 5554451de6 mg/timestamp-t-fix later to maint).
+   (merge 276d0e35c0 ma/split-symref-update-fix later to maint).
+   (merge 3bc4b8f7c7 bb/doc-eol-dirty later to maint).
+   (merge c1bb33c99c jk/system-path-cleanup later to maint).
