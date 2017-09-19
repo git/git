@@ -456,25 +456,56 @@ static void reject_rebase_or_bisect_branch(const char *target)
 	free_worktrees(worktrees);
 }
 
+static void get_error_msg(struct strbuf* error_msg, const char* oldname, unsigned old_branch_exists,
+			  const char* newname, int new_branch_validation_result)
+{
+	const char* connector_string = ", and ";
+	const unsigned connector_length = 6;
+	unsigned connector_added = 0;
+
+	if (!old_branch_exists) {
+		strbuf_addf(error_msg, _("branch '%s' doesn't exist"), oldname);
+
+		/* add the 'connector_string' and remove it later if it's not needed */
+		strbuf_addstr(error_msg, connector_string);
+		connector_added = 1;
+	}
+
+	switch (new_branch_validation_result) {
+		case BRANCH_EXISTS:
+			strbuf_addf(error_msg, _("branch '%s' already exists"), newname);
+			break;
+		case CANNOT_FORCE_UPDATE_CURRENT_BRANCH:
+			strbuf_addstr(error_msg, _("cannot force update the current branch"));
+			break;
+		case INVALID_BRANCH_NAME:
+			strbuf_addf(error_msg, _("branch name '%s' is invalid"), newname);
+			break;
+		case VALID_BRANCH_NAME:
+		case FORCE_UPDATING_BRANCH:
+			if(connector_added)
+				strbuf_remove(error_msg, error_msg->len-connector_length, connector_length);
+	}
+}
+
 static void rename_branch(const char *oldname, const char *newname, int force)
 {
 	struct strbuf oldref = STRBUF_INIT, newref = STRBUF_INIT, logmsg = STRBUF_INIT;
 	struct strbuf oldsection = STRBUF_INIT, newsection = STRBUF_INIT;
 	int recovery = 0;
 	int clobber_head_ok;
+	struct strbuf error_msg = STRBUF_INIT, empty = STRBUF_INIT;
 
 	if (!oldname)
 		die(_("cannot rename the current branch while not on any."));
 
-	if (strbuf_check_branch_ref(&oldref, oldname)) {
+	if (strbuf_check_branch_ref(&oldref, oldname) && ref_exists(oldref.buf))
+	{
 		/*
 		 * Bad name --- this could be an attempt to rename a
 		 * ref that we used to allow to be created by accident.
 		 */
-		if (ref_exists(oldref.buf))
-			recovery = 1;
-		else
-			die(_("Invalid branch name: '%s'"), oldname);
+		recovery = 1;
 	}
 
 	/*
@@ -483,7 +514,10 @@ static void rename_branch(const char *oldname, const char *newname, int force)
 	 */
 	clobber_head_ok = !strcmp(oldname, newname);
 
-	validate_new_branchname(newname, &newref, force, clobber_head_ok);
+	get_error_msg(&error_msg, oldname, ref_exists(oldref.buf),
+			newname, validate_branch_update(newname, &newref, force, clobber_head_ok, 1));
+	if (strbuf_cmp(&error_msg, &empty))
+		die("%s", error_msg.buf);
 
 	reject_rebase_or_bisect_branch(oldref.buf);
 
@@ -509,6 +543,8 @@ static void rename_branch(const char *oldname, const char *newname, int force)
 		die(_("Branch is renamed, but update of config-file failed"));
 	strbuf_release(&oldsection);
 	strbuf_release(&newsection);
+	strbuf_release(&error_msg);
+	strbuf_release(&empty);
 }
 
 static GIT_PATH_FUNC(edit_description, "EDIT_DESCRIPTION")
