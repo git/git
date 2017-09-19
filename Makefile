@@ -2603,9 +2603,6 @@ endif
 ifdef TEST_GIT_INDEX_VERSION
 	@echo TEST_GIT_INDEX_VERSION=\''$(subst ','\'',$(subst ','\'',$(TEST_GIT_INDEX_VERSION)))'\' >>$@+
 endif
-ifdef MSVC_DEPS
-	@echo MSVC_DEPS=\''$(subst ','\'',$(subst ','\'',$(MSVC_DEPS)))'\' >>$@+
-endif
 	@if cmp $@+ $@ >/dev/null 2>&1; then $(RM) $@+; else mv $@+ $@; fi
 
 ### Detect Python interpreter path changes
@@ -2754,8 +2751,6 @@ install: all
 	$(INSTALL) -m 644 $(SCRIPT_LIB) '$(DESTDIR_SQ)$(gitexec_instdir_SQ)'
 	$(INSTALL) $(install_bindir_programs) '$(DESTDIR_SQ)$(bindir_SQ)'
 ifdef MSVC
-	$(INSTALL) compat/vcbuild/GEN.DEPS/bin/*.dll '$(DESTDIR_SQ)$(bindir_SQ)'
-	$(INSTALL) compat/vcbuild/GEN.DEPS/bin/*.pdb '$(DESTDIR_SQ)$(bindir_SQ)'
 	# We DO NOT install the individual foo.o.pdb files because they
 	# have already been rolled up into the exe's pdb file.
 	# We DO NOT have pdb files for the builtin commands (like git-status.exe)
@@ -2978,9 +2973,15 @@ endif
 ifdef MSVC
 	$(RM) $(patsubst %.o,%.o.pdb,$(OBJECTS))
 	$(RM) $(patsubst %.exe,%.pdb,$(OTHER_PROGRAMS))
+	$(RM) $(patsubst %.exe,%.iobj,$(OTHER_PROGRAMS))
+	$(RM) $(patsubst %.exe,%.ipdb,$(OTHER_PROGRAMS))
 	$(RM) $(patsubst %.exe,%.pdb,$(PROGRAMS))
+	$(RM) $(patsubst %.exe,%.iobj,$(PROGRAMS))
+	$(RM) $(patsubst %.exe,%.ipdb,$(PROGRAMS))
 	$(RM) $(patsubst %.exe,%.pdb,$(TEST_PROGRAMS))
-	$(RM) GIT-MSVC-GEN
+	$(RM) $(patsubst %.exe,%.iobj,$(TEST_PROGRAMS))
+	$(RM) $(patsubst %.exe,%.ipdb,$(TEST_PROGRAMS))
+	$(RM) compat/vcbuild/MSVC-DEFS-GEN
 endif
 
 .PHONY: all install profile-clean cocciclean clean strip

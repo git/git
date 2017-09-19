@@ -57,9 +57,6 @@ fi
 . "$GIT_BUILD_DIR"/GIT-BUILD-OPTIONS
 export PERL_PATH SHELL_PATH
 
-test -z "$MSVC_DEPS" ||
-PATH="$GIT_BUILD_DIR/$MSVC_DEPS/bin:$PATH"
-
 ################################################################
 # It appears that people try to run tests without building...
 test -n "$GIT_TEST_INSTALLED" || "$GIT_BUILD_DIR/git$X" >/dev/null ||
