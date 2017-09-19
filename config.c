@@ -2450,7 +2450,7 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 {
 	int fd = -1, in_fd = -1;
 	int ret;
-	struct lock_file *lock = NULL;
+	static struct lock_file lock;
 	char *filename_buf = NULL;
 	char *contents = NULL;
 	size_t contents_sz;
@@ -2469,8 +2469,7 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 	 * The lock serves a purpose in addition to locking: the new
 	 * contents of .git/config will be written into it.
 	 */
-	lock = xcalloc(1, sizeof(struct lock_file));
-	fd = hold_lock_file_for_update(lock, config_filename, 0);
+	fd = hold_lock_file_for_update(&lock, config_filename, 0);
 	if (fd < 0) {
 		error_errno("could not lock config file %s", config_filename);
 		free(store.key);
@@ -2583,8 +2582,8 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 		close(in_fd);
 		in_fd = -1;
 
-		if (chmod(get_lock_file_path(lock), st.st_mode & 07777) < 0) {
-			error_errno("chmod on %s failed", get_lock_file_path(lock));
+		if (chmod(get_lock_file_path(&lock), st.st_mode & 07777) < 0) {
+			error_errno("chmod on %s failed", get_lock_file_path(&lock));
 			ret = CONFIG_NO_WRITE;
 			goto out_free;
 		}
@@ -2639,28 +2638,19 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 		contents = NULL;
 	}
 
-	if (commit_lock_file(lock) < 0) {
+	if (commit_lock_file(&lock) < 0) {
 		error_errno("could not write config file %s", config_filename);
 		ret = CONFIG_NO_WRITE;
-		lock = NULL;
 		goto out_free;
 	}
 
-	/*
-	 * lock is committed, so don't try to roll it back below.
-	 * NOTE: Since lockfile.c keeps a linked list of all created
-	 * lock_file structures, it isn't safe to free(lock).  It's
-	 * better to just leave it hanging around.
-	 */
-	lock = NULL;
 	ret = 0;
 
 	/* Invalidate the config cache */
 	git_config_clear();
 
 out_free:
-	if (lock)
-		rollback_lock_file(lock);
+	rollback_lock_file(&lock);
 	free(filename_buf);
 	if (contents)
 		munmap(contents, contents_sz);
@@ -2669,7 +2659,7 @@ out_free:
 	return ret;
 
 write_err_out:
-	ret = write_error(get_lock_file_path(lock));
+	ret = write_error(get_lock_file_path(&lock));
 	goto out_free;
 
 }
