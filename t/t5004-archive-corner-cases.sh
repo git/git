@@ -108,14 +108,14 @@ test_expect_success 'archive empty subtree with no pathspec' '
 	git archive --format=tar $root_tree >subtree-all.tar &&
 	make_dir extract &&
 	"$TAR" xf subtree-all.tar -C extract &&
-	check_dir extract sub
+	check_dir extract
 '
 
 test_expect_success 'archive empty subtree by direct pathspec' '
 	git archive --format=tar $root_tree -- sub >subtree-path.tar &&
 	make_dir extract &&
 	"$TAR" xf subtree-path.tar -C extract &&
-	check_dir extract sub
+	check_dir extract
 '
 
 ZIPINFO=zipinfo

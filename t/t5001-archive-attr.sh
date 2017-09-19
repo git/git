@@ -73,7 +73,7 @@ test_expect_missing	archive-pathspec/ignored-by-tree
 test_expect_missing	archive-pathspec/ignored-by-tree.d
 test_expect_missing	archive-pathspec/ignored-by-tree.d/file
 test_expect_exists	archive-pathspec/ignored-by-worktree
-test_expect_missing	archive-pathspec/excluded-by-pathspec.d failure
+test_expect_missing	archive-pathspec/excluded-by-pathspec.d
 test_expect_missing	archive-pathspec/excluded-by-pathspec.d/file
 
 test_expect_success 'git archive with wildcard pathspec' '
