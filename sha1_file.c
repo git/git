@@ -456,6 +456,7 @@ static void read_info_alternates(const char * relative_base, int depth)
 
 	path = xstrfmt("%s/info/alternates", relative_base);
 	if (strbuf_read_file(&buf, path, 1024) < 0) {
+		warn_on_fopen_errors(path);
 		free(path);
 		return;
 	}
