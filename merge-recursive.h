@@ -25,8 +25,7 @@ struct merge_options {
 	int show_rename_progress;
 	int call_depth;
 	struct strbuf obuf;
-	struct string_list current_file_set;
-	struct string_list current_directory_set;
+	struct hashmap current_file_dir_set;
 	struct string_list df_conflict_file_set;
 };
 
