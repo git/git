@@ -40,11 +40,15 @@ static void repo_setup_env(struct repository *repo)
 
 	repo->different_commondir = find_common_dir(&sb, repo->gitdir,
 						    !repo->ignore_env);
+	free(repo->commondir);
 	repo->commondir = strbuf_detach(&sb, NULL);
+	free(repo->objectdir);
 	repo->objectdir = git_path_from_env(DB_ENVIRONMENT, repo->commondir,
 					    "objects", !repo->ignore_env);
+	free(repo->graft_file);
 	repo->graft_file = git_path_from_env(GRAFT_ENVIRONMENT, repo->commondir,
 					     "info/grafts", !repo->ignore_env);
+	free(repo->index_file);
 	repo->index_file = git_path_from_env(INDEX_ENVIRONMENT, repo->gitdir,
 					     "index", !repo->ignore_env);
 }
@@ -52,16 +56,12 @@ static void repo_setup_env(struct repository *repo)
 void repo_set_gitdir(struct repository *repo, const char *path)
 {
 	const char *gitfile = read_gitfile(path);
+	char *old_gitdir = repo->gitdir;
 
-	/*
-	 * NEEDSWORK: Eventually we want to be able to free gitdir and the rest
-	 * of the environment before reinitializing it again, but we have some
-	 * crazy code paths where we try to set gitdir with the current gitdir
-	 * and we don't want to free gitdir before copying the passed in value.
-	 */
 	repo->gitdir = xstrdup(gitfile ? gitfile : path);
-
 	repo_setup_env(repo);
+
+	free(old_gitdir);
 }
 
 /*
