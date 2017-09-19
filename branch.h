@@ -15,6 +15,11 @@
  *
  *   - reflog creates a reflog for the branch
  *
+ *   - if 'force' is true, clobber_head indicates whether the branch could be
+ *     the current branch else it has no effect
+ *
+ *   - quiet suppresses tracking information
+ *
  *   - track causes the new branch to be configured to merge the remote branch
  *     that start_name is a tracking branch for (if any).
  */
