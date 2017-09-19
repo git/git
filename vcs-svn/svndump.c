@@ -318,6 +318,7 @@ static void end_revision(const char *note_ref)
 		strbuf_addf(&mark, ":%"PRIu32, rev_ctx.revision);
 		fast_export_note(mark.buf, "inline");
 		fast_export_buf_to_data(&rev_ctx.note);
+		strbuf_release(&mark);
 	}
 }
 

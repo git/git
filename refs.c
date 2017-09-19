@@ -594,7 +594,7 @@ static int write_pseudoref(const char *pseudoref, const unsigned char *sha1,
 	if (fd < 0) {
 		strbuf_addf(err, "could not open '%s' for writing: %s",
 			    filename, strerror(errno));
-		return -1;
+		goto done;
 	}
 
 	if (old_sha1) {
