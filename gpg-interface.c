@@ -202,26 +202,26 @@ int verify_signed_buffer(const char *payload, size_t payload_size,
 			 struct strbuf *gpg_output, struct strbuf *gpg_status)
 {
 	struct child_process gpg = CHILD_PROCESS_INIT;
-	static struct tempfile temp;
-	int fd, ret;
+	struct tempfile *temp;
+	int ret;
 	struct strbuf buf = STRBUF_INIT;
 
-	fd = mks_tempfile_t(&temp, ".git_vtag_tmpXXXXXX");
-	if (fd < 0)
+	temp = mks_tempfile_t(".git_vtag_tmpXXXXXX");
+	if (!temp)
 		return error_errno(_("could not create temporary file"));
-	if (write_in_full(fd, signature, signature_size) < 0) {
+	if (write_in_full(temp->fd, signature, signature_size) < 0 ||
+	    close_tempfile_gently(temp) < 0) {
 		error_errno(_("failed writing detached signature to '%s'"),
-			    temp.filename.buf);
+			    temp->filename.buf);
 		delete_tempfile(&temp);
 		return -1;
 	}
-	close(fd);
 
 	argv_array_pushl(&gpg.args,
 			 gpg_program,
 			 "--status-fd=1",
 			 "--keyid-format=long",
-			 "--verify", temp.filename.buf, "-",
+			 "--verify", temp->filename.buf, "-",
 			 NULL);
 
 	if (!gpg_status)

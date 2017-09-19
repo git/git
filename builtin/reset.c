@@ -367,8 +367,8 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		die_if_unmerged_cache(reset_type);
 
 	if (reset_type != SOFT) {
-		struct lock_file *lock = xcalloc(1, sizeof(*lock));
-		hold_locked_index(lock, LOCK_DIE_ON_ERROR);
+		struct lock_file lock = LOCK_INIT;
+		hold_locked_index(&lock, LOCK_DIE_ON_ERROR);
 		if (reset_type == MIXED) {
 			int flags = quiet ? REFRESH_QUIET : REFRESH_IN_PORCELAIN;
 			if (read_from_tree(&pathspec, &oid, intent_to_add))
@@ -384,7 +384,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 				die(_("Could not reset index file to revision '%s'."), rev);
 		}
 
-		if (write_locked_index(&the_index, lock, COMMIT_LOCK))
+		if (write_locked_index(&the_index, &lock, COMMIT_LOCK))
 			die(_("Could not write new index file."));
 	}
 

@@ -2309,8 +2309,11 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 
 	if (ce_flush(&c, newfd, istate->sha1))
 		return -1;
-	if (close_tempfile(tempfile))
-		return error(_("could not close '%s'"), tempfile->filename.buf);
+	if (close_tempfile_gently(tempfile)) {
+		error(_("could not close '%s'"), tempfile->filename.buf);
+		delete_tempfile(&tempfile);
+		return -1;
+	}
 	if (stat(tempfile->filename.buf, &st))
 		return -1;
 	istate->timestamp.sec = (unsigned int)st.st_mtime;
@@ -2334,7 +2337,7 @@ static int commit_locked_index(struct lock_file *lk)
 static int do_write_locked_index(struct index_state *istate, struct lock_file *lock,
 				 unsigned flags)
 {
-	int ret = do_write_index(istate, &lock->tempfile, 0);
+	int ret = do_write_index(istate, lock->tempfile, 0);
 	if (ret)
 		return ret;
 	assert((flags & (COMMIT_LOCK | CLOSE_LOCK)) !=
@@ -2342,7 +2345,7 @@ static int do_write_locked_index(struct index_state *istate, struct lock_file *l
 	if (flags & COMMIT_LOCK)
 		return commit_locked_index(lock);
 	else if (flags & CLOSE_LOCK)
-		return close_lock_file(lock);
+		return close_lock_file_gently(lock);
 	else
 		return ret;
 }
@@ -2417,34 +2420,33 @@ static int clean_shared_index_files(const char *current_hex)
 	return 0;
 }
 
-static struct tempfile temporary_sharedindex;
-
 static int write_shared_index(struct index_state *istate,
 			      struct lock_file *lock, unsigned flags)
 {
+	struct tempfile *temp;
 	struct split_index *si = istate->split_index;
-	int fd, ret;
+	int ret;
 
-	fd = mks_tempfile(&temporary_sharedindex, git_path("sharedindex_XXXXXX"));
-	if (fd < 0) {
+	temp = mks_tempfile(git_path("sharedindex_XXXXXX"));
+	if (!temp) {
 		hashclr(si->base_sha1);
 		return do_write_locked_index(istate, lock, flags);
 	}
 	move_cache_to_base_index(istate);
-	ret = do_write_index(si->base, &temporary_sharedindex, 1);
+	ret = do_write_index(si->base, temp, 1);
 	if (ret) {
-		delete_tempfile(&temporary_sharedindex);
+		delete_tempfile(&temp);
 		return ret;
 	}
-	ret = adjust_shared_perm(get_tempfile_path(&temporary_sharedindex));
+	ret = adjust_shared_perm(get_tempfile_path(temp));
 	if (ret) {
 		int save_errno = errno;
-		error("cannot fix permission bits on %s", get_tempfile_path(&temporary_sharedindex));
-		delete_tempfile(&temporary_sharedindex);
+		error("cannot fix permission bits on %s", get_tempfile_path(temp));
+		delete_tempfile(&temp);
 		errno = save_errno;
 		return ret;
 	}
-	ret = rename_tempfile(&temporary_sharedindex,
+	ret = rename_tempfile(&temp,
 			      git_path("sharedindex.%s", sha1_to_hex(si->base->sha1)));
 	if (!ret) {
 		hashcpy(si->base_sha1, si->base->sha1);
