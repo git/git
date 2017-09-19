@@ -18,9 +18,16 @@ ifdef MSVC
 
 	# Generate and include makefile variables that point to the
 	# currently installed set of MSVC command line tools.
-GIT-MSVC-GEN: ./compat/vcbuild/find_vs_env.bat
-	@./compat/vcbuild/find_vs_env.bat | sed 's|\\|/|g' >GIT-MSVC-GEN
--include GIT-MSVC-GEN
+compat/vcbuild/MSVC-DEFS-GEN: compat/vcbuild/find_vs_env.bat
+	@"$<" | tr '\\' / >"$@"
+include compat/vcbuild/MSVC-DEFS-GEN
+
+	# See if vcpkg and the vcpkg-build versions of the third-party
+	# libraries that we use are installed.  We include the result
+	# to get $(vcpkg_*) variables defined for the Makefile.
+compat/vcbuild/VCPKG-DEFS: compat/vcbuild/vcpkg_install.bat
+	@"$<"
+include compat/vcbuild/VCPKG-DEFS
 endif
 
 # We choose to avoid "if .. else if .. else .. endif endif"
@@ -413,13 +420,13 @@ ifeq ($(uname_S),Windows)
 	EXTLIBS = user32.lib advapi32.lib shell32.lib wininet.lib ws2_32.lib invalidcontinue.obj kernel32.lib ntdll.lib
 	PTHREAD_LIBS =
 	lib =
-	# Path to the unpacked third-party libraries
-	MSVC_DEPS = compat/vcbuild/GEN.DEPS
-	BASIC_CFLAGS += \
-		     -I$(MSVC_DEPS)/include -I$(MSVC_DEPS)/include/expat -I$(MSVC_DEPS)/include/zlib \
-		     -L$(MSVC_DEPS)/lib \
-		     $(sdk_includes) $(sdk_libs) \
-		     $(msvc_includes) $(msvc_libs)
+	BASIC_CFLAGS += $(vcpkg_inc) $(sdk_includes) $(msvc_includes)
+ifndef DEBUG
+	BASIC_CFLAGS += $(vcpkg_rel_lib)
+else
+	BASIC_CFLAGS += $(vcpkg_dbg_lib)
+endif
+	BASIC_CFLAGS += $(sdk_libs) $(msvc_libs)
 
 	# Optionally enable memory leak reporting.
 	# BASIC_CLFAGS += -DUSE_MSVC_CRTDBG
