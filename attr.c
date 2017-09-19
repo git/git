@@ -151,10 +151,12 @@ struct all_attrs_item {
 static void all_attrs_init(struct attr_hashmap *map, struct attr_check *check)
 {
 	int i;
+	unsigned int size;
 
 	hashmap_lock(map);
 
-	if (map->map.size < check->all_attrs_nr)
+	size = hashmap_get_size(&map->map);
+	if (size < check->all_attrs_nr)
 		die("BUG: interned attributes shouldn't be deleted");
 
 	/*
@@ -163,13 +165,13 @@ static void all_attrs_init(struct attr_hashmap *map, struct attr_check *check)
 	 * field), reallocate the provided attr_check instance's all_attrs
 	 * field and fill each entry with its corresponding git_attr.
 	 */
-	if (map->map.size != check->all_attrs_nr) {
+	if (size != check->all_attrs_nr) {
 		struct attr_hash_entry *e;
 		struct hashmap_iter iter;
 		hashmap_iter_init(&map->map, &iter);
 
-		REALLOC_ARRAY(check->all_attrs, map->map.size);
-		check->all_attrs_nr = map->map.size;
+		REALLOC_ARRAY(check->all_attrs, size);
+		check->all_attrs_nr = size;
 
 		while ((e = hashmap_iter_next(&iter))) {
 			const struct git_attr *a = e->value;
@@ -237,10 +239,11 @@ static const struct git_attr *git_attr_internal(const char *name, int namelen)
 
 	if (!a) {
 		FLEX_ALLOC_MEM(a, name, name, namelen);
-		a->attr_nr = g_attr_hashmap.map.size;
+		a->attr_nr = hashmap_get_size(&g_attr_hashmap.map);
 
 		attr_hashmap_add(&g_attr_hashmap, a->name, namelen, a);
-		assert(a->attr_nr == (g_attr_hashmap.map.size - 1));
+		assert(a->attr_nr ==
+		       (hashmap_get_size(&g_attr_hashmap.map) - 1));
 	}
 
 	hashmap_unlock(&g_attr_hashmap);

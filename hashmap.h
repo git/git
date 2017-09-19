@@ -183,7 +183,7 @@ struct hashmap {
 	const void *cmpfn_data;
 
 	/* total number of entries (0 means the hashmap is empty) */
-	unsigned int size;
+	unsigned int private_size; /* use hashmap_get_size() */
 
 	/*
 	 * tablesize is the allocated size of the hash table. A non-0 value
@@ -196,8 +196,7 @@ struct hashmap {
 	unsigned int grow_at;
 	unsigned int shrink_at;
 
-	/* See `hashmap_disallow_rehash`. */
-	unsigned disallow_rehash : 1;
+	unsigned int do_count_items : 1;
 };
 
 /* hashmap functions */
@@ -250,6 +249,18 @@ static inline void hashmap_entry_init(void *entry, unsigned int hash)
 	struct hashmap_entry *e = entry;
 	e->hash = hash;
 	e->next = NULL;
+}
+
+/*
+ * Return the number of items in the map.
+ */
+static inline unsigned int hashmap_get_size(struct hashmap *map)
+{
+	if (map->do_count_items)
+		return map->private_size;
+
+	BUG("hashmap_get_size: size not set");
+	return 0;
 }
 
 /*
@@ -345,24 +356,6 @@ extern void *hashmap_remove(struct hashmap *map, const void *key,
 int hashmap_bucket(const struct hashmap *map, unsigned int hash);
 
 /*
- * Disallow/allow rehashing of the hashmap.
- * This is useful if the caller knows that the hashmap needs multi-threaded
- * access.  The caller is still required to guard/lock searches and inserts
- * in a manner appropriate to their usage.  This simply prevents the table
- * from being unexpectedly re-mapped.
- *
- * It is up to the caller to ensure that the hashmap is initialized to a
- * reasonable size to prevent poor performance.
- *
- * A call to allow rehashing does not force a rehash; that might happen
- * with the next insert or delete.
- */
-static inline void hashmap_disallow_rehash(struct hashmap *map, unsigned value)
-{
-	map->disallow_rehash = value;
-}
-
-/*
  * Used to iterate over all entries of a hashmap. Note that it is
  * not safe to add or remove entries to the hashmap while
  * iterating.
@@ -385,6 +378,43 @@ static inline void *hashmap_iter_first(struct hashmap *map,
 {
 	hashmap_iter_init(map, iter);
 	return hashmap_iter_next(iter);
+}
+
+/*
+ * Disable item counting and automatic rehashing when adding/removing items.
+ *
+ * Normally, the hashmap keeps track of the number of items in the map
+ * and uses it to dynamically resize it.  This (both the counting and
+ * the resizing) can cause problems when the map is being used by
+ * threaded callers (because the hashmap code does not know about the
+ * locking strategy used by the threaded callers and therefore, does
+ * not know how to protect the "private_size" counter).
+ */
+static inline void hashmap_disable_item_counting(struct hashmap *map)
+{
+	map->do_count_items = 0;
+}
+
+/*
+ * Re-enable item couting when adding/removing items.
+ * If counting is currently disabled, it will force count them.
+ * It WILL NOT automatically rehash them.
+ */
+static inline void hashmap_enable_item_counting(struct hashmap *map)
+{
+	void *item;
+	unsigned int n = 0;
+	struct hashmap_iter iter;
+
+	if (map->do_count_items)
+		return;
+
+	hashmap_iter_init(map, &iter);
+	while ((item = hashmap_iter_next(&iter)))
+		n++;
+
+	map->do_count_items = 1;
+	map->private_size = n;
 }
 
 /* String interning */

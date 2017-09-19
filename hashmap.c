@@ -116,9 +116,6 @@ static void rehash(struct hashmap *map, unsigned int newsize)
 	unsigned int i, oldsize = map->tablesize;
 	struct hashmap_entry **oldtable = map->table;
 
-	if (map->disallow_rehash)
-		return;
-
 	alloc_table(map, newsize);
 	for (i = 0; i < oldsize; i++) {
 		struct hashmap_entry *e = oldtable[i];
@@ -166,6 +163,12 @@ void hashmap_init(struct hashmap *map, hashmap_cmp_fn equals_function,
 	while (initial_size > size)
 		size <<= HASHMAP_RESIZE_BITS;
 	alloc_table(map, size);
+
+	/*
+	 * Keep track of the number of items in the map and
+	 * allow the map to automatically grow as necessary.
+	 */
+	map->do_count_items = 1;
 }
 
 void hashmap_free(struct hashmap *map, int free_entries)
@@ -206,9 +209,11 @@ void hashmap_add(struct hashmap *map, void *entry)
 	map->table[b] = entry;
 
 	/* fix size and rehash if appropriate */
-	map->size++;
-	if (map->size > map->grow_at)
-		rehash(map, map->tablesize << HASHMAP_RESIZE_BITS);
+	if (map->do_count_items) {
+		map->private_size++;
+		if (map->private_size > map->grow_at)
+			rehash(map, map->tablesize << HASHMAP_RESIZE_BITS);
+	}
 }
 
 void *hashmap_remove(struct hashmap *map, const void *key, const void *keydata)
@@ -224,9 +229,12 @@ void *hashmap_remove(struct hashmap *map, const void *key, const void *keydata)
 	old->next = NULL;
 
 	/* fix size and rehash if appropriate */
-	map->size--;
-	if (map->size < map->shrink_at)
-		rehash(map, map->tablesize >> HASHMAP_RESIZE_BITS);
+	if (map->do_count_items) {
+		map->private_size--;
+		if (map->private_size < map->shrink_at)
+			rehash(map, map->tablesize >> HASHMAP_RESIZE_BITS);
+	}
+
 	return old;
 }
 
