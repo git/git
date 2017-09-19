@@ -1281,11 +1281,10 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 
 	if (opts.new_branch) {
 		struct strbuf buf = STRBUF_INIT;
+		int force = opts.new_branch_force != NULL;
 
-		opts.branch_exists =
-			validate_new_branchname(opts.new_branch, &buf,
-						!!opts.new_branch_force,
-						!!opts.new_branch_force);
+		opts.branch_exists = validate_new_branchname(opts.new_branch, &buf,
+							     force, force);
 
 		strbuf_release(&buf);
 	}
