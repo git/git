@@ -25,7 +25,7 @@ REM
 REM The output of this script should be written to a make "include
 REM file" and referenced by the top-level Makefile.
 REM
-REM See "config.mak.uname" (look for GIT-MSVC-GEN).
+REM See "config.mak.uname" (look for compat/vcbuild/MSVC-DEFS-GEN).
 REM ================================================================
 REM The provided command prompts are custom to each VS release and
 REM filled with lots of internal knowledge (such as Registry settings);
