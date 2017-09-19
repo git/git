@@ -939,6 +939,8 @@ int ref_transaction_update(struct ref_transaction *transaction,
 		return -1;
 	}
 
+	flags &= REF_TRANSACTION_UPDATE_ALLOWED_FLAGS;
+
 	flags |= (new_sha1 ? REF_HAVE_NEW : 0) | (old_sha1 ? REF_HAVE_OLD : 0);
 
 	ref_transaction_add_update(transaction, refname, flags,
