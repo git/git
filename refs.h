@@ -275,6 +275,8 @@ typedef int each_ref_fn(const char *refname,
  * modifies the reference also returns a nonzero value to immediately
  * stop the iteration. Returned references are sorted.
  */
+int refs_head_ref(struct ref_store *refs,
+		  each_ref_fn fn, void *cb_data);
 int refs_for_each_ref(struct ref_store *refs,
 		      each_ref_fn fn, void *cb_data);
 int refs_for_each_ref_in(struct ref_store *refs, const char *prefix,
@@ -289,6 +291,9 @@ int refs_for_each_remote_ref(struct ref_store *refs,
 int head_ref(each_ref_fn fn, void *cb_data);
 int for_each_ref(each_ref_fn fn, void *cb_data);
 int for_each_ref_in(const char *prefix, each_ref_fn fn, void *cb_data);
+int refs_for_each_fullref_in(struct ref_store *refs, const char *prefix,
+			     each_ref_fn fn, void *cb_data,
+			     unsigned int broken);
 int for_each_fullref_in(const char *prefix, each_ref_fn fn, void *cb_data,
 			unsigned int broken);
 int for_each_tag_ref(each_ref_fn fn, void *cb_data);
@@ -298,21 +303,6 @@ int for_each_replace_ref(each_ref_fn fn, void *cb_data);
 int for_each_glob_ref(each_ref_fn fn, const char *pattern, void *cb_data);
 int for_each_glob_ref_in(each_ref_fn fn, const char *pattern,
 			 const char *prefix, void *cb_data);
-
-int head_ref_submodule(const char *submodule, each_ref_fn fn, void *cb_data);
-int for_each_ref_submodule(const char *submodule,
-			   each_ref_fn fn, void *cb_data);
-int for_each_ref_in_submodule(const char *submodule, const char *prefix,
-			      each_ref_fn fn, void *cb_data);
-int for_each_fullref_in_submodule(const char *submodule, const char *prefix,
-				  each_ref_fn fn, void *cb_data,
-				  unsigned int broken);
-int for_each_tag_ref_submodule(const char *submodule,
-			       each_ref_fn fn, void *cb_data);
-int for_each_branch_ref_submodule(const char *submodule,
-				  each_ref_fn fn, void *cb_data);
-int for_each_remote_ref_submodule(const char *submodule,
-				  each_ref_fn fn, void *cb_data);
 
 int head_ref_namespaced(each_ref_fn fn, void *cb_data);
 int for_each_namespaced_ref(each_ref_fn fn, void *cb_data);

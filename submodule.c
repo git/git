@@ -69,6 +69,13 @@ int is_staging_gitmodules_ok(const struct index_state *istate)
 	return 1;
 }
 
+static int for_each_remote_ref_submodule(const char *submodule,
+					 each_ref_fn fn, void *cb_data)
+{
+	return refs_for_each_remote_ref(get_submodule_ref_store(submodule),
+					fn, cb_data);
+}
+
 /*
  * Try to update the "path" entry in the "submodule.<name>" section of the
  * .gitmodules file. Return 0 only if a .gitmodules file was found, a section
@@ -1627,6 +1634,8 @@ static int find_first_merges(struct object_array *result, const char *path,
 			oid_to_hex(&a->object.oid));
 	init_revisions(&revs, NULL);
 	rev_opts.submodule = path;
+	/* FIXME: can't handle linked worktrees in submodules yet */
+	revs.single_worktree = path != NULL;
 	setup_revisions(ARRAY_SIZE(rev_args)-1, rev_args, &revs, &rev_opts);
 
 	/* save all revisions from the above list that contain b */

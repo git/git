@@ -106,15 +106,6 @@ static void files_reflog_path(struct files_ref_store *refs,
 			      struct strbuf *sb,
 			      const char *refname)
 {
-	if (!refname) {
-		/*
-		 * FIXME: of course this is wrong in multi worktree
-		 * setting. To be fixed real soon.
-		 */
-		strbuf_addf(sb, "%s/logs", refs->gitcommondir);
-		return;
-	}
-
 	switch (ref_type(refname)) {
 	case REF_TYPE_PER_WORKTREE:
 	case REF_TYPE_PSEUDOREF:
@@ -2059,21 +2050,61 @@ static struct ref_iterator_vtable files_reflog_iterator_vtable = {
 	files_reflog_iterator_abort
 };
 
-static struct ref_iterator *files_reflog_iterator_begin(struct ref_store *ref_store)
+static struct ref_iterator *reflog_iterator_begin(struct ref_store *ref_store,
+						  const char *gitdir)
 {
-	struct files_ref_store *refs =
-		files_downcast(ref_store, REF_STORE_READ,
-			       "reflog_iterator_begin");
 	struct files_reflog_iterator *iter = xcalloc(1, sizeof(*iter));
 	struct ref_iterator *ref_iterator = &iter->base;
 	struct strbuf sb = STRBUF_INIT;
 
 	base_ref_iterator_init(ref_iterator, &files_reflog_iterator_vtable);
-	files_reflog_path(refs, &sb, NULL);
+	strbuf_addf(&sb, "%s/logs", gitdir);
 	iter->dir_iterator = dir_iterator_begin(sb.buf);
 	iter->ref_store = ref_store;
 	strbuf_release(&sb);
+
 	return ref_iterator;
+}
+
+static enum iterator_selection reflog_iterator_select(
+	struct ref_iterator *iter_worktree,
+	struct ref_iterator *iter_common,
+	void *cb_data)
+{
+	if (iter_worktree) {
+		/*
+		 * We're a bit loose here. We probably should ignore
+		 * common refs if they are accidentally added as
+		 * per-worktree refs.
+		 */
+		return ITER_SELECT_0;
+	} else if (iter_common) {
+		if (ref_type(iter_common->refname) == REF_TYPE_NORMAL)
+			return ITER_SELECT_1;
+
+		/*
+		 * The main ref store may contain main worktree's
+		 * per-worktree refs, which should be ignored
+		 */
+		return ITER_SKIP_1;
+	} else
+		return ITER_DONE;
+}
+
+static struct ref_iterator *files_reflog_iterator_begin(struct ref_store *ref_store)
+{
+	struct files_ref_store *refs =
+		files_downcast(ref_store, REF_STORE_READ,
+			       "reflog_iterator_begin");
+
+	if (!strcmp(refs->gitdir, refs->gitcommondir)) {
+		return reflog_iterator_begin(ref_store, refs->gitcommondir);
+	} else {
+		return merge_ref_iterator_begin(
+			reflog_iterator_begin(ref_store, refs->gitdir),
+			reflog_iterator_begin(ref_store, refs->gitcommondir),
+			reflog_iterator_select, refs);
+	}
 }
 
 /*
