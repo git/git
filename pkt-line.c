@@ -94,9 +94,9 @@ void packet_flush(int fd)
 int packet_flush_gently(int fd)
 {
 	packet_trace("0000", 4, 1);
-	if (write_in_full(fd, "0000", 4) == 4)
-		return 0;
-	return error("flush packet write failed");
+	if (write_in_full(fd, "0000", 4) < 0)
+		return error("flush packet write failed");
+	return 0;
 }
 
 void packet_buf_flush(struct strbuf *buf)
@@ -137,19 +137,18 @@ static int packet_write_fmt_1(int fd, int gently,
 			      const char *fmt, va_list args)
 {
 	static struct strbuf buf = STRBUF_INIT;
-	ssize_t count;
 
 	strbuf_reset(&buf);
 	format_packet(&buf, fmt, args);
-	count = write_in_full(fd, buf.buf, buf.len);
-	if (count == buf.len)
-		return 0;
-
-	if (!gently) {
-		check_pipe(errno);
-		die_errno("packet write with format failed");
+	if (write_in_full(fd, buf.buf, buf.len) < 0) {
+		if (!gently) {
+			check_pipe(errno);
+			die_errno("packet write with format failed");
+		}
+		return error("packet write with format failed");
 	}
-	return error("packet write with format failed");
+
+	return 0;
 }
 
 void packet_write_fmt(int fd, const char *fmt, ...)
@@ -184,9 +183,9 @@ static int packet_write_gently(const int fd_out, const char *buf, size_t size)
 	packet_size = size + 4;
 	set_packet_header(packet_write_buffer, packet_size);
 	memcpy(packet_write_buffer + 4, buf, size);
-	if (write_in_full(fd_out, packet_write_buffer, packet_size) == packet_size)
-		return 0;
-	return error("packet write failed");
+	if (write_in_full(fd_out, packet_write_buffer, packet_size) < 0)
+		return error("packet write failed");
+	return 0;
 }
 
 void packet_buf_write(struct strbuf *buf, const char *fmt, ...)

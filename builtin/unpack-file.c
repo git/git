@@ -15,7 +15,7 @@ static char *create_temp_file(struct object_id *oid)
 
 	xsnprintf(path, sizeof(path), ".merge_file_XXXXXX");
 	fd = xmkstemp(path);
-	if (write_in_full(fd, buf, size) != size)
+	if (write_in_full(fd, buf, size) < 0)
 		die_errno("unable to write temp-file");
 	close(fd);
 	return path;

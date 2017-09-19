@@ -302,7 +302,7 @@ static void write_buf_to_worktree(const struct object_id *obj,
 	fd = xopen(path, O_WRONLY | O_EXCL | O_CREAT, 0666);
 
 	while (size > 0) {
-		long ret = write_in_full(fd, buf, size);
+		ssize_t ret = write_in_full(fd, buf, size);
 		if (ret < 0) {
 			/* Ignore epipe */
 			if (errno == EPIPE)

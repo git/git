@@ -609,7 +609,7 @@ static int write_pseudoref(const char *pseudoref, const unsigned char *sha1,
 		}
 	}
 
-	if (write_in_full(fd, buf.buf, buf.len) != buf.len) {
+	if (write_in_full(fd, buf.buf, buf.len) < 0) {
 		strbuf_addf(err, "could not write to '%s'", filename);
 		rollback_lock_file(&lock);
 		goto done;
