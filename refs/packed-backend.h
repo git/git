@@ -1,6 +1,15 @@
 #ifndef REFS_PACKED_BACKEND_H
 #define REFS_PACKED_BACKEND_H
 
+/*
+ * Support for storing references in a `packed-refs` file.
+ *
+ * Note that this backend doesn't check for D/F conflicts, because it
+ * doesn't care about them. But usually it should be wrapped in a
+ * `files_ref_store` that prevents D/F conflicts from being created,
+ * even among packed refs.
+ */
+
 struct ref_store *packed_ref_store_create(const char *path,
 					  unsigned int store_flags);
 
@@ -13,13 +22,5 @@ int packed_refs_lock(struct ref_store *ref_store, int flags, struct strbuf *err)
 
 void packed_refs_unlock(struct ref_store *ref_store);
 int packed_refs_is_locked(struct ref_store *ref_store);
-
-void add_packed_ref(struct ref_store *ref_store,
-		    const char *refname, const struct object_id *oid);
-
-int commit_packed_refs(struct ref_store *ref_store, struct strbuf *err);
-
-int repack_without_refs(struct ref_store *ref_store,
-			struct string_list *refnames, struct strbuf *err);
 
 #endif /* REFS_PACKED_BACKEND_H */

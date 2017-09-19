@@ -92,19 +92,6 @@ struct ref_store *packed_ref_store_create(const char *path,
 }
 
 /*
- * Die if refs is not the main ref store. caller is used in any
- * necessary error messages.
- */
-static void packed_assert_main_repository(struct packed_ref_store *refs,
-					  const char *caller)
-{
-	if (refs->store_flags & REF_STORE_MAIN)
-		return;
-
-	die("BUG: operation %s only allowed for main ref store", caller);
-}
-
-/*
  * Downcast `ref_store` to `packed_ref_store`. Die if `ref_store` is
  * not a `packed_ref_store`. Also die if `packed_ref_store` doesn't
  * support at least the flags specified in `required_flags`. `caller`
@@ -322,40 +309,6 @@ static struct ref_dir *get_packed_refs(struct packed_ref_store *refs)
 }
 
 /*
- * Add or overwrite a reference in the in-memory packed reference
- * cache. This may only be called while the packed-refs file is locked
- * (see packed_refs_lock()). To actually write the packed-refs file,
- * call commit_packed_refs().
- */
-void add_packed_ref(struct ref_store *ref_store,
-		    const char *refname, const struct object_id *oid)
-{
-	struct packed_ref_store *refs =
-		packed_downcast(ref_store, REF_STORE_WRITE,
-				"add_packed_ref");
-	struct ref_dir *packed_refs;
-	struct ref_entry *packed_entry;
-
-	if (!is_lock_file_locked(&refs->lock))
-		die("BUG: packed refs not locked");
-
-	if (check_refname_format(refname, REFNAME_ALLOW_ONELEVEL))
-		die("Reference has invalid format: '%s'", refname);
-
-	packed_refs = get_packed_refs(refs);
-	packed_entry = find_ref_entry(packed_refs, refname);
-	if (packed_entry) {
-		/* Overwrite the existing entry: */
-		oidcpy(&packed_entry->u.value.oid, oid);
-		packed_entry->flag = REF_ISPACKED;
-		oidclr(&packed_entry->u.value.peeled);
-	} else {
-		packed_entry = create_ref_entry(refname, oid, REF_ISPACKED);
-		add_ref_entry(packed_refs, packed_entry);
-	}
-}
-
-/*
  * Return the ref_entry for the given refname from the packed
  * references.  If it does not exist, return NULL.
  */
@@ -525,7 +478,6 @@ int packed_refs_lock(struct ref_store *ref_store, int flags, struct strbuf *err)
 				"packed_refs_lock");
 	static int timeout_configured = 0;
 	static int timeout_value = 1000;
-	struct packed_ref_cache *packed_ref_cache;
 
 	if (!timeout_configured) {
 		git_config_get_int("core.packedrefstimeout", &timeout_value);
@@ -561,9 +513,11 @@ int packed_refs_lock(struct ref_store *ref_store, int flags, struct strbuf *err)
 	 */
 	validate_packed_ref_cache(refs);
 
-	packed_ref_cache = get_packed_ref_cache(refs);
-	/* Increment the reference count to prevent it from being freed: */
-	acquire_packed_ref_cache(packed_ref_cache);
+	/*
+	 * Now make sure that the packed-refs file as it exists in the
+	 * locked state is loaded into the cache:
+	 */
+	get_packed_ref_cache(refs);
 	return 0;
 }
 
@@ -577,7 +531,6 @@ void packed_refs_unlock(struct ref_store *ref_store)
 	if (!is_lock_file_locked(&refs->lock))
 		die("BUG: packed_refs_unlock() called when not locked");
 	rollback_lock_file(&refs->lock);
-	release_packed_ref_cache(refs->cache);
 }
 
 int packed_refs_is_locked(struct ref_store *ref_store)
@@ -597,29 +550,35 @@ int packed_refs_is_locked(struct ref_store *ref_store)
 static const char PACKED_REFS_HEADER[] =
 	"# pack-refs with: peeled fully-peeled \n";
 
-/*
- * Write the current version of the packed refs cache from memory to
- * disk. The packed-refs file must already be locked for writing (see
- * packed_refs_lock()). Return zero on success. On errors, rollback
- * the lockfile, write an error message to `err`, and return a nonzero
- * value.
- */
-int commit_packed_refs(struct ref_store *ref_store, struct strbuf *err)
+static int packed_init_db(struct ref_store *ref_store, struct strbuf *err)
 {
-	struct packed_ref_store *refs =
-		packed_downcast(ref_store, REF_STORE_WRITE | REF_STORE_MAIN,
-				"commit_packed_refs");
-	struct packed_ref_cache *packed_ref_cache =
-		get_packed_ref_cache(refs);
+	/* Nothing to do. */
+	return 0;
+}
+
+/*
+ * Write the packed-refs from the cache to the packed-refs tempfile,
+ * incorporating any changes from `updates`. `updates` must be a
+ * sorted string list whose keys are the refnames and whose util
+ * values are `struct ref_update *`. On error, rollback the tempfile,
+ * write an error message to `err`, and return a nonzero value.
+ *
+ * The packfile must be locked before calling this function and will
+ * remain locked when it is done.
+ */
+static int write_with_updates(struct packed_ref_store *refs,
+			      struct string_list *updates,
+			      struct strbuf *err)
+{
+	struct ref_iterator *iter = NULL;
+	size_t i;
 	int ok;
-	int ret = -1;
-	struct strbuf sb = STRBUF_INIT;
 	FILE *out;
-	struct ref_iterator *iter;
+	struct strbuf sb = STRBUF_INIT;
 	char *packed_refs_path;
 
 	if (!is_lock_file_locked(&refs->lock))
-		die("BUG: commit_packed_refs() called when unlocked");
+		die("BUG: write_with_updates() called while unlocked");
 
 	/*
 	 * If packed-refs is a symlink, we want to overwrite the
@@ -628,12 +587,13 @@ int commit_packed_refs(struct ref_store *ref_store, struct strbuf *err)
 	 */
 	packed_refs_path = get_locked_file_path(&refs->lock);
 	strbuf_addf(&sb, "%s.new", packed_refs_path);
+	free(packed_refs_path);
 	refs->tempfile = create_tempfile(sb.buf);
 	if (!refs->tempfile) {
 		strbuf_addf(err, "unable to create file %s: %s",
 			    sb.buf, strerror(errno));
 		strbuf_release(&sb);
-		goto out;
+		return -1;
 	}
 	strbuf_release(&sb);
 
@@ -644,131 +604,286 @@ int commit_packed_refs(struct ref_store *ref_store, struct strbuf *err)
 		goto error;
 	}
 
-	if (fprintf(out, "%s", PACKED_REFS_HEADER) < 0) {
-		strbuf_addf(err, "error writing to %s: %s",
-			    get_tempfile_path(refs->tempfile), strerror(errno));
-		goto error;
-	}
+	if (fprintf(out, "%s", PACKED_REFS_HEADER) < 0)
+		goto write_error;
 
-	iter = cache_ref_iterator_begin(packed_ref_cache->cache, NULL, 0);
-	while ((ok = ref_iterator_advance(iter)) == ITER_OK) {
-		struct object_id peeled;
-		int peel_error = ref_iterator_peel(iter, &peeled);
+	/*
+	 * We iterate in parallel through the current list of refs and
+	 * the list of updates, processing an entry from at least one
+	 * of the lists each time through the loop. When the current
+	 * list of refs is exhausted, set iter to NULL. When the list
+	 * of updates is exhausted, leave i set to updates->nr.
+	 */
+	iter = packed_ref_iterator_begin(&refs->base, "",
+					 DO_FOR_EACH_INCLUDE_BROKEN);
+	if ((ok = ref_iterator_advance(iter)) != ITER_OK)
+		iter = NULL;
 
-		if (write_packed_entry(out, iter->refname, iter->oid->hash,
-				       peel_error ? NULL : peeled.hash)) {
-			strbuf_addf(err, "error writing to %s: %s",
-				    get_tempfile_path(refs->tempfile),
-				    strerror(errno));
-			ref_iterator_abort(iter);
-			goto error;
+	i = 0;
+
+	while (iter || i < updates->nr) {
+		struct ref_update *update = NULL;
+		int cmp;
+
+		if (i >= updates->nr) {
+			cmp = -1;
+		} else {
+			update = updates->items[i].util;
+
+			if (!iter)
+				cmp = +1;
+			else
+				cmp = strcmp(iter->refname, update->refname);
+		}
+
+		if (!cmp) {
+			/*
+			 * There is both an old value and an update
+			 * for this reference. Check the old value if
+			 * necessary:
+			 */
+			if ((update->flags & REF_HAVE_OLD)) {
+				if (is_null_oid(&update->old_oid)) {
+					strbuf_addf(err, "cannot update ref '%s': "
+						    "reference already exists",
+						    update->refname);
+					goto error;
+				} else if (oidcmp(&update->old_oid, iter->oid)) {
+					strbuf_addf(err, "cannot update ref '%s': "
+						    "is at %s but expected %s",
+						    update->refname,
+						    oid_to_hex(iter->oid),
+						    oid_to_hex(&update->old_oid));
+					goto error;
+				}
+			}
+
+			/* Now figure out what to use for the new value: */
+			if ((update->flags & REF_HAVE_NEW)) {
+				/*
+				 * The update takes precedence. Skip
+				 * the iterator over the unneeded
+				 * value.
+				 */
+				if ((ok = ref_iterator_advance(iter)) != ITER_OK)
+					iter = NULL;
+				cmp = +1;
+			} else {
+				/*
+				 * The update doesn't actually want to
+				 * change anything. We're done with it.
+				 */
+				i++;
+				cmp = -1;
+			}
+		} else if (cmp > 0) {
+			/*
+			 * There is no old value but there is an
+			 * update for this reference. Make sure that
+			 * the update didn't expect an existing value:
+			 */
+			if ((update->flags & REF_HAVE_OLD) &&
+			    !is_null_oid(&update->old_oid)) {
+				strbuf_addf(err, "cannot update ref '%s': "
+					    "reference is missing but expected %s",
+					    update->refname,
+					    oid_to_hex(&update->old_oid));
+				goto error;
+			}
+		}
+
+		if (cmp < 0) {
+			/* Pass the old reference through. */
+
+			struct object_id peeled;
+			int peel_error = ref_iterator_peel(iter, &peeled);
+
+			if (write_packed_entry(out, iter->refname,
+					       iter->oid->hash,
+					       peel_error ? NULL : peeled.hash))
+				goto write_error;
+
+			if ((ok = ref_iterator_advance(iter)) != ITER_OK)
+				iter = NULL;
+		} else if (is_null_oid(&update->new_oid)) {
+			/*
+			 * The update wants to delete the reference,
+			 * and the reference either didn't exist or we
+			 * have already skipped it. So we're done with
+			 * the update (and don't have to write
+			 * anything).
+			 */
+			i++;
+		} else {
+			struct object_id peeled;
+			int peel_error = peel_object(update->new_oid.hash,
+						     peeled.hash);
+
+			if (write_packed_entry(out, update->refname,
+					       update->new_oid.hash,
+					       peel_error ? NULL : peeled.hash))
+				goto write_error;
+
+			i++;
 		}
 	}
 
 	if (ok != ITER_DONE) {
-		strbuf_addf(err, "unable to rewrite packed-refs file: "
+		strbuf_addf(err, "unable to write packed-refs file: "
 			    "error iterating over old contents");
 		goto error;
 	}
 
-	if (rename_tempfile(&refs->tempfile, packed_refs_path)) {
-		strbuf_addf(err, "error replacing %s: %s",
-			    refs->path, strerror(errno));
-		goto out;
+	if (close_tempfile_gently(refs->tempfile)) {
+		strbuf_addf(err, "error closing file %s: %s",
+			    get_tempfile_path(refs->tempfile),
+			    strerror(errno));
+		strbuf_release(&sb);
+		delete_tempfile(&refs->tempfile);
+		return -1;
 	}
 
-	ret = 0;
-	goto out;
+	return 0;
+
+write_error:
+	strbuf_addf(err, "error writing to %s: %s",
+		    get_tempfile_path(refs->tempfile), strerror(errno));
 
 error:
+	if (iter)
+		ref_iterator_abort(iter);
+
 	delete_tempfile(&refs->tempfile);
-
-out:
-	free(packed_refs_path);
-	return ret;
+	return -1;
 }
 
-/*
- * Rewrite the packed-refs file, omitting any refs listed in
- * 'refnames'. On error, leave packed-refs unchanged, write an error
- * message to 'err', and return a nonzero value. The packed refs lock
- * must be held when calling this function; it will still be held when
- * the function returns.
- *
- * The refs in 'refnames' needn't be sorted. `err` must not be NULL.
- */
-int repack_without_refs(struct ref_store *ref_store,
-			struct string_list *refnames, struct strbuf *err)
+struct packed_transaction_backend_data {
+	/* True iff the transaction owns the packed-refs lock. */
+	int own_lock;
+
+	struct string_list updates;
+};
+
+static void packed_transaction_cleanup(struct packed_ref_store *refs,
+				       struct ref_transaction *transaction)
 {
-	struct packed_ref_store *refs =
-		packed_downcast(ref_store, REF_STORE_WRITE | REF_STORE_MAIN,
-				"repack_without_refs");
-	struct ref_dir *packed;
-	struct string_list_item *refname;
-	int needs_repacking = 0, removed = 0;
+	struct packed_transaction_backend_data *data = transaction->backend_data;
 
-	packed_assert_main_repository(refs, "repack_without_refs");
-	assert(err);
+	if (data) {
+		string_list_clear(&data->updates, 0);
 
-	if (!is_lock_file_locked(&refs->lock))
-		die("BUG: repack_without_refs called without holding lock");
+		if (is_tempfile_active(refs->tempfile))
+			delete_tempfile(&refs->tempfile);
 
-	/* Look for a packed ref */
-	for_each_string_list_item(refname, refnames) {
-		if (get_packed_ref(refs, refname->string)) {
-			needs_repacking = 1;
-			break;
+		if (data->own_lock && is_lock_file_locked(&refs->lock)) {
+			packed_refs_unlock(&refs->base);
+			data->own_lock = 0;
 		}
+
+		free(data);
+		transaction->backend_data = NULL;
 	}
 
-	/* Avoid locking if we have nothing to do */
-	if (!needs_repacking)
-		return 0; /* no refname exists in packed refs */
-
-	packed = get_packed_refs(refs);
-
-	/* Remove refnames from the cache */
-	for_each_string_list_item(refname, refnames)
-		if (remove_entry_from_dir(packed, refname->string) != -1)
-			removed = 1;
-	if (!removed) {
-		/*
-		 * All packed entries disappeared while we were
-		 * acquiring the lock.
-		 */
-		clear_packed_ref_cache(refs);
-		return 0;
-	}
-
-	/* Write what remains */
-	return commit_packed_refs(&refs->base, err);
-}
-
-static int packed_init_db(struct ref_store *ref_store, struct strbuf *err)
-{
-	/* Nothing to do. */
-	return 0;
+	transaction->state = REF_TRANSACTION_CLOSED;
 }
 
 static int packed_transaction_prepare(struct ref_store *ref_store,
 				      struct ref_transaction *transaction,
 				      struct strbuf *err)
 {
-	die("BUG: not implemented yet");
+	struct packed_ref_store *refs = packed_downcast(
+			ref_store,
+			REF_STORE_READ | REF_STORE_WRITE | REF_STORE_ODB,
+			"ref_transaction_prepare");
+	struct packed_transaction_backend_data *data;
+	size_t i;
+	int ret = TRANSACTION_GENERIC_ERROR;
+
+	/*
+	 * Note that we *don't* skip transactions with zero updates,
+	 * because such a transaction might be executed for the side
+	 * effect of ensuring that all of the references are peeled.
+	 * If the caller wants to optimize away empty transactions, it
+	 * should do so itself.
+	 */
+
+	data = xcalloc(1, sizeof(*data));
+	string_list_init(&data->updates, 0);
+
+	transaction->backend_data = data;
+
+	/*
+	 * Stick the updates in a string list by refname so that we
+	 * can sort them:
+	 */
+	for (i = 0; i < transaction->nr; i++) {
+		struct ref_update *update = transaction->updates[i];
+		struct string_list_item *item =
+			string_list_append(&data->updates, update->refname);
+
+		/* Store a pointer to update in item->util: */
+		item->util = update;
+	}
+	string_list_sort(&data->updates);
+
+	if (ref_update_reject_duplicates(&data->updates, err))
+		goto failure;
+
+	if (!is_lock_file_locked(&refs->lock)) {
+		if (packed_refs_lock(ref_store, 0, err))
+			goto failure;
+		data->own_lock = 1;
+	}
+
+	if (write_with_updates(refs, &data->updates, err))
+		goto failure;
+
+	transaction->state = REF_TRANSACTION_PREPARED;
+	return 0;
+
+failure:
+	packed_transaction_cleanup(refs, transaction);
+	return ret;
 }
 
 static int packed_transaction_abort(struct ref_store *ref_store,
 				    struct ref_transaction *transaction,
 				    struct strbuf *err)
 {
-	die("BUG: not implemented yet");
+	struct packed_ref_store *refs = packed_downcast(
+			ref_store,
+			REF_STORE_READ | REF_STORE_WRITE | REF_STORE_ODB,
+			"ref_transaction_abort");
+
+	packed_transaction_cleanup(refs, transaction);
+	return 0;
 }
 
 static int packed_transaction_finish(struct ref_store *ref_store,
 				     struct ref_transaction *transaction,
 				     struct strbuf *err)
 {
-	die("BUG: not implemented yet");
+	struct packed_ref_store *refs = packed_downcast(
+			ref_store,
+			REF_STORE_READ | REF_STORE_WRITE | REF_STORE_ODB,
+			"ref_transaction_finish");
+	int ret = TRANSACTION_GENERIC_ERROR;
+	char *packed_refs_path;
+
+	packed_refs_path = get_locked_file_path(&refs->lock);
+	if (rename_tempfile(&refs->tempfile, packed_refs_path)) {
+		strbuf_addf(err, "error replacing %s: %s",
+			    refs->path, strerror(errno));
+		goto cleanup;
+	}
+
+	clear_packed_ref_cache(refs);
+	ret = 0;
+
+cleanup:
+	free(packed_refs_path);
+	packed_transaction_cleanup(refs, transaction);
+	return ret;
 }
 
 static int packed_initial_transaction_commit(struct ref_store *ref_store,
@@ -781,7 +896,50 @@ static int packed_initial_transaction_commit(struct ref_store *ref_store,
 static int packed_delete_refs(struct ref_store *ref_store, const char *msg,
 			     struct string_list *refnames, unsigned int flags)
 {
-	die("BUG: not implemented yet");
+	struct packed_ref_store *refs =
+		packed_downcast(ref_store, REF_STORE_WRITE, "delete_refs");
+	struct strbuf err = STRBUF_INIT;
+	struct ref_transaction *transaction;
+	struct string_list_item *item;
+	int ret;
+
+	(void)refs; /* We need the check above, but don't use the variable */
+
+	if (!refnames->nr)
+		return 0;
+
+	/*
+	 * Since we don't check the references' old_oids, the
+	 * individual updates can't fail, so we can pack all of the
+	 * updates into a single transaction.
+	 */
+
+	transaction = ref_store_transaction_begin(ref_store, &err);
+	if (!transaction)
+		return -1;
+
+	for_each_string_list_item(item, refnames) {
+		if (ref_transaction_delete(transaction, item->string, NULL,
+					   flags, msg, &err)) {
+			warning(_("could not delete reference %s: %s"),
+				item->string, err.buf);
+			strbuf_reset(&err);
+		}
+	}
+
+	ret = ref_transaction_commit(transaction, &err);
+
+	if (ret) {
+		if (refnames->nr == 1)
+			error(_("could not delete reference %s: %s"),
+			      refnames->items[0].string, err.buf);
+		else
+			error(_("could not delete references: %s"), err.buf);
+	}
+
+	ref_transaction_free(transaction);
+	strbuf_release(&err);
+	return ret;
 }
 
 static int packed_pack_refs(struct ref_store *ref_store, unsigned int flags)
