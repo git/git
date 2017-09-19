@@ -934,7 +934,7 @@ size_t wt_status_locate_end(const char *s, size_t len)
 
 void wt_status_add_cut_line(FILE *fp)
 {
-	const char *explanation = _("Do not touch the line above.\nEverything below will be removed.");
+	const char *explanation = _("Do not modify or remove the line above.\nEverything below it will be ignored.");
 	struct strbuf buf = STRBUF_INIT;
 
 	fprintf(fp, "%c %s", comment_line_char, cut_line);
