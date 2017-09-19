@@ -65,6 +65,38 @@ test_expect_success 'recursive pull updates working tree' '
 	test_path_is_file super/sub/merge_strategy.t
 '
 
+test_expect_success "submodule.recurse option triggers recursive pull" '
+	test_commit -C child merge_strategy_2 &&
+	git -C parent submodule update --remote &&
+	git -C parent add sub &&
+	git -C parent commit -m "update submodule" &&
+
+	git -C super -c submodule.recurse pull --no-rebase &&
+	test_path_is_file super/sub/merge_strategy_2.t
+'
+
+test_expect_success " --[no-]recurse-submodule and submodule.recurse" '
+	test_commit -C child merge_strategy_3 &&
+	git -C parent submodule update --remote &&
+	git -C parent add sub &&
+	git -C parent commit -m "update submodule" &&
+
+	git -C super -c submodule.recurse pull --no-recurse-submodules --no-rebase &&
+	test_path_is_missing super/sub/merge_strategy_3.t &&
+	git -C super -c submodule.recurse=false pull --recurse-submodules --no-rebase &&
+	test_path_is_file super/sub/merge_strategy_3.t &&
+
+	test_commit -C child merge_strategy_4 &&
+	git -C parent submodule update --remote &&
+	git -C parent add sub &&
+	git -C parent commit -m "update submodule" &&
+
+	git -C super -c submodule.recurse=false pull --no-recurse-submodules --no-rebase &&
+	test_path_is_missing super/sub/merge_strategy_4.t &&
+	git -C super -c submodule.recurse=true pull --recurse-submodules --no-rebase &&
+	test_path_is_file super/sub/merge_strategy_4.t
+'
+
 test_expect_success 'recursive rebasing pull' '
 	# change upstream
 	test_commit -C child rebase_strategy &&
