@@ -14854,8 +14854,7 @@ msgstr "Changements de $mb sur $onto :"
 
 #: git-rebase.sh:615
 msgid "First, rewinding head to replay your work on top of it..."
-msgstr ""
-"Premièrement, rembobinons head pour rejouer votre travail par-dessus..."
+msgstr "Rembobinage préalable de head pour pouvoir rejouer votre travail par-dessus..."
 
 #: git-rebase.sh:625
 #, sh-format
