@@ -1184,9 +1184,9 @@ extern int cmd_main(int, const char **);
  */
 #ifdef SUPPRESS_ANNOTATED_LEAKS
 extern void unleak_memory(const void *ptr, size_t len);
-#define UNLEAK(var) unleak_memory(&(var), sizeof(var));
+#define UNLEAK(var) unleak_memory(&(var), sizeof(var))
 #else
-#define UNLEAK(var)
+#define UNLEAK(var) do {} while (0)
 #endif
 
 #endif
