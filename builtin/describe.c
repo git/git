@@ -158,18 +158,21 @@ static int get_name(const char *path, const struct object_id *oid, int flag, voi
 	 * pattern.
 	 */
 	if (patterns.nr) {
+		int found = 0;
 		struct string_list_item *item;
 
 		if (!is_tag)
 			return 0;
 
 		for_each_string_list_item(item, &patterns) {
-			if (!wildmatch(item->string, path + 10, 0))
+			if (!wildmatch(item->string, path + 10, 0)) {
+				found = 1;
 				break;
-
-			/* If we get here, no pattern matched. */
-			return 0;
+			}
 		}
+
+		if (!found)
+			return 0;
 	}
 
 	/* Is it annotated? */
