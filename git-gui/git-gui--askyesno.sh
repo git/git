@@ -59,5 +59,17 @@ if {$::tcl_platform(platform) eq {windows}} {
 	}
 }
 
+if {$::tcl_platform(platform) eq {windows}} {
+	set icopath [file dirname [file normalize $argv0]]
+	if {[file tail $icopath] eq {git-core}} {
+		set icopath [file dirname $icopath]
+	}
+	set icopath [file dirname $icopath]
+	set icopath [file join $icopath share git git-for-windows.ico]
+	if {[file exists $icopath]} {
+		wm iconbitmap . -default $icopath
+	}
+}
+
 wm title . $title
 tk::PlaceWindow .
