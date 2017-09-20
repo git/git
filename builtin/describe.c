@@ -129,13 +129,24 @@ static void add_to_known_names(const char *path,
 
 static int get_name(const char *path, const struct object_id *oid, int flag, void *cb_data)
 {
-	int is_tag = starts_with(path, "refs/tags/");
+	int is_tag = 0;
 	struct object_id peeled;
 	int is_annotated, prio;
+	const char *path_to_match = NULL;
 
-	/* Reject anything outside refs/tags/ unless --all */
-	if (!all && !is_tag)
+	if (skip_prefix(path, "refs/tags/", &path_to_match)) {
+		is_tag = 1;
+	} else if (all) {
+		if ((exclude_patterns.nr || patterns.nr) &&
+		    !skip_prefix(path, "refs/heads/", &path_to_match) &&
+		    !skip_prefix(path, "refs/remotes/", &path_to_match)) {
+			/* Only accept reference of known type if there are match/exclude patterns */
+			return 0;
+		}
+	} else {
+		/* Reject anything outside refs/tags/ unless --all */
 		return 0;
+	}
 
 	/*
 	 * If we're given exclude patterns, first exclude any tag which match
@@ -144,11 +155,8 @@ static int get_name(const char *path, const struct object_id *oid, int flag, voi
 	if (exclude_patterns.nr) {
 		struct string_list_item *item;
 
-		if (!is_tag)
-			return 0;
-
 		for_each_string_list_item(item, &exclude_patterns) {
-			if (!wildmatch(item->string, path + 10, 0))
+			if (!wildmatch(item->string, path_to_match, 0))
 				return 0;
 		}
 	}
@@ -161,11 +169,8 @@ static int get_name(const char *path, const struct object_id *oid, int flag, voi
 		int found = 0;
 		struct string_list_item *item;
 
-		if (!is_tag)
-			return 0;
-
 		for_each_string_list_item(item, &patterns) {
-			if (!wildmatch(item->string, path + 10, 0)) {
+			if (!wildmatch(item->string, path_to_match, 0)) {
 				found = 1;
 				break;
 			}

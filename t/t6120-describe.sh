@@ -190,6 +190,33 @@ check_describe "test1-lightweight-*" --long --tags --match="test1-*" --match="te
 
 check_describe "test1-lightweight-*" --long --tags --match="test3-*" --match="test1-*" HEAD
 
+test_expect_success 'set-up branches' '
+	git branch branch_A A &&
+	git branch branch_C c &&
+	git update-ref refs/remotes/origin/remote_branch_A "A^{commit}" &&
+	git update-ref refs/remotes/origin/remote_branch_C "c^{commit}" &&
+	git update-ref refs/original/original_branch_A test-annotated~2
+'
+
+check_describe "heads/branch_A*" --all --match="branch_*" --exclude="branch_C" HEAD
+
+check_describe "remotes/origin/remote_branch_A*" --all --match="origin/remote_branch_*" --exclude="origin/remote_branch_C" HEAD
+
+check_describe "original/original_branch_A*" --all test-annotated~1
+
+test_expect_success '--match does not work for other types' '
+	test_must_fail git describe --all --match="*original_branch_*" test-annotated~1
+'
+
+test_expect_success '--exclude does not work for other types' '
+	R=$(git describe --all --exclude="any_pattern_even_not_matching" test-annotated~1) &&
+	case "$R" in
+	*original_branch_A*) echo "fail: Found unknown reference $R with --exclude"
+		false;;
+	*) echo ok: Found some known type;;
+	esac
+'
+
 test_expect_success 'name-rev with exact tags' '
 	echo A >expect &&
 	tag_object=$(git rev-parse refs/tags/A) &&
