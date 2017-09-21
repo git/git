@@ -2556,8 +2556,8 @@ struct in_pack_object {
 };
 
 struct in_pack {
-	int alloc;
-	int nr;
+	unsigned int alloc;
+	unsigned int nr;
 	struct in_pack_object *array;
 };
 

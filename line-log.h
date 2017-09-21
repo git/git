@@ -14,7 +14,7 @@ struct range {
 
 /* A set of ranges.  The ranges must always be disjoint and sorted. */
 struct range_set {
-	int alloc, nr;
+	unsigned int alloc, nr;
 	struct range *ranges;
 };
 
