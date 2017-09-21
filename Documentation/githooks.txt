@@ -127,11 +127,10 @@ help message found in the commented portion of the commit template.
 commit-msg
 ~~~~~~~~~~
 
-This hook is invoked by 'git commit', and can be bypassed
-with the `--no-verify` option.  It takes a single parameter, the
-name of the file that holds the proposed commit log message.
-Exiting with a non-zero status causes the 'git commit' to
-abort.
+This hook is invoked by 'git commit' and 'git merge', and can be
+bypassed with the `--no-verify` option.  It takes a single parameter,
+the name of the file that holds the proposed commit log message.
+Exiting with a non-zero status causes the command to abort.
 
 The hook is allowed to edit the message file in place, and can be used
 to normalize the message into some project standard format. It
