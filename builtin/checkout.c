@@ -436,6 +436,7 @@ static int reset_tree(struct tree *tree, const struct checkout_opts *o,
 		 * update paths in the work tree, and we cannot revert
 		 * them.
 		 */
+		/* fallthrough */
 	case 0:
 		return 0;
 	default:

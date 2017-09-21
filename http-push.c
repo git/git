@@ -1523,6 +1523,7 @@ static int remote_exists(const char *path)
 		break;
 	case HTTP_ERROR:
 		error("unable to access '%s': %s", url, curl_errorstr);
+		/* fallthrough */
 	default:
 		ret = -1;
 	}

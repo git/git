@@ -431,6 +431,7 @@ void tcl_quote_buf(struct strbuf *sb, const char *src)
 		case '{': case '}':
 		case '$': case '\\': case '"':
 			strbuf_addch(sb, '\\');
+			/* fallthrough */
 		default:
 			strbuf_addch(sb, c);
 			break;

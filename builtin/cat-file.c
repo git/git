@@ -113,6 +113,7 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 
 		if (textconv_object(path, obj_context.mode, &oid, 1, &buf, &size))
 			break;
+		/* else fallthrough */
 
 	case 'p':
 		type = sha1_object_info(oid.hash, NULL);
