@@ -86,7 +86,7 @@ USAGE="[--setup <command>] [--env-filter <command>]
 	[--parent-filter <command>] [--msg-filter <command>]
 	[--commit-filter <command>] [--tag-name-filter <command>]
 	[--subdirectory-filter <directory>] [--original <namespace>]
-	[-d <directory>] [-f | --force]
+	[-d <directory>] [-f | --force] [--state-branch <branch>]
 	[--] [<rev-list options>...]"
 
 OPTIONS_SPEC=
@@ -106,6 +106,7 @@ filter_msg=cat
 filter_commit=
 filter_tag_name=
 filter_subdir=
+state_branch=
 orig_namespace=refs/original/
 force=
 prune_empty=
@@ -180,6 +181,9 @@ do
 		;;
 	--original)
 		orig_namespace=$(expr "$OPTARG/" : '\(.*[^/]\)/*$')/
+		;;
+	--state-branch)
+		state_branch="$OPTARG"
 		;;
 	*)
 		usage
@@ -258,6 +262,26 @@ export GIT_INDEX_FILE
 
 # map old->new commit ids for rewriting parents
 mkdir ../map || die "Could not create map/ directory"
+
+if test -n "$state_branch"
+then
+	state_commit=$(git rev-parse --no-flags --revs-only "$state_branch")
+	if test -n "$state_commit"
+	then
+		echo "Populating map from $state_branch ($state_commit)" 1>&2
+		perl -e'open(MAP, "-|", "git show $ARGV[0]:filter.map") or die;
+			while (<MAP>) {
+				m/(.*):(.*)/ or die;
+				open F, ">../map/$1" or die;
+				print F "$2" or die;
+				close(F) or die;
+			}
+			close(MAP) or die;' "$state_commit" \
+				|| die "Unable to load state from $state_branch:filter.map"
+	else
+		echo "Branch $state_branch does not exist. Will create" 1>&2
+	fi
+fi
 
 # we need "--" only if there are no path arguments in $@
 nonrevs=$(git rev-parse --no-revs "$@") || exit
@@ -589,6 +613,29 @@ test -z "$ORIG_GIT_COMMITTER_DATE" || {
 	GIT_COMMITTER_DATE="$ORIG_GIT_COMMITTER_DATE" &&
 	export GIT_COMMITTER_DATE
 }
+
+if test -n "$state_branch"
+then
+	echo "Saving rewrite state to $state_branch" 1>&2
+	state_blob=$(
+		perl -e'opendir D, "../map" or die;
+			open H, "|-", "git hash-object -w --stdin" or die;
+			foreach (sort readdir(D)) {
+				next if m/^\.\.?$/;
+				open F, "<../map/$_" or die;
+				chomp($f = <F>);
+				print H "$_:$f\n" or die;
+			}
+			close(H) or die;' || die "Unable to save state")
+	state_tree=$(/bin/echo -e "100644 blob $state_blob\tfilter.map" | git mktree)
+	if test -n "$state_commit"
+	then
+		state_commit=$(/bin/echo "Sync" | git commit-tree "$state_tree" -p "$state_commit")
+	else
+		state_commit=$(/bin/echo "Sync" | git commit-tree "$state_tree" )
+	fi
+	git update-ref "$state_branch" "$state_commit"
+fi
 
 cd "$orig_dir"
 rm -rf "$tempdir"
