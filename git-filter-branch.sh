@@ -544,11 +544,6 @@ if [ "$filter_tag_name" ]; then
 	done
 fi
 
-cd "$orig_dir"
-rm -rf "$tempdir"
-
-trap - 0
-
 unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE
 test -z "$ORIG_GIT_DIR" || {
 	GIT_DIR="$ORIG_GIT_DIR" && export GIT_DIR
@@ -561,6 +556,11 @@ test -z "$ORIG_GIT_INDEX_FILE" || {
 	GIT_INDEX_FILE="$ORIG_GIT_INDEX_FILE" &&
 	export GIT_INDEX_FILE
 }
+
+cd "$orig_dir"
+rm -rf "$tempdir"
+
+trap - 0
 
 if [ "$(is_bare_repository)" = false ]; then
 	git read-tree -u -m HEAD || exit
