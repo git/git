@@ -561,7 +561,7 @@ if [ "$filter_tag_name" ]; then
 					}' \
 				    -e '/^-----BEGIN PGP SIGNATURE-----/q' \
 				    -e 'p' ) |
-				git mktag) ||
+				git hash-object -t tag -w --stdin) ||
 				die "Could not create new tag object for $ref"
 			if git cat-file tag "$ref" | \
 			   sane_grep '^-----BEGIN PGP SIGNATURE-----' >/dev/null 2>&1
