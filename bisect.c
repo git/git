@@ -826,7 +826,8 @@ static int check_ancestors(const char *prefix)
 
 	/* Clean up objects used, as they will be reused. */
 	clear_commit_marks_for_object_array(&pending_copy, ALL_REV_FLAGS);
-	free(pending_copy.objects);
+
+	object_array_clear(&pending_copy);
 
 	return res;
 }
