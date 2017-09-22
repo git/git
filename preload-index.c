@@ -79,6 +79,8 @@ static void preload_index(struct index_state *index,
 		return;
 
 	threads = index->cache_nr / THREAD_COST;
+	if ((index->cache_nr > 1) && (threads < 2) && getenv("GIT_FORCE_PRELOAD_TEST"))
+		threads = 2;
 	if (threads < 2)
 		return;
 	if (threads > MAX_PARALLEL)
