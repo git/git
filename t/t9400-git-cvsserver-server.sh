@@ -588,4 +588,52 @@ test_expect_success 'cvs annotate' '
     test_cmp ../expect ../actual
 '
 
+#------------
+# running via git-shell
+#------------
+
+cd "$WORKDIR"
+
+test_expect_success 'create remote-cvs helper' '
+	write_script remote-cvs <<-\EOF
+	exec git shell -c "cvs server"
+	EOF
+'
+
+test_expect_success 'cvs server does not run with vanilla git-shell' '
+	(
+		cd cvswork &&
+		CVS_SERVER=$WORKDIR/remote-cvs &&
+		export CVS_SERVER &&
+		test_must_fail cvs log merge
+	)
+'
+
+test_expect_success 'configure git shell to run cvs server' '
+	mkdir "$HOME"/git-shell-commands &&
+
+	write_script "$HOME"/git-shell-commands/cvs <<-\EOF &&
+	if ! test $# = 1 && test "$1" = "server"
+	then
+		echo >&2 "git-cvsserver only handles \"server\""
+		exit 1
+	fi
+	exec git cvsserver server
+	EOF
+
+	# Should not be used, but part of the recommended setup
+	write_script "$HOME"/git-shell-commands/no-interactive-login <<-\EOF
+	echo Interactive login forbidden
+	EOF
+'
+
+test_expect_success 'cvs server can run with recommended config' '
+	(
+		cd cvswork &&
+		CVS_SERVER=$WORKDIR/remote-cvs &&
+		export CVS_SERVER &&
+		cvs log merge
+	)
+'
+
 test_done
