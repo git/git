@@ -422,7 +422,7 @@ test_expect_success 'git branch --copy is a synonym for -c' '
 	test_cmp expect actual
 '
 
-test_expect_success 'git branch -c ee ef should copy and checkout branch ef' '
+test_expect_success 'git branch -c ee ef should copy ee to create branch ef' '
 	git checkout -b ee &&
 	git reflog exists refs/heads/ee &&
 	git config branch.ee.dummy Hello &&
@@ -431,7 +431,7 @@ test_expect_success 'git branch -c ee ef should copy and checkout branch ef' '
 	git reflog exists refs/heads/ef &&
 	test $(git config branch.ee.dummy) = Hello &&
 	test $(git config branch.ef.dummy) = Hello &&
-	test $(git rev-parse --abbrev-ref HEAD) = ef
+	test $(git rev-parse --abbrev-ref HEAD) = ee
 '
 
 test_expect_success 'git branch -c f/f g/g should work' '
@@ -494,12 +494,12 @@ test_expect_success 'git branch -C c1 c2 should succeed when c1 is checked out' 
 	git checkout -b c1 &&
 	git branch c2 &&
 	git branch -C c1 c2 &&
-	test $(git rev-parse --abbrev-ref HEAD) = c2
+	test $(git rev-parse --abbrev-ref HEAD) = c1
 '
 
-test_expect_success 'git branch -C c1 c2 should add entries to .git/logs/HEAD' '
+test_expect_success 'git branch -C c1 c2 should never touch HEAD' '
 	msg="Branch: copied refs/heads/c1 to refs/heads/c2" &&
-	grep "$msg$" .git/logs/HEAD
+	! grep "$msg$" .git/logs/HEAD
 '
 
 test_expect_success 'git branch -C master should work when master is checked out' '

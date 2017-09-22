@@ -506,12 +506,9 @@ static void copy_or_rename_branch(const char *oldname, const char *newname, int 
 				oldref.buf + 11);
 	}
 
-	if (replace_each_worktree_head_symref(oldref.buf, newref.buf, logmsg.buf)) {
-		if (copy)
-			die(_("Branch copied to %s, but HEAD is not updated!"), newname);
-		else
-			die(_("Branch renamed to %s, but HEAD is not updated!"), newname);
-	}
+	if (!copy &&
+	    replace_each_worktree_head_symref(oldref.buf, newref.buf, logmsg.buf))
+		die(_("Branch renamed to %s, but HEAD is not updated!"), newname);
 
 	strbuf_release(&logmsg);
 
