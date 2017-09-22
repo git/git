@@ -181,12 +181,7 @@ static int traverse_reachable(void)
 	if (show_progress)
 		progress = start_progress_delay(_("Checking connectivity"), 0, 0, 2);
 	while (pending.nr) {
-		struct object_array_entry *entry;
-		struct object *obj;
-
-		entry = pending.objects + --pending.nr;
-		obj = entry->item;
-		result |= traverse_one_object(obj);
+		result |= traverse_one_object(object_array_pop(&pending));
 		display_progress(progress, ++nr);
 	}
 	stop_progress(&progress);

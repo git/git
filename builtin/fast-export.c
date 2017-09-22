@@ -634,11 +634,10 @@ static void handle_tail(struct object_array *commits, struct rev_info *revs)
 {
 	struct commit *commit;
 	while (commits->nr) {
-		commit = (struct commit *)commits->objects[commits->nr - 1].item;
+		commit = (struct commit *)object_array_pop(commits);
 		if (has_unshown_parent(commit))
 			return;
 		handle_commit(commit, revs);
-		commits->nr--;
 	}
 }
 

@@ -353,6 +353,19 @@ static void object_array_release_entry(struct object_array_entry *ent)
 	free(ent->path);
 }
 
+struct object *object_array_pop(struct object_array *array)
+{
+	struct object *ret;
+
+	if (!array->nr)
+		return NULL;
+
+	ret = array->objects[array->nr - 1].item;
+	object_array_release_entry(&array->objects[array->nr - 1]);
+	array->nr--;
+	return ret;
+}
+
 void object_array_filter(struct object_array *array,
 			 object_array_each_func_t want, void *cb_data)
 {
