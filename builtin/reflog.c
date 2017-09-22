@@ -182,8 +182,8 @@ static int commit_is_complete(struct commit *commit)
 			found.objects[i].item->flags |= SEEN;
 	}
 	/* free object arrays */
-	free(study.objects);
-	free(found.objects);
+	object_array_clear(&study);
+	object_array_clear(&found);
 	return !is_incomplete;
 }
 
