@@ -12,6 +12,7 @@
 #include "refs.h"
 #include "submodule.h"
 #include "dir.h"
+#include "fsmonitor.h"
 
 /*
  * diff-files
@@ -228,6 +229,7 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 
 		if (!changed && !dirty_submodule) {
 			ce_mark_uptodate(ce);
+			mark_fsmonitor_valid(ce);
 			if (!DIFF_OPT_TST(&revs->diffopt, FIND_COPIES_HARDER))
 				continue;
 		}
