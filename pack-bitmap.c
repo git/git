@@ -653,8 +653,6 @@ static int in_bitmapped_pack(struct object_list *roots)
 int prepare_bitmap_walk(struct rev_info *revs)
 {
 	unsigned int i;
-	unsigned int pending_nr = revs->pending.nr;
-	struct object_array_entry *pending_e = revs->pending.objects;
 
 	struct object_list *wants = NULL;
 	struct object_list *haves = NULL;
@@ -669,8 +667,8 @@ int prepare_bitmap_walk(struct rev_info *revs)
 			return -1;
 	}
 
-	for (i = 0; i < pending_nr; ++i) {
-		struct object *object = pending_e[i].item;
+	for (i = 0; i < revs->pending.nr; ++i) {
+		struct object *object = revs->pending.objects[i].item;
 
 		if (object->type == OBJ_NONE)
 			parse_object_or_die(&object->oid, NULL);
@@ -714,9 +712,7 @@ int prepare_bitmap_walk(struct rev_info *revs)
 	if (!bitmap_git.loaded && load_pack_bitmap() < 0)
 		return -1;
 
-	revs->pending.nr = 0;
-	revs->pending.alloc = 0;
-	revs->pending.objects = NULL;
+	object_array_clear(&revs->pending);
 
 	if (haves) {
 		revs->ignore_missing_links = 1;
