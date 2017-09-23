@@ -2,9 +2,14 @@
 
 case "$1" in
 	--help)
-		echo "usage: $0 [other_git_tree...] [--] [test_scripts]"
+		echo "usage: $0 [--config file] [other_git_tree...] [--] [test_scripts]"
 		exit 0
 		;;
+	--config)
+		shift
+		GIT_PERF_CONFIG_FILE=$(cd "$(dirname "$1")"; pwd)/$(basename "$1")
+		export GIT_PERF_CONFIG_FILE
+		shift ;;
 esac
 
 die () {
