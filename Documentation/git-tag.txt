@@ -174,7 +174,7 @@ This option is only applicable when listing tags without annotation lines.
 	`core.logAllRefUpdates` in linkgit:git-config[1].
 	The negated form `--no-create-reflog` only overrides an earlier
 	`--create-reflog`, but currently does not negate the setting of
-	`core.logallrefupdates`.
+	`core.logAllRefUpdates`.
 
 <tagname>::
 	The name of the tag to create, delete, or describe.
