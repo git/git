@@ -239,8 +239,7 @@ int read_ref(const char *refname, unsigned char *sha1)
 
 int ref_exists(const char *refname)
 {
-	unsigned char sha1[20];
-	return !!resolve_ref_unsafe(refname, RESOLVE_REF_READING, sha1, NULL);
+	return !!resolve_ref_unsafe(refname, RESOLVE_REF_READING, NULL, NULL);
 }
 
 static int filter_refs(const char *refname, const struct object_id *oid,
@@ -286,12 +285,11 @@ static int warn_if_dangling_symref(const char *refname, const struct object_id *
 {
 	struct warn_if_dangling_data *d = cb_data;
 	const char *resolves_to;
-	struct object_id junk;
 
 	if (!(flags & REF_ISSYMREF))
 		return 0;
 
-	resolves_to = resolve_ref_unsafe(refname, 0, junk.hash, NULL);
+	resolves_to = resolve_ref_unsafe(refname, 0, NULL, NULL);
 	if (!resolves_to
 	    || (d->refname
 		? strcmp(resolves_to, d->refname)

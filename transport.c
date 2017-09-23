@@ -26,7 +26,6 @@ static void set_upstreams(struct transport *transport, struct ref *refs,
 		const char *localname;
 		const char *tmp;
 		const char *remotename;
-		unsigned char sha[20];
 		int flag = 0;
 		/*
 		 * Check suitability for tracking. Must be successful /
@@ -44,7 +43,7 @@ static void set_upstreams(struct transport *transport, struct ref *refs,
 		localname = ref->peer_ref->name;
 		remotename = ref->name;
 		tmp = resolve_ref_unsafe(localname, RESOLVE_REF_READING,
-					 sha, &flag);
+					 NULL, &flag);
 		if (tmp && flag & REF_ISSYMREF &&
 			starts_with(tmp, "refs/heads/"))
 			localname = tmp;
