@@ -125,23 +125,46 @@ get_var_from_env_or_config () {
 	test -n "${4+x}" && eval "$env_var=\"$4\""
 }
 
-get_var_from_env_or_config "GIT_PERF_REPEAT_COUNT" "perf" "repeatCount" 3
-export GIT_PERF_REPEAT_COUNT
+run_subsection () {
+	get_var_from_env_or_config "GIT_PERF_REPEAT_COUNT" "perf" "repeatCount" 3
+	export GIT_PERF_REPEAT_COUNT
 
-get_var_from_env_or_config "GIT_PERF_DIRS_OR_REVS" "perf" "dirsOrRevs"
-set -- $GIT_PERF_DIRS_OR_REVS "$@"
+	get_var_from_env_or_config "GIT_PERF_DIRS_OR_REVS" "perf" "dirsOrRevs"
+	set -- $GIT_PERF_DIRS_OR_REVS "$@"
 
-get_var_from_env_or_config "GIT_PERF_MAKE_COMMAND" "perf" "makeCommand"
-get_var_from_env_or_config "GIT_PERF_MAKE_OPTS" "perf" "makeOpts"
+	get_var_from_env_or_config "GIT_PERF_MAKE_COMMAND" "perf" "makeCommand"
+	get_var_from_env_or_config "GIT_PERF_MAKE_OPTS" "perf" "makeOpts"
 
-GIT_PERF_AGGREGATING_LATER=t
-export GIT_PERF_AGGREGATING_LATER
+	GIT_PERF_AGGREGATING_LATER=t
+	export GIT_PERF_AGGREGATING_LATER
+
+	if test $# = 0 -o "$1" = -- -o -f "$1"; then
+		set -- . "$@"
+	fi
+
+	run_dirs "$@"
+	./aggregate.perl "$@"
+}
 
 cd "$(dirname $0)"
 . ../../GIT-BUILD-OPTIONS
 
-if test $# = 0 -o "$1" = -- -o -f "$1"; then
-	set -- . "$@"
+mkdir -p test-results
+get_subsections "perf" >test-results/run_subsections.names
+
+if test $(wc -l <test-results/run_subsections.names) -eq 0
+then
+	(
+		run_subsection "$@"
+	)
+else
+	while read -r subsec
+	do
+		(
+			GIT_PERF_SUBSECTION="$subsec"
+			export GIT_PERF_SUBSECTION
+			echo "======== Run for subsection '$GIT_PERF_SUBSECTION' ========"
+			run_subsection "$@"
+		)
+	done <test-results/run_subsections.names
 fi
-run_dirs "$@"
-./aggregate.perl "$@"
