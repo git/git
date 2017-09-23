@@ -1396,9 +1396,12 @@ const char *refs_resolve_ref_unsafe(struct ref_store *refs,
 				    unsigned char *sha1, int *flags)
 {
 	static struct strbuf sb_refname = STRBUF_INIT;
+	struct object_id unused_oid;
 	int unused_flags;
 	int symref_count;
 
+	if (!sha1)
+		sha1 = unused_oid.hash;
 	if (!flags)
 		flags = &unused_flags;
 

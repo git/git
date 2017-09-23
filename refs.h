@@ -10,10 +10,11 @@ struct worktree;
 /*
  * Resolve a reference, recursively following symbolic refererences.
  *
- * Store the referred-to object's name in sha1 and return the name of
- * the non-symbolic reference that ultimately pointed at it.  The
- * return value, if not NULL, is a pointer into either a static buffer
- * or the input ref.
+ * Return the name of the non-symbolic reference that ultimately pointed
+ * at the resolved object name.  The return value, if not NULL, is a
+ * pointer into either a static buffer or the input ref.
+ *
+ * If sha1 is non-NULL, store the referred-to object's name in it.
  *
  * If the reference cannot be resolved to an object, the behavior
  * depends on the RESOLVE_REF_READING flag:
