@@ -367,11 +367,16 @@ static struct strbuf *decode_q_segment(const struct strbuf *q_seg, int rfc2047)
 
 	while ((c = *in++) != 0) {
 		if (c == '=') {
-			int d = *in++;
+			int ch, d = *in;
 			if (d == '\n' || !d)
 				break; /* drop trailing newline */
-			strbuf_addch(out, (hexval(d) << 4) | hexval(*in++));
-			continue;
+			ch = hex2chr(in);
+			if (ch >= 0) {
+				strbuf_addch(out, ch);
+				in += 2;
+				continue;
+			}
+			/* garbage -- fall through */
 		}
 		if (rfc2047 && c == '_') /* rfc2047 4.2 (2) */
 			c = 0x20;
