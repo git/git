@@ -93,6 +93,13 @@ run_dirs () {
 	done
 }
 
+get_subsections () {
+	section="$1"
+	test -z "$GIT_PERF_CONFIG_FILE" && return
+	git config -f "$GIT_PERF_CONFIG_FILE" --name-only --get-regex "$section\..*\.[^.]+" |
+	sed -e "s/$section\.\(.*\)\..*/\1/" | sort | uniq
+}
+
 get_var_from_env_or_config () {
 	env_var="$1"
 	conf_var="$2"
