@@ -14,7 +14,7 @@ skip_branch_tip_with_tag () {
 	# of a tag.
 
 	if TAG=$(git describe --exact-match "$TRAVIS_BRANCH" 2>/dev/null) &&
-		$TAG != $TRAVIS_BRANCH
+		test "$TAG" != "$TRAVIS_BRANCH"
 	then
 		echo "Tip of $TRAVIS_BRANCH is exactly at $TAG"
 		exit 0
