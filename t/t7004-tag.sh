@@ -1863,7 +1863,6 @@ test_expect_success 'version sort with very long prerelease suffix' '
 	git tag -l --sort=version:refname
 '
 
-# we require ulimit, this excludes Windows
 test_expect_success ULIMIT_STACK_SIZE '--contains and --no-contains work in a deep repo' '
 	>expect &&
 	i=1 &&
