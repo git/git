@@ -28,6 +28,9 @@ test_expect_success 'setup optionspec' '
 |g,fluf?path     short and long option optional argument
 |longest=very-long-argument-hint  a very long argument hint
 |pair=key=value  with an equals sign in the hint
+|aswitch help te=t contains? fl*g characters!`
+|bswitch=hint	 hint has trailing tab character
+|cswitch	 switch has trailing tab character
 |short-hint=a    with a one symbol hint
 |
 |Extras
@@ -62,6 +65,9 @@ test_expect_success 'test --parseopt help output' '
 |    --longest <very-long-argument-hint>
 |                          a very long argument hint
 |    --pair <key=value>    with an equals sign in the hint
+|    --aswitch             help te=t contains? fl*g characters!`
+|    --bswitch <hint>      hint has trailing tab character
+|    --cswitch             switch has trailing tab character
 |    --short-hint <a>      with a one symbol hint
 |
 |Extras
@@ -75,17 +81,17 @@ END_EXPECT
 
 test_expect_success 'setup expect.1' "
 	cat > expect <<EOF
-set -- --foo --bar 'ham' -b -- 'arg'
+set -- --foo --bar 'ham' -b --aswitch -- 'arg'
 EOF
 "
 
 test_expect_success 'test --parseopt' '
-	git rev-parse --parseopt -- --foo --bar=ham --baz arg < optionspec > output &&
+	git rev-parse --parseopt -- --foo --bar=ham --baz --aswitch arg < optionspec > output &&
 	test_cmp expect output
 '
 
 test_expect_success 'test --parseopt with mixed options and arguments' '
-	git rev-parse --parseopt -- --foo arg --bar=ham --baz < optionspec > output &&
+	git rev-parse --parseopt -- --foo arg --bar=ham --baz --aswitch < optionspec > output &&
 	test_cmp expect output
 '
 
