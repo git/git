@@ -21,6 +21,7 @@
 #include "bisect.h"
 #include "packfile.h"
 #include "worktree.h"
+#include "argv-array.h"
 
 volatile show_early_output_fn_t show_early_output;
 
@@ -1672,31 +1673,15 @@ int handle_revision_arg(const char *arg_, struct rev_info *revs, int flags, unsi
 	return 0;
 }
 
-struct cmdline_pathspec {
-	int alloc;
-	int nr;
-	const char **path;
-};
-
-static void append_prune_data(struct cmdline_pathspec *prune, const char **av)
-{
-	while (*av) {
-		ALLOC_GROW(prune->path, prune->nr + 1, prune->alloc);
-		prune->path[prune->nr++] = *(av++);
-	}
-}
-
 static void read_pathspec_from_stdin(struct rev_info *revs, struct strbuf *sb,
-				     struct cmdline_pathspec *prune)
+				     struct argv_array *prune)
 {
-	while (strbuf_getline(sb, stdin) != EOF) {
-		ALLOC_GROW(prune->path, prune->nr + 1, prune->alloc);
-		prune->path[prune->nr++] = xstrdup(sb->buf);
-	}
+	while (strbuf_getline(sb, stdin) != EOF)
+		argv_array_push(prune, sb->buf);
 }
 
 static void read_revisions_from_stdin(struct rev_info *revs,
-				      struct cmdline_pathspec *prune)
+				      struct argv_array *prune)
 {
 	struct strbuf sb;
 	int seen_dashdash = 0;
@@ -2286,10 +2271,9 @@ static void NORETURN diagnose_missing_default(const char *def)
 int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct setup_revision_opt *opt)
 {
 	int i, flags, left, seen_dashdash, read_from_stdin, got_rev_arg = 0, revarg_opt;
-	struct cmdline_pathspec prune_data;
+	struct argv_array prune_data = ARGV_ARRAY_INIT;
 	const char *submodule = NULL;
 
-	memset(&prune_data, 0, sizeof(prune_data));
 	if (opt)
 		submodule = opt->submodule;
 
@@ -2305,7 +2289,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 			argv[i] = NULL;
 			argc = i;
 			if (argv[i + 1])
-				append_prune_data(&prune_data, argv + i + 1);
+				argv_array_pushv(&prune_data, argv + i + 1);
 			seen_dashdash = 1;
 			break;
 		}
@@ -2366,14 +2350,14 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 			for (j = i; j < argc; j++)
 				verify_filename(revs->prefix, argv[j], j == i);
 
-			append_prune_data(&prune_data, argv + i);
+			argv_array_pushv(&prune_data, argv + i);
 			break;
 		}
 		else
 			got_rev_arg = 1;
 	}
 
-	if (prune_data.nr) {
+	if (prune_data.argc) {
 		/*
 		 * If we need to introduce the magic "a lone ':' means no
 		 * pathspec whatsoever", here is the place to do so.
@@ -2388,11 +2372,10 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 		 *	call init_pathspec() to set revs->prune_data here.
 		 * }
 		 */
-		ALLOC_GROW(prune_data.path, prune_data.nr + 1, prune_data.alloc);
-		prune_data.path[prune_data.nr++] = NULL;
 		parse_pathspec(&revs->prune_data, 0, 0,
-			       revs->prefix, prune_data.path);
+			       revs->prefix, prune_data.argv);
 	}
+	argv_array_clear(&prune_data);
 
 	if (revs->def == NULL)
 		revs->def = opt ? opt->def : NULL;
