@@ -3,7 +3,9 @@
 # Perform sanity checks on documentation and build it.
 #
 
-set -e
+. ${0%/*}/lib-travisci.sh
+
+gem install asciidoctor
 
 make check-builtins
 make check-docs
