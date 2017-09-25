@@ -279,7 +279,6 @@ test_expect_success 'describe ignoring a borken submodule' '
 	grep broken out
 '
 
-# we require ulimit, this excludes Windows
 test_expect_failure ULIMIT_STACK_SIZE 'name-rev works in a deep repo' '
 	i=1 &&
 	while test $i -lt 8000
