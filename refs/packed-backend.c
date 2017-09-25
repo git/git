@@ -19,6 +19,12 @@ struct packed_ref_cache {
 	struct ref_cache *cache;
 
 	/*
+	 * What is the peeled state of this cache? (This is usually
+	 * determined from the header of the "packed-refs" file.)
+	 */
+	enum { PEELED_NONE, PEELED_TAGS, PEELED_FULLY } peeled;
+
+	/*
 	 * Count of references to the data structure in this instance,
 	 * including the pointer from files_ref_store::packed if any.
 	 * The data will not be freed as long as the reference count
@@ -195,13 +201,13 @@ static struct packed_ref_cache *read_packed_refs(struct packed_ref_store *refs)
 	char *buf;
 	const char *pos, *eol, *eof;
 	struct strbuf tmp = STRBUF_INIT;
-	enum { PEELED_NONE, PEELED_TAGS, PEELED_FULLY } peeled = PEELED_NONE;
 	struct ref_dir *dir;
 
 	packed_refs->refs = refs;
 	acquire_packed_ref_cache(packed_refs);
 	packed_refs->cache = create_ref_cache(NULL, NULL);
 	packed_refs->cache->root->flag &= ~REF_INCOMPLETE;
+	packed_refs->peeled = PEELED_NONE;
 
 	fd = open(refs->path, O_RDONLY);
 	if (fd < 0) {
@@ -244,9 +250,9 @@ static struct packed_ref_cache *read_packed_refs(struct packed_ref_store *refs)
 		string_list_split_in_place(&traits, p, ' ', -1);
 
 		if (unsorted_string_list_has_string(&traits, "fully-peeled"))
-			peeled = PEELED_FULLY;
+			packed_refs->peeled = PEELED_FULLY;
 		else if (unsorted_string_list_has_string(&traits, "peeled"))
-			peeled = PEELED_TAGS;
+			packed_refs->peeled = PEELED_TAGS;
 		/* perhaps other traits later as well */
 
 		/* The "+ 1" is for the LF character. */
@@ -282,8 +288,9 @@ static struct packed_ref_cache *read_packed_refs(struct packed_ref_store *refs)
 			oidclr(&oid);
 			flag |= REF_BAD_NAME | REF_ISBROKEN;
 		}
-		if (peeled == PEELED_FULLY ||
-		    (peeled == PEELED_TAGS && starts_with(refname, "refs/tags/")))
+		if (packed_refs->peeled == PEELED_FULLY ||
+		    (packed_refs->peeled == PEELED_TAGS &&
+		     starts_with(refname, "refs/tags/")))
 			flag |= REF_KNOWS_PEELED;
 		entry = create_ref_entry(refname, &oid, flag);
 		add_ref_entry(dir, entry);
