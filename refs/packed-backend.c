@@ -134,33 +134,6 @@ static void clear_packed_ref_cache(struct packed_ref_store *refs)
 	}
 }
 
-/* The length of a peeled reference line in packed-refs, including EOL: */
-#define PEELED_LINE_LENGTH 42
-
-/*
- * Parse one line from a packed-refs file.  Write the SHA1 to sha1.
- * Return a pointer to the refname within the line (null-terminated),
- * or NULL if there was a problem.
- */
-static const char *parse_ref_line(struct strbuf *line, struct object_id *oid)
-{
-	const char *ref;
-
-	if (parse_oid_hex(line->buf, oid, &ref) < 0)
-		return NULL;
-	if (!isspace(*ref++))
-		return NULL;
-
-	if (isspace(*ref))
-		return NULL;
-
-	if (line->buf[line->len - 1] != '\n')
-		return NULL;
-	line->buf[--line->len] = 0;
-
-	return ref;
-}
-
 static NORETURN void die_unterminated_line(const char *path,
 					   const char *p, size_t len)
 {
@@ -221,8 +194,7 @@ static struct packed_ref_cache *read_packed_refs(struct packed_ref_store *refs)
 	size_t size;
 	char *buf;
 	const char *pos, *eol, *eof;
-	struct ref_entry *last = NULL;
-	struct strbuf line = STRBUF_INIT;
+	struct strbuf tmp = STRBUF_INIT;
 	enum { PEELED_NONE, PEELED_TAGS, PEELED_FULLY } peeled = PEELED_NONE;
 	struct ref_dir *dir;
 
@@ -264,9 +236,9 @@ static struct packed_ref_cache *read_packed_refs(struct packed_ref_store *refs)
 		if (!eol)
 			die_unterminated_line(refs->path, pos, eof - pos);
 
-		strbuf_add(&line, pos, eol - pos);
+		strbuf_add(&tmp, pos, eol - pos);
 
-		if (!skip_prefix(line.buf, "# pack-refs with:", (const char **)&p))
+		if (!skip_prefix(tmp.buf, "# pack-refs with:", (const char **)&p))
 			die_invalid_line(refs->path, pos, eof - pos);
 
 		string_list_split_in_place(&traits, p, ' ', -1);
@@ -281,61 +253,68 @@ static struct packed_ref_cache *read_packed_refs(struct packed_ref_store *refs)
 		pos = eol + 1;
 
 		string_list_clear(&traits, 0);
-		strbuf_reset(&line);
+		strbuf_reset(&tmp);
 	}
 
 	dir = get_ref_dir(packed_refs->cache->root);
 	while (pos < eof) {
+		const char *p = pos;
 		struct object_id oid;
 		const char *refname;
+		int flag = REF_ISPACKED;
+		struct ref_entry *entry = NULL;
 
-		eol = memchr(pos, '\n', eof - pos);
+		if (eof - pos < GIT_SHA1_HEXSZ + 2 ||
+		    parse_oid_hex(p, &oid, &p) ||
+		    !isspace(*p++))
+			die_invalid_line(refs->path, pos, eof - pos);
+
+		eol = memchr(p, '\n', eof - p);
 		if (!eol)
 			die_unterminated_line(refs->path, pos, eof - pos);
 
-		strbuf_add(&line, pos, eol + 1 - pos);
+		strbuf_add(&tmp, p, eol - p);
+		refname = tmp.buf;
 
-		refname = parse_ref_line(&line, &oid);
-		if (refname) {
-			int flag = REF_ISPACKED;
+		if (check_refname_format(refname, REFNAME_ALLOW_ONELEVEL)) {
+			if (!refname_is_safe(refname))
+				die("packed refname is dangerous: %s", refname);
+			oidclr(&oid);
+			flag |= REF_BAD_NAME | REF_ISBROKEN;
+		}
+		if (peeled == PEELED_FULLY ||
+		    (peeled == PEELED_TAGS && starts_with(refname, "refs/tags/")))
+			flag |= REF_KNOWS_PEELED;
+		entry = create_ref_entry(refname, &oid, flag);
+		add_ref_entry(dir, entry);
 
-			if (check_refname_format(refname, REFNAME_ALLOW_ONELEVEL)) {
-				if (!refname_is_safe(refname))
-					die("packed refname is dangerous: %s", refname);
-				oidclr(&oid);
-				flag |= REF_BAD_NAME | REF_ISBROKEN;
-			}
-			last = create_ref_entry(refname, &oid, flag);
-			if (peeled == PEELED_FULLY ||
-			    (peeled == PEELED_TAGS && starts_with(refname, "refs/tags/")))
-				last->flag |= REF_KNOWS_PEELED;
-			add_ref_entry(dir, last);
-		} else if (last &&
-		    line.buf[0] == '^' &&
-		    line.len == PEELED_LINE_LENGTH &&
-		    line.buf[PEELED_LINE_LENGTH - 1] == '\n' &&
-		    !get_oid_hex(line.buf + 1, &oid)) {
-			oidcpy(&last->u.value.peeled, &oid);
+		pos = eol + 1;
+
+		if (pos < eof && *pos == '^') {
+			p = pos + 1;
+			if (eof - p < GIT_SHA1_HEXSZ + 1 ||
+			    parse_oid_hex(p, &entry->u.value.peeled, &p) ||
+			    *p++ != '\n')
+				die_invalid_line(refs->path, pos, eof - pos);
+
 			/*
 			 * Regardless of what the file header said,
 			 * we definitely know the value of *this*
 			 * reference:
 			 */
-			last->flag |= REF_KNOWS_PEELED;
-		} else {
-			die_invalid_line(refs->path, line.buf, line.len);
+			entry->flag |= REF_KNOWS_PEELED;
+
+			pos = p;
 		}
 
-		/* The "+ 1" is for the LF character. */
-		pos = eol + 1;
-		strbuf_reset(&line);
+		strbuf_reset(&tmp);
 	}
 
 	if (munmap(buf, size))
 		die_errno("error ummapping packed-refs file");
 	close(fd);
 
-	strbuf_release(&line);
+	strbuf_release(&tmp);
 	return packed_refs;
 }
 
