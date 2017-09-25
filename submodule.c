@@ -1997,6 +1997,10 @@ const char *get_superproject_working_tree(void)
 	return ret;
 }
 
+/*
+ * Put the gitdir for a submodule (given relative to the main
+ * repository worktree) into `buf`, or return -1 on error.
+ */
 int submodule_to_gitdir(struct strbuf *buf, const char *submodule)
 {
 	const struct submodule *sub;
