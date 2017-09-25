@@ -235,6 +235,9 @@ print a message to stderr and exit with nonzero status.
 --is-bare-repository::
 	When the repository is bare print "true", otherwise "false".
 
+--is-shallow-repository::
+	When the repository is shallow print "true", otherwise "false".
+
 --resolve-git-dir <path>::
 	Check if <path> is a valid repository or a gitfile that
 	points at a valid repository, and print the location of the
