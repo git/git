@@ -80,6 +80,10 @@ UI, Workflows & Features
  * The codepath to call external process filter for smudge/clean
    operation learned to show the progress meter.
 
+ * "git rev-parse" learned "--is-shallow-repository", that is to be
+   used in a way similar to existing "--is-bare-repository" and
+   friends.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -166,6 +170,24 @@ Performance, Internal Implementation, Development Support etc.
  * The codepath for "git merge-recursive" has been cleaned up.
 
  * Many leaks of strbuf have been fixed.
+
+ * "git imap-send" has our own implementation of the protocol and also
+   can use more recent libCurl with the imap protocol support.  Update
+   the latter so that it can use the credential subsystem, and then
+   make it the default option to use, so that we can eventually
+   deprecate and remove the former.
+
+ * "make style" runs git-clang-format to help developers by pointing
+   out coding style issues.
+
+ * A test to demonstrate "git mv" failing to adjust nested submodules
+   has been added.
+   (merge c514167df2 hv/mv-nested-submodules-test later to maint).
+
+ * On Cygwin, "ulimit -s" does not report failure but it does not work
+   at all, which causes an unexpected success of some tests that
+   expect failures under a limited stack situation.  This has been
+   fixed.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -296,6 +318,47 @@ Fixes since v2.14
    to match the behaviour of the former.
    (merge c818e74332 rk/commit-tree-make-F-verbatim later to maint).
 
+ * Many codepaths did not diagnose write failures correctly when disks
+   go full, due to their misuse of write_in_full() helper function,
+   which have been corrected.
+   (merge f48ecd38cb jk/write-in-full-fix later to maint).
+
+ * "git help co" now says "co is aliased to ...", not "git co is".
+   (merge b3a8076e0d ks/help-alias-label later to maint).
+
+ * "git archive", especially when used with pathspec, stored an empty
+   directory in its output, even though Git itself never does so.
+   This has been fixed.
+   (merge 4318094047 rs/archive-excluded-directory later to maint).
+
+ * API error-proofing which happens to also squelch warnings from GCC.
+   (merge c788c54cde tg/refs-allowed-flags later to maint).
+
+ * The explanation of the cut-line in the commit log editor has been
+   slightly tweaked.
+   (merge 8c4b1a3593 ks/commit-do-not-touch-cut-line later to maint).
+
+ * "git gc" tries to avoid running two instances at the same time by
+   reading and writing pid/host from and to a lock file; it used to
+   use an incorrect fscanf() format when reading, which has been
+   corrected.
+   (merge afe2fab72c aw/gc-lockfile-fscanf-fix later to maint).
+
+ * The scripts to drive TravisCI has been reorganized and then an
+   optimization to avoid spending cycles on a branch whose tip is
+   tagged has been implemented.
+   (merge 8376eb4a8f ls/travis-scriptify later to maint).
+
+ * The test linter has been taught that we do not like "echo -e".
+   (merge 1a6d46895d tb/test-lint-echo-e later to maint).
+
+ * Code cmp.std.c nitpick.
+   (merge ac7da78ede mh/for-each-string-list-item-empty-fix later to maint).
+
+ * A regression fix for 2.11 that made the code to read the list of
+   alternate object stores overrun the end of the string.
+   (merge f0f7bebef7 jk/info-alternates-fix later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge f094b89a4d ma/parse-maybe-bool later to maint).
    (merge 39b00fa4d4 jk/drop-sha1-entry-pos later to maint).
@@ -309,3 +372,7 @@ Fixes since v2.14
    (merge 276d0e35c0 ma/split-symref-update-fix later to maint).
    (merge 3bc4b8f7c7 bb/doc-eol-dirty later to maint).
    (merge c1bb33c99c jk/system-path-cleanup later to maint).
+   (merge ab46e6fc72 cc/subprocess-handshake-missing-capabilities later to maint).
+   (merge f7a32dd97f kd/doc-for-each-ref later to maint).
+   (merge be94568bc7 ez/doc-duplicated-words-fix later to maint).
+   (merge 01e4be6c3d ks/test-readme-phrasofix later to maint).
