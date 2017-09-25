@@ -297,9 +297,7 @@ void bitmap_writer_build(struct packing_data *to_pack)
 
 			traverse_commit_list(&revs, show_commit, show_object, base);
 
-			revs.pending.nr = 0;
-			revs.pending.alloc = 0;
-			revs.pending.objects = NULL;
+			object_array_clear(&revs.pending);
 
 			stored->bitmap = bitmap_to_ewah(base);
 			need_reset = 0;

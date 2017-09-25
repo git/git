@@ -126,7 +126,7 @@ static int commit_is_complete(struct commit *commit)
 		struct commit *c;
 		struct commit_list *parent;
 
-		c = (struct commit *)study.objects[--study.nr].item;
+		c = (struct commit *)object_array_pop(&study);
 		if (!c->object.parsed && !parse_object(&c->object.oid))
 			c->object.flags |= INCOMPLETE;
 
@@ -182,8 +182,8 @@ static int commit_is_complete(struct commit *commit)
 			found.objects[i].item->flags |= SEEN;
 	}
 	/* free object arrays */
-	free(study.objects);
-	free(found.objects);
+	object_array_clear(&study);
+	object_array_clear(&found);
 	return !is_incomplete;
 }
 

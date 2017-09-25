@@ -1685,7 +1685,7 @@ static int find_first_merges(struct object_array *result, const char *path,
 			add_object_array(merges.objects[i].item, NULL, result);
 	}
 
-	free(merges.objects);
+	object_array_clear(&merges);
 	return result->nr;
 }
 
@@ -1790,7 +1790,7 @@ int merge_submodule(struct object_id *result, const char *path,
 			print_commit((struct commit *) merges.objects[i].item);
 	}
 
-	free(merges.objects);
+	object_array_clear(&merges);
 	return 0;
 }
 

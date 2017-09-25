@@ -1086,6 +1086,7 @@ struct commit_list *reduce_heads(struct commit_list *heads)
 	num_head = remove_redundant(array, num_head);
 	for (i = 0; i < num_head; i++)
 		tail = &commit_list_insert(array[i], tail)->next;
+	free(array);
 	return result;
 }
 

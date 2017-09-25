@@ -888,7 +888,7 @@ static void receive_needs(void)
 		}
 
 	shallow_nr += shallows.nr;
-	free(shallows.objects);
+	object_array_clear(&shallows);
 }
 
 /* return non-zero if the ref is hidden, otherwise 0 */
