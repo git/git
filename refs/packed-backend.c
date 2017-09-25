@@ -2,7 +2,6 @@
 #include "../config.h"
 #include "../refs.h"
 #include "refs-internal.h"
-#include "ref-cache.h"
 #include "packed-backend.h"
 #include "../iterator.h"
 #include "../lockfile.h"
@@ -225,6 +224,14 @@ static NORETURN void die_invalid_line(const char *path,
 		die("unexpected line in %s: %.75s...", path, p);
 
 }
+
+/*
+ * This value is set in `base.flags` if the peeled value of the
+ * current reference is known. In that case, `peeled` contains the
+ * correct peeled value for the reference, which might be `null_sha1`
+ * if the reference is not a tag or if it is broken.
+ */
+#define REF_KNOWS_PEELED 0x40
 
 /*
  * An iterator over a packed-refs file that is currently mmapped.
