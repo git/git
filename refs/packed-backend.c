@@ -7,6 +7,35 @@
 #include "../iterator.h"
 #include "../lockfile.h"
 
+enum mmap_strategy {
+	/*
+	 * Don't use mmap() at all for reading `packed-refs`.
+	 */
+	MMAP_NONE,
+
+	/*
+	 * Can use mmap() for reading `packed-refs`, but the file must
+	 * not remain mmapped. This is the usual option on Windows,
+	 * where you cannot rename a new version of a file onto a file
+	 * that is currently mmapped.
+	 */
+	MMAP_TEMPORARY,
+
+	/*
+	 * It is OK to leave the `packed-refs` file mmapped while
+	 * arbitrary other code is running.
+	 */
+	MMAP_OK
+};
+
+#if defined(NO_MMAP)
+static enum mmap_strategy mmap_strategy = MMAP_NONE;
+#elif defined(MMAP_PREVENTS_DELETE)
+static enum mmap_strategy mmap_strategy = MMAP_TEMPORARY;
+#else
+static enum mmap_strategy mmap_strategy = MMAP_OK;
+#endif
+
 struct packed_ref_store;
 
 struct packed_ref_cache {
@@ -17,6 +46,21 @@ struct packed_ref_cache {
 	struct packed_ref_store *refs;
 
 	struct ref_cache *cache;
+
+	/* Is the `packed-refs` file currently mmapped? */
+	int mmapped;
+
+	/*
+	 * The contents of the `packed-refs` file. If the file is
+	 * mmapped, this points at the mmapped contents of the file.
+	 * If not, this points at heap-allocated memory containing the
+	 * contents. If there were no contents (e.g., because the file
+	 * didn't exist), `buf` and `eof` are both NULL.
+	 */
+	char *buf, *eof;
+
+	/* The size of the header line, if any; otherwise, 0: */
+	size_t header_len;
 
 	/*
 	 * What is the peeled state of this cache? (This is usually
@@ -77,6 +121,26 @@ static void acquire_packed_ref_cache(struct packed_ref_cache *packed_refs)
 }
 
 /*
+ * If the buffer in `packed_refs` is active, then either munmap the
+ * memory and close the file, or free the memory. Then set the buffer
+ * pointers to NULL.
+ */
+static void release_packed_ref_buffer(struct packed_ref_cache *packed_refs)
+{
+	if (packed_refs->mmapped) {
+		if (munmap(packed_refs->buf,
+			   packed_refs->eof - packed_refs->buf))
+			die_errno("error ummapping packed-refs file %s",
+				  packed_refs->refs->path);
+		packed_refs->mmapped = 0;
+	} else {
+		free(packed_refs->buf);
+	}
+	packed_refs->buf = packed_refs->eof = NULL;
+	packed_refs->header_len = 0;
+}
+
+/*
  * Decrease the reference count of *packed_refs.  If it goes to zero,
  * free *packed_refs and return true; otherwise return false.
  */
@@ -85,6 +149,7 @@ static int release_packed_ref_cache(struct packed_ref_cache *packed_refs)
 	if (!--packed_refs->referrers) {
 		free_ref_cache(packed_refs->cache);
 		stat_validity_clear(&packed_refs->validity);
+		release_packed_ref_buffer(packed_refs);
 		free(packed_refs);
 		return 1;
 	} else {
@@ -284,12 +349,14 @@ static struct ref_iterator_vtable mmapped_ref_iterator_vtable = {
 };
 
 struct ref_iterator *mmapped_ref_iterator_begin(
-		const char *packed_refs_file,
 		struct packed_ref_cache *packed_refs,
 		const char *pos, const char *eof)
 {
 	struct mmapped_ref_iterator *iter = xcalloc(1, sizeof(*iter));
 	struct ref_iterator *ref_iterator = &iter->base;
+
+	if (!packed_refs->buf)
+		return empty_ref_iterator_begin();
 
 	base_ref_iterator_init(ref_iterator, &mmapped_ref_iterator_vtable, 0);
 
@@ -302,6 +369,62 @@ struct ref_iterator *mmapped_ref_iterator_begin(
 	iter->base.oid = &iter->oid;
 
 	return ref_iterator;
+}
+
+/*
+ * Depending on `mmap_strategy`, either mmap or read the contents of
+ * the `packed-refs` file into the `packed_refs` instance. Return 1 if
+ * the file existed and was read, or 0 if the file was absent. Die on
+ * errors.
+ */
+static int load_contents(struct packed_ref_cache *packed_refs)
+{
+	int fd;
+	struct stat st;
+	size_t size;
+	ssize_t bytes_read;
+
+	fd = open(packed_refs->refs->path, O_RDONLY);
+	if (fd < 0) {
+		if (errno == ENOENT) {
+			/*
+			 * This is OK; it just means that no
+			 * "packed-refs" file has been written yet,
+			 * which is equivalent to it being empty,
+			 * which is its state when initialized with
+			 * zeros.
+			 */
+			return 0;
+		} else {
+			die_errno("couldn't read %s", packed_refs->refs->path);
+		}
+	}
+
+	stat_validity_update(&packed_refs->validity, fd);
+
+	if (fstat(fd, &st) < 0)
+		die_errno("couldn't stat %s", packed_refs->refs->path);
+	size = xsize_t(st.st_size);
+
+	switch (mmap_strategy) {
+	case MMAP_NONE:
+	case MMAP_TEMPORARY:
+		packed_refs->buf = xmalloc(size);
+		bytes_read = read_in_full(fd, packed_refs->buf, size);
+		if (bytes_read < 0 || bytes_read != size)
+			die_errno("couldn't read %s", packed_refs->refs->path);
+		packed_refs->eof = packed_refs->buf + size;
+		packed_refs->mmapped = 0;
+		break;
+	case MMAP_OK:
+		packed_refs->buf = xmmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
+		packed_refs->eof = packed_refs->buf + size;
+		packed_refs->mmapped = 1;
+		break;
+	}
+	close(fd);
+
+	return 1;
 }
 
 /*
@@ -336,11 +459,6 @@ struct ref_iterator *mmapped_ref_iterator_begin(
 static struct packed_ref_cache *read_packed_refs(struct packed_ref_store *refs)
 {
 	struct packed_ref_cache *packed_refs = xcalloc(1, sizeof(*packed_refs));
-	int fd;
-	struct stat st;
-	size_t size;
-	char *buf;
-	const char *pos, *eof;
 	struct ref_dir *dir;
 	struct ref_iterator *iter;
 	int ok;
@@ -351,45 +469,29 @@ static struct packed_ref_cache *read_packed_refs(struct packed_ref_store *refs)
 	packed_refs->cache->root->flag &= ~REF_INCOMPLETE;
 	packed_refs->peeled = PEELED_NONE;
 
-	fd = open(refs->path, O_RDONLY);
-	if (fd < 0) {
-		if (errno == ENOENT) {
-			/*
-			 * This is OK; it just means that no
-			 * "packed-refs" file has been written yet,
-			 * which is equivalent to it being empty.
-			 */
-			return packed_refs;
-		} else {
-			die_errno("couldn't read %s", refs->path);
-		}
-	}
-
-	stat_validity_update(&packed_refs->validity, fd);
-
-	if (fstat(fd, &st) < 0)
-		die_errno("couldn't stat %s", refs->path);
-
-	size = xsize_t(st.st_size);
-	buf = xmmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
-	pos = buf;
-	eof = buf + size;
+	if (!load_contents(packed_refs))
+		return packed_refs;
 
 	/* If the file has a header line, process it: */
-	if (pos < eof && *pos == '#') {
+	if (packed_refs->buf < packed_refs->eof && *packed_refs->buf == '#') {
 		struct strbuf tmp = STRBUF_INIT;
 		char *p;
 		const char *eol;
 		struct string_list traits = STRING_LIST_INIT_NODUP;
 
-		eol = memchr(pos, '\n', eof - pos);
+		eol = memchr(packed_refs->buf, '\n',
+			     packed_refs->eof - packed_refs->buf);
 		if (!eol)
-			die_unterminated_line(refs->path, pos, eof - pos);
+			die_unterminated_line(refs->path,
+					      packed_refs->buf,
+					      packed_refs->eof - packed_refs->buf);
 
-		strbuf_add(&tmp, pos, eol - pos);
+		strbuf_add(&tmp, packed_refs->buf, eol - packed_refs->buf);
 
 		if (!skip_prefix(tmp.buf, "# pack-refs with:", (const char **)&p))
-			die_invalid_line(refs->path, pos, eof - pos);
+			die_invalid_line(refs->path,
+					 packed_refs->buf,
+					 packed_refs->eof - packed_refs->buf);
 
 		string_list_split_in_place(&traits, p, ' ', -1);
 
@@ -400,14 +502,17 @@ static struct packed_ref_cache *read_packed_refs(struct packed_ref_store *refs)
 		/* perhaps other traits later as well */
 
 		/* The "+ 1" is for the LF character. */
-		pos = eol + 1;
+		packed_refs->header_len = eol + 1 - packed_refs->buf;
 
 		string_list_clear(&traits, 0);
 		strbuf_release(&tmp);
 	}
 
 	dir = get_ref_dir(packed_refs->cache->root);
-	iter = mmapped_ref_iterator_begin(refs->path, packed_refs, pos, eof);
+	iter = mmapped_ref_iterator_begin(
+			packed_refs,
+			packed_refs->buf + packed_refs->header_len,
+			packed_refs->eof);
 	while ((ok = ref_iterator_advance(iter)) == ITER_OK) {
 		struct ref_entry *entry =
 			create_ref_entry(iter->refname, iter->oid, iter->flags);
@@ -419,11 +524,6 @@ static struct packed_ref_cache *read_packed_refs(struct packed_ref_store *refs)
 
 	if (ok != ITER_DONE)
 		die("error reading packed-refs file %s", refs->path);
-
-	if (munmap(buf, size))
-		die_errno("error ummapping packed-refs file %s", refs->path);
-
-	close(fd);
 
 	return packed_refs;
 }
@@ -1031,6 +1131,8 @@ static int packed_transaction_finish(struct ref_store *ref_store,
 	int ret = TRANSACTION_GENERIC_ERROR;
 	char *packed_refs_path;
 
+	clear_packed_ref_cache(refs);
+
 	packed_refs_path = get_locked_file_path(&refs->lock);
 	if (rename_tempfile(&refs->tempfile, packed_refs_path)) {
 		strbuf_addf(err, "error replacing %s: %s",
@@ -1038,7 +1140,6 @@ static int packed_transaction_finish(struct ref_store *ref_store,
 		goto cleanup;
 	}
 
-	clear_packed_ref_cache(refs);
 	ret = 0;
 
 cleanup:
