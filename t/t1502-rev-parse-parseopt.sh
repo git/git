@@ -98,7 +98,7 @@ END_EXPECT
 	test_i18ncmp expect output
 '
 
-test_expect_failure 'test --parseopt help output no switches' '
+test_expect_success 'test --parseopt help output no switches' '
 	sed -e "s/^|//" >expect <<\END_EXPECT &&
 |cat <<\EOF
 |usage: some-command [options] <args>...
@@ -111,7 +111,7 @@ END_EXPECT
 	test_i18ncmp expect output
 '
 
-test_expect_failure 'test --parseopt help output hidden switches' '
+test_expect_success 'test --parseopt help output hidden switches' '
 	sed -e "s/^|//" >expect <<\END_EXPECT &&
 |cat <<\EOF
 |usage: some-command [options] <args>...
