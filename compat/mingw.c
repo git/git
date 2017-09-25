@@ -2428,7 +2428,8 @@ repeat:
 		return -1;
 	}
 
-	if ((attrs = GetFileAttributesW(wpnew)) != INVALID_FILE_ATTRIBUTES) {
+	if (attrs == INVALID_FILE_ATTRIBUTES &&
+	    (attrs = GetFileAttributesW(wpnew)) != INVALID_FILE_ATTRIBUTES) {
 		if (attrs & FILE_ATTRIBUTE_DIRECTORY) {
 			DWORD attrsold = GetFileAttributesW(wpold);
 			if (attrsold == INVALID_FILE_ATTRIBUTES ||
