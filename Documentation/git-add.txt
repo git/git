@@ -61,6 +61,9 @@ OPTIONS
 	the working tree.  Note that older versions of Git used
 	to ignore removed files; use `--no-all` option if you want
 	to add modified or new files but ignore removed	ones.
++
+For more details about the <pathspec> syntax, see the 'pathspec' entry
+in linkgit:gitglossary[7].
 
 -n::
 --dry-run::

@@ -407,7 +407,7 @@ these forms:
 
 exclude;;
 	After a path matches any non-exclude pathspec, it will be run
-	through all exclude pathspec (magic signature: `!` or its
+	through all exclude pathspecs (magic signature: `!` or its
 	synonym `^`). If it matches, the path is ignored.  When there
 	is no non-exclude pathspec, the exclusion is applied to the
 	result set as if invoked without any pathspec.
