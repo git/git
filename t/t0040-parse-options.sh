@@ -10,6 +10,8 @@ test_description='our own option parser'
 cat >expect <<\EOF
 usage: test-parse-options <options>
 
+    A helper function for the parse-options API.
+
     --yes                 get a boolean
     -D, --no-doubt        begins with 'no-'
     -B, --no-fear         be brave
@@ -90,8 +92,8 @@ test_expect_success 'OPT_BOOL() is idempotent #2' 'check boolean: 1 -DB'
 test_expect_success 'OPT_BOOL() negation #1' 'check boolean: 0 -D --no-yes'
 test_expect_success 'OPT_BOOL() negation #2' 'check boolean: 0 -D --no-no-doubt'
 
-test_expect_success 'OPT_BOOL() no negation #1' 'check_unknown_i18n --fear'
-test_expect_success 'OPT_BOOL() no negation #2' 'check_unknown_i18n --no-no-fear'
+test_expect_failure 'OPT_BOOL() no negation #1' 'check_unknown_i18n --fear'
+test_expect_failure 'OPT_BOOL() no negation #2' 'check_unknown_i18n --no-no-fear'
 
 test_expect_success 'OPT_BOOL() positivation' 'check boolean: 0 -D --doubt'
 
@@ -286,7 +288,7 @@ test_expect_success 'OPT_CALLBACK() and OPT_BIT() work' '
 
 >expect
 
-test_expect_success 'OPT_CALLBACK() and callback errors work' '
+test_expect_failure 'OPT_CALLBACK() and callback errors work' '
 	test_must_fail test-parse-options --no-length >output 2>output.err &&
 	test_i18ncmp expect output &&
 	test_i18ncmp expect.err output.err
