@@ -2200,7 +2200,7 @@ static struct {
 	size_t *offset;
 	unsigned int offset_alloc;
 	enum { START, SECTION_SEEN, SECTION_END_SEEN, KEY_SEEN } state;
-	int seen;
+	unsigned int seen;
 } store;
 
 static int matches(const char *key, const char *value)

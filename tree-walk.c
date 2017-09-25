@@ -582,12 +582,11 @@ enum follow_symlinks_result get_tree_entry_follow_symlinks(unsigned char *tree_s
 	int retval = MISSING_OBJECT;
 	struct dir_state *parents = NULL;
 	size_t parents_alloc = 0;
-	ssize_t parents_nr = 0;
+	size_t i, parents_nr = 0;
 	unsigned char current_tree_sha1[20];
 	struct strbuf namebuf = STRBUF_INIT;
 	struct tree_desc t;
 	int follows_remaining = GET_TREE_ENTRY_FOLLOW_SYMLINKS_MAX_LINKS;
-	int i;
 
 	init_tree_desc(&t, NULL, 0UL);
 	strbuf_addstr(&namebuf, name);

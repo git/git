@@ -898,9 +898,11 @@ static inline char *xstrdup_or_null(const char *str)
 
 static inline size_t xsize_t(off_t len)
 {
-	if (len > (size_t) len)
+	size_t size = (size_t) len;
+
+	if (len != (off_t) size)
 		die("Cannot handle files this big");
-	return (size_t)len;
+	return size;
 }
 
 __attribute__((format (printf, 3, 4)))
