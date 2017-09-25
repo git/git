@@ -164,6 +164,141 @@ static NORETURN void die_invalid_line(const char *path,
 }
 
 /*
+ * An iterator over a packed-refs file that is currently mmapped.
+ */
+struct mmapped_ref_iterator {
+	struct ref_iterator base;
+
+	struct packed_ref_cache *packed_refs;
+
+	/* The current position in the mmapped file: */
+	const char *pos;
+
+	/* The end of the mmapped file: */
+	const char *eof;
+
+	struct object_id oid, peeled;
+
+	struct strbuf refname_buf;
+};
+
+static int mmapped_ref_iterator_advance(struct ref_iterator *ref_iterator)
+{
+	struct mmapped_ref_iterator *iter =
+		(struct mmapped_ref_iterator *)ref_iterator;
+	const char *p = iter->pos, *eol;
+
+	strbuf_reset(&iter->refname_buf);
+
+	if (iter->pos == iter->eof)
+		return ref_iterator_abort(ref_iterator);
+
+	iter->base.flags = REF_ISPACKED;
+
+	if (iter->eof - p < GIT_SHA1_HEXSZ + 2 ||
+	    parse_oid_hex(p, &iter->oid, &p) ||
+	    !isspace(*p++))
+		die_invalid_line(iter->packed_refs->refs->path,
+				 iter->pos, iter->eof - iter->pos);
+
+	eol = memchr(p, '\n', iter->eof - p);
+	if (!eol)
+		die_unterminated_line(iter->packed_refs->refs->path,
+				      iter->pos, iter->eof - iter->pos);
+
+	strbuf_add(&iter->refname_buf, p, eol - p);
+	iter->base.refname = iter->refname_buf.buf;
+
+	if (check_refname_format(iter->base.refname, REFNAME_ALLOW_ONELEVEL)) {
+		if (!refname_is_safe(iter->base.refname))
+			die("packed refname is dangerous: %s",
+			    iter->base.refname);
+		oidclr(&iter->oid);
+		iter->base.flags |= REF_BAD_NAME | REF_ISBROKEN;
+	}
+	if (iter->packed_refs->peeled == PEELED_FULLY ||
+	    (iter->packed_refs->peeled == PEELED_TAGS &&
+	     starts_with(iter->base.refname, "refs/tags/")))
+		iter->base.flags |= REF_KNOWS_PEELED;
+
+	iter->pos = eol + 1;
+
+	if (iter->pos < iter->eof && *iter->pos == '^') {
+		p = iter->pos + 1;
+		if (iter->eof - p < GIT_SHA1_HEXSZ + 1 ||
+		    parse_oid_hex(p, &iter->peeled, &p) ||
+		    *p++ != '\n')
+			die_invalid_line(iter->packed_refs->refs->path,
+					 iter->pos, iter->eof - iter->pos);
+		iter->pos = p;
+
+		/*
+		 * Regardless of what the file header said, we
+		 * definitely know the value of *this* reference:
+		 */
+		iter->base.flags |= REF_KNOWS_PEELED;
+	} else {
+		oidclr(&iter->peeled);
+	}
+
+	return ITER_OK;
+}
+
+static int mmapped_ref_iterator_peel(struct ref_iterator *ref_iterator,
+				    struct object_id *peeled)
+{
+	struct mmapped_ref_iterator *iter =
+		(struct mmapped_ref_iterator *)ref_iterator;
+
+	if ((iter->base.flags & REF_KNOWS_PEELED)) {
+		oidcpy(peeled, &iter->peeled);
+		return is_null_oid(&iter->peeled) ? -1 : 0;
+	} else if ((iter->base.flags & (REF_ISBROKEN | REF_ISSYMREF))) {
+		return -1;
+	} else {
+		return !!peel_object(iter->oid.hash, peeled->hash);
+	}
+}
+
+static int mmapped_ref_iterator_abort(struct ref_iterator *ref_iterator)
+{
+	struct mmapped_ref_iterator *iter =
+		(struct mmapped_ref_iterator *)ref_iterator;
+
+	release_packed_ref_cache(iter->packed_refs);
+	strbuf_release(&iter->refname_buf);
+	base_ref_iterator_free(ref_iterator);
+	return ITER_DONE;
+}
+
+static struct ref_iterator_vtable mmapped_ref_iterator_vtable = {
+	mmapped_ref_iterator_advance,
+	mmapped_ref_iterator_peel,
+	mmapped_ref_iterator_abort
+};
+
+struct ref_iterator *mmapped_ref_iterator_begin(
+		const char *packed_refs_file,
+		struct packed_ref_cache *packed_refs,
+		const char *pos, const char *eof)
+{
+	struct mmapped_ref_iterator *iter = xcalloc(1, sizeof(*iter));
+	struct ref_iterator *ref_iterator = &iter->base;
+
+	base_ref_iterator_init(ref_iterator, &mmapped_ref_iterator_vtable, 0);
+
+	iter->packed_refs = packed_refs;
+	acquire_packed_ref_cache(iter->packed_refs);
+	iter->pos = pos;
+	iter->eof = eof;
+	strbuf_init(&iter->refname_buf, 0);
+
+	iter->base.oid = &iter->oid;
+
+	return ref_iterator;
+}
+
+/*
  * Read from the `packed-refs` file into a newly-allocated
  * `packed_ref_cache` and return it. The return value will already
  * have its reference count incremented.
@@ -199,9 +334,10 @@ static struct packed_ref_cache *read_packed_refs(struct packed_ref_store *refs)
 	struct stat st;
 	size_t size;
 	char *buf;
-	const char *pos, *eol, *eof;
-	struct strbuf tmp = STRBUF_INIT;
+	const char *pos, *eof;
 	struct ref_dir *dir;
+	struct ref_iterator *iter;
+	int ok;
 
 	packed_refs->refs = refs;
 	acquire_packed_ref_cache(packed_refs);
@@ -235,7 +371,9 @@ static struct packed_ref_cache *read_packed_refs(struct packed_ref_store *refs)
 
 	/* If the file has a header line, process it: */
 	if (pos < eof && *pos == '#') {
+		struct strbuf tmp = STRBUF_INIT;
 		char *p;
+		const char *eol;
 		struct string_list traits = STRING_LIST_INIT_NODUP;
 
 		eol = memchr(pos, '\n', eof - pos);
@@ -259,69 +397,28 @@ static struct packed_ref_cache *read_packed_refs(struct packed_ref_store *refs)
 		pos = eol + 1;
 
 		string_list_clear(&traits, 0);
-		strbuf_reset(&tmp);
+		strbuf_release(&tmp);
 	}
 
 	dir = get_ref_dir(packed_refs->cache->root);
-	while (pos < eof) {
-		const char *p = pos;
-		struct object_id oid;
-		const char *refname;
-		int flag = REF_ISPACKED;
-		struct ref_entry *entry = NULL;
+	iter = mmapped_ref_iterator_begin(refs->path, packed_refs, pos, eof);
+	while ((ok = ref_iterator_advance(iter)) == ITER_OK) {
+		struct ref_entry *entry =
+			create_ref_entry(iter->refname, iter->oid, iter->flags);
 
-		if (eof - pos < GIT_SHA1_HEXSZ + 2 ||
-		    parse_oid_hex(p, &oid, &p) ||
-		    !isspace(*p++))
-			die_invalid_line(refs->path, pos, eof - pos);
-
-		eol = memchr(p, '\n', eof - p);
-		if (!eol)
-			die_unterminated_line(refs->path, pos, eof - pos);
-
-		strbuf_add(&tmp, p, eol - p);
-		refname = tmp.buf;
-
-		if (check_refname_format(refname, REFNAME_ALLOW_ONELEVEL)) {
-			if (!refname_is_safe(refname))
-				die("packed refname is dangerous: %s", refname);
-			oidclr(&oid);
-			flag |= REF_BAD_NAME | REF_ISBROKEN;
-		}
-		if (packed_refs->peeled == PEELED_FULLY ||
-		    (packed_refs->peeled == PEELED_TAGS &&
-		     starts_with(refname, "refs/tags/")))
-			flag |= REF_KNOWS_PEELED;
-		entry = create_ref_entry(refname, &oid, flag);
+		if ((iter->flags & REF_KNOWS_PEELED))
+			ref_iterator_peel(iter, &entry->u.value.peeled);
 		add_ref_entry(dir, entry);
-
-		pos = eol + 1;
-
-		if (pos < eof && *pos == '^') {
-			p = pos + 1;
-			if (eof - p < GIT_SHA1_HEXSZ + 1 ||
-			    parse_oid_hex(p, &entry->u.value.peeled, &p) ||
-			    *p++ != '\n')
-				die_invalid_line(refs->path, pos, eof - pos);
-
-			/*
-			 * Regardless of what the file header said,
-			 * we definitely know the value of *this*
-			 * reference:
-			 */
-			entry->flag |= REF_KNOWS_PEELED;
-
-			pos = p;
-		}
-
-		strbuf_reset(&tmp);
 	}
 
+	if (ok != ITER_DONE)
+		die("error reading packed-refs file %s", refs->path);
+
 	if (munmap(buf, size))
-		die_errno("error ummapping packed-refs file");
+		die_errno("error ummapping packed-refs file %s", refs->path);
+
 	close(fd);
 
-	strbuf_release(&tmp);
 	return packed_refs;
 }
 
