@@ -32,8 +32,10 @@ void string_list_clear_func(struct string_list *list, string_list_clear_func_t c
 typedef int (*string_list_each_func_t)(struct string_list_item *, void *);
 int for_each_string_list(struct string_list *list,
 			 string_list_each_func_t, void *cb_data);
-#define for_each_string_list_item(item,list) \
-	for (item = (list)->items; item < (list)->items + (list)->nr; ++item)
+#define for_each_string_list_item(item,list)            \
+	for (item = (list)->items;                      \
+	     item && item < (list)->items + (list)->nr; \
+	     ++item)
 
 /*
  * Apply want to each item in list, retaining only the ones for which
