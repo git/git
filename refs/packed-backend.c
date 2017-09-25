@@ -398,6 +398,27 @@ static int cmp_packed_ref_entries(const void *v1, const void *v2)
 }
 
 /*
+ * Compare a packed-refs record pointed to by `rec` to the specified
+ * NUL-terminated refname.
+ */
+static int cmp_entry_to_refname(const char *rec, const char *refname)
+{
+	const char *r1 = rec + GIT_SHA1_HEXSZ + 1;
+	const char *r2 = refname;
+
+	while (1) {
+		if (*r1 == '\n')
+			return *r2 ? -1 : 0;
+		if (!*r2)
+			return 1;
+		if (*r1 != *r2)
+			return (unsigned char)*r1 < (unsigned char)*r2 ? -1 : +1;
+		r1++;
+		r2++;
+	}
+}
+
+/*
  * `packed_refs->buf` is not known to be sorted. Check whether it is,
  * and if not, sort it into new memory and munmap/free the old
  * storage.
@@ -504,6 +525,17 @@ static const char *find_start_of_record(const char *buf, const char *p)
 }
 
 /*
+ * Return a pointer to the start of the record following the record
+ * that contains `*p`. If none is found before `end`, return `end`.
+ */
+static const char *find_end_of_record(const char *p, const char *end)
+{
+	while (++p < end && (p[-1] != '\n' || p[0] == '^'))
+		;
+	return p;
+}
+
+/*
  * We want to be able to compare mmapped reference records quickly,
  * without totally parsing them. We can do so because the records are
  * LF-terminated, and the refname should start exactly (GIT_SHA1_HEXSZ
@@ -590,6 +622,65 @@ static int load_contents(struct packed_ref_cache *packed_refs)
 	close(fd);
 
 	return 1;
+}
+
+/*
+ * Find the place in `cache->buf` where the start of the record for
+ * `refname` starts. If `mustexist` is true and the reference doesn't
+ * exist, then return NULL. If `mustexist` is false and the reference
+ * doesn't exist, then return the point where that reference would be
+ * inserted. In the latter mode, `refname` doesn't have to be a proper
+ * reference name; for example, one could search for "refs/replace/"
+ * to find the start of any replace references.
+ *
+ * The record is sought using a binary search, so `cache->buf` must be
+ * sorted.
+ */
+static const char *find_reference_location(struct packed_ref_cache *cache,
+					   const char *refname, int mustexist)
+{
+	/*
+	 * This is not *quite* a garden-variety binary search, because
+	 * the data we're searching is made up of records, and we
+	 * always need to find the beginning of a record to do a
+	 * comparison. A "record" here is one line for the reference
+	 * itself and zero or one peel lines that start with '^'. Our
+	 * loop invariant is described in the next two comments.
+	 */
+
+	/*
+	 * A pointer to the character at the start of a record whose
+	 * preceding records all have reference names that come
+	 * *before* `refname`.
+	 */
+	const char *lo = cache->buf + cache->header_len;
+
+	/*
+	 * A pointer to a the first character of a record whose
+	 * reference name comes *after* `refname`.
+	 */
+	const char *hi = cache->eof;
+
+	while (lo < hi) {
+		const char *mid, *rec;
+		int cmp;
+
+		mid = lo + (hi - lo) / 2;
+		rec = find_start_of_record(lo, mid);
+		cmp = cmp_entry_to_refname(rec, refname);
+		if (cmp < 0) {
+			lo = find_end_of_record(mid, hi);
+		} else if (cmp > 0) {
+			hi = rec;
+		} else {
+			return rec;
+		}
+	}
+
+	if (mustexist)
+		return NULL;
+	else
+		return lo;
 }
 
 /*
@@ -888,6 +979,8 @@ static struct ref_iterator *packed_ref_iterator_begin(
 		const char *prefix, unsigned int flags)
 {
 	struct packed_ref_store *refs;
+	struct packed_ref_cache *packed_refs;
+	const char *start;
 	struct packed_ref_iterator *iter;
 	struct ref_iterator *ref_iterator;
 	unsigned int required_flags = REF_STORE_READ;
@@ -905,12 +998,22 @@ static struct ref_iterator *packed_ref_iterator_begin(
 	 * the packed-ref cache is up to date with what is on disk,
 	 * and re-reads it if not.
 	 */
+	iter->cache = packed_refs = get_packed_ref_cache(refs);
+	acquire_packed_ref_cache(packed_refs);
 
-	iter->cache = get_packed_ref_cache(refs);
-	acquire_packed_ref_cache(iter->cache);
-	iter->iter0 = cache_ref_iterator_begin(iter->cache->cache, prefix, 0);
+	if (prefix && *prefix)
+		start = find_reference_location(packed_refs, prefix, 0);
+	else
+		start = packed_refs->buf + packed_refs->header_len;
+
+	iter->iter0 = mmapped_ref_iterator_begin(
+			packed_refs, start, packed_refs->eof);
 
 	iter->flags = flags;
+
+	if (prefix && *prefix)
+		/* Stop iteration after we've gone *past* prefix: */
+		ref_iterator = prefix_ref_iterator_begin(ref_iterator, prefix, 0);
 
 	return ref_iterator;
 }
