@@ -1436,7 +1436,6 @@ static void print_summary(const char *prefix, const struct object_id *oid,
 	struct rev_info rev;
 	struct commit *commit;
 	struct strbuf format = STRBUF_INIT;
-	struct object_id junk_oid;
 	const char *head;
 	struct pretty_print_context pctx = {0};
 	struct strbuf author_ident = STRBUF_INIT;
@@ -1489,7 +1488,7 @@ static void print_summary(const char *prefix, const struct object_id *oid,
 	rev.diffopt.break_opt = 0;
 	diff_setup_done(&rev.diffopt);
 
-	head = resolve_ref_unsafe("HEAD", 0, junk_oid.hash, NULL);
+	head = resolve_ref_unsafe("HEAD", 0, NULL, NULL);
 	if (!strcmp(head, "HEAD"))
 		head = _("detached HEAD");
 	else

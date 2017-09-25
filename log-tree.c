@@ -185,7 +185,6 @@ static const struct name_decoration *current_pointed_by_HEAD(const struct name_d
 {
 	const struct name_decoration *list, *head = NULL;
 	const char *branch_name = NULL;
-	struct object_id unused;
 	int rru_flags;
 
 	/* First find HEAD */
@@ -198,7 +197,7 @@ static const struct name_decoration *current_pointed_by_HEAD(const struct name_d
 		return NULL;
 
 	/* Now resolve and find the matching current branch */
-	branch_name = resolve_ref_unsafe("HEAD", 0, unused.hash, &rru_flags);
+	branch_name = resolve_ref_unsafe("HEAD", 0, NULL, &rru_flags);
 	if (!(rru_flags & REF_ISSYMREF))
 		return NULL;
 

@@ -1660,10 +1660,9 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			check_head = 1;
 
 		if (check_head) {
-			struct object_id oid;
 			const char *ref, *v;
 			ref = resolve_ref_unsafe("HEAD", RESOLVE_REF_READING,
-						 oid.hash, NULL);
+						 NULL, NULL);
 			if (ref && skip_prefix(ref, "refs/heads/", &v))
 				branch_name = xstrdup(v);
 			else
