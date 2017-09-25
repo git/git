@@ -876,18 +876,22 @@ static int packed_read_raw_ref(struct ref_store *ref_store,
 {
 	struct packed_ref_store *refs =
 		packed_downcast(ref_store, REF_STORE_READ, "read_raw_ref");
-
-	struct ref_entry *entry;
+	struct packed_ref_cache *packed_refs = get_packed_ref_cache(refs);
+	const char *rec;
 
 	*type = 0;
 
-	entry = get_packed_ref(refs, refname);
-	if (!entry) {
+	rec = find_reference_location(packed_refs, refname, 1);
+
+	if (!rec) {
+		/* refname is not a packed reference. */
 		errno = ENOENT;
 		return -1;
 	}
 
-	hashcpy(sha1, entry->u.value.oid.hash);
+	if (get_sha1_hex(rec, sha1))
+		die_invalid_line(refs->path, rec, packed_refs->eof - rec);
+
 	*type = REF_ISPACKED;
 	return 0;
 }
