@@ -51,6 +51,11 @@ test_expect_success '--path=<path> complains without --textconv/--filters' '
 	grep "path.*needs.*filters" err
 '
 
+test_expect_success '--textconv/--filters complain without path' '
+	test_must_fail git cat-file --textconv HEAD &&
+	test_must_fail git cat-file --filters HEAD
+'
+
 test_expect_success 'cat-file --textconv --batch works' '
 	sha1=$(git rev-parse -q --verify HEAD:world.txt) &&
 	test_config diff.txt.textconv "tr A-Za-z N-ZA-Mn-za-m <" &&
