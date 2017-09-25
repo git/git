@@ -2952,7 +2952,7 @@ static void parse_reset_branch(const char *arg)
 
 static void cat_blob_write(const char *buf, unsigned long size)
 {
-	if (write_in_full(cat_blob_fd, buf, size) != size)
+	if (write_in_full(cat_blob_fd, buf, size) < 0)
 		die_errno("Write to frontend failed");
 }
 

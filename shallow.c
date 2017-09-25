@@ -294,7 +294,7 @@ const char *setup_temporary_shallow(const struct oid_array *extra)
 	if (write_shallow_commits(&sb, 0, extra)) {
 		temp = xmks_tempfile(git_path("shallow_XXXXXX"));
 
-		if (write_in_full(temp->fd, sb.buf, sb.len) != sb.len ||
+		if (write_in_full(temp->fd, sb.buf, sb.len) < 0 ||
 		    close_tempfile_gently(temp) < 0)
 			die_errno("failed to write to %s",
 				  get_tempfile_path(temp));
@@ -319,7 +319,7 @@ void setup_alternate_shallow(struct lock_file *shallow_lock,
 				       LOCK_DIE_ON_ERROR);
 	check_shallow_file_for_update();
 	if (write_shallow_commits(&sb, 0, extra)) {
-		if (write_in_full(fd, sb.buf, sb.len) != sb.len)
+		if (write_in_full(fd, sb.buf, sb.len) < 0)
 			die_errno("failed to write to %s",
 				  get_lock_file_path(shallow_lock));
 		*alternate_shallow_file = get_lock_file_path(shallow_lock);
@@ -366,7 +366,7 @@ void prune_shallow(int show_only)
 				       LOCK_DIE_ON_ERROR);
 	check_shallow_file_for_update();
 	if (write_shallow_commits_1(&sb, 0, NULL, SEEN_ONLY)) {
-		if (write_in_full(fd, sb.buf, sb.len) != sb.len)
+		if (write_in_full(fd, sb.buf, sb.len) < 0)
 			die_errno("failed to write to %s",
 				  get_lock_file_path(&shallow_lock));
 		commit_lock_file(&shallow_lock);

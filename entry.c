@@ -257,7 +257,8 @@ static int write_entry(struct cache_entry *ce,
 	char *new;
 	struct strbuf buf = STRBUF_INIT;
 	unsigned long size;
-	size_t wrote, newsize = 0;
+	ssize_t wrote;
+	size_t newsize = 0;
 	struct stat st;
 	const struct submodule *sub;
 
@@ -332,7 +333,7 @@ static int write_entry(struct cache_entry *ce,
 			fstat_done = fstat_output(fd, state, &st);
 		close(fd);
 		free(new);
-		if (wrote != size)
+		if (wrote < 0)
 			return error("unable to write file %s", path);
 		break;
 	case S_IFGITLINK:

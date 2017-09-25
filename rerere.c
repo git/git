@@ -258,7 +258,7 @@ static int write_rr(struct string_list *rr, int out_fd)
 				    rerere_id_hex(id),
 				    rr->items[i].string, 0);
 
-		if (write_in_full(out_fd, buf.buf, buf.len) != buf.len)
+		if (write_in_full(out_fd, buf.buf, buf.len) < 0)
 			die("unable to write rerere record");
 
 		strbuf_release(&buf);

@@ -540,7 +540,7 @@ int stream_blob_to_fd(int fd, const struct object_id *oid, struct stream_filter 
 			kept = 0;
 		wrote = write_in_full(fd, buf, readlen);
 
-		if (wrote != readlen)
+		if (wrote < 0)
 			goto close_and_exit;
 	}
 	if (kept && (lseek(fd, kept - 1, SEEK_CUR) == (off_t) -1 ||
