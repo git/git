@@ -599,7 +599,7 @@ static int usage_with_options_internal(struct parse_opt_ctx_t *ctx,
 		if (**usagestr)
 			fprintf_ln(outfile, _("    %s"), _(*usagestr));
 		else
-			putchar('\n');
+			fputc('\n', outfile);
 		usagestr++;
 	}
 

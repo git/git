@@ -139,7 +139,7 @@ END_EXPECT
 	test_i18ncmp expect output
 '
 
-test_expect_failure 'test --parseopt invalid switch help output' '
+test_expect_success 'test --parseopt invalid switch help output' '
 	sed -e "s/^|//" >expect <<\END_EXPECT &&
 |error: unknown option `does-not-exist'\''
 |usage: some-command [options] <args>...
