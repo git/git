@@ -822,6 +822,7 @@ static void handle_filter(struct mailinfo *mi, struct strbuf *line)
 		if (!handle_commit_msg(mi, line))
 			break;
 		mi->filter_stage++;
+		/* fallthrough */
 	case 1:
 		handle_patch(mi, line);
 		break;

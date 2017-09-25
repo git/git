@@ -638,9 +638,7 @@ static int curl_trace(CURL *handle, curl_infotype type, char *data, size_t size,
 	switch (type) {
 	case CURLINFO_TEXT:
 		trace_printf_key(&trace_curl, "== Info: %s", data);
-	default:		/* we ignore unknown types by default */
-		return 0;
-
+		break;
 	case CURLINFO_HEADER_OUT:
 		text = "=> Send header";
 		curl_dump_header(text, (unsigned char *)data, size, DO_FILTER);
@@ -665,6 +663,9 @@ static int curl_trace(CURL *handle, curl_infotype type, char *data, size_t size,
 		text = "<= Recv SSL data";
 		curl_dump_data(text, (unsigned char *)data, size);
 		break;
+
+	default:		/* we ignore unknown types by default */
+		return 0;
 	}
 	return 0;
 }
