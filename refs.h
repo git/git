@@ -345,6 +345,14 @@ int refs_pack_refs(struct ref_store *refs, unsigned int flags);
 #define REF_FORCE_CREATE_REFLOG 0x40
 
 /*
+ * Flags that can be passed in to ref_transaction_update
+ */
+#define REF_TRANSACTION_UPDATE_ALLOWED_FLAGS \
+	REF_ISPRUNING |                      \
+	REF_FORCE_CREATE_REFLOG |            \
+	REF_NODEREF
+
+/*
  * Setup reflog before using. Fill in err and return -1 on failure.
  */
 int refs_create_reflog(struct ref_store *refs, const char *refname,
