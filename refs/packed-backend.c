@@ -234,9 +234,15 @@ static int mmapped_ref_iterator_advance(struct ref_iterator *ref_iterator)
 
 		/*
 		 * Regardless of what the file header said, we
-		 * definitely know the value of *this* reference:
+		 * definitely know the value of *this* reference. But
+		 * we suppress it if the reference is broken:
 		 */
-		iter->base.flags |= REF_KNOWS_PEELED;
+		if ((iter->base.flags & REF_ISBROKEN)) {
+			oidclr(&iter->peeled);
+			iter->base.flags &= ~REF_KNOWS_PEELED;
+		} else {
+			iter->base.flags |= REF_KNOWS_PEELED;
+		}
 	} else {
 		oidclr(&iter->peeled);
 	}
