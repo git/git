@@ -850,26 +850,6 @@ static struct packed_ref_cache *get_packed_ref_cache(struct packed_ref_store *re
 	return refs->cache;
 }
 
-static struct ref_dir *get_packed_ref_dir(struct packed_ref_cache *packed_ref_cache)
-{
-	return get_ref_dir(packed_ref_cache->cache->root);
-}
-
-static struct ref_dir *get_packed_refs(struct packed_ref_store *refs)
-{
-	return get_packed_ref_dir(get_packed_ref_cache(refs));
-}
-
-/*
- * Return the ref_entry for the given refname from the packed
- * references.  If it does not exist, return NULL.
- */
-static struct ref_entry *get_packed_ref(struct packed_ref_store *refs,
-					const char *refname)
-{
-	return find_ref_entry(get_packed_refs(refs), refname);
-}
-
 static int packed_read_raw_ref(struct ref_store *ref_store,
 			       const char *refname, unsigned char *sha1,
 			       struct strbuf *referent, unsigned int *type)
@@ -893,21 +873,6 @@ static int packed_read_raw_ref(struct ref_store *ref_store,
 		die_invalid_line(refs->path, rec, packed_refs->eof - rec);
 
 	*type = REF_ISPACKED;
-	return 0;
-}
-
-static int packed_peel_ref(struct ref_store *ref_store,
-			   const char *refname, unsigned char *sha1)
-{
-	struct packed_ref_store *refs =
-		packed_downcast(ref_store, REF_STORE_READ | REF_STORE_ODB,
-				"peel_ref");
-	struct ref_entry *r = get_packed_ref(refs, refname);
-
-	if (!r || peel_entry(r, 0))
-		return -1;
-
-	hashcpy(sha1, r->u.value.peeled.hash);
 	return 0;
 }
 
@@ -1597,7 +1562,6 @@ struct ref_storage_be refs_be_packed = {
 	packed_initial_transaction_commit,
 
 	packed_pack_refs,
-	packed_peel_ref,
 	packed_create_symref,
 	packed_delete_refs,
 	packed_rename_ref,

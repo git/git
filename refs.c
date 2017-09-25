@@ -1735,7 +1735,23 @@ int refs_pack_refs(struct ref_store *refs, unsigned int flags)
 int refs_peel_ref(struct ref_store *refs, const char *refname,
 		  unsigned char *sha1)
 {
-	return refs->be->peel_ref(refs, refname, sha1);
+	int flag;
+	unsigned char base[20];
+
+	if (current_ref_iter && current_ref_iter->refname == refname) {
+		struct object_id peeled;
+
+		if (ref_iterator_peel(current_ref_iter, &peeled))
+			return -1;
+		hashcpy(sha1, peeled.hash);
+		return 0;
+	}
+
+	if (refs_read_ref_full(refs, refname,
+			       RESOLVE_REF_READING, base, &flag))
+		return -1;
+
+	return peel_object(base, sha1);
 }
 
 int peel_ref(const char *refname, unsigned char *sha1)
