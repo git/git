@@ -258,7 +258,7 @@ static const char *lock_repo_for_gc(int force, pid_t* ret_pid)
 		int should_exit;
 
 		if (!scan_fmt)
-			scan_fmt = xstrfmt("%s %%%dc", "%"SCNuMAX, HOST_NAME_MAX);
+			scan_fmt = xstrfmt("%s %%%ds", "%"SCNuMAX, HOST_NAME_MAX);
 		fp = fopen(pidfile_path, "r");
 		memset(locking_host, 0, sizeof(locking_host));
 		should_exit =
