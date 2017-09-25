@@ -14,7 +14,7 @@ SYNOPSIS
 	[--commit-filter <command>] [--tag-name-filter <command>]
 	[--subdirectory-filter <directory>] [--prune-empty]
 	[--original <namespace>] [-d <directory>] [-f | --force]
-	[--] [<rev-list options>...]
+	[--state-branch <branch>] [--] [<rev-list options>...]
 
 DESCRIPTION
 -----------
@@ -197,6 +197,12 @@ to other tags will be rewritten to point to the underlying commit.
 	'git filter-branch' refuses to start with an existing temporary
 	directory or when there are already refs starting with
 	'refs/original/', unless forced.
+
+--state-branch <branch>::
+	This option will cause the mapping from old to new objects to
+	be loaded from named branch upon startup and saved as a new
+	commit to that branch upon exit, enabling incremental of large
+	trees. If '<branch>' does not exist it will be created.
 
 <rev-list options>...::
 	Arguments for 'git rev-list'.  All positive refs included by
