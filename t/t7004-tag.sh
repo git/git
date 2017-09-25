@@ -1863,12 +1863,6 @@ test_expect_success 'version sort with very long prerelease suffix' '
 	git tag -l --sort=version:refname
 '
 
-run_with_limited_stack () {
-	(ulimit -s 128 && "$@")
-}
-
-test_lazy_prereq ULIMIT_STACK_SIZE 'run_with_limited_stack true'
-
 # we require ulimit, this excludes Windows
 test_expect_success ULIMIT_STACK_SIZE '--contains and --no-contains work in a deep repo' '
 	>expect &&
