@@ -163,6 +163,13 @@ sub createProject {
         } elsif ($needsCurl && $1 eq 'expat') {
 	  # libexpat is only available targeting v100 and v110
 	  $libs .= ";$rel_dir\\compat\\vcbuild\\GEN.PKGS\\$1.$2\\build\\native\\lib\\v110\\\$(Platform)\\Release\\dynamic\\utf8\\libexpat.lib";
+	} elsif ($1 eq 'zlib') {
+	  # zlib
+	  $libs .= ";$rel_dir\\compat\\vcbuild\\GEN.PKGS\\$1.v140.windesktop.msvcstl.dyn.rt-dyn.$2\\lib\\native\\v140\\windesktop\\msvcstl\\dyn\\rt-dyn\\x64\\RelWithDebInfo\\zlib.lib";
+	} elsif ($1 eq 'openssl') {
+	  # openssl
+	  $libs .= ";$rel_dir\\compat\\vcbuild\\GEN.PKGS\\$1.v140.windesktop.msvcstl.dyn.rt-dyn.x64.$2\\lib\\native\\v140\\windesktop\\msvcstl\\dyn\\rt-dyn\\x64\\release\\libeay32.lib";
+	  $libs .= ";$rel_dir\\compat\\vcbuild\\GEN.PKGS\\$1.v140.windesktop.msvcstl.dyn.rt-dyn.x64.$2\\lib\\native\\v140\\windesktop\\msvcstl\\dyn\\rt-dyn\\x64\\release\\ssleay32.lib";
 	}
         next if ($1 =~  /^(zlib$|openssl(?!.*(x64|x86)$))/);
         my $targetsFile = "$rel_dir\\compat\\vcbuild\\GEN.PKGS\\$1.$2\\build\\native\\$1.targets";
