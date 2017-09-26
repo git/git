@@ -144,6 +144,8 @@ static struct active_request_slot *active_queue_head;
 
 static char *cached_accept_language;
 
+static char *http_ssl_backend;
+
 size_t fread_buffer(char *ptr, size_t eltsize, size_t nmemb, void *buffer_)
 {
 	size_t size = eltsize * nmemb;
@@ -291,6 +293,12 @@ static int http_options(const char *var, const char *value, void *cb)
 		curl_ssl_try = git_config_bool(var, value);
 		return 0;
 	}
+	if (!strcmp("http.sslbackend", var)) {
+		free(http_ssl_backend);
+		http_ssl_backend = xstrdup_or_null(value);
+		return 0;
+	}
+
 	if (!strcmp("http.minsessions", var)) {
 		min_curl_sessions = git_config_int(var, value);
 #ifndef USE_CURL_MULTI
@@ -912,6 +920,30 @@ void http_init(struct remote *remote, const char *url, int proactive_auth)
 
 	git_config(urlmatch_config_entry, &config);
 	free(normalized_url);
+
+#if LIBCURL_VERSION_NUM >= 0x073800 || \
+		defined(CURL_WITH_EXPERIMENTAL_SSL_BACKEND_SUPPORT)
+	if (http_ssl_backend) {
+		const curl_ssl_backend **backends;
+		struct strbuf buf = STRBUF_INIT;
+		int i;
+
+		switch (curl_global_sslset(-1, http_ssl_backend, &backends)) {
+		case CURLSSLSET_UNKNOWN_BACKEND:
+			strbuf_addf(&buf, _("Unsupported SSL backend '%s'. "
+					    "Supported SSL backends:"),
+					    http_ssl_backend);
+			for (i = 0; backends[i]; i++)
+				strbuf_addf(&buf, "\n\t%s", backends[i]->name);
+			die(buf.buf);
+		case CURLSSLSET_TOO_LATE:
+			die(_("Could not set SSL backend to '%s': already set"),
+			    http_ssl_backend);
+		case CURLSSLSET_OK:
+			break; /* Okay! */
+		}
+	}
+#endif
 
 	if (curl_global_init(CURL_GLOBAL_ALL) != CURLE_OK)
 		die("curl_global_init failed");
