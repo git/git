@@ -69,7 +69,7 @@ call_merge () {
 	test -z "$strategy" && strategy=recursive
 	# If cmt doesn't have a parent, don't include it as a base
 	base=$(git rev-parse --verify --quiet $cmt^)
-	eval 'git-merge-$strategy' $strategy_opts $base ' -- "$hd" "$cmt"'
+	eval 'git merge-$strategy' $strategy_opts $base ' -- "$hd" "$cmt"'
 	rv=$?
 	case "$rv" in
 	0)
