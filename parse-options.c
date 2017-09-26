@@ -581,6 +581,7 @@ static int usage_with_options_internal(struct parse_opt_ctx_t *ctx,
 				       const struct option *opts, int full, int err)
 {
 	FILE *outfile = err ? stderr : stdout;
+	int need_newline;
 
 	if (!usagestr)
 		return PARSE_OPT_HELP;
@@ -599,12 +600,11 @@ static int usage_with_options_internal(struct parse_opt_ctx_t *ctx,
 		if (**usagestr)
 			fprintf_ln(outfile, _("    %s"), _(*usagestr));
 		else
-			putchar('\n');
+			fputc('\n', outfile);
 		usagestr++;
 	}
 
-	if (opts->type != OPTION_GROUP)
-		fputc('\n', outfile);
+	need_newline = 1;
 
 	for (; opts->type != OPTION_END; opts++) {
 		size_t pos;
@@ -612,12 +612,18 @@ static int usage_with_options_internal(struct parse_opt_ctx_t *ctx,
 
 		if (opts->type == OPTION_GROUP) {
 			fputc('\n', outfile);
+			need_newline = 0;
 			if (*opts->help)
 				fprintf(outfile, "%s\n", _(opts->help));
 			continue;
 		}
 		if (!full && (opts->flags & PARSE_OPT_HIDDEN))
 			continue;
+
+		if (need_newline) {
+			fputc('\n', outfile);
+			need_newline = 0;
+		}
 
 		pos = fprintf(outfile, "    ");
 		if (opts->short_name) {
