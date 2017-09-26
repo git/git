@@ -40,7 +40,7 @@ test_expect_success 'UTF-16 refused because of NULs' '
 '
 
 test_expect_success 'UTF-8 invalid characters refused' '
-	test_when_finished "rm -f $HOME/stderr $HOME/invalid" &&
+	test_when_finished "rm -f \"$HOME/stderr $HOME/invalid\"" &&
 	echo "UTF-8 characters" >F &&
 	printf "Commit message\n\nInvalid surrogate:\355\240\200\n" \
 		>"$HOME/invalid" &&
@@ -49,7 +49,7 @@ test_expect_success 'UTF-8 invalid characters refused' '
 '
 
 test_expect_success 'UTF-8 overlong sequences rejected' '
-	test_when_finished "rm -f $HOME/stderr $HOME/invalid" &&
+	test_when_finished "rm -f \"$HOME/stderr $HOME/invalid\"" &&
 	rm -f "$HOME/stderr" "$HOME/invalid" &&
 	echo "UTF-8 overlong" >F &&
 	printf "\340\202\251ommit message\n\nThis is not a space:\300\240\n" \
@@ -59,7 +59,7 @@ test_expect_success 'UTF-8 overlong sequences rejected' '
 '
 
 test_expect_success 'UTF-8 non-characters refused' '
-	test_when_finished "rm -f $HOME/stderr $HOME/invalid" &&
+	test_when_finished "rm -f \"$HOME/stderr $HOME/invalid\"" &&
 	echo "UTF-8 non-character 1" >F &&
 	printf "Commit message\n\nNon-character:\364\217\277\276\n" \
 		>"$HOME/invalid" &&
@@ -68,7 +68,7 @@ test_expect_success 'UTF-8 non-characters refused' '
 '
 
 test_expect_success 'UTF-8 non-characters refused' '
-	test_when_finished "rm -f $HOME/stderr $HOME/invalid" &&
+	test_when_finished "rm -f \"$HOME/stderr $HOME/invalid\"" &&
 	echo "UTF-8 non-character 2." >F &&
 	printf "Commit message\n\nNon-character:\357\267\220\n" \
 		>"$HOME/invalid" &&
