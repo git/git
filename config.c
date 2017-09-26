@@ -991,7 +991,7 @@ int git_config_pathname(const char **dest, const char *var, const char *value)
 	return 0;
 }
 
-static int git_default_core_config(const char *var, const char *value)
+static int git_default_core_config(const char *var, const char *value, void *cb)
 {
 	/* This needs a better name */
 	if (!strcmp(var, "core.filemode")) {
@@ -1234,16 +1234,8 @@ static int git_default_core_config(const char *var, const char *value)
 		return 0;
 	}
 
-	if (!strcmp(var, "core.hidedotfiles")) {
-		if (value && !strcasecmp(value, "dotgitonly"))
-			hide_dotfiles = HIDE_DOTFILES_DOTGITONLY;
-		else
-			hide_dotfiles = git_config_bool(var, value);
-		return 0;
-	}
-
 	/* Add other config variables here and to Documentation/config.txt. */
-	return 0;
+	return platform_core_config(var, value, cb);
 }
 
 static int git_default_i18n_config(const char *var, const char *value)
@@ -1328,13 +1320,13 @@ static int git_default_mailmap_config(const char *var, const char *value)
 	return 0;
 }
 
-int git_default_config(const char *var, const char *value, void *dummy)
+int git_default_config(const char *var, const char *value, void *cb)
 {
 	if (starts_with(var, "core."))
-		return git_default_core_config(var, value);
+		return git_default_core_config(var, value, cb);
 
 	if (starts_with(var, "user."))
-		return git_ident_config(var, value, dummy);
+		return git_ident_config(var, value, cb);
 
 	if (starts_with(var, "i18n."))
 		return git_default_i18n_config(var, value);
@@ -1351,7 +1343,7 @@ int git_default_config(const char *var, const char *value, void *dummy)
 	if (starts_with(var, "advice."))
 		return git_default_advice_config(var, value);
 
-	if (git_color_config(var, value, dummy) < 0)
+	if (git_color_config(var, value, cb) < 0)
 		return -1;
 
 	if (!strcmp(var, "pager.color") || !strcmp(var, "color.pager")) {
