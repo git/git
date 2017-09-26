@@ -73,4 +73,36 @@ test_expect_success 'pull passes -X to underlying merge' '
 	git reset --hard master && test_must_fail git pull -s recursive -X bork . side
 '
 
+test_expect_success SYMLINKS 'symlink with -Xours/-Xtheirs' '
+	git reset --hard master &&
+	git checkout -b two master &&
+	ln -s target-zero link &&
+	git add link &&
+	git commit -m "add link pointing to zero" &&
+
+	ln -f -s target-two link &&
+	git commit -m "add link pointing to two" link &&
+
+	git checkout -b one HEAD^ &&
+	ln -f -s target-one link &&
+	git commit -m "add link pointing to one" link &&
+
+	# we expect symbolic links not to resolve automatically, of course
+	git checkout one^0 &&
+	test_must_fail git merge -s recursive two &&
+
+	# favor theirs to resolve to target-two?
+	git reset --hard &&
+	git checkout one^0 &&
+	git merge -s recursive -X theirs two &&
+	git diff --exit-code two HEAD link &&
+
+	# favor ours to resolve to target-one?
+	git reset --hard &&
+	git checkout one^0 &&
+	git merge -s recursive -X ours two &&
+	git diff --exit-code one HEAD link
+
+'
+
 test_done
