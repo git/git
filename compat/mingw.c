@@ -3062,6 +3062,10 @@ static void maybe_redirect_std_handles(void)
 
 #if defined(_MSC_VER)
 
+#ifdef _DEBUG
+#include <crtdbg.h>
+#endif
+
 /*
  * This routine sits between wmain() and "main" in git.exe.
  * We receive UNICODE (wchar_t) values for argv and env.
@@ -3085,6 +3089,10 @@ int msc_startup(int argc, wchar_t **w_argv, wchar_t **w_env)
 	char *buffer = NULL;
 	int maxlen;
 	int k, exit_status;
+
+#ifdef _DEBUG
+	_CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_DEBUG);
+#endif
 
 #ifdef USE_MSVC_CRTDBG
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
