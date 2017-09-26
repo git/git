@@ -1,5 +1,6 @@
 #include "builtin.h"
 #include "tag.h"
+#include "config.h"
 
 /*
  * A signature file has a very simple fixed format: four lines
@@ -156,6 +157,7 @@ int cmd_mktag(int argc, const char **argv, const char *prefix)
 	if (argc != 1)
 		usage("git mktag");
 
+	git_config(git_default_config, NULL);
 	if (strbuf_read(&buf, 0, 4096) < 0) {
 		die_errno("could not read from stdin");
 	}
