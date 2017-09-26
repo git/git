@@ -91,4 +91,15 @@ Fixes since v2.14.1
  * "git archive" did not work well with pathspecs and the
    export-ignore attribute.
 
+ * "git cvsserver" no longer is invoked by "git daemon" by default,
+   as it is old and largely unmaintained.
+
+ * Various Perl scripts did not use safe_pipe_capture() instead of
+   backticks, leaving them susceptible to end-user input.  They have
+   been corrected.
+
 Also contains various documentation updates and code clean-ups.
+
+Credits go to joernchen <joernchen@phenoelit.de> for finding the
+unsafe constructs in "git cvsserver", and to Jeff King at GitHub for
+finding and fixing instances of the same issue in other scripts.
