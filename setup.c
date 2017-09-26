@@ -541,7 +541,8 @@ void read_gitfile_error_die(int error_code, const char *path, const char *dir)
 
 /*
  * Try to read the location of the git directory from the .git file,
- * return path to git directory if found.
+ * return path to git directory if found. The return value comes from
+ * a shared buffer.
  *
  * On failure, if return_error_code is not NULL, return_error_code
  * will be set to an error code and NULL will be returned. If
