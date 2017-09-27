@@ -27,8 +27,6 @@ inst_prefix=$(
 
 LANG=C
 
-: ${O=-O2}
-
 for cv in PYTHON_PATH=python TCL_PATH=tclsh TCLTKPATH=wish
 do
 	cmd=${cv#*=}
@@ -55,13 +53,12 @@ do
 	)
 done
 
-Wall="-Wall -Wvla -Wdeclaration-after-statement -Wno-format-zero-length${Wall+ $Wall}"
 tests= jobs= skip= oldtest= with_dash= testpen=
 clean=:
 
 case `uname` in
 OpenBSD)
-	O="-fgnu89-inline"
+	# O="-fgnu89-inline"
 	skip="t9402"
 	;;
 NetBSD)
@@ -74,7 +71,7 @@ FreeBSD)
 	;;
 SunOS)
 	NEEDS_CRYPTO_WITH_SSL=YesPlease ; export NEEDS_CRYPTO_WITH_SSL
-	NO_PEDANTIC=CannotDo Wall=
+	NO_PEDANTIC=CannotDo
 	;;
 esac
 
@@ -103,13 +100,18 @@ then
 	NO_PEDANTIC=YesPlease
 fi
 
+DEVELOPER=
 case "$NO_PEDANTIC" in
 ?*)	;;
 '')
+	DEVELOPER=1
+	;;
+'not-used-anymore')
 	# PEDANT="-Wtypedef-redefinition $PEDANT"
 	PEDANT="-Werror -Wold-style-definition $PEDANT"
 	PEDANT="-Wpointer-arith -Woverflow -Wunused $PEDANT"
 	PEDANT="-Wold-style-declaration -Wstrict-prototypes $PEDANT"
+	PEDANT="-Wstrict-prototypes $PEDANT"
 	;;
 esac
 
@@ -129,7 +131,7 @@ do
 		oldtest=t
 		;;
 	-loose | --loose)
-		PEDANT= Wall=
+		DEVELOPER= PEDANT=
 		;;
 	--memtrash)
 		testpen=testpen.$$
@@ -189,8 +191,6 @@ then
 	GIT_TEST_OPTS="$TRASH${GIT_TEST_OPTS+" $GIT_TEST_OPTS"}"
 	export GIT_TEST_OPTS
 fi
-
-O="${PEDANT}${PEDANT:+ }$O"
 
 test -f /bin/dash || with_dash=
 
@@ -265,13 +265,6 @@ then
 	set INSTALL=ginstall "$@"
 fi
 
-CFLAGS="$O $Wall -g"
-OK_TO_USE_CFLAGS=Yes
-if test -n "${NO_CFLAGS+set}"
-then
-	unset OK_TO_USE_CFLAGS
-fi
-
 unset	SSH_AGENT_PID SSH_CLIENT SSH_TTY SSH_AUTH_SOCK SSH_CONNECTION \
 	GPG_AGENT_INFO GNOME_KEYRING_CONTROL GNOME_KEYRING_PID \
 	XDG_SESSION_COOKIE XDG_SESSION_PATH XDG_SEAT_PATH  XDG_DATA_DIRS \
@@ -280,10 +273,13 @@ unset	SSH_AGENT_PID SSH_CLIENT SSH_TTY SSH_AUTH_SOCK SSH_CONNECTION \
 	DBUS_SESSION_BUS_ADDRESS LESSOPEN WINDOW DISPLAY GTK_IM_MODULE \
 	XDG_CURRENT_DESKTOP LESSCLOSE XAUTHORITY
 
+# O=-fsanitize=address Meta/Make
+
 ${make-make} \
      $jobs \
      ETC_GITCONFIG=$prefix/etc/gitconfig \
-     ${OK_TO_USE_CFLAGS+"CFLAGS=$CFLAGS"} \
+     ${DEVELOPER:+"DEVELOPER=YesPlease"} \
+     ${O:+CFLAGS="-g -Wall $O"} \
      ${tests:+"T=$tests"} \
      "$@"
 status=$?

@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Sep 2017, #04; Mon, 25)
+Subject: What's cooking in git.git (Sep 2017, #05; Tue, 26)
 X-master-at: 28996cec80690d2322359d3650a57e8de6e01eb6
 X-next-at: 2c7b836f3ab9b78a2baeee97e329e4c1a1e4c005
 
-What's cooking in git.git (Sep 2017, #04; Mon, 25)
+What's cooking in git.git (Sep 2017, #05; Tue, 26)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -22,7 +22,67 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
+[New Topics]
+
+* mr/doc-negative-pathspec (2017-09-25) 1 commit
+ - docs: improve discoverability of exclude pathspec
+
+--------------------------------------------------
+[Stalled]
+
+* mk/use-size-t-in-zlib (2017-08-10) 1 commit
+ . zlib.c: use size_t for size
+
+ The wrapper to call into zlib followed our long tradition to use
+ "unsigned long" for sizes of regions in memory, which have been
+ updated to use "size_t".
+
+ Needs resurrecting by making sure the fix is good and still applies
+ (or adjusted to today's codebase).
+
+
+* mg/status-in-progress-info (2017-05-10) 2 commits
+ - status --short --inprogress: spell it as --in-progress
+ - status: show in-progress info for short status
+
+ "git status" learns an option to report various operations
+ (e.g. "merging") that the user is in the middle of.
+
+ cf. <xmqqmvakcdqw.fsf@gitster.mtv.corp.google.com>
+
+
+* nd/worktree-move (2017-04-20) 6 commits
+ - worktree remove: new command
+ - worktree move: refuse to move worktrees with submodules
+ - worktree move: accept destination as directory
+ - worktree move: new command
+ - worktree.c: add update_worktree_location()
+ - worktree.c: add validate_worktree()
+
+ "git worktree" learned move and remove subcommands.
+
+ Expecting a reroll.
+ cf. <20170420101024.7593-1-pclouds@gmail.com>
+ cf. <20170421145916.mknekgqzhxffu7di@sigill.intra.peff.net>
+ cf. <d0e81b1e-5869-299e-f462-4d43dc997bd1@ramsayjones.plus.com>
+
+
+* sg/clone-refspec-from-command-line-config (2017-06-16) 2 commits
+ - Documentation/clone: document ignored configuration variables
+ - clone: respect additional configured fetch refspecs during initial fetch
+ (this branch is used by sg/remote-no-string-refspecs.)
+
+ "git clone -c var=val" is a way to set configuration variables in
+ the resulting repository, but it is more useful to also make these
+ variables take effect while the initial clone is happening,
+ e.g. these configuration variables could be fetch refspecs.
+
+ Waiting for a response.
+ cf. <20170617112228.vugswym4o4owf6wj@sigill.intra.peff.net>
+ cf. <xmqqmv8zhdap.fsf@gitster.mtv.corp.google.com>
+
+--------------------------------------------------
+[Cooking]
 
 * sb/merge-commit-msg-hook (2017-09-22) 1 commit
   (merged to 'next' on 2017-09-25 at 096e0502a8)
@@ -31,520 +91,8 @@ of the repositories listed at
  As "git commit" to conclude a conflicted "git merge" honors the
  commit-msg hook, "git merge" that records a merge commit that
  cleanly auto-merges should, but it didn't.
-
-
-* aw/gc-lockfile-fscanf-fix (2017-09-17) 1 commit
-  (merged to 'next' on 2017-09-24 at 999ccd41aa)
- + gc: call fscanf() with %<len>s, not %<len>c, when reading hostname
-
- "git gc" tries to avoid running two instances at the same time by
- reading and writing pid/host from and to a lock file; it used to
- use an incorrect fscanf() format when reading, which has been
- corrected.
-
-
-* bb/doc-eol-dirty (2017-09-07) 1 commit
-  (merged to 'next' on 2017-09-14 at 2f0cb688c6)
- + Documentation: mention that `eol` can change the dirty status of paths
-
- Doc update.
-
-
-* bw/git-clang-format (2017-08-14) 2 commits
-  (merged to 'next' on 2017-09-24 at ae51a4e81c)
- + Makefile: add style build rule
- + clang-format: outline the git project's coding style
-
- "make style" runs git-clang-format to help developers by pointing
- out coding style issues.
-
-
-* cc/subprocess-handshake-missing-capabilities (2017-09-11) 1 commit
-  (merged to 'next' on 2017-09-19 at 7d0c272bc8)
- + subprocess: loudly die when subprocess asks for an unsupported capability
-
- Finishing touches to a topic already in 'master'.
-
-
-* dw/diff-highlight-makefile-fix (2017-09-06) 1 commit
-  (merged to 'next' on 2017-09-10 at 8dfda480ac)
- + diff-highlight: add clean target to Makefile
-
- Build clean-up.
-
-
-* ez/doc-duplicated-words-fix (2017-09-14) 1 commit
-  (merged to 'next' on 2017-09-19 at 20781bd866)
- + doc: fix minor typos (extra/duplicated words)
-
- Typofix.
-
-
-* hv/mv-nested-submodules-test (2017-09-17) 1 commit
-  (merged to 'next' on 2017-09-24 at d36650bbca)
- + add test for bug in git-mv for recursive submodules
-
- A test to demonstrate "git mv" failing to adjust nested submodules
- has been added.
-
-
-* jh/hashmap-disable-counting (2017-09-07) 1 commit
-  (merged to 'next' on 2017-09-14 at bbc08f4222)
- + hashmap: add API to disable item counting when threaded
-
- Our hashmap implementation in hashmap.[ch] is not thread-safe when
- adding a new item needs to expand the hashtable by rehashing; add
- an API to disable the automatic rehashing to work it around.
-
-
-* jk/config-lockfile-leak-fix (2017-09-06) 1 commit
-  (merged to 'next' on 2017-09-10 at 7b91d71749)
- + config: use a static lock_file struct
-
- A leakfix.
-
-
-* jk/incore-lockfile-removal (2017-09-06) 20 commits
-  (merged to 'next' on 2017-09-14 at 603dae7fb2)
- + stop leaking lock structs in some simple cases
- + ref_lock: stop leaking lock_files
- + lockfile: update lifetime requirements in documentation
- + tempfile: auto-allocate tempfiles on heap
- + tempfile: remove deactivated list entries
- + tempfile: use list.h for linked list
- + tempfile: release deactivated strbufs instead of resetting
- + tempfile: robustify cleanup handler
- + tempfile: factor out deactivation
- + tempfile: factor out activation
- + tempfile: replace die("BUG") with BUG()
- + tempfile: handle NULL tempfile pointers gracefully
- + tempfile: prefer is_tempfile_active to bare access
- + lockfile: do not rollback lock on failed close
- + tempfile: do not delete tempfile on failed close
- + always check return value of close_tempfile
- + verify_signed_buffer: prefer close_tempfile() to close()
- + setup_temporary_shallow: move tempfile struct into function
- + setup_temporary_shallow: avoid using inactive tempfile
- + write_index_as_tree: cleanup tempfile on error
-
- The long-standing rule that an in-core lockfile instance, once it
- is used, must not be freed, has been lifted and the lockfile and
- tempfile APIs have been updated to reduce the chance of programming
- errors.
-
-
-* jk/info-alternates-fix (2017-09-20) 2 commits
-  (merged to 'next' on 2017-09-24 at d1594d1397)
- + read_info_alternates: warn on non-trivial errors
- + Merge branch 'jk/info-alternates-fix-2.11' into jk/info-alternates-fix
- (this branch uses jk/info-alternates-fix-2.11.)
-
- A regression fix for 2.11 that made the code to read the list of
- alternate object stores overrun the end of the string.
-
-
-* jk/info-alternates-fix-2.11 (2017-09-20) 1 commit
- + read_info_alternates: read contents into strbuf
- (this branch is used by jk/info-alternates-fix.)
-
- A regression fix for 2.11 that made the code to read the list of
- alternate object stores overrun the end of the string.
-
-
-* jk/leak-checkers (2017-09-08) 11 commits
-  (merged to 'next' on 2017-09-20 at 5e9ba01461)
- + git-compat-util: make UNLEAK less error-prone
-  (merged to 'next' on 2017-09-14 at 906ed9f590)
- + add UNLEAK annotation for reducing leak false positives
- + set_git_dir: handle feeding gitdir to itself
- + repository: free fields before overwriting them
- + reset: free allocated tree buffers
- + reset: make tree counting less confusing
- + config: plug user_config leak
- + update-index: fix cache entry leak in add_one_file()
- + add: free leaked pathspec after add_files_to_cache()
- + test-lib: set LSAN_OPTIONS to abort by default
- + test-lib: --valgrind should not override --verbose-log
-
- Many of our programs consider that it is OK to release dynamic
- storage that is used throughout the life of the program by simply
- exiting, but this makes it harder to leak detection tools to avoid
- reporting false positives.  Plug many existing leaks and introduce
- a mechanism for developers to mark that the region of memory
- pointed by a pointer is not lost/leaking to help these tools.
-
-
-* jk/revision-remove-cmdline-pathspec (2017-09-21) 2 commits
-  (merged to 'next' on 2017-09-24 at 2adfb89370)
- + pathspec doc: parse_pathspec does not maintain references to args
- + revision: replace "struct cmdline_pathspec" with argv_array
-
- Code clean-up that also plugs memory leaks.
-
-
-* jk/shortlog-ident-cleanup (2017-09-09) 1 commit
-  (merged to 'next' on 2017-09-14 at 09695b6c39)
- + shortlog: skip format/parse roundtrip for internal traversal
-
- Code clean-up.
-
-
-* jk/system-path-cleanup (2017-09-07) 2 commits
-  (merged to 'next' on 2017-09-14 at c6faaf8858)
- + git_extract_argv0_path: do nothing without RUNTIME_PREFIX
- + system_path: move RUNTIME_PREFIX to a sub-function
-
- Code clean-up.
-
-
-* jk/write-in-full-fix (2017-09-14) 8 commits
-  (merged to 'next' on 2017-09-19 at 7b26691c07)
- + read_pack_header: handle signed/unsigned comparison in read result
- + config: flip return value of store_write_*()
- + notes-merge: use ssize_t for write_in_full() return value
- + pkt-line: check write_in_full() errors against "< 0"
- + convert less-trivial versions of "write_in_full() != len"
- + avoid "write_in_full(fd, buf, len) != len" pattern
- + get-tar-commit-id: check write_in_full() return against 0
- + config: avoid "write_in_full(fd, buf, len) < len" pattern
-
- Many codepaths did not diagnose write failures correctly when disks
- go full, due to their misuse of write_in_full() helper function,
- which have been corrected.
-
-
-* jn/per-repo-object-store-fixes (2017-09-14) 3 commits
-  (merged to 'next' on 2017-09-19 at 95aef30d5b)
- + replace-objects: evaluate replacement refs without using the object store
- + push, fetch: error out for submodule entries not pointing to commits
- + pack: make packed_git_mru global a value instead of a pointer
-
- Step #0 of a planned & larger series to make the in-core object
- store per in-core repository object.
-
-
-* jt/packmigrate (2017-09-06) 1 commit
-  (merged to 'next' on 2017-09-14 at 169e9573a0)
- + Remove inadvertently added outgoing/packfile.h
-
- Remove unneeded file added by a topic already in 'master'.
-
-
-* kd/doc-for-each-ref (2017-09-12) 2 commits
-  (merged to 'next' on 2017-09-19 at 993a2ae375)
- + doc/for-each-ref: explicitly specify option names
- + doc/for-each-ref: consistently use '=' to between argument names and values
-
- Doc update.
-
-
-* ks/commit-do-not-touch-cut-line (2017-09-15) 1 commit
-  (merged to 'next' on 2017-09-19 at 83891def6b)
- + commit-template: change a message to be more intuitive
-
- The explanation of the cut-line in the commit log editor has been
- slightly tweaked.
-
-
-* ks/help-alias-label (2017-09-14) 1 commit
-  (merged to 'next' on 2017-09-19 at 7737c853e0)
- + help: change a message to be more precise
-
- "git help co" now says "co is aliased to ...", not "git co is".
-
-
-* ks/test-readme-phrasofix (2017-09-19) 1 commit
-  (merged to 'next' on 2017-09-24 at 3a721d05f5)
- + t/README: fix typo and grammatically improve a sentence
-
- Doc updates.
-
-
-* kw/merge-recursive-cleanup (2017-09-08) 3 commits
-  (merged to 'next' on 2017-09-14 at 9f20025e6b)
- + merge-recursive: change current file dir string_lists to hashmap
- + merge-recursive: remove return value from get_files_dirs
- + merge-recursive: fix memory leak
-
- A leakfix and code clean-up.
-
-
-* kw/write-index-reduce-alloc (2017-09-08) 2 commits
-  (merged to 'next' on 2017-09-19 at d0e32c567a)
- + read-cache: fix index corruption with index v4
- + Add t/helper/test-write-cache to .gitignore
-
- A hotfix to a topic already in 'master'.
-
-
-* ls/travis-scriptify (2017-09-22) 4 commits
-  (merged to 'next' on 2017-09-24 at 6e808f0472)
- + travis-ci: fix "skip_branch_tip_with_tag()" string comparison
-  (merged to 'next' on 2017-09-14 at 8fa685d3b7)
- + travis: dedent a few scripts that are indented overly deeply
- + travis-ci: skip a branch build if equal tag is present
- + travis-ci: move Travis CI code into dedicated scripts
-
- The scripts to drive TravisCI has been reorganized and then an
- optimization to avoid spending cycles on a branch whose tip is
- tagged has been implemented.
-
-
-* ma/pkt-line-leakfix (2017-09-06) 1 commit
-  (merged to 'next' on 2017-09-10 at f0d9994319)
- + pkt-line: re-'static'-ify buffer in packet_write_fmt_1()
-
- A leakfix.
-
-
-* ma/remove-config-maybe-bool (2017-09-07) 1 commit
-  (merged to 'next' on 2017-09-14 at d0c7fb97a9)
- + config: remove git_config_maybe_bool
-
- Finishing touches to a recent topic.
-
-
-* ma/split-symref-update-fix (2017-09-10) 4 commits
-  (merged to 'next' on 2017-09-10 at 96c403fca7)
- + refs/files-backend: add `refname`, not "HEAD", to list
- + refs/files-backend: correct return value in lock_ref_for_update
- + refs/files-backend: fix memory leak in lock_ref_for_update
- + refs/files-backend: add longer-scoped copy of string to list
-
- A leakfix.
-
-
-* mg/name-rev-tests-with-short-stack (2017-09-08) 4 commits
-  (merged to 'next' on 2017-09-14 at 1e4a0fe206)
- + t6120: test describe and name-rev with deep repos
- + t6120: clean up state after breaking repo
- + t6120: test name-rev --all and --stdin
- + t7004: move limited stack prereq to test-lib
- (this branch is used by rj/test-ulimit-on-windows.)
-
- A handful of tests to demonstrates a recursive implementation of
- "name-rev" hurts.
-
-
-* mg/timestamp-t-fix (2017-09-06) 1 commit
-  (merged to 'next' on 2017-09-10 at a5df4d5b3e)
- + name-rev: change ULONG_MAX to TIME_MAX
-
- A mismerge fix.
-
-
-* mh/for-each-string-list-item-empty-fix (2017-09-20) 1 commit
-  (merged to 'next' on 2017-09-24 at 7ca1782f86)
- + for_each_string_list_item: avoid undefined behavior for empty list
-
- Code cmp.std.c nitpick.
-
-
-* mh/notes-cleanup (2017-09-09) 13 commits
-  (merged to 'next' on 2017-09-10 at cb1d725504)
- + load_subtree(): check that `prefix_len` is in the expected range
-  (merged to 'next' on 2017-08-26 at 2d6df46966)
- + load_subtree(): declare some variables to be `size_t`
- + hex_to_bytes(): simpler replacement for `get_oid_hex_segment()`
- + get_oid_hex_segment(): don't pad the rest of `oid`
- + load_subtree(): combine some common code
- + get_oid_hex_segment(): return 0 on success
- + load_subtree(): only consider blobs to be potential notes
- + load_subtree(): check earlier whether an internal node is a tree entry
- + load_subtree(): separate logic for internal vs. terminal entries
- + load_subtree(): fix incorrect comment
- + load_subtree(): reduce the scope of some local variables
- + load_subtree(): remove unnecessary conditional
- + notes: make GET_NIBBLE macro more robust
-
- Code clean-up.
-
-
-* mh/packed-ref-store-prep (2017-09-07) 1 commit
-  (merged to 'next' on 2017-09-14 at e3ef821847)
- + rev-parse: don't trim bisect refnames
-
- Fix regression to "gitk --bisect" by a recent update.
-
-
-* mh/packed-ref-transactions (2017-09-09) 11 commits
-  (merged to 'next' on 2017-09-14 at b926200d45)
- + files_transaction_finish(): delete reflogs before references
- + packed-backend: rip out some now-unused code
- + files_ref_store: use a transaction to update packed refs
- + t1404: demonstrate two problems with reference transactions
- + files_initial_transaction_commit(): use a transaction for packed refs
- + prune_refs(): also free the linked list
- + files_pack_refs(): use a reference transaction to write packed refs
- + packed_delete_refs(): implement method
- + packed_ref_store: implement reference transactions
- + struct ref_transaction: add a place for backends to store data
- + packed-backend: don't adjust the reference count on lock/unlock
- (this branch is used by mh/mmap-packed-refs.)
-
- Implement transactional update to the packed-ref representation of
- references.
-
-
-* nd/prune-in-worktree (2017-08-24) 16 commits
-  (merged to 'next' on 2017-09-14 at 3efe283118)
- + refs.c: reindent get_submodule_ref_store()
- + refs.c: remove fallback-to-main-store code get_submodule_ref_store()
- + rev-list: expose and document --single-worktree
- + revision.c: --reflog add HEAD reflog from all worktrees
- + files-backend: make reflog iterator go through per-worktree reflog
- + revision.c: --all adds HEAD from all worktrees
- + refs: remove dead for_each_*_submodule()
- + refs.c: move for_each_remote_ref_submodule() to submodule.c
- + revision.c: use refs_for_each*() instead of for_each_*_submodule()
- + refs: add refs_head_ref()
- + refs: move submodule slash stripping code to get_submodule_ref_store
- + refs.c: refactor get_submodule_ref_store(), share common free block
- + revision.c: --indexed-objects add objects from all worktrees
- + revision.c: refactor add_index_objects_to_pending()
- + refs.c: use is_dir_sep() in resolve_gitlink_ref()
- + revision.h: new flag in struct rev_info wrt. worktree-related refs
-
- "git gc" and friends when multiple worktrees are used off of a
- single repository did not consider the index and per-worktree refs
- of other worktrees as the root for reachability traversal, making
- objects that are in use only in other worktrees to be subject to
- garbage collection.
-
-
-* nm/imap-send-with-curl (2017-09-15) 4 commits
-  (merged to 'next' on 2017-09-19 at d07debeb6c)
- + imap-send: use curl by default when possible
- + imap_send: setup_curl: retreive credentials if not set in config file
- + imap-send: add wrapper to get server credentials if needed
- + imap-send: return with error if curl failed
-
- "git imap-send" has our own implementation of the protocol and also
- can use more recent libCurl with the imap protocol support.  Update
- the latter so that it can use the credential subsystem, and then
- make it the default option to use, so that we can eventually
- deprecate and remove the former.
-
-
-* nm/pull-submodule-recurse-config (2017-09-07) 2 commits
-  (merged to 'next' on 2017-09-14 at 38bf2c88e0)
- + pull: honor submodule.recurse config option
- + pull: fix cli and config option parsing order
-
- "git -c submodule.recurse=yes pull" did not work as if the
- "--recurse-submodules" option was given from the command line.
- This has been corrected.
-
-
-* ow/rev-parse-is-shallow-repo (2017-09-19) 1 commit
-  (merged to 'next' on 2017-09-24 at 8f1b915908)
- + rev-parse: rev-parse: add --is-shallow-repository
-
- "git rev-parse" learned "--is-shallow-repository", that is to be
- used in a way similar to existing "--is-bare-repository" and
- friends.
-
-
-* rj/test-ulimit-on-windows (2017-09-19) 3 commits
-  (merged to 'next' on 2017-09-24 at b01a595c05)
- + t9010-*.sh: skip all tests if the PIPE prereq is missing
- + test-lib: use more compact expression in PIPE prerequisite
- + test-lib: don't use ulimit in test prerequisites on cygwin
- (this branch uses mg/name-rev-tests-with-short-stack.)
-
- On Cygwin, "ulimit -s" does not report failure but it does not work
- at all, which causes an unexpected success of some tests that
- expect failures under a limited stack situation.  This has been
- fixed.
-
-
-* rk/commit-tree-make-F-verbatim (2017-09-10) 1 commit
-  (merged to 'next' on 2017-09-14 at 3d40c900f3)
- + commit-tree: do not complete line in -F input
-
- Unlike "git commit-tree < file", "git commit-tree -F file" did not
- pass the contents of the file verbatim and instead completed an
- incomplete line at the end, if exists.  The latter has been updated
- to match the behaviour of the former.
-
-
-* rs/archive-excluded-directory (2017-09-14) 1 commit
-  (merged to 'next' on 2017-09-19 at c695db3039)
- + archive: don't add empty directories to archives
-
- "git archive", especially when used with pathspec, stored an empty
- directory in its output, even though Git itself never does so.
- This has been fixed.
-
-
-* rs/strbuf-leakfix (2017-09-10) 34 commits
-  (merged to 'next' on 2017-09-14 at bb46952e6a)
- + wt-status: release strbuf after use in wt_longstatus_print_tracking()
- + wt-status: release strbuf after use in read_rebase_todolist()
- + vcs-svn: release strbuf after use in end_revision()
- + utf8: release strbuf on error return in strbuf_utf8_replace()
- + userdiff: release strbuf after use in userdiff_get_textconv()
- + transport-helper: release strbuf after use in process_connect_service()
- + sequencer: release strbuf after use in save_head()
- + shortlog: release strbuf after use in insert_one_record()
- + sha1_file: release strbuf on error return in index_path()
- + send-pack: release strbuf on error return in send_pack()
- + remote: release strbuf after use in set_url()
- + remote: release strbuf after use in migrate_file()
- + remote: release strbuf after use in read_remote_branches()
- + refs: release strbuf on error return in write_pseudoref()
- + notes: release strbuf after use in notes_copy_from_stdin()
- + merge: release strbuf after use in write_merge_heads()
- + merge: release strbuf after use in save_state()
- + mailinfo: release strbuf on error return in handle_boundary()
- + mailinfo: release strbuf after use in handle_from()
- + help: release strbuf on error return in exec_woman_emacs()
- + help: release strbuf on error return in exec_man_man()
- + help: release strbuf on error return in exec_man_konqueror()
- + diff: release strbuf after use in show_stats()
- + diff: release strbuf after use in show_rename_copy()
- + diff: release strbuf after use in diff_summary()
- + convert: release strbuf on error return in filter_buffer_or_fd()
- + connect: release strbuf on error return in git_connect()
- + commit: release strbuf on error return in commit_tree_extended()
- + clone: release strbuf after use in remove_junk()
- + clean: release strbuf after use in remove_dirs()
- + check-ref-format: release strbuf after use in check_ref_format_branch()
- + am: release strbuf after use in safe_to_abort()
- + am: release strbuf on error return in hg_patch_to_mail()
- + am: release strbufs after use in detect_patch_format()
-
- Many leaks of strbuf have been fixed.
-
-
-* tb/test-lint-echo-e (2017-09-21) 1 commit
-  (merged to 'next' on 2017-09-24 at dfa5caa4ce)
- + test-lint: echo -e (or -E) is not portable
-
- The test linter has been taught that we do not like "echo -e".
-
-
-* tg/refs-allowed-flags (2017-09-14) 1 commit
-  (merged to 'next' on 2017-09-19 at 407066a925)
- + refs: strip out not allowed flags from ref_transaction_update
-
- API error-proofing which happens to also squelch warnings from GCC.
-
-
-* ti/external-sha1dc (2017-08-16) 2 commits
-  (merged to 'next' on 2017-08-26 at a0fb4e91a5)
- + sha1dc: allow building with the external sha1dc library
- + sha1dc: build git plumbing code more explicitly
-
- Platforms that ship with a separate sha1 with collision detection
- library can link to it instead of using the copy we ship as part of
- our source tree.
-
---------------------------------------------------
-[New Topics]
-
-* sb/merge-commit-msg-hook (2017-09-22) 1 commit
-  (merged to 'next' on 2017-09-25 at 096e0502a8)
+ * sb/merge-commit-msg-hook (2017-09-22) 1 commit
+ (merged to 'next' on 2017-09-25 at 096e0502a8)
  + Documentation/githooks: mention merge in commit-msg hook
 
  Add documentation for a topic that has recently graduated to the
@@ -829,62 +377,6 @@ of the repositories listed at
 
  Will merge to 'next'.
 
---------------------------------------------------
-[Stalled]
-
-* mk/use-size-t-in-zlib (2017-08-10) 1 commit
- . zlib.c: use size_t for size
-
- The wrapper to call into zlib followed our long tradition to use
- "unsigned long" for sizes of regions in memory, which have been
- updated to use "size_t".
-
- Needs resurrecting by making sure the fix is good and still applies
- (or adjusted to today's codebase).
-
-
-* mg/status-in-progress-info (2017-05-10) 2 commits
- - status --short --inprogress: spell it as --in-progress
- - status: show in-progress info for short status
-
- "git status" learns an option to report various operations
- (e.g. "merging") that the user is in the middle of.
-
- cf. <xmqqmvakcdqw.fsf@gitster.mtv.corp.google.com>
-
-
-* nd/worktree-move (2017-04-20) 6 commits
- - worktree remove: new command
- - worktree move: refuse to move worktrees with submodules
- - worktree move: accept destination as directory
- - worktree move: new command
- - worktree.c: add update_worktree_location()
- - worktree.c: add validate_worktree()
-
- "git worktree" learned move and remove subcommands.
-
- Expecting a reroll.
- cf. <20170420101024.7593-1-pclouds@gmail.com>
- cf. <20170421145916.mknekgqzhxffu7di@sigill.intra.peff.net>
- cf. <d0e81b1e-5869-299e-f462-4d43dc997bd1@ramsayjones.plus.com>
-
-
-* sg/clone-refspec-from-command-line-config (2017-06-16) 2 commits
- - Documentation/clone: document ignored configuration variables
- - clone: respect additional configured fetch refspecs during initial fetch
- (this branch is used by sg/remote-no-string-refspecs.)
-
- "git clone -c var=val" is a way to set configuration variables in
- the resulting repository, but it is more useful to also make these
- variables take effect while the initial clone is happening,
- e.g. these configuration variables could be fetch refspecs.
-
- Waiting for a response.
- cf. <20170617112228.vugswym4o4owf6wj@sigill.intra.peff.net>
- cf. <xmqqmv8zhdap.fsf@gitster.mtv.corp.google.com>
-
---------------------------------------------------
-[Cooking]
 
 * js/rebase-i-final (2017-07-27) 10 commits
  - rebase -i: rearrange fixup/squash lines using the rebase--helper
@@ -966,8 +458,7 @@ of the repositories listed at
  cf. <20170922201551.15012-1-jonathantanmy@google.com>
 
 
-* mh/mmap-packed-refs (2017-09-24) 22 commits
- - SQUASH???
+* mh/mmap-packed-refs (2017-09-25) 21 commits
  - packed-backend.c: rename a bunch of things and update comments
  - mmapped_ref_iterator: inline into `packed_ref_iterator`
  - ref_cache: remove support for storing peeled values
@@ -995,9 +486,6 @@ of the repositories listed at
  pre-parse everything, and an access to a single ref in the
  packed-refs does not touch majority of irrelevant refs, either.
 
- Under review; expecting an eventual reroll.
- cf. <b092c424-987a-fe00-43d4-17062000dfc0@alum.mit.edu> etc.
-
 
 * pc/submodule-helper (2017-09-25) 4 commits
  - submodule: port submodule subcommand 'status' from shell to C
@@ -1008,15 +496,6 @@ of the repositories listed at
  GSoC.
 
  Looking good; it appeared to me that 3/4 is totally superfluous, though.
-
-
-* sb/parse-options-blank-line-before-option-list (2017-08-25) 1 commit
- - usage_with_options: omit double new line on empty option list
-
- "git worktree" with no option and no subcommand showed too many
- blank lines in its help text, which has been reduced.
-
- Superseded by bc/rev-parse-parseopt-fix?
 
 
 * bc/hash-algo (2017-08-20) 5 commits
@@ -1178,3 +657,14 @@ of the repositories listed at
  repository we visit.
 
  Will be rerolled.
+
+
+* sb/parse-options-blank-line-before-option-list (2017-08-25) 1 commit
+ - usage_with_options: omit double new line on empty option list
+
+ "git worktree" with no option and no subcommand showed too many
+ blank lines in its help text, which has been reduced.
+
+ Superseded by bc/rev-parse-parseopt-fix.
+
+
