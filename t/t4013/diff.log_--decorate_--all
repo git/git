@@ -1,4 +1,10 @@
 $ git log --decorate --all
+commit b7e0bc69303b488b47deca799a7d723971dfa6cd (mode)
+Author: A U Thor <author@example.com>
+Date:   Mon Jun 26 00:06:00 2006 +0000
+
+    update mode
+
 commit cd4e72fd96faed3f0ba949dc42967430374e2290 (rearrange)
 Author: A U Thor <author@example.com>
 Date:   Mon Jun 26 00:06:00 2006 +0000
