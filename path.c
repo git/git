@@ -638,7 +638,7 @@ int validate_headref(const char *path)
 	struct stat st;
 	char buffer[256];
 	const char *refname;
-	unsigned char sha1[20];
+	struct object_id oid;
 	int fd;
 	ssize_t len;
 
@@ -679,7 +679,7 @@ int validate_headref(const char *path)
 	/*
 	 * Is this a detached HEAD?
 	 */
-	if (!get_sha1_hex(buffer, sha1))
+	if (!get_oid_hex(buffer, &oid))
 		return 0;
 
 	return -1;
