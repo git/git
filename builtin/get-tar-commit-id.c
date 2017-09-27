@@ -26,7 +26,7 @@ int cmd_get_tar_commit_id(int argc, const char **argv, const char *prefix)
 		usage(builtin_get_tar_commit_id_usage);
 
 	n = read_in_full(0, buffer, HEADERSIZE);
-	if (n < HEADERSIZE)
+	if (n != HEADERSIZE)
 		die("git get-tar-commit-id: read error");
 	if (header->typeflag[0] != 'g')
 		return 1;

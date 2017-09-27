@@ -258,7 +258,7 @@ static int get_packet_data(int fd, char **src_buf, size_t *src_size,
 	}
 
 	/* And complain if we didn't get enough bytes to satisfy the read. */
-	if (ret < size) {
+	if (ret != size) {
 		if (options & PACKET_READ_GENTLE_ON_EOF)
 			return -1;
 
