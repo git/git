@@ -636,7 +636,8 @@ void strbuf_git_common_path(struct strbuf *sb,
 int validate_headref(const char *path)
 {
 	struct stat st;
-	char *buf, buffer[256];
+	char buffer[256];
+	const char *refname;
 	unsigned char sha1[20];
 	int fd;
 	ssize_t len;
@@ -668,14 +669,10 @@ int validate_headref(const char *path)
 	/*
 	 * Is it a symbolic ref?
 	 */
-	if (len < 4)
-		return -1;
-	if (!memcmp("ref:", buffer, 4)) {
-		buf = buffer + 4;
-		len -= 4;
-		while (len && isspace(*buf))
-			buf++, len--;
-		if (len >= 5 && !memcmp("refs/", buf, 5))
+	if (skip_prefix(buffer, "ref:", &refname)) {
+		while (isspace(*refname))
+			refname++;
+		if (starts_with(refname, "refs/"))
 			return 0;
 	}
 
