@@ -213,14 +213,19 @@ void fixup_pack_header_footer(int pack_fd,
 	git_SHA_CTX old_sha1_ctx, new_sha1_ctx;
 	struct pack_header hdr;
 	char *buf;
+	ssize_t read_result;
 
 	git_SHA1_Init(&old_sha1_ctx);
 	git_SHA1_Init(&new_sha1_ctx);
 
 	if (lseek(pack_fd, 0, SEEK_SET) != 0)
 		die_errno("Failed seeking to start of '%s'", pack_name);
-	if (read_in_full(pack_fd, &hdr, sizeof(hdr)) != sizeof(hdr))
+	read_result = read_in_full(pack_fd, &hdr, sizeof(hdr));
+	if (read_result < 0)
 		die_errno("Unable to reread header of '%s'", pack_name);
+	else if (read_result != sizeof(hdr))
+		die_errno("Unexpected short read for header of '%s'",
+			  pack_name);
 	if (lseek(pack_fd, 0, SEEK_SET) != 0)
 		die_errno("Failed seeking to start of '%s'", pack_name);
 	git_SHA1_Update(&old_sha1_ctx, &hdr, sizeof(hdr));

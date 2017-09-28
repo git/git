@@ -442,6 +442,7 @@ static int open_packed_git_1(struct packed_git *p)
 	unsigned char sha1[20];
 	unsigned char *idx_sha1;
 	long fd_flag;
+	ssize_t read_result;
 
 	if (!p->index_data && open_pack_index(p))
 		return error("packfile %s index unavailable", p->pack_name);
@@ -483,7 +484,10 @@ static int open_packed_git_1(struct packed_git *p)
 		return error("cannot set FD_CLOEXEC");
 
 	/* Verify we recognize this pack file format. */
-	if (read_in_full(p->pack_fd, &hdr, sizeof(hdr)) != sizeof(hdr))
+	read_result = read_in_full(p->pack_fd, &hdr, sizeof(hdr));
+	if (read_result < 0)
+		return error_errno("error reading from %s", p->pack_name);
+	if (read_result != sizeof(hdr))
 		return error("file %s is far too short to be a packfile", p->pack_name);
 	if (hdr.hdr_signature != htonl(PACK_SIGNATURE))
 		return error("file %s is not a GIT packfile", p->pack_name);
@@ -500,7 +504,10 @@ static int open_packed_git_1(struct packed_git *p)
 			     p->num_objects);
 	if (lseek(p->pack_fd, p->pack_size - sizeof(sha1), SEEK_SET) == -1)
 		return error("end of packfile %s is unavailable", p->pack_name);
-	if (read_in_full(p->pack_fd, sha1, sizeof(sha1)) != sizeof(sha1))
+	read_result = read_in_full(p->pack_fd, sha1, sizeof(sha1));
+	if (read_result < 0)
+		return error_errno("error reading from %s", p->pack_name);
+	if (read_result != sizeof(sha1))
 		return error("packfile %s signature is unavailable", p->pack_name);
 	idx_sha1 = ((unsigned char *)p->index_data) + p->index_size - 40;
 	if (hashcmp(sha1, idx_sha1))

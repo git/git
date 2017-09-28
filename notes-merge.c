@@ -308,8 +308,6 @@ static void write_buf_to_worktree(const struct object_id *obj,
 			if (errno == EPIPE)
 				break;
 			die_errno("notes-merge");
-		} else if (!ret) {
-			die("notes-merge: disk full?");
 		}
 		size -= ret;
 		buf += ret;

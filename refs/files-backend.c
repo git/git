@@ -3006,7 +3006,7 @@ static int files_reflog_expire(struct ref_store *ref_store,
 		} else if (update &&
 			   (write_in_full(get_lock_file_fd(&lock->lk),
 				oid_to_hex(&cb.last_kept_oid), GIT_SHA1_HEXSZ) < 0 ||
-			    write_str_in_full(get_lock_file_fd(&lock->lk), "\n") < 1 ||
+			    write_str_in_full(get_lock_file_fd(&lock->lk), "\n") < 0 ||
 			    close_ref_gently(lock) < 0)) {
 			status |= error("couldn't write %s",
 					get_lock_file_path(&lock->lk));
