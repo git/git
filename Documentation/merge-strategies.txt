@@ -39,7 +39,8 @@ even look at what the other tree contains at all.  It discards everything
 the other tree did, declaring 'our' history contains all that happened in it.
 
 theirs;;
-	This is the opposite of 'ours'.
+	This is the opposite of 'ours'; note that, unlike 'ours', there is
+	no 'theirs' merge stragegy to confuse this merge option with.
 
 patience;;
 	With this option, 'merge-recursive' spends a little extra time
