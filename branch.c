@@ -191,9 +191,8 @@ int validate_new_branchname(const char *name, struct strbuf *ref,
 
 	if (!attr_only) {
 		const char *head;
-		struct object_id oid;
 
-		head = resolve_ref_unsafe("HEAD", 0, oid.hash, NULL);
+		head = resolve_ref_unsafe("HEAD", 0, NULL, NULL);
 		if (!is_bare_repository() && head && !strcmp(head, ref->buf))
 			die(_("Cannot force update the current branch."));
 	}

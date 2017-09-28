@@ -2248,11 +2248,10 @@ static int handle_revision_pseudo_opt(const char *submodule,
 
 static void NORETURN diagnose_missing_default(const char *def)
 {
-	unsigned char sha1[20];
 	int flags;
 	const char *refname;
 
-	refname = resolve_ref_unsafe(def, 0, sha1, &flags);
+	refname = resolve_ref_unsafe(def, 0, NULL, &flags);
 	if (!refname || !(flags & REF_ISSYMREF) || (flags & REF_ISBROKEN))
 		die(_("your current branch appears to be broken"));
 
