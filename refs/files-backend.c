@@ -1258,9 +1258,9 @@ static int commit_ref_update(struct files_ref_store *refs,
 			     const struct object_id *oid, const char *logmsg,
 			     struct strbuf *err);
 
-static int files_rename_ref(struct ref_store *ref_store,
+static int files_copy_or_rename_ref(struct ref_store *ref_store,
 			    const char *oldrefname, const char *newrefname,
-			    const char *logmsg)
+			    const char *logmsg, int copy)
 {
 	struct files_ref_store *refs =
 		files_downcast(ref_store, REF_STORE_WRITE, "rename_ref");
@@ -1292,8 +1292,12 @@ static int files_rename_ref(struct ref_store *ref_store,
 	}
 
 	if (flag & REF_ISSYMREF) {
-		ret = error("refname %s is a symbolic ref, renaming it is not supported",
-			    oldrefname);
+		if (copy)
+			ret = error("refname %s is a symbolic ref, copying it is not supported",
+				    oldrefname);
+		else
+			ret = error("refname %s is a symbolic ref, renaming it is not supported",
+				    oldrefname);
 		goto out;
 	}
 	if (!refs_rename_ref_available(&refs->base, oldrefname, newrefname)) {
@@ -1301,13 +1305,19 @@ static int files_rename_ref(struct ref_store *ref_store,
 		goto out;
 	}
 
-	if (log && rename(sb_oldref.buf, tmp_renamed_log.buf)) {
+	if (!copy && log && rename(sb_oldref.buf, tmp_renamed_log.buf)) {
 		ret = error("unable to move logfile logs/%s to logs/"TMP_RENAMED_LOG": %s",
 			    oldrefname, strerror(errno));
 		goto out;
 	}
 
-	if (refs_delete_ref(&refs->base, logmsg, oldrefname,
+	if (copy && log && copy_file(tmp_renamed_log.buf, sb_oldref.buf, 0644)) {
+		ret = error("unable to copy logfile logs/%s to logs/"TMP_RENAMED_LOG": %s",
+			    oldrefname, strerror(errno));
+		goto out;
+	}
+
+	if (!copy && refs_delete_ref(&refs->base, logmsg, oldrefname,
 			    orig_oid.hash, REF_NODEREF)) {
 		error("unable to delete old %s", oldrefname);
 		goto rollback;
@@ -1320,7 +1330,7 @@ static int files_rename_ref(struct ref_store *ref_store,
 	 * the safety anyway; we want to delete the reference whatever
 	 * its current value.
 	 */
-	if (!refs_read_ref_full(&refs->base, newrefname,
+	if (!copy && !refs_read_ref_full(&refs->base, newrefname,
 				RESOLVE_REF_READING | RESOLVE_REF_NO_RECURSE,
 				oid.hash, NULL) &&
 	    refs_delete_ref(&refs->base, NULL, newrefname,
@@ -1351,7 +1361,10 @@ static int files_rename_ref(struct ref_store *ref_store,
 	lock = lock_ref_sha1_basic(refs, newrefname, NULL, NULL, NULL,
 				   REF_NODEREF, NULL, &err);
 	if (!lock) {
-		error("unable to rename '%s' to '%s': %s", oldrefname, newrefname, err.buf);
+		if (copy)
+			error("unable to copy '%s' to '%s': %s", oldrefname, newrefname, err.buf);
+		else
+			error("unable to rename '%s' to '%s': %s", oldrefname, newrefname, err.buf);
 		strbuf_release(&err);
 		goto rollback;
 	}
@@ -1400,6 +1413,22 @@ static int files_rename_ref(struct ref_store *ref_store,
 	strbuf_release(&tmp_renamed_log);
 
 	return ret;
+}
+
+static int files_rename_ref(struct ref_store *ref_store,
+			    const char *oldrefname, const char *newrefname,
+			    const char *logmsg)
+{
+	return files_copy_or_rename_ref(ref_store, oldrefname,
+				 newrefname, logmsg, 0);
+}
+
+static int files_copy_ref(struct ref_store *ref_store,
+			    const char *oldrefname, const char *newrefname,
+			    const char *logmsg)
+{
+	return files_copy_or_rename_ref(ref_store, oldrefname,
+				 newrefname, logmsg, 1);
 }
 
 static int close_ref_gently(struct ref_lock *lock)
@@ -3064,6 +3093,7 @@ struct ref_storage_be refs_be_files = {
 	files_create_symref,
 	files_delete_refs,
 	files_rename_ref,
+	files_copy_ref,
 
 	files_ref_iterator_begin,
 	files_read_raw_ref,
