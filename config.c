@@ -2355,6 +2355,7 @@ static ssize_t write_pair(int fd, const char *key, const char *value)
 		case '"':
 		case '\\':
 			strbuf_addch(&sb, '\\');
+			/* fallthrough */
 		default:
 			strbuf_addch(&sb, value[i]);
 			break;

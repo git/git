@@ -497,7 +497,7 @@ int send_pack(struct send_pack_args *args,
 				strbuf_release(&cap_buf);
 				return atomic_push_failure(args, remote_refs, ref);
 			}
-			/* Fallthrough for non atomic case. */
+			/* else fallthrough */
 		default:
 			continue;
 		}

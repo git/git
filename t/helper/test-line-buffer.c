@@ -17,27 +17,17 @@ static uint32_t strtouint32(const char *s)
 
 static void handle_command(const char *command, const char *arg, struct line_buffer *buf)
 {
-	switch (*command) {
-	case 'b':
-		if (starts_with(command, "binary ")) {
-			struct strbuf sb = STRBUF_INIT;
-			strbuf_addch(&sb, '>');
-			buffer_read_binary(buf, &sb, strtouint32(arg));
-			fwrite(sb.buf, 1, sb.len, stdout);
-			strbuf_release(&sb);
-			return;
-		}
-	case 'c':
-		if (starts_with(command, "copy ")) {
-			buffer_copy_bytes(buf, strtouint32(arg));
-			return;
-		}
-	case 's':
-		if (starts_with(command, "skip ")) {
-			buffer_skip_bytes(buf, strtouint32(arg));
-			return;
-		}
-	default:
+	if (starts_with(command, "binary ")) {
+		struct strbuf sb = STRBUF_INIT;
+		strbuf_addch(&sb, '>');
+		buffer_read_binary(buf, &sb, strtouint32(arg));
+		fwrite(sb.buf, 1, sb.len, stdout);
+		strbuf_release(&sb);
+	} else if (starts_with(command, "copy ")) {
+		buffer_copy_bytes(buf, strtouint32(arg));
+	} else if (starts_with(command, "skip ")) {
+		buffer_skip_bytes(buf, strtouint32(arg));
+	} else {
 		die("unrecognized command: %s", command);
 	}
 }

@@ -588,6 +588,7 @@ static int fsck_tree(struct tree *item, struct fsck_options *options)
 		case S_IFREG | 0664:
 			if (!options->strict)
 				break;
+			/* fallthrough */
 		default:
 			has_bad_modes = 1;
 		}
