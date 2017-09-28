@@ -120,7 +120,7 @@ extern int submodule_move_head(const char *path,
 
 /*
  * Prepare the "env_array" parameter of a "struct child_process" for executing
- * a submodule by clearing any repo-specific envirionment variables, but
+ * a submodule by clearing any repo-specific environment variables, but
  * retaining any config in the environment.
  */
 extern void prepare_submodule_repo_env(struct argv_array *out);
