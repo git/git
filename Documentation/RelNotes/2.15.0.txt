@@ -189,6 +189,12 @@ Performance, Internal Implementation, Development Support etc.
    expect failures under a limited stack situation.  This has been
    fixed.
 
+ * Many codepaths have been updated to squelch -Wimplicit-fallthrough
+   warnings from Gcc 7 (which is a good code hygiene).
+
+ * Add a helper for DLL loading in anticipation for its need in a
+   future topic RSN.
+
 
 Also contains various documentation updates and code clean-ups.
 
@@ -359,6 +365,44 @@ Fixes since v2.14
    alternate object stores overrun the end of the string.
    (merge f0f7bebef7 jk/info-alternates-fix later to maint).
 
+ * "git describe --match" learned to take multiple patterns in v2.13
+   series, but the feature ignored the patterns after the first one
+   and did not work at all.  This has been fixed.
+   (merge da769d2986 jk/describe-omit-some-refs later to maint).
+
+ * "git filter-branch" cannot reproduce a history with a tag without
+   the tagger field, which only ancient versions of Git allowed to be
+   created.  This has been corrected.
+   (merge b2c1ca6b4b ic/fix-filter-branch-to-handle-tag-without-tagger later to maint).
+
+ * "git cat-file --textconv" started segfaulting recently, which
+   has been corrected.
+   (merge cc0ea7c9e5 jk/diff-blob later to maint).
+
+ * The built-in pattern to detect the "function header" for HTML did
+   not match <H1>..<H6> elements without any attributes, which has
+   been fixed.
+   (merge 9c03caca2c ik/userdiff-html-h-element-fix later to maint).
+
+ * "git mailinfo" was loose in decoding quoted printable and produced
+   garbage when the two letters after the equal sign are not
+   hexadecimal.  This has been fixed.
+   (merge c8cf423eab rs/mailinfo-qp-decode-fix later to maint).
+
+ * The machinery to create xdelta used in pack files received the
+   sizes of the data in size_t, but lost the higher bits of them by
+   storing them in "unsigned int" during the computation, which is
+   fixed.
+
+ * The delta format used in the packfile cannot reference data at
+   offset larger than what can be expressed in 4-byte, but the
+   generator for the data failed to make sure the offset does not
+   overflow.  This has been corrected.
+
+ * The documentation for '-X<option>' for merges was misleadingly
+   written to suggest that "-s theirs" exists, which is not the case.
+   (merge c25d98b2a7 jc/merge-x-theirs-docfix later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge f094b89a4d ma/parse-maybe-bool later to maint).
    (merge 39b00fa4d4 jk/drop-sha1-entry-pos later to maint).
@@ -376,3 +420,6 @@ Fixes since v2.14
    (merge f7a32dd97f kd/doc-for-each-ref later to maint).
    (merge be94568bc7 ez/doc-duplicated-words-fix later to maint).
    (merge 01e4be6c3d ks/test-readme-phrasofix later to maint).
+   (merge 217bb56d4f hn/typofix later to maint).
+   (merge c08fd6388c jk/doc-read-tree-table-asciidoctor-fix later to maint).
+   (merge c3342b362e ks/doc-use-camelcase-for-config-name later to maint).
