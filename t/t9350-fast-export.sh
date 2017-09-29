@@ -234,7 +234,7 @@ test_expect_success 'fast-export -C -C | fast-import' '
 	mkdir new &&
 	git --git-dir=new/.git init &&
 	git fast-export -C -C --signed-tags=strip --all > output &&
-	grep "^C file6 file7\$" output &&
+	grep "^C file2 file4\$" output &&
 	cat output |
 	(cd new &&
 	 git fast-import &&
@@ -519,6 +519,24 @@ test_expect_success 'delete refspec' '
 	from 0000000000000000000000000000000000000000
 
 	EOF
+	test_cmp expected actual
+'
+
+test_expect_success 'when using -C, do not declare copy when source of copy is also modified' '
+	test_create_repo src &&
+	echo a_line >src/file.txt &&
+	git -C src add file.txt &&
+	git -C src commit -m 1st_commit &&
+
+	cp src/file.txt src/file2.txt &&
+	echo another_line >>src/file.txt &&
+	git -C src add file.txt file2.txt &&
+	git -C src commit -m 2nd_commit &&
+
+	test_create_repo dst &&
+	git -C src fast-export --all -C | git -C dst fast-import &&
+	git -C src show >expected &&
+	git -C dst show >actual &&
 	test_cmp expected actual
 '
 
