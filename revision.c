@@ -1106,7 +1106,7 @@ static void add_rev_cmdline(struct rev_info *revs,
 			    unsigned flags)
 {
 	struct rev_cmdline_info *info = &revs->cmdline;
-	int nr = info->nr;
+	unsigned int nr = info->nr;
 
 	ALLOC_GROW(info->rev, nr + 1, info->alloc);
 	info->rev[nr].item = item;

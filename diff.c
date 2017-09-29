@@ -1541,7 +1541,7 @@ static void emit_rewrite_diff(const char *name_a,
 
 struct diff_words_buffer {
 	mmfile_t text;
-	long alloc;
+	unsigned long alloc;
 	struct diff_words_orig {
 		const char *begin, *end;
 	} *orig;
