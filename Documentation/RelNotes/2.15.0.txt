@@ -84,6 +84,9 @@ UI, Workflows & Features
    used in a way similar to existing "--is-bare-repository" and
    friends.
 
+ * "git describe --match <pattern>" has been taught to play well with
+   the "--all" option.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -195,6 +198,10 @@ Performance, Internal Implementation, Development Support etc.
  * Add a helper for DLL loading in anticipation for its need in a
    future topic RSN.
 
+ * "git status --ignored", when noticing that a directory without any
+   tracked path is ignored, still enumerated all the ignored paths in
+   the directory, which is unnecessary.  The codepath has been
+   optimized to avoid this overhead.
 
 Also contains various documentation updates and code clean-ups.
 
@@ -402,6 +409,17 @@ Fixes since v2.14
  * The documentation for '-X<option>' for merges was misleadingly
    written to suggest that "-s theirs" exists, which is not the case.
    (merge c25d98b2a7 jc/merge-x-theirs-docfix later to maint).
+
+ * "git fast-export" with -M/-C option issued "copy" instruction on a
+   path that is simultaneously modified, which was incorrect.
+   (merge b3e8ca89cf jt/fast-export-copy-modify-fix later to maint).
+
+ * Many codepaths have been updated to squelch -Wsign-compare
+   warnings.
+   (merge 071bcaab64 rj/no-sign-compare later to maint).
+
+ * Memory leaks in various codepaths have been plugged.
+   (merge 4d01a7fa65 ma/leakplugs later to maint).
 
  * Other minor doc, test and build updates and code cleanups.
    (merge f094b89a4d ma/parse-maybe-bool later to maint).
