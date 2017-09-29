@@ -433,7 +433,12 @@ static int read_bisect_refs(void)
 
 static GIT_PATH_FUNC(git_path_bisect_names, "BISECT_NAMES")
 static GIT_PATH_FUNC(git_path_bisect_expected_rev, "BISECT_EXPECTED_REV")
+static GIT_PATH_FUNC(git_path_bisect_ancestors_ok, "BISECT_ANCESTORS_OK")
+static GIT_PATH_FUNC(git_path_bisect_run, "BISECT_RUN")
+static GIT_PATH_FUNC(git_path_bisect_start, "BISECT_START")
+static GIT_PATH_FUNC(git_path_bisect_log, "BISECT_LOG")
 static GIT_PATH_FUNC(git_path_bisect_terms, "BISECT_TERMS")
+static GIT_PATH_FUNC(git_path_head_name, "head-name")
 
 static void read_bisect_paths(struct argv_array *array)
 {
@@ -1043,4 +1048,41 @@ int estimate_bisect_steps(int all)
 	x = all - e;
 
 	return (e < 3 * x) ? n : n - 1;
+}
+
+static int mark_for_removal(const char *refname, const struct object_id *oid,
+			    int flag, void *cb_data)
+{
+	struct string_list *refs = cb_data;
+	char *ref = xstrfmt("refs/bisect%s", refname);
+	string_list_append(refs, ref);
+	return 0;
+}
+
+int bisect_clean_state(void)
+{
+	int result = 0;
+
+	/* There may be some refs packed during bisection */
+	struct string_list refs_for_removal = STRING_LIST_INIT_NODUP;
+	for_each_ref_in("refs/bisect", mark_for_removal, (void *) &refs_for_removal);
+	string_list_append(&refs_for_removal, xstrdup("BISECT_HEAD"));
+	result = delete_refs("bisect: remove", &refs_for_removal, REF_NODEREF);
+	refs_for_removal.strdup_strings = 1;
+	string_list_clear(&refs_for_removal, 0);
+	unlink_or_warn(git_path_bisect_expected_rev());
+	unlink_or_warn(git_path_bisect_ancestors_ok());
+	unlink_or_warn(git_path_bisect_log());
+	unlink_or_warn(git_path_bisect_names());
+	unlink_or_warn(git_path_bisect_run());
+	unlink_or_warn(git_path_bisect_terms());
+	/* Cleanup head-name if it got left by an old version of git-bisect */
+	unlink_or_warn(git_path_head_name());
+	/*
+	 * Cleanup BISECT_START last to support the --no-checkout option
+	 * introduced in the commit 4796e823a.
+	 */
+	unlink_or_warn(git_path_bisect_start());
+
+	return result;
 }
