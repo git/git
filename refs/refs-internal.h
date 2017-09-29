@@ -329,6 +329,13 @@ int refs_rename_ref_available(struct ref_store *refs,
  */
 struct ref_iterator {
 	struct ref_iterator_vtable *vtable;
+
+	/*
+	 * Does this `ref_iterator` iterate over references in order
+	 * by refname?
+	 */
+	unsigned int ordered : 1;
+
 	const char *refname;
 	const struct object_id *oid;
 	unsigned int flags;
@@ -374,7 +381,7 @@ int is_empty_ref_iterator(struct ref_iterator *ref_iterator);
  * which the refname begins with prefix. If trim is non-zero, then
  * trim that many characters off the beginning of each refname. flags
  * can be DO_FOR_EACH_INCLUDE_BROKEN to include broken references in
- * the iteration.
+ * the iteration. The output is ordered by refname.
  */
 struct ref_iterator *refs_ref_iterator_begin(
 		struct ref_store *refs,
@@ -400,9 +407,11 @@ typedef enum iterator_selection ref_iterator_select_fn(
  * Iterate over the entries from iter0 and iter1, with the values
  * interleaved as directed by the select function. The iterator takes
  * ownership of iter0 and iter1 and frees them when the iteration is
- * over.
+ * over. A derived class should set `ordered` to 1 or 0 based on
+ * whether it generates its output in order by reference name.
  */
 struct ref_iterator *merge_ref_iterator_begin(
+		int ordered,
 		struct ref_iterator *iter0, struct ref_iterator *iter1,
 		ref_iterator_select_fn *select, void *cb_data);
 
@@ -431,6 +440,8 @@ struct ref_iterator *overlay_ref_iterator_begin(
  * As an convenience to callers, if prefix is the empty string and
  * trim is zero, this function returns iter0 directly, without
  * wrapping it.
+ *
+ * The resulting ref_iterator is ordered if iter0 is.
  */
 struct ref_iterator *prefix_ref_iterator_begin(struct ref_iterator *iter0,
 					       const char *prefix,
@@ -441,11 +452,14 @@ struct ref_iterator *prefix_ref_iterator_begin(struct ref_iterator *iter0,
 /*
  * Base class constructor for ref_iterators. Initialize the
  * ref_iterator part of iter, setting its vtable pointer as specified.
+ * `ordered` should be set to 1 if the iterator will iterate over
+ * references in order by refname; otherwise it should be set to 0.
  * This is meant to be called only by the initializers of derived
  * classes.
  */
 void base_ref_iterator_init(struct ref_iterator *iter,
-			    struct ref_iterator_vtable *vtable);
+			    struct ref_iterator_vtable *vtable,
+			    int ordered);
 
 /*
  * Base class destructor for ref_iterators. Destroy the ref_iterator
@@ -548,8 +562,6 @@ typedef int ref_transaction_commit_fn(struct ref_store *refs,
 				      struct strbuf *err);
 
 typedef int pack_refs_fn(struct ref_store *ref_store, unsigned int flags);
-typedef int peel_ref_fn(struct ref_store *ref_store,
-			const char *refname, unsigned char *sha1);
 typedef int create_symref_fn(struct ref_store *ref_store,
 			     const char *ref_target,
 			     const char *refs_heads_master,
@@ -567,7 +579,8 @@ typedef int copy_ref_fn(struct ref_store *ref_store,
  * Iterate over the references in `ref_store` whose names start with
  * `prefix`. `prefix` is matched as a literal string, without regard
  * for path separators. If prefix is NULL or the empty string, iterate
- * over all references in `ref_store`.
+ * over all references in `ref_store`. The output is ordered by
+ * refname.
  */
 typedef struct ref_iterator *ref_iterator_begin_fn(
 		struct ref_store *ref_store,
@@ -656,7 +669,6 @@ struct ref_storage_be {
 	ref_transaction_commit_fn *initial_transaction_commit;
 
 	pack_refs_fn *pack_refs;
-	peel_ref_fn *peel_ref;
 	create_symref_fn *create_symref;
 	delete_refs_fn *delete_refs;
 	rename_ref_fn *rename_ref;

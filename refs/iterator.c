@@ -25,9 +25,11 @@ int ref_iterator_abort(struct ref_iterator *ref_iterator)
 }
 
 void base_ref_iterator_init(struct ref_iterator *iter,
-			    struct ref_iterator_vtable *vtable)
+			    struct ref_iterator_vtable *vtable,
+			    int ordered)
 {
 	iter->vtable = vtable;
+	iter->ordered = !!ordered;
 	iter->refname = NULL;
 	iter->oid = NULL;
 	iter->flags = 0;
@@ -72,7 +74,7 @@ struct ref_iterator *empty_ref_iterator_begin(void)
 	struct empty_ref_iterator *iter = xcalloc(1, sizeof(*iter));
 	struct ref_iterator *ref_iterator = &iter->base;
 
-	base_ref_iterator_init(ref_iterator, &empty_ref_iterator_vtable);
+	base_ref_iterator_init(ref_iterator, &empty_ref_iterator_vtable, 1);
 	return ref_iterator;
 }
 
@@ -205,6 +207,7 @@ static struct ref_iterator_vtable merge_ref_iterator_vtable = {
 };
 
 struct ref_iterator *merge_ref_iterator_begin(
+		int ordered,
 		struct ref_iterator *iter0, struct ref_iterator *iter1,
 		ref_iterator_select_fn *select, void *cb_data)
 {
@@ -219,7 +222,7 @@ struct ref_iterator *merge_ref_iterator_begin(
 	 * references through only if they exist in both iterators.
 	 */
 
-	base_ref_iterator_init(ref_iterator, &merge_ref_iterator_vtable);
+	base_ref_iterator_init(ref_iterator, &merge_ref_iterator_vtable, ordered);
 	iter->iter0 = iter0;
 	iter->iter1 = iter1;
 	iter->select = select;
@@ -268,9 +271,11 @@ struct ref_iterator *overlay_ref_iterator_begin(
 	} else if (is_empty_ref_iterator(back)) {
 		ref_iterator_abort(back);
 		return front;
+	} else if (!front->ordered || !back->ordered) {
+		BUG("overlay_ref_iterator requires ordered inputs");
 	}
 
-	return merge_ref_iterator_begin(front, back,
+	return merge_ref_iterator_begin(1, front, back,
 					overlay_iterator_select, NULL);
 }
 
@@ -282,6 +287,20 @@ struct prefix_ref_iterator {
 	int trim;
 };
 
+/* Return -1, 0, 1 if refname is before, inside, or after the prefix. */
+static int compare_prefix(const char *refname, const char *prefix)
+{
+	while (*prefix) {
+		if (*refname != *prefix)
+			return ((unsigned char)*refname < (unsigned char)*prefix) ? -1 : +1;
+
+		refname++;
+		prefix++;
+	}
+
+	return 0;
+}
+
 static int prefix_ref_iterator_advance(struct ref_iterator *ref_iterator)
 {
 	struct prefix_ref_iterator *iter =
@@ -289,8 +308,24 @@ static int prefix_ref_iterator_advance(struct ref_iterator *ref_iterator)
 	int ok;
 
 	while ((ok = ref_iterator_advance(iter->iter0)) == ITER_OK) {
-		if (!starts_with(iter->iter0->refname, iter->prefix))
+		int cmp = compare_prefix(iter->iter0->refname, iter->prefix);
+
+		if (cmp < 0)
 			continue;
+
+		if (cmp > 0) {
+			/*
+			 * If the source iterator is ordered, then we
+			 * can stop the iteration as soon as we see a
+			 * refname that comes after the prefix:
+			 */
+			if (iter->iter0->ordered) {
+				ok = ref_iterator_abort(iter->iter0);
+				break;
+			} else {
+				continue;
+			}
+		}
 
 		if (iter->trim) {
 			/*
@@ -361,7 +396,7 @@ struct ref_iterator *prefix_ref_iterator_begin(struct ref_iterator *iter0,
 	iter = xcalloc(1, sizeof(*iter));
 	ref_iterator = &iter->base;
 
-	base_ref_iterator_init(ref_iterator, &prefix_ref_iterator_vtable);
+	base_ref_iterator_init(ref_iterator, &prefix_ref_iterator_vtable, iter0->ordered);
 
 	iter->iter0 = iter0;
 	iter->prefix = xstrdup(prefix);

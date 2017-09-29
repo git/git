@@ -184,6 +184,7 @@ ifeq ($(uname_O),Cygwin)
 	UNRELIABLE_FSTAT = UnfortunatelyYes
 	SPARSE_FLAGS = -isystem /usr/include/w32api -Wno-one-bit-signed-bitfield
 	OBJECT_CREATION_USES_RENAMES = UnfortunatelyNeedsTo
+	MMAP_PREVENTS_DELETE = UnfortunatelyYes
 	COMPAT_OBJS += compat/cygwin.o
 	FREAD_READS_DIRECTORIES = UnfortunatelyYes
 endif
@@ -353,6 +354,7 @@ ifeq ($(uname_S),Windows)
 	NO_ST_BLOCKS_IN_STRUCT_STAT = YesPlease
 	NO_NSEC = YesPlease
 	USE_WIN32_MMAP = YesPlease
+	MMAP_PREVENTS_DELETE = UnfortunatelyYes
 	# USE_NED_ALLOCATOR = YesPlease
 	UNRELIABLE_FSTAT = UnfortunatelyYes
 	OBJECT_CREATION_USES_RENAMES = UnfortunatelyNeedsTo
@@ -501,6 +503,7 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_ST_BLOCKS_IN_STRUCT_STAT = YesPlease
 	NO_NSEC = YesPlease
 	USE_WIN32_MMAP = YesPlease
+	MMAP_PREVENTS_DELETE = UnfortunatelyYes
 	USE_NED_ALLOCATOR = YesPlease
 	UNRELIABLE_FSTAT = UnfortunatelyYes
 	OBJECT_CREATION_USES_RENAMES = UnfortunatelyNeedsTo
