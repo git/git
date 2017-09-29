@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Sep 2017, #05; Tue, 26)
-X-master-at: 28996cec80690d2322359d3650a57e8de6e01eb6
-X-next-at: 2c7b836f3ab9b78a2baeee97e329e4c1a1e4c005
+Subject: What's cooking in git.git (Sep 2017, #06; Fri, 29)
+X-master-at: ea220ee40cbb03a63ebad2be902057bf742492fd
+X-next-at: c088eec7b5eaefc58ab32b335cb69cb3d5e2cd78
 
-What's cooking in git.git (Sep 2017, #05; Tue, 26)
+What's cooking in git.git (Sep 2017, #06; Fri, 29)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,20 +12,344 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-We are at week #8 of this cycle.  Quite a many topics that have been
-in 'master' are now also merged to 'maint', so perhaps I should tag
-2.14.2 soonish.
-
 You can find the changes described here in the integration branches
 of the repositories listed at
 
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
+[Graduated to "master"]
+
+* hn/typofix (2017-09-22) 1 commit
+  (merged to 'next' on 2017-09-25 at 489ad60f5b)
+ + submodule.h: typofix
+
+
+* ic/fix-filter-branch-to-handle-tag-without-tagger (2017-09-22) 4 commits
+  (merged to 'next' on 2017-09-25 at c7550033df)
+ + filter-branch: use hash-object instead of mktag
+ + filter-branch: stash away ref map in a branch
+ + filter-branch: preserve and restore $GIT_AUTHOR_* and $GIT_COMMITTER_*
+ + filter-branch: reset $GIT_* before cleaning up
+
+ "git filter-branch" cannot reproduce a history with a tag without
+ the tagger field, which only ancient versions of Git allowed to be
+ created.  This has been corrected.
+
+
+* ik/userdiff-html-h-element-fix (2017-09-24) 1 commit
+  (merged to 'next' on 2017-09-25 at e3cbe89672)
+ + userdiff: fix HTML hunk header regexp
+
+ The built-in pattern to detect the "function header" for HTML did
+ not match <H1>..<H6> elements without any attributes, which has
+ been fixed.
+
+
+* jc/merge-x-theirs-docfix (2017-09-25) 1 commit
+  (merged to 'next' on 2017-09-26 at 5a7d954982)
+ + merge-strategies: avoid implying that "-s theirs" exists
+
+ The documentation for '-X<option>' for merges was misleadingly
+ written to suggest that "-s theirs" exists, which is not the case.
+
+
+* jk/describe-omit-some-refs (2017-09-17) 1 commit
+  (merged to 'next' on 2017-09-24 at c373c71279)
+ + describe: fix matching to actually match all patterns
+ (this branch is used by mk/describe-match-with-all.)
+
+ "git describe --match" learned to take multiple patterns in v2.13
+ series, but the feature ignored the patterns after the first one
+ and did not work at all.  This has been fixed.
+
+
+* jk/diff-blob (2017-09-22) 1 commit
+  (merged to 'next' on 2017-09-25 at 38286c8ff5)
+ + cat-file: handle NULL object_context.path
+
+ "git cat-file --textconv" started segfaulting recently, which
+ has been corrected.
+
+
+* jk/doc-read-tree-table-asciidoctor-fix (2017-09-24) 1 commit
+  (merged to 'next' on 2017-09-25 at 070163b964)
+ + doc: put literal block delimiter around table
+
+ A docfix.
+
+
+* jk/fallthrough (2017-09-22) 3 commits
+  (merged to 'next' on 2017-09-25 at ad96c37620)
+ + consistently use "fallthrough" comments in switches
+ + curl_trace(): eliminate switch fallthrough
+ + test-line-buffer: simplify command parsing
+
+ Many codepaths have been updated to squelch -Wimplicit-fallthrough
+ warnings from Gcc 7 (which is a good code hygiene).
+
+
+* jm/status-ignored-directory-optim (2017-09-19) 1 commit
+  (merged to 'next' on 2017-09-24 at ca50f5ed41)
+ + Improve performance of git status --ignored
+
+ "git status --ignored", when noticing that a directory without any
+ tracked path is ignored, still enumerated all the ignored paths in
+ the directory, which is unnecessary.  The codepath has been
+ optimized to avoid this overhead.
+
+
+* js/win32-lazyload-dll (2017-09-26) 1 commit
+  (merged to 'next' on 2017-09-26 at 04577bf1c5)
+ + Win32: simplify loading of DLL functions
+
+ Add a helper in anticipation for its need in a future topic RSN.
+
+
+* jt/fast-export-copy-modify-fix (2017-09-21) 1 commit
+  (merged to 'next' on 2017-09-24 at c02bfe1902)
+ + fast-export: do not copy from modified file
+
+ "git fast-export" with -M/-C option issued "copy" instruction on a
+ path that is simultaneously modified, which was incorrect.
+
+
+* ks/doc-use-camelcase-for-config-name (2017-09-25) 1 commit
+  (merged to 'next' on 2017-09-26 at 7b4d2115af)
+ + doc: camelCase the config variables to improve readability
+
+ Doc update.
+
+
+* ma/leakplugs (2017-09-24) 6 commits
+  (merged to 'next' on 2017-09-25 at 69d381a96a)
+ + pack-bitmap[-write]: use `object_array_clear()`, don't leak
+ + object_array: add and use `object_array_pop()`
+ + object_array: use `object_array_clear()`, not `free()`
+ + leak_pending: use `object_array_clear()`, not `free()`
+ + commit: fix memory leak in `reduce_heads()`
+ + builtin/commit: fix memory leak in `prepare_index()`
+
+ Memory leaks in various codepaths have been plugged.
+
+
+* mk/describe-match-with-all (2017-09-20) 2 commits
+  (merged to 'next' on 2017-09-24 at f96d58dd83)
+ + describe: teach --match to handle branches and remotes
+ + Merge branch 'jk/describe-omit-some-refs' into mk/describe-match-with-all
+
+ "git describe --match <pattern>" has been taught to play well with
+ the "--all" option.
+
+
+* mk/diff-delta-avoid-large-offset (2017-08-11) 1 commit
+  (merged to 'next' on 2017-09-26 at b4983ac027)
+ + diff-delta: do not allow delta offset truncation
+
+ The delta format used in the packfile cannot reference data at
+ offset larger than what can be expressed in 4-byte, but the
+ generator for the data failed to make sure the offset does not
+ overflow.  This has been corrected.
+
+
+* mk/diff-delta-uint-may-be-shorter-than-ulong (2017-08-10) 1 commit
+  (merged to 'next' on 2017-09-26 at 0ccd9346d7)
+ + diff-delta: fix encoding size that would not fit in "unsigned int"
+
+ The machinery to create xdelta used in pack files received the
+ sizes of the data in size_t, but lost the higher bits of them by
+ storing them in "unsigned int" during the computation, which is
+ fixed.
+
+
+* rj/no-sign-compare (2017-09-22) 4 commits
+  (merged to 'next' on 2017-09-25 at 71ee264ce6)
+ + ALLOC_GROW: avoid -Wsign-compare warnings
+ + cache.h: hex2chr() - avoid -Wsign-compare warnings
+ + commit-slab.h: avoid -Wsign-compare warnings
+ + git-compat-util.h: xsize_t() - avoid -Wsign-compare warnings
+
+ Many codepaths have been updated to squelch -Wsign-compare
+ warnings.
+
+
+* rs/mailinfo-qp-decode-fix (2017-09-24) 1 commit
+  (merged to 'next' on 2017-09-25 at d48c594041)
+ + mailinfo: don't decode invalid =XY quoted-printable sequences
+
+ "git mailinfo" was loose in decoding quoted printable and produced
+ garbage when the two letters after the equal sign are not
+ hexadecimal.  This has been fixed.
+
+
+* rs/resolve-ref-optional-result (2017-09-24) 3 commits
+  (merged to 'next' on 2017-09-25 at b0f31228bb)
+ + refs: pass NULL to resolve_ref_unsafe() if hash is not needed
+ + refs: pass NULL to refs_resolve_ref_unsafe() if hash is not needed
+ + refs: make sha1 output parameter of refs_resolve_ref_unsafe() optional
+
+ Code clean-up.
+
+
+* sb/doc-config-submodule-update (2017-09-24) 1 commit
+  (merged to 'next' on 2017-09-25 at 447014b4ce)
+ + Documentation/config: clarify the meaning of submodule.<name>.update
+
+
+* sb/merge-commit-msg-hook (2017-09-22) 1 commit
+  (merged to 'next' on 2017-09-25 at 096e0502a8)
+ + Documentation/githooks: mention merge in commit-msg hook
+
+ As "git commit" to conclude a conflicted "git merge" honors the
+ commit-msg hook, "git merge" that records a merge commit that
+ cleanly auto-merges should, but it didn't.
+ * sb/merge-commit-msg-hook (2017-09-22) 1 commit
+ (merged to 'next' on 2017-09-25 at 096e0502a8)
+ + Documentation/githooks: mention merge in commit-msg hook
+
+ Add documentation for a topic that has recently graduated to the
+ 'master' branch.
+
+--------------------------------------------------
 [New Topics]
 
-* mr/doc-negative-pathspec (2017-09-25) 1 commit
- - docs: improve discoverability of exclude pathspec
+* er/fast-import-dump-refs-on-checkpoint (2017-09-29) 2 commits
+ - SQUASH???
+ - fast-import: checkpoint: dump branches/tags/marks even if object_count==0
+
+ The checkpoint command "git fast-import" did not flush updates to
+ refs and marks unless at least one object was created since the
+ last checkpoint, which has been corrected, as these things can
+ happen without any new object getting created.
+
+
+* hn/path-ownership-comment (2017-09-27) 2 commits
+  (merged to 'next' on 2017-09-28 at 7cf8481c29)
+ + read_gitfile_gently: clarify return value ownership.
+ + real_path: clarify return value ownership
+
+ Add comment to a few functions that use a short-lived buffer the
+ caller can peek and copy out of.
+
+ Will merge to 'master'.
+
+
+* hn/string-list-doc (2017-09-27) 1 commit
+  (merged to 'next' on 2017-09-28 at ffc8f65f4a)
+ + string-list.h: move documentation from Documentation/api/ into header
+
+ Doc reorg.
+
+ Will merge to 'master'.
+
+
+* hn/submodule-comment (2017-09-26) 1 commit
+  (merged to 'next' on 2017-09-28 at a071ca3fde)
+ + submodule.c: describe submodule_to_gitdir() in a new comment
+
+ Will merge to 'master'.
+
+
+* jk/no-optional-locks (2017-09-27) 1 commit
+  (merged to 'next' on 2017-09-28 at eaffe9c638)
+ + git: add --no-optional-locks option
+
+ Some commands (most notably "git status") makes an opportunistic
+ update when performing a read-only operation to help optimize later
+ operations in the same repository.  The new "--no-optional-locks"
+ option can be passed to Git to disable them.
+
+ Will merge to 'master'.
+
+
+* jk/read-in-full (2017-09-27) 7 commits
+  (merged to 'next' on 2017-09-28 at 9d109b9233)
+ + worktree: check the result of read_in_full()
+ + worktree: use xsize_t to access file size
+ + distinguish error versus short read from read_in_full()
+ + avoid looking at errno for short read_in_full() returns
+ + prefer "!=" when checking read_in_full() result
+ + notes-merge: drop dead zero-write code
+ + files-backend: prefer "0" for write_in_full() error check
+
+ Code clean-up to prevent future mistakes by copying and pasting
+ code that checks the result of read_in_full() function.
+
+ Will merge to 'master'.
+
+
+* jk/validate-headref-fix (2017-09-27) 3 commits
+  (merged to 'next' on 2017-09-28 at dcea9d16f9)
+ + validate_headref: use get_oid_hex for detached HEADs
+ + validate_headref: use skip_prefix for symref parsing
+ + validate_headref: NUL-terminate HEAD buffer
+
+ Code clean-up.
+
+ Will merge to 'master'.
+
+
+* sb/diff-color-move (2017-09-28) 1 commit
+  (merged to 'next' on 2017-09-28 at cbdbc741be)
+ + diff: correct newline in summary for renamed files
+
+ The output from "git diff --summary" was broken in a recent topic
+ that has been merged to 'master' and lost a LF after reporting of
+ mode change.  This has been fixed.
+
+ Will merge to 'master'.
+
+
+* sb/submodule-diff-header-fix (2017-09-28) 1 commit
+  (merged to 'next' on 2017-09-28 at 10e0f59303)
+ + submodule: correct error message for missing commits
+
+ Error message tweak.
+
+ Will merge to 'master'.
+
+
+* sb/test-submodule-update-config (2017-09-27) 1 commit
+  (merged to 'next' on 2017-09-28 at 497214603c)
+ + t7406: submodule.<name>.update command must not be run from .gitmodules
+
+ Will merge to 'master'.
+
+
+* ad/doc-markup-fix (2017-09-29) 1 commit
+ - doc: correct command formatting
+
+ Docfix.
+
+ Will merge to 'next'.
+
+
+* jr/hash-migration-plan-doc (2017-09-28) 1 commit
+ - technical doc: add a design doc for hash function transition
+
+ Lay out plans for weaning us off of SHA-1.
+
+ Will merge to 'next'.
+
+
+* ot/mru-on-list (2017-09-28) 1 commit
+ - mru: use double-linked list from list.h
+
+ The first step to getting rid of mru API and using the
+ doubly-linked list API directly instead.
+
+ Needs review.
+ Outreachy.
+
+
+* rb/compat-poll-fix (2017-09-29) 1 commit
+ - poll.c: always set revents, even if to zero
+
+ Backports a moral equivalent of 2015 fix to the poll emulation from
+ the upstream gnulib to fix occasional breakages on HPE NonStop.
+
+ Needs review.
+
 
 --------------------------------------------------
 [Stalled]
@@ -84,31 +408,11 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* sb/merge-commit-msg-hook (2017-09-22) 1 commit
-  (merged to 'next' on 2017-09-25 at 096e0502a8)
- + Documentation/githooks: mention merge in commit-msg hook
+* mr/doc-negative-pathspec (2017-09-25) 1 commit
+  (merged to 'next' on 2017-09-29 at 147bb7ef8b)
+ + docs: improve discoverability of exclude pathspec
 
- As "git commit" to conclude a conflicted "git merge" honors the
- commit-msg hook, "git merge" that records a merge commit that
- cleanly auto-merges should, but it didn't.
- * sb/merge-commit-msg-hook (2017-09-22) 1 commit
- (merged to 'next' on 2017-09-25 at 096e0502a8)
- + Documentation/githooks: mention merge in commit-msg hook
-
- Add documentation for a topic that has recently graduated to the
- 'master' branch.
-
- Will merge to 'master'.
-
-
-* jk/describe-omit-some-refs (2017-09-17) 1 commit
-  (merged to 'next' on 2017-09-24 at c373c71279)
- + describe: fix matching to actually match all patterns
- (this branch is used by mk/describe-match-with-all.)
-
- "git describe --match" learned to take multiple patterns in v2.13
- series, but the feature ignored the patterns after the first one
- and did not work at all.  This has been fixed.
+ Doc updates.
 
  Will merge to 'master'.
 
@@ -148,11 +452,14 @@ of the repositories listed at
  into the feature, without affecting the current callers that may not
  be prepared to accept a guess that is not known to be correct.
 
+ What's the doneness of this one?
+
 
 * bc/rev-parse-parseopt-fix (2017-09-25) 7 commits
- - parse-options: only insert newline in help text if needed
- - parse-options: write blank line to correct output stream
- - t0040,t1502: Demonstrate parse_options bugs
+  (merged to 'next' on 2017-09-26 at f3e013eaa4)
+ + parse-options: only insert newline in help text if needed
+ + parse-options: write blank line to correct output stream
+ + t0040,t1502: Demonstrate parse_options bugs
   (merged to 'next' on 2017-09-24 at e479bce0ff)
  + git-rebase: don't ignore unexpected command line arguments
  + rev-parse parseopt: interpret any whitespace as start of help text
@@ -163,7 +470,7 @@ of the repositories listed at
  option specification that does not have the optional flags (*=?!)
  correctly, which has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ds/find-unique-abbrev-optim (2017-09-19) 4 commits
@@ -171,127 +478,6 @@ of the repositories listed at
  - sha1_name: parse less while finding common prefix
  - sha1_name: unroll len loop in find_unique_abbrev_r()
  - sha1_name: create perf test for find_unique_abbrev()
-
-
-* ic/fix-filter-branch-to-handle-tag-without-tagger (2017-09-22) 4 commits
-  (merged to 'next' on 2017-09-25 at c7550033df)
- + filter-branch: use hash-object instead of mktag
- + filter-branch: stash away ref map in a branch
- + filter-branch: preserve and restore $GIT_AUTHOR_* and $GIT_COMMITTER_*
- + filter-branch: reset $GIT_* before cleaning up
-
- "git filter-branch" cannot reproduce a history with a tag without
- the tagger field, which only ancient versions of Git allowed to be
- created.  This has been corrected.
-
- Will merge to 'master'.
-
-
-* jm/status-ignored-directory-optim (2017-09-19) 1 commit
-  (merged to 'next' on 2017-09-24 at ca50f5ed41)
- + Improve performance of git status --ignored
-
- "git status --ignored", when noticing that a directory without any
- tracked path is ignored, still enumerated all the ignored paths in
- the directory, which is unnecessary.  The codepath has been
- optimized to avoid this overhead.
-
- Will merge to 'master'.
-
-
-* js/win32-lazyload-dll (2017-09-20) 1 commit
- - Win32: simplify loading of DLL functions
-
- Add a helper in anticipation for its need in a future topic RSN.
-
- Expecting a reroll.
- cf. <xmqqwp4sk21s.fsf@gitster.mtv.corp.google.com>
-
-
-* ks/doc-use-camelcase-for-config-name (2017-09-25) 1 commit
- - doc: camelCase the config variables to improve readability
-
- Doc update.
-
- Will merge to 'next'.
-
-
-* mk/describe-match-with-all (2017-09-20) 2 commits
-  (merged to 'next' on 2017-09-24 at f96d58dd83)
- + describe: teach --match to handle branches and remotes
- + Merge branch 'jk/describe-omit-some-refs' into mk/describe-match-with-all
- (this branch uses jk/describe-omit-some-refs.)
-
- "git describe --match <pattern>" has been taught to play well with
- the "--all" option.
-
- Will merge to 'master'.
-
-
-* jt/fast-export-copy-modify-fix (2017-09-21) 1 commit
-  (merged to 'next' on 2017-09-24 at c02bfe1902)
- + fast-export: do not copy from modified file
-
- "git fast-export" with -M/-C option issued "copy" instruction on a
- path that is simultaneously modified, which was incorrect.
-
- Will merge to 'master'.
-
-
-* ma/leakplugs (2017-09-24) 6 commits
-  (merged to 'next' on 2017-09-25 at 69d381a96a)
- + pack-bitmap[-write]: use `object_array_clear()`, don't leak
- + object_array: add and use `object_array_pop()`
- + object_array: use `object_array_clear()`, not `free()`
- + leak_pending: use `object_array_clear()`, not `free()`
- + commit: fix memory leak in `reduce_heads()`
- + builtin/commit: fix memory leak in `prepare_index()`
-
- Memory leaks in various codepaths have been plugged.
-
- Will merge to 'master'.
-
-
-* hn/typofix (2017-09-22) 1 commit
-  (merged to 'next' on 2017-09-25 at 489ad60f5b)
- + submodule.h: typofix
-
- Will merge to 'master'.
-
-
-* jk/diff-blob (2017-09-22) 1 commit
-  (merged to 'next' on 2017-09-25 at 38286c8ff5)
- + cat-file: handle NULL object_context.path
-
- "git cat-file --textconv" started segfaulting recently, which
- has been corrected.
-
- Will merge to 'master'.
-
-
-* jk/fallthrough (2017-09-22) 3 commits
-  (merged to 'next' on 2017-09-25 at ad96c37620)
- + consistently use "fallthrough" comments in switches
- + curl_trace(): eliminate switch fallthrough
- + test-line-buffer: simplify command parsing
-
- Many codepaths have been updated to squelch -Wimplicit-fallthrough
- warnings from Gcc 7 (which is a good code hygiene).
-
- Will merge to 'master'.
-
-
-* rj/no-sign-compare (2017-09-22) 4 commits
-  (merged to 'next' on 2017-09-25 at 71ee264ce6)
- + ALLOC_GROW: avoid -Wsign-compare warnings
- + cache.h: hex2chr() - avoid -Wsign-compare warnings
- + commit-slab.h: avoid -Wsign-compare warnings
- + git-compat-util.h: xsize_t() - avoid -Wsign-compare warnings
-
- Many codepaths have been updated to squelch -Wsign-compare
- warnings.
-
- Will merge to 'master'.
 
 
 * cc/perf-run-config (2017-09-24) 9 commits
@@ -308,26 +494,6 @@ of the repositories listed at
  Needs review.
 
 
-* ik/userdiff-html-h-element-fix (2017-09-24) 1 commit
-  (merged to 'next' on 2017-09-25 at e3cbe89672)
- + userdiff: fix HTML hunk header regexp
-
- The built-in pattern to detect the "function header" for HTML did
- not match <H1>..<H6> elements without any attributes, which has
- been fixed.
-
- Will merge to 'master'.
-
-
-* jk/doc-read-tree-table-asciidoctor-fix (2017-09-24) 1 commit
-  (merged to 'next' on 2017-09-25 at 070163b964)
- + doc: put literal block delimiter around table
-
- A docfix.
-
- Will merge to 'master'.
-
-
 * mg/merge-pre-merge-hook (2017-09-24) 4 commits
  - t7503: add tests for pre-merge-hook
  - merge: --no-verify to bypass pre-merge hook
@@ -340,82 +506,23 @@ of the repositories listed at
  Waiting for review to conclude.
 
 
-* rs/mailinfo-qp-decode-fix (2017-09-24) 1 commit
-  (merged to 'next' on 2017-09-25 at d48c594041)
- + mailinfo: don't decode invalid =XY quoted-printable sequences
-
- "git mailinfo" was loose in decoding quoted printable and produced
- garbage when the two letters after the equal sign are not
- hexadecimal.  This has been fixed.
-
- Will merge to 'master'.
-
-
-* rs/resolve-ref-optional-result (2017-09-24) 3 commits
-  (merged to 'next' on 2017-09-25 at b0f31228bb)
- + refs: pass NULL to resolve_ref_unsafe() if hash is not needed
- + refs: pass NULL to refs_resolve_ref_unsafe() if hash is not needed
- + refs: make sha1 output parameter of refs_resolve_ref_unsafe() optional
-
- Code clean-up.
-
- Will merge to 'master'.
-
-
-* sb/doc-config-submodule-update (2017-09-24) 1 commit
-  (merged to 'next' on 2017-09-25 at 447014b4ce)
- + Documentation/config: clarify the meaning of submodule.<name>.update
-
- Will merge to 'master'.
-
-
-* jc/merge-x-theirs-docfix (2017-09-25) 1 commit
- - merge-strategies: avoid implying that "-s theirs" exists
-
- The documentation for '-X<option>' for merges was misleadingly
- written to suggest that "-s theirs" exists, which is not the case.
-
- Will merge to 'next'.
-
-
 * js/rebase-i-final (2017-07-27) 10 commits
- - rebase -i: rearrange fixup/squash lines using the rebase--helper
- - t3415: test fixup with wrapped oneline
- - rebase -i: skip unnecessary picks using the rebase--helper
- - rebase -i: check for missing commits in the rebase--helper
- - t3404: relax rebase.missingCommitsCheck tests
- - rebase -i: also expand/collapse the SHA-1s via the rebase--helper
- - rebase -i: do not invent onelines when expanding/collapsing SHA-1s
- - rebase -i: remove useless indentation
- - rebase -i: generate the script via rebase--helper
- - t3415: verify that an empty instructionFormat is handled as before
+  (merged to 'next' on 2017-09-26 at ea3f8f5e11)
+ + rebase -i: rearrange fixup/squash lines using the rebase--helper
+ + t3415: test fixup with wrapped oneline
+ + rebase -i: skip unnecessary picks using the rebase--helper
+ + rebase -i: check for missing commits in the rebase--helper
+ + t3404: relax rebase.missingCommitsCheck tests
+ + rebase -i: also expand/collapse the SHA-1s via the rebase--helper
+ + rebase -i: do not invent onelines when expanding/collapsing SHA-1s
+ + rebase -i: remove useless indentation
+ + rebase -i: generate the script via rebase--helper
+ + t3415: verify that an empty instructionFormat is handled as before
 
  The final batch to "git rebase -i" updates to move more code from
  the shell script to C.
 
- Will merge to 'next'.
-
-
-* mk/diff-delta-avoid-large-offset (2017-08-11) 1 commit
- - diff-delta: do not allow delta offset truncation
-
- The delta format used in the packfile cannot reference data at
- offset larger than what can be expressed in 4-byte, but the
- generator for the data failed to make sure the offset does not
- overflow.  This has been corrected.
-
- Will merge to 'next'.
-
-
-* mk/diff-delta-uint-may-be-shorter-than-ulong (2017-08-10) 1 commit
- - diff-delta: fix encoding size that would not fit in "unsigned int"
-
- The machinery to create xdelta used in pack files received the
- sizes of the data in size_t, but lost the higher bits of them by
- storing them in "unsigned int" during the computation, which is
- fixed.
-
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * bp/fsmonitor (2017-09-24) 12 commits
@@ -438,7 +545,7 @@ of the repositories listed at
  Looking mostly ready.  Further comments?
 
 
-* bw/protocol-v1 (2017-09-21) 9 commits
+* bw/protocol-v1 (2017-09-27) 9 commits
  - i5700: add interop test for protocol transition
  - http: tell server that the client understands v1
  - connect: tell server that the client understands v1
@@ -446,45 +553,44 @@ of the repositories listed at
  - upload-pack, receive-pack: introduce protocol version 1
  - daemon: recognize hidden request arguments
  - protocol: introduce protocol extention mechanisms
- - connect: die when a capability line comes after a ref
  - pkt-line: add packet_write function
+ - connect: in ref advertisement, shallows are last
 
  A new mechanism to upgrade the wire protocol in place is proposed
  and demonstrated that it works with the older versions of Git
  without harming them.
 
- Expecting a reroll,
- together with Jonathan's update to get_remote_heads()
- cf. <20170922201551.15012-1-jonathantanmy@google.com>
-
 
 * mh/mmap-packed-refs (2017-09-25) 21 commits
- - packed-backend.c: rename a bunch of things and update comments
- - mmapped_ref_iterator: inline into `packed_ref_iterator`
- - ref_cache: remove support for storing peeled values
- - packed_ref_store: get rid of the `ref_cache` entirely
- - ref_store: implement `refs_peel_ref()` generically
- - packed_read_raw_ref(): read the reference from the mmapped buffer
- - packed_ref_iterator_begin(): iterate using `mmapped_ref_iterator`
- - read_packed_refs(): ensure that references are ordered when read
- - packed_ref_cache: keep the `packed-refs` file mmapped if possible
- - packed-backend.c: reorder some definitions
- - mmapped_ref_iterator_advance(): no peeled value for broken refs
- - mmapped_ref_iterator: add iterator over a packed-refs file
- - packed_ref_cache: remember the file-wide peeling state
- - read_packed_refs(): read references with minimal copying
- - read_packed_refs(): make parsing of the header line more robust
- - read_packed_refs(): only check for a header at the top of the file
- - read_packed_refs(): use mmap to read the `packed-refs` file
- - die_unterminated_line(), die_invalid_line(): new functions
- - packed_ref_cache: add a backlink to the associated `packed_ref_store`
- - prefix_ref_iterator: break when we leave the prefix
- - ref_iterator: keep track of whether the iterator output is ordered
+  (merged to 'next' on 2017-09-29 at 3639417666)
+ + packed-backend.c: rename a bunch of things and update comments
+ + mmapped_ref_iterator: inline into `packed_ref_iterator`
+ + ref_cache: remove support for storing peeled values
+ + packed_ref_store: get rid of the `ref_cache` entirely
+ + ref_store: implement `refs_peel_ref()` generically
+ + packed_read_raw_ref(): read the reference from the mmapped buffer
+ + packed_ref_iterator_begin(): iterate using `mmapped_ref_iterator`
+ + read_packed_refs(): ensure that references are ordered when read
+ + packed_ref_cache: keep the `packed-refs` file mmapped if possible
+ + packed-backend.c: reorder some definitions
+ + mmapped_ref_iterator_advance(): no peeled value for broken refs
+ + mmapped_ref_iterator: add iterator over a packed-refs file
+ + packed_ref_cache: remember the file-wide peeling state
+ + read_packed_refs(): read references with minimal copying
+ + read_packed_refs(): make parsing of the header line more robust
+ + read_packed_refs(): only check for a header at the top of the file
+ + read_packed_refs(): use mmap to read the `packed-refs` file
+ + die_unterminated_line(), die_invalid_line(): new functions
+ + packed_ref_cache: add a backlink to the associated `packed_ref_store`
+ + prefix_ref_iterator: break when we leave the prefix
+ + ref_iterator: keep track of whether the iterator output is ordered
 
  Operations that do not touch (majority of) packed refs have been
  optimized by making accesses to packed-refs file lazy; we no longer
  pre-parse everything, and an access to a single ref in the
  packed-refs does not touch majority of irrelevant refs, either.
+
+ Will merge to 'master'.
 
 
 * pc/submodule-helper (2017-09-25) 4 commits
@@ -494,8 +600,7 @@ of the repositories listed at
  - submodule--helper: introduce get_submodule_displaypath()
 
  GSoC.
-
- Looking good; it appeared to me that 3/4 is totally superfluous, though.
+ Looking better; it appeared to me that 3/4 is totally superfluous, though.
 
 
 * bc/hash-algo (2017-08-20) 5 commits
@@ -589,82 +694,13 @@ of the repositories listed at
 
 
 * sd/branch-copy (2017-09-24) 4 commits
- - branch: fix "copy" to never touch HEAD
- - branch: add a --copy (-c) option to go with --move (-m)
- - branch: add test for -m renaming multiple config sections
- - config: create a function to format section headers
+  (merged to 'next' on 2017-09-28 at a6eceefa02)
+ + branch: fix "copy" to never touch HEAD
+ + branch: add a --copy (-c) option to go with --move (-m)
+ + branch: add test for -m renaming multiple config sections
+ + config: create a function to format section headers
 
  "git branch" learned "-c/-C" to create and switch to a new branch
  by copying an existing one.
 
- Will merge to 'next'.
-
---------------------------------------------------
-[Discarded]
-
-* jc/apply-with-crlf (2017-08-16) 5 commits
- . apply: clarify read_old_data() is about no-index case
- . apply: localize the CRLF business to read_old_data()
- . apply: only pay attention to CRLF in the preimage
- . apply: remove unused field apply_state.flags
- . apply: file commited with CRLF should roundtrip diff and apply
-
- This served as an input to updated tb/apply-with-crlf.
-
-
-* jn/per-repo-obj-store (2017-09-07) 39 commits
- . pack: allow sha1_loose_object_info to handle arbitrary repositories
- . pack: allow map_sha1_file to handle arbitrary repositories
- . pack: allow map_sha1_file_1 to handle arbitrary repositories
- . pack: allow open_sha1_file to handle arbitrary repositories
- . pack: allow stat_sha1_file to handle arbitrary repositories
- . pack: allow sha1_file_name to handle arbitrary repositories
- . pack: allow reprepare_packed_git to handle arbitrary repositories
- . pack: allow prepare_packed_git to handle arbitrary repositories
- . pack: allow prepare_packed_git_one to handle arbitrary repositories
- . pack: allow prepare_packed_git_mru to handle arbitrary repositories
- . pack: allow rearrange_packed_git to handle arbitrary repositories
- . pack: allow install_packed_git to handle arbitrary repositories
- . object-store: allow foreach_alt_odb to handle arbitrary repositories
- . object-store: allow prepare_alt_odb to handle arbitrary repositories
- . sha1_file: allow alt_odb_usable to handle arbitrary repositories
- . pack: add repository argument to map_sha1_file
- . pack: add repository argument to sha1_file_name
- . pack: add repository argument to reprepare_packed_git
- . pack: add repository argument to prepare_packed_git
- . pack: add repository argument to prepare_packed_git_mru
- . pack: add repository argument to rearrange_packed_git
- . pack: add repository argument to prepare_packed_git_one
- . pack: add repository argument to install_packed_git
- . object-store: add repository argument to foreach_alt_odb
- . object-store: add repository argument to prepare_alt_odb
- . sha1_file: add repository argument to sha1_loose_object_info
- . sha1_file: add repository argument to map_sha1_file_1
- . sha1_file: add repository argument to open_sha1_file
- . sha1_file: add repository argument to stat_sha1_file
- . sha1_file: add repository argument to link_alt_odb_entries
- . sha1_file: add repository argument to read_info_alternates
- . sha1_file: add repository argument to link_alt_odb_entry
- . sha1_file: add repository argument to alt_odb_usable
- . pack: move approximate object count to object store
- . pack: move prepare_packed_git_run_once to object store
- . object-store: move packed_git and packed_git_mru to object store
- . object-store: move alt_odb_list and alt_odb_tail to object store
- . repository: introduce object store field
- . pack: make packed_git_mru global a value instead of a pointer
-
- We now can have separate instances of in-core object store per
- repository we visit.
-
- Will be rerolled.
-
-
-* sb/parse-options-blank-line-before-option-list (2017-08-25) 1 commit
- - usage_with_options: omit double new line on empty option list
-
- "git worktree" with no option and no subcommand showed too many
- blank lines in its help text, which has been reduced.
-
- Superseded by bc/rev-parse-parseopt-fix.
-
-
+ Will merge to 'master'.
