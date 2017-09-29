@@ -549,7 +549,6 @@ int index_differs_from(const char *def, int diff_flags,
 	rev.diffopt.flags |= diff_flags;
 	rev.diffopt.ita_invisible_in_index = ita_invisible_in_index;
 	run_diff_index(&rev, 1);
-	if (rev.pending.alloc)
-		free(rev.pending.objects);
+	object_array_clear(&rev.pending);
 	return (DIFF_OPT_TST(&rev.diffopt, HAS_CHANGES) != 0);
 }

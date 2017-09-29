@@ -157,9 +157,14 @@ int verify_bundle(struct bundle_header *header, int verbose)
 	req_nr = revs.pending.nr;
 	setup_revisions(2, argv, &revs, NULL);
 
+	/* Save pending objects, so they can be cleaned up later. */
 	refs = revs.pending;
 	revs.leak_pending = 1;
 
+	/*
+	 * prepare_revision_walk (together with .leak_pending = 1) makes us
+	 * the sole owner of the list of pending objects.
+	 */
 	if (prepare_revision_walk(&revs))
 		die(_("revision walk setup failed"));
 
@@ -176,8 +181,10 @@ int verify_bundle(struct bundle_header *header, int verbose)
 				refs.objects[i].name);
 		}
 
+	/* Clean up objects used, as they will be reused. */
 	clear_commit_marks_for_object_array(&refs, ALL_REV_FLAGS);
-	free(refs.objects);
+
+	object_array_clear(&refs);
 
 	if (verbose) {
 		struct ref_list *r;

@@ -99,7 +99,7 @@ struct commit_list *get_shallow_commits(struct object_array *heads, int depth,
 				cur_depth = 0;
 			} else {
 				commit = (struct commit *)
-					stack.objects[--stack.nr].item;
+					object_array_pop(&stack);
 				cur_depth = *(int *)commit->util;
 			}
 		}
