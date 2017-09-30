@@ -1,6 +1,8 @@
 #ifndef MRU_H
 #define MRU_H
 
+#include "list.h"
+
 /**
  * A simple most-recently-used cache, backed by a doubly-linked list.
  *
@@ -8,18 +10,15 @@
  *
  *   // Create a list.  Zero-initialization is required.
  *   static struct mru cache;
- *   mru_append(&cache, item);
- *   ...
+ *   INIT_LIST_HEAD(&cache.list);
  *
- *   // Iterate in MRU order.
- *   struct mru_entry *p;
- *   for (p = cache.head; p; p = p->next) {
- *	if (matches(p->item))
- *		break;
- *   }
+ *   // Add new item to the end of the list.
+ *   void *item;
+ *   ...
+ *   mru_append(&cache, item);
  *
  *   // Mark an item as used, moving it to the front of the list.
- *   mru_mark(&cache, p);
+ *   mru_mark(&cache, item);
  *
  *   // Reset the list to empty, cleaning up all resources.
  *   mru_clear(&cache);
@@ -29,17 +28,13 @@
  * you will begin traversing the whole list again.
  */
 
-struct mru_entry {
-	void *item;
-	struct mru_entry *prev, *next;
-};
-
 struct mru {
-	struct mru_entry *head, *tail;
+	struct list_head list;
+	void *item;
 };
 
-void mru_append(struct mru *mru, void *item);
-void mru_mark(struct mru *mru, struct mru_entry *entry);
-void mru_clear(struct mru *mru);
+void mru_append(struct mru *head, void *item);
+void mru_mark(struct mru *head, struct mru *entry);
+void mru_clear(struct mru *head);
 
 #endif /* MRU_H */
