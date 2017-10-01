@@ -494,5 +494,6 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 				  always, allow_undefined, data.name_only);
 	}
 
+	UNLEAK(revs);
 	return 0;
 }
