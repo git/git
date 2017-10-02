@@ -4,6 +4,7 @@
 #include "cache.h"
 #include "pathspec.h"
 #include "dir.h"
+#include "fsmonitor.h"
 
 #ifdef NO_PTHREADS
 static void preload_index(struct index_state *index,
@@ -55,15 +56,18 @@ static void *preload_thread(void *_data)
 			continue;
 		if (ce_skip_worktree(ce))
 			continue;
+		if (ce->ce_flags & CE_FSMONITOR_VALID)
+			continue;
 		if (!ce_path_match(ce, &p->pathspec, NULL))
 			continue;
 		if (threaded_has_symlink_leading_path(&cache, ce->name, ce_namelen(ce)))
 			continue;
 		if (lstat(ce->name, &st))
 			continue;
-		if (ie_match_stat(index, ce, &st, CE_MATCH_RACY_IS_DIRTY))
+		if (ie_match_stat(index, ce, &st, CE_MATCH_RACY_IS_DIRTY|CE_MATCH_IGNORE_FSMONITOR))
 			continue;
 		ce_mark_uptodate(ce);
+		mark_fsmonitor_valid(ce);
 	} while (--nr > 0);
 	cache_def_clear(&cache);
 	return NULL;
@@ -79,6 +83,8 @@ static void preload_index(struct index_state *index,
 		return;
 
 	threads = index->cache_nr / THREAD_COST;
+	if ((index->cache_nr > 1) && (threads < 2) && getenv("GIT_FORCE_PRELOAD_TEST"))
+		threads = 2;
 	if (threads < 2)
 		return;
 	if (threads > MAX_PARALLEL)
