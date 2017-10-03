@@ -12,7 +12,6 @@ test_expect_success 'set up some sample branches' '
 # choose non-default colors to make sure config
 # is taking effect
 test_expect_success 'set up some color config' '
-	git config color.branch always &&
 	git config color.branch.local blue &&
 	git config color.branch.remote yellow &&
 	git config color.branch.current cyan
@@ -24,7 +23,7 @@ test_expect_success 'regular output shows colors' '
 	  <BLUE>other<RESET>
 	  <YELLOW>remotes/origin/master<RESET>
 	EOF
-	git branch -a >actual.raw &&
+	git branch --color -a >actual.raw &&
 	test_decode_color <actual.raw >actual &&
 	test_cmp expect actual
 '
@@ -36,7 +35,7 @@ test_expect_success 'verbose output shows colors' '
 	  <BLUE>other                <RESET> $oid foo
 	  <YELLOW>remotes/origin/master<RESET> $oid foo
 	EOF
-	git branch -v -a >actual.raw &&
+	git branch --color -v -a >actual.raw &&
 	test_decode_color <actual.raw >actual &&
 	test_cmp expect actual
 '
