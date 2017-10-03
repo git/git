@@ -38,14 +38,6 @@ struct ref_value {
 	 * referred to by the last reference in the symlink chain.
 	 */
 	struct object_id oid;
-
-	/*
-	 * If REF_KNOWS_PEELED, then this field holds the peeled value
-	 * of this reference, or null if the reference is known not to
-	 * be peelable.  See the documentation for peel_ref() for an
-	 * exact definition of "peelable".
-	 */
-	struct object_id peeled;
 };
 
 /*
@@ -97,21 +89,14 @@ struct ref_dir {
  * public values; see refs.h.
  */
 
-/*
- * The field ref_entry->u.value.peeled of this value entry contains
- * the correct peeled value for the reference, which might be
- * null_sha1 if the reference is not a tag or if it is broken.
- */
-#define REF_KNOWS_PEELED 0x10
-
 /* ref_entry represents a directory of references */
-#define REF_DIR 0x20
+#define REF_DIR 0x10
 
 /*
  * Entry has not yet been read from disk (used only for REF_DIR
  * entries representing loose references)
  */
-#define REF_INCOMPLETE 0x40
+#define REF_INCOMPLETE 0x20
 
 /*
  * A ref_entry represents either a reference or a "subdirectory" of
@@ -245,23 +230,11 @@ struct ref_entry *find_ref_entry(struct ref_dir *dir, const char *refname);
  * Start iterating over references in `cache`. If `prefix` is
  * specified, only include references whose names start with that
  * prefix. If `prime_dir` is true, then fill any incomplete
- * directories before beginning the iteration.
+ * directories before beginning the iteration. The output is ordered
+ * by refname.
  */
 struct ref_iterator *cache_ref_iterator_begin(struct ref_cache *cache,
 					      const char *prefix,
 					      int prime_dir);
-
-/*
- * Peel the entry (if possible) and return its new peel_status.  If
- * repeel is true, re-peel the entry even if there is an old peeled
- * value that is already stored in it.
- *
- * It is OK to call this function with a packed reference entry that
- * might be stale and might even refer to an object that has since
- * been garbage-collected.  In such a case, if the entry has
- * REF_KNOWS_PEELED then leave the status unchanged and return
- * PEEL_PEELED or PEEL_NON_TAG; otherwise, return PEEL_INVALID.
- */
-enum peel_status peel_entry(struct ref_entry *entry, int repeel);
 
 #endif /* REFS_REF_CACHE_H */
