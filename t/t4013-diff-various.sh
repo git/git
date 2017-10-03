@@ -90,6 +90,14 @@ test_expect_success setup '
 	git commit -m "Rearranged lines in dir/sub" &&
 	git checkout master &&
 
+	GIT_AUTHOR_DATE="2006-06-26 00:06:00 +0000" &&
+	GIT_COMMITTER_DATE="2006-06-26 00:06:00 +0000" &&
+	export GIT_AUTHOR_DATE GIT_COMMITTER_DATE &&
+	git checkout -b mode initial &&
+	git update-index --chmod=+x file0 &&
+	git commit -m "update mode" &&
+	git checkout -f master &&
+
 	git config diff.renames false &&
 
 	git show-branch
@@ -191,6 +199,10 @@ diff-tree --pretty=oneline --root --patch-with-raw initial
 diff-tree --pretty side
 diff-tree --pretty -p side
 diff-tree --pretty --patch-with-stat side
+
+diff-tree initial mode
+diff-tree --stat initial mode
+diff-tree --summary initial mode
 
 diff-tree master
 diff-tree -p master
