@@ -108,7 +108,7 @@ int cmd_main(int argc, const char **argv)
 		 * Split by newline, but don't create a string_list item
 		 * for the empty string after the last separator.
 		 */
-		if (sb.buf[sb.len - 1] == '\n')
+		if (sb.len && sb.buf[sb.len - 1] == '\n')
 			strbuf_setlen(&sb, sb.len - 1);
 		string_list_split_in_place(&list, sb.buf, '\n', -1);
 
