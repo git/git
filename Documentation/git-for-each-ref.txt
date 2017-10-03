@@ -55,6 +55,11 @@ OPTIONS
 	literally, in the latter case matching completely or from the
 	beginning up to a slash.
 
+--color[=<when>]:
+	Respect any colors specified in the `--format` option. The
+	`<when>` field must be one of `always`, `never`, or `auto` (if
+	`<when>` is absent, behave as if `always` was given).
+
 --shell::
 --perl::
 --python::

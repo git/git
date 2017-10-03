@@ -1919,8 +1919,8 @@ test_expect_success TTY '%(color) present with tty' '
 	test_cmp expect.color actual
 '
 
-test_expect_success 'color.ui=always overrides auto-color' '
-	git -c color.ui=always tag $color_args >actual.raw &&
+test_expect_success '--color overrides auto-color' '
+	git tag --color $color_args >actual.raw &&
 	test_decode_color <actual.raw >actual &&
 	test_cmp expect.color actual
 '

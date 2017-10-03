@@ -435,8 +435,8 @@ test_expect_success '%(color) does not show color without tty' '
 	test_cmp expected.bare actual
 '
 
-test_expect_success 'color.ui=always can override tty check' '
-	git -c color.ui=always for-each-ref --format="$color_format" >actual.raw &&
+test_expect_success '--color can override tty check' '
+	git for-each-ref --color --format="$color_format" >actual.raw &&
 	test_decode_color <actual.raw >actual &&
 	test_cmp expected.color actual
 '
