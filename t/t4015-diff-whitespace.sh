@@ -821,7 +821,7 @@ test_expect_success 'diff that introduces a line with only tabs' '
 	echo "test" >x &&
 	git commit -m "initial" x &&
 	echo "{NTN}" | tr "NT" "\n\t" >>x &&
-	git -c color.diff=always diff | test_decode_color >current &&
+	git diff --color | test_decode_color >current &&
 
 	cat >expected <<-\EOF &&
 	<BOLD>diff --git a/x b/x<RESET>
@@ -851,7 +851,7 @@ test_expect_success 'diff that introduces and removes ws breakages' '
 		echo "2. and a new line "
 	} >x &&
 
-	git -c color.diff=always diff |
+	git diff --color |
 	test_decode_color >current &&
 
 	cat >expected <<-\EOF &&
@@ -923,15 +923,15 @@ test_expect_success 'ws-error-highlight test setup' '
 
 test_expect_success 'test --ws-error-highlight option' '
 
-	git -c color.diff=always diff --ws-error-highlight=default,old |
+	git diff --color --ws-error-highlight=default,old |
 	test_decode_color >current &&
 	test_cmp expect.default-old current &&
 
-	git -c color.diff=always diff --ws-error-highlight=all |
+	git diff --color --ws-error-highlight=all |
 	test_decode_color >current &&
 	test_cmp expect.all current &&
 
-	git -c color.diff=always diff --ws-error-highlight=none |
+	git diff --color --ws-error-highlight=none |
 	test_decode_color >current &&
 	test_cmp expect.none current
 
@@ -939,15 +939,15 @@ test_expect_success 'test --ws-error-highlight option' '
 
 test_expect_success 'test diff.wsErrorHighlight config' '
 
-	git -c color.diff=always -c diff.wsErrorHighlight=default,old diff |
+	git -c diff.wsErrorHighlight=default,old diff --color |
 	test_decode_color >current &&
 	test_cmp expect.default-old current &&
 
-	git -c color.diff=always -c diff.wsErrorHighlight=all diff |
+	git -c diff.wsErrorHighlight=all diff --color |
 	test_decode_color >current &&
 	test_cmp expect.all current &&
 
-	git -c color.diff=always -c diff.wsErrorHighlight=none diff |
+	git -c diff.wsErrorHighlight=none diff --color |
 	test_decode_color >current &&
 	test_cmp expect.none current
 
@@ -955,18 +955,18 @@ test_expect_success 'test diff.wsErrorHighlight config' '
 
 test_expect_success 'option overrides diff.wsErrorHighlight' '
 
-	git -c color.diff=always -c diff.wsErrorHighlight=none \
-		diff --ws-error-highlight=default,old |
+	git -c diff.wsErrorHighlight=none \
+		diff --color --ws-error-highlight=default,old |
 	test_decode_color >current &&
 	test_cmp expect.default-old current &&
 
-	git -c color.diff=always -c diff.wsErrorHighlight=default \
-		diff --ws-error-highlight=all |
+	git -c diff.wsErrorHighlight=default \
+		diff --color --ws-error-highlight=all |
 	test_decode_color >current &&
 	test_cmp expect.all current &&
 
-	git -c color.diff=always -c diff.wsErrorHighlight=all \
-		diff --ws-error-highlight=none |
+	git -c diff.wsErrorHighlight=all \
+		diff --color --ws-error-highlight=none |
 	test_decode_color >current &&
 	test_cmp expect.none current
 
