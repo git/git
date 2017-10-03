@@ -258,12 +258,6 @@ test_expect_success TTY '%(color) present with tty' '
 	test_cmp expect.color actual
 '
 
-test_expect_success 'color.branch=always overrides auto-color' '
-	git -c color.branch=always branch $color_args >actual.raw &&
-	test_decode_color <actual.raw >actual &&
-	test_cmp expect.color actual
-'
-
 test_expect_success '--color overrides auto-color' '
 	git branch --color $color_args >actual.raw &&
 	test_decode_color <actual.raw >actual &&
