@@ -1,4 +1,8 @@
-# Defaults
+# This file is an example configuration for clang-format 5.0.
+#
+# Note that this style definition should only be understood as a hint
+# for writing new code. The rules are still work-in-progress and does
+# not yet exactly match the style we have in the existing code.
 
 # Use tabs whenever we need to fill whitespace that spans at least from one tab
 # stop to the next one.
