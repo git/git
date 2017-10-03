@@ -38,7 +38,9 @@ static int prune_worktree(const char *id, struct strbuf *reason)
 {
 	struct stat st;
 	char *path;
-	int fd, len;
+	int fd;
+	size_t len;
+	ssize_t read_result;
 
 	if (!is_directory(git_path("worktrees/%s", id))) {
 		strbuf_addf(reason, _("Removing worktrees/%s: not a valid directory"), id);
@@ -56,10 +58,26 @@ static int prune_worktree(const char *id, struct strbuf *reason)
 			    id, strerror(errno));
 		return 1;
 	}
-	len = st.st_size;
+	len = xsize_t(st.st_size);
 	path = xmallocz(len);
-	read_in_full(fd, path, len);
+
+	read_result = read_in_full(fd, path, len);
+	if (read_result < 0) {
+		strbuf_addf(reason, _("Removing worktrees/%s: unable to read gitdir file (%s)"),
+			    id, strerror(errno));
+		close(fd);
+		free(path);
+		return 1;
+	}
 	close(fd);
+
+	if (read_result != len) {
+		strbuf_addf(reason,
+			    _("Removing worktrees/%s: short read (expected %"PRIuMAX" bytes, read %"PRIuMAX")"),
+			    id, (uintmax_t)len, (uintmax_t)read_result);
+		free(path);
+		return 1;
+	}
 	while (len && (path[len - 1] == '\n' || path[len - 1] == '\r'))
 		len--;
 	if (!len) {
