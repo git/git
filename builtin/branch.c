@@ -28,6 +28,7 @@ static const char * const builtin_branch_usage[] = {
 	N_("git branch [<options>] [-l] [-f] <branch-name> [<start-point>]"),
 	N_("git branch [<options>] [-r] (-d | -D) <branch-name>..."),
 	N_("git branch [<options>] (-m | -M) [<old-branch>] <new-branch>"),
+	N_("git branch [<options>] (-c | -C) [<old-branch>] <new-branch>"),
 	N_("git branch [<options>] [-r | -a] [--points-at]"),
 	N_("git branch [<options>] [-r | -a] [--format]"),
 	NULL
@@ -456,15 +457,19 @@ static void reject_rebase_or_bisect_branch(const char *target)
 	free_worktrees(worktrees);
 }
 
-static void rename_branch(const char *oldname, const char *newname, int force)
+static void copy_or_rename_branch(const char *oldname, const char *newname, int copy, int force)
 {
 	struct strbuf oldref = STRBUF_INIT, newref = STRBUF_INIT, logmsg = STRBUF_INIT;
 	struct strbuf oldsection = STRBUF_INIT, newsection = STRBUF_INIT;
 	int recovery = 0;
 	int clobber_head_ok;
 
-	if (!oldname)
-		die(_("cannot rename the current branch while not on any."));
+	if (!oldname) {
+		if (copy)
+			die(_("cannot copy the current branch while not on any."));
+		else
+			die(_("cannot rename the current branch while not on any."));
+	}
 
 	if (strbuf_check_branch_ref(&oldref, oldname)) {
 		/*
@@ -487,16 +492,29 @@ static void rename_branch(const char *oldname, const char *newname, int force)
 
 	reject_rebase_or_bisect_branch(oldref.buf);
 
-	strbuf_addf(&logmsg, "Branch: renamed %s to %s",
-		 oldref.buf, newref.buf);
+	if (copy)
+		strbuf_addf(&logmsg, "Branch: copied %s to %s",
+			    oldref.buf, newref.buf);
+	else
+		strbuf_addf(&logmsg, "Branch: renamed %s to %s",
+			    oldref.buf, newref.buf);
 
-	if (rename_ref(oldref.buf, newref.buf, logmsg.buf))
+	if (!copy && rename_ref(oldref.buf, newref.buf, logmsg.buf))
 		die(_("Branch rename failed"));
+	if (copy && copy_existing_ref(oldref.buf, newref.buf, logmsg.buf))
+		die(_("Branch copy failed"));
 
-	if (recovery)
-		warning(_("Renamed a misnamed branch '%s' away"), oldref.buf + 11);
+	if (recovery) {
+		if (copy)
+			warning(_("Copied a misnamed branch '%s' away"),
+				oldref.buf + 11);
+		else
+			warning(_("Renamed a misnamed branch '%s' away"),
+				oldref.buf + 11);
+	}
 
-	if (replace_each_worktree_head_symref(oldref.buf, newref.buf, logmsg.buf))
+	if (!copy &&
+	    replace_each_worktree_head_symref(oldref.buf, newref.buf, logmsg.buf))
 		die(_("Branch renamed to %s, but HEAD is not updated!"), newname);
 
 	strbuf_release(&logmsg);
@@ -505,8 +523,10 @@ static void rename_branch(const char *oldname, const char *newname, int force)
 	strbuf_release(&oldref);
 	strbuf_addf(&newsection, "branch.%s", newref.buf + 11);
 	strbuf_release(&newref);
-	if (git_config_rename_section(oldsection.buf, newsection.buf) < 0)
+	if (!copy && git_config_rename_section(oldsection.buf, newsection.buf) < 0)
 		die(_("Branch is renamed, but update of config-file failed"));
+	if (copy && strcmp(oldname, newname) && git_config_copy_section(oldsection.buf, newsection.buf) < 0)
+		die(_("Branch is copied, but update of config-file failed"));
 	strbuf_release(&oldsection);
 	strbuf_release(&newsection);
 }
@@ -544,7 +564,7 @@ static int edit_branch_description(const char *branch_name)
 
 int cmd_branch(int argc, const char **argv, const char *prefix)
 {
-	int delete = 0, rename = 0, force = 0, list = 0;
+	int delete = 0, rename = 0, copy = 0, force = 0, list = 0;
 	int reflog = 0, edit_description = 0;
 	int quiet = 0, unset_upstream = 0;
 	const char *new_upstream = NULL;
@@ -581,6 +601,8 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		OPT_BIT('D', NULL, &delete, N_("delete branch (even if not merged)"), 2),
 		OPT_BIT('m', "move", &rename, N_("move/rename a branch and its reflog"), 1),
 		OPT_BIT('M', NULL, &rename, N_("move/rename a branch, even if target exists"), 2),
+		OPT_BIT('c', "copy", &copy, N_("copy a branch and its reflog"), 1),
+		OPT_BIT('C', NULL, &copy, N_("copy a branch, even if target exists"), 2),
 		OPT_BOOL(0, "list", &list, N_("list branch names")),
 		OPT_BOOL('l', "create-reflog", &reflog, N_("create the branch's reflog")),
 		OPT_BOOL(0, "edit-description", &edit_description,
@@ -624,14 +646,14 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix, options, builtin_branch_usage,
 			     0);
 
-	if (!delete && !rename && !edit_description && !new_upstream && !unset_upstream && argc == 0)
+	if (!delete && !rename && !copy && !edit_description && !new_upstream && !unset_upstream && argc == 0)
 		list = 1;
 
 	if (filter.with_commit || filter.merge != REF_FILTER_MERGED_NONE || filter.points_at.nr ||
 	    filter.no_commit)
 		list = 1;
 
-	if (!!delete + !!rename + !!new_upstream +
+	if (!!delete + !!rename + !!copy + !!new_upstream +
 	    list + unset_upstream > 1)
 		usage_with_options(builtin_branch_usage, options);
 
@@ -649,6 +671,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	if (force) {
 		delete *= 2;
 		rename *= 2;
+		copy *= 2;
 	}
 
 	if (delete) {
@@ -703,13 +726,22 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 
 		if (edit_branch_description(branch_name))
 			return 1;
+	} else if (copy) {
+		if (!argc)
+			die(_("branch name required"));
+		else if (argc == 1)
+			copy_or_rename_branch(head, argv[0], 1, copy > 1);
+		else if (argc == 2)
+			copy_or_rename_branch(argv[0], argv[1], 1, copy > 1);
+		else
+			die(_("too many branches for a copy operation"));
 	} else if (rename) {
 		if (!argc)
 			die(_("branch name required"));
 		else if (argc == 1)
-			rename_branch(head, argv[0], rename > 1);
+			copy_or_rename_branch(head, argv[0], 0, rename > 1);
 		else if (argc == 2)
-			rename_branch(argv[0], argv[1], rename > 1);
+			copy_or_rename_branch(argv[0], argv[1], 0, rename > 1);
 		else
 			die(_("too many branches for a rename operation"));
 	} else if (new_upstream) {

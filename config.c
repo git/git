@@ -2292,11 +2292,10 @@ static int write_error(const char *filename)
 	return 4;
 }
 
-static ssize_t write_section(int fd, const char *key)
+static struct strbuf store_create_section(const char *key)
 {
 	const char *dot;
 	int i;
-	ssize_t ret;
 	struct strbuf sb = STRBUF_INIT;
 
 	dot = memchr(key, '.', store.baselen);
@@ -2312,7 +2311,15 @@ static ssize_t write_section(int fd, const char *key)
 		strbuf_addf(&sb, "[%.*s]\n", store.baselen, key);
 	}
 
-	ret = write_in_full(fd, sb.buf, sb.len);
+	return sb;
+}
+
+static ssize_t write_section(int fd, const char *key)
+{
+	struct strbuf sb = store_create_section(key);
+	ssize_t ret;
+
+	ret = write_in_full(fd, sb.buf, sb.len) == sb.len;
 	strbuf_release(&sb);
 
 	return ret;
@@ -2743,8 +2750,8 @@ static int section_name_is_ok(const char *name)
 }
 
 /* if new_name == NULL, the section is removed instead */
-int git_config_rename_section_in_file(const char *config_filename,
-				      const char *old_name, const char *new_name)
+static int git_config_copy_or_rename_section_in_file(const char *config_filename,
+				      const char *old_name, const char *new_name, int copy)
 {
 	int ret = 0, remove = 0;
 	char *filename_buf = NULL;
@@ -2753,6 +2760,7 @@ int git_config_rename_section_in_file(const char *config_filename,
 	char buf[1024];
 	FILE *config_file = NULL;
 	struct stat st;
+	struct strbuf copystr = STRBUF_INIT;
 
 	if (new_name && !section_name_is_ok(new_name)) {
 		ret = error("invalid section name: %s", new_name);
@@ -2791,12 +2799,30 @@ int git_config_rename_section_in_file(const char *config_filename,
 	while (fgets(buf, sizeof(buf), config_file)) {
 		int i;
 		int length;
+		int is_section = 0;
 		char *output = buf;
 		for (i = 0; buf[i] && isspace(buf[i]); i++)
 			; /* do nothing */
 		if (buf[i] == '[') {
 			/* it's a section */
-			int offset = section_name_match(&buf[i], old_name);
+			int offset;
+			is_section = 1;
+
+			/*
+			 * When encountering a new section under -c we
+			 * need to flush out any section we're already
+			 * coping and begin anew. There might be
+			 * multiple [branch "$name"] sections.
+			 */
+			if (copystr.len > 0) {
+				if (write_in_full(out_fd, copystr.buf, copystr.len) != copystr.len) {
+					ret = write_error(get_lock_file_path(lock));
+					goto out;
+				}
+				strbuf_reset(&copystr);
+			}
+
+			offset = section_name_match(&buf[i], old_name);
 			if (offset > 0) {
 				ret++;
 				if (new_name == NULL) {
@@ -2804,25 +2830,29 @@ int git_config_rename_section_in_file(const char *config_filename,
 					continue;
 				}
 				store.baselen = strlen(new_name);
-				if (write_section(out_fd, new_name) < 0) {
-					ret = write_error(get_lock_file_path(lock));
-					goto out;
-				}
-				/*
-				 * We wrote out the new section, with
-				 * a newline, now skip the old
-				 * section's length
-				 */
-				output += offset + i;
-				if (strlen(output) > 0) {
+				if (!copy) {
+					if (write_section(out_fd, new_name) < 0) {
+						ret = write_error(get_lock_file_path(lock));
+						goto out;
+					}
 					/*
-					 * More content means there's
-					 * a declaration to put on the
-					 * next line; indent with a
-					 * tab
+					 * We wrote out the new section, with
+					 * a newline, now skip the old
+					 * section's length
 					 */
-					output -= 1;
-					output[0] = '\t';
+					output += offset + i;
+					if (strlen(output) > 0) {
+						/*
+						 * More content means there's
+						 * a declaration to put on the
+						 * next line; indent with a
+						 * tab
+						 */
+						output -= 1;
+						output[0] = '\t';
+					}
+				} else {
+					copystr = store_create_section(new_name);
 				}
 			}
 			remove = 0;
@@ -2830,11 +2860,30 @@ int git_config_rename_section_in_file(const char *config_filename,
 		if (remove)
 			continue;
 		length = strlen(output);
+
+		if (!is_section && copystr.len > 0) {
+			strbuf_add(&copystr, output, length);
+		}
+
 		if (write_in_full(out_fd, output, length) < 0) {
 			ret = write_error(get_lock_file_path(lock));
 			goto out;
 		}
 	}
+
+	/*
+	 * Copy a trailing section at the end of the config, won't be
+	 * flushed by the usual "flush because we have a new section
+	 * logic in the loop above.
+	 */
+	if (copystr.len > 0) {
+		if (write_in_full(out_fd, copystr.buf, copystr.len) != copystr.len) {
+			ret = write_error(get_lock_file_path(lock));
+			goto out;
+		}
+		strbuf_reset(&copystr);
+	}
+
 	fclose(config_file);
 	config_file = NULL;
 commit_and_out:
@@ -2850,9 +2899,28 @@ out_no_rollback:
 	return ret;
 }
 
+int git_config_rename_section_in_file(const char *config_filename,
+				      const char *old_name, const char *new_name)
+{
+	return git_config_copy_or_rename_section_in_file(config_filename,
+					 old_name, new_name, 0);
+}
+
 int git_config_rename_section(const char *old_name, const char *new_name)
 {
 	return git_config_rename_section_in_file(NULL, old_name, new_name);
+}
+
+int git_config_copy_section_in_file(const char *config_filename,
+				      const char *old_name, const char *new_name)
+{
+	return git_config_copy_or_rename_section_in_file(config_filename,
+					 old_name, new_name, 1);
+}
+
+int git_config_copy_section(const char *old_name, const char *new_name)
+{
+	return git_config_copy_section_in_file(NULL, old_name, new_name);
 }
 
 /*
