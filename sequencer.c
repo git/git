@@ -204,7 +204,7 @@ int sequencer_remove_state(struct replay_opts *opts)
 		free(opts->xopts[i]);
 	free(opts->xopts);
 
-	strbuf_addf(&dir, "%s", get_dir(opts));
+	strbuf_addstr(&dir, get_dir(opts));
 	remove_dir_recursively(&dir, 0);
 	strbuf_release(&dir);
 
