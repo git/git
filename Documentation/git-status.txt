@@ -111,6 +111,8 @@ configuration variable documented in linkgit:git-config[1].
 	without options are equivalent to 'always' and 'never'
 	respectively.
 
+<pathspec>...::
+	See the 'pathspec' entry in linkgit:gitglossary[7].
 
 OUTPUT
 ------

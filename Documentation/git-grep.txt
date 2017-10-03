@@ -289,6 +289,9 @@ providing this option will cause it to die.
 <pathspec>...::
 	If given, limit the search to paths matching at least one pattern.
 	Both leading paths match and glob(7) patterns are supported.
++
+For more details about the <pathspec> syntax, see the 'pathspec' entry
+in linkgit:gitglossary[7].
 
 Examples
 --------
@@ -304,6 +307,9 @@ Examples
 `git grep --all-match -e NODE -e Unexpected`::
 	Looks for a line that has `NODE` or `Unexpected` in
 	files that have lines that match both.
+
+`git grep solution -- :^Documentation`::
+	Looks for `solution`, excluding files in `Documentation`.
 
 GIT
 ---
