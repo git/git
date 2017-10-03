@@ -159,7 +159,7 @@ test_expect_success 'no color when stdout is a regular file' '
 test_expect_success TTY 'color when writing to a pager' '
 	rm -f paginated.out &&
 	test_config color.ui auto &&
-	test_terminal env TERM=vt100 git log &&
+	test_terminal git log &&
 	colorful paginated.out
 '
 
@@ -167,7 +167,7 @@ test_expect_success TTY 'colors are suppressed by color.pager' '
 	rm -f paginated.out &&
 	test_config color.ui auto &&
 	test_config color.pager false &&
-	test_terminal env TERM=vt100 git log &&
+	test_terminal git log &&
 	! colorful paginated.out
 '
 
@@ -186,7 +186,7 @@ test_expect_success 'color when writing to a file intended for a pager' '
 test_expect_success TTY 'colors are sent to pager for external commands' '
 	test_config alias.externallog "!git log" &&
 	test_config color.ui auto &&
-	test_terminal env TERM=vt100 git -p externallog &&
+	test_terminal git -p externallog &&
 	colorful paginated.out
 '
 

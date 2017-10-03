@@ -1914,7 +1914,7 @@ test_expect_success '%(color) omitted without tty' '
 '
 
 test_expect_success TTY '%(color) present with tty' '
-	test_terminal env TERM=vt100 git tag $color_args >actual.raw &&
+	test_terminal git tag $color_args >actual.raw &&
 	test_decode_color <actual.raw >actual &&
 	test_cmp expect.color actual
 '

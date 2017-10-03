@@ -425,8 +425,7 @@ test_expect_success 'set up color tests' '
 '
 
 test_expect_success TTY '%(color) shows color with a tty' '
-	test_terminal env TERM=vt100 \
-		git for-each-ref --format="$color_format" >actual.raw &&
+	test_terminal git for-each-ref --format="$color_format" >actual.raw &&
 	test_decode_color <actual.raw >actual &&
 	test_cmp expected.color actual
 '

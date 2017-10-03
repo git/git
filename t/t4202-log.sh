@@ -750,7 +750,7 @@ test_expect_success 'log.decorate config parsing' '
 '
 
 test_expect_success TTY 'log output on a TTY' '
-	git log --oneline --decorate >expect.short &&
+	git log --color --oneline --decorate >expect.short &&
 
 	test_terminal git log --oneline >actual &&
 	test_cmp expect.short actual
