@@ -182,6 +182,10 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 			setenv(GIT_ICASE_PATHSPECS_ENVIRONMENT, "1", 1);
 			if (envchanged)
 				*envchanged = 1;
+		} else if (!strcmp(cmd, "--no-optional-locks")) {
+			setenv(GIT_OPTIONAL_LOCKS_ENVIRONMENT, "0", 1);
+			if (envchanged)
+				*envchanged = 1;
 		} else if (!strcmp(cmd, "--shallow-file")) {
 			(*argv)++;
 			(*argc)--;

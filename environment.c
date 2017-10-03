@@ -338,3 +338,8 @@ void reset_shared_repository(void)
 {
 	need_shared_repository_from_config = 1;
 }
+
+int use_optional_locks(void)
+{
+	return git_env_bool(GIT_OPTIONAL_LOCKS_ENVIRONMENT, 1);
+}
