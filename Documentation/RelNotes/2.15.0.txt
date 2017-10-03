@@ -87,6 +87,14 @@ UI, Workflows & Features
  * "git describe --match <pattern>" has been taught to play well with
    the "--all" option.
 
+ * "git branch" learned "-c/-C" to create a new branch by copying an
+   existing one.
+
+ * Some commands (most notably "git status") makes an opportunistic
+   update when performing a read-only operation to help optimize later
+   operations in the same repository.  The new "--no-optional-locks"
+   option can be passed to Git to disable them.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -202,6 +210,14 @@ Performance, Internal Implementation, Development Support etc.
    tracked path is ignored, still enumerated all the ignored paths in
    the directory, which is unnecessary.  The codepath has been
    optimized to avoid this overhead.
+
+ * The final batch to "git rebase -i" updates to move more code from
+   the shell script to C has been merged.
+
+ * Operations that do not touch (majority of) packed refs have been
+   optimized by making accesses to packed-refs file lazy; we no longer
+   pre-parse everything, and an access to a single ref in the
+   packed-refs does not touch majority of irrelevant refs, either.
 
 Also contains various documentation updates and code clean-ups.
 
@@ -421,6 +437,11 @@ Fixes since v2.14
  * Memory leaks in various codepaths have been plugged.
    (merge 4d01a7fa65 ma/leakplugs later to maint).
 
+ * Recent versions of "git rev-parse --parseopt" did not parse the
+   option specification that does not have the optional flags (*=?!)
+   correctly, which has been corrected.
+   (merge a6304fa4c2 bc/rev-parse-parseopt-fix later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge f094b89a4d ma/parse-maybe-bool later to maint).
    (merge 39b00fa4d4 jk/drop-sha1-entry-pos later to maint).
@@ -441,3 +462,6 @@ Fixes since v2.14
    (merge 217bb56d4f hn/typofix later to maint).
    (merge c08fd6388c jk/doc-read-tree-table-asciidoctor-fix later to maint).
    (merge c3342b362e ks/doc-use-camelcase-for-config-name later to maint).
+   (merge 0bca165fdb jk/validate-headref-fix later to maint).
+   (merge 93dbefb389 mr/doc-negative-pathspec later to maint).
+   (merge 5e633326e4 ad/doc-markup-fix later to maint).
