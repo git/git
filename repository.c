@@ -200,25 +200,17 @@ out:
 
 void repo_clear(struct repository *repo)
 {
-	free(repo->gitdir);
-	repo->gitdir = NULL;
-	free(repo->commondir);
-	repo->commondir = NULL;
-	free(repo->objectdir);
-	repo->objectdir = NULL;
-	free(repo->graft_file);
-	repo->graft_file = NULL;
-	free(repo->index_file);
-	repo->index_file = NULL;
-	free(repo->worktree);
-	repo->worktree = NULL;
-	free(repo->submodule_prefix);
-	repo->submodule_prefix = NULL;
+	FREE_AND_NULL(repo->gitdir);
+	FREE_AND_NULL(repo->commondir);
+	FREE_AND_NULL(repo->objectdir);
+	FREE_AND_NULL(repo->graft_file);
+	FREE_AND_NULL(repo->index_file);
+	FREE_AND_NULL(repo->worktree);
+	FREE_AND_NULL(repo->submodule_prefix);
 
 	if (repo->config) {
 		git_configset_clear(repo->config);
-		free(repo->config);
-		repo->config = NULL;
+		FREE_AND_NULL(repo->config);
 	}
 
 	if (repo->submodule_cache) {
@@ -228,8 +220,7 @@ void repo_clear(struct repository *repo)
 
 	if (repo->index) {
 		discard_index(repo->index);
-		free(repo->index);
-		repo->index = NULL;
+		FREE_AND_NULL(repo->index);
 	}
 }
 
