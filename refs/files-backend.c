@@ -2494,7 +2494,6 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 	struct string_list affected_refnames = STRING_LIST_INIT_NODUP;
 	char *head_ref = NULL;
 	int head_type;
-	struct object_id head_oid;
 	struct files_transaction_backend_data *backend_data;
 	struct ref_transaction *packed_transaction = NULL;
 
@@ -2551,7 +2550,7 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 	 */
 	head_ref = refs_resolve_refdup(ref_store, "HEAD",
 				       RESOLVE_REF_NO_RECURSE,
-				       head_oid.hash, &head_type);
+				       NULL, &head_type);
 
 	if (head_ref && !(head_type & REF_ISSYMREF)) {
 		FREE_AND_NULL(head_ref);

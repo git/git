@@ -61,11 +61,10 @@ static struct complete_reflogs *read_complete_reflog(const char *ref)
 	reflogs->ref = xstrdup(ref);
 	for_each_reflog_ent(ref, read_one_reflog, reflogs);
 	if (reflogs->nr == 0) {
-		struct object_id oid;
 		const char *name;
 		void *name_to_free;
 		name = name_to_free = resolve_refdup(ref, RESOLVE_REF_READING,
-						     oid.hash, NULL);
+						     NULL, NULL);
 		if (name) {
 			for_each_reflog_ent(name, read_one_reflog, reflogs);
 			free(name_to_free);
@@ -151,9 +150,8 @@ int add_reflog_for_walk(struct reflog_walk_info *info,
 		reflogs = item->util;
 	else {
 		if (*branch == '\0') {
-			struct object_id oid;
 			free(branch);
-			branch = resolve_refdup("HEAD", 0, oid.hash, NULL);
+			branch = resolve_refdup("HEAD", 0, NULL, NULL);
 			if (!branch)
 				die ("No current branch");
 
