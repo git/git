@@ -483,4 +483,14 @@ test_expect_success 'hunk-editing handles custom comment char' '
 	git diff --exit-code
 '
 
+test_expect_success 'add -p works even with color.ui=always' '
+	git reset --hard &&
+	echo change >>file &&
+	test_config color.ui always &&
+	echo y | git add -p &&
+	echo file >expect &&
+	git diff --cached --name-only >actual &&
+	test_cmp expect actual
+'
+
 test_done
