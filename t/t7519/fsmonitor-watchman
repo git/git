@@ -50,9 +50,6 @@ launch_watchman();
 
 sub launch_watchman {
 
-	# Set input record separator
-	local $/ = 0666;
-
 	my $pid = open2(\*CHLD_OUT, \*CHLD_IN, 'watchman -j')
 	    or die "open2() failed: $!\n" .
 	    "Falling back to scanning...\n";
@@ -83,7 +80,8 @@ sub launch_watchman {
 	close $fh;
 
 	print CHLD_IN $query;
-	my $response = <CHLD_OUT>;
+	close CHLD_IN;
+	my $response = do {local $/; <CHLD_OUT>};
 
 	open ($fh, ">", ".git/watchman-response.json");
 	print $fh $response;
