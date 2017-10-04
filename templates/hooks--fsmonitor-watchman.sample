@@ -35,7 +35,7 @@ my $system = `uname -s`;
 $system =~ s/[\r\n]+//g;
 my $git_work_tree;
 
-if ($system =~ m/^MSYS_NT/) {
+if ($system =~ m/^MSYS_NT/ || $system =~ m/^MINGW/) {
 	$git_work_tree = `cygpath -aw "\$PWD"`;
 	$git_work_tree =~ s/[\r\n]+//g;
 	$git_work_tree =~ s,\\,/,g;
