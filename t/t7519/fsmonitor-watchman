@@ -129,6 +129,7 @@ sub launch_watchman {
 	    "Falling back to scanning...\n" if $o->{error};
 
 	open ($fh, ">", ".git/watchman-output.out");
+	binmode $fh, ":utf8";
 	print $fh @{$o->{files}};
 	close $fh;
 
