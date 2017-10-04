@@ -921,8 +921,7 @@ void http_init(struct remote *remote, const char *url, int proactive_auth)
 	git_config(urlmatch_config_entry, &config);
 	free(normalized_url);
 
-#if LIBCURL_VERSION_NUM >= 0x073800 || \
-		defined(CURL_WITH_EXPERIMENTAL_SSL_BACKEND_SUPPORT)
+#if LIBCURL_VERSION_NUM >= 0x073800
 	if (http_ssl_backend) {
 		const curl_ssl_backend **backends;
 		struct strbuf buf = STRBUF_INIT;
@@ -936,6 +935,10 @@ void http_init(struct remote *remote, const char *url, int proactive_auth)
 			for (i = 0; backends[i]; i++)
 				strbuf_addf(&buf, "\n\t%s", backends[i]->name);
 			die(buf.buf);
+		case CURLSSLSET_NO_BACKENDS:
+			die(_("Could not set SSL backend to '%s': "
+			      "cURL was built without SSL backends"),
+			    http_ssl_backend);
 		case CURLSSLSET_TOO_LATE:
 			die(_("Could not set SSL backend to '%s': already set"),
 			    http_ssl_backend);
