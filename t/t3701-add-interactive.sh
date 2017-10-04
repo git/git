@@ -2,6 +2,7 @@
 
 test_description='add -i basic tests'
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-terminal.sh
 
 if ! test_have_prereq PERL
 then
@@ -380,14 +381,11 @@ test_expect_success 'patch mode ignores unmerged entries' '
 	test_cmp expected diff
 '
 
-test_expect_success 'diffs can be colorized' '
+test_expect_success TTY 'diffs can be colorized' '
 	git reset --hard &&
 
-	# force color even though the test script has no terminal
-	test_config color.ui always &&
-
 	echo content >test &&
-	printf y | git add -p >output 2>&1 &&
+	printf y | test_terminal git add -p >output 2>&1 &&
 
 	# We do not want to depend on the exact coloring scheme
 	# git uses for diffs, so just check that we saw some kind of color.
@@ -483,6 +481,16 @@ test_expect_success 'hunk-editing handles custom comment char' '
 	test_config core.commentChar "\$" &&
 	echo e | GIT_EDITOR=true git add -p &&
 	git diff --exit-code
+'
+
+test_expect_success 'add -p works even with color.ui=always' '
+	git reset --hard &&
+	echo change >>file &&
+	test_config color.ui always &&
+	echo y | git add -p &&
+	echo file >expect &&
+	git diff --cached --name-only >actual &&
+	test_cmp expect actual
 '
 
 test_done

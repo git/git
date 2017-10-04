@@ -476,7 +476,7 @@ test_expect_success 'git clean -id with prefix and path (ask)' '
 test_expect_success TTY 'git clean -i paints the header in HEADER color' '
 	>a.out &&
 	echo q |
-	test_terminal env TERM=vt100 git clean -i |
+	test_terminal git clean -i |
 	test_decode_color |
 	head -n 1 >header &&
 	# not i18ngrep

@@ -411,6 +411,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 		},
 		OPT_STRING(  0 , "format", &format.format, N_("format"),
 			   N_("format to use for the output")),
+		OPT__COLOR(&format.use_color, N_("respect format colors")),
 		OPT_BOOL('i', "ignore-case", &icase, N_("sorting and filtering are case insensitive")),
 		OPT_END()
 	};
