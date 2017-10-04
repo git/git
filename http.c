@@ -934,7 +934,7 @@ void http_init(struct remote *remote, const char *url, int proactive_auth)
 					    http_ssl_backend);
 			for (i = 0; backends[i]; i++)
 				strbuf_addf(&buf, "\n\t%s", backends[i]->name);
-			die(buf.buf);
+			die("%s", buf.buf);
 		case CURLSSLSET_NO_BACKENDS:
 			die(_("Could not set SSL backend to '%s': "
 			      "cURL was built without SSL backends"),
