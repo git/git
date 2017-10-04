@@ -217,7 +217,7 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 		if (!head_rev)
 			die(_("Couldn't look up commit object for HEAD"));
 	}
-	for (i = 0; i < argc; i++, strbuf_release(&bname)) {
+	for (i = 0; i < argc; i++, strbuf_reset(&bname)) {
 		char *target = NULL;
 		int flags = 0;
 
@@ -282,8 +282,9 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 	}
 
 	free(name);
+	strbuf_release(&bname);
 
-	return(ret);
+	return ret;
 }
 
 static int calc_maxwidth(struct ref_array *refs, int remote_bonus)
