@@ -53,11 +53,11 @@ int checkout_fast_forward(const struct object_id *head,
 	struct tree_desc t[MAX_UNPACK_TREES];
 	int i, nr_trees = 0;
 	struct dir_struct dir;
-	struct lock_file *lock_file = xcalloc(1, sizeof(struct lock_file));
+	struct lock_file lock_file = LOCK_INIT;
 
 	refresh_cache(REFRESH_QUIET);
 
-	if (hold_locked_index(lock_file, LOCK_REPORT_ON_ERROR) < 0)
+	if (hold_locked_index(&lock_file, LOCK_REPORT_ON_ERROR) < 0)
 		return -1;
 
 	memset(&trees, 0, sizeof(trees));
@@ -91,8 +91,8 @@ int checkout_fast_forward(const struct object_id *head,
 	}
 	if (unpack_trees(nr_trees, t, &opts))
 		return -1;
-	if (write_locked_index(&the_index, lock_file, COMMIT_LOCK)) {
-		rollback_lock_file(lock_file);
+	if (write_locked_index(&the_index, &lock_file, COMMIT_LOCK)) {
+		rollback_lock_file(&lock_file);
 		return error(_("unable to write new index file"));
 	}
 	return 0;
