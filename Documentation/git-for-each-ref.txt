@@ -147,8 +147,9 @@ upstream::
 	encountered. Append `:track,nobracket` to show tracking
 	information without brackets (i.e "ahead N, behind M").
 +
-Also respects `:remotename` to state the name of the *remote* instead of
-the ref.
+Also respects `:remotename` to state the name of the *remote* instead
+of the ref, and `:remoteref` to state the name of the *reference* as
+locally known by the remote.
 +
 Has no effect if the ref does not have tracking information associated
 with it.  All the options apart from `nobracket` are mutually exclusive,
@@ -157,9 +158,9 @@ but if used together the last option is selected.
 push::
 	The name of a local ref which represents the `@{push}`
 	location for the displayed ref. Respects `:short`, `:lstrip`,
-	`:rstrip`, `:track`, `:trackshort` and `:remotename` options as
-	`upstream` does. Produces an empty string if no `@{push}` ref is
-	configured.
+	`:rstrip`, `:track`, `:trackshort`, `:remotename`, and `:remoteref`
+	options as `upstream` does. Produces an empty string if no `@{push}`
+	ref is configured.
 
 HEAD::
 	'*' if HEAD matches current ref (the checked out branch), ' '
