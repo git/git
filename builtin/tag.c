@@ -552,9 +552,10 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	if (force && !is_null_oid(&prev) && oidcmp(&prev, &object))
 		printf(_("Updated tag '%s' (was %s)\n"), tag, find_unique_abbrev(prev.hash, DEFAULT_ABBREV));
 
-	strbuf_release(&err);
-	strbuf_release(&buf);
-	strbuf_release(&ref);
-	strbuf_release(&reflog_msg);
+	UNLEAK(buf);
+	UNLEAK(ref);
+	UNLEAK(reflog_msg);
+	UNLEAK(msg);
+	UNLEAK(err);
 	return 0;
 }
