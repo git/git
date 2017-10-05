@@ -240,8 +240,8 @@ extern char *get_locked_file_path(struct lock_file *lk);
  * If the lockfile is still open, close it (and the file pointer if it
  * has been opened using `fdopen_lock_file()`) without renaming the
  * lockfile over the file being locked. Return 0 upon success. On
- * failure to `close(2)`, return a negative value and roll back the
- * lock file. Usually `commit_lock_file()`, `commit_lock_file_to()`,
+ * failure to `close(2)`, return a negative value (the lockfile is not
+ * rolled back). Usually `commit_lock_file()`, `commit_lock_file_to()`,
  * or `rollback_lock_file()` should eventually be called.
  */
 static inline int close_lock_file_gently(struct lock_file *lk)
