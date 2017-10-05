@@ -3094,9 +3094,9 @@ static void run_external_diff(const char *pgm,
 	argv_array_pushf(&env, "GIT_DIFF_PATH_COUNTER=%d", ++o->diff_path_counter);
 	argv_array_pushf(&env, "GIT_DIFF_PATH_TOTAL=%d", q->nr);
 
-	if (one->should_munmap)
+	if (one && one->should_munmap)
 		diff_free_filespec_data(one);
-	if (two->should_munmap)
+	if (two && two->should_munmap)
 		diff_free_filespec_data(two);
 	if (run_command_v_opt_cd_env(argv.argv, RUN_USING_SHELL, NULL, env.argv))
 		die(_("external diff died, stopping at %s"), name);
