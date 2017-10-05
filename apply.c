@@ -79,7 +79,6 @@ int init_apply_state(struct apply_state *state,
 {
 	memset(state, 0, sizeof(*state));
 	state->prefix = prefix;
-	state->newfd = -1;
 	state->apply = 1;
 	state->line_termination = '\n';
 	state->p_value = 1;
@@ -4705,13 +4704,13 @@ static int apply_patch(struct apply_state *state,
 		state->apply = 0;
 
 	state->update_index = state->check_index && state->apply;
-	if (state->update_index && state->newfd < 0) {
+	if (state->update_index && !is_lock_file_locked(&state->lock_file)) {
 		if (state->index_file)
-			state->newfd = hold_lock_file_for_update(&state->lock_file,
-								 state->index_file,
-								 LOCK_DIE_ON_ERROR);
+			hold_lock_file_for_update(&state->lock_file,
+						  state->index_file,
+						  LOCK_DIE_ON_ERROR);
 		else
-			state->newfd = hold_locked_index(&state->lock_file, LOCK_DIE_ON_ERROR);
+			hold_locked_index(&state->lock_file, LOCK_DIE_ON_ERROR);
 	}
 
 	if (state->check_index && read_apply_cache(state) < 0) {
@@ -4913,16 +4912,12 @@ int apply_all_patches(struct apply_state *state,
 			res = -128;
 			goto end;
 		}
-		state->newfd = -1;
 	}
 
 	res = !!errs;
 
 end:
-	if (state->newfd >= 0) {
-		rollback_lock_file(&state->lock_file);
-		state->newfd = -1;
-	}
+	rollback_lock_file(&state->lock_file);
 
 	if (state->apply_verbosity <= verbosity_silent) {
 		set_error_routine(state->saved_error_routine);
