@@ -1233,8 +1233,8 @@ static int write_with_updates(struct packed_ref_store *refs,
 	}
 
 	if (ok != ITER_DONE) {
-		strbuf_addf(err, "unable to write packed-refs file: "
-			    "error iterating over old contents");
+		strbuf_addstr(err, "unable to write packed-refs file: "
+			      "error iterating over old contents");
 		goto error;
 	}
 

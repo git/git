@@ -718,7 +718,7 @@ char *expand_user_path(const char *path, int real_home)
 			if (!home)
 				goto return_null;
 			if (real_home)
-				strbuf_addstr(&user_path, real_path(home));
+				strbuf_add_real_path(&user_path, home);
 			else
 				strbuf_addstr(&user_path, home);
 #ifdef GIT_WINDOWS_NATIVE

@@ -696,12 +696,8 @@ static void graph_pad_horizontally(struct git_graph *graph, struct strbuf *sb,
 	 * This way, fields printed to the right of the graph will remain
 	 * aligned for the entire commit.
 	 */
-	int extra;
-	if (chars_written >= graph->width)
-		return;
-
-	extra = graph->width - chars_written;
-	strbuf_addf(sb, "%*s", (int) extra, "");
+	if (chars_written < graph->width)
+		strbuf_addchars(sb, ' ', graph->width - chars_written);
 }
 
 static void graph_output_padding_line(struct git_graph *graph,
@@ -787,7 +783,7 @@ static void graph_output_pre_commit_line(struct git_graph *graph,
 		if (col->commit == graph->commit) {
 			seen_this = 1;
 			strbuf_write_column(sb, col, '|');
-			strbuf_addf(sb, "%*s", graph->expansion_row, "");
+			strbuf_addchars(sb, ' ', graph->expansion_row);
 			chars_written += 1 + graph->expansion_row;
 		} else if (seen_this && (graph->expansion_row == 0)) {
 			/*
