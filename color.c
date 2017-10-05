@@ -308,7 +308,7 @@ int git_config_colorbool(const char *var, const char *value)
 		if (!strcasecmp(value, "never"))
 			return 0;
 		if (!strcasecmp(value, "always"))
-			return 1;
+			return var ? GIT_COLOR_AUTO : 1;
 		if (!strcasecmp(value, "auto"))
 			return GIT_COLOR_AUTO;
 	}

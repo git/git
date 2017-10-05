@@ -3,6 +3,7 @@
 test_description='git clean -i basic tests'
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-terminal.sh
 
 test_expect_success 'setup' '
 
@@ -472,10 +473,10 @@ test_expect_success 'git clean -id with prefix and path (ask)' '
 
 '
 
-test_expect_success 'git clean -i paints the header in HEADER color' '
+test_expect_success TTY 'git clean -i paints the header in HEADER color' '
 	>a.out &&
 	echo q |
-	git -c color.ui=always clean -i |
+	test_terminal git clean -i |
 	test_decode_color |
 	head -n 1 >header &&
 	# not i18ngrep
