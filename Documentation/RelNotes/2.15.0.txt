@@ -219,6 +219,9 @@ Performance, Internal Implementation, Development Support etc.
    pre-parse everything, and an access to a single ref in the
    packed-refs does not touch majority of irrelevant refs, either.
 
+ * Add comment to clarify that the style file is meant to be used with
+   clang-5 and the rules are still work in progress.
+
 Also contains various documentation updates and code clean-ups.
 
 
@@ -442,6 +445,16 @@ Fixes since v2.14
    correctly, which has been corrected.
    (merge a6304fa4c2 bc/rev-parse-parseopt-fix later to maint).
 
+ * The checkpoint command "git fast-import" did not flush updates to
+   refs and marks unless at least one object was created since the
+   last checkpoint, which has been corrected, as these things can
+   happen without any new object getting created.
+   (merge 30e215a65c er/fast-import-dump-refs-on-checkpoint later to maint).
+
+ * Spell the name of our system as "Git" in the output from
+   request-pull script.
+   (merge e66d7c37a5 ar/request-pull-phrasofix later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge f094b89a4d ma/parse-maybe-bool later to maint).
    (merge 39b00fa4d4 jk/drop-sha1-entry-pos later to maint).
@@ -465,3 +478,6 @@ Fixes since v2.14
    (merge 0bca165fdb jk/validate-headref-fix later to maint).
    (merge 93dbefb389 mr/doc-negative-pathspec later to maint).
    (merge 5e633326e4 ad/doc-markup-fix later to maint).
+   (merge 9ca356fa8b rs/cocci-de-paren-call-params later to maint).
+   (merge 7099153e8d rs/tag-null-pointer-arith-fix later to maint).
+   (merge 0e187d758c rs/run-command-use-alloc-array later to maint).
