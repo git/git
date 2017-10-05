@@ -1268,9 +1268,11 @@ static void fill_remote_ref_details(struct used_atom *atom, const char *refname,
 		else
 			*s = "";
 	} else if (atom->u.remote_ref.option == RR_REMOTE_REF) {
-		int explicit, for_push = starts_with(atom->name, "push");
-		const char *merge = remote_ref_for_branch(branch, for_push,
-							  &explicit);
+		int explicit;
+		const char *merge;
+
+		merge = remote_ref_for_branch(branch, atom->u.remote_ref.push,
+					      &explicit);
 		if (explicit)
 			*s = xstrdup(merge);
 		else
