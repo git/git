@@ -2187,6 +2187,13 @@ void update_index_if_able(struct index_state *istate, struct lock_file *lockfile
 		rollback_lock_file(lockfile);
 }
 
+/*
+ * On success, `tempfile` is closed. If it is the temporary file
+ * of a `struct lock_file`, we will therefore effectively perform
+ * a 'close_lock_file_gently()`. Since that is an implementation
+ * detail of lockfiles, callers of `do_write_index()` should not
+ * rely on it.
+ */
 static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 			  int strip_extensions)
 {
@@ -2343,14 +2350,9 @@ static int do_write_locked_index(struct index_state *istate, struct lock_file *l
 	int ret = do_write_index(istate, lock->tempfile, 0);
 	if (ret)
 		return ret;
-	assert((flags & (COMMIT_LOCK | CLOSE_LOCK)) !=
-	       (COMMIT_LOCK | CLOSE_LOCK));
 	if (flags & COMMIT_LOCK)
 		return commit_locked_index(lock);
-	else if (flags & CLOSE_LOCK)
-		return close_lock_file_gently(lock);
-	else
-		return ret;
+	return close_lock_file_gently(lock);
 }
 
 static int write_split_index(struct index_state *istate,

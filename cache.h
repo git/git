@@ -604,11 +604,10 @@ extern int read_index_unmerged(struct index_state *);
 
 /* For use with `write_locked_index()`. */
 #define COMMIT_LOCK		(1 << 0)
-#define CLOSE_LOCK		(1 << 1)
 
 /*
- * Write the index while holding an already-taken lock. The flags may
- * contain at most one of `COMMIT_LOCK` and `CLOSE_LOCK`.
+ * Write the index while holding an already-taken lock. Close the lock,
+ * and if `COMMIT_LOCK` is given, commit it.
  *
  * Unless a split index is in use, write the index into the lockfile.
  *
