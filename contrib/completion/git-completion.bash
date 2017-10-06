@@ -1385,7 +1385,7 @@ _git_describe ()
 		__gitcomp "
 			--all --tags --contains --abbrev= --candidates=
 			--exact-match --debug --long --match --always --first-parent
-			--exclude
+			--exclude --dirty --broken
 			"
 		return
 	esac
