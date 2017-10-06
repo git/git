@@ -79,7 +79,7 @@ test_expect_success 'fail to merge empty notes ref into empty notes ref (z => y)
 test_expect_success 'fail to merge into various non-notes refs' '
 	test_must_fail git -c "core.notesRef=refs/notes" notes merge x &&
 	test_must_fail git -c "core.notesRef=refs/notes/" notes merge x &&
-	mkdir -p .git/refs/notes/dir &&
+	git update-ref refs/notes/dir/foo HEAD &&
 	test_must_fail git -c "core.notesRef=refs/notes/dir" notes merge x &&
 	test_must_fail git -c "core.notesRef=refs/notes/dir/" notes merge x &&
 	test_must_fail git -c "core.notesRef=refs/heads/master" notes merge x &&
