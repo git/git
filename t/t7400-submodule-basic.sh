@@ -1211,7 +1211,7 @@ test_expect_success 'clone --recurse-submodules with a pathspec works' '
 
 	git clone --recurse-submodules="sub0" multisuper multisuper_clone &&
 	git -C multisuper_clone submodule status |cut -c1,43- >actual &&
-	test_cmp actual expected
+	test_cmp expected actual
 '
 
 test_expect_success 'clone with multiple --recurse-submodules options' '

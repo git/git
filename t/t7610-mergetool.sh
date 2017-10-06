@@ -621,7 +621,7 @@ test_expect_success 'file with no base' '
 	test_must_fail git merge master &&
 	git mergetool --no-prompt --tool mybase -- both &&
 	>expected &&
-	test_cmp both expected
+	test_cmp expected both
 '
 
 test_expect_success 'custom commands override built-ins' '
@@ -632,7 +632,7 @@ test_expect_success 'custom commands override built-ins' '
 	test_must_fail git merge master &&
 	git mergetool --no-prompt --tool defaults -- both &&
 	echo master both added >expected &&
-	test_cmp both expected
+	test_cmp expected both
 '
 
 test_expect_success 'filenames seen by tools start with ./' '

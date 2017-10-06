@@ -218,7 +218,7 @@ test_expect_success 'D/F' '
 		echo "100644 $a 2	subdir/file2"
 		echo "100644 $b 3	subdir/file2/another"
 	) >expect &&
-	test_cmp actual expect
+	test_cmp expect actual
 
 '
 

@@ -697,7 +697,7 @@ test_expect_success 'merge --no-ff --edit' '
 	git cat-file commit HEAD >raw &&
 	grep "work done on the side branch" raw &&
 	sed "1,/^$/d" >actual raw &&
-	test_cmp actual expected
+	test_cmp expected actual
 '
 
 test_expect_success GPG 'merge --ff-only tag' '
@@ -709,7 +709,7 @@ test_expect_success GPG 'merge --ff-only tag' '
 	git merge --ff-only signed &&
 	git rev-parse signed^0 >expect &&
 	git rev-parse HEAD >actual &&
-	test_cmp actual expect
+	test_cmp expect actual
 '
 
 test_expect_success GPG 'merge --no-edit tag should skip editor' '
@@ -721,7 +721,7 @@ test_expect_success GPG 'merge --no-edit tag should skip editor' '
 	EDITOR=false git merge --no-edit signed &&
 	git rev-parse signed^0 >expect &&
 	git rev-parse HEAD^2 >actual &&
-	test_cmp actual expect
+	test_cmp expect actual
 '
 
 test_expect_success 'set up mod-256 conflict scenario' '
