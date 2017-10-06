@@ -616,6 +616,10 @@ extern int read_index_unmerged(struct index_state *);
  * split index to the lockfile. If the temporary file for the shared
  * index cannot be created, fall back to the behavior described in
  * the previous paragraph.
+ *
+ * With `COMMIT_LOCK`, the lock is always committed or rolled back.
+ * Without it, the lock is closed, but neither committed nor rolled
+ * back.
  */
 extern int write_locked_index(struct index_state *, struct lock_file *lock, unsigned flags);
 
