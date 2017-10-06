@@ -129,11 +129,35 @@ test_expect_success 'symbolic-ref does not create ref d/f conflicts' '
 	test_must_fail git symbolic-ref refs/heads/df/conflict refs/heads/df
 '
 
-test_expect_success 'symbolic-ref handles existing pointer to invalid name' '
+test_expect_success 'symbolic-ref can overwrite pointer to invalid name' '
+	test_when_finished reset_to_sane &&
 	head=$(git rev-parse HEAD) &&
 	git symbolic-ref HEAD refs/heads/outer &&
+	test_when_finished "git update-ref -d refs/heads/outer/inner" &&
 	git update-ref refs/heads/outer/inner $head &&
 	git symbolic-ref HEAD refs/heads/unrelated
+'
+
+test_expect_success 'symbolic-ref can resolve d/f name (EISDIR)' '
+	test_when_finished reset_to_sane &&
+	head=$(git rev-parse HEAD) &&
+	git symbolic-ref HEAD refs/heads/outer/inner &&
+	test_when_finished "git update-ref -d refs/heads/outer" &&
+	git update-ref refs/heads/outer $head &&
+	echo refs/heads/outer/inner >expect &&
+	git symbolic-ref HEAD >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'symbolic-ref can resolve d/f name (ENOTDIR)' '
+	test_when_finished reset_to_sane &&
+	head=$(git rev-parse HEAD) &&
+	git symbolic-ref HEAD refs/heads/outer &&
+	test_when_finished "git update-ref -d refs/heads/outer/inner" &&
+	git update-ref refs/heads/outer/inner $head &&
+	echo refs/heads/outer >expect &&
+	git symbolic-ref HEAD >actual &&
+	test_cmp expect actual
 '
 
 test_done
