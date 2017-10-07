@@ -34,11 +34,10 @@ static struct strbuf *get_pathname(void)
 	return sb;
 }
 
-static char *cleanup_path(char *path)
+static const char *cleanup_path(const char *path)
 {
 	/* Clean it up */
-	if (!memcmp(path, "./", 2)) {
-		path += 2;
+	if (skip_prefix(path, "./", &path)) {
 		while (*path == '/')
 			path++;
 	}
@@ -47,7 +46,7 @@ static char *cleanup_path(char *path)
 
 static void strbuf_cleanup_path(struct strbuf *sb)
 {
-	char *path = cleanup_path(sb->buf);
+	const char *path = cleanup_path(sb->buf);
 	if (path > sb->buf)
 		strbuf_remove(sb, 0, path - sb->buf);
 }
@@ -64,7 +63,7 @@ char *mksnpath(char *buf, size_t n, const char *fmt, ...)
 		strlcpy(buf, bad_path, n);
 		return buf;
 	}
-	return cleanup_path(buf);
+	return (char *)cleanup_path(buf);
 }
 
 static int dir_prefix(const char *buf, const char *dir)

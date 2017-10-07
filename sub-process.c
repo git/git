@@ -77,13 +77,12 @@ int subprocess_start(struct hashmap *hashmap, struct subprocess_entry *entry, co
 {
 	int err;
 	struct child_process *process;
-	const char *argv[] = { cmd, NULL };
 
 	entry->cmd = cmd;
 	process = &entry->process;
 
 	child_process_init(process);
-	process->argv = argv;
+	argv_array_push(&process->args, cmd);
 	process->use_shell = 1;
 	process->in = -1;
 	process->out = -1;
