@@ -8,12 +8,12 @@ Backward compatibility notes and other notable changes.
    more explicit '.' for that instead.  The hope is that existing
    users will not mind this change, and eventually the warning can be
    turned into a hard error, upgrading the deprecation into removal of
-   this (mis)feature.  That is now scheduled to happen in the upcoming
-   release.
+   this (mis)feature.  That is now scheduled to happen in Git v2.16,
+   the next major release after this one.
 
  * Git now avoids blindly falling back to ".git" when the setup
    sequence said we are _not_ in Git repository.  A corner case that
-   happens to work right now may be broken by a call to die("BUG").
+   happens to work right now may be broken by a call to BUG().
    We've tried hard to locate such cases and fixed them, but there
    might still be cases that need to be addressed--bug reports are
    greatly appreciated.
@@ -60,6 +60,10 @@ UI, Workflows & Features
  * "git interpret-trailers" has been taught a "--parse" and a few
    other options to make it easier for scripts to grab existing
    trailer lines from a commit log message.
+
+ * The "--format=%(trailers)" option "git log" and its friends take
+   learned to take the 'unfold' and 'only' modifiers to normalize its
+   output, e.g. "git log --format=%(trailers:only,unfold)".
 
  * "gitweb" shows a link to visit the 'raw' contents of blbos in the
    history overview page.
@@ -221,6 +225,11 @@ Performance, Internal Implementation, Development Support etc.
 
  * Add comment to clarify that the style file is meant to be used with
    clang-5 and the rules are still work in progress.
+
+ * Many variables that points at a region of memory that will live
+   throughout the life of the program have been marked with UNLEAK
+   marker to help the leak checkers concentrate on real leaks..
+
 
 Also contains various documentation updates and code clean-ups.
 
@@ -455,6 +464,27 @@ Fixes since v2.14
    request-pull script.
    (merge e66d7c37a5 ar/request-pull-phrasofix later to maint).
 
+ * Fixes for a handful memory access issues identified by valgrind.
+   (merge 2944a94c6b tg/memfixes later to maint).
+
+ * Backports a moral equivalent of 2015 fix to the poll() emulation
+   from the upstream gnulib to fix occasional breakages on HPE NonStop.
+   (merge 61b2a1acaa rb/compat-poll-fix later to maint).
+
+ * Users with "color.ui = always" in their configuration were broken
+   by a recent change that made plumbing commands to pay attention to
+   them as the patch created internally by "git add -p" were colored
+   (heh) and made unusable.  Fix this regression by redefining
+   'always' to mean the same thing as 'auto'.
+   (merge 6be4595edb jk/ui-color-always-to-auto-maint later to maint).
+
+ * In the "--format=..." option of the "git for-each-ref" command (and
+   its friends, i.e. the listing mode of "git branch/tag"), "%(atom:)"
+   (e.g. "%(refname:)", "%(body:)" used to error out.  Instead, treat
+   them as if the colon and an empty string that follows it were not
+   there.
+   (merge bea4dbeafd tb/ref-filter-empty-modifier later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge f094b89a4d ma/parse-maybe-bool later to maint).
    (merge 39b00fa4d4 jk/drop-sha1-entry-pos later to maint).
@@ -481,3 +511,8 @@ Fixes since v2.14
    (merge 9ca356fa8b rs/cocci-de-paren-call-params later to maint).
    (merge 7099153e8d rs/tag-null-pointer-arith-fix later to maint).
    (merge 0e187d758c rs/run-command-use-alloc-array later to maint).
+   (merge e0222159fa jn/strbuf-doc-re-reuse later to maint).
+   (merge 97487ea11a rs/qsort-s later to maint).
+   (merge a9155c50bd sb/branch-avoid-repeated-strbuf-release later to maint).
+   (merge f777623514 ks/branch-tweak-error-message-for-extra-args later to maint).
+   (merge 33f3c683ec ks/verify-filename-non-option-error-message-tweak later to maint).
