@@ -40,7 +40,7 @@ static unsigned int pack_max_fds;
 static size_t peak_pack_mapped;
 static size_t pack_mapped;
 struct packed_git *packed_git;
-struct mru packed_git_mru;
+struct mru packed_git_mru = {{&packed_git_mru.list, &packed_git_mru.list}};
 
 #define SZ_FMT PRIuMAX
 static inline uintmax_t sz_fmt(size_t s) { return s; }
@@ -1831,13 +1831,14 @@ static int fill_pack_entry(const unsigned char *sha1,
  */
 int find_pack_entry(const unsigned char *sha1, struct pack_entry *e)
 {
-	struct mru_entry *p;
+	struct list_head *pos;
 
 	prepare_packed_git();
 	if (!packed_git)
 		return 0;
 
-	for (p = packed_git_mru.head; p; p = p->next) {
+	list_for_each(pos, &packed_git_mru.list) {
+		struct mru *p = list_entry(pos, struct mru, list);
 		if (fill_pack_entry(sha1, e, p->item)) {
 			mru_mark(&packed_git_mru, p);
 			return 1;
