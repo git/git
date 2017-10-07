@@ -6,6 +6,7 @@
 test_description='git status'
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-terminal.sh
 
 test_expect_success 'status -h in broken repository' '
 	git config --global advice.statusuoption false &&
@@ -667,7 +668,7 @@ test_expect_success 'setup unique colors' '
 
 '
 
-test_expect_success 'status with color.ui' '
+test_expect_success TTY 'status with color.ui' '
 	cat >expect <<\EOF &&
 On branch <GREEN>master<RESET>
 Your branch and '\''upstream'\'' have diverged,
@@ -694,14 +695,14 @@ Untracked files:
 	<BLUE>untracked<RESET>
 
 EOF
-	test_config color.ui always &&
-	git status | test_decode_color >output &&
+	test_config color.ui auto &&
+	test_terminal git status | test_decode_color >output &&
 	test_i18ncmp expect output
 '
 
-test_expect_success 'status with color.status' '
-	test_config color.status always &&
-	git status | test_decode_color >output &&
+test_expect_success TTY 'status with color.status' '
+	test_config color.status auto &&
+	test_terminal git status | test_decode_color >output &&
 	test_i18ncmp expect output
 '
 
@@ -714,19 +715,19 @@ cat >expect <<\EOF
 <BLUE>??<RESET> untracked
 EOF
 
-test_expect_success 'status -s with color.ui' '
+test_expect_success TTY 'status -s with color.ui' '
 
-	git config color.ui always &&
-	git status -s | test_decode_color >output &&
+	git config color.ui auto &&
+	test_terminal git status -s | test_decode_color >output &&
 	test_cmp expect output
 
 '
 
-test_expect_success 'status -s with color.status' '
+test_expect_success TTY 'status -s with color.status' '
 
 	git config --unset color.ui &&
-	git config color.status always &&
-	git status -s | test_decode_color >output &&
+	git config color.status auto &&
+	test_terminal git status -s | test_decode_color >output &&
 	test_cmp expect output
 
 '
@@ -741,9 +742,9 @@ cat >expect <<\EOF
 <BLUE>??<RESET> untracked
 EOF
 
-test_expect_success 'status -s -b with color.status' '
+test_expect_success TTY 'status -s -b with color.status' '
 
-	git status -s -b | test_decode_color >output &&
+	test_terminal git status -s -b | test_decode_color >output &&
 	test_i18ncmp expect output
 
 '
@@ -757,20 +758,20 @@ A  dir2/added
 ?? untracked
 EOF
 
-test_expect_success 'status --porcelain ignores color.ui' '
+test_expect_success TTY 'status --porcelain ignores color.ui' '
 
 	git config --unset color.status &&
-	git config color.ui always &&
-	git status --porcelain | test_decode_color >output &&
+	git config color.ui auto &&
+	test_terminal git status --porcelain | test_decode_color >output &&
 	test_cmp expect output
 
 '
 
-test_expect_success 'status --porcelain ignores color.status' '
+test_expect_success TTY 'status --porcelain ignores color.status' '
 
 	git config --unset color.ui &&
-	git config color.status always &&
-	git status --porcelain | test_decode_color >output &&
+	git config color.status auto &&
+	test_terminal git status --porcelain | test_decode_color >output &&
 	test_cmp expect output
 
 '

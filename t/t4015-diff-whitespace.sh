@@ -802,7 +802,6 @@ test_expect_success 'combined diff with autocrlf conversion' '
 # Start testing the colored format for whitespace checks
 
 test_expect_success 'setup diff colors' '
-	git config color.diff always &&
 	git config color.diff.plain normal &&
 	git config color.diff.meta bold &&
 	git config color.diff.frag cyan &&
@@ -821,7 +820,7 @@ test_expect_success 'diff that introduces a line with only tabs' '
 	echo "test" >x &&
 	git commit -m "initial" x &&
 	echo "{NTN}" | tr "NT" "\n\t" >>x &&
-	git -c color.diff=always diff | test_decode_color >current &&
+	git diff --color | test_decode_color >current &&
 
 	cat >expected <<-\EOF &&
 	<BOLD>diff --git a/x b/x<RESET>
@@ -851,7 +850,7 @@ test_expect_success 'diff that introduces and removes ws breakages' '
 		echo "2. and a new line "
 	} >x &&
 
-	git -c color.diff=always diff |
+	git diff --color |
 	test_decode_color >current &&
 
 	cat >expected <<-\EOF &&
@@ -923,15 +922,15 @@ test_expect_success 'ws-error-highlight test setup' '
 
 test_expect_success 'test --ws-error-highlight option' '
 
-	git -c color.diff=always diff --ws-error-highlight=default,old |
+	git diff --color --ws-error-highlight=default,old |
 	test_decode_color >current &&
 	test_cmp expect.default-old current &&
 
-	git -c color.diff=always diff --ws-error-highlight=all |
+	git diff --color --ws-error-highlight=all |
 	test_decode_color >current &&
 	test_cmp expect.all current &&
 
-	git -c color.diff=always diff --ws-error-highlight=none |
+	git diff --color --ws-error-highlight=none |
 	test_decode_color >current &&
 	test_cmp expect.none current
 
@@ -939,15 +938,15 @@ test_expect_success 'test --ws-error-highlight option' '
 
 test_expect_success 'test diff.wsErrorHighlight config' '
 
-	git -c color.diff=always -c diff.wsErrorHighlight=default,old diff |
+	git -c diff.wsErrorHighlight=default,old diff --color |
 	test_decode_color >current &&
 	test_cmp expect.default-old current &&
 
-	git -c color.diff=always -c diff.wsErrorHighlight=all diff |
+	git -c diff.wsErrorHighlight=all diff --color |
 	test_decode_color >current &&
 	test_cmp expect.all current &&
 
-	git -c color.diff=always -c diff.wsErrorHighlight=none diff |
+	git -c diff.wsErrorHighlight=none diff --color |
 	test_decode_color >current &&
 	test_cmp expect.none current
 
@@ -955,18 +954,18 @@ test_expect_success 'test diff.wsErrorHighlight config' '
 
 test_expect_success 'option overrides diff.wsErrorHighlight' '
 
-	git -c color.diff=always -c diff.wsErrorHighlight=none \
-		diff --ws-error-highlight=default,old |
+	git -c diff.wsErrorHighlight=none \
+		diff --color --ws-error-highlight=default,old |
 	test_decode_color >current &&
 	test_cmp expect.default-old current &&
 
-	git -c color.diff=always -c diff.wsErrorHighlight=default \
-		diff --ws-error-highlight=all |
+	git -c diff.wsErrorHighlight=default \
+		diff --color --ws-error-highlight=all |
 	test_decode_color >current &&
 	test_cmp expect.all current &&
 
-	git -c color.diff=always -c diff.wsErrorHighlight=all \
-		diff --ws-error-highlight=none |
+	git -c diff.wsErrorHighlight=all \
+		diff --color --ws-error-highlight=none |
 	test_decode_color >current &&
 	test_cmp expect.none current
 
@@ -986,7 +985,7 @@ test_expect_success 'detect moved code, complete file' '
 	git mv test.c main.c &&
 	test_config color.diff.oldMoved "normal red" &&
 	test_config color.diff.newMoved "normal green" &&
-	git diff HEAD --color-moved=zebra --no-renames | test_decode_color >actual &&
+	git diff HEAD --color-moved=zebra --color --no-renames | test_decode_color >actual &&
 	cat >expected <<-\EOF &&
 	<BOLD>diff --git a/main.c b/main.c<RESET>
 	<BOLD>new file mode 100644<RESET>
@@ -1087,7 +1086,7 @@ test_expect_success 'detect malicious moved code, inside file' '
 			bar();
 		}
 	EOF
-	git diff HEAD --no-renames --color-moved=zebra| test_decode_color >actual &&
+	git diff HEAD --no-renames --color-moved=zebra --color | test_decode_color >actual &&
 	cat <<-\EOF >expected &&
 	<BOLD>diff --git a/main.c b/main.c<RESET>
 	<BOLD>index 27a619c..7cf9336 100644<RESET>
@@ -1136,7 +1135,7 @@ test_expect_success 'plain moved code, inside file' '
 	test_config color.diff.oldMovedAlternative "blue" &&
 	test_config color.diff.newMovedAlternative "yellow" &&
 	# needs previous test as setup
-	git diff HEAD --no-renames --color-moved=plain| test_decode_color >actual &&
+	git diff HEAD --no-renames --color-moved=plain --color | test_decode_color >actual &&
 	cat <<-\EOF >expected &&
 	<BOLD>diff --git a/main.c b/main.c<RESET>
 	<BOLD>index 27a619c..7cf9336 100644<RESET>
@@ -1227,7 +1226,7 @@ test_expect_success 'detect permutations inside moved code -- dimmed_zebra' '
 	test_config color.diff.newMovedDimmed "normal cyan" &&
 	test_config color.diff.oldMovedAlternativeDimmed "normal blue" &&
 	test_config color.diff.newMovedAlternativeDimmed "normal yellow" &&
-	git diff HEAD --no-renames --color-moved=dimmed_zebra |
+	git diff HEAD --no-renames --color-moved=dimmed_zebra --color |
 		grep -v "index" |
 		test_decode_color >actual &&
 	cat <<-\EOF >expected &&
@@ -1271,7 +1270,7 @@ test_expect_success 'cmd option assumes configured colored-moved' '
 	test_config color.diff.oldMovedAlternativeDimmed "normal blue" &&
 	test_config color.diff.newMovedAlternativeDimmed "normal yellow" &&
 	test_config diff.colorMoved zebra &&
-	git diff HEAD --no-renames --color-moved |
+	git diff HEAD --no-renames --color-moved --color |
 		grep -v "index" |
 		test_decode_color >actual &&
 	cat <<-\EOF >expected &&
@@ -1343,7 +1342,7 @@ line 4
 EOF
 	test_config color.diff.oldMoved "magenta" &&
 	test_config color.diff.newMoved "cyan" &&
-	git diff HEAD --no-renames --color-moved |
+	git diff HEAD --no-renames --color-moved --color |
 		grep -v "index" |
 		test_decode_color >actual &&
 	cat <<-\EOF >expected &&
@@ -1364,7 +1363,7 @@ EOF
 	EOF
 	test_cmp expected actual &&
 
-	git diff HEAD --no-renames -w --color-moved |
+	git diff HEAD --no-renames -w --color-moved --color |
 		grep -v "index" |
 		test_decode_color >actual &&
 	cat <<-\EOF >expected &&
@@ -1403,7 +1402,7 @@ test_expect_success '--color-moved block at end of diff output respects MIN_ALNU
 	irrelevant_line
 	EOF
 
-	git diff HEAD --color-moved=zebra --no-renames |
+	git diff HEAD --color-moved=zebra --color --no-renames |
 		grep -v "index" |
 		test_decode_color >actual &&
 	cat >expected <<-\EOF &&
@@ -1442,7 +1441,7 @@ test_expect_success '--color-moved respects MIN_ALNUM_COUNT' '
 	nineteen chars 456789
 	EOF
 
-	git diff HEAD --color-moved=zebra --no-renames |
+	git diff HEAD --color-moved=zebra --color --no-renames |
 		grep -v "index" |
 		test_decode_color >actual &&
 	cat >expected <<-\EOF &&
@@ -1485,7 +1484,7 @@ test_expect_success '--color-moved treats adjacent blocks as separate for MIN_AL
 	7charsA
 	EOF
 
-	git diff HEAD --color-moved=zebra --no-renames | grep -v "index" | test_decode_color >actual &&
+	git diff HEAD --color-moved=zebra --color --no-renames | grep -v "index" | test_decode_color >actual &&
 	cat >expected <<-\EOF &&
 	<BOLD>diff --git a/bar b/bar<RESET>
 	<BOLD>--- a/bar<RESET>
@@ -1519,7 +1518,7 @@ test_expect_success 'move detection with submodules' '
 	echo foul >bananas/recipe &&
 	echo ripe >fruit.t &&
 
-	git diff --submodule=diff --color-moved >actual &&
+	git diff --submodule=diff --color-moved --color >actual &&
 
 	# no move detection as the moved line is across repository boundaries.
 	test_decode_color <actual >decoded_actual &&
@@ -1527,7 +1526,7 @@ test_expect_success 'move detection with submodules' '
 	! grep BRED decoded_actual &&
 
 	# nor did we mess with it another way
-	git diff --submodule=diff | test_decode_color >expect &&
+	git diff --submodule=diff --color | test_decode_color >expect &&
 	test_cmp expect decoded_actual
 '
 
