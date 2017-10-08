@@ -613,7 +613,7 @@ re_string_reconstruct (re_string_t *pstr, int idx, int eflags)
 	      int low = 0, high = pstr->valid_len, mid;
 	      do
 		{
-		  mid = (high + low) / 2;
+		  mid = low + (high - low) / 2;
 		  if (pstr->offsets[mid] > offset)
 		    high = mid;
 		  else if (pstr->offsets[mid] < offset)
@@ -1394,7 +1394,7 @@ re_node_set_contains (const re_node_set *set, int elem)
   right = set->nelem - 1;
   while (idx < right)
     {
-      mid = (idx + right) / 2;
+      mid = idx + (right - idx) / 2;
       if (set->elems[mid] < elem)
 	idx = mid + 1;
       else

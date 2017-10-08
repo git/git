@@ -394,7 +394,7 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 		lo = 0;
 		hi = nr;
 		while (lo < hi) {
-			mid = (lo + hi)/2;
+			mid = lo + (hi - lo) / 2;
 			if (base_offset < obj_list[mid].offset) {
 				hi = mid;
 			} else if (base_offset > obj_list[mid].offset) {
