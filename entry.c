@@ -240,6 +240,7 @@ static int write_entry(struct cache_entry *ce,
 		       char *path, const struct checkout *state, int to_tempfile)
 {
 	unsigned int ce_mode_s_ifmt = ce->ce_mode & S_IFMT;
+	struct delayed_checkout *dco = state->delayed_checkout;
 	int fd, ret, fstat_done = 0;
 	char *new;
 	struct strbuf buf = STRBUF_INIT;
@@ -261,10 +262,19 @@ static int write_entry(struct cache_entry *ce,
 	switch (ce_mode_s_ifmt) {
 	case S_IFREG:
 	case S_IFLNK:
-		new = read_blob_entry(ce, &size);
-		if (!new)
-			return error("unable to read sha1 file of %s (%s)",
-				path, oid_to_hex(&ce->oid));
+		/*
+		 * We do not send the blob in case of a retry, so do not
+		 * bother reading it at all.
+		 */
+		if (ce_mode_s_ifmt == S_IFREG && dco && dco->state == CE_RETRY) {
+			new = NULL;
+			size = 0;
+		} else {
+			new = read_blob_entry(ce, &size);
+			if (!new)
+				return error("unable to read sha1 file of %s (%s)",
+					     path, oid_to_hex(&ce->oid));
+		}
 
 		if (ce_mode_s_ifmt == S_IFLNK && has_symlinks && !to_tempfile) {
 			ret = symlink(new, path);
@@ -279,14 +289,7 @@ static int write_entry(struct cache_entry *ce,
 		 * Convert from git internal format to working tree format
 		 */
 		if (ce_mode_s_ifmt == S_IFREG) {
-			struct delayed_checkout *dco = state->delayed_checkout;
 			if (dco && dco->state != CE_NO_DELAY) {
-				/* Do not send the blob in case of a retry. */
-				if (dco->state == CE_RETRY) {
-					free(new);
-					new = NULL;
-					size = 0;
-				}
 				ret = async_convert_to_working_tree(
 					ce->name, new, size, &buf, dco);
 				if (ret && string_list_has_string(&dco->paths, ce->name)) {
