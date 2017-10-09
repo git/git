@@ -283,6 +283,7 @@ static int write_entry(struct cache_entry *ce,
 			if (dco && dco->state != CE_NO_DELAY) {
 				/* Do not send the blob in case of a retry. */
 				if (dco->state == CE_RETRY) {
+					free(new);
 					new = NULL;
 					size = 0;
 				}
