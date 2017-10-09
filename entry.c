@@ -260,13 +260,31 @@ static int write_entry(struct cache_entry *ce,
 	}
 
 	switch (ce_mode_s_ifmt) {
-	case S_IFREG:
 	case S_IFLNK:
+		new = read_blob_entry(ce, &size);
+		if (!new)
+			return error("unable to read sha1 file of %s (%s)",
+				     path, oid_to_hex(&ce->oid));
+
+		/*
+		 * We can't make a real symlink; write out a regular file entry
+		 * with the symlink destination as its contents.
+		 */
+		if (!has_symlinks || to_tempfile)
+			goto write_file_entry;
+
+		ret = symlink(new, path);
+		free(new);
+		if (ret)
+			return error_errno("unable to create symlink %s", path);
+		break;
+
+	case S_IFREG:
 		/*
 		 * We do not send the blob in case of a retry, so do not
 		 * bother reading it at all.
 		 */
-		if (ce_mode_s_ifmt == S_IFREG && dco && dco->state == CE_RETRY) {
+		if (dco && dco->state == CE_RETRY) {
 			new = NULL;
 			size = 0;
 		} else {
@@ -276,42 +294,31 @@ static int write_entry(struct cache_entry *ce,
 					     path, oid_to_hex(&ce->oid));
 		}
 
-		if (ce_mode_s_ifmt == S_IFLNK && has_symlinks && !to_tempfile) {
-			ret = symlink(new, path);
-			free(new);
-			if (ret)
-				return error_errno("unable to create symlink %s",
-						   path);
-			break;
-		}
-
 		/*
 		 * Convert from git internal format to working tree format
 		 */
-		if (ce_mode_s_ifmt == S_IFREG) {
-			if (dco && dco->state != CE_NO_DELAY) {
-				ret = async_convert_to_working_tree(
-					ce->name, new, size, &buf, dco);
-				if (ret && string_list_has_string(&dco->paths, ce->name)) {
-					free(new);
-					goto delayed;
-				}
-			} else
-				ret = convert_to_working_tree(
-					ce->name, new, size, &buf);
-
-			if (ret) {
+		if (dco && dco->state != CE_NO_DELAY) {
+			ret = async_convert_to_working_tree(ce->name, new,
+							    size, &buf, dco);
+			if (ret && string_list_has_string(&dco->paths, ce->name)) {
 				free(new);
-				new = strbuf_detach(&buf, &newsize);
-				size = newsize;
+				goto delayed;
 			}
-			/*
-			 * No "else" here as errors from convert are OK at this
-			 * point. If the error would have been fatal (e.g.
-			 * filter is required), then we would have died already.
-			 */
-		}
+		} else
+			ret = convert_to_working_tree(ce->name, new, size, &buf);
 
+		if (ret) {
+			free(new);
+			new = strbuf_detach(&buf, &newsize);
+			size = newsize;
+		}
+		/*
+		 * No "else" here as errors from convert are OK at this
+		 * point. If the error would have been fatal (e.g.
+		 * filter is required), then we would have died already.
+		 */
+
+	write_file_entry:
 		fd = open_output_fd(path, ce, to_tempfile);
 		if (fd < 0) {
 			free(new);
@@ -326,6 +333,7 @@ static int write_entry(struct cache_entry *ce,
 		if (wrote != size)
 			return error("unable to write file %s", path);
 		break;
+
 	case S_IFGITLINK:
 		if (to_tempfile)
 			return error("cannot create temporary submodule %s", path);
@@ -337,6 +345,7 @@ static int write_entry(struct cache_entry *ce,
 				NULL, oid_to_hex(&ce->oid),
 				state->force ? SUBMODULE_MOVE_HEAD_FORCE : 0);
 		break;
+
 	default:
 		return error("unknown file mode for %s in index", path);
 	}
