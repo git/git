@@ -1435,8 +1435,21 @@ const char *refs_resolve_ref_unsafe(struct ref_store *refs,
 		if (refs_read_raw_ref(refs, refname,
 				      sha1, &sb_refname, &read_flags)) {
 			*flags |= read_flags;
-			if (errno != ENOENT || (resolve_flags & RESOLVE_REF_READING))
+
+			/* In reading mode, refs must eventually resolve */
+			if (resolve_flags & RESOLVE_REF_READING)
 				return NULL;
+
+			/*
+			 * Otherwise a missing ref is OK. But the files backend
+			 * may show errors besides ENOENT if there are
+			 * similarly-named refs.
+			 */
+			if (errno != ENOENT &&
+			    errno != EISDIR &&
+			    errno != ENOTDIR)
+				return NULL;
+
 			hashclr(sha1);
 			if (*flags & REF_BAD_NAME)
 				*flags |= REF_ISBROKEN;

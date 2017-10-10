@@ -117,6 +117,16 @@ test_expect_success 'git branch -m bbb should rename checked out branch' '
 	test_cmp expect actual
 '
 
+test_expect_success 'renaming checked out branch works with d/f conflict' '
+	test_when_finished "git branch -D foo/bar || git branch -D foo" &&
+	test_when_finished git checkout master &&
+	git checkout -b foo &&
+	git branch -m foo/bar &&
+	git symbolic-ref HEAD >actual &&
+	echo refs/heads/foo/bar >expect &&
+	test_cmp expect actual
+'
+
 test_expect_success 'git branch -m o/o o should fail when o/p exists' '
 	git branch o/o &&
 	git branch o/p &&
