@@ -166,7 +166,7 @@ static int binary_search(struct entry **sequence, int longest,
 	int left = -1, right = longest;
 
 	while (left + 1 < right) {
-		int middle = (left + right) / 2;
+		int middle = left + (right - left) / 2;
 		/* by construction, no two entries can be equal */
 		if (sequence[middle]->line2 > entry->line2)
 			right = middle;

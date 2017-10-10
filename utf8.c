@@ -32,7 +32,7 @@ static int bisearch(ucs_char_t ucs, const struct interval *table, int max)
 	if (ucs < table[0].first || ucs > table[max].last)
 		return 0;
 	while (max >= min) {
-		mid = (min + max) / 2;
+		mid = min + (max - min) / 2;
 		if (ucs > table[mid].last)
 			min = mid + 1;
 		else if (ucs < table[mid].first)

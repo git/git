@@ -157,7 +157,7 @@ static void unique_in_pack(struct packed_git *p,
 	num = p->num_objects;
 	last = num;
 	while (first < last) {
-		uint32_t mid = (first + last) / 2;
+		uint32_t mid = first + (last - first) / 2;
 		const unsigned char *current;
 		int cmp;
 
