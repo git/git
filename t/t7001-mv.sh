@@ -488,7 +488,7 @@ test_expect_success 'moving a submodule in nested directories' '
 		git config -f ../.gitmodules submodule.deep/directory/hierarchy/sub.path >../actual &&
 		echo "directory/hierarchy/sub" >../expect
 	) &&
-	test_cmp actual expect
+	test_cmp expect actual
 '
 
 test_expect_failure 'moving nested submodules' '

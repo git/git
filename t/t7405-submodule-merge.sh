@@ -119,7 +119,7 @@ test_expect_success 'merge with one side as a fast-forward of the other' '
 	 git ls-tree test-forward sub | cut -f1 | cut -f3 -d" " > actual &&
 	 (cd sub &&
 	  git rev-parse sub-d > ../expect) &&
-	 test_cmp actual expect)
+	 test_cmp expect actual)
 '
 
 test_expect_success 'merging should conflict for non fast-forward' '
