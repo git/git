@@ -8,7 +8,7 @@ always NULL-terminated at the element pointed to by `argv[argc]`. This
 makes the result suitable for passing to functions expecting to receive
 argv from main(), or the link:api-run-command.html[run-command API].
 
-The link:api-string-list.html[string-list API] is similar, but cannot be
+The string-list API (documented in string-list.h) is similar, but cannot be
 used for these purposes; instead of storing a straight string pointer,
 it contains an item structure with a `util` field that is not compatible
 with the traditional argv interface.
