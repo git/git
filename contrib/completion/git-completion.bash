@@ -2350,6 +2350,7 @@ _git_config ()
 		advice.rmHints
 		advice.statusHints
 		advice.statusUoption
+		advice.ignoredHook
 		alias.
 		am.keepcr
 		am.threeWay

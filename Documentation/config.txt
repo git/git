@@ -351,6 +351,9 @@ advice.*::
 	addEmbeddedRepo::
 		Advice on what to do when you've accidentally added one
 		git repo inside of another.
+	ignoredHook::
+		Advice shown if an hook is ignored because the hook is not
+		set as executable.
 --
 
 core.fileMode::
