@@ -222,6 +222,28 @@ test_expect_success 'unparseable tree object' '
 	test_i18ngrep ! "fatal: empty filename in tree entry" out
 '
 
+hex2oct() {
+	perl -ne 'printf "\\%03o", hex for /../g'
+}
+
+test_expect_success 'tree entry with type mismatch' '
+	test_when_finished "remove_object \$blob" &&
+	test_when_finished "remove_object \$tree" &&
+	test_when_finished "remove_object \$commit" &&
+	test_when_finished "git update-ref -d refs/heads/type_mismatch" &&
+	blob=$(echo blob | git hash-object -w --stdin) &&
+	blob_bin=$(echo $blob | hex2oct) &&
+	tree=$(
+		printf "40000 dir\0${blob_bin}100644 file\0${blob_bin}" |
+		git hash-object -t tree --stdin -w --literally
+	) &&
+	commit=$(git commit-tree $tree) &&
+	git update-ref refs/heads/type_mismatch $commit &&
+	test_must_fail git fsck >out 2>&1 &&
+	test_i18ngrep "is a blob, not a tree" out &&
+	test_i18ngrep ! "dangling blob" out
+'
+
 test_expect_success 'tag pointing to nonexistent' '
 	cat >invalid-tag <<-\EOF &&
 	object ffffffffffffffffffffffffffffffffffffffff
