@@ -10,7 +10,7 @@ static uint32_t take2(const unsigned char *sha1)
  * Conventional binary search loop looks like this:
  *
  *      do {
- *              int mi = (lo + hi) / 2;
+ *              int mi = lo + (hi - lo) / 2;
  *              int cmp = "entry pointed at by mi" minus "target";
  *              if (!cmp)
  *                      return (mi is the wanted one)
@@ -95,7 +95,7 @@ int sha1_pos(const unsigned char *sha1, void *table, size_t nr,
 			hi = mi;
 		else
 			lo = mi + 1;
-		mi = (hi + lo) / 2;
+		mi = lo + (hi - lo) / 2;
 	} while (lo < hi);
 	return -lo-1;
 }
