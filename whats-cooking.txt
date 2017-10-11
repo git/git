@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Oct 2017, #01; Wed, 4)
-X-master-at: 8fb8a945bc2dea2bb04249213ad8dacffbfc604f
-X-next-at: 6663358d3414aff4d7dac0c6f06cbfcc2cb48ddb
+Subject: What's cooking in git.git (Oct 2017, #02; Wed, 11)
+X-master-at: 111ef79afe185f8731920569450f6a65320f5d5f
+X-next-at: 92ea9504509327dacaba929d631d198e57533c14
 
-What's cooking in git.git (Oct 2017, #01; Wed, 4)
+What's cooking in git.git (Oct 2017, #02; Wed, 11)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,9 +12,10 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-I wanted to do v2.15-rc0 today but it seems that this has to slip,
-with too many topics still in flight in 'next' among which many are
-fixes, one is even a fix for a recent regression.
+2.15-rc1 has been tagged.  Some of the topic marked "Will merge to
+'master'" below might still become part of 2.15 final, while others
+may be left to be merged after the final, to become part of the
+release after that one (2.16?).
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -24,248 +25,145 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ad/doc-markup-fix (2017-09-29) 1 commit
-  (merged to 'next' on 2017-10-02 at fdf600e8f3)
- + doc: correct command formatting
+* ar/request-pull-phrasofix (2017-10-03) 1 commit
+  (merged to 'next' on 2017-10-03 at 07807bba90)
+ + request-pull: capitalise "Git" to make it a proper noun
 
- Docfix.
-
-
-* bc/rev-parse-parseopt-fix (2017-09-25) 7 commits
-  (merged to 'next' on 2017-09-26 at f3e013eaa4)
- + parse-options: only insert newline in help text if needed
- + parse-options: write blank line to correct output stream
- + t0040,t1502: Demonstrate parse_options bugs
-  (merged to 'next' on 2017-09-24 at e479bce0ff)
- + git-rebase: don't ignore unexpected command line arguments
- + rev-parse parseopt: interpret any whitespace as start of help text
- + rev-parse parseopt: do not search help text for flag chars
- + t1502: demonstrate rev-parse --parseopt option mis-parsing
-
- Recent versions of "git rev-parse --parseopt" did not parse the
- option specification that does not have the optional flags (*=?!)
- correctly, which has been corrected.
+ Spell the name of our system as "Git" in the output from
+ request-pull script.
 
 
-* bw/git-clang-format (2017-10-01) 1 commit
-  (merged to 'next' on 2017-10-02 at ee84c89b07)
- + clang-format: adjust line break penalties
- (this branch is used by sb/git-clang-format.)
-
- Adjust clang-format penalty parameters.
-
-
-* hn/path-ownership-comment (2017-09-27) 2 commits
-  (merged to 'next' on 2017-09-28 at 7cf8481c29)
- + read_gitfile_gently: clarify return value ownership.
- + real_path: clarify return value ownership
-
- Add comment to a few functions that use a short-lived buffer the
- caller can peek and copy out of.
-
-
-* hn/string-list-doc (2017-09-27) 1 commit
-  (merged to 'next' on 2017-09-28 at ffc8f65f4a)
- + string-list.h: move documentation from Documentation/api/ into header
-
- Doc reorg.
-
-
-* hn/submodule-comment (2017-09-26) 1 commit
-  (merged to 'next' on 2017-09-28 at a071ca3fde)
- + submodule.c: describe submodule_to_gitdir() in a new comment
-
-
-* jk/no-optional-locks (2017-09-27) 1 commit
-  (merged to 'next' on 2017-09-28 at eaffe9c638)
- + git: add --no-optional-locks option
-
- Some commands (most notably "git status") makes an opportunistic
- update when performing a read-only operation to help optimize later
- operations in the same repository.  The new "--no-optional-locks"
- option can be passed to Git to disable them.
-
-
-* jk/read-in-full (2017-09-27) 7 commits
-  (merged to 'next' on 2017-09-28 at 9d109b9233)
- + worktree: check the result of read_in_full()
- + worktree: use xsize_t to access file size
- + distinguish error versus short read from read_in_full()
- + avoid looking at errno for short read_in_full() returns
- + prefer "!=" when checking read_in_full() result
- + notes-merge: drop dead zero-write code
- + files-backend: prefer "0" for write_in_full() error check
-
- Code clean-up to prevent future mistakes by copying and pasting
- code that checks the result of read_in_full() function.
-
-
-* jk/validate-headref-fix (2017-09-27) 3 commits
-  (merged to 'next' on 2017-09-28 at dcea9d16f9)
- + validate_headref: use get_oid_hex for detached HEADs
- + validate_headref: use skip_prefix for symref parsing
- + validate_headref: NUL-terminate HEAD buffer
+* ds/avoid-overflow-in-midpoint-computation (2017-10-10) 1 commit
+  (merged to 'next' on 2017-10-10 at 6279867a5d)
+ + cleanup: fix possible overflow errors in binary search
 
  Code clean-up.
 
 
-* js/rebase-i-final (2017-07-27) 10 commits
-  (merged to 'next' on 2017-09-26 at ea3f8f5e11)
- + rebase -i: rearrange fixup/squash lines using the rebase--helper
- + t3415: test fixup with wrapped oneline
- + rebase -i: skip unnecessary picks using the rebase--helper
- + rebase -i: check for missing commits in the rebase--helper
- + t3404: relax rebase.missingCommitsCheck tests
- + rebase -i: also expand/collapse the SHA-1s via the rebase--helper
- + rebase -i: do not invent onelines when expanding/collapsing SHA-1s
- + rebase -i: remove useless indentation
- + rebase -i: generate the script via rebase--helper
- + t3415: verify that an empty instructionFormat is handled as before
+* er/fast-import-dump-refs-on-checkpoint (2017-09-29) 1 commit
+  (merged to 'next' on 2017-10-03 at 4e7b0e7ec1)
+ + fast-import: checkpoint: dump branches/tags/marks even if object_count==0
 
- The final batch to "git rebase -i" updates to move more code from
- the shell script to C.
+ The checkpoint command "git fast-import" did not flush updates to
+ refs and marks unless at least one object was created since the
+ last checkpoint, which has been corrected, as these things can
+ happen without any new object getting created.
 
 
-* mh/mmap-packed-refs (2017-09-25) 21 commits
-  (merged to 'next' on 2017-09-29 at 3639417666)
- + packed-backend.c: rename a bunch of things and update comments
- + mmapped_ref_iterator: inline into `packed_ref_iterator`
- + ref_cache: remove support for storing peeled values
- + packed_ref_store: get rid of the `ref_cache` entirely
- + ref_store: implement `refs_peel_ref()` generically
- + packed_read_raw_ref(): read the reference from the mmapped buffer
- + packed_ref_iterator_begin(): iterate using `mmapped_ref_iterator`
- + read_packed_refs(): ensure that references are ordered when read
- + packed_ref_cache: keep the `packed-refs` file mmapped if possible
- + packed-backend.c: reorder some definitions
- + mmapped_ref_iterator_advance(): no peeled value for broken refs
- + mmapped_ref_iterator: add iterator over a packed-refs file
- + packed_ref_cache: remember the file-wide peeling state
- + read_packed_refs(): read references with minimal copying
- + read_packed_refs(): make parsing of the header line more robust
- + read_packed_refs(): only check for a header at the top of the file
- + read_packed_refs(): use mmap to read the `packed-refs` file
- + die_unterminated_line(), die_invalid_line(): new functions
- + packed_ref_cache: add a backlink to the associated `packed_ref_store`
- + prefix_ref_iterator: break when we leave the prefix
- + ref_iterator: keep track of whether the iterator output is ordered
+* hn/string-list-doc (2017-10-06) 1 commit
+  (merged to 'next' on 2017-10-10 at d214a7c369)
+ + api-argv-array.txt: remove broken link to string-list API
 
- Operations that do not touch (majority of) packed refs have been
- optimized by making accesses to packed-refs file lazy; we no longer
- pre-parse everything, and an access to a single ref in the
- packed-refs does not touch majority of irrelevant refs, either.
+ Docfix.
 
 
-* mr/doc-negative-pathspec (2017-09-25) 1 commit
-  (merged to 'next' on 2017-09-29 at 147bb7ef8b)
- + docs: improve discoverability of exclude pathspec
+* jk/refs-df-conflict (2017-10-07) 2 commits
+  (merged to 'next' on 2017-10-10 at d5953a1ced)
+ + refs_resolve_ref_unsafe: handle d/f conflicts for writes
+ + t3308: create a real ref directory/file conflict
 
- Doc updates.
-
-
-* sb/diff-color-move (2017-09-28) 1 commit
-  (merged to 'next' on 2017-09-28 at cbdbc741be)
- + diff: correct newline in summary for renamed files
-
- The output from "git diff --summary" was broken in a recent topic
- that has been merged to 'master' and lost a LF after reporting of
- mode change.  This has been fixed.
+ An ancient bug that made Git misbehave with creation/renaming of
+ refs has been fixed.
 
 
-* sb/submodule-diff-header-fix (2017-09-28) 1 commit
-  (merged to 'next' on 2017-09-28 at 10e0f59303)
- + submodule: correct error message for missing commits
+* jk/sha1-loose-object-info-fix (2017-10-06) 1 commit
+  (merged to 'next' on 2017-10-10 at bcfd9c4e3f)
+ + sha1_loose_object_info: handle errors from unpack_sha1_rest
+
+ Leakfix and futureproofing.
+
+
+* jk/ui-color-always-to-auto (2017-10-04) 3 commits
+  (merged to 'next' on 2017-10-05 at 792ae936cf)
+ + Merge branch 'jk/ui-color-always-to-auto-maint' into jk/ui-color-always-to-auto
+ + t7301: use test_terminal to check color
+ + t4015: use --color with --color-moved
+ (this branch uses jk/ui-color-always-to-auto-maint.)
+
+ Fix regression of "git add -p" for users with "color.ui = always"
+ in their configuration, by merging the topic below and adjusting it
+ for the 'master' front.
+
+
+* jk/ui-color-always-to-auto-maint (2017-10-04) 10 commits
+ + color: make "always" the same as "auto" in config
+ + provide --color option for all ref-filter users
+ + t3205: use --color instead of color.branch=always
+ + t3203: drop "always" color test
+ + t6006: drop "always" color config tests
+ + t7502: use diff.noprefix for --verbose test
+ + t7508: use test_terminal for color output
+ + t3701: use test-terminal to collect color output
+ + t4015: prefer --color to -c color.diff=always
+ + test-terminal: set TERM=vt100
+ (this branch is used by jk/ui-color-always-to-auto.)
+
+ Users with "color.ui = always" in their configuration were broken
+ by a recent change that made plumbing commands to pay attention to
+ them as the patch created internally by "git add -p" were colored
+ (heh) and made unusable.  Fix this regression by redefining
+ 'always' to mean the same thing as 'auto'.
+
+
+* jn/strbuf-doc-re-reuse (2017-10-04) 1 commit
+  (merged to 'next' on 2017-10-04 at 5940d412d9)
+ + strbuf doc: reuse after strbuf_release is fine
+
+
+* jr/hash-migration-plan-doc (2017-09-28) 1 commit
+  (merged to 'next' on 2017-10-04 at b47b3bb656)
+ + technical doc: add a design doc for hash function transition
+
+ Lay out plans for weaning us off of SHA-1.
+
+
+* jt/oidmap (2017-10-01) 1 commit
+  (merged to 'next' on 2017-10-05 at e41445fc33)
+ + oidmap: map with OID as key
+
+ Introduce a new "oidmap" API and rewrite oidset to use it.
+
+
+* ks/branch-tweak-error-message-for-extra-args (2017-10-04) 1 commit
+  (merged to 'next' on 2017-10-05 at aa0b656bf0)
+ + branch: change the error messages to be more meaningful
 
  Error message tweak.
 
 
-* sb/test-submodule-update-config (2017-09-27) 1 commit
-  (merged to 'next' on 2017-09-28 at 497214603c)
- + t7406: submodule.<name>.update command must not be run from .gitmodules
+* ks/verify-filename-non-option-error-message-tweak (2017-10-04) 1 commit
+  (merged to 'next' on 2017-10-05 at 2a7030f6fe)
+ + setup: update error message to be more meaningful
+
+ Error message tweak.
 
 
-* sd/branch-copy (2017-09-24) 4 commits
-  (merged to 'next' on 2017-09-28 at a6eceefa02)
- + branch: fix "copy" to never touch HEAD
- + branch: add a --copy (-c) option to go with --move (-m)
- + branch: add test for -m renaming multiple config sections
- + config: create a function to format section headers
+* ls/filter-process-delayed (2017-10-10) 5 commits
+  (merged to 'next' on 2017-10-10 at 7b26d72991)
+ + write_entry: untangle symlink and regular-file cases
+ + write_entry: avoid reading blobs in CE_RETRY case
+ + write_entry: fix leak when retrying delayed filter
+ + entry.c: check if file exists after checkout
+ + entry.c: update cache entry only for existing files
 
- "git branch" learned "-c/-C" to create a new branch by copying an
- existing one.
-
---------------------------------------------------
-[New Topics]
-
-* jc/merge-symlink-ours-theirs (2017-09-26) 1 commit
- - merge: teach -Xours/-Xtheirs to symbolic link merge
-
- "git merge -Xours/-Xtheirs" learned to use our/their version when
- resolving a conflicting updates to a symbolic link.
-
- Needs review.
-
-
-* jt/oidmap (2017-10-01) 1 commit
- - oidmap: map with OID as key
-
- Introduce a new "oidmap" API and rewrite oidset to use it.
-
- Will merge to 'next'.
-
-
-* jt/partial-clone-lazy-fetch (2017-10-02) 18 commits
- - fetch-pack: restore save_commit_buffer after use
- - unpack-trees: batch fetching of missing blobs
- - clone: configure blobmaxbytes in created repos
- - clone: support excluding large blobs
- - fetch: support excluding large blobs
- - fetch: refactor calculation of remote list
- - fetch-pack: support excluding large blobs
- - pack-objects: support --blob-max-bytes
- - pack-objects: rename want_.* to ignore_.*
- - gc: do not repack promisor packfiles
- - rev-list: support termination at promisor objects
- - sha1_file: support lazily fetching missing objects
- - introduce fetch-object: fetch one promisor object
- - index-pack: refactor writing of .keep files
- - fsck: support promisor objects as CLI argument
- - fsck: support referenced promisor objects
- - fsck: support refs pointing to promisor objects
- - fsck: introduce partialclone extension
-
- A journey for "git clone" and "git fetch" to become "lazier" by
- depending more on its remote repository---this is the beginning of
- it.
-
- Needs review.
+ Bugfixes to an already graduated series.
 
 
 * ma/builtin-unleak (2017-10-02) 1 commit
- - builtin/: add UNLEAKs
+  (merged to 'next' on 2017-10-05 at 380cb74320)
+ + builtin/: add UNLEAKs
 
  Many variables that points at a region of memory that will live
  throughout the life of the program have been marked with UNLEAK
  marker to help the leak checkers concentrate on real leaks..
 
 
-* ma/lockfile-fixes (2017-10-02) 11 commits
- - read-cache: roll back lock on error with `COMMIT_LOCK`
- - read-cache: don't leave dangling pointer in `do_write_index()`
- - read-cache: require flags for `write_locked_index()`
- - cache.h: document `write_locked_index()`
- - apply: remove `newfd` from `struct apply_state`
- - apply: move lockfile into `apply_state`
- - cache-tree: simplify locking logic
- - tempfile: fix documentation on `delete_tempfile()`
- - lockfile: fix documentation on `close_lock_file_gently()`
- - treewide: prefer lockfiles on the stack
- - sha1_file: do not leak `lock_file`
+* rb/compat-poll-fix (2017-09-29) 1 commit
+  (merged to 'next' on 2017-10-05 at c31029202d)
+ + poll.c: always set revents, even if to zero
 
- An earlier update made it possible to use an on-stack in-core
- lockfile structure (as opposed to having to deliberately leak an
- on-heap one).  Many codepaths have been updated to take advantage
- of this new facility.
+ Backports a moral equivalent of 2015 fix to the poll emulation from
+ the upstream gnulib to fix occasional breakages on HPE NonStop.
 
 
 * rs/cleanup-strbuf-users (2017-10-02) 3 commits
@@ -276,8 +174,6 @@ of the repositories listed at
 
  Code clean-up.
 
- Will merge to 'master'.
-
 
 * rs/cocci-de-paren-call-params (2017-10-02) 1 commit
   (merged to 'next' on 2017-10-03 at ee97fe5c24)
@@ -285,44 +181,17 @@ of the repositories listed at
 
  Code clean-up.
 
- Will merge to 'master'.
+
+* rs/fsck-null-return-from-lookup (2017-10-06) 1 commit
+  (merged to 'next' on 2017-10-10 at 32dfa424cf)
+ + fsck: handle NULL return of lookup_blob() and lookup_tree()
+
+ Improve behaviour of "git fsck" upon finding a missing object.
 
 
-* rs/run-command-use-alloc-array (2017-10-03) 1 commit
-  (merged to 'next' on 2017-10-03 at e3869b6c32)
- + run-command: use ALLOC_ARRAY
-
- Code clean-up.
-
- Will merge to 'master'.
-
-
-* rs/tag-null-pointer-arith-fix (2017-10-02) 1 commit
-  (merged to 'next' on 2017-10-03 at e05d92fec9)
- + tag: avoid NULL pointer arithmetic
-
- Code clean-up.
-
- Will merge to 'master'.
-
-
-* rs/use-free-and-null (2017-10-02) 1 commit
-  (merged to 'next' on 2017-10-03 at 6340234d67)
- + repository: use FREE_AND_NULL
-
- Code clean-up.
-
- Will merge to 'master'.
-
-
-* sb/git-clang-format (2017-10-02) 1 commit
-  (merged to 'next' on 2017-10-03 at b40d47b9d5)
- + clang-format: add a comment about the meaning/status of the
-
- Add comment to clarify that the style file is meant to be used with
- clang-5 and the rules are still work in progress.
-
- Will merge to 'master'.
+* rs/qsort-s (2017-10-04) 1 commit
+  (merged to 'next' on 2017-10-04 at 5f10a6e263)
+ + test-stringlist: avoid buffer underrun when sorting nothing
 
 
 * rs/resolve-ref-optional-result (2017-10-01) 2 commits
@@ -332,92 +201,192 @@ of the repositories listed at
 
  Code clean-up.
 
- Will merge to 'master'.
+
+* rs/rs-mailmap (2017-10-06) 1 commit
+  (merged to 'next' on 2017-10-10 at 020d29b68c)
+ + .mailmap: normalize name for René Scharfe
 
 
-* ar/request-pull-phrasofix (2017-10-03) 1 commit
-  (merged to 'next' on 2017-10-03 at 07807bba90)
- + request-pull: capitalise "Git" to make it a proper noun
+* rs/run-command-use-alloc-array (2017-10-03) 1 commit
+  (merged to 'next' on 2017-10-03 at e3869b6c32)
+ + run-command: use ALLOC_ARRAY
 
- Spell the name of our system as "Git" in the output from
- request-pull script.
-
- Will merge to 'master'.
+ Code clean-up.
 
 
-* tb/show-trailers-in-ref-filter (2017-10-02) 7 commits
- - ref-filter.c: parse trailers arguments with %(contents) atom
- - ref-filter.c: use trailer_opts to format trailers
- - t6300: refactor %(trailers) tests
- - doc: use "`<literal>`"-style quoting for literal strings
- - doc: 'trailers' is the preferred way to format trailers
- - t4205: unfold across multiple lines
- - pretty.c: delimit "%(trailers)" arguments with ","
+* rs/tag-null-pointer-arith-fix (2017-10-02) 1 commit
+  (merged to 'next' on 2017-10-03 at e05d92fec9)
+ + tag: avoid NULL pointer arithmetic
+
+ Code clean-up.
+
+
+* rs/use-free-and-null (2017-10-02) 1 commit
+  (merged to 'next' on 2017-10-03 at 6340234d67)
+ + repository: use FREE_AND_NULL
+
+ Code clean-up.
+
+
+* sb/branch-avoid-repeated-strbuf-release (2017-10-04) 1 commit
+  (merged to 'next' on 2017-10-04 at bd86ef77fc)
+ + branch: reset instead of release a strbuf
+
+
+* sb/git-clang-format (2017-10-02) 1 commit
+  (merged to 'next' on 2017-10-03 at b40d47b9d5)
+ + clang-format: add a comment about the meaning/status of the
+
+ Add comment to clarify that the style file is meant to be used with
+ clang-5 and the rules are still work in progress.
+
+
+* sb/test-cmp-expect-actual (2017-10-07) 1 commit
+  (merged to 'next' on 2017-10-10 at c47a4dcc72)
+ + tests: fix diff order arguments in test_cmp
+
+ Test tweak.
+
+
+* tb/complete-describe (2017-10-07) 1 commit
+  (merged to 'next' on 2017-10-10 at 2607253946)
+ + completion: add --broken and --dirty to describe
+
+ Docfix.
+
+
+* tb/delimit-pretty-trailers-args-with-comma (2017-10-02) 1 commit
+  (merged to 'next' on 2017-10-04 at de5446a01c)
+ + pretty.c: delimit "%(trailers)" arguments with ","
+ (this branch is used by tb/show-trailers-in-ref-filter.)
+
+ The feature that allows --pretty='%(trailers)' to take modifiers
+ like "fold" and "only" used to separate these modifiers with a
+ comma, i.e. "%(trailers:fold:only)", but we changed our mind and
+ use a comma, i.e. "%(trailers:fold,only)".  Fast track this change
+ before this new feature becomes part of any official release.
+
+
+* tb/ref-filter-empty-modifier (2017-10-05) 1 commit
+  (merged to 'next' on 2017-10-05 at 62cb67688a)
+ + ref-filter.c: pass empty-string as NULL to atom parsers
+
+ In the "--format=..." option of the "git for-each-ref" command (and
+ its friends, i.e. the listing mode of "git branch/tag"), "%(atom:)"
+ (e.g. "%(refname:)", "%(body:)" used to error out.  Instead, treat
+ them as if the colon and an empty string that follows it were not
+ there.
+
+
+* tb/show-trailers-in-ref-filter (2017-10-02) 6 commits
+  (merged to 'next' on 2017-10-05 at c7a697f15d)
+ + ref-filter.c: parse trailers arguments with %(contents) atom
+ + ref-filter.c: use trailer_opts to format trailers
+ + t6300: refactor %(trailers) tests
+ + doc: use "`<literal>`"-style quoting for literal strings
+ + doc: 'trailers' is the preferred way to format trailers
+ + t4205: unfold across multiple lines
 
  "git for-each-ref --format=..." learned a new format element,
  %(trailers), to show only the commit log trailer part of the log
  message.
 
- Will merge to 'next'.
-
-
-* jk/ui-color-always-to-auto (2017-10-04) 3 commits
- - Merge branch 'jk/ui-color-always-to-auto-maint' into jk/ui-color-always-to-auto
- - t7301: use test_terminal to check color
- - t4015: use --color with --color-moved
- (this branch uses jk/ui-color-always-to-auto-maint.)
-
-
-* jk/ui-color-always-to-auto-maint (2017-10-04) 10 commits
- - color: make "always" the same as "auto" in config
- - provide --color option for all ref-filter users
- - t3205: use --color instead of color.branch=always
- - t3203: drop "always" color test
- - t6006: drop "always" color config tests
- - t7502: use diff.noprefix for --verbose test
- - t7508: use test_terminal for color output
- - t3701: use test-terminal to collect color output
- - t4015: prefer --color to -c color.diff=always
- - test-terminal: set TERM=vt100
- (this branch is used by jk/ui-color-always-to-auto.)
-
-
-* jn/strbuf-doc-re-reuse (2017-10-04) 1 commit
- - strbuf doc: reuse after strbuf_release is fine
-
- Will merge to 'next'.
-
-
-* ks/branch-tweak-error-message-for-extra-args (2017-10-04) 1 commit
- - branch: change the error messages to be more meaningful
-
- Error message tweak.
-
-
-* ks/verify-filename-non-option-error-message-tweak (2017-10-04) 1 commit
- - setup: update error message to be more meaningful
-
- Error message tweak.
-
-
-* rs/qsort-s (2017-10-04) 1 commit
- - test-stringlist: avoid buffer underrun when sorting nothing
-
- Will merge to 'next'.
-
-
-* sb/branch-avoid-repeated-strbuf-release (2017-10-04) 1 commit
- - branch: reset instead of release a strbuf
-
- Will merge to 'next'.
-
 
 * tg/memfixes (2017-10-04) 3 commits
- - sub-process: use child_process.args instead of child_process.argv
- - http-push: fix construction of hex value from path
- - path.c: fix uninitialized memory access
+  (merged to 'next' on 2017-10-04 at fb338a5531)
+ + sub-process: use child_process.args instead of child_process.argv
+ + http-push: fix construction of hex value from path
+ + path.c: fix uninitialized memory access
 
  Fixes for a handful memory access issues identified by valgrind.
+
+--------------------------------------------------
+[New Topics]
+
+* dm/run-command-ignored-hook-advise (2017-10-10) 1 commit
+  (merged to 'next' on 2017-10-10 at 0827814922)
+ + run-command: add hint when a hook is ignored
+
+ A hook script that is set unexecutable is simply ignored.  Git
+ notifies when such a file is ignored, unless the message is
+ squelched via advice.ignoredHook configuration.
+
+ Will cook in 'next'.
+
+
+* hv/fetch-moved-submodules-on-demand (2017-10-08) 5 commits
+ - DONTMERGE: mark failing tests for now
+ - submodule: simplify decision tree whether to or not to fetch
+ - implement fetching of moved submodules
+ - change submodule push test to use proper repository setup
+ - fetch: add test to make sure we stay backwards compatible
+
+ WIP.
+
+
+* js/for-each-ref-remote-name-and-ref (2017-10-11) 3 commits
+ - for-each-ref: test :remotename and :remoteref
+ - for-each-ref: let upstream/push optionally report the remote ref name
+ - for-each-ref: let upstream/push optionally report the remote name
+
+ The "--format=..." option "git for-each-ref" takes learned to show
+ the name of the 'remote' repository and the ref at the remote side
+ that is affected for 'upstream' and 'push' via "%(push:remotename)"
+ and friends.
+
+
+* pb/bisect-helper (2017-10-06) 6 commits
+ - bisect--helper: `is_expected_rev` & `check_expected_revs` shell function in C
+ - t6030: explicitly test for bisection cleanup
+ - bisect--helper: `bisect_clean_state` shell function in C
+ - bisect--helper: `write_terms` shell function in C
+ - bisect--helper: rewrite `check_term_format` shell function in C
+ - bisect--helper: use OPT_CMDMODE instead of OPT_BOOL
+
+ An early part of piece-by-piece rewrite of "git bisect".
+
+ Will merge to 'next'.
+
+
+* bc/object-id (2017-10-09) 24 commits
+ - refs/files-backend: convert static functions to object_id
+ - refs: convert read_raw_ref backends to struct object_id
+ - refs: convert peel_object to struct object_id
+ - refs: convert resolve_ref_unsafe to struct object_id
+ - worktree: convert struct worktree to object_id
+ - refs: convert resolve_gitlink_ref to struct object_id
+ - resolve_gitlink_ref(): convert remaining callers to object_id
+ - sha1_file: convert index_path and index_fd to struct object_id
+ - refs: convert reflog_expire parameter to struct object_id
+ - refs: convert read_ref_at to struct object_id
+ - refs: convert peel_ref to struct object_id
+ - builtin/pack-objects: convert to struct object_id
+ - pack-bitmap: convert traverse_bitmap_commit_list to object_id
+ - refs: convert dwim_log to struct object_id
+ - builtin/reflog: convert remaining unsigned char uses to object_id
+ - refs: convert dwim_ref and expand_ref to struct object_id
+ - refs: convert read_ref and read_ref_full to object_id
+ - refs: convert resolve_refdup and refs_resolve_refdup to struct object_id
+ - check_connected(): use struct object_id
+ - refs: update ref transactions to use struct object_id
+ - refs: convert update_ref and refs_update_ref to use struct object_id
+ - refs: convert delete_ref and refs_delete_ref to struct object_id
+ - refs/files-backend: convert struct ref_to_prune to object_id
+ - walker: convert to struct object_id
+
+
+* jc/no-cmd-as-subroutine (2017-10-11) 2 commits
+ - merge-ours: do not use cmd_*() as a subroutine
+ - describe: do not use cmd_*() as a subroutine
+
+ Calling cmd_foo() as if it is a general purpose helper function is
+ a no-no.  Correct two instances of such to set an example.
+
+
+* jc/doc-checkout (2017-10-11) 1 commit
+ - checkout doc: clarify command line args for "checkout paths" mode
+
+ Doc update.
 
  Will merge to 'next'.
 
@@ -478,43 +447,72 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* er/fast-import-dump-refs-on-checkpoint (2017-09-29) 1 commit
-  (merged to 'next' on 2017-10-03 at 4e7b0e7ec1)
- + fast-import: checkpoint: dump branches/tags/marks even if object_count==0
+* jc/merge-symlink-ours-theirs (2017-09-26) 1 commit
+ - merge: teach -Xours/-Xtheirs to symbolic link merge
 
- The checkpoint command "git fast-import" did not flush updates to
- refs and marks unless at least one object was created since the
- last checkpoint, which has been corrected, as these things can
- happen without any new object getting created.
+ "git merge -Xours/-Xtheirs" learned to use our/their version when
+ resolving a conflicting updates to a symbolic link.
 
- Will merge to 'master'.
+ Needs review.
 
 
-* jr/hash-migration-plan-doc (2017-09-28) 1 commit
- - technical doc: add a design doc for hash function transition
+* jt/partial-clone-lazy-fetch (2017-10-02) 18 commits
+ - fetch-pack: restore save_commit_buffer after use
+ - unpack-trees: batch fetching of missing blobs
+ - clone: configure blobmaxbytes in created repos
+ - clone: support excluding large blobs
+ - fetch: support excluding large blobs
+ - fetch: refactor calculation of remote list
+ - fetch-pack: support excluding large blobs
+ - pack-objects: support --blob-max-bytes
+ - pack-objects: rename want_.* to ignore_.*
+ - gc: do not repack promisor packfiles
+ - rev-list: support termination at promisor objects
+ - sha1_file: support lazily fetching missing objects
+ - introduce fetch-object: fetch one promisor object
+ - index-pack: refactor writing of .keep files
+ - fsck: support promisor objects as CLI argument
+ - fsck: support referenced promisor objects
+ - fsck: support refs pointing to promisor objects
+ - fsck: introduce partialclone extension
 
- Lay out plans for weaning us off of SHA-1.
+ A journey for "git clone" and "git fetch" to become "lazier" by
+ depending more on its remote repository---this is the beginning of
+ it.
 
- Will merge to 'next'.
+ Needs review.
+
+
+* ma/lockfile-fixes (2017-10-07) 12 commits
+ - read_cache: roll back lock in `update_index_if_able()`
+ - read-cache: leave lock in right state in `write_locked_index()`
+ - read-cache: drop explicit `CLOSE_LOCK`-flag
+ - cache.h: document `write_locked_index()`
+ - apply: remove `newfd` from `struct apply_state`
+ - apply: move lockfile into `apply_state`
+ - cache-tree: simplify locking logic
+ - checkout-index: simplify locking logic
+ - tempfile: fix documentation on `delete_tempfile()`
+ - lockfile: fix documentation on `close_lock_file_gently()`
+ - treewide: prefer lockfiles on the stack
+ - sha1_file: do not leak `lock_file`
+
+ An earlier update made it possible to use an on-stack in-core
+ lockfile structure (as opposed to having to deliberately leak an
+ on-heap one).  Many codepaths have been updated to take advantage
+ of this new facility.
+
+ Looking good.  Is this ready for 'next'?
 
 
 * ot/mru-on-list (2017-10-01) 1 commit
- - mru: use double-linked list from list.h
+  (merged to 'next' on 2017-10-07 at e6ad4a16a2)
+ + mru: use double-linked list from list.h
 
  The first step to getting rid of mru API and using the
  doubly-linked list API directly instead.
 
- Needs review.
- Outreachy.
-
-
-* rb/compat-poll-fix (2017-09-29) 1 commit
- - poll.c: always set revents, even if to zero
-
- Backports a moral equivalent of 2015 fix to the poll emulation from
- the upstream gnulib to fix occasional breakages on HPE NonStop.
-
- Needs review.
+ Will cook in 'next'.
 
 
 * jm/svn-pushmergeinfo-fix (2017-09-17) 1 commit
@@ -555,12 +553,16 @@ of the repositories listed at
  What's the doneness of this one?
 
 
-* ds/find-unique-abbrev-optim (2017-10-03) 5 commits
+* ds/find-unique-abbrev-optim (2017-10-09) 4 commits
  - sha1_name: minimize OID comparisons during disambiguation
  - sha1_name: parse less while finding common prefix
  - sha1_name: unroll len loop in find_unique_abbrev_r()
- - p0008-abbrev.sh: test find_unique_abbrev() perf
- - test-list-objects: list a subset of object ids
+ - p4211-line-log.sh: add log --online --raw --parents perf test
+
+ Optimize the code to find shortest unique prefix of object names.
+
+ Almost there.
+ cf. <20171009134933.vmba67adelqbkx4y@sigill.intra.peff.net>
 
 
 * cc/perf-run-config (2017-09-24) 9 commits
@@ -589,8 +591,11 @@ of the repositories listed at
  Waiting for review to conclude.
 
 
-* bp/fsmonitor (2017-10-04) 13 commits
- - fsmonitor: MINGW support for watchman integration
+* bp/fsmonitor (2017-10-05) 15 commits
+  (merged to 'next' on 2017-10-05 at 964a029d13)
+ + fsmonitor: preserve utf8 filenames in fsmonitor-watchman log
+ + fsmonitor: read entirety of watchman output
+ + fsmonitor: MINGW support for watchman integration
   (merged to 'next' on 2017-10-02 at cf0c67979c)
  + fsmonitor: add a performance test
  + fsmonitor: add a sample integration script for Watchman
@@ -607,6 +612,8 @@ of the repositories listed at
 
  We learned to talk to watchman to speed up "git status" and other
  operations that need to see which paths have been modified.
+
+ Will cook in 'next'.
 
 
 * bw/protocol-v1 (2017-10-04) 10 commits
@@ -625,8 +632,14 @@ of the repositories listed at
  and demonstrated that it works with the older versions of Git
  without harming them.
 
+ Expecting a reroll.
+ cf. <20171003214206.GY19555@aiede.mtv.corp.google.com>
+ The tip one needs to clarify that it is not just '-o' but also '-p'
+ option in the documentation.  Other than that, the approach taken
+ by the series basically seems sane and well received.
 
-* pc/submodule-helper (2017-10-02) 3 commits
+
+* pc/submodule-helper (2017-10-07) 3 commits
  - submodule: port submodule subcommand 'status' from shell to C
  - submodule--helper: introduce for_each_listed_submodule()
  - submodule--helper: introduce get_submodule_displaypath()
@@ -635,7 +648,8 @@ of the repositories listed at
  Is this ready for 'next'?
 
 
-* bc/hash-algo (2017-08-20) 5 commits
+* bc/hash-algo (2017-10-04) 6 commits
+ - fixup! hash-algo: integrate hash algorithm support with repo setup
  - hash-algo: switch empty tree and blob lookups to use hash abstraction
  - hash-algo: integrate hash algorithm support with repo setup
  - hash-algo: add structure representing hash algorithm
@@ -690,23 +704,6 @@ of the repositories listed at
  cf. <f59c8256-716b-9305-2a4f-d4fe49f666ff@web.de>
 
 
-* jc/allow-lazy-cas (2017-07-06) 1 commit
- - push: disable lazy --force-with-lease by default
-
- Because "git push --force-with-lease[=<ref>]" that relies on the
- stability of remote-tracking branches is unsafe when something
- fetches into the repository behind user's back, it is now disabled
- by default.  A new configuration variable can be used to enable it
- by users who know what they are doing.  This would pave the way to
- possibly turn `--force` into `--force-with-lease`.
-
- Will discard.
- Independent from disabling the feature by default, this stirred up
- a discussion to replace the DWIM heuristics with a better one, which
- deserves to be its own topic.
- cf. <alpine.DEB.2.21.1.1707131435220.4193@virtualbox>
-
-
 * ex/deprecate-empty-pathspec-as-match-all (2017-06-23) 2 commits
   (merged to 'next' on 2017-08-14 at 24db08a6e8)
  + pathspec: die on empty strings as pathspec
@@ -723,7 +720,6 @@ of the repositories listed at
  Will cook in 'next'.
  As the draft RelNotes says, let's merge this to 'master' after
  this release cycle.
-
 
 --------------------------------------------------
 [Discarded]
@@ -742,3 +738,18 @@ of the repositories listed at
  one) until we come up with a different fix to the problem.
 
 
+* jc/allow-lazy-cas (2017-07-06) 1 commit
+ . push: disable lazy --force-with-lease by default
+
+ Because "git push --force-with-lease[=<ref>]" that relies on the
+ stability of remote-tracking branches is unsafe when something
+ fetches into the repository behind user's back, it is now disabled
+ by default.  A new configuration variable can be used to enable it
+ by users who know what they are doing.  This would pave the way to
+ possibly turn `--force` into `--force-with-lease`.
+
+ Will discard.
+ Independent from disabling the feature by default, this stirred up
+ a discussion to replace the DWIM heuristics with a better one, which
+ deserves to be its own topic.
+ cf. <alpine.DEB.2.21.1.1707131435220.4193@virtualbox>
