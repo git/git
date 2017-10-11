@@ -544,7 +544,7 @@ Signed-off-by: A U Thor
 EOF
 
 unfold () {
-	perl -0pe 's/\n\s+/ /'
+	perl -0pe 's/\n\s+/ /g'
 }
 
 test_expect_success 'set up trailer tests' '
