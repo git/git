@@ -99,6 +99,10 @@ UI, Workflows & Features
    operations in the same repository.  The new "--no-optional-locks"
    option can be passed to Git to disable them.
 
+ * "git for-each-ref --format=..." learned a new format element,
+   %(trailers), to show only the commit log trailer part of the log
+   message.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -229,6 +233,11 @@ Performance, Internal Implementation, Development Support etc.
  * Many variables that points at a region of memory that will live
    throughout the life of the program have been marked with UNLEAK
    marker to help the leak checkers concentrate on real leaks..
+
+ * Plans for weaning us off of SHA-1 has been documented.
+
+ * A new "oidmap" API has been introduced and oidset API has been
+   rewritten to use it.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -485,6 +494,9 @@ Fixes since v2.14
    there.
    (merge bea4dbeafd tb/ref-filter-empty-modifier later to maint).
 
+ * An ancient bug that made Git misbehave with creation/renaming of
+   refs has been fixed.
+
  * Other minor doc, test and build updates and code cleanups.
    (merge f094b89a4d ma/parse-maybe-bool later to maint).
    (merge 39b00fa4d4 jk/drop-sha1-entry-pos later to maint).
@@ -516,3 +528,8 @@ Fixes since v2.14
    (merge a9155c50bd sb/branch-avoid-repeated-strbuf-release later to maint).
    (merge f777623514 ks/branch-tweak-error-message-for-extra-args later to maint).
    (merge 33f3c683ec ks/verify-filename-non-option-error-message-tweak later to maint).
+   (merge b3ea7dd32d jk/sha1-loose-object-info-fix later to maint).
+   (merge 2720f6db5d rs/fsck-null-return-from-lookup later to maint).
+   (merge 99b7b687a6 rs/rs-mailmap later to maint).
+   (merge 7823655082 tb/complete-describe later to maint).
+   (merge 7cbbf9d6a2 ls/filter-process-delayed later to maint).
