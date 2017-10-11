@@ -1124,10 +1124,14 @@ static int sha1_loose_object_info(const unsigned char *sha1,
 	} else if ((status = parse_sha1_header_extended(hdr, oi, flags)) < 0)
 		status = error("unable to parse %s header", sha1_to_hex(sha1));
 
-	if (status >= 0 && oi->contentp)
+	if (status >= 0 && oi->contentp) {
 		*oi->contentp = unpack_sha1_rest(&stream, hdr,
 						 *oi->sizep, sha1);
-	else
+		if (!*oi->contentp) {
+			git_inflate_end(&stream);
+			status = -1;
+		}
+	} else
 		git_inflate_end(&stream);
 
 	munmap(map, mapsize);
