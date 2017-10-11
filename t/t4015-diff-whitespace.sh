@@ -155,7 +155,7 @@ test_expect_success 'ignore-blank-lines: only new lines' '
 " >x &&
 	git diff --ignore-blank-lines >out &&
 	>expect &&
-	test_cmp out expect
+	test_cmp expect out
 '
 
 test_expect_success 'ignore-blank-lines: only new lines with space' '
@@ -165,7 +165,7 @@ test_expect_success 'ignore-blank-lines: only new lines with space' '
  " >x &&
 	git diff -w --ignore-blank-lines >out &&
 	>expect &&
-	test_cmp out expect
+	test_cmp expect out
 '
 
 test_expect_success 'ignore-blank-lines: after change' '

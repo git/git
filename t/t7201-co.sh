@@ -187,7 +187,7 @@ test_expect_success 'format of merge conflict from checkout -m' '
 	d
 	>>>>>>> local
 	EOF
-	test_cmp two expect
+	test_cmp expect two
 '
 
 test_expect_success 'checkout --merge --conflict=diff3 <branch>' '
@@ -213,7 +213,7 @@ test_expect_success 'checkout --merge --conflict=diff3 <branch>' '
 	d
 	>>>>>>> local
 	EOF
-	test_cmp two expect
+	test_cmp expect two
 '
 
 test_expect_success 'switch to another branch while carrying a deletion' '
