@@ -358,15 +358,15 @@ static int fsck_walk_tree(struct tree *tree, void *data, struct fsck_options *op
 			continue;
 
 		if (S_ISDIR(entry.mode)) {
-			obj = &lookup_tree(entry.oid)->object;
-			if (name)
+			obj = (struct object *)lookup_tree(entry.oid);
+			if (name && obj)
 				put_object_name(options, obj, "%s%s/", name,
 					entry.path);
 			result = options->walk(obj, OBJ_TREE, data, options);
 		}
 		else if (S_ISREG(entry.mode) || S_ISLNK(entry.mode)) {
-			obj = &lookup_blob(entry.oid)->object;
-			if (name)
+			obj = (struct object *)lookup_blob(entry.oid);
+			if (name && obj)
 				put_object_name(options, obj, "%s%s", name,
 					entry.path);
 			result = options->walk(obj, OBJ_BLOB, data, options);
