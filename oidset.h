@@ -1,6 +1,8 @@
 #ifndef OIDSET_H
 #define OIDSET_H
 
+#include "oidmap.h"
+
 /**
  * This API is similar to sha1-array, in that it maintains a set of object ids
  * in a memory-efficient way. The major differences are:
@@ -17,10 +19,10 @@
  * A single oidset; should be zero-initialized (or use OIDSET_INIT).
  */
 struct oidset {
-	struct hashmap map;
+	struct oidmap map;
 };
 
-#define OIDSET_INIT { { NULL } }
+#define OIDSET_INIT { OIDMAP_INIT }
 
 /**
  * Returns true iff `set` contains `oid`.
