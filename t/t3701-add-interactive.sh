@@ -483,7 +483,7 @@ test_expect_success 'hunk-editing handles custom comment char' '
 	git diff --exit-code
 '
 
-test_expect_success 'add -p works even with color.ui=always' '
+test_expect_failure 'add -p works even with color.ui=always' '
 	git reset --hard &&
 	echo change >>file &&
 	test_config color.ui always &&
