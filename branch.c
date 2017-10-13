@@ -178,19 +178,31 @@ int read_branch_desc(struct strbuf *buf, const char *branch_name)
 	return 0;
 }
 
-int validate_new_branchname(const char *name, struct strbuf *ref,
-			    int force, int attr_only)
+/*
+ * Check if 'name' can be a valid name for a branch; die otherwise.
+ * Return 1 if the named branch already exists; return 0 otherwise.
+ * Fill ref with the full refname for the branch.
+ */
+int validate_branchname(const char *name, struct strbuf *ref)
 {
-	const char *head;
-
 	if (strbuf_check_branch_ref(ref, name))
 		die(_("'%s' is not a valid branch name."), name);
 
-	if (!ref_exists(ref->buf))
-		return 0;
+	return ref_exists(ref->buf);
+}
 
-	if (attr_only)
-		return 1;
+/*
+ * Check if a branch 'name' can be created as a new branch; die otherwise.
+ * 'force' can be used when it is OK for the named branch already exists.
+ * Return 1 if the named branch already exists; return 0 otherwise.
+ * Fill ref with the full refname for the branch.
+ */
+int validate_new_branchname(const char *name, struct strbuf *ref, int force)
+{
+	const char *head;
+
+	if (!validate_branchname(name, ref))
+		return 0;
 
 	if (!force)
 		die(_("A branch named '%s' already exists."),
@@ -246,9 +258,9 @@ void create_branch(const char *name, const char *start_name,
 	if (track == BRANCH_TRACK_EXPLICIT || track == BRANCH_TRACK_OVERRIDE)
 		explicit_tracking = 1;
 
-	if (validate_new_branchname(name, &ref, force,
-				    track == BRANCH_TRACK_OVERRIDE ||
-				    clobber_head)) {
+	if ((track == BRANCH_TRACK_OVERRIDE || clobber_head)
+	    ? validate_branchname(name, &ref)
+	    : validate_new_branchname(name, &ref, force)) {
 		if (!force)
 			dont_change_ref = 1;
 		else
