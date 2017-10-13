@@ -261,6 +261,17 @@ test_expect_success 'rev-list %C(auto,...) respects --color' '
 	test_cmp expect actual
 '
 
+test_expect_success "color.ui=always in config file same as auto" '
+	test_config color.ui always &&
+	git log --format=$COLOR -1 >actual &&
+	has_no_color actual
+'
+
+test_expect_success "color.ui=always on command-line is always" '
+	git -c color.ui=always log --format=$COLOR -1 >actual &&
+	has_color actual
+'
+
 iconv -f utf-8 -t $test_encoding > commit-msg <<EOF
 Test printing of complex bodies
 
