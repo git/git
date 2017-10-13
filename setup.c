@@ -934,6 +934,12 @@ static enum discovery_result setup_git_directory_gently_1(struct strbuf *dir,
 	if (ceil_offset < 0)
 		ceil_offset = min_offset - 2;
 
+	if (min_offset && min_offset == dir->len &&
+	    !is_dir_sep(dir->buf[min_offset - 1])) {
+		strbuf_addch(dir, '/');
+		min_offset++;
+	}
+
 	/*
 	 * Test in the following order (relative to the dir):
 	 * - .git (file containing "gitdir: <path>")
