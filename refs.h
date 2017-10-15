@@ -139,8 +139,8 @@ int resolve_gitlink_ref(const char *submodule, const char *refname,
  */
 int refname_match(const char *abbrev_name, const char *full_name);
 
-int expand_ref(const char *str, int len, unsigned char *sha1, char **ref);
-int dwim_ref(const char *str, int len, unsigned char *sha1, char **ref);
+int expand_ref(const char *str, int len, struct object_id *oid, char **ref);
+int dwim_ref(const char *str, int len, struct object_id *oid, char **ref);
 int dwim_log(const char *str, int len, unsigned char *sha1, char **ref);
 
 /*

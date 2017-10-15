@@ -133,7 +133,7 @@ static void show_rev(int type, const struct object_id *oid, const char *name)
 			struct object_id discard;
 			char *full;
 
-			switch (dwim_ref(name, strlen(name), discard.hash, &full)) {
+			switch (dwim_ref(name, strlen(name), &discard, &full)) {
 			case 0:
 				/*
 				 * Not found -- not a ref.  We could

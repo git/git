@@ -264,7 +264,7 @@ void create_branch(const char *name, const char *start_name,
 		die(_("Not a valid object name: '%s'."), start_name);
 	}
 
-	switch (dwim_ref(start_name, strlen(start_name), oid.hash, &real_ref)) {
+	switch (dwim_ref(start_name, strlen(start_name), &oid, &real_ref)) {
 	case 0:
 		/* Not branching from any existing branch */
 		if (explicit_tracking)

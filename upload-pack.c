@@ -787,7 +787,7 @@ static void receive_needs(void)
 		if (skip_prefix(line, "deepen-not ", &arg)) {
 			char *ref = NULL;
 			struct object_id oid;
-			if (expand_ref(arg, strlen(arg), oid.hash, &ref) != 1)
+			if (expand_ref(arg, strlen(arg), &oid, &ref) != 1)
 				die("git upload-pack: ambiguous deepen-not: %s", line);
 			string_list_append(&deepen_not, ref);
 			free(ref);

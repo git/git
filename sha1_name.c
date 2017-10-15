@@ -603,7 +603,7 @@ static int get_oid_basic(const char *str, int len, struct object_id *oid,
 
 	if (len == GIT_SHA1_HEXSZ && !get_oid_hex(str, oid)) {
 		if (warn_ambiguous_refs && warn_on_object_refname_ambiguity) {
-			refs_found = dwim_ref(str, len, tmp_oid.hash, &real_ref);
+			refs_found = dwim_ref(str, len, &tmp_oid, &real_ref);
 			if (refs_found > 0) {
 				warning(warn_msg, len, str);
 				if (advice_object_name_warning)
@@ -654,11 +654,11 @@ static int get_oid_basic(const char *str, int len, struct object_id *oid,
 
 	if (!len && reflog_len)
 		/* allow "@{...}" to mean the current branch reflog */
-		refs_found = dwim_ref("HEAD", 4, oid->hash, &real_ref);
+		refs_found = dwim_ref("HEAD", 4, oid, &real_ref);
 	else if (reflog_len)
 		refs_found = dwim_log(str, len, oid->hash, &real_ref);
 	else
-		refs_found = dwim_ref(str, len, oid->hash, &real_ref);
+		refs_found = dwim_ref(str, len, oid, &real_ref);
 
 	if (!refs_found)
 		return -1;

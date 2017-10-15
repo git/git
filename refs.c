@@ -456,15 +456,15 @@ static char *substitute_branch_name(const char **string, int *len)
 	return NULL;
 }
 
-int dwim_ref(const char *str, int len, unsigned char *sha1, char **ref)
+int dwim_ref(const char *str, int len, struct object_id *oid, char **ref)
 {
 	char *last_branch = substitute_branch_name(&str, &len);
-	int   refs_found  = expand_ref(str, len, sha1, ref);
+	int   refs_found  = expand_ref(str, len, oid, ref);
 	free(last_branch);
 	return refs_found;
 }
 
-int expand_ref(const char *str, int len, unsigned char *sha1, char **ref)
+int expand_ref(const char *str, int len, struct object_id *oid, char **ref)
 {
 	const char **p, *r;
 	int refs_found = 0;
@@ -472,15 +472,16 @@ int expand_ref(const char *str, int len, unsigned char *sha1, char **ref)
 
 	*ref = NULL;
 	for (p = ref_rev_parse_rules; *p; p++) {
-		unsigned char sha1_from_ref[20];
-		unsigned char *this_result;
+		struct object_id oid_from_ref;
+		struct object_id *this_result;
 		int flag;
 
-		this_result = refs_found ? sha1_from_ref : sha1;
+		this_result = refs_found ? &oid_from_ref : oid;
 		strbuf_reset(&fullref);
 		strbuf_addf(&fullref, *p, len, str);
 		r = resolve_ref_unsafe(fullref.buf, RESOLVE_REF_READING,
-				       this_result, &flag);
+				       this_result ? this_result->hash : NULL,
+				       &flag);
 		if (r) {
 			if (!refs_found++)
 				*ref = xstrdup(r);

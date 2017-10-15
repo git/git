@@ -720,7 +720,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 			die(Q_("only %d entry can be shown at one time.",
 			       "only %d entries can be shown at one time.",
 			       MAX_REVS), MAX_REVS);
-		if (!dwim_ref(*av, strlen(*av), oid.hash, &ref))
+		if (!dwim_ref(*av, strlen(*av), &oid, &ref))
 			die(_("no such ref %s"), *av);
 
 		/* Has the base been specified? */
