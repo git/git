@@ -583,6 +583,9 @@ static int write_pseudoref(const char *pseudoref, const struct object_id *oid,
 	struct strbuf buf = STRBUF_INIT;
 	int ret = -1;
 
+	if (!oid)
+		return 0;
+
 	strbuf_addf(&buf, "%s\n", oid_to_hex(oid));
 
 	filename = git_path("%s", pseudoref);
