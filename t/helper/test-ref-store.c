@@ -72,12 +72,12 @@ static int cmd_pack_refs(struct ref_store *refs, const char **argv)
 static int cmd_peel_ref(struct ref_store *refs, const char **argv)
 {
 	const char *refname = notnull(*argv++, "refname");
-	unsigned char sha1[20];
+	struct object_id oid;
 	int ret;
 
-	ret = refs_peel_ref(refs, refname, sha1);
+	ret = refs_peel_ref(refs, refname, &oid);
 	if (!ret)
-		puts(sha1_to_hex(sha1));
+		puts(oid_to_hex(&oid));
 	return ret;
 }
 

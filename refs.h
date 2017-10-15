@@ -114,14 +114,14 @@ extern int refs_init_db(struct strbuf *err);
 /*
  * If refname is a non-symbolic reference that refers to a tag object,
  * and the tag can be (recursively) dereferenced to a non-tag object,
- * store the SHA1 of the referred-to object to sha1 and return 0.  If
- * any of these conditions are not met, return a non-zero value.
+ * store the object ID of the referred-to object to oid and return 0.
+ * If any of these conditions are not met, return a non-zero value.
  * Symbolic references are considered unpeelable, even if they
  * ultimately resolve to a peelable tag.
  */
 int refs_peel_ref(struct ref_store *refs, const char *refname,
-		  unsigned char *sha1);
-int peel_ref(const char *refname, unsigned char *sha1);
+		  struct object_id *oid);
+int peel_ref(const char *refname, struct object_id *oid);
 
 /**
  * Resolve refname in the nested "gitlink" repository in the specified

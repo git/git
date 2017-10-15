@@ -1697,7 +1697,7 @@ int refs_pack_refs(struct ref_store *refs, unsigned int flags)
 }
 
 int refs_peel_ref(struct ref_store *refs, const char *refname,
-		  unsigned char *sha1)
+		  struct object_id *oid)
 {
 	int flag;
 	struct object_id base;
@@ -1707,7 +1707,7 @@ int refs_peel_ref(struct ref_store *refs, const char *refname,
 
 		if (ref_iterator_peel(current_ref_iter, &peeled))
 			return -1;
-		hashcpy(sha1, peeled.hash);
+		oidcpy(oid, &peeled);
 		return 0;
 	}
 
@@ -1715,12 +1715,12 @@ int refs_peel_ref(struct ref_store *refs, const char *refname,
 			       RESOLVE_REF_READING, &base, &flag))
 		return -1;
 
-	return peel_object(base.hash, sha1);
+	return peel_object(base.hash, oid->hash);
 }
 
-int peel_ref(const char *refname, unsigned char *sha1)
+int peel_ref(const char *refname, struct object_id *oid)
 {
-	return refs_peel_ref(get_main_ref_store(), refname, sha1);
+	return refs_peel_ref(get_main_ref_store(), refname, oid);
 }
 
 int refs_create_symref(struct ref_store *refs,

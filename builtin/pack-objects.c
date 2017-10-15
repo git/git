@@ -562,7 +562,7 @@ static int mark_tagged(const char *path, const struct object_id *oid, int flag,
 
 	if (entry)
 		entry->tagged = 1;
-	if (!peel_ref(path, peeled.hash)) {
+	if (!peel_ref(path, &peeled)) {
 		entry = packlist_find(&to_pack, peeled.hash, NULL);
 		if (entry)
 			entry->tagged = 1;
@@ -2371,7 +2371,7 @@ static int add_ref_tag(const char *path, const struct object_id *oid, int flag, 
 	struct object_id peeled;
 
 	if (starts_with(path, "refs/tags/") && /* is a tag? */
-	    !peel_ref(path, peeled.hash)    && /* peelable? */
+	    !peel_ref(path, &peeled)    && /* peelable? */
 	    packlist_find(&to_pack, peeled.hash, NULL))      /* object packed? */
 		add_tag_chain(oid);
 	return 0;

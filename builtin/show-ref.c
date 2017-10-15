@@ -38,7 +38,7 @@ static void show_one(const char *refname, const struct object_id *oid)
 	if (!deref_tags)
 		return;
 
-	if (!peel_ref(refname, peeled.hash)) {
+	if (!peel_ref(refname, &peeled)) {
 		hex = find_unique_abbrev(peeled.hash, abbrev);
 		printf("%s %s^{}\n", hex, refname);
 	}
