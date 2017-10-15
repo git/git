@@ -120,11 +120,11 @@ enum peel_status {
 /*
  * Peel the named object; i.e., if the object is a tag, resolve the
  * tag recursively until a non-tag is found.  If successful, store the
- * result to sha1 and return PEEL_PEELED.  If the object is not a tag
+ * result to oid and return PEEL_PEELED.  If the object is not a tag
  * or is not valid, return PEEL_NON_TAG or PEEL_INVALID, respectively,
  * and leave sha1 unchanged.
  */
-enum peel_status peel_object(const unsigned char *name, unsigned char *sha1);
+enum peel_status peel_object(const struct object_id *name, struct object_id *oid);
 
 /*
  * Copy the reflog message msg to buf, which has been allocated sufficiently

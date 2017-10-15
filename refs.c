@@ -252,12 +252,12 @@ static int filter_refs(const char *refname, const struct object_id *oid,
 	return filter->fn(refname, oid, flags, filter->cb_data);
 }
 
-enum peel_status peel_object(const unsigned char *name, unsigned char *sha1)
+enum peel_status peel_object(const struct object_id *name, struct object_id *oid)
 {
-	struct object *o = lookup_unknown_object(name);
+	struct object *o = lookup_unknown_object(name->hash);
 
 	if (o->type == OBJ_NONE) {
-		int type = sha1_object_info(name, NULL);
+		int type = sha1_object_info(name->hash, NULL);
 		if (type < 0 || !object_as_type(o, type, 0))
 			return PEEL_INVALID;
 	}
@@ -269,7 +269,7 @@ enum peel_status peel_object(const unsigned char *name, unsigned char *sha1)
 	if (!o)
 		return PEEL_INVALID;
 
-	hashcpy(sha1, o->oid.hash);
+	oidcpy(oid, &o->oid);
 	return PEEL_PEELED;
 }
 
@@ -1714,7 +1714,7 @@ int refs_peel_ref(struct ref_store *refs, const char *refname,
 			       RESOLVE_REF_READING, &base, &flag))
 		return -1;
 
-	return peel_object(base.hash, oid->hash);
+	return peel_object(&base, oid);
 }
 
 int peel_ref(const char *refname, struct object_id *oid)
