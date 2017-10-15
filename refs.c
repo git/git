@@ -574,8 +574,8 @@ long get_files_ref_lock_timeout_ms(void)
 	return timeout_ms;
 }
 
-static int write_pseudoref(const char *pseudoref, const unsigned char *sha1,
-			   const unsigned char *old_sha1, struct strbuf *err)
+static int write_pseudoref(const char *pseudoref, const struct object_id *oid,
+			   const struct object_id *old_oid, struct strbuf *err)
 {
 	const char *filename;
 	int fd;
@@ -583,7 +583,7 @@ static int write_pseudoref(const char *pseudoref, const unsigned char *sha1,
 	struct strbuf buf = STRBUF_INIT;
 	int ret = -1;
 
-	strbuf_addf(&buf, "%s\n", sha1_to_hex(sha1));
+	strbuf_addf(&buf, "%s\n", oid_to_hex(oid));
 
 	filename = git_path("%s", pseudoref);
 	fd = hold_lock_file_for_update_timeout(&lock, filename,
@@ -595,12 +595,12 @@ static int write_pseudoref(const char *pseudoref, const unsigned char *sha1,
 		goto done;
 	}
 
-	if (old_sha1) {
-		unsigned char actual_old_sha1[20];
+	if (old_oid) {
+		struct object_id actual_old_oid;
 
-		if (read_ref(pseudoref, actual_old_sha1))
+		if (read_ref(pseudoref, actual_old_oid.hash))
 			die("could not read ref '%s'", pseudoref);
-		if (hashcmp(actual_old_sha1, old_sha1)) {
+		if (oidcmp(&actual_old_oid, old_oid)) {
 			strbuf_addf(err, "unexpected sha1 when writing '%s'", pseudoref);
 			rollback_lock_file(&lock);
 			goto done;
@@ -985,17 +985,9 @@ int ref_transaction_verify(struct ref_transaction *transaction,
 				      flags, NULL, err);
 }
 
-int update_ref_oid(const char *msg, const char *refname,
-	       const struct object_id *new_oid, const struct object_id *old_oid,
-	       unsigned int flags, enum action_on_err onerr)
-{
-	return update_ref(msg, refname, new_oid ? new_oid->hash : NULL,
-		old_oid ? old_oid->hash : NULL, flags, onerr);
-}
-
 int refs_update_ref(struct ref_store *refs, const char *msg,
-		    const char *refname, const unsigned char *new_sha1,
-		    const unsigned char *old_sha1, unsigned int flags,
+		    const char *refname, const struct object_id *new_oid,
+		    const struct object_id *old_oid, unsigned int flags,
 		    enum action_on_err onerr)
 {
 	struct ref_transaction *t = NULL;
@@ -1004,11 +996,12 @@ int refs_update_ref(struct ref_store *refs, const char *msg,
 
 	if (ref_type(refname) == REF_TYPE_PSEUDOREF) {
 		assert(refs == get_main_ref_store());
-		ret = write_pseudoref(refname, new_sha1, old_sha1, &err);
+		ret = write_pseudoref(refname, new_oid, old_oid, &err);
 	} else {
 		t = ref_store_transaction_begin(refs, &err);
 		if (!t ||
-		    ref_transaction_update(t, refname, new_sha1, old_sha1,
+		    ref_transaction_update(t, refname, new_oid ? new_oid->hash : NULL,
+					   old_oid ? old_oid->hash : NULL,
 					   flags, msg, &err) ||
 		    ref_transaction_commit(t, &err)) {
 			ret = 1;
@@ -1038,12 +1031,12 @@ int refs_update_ref(struct ref_store *refs, const char *msg,
 }
 
 int update_ref(const char *msg, const char *refname,
-	       const unsigned char *new_sha1,
-	       const unsigned char *old_sha1,
+	       const struct object_id *new_oid,
+	       const struct object_id *old_oid,
 	       unsigned int flags, enum action_on_err onerr)
 {
-	return refs_update_ref(get_main_ref_store(), msg, refname, new_sha1,
-			       old_sha1, flags, onerr);
+	return refs_update_ref(get_main_ref_store(), msg, refname, new_oid,
+			       old_oid, flags, onerr);
 }
 
 char *shorten_unambiguous_ref(const char *refname, int strict)

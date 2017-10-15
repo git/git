@@ -437,7 +437,7 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 				  (oldval && !is_null_oid(&oldoid)) ? &oldoid : NULL,
 				  flags);
 	else
-		return update_ref(msg, refname, oid.hash, oldval ? oldoid.hash : NULL,
+		return update_ref(msg, refname, &oid, oldval ? &oldoid : NULL,
 				  flags | create_reflog_flag,
 				  UPDATE_REFS_DIE_ON_ERR);
 }

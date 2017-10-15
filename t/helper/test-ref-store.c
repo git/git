@@ -233,15 +233,15 @@ static int cmd_update_ref(struct ref_store *refs, const char **argv)
 	const char *new_sha1_buf = notnull(*argv++, "old-sha1");
 	const char *old_sha1_buf = notnull(*argv++, "old-sha1");
 	unsigned int flags = arg_flags(*argv++, "flags");
-	unsigned char old_sha1[20];
-	unsigned char new_sha1[20];
+	struct object_id old_oid;
+	struct object_id new_oid;
 
-	if (get_sha1_hex(old_sha1_buf, old_sha1) ||
-	    get_sha1_hex(new_sha1_buf, new_sha1))
+	if (get_oid_hex(old_sha1_buf, &old_oid) ||
+	    get_oid_hex(new_sha1_buf, &new_oid))
 		die("not sha-1");
 
 	return refs_update_ref(refs, msg, refname,
-			       new_sha1, old_sha1,
+			       &new_oid, &old_oid,
 			       flags, UPDATE_REFS_DIE_ON_ERR);
 }
 
