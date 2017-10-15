@@ -1016,7 +1016,7 @@ int push_unpushed_submodules(struct oid_array *commits,
 		char *head;
 		struct object_id head_oid;
 
-		head = resolve_refdup("HEAD", 0, head_oid.hash, NULL);
+		head = resolve_refdup("HEAD", 0, &head_oid, NULL);
 		if (!head)
 			die(_("Failed to resolve HEAD as a valid ref."));
 

@@ -69,9 +69,9 @@ const char *resolve_ref_unsafe(const char *refname, int resolve_flags,
 
 char *refs_resolve_refdup(struct ref_store *refs,
 			  const char *refname, int resolve_flags,
-			  unsigned char *sha1, int *flags);
+			  struct object_id *oid, int *flags);
 char *resolve_refdup(const char *refname, int resolve_flags,
-		     unsigned char *sha1, int *flags);
+		     struct object_id *oid, int *flags);
 
 int refs_read_ref_full(struct ref_store *refs, const char *refname,
 		       int resolve_flags, unsigned char *sha1, int *flags);

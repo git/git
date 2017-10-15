@@ -194,21 +194,21 @@ int ref_resolves_to_object(const char *refname,
 
 char *refs_resolve_refdup(struct ref_store *refs,
 			  const char *refname, int resolve_flags,
-			  unsigned char *sha1, int *flags)
+			  struct object_id *oid, int *flags)
 {
 	const char *result;
 
 	result = refs_resolve_ref_unsafe(refs, refname, resolve_flags,
-					 sha1, flags);
+					 oid->hash, flags);
 	return xstrdup_or_null(result);
 }
 
 char *resolve_refdup(const char *refname, int resolve_flags,
-		     unsigned char *sha1, int *flags)
+		     struct object_id *oid, int *flags)
 {
 	return refs_resolve_refdup(get_main_ref_store(),
 				   refname, resolve_flags,
-				   sha1, flags);
+				   oid, flags);
 }
 
 /* The argument to filter_refs */

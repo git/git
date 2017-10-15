@@ -705,8 +705,8 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 			static const char *fake_av[2];
 
 			fake_av[0] = resolve_refdup("HEAD",
-						    RESOLVE_REF_READING,
-						    oid.hash, NULL);
+						    RESOLVE_REF_READING, &oid,
+						    NULL);
 			fake_av[1] = NULL;
 			av = fake_av;
 			ac = 1;
@@ -775,7 +775,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 	}
 
 	head = resolve_refdup("HEAD", RESOLVE_REF_READING,
-			      head_oid.hash, NULL);
+			      &head_oid, NULL);
 
 	if (with_current_branch && head) {
 		int has_head = 0;
