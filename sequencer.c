@@ -393,7 +393,7 @@ static int fast_forward_to(const struct object_id *to, const struct object_id *f
 	transaction = ref_transaction_begin(&err);
 	if (!transaction ||
 	    ref_transaction_update(transaction, "HEAD",
-				   to->hash, unborn ? null_sha1 : from->hash,
+				   to, unborn ? &null_oid : from,
 				   0, sb.buf, &err) ||
 	    ref_transaction_commit(transaction, &err)) {
 		ref_transaction_free(transaction);

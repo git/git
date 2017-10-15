@@ -1788,9 +1788,9 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 
 	transaction = ref_transaction_begin(&err);
 	if (!transaction ||
-	    ref_transaction_update(transaction, "HEAD", oid.hash,
+	    ref_transaction_update(transaction, "HEAD", &oid,
 				   current_head
-				   ? current_head->object.oid.hash : null_sha1,
+				   ? &current_head->object.oid : &null_oid,
 				   0, sb.buf, &err) ||
 	    ref_transaction_commit(transaction, &err)) {
 		rollback_index_files();

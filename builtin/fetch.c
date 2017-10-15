@@ -457,8 +457,8 @@ static int s_update_ref(const char *action,
 	transaction = ref_transaction_begin(&err);
 	if (!transaction ||
 	    ref_transaction_update(transaction, ref->name,
-				   ref->new_oid.hash,
-				   check_old ? ref->old_oid.hash : NULL,
+				   &ref->new_oid,
+				   check_old ? &ref->old_oid : NULL,
 				   0, msg, &err))
 		goto fail;
 

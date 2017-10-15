@@ -202,8 +202,8 @@ int ref_update_reject_duplicates(struct string_list *refnames,
 struct ref_update *ref_transaction_add_update(
 		struct ref_transaction *transaction,
 		const char *refname, unsigned int flags,
-		const unsigned char *new_sha1,
-		const unsigned char *old_sha1,
+		const struct object_id *new_oid,
+		const struct object_id *old_oid,
 		const char *msg);
 
 /*

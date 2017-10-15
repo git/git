@@ -994,7 +994,7 @@ static void prune_ref(struct files_ref_store *refs, struct ref_to_prune *r)
 
 	transaction = ref_store_transaction_begin(&refs->base, &err);
 	if (!transaction ||
-	    ref_transaction_delete(transaction, r->name, r->oid.hash,
+	    ref_transaction_delete(transaction, r->name, &r->oid,
 				   REF_ISPRUNING | REF_NODEREF, NULL, &err) ||
 	    ref_transaction_commit(transaction, &err)) {
 		ref_transaction_free(transaction);
@@ -1079,7 +1079,7 @@ static int files_pack_refs(struct ref_store *ref_store, unsigned int flags)
 		 * packed-refs transaction:
 		 */
 		if (ref_transaction_update(transaction, iter->refname,
-					   iter->oid->hash, NULL,
+					   iter->oid, NULL,
 					   REF_NODEREF, NULL, &err))
 			die("failure preparing to create packed reference %s: %s",
 			    iter->refname, err.buf);
@@ -2148,7 +2148,7 @@ static int split_head_update(struct ref_update *update,
 	new_update = ref_transaction_add_update(
 			transaction, "HEAD",
 			update->flags | REF_LOG_ONLY | REF_NODEREF,
-			update->new_oid.hash, update->old_oid.hash,
+			&update->new_oid, &update->old_oid,
 			update->msg);
 
 	/*
@@ -2212,7 +2212,7 @@ static int split_symref_update(struct files_ref_store *refs,
 
 	new_update = ref_transaction_add_update(
 			transaction, referent, new_flags,
-			update->new_oid.hash, update->old_oid.hash,
+			&update->new_oid, &update->old_oid,
 			update->msg);
 
 	new_update->parent_update = update;
@@ -2594,7 +2594,7 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 			ref_transaction_add_update(
 					packed_transaction, update->refname,
 					update->flags & ~REF_HAVE_OLD,
-					update->new_oid.hash, update->old_oid.hash,
+					&update->new_oid, &update->old_oid,
 					NULL);
 		}
 	}
@@ -2847,7 +2847,7 @@ static int files_initial_transaction_commit(struct ref_store *ref_store,
 		 */
 		ref_transaction_add_update(packed_transaction, update->refname,
 					   update->flags & ~REF_HAVE_OLD,
-					   update->new_oid.hash, update->old_oid.hash,
+					   &update->new_oid, &update->old_oid,
 					   NULL);
 	}
 

@@ -1139,7 +1139,7 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 		}
 		if (ref_transaction_delete(transaction,
 					   namespaced_name,
-					   old_oid ? old_oid->hash : NULL,
+					   old_oid,
 					   0, "push", &err)) {
 			rp_error("%s", err.buf);
 			strbuf_release(&err);
@@ -1156,7 +1156,7 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 
 		if (ref_transaction_update(transaction,
 					   namespaced_name,
-					   new_oid->hash, old_oid->hash,
+					   new_oid, old_oid,
 					   0, "push",
 					   &err)) {
 			rp_error("%s", err.buf);

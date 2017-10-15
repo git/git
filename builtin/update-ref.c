@@ -200,7 +200,7 @@ static const char *parse_cmd_update(struct ref_transaction *transaction,
 		die("update %s: extra input: %s", refname, next);
 
 	if (ref_transaction_update(transaction, refname,
-				   new_oid.hash, have_old ? old_oid.hash : NULL,
+				   &new_oid, have_old ? &old_oid : NULL,
 				   update_flags | create_reflog_flag,
 				   msg, &err))
 		die("%s", err.buf);
@@ -232,7 +232,7 @@ static const char *parse_cmd_create(struct ref_transaction *transaction,
 	if (*next != line_termination)
 		die("create %s: extra input: %s", refname, next);
 
-	if (ref_transaction_create(transaction, refname, new_oid.hash,
+	if (ref_transaction_create(transaction, refname, &new_oid,
 				   update_flags | create_reflog_flag,
 				   msg, &err))
 		die("%s", err.buf);
@@ -269,7 +269,7 @@ static const char *parse_cmd_delete(struct ref_transaction *transaction,
 		die("delete %s: extra input: %s", refname, next);
 
 	if (ref_transaction_delete(transaction, refname,
-				   have_old ? old_oid.hash : NULL,
+				   have_old ? &old_oid : NULL,
 				   update_flags, msg, &err))
 		die("%s", err.buf);
 
@@ -298,7 +298,7 @@ static const char *parse_cmd_verify(struct ref_transaction *transaction,
 	if (*next != line_termination)
 		die("verify %s: extra input: %s", refname, next);
 
-	if (ref_transaction_verify(transaction, refname, old_oid.hash,
+	if (ref_transaction_verify(transaction, refname, &old_oid,
 				   update_flags, &err))
 		die("%s", err.buf);
 

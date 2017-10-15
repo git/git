@@ -511,14 +511,14 @@ struct ref_transaction *ref_transaction_begin(struct strbuf *err);
  */
 
 /*
- * Add a reference update to transaction. new_sha1 is the value that
- * the reference should have after the update, or null_sha1 if it
- * should be deleted. If new_sha1 is NULL, then the reference is not
- * changed at all. old_sha1 is the value that the reference must have
- * before the update, or null_sha1 if it must not have existed
+ * Add a reference update to transaction. new_oid is the value that
+ * the reference should have after the update, or null_oid if it
+ * should be deleted. If new_oid is NULL, then the reference is not
+ * changed at all. old_oid is the value that the reference must have
+ * before the update, or null_oid if it must not have existed
  * beforehand. The old value is checked after the lock is taken to
- * prevent races. If the old value doesn't agree with old_sha1, the
- * whole transaction fails. If old_sha1 is NULL, then the previous
+ * prevent races. If the old value doesn't agree with old_oid, the
+ * whole transaction fails. If old_oid is NULL, then the previous
  * value is not checked.
  *
  * See the above comment "Reference transaction updates" for more
@@ -526,15 +526,15 @@ struct ref_transaction *ref_transaction_begin(struct strbuf *err);
  */
 int ref_transaction_update(struct ref_transaction *transaction,
 			   const char *refname,
-			   const unsigned char *new_sha1,
-			   const unsigned char *old_sha1,
+			   const struct object_id *new_oid,
+			   const struct object_id *old_oid,
 			   unsigned int flags, const char *msg,
 			   struct strbuf *err);
 
 /*
- * Add a reference creation to transaction. new_sha1 is the value that
+ * Add a reference creation to transaction. new_oid is the value that
  * the reference should have after the update; it must not be
- * null_sha1. It is verified that the reference does not exist
+ * null_oid. It is verified that the reference does not exist
  * already.
  *
  * See the above comment "Reference transaction updates" for more
@@ -542,35 +542,35 @@ int ref_transaction_update(struct ref_transaction *transaction,
  */
 int ref_transaction_create(struct ref_transaction *transaction,
 			   const char *refname,
-			   const unsigned char *new_sha1,
+			   const struct object_id *new_oid,
 			   unsigned int flags, const char *msg,
 			   struct strbuf *err);
 
 /*
- * Add a reference deletion to transaction. If old_sha1 is non-NULL,
+ * Add a reference deletion to transaction. If old_oid is non-NULL,
  * then it holds the value that the reference should have had before
- * the update (which must not be null_sha1).
+ * the update (which must not be null_oid).
  *
  * See the above comment "Reference transaction updates" for more
  * information.
  */
 int ref_transaction_delete(struct ref_transaction *transaction,
 			   const char *refname,
-			   const unsigned char *old_sha1,
+			   const struct object_id *old_oid,
 			   unsigned int flags, const char *msg,
 			   struct strbuf *err);
 
 /*
- * Verify, within a transaction, that refname has the value old_sha1,
- * or, if old_sha1 is null_sha1, then verify that the reference
- * doesn't exist. old_sha1 must be non-NULL.
+ * Verify, within a transaction, that refname has the value old_oid,
+ * or, if old_oid is null_oid, then verify that the reference
+ * doesn't exist. old_oid must be non-NULL.
  *
  * See the above comment "Reference transaction updates" for more
  * information.
  */
 int ref_transaction_verify(struct ref_transaction *transaction,
 			   const char *refname,
-			   const unsigned char *old_sha1,
+			   const struct object_id *old_oid,
 			   unsigned int flags,
 			   struct strbuf *err);
 

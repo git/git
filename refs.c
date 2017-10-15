@@ -671,8 +671,7 @@ int refs_delete_ref(struct ref_store *refs, const char *msg,
 
 	transaction = ref_store_transaction_begin(refs, &err);
 	if (!transaction ||
-	    ref_transaction_delete(transaction, refname,
-				   old_oid ? old_oid->hash : NULL,
+	    ref_transaction_delete(transaction, refname, old_oid,
 				   flags, msg, &err) ||
 	    ref_transaction_commit(transaction, &err)) {
 		error("%s", err.buf);
@@ -898,8 +897,8 @@ void ref_transaction_free(struct ref_transaction *transaction)
 struct ref_update *ref_transaction_add_update(
 		struct ref_transaction *transaction,
 		const char *refname, unsigned int flags,
-		const unsigned char *new_sha1,
-		const unsigned char *old_sha1,
+		const struct object_id *new_oid,
+		const struct object_id *old_oid,
 		const char *msg)
 {
 	struct ref_update *update;
@@ -917,23 +916,23 @@ struct ref_update *ref_transaction_add_update(
 	update->flags = flags;
 
 	if (flags & REF_HAVE_NEW)
-		hashcpy(update->new_oid.hash, new_sha1);
+		oidcpy(&update->new_oid, new_oid);
 	if (flags & REF_HAVE_OLD)
-		hashcpy(update->old_oid.hash, old_sha1);
+		oidcpy(&update->old_oid, old_oid);
 	update->msg = xstrdup_or_null(msg);
 	return update;
 }
 
 int ref_transaction_update(struct ref_transaction *transaction,
 			   const char *refname,
-			   const unsigned char *new_sha1,
-			   const unsigned char *old_sha1,
+			   const struct object_id *new_oid,
+			   const struct object_id *old_oid,
 			   unsigned int flags, const char *msg,
 			   struct strbuf *err)
 {
 	assert(err);
 
-	if ((new_sha1 && !is_null_sha1(new_sha1)) ?
+	if ((new_oid && !is_null_oid(new_oid)) ?
 	    check_refname_format(refname, REFNAME_ALLOW_ONELEVEL) :
 	    !refname_is_safe(refname)) {
 		strbuf_addf(err, "refusing to update ref with bad name '%s'",
@@ -943,48 +942,48 @@ int ref_transaction_update(struct ref_transaction *transaction,
 
 	flags &= REF_TRANSACTION_UPDATE_ALLOWED_FLAGS;
 
-	flags |= (new_sha1 ? REF_HAVE_NEW : 0) | (old_sha1 ? REF_HAVE_OLD : 0);
+	flags |= (new_oid ? REF_HAVE_NEW : 0) | (old_oid ? REF_HAVE_OLD : 0);
 
 	ref_transaction_add_update(transaction, refname, flags,
-				   new_sha1, old_sha1, msg);
+				   new_oid, old_oid, msg);
 	return 0;
 }
 
 int ref_transaction_create(struct ref_transaction *transaction,
 			   const char *refname,
-			   const unsigned char *new_sha1,
+			   const struct object_id *new_oid,
 			   unsigned int flags, const char *msg,
 			   struct strbuf *err)
 {
-	if (!new_sha1 || is_null_sha1(new_sha1))
-		die("BUG: create called without valid new_sha1");
-	return ref_transaction_update(transaction, refname, new_sha1,
-				      null_sha1, flags, msg, err);
+	if (!new_oid || is_null_oid(new_oid))
+		die("BUG: create called without valid new_oid");
+	return ref_transaction_update(transaction, refname, new_oid,
+				      &null_oid, flags, msg, err);
 }
 
 int ref_transaction_delete(struct ref_transaction *transaction,
 			   const char *refname,
-			   const unsigned char *old_sha1,
+			   const struct object_id *old_oid,
 			   unsigned int flags, const char *msg,
 			   struct strbuf *err)
 {
-	if (old_sha1 && is_null_sha1(old_sha1))
-		die("BUG: delete called with old_sha1 set to zeros");
+	if (old_oid && is_null_oid(old_oid))
+		die("BUG: delete called with old_oid set to zeros");
 	return ref_transaction_update(transaction, refname,
-				      null_sha1, old_sha1,
+				      &null_oid, old_oid,
 				      flags, msg, err);
 }
 
 int ref_transaction_verify(struct ref_transaction *transaction,
 			   const char *refname,
-			   const unsigned char *old_sha1,
+			   const struct object_id *old_oid,
 			   unsigned int flags,
 			   struct strbuf *err)
 {
-	if (!old_sha1)
-		die("BUG: verify called with old_sha1 set to NULL");
+	if (!old_oid)
+		die("BUG: verify called with old_oid set to NULL");
 	return ref_transaction_update(transaction, refname,
-				      NULL, old_sha1,
+				      NULL, old_oid,
 				      flags, NULL, err);
 }
 
@@ -1003,8 +1002,7 @@ int refs_update_ref(struct ref_store *refs, const char *msg,
 	} else {
 		t = ref_store_transaction_begin(refs, &err);
 		if (!t ||
-		    ref_transaction_update(t, refname, new_oid ? new_oid->hash : NULL,
-					   old_oid ? old_oid->hash : NULL,
+		    ref_transaction_update(t, refname, new_oid, old_oid,
 					   flags, msg, &err) ||
 		    ref_transaction_commit(t, &err)) {
 			ret = 1;
