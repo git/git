@@ -587,7 +587,7 @@ static void show_extended_objects(struct bitmap *objects,
 			continue;
 
 		obj = eindex->objects[i];
-		show_reach(obj->oid.hash, obj->type, 0, eindex->hashes[i], NULL, 0);
+		show_reach(&obj->oid, obj->type, 0, eindex->hashes[i], NULL, 0);
 	}
 }
 
@@ -612,7 +612,7 @@ static void show_objects_for_type(
 		eword_t word = objects->words[i] & filter;
 
 		for (offset = 0; offset < BITS_IN_EWORD; ++offset) {
-			const unsigned char *sha1;
+			struct object_id oid;
 			struct revindex_entry *entry;
 			uint32_t hash = 0;
 
@@ -625,12 +625,12 @@ static void show_objects_for_type(
 				continue;
 
 			entry = &bitmap_git.pack->revindex[pos + offset];
-			sha1 = nth_packed_object_sha1(bitmap_git.pack, entry->nr);
+			nth_packed_object_oid(&oid, bitmap_git.pack, entry->nr);
 
 			if (bitmap_git.hashes)
 				hash = get_be32(bitmap_git.hashes + entry->nr);
 
-			show_reach(sha1, object_type, 0, hash, bitmap_git.pack, entry->offset);
+			show_reach(&oid, object_type, 0, hash, bitmap_git.pack, entry->offset);
 		}
 
 		pos += BITS_IN_EWORD;

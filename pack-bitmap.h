@@ -27,7 +27,7 @@ enum pack_bitmap_flags {
 };
 
 typedef int (*show_reachable_fn)(
-	const unsigned char *sha1,
+	const struct object_id *oid,
 	enum object_type type,
 	int flags,
 	uint32_t hash,
