@@ -434,7 +434,7 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 		 * NULL_SHA1 as "don't care" here:
 		 */
 		return delete_ref(msg, refname,
-				  (oldval && !is_null_oid(&oldoid)) ? oldoid.hash : NULL,
+				  (oldval && !is_null_oid(&oldoid)) ? &oldoid : NULL,
 				  flags);
 	else
 		return update_ref(msg, refname, oid.hash, oldval ? oldoid.hash : NULL,

@@ -620,25 +620,25 @@ done:
 	return ret;
 }
 
-static int delete_pseudoref(const char *pseudoref, const unsigned char *old_sha1)
+static int delete_pseudoref(const char *pseudoref, const struct object_id *old_oid)
 {
 	static struct lock_file lock;
 	const char *filename;
 
 	filename = git_path("%s", pseudoref);
 
-	if (old_sha1 && !is_null_sha1(old_sha1)) {
+	if (old_oid && !is_null_oid(old_oid)) {
 		int fd;
-		unsigned char actual_old_sha1[20];
+		struct object_id actual_old_oid;
 
 		fd = hold_lock_file_for_update_timeout(
 				&lock, filename, LOCK_DIE_ON_ERROR,
 				get_files_ref_lock_timeout_ms());
 		if (fd < 0)
 			die_errno(_("Could not open '%s' for writing"), filename);
-		if (read_ref(pseudoref, actual_old_sha1))
+		if (read_ref(pseudoref, actual_old_oid.hash))
 			die("could not read ref '%s'", pseudoref);
-		if (hashcmp(actual_old_sha1, old_sha1)) {
+		if (oidcmp(&actual_old_oid, old_oid)) {
 			warning("Unexpected sha1 when deleting %s", pseudoref);
 			rollback_lock_file(&lock);
 			return -1;
@@ -655,7 +655,7 @@ static int delete_pseudoref(const char *pseudoref, const unsigned char *old_sha1
 
 int refs_delete_ref(struct ref_store *refs, const char *msg,
 		    const char *refname,
-		    const unsigned char *old_sha1,
+		    const struct object_id *old_oid,
 		    unsigned int flags)
 {
 	struct ref_transaction *transaction;
@@ -663,12 +663,13 @@ int refs_delete_ref(struct ref_store *refs, const char *msg,
 
 	if (ref_type(refname) == REF_TYPE_PSEUDOREF) {
 		assert(refs == get_main_ref_store());
-		return delete_pseudoref(refname, old_sha1);
+		return delete_pseudoref(refname, old_oid);
 	}
 
 	transaction = ref_store_transaction_begin(refs, &err);
 	if (!transaction ||
-	    ref_transaction_delete(transaction, refname, old_sha1,
+	    ref_transaction_delete(transaction, refname,
+				   old_oid ? old_oid->hash : NULL,
 				   flags, msg, &err) ||
 	    ref_transaction_commit(transaction, &err)) {
 		error("%s", err.buf);
@@ -682,10 +683,10 @@ int refs_delete_ref(struct ref_store *refs, const char *msg,
 }
 
 int delete_ref(const char *msg, const char *refname,
-	       const unsigned char *old_sha1, unsigned int flags)
+	       const struct object_id *old_oid, unsigned int flags)
 {
 	return refs_delete_ref(get_main_ref_store(), msg, refname,
-			       old_sha1, flags);
+			       old_oid, flags);
 }
 
 int copy_reflog_msg(char *buf, const char *msg)

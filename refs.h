@@ -371,19 +371,19 @@ int refs_reflog_exists(struct ref_store *refs, const char *refname);
 int reflog_exists(const char *refname);
 
 /*
- * Delete the specified reference. If old_sha1 is non-NULL, then
+ * Delete the specified reference. If old_oid is non-NULL, then
  * verify that the current value of the reference is old_sha1 before
- * deleting it. If old_sha1 is NULL, delete the reference if it
- * exists, regardless of its old value. It is an error for old_sha1 to
- * be NULL_SHA1. msg and flags are passed through to
+ * deleting it. If old_oid is NULL, delete the reference if it
+ * exists, regardless of its old value. It is an error for old_oid to
+ * be null_oid. msg and flags are passed through to
  * ref_transaction_delete().
  */
 int refs_delete_ref(struct ref_store *refs, const char *msg,
 		    const char *refname,
-		    const unsigned char *old_sha1,
+		    const struct object_id *old_oid,
 		    unsigned int flags);
 int delete_ref(const char *msg, const char *refname,
-	       const unsigned char *old_sha1, unsigned int flags);
+	       const struct object_id *old_oid, unsigned int flags);
 
 /*
  * Delete the specified references. If there are any problems, emit
