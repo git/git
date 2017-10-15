@@ -130,7 +130,7 @@ int peel_ref(const char *refname, struct object_id *oid);
  * otherwise, return a non-zero value.
  */
 int resolve_gitlink_ref(const char *submodule, const char *refname,
-			unsigned char *sha1);
+			struct object_id *oid);
 
 /*
  * Return true iff abbrev_name is a possible abbreviation for
