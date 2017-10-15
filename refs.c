@@ -497,7 +497,7 @@ int expand_ref(const char *str, int len, struct object_id *oid, char **ref)
 	return refs_found;
 }
 
-int dwim_log(const char *str, int len, unsigned char *sha1, char **log)
+int dwim_log(const char *str, int len, struct object_id *oid, char **log)
 {
 	char *last_branch = substitute_branch_name(&str, &len);
 	const char **p;
@@ -506,13 +506,13 @@ int dwim_log(const char *str, int len, unsigned char *sha1, char **log)
 
 	*log = NULL;
 	for (p = ref_rev_parse_rules; *p; p++) {
-		unsigned char hash[20];
+		struct object_id hash;
 		const char *ref, *it;
 
 		strbuf_reset(&path);
 		strbuf_addf(&path, *p, len, str);
 		ref = resolve_ref_unsafe(path.buf, RESOLVE_REF_READING,
-					 hash, NULL);
+					 hash.hash, NULL);
 		if (!ref)
 			continue;
 		if (reflog_exists(path.buf))
@@ -523,7 +523,7 @@ int dwim_log(const char *str, int len, unsigned char *sha1, char **log)
 			continue;
 		if (!logs_found++) {
 			*log = xstrdup(it);
-			hashcpy(sha1, hash);
+			oidcpy(oid, &hash);
 		}
 		if (!warn_ambiguous_refs)
 			break;

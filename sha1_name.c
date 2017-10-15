@@ -656,7 +656,7 @@ static int get_oid_basic(const char *str, int len, struct object_id *oid,
 		/* allow "@{...}" to mean the current branch reflog */
 		refs_found = dwim_ref("HEAD", 4, oid, &real_ref);
 	else if (reflog_len)
-		refs_found = dwim_log(str, len, oid->hash, &real_ref);
+		refs_found = dwim_log(str, len, oid, &real_ref);
 	else
 		refs_found = dwim_ref(str, len, oid, &real_ref);
 

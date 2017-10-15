@@ -602,7 +602,7 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 	for (; i < argc; i++) {
 		char *ref;
 		struct object_id oid;
-		if (!dwim_log(argv[i], strlen(argv[i]), oid.hash, &ref)) {
+		if (!dwim_log(argv[i], strlen(argv[i]), &oid, &ref)) {
 			status |= error("%s points nowhere!", argv[i]);
 			continue;
 		}
@@ -668,7 +668,7 @@ static int cmd_reflog_delete(int argc, const char **argv, const char *prefix)
 			continue;
 		}
 
-		if (!dwim_log(argv[i], spec - argv[i], oid.hash, &ref)) {
+		if (!dwim_log(argv[i], spec - argv[i], &oid, &ref)) {
 			status |= error("no reflog for '%s'", argv[i]);
 			continue;
 		}

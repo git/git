@@ -161,7 +161,7 @@ int add_reflog_for_walk(struct reflog_walk_info *info,
 			struct object_id oid;
 			char *b;
 			int ret = dwim_log(branch, strlen(branch),
-					   oid.hash, &b);
+					   &oid, &b);
 			if (ret > 1)
 				free(b);
 			else if (ret == 1) {
