@@ -14,22 +14,22 @@ struct worktree;
  * at the resolved object name.  The return value, if not NULL, is a
  * pointer into either a static buffer or the input ref.
  *
- * If sha1 is non-NULL, store the referred-to object's name in it.
+ * If oid is non-NULL, store the referred-to object's name in it.
  *
  * If the reference cannot be resolved to an object, the behavior
  * depends on the RESOLVE_REF_READING flag:
  *
  * - If RESOLVE_REF_READING is set, return NULL.
  *
- * - If RESOLVE_REF_READING is not set, clear sha1 and return the name of
+ * - If RESOLVE_REF_READING is not set, clear oid and return the name of
  *   the last reference name in the chain, which will either be a non-symbolic
  *   reference or an undefined reference.  If this is a prelude to
  *   "writing" to the ref, the return value is the name of the ref
  *   that will actually be created or changed.
  *
  * If the RESOLVE_REF_NO_RECURSE flag is passed, only resolves one
- * level of symbolic reference.  The value stored in sha1 for a symbolic
- * reference will always be null_sha1 in this case, and the return
+ * level of symbolic reference.  The value stored in oid for a symbolic
+ * reference will always be null_oid in this case, and the return
  * value is the reference that the symref refers to directly.
  *
  * If flags is non-NULL, set the value that it points to the
@@ -46,7 +46,7 @@ struct worktree;
  *
  * RESOLVE_REF_ALLOW_BAD_NAME allows resolving refs even when their
  * name is invalid according to git-check-ref-format(1).  If the name
- * is bad then the value stored in sha1 will be null_sha1 and the two
+ * is bad then the value stored in oid will be null_oid and the two
  * flags REF_ISBROKEN and REF_BAD_NAME will be set.
  *
  * Even with RESOLVE_REF_ALLOW_BAD_NAME, names that escape the refs/
@@ -62,10 +62,10 @@ struct worktree;
 const char *refs_resolve_ref_unsafe(struct ref_store *refs,
 				    const char *refname,
 				    int resolve_flags,
-				    unsigned char *sha1,
+				    struct object_id *oid,
 				    int *flags);
 const char *resolve_ref_unsafe(const char *refname, int resolve_flags,
-			       unsigned char *sha1, int *flags);
+			       struct object_id *oid, int *flags);
 
 char *refs_resolve_refdup(struct ref_store *refs,
 			  const char *refname, int resolve_flags,

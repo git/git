@@ -31,7 +31,7 @@ static void add_head_info(struct worktree *wt)
 	target = refs_resolve_ref_unsafe(get_worktree_ref_store(wt),
 					 "HEAD",
 					 0,
-					 wt->head_oid.hash, &flags);
+					 &wt->head_oid, &flags);
 	if (!target)
 		return;
 
