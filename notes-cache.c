@@ -11,7 +11,7 @@ static int notes_cache_match_validity(const char *ref, const char *validity)
 	struct strbuf msg = STRBUF_INIT;
 	int ret;
 
-	if (read_ref(ref, oid.hash) < 0)
+	if (read_ref(ref, &oid) < 0)
 		return 0;
 
 	commit = lookup_commit_reference_gently(&oid, 1);

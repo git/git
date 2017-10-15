@@ -1027,7 +1027,7 @@ void init_notes(struct notes_tree *t, const char *notes_ref,
 	if (flags & NOTES_INIT_EMPTY || !notes_ref ||
 	    get_oid_treeish(notes_ref, &object_oid))
 		return;
-	if (flags & NOTES_INIT_WRITABLE && read_ref(notes_ref, object_oid.hash))
+	if (flags & NOTES_INIT_WRITABLE && read_ref(notes_ref, &object_oid))
 		die("Cannot use notes ref %s", notes_ref);
 	if (get_tree_entry(object_oid.hash, "", oid.hash, &mode))
 		die("Failed to read notes tree referenced by %s (%s)",

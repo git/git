@@ -219,22 +219,22 @@ struct ref_filter {
 };
 
 int refs_read_ref_full(struct ref_store *refs, const char *refname,
-		       int resolve_flags, unsigned char *sha1, int *flags)
+		       int resolve_flags, struct object_id *oid, int *flags)
 {
-	if (refs_resolve_ref_unsafe(refs, refname, resolve_flags, sha1, flags))
+	if (refs_resolve_ref_unsafe(refs, refname, resolve_flags, oid->hash, flags))
 		return 0;
 	return -1;
 }
 
-int read_ref_full(const char *refname, int resolve_flags, unsigned char *sha1, int *flags)
+int read_ref_full(const char *refname, int resolve_flags, struct object_id *oid, int *flags)
 {
 	return refs_read_ref_full(get_main_ref_store(), refname,
-				  resolve_flags, sha1, flags);
+				  resolve_flags, oid, flags);
 }
 
-int read_ref(const char *refname, unsigned char *sha1)
+int read_ref(const char *refname, struct object_id *oid)
 {
-	return read_ref_full(refname, RESOLVE_REF_READING, sha1, NULL);
+	return read_ref_full(refname, RESOLVE_REF_READING, oid, NULL);
 }
 
 int ref_exists(const char *refname)
@@ -362,7 +362,7 @@ int head_ref_namespaced(each_ref_fn fn, void *cb_data)
 	int flag;
 
 	strbuf_addf(&buf, "%sHEAD", get_git_namespace());
-	if (!read_ref_full(buf.buf, RESOLVE_REF_READING, oid.hash, &flag))
+	if (!read_ref_full(buf.buf, RESOLVE_REF_READING, &oid, &flag))
 		ret = fn(buf.buf, &oid, flag, cb_data);
 	strbuf_release(&buf);
 
@@ -601,7 +601,7 @@ static int write_pseudoref(const char *pseudoref, const struct object_id *oid,
 	if (old_oid) {
 		struct object_id actual_old_oid;
 
-		if (read_ref(pseudoref, actual_old_oid.hash))
+		if (read_ref(pseudoref, &actual_old_oid))
 			die("could not read ref '%s'", pseudoref);
 		if (oidcmp(&actual_old_oid, old_oid)) {
 			strbuf_addf(err, "unexpected sha1 when writing '%s'", pseudoref);
@@ -639,7 +639,7 @@ static int delete_pseudoref(const char *pseudoref, const struct object_id *old_o
 				get_files_ref_lock_timeout_ms());
 		if (fd < 0)
 			die_errno(_("Could not open '%s' for writing"), filename);
-		if (read_ref(pseudoref, actual_old_oid.hash))
+		if (read_ref(pseudoref, &actual_old_oid))
 			die("could not read ref '%s'", pseudoref);
 		if (oidcmp(&actual_old_oid, old_oid)) {
 			warning("Unexpected sha1 when deleting %s", pseudoref);
@@ -1249,7 +1249,7 @@ int refs_head_ref(struct ref_store *refs, each_ref_fn fn, void *cb_data)
 	int flag;
 
 	if (!refs_read_ref_full(refs, "HEAD", RESOLVE_REF_READING,
-				oid.hash, &flag))
+				&oid, &flag))
 		return fn("HEAD", &oid, flag, cb_data);
 
 	return 0;
@@ -1699,7 +1699,7 @@ int refs_peel_ref(struct ref_store *refs, const char *refname,
 		  unsigned char *sha1)
 {
 	int flag;
-	unsigned char base[20];
+	struct object_id base;
 
 	if (current_ref_iter && current_ref_iter->refname == refname) {
 		struct object_id peeled;
@@ -1711,10 +1711,10 @@ int refs_peel_ref(struct ref_store *refs, const char *refname,
 	}
 
 	if (refs_read_ref_full(refs, refname,
-			       RESOLVE_REF_READING, base, &flag))
+			       RESOLVE_REF_READING, &base, &flag))
 		return -1;
 
-	return peel_object(base, sha1);
+	return peel_object(base.hash, sha1);
 }
 
 int peel_ref(const char *refname, unsigned char *sha1)

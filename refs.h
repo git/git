@@ -74,10 +74,10 @@ char *resolve_refdup(const char *refname, int resolve_flags,
 		     struct object_id *oid, int *flags);
 
 int refs_read_ref_full(struct ref_store *refs, const char *refname,
-		       int resolve_flags, unsigned char *sha1, int *flags);
+		       int resolve_flags, struct object_id *oid, int *flags);
 int read_ref_full(const char *refname, int resolve_flags,
-		  unsigned char *sha1, int *flags);
-int read_ref(const char *refname, unsigned char *sha1);
+		  struct object_id *oid, int *flags);
+int read_ref(const char *refname, struct object_id *oid);
 
 /*
  * Return 0 if a reference named refname could be created without

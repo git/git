@@ -782,7 +782,7 @@ static int verify_lock(struct ref_store *ref_store, struct ref_lock *lock,
 
 	if (refs_read_ref_full(ref_store, lock->ref_name,
 			       mustexist ? RESOLVE_REF_READING : 0,
-			       lock->old_oid.hash, NULL)) {
+			       &lock->old_oid, NULL)) {
 		if (old_sha1) {
 			int save_errno = errno;
 			strbuf_addf(err, "can't verify ref '%s'", lock->ref_name);
@@ -1297,7 +1297,7 @@ static int files_copy_or_rename_ref(struct ref_store *ref_store,
 	 */
 	if (!copy && !refs_read_ref_full(&refs->base, newrefname,
 				RESOLVE_REF_READING | RESOLVE_REF_NO_RECURSE,
-				oid.hash, NULL) &&
+				&oid, NULL) &&
 	    refs_delete_ref(&refs->base, NULL, newrefname,
 			    NULL, REF_NODEREF)) {
 		if (errno == EISDIR) {
@@ -1721,7 +1721,7 @@ static void update_symref_reflog(struct files_ref_store *refs,
 	struct object_id new_oid;
 	if (logmsg &&
 	    !refs_read_ref_full(&refs->base, target,
-				RESOLVE_REF_READING, new_oid.hash, NULL) &&
+				RESOLVE_REF_READING, &new_oid, NULL) &&
 	    files_log_ref_write(refs, refname, &lock->old_oid,
 				&new_oid, logmsg, 0, &err)) {
 		error("%s", err.buf);
@@ -2010,7 +2010,7 @@ static int files_reflog_iterator_advance(struct ref_iterator *ref_iterator)
 
 		if (refs_read_ref_full(iter->ref_store,
 				       diter->relative_path, 0,
-				       iter->oid.hash, &flags)) {
+				       &iter->oid, &flags)) {
 			error("bad ref for %s", diter->path.buf);
 			continue;
 		}
@@ -2347,7 +2347,7 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 			 */
 			if (refs_read_ref_full(&refs->base,
 					       referent.buf, 0,
-					       lock->old_oid.hash, NULL)) {
+					       &lock->old_oid, NULL)) {
 				if (update->flags & REF_HAVE_OLD) {
 					strbuf_addf(err, "cannot lock ref '%s': "
 						    "error reading reference",
