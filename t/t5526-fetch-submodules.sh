@@ -570,4 +570,39 @@ test_expect_success 'fetching submodule into a broken repository' '
 	test_must_fail git -C dst fetch --recurse-submodules
 '
 
+test_expect_success "fetch new commits when submodule got renamed" '
+	git clone . downstream_rename &&
+	(
+		cd downstream_rename &&
+		git submodule update --init &&
+# NEEDSWORK: we omitted --recursive for the submodule update here since
+# that does not work. See test 7001 for mv "moving nested submodules"
+# for details. Once that is fixed we should add the --recursive option
+# here.
+		git checkout -b rename &&
+		git mv submodule submodule_renamed &&
+		(
+			cd submodule_renamed &&
+			git checkout -b rename_sub &&
+			echo a >a &&
+			git add a &&
+			git commit -ma &&
+			git push origin rename_sub &&
+			git rev-parse HEAD >../../expect
+		) &&
+		git add submodule_renamed &&
+		git commit -m "update renamed submodule" &&
+		git push origin rename
+	) &&
+	(
+		cd downstream &&
+		git fetch --recurse-submodules=on-demand &&
+		(
+			cd submodule &&
+			git rev-parse origin/rename_sub >../../actual
+		)
+	) &&
+	test_cmp expect actual
+'
+
 test_done
