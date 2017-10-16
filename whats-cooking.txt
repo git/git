@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Oct 2017, #02; Wed, 11)
+Subject: What's cooking in git.git (Oct 2017, #03; Mon, 16)
 X-master-at: 111ef79afe185f8731920569450f6a65320f5d5f
-X-next-at: 92ea9504509327dacaba929d631d198e57533c14
+X-next-at: 2b38de12cc0e926ec9a73ad73767e578a81645ba
 
-What's cooking in git.git (Oct 2017, #02; Wed, 11)
+What's cooking in git.git (Oct 2017, #03; Mon, 16)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,10 +12,19 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-2.15-rc1 has been tagged.  Some of the topic marked "Will merge to
-'master'" below might still become part of 2.15 final, while others
-may be left to be merged after the final, to become part of the
-release after that one (2.16?).
+2.15-rc1 has been tagged, but 2.15-rc2 is going to slip.  The topics
+that are cooking in 'next' that are not urgent fixes are classified
+as "Will cook in 'next'", and will not graduate to 'master' until
+the final.
+
+We haven't decided how to resolve the "git add -i" regression (see
+the thread at
+https://public-inbox.org/git/xmqqzi8vvht6.fsf@gitster.mtv.corp.google.com/
+for the two approaches), and 'next' has one of them ("demote
+'always' to 'auto' when given to color.ui from the configuration
+file"), while 'pu' has f6b2410f20 that takes a different approach
+("It was a mistake to allow plumbing to pay attention to color.ui
+config, so revert it to unbreak 'add -i'").
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -23,372 +32,90 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* ar/request-pull-phrasofix (2017-10-03) 1 commit
-  (merged to 'next' on 2017-10-03 at 07807bba90)
- + request-pull: capitalise "Git" to make it a proper noun
-
- Spell the name of our system as "Git" in the output from
- request-pull script.
-
-
-* ds/avoid-overflow-in-midpoint-computation (2017-10-10) 1 commit
-  (merged to 'next' on 2017-10-10 at 6279867a5d)
- + cleanup: fix possible overflow errors in binary search
-
- Code clean-up.
-
-
-* er/fast-import-dump-refs-on-checkpoint (2017-09-29) 1 commit
-  (merged to 'next' on 2017-10-03 at 4e7b0e7ec1)
- + fast-import: checkpoint: dump branches/tags/marks even if object_count==0
-
- The checkpoint command "git fast-import" did not flush updates to
- refs and marks unless at least one object was created since the
- last checkpoint, which has been corrected, as these things can
- happen without any new object getting created.
-
-
-* hn/string-list-doc (2017-10-06) 1 commit
-  (merged to 'next' on 2017-10-10 at d214a7c369)
- + api-argv-array.txt: remove broken link to string-list API
-
- Docfix.
-
-
-* jk/refs-df-conflict (2017-10-07) 2 commits
-  (merged to 'next' on 2017-10-10 at d5953a1ced)
- + refs_resolve_ref_unsafe: handle d/f conflicts for writes
- + t3308: create a real ref directory/file conflict
-
- An ancient bug that made Git misbehave with creation/renaming of
- refs has been fixed.
-
-
-* jk/sha1-loose-object-info-fix (2017-10-06) 1 commit
-  (merged to 'next' on 2017-10-10 at bcfd9c4e3f)
- + sha1_loose_object_info: handle errors from unpack_sha1_rest
-
- Leakfix and futureproofing.
-
-
-* jk/ui-color-always-to-auto (2017-10-04) 3 commits
-  (merged to 'next' on 2017-10-05 at 792ae936cf)
- + Merge branch 'jk/ui-color-always-to-auto-maint' into jk/ui-color-always-to-auto
- + t7301: use test_terminal to check color
- + t4015: use --color with --color-moved
- (this branch uses jk/ui-color-always-to-auto-maint.)
-
- Fix regression of "git add -p" for users with "color.ui = always"
- in their configuration, by merging the topic below and adjusting it
- for the 'master' front.
-
-
-* jk/ui-color-always-to-auto-maint (2017-10-04) 10 commits
- + color: make "always" the same as "auto" in config
- + provide --color option for all ref-filter users
- + t3205: use --color instead of color.branch=always
- + t3203: drop "always" color test
- + t6006: drop "always" color config tests
- + t7502: use diff.noprefix for --verbose test
- + t7508: use test_terminal for color output
- + t3701: use test-terminal to collect color output
- + t4015: prefer --color to -c color.diff=always
- + test-terminal: set TERM=vt100
- (this branch is used by jk/ui-color-always-to-auto.)
-
- Users with "color.ui = always" in their configuration were broken
- by a recent change that made plumbing commands to pay attention to
- them as the patch created internally by "git add -p" were colored
- (heh) and made unusable.  Fix this regression by redefining
- 'always' to mean the same thing as 'auto'.
-
-
-* jn/strbuf-doc-re-reuse (2017-10-04) 1 commit
-  (merged to 'next' on 2017-10-04 at 5940d412d9)
- + strbuf doc: reuse after strbuf_release is fine
-
-
-* jr/hash-migration-plan-doc (2017-09-28) 1 commit
-  (merged to 'next' on 2017-10-04 at b47b3bb656)
- + technical doc: add a design doc for hash function transition
-
- Lay out plans for weaning us off of SHA-1.
-
-
-* jt/oidmap (2017-10-01) 1 commit
-  (merged to 'next' on 2017-10-05 at e41445fc33)
- + oidmap: map with OID as key
-
- Introduce a new "oidmap" API and rewrite oidset to use it.
-
-
-* ks/branch-tweak-error-message-for-extra-args (2017-10-04) 1 commit
-  (merged to 'next' on 2017-10-05 at aa0b656bf0)
- + branch: change the error messages to be more meaningful
-
- Error message tweak.
-
-
-* ks/verify-filename-non-option-error-message-tweak (2017-10-04) 1 commit
-  (merged to 'next' on 2017-10-05 at 2a7030f6fe)
- + setup: update error message to be more meaningful
-
- Error message tweak.
-
-
-* ls/filter-process-delayed (2017-10-10) 5 commits
-  (merged to 'next' on 2017-10-10 at 7b26d72991)
- + write_entry: untangle symlink and regular-file cases
- + write_entry: avoid reading blobs in CE_RETRY case
- + write_entry: fix leak when retrying delayed filter
- + entry.c: check if file exists after checkout
- + entry.c: update cache entry only for existing files
-
- Bugfixes to an already graduated series.
-
-
-* ma/builtin-unleak (2017-10-02) 1 commit
-  (merged to 'next' on 2017-10-05 at 380cb74320)
- + builtin/: add UNLEAKs
-
- Many variables that points at a region of memory that will live
- throughout the life of the program have been marked with UNLEAK
- marker to help the leak checkers concentrate on real leaks..
-
-
-* rb/compat-poll-fix (2017-09-29) 1 commit
-  (merged to 'next' on 2017-10-05 at c31029202d)
- + poll.c: always set revents, even if to zero
-
- Backports a moral equivalent of 2015 fix to the poll emulation from
- the upstream gnulib to fix occasional breakages on HPE NonStop.
-
-
-* rs/cleanup-strbuf-users (2017-10-02) 3 commits
-  (merged to 'next' on 2017-10-03 at 322ec33ad8)
- + graph: use strbuf_addchars() to add spaces
- + use strbuf_addstr() for adding strings to strbufs
- + path: use strbuf_add_real_path()
-
- Code clean-up.
-
-
-* rs/cocci-de-paren-call-params (2017-10-02) 1 commit
-  (merged to 'next' on 2017-10-03 at ee97fe5c24)
- + coccinelle: remove parentheses that become unnecessary
-
- Code clean-up.
-
-
-* rs/fsck-null-return-from-lookup (2017-10-06) 1 commit
-  (merged to 'next' on 2017-10-10 at 32dfa424cf)
- + fsck: handle NULL return of lookup_blob() and lookup_tree()
-
- Improve behaviour of "git fsck" upon finding a missing object.
-
-
-* rs/qsort-s (2017-10-04) 1 commit
-  (merged to 'next' on 2017-10-04 at 5f10a6e263)
- + test-stringlist: avoid buffer underrun when sorting nothing
-
-
-* rs/resolve-ref-optional-result (2017-10-01) 2 commits
-  (merged to 'next' on 2017-10-03 at f129d4b0e9)
- + refs: pass NULL to resolve_refdup() if hash is not needed
- + refs: pass NULL to refs_resolve_refdup() if hash is not needed
-
- Code clean-up.
-
-
-* rs/rs-mailmap (2017-10-06) 1 commit
-  (merged to 'next' on 2017-10-10 at 020d29b68c)
- + .mailmap: normalize name for René Scharfe
-
-
-* rs/run-command-use-alloc-array (2017-10-03) 1 commit
-  (merged to 'next' on 2017-10-03 at e3869b6c32)
- + run-command: use ALLOC_ARRAY
-
- Code clean-up.
-
-
-* rs/tag-null-pointer-arith-fix (2017-10-02) 1 commit
-  (merged to 'next' on 2017-10-03 at e05d92fec9)
- + tag: avoid NULL pointer arithmetic
-
- Code clean-up.
-
-
-* rs/use-free-and-null (2017-10-02) 1 commit
-  (merged to 'next' on 2017-10-03 at 6340234d67)
- + repository: use FREE_AND_NULL
-
- Code clean-up.
-
-
-* sb/branch-avoid-repeated-strbuf-release (2017-10-04) 1 commit
-  (merged to 'next' on 2017-10-04 at bd86ef77fc)
- + branch: reset instead of release a strbuf
-
-
-* sb/git-clang-format (2017-10-02) 1 commit
-  (merged to 'next' on 2017-10-03 at b40d47b9d5)
- + clang-format: add a comment about the meaning/status of the
-
- Add comment to clarify that the style file is meant to be used with
- clang-5 and the rules are still work in progress.
-
-
-* sb/test-cmp-expect-actual (2017-10-07) 1 commit
-  (merged to 'next' on 2017-10-10 at c47a4dcc72)
- + tests: fix diff order arguments in test_cmp
-
- Test tweak.
-
-
-* tb/complete-describe (2017-10-07) 1 commit
-  (merged to 'next' on 2017-10-10 at 2607253946)
- + completion: add --broken and --dirty to describe
-
- Docfix.
-
-
-* tb/delimit-pretty-trailers-args-with-comma (2017-10-02) 1 commit
-  (merged to 'next' on 2017-10-04 at de5446a01c)
- + pretty.c: delimit "%(trailers)" arguments with ","
- (this branch is used by tb/show-trailers-in-ref-filter.)
-
- The feature that allows --pretty='%(trailers)' to take modifiers
- like "fold" and "only" used to separate these modifiers with a
- comma, i.e. "%(trailers:fold:only)", but we changed our mind and
- use a comma, i.e. "%(trailers:fold,only)".  Fast track this change
- before this new feature becomes part of any official release.
-
-
-* tb/ref-filter-empty-modifier (2017-10-05) 1 commit
-  (merged to 'next' on 2017-10-05 at 62cb67688a)
- + ref-filter.c: pass empty-string as NULL to atom parsers
-
- In the "--format=..." option of the "git for-each-ref" command (and
- its friends, i.e. the listing mode of "git branch/tag"), "%(atom:)"
- (e.g. "%(refname:)", "%(body:)" used to error out.  Instead, treat
- them as if the colon and an empty string that follows it were not
- there.
-
-
-* tb/show-trailers-in-ref-filter (2017-10-02) 6 commits
-  (merged to 'next' on 2017-10-05 at c7a697f15d)
- + ref-filter.c: parse trailers arguments with %(contents) atom
- + ref-filter.c: use trailer_opts to format trailers
- + t6300: refactor %(trailers) tests
- + doc: use "`<literal>`"-style quoting for literal strings
- + doc: 'trailers' is the preferred way to format trailers
- + t4205: unfold across multiple lines
-
- "git for-each-ref --format=..." learned a new format element,
- %(trailers), to show only the commit log trailer part of the log
- message.
-
-
-* tg/memfixes (2017-10-04) 3 commits
-  (merged to 'next' on 2017-10-04 at fb338a5531)
- + sub-process: use child_process.args instead of child_process.argv
- + http-push: fix construction of hex value from path
- + path.c: fix uninitialized memory access
-
- Fixes for a handful memory access issues identified by valgrind.
-
---------------------------------------------------
 [New Topics]
 
-* dm/run-command-ignored-hook-advise (2017-10-10) 1 commit
-  (merged to 'next' on 2017-10-10 at 0827814922)
- + run-command: add hint when a hook is ignored
+* jk/ui-color-always-to-auto-maint (2017-10-13) 2 commits
+  (merged to 'next' on 2017-10-13 at bb16e1edc8)
+ + color: document that "git -c color.*=always" is a bit special
+ + color: downgrade "always" to "auto" only for on-disk configuration
 
- A hook script that is set unexecutable is simply ignored.  Git
- notifies when such a file is ignored, unless the message is
- squelched via advice.ignoredHook configuration.
+ It turns out that "git -c color.ui=always cmd" is relied on by many
+ third-party tools as a way to force coloured output no matter what
+ the end-user configuration is, and a recent attempt to downgrade
+ 'always' to 'auto' to fix the regression to "git add -p" broke it.
+
+
+* jk/ref-filter-colors-fix (2017-10-14) 4 commits
+ - tag: respect color.ui config
+ - Revert "color: check color.ui in git_default_config()"
+ - Revert "t6006: drop "always" color config tests"
+ - Revert "color: make "always" the same as "auto" in config"
+
+ This is the "theoretically more correct" approach of simply
+ stepping back to the state before plumbing commands started paying
+ attention to "color.ui" configuration variable.
+
+
+* jc/branch-name-sanity (2017-10-14) 3 commits
+  (merged to 'next' on 2017-10-16 at 174646d1c3)
+ + branch: forbid refs/heads/HEAD
+ + branch: split validate_new_branchname() into two
+ + branch: streamline "attr_only" handling in validate_new_branchname()
+
+ "git branch" and "git checkout -b" are now forbidden from creating
+ a branch whose name is "HEAD".
 
  Will cook in 'next'.
 
 
-* hv/fetch-moved-submodules-on-demand (2017-10-08) 5 commits
- - DONTMERGE: mark failing tests for now
- - submodule: simplify decision tree whether to or not to fetch
- - implement fetching of moved submodules
- - change submodule push test to use proper repository setup
- - fetch: add test to make sure we stay backwards compatible
+* jk/revision-pruning-optim (2017-10-14) 1 commit
+  (merged to 'next' on 2017-10-16 at 2662baa21d)
+ + revision: quit pruning diff more quickly when possible
 
- WIP.
+ Pathspec-limited revision traversal was taught not to keep finding
+ unneeded differences once it knows two trees are different inside
+ given pathspec.
 
-
-* js/for-each-ref-remote-name-and-ref (2017-10-11) 3 commits
- - for-each-ref: test :remotename and :remoteref
- - for-each-ref: let upstream/push optionally report the remote ref name
- - for-each-ref: let upstream/push optionally report the remote name
-
- The "--format=..." option "git for-each-ref" takes learned to show
- the name of the 'remote' repository and the ref at the remote side
- that is affected for 'upstream' and 'push' via "%(push:remotename)"
- and friends.
+ Will cook in 'next'.
 
 
-* pb/bisect-helper (2017-10-06) 6 commits
- - bisect--helper: `is_expected_rev` & `check_expected_revs` shell function in C
- - t6030: explicitly test for bisection cleanup
- - bisect--helper: `bisect_clean_state` shell function in C
- - bisect--helper: `write_terms` shell function in C
- - bisect--helper: rewrite `check_term_format` shell function in C
- - bisect--helper: use OPT_CMDMODE instead of OPT_BOOL
+* js/rebase-i-final (2017-10-16) 1 commit
+  (merged to 'next' on 2017-10-16 at 72362f5f9c)
+ + sequencer.c: fix and unify error messages in rearrange_squash()
 
- An early part of piece-by-piece rewrite of "git bisect".
+ Error message fix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* bc/object-id (2017-10-09) 24 commits
- - refs/files-backend: convert static functions to object_id
- - refs: convert read_raw_ref backends to struct object_id
- - refs: convert peel_object to struct object_id
- - refs: convert resolve_ref_unsafe to struct object_id
- - worktree: convert struct worktree to object_id
- - refs: convert resolve_gitlink_ref to struct object_id
- - resolve_gitlink_ref(): convert remaining callers to object_id
- - sha1_file: convert index_path and index_fd to struct object_id
- - refs: convert reflog_expire parameter to struct object_id
- - refs: convert read_ref_at to struct object_id
- - refs: convert peel_ref to struct object_id
- - builtin/pack-objects: convert to struct object_id
- - pack-bitmap: convert traverse_bitmap_commit_list to object_id
- - refs: convert dwim_log to struct object_id
- - builtin/reflog: convert remaining unsigned char uses to object_id
- - refs: convert dwim_ref and expand_ref to struct object_id
- - refs: convert read_ref and read_ref_full to object_id
- - refs: convert resolve_refdup and refs_resolve_refdup to struct object_id
- - check_connected(): use struct object_id
- - refs: update ref transactions to use struct object_id
- - refs: convert update_ref and refs_update_ref to use struct object_id
- - refs: convert delete_ref and refs_delete_ref to struct object_id
- - refs/files-backend: convert struct ref_to_prune to object_id
- - walker: convert to struct object_id
+* wk/merge-options-gpg-sign-doc (2017-10-12) 1 commit
+  (merged to 'next' on 2017-10-16 at ae61d824da)
+ + Documentation/merge-options.txt: describe -S/--gpg-sign for 'pull'
+
+ Doc updates.
+
+ Will cook in 'next'.
 
 
-* jc/no-cmd-as-subroutine (2017-10-11) 2 commits
- - merge-ours: do not use cmd_*() as a subroutine
- - describe: do not use cmd_*() as a subroutine
+* wk/pull-signoff (2017-10-13) 1 commit
+  (merged to 'next' on 2017-10-16 at 5e48f349d9)
+ + pull: pass --signoff/--no-signoff to "git merge"
 
- Calling cmd_foo() as if it is a general purpose helper function is
- a no-no.  Correct two instances of such to set an example.
+ "git pull" has been taught to accept "--[no-]signoff" option and
+ pass it down to "git merge".
+
+ Will cook in 'next'.
 
 
-* jc/doc-checkout (2017-10-11) 1 commit
- - checkout doc: clarify command line args for "checkout paths" mode
+* sb/diff-color-move (2017-10-16) 1 commit
+  (merged to 'next' on 2017-10-16 at 69de1bad9d)
+ + diff: fix infinite loop with --color-moved --ignore-space-change
 
- Doc update.
+ A recently added "--color-moved" feature of "diff" fell into
+ infinite loop when ignoring whitespace changes, which has been
+ fixed.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 --------------------------------------------------
 [Stalled]
@@ -429,23 +156,106 @@ of the repositories listed at
  cf. <20170421145916.mknekgqzhxffu7di@sigill.intra.peff.net>
  cf. <d0e81b1e-5869-299e-f462-4d43dc997bd1@ramsayjones.plus.com>
 
-
-* sg/clone-refspec-from-command-line-config (2017-06-16) 2 commits
- - Documentation/clone: document ignored configuration variables
- - clone: respect additional configured fetch refspecs during initial fetch
- (this branch is used by sg/remote-no-string-refspecs.)
-
- "git clone -c var=val" is a way to set configuration variables in
- the resulting repository, but it is more useful to also make these
- variables take effect while the initial clone is happening,
- e.g. these configuration variables could be fetch refspecs.
-
- Waiting for a response.
- cf. <20170617112228.vugswym4o4owf6wj@sigill.intra.peff.net>
- cf. <xmqqmv8zhdap.fsf@gitster.mtv.corp.google.com>
-
 --------------------------------------------------
 [Cooking]
+
+* dm/run-command-ignored-hook-advise (2017-10-10) 1 commit
+  (merged to 'next' on 2017-10-10 at 0827814922)
+ + run-command: add hint when a hook is ignored
+
+ A hook script that is set unexecutable is simply ignored.  Git
+ notifies when such a file is ignored, unless the message is
+ squelched via advice.ignoredHook configuration.
+
+ Will cook in 'next'.
+
+
+* hv/fetch-moved-submodules-on-demand (2017-10-08) 5 commits
+ - DONTMERGE: mark failing tests for now
+ - submodule: simplify decision tree whether to or not to fetch
+ - implement fetching of moved submodules
+ - change submodule push test to use proper repository setup
+ - fetch: add test to make sure we stay backwards compatible
+
+ WIP.
+
+
+* js/for-each-ref-remote-name-and-ref (2017-10-11) 3 commits
+ - for-each-ref: test :remotename and :remoteref
+ - for-each-ref: let upstream/push optionally report the remote ref name
+ - for-each-ref: let upstream/push optionally report the remote name
+
+ The "--format=..." option "git for-each-ref" takes learned to show
+ the name of the 'remote' repository and the ref at the remote side
+ that is affected for 'upstream' and 'push' via "%(push:remotename)"
+ and friends.
+
+ Needs a bit more work on the documentation part?
+
+
+* pb/bisect-helper (2017-10-06) 6 commits
+  (merged to 'next' on 2017-10-13 at ffc9aefe63)
+ + bisect--helper: `is_expected_rev` & `check_expected_revs` shell function in C
+ + t6030: explicitly test for bisection cleanup
+ + bisect--helper: `bisect_clean_state` shell function in C
+ + bisect--helper: `write_terms` shell function in C
+ + bisect--helper: rewrite `check_term_format` shell function in C
+ + bisect--helper: use OPT_CMDMODE instead of OPT_BOOL
+
+ An early part of piece-by-piece rewrite of "git bisect".
+
+ Will cook in 'next'.
+
+
+* bc/object-id (2017-10-16) 25 commits
+ - refs/files-backend: convert static functions to object_id
+ - refs: convert read_raw_ref backends to struct object_id
+ - refs: convert peel_object to struct object_id
+ - refs: convert resolve_ref_unsafe to struct object_id
+ - worktree: convert struct worktree to object_id
+ - refs: convert resolve_gitlink_ref to struct object_id
+ - Convert remaining callers of resolve_gitlink_ref to object_id
+ - sha1_file: convert index_path and index_fd to struct object_id
+ - refs: convert reflog_expire parameter to struct object_id
+ - refs: convert read_ref_at to struct object_id
+ - refs: convert peel_ref to struct object_id
+ - builtin/pack-objects: convert to struct object_id
+ - pack-bitmap: convert traverse_bitmap_commit_list to object_id
+ - refs: convert dwim_log to struct object_id
+ - builtin/reflog: convert remaining unsigned char uses to object_id
+ - refs: convert dwim_ref and expand_ref to struct object_id
+ - refs: convert read_ref and read_ref_full to object_id
+ - refs: convert resolve_refdup and refs_resolve_refdup to struct object_id
+ - Convert check_connected to use struct object_id
+ - refs: update ref transactions to use struct object_id
+ - refs: prevent accidental NULL dereference in write_pseudoref
+ - refs: convert update_ref and refs_update_ref to use struct object_id
+ - refs: convert delete_ref and refs_delete_ref to struct object_id
+ - refs/files-backend: convert struct ref_to_prune to object_id
+ - walker: convert to struct object_id
+
+ Conversion from uchar[20] to struct object_id continues.
+
+
+* jc/no-cmd-as-subroutine (2017-10-11) 2 commits
+  (merged to 'next' on 2017-10-16 at 5f4ee919ac)
+ + merge-ours: do not use cmd_*() as a subroutine
+ + describe: do not use cmd_*() as a subroutine
+
+ Calling cmd_foo() as if it is a general purpose helper function is
+ a no-no.  Correct two instances of such to set an example.
+
+ Will cook in 'next'.
+
+
+* jc/doc-checkout (2017-10-11) 1 commit
+  (merged to 'next' on 2017-10-13 at c000f4bd84)
+ + checkout doc: clarify command line args for "checkout paths" mode
+
+ Doc update.
+
+ Will merge to 'master'.
+
 
 * jc/merge-symlink-ours-theirs (2017-09-26) 1 commit
  - merge: teach -Xours/-Xtheirs to symbolic link merge
@@ -480,29 +290,31 @@ of the repositories listed at
  depending more on its remote repository---this is the beginning of
  it.
 
- Needs review.
+ Expecting a reroll.
+ cf. <CAGf8dgLu-TeK8KbHv-U+18O+L2TxKcGv5vFFHy38J6a_YXRfew@mail.gmail.com>
 
 
 * ma/lockfile-fixes (2017-10-07) 12 commits
- - read_cache: roll back lock in `update_index_if_able()`
- - read-cache: leave lock in right state in `write_locked_index()`
- - read-cache: drop explicit `CLOSE_LOCK`-flag
- - cache.h: document `write_locked_index()`
- - apply: remove `newfd` from `struct apply_state`
- - apply: move lockfile into `apply_state`
- - cache-tree: simplify locking logic
- - checkout-index: simplify locking logic
- - tempfile: fix documentation on `delete_tempfile()`
- - lockfile: fix documentation on `close_lock_file_gently()`
- - treewide: prefer lockfiles on the stack
- - sha1_file: do not leak `lock_file`
+  (merged to 'next' on 2017-10-16 at 19fae5c138)
+ + read_cache: roll back lock in `update_index_if_able()`
+ + read-cache: leave lock in right state in `write_locked_index()`
+ + read-cache: drop explicit `CLOSE_LOCK`-flag
+ + cache.h: document `write_locked_index()`
+ + apply: remove `newfd` from `struct apply_state`
+ + apply: move lockfile into `apply_state`
+ + cache-tree: simplify locking logic
+ + checkout-index: simplify locking logic
+ + tempfile: fix documentation on `delete_tempfile()`
+ + lockfile: fix documentation on `close_lock_file_gently()`
+ + treewide: prefer lockfiles on the stack
+ + sha1_file: do not leak `lock_file`
 
  An earlier update made it possible to use an on-stack in-core
  lockfile structure (as opposed to having to deliberately leak an
  on-heap one).  Many codepaths have been updated to take advantage
  of this new facility.
 
- Looking good.  Is this ready for 'next'?
+ Will cook in 'next'.
 
 
 * ot/mru-on-list (2017-10-01) 1 commit
@@ -553,16 +365,16 @@ of the repositories listed at
  What's the doneness of this one?
 
 
-* ds/find-unique-abbrev-optim (2017-10-09) 4 commits
- - sha1_name: minimize OID comparisons during disambiguation
- - sha1_name: parse less while finding common prefix
- - sha1_name: unroll len loop in find_unique_abbrev_r()
- - p4211-line-log.sh: add log --online --raw --parents perf test
+* ds/find-unique-abbrev-optim (2017-10-13) 4 commits
+  (merged to 'next' on 2017-10-16 at 7f4479ac52)
+ + sha1_name: minimize OID comparisons during disambiguation
+ + sha1_name: parse less while finding common prefix
+ + sha1_name: unroll len loop in find_unique_abbrev_r()
+ + p4211-line-log.sh: add log --online --raw --parents perf test
 
  Optimize the code to find shortest unique prefix of object names.
 
- Almost there.
- cf. <20171009134933.vmba67adelqbkx4y@sigill.intra.peff.net>
+ Will cook in 'next'.
 
 
 * cc/perf-run-config (2017-09-24) 9 commits
@@ -577,18 +389,6 @@ of the repositories listed at
  - perf/run: add '--config' option to the 'run' script
 
  Needs review.
-
-
-* mg/merge-pre-merge-hook (2017-09-24) 4 commits
- - t7503: add tests for pre-merge-hook
- - merge: --no-verify to bypass pre-merge hook
- - merge: do no-verify like commit
- - git-merge: honor pre-merge hook
-
- "git merge" learned a 'pre-merge' hook, that would be triggered
- before the merge commit is created by a clean auto-merge.
-
- Waiting for review to conclude.
 
 
 * bp/fsmonitor (2017-10-05) 15 commits
@@ -640,12 +440,13 @@ of the repositories listed at
 
 
 * pc/submodule-helper (2017-10-07) 3 commits
- - submodule: port submodule subcommand 'status' from shell to C
- - submodule--helper: introduce for_each_listed_submodule()
- - submodule--helper: introduce get_submodule_displaypath()
+  (merged to 'next' on 2017-10-16 at 2b38de12cc)
+ + submodule: port submodule subcommand 'status' from shell to C
+ + submodule--helper: introduce for_each_listed_submodule()
+ + submodule--helper: introduce get_submodule_displaypath()
 
  GSoC.
- Is this ready for 'next'?
+ Will merge to 'master'.
 
 
 * bc/hash-algo (2017-10-04) 6 commits
@@ -689,19 +490,9 @@ of the repositories listed at
 * jk/check-ref-format-oor-fix (2017-07-14) 1 commit
  - check-ref-format: require a repository for --branch
 
- Discussion slowly continues...
+ Discussion slowly continued but then stalled.
  cf. <20170717172709.GL93855@aiede.mtv.corp.google.com>
  cf. <20170817102217.3yw7uxnkupdy3lh5@sigill.intra.peff.net>
-
-
-* rs/sha1-file-micro-optim (2017-07-09) 2 commits
- - SQUASH???
- - sha1_file: add slash once in for_each_file_in_obj_subdir()
-
- Code cleanup.
-
- Perhaps drop.
- cf. <f59c8256-716b-9305-2a4f-d4fe49f666ff@web.de>
 
 
 * ex/deprecate-empty-pathspec-as-match-all (2017-06-23) 2 commits
@@ -724,7 +515,7 @@ of the repositories listed at
 --------------------------------------------------
 [Discarded]
 
-* jc/ref-filter-colors-fix (2017-10-03) 2 commits
+* jc/ref-filter-colors-fix (2017-10-14) 2 commits
  . colors: git_default_config() does not read color.ui
  . Revert "color: check color.ui in git_default_config()"
 
@@ -753,3 +544,40 @@ of the repositories listed at
  a discussion to replace the DWIM heuristics with a better one, which
  deserves to be its own topic.
  cf. <alpine.DEB.2.21.1.1707131435220.4193@virtualbox>
+
+
+* sg/clone-refspec-from-command-line-config (2017-06-16) 2 commits
+ . Documentation/clone: document ignored configuration variables
+ . clone: respect additional configured fetch refspecs during initial fetch
+ (this branch is used by sg/remote-no-string-refspecs.)
+
+ "git clone -c var=val" is a way to set configuration variables in
+ the resulting repository, but it is more useful to also make these
+ variables take effect while the initial clone is happening,
+ e.g. these configuration variables could be fetch refspecs.
+
+ Got tired of waiting for a response.
+ cf. <20170617112228.vugswym4o4owf6wj@sigill.intra.peff.net>
+ cf. <xmqqmv8zhdap.fsf@gitster.mtv.corp.google.com>
+
+
+* rs/sha1-file-micro-optim (2017-07-09) 2 commits
+ . SQUASH???
+ . sha1_file: add slash once in for_each_file_in_obj_subdir()
+
+ Code cleanup.
+
+ Perhaps drop.
+ cf. <f59c8256-716b-9305-2a4f-d4fe49f666ff@web.de>
+
+
+* mg/merge-pre-merge-hook (2017-09-24) 4 commits
+ - t7503: add tests for pre-merge-hook
+ - merge: --no-verify to bypass pre-merge hook
+ - merge: do no-verify like commit
+ - git-merge: honor pre-merge hook
+
+ "git merge" learned a 'pre-merge' hook, that would be triggered
+ before the merge commit is created by a clean auto-merge.
+
+ What's the doneness of this?  Is everybody happy?
