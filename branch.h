@@ -23,22 +23,19 @@ void create_branch(const char *name, const char *start_name,
 		   int clobber_head, int quiet, enum branch_track track);
 
 /*
- * Validates that the requested branch may be created, returning the
- * interpreted ref in ref, force indicates whether (non-head) branches
- * may be overwritten. A non-zero return value indicates that the force
- * parameter was non-zero and the branch already exists.
- *
- * Contrary to all of the above, when attr_only is 1, the caller is
- * not interested in verifying if it is Ok to update the named
- * branch to point at a potentially different commit. It is merely
- * asking if it is OK to change some attribute for the named branch
- * (e.g. tracking upstream).
- *
- * NEEDSWORK: This needs to be split into two separate functions in the
- * longer run for sanity.
- *
+ * Check if 'name' can be a valid name for a branch; die otherwise.
+ * Return 1 if the named branch already exists; return 0 otherwise.
+ * Fill ref with the full refname for the branch.
  */
-int validate_new_branchname(const char *name, struct strbuf *ref, int force, int attr_only);
+extern int validate_branchname(const char *name, struct strbuf *ref);
+
+/*
+ * Check if a branch 'name' can be created as a new branch; die otherwise.
+ * 'force' can be used when it is OK for the named branch already exists.
+ * Return 1 if the named branch already exists; return 0 otherwise.
+ * Fill ref with the full refname for the branch.
+ */
+extern int validate_new_branchname(const char *name, struct strbuf *ref, int force);
 
 /*
  * Remove information about the state of working on the current
