@@ -170,7 +170,7 @@ no)
 
 			rebuild=$(git config "branch.$branch.rebuild" || :)
 
-			GIT_EDITOR=: git merge $rebuild $accept_rerere --edit "$branch" ||
+			GIT_EDITOR=: git merge --no-ff $rebuild $accept_rerere --edit "$branch" ||
 			accept_rerere ||
 			exit
 
