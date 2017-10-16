@@ -147,6 +147,8 @@ test_expect_success 'push with file:// using protocol v1' '
 test_expect_success 'setup ssh wrapper' '
 	GIT_SSH="$GIT_BUILD_DIR/t/helper/test-fake-ssh" &&
 	export GIT_SSH &&
+	GIT_SSH_VARIANT=ssh &&
+	export GIT_SSH_VARIANT &&
 	export TRASH_DIRECTORY &&
 	>"$TRASH_DIRECTORY"/ssh-output
 '

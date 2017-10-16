@@ -776,37 +776,44 @@ static const char *get_ssh_command(void)
 	return NULL;
 }
 
-static int override_ssh_variant(int *port_option, int *needs_batch)
-{
-	char *variant;
+enum ssh_variant {
+	VARIANT_SIMPLE,
+	VARIANT_SSH,
+	VARIANT_PLINK,
+	VARIANT_PUTTY,
+	VARIANT_TORTOISEPLINK,
+};
 
-	variant = xstrdup_or_null(getenv("GIT_SSH_VARIANT"));
-	if (!variant &&
-	    git_config_get_string("ssh.variant", &variant))
+static int override_ssh_variant(enum ssh_variant *ssh_variant)
+{
+	const char *variant = getenv("GIT_SSH_VARIANT");
+
+	if (!variant && git_config_get_string_const("ssh.variant", &variant))
 		return 0;
 
-	if (!strcmp(variant, "plink") || !strcmp(variant, "putty")) {
-		*port_option = 'P';
-		*needs_batch = 0;
-	} else if (!strcmp(variant, "tortoiseplink")) {
-		*port_option = 'P';
-		*needs_batch = 1;
-	} else {
-		*port_option = 'p';
-		*needs_batch = 0;
-	}
-	free(variant);
+	if (!strcmp(variant, "plink"))
+		*ssh_variant = VARIANT_PLINK;
+	else if (!strcmp(variant, "putty"))
+		*ssh_variant = VARIANT_PUTTY;
+	else if (!strcmp(variant, "tortoiseplink"))
+		*ssh_variant = VARIANT_TORTOISEPLINK;
+	else if (!strcmp(variant, "simple"))
+		*ssh_variant = VARIANT_SIMPLE;
+	else
+		*ssh_variant = VARIANT_SSH;
+
 	return 1;
 }
 
-static void handle_ssh_variant(const char *ssh_command, int is_cmdline,
-			       int *port_option, int *needs_batch)
+static enum ssh_variant determine_ssh_variant(const char *ssh_command,
+					      int is_cmdline)
 {
+	enum ssh_variant ssh_variant = VARIANT_SIMPLE;
 	const char *variant;
 	char *p = NULL;
 
-	if (override_ssh_variant(port_option, needs_batch))
-		return;
+	if (override_ssh_variant(&ssh_variant))
+		return ssh_variant;
 
 	if (!is_cmdline) {
 		p = xstrdup(ssh_command);
@@ -825,19 +832,22 @@ static void handle_ssh_variant(const char *ssh_command, int is_cmdline,
 			free(ssh_argv);
 		} else {
 			free(p);
-			return;
+			return ssh_variant;
 		}
 	}
 
-	if (!strcasecmp(variant, "plink") ||
-	    !strcasecmp(variant, "plink.exe"))
-		*port_option = 'P';
+	if (!strcasecmp(variant, "ssh") ||
+	    !strcasecmp(variant, "ssh.exe"))
+		ssh_variant = VARIANT_SSH;
+	else if (!strcasecmp(variant, "plink") ||
+		 !strcasecmp(variant, "plink.exe"))
+		ssh_variant = VARIANT_PLINK;
 	else if (!strcasecmp(variant, "tortoiseplink") ||
-		 !strcasecmp(variant, "tortoiseplink.exe")) {
-		*port_option = 'P';
-		*needs_batch = 1;
-	}
+		 !strcasecmp(variant, "tortoiseplink.exe"))
+		ssh_variant = VARIANT_TORTOISEPLINK;
+
 	free(p);
+	return ssh_variant;
 }
 
 /*
@@ -937,8 +947,7 @@ struct child_process *git_connect(int fd[2], const char *url,
 		conn->in = conn->out = -1;
 		if (protocol == PROTO_SSH) {
 			const char *ssh;
-			int needs_batch = 0;
-			int port_option = 'p';
+			enum ssh_variant variant;
 			char *ssh_host = hostandport;
 			const char *port = NULL;
 			transport_check_allowed("ssh");
@@ -965,10 +974,9 @@ struct child_process *git_connect(int fd[2], const char *url,
 				die("strange hostname '%s' blocked", ssh_host);
 
 			ssh = get_ssh_command();
-			if (ssh)
-				handle_ssh_variant(ssh, 1, &port_option,
-						   &needs_batch);
-			else {
+			if (ssh) {
+				variant = determine_ssh_variant(ssh, 1);
+			} else {
 				/*
 				 * GIT_SSH is the no-shell version of
 				 * GIT_SSH_COMMAND (and must remain so for
@@ -979,32 +987,38 @@ struct child_process *git_connect(int fd[2], const char *url,
 				ssh = getenv("GIT_SSH");
 				if (!ssh)
 					ssh = "ssh";
-				else
-					handle_ssh_variant(ssh, 0,
-							   &port_option,
-							   &needs_batch);
+				variant = determine_ssh_variant(ssh, 0);
 			}
 
 			argv_array_push(&conn->args, ssh);
 
-			if (get_protocol_version_config() > 0) {
+			if (variant == VARIANT_SSH &&
+			    get_protocol_version_config() > 0) {
 				argv_array_push(&conn->args, "-o");
 				argv_array_push(&conn->args, "SendEnv=" GIT_PROTOCOL_ENVIRONMENT);
 				argv_array_pushf(&conn->env_array, GIT_PROTOCOL_ENVIRONMENT "=version=%d",
 						 get_protocol_version_config());
 			}
 
-			if (flags & CONNECT_IPV4)
-				argv_array_push(&conn->args, "-4");
-			else if (flags & CONNECT_IPV6)
-				argv_array_push(&conn->args, "-6");
-			if (needs_batch)
+			if (variant != VARIANT_SIMPLE) {
+				if (flags & CONNECT_IPV4)
+					argv_array_push(&conn->args, "-4");
+				else if (flags & CONNECT_IPV6)
+					argv_array_push(&conn->args, "-6");
+			}
+
+			if (variant == VARIANT_TORTOISEPLINK)
 				argv_array_push(&conn->args, "-batch");
-			if (port) {
-				argv_array_pushf(&conn->args,
-						 "-%c", port_option);
+
+			if (port && variant != VARIANT_SIMPLE) {
+				if (variant == VARIANT_SSH)
+					argv_array_push(&conn->args, "-p");
+				else
+					argv_array_push(&conn->args, "-P");
+
 				argv_array_push(&conn->args, port);
 			}
+
 			argv_array_push(&conn->args, ssh_host);
 		} else {
 			transport_check_allowed("file");
