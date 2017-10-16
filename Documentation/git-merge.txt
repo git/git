@@ -72,12 +72,6 @@ include::merge-options.txt[]
 	agrees to a Developer Certificate of Origin
 	(see http://developercertificate.org/ for more information).
 
--S[<keyid>]::
---gpg-sign[=<keyid>]::
-	GPG-sign the resulting merge commit. The `keyid` argument is
-	optional and defaults to the committer identity; if specified,
-	it must be stuck to the option without a space.
-
 -m <msg>::
 	Set the commit message to be used for the merge commit (in
 	case one is created).
