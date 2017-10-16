@@ -452,6 +452,8 @@ static inline enum object_type object_type(unsigned int mode)
  * ignored.
  */
 #define GIT_PROTOCOL_ENVIRONMENT "GIT_PROTOCOL"
+/* HTTP header used to handshake the wire protocol */
+#define GIT_PROTOCOL_HEADER "Git-Protocol"
 
 /*
  * This environment variable is expected to contain a boolean indicating
