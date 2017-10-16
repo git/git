@@ -68,10 +68,10 @@
  * `create_tempfile()` returns an allocated tempfile on success or NULL
  * on failure. On errors, `errno` describes the reason for failure.
  *
- * `delete_tempfile()`, `rename_tempfile()`, and `close_tempfile_gently()`
- * return 0 on success. On failure they set `errno` appropriately and return
- * -1. `delete` and `rename` (but not `close`) do their best to delete the
- * temporary file before returning.
+ * `rename_tempfile()` and `close_tempfile_gently()` return 0 on success.
+ * On failure they set `errno` appropriately and return -1.
+ * `delete_tempfile()` and `rename` (but not `close`) do their best to
+ * delete the temporary file before returning.
  */
 
 struct tempfile {
