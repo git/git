@@ -81,12 +81,12 @@ set_ident () {
 	finish_ident COMMITTER
 }
 
-USAGE="[--setup <command>] [--env-filter <command>]
-	[--tree-filter <command>] [--index-filter <command>]
-	[--parent-filter <command>] [--msg-filter <command>]
-	[--commit-filter <command>] [--tag-name-filter <command>]
-	[--subdirectory-filter <directory>] [--original <namespace>]
-	[-d <directory>] [-f | --force]
+USAGE="[--setup <command>] [--subdirectory-filter <directory>]
+	[--env-filter <command>] [--tree-filter <command>]
+	[--index-filter <command>] [--parent-filter <command>]
+	[--msg-filter <command>] [--commit-filter <command>]
+	[--tag-name-filter <command>] [--prune-empty]
+	[--original <namespace>] [-d <directory>] [-f | --force]
 	[--] [<rev-list options>...]"
 
 OPTIONS_SPEC=
@@ -153,6 +153,10 @@ do
 	--setup)
 		filter_setup="$OPTARG"
 		;;
+	--subdirectory-filter)
+		filter_subdir="$OPTARG"
+		remap_to_ancestor=t
+		;;
 	--env-filter)
 		filter_env="$OPTARG"
 		;;
@@ -173,10 +177,6 @@ do
 		;;
 	--tag-name-filter)
 		filter_tag_name="$OPTARG"
-		;;
-	--subdirectory-filter)
-		filter_subdir="$OPTARG"
-		remap_to_ancestor=t
 		;;
 	--original)
 		orig_namespace=$(expr "$OPTARG/" : '\(.*[^/]\)/*$')/
