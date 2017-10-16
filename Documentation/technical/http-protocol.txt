@@ -219,6 +219,10 @@ smart server reply:
    S: 003c2cb58b79488a98d2721cea644875a8dd0026b115 refs/tags/v1.0\n
    S: 003fa3c2e2402b99163d1d59756e5f207ae21cccba4c refs/tags/v1.0^{}\n
 
+The client may send Extra Parameters (see
+Documentation/technical/pack-protocol.txt) as a colon-separated string
+in the Git-Protocol HTTP header.
+
 Dumb Server Response
 ^^^^^^^^^^^^^^^^^^^^
 Dumb servers MUST respond with the dumb server reply format.
@@ -269,7 +273,11 @@ the C locale ordering.  The stream SHOULD include the default ref
 named `HEAD` as the first ref.  The stream MUST include capability
 declarations behind a NUL on the first ref.
 
+The returned response contains "version 1" if "version=1" was sent as an
+Extra Parameter.
+
   smart_reply     =  PKT-LINE("# service=$servicename" LF)
+		     *1("version 1")
 		     ref_list
 		     "0000"
   ref_list        =  empty_list / non_empty_list
