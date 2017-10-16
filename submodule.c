@@ -1187,6 +1187,31 @@ struct submodule_parallel_fetch {
 };
 #define SPF_INIT {0, ARGV_ARRAY_INIT, NULL, NULL, 0, 0, 0, 0}
 
+static int get_fetch_recurse_config(const struct submodule *submodule,
+				    struct submodule_parallel_fetch *spf)
+{
+	if (spf->command_line_option != RECURSE_SUBMODULES_DEFAULT)
+		return spf->command_line_option;
+
+	if (submodule) {
+		char *key;
+		const char *value;
+
+		int fetch_recurse = submodule->fetch_recurse;
+		key = xstrfmt("submodule.%s.fetchRecurseSubmodules", submodule->name);
+		if (!repo_config_get_string_const(the_repository, key, &value)) {
+			fetch_recurse = parse_fetch_recurse_submodules_arg(key, value);
+		}
+		free(key);
+
+		if (fetch_recurse != RECURSE_SUBMODULES_NONE)
+			/* local config overrules everything except commandline */
+			return fetch_recurse;
+	}
+
+	return spf->default_option;
+}
+
 static int get_next_submodule(struct child_process *cp,
 			      struct strbuf *err, void *data, void **task_cb)
 {
@@ -1214,46 +1239,21 @@ static int get_next_submodule(struct child_process *cp,
 			}
 		}
 
-		default_argv = "yes";
-		if (spf->command_line_option == RECURSE_SUBMODULES_DEFAULT) {
-			int fetch_recurse = RECURSE_SUBMODULES_NONE;
-
-			if (submodule) {
-				char *key;
-				const char *value;
-
-				fetch_recurse = submodule->fetch_recurse;
-				key = xstrfmt("submodule.%s.fetchRecurseSubmodules", submodule->name);
-				if (!repo_config_get_string_const(the_repository, key, &value)) {
-					fetch_recurse = parse_fetch_recurse_submodules_arg(key, value);
-				}
-				free(key);
-			}
-
-			if (fetch_recurse != RECURSE_SUBMODULES_NONE) {
-				if (fetch_recurse == RECURSE_SUBMODULES_OFF)
-					continue;
-				if (fetch_recurse == RECURSE_SUBMODULES_ON_DEMAND) {
-					if (!unsorted_string_list_lookup(&changed_submodule_names,
-									 submodule->name))
-						continue;
-					default_argv = "on-demand";
-				}
-			} else {
-				if (spf->default_option == RECURSE_SUBMODULES_OFF)
-					continue;
-				if (spf->default_option == RECURSE_SUBMODULES_ON_DEMAND) {
-					if (!unsorted_string_list_lookup(&changed_submodule_names,
-									  submodule->name))
-						continue;
-					default_argv = "on-demand";
-				}
-			}
-		} else if (spf->command_line_option == RECURSE_SUBMODULES_ON_DEMAND) {
-			if (!unsorted_string_list_lookup(&changed_submodule_names,
+		switch (get_fetch_recurse_config(submodule, spf))
+		{
+		default:
+		case RECURSE_SUBMODULES_DEFAULT:
+		case RECURSE_SUBMODULES_ON_DEMAND:
+			if (!submodule || !unsorted_string_list_lookup(&changed_submodule_names,
 							 submodule->name))
 				continue;
 			default_argv = "on-demand";
+			break;
+		case RECURSE_SUBMODULES_ON:
+			default_argv = "yes";
+			break;
+		case RECURSE_SUBMODULES_OFF:
+			continue;
 		}
 
 		strbuf_addf(&submodule_path, "%s/%s", spf->work_tree, ce->name);
