@@ -12,6 +12,7 @@
 #include "sha1-array.h"
 #include "transport.h"
 #include "strbuf.h"
+#include "protocol.h"
 
 static char *server_capabilities;
 static const char *parse_feature_value(const char *, const char *, int *);
@@ -129,9 +130,23 @@ static int read_remote_ref(int in, char **src_buf, size_t *src_len,
 	return len;
 }
 
-#define EXPECTING_FIRST_REF 0
-#define EXPECTING_REF 1
-#define EXPECTING_SHALLOW 2
+#define EXPECTING_PROTOCOL_VERSION 0
+#define EXPECTING_FIRST_REF 1
+#define EXPECTING_REF 2
+#define EXPECTING_SHALLOW 3
+
+/* Returns 1 if packet_buffer is a protocol version pkt-line, 0 otherwise. */
+static int process_protocol_version(void)
+{
+	switch (determine_protocol_version_client(packet_buffer)) {
+	case protocol_v1:
+		return 1;
+	case protocol_v0:
+		return 0;
+	default:
+		die("server is speaking an unknown protocol");
+	}
+}
 
 static void process_capabilities(int *len)
 {
@@ -224,12 +239,19 @@ struct ref **get_remote_heads(int in, char *src_buf, size_t src_len,
 	 */
 	int responded = 0;
 	int len;
-	int state = EXPECTING_FIRST_REF;
+	int state = EXPECTING_PROTOCOL_VERSION;
 
 	*list = NULL;
 
 	while ((len = read_remote_ref(in, &src_buf, &src_len, &responded))) {
 		switch (state) {
+		case EXPECTING_PROTOCOL_VERSION:
+			if (process_protocol_version()) {
+				state = EXPECTING_FIRST_REF;
+				break;
+			}
+			state = EXPECTING_FIRST_REF;
+			/* fallthrough */
 		case EXPECTING_FIRST_REF:
 			process_capabilities(&len);
 			if (process_dummy_ref()) {
