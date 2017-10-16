@@ -89,6 +89,11 @@ OPTIONS
 	can be used or modified in the following filter steps except
 	the commit filter, for technical reasons.
 
+--subdirectory-filter <directory>::
+	Only look at the history which touches the given subdirectory.
+	The result will contain that directory (and only that) as its
+	project root. Implies <<Remap_to_ancestor>>.
+
 --env-filter <command>::
 	This filter may be used if you only need to modify the environment
 	in which the commit will be performed.  Specifically, you might
@@ -166,11 +171,6 @@ it should retain any signature. That is not the case, signatures will always
 be removed, buyer beware. There is also no support for changing the
 author or timestamp (or the tag message for that matter). Tags which point
 to other tags will be rewritten to point to the underlying commit.
-
---subdirectory-filter <directory>::
-	Only look at the history which touches the given subdirectory.
-	The result will contain that directory (and only that) as its
-	project root. Implies <<Remap_to_ancestor>>.
 
 --prune-empty::
 	Some filters will generate empty commits that leave the tree untouched.
