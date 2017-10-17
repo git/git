@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2017-10-08 09:48+0800\n"
-"PO-Revision-Date: 2017-10-08 11:17-0500\n"
+"POT-Creation-Date: 2017-10-17 09:44+0800\n"
+"PO-Revision-Date: 2017-10-16 21:15-0500\n"
 "Last-Translator: christopher.diaz.riv@gmail.com\n"
 "Language-Team: CodeLabora <codelabora@gmail.com>\n"
 "Language: es\n"
@@ -1006,7 +1006,7 @@ msgid "--reverse and --first-parent together require specified latest commit"
 msgstr ""
 "--reverse y --first-parent juntos requieren especificar el ultimo commit"
 
-#: blame.c:1797 bundle.c:169 ref-filter.c:1932 sequencer.c:1168
+#: blame.c:1797 bundle.c:169 ref-filter.c:1947 sequencer.c:1168
 #: sequencer.c:2351 builtin/commit.c:1065 builtin/log.c:357 builtin/log.c:911
 #: builtin/log.c:1361 builtin/log.c:1690 builtin/log.c:1938 builtin/merge.c:369
 #: builtin/shortlog.c:191
@@ -1681,7 +1681,7 @@ msgstr "no se pudo migrar el directorio git de '%s' a '%s'"
 msgid "Filtering content"
 msgstr "Filtrando contenido"
 
-#: entry.c:417
+#: entry.c:433
 #, c-format
 msgid "could not stat file '%s'"
 msgstr "no se pudo establecer el archivo '%s'"
@@ -2566,7 +2566,7 @@ msgstr "no es posible remover el vinculo: %s"
 msgid "Could not open '%s' for writing"
 msgstr "No sepudo abrir '%s' para escritura"
 
-#: refs.c:1779
+#: refs.c:1792
 msgid "ref updates forbidden inside quarantine environment"
 msgstr "actualizaciones de ref prohibidas dentro de ambiente de cuarentena"
 
@@ -2605,157 +2605,157 @@ msgstr "detras %d"
 msgid "ahead %d, behind %d"
 msgstr "delante %d, detras %d"
 
-#: ref-filter.c:104
+#: ref-filter.c:105
 #, c-format
 msgid "expected format: %%(color:<color>)"
 msgstr "formato esperado: %%(color:<color>)"
 
-#: ref-filter.c:106
+#: ref-filter.c:107
 #, c-format
 msgid "unrecognized color: %%(color:%s)"
 msgstr "color no reconocido: %%(color:%s)"
 
-#: ref-filter.c:126
+#: ref-filter.c:127
 #, c-format
 msgid "Integer value expected refname:lstrip=%s"
 msgstr "valor entero esperado refname:lstrip=%s"
 
-#: ref-filter.c:130
+#: ref-filter.c:131
 #, c-format
 msgid "Integer value expected refname:rstrip=%s"
 msgstr "valor entero esperado refname:rstrip=%s"
 
-#: ref-filter.c:132
+#: ref-filter.c:133
 #, c-format
 msgid "unrecognized %%(%s) argument: %s"
 msgstr "argumento: %s no reconocido %%(%s)"
 
-#: ref-filter.c:172
+#: ref-filter.c:173
 #, c-format
 msgid "%%(body) does not take arguments"
 msgstr "%%(body) no toma ningún argumento"
 
-#: ref-filter.c:179
+#: ref-filter.c:180
 #, c-format
 msgid "%%(subject) does not take arguments"
 msgstr "%%(subject) no toma ningún argumento"
 
-#: ref-filter.c:186
+#: ref-filter.c:198
 #, c-format
-msgid "%%(trailers) does not take arguments"
-msgstr "%%(trailers) no toma argumentos"
+msgid "unknown %%(trailers) argument: %s"
+msgstr "%%(trailers) desconocidos, argumento: %s"
 
-#: ref-filter.c:205
+#: ref-filter.c:221
 #, c-format
 msgid "positive value expected contents:lines=%s"
 msgstr "valor positivo esperado contents:lines=%s"
 
-#: ref-filter.c:207
+#: ref-filter.c:223
 #, c-format
 msgid "unrecognized %%(contents) argument: %s"
 msgstr "argumento %s no reconocido %%(contents)"
 
-#: ref-filter.c:220
+#: ref-filter.c:236
 #, c-format
 msgid "positive value expected objectname:short=%s"
 msgstr "valor positivo esperado objectname:short=%s"
 
-#: ref-filter.c:224
+#: ref-filter.c:240
 #, c-format
 msgid "unrecognized %%(objectname) argument: %s"
 msgstr "argumento: %s no reconocido %%(objectname)"
 
-#: ref-filter.c:251
+#: ref-filter.c:267
 #, c-format
 msgid "expected format: %%(align:<width>,<position>)"
 msgstr "formato esperado: %%(align:<ancho>,<posición>)"
 
-#: ref-filter.c:263
+#: ref-filter.c:279
 #, c-format
 msgid "unrecognized position:%s"
 msgstr "posición desconocida: %s"
 
-#: ref-filter.c:267
+#: ref-filter.c:283
 #, c-format
 msgid "unrecognized width:%s"
 msgstr "ancho desconocido: %s"
 
-#: ref-filter.c:273
+#: ref-filter.c:289
 #, c-format
 msgid "unrecognized %%(align) argument: %s"
 msgstr "argumento no reconocido para %%(align): %s"
 
-#: ref-filter.c:277
+#: ref-filter.c:293
 #, c-format
 msgid "positive width expected with the %%(align) atom"
 msgstr "se esperaba un ancho positivo con el átomo %%(align)"
 
-#: ref-filter.c:292
+#: ref-filter.c:308
 #, c-format
 msgid "unrecognized %%(if) argument: %s"
 msgstr "argumento: %s no reconocido %%(if)"
 
-#: ref-filter.c:382
+#: ref-filter.c:398
 #, c-format
 msgid "malformed field name: %.*s"
 msgstr "nombre malformado de campo: %.*s"
 
-#: ref-filter.c:408
+#: ref-filter.c:424
 #, c-format
 msgid "unknown field name: %.*s"
 msgstr "nombre de campo desconocido: %.*s"
 
-#: ref-filter.c:520
+#: ref-filter.c:536
 #, c-format
 msgid "format: %%(if) atom used without a %%(then) atom"
 msgstr "formato: atomo %%(if) usado sin un atomo %%(then)"
 
-#: ref-filter.c:580
+#: ref-filter.c:596
 #, c-format
 msgid "format: %%(then) atom used without an %%(if) atom"
 msgstr "formato: atomo %%(then) usado sin atomo %%(if)"
 
-#: ref-filter.c:582
+#: ref-filter.c:598
 #, c-format
 msgid "format: %%(then) atom used more than once"
 msgstr "formato: atomo %%(then) usado mas de una vez"
 
-#: ref-filter.c:584
+#: ref-filter.c:600
 #, c-format
 msgid "format: %%(then) atom used after %%(else)"
 msgstr "formato: atomo %%(then) usado despues de %%(else)"
 
-#: ref-filter.c:610
+#: ref-filter.c:626
 #, c-format
 msgid "format: %%(else) atom used without an %%(if) atom"
 msgstr "formato: atomo %%(else) usado sin un atomo %%(if)"
 
-#: ref-filter.c:612
+#: ref-filter.c:628
 #, c-format
 msgid "format: %%(else) atom used without a %%(then) atom"
 msgstr "formato: atomo %%(else) usado sin un atomo %%(then) "
 
-#: ref-filter.c:614
+#: ref-filter.c:630
 #, c-format
 msgid "format: %%(else) atom used more than once"
 msgstr "formato: atomo %%(else) usado mas de una vez"
 
-#: ref-filter.c:627
+#: ref-filter.c:643
 #, c-format
 msgid "format: %%(end) atom used without corresponding atom"
 msgstr "formato: atomo %%(end) usado sin atomo correspondiente"
 
-#: ref-filter.c:682
+#: ref-filter.c:698
 #, c-format
 msgid "malformed format string %s"
 msgstr "formato de cadena malformado %s"
 
-#: ref-filter.c:1268
+#: ref-filter.c:1283
 #, c-format
 msgid "(no branch, rebasing %s)"
 msgstr "(no hay rama, rebasando %s)"
 
-#: ref-filter.c:1271
+#: ref-filter.c:1286
 #, c-format
 msgid "(no branch, bisect started on %s)"
 msgstr "(no hay rama, comenzando bisectado en %s)"
@@ -2763,7 +2763,7 @@ msgstr "(no hay rama, comenzando bisectado en %s)"
 #. TRANSLATORS: make sure this matches "HEAD
 #. detached at " in wt-status.c
 #.
-#: ref-filter.c:1279
+#: ref-filter.c:1294
 #, c-format
 msgid "(HEAD detached at %s)"
 msgstr "(HEAD desascoplado en %s)"
@@ -2771,46 +2771,46 @@ msgstr "(HEAD desascoplado en %s)"
 #. TRANSLATORS: make sure this matches "HEAD
 #. detached from " in wt-status.c
 #.
-#: ref-filter.c:1286
+#: ref-filter.c:1301
 #, c-format
 msgid "(HEAD detached from %s)"
 msgstr "(HEAD desacoplado de %s)"
 
-#: ref-filter.c:1290
+#: ref-filter.c:1305
 msgid "(no branch)"
 msgstr "(sin rama)"
 
-#: ref-filter.c:1439 ref-filter.c:1470
+#: ref-filter.c:1454 ref-filter.c:1485
 #, c-format
 msgid "missing object %s for %s"
 msgstr "objeto %s faltante para %s"
 
-#: ref-filter.c:1442 ref-filter.c:1473
+#: ref-filter.c:1457 ref-filter.c:1488
 #, c-format
 msgid "parse_object_buffer failed on %s for %s"
 msgstr "parse_object_buffer falló en %s para %s"
 
-#: ref-filter.c:1773
+#: ref-filter.c:1788
 #, c-format
 msgid "malformed object at '%s'"
 msgstr "objeto malformado en '%s'"
 
-#: ref-filter.c:1840
+#: ref-filter.c:1855
 #, c-format
 msgid "ignoring ref with broken name %s"
 msgstr "ignorando referencia con nombre roto %s"
 
-#: ref-filter.c:1845
+#: ref-filter.c:1860
 #, c-format
 msgid "ignoring broken ref %s"
 msgstr "ignorando referencia rota %s"
 
-#: ref-filter.c:2107
+#: ref-filter.c:2122
 #, c-format
 msgid "format: %%(end) atom missing"
 msgstr "formato: falta atomo %%(end)"
 
-#: ref-filter.c:2201
+#: ref-filter.c:2216
 #, c-format
 msgid "malformed object name %s"
 msgstr "nombre de objeto malformado %s"
@@ -3522,9 +3522,10 @@ msgstr "No se pudo abrir '%s' para escritura"
 
 #: sequencer.c:2561
 #, c-format
-msgid "unrecognized setting %s for optionrebase.missingCommitsCheck. Ignoring."
+msgid ""
+"unrecognized setting %s for option rebase.missingCommitsCheck. Ignoring."
 msgstr ""
-"Opcion %s no reconocida para optionrebase.missingCommitsCheck. Ingorando."
+"Opción %s no reconocida para la opción rebase.missingCommitsCheck. Ingorando."
 
 #: sequencer.c:2641
 #, c-format
@@ -16554,6 +16555,9 @@ msgstr "Saltando %s con el sufijo de backup '%s'.\n"
 #, perl-format
 msgid "Do you really want to send %s? [y|N]: "
 msgstr "Realmente deseas mandar %s?[y|N]"
+
+#~ msgid "%%(trailers) does not take arguments"
+#~ msgstr "%%(trailers) no toma argumentos"
 
 #~ msgid "submodule update strategy not supported for submodule '%s'"
 #~ msgstr ""
