@@ -208,9 +208,24 @@ do
 		has_no_color actual
 	'
 
+	test_expect_success "$desc enables colors for color.diff" '
+		git -c color.diff=always log --format=$color -1 >actual &&
+		has_color actual
+	'
+
+	test_expect_success "$desc enables colors for color.ui" '
+		git -c color.ui=always log --format=$color -1 >actual &&
+		has_color actual
+	'
+
 	test_expect_success "$desc respects --color" '
 		git log --format=$color -1 --color >actual &&
 		has_color actual
+	'
+
+	test_expect_success "$desc respects --no-color" '
+		git -c color.ui=always log --format=$color -1 --no-color >actual &&
+		has_no_color actual
 	'
 
 	test_expect_success TTY "$desc respects --color=auto (stdout is tty)" '
@@ -224,11 +239,6 @@ do
 			git log --format=$color -1 --color=auto >actual &&
 			has_no_color actual
 		)
-	'
-
-	test_expect_success TTY "$desc respects --no-color" '
-		test_terminal git log --format=$color -1 --no-color >actual &&
-		has_no_color actual
 	'
 done
 

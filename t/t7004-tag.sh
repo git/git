@@ -1918,6 +1918,12 @@ test_expect_success '--color overrides auto-color' '
 	test_cmp expect.color actual
 '
 
+test_expect_success 'color.ui=always overrides auto-color' '
+	git -c color.ui=always tag $color_args >actual.raw &&
+	test_decode_color <actual.raw >actual &&
+	test_cmp expect.color actual
+'
+
 test_expect_success 'setup --merged test tags' '
 	git tag mergetest-1 HEAD~2 &&
 	git tag mergetest-2 HEAD~1 &&
