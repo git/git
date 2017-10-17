@@ -1530,4 +1530,13 @@ test_expect_success 'move detection with submodules' '
 	test_cmp expect decoded_actual
 '
 
+test_expect_success 'move detection with whitespace changes' '
+	test_when_finished "git reset --hard" &&
+	test_seq 10 >test &&
+	git add test &&
+	sed s/3/42/ <test >test.tmp &&
+	mv test.tmp test &&
+	git -c diff.colormoved diff --ignore-space-change -- test
+'
+
 test_done
