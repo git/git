@@ -533,3 +533,4 @@ Fixes since v2.14
    (merge 99b7b687a6 rs/rs-mailmap later to maint).
    (merge 7823655082 tb/complete-describe later to maint).
    (merge 7cbbf9d6a2 ls/filter-process-delayed later to maint).
+   (merge b59698aef3 jc/doc-checkout later to maint).
