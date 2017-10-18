@@ -13,7 +13,8 @@ SYNOPSIS
 'git checkout' [-q] [-f] [-m] [--detach] <commit>
 'git checkout' [-q] [-f] [-m] [[-b|-B|--orphan] <new_branch>] [<start_point>]
 'git checkout' [-f|--ours|--theirs|-m|--conflict=<style>] [<tree-ish>] [--] <paths>...
-'git checkout' [-p|--patch] [<tree-ish>] [--] [<paths>...]
+'git checkout' [<tree-ish>] [--] <pathspec>...
+'git checkout' (-p|--patch) [<tree-ish>] [--] [<paths>...]
 
 DESCRIPTION
 -----------
@@ -78,20 +79,13 @@ be used to detach HEAD at the tip of the branch (`git checkout
 +
 Omitting <branch> detaches HEAD at the tip of the current branch.
 
-'git checkout' [-p|--patch] [<tree-ish>] [--] <pathspec>...::
+'git checkout' [<tree-ish>] [--] <pathspec>...::
 
-	When <paths> or `--patch` are given, 'git checkout' does *not*
-	switch branches.  It updates the named paths in the working tree
-	from the index file or from a named <tree-ish> (most often a
-	commit).  In this case, the `-b` and `--track` options are
-	meaningless and giving either of them results in an error.  The
-	<tree-ish> argument can be used to specify a specific tree-ish
-	(i.e.  commit, tag or tree) to update the index for the given
-	paths before updating the working tree.
-+
-'git checkout' with <paths> or `--patch` is used to restore modified or
-deleted paths to their original contents from the index or replace paths
-with the contents from a named <tree-ish> (most often a commit-ish).
+	Overwrite paths in the working tree by replacing with the
+	contents in the index or in the <tree-ish> (most often a
+	commit).  When a <tree-ish> is given, the paths that
+	match the <pathspec> are updated both in the index and in
+	the working tree.
 +
 The index may contain unmerged entries because of a previous failed merge.
 By default, if you try to check out such an entry from the index, the
@@ -100,6 +94,14 @@ Using `-f` will ignore these unmerged entries.  The contents from a
 specific side of the merge can be checked out of the index by
 using `--ours` or `--theirs`.  With `-m`, changes made to the working tree
 file can be discarded to re-create the original conflicted merge result.
+
+'git checkout' (-p|--patch) [<tree-ish>] [--] [<pathspec>...]::
+	This is similar to the "check out paths to the working tree
+	from either the index or from a tree-ish" mode described
+	above, but lets you use the interactive interface to show
+	the "diff" output and choose which hunks to use in the
+	result.  See below for the description of `--patch` option.
+
 
 OPTIONS
 -------
