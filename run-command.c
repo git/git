@@ -452,7 +452,7 @@ static char **prep_childenv(const char *const *deltaenv)
 	}
 
 	/* Create an array of 'char *' to be used as the childenv */
-	childenv = xmalloc((env.nr + 1) * sizeof(char *));
+	ALLOC_ARRAY(childenv, env.nr + 1);
 	for (i = 0; i < env.nr; i++)
 		childenv[i] = env.items[i].util;
 	childenv[env.nr] = NULL;
