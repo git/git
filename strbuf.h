@@ -82,8 +82,12 @@ extern char strbuf_slopbuf[];
 extern void strbuf_init(struct strbuf *, size_t);
 
 /**
- * Release a string buffer and the memory it used. You should not use the
- * string buffer after using this function, unless you initialize it again.
+ * Release a string buffer and the memory it used. After this call, the
+ * strbuf points to an empty string that does not need to be free()ed, as
+ * if it had been set to `STRBUF_INIT` and never modified.
+ *
+ * To clear a strbuf in preparation for further use without the overhead
+ * of free()ing and malloc()ing again, use strbuf_reset() instead.
  */
 extern void strbuf_release(struct strbuf *);
 
@@ -91,6 +95,9 @@ extern void strbuf_release(struct strbuf *);
  * Detach the string from the strbuf and returns it; you now own the
  * storage the string occupies and it is your responsibility from then on
  * to release it with `free(3)` when you are done with it.
+ *
+ * The strbuf that previously held the string is reset to `STRBUF_INIT` so
+ * it can be reused after calling this function.
  */
 extern char *strbuf_detach(struct strbuf *, size_t *);
 
