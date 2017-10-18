@@ -11,7 +11,7 @@ static int notes_cache_match_validity(const char *ref, const char *validity)
 	struct strbuf msg = STRBUF_INIT;
 	int ret;
 
-	if (read_ref(ref, oid.hash) < 0)
+	if (read_ref(ref, &oid) < 0)
 		return 0;
 
 	commit = lookup_commit_reference_gently(&oid, 1);
@@ -59,7 +59,7 @@ int notes_cache_write(struct notes_cache *c)
 	if (commit_tree(c->validity, strlen(c->validity), tree_oid.hash, NULL,
 			commit_oid.hash, NULL, NULL) < 0)
 		return -1;
-	if (update_ref("update notes cache", c->tree.update_ref, commit_oid.hash,
+	if (update_ref("update notes cache", c->tree.update_ref, &commit_oid,
 		       NULL, 0, UPDATE_REFS_QUIET_ON_ERR) < 0)
 		return -1;
 

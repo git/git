@@ -189,7 +189,7 @@ static void loose_fill_ref_dir(struct ref_store *ref_store,
 			if (!refs_resolve_ref_unsafe(&refs->base,
 						     refname.buf,
 						     RESOLVE_REF_READING,
-						     oid.hash, &flag)) {
+						     &oid, &flag)) {
 				oidclr(&oid);
 				flag |= REF_ISBROKEN;
 			} else if (is_null_oid(&oid)) {
@@ -261,7 +261,7 @@ static struct ref_cache *get_loose_ref_cache(struct files_ref_store *refs)
 }
 
 static int files_read_raw_ref(struct ref_store *ref_store,
-			      const char *refname, unsigned char *sha1,
+			      const char *refname, struct object_id *oid,
 			      struct strbuf *referent, unsigned int *type)
 {
 	struct files_ref_store *refs =
@@ -270,6 +270,7 @@ static int files_read_raw_ref(struct ref_store *ref_store,
 	struct strbuf sb_path = STRBUF_INIT;
 	const char *path;
 	const char *buf;
+	const char *p;
 	struct stat st;
 	int fd;
 	int ret = -1;
@@ -304,7 +305,7 @@ stat_ref:
 		if (errno != ENOENT)
 			goto out;
 		if (refs_read_raw_ref(refs->packed_ref_store, refname,
-				      sha1, referent, type)) {
+				      oid, referent, type)) {
 			errno = ENOENT;
 			goto out;
 		}
@@ -344,7 +345,7 @@ stat_ref:
 		 * packed ref:
 		 */
 		if (refs_read_raw_ref(refs->packed_ref_store, refname,
-				      sha1, referent, type)) {
+				      oid, referent, type)) {
 			errno = EISDIR;
 			goto out;
 		}
@@ -390,8 +391,8 @@ stat_ref:
 	 * Please note that FETCH_HEAD has additional
 	 * data after the sha.
 	 */
-	if (get_sha1_hex(buf, sha1) ||
-	    (buf[40] != '\0' && !isspace(buf[40]))) {
+	if (parse_oid_hex(buf, oid, &p) ||
+	    (*p != '\0' && !isspace(*p))) {
 		*type |= REF_ISBROKEN;
 		errno = EINVAL;
 		goto out;
@@ -545,7 +546,7 @@ retry:
 	 */
 
 	if (files_read_raw_ref(&refs->base, refname,
-			       lock->old_oid.hash, referent, type)) {
+			       &lock->old_oid, referent, type)) {
 		if (errno == ENOENT) {
 			if (mustexist) {
 				/* Garden variety missing reference. */
@@ -769,21 +770,21 @@ static struct ref_iterator *files_ref_iterator_begin(
 }
 
 /*
- * Verify that the reference locked by lock has the value old_sha1.
- * Fail if the reference doesn't exist and mustexist is set. Return 0
- * on success. On error, write an error message to err, set errno, and
- * return a negative value.
+ * Verify that the reference locked by lock has the value old_oid
+ * (unless it is NULL).  Fail if the reference doesn't exist and
+ * mustexist is set. Return 0 on success. On error, write an error
+ * message to err, set errno, and return a negative value.
  */
 static int verify_lock(struct ref_store *ref_store, struct ref_lock *lock,
-		       const unsigned char *old_sha1, int mustexist,
+		       const struct object_id *old_oid, int mustexist,
 		       struct strbuf *err)
 {
 	assert(err);
 
 	if (refs_read_ref_full(ref_store, lock->ref_name,
 			       mustexist ? RESOLVE_REF_READING : 0,
-			       lock->old_oid.hash, NULL)) {
-		if (old_sha1) {
+			       &lock->old_oid, NULL)) {
+		if (old_oid) {
 			int save_errno = errno;
 			strbuf_addf(err, "can't verify ref '%s'", lock->ref_name);
 			errno = save_errno;
@@ -793,11 +794,11 @@ static int verify_lock(struct ref_store *ref_store, struct ref_lock *lock,
 			return 0;
 		}
 	}
-	if (old_sha1 && hashcmp(lock->old_oid.hash, old_sha1)) {
+	if (old_oid && oidcmp(&lock->old_oid, old_oid)) {
 		strbuf_addf(err, "ref '%s' is at %s but expected %s",
 			    lock->ref_name,
 			    oid_to_hex(&lock->old_oid),
-			    sha1_to_hex(old_sha1));
+			    oid_to_hex(old_oid));
 		errno = EBUSY;
 		return -1;
 	}
@@ -827,22 +828,22 @@ static int create_reflock(const char *path, void *cb)
  * Locks a ref returning the lock on success and NULL on failure.
  * On failure errno is set to something meaningful.
  */
-static struct ref_lock *lock_ref_sha1_basic(struct files_ref_store *refs,
-					    const char *refname,
-					    const unsigned char *old_sha1,
-					    const struct string_list *extras,
-					    const struct string_list *skip,
-					    unsigned int flags, int *type,
-					    struct strbuf *err)
+static struct ref_lock *lock_ref_oid_basic(struct files_ref_store *refs,
+					   const char *refname,
+					   const struct object_id *old_oid,
+					   const struct string_list *extras,
+					   const struct string_list *skip,
+					   unsigned int flags, int *type,
+					   struct strbuf *err)
 {
 	struct strbuf ref_file = STRBUF_INIT;
 	struct ref_lock *lock;
 	int last_errno = 0;
-	int mustexist = (old_sha1 && !is_null_sha1(old_sha1));
+	int mustexist = (old_oid && !is_null_oid(old_oid));
 	int resolve_flags = RESOLVE_REF_NO_RECURSE;
 	int resolved;
 
-	files_assert_main_repository(refs, "lock_ref_sha1_basic");
+	files_assert_main_repository(refs, "lock_ref_oid_basic");
 	assert(err);
 
 	lock = xcalloc(1, sizeof(struct ref_lock));
@@ -855,7 +856,7 @@ static struct ref_lock *lock_ref_sha1_basic(struct files_ref_store *refs,
 	files_ref_path(refs, &ref_file, refname);
 	resolved = !!refs_resolve_ref_unsafe(&refs->base,
 					     refname, resolve_flags,
-					     lock->old_oid.hash, type);
+					     &lock->old_oid, type);
 	if (!resolved && errno == EISDIR) {
 		/*
 		 * we are trying to lock foo but we used to
@@ -874,7 +875,7 @@ static struct ref_lock *lock_ref_sha1_basic(struct files_ref_store *refs,
 		}
 		resolved = !!refs_resolve_ref_unsafe(&refs->base,
 						     refname, resolve_flags,
-						     lock->old_oid.hash, type);
+						     &lock->old_oid, type);
 	}
 	if (!resolved) {
 		last_errno = errno;
@@ -908,7 +909,7 @@ static struct ref_lock *lock_ref_sha1_basic(struct files_ref_store *refs,
 		goto error_return;
 	}
 
-	if (verify_lock(&refs->base, lock, old_sha1, mustexist, err)) {
+	if (verify_lock(&refs->base, lock, old_oid, mustexist, err)) {
 		last_errno = errno;
 		goto error_return;
 	}
@@ -926,7 +927,7 @@ static struct ref_lock *lock_ref_sha1_basic(struct files_ref_store *refs,
 
 struct ref_to_prune {
 	struct ref_to_prune *next;
-	unsigned char sha1[20];
+	struct object_id oid;
 	char name[FLEX_ARRAY];
 };
 
@@ -994,7 +995,7 @@ static void prune_ref(struct files_ref_store *refs, struct ref_to_prune *r)
 
 	transaction = ref_store_transaction_begin(&refs->base, &err);
 	if (!transaction ||
-	    ref_transaction_delete(transaction, r->name, r->sha1,
+	    ref_transaction_delete(transaction, r->name, &r->oid,
 				   REF_ISPRUNING | REF_NODEREF, NULL, &err) ||
 	    ref_transaction_commit(transaction, &err)) {
 		ref_transaction_free(transaction);
@@ -1079,7 +1080,7 @@ static int files_pack_refs(struct ref_store *ref_store, unsigned int flags)
 		 * packed-refs transaction:
 		 */
 		if (ref_transaction_update(transaction, iter->refname,
-					   iter->oid->hash, NULL,
+					   iter->oid, NULL,
 					   REF_NODEREF, NULL, &err))
 			die("failure preparing to create packed reference %s: %s",
 			    iter->refname, err.buf);
@@ -1088,7 +1089,7 @@ static int files_pack_refs(struct ref_store *ref_store, unsigned int flags)
 		if ((flags & PACK_REFS_PRUNE)) {
 			struct ref_to_prune *n;
 			FLEX_ALLOC_STR(n, name, iter->refname);
-			hashcpy(n->sha1, iter->oid->hash);
+			oidcpy(&n->oid, iter->oid);
 			n->next = refs_to_prune;
 			refs_to_prune = n;
 		}
@@ -1251,7 +1252,7 @@ static int files_copy_or_rename_ref(struct ref_store *ref_store,
 
 	if (!refs_resolve_ref_unsafe(&refs->base, oldrefname,
 				     RESOLVE_REF_READING | RESOLVE_REF_NO_RECURSE,
-				orig_oid.hash, &flag)) {
+				&orig_oid, &flag)) {
 		ret = error("refname %s not found", oldrefname);
 		goto out;
 	}
@@ -1283,7 +1284,7 @@ static int files_copy_or_rename_ref(struct ref_store *ref_store,
 	}
 
 	if (!copy && refs_delete_ref(&refs->base, logmsg, oldrefname,
-			    orig_oid.hash, REF_NODEREF)) {
+			    &orig_oid, REF_NODEREF)) {
 		error("unable to delete old %s", oldrefname);
 		goto rollback;
 	}
@@ -1297,7 +1298,7 @@ static int files_copy_or_rename_ref(struct ref_store *ref_store,
 	 */
 	if (!copy && !refs_read_ref_full(&refs->base, newrefname,
 				RESOLVE_REF_READING | RESOLVE_REF_NO_RECURSE,
-				oid.hash, NULL) &&
+				&oid, NULL) &&
 	    refs_delete_ref(&refs->base, NULL, newrefname,
 			    NULL, REF_NODEREF)) {
 		if (errno == EISDIR) {
@@ -1323,8 +1324,8 @@ static int files_copy_or_rename_ref(struct ref_store *ref_store,
 
 	logmoved = log;
 
-	lock = lock_ref_sha1_basic(refs, newrefname, NULL, NULL, NULL,
-				   REF_NODEREF, NULL, &err);
+	lock = lock_ref_oid_basic(refs, newrefname, NULL, NULL, NULL,
+				  REF_NODEREF, NULL, &err);
 	if (!lock) {
 		if (copy)
 			error("unable to copy '%s' to '%s': %s", oldrefname, newrefname, err.buf);
@@ -1346,8 +1347,8 @@ static int files_copy_or_rename_ref(struct ref_store *ref_store,
 	goto out;
 
  rollback:
-	lock = lock_ref_sha1_basic(refs, oldrefname, NULL, NULL, NULL,
-				   REF_NODEREF, NULL, &err);
+	lock = lock_ref_oid_basic(refs, oldrefname, NULL, NULL, NULL,
+				  REF_NODEREF, NULL, &err);
 	if (!lock) {
 		error("unable to lock %s for rollback: %s", oldrefname, err.buf);
 		strbuf_release(&err);
@@ -1721,7 +1722,7 @@ static void update_symref_reflog(struct files_ref_store *refs,
 	struct object_id new_oid;
 	if (logmsg &&
 	    !refs_read_ref_full(&refs->base, target,
-				RESOLVE_REF_READING, new_oid.hash, NULL) &&
+				RESOLVE_REF_READING, &new_oid, NULL) &&
 	    files_log_ref_write(refs, refname, &lock->old_oid,
 				&new_oid, logmsg, 0, &err)) {
 		error("%s", err.buf);
@@ -1762,9 +1763,9 @@ static int files_create_symref(struct ref_store *ref_store,
 	struct ref_lock *lock;
 	int ret;
 
-	lock = lock_ref_sha1_basic(refs, refname, NULL,
-				   NULL, NULL, REF_NODEREF, NULL,
-				   &err);
+	lock = lock_ref_oid_basic(refs, refname, NULL,
+				  NULL, NULL, REF_NODEREF, NULL,
+				  &err);
 	if (!lock) {
 		error("%s", err.buf);
 		strbuf_release(&err);
@@ -2010,7 +2011,7 @@ static int files_reflog_iterator_advance(struct ref_iterator *ref_iterator)
 
 		if (refs_read_ref_full(iter->ref_store,
 				       diter->relative_path, 0,
-				       iter->oid.hash, &flags)) {
+				       &iter->oid, &flags)) {
 			error("bad ref for %s", diter->path.buf);
 			continue;
 		}
@@ -2148,7 +2149,7 @@ static int split_head_update(struct ref_update *update,
 	new_update = ref_transaction_add_update(
 			transaction, "HEAD",
 			update->flags | REF_LOG_ONLY | REF_NODEREF,
-			update->new_oid.hash, update->old_oid.hash,
+			&update->new_oid, &update->old_oid,
 			update->msg);
 
 	/*
@@ -2212,7 +2213,7 @@ static int split_symref_update(struct files_ref_store *refs,
 
 	new_update = ref_transaction_add_update(
 			transaction, referent, new_flags,
-			update->new_oid.hash, update->old_oid.hash,
+			&update->new_oid, &update->old_oid,
 			update->msg);
 
 	new_update->parent_update = update;
@@ -2347,7 +2348,7 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 			 */
 			if (refs_read_ref_full(&refs->base,
 					       referent.buf, 0,
-					       lock->old_oid.hash, NULL)) {
+					       &lock->old_oid, NULL)) {
 				if (update->flags & REF_HAVE_OLD) {
 					strbuf_addf(err, "cannot lock ref '%s': "
 						    "error reading reference",
@@ -2594,7 +2595,7 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 			ref_transaction_add_update(
 					packed_transaction, update->refname,
 					update->flags & ~REF_HAVE_OLD,
-					update->new_oid.hash, update->old_oid.hash,
+					&update->new_oid, &update->old_oid,
 					NULL);
 		}
 	}
@@ -2847,7 +2848,7 @@ static int files_initial_transaction_commit(struct ref_store *ref_store,
 		 */
 		ref_transaction_add_update(packed_transaction, update->refname,
 					   update->flags & ~REF_HAVE_OLD,
-					   update->new_oid.hash, update->old_oid.hash,
+					   &update->new_oid, &update->old_oid,
 					   NULL);
 	}
 
@@ -2908,7 +2909,7 @@ static int expire_reflog_ent(struct object_id *ooid, struct object_id *noid,
 }
 
 static int files_reflog_expire(struct ref_store *ref_store,
-			       const char *refname, const unsigned char *sha1,
+			       const char *refname, const struct object_id *oid,
 			       unsigned int flags,
 			       reflog_expiry_prepare_fn prepare_fn,
 			       reflog_expiry_should_prune_fn should_prune_fn,
@@ -2925,7 +2926,6 @@ static int files_reflog_expire(struct ref_store *ref_store,
 	int status = 0;
 	int type;
 	struct strbuf err = STRBUF_INIT;
-	struct object_id oid;
 
 	memset(&cb, 0, sizeof(cb));
 	cb.flags = flags;
@@ -2937,9 +2937,9 @@ static int files_reflog_expire(struct ref_store *ref_store,
 	 * reference itself, plus we might need to update the
 	 * reference if --updateref was specified:
 	 */
-	lock = lock_ref_sha1_basic(refs, refname, sha1,
-				   NULL, NULL, REF_NODEREF,
-				   &type, &err);
+	lock = lock_ref_oid_basic(refs, refname, oid,
+				  NULL, NULL, REF_NODEREF,
+				  &type, &err);
 	if (!lock) {
 		error("cannot lock ref '%s': %s", refname, err.buf);
 		strbuf_release(&err);
@@ -2975,9 +2975,7 @@ static int files_reflog_expire(struct ref_store *ref_store,
 		}
 	}
 
-	hashcpy(oid.hash, sha1);
-
-	(*prepare_fn)(refname, &oid, cb.policy_cb);
+	(*prepare_fn)(refname, oid, cb.policy_cb);
 	refs_for_each_reflog_ent(ref_store, refname, expire_reflog_ent, &cb);
 	(*cleanup_fn)(cb.policy_cb);
 

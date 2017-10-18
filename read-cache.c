@@ -196,7 +196,7 @@ static int ce_compare_link(const struct cache_entry *ce, size_t expected_size)
 
 static int ce_compare_gitlink(const struct cache_entry *ce)
 {
-	unsigned char sha1[20];
+	struct object_id oid;
 
 	/*
 	 * We don't actually require that the .git directory
@@ -206,9 +206,9 @@ static int ce_compare_gitlink(const struct cache_entry *ce)
 	 *
 	 * If so, we consider it always to match.
 	 */
-	if (resolve_gitlink_ref(ce->name, "HEAD", sha1) < 0)
+	if (resolve_gitlink_ref(ce->name, "HEAD", &oid) < 0)
 		return 0;
-	return hashcmp(sha1, ce->oid.hash);
+	return oidcmp(&oid, &ce->oid);
 }
 
 static int ce_modified_check_fs(const struct cache_entry *ce, struct stat *st)

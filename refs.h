@@ -14,22 +14,22 @@ struct worktree;
  * at the resolved object name.  The return value, if not NULL, is a
  * pointer into either a static buffer or the input ref.
  *
- * If sha1 is non-NULL, store the referred-to object's name in it.
+ * If oid is non-NULL, store the referred-to object's name in it.
  *
  * If the reference cannot be resolved to an object, the behavior
  * depends on the RESOLVE_REF_READING flag:
  *
  * - If RESOLVE_REF_READING is set, return NULL.
  *
- * - If RESOLVE_REF_READING is not set, clear sha1 and return the name of
+ * - If RESOLVE_REF_READING is not set, clear oid and return the name of
  *   the last reference name in the chain, which will either be a non-symbolic
  *   reference or an undefined reference.  If this is a prelude to
  *   "writing" to the ref, the return value is the name of the ref
  *   that will actually be created or changed.
  *
  * If the RESOLVE_REF_NO_RECURSE flag is passed, only resolves one
- * level of symbolic reference.  The value stored in sha1 for a symbolic
- * reference will always be null_sha1 in this case, and the return
+ * level of symbolic reference.  The value stored in oid for a symbolic
+ * reference will always be null_oid in this case, and the return
  * value is the reference that the symref refers to directly.
  *
  * If flags is non-NULL, set the value that it points to the
@@ -46,7 +46,7 @@ struct worktree;
  *
  * RESOLVE_REF_ALLOW_BAD_NAME allows resolving refs even when their
  * name is invalid according to git-check-ref-format(1).  If the name
- * is bad then the value stored in sha1 will be null_sha1 and the two
+ * is bad then the value stored in oid will be null_oid and the two
  * flags REF_ISBROKEN and REF_BAD_NAME will be set.
  *
  * Even with RESOLVE_REF_ALLOW_BAD_NAME, names that escape the refs/
@@ -62,22 +62,22 @@ struct worktree;
 const char *refs_resolve_ref_unsafe(struct ref_store *refs,
 				    const char *refname,
 				    int resolve_flags,
-				    unsigned char *sha1,
+				    struct object_id *oid,
 				    int *flags);
 const char *resolve_ref_unsafe(const char *refname, int resolve_flags,
-			       unsigned char *sha1, int *flags);
+			       struct object_id *oid, int *flags);
 
 char *refs_resolve_refdup(struct ref_store *refs,
 			  const char *refname, int resolve_flags,
-			  unsigned char *sha1, int *flags);
+			  struct object_id *oid, int *flags);
 char *resolve_refdup(const char *refname, int resolve_flags,
-		     unsigned char *sha1, int *flags);
+		     struct object_id *oid, int *flags);
 
 int refs_read_ref_full(struct ref_store *refs, const char *refname,
-		       int resolve_flags, unsigned char *sha1, int *flags);
+		       int resolve_flags, struct object_id *oid, int *flags);
 int read_ref_full(const char *refname, int resolve_flags,
-		  unsigned char *sha1, int *flags);
-int read_ref(const char *refname, unsigned char *sha1);
+		  struct object_id *oid, int *flags);
+int read_ref(const char *refname, struct object_id *oid);
 
 /*
  * Return 0 if a reference named refname could be created without
@@ -114,14 +114,14 @@ extern int refs_init_db(struct strbuf *err);
 /*
  * If refname is a non-symbolic reference that refers to a tag object,
  * and the tag can be (recursively) dereferenced to a non-tag object,
- * store the SHA1 of the referred-to object to sha1 and return 0.  If
- * any of these conditions are not met, return a non-zero value.
+ * store the object ID of the referred-to object to oid and return 0.
+ * If any of these conditions are not met, return a non-zero value.
  * Symbolic references are considered unpeelable, even if they
  * ultimately resolve to a peelable tag.
  */
 int refs_peel_ref(struct ref_store *refs, const char *refname,
-		  unsigned char *sha1);
-int peel_ref(const char *refname, unsigned char *sha1);
+		  struct object_id *oid);
+int peel_ref(const char *refname, struct object_id *oid);
 
 /**
  * Resolve refname in the nested "gitlink" repository in the specified
@@ -130,7 +130,7 @@ int peel_ref(const char *refname, unsigned char *sha1);
  * otherwise, return a non-zero value.
  */
 int resolve_gitlink_ref(const char *submodule, const char *refname,
-			unsigned char *sha1);
+			struct object_id *oid);
 
 /*
  * Return true iff abbrev_name is a possible abbreviation for
@@ -139,9 +139,9 @@ int resolve_gitlink_ref(const char *submodule, const char *refname,
  */
 int refname_match(const char *abbrev_name, const char *full_name);
 
-int expand_ref(const char *str, int len, unsigned char *sha1, char **ref);
-int dwim_ref(const char *str, int len, unsigned char *sha1, char **ref);
-int dwim_log(const char *str, int len, unsigned char *sha1, char **ref);
+int expand_ref(const char *str, int len, struct object_id *oid, char **ref);
+int dwim_ref(const char *str, int len, struct object_id *oid, char **ref);
+int dwim_log(const char *str, int len, struct object_id *oid, char **ref);
 
 /*
  * A ref_transaction represents a collection of reference updates that
@@ -363,7 +363,7 @@ int safe_create_reflog(const char *refname, int force_create, struct strbuf *err
 /** Reads log for the value of ref during at_time. **/
 int read_ref_at(const char *refname, unsigned int flags,
 		timestamp_t at_time, int cnt,
-		unsigned char *sha1, char **msg,
+		struct object_id *oid, char **msg,
 		timestamp_t *cutoff_time, int *cutoff_tz, int *cutoff_cnt);
 
 /** Check if a particular reflog exists */
@@ -371,19 +371,19 @@ int refs_reflog_exists(struct ref_store *refs, const char *refname);
 int reflog_exists(const char *refname);
 
 /*
- * Delete the specified reference. If old_sha1 is non-NULL, then
+ * Delete the specified reference. If old_oid is non-NULL, then
  * verify that the current value of the reference is old_sha1 before
- * deleting it. If old_sha1 is NULL, delete the reference if it
- * exists, regardless of its old value. It is an error for old_sha1 to
- * be NULL_SHA1. msg and flags are passed through to
+ * deleting it. If old_oid is NULL, delete the reference if it
+ * exists, regardless of its old value. It is an error for old_oid to
+ * be null_oid. msg and flags are passed through to
  * ref_transaction_delete().
  */
 int refs_delete_ref(struct ref_store *refs, const char *msg,
 		    const char *refname,
-		    const unsigned char *old_sha1,
+		    const struct object_id *old_oid,
 		    unsigned int flags);
 int delete_ref(const char *msg, const char *refname,
-	       const unsigned char *old_sha1, unsigned int flags);
+	       const struct object_id *old_oid, unsigned int flags);
 
 /*
  * Delete the specified references. If there are any problems, emit
@@ -511,14 +511,14 @@ struct ref_transaction *ref_transaction_begin(struct strbuf *err);
  */
 
 /*
- * Add a reference update to transaction. new_sha1 is the value that
- * the reference should have after the update, or null_sha1 if it
- * should be deleted. If new_sha1 is NULL, then the reference is not
- * changed at all. old_sha1 is the value that the reference must have
- * before the update, or null_sha1 if it must not have existed
+ * Add a reference update to transaction. new_oid is the value that
+ * the reference should have after the update, or null_oid if it
+ * should be deleted. If new_oid is NULL, then the reference is not
+ * changed at all. old_oid is the value that the reference must have
+ * before the update, or null_oid if it must not have existed
  * beforehand. The old value is checked after the lock is taken to
- * prevent races. If the old value doesn't agree with old_sha1, the
- * whole transaction fails. If old_sha1 is NULL, then the previous
+ * prevent races. If the old value doesn't agree with old_oid, the
+ * whole transaction fails. If old_oid is NULL, then the previous
  * value is not checked.
  *
  * See the above comment "Reference transaction updates" for more
@@ -526,15 +526,15 @@ struct ref_transaction *ref_transaction_begin(struct strbuf *err);
  */
 int ref_transaction_update(struct ref_transaction *transaction,
 			   const char *refname,
-			   const unsigned char *new_sha1,
-			   const unsigned char *old_sha1,
+			   const struct object_id *new_oid,
+			   const struct object_id *old_oid,
 			   unsigned int flags, const char *msg,
 			   struct strbuf *err);
 
 /*
- * Add a reference creation to transaction. new_sha1 is the value that
+ * Add a reference creation to transaction. new_oid is the value that
  * the reference should have after the update; it must not be
- * null_sha1. It is verified that the reference does not exist
+ * null_oid. It is verified that the reference does not exist
  * already.
  *
  * See the above comment "Reference transaction updates" for more
@@ -542,35 +542,35 @@ int ref_transaction_update(struct ref_transaction *transaction,
  */
 int ref_transaction_create(struct ref_transaction *transaction,
 			   const char *refname,
-			   const unsigned char *new_sha1,
+			   const struct object_id *new_oid,
 			   unsigned int flags, const char *msg,
 			   struct strbuf *err);
 
 /*
- * Add a reference deletion to transaction. If old_sha1 is non-NULL,
+ * Add a reference deletion to transaction. If old_oid is non-NULL,
  * then it holds the value that the reference should have had before
- * the update (which must not be null_sha1).
+ * the update (which must not be null_oid).
  *
  * See the above comment "Reference transaction updates" for more
  * information.
  */
 int ref_transaction_delete(struct ref_transaction *transaction,
 			   const char *refname,
-			   const unsigned char *old_sha1,
+			   const struct object_id *old_oid,
 			   unsigned int flags, const char *msg,
 			   struct strbuf *err);
 
 /*
- * Verify, within a transaction, that refname has the value old_sha1,
- * or, if old_sha1 is null_sha1, then verify that the reference
- * doesn't exist. old_sha1 must be non-NULL.
+ * Verify, within a transaction, that refname has the value old_oid,
+ * or, if old_oid is null_oid, then verify that the reference
+ * doesn't exist. old_oid must be non-NULL.
  *
  * See the above comment "Reference transaction updates" for more
  * information.
  */
 int ref_transaction_verify(struct ref_transaction *transaction,
 			   const char *refname,
-			   const unsigned char *old_sha1,
+			   const struct object_id *old_oid,
 			   unsigned int flags,
 			   struct strbuf *err);
 
@@ -643,12 +643,9 @@ void ref_transaction_free(struct ref_transaction *transaction);
  * argument.
  */
 int refs_update_ref(struct ref_store *refs, const char *msg, const char *refname,
-		    const unsigned char *new_sha1, const unsigned char *old_sha1,
+		    const struct object_id *new_oid, const struct object_id *old_oid,
 		    unsigned int flags, enum action_on_err onerr);
 int update_ref(const char *msg, const char *refname,
-	       const unsigned char *new_sha1, const unsigned char *old_sha1,
-	       unsigned int flags, enum action_on_err onerr);
-int update_ref_oid(const char *msg, const char *refname,
 	       const struct object_id *new_oid, const struct object_id *old_oid,
 	       unsigned int flags, enum action_on_err onerr);
 
@@ -706,20 +703,20 @@ typedef int reflog_expiry_should_prune_fn(struct object_id *ooid,
 typedef void reflog_expiry_cleanup_fn(void *cb_data);
 
 /*
- * Expire reflog entries for the specified reference. sha1 is the old
+ * Expire reflog entries for the specified reference. oid is the old
  * value of the reference. flags is a combination of the constants in
  * enum expire_reflog_flags. The three function pointers are described
  * above. On success, return zero.
  */
 int refs_reflog_expire(struct ref_store *refs,
 		       const char *refname,
-		       const unsigned char *sha1,
+		       const struct object_id *oid,
 		       unsigned int flags,
 		       reflog_expiry_prepare_fn prepare_fn,
 		       reflog_expiry_should_prune_fn should_prune_fn,
 		       reflog_expiry_cleanup_fn cleanup_fn,
 		       void *policy_cb_data);
-int reflog_expire(const char *refname, const unsigned char *sha1,
+int reflog_expire(const char *refname, const struct object_id *oid,
 		  unsigned int flags,
 		  reflog_expiry_prepare_fn prepare_fn,
 		  reflog_expiry_should_prune_fn should_prune_fn,

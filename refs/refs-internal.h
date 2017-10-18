@@ -120,11 +120,11 @@ enum peel_status {
 /*
  * Peel the named object; i.e., if the object is a tag, resolve the
  * tag recursively until a non-tag is found.  If successful, store the
- * result to sha1 and return PEEL_PEELED.  If the object is not a tag
+ * result to oid and return PEEL_PEELED.  If the object is not a tag
  * or is not valid, return PEEL_NON_TAG or PEEL_INVALID, respectively,
  * and leave sha1 unchanged.
  */
-enum peel_status peel_object(const unsigned char *name, unsigned char *sha1);
+enum peel_status peel_object(const struct object_id *name, struct object_id *oid);
 
 /*
  * Copy the reflog message msg to buf, which has been allocated sufficiently
@@ -181,7 +181,7 @@ struct ref_update {
 };
 
 int refs_read_raw_ref(struct ref_store *ref_store,
-		      const char *refname, unsigned char *sha1,
+		      const char *refname, struct object_id *oid,
 		      struct strbuf *referent, unsigned int *type);
 
 /*
@@ -202,8 +202,8 @@ int ref_update_reject_duplicates(struct string_list *refnames,
 struct ref_update *ref_transaction_add_update(
 		struct ref_transaction *transaction,
 		const char *refname, unsigned int flags,
-		const unsigned char *new_sha1,
-		const unsigned char *old_sha1,
+		const struct object_id *new_oid,
+		const struct object_id *old_oid,
 		const char *msg);
 
 /*
@@ -608,7 +608,7 @@ typedef int create_reflog_fn(struct ref_store *ref_store, const char *refname,
 			     int force_create, struct strbuf *err);
 typedef int delete_reflog_fn(struct ref_store *ref_store, const char *refname);
 typedef int reflog_expire_fn(struct ref_store *ref_store,
-			     const char *refname, const unsigned char *sha1,
+			     const char *refname, const struct object_id *oid,
 			     unsigned int flags,
 			     reflog_expiry_prepare_fn prepare_fn,
 			     reflog_expiry_should_prune_fn should_prune_fn,
@@ -619,13 +619,13 @@ typedef int reflog_expire_fn(struct ref_store *ref_store,
  * Read a reference from the specified reference store, non-recursively.
  * Set type to describe the reference, and:
  *
- * - If refname is the name of a normal reference, fill in sha1
+ * - If refname is the name of a normal reference, fill in oid
  *   (leaving referent unchanged).
  *
  * - If refname is the name of a symbolic reference, write the full
  *   name of the reference to which it refers (e.g.
  *   "refs/heads/master") to referent and set the REF_ISSYMREF bit in
- *   type (leaving sha1 unchanged). The caller is responsible for
+ *   type (leaving oid unchanged). The caller is responsible for
  *   validating that referent is a valid reference name.
  *
  * WARNING: refname might be used as part of a filename, so it is
@@ -637,7 +637,7 @@ typedef int reflog_expire_fn(struct ref_store *ref_store,
  *
  * Return 0 on success. If the ref doesn't exist, set errno to ENOENT
  * and return -1. If the ref exists but is neither a symbolic ref nor
- * a sha1, it is broken; set REF_ISBROKEN in type, set errno to
+ * an object ID, it is broken; set REF_ISBROKEN in type, set errno to
  * EINVAL, and return -1. If there is another error reading the ref,
  * set errno appropriately and return -1.
  *
@@ -654,7 +654,7 @@ typedef int reflog_expire_fn(struct ref_store *ref_store,
  *   refname will still be valid and unchanged.
  */
 typedef int read_raw_ref_fn(struct ref_store *ref_store,
-			    const char *refname, unsigned char *sha1,
+			    const char *refname, struct object_id *oid,
 			    struct strbuf *referent, unsigned int *type);
 
 struct ref_storage_be {

@@ -705,8 +705,8 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 			static const char *fake_av[2];
 
 			fake_av[0] = resolve_refdup("HEAD",
-						    RESOLVE_REF_READING,
-						    oid.hash, NULL);
+						    RESOLVE_REF_READING, &oid,
+						    NULL);
 			fake_av[1] = NULL;
 			av = fake_av;
 			ac = 1;
@@ -720,7 +720,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 			die(Q_("only %d entry can be shown at one time.",
 			       "only %d entries can be shown at one time.",
 			       MAX_REVS), MAX_REVS);
-		if (!dwim_ref(*av, strlen(*av), oid.hash, &ref))
+		if (!dwim_ref(*av, strlen(*av), &oid, &ref))
 			die(_("no such ref %s"), *av);
 
 		/* Has the base been specified? */
@@ -731,7 +731,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 				/* Ah, that is a date spec... */
 				timestamp_t at;
 				at = approxidate(reflog_base);
-				read_ref_at(ref, flags, at, -1, oid.hash, NULL,
+				read_ref_at(ref, flags, at, -1, &oid, NULL,
 					    NULL, NULL, &base);
 			}
 		}
@@ -743,7 +743,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 			timestamp_t timestamp;
 			int tz;
 
-			if (read_ref_at(ref, flags, 0, base+i, oid.hash, &logmsg,
+			if (read_ref_at(ref, flags, 0, base + i, &oid, &logmsg,
 					&timestamp, &tz, NULL)) {
 				reflog = i;
 				break;
@@ -775,7 +775,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 	}
 
 	head = resolve_refdup("HEAD", RESOLVE_REF_READING,
-			      head_oid.hash, NULL);
+			      &head_oid, NULL);
 
 	if (with_current_branch && head) {
 		int has_head = 0;

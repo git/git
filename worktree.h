@@ -8,7 +8,7 @@ struct worktree {
 	char *id;
 	char *head_ref;		/* NULL if HEAD is broken or detached */
 	char *lock_reason;	/* internal use */
-	unsigned char head_sha1[20];
+	struct object_id head_oid;
 	int is_detached;
 	int is_bare;
 	int is_current;

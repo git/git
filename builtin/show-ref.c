@@ -38,7 +38,7 @@ static void show_one(const char *refname, const struct object_id *oid)
 	if (!deref_tags)
 		return;
 
-	if (!peel_ref(refname, peeled.hash)) {
+	if (!peel_ref(refname, &peeled)) {
 		hex = find_unique_abbrev(peeled.hash, abbrev);
 		printf("%s %s^{}\n", hex, refname);
 	}
@@ -197,7 +197,7 @@ int cmd_show_ref(int argc, const char **argv, const char *prefix)
 			struct object_id oid;
 
 			if ((starts_with(*pattern, "refs/") || !strcmp(*pattern, "HEAD")) &&
-			    !read_ref(*pattern, oid.hash)) {
+			    !read_ref(*pattern, &oid)) {
 				show_one(*pattern, &oid);
 			}
 			else if (!quiet)

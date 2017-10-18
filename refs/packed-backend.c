@@ -716,7 +716,7 @@ static struct snapshot *get_snapshot(struct packed_ref_store *refs)
 }
 
 static int packed_read_raw_ref(struct ref_store *ref_store,
-			       const char *refname, unsigned char *sha1,
+			       const char *refname, struct object_id *oid,
 			       struct strbuf *referent, unsigned int *type)
 {
 	struct packed_ref_store *refs =
@@ -734,7 +734,7 @@ static int packed_read_raw_ref(struct ref_store *ref_store,
 		return -1;
 	}
 
-	if (get_sha1_hex(rec, sha1))
+	if (get_oid_hex(rec, oid))
 		die_invalid_line(refs->path, rec, snapshot->eof - rec);
 
 	*type = REF_ISPACKED;
@@ -880,7 +880,7 @@ static int packed_ref_iterator_peel(struct ref_iterator *ref_iterator,
 	} else if ((iter->base.flags & (REF_ISBROKEN | REF_ISSYMREF))) {
 		return -1;
 	} else {
-		return !!peel_object(iter->oid.hash, peeled->hash);
+		return !!peel_object(&iter->oid, peeled);
 	}
 }
 
@@ -1220,8 +1220,8 @@ static int write_with_updates(struct packed_ref_store *refs,
 			i++;
 		} else {
 			struct object_id peeled;
-			int peel_error = peel_object(update->new_oid.hash,
-						     peeled.hash);
+			int peel_error = peel_object(&update->new_oid,
+						     &peeled);
 
 			if (write_packed_entry(out, update->refname,
 					       update->new_oid.hash,
@@ -1519,7 +1519,7 @@ static int packed_delete_reflog(struct ref_store *ref_store,
 }
 
 static int packed_reflog_expire(struct ref_store *ref_store,
-				const char *refname, const unsigned char *sha1,
+				const char *refname, const struct object_id *oid,
 				unsigned int flags,
 				reflog_expiry_prepare_fn prepare_fn,
 				reflog_expiry_should_prune_fn should_prune_fn,
