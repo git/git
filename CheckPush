@@ -55,13 +55,18 @@ do
 	fi
 done
 
-if	next_tree=$(git rev-parse next^{tree}) &&
+if ! next_equiv=$(git rev-parse --verify 'jch^{/^### match next}' 2>/dev/null) ||
+   ! git diff --stat --exit-code next $next_equiv
+then
+	next_tree=$(git rev-parse next^{tree}) &&
 	next_equiv=$(git rev-list --first-parent master..pu |
-		xargs -n1 sh -c '
-			echo $(git rev-parse $1^{tree}) $1
-		' - | sed -n -e "s/^$next_tree //p"
-	) &&
-	test -n "$next_equiv"
+			xargs -n1 sh -c '
+				echo $(git rev-parse $1^{tree}) $1
+			' - | sed -n -e "s/^$next_tree //p"
+		    )
+fi
+
+if test -n "$next_equiv"
 then
 	jch=$(git rev-list --first-parent master..jch | wc -l) &&
 	pu=$(git rev-list --first-parent master..pu | wc -l) &&
@@ -72,7 +77,4 @@ then
 	else
 		echo "master..$next..next..$jch..jch..$pu..pu"
 	fi
-elif match_next=$(git rev-parse 'jch^{/^### match next$}' 2>/dev/null)
-then
-	git diff --stat "$match_next" next
 fi
