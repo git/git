@@ -426,8 +426,7 @@ test_expect_success 'set up color tests' '
 '
 
 test_expect_success TTY '%(color) shows color with a tty' '
-	test_terminal env TERM=vt100 \
-		git for-each-ref --format="$color_format" >actual.raw &&
+	test_terminal git for-each-ref --format="$color_format" >actual.raw &&
 	test_decode_color <actual.raw >actual &&
 	test_cmp expected.color actual
 '
@@ -437,10 +436,15 @@ test_expect_success '%(color) does not show color without tty' '
 	test_cmp expected.bare actual
 '
 
-test_expect_success 'color.ui=always can override tty check' '
-	git -c color.ui=always for-each-ref --format="$color_format" >actual.raw &&
+test_expect_success '--color can override tty check' '
+	git for-each-ref --color --format="$color_format" >actual.raw &&
 	test_decode_color <actual.raw >actual &&
 	test_cmp expected.color actual
+'
+
+test_expect_success 'color.ui=always does not override tty check' '
+	git -c color.ui=always for-each-ref --format="$color_format" >actual &&
+	test_cmp expected.bare actual
 '
 
 cat >expected <<\EOF

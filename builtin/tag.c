@@ -158,7 +158,7 @@ static int git_tag_config(const char *var, const char *value, void *cb)
 
 	if (starts_with(var, "column."))
 		return git_column_config(var, value, "tag", &colopts);
-	return git_default_config(var, value, cb);
+	return git_color_default_config(var, value, cb);
 }
 
 static void write_tag_body(int fd, const struct object_id *oid)
@@ -411,6 +411,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 		},
 		OPT_STRING(  0 , "format", &format.format, N_("format"),
 			   N_("format to use for the output")),
+		OPT__COLOR(&format.use_color, N_("respect format colors")),
 		OPT_BOOL('i', "ignore-case", &icase, N_("sorting and filtering are case insensitive")),
 		OPT_END()
 	};
