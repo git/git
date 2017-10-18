@@ -3072,6 +3072,7 @@ sub git_get_projects_list {
 				# only directories can be git repositories
 				return unless (-d $_);
 				# need search permission
+				use filetest 'access';
 				return unless (-x $_);
 				# don't traverse too deep (Find is super slow on os x)
 				# $project_maxdepth excludes depth of $projectroot
