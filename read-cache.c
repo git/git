@@ -1509,6 +1509,9 @@ struct ondisk_cache_entry_extended {
 /* Allow fsck to force verification of the index checksum. */
 int verify_index_checksum;
 
+/* Allow fsck to force verification of the cache entry order. */
+int verify_ce_order;
+
 static int verify_hdr(struct cache_header *hdr, unsigned long size)
 {
 	git_SHA_CTX c;
@@ -1665,6 +1668,9 @@ static struct cache_entry *create_from_disk(struct ondisk_cache_entry *ondisk,
 static void check_ce_order(struct index_state *istate)
 {
 	unsigned int i;
+
+	if (!verify_ce_order)
+		return;
 
 	for (i = 1; i < istate->cache_nr; i++) {
 		struct cache_entry *ce = istate->cache[i - 1];
