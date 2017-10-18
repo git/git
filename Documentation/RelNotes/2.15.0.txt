@@ -133,7 +133,6 @@ Performance, Internal Implementation, Development Support etc.
  * A helper function to read a single whole line into strbuf
    mistakenly triggered OOM error at EOF under certain conditions,
    which has been fixed.
-   (merge 642956cf45 rs/strbuf-getwholeline-fix later to maint).
 
  * The "ref-store" code reorganization continues.
 
@@ -342,7 +341,6 @@ Fixes since v2.14
    was taught to "git send-email" as a valid way to tell it that it
    needs to also send a carbon copy to <a@dd.re.ss> in the trailer
    section.
-   (merge cc90750677 mm/send-email-cc-cruft later to maint).
 
  * "git branch -M a b" while on a branch that is completely unrelated
    to either branch a or branch b misbehaved when multiple worktree
@@ -356,7 +354,6 @@ Fixes since v2.14
    garbage collection.
 
  * A regression to "gitk --bisect" by a recent update has been fixed.
-   (merge 1d0538e486 mh/packed-ref-store-prep later to maint).
 
  * "git -c submodule.recurse=yes pull" did not work as if the
    "--recurse-submodules" option was given from the command line.
@@ -366,7 +363,6 @@ Fixes since v2.14
    pass the contents of the file verbatim and instead completed an
    incomplete line at the end, if exists.  The latter has been updated
    to match the behaviour of the former.
-   (merge c818e74332 rk/commit-tree-make-F-verbatim later to maint).
 
  * Many codepaths did not diagnose write failures correctly when disks
    go full, due to their misuse of write_in_full() helper function,
@@ -379,10 +375,8 @@ Fixes since v2.14
  * "git archive", especially when used with pathspec, stored an empty
    directory in its output, even though Git itself never does so.
    This has been fixed.
-   (merge 4318094047 rs/archive-excluded-directory later to maint).
 
  * API error-proofing which happens to also squelch warnings from GCC.
-   (merge c788c54cde tg/refs-allowed-flags later to maint).
 
  * The explanation of the cut-line in the commit log editor has been
    slightly tweaked.
@@ -392,7 +386,6 @@ Fixes since v2.14
    reading and writing pid/host from and to a lock file; it used to
    use an incorrect fscanf() format when reading, which has been
    corrected.
-   (merge afe2fab72c aw/gc-lockfile-fscanf-fix later to maint).
 
  * The scripts to drive TravisCI has been reorganized and then an
    optimization to avoid spending cycles on a branch whose tip is
@@ -400,10 +393,8 @@ Fixes since v2.14
    (merge 8376eb4a8f ls/travis-scriptify later to maint).
 
  * The test linter has been taught that we do not like "echo -e".
-   (merge 1a6d46895d tb/test-lint-echo-e later to maint).
 
  * Code cmp.std.c nitpick.
-   (merge ac7da78ede mh/for-each-string-list-item-empty-fix later to maint).
 
  * A regression fix for 2.11 that made the code to read the list of
    alternate object stores overrun the end of the string.
@@ -412,7 +403,6 @@ Fixes since v2.14
  * "git describe --match" learned to take multiple patterns in v2.13
    series, but the feature ignored the patterns after the first one
    and did not work at all.  This has been fixed.
-   (merge da769d2986 jk/describe-omit-some-refs later to maint).
 
  * "git filter-branch" cannot reproduce a history with a tag without
    the tagger field, which only ancient versions of Git allowed to be
@@ -421,17 +411,14 @@ Fixes since v2.14
 
  * "git cat-file --textconv" started segfaulting recently, which
    has been corrected.
-   (merge cc0ea7c9e5 jk/diff-blob later to maint).
 
  * The built-in pattern to detect the "function header" for HTML did
    not match <H1>..<H6> elements without any attributes, which has
    been fixed.
-   (merge 9c03caca2c ik/userdiff-html-h-element-fix later to maint).
 
  * "git mailinfo" was loose in decoding quoted printable and produced
    garbage when the two letters after the equal sign are not
    hexadecimal.  This has been fixed.
-   (merge c8cf423eab rs/mailinfo-qp-decode-fix later to maint).
 
  * The machinery to create xdelta used in pack files received the
    sizes of the data in size_t, but lost the higher bits of them by
@@ -445,7 +432,6 @@ Fixes since v2.14
 
  * The documentation for '-X<option>' for merges was misleadingly
    written to suggest that "-s theirs" exists, which is not the case.
-   (merge c25d98b2a7 jc/merge-x-theirs-docfix later to maint).
 
  * "git fast-export" with -M/-C option issued "copy" instruction on a
    path that is simultaneously modified, which was incorrect.
@@ -471,14 +457,11 @@ Fixes since v2.14
 
  * Spell the name of our system as "Git" in the output from
    request-pull script.
-   (merge e66d7c37a5 ar/request-pull-phrasofix later to maint).
 
  * Fixes for a handful memory access issues identified by valgrind.
-   (merge 2944a94c6b tg/memfixes later to maint).
 
  * Backports a moral equivalent of 2015 fix to the poll() emulation
    from the upstream gnulib to fix occasional breakages on HPE NonStop.
-   (merge 61b2a1acaa rb/compat-poll-fix later to maint).
 
  * Users with "color.ui = always" in their configuration were broken
    by a recent change that made plumbing commands to pay attention to
@@ -491,45 +474,16 @@ Fixes since v2.14
    (e.g. "%(refname:)", "%(body:)" used to error out.  Instead, treat
    them as if the colon and an empty string that follows it were not
    there.
-   (merge bea4dbeafd tb/ref-filter-empty-modifier later to maint).
 
  * An ancient bug that made Git misbehave with creation/renaming of
    refs has been fixed.
 
  * Other minor doc, test and build updates and code cleanups.
    (merge f094b89a4d ma/parse-maybe-bool later to maint).
-   (merge 39b00fa4d4 jk/drop-sha1-entry-pos later to maint).
    (merge 6cdf8a7929 ma/ts-cleanups later to maint).
    (merge 7560f547e6 ma/up-to-date later to maint).
    (merge 0db3dc75f3 rs/apply-epoch later to maint).
-   (merge 74f1bd912b dw/diff-highlight-makefile-fix later to maint).
-   (merge f991761eb8 jk/config-lockfile-leak-fix later to maint).
-   (merge 150efef1e7 ma/pkt-line-leakfix later to maint).
-   (merge 5554451de6 mg/timestamp-t-fix later to maint).
    (merge 276d0e35c0 ma/split-symref-update-fix later to maint).
-   (merge 3bc4b8f7c7 bb/doc-eol-dirty later to maint).
-   (merge c1bb33c99c jk/system-path-cleanup later to maint).
-   (merge ab46e6fc72 cc/subprocess-handshake-missing-capabilities later to maint).
-   (merge f7a32dd97f kd/doc-for-each-ref later to maint).
-   (merge be94568bc7 ez/doc-duplicated-words-fix later to maint).
-   (merge 01e4be6c3d ks/test-readme-phrasofix later to maint).
-   (merge 217bb56d4f hn/typofix later to maint).
-   (merge c08fd6388c jk/doc-read-tree-table-asciidoctor-fix later to maint).
-   (merge c3342b362e ks/doc-use-camelcase-for-config-name later to maint).
-   (merge 0bca165fdb jk/validate-headref-fix later to maint).
-   (merge 93dbefb389 mr/doc-negative-pathspec later to maint).
-   (merge 5e633326e4 ad/doc-markup-fix later to maint).
-   (merge 9ca356fa8b rs/cocci-de-paren-call-params later to maint).
-   (merge 7099153e8d rs/tag-null-pointer-arith-fix later to maint).
-   (merge 0e187d758c rs/run-command-use-alloc-array later to maint).
-   (merge e0222159fa jn/strbuf-doc-re-reuse later to maint).
-   (merge 97487ea11a rs/qsort-s later to maint).
-   (merge a9155c50bd sb/branch-avoid-repeated-strbuf-release later to maint).
    (merge f777623514 ks/branch-tweak-error-message-for-extra-args later to maint).
    (merge 33f3c683ec ks/verify-filename-non-option-error-message-tweak later to maint).
-   (merge b3ea7dd32d jk/sha1-loose-object-info-fix later to maint).
-   (merge 2720f6db5d rs/fsck-null-return-from-lookup later to maint).
-   (merge 99b7b687a6 rs/rs-mailmap later to maint).
-   (merge 7823655082 tb/complete-describe later to maint).
    (merge 7cbbf9d6a2 ls/filter-process-delayed later to maint).
-   (merge b59698aef3 jc/doc-checkout later to maint).
