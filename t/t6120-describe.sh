@@ -182,9 +182,13 @@ check_describe "test2-lightweight-*" --tags --match="test2-*"
 
 check_describe "test2-lightweight-*" --long --tags --match="test2-*" HEAD^
 
-check_describe "test1-lightweight-*" --long --tags --match="test1-*" --match="test2-*" HEAD^
+check_describe "test2-lightweight-*" --long --tags --match="test1-*" --match="test2-*" HEAD^
 
 check_describe "test2-lightweight-*" --long --tags --match="test1-*" --no-match --match="test2-*" HEAD^
+
+check_describe "test1-lightweight-*" --long --tags --match="test1-*" --match="test3-*" HEAD
+
+check_describe "test1-lightweight-*" --long --tags --match="test3-*" --match="test1-*" HEAD
 
 test_expect_success 'name-rev with exact tags' '
 	echo A >expect &&
