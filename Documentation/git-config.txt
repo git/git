@@ -174,11 +174,11 @@ See also <<FILES>>.
 	either --bool or --int, as described above.
 
 --path::
-	'git-config' will expand leading '{tilde}' to the value of
-	'$HOME', and '{tilde}user' to the home directory for the
+	`git config` will expand a leading `~` to the value of
+	`$HOME`, and `~user` to the home directory for the
 	specified user.  This option has no effect when setting the
-	value (but you can use 'git config bla {tilde}/' from the
-	command line to let your shell do the expansion).
+	value (but you can use `git config section.variable ~/`
+	from the command line to let your shell do the expansion).
 
 -z::
 --null::
