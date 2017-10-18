@@ -442,6 +442,11 @@ test_expect_success '--color can override tty check' '
 	test_cmp expected.color actual
 '
 
+test_expect_success 'color.ui=always does not override tty check' '
+	git -c color.ui=always for-each-ref --format="$color_format" >actual &&
+	test_cmp expected.bare actual
+'
+
 cat >expected <<\EOF
 heads/master
 tags/master
