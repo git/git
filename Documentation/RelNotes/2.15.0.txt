@@ -483,9 +483,8 @@ Fixes since v2.14
  * Users with "color.ui = always" in their configuration were broken
    by a recent change that made plumbing commands to pay attention to
    them as the patch created internally by "git add -p" were colored
-   (heh) and made unusable.  Fix this regression by redefining
-   'always' to mean the same thing as 'auto'.
-   (merge 6be4595edb jk/ui-color-always-to-auto-maint later to maint).
+   (heh) and made unusable.  This has been fixed by reverting the
+   offending change.
 
  * In the "--format=..." option of the "git for-each-ref" command (and
    its friends, i.e. the listing mode of "git branch/tag"), "%(atom:)"
