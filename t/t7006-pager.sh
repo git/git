@@ -570,4 +570,18 @@ test_expect_success 'command with underscores does not complain' '
 	test_cmp expect actual
 '
 
+test_expect_success TTY 'git tag with auto-columns ' '
+	test_commit one &&
+	test_commit two &&
+	test_commit three &&
+	test_commit four &&
+	test_commit five &&
+	cat >expect <<-\EOF &&
+	initial  one      two      three    four     five
+	EOF
+	test_terminal env PAGER="cat >actual" COLUMNS=80 \
+		git -c column.ui=auto tag --sort=authordate &&
+	test_cmp expect actual
+'
+
 test_done
