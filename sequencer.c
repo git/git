@@ -2948,7 +2948,7 @@ int rearrange_squash(void)
 		if (fd < 0)
 			res = error_errno(_("could not open '%s'"), todo_file);
 		else if (write(fd, buf.buf, buf.len) < 0)
-			res = error_errno(_("could not write '%s'"), todo_file);
+			res = error_errno(_("could not write to '%s'"), todo_file);
 		else if (ftruncate(fd, buf.len) < 0)
 			res = error_errno(_("could not truncate '%s'"),
 					   todo_file);
