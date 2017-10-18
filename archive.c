@@ -121,11 +121,6 @@ static int check_attr_export_subst(const struct attr_check *check)
 	return check && ATTR_TRUE(check->items[1].value);
 }
 
-static int should_queue_directories(const struct archiver_args *args)
-{
-	return args->pathspec.has_wildcard;
-}
-
 static int write_archive_entry(const unsigned char *sha1, const char *base,
 		int baselen, const char *filename, unsigned mode, int stage,
 		void *context)
@@ -147,7 +142,7 @@ static int write_archive_entry(const unsigned char *sha1, const char *base,
 		strbuf_addch(&path, '/');
 	path_without_prefix = path.buf + args->baselen;
 
-	if (!S_ISDIR(mode) || !should_queue_directories(args)) {
+	if (!S_ISDIR(mode)) {
 		const struct attr_check *check;
 		check = get_archive_attrs(path_without_prefix);
 		if (check_attr_export_ignore(check))
@@ -167,14 +162,6 @@ static int write_archive_entry(const unsigned char *sha1, const char *base,
 	if (args->verbose)
 		fprintf(stderr, "%.*s\n", (int)path.len, path.buf);
 	return write_entry(args, sha1, path.buf, path.len, mode);
-}
-
-static int write_archive_entry_buf(const unsigned char *sha1, struct strbuf *base,
-		const char *filename, unsigned mode, int stage,
-		void *context)
-{
-	return write_archive_entry(sha1, base->buf, base->len,
-				     filename, mode, stage, context);
 }
 
 static void queue_directory(const unsigned char *sha1,
@@ -290,9 +277,7 @@ int write_archive_entries(struct archiver_args *args,
 	}
 
 	err = read_tree_recursive(args->tree, "", 0, 0, &args->pathspec,
-				  should_queue_directories(args) ?
-				  queue_or_write_archive_entry :
-				  write_archive_entry_buf,
+				  queue_or_write_archive_entry,
 				  &context);
 	if (err == READ_TREE_RECURSIVE)
 		err = 0;
