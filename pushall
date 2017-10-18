@@ -30,7 +30,7 @@ push_retry () {
 }
 
 case " $* " in
-*' +next '*)
+*' +next '* | *' next '*)
 	push_retry "$nexts" "$@"
 	exit $?
 	;;
