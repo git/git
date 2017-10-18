@@ -142,13 +142,13 @@ int parse_tag_buffer(struct tag *item, const void *data, unsigned long size)
 	bufptr = nl + 1;
 
 	if (!strcmp(type, blob_type)) {
-		item->tagged = &lookup_blob(&oid)->object;
+		item->tagged = (struct object *)lookup_blob(&oid);
 	} else if (!strcmp(type, tree_type)) {
-		item->tagged = &lookup_tree(&oid)->object;
+		item->tagged = (struct object *)lookup_tree(&oid);
 	} else if (!strcmp(type, commit_type)) {
-		item->tagged = &lookup_commit(&oid)->object;
+		item->tagged = (struct object *)lookup_commit(&oid);
 	} else if (!strcmp(type, tag_type)) {
-		item->tagged = &lookup_tag(&oid)->object;
+		item->tagged = (struct object *)lookup_tag(&oid);
 	} else {
 		error("Unknown type %s", type);
 		item->tagged = NULL;
