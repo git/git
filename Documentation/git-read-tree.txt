@@ -179,6 +179,7 @@ Here are the "carry forward" rules, where "I" denotes the index,
 "clean" means that index and work tree coincide, and "exists"/"nothing"
 refer to the presence of a path in the specified commit:
 
+....
 	I                   H        M        Result
        -------------------------------------------------------
      0  nothing             nothing  nothing  (does not happen)
@@ -217,6 +218,7 @@ refer to the presence of a path in the specified commit:
      19 no    no    yes     exists   exists   keep index
      20 yes   yes   no      exists   exists   use M
      21 no    yes   no      exists   exists   fail
+....
 
 In all "keep index" cases, the index entry stays as in the
 original index file.  If the entry is not up to date,
