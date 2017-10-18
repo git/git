@@ -17,7 +17,7 @@ inst_prefix=$(
 )
 
 force= with_dash= test_long= M= install= nodoc= notest= bootstrap= branches= jobs=
-scratch= noprove=
+scratch= noprove= memtrash=--memtrash
 while	case "$1" in
 	--pedantic | --locale=* | --loose) M="$M $1" ;;
 	--force) force=$1 ;;
@@ -26,6 +26,8 @@ while	case "$1" in
 	--noinstall) install=noinstall ;;
 	--nodoc) nodoc=y ;;
 	--notest) notest=y ;;
+	--nomemtrash) memtrash= ;;
+	--memtrash) memtrash=--memtrash ;;
 	--test=*) test="$1" ;;
 	--scratch) scratch=y ;;
 	--bootstrap) bootstrap=y ;;
@@ -196,7 +198,7 @@ do
 
 		save=$(git rev-parse HEAD) &&
 
-		Meta/Make $M $noprove ${test+"$test"} $jobs $test_long --memtrash \
+		Meta/Make $M $noprove ${test+"$test"} $jobs $test_long $memtrash \
 		    -- ${with_dash:+SHELL_PATH=/bin/dash} "$@" $dotest &&
 
 		{
