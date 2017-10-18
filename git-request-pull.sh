@@ -128,7 +128,7 @@ git show -s --format='The following changes since commit %H:
 
   %s (%ci)
 
-are available in the git repository at:
+are available in the Git repository at:
 ' $merge_base &&
 echo "  $url $pretty_remote" &&
 git show -s --format='
