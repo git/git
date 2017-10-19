@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Oct 2017, #03; Mon, 16)
-X-master-at: 111ef79afe185f8731920569450f6a65320f5d5f
-X-next-at: 2b38de12cc0e926ec9a73ad73767e578a81645ba
+Subject: What's cooking in git.git (Oct 2017, #04; Thu, 19)
+X-master-at: 660fb3dfa8f3e42b287ee7e27a36ecd2420b89c3
+X-next-at: 76aedb4517c834be2dc89efb5f9d15908e324422
 
-What's cooking in git.git (Oct 2017, #03; Mon, 16)
+What's cooking in git.git (Oct 2017, #04; Thu, 19)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,19 +12,12 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-2.15-rc1 has been tagged, but 2.15-rc2 is going to slip.  The topics
-that are cooking in 'next' that are not urgent fixes are classified
-as "Will cook in 'next'", and will not graduate to 'master' until
-the final.
+2.15-rc2 has slipped and will be tagged tomorrow.  Expect the final
+near the end of the month.
 
-We haven't decided how to resolve the "git add -i" regression (see
-the thread at
-https://public-inbox.org/git/xmqqzi8vvht6.fsf@gitster.mtv.corp.google.com/
-for the two approaches), and 'next' has one of them ("demote
-'always' to 'auto' when given to color.ui from the configuration
-file"), while 'pu' has f6b2410f20 that takes a different approach
-("It was a mistake to allow plumbing to pay attention to color.ui
-config, so revert it to unbreak 'add -i'").
+The topics that are cooking in 'next' that are not urgent fixes are
+classified as "Will cook in 'next'", and will not graduate to
+'master' until the final.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -32,79 +25,35 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[New Topics]
+[Graduated to "master"]
 
-* jk/ui-color-always-to-auto-maint (2017-10-13) 2 commits
-  (merged to 'next' on 2017-10-13 at bb16e1edc8)
- + color: document that "git -c color.*=always" is a bit special
- + color: downgrade "always" to "auto" only for on-disk configuration
+* jc/doc-checkout (2017-10-11) 1 commit
+  (merged to 'next' on 2017-10-13 at c000f4bd84)
+ + checkout doc: clarify command line args for "checkout paths" mode
 
- It turns out that "git -c color.ui=always cmd" is relied on by many
- third-party tools as a way to force coloured output no matter what
- the end-user configuration is, and a recent attempt to downgrade
- 'always' to 'auto' to fix the regression to "git add -p" broke it.
+ Doc update.
 
 
-* jk/ref-filter-colors-fix (2017-10-14) 4 commits
- - tag: respect color.ui config
- - Revert "color: check color.ui in git_default_config()"
- - Revert "t6006: drop "always" color config tests"
- - Revert "color: make "always" the same as "auto" in config"
+* jk/ref-filter-colors-fix (2017-10-17) 5 commits
+  (merged to 'next' on 2017-10-17 at d87a6bf270)
+ + tag: respect color.ui config
+ + Revert "color: check color.ui in git_default_config()"
+ + Revert "t6006: drop "always" color config tests"
+ + Revert "color: make "always" the same as "auto" in config"
+ + Merge branch 'jk/ui-color-always-to-auto-maint' (early part) into jk/ref-filter-colors-fix-maint
 
  This is the "theoretically more correct" approach of simply
  stepping back to the state before plumbing commands started paying
  attention to "color.ui" configuration variable.
 
 
-* jc/branch-name-sanity (2017-10-14) 3 commits
-  (merged to 'next' on 2017-10-16 at 174646d1c3)
- + branch: forbid refs/heads/HEAD
- + branch: split validate_new_branchname() into two
- + branch: streamline "attr_only" handling in validate_new_branchname()
-
- "git branch" and "git checkout -b" are now forbidden from creating
- a branch whose name is "HEAD".
-
- Will cook in 'next'.
-
-
-* jk/revision-pruning-optim (2017-10-14) 1 commit
-  (merged to 'next' on 2017-10-16 at 2662baa21d)
- + revision: quit pruning diff more quickly when possible
-
- Pathspec-limited revision traversal was taught not to keep finding
- unneeded differences once it knows two trees are different inside
- given pathspec.
-
- Will cook in 'next'.
-
-
-* js/rebase-i-final (2017-10-16) 1 commit
+* js/rebase-i-final (2017-10-18) 2 commits
+  (merged to 'next' on 2017-10-18 at 0bcaefbd55)
+ + sequencer.c: unify an error message
   (merged to 'next' on 2017-10-16 at 72362f5f9c)
  + sequencer.c: fix and unify error messages in rearrange_squash()
 
  Error message fix.
-
- Will merge to 'master'.
-
-
-* wk/merge-options-gpg-sign-doc (2017-10-12) 1 commit
-  (merged to 'next' on 2017-10-16 at ae61d824da)
- + Documentation/merge-options.txt: describe -S/--gpg-sign for 'pull'
-
- Doc updates.
-
- Will cook in 'next'.
-
-
-* wk/pull-signoff (2017-10-13) 1 commit
-  (merged to 'next' on 2017-10-16 at 5e48f349d9)
- + pull: pass --signoff/--no-signoff to "git merge"
-
- "git pull" has been taught to accept "--[no-]signoff" option and
- pass it down to "git merge".
-
- Will cook in 'next'.
 
 
 * sb/diff-color-move (2017-10-16) 1 commit
@@ -115,7 +64,80 @@ of the repositories listed at
  infinite loop when ignoring whitespace changes, which has been
  fixed.
 
+--------------------------------------------------
+[New Topics]
+
+* jc/check-ref-format-oor (2017-10-18) 3 commits
+  (merged to 'next' on 2017-10-18 at 8b17566c80)
+ + check-ref-format doc: --branch validates and expands <branch>
+ + check-ref-format --branch: strip refs/heads/ using skip_prefix
+ + check-ref-format --branch: do not expand @{...} outside repository
+
+ "git check-ref-format --branch @{-1}" bit a "BUG()" when run
+ outside a repository for obvious reasons; clarify the documentation
+ and make sure we do not even try to expand the at-mark magic in
+ such a case, but still call the validation logic for branch names.
+
+ Will cook in 'next'.
+
+
+* jc/fetch-refspec-doc-update (2017-10-18) 1 commit
+  (merged to 'next' on 2017-10-18 at ac77e57f59)
+ + fetch doc: src side of refspec could be full SHA-1
+
+ "git fetch <there> <src>:<dst>" allows an object name on the <src>
+ side when the other side accepts such a request since Git v2.5, but
+ the documentation was left stale.
+
  Will merge to 'master'.
+
+
+* kd/auto-col-with-pager-fix (2017-10-17) 1 commit
+  (merged to 'next' on 2017-10-18 at fe89ff7e83)
+ + column: show auto columns when pager is active
+
+ "auto" as a value for the columnar output configuration ought to
+ judge "is the output consumed by humans?" with the same criteria as
+ "auto" for coloured output configuration, i.e. either the standard
+ output stream is going to tty, or a pager is in use.  We forgot the
+ latter, which has been fixed.
+
+ Will cook in 'next'.
+
+
+* jc/t5601-copy-workaround (2017-10-17) 1 commit
+  (merged to 'next' on 2017-10-18 at ea1e133968)
+ + t5601: rm the target file of cp that could still be executing
+
+ A (possibly flakey) test fix.
+
+ Will cook in 'next'.
+
+
+* dg/filter-branch-filter-order-doc (2017-10-18) 1 commit
+  (merged to 'next' on 2017-10-18 at 46c92e5949)
+ + doc: list filter-branch subdirectory-filter first
+
+ Update the documentation for "git filter-branch" so that the filter
+ options are listed in the same order as they are applied, as
+ described in an earlier part of the doc.
+
+ Will merge to 'master'.
+
+
+* jc/branch-force-doc-readability-fix (2017-10-18) 1 commit
+  (merged to 'next' on 2017-10-18 at 4ef4b064eb)
+ + branch doc: sprinkle a few commas for readability
+
+ Doc update.
+
+ Will merge to 'master'.
+
+
+* np/config-path-doc (2017-10-19) 1 commit
+ - config doc: clarify "git config --path" example
+
+ Doc update.
 
 --------------------------------------------------
 [Stalled]
@@ -159,6 +181,61 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* jk/ui-color-always-to-auto-maint (2017-10-13) 2 commits
+  (merged to 'next' on 2017-10-13 at bb16e1edc8)
+ + color: document that "git -c color.*=always" is a bit special
+ + color: downgrade "always" to "auto" only for on-disk configuration
+
+ It turns out that "git -c color.ui=always cmd" is relied on by many
+ third-party tools as a way to force coloured output no matter what
+ the end-user configuration is, and a recent attempt to downgrade
+ 'always' to 'auto' to fix the regression to "git add -p" broke it.
+
+ This has been reverted from 'next'.
+
+
+* jc/branch-name-sanity (2017-10-14) 3 commits
+  (merged to 'next' on 2017-10-16 at 174646d1c3)
+ + branch: forbid refs/heads/HEAD
+ + branch: split validate_new_branchname() into two
+ + branch: streamline "attr_only" handling in validate_new_branchname()
+
+ "git branch" and "git checkout -b" are now forbidden from creating
+ a branch whose name is "HEAD".
+
+ Will cook in 'next'.
+
+
+* jk/revision-pruning-optim (2017-10-14) 1 commit
+  (merged to 'next' on 2017-10-16 at 2662baa21d)
+ + revision: quit pruning diff more quickly when possible
+
+ Pathspec-limited revision traversal was taught not to keep finding
+ unneeded differences once it knows two trees are different inside
+ given pathspec.
+
+ Will cook in 'next'.
+
+
+* wk/merge-options-gpg-sign-doc (2017-10-12) 1 commit
+  (merged to 'next' on 2017-10-16 at ae61d824da)
+ + Documentation/merge-options.txt: describe -S/--gpg-sign for 'pull'
+
+ Doc updates.
+
+ Will merge to 'master'.
+
+
+* wk/pull-signoff (2017-10-13) 1 commit
+  (merged to 'next' on 2017-10-16 at 5e48f349d9)
+ + pull: pass --signoff/--no-signoff to "git merge"
+
+ "git pull" has been taught to accept "--[no-]signoff" option and
+ pass it down to "git merge".
+
+ Will cook in 'next'.
+
+
 * dm/run-command-ignored-hook-advise (2017-10-10) 1 commit
   (merged to 'next' on 2017-10-10 at 0827814922)
  + run-command: add hint when a hook is ignored
@@ -170,14 +247,12 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* hv/fetch-moved-submodules-on-demand (2017-10-08) 5 commits
- - DONTMERGE: mark failing tests for now
+* hv/fetch-moved-submodules-on-demand (2017-10-17) 3 commits
  - submodule: simplify decision tree whether to or not to fetch
  - implement fetching of moved submodules
- - change submodule push test to use proper repository setup
  - fetch: add test to make sure we stay backwards compatible
 
- WIP.
+ Needs review.
 
 
 * js/for-each-ref-remote-name-and-ref (2017-10-11) 3 commits
@@ -208,33 +283,36 @@ of the repositories listed at
 
 
 * bc/object-id (2017-10-16) 25 commits
- - refs/files-backend: convert static functions to object_id
- - refs: convert read_raw_ref backends to struct object_id
- - refs: convert peel_object to struct object_id
- - refs: convert resolve_ref_unsafe to struct object_id
- - worktree: convert struct worktree to object_id
- - refs: convert resolve_gitlink_ref to struct object_id
- - Convert remaining callers of resolve_gitlink_ref to object_id
- - sha1_file: convert index_path and index_fd to struct object_id
- - refs: convert reflog_expire parameter to struct object_id
- - refs: convert read_ref_at to struct object_id
- - refs: convert peel_ref to struct object_id
- - builtin/pack-objects: convert to struct object_id
- - pack-bitmap: convert traverse_bitmap_commit_list to object_id
- - refs: convert dwim_log to struct object_id
- - builtin/reflog: convert remaining unsigned char uses to object_id
- - refs: convert dwim_ref and expand_ref to struct object_id
- - refs: convert read_ref and read_ref_full to object_id
- - refs: convert resolve_refdup and refs_resolve_refdup to struct object_id
- - Convert check_connected to use struct object_id
- - refs: update ref transactions to use struct object_id
- - refs: prevent accidental NULL dereference in write_pseudoref
- - refs: convert update_ref and refs_update_ref to use struct object_id
- - refs: convert delete_ref and refs_delete_ref to struct object_id
- - refs/files-backend: convert struct ref_to_prune to object_id
- - walker: convert to struct object_id
+  (merged to 'next' on 2017-10-18 at ef8aa2698d)
+ + refs/files-backend: convert static functions to object_id
+ + refs: convert read_raw_ref backends to struct object_id
+ + refs: convert peel_object to struct object_id
+ + refs: convert resolve_ref_unsafe to struct object_id
+ + worktree: convert struct worktree to object_id
+ + refs: convert resolve_gitlink_ref to struct object_id
+ + Convert remaining callers of resolve_gitlink_ref to object_id
+ + sha1_file: convert index_path and index_fd to struct object_id
+ + refs: convert reflog_expire parameter to struct object_id
+ + refs: convert read_ref_at to struct object_id
+ + refs: convert peel_ref to struct object_id
+ + builtin/pack-objects: convert to struct object_id
+ + pack-bitmap: convert traverse_bitmap_commit_list to object_id
+ + refs: convert dwim_log to struct object_id
+ + builtin/reflog: convert remaining unsigned char uses to object_id
+ + refs: convert dwim_ref and expand_ref to struct object_id
+ + refs: convert read_ref and read_ref_full to object_id
+ + refs: convert resolve_refdup and refs_resolve_refdup to struct object_id
+ + Convert check_connected to use struct object_id
+ + refs: update ref transactions to use struct object_id
+ + refs: prevent accidental NULL dereference in write_pseudoref
+ + refs: convert update_ref and refs_update_ref to use struct object_id
+ + refs: convert delete_ref and refs_delete_ref to struct object_id
+ + refs/files-backend: convert struct ref_to_prune to object_id
+ + walker: convert to struct object_id
 
  Conversion from uchar[20] to struct object_id continues.
+
+ Will cook in 'next'.
 
 
 * jc/no-cmd-as-subroutine (2017-10-11) 2 commits
@@ -246,15 +324,6 @@ of the repositories listed at
  a no-no.  Correct two instances of such to set an example.
 
  Will cook in 'next'.
-
-
-* jc/doc-checkout (2017-10-11) 1 commit
-  (merged to 'next' on 2017-10-13 at c000f4bd84)
- + checkout doc: clarify command line args for "checkout paths" mode
-
- Doc update.
-
- Will merge to 'master'.
 
 
 * jc/merge-symlink-ours-theirs (2017-09-26) 1 commit
@@ -416,27 +485,25 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* bw/protocol-v1 (2017-10-04) 10 commits
- - ssh: introduce a 'simple' ssh variant
- - i5700: add interop test for protocol transition
- - http: tell server that the client understands v1
- - connect: tell server that the client understands v1
- - connect: teach client to recognize v1 server response
- - upload-pack, receive-pack: introduce protocol version 1
- - daemon: recognize hidden request arguments
- - protocol: introduce protocol extention mechanisms
- - pkt-line: add packet_write function
- - connect: in ref advertisement, shallows are last
+* bw/protocol-v1 (2017-10-17) 11 commits
+  (merged to 'next' on 2017-10-18 at 835fe09e50)
+ + Documentation: document Extra Parameters
+ + ssh: introduce a 'simple' ssh variant
+ + i5700: add interop test for protocol transition
+ + http: tell server that the client understands v1
+ + connect: tell server that the client understands v1
+ + connect: teach client to recognize v1 server response
+ + upload-pack, receive-pack: introduce protocol version 1
+ + daemon: recognize hidden request arguments
+ + protocol: introduce protocol extension mechanisms
+ + pkt-line: add packet_write function
+ + connect: in ref advertisement, shallows are last
 
  A new mechanism to upgrade the wire protocol in place is proposed
  and demonstrated that it works with the older versions of Git
  without harming them.
 
- Expecting a reroll.
- cf. <20171003214206.GY19555@aiede.mtv.corp.google.com>
- The tip one needs to clarify that it is not just '-o' but also '-p'
- option in the documentation.  Other than that, the approach taken
- by the series basically seems sane and well received.
+ Will cook in 'next'.
 
 
 * pc/submodule-helper (2017-10-07) 3 commits
@@ -446,7 +513,7 @@ of the repositories listed at
  + submodule--helper: introduce get_submodule_displaypath()
 
  GSoC.
- Will merge to 'master'.
+ Will cook in 'next'.
 
 
 * bc/hash-algo (2017-10-04) 6 commits
@@ -485,14 +552,6 @@ of the repositories listed at
  Undecided.
  This needs justification in a larger picture; it is unclear why
  this is better than rejecting recursive checkout, for example.
-
-
-* jk/check-ref-format-oor-fix (2017-07-14) 1 commit
- - check-ref-format: require a repository for --branch
-
- Discussion slowly continued but then stalled.
- cf. <20170717172709.GL93855@aiede.mtv.corp.google.com>
- cf. <20170817102217.3yw7uxnkupdy3lh5@sigill.intra.peff.net>
 
 
 * ex/deprecate-empty-pathspec-as-match-all (2017-06-23) 2 commits
@@ -539,7 +598,6 @@ of the repositories listed at
  by users who know what they are doing.  This would pave the way to
  possibly turn `--force` into `--force-with-lease`.
 
- Will discard.
  Independent from disabling the feature by default, this stirred up
  a discussion to replace the DWIM heuristics with a better one, which
  deserves to be its own topic.
@@ -572,12 +630,20 @@ of the repositories listed at
 
 
 * mg/merge-pre-merge-hook (2017-09-24) 4 commits
- - t7503: add tests for pre-merge-hook
- - merge: --no-verify to bypass pre-merge hook
- - merge: do no-verify like commit
- - git-merge: honor pre-merge hook
+ . t7503: add tests for pre-merge-hook
+ . merge: --no-verify to bypass pre-merge hook
+ . merge: do no-verify like commit
+ . git-merge: honor pre-merge hook
 
  "git merge" learned a 'pre-merge' hook, that would be triggered
  before the merge commit is created by a clean auto-merge.
 
  What's the doneness of this?  Is everybody happy?
+
+
+* jk/check-ref-format-oor-fix (2017-07-14) 1 commit
+ . check-ref-format: require a repository for --branch
+
+ Discussion slowly continued but then stalled.
+ cf. <20170717172709.GL93855@aiede.mtv.corp.google.com>
+ cf. <20170817102217.3yw7uxnkupdy3lh5@sigill.intra.peff.net>
