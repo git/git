@@ -478,6 +478,16 @@ Fixes since v2.14
  * An ancient bug that made Git misbehave with creation/renaming of
    refs has been fixed.
 
+ * "git fetch <there> <src>:<dst>" allows an object name on the <src>
+   side when the other side accepts such a request since Git v2.5, but
+   the documentation was left stale.
+   (merge 83558a412a jc/fetch-refspec-doc-update later to maint).
+
+ * Update the documentation for "git filter-branch" so that the filter
+   options are listed in the same order as they are applied, as
+   described in an earlier part of the doc.
+   (merge 07c4984508 dg/filter-branch-filter-order-doc later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge f094b89a4d ma/parse-maybe-bool later to maint).
    (merge 6cdf8a7929 ma/ts-cleanups later to maint).
@@ -487,3 +497,5 @@ Fixes since v2.14
    (merge f777623514 ks/branch-tweak-error-message-for-extra-args later to maint).
    (merge 33f3c683ec ks/verify-filename-non-option-error-message-tweak later to maint).
    (merge 7cbbf9d6a2 ls/filter-process-delayed later to maint).
+   (merge 488aa65c8f wk/merge-options-gpg-sign-doc later to maint).
+   (merge e61cb19a27 jc/branch-force-doc-readability-fix later to maint).
