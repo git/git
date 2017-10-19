@@ -1318,30 +1318,34 @@ test_expect_success 'no effect from --color-moved with --word-diff' '
 	test_cmp expect actual
 '
 
-test_expect_success 'move detection ignoring whitespace ' '
+test_expect_success 'set up whitespace tests' '
 	git reset --hard &&
-	cat <<\EOF >lines.txt &&
-line 1
-line 2
-line 3
-line 4
-long line 5
-long line 6
-long line 7
-EOF
-	git add lines.txt &&
-	git commit -m "add poetry" &&
-	cat <<\EOF >lines.txt &&
+	# Note that these lines have no leading or trailing whitespace.
+	cat <<-\EOF >lines.txt &&
+	line 1
+	line 2
+	line 3
+	line 4
 	long line 5
 	long line 6
 	long line 7
-line 1
-line 2
-line 3
-line 4
-EOF
-	test_config color.diff.oldMoved "magenta" &&
-	test_config color.diff.newMoved "cyan" &&
+	EOF
+	git add lines.txt &&
+	git commit -m "add poetry" &&
+	git config color.diff.oldMoved "magenta" &&
+	git config color.diff.newMoved "cyan"
+'
+
+test_expect_success 'move detection ignoring whitespace ' '
+	q_to_tab <<-\EOF >lines.txt &&
+	Qlong line 5
+	Qlong line 6
+	Qlong line 7
+	line 1
+	line 2
+	line 3
+	line 4
+	EOF
 	git diff HEAD --no-renames --color-moved --color |
 		grep -v "index" |
 		test_decode_color >actual &&
@@ -1383,6 +1387,11 @@ EOF
 	<MAGENTA>-long line 7<RESET>
 	EOF
 	test_cmp expected actual
+'
+
+test_expect_success 'clean up whitespace-test colors' '
+	git config --unset color.diff.oldMoved &&
+	git config --unset color.diff.newMoved
 '
 
 test_expect_success '--color-moved block at end of diff output respects MIN_ALNUM_COUNT' '
