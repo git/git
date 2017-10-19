@@ -782,7 +782,7 @@ static unsigned get_string_hash(struct emitted_diff_symbol *es, struct diff_opti
 		strbuf_reset(&sb);
 		while (ae > ap && isspace(ae[-1]))
 			ae--;
-		while ((c = next_byte(&ap, &ae, o)) > 0)
+		while ((c = next_byte(&ap, &ae, o)) >= 0)
 			strbuf_addch(&sb, c);
 
 		return memhash(sb.buf, sb.len);
