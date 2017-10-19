@@ -1326,9 +1326,11 @@ test_expect_success 'set up whitespace tests' '
 	line 2
 	line 3
 	line 4
-	long line 5
+	line 5
 	long line 6
 	long line 7
+	long line 8
+	long line 9
 	EOF
 	git add lines.txt &&
 	git commit -m "add poetry" &&
@@ -1338,13 +1340,15 @@ test_expect_success 'set up whitespace tests' '
 
 test_expect_success 'move detection ignoring whitespace ' '
 	q_to_tab <<-\EOF >lines.txt &&
-	Qlong line 5
 	Qlong line 6
 	Qlong line 7
+	Qlong line 8
+	Qchanged long line 9
 	line 1
 	line 2
 	line 3
 	line 4
+	line 5
 	EOF
 	git diff HEAD --no-renames --color-moved --color |
 		grep -v "index" |
@@ -1353,17 +1357,20 @@ test_expect_success 'move detection ignoring whitespace ' '
 	<BOLD>diff --git a/lines.txt b/lines.txt<RESET>
 	<BOLD>--- a/lines.txt<RESET>
 	<BOLD>+++ b/lines.txt<RESET>
-	<CYAN>@@ -1,7 +1,7 @@<RESET>
-	<GREEN>+<RESET>	<GREEN>long line 5<RESET>
+	<CYAN>@@ -1,9 +1,9 @@<RESET>
 	<GREEN>+<RESET>	<GREEN>long line 6<RESET>
 	<GREEN>+<RESET>	<GREEN>long line 7<RESET>
+	<GREEN>+<RESET>	<GREEN>long line 8<RESET>
+	<GREEN>+<RESET>	<GREEN>changed long line 9<RESET>
 	 line 1<RESET>
 	 line 2<RESET>
 	 line 3<RESET>
 	 line 4<RESET>
-	<RED>-long line 5<RESET>
+	 line 5<RESET>
 	<RED>-long line 6<RESET>
 	<RED>-long line 7<RESET>
+	<RED>-long line 8<RESET>
+	<RED>-long line 9<RESET>
 	EOF
 	test_cmp expected actual &&
 
@@ -1374,17 +1381,20 @@ test_expect_success 'move detection ignoring whitespace ' '
 	<BOLD>diff --git a/lines.txt b/lines.txt<RESET>
 	<BOLD>--- a/lines.txt<RESET>
 	<BOLD>+++ b/lines.txt<RESET>
-	<CYAN>@@ -1,7 +1,7 @@<RESET>
-	<CYAN>+<RESET>	<CYAN>long line 5<RESET>
+	<CYAN>@@ -1,9 +1,9 @@<RESET>
 	<CYAN>+<RESET>	<CYAN>long line 6<RESET>
 	<CYAN>+<RESET>	<CYAN>long line 7<RESET>
+	<CYAN>+<RESET>	<CYAN>long line 8<RESET>
+	<GREEN>+<RESET>	<GREEN>changed long line 9<RESET>
 	 line 1<RESET>
 	 line 2<RESET>
 	 line 3<RESET>
 	 line 4<RESET>
-	<MAGENTA>-long line 5<RESET>
+	 line 5<RESET>
 	<MAGENTA>-long line 6<RESET>
 	<MAGENTA>-long line 7<RESET>
+	<MAGENTA>-long line 8<RESET>
+	<RED>-long line 9<RESET>
 	EOF
 	test_cmp expected actual
 '
