@@ -1399,6 +1399,70 @@ test_expect_success 'move detection ignoring whitespace ' '
 	test_cmp expected actual
 '
 
+test_expect_success 'move detection ignoring whitespace changes' '
+	git reset --hard &&
+	# Lines 6-8 have a space change, but 9 is new whitespace
+	q_to_tab <<-\EOF >lines.txt &&
+	longQline 6
+	longQline 7
+	longQline 8
+	long liQne 9
+	line 1
+	line 2
+	line 3
+	line 4
+	line 5
+	EOF
+
+	git diff HEAD --no-renames --color-moved --color |
+		grep -v "index" |
+		test_decode_color >actual &&
+	cat <<-\EOF >expected &&
+	<BOLD>diff --git a/lines.txt b/lines.txt<RESET>
+	<BOLD>--- a/lines.txt<RESET>
+	<BOLD>+++ b/lines.txt<RESET>
+	<CYAN>@@ -1,9 +1,9 @@<RESET>
+	<GREEN>+<RESET><GREEN>long	line 6<RESET>
+	<GREEN>+<RESET><GREEN>long	line 7<RESET>
+	<GREEN>+<RESET><GREEN>long	line 8<RESET>
+	<GREEN>+<RESET><GREEN>long li	ne 9<RESET>
+	 line 1<RESET>
+	 line 2<RESET>
+	 line 3<RESET>
+	 line 4<RESET>
+	 line 5<RESET>
+	<RED>-long line 6<RESET>
+	<RED>-long line 7<RESET>
+	<RED>-long line 8<RESET>
+	<RED>-long line 9<RESET>
+	EOF
+	test_cmp expected actual &&
+
+	git diff HEAD --no-renames -b --color-moved --color |
+		grep -v "index" |
+		test_decode_color >actual &&
+	cat <<-\EOF >expected &&
+	<BOLD>diff --git a/lines.txt b/lines.txt<RESET>
+	<BOLD>--- a/lines.txt<RESET>
+	<BOLD>+++ b/lines.txt<RESET>
+	<CYAN>@@ -1,9 +1,9 @@<RESET>
+	<CYAN>+<RESET><CYAN>long	line 6<RESET>
+	<CYAN>+<RESET><CYAN>long	line 7<RESET>
+	<CYAN>+<RESET><CYAN>long	line 8<RESET>
+	<GREEN>+<RESET><GREEN>long li	ne 9<RESET>
+	 line 1<RESET>
+	 line 2<RESET>
+	 line 3<RESET>
+	 line 4<RESET>
+	 line 5<RESET>
+	<MAGENTA>-long line 6<RESET>
+	<MAGENTA>-long line 7<RESET>
+	<MAGENTA>-long line 8<RESET>
+	<RED>-long line 9<RESET>
+	EOF
+	test_cmp expected actual
+'
+
 test_expect_success 'clean up whitespace-test colors' '
 	git config --unset color.diff.oldMoved &&
 	git config --unset color.diff.newMoved
@@ -1547,15 +1611,6 @@ test_expect_success 'move detection with submodules' '
 	# nor did we mess with it another way
 	git diff --submodule=diff --color | test_decode_color >expect &&
 	test_cmp expect decoded_actual
-'
-
-test_expect_success 'move detection with whitespace changes' '
-	test_when_finished "git reset --hard" &&
-	test_seq 10 >test &&
-	git add test &&
-	sed s/3/42/ <test >test.tmp &&
-	mv test.tmp test &&
-	git -c diff.colormoved diff --ignore-space-change -- test
 '
 
 test_done
