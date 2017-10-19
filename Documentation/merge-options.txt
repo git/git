@@ -42,6 +42,12 @@ set to `no` at the beginning of them.
 	current `HEAD` is already up to date or the merge can be
 	resolved as a fast-forward.
 
+-S[<keyid>]::
+--gpg-sign[=<keyid>]::
+	GPG-sign the resulting merge commit. The `keyid` argument is
+	optional and defaults to the committer identity; if specified,
+	it must be stuck to the option without a space.
+
 --log[=<n>]::
 --no-log::
 	In addition to branch names, populate the log message with
