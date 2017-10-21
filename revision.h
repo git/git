@@ -4,7 +4,7 @@
 #include "parse-options.h"
 #include "grep.h"
 #include "notes.h"
-#include "commit.h"
+#include "pretty.h"
 #include "diff.h"
 
 /* Remember to update object flag allocation in object.h */
