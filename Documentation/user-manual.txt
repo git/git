@@ -1556,7 +1556,7 @@ so on a different branch and then coming back), unstash the
 work-in-progress changes.
 
 ------------------------------------------------
-$ git stash save "work in progress for foo feature"
+$ git stash push -m "work in progress for foo feature"
 ------------------------------------------------
 
 This command will save your changes away to the `stash`, and

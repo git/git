@@ -267,11 +267,11 @@ push_stash () {
 			# translation of "error: " takes in your language. E.g. in
 			# English this is:
 			#
-			#    $ git stash save --blah-blah 2>&1 | head -n 2
-			#    error: unknown option for 'stash save': --blah-blah
-			#           To provide a message, use git stash save -- '--blah-blah'
-			eval_gettextln "error: unknown option for 'stash save': \$option
-       To provide a message, use git stash save -- '\$option'"
+			#    $ git stash push --blah-blah 2>&1 | head -n 2
+			#    error: unknown option for 'stash push': --blah-blah
+			#           To provide a message, use git stash push -m '--blah-blah'
+			eval_gettextln "error: unknown option for 'stash push': \$option
+       To provide a message, use git stash push -m '\$option'"
 			usage
 			;;
 		*)
