@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git Russian Localization Project\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2017-10-08 09:48+0800\n"
-"PO-Revision-Date: 2017-10-15 09:56+0000\n"
+"POT-Creation-Date: 2017-10-17 09:44+0800\n"
+"PO-Revision-Date: 2017-10-22 17:34+0000\n"
 "Last-Translator: Dimitriy Ryazantcev <DJm00n@mail.ru>\n"
 "Language-Team: Russian (http://www.transifex.com/djm00n/git-po-ru/language/ru/)\n"
 "MIME-Version: 1.0\n"
@@ -959,7 +959,7 @@ msgstr "нельзя использовать --contents с указанием �
 msgid "--reverse and --first-parent together require specified latest commit"
 msgstr "при --reverse и --first-parent вместе нужно указывать конкретный последний коммит"
 
-#: blame.c:1797 bundle.c:169 ref-filter.c:1932 sequencer.c:1168
+#: blame.c:1797 bundle.c:169 ref-filter.c:1947 sequencer.c:1168
 #: sequencer.c:2351 builtin/commit.c:1065 builtin/log.c:357 builtin/log.c:911
 #: builtin/log.c:1361 builtin/log.c:1690 builtin/log.c:1938
 #: builtin/merge.c:369 builtin/shortlog.c:191
@@ -1602,7 +1602,7 @@ msgstr "не удалось переместить каталог git с «%s» 
 msgid "Filtering content"
 msgstr "Фильтруется содержимое"
 
-#: entry.c:417
+#: entry.c:433
 #, c-format
 msgid "could not stat file '%s'"
 msgstr "не удалось выполнить stat для файла «%s»"
@@ -2428,7 +2428,7 @@ msgstr "не удалось отсоединить: %s"
 msgid "Could not open '%s' for writing"
 msgstr "Не удалось открыть «%s» для записи"
 
-#: refs.c:1779
+#: refs.c:1792
 msgid "ref updates forbidden inside quarantine environment"
 msgstr "обновление ссылок запрещено в изолированном окружении"
 
@@ -2467,210 +2467,210 @@ msgstr "позади %d"
 msgid "ahead %d, behind %d"
 msgstr "впереди %d, позади %d"
 
-#: ref-filter.c:104
+#: ref-filter.c:105
 #, c-format
 msgid "expected format: %%(color:<color>)"
 msgstr "ожидаемый формат: %%(color:<color>)"
 
-#: ref-filter.c:106
+#: ref-filter.c:107
 #, c-format
 msgid "unrecognized color: %%(color:%s)"
 msgstr "неопознанный цвет: %%(color:%s)"
 
-#: ref-filter.c:126
+#: ref-filter.c:127
 #, c-format
 msgid "Integer value expected refname:lstrip=%s"
 msgstr "Ожидается целочисленное значение refname:lstrip=%s"
 
-#: ref-filter.c:130
+#: ref-filter.c:131
 #, c-format
 msgid "Integer value expected refname:rstrip=%s"
 msgstr "Ожидается целочисленное значение refname:rstrip=%s"
 
-#: ref-filter.c:132
+#: ref-filter.c:133
 #, c-format
 msgid "unrecognized %%(%s) argument: %s"
 msgstr "неопознанный аргумент %%(%s): %s"
 
-#: ref-filter.c:172
+#: ref-filter.c:173
 #, c-format
 msgid "%%(body) does not take arguments"
 msgstr "параметр %%(body) не принимает аргументы"
 
-#: ref-filter.c:179
+#: ref-filter.c:180
 #, c-format
 msgid "%%(subject) does not take arguments"
 msgstr "параметр %%(subject) не принимает аргументы"
 
-#: ref-filter.c:186
+#: ref-filter.c:198
 #, c-format
-msgid "%%(trailers) does not take arguments"
-msgstr "параметр %%(trailers) не принимает аргументы"
+msgid "unknown %%(trailers) argument: %s"
+msgstr "неизвестный аргумент для %%(trailers): %s"
 
-#: ref-filter.c:205
+#: ref-filter.c:221
 #, c-format
 msgid "positive value expected contents:lines=%s"
 msgstr "положительное значение ожидает contents:lines=%s"
 
-#: ref-filter.c:207
+#: ref-filter.c:223
 #, c-format
 msgid "unrecognized %%(contents) argument: %s"
 msgstr "неопознанный аргумент %%(contents): %s"
 
-#: ref-filter.c:220
+#: ref-filter.c:236
 #, c-format
 msgid "positive value expected objectname:short=%s"
 msgstr "ожидается положительное значение objectname:short=%s"
 
-#: ref-filter.c:224
+#: ref-filter.c:240
 #, c-format
 msgid "unrecognized %%(objectname) argument: %s"
 msgstr "неопознанный аргумент %%(objectname): %s"
 
-#: ref-filter.c:251
+#: ref-filter.c:267
 #, c-format
 msgid "expected format: %%(align:<width>,<position>)"
 msgstr "ожидаемый формат: %%(align:<width>,<position>)"
 
-#: ref-filter.c:263
+#: ref-filter.c:279
 #, c-format
 msgid "unrecognized position:%s"
 msgstr "неопознанная позиция:%s"
 
-#: ref-filter.c:267
+#: ref-filter.c:283
 #, c-format
 msgid "unrecognized width:%s"
 msgstr "неопознанная ширина:%s"
 
-#: ref-filter.c:273
+#: ref-filter.c:289
 #, c-format
 msgid "unrecognized %%(align) argument: %s"
 msgstr "неопознанный аргумент %%(align): %s"
 
-#: ref-filter.c:277
+#: ref-filter.c:293
 #, c-format
 msgid "positive width expected with the %%(align) atom"
 msgstr "ожидается положительная ширина с указанием частицы %%(align)"
 
-#: ref-filter.c:292
+#: ref-filter.c:308
 #, c-format
 msgid "unrecognized %%(if) argument: %s"
 msgstr "неопознанный аргумент %%(if): %s"
 
-#: ref-filter.c:382
+#: ref-filter.c:398
 #, c-format
 msgid "malformed field name: %.*s"
 msgstr "неправильное имя поля: %.*s"
 
-#: ref-filter.c:408
+#: ref-filter.c:424
 #, c-format
 msgid "unknown field name: %.*s"
 msgstr "неизвестное имя поля: %.*s"
 
-#: ref-filter.c:520
+#: ref-filter.c:536
 #, c-format
 msgid "format: %%(if) atom used without a %%(then) atom"
 msgstr "формат: частица %%(if) использована без частицы %%(then)"
 
-#: ref-filter.c:580
+#: ref-filter.c:596
 #, c-format
 msgid "format: %%(then) atom used without an %%(if) atom"
 msgstr "формат: частица %%(then) использована без частицы %%(if)"
 
-#: ref-filter.c:582
+#: ref-filter.c:598
 #, c-format
 msgid "format: %%(then) atom used more than once"
 msgstr "формат: частица %%(then) использована более одного раза"
 
-#: ref-filter.c:584
+#: ref-filter.c:600
 #, c-format
 msgid "format: %%(then) atom used after %%(else)"
 msgstr "формат: частица %%(then) использована после %%(else)"
 
-#: ref-filter.c:610
+#: ref-filter.c:626
 #, c-format
 msgid "format: %%(else) atom used without an %%(if) atom"
 msgstr "формат: частица %%(else) использована без частицы %%(if)"
 
-#: ref-filter.c:612
+#: ref-filter.c:628
 #, c-format
 msgid "format: %%(else) atom used without a %%(then) atom"
 msgstr "формат: частица %%(else) использована без частицы %%(then)"
 
-#: ref-filter.c:614
+#: ref-filter.c:630
 #, c-format
 msgid "format: %%(else) atom used more than once"
 msgstr "формат: частица %%(else) использована более одного раза"
 
-#: ref-filter.c:627
+#: ref-filter.c:643
 #, c-format
 msgid "format: %%(end) atom used without corresponding atom"
 msgstr "формат: частица %%(end) использована без соответствующей частицы"
 
-#: ref-filter.c:682
+#: ref-filter.c:698
 #, c-format
 msgid "malformed format string %s"
 msgstr "неправильная строка формата %s"
 
-#: ref-filter.c:1268
+#: ref-filter.c:1283
 #, c-format
 msgid "(no branch, rebasing %s)"
 msgstr "(нет ветки, перемещение %s)"
 
-#: ref-filter.c:1271
+#: ref-filter.c:1286
 #, c-format
 msgid "(no branch, bisect started on %s)"
 msgstr "(нет ветки, двоичный поиск начат на %s)"
 
 #. TRANSLATORS: make sure this matches "HEAD
 #. detached at " in wt-status.c
-#: ref-filter.c:1279
+#: ref-filter.c:1294
 #, c-format
 msgid "(HEAD detached at %s)"
 msgstr "(HEAD отделён на %s)"
 
 #. TRANSLATORS: make sure this matches "HEAD
 #. detached from " in wt-status.c
-#: ref-filter.c:1286
+#: ref-filter.c:1301
 #, c-format
 msgid "(HEAD detached from %s)"
 msgstr "(HEAD отделён начиная с %s)"
 
-#: ref-filter.c:1290
+#: ref-filter.c:1305
 msgid "(no branch)"
 msgstr "(нет ветки)"
 
-#: ref-filter.c:1439 ref-filter.c:1470
+#: ref-filter.c:1454 ref-filter.c:1485
 #, c-format
 msgid "missing object %s for %s"
 msgstr "не найден объект %s для %s"
 
-#: ref-filter.c:1442 ref-filter.c:1473
+#: ref-filter.c:1457 ref-filter.c:1488
 #, c-format
 msgid "parse_object_buffer failed on %s for %s"
 msgstr "сбой при выполнении parse_object_buffer на %s для %s"
 
-#: ref-filter.c:1773
+#: ref-filter.c:1788
 #, c-format
 msgid "malformed object at '%s'"
 msgstr "Повреждённый объект «%s»"
 
-#: ref-filter.c:1840
+#: ref-filter.c:1855
 #, c-format
 msgid "ignoring ref with broken name %s"
 msgstr "игнорирую ссылку с неправильным именем %s"
 
-#: ref-filter.c:1845
+#: ref-filter.c:1860
 #, c-format
 msgid "ignoring broken ref %s"
 msgstr "игнорирую неправильную ссылку %s"
 
-#: ref-filter.c:2107
+#: ref-filter.c:2122
 #, c-format
 msgid "format: %%(end) atom missing"
 msgstr "format: пропущена частица %%(end)"
 
-#: ref-filter.c:2201
+#: ref-filter.c:2216
 #, c-format
 msgid "malformed object name %s"
 msgstr "неправильное имя объекта %s"
@@ -3334,8 +3334,8 @@ msgstr "не удалось открыть «%s» для записи"
 #: sequencer.c:2561
 #, c-format
 msgid ""
-"unrecognized setting %s for optionrebase.missingCommitsCheck. Ignoring."
-msgstr "нераспознанная настройка %s для опции optionrebase.missingCommitsCheck. Игнорирую."
+"unrecognized setting %s for option rebase.missingCommitsCheck. Ignoring."
+msgstr "нераспознанная настройка %s для опции rebase.missingCommitsCheck. Игнорирую."
 
 #: sequencer.c:2641
 #, c-format
