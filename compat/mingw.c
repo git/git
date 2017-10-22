@@ -6,6 +6,7 @@
 #include "../strbuf.h"
 #include "../run-command.h"
 #include "../cache.h"
+#include "win32/lazyload.h"
 #include "win32/exit-process.h"
 #include "../config.h"
 #include "../string-list.h"
