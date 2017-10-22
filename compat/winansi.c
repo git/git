@@ -7,6 +7,7 @@
 #include <wingdi.h>
 #include <winreg.h>
 #include "win32.h"
+#include "win32/lazyload.h"
 
 static int fd_is_interactive[3] = { 0, 0, 0 };
 #define FD_CONSOLE 0x1
