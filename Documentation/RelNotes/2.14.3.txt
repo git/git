@@ -72,4 +72,28 @@ Fixes since v2.14.2
    them as the patch created internally by "git add -p" were colored
    (heh) and made unusable.  This has been fixed.
 
+ * "git branch -M a b" while on a branch that is completely unrelated
+   to either branch a or branch b misbehaved when multiple worktree
+   was in use.  This has been fixed.
+
+ * "git fast-export" with -M/-C option issued "copy" instruction on a
+   path that is simultaneously modified, which was incorrect.
+
+ * The checkpoint command "git fast-import" did not flush updates to
+   refs and marks unless at least one object was created since the
+   last checkpoint, which has been corrected, as these things can
+   happen without any new object getting created.
+
+ * The scripts to drive TravisCI has been reorganized and then an
+   optimization to avoid spending cycles on a branch whose tip is
+   tagged has been implemented.
+
+ * "git fetch <there> <src>:<dst>" allows an object name on the <src>
+   side when the other side accepts such a request since Git v2.5, but
+   the documentation was left stale.
+
+ * A regression in 2.11 that made the code to read the list of
+   alternate object stores overrun the end of the string has been
+   fixed.
+
 Also contains various documentation updates and code clean-ups.
