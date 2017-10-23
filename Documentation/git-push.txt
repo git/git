@@ -156,11 +156,17 @@ already exists on the remote side.
 	Either all refs are updated, or on error, no refs are updated.
 	If the server does not support atomic pushes the push will fail.
 
--o::
---push-option::
+-o <option>::
+--push-option=<option>::
 	Transmit the given string to the server, which passes them to
 	the pre-receive as well as the post-receive hook. The given string
 	must not contain a NUL or LF character.
+	When multiple `--push-option=<option>` are given, they are
+	all sent to the other side in the order listed on the
+	command line.
+	When no `--push-option=<option>` is given from the command
+	line, the values of configuration variable `push.pushOption`
+	are used instead.
 
 --receive-pack=<git-receive-pack>::
 --exec=<git-receive-pack>::
