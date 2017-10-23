@@ -1159,7 +1159,7 @@ msgstr "分支 '%s' 设置为使用变基来跟踪本地分支 '%s'。"
 #: branch.c:99
 #, c-format
 msgid "Branch '%s' set up to track local branch '%s'."
-msgstr "分支 '%s' 设置为跟踪本地分支 '%s。"
+msgstr "分支 '%s' 设置为跟踪本地分支 '%s'。"
 
 #: branch.c:104
 #, c-format
@@ -3795,7 +3795,7 @@ msgstr "路径规格 '%s' 在子模组 '%.*s' 中"
 #: submodule.c:799
 #, c-format
 msgid "submodule entry '%s' (%s) is a %s, not a commit"
-msgstr "子模组条目 '%s' (%s) 是一个 %s，不是一个提交"
+msgstr "子模组条目 '%s'（%s）是一个 %s，不是一个提交"
 
 #: submodule.c:1021 builtin/branch.c:641 builtin/submodule--helper.c:1149
 msgid "Failed to resolve HEAD as a valid ref."
