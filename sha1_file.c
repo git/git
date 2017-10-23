@@ -3715,7 +3715,7 @@ int index_path(unsigned char *sha1, const char *path, struct stat *st, unsigned 
 
 int read_pack_header(int fd, struct pack_header *header)
 {
-	if (read_in_full(fd, header, sizeof(*header)) < sizeof(*header))
+	if (read_in_full(fd, header, sizeof(*header)) != sizeof(*header))
 		/* "eof before pack header was fully read" */
 		return PH_ERROR_EOF;
 

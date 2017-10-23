@@ -33,8 +33,7 @@ int cmd_get_tar_commit_id(int argc, const char **argv, const char *prefix)
 	if (!skip_prefix(content, "52 comment=", &comment))
 		return 1;
 
-	n = write_in_full(1, comment, 41);
-	if (n < 41)
+	if (write_in_full(1, comment, 41) < 0)
 		die_errno("git get-tar-commit-id: write error");
 
 	return 0;

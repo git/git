@@ -2978,7 +2978,7 @@ static void prep_temp_blob(const char *path, struct diff_tempfile *temp,
 		blob = buf.buf;
 		size = buf.len;
 	}
-	if (write_in_full(fd, blob, size) != size)
+	if (write_in_full(fd, blob, size) < 0)
 		die_errno("unable to write temp-file");
 	close_tempfile(&temp->tempfile);
 	temp->name = get_tempfile_path(&temp->tempfile);
