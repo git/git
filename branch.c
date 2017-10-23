@@ -357,8 +357,9 @@ int replace_each_worktree_head_symref(const char *oldref, const char *newref,
 
 		if (worktrees[i]->is_detached)
 			continue;
-		if (worktrees[i]->head_ref &&
-		    strcmp(oldref, worktrees[i]->head_ref))
+		if (!worktrees[i]->head_ref)
+			continue;
+		if (strcmp(oldref, worktrees[i]->head_ref))
 			continue;
 
 		refs = get_worktree_ref_store(worktrees[i]);
