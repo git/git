@@ -304,6 +304,8 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	if (!names.nr && !quiet)
 		printf("Nothing new to pack.\n");
 
+	close_all_packs();
+
 	/*
 	 * Ok we have prepared all new packfiles.
 	 * First see if there are packs of the same name and if so
