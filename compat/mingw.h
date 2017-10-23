@@ -265,11 +265,52 @@ char *mingw_getcwd(char *pointer, int len);
 #error "NO_UNSETENV is incompatible with the MinGW startup code!"
 #endif
 
+#if defined(_MSC_VER)
+/*
+ * We bind *env() routines (even the mingw_ ones) to private msc_ versions.
+ * These talk to the CRT using UNICODE/wchar_t, but maintain the original
+ * narrow-char API.
+ *
+ * Note that the MSCRT maintains both ANSI (getenv()) and UNICODE (_wgetenv())
+ * routines and stores both versions of each environment variable in parallel
+ * (and secretly updates both when you set one or the other), but it uses CP_ACP
+ * to do the conversion rather than CP_UTF8.
+ *
+ * Since everything in the git code base is UTF8, we define the msc_ routines
+ * to access the CRT using the UNICODE routines and manually convert them to
+ * UTF8.  This also avoids round-trip problems.
+ *
+ * This also helps with our linkage, since "_wenviron" is publicly exported
+ * from the CRT.  But to access "_environ" we would have to statically link
+ * to the CRT (/MT).
+ *
+ * We also use "wmain(argc,argv,env)" and get the initial UNICODE setup for us.
+ * This avoids the need for the msc_startup() to import and convert the
+ * inherited environment.
+ *
+ * We require NO_SETENV (and let gitsetenv() call our msc_putenv).
+ */
+#define getenv       msc_getenv
+#define putenv       msc_putenv
+#define unsetenv     msc_putenv
+#define mingw_getenv msc_getenv
+#define mingw_putenv msc_putenv
+char *msc_getenv(const char *name);
+int   msc_putenv(const char *name);
+
+#ifndef NO_SETENV
+#error "NO_SETENV is required for MSC startup code!"
+#endif
+
+#else
+
 char *mingw_getenv(const char *name);
 #define getenv mingw_getenv
 int mingw_putenv(const char *namevalue);
 #define putenv mingw_putenv
 #define unsetenv mingw_putenv
+
+#endif
 
 int mingw_gethostname(char *host, int namelen);
 #define gethostname mingw_gethostname
@@ -353,10 +394,12 @@ static inline long long filetime_to_hnsec(const FILETIME *ft)
 #ifndef __MINGW64_VERSION_MAJOR
 #define off_t off64_t
 #define lseek _lseeki64
+#ifndef _MSC_VER
 struct timespec {
 	time_t tv_sec;
 	long tv_nsec;
 };
+#endif
 #endif
 
 static inline void filetime_to_timespec(const FILETIME *ft, struct timespec *ts)
@@ -651,7 +694,26 @@ extern CRITICAL_SECTION pinfo_cs;
 
 /*
  * A replacement of main() that adds win32 specific initialization.
+ *
+ * Note that the end of these macros are unterminated so that the
+ * brace group following the use of the macro is the body of the
+ * function.
  */
+#if defined(_MSC_VER)
+
+int msc_startup(int argc, wchar_t **w_argv, wchar_t **w_env);
+extern int msc_main(int argc, const char **argv);
+
+#define main(c,v) dummy_decl_msc_main(void);				\
+int wmain(int my_argc,									\
+		  wchar_t **my_w_argv,							\
+		  wchar_t **my_w_env)							\
+{														\
+	return msc_startup(my_argc, my_w_argv, my_w_env);	\
+}														\
+int msc_main(c, v)
+
+#else
 
 void mingw_startup(void);
 #define main(c,v) dummy_decl_mingw_main(void); \
@@ -662,6 +724,8 @@ int main(int argc, const char **argv) \
 	return mingw_main(__argc, (void *)__argv); \
 } \
 static int mingw_main(c,v)
+
+#endif
 
 /*
  * Used by Pthread API implementation for Windows
