@@ -391,6 +391,9 @@ ifeq ($(uname_S),Windows)
 		compat/win32/dirent.o compat/win32/fscache.o
 	COMPAT_CFLAGS = -D__USE_MINGW_ACCESS -DDETECT_MSYS_TTY -DNOGDI -DHAVE_STRING_H -Icompat -Icompat/regex -Icompat/win32 -DSTRIP_EXTENSION=\".exe\"
 	BASIC_LDFLAGS = -IGNORE:4217 -IGNORE:4049 -NOLOGO -SUBSYSTEM:CONSOLE
+	# invalidcontinue.obj allows Git's source code to close the same file
+	# handle twice, or to access the osfhandle of an already-closed stdout
+	# See https://msdn.microsoft.com/en-us/library/ms235330.aspx
 	EXTLIBS = user32.lib advapi32.lib shell32.lib wininet.lib ws2_32.lib invalidcontinue.obj kernel32.lib ntdll.lib
 	PTHREAD_LIBS =
 	lib =
