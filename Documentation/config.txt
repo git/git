@@ -859,6 +859,12 @@ relatively high IO latencies.  When enabled, Git will do the
 index comparison to the filesystem data in parallel, allowing
 overlapping IO's.  Defaults to true.
 
+core.unsetenvvars::
+	EXPERIMENTAL, Windows-only: comma-separated list of environment
+	variables' names that need to be unset before spawning any other
+	process. Defaults to `PERL5LIB` to account for the fact that Git
+	for Windows insists on using its own Perl interpreter.
+
 core.createObject::
 	You can set this to 'link', in which case a hardlink followed by
 	a delete of the source are used to make sure that object creation
