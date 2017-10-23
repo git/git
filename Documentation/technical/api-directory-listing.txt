@@ -33,6 +33,12 @@ The notable options are:
 	Similar to `DIR_SHOW_IGNORED`, but return ignored files in `ignored[]`
 	in addition to untracked files in `entries[]`.
 
+`DIR_SHOW_IGNORED_DIRECTORY`:::
+
+	(EXPERIMENTAL) If this is set, non-empty directories that match an
+	ignore pattern are returned. The individual files contained in ignored
+	directories are not included.
+
 `DIR_KEEP_UNTRACKED_CONTENTS`:::
 
 	Only has meaning if `DIR_SHOW_IGNORED_TOO` is also set; if this is set, the
