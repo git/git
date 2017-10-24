@@ -1,19 +1,16 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Oct 2017, #04; Thu, 19)
-X-master-at: 660fb3dfa8f3e42b287ee7e27a36ecd2420b89c3
-X-next-at: 76aedb4517c834be2dc89efb5f9d15908e324422
+Subject: What's cooking in git.git (Oct 2017, #05; Tue, 24)
+X-master-at: ba78f398be65e941b93276680f68a81075716472
+X-next-at: 2730555016ec4ac1303af3176e408a59149b4d11
 
-What's cooking in git.git (Oct 2017, #04; Thu, 19)
+What's cooking in git.git (Oct 2017, #05; Tue, 24)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
-
-2.15-rc2 has slipped and will be tagged tomorrow.  Expect the final
-near the end of the month.
 
 The topics that are cooking in 'next' that are not urgent fixes are
 classified as "Will cook in 'next'", and will not graduate to
@@ -27,58 +24,20 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* jc/doc-checkout (2017-10-11) 1 commit
-  (merged to 'next' on 2017-10-13 at c000f4bd84)
- + checkout doc: clarify command line args for "checkout paths" mode
+* dg/filter-branch-filter-order-doc (2017-10-18) 1 commit
+  (merged to 'next' on 2017-10-18 at 46c92e5949)
+ + doc: list filter-branch subdirectory-filter first
+
+ Update the documentation for "git filter-branch" so that the filter
+ options are listed in the same order as they are applied, as
+ described in an earlier part of the doc.
+
+
+* jc/branch-force-doc-readability-fix (2017-10-18) 1 commit
+  (merged to 'next' on 2017-10-18 at 4ef4b064eb)
+ + branch doc: sprinkle a few commas for readability
 
  Doc update.
-
-
-* jk/ref-filter-colors-fix (2017-10-17) 5 commits
-  (merged to 'next' on 2017-10-17 at d87a6bf270)
- + tag: respect color.ui config
- + Revert "color: check color.ui in git_default_config()"
- + Revert "t6006: drop "always" color config tests"
- + Revert "color: make "always" the same as "auto" in config"
- + Merge branch 'jk/ui-color-always-to-auto-maint' (early part) into jk/ref-filter-colors-fix-maint
-
- This is the "theoretically more correct" approach of simply
- stepping back to the state before plumbing commands started paying
- attention to "color.ui" configuration variable.
-
-
-* js/rebase-i-final (2017-10-18) 2 commits
-  (merged to 'next' on 2017-10-18 at 0bcaefbd55)
- + sequencer.c: unify an error message
-  (merged to 'next' on 2017-10-16 at 72362f5f9c)
- + sequencer.c: fix and unify error messages in rearrange_squash()
-
- Error message fix.
-
-
-* sb/diff-color-move (2017-10-16) 1 commit
-  (merged to 'next' on 2017-10-16 at 69de1bad9d)
- + diff: fix infinite loop with --color-moved --ignore-space-change
-
- A recently added "--color-moved" feature of "diff" fell into
- infinite loop when ignoring whitespace changes, which has been
- fixed.
-
---------------------------------------------------
-[New Topics]
-
-* jc/check-ref-format-oor (2017-10-18) 3 commits
-  (merged to 'next' on 2017-10-18 at 8b17566c80)
- + check-ref-format doc: --branch validates and expands <branch>
- + check-ref-format --branch: strip refs/heads/ using skip_prefix
- + check-ref-format --branch: do not expand @{...} outside repository
-
- "git check-ref-format --branch @{-1}" bit a "BUG()" when run
- outside a repository for obvious reasons; clarify the documentation
- and make sure we do not even try to expand the at-mark magic in
- such a case, but still call the validation logic for branch names.
-
- Will cook in 'next'.
 
 
 * jc/fetch-refspec-doc-update (2017-10-18) 1 commit
@@ -89,55 +48,129 @@ of the repositories listed at
  side when the other side accepts such a request since Git v2.5, but
  the documentation was left stale.
 
- Will merge to 'master'.
+
+* wk/merge-options-gpg-sign-doc (2017-10-12) 1 commit
+  (merged to 'next' on 2017-10-16 at ae61d824da)
+ + Documentation/merge-options.txt: describe -S/--gpg-sign for 'pull'
+
+ Doc updates.
+
+--------------------------------------------------
+[New Topics]
+
+* cc/git-packet-pm (2017-10-22) 6 commits
+ - Git/Packet.pm: extract parts of t0021/rot13-filter.pl for reuse
+ - t0021/rot13-filter: add capability functions
+ - t0021/rot13-filter: add packet_initialize()
+ - t0021/rot13-filter: improve error message
+ - t0021/rot13-filter: improve 'if .. elsif .. else' style
+ - t0021/rot13-filter: refactor packet reading functions
+
+ Parts of a test to drive the long-running content filter interface
+ has been split into its own module, hopefully to eventually become
+ reusable.
+
+ Expecting a reroll.
+ The original unfortunately is quite broken in error detection
+ cases to make the result sub-par as a standalone module before it
+ gets fixed.
 
 
-* kd/auto-col-with-pager-fix (2017-10-17) 1 commit
-  (merged to 'next' on 2017-10-18 at fe89ff7e83)
- + column: show auto columns when pager is active
+* jk/diff-color-moved-fix (2017-10-21) 5 commits
+ - diff: handle NULs in get_string_hash()
+ - diff: fix whitespace-skipping with --color-moved
+ - t4015: test the output of "diff --color-moved -b"
+ - t4015: check "negative" case for "-w --color-moved"
+ - t4015: refactor --color-moved whitespace test
 
- "auto" as a value for the columnar output configuration ought to
- judge "is the output consumed by humans?" with the same criteria as
- "auto" for coloured output configuration, i.e. either the standard
- output stream is going to tty, or a pager is in use.  We forgot the
- latter, which has been fixed.
+ The experimental "color moved lines differently in diff output"
+ feature was buggy around "ignore whitespace changes" edges, whihch
+ has been corrected.
 
- Will cook in 'next'.
-
-
-* jc/t5601-copy-workaround (2017-10-17) 1 commit
-  (merged to 'next' on 2017-10-18 at ea1e133968)
- + t5601: rm the target file of cp that could still be executing
-
- A (possibly flakey) test fix.
-
- Will cook in 'next'.
+ What's the done-ness of this series?  Are there still loose ends to
+ be tied?
 
 
-* dg/filter-branch-filter-order-doc (2017-10-18) 1 commit
-  (merged to 'next' on 2017-10-18 at 46c92e5949)
- + doc: list filter-branch subdirectory-filter first
+* jk/misc-resolve-ref-unsafe-fixes (2017-10-21) 4 commits
+ - worktree: handle broken symrefs in find_shared_symref()
+ - log: handle broken HEAD in decoration check
+ - remote: handle broken symrefs
+ - test-ref-store: avoid passing NULL to printf
 
- Update the documentation for "git filter-branch" so that the filter
- options are listed in the same order as they are applied, as
- described in an earlier part of the doc.
+ Some codepaths did not check for errors when asking what branch the
+ HEAD points at, which have been fixed.
 
- Will merge to 'master'.
-
-
-* jc/branch-force-doc-readability-fix (2017-10-18) 1 commit
-  (merged to 'next' on 2017-10-18 at 4ef4b064eb)
- + branch doc: sprinkle a few commas for readability
-
- Doc update.
-
- Will merge to 'master'.
+ Will merge to 'next'.
 
 
-* np/config-path-doc (2017-10-19) 1 commit
- - config doc: clarify "git config --path" example
+* ao/check-resolve-ref-unsafe-result (2017-10-21) 1 commit
+ - commit: check result of resolve_ref_unsafe
 
- Doc update.
+ "git commit", after making a commit, did not check for errors when
+ asking on what branch it made the commit, which has been correted.
+
+ Will merge to 'next'.
+
+
+* jm/status-ignored-files-list (2017-10-24) 4 commits
+ - status: test ignored modes
+ - status: document options to show matching ignored files
+ - status: report matching ignored and normal untracked
+ - status: add option to show ignored files differently
+
+ The set of paths output from "git status --ignored" was tied
+ closely with its "--untracked=<mode>" option, but now it can be
+ controlled more flexibly.  Most notably, a directory that is
+ ignored because it is listed to be ignored in the ignore/exclude
+ mechanism can be handled differently from a directory that ends up
+ to be ignored only because all files in it are ignored.
+
+ Will merge to 'next'.
+
+
+* mp/push-pushoption-config (2017-10-24) 1 commit
+ - builtin/push.c: add push.pushOption config
+
+ The "--push-option=<string>" option to "git push" now defaults to a
+ list of strings configured via push.pushOption variable.
+
+ Will merge to 'next'.
+
+
+* gc/gitweb-filetest-acl (2017-10-24) 1 commit
+ - gitweb: use filetest to allow ACLs
+
+ "gitweb" checks if a directory is searchable with Perl's "-x"
+ operator, which can be enhanced by using "filetest 'access'"
+ pragma, which now we do.
+
+ Will merge to 'next'.
+
+
+* jr/ssh-wrappers (2017-10-24) 5 commits
+ - ssh: 'simple' variant does not support --port
+ - ssh: 'simple' variant does not support -4/-6
+ - ssh: 'auto' variant to select between 'ssh' and 'simple'
+ - connect: split ssh command line options into separate function
+ - connect: split git:// setup into a separate function
+ (this branch uses bw/protocol-v1.)
+
+ The ssh-variant 'simple' introduced earlier broke existing
+ installations by not passing --port/-4/-6 and not diagnosing an
+ attempt to pass these as an error.  Instead, default to
+ automatically detect how compatible the GIT_SSH/GIT_SSH_COMMAND is
+ to OpenSSH convention and then error out an invocation to make it
+ easier to diagnose connection errors.
+
+
+* tg/deprecate-stash-save (2017-10-23) 3 commits
+ - stash: remove now superfluos help for "stash push"
+ - mark git stash push deprecated in the man page
+ - replace git stash save with git stash push in the documentation
+
+ "git stash save" has been deprecated in favour of "git stash push".
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -181,17 +214,48 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* jk/ui-color-always-to-auto-maint (2017-10-13) 2 commits
-  (merged to 'next' on 2017-10-13 at bb16e1edc8)
- + color: document that "git -c color.*=always" is a bit special
- + color: downgrade "always" to "auto" only for on-disk configuration
+* jc/check-ref-format-oor (2017-10-18) 3 commits
+  (merged to 'next' on 2017-10-18 at 8b17566c80)
+ + check-ref-format doc: --branch validates and expands <branch>
+ + check-ref-format --branch: strip refs/heads/ using skip_prefix
+ + check-ref-format --branch: do not expand @{...} outside repository
 
- It turns out that "git -c color.ui=always cmd" is relied on by many
- third-party tools as a way to force coloured output no matter what
- the end-user configuration is, and a recent attempt to downgrade
- 'always' to 'auto' to fix the regression to "git add -p" broke it.
+ "git check-ref-format --branch @{-1}" bit a "BUG()" when run
+ outside a repository for obvious reasons; clarify the documentation
+ and make sure we do not even try to expand the at-mark magic in
+ such a case, but still call the validation logic for branch names.
 
- This has been reverted from 'next'.
+ Will cook in 'next'.
+
+
+* kd/auto-col-with-pager-fix (2017-10-24) 2 commits
+  (merged to 'next' on 2017-10-24 at ef3ff0f14b)
+ + column: do not include pager.c
+  (merged to 'next' on 2017-10-18 at fe89ff7e83)
+ + column: show auto columns when pager is active
+
+ "auto" as a value for the columnar output configuration ought to
+ judge "is the output consumed by humans?" with the same criteria as
+ "auto" for coloured output configuration, i.e. either the standard
+ output stream is going to tty, or a pager is in use.  We forgot the
+ latter, which has been fixed.
+
+ Will cook in 'next'.
+
+
+* jc/t5601-copy-workaround (2017-10-17) 1 commit
+  (merged to 'next' on 2017-10-18 at ea1e133968)
+ + t5601: rm the target file of cp that could still be executing
+
+ A (possibly flakey) test fix.
+
+ Will cook in 'next'.
+
+
+* np/config-path-doc (2017-10-19) 1 commit
+ - config doc: clarify "git config --path" example
+
+ Doc update.
 
 
 * jc/branch-name-sanity (2017-10-14) 3 commits
@@ -215,15 +279,6 @@ of the repositories listed at
  given pathspec.
 
  Will cook in 'next'.
-
-
-* wk/merge-options-gpg-sign-doc (2017-10-12) 1 commit
-  (merged to 'next' on 2017-10-16 at ae61d824da)
- + Documentation/merge-options.txt: describe -S/--gpg-sign for 'pull'
-
- Doc updates.
-
- Will merge to 'master'.
 
 
 * wk/pull-signoff (2017-10-13) 1 commit
@@ -265,7 +320,7 @@ of the repositories listed at
  that is affected for 'upstream' and 'push' via "%(push:remotename)"
  and friends.
 
- Needs a bit more work on the documentation part?
+ Needs a bit more work on the documentation part.
 
 
 * pb/bisect-helper (2017-10-06) 6 commits
@@ -498,6 +553,7 @@ of the repositories listed at
  + protocol: introduce protocol extension mechanisms
  + pkt-line: add packet_write function
  + connect: in ref advertisement, shallows are last
+ (this branch is used by jr/ssh-wrappers.)
 
  A new mechanism to upgrade the wire protocol in place is proposed
  and demonstrated that it works with the older versions of Git
@@ -524,8 +580,9 @@ of the repositories listed at
  - setup: expose enumerated repo info
  - Merge branch 'bc/vcs-svn-cleanup' into bc/hash-algo
 
- RFC
+ Expecting a reroll.
  cf. <20170821000022.26729-1-sandals@crustytoothpaste.net>
+ cf. <20171017013405.swzjqc3rwvqjfkov@genre.crustytoothpaste.net>
 
 
 * jk/drop-ancient-curl (2017-08-09) 5 commits
@@ -647,3 +704,16 @@ of the repositories listed at
  Discussion slowly continued but then stalled.
  cf. <20170717172709.GL93855@aiede.mtv.corp.google.com>
  cf. <20170817102217.3yw7uxnkupdy3lh5@sigill.intra.peff.net>
+
+
+* jk/ui-color-always-to-auto-maint (2017-10-13) 2 commits
+  (merged to 'next' on 2017-10-13 at bb16e1edc8)
+ + color: document that "git -c color.*=always" is a bit special
+ + color: downgrade "always" to "auto" only for on-disk configuration
+
+ It turns out that "git -c color.ui=always cmd" is relied on by many
+ third-party tools as a way to force coloured output no matter what
+ the end-user configuration is, and a recent attempt to downgrade
+ 'always' to 'auto' to fix the regression to "git add -p" broke it.
+
+ This has been reverted from 'next'.
