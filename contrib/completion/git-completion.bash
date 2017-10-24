@@ -1250,7 +1250,8 @@ _git_checkout ()
 	--*)
 		__gitcomp "
 			--quiet --ours --theirs --track --no-track --merge
-			--conflict= --orphan --patch
+			--conflict= --orphan --patch --detach --ignore-skip-worktree-bits
+			--recurse-submodules --no-recurse-submodules
 			"
 		;;
 	*)
