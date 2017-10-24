@@ -5,7 +5,6 @@
 #include "parse-options.h"
 #include "run-command.h"
 #include "utf8.h"
-#include "pager.c"
 
 #define XY2LINEAR(d, x, y) (COL_LAYOUT((d)->colopts) == COL_COLUMN ? \
 			    (x) * (d)->rows + (y) : \
