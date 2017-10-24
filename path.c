@@ -190,7 +190,7 @@ static void *add_to_trie(struct trie *root, const char *key, void *value)
 		 * Split this node: child will contain this node's
 		 * existing children.
 		 */
-		child = malloc(sizeof(*child));
+		child = xmalloc(sizeof(*child));
 		memcpy(child->children, root->children, sizeof(root->children));
 
 		child->len = root->len - i - 1;
