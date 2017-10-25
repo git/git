@@ -29,4 +29,20 @@ extern void xdiff_clear_find_func(xdemitconf_t *xecfg);
 extern int git_xmerge_config(const char *var, const char *value, void *cb);
 extern int git_xmerge_style;
 
+/*
+ * Compare the strings l1 with l2 which are of size s1 and s2 respectively.
+ * Returns 1 if the strings are deemed equal, 0 otherwise.
+ * The `flags` given as XDF_WHITESPACE_FLAGS determine how white spaces
+ * are treated for the comparision.
+ */
+extern int xdiff_compare_lines(const char *l1, long s1,
+			       const char *l2, long s2, long flags);
+
+/*
+ * Returns a hash of the string s of length len.
+ * The `flags` given as XDF_WHITESPACE_FLAGS determine how white spaces
+ * are treated for the hash.
+ */
+extern unsigned long xdiff_hash_string(const char *s, size_t len, long flags);
+
 #endif
