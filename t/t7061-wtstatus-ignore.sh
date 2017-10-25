@@ -272,4 +272,15 @@ test_expect_success 'status ignored tracked directory with uncommitted file in t
 	test_cmp expected actual
 '
 
+cat >expected <<\EOF
+!! tracked/submodule/
+EOF
+
+test_expect_success 'status ignores submodule in excluded directory' '
+	git init tracked/submodule &&
+	test_commit -C tracked/submodule initial &&
+	git status --porcelain --ignored -u tracked/submodule >actual &&
+	test_cmp expected actual
+'
+
 test_done
