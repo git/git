@@ -3434,9 +3434,7 @@ void diff_setup_done(struct diff_options *options)
 	 * inside contents.
 	 */
 
-	if (DIFF_XDL_TST(options, IGNORE_WHITESPACE) ||
-	    DIFF_XDL_TST(options, IGNORE_WHITESPACE_CHANGE) ||
-	    DIFF_XDL_TST(options, IGNORE_WHITESPACE_AT_EOL))
+	if ((options->xdl_opts & XDF_WHITESPACE_FLAGS))
 		DIFF_OPT_SET(options, DIFF_FROM_CONTENTS);
 	else
 		DIFF_OPT_CLR(options, DIFF_FROM_CONTENTS);
