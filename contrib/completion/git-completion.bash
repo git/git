@@ -2648,6 +2648,7 @@ _git_config ()
 		status.showUntrackedFiles
 		status.submodulesummary
 		submodule.
+		tag.gpgSign
 		tar.umask
 		transfer.unpackLimit
 		url.

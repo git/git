@@ -31,6 +31,7 @@ static const char * const git_tag_usage[] = {
 
 static unsigned int colopts;
 static int force_sign_annotate;
+static int sign_tag;
 
 static int list_tags(struct ref_filter *filter, struct ref_sorting *sorting,
 		     struct ref_format *format)
@@ -140,6 +141,11 @@ static int git_tag_config(const char *var, const char *value, void *cb)
 {
 	int status;
 	struct ref_sorting **sorting_tail = (struct ref_sorting **)cb;
+
+	if (!strcmp(var, "tag.gpgsign")) {
+		sign_tag = git_config_bool(var, value);
+		return 0;
+	}
 
 	if (!strcmp(var, "tag.sort")) {
 		if (!value)
@@ -372,6 +378,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	static struct ref_sorting *sorting = NULL, **sorting_tail = &sorting;
 	struct ref_format format = REF_FORMAT_INIT;
 	int icase = 0;
+	int no_gpg_sign = 0;
 	struct option options[] = {
 		OPT_CMDMODE('l', "list", &cmdmode, N_("list tag names"), 'l'),
 		{ OPTION_INTEGER, 'n', NULL, &filter.lines, N_("n"),
@@ -393,6 +400,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 					N_("use another key to sign the tag")),
 		OPT__FORCE(&force, N_("replace the tag if exists")),
 		OPT_BOOL(0, "create-reflog", &create_reflog, N_("create a reflog")),
+		OPT_BOOL(0, "no-gpg-sign", &no_gpg_sign, N_("do not GPG-sign tag")),
 
 		OPT_GROUP(N_("Tag listing options")),
 		OPT_COLUMN(0, "column", &colopts, N_("show tag list in columns")),
@@ -426,6 +434,10 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 
 	argc = parse_options(argc, argv, prefix, options, git_tag_usage, 0);
 
+	if (no_gpg_sign) {
+		sign_tag = 0;
+	}
+
 	if (keyid) {
 		opt.sign = 1;
 		set_signing_key(keyid);
@@ -444,7 +456,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	if (cmdmode == 'l')
 		setup_auto_pager("tag", 1);
 
-	if ((create_tag_object || force) && (cmdmode != 0))
+	if ((create_tag_object || force || no_gpg_sign) && (cmdmode != 0))
 		usage_with_options(git_tag_usage, options);
 
 	finalize_colopts(&colopts, -1);
@@ -536,8 +548,8 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 
 	create_reflog_msg(&object, &reflog_msg);
 
-	if (create_tag_object) {
-		if (force_sign_annotate && !annotate)
+	if (create_tag_object || sign_tag) {
+		if (sign_tag || (force_sign_annotate && !annotate))
 			opt.sign = 1;
 		create_tag(&object, tag, &buf, &opt, &prev, &object);
 	}

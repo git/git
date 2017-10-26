@@ -3161,6 +3161,10 @@ tag.forceSignAnnotated::
 	If `--annotate` is specified on the command line, it takes
 	precedence over this option.
 
+tag.gpgSign::
+
+	A boolean to specify whether all tags should be GPG signed.
+
 tag.sort::
 	This variable controls the sort ordering of tags when displayed by
 	linkgit:git-tag[1]. Without the "--sort=<value>" option provided, the

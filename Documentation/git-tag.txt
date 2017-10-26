@@ -181,6 +181,10 @@ This option is only applicable when listing tags without annotation lines.
 	`--create-reflog`, but currently does not negate the setting of
 	`core.logAllRefUpdates`.
 
+--no-gpg-sign::
+	Countermand `tag.gpgSign` configuration variable that is
+	set to force each and every tag to be signed.
+
 <tagname>::
 	The name of the tag to create, delete, or describe.
 	The new tag name must pass all checks defined by
