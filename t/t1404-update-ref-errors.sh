@@ -34,6 +34,81 @@ test_update_rejected () {
 
 Q="'"
 
+# Test adding and deleting D/F-conflicting references in a single
+# transaction.
+df_test() {
+	prefix="$1"
+	pack=: symadd=false symdel=false add_del=false addref= delref=
+	shift
+	while test $# -gt 0
+	do
+		case "$1" in
+		--pack)
+			pack="git pack-refs --all"
+			shift
+			;;
+		--sym-add)
+			# Perform the add via a symbolic reference
+			symadd=true
+			shift
+			;;
+		--sym-del)
+			# Perform the del via a symbolic reference
+			symdel=true
+			shift
+			;;
+		--del-add)
+			# Delete first reference then add second
+			add_del=false
+			delref="$prefix/r/$2"
+			addref="$prefix/r/$3"
+			shift 3
+			;;
+		--add-del)
+			# Add first reference then delete second
+			add_del=true
+			addref="$prefix/r/$2"
+			delref="$prefix/r/$3"
+			shift 3
+			;;
+		*)
+			echo 1>&2 "Extra args to df_test: $*"
+			return 1
+			;;
+		esac
+	done
+	git update-ref "$delref" $C &&
+	if $symadd
+	then
+		addname="$prefix/s/symadd" &&
+		git symbolic-ref "$addname" "$addref"
+	else
+		addname="$addref"
+	fi &&
+	if $symdel
+	then
+		delname="$prefix/s/symdel" &&
+		git symbolic-ref "$delname" "$delref"
+	else
+		delname="$delref"
+	fi &&
+	cat >expected-err <<-EOF &&
+	fatal: cannot lock ref $Q$addname$Q: $Q$delref$Q exists; cannot create $Q$addref$Q
+	EOF
+	$pack &&
+	if $add_del
+	then
+		printf "%s\n" "create $addname $D" "delete $delname"
+	else
+		printf "%s\n" "delete $delname" "create $addname $D"
+	fi >commands &&
+	test_must_fail git update-ref --stdin <commands 2>output.err &&
+	test_cmp expected-err output.err &&
+	printf "%s\n" "$C $delref" >expected-refs &&
+	git for-each-ref --format="%(objectname) %(refname)" $prefix/r >actual-refs &&
+	test_cmp expected-refs actual-refs
+}
+
 test_expect_success 'setup' '
 
 	git commit --allow-empty -m Initial &&
@@ -186,6 +261,72 @@ test_expect_success 'empty directory should not fool 1-arg delete' '
 	mkdir -p .git/$prefix/foo/bar/baz &&
 	printf "delete %s $C\n" $prefix/foo |
 	git update-ref --stdin
+'
+
+test_expect_success 'D/F conflict prevents add long + delete short' '
+	df_test refs/df-al-ds --add-del foo/bar foo
+'
+
+test_expect_success 'D/F conflict prevents add short + delete long' '
+	df_test refs/df-as-dl --add-del foo foo/bar
+'
+
+test_expect_success 'D/F conflict prevents delete long + add short' '
+	df_test refs/df-dl-as --del-add foo/bar foo
+'
+
+test_expect_success 'D/F conflict prevents delete short + add long' '
+	df_test refs/df-ds-al --del-add foo foo/bar
+'
+
+test_expect_success 'D/F conflict prevents add long + delete short packed' '
+	df_test refs/df-al-dsp --pack --add-del foo/bar foo
+'
+
+test_expect_success 'D/F conflict prevents add short + delete long packed' '
+	df_test refs/df-as-dlp --pack --add-del foo foo/bar
+'
+
+test_expect_success 'D/F conflict prevents delete long packed + add short' '
+	df_test refs/df-dlp-as --pack --del-add foo/bar foo
+'
+
+test_expect_success 'D/F conflict prevents delete short packed + add long' '
+	df_test refs/df-dsp-al --pack --del-add foo foo/bar
+'
+
+# Try some combinations involving symbolic refs...
+
+test_expect_success 'D/F conflict prevents indirect add long + delete short' '
+	df_test refs/df-ial-ds --sym-add --add-del foo/bar foo
+'
+
+test_expect_success 'D/F conflict prevents indirect add long + indirect delete short' '
+	df_test refs/df-ial-ids --sym-add --sym-del --add-del foo/bar foo
+'
+
+test_expect_success 'D/F conflict prevents indirect add short + indirect delete long' '
+	df_test refs/df-ias-idl --sym-add --sym-del --add-del foo foo/bar
+'
+
+test_expect_success 'D/F conflict prevents indirect delete long + indirect add short' '
+	df_test refs/df-idl-ias --sym-add --sym-del --del-add foo/bar foo
+'
+
+test_expect_success 'D/F conflict prevents indirect add long + delete short packed' '
+	df_test refs/df-ial-dsp --sym-add --pack --add-del foo/bar foo
+'
+
+test_expect_success 'D/F conflict prevents indirect add long + indirect delete short packed' '
+	df_test refs/df-ial-idsp --sym-add --sym-del --pack --add-del foo/bar foo
+'
+
+test_expect_success 'D/F conflict prevents add long + indirect delete short packed' '
+	df_test refs/df-al-idsp --sym-del --pack --add-del foo/bar foo
+'
+
+test_expect_success 'D/F conflict prevents indirect delete long packed + indirect add short' '
+	df_test refs/df-idlp-ias --sym-add --sym-del --pack --del-add foo/bar foo
 '
 
 # Test various errors when reading the old values of references...
