@@ -20,6 +20,31 @@ modification *should* take notice and update the test vectors here.
 
 . ./test-lib.sh
 
+try_local_x () {
+	local x="local" &&
+	echo "$x"
+}
+
+# This test is an experiment to check whether any Git users are using
+# Shells that don't support the "local" keyword. "local" is not
+# POSIX-standard, but it is very widely supported by POSIX-compliant
+# shells, and if it doesn't cause problems for people, we would like
+# to be able to use it in Git code.
+#
+# For now, this is the only test that requires "local". If your shell
+# fails this test, you can ignore the failure, but please report the
+# problem to the Git mailing list <git@vger.kernel.org>, as it might
+# convince us to continue avoiding the use of "local".
+test_expect_success 'verify that the running shell supports "local"' '
+	x="notlocal" &&
+	echo "local" >expected1 &&
+	try_local_x >actual1 &&
+	test_cmp expected1 actual1 &&
+	echo "notlocal" >expected2 &&
+	echo "$x" >actual2 &&
+	test_cmp expected2 actual2
+'
+
 ################################################################
 # git init has been done in an empty repository.
 # make sure it is empty.
