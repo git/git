@@ -6,6 +6,7 @@
 #include "dir.h"
 #include "argv-array.h"
 #include "run-command.h"
+#include "prompt.h"
 
 static GIT_PATH_FUNC(git_path_bisect_terms, "BISECT_TERMS")
 static GIT_PATH_FUNC(git_path_bisect_expected_rev, "BISECT_EXPECTED_REV")
@@ -21,6 +22,7 @@ static const char * const git_bisect_helper_usage[] = {
 	N_("git bisect--helper --bisect-reset [<commit>]"),
 	N_("git bisect--helper --bisect-write <state> <revision> <good_term> <bad_term> [<nolog>]"),
 	N_("git bisect--helper --bisect-check-and-set-terms <command> <good_term> <bad_term>"),
+	N_("git bisect--helper --bisect-next-check [<term>] <good_term> <bad_term>"),
 	NULL
 };
 
@@ -43,6 +45,11 @@ static void set_terms(struct bisect_terms *terms, const char *bad,
 	terms->term_good = xstrdup(good);
 	terms->term_bad = xstrdup(bad);
 }
+
+static const char *voc[] = {
+	"bad|new",
+	"good|old"
+};
 
 /*
  * Check whether the string `term` belongs to the set of strings
@@ -264,6 +271,79 @@ static int check_and_set_terms(struct bisect_terms *terms, const char *cmd)
 	return 0;
 }
 
+static int mark_good(const char *refname, const struct object_id *oid,
+		     int flag, void *cb_data)
+{
+	int *m_good = (int *)cb_data;
+	*m_good = 0;
+	return 1;
+}
+
+static int bisect_next_check(const struct bisect_terms *terms,
+			     const char *current_term)
+{
+	int missing_good = 1, missing_bad = 1, retval = 0;
+	const char *bad_ref = xstrfmt("refs/bisect/%s", terms->term_bad);
+	const char *good_glob = xstrfmt("%s-*", terms->term_good);
+
+	if (ref_exists(bad_ref))
+		missing_bad = 0;
+
+	for_each_glob_ref_in(mark_good, good_glob, "refs/bisect/",
+			     (void *) &missing_good);
+
+	if (!missing_good && !missing_bad)
+		goto finish;
+
+	if (!current_term)
+		goto fail;
+
+	if (missing_good && !missing_bad && current_term &&
+	    !strcmp(current_term, terms->term_good)) {
+		char *yesno;
+		/*
+		 * have bad (or new) but not good (or old). We could bisect
+		 * although this is less optimum.
+		 */
+		fprintf(stderr, _("Warning: bisecting only with a %s commit\n"),
+			terms->term_bad);
+		if (!isatty(0))
+			goto finish;
+		/*
+		 * TRANSLATORS: Make sure to include [Y] and [n] in your
+		 * translation. The program will only accept English input
+		 * at this point.
+		 */
+		yesno = git_prompt(_("Are you sure [Y/n]? "), PROMPT_ECHO);
+		if (starts_with(yesno, "N") || starts_with(yesno, "n"))
+			goto fail;
+
+		goto finish;
+	}
+	if (!is_empty_or_missing_file(git_path_bisect_start())) {
+		error(_("You need to give me at least one %s and "
+			"%s revision. You can use \"git bisect %s\" "
+			"and \"git bisect %s\" for that.\n"),
+			voc[0], voc[1], voc[0], voc[1]);
+		goto fail;
+	} else {
+		error(_("You need to start by \"git bisect start\". You "
+			"then need to give me at least one %s and %s "
+			"revision. You can use \"git bisect %s\" and "
+			"\"git bisect %s\" for that.\n"),
+			voc[1], voc[0], voc[1], voc[0]);
+		goto fail;
+	}
+	goto finish;
+
+fail:
+	retval = -1;
+finish:
+	free((void *) good_glob);
+	free((void *) bad_ref);
+	return retval;
+}
+
 int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 {
 	enum {
@@ -273,7 +353,8 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 		CHECK_EXPECTED_REVS,
 		BISECT_RESET,
 		BISECT_WRITE,
-		CHECK_AND_SET_TERMS
+		CHECK_AND_SET_TERMS,
+		BISECT_NEXT_CHECK
 	} cmdmode = 0;
 	int no_checkout = 0, res = 0;
 	struct option options[] = {
@@ -291,6 +372,8 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 			 N_("update the refs according to the bisection state and may write it to BISECT_LOG"), BISECT_WRITE),
 		OPT_CMDMODE(0, "check-and-set-terms", &cmdmode,
 			 N_("check and set terms in a bisection state"), CHECK_AND_SET_TERMS),
+		OPT_CMDMODE(0, "bisect-next-check", &cmdmode,
+			 N_("check whether bad or good terms exist"), BISECT_NEXT_CHECK),
 		OPT_BOOL(0, "no-checkout", &no_checkout,
 			 N_("update BISECT_HEAD instead of checking out the current commit")),
 		OPT_END()
@@ -334,6 +417,12 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 			return error(_("--check-and-set-terms requires 3 arguments"));
 		set_terms(&terms, argv[2], argv[1]);
 		res = check_and_set_terms(&terms, argv[0]);
+		break;
+	case BISECT_NEXT_CHECK:
+		if (argc != 2 && argc != 3)
+			return error(_("--bisect-next-check requires 2 or 3 arguments"));
+		set_terms(&terms, argv[1], argv[0]);
+		res = bisect_next_check(&terms, argc == 3 ? argv[2] : NULL);
 		break;
 	default:
 		return error("BUG: unknown subcommand '%d'", cmdmode);
