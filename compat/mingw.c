@@ -2703,12 +2703,7 @@ int mingw_raise(int sig)
 
 int link(const char *oldpath, const char *newpath)
 {
-	DECLARE_PROC_ADDR(kernel32.dll, BOOL, CreateHardLinkW,
-			LPCWSTR, LPCWSTR, LPSECURITY_ATTRIBUTES);
 	wchar_t woldpath[MAX_LONG_PATH], wnewpath[MAX_LONG_PATH];
-
-	if (!INIT_PROC_ADDR(CreateHardLinkW))
-		return -1;
 
 	if (xutftowcs_long_path(woldpath, oldpath) < 0 ||
 	    xutftowcs_long_path(wnewpath, newpath) < 0)
