@@ -20,6 +20,7 @@ static const char * const git_bisect_helper_usage[] = {
 	N_("git bisect--helper --bisect-clean-state"),
 	N_("git bisect--helper --bisect-reset [<commit>]"),
 	N_("git bisect--helper --bisect-write <state> <revision> <good_term> <bad_term> [<nolog>]"),
+	N_("git bisect--helper --bisect-check-and-set-terms <command> <good_term> <bad_term>"),
 	NULL
 };
 
@@ -234,6 +235,35 @@ finish:
 	return retval;
 }
 
+static int check_and_set_terms(struct bisect_terms *terms, const char *cmd)
+{
+	int has_term_file = !is_empty_or_missing_file(git_path_bisect_terms());
+
+	if (one_of(cmd, "skip", "start", "terms", NULL))
+		return 0;
+
+	if (has_term_file && strcmp(cmd, terms->term_bad) &&
+	    strcmp(cmd, terms->term_good))
+		return error(_("Invalid command: you're currently in a "
+				"%s/%s bisect"), terms->term_bad,
+				terms->term_good);
+
+	if (!has_term_file) {
+		if (one_of(cmd, "bad", "good", NULL)) {
+			free_terms(terms);
+			set_terms(terms, "bad", "good");
+			return write_terms(terms->term_bad, terms->term_good);
+		}
+		else if (one_of(cmd, "new", "old", NULL)) {
+			free_terms(terms);
+			set_terms(terms, "new", "old");
+			return write_terms(terms->term_bad, terms->term_good);
+		}
+	}
+
+	return 0;
+}
+
 int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 {
 	enum {
@@ -242,7 +272,8 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 		BISECT_CLEAN_STATE,
 		CHECK_EXPECTED_REVS,
 		BISECT_RESET,
-		BISECT_WRITE
+		BISECT_WRITE,
+		CHECK_AND_SET_TERMS
 	} cmdmode = 0;
 	int no_checkout = 0, res = 0;
 	struct option options[] = {
@@ -258,6 +289,8 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 			 N_("reset the bisection state"), BISECT_RESET),
 		OPT_CMDMODE(0, "bisect-write", &cmdmode,
 			 N_("update the refs according to the bisection state and may write it to BISECT_LOG"), BISECT_WRITE),
+		OPT_CMDMODE(0, "check-and-set-terms", &cmdmode,
+			 N_("check and set terms in a bisection state"), CHECK_AND_SET_TERMS),
 		OPT_BOOL(0, "no-checkout", &no_checkout,
 			 N_("update BISECT_HEAD instead of checking out the current commit")),
 		OPT_END()
@@ -295,6 +328,12 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 		nolog = (argc == 5) && !strcmp(argv[4], "nolog");
 		set_terms(&terms, argv[3], argv[2]);
 		res = bisect_write(argv[0], argv[1], &terms, nolog);
+		break;
+	case CHECK_AND_SET_TERMS:
+		if (argc != 3)
+			return error(_("--check-and-set-terms requires 3 arguments"));
+		set_terms(&terms, argv[2], argv[1]);
+		res = check_and_set_terms(&terms, argv[0]);
 		break;
 	default:
 		return error("BUG: unknown subcommand '%d'", cmdmode);
