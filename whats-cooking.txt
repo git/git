@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Oct 2017, #05; Tue, 24)
-X-master-at: ba78f398be65e941b93276680f68a81075716472
-X-next-at: 2730555016ec4ac1303af3176e408a59149b4d11
+Subject: What's cooking in git.git (Oct 2017, #06; Fri, 27)
+X-master-at: 4e40fb302eacf4949f6b7d010fd5c11f1f652b7f
+X-next-at: caf49859d7a24ba95393b3d7850ab15d9a76e017
 
-What's cooking in git.git (Oct 2017, #05; Tue, 24)
+What's cooking in git.git (Oct 2017, #06; Fri, 27)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -24,153 +24,107 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* dg/filter-branch-filter-order-doc (2017-10-18) 1 commit
-  (merged to 'next' on 2017-10-18 at 46c92e5949)
- + doc: list filter-branch subdirectory-filter first
+* mh/ref-locking-fix (2017-10-25) 2 commits
+  (merged to 'next' on 2017-10-26 at 1f1091ad64)
+ + files_transaction_prepare(): fix handling of ref lock failure
+ + t1404: add a bunch of tests of D/F conflicts
 
- Update the documentation for "git filter-branch" so that the filter
- options are listed in the same order as they are applied, as
- described in an earlier part of the doc.
-
-
-* jc/branch-force-doc-readability-fix (2017-10-18) 1 commit
-  (merged to 'next' on 2017-10-18 at 4ef4b064eb)
- + branch doc: sprinkle a few commas for readability
-
- Doc update.
-
-
-* jc/fetch-refspec-doc-update (2017-10-18) 1 commit
-  (merged to 'next' on 2017-10-18 at ac77e57f59)
- + fetch doc: src side of refspec could be full SHA-1
-
- "git fetch <there> <src>:<dst>" allows an object name on the <src>
- side when the other side accepts such a request since Git v2.5, but
- the documentation was left stale.
-
-
-* wk/merge-options-gpg-sign-doc (2017-10-12) 1 commit
-  (merged to 'next' on 2017-10-16 at ae61d824da)
- + Documentation/merge-options.txt: describe -S/--gpg-sign for 'pull'
-
- Doc updates.
+ Transactions to update multiple references that involves a deletion
+ was quite broken in an error codepath and did not abort everything
+ correctly.
 
 --------------------------------------------------
 [New Topics]
 
-* cc/git-packet-pm (2017-10-22) 6 commits
- - Git/Packet.pm: extract parts of t0021/rot13-filter.pl for reuse
- - t0021/rot13-filter: add capability functions
- - t0021/rot13-filter: add packet_initialize()
- - t0021/rot13-filter: improve error message
- - t0021/rot13-filter: improve 'if .. elsif .. else' style
- - t0021/rot13-filter: refactor packet reading functions
+* js/submodule-in-excluded (2017-10-26) 1 commit
+  (merged to 'next' on 2017-10-26 at 2a262e6a0b)
+ + status: do not get confused by submodules in excluded directories
 
- Parts of a test to drive the long-running content filter interface
- has been split into its own module, hopefully to eventually become
- reusable.
+ "git status --ignored -u" did not stop at a working tree of a
+ separate project that is embedded in an ignored directory and
+ listed files in that other project, instead of just showing the
+ directory itself as ignored.
 
- Expecting a reroll.
- The original unfortunately is quite broken in error detection
- cases to make the result sub-par as a standalone module before it
- gets fixed.
+ Will cook in 'next'.
 
 
-* jk/diff-color-moved-fix (2017-10-21) 5 commits
- - diff: handle NULs in get_string_hash()
- - diff: fix whitespace-skipping with --color-moved
- - t4015: test the output of "diff --color-moved -b"
- - t4015: check "negative" case for "-w --color-moved"
- - t4015: refactor --color-moved whitespace test
+* ao/path-use-xmalloc (2017-10-25) 1 commit
+  (merged to 'next' on 2017-10-26 at 4cc04083fb)
+ + path.c: use xmalloc() in add_to_trie()
 
- The experimental "color moved lines differently in diff output"
- feature was buggy around "ignore whitespace changes" edges, whihch
- has been corrected.
+ A possible oom error is now caught as a fatal error, instead of
+ continuing and dereferencing NULL.
 
- What's the done-ness of this series?  Are there still loose ends to
- be tied?
+ Will merge to 'master'.
 
 
-* jk/misc-resolve-ref-unsafe-fixes (2017-10-21) 4 commits
- - worktree: handle broken symrefs in find_shared_symref()
- - log: handle broken HEAD in decoration check
- - remote: handle broken symrefs
- - test-ref-store: avoid passing NULL to printf
+* tb/complete-checkout (2017-10-25) 1 commit
+  (merged to 'next' on 2017-10-26 at beeaf5b00c)
+ + completion: add remaining flags to checkout
 
- Some codepaths did not check for errors when asking what branch the
- HEAD points at, which have been fixed.
+ Command line completion (in contrib/) update.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
-* ao/check-resolve-ref-unsafe-result (2017-10-21) 1 commit
- - commit: check result of resolve_ref_unsafe
+* jc/ignore-cr-at-eol (2017-10-26) 2 commits
+ - diff: --ignore-cr-at-eol
+ - xdiff: reassign xpparm_t.flags bits
 
- "git commit", after making a commit, did not check for errors when
- asking on what branch it made the commit, which has been correted.
+ The "diff" family of commands learned to ignore differences in
+ carriage return at the end of line.
 
- Will merge to 'next'.
-
-
-* jm/status-ignored-files-list (2017-10-24) 4 commits
- - status: test ignored modes
- - status: document options to show matching ignored files
- - status: report matching ignored and normal untracked
- - status: add option to show ignored files differently
-
- The set of paths output from "git status --ignored" was tied
- closely with its "--untracked=<mode>" option, but now it can be
- controlled more flexibly.  Most notably, a directory that is
- ignored because it is listed to be ignored in the ignore/exclude
- mechanism can be handled differently from a directory that ends up
- to be ignored only because all files in it are ignored.
-
- Will merge to 'next'.
+ Just a lunch-time hack.
+ Lacks tests, docs and proper log message.
 
 
-* mp/push-pushoption-config (2017-10-24) 1 commit
- - builtin/push.c: add push.pushOption config
+* sb/diff-color-moved-use-xdl-recmatch (2017-10-26) 2 commits
+  (merged to 'next' on 2017-10-26 at 6711f24498)
+ + diff.c: get rid of duplicate implementation
+ + xdiff-interface: export comparing and hashing strings
+ (this branch uses jk/diff-color-moved-fix.)
 
- The "--push-option=<string>" option to "git push" now defaults to a
- list of strings configured via push.pushOption variable.
+ Instead of using custom line comparison and hashing functions to
+ implement "moved lines" coloring in the diff output, use the pair
+ of these functions from lower-layer xdiff/ code.
 
- Will merge to 'next'.
-
-
-* gc/gitweb-filetest-acl (2017-10-24) 1 commit
- - gitweb: use filetest to allow ACLs
-
- "gitweb" checks if a directory is searchable with Perl's "-x"
- operator, which can be enhanced by using "filetest 'access'"
- pragma, which now we do.
-
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
-* jr/ssh-wrappers (2017-10-24) 5 commits
- - ssh: 'simple' variant does not support --port
- - ssh: 'simple' variant does not support -4/-6
- - ssh: 'auto' variant to select between 'ssh' and 'simple'
- - connect: split ssh command line options into separate function
- - connect: split git:// setup into a separate function
- (this branch uses bw/protocol-v1.)
+* jh/dir-add-exclude-from-blob (2017-10-27) 1 commit
+ - dir: allow exclusions from blob in addition to file
 
- The ssh-variant 'simple' introduced earlier broke existing
- installations by not passing --port/-4/-6 and not diagnosing an
- attempt to pass these as an error.  Instead, default to
- automatically detect how compatible the GIT_SSH/GIT_SSH_COMMAND is
- to OpenSSH convention and then error out an invocation to make it
- easier to diagnose connection errors.
+ The code to read exclusion list from a blob, which is used when the
+ .gitignore file is outside a sparse checkout area, has been
+ refactored so that other codepath can later use it to do the same
+ outside the context of "sparse checkout".
 
 
-* tg/deprecate-stash-save (2017-10-23) 3 commits
- - stash: remove now superfluos help for "stash push"
- - mark git stash push deprecated in the man page
- - replace git stash save with git stash push in the documentation
+* mh/avoid-rewriting-packed-refs (2017-10-27) 2 commits
+ - files-backend: don't rewrite the `packed-refs` file unnecessarily
+ - t1409: check that `packed-refs` is not rewritten unnecessarily
 
- "git stash save" has been deprecated in favour of "git stash push".
+ Recent update to the refs infrastructure implementation started
+ rewriting packed-refs file more often than before; this has been
+ optimized again for most trivial cases.
 
- Will merge to 'next'.
+
+* sb/rev-parse-show-superproject-root (2017-10-27) 1 commit
+  (merged to 'next' on 2017-10-27 at f9a0520cec)
+ + docs: fix formatting of rev-parse's --show-superproject-working-tree
+
+ Doc markup fix.
+
+ Will merge to 'master'.
+
+
+* sg/rev-list-doc-reorder-fix (2017-10-27) 1 commit
+  (merged to 'next' on 2017-10-27 at caf49859d7)
+ + rev-list-options.txt: use correct directional reference
+
+ Doc flow fix.
+
+ Will merge to 'master'.
 
 --------------------------------------------------
 [Stalled]
@@ -214,6 +168,130 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* cc/git-packet-pm (2017-10-22) 6 commits
+ - Git/Packet.pm: extract parts of t0021/rot13-filter.pl for reuse
+ - t0021/rot13-filter: add capability functions
+ - t0021/rot13-filter: add packet_initialize()
+ - t0021/rot13-filter: improve error message
+ - t0021/rot13-filter: improve 'if .. elsif .. else' style
+ - t0021/rot13-filter: refactor packet reading functions
+
+ Parts of a test to drive the long-running content filter interface
+ has been split into its own module, hopefully to eventually become
+ reusable.
+
+ Expecting a reroll.
+ The original unfortunately is quite broken in error detection
+ cases to make the result sub-par as a standalone module before it
+ gets fixed.
+
+
+* jk/diff-color-moved-fix (2017-10-21) 5 commits
+  (merged to 'next' on 2017-10-26 at eb580e4c8c)
+ + diff: handle NULs in get_string_hash()
+ + diff: fix whitespace-skipping with --color-moved
+ + t4015: test the output of "diff --color-moved -b"
+ + t4015: check "negative" case for "-w --color-moved"
+ + t4015: refactor --color-moved whitespace test
+ (this branch is used by sb/diff-color-moved-use-xdl-recmatch.)
+
+ The experimental "color moved lines differently in diff output"
+ feature was buggy around "ignore whitespace changes" edges, whihch
+ has been corrected.
+
+ Will cook in 'next'.
+ Most of the fixes to the incorrectly implemented custom helpers
+ will go away with sb/diff-color-moved-use-xdl-recmatch topic.
+
+
+* jk/misc-resolve-ref-unsafe-fixes (2017-10-21) 4 commits
+  (merged to 'next' on 2017-10-26 at c327b2ec2f)
+ + worktree: handle broken symrefs in find_shared_symref()
+ + log: handle broken HEAD in decoration check
+ + remote: handle broken symrefs
+ + test-ref-store: avoid passing NULL to printf
+
+ Some codepaths did not check for errors when asking what branch the
+ HEAD points at, which have been fixed.
+
+ Will cook in 'next'.
+
+
+* ao/check-resolve-ref-unsafe-result (2017-10-21) 1 commit
+  (merged to 'next' on 2017-10-26 at 84302ab59a)
+ + commit: check result of resolve_ref_unsafe
+
+ "git commit", after making a commit, did not check for errors when
+ asking on what branch it made the commit, which has been correted.
+
+ Will cook in 'next'.
+
+
+* jm/status-ignored-files-list (2017-10-24) 4 commits
+  (merged to 'next' on 2017-10-26 at 5df1e2354f)
+ + status: test ignored modes
+ + status: document options to show matching ignored files
+ + status: report matching ignored and normal untracked
+ + status: add option to show ignored files differently
+
+ The set of paths output from "git status --ignored" was tied
+ closely with its "--untracked=<mode>" option, but now it can be
+ controlled more flexibly.  Most notably, a directory that is
+ ignored because it is listed to be ignored in the ignore/exclude
+ mechanism can be handled differently from a directory that ends up
+ to be ignored only because all files in it are ignored.
+
+ Will cook in 'next'.
+
+
+* mp/push-pushoption-config (2017-10-24) 1 commit
+  (merged to 'next' on 2017-10-26 at 2c72164d12)
+ + builtin/push.c: add push.pushOption config
+
+ The "--push-option=<string>" option to "git push" now defaults to a
+ list of strings configured via push.pushOption variable.
+
+ Will cook in 'next'.
+
+
+* gc/gitweb-filetest-acl (2017-10-24) 1 commit
+  (merged to 'next' on 2017-10-26 at 5b490f53bf)
+ + gitweb: use filetest to allow ACLs
+
+ "gitweb" checks if a directory is searchable with Perl's "-x"
+ operator, which can be enhanced by using "filetest 'access'"
+ pragma, which now we do.
+
+ Will cook in 'next'.
+
+
+* jr/ssh-wrappers (2017-10-24) 5 commits
+ - ssh: 'simple' variant does not support --port
+ - ssh: 'simple' variant does not support -4/-6
+ - ssh: 'auto' variant to select between 'ssh' and 'simple'
+ - connect: split ssh command line options into separate function
+ - connect: split git:// setup into a separate function
+ (this branch uses bw/protocol-v1.)
+
+ The ssh-variant 'simple' introduced earlier broke existing
+ installations by not passing --port/-4/-6 and not diagnosing an
+ attempt to pass these as an error.  Instead, default to
+ automatically detect how compatible the GIT_SSH/GIT_SSH_COMMAND is
+ to OpenSSH convention and then error out an invocation to make it
+ easier to diagnose connection errors.
+
+
+* tg/deprecate-stash-save (2017-10-27) 3 commits
+  (merged to 'next' on 2017-10-27 at 73b1edb73b)
+ + stash: remove now superfluos help for "stash push"
+ + stash: mark "git stash save" deprecated in the man page
+ + stash: replace "git stash save" with "git stash push" in the documentation
+
+ "git stash save" has been deprecated in favour of "git stash push".
+
+ Will cook in 'next'.
+
+
 * jc/check-ref-format-oor (2017-10-18) 3 commits
   (merged to 'next' on 2017-10-18 at 8b17566c80)
  + check-ref-format doc: --branch validates and expands <branch>
@@ -253,9 +331,12 @@ of the repositories listed at
 
 
 * np/config-path-doc (2017-10-19) 1 commit
- - config doc: clarify "git config --path" example
+  (merged to 'next' on 2017-10-26 at c17a3daafc)
+ + config doc: clarify "git config --path" example
 
  Doc update.
+
+ Will merge to 'master'.
 
 
 * jc/branch-name-sanity (2017-10-14) 3 commits
@@ -303,11 +384,16 @@ of the repositories listed at
 
 
 * hv/fetch-moved-submodules-on-demand (2017-10-17) 3 commits
- - submodule: simplify decision tree whether to or not to fetch
- - implement fetching of moved submodules
- - fetch: add test to make sure we stay backwards compatible
+  (merged to 'next' on 2017-10-26 at c446ea3e9a)
+ + submodule: simplify decision tree whether to or not to fetch
+ + implement fetching of moved submodules
+ + fetch: add test to make sure we stay backwards compatible
 
- Needs review.
+ "git fetch --recurse-submodules" now knows that submodules can be
+ moved around in the superproject in addition to getting updated,
+ and finds the ones that need to be fetched accordingly.
+
+ Will cook in 'next'.
 
 
 * js/for-each-ref-remote-name-and-ref (2017-10-11) 3 commits
@@ -598,8 +684,9 @@ of the repositories listed at
 
 
 * sb/submodule-recursive-checkout-detach-head (2017-07-28) 2 commits
- - Documentation/checkout: clarify submodule HEADs to be detached
- - recursive submodules: detach HEAD from new state
+  (merged to 'next' on 2017-10-26 at 30994b4c76)
+ + Documentation/checkout: clarify submodule HEADs to be detached
+ + recursive submodules: detach HEAD from new state
 
  "git checkout --recursive" may overwrite and rewind the history of
  the branch that happens to be checked out in submodule
@@ -630,81 +717,6 @@ of the repositories listed at
 
 --------------------------------------------------
 [Discarded]
-
-* jc/ref-filter-colors-fix (2017-10-14) 2 commits
- . colors: git_default_config() does not read color.ui
- . Revert "color: check color.ui in git_default_config()"
-
- Recent tip of 'master' and 'maint' (at least as of v2.14.2) has a
- regression in "git add -p" for those who set ui.color=always in
- their configuration, caused by us being overly aggressive in
- allowing plumbing commands to honor the configuration to fix a
- fallout from an earlier change that made everybody, even the
- plumbing commands, to automatically color its output by default.
- Revert it for now from the released version (and to be released
- one) until we come up with a different fix to the problem.
-
-
-* jc/allow-lazy-cas (2017-07-06) 1 commit
- . push: disable lazy --force-with-lease by default
-
- Because "git push --force-with-lease[=<ref>]" that relies on the
- stability of remote-tracking branches is unsafe when something
- fetches into the repository behind user's back, it is now disabled
- by default.  A new configuration variable can be used to enable it
- by users who know what they are doing.  This would pave the way to
- possibly turn `--force` into `--force-with-lease`.
-
- Independent from disabling the feature by default, this stirred up
- a discussion to replace the DWIM heuristics with a better one, which
- deserves to be its own topic.
- cf. <alpine.DEB.2.21.1.1707131435220.4193@virtualbox>
-
-
-* sg/clone-refspec-from-command-line-config (2017-06-16) 2 commits
- . Documentation/clone: document ignored configuration variables
- . clone: respect additional configured fetch refspecs during initial fetch
- (this branch is used by sg/remote-no-string-refspecs.)
-
- "git clone -c var=val" is a way to set configuration variables in
- the resulting repository, but it is more useful to also make these
- variables take effect while the initial clone is happening,
- e.g. these configuration variables could be fetch refspecs.
-
- Got tired of waiting for a response.
- cf. <20170617112228.vugswym4o4owf6wj@sigill.intra.peff.net>
- cf. <xmqqmv8zhdap.fsf@gitster.mtv.corp.google.com>
-
-
-* rs/sha1-file-micro-optim (2017-07-09) 2 commits
- . SQUASH???
- . sha1_file: add slash once in for_each_file_in_obj_subdir()
-
- Code cleanup.
-
- Perhaps drop.
- cf. <f59c8256-716b-9305-2a4f-d4fe49f666ff@web.de>
-
-
-* mg/merge-pre-merge-hook (2017-09-24) 4 commits
- . t7503: add tests for pre-merge-hook
- . merge: --no-verify to bypass pre-merge hook
- . merge: do no-verify like commit
- . git-merge: honor pre-merge hook
-
- "git merge" learned a 'pre-merge' hook, that would be triggered
- before the merge commit is created by a clean auto-merge.
-
- What's the doneness of this?  Is everybody happy?
-
-
-* jk/check-ref-format-oor-fix (2017-07-14) 1 commit
- . check-ref-format: require a repository for --branch
-
- Discussion slowly continued but then stalled.
- cf. <20170717172709.GL93855@aiede.mtv.corp.google.com>
- cf. <20170817102217.3yw7uxnkupdy3lh5@sigill.intra.peff.net>
-
 
 * jk/ui-color-always-to-auto-maint (2017-10-13) 2 commits
   (merged to 'next' on 2017-10-13 at bb16e1edc8)
