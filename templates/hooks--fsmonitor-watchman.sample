@@ -49,7 +49,7 @@ launch_watchman();
 
 sub launch_watchman {
 
-	my $pid = open2(\*CHLD_OUT, \*CHLD_IN, 'watchman -j')
+	my $pid = open2(\*CHLD_OUT, \*CHLD_IN, 'watchman -j --no-pretty')
 	    or die "open2() failed: $!\n" .
 	    "Falling back to scanning...\n";
 
