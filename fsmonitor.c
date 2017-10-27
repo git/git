@@ -121,6 +121,7 @@ static int query_fsmonitor(int version, uint64_t last_update, struct strbuf *que
 	argv[3] = NULL;
 	cp.argv = argv;
 	cp.use_shell = 1;
+	cp.dir = get_git_work_tree();
 
 	return capture_command(&cp, query_result, 1024);
 }
