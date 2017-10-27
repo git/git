@@ -12,14 +12,36 @@ static GIT_PATH_FUNC(git_path_bisect_expected_rev, "BISECT_EXPECTED_REV")
 static GIT_PATH_FUNC(git_path_bisect_ancestors_ok, "BISECT_ANCESTORS_OK")
 static GIT_PATH_FUNC(git_path_bisect_start, "BISECT_START")
 static GIT_PATH_FUNC(git_path_bisect_head, "BISECT_HEAD")
+static GIT_PATH_FUNC(git_path_bisect_log, "BISECT_LOG")
 
 static const char * const git_bisect_helper_usage[] = {
 	N_("git bisect--helper --next-all [--no-checkout]"),
 	N_("git bisect--helper --write-terms <bad_term> <good_term>"),
 	N_("git bisect--helper --bisect-clean-state"),
 	N_("git bisect--helper --bisect-reset [<commit>]"),
+	N_("git bisect--helper --bisect-write <state> <revision> <good_term> <bad_term> [<nolog>]"),
 	NULL
 };
+
+struct bisect_terms {
+	const char *term_good;
+	const char *term_bad;
+};
+
+static void free_terms(struct bisect_terms *terms)
+{
+	if (!terms->term_good)
+		free((void *) terms->term_good);
+	if (!terms->term_bad)
+		free((void *) terms->term_bad);
+}
+
+static void set_terms(struct bisect_terms *terms, const char *bad,
+		      const char *good)
+{
+	terms->term_good = xstrdup(good);
+	terms->term_bad = xstrdup(bad);
+}
 
 /*
  * Check whether the string `term` belongs to the set of strings
@@ -146,6 +168,72 @@ static int bisect_reset(const char *commit)
 	return bisect_clean_state();
 }
 
+static void log_commit(FILE *fp, char *fmt, const char *state,
+		       struct commit *commit)
+{
+	struct pretty_print_context pp = {0};
+	struct strbuf commit_msg = STRBUF_INIT;
+	char *label = xstrfmt(fmt, state);
+
+	format_commit_message(commit, "%s", &commit_msg, &pp);
+
+	fprintf(fp, "# %s: [%s] %s\n", label, oid_to_hex(&commit->object.oid),
+		commit_msg.buf);
+
+	strbuf_release(&commit_msg);
+	free(label);
+}
+
+static int bisect_write(const char *state, const char *rev,
+			const struct bisect_terms *terms, int nolog)
+{
+	struct strbuf tag = STRBUF_INIT;
+	struct object_id oid;
+	struct commit *commit;
+	FILE *fp = NULL;
+	int retval = 0;
+
+	if (!strcmp(state, terms->term_bad)) {
+		strbuf_addf(&tag, "refs/bisect/%s", state);
+	} else if (one_of(state, terms->term_good, "skip", NULL)) {
+		strbuf_addf(&tag, "refs/bisect/%s-%s", state, rev);
+	} else {
+		error(_("Bad bisect_write argument: %s"), state);
+		goto fail;
+	}
+
+	if (get_oid(rev, &oid)) {
+		error(_("couldn't get the oid of the rev '%s'"), rev);
+		goto fail;
+	}
+
+	if (update_ref(NULL, tag.buf, &oid, NULL, 0,
+		       UPDATE_REFS_MSG_ON_ERR))
+		goto fail;
+
+	fp = fopen(git_path_bisect_log(), "a");
+	if (!fp) {
+		error_errno(_("couldn't open the file '%s'"), git_path_bisect_log());
+		goto fail;
+	}
+
+	commit = lookup_commit_reference(&oid);
+	log_commit(fp, "%s", state, commit);
+
+	if (!nolog)
+		fprintf(fp, "git bisect %s %s\n", state, rev);
+
+	goto finish;
+
+fail:
+	retval = -1;
+finish:
+	if (fp)
+		fclose(fp);
+	strbuf_release(&tag);
+	return retval;
+}
+
 int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 {
 	enum {
@@ -153,9 +241,10 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 		WRITE_TERMS,
 		BISECT_CLEAN_STATE,
 		CHECK_EXPECTED_REVS,
-		BISECT_RESET
+		BISECT_RESET,
+		BISECT_WRITE
 	} cmdmode = 0;
-	int no_checkout = 0;
+	int no_checkout = 0, res = 0;
 	struct option options[] = {
 		OPT_CMDMODE(0, "next-all", &cmdmode,
 			 N_("perform 'git bisect next'"), NEXT_ALL),
@@ -167,10 +256,13 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 			 N_("check for expected revs"), CHECK_EXPECTED_REVS),
 		OPT_CMDMODE(0, "bisect-reset", &cmdmode,
 			 N_("reset the bisection state"), BISECT_RESET),
+		OPT_CMDMODE(0, "bisect-write", &cmdmode,
+			 N_("update the refs according to the bisection state and may write it to BISECT_LOG"), BISECT_WRITE),
 		OPT_BOOL(0, "no-checkout", &no_checkout,
 			 N_("update BISECT_HEAD instead of checking out the current commit")),
 		OPT_END()
 	};
+	struct bisect_terms terms;
 
 	argc = parse_options(argc, argv, prefix, options,
 			     git_bisect_helper_usage, 0);
@@ -179,6 +271,7 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 		usage_with_options(git_bisect_helper_usage, options);
 
 	switch (cmdmode) {
+	int nolog;
 	case NEXT_ALL:
 		return bisect_next_all(prefix, no_checkout);
 	case WRITE_TERMS:
@@ -196,8 +289,16 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 		if (argc > 1)
 			return error(_("--bisect-reset requires either no argument or a commit"));
 		return bisect_reset(argc ? argv[0] : NULL);
+	case BISECT_WRITE:
+		if (argc != 4 && argc != 5)
+			return error(_("--bisect-write requires either 4 or 5 arguments"));
+		nolog = (argc == 5) && !strcmp(argv[4], "nolog");
+		set_terms(&terms, argv[3], argv[2]);
+		res = bisect_write(argv[0], argv[1], &terms, nolog);
+		break;
 	default:
 		return error("BUG: unknown subcommand '%d'", cmdmode);
 	}
-	return 0;
+	free_terms(&terms);
+	return res;
 }
