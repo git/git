@@ -26,7 +26,6 @@ int read_fsmonitor_extension(struct index_state *istate, const void *data,
 	uint32_t hdr_version;
 	uint32_t ewah_size;
 	struct ewah_bitmap *fsmonitor_dirty;
-	int i;
 	int ret;
 
 	if (sz < sizeof(uint32_t) + sizeof(uint64_t) + sizeof(uint32_t))
@@ -49,20 +48,7 @@ int read_fsmonitor_extension(struct index_state *istate, const void *data,
 		ewah_free(fsmonitor_dirty);
 		return error("failed to parse ewah bitmap reading fsmonitor index extension");
 	}
-
-	if (git_config_get_fsmonitor()) {
-		/* Mark all entries valid */
-		for (i = 0; i < istate->cache_nr; i++)
-			istate->cache[i]->ce_flags |= CE_FSMONITOR_VALID;
-
-		/* Mark all previously saved entries as dirty */
-		ewah_each_bit(fsmonitor_dirty, fsmonitor_ewah_callback, istate);
-
-		/* Now mark the untracked cache for fsmonitor usage */
-		if (istate->untracked)
-			istate->untracked->use_fsmonitor = 1;
-	}
-	ewah_free(fsmonitor_dirty);
+	istate->fsmonitor_dirty = fsmonitor_dirty;
 
 	trace_printf_key(&trace_fsmonitor, "read fsmonitor extension successful");
 	return 0;
@@ -239,7 +225,29 @@ void remove_fsmonitor(struct index_state *istate)
 
 void tweak_fsmonitor(struct index_state *istate)
 {
-	switch (git_config_get_fsmonitor()) {
+	int i;
+	int fsmonitor_enabled = git_config_get_fsmonitor();
+
+	if (istate->fsmonitor_dirty) {
+		if (fsmonitor_enabled) {
+			/* Mark all entries valid */
+			for (i = 0; i < istate->cache_nr; i++) {
+				istate->cache[i]->ce_flags |= CE_FSMONITOR_VALID;
+			}
+
+			/* Mark all previously saved entries as dirty */
+			ewah_each_bit(istate->fsmonitor_dirty, fsmonitor_ewah_callback, istate);
+
+			/* Now mark the untracked cache for fsmonitor usage */
+			if (istate->untracked)
+				istate->untracked->use_fsmonitor = 1;
+		}
+
+		ewah_free(istate->fsmonitor_dirty);
+		istate->fsmonitor_dirty = NULL;
+	}
+
+	switch (fsmonitor_enabled) {
 	case -1: /* keep: do nothing */
 		break;
 	case 0: /* false */
