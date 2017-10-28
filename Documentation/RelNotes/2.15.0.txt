@@ -488,6 +488,10 @@ Fixes since v2.14
    described in an earlier part of the doc.
    (merge 07c4984508 dg/filter-branch-filter-order-doc later to maint).
 
+ * A possible oom error is now caught as a fatal error, instead of
+   continuing and dereferencing NULL.
+   (merge 55d7d15847 ao/path-use-xmalloc later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge f094b89a4d ma/parse-maybe-bool later to maint).
    (merge 6cdf8a7929 ma/ts-cleanups later to maint).
@@ -499,3 +503,6 @@ Fixes since v2.14
    (merge 7cbbf9d6a2 ls/filter-process-delayed later to maint).
    (merge 488aa65c8f wk/merge-options-gpg-sign-doc later to maint).
    (merge e61cb19a27 jc/branch-force-doc-readability-fix later to maint).
+   (merge 32fceba3fd np/config-path-doc later to maint).
+   (merge e38c681fb7 sb/rev-parse-show-superproject-root later to maint).
+   (merge 4f851dc883 sg/rev-list-doc-reorder-fix later to maint).
