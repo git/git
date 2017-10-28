@@ -264,7 +264,7 @@ print a message to stderr and exit with nonzero status.
 --show-toplevel::
 	Show the absolute path of the top-level directory.
 
---show-superproject-working-tree
+--show-superproject-working-tree::
 	Show the absolute path of the root of the superproject's
 	working tree (if exists) that uses the current repository as
 	its submodule.  Outputs nothing if the current repository is
