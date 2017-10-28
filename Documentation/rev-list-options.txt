@@ -799,11 +799,11 @@ endif::git-rev-list[]
 
 --parents::
 	Print also the parents of the commit (in the form "commit parent...").
-	Also enables parent rewriting, see 'History Simplification' below.
+	Also enables parent rewriting, see 'History Simplification' above.
 
 --children::
 	Print also the children of the commit (in the form "commit child...").
-	Also enables parent rewriting, see 'History Simplification' below.
+	Also enables parent rewriting, see 'History Simplification' above.
 
 ifdef::git-rev-list[]
 --timestamp::
@@ -846,7 +846,7 @@ you would get an output like this:
 	to be drawn properly.
 	Cannot be combined with `--no-walk`.
 +
-This enables parent rewriting, see 'History Simplification' below.
+This enables parent rewriting, see 'History Simplification' above.
 +
 This implies the `--topo-order` option by default, but the
 `--date-order` option may also be specified.
