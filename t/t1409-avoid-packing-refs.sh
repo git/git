@@ -26,7 +26,7 @@ test_expect_success 'setup' '
 	C=$(git rev-parse HEAD)
 '
 
-test_expect_failure 'do not create packed-refs file gratuitously' '
+test_expect_success 'do not create packed-refs file gratuitously' '
 	test_must_fail test -f .git/packed-refs &&
 	git update-ref refs/heads/foo $A &&
 	test_must_fail test -f .git/packed-refs &&
@@ -107,7 +107,7 @@ test_expect_success 'leave packed-refs untouched on verify of loose' '
 	check_packed_refs_marked
 '
 
-test_expect_failure 'leave packed-refs untouched on delete of loose' '
+test_expect_success 'leave packed-refs untouched on delete of loose' '
 	git pack-refs --all &&
 	git update-ref refs/heads/loose-delete $A &&
 	mark_packed_refs &&
