@@ -156,7 +156,7 @@ static int handle_fork_point(int argc, const char **argv)
 	struct commit_list *bases;
 	int i, ret = 0;
 
-	switch (dwim_ref(argv[0], strlen(argv[0]), oid.hash, &refname)) {
+	switch (dwim_ref(argv[0], strlen(argv[0]), &oid, &refname)) {
 	case 0:
 		die("No such ref: '%s'", argv[0]);
 	case 1:

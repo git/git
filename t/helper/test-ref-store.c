@@ -72,12 +72,12 @@ static int cmd_pack_refs(struct ref_store *refs, const char **argv)
 static int cmd_peel_ref(struct ref_store *refs, const char **argv)
 {
 	const char *refname = notnull(*argv++, "refname");
-	unsigned char sha1[20];
+	struct object_id oid;
 	int ret;
 
-	ret = refs_peel_ref(refs, refname, sha1);
+	ret = refs_peel_ref(refs, refname, &oid);
 	if (!ret)
-		puts(sha1_to_hex(sha1));
+		puts(oid_to_hex(&oid));
 	return ret;
 }
 
@@ -127,15 +127,15 @@ static int cmd_for_each_ref(struct ref_store *refs, const char **argv)
 
 static int cmd_resolve_ref(struct ref_store *refs, const char **argv)
 {
-	unsigned char sha1[20];
+	struct object_id oid;
 	const char *refname = notnull(*argv++, "refname");
 	int resolve_flags = arg_flags(*argv++, "resolve-flags");
 	int flags;
 	const char *ref;
 
 	ref = refs_resolve_ref_unsafe(refs, refname, resolve_flags,
-				      sha1, &flags);
-	printf("%s %s 0x%x\n", sha1_to_hex(sha1), ref, flags);
+				      &oid, &flags);
+	printf("%s %s 0x%x\n", oid_to_hex(&oid), ref, flags);
 	return ref ? 0 : 1;
 }
 
@@ -218,12 +218,12 @@ static int cmd_delete_ref(struct ref_store *refs, const char **argv)
 	const char *refname = notnull(*argv++, "refname");
 	const char *sha1_buf = notnull(*argv++, "old-sha1");
 	unsigned int flags = arg_flags(*argv++, "flags");
-	unsigned char old_sha1[20];
+	struct object_id old_oid;
 
-	if (get_sha1_hex(sha1_buf, old_sha1))
+	if (get_oid_hex(sha1_buf, &old_oid))
 		die("not sha-1");
 
-	return refs_delete_ref(refs, msg, refname, old_sha1, flags);
+	return refs_delete_ref(refs, msg, refname, &old_oid, flags);
 }
 
 static int cmd_update_ref(struct ref_store *refs, const char **argv)
@@ -233,15 +233,15 @@ static int cmd_update_ref(struct ref_store *refs, const char **argv)
 	const char *new_sha1_buf = notnull(*argv++, "old-sha1");
 	const char *old_sha1_buf = notnull(*argv++, "old-sha1");
 	unsigned int flags = arg_flags(*argv++, "flags");
-	unsigned char old_sha1[20];
-	unsigned char new_sha1[20];
+	struct object_id old_oid;
+	struct object_id new_oid;
 
-	if (get_sha1_hex(old_sha1_buf, old_sha1) ||
-	    get_sha1_hex(new_sha1_buf, new_sha1))
+	if (get_oid_hex(old_sha1_buf, &old_oid) ||
+	    get_oid_hex(new_sha1_buf, &new_oid))
 		die("not sha-1");
 
 	return refs_update_ref(refs, msg, refname,
-			       new_sha1, old_sha1,
+			       &new_oid, &old_oid,
 			       flags, UPDATE_REFS_DIE_ON_ERR);
 }
 

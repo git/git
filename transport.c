@@ -305,8 +305,8 @@ void transport_update_tracking_ref(struct remote *remote, struct ref *ref, int v
 		if (ref->deletion) {
 			delete_ref(NULL, rs.dst, NULL, 0);
 		} else
-			update_ref("update by push", rs.dst,
-					ref->new_oid.hash, NULL, 0, 0);
+			update_ref("update by push", rs.dst, &ref->new_oid,
+				   NULL, 0, 0);
 		free(rs.dst);
 	}
 }

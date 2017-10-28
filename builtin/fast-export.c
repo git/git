@@ -823,7 +823,7 @@ static void get_tags_and_duplicates(struct rev_cmdline_info *info)
 		if (e->flags & UNINTERESTING)
 			continue;
 
-		if (dwim_ref(e->name, strlen(e->name), oid.hash, &full_name) != 1)
+		if (dwim_ref(e->name, strlen(e->name), &oid, &full_name) != 1)
 			continue;
 
 		if (refspecs) {
