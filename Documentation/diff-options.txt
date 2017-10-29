@@ -63,7 +63,12 @@ ifndef::git-format-patch[]
 	Synonym for `-p --raw`.
 endif::git-format-patch[]
 
-include::diff-heuristic-options.txt[]
+--indent-heuristic::
+	Enable the heuristic that shift diff hunk boundaries to make patches
+	easier to read. This is the default.
+
+--no-indent-heuristic::
+	Disable the indent heuristic.
 
 --minimal::
 	Spend extra time to make sure the smallest possible
