@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Oct 2017, #06; Fri, 27)
-X-master-at: 4e40fb302eacf4949f6b7d010fd5c11f1f652b7f
-X-next-at: caf49859d7a24ba95393b3d7850ab15d9a76e017
+Subject: What's cooking in git.git (Oct 2017, #07; Mon, 30)
+X-master-at: cb5918aa0d50f50e83787f65c2ddc3dcb10159fe
+X-next-at: c27cc4dac6288e7b0a5136f6084655a61518ce60
 
-What's cooking in git.git (Oct 2017, #06; Fri, 27)
+What's cooking in git.git (Oct 2017, #07; Mon, 30)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,41 +12,82 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-The topics that are cooking in 'next' that are not urgent fixes are
-classified as "Will cook in 'next'", and will not graduate to
-'master' until the final.
-
 You can find the changes described here in the integration branches
 of the repositories listed at
 
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* mh/ref-locking-fix (2017-10-25) 2 commits
-  (merged to 'next' on 2017-10-26 at 1f1091ad64)
- + files_transaction_prepare(): fix handling of ref lock failure
- + t1404: add a bunch of tests of D/F conflicts
-
- Transactions to update multiple references that involves a deletion
- was quite broken in an error codepath and did not abort everything
- correctly.
-
---------------------------------------------------
 [New Topics]
 
-* js/submodule-in-excluded (2017-10-26) 1 commit
-  (merged to 'next' on 2017-10-26 at 2a262e6a0b)
- + status: do not get confused by submodules in excluded directories
+* bw/diff-opt-impl-to-bitfields (2017-10-29) 3 commits
+ - diff: convert flags to be stored in bitfields
+ - reset: use DIFF_OPT_SET macro to set a diff flag
+ - add: use DIFF_OPT_SET macro to set a diff flag
 
- "git status --ignored -u" did not stop at a working tree of a
- separate project that is embedded in an ignored directory and
- listed files in that other project, instead of just showing the
- directory itself as ignored.
+ A single-word "unsigned flags" in the diff options is being split
+ into a structure with many bitfields.
 
- Will cook in 'next'.
 
+* mh/tidy-ref-update-flags (2017-10-28) 8 commits
+ - refs: rename constant `REF_ISPRUNING` to `REF_IS_PRUNING`
+ - refs: rename constant `REF_NODEREF` to `REF_NO_DEREF`
+ - refs: tidy up and adjust visibility of the `ref_update` flags
+ - ref_transaction_add_update(): remove a check
+ - ref_transaction_update(): die on disallowed flags
+ - prune_ref(): call `ref_transaction_add_update()` directly
+ - files_transaction_prepare(): don't leak flags to packed transaction
+ - Merge branch 'bc/object-id' into base
+ (this branch uses bc/object-id.)
+
+ Code clean-up in refs API implementation.
+
+
+* ao/diff-populate-filespec-lstat-errorpath-fix (2017-10-29) 1 commit
+ - diff: fix lstat() error handling in diff_populate_filespec()
+
+ After an error from lstat(), diff_populate_filespec() function
+ sometimes still went ahead and used invalid data in struct stat,
+ which has been fixed.
+
+
+* av/fsmonitor (2017-10-30) 5 commits
+ - SQUASH???
+ - fsmonitor: delay updating state until after split index is merged
+ - fsmonitor: document GIT_TRACE_FSMONITOR
+ - fsmonitor: don't bother pretty-printing JSON from watchman
+ - fsmonitor: set the PWD to the top of the working tree
+ (this branch uses bp/fsmonitor.)
+
+ Various fixes to bp/fsmonitor topic.
+
+ What's the status of this one?  I recall that I saw Dscho's "looks
+ good" respose to the cover letter, and Ben sounded positive on most
+ of the patches in the previous series.  Except for the SQUASH??? I
+ had to add to squelch compiler warnings, is this good to go?
+
+
+* bc/submitting-patches-in-asciidoc (2017-10-30) 2 commits
+ - Documentation: convert SubmittingPatches to AsciiDoc
+ - Documentation: enable compat-mode for Asciidoctor
+
+ The SubmittingPatches document has been converted to produce an
+ HTML version via AsciiDoc/Asciidoctor.
+
+
+* pb/bisect-helper-2 (2017-10-28) 8 commits
+ - t6030: make various test to pass GETTEXT_POISON tests
+ - bisect--helper: `bisect_start` shell function partially in C
+ - bisect--helper: `get_terms` & `bisect_terms` shell function in C
+ - bisect--helper: `bisect_next_check` shell function in C
+ - bisect--helper: `check_and_set_terms` shell function in C
+ - wrapper: move is_empty_file() and rename it as is_empty_or_missing_file()
+ - bisect--helper: `bisect_write` shell function in C
+ - bisect--helper: `bisect_reset` shell function in C
+ (this branch uses pb/bisect-helper.)
+
+--------------------------------------------------
+[Graduated to "master"]
 
 * ao/path-use-xmalloc (2017-10-25) 1 commit
   (merged to 'next' on 2017-10-26 at 4cc04083fb)
@@ -55,58 +96,12 @@ of the repositories listed at
  A possible oom error is now caught as a fatal error, instead of
  continuing and dereferencing NULL.
 
- Will merge to 'master'.
 
+* np/config-path-doc (2017-10-19) 1 commit
+  (merged to 'next' on 2017-10-26 at c17a3daafc)
+ + config doc: clarify "git config --path" example
 
-* tb/complete-checkout (2017-10-25) 1 commit
-  (merged to 'next' on 2017-10-26 at beeaf5b00c)
- + completion: add remaining flags to checkout
-
- Command line completion (in contrib/) update.
-
- Will cook in 'next'.
-
-
-* jc/ignore-cr-at-eol (2017-10-26) 2 commits
- - diff: --ignore-cr-at-eol
- - xdiff: reassign xpparm_t.flags bits
-
- The "diff" family of commands learned to ignore differences in
- carriage return at the end of line.
-
- Just a lunch-time hack.
- Lacks tests, docs and proper log message.
-
-
-* sb/diff-color-moved-use-xdl-recmatch (2017-10-26) 2 commits
-  (merged to 'next' on 2017-10-26 at 6711f24498)
- + diff.c: get rid of duplicate implementation
- + xdiff-interface: export comparing and hashing strings
- (this branch uses jk/diff-color-moved-fix.)
-
- Instead of using custom line comparison and hashing functions to
- implement "moved lines" coloring in the diff output, use the pair
- of these functions from lower-layer xdiff/ code.
-
- Will cook in 'next'.
-
-
-* jh/dir-add-exclude-from-blob (2017-10-27) 1 commit
- - dir: allow exclusions from blob in addition to file
-
- The code to read exclusion list from a blob, which is used when the
- .gitignore file is outside a sparse checkout area, has been
- refactored so that other codepath can later use it to do the same
- outside the context of "sparse checkout".
-
-
-* mh/avoid-rewriting-packed-refs (2017-10-27) 2 commits
- - files-backend: don't rewrite the `packed-refs` file unnecessarily
- - t1409: check that `packed-refs` is not rewritten unnecessarily
-
- Recent update to the refs infrastructure implementation started
- rewriting packed-refs file more often than before; this has been
- optimized again for most trivial cases.
+ Doc update.
 
 
 * sb/rev-parse-show-superproject-root (2017-10-27) 1 commit
@@ -115,16 +110,12 @@ of the repositories listed at
 
  Doc markup fix.
 
- Will merge to 'master'.
-
 
 * sg/rev-list-doc-reorder-fix (2017-10-27) 1 commit
   (merged to 'next' on 2017-10-27 at caf49859d7)
  + rev-list-options.txt: use correct directional reference
 
  Doc flow fix.
-
- Will merge to 'master'.
 
 --------------------------------------------------
 [Stalled]
@@ -168,7 +159,71 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* cc/git-packet-pm (2017-10-22) 6 commits
+* js/submodule-in-excluded (2017-10-26) 1 commit
+  (merged to 'next' on 2017-10-26 at 2a262e6a0b)
+ + status: do not get confused by submodules in excluded directories
+
+ "git status --ignored -u" did not stop at a working tree of a
+ separate project that is embedded in an ignored directory and
+ listed files in that other project, instead of just showing the
+ directory itself as ignored.
+
+ Will cook in 'next'.
+
+
+* tb/complete-checkout (2017-10-25) 1 commit
+  (merged to 'next' on 2017-10-26 at beeaf5b00c)
+ + completion: add remaining flags to checkout
+
+ Command line completion (in contrib/) update.
+
+ Will cook in 'next'.
+
+
+* jc/ignore-cr-at-eol (2017-10-27) 2 commits
+ - diff: --ignore-cr-at-eol
+ - xdiff: reassign xpparm_t.flags bits
+
+ The "diff" family of commands learned to ignore differences in
+ carriage return at the end of line.
+
+ Just a lunch-time hack.
+ Lacks tests, docs and proper log message.
+
+
+* sb/diff-color-moved-use-xdl-recmatch (2017-10-26) 2 commits
+  (merged to 'next' on 2017-10-26 at 6711f24498)
+ + diff.c: get rid of duplicate implementation
+ + xdiff-interface: export comparing and hashing strings
+ (this branch uses jk/diff-color-moved-fix.)
+
+ Instead of using custom line comparison and hashing functions to
+ implement "moved lines" coloring in the diff output, use the pair
+ of these functions from lower-layer xdiff/ code.
+
+ Will cook in 'next'.
+
+
+* jh/dir-add-exclude-from-blob (2017-10-27) 1 commit
+ - dir: allow exclusions from blob in addition to file
+
+ The code to read exclusion list from a blob, which is used when the
+ .gitignore file is outside a sparse checkout area, has been
+ refactored so that other codepath can later use it to do the same
+ outside the context of "sparse checkout".
+
+
+* mh/avoid-rewriting-packed-refs (2017-10-30) 2 commits
+ - files-backend: don't rewrite the `packed-refs` file unnecessarily
+ - t1409: check that `packed-refs` is not rewritten unnecessarily
+
+ Recent update to the refs infrastructure implementation started
+ rewriting packed-refs file more often than before; this has been
+ optimized again for most trivial cases.
+
+
+* cc/git-packet-pm (2017-10-30) 7 commits
+ - fixup! Git/Packet.pm: extract parts of t0021/rot13-filter.pl for reuse
  - Git/Packet.pm: extract parts of t0021/rot13-filter.pl for reuse
  - t0021/rot13-filter: add capability functions
  - t0021/rot13-filter: add packet_initialize()
@@ -265,7 +320,8 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* jr/ssh-wrappers (2017-10-24) 5 commits
+* jn/ssh-wrappers (2017-10-30) 6 commits
+ - fixup! ssh: 'auto' variant to select between 'ssh' and 'simple'
  - ssh: 'simple' variant does not support --port
  - ssh: 'simple' variant does not support -4/-6
  - ssh: 'auto' variant to select between 'ssh' and 'simple'
@@ -279,6 +335,9 @@ of the repositories listed at
  automatically detect how compatible the GIT_SSH/GIT_SSH_COMMAND is
  to OpenSSH convention and then error out an invocation to make it
  easier to diagnose connection errors.
+
+ Expecting a reroll.
+ cf. <20171025163243.xmm7szrkwgblpgcc@aiede.mtv.corp.google.com>
 
 
 * tg/deprecate-stash-save (2017-10-27) 3 commits
@@ -328,15 +387,6 @@ of the repositories listed at
  A (possibly flakey) test fix.
 
  Will cook in 'next'.
-
-
-* np/config-path-doc (2017-10-19) 1 commit
-  (merged to 'next' on 2017-10-26 at c17a3daafc)
- + config doc: clarify "git config --path" example
-
- Doc update.
-
- Will merge to 'master'.
 
 
 * jc/branch-name-sanity (2017-10-14) 3 commits
@@ -417,6 +467,7 @@ of the repositories listed at
  + bisect--helper: `write_terms` shell function in C
  + bisect--helper: rewrite `check_term_format` shell function in C
  + bisect--helper: use OPT_CMDMODE instead of OPT_BOOL
+ (this branch is used by pb/bisect-helper-2.)
 
  An early part of piece-by-piece rewrite of "git bisect".
 
@@ -450,6 +501,7 @@ of the repositories listed at
  + refs: convert delete_ref and refs_delete_ref to struct object_id
  + refs/files-backend: convert struct ref_to_prune to object_id
  + walker: convert to struct object_id
+ (this branch is used by mh/tidy-ref-update-flags.)
 
  Conversion from uchar[20] to struct object_id continues.
 
@@ -619,6 +671,7 @@ of the repositories listed at
  + update-index: add a new --force-write-index option
  + preload-index: add override to enable testing preload-index
  + bswap: add 64 bit endianness helper get_be64
+ (this branch is used by av/fsmonitor.)
 
  We learned to talk to watchman to speed up "git status" and other
  operations that need to see which paths have been modified.
@@ -639,7 +692,7 @@ of the repositories listed at
  + protocol: introduce protocol extension mechanisms
  + pkt-line: add packet_write function
  + connect: in ref advertisement, shallows are last
- (this branch is used by jr/ssh-wrappers.)
+ (this branch is used by jn/ssh-wrappers.)
 
  A new mechanism to upgrade the wire protocol in place is proposed
  and demonstrated that it works with the older versions of Git
@@ -658,17 +711,17 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* bc/hash-algo (2017-10-04) 6 commits
- - fixup! hash-algo: integrate hash algorithm support with repo setup
- - hash-algo: switch empty tree and blob lookups to use hash abstraction
- - hash-algo: integrate hash algorithm support with repo setup
- - hash-algo: add structure representing hash algorithm
+* bc/hash-algo (2017-10-30) 4 commits
+ - Switch empty tree and blob lookups to use hash abstraction
+ - Integrate hash algorithm support with repo setup
+ - Add structure representing hash algorithm
  - setup: expose enumerated repo info
- - Merge branch 'bc/vcs-svn-cleanup' into bc/hash-algo
 
- Expecting a reroll.
- cf. <20170821000022.26729-1-sandals@crustytoothpaste.net>
- cf. <20171017013405.swzjqc3rwvqjfkov@genre.crustytoothpaste.net>
+ An infrastructure to define what hash function is used in Git is
+ introduced, and an effort to plumb that throughout various
+ codepaths has been started.
+
+ cf. <20171028181239.59458-1-sandals@crustytoothpaste.net>
 
 
 * jk/drop-ancient-curl (2017-08-09) 5 commits
