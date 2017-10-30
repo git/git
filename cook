@@ -250,6 +250,15 @@ sub get_commit {
 		}
 
 		my $list = join("\n", map { " " . $_ } @desc);
+
+		# NEEDSWORK:
+		# This is done a bit too early. We grabbed all
+		# under refs/heads/??/* without caring if they are
+		# merged to 'pu' yet, and it is correct because
+		# we want to describe a topic that is in the old
+		# edition that is tentatively kicked out of 'pu'.
+		# However, we do not want to say a topic is used
+		# by a new topic that is not yet in 'pu'!
 		my $relation = describe_relation($topic{$branch});
 		$topic{$branch}{'desc'} = $head . $list;
 		if ($relation) {
