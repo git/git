@@ -349,6 +349,12 @@ endif
 ifeq ($(uname_S),Windows)
 	GIT_VERSION := $(GIT_VERSION).MSVC
 	pathsep = ;
+	# Assume that this is built in Git for Windows' SDK
+	ifeq (MINGW32,$(MSYSTEM))
+		prefix = /mingw32
+	else
+		prefix = /mingw64
+	endif
 	# Prepend MSVC 64-bit tool-chain to PATH.
 	#
 	# A regular Git Bash *does not* have cl.exe in its $PATH. As there is a
