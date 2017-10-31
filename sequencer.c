@@ -2668,13 +2668,11 @@ leave_check:
 static int rewrite_file(const char *path, const char *buf, size_t len)
 {
 	int rc = 0;
-	int fd = open(path, O_WRONLY);
+	int fd = open(path, O_WRONLY | O_TRUNC);
 	if (fd < 0)
 		return error_errno(_("could not open '%s' for writing"), path);
 	if (write_in_full(fd, buf, len) < 0)
 		rc = error_errno(_("could not write to '%s'"), path);
-	if (!rc && ftruncate(fd, len) < 0)
-		rc = error_errno(_("could not truncate '%s'"), path);
 	close(fd);
 	return rc;
 }
