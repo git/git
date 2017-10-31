@@ -736,7 +736,7 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 parse_done:
 	no_whole_file_rename = !revs.diffopt.flags.FOLLOW_RENAMES;
 	xdl_opts |= revs.diffopt.xdl_opts & XDF_INDENT_HEURISTIC;
-	DIFF_OPT_CLR(&revs.diffopt, FOLLOW_RENAMES);
+	revs.diffopt.flags.FOLLOW_RENAMES = 0;
 	argc = parse_options_end(&ctx);
 
 	if (incremental || (output_option & OUTPUT_PORCELAIN)) {

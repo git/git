@@ -124,16 +124,16 @@ static int parse_dirstat_params(struct diff_options *options, const char *params
 	for (i = 0; i < params.nr; i++) {
 		const char *p = params.items[i].string;
 		if (!strcmp(p, "changes")) {
-			DIFF_OPT_CLR(options, DIRSTAT_BY_LINE);
-			DIFF_OPT_CLR(options, DIRSTAT_BY_FILE);
+			options->flags.DIRSTAT_BY_LINE = 0;
+			options->flags.DIRSTAT_BY_FILE = 0;
 		} else if (!strcmp(p, "lines")) {
 			options->flags.DIRSTAT_BY_LINE = 1;
-			DIFF_OPT_CLR(options, DIRSTAT_BY_FILE);
+			options->flags.DIRSTAT_BY_FILE = 0;
 		} else if (!strcmp(p, "files")) {
-			DIFF_OPT_CLR(options, DIRSTAT_BY_LINE);
+			options->flags.DIRSTAT_BY_LINE = 0;
 			options->flags.DIRSTAT_BY_FILE = 1;
 		} else if (!strcmp(p, "noncumulative")) {
-			DIFF_OPT_CLR(options, DIRSTAT_CUMULATIVE);
+			options->flags.DIRSTAT_CUMULATIVE = 0;
 		} else if (!strcmp(p, "cumulative")) {
 			options->flags.DIRSTAT_CUMULATIVE = 1;
 		} else if (isdigit(*p)) {
@@ -4205,7 +4205,7 @@ void diff_setup_done(struct diff_options *options)
 	    DIFF_XDL_TST(options, IGNORE_WHITESPACE_AT_EOL))
 		options->flags.DIFF_FROM_CONTENTS = 1;
 	else
-		DIFF_OPT_CLR(options, DIFF_FROM_CONTENTS);
+		options->flags.DIFF_FROM_CONTENTS = 0;
 
 	if (options->flags.FIND_COPIES_HARDER)
 		options->detect_rename = DIFF_DETECT_COPY;
@@ -4640,7 +4640,7 @@ int diff_opt_parse(struct diff_options *options,
 	else if (!strcmp(arg, "--rename-empty"))
 		options->flags.RENAME_EMPTY = 1;
 	else if (!strcmp(arg, "--no-rename-empty"))
-		DIFF_OPT_CLR(options, RENAME_EMPTY);
+		options->flags.RENAME_EMPTY = 0;
 	else if (!strcmp(arg, "--relative"))
 		options->flags.RELATIVE_NAME = 1;
 	else if (skip_prefix(arg, "--relative=", &arg)) {
@@ -4697,8 +4697,8 @@ int diff_opt_parse(struct diff_options *options,
 	else if (!strcmp(arg, "--follow"))
 		options->flags.FOLLOW_RENAMES = 1;
 	else if (!strcmp(arg, "--no-follow")) {
-		DIFF_OPT_CLR(options, FOLLOW_RENAMES);
-		DIFF_OPT_CLR(options, DEFAULT_FOLLOW_RENAMES);
+		options->flags.FOLLOW_RENAMES = 0;
+		options->flags.DEFAULT_FOLLOW_RENAMES = 0;
 	} else if (!strcmp(arg, "--color"))
 		options->use_color = 1;
 	else if (skip_prefix(arg, "--color=", &arg)) {
@@ -4761,12 +4761,12 @@ int diff_opt_parse(struct diff_options *options,
 	else if (!strcmp(arg, "--ext-diff"))
 		options->flags.ALLOW_EXTERNAL = 1;
 	else if (!strcmp(arg, "--no-ext-diff"))
-		DIFF_OPT_CLR(options, ALLOW_EXTERNAL);
+		options->flags.ALLOW_EXTERNAL = 0;
 	else if (!strcmp(arg, "--textconv")) {
 		options->flags.ALLOW_TEXTCONV = 1;
 		options->flags.TEXTCONV_SET_VIA_CMDLINE = 1;
 	} else if (!strcmp(arg, "--no-textconv"))
-		DIFF_OPT_CLR(options, ALLOW_TEXTCONV);
+		options->flags.ALLOW_TEXTCONV = 0;
 	else if (!strcmp(arg, "--ignore-submodules")) {
 		options->flags.OVERRIDE_SUBMODULE_CONFIG = 1;
 		handle_ignore_submodules_arg(options, "all");
@@ -4850,7 +4850,7 @@ int diff_opt_parse(struct diff_options *options,
 	else if (!strcmp(arg, "--function-context"))
 		options->flags.FUNCCONTEXT = 1;
 	else if (!strcmp(arg, "--no-function-context"))
-		DIFF_OPT_CLR(options, FUNCCONTEXT);
+		options->flags.FUNCCONTEXT = 0;
 	else if ((argcount = parse_long_opt("output", av, &optarg))) {
 		char *path = prefix_filename(prefix, optarg);
 		options->file = xfopen(path, "w");
@@ -5688,7 +5688,7 @@ free_queue:
 		if (options->found_changes)
 			options->flags.HAS_CHANGES = 1;
 		else
-			DIFF_OPT_CLR(options, HAS_CHANGES);
+			options->flags.HAS_CHANGES = 0;
 	}
 }
 
@@ -5860,7 +5860,7 @@ void diffcore_std(struct diff_options *options)
 	if (diff_queued_diff.nr && !options->flags.DIFF_FROM_CONTENTS)
 		options->flags.HAS_CHANGES = 1;
 	else
-		DIFF_OPT_CLR(options, HAS_CHANGES);
+		options->flags.HAS_CHANGES = 0;
 
 	options->found_follow = 0;
 }

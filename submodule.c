@@ -402,9 +402,9 @@ const char *submodule_strategy_to_string(const struct submodule_update_strategy 
 void handle_ignore_submodules_arg(struct diff_options *diffopt,
 				  const char *arg)
 {
-	DIFF_OPT_CLR(diffopt, IGNORE_SUBMODULES);
-	DIFF_OPT_CLR(diffopt, IGNORE_UNTRACKED_IN_SUBMODULES);
-	DIFF_OPT_CLR(diffopt, IGNORE_DIRTY_SUBMODULES);
+	diffopt->flags.IGNORE_SUBMODULES = 0;
+	diffopt->flags.IGNORE_UNTRACKED_IN_SUBMODULES = 0;
+	diffopt->flags.IGNORE_DIRTY_SUBMODULES = 0;
 
 	if (!strcmp(arg, "all"))
 		diffopt->flags.IGNORE_SUBMODULES = 1;

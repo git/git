@@ -106,8 +106,6 @@ static inline void diff_flags_or(struct diff_flags *a,
 		tmp_a[i] |= tmp_b[i];
 }
 
-#define DIFF_OPT_CLR(opts, flag)	((opts)->flags.flag = 0)
-
 #define DIFF_XDL_TST(opts, flag)    ((opts)->xdl_opts & XDF_##flag)
 #define DIFF_XDL_SET(opts, flag)    ((opts)->xdl_opts |= XDF_##flag)
 #define DIFF_XDL_CLR(opts, flag)    ((opts)->xdl_opts &= ~XDF_##flag)

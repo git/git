@@ -541,7 +541,7 @@ static struct string_list *get_renames(struct merge_options *o,
 
 	diff_setup(&opts);
 	opts.flags.RECURSIVE = 1;
-	DIFF_OPT_CLR(&opts, RENAME_EMPTY);
+	opts.flags.RENAME_EMPTY = 0;
 	opts.detect_rename = DIFF_DETECT_RENAME;
 	opts.rename_limit = o->merge_rename_limit >= 0 ? o->merge_rename_limit :
 			    o->diff_rename_limit >= 0 ? o->diff_rename_limit :
