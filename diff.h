@@ -60,42 +60,56 @@ typedef struct strbuf *(*diff_prefix_fn_t)(struct diff_options *opt, void *data)
 
 #define DIFF_FORMAT_CALLBACK	0x1000
 
-#define DIFF_OPT_RECURSIVE           (1 <<  0)
-#define DIFF_OPT_TREE_IN_RECURSIVE   (1 <<  1)
-#define DIFF_OPT_BINARY              (1 <<  2)
-#define DIFF_OPT_TEXT                (1 <<  3)
-#define DIFF_OPT_FULL_INDEX          (1 <<  4)
-#define DIFF_OPT_SILENT_ON_REMOVE    (1 <<  5)
-#define DIFF_OPT_FIND_COPIES_HARDER  (1 <<  6)
-#define DIFF_OPT_FOLLOW_RENAMES      (1 <<  7)
-#define DIFF_OPT_RENAME_EMPTY        (1 <<  8)
-/* (1 <<  9) unused */
-#define DIFF_OPT_HAS_CHANGES         (1 << 10)
-#define DIFF_OPT_QUICK               (1 << 11)
-#define DIFF_OPT_NO_INDEX            (1 << 12)
-#define DIFF_OPT_ALLOW_EXTERNAL      (1 << 13)
-#define DIFF_OPT_EXIT_WITH_STATUS    (1 << 14)
-#define DIFF_OPT_REVERSE_DIFF        (1 << 15)
-#define DIFF_OPT_CHECK_FAILED        (1 << 16)
-#define DIFF_OPT_RELATIVE_NAME       (1 << 17)
-#define DIFF_OPT_IGNORE_SUBMODULES   (1 << 18)
-#define DIFF_OPT_DIRSTAT_CUMULATIVE  (1 << 19)
-#define DIFF_OPT_DIRSTAT_BY_FILE     (1 << 20)
-#define DIFF_OPT_ALLOW_TEXTCONV      (1 << 21)
-#define DIFF_OPT_DIFF_FROM_CONTENTS  (1 << 22)
-#define DIFF_OPT_DIRTY_SUBMODULES    (1 << 24)
-#define DIFF_OPT_IGNORE_UNTRACKED_IN_SUBMODULES (1 << 25)
-#define DIFF_OPT_IGNORE_DIRTY_SUBMODULES (1 << 26)
-#define DIFF_OPT_OVERRIDE_SUBMODULE_CONFIG (1 << 27)
-#define DIFF_OPT_DIRSTAT_BY_LINE     (1 << 28)
-#define DIFF_OPT_FUNCCONTEXT         (1 << 29)
-#define DIFF_OPT_PICKAXE_IGNORE_CASE (1 << 30)
-#define DIFF_OPT_DEFAULT_FOLLOW_RENAMES (1U << 31)
+#define DIFF_FLAGS_INIT { 0 }
+struct diff_flags {
+	unsigned RECURSIVE:1;
+	unsigned TREE_IN_RECURSIVE:1;
+	unsigned BINARY:1;
+	unsigned TEXT:1;
+	unsigned FULL_INDEX:1;
+	unsigned SILENT_ON_REMOVE:1;
+	unsigned FIND_COPIES_HARDER:1;
+	unsigned FOLLOW_RENAMES:1;
+	unsigned RENAME_EMPTY:1;
+	unsigned HAS_CHANGES:1;
+	unsigned QUICK:1;
+	unsigned NO_INDEX:1;
+	unsigned ALLOW_EXTERNAL:1;
+	unsigned EXIT_WITH_STATUS:1;
+	unsigned REVERSE_DIFF:1;
+	unsigned CHECK_FAILED:1;
+	unsigned RELATIVE_NAME:1;
+	unsigned IGNORE_SUBMODULES:1;
+	unsigned DIRSTAT_CUMULATIVE:1;
+	unsigned DIRSTAT_BY_FILE:1;
+	unsigned ALLOW_TEXTCONV:1;
+	unsigned DIFF_FROM_CONTENTS:1;
+	unsigned DIRTY_SUBMODULES:1;
+	unsigned IGNORE_UNTRACKED_IN_SUBMODULES:1;
+	unsigned IGNORE_DIRTY_SUBMODULES:1;
+	unsigned OVERRIDE_SUBMODULE_CONFIG:1;
+	unsigned DIRSTAT_BY_LINE:1;
+	unsigned FUNCCONTEXT:1;
+	unsigned PICKAXE_IGNORE_CASE:1;
+	unsigned DEFAULT_FOLLOW_RENAMES:1;
+};
 
-#define DIFF_OPT_TST(opts, flag)    ((opts)->flags & DIFF_OPT_##flag)
-#define DIFF_OPT_TOUCHED(opts, flag)    ((opts)->touched_flags & DIFF_OPT_##flag)
-#define DIFF_OPT_SET(opts, flag)    (((opts)->flags |= DIFF_OPT_##flag),((opts)->touched_flags |= DIFF_OPT_##flag))
-#define DIFF_OPT_CLR(opts, flag)    (((opts)->flags &= ~DIFF_OPT_##flag),((opts)->touched_flags |= DIFF_OPT_##flag))
+static inline void diff_flags_or(struct diff_flags *a,
+				 const struct diff_flags *b)
+{
+	char *tmp_a = (char *)a;
+	const char *tmp_b = (const char *)b;
+	int i;
+
+	for (i = 0; i < sizeof(struct diff_flags); i++)
+		tmp_a[i] |= tmp_b[i];
+}
+
+#define DIFF_OPT_TST(opts, flag)	((opts)->flags.flag)
+#define DIFF_OPT_TOUCHED(opts, flag)	((opts)->touched_flags.flag)
+#define DIFF_OPT_SET(opts, flag)	(((opts)->flags.flag = 1),((opts)->touched_flags.flag = 1))
+#define DIFF_OPT_CLR(opts, flag)	(((opts)->flags.flag = 0),((opts)->touched_flags.flag = 1))
+
 #define DIFF_XDL_TST(opts, flag)    ((opts)->xdl_opts & XDF_##flag)
 #define DIFF_XDL_SET(opts, flag)    ((opts)->xdl_opts |= XDF_##flag)
 #define DIFF_XDL_CLR(opts, flag)    ((opts)->xdl_opts &= ~XDF_##flag)
@@ -122,8 +136,8 @@ struct diff_options {
 	const char *a_prefix, *b_prefix;
 	const char *line_prefix;
 	size_t line_prefix_length;
-	unsigned flags;
-	unsigned touched_flags;
+	struct diff_flags flags;
+	struct diff_flags touched_flags;
 
 	/* diff-filter bits */
 	unsigned int filter;
@@ -388,7 +402,8 @@ extern int diff_result_code(struct diff_options *, int);
 
 extern void diff_no_index(struct rev_info *, int, const char **);
 
-extern int index_differs_from(const char *def, int diff_flags, int ita_invisible_in_index);
+extern int index_differs_from(const char *def, const struct diff_flags *flags,
+			      int ita_invisible_in_index);
 
 /*
  * Fill the contents of the filespec "df", respecting any textconv defined by

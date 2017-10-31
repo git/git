@@ -71,7 +71,7 @@ static int match_stat_with_submodule(struct diff_options *diffopt,
 {
 	int changed = ce_match_stat(ce, st, ce_option);
 	if (S_ISGITLINK(ce->ce_mode)) {
-		unsigned orig_flags = diffopt->flags;
+		struct diff_flags orig_flags = diffopt->flags;
 		if (!DIFF_OPT_TST(diffopt, OVERRIDE_SUBMODULE_CONFIG))
 			set_diffopt_flags_from_submodule_config(diffopt, ce->name);
 		if (DIFF_OPT_TST(diffopt, IGNORE_SUBMODULES))
@@ -534,7 +534,7 @@ int do_diff_cache(const struct object_id *tree_oid, struct diff_options *opt)
 	return 0;
 }
 
-int index_differs_from(const char *def, int diff_flags,
+int index_differs_from(const char *def, const struct diff_flags *flags,
 		       int ita_invisible_in_index)
 {
 	struct rev_info rev;
@@ -546,7 +546,8 @@ int index_differs_from(const char *def, int diff_flags,
 	setup_revisions(0, NULL, &rev, &opt);
 	DIFF_OPT_SET(&rev.diffopt, QUICK);
 	DIFF_OPT_SET(&rev.diffopt, EXIT_WITH_STATUS);
-	rev.diffopt.flags |= diff_flags;
+	if (flags)
+		diff_flags_or(&rev.diffopt.flags, flags);
 	rev.diffopt.ita_invisible_in_index = ita_invisible_in_index;
 	run_diff_index(&rev, 1);
 	object_array_clear(&rev.pending);
