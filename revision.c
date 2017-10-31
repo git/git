@@ -410,7 +410,7 @@ static void file_add_remove(struct diff_options *options,
 
 	tree_difference |= diff;
 	if (tree_difference == REV_TREE_DIFFERENT)
-		options->flags.HAS_CHANGES = 1;
+		options->flags.has_changes = 1;
 }
 
 static void file_change(struct diff_options *options,
@@ -422,7 +422,7 @@ static void file_change(struct diff_options *options,
 		 unsigned old_dirty_submodule, unsigned new_dirty_submodule)
 {
 	tree_difference = REV_TREE_DIFFERENT;
-	options->flags.HAS_CHANGES = 1;
+	options->flags.has_changes = 1;
 }
 
 static int rev_compare_tree(struct rev_info *revs,
@@ -455,7 +455,7 @@ static int rev_compare_tree(struct rev_info *revs,
 	}
 
 	tree_difference = REV_TREE_SAME;
-	revs->pruning.flags.HAS_CHANGES = 0;
+	revs->pruning.flags.has_changes = 0;
 	if (diff_tree_oid(&t1->object.oid, &t2->object.oid, "",
 			   &revs->pruning) < 0)
 		return REV_TREE_DIFFERENT;
@@ -471,7 +471,7 @@ static int rev_same_tree_as_empty(struct rev_info *revs, struct commit *commit)
 		return 0;
 
 	tree_difference = REV_TREE_SAME;
-	revs->pruning.flags.HAS_CHANGES = 0;
+	revs->pruning.flags.has_changes = 0;
 	retval = diff_tree_oid(NULL, &t1->object.oid, "", &revs->pruning);
 
 	return retval >= 0 && (tree_difference == REV_TREE_SAME);
@@ -1403,8 +1403,8 @@ void init_revisions(struct rev_info *revs, const char *prefix)
 	revs->abbrev = DEFAULT_ABBREV;
 	revs->ignore_merges = 1;
 	revs->simplify_history = 1;
-	revs->pruning.flags.RECURSIVE = 1;
-	revs->pruning.flags.QUICK = 1;
+	revs->pruning.flags.recursive = 1;
+	revs->pruning.flags.quick = 1;
 	revs->pruning.add_remove = file_add_remove;
 	revs->pruning.change = file_change;
 	revs->sort_order = REV_SORT_IN_GRAPH_ORDER;
@@ -1917,11 +1917,11 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		die("--unpacked=<packfile> no longer supported.");
 	} else if (!strcmp(arg, "-r")) {
 		revs->diff = 1;
-		revs->diffopt.flags.RECURSIVE = 1;
+		revs->diffopt.flags.recursive = 1;
 	} else if (!strcmp(arg, "-t")) {
 		revs->diff = 1;
-		revs->diffopt.flags.RECURSIVE = 1;
-		revs->diffopt.flags.TREE_IN_RECURSIVE = 1;
+		revs->diffopt.flags.recursive = 1;
+		revs->diffopt.flags.tree_in_recursive = 1;
 	} else if (!strcmp(arg, "-m")) {
 		revs->ignore_merges = 0;
 	} else if (!strcmp(arg, "-c")) {
@@ -2066,7 +2066,7 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->grep_filter.pattern_type_option = GREP_PATTERN_TYPE_ERE;
 	} else if (!strcmp(arg, "--regexp-ignore-case") || !strcmp(arg, "-i")) {
 		revs->grep_filter.ignore_case = 1;
-		revs->diffopt.flags.PICKAXE_IGNORE_CASE = 1;
+		revs->diffopt.flags.pickaxe_ignore_case = 1;
 	} else if (!strcmp(arg, "--fixed-strings") || !strcmp(arg, "-F")) {
 		revs->grep_filter.pattern_type_option = GREP_PATTERN_TYPE_FIXED;
 	} else if (!strcmp(arg, "--perl-regexp") || !strcmp(arg, "-P")) {
@@ -2399,7 +2399,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 	/* Pickaxe, diff-filter and rename following need diffs */
 	if (revs->diffopt.pickaxe ||
 	    revs->diffopt.filter ||
-	    revs->diffopt.flags.FOLLOW_RENAMES)
+	    revs->diffopt.flags.follow_renames)
 		revs->diff = 1;
 
 	if (revs->topo_order)
@@ -2408,7 +2408,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 	if (revs->prune_data.nr) {
 		copy_pathspec(&revs->pruning.pathspec, &revs->prune_data);
 		/* Can't prune commits with rename following: the paths change.. */
-		if (!revs->diffopt.flags.FOLLOW_RENAMES)
+		if (!revs->diffopt.flags.follow_renames)
 			revs->prune = 1;
 		if (!revs->full_diff)
 			copy_pathspec(&revs->diffopt.pathspec,

@@ -121,16 +121,16 @@ static void cmd_log_init_defaults(struct rev_info *rev)
 	if (fmt_pretty)
 		get_commit_format(fmt_pretty, rev);
 	if (default_follow)
-		rev->diffopt.flags.DEFAULT_FOLLOW_RENAMES = 1;
+		rev->diffopt.flags.default_follow_renames = 1;
 	rev->verbose_header = 1;
-	rev->diffopt.flags.RECURSIVE = 1;
+	rev->diffopt.flags.recursive = 1;
 	rev->diffopt.stat_width = -1; /* use full terminal width */
 	rev->diffopt.stat_graph_width = -1; /* respect statGraphWidth config */
 	rev->abbrev_commit = default_abbrev_commit;
 	rev->show_root_diff = default_show_root;
 	rev->subject_prefix = fmt_patch_subject_prefix;
 	rev->show_signature = default_show_signature;
-	rev->diffopt.flags.ALLOW_TEXTCONV = 1;
+	rev->diffopt.flags.allow_textconv = 1;
 
 	if (default_date_mode)
 		parse_date_format(default_date_mode, &rev->date_mode);
@@ -181,7 +181,7 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 		init_display_notes(&rev->notes_opt);
 
 	if (rev->diffopt.pickaxe || rev->diffopt.filter ||
-	    rev->diffopt.flags.FOLLOW_RENAMES)
+	    rev->diffopt.flags.follow_renames)
 		rev->always_show_header = 0;
 
 	if (source)
@@ -391,7 +391,7 @@ static int cmd_log_walk(struct rev_info *rev)
 		fclose(rev->diffopt.file);
 
 	if (rev->diffopt.output_format & DIFF_FORMAT_CHECKDIFF &&
-	    rev->diffopt.flags.CHECK_FAILED) {
+	    rev->diffopt.flags.check_failed) {
 		return 02;
 	}
 	return diff_result_code(&rev->diffopt, 0);
@@ -483,8 +483,8 @@ static int show_blob_object(const struct object_id *oid, struct rev_info *rev, c
 	unsigned long size;
 
 	fflush(rev->diffopt.file);
-	if (!rev->diffopt.flags.TEXTCONV_SET_VIA_CMDLINE ||
-	    !rev->diffopt.flags.ALLOW_TEXTCONV)
+	if (!rev->diffopt.flags.textconv_set_via_cmdline ||
+	    !rev->diffopt.flags.allow_textconv)
 		return stream_blob_to_fd(1, oid, NULL, 0);
 
 	if (get_oid_with_context(obj_name, GET_OID_RECORD_PATH,
@@ -666,9 +666,9 @@ int cmd_log_reflog(int argc, const char **argv, const char *prefix)
 static void log_setup_revisions_tweak(struct rev_info *rev,
 				      struct setup_revision_opt *opt)
 {
-	if (rev->diffopt.flags.DEFAULT_FOLLOW_RENAMES &&
+	if (rev->diffopt.flags.default_follow_renames &&
 	    rev->prune_data.nr == 1)
-		rev->diffopt.flags.FOLLOW_RENAMES = 1;
+		rev->diffopt.flags.follow_renames = 1;
 
 	/* Turn --cc/-c into -p --cc/-c when -p was not given */
 	if (!rev->diffopt.output_format && rev->combine_merges)
@@ -1340,7 +1340,7 @@ static void prepare_bases(struct base_tree_info *bases,
 		return;
 
 	diff_setup(&diffopt);
-	diffopt.flags.RECURSIVE = 1;
+	diffopt.flags.recursive = 1;
 	diff_setup_done(&diffopt);
 
 	oidcpy(&bases->base_commit, &base->object.oid);
@@ -1511,7 +1511,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	rev.verbose_header = 1;
 	rev.diff = 1;
 	rev.max_parents = 1;
-	rev.diffopt.flags.RECURSIVE = 1;
+	rev.diffopt.flags.recursive = 1;
 	rev.subject_prefix = fmt_patch_subject_prefix;
 	memset(&s_r_opt, 0, sizeof(s_r_opt));
 	s_r_opt.def = "HEAD";
@@ -1612,8 +1612,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 
 	rev.zero_commit = zero_commit;
 
-	if (!rev.diffopt.flags.TEXT && !no_binary_diff)
-		rev.diffopt.flags.BINARY = 1;
+	if (!rev.diffopt.flags.text && !no_binary_diff)
+		rev.diffopt.flags.binary = 1;
 
 	if (rev.show_notes)
 		init_display_notes(&rev.notes_opt);

@@ -708,8 +708,8 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 	git_config(git_blame_config, &output_option);
 	init_revisions(&revs, NULL);
 	revs.date_mode = blame_date_mode;
-	revs.diffopt.flags.ALLOW_TEXTCONV = 1;
-	revs.diffopt.flags.FOLLOW_RENAMES = 1;
+	revs.diffopt.flags.allow_textconv = 1;
+	revs.diffopt.flags.follow_renames = 1;
 
 	save_commit_buffer = 0;
 	dashdash_pos = 0;
@@ -734,9 +734,9 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 		parse_revision_opt(&revs, &ctx, options, blame_opt_usage);
 	}
 parse_done:
-	no_whole_file_rename = !revs.diffopt.flags.FOLLOW_RENAMES;
+	no_whole_file_rename = !revs.diffopt.flags.follow_renames;
 	xdl_opts |= revs.diffopt.xdl_opts & XDF_INDENT_HEURISTIC;
-	revs.diffopt.flags.FOLLOW_RENAMES = 0;
+	revs.diffopt.flags.follow_renames = 0;
 	argc = parse_options_end(&ctx);
 
 	if (incremental || (output_option & OUTPUT_PORCELAIN)) {
@@ -803,7 +803,7 @@ parse_done:
 	}
 	blame_date_width -= 1; /* strip the null */
 
-	if (revs.diffopt.flags.FIND_COPIES_HARDER)
+	if (revs.diffopt.flags.find_copies_harder)
 		opt |= (PICKAXE_BLAME_COPY | PICKAXE_BLAME_MOVE |
 			PICKAXE_BLAME_COPY_HARDER);
 

@@ -559,12 +559,12 @@ static void wt_status_collect_changes_worktree(struct wt_status *s)
 	init_revisions(&rev, NULL);
 	setup_revisions(0, NULL, &rev, NULL);
 	rev.diffopt.output_format |= DIFF_FORMAT_CALLBACK;
-	rev.diffopt.flags.DIRTY_SUBMODULES = 1;
+	rev.diffopt.flags.dirty_submodules = 1;
 	rev.diffopt.ita_invisible_in_index = 1;
 	if (!s->show_untracked_files)
-		rev.diffopt.flags.IGNORE_UNTRACKED_IN_SUBMODULES = 1;
+		rev.diffopt.flags.ignore_untracked_in_submodules = 1;
 	if (s->ignore_submodule_arg) {
-		rev.diffopt.flags.OVERRIDE_SUBMODULE_CONFIG = 1;
+		rev.diffopt.flags.override_submodule_config = 1;
 		handle_ignore_submodules_arg(&rev.diffopt, s->ignore_submodule_arg);
 	}
 	rev.diffopt.format_callback = wt_status_collect_changed_cb;
@@ -583,7 +583,7 @@ static void wt_status_collect_changes_index(struct wt_status *s)
 	opt.def = s->is_initial ? EMPTY_TREE_SHA1_HEX : s->reference;
 	setup_revisions(0, NULL, &rev, &opt);
 
-	rev.diffopt.flags.OVERRIDE_SUBMODULE_CONFIG = 1;
+	rev.diffopt.flags.override_submodule_config = 1;
 	rev.diffopt.ita_invisible_in_index = 1;
 	if (s->ignore_submodule_arg) {
 		handle_ignore_submodules_arg(&rev.diffopt, s->ignore_submodule_arg);
@@ -949,7 +949,7 @@ static void wt_longstatus_print_verbose(struct wt_status *s)
 	const char *c = color(WT_STATUS_HEADER, s);
 
 	init_revisions(&rev, NULL);
-	rev.diffopt.flags.ALLOW_TEXTCONV = 1;
+	rev.diffopt.flags.allow_textconv = 1;
 	rev.diffopt.ita_invisible_in_index = 1;
 
 	memset(&opt, 0, sizeof(opt));
@@ -2263,8 +2263,8 @@ int has_unstaged_changes(int ignore_submodules)
 
 	init_revisions(&rev_info, NULL);
 	if (ignore_submodules)
-		rev_info.diffopt.flags.IGNORE_SUBMODULES = 1;
-	rev_info.diffopt.flags.QUICK = 1;
+		rev_info.diffopt.flags.ignore_submodules = 1;
+	rev_info.diffopt.flags.quick = 1;
 	diff_setup_done(&rev_info.diffopt);
 	result = run_diff_files(&rev_info, 0);
 	return diff_result_code(&rev_info.diffopt, result);
@@ -2283,8 +2283,8 @@ int has_uncommitted_changes(int ignore_submodules)
 
 	init_revisions(&rev_info, NULL);
 	if (ignore_submodules)
-		rev_info.diffopt.flags.IGNORE_SUBMODULES = 1;
-	rev_info.diffopt.flags.QUICK = 1;
+		rev_info.diffopt.flags.ignore_submodules = 1;
+	rev_info.diffopt.flags.quick = 1;
 	add_head_to_pending(&rev_info);
 	diff_setup_done(&rev_info.diffopt);
 	result = run_diff_index(&rev_info, 1);

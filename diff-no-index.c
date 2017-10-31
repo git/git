@@ -184,7 +184,7 @@ static int queue_diff(struct diff_options *o,
 	} else {
 		struct diff_filespec *d1, *d2;
 
-		if (o->flags.REVERSE_DIFF) {
+		if (o->flags.reverse_diff) {
 			SWAP(mode1, mode2);
 			SWAP(name1, name2);
 		}
@@ -276,16 +276,16 @@ void diff_no_index(struct rev_info *revs,
 	if (!revs->diffopt.output_format)
 		revs->diffopt.output_format = DIFF_FORMAT_PATCH;
 
-	revs->diffopt.flags.NO_INDEX = 1;
+	revs->diffopt.flags.no_index = 1;
 
-	revs->diffopt.flags.RELATIVE_NAME = 1;
+	revs->diffopt.flags.relative_name = 1;
 	revs->diffopt.prefix = prefix;
 
 	revs->max_count = -2;
 	diff_setup_done(&revs->diffopt);
 
 	setup_diff_pager(&revs->diffopt);
-	revs->diffopt.flags.EXIT_WITH_STATUS = 1;
+	revs->diffopt.flags.exit_with_status = 1;
 
 	if (queue_diff(&revs->diffopt, paths[0], paths[1]))
 		exit(1);

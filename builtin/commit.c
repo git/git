@@ -913,10 +913,10 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 			 * be really confusing.
 			 */
 			struct diff_flags flags = DIFF_FLAGS_INIT;
-			flags.OVERRIDE_SUBMODULE_CONFIG = 1;
+			flags.override_submodule_config = 1;
 			if (ignore_submodule_arg &&
 			    !strcmp(ignore_submodule_arg, "all"))
-				flags.IGNORE_SUBMODULES = 1;
+				flags.ignore_submodules = 1;
 			commitable = index_differs_from(parent, &flags, 1);
 		}
 	}

@@ -72,14 +72,14 @@ static int match_stat_with_submodule(struct diff_options *diffopt,
 	int changed = ce_match_stat(ce, st, ce_option);
 	if (S_ISGITLINK(ce->ce_mode)) {
 		struct diff_flags orig_flags = diffopt->flags;
-		if (!diffopt->flags.OVERRIDE_SUBMODULE_CONFIG)
+		if (!diffopt->flags.override_submodule_config)
 			set_diffopt_flags_from_submodule_config(diffopt, ce->name);
-		if (diffopt->flags.IGNORE_SUBMODULES)
+		if (diffopt->flags.ignore_submodules)
 			changed = 0;
-		else if (!diffopt->flags.IGNORE_DIRTY_SUBMODULES &&
-			 (!changed || diffopt->flags.DIRTY_SUBMODULES))
+		else if (!diffopt->flags.ignore_dirty_submodules &&
+			 (!changed || diffopt->flags.dirty_submodules))
 			*dirty_submodule = is_submodule_modified(ce->name,
-								 diffopt->flags.IGNORE_UNTRACKED_IN_SUBMODULES);
+								 diffopt->flags.ignore_untracked_in_submodules);
 		diffopt->flags = orig_flags;
 	}
 	return changed;
@@ -229,7 +229,7 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 
 		if (!changed && !dirty_submodule) {
 			ce_mark_uptodate(ce);
-			if (!revs->diffopt.flags.FIND_COPIES_HARDER)
+			if (!revs->diffopt.flags.find_copies_harder)
 				continue;
 		}
 		oldmode = ce->ce_mode;
@@ -363,7 +363,7 @@ static int show_modified(struct rev_info *revs,
 
 	oldmode = old->ce_mode;
 	if (mode == oldmode && !oidcmp(oid, &old->oid) && !dirty_submodule &&
-	    !revs->diffopt.flags.FIND_COPIES_HARDER)
+	    !revs->diffopt.flags.find_copies_harder)
 		return 0;
 
 	diff_change(&revs->diffopt, oldmode, mode,
@@ -494,7 +494,7 @@ static int diff_cache(struct rev_info *revs,
 	opts.head_idx = 1;
 	opts.index_only = cached;
 	opts.diff_index_cached = (cached &&
-				  !revs->diffopt.flags.FIND_COPIES_HARDER);
+				  !revs->diffopt.flags.find_copies_harder);
 	opts.merge = 1;
 	opts.fn = oneway_diff;
 	opts.unpack_data = revs;
@@ -545,12 +545,12 @@ int index_differs_from(const char *def, const struct diff_flags *flags,
 	memset(&opt, 0, sizeof(opt));
 	opt.def = def;
 	setup_revisions(0, NULL, &rev, &opt);
-	rev.diffopt.flags.QUICK = 1;
-	rev.diffopt.flags.EXIT_WITH_STATUS = 1;
+	rev.diffopt.flags.quick = 1;
+	rev.diffopt.flags.exit_with_status = 1;
 	if (flags)
 		diff_flags_or(&rev.diffopt.flags, flags);
 	rev.diffopt.ita_invisible_in_index = ita_invisible_in_index;
 	run_diff_index(&rev, 1);
 	object_array_clear(&rev.pending);
-	return (rev.diffopt.flags.HAS_CHANGES != 0);
+	return (rev.diffopt.flags.has_changes != 0);
 }
