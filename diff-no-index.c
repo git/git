@@ -276,16 +276,16 @@ void diff_no_index(struct rev_info *revs,
 	if (!revs->diffopt.output_format)
 		revs->diffopt.output_format = DIFF_FORMAT_PATCH;
 
-	DIFF_OPT_SET(&revs->diffopt, NO_INDEX);
+	revs->diffopt.flags.NO_INDEX = 1;
 
-	DIFF_OPT_SET(&revs->diffopt, RELATIVE_NAME);
+	revs->diffopt.flags.RELATIVE_NAME = 1;
 	revs->diffopt.prefix = prefix;
 
 	revs->max_count = -2;
 	diff_setup_done(&revs->diffopt);
 
 	setup_diff_pager(&revs->diffopt);
-	DIFF_OPT_SET(&revs->diffopt, EXIT_WITH_STATUS);
+	revs->diffopt.flags.EXIT_WITH_STATUS = 1;
 
 	if (queue_diff(&revs->diffopt, paths[0], paths[1]))
 		exit(1);

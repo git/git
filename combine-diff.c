@@ -1413,7 +1413,7 @@ void diff_tree_combined(const struct object_id *oid,
 
 	diffopts = *opt;
 	copy_pathspec(&diffopts.pathspec, &opt->pathspec);
-	DIFF_OPT_SET(&diffopts, RECURSIVE);
+	diffopts.flags.RECURSIVE = 1;
 	DIFF_OPT_CLR(&diffopts, ALLOW_EXTERNAL);
 
 	/* find set of paths that everybody touches

@@ -608,8 +608,8 @@ static void try_to_follow_renames(const struct object_id *old_oid,
 	q->nr = 0;
 
 	diff_setup(&diff_opts);
-	DIFF_OPT_SET(&diff_opts, RECURSIVE);
-	DIFF_OPT_SET(&diff_opts, FIND_COPIES_HARDER);
+	diff_opts.flags.RECURSIVE = 1;
+	diff_opts.flags.FIND_COPIES_HARDER = 1;
 	diff_opts.output_format = DIFF_FORMAT_NO_OUTPUT;
 	diff_opts.single_follow = opt->pathspec.items[0].match;
 	diff_opts.break_opt = opt->break_opt;

@@ -183,7 +183,7 @@ void set_diffopt_flags_from_submodule_config(struct diff_options *diffopt,
 		if (ignore)
 			handle_ignore_submodules_arg(diffopt, ignore);
 		else if (is_gitmodules_unmerged(&the_index))
-			DIFF_OPT_SET(diffopt, IGNORE_SUBMODULES);
+			diffopt->flags.IGNORE_SUBMODULES = 1;
 	}
 }
 
@@ -407,11 +407,11 @@ void handle_ignore_submodules_arg(struct diff_options *diffopt,
 	DIFF_OPT_CLR(diffopt, IGNORE_DIRTY_SUBMODULES);
 
 	if (!strcmp(arg, "all"))
-		DIFF_OPT_SET(diffopt, IGNORE_SUBMODULES);
+		diffopt->flags.IGNORE_SUBMODULES = 1;
 	else if (!strcmp(arg, "untracked"))
-		DIFF_OPT_SET(diffopt, IGNORE_UNTRACKED_IN_SUBMODULES);
+		diffopt->flags.IGNORE_UNTRACKED_IN_SUBMODULES = 1;
 	else if (!strcmp(arg, "dirty"))
-		DIFF_OPT_SET(diffopt, IGNORE_DIRTY_SUBMODULES);
+		diffopt->flags.IGNORE_DIRTY_SUBMODULES = 1;
 	else if (strcmp(arg, "none"))
 		die("bad --ignore-submodules argument: %s", arg);
 }

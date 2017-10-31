@@ -127,15 +127,15 @@ static int parse_dirstat_params(struct diff_options *options, const char *params
 			DIFF_OPT_CLR(options, DIRSTAT_BY_LINE);
 			DIFF_OPT_CLR(options, DIRSTAT_BY_FILE);
 		} else if (!strcmp(p, "lines")) {
-			DIFF_OPT_SET(options, DIRSTAT_BY_LINE);
+			options->flags.DIRSTAT_BY_LINE = 1;
 			DIFF_OPT_CLR(options, DIRSTAT_BY_FILE);
 		} else if (!strcmp(p, "files")) {
 			DIFF_OPT_CLR(options, DIRSTAT_BY_LINE);
-			DIFF_OPT_SET(options, DIRSTAT_BY_FILE);
+			options->flags.DIRSTAT_BY_FILE = 1;
 		} else if (!strcmp(p, "noncumulative")) {
 			DIFF_OPT_CLR(options, DIRSTAT_CUMULATIVE);
 		} else if (!strcmp(p, "cumulative")) {
-			DIFF_OPT_SET(options, DIRSTAT_CUMULATIVE);
+			options->flags.DIRSTAT_CUMULATIVE = 1;
 		} else if (isdigit(*p)) {
 			char *end;
 			int permille = strtoul(p, &end, 10) * 10;
@@ -3447,7 +3447,7 @@ static void builtin_checkdiff(const char *name_a, const char *name_b,
 	diff_free_filespec_data(one);
 	diff_free_filespec_data(two);
 	if (data.status)
-		DIFF_OPT_SET(o, CHECK_FAILED);
+		o->flags.CHECK_FAILED = 1;
 }
 
 struct diff_filespec *alloc_filespec(const char *path)
@@ -4152,7 +4152,7 @@ void diff_setup(struct diff_options *options)
 	options->context = diff_context_default;
 	options->interhunkcontext = diff_interhunk_context_default;
 	options->ws_error_highlight = ws_error_highlight_default;
-	DIFF_OPT_SET(options, RENAME_EMPTY);
+	options->flags.RENAME_EMPTY = 1;
 
 	/* pathchange left =NULL by default */
 	options->change = diff_change;
@@ -4203,7 +4203,7 @@ void diff_setup_done(struct diff_options *options)
 	if (DIFF_XDL_TST(options, IGNORE_WHITESPACE) ||
 	    DIFF_XDL_TST(options, IGNORE_WHITESPACE_CHANGE) ||
 	    DIFF_XDL_TST(options, IGNORE_WHITESPACE_AT_EOL))
-		DIFF_OPT_SET(options, DIFF_FROM_CONTENTS);
+		options->flags.DIFF_FROM_CONTENTS = 1;
 	else
 		DIFF_OPT_CLR(options, DIFF_FROM_CONTENTS);
 
@@ -4240,18 +4240,18 @@ void diff_setup_done(struct diff_options *options)
 				      DIFF_FORMAT_DIRSTAT |
 				      DIFF_FORMAT_SUMMARY |
 				      DIFF_FORMAT_CHECKDIFF))
-		DIFF_OPT_SET(options, RECURSIVE);
+		options->flags.RECURSIVE = 1;
 	/*
 	 * Also pickaxe would not work very well if you do not say recursive
 	 */
 	if (options->pickaxe)
-		DIFF_OPT_SET(options, RECURSIVE);
+		options->flags.RECURSIVE = 1;
 	/*
 	 * When patches are generated, submodules diffed against the work tree
 	 * must be checked for dirtiness too so it can be shown in the output
 	 */
 	if (options->output_format & DIFF_FORMAT_PATCH)
-		DIFF_OPT_SET(options, DIRTY_SUBMODULES);
+		options->flags.DIRTY_SUBMODULES = 1;
 
 	if (options->detect_rename && options->rename_limit < 0)
 		options->rename_limit = diff_rename_limit_default;
@@ -4275,7 +4275,7 @@ void diff_setup_done(struct diff_options *options)
 	 */
 	if (options->flags.QUICK) {
 		options->output_format = DIFF_FORMAT_NO_OUTPUT;
-		DIFF_OPT_SET(options, EXIT_WITH_STATUS);
+		options->flags.EXIT_WITH_STATUS = 1;
 	}
 
 	options->diff_path_counter = 0;
@@ -4630,7 +4630,7 @@ int diff_opt_parse(struct diff_options *options,
 	else if (starts_with(arg, "-C") || starts_with(arg, "--find-copies=") ||
 		 !strcmp(arg, "--find-copies")) {
 		if (options->detect_rename == DIFF_DETECT_COPY)
-			DIFF_OPT_SET(options, FIND_COPIES_HARDER);
+			options->flags.FIND_COPIES_HARDER = 1;
 		if ((options->rename_score = diff_scoreopt_parse(arg)) == -1)
 			return error("invalid argument to -C: %s", arg+2);
 		options->detect_rename = DIFF_DETECT_COPY;
@@ -4638,13 +4638,13 @@ int diff_opt_parse(struct diff_options *options,
 	else if (!strcmp(arg, "--no-renames"))
 		options->detect_rename = 0;
 	else if (!strcmp(arg, "--rename-empty"))
-		DIFF_OPT_SET(options, RENAME_EMPTY);
+		options->flags.RENAME_EMPTY = 1;
 	else if (!strcmp(arg, "--no-rename-empty"))
 		DIFF_OPT_CLR(options, RENAME_EMPTY);
 	else if (!strcmp(arg, "--relative"))
-		DIFF_OPT_SET(options, RELATIVE_NAME);
+		options->flags.RELATIVE_NAME = 1;
 	else if (skip_prefix(arg, "--relative=", &arg)) {
-		DIFF_OPT_SET(options, RELATIVE_NAME);
+		options->flags.RELATIVE_NAME = 1;
 		options->prefix = arg;
 	}
 
@@ -4684,18 +4684,18 @@ int diff_opt_parse(struct diff_options *options,
 	/* flags options */
 	else if (!strcmp(arg, "--binary")) {
 		enable_patch_output(&options->output_format);
-		DIFF_OPT_SET(options, BINARY);
+		options->flags.BINARY = 1;
 	}
 	else if (!strcmp(arg, "--full-index"))
-		DIFF_OPT_SET(options, FULL_INDEX);
+		options->flags.FULL_INDEX = 1;
 	else if (!strcmp(arg, "-a") || !strcmp(arg, "--text"))
-		DIFF_OPT_SET(options, TEXT);
+		options->flags.TEXT = 1;
 	else if (!strcmp(arg, "-R"))
-		DIFF_OPT_SET(options, REVERSE_DIFF);
+		options->flags.REVERSE_DIFF = 1;
 	else if (!strcmp(arg, "--find-copies-harder"))
-		DIFF_OPT_SET(options, FIND_COPIES_HARDER);
+		options->flags.FIND_COPIES_HARDER = 1;
 	else if (!strcmp(arg, "--follow"))
-		DIFF_OPT_SET(options, FOLLOW_RENAMES);
+		options->flags.FOLLOW_RENAMES = 1;
 	else if (!strcmp(arg, "--no-follow")) {
 		DIFF_OPT_CLR(options, FOLLOW_RENAMES);
 		DIFF_OPT_CLR(options, DEFAULT_FOLLOW_RENAMES);
@@ -4755,23 +4755,23 @@ int diff_opt_parse(struct diff_options *options,
 		return argcount;
 	}
 	else if (!strcmp(arg, "--exit-code"))
-		DIFF_OPT_SET(options, EXIT_WITH_STATUS);
+		options->flags.EXIT_WITH_STATUS = 1;
 	else if (!strcmp(arg, "--quiet"))
-		DIFF_OPT_SET(options, QUICK);
+		options->flags.QUICK = 1;
 	else if (!strcmp(arg, "--ext-diff"))
-		DIFF_OPT_SET(options, ALLOW_EXTERNAL);
+		options->flags.ALLOW_EXTERNAL = 1;
 	else if (!strcmp(arg, "--no-ext-diff"))
 		DIFF_OPT_CLR(options, ALLOW_EXTERNAL);
 	else if (!strcmp(arg, "--textconv")) {
-		DIFF_OPT_SET(options, ALLOW_TEXTCONV);
-		DIFF_OPT_SET(options, TEXTCONV_SET_VIA_CMDLINE);
+		options->flags.ALLOW_TEXTCONV = 1;
+		options->flags.TEXTCONV_SET_VIA_CMDLINE = 1;
 	} else if (!strcmp(arg, "--no-textconv"))
 		DIFF_OPT_CLR(options, ALLOW_TEXTCONV);
 	else if (!strcmp(arg, "--ignore-submodules")) {
-		DIFF_OPT_SET(options, OVERRIDE_SUBMODULE_CONFIG);
+		options->flags.OVERRIDE_SUBMODULE_CONFIG = 1;
 		handle_ignore_submodules_arg(options, "all");
 	} else if (skip_prefix(arg, "--ignore-submodules=", &arg)) {
-		DIFF_OPT_SET(options, OVERRIDE_SUBMODULE_CONFIG);
+		options->flags.OVERRIDE_SUBMODULE_CONFIG = 1;
 		handle_ignore_submodules_arg(options, arg);
 	} else if (!strcmp(arg, "--submodule"))
 		options->submodule_format = DIFF_SUBMODULE_LOG;
@@ -4846,9 +4846,9 @@ int diff_opt_parse(struct diff_options *options,
 			 &options->interhunkcontext))
 		;
 	else if (!strcmp(arg, "-W"))
-		DIFF_OPT_SET(options, FUNCCONTEXT);
+		options->flags.FUNCCONTEXT = 1;
 	else if (!strcmp(arg, "--function-context"))
-		DIFF_OPT_SET(options, FUNCCONTEXT);
+		options->flags.FUNCCONTEXT = 1;
 	else if (!strcmp(arg, "--no-function-context"))
 		DIFF_OPT_CLR(options, FUNCCONTEXT);
 	else if ((argcount = parse_long_opt("output", av, &optarg))) {
@@ -5686,7 +5686,7 @@ free_queue:
 	 */
 	if (options->flags.DIFF_FROM_CONTENTS) {
 		if (options->found_changes)
-			DIFF_OPT_SET(options, HAS_CHANGES);
+			options->flags.HAS_CHANGES = 1;
 		else
 			DIFF_OPT_CLR(options, HAS_CHANGES);
 	}
@@ -5858,7 +5858,7 @@ void diffcore_std(struct diff_options *options)
 	diffcore_apply_filter(options);
 
 	if (diff_queued_diff.nr && !options->flags.DIFF_FROM_CONTENTS)
-		DIFF_OPT_SET(options, HAS_CHANGES);
+		options->flags.HAS_CHANGES = 1;
 	else
 		DIFF_OPT_CLR(options, HAS_CHANGES);
 
@@ -5952,7 +5952,7 @@ void diff_addremove(struct diff_options *options,
 
 	diff_queue(&diff_queued_diff, one, two);
 	if (!options->flags.DIFF_FROM_CONTENTS)
-		DIFF_OPT_SET(options, HAS_CHANGES);
+		options->flags.HAS_CHANGES = 1;
 }
 
 void diff_change(struct diff_options *options,
@@ -5996,7 +5996,7 @@ void diff_change(struct diff_options *options,
 	    !diff_filespec_check_stat_unmatch(p))
 		return;
 
-	DIFF_OPT_SET(options, HAS_CHANGES);
+	options->flags.HAS_CHANGES = 1;
 }
 
 struct diff_filepair *diff_unmerge(struct diff_options *options, const char *path)

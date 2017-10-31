@@ -541,7 +541,7 @@ static struct blame_origin *find_origin(struct commit *parent,
 	 * same and diff-tree is fairly efficient about this.
 	 */
 	diff_setup(&diff_opts);
-	DIFF_OPT_SET(&diff_opts, RECURSIVE);
+	diff_opts.flags.RECURSIVE = 1;
 	diff_opts.detect_rename = 0;
 	diff_opts.output_format = DIFF_FORMAT_NO_OUTPUT;
 	paths[0] = origin->path;
@@ -615,7 +615,7 @@ static struct blame_origin *find_rename(struct commit *parent,
 	int i;
 
 	diff_setup(&diff_opts);
-	DIFF_OPT_SET(&diff_opts, RECURSIVE);
+	diff_opts.flags.RECURSIVE = 1;
 	diff_opts.detect_rename = DIFF_DETECT_RENAME;
 	diff_opts.output_format = DIFF_FORMAT_NO_OUTPUT;
 	diff_opts.single_follow = origin->path;
@@ -1238,7 +1238,7 @@ static void find_copy_in_parent(struct blame_scoreboard *sb,
 		return; /* nothing remains for this target */
 
 	diff_setup(&diff_opts);
-	DIFF_OPT_SET(&diff_opts, RECURSIVE);
+	diff_opts.flags.RECURSIVE = 1;
 	diff_opts.output_format = DIFF_FORMAT_NO_OUTPUT;
 
 	diff_setup_done(&diff_opts);
@@ -1253,7 +1253,7 @@ static void find_copy_in_parent(struct blame_scoreboard *sb,
 	if ((opt & PICKAXE_BLAME_COPY_HARDEST)
 	    || ((opt & PICKAXE_BLAME_COPY_HARDER)
 		&& (!porigin || strcmp(target->path, porigin->path))))
-		DIFF_OPT_SET(&diff_opts, FIND_COPIES_HARDER);
+		diff_opts.flags.FIND_COPIES_HARDER = 1;
 
 	if (is_null_oid(&target->commit->object.oid))
 		do_diff_cache(&parent->tree->object.oid, &diff_opts);

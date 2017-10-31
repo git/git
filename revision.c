@@ -410,7 +410,7 @@ static void file_add_remove(struct diff_options *options,
 
 	tree_difference |= diff;
 	if (tree_difference == REV_TREE_DIFFERENT)
-		DIFF_OPT_SET(options, HAS_CHANGES);
+		options->flags.HAS_CHANGES = 1;
 }
 
 static void file_change(struct diff_options *options,
@@ -422,7 +422,7 @@ static void file_change(struct diff_options *options,
 		 unsigned old_dirty_submodule, unsigned new_dirty_submodule)
 {
 	tree_difference = REV_TREE_DIFFERENT;
-	DIFF_OPT_SET(options, HAS_CHANGES);
+	options->flags.HAS_CHANGES = 1;
 }
 
 static int rev_compare_tree(struct rev_info *revs,
@@ -1403,8 +1403,8 @@ void init_revisions(struct rev_info *revs, const char *prefix)
 	revs->abbrev = DEFAULT_ABBREV;
 	revs->ignore_merges = 1;
 	revs->simplify_history = 1;
-	DIFF_OPT_SET(&revs->pruning, RECURSIVE);
-	DIFF_OPT_SET(&revs->pruning, QUICK);
+	revs->pruning.flags.RECURSIVE = 1;
+	revs->pruning.flags.QUICK = 1;
 	revs->pruning.add_remove = file_add_remove;
 	revs->pruning.change = file_change;
 	revs->sort_order = REV_SORT_IN_GRAPH_ORDER;
@@ -1917,11 +1917,11 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		die("--unpacked=<packfile> no longer supported.");
 	} else if (!strcmp(arg, "-r")) {
 		revs->diff = 1;
-		DIFF_OPT_SET(&revs->diffopt, RECURSIVE);
+		revs->diffopt.flags.RECURSIVE = 1;
 	} else if (!strcmp(arg, "-t")) {
 		revs->diff = 1;
-		DIFF_OPT_SET(&revs->diffopt, RECURSIVE);
-		DIFF_OPT_SET(&revs->diffopt, TREE_IN_RECURSIVE);
+		revs->diffopt.flags.RECURSIVE = 1;
+		revs->diffopt.flags.TREE_IN_RECURSIVE = 1;
 	} else if (!strcmp(arg, "-m")) {
 		revs->ignore_merges = 0;
 	} else if (!strcmp(arg, "-c")) {
@@ -2066,7 +2066,7 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->grep_filter.pattern_type_option = GREP_PATTERN_TYPE_ERE;
 	} else if (!strcmp(arg, "--regexp-ignore-case") || !strcmp(arg, "-i")) {
 		revs->grep_filter.ignore_case = 1;
-		DIFF_OPT_SET(&revs->diffopt, PICKAXE_IGNORE_CASE);
+		revs->diffopt.flags.PICKAXE_IGNORE_CASE = 1;
 	} else if (!strcmp(arg, "--fixed-strings") || !strcmp(arg, "-F")) {
 		revs->grep_filter.pattern_type_option = GREP_PATTERN_TYPE_FIXED;
 	} else if (!strcmp(arg, "--perl-regexp") || !strcmp(arg, "-P")) {

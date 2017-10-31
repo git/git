@@ -121,16 +121,16 @@ static void cmd_log_init_defaults(struct rev_info *rev)
 	if (fmt_pretty)
 		get_commit_format(fmt_pretty, rev);
 	if (default_follow)
-		DIFF_OPT_SET(&rev->diffopt, DEFAULT_FOLLOW_RENAMES);
+		rev->diffopt.flags.DEFAULT_FOLLOW_RENAMES = 1;
 	rev->verbose_header = 1;
-	DIFF_OPT_SET(&rev->diffopt, RECURSIVE);
+	rev->diffopt.flags.RECURSIVE = 1;
 	rev->diffopt.stat_width = -1; /* use full terminal width */
 	rev->diffopt.stat_graph_width = -1; /* respect statGraphWidth config */
 	rev->abbrev_commit = default_abbrev_commit;
 	rev->show_root_diff = default_show_root;
 	rev->subject_prefix = fmt_patch_subject_prefix;
 	rev->show_signature = default_show_signature;
-	DIFF_OPT_SET(&rev->diffopt, ALLOW_TEXTCONV);
+	rev->diffopt.flags.ALLOW_TEXTCONV = 1;
 
 	if (default_date_mode)
 		parse_date_format(default_date_mode, &rev->date_mode);
@@ -668,7 +668,7 @@ static void log_setup_revisions_tweak(struct rev_info *rev,
 {
 	if (rev->diffopt.flags.DEFAULT_FOLLOW_RENAMES &&
 	    rev->prune_data.nr == 1)
-		DIFF_OPT_SET(&rev->diffopt, FOLLOW_RENAMES);
+		rev->diffopt.flags.FOLLOW_RENAMES = 1;
 
 	/* Turn --cc/-c into -p --cc/-c when -p was not given */
 	if (!rev->diffopt.output_format && rev->combine_merges)
@@ -1340,7 +1340,7 @@ static void prepare_bases(struct base_tree_info *bases,
 		return;
 
 	diff_setup(&diffopt);
-	DIFF_OPT_SET(&diffopt, RECURSIVE);
+	diffopt.flags.RECURSIVE = 1;
 	diff_setup_done(&diffopt);
 
 	oidcpy(&bases->base_commit, &base->object.oid);
@@ -1511,7 +1511,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	rev.verbose_header = 1;
 	rev.diff = 1;
 	rev.max_parents = 1;
-	DIFF_OPT_SET(&rev.diffopt, RECURSIVE);
+	rev.diffopt.flags.RECURSIVE = 1;
 	rev.subject_prefix = fmt_patch_subject_prefix;
 	memset(&s_r_opt, 0, sizeof(s_r_opt));
 	s_r_opt.def = "HEAD";
@@ -1613,7 +1613,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	rev.zero_commit = zero_commit;
 
 	if (!rev.diffopt.flags.TEXT && !no_binary_diff)
-		DIFF_OPT_SET(&rev.diffopt, BINARY);
+		rev.diffopt.flags.BINARY = 1;
 
 	if (rev.show_notes)
 		init_display_notes(&rev.notes_opt);

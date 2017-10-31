@@ -708,8 +708,8 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 	git_config(git_blame_config, &output_option);
 	init_revisions(&revs, NULL);
 	revs.date_mode = blame_date_mode;
-	DIFF_OPT_SET(&revs.diffopt, ALLOW_TEXTCONV);
-	DIFF_OPT_SET(&revs.diffopt, FOLLOW_RENAMES);
+	revs.diffopt.flags.ALLOW_TEXTCONV = 1;
+	revs.diffopt.flags.FOLLOW_RENAMES = 1;
 
 	save_commit_buffer = 0;
 	dashdash_pos = 0;

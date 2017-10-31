@@ -545,8 +545,8 @@ int index_differs_from(const char *def, const struct diff_flags *flags,
 	memset(&opt, 0, sizeof(opt));
 	opt.def = def;
 	setup_revisions(0, NULL, &rev, &opt);
-	DIFF_OPT_SET(&rev.diffopt, QUICK);
-	DIFF_OPT_SET(&rev.diffopt, EXIT_WITH_STATUS);
+	rev.diffopt.flags.QUICK = 1;
+	rev.diffopt.flags.EXIT_WITH_STATUS = 1;
 	if (flags)
 		diff_flags_or(&rev.diffopt.flags, flags);
 	rev.diffopt.ita_invisible_in_index = ita_invisible_in_index;

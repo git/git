@@ -350,8 +350,8 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	rev.diffopt.stat_graph_width = -1;
 
 	/* Default to let external and textconv be used */
-	DIFF_OPT_SET(&rev.diffopt, ALLOW_EXTERNAL);
-	DIFF_OPT_SET(&rev.diffopt, ALLOW_TEXTCONV);
+	rev.diffopt.flags.ALLOW_EXTERNAL = 1;
+	rev.diffopt.flags.ALLOW_TEXTCONV = 1;
 
 	if (nongit)
 		die(_("Not a git repository"));
@@ -361,7 +361,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 		diff_setup_done(&rev.diffopt);
 	}
 
-	DIFF_OPT_SET(&rev.diffopt, RECURSIVE);
+	rev.diffopt.flags.RECURSIVE = 1;
 
 	setup_diff_pager(&rev.diffopt);
 
