@@ -184,7 +184,7 @@ static int queue_diff(struct diff_options *o,
 	} else {
 		struct diff_filespec *d1, *d2;
 
-		if (DIFF_OPT_TST(o, REVERSE_DIFF)) {
+		if (o->flags.REVERSE_DIFF) {
 			SWAP(mode1, mode2);
 			SWAP(name1, name2);
 		}

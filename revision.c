@@ -2399,7 +2399,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 	/* Pickaxe, diff-filter and rename following need diffs */
 	if (revs->diffopt.pickaxe ||
 	    revs->diffopt.filter ||
-	    DIFF_OPT_TST(&revs->diffopt, FOLLOW_RENAMES))
+	    revs->diffopt.flags.FOLLOW_RENAMES)
 		revs->diff = 1;
 
 	if (revs->topo_order)
@@ -2408,7 +2408,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 	if (revs->prune_data.nr) {
 		copy_pathspec(&revs->pruning.pathspec, &revs->prune_data);
 		/* Can't prune commits with rename following: the paths change.. */
-		if (!DIFF_OPT_TST(&revs->diffopt, FOLLOW_RENAMES))
+		if (!revs->diffopt.flags.FOLLOW_RENAMES)
 			revs->prune = 1;
 		if (!revs->full_diff)
 			copy_pathspec(&revs->diffopt.pathspec,

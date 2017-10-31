@@ -616,7 +616,7 @@ void show_submodule_inline_diff(struct diff_options *o, const char *path,
 	argv_array_pushf(&cp.args, "--color=%s", want_color(o->use_color) ?
 			 "always" : "never");
 
-	if (DIFF_OPT_TST(o, REVERSE_DIFF)) {
+	if (o->flags.REVERSE_DIFF) {
 		argv_array_pushf(&cp.args, "--src-prefix=%s%s/",
 				 o->b_prefix, path);
 		argv_array_pushf(&cp.args, "--dst-prefix=%s%s/",

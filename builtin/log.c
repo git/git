@@ -181,7 +181,7 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 		init_display_notes(&rev->notes_opt);
 
 	if (rev->diffopt.pickaxe || rev->diffopt.filter ||
-	    DIFF_OPT_TST(&rev->diffopt, FOLLOW_RENAMES))
+	    rev->diffopt.flags.FOLLOW_RENAMES)
 		rev->always_show_header = 0;
 
 	if (source)
@@ -391,7 +391,7 @@ static int cmd_log_walk(struct rev_info *rev)
 		fclose(rev->diffopt.file);
 
 	if (rev->diffopt.output_format & DIFF_FORMAT_CHECKDIFF &&
-	    DIFF_OPT_TST(&rev->diffopt, CHECK_FAILED)) {
+	    rev->diffopt.flags.CHECK_FAILED) {
 		return 02;
 	}
 	return diff_result_code(&rev->diffopt, 0);
@@ -483,8 +483,8 @@ static int show_blob_object(const struct object_id *oid, struct rev_info *rev, c
 	unsigned long size;
 
 	fflush(rev->diffopt.file);
-	if (!DIFF_OPT_TST(&rev->diffopt, TEXTCONV_SET_VIA_CMDLINE) ||
-	    !DIFF_OPT_TST(&rev->diffopt, ALLOW_TEXTCONV))
+	if (!rev->diffopt.flags.TEXTCONV_SET_VIA_CMDLINE ||
+	    !rev->diffopt.flags.ALLOW_TEXTCONV)
 		return stream_blob_to_fd(1, oid, NULL, 0);
 
 	if (get_oid_with_context(obj_name, GET_OID_RECORD_PATH,
@@ -666,7 +666,7 @@ int cmd_log_reflog(int argc, const char **argv, const char *prefix)
 static void log_setup_revisions_tweak(struct rev_info *rev,
 				      struct setup_revision_opt *opt)
 {
-	if (DIFF_OPT_TST(&rev->diffopt, DEFAULT_FOLLOW_RENAMES) &&
+	if (rev->diffopt.flags.DEFAULT_FOLLOW_RENAMES &&
 	    rev->prune_data.nr == 1)
 		DIFF_OPT_SET(&rev->diffopt, FOLLOW_RENAMES);
 
@@ -1612,7 +1612,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 
 	rev.zero_commit = zero_commit;
 
-	if (!DIFF_OPT_TST(&rev.diffopt, TEXT) && !no_binary_diff)
+	if (!rev.diffopt.flags.TEXT && !no_binary_diff)
 		DIFF_OPT_SET(&rev.diffopt, BINARY);
 
 	if (rev.show_notes)

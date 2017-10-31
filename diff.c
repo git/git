@@ -1481,7 +1481,7 @@ static void emit_rewrite_diff(const char *name_a,
 	struct emit_callback ecbdata;
 	struct strbuf out = STRBUF_INIT;
 
-	if (diff_mnemonic_prefix && DIFF_OPT_TST(o, REVERSE_DIFF)) {
+	if (diff_mnemonic_prefix && o->flags.REVERSE_DIFF) {
 		a_prefix = o->b_prefix;
 		b_prefix = o->a_prefix;
 	} else {
@@ -2729,7 +2729,7 @@ static void show_dirstat(struct diff_options *options)
 	dir.alloc = 0;
 	dir.nr = 0;
 	dir.permille = options->dirstat_permille;
-	dir.cumulative = DIFF_OPT_TST(options, DIRSTAT_CUMULATIVE);
+	dir.cumulative = options->flags.DIRSTAT_CUMULATIVE;
 
 	changed = 0;
 	for (i = 0; i < q->nr; i++) {
@@ -2755,7 +2755,7 @@ static void show_dirstat(struct diff_options *options)
 			goto found_damage;
 		}
 
-		if (DIFF_OPT_TST(options, DIRSTAT_BY_FILE)) {
+		if (options->flags.DIRSTAT_BY_FILE) {
 			/*
 			 * In --dirstat-by-file mode, we don't really need to
 			 * look at the actual file contents at all.
@@ -2830,7 +2830,7 @@ static void show_dirstat_by_line(struct diffstat_t *data, struct diff_options *o
 	dir.alloc = 0;
 	dir.nr = 0;
 	dir.permille = options->dirstat_permille;
-	dir.cumulative = DIFF_OPT_TST(options, DIRSTAT_CUMULATIVE);
+	dir.cumulative = options->flags.DIRSTAT_CUMULATIVE;
 
 	changed = 0;
 	for (i = 0; i < data->nr; i++) {
@@ -3117,7 +3117,7 @@ static void builtin_diff(const char *name_a,
 	const char *line_prefix = diff_line_prefix(o);
 
 	diff_set_mnemonic_prefix(o, "a/", "b/");
-	if (DIFF_OPT_TST(o, REVERSE_DIFF)) {
+	if (o->flags.REVERSE_DIFF) {
 		a_prefix = o->b_prefix;
 		b_prefix = o->a_prefix;
 	} else {
@@ -3141,7 +3141,7 @@ static void builtin_diff(const char *name_a,
 		return;
 	}
 
-	if (DIFF_OPT_TST(o, ALLOW_TEXTCONV)) {
+	if (o->flags.ALLOW_TEXTCONV) {
 		textconv_one = get_textconv(one);
 		textconv_two = get_textconv(two);
 	}
@@ -3201,13 +3201,13 @@ static void builtin_diff(const char *name_a,
 				 header.len, 0);
 		strbuf_reset(&header);
 		goto free_ab_and_return;
-	} else if (!DIFF_OPT_TST(o, TEXT) &&
+	} else if (!o->flags.TEXT &&
 	    ( (!textconv_one && diff_filespec_is_binary(one)) ||
 	      (!textconv_two && diff_filespec_is_binary(two)) )) {
 		struct strbuf sb = STRBUF_INIT;
 		if (!one->data && !two->data &&
 		    S_ISREG(one->mode) && S_ISREG(two->mode) &&
-		    !DIFF_OPT_TST(o, BINARY)) {
+		    !o->flags.BINARY) {
 			if (!oidcmp(&one->oid, &two->oid)) {
 				if (must_show_header)
 					emit_diff_symbol(o, DIFF_SYMBOL_HEADER,
@@ -3236,7 +3236,7 @@ static void builtin_diff(const char *name_a,
 		}
 		emit_diff_symbol(o, DIFF_SYMBOL_HEADER, header.buf, header.len, 0);
 		strbuf_reset(&header);
-		if (DIFF_OPT_TST(o, BINARY))
+		if (o->flags.BINARY)
 			emit_binary_diff(o, &mf1, &mf2);
 		else {
 			strbuf_addf(&sb, "%sBinary files %s and %s differ\n",
@@ -3282,7 +3282,7 @@ static void builtin_diff(const char *name_a,
 		xecfg.ctxlen = o->context;
 		xecfg.interhunkctxlen = o->interhunkcontext;
 		xecfg.flags = XDL_EMIT_FUNCNAMES;
-		if (DIFF_OPT_TST(o, FUNCCONTEXT))
+		if (o->flags.FUNCCONTEXT)
 			xecfg.flags |= XDL_EMIT_FUNCCONTEXT;
 		if (pe)
 			xdiff_set_find_func(&xecfg, pe->pattern, pe->cflags);
@@ -3941,9 +3941,9 @@ static void fill_metainfo(struct strbuf *msg,
 		*must_show_header = 0;
 	}
 	if (one && two && oidcmp(&one->oid, &two->oid)) {
-		int abbrev = DIFF_OPT_TST(o, FULL_INDEX) ? 40 : DEFAULT_ABBREV;
+		int abbrev = o->flags.FULL_INDEX ? 40 : DEFAULT_ABBREV;
 
-		if (DIFF_OPT_TST(o, BINARY)) {
+		if (o->flags.BINARY) {
 			mmfile_t mf;
 			if ((!fill_mmfile(&mf, one) && diff_filespec_is_binary(one)) ||
 			    (!fill_mmfile(&mf, two) && diff_filespec_is_binary(two)))
@@ -3973,7 +3973,7 @@ static void run_diff_cmd(const char *pgm,
 	int must_show_header = 0;
 
 
-	if (DIFF_OPT_TST(o, ALLOW_EXTERNAL)) {
+	if (o->flags.ALLOW_EXTERNAL) {
 		struct userdiff_driver *drv = userdiff_find_by_path(attr_path);
 		if (drv && drv->external)
 			pgm = drv->external;
@@ -4053,7 +4053,7 @@ static void run_diff(struct diff_filepair *p, struct diff_options *o)
 	if (o->prefix_length)
 		strip_prefix(o->prefix_length, &name, &other);
 
-	if (!DIFF_OPT_TST(o, ALLOW_EXTERNAL))
+	if (!o->flags.ALLOW_EXTERNAL)
 		pgm = NULL;
 
 	if (DIFF_PAIR_UNMERGED(p)) {
@@ -4207,10 +4207,10 @@ void diff_setup_done(struct diff_options *options)
 	else
 		DIFF_OPT_CLR(options, DIFF_FROM_CONTENTS);
 
-	if (DIFF_OPT_TST(options, FIND_COPIES_HARDER))
+	if (options->flags.FIND_COPIES_HARDER)
 		options->detect_rename = DIFF_DETECT_COPY;
 
-	if (!DIFF_OPT_TST(options, RELATIVE_NAME))
+	if (!options->flags.RELATIVE_NAME)
 		options->prefix = NULL;
 	if (options->prefix)
 		options->prefix_length = strlen(options->prefix);
@@ -4273,14 +4273,14 @@ void diff_setup_done(struct diff_options *options)
 	 * to have found.  It does not make sense not to return with
 	 * exit code in such a case either.
 	 */
-	if (DIFF_OPT_TST(options, QUICK)) {
+	if (options->flags.QUICK) {
 		options->output_format = DIFF_FORMAT_NO_OUTPUT;
 		DIFF_OPT_SET(options, EXIT_WITH_STATUS);
 	}
 
 	options->diff_path_counter = 0;
 
-	if (DIFF_OPT_TST(options, FOLLOW_RENAMES) && options->pathspec.nr != 1)
+	if (options->flags.FOLLOW_RENAMES && options->pathspec.nr != 1)
 		die(_("--follow requires exactly one pathspec"));
 
 	if (!options->use_color || external_diff())
@@ -5600,7 +5600,7 @@ void diff_flush(struct diff_options *options)
 		separator++;
 	}
 
-	if (output_format & DIFF_FORMAT_DIRSTAT && DIFF_OPT_TST(options, DIRSTAT_BY_LINE))
+	if (output_format & DIFF_FORMAT_DIRSTAT && options->flags.DIRSTAT_BY_LINE)
 		dirstat_by_line = 1;
 
 	if (output_format & (DIFF_FORMAT_DIFFSTAT|DIFF_FORMAT_SHORTSTAT|DIFF_FORMAT_NUMSTAT) ||
@@ -5635,8 +5635,8 @@ void diff_flush(struct diff_options *options)
 	}
 
 	if (output_format & DIFF_FORMAT_NO_OUTPUT &&
-	    DIFF_OPT_TST(options, EXIT_WITH_STATUS) &&
-	    DIFF_OPT_TST(options, DIFF_FROM_CONTENTS)) {
+	    options->flags.EXIT_WITH_STATUS &&
+	    options->flags.DIFF_FROM_CONTENTS) {
 		/*
 		 * run diff_flush_patch for the exit status. setting
 		 * options->file to /dev/null should be safe, because we
@@ -5684,7 +5684,7 @@ free_queue:
 	 * diff_addremove/diff_change does not set the bit when
 	 * DIFF_FROM_CONTENTS is in effect (e.g. with -w).
 	 */
-	if (DIFF_OPT_TST(options, DIFF_FROM_CONTENTS)) {
+	if (options->flags.DIFF_FROM_CONTENTS) {
 		if (options->found_changes)
 			DIFF_OPT_SET(options, HAS_CHANGES);
 		else
@@ -5808,7 +5808,7 @@ static void diffcore_skip_stat_unmatch(struct diff_options *diffopt)
 			 * to determine how many paths were dirty only
 			 * due to stat info mismatch.
 			 */
-			if (!DIFF_OPT_TST(diffopt, NO_INDEX))
+			if (!diffopt->flags.NO_INDEX)
 				diffopt->skip_stat_unmatch++;
 			diff_free_filepair(p);
 		}
@@ -5857,7 +5857,7 @@ void diffcore_std(struct diff_options *options)
 		diff_resolve_rename_copy();
 	diffcore_apply_filter(options);
 
-	if (diff_queued_diff.nr && !DIFF_OPT_TST(options, DIFF_FROM_CONTENTS))
+	if (diff_queued_diff.nr && !options->flags.DIFF_FROM_CONTENTS)
 		DIFF_OPT_SET(options, HAS_CHANGES);
 	else
 		DIFF_OPT_CLR(options, HAS_CHANGES);
@@ -5872,23 +5872,23 @@ int diff_result_code(struct diff_options *opt, int status)
 	diff_warn_rename_limit("diff.renameLimit",
 			       opt->needed_rename_limit,
 			       opt->degraded_cc_to_c);
-	if (!DIFF_OPT_TST(opt, EXIT_WITH_STATUS) &&
+	if (!opt->flags.EXIT_WITH_STATUS &&
 	    !(opt->output_format & DIFF_FORMAT_CHECKDIFF))
 		return status;
-	if (DIFF_OPT_TST(opt, EXIT_WITH_STATUS) &&
-	    DIFF_OPT_TST(opt, HAS_CHANGES))
+	if (opt->flags.EXIT_WITH_STATUS &&
+	    opt->flags.HAS_CHANGES)
 		result |= 01;
 	if ((opt->output_format & DIFF_FORMAT_CHECKDIFF) &&
-	    DIFF_OPT_TST(opt, CHECK_FAILED))
+	    opt->flags.CHECK_FAILED)
 		result |= 02;
 	return result;
 }
 
 int diff_can_quit_early(struct diff_options *opt)
 {
-	return (DIFF_OPT_TST(opt, QUICK) &&
+	return (opt->flags.QUICK &&
 		!opt->filter &&
-		DIFF_OPT_TST(opt, HAS_CHANGES));
+		opt->flags.HAS_CHANGES);
 }
 
 /*
@@ -5901,9 +5901,9 @@ static int is_submodule_ignored(const char *path, struct diff_options *options)
 {
 	int ignored = 0;
 	struct diff_flags orig_flags = options->flags;
-	if (!DIFF_OPT_TST(options, OVERRIDE_SUBMODULE_CONFIG))
+	if (!options->flags.OVERRIDE_SUBMODULE_CONFIG)
 		set_diffopt_flags_from_submodule_config(options, path);
-	if (DIFF_OPT_TST(options, IGNORE_SUBMODULES))
+	if (options->flags.IGNORE_SUBMODULES)
 		ignored = 1;
 	options->flags = orig_flags;
 	return ignored;
@@ -5932,7 +5932,7 @@ void diff_addremove(struct diff_options *options,
 	 * Before the final output happens, they are pruned after
 	 * merged into rename/copy pairs as appropriate.
 	 */
-	if (DIFF_OPT_TST(options, REVERSE_DIFF))
+	if (options->flags.REVERSE_DIFF)
 		addremove = (addremove == '+' ? '-' :
 			     addremove == '-' ? '+' : addremove);
 
@@ -5951,7 +5951,7 @@ void diff_addremove(struct diff_options *options,
 	}
 
 	diff_queue(&diff_queued_diff, one, two);
-	if (!DIFF_OPT_TST(options, DIFF_FROM_CONTENTS))
+	if (!options->flags.DIFF_FROM_CONTENTS)
 		DIFF_OPT_SET(options, HAS_CHANGES);
 }
 
@@ -5970,7 +5970,7 @@ void diff_change(struct diff_options *options,
 	    is_submodule_ignored(concatpath, options))
 		return;
 
-	if (DIFF_OPT_TST(options, REVERSE_DIFF)) {
+	if (options->flags.REVERSE_DIFF) {
 		SWAP(old_mode, new_mode);
 		SWAP(old_oid, new_oid);
 		SWAP(old_oid_valid, new_oid_valid);
@@ -5989,10 +5989,10 @@ void diff_change(struct diff_options *options,
 	two->dirty_submodule = new_dirty_submodule;
 	p = diff_queue(&diff_queued_diff, one, two);
 
-	if (DIFF_OPT_TST(options, DIFF_FROM_CONTENTS))
+	if (options->flags.DIFF_FROM_CONTENTS)
 		return;
 
-	if (DIFF_OPT_TST(options, QUICK) && options->skip_stat_unmatch &&
+	if (options->flags.QUICK && options->skip_stat_unmatch &&
 	    !diff_filespec_check_stat_unmatch(p))
 		return;
 
@@ -6134,7 +6134,7 @@ void setup_diff_pager(struct diff_options *opt)
 	 * and because it is easy to find people oneline advising "git diff
 	 * --exit-code" in hooks and other scripts, we do not do so.
 	 */
-	if (!DIFF_OPT_TST(opt, EXIT_WITH_STATUS) &&
+	if (!opt->flags.EXIT_WITH_STATUS &&
 	    check_pager_config("diff") != 0)
 		setup_pager();
 }

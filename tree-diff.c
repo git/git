@@ -212,9 +212,9 @@ static struct combine_diff_path *emit_path(struct combine_diff_path *p,
 		mode = 0;
 	}
 
-	if (DIFF_OPT_TST(opt, RECURSIVE) && isdir) {
+	if (opt->flags.RECURSIVE && isdir) {
 		recurse = 1;
-		emitthis = DIFF_OPT_TST(opt, TREE_IN_RECURSIVE);
+		emitthis = opt->flags.TREE_IN_RECURSIVE;
 	}
 
 	if (emitthis) {
@@ -425,7 +425,7 @@ static struct combine_diff_path *ll_diff_tree_paths(
 	ttree = fill_tree_descriptor(&t, oid);
 
 	/* Enable recursion indefinitely */
-	opt->pathspec.recursive = DIFF_OPT_TST(opt, RECURSIVE);
+	opt->pathspec.recursive = opt->flags.RECURSIVE;
 
 	for (;;) {
 		int imin, cmp;
@@ -484,7 +484,7 @@ static struct combine_diff_path *ll_diff_tree_paths(
 		/* t = p[imin] */
 		if (cmp == 0) {
 			/* are either pi > p[imin] or diff(t,pi) != ø ? */
-			if (!DIFF_OPT_TST(opt, FIND_COPIES_HARDER)) {
+			if (!opt->flags.FIND_COPIES_HARDER) {
 				for (i = 0; i < nparent; ++i) {
 					/* p[i] > p[imin] */
 					if (tp[i].entry.mode & S_IFXMIN_NEQ)
@@ -522,7 +522,7 @@ static struct combine_diff_path *ll_diff_tree_paths(
 		/* t > p[imin] */
 		else {
 			/* ∀i pi=p[imin] -> D += "-p[imin]" */
-			if (!DIFF_OPT_TST(opt, FIND_COPIES_HARDER)) {
+			if (!opt->flags.FIND_COPIES_HARDER) {
 				for (i = 0; i < nparent; ++i)
 					if (tp[i].entry.mode & S_IFXMIN_NEQ)
 						goto skip_emit_tp;
@@ -706,7 +706,7 @@ int diff_tree_oid(const struct object_id *old_oid,
 	strbuf_addstr(&base, base_str);
 
 	retval = ll_diff_tree_oid(old_oid, new_oid, &base, opt);
-	if (!*base_str && DIFF_OPT_TST(opt, FOLLOW_RENAMES) && diff_might_be_rename())
+	if (!*base_str && opt->flags.FOLLOW_RENAMES && diff_might_be_rename())
 		try_to_follow_renames(old_oid, new_oid, &base, opt);
 
 	strbuf_release(&base);

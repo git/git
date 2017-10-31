@@ -209,7 +209,7 @@ static struct commit *fake_working_tree_commit(struct diff_options *opt,
 
 		switch (st.st_mode & S_IFMT) {
 		case S_IFREG:
-			if (DIFF_OPT_TST(opt, ALLOW_TEXTCONV) &&
+			if (opt->flags.ALLOW_TEXTCONV &&
 			    textconv_object(read_from, mode, &null_oid, 0, &buf_ptr, &buf_len))
 				strbuf_attach(&buf, buf_ptr, buf_len, buf_len + 1);
 			else if (strbuf_read_file(&buf, read_from, st.st_size) != st.st_size)
@@ -293,7 +293,7 @@ static void fill_origin_blob(struct diff_options *opt,
 		unsigned long file_size;
 
 		(*num_read_blob)++;
-		if (DIFF_OPT_TST(opt, ALLOW_TEXTCONV) &&
+		if (opt->flags.ALLOW_TEXTCONV &&
 		    textconv_object(o->path, o->mode, &o->blob_oid, 1, &file->ptr, &file_size))
 			;
 		else
@@ -1262,7 +1262,7 @@ static void find_copy_in_parent(struct blame_scoreboard *sb,
 			      &target->commit->tree->object.oid,
 			      "", &diff_opts);
 
-	if (!DIFF_OPT_TST(&diff_opts, FIND_COPIES_HARDER))
+	if (!diff_opts.flags.FIND_COPIES_HARDER)
 		diffcore_std(&diff_opts);
 
 	do {
@@ -1825,7 +1825,7 @@ void setup_scoreboard(struct blame_scoreboard *sb, const char *path, struct blam
 		if (fill_blob_sha1_and_mode(o))
 			die(_("no such path %s in %s"), path, final_commit_name);
 
-		if (DIFF_OPT_TST(&sb->revs->diffopt, ALLOW_TEXTCONV) &&
+		if (sb->revs->diffopt.flags.ALLOW_TEXTCONV &&
 		    textconv_object(path, o->mode, &o->blob_oid, 1, (char **) &sb->final_buf,
 				    &sb->final_buf_size))
 			;

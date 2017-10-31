@@ -1168,7 +1168,7 @@ static int index_has_changes(struct strbuf *sb)
 			strbuf_addstr(sb, diff_queued_diff.queue[i]->two->path);
 		}
 		diff_flush(&opt);
-		return DIFF_OPT_TST(&opt, HAS_CHANGES) != 0;
+		return opt.flags.HAS_CHANGES != 0;
 	} else {
 		for (i = 0; sb && i < active_nr; i++) {
 			if (i)

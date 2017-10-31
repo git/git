@@ -44,7 +44,7 @@ static void stuff_change(struct diff_options *opt,
 	    !oidcmp(old_oid, new_oid) && (old_mode == new_mode))
 		return;
 
-	if (DIFF_OPT_TST(opt, REVERSE_DIFF)) {
+	if (opt->flags.REVERSE_DIFF) {
 		SWAP(old_mode, new_mode);
 		SWAP(old_oid, new_oid);
 		SWAP(old_path, new_path);

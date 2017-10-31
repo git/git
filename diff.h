@@ -106,7 +106,6 @@ static inline void diff_flags_or(struct diff_flags *a,
 		tmp_a[i] |= tmp_b[i];
 }
 
-#define DIFF_OPT_TST(opts, flag)	((opts)->flags.flag)
 #define DIFF_OPT_SET(opts, flag)	((opts)->flags.flag = 1)
 #define DIFF_OPT_CLR(opts, flag)	((opts)->flags.flag = 0)
 

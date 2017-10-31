@@ -734,7 +734,7 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 		parse_revision_opt(&revs, &ctx, options, blame_opt_usage);
 	}
 parse_done:
-	no_whole_file_rename = !DIFF_OPT_TST(&revs.diffopt, FOLLOW_RENAMES);
+	no_whole_file_rename = !revs.diffopt.flags.FOLLOW_RENAMES;
 	xdl_opts |= revs.diffopt.xdl_opts & XDF_INDENT_HEURISTIC;
 	DIFF_OPT_CLR(&revs.diffopt, FOLLOW_RENAMES);
 	argc = parse_options_end(&ctx);
@@ -803,7 +803,7 @@ parse_done:
 	}
 	blame_date_width -= 1; /* strip the null */
 
-	if (DIFF_OPT_TST(&revs.diffopt, FIND_COPIES_HARDER))
+	if (revs.diffopt.flags.FIND_COPIES_HARDER)
 		opt |= (PICKAXE_BLAME_COPY | PICKAXE_BLAME_MOVE |
 			PICKAXE_BLAME_COPY_HARDER);
 
