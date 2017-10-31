@@ -83,6 +83,7 @@ struct diff_flags {
 	unsigned DIRSTAT_CUMULATIVE:1;
 	unsigned DIRSTAT_BY_FILE:1;
 	unsigned ALLOW_TEXTCONV:1;
+	unsigned TEXTCONV_SET_VIA_CMDLINE:1;
 	unsigned DIFF_FROM_CONTENTS:1;
 	unsigned DIRTY_SUBMODULES:1;
 	unsigned IGNORE_UNTRACKED_IN_SUBMODULES:1;

@@ -4762,9 +4762,10 @@ int diff_opt_parse(struct diff_options *options,
 		DIFF_OPT_SET(options, ALLOW_EXTERNAL);
 	else if (!strcmp(arg, "--no-ext-diff"))
 		DIFF_OPT_CLR(options, ALLOW_EXTERNAL);
-	else if (!strcmp(arg, "--textconv"))
+	else if (!strcmp(arg, "--textconv")) {
 		DIFF_OPT_SET(options, ALLOW_TEXTCONV);
-	else if (!strcmp(arg, "--no-textconv"))
+		DIFF_OPT_SET(options, TEXTCONV_SET_VIA_CMDLINE);
+	} else if (!strcmp(arg, "--no-textconv"))
 		DIFF_OPT_CLR(options, ALLOW_TEXTCONV);
 	else if (!strcmp(arg, "--ignore-submodules")) {
 		DIFF_OPT_SET(options, OVERRIDE_SUBMODULE_CONFIG);
