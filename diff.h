@@ -107,9 +107,8 @@ static inline void diff_flags_or(struct diff_flags *a,
 }
 
 #define DIFF_OPT_TST(opts, flag)	((opts)->flags.flag)
-#define DIFF_OPT_TOUCHED(opts, flag)	((opts)->touched_flags.flag)
-#define DIFF_OPT_SET(opts, flag)	(((opts)->flags.flag = 1),((opts)->touched_flags.flag = 1))
-#define DIFF_OPT_CLR(opts, flag)	(((opts)->flags.flag = 0),((opts)->touched_flags.flag = 1))
+#define DIFF_OPT_SET(opts, flag)	((opts)->flags.flag = 1)
+#define DIFF_OPT_CLR(opts, flag)	((opts)->flags.flag = 0)
 
 #define DIFF_XDL_TST(opts, flag)    ((opts)->xdl_opts & XDF_##flag)
 #define DIFF_XDL_SET(opts, flag)    ((opts)->xdl_opts |= XDF_##flag)
@@ -138,7 +137,6 @@ struct diff_options {
 	const char *line_prefix;
 	size_t line_prefix_length;
 	struct diff_flags flags;
-	struct diff_flags touched_flags;
 
 	/* diff-filter bits */
 	unsigned int filter;
