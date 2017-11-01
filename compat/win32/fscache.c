@@ -12,6 +12,11 @@ static struct hashmap map;
 static CRITICAL_SECTION mutex;
 static struct trace_key trace_fscache = TRACE_KEY_INIT(FSCACHE);
 
+int fscache_is_enabled(void)
+{
+	return enabled;
+}
+
 /*
  * An entry in the file system cache. Used for both entire directory listings
  * and file entries.
