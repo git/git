@@ -1115,16 +1115,37 @@ static int add_patterns(const char *fname, const char *base, int baselen,
 	size_t size = 0;
 	char *buf;
 
-	if (flags & PATTERN_NOFOLLOW)
-		fd = open_nofollow(fname, O_RDONLY);
-	else
-		fd = open(fname, O_RDONLY);
-
-	if (fd < 0 || fstat(fd, &st) < 0) {
-		if (fd < 0)
-			warn_on_fopen_errors(fname);
+	/*
+	 * Since `clang`'s `-Wunreachable-code` mode is clever, it would figure
+	 * out that on non-Windows platforms, this `lstat()` is unreachable.
+	 * We do want to keep the conditional block for the sake of Windows,
+	 * though, so let's use the `NOT_CONSTANT()` trick to suppress that error.
+	 */
+	if (NOT_CONSTANT(is_fscache_enabled(fname))) {
+		if (lstat(fname, &st) < 0) {
+			fd = -1;
+		} else {
+			fd = open(fname, O_RDONLY);
+			if (fd < 0)
+				warn_on_fopen_errors(fname);
+		}
+	} else {
+		if (flags & PATTERN_NOFOLLOW)
+			fd = open_nofollow(fname, O_RDONLY);
 		else
-			close(fd);
+			fd = open(fname, O_RDONLY);
+
+		if (fd < 0 || fstat(fd, &st) < 0) {
+			if (fd < 0)
+				warn_on_fopen_errors(fname);
+			else {
+				close(fd);
+				fd = -1;
+			}
+		}
+	}
+
+	if (fd < 0) {
 		if (!istate)
 			return -1;
 		r = read_skip_worktree_file_from_index(istate, fname,
