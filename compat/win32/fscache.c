@@ -8,6 +8,11 @@ static volatile long enabled;
 static struct hashmap map;
 static CRITICAL_SECTION mutex;
 
+int fscache_is_enabled(void)
+{
+	return enabled;
+}
+
 /*
  * An entry in the file system cache. Used for both entire directory listings
  * and file entries.
