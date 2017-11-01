@@ -26,3 +26,11 @@ skip_branch_tip_with_tag () {
 set -e
 
 skip_branch_tip_with_tag
+
+case "${TRAVIS_OS_NAME:-linux}" in
+linux)
+	P4_PATH="$(pwd)/custom/p4"
+	GIT_LFS_PATH="$(pwd)/custom/git-lfs"
+	export PATH="$GIT_LFS_PATH:$P4_PATH:$PATH"
+	;;
+esac
