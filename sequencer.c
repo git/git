@@ -2673,7 +2673,8 @@ static int rewrite_file(const char *path, const char *buf, size_t len)
 		return error_errno(_("could not open '%s' for writing"), path);
 	if (write_in_full(fd, buf, len) < 0)
 		rc = error_errno(_("could not write to '%s'"), path);
-	close(fd);
+	if (close(fd) && !rc)
+		rc = error_errno(_("could not close '%s'"), path);
 	return rc;
 }
 
