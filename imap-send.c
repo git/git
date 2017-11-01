@@ -692,6 +692,10 @@ static int parse_response_code(struct imap_store *ctx, struct imap_cmd_cb *cb,
 	}
 	*p++ = 0;
 	arg = next_arg(&s);
+	if (!arg) {
+		fprintf(stderr, "IMAP error: empty response code\n");
+		return RESP_BAD;
+	}
 	if (!strcmp("UIDVALIDITY", arg)) {
 		if (!(arg = next_arg(&s)) || !(ctx->uidvalidity = atoi(arg))) {
 			fprintf(stderr, "IMAP error: malformed UIDVALIDITY status\n");
@@ -724,7 +728,8 @@ static int get_cmd_result(struct imap_store *ctx, struct imap_cmd *tcmd)
 {
 	struct imap *imap = ctx->imap;
 	struct imap_cmd *cmdp, **pcmdp;
-	char *cmd, *arg, *arg1;
+	char *cmd;
+	const char *arg, *arg1;
 	int n, resp, resp2, tag;
 
 	for (;;) {
@@ -732,6 +737,10 @@ static int get_cmd_result(struct imap_store *ctx, struct imap_cmd *tcmd)
 			return RESP_BAD;
 
 		arg = next_arg(&cmd);
+		if (!arg) {
+			fprintf(stderr, "IMAP error: empty response\n");
+			return RESP_BAD;
+		}
 		if (*arg == '*') {
 			arg = next_arg(&cmd);
 			if (!arg) {
@@ -807,6 +816,8 @@ static int get_cmd_result(struct imap_store *ctx, struct imap_cmd *tcmd)
 			if (cmdp->cb.cont || cmdp->cb.data)
 				imap->literal_pending = 0;
 			arg = next_arg(&cmd);
+			if (!arg)
+				arg = "";
 			if (!strcmp("OK", arg))
 				resp = DRV_OK;
 			else {
