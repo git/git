@@ -1,16 +1,27 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Oct 2017, #07; Mon, 30)
+Subject: What's cooking in git.git (Nov 2017, #01; Wed, 1)
 X-master-at: cb5918aa0d50f50e83787f65c2ddc3dcb10159fe
-X-next-at: c27cc4dac6288e7b0a5136f6084655a61518ce60
+X-next-at: fe51978a306f83b42a353408675befa0e5938b43
 
-What's cooking in git.git (Oct 2017, #07; Mon, 30)
+What's cooking in git.git (Nov 2017, #01; Wed, 1)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
+
+Git 2.15 final was tagged.  I may not have fully caught up with the
+list traffic and there may be topics that should have been scooped
+up but lost in the noise, but I think the tree is in a better shape
+than yesterday ;-)  We'll see if there is any brown paper bag bugs
+by waiting til the end of the week.
+
+And then we'll start the new cycle by rewinding the top of 'next'
+and also marking topics that are marked as "will cook in 'next'" as
+"will merge to 'master'" around the weekend.  The first to graduate
+will be the ex/deprecate-empty-pathspec-as-match-all topic.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -20,102 +31,144 @@ of the repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* bw/diff-opt-impl-to-bitfields (2017-10-29) 3 commits
- - diff: convert flags to be stored in bitfields
- - reset: use DIFF_OPT_SET macro to set a diff flag
- - add: use DIFF_OPT_SET macro to set a diff flag
+* ad/5580-unc-tests-on-cygwin (2017-11-01) 1 commit
+ - t5580: add Cygwin support
 
- A single-word "unsigned flags" in the diff options is being split
- into a structure with many bitfields.
+ UNC paths are also relevant in Cygwin builds and they are now
+ tested just like Mingw builds.
 
-
-* mh/tidy-ref-update-flags (2017-10-28) 8 commits
- - refs: rename constant `REF_ISPRUNING` to `REF_IS_PRUNING`
- - refs: rename constant `REF_NODEREF` to `REF_NO_DEREF`
- - refs: tidy up and adjust visibility of the `ref_update` flags
- - ref_transaction_add_update(): remove a check
- - ref_transaction_update(): die on disallowed flags
- - prune_ref(): call `ref_transaction_add_update()` directly
- - files_transaction_prepare(): don't leak flags to packed transaction
- - Merge branch 'bc/object-id' into base
- (this branch uses bc/object-id.)
-
- Code clean-up in refs API implementation.
+ Will merge to 'next'.
 
 
-* ao/diff-populate-filespec-lstat-errorpath-fix (2017-10-29) 1 commit
- - diff: fix lstat() error handling in diff_populate_filespec()
+* ao/merge-verbosity-getenv-just-once (2017-11-01) 1 commit
+ - merge-recursive: check GIT_MERGE_VERBOSITY only once
 
- After an error from lstat(), diff_populate_filespec() function
- sometimes still went ahead and used invalid data in struct stat,
- which has been fixed.
+ Code cleanup.
+
+ Will merge to 'next'.
 
 
-* av/fsmonitor (2017-10-30) 5 commits
+* bp/read-index-from-skip-verification (2017-11-01) 1 commit
+ - read_index_from(): speed index loading by skiping verification of the entry order
+
+ Drop (perhaps overly cautious) sanity check before using the index
+ read from the filesystem at runtime.
+
+ Will merge to 'next'.
+
+
+* cn/diff-indent-no-longer-is-experimental (2017-11-01) 2 commits
  - SQUASH???
- - fsmonitor: delay updating state until after split index is merged
- - fsmonitor: document GIT_TRACE_FSMONITOR
- - fsmonitor: don't bother pretty-printing JSON from watchman
- - fsmonitor: set the PWD to the top of the working tree
- (this branch uses bp/fsmonitor.)
-
- Various fixes to bp/fsmonitor topic.
-
- What's the status of this one?  I recall that I saw Dscho's "looks
- good" respose to the cover letter, and Ben sounded positive on most
- of the patches in the previous series.  Except for the SQUASH??? I
- had to add to squelch compiler warnings, is this good to go?
-
-
-* bc/submitting-patches-in-asciidoc (2017-10-30) 2 commits
- - Documentation: convert SubmittingPatches to AsciiDoc
- - Documentation: enable compat-mode for Asciidoctor
-
- The SubmittingPatches document has been converted to produce an
- HTML version via AsciiDoc/Asciidoctor.
-
-
-* pb/bisect-helper-2 (2017-10-28) 8 commits
- - t6030: make various test to pass GETTEXT_POISON tests
- - bisect--helper: `bisect_start` shell function partially in C
- - bisect--helper: `get_terms` & `bisect_terms` shell function in C
- - bisect--helper: `bisect_next_check` shell function in C
- - bisect--helper: `check_and_set_terms` shell function in C
- - wrapper: move is_empty_file() and rename it as is_empty_or_missing_file()
- - bisect--helper: `bisect_write` shell function in C
- - bisect--helper: `bisect_reset` shell function in C
- (this branch uses pb/bisect-helper.)
-
---------------------------------------------------
-[Graduated to "master"]
-
-* ao/path-use-xmalloc (2017-10-25) 1 commit
-  (merged to 'next' on 2017-10-26 at 4cc04083fb)
- + path.c: use xmalloc() in add_to_trie()
-
- A possible oom error is now caught as a fatal error, instead of
- continuing and dereferencing NULL.
-
-
-* np/config-path-doc (2017-10-19) 1 commit
-  (merged to 'next' on 2017-10-26 at c17a3daafc)
- + config doc: clarify "git config --path" example
+ - diff: --indent-heuristic is no longer experimental
 
  Doc update.
 
-
-* sb/rev-parse-show-superproject-root (2017-10-27) 1 commit
-  (merged to 'next' on 2017-10-27 at f9a0520cec)
- + docs: fix formatting of rev-parse's --show-superproject-working-tree
-
- Doc markup fix.
+ Will merge to 'next' after squashing the fixup.
 
 
-* sg/rev-list-doc-reorder-fix (2017-10-27) 1 commit
-  (merged to 'next' on 2017-10-27 at caf49859d7)
- + rev-list-options.txt: use correct directional reference
+* jk/rebase-i-exec-gitdir-fix (2017-11-01) 1 commit
+ - sequencer: pass absolute GIT_DIR to exec commands
 
- Doc flow fix.
+ A recent regression in "git rebase -i" that broke execution of git
+ commands from subdirectories via "exec" insn has been fixed.
+
+ Ack from Dscho would be nice.
+
+
+* mh/test-local-canary (2017-10-31) 1 commit
+ - t0000: check whether the shell supports the "local" keyword
+
+ We try to see if somebody runs our test suite with a shell that
+ does not support "local" like bash/dash does.
+
+ Will merge to 'next'.
+
+
+* rs/hex-to-bytes-cleanup (2017-11-01) 3 commits
+ - sha1_file: use hex_to_bytes()
+ - http-push: use hex_to_bytes()
+ - notes: move hex_to_bytes() to hex.c and export it
+
+ Code cleanup.
+
+ Will merge to 'next'.
+
+
+* rs/sequencer-rewrite-file-cleanup (2017-11-01) 2 commits
+ - sequencer: use O_TRUNC to truncate files
+ - sequencer: factor out rewrite_file()
+
+ Code cleanup.
+
+ Will merge to 'next'.
+
+
+* sb/describe-blob (2017-11-01) 7 commits
+ - t6120: fix typo in test name
+ - builtin/describe.c: describe a blob
+ - builtin/describe.c: factor out describe_commit
+ - builtin/describe.c: print debug statements earlier
+ - builtin/describe.c: rename `oid` to avoid variable shadowing
+ - revision.h: introduce blob/tree walking in order of the commits
+ - list-objects.c: factor out traverse_trees_and_blobs
+
+ "git describe" was taught to dig trees deeper to find a
+ <commit-ish>:<path> that refers to a given blob object.
+
+
+* tb/add-renormalize (2017-10-31) 1 commit
+ - add: introduce "--renormalize"
+
+ "git add --renormalize ." is a new and safer way to record the fact
+ that you are correcting the end-of-line convention and other
+ "convert_to_git()" glitches in the in-repository data.
+
+
+* ab/mediawiki-name-truncation (2017-11-01) 1 commit
+ - remote-mediawiki: limit filenames to legal
+
+ The remote-helper for talking to MediaWiki has been updated to
+ truncate an overlong pagename so that ".mw" suffix can still be
+ added.
+
+ Will merge to 'next'.
+
+
+* ab/mediawiki-namespace (2017-11-01) 7 commits
+ - remote-mediawiki: show progress while fetching namespaces
+ - remote-mediawiki: process namespaces in order
+ - remote-mediawiki: support fetching from (Main) namespace
+ - remote-mediawiki: skip virtual namespaces
+ - remote-mediawiki: show known namespace choices on failure
+ - remote-mediawiki: allow fetching namespaces with spaces
+ - remote-mediawiki: add namespace support
+
+ The remote-helper for talking to MediaWiki has been updated to
+ work with mediawiki namespaces.
+
+ Will merge to 'next'.
+
+
+* js/mingw-full-version-in-resources (2017-11-01) 1 commit
+ - mingw: include the full version information in the resources
+
+ MinGW updates.
+
+ Will merge to 'next'.
+
+* js/mingw-redirection (2017-11-01) 3 commits
+ - mingw: document the experimental standard handle redirection
+ - mingw: special-case GIT_REDIRECT_STDERR=2>&1
+ - mingw: add experimental feature to redirect standard handles
+
+ MinGW updates.
+
+
+* js/wincred-empty-cred (2017-11-01) 2 commits
+ - wincred: handle empty username/password correctly
+ - t0302: check helper can handle empty credentials
+
+ MinGW updates.
 
 --------------------------------------------------
 [Stalled]
@@ -158,6 +211,74 @@ of the repositories listed at
 
 --------------------------------------------------
 [Cooking]
+
+* bw/diff-opt-impl-to-bitfields (2017-11-01) 8 commits
+ - diff: make struct diff_flags members lowercase
+ - diff: remove DIFF_OPT_CLR macro
+ - diff: remove DIFF_OPT_SET macro
+ - diff: remove DIFF_OPT_TST macro
+ - diff: remove touched flags
+ - diff: add flag to indicate textconv was set via cmdline
+ - diff: convert flags to be stored in bitfields
+ - add, reset: use DIFF_OPT_SET macro to set a diff flag
+
+ A single-word "unsigned flags" in the diff options is being split
+ into a structure with many bitfields.
+
+
+* mh/tidy-ref-update-flags (2017-10-28) 8 commits
+ - refs: rename constant `REF_ISPRUNING` to `REF_IS_PRUNING`
+ - refs: rename constant `REF_NODEREF` to `REF_NO_DEREF`
+ - refs: tidy up and adjust visibility of the `ref_update` flags
+ - ref_transaction_add_update(): remove a check
+ - ref_transaction_update(): die on disallowed flags
+ - prune_ref(): call `ref_transaction_add_update()` directly
+ - files_transaction_prepare(): don't leak flags to packed transaction
+ - Merge branch 'bc/object-id' into base
+ (this branch uses bc/object-id.)
+
+ Code clean-up in refs API implementation.
+
+
+* ao/diff-populate-filespec-lstat-errorpath-fix (2017-10-29) 1 commit
+ - diff: fix lstat() error handling in diff_populate_filespec()
+
+ After an error from lstat(), diff_populate_filespec() function
+ sometimes still went ahead and used invalid data in struct stat,
+ which has been fixed.
+
+
+* av/fsmonitor (2017-11-01) 4 commits
+ - fsmonitor: delay updating state until after split index is merged
+ - fsmonitor: document GIT_TRACE_FSMONITOR
+ - fsmonitor: don't bother pretty-printing JSON from watchman
+ - fsmonitor: set the PWD to the top of the working tree
+ (this branch uses bp/fsmonitor.)
+
+ Various fixes to bp/fsmonitor topic.
+
+ Will merge to 'next'.
+
+
+* bc/submitting-patches-in-asciidoc (2017-10-30) 2 commits
+ - Documentation: convert SubmittingPatches to AsciiDoc
+ - Documentation: enable compat-mode for Asciidoctor
+
+ The SubmittingPatches document has been converted to produce an
+ HTML version via AsciiDoc/Asciidoctor.
+
+
+* pb/bisect-helper-2 (2017-10-28) 8 commits
+ - t6030: make various test to pass GETTEXT_POISON tests
+ - bisect--helper: `bisect_start` shell function partially in C
+ - bisect--helper: `get_terms` & `bisect_terms` shell function in C
+ - bisect--helper: `bisect_next_check` shell function in C
+ - bisect--helper: `check_and_set_terms` shell function in C
+ - wrapper: move is_empty_file() and rename it as is_empty_or_missing_file()
+ - bisect--helper: `bisect_write` shell function in C
+ - bisect--helper: `bisect_reset` shell function in C
+ (this branch uses pb/bisect-helper.)
+
 
 * js/submodule-in-excluded (2017-10-26) 1 commit
   (merged to 'next' on 2017-10-26 at 2a262e6a0b)
@@ -222,7 +343,7 @@ of the repositories listed at
  optimized again for most trivial cases.
 
 
-* cc/git-packet-pm (2017-10-30) 7 commits
+* cc/git-packet-pm (2017-10-31) 7 commits
  - fixup! Git/Packet.pm: extract parts of t0021/rot13-filter.pl for reuse
  - Git/Packet.pm: extract parts of t0021/rot13-filter.pl for reuse
  - t0021/rot13-filter: add capability functions
@@ -282,8 +403,8 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* jm/status-ignored-files-list (2017-10-24) 4 commits
-  (merged to 'next' on 2017-10-26 at 5df1e2354f)
+* jm/status-ignored-files-list (2017-10-31) 4 commits
+  (merged to 'next' on 2017-11-01 at fe51978a30)
  + status: test ignored modes
  + status: document options to show matching ignored files
  + status: report matching ignored and normal untracked
