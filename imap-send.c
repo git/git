@@ -683,7 +683,7 @@ static int parse_response_code(struct imap_store *ctx, struct imap_cmd_cb *cb,
 	struct imap *imap = ctx->imap;
 	char *arg, *p;
 
-	if (*s != '[')
+	if (!s || *s != '[')
 		return RESP_OK;		/* no response code */
 	s++;
 	if (!(p = strchr(s, ']'))) {
