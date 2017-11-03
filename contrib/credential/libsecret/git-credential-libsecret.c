@@ -104,7 +104,7 @@ static int keyring_get(struct credential *c)
 	items = secret_service_search_sync(service,
 					   SECRET_SCHEMA_COMPAT_NETWORK,
 					   attributes,
-					   SECRET_SEARCH_LOAD_SECRETS,
+					   SECRET_SEARCH_LOAD_SECRETS | SECRET_SEARCH_UNLOCK,
 					   NULL,
 					   &error);
 	g_hash_table_unref(attributes);
