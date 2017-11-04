@@ -65,7 +65,7 @@ UI, Workflows & Features
    learned to take the 'unfold' and 'only' modifiers to normalize its
    output, e.g. "git log --format=%(trailers:only,unfold)".
 
- * "gitweb" shows a link to visit the 'raw' contents of blbos in the
+ * "gitweb" shows a link to visit the 'raw' contents of blobs in the
    history overview page.
 
  * "[gc] rerereResolved = 5.days" used to be invalid, as the variable
@@ -109,13 +109,13 @@ Performance, Internal Implementation, Development Support etc.
  * Conversion from uchar[20] to struct object_id continues.
 
  * Start using selected c99 constructs in small, stable and
-   essentialpart of the system to catch people who care about
+   essential part of the system to catch people who care about
    older compilers that do not grok them.
 
  * The filter-process interface learned to allow a process with long
    latency give a "delayed" response.
 
- * Many uses of comparision callback function the hashmap API uses
+ * Many uses of comparison callback function the hashmap API uses
    cast the callback function type when registering it to
    hashmap_init(), which defeats the compile time type checking when
    the callback interface changes (e.g. gaining more parameters).
