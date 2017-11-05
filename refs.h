@@ -126,7 +126,7 @@ int peel_ref(const char *refname, struct object_id *oid);
 /**
  * Resolve refname in the nested "gitlink" repository in the specified
  * submodule (which must be non-NULL). If the resolution is
- * successful, return 0 and set sha1 to the name of the object;
+ * successful, return 0 and set oid to the name of the object;
  * otherwise, return a non-zero value.
  */
 int resolve_gitlink_ref(const char *submodule, const char *refname,
@@ -260,7 +260,7 @@ struct ref_transaction;
 
 /*
  * The signature for the callback function for the for_each_*()
- * functions below.  The memory pointed to by the refname and sha1
+ * functions below.  The memory pointed to by the refname and oid
  * arguments is only guaranteed to be valid for the duration of a
  * single callback invocation.
  */
@@ -354,7 +354,7 @@ int reflog_exists(const char *refname);
 
 /*
  * Delete the specified reference. If old_oid is non-NULL, then
- * verify that the current value of the reference is old_sha1 before
+ * verify that the current value of the reference is old_oid before
  * deleting it. If old_oid is NULL, delete the reference if it
  * exists, regardless of its old value. It is an error for old_oid to
  * be null_oid. msg and flags are passed through to
@@ -633,7 +633,7 @@ int ref_transaction_abort(struct ref_transaction *transaction,
  * It is a bug to call this function when there might be other
  * processes accessing the repository or if there are existing
  * references that might conflict with the ones being created. All
- * old_sha1 values must either be absent or NULL_SHA1.
+ * old_oid values must either be absent or null_oid.
  */
 int initial_ref_transaction_commit(struct ref_transaction *transaction,
 				   struct strbuf *err);

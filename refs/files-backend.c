@@ -240,7 +240,7 @@ static void loose_fill_ref_dir(struct ref_store *ref_store,
 			} else if (is_null_oid(&oid)) {
 				/*
 				 * It is so astronomically unlikely
-				 * that NULL_SHA1 is the SHA-1 of an
+				 * that null_oid is the OID of an
 				 * actual object that we consider its
 				 * appearance in a loose reference
 				 * file to be repo corruption
@@ -473,7 +473,7 @@ static void unlock_ref(struct ref_lock *lock)
  * are passed to refs_verify_refname_available() for this check.
  *
  * If mustexist is not set and the reference is not found or is
- * broken, lock the reference anyway but clear sha1.
+ * broken, lock the reference anyway but clear old_oid.
  *
  * Return 0 on success. On failure, write an error message to err and
  * return TRANSACTION_NAME_CONFLICT or TRANSACTION_GENERIC_ERROR.
@@ -1648,9 +1648,8 @@ static int files_log_ref_write(struct files_ref_store *refs,
 }
 
 /*
- * Write sha1 into the open lockfile, then close the lockfile. On
- * errors, rollback the lockfile, fill in *err and
- * return -1.
+ * Write oid into the open lockfile, then close the lockfile. On
+ * errors, rollback the lockfile, fill in *err and return -1.
  */
 static int write_ref_to_lockfile(struct ref_lock *lock,
 				 const struct object_id *oid, struct strbuf *err)
@@ -2272,7 +2271,7 @@ static int split_symref_update(struct files_ref_store *refs,
 
 	/*
 	 * Change the symbolic ref update to log only. Also, it
-	 * doesn't need to check its old SHA-1 value, as that will be
+	 * doesn't need to check its old OID value, as that will be
 	 * done when new_update is processed.
 	 */
 	update->flags |= REF_LOG_ONLY | REF_NO_DEREF;
@@ -2341,7 +2340,7 @@ static int check_old_oid(struct ref_update *update, struct object_id *oid,
  * Prepare for carrying out update:
  * - Lock the reference referred to by update.
  * - Read the reference under lock.
- * - Check that its old SHA-1 value (if specified) is correct, and in
+ * - Check that its old OID value (if specified) is correct, and in
  *   any case record it in update->lock->old_oid for later use when
  *   writing the reflog.
  * - If it is a symref update without REF_NO_DEREF, split it up into a
@@ -2396,7 +2395,7 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 			/*
 			 * We won't be reading the referent as part of
 			 * the transaction, so we have to read it here
-			 * to record and possibly check old_sha1:
+			 * to record and possibly check old_oid:
 			 */
 			if (refs_read_ref_full(&refs->base,
 					       referent.buf, 0,
@@ -2416,7 +2415,7 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 			/*
 			 * Create a new update for the reference this
 			 * symref is pointing at. Also, we will record
-			 * and verify old_sha1 for this update as part
+			 * and verify old_oid for this update as part
 			 * of processing the split-off update, so we
 			 * don't have to do it here.
 			 */
@@ -2436,7 +2435,7 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 
 		/*
 		 * If this update is happening indirectly because of a
-		 * symref update, record the old SHA-1 in the parent
+		 * symref update, record the old OID in the parent
 		 * update:
 		 */
 		for (parent_update = update->parent_update;

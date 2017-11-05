@@ -770,7 +770,7 @@ static int read_ref_at_ent(struct object_id *ooid, struct object_id *noid,
 		if (cb->cutoff_cnt)
 			*cb->cutoff_cnt = cb->reccnt - 1;
 		/*
-		 * we have not yet updated cb->[n|o]sha1 so they still
+		 * we have not yet updated cb->[n|o]oid so they still
 		 * hold the values for the previous record.
 		 */
 		if (!is_null_oid(&cb->ooid)) {

@@ -744,7 +744,7 @@ static int packed_read_raw_ref(struct ref_store *ref_store,
 /*
  * This value is set in `base.flags` if the peeled value of the
  * current reference is known. In that case, `peeled` contains the
- * correct peeled value for the reference, which might be `null_sha1`
+ * correct peeled value for the reference, which might be `null_oid`
  * if the reference is not a tag or if it is broken.
  */
 #define REF_KNOWS_PEELED 0x40

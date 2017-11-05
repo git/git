@@ -15,13 +15,13 @@
  */
 
 /*
- * The reference should be updated to new_sha1.
+ * The reference should be updated to new_oid.
  */
 #define REF_HAVE_NEW (1 << 2)
 
 /*
  * The current reference's value should be checked to make sure that
- * it agrees with old_sha1.
+ * it agrees with old_oid.
  */
 #define REF_HAVE_OLD (1 << 3)
 
@@ -86,7 +86,7 @@ enum peel_status {
  * tag recursively until a non-tag is found.  If successful, store the
  * result to oid and return PEEL_PEELED.  If the object is not a tag
  * or is not valid, return PEEL_NON_TAG or PEEL_INVALID, respectively,
- * and leave sha1 unchanged.
+ * and leave oid unchanged.
  */
 enum peel_status peel_object(const struct object_id *name, struct object_id *oid);
 
@@ -98,11 +98,11 @@ enum peel_status peel_object(const struct object_id *name, struct object_id *oid
 int copy_reflog_msg(char *buf, const char *msg);
 
 /**
- * Information needed for a single ref update. Set new_sha1 to the new
- * value or to null_sha1 to delete the ref. To check the old value
- * while the ref is locked, set (flags & REF_HAVE_OLD) and set
- * old_sha1 to the old value, or to null_sha1 to ensure the ref does
- * not exist before update.
+ * Information needed for a single ref update. Set new_oid to the new
+ * value or to null_oid to delete the ref. To check the old value
+ * while the ref is locked, set (flags & REF_HAVE_OLD) and set old_oid
+ * to the old value, or to null_oid to ensure the ref does not exist
+ * before update.
  */
 struct ref_update {
 	/*
@@ -158,7 +158,7 @@ int ref_update_reject_duplicates(struct string_list *refnames,
 /*
  * Add a ref_update with the specified properties to transaction, and
  * return a pointer to the new object. This function does not verify
- * that refname is well-formed. new_sha1 and old_sha1 are only
+ * that refname is well-formed. new_oid and old_oid are only
  * dereferenced if the REF_HAVE_NEW and REF_HAVE_OLD bits,
  * respectively, are set in flags.
  */
