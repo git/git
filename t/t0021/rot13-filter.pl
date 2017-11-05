@@ -93,11 +93,19 @@ sub packet_bin_read {
 	}
 }
 
-sub packet_txt_read {
-	my ( $res, $buf ) = packet_bin_read();
-	unless ( $res == -1 or $buf eq '' or $buf =~ s/\n$// ) {
+sub remove_final_lf_or_die {
+	my $buf = shift;
+	unless ( $buf =~ s/\n$// ) {
 		die "A non-binary line MUST be terminated by an LF.\n"
 		    . "Received: '$buf'";
+	}
+	return $buf;
+}
+
+sub packet_txt_read {
+	my ( $res, $buf ) = packet_bin_read();
+	unless ( $res == -1 or $buf eq '' ) {
+		$buf = remove_final_lf_or_die($buf);
 	}
 	return ( $res, $buf );
 }
