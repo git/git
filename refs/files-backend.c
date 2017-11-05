@@ -10,6 +10,51 @@
 #include "../object.h"
 #include "../dir.h"
 
+/*
+ * This backend uses the following flags in `ref_update::flags` for
+ * internal bookkeeping purposes. Their numerical values must not
+ * conflict with REF_NODEREF, REF_FORCE_CREATE_REFLOG, REF_HAVE_NEW,
+ * REF_HAVE_OLD, or REF_ISPRUNING, which are also stored in
+ * `ref_update::flags`.
+ */
+
+/*
+ * Used as a flag in ref_update::flags when a loose ref is being
+ * pruned. This flag must only be used when REF_NODEREF is set.
+ */
+#define REF_ISPRUNING (1 << 4)
+
+/*
+ * Flag passed to lock_ref_sha1_basic() telling it to tolerate broken
+ * refs (i.e., because the reference is about to be deleted anyway).
+ */
+#define REF_DELETING (1 << 5)
+
+/*
+ * Used as a flag in ref_update::flags when the lockfile needs to be
+ * committed.
+ */
+#define REF_NEEDS_COMMIT (1 << 6)
+
+/*
+ * Used as a flag in ref_update::flags when we want to log a ref
+ * update but not actually perform it.  This is used when a symbolic
+ * ref update is split up.
+ */
+#define REF_LOG_ONLY (1 << 7)
+
+/*
+ * Used as a flag in ref_update::flags when the ref_update was via an
+ * update to HEAD.
+ */
+#define REF_UPDATE_VIA_HEAD (1 << 8)
+
+/*
+ * Used as a flag in ref_update::flags when the loose reference has
+ * been deleted.
+ */
+#define REF_DELETED_LOOSE (1 << 9)
+
 struct ref_lock {
 	char *ref_name;
 	struct lock_file lk;

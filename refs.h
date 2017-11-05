@@ -336,22 +336,6 @@ void warn_dangling_symrefs(FILE *fp, const char *msg_fmt,
 int refs_pack_refs(struct ref_store *refs, unsigned int flags);
 
 /*
- * Flags controlling ref_transaction_update(), ref_transaction_create(), etc.
- * REF_NODEREF: act on the ref directly, instead of dereferencing
- *              symbolic references.
- *
- * Other flags are reserved for internal use.
- */
-#define REF_NODEREF	0x01
-#define REF_FORCE_CREATE_REFLOG 0x40
-
-/*
- * Flags that can be passed in to ref_transaction_update
- */
-#define REF_TRANSACTION_UPDATE_ALLOWED_FLAGS \
-	(REF_NODEREF | REF_FORCE_CREATE_REFLOG)
-
-/*
  * Setup reflog before using. Fill in err and return -1 on failure.
  */
 int refs_create_reflog(struct ref_store *refs, const char *refname,
@@ -478,22 +462,23 @@ struct ref_transaction *ref_transaction_begin(struct strbuf *err);
  *
  *     refname -- the name of the reference to be affected.
  *
- *     new_sha1 -- the SHA-1 that should be set to be the new value of
- *         the reference. Some functions allow this parameter to be
+ *     new_oid -- the object ID that should be set to be the new value
+ *         of the reference. Some functions allow this parameter to be
  *         NULL, meaning that the reference is not changed, or
- *         null_sha1, meaning that the reference should be deleted. A
+ *         null_oid, meaning that the reference should be deleted. A
  *         copy of this value is made in the transaction.
  *
- *     old_sha1 -- the SHA-1 value that the reference must have before
+ *     old_oid -- the object ID that the reference must have before
  *         the update. Some functions allow this parameter to be NULL,
  *         meaning that the old value of the reference is not checked,
- *         or null_sha1, meaning that the reference must not exist
+ *         or null_oid, meaning that the reference must not exist
  *         before the update. A copy of this value is made in the
  *         transaction.
  *
  *     flags -- flags affecting the update, passed to
- *         update_ref_lock(). Can be REF_NODEREF, which means that
- *         symbolic references should not be followed.
+ *         update_ref_lock(). Possible flags: REF_NODEREF,
+ *         REF_FORCE_CREATE_REFLOG. See those constants for more
+ *         information.
  *
  *     msg -- a message describing the change (for the reflog).
  *
@@ -509,11 +494,37 @@ struct ref_transaction *ref_transaction_begin(struct strbuf *err);
  */
 
 /*
- * Add a reference update to transaction. new_oid is the value that
- * the reference should have after the update, or null_oid if it
- * should be deleted. If new_oid is NULL, then the reference is not
- * changed at all. old_oid is the value that the reference must have
- * before the update, or null_oid if it must not have existed
+ * The following flags can be passed to ref_transaction_update() etc.
+ * Internally, they are stored in `ref_update::flags`, along with some
+ * internal flags.
+ */
+
+/*
+ * Act on the ref directly; i.e., without dereferencing symbolic refs.
+ * If this flag is not specified, then symbolic references are
+ * dereferenced and the update is applied to the referent.
+ */
+#define REF_NODEREF (1 << 0)
+
+/*
+ * Force the creation of a reflog for this reference, even if it
+ * didn't previously have a reflog.
+ */
+#define REF_FORCE_CREATE_REFLOG (1 << 1)
+
+/*
+ * Bitmask of all of the flags that are allowed to be passed in to
+ * ref_transaction_update() and friends:
+ */
+#define REF_TRANSACTION_UPDATE_ALLOWED_FLAGS \
+	(REF_NODEREF | REF_FORCE_CREATE_REFLOG)
+
+/*
+ * Add a reference update to transaction. `new_oid` is the value that
+ * the reference should have after the update, or `null_oid` if it
+ * should be deleted. If `new_oid` is NULL, then the reference is not
+ * changed at all. `old_oid` is the value that the reference must have
+ * before the update, or `null_oid` if it must not have existed
  * beforehand. The old value is checked after the lock is taken to
  * prevent races. If the old value doesn't agree with old_oid, the
  * whole transaction fails. If old_oid is NULL, then the previous
