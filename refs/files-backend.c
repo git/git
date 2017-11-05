@@ -13,14 +13,14 @@
 /*
  * This backend uses the following flags in `ref_update::flags` for
  * internal bookkeeping purposes. Their numerical values must not
- * conflict with REF_NODEREF, REF_FORCE_CREATE_REFLOG, REF_HAVE_NEW,
+ * conflict with REF_NO_DEREF, REF_FORCE_CREATE_REFLOG, REF_HAVE_NEW,
  * REF_HAVE_OLD, or REF_ISPRUNING, which are also stored in
  * `ref_update::flags`.
  */
 
 /*
  * Used as a flag in ref_update::flags when a loose ref is being
- * pruned. This flag must only be used when REF_NODEREF is set.
+ * pruned. This flag must only be used when REF_NO_DEREF is set.
  */
 #define REF_ISPRUNING (1 << 4)
 
@@ -1044,7 +1044,7 @@ static void prune_ref(struct files_ref_store *refs, struct ref_to_prune *r)
 		goto cleanup;
 	ref_transaction_add_update(
 			transaction, r->name,
-			REF_NODEREF | REF_HAVE_NEW | REF_HAVE_OLD | REF_ISPRUNING,
+			REF_NO_DEREF | REF_HAVE_NEW | REF_HAVE_OLD | REF_ISPRUNING,
 			&null_oid, &r->oid, NULL);
 	if (ref_transaction_commit(transaction, &err))
 		goto cleanup;
@@ -1133,7 +1133,7 @@ static int files_pack_refs(struct ref_store *ref_store, unsigned int flags)
 		 */
 		if (ref_transaction_update(transaction, iter->refname,
 					   iter->oid, NULL,
-					   REF_NODEREF, NULL, &err))
+					   REF_NO_DEREF, NULL, &err))
 			die("failure preparing to create packed reference %s: %s",
 			    iter->refname, err.buf);
 
@@ -1336,7 +1336,7 @@ static int files_copy_or_rename_ref(struct ref_store *ref_store,
 	}
 
 	if (!copy && refs_delete_ref(&refs->base, logmsg, oldrefname,
-			    &orig_oid, REF_NODEREF)) {
+			    &orig_oid, REF_NO_DEREF)) {
 		error("unable to delete old %s", oldrefname);
 		goto rollback;
 	}
@@ -1352,7 +1352,7 @@ static int files_copy_or_rename_ref(struct ref_store *ref_store,
 				RESOLVE_REF_READING | RESOLVE_REF_NO_RECURSE,
 				&oid, NULL) &&
 	    refs_delete_ref(&refs->base, NULL, newrefname,
-			    NULL, REF_NODEREF)) {
+			    NULL, REF_NO_DEREF)) {
 		if (errno == EISDIR) {
 			struct strbuf path = STRBUF_INIT;
 			int result;
@@ -1377,7 +1377,7 @@ static int files_copy_or_rename_ref(struct ref_store *ref_store,
 	logmoved = log;
 
 	lock = lock_ref_oid_basic(refs, newrefname, NULL, NULL, NULL,
-				  REF_NODEREF, NULL, &err);
+				  REF_NO_DEREF, NULL, &err);
 	if (!lock) {
 		if (copy)
 			error("unable to copy '%s' to '%s': %s", oldrefname, newrefname, err.buf);
@@ -1400,7 +1400,7 @@ static int files_copy_or_rename_ref(struct ref_store *ref_store,
 
  rollback:
 	lock = lock_ref_oid_basic(refs, oldrefname, NULL, NULL, NULL,
-				  REF_NODEREF, NULL, &err);
+				  REF_NO_DEREF, NULL, &err);
 	if (!lock) {
 		error("unable to lock %s for rollback: %s", oldrefname, err.buf);
 		strbuf_release(&err);
@@ -1816,7 +1816,7 @@ static int files_create_symref(struct ref_store *ref_store,
 	int ret;
 
 	lock = lock_ref_oid_basic(refs, refname, NULL,
-				  NULL, NULL, REF_NODEREF, NULL,
+				  NULL, NULL, REF_NO_DEREF, NULL,
 				  &err);
 	if (!lock) {
 		error("%s", err.buf);
@@ -2200,7 +2200,7 @@ static int split_head_update(struct ref_update *update,
 
 	new_update = ref_transaction_add_update(
 			transaction, "HEAD",
-			update->flags | REF_LOG_ONLY | REF_NODEREF,
+			update->flags | REF_LOG_ONLY | REF_NO_DEREF,
 			&update->new_oid, &update->old_oid,
 			update->msg);
 
@@ -2219,8 +2219,8 @@ static int split_head_update(struct ref_update *update,
 
 /*
  * update is for a symref that points at referent and doesn't have
- * REF_NODEREF set. Split it into two updates:
- * - The original update, but with REF_LOG_ONLY and REF_NODEREF set
+ * REF_NO_DEREF set. Split it into two updates:
+ * - The original update, but with REF_LOG_ONLY and REF_NO_DEREF set
  * - A new, separate update for the referent reference
  * Note that the new update will itself be subject to splitting when
  * the iteration gets to it.
@@ -2275,7 +2275,7 @@ static int split_symref_update(struct files_ref_store *refs,
 	 * doesn't need to check its old SHA-1 value, as that will be
 	 * done when new_update is processed.
 	 */
-	update->flags |= REF_LOG_ONLY | REF_NODEREF;
+	update->flags |= REF_LOG_ONLY | REF_NO_DEREF;
 	update->flags &= ~REF_HAVE_OLD;
 
 	/*
@@ -2344,7 +2344,7 @@ static int check_old_oid(struct ref_update *update, struct object_id *oid,
  * - Check that its old SHA-1 value (if specified) is correct, and in
  *   any case record it in update->lock->old_oid for later use when
  *   writing the reflog.
- * - If it is a symref update without REF_NODEREF, split it up into a
+ * - If it is a symref update without REF_NO_DEREF, split it up into a
  *   REF_LOG_ONLY update of the symref and add a separate update for
  *   the referent to transaction.
  * - If it is an update of head_ref, add a corresponding REF_LOG_ONLY
@@ -2392,7 +2392,7 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 	update->backend_data = lock;
 
 	if (update->type & REF_ISSYMREF) {
-		if (update->flags & REF_NODEREF) {
+		if (update->flags & REF_NO_DEREF) {
 			/*
 			 * We won't be reading the referent as part of
 			 * the transaction, so we have to read it here
@@ -2564,7 +2564,7 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 	 * split_symref_update() or split_head_update(), those
 	 * functions will check that the new updates don't have the
 	 * same refname as any existing ones.) Also fail if any of the
-	 * updates use REF_ISPRUNING without REF_NODEREF.
+	 * updates use REF_ISPRUNING without REF_NO_DEREF.
 	 */
 	for (i = 0; i < transaction->nr; i++) {
 		struct ref_update *update = transaction->updates[i];
@@ -2572,8 +2572,8 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 			string_list_append(&affected_refnames, update->refname);
 
 		if ((update->flags & REF_ISPRUNING) &&
-		    !(update->flags & REF_NODEREF))
-			BUG("REF_ISPRUNING set without REF_NODEREF");
+		    !(update->flags & REF_NO_DEREF))
+			BUG("REF_ISPRUNING set without REF_NO_DEREF");
 
 		/*
 		 * We store a pointer to update in item->util, but at
@@ -2651,7 +2651,7 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 
 			ref_transaction_add_update(
 					packed_transaction, update->refname,
-					REF_HAVE_NEW | REF_NODEREF,
+					REF_HAVE_NEW | REF_NO_DEREF,
 					&update->new_oid, NULL,
 					NULL);
 		}
@@ -2995,7 +2995,7 @@ static int files_reflog_expire(struct ref_store *ref_store,
 	 * reference if --updateref was specified:
 	 */
 	lock = lock_ref_oid_basic(refs, refname, oid,
-				  NULL, NULL, REF_NODEREF,
+				  NULL, NULL, REF_NO_DEREF,
 				  &type, &err);
 	if (!lock) {
 		error("cannot lock ref '%s': %s", refname, err.buf);

@@ -476,7 +476,7 @@ struct ref_transaction *ref_transaction_begin(struct strbuf *err);
  *         transaction.
  *
  *     flags -- flags affecting the update, passed to
- *         update_ref_lock(). Possible flags: REF_NODEREF,
+ *         update_ref_lock(). Possible flags: REF_NO_DEREF,
  *         REF_FORCE_CREATE_REFLOG. See those constants for more
  *         information.
  *
@@ -504,7 +504,7 @@ struct ref_transaction *ref_transaction_begin(struct strbuf *err);
  * If this flag is not specified, then symbolic references are
  * dereferenced and the update is applied to the referent.
  */
-#define REF_NODEREF (1 << 0)
+#define REF_NO_DEREF (1 << 0)
 
 /*
  * Force the creation of a reflog for this reference, even if it
@@ -517,7 +517,7 @@ struct ref_transaction *ref_transaction_begin(struct strbuf *err);
  * ref_transaction_update() and friends:
  */
 #define REF_TRANSACTION_UPDATE_ALLOWED_FLAGS \
-	(REF_NODEREF | REF_FORCE_CREATE_REFLOG)
+	(REF_NO_DEREF | REF_FORCE_CREATE_REFLOG)
 
 /*
  * Add a reference update to transaction. `new_oid` is the value that

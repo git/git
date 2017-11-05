@@ -258,7 +258,7 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 		}
 
 		if (delete_ref(NULL, name, is_null_oid(&oid) ? NULL : &oid,
-			       REF_NODEREF)) {
+			       REF_NO_DEREF)) {
 			error(remote_branch
 			      ? _("Error deleting remote-tracking branch '%s'")
 			      : _("Error deleting branch '%s'"),

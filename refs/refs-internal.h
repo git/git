@@ -9,7 +9,7 @@
 
 /*
  * The following flags can appear in `ref_update::flags`. Their
- * numerical values must not conflict with those of REF_NODEREF and
+ * numerical values must not conflict with those of REF_NO_DEREF and
  * REF_FORCE_CREATE_REFLOG, which are also stored in
  * `ref_update::flags`.
  */
@@ -119,7 +119,7 @@ struct ref_update {
 	struct object_id old_oid;
 
 	/*
-	 * One or more of REF_NODEREF, REF_FORCE_CREATE_REFLOG,
+	 * One or more of REF_NO_DEREF, REF_FORCE_CREATE_REFLOG,
 	 * REF_HAVE_NEW, REF_HAVE_OLD, or backend-specific flags.
 	 */
 	unsigned int flags;
