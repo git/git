@@ -150,24 +150,56 @@ sub packet_initialize {
 	packet_flush();
 }
 
+sub packet_read_capabilities {
+	my @cap;
+	while (1) {
+		my ( $res, $buf ) = packet_bin_read();
+		if ( $res == -1 ) {
+			die "unexpected EOF when reading capabilities";
+		}
+		return ( $res, @cap ) if ( $res != 0 );
+		$buf = remove_final_lf_or_die($buf);
+		unless ( $buf =~ s/capability=// ) {
+			die "bad capability buf: '$buf'";
+		}
+		push @cap, $buf;
+	}
+}
+
+# Read remote capabilities and check them against capabilities we require
+sub packet_read_and_check_capabilities {
+	my @required_caps = @_;
+	my ($res, @remote_caps) = packet_read_capabilities();
+	my %remote_caps = map { $_ => 1 } @remote_caps;
+	foreach (@required_caps) {
+		unless (exists($remote_caps{$_})) {
+			die "required '$_' capability not available from remote" ;
+		}
+	}
+	return %remote_caps;
+}
+
+# Check our capabilities we want to advertise against the remote ones
+# and then advertise our capabilities
+sub packet_check_and_write_capabilities {
+	my ($remote_caps, @our_caps) = @_;
+	foreach (@our_caps) {
+		unless (exists($remote_caps->{$_})) {
+			die "our capability '$_' is not available from remote"
+		}
+		packet_txt_write( "capability=" . $_ );
+	}
+	packet_flush();
+}
+
 print $debug "START\n";
 $debug->flush();
 
 packet_initialize("git-filter", 2);
 
-packet_compare_lists([0, "capability=clean"], packet_txt_read()) ||
-	die "bad capability";
-packet_compare_lists([0, "capability=smudge"], packet_txt_read()) ||
-	die "bad capability";
-packet_compare_lists([0, "capability=delay"], packet_txt_read()) ||
-	die "bad capability";
-packet_compare_lists([1, ""], packet_bin_read()) ||
-	die "bad capability end";
+my %remote_caps = packet_read_and_check_capabilities("clean", "smudge", "delay");
+packet_check_and_write_capabilities(\%remote_caps, @capabilities);
 
-foreach (@capabilities) {
-	packet_txt_write( "capability=" . $_ );
-}
-packet_flush();
 print $debug "init handshake complete\n";
 $debug->flush();
 
