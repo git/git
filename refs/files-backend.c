@@ -2518,12 +2518,17 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 	 * transaction. (If we end up splitting up any updates using
 	 * split_symref_update() or split_head_update(), those
 	 * functions will check that the new updates don't have the
-	 * same refname as any existing ones.)
+	 * same refname as any existing ones.) Also fail if any of the
+	 * updates use REF_ISPRUNING without REF_NODEREF.
 	 */
 	for (i = 0; i < transaction->nr; i++) {
 		struct ref_update *update = transaction->updates[i];
 		struct string_list_item *item =
 			string_list_append(&affected_refnames, update->refname);
+
+		if ((update->flags & REF_ISPRUNING) &&
+		    !(update->flags & REF_NODEREF))
+			BUG("REF_ISPRUNING set without REF_NODEREF");
 
 		/*
 		 * We store a pointer to update in item->util, but at
