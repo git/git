@@ -989,22 +989,29 @@ static void prune_ref(struct files_ref_store *refs, struct ref_to_prune *r)
 {
 	struct ref_transaction *transaction;
 	struct strbuf err = STRBUF_INIT;
+	int ret = -1;
 
 	if (check_refname_format(r->name, 0))
 		return;
 
 	transaction = ref_store_transaction_begin(&refs->base, &err);
-	if (!transaction ||
-	    ref_transaction_delete(transaction, r->name, &r->oid,
-				   REF_ISPRUNING | REF_NODEREF, NULL, &err) ||
-	    ref_transaction_commit(transaction, &err)) {
-		ref_transaction_free(transaction);
+	if (!transaction)
+		goto cleanup;
+	ref_transaction_add_update(
+			transaction, r->name,
+			REF_NODEREF | REF_HAVE_NEW | REF_HAVE_OLD | REF_ISPRUNING,
+			&null_oid, &r->oid, NULL);
+	if (ref_transaction_commit(transaction, &err))
+		goto cleanup;
+
+	ret = 0;
+
+cleanup:
+	if (ret)
 		error("%s", err.buf);
-		strbuf_release(&err);
-		return;
-	}
-	ref_transaction_free(transaction);
 	strbuf_release(&err);
+	ref_transaction_free(transaction);
+	return;
 }
 
 /*

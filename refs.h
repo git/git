@@ -349,9 +349,7 @@ int refs_pack_refs(struct ref_store *refs, unsigned int flags);
  * Flags that can be passed in to ref_transaction_update
  */
 #define REF_TRANSACTION_UPDATE_ALLOWED_FLAGS \
-	REF_ISPRUNING |                      \
-	REF_FORCE_CREATE_REFLOG |            \
-	REF_NODEREF
+	(REF_NODEREF | REF_FORCE_CREATE_REFLOG)
 
 /*
  * Setup reflog before using. Fill in err and return -1 on failure.
