@@ -2594,8 +2594,8 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 
 			ref_transaction_add_update(
 					packed_transaction, update->refname,
-					update->flags & ~REF_HAVE_OLD,
-					&update->new_oid, &update->old_oid,
+					REF_HAVE_NEW | REF_NODEREF,
+					&update->new_oid, NULL,
 					NULL);
 		}
 	}
