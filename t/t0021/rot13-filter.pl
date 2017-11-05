@@ -74,8 +74,7 @@ sub packet_bin_read {
 	my $bytes_read = read STDIN, $buffer, 4;
 	if ( $bytes_read == 0 ) {
 		# EOF - Git stopped talking to us!
-		print $debug "STOP\n";
-		exit();
+		return ( -1, "" );
 	}
 	elsif ( $bytes_read != 4 ) {
 		die "invalid packet: '$buffer'";
@@ -99,8 +98,17 @@ sub packet_bin_read {
 
 sub packet_txt_read {
 	my ( $res, $buf ) = packet_bin_read();
-	unless ( $buf eq '' or $buf =~ s/\n$// ) {
+	unless ( $res == -1 or $buf eq '' or $buf =~ s/\n$// ) {
 		die "A non-binary line MUST be terminated by an LF.";
+	}
+	return ( $res, $buf );
+}
+
+sub packet_required_key_val_read {
+	my ( $key ) = @_;
+	my ( $res, $buf ) = packet_txt_read();
+	unless ( $res == -1 or ( $buf =~ s/^$key=// and $buf ne '' ) ) {
+		die "bad $key: '$buf'";
 	}
 	return ( $res, $buf );
 }
@@ -152,13 +160,18 @@ print $debug "init handshake complete\n";
 $debug->flush();
 
 while (1) {
-	my ( $command ) = packet_txt_read() =~ /^command=(.+)$/;
+	my ( $res, $command ) = packet_required_key_val_read("command");
+	if ( $res == -1 ) {
+		print $debug "STOP\n";
+		exit();
+	}
 	print $debug "IN: $command";
 	$debug->flush();
 
 	if ( $command eq "list_available_blobs" ) {
 		# Flush
-		packet_bin_read();
+		packet_compare_lists([1, ""], packet_bin_read()) ||
+			die "bad list_available_blobs end";
 
 		foreach my $pathname ( sort keys %DELAY ) {
 			if ( $DELAY{$pathname}{"requested"} >= 1 ) {
@@ -184,13 +197,12 @@ while (1) {
 		packet_flush();
 	}
 	else {
-		my ( $pathname ) = packet_txt_read() =~ /^pathname=(.+)$/;
+		my ( $res, $pathname ) = packet_required_key_val_read("pathname");
+		if ( $res == -1 ) {
+			die "unexpected EOF while expecting pathname";
+		}
 		print $debug " $pathname";
 		$debug->flush();
-
-		if ( $pathname eq "" ) {
-			die "bad pathname '$pathname'";
-		}
 
 		# Read until flush
 		my ( $done, $buffer ) = packet_txt_read();
@@ -205,6 +217,9 @@ while (1) {
 
 			( $done, $buffer ) = packet_txt_read();
 		}
+		if ( $done == -1 ) {
+			die "unexpected EOF after pathname '$pathname'";
+		}
 
 		my $input = "";
 		{
@@ -215,6 +230,9 @@ while (1) {
 				( $done, $buffer ) = packet_bin_read();
 				$input .= $buffer;
 			}
+			if ( $done == -1 ) {
+				die "unexpected EOF while reading input for '$pathname'";
+			}			
 			print $debug " " . length($input) . " [OK] -- ";
 			$debug->flush();
 		}
