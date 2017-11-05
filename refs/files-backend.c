@@ -14,7 +14,7 @@
  * This backend uses the following flags in `ref_update::flags` for
  * internal bookkeeping purposes. Their numerical values must not
  * conflict with REF_NO_DEREF, REF_FORCE_CREATE_REFLOG, REF_HAVE_NEW,
- * REF_HAVE_OLD, or REF_ISPRUNING, which are also stored in
+ * REF_HAVE_OLD, or REF_IS_PRUNING, which are also stored in
  * `ref_update::flags`.
  */
 
@@ -22,7 +22,7 @@
  * Used as a flag in ref_update::flags when a loose ref is being
  * pruned. This flag must only be used when REF_NO_DEREF is set.
  */
-#define REF_ISPRUNING (1 << 4)
+#define REF_IS_PRUNING (1 << 4)
 
 /*
  * Flag passed to lock_ref_sha1_basic() telling it to tolerate broken
@@ -1044,7 +1044,7 @@ static void prune_ref(struct files_ref_store *refs, struct ref_to_prune *r)
 		goto cleanup;
 	ref_transaction_add_update(
 			transaction, r->name,
-			REF_NO_DEREF | REF_HAVE_NEW | REF_HAVE_OLD | REF_ISPRUNING,
+			REF_NO_DEREF | REF_HAVE_NEW | REF_HAVE_OLD | REF_IS_PRUNING,
 			&null_oid, &r->oid, NULL);
 	if (ref_transaction_commit(transaction, &err))
 		goto cleanup;
@@ -2177,7 +2177,7 @@ static int split_head_update(struct ref_update *update,
 	struct ref_update *new_update;
 
 	if ((update->flags & REF_LOG_ONLY) ||
-	    (update->flags & REF_ISPRUNING) ||
+	    (update->flags & REF_IS_PRUNING) ||
 	    (update->flags & REF_UPDATE_VIA_HEAD))
 		return 0;
 
@@ -2564,16 +2564,16 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 	 * split_symref_update() or split_head_update(), those
 	 * functions will check that the new updates don't have the
 	 * same refname as any existing ones.) Also fail if any of the
-	 * updates use REF_ISPRUNING without REF_NO_DEREF.
+	 * updates use REF_IS_PRUNING without REF_NO_DEREF.
 	 */
 	for (i = 0; i < transaction->nr; i++) {
 		struct ref_update *update = transaction->updates[i];
 		struct string_list_item *item =
 			string_list_append(&affected_refnames, update->refname);
 
-		if ((update->flags & REF_ISPRUNING) &&
+		if ((update->flags & REF_IS_PRUNING) &&
 		    !(update->flags & REF_NO_DEREF))
-			BUG("REF_ISPRUNING set without REF_NO_DEREF");
+			BUG("REF_IS_PRUNING set without REF_NO_DEREF");
 
 		/*
 		 * We store a pointer to update in item->util, but at
@@ -2632,7 +2632,7 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 
 		if (update->flags & REF_DELETING &&
 		    !(update->flags & REF_LOG_ONLY) &&
-		    !(update->flags & REF_ISPRUNING)) {
+		    !(update->flags & REF_IS_PRUNING)) {
 			/*
 			 * This reference has to be deleted from
 			 * packed-refs if it exists there.
@@ -2749,7 +2749,7 @@ static int files_transaction_finish(struct ref_store *ref_store,
 		struct ref_update *update = transaction->updates[i];
 		if (update->flags & REF_DELETING &&
 		    !(update->flags & REF_LOG_ONLY) &&
-		    !(update->flags & REF_ISPRUNING)) {
+		    !(update->flags & REF_IS_PRUNING)) {
 			strbuf_reset(&sb);
 			files_reflog_path(refs, &sb, update->refname);
 			if (!unlink_or_warn(sb.buf))
