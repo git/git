@@ -65,6 +65,7 @@ chomp(@tracked_categories);
 
 # Just like @tracked_categories, but for MediaWiki namespaces.
 my @tracked_namespaces = split(/[ \n]/, run_git("config --get-all remote.${remotename}.namespaces"));
+for (@tracked_namespaces) { s/_/ /g; }
 chomp(@tracked_namespaces);
 
 # Import media files on pull
