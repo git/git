@@ -181,7 +181,7 @@ static int get_name(const char *path, const struct object_id *oid, int flag, voi
 	}
 
 	/* Is it annotated? */
-	if (!peel_ref(path, peeled.hash)) {
+	if (!peel_ref(path, &peeled)) {
 		is_annotated = !!oidcmp(oid, &peeled);
 	} else {
 		oidcpy(&peeled, oid);

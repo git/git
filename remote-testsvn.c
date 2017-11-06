@@ -174,7 +174,7 @@ static int cmd_import(const char *line)
 	struct child_process svndump_proc = CHILD_PROCESS_INIT;
 	const char *command = "svnrdump";
 
-	if (read_ref(private_ref, head_oid.hash))
+	if (read_ref(private_ref, &head_oid))
 		startrev = 0;
 	else {
 		note_msg = read_ref_note(&head_oid);
