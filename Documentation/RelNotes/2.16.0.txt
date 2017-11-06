@@ -1,0 +1,84 @@
+Git 2.16 Release Notes
+======================
+
+Backward compatibility notes and other notable changes.
+
+ * Use of an empty string as a pathspec element that is used for
+   'everything matches' is now an error.
+
+
+Updates since v2.15
+-------------------
+
+UI, Workflows & Features
+
+ * An empty string as a pathspec element that means "everything"
+   i.e. 'git add ""', is now illegal.  We started this by first
+   deprecating and warning a pathspec that has such an element in
+   2.11 (Nov 2016).
+
+
+Performance, Internal Implementation, Development Support etc.
+
+ * An earlier update made it possible to use an on-stack in-core
+   lockfile structure (as opposed to having to deliberately leak an
+   on-heap one).  Many codepaths have been updated to take advantage
+   of this new facility.
+   (merge b74c90fb41 ma/lockfile-fixes later to maint).
+
+ * Calling cmd_foo() as if it is a general purpose helper function is
+   a no-no.  Correct two instances of such to set an example.
+   (merge a92b1095d1 jc/no-cmd-as-subroutine later to maint).
+
+ * We try to see if somebody runs our test suite with a shell that
+   does not support "local" like bash/dash does.
+   (merge 01d3a526ad mh/test-local-canary later to maint).
+
+
+Also contains various documentation updates and code clean-ups.
+
+
+Fixes since v2.15
+-----------------
+
+ * "auto" as a value for the columnar output configuration ought to
+   judge "is the output consumed by humans?" with the same criteria as
+   "auto" for coloured output configuration, i.e. either the standard
+   output stream is going to tty, or a pager is in use.  We forgot the
+   latter, which has been fixed.
+   (merge 965ff23a43 kd/auto-col-with-pager-fix later to maint).
+
+ * The experimental "color moved lines differently in diff output"
+   feature was buggy around "ignore whitespace changes" edges, whihch
+   has been corrected.
+   (merge b66b507292 jk/diff-color-moved-fix later to maint).
+
+ * Instead of using custom line comparison and hashing functions to
+   implement "moved lines" coloring in the diff output, use the pair
+   of these functions from lower-layer xdiff/ code.
+   (merge 01be97c2b2 sb/diff-color-moved-use-xdl-recmatch later to maint).
+
+ * Some codepaths did not check for errors when asking what branch the
+   HEAD points at, which have been fixed.
+   (merge dbd2b55cb7 jk/misc-resolve-ref-unsafe-fixes later to maint).
+
+ * "git commit", after making a commit, did not check for errors when
+   asking on what branch it made the commit, which has been correted.
+   (merge c26de08370 ao/check-resolve-ref-unsafe-result later to maint).
+
+ * "git status --ignored -u" did not stop at a working tree of a
+   separate project that is embedded in an ignored directory and
+   listed files in that other project, instead of just showing the
+   directory itself as ignored.
+   (merge fadb4820c4 js/submodule-in-excluded later to maint).
+
+ * A broken access to object databases in recent update to "git grep
+   --recurse-submodules" has been fixed.
+   (merge 9560e6245a bw/grep-recurse-submodules later to maint).
+
+ * A recent regression in "git rebase -i" that broke execution of git
+   commands from subdirectories via "exec" insn has been fixed.
+   (merge 09d7b6c6fa jk/rebase-i-exec-gitdir-fix later to maint).
+
+ * Other minor doc, test and build updates and code cleanups.
+   (merge bab76141da cn/diff-indent-no-longer-is-experimental later to maint).
