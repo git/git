@@ -17,6 +17,7 @@ int advice_set_upstream_failure = 1;
 int advice_object_name_warning = 1;
 int advice_rm_hints = 1;
 int advice_add_embedded_repo = 1;
+int advice_ignored_hook = 1;
 
 static struct {
 	const char *name;
@@ -38,6 +39,7 @@ static struct {
 	{ "objectnamewarning", &advice_object_name_warning },
 	{ "rmhints", &advice_rm_hints },
 	{ "addembeddedrepo", &advice_add_embedded_repo },
+	{ "ignoredhook", &advice_ignored_hook },
 
 	/* make this an alias for backward compatibility */
 	{ "pushnonfastforward", &advice_push_update_rejected }
