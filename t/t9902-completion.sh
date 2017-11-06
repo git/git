@@ -1245,6 +1245,10 @@ test_expect_success 'double dash "git checkout"' '
 	--conflict=
 	--orphan Z
 	--patch Z
+	--detach Z
+	--ignore-skip-worktree-bits Z
+	--recurse-submodules Z
+	--no-recurse-submodules Z
 	EOF
 '
 
