@@ -315,7 +315,7 @@ test_expect_success 'setup master' '
 	echo >.gitattributes &&
 	git checkout -b master &&
 	git add .gitattributes &&
-	git commit -m "add .gitattributes" "" &&
+	git commit -m "add .gitattributes" . &&
 	printf "\$Id: 0000000000000000000000000000000000000000 \$\nLINEONE\nLINETWO\nLINETHREE"     >LF &&
 	printf "\$Id: 0000000000000000000000000000000000000000 \$\r\nLINEONE\r\nLINETWO\r\nLINETHREE" >CRLF &&
 	printf "\$Id: 0000000000000000000000000000000000000000 \$\nLINEONE\r\nLINETWO\nLINETHREE"   >CRLF_mix_LF &&
