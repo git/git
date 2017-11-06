@@ -63,6 +63,10 @@ chomp(@tracked_pages);
 my @tracked_categories = split(/[ \n]/, run_git("config --get-all remote.${remotename}.categories"));
 chomp(@tracked_categories);
 
+# Just like @tracked_categories, but for MediaWiki namespaces.
+my @tracked_namespaces = split(/[ \n]/, run_git("config --get-all remote.${remotename}.namespaces"));
+chomp(@tracked_namespaces);
+
 # Import media files on pull
 my $import_media = run_git("config --get --bool remote.${remotename}.mediaimport");
 chomp($import_media);
@@ -256,6 +260,23 @@ sub get_mw_tracked_categories {
 	return;
 }
 
+sub get_mw_tracked_namespaces {
+    my $pages = shift;
+    foreach my $local_namespace (@tracked_namespaces) {
+        my $mw_pages = $mediawiki->list( {
+            action => 'query',
+            list => 'allpages',
+            apnamespace => get_mw_namespace_id($local_namespace),
+            aplimit => 'max' } )
+            || die $mediawiki->{error}->{code} . ': '
+                . $mediawiki->{error}->{details} . "\n";
+        foreach my $page (@{$mw_pages}) {
+            $pages->{$page->{title}} = $page;
+        }
+    }
+    return;
+}
+
 sub get_mw_all_pages {
 	my $pages = shift;
 	# No user-provided list, get the list of pages from the API.
@@ -318,6 +339,10 @@ sub get_mw_pages {
 	if (@tracked_categories) {
 		$user_defined = 1;
 		get_mw_tracked_categories(\%pages);
+	}
+	if (@tracked_namespaces) {
+		$user_defined = 1;
+		get_mw_tracked_namespaces(\%pages);
 	}
 	if (!$user_defined) {
 		get_mw_all_pages(\%pages);
