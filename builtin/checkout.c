@@ -247,7 +247,7 @@ static int checkout_paths(const struct checkout_opts *opts,
 	struct object_id rev;
 	struct commit *head;
 	int errs = 0;
-	struct lock_file *lock_file;
+	struct lock_file lock_file = LOCK_INIT;
 
 	if (opts->track != BRANCH_TRACK_UNSPECIFIED)
 		die(_("'%s' cannot be used with updating paths"), "--track");
@@ -275,9 +275,7 @@ static int checkout_paths(const struct checkout_opts *opts,
 		return run_add_interactive(revision, "--patch=checkout",
 					   &opts->pathspec);
 
-	lock_file = xcalloc(1, sizeof(struct lock_file));
-
-	hold_locked_index(lock_file, LOCK_DIE_ON_ERROR);
+	hold_locked_index(&lock_file, LOCK_DIE_ON_ERROR);
 	if (read_cache_preload(&opts->pathspec) < 0)
 		return error(_("index file corrupt"));
 
@@ -376,7 +374,7 @@ static int checkout_paths(const struct checkout_opts *opts,
 	}
 	errs |= finish_delayed_checkout(&state);
 
-	if (write_locked_index(&the_index, lock_file, COMMIT_LOCK))
+	if (write_locked_index(&the_index, &lock_file, COMMIT_LOCK))
 		die(_("unable to write new index file"));
 
 	read_ref_full("HEAD", 0, rev.hash, NULL);
@@ -472,9 +470,9 @@ static int merge_working_tree(const struct checkout_opts *opts,
 			      int *writeout_error)
 {
 	int ret;
-	struct lock_file *lock_file = xcalloc(1, sizeof(struct lock_file));
+	struct lock_file lock_file = LOCK_INIT;
 
-	hold_locked_index(lock_file, LOCK_DIE_ON_ERROR);
+	hold_locked_index(&lock_file, LOCK_DIE_ON_ERROR);
 	if (read_cache_preload(NULL) < 0)
 		return error(_("index file corrupt"));
 
@@ -591,7 +589,7 @@ static int merge_working_tree(const struct checkout_opts *opts,
 	if (!cache_tree_fully_valid(active_cache_tree))
 		cache_tree_update(&the_index, WRITE_TREE_SILENT | WRITE_TREE_REPAIR);
 
-	if (write_locked_index(&the_index, lock_file, COMMIT_LOCK))
+	if (write_locked_index(&the_index, &lock_file, COMMIT_LOCK))
 		die(_("unable to write new index file"));
 
 	if (!opts->force && !opts->quiet)

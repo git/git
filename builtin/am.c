@@ -1134,11 +1134,11 @@ static const char *msgnum(const struct am_state *state)
  */
 static void refresh_and_write_cache(void)
 {
-	struct lock_file *lock_file = xcalloc(1, sizeof(struct lock_file));
+	struct lock_file lock_file = LOCK_INIT;
 
-	hold_locked_index(lock_file, LOCK_DIE_ON_ERROR);
+	hold_locked_index(&lock_file, LOCK_DIE_ON_ERROR);
 	refresh_cache(REFRESH_QUIET);
-	if (write_locked_index(&the_index, lock_file, COMMIT_LOCK))
+	if (write_locked_index(&the_index, &lock_file, COMMIT_LOCK))
 		die(_("unable to write index file"));
 }
 
@@ -1488,11 +1488,10 @@ static int run_apply(const struct am_state *state, const char *index_file)
 	struct argv_array apply_opts = ARGV_ARRAY_INIT;
 	struct apply_state apply_state;
 	int res, opts_left;
-	static struct lock_file lock_file;
 	int force_apply = 0;
 	int options = 0;
 
-	if (init_apply_state(&apply_state, NULL, &lock_file))
+	if (init_apply_state(&apply_state, NULL))
 		die("BUG: init_apply_state() failed");
 
 	argv_array_push(&apply_opts, "apply");
@@ -1946,15 +1945,14 @@ next:
  */
 static int fast_forward_to(struct tree *head, struct tree *remote, int reset)
 {
-	struct lock_file *lock_file;
+	struct lock_file lock_file = LOCK_INIT;
 	struct unpack_trees_options opts;
 	struct tree_desc t[2];
 
 	if (parse_tree(head) || parse_tree(remote))
 		return -1;
 
-	lock_file = xcalloc(1, sizeof(struct lock_file));
-	hold_locked_index(lock_file, LOCK_DIE_ON_ERROR);
+	hold_locked_index(&lock_file, LOCK_DIE_ON_ERROR);
 
 	refresh_cache(REFRESH_QUIET);
 
@@ -1970,11 +1968,11 @@ static int fast_forward_to(struct tree *head, struct tree *remote, int reset)
 	init_tree_desc(&t[1], remote->buffer, remote->size);
 
 	if (unpack_trees(2, t, &opts)) {
-		rollback_lock_file(lock_file);
+		rollback_lock_file(&lock_file);
 		return -1;
 	}
 
-	if (write_locked_index(&the_index, lock_file, COMMIT_LOCK))
+	if (write_locked_index(&the_index, &lock_file, COMMIT_LOCK))
 		die(_("unable to write new index file"));
 
 	return 0;
@@ -1986,15 +1984,14 @@ static int fast_forward_to(struct tree *head, struct tree *remote, int reset)
  */
 static int merge_tree(struct tree *tree)
 {
-	struct lock_file *lock_file;
+	struct lock_file lock_file = LOCK_INIT;
 	struct unpack_trees_options opts;
 	struct tree_desc t[1];
 
 	if (parse_tree(tree))
 		return -1;
 
-	lock_file = xcalloc(1, sizeof(struct lock_file));
-	hold_locked_index(lock_file, LOCK_DIE_ON_ERROR);
+	hold_locked_index(&lock_file, LOCK_DIE_ON_ERROR);
 
 	memset(&opts, 0, sizeof(opts));
 	opts.head_idx = 1;
@@ -2005,11 +2002,11 @@ static int merge_tree(struct tree *tree)
 	init_tree_desc(&t[0], tree->buffer, tree->size);
 
 	if (unpack_trees(1, t, &opts)) {
-		rollback_lock_file(lock_file);
+		rollback_lock_file(&lock_file);
 		return -1;
 	}
 
-	if (write_locked_index(&the_index, lock_file, COMMIT_LOCK))
+	if (write_locked_index(&the_index, &lock_file, COMMIT_LOCK))
 		die(_("unable to write new index file"));
 
 	return 0;

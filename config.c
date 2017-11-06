@@ -2751,7 +2751,7 @@ static int git_config_copy_or_rename_section_in_file(const char *config_filename
 {
 	int ret = 0, remove = 0;
 	char *filename_buf = NULL;
-	struct lock_file *lock;
+	struct lock_file lock = LOCK_INIT;
 	int out_fd;
 	char buf[1024];
 	FILE *config_file = NULL;
@@ -2766,8 +2766,7 @@ static int git_config_copy_or_rename_section_in_file(const char *config_filename
 	if (!config_filename)
 		config_filename = filename_buf = git_pathdup("config");
 
-	lock = xcalloc(1, sizeof(struct lock_file));
-	out_fd = hold_lock_file_for_update(lock, config_filename, 0);
+	out_fd = hold_lock_file_for_update(&lock, config_filename, 0);
 	if (out_fd < 0) {
 		ret = error("could not lock config file %s", config_filename);
 		goto out;
@@ -2786,9 +2785,9 @@ static int git_config_copy_or_rename_section_in_file(const char *config_filename
 		goto out;
 	}
 
-	if (chmod(get_lock_file_path(lock), st.st_mode & 07777) < 0) {
+	if (chmod(get_lock_file_path(&lock), st.st_mode & 07777) < 0) {
 		ret = error_errno("chmod on %s failed",
-				  get_lock_file_path(lock));
+				  get_lock_file_path(&lock));
 		goto out;
 	}
 
@@ -2812,7 +2811,7 @@ static int git_config_copy_or_rename_section_in_file(const char *config_filename
 			 */
 			if (copystr.len > 0) {
 				if (write_in_full(out_fd, copystr.buf, copystr.len) != copystr.len) {
-					ret = write_error(get_lock_file_path(lock));
+					ret = write_error(get_lock_file_path(&lock));
 					goto out;
 				}
 				strbuf_reset(&copystr);
@@ -2828,7 +2827,7 @@ static int git_config_copy_or_rename_section_in_file(const char *config_filename
 				store.baselen = strlen(new_name);
 				if (!copy) {
 					if (write_section(out_fd, new_name) < 0) {
-						ret = write_error(get_lock_file_path(lock));
+						ret = write_error(get_lock_file_path(&lock));
 						goto out;
 					}
 					/*
@@ -2862,7 +2861,7 @@ static int git_config_copy_or_rename_section_in_file(const char *config_filename
 		}
 
 		if (write_in_full(out_fd, output, length) < 0) {
-			ret = write_error(get_lock_file_path(lock));
+			ret = write_error(get_lock_file_path(&lock));
 			goto out;
 		}
 	}
@@ -2874,7 +2873,7 @@ static int git_config_copy_or_rename_section_in_file(const char *config_filename
 	 */
 	if (copystr.len > 0) {
 		if (write_in_full(out_fd, copystr.buf, copystr.len) != copystr.len) {
-			ret = write_error(get_lock_file_path(lock));
+			ret = write_error(get_lock_file_path(&lock));
 			goto out;
 		}
 		strbuf_reset(&copystr);
@@ -2883,13 +2882,13 @@ static int git_config_copy_or_rename_section_in_file(const char *config_filename
 	fclose(config_file);
 	config_file = NULL;
 commit_and_out:
-	if (commit_lock_file(lock) < 0)
+	if (commit_lock_file(&lock) < 0)
 		ret = error_errno("could not write config file %s",
 				  config_filename);
 out:
 	if (config_file)
 		fclose(config_file);
-	rollback_lock_file(lock);
+	rollback_lock_file(&lock);
 out_no_rollback:
 	free(filename_buf);
 	return ret;

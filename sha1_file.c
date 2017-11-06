@@ -456,19 +456,19 @@ struct alternate_object_database *alloc_alt_odb(const char *dir)
 
 void add_to_alternates_file(const char *reference)
 {
-	struct lock_file *lock = xcalloc(1, sizeof(struct lock_file));
+	struct lock_file lock = LOCK_INIT;
 	char *alts = git_pathdup("objects/info/alternates");
 	FILE *in, *out;
+	int found = 0;
 
-	hold_lock_file_for_update(lock, alts, LOCK_DIE_ON_ERROR);
-	out = fdopen_lock_file(lock, "w");
+	hold_lock_file_for_update(&lock, alts, LOCK_DIE_ON_ERROR);
+	out = fdopen_lock_file(&lock, "w");
 	if (!out)
 		die_errno("unable to fdopen alternates lockfile");
 
 	in = fopen(alts, "r");
 	if (in) {
 		struct strbuf line = STRBUF_INIT;
-		int found = 0;
 
 		while (strbuf_getline(&line, in) != EOF) {
 			if (!strcmp(reference, line.buf)) {
@@ -480,18 +480,15 @@ void add_to_alternates_file(const char *reference)
 
 		strbuf_release(&line);
 		fclose(in);
-
-		if (found) {
-			rollback_lock_file(lock);
-			lock = NULL;
-		}
 	}
 	else if (errno != ENOENT)
 		die_errno("unable to read alternates file");
 
-	if (lock) {
+	if (found) {
+		rollback_lock_file(&lock);
+	} else {
 		fprintf_or_die(out, "%s\n", reference);
-		if (commit_lock_file(lock))
+		if (commit_lock_file(&lock))
 			die_errno("unable to move new alternates file into place");
 		if (alt_odb_tail)
 			link_alt_odb_entries(reference, '\n', NULL, 0);

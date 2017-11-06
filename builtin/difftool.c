@@ -616,7 +616,6 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 			if (hold_lock_file_for_update(&lock, buf.buf, 0) < 0 ||
 			    write_locked_index(&wtindex, &lock, COMMIT_LOCK)) {
 				ret = error("could not write %s", buf.buf);
-				rollback_lock_file(&lock);
 				goto finish;
 			}
 			changed_files(&wt_modified, buf.buf, workdir);

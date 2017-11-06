@@ -9,8 +9,6 @@ static const char * const apply_usage[] = {
 	NULL
 };
 
-static struct lock_file lock_file;
-
 int cmd_apply(int argc, const char **argv, const char *prefix)
 {
 	int force_apply = 0;
@@ -18,7 +16,7 @@ int cmd_apply(int argc, const char **argv, const char *prefix)
 	int ret;
 	struct apply_state state;
 
-	if (init_apply_state(&state, prefix, &lock_file))
+	if (init_apply_state(&state, prefix))
 		exit(128);
 
 	argc = apply_parse_options(argc, argv,
