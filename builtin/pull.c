@@ -86,6 +86,7 @@ static int recurse_submodules = RECURSE_SUBMODULES_DEFAULT;
 static enum rebase_type opt_rebase = -1;
 static char *opt_diffstat;
 static char *opt_log;
+static char *opt_signoff;
 static char *opt_squash;
 static char *opt_commit;
 static char *opt_edit;
@@ -141,6 +142,9 @@ static struct option pull_options[] = {
 		PARSE_OPT_NOARG | PARSE_OPT_HIDDEN),
 	OPT_PASSTHRU(0, "log", &opt_log, N_("n"),
 		N_("add (at most <n>) entries from shortlog to merge commit message"),
+		PARSE_OPT_OPTARG),
+	OPT_PASSTHRU(0, "signoff", &opt_signoff, NULL,
+		N_("add Signed-off-by:"),
 		PARSE_OPT_OPTARG),
 	OPT_PASSTHRU(0, "squash", &opt_squash, NULL,
 		N_("create a single commit instead of doing a merge"),
@@ -594,6 +598,8 @@ static int run_merge(void)
 		argv_array_push(&args, opt_diffstat);
 	if (opt_log)
 		argv_array_push(&args, opt_log);
+	if (opt_signoff)
+		argv_array_push(&args, opt_signoff);
 	if (opt_squash)
 		argv_array_push(&args, opt_squash);
 	if (opt_commit)

@@ -165,4 +165,49 @@ test_expect_success 'git pull --allow-unrelated-histories' '
 	)
 '
 
+test_expect_success 'git pull does not add a sign-off line' '
+	test_when_finished "rm -fr src dst actual" &&
+	git init src &&
+	test_commit -C src one &&
+	git clone src dst &&
+	test_commit -C src two &&
+	git -C dst pull --no-ff &&
+	git -C dst show -s --pretty="format:%(trailers)" HEAD >actual &&
+	test_must_be_empty actual
+'
+
+test_expect_success 'git pull --no-signoff does not add sign-off line' '
+	test_when_finished "rm -fr src dst actual" &&
+	git init src &&
+	test_commit -C src one &&
+	git clone src dst &&
+	test_commit -C src two &&
+	git -C dst pull --no-signoff --no-ff &&
+	git -C dst show -s --pretty="format:%(trailers)" HEAD >actual &&
+	test_must_be_empty actual
+'
+
+test_expect_success 'git pull --signoff add a sign-off line' '
+	test_when_finished "rm -fr src dst expected actual" &&
+	echo "Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>" >expected &&
+	git init src &&
+	test_commit -C src one &&
+	git clone src dst &&
+	test_commit -C src two &&
+	git -C dst pull --signoff --no-ff &&
+	git -C dst show -s --pretty="format:%(trailers)" HEAD >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'git pull --no-signoff flag cancels --signoff flag' '
+	test_when_finished "rm -fr src dst actual" &&
+	git init src &&
+	test_commit -C src one &&
+	git clone src dst &&
+	test_commit -C src two &&
+	git -C dst pull --signoff --no-signoff --no-ff &&
+	git -C dst show -s --pretty="format:%(trailers)" HEAD >actual &&
+	test_must_be_empty actual
+'
+
 test_done
