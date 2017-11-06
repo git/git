@@ -395,8 +395,16 @@ static struct commit *one_relevant_parent(const struct rev_info *revs,
  * if the whole diff is removal of old data, and otherwise
  * REV_TREE_DIFFERENT (of course if the trees are the same we
  * want REV_TREE_SAME).
- * That means that once we get to REV_TREE_DIFFERENT, we do not
- * have to look any further.
+ *
+ * The only time we care about the distinction is when
+ * remove_empty_trees is in effect, in which case we care only about
+ * whether the whole change is REV_TREE_NEW, or if there's another type
+ * of change. Which means we can stop the diff early in either of these
+ * cases:
+ *
+ *   1. We're not using remove_empty_trees at all.
+ *
+ *   2. We saw anything except REV_TREE_NEW.
  */
 static int tree_difference = REV_TREE_SAME;
 
@@ -407,9 +415,10 @@ static void file_add_remove(struct diff_options *options,
 		    const char *fullpath, unsigned dirty_submodule)
 {
 	int diff = addremove == '+' ? REV_TREE_NEW : REV_TREE_OLD;
+	struct rev_info *revs = options->change_fn_data;
 
 	tree_difference |= diff;
-	if (tree_difference == REV_TREE_DIFFERENT)
+	if (!revs->remove_empty_trees || tree_difference != REV_TREE_NEW)
 		DIFF_OPT_SET(options, HAS_CHANGES);
 }
 
@@ -1407,6 +1416,7 @@ void init_revisions(struct rev_info *revs, const char *prefix)
 	DIFF_OPT_SET(&revs->pruning, QUICK);
 	revs->pruning.add_remove = file_add_remove;
 	revs->pruning.change = file_change;
+	revs->pruning.change_fn_data = revs;
 	revs->sort_order = REV_SORT_IN_GRAPH_ORDER;
 	revs->dense = 1;
 	revs->prefix = prefix;
