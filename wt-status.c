@@ -2262,8 +2262,10 @@ int has_unstaged_changes(int ignore_submodules)
 	int result;
 
 	init_revisions(&rev_info, NULL);
-	if (ignore_submodules)
+	if (ignore_submodules) {
 		DIFF_OPT_SET(&rev_info.diffopt, IGNORE_SUBMODULES);
+		DIFF_OPT_SET(&rev_info.diffopt, OVERRIDE_SUBMODULE_CONFIG);
+	}
 	DIFF_OPT_SET(&rev_info.diffopt, QUICK);
 	diff_setup_done(&rev_info.diffopt);
 	result = run_diff_files(&rev_info, 0);
