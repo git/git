@@ -2624,6 +2624,35 @@ push.gpgSign::
 	override a value from a lower-priority config file. An explicit
 	command-line flag always overrides this config option.
 
+push.pushOption::
+	When no `--push-option=<option>` argument is given from the
+	command line, `git push` behaves as if each <value> of
+	this variable is given as `--push-option=<value>`.
++
+This is a multi-valued variable, and an empty value can be used in a
+higher priority configuration file (e.g. `.git/config` in a
+repository) to clear the values inherited from a lower priority
+configuration files (e.g. `$HOME/.gitconfig`).
++
+--
+
+Example:
+
+/etc/gitconfig
+  push.pushoption = a
+  push.pushoption = b
+
+~/.gitconfig
+  push.pushoption = c
+
+repo/.git/config
+  push.pushoption =
+  push.pushoption = b
+
+This will result in only b (a and c are cleared).
+
+--
+
 push.recurseSubmodules::
 	Make sure all submodule commits used by the revisions to be pushed
 	are available on a remote-tracking branch. If the value is 'check'

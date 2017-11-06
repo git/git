@@ -140,6 +140,83 @@ test_expect_success 'push options and submodules' '
 	test_cmp expect parent_upstream/.git/hooks/post-receive.push_options
 '
 
+test_expect_success 'default push option' '
+	mk_repo_pair &&
+	git -C upstream config receive.advertisePushOptions true &&
+	(
+		cd workbench &&
+		test_commit one &&
+		git push --mirror up &&
+		test_commit two &&
+		git -c push.pushOption=default push up master
+	) &&
+	test_refs master master &&
+	echo "default" >expect &&
+	test_cmp expect upstream/.git/hooks/pre-receive.push_options &&
+	test_cmp expect upstream/.git/hooks/post-receive.push_options
+'
+
+test_expect_success 'two default push options' '
+	mk_repo_pair &&
+	git -C upstream config receive.advertisePushOptions true &&
+	(
+		cd workbench &&
+		test_commit one &&
+		git push --mirror up &&
+		test_commit two &&
+		git -c push.pushOption=default1 -c push.pushOption=default2 push up master
+	) &&
+	test_refs master master &&
+	printf "default1\ndefault2\n" >expect &&
+	test_cmp expect upstream/.git/hooks/pre-receive.push_options &&
+	test_cmp expect upstream/.git/hooks/post-receive.push_options
+'
+
+test_expect_success 'push option from command line overrides from-config push option' '
+	mk_repo_pair &&
+	git -C upstream config receive.advertisePushOptions true &&
+	(
+		cd workbench &&
+		test_commit one &&
+		git push --mirror up &&
+		test_commit two &&
+		git -c push.pushOption=default push --push-option=manual up master
+	) &&
+	test_refs master master &&
+	echo "manual" >expect &&
+	test_cmp expect upstream/.git/hooks/pre-receive.push_options &&
+	test_cmp expect upstream/.git/hooks/post-receive.push_options
+'
+
+test_expect_success 'empty value of push.pushOption in config clears the list' '
+	mk_repo_pair &&
+	git -C upstream config receive.advertisePushOptions true &&
+	(
+		cd workbench &&
+		test_commit one &&
+		git push --mirror up &&
+		test_commit two &&
+		git -c push.pushOption=default1 -c push.pushOption= -c push.pushOption=default2 push up master
+	) &&
+	test_refs master master &&
+	echo "default2" >expect &&
+	test_cmp expect upstream/.git/hooks/pre-receive.push_options &&
+	test_cmp expect upstream/.git/hooks/post-receive.push_options
+'
+
+test_expect_success 'invalid push option in config' '
+	mk_repo_pair &&
+	git -C upstream config receive.advertisePushOptions true &&
+	(
+		cd workbench &&
+		test_commit one &&
+		git push --mirror up &&
+		test_commit two &&
+		test_must_fail git -c push.pushOption push up master
+	) &&
+	test_refs master HEAD@{1}
+'
+
 . "$TEST_DIRECTORY"/lib-httpd.sh
 start_httpd
 
