@@ -707,88 +707,14 @@ struct moved_entry {
 	struct moved_entry *next_line;
 };
 
-static int next_byte(const char **cp, const char **endp,
-		     const struct diff_options *diffopt)
-{
-	int retval;
-
-	if (*cp >= *endp)
-		return -1;
-
-	if (isspace(**cp)) {
-		if (DIFF_XDL_TST(diffopt, IGNORE_WHITESPACE_CHANGE)) {
-			while (*cp < *endp && isspace(**cp))
-				(*cp)++;
-			/*
-			 * After skipping a couple of whitespaces,
-			 * we still have to account for one space.
-			 */
-			return (int)' ';
-		}
-
-		if (DIFF_XDL_TST(diffopt, IGNORE_WHITESPACE)) {
-			while (*cp < *endp && isspace(**cp))
-				(*cp)++;
-			/*
-			 * return the first non-ws character via the usual
-			 * below, unless we ate all of the bytes
-			 */
-			if (*cp >= *endp)
-				return -1;
-		}
-	}
-
-	retval = (unsigned char)(**cp);
-	(*cp)++;
-	return retval;
-}
-
 static int moved_entry_cmp(const struct diff_options *diffopt,
 			   const struct moved_entry *a,
 			   const struct moved_entry *b,
 			   const void *keydata)
 {
-	const char *ap = a->es->line, *ae = a->es->line + a->es->len;
-	const char *bp = b->es->line, *be = b->es->line + b->es->len;
-
-	if (!(diffopt->xdl_opts & XDF_WHITESPACE_FLAGS))
-		return a->es->len != b->es->len  || memcmp(ap, bp, a->es->len);
-
-	if (DIFF_XDL_TST(diffopt, IGNORE_WHITESPACE_AT_EOL)) {
-		while (ae > ap && isspace(ae[-1]))
-			ae--;
-		while (be > bp && isspace(be[-1]))
-			be--;
-	}
-
-	while (1) {
-		int ca, cb;
-		ca = next_byte(&ap, &ae, diffopt);
-		cb = next_byte(&bp, &be, diffopt);
-		if (ca != cb)
-			return 1;
-		if (ca < 0)
-			return 0;
-	}
-}
-
-static unsigned get_string_hash(struct emitted_diff_symbol *es, struct diff_options *o)
-{
-	if (o->xdl_opts & XDF_WHITESPACE_FLAGS) {
-		static struct strbuf sb = STRBUF_INIT;
-		const char *ap = es->line, *ae = es->line + es->len;
-		int c;
-
-		strbuf_reset(&sb);
-		while (ae > ap && isspace(ae[-1]))
-			ae--;
-		while ((c = next_byte(&ap, &ae, o)) >= 0)
-			strbuf_addch(&sb, c);
-
-		return memhash(sb.buf, sb.len);
-	} else {
-		return memhash(es->line, es->len);
-	}
+	return !xdiff_compare_lines(a->es->line, a->es->len,
+				    b->es->line, b->es->len,
+				    diffopt->xdl_opts);
 }
 
 static struct moved_entry *prepare_entry(struct diff_options *o,
@@ -797,7 +723,7 @@ static struct moved_entry *prepare_entry(struct diff_options *o,
 	struct moved_entry *ret = xmalloc(sizeof(*ret));
 	struct emitted_diff_symbol *l = &o->emitted_symbols->buf[line_no];
 
-	ret->ent.hash = get_string_hash(l, o);
+	ret->ent.hash = xdiff_hash_string(l->line, l->len, o->xdl_opts);
 	ret->es = l;
 	ret->next_line = NULL;
 
