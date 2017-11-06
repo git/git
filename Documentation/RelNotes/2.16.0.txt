@@ -17,6 +17,22 @@ UI, Workflows & Features
    deprecating and warning a pathspec that has such an element in
    2.11 (Nov 2016).
 
+ * A hook script that is set unexecutable is simply ignored.  Git
+   notifies when such a file is ignored, unless the message is
+   squelched via advice.ignoredHook configuration.
+
+ * "git pull" has been taught to accept "--[no-]signoff" option and
+   pass it down to "git merge".
+
+ * The "--push-option=<string>" option to "git push" now defaults to a
+   list of strings configured via push.pushOption variable.
+
+ * "gitweb" checks if a directory is searchable with Perl's "-x"
+   operator, which can be enhanced by using "filetest 'access'"
+   pragma, which now we do.
+
+ * "git stash save" has been deprecated in favour of "git stash push".
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -24,15 +40,24 @@ Performance, Internal Implementation, Development Support etc.
    lockfile structure (as opposed to having to deliberately leak an
    on-heap one).  Many codepaths have been updated to take advantage
    of this new facility.
-   (merge b74c90fb41 ma/lockfile-fixes later to maint).
 
  * Calling cmd_foo() as if it is a general purpose helper function is
    a no-no.  Correct two instances of such to set an example.
-   (merge a92b1095d1 jc/no-cmd-as-subroutine later to maint).
 
  * We try to see if somebody runs our test suite with a shell that
    does not support "local" like bash/dash does.
-   (merge 01d3a526ad mh/test-local-canary later to maint).
+
+ * An early part of piece-by-piece rewrite of "git bisect" in C.
+
+ * GSoC to piece-by-piece rewrite "git submodule" in C.
+
+ * Optimize the code to find shortest unique prefix of object names.
+
+ * Pathspec-limited revision traversal was taught not to keep finding
+   unneeded differences once it knows two trees are different inside
+   given pathspec.
+
+ * Conversion from uchar[20] to struct object_id continues.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -79,6 +104,23 @@ Fixes since v2.15
  * A recent regression in "git rebase -i" that broke execution of git
    commands from subdirectories via "exec" insn has been fixed.
    (merge 09d7b6c6fa jk/rebase-i-exec-gitdir-fix later to maint).
+
+ * A (possibly flakey) test fix.
+   (merge cff48ccf2a jc/t5601-copy-workaround later to maint).
+
+ * "git check-ref-format --branch @{-1}" bit a "BUG()" when run
+   outside a repository for obvious reasons; clarify the documentation
+   and make sure we do not even try to expand the at-mark magic in
+   such a case, but still call the validation logic for branch names.
+   (merge 89dd32aedc jc/check-ref-format-oor later to maint).
+
+ * "git fetch --recurse-submodules" now knows that submodules can be
+   moved around in the superproject in addition to getting updated,
+   and finds the ones that need to be fetched accordingly.
+   (merge 4b4acedd61 hv/fetch-moved-submodules-on-demand later to maint).
+
+ * Command line completion (in contrib/) update.
+   (merge 6357d9d004 tb/complete-checkout later to maint).
 
  * Other minor doc, test and build updates and code cleanups.
    (merge bab76141da cn/diff-indent-no-longer-is-experimental later to maint).
