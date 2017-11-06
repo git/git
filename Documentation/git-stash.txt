@@ -13,8 +13,6 @@ SYNOPSIS
 'git stash' drop [-q|--quiet] [<stash>]
 'git stash' ( pop | apply ) [--index] [-q|--quiet] [<stash>]
 'git stash' branch <branchname> [<stash>]
-'git stash' save [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]
-	     [-u|--include-untracked] [-a|--all] [<message>]
 'git stash' [push [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]
 	     [-u|--include-untracked] [-a|--all] [-m|--message <message>]]
 	     [--] [<pathspec>...]]
@@ -33,7 +31,7 @@ and reverts the working directory to match the `HEAD` commit.
 The modifications stashed away by this command can be listed with
 `git stash list`, inspected with `git stash show`, and restored
 (potentially on top of a different commit) with `git stash apply`.
-Calling `git stash` without any arguments is equivalent to `git stash save`.
+Calling `git stash` without any arguments is equivalent to `git stash push`.
 A stash is by default listed as "WIP on 'branchname' ...", but
 you can give a more descriptive message on the command line when
 you create one.
@@ -48,7 +46,6 @@ stash index (e.g. the integer `n` is equivalent to `stash@{n}`).
 OPTIONS
 -------
 
-save [-p|--patch] [-k|--[no-]keep-index] [-u|--include-untracked] [-a|--all] [-q|--quiet] [<message>]::
 push [-p|--patch] [-k|--[no-]keep-index] [-u|--include-untracked] [-a|--all] [-q|--quiet] [-m|--message <message>] [--] [<pathspec>...]::
 
 	Save your local modifications to a new 'stash entry' and roll them
@@ -87,6 +84,12 @@ linkgit:git-add[1] to learn how to operate the `--patch` mode.
 The `--patch` option implies `--keep-index`.  You can use
 `--no-keep-index` to override this.
 
+save [-p|--patch] [-k|--[no-]keep-index] [-u|--include-untracked] [-a|--all] [-q|--quiet] [<message>]::
+
+	This option is deprecated in favour of 'git stash push'.  It
+	differs from "stash push" in that it cannot take pathspecs,
+	and any non-option arguments form the message.
+
 list [<options>]::
 
 	List the stash entries that you currently have.  Each 'stash entry' is
@@ -118,7 +121,7 @@ pop [--index] [-q|--quiet] [<stash>]::
 
 	Remove a single stashed state from the stash list and apply it
 	on top of the current working tree state, i.e., do the inverse
-	operation of `git stash save`. The working directory must
+	operation of `git stash push`. The working directory must
 	match the index.
 +
 Applying the state can fail with conflicts; in this case, it is not
@@ -137,7 +140,7 @@ apply [--index] [-q|--quiet] [<stash>]::
 
 	Like `pop`, but do not remove the state from the stash list. Unlike `pop`,
 	`<stash>` may be any commit that looks like a commit created by
-	`stash save` or `stash create`.
+	`stash push` or `stash create`.
 
 branch <branchname> [<stash>]::
 
@@ -148,7 +151,7 @@ branch <branchname> [<stash>]::
 	`stash@{<revision>}`, it then drops the `<stash>`. When no `<stash>`
 	is given, applies the latest one.
 +
-This is useful if the branch on which you ran `git stash save` has
+This is useful if the branch on which you ran `git stash push` has
 changed enough that `git stash apply` fails due to conflicts. Since
 the stash entry is applied on top of the commit that was HEAD at the
 time `git stash` was run, it restores the originally stashed state
@@ -255,14 +258,14 @@ $ git stash pop
 
 Testing partial commits::
 
-You can use `git stash save --keep-index` when you want to make two or
+You can use `git stash push --keep-index` when you want to make two or
 more commits out of the changes in the work tree, and you want to test
 each change before committing:
 +
 ----------------------------------------------------------------
 # ... hack hack hack ...
 $ git add --patch foo            # add just first part to the index
-$ git stash save --keep-index    # save all other changes to the stash
+$ git stash push --keep-index    # save all other changes to the stash
 $ edit/build/test first part
 $ git commit -m 'First part'     # commit fully tested change
 $ git stash pop                  # prepare to work on all other changes
