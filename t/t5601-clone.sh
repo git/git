@@ -308,6 +308,7 @@ test_expect_success 'clone checking out a tag' '
 
 setup_ssh_wrapper () {
 	test_expect_success 'setup ssh wrapper' '
+		rm -f "$TRASH_DIRECTORY/ssh-wrapper$X" &&
 		cp "$GIT_BUILD_DIR/t/helper/test-fake-ssh$X" \
 			"$TRASH_DIRECTORY/ssh-wrapper$X" &&
 		GIT_SSH="$TRASH_DIRECTORY/ssh-wrapper$X" &&
@@ -318,6 +319,7 @@ setup_ssh_wrapper () {
 }
 
 copy_ssh_wrapper_as () {
+	rm -f "${1%$X}$X" &&
 	cp "$TRASH_DIRECTORY/ssh-wrapper$X" "${1%$X}$X" &&
 	GIT_SSH="${1%$X}$X" &&
 	export GIT_SSH
