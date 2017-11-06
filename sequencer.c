@@ -1861,12 +1861,15 @@ static int error_failed_squash(struct commit *commit,
 
 static int do_exec(const char *command_line)
 {
+	struct argv_array child_env = ARGV_ARRAY_INIT;
 	const char *child_argv[] = { NULL, NULL };
 	int dirty, status;
 
 	fprintf(stderr, "Executing: %s\n", command_line);
 	child_argv[0] = command_line;
-	status = run_command_v_opt(child_argv, RUN_USING_SHELL);
+	argv_array_pushf(&child_env, "GIT_DIR=%s", absolute_path(get_git_dir()));
+	status = run_command_v_opt_cd_env(child_argv, RUN_USING_SHELL, NULL,
+					  child_env.argv);
 
 	/* force re-reading of the cache */
 	if (discard_cache() < 0 || read_cache() < 0)
@@ -1895,6 +1898,8 @@ static int do_exec(const char *command_line)
 			  "\n"), command_line);
 		status = 1;
 	}
+
+	argv_array_clear(&child_env);
 
 	return status;
 }
