@@ -57,7 +57,7 @@ static int handle_independent(int count, const char **args)
 	for (i = count - 1; i >= 0; i--)
 		commit_list_insert(get_commit_reference(args[i]), &revs);
 
-	revs = reduce_heads(revs);
+	reduce_heads_replace(&revs);
 
 	if (!revs)
 		return 1;
@@ -78,7 +78,9 @@ static int handle_octopus(int count, const char **args, int show_all)
 	for (i = count - 1; i >= 0; i--)
 		commit_list_insert(get_commit_reference(args[i]), &revs);
 
-	result = reduce_heads(get_octopus_merge_bases(revs));
+	result = get_octopus_merge_bases(revs);
+	free_commit_list(revs);
+	reduce_heads_replace(&result);
 
 	if (!result)
 		return 1;
