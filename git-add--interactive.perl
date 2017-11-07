@@ -1304,17 +1304,17 @@ my %patch_update_prompt_modes = (
 	stage => {
 		mode => N__("Stage mode change [y,n,q,a,d,/%s,?]? "),
 		deletion => N__("Stage deletion [y,n,q,a,d,/%s,?]? "),
-		hunk => N__("Stage this hunk [y,n,q,a,d,/%s,?]? "),
+		hunk => N__("Stage this, hunk? [y,n,q,a,d,/%s,?]? "),
 	},
 	stash => {
 		mode => N__("Stash mode change [y,n,q,a,d,/%s,?]? "),
 		deletion => N__("Stash deletion [y,n,q,a,d,/%s,?]? "),
-		hunk => N__("Stash this hunk [y,n,q,a,d,/%s,?]? "),
+		hunk => N__("Stash this, hunk? [y,n,q,a,d,/%s,?]? "),
 	},
 	reset_head => {
 		mode => N__("Unstage mode change [y,n,q,a,d,/%s,?]? "),
 		deletion => N__("Unstage deletion [y,n,q,a,d,/%s,?]? "),
-		hunk => N__("Unstage this hunk [y,n,q,a,d,/%s,?]? "),
+		hunk => N__("Unstage this, hunk? [y,n,q,a,d,/%s,?]? "),
 	},
 	reset_nothead => {
 		mode => N__("Apply mode change to index [y,n,q,a,d,/%s,?]? "),
