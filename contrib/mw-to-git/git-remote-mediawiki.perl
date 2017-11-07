@@ -263,7 +263,7 @@ sub get_mw_tracked_categories {
 
 sub get_mw_tracked_namespaces {
     my $pages = shift;
-    foreach my $local_namespace (@tracked_namespaces) {
+    foreach my $local_namespace (sort @tracked_namespaces) {
         my $namespace_id;
         if ($local_namespace eq "(Main)") {
             $namespace_id = 0;
