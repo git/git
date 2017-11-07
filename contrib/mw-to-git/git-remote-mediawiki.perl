@@ -264,7 +264,12 @@ sub get_mw_tracked_categories {
 sub get_mw_tracked_namespaces {
     my $pages = shift;
     foreach my $local_namespace (@tracked_namespaces) {
-        my $namespace_id = get_mw_namespace_id($local_namespace);
+        my $namespace_id;
+        if ($local_namespace eq "(Main)") {
+            $namespace_id = 0;
+        } else {
+            $namespace_id = get_mw_namespace_id($local_namespace);
+        }
         # virtual namespaces don't support allpages
         next if !defined($namespace_id) || $namespace_id < 0;
         my $mw_pages = $mediawiki->list( {
