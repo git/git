@@ -279,6 +279,7 @@ sub get_mw_tracked_namespaces {
             aplimit => 'max' } )
             || die $mediawiki->{error}->{code} . ': '
                 . $mediawiki->{error}->{details} . "\n";
+        print {*STDERR} "$#{$mw_pages} found in namespace $local_namespace ($namespace_id)\n";
         foreach my $page (@{$mw_pages}) {
             $pages->{$page->{title}} = $page;
         }
