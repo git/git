@@ -863,7 +863,7 @@ rearrange_squash () {
 	rm -f "$1.sq" "$1.rearranged"
 }
 
-# Add commands after a pick or after a squash/fixup serie
+# Add commands after a pick or after a squash/fixup series
 # in the todo list.
 add_exec_commands () {
 	{
