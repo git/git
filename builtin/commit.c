@@ -1391,7 +1391,8 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 			   "show directories that match an ignore pattern "
 			   "name.")),
 		OPT_BOOL(0, "no-lock-index", &no_lock_index,
-			 N_("do not lock the index")),
+			 N_("(DEPRECATED: use `git --no-optional-locks status` "
+			    "instead) Do not lock the index")),
 		OPT_END(),
 	};
 
