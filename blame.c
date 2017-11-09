@@ -209,7 +209,7 @@ static struct commit *fake_working_tree_commit(struct diff_options *opt,
 
 		switch (st.st_mode & S_IFMT) {
 		case S_IFREG:
-			if (DIFF_OPT_TST(opt, ALLOW_TEXTCONV) &&
+			if (opt->flags.allow_textconv &&
 			    textconv_object(read_from, mode, &null_oid, 0, &buf_ptr, &buf_len))
 				strbuf_attach(&buf, buf_ptr, buf_len, buf_len + 1);
 			else if (strbuf_read_file(&buf, read_from, st.st_size) != st.st_size)
@@ -293,7 +293,7 @@ static void fill_origin_blob(struct diff_options *opt,
 		unsigned long file_size;
 
 		(*num_read_blob)++;
-		if (DIFF_OPT_TST(opt, ALLOW_TEXTCONV) &&
+		if (opt->flags.allow_textconv &&
 		    textconv_object(o->path, o->mode, &o->blob_oid, 1, &file->ptr, &file_size))
 			;
 		else
@@ -541,7 +541,7 @@ static struct blame_origin *find_origin(struct commit *parent,
 	 * same and diff-tree is fairly efficient about this.
 	 */
 	diff_setup(&diff_opts);
-	DIFF_OPT_SET(&diff_opts, RECURSIVE);
+	diff_opts.flags.recursive = 1;
 	diff_opts.detect_rename = 0;
 	diff_opts.output_format = DIFF_FORMAT_NO_OUTPUT;
 	paths[0] = origin->path;
@@ -615,7 +615,7 @@ static struct blame_origin *find_rename(struct commit *parent,
 	int i;
 
 	diff_setup(&diff_opts);
-	DIFF_OPT_SET(&diff_opts, RECURSIVE);
+	diff_opts.flags.recursive = 1;
 	diff_opts.detect_rename = DIFF_DETECT_RENAME;
 	diff_opts.output_format = DIFF_FORMAT_NO_OUTPUT;
 	diff_opts.single_follow = origin->path;
@@ -1238,7 +1238,7 @@ static void find_copy_in_parent(struct blame_scoreboard *sb,
 		return; /* nothing remains for this target */
 
 	diff_setup(&diff_opts);
-	DIFF_OPT_SET(&diff_opts, RECURSIVE);
+	diff_opts.flags.recursive = 1;
 	diff_opts.output_format = DIFF_FORMAT_NO_OUTPUT;
 
 	diff_setup_done(&diff_opts);
@@ -1253,7 +1253,7 @@ static void find_copy_in_parent(struct blame_scoreboard *sb,
 	if ((opt & PICKAXE_BLAME_COPY_HARDEST)
 	    || ((opt & PICKAXE_BLAME_COPY_HARDER)
 		&& (!porigin || strcmp(target->path, porigin->path))))
-		DIFF_OPT_SET(&diff_opts, FIND_COPIES_HARDER);
+		diff_opts.flags.find_copies_harder = 1;
 
 	if (is_null_oid(&target->commit->object.oid))
 		do_diff_cache(&parent->tree->object.oid, &diff_opts);
@@ -1262,7 +1262,7 @@ static void find_copy_in_parent(struct blame_scoreboard *sb,
 			      &target->commit->tree->object.oid,
 			      "", &diff_opts);
 
-	if (!DIFF_OPT_TST(&diff_opts, FIND_COPIES_HARDER))
+	if (!diff_opts.flags.find_copies_harder)
 		diffcore_std(&diff_opts);
 
 	do {
@@ -1825,7 +1825,7 @@ void setup_scoreboard(struct blame_scoreboard *sb, const char *path, struct blam
 		if (fill_blob_sha1_and_mode(o))
 			die(_("no such path %s in %s"), path, final_commit_name);
 
-		if (DIFF_OPT_TST(&sb->revs->diffopt, ALLOW_TEXTCONV) &&
+		if (sb->revs->diffopt.flags.allow_textconv &&
 		    textconv_object(path, o->mode, &o->blob_oid, 1, (char **) &sb->final_buf,
 				    &sb->final_buf_size))
 			;

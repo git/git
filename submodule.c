@@ -183,7 +183,7 @@ void set_diffopt_flags_from_submodule_config(struct diff_options *diffopt,
 		if (ignore)
 			handle_ignore_submodules_arg(diffopt, ignore);
 		else if (is_gitmodules_unmerged(&the_index))
-			DIFF_OPT_SET(diffopt, IGNORE_SUBMODULES);
+			diffopt->flags.ignore_submodules = 1;
 	}
 }
 
@@ -402,16 +402,16 @@ const char *submodule_strategy_to_string(const struct submodule_update_strategy 
 void handle_ignore_submodules_arg(struct diff_options *diffopt,
 				  const char *arg)
 {
-	DIFF_OPT_CLR(diffopt, IGNORE_SUBMODULES);
-	DIFF_OPT_CLR(diffopt, IGNORE_UNTRACKED_IN_SUBMODULES);
-	DIFF_OPT_CLR(diffopt, IGNORE_DIRTY_SUBMODULES);
+	diffopt->flags.ignore_submodules = 0;
+	diffopt->flags.ignore_untracked_in_submodules = 0;
+	diffopt->flags.ignore_dirty_submodules = 0;
 
 	if (!strcmp(arg, "all"))
-		DIFF_OPT_SET(diffopt, IGNORE_SUBMODULES);
+		diffopt->flags.ignore_submodules = 1;
 	else if (!strcmp(arg, "untracked"))
-		DIFF_OPT_SET(diffopt, IGNORE_UNTRACKED_IN_SUBMODULES);
+		diffopt->flags.ignore_untracked_in_submodules = 1;
 	else if (!strcmp(arg, "dirty"))
-		DIFF_OPT_SET(diffopt, IGNORE_DIRTY_SUBMODULES);
+		diffopt->flags.ignore_dirty_submodules = 1;
 	else if (strcmp(arg, "none"))
 		die("bad --ignore-submodules argument: %s", arg);
 }
@@ -616,7 +616,7 @@ void show_submodule_inline_diff(struct diff_options *o, const char *path,
 	argv_array_pushf(&cp.args, "--color=%s", want_color(o->use_color) ?
 			 "always" : "never");
 
-	if (DIFF_OPT_TST(o, REVERSE_DIFF)) {
+	if (o->flags.reverse_diff) {
 		argv_array_pushf(&cp.args, "--src-prefix=%s%s/",
 				 o->b_prefix, path);
 		argv_array_pushf(&cp.args, "--dst-prefix=%s%s/",

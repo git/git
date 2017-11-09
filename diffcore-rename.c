@@ -405,7 +405,7 @@ static int too_many_rename_candidates(int num_create,
 		num_src > num_create ? num_src : num_create;
 
 	/* Are we running under -C -C? */
-	if (!DIFF_OPT_TST(options, FIND_COPIES_HARDER))
+	if (!options->flags.find_copies_harder)
 		return 1;
 
 	/* Would we bust the limit if we were running under -C? */
@@ -463,7 +463,7 @@ void diffcore_rename(struct diff_options *options)
 			else if (options->single_follow &&
 				 strcmp(options->single_follow, p->two->path))
 				continue; /* not interested */
-			else if (!DIFF_OPT_TST(options, RENAME_EMPTY) &&
+			else if (!options->flags.rename_empty &&
 				 is_empty_blob_oid(&p->two->oid))
 				continue;
 			else if (add_rename_dst(p->two) < 0) {
@@ -473,7 +473,7 @@ void diffcore_rename(struct diff_options *options)
 				goto cleanup;
 			}
 		}
-		else if (!DIFF_OPT_TST(options, RENAME_EMPTY) &&
+		else if (!options->flags.rename_empty &&
 			 is_empty_blob_oid(&p->one->oid))
 			continue;
 		else if (!DIFF_PAIR_UNMERGED(p) && !DIFF_FILE_VALID(p->two)) {

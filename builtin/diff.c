@@ -44,7 +44,7 @@ static void stuff_change(struct diff_options *opt,
 	    !oidcmp(old_oid, new_oid) && (old_mode == new_mode))
 		return;
 
-	if (DIFF_OPT_TST(opt, REVERSE_DIFF)) {
+	if (opt->flags.reverse_diff) {
 		SWAP(old_mode, new_mode);
 		SWAP(old_oid, new_oid);
 		SWAP(old_path, new_path);
@@ -349,8 +349,8 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	rev.diffopt.stat_graph_width = -1;
 
 	/* Default to let external and textconv be used */
-	DIFF_OPT_SET(&rev.diffopt, ALLOW_EXTERNAL);
-	DIFF_OPT_SET(&rev.diffopt, ALLOW_TEXTCONV);
+	rev.diffopt.flags.allow_external = 1;
+	rev.diffopt.flags.allow_textconv = 1;
 
 	if (nongit)
 		die(_("Not a git repository"));
@@ -360,7 +360,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 		diff_setup_done(&rev.diffopt);
 	}
 
-	DIFF_OPT_SET(&rev.diffopt, RECURSIVE);
+	rev.diffopt.flags.recursive = 1;
 
 	setup_diff_pager(&rev.diffopt);
 

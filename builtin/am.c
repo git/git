@@ -1157,9 +1157,9 @@ static int index_has_changes(struct strbuf *sb)
 		struct diff_options opt;
 
 		diff_setup(&opt);
-		DIFF_OPT_SET(&opt, EXIT_WITH_STATUS);
+		opt.flags.exit_with_status = 1;
 		if (!sb)
-			DIFF_OPT_SET(&opt, QUICK);
+			opt.flags.quick = 1;
 		do_diff_cache(&head, &opt);
 		diffcore_std(&opt);
 		for (i = 0; sb && i < diff_queued_diff.nr; i++) {
@@ -1168,7 +1168,7 @@ static int index_has_changes(struct strbuf *sb)
 			strbuf_addstr(sb, diff_queued_diff.queue[i]->two->path);
 		}
 		diff_flush(&opt);
-		return DIFF_OPT_TST(&opt, HAS_CHANGES) != 0;
+		return opt.flags.has_changes != 0;
 	} else {
 		for (i = 0; sb && i < active_nr; i++) {
 			if (i)
@@ -1409,8 +1409,8 @@ static void write_commit_patch(const struct am_state *state, struct commit *comm
 	rev_info.show_root_diff = 1;
 	rev_info.diffopt.output_format = DIFF_FORMAT_PATCH;
 	rev_info.no_commit_id = 1;
-	DIFF_OPT_SET(&rev_info.diffopt, BINARY);
-	DIFF_OPT_SET(&rev_info.diffopt, FULL_INDEX);
+	rev_info.diffopt.flags.binary = 1;
+	rev_info.diffopt.flags.full_index = 1;
 	rev_info.diffopt.use_color = 0;
 	rev_info.diffopt.file = fp;
 	rev_info.diffopt.close_file = 1;

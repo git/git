@@ -60,42 +60,52 @@ typedef struct strbuf *(*diff_prefix_fn_t)(struct diff_options *opt, void *data)
 
 #define DIFF_FORMAT_CALLBACK	0x1000
 
-#define DIFF_OPT_RECURSIVE           (1 <<  0)
-#define DIFF_OPT_TREE_IN_RECURSIVE   (1 <<  1)
-#define DIFF_OPT_BINARY              (1 <<  2)
-#define DIFF_OPT_TEXT                (1 <<  3)
-#define DIFF_OPT_FULL_INDEX          (1 <<  4)
-#define DIFF_OPT_SILENT_ON_REMOVE    (1 <<  5)
-#define DIFF_OPT_FIND_COPIES_HARDER  (1 <<  6)
-#define DIFF_OPT_FOLLOW_RENAMES      (1 <<  7)
-#define DIFF_OPT_RENAME_EMPTY        (1 <<  8)
-/* (1 <<  9) unused */
-#define DIFF_OPT_HAS_CHANGES         (1 << 10)
-#define DIFF_OPT_QUICK               (1 << 11)
-#define DIFF_OPT_NO_INDEX            (1 << 12)
-#define DIFF_OPT_ALLOW_EXTERNAL      (1 << 13)
-#define DIFF_OPT_EXIT_WITH_STATUS    (1 << 14)
-#define DIFF_OPT_REVERSE_DIFF        (1 << 15)
-#define DIFF_OPT_CHECK_FAILED        (1 << 16)
-#define DIFF_OPT_RELATIVE_NAME       (1 << 17)
-#define DIFF_OPT_IGNORE_SUBMODULES   (1 << 18)
-#define DIFF_OPT_DIRSTAT_CUMULATIVE  (1 << 19)
-#define DIFF_OPT_DIRSTAT_BY_FILE     (1 << 20)
-#define DIFF_OPT_ALLOW_TEXTCONV      (1 << 21)
-#define DIFF_OPT_DIFF_FROM_CONTENTS  (1 << 22)
-#define DIFF_OPT_DIRTY_SUBMODULES    (1 << 24)
-#define DIFF_OPT_IGNORE_UNTRACKED_IN_SUBMODULES (1 << 25)
-#define DIFF_OPT_IGNORE_DIRTY_SUBMODULES (1 << 26)
-#define DIFF_OPT_OVERRIDE_SUBMODULE_CONFIG (1 << 27)
-#define DIFF_OPT_DIRSTAT_BY_LINE     (1 << 28)
-#define DIFF_OPT_FUNCCONTEXT         (1 << 29)
-#define DIFF_OPT_PICKAXE_IGNORE_CASE (1 << 30)
-#define DIFF_OPT_DEFAULT_FOLLOW_RENAMES (1U << 31)
+#define DIFF_FLAGS_INIT { 0 }
+struct diff_flags {
+	unsigned recursive:1;
+	unsigned tree_in_recursive:1;
+	unsigned binary:1;
+	unsigned text:1;
+	unsigned full_index:1;
+	unsigned silent_on_remove:1;
+	unsigned find_copies_harder:1;
+	unsigned follow_renames:1;
+	unsigned rename_empty:1;
+	unsigned has_changes:1;
+	unsigned quick:1;
+	unsigned no_index:1;
+	unsigned allow_external:1;
+	unsigned exit_with_status:1;
+	unsigned reverse_diff:1;
+	unsigned check_failed:1;
+	unsigned relative_name:1;
+	unsigned ignore_submodules:1;
+	unsigned dirstat_cumulative:1;
+	unsigned dirstat_by_file:1;
+	unsigned allow_textconv:1;
+	unsigned textconv_set_via_cmdline:1;
+	unsigned diff_from_contents:1;
+	unsigned dirty_submodules:1;
+	unsigned ignore_untracked_in_submodules:1;
+	unsigned ignore_dirty_submodules:1;
+	unsigned override_submodule_config:1;
+	unsigned dirstat_by_line:1;
+	unsigned funccontext:1;
+	unsigned pickaxe_ignore_case:1;
+	unsigned default_follow_renames:1;
+};
 
-#define DIFF_OPT_TST(opts, flag)    ((opts)->flags & DIFF_OPT_##flag)
-#define DIFF_OPT_TOUCHED(opts, flag)    ((opts)->touched_flags & DIFF_OPT_##flag)
-#define DIFF_OPT_SET(opts, flag)    (((opts)->flags |= DIFF_OPT_##flag),((opts)->touched_flags |= DIFF_OPT_##flag))
-#define DIFF_OPT_CLR(opts, flag)    (((opts)->flags &= ~DIFF_OPT_##flag),((opts)->touched_flags |= DIFF_OPT_##flag))
+static inline void diff_flags_or(struct diff_flags *a,
+				 const struct diff_flags *b)
+{
+	char *tmp_a = (char *)a;
+	const char *tmp_b = (const char *)b;
+	int i;
+
+	for (i = 0; i < sizeof(struct diff_flags); i++)
+		tmp_a[i] |= tmp_b[i];
+}
+
 #define DIFF_XDL_TST(opts, flag)    ((opts)->xdl_opts & XDF_##flag)
 #define DIFF_XDL_SET(opts, flag)    ((opts)->xdl_opts |= XDF_##flag)
 #define DIFF_XDL_CLR(opts, flag)    ((opts)->xdl_opts &= ~XDF_##flag)
@@ -122,8 +132,7 @@ struct diff_options {
 	const char *a_prefix, *b_prefix;
 	const char *line_prefix;
 	size_t line_prefix_length;
-	unsigned flags;
-	unsigned touched_flags;
+	struct diff_flags flags;
 
 	/* diff-filter bits */
 	unsigned int filter;
@@ -389,7 +398,8 @@ extern int diff_result_code(struct diff_options *, int);
 
 extern void diff_no_index(struct rev_info *, int, const char **);
 
-extern int index_differs_from(const char *def, int diff_flags, int ita_invisible_in_index);
+extern int index_differs_from(const char *def, const struct diff_flags *flags,
+			      int ita_invisible_in_index);
 
 /*
  * Fill the contents of the filespec "df", respecting any textconv defined by

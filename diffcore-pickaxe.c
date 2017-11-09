@@ -131,7 +131,7 @@ static int pickaxe_match(struct diff_filepair *p, struct diff_options *o,
 	if (!DIFF_FILE_VALID(p->one) && !DIFF_FILE_VALID(p->two))
 		return 0;
 
-	if (DIFF_OPT_TST(o, ALLOW_TEXTCONV)) {
+	if (o->flags.allow_textconv) {
 		textconv_one = get_textconv(p->one);
 		textconv_two = get_textconv(p->two);
 	}
@@ -222,11 +222,11 @@ void diffcore_pickaxe(struct diff_options *o)
 
 	if (opts & (DIFF_PICKAXE_REGEX | DIFF_PICKAXE_KIND_G)) {
 		int cflags = REG_EXTENDED | REG_NEWLINE;
-		if (DIFF_OPT_TST(o, PICKAXE_IGNORE_CASE))
+		if (o->flags.pickaxe_ignore_case)
 			cflags |= REG_ICASE;
 		regcomp_or_die(&regex, needle, cflags);
 		regexp = &regex;
-	} else if (DIFF_OPT_TST(o, PICKAXE_IGNORE_CASE) &&
+	} else if (o->flags.pickaxe_ignore_case &&
 		   has_non_ascii(needle)) {
 		struct strbuf sb = STRBUF_INIT;
 		int cflags = REG_NEWLINE | REG_ICASE;
@@ -236,7 +236,7 @@ void diffcore_pickaxe(struct diff_options *o)
 		strbuf_release(&sb);
 		regexp = &regex;
 	} else {
-		kws = kwsalloc(DIFF_OPT_TST(o, PICKAXE_IGNORE_CASE)
+		kws = kwsalloc(o->flags.pickaxe_ignore_case
 			       ? tolower_trans_tbl : NULL);
 		kwsincr(kws, needle, strlen(needle));
 		kwsprep(kws);

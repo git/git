@@ -1066,7 +1066,7 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 		die("revision walk setup failed");
 	revs.diffopt.format_callback = show_filemodify;
 	revs.diffopt.format_callback_data = &paths_of_changed_objects;
-	DIFF_OPT_SET(&revs.diffopt, RECURSIVE);
+	revs.diffopt.flags.recursive = 1;
 	while ((commit = get_revision(&revs))) {
 		if (has_unshown_parent(commit)) {
 			add_object_array(&commit->object, NULL, &commits);

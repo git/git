@@ -793,7 +793,7 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 	struct commit_list *parents;
 	struct object_id *oid;
 
-	if (!opt->diff && !DIFF_OPT_TST(&opt->diffopt, EXIT_WITH_STATUS))
+	if (!opt->diff && !opt->diffopt.flags.exit_with_status)
 		return 0;
 
 	parse_commit_or_die(commit);

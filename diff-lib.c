@@ -71,14 +71,15 @@ static int match_stat_with_submodule(struct diff_options *diffopt,
 {
 	int changed = ce_match_stat(ce, st, ce_option);
 	if (S_ISGITLINK(ce->ce_mode)) {
-		unsigned orig_flags = diffopt->flags;
-		if (!DIFF_OPT_TST(diffopt, OVERRIDE_SUBMODULE_CONFIG))
+		struct diff_flags orig_flags = diffopt->flags;
+		if (!diffopt->flags.override_submodule_config)
 			set_diffopt_flags_from_submodule_config(diffopt, ce->name);
-		if (DIFF_OPT_TST(diffopt, IGNORE_SUBMODULES))
+		if (diffopt->flags.ignore_submodules)
 			changed = 0;
-		else if (!DIFF_OPT_TST(diffopt, IGNORE_DIRTY_SUBMODULES)
-		    && (!changed || DIFF_OPT_TST(diffopt, DIRTY_SUBMODULES)))
-			*dirty_submodule = is_submodule_modified(ce->name, DIFF_OPT_TST(diffopt, IGNORE_UNTRACKED_IN_SUBMODULES));
+		else if (!diffopt->flags.ignore_dirty_submodules &&
+			 (!changed || diffopt->flags.dirty_submodules))
+			*dirty_submodule = is_submodule_modified(ce->name,
+								 diffopt->flags.ignore_untracked_in_submodules);
 		diffopt->flags = orig_flags;
 	}
 	return changed;
@@ -228,7 +229,7 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 
 		if (!changed && !dirty_submodule) {
 			ce_mark_uptodate(ce);
-			if (!DIFF_OPT_TST(&revs->diffopt, FIND_COPIES_HARDER))
+			if (!revs->diffopt.flags.find_copies_harder)
 				continue;
 		}
 		oldmode = ce->ce_mode;
@@ -362,7 +363,7 @@ static int show_modified(struct rev_info *revs,
 
 	oldmode = old->ce_mode;
 	if (mode == oldmode && !oidcmp(oid, &old->oid) && !dirty_submodule &&
-	    !DIFF_OPT_TST(&revs->diffopt, FIND_COPIES_HARDER))
+	    !revs->diffopt.flags.find_copies_harder)
 		return 0;
 
 	diff_change(&revs->diffopt, oldmode, mode,
@@ -493,7 +494,7 @@ static int diff_cache(struct rev_info *revs,
 	opts.head_idx = 1;
 	opts.index_only = cached;
 	opts.diff_index_cached = (cached &&
-				  !DIFF_OPT_TST(&revs->diffopt, FIND_COPIES_HARDER));
+				  !revs->diffopt.flags.find_copies_harder);
 	opts.merge = 1;
 	opts.fn = oneway_diff;
 	opts.unpack_data = revs;
@@ -534,7 +535,7 @@ int do_diff_cache(const struct object_id *tree_oid, struct diff_options *opt)
 	return 0;
 }
 
-int index_differs_from(const char *def, int diff_flags,
+int index_differs_from(const char *def, const struct diff_flags *flags,
 		       int ita_invisible_in_index)
 {
 	struct rev_info rev;
@@ -544,11 +545,12 @@ int index_differs_from(const char *def, int diff_flags,
 	memset(&opt, 0, sizeof(opt));
 	opt.def = def;
 	setup_revisions(0, NULL, &rev, &opt);
-	DIFF_OPT_SET(&rev.diffopt, QUICK);
-	DIFF_OPT_SET(&rev.diffopt, EXIT_WITH_STATUS);
-	rev.diffopt.flags |= diff_flags;
+	rev.diffopt.flags.quick = 1;
+	rev.diffopt.flags.exit_with_status = 1;
+	if (flags)
+		diff_flags_or(&rev.diffopt.flags, flags);
 	rev.diffopt.ita_invisible_in_index = ita_invisible_in_index;
 	run_diff_index(&rev, 1);
 	object_array_clear(&rev.pending);
-	return (DIFF_OPT_TST(&rev.diffopt, HAS_CHANGES) != 0);
+	return (rev.diffopt.flags.has_changes != 0);
 }

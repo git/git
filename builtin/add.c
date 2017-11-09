@@ -116,7 +116,7 @@ int add_files_to_cache(const char *prefix,
 	rev.diffopt.output_format = DIFF_FORMAT_CALLBACK;
 	rev.diffopt.format_callback = update_callback;
 	rev.diffopt.format_callback_data = &data;
-	rev.diffopt.flags |= DIFF_OPT_OVERRIDE_SUBMODULE_CONFIG;
+	rev.diffopt.flags.override_submodule_config = 1;
 	rev.max_count = 0; /* do not compare unmerged paths with stage #2 */
 	run_diff_files(&rev, DIFF_RACY_IS_MODIFIED);
 	clear_pathspec(&rev.prune_data);
@@ -218,7 +218,7 @@ static int edit_patch(int argc, const char **argv, const char *prefix)
 	argc = setup_revisions(argc, argv, &rev, NULL);
 	rev.diffopt.output_format = DIFF_FORMAT_PATCH;
 	rev.diffopt.use_color = 0;
-	DIFF_OPT_SET(&rev.diffopt, IGNORE_DIRTY_SUBMODULES);
+	rev.diffopt.flags.ignore_dirty_submodules = 1;
 	out = open(file, O_CREAT | O_WRONLY, 0666);
 	if (out < 0)
 		die(_("Could not open '%s' for writing."), file);

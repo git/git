@@ -294,7 +294,7 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	if (revs.bisect)
 		bisect_list = 1;
 
-	if (DIFF_OPT_TST(&revs.diffopt, QUICK))
+	if (revs.diffopt.flags.quick)
 		info.flags |= REV_LIST_QUIET;
 	for (i = 1 ; i < argc; i++) {
 		const char *arg = argv[i];

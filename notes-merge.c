@@ -125,7 +125,7 @@ static struct notes_merge_pair *diff_tree_remote(struct notes_merge_options *o,
 	       oid_to_hex(base), oid_to_hex(remote));
 
 	diff_setup(&opt);
-	DIFF_OPT_SET(&opt, RECURSIVE);
+	opt.flags.recursive = 1;
 	opt.output_format = DIFF_FORMAT_NO_OUTPUT;
 	diff_setup_done(&opt);
 	diff_tree_oid(base, remote, "", &opt);
@@ -188,7 +188,7 @@ static void diff_tree_local(struct notes_merge_options *o,
 	       len, oid_to_hex(base), oid_to_hex(local));
 
 	diff_setup(&opt);
-	DIFF_OPT_SET(&opt, RECURSIVE);
+	opt.flags.recursive = 1;
 	opt.output_format = DIFF_FORMAT_NO_OUTPUT;
 	diff_setup_done(&opt);
 	diff_tree_oid(base, local, "", &opt);

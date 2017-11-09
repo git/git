@@ -898,7 +898,7 @@ static void show_combined_header(struct combine_diff_path *elem,
 				 int show_file_header)
 {
 	struct diff_options *opt = &rev->diffopt;
-	int abbrev = DIFF_OPT_TST(opt, FULL_INDEX) ? GIT_SHA1_HEXSZ : DEFAULT_ABBREV;
+	int abbrev = opt->flags.full_index ? GIT_SHA1_HEXSZ : DEFAULT_ABBREV;
 	const char *a_prefix = opt->a_prefix ? opt->a_prefix : "a/";
 	const char *b_prefix = opt->b_prefix ? opt->b_prefix : "b/";
 	const char *c_meta = diff_get_color_opt(opt, DIFF_METAINFO);
@@ -987,7 +987,7 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 	userdiff = userdiff_find_by_path(elem->path);
 	if (!userdiff)
 		userdiff = userdiff_find_by_name("default");
-	if (DIFF_OPT_TST(opt, ALLOW_TEXTCONV))
+	if (opt->flags.allow_textconv)
 		textconv = userdiff_get_textconv(userdiff);
 
 	/* Read the result of merge first */
@@ -1413,8 +1413,8 @@ void diff_tree_combined(const struct object_id *oid,
 
 	diffopts = *opt;
 	copy_pathspec(&diffopts.pathspec, &opt->pathspec);
-	DIFF_OPT_SET(&diffopts, RECURSIVE);
-	DIFF_OPT_CLR(&diffopts, ALLOW_EXTERNAL);
+	diffopts.flags.recursive = 1;
+	diffopts.flags.allow_external = 0;
 
 	/* find set of paths that everybody touches
 	 *
@@ -1435,7 +1435,7 @@ void diff_tree_combined(const struct object_id *oid,
 	 * NOTE please keep this semantically in sync with diffcore_std()
 	 */
 	need_generic_pathscan = opt->skip_stat_unmatch	||
-			DIFF_OPT_TST(opt, FOLLOW_RENAMES)	||
+			opt->flags.follow_renames	||
 			opt->break_opt != -1	||
 			opt->detect_rename	||
 			opt->pickaxe		||
