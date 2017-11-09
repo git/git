@@ -1881,6 +1881,7 @@ int for_each_file_in_obj_subdir(unsigned int subdir_nr,
 	DIR *dir;
 	struct dirent *de;
 	int r = 0;
+	struct object_id oid;
 
 	if (subdir_nr > 0xff)
 		BUG("invalid loose object subdirectory: %x", subdir_nr);
@@ -1898,6 +1899,8 @@ int for_each_file_in_obj_subdir(unsigned int subdir_nr,
 		return r;
 	}
 
+	oid.hash[0] = subdir_nr;
+
 	while ((de = readdir(dir))) {
 		if (is_dot_or_dotdot(de->d_name))
 			continue;
@@ -1905,20 +1908,15 @@ int for_each_file_in_obj_subdir(unsigned int subdir_nr,
 		strbuf_setlen(path, baselen);
 		strbuf_addf(path, "/%s", de->d_name);
 
-		if (strlen(de->d_name) == GIT_SHA1_HEXSZ - 2)  {
-			char hex[GIT_MAX_HEXSZ+1];
-			struct object_id oid;
-
-			xsnprintf(hex, sizeof(hex), "%02x%s",
-				  subdir_nr, de->d_name);
-			if (!get_oid_hex(hex, &oid)) {
-				if (obj_cb) {
-					r = obj_cb(&oid, path->buf, data);
-					if (r)
-						break;
-				}
-				continue;
+		if (strlen(de->d_name) == GIT_SHA1_HEXSZ - 2 &&
+		    !hex_to_bytes(oid.hash + 1, de->d_name,
+				  GIT_SHA1_RAWSZ - 1)) {
+			if (obj_cb) {
+				r = obj_cb(&oid, path->buf, data);
+				if (r)
+					break;
 			}
+			continue;
 		}
 
 		if (cruft_cb) {
