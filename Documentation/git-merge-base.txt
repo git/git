@@ -154,22 +154,70 @@ topic origin/master`, the history of remote-tracking branch
 `origin/master` may have been rewound and rebuilt, leading to a
 history of this shape:
 
-	                 o---B1
+			 o---B2
 	                /
-	---o---o---B2--o---o---o---B (origin/master)
+	---o---o---B1--o---o---o---B (origin/master)
 	        \
-	         B3
+		 B0
 	          \
-	           Derived (topic)
+		   D0---D1---D (topic)
 
-where `origin/master` used to point at commits B3, B2, B1 and now it
+where `origin/master` used to point at commits B0, B1, B2 and now it
 points at B, and your `topic` branch was started on top of it back
-when `origin/master` was at B3. This mode uses the reflog of
-`origin/master` to find B3 as the fork point, so that the `topic`
-can be rebased on top of the updated `origin/master` by:
+when `origin/master` was at B0, and you built three commits, D0, D1,
+and D, on top of it.  Imagine that you now want to rebase the work
+you did on the topic on top of the updated origin/master.
+
+In such a case, `git merge-base origin/master topic` would return the
+parent of B0 in the above picture, but B0^..D is *not* the range of
+commits you would want to replay on top of B (it includes B0, which
+is not what you wrote; it is a commit the other side discarded when
+it moved its tip from B0 to B1).
+
+`git merge-base --fork-point origin/master topic` is designed to
+help in such a case.  It takes not only B but also B0, B1, and B2
+(i.e. old tips of the remote-tracking branches your repository's
+reflog knows about) into account to see on which commit your topic
+branch was built and finds B0, allowing you to replay only the
+commits on your topic, excluding the commits the other side later
+discarded.
+
+Hence
 
     $ fork_point=$(git merge-base --fork-point origin/master topic)
+
+will find B0, and
+
     $ git rebase --onto origin/master $fork_point topic
+
+will replay D0, D1 and D on top of B to create a new history of this
+shape:
+
+			 o---B2
+			/
+	---o---o---B1--o---o---o---B (origin/master)
+		\                   \
+		 B0                  D0'--D1'--D' (topic - updated)
+		  \
+		   D0---D1---D (topic - old)
+
+A caveat is that older reflog entries in your repository may be
+expired by `git gc`.  If B0 no longer appears in the reflog of the
+remote-tracking branch `origin/master`, the `--fork-point` mode
+obviously cannot find it and fails, avoiding to give a random and
+useless result (such as the parent of B0, like the same command
+without the `--fork-point` option gives).
+
+Also, the remote-tracking branch you use the `--fork-point` mode
+with must be the one your topic forked from its tip.  If you forked
+from an older commit than the tip, this mode would not find the fork
+point (imagine in the above sample history B0 did not exist,
+origin/master started at B1, moved to B2 and then B, and you forked
+your topic at origin/master^ when origin/master was B1; the shape of
+the history would be the same as above, without B0, and the parent
+of B1 is what `git merge-base origin/master topic` correctly finds,
+but the `--fork-point` mode will not, because it is not one of the
+commits that used to be at the tip of origin/master).
 
 
 See also
