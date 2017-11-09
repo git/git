@@ -10,7 +10,14 @@ extern struct trace_key trace_fsmonitor;
 extern int read_fsmonitor_extension(struct index_state *istate, const void *data, unsigned long sz);
 
 /*
- * Write the CE_FSMONITOR_VALID state into the fsmonitor index extension.
+ * Fill the fsmonitor_dirty ewah bits with their state from the index,
+ * before it is split during writing.
+ */
+extern void fill_fsmonitor_bitmap(struct index_state *istate);
+
+/*
+ * Write the CE_FSMONITOR_VALID state into the fsmonitor index
+ * extension.  Reads from the fsmonitor_dirty ewah in the index.
  */
 extern void write_fsmonitor_extension(struct strbuf *sb, struct index_state *istate);
 

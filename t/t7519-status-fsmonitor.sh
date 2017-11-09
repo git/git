@@ -301,4 +301,17 @@ do
 	done
 done
 
+# test that splitting the index dosn't interfere
+test_expect_success 'splitting the index results in the same state' '
+	write_integration_script &&
+	dirty_repo &&
+	git update-index --fsmonitor  &&
+	git ls-files -f >expect &&
+	test-dump-fsmonitor >&2 && echo &&
+	git update-index --fsmonitor --split-index &&
+	test-dump-fsmonitor >&2 && echo &&
+	git ls-files -f >actual &&
+	test_cmp expect actual
+'
+
 test_done

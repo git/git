@@ -54,12 +54,19 @@ int read_fsmonitor_extension(struct index_state *istate, const void *data,
 	return 0;
 }
 
+void fill_fsmonitor_bitmap(struct index_state *istate)
+{
+	int i;
+	istate->fsmonitor_dirty = ewah_new();
+	for (i = 0; i < istate->cache_nr; i++)
+		if (!(istate->cache[i]->ce_flags & CE_FSMONITOR_VALID))
+			ewah_set(istate->fsmonitor_dirty, i);
+}
+
 void write_fsmonitor_extension(struct strbuf *sb, struct index_state *istate)
 {
 	uint32_t hdr_version;
 	uint64_t tm;
-	struct ewah_bitmap *bitmap;
-	int i;
 	uint32_t ewah_start;
 	uint32_t ewah_size = 0;
 	int fixup = 0;
@@ -73,12 +80,9 @@ void write_fsmonitor_extension(struct strbuf *sb, struct index_state *istate)
 	strbuf_add(sb, &ewah_size, sizeof(uint32_t)); /* we'll fix this up later */
 
 	ewah_start = sb->len;
-	bitmap = ewah_new();
-	for (i = 0; i < istate->cache_nr; i++)
-		if (!(istate->cache[i]->ce_flags & CE_FSMONITOR_VALID))
-			ewah_set(bitmap, i);
-	ewah_serialize_strbuf(bitmap, sb);
-	ewah_free(bitmap);
+	ewah_serialize_strbuf(istate->fsmonitor_dirty, sb);
+	ewah_free(istate->fsmonitor_dirty);
+	istate->fsmonitor_dirty = NULL;
 
 	/* fix up size field */
 	put_be32(&ewah_size, sb->len - ewah_start);
