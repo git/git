@@ -59,6 +59,16 @@ Performance, Internal Implementation, Development Support etc.
 
  * Conversion from uchar[20] to struct object_id continues.
 
+ * Code cleanup.
+   (merge 62a24c8923 rs/hex-to-bytes-cleanup later to maint).
+
+ * A single-word "unsigned flags" in the diff options is being split
+   into a structure with many bitfields.
+   (merge 0d1e0e7801 bw/diff-opt-impl-to-bitfields later to maint).
+
+ * TravisCI build updates.
+   (merge c2154953b8 sg/travis-fixes later to maint).
+
 
 Also contains various documentation updates and code clean-ups.
 
@@ -122,5 +132,35 @@ Fixes since v2.15
  * Command line completion (in contrib/) update.
    (merge 6357d9d004 tb/complete-checkout later to maint).
 
+ * Description of blame.{showroot,blankboundary,showemail,date}
+   configuration variables have been added to "git config --help".
+   (merge de0bc11d13 sb/blame-config-doc later to maint).
+
+ * After an error from lstat(), diff_populate_filespec() function
+   sometimes still went ahead and used invalid data in struct stat,
+   which has been fixed.
+   (merge 10e0ca843d ao/diff-populate-filespec-lstat-errorpath-fix later to maint).
+
+ * UNC paths are also relevant in Cygwin builds and they are now
+   tested just like Mingw builds.
+   (merge f21d60b429 ad/5580-unc-tests-on-cygwin later to maint).
+
+ * Correct start-up sequence so that a repository could be placed
+   immediately under the root directory again (which was broken at
+   around Git 2.13).
+   (merge fa4d8c783d js/early-config later to maint).
+
+ * The credential helper for libsecret (in contrib/) has been improved
+   to allow possibly prompting the end user to unlock secrets that are
+   currently locked (otherwise the secrets may not be loaded).
+   (merge 9c109e9bbc dk/libsecret-unlock-to-load-fix later to maint).
+
+ * MinGW updates.
+   (merge 39bb86b4e5 js/mingw-full-version-in-resources later to maint).
+   (merge 601e1e7897 js/wincred-empty-cred later to maint).
+   (merge b2f55717c7 js/mingw-redirect-std-handles later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge bab76141da cn/diff-indent-no-longer-is-experimental later to maint).
+   (merge 8684dde10d jm/relnotes-2.15-typofix later to maint).
+   (merge cd3f8e2fc2 ks/mailmap later to maint).
