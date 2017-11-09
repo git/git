@@ -41,7 +41,8 @@ if ($system =~ m/^MSYS_NT/ || $system =~ m/^MINGW/) {
 	$git_work_tree =~ s/[\r\n]+//g;
 	$git_work_tree =~ s,\\,/,g;
 } else {
-	$git_work_tree = $ENV{'PWD'};
+	require Cwd;
+	$git_work_tree = Cwd::cwd();
 }
 
 my $retry = 1;
