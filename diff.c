@@ -3545,14 +3545,12 @@ int diff_populate_filespec(struct diff_filespec *s, unsigned int flags)
 		int fd;
 
 		if (lstat(s->path, &st) < 0) {
-			if (errno == ENOENT) {
-			err_empty:
-				err = -1;
-			empty:
-				s->data = (char *)"";
-				s->size = 0;
-				return err;
-			}
+		err_empty:
+			err = -1;
+		empty:
+			s->data = (char *)"";
+			s->size = 0;
+			return err;
 		}
 		s->size = xsize_t(st.st_size);
 		if (!s->size)
