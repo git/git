@@ -312,7 +312,9 @@ int is_git_directory(const char *suspect)
 	size_t len;
 
 	/* Check worktree-related signatures */
-	strbuf_addf(&path, "%s/HEAD", suspect);
+	strbuf_addstr(&path, suspect);
+	strbuf_complete(&path, '/');
+	strbuf_addstr(&path, "HEAD");
 	if (validate_headref(path.buf))
 		goto done;
 
