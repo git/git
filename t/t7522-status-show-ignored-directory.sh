@@ -21,6 +21,7 @@ test_expect_success 'setup initial commit and ignore file' '
 '
 
 cat >expect <<\EOF
+? err
 ? expect
 ? output
 ! dir/ignored/ignored_1.ign
@@ -38,8 +39,9 @@ test_expect_success 'setup folder with ignored files' '
 
 test_expect_success 'Verify behavior of status on folders with ignored files' '
 	test_when_finished "git clean -fdx" &&
-	git status --porcelain=v2 --ignored --untracked-files=all --show-ignored-directory >output &&
-	test_i18ncmp expect output
+	git status --porcelain=v2 --ignored --untracked-files=all --show-ignored-directory >output 2>err &&
+	test_i18ncmp expect output &&
+	grep "deprecated.*use --ignored=matching instead" err
 '
 
 # Test status bahavior on folder with tracked and ignored files
