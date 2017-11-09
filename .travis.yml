@@ -71,7 +71,7 @@ matrix:
           packages:
           - coccinelle
       before_install:
-      # "before_script" that builds Git is inherited from base job
+      before_script:
       script: ci/run-static-analysis.sh
       after_failure:
     - env: Documentation
