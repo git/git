@@ -58,4 +58,15 @@ extern const char sign_off_header[];
 void append_signoff(struct strbuf *msgbuf, int ignore_footer, unsigned flag);
 void append_conflicts_hint(struct strbuf *msgbuf);
 
+enum commit_msg_cleanup_mode {
+	COMMIT_MSG_CLEANUP_SPACE,
+	COMMIT_MSG_CLEANUP_NONE,
+	COMMIT_MSG_CLEANUP_SCISSORS,
+	COMMIT_MSG_CLEANUP_ALL
+};
+
+int message_is_empty(const struct strbuf *sb,
+		     enum commit_msg_cleanup_mode cleanup_mode);
+int template_untouched(const struct strbuf *sb, const char *template_file,
+		       enum commit_msg_cleanup_mode cleanup_mode);
 #endif
