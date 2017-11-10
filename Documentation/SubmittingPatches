@@ -184,14 +184,15 @@ lose tabs that way if you are not careful.
 
 It is a common convention to prefix your subject line with
 [PATCH].  This lets people easily distinguish patches from other
-e-mail discussions.  Use of additional markers after PATCH and
-the closing bracket to mark the nature of the patch is also
-encouraged.  E.g. [PATCH/RFC] is often used when the patch is
-not ready to be applied but it is for discussion, [PATCH v2],
-[PATCH v3] etc. are often seen when you are sending an update to
-what you have previously sent.
+e-mail discussions.  Use of markers in addition to PATCH within
+the brackets to describe the nature of the patch is also
+encouraged.  E.g. [RFC PATCH] (where RFC stands for "request for
+comments") is often used to indicate a patch needs further
+discussion before being accepted, [PATCH v2], [PATCH v3] etc.
+are often seen when you are sending an update to what you have
+previously sent.
 
-"git format-patch" command follows the best current practice to
+The "git format-patch" command follows the best current practice to
 format the body of an e-mail message.  At the beginning of the
 patch should come your commit message, ending with the
 Signed-off-by: lines, and a line that consists of three dashes,
@@ -199,6 +200,10 @@ followed by the diffstat information and the patch itself.  If
 you are forwarding a patch from somebody else, optionally, at
 the beginning of the e-mail message just before the commit
 message starts, you can put a "From: " line to name that person.
+To change the default "[PATCH]" in the subject to "[<text>]", use
+`git format-patch --subject-prefix=<text>`.  As a shortcut, you
+can use `--rfc` instead of `--subject-prefix="RFC PATCH"`, or
+`-v <n>` instead of `--subject-prefix="PATCH v<n>"`.
 
 You often want to add additional explanation about the patch,
 other than the commit message itself.  Place such "cover letter"
