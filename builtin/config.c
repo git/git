@@ -30,6 +30,7 @@ static int end_null;
 static int respect_includes_opt = -1;
 static struct config_options config_options;
 static int show_origin;
+static const char *default_value;
 
 #define ACTION_GET (1<<0)
 #define ACTION_GET_ALL (1<<1)
@@ -52,6 +53,8 @@ static int show_origin;
 #define TYPE_INT (1<<1)
 #define TYPE_BOOL_OR_INT (1<<2)
 #define TYPE_PATH (1<<3)
+#define TYPE_COLOR (1<<4)
+
 
 static struct option builtin_config_options[] = {
 	OPT_GROUP(N_("Config file location")),
@@ -80,11 +83,13 @@ static struct option builtin_config_options[] = {
 	OPT_BIT(0, "int", &types, N_("value is decimal number"), TYPE_INT),
 	OPT_BIT(0, "bool-or-int", &types, N_("value is --bool or --int"), TYPE_BOOL_OR_INT),
 	OPT_BIT(0, "path", &types, N_("value is a path (file or directory name)"), TYPE_PATH),
+	OPT_BIT(0, "color", &types, N_("find the color configured"), TYPE_COLOR),
 	OPT_GROUP(N_("Other")),
 	OPT_BOOL('z', "null", &end_null, N_("terminate values with NUL byte")),
 	OPT_BOOL(0, "name-only", &omit_values, N_("show variable names only")),
 	OPT_BOOL(0, "includes", &respect_includes_opt, N_("respect include directives on lookup")),
 	OPT_BOOL(0, "show-origin", &show_origin, N_("show origin of config (file, standard input, blob, command line)")),
+	OPT_STRING(0, "default", &default_value, N_("default-value"), N_("sets default value when no value is returned from config")),
 	OPT_END(),
 };
 
@@ -156,6 +161,13 @@ static int format_config(struct strbuf *buf, const char *key_, const char *value
 		} else if (types == TYPE_PATH) {
 			const char *v;
 			if (git_config_pathname(&v, key_, value_) < 0)
+				return -1;
+			strbuf_addstr(buf, v);
+			free((char *)v);
+		}
+		else if (types == TYPE_COLOR) {
+			char *v = xmalloc(COLOR_MAXLEN);
+			if (git_config_color(&v, key_, value_) < 0)
 				return -1;
 			strbuf_addstr(buf, v);
 			free((char *)v);
@@ -244,8 +256,16 @@ static int get_value(const char *key_, const char *regex_)
 	config_with_options(collect_config, &values,
 			    &given_config_source, &config_options);
 
-	ret = !values.nr;
+	if (!values.nr && default_value && types) {
+		struct strbuf *item;
+		ALLOC_GROW(values.items, values.nr + 1, values.alloc);
+		item = &values.items[values.nr++];
+		if(format_config(item, key_, default_value) < 0){
+			values.nr = 0;
+		}
+	}
 
+	ret = !values.nr;
 	for (i = 0; i < values.nr; i++) {
 		struct strbuf *buf = values.items + i;
 		if (do_all || i == values.nr - 1)
@@ -268,6 +288,7 @@ free_strings:
 	return ret;
 }
 
+
 static char *normalize_value(const char *key, const char *value)
 {
 	if (!value)
@@ -281,6 +302,17 @@ static char *normalize_value(const char *key, const char *value)
 		 * when retrieving the value.
 		 */
 		return xstrdup(value);
+	if (types == TYPE_COLOR)
+	{
+		char *v = xmalloc(COLOR_MAXLEN);
+		if (git_config_color(&v, key, value) == 0)
+		{
+			free((char *)v);
+			return xstrdup(value);
+		}
+		free((char *)v);
+		die("cannot parse color '%s'", value);
+	}
 	if (types == TYPE_INT)
 		return xstrfmt("%"PRId64, git_config_int64(key, value));
 	if (types == TYPE_BOOL)

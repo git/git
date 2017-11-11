@@ -16,6 +16,7 @@
 #include "string-list.h"
 #include "utf8.h"
 #include "dir.h"
+#include "color.h"
 
 struct config_source {
 	struct config_source *prev;
@@ -987,6 +988,15 @@ int git_config_pathname(const char **dest, const char *var, const char *value)
 	*dest = expand_user_path(value, 0);
 	if (!*dest)
 		die(_("failed to expand user dir in: '%s'"), value);
+	return 0;
+}
+
+int git_config_color(char **dest, const char *var, const char *value)
+{
+	if (!value)
+		return config_error_nonbool(var);
+	if (color_parse(value, *dest) < 0)
+		return -1;
 	return 0;
 }
 

@@ -179,6 +179,10 @@ See also <<FILES>>.
 	specified user.  This option has no effect when setting the
 	value (but you can use `git config section.variable ~/`
 	from the command line to let your shell do the expansion).
+--color::
+	Find the color configured for `name` (e.g. `color.diff.new`) and
+	output it as the ANSI color escape sequence to the standard
+	output. 
 
 -z::
 --null::

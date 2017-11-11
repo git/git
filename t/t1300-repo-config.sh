@@ -1558,4 +1558,165 @@ test_expect_success '--local requires a repo' '
 	test_expect_code 128 nongit git config --local foo.bar
 '
 
+boolean()
+{
+	slot=${3:-no.such.slot} &&
+	actual=$(git config --default "$1" --bool "$slot") &&
+	test "$actual" = "$2"
+}
+
+invalid_boolean()
+{
+	slot=${2:-no.such.slot} &&
+	test_must_fail git config --default "$1" --bool "$slot"
+}
+
+test_expect_success 'empty value for boolean' '
+	boolean "" "false"
+'
+
+test_expect_success 'true' '
+	boolean "true" "true"
+'
+
+test_expect_success '1 is true' '
+	boolean "1" "true"
+'
+
+test_expect_success 'non-zero is true' '
+	boolean "5312" "true"
+'
+
+test_expect_success 'false' '
+	boolean "false" "false"
+'
+
+test_expect_success '0 is false' '
+	boolean "0" "false"
+'
+
+test_expect_success 'invalid value' '
+	invalid_boolean "ab"
+'
+
+test_expect_success 'existing slot has priority = true' '
+	git config bool.value true &&
+	boolean "false" "true" "bool.value"
+'
+
+test_expect_success 'existing slot has priority = false' '
+	git config bool.value false &&
+	boolean "true" "false" "bool.value"
+'
+
+int()
+{
+	slot=${3:-no.such.slot} &&
+	actual=$(git config --default "$1" --int "$slot") &&
+	test "$actual" = "$2"
+}
+
+invalid_int()
+{
+	slot=${2:-no.such.slot} &&
+	test_must_fail git config "$1" --int "$slot"
+}
+
+test_expect_success 'empty value for int' '
+	invalid_int "" ""
+'
+
+test_expect_success 'positive' '
+	int "12345" "12345"
+'
+
+test_expect_success 'negative' '
+	int "-679032" "-679032"
+'
+
+test_expect_success 'invalid value' '
+	invalid_int "abc"
+'
+test_expect_success 'existing slot has priority = 123' '
+	git config int.value 123 &&
+	int "666" "123" "int.value"
+'
+
+test_expect_success 'existing slot with bad value' '
+	git config int.value abc &&
+	invalid_int "123" "int.value"
+'
+
+path()
+{
+	slot=${3:-no.such.slot} &&
+	actual=$(git config --default "$1" --path "$slot") &&
+	test "$actual" = "$2"
+}
+
+invalid_path()
+{
+	slot=${2:-no.such.slot} &&
+	test_must_fail git config "$1" --path "$slot"
+}
+
+test_expect_success 'empty path is invalid' '
+	invalid_path "" ""
+'
+
+test_expect_success 'valid path' '
+	path "/aa/bb/cc" "/aa/bb/cc"
+'
+
+test_expect_success 'existing slot has priority = /to/the/moon' '
+	git config path.value /to/the/moon &&
+	path "/to/the/sun" "/to/the/moon" "path.value"
+'
+ESC=$(printf '\033')
+
+color()
+{
+	slot=${3:-no.such.slot} &&
+	actual=$(git config --default "$1" --color "$slot" ) &&
+	test "$actual" = "${2:+$ESC}$2"
+}
+
+invalid_color()
+{
+	slot=${2:-no.such.slot} &&
+	test_must_fail git config --default "$1" --color "$slot"
+}
+
+test_expect_success 'reset' '
+	color "reset" "[m"
+'
+
+test_expect_success 'empty color is empty' '
+	color "" ""
+'
+
+test_expect_success 'absurdly long color specification' '
+	color \
+	  "#ffffff #ffffff bold nobold dim nodim italic noitalic
+	   ul noul blink noblink reverse noreverse strike nostrike" \
+	  "[1;2;3;4;5;7;9;22;23;24;25;27;29;38;2;255;255;255;48;2;255;255;255m"
+'
+
+test_expect_success 'color too small' '
+	invalid_color "-2"
+'
+
+test_expect_success 'color too big' '
+	invalid_color "256"
+'
+
+test_expect_success 'extra character after color name' '
+	invalid_color "redX"
+'
+
+test_expect_success 'existing slot has priority = red' '
+	git config color.value red &&
+	color "blue" "[31m" "color.value"
+'
+
 test_done
