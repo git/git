@@ -9,7 +9,7 @@
  * best commit, as chosen by `find_all`.
  */
 extern void find_bisection(struct commit_list **list, int *reaches, int *all,
-			   int find_all);
+			   int find_all, int first_parent_only);
 
 extern struct commit_list *filter_skipped(struct commit_list *list,
 					  struct commit_list **tried,

@@ -34,7 +34,7 @@ static const char *term_good;
  * We care just barely enough to avoid recursing for
  * non-merge entries.
  */
-static int count_distance(struct commit_list *entry)
+static int count_distance(struct commit_list *entry, int max_parents)
 {
 	int nr = 0;
 
@@ -50,9 +50,10 @@ static int count_distance(struct commit_list *entry)
 		p = commit->parents;
 		entry = p;
 		if (p) {
+			int n = max_parents - 1;
 			p = p->next;
-			while (p) {
-				nr += count_distance(p);
+			while (p && n-- > 0) {
+				nr += count_distance(p, max_parents);
 				p = p->next;
 			}
 		}
@@ -82,12 +83,12 @@ static inline void weight_set(struct commit_list *elem, int weight)
 	*((int*)(elem->item->util)) = weight;
 }
 
-static int count_interesting_parents(struct commit *commit)
+static int count_interesting_parents(struct commit *commit, int max_parents)
 {
 	struct commit_list *p;
 	int count;
 
-	for (count = 0, p = commit->parents; p; p = p->next) {
+	for (count = 0, p = commit->parents; p && max_parents-- > 0; p = p->next) {
 		if (p->item->object.flags & UNINTERESTING)
 			continue;
 		count++;
@@ -117,10 +118,10 @@ static inline int halfway(struct commit_list *p, int nr)
 }
 
 #if !DEBUG_BISECT
-#define show_list(a,b,c,d) do { ; } while (0)
+#define show_list(a,b,c,d,e) do { ; } while (0)
 #else
 static void show_list(const char *debug, int counted, int nr,
-		      struct commit_list *list)
+		      struct commit_list *list, int max_parents)
 {
 	struct commit_list *p;
 
@@ -136,6 +137,7 @@ static void show_list(const char *debug, int counted, int nr,
 					     &size);
 		const char *subject_start;
 		int subject_len;
+		int n = max_parents;
 
 		fprintf(stderr, "%c%c%c ",
 			(flags & TREESAME) ? ' ' : 'T',
@@ -146,7 +148,7 @@ static void show_list(const char *debug, int counted, int nr,
 		else
 			fprintf(stderr, "---");
 		fprintf(stderr, " %.*s", 8, oid_to_hex(&commit->object.oid));
-		for (pp = commit->parents; pp; pp = pp->next)
+		for (pp = commit->parents; pp && n--; pp = pp->next)
 			fprintf(stderr, " %.*s", 8,
 				oid_to_hex(&pp->item->object.oid));
 
@@ -254,7 +256,7 @@ static struct commit_list *best_bisection_sorted(struct commit_list *list, int n
  */
 static struct commit_list *do_find_bisection(struct commit_list *list,
 					     int nr, int *weights,
-					     int find_all)
+					     int find_all, int max_parents)
 {
 	int n, counted;
 	struct commit_list *p;
@@ -266,7 +268,7 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 		unsigned flags = commit->object.flags;
 
 		p->item->util = &weights[n++];
-		switch (count_interesting_parents(commit)) {
+		switch (count_interesting_parents(commit, max_parents)) {
 		case 0:
 			if (!(flags & TREESAME)) {
 				weight_set(p, 1);
@@ -309,7 +311,7 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 			continue;
 		if (weight(p) != -2)
 			continue;
-		weight_set(p, count_distance(p));
+		weight_set(p, count_distance(p, max_parents));
 		clear_distance(list);
 
 		/* Does it happen to be at exactly half-way? */
@@ -324,10 +326,11 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 		for (p = list; p; p = p->next) {
 			struct commit_list *q;
 			unsigned flags = p->item->object.flags;
+			int n = max_parents;
 
 			if (0 <= weight(p))
 				continue;
-			for (q = p->item->parents; q; q = q->next) {
+			for (q = p->item->parents; q && n-- > 0; q = q->next) {
 				if (q->item->object.flags & UNINTERESTING)
 					continue;
 				if (0 <= weight(q))
@@ -365,11 +368,12 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 }
 
 void find_bisection(struct commit_list **commit_list, int *reaches,
-		    int *all, int find_all)
+		    int *all, int find_all, int first_parent_only)
 {
 	int nr, on_list;
 	struct commit_list *list, *p, *best, *next, *last;
 	int *weights;
+  int max_parents = first_parent_only ? 1 : INT_MAX
 
 	show_list("bisection 2 entry", 0, 0, *commit_list);
 
@@ -400,7 +404,7 @@ void find_bisection(struct commit_list **commit_list, int *reaches,
 	weights = xcalloc(on_list, sizeof(*weights));
 
 	/* Do the real work of finding bisection commit. */
-	best = do_find_bisection(list, nr, weights, find_all);
+	best = do_find_bisection(list, nr, weights, find_all, max_parents);
 	if (best) {
 		if (!find_all) {
 			list->item = best->item;
@@ -957,7 +961,8 @@ int bisect_next_all(const char *prefix, int no_checkout)
 
 	bisect_common(&revs);
 
-	find_bisection(&revs.commits, &reaches, &all, !!skipped_revs.nr);
+	find_bisection(&revs.commits, &reaches, &all,
+			!!skipped_revs.nr, revs.first_parent_only);
 	revs.commits = managed_skipped(revs.commits, &tried);
 
 	if (!revs.commits) {
