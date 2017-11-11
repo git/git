@@ -240,7 +240,7 @@ msgstr "未能识别的空白字符忽略选项 '%s'"
 
 #: apply.c:125
 msgid "--reject and --3way cannot be used together."
-msgstr "--reject 和 --3say 不能同时使用。"
+msgstr "--reject 和 --3way 不能同时使用。"
 
 #: apply.c:127
 msgid "--cached and --3way cannot be used together."
