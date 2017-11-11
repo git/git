@@ -138,7 +138,7 @@ msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
 "POT-Creation-Date: 2017-10-17 09:44+0800\n"
-"PO-Revision-Date: 2017-10-24 09:43+0800\n"
+"PO-Revision-Date: 2017-12-02 17:15+0800\n"
 "Last-Translator: Jiang Xin <worldhello.net@gmail.com>\n"
 "Language-Team: GitHub <https://github.com/jiangxin/git/>\n"
 "Language: zh_CN\n"
@@ -225,7 +225,7 @@ msgstr ""
 "如果您想要通过创建分支来保留在此状态下所做的提交，您可以通过在检出命令添加\n"
 "参数 -b 来实现（现在或稍后）。例如：\n"
 "\n"
-"  git checkout -b <new-branch-name>\n"
+"  git checkout -b <新分支名>\n"
 "\n"
 
 #: apply.c:58
@@ -2659,7 +2659,7 @@ msgstr "领先 %d，落后 %d"
 #: ref-filter.c:105
 #, c-format
 msgid "expected format: %%(color:<color>)"
-msgstr "期望的格式：%%(color:<color>)"
+msgstr "期望的格式：%%(color:<颜色>)"
 
 #: ref-filter.c:107
 #, c-format
@@ -2719,7 +2719,7 @@ msgstr "未能识别的 %%(objectname) 参数：%s"
 #: ref-filter.c:267
 #, c-format
 msgid "expected format: %%(align:<width>,<position>)"
-msgstr "期望的格式：%%(align:<width>,<position>)"
+msgstr "期望的格式：%%(align:<宽度>,<位置>)"
 
 #: ref-filter.c:279
 #, c-format
@@ -3635,7 +3635,7 @@ msgid ""
 "Use 'git <command> -- <path>...' to specify paths that do not exist locally."
 msgstr ""
 "%s：工作区中无此路径。\n"
-"使用命令 'git <command> -- <path>...' 来指定本地不存在的路径。"
+"使用命令 'git <命令> -- <路径>...' 来指定本地不存在的路径。"
 
 #: setup.c:184
 #, c-format
@@ -3646,7 +3646,7 @@ msgid ""
 msgstr ""
 "有歧义的参数 '%s'：未知的版本或路径不存在于工作区中。\n"
 "使用 '--' 来分隔版本和路径，例如：\n"
-"'git <command> [<revision>...] -- [<file>...]'"
+"'git <命令> [<版本>...] -- [<文件>...]'"
 
 #: setup.c:252
 #, c-format
@@ -3657,7 +3657,7 @@ msgid ""
 msgstr ""
 "有歧义的参数 '%s'：可同时是版本和文件\n"
 "使用 '--' 来分隔版本和路径，例如：\n"
-"'git <command> [<revision>...] -- [<file>...]'"
+"'git <命令> [<版本>...] -- [<文件>...]'"
 
 #: setup.c:499
 #, c-format
@@ -7273,7 +7273,7 @@ msgstr "请使用 -m 或 -F 选项提供提交说明。\n"
 #: builtin/commit.c:1075
 #, c-format
 msgid "--author '%s' is not 'Name <email>' and matches no existing author"
-msgstr "--author '%s' 不是 'Name <email>' 格式，且未能在现有作者中找到匹配"
+msgstr "--author '%s' 不是 '姓名 <邮箱>' 格式，且未能在现有作者中找到匹配"
 
 #: builtin/commit.c:1090 builtin/commit.c:1335
 #, c-format
@@ -9617,7 +9617,7 @@ msgid ""
 msgstr ""
 "无法得到上游地址，如果你想自动记录基线提交，请使用命令\n"
 "git branch --set-upstream-to 来跟踪一个远程分支。或者你可以通过\n"
-"参数 --base=<base-commit-id> 手动指定一个基线提交。"
+"参数 --base=<基线提交> 手动指定一个基线提交。"
 
 #: builtin/log.c:1308
 msgid "Failed to find exact merge base"
@@ -11081,7 +11081,7 @@ msgstr "git pack-objects --stdout [<选项>...] [< <引用列表> | < <对象列
 #: builtin/pack-objects.c:32
 msgid ""
 "git pack-objects [<options>...] <base-name> [< <ref-list> | < <object-list>]"
-msgstr "git pack-objects [<选项>...] <base-name> [< <引用列表> | < <对象列表>]"
+msgstr "git pack-objects [<选项>...] <前缀名称> [< <引用列表> | < <对象列表>]"
 
 #: builtin/pack-objects.c:181 builtin/pack-objects.c:184
 #, c-format
@@ -11862,7 +11862,7 @@ msgstr "重新排列 fixup/squash 行"
 
 #: builtin/receive-pack.c:29
 msgid "git receive-pack <git-dir>"
-msgstr "git receive-pack <git-dir>"
+msgstr "git receive-pack <仓库目录>"
 
 #: builtin/receive-pack.c:839
 msgid ""
@@ -13013,7 +13013,7 @@ msgstr ""
 
 #: builtin/show-branch.c:16
 msgid "git show-branch (-g | --reflog)[=<n>[,<base>]] [--list] [<ref>]"
-msgstr "git show-branch (-g | --reflog)[=<n>[,<base>]] [--list] [<引用>]"
+msgstr "git show-branch (-g | --reflog)[=<n>[,<起始点>]] [--list] [<引用>]"
 
 #: builtin/show-branch.c:376
 #, c-format
@@ -13089,7 +13089,7 @@ msgstr "<n>[,<base>]"
 
 #: builtin/show-branch.c:656
 msgid "show <n> most recent ref-log entries starting at base"
-msgstr "显示从 base 开始的 <n> 条最近的引用日志记录"
+msgstr "显示从起始点开始的 <n> 条最近的引用日志记录"
 
 #: builtin/show-branch.c:690
 msgid ""
@@ -13986,7 +13986,7 @@ msgstr "报告清除的工作区"
 
 #: builtin/worktree.c:149
 msgid "expire working trees older than <time>"
-msgstr "将早于 <time> 的工作区过期"
+msgstr "将早于 <时间> 的工作区过期"
 
 #: builtin/worktree.c:223
 #, c-format
@@ -14005,7 +14005,7 @@ msgstr "准备 %s（标识符 %s）"
 
 #: builtin/worktree.c:345
 msgid "checkout <branch> even if already checked out in other worktree"
-msgstr "检出分支 <branch> 即使已经被检出到其它工作区"
+msgstr "检出 <分支>，即使已经被检出到其它工作区"
 
 #: builtin/worktree.c:347
 msgid "create a new branch"
@@ -14085,7 +14085,7 @@ msgstr "在初始的引用广告后立即退出"
 
 #: upload-pack.c:1044
 msgid "do not try <directory>/.git/ if <directory> is no Git directory"
-msgstr "不要尝试 <directory>/.git/ 如果 <directory> 不是一个 Git 目录"
+msgstr "如果 <目录> 不是一个 Git 目录，不要尝试 <目录>/.git/"
 
 #: upload-pack.c:1046
 msgid "interrupt transfer after <n> seconds of inactivity"
@@ -14518,7 +14518,7 @@ msgid ""
 "To abort and get back to the state before \"git rebase\", run \"git rebase --"
 "abort\"."
 msgstr ""
-"手工解决所有冲突，执行 \"git add/rm <conflicted_files>\" 标记\n"
+"手工解决所有冲突，执行 \"git add/rm <冲突的文件>\" 标记\n"
 "冲突已解决，然后执行 \"git rebase --continue\"。您也可以执行\n"
 "\"git rebase --skip\" 命令跳过这个提交。如果想要终止执行并回到\n"
 "\"git rebase\" 执行之前的状态，执行 \"git rebase --abort\"。"
