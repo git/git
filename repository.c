@@ -64,6 +64,11 @@ void repo_set_gitdir(struct repository *repo, const char *path)
 	free(old_gitdir);
 }
 
+void repo_set_hash_algo(struct repository *repo, int hash_algo)
+{
+	repo->hash_algo = &hash_algos[hash_algo];
+}
+
 /*
  * Attempt to resolve and set the provided 'gitdir' for repository 'repo'.
  * Return 0 upon success and a non-zero value upon failure.
@@ -135,6 +140,8 @@ int repo_init(struct repository *repo, const char *gitdir, const char *worktree)
 
 	if (read_and_verify_repository_format(&format, repo->commondir))
 		goto error;
+
+	repo_set_hash_algo(repo, format.hash_algo);
 
 	if (worktree)
 		repo_set_worktree(repo, worktree);

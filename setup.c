@@ -488,6 +488,7 @@ int read_repository_format(struct repository_format *format, const char *path)
 	memset(format, 0, sizeof(*format));
 	format->version = -1;
 	format->is_bare = -1;
+	format->hash_algo = GIT_HASH_SHA1;
 	string_list_init(&format->unknown_extensions, 1);
 	git_config_from_file(check_repo_format, path, format);
 	return format->version;
@@ -1113,6 +1114,8 @@ const char *setup_git_directory_gently(int *nongit_ok)
 			repo_set_gitdir(the_repository, gitdir);
 			setup_git_env();
 		}
+		if (startup_info->have_repository)
+			repo_set_hash_algo(the_repository, repo_fmt.hash_algo);
 	}
 
 	strbuf_release(&dir);

@@ -14,6 +14,7 @@
 #include "hash.h"
 #include "path.h"
 #include "sha1-array.h"
+#include "repository.h"
 
 #ifndef platform_SHA_CTX
 /*
@@ -76,6 +77,8 @@ unsigned long git_deflate_bound(git_zstream *, unsigned long);
 struct object_id {
 	unsigned char hash[GIT_MAX_RAWSZ];
 };
+
+#define the_hash_algo the_repository->hash_algo
 
 #if defined(DT_UNKNOWN) && !defined(NO_D_TYPE_IN_DIRENT)
 #define DTYPE(de)	((de)->d_type)
@@ -888,6 +891,7 @@ struct repository_format {
 	int version;
 	int precious_objects;
 	int is_bare;
+	int hash_algo;
 	char *work_tree;
 	struct string_list unknown_extensions;
 };
