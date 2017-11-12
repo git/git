@@ -1433,7 +1433,7 @@ static void write_index_patch(const struct am_state *state)
 	if (!get_oid_tree("HEAD", &head))
 		tree = lookup_tree(&head);
 	else
-		tree = lookup_tree(&empty_tree_oid);
+		tree = lookup_tree(the_hash_algo->empty_tree);
 
 	fp = xfopen(am_path(state, "patch"), "w");
 	init_revisions(&rev_info, NULL);

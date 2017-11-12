@@ -347,7 +347,7 @@ static int read_oneliner(struct strbuf *buf,
 
 static struct tree *empty_tree(void)
 {
-	return lookup_tree(&empty_tree_oid);
+	return lookup_tree(the_hash_algo->empty_tree);
 }
 
 static int error_dirty_index(struct replay_opts *opts)
@@ -705,7 +705,7 @@ static int is_original_commit_empty(struct commit *commit)
 				oid_to_hex(&parent->object.oid));
 		ptree_oid = &parent->tree->object.oid;
 	} else {
-		ptree_oid = &empty_tree_oid; /* commit is root */
+		ptree_oid = the_hash_algo->empty_tree; /* commit is root */
 	}
 
 	return !oidcmp(ptree_oid, &commit->tree->object.oid);
@@ -958,7 +958,7 @@ static int do_pick_commit(enum todo_command command, struct commit *commit,
 	} else {
 		unborn = get_oid("HEAD", &head);
 		if (unborn)
-			oidcpy(&head, &empty_tree_oid);
+			oidcpy(&head, the_hash_algo->empty_tree);
 		if (index_differs_from(unborn ? EMPTY_TREE_SHA1_HEX : "HEAD",
 				       NULL, 0))
 			return error_dirty_index(opts);

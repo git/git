@@ -1024,22 +1024,22 @@ extern const struct object_id empty_blob_oid;
 
 static inline int is_empty_blob_sha1(const unsigned char *sha1)
 {
-	return !hashcmp(sha1, EMPTY_BLOB_SHA1_BIN);
+	return !hashcmp(sha1, the_hash_algo->empty_blob->hash);
 }
 
 static inline int is_empty_blob_oid(const struct object_id *oid)
 {
-	return !hashcmp(oid->hash, EMPTY_BLOB_SHA1_BIN);
+	return !oidcmp(oid, the_hash_algo->empty_blob);
 }
 
 static inline int is_empty_tree_sha1(const unsigned char *sha1)
 {
-	return !hashcmp(sha1, EMPTY_TREE_SHA1_BIN);
+	return !hashcmp(sha1, the_hash_algo->empty_tree->hash);
 }
 
 static inline int is_empty_tree_oid(const struct object_id *oid)
 {
-	return !hashcmp(oid->hash, EMPTY_TREE_SHA1_BIN);
+	return !oidcmp(oid, the_hash_algo->empty_tree);
 }
 
 /* set default permissions by passing mode arguments to open(2) */
