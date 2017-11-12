@@ -450,6 +450,8 @@ bisect_replay () {
 bisect_run () {
 	bisect_next_check fail
 
+	test -n "$*" || die "$(gettext "bisect run failed: no command provided.")"
+
 	while true
 	do
 		command="$@"
