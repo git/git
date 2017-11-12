@@ -9,6 +9,7 @@ test_description='git shortlog
 . ./test-lib.sh
 
 test_expect_success 'setup' '
+	test_tick &&
 	echo 1 >a1 &&
 	git add a1 &&
 	tree=$(git write-tree) &&
@@ -59,7 +60,7 @@ fuzz() {
 	file=$1 &&
 	sed "
 			s/$_x40/OBJECT_NAME/g
-			s/$_x05/OBJID/g
+			s/$_x35/OBJID/g
 			s/^ \{6\}[CTa].*/      SUBJECT/g
 			s/^ \{8\}[^ ].*/        CONTINUATION/g
 		" <"$file" >"$file.fuzzy" &&
@@ -81,7 +82,7 @@ test_expect_success 'pretty format' '
 
 test_expect_success '--abbrev' '
 	sed s/SUBJECT/OBJID/ expect.template >expect &&
-	git shortlog --format="%h" --abbrev=5 HEAD >log &&
+	git shortlog --format="%h" --abbrev=35 HEAD >log &&
 	fuzz log >log.predictable &&
 	test_cmp expect log.predictable
 '
