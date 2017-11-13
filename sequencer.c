@@ -448,6 +448,7 @@ static int do_recursive_merge(struct commit *base, struct commit *next,
 	o.branch2 = next ? next_label : "(empty tree)";
 	if (is_rebase_i(opts))
 		o.buffer_output = 2;
+	o.show_rename_progress = 1;
 
 	head_tree = parse_tree_indirect(head);
 	next_tree = next ? next->tree : empty_tree();
