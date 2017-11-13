@@ -901,6 +901,36 @@ test_expect_success 'get --path barfs on boolean variable' '
 	test_must_fail git config --get --path path.bool
 '
 
+test_expect_success 'get --expiry-date' '
+	rel="3.weeks.5.days.00:00" &&
+	rel_out="$rel ->" &&
+	cat >.git/config <<-\EOF &&
+	[date]
+	valid1 = "3.weeks.5.days 00:00"
+	valid2 = "Fri Jun 4 15:46:55 2010"
+	valid3 = "2017/11/11 11:11:11PM"
+	valid4 = "2017/11/10 09:08:07 PM"
+	valid5 = "never"
+	invalid1 = "abc"
+	EOF
+	cat >expect <<-EOF &&
+	$(test-date timestamp $rel)
+	1275666415
+	1510441871
+	1510348087
+	0
+	EOF
+	{
+		echo "$rel_out $(git config --expiry-date date.valid1)"
+		git config --expiry-date date.valid2 &&
+		git config --expiry-date date.valid3 &&
+		git config --expiry-date date.valid4 &&
+		git config --expiry-date date.valid5
+	} >actual &&
+	test_cmp expect actual &&
+	test_must_fail git config --expiry-date date.invalid1
+'
+
 cat > expect << EOF
 [quote]
 	leading = " test"
