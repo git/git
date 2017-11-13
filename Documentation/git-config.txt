@@ -180,6 +180,11 @@ See also <<FILES>>.
 	value (but you can use `git config section.variable ~/`
 	from the command line to let your shell do the expansion).
 
+--expiry-date::
+	`git config` will ensure that the output is converted from
+	a fixed or relative date-string to a timestamp. This option
+	has no effect when setting the value.
+
 -z::
 --null::
 	For all options that output values and/or keys, always

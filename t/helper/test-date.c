@@ -5,6 +5,7 @@ static const char *usage_msg = "\n"
 "  test-date show:<format> [time_t]...\n"
 "  test-date parse [date]...\n"
 "  test-date approxidate [date]...\n"
+"  test-date timestamp [date]...\n"
 "  test-date is64bit\n"
 "  test-date time_t-is64bit\n";
 
@@ -71,6 +72,15 @@ static void parse_approxidate(const char **argv, struct timeval *now)
 	}
 }
 
+static void parse_approx_timestamp(const char **argv, struct timeval *now)
+{
+	for (; *argv; argv++) {
+		timestamp_t t;
+		t = approxidate_relative(*argv, now);
+		printf("%s -> %"PRItime"\n", *argv, t);
+	}
+}
+
 int cmd_main(int argc, const char **argv)
 {
 	struct timeval now;
@@ -95,6 +105,8 @@ int cmd_main(int argc, const char **argv)
 		parse_dates(argv+1, &now);
 	else if (!strcmp(*argv, "approxidate"))
 		parse_approxidate(argv+1, &now);
+	else if (!strcmp(*argv, "timestamp"))
+		parse_approx_timestamp(argv+1, &now);
 	else if (!strcmp(*argv, "is64bit"))
 		return sizeof(timestamp_t) == 8 ? 0 : 1;
 	else if (!strcmp(*argv, "time_t-is64bit"))
