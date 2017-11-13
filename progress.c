@@ -30,8 +30,8 @@ struct throughput {
 
 struct progress {
 	const char *title;
-	int last_value;
-	unsigned total;
+	uint64_t last_value;
+	uint64_t total;
 	unsigned last_percent;
 	unsigned delay;
 	unsigned delayed_percent_threshold;
@@ -79,7 +79,7 @@ static int is_foreground_fd(int fd)
 	return tpgrp < 0 || tpgrp == getpgid(0);
 }
 
-static int display(struct progress *progress, unsigned n, const char *done)
+static int display(struct progress *progress, uint64_t n, const char *done)
 {
 	const char *eol, *tp;
 
@@ -106,9 +106,10 @@ static int display(struct progress *progress, unsigned n, const char *done)
 		if (percent != progress->last_percent || progress_update) {
 			progress->last_percent = percent;
 			if (is_foreground_fd(fileno(stderr)) || done) {
-				fprintf(stderr, "%s: %3u%% (%u/%u)%s%s",
-					progress->title, percent, n,
-					progress->total, tp, eol);
+				fprintf(stderr, "%s: %3u%% (%"PRIuMAX"/%"PRIuMAX")%s%s",
+					progress->title, percent,
+					(uintmax_t)n, (uintmax_t)progress->total,
+					tp, eol);
 				fflush(stderr);
 			}
 			progress_update = 0;
@@ -116,8 +117,8 @@ static int display(struct progress *progress, unsigned n, const char *done)
 		}
 	} else if (progress_update) {
 		if (is_foreground_fd(fileno(stderr)) || done) {
-			fprintf(stderr, "%s: %u%s%s",
-				progress->title, n, tp, eol);
+			fprintf(stderr, "%s: %"PRIuMAX"%s%s",
+				progress->title, (uintmax_t)n, tp, eol);
 			fflush(stderr);
 		}
 		progress_update = 0;
@@ -127,7 +128,7 @@ static int display(struct progress *progress, unsigned n, const char *done)
 	return 0;
 }
 
-static void throughput_string(struct strbuf *buf, off_t total,
+static void throughput_string(struct strbuf *buf, uint64_t total,
 			      unsigned int rate)
 {
 	strbuf_reset(buf);
@@ -138,7 +139,7 @@ static void throughput_string(struct strbuf *buf, off_t total,
 	strbuf_addstr(buf, "/s");
 }
 
-void display_throughput(struct progress *progress, off_t total)
+void display_throughput(struct progress *progress, uint64_t total)
 {
 	struct throughput *tp;
 	uint64_t now_ns;
@@ -200,12 +201,12 @@ void display_throughput(struct progress *progress, off_t total)
 		display(progress, progress->last_value, NULL);
 }
 
-int display_progress(struct progress *progress, unsigned n)
+int display_progress(struct progress *progress, uint64_t n)
 {
 	return progress ? display(progress, n, NULL) : 0;
 }
 
-static struct progress *start_progress_delay(const char *title, unsigned total,
+static struct progress *start_progress_delay(const char *title, uint64_t total,
 					     unsigned percent_threshold, unsigned delay)
 {
 	struct progress *progress = malloc(sizeof(*progress));
@@ -227,12 +228,12 @@ static struct progress *start_progress_delay(const char *title, unsigned total,
 	return progress;
 }
 
-struct progress *start_delayed_progress(const char *title, unsigned total)
+struct progress *start_delayed_progress(const char *title, uint64_t total)
 {
 	return start_progress_delay(title, total, 0, 2);
 }
 
-struct progress *start_progress(const char *title, unsigned total)
+struct progress *start_progress(const char *title, uint64_t total)
 {
 	return start_progress_delay(title, total, 0, 0);
 }
