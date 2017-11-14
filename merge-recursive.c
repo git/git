@@ -1901,8 +1901,9 @@ static int process_entry(struct merge_options *o,
 			oid = b_oid;
 			conf = _("directory/file");
 		}
-		if (dir_in_way(path, !o->call_depth,
-			       S_ISGITLINK(a_mode))) {
+		if (dir_in_way(path,
+			       !o->call_depth && !S_ISGITLINK(a_mode),
+			       0)) {
 			char *new_path = unique_path(o, path, add_branch);
 			clean_merge = 0;
 			output(o, 1, _("CONFLICT (%s): There is a directory with name %s in %s. "

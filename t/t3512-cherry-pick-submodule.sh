@@ -10,7 +10,7 @@ KNOWN_FAILURE_NOFF_MERGE_DOESNT_CREATE_EMPTY_SUBMODULE_DIR=1
 KNOWN_FAILURE_NOFF_MERGE_ATTEMPTS_TO_MERGE_REMOVED_SUBMODULE_FILES=1
 test_submodule_switch "git cherry-pick"
 
-test_expect_failure 'unrelated submodule/file conflict is ignored' '
+test_expect_success 'unrelated submodule/file conflict is ignored' '
 	test_create_repo sub &&
 
 	touch sub/file &&
