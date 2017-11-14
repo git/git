@@ -793,9 +793,6 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	} else if (argc > 0 && argc <= 2) {
 		struct branch *branch = branch_get(argv[0]);
 
-		if (!strcmp(argv[0], "HEAD"))
-			die(_("it does not make sense to create 'HEAD' manually"));
-
 		if (!branch)
 			die(_("no such branch '%s'"), argv[0]);
 
