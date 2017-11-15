@@ -108,6 +108,17 @@ test_expect_success 'rebase -i with the exec command runs from tree root' '
 	rm -fr subdir
 '
 
+test_expect_success 'rebase -i with exec allows git commands in subdirs' '
+	test_when_finished "rm -rf subdir" &&
+	test_when_finished "git rebase --abort ||:" &&
+	git checkout master &&
+	mkdir subdir && (cd subdir &&
+	set_fake_editor &&
+	FAKE_LINES="1 exec_cd_subdir_&&_git_rev-parse_--is-inside-work-tree" \
+		git rebase -i HEAD^
+	)
+'
+
 test_expect_success 'rebase -i with the exec command checks tree cleanness' '
 	git checkout master &&
 	set_fake_editor &&
