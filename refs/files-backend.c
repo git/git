@@ -2606,7 +2606,23 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 			goto cleanup;
 		}
 		backend_data->packed_refs_locked = 1;
-		ret = ref_transaction_prepare(packed_transaction, err);
+
+		if (is_packed_transaction_needed(refs->packed_ref_store,
+						 packed_transaction)) {
+			ret = ref_transaction_prepare(packed_transaction, err);
+		} else {
+			/*
+			 * We can skip rewriting the `packed-refs`
+			 * file. But we do need to leave it locked, so
+			 * that somebody else doesn't pack a reference
+			 * that we are trying to delete.
+			 */
+			if (ref_transaction_abort(packed_transaction, err)) {
+				ret = TRANSACTION_GENERIC_ERROR;
+				goto cleanup;
+			}
+			backend_data->packed_transaction = NULL;
+		}
 	}
 
 cleanup:

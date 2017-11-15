@@ -23,4 +23,13 @@ int packed_refs_lock(struct ref_store *ref_store, int flags, struct strbuf *err)
 void packed_refs_unlock(struct ref_store *ref_store);
 int packed_refs_is_locked(struct ref_store *ref_store);
 
+/*
+ * Return true if `transaction` really needs to be carried out against
+ * the specified packed_ref_store, or false if it can be skipped
+ * (i.e., because it is an obvious NOOP). `ref_store` must be locked
+ * before calling this function.
+ */
+int is_packed_transaction_needed(struct ref_store *ref_store,
+				 struct ref_transaction *transaction);
+
 #endif /* REFS_PACKED_BACKEND_H */
