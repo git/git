@@ -2267,8 +2267,10 @@ int has_unstaged_changes(int ignore_submodules)
 	int result;
 
 	init_revisions(&rev_info, NULL);
-	if (ignore_submodules)
+	if (ignore_submodules) {
 		rev_info.diffopt.flags.ignore_submodules = 1;
+		rev_info.diffopt.flags.override_submodule_config = 1;
+	}
 	rev_info.diffopt.flags.quick = 1;
 	diff_setup_done(&rev_info.diffopt);
 	result = run_diff_files(&rev_info, 0);
