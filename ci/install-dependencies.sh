@@ -12,20 +12,18 @@ case "${TRAVIS_OS_NAME:-linux}" in
 linux)
 	export GIT_TEST_HTTPD=YesPlease
 
-	mkdir --parents custom/p4
-	pushd custom/p4
+	mkdir --parents "$P4_PATH"
+	pushd "$P4_PATH"
 		wget --quiet "$P4WHENCE/bin.linux26x86_64/p4d"
 		wget --quiet "$P4WHENCE/bin.linux26x86_64/p4"
 		chmod u+x p4d
 		chmod u+x p4
-		export PATH="$(pwd):$PATH"
 	popd
-	mkdir --parents custom/git-lfs
-	pushd custom/git-lfs
+	mkdir --parents "$GIT_LFS_PATH"
+	pushd "$GIT_LFS_PATH"
 		wget --quiet "$LFSWHENCE/git-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz"
 		tar --extract --gunzip --file "git-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz"
 		cp git-lfs-$LINUX_GIT_LFS_VERSION/git-lfs .
-		export PATH="$(pwd):$PATH"
 	popd
 	;;
 osx)
