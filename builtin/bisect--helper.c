@@ -46,7 +46,7 @@ static int check_term_format(const char *term, const char *orig_term)
 		return error(_("'%s' is not a valid term"), term);
 
 	if (one_of(term, "help", "start", "skip", "next", "reset",
-			"visualize", "replay", "log", "run", "terms", NULL))
+			"visualize", "view", "replay", "log", "run", "terms", NULL))
 		return error(_("can't use the builtin command '%s' as a term"), term);
 
 	/*
