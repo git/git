@@ -33,6 +33,36 @@ UI, Workflows & Features
 
  * "git stash save" has been deprecated in favour of "git stash push".
 
+ * The set of paths output from "git status --ignored" was tied
+   closely with its "--untracked=<mode>" option, but now it can be
+   controlled more flexibly.  Most notably, a directory that is
+   ignored because it is listed to be ignored in the ignore/exclude
+   mechanism can be handled differently from a directory that ends up
+   to be ignored only because all files in it are ignored.
+
+ * The remote-helper for talking to MediaWiki has been updated to
+   truncate an overlong pagename so that ".mw" suffix can still be
+   added.
+
+ * The remote-helper for talking to MediaWiki has been updated to
+   work with mediawiki namespaces.
+
+ * The "--format=..." option "git for-each-ref" takes learned to show
+   the name of the 'remote' repository and the ref at the remote side
+   that is affected for 'upstream' and 'push' via "%(push:remotename)"
+   and friends.
+
+ * Doc and message updates to teach users "bisect view" is a synonym
+   for "bisect visualize".
+
+ * "git bisect run" that did not specify any command to run used to go
+   ahead and treated all commits to be tested as 'good'.  This has
+   been corrected by making the command error out.
+
+ * The SubmittingPatches document has been converted to produce an
+   HTML version via AsciiDoc/Asciidoctor.
+   (merge 049e64aa50 bc/submitting-patches-in-asciidoc later to maint).
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -67,8 +97,14 @@ Performance, Internal Implementation, Development Support etc.
    (merge 0d1e0e7801 bw/diff-opt-impl-to-bitfields later to maint).
 
  * TravisCI build updates.
-   (merge c2154953b8 sg/travis-fixes later to maint).
 
+ * Parts of a test to drive the long-running content filter interface
+   has been split into its own module, hopefully to eventually become
+   reusable.
+   (merge 0fe8d516bb cc/git-packet-pm later to maint).
+
+ * Drop (perhaps overly cautious) sanity check before using the index
+   read from the filesystem at runtime.
 
 Also contains various documentation updates and code clean-ups.
 
@@ -81,86 +117,95 @@ Fixes since v2.15
    "auto" for coloured output configuration, i.e. either the standard
    output stream is going to tty, or a pager is in use.  We forgot the
    latter, which has been fixed.
-   (merge 965ff23a43 kd/auto-col-with-pager-fix later to maint).
 
  * The experimental "color moved lines differently in diff output"
    feature was buggy around "ignore whitespace changes" edges, whihch
    has been corrected.
-   (merge b66b507292 jk/diff-color-moved-fix later to maint).
 
  * Instead of using custom line comparison and hashing functions to
    implement "moved lines" coloring in the diff output, use the pair
    of these functions from lower-layer xdiff/ code.
-   (merge 01be97c2b2 sb/diff-color-moved-use-xdl-recmatch later to maint).
 
  * Some codepaths did not check for errors when asking what branch the
    HEAD points at, which have been fixed.
-   (merge dbd2b55cb7 jk/misc-resolve-ref-unsafe-fixes later to maint).
 
  * "git commit", after making a commit, did not check for errors when
    asking on what branch it made the commit, which has been correted.
-   (merge c26de08370 ao/check-resolve-ref-unsafe-result later to maint).
 
  * "git status --ignored -u" did not stop at a working tree of a
    separate project that is embedded in an ignored directory and
    listed files in that other project, instead of just showing the
    directory itself as ignored.
-   (merge fadb4820c4 js/submodule-in-excluded later to maint).
 
  * A broken access to object databases in recent update to "git grep
    --recurse-submodules" has been fixed.
-   (merge 9560e6245a bw/grep-recurse-submodules later to maint).
 
  * A recent regression in "git rebase -i" that broke execution of git
    commands from subdirectories via "exec" insn has been fixed.
-   (merge 09d7b6c6fa jk/rebase-i-exec-gitdir-fix later to maint).
 
  * A (possibly flakey) test fix.
-   (merge cff48ccf2a jc/t5601-copy-workaround later to maint).
 
  * "git check-ref-format --branch @{-1}" bit a "BUG()" when run
    outside a repository for obvious reasons; clarify the documentation
    and make sure we do not even try to expand the at-mark magic in
    such a case, but still call the validation logic for branch names.
-   (merge 89dd32aedc jc/check-ref-format-oor later to maint).
 
  * "git fetch --recurse-submodules" now knows that submodules can be
    moved around in the superproject in addition to getting updated,
    and finds the ones that need to be fetched accordingly.
-   (merge 4b4acedd61 hv/fetch-moved-submodules-on-demand later to maint).
 
  * Command line completion (in contrib/) update.
-   (merge 6357d9d004 tb/complete-checkout later to maint).
 
  * Description of blame.{showroot,blankboundary,showemail,date}
    configuration variables have been added to "git config --help".
-   (merge de0bc11d13 sb/blame-config-doc later to maint).
 
  * After an error from lstat(), diff_populate_filespec() function
    sometimes still went ahead and used invalid data in struct stat,
    which has been fixed.
-   (merge 10e0ca843d ao/diff-populate-filespec-lstat-errorpath-fix later to maint).
 
  * UNC paths are also relevant in Cygwin builds and they are now
    tested just like Mingw builds.
-   (merge f21d60b429 ad/5580-unc-tests-on-cygwin later to maint).
 
  * Correct start-up sequence so that a repository could be placed
    immediately under the root directory again (which was broken at
    around Git 2.13).
-   (merge fa4d8c783d js/early-config later to maint).
 
  * The credential helper for libsecret (in contrib/) has been improved
    to allow possibly prompting the end user to unlock secrets that are
    currently locked (otherwise the secrets may not be loaded).
-   (merge 9c109e9bbc dk/libsecret-unlock-to-load-fix later to maint).
 
  * MinGW updates.
-   (merge 39bb86b4e5 js/mingw-full-version-in-resources later to maint).
-   (merge 601e1e7897 js/wincred-empty-cred later to maint).
-   (merge b2f55717c7 js/mingw-redirect-std-handles later to maint).
+
+ * Error checking in "git imap-send" for empty response has been
+   improved.
+   (merge 618ec81abb rs/imap-send-next-arg-fix later to maint).
+
+ * Recent update to the refs infrastructure implementation started
+   rewriting packed-refs file more often than before; this has been
+   optimized again for most trivial cases.
+   (merge 7c6bd25c7d mh/avoid-rewriting-packed-refs later to maint).
+
+ * Some error messages did not quote filenames shown in it, which have
+   been fixed.
+   (merge 0a288d1ee9 sr/wrapper-quote-filenames later to maint).
+
+ * "git rebase -i" recently started misbehaving when a submodule that
+   is configured with 'submodule.<name>.ignore' is dirty; this has
+   been corrected.
+   (merge c6d8ccf3a2 bw/rebase-i-ignored-submodule-fix later to maint).
+
+ * Building with NO_LIBPCRE1_JIT did not disable it, which has been fixed.
+   (merge 2fff1e196d ab/pcre-v2 later to maint).
+
+ * We used to add an empty alternate object database to the system
+   that does not help anything; it has been corrected.
+   (merge f28e36686a jk/info-alternates-fix later to maint).
 
  * Other minor doc, test and build updates and code cleanups.
-   (merge bab76141da cn/diff-indent-no-longer-is-experimental later to maint).
-   (merge 8684dde10d jm/relnotes-2.15-typofix later to maint).
-   (merge cd3f8e2fc2 ks/mailmap later to maint).
+   (merge 804862209b ao/merge-verbosity-getenv-just-once later to maint).
+   (merge 9360ec0002 rs/sequencer-rewrite-file-cleanup later to maint).
+   (merge f4e45cb3eb ma/bisect-leakfix later to maint).
+   (merge 4da72644b7 ma/reduce-heads-leakfix later to maint).
+   (merge 3dc5433fd5 ad/rebase-i-serie-typofix later to maint).
+   (merge 5313bee032 tz/fsf-address-update later to maint).
+   (merge 5555a2aa4b cb/t4201-robustify later to maint).
