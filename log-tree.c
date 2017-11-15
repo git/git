@@ -198,7 +198,7 @@ static const struct name_decoration *current_pointed_by_HEAD(const struct name_d
 
 	/* Now resolve and find the matching current branch */
 	branch_name = resolve_ref_unsafe("HEAD", 0, NULL, &rru_flags);
-	if (!(rru_flags & REF_ISSYMREF))
+	if (!branch_name || !(rru_flags & REF_ISSYMREF))
 		return NULL;
 
 	if (!starts_with(branch_name, "refs/"))

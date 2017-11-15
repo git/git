@@ -327,7 +327,8 @@ const struct worktree *find_shared_symref(const char *symref,
 		refs = get_worktree_ref_store(wt);
 		symref_target = refs_resolve_ref_unsafe(refs, symref, 0,
 							NULL, &flags);
-		if ((flags & REF_ISSYMREF) && !strcmp(symref_target, target)) {
+		if ((flags & REF_ISSYMREF) &&
+		    symref_target && !strcmp(symref_target, target)) {
 			existing = wt;
 			break;
 		}
