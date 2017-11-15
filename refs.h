@@ -126,7 +126,7 @@ int peel_ref(const char *refname, struct object_id *oid);
 /**
  * Resolve refname in the nested "gitlink" repository in the specified
  * submodule (which must be non-NULL). If the resolution is
- * successful, return 0 and set sha1 to the name of the object;
+ * successful, return 0 and set oid to the name of the object;
  * otherwise, return a non-zero value.
  */
 int resolve_gitlink_ref(const char *submodule, const char *refname,
@@ -260,7 +260,7 @@ struct ref_transaction;
 
 /*
  * The signature for the callback function for the for_each_*()
- * functions below.  The memory pointed to by the refname and sha1
+ * functions below.  The memory pointed to by the refname and oid
  * arguments is only guaranteed to be valid for the duration of a
  * single callback invocation.
  */
@@ -336,24 +336,6 @@ void warn_dangling_symrefs(FILE *fp, const char *msg_fmt,
 int refs_pack_refs(struct ref_store *refs, unsigned int flags);
 
 /*
- * Flags controlling ref_transaction_update(), ref_transaction_create(), etc.
- * REF_NODEREF: act on the ref directly, instead of dereferencing
- *              symbolic references.
- *
- * Other flags are reserved for internal use.
- */
-#define REF_NODEREF	0x01
-#define REF_FORCE_CREATE_REFLOG 0x40
-
-/*
- * Flags that can be passed in to ref_transaction_update
- */
-#define REF_TRANSACTION_UPDATE_ALLOWED_FLAGS \
-	REF_ISPRUNING |                      \
-	REF_FORCE_CREATE_REFLOG |            \
-	REF_NODEREF
-
-/*
  * Setup reflog before using. Fill in err and return -1 on failure.
  */
 int refs_create_reflog(struct ref_store *refs, const char *refname,
@@ -372,7 +354,7 @@ int reflog_exists(const char *refname);
 
 /*
  * Delete the specified reference. If old_oid is non-NULL, then
- * verify that the current value of the reference is old_sha1 before
+ * verify that the current value of the reference is old_oid before
  * deleting it. If old_oid is NULL, delete the reference if it
  * exists, regardless of its old value. It is an error for old_oid to
  * be null_oid. msg and flags are passed through to
@@ -480,22 +462,23 @@ struct ref_transaction *ref_transaction_begin(struct strbuf *err);
  *
  *     refname -- the name of the reference to be affected.
  *
- *     new_sha1 -- the SHA-1 that should be set to be the new value of
- *         the reference. Some functions allow this parameter to be
+ *     new_oid -- the object ID that should be set to be the new value
+ *         of the reference. Some functions allow this parameter to be
  *         NULL, meaning that the reference is not changed, or
- *         null_sha1, meaning that the reference should be deleted. A
+ *         null_oid, meaning that the reference should be deleted. A
  *         copy of this value is made in the transaction.
  *
- *     old_sha1 -- the SHA-1 value that the reference must have before
+ *     old_oid -- the object ID that the reference must have before
  *         the update. Some functions allow this parameter to be NULL,
  *         meaning that the old value of the reference is not checked,
- *         or null_sha1, meaning that the reference must not exist
+ *         or null_oid, meaning that the reference must not exist
  *         before the update. A copy of this value is made in the
  *         transaction.
  *
  *     flags -- flags affecting the update, passed to
- *         update_ref_lock(). Can be REF_NODEREF, which means that
- *         symbolic references should not be followed.
+ *         update_ref_lock(). Possible flags: REF_NO_DEREF,
+ *         REF_FORCE_CREATE_REFLOG. See those constants for more
+ *         information.
  *
  *     msg -- a message describing the change (for the reflog).
  *
@@ -511,11 +494,37 @@ struct ref_transaction *ref_transaction_begin(struct strbuf *err);
  */
 
 /*
- * Add a reference update to transaction. new_oid is the value that
- * the reference should have after the update, or null_oid if it
- * should be deleted. If new_oid is NULL, then the reference is not
- * changed at all. old_oid is the value that the reference must have
- * before the update, or null_oid if it must not have existed
+ * The following flags can be passed to ref_transaction_update() etc.
+ * Internally, they are stored in `ref_update::flags`, along with some
+ * internal flags.
+ */
+
+/*
+ * Act on the ref directly; i.e., without dereferencing symbolic refs.
+ * If this flag is not specified, then symbolic references are
+ * dereferenced and the update is applied to the referent.
+ */
+#define REF_NO_DEREF (1 << 0)
+
+/*
+ * Force the creation of a reflog for this reference, even if it
+ * didn't previously have a reflog.
+ */
+#define REF_FORCE_CREATE_REFLOG (1 << 1)
+
+/*
+ * Bitmask of all of the flags that are allowed to be passed in to
+ * ref_transaction_update() and friends:
+ */
+#define REF_TRANSACTION_UPDATE_ALLOWED_FLAGS \
+	(REF_NO_DEREF | REF_FORCE_CREATE_REFLOG)
+
+/*
+ * Add a reference update to transaction. `new_oid` is the value that
+ * the reference should have after the update, or `null_oid` if it
+ * should be deleted. If `new_oid` is NULL, then the reference is not
+ * changed at all. `old_oid` is the value that the reference must have
+ * before the update, or `null_oid` if it must not have existed
  * beforehand. The old value is checked after the lock is taken to
  * prevent races. If the old value doesn't agree with old_oid, the
  * whole transaction fails. If old_oid is NULL, then the previous
@@ -624,7 +633,7 @@ int ref_transaction_abort(struct ref_transaction *transaction,
  * It is a bug to call this function when there might be other
  * processes accessing the repository or if there are existing
  * references that might conflict with the ones being created. All
- * old_sha1 values must either be absent or NULL_SHA1.
+ * old_oid values must either be absent or null_oid.
  */
 int initial_ref_transaction_commit(struct ref_transaction *transaction,
 				   struct strbuf *err);

@@ -744,7 +744,7 @@ static int packed_read_raw_ref(struct ref_store *ref_store,
 /*
  * This value is set in `base.flags` if the peeled value of the
  * current reference is known. In that case, `peeled` contains the
- * correct peeled value for the reference, which might be `null_sha1`
+ * correct peeled value for the reference, which might be `null_oid`
  * if the reference is not a tag or if it is broken.
  */
 #define REF_KNOWS_PEELED 0x40
@@ -961,11 +961,11 @@ static struct ref_iterator *packed_ref_iterator_begin(
  * by the failing call to `fprintf()`.
  */
 static int write_packed_entry(FILE *fh, const char *refname,
-			      const unsigned char *sha1,
-			      const unsigned char *peeled)
+			      const struct object_id *oid,
+			      const struct object_id *peeled)
 {
-	if (fprintf(fh, "%s %s\n", sha1_to_hex(sha1), refname) < 0 ||
-	    (peeled && fprintf(fh, "^%s\n", sha1_to_hex(peeled)) < 0))
+	if (fprintf(fh, "%s %s\n", oid_to_hex(oid), refname) < 0 ||
+	    (peeled && fprintf(fh, "^%s\n", oid_to_hex(peeled)) < 0))
 		return -1;
 
 	return 0;
@@ -1203,8 +1203,8 @@ static int write_with_updates(struct packed_ref_store *refs,
 			int peel_error = ref_iterator_peel(iter, &peeled);
 
 			if (write_packed_entry(out, iter->refname,
-					       iter->oid->hash,
-					       peel_error ? NULL : peeled.hash))
+					       iter->oid,
+					       peel_error ? NULL : &peeled))
 				goto write_error;
 
 			if ((ok = ref_iterator_advance(iter)) != ITER_OK)
@@ -1224,8 +1224,8 @@ static int write_with_updates(struct packed_ref_store *refs,
 						     &peeled);
 
 			if (write_packed_entry(out, update->refname,
-					       update->new_oid.hash,
-					       peel_error ? NULL : peeled.hash))
+					       &update->new_oid,
+					       peel_error ? NULL : &peeled))
 				goto write_error;
 
 			i++;

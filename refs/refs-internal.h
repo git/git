@@ -8,58 +8,22 @@
  */
 
 /*
- * Flag passed to lock_ref_sha1_basic() telling it to tolerate broken
- * refs (i.e., because the reference is about to be deleted anyway).
- */
-#define REF_DELETING	0x02
-
-/*
- * Used as a flag in ref_update::flags when a loose ref is being
- * pruned. This flag must only be used when REF_NODEREF is set.
- */
-#define REF_ISPRUNING	0x04
-
-/*
- * Used as a flag in ref_update::flags when the reference should be
- * updated to new_sha1.
- */
-#define REF_HAVE_NEW	0x08
-
-/*
- * Used as a flag in ref_update::flags when old_sha1 should be
- * checked.
- */
-#define REF_HAVE_OLD	0x10
-
-/*
- * Used as a flag in ref_update::flags when the lockfile needs to be
- * committed.
- */
-#define REF_NEEDS_COMMIT 0x20
-
-/*
- * 0x40 is REF_FORCE_CREATE_REFLOG, so skip it if you're adding a
- * value to ref_update::flags
+ * The following flags can appear in `ref_update::flags`. Their
+ * numerical values must not conflict with those of REF_NO_DEREF and
+ * REF_FORCE_CREATE_REFLOG, which are also stored in
+ * `ref_update::flags`.
  */
 
 /*
- * Used as a flag in ref_update::flags when we want to log a ref
- * update but not actually perform it.  This is used when a symbolic
- * ref update is split up.
+ * The reference should be updated to new_oid.
  */
-#define REF_LOG_ONLY 0x80
+#define REF_HAVE_NEW (1 << 2)
 
 /*
- * Internal flag, meaning that the containing ref_update was via an
- * update to HEAD.
+ * The current reference's value should be checked to make sure that
+ * it agrees with old_oid.
  */
-#define REF_UPDATE_VIA_HEAD 0x100
-
-/*
- * Used as a flag in ref_update::flags when the loose reference has
- * been deleted.
- */
-#define REF_DELETED_LOOSE 0x200
+#define REF_HAVE_OLD (1 << 3)
 
 /*
  * Return the length of time to retry acquiring a loose reference lock
@@ -122,7 +86,7 @@ enum peel_status {
  * tag recursively until a non-tag is found.  If successful, store the
  * result to oid and return PEEL_PEELED.  If the object is not a tag
  * or is not valid, return PEEL_NON_TAG or PEEL_INVALID, respectively,
- * and leave sha1 unchanged.
+ * and leave oid unchanged.
  */
 enum peel_status peel_object(const struct object_id *name, struct object_id *oid);
 
@@ -134,30 +98,29 @@ enum peel_status peel_object(const struct object_id *name, struct object_id *oid
 int copy_reflog_msg(char *buf, const char *msg);
 
 /**
- * Information needed for a single ref update. Set new_sha1 to the new
- * value or to null_sha1 to delete the ref. To check the old value
- * while the ref is locked, set (flags & REF_HAVE_OLD) and set
- * old_sha1 to the old value, or to null_sha1 to ensure the ref does
- * not exist before update.
+ * Information needed for a single ref update. Set new_oid to the new
+ * value or to null_oid to delete the ref. To check the old value
+ * while the ref is locked, set (flags & REF_HAVE_OLD) and set old_oid
+ * to the old value, or to null_oid to ensure the ref does not exist
+ * before update.
  */
 struct ref_update {
-
 	/*
-	 * If (flags & REF_HAVE_NEW), set the reference to this value:
+	 * If (flags & REF_HAVE_NEW), set the reference to this value
+	 * (or delete it, if `new_oid` is `null_oid`).
 	 */
 	struct object_id new_oid;
 
 	/*
 	 * If (flags & REF_HAVE_OLD), check that the reference
-	 * previously had this value:
+	 * previously had this value (or didn't previously exist, if
+	 * `old_oid` is `null_oid`).
 	 */
 	struct object_id old_oid;
 
 	/*
-	 * One or more of REF_HAVE_NEW, REF_HAVE_OLD, REF_NODEREF,
-	 * REF_DELETING, REF_ISPRUNING, REF_LOG_ONLY,
-	 * REF_UPDATE_VIA_HEAD, REF_NEEDS_COMMIT, and
-	 * REF_DELETED_LOOSE:
+	 * One or more of REF_NO_DEREF, REF_FORCE_CREATE_REFLOG,
+	 * REF_HAVE_NEW, REF_HAVE_OLD, or backend-specific flags.
 	 */
 	unsigned int flags;
 
@@ -195,7 +158,7 @@ int ref_update_reject_duplicates(struct string_list *refnames,
 /*
  * Add a ref_update with the specified properties to transaction, and
  * return a pointer to the new object. This function does not verify
- * that refname is well-formed. new_sha1 and old_sha1 are only
+ * that refname is well-formed. new_oid and old_oid are only
  * dereferenced if the REF_HAVE_NEW and REF_HAVE_OLD bits,
  * respectively, are set in flags.
  */

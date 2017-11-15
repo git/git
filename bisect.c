@@ -1073,7 +1073,7 @@ int bisect_clean_state(void)
 	struct string_list refs_for_removal = STRING_LIST_INIT_NODUP;
 	for_each_ref_in("refs/bisect", mark_for_removal, (void *) &refs_for_removal);
 	string_list_append(&refs_for_removal, xstrdup("BISECT_HEAD"));
-	result = delete_refs("bisect: remove", &refs_for_removal, REF_NODEREF);
+	result = delete_refs("bisect: remove", &refs_for_removal, REF_NO_DEREF);
 	refs_for_removal.strdup_strings = 1;
 	string_list_clear(&refs_for_removal, 0);
 	unlink_or_warn(git_path_bisect_expected_rev());

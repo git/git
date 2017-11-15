@@ -58,7 +58,7 @@ int cmd_symbolic_ref(int argc, const char **argv, const char *prefix)
 			die("Cannot delete %s, not a symbolic ref", argv[0]);
 		if (!strcmp(argv[0], "HEAD"))
 			die("deleting '%s' is not allowed", argv[0]);
-		return delete_ref(NULL, argv[0], NULL, REF_NODEREF);
+		return delete_ref(NULL, argv[0], NULL, REF_NO_DEREF);
 	}
 
 	switch (argc) {

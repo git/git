@@ -770,7 +770,7 @@ static int read_ref_at_ent(struct object_id *ooid, struct object_id *noid,
 		if (cb->cutoff_cnt)
 			*cb->cutoff_cnt = cb->reccnt - 1;
 		/*
-		 * we have not yet updated cb->[n|o]sha1 so they still
+		 * we have not yet updated cb->[n|o]oid so they still
 		 * hold the values for the previous record.
 		 */
 		if (!is_null_oid(&cb->ooid)) {
@@ -906,9 +906,6 @@ struct ref_update *ref_transaction_add_update(
 	if (transaction->state != REF_TRANSACTION_OPEN)
 		die("BUG: update called for transaction that is not open");
 
-	if ((flags & REF_ISPRUNING) && !(flags & REF_NODEREF))
-		die("BUG: REF_ISPRUNING set without REF_NODEREF");
-
 	FLEX_ALLOC_STR(update, refname, refname);
 	ALLOC_GROW(transaction->updates, transaction->nr + 1, transaction->alloc);
 	transaction->updates[transaction->nr++] = update;
@@ -940,7 +937,8 @@ int ref_transaction_update(struct ref_transaction *transaction,
 		return -1;
 	}
 
-	flags &= REF_TRANSACTION_UPDATE_ALLOWED_FLAGS;
+	if (flags & ~REF_TRANSACTION_UPDATE_ALLOWED_FLAGS)
+		BUG("illegal flags 0x%x passed to ref_transaction_update()", flags);
 
 	flags |= (new_oid ? REF_HAVE_NEW : 0) | (old_oid ? REF_HAVE_OLD : 0);
 
