@@ -1,5 +1,0 @@
---indent-heuristic::
---no-indent-heuristic::
-	These are to help debugging and tuning experimental heuristics
-	(which are off by default) that shift diff hunk boundaries to
-	make patches easier to read.
