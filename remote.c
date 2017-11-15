@@ -675,6 +675,36 @@ const char *pushremote_for_branch(struct branch *branch, int *explicit)
 	return remote_for_branch(branch, explicit);
 }
 
+const char *remote_ref_for_branch(struct branch *branch, int for_push,
+				  int *explicit)
+{
+	if (branch) {
+		if (!for_push) {
+			if (branch->merge_nr) {
+				if (explicit)
+					*explicit = 1;
+				return branch->merge_name[0];
+			}
+		} else {
+			const char *dst, *remote_name =
+				pushremote_for_branch(branch, NULL);
+			struct remote *remote = remote_get(remote_name);
+
+			if (remote && remote->push_refspec_nr &&
+			    (dst = apply_refspecs(remote->push,
+						  remote->push_refspec_nr,
+						  branch->refname))) {
+				if (explicit)
+					*explicit = 1;
+				return dst;
+			}
+		}
+	}
+	if (explicit)
+		*explicit = 0;
+	return "";
+}
+
 static struct remote *remote_get_1(const char *name,
 				   const char *(*get_default)(struct branch *, int *))
 {

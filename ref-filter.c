@@ -76,9 +76,11 @@ static struct used_atom {
 		char color[COLOR_MAXLEN];
 		struct align align;
 		struct {
-			enum { RR_REF, RR_TRACK, RR_TRACKSHORT } option;
+			enum {
+				RR_REF, RR_TRACK, RR_TRACKSHORT, RR_REMOTE_NAME, RR_REMOTE_REF
+			} option;
 			struct refname_atom refname;
-			unsigned int nobracket : 1;
+			unsigned int nobracket : 1, push : 1, push_remote : 1;
 		} remote_ref;
 		struct {
 			enum { C_BARE, C_BODY, C_BODY_DEP, C_LINES, C_SIG, C_SUB, C_TRAILERS } option;
@@ -138,6 +140,9 @@ static void remote_ref_atom_parser(const struct ref_format *format, struct used_
 	struct string_list params = STRING_LIST_INIT_DUP;
 	int i;
 
+	if (!strcmp(atom->name, "push") || starts_with(atom->name, "push:"))
+		atom->u.remote_ref.push = 1;
+
 	if (!arg) {
 		atom->u.remote_ref.option = RR_REF;
 		refname_atom_parser_internal(&atom->u.remote_ref.refname,
@@ -157,7 +162,13 @@ static void remote_ref_atom_parser(const struct ref_format *format, struct used_
 			atom->u.remote_ref.option = RR_TRACKSHORT;
 		else if (!strcmp(s, "nobracket"))
 			atom->u.remote_ref.nobracket = 1;
-		else {
+		else if (!strcmp(s, "remotename")) {
+			atom->u.remote_ref.option = RR_REMOTE_NAME;
+			atom->u.remote_ref.push_remote = 1;
+		} else if (!strcmp(s, "remoteref")) {
+			atom->u.remote_ref.option = RR_REMOTE_REF;
+			atom->u.remote_ref.push_remote = 1;
+		} else {
 			atom->u.remote_ref.option = RR_REF;
 			refname_atom_parser_internal(&atom->u.remote_ref.refname,
 						     arg, atom->name);
@@ -1268,6 +1279,25 @@ static void fill_remote_ref_details(struct used_atom *atom, const char *refname,
 			*s = ">";
 		else
 			*s = "<>";
+	} else if (atom->u.remote_ref.option == RR_REMOTE_NAME) {
+		int explicit;
+		const char *remote = atom->u.remote_ref.push ?
+			pushremote_for_branch(branch, &explicit) :
+			remote_for_branch(branch, &explicit);
+		if (explicit)
+			*s = xstrdup(remote);
+		else
+			*s = "";
+	} else if (atom->u.remote_ref.option == RR_REMOTE_REF) {
+		int explicit;
+		const char *merge;
+
+		merge = remote_ref_for_branch(branch, atom->u.remote_ref.push,
+					      &explicit);
+		if (explicit)
+			*s = xstrdup(merge);
+		else
+			*s = "";
 	} else
 		die("BUG: unhandled RR_* enum");
 }
@@ -1377,16 +1407,20 @@ static void populate_value(struct ref_array_item *ref)
 			if (refname)
 				fill_remote_ref_details(atom, refname, branch, &v->s);
 			continue;
-		} else if (starts_with(name, "push")) {
+		} else if (atom->u.remote_ref.push) {
 			const char *branch_name;
 			if (!skip_prefix(ref->refname, "refs/heads/",
 					 &branch_name))
 				continue;
 			branch = branch_get(branch_name);
 
-			refname = branch_get_push(branch, NULL);
-			if (!refname)
-				continue;
+			if (atom->u.remote_ref.push_remote)
+				refname = NULL;
+			else {
+				refname = branch_get_push(branch, NULL);
+				if (!refname)
+					continue;
+			}
 			fill_remote_ref_details(atom, refname, branch, &v->s);
 			continue;
 		} else if (starts_with(name, "color:")) {
