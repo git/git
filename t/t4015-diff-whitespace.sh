@@ -1318,30 +1318,38 @@ test_expect_success 'no effect from --color-moved with --word-diff' '
 	test_cmp expect actual
 '
 
-test_expect_success 'move detection ignoring whitespace ' '
+test_expect_success 'set up whitespace tests' '
 	git reset --hard &&
-	cat <<\EOF >lines.txt &&
-line 1
-line 2
-line 3
-line 4
-long line 5
-long line 6
-long line 7
-EOF
-	git add lines.txt &&
-	git commit -m "add poetry" &&
-	cat <<\EOF >lines.txt &&
-	long line 5
+	# Note that these lines have no leading or trailing whitespace.
+	cat <<-\EOF >lines.txt &&
+	line 1
+	line 2
+	line 3
+	line 4
+	line 5
 	long line 6
 	long line 7
-line 1
-line 2
-line 3
-line 4
-EOF
-	test_config color.diff.oldMoved "magenta" &&
-	test_config color.diff.newMoved "cyan" &&
+	long line 8
+	long line 9
+	EOF
+	git add lines.txt &&
+	git commit -m "add poetry" &&
+	git config color.diff.oldMoved "magenta" &&
+	git config color.diff.newMoved "cyan"
+'
+
+test_expect_success 'move detection ignoring whitespace ' '
+	q_to_tab <<-\EOF >lines.txt &&
+	Qlong line 6
+	Qlong line 7
+	Qlong line 8
+	Qchanged long line 9
+	line 1
+	line 2
+	line 3
+	line 4
+	line 5
+	EOF
 	git diff HEAD --no-renames --color-moved --color |
 		grep -v "index" |
 		test_decode_color >actual &&
@@ -1349,17 +1357,20 @@ EOF
 	<BOLD>diff --git a/lines.txt b/lines.txt<RESET>
 	<BOLD>--- a/lines.txt<RESET>
 	<BOLD>+++ b/lines.txt<RESET>
-	<CYAN>@@ -1,7 +1,7 @@<RESET>
-	<GREEN>+<RESET>	<GREEN>long line 5<RESET>
+	<CYAN>@@ -1,9 +1,9 @@<RESET>
 	<GREEN>+<RESET>	<GREEN>long line 6<RESET>
 	<GREEN>+<RESET>	<GREEN>long line 7<RESET>
+	<GREEN>+<RESET>	<GREEN>long line 8<RESET>
+	<GREEN>+<RESET>	<GREEN>changed long line 9<RESET>
 	 line 1<RESET>
 	 line 2<RESET>
 	 line 3<RESET>
 	 line 4<RESET>
-	<RED>-long line 5<RESET>
+	 line 5<RESET>
 	<RED>-long line 6<RESET>
 	<RED>-long line 7<RESET>
+	<RED>-long line 8<RESET>
+	<RED>-long line 9<RESET>
 	EOF
 	test_cmp expected actual &&
 
@@ -1370,19 +1381,158 @@ EOF
 	<BOLD>diff --git a/lines.txt b/lines.txt<RESET>
 	<BOLD>--- a/lines.txt<RESET>
 	<BOLD>+++ b/lines.txt<RESET>
-	<CYAN>@@ -1,7 +1,7 @@<RESET>
-	<CYAN>+<RESET>	<CYAN>long line 5<RESET>
+	<CYAN>@@ -1,9 +1,9 @@<RESET>
 	<CYAN>+<RESET>	<CYAN>long line 6<RESET>
 	<CYAN>+<RESET>	<CYAN>long line 7<RESET>
+	<CYAN>+<RESET>	<CYAN>long line 8<RESET>
+	<GREEN>+<RESET>	<GREEN>changed long line 9<RESET>
 	 line 1<RESET>
 	 line 2<RESET>
 	 line 3<RESET>
 	 line 4<RESET>
-	<MAGENTA>-long line 5<RESET>
+	 line 5<RESET>
 	<MAGENTA>-long line 6<RESET>
 	<MAGENTA>-long line 7<RESET>
+	<MAGENTA>-long line 8<RESET>
+	<RED>-long line 9<RESET>
 	EOF
 	test_cmp expected actual
+'
+
+test_expect_success 'move detection ignoring whitespace changes' '
+	git reset --hard &&
+	# Lines 6-8 have a space change, but 9 is new whitespace
+	q_to_tab <<-\EOF >lines.txt &&
+	longQline 6
+	longQline 7
+	longQline 8
+	long liQne 9
+	line 1
+	line 2
+	line 3
+	line 4
+	line 5
+	EOF
+
+	git diff HEAD --no-renames --color-moved --color |
+		grep -v "index" |
+		test_decode_color >actual &&
+	cat <<-\EOF >expected &&
+	<BOLD>diff --git a/lines.txt b/lines.txt<RESET>
+	<BOLD>--- a/lines.txt<RESET>
+	<BOLD>+++ b/lines.txt<RESET>
+	<CYAN>@@ -1,9 +1,9 @@<RESET>
+	<GREEN>+<RESET><GREEN>long	line 6<RESET>
+	<GREEN>+<RESET><GREEN>long	line 7<RESET>
+	<GREEN>+<RESET><GREEN>long	line 8<RESET>
+	<GREEN>+<RESET><GREEN>long li	ne 9<RESET>
+	 line 1<RESET>
+	 line 2<RESET>
+	 line 3<RESET>
+	 line 4<RESET>
+	 line 5<RESET>
+	<RED>-long line 6<RESET>
+	<RED>-long line 7<RESET>
+	<RED>-long line 8<RESET>
+	<RED>-long line 9<RESET>
+	EOF
+	test_cmp expected actual &&
+
+	git diff HEAD --no-renames -b --color-moved --color |
+		grep -v "index" |
+		test_decode_color >actual &&
+	cat <<-\EOF >expected &&
+	<BOLD>diff --git a/lines.txt b/lines.txt<RESET>
+	<BOLD>--- a/lines.txt<RESET>
+	<BOLD>+++ b/lines.txt<RESET>
+	<CYAN>@@ -1,9 +1,9 @@<RESET>
+	<CYAN>+<RESET><CYAN>long	line 6<RESET>
+	<CYAN>+<RESET><CYAN>long	line 7<RESET>
+	<CYAN>+<RESET><CYAN>long	line 8<RESET>
+	<GREEN>+<RESET><GREEN>long li	ne 9<RESET>
+	 line 1<RESET>
+	 line 2<RESET>
+	 line 3<RESET>
+	 line 4<RESET>
+	 line 5<RESET>
+	<MAGENTA>-long line 6<RESET>
+	<MAGENTA>-long line 7<RESET>
+	<MAGENTA>-long line 8<RESET>
+	<RED>-long line 9<RESET>
+	EOF
+	test_cmp expected actual
+'
+
+test_expect_success 'move detection ignoring whitespace at eol' '
+	git reset --hard &&
+	# Lines 6-9 have new eol whitespace, but 9 also has it in the middle
+	q_to_tab <<-\EOF >lines.txt &&
+	long line 6Q
+	long line 7Q
+	long line 8Q
+	longQline 9Q
+	line 1
+	line 2
+	line 3
+	line 4
+	line 5
+	EOF
+
+	# avoid cluttering the output with complaints about our eol whitespace
+	test_config core.whitespace -blank-at-eol &&
+
+	git diff HEAD --no-renames --color-moved --color |
+		grep -v "index" |
+		test_decode_color >actual &&
+	cat <<-\EOF >expected &&
+	<BOLD>diff --git a/lines.txt b/lines.txt<RESET>
+	<BOLD>--- a/lines.txt<RESET>
+	<BOLD>+++ b/lines.txt<RESET>
+	<CYAN>@@ -1,9 +1,9 @@<RESET>
+	<GREEN>+<RESET><GREEN>long line 6	<RESET>
+	<GREEN>+<RESET><GREEN>long line 7	<RESET>
+	<GREEN>+<RESET><GREEN>long line 8	<RESET>
+	<GREEN>+<RESET><GREEN>long	line 9	<RESET>
+	 line 1<RESET>
+	 line 2<RESET>
+	 line 3<RESET>
+	 line 4<RESET>
+	 line 5<RESET>
+	<RED>-long line 6<RESET>
+	<RED>-long line 7<RESET>
+	<RED>-long line 8<RESET>
+	<RED>-long line 9<RESET>
+	EOF
+	test_cmp expected actual &&
+
+	git diff HEAD --no-renames --ignore-space-at-eol --color-moved --color |
+		grep -v "index" |
+		test_decode_color >actual &&
+	cat <<-\EOF >expected &&
+	<BOLD>diff --git a/lines.txt b/lines.txt<RESET>
+	<BOLD>--- a/lines.txt<RESET>
+	<BOLD>+++ b/lines.txt<RESET>
+	<CYAN>@@ -1,9 +1,9 @@<RESET>
+	<CYAN>+<RESET><CYAN>long line 6	<RESET>
+	<CYAN>+<RESET><CYAN>long line 7	<RESET>
+	<CYAN>+<RESET><CYAN>long line 8	<RESET>
+	<GREEN>+<RESET><GREEN>long	line 9	<RESET>
+	 line 1<RESET>
+	 line 2<RESET>
+	 line 3<RESET>
+	 line 4<RESET>
+	 line 5<RESET>
+	<MAGENTA>-long line 6<RESET>
+	<MAGENTA>-long line 7<RESET>
+	<MAGENTA>-long line 8<RESET>
+	<RED>-long line 9<RESET>
+	EOF
+	test_cmp expected actual
+'
+
+test_expect_success 'clean up whitespace-test colors' '
+	git config --unset color.diff.oldMoved &&
+	git config --unset color.diff.newMoved
 '
 
 test_expect_success '--color-moved block at end of diff output respects MIN_ALNUM_COUNT' '
@@ -1528,15 +1678,6 @@ test_expect_success 'move detection with submodules' '
 	# nor did we mess with it another way
 	git diff --submodule=diff --color | test_decode_color >expect &&
 	test_cmp expect decoded_actual
-'
-
-test_expect_success 'move detection with whitespace changes' '
-	test_when_finished "git reset --hard" &&
-	test_seq 10 >test &&
-	git add test &&
-	sed s/3/42/ <test >test.tmp &&
-	mv test.tmp test &&
-	git -c diff.colormoved diff --ignore-space-change -- test
 '
 
 test_done

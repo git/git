@@ -712,7 +712,7 @@ static int next_byte(const char **cp, const char **endp,
 {
 	int retval;
 
-	if (*cp > *endp)
+	if (*cp >= *endp)
 		return -1;
 
 	if (isspace(**cp)) {
@@ -729,7 +729,12 @@ static int next_byte(const char **cp, const char **endp,
 		if (DIFF_XDL_TST(diffopt, IGNORE_WHITESPACE)) {
 			while (*cp < *endp && isspace(**cp))
 				(*cp)++;
-			/* return the first non-ws character via the usual below */
+			/*
+			 * return the first non-ws character via the usual
+			 * below, unless we ate all of the bytes
+			 */
+			if (*cp >= *endp)
+				return -1;
 		}
 	}
 
@@ -750,9 +755,9 @@ static int moved_entry_cmp(const struct diff_options *diffopt,
 		return a->es->len != b->es->len  || memcmp(ap, bp, a->es->len);
 
 	if (DIFF_XDL_TST(diffopt, IGNORE_WHITESPACE_AT_EOL)) {
-		while (ae > ap && isspace(*ae))
+		while (ae > ap && isspace(ae[-1]))
 			ae--;
-		while (be > bp && isspace(*be))
+		while (be > bp && isspace(be[-1]))
 			be--;
 	}
 
@@ -775,9 +780,9 @@ static unsigned get_string_hash(struct emitted_diff_symbol *es, struct diff_opti
 		int c;
 
 		strbuf_reset(&sb);
-		while (ae > ap && isspace(*ae))
+		while (ae > ap && isspace(ae[-1]))
 			ae--;
-		while ((c = next_byte(&ap, &ae, o)) > 0)
+		while ((c = next_byte(&ap, &ae, o)) >= 0)
 			strbuf_addch(&sb, c);
 
 		return memhash(sb.buf, sb.len);
