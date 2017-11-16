@@ -10,7 +10,7 @@ SYNOPSIS
 [verse]
 'git add' [--verbose | -v] [--dry-run | -n] [--force | -f] [--interactive | -i] [--patch | -p]
 	  [--edit | -e] [--[no-]all | --[no-]ignore-removal | [--update | -u]]
-	  [--intent-to-add | -N] [--refresh] [--ignore-errors] [--ignore-missing]
+	  [--intent-to-add | -N] [--refresh] [--ignore-errors] [--ignore-missing] [--renormalize]
 	  [--chmod=(+|-)x] [--] [<pathspec>...]
 
 DESCRIPTION
@@ -174,6 +174,13 @@ for "git add --no-all <pathspec>...", i.e. ignored removed files.
 	create an entry in `.gitmodules`. This option will suppress the
 	warning (e.g., if you are manually performing operations on
 	submodules).
+
+--renormalize::
+	Apply the "clean" process freshly to all tracked files to
+	forcibly add them again to the index.  This is useful after
+	changing `core.autocrlf` configuration or the `text` attribute
+	in order to correct files added with wrong CRLF/LF line endings.
+	This option implies `-u`.
 
 --chmod=(+|-)x::
 	Override the executable bit of the added files.  The executable

@@ -232,8 +232,7 @@ From a clean working directory:
 
 -------------------------------------------------
 $ echo "* text=auto" >.gitattributes
-$ git read-tree --empty   # Clean index, force re-scan of working directory
-$ git add .
+$ git add --renormalize .
 $ git status        # Show files that will be normalized
 $ git commit -m "Introduce end-of-line normalization"
 -------------------------------------------------
@@ -327,6 +326,9 @@ a non-zero status, is not an error but makes the filter a no-op passthru.
 You can declare that a filter turns a content that by itself is unusable
 into a usable content by setting the filter.<driver>.required configuration
 variable to `true`.
+
+Note: Whenever the clean filter is changed, the repo should be renormalized:
+$ git add --renormalize .
 
 For example, in .gitattributes, you would assign the `filter`
 attribute for paths.
