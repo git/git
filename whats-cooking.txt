@@ -1,19 +1,16 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Nov 2017, #04; Tue, 14)
-X-master-at: d8df70f2739af78cab6d7f9b942e890da6fbd01d
-X-next-at: 0d8980c5de90c09f1fb308c53a14d7d082f5358b
+Subject: What's cooking in git.git (Nov 2017, #05; Fri, 17)
+X-master-at: 89ea799ffcc5c8a0547d3c9075eb979256ee95b8
+X-next-at: f926f18f3dda0c52e794b2de0911f1b046c7dadf
 
-What's cooking in git.git (Nov 2017, #04; Tue, 14)
+What's cooking in git.git (Nov 2017, #05; Fri, 17)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
-
-The tip of 'next' has been rebuilt on top of v2.15, while kicking a
-few topics back to 'pu'.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -23,209 +20,27 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ad/5580-unc-tests-on-cygwin (2017-11-01) 1 commit
-  (merged to 'next' on 2017-11-07 at 34fc479da2)
- + t5580: add Cygwin support
-
- UNC paths are also relevant in Cygwin builds and they are now
- tested just like Mingw builds.
-
-
-* ao/diff-populate-filespec-lstat-errorpath-fix (2017-10-29) 1 commit
-  (merged to 'next' on 2017-11-07 at b03241e6e5)
- + diff: fix lstat() error handling in diff_populate_filespec()
-
- After an error from lstat(), diff_populate_filespec() function
- sometimes still went ahead and used invalid data in struct stat,
- which has been fixed.
-
-
-* bw/diff-opt-impl-to-bitfields (2017-11-01) 8 commits
-  (merged to 'next' on 2017-11-07 at 8be78206ba)
- + diff: make struct diff_flags members lowercase
- + diff: remove DIFF_OPT_CLR macro
- + diff: remove DIFF_OPT_SET macro
- + diff: remove DIFF_OPT_TST macro
- + diff: remove touched flags
- + diff: add flag to indicate textconv was set via cmdline
- + diff: convert flags to be stored in bitfields
- + add, reset: use DIFF_OPT_SET macro to set a diff flag
-
- A single-word "unsigned flags" in the diff options is being split
- into a structure with many bitfields.
-
-
-* dk/libsecret-unlock-to-load-fix (2017-11-04) 1 commit
-  (merged to 'next' on 2017-11-07 at 57d1d76c8c)
- + credential-libsecret: unlock locked secrets
-
- The credential helper for libsecret (in contrib/) has been improved
- to allow possibly prompting the end user to unlock secrets that are
- currently locked (otherwise the secrets may not be loaded).
-
-
-* jm/relnotes-2.15-typofix (2017-11-06) 1 commit
-  (merged to 'next' on 2017-11-07 at 60fc937b62)
- + fix typos in 2.15.0 release notes
-
- Typofix.
-
-
-* jm/status-ignored-files-list (2017-10-31) 4 commits
-  (merged to 'next' on 2017-11-07 at 682c74a2cb)
- + status: test ignored modes
- + status: document options to show matching ignored files
- + status: report matching ignored and normal untracked
- + status: add option to show ignored files differently
-
- Originally merged to 'next' on 2017-11-01
-
- The set of paths output from "git status --ignored" was tied
- closely with its "--untracked=<mode>" option, but now it can be
- controlled more flexibly.  Most notably, a directory that is
- ignored because it is listed to be ignored in the ignore/exclude
- mechanism can be handled differently from a directory that ends up
- to be ignored only because all files in it are ignored.
-
-
-* js/early-config (2017-11-03) 1 commit
-  (merged to 'next' on 2017-11-07 at 9477c7c8ea)
- + setup: avoid double slashes when looking for HEAD
-
- Correct start-up sequence so that a repository could be placed
- immediately under the root directory again (which was broken at
- around Git 2.13).
-
-
-* js/mingw-full-version-in-resources (2017-11-01) 1 commit
-  (merged to 'next' on 2017-11-07 at 3a256b5ddc)
- + mingw: include the full version information in the resources
-
- MinGW updates.
-
-
-* js/mingw-redirect-std-handles (2017-11-02) 3 commits
-  (merged to 'next' on 2017-11-07 at 9af6a3dea0)
- + mingw: document the standard handle redirection
- + mingw: optionally redirect stderr/stdout via the same handle
- + mingw: add experimental feature to redirect standard handles
-
- MinGW updates.
-
-
-* js/wincred-empty-cred (2017-11-01) 2 commits
-  (merged to 'next' on 2017-11-07 at 43d3fcc30a)
- + wincred: handle empty username/password correctly
- + t0302: check helper can handle empty credentials
-
- MinGW updates.
-
-
-* ks/mailmap (2017-11-03) 1 commit
-  (merged to 'next' on 2017-11-07 at 46975637c7)
- + mailmap: use Kaartic Sivaraam's new address
-
-
-* rs/hex-to-bytes-cleanup (2017-11-01) 3 commits
-  (merged to 'next' on 2017-11-07 at fac14770e1)
- + sha1_file: use hex_to_bytes()
- + http-push: use hex_to_bytes()
- + notes: move hex_to_bytes() to hex.c and export it
-
- Code cleanup.
-
-
-* sb/blame-config-doc (2017-11-06) 1 commit
-  (merged to 'next' on 2017-11-07 at 0576cb452f)
- + config: document blame configuration
-
- Description of blame.{showroot,blankboundary,showemail,date}
- configuration variables have been added to "git config --help".
-
-
-* sg/travis-fixes (2017-11-02) 2 commits
-  (merged to 'next' on 2017-11-07 at bbf39361b6)
- + travis-ci: don't build Git for the static analysis job
- + travis-ci: fix running P4 and Git LFS tests in Linux build jobs
-
- TravisCI build updates.
-
---------------------------------------------------
-[New Topics]
-
-* ad/rebase-i-serie-typofix (2017-11-09) 1 commit
-  (merged to 'next' on 2017-11-13 at 199e79b29e)
- + rebase -i: fix comment typo
-
- Will merge to 'master'.
-
-
-* ad/submitting-patches-title-decoration (2017-11-11) 1 commit
- - doc/SubmittingPatches: correct subject guidance
-
- Doc update around use of "format-patch --subject-prefix" etc.
-
- Will merge to 'next'.
-
-
-* jc/merge-base-fork-point-doc (2017-11-09) 1 commit
- - merge-base --fork-point doc: clarify the example and failure modes
-
- Clarify and enhance documentation for "merge-base --fork-point", as
- it was clear what it computed but not why/what for.
-
-
-* tz/fsf-address-update (2017-11-09) 3 commits
-  (merged to 'next' on 2017-11-13 at 97965f70d9)
- + Merge branch 'tz/fsf-address-update' of ../git-gui into tz/fsf-address-update
- + Replace Free Software Foundation address in license notices
- + Replace Free Software Foundation address in license notices
-
- Will merge to 'master'.
-
-
-* bp/fastindex (2017-11-11) 5 commits
- - SQUASH???
- - fastindex: add documentation for the fastindex extension
- - fastindex: add test tools and a test script
- - update-index: add fastindex support to update-index
- - fastindex: speed up index load through parallelization
-
-
-* pw/sequencer-in-process-commit (2017-11-11) 10 commits
- - SQUASH??? styles
- - sequencer: try to commit without forking 'git commit'
- - sequencer: load commit related config
- - sequencer: simplify adding Signed-off-by: trailer
- - sequencer: don't die in print_commit_summary()
- - commit: move print_commit_summary() to libgit
- - commit: move post-rewrite code to libgit
- - Add a function to update HEAD after creating a commit
- - commit: move empty message checks to libgit
- - t3404: check intermediate squash messages
-
- The sequencer infrastructure is shared across "git cherry-pick",
- "git rebase -i", etc., and has always spawned "git commit" when it
- needs to create a commit.  It has been taught to do so internally,
- when able, by reusing the codepath "git commit" itself uses.
-
-
-* rs/apply-fuzzy-match-fix (2017-11-12) 1 commit
- - apply: avoid out-of-bounds access in fuzzy_matchlines()
-
- A fix for an ancient bug in "git apply --ignore-space-change" codepath.
-
- Will merge to 'next'.
-
-
-* sb/test-cherry-pick-submodule-getting-in-a-way (2017-11-12) 1 commit
- - t/3512: demonstrate unrelated submodule/file conflict as cherry-pick failure
-
- An additional test, in anticipation for a fix.
-
- Will merge to 'next'.
- It would be very preferrable if we can merge an actual fix together
- to 'next', though.
+* ab/mediawiki-name-truncation (2017-11-01) 1 commit
+  (merged to 'next' on 2017-11-07 at b30233d585)
+ + remote-mediawiki: limit filenames to legal
+
+ The remote-helper for talking to MediaWiki has been updated to
+ truncate an overlong pagename so that ".mw" suffix can still be
+ added.
+
+
+* ab/mediawiki-namespace (2017-11-08) 7 commits
+  (merged to 'next' on 2017-11-10 at 1cf9cfdfbc)
+ + remote-mediawiki: show progress while fetching namespaces
+ + remote-mediawiki: process namespaces in order
+ + remote-mediawiki: support fetching from (Main) namespace
+ + remote-mediawiki: skip virtual namespaces
+ + remote-mediawiki: show known namespace choices on failure
+ + remote-mediawiki: allow fetching namespaces with spaces
+ + remote-mediawiki: add namespace support
+
+ The remote-helper for talking to MediaWiki has been updated to
+ work with mediawiki namespaces.
 
 
 * ab/pcre-v2 (2017-11-13) 1 commit
@@ -234,7 +49,45 @@ of the repositories listed at
 
  Building with NO_LIBPCRE1_JIT did not disable it, which has been fixed.
 
- Will merge to 'master'.
+
+* ad/rebase-i-serie-typofix (2017-11-09) 1 commit
+  (merged to 'next' on 2017-11-13 at 199e79b29e)
+ + rebase -i: fix comment typo
+
+ Typofix.
+
+
+* ao/merge-verbosity-getenv-just-once (2017-11-01) 1 commit
+  (merged to 'next' on 2017-11-09 at e7cfb8dcec)
+ + merge-recursive: check GIT_MERGE_VERBOSITY only once
+
+ Code cleanup.
+
+
+* bc/submitting-patches-in-asciidoc (2017-11-13) 2 commits
+  (merged to 'next' on 2017-11-13 at 70f65b981a)
+ + Documentation: convert SubmittingPatches to AsciiDoc
+ + Documentation: enable compat-mode for Asciidoctor
+
+ The SubmittingPatches document has been converted to produce an
+ HTML version via AsciiDoc/Asciidoctor.
+
+
+* bp/read-index-from-skip-verification (2017-11-08) 1 commit
+  (merged to 'next' on 2017-11-10 at 3c3e32f1ed)
+ + read_index_from(): speed index loading by skipping verification of the entry order
+
+ Drop (perhaps overly cautious) sanity check before using the index
+ read from the filesystem at runtime.
+
+
+* bw/rebase-i-ignored-submodule-fix (2017-11-07) 1 commit
+  (merged to 'next' on 2017-11-10 at a0a54103ed)
+ + wt-status: actually ignore submodules when requested
+
+ "git rebase -i" recently started misbehaving when a submodule that
+ is configured with 'submodule.<name>.ignore' is dirty; this has
+ been corrected.
 
 
 * cb/t4201-robustify (2017-11-13) 1 commit
@@ -243,7 +96,21 @@ of the repositories listed at
 
  A test update.
 
- Will merge to 'master'.
+
+* cc/git-packet-pm (2017-11-07) 8 commits
+  (merged to 'next' on 2017-11-10 at b40bc2c0bb)
+ + Git/Packet.pm: extract parts of t0021/rot13-filter.pl for reuse
+ + t0021/rot13-filter: add capability functions
+ + t0021/rot13-filter: refactor checking final lf
+ + t0021/rot13-filter: add packet_initialize()
+ + t0021/rot13-filter: improve error message
+ + t0021/rot13-filter: improve 'if .. elsif .. else' style
+ + t0021/rot13-filter: refactor packet reading functions
+ + t0021/rot13-filter: fix list comparison
+
+ Parts of a test to drive the long-running content filter interface
+ has been split into its own module, hopefully to eventually become
+ reusable.
 
 
 * jk/info-alternates-fix (2017-11-13) 1 commit
@@ -253,7 +120,68 @@ of the repositories listed at
  We used to add an empty alternate object database to the system
  that does not help anything; it has been corrected.
 
- Will merge to 'master'.
+
+* js/for-each-ref-remote-name-and-ref (2017-11-08) 3 commits
+  (merged to 'next' on 2017-11-10 at 254af5d602)
+ + for-each-ref: test :remotename and :remoteref
+ + for-each-ref: let upstream/push report the remote ref name
+ + for-each-ref: let upstream/push optionally report the remote name
+
+ The "--format=..." option "git for-each-ref" takes learned to show
+ the name of the 'remote' repository and the ref at the remote side
+ that is affected for 'upstream' and 'push' via "%(push:remotename)"
+ and friends.
+
+
+* jt/submodule-tests-cleanup (2017-11-08) 1 commit
+  (merged to 'next' on 2017-11-10 at c6cbcdeaa4)
+ + Tests: clean up and document submodule helpers
+
+ Test clean-up.
+
+
+* ma/bisect-leakfix (2017-11-06) 4 commits
+  (merged to 'next' on 2017-11-09 at c280d786f4)
+ + bisect: fix memory leak when returning best element
+ + bisect: fix off-by-one error in `best_bisection_sorted()`
+ + bisect: fix memory leak in `find_bisection()`
+ + bisect: change calling-convention of `find_bisection()`
+
+ Leak fixes.
+
+
+* ma/reduce-heads-leakfix (2017-11-08) 2 commits
+  (merged to 'next' on 2017-11-10 at 9428953ec8)
+ + reduce_heads: fix memory leaks
+ + builtin/merge-base: free commit lists
+
+ Leak fixes.
+
+
+* mh/avoid-rewriting-packed-refs (2017-10-30) 2 commits
+  (merged to 'next' on 2017-11-09 at 272e27cc9a)
+ + files-backend: don't rewrite the `packed-refs` file unnecessarily
+ + t1409: check that `packed-refs` is not rewritten unnecessarily
+
+ Recent update to the refs infrastructure implementation started
+ rewriting packed-refs file more often than before; this has been
+ optimized again for most trivial cases.
+
+
+* mh/tidy-ref-update-flags (2017-11-06) 10 commits
+  (merged to 'next' on 2017-11-09 at 5231330c1c)
+ + refs: update some more docs to use "oid" rather than "sha1"
+ + write_packed_entry(): take `object_id` arguments
+ + refs: rename constant `REF_ISPRUNING` to `REF_IS_PRUNING`
+ + refs: rename constant `REF_NODEREF` to `REF_NO_DEREF`
+ + refs: tidy up and adjust visibility of the `ref_update` flags
+ + ref_transaction_add_update(): remove a check
+ + ref_transaction_update(): die on disallowed flags
+ + prune_ref(): call `ref_transaction_add_update()` directly
+ + files_transaction_prepare(): don't leak flags to packed transaction
+ + Merge branch 'bc/object-id' into base
+
+ Code clean-up in refs API implementation.
 
 
 * rd/bisect-view-is-visualize (2017-11-13) 1 commit
@@ -263,7 +191,23 @@ of the repositories listed at
  Doc and message updates to teach users "bisect view" is a synonym
  for "bisect visualize".
 
- Will merge to 'master'.
+
+* rs/imap-send-next-arg-fix (2017-11-03) 2 commits
+  (merged to 'next' on 2017-11-07 at f4df55fe5b)
+ + imap-send: handle missing response codes gracefully
+ + imap-send: handle NULL return of next_arg()
+
+ Error checking in "git imap-send" for empty response has been
+ improved.
+
+
+* rs/sequencer-rewrite-file-cleanup (2017-11-02) 3 commits
+  (merged to 'next' on 2017-11-09 at 06f45be770)
+ + sequencer.c: check return value of close() in rewrite_file()
+ + sequencer: use O_TRUNC to truncate files
+ + sequencer: factor out rewrite_file()
+
+ Code cleanup.
 
 
 * sb/bisect-run-empty (2017-11-13) 1 commit
@@ -274,31 +218,114 @@ of the repositories listed at
  ahead and treated all commits to be tested as 'good'.  This has
  been corrected by making the command error out.
 
- Will merge to 'master'.
+
+* sr/wrapper-quote-filenames (2017-11-06) 1 commit
+  (merged to 'next' on 2017-11-09 at a14ac8da60)
+ + wrapper.c: consistently quote filenames in error messages
+
+ Some error messages did not quote filenames shown in it, which have
+ been fixed.
 
 
-* en/rename-progress (2017-11-14) 5 commits
- - sequencer: show rename progress during cherry picks
- - diff: remove silent clamp of renameLimit
- - SQUASH???
- - progress: fix progress meters when dealing with lots of work
- - sequencer: warn when internal merge may be suboptimal due to renameLimit
+* tz/fsf-address-update (2017-11-09) 3 commits
+  (merged to 'next' on 2017-11-13 at 97965f70d9)
+ + Merge branch 'tz/fsf-address-update' of ../git-gui into tz/fsf-address-update
+ + Replace Free Software Foundation address in license notices
+ + Replace Free Software Foundation address in license notices
 
- Historically, the diff machinery for rename detection had a
- hardcoded limit of 32k paths; this is being lifted to allow users
- trade cycles with a (possibly) easier to read result.
+ Replace the mailing address of FSF to a URL, as FSF prefers.
 
- Will squash in the type-fix and merge to 'next'.
+--------------------------------------------------
+[New Topics]
+
+* rv/sendemail-tocmd-in-config-and-completion (2017-11-14) 2 commits
+ - completion: add git config sendemail.tocmd
+ - Documentation/config: add sendemail.tocmd to list preceding "See git-send-email(1)"
+
+ Teach "sendemail.tocmd" to places that know about "sendemail.to",
+ like documentation and shell completion (in contrib/).
+
+ Will merge to 'next'.
 
 
-* tz/redirect-fix (2017-11-14) 2 commits
- - rebase: fix stderr redirect in apply_autostash()
- - t/lib-gpg: fix gpgconf stderr redirect to /dev/null
+* tz/notes-error-to-stderr (2017-11-15) 1 commit
+ - notes: send "Automatic notes merge failed" messages to stderr
 
- A few scripts (both in production and tests) incorrectly redirected
- their error output.  These have been corrected.
+ "git notes" sent its error message to its standard output stream,
+ which was corrected.
 
- Wait for the third one and then merge to 'next'.
+ Will merge to 'next'.
+
+
+* hm/config-parse-expiry-date (2017-11-16) 1 commit
+ - config: add --expiry-date
+
+ "git config --expiry-date gc.reflogexpire" can read "2.weeks" from
+ the configuration and report it as a timestamp, just like "--int"
+ would read "1k" and report 1024, to help consumption by scripts.
+
+
+* sd/branch-copy (2017-11-16) 1 commit
+ - config: avoid "write_in_full(fd, buf, len) != len" pattern
+
+ Code clean-up.
+
+ Will merge to 'next'.
+
+
+* pw/sequencer-recover-from-unlockable-index (2017-11-16) 1 commit
+ - sequencer: reschedule pick if index can't be locked
+
+ The sequencer machinery (used by "git cherry-pick A..B", and "git
+ rebase -i", among other things) would have lost a commit if stopped
+ due to an unlockable index file, which has been fixed.
+
+ Will merge to 'next'.
+
+
+* dj/runtime-prefix (2017-11-17) 1 commit
+ - exec_cmd: RUNTIME_PREFIX on some POSIX systems
+
+ A build-time option has been added to allow Git to be told to refer
+ to its associated files relative to the main binary, in the same
+ way that has been possible on Windows for quite some time, for
+ Linux, BSDs and Darwin.
+
+
+* jc/editor-waiting-message (2017-11-17) 1 commit
+ - launch_editor(): indicate that Git waits for user input
+
+ Git shows a message to tell the user that it is waiting for the
+ user to finish editing when spawning an editor, in case the editor
+ opens to a hidden window or somewhere obscure and the user gets
+ lost.
+
+
+* rs/apply-inaccurate-eof-with-incomplete-line (2017-11-17) 1 commit
+ - apply: update line lengths for --inaccurate-eof
+
+ "git apply --inaccurate-eof" when used with "--ignore-space-change"
+ triggered an internal sanity check, which has been fixed.
+
+ Will merge to 'next'.
+
+
+* tz/branch-doc-remove-set-upstream (2017-11-17) 1 commit
+ - branch doc: remove --set-upstream from synopsis
+
+ "git branch --set-upstream" has been deprecated and (sort of)
+ removed, as "--set-upstream-to" is the preferred one these days.
+ The documentation still had "--set-upstream" listed on its
+ synopsys section, which has been corrected.
+
+
+* tz/complete-branch-copy (2017-11-17) 1 commit
+ - completion: add '--copy' option to 'git branch'
+
+ Command line completion (in contrib/) has been taught about the
+ "--copy" option of "git branch".
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -424,21 +451,114 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* bw/rebase-i-ignored-submodule-fix (2017-11-07) 1 commit
-  (merged to 'next' on 2017-11-10 at a0a54103ed)
- + wt-status: actually ignore submodules when requested
+* jc/branch-name-sanity (2017-11-15) 4 commits
+ - builtin/branch: remove redundant check for HEAD
+ - branch: correctly reject refs/heads/{-dash,HEAD}
+ - branch: split validate_new_branchname() into two
+ - branch: streamline "attr_only" handling in validate_new_branchname()
 
- "git rebase -i" recently started misbehaving when a submodule that
- is configured with 'submodule.<name>.ignore' is dirty; this has
- been corrected.
+ "git branch" and "git checkout -b" are now forbidden from creating
+ a branch whose name is "HEAD".
+
+ Will merge to 'next'.
+
+
+* ad/submitting-patches-title-decoration (2017-11-11) 1 commit
+  (merged to 'next' on 2017-11-15 at 99238c3537)
+ + doc/SubmittingPatches: correct subject guidance
+
+ Doc update around use of "format-patch --subject-prefix" etc.
 
  Will merge to 'master'.
 
 
-* ar/unconfuse-three-dots (2017-11-07) 3 commits
- - Documentation: revisions: add note about 3dots usages as continuation indications
- - Documentation: user-manual: limit potentially confusing usage of 3dots (and 2dots)
- - checkout: describe_detached_head: remove 3dots after committish
+* jc/merge-base-fork-point-doc (2017-11-09) 1 commit
+ - merge-base --fork-point doc: clarify the example and failure modes
+
+ Clarify and enhance documentation for "merge-base --fork-point", as
+ it was clear what it computed but not why/what for.
+
+ Will merge to 'next'.
+
+
+* bp/fastindex (2017-11-11) 5 commits
+ - SQUASH???
+ - fastindex: add documentation for the fastindex extension
+ - fastindex: add test tools and a test script
+ - update-index: add fastindex support to update-index
+ - fastindex: speed up index load through parallelization
+
+
+* pw/sequencer-in-process-commit (2017-11-11) 10 commits
+ - SQUASH??? styles
+ - sequencer: try to commit without forking 'git commit'
+ - sequencer: load commit related config
+ - sequencer: simplify adding Signed-off-by: trailer
+ - sequencer: don't die in print_commit_summary()
+ - commit: move print_commit_summary() to libgit
+ - commit: move post-rewrite code to libgit
+ - Add a function to update HEAD after creating a commit
+ - commit: move empty message checks to libgit
+ - t3404: check intermediate squash messages
+
+ The sequencer infrastructure is shared across "git cherry-pick",
+ "git rebase -i", etc., and has always spawned "git commit" when it
+ needs to create a commit.  It has been taught to do so internally,
+ when able, by reusing the codepath "git commit" itself uses.
+
+ This looked more or less ready.
+
+
+* rs/apply-fuzzy-match-fix (2017-11-12) 1 commit
+  (merged to 'next' on 2017-11-15 at 2d724fa63b)
+ + apply: avoid out-of-bounds access in fuzzy_matchlines()
+
+ A fix for an ancient bug in "git apply --ignore-space-change" codepath.
+
+ Will merge to 'master'.
+
+
+* sb/test-cherry-pick-submodule-getting-in-a-way (2017-11-15) 2 commits
+ - merge-recursive: handle addition of submodule on our side of history
+ - t/3512: demonstrate unrelated submodule/file conflict as cherry-pick failure
+
+ The three-way merge performed by "git cherry-pick" was confused
+ when a new submodule was added in the meantime, which has been
+ fixed (or "papered over").
+
+ Will merge to 'next'.
+
+
+* en/rename-progress (2017-11-15) 4 commits
+ - sequencer: show rename progress during cherry picks
+ - diff: remove silent clamp of renameLimit
+ - progress: fix progress meters when dealing with lots of work
+ - sequencer: warn when internal merge may be suboptimal due to renameLimit
+
+ Historically, the diff machinery for rename detection had a
+ hardcoded limit of 32k paths; this is being lifted to allow users
+ trade cycles with a (possibly) easier to read result.
+
+ Will merge to 'next'.
+
+
+* tz/redirect-fix (2017-11-14) 2 commits
+ - rebase: fix stderr redirect in apply_autostash()
+ - t/lib-gpg: fix gpgconf stderr redirect to /dev/null
+
+ A few scripts (both in production and tests) incorrectly redirected
+ their error output.  These have been corrected.
+
+ Will merge to 'next'.
+
+
+* ar/unconfuse-three-dots (2017-11-14) 6 commits
+ - Testing: provide tests requiring them with ellipses after SHA-1 values
+ - Documentation: revisions: fix typo: "three dot" ---> "three-dot" (in line with "two-dot").
+ - Documentation: user-manual: limit usage of ellipsis
+ - diff: diff_aligned_abbrev: remove ellipsis after abbreviated SHA-1 value
+ - checkout: describe_detached_head: remove ellipsis after committish
+ - config: introduce core.printsha1ellipsis
 
  Ancient part of codebase still shows dots after an abbreviated
  object name just to show that it is not a full object name, but
@@ -446,62 +566,16 @@ of the repositories listed at
  who are used to seeing abbreviated object names and find them
  confusing with the range syntax.
 
+ This may become a new default someday, but the way to tentatively
+ get the original behaviour back would probably want to be an
+ environment variable, not a configuration.
 
-* jt/submodule-tests-cleanup (2017-11-08) 1 commit
-  (merged to 'next' on 2017-11-10 at c6cbcdeaa4)
- + Tests: clean up and document submodule helpers
-
- Will merge to 'master'.
-
-
-* js/for-each-ref-remote-name-and-ref (2017-11-08) 3 commits
-  (merged to 'next' on 2017-11-10 at 254af5d602)
- + for-each-ref: test :remotename and :remoteref
- + for-each-ref: let upstream/push report the remote ref name
- + for-each-ref: let upstream/push optionally report the remote name
-
- The "--format=..." option "git for-each-ref" takes learned to show
- the name of the 'remote' repository and the ref at the remote side
- that is affected for 'upstream' and 'push' via "%(push:remotename)"
- and friends.
-
- Will merge to 'master'.
+ Expecting a reroll.
 
 
-* ma/bisect-leakfix (2017-11-06) 4 commits
-  (merged to 'next' on 2017-11-09 at c280d786f4)
- + bisect: fix memory leak when returning best element
- + bisect: fix off-by-one error in `best_bisection_sorted()`
- + bisect: fix memory leak in `find_bisection()`
- + bisect: change calling-convention of `find_bisection()`
-
- Leak fixes.
-
- Will merge to 'master'.
-
-
-* ma/reduce-heads-leakfix (2017-11-08) 2 commits
-  (merged to 'next' on 2017-11-10 at 9428953ec8)
- + reduce_heads: fix memory leaks
- + builtin/merge-base: free commit lists
-
- Leak fixes.
-
- Will merge to 'master'.
-
-
-* sr/wrapper-quote-filenames (2017-11-06) 1 commit
-  (merged to 'next' on 2017-11-09 at a14ac8da60)
- + wrapper.c: consistently quote filenames in error messages
-
- Some error messages did not quote filenames shown in it, which have
- been fixed.
-
- Will merge to 'master'.
-
-
-* jh/fsck-promisors (2017-11-08) 9 commits
+* jh/fsck-promisors (2017-11-17) 10 commits
  - gc: do not repack promisor packfiles
+ - rev-list: support termination at promisor objects
  - sha1_file: support lazily fetching missing objects
  - introduce fetch-object: fetch one promisor object
  - index-pack: refactor writing of .keep files
@@ -513,7 +587,7 @@ of the repositories listed at
  (this branch is used by jh/partial-clone; uses jh/object-filtering.)
 
 
-* jh/object-filtering (2017-11-08) 6 commits
+* jh/object-filtering (2017-11-17) 6 commits
  - pack-objects: add list-objects filtering
  - rev-list: add list-objects filtering support
  - list-objects: filter objects in traverse_commit_list
@@ -523,15 +597,15 @@ of the repositories listed at
  (this branch is used by jh/fsck-promisors and jh/partial-clone.)
 
 
-* jh/partial-clone (2017-11-08) 15 commits
- . fixup! upload-pack: add object filtering for partial clone
- . index-pack: silently assume missing objects are promisor
+* jh/partial-clone (2017-11-17) 15 commits
  . fetch-pack: restore save_commit_buffer after use
  . unpack-trees: batch fetching of missing blobs
  . t5500: more tests for partial clone and fetch
  . t5601: test for partial clone
  . t5500: add fetch-pack tests for partial clone
  . fetch: add from_promisor and exclude-promisor-objects parameters
+ . fetch-pack: test support excluding large blobs
+ . partial-clone: define partial clone settings in config
  . fetch-pack: test support excluding large blobs
  . pack-objects: test support for blob filtering
  . remote-curl: add object filtering for partial clone
@@ -542,48 +616,7 @@ of the repositories listed at
  (this branch uses jh/fsck-promisors and jh/object-filtering.)
 
 
-* rs/imap-send-next-arg-fix (2017-11-03) 2 commits
-  (merged to 'next' on 2017-11-07 at f4df55fe5b)
- + imap-send: handle missing response codes gracefully
- + imap-send: handle NULL return of next_arg()
-
- Error checking in "git imap-send" for empty response has been
- improved.
-
- Will merge to 'master'.
-
-
-* ao/merge-verbosity-getenv-just-once (2017-11-01) 1 commit
-  (merged to 'next' on 2017-11-09 at e7cfb8dcec)
- + merge-recursive: check GIT_MERGE_VERBOSITY only once
-
- Code cleanup.
-
- Will merge to 'master'.
-
-
-* bp/read-index-from-skip-verification (2017-11-08) 1 commit
-  (merged to 'next' on 2017-11-10 at 3c3e32f1ed)
- + read_index_from(): speed index loading by skipping verification of the entry order
-
- Drop (perhaps overly cautious) sanity check before using the index
- read from the filesystem at runtime.
-
- Will merge to 'master'.
-
-
-* rs/sequencer-rewrite-file-cleanup (2017-11-02) 3 commits
-  (merged to 'next' on 2017-11-09 at 06f45be770)
- + sequencer.c: check return value of close() in rewrite_file()
- + sequencer: use O_TRUNC to truncate files
- + sequencer: factor out rewrite_file()
-
- Code cleanup.
-
- Will merge to 'master'.
-
-
-* sb/describe-blob (2017-11-13) 7 commits
+* sb/describe-blob (2017-11-16) 7 commits
  - builtin/describe.c: describe a blob
  - builtin/describe.c: factor out describe_commit
  - builtin/describe.c: print debug statements earlier
@@ -596,58 +629,14 @@ of the repositories listed at
  <commit-ish>:<path> that refers to a given blob object.
 
 
-* tb/add-renormalize (2017-11-07) 2 commits
- - SQUASH???
+* tb/add-renormalize (2017-11-17) 1 commit
  - add: introduce "--renormalize"
 
  "git add --renormalize ." is a new and safer way to record the fact
  that you are correcting the end-of-line convention and other
  "convert_to_git()" glitches in the in-repository data.
 
-
-* ab/mediawiki-name-truncation (2017-11-01) 1 commit
-  (merged to 'next' on 2017-11-07 at b30233d585)
- + remote-mediawiki: limit filenames to legal
-
- The remote-helper for talking to MediaWiki has been updated to
- truncate an overlong pagename so that ".mw" suffix can still be
- added.
-
- Will merge to 'master'.
-
-
-* ab/mediawiki-namespace (2017-11-08) 7 commits
-  (merged to 'next' on 2017-11-10 at 1cf9cfdfbc)
- + remote-mediawiki: show progress while fetching namespaces
- + remote-mediawiki: process namespaces in order
- + remote-mediawiki: support fetching from (Main) namespace
- + remote-mediawiki: skip virtual namespaces
- + remote-mediawiki: show known namespace choices on failure
- + remote-mediawiki: allow fetching namespaces with spaces
- + remote-mediawiki: add namespace support
-
- The remote-helper for talking to MediaWiki has been updated to
- work with mediawiki namespaces.
-
- Will merge to 'master'.
-
-
-* mh/tidy-ref-update-flags (2017-11-06) 10 commits
-  (merged to 'next' on 2017-11-09 at 5231330c1c)
- + refs: update some more docs to use "oid" rather than "sha1"
- + write_packed_entry(): take `object_id` arguments
- + refs: rename constant `REF_ISPRUNING` to `REF_IS_PRUNING`
- + refs: rename constant `REF_NODEREF` to `REF_NO_DEREF`
- + refs: tidy up and adjust visibility of the `ref_update` flags
- + ref_transaction_add_update(): remove a check
- + ref_transaction_update(): die on disallowed flags
- + prune_ref(): call `ref_transaction_add_update()` directly
- + files_transaction_prepare(): don't leak flags to packed transaction
- + Merge branch 'bc/object-id' into base
-
- Code clean-up in refs API implementation.
-
- Will merge to 'master'.
+ Will merge to 'next'.
 
 
 * av/fsmonitor (2017-11-13) 7 commits
@@ -694,17 +683,6 @@ of the repositories listed at
  Waiting for follow-on fixes to settle.
 
 
-* bc/submitting-patches-in-asciidoc (2017-11-13) 2 commits
-  (merged to 'next' on 2017-11-13 at 70f65b981a)
- + Documentation: convert SubmittingPatches to AsciiDoc
- + Documentation: enable compat-mode for Asciidoctor
-
- The SubmittingPatches document has been converted to produce an
- HTML version via AsciiDoc/Asciidoctor.
-
- Will merge to 'master'.
-
-
 * pb/bisect-helper-2 (2017-10-28) 8 commits
  - t6030: make various test to pass GETTEXT_POISON tests
  - bisect--helper: `bisect_start` shell function partially in C
@@ -726,47 +704,7 @@ of the repositories listed at
  The "diff" family of commands learned to ignore differences in
  carriage return at the end of line.
 
-
-* mh/avoid-rewriting-packed-refs (2017-10-30) 2 commits
-  (merged to 'next' on 2017-11-09 at 272e27cc9a)
- + files-backend: don't rewrite the `packed-refs` file unnecessarily
- + t1409: check that `packed-refs` is not rewritten unnecessarily
-
- Recent update to the refs infrastructure implementation started
- rewriting packed-refs file more often than before; this has been
- optimized again for most trivial cases.
-
- Will merge to 'master'.
-
-
-* cc/git-packet-pm (2017-11-07) 8 commits
-  (merged to 'next' on 2017-11-10 at b40bc2c0bb)
- + Git/Packet.pm: extract parts of t0021/rot13-filter.pl for reuse
- + t0021/rot13-filter: add capability functions
- + t0021/rot13-filter: refactor checking final lf
- + t0021/rot13-filter: add packet_initialize()
- + t0021/rot13-filter: improve error message
- + t0021/rot13-filter: improve 'if .. elsif .. else' style
- + t0021/rot13-filter: refactor packet reading functions
- + t0021/rot13-filter: fix list comparison
-
- Parts of a test to drive the long-running content filter interface
- has been split into its own module, hopefully to eventually become
- reusable.
-
- Will merge to 'master'.
-
-
-* jc/branch-name-sanity (2017-10-14) 3 commits
- - branch: forbid refs/heads/HEAD
- - branch: split validate_new_branchname() into two
- - branch: streamline "attr_only" handling in validate_new_branchname()
-
- "git branch" and "git checkout -b" are now forbidden from creating
- a branch whose name is "HEAD".
-
- Reported to cause problems when renaming HEAD during a rebase.
- cf. <49563f7c-354e-334e-03a6-c3a40884b6d0@gmail.com>
+ Will merge to 'next'.
 
 
 * ot/mru-on-list (2017-10-01) 1 commit
