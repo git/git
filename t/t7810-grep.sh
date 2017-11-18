@@ -785,7 +785,7 @@ test_expect_success 'grep -W with userdiff' '
 	git grep -W echo >function-context-userdiff-actual
 '
 
-test_expect_failure ' includes preceding comment' '
+test_expect_success ' includes preceding comment' '
 	grep "# Say hello" function-context-userdiff-actual
 '
 
