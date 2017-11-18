@@ -416,16 +416,6 @@ static struct reflog_expire_cfg *find_cfg_ent(const char *pattern, size_t len)
 	return ent;
 }
 
-static int parse_expire_cfg_value(const char *var, const char *value, timestamp_t *expire)
-{
-	if (!value)
-		return config_error_nonbool(var);
-	if (parse_expiry_date(value, expire))
-		return error(_("'%s' for '%s' is not a valid timestamp"),
-			     value, var);
-	return 0;
-}
-
 /* expiry timer slot */
 #define EXPIRE_TOTAL   01
 #define EXPIRE_UNREACH 02
@@ -443,11 +433,11 @@ static int reflog_expire_config(const char *var, const char *value, void *cb)
 
 	if (!strcmp(key, "reflogexpire")) {
 		slot = EXPIRE_TOTAL;
-		if (parse_expire_cfg_value(var, value, &expire))
+		if (git_config_expiry_date(&expire, var, value))
 			return -1;
 	} else if (!strcmp(key, "reflogexpireunreachable")) {
 		slot = EXPIRE_UNREACH;
-		if (parse_expire_cfg_value(var, value, &expire))
+		if (git_config_expiry_date(&expire, var, value))
 			return -1;
 	} else
 		return git_default_config(var, value, cb);
