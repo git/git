@@ -228,7 +228,7 @@ N_("\n"
 "\"git push -u\" to set the upstream config as you push.");
 
 void create_branch(const char *name, const char *start_name,
-		   int force, int reflog, int clobber_head,
+		   int force, int reflog, int clobber_head_ok,
 		   int quiet, enum branch_track track)
 {
 	struct commit *commit;
@@ -244,7 +244,7 @@ void create_branch(const char *name, const char *start_name,
 
 	if (validate_new_branchname(name, &ref, force,
 				    track == BRANCH_TRACK_OVERRIDE ||
-				    clobber_head)) {
+				    clobber_head_ok)) {
 		if (!force)
 			dont_change_ref = 1;
 		else

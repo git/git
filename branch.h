@@ -15,12 +15,17 @@
  *
  *   - reflog creates a reflog for the branch
  *
+ *   - clobber_head_ok allows the currently checked out (hence existing)
+ *     branch to be overwritten; without 'force', it has no effect.
+ *
+ *   - quiet suppresses tracking information
+ *
  *   - track causes the new branch to be configured to merge the remote branch
  *     that start_name is a tracking branch for (if any).
  */
 void create_branch(const char *name, const char *start_name,
 		   int force, int reflog,
-		   int clobber_head, int quiet, enum branch_track track);
+		   int clobber_head_ok, int quiet, enum branch_track track);
 
 /*
  * Validates that the requested branch may be created, returning the
