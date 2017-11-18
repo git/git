@@ -85,7 +85,7 @@ test_expect_success 'setup' '
 
 check_diff changed_hello 'changed function'
 
-test_expect_failure ' context includes comment' '
+test_expect_success ' context includes comment' '
 	grep "^ .*Hello comment" changed_hello.diff
 '
 

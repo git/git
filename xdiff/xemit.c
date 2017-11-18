@@ -204,6 +204,9 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 			}
 
 			fs1 = get_func_line(xe, xecfg, NULL, i1, -1);
+			while (fs1 > 0 && !is_empty_rec(&xe->xdf1, fs1 - 1) &&
+			       !is_func_rec(&xe->xdf1, xecfg, fs1 - 1))
+				fs1--;
 			if (fs1 < 0)
 				fs1 = 0;
 			if (fs1 < s1) {
