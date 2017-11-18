@@ -1479,20 +1479,21 @@ static void show_funcname_line(struct grep_opt *opt, struct grep_source *gs,
 static void show_pre_context(struct grep_opt *opt, struct grep_source *gs,
 			     char *bol, char *end, unsigned lno)
 {
-	unsigned cur = lno, from = 1, funcname_lno = 0;
+	unsigned cur = lno, from = 1, funcname_lno = 0, orig_from;
 	int funcname_needed = !!opt->funcname;
-
-	if (opt->funcbody && !match_funcname(opt, gs, bol, end))
-		funcname_needed = 2;
 
 	if (opt->pre_context < lno)
 		from = lno - opt->pre_context;
 	if (from <= opt->last_shown)
 		from = opt->last_shown + 1;
+	orig_from = from;
+	if (opt->funcbody && !match_funcname(opt, gs, bol, end)) {
+		funcname_needed = 1;
+		from = opt->last_shown + 1;
+	}
 
 	/* Rewind. */
-	while (bol > gs->buf &&
-	       cur > (funcname_needed == 2 ? opt->last_shown + 1 : from)) {
+	while (bol > gs->buf && cur > from) {
 		char *eol = --bol;
 
 		while (bol > gs->buf && bol[-1] != '\n')
@@ -1501,6 +1502,7 @@ static void show_pre_context(struct grep_opt *opt, struct grep_source *gs,
 		if (funcname_needed && match_funcname(opt, gs, bol, eol)) {
 			funcname_lno = cur;
 			funcname_needed = 0;
+			from = orig_from;
 		}
 	}
 
