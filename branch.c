@@ -228,7 +228,7 @@ N_("\n"
 "\"git push -u\" to set the upstream config as you push.");
 
 void create_branch(const char *name, const char *start_name,
-		   int force, int reflog, int clobber_head_ok,
+		   int force, int clobber_head_ok, int reflog,
 		   int quiet, enum branch_track track)
 {
 	struct commit *commit;
