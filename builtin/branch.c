@@ -507,7 +507,7 @@ static void copy_or_rename_branch(const char *oldname, const char *newname, int 
 
 	if (recovery) {
 		if (copy)
-			warning(_("Copied a misnamed branch '%s' away"),
+			warning(_("Created a copy of a misnamed branch '%s'"),
 				oldref.buf + 11);
 		else
 			warning(_("Renamed a misnamed branch '%s' away"),
