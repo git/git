@@ -255,4 +255,26 @@ test_expect_success 'rebase commit with an ancient timestamp' '
 	grep "author .* 34567 +0600$" actual
 '
 
+test_expect_success 'rebase with "From " line in commit message' '
+	git checkout -b preserve-from master~1 &&
+	cat >From_.msg <<EOF &&
+Somebody embedded an mbox in a commit message
+
+This is from so-and-so:
+
+From a@b Mon Sep 17 00:00:00 2001
+From: John Doe <nobody@example.com>
+Date: Sat, 11 Nov 2017 00:00:00 +0000
+Subject: not this message
+
+something
+EOF
+	>From_ &&
+	git add From_ &&
+	git commit -F From_.msg &&
+	git rebase master &&
+	git log -1 --pretty=format:%B >out &&
+	test_cmp From_.msg out
+'
+
 test_done
