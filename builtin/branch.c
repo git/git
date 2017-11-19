@@ -648,6 +648,9 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		rename *= 2;
 	}
 
+	if (list)
+		setup_auto_pager("branch", 0);
+
 	if (delete) {
 		if (!argc)
 			die(_("branch name required"));

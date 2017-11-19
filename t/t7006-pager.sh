@@ -232,7 +232,7 @@ test_expect_success TTY 'git branch respects --no-pager' '
 	! test -e paginated.out
 '
 
-test_expect_failure TTY 'git branch --edit-description ignores pager.branch' '
+test_expect_success TTY 'git branch --edit-description ignores pager.branch' '
 	rm -f paginated.out editor.used &&
 	write_script editor <<-\EOF &&
 		echo "New description" >"$1"
@@ -243,13 +243,13 @@ test_expect_failure TTY 'git branch --edit-description ignores pager.branch' '
 	test -e editor.used
 '
 
-test_expect_success TTY 'git branch --set-upstream-to respects pager.branch' '
+test_expect_success TTY 'git branch --set-upstream-to ignores pager.branch' '
 	rm -f paginated.out &&
 	git branch other &&
 	test_when_finished "git branch -D other" &&
 	test_terminal git -c pager.branch branch --set-upstream-to=other &&
 	test_when_finished "git branch --unset-upstream" &&
-	test -e paginated.out
+	! test -e paginated.out
 '
 
 # A colored commit log will begin with an appropriate ANSI escape
