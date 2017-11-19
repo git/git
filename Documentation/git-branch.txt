@@ -274,7 +274,7 @@ start-point is either a local or remote-tracking branch.
 CONFIGURATION
 -------------
 `pager.branch` is only respected when listing branches, i.e., when
-`--list` is used or implied.
+`--list` is used or implied. The default is to use a pager.
 See linkgit:git-config[1].
 
 Examples

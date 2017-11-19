@@ -649,7 +649,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	}
 
 	if (list)
-		setup_auto_pager("branch", 0);
+		setup_auto_pager("branch", 1);
 
 	if (delete) {
 		if (!argc)

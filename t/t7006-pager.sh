@@ -214,21 +214,21 @@ test_expect_success TTY 'git tag as alias respects pager.tag with -l' '
 	! test -e paginated.out
 '
 
-test_expect_success TTY 'git branch defaults to not paging' '
+test_expect_success TTY 'git branch defaults to paging' '
 	rm -f paginated.out &&
 	test_terminal git branch &&
-	! test -e paginated.out
+	test -e paginated.out
 '
 
 test_expect_success TTY 'git branch respects pager.branch' '
 	rm -f paginated.out &&
-	test_terminal git -c pager.branch branch &&
-	test -e paginated.out
+	test_terminal git -c pager.branch=false branch &&
+	! test -e paginated.out
 '
 
 test_expect_success TTY 'git branch respects --no-pager' '
 	rm -f paginated.out &&
-	test_terminal git -c pager.branch --no-pager branch &&
+	test_terminal git --no-pager branch &&
 	! test -e paginated.out
 '
 
