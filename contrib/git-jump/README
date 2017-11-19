@@ -63,6 +63,9 @@ git jump grep foo_bar
 # same as above, but case-insensitive; you can give
 # arbitrary grep options
 git jump grep -i foo_bar
+
+# use the silver searcher for git jump grep
+git config jump.grepCmd "ag --column"
 --------------------------------------------------
 
 
