@@ -9,15 +9,10 @@ create_packs () {
 			print "data <<EOF";
 			print "$_";
 			print "EOF";
+			print "checkpoint"
 		}
 	' "$@" |
-	git fast-import &&
-
-	git cat-file --batch-all-objects --batch-check='%(objectname)' |
-	while read sha1
-	do
-		echo $sha1 | git pack-objects .git/objects/pack/pack
-	done
+	git fast-import
 }
 
 # create a large number of packs, disabling any gc which might
@@ -25,5 +20,6 @@ create_packs () {
 setup_many_packs () {
 	git config gc.auto 0 &&
 	git config gc.autopacklimit 0 &&
+	git config fastimport.unpacklimit 0 &&
 	create_packs 500
 }
