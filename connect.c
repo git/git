@@ -889,7 +889,8 @@ static struct child_process *git_connect_git(int fd[2], char *hostandport,
 
 	transport_check_allowed("git");
 
-	/* These underlying connection commands die() if they
+	/*
+	 * These underlying connection commands die() if they
 	 * cannot connect.
 	 */
 	if (git_use_proxy(hostandport))
