@@ -378,12 +378,18 @@ test_expect_success 'variant=auto picks based on basename' '
 
 test_expect_success 'simple does not support -4/-6' '
 	copy_ssh_wrapper_as "$TRASH_DIRECTORY/simple" &&
-	test_must_fail git clone -4 "[myhost:123]:src" ssh-bracket-clone-simple
+	test_must_fail git clone -4 "myhost:src" ssh-4-clone-simple
+'
+
+test_expect_success 'simple does not support port' '
+	copy_ssh_wrapper_as "$TRASH_DIRECTORY/simple" &&
+	test_must_fail git clone "[myhost:123]:src" ssh-bracket-clone-simple
 '
 
 test_expect_success 'uplink is treated as simple' '
 	copy_ssh_wrapper_as "$TRASH_DIRECTORY/uplink" &&
-	git clone "[myhost:123]:src" ssh-bracket-clone-uplink &&
+	test_must_fail git clone "[myhost:123]:src" ssh-bracket-clone-uplink &&
+	git clone "myhost:src" ssh-clone-uplink &&
 	expect_ssh myhost src
 '
 
