@@ -364,9 +364,10 @@ test_expect_success 'OpenSSH variant passes -4' '
 	expect_ssh "-4 -p 123" myhost src
 '
 
-test_expect_success 'variant can be overriden' '
-	git -c ssh.variant=simple clone -4 "[myhost:123]:src" ssh-simple-clone &&
-	expect_ssh myhost src
+test_expect_success 'variant can be overridden' '
+	copy_ssh_wrapper_as "$TRASH_DIRECTORY/putty" &&
+	git -c ssh.variant=putty clone -4 "[myhost:123]:src" ssh-putty-clone &&
+	expect_ssh "-4 -P 123" myhost src
 '
 
 test_expect_success 'variant=auto picks based on basename' '
@@ -375,10 +376,9 @@ test_expect_success 'variant=auto picks based on basename' '
 	expect_ssh "-4 -P 123" myhost src
 '
 
-test_expect_success 'simple is treated as simple' '
+test_expect_success 'simple does not support -4/-6' '
 	copy_ssh_wrapper_as "$TRASH_DIRECTORY/simple" &&
-	git clone -4 "[myhost:123]:src" ssh-bracket-clone-simple &&
-	expect_ssh myhost src
+	test_must_fail git clone -4 "[myhost:123]:src" ssh-bracket-clone-simple
 '
 
 test_expect_success 'uplink is treated as simple' '
