@@ -788,6 +788,7 @@ static const char *get_ssh_command(void)
 }
 
 enum ssh_variant {
+	VARIANT_AUTO,
 	VARIANT_SIMPLE,
 	VARIANT_SSH,
 	VARIANT_PLINK,
@@ -795,14 +796,16 @@ enum ssh_variant {
 	VARIANT_TORTOISEPLINK,
 };
 
-static int override_ssh_variant(enum ssh_variant *ssh_variant)
+static void override_ssh_variant(enum ssh_variant *ssh_variant)
 {
 	const char *variant = getenv("GIT_SSH_VARIANT");
 
 	if (!variant && git_config_get_string_const("ssh.variant", &variant))
-		return 0;
+		return;
 
-	if (!strcmp(variant, "plink"))
+	if (!strcmp(variant, "auto"))
+		*ssh_variant = VARIANT_AUTO;
+	else if (!strcmp(variant, "plink"))
 		*ssh_variant = VARIANT_PLINK;
 	else if (!strcmp(variant, "putty"))
 		*ssh_variant = VARIANT_PUTTY;
@@ -812,18 +815,18 @@ static int override_ssh_variant(enum ssh_variant *ssh_variant)
 		*ssh_variant = VARIANT_SIMPLE;
 	else
 		*ssh_variant = VARIANT_SSH;
-
-	return 1;
 }
 
 static enum ssh_variant determine_ssh_variant(const char *ssh_command,
 					      int is_cmdline)
 {
-	enum ssh_variant ssh_variant = VARIANT_SIMPLE;
+	enum ssh_variant ssh_variant = VARIANT_AUTO;
 	const char *variant;
 	char *p = NULL;
 
-	if (override_ssh_variant(&ssh_variant))
+	override_ssh_variant(&ssh_variant);
+
+	if (ssh_variant != VARIANT_AUTO)
 		return ssh_variant;
 
 	if (!is_cmdline) {
@@ -980,6 +983,21 @@ static void fill_ssh_args(struct child_process *conn, const char *ssh_host,
 		if (!ssh)
 			ssh = "ssh";
 		variant = determine_ssh_variant(ssh, 0);
+	}
+
+	if (variant == VARIANT_AUTO) {
+		struct child_process detect = CHILD_PROCESS_INIT;
+
+		detect.use_shell = conn->use_shell;
+		detect.no_stdin = detect.no_stdout = detect.no_stderr = 1;
+
+		argv_array_push(&detect.args, ssh);
+		argv_array_push(&detect.args, "-G");
+		push_ssh_options(&detect.args, &detect.env_array,
+				 VARIANT_SSH, port, flags);
+		argv_array_push(&detect.args, ssh_host);
+
+		variant = run_command(&detect) ? VARIANT_SIMPLE : VARIANT_SSH;
 	}
 
 	argv_array_push(&conn->args, ssh);

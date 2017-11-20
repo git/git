@@ -369,6 +369,12 @@ test_expect_success 'variant can be overriden' '
 	expect_ssh myhost src
 '
 
+test_expect_success 'variant=auto picks based on basename' '
+	copy_ssh_wrapper_as "$TRASH_DIRECTORY/plink" &&
+	git -c ssh.variant=auto clone -4 "[myhost:123]:src" ssh-auto-clone &&
+	expect_ssh "-4 -P 123" myhost src
+'
+
 test_expect_success 'simple is treated as simple' '
 	copy_ssh_wrapper_as "$TRASH_DIRECTORY/simple" &&
 	git clone -4 "[myhost:123]:src" ssh-bracket-clone-simple &&
@@ -379,6 +385,21 @@ test_expect_success 'uplink is treated as simple' '
 	copy_ssh_wrapper_as "$TRASH_DIRECTORY/uplink" &&
 	git clone "[myhost:123]:src" ssh-bracket-clone-uplink &&
 	expect_ssh myhost src
+'
+
+test_expect_success 'OpenSSH-like uplink is treated as ssh' '
+	write_script "$TRASH_DIRECTORY/uplink" <<-EOF &&
+	if test "\$1" = "-G"
+	then
+		exit 0
+	fi &&
+	exec "\$TRASH_DIRECTORY/ssh$X" "\$@"
+	EOF
+	test_when_finished "rm -f \"\$TRASH_DIRECTORY/uplink\"" &&
+	GIT_SSH="$TRASH_DIRECTORY/uplink" &&
+	test_when_finished "GIT_SSH=\"\$TRASH_DIRECTORY/ssh\$X\"" &&
+	git clone "[myhost:123]:src" ssh-bracket-clone-sshlike-uplink &&
+	expect_ssh "-p 123" myhost src
 '
 
 test_expect_success 'plink is treated specially (as putty)' '
