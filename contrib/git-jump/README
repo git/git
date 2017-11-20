@@ -95,3 +95,10 @@ how to activate it.
 
 The shell snippets to generate the quickfix lines will almost certainly
 choke on filenames with exotic characters (like newlines).
+
+Contributing
+------------
+
+Bug fixes, bug reports, and feature requests should be discussed on the
+Git mailing list <git@vger.kernel.org>, and cc'd to the git-jump
+maintainer, Jeff King <peff@peff.net>.
