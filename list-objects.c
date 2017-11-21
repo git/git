@@ -7,16 +7,21 @@
 #include "tree-walk.h"
 #include "revision.h"
 #include "list-objects.h"
+#include "list-objects-filter.h"
+#include "list-objects-filter-options.h"
 
 static void process_blob(struct rev_info *revs,
 			 struct blob *blob,
 			 show_object_fn show,
 			 struct strbuf *path,
 			 const char *name,
-			 void *cb_data)
+			 void *cb_data,
+			 filter_object_fn filter_fn,
+			 void *filter_data)
 {
 	struct object *obj = &blob->object;
 	size_t pathlen;
+	enum list_objects_filter_result r = LOFR_MARK_SEEN | LOFR_DO_SHOW;
 
 	if (!revs->blob_objects)
 		return;
@@ -24,11 +29,17 @@ static void process_blob(struct rev_info *revs,
 		die("bad blob object");
 	if (obj->flags & (UNINTERESTING | SEEN))
 		return;
-	obj->flags |= SEEN;
 
 	pathlen = path->len;
 	strbuf_addstr(path, name);
-	show(obj, path->buf, cb_data);
+	if (filter_fn)
+		r = filter_fn(LOFS_BLOB, obj,
+			      path->buf, &path->buf[pathlen],
+			      filter_data);
+	if (r & LOFR_MARK_SEEN)
+		obj->flags |= SEEN;
+	if (r & LOFR_DO_SHOW)
+		show(obj, path->buf, cb_data);
 	strbuf_setlen(path, pathlen);
 }
 
@@ -69,7 +80,9 @@ static void process_tree(struct rev_info *revs,
 			 show_object_fn show,
 			 struct strbuf *base,
 			 const char *name,
-			 void *cb_data)
+			 void *cb_data,
+			 filter_object_fn filter_fn,
+			 void *filter_data)
 {
 	struct object *obj = &tree->object;
 	struct tree_desc desc;
@@ -77,6 +90,7 @@ static void process_tree(struct rev_info *revs,
 	enum interesting match = revs->diffopt.pathspec.nr == 0 ?
 		all_entries_interesting: entry_not_interesting;
 	int baselen = base->len;
+	enum list_objects_filter_result r = LOFR_MARK_SEEN | LOFR_DO_SHOW;
 
 	if (!revs->tree_objects)
 		return;
@@ -90,9 +104,15 @@ static void process_tree(struct rev_info *revs,
 		die("bad tree object %s", oid_to_hex(&obj->oid));
 	}
 
-	obj->flags |= SEEN;
 	strbuf_addstr(base, name);
-	show(obj, base->buf, cb_data);
+	if (filter_fn)
+		r = filter_fn(LOFS_BEGIN_TREE, obj,
+			      base->buf, &base->buf[baselen],
+			      filter_data);
+	if (r & LOFR_MARK_SEEN)
+		obj->flags |= SEEN;
+	if (r & LOFR_DO_SHOW)
+		show(obj, base->buf, cb_data);
 	if (base->len)
 		strbuf_addch(base, '/');
 
@@ -112,7 +132,7 @@ static void process_tree(struct rev_info *revs,
 			process_tree(revs,
 				     lookup_tree(entry.oid),
 				     show, base, entry.path,
-				     cb_data);
+				     cb_data, filter_fn, filter_data);
 		else if (S_ISGITLINK(entry.mode))
 			process_gitlink(revs, entry.oid->hash,
 					show, base, entry.path,
@@ -121,8 +141,19 @@ static void process_tree(struct rev_info *revs,
 			process_blob(revs,
 				     lookup_blob(entry.oid),
 				     show, base, entry.path,
-				     cb_data);
+				     cb_data, filter_fn, filter_data);
 	}
+
+	if (filter_fn) {
+		r = filter_fn(LOFS_END_TREE, obj,
+			      base->buf, &base->buf[baselen],
+			      filter_data);
+		if (r & LOFR_MARK_SEEN)
+			obj->flags |= SEEN;
+		if (r & LOFR_DO_SHOW)
+			show(obj, base->buf, cb_data);
+	}
+
 	strbuf_setlen(base, baselen);
 	free_tree_buffer(tree);
 }
@@ -183,10 +214,12 @@ static void add_pending_tree(struct rev_info *revs, struct tree *tree)
 	add_pending_object(revs, &tree->object, "");
 }
 
-void traverse_commit_list(struct rev_info *revs,
-			  show_commit_fn show_commit,
-			  show_object_fn show_object,
-			  void *data)
+static void do_traverse(struct rev_info *revs,
+			show_commit_fn show_commit,
+			show_object_fn show_object,
+			void *show_data,
+			filter_object_fn filter_fn,
+			void *filter_data)
 {
 	int i;
 	struct commit *commit;
@@ -200,7 +233,7 @@ void traverse_commit_list(struct rev_info *revs,
 		 */
 		if (commit->tree)
 			add_pending_tree(revs, commit->tree);
-		show_commit(commit, data);
+		show_commit(commit, show_data);
 	}
 	for (i = 0; i < revs->pending.nr; i++) {
 		struct object_array_entry *pending = revs->pending.objects + i;
@@ -211,19 +244,21 @@ void traverse_commit_list(struct rev_info *revs,
 			continue;
 		if (obj->type == OBJ_TAG) {
 			obj->flags |= SEEN;
-			show_object(obj, name, data);
+			show_object(obj, name, show_data);
 			continue;
 		}
 		if (!path)
 			path = "";
 		if (obj->type == OBJ_TREE) {
 			process_tree(revs, (struct tree *)obj, show_object,
-				     &base, path, data);
+				     &base, path, show_data,
+				     filter_fn, filter_data);
 			continue;
 		}
 		if (obj->type == OBJ_BLOB) {
 			process_blob(revs, (struct blob *)obj, show_object,
-				     &base, path, data);
+				     &base, path, show_data,
+				     filter_fn, filter_data);
 			continue;
 		}
 		die("unknown pending object %s (%s)",
@@ -231,4 +266,32 @@ void traverse_commit_list(struct rev_info *revs,
 	}
 	object_array_clear(&revs->pending);
 	strbuf_release(&base);
+}
+
+void traverse_commit_list(struct rev_info *revs,
+			  show_commit_fn show_commit,
+			  show_object_fn show_object,
+			  void *show_data)
+{
+	do_traverse(revs, show_commit, show_object, show_data, NULL, NULL);
+}
+
+void traverse_commit_list_filtered(
+	struct list_objects_filter_options *filter_options,
+	struct rev_info *revs,
+	show_commit_fn show_commit,
+	show_object_fn show_object,
+	void *show_data,
+	struct oidset *omitted)
+{
+	filter_object_fn filter_fn = NULL;
+	filter_free_fn filter_free_fn = NULL;
+	void *filter_data = NULL;
+
+	filter_data = list_objects_filter__init(omitted, filter_options,
+						&filter_fn, &filter_free_fn);
+	do_traverse(revs, show_commit, show_object, show_data,
+		    filter_fn, filter_data);
+	if (filter_data && filter_free_fn)
+		filter_free_fn(filter_data);
 }

@@ -38,6 +38,7 @@ struct object_array {
  * http-push.c:                            16-----19
  * commit.c:                               16-----19
  * sha1_name.c:                                     20
+ * list-objects-filter.c:                             21
  * builtin/fsck.c:  0--3
  */
 #define FLAG_BITS  27
