@@ -63,6 +63,9 @@ UI, Workflows & Features
    HTML version via AsciiDoc/Asciidoctor.
    (merge 049e64aa50 bc/submitting-patches-in-asciidoc later to maint).
 
+ * We learned to talk to watchman to speed up "git status" and other
+   operations that need to see which paths have been modified.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -90,18 +93,15 @@ Performance, Internal Implementation, Development Support etc.
  * Conversion from uchar[20] to struct object_id continues.
 
  * Code cleanup.
-   (merge 62a24c8923 rs/hex-to-bytes-cleanup later to maint).
 
  * A single-word "unsigned flags" in the diff options is being split
    into a structure with many bitfields.
-   (merge 0d1e0e7801 bw/diff-opt-impl-to-bitfields later to maint).
 
  * TravisCI build updates.
 
  * Parts of a test to drive the long-running content filter interface
    has been split into its own module, hopefully to eventually become
    reusable.
-   (merge 0fe8d516bb cc/git-packet-pm later to maint).
 
  * Drop (perhaps overly cautious) sanity check before using the index
    read from the filesystem at runtime.
@@ -187,25 +187,22 @@ Fixes since v2.15
 
  * Some error messages did not quote filenames shown in it, which have
    been fixed.
-   (merge 0a288d1ee9 sr/wrapper-quote-filenames later to maint).
 
  * "git rebase -i" recently started misbehaving when a submodule that
    is configured with 'submodule.<name>.ignore' is dirty; this has
    been corrected.
-   (merge c6d8ccf3a2 bw/rebase-i-ignored-submodule-fix later to maint).
 
  * Building with NO_LIBPCRE1_JIT did not disable it, which has been fixed.
-   (merge 2fff1e196d ab/pcre-v2 later to maint).
 
  * We used to add an empty alternate object database to the system
    that does not help anything; it has been corrected.
-   (merge f28e36686a jk/info-alternates-fix later to maint).
+
+ * Doc update around use of "format-patch --subject-prefix" etc.
+   (merge f6be7edcac ad/submitting-patches-title-decoration later to maint).
+
+ * A fix for an ancient bug in "git apply --ignore-space-change" codepath.
+   (merge 6ce15ce576 rs/apply-fuzzy-match-fix later to maint).
 
  * Other minor doc, test and build updates and code cleanups.
-   (merge 804862209b ao/merge-verbosity-getenv-just-once later to maint).
-   (merge 9360ec0002 rs/sequencer-rewrite-file-cleanup later to maint).
    (merge f4e45cb3eb ma/bisect-leakfix later to maint).
    (merge 4da72644b7 ma/reduce-heads-leakfix later to maint).
-   (merge 3dc5433fd5 ad/rebase-i-serie-typofix later to maint).
-   (merge 5313bee032 tz/fsf-address-update later to maint).
-   (merge 5555a2aa4b cb/t4201-robustify later to maint).
