@@ -348,6 +348,7 @@ struct index_state {
 	unsigned char sha1[20];
 	struct untracked_cache *untracked;
 	uint64_t fsmonitor_last_update;
+	struct ewah_bitmap *fsmonitor_dirty;
 };
 
 extern struct index_state the_index;

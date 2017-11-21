@@ -595,6 +595,10 @@ into it.
 Unsetting the variable, or setting it to empty, "0" or
 "false" (case insensitive) disables trace messages.
 
+`GIT_TRACE_FSMONITOR`::
+	Enables trace messages for the filesystem monitor extension.
+	See `GIT_TRACE` for available trace output options.
+
 `GIT_TRACE_PACK_ACCESS`::
 	Enables trace messages for all accesses to any packs. For each
 	access, the pack file name and an offset in the pack is

@@ -28,19 +28,13 @@ if ($version == 1) {
 	    "Falling back to scanning...\n";
 }
 
-# Convert unix style paths to escaped Windows style paths when running
-# in Windows command prompt
-
-my $system = `uname -s`;
-$system =~ s/[\r\n]+//g;
 my $git_work_tree;
-
-if ($system =~ m/^MSYS_NT/ || $system =~ m/^MINGW/) {
-	$git_work_tree = `cygpath -aw "\$PWD"`;
-	$git_work_tree =~ s/[\r\n]+//g;
-	$git_work_tree =~ s,\\,/,g;
+if ($^O =~ 'msys' || $^O =~ 'cygwin') {
+	$git_work_tree = Win32::GetCwd();
+	$git_work_tree =~ tr/\\/\//;
 } else {
-	$git_work_tree = $ENV{'PWD'};
+	require Cwd;
+	$git_work_tree = Cwd::cwd();
 }
 
 my $retry = 1;
@@ -49,7 +43,7 @@ launch_watchman();
 
 sub launch_watchman {
 
-	my $pid = open2(\*CHLD_OUT, \*CHLD_IN, 'watchman -j')
+	my $pid = open2(\*CHLD_OUT, \*CHLD_IN, 'watchman -j --no-pretty')
 	    or die "open2() failed: $!\n" .
 	    "Falling back to scanning...\n";
 

@@ -2535,6 +2535,9 @@ int write_locked_index(struct index_state *istate, struct lock_file *lock,
 	int new_shared_index, ret;
 	struct split_index *si = istate->split_index;
 
+	if (istate->fsmonitor_last_update)
+		fill_fsmonitor_bitmap(istate);
+
 	if (!si || alternate_index_output ||
 	    (istate->cache_changed & ~EXTMASK)) {
 		if (si)
