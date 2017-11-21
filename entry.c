@@ -4,6 +4,7 @@
 #include "streaming.h"
 #include "submodule.h"
 #include "progress.h"
+#include "fsmonitor.h"
 
 static void create_directories(const char *path, int path_len,
 			       const struct checkout *state)
@@ -373,6 +374,7 @@ finish:
 						   ce->name);
 		fill_stat_cache_info(ce, &st);
 		ce->ce_flags |= CE_UPDATE_IN_BASE;
+		mark_fsmonitor_invalid(state->istate, ce);
 		state->istate->cache_changed |= CE_ENTRY_CHANGED;
 	}
 delayed:

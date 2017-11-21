@@ -16,9 +16,11 @@ SYNOPSIS
 	     [--chmod=(+|-)x]
 	     [--[no-]assume-unchanged]
 	     [--[no-]skip-worktree]
+	     [--[no-]fsmonitor-valid]
 	     [--ignore-submodules]
 	     [--[no-]split-index]
 	     [--[no-|test-|force-]untracked-cache]
+	     [--[no-]fsmonitor]
 	     [--really-refresh] [--unresolve] [--again | -g]
 	     [--info-only] [--index-info]
 	     [-z] [--stdin] [--index-version <n>]
@@ -111,6 +113,12 @@ you will need to handle the situation manually.
 	set and unset the "skip-worktree" bit for the paths. See
 	section "Skip-worktree bit" below for more information.
 
+--[no-]fsmonitor-valid::
+	When one of these flags is specified, the object name recorded
+	for the paths are not updated. Instead, these options
+	set and unset the "fsmonitor valid" bit for the paths. See
+	section "File System Monitor" below for more information.
+
 -g::
 --again::
 	Runs 'git update-index' itself on the paths whose index
@@ -200,6 +208,15 @@ will remove the intended effect of the option.
 	compatibility with older versions of Git where
 	`--untracked-cache` used to imply `--test-untracked-cache` but
 	this option would enable the extension unconditionally.
+
+--fsmonitor::
+--no-fsmonitor::
+	Enable or disable files system monitor feature. These options
+	take effect whatever the value of the `core.fsmonitor`
+	configuration variable (see linkgit:git-config[1]). But a warning
+	is emitted when the change goes against the configured value, as
+	the configured value will take effect next time the index is
+	read and this will remove the intended effect of the option.
 
 \--::
 	Do not interpret any more arguments as options.
@@ -446,6 +463,34 @@ untracked cache is added to or removed from the index the next time a
 command reads the index; while when `--[no-|force-]untracked-cache`
 are used, the untracked cache is immediately added to or removed from
 the index.
+
+File System Monitor
+-------------------
+
+This feature is intended to speed up git operations for repos that have
+large working directories.
+
+It enables git to work together with a file system monitor (see the
+"fsmonitor-watchman" section of linkgit:githooks[5]) that can
+inform it as to what files have been modified. This enables git to avoid
+having to lstat() every file to find modified files.
+
+When used in conjunction with the untracked cache, it can further improve
+performance by avoiding the cost of scanning the entire working directory
+looking for new files.
+
+If you want to enable (or disable) this feature, it is easier to use
+the `core.fsmonitor` configuration variable (see
+linkgit:git-config[1]) than using the `--fsmonitor` option to
+`git update-index` in each repository, especially if you want to do so
+across all repositories you use, because you can set the configuration
+variable to `true` (or `false`) in your `$HOME/.gitconfig` just once
+and have it affect all repositories you touch.
+
+When the `core.fsmonitor` configuration variable is changed, the
+file system monitor is added to or removed from the index the next time
+a command reads the index. When `--[no-]fsmonitor` are used, the file
+system monitor is immediately added to or removed from the index.
 
 Configuration
 -------------

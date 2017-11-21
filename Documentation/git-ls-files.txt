@@ -9,7 +9,7 @@ git-ls-files - Show information about files in the index and the working tree
 SYNOPSIS
 --------
 [verse]
-'git ls-files' [-z] [-t] [-v]
+'git ls-files' [-z] [-t] [-v] [-f]
 		(--[cached|deleted|others|ignored|stage|unmerged|killed|modified])*
 		(-[c|d|o|i|s|u|k|m])*
 		[--eol]
@@ -131,6 +131,11 @@ a space) at the start of each line:
 -v::
 	Similar to `-t`, but use lowercase letters for files
 	that are marked as 'assume unchanged' (see
+	linkgit:git-update-index[1]).
+
+-f::
+	Similar to `-t`, but use lowercase letters for files
+	that are marked as 'fsmonitor valid' (see
 	linkgit:git-update-index[1]).
 
 --full-name::
