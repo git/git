@@ -306,21 +306,20 @@ test_expect_success 'clone checking out a tag' '
 	test_cmp fetch.expected fetch.actual
 '
 
-setup_ssh_wrapper () {
-	test_expect_success 'setup ssh wrapper' '
-		cp "$GIT_BUILD_DIR/t/helper/test-fake-ssh$X" \
-			"$TRASH_DIRECTORY/ssh$X" &&
-		GIT_SSH="$TRASH_DIRECTORY/ssh$X" &&
-		export GIT_SSH &&
-		export TRASH_DIRECTORY &&
-		>"$TRASH_DIRECTORY"/ssh-output
-	'
-}
+test_expect_success 'set up ssh wrapper' '
+	cp "$GIT_BUILD_DIR/t/helper/test-fake-ssh$X" \
+		"$TRASH_DIRECTORY/ssh$X" &&
+	GIT_SSH="$TRASH_DIRECTORY/ssh$X" &&
+	export GIT_SSH &&
+	export TRASH_DIRECTORY &&
+	>"$TRASH_DIRECTORY"/ssh-output
+'
 
 copy_ssh_wrapper_as () {
 	cp "$TRASH_DIRECTORY/ssh$X" "${1%$X}$X" &&
+	test_when_finished "rm $(git rev-parse --sq-quote "${1%$X}$X")" &&
 	GIT_SSH="${1%$X}$X" &&
-	export GIT_SSH
+	test_when_finished "GIT_SSH=\"\$TRASH_DIRECTORY/ssh\$X\""
 }
 
 expect_ssh () {
@@ -343,8 +342,6 @@ expect_ssh () {
 	} >"$TRASH_DIRECTORY/ssh-expect" &&
 	(cd "$TRASH_DIRECTORY" && test_cmp ssh-expect ssh-output)
 }
-
-setup_ssh_wrapper
 
 test_expect_success 'clone myhost:src uses ssh' '
 	git clone myhost:src ssh-clone &&
@@ -432,12 +429,14 @@ test_expect_success 'ssh.variant overrides plink detection' '
 '
 
 test_expect_success 'GIT_SSH_VARIANT overrides plink detection to plink' '
+	copy_ssh_wrapper_as "$TRASH_DIRECTORY/plink" &&
 	GIT_SSH_VARIANT=plink \
 	git clone "[myhost:123]:src" ssh-bracket-clone-variant-3 &&
 	expect_ssh "-P 123" myhost src
 '
 
 test_expect_success 'GIT_SSH_VARIANT overrides plink to tortoiseplink' '
+	copy_ssh_wrapper_as "$TRASH_DIRECTORY/plink" &&
 	GIT_SSH_VARIANT=tortoiseplink \
 	git clone "[myhost:123]:src" ssh-bracket-clone-variant-4 &&
 	expect_ssh "-batch -P 123" myhost src
@@ -448,9 +447,6 @@ test_expect_success 'clean failure on broken quoting' '
 		env GIT_SSH_COMMAND="${SQ}plink.exe -v" \
 		git clone "[myhost:123]:src" sq-failure
 '
-
-# Reset the GIT_SSH environment variable for clone tests.
-setup_ssh_wrapper
 
 counter=0
 # $1 url
