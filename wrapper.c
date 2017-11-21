@@ -569,7 +569,7 @@ static int warn_if_unremovable(const char *op, const char *file, int rc)
 	if (!rc || errno == ENOENT)
 		return 0;
 	err = errno;
-	warning_errno("unable to %s %s", op, file);
+	warning_errno("unable to %s '%s'", op, file);
 	errno = err;
 	return rc;
 }
@@ -583,7 +583,7 @@ int unlink_or_msg(const char *file, struct strbuf *err)
 	if (!rc || errno == ENOENT)
 		return 0;
 
-	strbuf_addf(err, "unable to unlink %s: %s",
+	strbuf_addf(err, "unable to unlink '%s': %s",
 		    file, strerror(errno));
 	return -1;
 }
@@ -653,9 +653,9 @@ void write_file_buf(const char *path, const char *buf, size_t len)
 {
 	int fd = xopen(path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
 	if (write_in_full(fd, buf, len) < 0)
-		die_errno(_("could not write to %s"), path);
+		die_errno(_("could not write to '%s'"), path);
 	if (close(fd))
-		die_errno(_("could not close %s"), path);
+		die_errno(_("could not close '%s'"), path);
 }
 
 void write_file(const char *path, const char *fmt, ...)
