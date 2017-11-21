@@ -64,5 +64,17 @@ Fixes since v2.15
 
  * Updates from GfW project.
 
+ * "git rebase -i" recently started misbehaving when a submodule that
+   is configured with 'submodule.<name>.ignore' is dirty; this has
+   been corrected.
+
+ * Some error messages did not quote filenames shown in it, which have
+   been fixed.
+
+ * Building with NO_LIBPCRE1_JIT did not disable it, which has been fixed.
+
+ * We used to add an empty alternate object database to the system
+   that does not help anything; it has been corrected.
+
 
 Also contains various documentation updates and code clean-ups.
