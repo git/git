@@ -175,14 +175,14 @@ create::
 	return its object name, without storing it anywhere in the ref
 	namespace.
 	This is intended to be useful for scripts.  It is probably not
-	the command you want to use; see "save" above.
+	the command you want to use; see "push" above.
 
 store::
 
 	Store a given stash created via 'git stash create' (which is a
 	dangling merge commit) in the stash ref, updating the stash
 	reflog.  This is intended to be useful for scripts.  It is
-	probably not the command you want to use; see "save" above.
+	probably not the command you want to use; see "push" above.
 
 DISCUSSION
 ----------
