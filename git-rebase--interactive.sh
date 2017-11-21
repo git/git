@@ -722,7 +722,7 @@ collapse_todo_ids() {
 	git rebase--helper --shorten-ids
 }
 
-# Add commands after a pick or after a squash/fixup serie
+# Add commands after a pick or after a squash/fixup series
 # in the todo list.
 add_exec_commands () {
 	{
