@@ -254,7 +254,7 @@ $(ALL_MSGFILES): %.msg : %.po
 lib/tclIndex: $(ALL_LIBFILES) GIT-GUI-VARS
 	$(QUIET_INDEX)if echo \
 	  $(foreach p,$(PRELOAD_FILES),source $p\;) \
-	  auto_mkindex lib '*.tcl' \
+	  auto_mkindex lib $(patsubst lib/%,%,$(sort $(ALL_LIBFILES))) \
 	| $(TCL_PATH) $(QUIET_2DEVNULL); then : ok; \
 	else \
 	 echo >&2 "    * $(TCL_PATH) failed; using unoptimized loading"; \
