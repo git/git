@@ -208,6 +208,10 @@ info/exclude::
 	'git clean' look at it but the core Git commands do not look
 	at it.  See also: linkgit:gitignore[5].
 
+info/attributes::
+	Defines which attributes to assign to a path, similar to per-directory
+	`.gitattributes` files.   See also: linkgit:gitattributes[5].
+
 info/sparse-checkout::
 	This file stores sparse checkout patterns.
 	See also: linkgit:git-read-tree[1].
