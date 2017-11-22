@@ -14331,7 +14331,7 @@ msgstr "git worktree add [<options>] <chemin> [<branche>]"
 
 #: builtin/worktree.c:17
 msgid "git worktree list [<options>]"
-msgstr "git worktree prune [<options>]"
+msgstr "git worktree list [<options>]"
 
 #: builtin/worktree.c:18
 msgid "git worktree lock [<options>] <path>"
