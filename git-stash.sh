@@ -76,6 +76,12 @@ create_stash () {
 			shift
 			stash_msg=${1?"BUG: create_stash () -m requires an argument"}
 			;;
+		-m*)
+			stash_msg=${1#-m}
+			;;
+		--message=*)
+			stash_msg=${1#--message=}
+			;;
 		-u|--include-untracked)
 			shift
 			untracked=${1?"BUG: create_stash () -u requires an argument"}
@@ -193,6 +199,12 @@ store_stash () {
 			shift
 			stash_msg="$1"
 			;;
+		-m*)
+			stash_msg=${1#-m}
+			;;
+		--message=*)
+			stash_msg=${1#--message=}
+			;;
 		-q|--quiet)
 			quiet=t
 			;;
@@ -250,6 +262,12 @@ push_stash () {
 			shift
 			test -z ${1+x} && usage
 			stash_msg=$1
+			;;
+		-m*)
+			stash_msg=${1#-m}
+			;;
+		--message=*)
+			stash_msg=${1#--message=}
 			;;
 		--help)
 			show_help
