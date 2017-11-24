@@ -57,6 +57,7 @@ extern const char sign_off_header[];
 
 void append_signoff(struct strbuf *msgbuf, int ignore_footer, unsigned flag);
 void append_conflicts_hint(struct strbuf *msgbuf);
+int git_sequencer_config(const char *k, const char *v, void *cb);
 
 enum commit_msg_cleanup_mode {
 	COMMIT_MSG_CLEANUP_SPACE,
