@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Nov 2017, #06; Tue, 21)
+Subject: What's cooking in git.git (Nov 2017, #07; Fri, 24)
 X-master-at: 14c63a9dc093d6738454f6369a4f5663ca732cf7
-X-next-at: 466bffb3ac3fb7c740a2ea1485c5f69af6b40864
+X-next-at: b06021eebab0504f6c8e11598ad9be6115ba037d
 
-What's cooking in git.git (Nov 2017, #06; Tue, 21)
+What's cooking in git.git (Nov 2017, #07; Fri, 24)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -22,186 +22,189 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* ad/submitting-patches-title-decoration (2017-11-11) 1 commit
-  (merged to 'next' on 2017-11-15 at 99238c3537)
- + doc/SubmittingPatches: correct subject guidance
-
- Doc update around use of "format-patch --subject-prefix" etc.
-
-
-* av/fsmonitor (2017-11-13) 7 commits
-  (merged to 'next' on 2017-11-13 at db56ad7eef)
- + fsmonitor: simplify determining the git worktree under Windows
- + fsmonitor: store fsmonitor bitmap before splitting index
- + fsmonitor: read from getcwd(), not the PWD environment variable
-  (merged to 'next' on 2017-11-07 at a06178754d)
- + fsmonitor: delay updating state until after split index is merged
- + fsmonitor: document GIT_TRACE_FSMONITOR
- + fsmonitor: don't bother pretty-printing JSON from watchman
- + fsmonitor: set the PWD to the top of the working tree
- (this branch uses bp/fsmonitor.)
-
- Various fixes to bp/fsmonitor topic.
-
- Waiting for follow-on fixes to settle.
-
-
-* bp/fsmonitor (2017-10-05) 15 commits
-  (merged to 'next' on 2017-11-07 at b08d44ba60)
- + fsmonitor: preserve utf8 filenames in fsmonitor-watchman log
- + fsmonitor: read entirety of watchman output
- + fsmonitor: MINGW support for watchman integration
- + fsmonitor: add a performance test
- + fsmonitor: add a sample integration script for Watchman
- + fsmonitor: add test cases for fsmonitor extension
- + split-index: disable the fsmonitor extension when running the split index test
- + fsmonitor: add a test tool to dump the index extension
- + update-index: add fsmonitor support to update-index
- + ls-files: Add support in ls-files to display the fsmonitor valid bit
- + fsmonitor: add documentation for the fsmonitor extension.
- + fsmonitor: teach git to optionally utilize a file system monitor to speed up detecting new or changed files.
- + update-index: add a new --force-write-index option
- + preload-index: add override to enable testing preload-index
- + bswap: add 64 bit endianness helper get_be64
- (this branch is used by av/fsmonitor.)
-
- Originally merged to 'next' on 2017-10-05
-
- We learned to talk to watchman to speed up "git status" and other
- operations that need to see which paths have been modified.
-
- Waiting for follow-on fixes to settle.
-
-
-* rs/apply-fuzzy-match-fix (2017-11-12) 1 commit
-  (merged to 'next' on 2017-11-15 at 2d724fa63b)
- + apply: avoid out-of-bounds access in fuzzy_matchlines()
-
- A fix for an ancient bug in "git apply --ignore-space-change" codepath.
-
---------------------------------------------------
 [New Topics]
 
-* ew/rebase-mboxrd (2017-11-18) 1 commit
-  (merged to 'next' on 2017-11-21 at 88eaaac334)
- + rebase: use mboxrd format to avoid split errors
+* en/rename-directory-detection (2017-11-21) 33 commits
+ - merge-recursive: ensure we write updates for directory-renamed file
+ - merge-recursive: avoid spurious rename/rename conflict from dir renames
+ - directory rename detection: new testcases showcasing a pair of bugs
+ - merge-recursive: fix remaining directory rename + dirty overwrite cases
+ - merge-recursive: fix overwriting dirty files involved in renames
+ - merge-recursive: avoid clobbering untracked files with directory renames
+ - merge-recursive: apply necessary modifications for directory renames
+ - merge-recursive: when comparing files, don't include trees
+ - merge-recursive: check for file level conflicts then get new name
+ - merge-recursive: add computation of collisions due to dir rename & merging
+ - merge-recursive: add a new hashmap for storing file collisions
+ - merge-recursive: check for directory level conflicts
+ - merge-recursive: add get_directory_renames()
+ - merge-recursive: add a new hashmap for storing directory renames
+ - merge-recursive: split out code for determining diff_filepairs
+ - merge-recursive: make !o->detect_rename codepath more obvious
+ - merge-recursive: fix leaks of allocated renames and diff_filepairs
+ - merge-recursive: introduce new functions to handle rename logic
+ - merge-recursive: move the get_renames() function
+ - directory rename detection: tests for handling overwriting dirty files
+ - directory rename detection: tests for handling overwriting untracked files
+ - directory rename detection: miscellaneous testcases to complete coverage
+ - directory rename detection: testcases exploring possibly suboptimal merges
+ - directory rename detection: more involved edge/corner testcases
+ - directory rename detection: testcases checking which side did the rename
+ - directory rename detection: files/directories in the way of some renames
+ - directory rename detection: partially renamed directory testcase/discussion
+ - directory rename detection: testcases to avoid taking detection too far
+ - directory rename detection: directory splitting testcases
+ - directory rename detection: basic testcases
+ - merge-recursive: add explanation for src_entry and dst_entry
+ - merge-recursive: fix logic ordering issue
+ - Tighten and correct a few testcases for merging and cherry-picking
 
- When "git rebase" prepared an mailbox of changes and fed it to "git
- am" to replay them, it was confused when a stray "From " happened
- to be in the log message of one of the replayed changes.  This has
- been corrected.
+ Rename detection logic in "diff" family that is used in "merge" has
+ learned to guess when all of x/a, x/b and x/c have moved to z/a,
+ z/b and z/c, it is likely that x/d added in the meantime would also
+ want to move to z/d by taking the hint that the entire directory
+ 'x' moved to 'z'.
 
- Will merge to 'master'.
-
-
-* rs/config-write-section-fix (2017-11-18) 1 commit
-  (merged to 'next' on 2017-11-21 at a7f3f93e0c)
- + config: flip return value of write_section()
-
- There was a recent semantic mismerge in the codepath to write out a
- section of a configuration section, which has been corrected.
-
- Will merge to 'master'.
-
-
-* ma/branch-list-paginate (2017-11-20) 3 commits
- - branch: change default of `pager.branch` to "on"
- - branch: respect `pager.branch` in list-mode only
- - t7006: add tests for how git branch paginates
-
- "git branch --list" learned to show its output through the pager by
- default when the output is going to a terminal, which is controlled
- by the pager.branch configuration variable.  This is similar to a
- recent change to "git tag --list".
-
- Will merge to 'next'.
-
-
-* rs/include-comments-before-the-function-header (2017-11-21) 6 commits
- - grep: show non-empty lines before functions with -W
- - grep: update boundary variable for pre-context
- - t7810: improve check of -W with user-defined function lines
- - xdiff: show non-empty lines before functions with -W
- - xdiff: factor out is_func_rec()
- - t4051: add test for comments preceding function lines
-
- "git grep -W", "git diff -W" and their friends learned a heuristic
- to extend a pre-context beyond the line that matches the "function
- pattern" (aka "diff.*.xfuncname") to include a comment block, if
- exists, that immediately precedes it.
-
- Will merge to 'next'.
+ Needs review.
 
 
-* jk/fewer-pack-rescan (2017-11-21) 5 commits
- - sha1_file: don't re-scan pack directory for null sha1
- - everything_local: use "quick" object existence check
- - p5551: add a script to test fetch pack-dir rescans
- - t/perf/lib-pack: use fast-import checkpoint to create packs
- - p5550: factor out nonsense-pack creation
+* ac/complete-pull-autostash (2017-11-22) 1 commit
+ - completion: add --autostash and --no-autostash to pull
 
- Internaly we use 0{40} as a placeholder object name to signal the
- codepath that there is no such object (e.g. the fast-forward check
- while "git fetch" stores a new remote-tracking ref says "we know
- there is no 'old' thing pointed at by the ref, as we are creating
- it anew" by passing 0{40} for the 'old' side), and expect that a
- codepath to locate an in-core object to return NULL as a sign that
- the object does not exist.  A look-up for an object that does not
- exist however is quite costly with a repository with large number
- of packfiles.  This access pattern has been optimized.
-
- Undecided.
-
- While resolving a conflict with jh/fsck-promisors topic, I ended up
- with a code that rejects 0{40} a lot earlier, before we try to see
- if a pack entry for 0{40} exists, even though the patch that is
- queued on this topic is more conservative.  Perhaps we would want
- to use the alternate version that declares the 0{40} is a sentinel
- that signals that there is no such object.
-
-
-* ks/rebase-no-git-foo (2017-11-21) 1 commit
- - git-rebase: clean up dashed-usages in messages
-
- Mentions of "git-rebase" and "git-am" (dashed form) still remained
- in end-user visible strings emitted by the "git rebase" command;
- they have been corrected.
+ The shell completion (in contrib/) learned that "git pull" can take
+ the "--autostash" option.
 
  Will merge to 'next'.
 
 
-* sw/pull-ipv46-passthru (2017-11-21) 1 commit
- - pull: pass -4/-6 option to 'git fetch'
+* cc/git-packet-pm (2017-11-22) 2 commits
+ - Git/Packet.pm: use 'if' instead of 'unless'
+ - Git/Packet: clarify that packet_required_key_val_read allows EOF
 
- Contrary to the documentation, "git pull -4/-4 other-args" did not
- ask the underlying "git fetch" to go over IPv4/IPv6, which has been
- corrected.
+ Code clean-up.
 
  Will merge to 'next'.
+
+
+* jn/reproducible-build (2017-11-22) 3 commits
+ - Merge branch 'jn/reproducible-build' of ../git-gui into jn/reproducible-build
+ - git-gui: sort entries in optimized tclIndex
+ - generate-cmdlist: avoid non-deterministic output
+
+ The build procedure has been taught to avoid some unnecessary
+ instability in the build products.
+
+ Will merge to 'next'.
+
+
+* jt/submodule-tests-cleanup (2017-11-22) 1 commit
+ - Tests: clean up submodule recursive helpers
+
+ Further test clean-up.
+
+ Will merge to 'next'.
+
+
+* rd/man-prune-progress (2017-11-22) 1 commit
+ - prune: add "--progress" to man page and usage msg
+
+ Doc update.
+
+ Will merge to 'next'.
+
+
+* rd/man-reflog-add-n (2017-11-22) 1 commit
+ - doc: add missing "-n" (dry-run) option to reflog man page
+
+ Doc update.
+
+ Will merge to 'next'.
+
+
+* ph/stash-save-m-option-fix (2017-11-24) 1 commit
+ - stash: learn to parse -m/--message like commit does
+
+ In addition to "git stash -m message", the command learned to
+ accept "git stash -mmessage" form.
+
+ Will merge to 'next'.
+
+
+* ra/decorate-limit-refs (2017-11-22) 1 commit
+ - log: add option to choose which refs to decorate
+
+ The tagnames "git log --decorate" uses to annotate the commits can
+ now be limited to subset of available refs with the two additional
+ options, --decorate-refs[-exclude]=<pattern>.
+
+ Will merge to 'next'.
+
+
+* rd/doc-notes-prune-fix (2017-11-22) 1 commit
+ - notes: correct 'git notes prune' options to '[-n] [-v]'
+
+ Doc update.
+
+ Will merge to 'next'.
+
+
+* tg/deprecate-stash-save (2017-11-22) 1 commit
+ - doc: prefer 'stash push' over 'stash save'
+
+ Doc update.
+
+ Will merge to 'next'.
+
+
+* ab/pcre2-grep (2017-11-24) 2 commits
+ - grep: fix segfault under -P + PCRE2 <=10.30 + (*NO_JIT)
+ - test-lib: add LIBPCRE1 & LIBPCRE2 prerequisites
+
+ "git grep" compiled with libpcre2 sometimes triggered a segfault,
+ which is being fixed.
+
+ Will merge to 'next'.
+
+
+* jc/receive-pack-hook-doc (2017-11-24) 1 commit
+ - hooks doc: clarify when receive-pack invokes its hooks
+
+ Doc update.
+
+ Will merge to 'next'.
+
+
+* sb/diff-blobfind (2017-11-24) 1 commit
+ - diff: add a new diffcore transformation to find a specific blob
+
+ "git diff" family of commands learned --blobfind=<object-name> that
+ allows you to limit the output only to a change that involves the
+ named blob object (either changing the contents from or to it).
+
+ Needs review.
+
+
+* sp/doc-info-attributes (2017-11-24) 1 commit
+ - doc: Mention info/attributes in gitrepository-layout
+
+ Doc update.
+
+ Will merge to 'next'.
+
+
+* tg/worktree-create-tracking (2017-11-24) 4 commits
+ - worktree: make add <path> dwim
+ - worktree: make add <path> <branch> dwim
+ - worktree: add --[no-]track option to the add subcommand
+ - checkout: factor out functions to new lib file
+
+ The way "git worktree add" determines what branch to create from
+ where and checkout in the new worktree has been updated a bit.
+
+ Needs review.
 
 --------------------------------------------------
 [Stalled]
-
-* pw/sequencer-in-process-commit (2017-11-18) 9 commits
- - SQUASH???
- - sequencer: try to commit without forking 'git commit'
- - sequencer: load commit related config
- - sequencer: simplify adding Signed-off-by: trailer
- - commit: move print_commit_summary() to libgit
- - commit: move post-rewrite code to libgit
- - Add a function to update HEAD after creating a commit
- - commit: move empty message checks to libgit
- - t3404: check intermediate squash messages
-
- The sequencer infrastructure is shared across "git cherry-pick",
- "git rebase -i", etc., and has always spawned "git commit" when it
- needs to create a commit.  It has been taught to do so internally,
- when able, by reusing the codepath "git commit" itself uses, which
- gives performance boost for a few tens of percents in some sample
- scenarios.
-
 
 * jc/merge-symlink-ours-theirs (2017-09-26) 1 commit
  - merge: teach -Xours/-Xtheirs to symbolic link merge
@@ -237,20 +240,6 @@ of the repositories listed at
  be prepared to accept a guess that is not known to be correct.
 
  What's the doneness of this one?
-
-
-* cc/perf-run-config (2017-09-24) 9 commits
- - perf: store subsection results in "test-results/$GIT_PERF_SUBSECTION/"
- - perf/run: show name of rev being built
- - perf/run: add run_subsection()
- - perf/run: update get_var_from_env_or_config() for subsections
- - perf/run: add get_subsections()
- - perf/run: add calls to get_var_from_env_or_config()
- - perf/run: add GIT_PERF_DIRS_OR_REVS
- - perf/run: add get_var_from_env_or_config()
- - perf/run: add '--config' option to the 'run' script
-
- Needs review.
 
 
 * jk/drop-ancient-curl (2017-08-09) 5 commits
@@ -304,6 +293,136 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* cc/perf-run-config (2017-09-24) 9 commits
+ - perf: store subsection results in "test-results/$GIT_PERF_SUBSECTION/"
+ - perf/run: show name of rev being built
+ - perf/run: add run_subsection()
+ - perf/run: update get_var_from_env_or_config() for subsections
+ - perf/run: add get_subsections()
+ - perf/run: add calls to get_var_from_env_or_config()
+ - perf/run: add GIT_PERF_DIRS_OR_REVS
+ - perf/run: add get_var_from_env_or_config()
+ - perf/run: add '--config' option to the 'run' script
+
+ Will merge to 'next'.
+
+
+* pw/sequencer-in-process-commit (2017-11-24) 9 commits
+ - t3512/t3513: remove KNOWN_FAILURE_CHERRY_PICK_SEES_EMPTY_COMMIT=1
+ - sequencer: try to commit without forking 'git commit'
+ - sequencer: load commit related config
+ - sequencer: simplify adding Signed-off-by: trailer
+ - commit: move print_commit_summary() to libgit
+ - commit: move post-rewrite code to libgit
+ - Add a function to update HEAD after creating a commit
+ - commit: move empty message checks to libgit
+ - t3404: check intermediate squash messages
+
+ The sequencer infrastructure is shared across "git cherry-pick",
+ "git rebase -i", etc., and has always spawned "git commit" when it
+ needs to create a commit.  It has been taught to do so internally,
+ when able, by reusing the codepath "git commit" itself uses, which
+ gives performance boost for a few tens of percents in some sample
+ scenarios.
+
+ Will merge to and cook in 'next'.
+
+
+* ew/rebase-mboxrd (2017-11-18) 1 commit
+  (merged to 'next' on 2017-11-21 at 88eaaac334)
+ + rebase: use mboxrd format to avoid split errors
+
+ When "git rebase" prepared an mailbox of changes and fed it to "git
+ am" to replay them, it was confused when a stray "From " happened
+ to be in the log message of one of the replayed changes.  This has
+ been corrected.
+
+ Will merge to 'master'.
+
+
+* rs/config-write-section-fix (2017-11-18) 1 commit
+  (merged to 'next' on 2017-11-21 at a7f3f93e0c)
+ + config: flip return value of write_section()
+
+ There was a recent semantic mismerge in the codepath to write out a
+ section of a configuration section, which has been corrected.
+
+ Will merge to 'master'.
+
+
+* ma/branch-list-paginate (2017-11-20) 3 commits
+  (merged to 'next' on 2017-11-22 at eecd7f2369)
+ + branch: change default of `pager.branch` to "on"
+ + branch: respect `pager.branch` in list-mode only
+ + t7006: add tests for how git branch paginates
+
+ "git branch --list" learned to show its output through the pager by
+ default when the output is going to a terminal, which is controlled
+ by the pager.branch configuration variable.  This is similar to a
+ recent change to "git tag --list".
+
+ Will merge to 'master'.
+
+
+* rs/include-comments-before-the-function-header (2017-11-21) 6 commits
+  (merged to 'next' on 2017-11-22 at d7255a836f)
+ + grep: show non-empty lines before functions with -W
+ + grep: update boundary variable for pre-context
+ + t7810: improve check of -W with user-defined function lines
+ + xdiff: show non-empty lines before functions with -W
+ + xdiff: factor out is_func_rec()
+ + t4051: add test for comments preceding function lines
+
+ "git grep -W", "git diff -W" and their friends learned a heuristic
+ to extend a pre-context beyond the line that matches the "function
+ pattern" (aka "diff.*.xfuncname") to include a comment block, if
+ exists, that immediately precedes it.
+
+ Will merge to 'master'.
+
+
+* jk/fewer-pack-rescan (2017-11-22) 5 commits
+ - sha1_file: fast-path null sha1 as a missing object
+ - everything_local: use "quick" object existence check
+ - p5551: add a script to test fetch pack-dir rescans
+ - t/perf/lib-pack: use fast-import checkpoint to create packs
+ - p5550: factor out nonsense-pack creation
+
+ Internaly we use 0{40} as a placeholder object name to signal the
+ codepath that there is no such object (e.g. the fast-forward check
+ while "git fetch" stores a new remote-tracking ref says "we know
+ there is no 'old' thing pointed at by the ref, as we are creating
+ it anew" by passing 0{40} for the 'old' side), and expect that a
+ codepath to locate an in-core object to return NULL as a sign that
+ the object does not exist.  A look-up for an object that does not
+ exist however is quite costly with a repository with large number
+ of packfiles.  This access pattern has been optimized.
+
+ Will merge to 'next'.
+
+
+* ks/rebase-no-git-foo (2017-11-21) 1 commit
+  (merged to 'next' on 2017-11-22 at 336552dbb7)
+ + git-rebase: clean up dashed-usages in messages
+
+ Mentions of "git-rebase" and "git-am" (dashed form) still remained
+ in end-user visible strings emitted by the "git rebase" command;
+ they have been corrected.
+
+ Will merge to 'master'.
+
+
+* sw/pull-ipv46-passthru (2017-11-21) 1 commit
+  (merged to 'next' on 2017-11-22 at b06021eeba)
+ + pull: pass -4/-6 option to 'git fetch'
+
+ Contrary to the documentation, "git pull -4/-6 other-args" did not
+ ask the underlying "git fetch" to go over IPv4/IPv6, which has been
+ corrected.
+
+ Will merge to 'master'.
+
+
 * jn/ssh-wrappers (2017-11-21) 9 commits
  - connect: correct style of C-style comment
  - ssh: 'simple' variant does not support --port
@@ -322,6 +441,8 @@ of the repositories listed at
  automatically detect how compatible the GIT_SSH/GIT_SSH_COMMAND is
  to OpenSSH convention and then error out an invocation to make it
  easier to diagnose connection errors.
+
+ Will merge to 'next'.
 
 
 * rv/sendemail-tocmd-in-config-and-completion (2017-11-14) 2 commits
@@ -352,6 +473,8 @@ of the repositories listed at
  the configuration and report it as a timestamp, just like "--int"
  would read "1k" and report 1024, to help consumption by scripts.
 
+ Will merge to 'next'.
+
 
 * sd/branch-copy (2017-11-16) 1 commit
   (merged to 'next' on 2017-11-20 at e33bcc460a)
@@ -381,6 +504,8 @@ of the repositories listed at
  way that has been possible on Windows for quite some time, for
  Linux, BSDs and Darwin.
 
+ A part of this that deals with Perl is still being discussed.
+
 
 * jc/editor-waiting-message (2017-11-17) 1 commit
  - launch_editor(): indicate that Git waits for user input
@@ -389,6 +514,8 @@ of the repositories listed at
  user to finish editing when spawning an editor, in case the editor
  opens to a hidden window or somewhere obscure and the user gets
  lost.
+
+ Will merge to 'next'.
 
 
 * rs/apply-inaccurate-eof-with-incomplete-line (2017-11-17) 1 commit
@@ -408,6 +535,8 @@ of the repositories listed at
  removed, as "--set-upstream-to" is the preferred one these days.
  The documentation still had "--set-upstream" listed on its
  synopsys section, which has been corrected.
+
+ Will merge to 'next'.
 
 
 * tz/complete-branch-copy (2017-11-17) 1 commit
@@ -466,7 +595,7 @@ of the repositories listed at
  hardcoded limit of 32k paths; this is being lifted to allow users
  trade cycles with a (possibly) easier to read result.
 
- Will merge to 'master'.
+ Will cook in 'next'.
 
 
 * tz/redirect-fix (2017-11-14) 2 commits
@@ -493,14 +622,29 @@ of the repositories listed at
  who are used to seeing abbreviated object names and find them
  confusing with the range syntax.
 
- This may become a new default someday, but the way to tentatively
- get the original behaviour back would probably want to be an
- environment variable, not a configuration.
+ Will merge to 'next'.
+ The tests may need to be updated to cover both old and new output,
+ but that can happen in follow-up series.
+ cf. <xmqqo9nuuadm.fsf@gitster.mtv.corp.google.com>
 
- Expecting a reroll.
+
+* jh/object-filtering (2017-11-22) 6 commits
+ - pack-objects: add list-objects filtering
+ - rev-list: add list-objects filtering support
+ - list-objects: filter objects in traverse_commit_list
+ - oidset: add iterator methods to oidset
+ - oidmap: add oidmap iterator methods
+ - dir: allow exclusions from blob in addition to file
+ (this branch is used by jh/fsck-promisors and jh/partial-clone.)
+
+ In preparation for implementing narrow/partial clone, the object
+ walking machinery has been taught a way to tell it to "filter" some
+ objects from enumeration.
+
+ Will merge to 'next'.
 
 
-* jh/fsck-promisors (2017-11-17) 10 commits
+* jh/fsck-promisors (2017-11-22) 10 commits
  - gc: do not repack promisor packfiles
  - rev-list: support termination at promisor objects
  - sha1_file: support lazily fetching missing objects
@@ -513,34 +657,36 @@ of the repositories listed at
  - extension.partialclone: introduce partial clone extension
  (this branch is used by jh/partial-clone; uses jh/object-filtering.)
 
-
-* jh/object-filtering (2017-11-17) 6 commits
- - pack-objects: add list-objects filtering
- - rev-list: add list-objects filtering support
- - list-objects: filter objects in traverse_commit_list
- - oidset: add iterator methods to oidset
- - oidmap: add oidmap iterator methods
- - dir: allow exclusions from blob in addition to file
- (this branch is used by jh/fsck-promisors and jh/partial-clone.)
+ In preparation for implementing narrow/partial clone, the machinery
+ for checking object connectivity used by gc and fsck has been
+ taught that a missing object is OK when it is referenced by a
+ packfile specially marked as coming from trusted repository that
+ promises to make them available on-demand and lazily.
 
 
-* jh/partial-clone (2017-11-17) 15 commits
- . fetch-pack: restore save_commit_buffer after use
- . unpack-trees: batch fetching of missing blobs
- . t5500: more tests for partial clone and fetch
- . t5601: test for partial clone
- . t5500: add fetch-pack tests for partial clone
- . fetch: add from_promisor and exclude-promisor-objects parameters
- . fetch-pack: test support excluding large blobs
- . partial-clone: define partial clone settings in config
- . fetch-pack: test support excluding large blobs
- . pack-objects: test support for blob filtering
- . remote-curl: add object filtering for partial clone
- . fetch: add object filtering for partial fetch
- . fetch: refactor calculation of remote list
- . clone, fetch-pack, index-pack, transport: partial clone
- . upload-pack: add object filtering for partial clone
+* jh/partial-clone (2017-11-22) 14 commits
+ - fetch-pack: restore save_commit_buffer after use
+ - unpack-trees: batch fetching of missing blobs
+ - t5500: more tests for partial clone and fetch
+ - t5601: test for partial clone
+ - t5500: add fetch-pack tests for partial clone
+ - fetch: add from_promisor and exclude-promisor-objects parameters
+ - partial-clone: define partial clone settings in config
+ - fetch-pack: test support excluding large blobs
+ - pack-objects: test support for blob filtering
+ - remote-curl: add object filtering for partial clone
+ - fetch: add object filtering for partial fetch
+ - fetch: refactor calculation of remote list
+ - clone, fetch-pack, index-pack, transport: partial clone
+ - upload-pack: add object filtering for partial clone
  (this branch uses jh/fsck-promisors and jh/object-filtering.)
+
+ The machinery to clone & fetch, which in turn involves packing and
+ unpacking objects, have been told how to omit certain objects using
+ the filtering mechanism introduced by the jh/object-filtering
+ topic, and also mark the resulting pack as a promisor pack to
+ tolerate missing objects, taking advantage of the mechanism
+ introduced by the jh/fsck-promisors topic.
 
 
 * sb/describe-blob (2017-11-16) 7 commits
@@ -632,7 +778,7 @@ of the repositories listed at
  and demonstrated that it works with the older versions of Git
  without harming them.
 
- Waiting for jn/ssh-wrappers topic.
+ Will merge to 'next'.
 
 
 * bc/hash-algo (2017-11-13) 4 commits
@@ -645,8 +791,7 @@ of the repositories listed at
  introduced, and an effort to plumb that throughout various
  codepaths has been started.
 
- Looked more or less OK to me.  Ready to merge to 'next'?  Further
- comments?
+ Will merge to 'next'.
 
 
 * sb/submodule-recursive-checkout-detach-head (2017-07-28) 2 commits
@@ -658,7 +803,7 @@ of the repositories listed at
  repositories, which might not be desirable.  Detach the HEAD but
  still allow the recursive checkout to succeed in such a case.
 
- Expecting a reroll.
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Discarded]
