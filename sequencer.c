@@ -477,9 +477,6 @@ static int do_recursive_merge(struct commit *base, struct commit *next,
 			_(action_name(opts)));
 	rollback_lock_file(&index_lock);
 
-	if (opts->signoff)
-		append_signoff(msgbuf, 0, 0);
-
 	if (!clean)
 		append_conflicts_hint(msgbuf);
 
@@ -657,8 +654,6 @@ static int run_git_commit(const char *defmsg, struct replay_opts *opts,
 		argv_array_push(&cmd.args, "--amend");
 	if (opts->gpg_sign)
 		argv_array_pushf(&cmd.args, "-S%s", opts->gpg_sign);
-	if (opts->signoff)
-		argv_array_push(&cmd.args, "-s");
 	if (defmsg)
 		argv_array_pushl(&cmd.args, "-F", defmsg, NULL);
 	if ((flags & CLEANUP_MSG))
@@ -1346,6 +1341,9 @@ static int do_pick_commit(enum todo_command command, struct commit *commit,
 			flags |= EDIT_MSG;
 		}
 	}
+
+	if (opts->signoff)
+		append_signoff(&msgbuf, 0, 0);
 
 	if (is_rebase_i(opts) && write_author_script(msg.message) < 0)
 		res = -1;
