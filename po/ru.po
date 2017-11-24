@@ -1,7 +1,7 @@
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
-# 
+#
 # Translators:
 # Dimitriy Ryazantcev <DJm00n@mail.ru>, 2014-2017
 # insolor, 2014
@@ -3421,7 +3421,7 @@ msgstr "обнаружены неизвестные расширения реп�
 #: setup.c:806
 #, c-format
 msgid "Not a git repository (or any of the parent directories): %s"
-msgstr "Не найден git репозитоий (или один из его каталогов): %s"
+msgstr "Не найден git репозиторий (или один из его каталогов): %s"
 
 #: setup.c:808 builtin/index-pack.c:1653
 msgid "Cannot come back to cwd"
@@ -3441,7 +3441,7 @@ msgstr "Не удалось изменить на «%s»"
 msgid ""
 "Not a git repository (or any parent up to mount point %s)\n"
 "Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set)."
-msgstr "Не найден git репозитоий (или один из его каталогов вплоть до точки монтирования %s)\nОстанавливаю поиск на границе файловой системы (так как GIT_DISCOVERY_ACROSS_FILESYSTEM не установлен)."
+msgstr "Не найден git репозиторий (или один из его каталогов вплоть до точки монтирования %s)\nОстанавливаю поиск на границе файловой системы (так как GIT_DISCOVERY_ACROSS_FILESYSTEM не установлен)."
 
 #: setup.c:1159
 #, c-format
@@ -7436,7 +7436,7 @@ msgstr "неправильный параметр: %s"
 
 #: builtin/diff.c:357
 msgid "Not a git repository"
-msgstr "Не найден git репозитоий"
+msgstr "Не найден git репозиторий"
 
 #: builtin/diff.c:400
 #, c-format
