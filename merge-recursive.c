@@ -646,7 +646,7 @@ static int remove_file(struct merge_options *o, int clean,
 		if (ignore_case) {
 			struct cache_entry *ce;
 			ce = cache_file_exists(path, strlen(path), ignore_case);
-			if (ce && ce_stage(ce) == 0)
+			if (ce && ce_stage(ce) == 0 && strcmp(path, ce->name))
 				return 0;
 		}
 		if (remove_path(path))
