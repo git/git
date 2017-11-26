@@ -332,13 +332,10 @@ Writing Tests
 -------------
 
 The test script is written as a shell script.  It should start
-with the standard "#!/bin/sh" with copyright notices, and an
+with the standard "#!/bin/sh", and an
 assignment to variable 'test_description', like this:
 
 	#!/bin/sh
-	#
-	# Copyright (c) 2005 Junio C Hamano
-	#
 
 	test_description='xxx test (option --frotz)
 
