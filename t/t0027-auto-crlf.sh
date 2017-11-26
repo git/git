@@ -43,19 +43,31 @@ create_gitattributes () {
 	} >.gitattributes
 }
 
-create_NNO_files () {
+# Create 2 sets of files:
+# The NNO files are "Not NOrmalized in the repo. We use CRLF_mix_LF and store
+#   it under different names for the different test cases, see ${pfx}
+#   Depending on .gitattributes they are normalized at the next commit (or not)
+# The MIX files have different contents in the repo.
+#   Depending on its contents, the "new safer autocrlf" may kick in.
+create_NNO_MIX_files () {
 	for crlf in false true input
 	do
 		for attr in "" auto text -text
 		do
 			for aeol in "" lf crlf
 			do
-				pfx=NNO_attr_${attr}_aeol_${aeol}_${crlf}
+				pfx=NNO_attr_${attr}_aeol_${aeol}_${crlf} &&
 				cp CRLF_mix_LF ${pfx}_LF.txt &&
 				cp CRLF_mix_LF ${pfx}_CRLF.txt &&
 				cp CRLF_mix_LF ${pfx}_CRLF_mix_LF.txt &&
 				cp CRLF_mix_LF ${pfx}_LF_mix_CR.txt &&
-				cp CRLF_mix_LF ${pfx}_CRLF_nul.txt
+				cp CRLF_mix_LF ${pfx}_CRLF_nul.txt &&
+				pfx=MIX_attr_${attr}_aeol_${aeol}_${crlf} &&
+				cp LF          ${pfx}_LF.txt &&
+				cp CRLF        ${pfx}_CRLF.txt &&
+				cp CRLF_mix_LF ${pfx}_CRLF_mix_LF.txt &&
+				cp LF_mix_CR   ${pfx}_LF_mix_CR.txt &&
+				cp CRLF_nul    ${pfx}_CRLF_nul.txt
 			done
 		done
 	done
@@ -135,6 +147,49 @@ commit_chk_wrnNNO () {
 		check_warning "$crlfnul" ${pfx}_CRLF_nul.err
 	'
 }
+
+# Commit a file with mixed line endings on top of different files
+# in the index. Check for warnings
+commit_MIX_chkwrn () {
+	attr=$1 ; shift
+	aeol=$1 ; shift
+	crlf=$1 ; shift
+	lfwarn=$1 ; shift
+	crlfwarn=$1 ; shift
+	lfmixcrlf=$1 ; shift
+	lfmixcr=$1 ; shift
+	crlfnul=$1 ; shift
+	pfx=MIX_attr_${attr}_aeol_${aeol}_${crlf}
+	#Commit file with CLRF_mix_LF on top of existing file
+	create_gitattributes "$attr" $aeol &&
+	for f in LF CRLF CRLF_mix_LF LF_mix_CR CRLF_nul
+	do
+		fname=${pfx}_$f.txt &&
+		cp CRLF_mix_LF $fname &&
+		printf Z >>"$fname" &&
+		git -c core.autocrlf=$crlf add $fname 2>"${pfx}_$f.err"
+	done
+
+	test_expect_success "commit file with mixed EOL crlf=$crlf attr=$attr LF" '
+		check_warning "$lfwarn" ${pfx}_LF.err
+	'
+	test_expect_success "commit file with mixed EOL attr=$attr aeol=$aeol crlf=$crlf CRLF" '
+		check_warning "$crlfwarn" ${pfx}_CRLF.err
+	'
+
+	test_expect_success "commit file with mixed EOL attr=$attr aeol=$aeol crlf=$crlf CRLF_mix_LF" '
+		check_warning "$lfmixcrlf" ${pfx}_CRLF_mix_LF.err
+	'
+
+	test_expect_success "commit file with mixed EOL attr=$attr aeol=$aeol crlf=$crlf LF_mix_cr" '
+		check_warning "$lfmixcr" ${pfx}_LF_mix_CR.err
+	'
+
+	test_expect_success "commit file with mixed EOL attr=$attr aeol=$aeol crlf=$crlf CRLF_nul" '
+		check_warning "$crlfnul" ${pfx}_CRLF_nul.err
+	'
+}
+
 
 stats_ascii () {
 	case "$1" in
@@ -323,8 +378,8 @@ test_expect_success 'setup master' '
 	printf "\$Id: 0000000000000000000000000000000000000000 \$\r\nLINEONE\r\nLINETWO\rLINETHREE"   >CRLF_mix_CR &&
 	printf "\$Id: 0000000000000000000000000000000000000000 \$\r\nLINEONEQ\r\nLINETWO\r\nLINETHREE" | q_to_nul >CRLF_nul &&
 	printf "\$Id: 0000000000000000000000000000000000000000 \$\nLINEONEQ\nLINETWO\nLINETHREE" | q_to_nul >LF_nul &&
-	create_NNO_files CRLF_mix_LF CRLF_mix_LF CRLF_mix_LF CRLF_mix_LF CRLF_mix_LF &&
-	git -c core.autocrlf=false add NNO_*.txt &&
+	create_NNO_MIX_files CRLF_mix_LF CRLF_mix_LF CRLF_mix_LF CRLF_mix_LF CRLF_mix_LF &&
+	git -c core.autocrlf=false add NNO_*.txt MIX_*.txt &&
 	git commit -m "mixed line endings" &&
 	test_tick
 '
@@ -384,6 +439,17 @@ test_expect_success 'commit files attr=crlf' '
 	commit_check_warn true  "crlf" "LF_CRLF" ""        "LF_CRLF" "LF_CRLF" "" &&
 	commit_check_warn input "crlf" "LF_CRLF" ""        "LF_CRLF" "LF_CRLF" ""
 '
+
+# Commit "CRLFmixLF" on top of these files already in the repo:
+# LF, CRLF, CRLFmixLF LF_mix_CR CRLFNULL
+#                 attr                    LF        CRLF      CRLFmixLF   LF_mix_CR   CRLFNUL
+commit_MIX_chkwrn ""      ""      false   ""        ""        ""          ""          ""
+commit_MIX_chkwrn ""      ""      true    "LF_CRLF" ""        ""          "LF_CRLF"   "LF_CRLF"
+commit_MIX_chkwrn ""      ""      input   "CRLF_LF" ""        ""          "CRLF_LF"   "CRLF_LF"
+
+commit_MIX_chkwrn "auto"  ""      false   "CRLF_LF" ""        ""          "CRLF_LF"   "CRLF_LF"
+commit_MIX_chkwrn "auto"  ""      true    "LF_CRLF" ""        ""          "LF_CRLF"   "LF_CRLF"
+commit_MIX_chkwrn "auto"  ""      input   "CRLF_LF" ""        ""          "CRLF_LF"   "CRLF_LF"
 
 #                 attr                    LF        CRLF      CRLFmixLF   LF_mix_CR   CRLFNUL
 commit_chk_wrnNNO ""      ""      false   ""        ""        ""          ""          ""
