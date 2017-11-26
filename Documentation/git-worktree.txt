@@ -107,6 +107,12 @@ OPTIONS
 	such as configuring sparse-checkout. See "Sparse checkout"
 	in linkgit:git-read-tree[1].
 
+--[no-]track::
+	When creating a new branch, if `<commit-ish>` is a branch,
+	mark it as "upstream" from the new branch.  This is the
+	default if `<commit-ish>` is a remote-tracking branch.  See
+	"--track" in linkgit:git-branch[1] for details.
+
 --lock::
 	Keep the working tree locked after creation. This is the
 	equivalent of `git worktree lock` after `git worktree add`,
