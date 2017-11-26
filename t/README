@@ -674,6 +674,11 @@ library for your script to use.
    <expected> file.  This behaves like "cmp" but produces more
    helpful output when the test is run with "-v" option.
 
+ - test_cmp_rev <expected> <actual>
+
+   Check whether the <expected> rev points to the same commit as the
+   <actual> rev.
+
  - test_line_count (= | -lt | -ge | ...) <length> <file>
 
    Check whether a file has the length it is expected to.
