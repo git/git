@@ -25,6 +25,7 @@
 #include "quote.h"
 
 struct trace_key trace_default_key = { "GIT_TRACE", 0, 0, 0 };
+struct trace_key trace_perf_key = TRACE_KEY_INIT(PERFORMANCE);
 
 /* Get a trace file descriptor from "key" env variable. */
 static int get_trace_fd(struct trace_key *key)
@@ -171,8 +172,6 @@ void trace_strbuf_fl(const char *file, int line, struct trace_key *key,
 	strbuf_addbuf(&buf, data);
 	print_trace_line(key, &buf);
 }
-
-static struct trace_key trace_perf_key = TRACE_KEY_INIT(PERFORMANCE);
 
 static void trace_performance_vprintf_fl(const char *file, int line,
 					 uint64_t nanos, const char *format,
