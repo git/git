@@ -11,6 +11,8 @@ struct trace_key {
 	unsigned int  need_close : 1;
 };
 
+extern struct trace_key trace_default_key;
+
 #define TRACE_KEY_INIT(name) { "GIT_TRACE_" #name, 0, 0, 0 }
 
 extern void trace_repo_setup(const char *prefix);
@@ -78,7 +80,7 @@ extern void trace_performance_since(uint64_t start, const char *format, ...);
  */
 
 #define trace_printf(...) \
-	trace_printf_key_fl(TRACE_CONTEXT, __LINE__, NULL, __VA_ARGS__)
+	trace_printf_key_fl(TRACE_CONTEXT, __LINE__, &trace_default_key, __VA_ARGS__)
 
 #define trace_printf_key(key, ...) \
 	trace_printf_key_fl(TRACE_CONTEXT, __LINE__, key, __VA_ARGS__)
