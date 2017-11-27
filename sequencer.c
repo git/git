@@ -438,7 +438,8 @@ static int do_recursive_merge(struct commit *base, struct commit *next,
 	char **xopt;
 	static struct lock_file index_lock;
 
-	hold_locked_index(&index_lock, LOCK_DIE_ON_ERROR);
+	if (hold_locked_index(&index_lock, LOCK_REPORT_ON_ERROR) < 0)
+		return -1;
 
 	read_cache();
 
