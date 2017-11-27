@@ -166,6 +166,10 @@ struct diff_options {
 	const char *stat_sep;
 	long xdl_opts;
 
+	/* see Documentation/diff-options.txt */
+	char **anchors;
+	size_t anchors_nr, anchors_alloc;
+
 	int stat_width;
 	int stat_name_width;
 	int stat_graph_width;
