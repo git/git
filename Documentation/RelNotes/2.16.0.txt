@@ -66,6 +66,17 @@ UI, Workflows & Features
  * We learned to talk to watchman to speed up "git status" and other
    operations that need to see which paths have been modified.
 
+ * The "diff" family of commands learned to ignore differences in
+   carriage return at the end of line.
+
+ * Places that know about "sendemail.to", like documentation and shell
+   completion (in contrib/) have been taught about "sendemail.tocmd",
+   too.
+
+ * "git add --renormalize ." is a new and safer way to record the fact
+   that you are correcting the end-of-line convention and other
+   "convert_to_git()" glitches in the in-repository data.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -119,7 +130,7 @@ Fixes since v2.15
    latter, which has been fixed.
 
  * The experimental "color moved lines differently in diff output"
-   feature was buggy around "ignore whitespace changes" edges, whihch
+   feature was buggy around "ignore whitespace changes" edges, which
    has been corrected.
 
  * Instead of using custom line comparison and hashing functions to
@@ -130,7 +141,7 @@ Fixes since v2.15
    HEAD points at, which have been fixed.
 
  * "git commit", after making a commit, did not check for errors when
-   asking on what branch it made the commit, which has been correted.
+   asking on what branch it made the commit, which has been corrected.
 
  * "git status --ignored -u" did not stop at a working tree of a
    separate project that is embedded in an ignored directory and
@@ -141,7 +152,7 @@ Fixes since v2.15
    --recurse-submodules" has been fixed.
 
  * A recent regression in "git rebase -i" that broke execution of git
-   commands from subdirectories via "exec" insn has been fixed.
+   commands from subdirectories via "exec" instruction has been fixed.
 
  * A (possibly flakey) test fix.
 
@@ -178,7 +189,6 @@ Fixes since v2.15
 
  * Error checking in "git imap-send" for empty response has been
    improved.
-   (merge 618ec81abb rs/imap-send-next-arg-fix later to maint).
 
  * Recent update to the refs infrastructure implementation started
    rewriting packed-refs file more often than before; this has been
@@ -198,11 +208,58 @@ Fixes since v2.15
    that does not help anything; it has been corrected.
 
  * Doc update around use of "format-patch --subject-prefix" etc.
-   (merge f6be7edcac ad/submitting-patches-title-decoration later to maint).
 
  * A fix for an ancient bug in "git apply --ignore-space-change" codepath.
-   (merge 6ce15ce576 rs/apply-fuzzy-match-fix later to maint).
+
+ * Clarify and enhance documentation for "merge-base --fork-point", as
+   it was clear what it computed but not why/what for.
+   (merge 6d1700b8af jc/merge-base-fork-point-doc later to maint).
+
+ * A few scripts (both in production and tests) incorrectly redirected
+   their error output.  These have been corrected.
+   (merge eadf1c8f45 tz/redirect-fix later to maint).
+
+ * "git notes" sent its error message to its standard output stream,
+   which was corrected.
+   (merge 89b9e31dd5 tz/notes-error-to-stderr later to maint).
+
+ * The three-way merge performed by "git cherry-pick" was confused
+   when a new submodule was added in the meantime, which has been
+   fixed (or "papered over").
+   (merge c641ca6707 sb/test-cherry-pick-submodule-getting-in-a-way later to maint).
+
+ * The sequencer machinery (used by "git cherry-pick A..B", and "git
+   rebase -i", among other things) would have lost a commit if stopped
+   due to an unlockable index file, which has been fixed.
+   (merge bd58886775 pw/sequencer-recover-from-unlockable-index later to maint).
+
+ * "git apply --inaccurate-eof" when used with "--ignore-space-change"
+   triggered an internal sanity check, which has been fixed.
+   (merge 4855de1233 rs/apply-inaccurate-eof-with-incomplete-line later to maint).
+
+ * Command line completion (in contrib/) has been taught about the
+   "--copy" option of "git branch".
+   (merge 41ca0f773e tz/complete-branch-copy later to maint).
+
+ * When "git rebase" prepared an mailbox of changes and fed it to "git
+   am" to replay them, it was confused when a stray "From " happened
+   to be in the log message of one of the replayed changes.  This has
+   been corrected.
+   (merge ae3b2b04bb ew/rebase-mboxrd later to maint).
+
+ * There was a recent semantic mismerge in the codepath to write out a
+   section of a configuration section, which has been corrected.
+   (merge 782c030ea2 rs/config-write-section-fix later to maint).
+
+ * Mentions of "git-rebase" and "git-am" (dashed form) still remained
+   in end-user visible strings emitted by the "git rebase" command;
+   they have been corrected.
+   (merge 82cb775c06 ks/rebase-no-git-foo later to maint).
+
+ * Contrary to the documentation, "git pull -4/-6 other-args" did not
+   ask the underlying "git fetch" to go over IPv4/IPv6, which has been
+   corrected.
+   (merge ffb4568afe sw/pull-ipv46-passthru later to maint).
 
  * Other minor doc, test and build updates and code cleanups.
-   (merge f4e45cb3eb ma/bisect-leakfix later to maint).
-   (merge 4da72644b7 ma/reduce-heads-leakfix later to maint).
+   (merge c5e3bc6ec4 sd/branch-copy later to maint).
