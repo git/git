@@ -4327,7 +4327,7 @@ msgstr ""
 #: wt-status.c:222
 msgid "  (use \"git add/rm <file>...\" to update what will be committed)"
 msgstr ""
-"  (usa \"git add/rm <archivo>...\" para actuailzar a lo que se le va a hacer "
+"  (usa \"git add/rm <archivo>...\" para actualizar a lo que se le va a hacer "
 "commit)"
 
 #: wt-status.c:223
@@ -4647,11 +4647,11 @@ msgstr "rebase en progreso; en"
 
 #: wt-status.c:1581
 msgid "HEAD detached at "
-msgstr "HEAD desacoplada en"
+msgstr "HEAD desacoplada en "
 
 #: wt-status.c:1583
 msgid "HEAD detached from "
-msgstr "HEAD desacoplada de"
+msgstr "HEAD desacoplada de "
 
 #: wt-status.c:1586
 msgid "Not currently on any branch."
