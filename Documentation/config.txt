@@ -3007,6 +3007,7 @@ sendemail.smtpPass::
 sendemail.suppresscc::
 sendemail.suppressFrom::
 sendemail.to::
+sendemail.tocmd::
 sendemail.smtpDomain::
 sendemail.smtpServer::
 sendemail.smtpServerPort::

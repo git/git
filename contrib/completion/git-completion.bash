@@ -2641,6 +2641,7 @@ _git_config ()
 		sendemail.suppressfrom
 		sendemail.thread
 		sendemail.to
+		sendemail.tocmd
 		sendemail.validate
 		sendemail.smtpbatchsize
 		sendemail.smtprelogindelay
