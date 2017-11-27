@@ -113,6 +113,8 @@ static char *opt_depth;
 static char *opt_unshallow;
 static char *opt_update_shallow;
 static char *opt_refmap;
+static char *opt_ipv4;
+static char *opt_ipv6;
 
 static struct option pull_options[] = {
 	/* Shared options */
@@ -218,6 +220,12 @@ static struct option pull_options[] = {
 	OPT_PASSTHRU(0, "refmap", &opt_refmap, N_("refmap"),
 		N_("specify fetch refmap"),
 		PARSE_OPT_NONEG),
+	OPT_PASSTHRU('4',  "ipv4", &opt_ipv4, NULL,
+		N_("use IPv4 addresses only"),
+		PARSE_OPT_NOARG),
+	OPT_PASSTHRU('6',  "ipv6", &opt_ipv6, NULL,
+		N_("use IPv6 addresses only"),
+		PARSE_OPT_NOARG),
 
 	OPT_END()
 };
@@ -522,6 +530,10 @@ static int run_fetch(const char *repo, const char **refspecs)
 		argv_array_push(&args, opt_update_shallow);
 	if (opt_refmap)
 		argv_array_push(&args, opt_refmap);
+	if (opt_ipv4)
+		argv_array_push(&args, opt_ipv4);
+	if (opt_ipv6)
+		argv_array_push(&args, opt_ipv6);
 
 	if (repo) {
 		argv_array_push(&args, repo);
