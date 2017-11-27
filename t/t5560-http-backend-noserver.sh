@@ -72,7 +72,7 @@ test_expect_success 'http-backend blocks bad PATH_INFO' '
 '
 
 # overrides existing definition for further cases
-run_backend() {
+run_backend () {
 	CONTENT_LENGTH="${#2}" && export CONTENT_LENGTH &&
 	( echo "$2" && cat /dev/zero ) |
 	QUERY_STRING="${1#*[?]}" \
@@ -89,7 +89,7 @@ test_expect_success 'CONTENT_LENGTH set and infinite input' '
 '
 
 test_expect_success 'CONTENT_LENGTH overflow ssite_t' '
-	NOT_FIT_IN_SSIZE=`"$GIT_BUILD_DIR/t/helper/test-print-values" "(size_t)(-20)"` &&
+	NOT_FIT_IN_SSIZE=$("$GIT_BUILD_DIR/t/helper/test-print-larger-than-ssize") &&
 	env \
 		CONTENT_TYPE=application/x-git-upload-pack-request \
 		QUERY_STRING=/repo.git/git-upload-pack \
