@@ -13,7 +13,7 @@ Fixes since v2.15
    latter, which has been fixed.
 
  * The experimental "color moved lines differently in diff output"
-   feature was buggy around "ignore whitespace changes" edges, whihch
+   feature was buggy around "ignore whitespace changes" edges, which
    has been corrected.
 
  * Instead of using custom line comparison and hashing functions to
@@ -24,7 +24,7 @@ Fixes since v2.15
    HEAD points at, which have been fixed.
 
  * "git commit", after making a commit, did not check for errors when
-   asking on what branch it made the commit, which has been correted.
+   asking on what branch it made the commit, which has been corrected.
 
  * "git status --ignored -u" did not stop at a working tree of a
    separate project that is embedded in an ignored directory and
@@ -35,7 +35,7 @@ Fixes since v2.15
    --recurse-submodules" has been fixed.
 
  * A recent regression in "git rebase -i" that broke execution of git
-   commands from subdirectories via "exec" insn has been fixed.
+   commands from subdirectories via "exec" instruction has been fixed.
 
  * "git check-ref-format --branch @{-1}" bit a "BUG()" when run
    outside a repository for obvious reasons; clarify the documentation
@@ -76,5 +76,10 @@ Fixes since v2.15
  * We used to add an empty alternate object database to the system
    that does not help anything; it has been corrected.
 
+ * Error checking in "git imap-send" for empty response has been
+   improved.
+
+ * An ancient bug in "git apply --ignore-space-change" codepath has
+   been fixed.
 
 Also contains various documentation updates and code clean-ups.
