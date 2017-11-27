@@ -2953,6 +2953,8 @@ static int apply_one_fragment(struct apply_state *state,
 	    newlines.len > 0 && newlines.buf[newlines.len - 1] == '\n') {
 		old--;
 		strbuf_setlen(&newlines, newlines.len - 1);
+		preimage.line_allocated[preimage.nr - 1].len--;
+		postimage.line_allocated[postimage.nr - 1].len--;
 	}
 
 	leading = frag->leading;
