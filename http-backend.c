@@ -324,10 +324,9 @@ static ssize_t read_request_fixed_len(int fd, ssize_t req_len, unsigned char **o
 	ssize_t cnt = 0;
 
 	if (max_request_buffer < req_len) {
-		die("request was larger than our maximum size (%lu): %lu;"
-			    " try setting GIT_HTTP_MAX_REQUEST_BUFFER",
-			    max_request_buffer,
-			    req_len);
+		die("request was larger than our maximum size (%lu): "
+		    "%" PRIuMAX "; try setting GIT_HTTP_MAX_REQUEST_BUFFER",
+		    max_request_buffer, (uintmax_t)req_len);
 	}
 
 	if (req_len <= 0) {
