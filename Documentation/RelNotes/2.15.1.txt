@@ -76,5 +76,10 @@ Fixes since v2.15
  * We used to add an empty alternate object database to the system
    that does not help anything; it has been corrected.
 
+ * Error checking in "git imap-send" for empty response has been
+   improved.
+
+ * An ancient bug in "git apply --ignore-space-change" codepath has
+   been fixed.
 
 Also contains various documentation updates and code clean-ups.
