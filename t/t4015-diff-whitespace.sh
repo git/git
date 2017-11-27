@@ -106,6 +106,8 @@ test_expect_success 'another test, without options' '
 	git diff -w -b --ignore-space-at-eol >out &&
 	test_cmp expect out &&
 
+	git diff -w --ignore-cr-at-eol >out &&
+	test_cmp expect out &&
 
 	tr "Q_" "\015 " <<-\EOF >expect &&
 	diff --git a/x b/x
@@ -128,6 +130,9 @@ test_expect_success 'another test, without options' '
 	git diff -b --ignore-space-at-eol >out &&
 	test_cmp expect out &&
 
+	git diff -b --ignore-cr-at-eol >out &&
+	test_cmp expect out &&
+
 	tr "Q_" "\015 " <<-\EOF >expect &&
 	diff --git a/x b/x
 	index d99af23..22d9f73 100644
@@ -145,6 +150,29 @@ test_expect_success 'another test, without options' '
 	 CR at end
 	EOF
 	git diff --ignore-space-at-eol >out &&
+	test_cmp expect out &&
+
+	git diff --ignore-space-at-eol --ignore-cr-at-eol >out &&
+	test_cmp expect out &&
+
+	tr "Q_" "\015 " <<-\EOF >expect &&
+	diff --git a/x b/x
+	index_d99af23..22d9f73 100644
+	--- a/x
+	+++ b/x
+	@@ -1,6 +1,6 @@
+	-whitespace at beginning
+	-whitespace change
+	-whitespace in the middle
+	-whitespace at end
+	+_	whitespace at beginning
+	+whitespace_	_change
+	+white space in the middle
+	+whitespace at end__
+	 unchanged line
+	 CR at end
+	EOF
+	git diff --ignore-cr-at-eol >out &&
 	test_cmp expect out
 '
 

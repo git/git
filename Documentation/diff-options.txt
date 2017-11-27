@@ -557,6 +557,9 @@ endif::git-format-patch[]
 --text::
 	Treat all files as text.
 
+--ignore-cr-at-eol::
+	Ignore carrige-return at the end of line when doing a comparison.
+
 --ignore-space-at-eol::
 	Ignore changes in whitespace at EOL.
 

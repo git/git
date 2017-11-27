@@ -58,11 +58,12 @@ diff-algorithm=[patience|minimal|histogram|myers];;
 ignore-space-change;;
 ignore-all-space;;
 ignore-space-at-eol;;
+ignore-cr-at-eol;;
 	Treats lines with the indicated type of whitespace change as
 	unchanged for the sake of a three-way merge.  Whitespace
 	changes mixed with other changes to a line are not ignored.
-	See also linkgit:git-diff[1] `-b`, `-w`, and
-	`--ignore-space-at-eol`.
+	See also linkgit:git-diff[1] `-b`, `-w`,
+	`--ignore-space-at-eol`, and `--ignore-cr-at-eol`.
 +
 * If 'their' version only introduces whitespace changes to a line,
   'our' version is used;
