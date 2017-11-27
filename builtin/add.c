@@ -26,6 +26,7 @@ static const char * const builtin_add_usage[] = {
 };
 static int patch_interactive, add_interactive, edit_interactive;
 static int take_worktree_changes;
+static int add_renormalize;
 
 struct update_callback_data {
 	int flags;
@@ -121,6 +122,25 @@ int add_files_to_cache(const char *prefix,
 	run_diff_files(&rev, DIFF_RACY_IS_MODIFIED);
 	clear_pathspec(&rev.prune_data);
 	return !!data.add_errors;
+}
+
+static int renormalize_tracked_files(const struct pathspec *pathspec, int flags)
+{
+	int i, retval = 0;
+
+	for (i = 0; i < active_nr; i++) {
+		struct cache_entry *ce = active_cache[i];
+
+		if (ce_stage(ce))
+			continue; /* do not touch unmerged paths */
+		if (!S_ISREG(ce->ce_mode) && !S_ISLNK(ce->ce_mode))
+			continue; /* do not touch non blobs */
+		if (pathspec && !ce_path_match(ce, pathspec, NULL))
+			continue;
+		retval |= add_file_to_cache(ce->name, flags | HASH_RENORMALIZE);
+	}
+
+	return retval;
 }
 
 static char *prune_directory(struct dir_struct *dir, struct pathspec *pathspec, int prefix)
@@ -276,6 +296,7 @@ static struct option builtin_add_options[] = {
 	OPT_BOOL('e', "edit", &edit_interactive, N_("edit current diff and apply")),
 	OPT__FORCE(&ignored_too, N_("allow adding otherwise ignored files")),
 	OPT_BOOL('u', "update", &take_worktree_changes, N_("update tracked files")),
+	OPT_BOOL(0, "renormalize", &add_renormalize, N_("renormalize EOL of tracked files (implies -u)")),
 	OPT_BOOL('N', "intent-to-add", &intent_to_add, N_("record only the fact that the path will be added later")),
 	OPT_BOOL('A', "all", &addremove_explicit, N_("add changes from all tracked and untracked files")),
 	{ OPTION_CALLBACK, 0, "ignore-removal", &addremove_explicit,
@@ -406,7 +427,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 			  chmod_arg[1] != 'x' || chmod_arg[2]))
 		die(_("--chmod param '%s' must be either -x or +x"), chmod_arg);
 
-	add_new_files = !take_worktree_changes && !refresh_only;
+	add_new_files = !take_worktree_changes && !refresh_only && !add_renormalize;
 	require_pathspec = !(take_worktree_changes || (0 < addremove_explicit));
 
 	hold_locked_index(&lock_file, LOCK_DIE_ON_ERROR);
@@ -500,7 +521,10 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 
 	plug_bulk_checkin();
 
-	exit_status |= add_files_to_cache(prefix, &pathspec, flags);
+	if (add_renormalize)
+		exit_status |= renormalize_tracked_files(&pathspec, flags);
+	else
+		exit_status |= add_files_to_cache(prefix, &pathspec, flags);
 
 	if (add_new_files)
 		exit_status |= add_files(&dir, flags);

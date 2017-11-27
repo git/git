@@ -74,6 +74,18 @@ static struct cached_object *find_cached_object(const unsigned char *sha1)
 	return NULL;
 }
 
+
+static enum safe_crlf get_safe_crlf(unsigned flags)
+{
+	if (flags & HASH_RENORMALIZE)
+		return SAFE_CRLF_RENORMALIZE;
+	else if (flags & HASH_WRITE_OBJECT)
+		return safe_crlf;
+	else
+		return SAFE_CRLF_FALSE;
+}
+
+
 int mkdir_in_gitdir(const char *path)
 {
 	if (mkdir(path, 0777)) {
@@ -1679,7 +1691,7 @@ static int index_mem(struct object_id *oid, void *buf, size_t size,
 	if ((type == OBJ_BLOB) && path) {
 		struct strbuf nbuf = STRBUF_INIT;
 		if (convert_to_git(&the_index, path, buf, size, &nbuf,
-				   write_object ? safe_crlf : SAFE_CRLF_FALSE)) {
+				   get_safe_crlf(flags))) {
 			buf = strbuf_detach(&nbuf, &size);
 			re_allocated = 1;
 		}
@@ -1713,7 +1725,7 @@ static int index_stream_convert_blob(struct object_id *oid, int fd,
 	assert(would_convert_to_git_filter_fd(path));
 
 	convert_to_git_filter_fd(&the_index, path, fd, &sbuf,
-				 write_object ? safe_crlf : SAFE_CRLF_FALSE);
+				 get_safe_crlf(flags));
 
 	if (write_object)
 		ret = write_sha1_file(sbuf.buf, sbuf.len, typename(OBJ_BLOB),

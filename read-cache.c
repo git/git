@@ -641,13 +641,17 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 {
 	int size, namelen, was_same;
 	mode_t st_mode = st->st_mode;
-	struct cache_entry *ce, *alias;
+	struct cache_entry *ce, *alias = NULL;
 	unsigned ce_option = CE_MATCH_IGNORE_VALID|CE_MATCH_IGNORE_SKIP_WORKTREE|CE_MATCH_RACY_IS_DIRTY;
 	int verbose = flags & (ADD_CACHE_VERBOSE | ADD_CACHE_PRETEND);
 	int pretend = flags & ADD_CACHE_PRETEND;
 	int intent_only = flags & ADD_CACHE_INTENT;
 	int add_option = (ADD_CACHE_OK_TO_ADD|ADD_CACHE_OK_TO_REPLACE|
 			  (intent_only ? ADD_CACHE_NEW_ONLY : 0));
+	int newflags = HASH_WRITE_OBJECT;
+
+	if (flags & HASH_RENORMALIZE)
+		newflags |= HASH_RENORMALIZE;
 
 	if (!S_ISREG(st_mode) && !S_ISLNK(st_mode) && !S_ISDIR(st_mode))
 		return error("%s: can only add regular files, symbolic links or git-directories", path);
@@ -688,19 +692,23 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 	if (ignore_case) {
 		adjust_dirname_case(istate, ce->name);
 	}
+	if (!(flags & HASH_RENORMALIZE)) {
+		alias = index_file_exists(istate, ce->name,
+					  ce_namelen(ce), ignore_case);
+		if (alias &&
+		    !ce_stage(alias) &&
+		    !ie_match_stat(istate, alias, st, ce_option)) {
+			/* Nothing changed, really */
+			if (!S_ISGITLINK(alias->ce_mode))
+				ce_mark_uptodate(alias);
+			alias->ce_flags |= CE_ADDED;
 
-	alias = index_file_exists(istate, ce->name, ce_namelen(ce), ignore_case);
-	if (alias && !ce_stage(alias) && !ie_match_stat(istate, alias, st, ce_option)) {
-		/* Nothing changed, really */
-		if (!S_ISGITLINK(alias->ce_mode))
-			ce_mark_uptodate(alias);
-		alias->ce_flags |= CE_ADDED;
-
-		free(ce);
-		return 0;
+			free(ce);
+			return 0;
+		}
 	}
 	if (!intent_only) {
-		if (index_path(&ce->oid, path, st, HASH_WRITE_OBJECT)) {
+		if (index_path(&ce->oid, path, st, newflags)) {
 			free(ce);
 			return error("unable to index file %s", path);
 		}
