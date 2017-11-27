@@ -2329,7 +2329,7 @@ static ssize_t write_section(int fd, const char *key)
 	struct strbuf sb = store_create_section(key);
 	ssize_t ret;
 
-	ret = write_in_full(fd, sb.buf, sb.len) == sb.len;
+	ret = write_in_full(fd, sb.buf, sb.len);
 	strbuf_release(&sb);
 
 	return ret;
