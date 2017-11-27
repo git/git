@@ -2824,7 +2824,7 @@ static int git_config_copy_or_rename_section_in_file(const char *config_filename
 			 * multiple [branch "$name"] sections.
 			 */
 			if (copystr.len > 0) {
-				if (write_in_full(out_fd, copystr.buf, copystr.len) != copystr.len) {
+				if (write_in_full(out_fd, copystr.buf, copystr.len) < 0) {
 					ret = write_error(get_lock_file_path(&lock));
 					goto out;
 				}
@@ -2886,7 +2886,7 @@ static int git_config_copy_or_rename_section_in_file(const char *config_filename
 	 * logic in the loop above.
 	 */
 	if (copystr.len > 0) {
-		if (write_in_full(out_fd, copystr.buf, copystr.len) != copystr.len) {
+		if (write_in_full(out_fd, copystr.buf, copystr.len) < 0) {
 			ret = write_error(get_lock_file_path(&lock));
 			goto out;
 		}
