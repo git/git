@@ -166,7 +166,7 @@ apply_autostash () {
 	if test -f "$state_dir/autostash"
 	then
 		stash_sha1=$(cat "$state_dir/autostash")
-		if git stash apply $stash_sha1 2>&1 >/dev/null
+		if git stash apply $stash_sha1 >/dev/null 2>&1
 		then
 			echo "$(gettext 'Applied autostash.')" >&2
 		else
