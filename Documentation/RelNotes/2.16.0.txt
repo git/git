@@ -77,6 +77,19 @@ UI, Workflows & Features
    that you are correcting the end-of-line convention and other
    "convert_to_git()" glitches in the in-repository data.
 
+ * "git branch" and "git checkout -b" are now forbidden from creating
+   a branch whose name is "HEAD".
+
+ * "git branch --list" learned to show its output through the pager by
+   default when the output is going to a terminal, which is controlled
+   by the pager.branch configuration variable.  This is similar to a
+   recent change to "git tag --list".
+
+ * "git grep -W", "git diff -W" and their friends learned a heuristic
+   to extend a pre-context beyond the line that matches the "function
+   pattern" (aka "diff.*.xfuncname") to include a comment block, if
+   exists, that immediately precedes it.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -249,7 +262,6 @@ Fixes since v2.15
 
  * There was a recent semantic mismerge in the codepath to write out a
    section of a configuration section, which has been corrected.
-   (merge 782c030ea2 rs/config-write-section-fix later to maint).
 
  * Mentions of "git-rebase" and "git-am" (dashed form) still remained
    in end-user visible strings emitted by the "git rebase" command;
