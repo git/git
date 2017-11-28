@@ -452,7 +452,7 @@ vcxproj:
 	# Make .vcxproj files and add them
 	unset QUIET_GEN QUIET_BUILT_IN; \
 	perl contrib/buildsystems/generate -g Vcxproj
-	git add -f git.sln {*,*/lib,t/helper/*}/{packages.config,*.vcxproj}
+	git add -f git.sln {*,*/lib,t/helper/*}/*.vcxproj
 
 	# Add common-cmds.h
 	$(MAKE) MSVC=1 prefix=/mingw64 common-cmds.h
