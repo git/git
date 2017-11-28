@@ -5,6 +5,7 @@
 *.pl eof=lf diff=perl
 *.pm eol=lf diff=perl
 *.py eol=lf diff=python
+*.bat eol=crlf
 /Documentation/**/*.txt eol=lf
 /command-list.txt eol=lf
 /GIT-VERSION-GEN eol=lf
