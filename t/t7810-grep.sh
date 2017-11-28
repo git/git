@@ -60,6 +60,18 @@ test_expect_success setup '
 		echo " line with leading space3"
 		echo "line without leading space2"
 	} >space &&
+	cat >hello.ps1 <<-\EOF &&
+	# No-op.
+	function dummy() {}
+
+	# Say hello.
+	function hello() {
+	  echo "Hello world."
+	} # hello
+
+	# Still a no-op.
+	function dummy() {}
+	EOF
 	git add . &&
 	test_tick &&
 	git commit -m initial
@@ -766,18 +778,27 @@ test_expect_success 'grep -W shows no trailing empty lines' '
 	test_cmp expected actual
 '
 
-cat >expected <<EOF
-hello.c=	printf("Hello world.\n");
-hello.c:	return 0;
-hello.c-	/* char ?? */
-EOF
-
 test_expect_success 'grep -W with userdiff' '
 	test_when_finished "rm -f .gitattributes" &&
-	git config diff.custom.xfuncname "(printf.*|})$" &&
-	echo "hello.c diff=custom" >.gitattributes &&
-	git grep -W return >actual &&
-	test_cmp expected actual
+	git config diff.custom.xfuncname "^function .*$" &&
+	echo "hello.ps1 diff=custom" >.gitattributes &&
+	git grep -W echo >function-context-userdiff-actual
+'
+
+test_expect_success ' includes preceding comment' '
+	grep "# Say hello" function-context-userdiff-actual
+'
+
+test_expect_success ' includes function line' '
+	grep "=function hello" function-context-userdiff-actual
+'
+
+test_expect_success ' includes matching line' '
+	grep ":  echo" function-context-userdiff-actual
+'
+
+test_expect_success ' includes last line of the function' '
+	grep "} # hello" function-context-userdiff-actual
 '
 
 for threads in $(test_seq 0 10)

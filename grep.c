@@ -1476,31 +1476,52 @@ static void show_funcname_line(struct grep_opt *opt, struct grep_source *gs,
 	}
 }
 
+static int is_empty_line(const char *bol, const char *eol);
+
 static void show_pre_context(struct grep_opt *opt, struct grep_source *gs,
 			     char *bol, char *end, unsigned lno)
 {
-	unsigned cur = lno, from = 1, funcname_lno = 0;
-	int funcname_needed = !!opt->funcname;
-
-	if (opt->funcbody && !match_funcname(opt, gs, bol, end))
-		funcname_needed = 2;
+	unsigned cur = lno, from = 1, funcname_lno = 0, orig_from;
+	int funcname_needed = !!opt->funcname, comment_needed = 0;
 
 	if (opt->pre_context < lno)
 		from = lno - opt->pre_context;
 	if (from <= opt->last_shown)
 		from = opt->last_shown + 1;
+	orig_from = from;
+	if (opt->funcbody) {
+		if (match_funcname(opt, gs, bol, end))
+			comment_needed = 1;
+		else
+			funcname_needed = 1;
+		from = opt->last_shown + 1;
+	}
 
 	/* Rewind. */
-	while (bol > gs->buf &&
-	       cur > (funcname_needed == 2 ? opt->last_shown + 1 : from)) {
+	while (bol > gs->buf && cur > from) {
+		char *next_bol = bol;
 		char *eol = --bol;
 
 		while (bol > gs->buf && bol[-1] != '\n')
 			bol--;
 		cur--;
+		if (comment_needed && (is_empty_line(bol, eol) ||
+				       match_funcname(opt, gs, bol, eol))) {
+			comment_needed = 0;
+			from = orig_from;
+			if (cur < from) {
+				cur++;
+				bol = next_bol;
+				break;
+			}
+		}
 		if (funcname_needed && match_funcname(opt, gs, bol, eol)) {
 			funcname_lno = cur;
 			funcname_needed = 0;
+			if (opt->funcbody)
+				comment_needed = 1;
+			else
+				from = orig_from;
 		}
 	}
 

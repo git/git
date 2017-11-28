@@ -121,6 +121,12 @@ static long match_func_rec(xdfile_t *xdf, xdemitconf_t const *xecfg, long ri,
 	return xecfg->find_func(rec, len, buf, sz, xecfg->find_func_priv);
 }
 
+static int is_func_rec(xdfile_t *xdf, xdemitconf_t const *xecfg, long ri)
+{
+	char dummy[1];
+	return match_func_rec(xdf, xecfg, ri, dummy, sizeof(dummy)) >= 0;
+}
+
 struct func_line {
 	long len;
 	char buf[80];
@@ -178,7 +184,6 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 
 			/* Appended chunk? */
 			if (i1 >= xe->xdf1.nrec) {
-				char dummy[1];
 				long i2 = xch->i2;
 
 				/*
@@ -186,8 +191,7 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 				 * a whole function was added.
 				 */
 				while (i2 < xe->xdf2.nrec) {
-					if (match_func_rec(&xe->xdf2, xecfg, i2,
-						dummy, sizeof(dummy)) >= 0)
+					if (is_func_rec(&xe->xdf2, xecfg, i2))
 						goto post_context_calculation;
 					i2++;
 				}
@@ -200,6 +204,9 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 			}
 
 			fs1 = get_func_line(xe, xecfg, NULL, i1, -1);
+			while (fs1 > 0 && !is_empty_rec(&xe->xdf1, fs1 - 1) &&
+			       !is_func_rec(&xe->xdf1, xecfg, fs1 - 1))
+				fs1--;
 			if (fs1 < 0)
 				fs1 = 0;
 			if (fs1 < s1) {

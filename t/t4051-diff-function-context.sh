@@ -85,6 +85,10 @@ test_expect_success 'setup' '
 
 check_diff changed_hello 'changed function'
 
+test_expect_success ' context includes comment' '
+	grep "^ .*Hello comment" changed_hello.diff
+'
+
 test_expect_success ' context includes begin' '
 	grep "^ .*Begin of hello" changed_hello.diff
 '
