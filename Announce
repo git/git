@@ -53,7 +53,8 @@ cnt=$(git rev-list --no-merges "$previous..$commit" | wc -l)
 
 cat <<EOF
 To: git@vger.kernel.org
-Cc: Linux Kernel <linux-kernel@vger.kernel.org>
+Cc: Linux Kernel <linux-kernel@vger.kernel.org>,
+    git-packagers@googlegroups.com
 Bcc: lwn@lwn.net
 Subject: [ANNOUNCE] Git $relname
 
