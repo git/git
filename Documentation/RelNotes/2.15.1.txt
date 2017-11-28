@@ -82,4 +82,7 @@ Fixes since v2.15
  * An ancient bug in "git apply --ignore-space-change" codepath has
    been fixed.
 
+ * There was a recent semantic mismerge in the codepath to write out a
+   section of a configuration section, which has been corrected.
+
 Also contains various documentation updates and code clean-ups.
