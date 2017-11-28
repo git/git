@@ -281,6 +281,12 @@ start-point is either a local or remote-tracking branch.
 	and the object it points at.  The format is the same as
 	that of linkgit:git-for-each-ref[1].
 
+CONFIGURATION
+-------------
+`pager.branch` is only respected when listing branches, i.e., when
+`--list` is used or implied. The default is to use a pager.
+See linkgit:git-config[1].
+
 Examples
 --------
 

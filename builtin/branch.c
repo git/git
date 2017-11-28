@@ -675,6 +675,9 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		copy *= 2;
 	}
 
+	if (list)
+		setup_auto_pager("branch", 1);
+
 	if (delete) {
 		if (!argc)
 			die(_("branch name required"));

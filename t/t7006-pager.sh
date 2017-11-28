@@ -214,6 +214,44 @@ test_expect_success TTY 'git tag as alias respects pager.tag with -l' '
 	! test -e paginated.out
 '
 
+test_expect_success TTY 'git branch defaults to paging' '
+	rm -f paginated.out &&
+	test_terminal git branch &&
+	test -e paginated.out
+'
+
+test_expect_success TTY 'git branch respects pager.branch' '
+	rm -f paginated.out &&
+	test_terminal git -c pager.branch=false branch &&
+	! test -e paginated.out
+'
+
+test_expect_success TTY 'git branch respects --no-pager' '
+	rm -f paginated.out &&
+	test_terminal git --no-pager branch &&
+	! test -e paginated.out
+'
+
+test_expect_success TTY 'git branch --edit-description ignores pager.branch' '
+	rm -f paginated.out editor.used &&
+	write_script editor <<-\EOF &&
+		echo "New description" >"$1"
+		touch editor.used
+	EOF
+	EDITOR=./editor test_terminal git -c pager.branch branch --edit-description &&
+	! test -e paginated.out &&
+	test -e editor.used
+'
+
+test_expect_success TTY 'git branch --set-upstream-to ignores pager.branch' '
+	rm -f paginated.out &&
+	git branch other &&
+	test_when_finished "git branch -D other" &&
+	test_terminal git -c pager.branch branch --set-upstream-to=other &&
+	test_when_finished "git branch --unset-upstream" &&
+	! test -e paginated.out
+'
+
 # A colored commit log will begin with an appropriate ANSI escape
 # for the first color; the text "commit" comes later.
 colorful() {
