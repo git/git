@@ -23,6 +23,7 @@ addons:
 
 env:
   global:
+    - BYPASS_TCLTK_CHECK=1
     - DEVELOPER=1
     # The Linux build installs the defined dependency versions below.
     # The OS X build installs the latest available versions. Keep that
