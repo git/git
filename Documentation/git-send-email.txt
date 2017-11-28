@@ -203,9 +203,9 @@ a password is obtained using 'git-credential'.
 	specify a full pathname of a sendmail-like program instead;
 	the program must support the `-i` option.  Default value can
 	be specified by the `sendemail.smtpServer` configuration
-	option; the built-in default is `/usr/sbin/sendmail` or
-	`/usr/lib/sendmail` if such program is available, or
-	`localhost` otherwise.
+	option; the built-in default is to search for `sendmail` in
+	`/usr/sbin`, `/usr/lib` and $PATH if such program is
+	available, falling back to `localhost` otherwise.
 
 --smtp-server-port=<port>::
 	Specifies a port different from the default port (SMTP
