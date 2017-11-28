@@ -15,6 +15,10 @@ subscribed to send messages.  The convention on the list is to keep
 everybody involved on Cc:, so it is unnecessary to say "Please Cc: me,
 I am not subscribed".
 
+As an anti-spam measure, the mailing list software rejects messages
+that are not text/plain and drops them on the floor.  If you are a
+GMail user, you'd want to make sure "Plain text mode" is checked.
+
 Before sending patches, please read Documentation/SubmittingPatches
 and Documentation/CodingGuidelines to familiarize yourself with the
 project convention.
