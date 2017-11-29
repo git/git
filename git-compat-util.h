@@ -1,6 +1,15 @@
 #ifndef GIT_COMPAT_UTIL_H
 #define GIT_COMPAT_UTIL_H
 
+#ifdef USE_MSVC_CRTDBG
+/*
+ * For these to work they must appear very early in each
+ * file -- before most of the standard header files.
+ */
+#include <stdlib.h>
+#include <crtdbg.h>
+#endif
+
 #define _FILE_OFFSET_BITS 64
 
 
@@ -272,6 +281,33 @@ extern char *gitdirname(char *);
 
 #ifndef NO_ICONV
 #include <iconv.h>
+#ifdef _MSC_VER
+/*
+ * At least version 1.14.0.11 of the libiconv NuPkg at
+ * https://www.nuget.org/packages/libiconv/ does not set errno at all.
+ *
+ * Let's simulate it by testing whether we might have possibly run out of
+ * space.
+ */
+static inline size_t msvc_iconv(iconv_t conv,
+	const char **inpos, size_t *insize,
+	char **outpos, size_t *outsize)
+{
+	int saved_errno = errno;
+	size_t res;
+
+	errno = ENOENT;
+	res = iconv(conv, inpos, insize, outpos, outsize);
+	if (!res)
+		errno = saved_errno;
+	else if (errno == ENOENT)
+		errno = *outsize < 16 ? E2BIG : 0;
+
+	return res;
+}
+#undef iconv
+#define iconv msvc_iconv
+#endif
 #endif
 
 #ifndef NO_OPENSSL
