@@ -145,18 +145,25 @@ upstream::
 	(behind), "<>" (ahead and behind), or "=" (in sync). `:track`
 	also prints "[gone]" whenever unknown upstream ref is
 	encountered. Append `:track,nobracket` to show tracking
-	information without brackets (i.e "ahead N, behind M").  Has
-	no effect if the ref does not have tracking information
-	associated with it.  All the options apart from `nobracket`
-	are mutually exclusive, but if used together the last option
-	is selected.
+	information without brackets (i.e "ahead N, behind M").
++
+For any remote-tracking branch `%(upstream)`, `%(upstream:remotename)`
+and `%(upstream:remoteref)` refer to the name of the remote and the
+name of the tracked remote ref, respectively. In other words, the
+remote-tracking branch can be updated explicitly and individually by
+using the refspec `%(upstream:remoteref):%(upstream)` to fetch from
+`%(upstream:remotename)`.
++
+Has no effect if the ref does not have tracking information associated
+with it.  All the options apart from `nobracket` are mutually exclusive,
+but if used together the last option is selected.
 
 push::
 	The name of a local ref which represents the `@{push}`
 	location for the displayed ref. Respects `:short`, `:lstrip`,
-	`:rstrip`, `:track`, and `:trackshort` options as `upstream`
-	does. Produces an empty string if no `@{push}` ref is
-	configured.
+	`:rstrip`, `:track`, `:trackshort`, `:remotename`, and `:remoteref`
+	options as `upstream` does. Produces an empty string if no `@{push}`
+	ref is configured.
 
 HEAD::
 	'*' if HEAD matches current ref (the checked out branch), ' '
