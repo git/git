@@ -123,7 +123,6 @@ sub createProject {
     my $defines = join(";", sort(@{$$build_structure{"$prefix${name}_DEFINES"}}));
     my $includes= join(";", sort(map { s/^-I//; s/\//\\/g; File::Spec->file_name_is_absolute($_) ? $_ : "$rel_dir\\$_" } @{$$build_structure{"$prefix${name}_INCLUDES"}}));
     my $cflags = join(" ", sort(map { s/^-[GLMOZ].*//; s/.* .*/"$&"/; $_; } @{$$build_structure{"$prefix${name}_CFLAGS"}}));
-    $cflags =~ s/\"/&quot;/g;
     $cflags =~ s/</&lt;/g;
     $cflags =~ s/>/&gt;/g;
 
@@ -133,7 +132,6 @@ sub createProject {
     }
 
     $defines =~ s/-D//g;
-    $defines =~ s/\"/&quot;/g;
     $defines =~ s/</&lt;/g;
     $defines =~ s/>/&gt;/g;
     $defines =~ s/\'//g;
