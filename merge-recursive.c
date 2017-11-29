@@ -1329,8 +1329,6 @@ static struct string_list *get_renames(struct merge_options *o,
 	struct diff_options opts;
 
 	renames = xcalloc(1, sizeof(struct string_list));
-	if (!o->detect_rename)
-		return renames;
 
 	diff_setup(&opts);
 	opts.flags.recursive = 1;
@@ -1648,6 +1646,12 @@ static int handle_renames(struct merge_options *o,
 			  struct string_list *entries,
 			  struct rename_info *ri)
 {
+	ri->head_renames = NULL;
+	ri->merge_renames = NULL;
+
+	if (!o->detect_rename)
+		return 1;
+
 	ri->head_renames  = get_renames(o, head, common, head, merge, entries);
 	ri->merge_renames = get_renames(o, merge, common, head, merge, entries);
 	return process_renames(o, ri->head_renames, ri->merge_renames);
@@ -1657,6 +1661,9 @@ static void cleanup_rename(struct string_list *rename)
 {
 	const struct rename *re;
 	int i;
+
+	if (rename == NULL)
+		return;
 
 	for (i = 0; i < rename->nr; i++) {
 		re = rename->items[i].util;
