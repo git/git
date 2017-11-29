@@ -3224,7 +3224,7 @@ test_expect_success '11b-setup: Avoid losing dirty file involved in directory re
 	)
 '
 
-test_expect_failure '11b-check: Avoid losing dirty file involved in directory rename' '
+test_expect_success '11b-check: Avoid losing dirty file involved in directory rename' '
 	(
 		cd 11b &&
 
@@ -3358,7 +3358,7 @@ test_expect_success '11d-setup: Avoid losing not-uptodate with rename + D/F conf
 	)
 '
 
-test_expect_failure '11d-check: Avoid losing not-uptodate with rename + D/F conflict' '
+test_expect_success '11d-check: Avoid losing not-uptodate with rename + D/F conflict' '
 	(
 		cd 11d &&
 
@@ -3432,7 +3432,7 @@ test_expect_success '11e-setup: Avoid deleting not-uptodate with dir rename/rena
 	)
 '
 
-test_expect_failure '11e-check: Avoid deleting not-uptodate with dir rename/rename(1to2)/add' '
+test_expect_success '11e-check: Avoid deleting not-uptodate with dir rename/rename(1to2)/add' '
 	(
 		cd 11e &&
 
@@ -3506,7 +3506,7 @@ test_expect_success '11f-setup: Avoid deleting not-uptodate with dir rename/rena
 	)
 '
 
-test_expect_failure '11f-check: Avoid deleting not-uptodate with dir rename/rename(2to1)' '
+test_expect_success '11f-check: Avoid deleting not-uptodate with dir rename/rename(2to1)' '
 	(
 		cd 11f &&
 
