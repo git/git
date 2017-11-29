@@ -716,7 +716,8 @@ static int everything_local(struct fetch_pack_args *args,
 	for (ref = *refs; ref; ref = ref->next) {
 		struct object *o;
 
-		if (!has_object_file(&ref->old_oid))
+		if (!has_object_file_with_flags(&ref->old_oid,
+						OBJECT_INFO_QUICK))
 			continue;
 
 		o = parse_object(&ref->old_oid);
