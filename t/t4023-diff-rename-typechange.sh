@@ -7,21 +7,21 @@ test_description='typechange rename detection'
 test_expect_success setup '
 
 	rm -f foo bar &&
-	cat "$TEST_DIRECTORY"/../COPYING >foo &&
+	cat "$TEST_DIRECTORY"/diff-lib/COPYING >foo &&
 	test_ln_s_add linklink bar &&
 	git add foo &&
 	git commit -a -m Initial &&
 	git tag one &&
 
 	git rm -f foo bar &&
-	cat "$TEST_DIRECTORY"/../COPYING >bar &&
+	cat "$TEST_DIRECTORY"/diff-lib/COPYING >bar &&
 	test_ln_s_add linklink foo &&
 	git add bar &&
 	git commit -a -m Second &&
 	git tag two &&
 
 	git rm -f foo bar &&
-	cat "$TEST_DIRECTORY"/../COPYING >foo &&
+	cat "$TEST_DIRECTORY"/diff-lib/COPYING >foo &&
 	git add foo &&
 	git commit -a -m Third &&
 	git tag three &&
@@ -35,15 +35,15 @@ test_expect_success setup '
 	# This is purely for sanity check
 
 	git rm -f foo bar &&
-	cat "$TEST_DIRECTORY"/../COPYING >foo &&
-	cat "$TEST_DIRECTORY"/../Makefile >bar &&
+	cat "$TEST_DIRECTORY"/diff-lib/COPYING >foo &&
+	cat "$TEST_DIRECTORY"/diff-lib/README >bar &&
 	git add foo bar &&
 	git commit -a -m Fifth &&
 	git tag five &&
 
 	git rm -f foo bar &&
-	cat "$TEST_DIRECTORY"/../Makefile >foo &&
-	cat "$TEST_DIRECTORY"/../COPYING >bar &&
+	cat "$TEST_DIRECTORY"/diff-lib/README >foo &&
+	cat "$TEST_DIRECTORY"/diff-lib/COPYING >bar &&
 	git add foo bar &&
 	git commit -a -m Sixth &&
 	git tag six
