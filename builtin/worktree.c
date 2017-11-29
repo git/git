@@ -33,7 +33,18 @@ struct add_opts {
 
 static int show_only;
 static int verbose;
+static int guess_remote;
 static timestamp_t expire;
+
+static int git_worktree_config(const char *var, const char *value, void *cb)
+{
+	if (!strcmp(var, "worktree.guessremote")) {
+		guess_remote = git_config_bool(var, value);
+		return 0;
+	}
+
+	return git_default_config(var, value, cb);
+}
 
 static int prune_worktree(const char *id, struct strbuf *reason)
 {
@@ -343,7 +354,6 @@ static int add(int ac, const char **av, const char *prefix)
 	char *path;
 	const char *branch;
 	const char *opt_track = NULL;
-	int guess_remote = 0;
 	struct option options[] = {
 		OPT__FORCE(&opts.force, N_("checkout <branch> even if already checked out in other worktree")),
 		OPT_STRING('b', NULL, &opts.new_branch, N_("branch"),
@@ -591,7 +601,7 @@ int cmd_worktree(int ac, const char **av, const char *prefix)
 		OPT_END()
 	};
 
-	git_config(git_default_config, NULL);
+	git_config(git_worktree_config, NULL);
 
 	if (ac < 2)
 		usage_with_options(worktree_usage, options);

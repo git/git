@@ -121,6 +121,9 @@ OPTIONS
 	branch in exactly one remote matching the basename of `<path>,
 	base the new branch on the remote-tracking branch, and mark
 	the remote-tracking branch as "upstream" from the new branch.
++
+This can also be set up as the default behaviour by using the
+`worktree.guessRemote` config option.
 
 --[no-]track::
 	When creating a new branch, if `<commit-ish>` is a branch,
