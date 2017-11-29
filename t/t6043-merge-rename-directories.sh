@@ -3713,7 +3713,7 @@ test_expect_success '12b-setup: Moving one directory hierarchy into another' '
 	)
 '
 
-test_expect_failure '12b-check: Moving one directory hierarchy into another' '
+test_expect_success '12b-check: Moving one directory hierarchy into another' '
 	(
 		cd 12b &&
 
