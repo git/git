@@ -1,4 +1,6 @@
+#ifndef NO_INTTYPES_H
 #include <inttypes.h>
+#endif
 #include "git-compat-util.h"
 #include "run-command.h"
 #include "compat/terminal.h"

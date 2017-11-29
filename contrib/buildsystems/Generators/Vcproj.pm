@@ -52,7 +52,6 @@ my @GUIDS = (
     "{00785268-A9CC-4E40-AC29-BAC0019159CE}",
     "{4C06F56A-DCDB-46A6-B67C-02339935CF12}",
     "{3A62D3FD-519E-4EC9-8171-D2C1BFEA022F}",
-    "{3A62D3FD-519E-4EC9-8171-D2C1BFEA022F}",
     "{9392EB58-D7BA-410B-B1F0-B2FAA6BC89A7}",
     "{2ACAB2D5-E0CE-4027-BCA0-D78B2D7A6C66}",
     "{86E216C3-43CE-481A-BCB2-BE5E62850635}",
@@ -63,7 +62,14 @@ my @GUIDS = (
     "{294BDC5A-F448-48B6-8110-DD0A81820F8C}",
     "{4B9F66E9-FAC9-47AB-B1EF-C16756FBFD06}",
     "{72EA49C6-2806-48BD-B81B-D4905102E19C}",
-    "{5728EB7E-8929-486C-8CD5-3238D060E768}"
+    "{5728EB7E-8929-486C-8CD5-3238D060E768}",
+    "{A3E300FC-5630-4850-A470-E9F2C2EFA7E7}",
+    "{CEA071D4-D9F3-4250-98F7-44AFDC8ACAA1}",
+    "{3FD87BB4-2236-4A1B-ADD2-46211A302442}",
+    "{49B03F41-5157-4079-95A7-64D728BCF74F}",
+    "{95D5A28B-80E2-40A9-BEA3-C52B9CA488E3}",
+    "{B85E6545-D523-4323-9F29-45389D090343}",
+    "{06840CEF-746C-4B71-9442-C395DD6590A5}"
 );
 
 sub generate {
@@ -106,6 +112,8 @@ sub createLibProject {
     my $includes= join(";", sort(map("&quot;$rel_dir\\$_&quot;", @{$$build_structure{"LIBS_${libname}_INCLUDES"}})));
     my $cflags  = join(" ", sort(@{$$build_structure{"LIBS_${libname}_CFLAGS"}}));
     $cflags =~ s/\"/&quot;/g;
+    $cflags =~ s/</&lt;/g;
+    $cflags =~ s/>/&gt;/g;
 
     my $cflags_debug = $cflags;
     $cflags_debug =~ s/-MT/-MTd/;
@@ -127,6 +135,8 @@ sub createLibProject {
 
     $defines =~ s/-D//g;
     $defines =~ s/\"/\\&quot;/g;
+    $defines =~ s/</&lt;/g;
+    $defines =~ s/>/&gt;/g;
     $defines =~ s/\'//g;
     $includes =~ s/-I//g;
     mkdir "$target" || die "Could not create the directory $target for lib project!\n";
@@ -161,9 +171,6 @@ sub createLibProject {
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
 			/>
 			<Tool
 				Name="VCMIDLTool"
@@ -227,9 +234,6 @@ sub createLibProject {
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
 			/>
 			<Tool
 				Name="VCMIDLTool"
@@ -325,6 +329,8 @@ sub createAppProject {
     my $includes= join(";", sort(map("&quot;$rel_dir\\$_&quot;", @{$$build_structure{"APPS_${appname}_INCLUDES"}})));
     my $cflags  = join(" ", sort(@{$$build_structure{"APPS_${appname}_CFLAGS"}}));
     $cflags =~ s/\"/&quot;/g;
+    $cflags =~ s/</&lt;/g;
+    $cflags =~ s/>/&gt;/g;
 
     my $cflags_debug = $cflags;
     $cflags_debug =~ s/-MT/-MTd/;
@@ -351,6 +357,8 @@ sub createAppProject {
 
     $defines =~ s/-D//g;
     $defines =~ s/\"/\\&quot;/g;
+    $defines =~ s/</&lt;/g;
+    $defines =~ s/>/&gt;/g;
     $defines =~ s/\'//g;
     $defines =~ s/\\\\/\\/g;
     $includes =~ s/-I//g;
@@ -386,9 +394,6 @@ sub createAppProject {
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
 			/>
 			<Tool
 				Name="VCMIDLTool"
@@ -457,9 +462,6 @@ sub createAppProject {
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
 			/>
 			<Tool
 				Name="VCMIDLTool"
@@ -561,20 +563,18 @@ sub createGlueProject {
     foreach (@apps) {
         $_ =~ s/\//_/g;
         $_ =~ s/\.exe//;
-        push(@tmp, $_);
+        if ($_ eq "git" ) {
+            unshift(@tmp, $_);
+        } else {
+            push(@tmp, $_);
+        }
     }
     @apps = @tmp;
 
     open F, ">git.sln" || die "Could not open git.sln for writing!\n";
     binmode F, ":crlf";
     print F "$SLN_HEAD";
-    foreach (@libs) {
-        my $libname = $_;
-        my $uuid = $build_structure{"LIBS_${libname}_GUID"};
-        print F "$SLN_PRE";
-        print F "\"${libname}\", \"${libname}\\${libname}.vcproj\", \"${uuid}\"";
-        print F "$SLN_POST";
-    }
+
     my $uuid_libgit = $build_structure{"LIBS_libgit_GUID"};
     my $uuid_xdiff_lib = $build_structure{"LIBS_xdiff_lib_GUID"};
     foreach (@apps) {
@@ -588,6 +588,13 @@ sub createGlueProject {
         print F "	EndProjectSection";
         print F "$SLN_POST";
     }
+    foreach (@libs) {
+        my $libname = $_;
+        my $uuid = $build_structure{"LIBS_${libname}_GUID"};
+        print F "$SLN_PRE";
+        print F "\"${libname}\", \"${libname}\\${libname}.vcproj\", \"${uuid}\"";
+        print F "$SLN_POST";
+    }
 
     print F << "EOM";
 Global
@@ -599,17 +606,17 @@ EOM
     print F << "EOM";
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 EOM
-    foreach (@libs) {
-        my $libname = $_;
-        my $uuid = $build_structure{"LIBS_${libname}_GUID"};
+    foreach (@apps) {
+        my $appname = $_;
+        my $uuid = $build_structure{"APPS_${appname}_GUID"};
         print F "\t\t${uuid}.Debug|Win32.ActiveCfg = Debug|Win32\n";
         print F "\t\t${uuid}.Debug|Win32.Build.0 = Debug|Win32\n";
         print F "\t\t${uuid}.Release|Win32.ActiveCfg = Release|Win32\n";
         print F "\t\t${uuid}.Release|Win32.Build.0 = Release|Win32\n";
     }
-    foreach (@apps) {
-        my $appname = $_;
-        my $uuid = $build_structure{"APPS_${appname}_GUID"};
+    foreach (@libs) {
+        my $libname = $_;
+        my $uuid = $build_structure{"LIBS_${libname}_GUID"};
         print F "\t\t${uuid}.Debug|Win32.ActiveCfg = Debug|Win32\n";
         print F "\t\t${uuid}.Debug|Win32.Build.0 = Debug|Win32\n";
         print F "\t\t${uuid}.Release|Win32.ActiveCfg = Release|Win32\n";
