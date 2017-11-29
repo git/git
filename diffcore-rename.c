@@ -392,6 +392,8 @@ static int too_many_rename_candidates(int num_create,
 	 *
 	 *    num_create * num_src > rename_limit * rename_limit
 	 */
+	if (rename_limit <= 0)
+		rename_limit = 32767;
 	if ((num_create <= rename_limit || num_src <= rename_limit) &&
 	    ((uint64_t)num_create * (uint64_t)num_src
 	     <= (uint64_t)rename_limit * (uint64_t)rename_limit))
