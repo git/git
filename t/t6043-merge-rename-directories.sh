@@ -477,7 +477,7 @@ test_expect_success '2a-setup: Directory split into two on one side, with equal 
 	)
 '
 
-test_expect_failure '2a-check: Directory split into two on one side, with equal numbers of paths' '
+test_expect_success '2a-check: Directory split into two on one side, with equal numbers of paths' '
 	(
 		cd 2a &&
 
