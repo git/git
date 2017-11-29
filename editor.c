@@ -7,11 +7,16 @@
 #define DEFAULT_EDITOR "vi"
 #endif
 
+int is_terminal_dumb(void)
+{
+	const char *terminal = getenv("TERM");
+	return !terminal || !strcmp(terminal, "dumb");
+}
+
 const char *git_editor(void)
 {
 	const char *editor = getenv("GIT_EDITOR");
-	const char *terminal = getenv("TERM");
-	int terminal_is_dumb = !terminal || !strcmp(terminal, "dumb");
+	int terminal_is_dumb = is_terminal_dumb();
 
 	if (!editor && editor_program)
 		editor = editor_program;
