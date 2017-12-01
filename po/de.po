@@ -2925,7 +2925,7 @@ msgstr "  (benutzen Sie \"git branch --unset-upstream\" zum Beheben)\n"
 #: remote.c:2083
 #, c-format
 msgid "Your branch is up to date with '%s'.\n"
-msgstr "Ihr Branch ist auf dem selben Stand wie '%s'.\n"
+msgstr "Ihr Branch ist auf demselben Stand wie '%s'.\n"
 
 #: remote.c:2087
 #, c-format
@@ -10874,7 +10874,7 @@ msgstr "Kann nicht überschreiben"
 
 #: builtin/mv.c:239
 msgid "multiple sources for the same target"
-msgstr "mehrere Quellen für das selbe Ziel"
+msgstr "mehrere Quellen für dasselbe Ziel"
 
 #: builtin/mv.c:241
 msgid "destination directory does not exist"
@@ -11827,7 +11827,7 @@ msgstr ""
 "\n"
 "    git push %s HEAD:%s\n"
 "\n"
-"Um auf den Branch mit dem selben Namen im Remote-Repository zu versenden,\n"
+"Um auf den Branch mit demselben Namen im Remote-Repository zu versenden,\n"
 "benutzen Sie:\n"
 "\n"
 "    git push %s %s\n"
