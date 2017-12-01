@@ -25,9 +25,11 @@ include compat/vcbuild/MSVC-DEFS-GEN
 	# See if vcpkg and the vcpkg-build versions of the third-party
 	# libraries that we use are installed.  We include the result
 	# to get $(vcpkg_*) variables defined for the Makefile.
+ifeq (,$(SKIP_VCPKG))
 compat/vcbuild/VCPKG-DEFS: compat/vcbuild/vcpkg_install.bat
 	@"$<"
 include compat/vcbuild/VCPKG-DEFS
+endif
 endif
 
 # We choose to avoid "if .. else if .. else .. endif endif"
@@ -716,12 +718,12 @@ vcxproj:
 	git add -f git.sln {*,*/lib,t/helper/*}/*.vcxproj
 
 	# Add common-cmds.h
-	$(MAKE) MSVC=1 prefix=/mingw64 common-cmds.h
+	$(MAKE) MSVC=1 SKIP_VCPKG=1 prefix=/mingw64 common-cmds.h
 	git add -f common-cmds.h
 
 	# Add scripts
 	rm -f perl/perl.mak
-	$(MAKE) MSVC=1 prefix=/mingw64 \
+	$(MAKE) MSVC=1 SKIP_VCPKG=1 prefix=/mingw64 \
 		$(SCRIPT_LIB) $(SCRIPT_SH_GEN) $(SCRIPT_PERL_GEN)
 	# Strip out the sane tool path, needed only for building
 	sed -i '/^git_broken_path_fix ".*/d' git-sh-setup
@@ -733,7 +735,7 @@ vcxproj:
 
 	# Add bin-wrappers, for testing
 	rm -rf bin-wrappers/
-	$(MAKE) MSVC=1 prefix=/mingw64 $(test_bindir_programs)
+	$(MAKE) MSVC=1 SKIP_VCPKG=1 prefix=/mingw64 $(test_bindir_programs)
 	# Ensure that the GIT_EXEC_PATH is a Unix-y one, and that the absolute
 	# path of the repository is not hard-coded (GIT_EXEC_PATH will be set
 	# by test-lib.sh according to the current setup)
@@ -756,7 +758,7 @@ vcxproj:
 	git add -f templates/boilerplates.made templates/blt/
 
 	# Add build options
-	$(MAKE) MSVC=1 prefix=/mingw64 GIT-BUILD-OPTIONS
+	$(MAKE) MSVC=1 SKIP_VCPKG=1 prefix=/mingw64 GIT-BUILD-OPTIONS
 	git add -f GIT-BUILD-OPTIONS
 
 	# Commit the whole shebang
