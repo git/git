@@ -462,6 +462,8 @@ static void copy_or_rename_branch(const char *oldname, const char *newname, int 
 {
 	struct strbuf oldref = STRBUF_INIT, newref = STRBUF_INIT, logmsg = STRBUF_INIT;
 	struct strbuf oldsection = STRBUF_INIT, newsection = STRBUF_INIT;
+	const char *interpreted_oldname = NULL;
+	const char *interpreted_newname = NULL;
 	int recovery = 0;
 	int clobber_head_ok;
 
@@ -493,6 +495,11 @@ static void copy_or_rename_branch(const char *oldname, const char *newname, int 
 
 	reject_rebase_or_bisect_branch(oldref.buf);
 
+	if (!skip_prefix(oldref.buf, "refs/heads/", &interpreted_oldname) ||
+	    !skip_prefix(newref.buf, "refs/heads/", &interpreted_newname)) {
+		die("BUG: expected prefix missing for refs");
+	}
+
 	if (copy)
 		strbuf_addf(&logmsg, "Branch: copied %s to %s",
 			    oldref.buf, newref.buf);
@@ -508,10 +515,10 @@ static void copy_or_rename_branch(const char *oldname, const char *newname, int 
 	if (recovery) {
 		if (copy)
 			warning(_("Created a copy of a misnamed branch '%s'"),
-				oldref.buf + 11);
+				interpreted_oldname);
 		else
 			warning(_("Renamed a misnamed branch '%s' away"),
-				oldref.buf + 11);
+				interpreted_oldname);
 	}
 
 	if (!copy &&
@@ -520,9 +527,9 @@ static void copy_or_rename_branch(const char *oldname, const char *newname, int 
 
 	strbuf_release(&logmsg);
 
-	strbuf_addf(&oldsection, "branch.%s", oldref.buf + 11);
+	strbuf_addf(&oldsection, "branch.%s", interpreted_oldname);
 	strbuf_release(&oldref);
-	strbuf_addf(&newsection, "branch.%s", newref.buf + 11);
+	strbuf_addf(&newsection, "branch.%s", interpreted_newname);
 	strbuf_release(&newref);
 	if (!copy && git_config_rename_section(oldsection.buf, newsection.buf) < 0)
 		die(_("Branch is renamed, but update of config-file failed"));
