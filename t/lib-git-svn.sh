@@ -110,14 +110,16 @@ EOF
 }
 
 require_svnserve () {
-	if test -z "$SVNSERVE_PORT"
+	test_tristate GIT_TEST_SVNSERVE
+	if ! test "$GIT_TEST_SVNSERVE" = true
 	then
-		skip_all='skipping svnserve test. (set $SVNSERVE_PORT to enable)'
+		skip_all='skipping svnserve test. (set $GIT_TEST_SVNSERVE to enable)'
 		test_done
 	fi
 }
 
 start_svnserve () {
+	SVNSERVE_PORT=${SVNSERVE_PORT-${this_test#t}}
 	svnserve --listen-port $SVNSERVE_PORT \
 		 --root "$rawsvnrepo" \
 		 --listen-once \
