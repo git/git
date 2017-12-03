@@ -23,10 +23,10 @@ rebase.missingCommitsCheck::
 	--edit-todo' can then be used to correct the error. If set to
 	"ignore", no checking is done.
 	To drop a commit without warning or error, use the `drop`
-	command in the todo-list.
+	command in the todo list.
 	Defaults to "ignore".
 
 rebase.instructionFormat::
 	A format string, as specified in linkgit:git-log[1], to be used for the
-	instruction list during an interactive rebase.  The format will
+	todo list during an interactive rebase.  The format will
 	automatically have the long commit hash prepended to the format.
