@@ -1268,6 +1268,7 @@ static int parse_insn_line(struct todo_item *item, const char *bol, char *eol)
 	bol += padding;
 
 	if (item->command == TODO_EXEC) {
+		item->commit = NULL;
 		item->arg = bol;
 		item->arg_len = (int)(eol - bol);
 		return 0;
