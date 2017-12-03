@@ -118,20 +118,37 @@ test_expect_success setup '
 EOF
 
 V=$(git version | sed -e 's/^git version //' -e 's/\./\\./g')
-while read cmd
+while read magic cmd
 do
-	case "$cmd" in
-	'' | '#'*) continue ;;
+	case "$magic" in
+	'' | '#'*)
+		continue ;;
+	:*)
+		magic=${magic#:}
+		label="$magic-$cmd"
+		case "$magic" in
+		noellipses) ;;
+		*)
+			die "bug in t4103: unknown magic $magic" ;;
+		esac ;;
+	*)
+		cmd="$magic $cmd" magic=
+		label="$cmd" ;;
 	esac
-	test=$(echo "$cmd" | sed -e 's|[/ ][/ ]*|_|g')
+	test=$(echo "$label" | sed -e 's|[/ ][/ ]*|_|g')
 	pfx=$(printf "%04d" $test_count)
 	expect="$TEST_DIRECTORY/t4013/diff.$test"
 	actual="$pfx-diff.$test"
 
 	test_expect_success "git $cmd" '
 		{
-			echo "\$ git $cmd"
-			GIT_PRINT_SHA1_ELLIPSIS="yes" git $cmd |
+			echo "$ git $cmd"
+			case "$magic" in
+			"")
+				GIT_PRINT_SHA1_ELLIPSIS=yes git $cmd ;;
+			noellipses)
+				git $cmd ;;
+			esac |
 			sed -e "s/^\\(-*\\)$V\\(-*\\)\$/\\1g-i-t--v-e-r-s-i-o-n\2/" \
 			    -e "s/^\\(.*mixed; boundary=\"-*\\)$V\\(-*\\)\"\$/\\1g-i-t--v-e-r-s-i-o-n\2\"/"
 			echo "\$"
