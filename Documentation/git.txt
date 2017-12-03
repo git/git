@@ -709,6 +709,15 @@ of clones and fetches.
 	the background which do not want to cause lock contention with
 	other operations on the repository.  Defaults to `1`.
 
+`GIT_PRINT_SHA1_ELLIPSIS` (deprecated)::
+	If set to `yes`, print an ellipsis following an
+	(abbreviated) SHA-1 value.  This affects indications of
+	detached HEADs (linkgit:git-checkout[1]) and the raw
+	diff output (linkgit:git-diff[1]).  Printing an
+	ellipsis in the cases mentioned is no longer considered
+	adequate and support for it is likely to be removed in the
+	foreseeable future (along with the variable).
+
 Discussion[[Discussion]]
 ------------------------
 

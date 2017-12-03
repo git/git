@@ -876,7 +876,7 @@ test_expect_success 'L: verify internal tree sorting' '
 	EXPECT_END
 
 	git fast-import <input &&
-	git diff-tree --abbrev --raw L^ L >output &&
+	GIT_PRINT_SHA1_ELLIPSIS="yes" git diff-tree --abbrev --raw L^ L >output &&
 	test_cmp expect output
 '
 
