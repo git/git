@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Nov 2017, #08; Tue, 28)
+Subject: What's cooking in git.git (Dec 2017, #01; Mon, 4)
 X-master-at: 1a4e40aa5dc16564af879142ba9dfbbb88d1e5ff
-X-next-at: 9478a6608122bc94547963754b0a9f2821bb2cfb
+X-next-at: 49b39d22972bb18690a282774c8bc54bea6b63b7
 
-What's cooking in git.git (Nov 2017, #08; Tue, 28)
+What's cooking in git.git (Dec 2017, #01; Mon, 4)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,291 +12,81 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-Git 2.15.1 has been tagged, with many of the fixes that have already
-been in 'master'.
-
 You can find the changes described here in the integration branches
 of the repositories listed at
 
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* ew/rebase-mboxrd (2017-11-18) 1 commit
-  (merged to 'next' on 2017-11-21 at 88eaaac334)
- + rebase: use mboxrd format to avoid split errors
-
- When "git rebase" prepared an mailbox of changes and fed it to "git
- am" to replay them, it was confused when a stray "From " happened
- to be in the log message of one of the replayed changes.  This has
- been corrected.
-
-
-* jc/branch-name-sanity (2017-11-15) 4 commits
-  (merged to 'next' on 2017-11-20 at 7236b0dde3)
- + builtin/branch: remove redundant check for HEAD
- + branch: correctly reject refs/heads/{-dash,HEAD}
- + branch: split validate_new_branchname() into two
- + branch: streamline "attr_only" handling in validate_new_branchname()
-
- "git branch" and "git checkout -b" are now forbidden from creating
- a branch whose name is "HEAD".
-
-
-* jc/ignore-cr-at-eol (2017-11-08) 2 commits
-  (merged to 'next' on 2017-11-20 at 9f7bae7cbd)
- + diff: --ignore-cr-at-eol
- + xdiff: reassign xpparm_t.flags bits
-
- The "diff" family of commands learned to ignore differences in
- carriage return at the end of line.
-
-
-* jc/merge-base-fork-point-doc (2017-11-09) 1 commit
-  (merged to 'next' on 2017-11-20 at 199b9255b4)
- + merge-base --fork-point doc: clarify the example and failure modes
-
- Clarify and enhance documentation for "merge-base --fork-point", as
- it was clear what it computed but not why/what for.
-
-
-* ks/rebase-no-git-foo (2017-11-21) 1 commit
-  (merged to 'next' on 2017-11-22 at 336552dbb7)
- + git-rebase: clean up dashed-usages in messages
-
- Mentions of "git-rebase" and "git-am" (dashed form) still remained
- in end-user visible strings emitted by the "git rebase" command;
- they have been corrected.
-
-
-* ma/branch-list-paginate (2017-11-20) 3 commits
-  (merged to 'next' on 2017-11-22 at eecd7f2369)
- + branch: change default of `pager.branch` to "on"
- + branch: respect `pager.branch` in list-mode only
- + t7006: add tests for how git branch paginates
-
- "git branch --list" learned to show its output through the pager by
- default when the output is going to a terminal, which is controlled
- by the pager.branch configuration variable.  This is similar to a
- recent change to "git tag --list".
-
-
-* pw/sequencer-recover-from-unlockable-index (2017-11-16) 1 commit
-  (merged to 'next' on 2017-11-20 at 36f0ed26ce)
- + sequencer: reschedule pick if index can't be locked
-
- The sequencer machinery (used by "git cherry-pick A..B", and "git
- rebase -i", among other things) would have lost a commit if stopped
- due to an unlockable index file, which has been fixed.
-
-
-* rs/apply-inaccurate-eof-with-incomplete-line (2017-11-17) 1 commit
-  (merged to 'next' on 2017-11-20 at c8aee1d135)
- + apply: update line lengths for --inaccurate-eof
-
- "git apply --inaccurate-eof" when used with "--ignore-space-change"
- triggered an internal sanity check, which has been fixed.
-
-
-* rs/config-write-section-fix (2017-11-18) 1 commit
-  (merged to 'next' on 2017-11-21 at a7f3f93e0c)
- + config: flip return value of write_section()
-
- There was a recent semantic mismerge in the codepath to write out a
- section of a configuration section, which has been corrected.
-
-
-* rs/include-comments-before-the-function-header (2017-11-21) 6 commits
-  (merged to 'next' on 2017-11-22 at d7255a836f)
- + grep: show non-empty lines before functions with -W
- + grep: update boundary variable for pre-context
- + t7810: improve check of -W with user-defined function lines
- + xdiff: show non-empty lines before functions with -W
- + xdiff: factor out is_func_rec()
- + t4051: add test for comments preceding function lines
-
- "git grep -W", "git diff -W" and their friends learned a heuristic
- to extend a pre-context beyond the line that matches the "function
- pattern" (aka "diff.*.xfuncname") to include a comment block, if
- exists, that immediately precedes it.
-
-
-* rv/sendemail-tocmd-in-config-and-completion (2017-11-14) 2 commits
-  (merged to 'next' on 2017-11-20 at 75cf6e2fc3)
- + completion: add git config sendemail.tocmd
- + Documentation/config: add sendemail.tocmd to list preceding "See git-send-email(1)"
-
- Teach "sendemail.tocmd" to places that know about "sendemail.to",
- like documentation and shell completion (in contrib/).
-
-
-* sb/test-cherry-pick-submodule-getting-in-a-way (2017-11-15) 2 commits
-  (merged to 'next' on 2017-11-20 at fe7016689e)
- + merge-recursive: handle addition of submodule on our side of history
- + t/3512: demonstrate unrelated submodule/file conflict as cherry-pick failure
-
- The three-way merge performed by "git cherry-pick" was confused
- when a new submodule was added in the meantime, which has been
- fixed (or "papered over").
-
-
-* sd/branch-copy (2017-11-16) 1 commit
-  (merged to 'next' on 2017-11-20 at e33bcc460a)
- + config: avoid "write_in_full(fd, buf, len) != len" pattern
-
- Code clean-up.
-
-
-* sw/pull-ipv46-passthru (2017-11-21) 1 commit
-  (merged to 'next' on 2017-11-22 at b06021eeba)
- + pull: pass -4/-6 option to 'git fetch'
-
- Contrary to the documentation, "git pull -4/-6 other-args" did not
- ask the underlying "git fetch" to go over IPv4/IPv6, which has been
- corrected.
-
-
-* tb/add-renormalize (2017-11-17) 1 commit
-  (merged to 'next' on 2017-11-20 at e302f3591f)
- + add: introduce "--renormalize"
-
- "git add --renormalize ." is a new and safer way to record the fact
- that you are correcting the end-of-line convention and other
- "convert_to_git()" glitches in the in-repository data.
-
-
-* tz/complete-branch-copy (2017-11-17) 1 commit
-  (merged to 'next' on 2017-11-20 at 6d22384fcd)
- + completion: add '--copy' option to 'git branch'
-
- Command line completion (in contrib/) has been taught about the
- "--copy" option of "git branch".
-
-
-* tz/notes-error-to-stderr (2017-11-15) 1 commit
-  (merged to 'next' on 2017-11-20 at a45d441ee2)
- + notes: send "Automatic notes merge failed" messages to stderr
-
- "git notes" sent its error message to its standard output stream,
- which was corrected.
-
-
-* tz/redirect-fix (2017-11-14) 2 commits
-  (merged to 'next' on 2017-11-20 at 5b13f7026e)
- + rebase: fix stderr redirect in apply_autostash()
- + t/lib-gpg: fix gpgconf stderr redirect to /dev/null
-
- A few scripts (both in production and tests) incorrectly redirected
- their error output.  These have been corrected.
-
---------------------------------------------------
 [New Topics]
 
-* en/merge-recursive-icase-removal (2017-11-27) 1 commit
- - merge-recursive: ignore_case shouldn't reject intentional removals
+* ab/simplify-perl-makefile (2017-12-04) 1 commit
+ - Makefile: replace perl/Makefile.PL with simple make rules
 
- The code internal to the recursive merge strategy was not fully
- prepared to see a path that is renamed to try overwriting another
- path that is only different in case on case insensitive systems.
- This does not matter in the current code, but will start to matter
- once the rename detection logic starts taking hints from nearby
- paths moving to some directory and moves a new path along with them.
+ The build procedure for perl/ part has been greatly simplified by
+ weaning ourselves off of MakeMaker.
 
 
-* gk/tracing-optimization (2017-11-27) 3 commits
- - SQUASH??? compilation fix-up
- - trace: improve performance while category is disabled
- - trace: remove trace key normalization
+* cc/object-filtering-typofix (2017-12-04) 1 commit
+ - list-objects-filter-options: fix 'keword' typo in comment
+ (this branch uses jh/object-filtering; is tangled with jh/fsck-promisors and jh/partial-clone.)
 
- The tracing infrastructure has been optimized for cases where no
- tracing is requested.
+ Typofix for a topic already in 'next'.
 
-
-* pc/submodule-helper (2017-11-26) 1 commit
- - submodule--helper.c: i18n: add a missing space in message
-
- A message fix.
-
- Will merge to 'next'.
+ JeffH said that jh/object-filtering needs further polishing a bit
+ before graduating to 'master', so it would be appreciated if this
+ can also be rolled into such an incremental update.
 
 
-* tb/check-crlf-for-safe-crlf (2017-11-27) 1 commit
- - convert: tighten the safe autocrlf handling
+* cc/skip-to-optional-val (2017-12-04) 4 commits
+ - diff: use skip_to_optional_val_default()
+ - diff: use skip_to_optional_val()
+ - index-pack: use skip_to_optional_val()
+ - git-compat-util: introduce skip_to_optional_val()
 
- The "safe crlf" check incorrectly triggered for contents that does
- not use CRLF as line endings, which has been corrected.
+ Introduce a helper to simplify code to parse a common pattern that
+ expects either "--key" or "--key=<something>".
 
- Will merge to 'next'.
-
-
-* tg/t-readme-updates (2017-11-27) 2 commits
- - t/README: document test_cmp_rev
- - t/README: remove mention of adding copyright notices
-
- Developer doc updates.
-
- Will merge to 'next'.
+ This may want a final reroll to make it harder to misuse by
+ allowing NULL at the valp part of the argument.
+ cf. <xmqqh8t6o9me.fsf@gitster.mtv.corp.google.com>
+ cf. <xmqqd13uo9d1.fsf@gitster.mtv.corp.google.com>
 
 
-* cc/require-tcl-tk-for-build (2017-11-27) 1 commit
- - Makefile: check that tcl/tk is installed
+* lb/rebase-i-short-command-names (2017-12-04) 9 commits
+ - t3404: add test case for abbreviated commands
+ - rebase -i: learn to abbreviate command names
+ - rebase -i -x: add exec commands via the rebase--helper
+ - rebase -i: update functions to use a flags parameter
+ - rebase -i: replace reference to sha1 with oid
+ - rebase -i: refactor transform_todo_ids
+ - rebase -i: set commit to null in exec commands
+ - Documentation: use preferred name for the 'todo list' script
+ - Documentation: move rebase.* configs to new file
 
- A first-time builder of Git may have installed neither tclsh nor
- msgfmt, in which case git-gui and gitk part will fail and break the
- build.  As a workaround, refuse to run a build when tclsh is not
- installed and NO_TCLTK is not set.
+ Allow a single-letter command name in the "rebase -i" todo list.
 
- Undecided.
- I still feel that requring tclsh to be installed, with or without
- "escape hatch" for experts, may be too heavy-handed.
-
-
-* mk/http-backend-content-length (2017-11-27) 4 commits
- - SQUASH???
- - t5560-http-backend-noserver.sh: add CONTENT_LENGTH cases
- - SQUASH???
- - http-backend: respect CONTENT_LENGTH as specified by rfc3875
-
- The http-backend (used for smart-http transport) used to slurp the
- whole input until EOF, without paying attention to CONTENT_LENGTH
- that is supplied in the environment and instead expecting the Web
- server to close the input stream.  This has been fixed.
-
- Expecting a reroll.
- Suggested fixes to be used when rerolling is queued, but I'd
- prefer _not_ squashing them myself.
+ This may want a final reroll to avoid adding new reference to insn
+ where todo is the more modern term, among other minor things.
+ cf. <xmqq4lp6o4p4.fsf@gitster.mtv.corp.google.com>
 
 
-* fk/sendmail-from-path (2017-11-28) 1 commit
- - git-send-email: honor $PATH for sendmail binary
+* ra/prompt-eread-fix (2017-12-04) 2 commits
+ - git-prompt: fix reading files with windows line endings
+ - git-prompt: make __git_eread intended use explicit
 
- "git send-email" tries to see if the sendmail program is available
- in /usr/lib and /usr/sbin; extend the list of locations to be
- checked to also include directories on $PATH.
+ Update the shell prompt script (in contrib/) to strip trailing CR
+ from strings read from various "state" files.
 
- Will merge to 'next'.
-
-
-* jk/no-optional-locks (2017-11-27) 1 commit
- - git-status.txt: mention --no-optional-locks
-
- Doc update for a feature available in Git v2.14 and upwards.
+ Proposed log messages of both commits may need small fixes.
+ cf. <xmqqindmml25.fsf@gitster.mtv.corp.google.com>
+ cf. <alpine.DEB.2.21.1.1712041516280.98586@virtualbox>
 
 
-* jt/diff-anchored-patience (2017-11-28) 1 commit
- - diff: support anchoring line(s)
+* ds/for-each-file-in-obj-micro-optim (2017-12-04) 1 commit
+ - sha1_file: use strbuf_add() instead of strbuf_addf()
 
- "git diff" learned a variant of the "--patience" algorithm, to
- which the user can specify which 'unique' line to be used as
- anchoring points.
-
-
-* ks/doc-checkout-previous (2017-11-28) 1 commit
- - Doc/checkout: checking out using @{-N} can lead to detached state
-
- @{-N} in "git checkout @{-N}" may refer to a detached HEAD state,
- but the documentation was not clear about it, which has been fixed.
+ The code to iterate over loose object files got optimized.
 
  Will merge to 'next'.
 
@@ -389,6 +179,115 @@ of the repositories listed at
 
 --------------------------------------------------
 [Cooking]
+
+* en/merge-recursive-icase-removal (2017-11-27) 1 commit
+ - merge-recursive: ignore_case shouldn't reject intentional removals
+
+ The code internal to the recursive merge strategy was not fully
+ prepared to see a path that is renamed to try overwriting another
+ path that is only different in case on case insensitive systems.
+ This does not matter in the current code, but will start to matter
+ once the rename detection logic starts taking hints from nearby
+ paths moving to some directory and moves a new path along with them.
+
+
+* gk/tracing-optimization (2017-11-27) 3 commits
+ - SQUASH??? compilation fix-up
+ - trace: improve performance while category is disabled
+ - trace: remove trace key normalization
+
+ The tracing infrastructure has been optimized for cases where no
+ tracing is requested.
+
+
+* pc/submodule-helper (2017-11-26) 1 commit
+ - submodule--helper.c: i18n: add a missing space in message
+
+ A message fix.
+
+ Will merge to 'next'.
+
+
+* tb/check-crlf-for-safe-crlf (2017-11-27) 1 commit
+ - convert: tighten the safe autocrlf handling
+
+ The "safe crlf" check incorrectly triggered for contents that does
+ not use CRLF as line endings, which has been corrected.
+
+ Will merge to 'next'.
+
+
+* tg/t-readme-updates (2017-11-27) 2 commits
+ - t/README: document test_cmp_rev
+ - t/README: remove mention of adding copyright notices
+
+ Developer doc updates.
+
+ Will merge to 'next'.
+
+
+* cc/require-tcl-tk-for-build (2017-11-29) 2 commits
+ - travis-ci: avoid new tcl/tk build requirement
+ - Makefile: check that tcl/tk is installed
+
+ A first-time builder of Git may have installed neither tclsh nor
+ msgfmt, in which case git-gui and gitk part will fail and break the
+ build.  As a workaround, refuse to run a build when tclsh is not
+ installed and NO_TCLTK is not set.
+
+ Undecided.
+ I still feel that requring tclsh to be installed, with or without
+ "escape hatch" for experts, may be too heavy-handed.
+
+
+* mk/http-backend-content-length (2017-11-27) 4 commits
+ - SQUASH???
+ - t5560-http-backend-noserver.sh: add CONTENT_LENGTH cases
+ - SQUASH???
+ - http-backend: respect CONTENT_LENGTH as specified by rfc3875
+
+ The http-backend (used for smart-http transport) used to slurp the
+ whole input until EOF, without paying attention to CONTENT_LENGTH
+ that is supplied in the environment and instead expecting the Web
+ server to close the input stream.  This has been fixed.
+
+ Expecting a reroll.
+ Suggested fixes to be used when rerolling is queued, but I'd
+ prefer _not_ squashing them myself.
+
+
+* fk/sendmail-from-path (2017-11-28) 1 commit
+ - git-send-email: honor $PATH for sendmail binary
+
+ "git send-email" tries to see if the sendmail program is available
+ in /usr/lib and /usr/sbin; extend the list of locations to be
+ checked to also include directories on $PATH.
+
+ Will merge to 'next'.
+
+
+* jk/no-optional-locks (2017-11-27) 1 commit
+ - git-status.txt: mention --no-optional-locks
+
+ Doc update for a feature available in Git v2.14 and upwards.
+
+
+* jt/diff-anchored-patience (2017-11-28) 1 commit
+ - diff: support anchoring line(s)
+
+ "git diff" learned a variant of the "--patience" algorithm, to
+ which the user can specify which 'unique' line to be used as
+ anchoring points.
+
+
+* ks/doc-checkout-previous (2017-11-28) 1 commit
+ - Doc/checkout: checking out using @{-N} can lead to detached state
+
+ @{-N} in "git checkout @{-N}" may refer to a detached HEAD state,
+ but the documentation was not clear about it, which has been fixed.
+
+ Will merge to 'next'.
+
 
 * en/rename-directory-detection (2017-11-21) 33 commits
  - merge-recursive: ensure we write updates for directory-renamed file
@@ -672,28 +571,31 @@ of the repositories listed at
 
 
 * dj/runtime-prefix (2017-11-28) 4 commits
- - exec_cmd: RUNTIME_PREFIX on some POSIX systems
- - Makefile: add Perl runtime prefix support
- - Makefile: add support for "perllibdir"
- - Makefile: generate Perl header from template file
+ . exec_cmd: RUNTIME_PREFIX on some POSIX systems
+ . Makefile: add Perl runtime prefix support
+ . Makefile: add support for "perllibdir"
+ . Makefile: generate Perl header from template file
 
  A build-time option has been added to allow Git to be told to refer
  to its associated files relative to the main binary, in the same
  way that has been possible on Windows for quite some time, for
  Linux, BSDs and Darwin.
 
- Will merge to 'next'.
+ Tentatively kicked out of 'next' to see how well another topic
+ ab/simplify-perl-makefile that heavily conflicts with this fares.
 
 
-* jc/editor-waiting-message (2017-11-17) 1 commit
+* ls/editor-waiting-message (2017-12-04) 2 commits
  - launch_editor(): indicate that Git waits for user input
+ - refactor "dumb" terminal determination
 
  Git shows a message to tell the user that it is waiting for the
  user to finish editing when spawning an editor, in case the editor
  opens to a hidden window or somewhere obscure and the user gets
  lost.
 
- Will merge to 'next'.
+ Still being bikeshed on, but hopefully the final is getting closer.
+ This is at its v4.
 
 
 * tz/branch-doc-remove-set-upstream (2017-11-17) 1 commit
@@ -708,7 +610,9 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* en/rename-progress (2017-11-15) 4 commits
+* en/rename-progress (2017-12-02) 5 commits
+  (merged to 'next' on 2017-12-04 at 49b39d2297)
+ + diffcore-rename: make diff-tree -l0 mean -l<large>
   (merged to 'next' on 2017-11-20 at 77a2e0ddd9)
  + sequencer: show rename progress during cherry picks
  + diff: remove silent clamp of renameLimit
@@ -719,24 +623,26 @@ of the repositories listed at
  hardcoded limit of 32k paths; this is being lifted to allow users
  trade cycles with a (possibly) easier to read result.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
-* ar/unconfuse-three-dots (2017-11-26) 8 commits
+* ar/unconfuse-three-dots (2017-12-04) 7 commits
  - t4013: test new output from diff --abbrev --raw
- - t4013: prepare for upcoming "diff --raw --abbrev" output format change
- - Testing: provide existing tests requiring them with ellipses after SHA-1 values
- - Documentation: git: document GIT_PRINT_SHA1_ELLIPSIS
- - Documentation: revisions: fix typo: "three dot" ---> "three-dot" (in line with "two-dot").
- - Documentation: user-manual: limit usage of ellipsis
- - checkout: describe_detached_head: remove ellipsis after committish
  - diff: diff_aligned_abbrev: remove ellipsis after abbreviated SHA-1 value
+ - t4013: prepare for upcoming "diff --raw --abbrev" output format change
+ - checkout: describe_detached_head: remove ellipsis after committish
+ - print_sha1_ellipsis: introduce helper
+ - Documentation: user-manual: limit usage of ellipsis
+ - Documentation: revisions: fix typo: "three dot" ---> "three-dot" (in line with "two-dot").
 
  Ancient part of codebase still shows dots after an abbreviated
  object name just to show that it is not a full object name, but
  these ellipses are confusing to people who newly discovered Git
  who are used to seeing abbreviated object names and find them
  confusing with the range syntax.
+
+ Almost there.
+ cf. <xmqqshcqmoe7.fsf@gitster.mtv.corp.google.com>
 
 
 * jh/object-filtering (2017-11-22) 6 commits
@@ -747,13 +653,13 @@ of the repositories listed at
  + oidset: add iterator methods to oidset
  + oidmap: add oidmap iterator methods
  + dir: allow exclusions from blob in addition to file
- (this branch is used by jh/fsck-promisors and jh/partial-clone.)
+ (this branch is used by cc/object-filtering-typofix, jh/fsck-promisors and jh/partial-clone.)
 
  In preparation for implementing narrow/partial clone, the object
  walking machinery has been taught a way to tell it to "filter" some
  objects from enumeration.
 
- Will merge to 'master'.
+ Expecting incremental updates for a finishing touch.
 
 
 * jh/fsck-promisors (2017-11-22) 10 commits
@@ -767,7 +673,7 @@ of the repositories listed at
  - fsck: support refs pointing to promisor objects
  - fsck: introduce partialclone extension
  - extension.partialclone: introduce partial clone extension
- (this branch is used by jh/partial-clone; uses jh/object-filtering.)
+ (this branch is used by jh/partial-clone; uses jh/object-filtering; is tangled with cc/object-filtering-typofix.)
 
  In preparation for implementing narrow/partial clone, the machinery
  for checking object connectivity used by gc and fsck has been
@@ -791,7 +697,7 @@ of the repositories listed at
  - fetch: refactor calculation of remote list
  - clone, fetch-pack, index-pack, transport: partial clone
  - upload-pack: add object filtering for partial clone
- (this branch uses jh/fsck-promisors and jh/object-filtering.)
+ (this branch uses jh/fsck-promisors and jh/object-filtering; is tangled with cc/object-filtering-typofix.)
 
  The machinery to clone & fetch, which in turn involves packing and
  unpacking objects, have been told how to omit certain objects using
