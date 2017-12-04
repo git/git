@@ -229,7 +229,7 @@ static struct progress *start_progress_delay(const char *title, unsigned total,
 
 struct progress *start_delayed_progress(const char *title, unsigned total)
 {
-	return start_progress_delay(title, total, 0, 2);
+	return start_progress_delay(title, total, 100, 2);
 }
 
 struct progress *start_progress(const char *title, unsigned total)
