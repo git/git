@@ -1587,7 +1587,8 @@ extern struct packed_git {
 	unsigned pack_local:1,
 		 pack_keep:1,
 		 freshened:1,
-		 do_not_close:1;
+		 do_not_close:1,
+		 pack_promisor:1;
 	unsigned char sha1[20];
 	struct revindex_entry *revindex;
 	/* something like ".git/objects/pack/xxxxx.pack" */
