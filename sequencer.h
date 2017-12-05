@@ -50,6 +50,7 @@ int sequencer_remove_state(struct replay_opts *opts);
 int sequencer_make_script(FILE *out, int argc, const char **argv,
 			  unsigned flags);
 
+int sequencer_add_exec_commands(const char *command);
 int transform_todos(unsigned flags);
 int check_todo_list(void);
 int skip_unnecessary_picks(void);

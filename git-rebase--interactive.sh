@@ -722,27 +722,6 @@ collapse_todo_ids() {
 	git rebase--helper --shorten-ids
 }
 
-# Add commands after a pick or after a squash/fixup series
-# in the todo list.
-add_exec_commands () {
-	{
-		first=t
-		while read -r insn rest
-		do
-			case $insn in
-			pick)
-				test -n "$first" ||
-				printf "%s" "$cmd"
-				;;
-			esac
-			printf "%s %s\n" "$insn" "$rest"
-			first=
-		done
-		printf "%s" "$cmd"
-	} <"$1" >"$1.new" &&
-	mv "$1.new" "$1"
-}
-
 # Switch to the branch in $into and notify it in the reflog
 checkout_onto () {
 	GIT_REFLOG_ACTION="$GIT_REFLOG_ACTION: checkout $onto_name"
@@ -982,7 +961,7 @@ fi
 
 test -s "$todo" || echo noop >> "$todo"
 test -z "$autosquash" || git rebase--helper --rearrange-squash || exit
-test -n "$cmd" && add_exec_commands "$todo"
+test -n "$cmd" && git rebase--helper --add-exec-commands "$cmd"
 
 todocount=$(git stripspace --strip-comments <"$todo" | wc -l)
 todocount=${todocount##* }
