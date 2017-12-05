@@ -74,8 +74,19 @@ int opt_parse_list_objects_filter(const struct option *opt,
 {
 	struct list_objects_filter_options *filter_options = opt->value;
 
-	assert(arg);
-	assert(!unset);
+	if (unset || !arg) {
+		list_objects_filter_release(filter_options);
+		return 0;
+	}
 
 	return parse_list_objects_filter(filter_options, arg);
+}
+
+void list_objects_filter_release(
+	struct list_objects_filter_options *filter_options)
+{
+	free(filter_options->filter_spec);
+	free(filter_options->sparse_oid_value);
+	free(filter_options->sparse_path_value);
+	memset(filter_options, 0, sizeof(*filter_options));
 }

@@ -242,6 +242,9 @@ So does `git bundle` (see linkgit:git-bundle[1]) when it creates a bundle.
 	the resulting packfile.  See linkgit:git-rev-list[1] for valid
 	`<filter-spec>` forms.
 
+--no-filter::
+	Turns off any previous `--filter=` argument.
+
 --missing=<missing-action>::
 	A debug option to help with future "partial clone" development.
 	This option specifies how missing objects are handled.

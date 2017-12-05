@@ -52,7 +52,10 @@ int opt_parse_list_objects_filter(const struct option *opt,
 
 #define OPT_PARSE_LIST_OBJECTS_FILTER(fo) \
 	{ OPTION_CALLBACK, 0, CL_ARG__FILTER, fo, N_("args"), \
-	  N_("object filtering"), PARSE_OPT_NONEG, \
+	  N_("object filtering"), 0, \
 	  opt_parse_list_objects_filter }
+
+void list_objects_filter_release(
+	struct list_objects_filter_options *filter_options);
 
 #endif /* LIST_OBJECTS_FILTER_OPTIONS_H */
