@@ -15,6 +15,8 @@ struct git_transport_options {
 	unsigned self_contained_and_connected : 1;
 	unsigned update_shallow : 1;
 	unsigned deepen_relative : 1;
+	unsigned from_promisor : 1;
+	unsigned no_dependents : 1;
 	int depth;
 	const char *deepen_since;
 	const struct string_list *deepen_not;
@@ -209,6 +211,15 @@ void transport_check_allowed(const char *type);
 
 /* Send push certificates */
 #define TRANS_OPT_PUSH_CERT "pushcert"
+
+/* Indicate that these objects are being fetched by a promisor */
+#define TRANS_OPT_FROM_PROMISOR "from-promisor"
+
+/*
+ * Indicate that only the objects wanted need to be fetched, not their
+ * dependents
+ */
+#define TRANS_OPT_NO_DEPENDENTS "no-dependents"
 
 /**
  * Returns 0 if the option was used, non-zero otherwise. Prints a
