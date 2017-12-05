@@ -403,6 +403,10 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 				    filter_options.filter_spec);
 			continue;
 		}
+		if (!strcmp(arg, ("--no-" CL_ARG__FILTER))) {
+			list_objects_filter_release(&filter_options);
+			continue;
+		}
 		if (!strcmp(arg, "--filter-print-omitted")) {
 			arg_print_omitted = 1;
 			continue;

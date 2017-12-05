@@ -715,15 +715,20 @@ ifdef::git-rev-list[]
 The form '--filter=blob:none' omits all blobs.
 +
 The form '--filter=blob:limit=<n>[kmg]' omits blobs larger than n bytes
-or units.  The value may be zero.
+or units.  n may be zero.  The suffixes k, m, and g can be used to name
+units in KiB, MiB, or GiB.  For example, 'blob:limit=1k' is the same
+as 'blob:limit=1024'.
 +
-The form '--filter=sparse:oid=<oid-ish>' uses a sparse-checkout
-specification contained in the object (or the object that the expression
-evaluates to) to omit blobs that would not be not required for a
-sparse checkout on the requested refs.
+The form '--filter=sparse:oid=<blob-ish>' uses a sparse-checkout
+specification contained in the blob (or blob-expression) '<blob-ish>'
+to omit blobs that would not be not required for a sparse checkout on
+the requested refs.
 +
 The form '--filter=sparse:path=<path>' similarly uses a sparse-checkout
 specification contained in <path>.
+
+--no-filter::
+	Turn off any previous `--filter=` argument.
 
 --filter-print-omitted::
 	Only useful with `--filter=`; prints a list of the objects omitted
