@@ -795,6 +795,13 @@ static const char *command_to_string(const enum todo_command command)
 	die("Unknown command: %d", command);
 }
 
+static const char command_to_char(const enum todo_command command)
+{
+	if (command < TODO_COMMENT && todo_command_info[command].c)
+		return todo_command_info[command].c;
+	return comment_line_char;
+}
+
 static int is_noop(const enum todo_command command)
 {
 	return TODO_NOOP <= command;
@@ -2453,6 +2460,7 @@ int sequencer_make_script(FILE *out, int argc, const char **argv,
 	struct rev_info revs;
 	struct commit *commit;
 	int keep_empty = flags & TODO_LIST_KEEP_EMPTY;
+	const char *insn = flags & TODO_LIST_ABBREVIATE_CMDS ? "p" : "pick";
 
 	init_revisions(&revs, NULL);
 	revs.verbose_header = 1;
@@ -2485,7 +2493,8 @@ int sequencer_make_script(FILE *out, int argc, const char **argv,
 		strbuf_reset(&buf);
 		if (!keep_empty && is_original_commit_empty(commit))
 			strbuf_addf(&buf, "%c ", comment_line_char);
-		strbuf_addf(&buf, "pick %s ", oid_to_hex(&commit->object.oid));
+		strbuf_addf(&buf, "%s %s ", insn,
+			    oid_to_hex(&commit->object.oid));
 		pretty_print_commit(&pp, commit, &buf);
 		strbuf_addch(&buf, '\n');
 		fputs(buf.buf, out);
@@ -2558,7 +2567,10 @@ int transform_todos(unsigned flags)
 		}
 
 		/* add command to the buffer */
-		strbuf_addstr(&buf, command_to_string(item->command));
+		if (flags & TODO_LIST_ABBREVIATE_CMDS)
+			strbuf_addch(&buf, command_to_char(item->command));
+		else
+			strbuf_addstr(&buf, command_to_string(item->command));
 
 		/* add commit id */
 		if (item->commit) {

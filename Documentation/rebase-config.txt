@@ -30,3 +30,23 @@ rebase.instructionFormat::
 	A format string, as specified in linkgit:git-log[1], to be used for the
 	todo list during an interactive rebase.  The format will
 	automatically have the long commit hash prepended to the format.
+
+rebase.abbreviateCommands::
+	If set to true, `git rebase` will use abbreviated command names in the
+	todo list resulting in something like this:
++
+-------------------------------------------
+	p deadbee The oneline of the commit
+	p fa1afe1 The oneline of the next commit
+	...
+-------------------------------------------
++
+instead of:
++
+-------------------------------------------
+	pick deadbee The oneline of the commit
+	pick fa1afe1 The oneline of the next commit
+	...
+-------------------------------------------
++
+Defaults to false.

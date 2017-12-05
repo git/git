@@ -47,6 +47,7 @@ int sequencer_remove_state(struct replay_opts *opts);
 
 #define TODO_LIST_KEEP_EMPTY (1U << 0)
 #define TODO_LIST_SHORTEN_IDS (1U << 1)
+#define TODO_LIST_ABBREVIATE_CMDS (1U << 2)
 int sequencer_make_script(FILE *out, int argc, const char **argv,
 			  unsigned flags);
 
