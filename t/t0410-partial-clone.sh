@@ -102,4 +102,27 @@ test_expect_success 'missing ref object, but promised, passes fsck' '
 	git -C repo fsck
 '
 
+test_expect_success 'missing object, but promised, passes fsck' '
+	rm -rf repo &&
+	test_create_repo repo &&
+	test_commit -C repo 1 &&
+	test_commit -C repo 2 &&
+	test_commit -C repo 3 &&
+	git -C repo tag -a annotated_tag -m "annotated tag" &&
+
+	C=$(git -C repo rev-parse 1) &&
+	T=$(git -C repo rev-parse 2^{tree}) &&
+	B=$(git hash-object repo/3.t) &&
+	AT=$(git -C repo rev-parse annotated_tag) &&
+
+	promise_and_delete "$C" &&
+	promise_and_delete "$T" &&
+	promise_and_delete "$B" &&
+	promise_and_delete "$AT" &&
+
+	git -C repo config core.repositoryformatversion 1 &&
+	git -C repo config extensions.partialclone "arbitrary string" &&
+	git -C repo fsck
+'
+
 test_done
