@@ -55,9 +55,9 @@ int cmd_rebase__helper(int argc, const char **argv, const char *prefix)
 	if (command == MAKE_SCRIPT && argc > 1)
 		return !!sequencer_make_script(keep_empty, stdout, argc, argv);
 	if (command == SHORTEN_SHA1S && argc == 1)
-		return !!transform_todo_ids(1);
+		return !!transform_todos(1);
 	if (command == EXPAND_SHA1S && argc == 1)
-		return !!transform_todo_ids(0);
+		return !!transform_todos(0);
 	if (command == CHECK_TODO_LIST && argc == 1)
 		return !!check_todo_list();
 	if (command == SKIP_UNNECESSARY_PICKS && argc == 1)

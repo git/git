@@ -48,7 +48,7 @@ int sequencer_remove_state(struct replay_opts *opts);
 int sequencer_make_script(int keep_empty, FILE *out,
 		int argc, const char **argv);
 
-int transform_todo_ids(int shorten_ids);
+int transform_todos(int shorten_ids);
 int check_todo_list(void);
 int skip_unnecessary_picks(void);
 int rearrange_squash(void);

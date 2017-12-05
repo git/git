@@ -2494,60 +2494,47 @@ int sequencer_make_script(int keep_empty, FILE *out,
 }
 
 
-int transform_todo_ids(int shorten_ids)
+int transform_todos(int shorten_ids)
 {
 	const char *todo_file = rebase_path_todo();
 	struct todo_list todo_list = TODO_LIST_INIT;
-	int fd, res, i;
-	FILE *out;
+	struct strbuf buf = STRBUF_INIT;
+	struct todo_item *item;
+	int i;
 
-	strbuf_reset(&todo_list.buf);
-	fd = open(todo_file, O_RDONLY);
-	if (fd < 0)
-		return error_errno(_("could not open '%s'"), todo_file);
-	if (strbuf_read(&todo_list.buf, fd, 0) < 0) {
-		close(fd);
+	if (strbuf_read_file(&todo_list.buf, todo_file, 0) < 0)
 		return error(_("could not read '%s'."), todo_file);
-	}
-	close(fd);
 
-	res = parse_insn_buffer(todo_list.buf.buf, &todo_list);
-	if (res) {
+	if (parse_insn_buffer(todo_list.buf.buf, &todo_list)) {
 		todo_list_release(&todo_list);
 		return error(_("unusable todo list: '%s'"), todo_file);
 	}
 
-	out = fopen(todo_file, "w");
-	if (!out) {
-		todo_list_release(&todo_list);
-		return error(_("unable to open '%s' for writing"), todo_file);
-	}
-	for (i = 0; i < todo_list.nr; i++) {
-		struct todo_item *item = todo_list.items + i;
-		int bol = item->offset_in_buf;
-		const char *p = todo_list.buf.buf + bol;
-		int eol = i + 1 < todo_list.nr ?
-			todo_list.items[i + 1].offset_in_buf :
-			todo_list.buf.len;
-
-		if (item->command >= TODO_EXEC && item->command != TODO_DROP)
-			fwrite(p, eol - bol, 1, out);
-		else {
-			const char *id = shorten_ids ?
-				short_commit_name(item->commit) :
-				oid_to_hex(&item->commit->object.oid);
-			int len;
-
-			p += strspn(p, " \t"); /* left-trim command */
-			len = strcspn(p, " \t"); /* length of command */
-
-			fprintf(out, "%.*s %s %.*s\n",
-				len, p, id, item->arg_len, item->arg);
+	for (item = todo_list.items, i = 0; i < todo_list.nr; i++, item++) {
+		/* if the item is not a command write it and continue */
+		if (item->command >= TODO_COMMENT) {
+			strbuf_addf(&buf, "%.*s\n", item->arg_len, item->arg);
+			continue;
 		}
+
+		/* add command to the buffer */
+		strbuf_addstr(&buf, command_to_string(item->command));
+
+		/* add commit id */
+		if (item->commit) {
+			const char *oid = shorten_ids ?
+					  short_commit_name(item->commit) :
+					  oid_to_hex(&item->commit->object.oid);
+
+			strbuf_addf(&buf, " %s", oid);
+		}
+		/* add all the rest */
+		strbuf_addf(&buf, " %.*s\n", item->arg_len, item->arg);
 	}
-	fclose(out);
+
+	i = write_message(buf.buf, buf.len, todo_file, 0);
 	todo_list_release(&todo_list);
-	return 0;
+	return i;
 }
 
 enum check_level {
