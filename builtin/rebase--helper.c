@@ -12,7 +12,7 @@ static const char * const builtin_rebase_helper_usage[] = {
 int cmd_rebase__helper(int argc, const char **argv, const char *prefix)
 {
 	struct replay_opts opts = REPLAY_OPTS_INIT;
-	int keep_empty = 0;
+	unsigned flags = 0, keep_empty = 0;
 	enum {
 		CONTINUE = 1, ABORT, MAKE_SCRIPT, SHORTEN_OIDS, EXPAND_OIDS,
 		CHECK_TODO_LIST, SKIP_UNNECESSARY_PICKS, REARRANGE_SQUASH
@@ -48,16 +48,17 @@ int cmd_rebase__helper(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, NULL, options,
 			builtin_rebase_helper_usage, PARSE_OPT_KEEP_ARGV0);
 
+	flags |= keep_empty ? TODO_LIST_KEEP_EMPTY : 0;
+	flags |= command == SHORTEN_OIDS ? TODO_LIST_SHORTEN_IDS : 0;
+
 	if (command == CONTINUE && argc == 1)
 		return !!sequencer_continue(&opts);
 	if (command == ABORT && argc == 1)
 		return !!sequencer_remove_state(&opts);
 	if (command == MAKE_SCRIPT && argc > 1)
-		return !!sequencer_make_script(keep_empty, stdout, argc, argv);
-	if (command == SHORTEN_OIDS && argc == 1)
-		return !!transform_todos(1);
-	if (command == EXPAND_OIDS && argc == 1)
-		return !!transform_todos(0);
+		return !!sequencer_make_script(stdout, argc, argv, flags);
+	if ((command == SHORTEN_OIDS || command == EXPAND_OIDS) && argc == 1)
+		return !!transform_todos(flags);
 	if (command == CHECK_TODO_LIST && argc == 1)
 		return !!check_todo_list();
 	if (command == SKIP_UNNECESSARY_PICKS && argc == 1)

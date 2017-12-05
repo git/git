@@ -2444,14 +2444,15 @@ void append_signoff(struct strbuf *msgbuf, int ignore_footer, unsigned flag)
 	strbuf_release(&sob);
 }
 
-int sequencer_make_script(int keep_empty, FILE *out,
-		int argc, const char **argv)
+int sequencer_make_script(FILE *out, int argc, const char **argv,
+			  unsigned flags)
 {
 	char *format = NULL;
 	struct pretty_print_context pp = {0};
 	struct strbuf buf = STRBUF_INIT;
 	struct rev_info revs;
 	struct commit *commit;
+	int keep_empty = flags & TODO_LIST_KEEP_EMPTY;
 
 	init_revisions(&revs, NULL);
 	revs.verbose_header = 1;
@@ -2494,7 +2495,7 @@ int sequencer_make_script(int keep_empty, FILE *out,
 }
 
 
-int transform_todos(int shorten_ids)
+int transform_todos(unsigned flags)
 {
 	const char *todo_file = rebase_path_todo();
 	struct todo_list todo_list = TODO_LIST_INIT;
@@ -2522,7 +2523,7 @@ int transform_todos(int shorten_ids)
 
 		/* add commit id */
 		if (item->commit) {
-			const char *oid = shorten_ids ?
+			const char *oid = flags & TODO_LIST_SHORTEN_IDS ?
 					  short_commit_name(item->commit) :
 					  oid_to_hex(&item->commit->object.oid);
 

@@ -45,10 +45,12 @@ int sequencer_continue(struct replay_opts *opts);
 int sequencer_rollback(struct replay_opts *opts);
 int sequencer_remove_state(struct replay_opts *opts);
 
-int sequencer_make_script(int keep_empty, FILE *out,
-		int argc, const char **argv);
+#define TODO_LIST_KEEP_EMPTY (1U << 0)
+#define TODO_LIST_SHORTEN_IDS (1U << 1)
+int sequencer_make_script(FILE *out, int argc, const char **argv,
+			  unsigned flags);
 
-int transform_todos(int shorten_ids);
+int transform_todos(unsigned flags);
 int check_todo_list(void);
 int skip_unnecessary_picks(void);
 int rearrange_squash(void);
