@@ -8,7 +8,7 @@
 #include "list-objects-filter-options.h"
 
 /*
- * Parse value of the argument to the "filter" keword.
+ * Parse value of the argument to the "filter" keyword.
  * On the command line this looks like:
  *       --filter=<arg>
  * and in the pack protocol as:
