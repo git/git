@@ -1670,7 +1670,8 @@ int submodule_move_head(const char *path,
 			cp.dir = path;
 
 			prepare_submodule_repo_env(&cp.env_array);
-			argv_array_pushl(&cp.args, "update-ref", "HEAD", new, NULL);
+			argv_array_pushl(&cp.args, "update-ref", "HEAD",
+					 "--no-deref", new, NULL);
 
 			if (run_command(&cp)) {
 				ret = -1;

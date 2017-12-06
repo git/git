@@ -264,6 +264,8 @@ section of linkgit:git-add[1] to learn how to operate the `--patch` mode.
 	local modifications in a submodule would be overwritten the checkout
 	will fail unless `-f` is used. If nothing (or --no-recurse-submodules)
 	is used, the work trees of submodules will not be updated.
+	Just like linkgit:git-submodule[1], this will detach the
+	submodules HEAD.
 
 <branch>::
 	Branch to checkout; if it refers to a branch (i.e., a name that,

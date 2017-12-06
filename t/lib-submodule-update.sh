@@ -689,6 +689,23 @@ test_submodule_switch_recursing_with_args () {
 			test_submodule_content sub1 origin/add_sub1
 		)
 	'
+	test_expect_success "$command: submodule branch is not changed, detach HEAD instead" '
+		prolog &&
+		reset_work_tree_to_interested add_sub1 &&
+		(
+			cd submodule_update &&
+			git -C sub1 checkout -b keep_branch &&
+			git -C sub1 rev-parse HEAD >expect &&
+			git branch -t check-keep origin/modify_sub1 &&
+			$command check-keep &&
+			test_superproject_content origin/modify_sub1 &&
+			test_submodule_content sub1 origin/modify_sub1 &&
+			git -C sub1 rev-parse keep_branch >actual &&
+			test_cmp expect actual &&
+			test_must_fail git -C sub1 symbolic-ref HEAD
+		)
+	'
+
 	# Replacing a tracked file with a submodule produces a checked out submodule
 	test_expect_success "$command: replace tracked file with submodule checks out submodule" '
 		prolog &&
