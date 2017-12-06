@@ -39,6 +39,19 @@ communicates with that invoked process over the SSH connection.
 The file:// transport runs the 'upload-pack' or 'receive-pack'
 process locally and communicates with it over a pipe.
 
+Extra Parameters
+----------------
+
+The protocol provides a mechanism in which clients can send additional
+information in its first message to the server. These are called "Extra
+Parameters", and are supported by the Git, SSH, and HTTP protocols.
+
+Each Extra Parameter takes the form of `<key>=<value>` or `<key>`.
+
+Servers that receive any such Extra Parameters MUST ignore all
+unrecognized keys. Currently, the only Extra Parameter recognized is
+"version=1".
+
 Git Transport
 -------------
 
@@ -46,18 +59,25 @@ The Git transport starts off by sending the command and repository
 on the wire using the pkt-line format, followed by a NUL byte and a
 hostname parameter, terminated by a NUL byte.
 
-   0032git-upload-pack /project.git\0host=myserver.com\0
+   0033git-upload-pack /project.git\0host=myserver.com\0
+
+The transport may send Extra Parameters by adding an additional NUL
+byte, and then adding one or more NUL-terminated strings:
+
+   003egit-upload-pack /project.git\0host=myserver.com\0\0version=1\0
 
 --
-   git-proto-request = request-command SP pathname NUL [ host-parameter NUL ]
+   git-proto-request = request-command SP pathname NUL
+		       [ host-parameter NUL ] [ NUL extra-parameters ]
    request-command   = "git-upload-pack" / "git-receive-pack" /
 		       "git-upload-archive"   ; case sensitive
    pathname          = *( %x01-ff ) ; exclude NUL
    host-parameter    = "host=" hostname [ ":" port ]
+   extra-parameters  = 1*extra-parameter
+   extra-parameter   = 1*( %x01-ff ) NUL
 --
 
-Only host-parameter is allowed in the git-proto-request. Clients
-MUST NOT attempt to send additional parameters. It is used for the
+host-parameter is used for the
 git-daemon name based virtual hosting.  See --interpolated-path
 option to git daemon, with the %H/%CH format characters.
 
@@ -117,6 +137,12 @@ we execute it without the leading '/'.
 		     v
    ssh user@example.com "git-upload-pack '~alice/project.git'"
 
+Depending on the value of the `protocol.version` configuration variable,
+Git may attempt to send Extra Parameters as a colon-separated string in
+the GIT_PROTOCOL environment variable. This is done only if
+the `ssh.variant` configuration variable indicates that the ssh command
+supports passing environment variables as an argument.
+
 A few things to remember here:
 
 - The "command name" is spelled with dash (e.g. git-upload-pack), but
@@ -137,11 +163,13 @@ Reference Discovery
 -------------------
 
 When the client initially connects the server will immediately respond
-with a listing of each reference it has (all branches and tags) along
+with a version number (if "version=1" is sent as an Extra Parameter),
+and a listing of each reference it has (all branches and tags) along
 with the object name that each reference currently points to.
 
-   $ echo -e -n "0039git-upload-pack /schacon/gitbook.git\0host=example.com\0" |
+   $ echo -e -n "0044git-upload-pack /schacon/gitbook.git\0host=example.com\0\0version=1\0" |
       nc -v example.com 9418
+   000aversion 1
    00887217a7c7e582c46cec22a130adf4b9d7d950fba0 HEAD\0multi_ack thin-pack
 		side-band side-band-64k ofs-delta shallow no-progress include-tag
    00441d3fcd5ced445d1abc402225c0b8a1299641f497 refs/heads/integration
@@ -165,7 +193,8 @@ immediately after the ref itself, if presented. A conforming server
 MUST peel the ref if it's an annotated tag.
 
 ----
-  advertised-refs  =  (no-refs / list-of-refs)
+  advertised-refs  =  *1("version 1")
+		      (no-refs / list-of-refs)
 		      *shallow
 		      flush-pkt
 

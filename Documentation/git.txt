@@ -522,11 +522,10 @@ other
 	If either of these environment variables is set then 'git fetch'
 	and 'git push' will use the specified command instead of 'ssh'
 	when they need to connect to a remote system.
-	The command will be given exactly two or four arguments: the
-	'username@host' (or just 'host') from the URL and the shell
-	command to execute on that remote system, optionally preceded by
-	`-p` (literally) and the 'port' from the URL when it specifies
-	something other than the default SSH port.
+	The command-line parameters passed to the configured command are
+	determined by the ssh variant.  See `ssh.variant` option in
+	linkgit:git-config[1] for details.
+
 +
 `$GIT_SSH_COMMAND` takes precedence over `$GIT_SSH`, and is interpreted
 by the shell, which allows additional arguments to be included.
@@ -704,6 +703,12 @@ of clones and fetches.
 	submodule initialization from an untrusted repository or for programs
 	which feed potentially-untrusted URLS to git commands.  See
 	linkgit:git-config[1] for more details.
+
+`GIT_PROTOCOL`::
+	For internal use only.  Used in handshaking the wire protocol.
+	Contains a colon ':' separated list of keys with optional values
+	'key[=value]'.  Presence of unknown keys and values must be
+	ignored.
 
 `GIT_OPTIONAL_LOCKS`::
 	If set to `0`, Git will complete any requested operation without

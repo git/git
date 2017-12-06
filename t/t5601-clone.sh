@@ -308,10 +308,10 @@ test_expect_success 'clone checking out a tag' '
 
 setup_ssh_wrapper () {
 	test_expect_success 'setup ssh wrapper' '
-		rm -f "$TRASH_DIRECTORY/ssh-wrapper$X" &&
+		rm -f "$TRASH_DIRECTORY/ssh$X" &&
 		cp "$GIT_BUILD_DIR/t/helper/test-fake-ssh$X" \
-			"$TRASH_DIRECTORY/ssh-wrapper$X" &&
-		GIT_SSH="$TRASH_DIRECTORY/ssh-wrapper$X" &&
+			"$TRASH_DIRECTORY/ssh$X" &&
+		GIT_SSH="$TRASH_DIRECTORY/ssh$X" &&
 		export GIT_SSH &&
 		export TRASH_DIRECTORY &&
 		>"$TRASH_DIRECTORY"/ssh-output
@@ -320,7 +320,7 @@ setup_ssh_wrapper () {
 
 copy_ssh_wrapper_as () {
 	rm -f "${1%$X}$X" &&
-	cp "$TRASH_DIRECTORY/ssh-wrapper$X" "${1%$X}$X" &&
+	cp "$TRASH_DIRECTORY/ssh$X" "${1%$X}$X" &&
 	GIT_SSH="${1%$X}$X" &&
 	export GIT_SSH
 }
@@ -364,10 +364,26 @@ test_expect_success 'bracketed hostnames are still ssh' '
 	expect_ssh "-p 123" myhost src
 '
 
-test_expect_success 'uplink is not treated as putty' '
+test_expect_success 'OpenSSH variant passes -4' '
+	git clone -4 "[myhost:123]:src" ssh-ipv4-clone &&
+	expect_ssh "-4 -p 123" myhost src
+'
+
+test_expect_success 'variant can be overriden' '
+	git -c ssh.variant=simple clone -4 "[myhost:123]:src" ssh-simple-clone &&
+	expect_ssh myhost src
+'
+
+test_expect_success 'simple is treated as simple' '
+	copy_ssh_wrapper_as "$TRASH_DIRECTORY/simple" &&
+	git clone -4 "[myhost:123]:src" ssh-bracket-clone-simple &&
+	expect_ssh myhost src
+'
+
+test_expect_success 'uplink is treated as simple' '
 	copy_ssh_wrapper_as "$TRASH_DIRECTORY/uplink" &&
 	git clone "[myhost:123]:src" ssh-bracket-clone-uplink &&
-	expect_ssh "-p 123" myhost src
+	expect_ssh myhost src
 '
 
 test_expect_success 'plink is treated specially (as putty)' '

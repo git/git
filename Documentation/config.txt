@@ -2111,12 +2111,31 @@ ssh.variant::
 	Depending on the value of the environment variables `GIT_SSH` or
 	`GIT_SSH_COMMAND`, or the config setting `core.sshCommand`, Git
 	auto-detects whether to adjust its command-line parameters for use
-	with plink or tortoiseplink, as opposed to the default (OpenSSH).
+	with ssh (OpenSSH), plink or tortoiseplink, as opposed to the default
+	(simple).
 +
 The config variable `ssh.variant` can be set to override this auto-detection;
-valid values are `ssh`, `plink`, `putty` or `tortoiseplink`. Any other value
-will be treated as normal ssh. This setting can be overridden via the
-environment variable `GIT_SSH_VARIANT`.
+valid values are `ssh`, `simple`, `plink`, `putty` or `tortoiseplink`. Any
+other value will be treated as normal ssh. This setting can be overridden via
+the environment variable `GIT_SSH_VARIANT`.
++
+The current command-line parameters used for each variant are as
+follows:
++
+--
+
+* `ssh` - [-p port] [-4] [-6] [-o option] [username@]host command
+
+* `simple` - [username@]host command
+
+* `plink` or `putty` - [-P port] [-4] [-6] [username@]host command
+
+* `tortoiseplink` - [-P port] [-4] [-6] -batch [username@]host command
+
+--
++
+Except for the `simple` variant, command-line parameters are likely to
+change as git gains new features.
 
 i18n.commitEncoding::
 	Character encoding the commit messages are stored in; Git itself
@@ -2542,6 +2561,23 @@ The protocol names currently used by git are:
 
   - any external helpers are named by their protocol (e.g., use
     `hg` to allow the `git-remote-hg` helper)
+--
+
+protocol.version::
+	Experimental. If set, clients will attempt to communicate with a
+	server using the specified protocol version.  If unset, no
+	attempt will be made by the client to communicate using a
+	particular protocol version, this results in protocol version 0
+	being used.
+	Supported versions:
++
+--
+
+* `0` - the original wire protocol.
+
+* `1` - the original wire protocol with the addition of a version string
+  in the initial response from the server.
+
 --
 
 pull.ff::
