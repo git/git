@@ -1922,6 +1922,7 @@ _git_pull ()
 	--*)
 		__gitcomp "
 			--rebase --no-rebase
+			--autostash --no-autostash
 			$__git_merge_options
 			$__git_fetch_options
 		"
