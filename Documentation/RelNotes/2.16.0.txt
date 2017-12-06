@@ -61,7 +61,6 @@ UI, Workflows & Features
 
  * The SubmittingPatches document has been converted to produce an
    HTML version via AsciiDoc/Asciidoctor.
-   (merge 049e64aa50 bc/submitting-patches-in-asciidoc later to maint).
 
  * We learned to talk to watchman to speed up "git status" and other
    operations that need to see which paths have been modified.
@@ -89,6 +88,13 @@ UI, Workflows & Features
    to extend a pre-context beyond the line that matches the "function
    pattern" (aka "diff.*.xfuncname") to include a comment block, if
    exists, that immediately precedes it.
+
+ * "git config --expiry-date gc.reflogexpire" can read "2.weeks" from
+   the configuration and report it as a timestamp, just like "--int"
+   would read "1k" and report 1024, to help consumption by scripts.
+
+ * The shell completion (in contrib/) learned that "git pull" can take
+   the "--autostash" option.
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -129,6 +135,13 @@ Performance, Internal Implementation, Development Support etc.
 
  * Drop (perhaps overly cautious) sanity check before using the index
    read from the filesystem at runtime.
+
+ * The build procedure has been taught to avoid some unnecessary
+   instability in the build products.
+
+ * A new mechanism to upgrade the wire protocol in place is proposed
+   and demonstrated that it works with the older versions of Git
+   without harming them.
 
 Also contains various documentation updates and code clean-ups.
 
@@ -206,7 +219,6 @@ Fixes since v2.15
  * Recent update to the refs infrastructure implementation started
    rewriting packed-refs file more often than before; this has been
    optimized again for most trivial cases.
-   (merge 7c6bd25c7d mh/avoid-rewriting-packed-refs later to maint).
 
  * Some error messages did not quote filenames shown in it, which have
    been fixed.
@@ -226,39 +238,31 @@ Fixes since v2.15
 
  * Clarify and enhance documentation for "merge-base --fork-point", as
    it was clear what it computed but not why/what for.
-   (merge 6d1700b8af jc/merge-base-fork-point-doc later to maint).
 
  * A few scripts (both in production and tests) incorrectly redirected
    their error output.  These have been corrected.
-   (merge eadf1c8f45 tz/redirect-fix later to maint).
 
  * "git notes" sent its error message to its standard output stream,
    which was corrected.
-   (merge 89b9e31dd5 tz/notes-error-to-stderr later to maint).
 
  * The three-way merge performed by "git cherry-pick" was confused
    when a new submodule was added in the meantime, which has been
    fixed (or "papered over").
-   (merge c641ca6707 sb/test-cherry-pick-submodule-getting-in-a-way later to maint).
 
  * The sequencer machinery (used by "git cherry-pick A..B", and "git
    rebase -i", among other things) would have lost a commit if stopped
    due to an unlockable index file, which has been fixed.
-   (merge bd58886775 pw/sequencer-recover-from-unlockable-index later to maint).
 
  * "git apply --inaccurate-eof" when used with "--ignore-space-change"
    triggered an internal sanity check, which has been fixed.
-   (merge 4855de1233 rs/apply-inaccurate-eof-with-incomplete-line later to maint).
 
  * Command line completion (in contrib/) has been taught about the
    "--copy" option of "git branch".
-   (merge 41ca0f773e tz/complete-branch-copy later to maint).
 
  * When "git rebase" prepared an mailbox of changes and fed it to "git
    am" to replay them, it was confused when a stray "From " happened
    to be in the log message of one of the replayed changes.  This has
    been corrected.
-   (merge ae3b2b04bb ew/rebase-mboxrd later to maint).
 
  * There was a recent semantic mismerge in the codepath to write out a
    section of a configuration section, which has been corrected.
@@ -266,12 +270,40 @@ Fixes since v2.15
  * Mentions of "git-rebase" and "git-am" (dashed form) still remained
    in end-user visible strings emitted by the "git rebase" command;
    they have been corrected.
-   (merge 82cb775c06 ks/rebase-no-git-foo later to maint).
 
  * Contrary to the documentation, "git pull -4/-6 other-args" did not
    ask the underlying "git fetch" to go over IPv4/IPv6, which has been
    corrected.
-   (merge ffb4568afe sw/pull-ipv46-passthru later to maint).
+
+ * "git checkout --recursive" may overwrite and rewind the history of
+   the branch that happens to be checked out in submodule
+   repositories, which might not be desirable.  Detach the HEAD but
+   still allow the recursive checkout to succeed in such a case.
+   (merge 57f22bf997 sb/submodule-recursive-checkout-detach-head later to maint).
+
+ * "git branch --set-upstream" has been deprecated and (sort of)
+   removed, as "--set-upstream-to" is the preferred one these days.
+   The documentation still had "--set-upstream" listed on its
+   synopsys section, which has been corrected.
+   (merge a060f3d3d8 tz/branch-doc-remove-set-upstream later to maint).
+
+ * Internaly we use 0{40} as a placeholder object name to signal the
+   codepath that there is no such object (e.g. the fast-forward check
+   while "git fetch" stores a new remote-tracking ref says "we know
+   there is no 'old' thing pointed at by the ref, as we are creating
+   it anew" by passing 0{40} for the 'old' side), and expect that a
+   codepath to locate an in-core object to return NULL as a sign that
+   the object does not exist.  A look-up for an object that does not
+   exist however is quite costly with a repository with large number
+   of packfiles.  This access pattern has been optimized.
+   (merge 87b5e236a1 jk/fewer-pack-rescan later to maint).
+
+ * In addition to "git stash -m message", the command learned to
+   accept "git stash -mmessage" form.
+   (merge 5675473fcb ph/stash-save-m-option-fix later to maint).
 
  * Other minor doc, test and build updates and code cleanups.
-   (merge c5e3bc6ec4 sd/branch-copy later to maint).
+   (merge 1a1fc2d5b5 rd/man-prune-progress later to maint).
+   (merge 0ba014035a rd/man-reflog-add-n later to maint).
+   (merge e54b63359f rd/doc-notes-prune-fix later to maint).
+   (merge ff4c9b413a sp/doc-info-attributes later to maint).
