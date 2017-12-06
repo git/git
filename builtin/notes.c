@@ -33,7 +33,7 @@ static const char * const git_notes_usage[] = {
 	N_("git notes merge --commit [-v | -q]"),
 	N_("git notes merge --abort [-v | -q]"),
 	N_("git notes [--ref <notes-ref>] remove [<object>...]"),
-	N_("git notes [--ref <notes-ref>] prune [-n | -v]"),
+	N_("git notes [--ref <notes-ref>] prune [-n] [-v]"),
 	N_("git notes [--ref <notes-ref>] get-ref"),
 	NULL
 };
