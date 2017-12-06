@@ -1204,7 +1204,7 @@ _git_branch ()
 			--color --no-color --verbose --abbrev= --no-abbrev
 			--track --no-track --contains --no-contains --merged --no-merged
 			--set-upstream-to= --edit-description --list
-			--unset-upstream --delete --move --remotes
+			--unset-upstream --delete --move --copy --remotes
 			--column --no-column --sort= --points-at
 			"
 		;;
