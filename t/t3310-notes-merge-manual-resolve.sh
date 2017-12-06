@@ -176,7 +176,7 @@ git rev-parse refs/notes/z > pre_merge_z
 test_expect_success 'merge z into m (== y) with default ("manual") resolver => Conflicting 3-way merge' '
 	git update-ref refs/notes/m refs/notes/y &&
 	git config core.notesRef refs/notes/m &&
-	test_must_fail git notes merge z >output &&
+	test_must_fail git notes merge z >output 2>&1 &&
 	# Output should point to where to resolve conflicts
 	test_i18ngrep "\\.git/NOTES_MERGE_WORKTREE" output &&
 	# Inspect merge conflicts
@@ -379,7 +379,7 @@ git rev-parse refs/notes/z > pre_merge_z
 test_expect_success 'redo merge of z into m (== y) with default ("manual") resolver => Conflicting 3-way merge' '
 	git update-ref refs/notes/m refs/notes/y &&
 	git config core.notesRef refs/notes/m &&
-	test_must_fail git notes merge z >output &&
+	test_must_fail git notes merge z >output 2>&1 &&
 	# Output should point to where to resolve conflicts
 	test_i18ngrep "\\.git/NOTES_MERGE_WORKTREE" output &&
 	# Inspect merge conflicts
@@ -413,7 +413,7 @@ git rev-parse refs/notes/y > pre_merge_y
 git rev-parse refs/notes/z > pre_merge_z
 
 test_expect_success 'redo merge of z into m (== y) with default ("manual") resolver => Conflicting 3-way merge' '
-	test_must_fail git notes merge z >output &&
+	test_must_fail git notes merge z >output 2>&1 &&
 	# Output should point to where to resolve conflicts
 	test_i18ngrep "\\.git/NOTES_MERGE_WORKTREE" output &&
 	# Inspect merge conflicts
@@ -494,7 +494,7 @@ cp expect_log_y expect_log_m
 
 test_expect_success 'redo merge of z into m (== y) with default ("manual") resolver => Conflicting 3-way merge' '
 	git update-ref refs/notes/m refs/notes/y &&
-	test_must_fail git notes merge z >output &&
+	test_must_fail git notes merge z >output 2>&1 &&
 	# Output should point to where to resolve conflicts
 	test_i18ngrep "\\.git/NOTES_MERGE_WORKTREE" output &&
 	# Inspect merge conflicts
