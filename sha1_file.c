@@ -1164,6 +1164,9 @@ int sha1_object_info_extended(const unsigned char *sha1, struct object_info *oi,
 				    lookup_replace_object(sha1) :
 				    sha1;
 
+	if (is_null_sha1(real))
+		return -1;
+
 	if (!oi)
 		oi = &blank_oi;
 
