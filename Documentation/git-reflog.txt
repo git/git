@@ -20,9 +20,9 @@ depending on the subcommand:
 'git reflog' ['show'] [log-options] [<ref>]
 'git reflog expire' [--expire=<time>] [--expire-unreachable=<time>]
 	[--rewrite] [--updateref] [--stale-fix]
-	[--dry-run] [--verbose] [--all | <refs>...]
+	[--dry-run | -n] [--verbose] [--all | <refs>...]
 'git reflog delete' [--rewrite] [--updateref]
-	[--dry-run] [--verbose] ref@\{specifier\}...
+	[--dry-run | -n] [--verbose] ref@\{specifier\}...
 'git reflog exists' <ref>
 
 Reference logs, or "reflogs", record when the tips of branches and
