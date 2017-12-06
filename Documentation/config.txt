@@ -2108,16 +2108,22 @@ matched against are those given directly to Git commands.  This means any URLs
 visited as a result of a redirection do not participate in matching.
 
 ssh.variant::
-	Depending on the value of the environment variables `GIT_SSH` or
-	`GIT_SSH_COMMAND`, or the config setting `core.sshCommand`, Git
-	auto-detects whether to adjust its command-line parameters for use
-	with ssh (OpenSSH), plink or tortoiseplink, as opposed to the default
-	(simple).
+	By default, Git determines the command line arguments to use
+	based on the basename of the configured SSH command (configured
+	using the environment variable `GIT_SSH` or `GIT_SSH_COMMAND` or
+	the config setting `core.sshCommand`). If the basename is
+	unrecognized, Git will attempt to detect support of OpenSSH
+	options by first invoking the configured SSH command with the
+	`-G` (print configuration) option and will subsequently use
+	OpenSSH options (if that is successful) or no options besides
+	the host and remote command (if it fails).
 +
-The config variable `ssh.variant` can be set to override this auto-detection;
-valid values are `ssh`, `simple`, `plink`, `putty` or `tortoiseplink`. Any
-other value will be treated as normal ssh. This setting can be overridden via
-the environment variable `GIT_SSH_VARIANT`.
+The config variable `ssh.variant` can be set to override this detection.
+Valid values are `ssh` (to use OpenSSH options), `plink`, `putty`,
+`tortoiseplink`, `simple` (no options except the host and remote command).
+The default auto-detection can be explicitly requested using the value
+`auto`.  Any other value is treated as `ssh`.  This setting can also be
+overridden via the environment variable `GIT_SSH_VARIANT`.
 +
 The current command-line parameters used for each variant are as
 follows:

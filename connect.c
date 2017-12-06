@@ -582,12 +582,25 @@ static int git_tcp_connect_sock(char *host, int flags)
 #endif /* NO_IPV6 */
 
 
-static void git_tcp_connect(int fd[2], char *host, int flags)
+/*
+ * Dummy child_process returned by git_connect() if the transport protocol
+ * does not need fork(2).
+ */
+static struct child_process no_fork = CHILD_PROCESS_INIT;
+
+int git_connection_is_socket(struct child_process *conn)
+{
+	return conn == &no_fork;
+}
+
+static struct child_process *git_tcp_connect(int fd[2], char *host, int flags)
 {
 	int sockfd = git_tcp_connect_sock(host, flags);
 
 	fd[0] = sockfd;
 	fd[1] = dup(sockfd);
+
+	return &no_fork;
 }
 
 
@@ -761,8 +774,6 @@ static enum protocol parse_connect_url(const char *url_orig, char **ret_host,
 	return protocol;
 }
 
-static struct child_process no_fork = CHILD_PROCESS_INIT;
-
 static const char *get_ssh_command(void)
 {
 	const char *ssh;
@@ -777,6 +788,7 @@ static const char *get_ssh_command(void)
 }
 
 enum ssh_variant {
+	VARIANT_AUTO,
 	VARIANT_SIMPLE,
 	VARIANT_SSH,
 	VARIANT_PLINK,
@@ -784,14 +796,16 @@ enum ssh_variant {
 	VARIANT_TORTOISEPLINK,
 };
 
-static int override_ssh_variant(enum ssh_variant *ssh_variant)
+static void override_ssh_variant(enum ssh_variant *ssh_variant)
 {
 	const char *variant = getenv("GIT_SSH_VARIANT");
 
 	if (!variant && git_config_get_string_const("ssh.variant", &variant))
-		return 0;
+		return;
 
-	if (!strcmp(variant, "plink"))
+	if (!strcmp(variant, "auto"))
+		*ssh_variant = VARIANT_AUTO;
+	else if (!strcmp(variant, "plink"))
 		*ssh_variant = VARIANT_PLINK;
 	else if (!strcmp(variant, "putty"))
 		*ssh_variant = VARIANT_PUTTY;
@@ -801,18 +815,18 @@ static int override_ssh_variant(enum ssh_variant *ssh_variant)
 		*ssh_variant = VARIANT_SIMPLE;
 	else
 		*ssh_variant = VARIANT_SSH;
-
-	return 1;
 }
 
 static enum ssh_variant determine_ssh_variant(const char *ssh_command,
 					      int is_cmdline)
 {
-	enum ssh_variant ssh_variant = VARIANT_SIMPLE;
+	enum ssh_variant ssh_variant = VARIANT_AUTO;
 	const char *variant;
 	char *p = NULL;
 
-	if (override_ssh_variant(&ssh_variant))
+	override_ssh_variant(&ssh_variant);
+
+	if (ssh_variant != VARIANT_AUTO)
 		return ssh_variant;
 
 	if (!is_cmdline) {
@@ -851,11 +865,181 @@ static enum ssh_variant determine_ssh_variant(const char *ssh_command,
 }
 
 /*
- * This returns a dummy child_process if the transport protocol does not
- * need fork(2), or a struct child_process object if it does.  Once done,
- * finish the connection with finish_connect() with the value returned from
- * this function (it is safe to call finish_connect() with NULL to support
- * the former case).
+ * Open a connection using Git's native protocol.
+ *
+ * The caller is responsible for freeing hostandport, but this function may
+ * modify it (for example, to truncate it to remove the port part).
+ */
+static struct child_process *git_connect_git(int fd[2], char *hostandport,
+					     const char *path, const char *prog,
+					     int flags)
+{
+	struct child_process *conn;
+	struct strbuf request = STRBUF_INIT;
+	/*
+	 * Set up virtual host information based on where we will
+	 * connect, unless the user has overridden us in
+	 * the environment.
+	 */
+	char *target_host = getenv("GIT_OVERRIDE_VIRTUAL_HOST");
+	if (target_host)
+		target_host = xstrdup(target_host);
+	else
+		target_host = xstrdup(hostandport);
+
+	transport_check_allowed("git");
+
+	/*
+	 * These underlying connection commands die() if they
+	 * cannot connect.
+	 */
+	if (git_use_proxy(hostandport))
+		conn = git_proxy_connect(fd, hostandport);
+	else
+		conn = git_tcp_connect(fd, hostandport, flags);
+	/*
+	 * Separate original protocol components prog and path
+	 * from extended host header with a NUL byte.
+	 *
+	 * Note: Do not add any other headers here!  Doing so
+	 * will cause older git-daemon servers to crash.
+	 */
+	strbuf_addf(&request,
+		    "%s %s%chost=%s%c",
+		    prog, path, 0,
+		    target_host, 0);
+
+	/* If using a new version put that stuff here after a second null byte */
+	if (get_protocol_version_config() > 0) {
+		strbuf_addch(&request, '\0');
+		strbuf_addf(&request, "version=%d%c",
+			    get_protocol_version_config(), '\0');
+	}
+
+	packet_write(fd[1], request.buf, request.len);
+
+	free(target_host);
+	strbuf_release(&request);
+	return conn;
+}
+
+/*
+ * Append the appropriate environment variables to `env` and options to
+ * `args` for running ssh in Git's SSH-tunneled transport.
+ */
+static void push_ssh_options(struct argv_array *args, struct argv_array *env,
+			     enum ssh_variant variant, const char *port,
+			     int flags)
+{
+	if (variant == VARIANT_SSH &&
+	    get_protocol_version_config() > 0) {
+		argv_array_push(args, "-o");
+		argv_array_push(args, "SendEnv=" GIT_PROTOCOL_ENVIRONMENT);
+		argv_array_pushf(env, GIT_PROTOCOL_ENVIRONMENT "=version=%d",
+				 get_protocol_version_config());
+	}
+
+	if (flags & CONNECT_IPV4) {
+		switch (variant) {
+		case VARIANT_AUTO:
+			BUG("VARIANT_AUTO passed to push_ssh_options");
+		case VARIANT_SIMPLE:
+			die("ssh variant 'simple' does not support -4");
+		case VARIANT_SSH:
+		case VARIANT_PLINK:
+		case VARIANT_PUTTY:
+		case VARIANT_TORTOISEPLINK:
+			argv_array_push(args, "-4");
+		}
+	} else if (flags & CONNECT_IPV6) {
+		switch (variant) {
+		case VARIANT_AUTO:
+			BUG("VARIANT_AUTO passed to push_ssh_options");
+		case VARIANT_SIMPLE:
+			die("ssh variant 'simple' does not support -6");
+		case VARIANT_SSH:
+		case VARIANT_PLINK:
+		case VARIANT_PUTTY:
+		case VARIANT_TORTOISEPLINK:
+			argv_array_push(args, "-6");
+		}
+	}
+
+	if (variant == VARIANT_TORTOISEPLINK)
+		argv_array_push(args, "-batch");
+
+	if (port) {
+		switch (variant) {
+		case VARIANT_AUTO:
+			BUG("VARIANT_AUTO passed to push_ssh_options");
+		case VARIANT_SIMPLE:
+			die("ssh variant 'simple' does not support setting port");
+		case VARIANT_SSH:
+			argv_array_push(args, "-p");
+			break;
+		case VARIANT_PLINK:
+		case VARIANT_PUTTY:
+		case VARIANT_TORTOISEPLINK:
+			argv_array_push(args, "-P");
+		}
+
+		argv_array_push(args, port);
+	}
+}
+
+/* Prepare a child_process for use by Git's SSH-tunneled transport. */
+static void fill_ssh_args(struct child_process *conn, const char *ssh_host,
+			  const char *port, int flags)
+{
+	const char *ssh;
+	enum ssh_variant variant;
+
+	if (looks_like_command_line_option(ssh_host))
+		die("strange hostname '%s' blocked", ssh_host);
+
+	ssh = get_ssh_command();
+	if (ssh) {
+		variant = determine_ssh_variant(ssh, 1);
+	} else {
+		/*
+		 * GIT_SSH is the no-shell version of
+		 * GIT_SSH_COMMAND (and must remain so for
+		 * historical compatibility).
+		 */
+		conn->use_shell = 0;
+
+		ssh = getenv("GIT_SSH");
+		if (!ssh)
+			ssh = "ssh";
+		variant = determine_ssh_variant(ssh, 0);
+	}
+
+	if (variant == VARIANT_AUTO) {
+		struct child_process detect = CHILD_PROCESS_INIT;
+
+		detect.use_shell = conn->use_shell;
+		detect.no_stdin = detect.no_stdout = detect.no_stderr = 1;
+
+		argv_array_push(&detect.args, ssh);
+		argv_array_push(&detect.args, "-G");
+		push_ssh_options(&detect.args, &detect.env_array,
+				 VARIANT_SSH, port, flags);
+		argv_array_push(&detect.args, ssh_host);
+
+		variant = run_command(&detect) ? VARIANT_SIMPLE : VARIANT_SSH;
+	}
+
+	argv_array_push(&conn->args, ssh);
+	push_ssh_options(&conn->args, &conn->env_array, variant, port, flags);
+	argv_array_push(&conn->args, ssh_host);
+}
+
+/*
+ * This returns the dummy child_process `no_fork` if the transport protocol
+ * does not need fork(2), or a struct child_process object if it does.  Once
+ * done, finish the connection with finish_connect() with the value returned
+ * from this function (it is safe to call finish_connect() with NULL to
+ * support the former case).
  *
  * If it returns, the connect is successful; it just dies on errors (this
  * will hopefully be changed in a libification effort, to return NULL when
@@ -865,7 +1049,7 @@ struct child_process *git_connect(int fd[2], const char *url,
 				  const char *prog, int flags)
 {
 	char *hostandport, *path;
-	struct child_process *conn = &no_fork;
+	struct child_process *conn;
 	enum protocol protocol;
 
 	/* Without this we cannot rely on waitpid() to tell
@@ -881,50 +1065,7 @@ struct child_process *git_connect(int fd[2], const char *url,
 		printf("Diag: path=%s\n", path ? path : "NULL");
 		conn = NULL;
 	} else if (protocol == PROTO_GIT) {
-		struct strbuf request = STRBUF_INIT;
-		/*
-		 * Set up virtual host information based on where we will
-		 * connect, unless the user has overridden us in
-		 * the environment.
-		 */
-		char *target_host = getenv("GIT_OVERRIDE_VIRTUAL_HOST");
-		if (target_host)
-			target_host = xstrdup(target_host);
-		else
-			target_host = xstrdup(hostandport);
-
-		transport_check_allowed("git");
-
-		/* These underlying connection commands die() if they
-		 * cannot connect.
-		 */
-		if (git_use_proxy(hostandport))
-			conn = git_proxy_connect(fd, hostandport);
-		else
-			git_tcp_connect(fd, hostandport, flags);
-		/*
-		 * Separate original protocol components prog and path
-		 * from extended host header with a NUL byte.
-		 *
-		 * Note: Do not add any other headers here!  Doing so
-		 * will cause older git-daemon servers to crash.
-		 */
-		strbuf_addf(&request,
-			    "%s %s%chost=%s%c",
-			    prog, path, 0,
-			    target_host, 0);
-
-		/* If using a new version put that stuff here after a second null byte */
-		if (get_protocol_version_config() > 0) {
-			strbuf_addch(&request, '\0');
-			strbuf_addf(&request, "version=%d%c",
-				    get_protocol_version_config(), '\0');
-		}
-
-		packet_write(fd[1], request.buf, request.len);
-
-		free(target_host);
-		strbuf_release(&request);
+		conn = git_connect_git(fd, hostandport, path, prog, flags);
 	} else {
 		struct strbuf cmd = STRBUF_INIT;
 		const char *const *var;
@@ -946,8 +1087,6 @@ struct child_process *git_connect(int fd[2], const char *url,
 		conn->use_shell = 1;
 		conn->in = conn->out = -1;
 		if (protocol == PROTO_SSH) {
-			const char *ssh;
-			enum ssh_variant variant;
 			char *ssh_host = hostandport;
 			const char *port = NULL;
 			transport_check_allowed("ssh");
@@ -969,57 +1108,7 @@ struct child_process *git_connect(int fd[2], const char *url,
 				strbuf_release(&cmd);
 				return NULL;
 			}
-
-			if (looks_like_command_line_option(ssh_host))
-				die("strange hostname '%s' blocked", ssh_host);
-
-			ssh = get_ssh_command();
-			if (ssh) {
-				variant = determine_ssh_variant(ssh, 1);
-			} else {
-				/*
-				 * GIT_SSH is the no-shell version of
-				 * GIT_SSH_COMMAND (and must remain so for
-				 * historical compatibility).
-				 */
-				conn->use_shell = 0;
-
-				ssh = getenv("GIT_SSH");
-				if (!ssh)
-					ssh = "ssh";
-				variant = determine_ssh_variant(ssh, 0);
-			}
-
-			argv_array_push(&conn->args, ssh);
-
-			if (variant == VARIANT_SSH &&
-			    get_protocol_version_config() > 0) {
-				argv_array_push(&conn->args, "-o");
-				argv_array_push(&conn->args, "SendEnv=" GIT_PROTOCOL_ENVIRONMENT);
-				argv_array_pushf(&conn->env_array, GIT_PROTOCOL_ENVIRONMENT "=version=%d",
-						 get_protocol_version_config());
-			}
-
-			if (variant != VARIANT_SIMPLE) {
-				if (flags & CONNECT_IPV4)
-					argv_array_push(&conn->args, "-4");
-				else if (flags & CONNECT_IPV6)
-					argv_array_push(&conn->args, "-6");
-			}
-
-			if (variant == VARIANT_TORTOISEPLINK)
-				argv_array_push(&conn->args, "-batch");
-
-			if (port && variant != VARIANT_SIMPLE) {
-				if (variant == VARIANT_SSH)
-					argv_array_push(&conn->args, "-p");
-				else
-					argv_array_push(&conn->args, "-P");
-
-				argv_array_push(&conn->args, port);
-			}
-
-			argv_array_push(&conn->args, ssh_host);
+			fill_ssh_args(conn, ssh_host, port, flags);
 		} else {
 			transport_check_allowed("file");
 			if (get_protocol_version_config() > 0) {
@@ -1039,11 +1128,6 @@ struct child_process *git_connect(int fd[2], const char *url,
 	free(hostandport);
 	free(path);
 	return conn;
-}
-
-int git_connection_is_socket(struct child_process *conn)
-{
-	return conn == &no_fork;
 }
 
 int finish_connect(struct child_process *conn)
