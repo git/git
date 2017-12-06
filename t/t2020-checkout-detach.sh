@@ -294,15 +294,15 @@ test_expect_success 'describe_detached_head does print SHA-1 ellipsis when asked
 	# Various ways of asking for ellipses...
 	# The user can just use any kind of quoting (including none).
 
-	GIT_PRINT_SHA1_ELLIPSIS="yes" git -c 'core.abbrev=12' checkout HEAD^ >actual 2>&1 &&
+	GIT_PRINT_SHA1_ELLIPSIS=yes git -c 'core.abbrev=12' checkout HEAD^ >actual 2>&1 &&
 	check_detached &&
 	test_i18ncmp 1st_detach actual &&
 
-	GIT_PRINT_SHA1_ELLIPSIS='yes' git -c 'core.abbrev=12' checkout HEAD^ >actual 2>&1 &&
+	GIT_PRINT_SHA1_ELLIPSIS=Yes git -c 'core.abbrev=12' checkout HEAD^ >actual 2>&1 &&
 	check_detached &&
 	test_i18ncmp 2nd_detach actual &&
 
-	GIT_PRINT_SHA1_ELLIPSIS=yes git -c 'core.abbrev=12' checkout HEAD^ >actual 2>&1 &&
+	GIT_PRINT_SHA1_ELLIPSIS=YES git -c 'core.abbrev=12' checkout HEAD^ >actual 2>&1 &&
 	check_detached &&
 	test_i18ncmp 3rd_detach actual &&
 
