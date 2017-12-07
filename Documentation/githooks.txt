@@ -170,7 +170,8 @@ This hook cannot affect the outcome of 'git checkout'.
 
 It is also run after 'git clone', unless the --no-checkout (-n) option is
 used. The first parameter given to the hook is the null-ref, the second the
-ref of the new HEAD and the flag is always 1.
+ref of the new HEAD and the flag is always 1. Likewise for 'git worktree add'
+unless --no-checkout is used.
 
 This hook can be used to perform repository validity checks, auto-display
 differences from the previous HEAD if different, or set working dir metadata

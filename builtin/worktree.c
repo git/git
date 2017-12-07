@@ -218,20 +218,21 @@ static int add_worktree(const char *path, const char *refname,
 	int counter = 0, len, ret;
 	struct strbuf symref = STRBUF_INIT;
 	struct commit *commit = NULL;
+	int is_branch = 0;
 
 	if (file_exists(path) && !is_empty_dir(path))
 		die(_("'%s' already exists"), path);
 
 	/* is 'refname' a branch or commit? */
 	if (!opts->detach && !strbuf_check_branch_ref(&symref, refname) &&
-		 ref_exists(symref.buf)) { /* it's a branch */
+	    ref_exists(symref.buf)) {
+		is_branch = 1;
 		if (!opts->force)
 			die_if_checked_out(symref.buf, 0);
-	} else { /* must be a commit */
-		commit = lookup_commit_reference_by_name(refname);
-		if (!commit)
-			die(_("invalid reference: %s"), refname);
 	}
+	commit = lookup_commit_reference_by_name(refname);
+	if (!commit)
+		die(_("invalid reference: %s"), refname);
 
 	name = worktree_basename(path, &len);
 	git_path_buf(&sb_repo, "worktrees/%.*s", (int)(path + len - name), name);
@@ -296,7 +297,7 @@ static int add_worktree(const char *path, const char *refname,
 	argv_array_pushf(&child_env, "%s=%s", GIT_WORK_TREE_ENVIRONMENT, path);
 	cp.git_cmd = 1;
 
-	if (commit)
+	if (!is_branch)
 		argv_array_pushl(&cp.args, "update-ref", "HEAD",
 				 oid_to_hex(&commit->object.oid), NULL);
 	else
@@ -327,6 +328,15 @@ done:
 		strbuf_addf(&sb, "%s/locked", sb_repo.buf);
 		unlink_or_warn(sb.buf);
 	}
+
+	/*
+	 * Hook failure does not warrant worktree deletion, so run hook after
+	 * is_junk is cleared, but do return appropriate code when hook fails.
+	 */
+	if (!ret && opts->checkout)
+		ret = run_hook_le(NULL, "post-checkout", oid_to_hex(&null_oid),
+				  oid_to_hex(&commit->object.oid), "1", NULL);
+
 	argv_array_clear(&child_env);
 	strbuf_release(&sb);
 	strbuf_release(&symref);
