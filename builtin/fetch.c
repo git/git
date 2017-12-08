@@ -1322,7 +1322,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 {
 	int i;
 	struct string_list list = STRING_LIST_INIT_DUP;
-	struct remote *remote;
+	struct remote *remote = NULL;
 	int result = 0;
 	struct argv_array argv_gc_auto = ARGV_ARRAY_INIT;
 
@@ -1367,17 +1367,14 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 		else if (argc > 1)
 			die(_("fetch --all does not make sense with refspecs"));
 		(void) for_each_remote(get_one_remote_for_fetch, &list);
-		result = fetch_multiple(&list);
 	} else if (argc == 0) {
 		/* No arguments -- use default remote */
 		remote = remote_get(NULL);
-		result = fetch_one(remote, argc, argv);
 	} else if (multiple) {
 		/* All arguments are assumed to be remotes or groups */
 		for (i = 0; i < argc; i++)
 			if (!add_remote_or_group(argv[i], &list))
 				die(_("No such remote or remote group: %s"), argv[i]);
-		result = fetch_multiple(&list);
 	} else {
 		/* Single remote or group */
 		(void) add_remote_or_group(argv[0], &list);
@@ -1385,13 +1382,18 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 			/* More than one remote */
 			if (argc > 1)
 				die(_("Fetching a group and specifying refspecs does not make sense"));
-			result = fetch_multiple(&list);
 		} else {
 			/* Zero or one remotes */
 			remote = remote_get(argv[0]);
-			result = fetch_one(remote, argc-1, argv+1);
+			argc--;
+			argv++;
 		}
 	}
+
+	if (remote)
+		result = fetch_one(remote, argc, argv);
+	else
+		result = fetch_multiple(&list);
 
 	if (!result && (recurse_submodules != RECURSE_SUBMODULES_OFF)) {
 		struct argv_array options = ARGV_ARRAY_INIT;
