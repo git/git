@@ -170,22 +170,22 @@ commit_MIX_chkwrn () {
 		git -c core.autocrlf=$crlf add $fname 2>"${pfx}_$f.err"
 	done
 
-	test_expect_success "commit file with mixed EOL crlf=$crlf attr=$attr LF" '
+	test_expect_success "commit file with mixed EOL onto LF crlf=$crlf attr=$attr" '
 		check_warning "$lfwarn" ${pfx}_LF.err
 	'
-	test_expect_success "commit file with mixed EOL attr=$attr aeol=$aeol crlf=$crlf CRLF" '
+	test_expect_success "commit file with mixed EOL onto CLRF attr=$attr aeol=$aeol crlf=$crlf" '
 		check_warning "$crlfwarn" ${pfx}_CRLF.err
 	'
 
-	test_expect_success "commit file with mixed EOL attr=$attr aeol=$aeol crlf=$crlf CRLF_mix_LF" '
+	test_expect_success "commit file with mixed EOL onto CRLF_mix_LF attr=$attr aeol=$aeol crlf=$crlf" '
 		check_warning "$lfmixcrlf" ${pfx}_CRLF_mix_LF.err
 	'
 
-	test_expect_success "commit file with mixed EOL attr=$attr aeol=$aeol crlf=$crlf LF_mix_cr" '
+	test_expect_success "commit file with mixed EOL onto LF_mix_cr attr=$attr aeol=$aeol crlf=$crlf " '
 		check_warning "$lfmixcr" ${pfx}_LF_mix_CR.err
 	'
 
-	test_expect_success "commit file with mixed EOL attr=$attr aeol=$aeol crlf=$crlf CRLF_nul" '
+	test_expect_success "commit file with mixed EOL onto CRLF_nul attr=$attr aeol=$aeol crlf=$crlf" '
 		check_warning "$crlfnul" ${pfx}_CRLF_nul.err
 	'
 }
@@ -378,7 +378,7 @@ test_expect_success 'setup master' '
 	printf "\$Id: 0000000000000000000000000000000000000000 \$\r\nLINEONE\r\nLINETWO\rLINETHREE"   >CRLF_mix_CR &&
 	printf "\$Id: 0000000000000000000000000000000000000000 \$\r\nLINEONEQ\r\nLINETWO\r\nLINETHREE" | q_to_nul >CRLF_nul &&
 	printf "\$Id: 0000000000000000000000000000000000000000 \$\nLINEONEQ\nLINETWO\nLINETHREE" | q_to_nul >LF_nul &&
-	create_NNO_MIX_files CRLF_mix_LF CRLF_mix_LF CRLF_mix_LF CRLF_mix_LF CRLF_mix_LF &&
+	create_NNO_MIX_files &&
 	git -c core.autocrlf=false add NNO_*.txt MIX_*.txt &&
 	git commit -m "mixed line endings" &&
 	test_tick
@@ -441,13 +441,14 @@ test_expect_success 'commit files attr=crlf' '
 '
 
 # Commit "CRLFmixLF" on top of these files already in the repo:
-# LF, CRLF, CRLFmixLF LF_mix_CR CRLFNULL
+#                                         mixed     mixed     mixed       mixed       mixed
+#                                         onto      onto      onto        onto        onto
 #                 attr                    LF        CRLF      CRLFmixLF   LF_mix_CR   CRLFNUL
 commit_MIX_chkwrn ""      ""      false   ""        ""        ""          ""          ""
 commit_MIX_chkwrn ""      ""      true    "LF_CRLF" ""        ""          "LF_CRLF"   "LF_CRLF"
 commit_MIX_chkwrn ""      ""      input   "CRLF_LF" ""        ""          "CRLF_LF"   "CRLF_LF"
 
-commit_MIX_chkwrn "auto"  ""      false   "CRLF_LF" ""        ""          "CRLF_LF"   "CRLF_LF"
+commit_MIX_chkwrn "auto"  ""      false   "$WAMIX"  ""        ""          "$WAMIX"    "$WAMIX"
 commit_MIX_chkwrn "auto"  ""      true    "LF_CRLF" ""        ""          "LF_CRLF"   "LF_CRLF"
 commit_MIX_chkwrn "auto"  ""      input   "CRLF_LF" ""        ""          "CRLF_LF"   "CRLF_LF"
 
