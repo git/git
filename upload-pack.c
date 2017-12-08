@@ -139,10 +139,15 @@ static void create_pack_file(void)
 	if (use_include_tag)
 		argv_array_push(&pack_objects.args, "--include-tag");
 	if (filter_options.filter_spec) {
-		struct strbuf buf = STRBUF_INIT;
-		sq_quote_buf(&buf, filter_options.filter_spec);
-		argv_array_pushf(&pack_objects.args, "--filter=%s", buf.buf);
-		strbuf_release(&buf);
+		if (pack_objects.use_shell) {
+			struct strbuf buf = STRBUF_INIT;
+			sq_quote_buf(&buf, filter_options.filter_spec);
+			argv_array_pushf(&pack_objects.args, "--filter=%s", buf.buf);
+			strbuf_release(&buf);
+		} else {
+			argv_array_pushf(&pack_objects.args, "--filter=%s",
+					 filter_options.filter_spec);
+		}
 	}
 
 	pack_objects.in = -1;
