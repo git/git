@@ -8,6 +8,7 @@
 /test-dump-fsmonitor
 /test-dump-split-index
 /test-dump-untracked-cache
+/test-example-decorate
 /test-fake-ssh
 /test-scrap-cache-tree
 /test-genrandom
