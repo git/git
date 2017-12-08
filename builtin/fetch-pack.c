@@ -157,6 +157,10 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 			parse_list_objects_filter(&args.filter_options, arg);
 			continue;
 		}
+		if (!strcmp(arg, ("--no-" CL_ARG__FILTER))) {
+			list_objects_filter_release(&args.filter_options);
+			continue;
+		}
 		usage(fetch_pack_usage);
 	}
 	if (deepen_not.nr)
