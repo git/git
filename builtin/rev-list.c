@@ -15,6 +15,7 @@
 #include "progress.h"
 #include "reflog-walk.h"
 #include "oidset.h"
+#include "packfile.h"
 
 static const char rev_list_usage[] =
 "git rev-list [OPTION] <commit-id>... [ -- paths... ]\n"
@@ -67,6 +68,7 @@ enum missing_action {
 	MA_ERROR = 0,    /* fail if any missing objects are encountered */
 	MA_ALLOW_ANY,    /* silently allow ALL missing objects */
 	MA_PRINT,        /* print ALL missing objects in special section */
+	MA_ALLOW_PROMISOR, /* silently allow all missing PROMISOR objects */
 };
 static enum missing_action arg_missing_action;
 
@@ -197,6 +199,12 @@ static void finish_commit(struct commit *commit, void *data)
 
 static inline void finish_object__ma(struct object *obj)
 {
+	/*
+	 * Whether or not we try to dynamically fetch missing objects
+	 * from the server, we currently DO NOT have the object.  We
+	 * can either print, allow (ignore), or conditionally allow
+	 * (ignore) them.
+	 */
 	switch (arg_missing_action) {
 	case MA_ERROR:
 		die("missing blob object '%s'", oid_to_hex(&obj->oid));
@@ -209,25 +217,36 @@ static inline void finish_object__ma(struct object *obj)
 		oidset_insert(&missing_objects, &obj->oid);
 		return;
 
+	case MA_ALLOW_PROMISOR:
+		if (is_promisor_object(&obj->oid))
+			return;
+		die("unexpected missing blob object '%s'",
+		    oid_to_hex(&obj->oid));
+		return;
+
 	default:
 		BUG("unhandled missing_action");
 		return;
 	}
 }
 
-static void finish_object(struct object *obj, const char *name, void *cb_data)
+static int finish_object(struct object *obj, const char *name, void *cb_data)
 {
 	struct rev_list_info *info = cb_data;
-	if (obj->type == OBJ_BLOB && !has_object_file(&obj->oid))
+	if (obj->type == OBJ_BLOB && !has_object_file(&obj->oid)) {
 		finish_object__ma(obj);
+		return 1;
+	}
 	if (info->revs->verify_objects && !obj->parsed && obj->type != OBJ_COMMIT)
 		parse_object(&obj->oid);
+	return 0;
 }
 
 static void show_object(struct object *obj, const char *name, void *cb_data)
 {
 	struct rev_list_info *info = cb_data;
-	finish_object(obj, name, cb_data);
+	if (finish_object(obj, name, cb_data))
+		return;
 	display_progress(progress, ++progress_counter);
 	if (info->flags & REV_LIST_QUIET)
 		return;
@@ -315,11 +334,19 @@ static inline int parse_missing_action_value(const char *value)
 
 	if (!strcmp(value, "allow-any")) {
 		arg_missing_action = MA_ALLOW_ANY;
+		fetch_if_missing = 0;
 		return 1;
 	}
 
 	if (!strcmp(value, "print")) {
 		arg_missing_action = MA_PRINT;
+		fetch_if_missing = 0;
+		return 1;
+	}
+
+	if (!strcmp(value, "allow-promisor")) {
+		arg_missing_action = MA_ALLOW_PROMISOR;
+		fetch_if_missing = 0;
 		return 1;
 	}
 
@@ -344,6 +371,35 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	init_revisions(&revs, prefix);
 	revs.abbrev = DEFAULT_ABBREV;
 	revs.commit_format = CMIT_FMT_UNSPECIFIED;
+
+	/*
+	 * Scan the argument list before invoking setup_revisions(), so that we
+	 * know if fetch_if_missing needs to be set to 0.
+	 *
+	 * "--exclude-promisor-objects" acts as a pre-filter on missing objects
+	 * by not crossing the boundary from realized objects to promisor
+	 * objects.
+	 *
+	 * Let "--missing" to conditionally set fetch_if_missing.
+	 */
+	for (i = 1; i < argc; i++) {
+		const char *arg = argv[i];
+		if (!strcmp(arg, "--exclude-promisor-objects")) {
+			fetch_if_missing = 0;
+			revs.exclude_promisor_objects = 1;
+			break;
+		}
+	}
+	for (i = 1; i < argc; i++) {
+		const char *arg = argv[i];
+		if (skip_prefix(arg, "--missing=", &arg)) {
+			if (revs.exclude_promisor_objects)
+				die(_("cannot combine --exclude-promisor-objects and --missing"));
+			if (parse_missing_action_value(arg))
+				break;
+		}
+	}
+
 	argc = setup_revisions(argc, argv, &revs, NULL);
 
 	memset(&info, 0, sizeof(info));
@@ -412,9 +468,10 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 			continue;
 		}
 
-		if (skip_prefix(arg, "--missing=", &arg) &&
-		    parse_missing_action_value(arg))
-			continue;
+		if (!strcmp(arg, "--exclude-promisor-objects"))
+			continue; /* already handled above */
+		if (skip_prefix(arg, "--missing=", &arg))
+			continue; /* already handled above */
 
 		usage(rev_list_usage);
 

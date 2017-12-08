@@ -121,7 +121,10 @@ struct rev_info {
 			bisect:1,
 			ancestry_path:1,
 			first_parent_only:1,
-			line_level_traverse:1;
+			line_level_traverse:1,
+
+			/* for internal use only */
+			exclude_promisor_objects:1;
 
 	/* Diff flags */
 	unsigned int	diff:1,

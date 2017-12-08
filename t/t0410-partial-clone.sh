@@ -160,6 +160,107 @@ test_expect_success 'fetching of missing objects' '
 	git verify-pack --verbose "$IDX" | grep "$HASH"
 '
 
+test_expect_success 'rev-list stops traversal at missing and promised commit' '
+	rm -rf repo &&
+	test_create_repo repo &&
+	test_commit -C repo foo &&
+	test_commit -C repo bar &&
+
+	FOO=$(git -C repo rev-parse foo) &&
+	promise_and_delete "$FOO" &&
+
+	git -C repo config core.repositoryformatversion 1 &&
+	git -C repo config extensions.partialclone "arbitrary string" &&
+	git -C repo rev-list --exclude-promisor-objects --objects bar >out &&
+	grep $(git -C repo rev-parse bar) out &&
+	! grep $FOO out
+'
+
+test_expect_success 'rev-list stops traversal at missing and promised tree' '
+	rm -rf repo &&
+	test_create_repo repo &&
+	test_commit -C repo foo &&
+	mkdir repo/a_dir &&
+	echo something >repo/a_dir/something &&
+	git -C repo add a_dir/something &&
+	git -C repo commit -m bar &&
+
+	# foo^{tree} (tree referenced from commit)
+	TREE=$(git -C repo rev-parse foo^{tree}) &&
+
+	# a tree referenced by HEAD^{tree} (tree referenced from tree)
+	TREE2=$(git -C repo ls-tree HEAD^{tree} | grep " tree " | head -1 | cut -b13-52) &&
+
+	promise_and_delete "$TREE" &&
+	promise_and_delete "$TREE2" &&
+
+	git -C repo config core.repositoryformatversion 1 &&
+	git -C repo config extensions.partialclone "arbitrary string" &&
+	git -C repo rev-list --exclude-promisor-objects --objects HEAD >out &&
+	grep $(git -C repo rev-parse foo) out &&
+	! grep $TREE out &&
+	grep $(git -C repo rev-parse HEAD) out &&
+	! grep $TREE2 out
+'
+
+test_expect_success 'rev-list stops traversal at missing and promised blob' '
+	rm -rf repo &&
+	test_create_repo repo &&
+	echo something >repo/something &&
+	git -C repo add something &&
+	git -C repo commit -m foo &&
+
+	BLOB=$(git -C repo hash-object -w something) &&
+	promise_and_delete "$BLOB" &&
+
+	git -C repo config core.repositoryformatversion 1 &&
+	git -C repo config extensions.partialclone "arbitrary string" &&
+	git -C repo rev-list --exclude-promisor-objects --objects HEAD >out &&
+	grep $(git -C repo rev-parse HEAD) out &&
+	! grep $BLOB out
+'
+
+test_expect_success 'rev-list stops traversal at promisor commit, tree, and blob' '
+	rm -rf repo &&
+	test_create_repo repo &&
+	test_commit -C repo foo &&
+	test_commit -C repo bar &&
+	test_commit -C repo baz &&
+
+	COMMIT=$(git -C repo rev-parse foo) &&
+	TREE=$(git -C repo rev-parse bar^{tree}) &&
+	BLOB=$(git hash-object repo/baz.t) &&
+	printf "%s\n%s\n%s\n" $COMMIT $TREE $BLOB | pack_as_from_promisor &&
+
+	git -C repo config core.repositoryformatversion 1 &&
+	git -C repo config extensions.partialclone "arbitrary string" &&
+	git -C repo rev-list --exclude-promisor-objects --objects HEAD >out &&
+	! grep $COMMIT out &&
+	! grep $TREE out &&
+	! grep $BLOB out &&
+	grep $(git -C repo rev-parse bar) out  # sanity check that some walking was done
+'
+
+test_expect_success 'rev-list accepts missing and promised objects on command line' '
+	rm -rf repo &&
+	test_create_repo repo &&
+	test_commit -C repo foo &&
+	test_commit -C repo bar &&
+	test_commit -C repo baz &&
+
+	COMMIT=$(git -C repo rev-parse foo) &&
+	TREE=$(git -C repo rev-parse bar^{tree}) &&
+	BLOB=$(git hash-object repo/baz.t) &&
+
+	promise_and_delete $COMMIT &&
+	promise_and_delete $TREE &&
+	promise_and_delete $BLOB &&
+
+	git -C repo config core.repositoryformatversion 1 &&
+	git -C repo config extensions.partialclone "arbitrary string" &&
+	git -C repo rev-list --exclude-promisor-objects --objects "$COMMIT" "$TREE" "$BLOB"
+'
+
 LIB_HTTPD_PORT=12345  # default port, 410, cannot be used as non-root
 . "$TEST_DIRECTORY"/lib-httpd.sh
 start_httpd
