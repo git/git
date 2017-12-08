@@ -1275,6 +1275,56 @@ static int fetch_multiple(struct string_list *list)
 	return result;
 }
 
+/*
+ * Fetching from the promisor remote should use the given filter-spec
+ * or inherit the default filter-spec from the config.
+ */
+static inline void fetch_one_setup_partial(struct remote *remote)
+{
+	/*
+	 * Explicit --no-filter argument overrides everything, regardless
+	 * of any prior partial clones and fetches.
+	 */
+	if (filter_options.no_filter)
+		return;
+
+	/*
+	 * If no prior partial clone/fetch and the current fetch DID NOT
+	 * request a partial-fetch, do a normal fetch.
+	 */
+	if (!repository_format_partial_clone && !filter_options.choice)
+		return;
+
+	/*
+	 * If this is the FIRST partial-fetch request, we enable partial
+	 * on this repo and remember the given filter-spec as the default
+	 * for subsequent fetches to this remote.
+	 */
+	if (!repository_format_partial_clone && filter_options.choice) {
+		partial_clone_register(remote->name, &filter_options);
+		return;
+	}
+
+	/*
+	 * We are currently limited to only ONE promisor remote and only
+	 * allow partial-fetches from the promisor remote.
+	 */
+	if (strcmp(remote->name, repository_format_partial_clone)) {
+		if (filter_options.choice)
+			die(_("--filter can only be used with the remote configured in core.partialClone"));
+		return;
+	}
+
+	/*
+	 * Do a partial-fetch from the promisor remote using either the
+	 * explicitly given filter-spec or inherit the filter-spec from
+	 * the config.
+	 */
+	if (!filter_options.choice)
+		partial_clone_get_default_filter_spec(&filter_options);
+	return;
+}
+
 static int fetch_one(struct remote *remote, int argc, const char **argv)
 {
 	static const char **refs = NULL;
@@ -1404,13 +1454,13 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 	}
 
 	if (remote) {
-		if (filter_options.choice &&
-		    strcmp(remote->name, repository_format_partial_clone))
-			die(_("--filter can only be used with the remote configured in core.partialClone"));
+		if (filter_options.choice || repository_format_partial_clone)
+			fetch_one_setup_partial(remote);
 		result = fetch_one(remote, argc, argv);
 	} else {
 		if (filter_options.choice)
 			die(_("--filter can only be used with the remote configured in core.partialClone"));
+		/* TODO should this also die if we have a previous partial-clone? */
 		result = fetch_multiple(&list);
 	}
 

@@ -158,7 +158,7 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 			continue;
 		}
 		if (!strcmp(arg, ("--no-" CL_ARG__FILTER))) {
-			list_objects_filter_release(&args.filter_options);
+			list_objects_filter_set_no_filter(&args.filter_options);
 			continue;
 		}
 		usage(fetch_pack_usage);

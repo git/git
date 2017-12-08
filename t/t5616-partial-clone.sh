@@ -59,7 +59,7 @@ test_expect_success 'push new commits to server' '
 	git -C src remote add srv "file://$(pwd)/srv.bare" &&
 	for x in a b c d e
 	do
-		echo "Mod $x" >>src/file.1.txt
+		echo "Mod file.1.txt $x" >>src/file.1.txt
 		git -C src add file.1.txt
 		git -C src commit -m "mod $x"
 	done &&
@@ -89,6 +89,26 @@ test_expect_success 'verify diff causes dynamic object fetch' '
 test_expect_success 'verify blame causes dynamic object fetch' '
 	git -C pc1 blame origin/master -- file.1.txt >observed.blame &&
 	test_cmp expect.blame observed.blame &&
+	git -C pc1 rev-list master..origin/master --quiet --objects --missing=print >observed &&
+	test_line_count = 0 observed
+'
+
+# create new commits in "src" repo to establish a history on file.2.txt
+# and push to "srv.bare".
+test_expect_success 'push new commits to server for file.2.txt' '
+	for x in a b c d e f
+	do
+		echo "Mod file.2.txt $x" >>src/file.2.txt
+		git -C src add file.2.txt
+		git -C src commit -m "mod $x"
+	done &&
+	git -C src push -u srv master
+'
+
+# Do FULL fetch by disabling filter-spec using --no-filter.
+# Verify we have all the new blobs.
+test_expect_success 'override inherited filter-spec using --no-filter' '
+	git -C pc1 fetch --no-filter origin &&
 	git -C pc1 rev-list master..origin/master --quiet --objects --missing=print >observed &&
 	test_line_count = 0 observed
 '

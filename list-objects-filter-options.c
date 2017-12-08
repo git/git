@@ -94,7 +94,7 @@ int opt_parse_list_objects_filter(const struct option *opt,
 	struct list_objects_filter_options *filter_options = opt->value;
 
 	if (unset || !arg) {
-		list_objects_filter_release(filter_options);
+		list_objects_filter_set_no_filter(filter_options);
 		return 0;
 	}
 
