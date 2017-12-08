@@ -10,14 +10,16 @@ delete_object () {
 
 pack_as_from_promisor () {
 	HASH=$(git -C repo pack-objects .git/objects/pack/pack) &&
-	>repo/.git/objects/pack/pack-$HASH.promisor
+	>repo/.git/objects/pack/pack-$HASH.promisor &&
+	echo $HASH
 }
 
 promise_and_delete () {
 	HASH=$(git -C repo rev-parse "$1") &&
 	git -C repo tag -a -m message my_annotated_tag "$HASH" &&
 	git -C repo rev-parse my_annotated_tag | pack_as_from_promisor &&
-	git -C repo tag -d my_annotated_tag &&
+	# tag -d prints a message to stdout, so redirect it
+	git -C repo tag -d my_annotated_tag >/dev/null &&
 	delete_object repo "$HASH"
 }
 
@@ -259,6 +261,54 @@ test_expect_success 'rev-list accepts missing and promised objects on command li
 	git -C repo config core.repositoryformatversion 1 &&
 	git -C repo config extensions.partialclone "arbitrary string" &&
 	git -C repo rev-list --exclude-promisor-objects --objects "$COMMIT" "$TREE" "$BLOB"
+'
+
+test_expect_success 'gc does not repack promisor objects' '
+	rm -rf repo &&
+	test_create_repo repo &&
+	test_commit -C repo my_commit &&
+
+	TREE_HASH=$(git -C repo rev-parse HEAD^{tree}) &&
+	HASH=$(printf "$TREE_HASH\n" | pack_as_from_promisor) &&
+
+	git -C repo config core.repositoryformatversion 1 &&
+	git -C repo config extensions.partialclone "arbitrary string" &&
+	git -C repo gc &&
+
+	# Ensure that the promisor packfile still exists, and remove it
+	test -e repo/.git/objects/pack/pack-$HASH.pack &&
+	rm repo/.git/objects/pack/pack-$HASH.* &&
+
+	# Ensure that the single other pack contains the commit, but not the tree
+	ls repo/.git/objects/pack/pack-*.pack >packlist &&
+	test_line_count = 1 packlist &&
+	git verify-pack repo/.git/objects/pack/pack-*.pack -v >out &&
+	grep "$(git -C repo rev-parse HEAD)" out &&
+	! grep "$TREE_HASH" out
+'
+
+test_expect_success 'gc stops traversal when a missing but promised object is reached' '
+	rm -rf repo &&
+	test_create_repo repo &&
+	test_commit -C repo my_commit &&
+
+	TREE_HASH=$(git -C repo rev-parse HEAD^{tree}) &&
+	HASH=$(promise_and_delete $TREE_HASH) &&
+
+	git -C repo config core.repositoryformatversion 1 &&
+	git -C repo config extensions.partialclone "arbitrary string" &&
+	git -C repo gc &&
+
+	# Ensure that the promisor packfile still exists, and remove it
+	test -e repo/.git/objects/pack/pack-$HASH.pack &&
+	rm repo/.git/objects/pack/pack-$HASH.* &&
+
+	# Ensure that the single other pack contains the commit, but not the tree
+	ls repo/.git/objects/pack/pack-*.pack >packlist &&
+	test_line_count = 1 packlist &&
+	git verify-pack repo/.git/objects/pack/pack-*.pack -v >out &&
+	grep "$(git -C repo rev-parse HEAD)" out &&
+	! grep "$TREE_HASH" out
 '
 
 LIB_HTTPD_PORT=12345  # default port, 410, cannot be used as non-root
