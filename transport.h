@@ -4,6 +4,7 @@
 #include "cache.h"
 #include "run-command.h"
 #include "remote.h"
+#include "list-objects-filter-options.h"
 
 struct string_list;
 
@@ -23,6 +24,7 @@ struct git_transport_options {
 	const char *uploadpack;
 	const char *receivepack;
 	struct push_cas_option *cas;
+	struct list_objects_filter_options filter_options;
 };
 
 enum transport_family {
@@ -220,6 +222,9 @@ void transport_check_allowed(const char *type);
  * dependents
  */
 #define TRANS_OPT_NO_DEPENDENTS "no-dependents"
+
+/* Filter objects for partial clone and fetch */
+#define TRANS_OPT_LIST_OBJECTS_FILTER "filter"
 
 /**
  * Returns 0 if the option was used, non-zero otherwise. Prints a
