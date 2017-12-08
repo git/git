@@ -105,12 +105,42 @@ test_expect_success 'push new commits to server for file.2.txt' '
 	git -C src push -u srv master
 '
 
-# Do FULL fetch by disabling filter-spec using --no-filter.
+# Do FULL fetch by disabling inherited filter-spec using --no-filter.
 # Verify we have all the new blobs.
 test_expect_success 'override inherited filter-spec using --no-filter' '
 	git -C pc1 fetch --no-filter origin &&
 	git -C pc1 rev-list master..origin/master --quiet --objects --missing=print >observed &&
 	test_line_count = 0 observed
+'
+
+# create new commits in "src" repo to establish a history on file.3.txt
+# and push to "srv.bare".
+test_expect_success 'push new commits to server for file.3.txt' '
+	for x in a b c d e f
+	do
+		echo "Mod file.3.txt $x" >>src/file.3.txt
+		git -C src add file.3.txt
+		git -C src commit -m "mod $x"
+	done &&
+	git -C src push -u srv master
+'
+
+# Do a partial fetch and then try to manually fetch the missing objects.
+# This can be used as the basis of a pre-command hook to bulk fetch objects
+# perhaps combined with a command in dry-run mode.
+test_expect_success 'manual prefetch of missing objects' '
+	git -C pc1 fetch --filter=blob:none origin &&
+	git -C pc1 rev-list master..origin/master --quiet --objects --missing=print \
+		| awk -f print_1.awk \
+		| sed "s/?//" \
+		| sort >observed.oids &&
+	test_line_count = 6 observed.oids &&
+	git -C pc1 fetch-pack --stdin "file://$(pwd)/srv.bare" <observed.oids &&
+	git -C pc1 rev-list master..origin/master --quiet --objects --missing=print \
+		| awk -f print_1.awk \
+		| sed "s/?//" \
+		| sort >observed.oids &&
+	test_line_count = 0 observed.oids
 '
 
 test_done
