@@ -611,6 +611,58 @@ test_expect_success 'partial clone: warn if server does not support object filte
 	test_i18ngrep "filtering not recognized by server" err
 '
 
+test_expect_success 'batch missing blob request during checkout' '
+	rm -rf server client &&
+
+	test_create_repo server &&
+	echo a >server/a &&
+	echo b >server/b &&
+	git -C server add a b &&
+
+	git -C server commit -m x &&
+	echo aa >server/a &&
+	echo bb >server/b &&
+	git -C server add a b &&
+	git -C server commit -m x &&
+
+	test_config -C server uploadpack.allowfilter 1 &&
+	test_config -C server uploadpack.allowanysha1inwant 1 &&
+
+	git clone --filter=blob:limit=0 "file://$(pwd)/server" client &&
+
+	# Ensure that there is only one negotiation by checking that there is
+	# only "done" line sent. ("done" marks the end of negotiation.)
+	GIT_TRACE_PACKET="$(pwd)/trace" git -C client checkout HEAD^ &&
+	grep "git> done" trace >done_lines &&
+	test_line_count = 1 done_lines
+'
+
+test_expect_success 'batch missing blob request does not inadvertently try to fetch gitlinks' '
+	rm -rf server client &&
+
+	test_create_repo repo_for_submodule &&
+	test_commit -C repo_for_submodule x &&
+
+	test_create_repo server &&
+	echo a >server/a &&
+	echo b >server/b &&
+	git -C server add a b &&
+	git -C server commit -m x &&
+
+	echo aa >server/a &&
+	echo bb >server/b &&
+	# Also add a gitlink pointing to an arbitrary repository
+	git -C server submodule add "$(pwd)/repo_for_submodule" c &&
+	git -C server add a b c &&
+	git -C server commit -m x &&
+
+	test_config -C server uploadpack.allowfilter 1 &&
+	test_config -C server uploadpack.allowanysha1inwant 1 &&
+
+	# Make sure that it succeeds
+	git clone --filter=blob:limit=0 "file://$(pwd)/server" client
+'
+
 . "$TEST_DIRECTORY"/lib-httpd.sh
 start_httpd
 
