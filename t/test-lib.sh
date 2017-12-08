@@ -264,7 +264,6 @@ do
 		shift ;;
 	-x)
 		trace=t
-		verbose=t
 		shift ;;
 	--verbose-log)
 		verbose_log=t
@@ -281,6 +280,11 @@ then
 elif test -n "$valgrind"
 then
 	test -z "$verbose_log" && verbose=t
+fi
+
+if test -n "$trace" && test -z "$verbose_log"
+then
+	verbose=t
 fi
 
 if test -n "$color"
@@ -586,7 +590,9 @@ maybe_setup_valgrind () {
 }
 
 want_trace () {
-	test "$trace" = t && test "$verbose" = t
+	test "$trace" = t && {
+		test "$verbose" = t || test "$verbose_log" = t
+	}
 }
 
 # This is a separate function because some tests use
