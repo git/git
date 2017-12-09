@@ -1660,10 +1660,7 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 				from_stdin = 1;
 			} else if (!strcmp(arg, "--fix-thin")) {
 				fix_thin_pack = 1;
-			} else if (!strcmp(arg, "--strict")) {
-				strict = 1;
-				do_fsck_object = 1;
-			} else if (skip_prefix(arg, "--strict=", &arg)) {
+			} else if (skip_to_optional_arg(arg, "--strict", &arg)) {
 				strict = 1;
 				do_fsck_object = 1;
 				fsck_set_msg_types(&fsck_options, arg);
@@ -1679,10 +1676,8 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 				verify = 1;
 				show_stat = 1;
 				stat_only = 1;
-			} else if (!strcmp(arg, "--keep")) {
-				keep_msg = "";
-			} else if (starts_with(arg, "--keep=")) {
-				keep_msg = arg + 7;
+			} else if (skip_to_optional_arg(arg, "--keep", &keep_msg)) {
+				; /* nothing to do */
 			} else if (starts_with(arg, "--threads=")) {
 				char *end;
 				nr_threads = strtoul(arg+10, &end, 0);
