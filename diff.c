@@ -4623,9 +4623,7 @@ int diff_opt_parse(struct diff_options *options,
 	else if (!strcmp(arg, "--no-follow")) {
 		options->flags.follow_renames = 0;
 		options->flags.default_follow_renames = 0;
-	} else if (!strcmp(arg, "--color"))
-		options->use_color = 1;
-	else if (skip_prefix(arg, "--color=", &arg)) {
+	} else if (skip_to_optional_arg_default(arg, "--color", &arg, "always")) {
 		int value = git_config_colorbool(NULL, arg);
 		if (value < 0)
 			return error("option `color' expects \"always\", \"auto\", or \"never\"");
@@ -4645,14 +4643,9 @@ int diff_opt_parse(struct diff_options *options,
 		if (cm < 0)
 			die("bad --color-moved argument: %s", arg);
 		options->color_moved = cm;
-	} else if (!strcmp(arg, "--color-words")) {
+	} else if (skip_to_optional_arg_default(arg, "--color-words", &options->word_regex, NULL)) {
 		options->use_color = 1;
 		options->word_diff = DIFF_WORDS_COLOR;
-	}
-	else if (skip_prefix(arg, "--color-words=", &arg)) {
-		options->use_color = 1;
-		options->word_diff = DIFF_WORDS_COLOR;
-		options->word_regex = arg;
 	}
 	else if (!strcmp(arg, "--word-diff")) {
 		if (options->word_diff == DIFF_WORDS_NONE)
@@ -4691,15 +4684,10 @@ int diff_opt_parse(struct diff_options *options,
 		options->flags.textconv_set_via_cmdline = 1;
 	} else if (!strcmp(arg, "--no-textconv"))
 		options->flags.allow_textconv = 0;
-	else if (!strcmp(arg, "--ignore-submodules")) {
-		options->flags.override_submodule_config = 1;
-		handle_ignore_submodules_arg(options, "all");
-	} else if (skip_prefix(arg, "--ignore-submodules=", &arg)) {
+	else if (skip_to_optional_arg_default(arg, "--ignore-submodules", &arg, "all")) {
 		options->flags.override_submodule_config = 1;
 		handle_ignore_submodules_arg(options, arg);
-	} else if (!strcmp(arg, "--submodule"))
-		options->submodule_format = DIFF_SUBMODULE_LOG;
-	else if (skip_prefix(arg, "--submodule=", &arg))
+	} else if (skip_to_optional_arg_default(arg, "--submodule", &arg, "log"))
 		return parse_submodule_opt(options, arg);
 	else if (skip_prefix(arg, "--ws-error-highlight=", &arg))
 		return parse_ws_error_highlight_opt(options, arg);
