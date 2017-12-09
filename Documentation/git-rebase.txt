@@ -379,13 +379,18 @@ rebase.instructionFormat.  A customized instruction format will automatically
 have the long commit hash prepended to the format.
 
 -r::
---rebase-merges::
+--rebase-merges[=(rebase-cousins|no-rebase-cousins)]::
 	By default, a rebase will simply drop merge commits and only rebase
 	the non-merge commits. With this option, it will try to preserve
 	the branching structure within the commits that are to be rebased,
 	by recreating the merge commits. If a merge commit resolved any merge
 	or contained manual amendments, then they will have to be re-applied
 	manually.
++
+By default, or when `no-rebase-cousins` was specified, commits which do not
+have `<upstream>` as direct ancestor will keep their original branch point.
+If the `rebase-cousins` mode is turned on, such commits are instead rebased
+onto `<upstream>` (or `<onto>`, if specified).
 +
 This mode is similar in spirit to `--preserve-merges`, but in contrast to
 that option works well in interactive rebases: commits can be reordered,
