@@ -176,4 +176,18 @@ test_expect_success 'with a branch tip that was cherry-picked already' '
 	EOF
 '
 
+test_expect_success 'refs/rewritten/* is worktree-local' '
+	git worktree add wt &&
+	cat >wt/script-from-scratch <<-\EOF &&
+	label xyz
+	exec GIT_DIR=../.git git rev-parse --verify refs/rewritten/xyz >a || :
+	exec git rev-parse --verify refs/rewritten/xyz >b
+	EOF
+
+	test_config -C wt sequence.editor \""$PWD"/replace-editor.sh\" &&
+	git -C wt rebase -i HEAD &&
+	test_must_be_empty wt/a &&
+	test_cmp_rev HEAD "$(cat wt/b)"
+'
+
 test_done
