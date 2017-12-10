@@ -3062,7 +3062,10 @@ static int pick_commits(struct todo_list *todo_list, struct replay_opts *opts)
 					    item->arg, item->arg_len,
 					    item->flags, opts)) < 0)
 				reschedule = 1;
-			else if (res > 0)
+			else if (item->commit)
+				record_in_rewritten(&item->commit->object.oid,
+						    peek_command(todo_list, 1));
+			if (res > 0)
 				/* failed with merge conflicts */
 				return error_with_patch(item->commit,
 							item->arg,
