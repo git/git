@@ -198,4 +198,10 @@ test_expect_success 'local clone from linked checkout' '
 	( cd here-clone && git fsck )
 '
 
+test_expect_success 'local clone --shared from linked checkout' '
+	git -C bare worktree add --detach ../baretree &&
+	git clone --local --shared baretree bare-clone &&
+	grep /bare/ bare-clone/.git/objects/info/alternates
+'
+
 test_done
