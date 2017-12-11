@@ -271,10 +271,13 @@ static void display_name(struct commit_name *n)
 		n->name_checked = 1;
 	}
 
-	if (n->tag)
+	if (n->tag) {
+		if (all)
+			printf("tags/");
 		printf("%s", n->tag->tag);
-	else
+	} else {
 		printf("%s", n->path);
+	}
 }
 
 static void show_suffix(int depth, const struct object_id *oid)
