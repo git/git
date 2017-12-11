@@ -40,6 +40,8 @@ export GIT_TEST_CLONE_2GB=YesPlease
 
 case "$jobname" in
 linux-clang|linux-gcc)
+	export GIT_TEST_HTTPD=YesPlease
+
 	# The Linux build installs the defined dependency versions below.
 	# The OS X build installs the latest available versions. Keep that
 	# in mind when you encounter a broken OS X build!

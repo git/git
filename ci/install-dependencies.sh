@@ -10,8 +10,6 @@ LFSWHENCE=https://github.com/github/git-lfs/releases/download/v$LINUX_GIT_LFS_VE
 
 case "$jobname" in
 linux-clang|linux-gcc)
-	export GIT_TEST_HTTPD=YesPlease
-
 	mkdir --parents "$P4_PATH"
 	pushd "$P4_PATH"
 		wget --quiet "$P4WHENCE/bin.linux26x86_64/p4d"
