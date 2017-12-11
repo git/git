@@ -8,8 +8,8 @@
 P4WHENCE=http://filehost.perforce.com/perforce/r$LINUX_P4_VERSION
 LFSWHENCE=https://github.com/github/git-lfs/releases/download/v$LINUX_GIT_LFS_VERSION
 
-case "${TRAVIS_OS_NAME:-linux}" in
-linux)
+case "$jobname" in
+linux-clang|linux-gcc)
 	export GIT_TEST_HTTPD=YesPlease
 
 	mkdir --parents "$P4_PATH"
@@ -26,7 +26,7 @@ linux)
 		cp git-lfs-$LINUX_GIT_LFS_VERSION/git-lfs .
 	popd
 	;;
-osx)
+osx-clang|osx-gcc)
 	brew update --quiet
 	# Uncomment this if you want to run perf tests:
 	# brew install gnu-time

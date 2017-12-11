@@ -27,8 +27,13 @@ set -e
 
 skip_branch_tip_with_tag
 
-case "${TRAVIS_OS_NAME:-linux}" in
-linux)
+if test -z "$jobname"
+then
+	jobname="$TRAVIS_OS_NAME-$CC"
+fi
+
+case "$jobname" in
+linux-clang|linux-gcc)
 	P4_PATH="$(pwd)/custom/p4"
 	GIT_LFS_PATH="$(pwd)/custom/git-lfs"
 	export PATH="$GIT_LFS_PATH:$P4_PATH:$PATH"
