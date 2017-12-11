@@ -23,7 +23,7 @@ skip_branch_tip_with_tag () {
 
 # Set 'exit on error' for all CI scripts to let the caller know that
 # something went wrong
-set -e
+set -ex
 
 skip_branch_tip_with_tag
 
