@@ -12,7 +12,7 @@
 #include "builtin.h"
 #include "notes.h"
 #include "blob.h"
-#include "commit.h"
+#include "pretty.h"
 #include "refs.h"
 #include "exec_cmd.h"
 #include "run-command.h"

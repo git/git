@@ -1,6 +1,6 @@
 #include "cache.h"
 #include "config.h"
-#include "commit.h"
+#include "pretty.h"
 #include "refs.h"
 #include "builtin.h"
 #include "color.h"
