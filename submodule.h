@@ -76,10 +76,12 @@ extern int should_update_submodules(void);
  */
 extern const struct submodule *submodule_from_ce(const struct cache_entry *ce);
 extern void check_for_new_submodule_commits(struct object_id *oid);
-extern int fetch_populated_submodules(const struct argv_array *options,
-			       const char *prefix, int command_line_option,
-			       int default_option,
-			       int quiet, int max_parallel_jobs);
+extern int fetch_populated_submodules(struct repository *r,
+				      const struct argv_array *options,
+				      const char *prefix,
+				      int command_line_option,
+				      int default_option,
+				      int quiet, int max_parallel_jobs);
 extern unsigned is_submodule_modified(const char *path, int ignore_untracked);
 extern int submodule_uses_gitfile(const char *path);
 

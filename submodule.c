@@ -1,3 +1,5 @@
+#define NO_THE_INDEX_COMPATIBILITY_MACROS
+
 #include "cache.h"
 #include "repository.h"
 #include "config.h"
@@ -1179,7 +1181,7 @@ int submodule_touches_in_range(struct object_id *excl_oid,
 struct submodule_parallel_fetch {
 	int count;
 	struct argv_array args;
-	const char *work_tree;
+	struct repository *r;
 	const char *prefix;
 	int command_line_option;
 	int default_option;
@@ -1200,7 +1202,7 @@ static int get_fetch_recurse_config(const struct submodule *submodule,
 
 		int fetch_recurse = submodule->fetch_recurse;
 		key = xstrfmt("submodule.%s.fetchRecurseSubmodules", submodule->name);
-		if (!repo_config_get_string_const(the_repository, key, &value)) {
+		if (!repo_config_get_string_const(spf->r, key, &value)) {
 			fetch_recurse = parse_fetch_recurse_submodules_arg(key, value);
 		}
 		free(key);
@@ -1219,11 +1221,11 @@ static int get_next_submodule(struct child_process *cp,
 	int ret = 0;
 	struct submodule_parallel_fetch *spf = data;
 
-	for (; spf->count < active_nr; spf->count++) {
+	for (; spf->count < spf->r->index->cache_nr; spf->count++) {
 		struct strbuf submodule_path = STRBUF_INIT;
 		struct strbuf submodule_git_dir = STRBUF_INIT;
 		struct strbuf submodule_prefix = STRBUF_INIT;
-		const struct cache_entry *ce = active_cache[spf->count];
+		const struct cache_entry *ce = spf->r->index->cache[spf->count];
 		const char *git_dir, *default_argv;
 		const struct submodule *submodule;
 		struct submodule default_submodule = SUBMODULE_INIT;
@@ -1231,7 +1233,7 @@ static int get_next_submodule(struct child_process *cp,
 		if (!S_ISGITLINK(ce->ce_mode))
 			continue;
 
-		submodule = submodule_from_path(&null_oid, ce->name);
+		submodule = submodule_from_cache(spf->r, &null_oid, ce->name);
 		if (!submodule) {
 			const char *name = default_name_or_path(ce->name);
 			if (name) {
@@ -1257,7 +1259,7 @@ static int get_next_submodule(struct child_process *cp,
 			continue;
 		}
 
-		strbuf_addf(&submodule_path, "%s/%s", spf->work_tree, ce->name);
+		strbuf_repo_worktree_path(&submodule_path, spf->r, "%s", ce->name);
 		strbuf_addf(&submodule_git_dir, "%s/.git", submodule_path.buf);
 		strbuf_addf(&submodule_prefix, "%s%s/", spf->prefix, ce->name);
 		git_dir = read_gitfile(submodule_git_dir.buf);
@@ -1310,7 +1312,8 @@ static int fetch_finish(int retvalue, struct strbuf *err,
 	return 0;
 }
 
-int fetch_populated_submodules(const struct argv_array *options,
+int fetch_populated_submodules(struct repository *r,
+			       const struct argv_array *options,
 			       const char *prefix, int command_line_option,
 			       int default_option,
 			       int quiet, int max_parallel_jobs)
@@ -1318,16 +1321,16 @@ int fetch_populated_submodules(const struct argv_array *options,
 	int i;
 	struct submodule_parallel_fetch spf = SPF_INIT;
 
-	spf.work_tree = get_git_work_tree();
+	spf.r = r;
 	spf.command_line_option = command_line_option;
 	spf.default_option = default_option;
 	spf.quiet = quiet;
 	spf.prefix = prefix;
 
-	if (!spf.work_tree)
+	if (!r->worktree)
 		goto out;
 
-	if (read_cache() < 0)
+	if (repo_read_index(r) < 0)
 		die("index file corrupt");
 
 	argv_array_push(&spf.args, "fetch");
