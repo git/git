@@ -143,9 +143,9 @@ int remove_path_from_gitmodules(const char *path)
 	return 0;
 }
 
-void stage_updated_gitmodules(void)
+void stage_updated_gitmodules(struct index_state *istate)
 {
-	if (add_file_to_cache(GITMODULES_FILE, 0))
+	if (add_file_to_index(istate, GITMODULES_FILE, 0))
 		die(_("staging updated .gitmodules failed"));
 }
 

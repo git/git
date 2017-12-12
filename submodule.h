@@ -37,7 +37,7 @@ extern int is_gitmodules_unmerged(const struct index_state *istate);
 extern int is_staging_gitmodules_ok(const struct index_state *istate);
 extern int update_path_in_gitmodules(const char *oldpath, const char *newpath);
 extern int remove_path_from_gitmodules(const char *path);
-extern void stage_updated_gitmodules(void);
+extern void stage_updated_gitmodules(struct index_state *istate);
 extern void set_diffopt_flags_from_submodule_config(struct diff_options *,
 		const char *path);
 extern int git_default_submodule_config(const char *var, const char *value, void *cb);
