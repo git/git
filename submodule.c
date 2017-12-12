@@ -55,14 +55,15 @@ int is_gitmodules_unmerged(const struct index_state *istate)
  * future version when we learn to stage the changes we do ourselves without
  * staging any previous modifications.
  */
-int is_staging_gitmodules_ok(const struct index_state *istate)
+int is_staging_gitmodules_ok(struct index_state *istate)
 {
 	int pos = index_name_pos(istate, GITMODULES_FILE, strlen(GITMODULES_FILE));
 
 	if ((pos >= 0) && (pos < istate->cache_nr)) {
 		struct stat st;
 		if (lstat(GITMODULES_FILE, &st) == 0 &&
-		    ce_match_stat(istate->cache[pos], &st, CE_MATCH_IGNORE_FSMONITOR) & DATA_CHANGED)
+		    ie_match_stat(istate, istate->cache[pos], &st,
+				  CE_MATCH_IGNORE_FSMONITOR) & DATA_CHANGED)
 			return 0;
 	}
 
