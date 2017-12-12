@@ -627,7 +627,6 @@ void transport_take_over(struct transport *transport,
 	transport->set_option = NULL;
 	transport->get_refs_list = get_refs_via_connect;
 	transport->fetch = fetch_refs_via_pack;
-	transport->push = NULL;
 	transport->push_refs = git_transport_push;
 	transport->disconnect = disconnect_git;
 	transport->smart_options = &(data->options);
@@ -969,13 +968,7 @@ int transport_push(struct transport *transport,
 	*reject_reasons = 0;
 	transport_verify_remote_names(refspec_nr, refspec);
 
-	if (transport->push) {
-		/* Maybe FIXME. But no important transport uses this case. */
-		if (flags & TRANSPORT_PUSH_SET_UPSTREAM)
-			die("This transport does not support using --set-upstream");
-
-		return transport->push(transport, refspec_nr, refspec, flags);
-	} else if (transport->push_refs) {
+	if (transport->push_refs) {
 		struct ref *remote_refs;
 		struct ref *local_refs = get_local_heads();
 		int match_flags = MATCH_REFS_NONE;
