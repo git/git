@@ -312,6 +312,30 @@ int for_each_namespaced_ref(each_ref_fn fn, void *cb_data);
 int refs_for_each_rawref(struct ref_store *refs, each_ref_fn fn, void *cb_data);
 int for_each_rawref(each_ref_fn fn, void *cb_data);
 
+/*
+ * Normalizes partial refs to their fully qualified form.
+ * Will prepend <prefix> to the <pattern> if it doesn't start with 'refs/'.
+ * <prefix> will default to 'refs/' if NULL.
+ *
+ * item.string will be set to the result.
+ * item.util will be set to NULL if <pattern> contains glob characters, or
+ * non-NULL if it doesn't.
+ */
+void normalize_glob_ref(struct string_list_item *item, const char *prefix,
+			const char *pattern);
+
+/*
+ * Returns 0 if refname matches any of the exclude_patterns, or if it doesn't
+ * match any of the include_patterns. Returns 1 otherwise.
+ *
+ * If pattern list is NULL or empty, matching against that list is skipped.
+ * This has the effect of matching everything by default, unless the user
+ * specifies rules otherwise.
+ */
+int ref_filter_match(const char *refname,
+		     const struct string_list *include_patterns,
+		     const struct string_list *exclude_patterns);
+
 static inline const char *has_glob_specials(const char *pattern)
 {
 	return strpbrk(pattern, "?*[");

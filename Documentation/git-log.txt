@@ -38,6 +38,13 @@ OPTIONS
 	are shown as if 'short' were given, otherwise no ref names are
 	shown. The default option is 'short'.
 
+--decorate-refs=<pattern>::
+--decorate-refs-exclude=<pattern>::
+	If no `--decorate-refs` is given, pretend as if all refs were
+	included.  For each candidate, do not use it for decoration if it
+	matches any patterns given to `--decorate-refs-exclude` or if it
+	doesn't match any of the patterns given to `--decorate-refs`.
+
 --source::
 	Print out the ref name given on the command line by which each
 	commit was reached.

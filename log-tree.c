@@ -94,8 +94,12 @@ static int add_ref_decoration(const char *refname, const struct object_id *oid,
 {
 	struct object *obj;
 	enum decoration_type type = DECORATION_NONE;
+	struct decoration_filter *filter = (struct decoration_filter *)cb_data;
 
-	assert(cb_data == NULL);
+	if (filter && !ref_filter_match(refname,
+			      filter->include_ref_pattern,
+			      filter->exclude_ref_pattern))
+		return 0;
 
 	if (starts_with(refname, git_replace_ref_base)) {
 		struct object_id original_oid;
@@ -148,15 +152,23 @@ static int add_graft_decoration(const struct commit_graft *graft, void *cb_data)
 	return 0;
 }
 
-void load_ref_decorations(int flags)
+void load_ref_decorations(struct decoration_filter *filter, int flags)
 {
 	if (!decoration_loaded) {
-
+		if (filter) {
+			struct string_list_item *item;
+			for_each_string_list_item(item, filter->exclude_ref_pattern) {
+				normalize_glob_ref(item, NULL, item->string);
+			}
+			for_each_string_list_item(item, filter->include_ref_pattern) {
+				normalize_glob_ref(item, NULL, item->string);
+			}
+		}
 		decoration_loaded = 1;
 		decoration_flags = flags;
-		for_each_ref(add_ref_decoration, NULL);
-		head_ref(add_ref_decoration, NULL);
-		for_each_commit_graft(add_graft_decoration, NULL);
+		for_each_ref(add_ref_decoration, filter);
+		head_ref(add_ref_decoration, filter);
+		for_each_commit_graft(add_graft_decoration, filter);
 	}
 }
 
