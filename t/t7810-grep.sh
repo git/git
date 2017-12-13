@@ -1131,6 +1131,12 @@ test_expect_success PCRE 'grep -P pattern' '
 	test_cmp expected actual
 '
 
+test_expect_success LIBPCRE2 "grep -P with (*NO_JIT) doesn't error out" '
+	git grep -P "(*NO_JIT)\p{Ps}.*?\p{Pe}" hello.c >actual &&
+	test_cmp expected actual
+
+'
+
 test_expect_success !PCRE 'grep -P pattern errors without PCRE' '
 	test_must_fail git grep -P "foo.*bar"
 '
