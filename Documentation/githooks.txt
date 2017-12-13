@@ -223,8 +223,8 @@ to the user by writing to standard error.
 pre-receive
 ~~~~~~~~~~~
 
-This hook is invoked by 'git-receive-pack' on the remote repository,
-which happens when a 'git push' is done on a local repository.
+This hook is invoked by 'git-receive-pack' when it reacts to
+'git push' and updates reference(s) in its repository.
 Just before starting to update refs on the remote repository, the
 pre-receive hook is invoked.  Its exit status determines the success
 or failure of the update.
@@ -264,8 +264,8 @@ linkgit:git-receive-pack[1] for some caveats.
 update
 ~~~~~~
 
-This hook is invoked by 'git-receive-pack' on the remote repository,
-which happens when a 'git push' is done on a local repository.
+This hook is invoked by 'git-receive-pack' when it reacts to
+'git push' and updates reference(s) in its repository.
 Just before updating the ref on the remote repository, the update hook
 is invoked.  Its exit status determines the success or failure of
 the ref update.
@@ -309,8 +309,8 @@ unannotated tags to be pushed.
 post-receive
 ~~~~~~~~~~~~
 
-This hook is invoked by 'git-receive-pack' on the remote repository,
-which happens when a 'git push' is done on a local repository.
+This hook is invoked by 'git-receive-pack' when it reacts to
+'git push' and updates reference(s) in its repository.
 It executes on the remote repository once after all the refs have
 been updated.
 
@@ -348,8 +348,8 @@ will be set to zero, `GIT_PUSH_OPTION_COUNT=0`.
 post-update
 ~~~~~~~~~~~
 
-This hook is invoked by 'git-receive-pack' on the remote repository,
-which happens when a 'git push' is done on a local repository.
+This hook is invoked by 'git-receive-pack' when it reacts to
+'git push' and updates reference(s) in its repository.
 It executes on the remote repository once after all the refs have
 been updated.
 
@@ -379,8 +379,8 @@ for the user.
 push-to-checkout
 ~~~~~~~~~~~~~~~~
 
-This hook is invoked by 'git-receive-pack' on the remote repository,
-which happens when a 'git push' is done on a local repository, when
+This hook is invoked by 'git-receive-pack' when it reacts to
+'git push' and updates reference(s) in its repository, and when
 the push tries to update the branch that is currently checked out
 and the `receive.denyCurrentBranch` configuration variable is set to
 `updateInstead`.  Such a push by default is refused if the working
