@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Dec 2017, #02; Thu, 7)
-X-master-at: 95ec6b1b3393eb6e26da40c565520a8db9796e9f
-X-next-at: ccaef8de5710194b7bd728194833ea8322a3477a
+Subject: What's cooking in git.git (Dec 2017, #03; Wed, 13)
+X-master-at: d9a3764af74ac215e06543c263ec21196d672b49
+X-next-at: 0bfd9d2efe08df63a501038b70f5b58d44a707da
 
-What's cooking in git.git (Dec 2017, #02; Thu, 7)
+What's cooking in git.git (Dec 2017, #03; Wed, 13)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -20,194 +20,34 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ac/complete-pull-autostash (2017-11-22) 1 commit
-  (merged to 'next' on 2017-11-27 at 802d204eda)
- + completion: add --autostash and --no-autostash to pull
+* ab/pcre2-grep (2017-11-24) 2 commits
+  (merged to 'next' on 2017-12-05 at 88f1927207)
+ + grep: fix segfault under -P + PCRE2 <=10.30 + (*NO_JIT)
+ + test-lib: add LIBPCRE1 & LIBPCRE2 prerequisites
 
- The shell completion (in contrib/) learned that "git pull" can take
- the "--autostash" option.
-
-
-* bw/protocol-v1 (2017-10-17) 11 commits
-  (merged to 'next' on 2017-11-27 at 55040d09ec)
- + Documentation: document Extra Parameters
- + ssh: introduce a 'simple' ssh variant
- + i5700: add interop test for protocol transition
- + http: tell server that the client understands v1
- + connect: tell server that the client understands v1
- + connect: teach client to recognize v1 server response
- + upload-pack, receive-pack: introduce protocol version 1
- + daemon: recognize hidden request arguments
- + protocol: introduce protocol extension mechanisms
- + pkt-line: add packet_write function
- + connect: in ref advertisement, shallows are last
- (this branch is used by jn/ssh-wrappers.)
-
- A new mechanism to upgrade the wire protocol in place is proposed
- and demonstrated that it works with the older versions of Git
- without harming them.
+ "git grep" compiled with libpcre2 sometimes triggered a segfault,
+ which is being fixed.
 
 
-* cc/git-packet-pm (2017-11-22) 2 commits
-  (merged to 'next' on 2017-11-27 at 1527ab3519)
- + Git/Packet.pm: use 'if' instead of 'unless'
- + Git/Packet: clarify that packet_required_key_val_read allows EOF
+* bc/hash-algo (2017-11-28) 5 commits
+  (merged to 'next' on 2017-11-28 at 5c74632345)
+ + repository: fix a sparse 'using integer as NULL pointer' warning
+  (merged to 'next' on 2017-11-27 at 98cc9ef2a8)
+ + Switch empty tree and blob lookups to use hash abstraction
+ + Integrate hash algorithm support with repo setup
+ + Add structure representing hash algorithm
+ + setup: expose enumerated repo info
 
- Code clean-up.
-
-
-* cc/perf-run-config (2017-09-24) 9 commits
-  (merged to 'next' on 2017-11-27 at d75a2469eb)
- + perf: store subsection results in "test-results/$GIT_PERF_SUBSECTION/"
- + perf/run: show name of rev being built
- + perf/run: add run_subsection()
- + perf/run: update get_var_from_env_or_config() for subsections
- + perf/run: add get_subsections()
- + perf/run: add calls to get_var_from_env_or_config()
- + perf/run: add GIT_PERF_DIRS_OR_REVS
- + perf/run: add get_var_from_env_or_config()
- + perf/run: add '--config' option to the 'run' script
+ An infrastructure to define what hash function is used in Git is
+ introduced, and an effort to plumb that throughout various
+ codepaths has been started.
 
 
-* hm/config-parse-expiry-date (2017-11-18) 1 commit
-  (merged to 'next' on 2017-11-27 at 20014f5541)
- + config: add --expiry-date
+* ds/for-each-file-in-obj-micro-optim (2017-12-04) 1 commit
+  (merged to 'next' on 2017-12-05 at 55ba487ccd)
+ + sha1_file: use strbuf_add() instead of strbuf_addf()
 
- "git config --expiry-date gc.reflogexpire" can read "2.weeks" from
- the configuration and report it as a timestamp, just like "--int"
- would read "1k" and report 1024, to help consumption by scripts.
-
-
-* jk/fewer-pack-rescan (2017-11-22) 5 commits
-  (merged to 'next' on 2017-11-27 at 2c35a2d831)
- + sha1_file: fast-path null sha1 as a missing object
- + everything_local: use "quick" object existence check
- + p5551: add a script to test fetch pack-dir rescans
- + t/perf/lib-pack: use fast-import checkpoint to create packs
- + p5550: factor out nonsense-pack creation
-
- Internaly we use 0{40} as a placeholder object name to signal the
- codepath that there is no such object (e.g. the fast-forward check
- while "git fetch" stores a new remote-tracking ref says "we know
- there is no 'old' thing pointed at by the ref, as we are creating
- it anew" by passing 0{40} for the 'old' side), and expect that a
- codepath to locate an in-core object to return NULL as a sign that
- the object does not exist.  A look-up for an object that does not
- exist however is quite costly with a repository with large number
- of packfiles.  This access pattern has been optimized.
-
-
-* jn/reproducible-build (2017-11-22) 3 commits
-  (merged to 'next' on 2017-11-27 at 6ae6946f8c)
- + Merge branch 'jn/reproducible-build' of ../git-gui into jn/reproducible-build
- + git-gui: sort entries in optimized tclIndex
- + generate-cmdlist: avoid non-deterministic output
-
- The build procedure has been taught to avoid some unnecessary
- instability in the build products.
-
-
-* jn/ssh-wrappers (2017-11-21) 9 commits
-  (merged to 'next' on 2017-11-27 at 00a2bb7a3c)
- + connect: correct style of C-style comment
- + ssh: 'simple' variant does not support --port
- + ssh: 'simple' variant does not support -4/-6
- + ssh: 'auto' variant to select between 'ssh' and 'simple'
- + connect: split ssh option computation to its own function
- + connect: split ssh command line options into separate function
- + connect: split git:// setup into a separate function
- + connect: move no_fork fallback to git_tcp_connect
- + ssh test: make copy_ssh_wrapper_as clean up after itself
- (this branch uses bw/protocol-v1.)
-
- The ssh-variant 'simple' introduced earlier broke existing
- installations by not passing --port/-4/-6 and not diagnosing an
- attempt to pass these as an error.  Instead, default to
- automatically detect how compatible the GIT_SSH/GIT_SSH_COMMAND is
- to OpenSSH convention and then error out an invocation to make it
- easier to diagnose connection errors.
-
-
-* jt/submodule-tests-cleanup (2017-11-22) 1 commit
-  (merged to 'next' on 2017-11-27 at 5f0e4bcde1)
- + Tests: clean up submodule recursive helpers
-
- Further test clean-up.
-
-
-* ph/stash-save-m-option-fix (2017-11-24) 1 commit
-  (merged to 'next' on 2017-11-27 at 96eadf9372)
- + stash: learn to parse -m/--message like commit does
-
- In addition to "git stash -m message", the command learned to
- accept "git stash -mmessage" form.
-
-
-* rd/doc-notes-prune-fix (2017-11-22) 1 commit
-  (merged to 'next' on 2017-11-27 at 4a657474ee)
- + notes: correct 'git notes prune' options to '[-n] [-v]'
-
- Doc update.
-
-
-* rd/man-prune-progress (2017-11-22) 1 commit
-  (merged to 'next' on 2017-11-27 at 1680e6a2f5)
- + prune: add "--progress" to man page and usage msg
-
- Doc update.
-
-
-* rd/man-reflog-add-n (2017-11-22) 1 commit
-  (merged to 'next' on 2017-11-27 at eacb065aa6)
- + doc: add missing "-n" (dry-run) option to reflog man page
-
- Doc update.
-
-
-* sb/submodule-recursive-checkout-detach-head (2017-07-28) 2 commits
-  (merged to 'next' on 2017-11-27 at 6584ec1a65)
- + Documentation/checkout: clarify submodule HEADs to be detached
- + recursive submodules: detach HEAD from new state
-
- "git checkout --recursive" may overwrite and rewind the history of
- the branch that happens to be checked out in submodule
- repositories, which might not be desirable.  Detach the HEAD but
- still allow the recursive checkout to succeed in such a case.
-
-
-* sp/doc-info-attributes (2017-11-24) 1 commit
-  (merged to 'next' on 2017-11-27 at 4e509c2d25)
- + doc: Mention info/attributes in gitrepository-layout
-
- Doc update.
-
-
-* tg/deprecate-stash-save (2017-11-22) 1 commit
-  (merged to 'next' on 2017-11-27 at 6bcb61b267)
- + doc: prefer 'stash push' over 'stash save'
-
- Doc update.
-
-
-* tz/branch-doc-remove-set-upstream (2017-11-17) 1 commit
-  (merged to 'next' on 2017-11-27 at 8fcad3f6e7)
- + branch doc: remove --set-upstream from synopsis
-
- "git branch --set-upstream" has been deprecated and (sort of)
- removed, as "--set-upstream-to" is the preferred one these days.
- The documentation still had "--set-upstream" listed on its
- synopsys section, which has been corrected.
-
---------------------------------------------------
-[New Topics]
-
-* bw/pathspec-match-submodule-boundary (2017-12-05) 1 commit
- - pathspec: only match across submodule boundaries when requested
-
- An v2.12-era regression in pathspec match logic, which made it look
- into submodule tree even when it is not desired, has been fixed.
-
- Will merge to 'next'.
+ The code to iterate over loose object files got optimized.
 
 
 * en/remove-stripspace (2017-12-05) 1 commit
@@ -217,7 +57,28 @@ of the repositories listed at
  An internal function that was left for backward compatibility has
  been removed, as there is no remaining callers.
 
- Will merge to 'master'.
+
+* fk/sendmail-from-path (2017-11-28) 1 commit
+  (merged to 'next' on 2017-12-05 at deb7a5f4a8)
+ + git-send-email: honor $PATH for sendmail binary
+
+ "git send-email" tries to see if the sendmail program is available
+ in /usr/lib and /usr/sbin; extend the list of locations to be
+ checked to also include directories on $PATH.
+
+
+* jc/receive-pack-hook-doc (2017-11-24) 1 commit
+  (merged to 'next' on 2017-12-05 at ffa14b1d48)
+ + hooks doc: clarify when receive-pack invokes its hooks
+
+ Doc update.
+
+
+* jk/no-optional-locks (2017-11-27) 1 commit
+  (merged to 'next' on 2017-12-06 at e642dde605)
+ + git-status.txt: mention --no-optional-locks
+
+ Doc update for a feature available in Git v2.14 and upwards.
 
 
 * jk/progress-delay-fix (2017-12-04) 2 commits
@@ -227,26 +88,6 @@ of the repositories listed at
 
  A regression in the progress eye-candy was fixed.
 
- Will merge to 'master'.
-
-
-* ls/git-gui-no-double-utf8-author-name (2017-12-05) 2 commits
- - Merge branch 'ls/no-double-utf8-author-name' of ../git-gui into ls/git-gui-no-double-utf8-author-name
- - git-gui: prevent double UTF-8 conversion
-
- Amending commits in git-gui broke the author name that is non-ascii
- due to incorrect enconding conversion.
-
- Will merge to 'next'.
-
-
-* sb/clone-recursive-submodule-doc (2017-12-05) 1 commit
- - Documentation/git-clone: improve description for submodule recursing
-
- Doc update.
-
- Will merge to 'next'.
-
 
 * js/hashmap-update-sample (2017-12-05) 1 commit
   (merged to 'next' on 2017-12-06 at 40ceee9a18)
@@ -254,29 +95,222 @@ of the repositories listed at
 
  Code comment update.
 
- Will merge to 'master'.
+
+* ks/doc-checkout-previous (2017-11-28) 1 commit
+  (merged to 'next' on 2017-12-05 at 02f17e3c55)
+ + Doc/checkout: checking out using @{-N} can lead to detached state
+
+ @{-N} in "git checkout @{-N}" may refer to a detached HEAD state,
+ but the documentation was not clear about it, which has been fixed.
 
 
-* ab/sha1dc-build (2017-12-05) 4 commits
- . sha1dc: remove in favor of using sha1collisiondetection as a submodule
- . Makefile: use the sha1collisiondetection submodule by default
- . sha1dc_git.h: re-arrange an ifdef chain for a subsequent change
- - Makefile: don't error out under DC_SHA1_EXTERNAL if DC_SHA1_SUBMODULE=auto
+* pc/submodule-helper (2017-11-26) 1 commit
+  (merged to 'next' on 2017-12-05 at fdf56787be)
+ + submodule--helper.c: i18n: add a missing space in message
+
+ A message fix.
 
 
-* bw/submodule-config-cleanup (2017-12-06) 1 commit
- - diff-tree: read the index so attribute checks work in bare repositories
+* ra/decorate-limit-refs (2017-11-22) 1 commit
+  (merged to 'next' on 2017-12-05 at 02c66aa4e0)
+ + log: add option to choose which refs to decorate
 
- Recent update to the submodule configuration code broke "diff-tree"
- by accidentally stopping to read from the index upfront.
+ The tagnames "git log --decorate" uses to annotate the commits can
+ now be limited to subset of available refs with the two additional
+ options, --decorate-refs[-exclude]=<pattern>.
+
+
+* tg/t-readme-updates (2017-11-27) 2 commits
+  (merged to 'next' on 2017-12-05 at c0b0e2d65b)
+ + t/README: document test_cmp_rev
+ + t/README: remove mention of adding copyright notices
+
+ Developer doc updates.
+
+--------------------------------------------------
+[New Topics]
+
+* es/worktree-checkout-hook (2017-12-07) 1 commit
+ - worktree: invoke post-checkout hook (unless --no-checkout)
+
+ "git worktree add" learned to run the post-checkout hook, just like
+ "git checkout" does, after the initial checkout.
 
  Will merge to 'next'.
 
 
-* sg/setup-doc-update (2017-12-07) 1 commit
- - setup.c: fix comment about order of .git directory discovery
+* rs/am-builtin-leakfix (2017-12-07) 1 commit
+ - am: release strbuf after use in split_mail_mbox()
 
- Comment update.
+ Leakfix.
+
+ Will merge to 'next'.
+
+
+* rs/fmt-merge-msg-string-leak-fix (2017-12-07) 1 commit
+ - fmt-merge-msg: avoid leaking strbuf in shortlog()
+
+ Leakfix.
+
+ Will merge to 'next'.
+
+
+* rs/strbuf-read-once-reset-length (2017-12-07) 1 commit
+ - strbuf: release memory on read error in strbuf_read_once()
+
+ Leakfix.
+
+ Will merge to 'next'.
+
+
+* db/doc-workflows-neuter-the-maintainer (2017-12-08) 1 commit
+ - doc: reword gitworkflows.txt for neutrality
+
+ Docfix.
+
+ Will merge to 'next'.
+
+
+* es/clone-shared-worktree (2017-12-11) 1 commit
+ - clone: support 'clone --shared' from a worktree
+
+ "git clone --shared" to borrow from a (secondary) worktree did not
+ work, even though "git clone --local" did.  Both are now accepted.
+
+ Will merge to 'next'.
+
+
+* jh/partial-clone-doc (2017-12-08) 1 commit
+ - partial-clone: design doc
+
+ Will merge to 'next'.
+
+
+* jk/cvsimport-quoting (2017-12-08) 1 commit
+ - cvsimport: apply shell-quoting regex globally
+
+ Typo/Logico fix.
+
+ Will merge to 'next'.
+
+
+* jk/test-suite-tracing (2017-12-08) 4 commits
+ - t/Makefile: introduce TEST_SHELL_PATH
+ - test-lib: make "-x" work with "--verbose-log"
+ - t5615: avoid re-using descriptor 4
+ - test-lib: silence "-x" cleanup under bash
+
+ Assorted fixes around running tests with "-x" tracing option.
+
+
+* jt/decorate-api (2017-12-08) 1 commit
+ - decorate: clean up and document API
+
+ A few structures and variables that are implementation details of
+ the decorate API have been renamed and then the API got documented
+ better.
+
+ Will merge to 'next'.
+
+
+* ks/branch-cleanup (2017-12-07) 4 commits
+ - builtin/branch: strip refs/heads/ using skip_prefix
+ - branch: update warning message shown when copying a misnamed branch
+ - branch: group related arguments of create_branch()
+ - branch: improve documentation and naming of create_branch() parameters
+
+ Code clean-up.
+
+ Will merge to 'next'.
+
+
+* rs/fmt-merge-msg-leakfix (2017-12-08) 1 commit
+ - transport-helper: plug strbuf and string_list leaks
+
+ Leakfix.
+
+ Will merge to 'next'.
+
+
+* tb/delimit-pretty-trailers-args-with-comma (2017-12-08) 1 commit
+ - docs/pretty-formats: mention commas in %(trailers) syntax
+
+ Doc updates.
+
+ Will merge to 'next'.
+
+
+* bw/submodule-sans-cache-compat (2017-12-12) 3 commits
+ - submodule: convert get_next_submodule to not rely on the_index
+ - submodule: used correct index in is_staging_gitmodules_ok
+ - submodule: convert stage_updated_gitmodules to take a struct index_state
+
+ Code clean-up.
+
+ Will merge to 'next'.
+
+
+* hi/merge-verify-sig-config (2017-12-12) 2 commits
+ - t: add tests for pull --verify-signatures
+ - merge: add config option for verifySignatures
+
+ "git merge" learned to pay attention to merge.verifySignatures
+ configuration variable and pretend as if '--verify-signatures'
+ option was given from the command line.
+
+ Will merge to 'next'.
+
+
+* ot/pretty (2017-12-12) 2 commits
+ - format: create docs for pretty.h
+ - format: create pretty.h file
+
+ Code clean-up.
+
+ Will merge to 'next'.
+
+
+* sb/test-helper-excludes (2017-12-12) 1 commit
+ - t/helper: ignore everything but sources
+
+ Simplify the ignore rules for t/helper directory.
+
+ Will merge to 'next'.
+
+
+* sg/travis-fixes (2017-12-12) 4 commits
+ - travis-ci: use 'set -x' in 'ci/*' scripts for extra tracing output
+ - travis-ci: set GIT_TEST_HTTPD in 'ci/lib-travisci.sh'
+ - travis-ci: move setting environment variables to 'ci/lib-travisci.sh'
+ - travis-ci: introduce a $jobname variable for 'ci/*' scripts
+
+ Assorted updates for TravisCI integration.
+
+ Will merge to 'next'.
+
+
+* bw/path-doc (2017-12-13) 1 commit
+ - path: document path functions
+
+ Doc updates.
+
+ Will merge to 'next'.
+
+
+* jt/transport-no-more-rsync (2017-12-12) 1 commit
+ - transport: remove unused "push" in vtable
+
+ Code clean-up.
+
+ Will merge to 'next'.
+
+
+* rb/quick-install-doc (2017-12-12) 1 commit
+ - install-doc-quick: allow specifying what ref to install
+
+ The build procedure now allows not just the repositories but also
+ the refs to be used to take pre-formatted manpages and html
+ documents to install.
 
  Will merge to 'next'.
 
@@ -370,32 +404,83 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* ab/simplify-perl-makefile (2017-12-04) 1 commit
- - Makefile: replace perl/Makefile.PL with simple make rules
+* bw/pathspec-match-submodule-boundary (2017-12-05) 1 commit
+  (merged to 'next' on 2017-12-13 at e256d292a4)
+ + pathspec: only match across submodule boundaries when requested
+
+ An v2.12-era regression in pathspec match logic, which made it look
+ into submodule tree even when it is not desired, has been fixed.
+
+ Will merge to 'master'.
+
+
+* ls/git-gui-no-double-utf8-author-name (2017-12-05) 2 commits
+  (merged to 'next' on 2017-12-13 at be577d6e1b)
+ + Merge branch 'ls/no-double-utf8-author-name' of ../git-gui into ls/git-gui-no-double-utf8-author-name
+ + git-gui: prevent double UTF-8 conversion
+
+ Amending commits in git-gui broke the author name that is non-ascii
+ due to incorrect enconding conversion.
+
+ Will merge to 'master'.
+
+
+* sb/clone-recursive-submodule-doc (2017-12-05) 1 commit
+  (merged to 'next' on 2017-12-13 at abfed699db)
+ + Documentation/git-clone: improve description for submodule recursing
+
+ Doc update.
+
+ Will merge to 'master'.
+
+
+* ab/sha1dc-build (2017-12-12) 4 commits
+ - Makefile: use the sha1collisiondetection submodule by default
+ - sha1dc_git.h: re-arrange an ifdef chain for a subsequent change
+ - Makefile: under "make dist", include the sha1collisiondetection submodule
+ - Makefile: don't error out under DC_SHA1_EXTERNAL if DC_SHA1_SUBMODULE=auto
+
+
+* bw/submodule-config-cleanup (2017-12-06) 1 commit
+  (merged to 'next' on 2017-12-13 at c952bf1b84)
+ + diff-tree: read the index so attribute checks work in bare repositories
+
+ Recent update to the submodule configuration code broke "diff-tree"
+ by accidentally stopping to read from the index upfront.
+
+ Will merge to 'master'.
+
+
+* sg/setup-doc-update (2017-12-07) 1 commit
+  (merged to 'next' on 2017-12-13 at 4355c6e0ef)
+ + setup.c: fix comment about order of .git directory discovery
+
+ Comment update.
+
+ Will merge to 'master'.
+
+
+* ab/simplify-perl-makefile (2017-12-11) 1 commit
+  (merged to 'next' on 2017-12-13 at 1b791d2503)
+ + Makefile: replace perl/Makefile.PL with simple make rules
 
  The build procedure for perl/ part has been greatly simplified by
  weaning ourselves off of MakeMaker.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* cc/skip-to-optional-val (2017-12-07) 7 commits
- - t4045: test 'diff --relative' for real
+* cc/skip-to-optional-val (2017-12-11) 7 commits
  - t4045: reindent to make helpers readable
- - diff: use skip-to-optional-val in parsing --relative
- - diff: use skip_to_optional_val_default()
- - diff: use skip_to_optional_val()
- - index-pack: use skip_to_optional_val()
- - git-compat-util: introduce skip_to_optional_val()
+ - diff: add tests for --relative without optional prefix value
+ - diff: use skip_to_optional_arg_default() in parsing --relative
+ - diff: use skip_to_optional_arg_default()
+ - diff: use skip_to_optional_arg()
+ - index-pack: use skip_to_optional_arg()
+ - git-compat-util: introduce skip_to_optional_arg()
 
  Introduce a helper to simplify code to parse a common pattern that
  expects either "--key" or "--key=<something>".
-
- Even though I queued fixes for "diff --relative" on top, it may
- still want a final reroll to make it harder to misuse by allowing
- NULL at the valp part of the argument.  Also s/_val/_arg/.
- cf. <xmqqh8t6o9me.fsf@gitster.mtv.corp.google.com>
- cf. <xmqqd13uo9d1.fsf@gitster.mtv.corp.google.com>
 
 
 * lb/rebase-i-short-command-names (2017-12-05) 9 commits
@@ -422,17 +507,9 @@ of the repositories listed at
  from strings read from various "state" files.
 
 
-* ds/for-each-file-in-obj-micro-optim (2017-12-04) 1 commit
-  (merged to 'next' on 2017-12-05 at 55ba487ccd)
- + sha1_file: use strbuf_add() instead of strbuf_addf()
-
- The code to iterate over loose object files got optimized.
-
- Will merge to 'master'.
-
-
 * en/merge-recursive-icase-removal (2017-11-27) 1 commit
- - merge-recursive: ignore_case shouldn't reject intentional removals
+  (merged to 'next' on 2017-12-13 at 85c6538a2a)
+ + merge-recursive: ignore_case shouldn't reject intentional removals
 
  The code internal to the recursive merge strategy was not fully
  prepared to see a path that is renamed to try overwriting another
@@ -441,47 +518,28 @@ of the repositories listed at
  once the rename detection logic starts taking hints from nearby
  paths moving to some directory and moves a new path along with them.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * gk/tracing-optimization (2017-12-06) 2 commits
- - trace: improve performance while category is disabled
- - trace: remove trace key normalization
+  (merged to 'next' on 2017-12-13 at d6bfac03ad)
+ + trace: improve performance while category is disabled
+ + trace: remove trace key normalization
 
  The tracing infrastructure has been optimized for cases where no
  tracing is requested.
 
- Will merge to 'next'.
-
-
-* pc/submodule-helper (2017-11-26) 1 commit
-  (merged to 'next' on 2017-12-05 at fdf56787be)
- + submodule--helper.c: i18n: add a missing space in message
-
- A message fix.
-
  Will merge to 'master'.
 
 
-* tb/check-crlf-for-safe-crlf (2017-11-27) 1 commit
+* tb/check-crlf-for-safe-crlf (2017-12-08) 2 commits
+  (merged to 'next' on 2017-12-08 at 5279b80103)
+ + t0027: Adapt the new MIX tests to Windows
   (merged to 'next' on 2017-12-05 at 7adaa1fe01)
  + convert: tighten the safe autocrlf handling
 
  The "safe crlf" check incorrectly triggered for contents that does
  not use CRLF as line endings, which has been corrected.
-
- Broken on Windows???
- cf. <DA960DCE-0635-47CF-B3C4-8133021799F1@gmail.com>
-
-
-* tg/t-readme-updates (2017-11-27) 2 commits
-  (merged to 'next' on 2017-12-05 at c0b0e2d65b)
- + t/README: document test_cmp_rev
- + t/README: remove mention of adding copyright notices
-
- Developer doc updates.
-
- Will merge to 'master'.
 
 
 * cc/require-tcl-tk-for-build (2017-11-29) 2 commits
@@ -514,47 +572,19 @@ of the repositories listed at
  prefer _not_ squashing them myself.
 
 
-* fk/sendmail-from-path (2017-11-28) 1 commit
-  (merged to 'next' on 2017-12-05 at deb7a5f4a8)
- + git-send-email: honor $PATH for sendmail binary
-
- "git send-email" tries to see if the sendmail program is available
- in /usr/lib and /usr/sbin; extend the list of locations to be
- checked to also include directories on $PATH.
-
- Will merge to 'master'.
-
-
-* jk/no-optional-locks (2017-11-27) 1 commit
-  (merged to 'next' on 2017-12-06 at e642dde605)
- + git-status.txt: mention --no-optional-locks
-
- Doc update for a feature available in Git v2.14 and upwards.
-
- Will merge to 'master'.
-
-
 * jt/diff-anchored-patience (2017-11-28) 1 commit
- - diff: support anchoring line(s)
+  (merged to 'next' on 2017-12-13 at 5f4843d7a0)
+ + diff: support anchoring line(s)
 
  "git diff" learned a variant of the "--patience" algorithm, to
  which the user can specify which 'unique' line to be used as
  anchoring points.
 
- Will merge to 'next'.
-
-
-* ks/doc-checkout-previous (2017-11-28) 1 commit
-  (merged to 'next' on 2017-12-05 at 02f17e3c55)
- + Doc/checkout: checking out using @{-N} can lead to detached state
-
- @{-N} in "git checkout @{-N}" may refer to a detached HEAD state,
- but the documentation was not clear about it, which has been fixed.
-
  Will merge to 'master'.
 
 
-* en/rename-directory-detection (2017-12-05) 34 commits
+* en/rename-directory-detection (2017-12-13) 35 commits
+ - SQUASH???
  - merge-recursive: ensure we write updates for directory-renamed file
  - merge-recursive: avoid spurious rename/rename conflict from dir renames
  - directory rename detection: new testcases showcasing a pair of bugs
@@ -599,62 +629,35 @@ of the repositories listed at
  Needs review.
 
 
-* ra/decorate-limit-refs (2017-11-22) 1 commit
-  (merged to 'next' on 2017-12-05 at 02c66aa4e0)
- + log: add option to choose which refs to decorate
-
- The tagnames "git log --decorate" uses to annotate the commits can
- now be limited to subset of available refs with the two additional
- options, --decorate-refs[-exclude]=<pattern>.
-
- Will merge to 'master'.
-
-
-* ab/pcre2-grep (2017-11-24) 2 commits
-  (merged to 'next' on 2017-12-05 at 88f1927207)
- + grep: fix segfault under -P + PCRE2 <=10.30 + (*NO_JIT)
- + test-lib: add LIBPCRE1 & LIBPCRE2 prerequisites
-
- "git grep" compiled with libpcre2 sometimes triggered a segfault,
- which is being fixed.
-
- Will merge to 'master'.
-
-
-* jc/receive-pack-hook-doc (2017-11-24) 1 commit
-  (merged to 'next' on 2017-12-05 at ffa14b1d48)
- + hooks doc: clarify when receive-pack invokes its hooks
-
- Doc update.
-
- Will merge to 'master'.
-
-
-* sb/diff-blobfind (2017-11-24) 1 commit
- - diff: add a new diffcore transformation to find a specific blob
+* sb/diff-blobfind (2017-12-12) 1 commit
+  (merged to 'next' on 2017-12-13 at 9a27a20c5f)
+ + diffcore: add a filter to find a specific blob
 
  "git diff" family of commands learned --blobfind=<object-name> that
  allows you to limit the output only to a change that involves the
  named blob object (either changing the contents from or to it).
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * tg/worktree-create-tracking (2017-12-06) 6 commits
- - add worktree.guessRemote config option
- - worktree: add --guess-remote flag to add subcommand
- - worktree: make add <path> <branch> dwim
- - worktree: add --[no-]track option to the add subcommand
- - worktree: add can be created from any commit-ish
- - checkout: factor out functions to new lib file
+  (merged to 'next' on 2017-12-13 at 830b68c660)
+ + add worktree.guessRemote config option
+ + worktree: add --guess-remote flag to add subcommand
+ + worktree: make add <path> <branch> dwim
+ + worktree: add --[no-]track option to the add subcommand
+ + worktree: add can be created from any commit-ish
+ + checkout: factor out functions to new lib file
 
  The way "git worktree add" determines what branch to create from
  where and checkout in the new worktree has been updated a bit.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* pw/sequencer-in-process-commit (2017-11-24) 9 commits
+* pw/sequencer-in-process-commit (2017-12-13) 10 commits
+  (merged to 'next' on 2017-12-13 at ec4d2b9c84)
+ + sequencer: improve config handling
   (merged to 'next' on 2017-12-06 at a4212f7ebd)
  + t3512/t3513: remove KNOWN_FAILURE_CHERRY_PICK_SEES_EMPTY_COMMIT=1
  + sequencer: try to commit without forking 'git commit'
@@ -692,15 +695,16 @@ of the repositories listed at
 
 
 * ls/editor-waiting-message (2017-12-07) 2 commits
- - launch_editor(): indicate that Git waits for user input
- - refactor "dumb" terminal determination
+  (merged to 'next' on 2017-12-13 at 494b5b41e3)
+ + launch_editor(): indicate that Git waits for user input
+ + refactor "dumb" terminal determination
 
  Git shows a message to tell the user that it is waiting for the
  user to finish editing when spawning an editor, in case the editor
  opens to a hidden window or somewhere obscure and the user gets
  lost.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * en/rename-progress (2017-12-02) 5 commits
@@ -720,14 +724,15 @@ of the repositories listed at
 
 
 * ar/unconfuse-three-dots (2017-12-06) 8 commits
- - t2020: test variations that matter
- - t4013: test new output from diff --abbrev --raw
- - diff: diff_aligned_abbrev: remove ellipsis after abbreviated SHA-1 value
- - t4013: prepare for upcoming "diff --raw --abbrev" output format change
- - checkout: describe_detached_head: remove ellipsis after committish
- - print_sha1_ellipsis: introduce helper
- - Documentation: user-manual: limit usage of ellipsis
- - Documentation: revisions: fix typo: "three dot" ---> "three-dot" (in line with "two-dot").
+  (merged to 'next' on 2017-12-13 at 33bd0b67c0)
+ + t2020: test variations that matter
+ + t4013: test new output from diff --abbrev --raw
+ + diff: diff_aligned_abbrev: remove ellipsis after abbreviated SHA-1 value
+ + t4013: prepare for upcoming "diff --raw --abbrev" output format change
+ + checkout: describe_detached_head: remove ellipsis after committish
+ + print_sha1_ellipsis: introduce helper
+ + Documentation: user-manual: limit usage of ellipsis
+ + Documentation: revisions: fix typo: "three dot" ---> "three-dot" (in line with "two-dot").
 
  Ancient part of codebase still shows dots after an abbreviated
  object name just to show that it is not a full object name, but
@@ -735,7 +740,7 @@ of the repositories listed at
  who are used to seeing abbreviated object names and find them
  confusing with the range syntax.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jh/object-filtering (2017-12-05) 9 commits
@@ -757,11 +762,9 @@ of the repositories listed at
  objects from enumeration.
 
 
-* jh/fsck-promisors (2017-12-05) 12 commits
+* jh/fsck-promisors (2017-12-08) 10 commits
  - gc: do not repack promisor packfiles
  - rev-list: support termination at promisor objects
- - fixup: sha1_file: add TODO
- - fixup: sha1_file: convert gotos to break/continue
  - sha1_file: support lazily fetching missing objects
  - introduce fetch-object: fetch one promisor object
  - index-pack: refactor writing of .keep files
@@ -779,15 +782,14 @@ of the repositories listed at
  promises to make them available on-demand and lazily.
 
 
-* jh/partial-clone (2017-12-05) 14 commits
+* jh/partial-clone (2017-12-08) 13 commits
+ - t5616: test bulk prefetch after partial fetch
+ - fetch: inherit filter-spec from partial clone
  - t5616: end-to-end tests for partial clone
  - fetch-pack: restore save_commit_buffer after use
  - unpack-trees: batch fetching of missing blobs
  - clone: partial clone
  - partial-clone: define partial clone settings in config
- - fixup: connected: conditionally pass --exclude-promisor-objects to rev-list
- - fixup: fetch: update --blob-max-bytes to --fitler
- - fixup: fetch: update error messages from --blob-max-bytes to --filter
  - fetch: support filters
  - fetch: refactor calculation of remote list
  - fetch-pack: test support excluding large blobs
@@ -804,7 +806,8 @@ of the repositories listed at
  introduced by the jh/fsck-promisors topic.
 
 
-* sb/describe-blob (2017-11-16) 7 commits
+* sb/describe-blob (2017-12-08) 8 commits
+ - SQUASH???
  - builtin/describe.c: describe a blob
  - builtin/describe.c: factor out describe_commit
  - builtin/describe.c: print debug statements earlier
@@ -815,8 +818,6 @@ of the repositories listed at
 
  "git describe" was taught to dig trees deeper to find a
  <commit-ish>:<path> that refers to a given blob object.
-
- Will merge to 'next'.
 
 
 * pb/bisect-helper-2 (2017-10-28) 8 commits
@@ -853,27 +854,3 @@ of the repositories listed at
  Needs a test, perhaps as a follow-up patch.
 
  Will merge to 'next'.
-
-
-* bc/hash-algo (2017-11-28) 5 commits
-  (merged to 'next' on 2017-11-28 at 5c74632345)
- + repository: fix a sparse 'using integer as NULL pointer' warning
-  (merged to 'next' on 2017-11-27 at 98cc9ef2a8)
- + Switch empty tree and blob lookups to use hash abstraction
- + Integrate hash algorithm support with repo setup
- + Add structure representing hash algorithm
- + setup: expose enumerated repo info
-
- An infrastructure to define what hash function is used in Git is
- introduced, and an effort to plumb that throughout various
- codepaths has been started.
-
- Will merge to 'master'.
-
---------------------------------------------------
-[Discarded]
-
-* cc/object-filtering-typofix (2017-12-04) 1 commit
- - list-objects-filter-options: fix 'keword' typo in comment
-
- Superseded by the same fix in jh/object-filtering.
