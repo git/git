@@ -332,13 +332,10 @@ Writing Tests
 -------------
 
 The test script is written as a shell script.  It should start
-with the standard "#!/bin/sh" with copyright notices, and an
+with the standard "#!/bin/sh", and an
 assignment to variable 'test_description', like this:
 
 	#!/bin/sh
-	#
-	# Copyright (c) 2005 Junio C Hamano
-	#
 
 	test_description='xxx test (option --frotz)
 
@@ -676,6 +673,11 @@ library for your script to use.
    Check whether the content of the <actual> file matches the
    <expected> file.  This behaves like "cmp" but produces more
    helpful output when the test is run with "-v" option.
+
+ - test_cmp_rev <expected> <actual>
+
+   Check whether the <expected> rev points to the same commit as the
+   <actual> rev.
 
  - test_line_count (= | -lt | -ge | ...) <length> <file>
 
