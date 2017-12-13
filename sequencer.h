@@ -11,6 +11,13 @@ enum replay_action {
 	REPLAY_INTERACTIVE_REBASE
 };
 
+enum commit_msg_cleanup_mode {
+	COMMIT_MSG_CLEANUP_SPACE,
+	COMMIT_MSG_CLEANUP_NONE,
+	COMMIT_MSG_CLEANUP_SCISSORS,
+	COMMIT_MSG_CLEANUP_ALL
+};
+
 struct replay_opts {
 	enum replay_action action;
 
@@ -29,6 +36,7 @@ struct replay_opts {
 	int mainline;
 
 	char *gpg_sign;
+	enum commit_msg_cleanup_mode default_msg_cleanup;
 
 	/* Merge strategy */
 	char *strategy;
@@ -40,6 +48,8 @@ struct replay_opts {
 };
 #define REPLAY_OPTS_INIT { -1 }
 
+/* Call this to setup defaults before parsing command line options */
+void sequencer_init_config(struct replay_opts *opts);
 int sequencer_pick_revisions(struct replay_opts *opts);
 int sequencer_continue(struct replay_opts *opts);
 int sequencer_rollback(struct replay_opts *opts);
@@ -57,15 +67,6 @@ extern const char sign_off_header[];
 
 void append_signoff(struct strbuf *msgbuf, int ignore_footer, unsigned flag);
 void append_conflicts_hint(struct strbuf *msgbuf);
-int git_sequencer_config(const char *k, const char *v, void *cb);
-
-enum commit_msg_cleanup_mode {
-	COMMIT_MSG_CLEANUP_SPACE,
-	COMMIT_MSG_CLEANUP_NONE,
-	COMMIT_MSG_CLEANUP_SCISSORS,
-	COMMIT_MSG_CLEANUP_ALL
-};
-
 int message_is_empty(const struct strbuf *sb,
 		     enum commit_msg_cleanup_mode cleanup_mode);
 int template_untouched(const struct strbuf *sb, const char *template_file,

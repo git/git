@@ -31,17 +31,6 @@ static const char * const cherry_pick_usage[] = {
 	NULL
 };
 
-static int common_config(const char *k, const char *v, void *cb)
-{
-	int status;
-
-	status = git_sequencer_config(k, v, NULL);
-	if (status)
-		return status;
-
-	return git_default_config(k, v, NULL);
-}
-
 static const char *action_name(const struct replay_opts *opts)
 {
 	return opts->action == REPLAY_REVERT ? "revert" : "cherry-pick";
@@ -219,7 +208,7 @@ int cmd_revert(int argc, const char **argv, const char *prefix)
 	if (isatty(0))
 		opts.edit = 1;
 	opts.action = REPLAY_REVERT;
-	git_config(common_config, NULL);
+	sequencer_init_config(&opts);
 	res = run_sequencer(argc, argv, &opts);
 	if (res < 0)
 		die(_("revert failed"));
@@ -232,7 +221,7 @@ int cmd_cherry_pick(int argc, const char **argv, const char *prefix)
 	int res;
 
 	opts.action = REPLAY_PICK;
-	git_config(common_config, NULL);
+	sequencer_init_config(&opts);
 	res = run_sequencer(argc, argv, &opts);
 	if (res < 0)
 		die(_("cherry-pick failed"));
