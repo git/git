@@ -96,6 +96,17 @@ UI, Workflows & Features
  * The shell completion (in contrib/) learned that "git pull" can take
    the "--autostash" option.
 
+ * The tagnames "git log --decorate" uses to annotate the commits can
+   now be limited to subset of available refs with the two additional
+   options, --decorate-refs[-exclude]=<pattern>.
+
+ * "git grep" compiled with libpcre2 sometimes triggered a segfault,
+   which is being fixed.
+
+ * "git send-email" tries to see if the sendmail program is available
+   in /usr/lib and /usr/sbin; extend the list of locations to be
+   checked to also include directories on $PATH.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -142,6 +153,15 @@ Performance, Internal Implementation, Development Support etc.
  * A new mechanism to upgrade the wire protocol in place is proposed
    and demonstrated that it works with the older versions of Git
    without harming them.
+
+ * An infrastructure to define what hash function is used in Git is
+   introduced, and an effort to plumb that throughout various
+   codepaths has been started.
+
+ * The code to iterate over loose object files got optimized.
+
+ * An internal function that was left for backward compatibility has
+   been removed, as there is no remaining callers.
 
 Also contains various documentation updates and code clean-ups.
 
@@ -302,8 +322,19 @@ Fixes since v2.15
    accept "git stash -mmessage" form.
    (merge 5675473fcb ph/stash-save-m-option-fix later to maint).
 
+ * @{-N} in "git checkout @{-N}" may refer to a detached HEAD state,
+   but the documentation was not clear about it, which has been fixed.
+   (merge 75ce149575 ks/doc-checkout-previous later to maint).
+
+ * A regression in the progress eye-candy was fixed.
+   (merge 9c5951cacf jk/progress-delay-fix later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge 1a1fc2d5b5 rd/man-prune-progress later to maint).
    (merge 0ba014035a rd/man-reflog-add-n later to maint).
    (merge e54b63359f rd/doc-notes-prune-fix later to maint).
    (merge ff4c9b413a sp/doc-info-attributes later to maint).
+   (merge 7db2cbf4f1 jc/receive-pack-hook-doc later to maint).
+   (merge 5a0526264b tg/t-readme-updates later to maint).
+   (merge 5e83cca0b8 jk/no-optional-locks later to maint).
+   (merge 826c778f7c js/hashmap-update-sample later to maint).
