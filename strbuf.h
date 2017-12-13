@@ -480,15 +480,6 @@ extern int strbuf_normalize_path(struct strbuf *sb);
  */
 extern void strbuf_stripspace(struct strbuf *buf, int skip_comments);
 
-/**
- * Temporary alias until all topic branches have switched to use
- * strbuf_stripspace directly.
- */
-static inline void stripspace(struct strbuf *buf, int skip_comments)
-{
-	strbuf_stripspace(buf, skip_comments);
-}
-
 static inline int strbuf_strip_suffix(struct strbuf *sb, const char *suffix)
 {
 	if (strip_suffix_mem(sb->buf, &sb->len, suffix)) {
