@@ -274,11 +274,11 @@ section of linkgit:git-add[1] to learn how to operate the `--patch` mode.
 	commit, your HEAD becomes "detached" and you are no longer on
 	any branch (see below for details).
 +
-As a special case, the `"@{-N}"` syntax for the N-th last branch/commit
-checks out branches (instead of detaching).  You may also specify
-`-` which is synonymous with `"@{-1}"`.
+You can use the `"@{-N}"` syntax to refer to the N-th last
+branch/commit checked out using "git checkout" operation. You may
+also specify `-` which is synonymous to `"@{-1}`.
 +
-As a further special case, you may use `"A...B"` as a shortcut for the
+As a special case, you may use `"A...B"` as a shortcut for the
 merge base of `A` and `B` if there is exactly one merge base. You can
 leave out at most one of `A` and `B`, in which case it defaults to `HEAD`.
 
