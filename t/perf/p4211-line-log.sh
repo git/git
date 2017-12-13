@@ -35,4 +35,8 @@ test_perf 'git log --oneline --raw --parents' '
 	git log --oneline --raw --parents >/dev/null
 '
 
+test_perf 'git log --oneline --raw --parents -1000' '
+	git log --oneline --raw --parents -1000 >/dev/null
+'
+
 test_done
