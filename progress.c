@@ -34,7 +34,6 @@ struct progress {
 	unsigned total;
 	unsigned last_percent;
 	unsigned delay;
-	unsigned delayed_percent_threshold;
 	struct throughput *throughput;
 	uint64_t start_ns;
 };
@@ -83,20 +82,8 @@ static int display(struct progress *progress, unsigned n, const char *done)
 {
 	const char *eol, *tp;
 
-	if (progress->delay) {
-		if (!progress_update || --progress->delay)
-			return 0;
-		if (progress->total) {
-			unsigned percent = n * 100 / progress->total;
-			if (percent > progress->delayed_percent_threshold) {
-				/* inhibit this progress report entirely */
-				clear_progress_signal();
-				progress->delay = -1;
-				progress->total = 0;
-				return 0;
-			}
-		}
-	}
+	if (progress->delay && (!progress_update || --progress->delay))
+		return 0;
 
 	progress->last_value = n;
 	tp = (progress->throughput) ? progress->throughput->display.buf : "";
@@ -206,7 +193,7 @@ int display_progress(struct progress *progress, unsigned n)
 }
 
 static struct progress *start_progress_delay(const char *title, unsigned total,
-					     unsigned percent_threshold, unsigned delay)
+					     unsigned delay)
 {
 	struct progress *progress = malloc(sizeof(*progress));
 	if (!progress) {
@@ -219,7 +206,6 @@ static struct progress *start_progress_delay(const char *title, unsigned total,
 	progress->total = total;
 	progress->last_value = -1;
 	progress->last_percent = -1;
-	progress->delayed_percent_threshold = percent_threshold;
 	progress->delay = delay;
 	progress->throughput = NULL;
 	progress->start_ns = getnanotime();
@@ -229,12 +215,12 @@ static struct progress *start_progress_delay(const char *title, unsigned total,
 
 struct progress *start_delayed_progress(const char *title, unsigned total)
 {
-	return start_progress_delay(title, total, 0, 2);
+	return start_progress_delay(title, total, 2);
 }
 
 struct progress *start_progress(const char *title, unsigned total)
 {
-	return start_progress_delay(title, total, 0, 0);
+	return start_progress_delay(title, total, 0);
 }
 
 void stop_progress(struct progress **p_progress)
