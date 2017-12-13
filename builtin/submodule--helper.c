@@ -623,7 +623,7 @@ static void status_submodule(const char *path, const struct object_id *ce_oid,
 
 		if (refs_head_ref(get_submodule_ref_store(path),
 				  handle_submodule_head_ref, &oid))
-			die(_("could not resolve HEAD ref inside the"
+			die(_("could not resolve HEAD ref inside the "
 			      "submodule '%s'"), path);
 
 		print_status(flags, '+', path, &oid, displaypath);
