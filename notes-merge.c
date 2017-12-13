@@ -595,7 +595,7 @@ int notes_merge(struct notes_merge_options *o,
 	bases = get_merge_bases(local, remote);
 	if (!bases) {
 		base_oid = &null_oid;
-		base_tree_oid = &empty_tree_oid;
+		base_tree_oid = the_hash_algo->empty_tree;
 		if (o->verbosity >= 4)
 			printf("No merge base found; doing history-less merge\n");
 	} else if (!bases->next) {
