@@ -554,7 +554,7 @@ test_expect_success '2b-check: Directory split into two on one side, with equal 
 		git rev-parse >expect \
 			O:z/b O:z/c B:x/d &&
 		test_cmp expect actual &&
-		! test_i18ngrep "CONFLICT.*directory rename split" out
+		test_i18ngrep ! "CONFLICT.*directory rename split" out
 	)
 '
 
@@ -705,7 +705,7 @@ test_expect_success '3b-check: Avoid implicit rename if involved as source on cu
 		test_cmp expect actual &&
 
 		test_i18ngrep CONFLICT.*rename/rename.*z/d.*x/d.*w/d out &&
-	! test_i18ngrep CONFLICT.*rename/rename.*y/d
+		test_i18ngrep ! CONFLICT.*rename/rename.*y/d
 	)
 '
 
@@ -2602,14 +2602,14 @@ test_expect_success '9e-setup: N-to-1 whammo' '
 	)
 '
 
-test_expect_success '9e-check: N-to-1 whammo' '
+test_expect_success C_LOCALE_OUTPUT '9e-check: N-to-1 whammo' '
 	(
 		cd 9e &&
 
 		git checkout A^0 &&
 
 		test_must_fail git merge -s recursive B^0 >out &&
-		test_i18ngrep "CONFLICT (implicit dir rename): Cannot map more than one path to combined/yo" out >error_line &&
+		grep "CONFLICT (implicit dir rename): Cannot map more than one path to combined/yo" out >error_line &&
 		grep -q dir1/yo error_line &&
 		grep -q dir2/yo error_line &&
 		grep -q dir3/yo error_line &&
@@ -3146,7 +3146,7 @@ test_expect_failure '10e-check: Does git complain about untracked file that is n
 		echo random >z/c &&
 
 		git merge -s recursive B^0 >out 2>err &&
-	! test_i18ngrep "following untracked working tree files would be overwritten by merge" err &&
+		test_i18ngrep ! "following untracked working tree files would be overwritten by merge" err &&
 
 		test 3 -eq $(git ls-files -s | wc -l) &&
 		test 0 -eq $(git ls-files -u | wc -l) &&
