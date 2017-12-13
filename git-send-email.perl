@@ -885,7 +885,9 @@ if (defined $initial_reply_to) {
 }
 
 if (!defined $smtp_server) {
-	foreach (qw( /usr/sbin/sendmail /usr/lib/sendmail )) {
+	my @sendmail_paths = qw( /usr/sbin/sendmail /usr/lib/sendmail );
+	push @sendmail_paths, map {"$_/sendmail"} split /:/, $ENV{PATH};
+	foreach (@sendmail_paths) {
 		if (-x $_) {
 			$smtp_server = $_;
 			last;
