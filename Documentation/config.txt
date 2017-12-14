@@ -2020,8 +2020,7 @@ http.maxRequests::
 http.minSessions::
 	The number of curl sessions (counted across slots) to be kept across
 	requests. They will not be ended with curl_easy_cleanup() until
-	http_cleanup() is invoked. If USE_CURL_MULTI is not defined, this
-	value will be capped at 1. Defaults to 1.
+	http_cleanup() is invoked. Defaults to 1.
 
 http.postBuffer::
 	Maximum size in bytes of the buffer used by smart HTTP
