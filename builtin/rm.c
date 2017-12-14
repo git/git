@@ -382,7 +382,7 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 		}
 		strbuf_release(&buf);
 		if (gitmodules_modified)
-			stage_updated_gitmodules();
+			stage_updated_gitmodules(&the_index);
 	}
 
 	if (active_cache_changed) {

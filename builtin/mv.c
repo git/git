@@ -291,7 +291,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 	}
 
 	if (gitmodules_modified)
-		stage_updated_gitmodules();
+		stage_updated_gitmodules(&the_index);
 
 	if (active_cache_changed &&
 	    write_locked_index(&the_index, &lock_file, COMMIT_LOCK))
