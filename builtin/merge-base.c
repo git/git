@@ -176,7 +176,7 @@ static int handle_fork_point(int argc, const char **argv)
 	revs.initial = 1;
 	for_each_reflog_ent(refname, collect_one_reflog_ent, &revs);
 
-	if (!revs.nr && !get_oid(refname, &oid))
+	if (!get_oid(refname, &oid))
 		add_one_commit(&oid, &revs);
 
 	for (i = 0; i < revs.nr; i++)
@@ -188,23 +188,11 @@ static int handle_fork_point(int argc, const char **argv)
 	 * There should be one and only one merge base, when we found
 	 * a common ancestor among reflog entries.
 	 */
-	if (!bases || bases->next) {
+	if (!bases || bases->next)
 		ret = 1;
-		goto cleanup_return;
-	}
+	else
+		printf("%s\n", oid_to_hex(&bases->item->object.oid));
 
-	/* And the found one must be one of the reflog entries */
-	for (i = 0; i < revs.nr; i++)
-		if (&bases->item->object == &revs.commit[i]->object)
-			break; /* found */
-	if (revs.nr <= i) {
-		ret = 1; /* not found */
-		goto cleanup_return;
-	}
-
-	printf("%s\n", oid_to_hex(&bases->item->object.oid));
-
-cleanup_return:
 	free_commit_list(bases);
 	return ret;
 }
