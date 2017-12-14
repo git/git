@@ -1491,6 +1491,7 @@ extern const char *ident_default_name(void);
 extern const char *ident_default_email(void);
 extern const char *git_editor(void);
 extern const char *git_pager(int stdout_is_tty);
+extern int is_terminal_dumb(void);
 extern int git_ident_config(const char *, const char *, void *);
 extern void reset_ident_date(void);
 

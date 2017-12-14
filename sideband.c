@@ -20,13 +20,12 @@
 
 int recv_sideband(const char *me, int in_stream, int out)
 {
-	const char *term, *suffix;
+	const char *suffix;
 	char buf[LARGE_PACKET_MAX + 1];
 	struct strbuf outbuf = STRBUF_INIT;
 	int retval = 0;
 
-	term = getenv("TERM");
-	if (isatty(2) && term && strcmp(term, "dumb"))
+	if (isatty(2) && !is_terminal_dumb())
 		suffix = ANSI_SUFFIX;
 	else
 		suffix = DUMB_SUFFIX;
