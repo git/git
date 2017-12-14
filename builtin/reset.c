@@ -12,7 +12,7 @@
 #include "lockfile.h"
 #include "tag.h"
 #include "object.h"
-#include "commit.h"
+#include "pretty.h"
 #include "run-command.h"
 #include "refs.h"
 #include "diff.h"
