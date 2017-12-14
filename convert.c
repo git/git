@@ -220,18 +220,27 @@ static void check_safe_crlf(const char *path, enum crlf_action crlf_action,
 	}
 }
 
-static int has_cr_in_index(const struct index_state *istate, const char *path)
+static int has_crlf_in_index(const struct index_state *istate, const char *path)
 {
 	unsigned long sz;
 	void *data;
-	int has_cr;
+	const char *crp;
+	int has_crlf = 0;
 
 	data = read_blob_data_from_index(istate, path, &sz);
 	if (!data)
 		return 0;
-	has_cr = memchr(data, '\r', sz) != NULL;
+
+	crp = memchr(data, '\r', sz);
+	if (crp) {
+		unsigned int ret_stats;
+		ret_stats = gather_convert_stats(data, sz);
+		if (!(ret_stats & CONVERT_STAT_BITS_BIN) &&
+		    (ret_stats & CONVERT_STAT_BITS_TXT_CRLF))
+			has_crlf = 1;
+	}
 	free(data);
-	return has_cr;
+	return has_crlf;
 }
 
 static int will_convert_lf_to_crlf(size_t len, struct text_stat *stats,
@@ -290,7 +299,7 @@ static int crlf_to_git(const struct index_state *istate,
 		 * cherry-pick.
 		 */
 		if ((checksafe != SAFE_CRLF_RENORMALIZE) &&
-		    has_cr_in_index(istate, path))
+		    has_crlf_in_index(istate, path))
 			convert_crlf_into_lf = 0;
 	}
 	if ((checksafe == SAFE_CRLF_WARN ||
