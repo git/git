@@ -4,6 +4,8 @@
 #include "diff.h"
 #include "revision.h"
 #include "list-objects.h"
+#include "list-objects-filter.h"
+#include "list-objects-filter-options.h"
 #include "pack.h"
 #include "pack-bitmap.h"
 #include "builtin.h"
@@ -12,6 +14,7 @@
 #include "bisect.h"
 #include "progress.h"
 #include "reflog-walk.h"
+#include "oidset.h"
 
 static const char rev_list_usage[] =
 "git rev-list [OPTION] <commit-id>... [ -- paths... ]\n"
@@ -54,6 +57,20 @@ static const char rev_list_usage[] =
 
 static struct progress *progress;
 static unsigned progress_counter;
+
+static struct list_objects_filter_options filter_options;
+static struct oidset omitted_objects;
+static int arg_print_omitted; /* print objects omitted by filter */
+
+static struct oidset missing_objects;
+enum missing_action {
+	MA_ERROR = 0,    /* fail if any missing objects are encountered */
+	MA_ALLOW_ANY,    /* silently allow ALL missing objects */
+	MA_PRINT,        /* print ALL missing objects in special section */
+};
+static enum missing_action arg_missing_action;
+
+#define DEFAULT_OIDSET_SIZE     (16*1024)
 
 static void finish_commit(struct commit *commit, void *data);
 static void show_commit(struct commit *commit, void *data)
@@ -178,11 +195,31 @@ static void finish_commit(struct commit *commit, void *data)
 	free_commit_buffer(commit);
 }
 
+static inline void finish_object__ma(struct object *obj)
+{
+	switch (arg_missing_action) {
+	case MA_ERROR:
+		die("missing blob object '%s'", oid_to_hex(&obj->oid));
+		return;
+
+	case MA_ALLOW_ANY:
+		return;
+
+	case MA_PRINT:
+		oidset_insert(&missing_objects, &obj->oid);
+		return;
+
+	default:
+		BUG("unhandled missing_action");
+		return;
+	}
+}
+
 static void finish_object(struct object *obj, const char *name, void *cb_data)
 {
 	struct rev_list_info *info = cb_data;
 	if (obj->type == OBJ_BLOB && !has_object_file(&obj->oid))
-		die("missing blob object '%s'", oid_to_hex(&obj->oid));
+		finish_object__ma(obj);
 	if (info->revs->verify_objects && !obj->parsed && obj->type != OBJ_COMMIT)
 		parse_object(&obj->oid);
 }
@@ -269,6 +306,26 @@ static int show_object_fast(
 	return 1;
 }
 
+static inline int parse_missing_action_value(const char *value)
+{
+	if (!strcmp(value, "error")) {
+		arg_missing_action = MA_ERROR;
+		return 1;
+	}
+
+	if (!strcmp(value, "allow-any")) {
+		arg_missing_action = MA_ALLOW_ANY;
+		return 1;
+	}
+
+	if (!strcmp(value, "print")) {
+		arg_missing_action = MA_PRINT;
+		return 1;
+	}
+
+	return 0;
+}
+
 int cmd_rev_list(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info revs;
@@ -335,6 +392,30 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 			show_progress = arg;
 			continue;
 		}
+
+		if (skip_prefix(arg, ("--" CL_ARG__FILTER "="), &arg)) {
+			parse_list_objects_filter(&filter_options, arg);
+			if (filter_options.choice && !revs.blob_objects)
+				die(_("object filtering requires --objects"));
+			if (filter_options.choice == LOFC_SPARSE_OID &&
+			    !filter_options.sparse_oid_value)
+				die(_("invalid sparse value '%s'"),
+				    filter_options.filter_spec);
+			continue;
+		}
+		if (!strcmp(arg, ("--no-" CL_ARG__FILTER))) {
+			list_objects_filter_release(&filter_options);
+			continue;
+		}
+		if (!strcmp(arg, "--filter-print-omitted")) {
+			arg_print_omitted = 1;
+			continue;
+		}
+
+		if (skip_prefix(arg, "--missing=", &arg) &&
+		    parse_missing_action_value(arg))
+			continue;
+
 		usage(rev_list_usage);
 
 	}
@@ -359,6 +440,9 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 
 	if (revs.show_notes)
 		die(_("rev-list does not support display of notes"));
+
+	if (filter_options.choice && use_bitmap_index)
+		die(_("cannot combine --use-bitmap-index with object filtering"));
 
 	save_commit_buffer = (revs.verbose_header ||
 			      revs.grep_filter.pattern_list ||
@@ -403,7 +487,31 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 			return show_bisect_vars(&info, reaches, all);
 	}
 
-	traverse_commit_list(&revs, show_commit, show_object, &info);
+	if (arg_print_omitted)
+		oidset_init(&omitted_objects, DEFAULT_OIDSET_SIZE);
+	if (arg_missing_action == MA_PRINT)
+		oidset_init(&missing_objects, DEFAULT_OIDSET_SIZE);
+
+	traverse_commit_list_filtered(
+		&filter_options, &revs, show_commit, show_object, &info,
+		(arg_print_omitted ? &omitted_objects : NULL));
+
+	if (arg_print_omitted) {
+		struct oidset_iter iter;
+		struct object_id *oid;
+		oidset_iter_init(&omitted_objects, &iter);
+		while ((oid = oidset_iter_next(&iter)))
+			printf("~%s\n", oid_to_hex(oid));
+		oidset_clear(&omitted_objects);
+	}
+	if (arg_missing_action == MA_PRINT) {
+		struct oidset_iter iter;
+		struct object_id *oid;
+		oidset_iter_init(&missing_objects, &iter);
+		while ((oid = oidset_iter_next(&iter)))
+			printf("?%s\n", oid_to_hex(oid));
+		oidset_clear(&missing_objects);
+	}
 
 	stop_progress(&progress);
 
