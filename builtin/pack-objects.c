@@ -75,6 +75,8 @@ static int use_bitmap_index = -1;
 static int write_bitmap_index;
 static uint16_t write_bitmap_options;
 
+static int exclude_promisor_objects;
+
 static unsigned long delta_cache_size = 0;
 static unsigned long max_delta_cache_size = 256 * 1024 * 1024;
 static unsigned long cache_max_small_delta_size = 1000;
@@ -84,8 +86,9 @@ static unsigned long window_memory_limit = 0;
 static struct list_objects_filter_options filter_options;
 
 enum missing_action {
-	MA_ERROR = 0,    /* fail if any missing objects are encountered */
-	MA_ALLOW_ANY,    /* silently allow ALL missing objects */
+	MA_ERROR = 0,      /* fail if any missing objects are encountered */
+	MA_ALLOW_ANY,      /* silently allow ALL missing objects */
+	MA_ALLOW_PROMISOR, /* silently allow all missing PROMISOR objects */
 };
 static enum missing_action arg_missing_action;
 static show_object_fn fn_show_object;
@@ -2579,6 +2582,20 @@ static void show_object__ma_allow_any(struct object *obj, const char *name, void
 	show_object(obj, name, data);
 }
 
+static void show_object__ma_allow_promisor(struct object *obj, const char *name, void *data)
+{
+	assert(arg_missing_action == MA_ALLOW_PROMISOR);
+
+	/*
+	 * Quietly ignore EXPECTED missing objects.  This avoids problems with
+	 * staging them now and getting an odd error later.
+	 */
+	if (!has_object_file(&obj->oid) && is_promisor_object(&obj->oid))
+		return;
+
+	show_object(obj, name, data);
+}
+
 static int option_parse_missing_action(const struct option *opt,
 				       const char *arg, int unset)
 {
@@ -2593,7 +2610,15 @@ static int option_parse_missing_action(const struct option *opt,
 
 	if (!strcmp(arg, "allow-any")) {
 		arg_missing_action = MA_ALLOW_ANY;
+		fetch_if_missing = 0;
 		fn_show_object = show_object__ma_allow_any;
+		return 0;
+	}
+
+	if (!strcmp(arg, "allow-promisor")) {
+		arg_missing_action = MA_ALLOW_PROMISOR;
+		fetch_if_missing = 0;
+		fn_show_object = show_object__ma_allow_promisor;
 		return 0;
 	}
 
@@ -3010,6 +3035,8 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		{ OPTION_CALLBACK, 0, "missing", NULL, N_("action"),
 		  N_("handling for missing objects"), PARSE_OPT_NONEG,
 		  option_parse_missing_action },
+		OPT_BOOL(0, "exclude-promisor-objects", &exclude_promisor_objects,
+			 N_("do not pack objects in promisor packfiles")),
 		OPT_END(),
 	};
 
@@ -3053,6 +3080,12 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	if (rev_list_unpacked) {
 		use_internal_rev_list = 1;
 		argv_array_push(&rp, "--unpacked");
+	}
+
+	if (exclude_promisor_objects) {
+		use_internal_rev_list = 1;
+		fetch_if_missing = 0;
+		argv_array_push(&rp, "--exclude-promisor-objects");
 	}
 
 	if (!reuse_object)

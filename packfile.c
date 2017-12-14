@@ -8,6 +8,11 @@
 #include "list.h"
 #include "streaming.h"
 #include "sha1-lookup.h"
+#include "commit.h"
+#include "object.h"
+#include "tag.h"
+#include "tree-walk.h"
+#include "tree.h"
 
 char *odb_pack_name(struct strbuf *buf,
 		    const unsigned char *sha1,
@@ -643,16 +648,20 @@ struct packed_git *add_packed_git(const char *path, size_t path_len, int local)
 		return NULL;
 
 	/*
-	 * ".pack" is long enough to hold any suffix we're adding (and
+	 * ".promisor" is long enough to hold any suffix we're adding (and
 	 * the use xsnprintf double-checks that)
 	 */
-	alloc = st_add3(path_len, strlen(".pack"), 1);
+	alloc = st_add3(path_len, strlen(".promisor"), 1);
 	p = alloc_packed_git(alloc);
 	memcpy(p->pack_name, path, path_len);
 
 	xsnprintf(p->pack_name + path_len, alloc - path_len, ".keep");
 	if (!access(p->pack_name, F_OK))
 		p->pack_keep = 1;
+
+	xsnprintf(p->pack_name + path_len, alloc - path_len, ".promisor");
+	if (!access(p->pack_name, F_OK))
+		p->pack_promisor = 1;
 
 	xsnprintf(p->pack_name + path_len, alloc - path_len, ".pack");
 	if (stat(p->pack_name, &st) || !S_ISREG(st.st_mode)) {
@@ -781,7 +790,8 @@ static void prepare_packed_git_one(char *objdir, int local)
 		if (ends_with(de->d_name, ".idx") ||
 		    ends_with(de->d_name, ".pack") ||
 		    ends_with(de->d_name, ".bitmap") ||
-		    ends_with(de->d_name, ".keep"))
+		    ends_with(de->d_name, ".keep") ||
+		    ends_with(de->d_name, ".promisor"))
 			string_list_append(&garbage, path.buf);
 		else
 			report_garbage(PACKDIR_FILE_GARBAGE, path.buf);
@@ -1890,6 +1900,9 @@ int for_each_packed_object(each_packed_object_fn cb, void *data, unsigned flags)
 	for (p = packed_git; p; p = p->next) {
 		if ((flags & FOR_EACH_OBJECT_LOCAL_ONLY) && !p->pack_local)
 			continue;
+		if ((flags & FOR_EACH_OBJECT_PROMISOR_ONLY) &&
+		    !p->pack_promisor)
+			continue;
 		if (open_pack_index(p)) {
 			pack_errors = 1;
 			continue;
@@ -1899,4 +1912,62 @@ int for_each_packed_object(each_packed_object_fn cb, void *data, unsigned flags)
 			break;
 	}
 	return r ? r : pack_errors;
+}
+
+static int add_promisor_object(const struct object_id *oid,
+			       struct packed_git *pack,
+			       uint32_t pos,
+			       void *set_)
+{
+	struct oidset *set = set_;
+	struct object *obj = parse_object(oid);
+	if (!obj)
+		return 1;
+
+	oidset_insert(set, oid);
+
+	/*
+	 * If this is a tree, commit, or tag, the objects it refers
+	 * to are also promisor objects. (Blobs refer to no objects.)
+	 */
+	if (obj->type == OBJ_TREE) {
+		struct tree *tree = (struct tree *)obj;
+		struct tree_desc desc;
+		struct name_entry entry;
+		if (init_tree_desc_gently(&desc, tree->buffer, tree->size))
+			/*
+			 * Error messages are given when packs are
+			 * verified, so do not print any here.
+			 */
+			return 0;
+		while (tree_entry_gently(&desc, &entry))
+			oidset_insert(set, entry.oid);
+	} else if (obj->type == OBJ_COMMIT) {
+		struct commit *commit = (struct commit *) obj;
+		struct commit_list *parents = commit->parents;
+
+		oidset_insert(set, &commit->tree->object.oid);
+		for (; parents; parents = parents->next)
+			oidset_insert(set, &parents->item->object.oid);
+	} else if (obj->type == OBJ_TAG) {
+		struct tag *tag = (struct tag *) obj;
+		oidset_insert(set, &tag->tagged->oid);
+	}
+	return 0;
+}
+
+int is_promisor_object(const struct object_id *oid)
+{
+	static struct oidset promisor_objects;
+	static int promisor_objects_prepared;
+
+	if (!promisor_objects_prepared) {
+		if (repository_format_partial_clone) {
+			for_each_packed_object(add_promisor_object,
+					       &promisor_objects,
+					       FOR_EACH_OBJECT_PROMISOR_ONLY);
+		}
+		promisor_objects_prepared = 1;
+	}
+	return oidset_contains(&promisor_objects, oid);
 }
