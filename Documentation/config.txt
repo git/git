@@ -2736,36 +2736,7 @@ push.recurseSubmodules::
 	is retained. You may override this configuration at time of push by
 	specifying '--recurse-submodules=check|on-demand|no'.
 
-rebase.stat::
-	Whether to show a diffstat of what changed upstream since the last
-	rebase. False by default.
-
-rebase.autoSquash::
-	If set to true enable `--autosquash` option by default.
-
-rebase.autoStash::
-	When set to true, automatically create a temporary stash entry
-	before the operation begins, and apply it after the operation
-	ends.  This means that you can run rebase on a dirty worktree.
-	However, use with care: the final stash application after a
-	successful rebase might result in non-trivial conflicts.
-	Defaults to false.
-
-rebase.missingCommitsCheck::
-	If set to "warn", git rebase -i will print a warning if some
-	commits are removed (e.g. a line was deleted), however the
-	rebase will still proceed. If set to "error", it will print
-	the previous warning and stop the rebase, 'git rebase
-	--edit-todo' can then be used to correct the error. If set to
-	"ignore", no checking is done.
-	To drop a commit without warning or error, use the `drop`
-	command in the todo-list.
-	Defaults to "ignore".
-
-rebase.instructionFormat::
-	A format string, as specified in linkgit:git-log[1], to be used for
-	the instruction list during an interactive rebase.  The format will automatically
-	have the long commit hash prepended to the format.
+include::rebase-config.txt[]
 
 receive.advertiseAtomic::
 	By default, git-receive-pack will advertise the atomic push

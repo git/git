@@ -1,0 +1,52 @@
+rebase.stat::
+	Whether to show a diffstat of what changed upstream since the last
+	rebase. False by default.
+
+rebase.autoSquash::
+	If set to true enable `--autosquash` option by default.
+
+rebase.autoStash::
+	When set to true, automatically create a temporary stash entry
+	before the operation begins, and apply it after the operation
+	ends.  This means that you can run rebase on a dirty worktree.
+	However, use with care: the final stash application after a
+	successful rebase might result in non-trivial conflicts.
+	This option can be overridden by the `--no-autostash` and
+	`--autostash` options of linkgit:git-rebase[1].
+	Defaults to false.
+
+rebase.missingCommitsCheck::
+	If set to "warn", git rebase -i will print a warning if some
+	commits are removed (e.g. a line was deleted), however the
+	rebase will still proceed. If set to "error", it will print
+	the previous warning and stop the rebase, 'git rebase
+	--edit-todo' can then be used to correct the error. If set to
+	"ignore", no checking is done.
+	To drop a commit without warning or error, use the `drop`
+	command in the todo list.
+	Defaults to "ignore".
+
+rebase.instructionFormat::
+	A format string, as specified in linkgit:git-log[1], to be used for the
+	todo list during an interactive rebase.  The format will
+	automatically have the long commit hash prepended to the format.
+
+rebase.abbreviateCommands::
+	If set to true, `git rebase` will use abbreviated command names in the
+	todo list resulting in something like this:
++
+-------------------------------------------
+	p deadbee The oneline of the commit
+	p fa1afe1 The oneline of the next commit
+	...
+-------------------------------------------
++
+instead of:
++
+-------------------------------------------
+	pick deadbee The oneline of the commit
+	pick fa1afe1 The oneline of the next commit
+	...
+-------------------------------------------
++
+Defaults to false.

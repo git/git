@@ -203,24 +203,7 @@ Alternatively, you can undo the 'git rebase' with
 CONFIGURATION
 -------------
 
-rebase.stat::
-	Whether to show a diffstat of what changed upstream since the last
-	rebase. False by default.
-
-rebase.autoSquash::
-	If set to true enable `--autosquash` option by default.
-
-rebase.autoStash::
-	If set to true enable `--autostash` option by default.
-
-rebase.missingCommitsCheck::
-	If set to "warn", print warnings about removed commits in
-	interactive mode. If set to "error", print the warnings and
-	stop the rebase. If set to "ignore", no checking is
-	done. "ignore" by default.
-
-rebase.instructionFormat::
-	Custom commit list format to use during an `--interactive` rebase.
+include::rebase-config.txt[]
 
 OPTIONS
 -------

@@ -1264,6 +1264,28 @@ test_expect_success 'rebase -i respects rebase.missingCommitsCheck = error' '
 	test B = $(git cat-file commit HEAD^ | sed -ne \$p)
 '
 
+test_expect_success 'respects rebase.abbreviateCommands with fixup, squash and exec' '
+	rebase_setup_and_clean abbrevcmd &&
+	test_commit "first" file1.txt "first line" first &&
+	test_commit "second" file1.txt "another line" second &&
+	test_commit "fixup! first" file2.txt "first line again" first_fixup &&
+	test_commit "squash! second" file1.txt "another line here" second_squash &&
+	cat >expected <<-EOF &&
+	p $(git rev-list --abbrev-commit -1 first) first
+	f $(git rev-list --abbrev-commit -1 first_fixup) fixup! first
+	x git show HEAD
+	p $(git rev-list --abbrev-commit -1 second) second
+	s $(git rev-list --abbrev-commit -1 second_squash) squash! second
+	x git show HEAD
+	EOF
+	git checkout abbrevcmd &&
+	set_cat_todo_editor &&
+	test_config rebase.abbreviateCommands true &&
+	test_must_fail git rebase -i --exec "git show HEAD" \
+		--autosquash master >actual &&
+	test_cmp expected actual
+'
+
 test_expect_success 'static check of bad command' '
 	rebase_setup_and_clean bad-cmd &&
 	set_fake_editor &&
