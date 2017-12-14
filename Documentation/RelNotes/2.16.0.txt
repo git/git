@@ -304,10 +304,10 @@ Fixes since v2.15
  * "git branch --set-upstream" has been deprecated and (sort of)
    removed, as "--set-upstream-to" is the preferred one these days.
    The documentation still had "--set-upstream" listed on its
-   synopsys section, which has been corrected.
+   synopsis section, which has been corrected.
    (merge a060f3d3d8 tz/branch-doc-remove-set-upstream later to maint).
 
- * Internaly we use 0{40} as a placeholder object name to signal the
+ * Internally we use 0{40} as a placeholder object name to signal the
    codepath that there is no such object (e.g. the fast-forward check
    while "git fetch" stores a new remote-tracking ref says "we know
    there is no 'old' thing pointed at by the ref, as we are creating
