@@ -304,10 +304,44 @@ test_expect_success 'describe chokes on severely broken submodules' '
 	mv .git/modules/sub1/ .git/modules/sub_moved &&
 	test_must_fail git describe --dirty
 '
-test_expect_success 'describe ignoring a borken submodule' '
+test_expect_success 'describe ignoring a broken submodule' '
 	git describe --broken >out &&
 	test_when_finished "mv .git/modules/sub_moved .git/modules/sub1" &&
 	grep broken out
+'
+
+test_expect_success 'describe a blob at a directly tagged commit' '
+	echo "make it a unique blob" >file &&
+	git add file && git commit -m "content in file" &&
+	git tag -a -m "latest annotated tag" unique-file &&
+	git describe HEAD:file >actual &&
+	echo "unique-file:file" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'describe a blob with its first introduction' '
+	git commit --allow-empty -m "empty commit" &&
+	git rm file &&
+	git commit -m "delete blob" &&
+	git revert HEAD &&
+	git commit --allow-empty -m "empty commit" &&
+	git describe HEAD:file >actual &&
+	echo "unique-file:file" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'describe directly tagged blob' '
+	git tag test-blob unique-file:file &&
+	git describe test-blob >actual &&
+	echo "unique-file:file" >expect &&
+	# suboptimal: we rather want to see "test-blob"
+	test_cmp expect actual
+'
+
+test_expect_success 'describe tag object' '
+	git tag test-blob-1 -a -m msg unique-file:file &&
+	test_must_fail git describe test-blob-1 2>actual &&
+	test_i18ngrep "fatal: test-blob-1 is neither a commit nor blob" actual
 '
 
 test_expect_failure ULIMIT_STACK_SIZE 'name-rev works in a deep repo' '

@@ -214,27 +214,17 @@ static void add_pending_tree(struct rev_info *revs, struct tree *tree)
 	add_pending_object(revs, &tree->object, "");
 }
 
-static void do_traverse(struct rev_info *revs,
-			show_commit_fn show_commit,
-			show_object_fn show_object,
-			void *show_data,
-			filter_object_fn filter_fn,
-			void *filter_data)
+static void traverse_trees_and_blobs(struct rev_info *revs,
+				     struct strbuf *base,
+				     show_object_fn show_object,
+				     void *show_data,
+				     filter_object_fn filter_fn,
+				     void *filter_data)
 {
 	int i;
-	struct commit *commit;
-	struct strbuf base;
 
-	strbuf_init(&base, PATH_MAX);
-	while ((commit = get_revision(revs)) != NULL) {
-		/*
-		 * an uninteresting boundary commit may not have its tree
-		 * parsed yet, but we are not going to show them anyway
-		 */
-		if (commit->tree)
-			add_pending_tree(revs, commit->tree);
-		show_commit(commit, show_data);
-	}
+	assert(base->len == 0);
+
 	for (i = 0; i < revs->pending.nr; i++) {
 		struct object_array_entry *pending = revs->pending.objects + i;
 		struct object *obj = pending->item;
@@ -251,13 +241,13 @@ static void do_traverse(struct rev_info *revs,
 			path = "";
 		if (obj->type == OBJ_TREE) {
 			process_tree(revs, (struct tree *)obj, show_object,
-				     &base, path, show_data,
+				     base, path, show_data,
 				     filter_fn, filter_data);
 			continue;
 		}
 		if (obj->type == OBJ_BLOB) {
 			process_blob(revs, (struct blob *)obj, show_object,
-				     &base, path, show_data,
+				     base, path, show_data,
 				     filter_fn, filter_data);
 			continue;
 		}
@@ -265,7 +255,42 @@ static void do_traverse(struct rev_info *revs,
 		    oid_to_hex(&obj->oid), name);
 	}
 	object_array_clear(&revs->pending);
-	strbuf_release(&base);
+}
+
+static void do_traverse(struct rev_info *revs,
+			show_commit_fn show_commit,
+			show_object_fn show_object,
+			void *show_data,
+			filter_object_fn filter_fn,
+			void *filter_data)
+{
+	struct commit *commit;
+	struct strbuf csp; /* callee's scratch pad */
+	strbuf_init(&csp, PATH_MAX);
+
+	while ((commit = get_revision(revs)) != NULL) {
+		/*
+		 * an uninteresting boundary commit may not have its tree
+		 * parsed yet, but we are not going to show them anyway
+		 */
+		if (commit->tree)
+			add_pending_tree(revs, commit->tree);
+		show_commit(commit, show_data);
+
+		if (revs->tree_blobs_in_commit_order)
+			/*
+			 * NEEDSWORK: Adding the tree and then flushing it here
+			 * needs a reallocation for each commit. Can we pass the
+			 * tree directory without allocation churn?
+			 */
+			traverse_trees_and_blobs(revs, &csp,
+						 show_object, show_data,
+						 filter_fn, filter_data);
+	}
+	traverse_trees_and_blobs(revs, &csp,
+				 show_object, show_data,
+				 filter_fn, filter_data);
+	strbuf_release(&csp);
 }
 
 void traverse_commit_list(struct rev_info *revs,
