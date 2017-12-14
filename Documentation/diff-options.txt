@@ -510,6 +510,12 @@ information.
 --pickaxe-regex::
 	Treat the <string> given to `-S` as an extended POSIX regular
 	expression to match.
+
+--find-object=<object-id>::
+	Restrict the output such that one side of the diff
+	matches the given object id. The object can be a blob,
+	gitlink entry or tree (when `-t` is given).
+
 endif::git-format-patch[]
 
 -O<orderfile>::

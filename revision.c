@@ -2409,7 +2409,8 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 	/* Pickaxe, diff-filter and rename following need diffs */
 	if (revs->diffopt.pickaxe ||
 	    revs->diffopt.filter ||
-	    revs->diffopt.flags.follow_renames)
+	    revs->diffopt.flags.follow_renames ||
+	    revs->diffopt.objfind)
 		revs->diff = 1;
 
 	if (revs->topo_order)
@@ -2883,6 +2884,8 @@ int prepare_revision_walk(struct rev_info *revs)
 		simplify_merges(revs);
 	if (revs->children.name)
 		set_children(revs);
+	if (revs->diffopt.objfind)
+		revs->simplify_history = 0;
 	return 0;
 }
 
