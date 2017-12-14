@@ -23,14 +23,42 @@ skip_branch_tip_with_tag () {
 
 # Set 'exit on error' for all CI scripts to let the caller know that
 # something went wrong
-set -e
+set -ex
 
 skip_branch_tip_with_tag
 
-case "${TRAVIS_OS_NAME:-linux}" in
-linux)
+if test -z "$jobname"
+then
+	jobname="$TRAVIS_OS_NAME-$CC"
+fi
+
+export DEVELOPER=1
+export DEFAULT_TEST_TARGET=prove
+export GIT_PROVE_OPTS="--timer --jobs 3 --state=failed,slow,save"
+export GIT_TEST_OPTS="--verbose-log"
+export GIT_TEST_CLONE_2GB=YesPlease
+
+case "$jobname" in
+linux-clang|linux-gcc)
+	export GIT_TEST_HTTPD=YesPlease
+
+	# The Linux build installs the defined dependency versions below.
+	# The OS X build installs the latest available versions. Keep that
+	# in mind when you encounter a broken OS X build!
+	export LINUX_P4_VERSION="16.2"
+	export LINUX_GIT_LFS_VERSION="1.5.2"
+
 	P4_PATH="$(pwd)/custom/p4"
 	GIT_LFS_PATH="$(pwd)/custom/git-lfs"
 	export PATH="$GIT_LFS_PATH:$P4_PATH:$PATH"
+	;;
+osx-clang|osx-gcc)
+	# t9810 occasionally fails on Travis CI OS X
+	# t9816 occasionally fails with "TAP out of sequence errors" on
+	# Travis CI OS X
+	export GIT_SKIP_TESTS="t9810 t9816"
+	;;
+GETTEXT_POISON)
+	export GETTEXT_POISON=YesPlease
 	;;
 esac
