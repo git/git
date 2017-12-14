@@ -80,7 +80,7 @@ done,*)
 	# from any previous runs.
 	>"$GIT_TEST_TEE_OUTPUT_FILE"
 
-	(GIT_TEST_TEE_STARTED=done ${SHELL_PATH} "$0" "$@" 2>&1;
+	(GIT_TEST_TEE_STARTED=done ${TEST_SHELL_PATH} "$0" "$@" 2>&1;
 	 echo $? >"$BASE.exit") | tee -a "$GIT_TEST_TEE_OUTPUT_FILE"
 	test "$(cat "$BASE.exit")" = 0
 	exit
@@ -264,7 +264,6 @@ do
 		shift ;;
 	-x)
 		trace=t
-		verbose=t
 		shift ;;
 	--verbose-log)
 		verbose_log=t
@@ -281,6 +280,11 @@ then
 elif test -n "$valgrind"
 then
 	test -z "$verbose_log" && verbose=t
+fi
+
+if test -n "$trace" && test -z "$verbose_log"
+then
+	verbose=t
 fi
 
 if test -n "$color"
@@ -586,7 +590,9 @@ maybe_setup_valgrind () {
 }
 
 want_trace () {
-	test "$trace" = t && test "$verbose" = t
+	test "$trace" = t && {
+		test "$verbose" = t || test "$verbose_log" = t
+	}
 }
 
 # This is a separate function because some tests use
@@ -601,26 +607,40 @@ test_eval_inner_ () {
 }
 
 test_eval_ () {
-	# We run this block with stderr redirected to avoid extra cruft
-	# during a "-x" trace. Once in "set -x" mode, we cannot prevent
+	# If "-x" tracing is in effect, then we want to avoid polluting stderr
+	# with non-test commands. But once in "set -x" mode, we cannot prevent
 	# the shell from printing the "set +x" to turn it off (nor the saving
 	# of $? before that). But we can make sure that the output goes to
 	# /dev/null.
 	#
-	# The test itself is run with stderr put back to &4 (so either to
-	# /dev/null, or to the original stderr if --verbose was used).
+	# There are a few subtleties here:
+	#
+	#   - we have to redirect descriptor 4 in addition to 2, to cover
+	#     BASH_XTRACEFD
+	#
+	#   - the actual eval has to come before the redirection block (since
+	#     it needs to see descriptor 4 to set up its stderr)
+	#
+	#   - likewise, any error message we print must be outside the block to
+	#     access descriptor 4
+	#
+	#   - checking $? has to come immediately after the eval, but it must
+	#     be _inside_ the block to avoid polluting the "set -x" output
+	#
+
+	test_eval_inner_ "$@" </dev/null >&3 2>&4
 	{
-		test_eval_inner_ "$@" </dev/null >&3 2>&4
 		test_eval_ret_=$?
 		if want_trace
 		then
 			set +x
-			if test "$test_eval_ret_" != 0
-			then
-				say_color error >&4 "error: last command exited with \$?=$test_eval_ret_"
-			fi
 		fi
-	} 2>/dev/null
+	} 2>/dev/null 4>&2
+
+	if test "$test_eval_ret_" != 0 && want_trace
+	then
+		say_color error >&4 "error: last command exited with \$?=$test_eval_ret_"
+	fi
 	return $test_eval_ret_
 }
 
