@@ -230,4 +230,19 @@ test_expect_success 'rename pretty print common prefix and suffix overlap' '
 	test_i18ngrep " d/f/{ => f}/e " output
 '
 
+test_expect_success 'diff-tree -l0 defaults to a big rename limit, not zero' '
+	test_write_lines line1 line2 line3 >myfile &&
+	git add myfile &&
+	git commit -m x &&
+
+	test_write_lines line1 line2 line4 >myotherfile &&
+	git rm myfile &&
+	git add myotherfile &&
+	git commit -m x &&
+
+	git diff-tree -M -l0 HEAD HEAD^ >actual &&
+	# Verify that a rename from myotherfile to myfile was detected
+	grep "myotherfile.*myfile" actual
+'
+
 test_done

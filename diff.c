@@ -5454,7 +5454,7 @@ void diff_warn_rename_limit(const char *varname, int needed, int degraded_cc)
 		warning(_(rename_limit_warning));
 	else
 		return;
-	if (0 < needed && needed < 32767)
+	if (0 < needed)
 		warning(_(rename_limit_advice), varname, needed);
 }
 
