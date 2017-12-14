@@ -281,7 +281,7 @@ static struct rpc_service *select_service(struct strbuf *hdr, const char *name)
  * hit max_request_buffer we die (we'd rather reject a
  * maliciously large request than chew up infinite memory).
  */
-static ssize_t read_request(int fd, unsigned char **out)
+static ssize_t read_request_eof(int fd, unsigned char **out)
 {
 	size_t len = 0, alloc = 8192;
 	unsigned char *buf = xmalloc(alloc);
@@ -316,6 +316,53 @@ static ssize_t read_request(int fd, unsigned char **out)
 			alloc = max_request_buffer;
 		REALLOC_ARRAY(buf, alloc);
 	}
+}
+
+static ssize_t read_request_fixed_len(int fd, ssize_t req_len, unsigned char **out)
+{
+	unsigned char *buf = NULL;
+	ssize_t cnt = 0;
+
+	if (max_request_buffer < req_len) {
+		die("request was larger than our maximum size (%lu): "
+		    "%" PRIuMAX "; try setting GIT_HTTP_MAX_REQUEST_BUFFER",
+		    max_request_buffer, (uintmax_t)req_len);
+	}
+
+	if (req_len <= 0) {
+		*out = NULL;
+		return 0;
+	}
+
+	buf = xmalloc(req_len);
+	cnt = read_in_full(fd, buf, req_len);
+	if (cnt < 0) {
+		free(buf);
+		return -1;
+	} else {
+		*out = buf;
+		return cnt;
+	}
+}
+
+static ssize_t env_content_length(void)
+{
+	ssize_t val = -1;
+	const char *str = getenv("CONTENT_LENGTH");
+
+	if (str && !git_parse_ssize_t(str, &val))
+		die("failed to parse CONTENT_LENGTH: %s", str);
+	return val;
+}
+
+static ssize_t read_request(int fd, unsigned char **out)
+{
+	ssize_t req_len = env_content_length();
+
+	if (req_len < 0)
+		return read_request_eof(fd, out);
+	else
+		return read_request_fixed_len(fd, req_len, out);
 }
 
 static void inflate_request(const char *prog_name, int out, int buffer_input)

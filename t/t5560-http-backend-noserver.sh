@@ -71,4 +71,34 @@ test_expect_success 'http-backend blocks bad PATH_INFO' '
 	expect_aliased 1 //domain/data.txt
 '
 
+# overrides existing definition for further cases
+run_backend () {
+	CONTENT_LENGTH="${#2}" && export CONTENT_LENGTH &&
+	( echo "$2" && cat /dev/zero ) |
+	QUERY_STRING="${1#*[?]}" \
+	PATH_TRANSLATED="$HTTPD_DOCUMENT_ROOT_PATH/${1%%[?]*}" \
+	git http-backend >act.out 2>act.err
+}
+
+test_expect_success 'CONTENT_LENGTH set and infinite input' '
+	config http.uploadpack true &&
+	GET info/refs?service=git-upload-pack "200 OK"	&&
+	! grep "fatal:.*" act.err &&
+	POST git-upload-pack 0000 "200 OK" &&
+	! grep "fatal:.*" act.err
+'
+
+test_expect_success 'CONTENT_LENGTH overflow ssite_t' '
+	NOT_FIT_IN_SSIZE=$("$GIT_BUILD_DIR/t/helper/test-print-larger-than-ssize") &&
+	env \
+		CONTENT_TYPE=application/x-git-upload-pack-request \
+		QUERY_STRING=/repo.git/git-upload-pack \
+		PATH_TRANSLATED="$PWD"/.git/git-upload-pack \
+		GIT_HTTP_EXPORT_ALL=TRUE \
+		REQUEST_METHOD=POST \
+		CONTENT_LENGTH="$NOT_FIT_IN_SSIZE" \
+		git http-backend </dev/zero >/dev/null 2>err &&
+	grep -q "fatal:.*CONTENT_LENGTH" err
+'
+
 test_done
