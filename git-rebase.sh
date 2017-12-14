@@ -477,7 +477,7 @@ then
 		;;
 	esac
 	upstream=$(peel_committish "${upstream_name}") ||
-	die "$(eval_gettext "invalid upstream \$upstream_name")"
+	die "$(eval_gettext "invalid upstream '\$upstream_name'")"
 	upstream_arg="$upstream_name"
 else
 	if test -z "$onto"
@@ -528,15 +528,18 @@ case "$#" in
 	branch_name="$1"
 	switch_to="$1"
 
-	if git show-ref --verify --quiet -- "refs/heads/$1" &&
-	   orig_head=$(git rev-parse -q --verify "refs/heads/$1")
+	# Is it a local branch?
+	if git show-ref --verify --quiet -- "refs/heads/$branch_name" &&
+	   orig_head=$(git rev-parse -q --verify "refs/heads/$branch_name")
 	then
-		head_name="refs/heads/$1"
-	elif orig_head=$(git rev-parse -q --verify "$1")
+		head_name="refs/heads/$branch_name"
+	# If not is it a valid ref (branch or commit)?
+	elif orig_head=$(git rev-parse -q --verify "$branch_name")
 	then
 		head_name="detached HEAD"
+
 	else
-		die "$(eval_gettext "fatal: no such branch: \$branch_name")"
+		die "$(eval_gettext "fatal: no such branch/commit '\$branch_name'")"
 	fi
 	;;
 0)
@@ -547,7 +550,7 @@ case "$#" in
 		branch_name=$(expr "z$branch_name" : 'zrefs/heads/\(.*\)')
 	else
 		head_name="detached HEAD"
-		branch_name=HEAD ;# detached
+		branch_name=HEAD
 	fi
 	orig_head=$(git rev-parse --verify HEAD) || exit
 	;;
@@ -598,11 +601,23 @@ then
 		test -z "$switch_to" ||
 		GIT_REFLOG_ACTION="$GIT_REFLOG_ACTION: checkout $switch_to" \
 			git checkout -q "$switch_to" --
-		say "$(eval_gettext "Current branch \$branch_name is up to date.")"
+		if test "$branch_name" = "HEAD" &&
+			 !(git symbolic-ref -q HEAD)
+		then
+			say "$(eval_gettext "HEAD is up to date.")"
+		else
+			say "$(eval_gettext "Current branch \$branch_name is up to date.")"
+		fi
 		finish_rebase
 		exit 0
 	else
-		say "$(eval_gettext "Current branch \$branch_name is up to date, rebase forced.")"
+		if test "$branch_name" = "HEAD" &&
+			 !(git symbolic-ref -q HEAD)
+		then
+			say "$(eval_gettext "HEAD is up to date, rebase forced.")"
+		else
+			say "$(eval_gettext "Current branch \$branch_name is up to date, rebase forced.")"
+		fi
 	fi
 fi
 
