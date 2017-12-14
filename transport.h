@@ -103,7 +103,6 @@ struct transport {
 	 * process involved generating new commits.
 	 **/
 	int (*push_refs)(struct transport *transport, struct ref *refs, int flags);
-	int (*push)(struct transport *connection, int refspec_nr, const char **refspec, int flags);
 	int (*connect)(struct transport *connection, const char *name,
 		       const char *executable, int fd[2]);
 
