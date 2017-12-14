@@ -80,6 +80,16 @@ endif::git-format-patch[]
 --histogram::
 	Generate a diff using the "histogram diff" algorithm.
 
+--anchored=<text>::
+	Generate a diff using the "anchored diff" algorithm.
++
+This option may be specified more than once.
++
+If a line exists in both the source and destination, exists only once,
+and starts with this text, this algorithm attempts to prevent it from
+appearing as a deletion or addition in the output. It uses the "patience
+diff" algorithm internally.
+
 --diff-algorithm={patience|minimal|histogram|myers}::
 	Choose a diff algorithm. The variants are as follows:
 +
