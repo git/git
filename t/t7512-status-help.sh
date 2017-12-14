@@ -74,7 +74,6 @@ test_expect_success 'prepare for rebase conflicts' '
 
 
 test_expect_success 'status when rebase in progress before resolving conflicts' '
-	test_when_finished "git rebase --abort" &&
 	ONTO=$(git rev-parse --short HEAD^^) &&
 	test_must_fail git rebase HEAD^ --onto HEAD^^ &&
 	cat >expected <<EOF &&
@@ -96,6 +95,15 @@ EOF
 	test_i18ncmp expected actual
 '
 
+test_expect_success 'short status when rebase in progress' '
+	test_when_finished "git rebase --abort" &&
+	cat >expected <<EOF &&
+## HEAD (no branch); REBASE-m
+UU main.txt
+EOF
+	git status --untracked-files=no --short --branch --in-progress >actual &&
+	test_i18ncmp expected actual
+'
 
 test_expect_success 'status when rebase in progress before rebase --continue' '
 	git reset --hard rebase_conflicts &&
@@ -133,7 +141,6 @@ test_expect_success 'prepare for rebase_i_conflicts' '
 
 
 test_expect_success 'status during rebase -i when conflicts unresolved' '
-	test_when_finished "git rebase --abort" &&
 	ONTO=$(git rev-parse --short rebase_i_conflicts) &&
 	LAST_COMMIT=$(git rev-parse --short rebase_i_conflicts_second) &&
 	test_must_fail git rebase -i rebase_i_conflicts &&
@@ -156,6 +163,16 @@ Unmerged paths:
 no changes added to commit (use "git add" and/or "git commit -a")
 EOF
 	git status --untracked-files=no >actual &&
+	test_i18ncmp expected actual
+'
+
+test_expect_success 'short status during rebase -i when conflicts unresolved' '
+	test_when_finished "git rebase --abort" &&
+	cat >expected <<EOF &&
+## HEAD (no branch); REBASE-i
+UU main.txt
+EOF
+	git status --untracked-files=no --short --branch --in-progress >actual &&
 	test_i18ncmp expected actual
 '
 
@@ -613,7 +630,6 @@ test_expect_success 'prepare am_session' '
 
 test_expect_success 'status in an am session: file already exists' '
 	git checkout -b am_already_exists &&
-	test_when_finished "rm Maildir/* && git am --abort" &&
 	git format-patch -1 -oMaildir &&
 	test_must_fail git am Maildir/*.patch &&
 	cat >expected <<\EOF &&
@@ -629,6 +645,14 @@ EOF
 	test_i18ncmp expected actual
 '
 
+test_expect_success 'short status in an am session: file already exists' '
+	test_when_finished "rm Maildir/* && git am --abort" &&
+	cat >expected <<\EOF &&
+## am_already_exists; AM
+EOF
+	git status --untracked-files=no --short --branch --in-progress >actual &&
+	test_i18ncmp expected actual
+'
 
 test_expect_success 'status in an am session: file does not exist' '
 	git reset --hard am_session &&
@@ -681,7 +705,6 @@ test_expect_success 'status when bisecting' '
 	test_commit one_bisect main.txt one &&
 	test_commit two_bisect main.txt two &&
 	test_commit three_bisect main.txt three &&
-	test_when_finished "git bisect reset" &&
 	git bisect start &&
 	git bisect bad &&
 	git bisect good one_bisect &&
@@ -697,6 +720,14 @@ EOF
 	test_i18ncmp expected actual
 '
 
+test_expect_success 'short status when bisecting' '
+	test_when_finished "git bisect reset" &&
+	cat >expected <<EOF &&
+## HEAD (no branch); BISECTING
+EOF
+	git status --untracked-files=no --short --branch --in-progress >actual &&
+	test_i18ncmp expected actual
+'
 
 test_expect_success 'status when rebase conflicts with statushints disabled' '
 	git reset --hard master &&
@@ -736,7 +767,6 @@ test_expect_success 'prepare for cherry-pick conflicts' '
 
 
 test_expect_success 'status when cherry-picking before resolving conflicts' '
-	test_when_finished "git cherry-pick --abort" &&
 	test_must_fail git cherry-pick cherry_branch_second &&
 	TO_CHERRY_PICK=$(git rev-parse --short CHERRY_PICK_HEAD) &&
 	cat >expected <<EOF &&
@@ -756,6 +786,15 @@ EOF
 	test_i18ncmp expected actual
 '
 
+test_expect_success 'short status when cherry-picking before resolving conflicts' '
+	test_when_finished "git cherry-pick --abort" &&
+	cat >expected <<EOF &&
+## cherry_branch; CHERRY-PICKING
+UU main.txt
+EOF
+	git status --untracked-files=no --short --branch --in-progress >actual &&
+	test_i18ncmp expected actual
+'
 
 test_expect_success 'status when cherry-picking after resolving conflicts' '
 	git reset --hard cherry_branch &&
@@ -824,6 +863,15 @@ Unmerged paths:
 no changes added to commit (use "git add" and/or "git commit -a")
 EOF
 	git status --untracked-files=no >actual &&
+	test_i18ncmp expected actual
+'
+
+test_expect_success 'short status while reverting commit (conflicts)' '
+	cat >expected <<EOF &&
+## master; REVERTING
+UU to-revert.txt
+EOF
+	git status --untracked-files=no --short --branch --in-progress >actual &&
 	test_i18ncmp expected actual
 '
 

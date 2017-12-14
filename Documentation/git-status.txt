@@ -35,6 +35,10 @@ OPTIONS
 --show-stash::
 	Show the number of entries currently stashed away.
 
+--in-progress::
+	When showing branch and tracking info in short-format,
+	show in-progress information (BISECTING, MERGING etc.), too.
+
 --porcelain[=<version>]::
 	Give the output in an easy-to-parse format for scripts.
 	This is similar to the short output, but will remain stable
