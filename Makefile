@@ -167,11 +167,12 @@ all::
 # Without this option, i.e. the default behavior is to build git with its
 # own built-in code (or submodule).
 #
-# Define DC_SHA1_SUBMODULE in addition to DC_SHA1 to use the
-# sha1collisiondetection shipped as a submodule instead of the
-# non-submodule copy in sha1dc/. This is an experimental option used
-# by the git project to migrate to using sha1collisiondetection as a
-# submodule.
+# Define NO_DC_SHA1_SUBMODULE in addition to DC_SHA1 to use the
+# sha1collisiondetection library shipped as a non-submodule copy in
+# sha1dc/, instead of using the sha1collisiondetection submodule. This
+# option might eventually go away in favor a hard dependency on
+# cloning git.git with "--recurse-submodules" or on running "git
+# submodule update --init" after cloning.
 #
 # Define OPENSSL_SHA1 environment variable when running make to link
 # with the SHA1 routine from openssl library.
@@ -1041,10 +1042,6 @@ EXTLIBS =
 
 GIT_USER_AGENT = git/$(GIT_VERSION)
 
-ifeq ($(wildcard sha1collisiondetection/lib/sha1.h),sha1collisiondetection/lib/sha1.h)
-DC_SHA1_SUBMODULE = auto
-endif
-
 include config.mak.uname
 -include config.mak.autogen
 -include config.mak
@@ -1194,6 +1191,17 @@ endif
 
 IMAP_SEND_BUILDDEPS =
 IMAP_SEND_LDFLAGS =
+
+ifndef NO_DC_SHA1_SUBMODULE
+	ifndef DC_SHA1_EXTERNAL
+		ifneq ($(wildcard sha1collisiondetection/lib/sha1.h),sha1collisiondetection/lib/sha1.h)
+$(error The sha1collisiondetection submodule is not checked out. \
+Please make it available, either by cloning with --recurse-submodules, \
+or by running "git submodule update --init". If you do not want to use \
+it for whatever reason, define NO_DC_SHA1_SUBMODULE=NoThanks)
+		endif
+	endif
+endif
 
 ifdef NO_CURL
 	BASIC_CFLAGS += -DNO_CURL
@@ -1512,17 +1520,17 @@ else
 	BASIC_CFLAGS += -DSHA1_DC
 	LIB_OBJS += sha1dc_git.o
 ifdef DC_SHA1_EXTERNAL
-	ifdef DC_SHA1_SUBMODULE
-$(error Only set DC_SHA1_EXTERNAL or DC_SHA1_SUBMODULE, not both)
+	ifdef NO_DC_SHA1_SUBMODULE
+$(error Only set DC_SHA1_EXTERNAL or NO_DC_SHA1_SUBMODULE, not both)
 	endif
 	BASIC_CFLAGS += -DDC_SHA1_EXTERNAL
 	EXTLIBS += -lsha1detectcoll
 else
-ifdef DC_SHA1_SUBMODULE
+ifndef NO_DC_SHA1_SUBMODULE
 	LIB_OBJS += sha1collisiondetection/lib/sha1.o
 	LIB_OBJS += sha1collisiondetection/lib/ubc_check.o
-	BASIC_CFLAGS += -DDC_SHA1_SUBMODULE
 else
+	BASIC_CFLAGS += -DNO_DC_SHA1_SUBMODULE
 	LIB_OBJS += sha1dc/sha1.o
 	LIB_OBJS += sha1dc/ubc_check.o
 endif
@@ -2674,6 +2682,21 @@ dist: git-archive$(X) configure
 		$(GIT_TARNAME)/configure \
 		$(GIT_TARNAME)/version \
 		$(GIT_TARNAME)/git-gui/version
+ifndef NO_DC_SHA1_SUBMODULE
+	@mkdir -p $(GIT_TARNAME)/sha1collisiondetection/lib
+	@cp sha1collisiondetection/LICENSE.txt \
+		$(GIT_TARNAME)/sha1collisiondetection/
+	@cp sha1collisiondetection/LICENSE.txt \
+		$(GIT_TARNAME)/sha1collisiondetection/
+	@cp sha1collisiondetection/lib/sha1.[ch] \
+		$(GIT_TARNAME)/sha1collisiondetection/lib/
+	@cp sha1collisiondetection/lib/ubc_check.[ch] \
+		$(GIT_TARNAME)/sha1collisiondetection/lib/
+	$(TAR) rf $(GIT_TARNAME).tar \
+		$(GIT_TARNAME)/sha1collisiondetection/LICENSE.txt \
+		$(GIT_TARNAME)/sha1collisiondetection/lib/sha1.[ch] \
+		$(GIT_TARNAME)/sha1collisiondetection/lib/ubc_check.[ch]
+endif
 	@$(RM) -r $(GIT_TARNAME)
 	gzip -f -9 $(GIT_TARNAME).tar
 
