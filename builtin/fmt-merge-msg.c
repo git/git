@@ -377,7 +377,8 @@ static void shortlog(const char *name,
 			string_list_append(&subjects,
 					   oid_to_hex(&commit->object.oid));
 		else
-			string_list_append(&subjects, strbuf_detach(&sb, NULL));
+			string_list_append_nodup(&subjects,
+						 strbuf_detach(&sb, NULL));
 	}
 
 	if (opts->credit_people)
