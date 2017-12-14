@@ -26,6 +26,10 @@ merge.ff::
 	allowed (equivalent to giving the `--ff-only` option from the
 	command line).
 
+merge.verifySignatures::
+	If true, this is equivalent to the --verify-signatures command
+	line option. See linkgit:git-merge[1] for details.
+
 include::fmt-merge-msg-config.txt[]
 
 merge.renameLimit::
