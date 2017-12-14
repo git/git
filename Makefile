@@ -425,6 +425,9 @@ all::
 #
 # to say "export LESS=FRX (and LV=-c) if the environment variable
 # LESS (and LV) is not set, respectively".
+#
+# When cross-compiling, define HOST_CPU as the canonical name of the CPU on
+# which the built Git will run (for instance "x86_64").
 
 GIT-VERSION-FILE: FORCE
 	@$(SHELL_PATH) ./GIT-VERSION-GEN
@@ -1093,6 +1096,12 @@ BROKEN_PATH_FIX = 's|^\# @@BROKEN_PATH_FIX@@$$|git_broken_path_fix $(SANE_TOOL_P
 PATH := $(SANE_TOOL_PATH):${PATH}
 else
 BROKEN_PATH_FIX = '/^\# @@BROKEN_PATH_FIX@@$$/d'
+endif
+
+ifeq (,$(HOST_CPU))
+	BASIC_CFLAGS += -DGIT_HOST_CPU="\"$(firstword $(subst -, ,$(uname_M)))\""
+else
+	BASIC_CFLAGS += -DGIT_HOST_CPU="\"$(HOST_CPU)\""
 endif
 
 ifneq (,$(INLINE))

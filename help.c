@@ -412,6 +412,7 @@ int cmd_version(int argc, const char **argv, const char *prefix)
 	printf("git version %s\n", git_version_string);
 
 	if (build_options) {
+		printf("cpu: %s\n", GIT_HOST_CPU);
 		printf("sizeof-long: %d\n", (int)sizeof(long));
 		/* NEEDSWORK: also save and output GIT-BUILD_OPTIONS? */
 	}
