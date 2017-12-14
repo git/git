@@ -315,6 +315,10 @@ all::
 # If not set it defaults to the bare 'wish'. If it is set to the empty
 # string then NO_TCLTK will be forced (this is used by configure script).
 #
+# The BYPASS_TCLTK_CHECK variable can be used when you want to build
+# the Tcl/Tk GUI but don't want to install Tcl/Tk on the build
+# machine.
+#
 # Define INTERNAL_QSORT to use Git's implementation of qsort(), which
 # is a simplified version of the merge sort used in glibc. This is
 # recommended if Git triggers O(n^2) behavior in your platform's qsort().
@@ -1646,6 +1650,15 @@ endif
 
 ifeq ($(TCLTK_PATH),)
 NO_TCLTK = NoThanks
+endif
+
+ifndef NO_TCLTK
+	ifndef BYPASS_TCLTK_CHECK
+		has_tcltk := $(shell type $(TCLTK_PATH) 2>/dev/null)
+		ifndef has_tcltk
+$(error "Tcl/Tk is not installed ('$(TCLTK_PATH)' not found). Consider setting NO_TCLTK or installing Tcl/Tk")
+		endif
+	endif
 endif
 
 ifeq ($(PERL_PATH),)
