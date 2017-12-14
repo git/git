@@ -407,8 +407,8 @@ follows.
 `git pull <url> <branch>`
 =====================================
 
-Occasionally, the maintainer may get merge conflicts when he tries to
-pull changes from downstream.  In this case, he can ask downstream to
+Occasionally, the maintainer may get merge conflicts when they try to
+pull changes from downstream.  In this case, they can ask downstream to
 do the merge and resolve the conflicts themselves (perhaps they will
 know better how to resolve them).  It is one of the rare cases where
 downstream 'should' merge from upstream.
