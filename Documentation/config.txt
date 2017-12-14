@@ -3344,6 +3344,10 @@ uploadpack.packObjectsHook::
 	was run. I.e., `upload-pack` will feed input intended for
 	`pack-objects` to the hook, and expects a completed packfile on
 	stdout.
+
+uploadpack.allowFilter::
+	If this option is set, `upload-pack` will advertise partial
+	clone and partial fetch object filtering.
 +
 Note that this configuration variable is ignored if it is seen in the
 repository-level config (this is a safety measure against fetching from

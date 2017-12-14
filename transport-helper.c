@@ -671,6 +671,11 @@ static int fetch(struct transport *transport,
 	if (data->transport_options.update_shallow)
 		set_helper_option(transport, "update-shallow", "true");
 
+	if (data->transport_options.filter_options.choice)
+		set_helper_option(
+			transport, "filter",
+			data->transport_options.filter_options.filter_spec);
+
 	if (data->fetch)
 		return fetch_with_fetch(transport, nr_heads, to_fetch);
 
