@@ -1011,7 +1011,8 @@ static enum interesting do_match(const struct name_entry *entry,
 				 * character.  More accurate matching can then
 				 * be performed in the submodule itself.
 				 */
-				if (ps->recursive && S_ISGITLINK(entry->mode) &&
+				if (ps->recurse_submodules &&
+				    S_ISGITLINK(entry->mode) &&
 				    !ps_strncmp(item, match + baselen,
 						entry->path,
 						item->nowildcard_len - baselen))
@@ -1060,7 +1061,7 @@ match_wildcards:
 		 * character.  More accurate matching can then
 		 * be performed in the submodule itself.
 		 */
-		if (ps->recursive && S_ISGITLINK(entry->mode) &&
+		if (ps->recurse_submodules && S_ISGITLINK(entry->mode) &&
 		    !ps_strncmp(item, match, base->buf + base_offset,
 				item->nowildcard_len)) {
 			strbuf_setlen(base, base_offset + baselen);

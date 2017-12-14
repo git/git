@@ -93,4 +93,23 @@ test_expect_success 'command line pathspec parsing for "git log"' '
 	git log --merge -- a
 '
 
+test_expect_success 'tree_entry_interesting does not match past submodule boundaries' '
+	test_when_finished "rm -rf repo submodule" &&
+	git init submodule &&
+	test_commit -C submodule initial &&
+	git init repo &&
+	>"repo/[bracket]" &&
+	git -C repo add "[bracket]" &&
+	test_tick &&
+	git -C repo commit -m bracket &&
+	git -C repo rev-list HEAD -- "[bracket]" >expect &&
+
+	git -C repo submodule add ../submodule &&
+	test_tick &&
+	git -C repo commit -m submodule &&
+
+	git -C repo rev-list HEAD -- "[bracket]" >actual &&
+	test_cmp expect actual
+'
+
 test_done
