@@ -926,7 +926,7 @@ static enum discovery_result setup_git_directory_gently_1(struct strbuf *dir,
 	 * - ../.git
 	 * - ../.git/
 	 * - ../ (bare)
-	 * - ../../.git/
+	 * - ../../.git
 	 *   etc.
 	 */
 	one_filesystem = !git_env_bool("GIT_DISCOVERY_ACROSS_FILESYSTEM", 0);
