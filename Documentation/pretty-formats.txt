@@ -204,11 +204,13 @@ endif::git-rev-list[]
   than given and there are spaces on its left, use those spaces
 - '%><(<N>)', '%><|(<N>)': similar to '% <(<N>)', '%<|(<N>)'
   respectively, but padding both sides (i.e. the text is centered)
-- %(trailers): display the trailers of the body as interpreted by
-  linkgit:git-interpret-trailers[1]. If the `:only` option is given,
-  omit non-trailer lines from the trailer block.  If the `:unfold`
-  option is given, behave as if interpret-trailer's `--unfold` option
-  was given. E.g., `%(trailers:only:unfold)` to do both.
+- %(trailers[:options]): display the trailers of the body as interpreted
+  by linkgit:git-interpret-trailers[1]. The `trailers` string may be
+  followed by a colon and zero or more comma-separated options. If the
+  `only` option is given, omit non-trailer lines from the trailer block.
+  If the `unfold` option is given, behave as if interpret-trailer's
+  `--unfold` option was given.  E.g., `%(trailers:only,unfold)` to do
+  both.
 
 NOTE: Some placeholders may depend on other options given to the
 revision traversal engine. For example, the `%g*` reflog options will
