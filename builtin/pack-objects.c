@@ -15,6 +15,8 @@
 #include "diff.h"
 #include "revision.h"
 #include "list-objects.h"
+#include "list-objects-filter.h"
+#include "list-objects-filter-options.h"
 #include "pack-objects.h"
 #include "progress.h"
 #include "refs.h"
@@ -73,11 +75,23 @@ static int use_bitmap_index = -1;
 static int write_bitmap_index;
 static uint16_t write_bitmap_options;
 
+static int exclude_promisor_objects;
+
 static unsigned long delta_cache_size = 0;
 static unsigned long max_delta_cache_size = 256 * 1024 * 1024;
 static unsigned long cache_max_small_delta_size = 1000;
 
 static unsigned long window_memory_limit = 0;
+
+static struct list_objects_filter_options filter_options;
+
+enum missing_action {
+	MA_ERROR = 0,      /* fail if any missing objects are encountered */
+	MA_ALLOW_ANY,      /* silently allow ALL missing objects */
+	MA_ALLOW_PROMISOR, /* silently allow all missing PROMISOR objects */
+};
+static enum missing_action arg_missing_action;
+static show_object_fn fn_show_object;
 
 /*
  * stats
@@ -995,8 +1009,8 @@ static int want_object_in_pack(const struct object_id *oid,
 			       struct packed_git **found_pack,
 			       off_t *found_offset)
 {
-	struct mru_entry *entry;
 	int want;
+	struct list_head *pos;
 
 	if (!exclude && local && has_loose_object_nonlocal(oid->hash))
 		return 0;
@@ -1012,7 +1026,8 @@ static int want_object_in_pack(const struct object_id *oid,
 			return want;
 	}
 
-	for (entry = packed_git_mru.head; entry; entry = entry->next) {
+	list_for_each(pos, &packed_git_mru.list) {
+		struct mru *entry = list_entry(pos, struct mru, list);
 		struct packed_git *p = entry->item;
 		off_t offset;
 
@@ -2553,6 +2568,64 @@ static void show_object(struct object *obj, const char *name, void *data)
 	obj->flags |= OBJECT_ADDED;
 }
 
+static void show_object__ma_allow_any(struct object *obj, const char *name, void *data)
+{
+	assert(arg_missing_action == MA_ALLOW_ANY);
+
+	/*
+	 * Quietly ignore ALL missing objects.  This avoids problems with
+	 * staging them now and getting an odd error later.
+	 */
+	if (!has_object_file(&obj->oid))
+		return;
+
+	show_object(obj, name, data);
+}
+
+static void show_object__ma_allow_promisor(struct object *obj, const char *name, void *data)
+{
+	assert(arg_missing_action == MA_ALLOW_PROMISOR);
+
+	/*
+	 * Quietly ignore EXPECTED missing objects.  This avoids problems with
+	 * staging them now and getting an odd error later.
+	 */
+	if (!has_object_file(&obj->oid) && is_promisor_object(&obj->oid))
+		return;
+
+	show_object(obj, name, data);
+}
+
+static int option_parse_missing_action(const struct option *opt,
+				       const char *arg, int unset)
+{
+	assert(arg);
+	assert(!unset);
+
+	if (!strcmp(arg, "error")) {
+		arg_missing_action = MA_ERROR;
+		fn_show_object = show_object;
+		return 0;
+	}
+
+	if (!strcmp(arg, "allow-any")) {
+		arg_missing_action = MA_ALLOW_ANY;
+		fetch_if_missing = 0;
+		fn_show_object = show_object__ma_allow_any;
+		return 0;
+	}
+
+	if (!strcmp(arg, "allow-promisor")) {
+		arg_missing_action = MA_ALLOW_PROMISOR;
+		fetch_if_missing = 0;
+		fn_show_object = show_object__ma_allow_promisor;
+		return 0;
+	}
+
+	die(_("invalid value for --missing"));
+	return 0;
+}
+
 static void show_edge(struct commit *commit)
 {
 	add_preferred_base(&commit->object.oid);
@@ -2817,7 +2890,12 @@ static void get_object_list(int ac, const char **av)
 	if (prepare_revision_walk(&revs))
 		die("revision walk setup failed");
 	mark_edges_uninteresting(&revs, show_edge);
-	traverse_commit_list(&revs, show_commit, show_object, NULL);
+
+	if (!fn_show_object)
+		fn_show_object = show_object;
+	traverse_commit_list_filtered(&filter_options, &revs,
+				      show_commit, fn_show_object, NULL,
+				      NULL);
 
 	if (unpack_unreachable_expiration) {
 		revs.ignore_missing_links = 1;
@@ -2953,6 +3031,12 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 			 N_("use a bitmap index if available to speed up counting objects")),
 		OPT_BOOL(0, "write-bitmap-index", &write_bitmap_index,
 			 N_("write a bitmap index together with the pack index")),
+		OPT_PARSE_LIST_OBJECTS_FILTER(&filter_options),
+		{ OPTION_CALLBACK, 0, "missing", NULL, N_("action"),
+		  N_("handling for missing objects"), PARSE_OPT_NONEG,
+		  option_parse_missing_action },
+		OPT_BOOL(0, "exclude-promisor-objects", &exclude_promisor_objects,
+			 N_("do not pack objects in promisor packfiles")),
 		OPT_END(),
 	};
 
@@ -2998,6 +3082,12 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		argv_array_push(&rp, "--unpacked");
 	}
 
+	if (exclude_promisor_objects) {
+		use_internal_rev_list = 1;
+		fetch_if_missing = 0;
+		argv_array_push(&rp, "--exclude-promisor-objects");
+	}
+
 	if (!reuse_object)
 		reuse_delta = 0;
 	if (pack_compression_level == -1)
@@ -3028,6 +3118,12 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		die("--keep-unreachable and --unpack-unreachable are incompatible.");
 	if (!rev_list_all || !rev_list_reflog || !rev_list_index)
 		unpack_unreachable_expiration = 0;
+
+	if (filter_options.choice) {
+		if (!pack_to_stdout)
+			die("cannot use --filter without --stdout.");
+		use_bitmap_index = 0;
+	}
 
 	/*
 	 * "soft" reasons not to use bitmaps - for on-disk repack by default we want

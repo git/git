@@ -271,7 +271,7 @@ The '..' (two-dot) Range Notation::
  for commits that are reachable from r2 excluding those that are reachable
  from r1 by '{caret}r1 r2' and it can be written as 'r1..r2'.
 
-The '...' (three dot) Symmetric Difference Notation::
+The '...' (three-dot) Symmetric Difference Notation::
  A similar notation 'r1\...r2' is called symmetric difference
  of 'r1' and 'r2' and is defined as
  'r1 r2 --not $(git merge-base --all r1 r2)'.

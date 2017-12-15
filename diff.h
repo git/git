@@ -7,6 +7,7 @@
 #include "tree-walk.h"
 #include "pathspec.h"
 #include "object.h"
+#include "oidset.h"
 
 struct rev_info;
 struct diff_options;
@@ -166,6 +167,10 @@ struct diff_options {
 	const char *stat_sep;
 	long xdl_opts;
 
+	/* see Documentation/diff-options.txt */
+	char **anchors;
+	size_t anchors_nr, anchors_alloc;
+
 	int stat_width;
 	int stat_name_width;
 	int stat_graph_width;
@@ -173,6 +178,8 @@ struct diff_options {
 	const char *word_regex;
 	enum diff_words_type word_diff;
 	enum diff_submodule_format submodule_format;
+
+	struct oidset *objfind;
 
 	/* this is set by diffcore for DIFF_FORMAT_PATCH */
 	int found_changes;

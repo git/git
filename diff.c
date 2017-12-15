@@ -3210,6 +3210,8 @@ static void builtin_diff(const char *name_a,
 		ecbdata.opt = o;
 		ecbdata.header = header.len ? &header : NULL;
 		xpp.flags = o->xdl_opts;
+		xpp.anchors = o->anchors;
+		xpp.anchors_nr = o->anchors_nr;
 		xecfg.ctxlen = o->context;
 		xecfg.interhunkctxlen = o->interhunkcontext;
 		xecfg.flags = XDL_EMIT_FUNCNAMES;
@@ -3302,6 +3304,8 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 		memset(&xpp, 0, sizeof(xpp));
 		memset(&xecfg, 0, sizeof(xecfg));
 		xpp.flags = o->xdl_opts;
+		xpp.anchors = o->anchors;
+		xpp.anchors_nr = o->anchors_nr;
 		xecfg.ctxlen = o->context;
 		xecfg.interhunkctxlen = o->interhunkcontext;
 		if (xdi_diff_outf(&mf1, &mf2, diffstat_consume, diffstat,
@@ -4082,6 +4086,7 @@ void diff_setup(struct diff_options *options)
 	options->interhunkcontext = diff_interhunk_context_default;
 	options->ws_error_highlight = ws_error_highlight_default;
 	options->flags.rename_empty = 1;
+	options->objfind = NULL;
 
 	/* pathchange left =NULL by default */
 	options->change = diff_change;
@@ -4485,6 +4490,19 @@ static int parse_ws_error_highlight_opt(struct diff_options *opt, const char *ar
 	return 1;
 }
 
+static int parse_objfind_opt(struct diff_options *opt, const char *arg)
+{
+	struct object_id oid;
+
+	if (get_oid(arg, &oid))
+		return error("unable to resolve '%s'", arg);
+
+	if (!opt->objfind)
+		opt->objfind = xcalloc(1, sizeof(*opt->objfind));
+	oidset_insert(opt->objfind, &oid);
+	return 1;
+}
+
 int diff_opt_parse(struct diff_options *options,
 		   const char **av, int ac, const char *prefix)
 {
@@ -4508,17 +4526,12 @@ int diff_opt_parse(struct diff_options *options,
 		options->output_format |= DIFF_FORMAT_NUMSTAT;
 	else if (!strcmp(arg, "--shortstat"))
 		options->output_format |= DIFF_FORMAT_SHORTSTAT;
-	else if (!strcmp(arg, "-X") || !strcmp(arg, "--dirstat"))
-		return parse_dirstat_opt(options, "");
-	else if (skip_prefix(arg, "-X", &arg))
-		return parse_dirstat_opt(options, arg);
-	else if (skip_prefix(arg, "--dirstat=", &arg))
+	else if (skip_prefix(arg, "-X", &arg) ||
+		 skip_to_optional_arg(arg, "--dirstat", &arg))
 		return parse_dirstat_opt(options, arg);
 	else if (!strcmp(arg, "--cumulative"))
 		return parse_dirstat_opt(options, "cumulative");
-	else if (!strcmp(arg, "--dirstat-by-file"))
-		return parse_dirstat_opt(options, "files");
-	else if (skip_prefix(arg, "--dirstat-by-file=", &arg)) {
+	else if (skip_to_optional_arg(arg, "--dirstat-by-file", &arg)) {
 		parse_dirstat_opt(options, "files");
 		return parse_dirstat_opt(options, arg);
 	}
@@ -4540,13 +4553,13 @@ int diff_opt_parse(struct diff_options *options,
 		return stat_opt(options, av);
 
 	/* renames options */
-	else if (starts_with(arg, "-B") || starts_with(arg, "--break-rewrites=") ||
-		 !strcmp(arg, "--break-rewrites")) {
+	else if (starts_with(arg, "-B") ||
+		 skip_to_optional_arg(arg, "--break-rewrites", NULL)) {
 		if ((options->break_opt = diff_scoreopt_parse(arg)) == -1)
 			return error("invalid argument to -B: %s", arg+2);
 	}
-	else if (starts_with(arg, "-M") || starts_with(arg, "--find-renames=") ||
-		 !strcmp(arg, "--find-renames")) {
+	else if (starts_with(arg, "-M") ||
+		 skip_to_optional_arg(arg, "--find-renames", NULL)) {
 		if ((options->rename_score = diff_scoreopt_parse(arg)) == -1)
 			return error("invalid argument to -M: %s", arg+2);
 		options->detect_rename = DIFF_DETECT_RENAME;
@@ -4554,8 +4567,8 @@ int diff_opt_parse(struct diff_options *options,
 	else if (!strcmp(arg, "-D") || !strcmp(arg, "--irreversible-delete")) {
 		options->irreversible_delete = 1;
 	}
-	else if (starts_with(arg, "-C") || starts_with(arg, "--find-copies=") ||
-		 !strcmp(arg, "--find-copies")) {
+	else if (starts_with(arg, "-C") ||
+		 skip_to_optional_arg(arg, "--find-copies", NULL)) {
 		if (options->detect_rename == DIFF_DETECT_COPY)
 			options->flags.find_copies_harder = 1;
 		if ((options->rename_score = diff_scoreopt_parse(arg)) == -1)
@@ -4568,11 +4581,10 @@ int diff_opt_parse(struct diff_options *options,
 		options->flags.rename_empty = 1;
 	else if (!strcmp(arg, "--no-rename-empty"))
 		options->flags.rename_empty = 0;
-	else if (!strcmp(arg, "--relative"))
+	else if (skip_to_optional_arg_default(arg, "--relative", &arg, NULL)) {
 		options->flags.relative_name = 1;
-	else if (skip_prefix(arg, "--relative=", &arg)) {
-		options->flags.relative_name = 1;
-		options->prefix = arg;
+		if (arg)
+			options->prefix = arg;
 	}
 
 	/* xdiff options */
@@ -4594,9 +4606,18 @@ int diff_opt_parse(struct diff_options *options,
 		DIFF_XDL_SET(options, INDENT_HEURISTIC);
 	else if (!strcmp(arg, "--no-indent-heuristic"))
 		DIFF_XDL_CLR(options, INDENT_HEURISTIC);
-	else if (!strcmp(arg, "--patience"))
+	else if (!strcmp(arg, "--patience")) {
+		int i;
 		options->xdl_opts = DIFF_WITH_ALG(options, PATIENCE_DIFF);
-	else if (!strcmp(arg, "--histogram"))
+		/*
+		 * Both --patience and --anchored use PATIENCE_DIFF
+		 * internally, so remove any anchors previously
+		 * specified.
+		 */
+		for (i = 0; i < options->anchors_nr; i++)
+			free(options->anchors[i]);
+		options->anchors_nr = 0;
+	} else if (!strcmp(arg, "--histogram"))
 		options->xdl_opts = DIFF_WITH_ALG(options, HISTOGRAM_DIFF);
 	else if ((argcount = parse_long_opt("diff-algorithm", av, &optarg))) {
 		long value = parse_algorithm_value(optarg);
@@ -4608,6 +4629,11 @@ int diff_opt_parse(struct diff_options *options,
 		options->xdl_opts &= ~XDF_DIFF_ALGORITHM_MASK;
 		options->xdl_opts |= value;
 		return argcount;
+	} else if (skip_prefix(arg, "--anchored=", &arg)) {
+		options->xdl_opts = DIFF_WITH_ALG(options, PATIENCE_DIFF);
+		ALLOC_GROW(options->anchors, options->anchors_nr + 1,
+			   options->anchors_alloc);
+		options->anchors[options->anchors_nr++] = xstrdup(arg);
 	}
 
 	/* flags options */
@@ -4628,9 +4654,7 @@ int diff_opt_parse(struct diff_options *options,
 	else if (!strcmp(arg, "--no-follow")) {
 		options->flags.follow_renames = 0;
 		options->flags.default_follow_renames = 0;
-	} else if (!strcmp(arg, "--color"))
-		options->use_color = 1;
-	else if (skip_prefix(arg, "--color=", &arg)) {
+	} else if (skip_to_optional_arg_default(arg, "--color", &arg, "always")) {
 		int value = git_config_colorbool(NULL, arg);
 		if (value < 0)
 			return error("option `color' expects \"always\", \"auto\", or \"never\"");
@@ -4650,14 +4674,9 @@ int diff_opt_parse(struct diff_options *options,
 		if (cm < 0)
 			die("bad --color-moved argument: %s", arg);
 		options->color_moved = cm;
-	} else if (!strcmp(arg, "--color-words")) {
+	} else if (skip_to_optional_arg_default(arg, "--color-words", &options->word_regex, NULL)) {
 		options->use_color = 1;
 		options->word_diff = DIFF_WORDS_COLOR;
-	}
-	else if (skip_prefix(arg, "--color-words=", &arg)) {
-		options->use_color = 1;
-		options->word_diff = DIFF_WORDS_COLOR;
-		options->word_regex = arg;
 	}
 	else if (!strcmp(arg, "--word-diff")) {
 		if (options->word_diff == DIFF_WORDS_NONE)
@@ -4696,15 +4715,10 @@ int diff_opt_parse(struct diff_options *options,
 		options->flags.textconv_set_via_cmdline = 1;
 	} else if (!strcmp(arg, "--no-textconv"))
 		options->flags.allow_textconv = 0;
-	else if (!strcmp(arg, "--ignore-submodules")) {
-		options->flags.override_submodule_config = 1;
-		handle_ignore_submodules_arg(options, "all");
-	} else if (skip_prefix(arg, "--ignore-submodules=", &arg)) {
+	else if (skip_to_optional_arg_default(arg, "--ignore-submodules", &arg, "all")) {
 		options->flags.override_submodule_config = 1;
 		handle_ignore_submodules_arg(options, arg);
-	} else if (!strcmp(arg, "--submodule"))
-		options->submodule_format = DIFF_SUBMODULE_LOG;
-	else if (skip_prefix(arg, "--submodule=", &arg))
+	} else if (skip_to_optional_arg_default(arg, "--submodule", &arg, "log"))
 		return parse_submodule_opt(options, arg);
 	else if (skip_prefix(arg, "--ws-error-highlight=", &arg))
 		return parse_ws_error_highlight_opt(options, arg);
@@ -4736,7 +4750,8 @@ int diff_opt_parse(struct diff_options *options,
 	else if ((argcount = short_opt('O', av, &optarg))) {
 		options->orderfile = prefix_filename(prefix, optarg);
 		return argcount;
-	}
+	} else if (skip_prefix(arg, "--find-object=", &arg))
+		return parse_objfind_opt(options, arg);
 	else if ((argcount = parse_long_opt("diff-filter", av, &optarg))) {
 		int offending = parse_diff_filter_opt(optarg, options);
 		if (offending)
@@ -4902,14 +4917,20 @@ const char *diff_aligned_abbrev(const struct object_id *oid, int len)
 	int abblen;
 	const char *abbrev;
 
+	/* Do we want all 40 hex characters? */
 	if (len == GIT_SHA1_HEXSZ)
 		return oid_to_hex(oid);
 
+	/* An abbreviated value is fine, possibly followed by an ellipsis. */
 	abbrev = diff_abbrev_oid(oid, len);
+
+	if (!print_sha1_ellipsis())
+		return abbrev;
+
 	abblen = strlen(abbrev);
 
 	/*
-	 * In well-behaved cases, where the abbbreviated result is the
+	 * In well-behaved cases, where the abbreviated result is the
 	 * same as the requested length, append three dots after the
 	 * abbreviation (hence the whole logic is limited to the case
 	 * where abblen < 37); when the actual abbreviated result is a
@@ -5454,7 +5475,7 @@ void diff_warn_rename_limit(const char *varname, int needed, int degraded_cc)
 		warning(_(rename_limit_warning));
 	else
 		return;
-	if (0 < needed && needed < 32767)
+	if (0 < needed)
 		warning(_(rename_limit_advice), varname, needed);
 }
 
@@ -5770,6 +5791,9 @@ void diffcore_std(struct diff_options *options)
 		diffcore_skip_stat_unmatch(options);
 	if (!options->found_follow) {
 		/* See try_to_follow_renames() in tree-diff.c */
+
+		if (options->objfind)
+			diffcore_objfind(options);
 		if (options->break_opt != -1)
 			diffcore_break(options->break_opt);
 		if (options->detect_rename)

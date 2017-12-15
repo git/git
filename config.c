@@ -853,7 +853,7 @@ int git_parse_ulong(const char *value, unsigned long *ret)
 	return 1;
 }
 
-static int git_parse_ssize_t(const char *value, ssize_t *ret)
+int git_parse_ssize_t(const char *value, ssize_t *ret)
 {
 	intmax_t tmp;
 	if (!git_parse_signed(value, &tmp, maximum_signed_value_of_type(ssize_t)))
@@ -1249,6 +1249,11 @@ static int git_default_core_config(const char *var, const char *value)
 		else
 			hide_dotfiles = git_config_bool(var, value);
 		return 0;
+	}
+
+	if (!strcmp(var, "core.partialclonefilter")) {
+		return git_config_string(&core_partial_clone_filter_default,
+					 var, value);
 	}
 
 	/* Add other config variables here and to Documentation/config.txt. */

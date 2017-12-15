@@ -34,22 +34,6 @@
 #include "packfile.h"
 
 /**
- * Returns 1 if the file is empty or does not exist, 0 otherwise.
- */
-static int is_empty_file(const char *filename)
-{
-	struct stat st;
-
-	if (stat(filename, &st) < 0) {
-		if (errno == ENOENT)
-			return 1;
-		die_errno(_("could not stat %s"), filename);
-	}
-
-	return !st.st_size;
-}
-
-/**
  * Returns the length of the first line of msg.
  */
 static int linelen(const char *msg)
@@ -708,6 +692,7 @@ static int split_mail_mbox(struct am_state *state, const char **paths,
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
 	struct strbuf last = STRBUF_INIT;
+	int ret;
 
 	cp.git_cmd = 1;
 	argv_array_push(&cp.args, "mailsplit");
@@ -721,13 +706,16 @@ static int split_mail_mbox(struct am_state *state, const char **paths,
 	argv_array_push(&cp.args, "--");
 	argv_array_pushv(&cp.args, paths);
 
-	if (capture_command(&cp, &last, 8))
-		return -1;
+	ret = capture_command(&cp, &last, 8);
+	if (ret)
+		goto exit;
 
 	state->cur = 1;
 	state->last = strtol(last.buf, NULL, 10);
 
-	return 0;
+exit:
+	strbuf_release(&last);
+	return ret ? -1 : 0;
 }
 
 /**
@@ -1298,7 +1286,7 @@ static int parse_mail(struct am_state *state, const char *mail)
 		goto finish;
 	}
 
-	if (is_empty_file(am_path(state, "patch"))) {
+	if (is_empty_or_missing_file(am_path(state, "patch"))) {
 		printf_ln(_("Patch is empty."));
 		die_user_resolve(state);
 	}
@@ -1880,7 +1868,7 @@ next:
 		resume = 0;
 	}
 
-	if (!is_empty_file(am_path(state, "rewritten"))) {
+	if (!is_empty_or_missing_file(am_path(state, "rewritten"))) {
 		assert(state->rebasing);
 		copy_notes_for_rebase(state);
 		run_post_rewrite_hook(state);

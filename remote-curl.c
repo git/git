@@ -24,6 +24,7 @@ struct options {
 	char *deepen_since;
 	struct string_list deepen_not;
 	struct string_list push_options;
+	char *filter;
 	unsigned progress : 1,
 		check_self_contained_and_connected : 1,
 		cloning : 1,
@@ -33,7 +34,9 @@ struct options {
 		thin : 1,
 		/* One of the SEND_PACK_PUSH_CERT_* constants. */
 		push_cert : 2,
-		deepen_relative : 1;
+		deepen_relative : 1,
+		from_promisor : 1,
+		no_dependents : 1;
 };
 static struct options options;
 static struct string_list cas_options = STRING_LIST_INIT_DUP;
@@ -144,8 +147,6 @@ static int set_option(const char *name, const char *value)
 	} else if (!strcmp(name, "push-option")) {
 		string_list_append(&options.push_options, value);
 		return 0;
-
-#if LIBCURL_VERSION_NUM >= 0x070a08
 	} else if (!strcmp(name, "family")) {
 		if (!strcmp(value, "ipv4"))
 			git_curl_ipresolve = CURL_IPRESOLVE_V4;
@@ -156,7 +157,15 @@ static int set_option(const char *name, const char *value)
 		else
 			return -1;
 		return 0;
-#endif /* LIBCURL_VERSION_NUM >= 0x070a08 */
+	} else if (!strcmp(name, "from-promisor")) {
+		options.from_promisor = 1;
+		return 0;
+	} else if (!strcmp(name, "no-dependents")) {
+		options.no_dependents = 1;
+		return 0;
+	} else if (!strcmp(name, "filter")) {
+		options.filter = xstrdup(value);;
+		return 0;
 	} else {
 		return 1 /* unsupported */;
 	}
@@ -438,7 +447,6 @@ static size_t rpc_out(void *ptr, size_t eltsize,
 	return avail;
 }
 
-#ifndef NO_CURL_IOCTL
 static curlioerr rpc_ioctl(CURL *handle, int cmd, void *clientp)
 {
 	struct rpc_state *rpc = clientp;
@@ -459,7 +467,6 @@ static curlioerr rpc_ioctl(CURL *handle, int cmd, void *clientp)
 		return CURLIOE_UNKNOWNCMD;
 	}
 }
-#endif
 
 static size_t rpc_in(char *ptr, size_t eltsize,
 		size_t nmemb, void *buffer_)
@@ -605,10 +612,8 @@ retry:
 		rpc->initial_buffer = 1;
 		curl_easy_setopt(slot->curl, CURLOPT_READFUNCTION, rpc_out);
 		curl_easy_setopt(slot->curl, CURLOPT_INFILE, rpc);
-#ifndef NO_CURL_IOCTL
 		curl_easy_setopt(slot->curl, CURLOPT_IOCTLFUNCTION, rpc_ioctl);
 		curl_easy_setopt(slot->curl, CURLOPT_IOCTLDATA, rpc);
-#endif
 		if (options.verbosity > 1) {
 			fprintf(stderr, "POST %s (chunked)\n", rpc->service_name);
 			fflush(stderr);
@@ -822,6 +827,12 @@ static int fetch_git(struct discovery *heads,
 				 options.deepen_not.items[i].string);
 	if (options.deepen_relative && options.depth)
 		argv_array_push(&args, "--deepen-relative");
+	if (options.from_promisor)
+		argv_array_push(&args, "--from-promisor");
+	if (options.no_dependents)
+		argv_array_push(&args, "--no-dependents");
+	if (options.filter)
+		argv_array_pushf(&args, "--filter=%s", options.filter);
 	argv_array_push(&args, url.buf);
 
 	for (i = 0; i < nr_heads; i++) {

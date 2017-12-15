@@ -1763,6 +1763,7 @@ static void wt_shortstatus_other(struct string_list_item *it,
 static void wt_shortstatus_print_tracking(struct wt_status *s)
 {
 	struct branch *branch;
+	struct wt_status_state state;
 	const char *header_color = color(WT_STATUS_HEADER, s);
 	const char *branch_color_local = color(WT_STATUS_LOCAL_BRANCH, s);
 	const char *branch_color_remote = color(WT_STATUS_REMOTE_BRANCH, s);
@@ -1787,7 +1788,7 @@ static void wt_shortstatus_print_tracking(struct wt_status *s)
 	if (!strcmp(s->branch, "HEAD")) {
 		color_fprintf(s->fp, color(WT_STATUS_NOBRANCH, s), "%s",
 			      LABEL(N_("HEAD (no branch)")));
-		goto conclude;
+		goto in_progress;
 	}
 
 	skip_prefix(branch_name, "refs/heads/", &branch_name);
@@ -1798,7 +1799,7 @@ static void wt_shortstatus_print_tracking(struct wt_status *s)
 
 	if (stat_tracking_info(branch, &num_ours, &num_theirs, &base) < 0) {
 		if (!base)
-			goto conclude;
+			goto in_progress;
 
 		upstream_is_gone = 1;
 	}
@@ -1809,7 +1810,7 @@ static void wt_shortstatus_print_tracking(struct wt_status *s)
 	free(short_base);
 
 	if (!upstream_is_gone && !num_ours && !num_theirs)
-		goto conclude;
+		goto in_progress;
 
 	color_fprintf(s->fp, header_color, " [");
 	if (upstream_is_gone) {
@@ -1828,6 +1829,31 @@ static void wt_shortstatus_print_tracking(struct wt_status *s)
 	}
 
 	color_fprintf(s->fp, header_color, "]");
+
+ in_progress:
+	if (!s->show_in_progress)
+		goto conclude;
+	memset(&state, 0, sizeof(state));
+	wt_status_get_state(&state,
+			    s->branch && !strcmp(s->branch, "HEAD"));
+	if (state.merge_in_progress)
+		color_fprintf(s->fp, header_color, "; %s", LABEL(N_("MERGING")));
+	else if (state.am_in_progress)
+		color_fprintf(s->fp, header_color, "; %s", LABEL(N_("AM")));
+	else if (state.rebase_in_progress)
+		color_fprintf(s->fp, header_color, "; %s", LABEL(N_("REBASE-m")));
+	else if (state.rebase_interactive_in_progress)
+		color_fprintf(s->fp, header_color, "; %s", LABEL(N_("REBASE-i")));
+	else if (state.cherry_pick_in_progress)
+		color_fprintf(s->fp, header_color, "; %s", LABEL(N_("CHERRY-PICKING")));
+	else if (state.revert_in_progress)
+		color_fprintf(s->fp, header_color, "; %s", LABEL(N_("REVERTING")));
+	if (state.bisect_in_progress)
+		color_fprintf(s->fp, header_color, "; %s", LABEL(N_("BISECTING")));
+	free(state.branch);
+	free(state.onto);
+	free(state.detached_from);
+
  conclude:
 	fputc(s->null_termination ? '\0' : '\n', s->fp);
 }

@@ -245,6 +245,12 @@ test_expect_success 'local clone from linked checkout' '
 	( cd here-clone && git fsck )
 '
 
+test_expect_success 'local clone --shared from linked checkout' '
+	git -C bare worktree add --detach ../baretree &&
+	git clone --local --shared baretree bare-clone &&
+	grep /bare/ bare-clone/.git/objects/info/alternates
+'
+
 test_expect_success '"add" worktree with --no-checkout' '
 	git worktree add --no-checkout -b swamp swamp &&
 	! test -e swamp/init.t &&
@@ -312,6 +318,165 @@ test_expect_success 'checkout a branch under bisect' '
 
 test_expect_success 'rename a branch under bisect not allowed' '
 	test_must_fail git branch -M under-bisect bisect-with-new-name
+'
+# Is branch "refs/heads/$1" set to pull from "$2/$3"?
+test_branch_upstream () {
+	printf "%s\n" "$2" "refs/heads/$3" >expect.upstream &&
+	{
+		git config "branch.$1.remote" &&
+		git config "branch.$1.merge"
+	} >actual.upstream &&
+	test_cmp expect.upstream actual.upstream
+}
+
+test_expect_success '--track sets up tracking' '
+	test_when_finished rm -rf track &&
+	git worktree add --track -b track track master &&
+	test_branch_upstream track . master
+'
+
+# setup remote repository $1 and repository $2 with $1 set up as
+# remote.  The remote has two branches, master and foo.
+setup_remote_repo () {
+	git init $1 &&
+	(
+		cd $1 &&
+		test_commit $1_master &&
+		git checkout -b foo &&
+		test_commit upstream_foo
+	) &&
+	git init $2 &&
+	(
+		cd $2 &&
+		test_commit $2_master &&
+		git remote add $1 ../$1 &&
+		git config remote.$1.fetch \
+			"refs/heads/*:refs/remotes/$1/*" &&
+		git fetch --all
+	)
+}
+
+test_expect_success '--no-track avoids setting up tracking' '
+	test_when_finished rm -rf repo_upstream repo_local foo &&
+	setup_remote_repo repo_upstream repo_local &&
+	(
+		cd repo_local &&
+		git worktree add --no-track -b foo ../foo repo_upstream/foo
+	) &&
+	(
+		cd foo &&
+		test_must_fail git config "branch.foo.remote" &&
+		test_must_fail git config "branch.foo.merge" &&
+		test_cmp_rev refs/remotes/repo_upstream/foo refs/heads/foo
+	)
+'
+
+test_expect_success '"add" <path> <non-existent-branch> fails' '
+	test_must_fail git worktree add foo non-existent
+'
+
+test_expect_success '"add" <path> <branch> dwims' '
+	test_when_finished rm -rf repo_upstream repo_dwim foo &&
+	setup_remote_repo repo_upstream repo_dwim &&
+	git init repo_dwim &&
+	(
+		cd repo_dwim &&
+		git worktree add ../foo foo
+	) &&
+	(
+		cd foo &&
+		test_branch_upstream foo repo_upstream foo &&
+		test_cmp_rev refs/remotes/repo_upstream/foo refs/heads/foo
+	)
+'
+
+test_expect_success 'git worktree add does not match remote' '
+	test_when_finished rm -rf repo_a repo_b foo &&
+	setup_remote_repo repo_a repo_b &&
+	(
+		cd repo_b &&
+		git worktree add ../foo
+	) &&
+	(
+		cd foo &&
+		test_must_fail git config "branch.foo.remote" &&
+		test_must_fail git config "branch.foo.merge" &&
+		! test_cmp_rev refs/remotes/repo_a/foo refs/heads/foo
+	)
+'
+
+test_expect_success 'git worktree add --guess-remote sets up tracking' '
+	test_when_finished rm -rf repo_a repo_b foo &&
+	setup_remote_repo repo_a repo_b &&
+	(
+		cd repo_b &&
+		git worktree add --guess-remote ../foo
+	) &&
+	(
+		cd foo &&
+		test_branch_upstream foo repo_a foo &&
+		test_cmp_rev refs/remotes/repo_a/foo refs/heads/foo
+	)
+'
+
+test_expect_success 'git worktree add with worktree.guessRemote sets up tracking' '
+	test_when_finished rm -rf repo_a repo_b foo &&
+	setup_remote_repo repo_a repo_b &&
+	(
+		cd repo_b &&
+		git config worktree.guessRemote true &&
+		git worktree add ../foo
+	) &&
+	(
+		cd foo &&
+		test_branch_upstream foo repo_a foo &&
+		test_cmp_rev refs/remotes/repo_a/foo refs/heads/foo
+	)
+'
+
+test_expect_success 'git worktree --no-guess-remote option overrides config' '
+	test_when_finished rm -rf repo_a repo_b foo &&
+	setup_remote_repo repo_a repo_b &&
+	(
+		cd repo_b &&
+		git config worktree.guessRemote true &&
+		git worktree add --no-guess-remote ../foo
+	) &&
+	(
+		cd foo &&
+		test_must_fail git config "branch.foo.remote" &&
+		test_must_fail git config "branch.foo.merge" &&
+		! test_cmp_rev refs/remotes/repo_a/foo refs/heads/foo
+	)
+'
+
+post_checkout_hook () {
+	test_when_finished "rm -f .git/hooks/post-checkout" &&
+	mkdir -p .git/hooks &&
+	write_script .git/hooks/post-checkout <<-\EOF
+	echo $* >hook.actual
+	EOF
+}
+
+test_expect_success '"add" invokes post-checkout hook (branch)' '
+	post_checkout_hook &&
+	printf "%s %s 1\n" $_z40 $(git rev-parse HEAD) >hook.expect &&
+	git worktree add gumby &&
+	test_cmp hook.expect hook.actual
+'
+
+test_expect_success '"add" invokes post-checkout hook (detached)' '
+	post_checkout_hook &&
+	printf "%s %s 1\n" $_z40 $(git rev-parse HEAD) >hook.expect &&
+	git worktree add --detach grumpy &&
+	test_cmp hook.expect hook.actual
+'
+
+test_expect_success '"add --no-checkout" suppresses post-checkout hook' '
+	post_checkout_hook &&
+	rm -f hook.actual &&
+	git worktree add --no-checkout gloopy &&
+	test_path_is_missing hook.actual
 '
 
 test_done

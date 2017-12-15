@@ -189,7 +189,7 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 		init_display_notes(&rev->notes_opt);
 
 	if (rev->diffopt.pickaxe || rev->diffopt.filter ||
-	    rev->diffopt.flags.follow_renames)
+	    rev->diffopt.flags.follow_renames || rev->diffopt.objfind)
 		rev->always_show_header = 0;
 
 	if (source)

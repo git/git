@@ -24,6 +24,16 @@ int oidset_insert(struct oidset *set, const struct object_id *oid)
 	return 0;
 }
 
+int oidset_remove(struct oidset *set, const struct object_id *oid)
+{
+	struct oidmap_entry *entry;
+
+	entry = oidmap_remove(&set->map, oid);
+	free(entry);
+
+	return (entry != NULL);
+}
+
 void oidset_clear(struct oidset *set)
 {
 	oidmap_free(&set->map, 1);

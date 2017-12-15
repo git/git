@@ -85,6 +85,7 @@ struct wt_status {
 	int commit_template;
 	int show_branch;
 	int show_stash;
+	int show_in_progress;
 	int hints;
 
 	enum wt_status_format status_format;

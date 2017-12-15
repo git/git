@@ -62,6 +62,12 @@ struct hashmap {
 		 * initially, "next" reflects only the order in file1.
 		 */
 		struct entry *next, *previous;
+
+		/*
+		 * If 1, this entry can serve as an anchor. See
+		 * Documentation/diff-options.txt for more information.
+		 */
+		unsigned anchor : 1;
 	} *entries, *first, *last;
 	/* were common records found? */
 	unsigned long has_matches;
@@ -70,8 +76,19 @@ struct hashmap {
 	xpparam_t const *xpp;
 };
 
+static int is_anchor(xpparam_t const *xpp, const char *line)
+{
+	int i;
+	for (i = 0; i < xpp->anchors_nr; i++) {
+		if (!strncmp(line, xpp->anchors[i], strlen(xpp->anchors[i])))
+			return 1;
+	}
+	return 0;
+}
+
 /* The argument "pass" is 1 for the first file, 2 for the second. */
-static void insert_record(int line, struct hashmap *map, int pass)
+static void insert_record(xpparam_t const *xpp, int line, struct hashmap *map,
+			  int pass)
 {
 	xrecord_t **records = pass == 1 ?
 		map->env->xdf1.recs : map->env->xdf2.recs;
@@ -110,6 +127,7 @@ static void insert_record(int line, struct hashmap *map, int pass)
 		return;
 	map->entries[index].line1 = line;
 	map->entries[index].hash = record->ha;
+	map->entries[index].anchor = is_anchor(xpp, map->env->xdf1.recs[line - 1]->ptr);
 	if (!map->first)
 		map->first = map->entries + index;
 	if (map->last) {
@@ -147,11 +165,11 @@ static int fill_hashmap(mmfile_t *file1, mmfile_t *file2,
 
 	/* First, fill with entries from the first file */
 	while (count1--)
-		insert_record(line1++, result, 1);
+		insert_record(xpp, line1++, result, 1);
 
 	/* Then search for matches in the second file */
 	while (count2--)
-		insert_record(line2++, result, 2);
+		insert_record(xpp, line2++, result, 2);
 
 	return 0;
 }
@@ -192,14 +210,28 @@ static struct entry *find_longest_common_sequence(struct hashmap *map)
 	int longest = 0, i;
 	struct entry *entry;
 
+	/*
+	 * If not -1, this entry in sequence must never be overridden.
+	 * Therefore, overriding entries before this has no effect, so
+	 * do not do that either.
+	 */
+	int anchor_i = -1;
+
 	for (entry = map->first; entry; entry = entry->next) {
 		if (!entry->line2 || entry->line2 == NON_UNIQUE)
 			continue;
 		i = binary_search(sequence, longest, entry);
 		entry->previous = i < 0 ? NULL : sequence[i];
-		sequence[++i] = entry;
-		if (i == longest)
+		++i;
+		if (i <= anchor_i)
+			continue;
+		sequence[i] = entry;
+		if (entry->anchor) {
+			anchor_i = i;
+			longest = anchor_i + 1;
+		} else if (i == longest) {
 			longest++;
+		}
 	}
 
 	/* No common unique lines were found */

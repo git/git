@@ -13,14 +13,20 @@
  *
  *   - force enables overwriting an existing (non-head) branch
  *
+ *   - clobber_head_ok allows the currently checked out (hence existing)
+ *     branch to be overwritten; without 'force', it has no effect.
+ *
  *   - reflog creates a reflog for the branch
+ *
+ *   - quiet suppresses tracking information
  *
  *   - track causes the new branch to be configured to merge the remote branch
  *     that start_name is a tracking branch for (if any).
+ *
  */
 void create_branch(const char *name, const char *start_name,
-		   int force, int reflog,
-		   int clobber_head, int quiet, enum branch_track track);
+		   int force, int clobber_head_ok,
+		   int reflog, int quiet, enum branch_track track);
 
 /*
  * Check if 'name' can be a valid name for a branch; die otherwise.

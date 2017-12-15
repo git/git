@@ -160,6 +160,15 @@ static int set_git_option(struct git_transport_options *opts,
 	} else if (!strcmp(name, TRANS_OPT_DEEPEN_RELATIVE)) {
 		opts->deepen_relative = !!value;
 		return 0;
+	} else if (!strcmp(name, TRANS_OPT_FROM_PROMISOR)) {
+		opts->from_promisor = !!value;
+		return 0;
+	} else if (!strcmp(name, TRANS_OPT_NO_DEPENDENTS)) {
+		opts->no_dependents = !!value;
+		return 0;
+	} else if (!strcmp(name, TRANS_OPT_LIST_OBJECTS_FILTER)) {
+		parse_list_objects_filter(&opts->filter_options, value);
+		return 0;
 	}
 	return 1;
 }
@@ -228,6 +237,9 @@ static int fetch_refs_via_pack(struct transport *transport,
 		data->options.check_self_contained_and_connected;
 	args.cloning = transport->cloning;
 	args.update_shallow = data->options.update_shallow;
+	args.from_promisor = data->options.from_promisor;
+	args.no_dependents = data->options.no_dependents;
+	args.filter_options = data->options.filter_options;
 
 	if (!data->got_remote_heads) {
 		connect_setup(transport, 0);
@@ -627,7 +639,6 @@ void transport_take_over(struct transport *transport,
 	transport->set_option = NULL;
 	transport->get_refs_list = get_refs_via_connect;
 	transport->fetch = fetch_refs_via_pack;
-	transport->push = NULL;
 	transport->push_refs = git_transport_push;
 	transport->disconnect = disconnect_git;
 	transport->smart_options = &(data->options);
@@ -969,13 +980,7 @@ int transport_push(struct transport *transport,
 	*reject_reasons = 0;
 	transport_verify_remote_names(refspec_nr, refspec);
 
-	if (transport->push) {
-		/* Maybe FIXME. But no important transport uses this case. */
-		if (flags & TRANSPORT_PUSH_SET_UPSTREAM)
-			die("This transport does not support using --set-upstream");
-
-		return transport->push(transport, refspec_nr, refspec, flags);
-	} else if (transport->push_refs) {
+	if (transport->push_refs) {
 		struct ref *remote_refs;
 		struct ref *local_refs = get_local_heads();
 		int match_flags = MATCH_REFS_NONE;

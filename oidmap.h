@@ -65,4 +65,26 @@ extern void *oidmap_put(struct oidmap *map, void *entry);
  */
 extern void *oidmap_remove(struct oidmap *map, const struct object_id *key);
 
+
+struct oidmap_iter {
+	struct hashmap_iter h_iter;
+};
+
+static inline void oidmap_iter_init(struct oidmap *map, struct oidmap_iter *iter)
+{
+	hashmap_iter_init(&map->map, &iter->h_iter);
+}
+
+static inline void *oidmap_iter_next(struct oidmap_iter *iter)
+{
+	return hashmap_iter_next(&iter->h_iter);
+}
+
+static inline void *oidmap_iter_first(struct oidmap *map,
+				      struct oidmap_iter *iter)
+{
+	oidmap_iter_init(map, iter);
+	return oidmap_iter_next(iter);
+}
+
 #endif
