@@ -703,57 +703,70 @@ EOT3
 		do_edit($compose_filename);
 	}
 
-	open my $c2, ">", $compose_filename . ".final"
-		or die sprintf(__("Failed to open %s.final: %s"), $compose_filename, $!);
-
 	open $c, "<", $compose_filename
 		or die sprintf(__("Failed to open %s: %s"), $compose_filename, $!);
 
-	my $need_8bit_cte = file_has_nonascii($compose_filename);
-	my $in_body = 0;
-	my $summary_empty = 1;
 	if (!defined $compose_encoding) {
 		$compose_encoding = "UTF-8";
 	}
-	while(<$c>) {
-		next if m/^GIT:/;
-		if ($in_body) {
-			$summary_empty = 0 unless (/^\n$/);
-		} elsif (/^\n$/) {
-			$in_body = 1;
-			if ($need_8bit_cte) {
-				print $c2 "MIME-Version: 1.0\n",
-					 "Content-Type: text/plain; ",
-					   "charset=$compose_encoding\n",
-					 "Content-Transfer-Encoding: 8bit\n";
-			}
-		} elsif (/^MIME-Version:/i) {
-			$need_8bit_cte = 0;
-		} elsif (/^Subject:\s*(.+)\s*$/i) {
-			$initial_subject = $1;
-			my $subject = $initial_subject;
-			$_ = "Subject: " .
-				quote_subject($subject, $compose_encoding) .
-				"\n";
-		} elsif (/^In-Reply-To:\s*(.+)\s*$/i) {
-			$initial_reply_to = $1;
-			next;
-		} elsif (/^From:\s*(.+)\s*$/i) {
-			$sender = $1;
-			next;
-		} elsif (/^(?:To|Cc|Bcc):/i) {
-			print __("To/Cc/Bcc fields are not interpreted yet, they have been ignored\n");
-			next;
+
+	my %parsed_email;
+	while (my $line = <$c>) {
+		next if $line =~ m/^GIT:/;
+		parse_header_line($line, \%parsed_email);
+		if ($line =~ /^$/) {
+			$parsed_email{'body'} = filter_body($c);
 		}
-		print $c2 $_;
 	}
 	close $c;
-	close $c2;
 
-	if ($summary_empty) {
+	open my $c2, ">", $compose_filename . ".final"
+	or die sprintf(__("Failed to open %s.final: %s"), $compose_filename, $!);
+
+
+	if ($parsed_email{'From'}) {
+		$sender = delete($parsed_email{'From'});
+	}
+	if ($parsed_email{'In-Reply-To'}) {
+		$initial_reply_to = delete($parsed_email{'In-Reply-To'});
+	}
+	if ($parsed_email{'Subject'}) {
+		$initial_subject = delete($parsed_email{'Subject'});
+		print $c2 "Subject: " .
+			quote_subject($initial_subject, $compose_encoding) .
+			"\n";
+	}
+
+	if ($parsed_email{'MIME-Version'}) {
+		print $c2 "MIME-Version: $parsed_email{'MIME-Version'}\n",
+				"Content-Type: $parsed_email{'Content-Type'};\n",
+				"Content-Transfer-Encoding: $parsed_email{'Content-Transfer-Encoding'}\n";
+		delete($parsed_email{'MIME-Version'});
+		delete($parsed_email{'Content-Type'});
+		delete($parsed_email{'Content-Transfer-Encoding'});
+	} elsif (file_has_nonascii($compose_filename)) {
+		my $content_type = (delete($parsed_email{'Content-Type'}) or
+			"text/plain; charset=$compose_encoding");
+		print $c2 "MIME-Version: 1.0\n",
+			"Content-Type: $content_type\n",
+			"Content-Transfer-Encoding: 8bit\n";
+	}
+	# Preserve unknown headers
+	foreach my $key (keys %parsed_email) {
+		next if $key eq 'body';
+		print $c2 "$key: $parsed_email{$key}";
+	}
+
+	if ($parsed_email{'body'}) {
+		print $c2 "\n$parsed_email{'body'}\n";
+		delete($parsed_email{'body'});
+	} else {
 		print __("Summary email is empty, skipping it\n");
 		$compose = -1;
 	}
+
+	close $c2;
+
 } elsif ($annotate) {
 	do_edit(@files);
 }
@@ -791,6 +804,32 @@ sub ask {
 	}
 	return;
 }
+
+sub parse_header_line {
+	my $lines = shift;
+	my $parsed_line = shift;
+	my $addr_pat = join "|", qw(To Cc Bcc);
+
+	foreach (split(/\n/, $lines)) {
+		if (/^($addr_pat):\s*(.+)$/i) {
+		        $parsed_line->{$1} = [ parse_address_line($2) ];
+		} elsif (/^([^:]*):\s*(.+)\s*$/i) {
+		        $parsed_line->{$1} = $2;
+		}
+	}
+}
+
+sub filter_body {
+	my $c = shift;
+	my $body = "";
+	while (my $body_line = <$c>) {
+		if ($body_line !~ m/^GIT:/) {
+			$body .= $body_line;
+		}
+	}
+	return $body;
+}
+
 
 my %broken_encoding;
 
