@@ -43,33 +43,36 @@ test_expect_success GPG 'create repositories with signed commits' '
 '
 
 test_expect_success GPG 'pull unsigned commit with --verify-signatures' '
+	test_when_finished "git reset --hard && git checkout initial" &&
 	test_must_fail git pull --ff-only --verify-signatures unsigned 2>pullerror &&
 	test_i18ngrep "does not have a GPG signature" pullerror
 '
 
 test_expect_success GPG 'pull commit with bad signature with --verify-signatures' '
+	test_when_finished "git reset --hard && git checkout initial" &&
 	test_must_fail git pull --ff-only --verify-signatures bad 2>pullerror &&
 	test_i18ngrep "has a bad GPG signature" pullerror
 '
 
 test_expect_success GPG 'pull commit with untrusted signature with --verify-signatures' '
+	test_when_finished "git reset --hard && git checkout initial" &&
 	test_must_fail git pull --ff-only --verify-signatures untrusted 2>pullerror &&
 	test_i18ngrep "has an untrusted GPG signature" pullerror
 '
 
 test_expect_success GPG 'pull signed commit with --verify-signatures' '
-	test_when_finished "git checkout initial" &&
+	test_when_finished "git reset --hard && git checkout initial" &&
 	git pull --verify-signatures signed >pulloutput &&
 	test_i18ngrep "has a good GPG signature" pulloutput
 '
 
 test_expect_success GPG 'pull commit with bad signature without verification' '
-	test_when_finished "git checkout initial" &&
+	test_when_finished "git reset --hard && git checkout initial" &&
 	git pull --ff-only bad 2>pullerror
 '
 
 test_expect_success GPG 'pull commit with bad signature with --no-verify-signatures' '
-	test_when_finished "git checkout initial" &&
+	test_when_finished "git reset --hard && git checkout initial" &&
 	test_config merge.verifySignatures true &&
 	test_config pull.verifySignatures true &&
 	git pull --ff-only --no-verify-signatures bad 2>pullerror
