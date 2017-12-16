@@ -40,8 +40,7 @@ test_lazy_prereq UNTRACKED_CACHE '
 '
 
 test_lazy_prereq WATCHMAN '
-	{ command -v watchman >/dev/null 2>&1; ret=$?; } &&
-	test $ret -ne 1
+	command -v watchman
 '
 
 if test_have_prereq WATCHMAN
