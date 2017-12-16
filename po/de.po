@@ -1070,42 +1070,42 @@ msgstr "Branch %s kann nicht sein eigener Upstream-Branch sein."
 #: branch.c:93
 #, c-format
 msgid "Branch '%s' set up to track remote branch '%s' from '%s' by rebasing."
-msgstr "Branch '%s' konfiguriert zum Folgen von Remote-Branch '%s' von '%s' durch Rebase."
+msgstr "Branch '%s' folgt nun Remote-Branch '%s' von '%s' durch Rebase."
 
 #: branch.c:94
 #, c-format
 msgid "Branch '%s' set up to track remote branch '%s' from '%s'."
-msgstr "Branch '%s' konfiguriert zum Folgen von Remote-Branch '%s' von '%s'."
+msgstr "Branch '%s' folgt nun Remote-Branch '%s' von '%s'."
 
 #: branch.c:98
 #, c-format
 msgid "Branch '%s' set up to track local branch '%s' by rebasing."
-msgstr "Branch '%s' konfiguriert zum Folgen von lokalem Branch '%s' durch Rebase."
+msgstr "Branch '%s' folgt nun lokalem Branch '%s' durch Rebase."
 
 #: branch.c:99
 #, c-format
 msgid "Branch '%s' set up to track local branch '%s'."
-msgstr "Branch '%s' konfiguriert zum Folgen von lokalem Branch '%s'."
+msgstr "Branch '%s' folgt nun lokalem Branch '%s'."
 
 #: branch.c:104
 #, c-format
 msgid "Branch '%s' set up to track remote ref '%s' by rebasing."
-msgstr "Branch '%s' konfiguriert zum Folgen von Remote-Referenz '%s' durch Rebase."
+msgstr "Branch '%s' folgt nun Remote-Referenz '%s' durch Rebase."
 
 #: branch.c:105
 #, c-format
 msgid "Branch '%s' set up to track remote ref '%s'."
-msgstr "Branch '%s' konfiguriert zum Folgen von Remote-Referenz '%s'."
+msgstr "Branch '%s' folgt nun Remote-Referenz '%s'."
 
 #: branch.c:109
 #, c-format
 msgid "Branch '%s' set up to track local ref '%s' by rebasing."
-msgstr "Branch '%s' konfiguriert zum Folgen von lokaler Referenz '%s' durch Rebase."
+msgstr "Branch '%s' folgt nun lokaler Referenz '%s' durch Rebase."
 
 #: branch.c:110
 #, c-format
 msgid "Branch '%s' set up to track local ref '%s'."
-msgstr "Branch '%s' konfiguriert zum Folgen von lokaler Referenz '%s'."
+msgstr "Branch '%s' folgt nun lokaler Referenz '%s'."
 
 #: branch.c:119
 msgid "Unable to write upstream branch configuration"
