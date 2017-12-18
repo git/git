@@ -1311,12 +1311,41 @@ static char *path_lookup(const char *cmd, int exe_only)
 }
 
 #if defined(_MSC_VER)
+
+/* We need a stable sort */
+#ifndef INTERNAL_QSORT
+#include "qsort.c"
+#endif
+
+/* Compare only keys */
+static int wenvcmp(const void *a, const void *b)
+{
+	wchar_t *p = *(wchar_t **)a, *q = *(wchar_t **)b;
+	size_t p_len, q_len;
+	int ret;
+
+	/* Find end of keys */
+	for (p_len = 0; p[p_len] && p[p_len] != L'='; p_len++)
+		; /* do nothing */
+	for (q_len = 0; q[q_len] && q[q_len] != L'='; q_len++)
+		; /* do nothing */
+
+		  /* Are keys identical (modulo case)? */
+	if (p_len == q_len && !_wcsnicmp(p, q, p_len))
+		return 0;
+
+	ret = _wcsnicmp(p, q, p_len < q_len ? p_len : q_len);
+	return ret ? ret : (p_len < q_len ? -1 : +1);
+}
+
 /*
  * Build an environment block combining the inherited environment
  * merged with the given list of settings.
  *
  * Values of the form "KEY=VALUE" in deltaenv override inherited values.
  * Values of the form "KEY" in deltaenv delete inherited values.
+ *
+ * Multiple entries in deltaenv for the same key are explicitly allowed.
  *
  * We return a contiguous block of UNICODE strings with a final trailing
  * zero word.
@@ -1328,162 +1357,96 @@ static wchar_t *make_environment_block(char **deltaenv)
 	 * as a function that returns a pointer to a mostly static table.
 	 * Grab the pointer and cache it for the duration of our loop.
 	 */
-	const wchar_t *my_wenviron = GetEnvironmentStringsW();
-	const wchar_t *p;
+	const wchar_t *wenv = GetEnvironmentStringsW(), *p;
+	size_t delta_size = 0, size = 1; /* for extra NUL at the end */
+
+	wchar_t **array = NULL;
+	size_t alloc = 0, nr = 0, i;
+
+	const char *p2;
+	wchar_t *wdeltaenv;
+
+	wchar_t *result, *p3;
 
 	/*
-	 * Internally, we create normal 'C' arrays of strings (pointing
-	 * into the blocks) to help with some of the de-dup work.
+	 * If there is no deltaenv to apply, simply return a copy
 	 */
-	wchar_t **wptrs_ins = NULL;
-	wchar_t **wptrs_del = NULL;
-	wchar_t *wblock_ins = NULL;
-	wchar_t *wblock_del = NULL;
-	wchar_t *wend_ins;
-	wchar_t *wend_del;
-	wchar_t *w_ins;
-	wchar_t *w_del;
-
-	int maxlen = 0;
-	int nr_delta = 0;
-	int nr_delta_ins = 0;
-	int nr_delta_del = 0;
-	int nr_wenv = 0;
-	int j, k, k_ins, k_del;
-
-	/*
-	 * Count the number of inserts and deletes in the deltaenv list.
-	 * Allocate 'C' arrays for inserts and deletes.
-	 * Also estimate the block size of our results.
-	 */
-	if (deltaenv && deltaenv[0] && *deltaenv[0]) {
-		for (k = 0; deltaenv && deltaenv[k] && *deltaenv[k]; k++) {
-			if (strchr(deltaenv[k], '=') == NULL)
-				nr_delta_del++;
-			else {
-				maxlen += strlen(deltaenv[k]) + 1;
-				nr_delta_ins++;
-			}
+	if (!deltaenv || !*deltaenv) {
+		for (p = wenv; p && *p; ) {
+			size_t s = wcslen(p) + 1;
+			size += s;
+			p += s;
 		}
 
-		if (nr_delta_ins)
-			wptrs_ins = (wchar_t**)calloc(nr_delta_ins + 1, sizeof(wchar_t*));
-		if (nr_delta_del)
-			wptrs_del = (wchar_t**)calloc(nr_delta_del + 1, sizeof(wchar_t*));
-
-		nr_delta = nr_delta_ins + nr_delta_del;
+		ALLOC_ARRAY(result, size);
+		memcpy(result, wenv, size * sizeof(*wenv));
+		FreeEnvironmentStringsW(wenv);
+		return result;
 	}
-	for (p = my_wenviron; p && *p; ) {
-		size_t len = wcslen(p) + 1;
-		maxlen += len;
-		p += len;
-		nr_wenv++;
-	}
-	maxlen++;
 
 	/*
-	 * Allocate blocks for inserted and deleted items.
-	 * The individual pointers in the 'C' arrays will point into here.
-	 * We will use the wblock_ins as the final result.
+	 * If there is a deltaenv, let's accumulate all keys into `array`,
+	 * sort them using the stable git_qsort() and then copy, skipping
+	 * duplicate keys
 	 */
-	if (nr_delta_del) {
-		wblock_del = (wchar_t*)calloc(maxlen, sizeof(wchar_t));
-		wend_del = wblock_del + maxlen;
-		w_del = wblock_del;
-	}
-	wblock_ins = (wchar_t*)calloc(maxlen, sizeof(wchar_t));
-	wend_ins = wblock_ins + maxlen;
-	w_ins = wblock_ins;
 
-	/*
-	 * deltaenv values override inherited environment, so put them
-	 * in the result list first (so that we can de-dup using the
-	 * wide versions of them.
-	 *
-	 * Items in the deltaenv list that DO NOT contain an "=" are
-	 * treated as unsetenv.
-	 *
-	 * Care needs to be taken to handle entries that are added first, and
-	 * then deleted.
-	 */
-	k_ins = 0;
-	k_del = 0;
-	for (k = 0; k < nr_delta; k++) {
-		if (strchr(deltaenv[k], '=') == NULL) {
-			wchar_t *save = w_del;
-			wptrs_del[k_del++] = w_del;
-			w_del += xutftowcs(w_del, deltaenv[k], (wend_del - w_del));
-			*w_del++ = L'='; /* append '=' to make lookup easier in next step. */
-			*w_del++ = 0;
-
-			/* If we added this key, we have to remove it again */
-			for (j = 0; j < k_ins; j++)
-				if (!wcsnicmp(wptrs_ins[j], save, w_del - save - 1)) {
-					if (j + 1 < k_ins) {
-						int delta = sizeof(wchar_t) * (wptrs_ins[j + 1] - wptrs_ins[j]), i;
-						memmove(wptrs_ins[j], wptrs_ins[j + 1], sizeof(wchar_t) * (w_ins - wptrs_ins[j + 1]));
-						for (i = j; i < --k_ins; i++)
-							wptrs_ins[i] = wptrs_ins[i + 1] - delta;
-						w_ins -= delta;
-					} else
-						w_ins = wptrs_ins[j];
-					k_ins--;
-					j--;
-				}
-		} else {
-			wptrs_ins[k_ins++] = w_ins;
-			w_ins += xutftowcs(w_ins, deltaenv[k], (wend_ins - w_ins)) + 1;
-		}
-	}
-	assert(k_ins <= nr_delta_ins);
-	assert(k_del == nr_delta_del);
-
-	/*
-	 * Walk the inherited environment and copy over unique, non-deleted
-	 * ones into the result set. Note that we only have to de-dup WRT
-	 * the values from deltaenv, because the inherited set should be unique.
-	 */
-	p = my_wenviron;
-	for (j = 0; j < nr_wenv; j++) {
-		const wchar_t *v_j = p;
-		wchar_t *v_j_eq = wcschr(v_j, L'=');
-		int len_j_eq, len_j;
-
-		p += wcslen(p) + 1;
-		if (!v_j_eq)
-			continue; /* should not happen */
-		len_j_eq = v_j_eq + 1 - v_j; /* length(v_j) including '=' */
-
-		/* lookup v_j in list of to-delete vars */
-		for (k_del = 0; k_del < nr_delta_del; k_del++) {
-			if (wcsnicmp(v_j, wptrs_del[k_del], len_j_eq) == 0)
-				goto skip_it;
-		}
-
-		/* lookup v_j in deltaenv portion of result set */
-		for (k_ins = 0; k_ins < nr_delta_ins; k_ins++) {
-			if (wcsnicmp(v_j, wptrs_ins[k_ins], len_j_eq) == 0)
-				goto skip_it;
-		}
-
-		/* item is unique, add it to results. */
-		len_j = wcslen(v_j);
-		memcpy(w_ins, v_j, len_j * sizeof(wchar_t));
-		w_ins += len_j + 1;
-
-skip_it:
-		;
+	for (p = wenv; p && *p; ) {
+		size_t s = wcslen(p) + 1;
+		size += s;
+		ALLOC_GROW(array, nr + 1, alloc);
+		array[nr++] = p;
+		p += s;
 	}
 
-	FreeEnvironmentStringsW(my_wenviron);
-	if (wptrs_ins)
-		free(wptrs_ins);
-	if (wptrs_del)
-		free(wptrs_del);
-	if (wblock_del)
-		free(wblock_del);
+	/* (over-)assess size needed for wchar version of deltaenv */
+	for (i = 0; deltaenv[i]; i++) {
+		size_t s = strlen(deltaenv[i]) + 1;
+		delta_size += s;
+	}
 
-	return wblock_ins;
+	ALLOC_ARRAY(wdeltaenv, delta_size);
+
+	/* convert the deltaenv, appending to array */
+	for (i = 0, p3 = wdeltaenv; deltaenv[i]; i++) {
+		size_t s = strlen(deltaenv[i]) + 1, wlen;
+		wlen = xutftowcs(p3, deltaenv[i], s * 2);
+
+		ALLOC_GROW(array, nr + 1, alloc);
+		array[nr++] = p3;
+
+		p3 += wlen + 1;
+	}
+
+	git_qsort(array, nr, sizeof(*array), wenvcmp);
+	ALLOC_ARRAY(result, size + delta_size);
+
+	for (p3 = result, i = 0; i < nr; i++) {
+		wchar_t *equal = wcschr(array[i], L'=');;
+
+		/* Skip "to delete" entry */
+		if (!equal)
+			continue;
+
+		p = array[i];
+
+		/* Skip any duplicate */
+		if (i + 1 < nr) {
+			wchar_t *next = array[i + 1];
+			size_t n = equal - p;
+
+			if (!_wcsnicmp(p, next, n) && (!next[n] || next[n] == L'='))
+				continue;
+		}
+
+		size = wcslen(p) + 1;
+		memcpy(p3, p, size * sizeof(*p));
+		p3 += size;
+	}
+	*p3 = L'\0';
+
+	free(array);
+	FreeEnvironmentStringsW(wenv);
+	return result;
 }
 
 #else
