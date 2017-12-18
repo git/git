@@ -1328,8 +1328,8 @@ static wchar_t *make_environment_block(char **deltaenv)
 	 * as a function that returns a pointer to a mostly static table.
 	 * Grab the pointer and cache it for the duration of our loop.
 	 */
-	extern wchar_t **_wenviron;
-	const wchar_t **my_wenviron = _wenviron;
+	const wchar_t *my_wenviron = GetEnvironmentStringsW();
+	const wchar_t *p;
 
 	/*
 	 * Internally, we create normal 'C' arrays of strings (pointing
@@ -1373,8 +1373,12 @@ static wchar_t *make_environment_block(char **deltaenv)
 
 		nr_delta = nr_delta_ins + nr_delta_del;
 	}
-	while (my_wenviron && my_wenviron[nr_wenv] && *my_wenviron[nr_wenv])
-		maxlen += wcslen(my_wenviron[nr_wenv++]) + 1;
+	for (p = my_wenviron; p && *p; ) {
+		size_t len = wcslen(p) + 1;
+		maxlen += len;
+		p += len;
+		nr_wenv++;
+	}
 	maxlen++;
 
 	/*
@@ -1439,11 +1443,13 @@ static wchar_t *make_environment_block(char **deltaenv)
 	 * ones into the result set. Note that we only have to de-dup WRT
 	 * the values from deltaenv, because the inherited set should be unique.
 	 */
+	p = my_wenviron;
 	for (j = 0; j < nr_wenv; j++) {
-		const wchar_t *v_j = my_wenviron[j];
+		const wchar_t *v_j = p;
 		wchar_t *v_j_eq = wcschr(v_j, L'=');
 		int len_j_eq, len_j;
 
+		p += wcslen(p) + 1;
 		if (!v_j_eq)
 			continue; /* should not happen */
 		len_j_eq = v_j_eq + 1 - v_j; /* length(v_j) including '=' */
@@ -1469,6 +1475,7 @@ skip_it:
 		;
 	}
 
+	FreeEnvironmentStringsW(my_wenviron);
 	if (wptrs_ins)
 		free(wptrs_ins);
 	if (wptrs_del)
