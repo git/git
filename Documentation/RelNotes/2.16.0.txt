@@ -107,6 +107,19 @@ UI, Workflows & Features
    in /usr/lib and /usr/sbin; extend the list of locations to be
    checked to also include directories on $PATH.
 
+ * "git diff" learned, "--anchored", a variant of the "--patience"
+   algorithm, to which the user can specify which 'unique' line to be
+   used as anchoring points.
+
+ * The way "git worktree add" determines what branch to create from
+   where and checkout in the new worktree has been updated a bit.
+
+ * Ancient part of codebase still shows dots after an abbreviated
+   object name just to show that it is not a full object name, but
+   these ellipses are confusing to people who newly discovered Git
+   who are used to seeing abbreviated object names and find them
+   confusing with the range syntax.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -162,6 +175,13 @@ Performance, Internal Implementation, Development Support etc.
 
  * An internal function that was left for backward compatibility has
    been removed, as there is no remaining callers.
+
+ * Historically, the diff machinery for rename detection had a
+   hardcoded limit of 32k paths; this is being lifted to allow users
+   trade cycles with a (possibly) easier to read result.
+
+ * The tracing infrastructure has been optimized for cases where no
+   tracing is requested.
 
 Also contains various documentation updates and code clean-ups.
 
@@ -329,6 +349,31 @@ Fixes since v2.15
  * A regression in the progress eye-candy was fixed.
    (merge 9c5951cacf jk/progress-delay-fix later to maint).
 
+ * The code internal to the recursive merge strategy was not fully
+   prepared to see a path that is renamed to try overwriting another
+   path that is only different in case on case insensitive systems.
+   This does not matter in the current code, but will start to matter
+   once the rename detection logic starts taking hints from nearby
+   paths moving to some directory and moves a new path along with them.
+   (merge 4cba2b0108 en/merge-recursive-icase-removal later to maint).
+
+ * An v2.12-era regression in pathspec match logic, which made it look
+   into submodule tree even when it is not desired, has been fixed.
+   (merge eef3df5a93 bw/pathspec-match-submodule-boundary later to maint).
+
+ * Amending commits in git-gui broke the author name that is non-ascii
+   due to incorrect enconding conversion.
+
+ * Recent update to the submodule configuration code broke "diff-tree"
+   by accidentally stopping to read from the index upfront.
+   (merge fd66bcc31f bw/submodule-config-cleanup later to maint).
+
+ * Git shows a message to tell the user that it is waiting for the
+   user to finish editing when spawning an editor, in case the editor
+   opens to a hidden window or somewhere obscure and the user gets
+   lost.
+   (merge abfb04d0c7 ls/editor-waiting-message later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge 1a1fc2d5b5 rd/man-prune-progress later to maint).
    (merge 0ba014035a rd/man-reflog-add-n later to maint).
@@ -338,3 +383,4 @@ Fixes since v2.15
    (merge 5a0526264b tg/t-readme-updates later to maint).
    (merge 5e83cca0b8 jk/no-optional-locks later to maint).
    (merge 826c778f7c js/hashmap-update-sample later to maint).
+   (merge 176b2d328c sg/setup-doc-update later to maint).
