@@ -354,6 +354,9 @@ advice.*::
 	ignoredHook::
 		Advice shown if an hook is ignored because the hook is not
 		set as executable.
+	waitingForEditor::
+		Print a message to the terminal whenever Git is waiting for
+		editor input from the user.
 --
 
 core.fileMode::
