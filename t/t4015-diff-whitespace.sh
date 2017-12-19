@@ -636,6 +636,23 @@ test_expect_success 'check with space before tab in indent (diff-tree)' '
 	test_must_fail git diff-tree --check HEAD^ HEAD
 '
 
+test_expect_success 'check with ignored trailing whitespace attr (diff-tree)' '
+	test_when_finished "git reset --hard HEAD^" &&
+
+	# create a whitespace error that should be ignored
+	echo "* -whitespace" >.gitattributes &&
+	git add .gitattributes &&
+	echo "foo(); " >x &&
+	git add x &&
+	git commit -m "add trailing space" &&
+
+	# with a worktree diff-tree ignores the whitespace error
+	git diff-tree --root --check HEAD &&
+
+	# without a worktree diff-tree still ignores the whitespace error
+	git -C .git diff-tree --root --check HEAD
+'
+
 test_expect_success 'check trailing whitespace (trailing-space: off)' '
 	git config core.whitespace "-trailing-space" &&
 	echo "foo ();   " >x &&
