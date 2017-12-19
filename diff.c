@@ -4920,14 +4920,20 @@ const char *diff_aligned_abbrev(const struct object_id *oid, int len)
 	int abblen;
 	const char *abbrev;
 
+	/* Do we want all 40 hex characters? */
 	if (len == GIT_SHA1_HEXSZ)
 		return oid_to_hex(oid);
 
+	/* An abbreviated value is fine, possibly followed by an ellipsis. */
 	abbrev = diff_abbrev_oid(oid, len);
+
+	if (!print_sha1_ellipsis())
+		return abbrev;
+
 	abblen = strlen(abbrev);
 
 	/*
-	 * In well-behaved cases, where the abbbreviated result is the
+	 * In well-behaved cases, where the abbreviated result is the
 	 * same as the requested length, append three dots after the
 	 * abbreviation (hence the whole logic is limited to the case
 	 * where abblen < 37); when the actual abbreviated result is a

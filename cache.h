@@ -1972,4 +1972,10 @@ void sleep_millisec(int millisec);
  */
 void safe_create_dir(const char *dir, int share);
 
+/*
+ * Should we print an ellipsis after an abbreviated SHA-1 value
+ * when doing diff-raw output or indicating a detached HEAD?
+ */
+extern int print_sha1_ellipsis(void);
+
 #endif /* CACHE_H */
