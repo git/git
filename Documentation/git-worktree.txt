@@ -9,7 +9,7 @@ git-worktree - Manage multiple working trees
 SYNOPSIS
 --------
 [verse]
-'git worktree add' [-f] [--detach] [--checkout] [--lock] [-b <new-branch>] <path> [<branch>]
+'git worktree add' [-f] [--detach] [--checkout] [--lock] [-b <new-branch>] <path> [<commit-ish>]
 'git worktree list' [--porcelain]
 'git worktree lock' [--reason <string>] <worktree>
 'git worktree prune' [-n] [-v] [--expire <expire>]
@@ -45,14 +45,22 @@ specifying `--reason` to explain why the working tree is locked.
 
 COMMANDS
 --------
-add <path> [<branch>]::
+add <path> [<commit-ish>]::
 
-Create `<path>` and checkout `<branch>` into it. The new working directory
+Create `<path>` and checkout `<commit-ish>` into it. The new working directory
 is linked to the current repository, sharing everything except working
 directory specific files such as HEAD, index, etc. `-` may also be
-specified as `<branch>`; it is synonymous with `@{-1}`.
+specified as `<commit-ish>`; it is synonymous with `@{-1}`.
 +
-If `<branch>` is omitted and neither `-b` nor `-B` nor `--detach` used,
+If <commit-ish> is a branch name (call it `<branch>` and is not found,
+and neither `-b` nor `-B` nor `--detach` are used, but there does
+exist a tracking branch in exactly one remote (call it `<remote>`)
+with a matching name, treat as equivalent to
+------------
+$ git worktree add --track -b <branch> <path> <remote>/<branch>
+------------
++
+If `<commit-ish>` is omitted and neither `-b` nor `-B` nor `--detach` used,
 then, as a convenience, a new branch based at HEAD is created automatically,
 as if `-b $(basename <path>)` was specified.
 
@@ -84,28 +92,44 @@ OPTIONS
 
 -f::
 --force::
-	By default, `add` refuses to create a new working tree when `<branch>`
+	By default, `add` refuses to create a new working tree when `<commit-ish>` is a branch name and
 	is already checked out by another working tree. This option overrides
 	that safeguard.
 
 -b <new-branch>::
 -B <new-branch>::
 	With `add`, create a new branch named `<new-branch>` starting at
-	`<branch>`, and check out `<new-branch>` into the new working tree.
-	If `<branch>` is omitted, it defaults to HEAD.
+	`<commit-ish>`, and check out `<new-branch>` into the new working tree.
+	If `<commit-ish>` is omitted, it defaults to HEAD.
 	By default, `-b` refuses to create a new branch if it already
 	exists. `-B` overrides this safeguard, resetting `<new-branch>` to
-	`<branch>`.
+	`<commit-ish>`.
 
 --detach::
 	With `add`, detach HEAD in the new working tree. See "DETACHED HEAD"
 	in linkgit:git-checkout[1].
 
 --[no-]checkout::
-	By default, `add` checks out `<branch>`, however, `--no-checkout` can
+	By default, `add` checks out `<commit-ish>`, however, `--no-checkout` can
 	be used to suppress checkout in order to make customizations,
 	such as configuring sparse-checkout. See "Sparse checkout"
 	in linkgit:git-read-tree[1].
+
+--[no-]guess-remote::
+	With `worktree add <path>`, without `<commit-ish>`, instead
+	of creating a new branch from HEAD, if there exists a tracking
+	branch in exactly one remote matching the basename of `<path>,
+	base the new branch on the remote-tracking branch, and mark
+	the remote-tracking branch as "upstream" from the new branch.
++
+This can also be set up as the default behaviour by using the
+`worktree.guessRemote` config option.
+
+--[no-]track::
+	When creating a new branch, if `<commit-ish>` is a branch,
+	mark it as "upstream" from the new branch.  This is the
+	default if `<commit-ish>` is a remote-tracking branch.  See
+	"--track" in linkgit:git-branch[1] for details.
 
 --lock::
 	Keep the working tree locked after creation. This is the
