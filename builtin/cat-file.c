@@ -217,47 +217,49 @@ static int is_atom(const char *atom, const char *s, int slen)
 	return alen == slen && !memcmp(atom, s, alen);
 }
 
-static void expand_atom(struct strbuf *sb, const char *atom, int len,
-			void *vdata)
+static void expand_atom_into_fields(struct strbuf *sb, const char *atom, int len,
+			struct expand_data *data)
 {
-	struct expand_data *data = vdata;
-
-	if (is_atom("objectname", atom, len)) {
-		if (!data->mark_query)
-			strbuf_addstr(sb, oid_to_hex(&data->oid));
-	} else if (is_atom("objecttype", atom, len)) {
-		if (data->mark_query)
-			data->info.typep = &data->type;
-		else
-			strbuf_addstr(sb, typename(data->type));
-	} else if (is_atom("objectsize", atom, len)) {
-		if (data->mark_query)
-			data->info.sizep = &data->size;
-		else
-			strbuf_addf(sb, "%lu", data->size);
-	} else if (is_atom("objectsize:disk", atom, len)) {
-		if (data->mark_query)
-			data->info.disk_sizep = &data->disk_size;
-		else
-			strbuf_addf(sb, "%"PRIuMAX, (uintmax_t)data->disk_size);
-	} else if (is_atom("rest", atom, len)) {
-		if (data->mark_query)
-			data->split_on_whitespace = 1;
-		else if (data->rest)
-			strbuf_addstr(sb, data->rest);
-	} else if (is_atom("deltabase", atom, len)) {
-		if (data->mark_query)
-			data->info.delta_base_sha1 = data->delta_base_oid.hash;
-		else
-			strbuf_addstr(sb,
-				      oid_to_hex(&data->delta_base_oid));
-	} else
+	if (is_atom("objectname", atom, len))
+		; /* do nothing */
+	else if (is_atom("objecttype", atom, len))
+		data->info.typep = &data->type;
+	else if (is_atom("objectsize", atom, len))
+		data->info.sizep = &data->size;
+	else if (is_atom("objectsize:disk", atom, len))
+		data->info.disk_sizep = &data->disk_size;
+	else if (is_atom("rest", atom, len))
+		data->split_on_whitespace = 1;
+	else if (is_atom("deltabase", atom, len))
+		data->info.delta_base_sha1 = data->delta_base_oid.hash;
+	else
 		die("unknown format element: %.*s", len, atom);
 }
 
-static size_t expand_format(struct strbuf *sb, const char *start, void *data)
+static void expand_atom(struct strbuf *sb, const char *atom, int len,
+			 struct expand_data *data)
+{
+	if (is_atom("objectname", atom, len))
+		strbuf_addstr(sb, oid_to_hex(&data->oid));
+	else if (is_atom("objecttype", atom, len))
+		strbuf_addstr(sb, typename(data->type));
+	else if (is_atom("objectsize", atom, len))
+		strbuf_addf(sb, "%lu", data->size);
+	else if (is_atom("objectsize:disk", atom, len))
+		strbuf_addf(sb, "%"PRIuMAX, (uintmax_t)data->disk_size);
+	else if (is_atom("rest", atom, len)) {
+		if (data->rest)
+			strbuf_addstr(sb, data->rest);
+	} else if (is_atom("deltabase", atom, len))
+		strbuf_addstr(sb, oid_to_hex(&data->delta_base_oid));
+	else
+		die("unknown format element: %.*s", len, atom);
+}
+
+static size_t expand_format(struct strbuf *sb, const char *start, void *vdata)
 {
 	const char *end;
+	struct expand_data *data = vdata;
 
 	if (*start != '(')
 		return 0;
@@ -265,7 +267,10 @@ static size_t expand_format(struct strbuf *sb, const char *start, void *data)
 	if (!end)
 		die("format element '%s' does not end in ')'", start);
 
-	expand_atom(sb, start + 1, end - start - 1, data);
+	if (data->mark_query)
+		expand_atom_into_fields(sb, start + 1, end - start - 1, data);
+	else
+		expand_atom(sb, start + 1, end - start - 1, data);
 
 	return end - start + 1;
 }
