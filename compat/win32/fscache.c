@@ -8,11 +8,6 @@ static volatile long enabled;
 static struct hashmap map;
 static CRITICAL_SECTION mutex;
 
-int fscache_is_enabled(void)
-{
-	return enabled;
-}
-
 /*
  * An entry in the file system cache. Used for both entire directory listings
  * and file entries.
@@ -247,7 +242,7 @@ static void fscache_clear(void)
 /*
  * Checks if the cache is enabled for the given path.
  */
-static inline int fscache_enabled(const char *path)
+int fscache_enabled(const char *path)
 {
 	return enabled > 0 && !is_absolute_path(path);
 }
