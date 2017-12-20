@@ -1079,7 +1079,7 @@ static int add_patterns(const char *fname, const char *base, int baselen,
 	size_t size = 0;
 	char *buf;
 
-	if (is_fscache_enabled()) {
+	if (is_fscache_enabled(fname)) {
 		if (lstat(fname, &st) < 0) {
 			fd = -1;
 		} else {
