@@ -1054,6 +1054,29 @@ static int add_patterns(const char *fname, const char *base, int baselen,
 	size_t size = 0;
 	char *buf;
 
+	/*
+	 * A performance optimization for status.
+	 *
+	 * During a status scan, git looks in each directory for a .gitignore
+	 * file before scanning the directory.  Since .gitignore files are not
+	 * that common, we can waste a lot of time looking for files that are
+	 * not there.  Fortunately, the fscache already knows if the directory
+	 * contains a .gitignore file, since it has already read the directory
+	 * and it already has the stat-data.
+	 *
+	 * If the fscache is enabled, use the fscache-lstat() interlude to see
+	 * if the file exists (in the fscache hash maps) before trying to open()
+	 * it.
+	 *
+	 * This causes problem when the .gitignore file is a symlink, because
+	 * we call lstat() rather than stat() on the symlnk and the resulting
+	 * stat-data is for the symlink itself rather than the target file.
+	 * We CANNOT use stat() here because the fscache DOES NOT install an
+	 * interlude for stat() and mingw_stat() always calls "open-fstat-close"
+	 * on the file and defeats the purpose of the optimization here.  Since
+	 * symlinks are even more rare than .gitignore files, we force a fstat()
+	 * after our open() to get stat-data for the target file.
+	 */
 	if (is_fscache_enabled(fname)) {
 		if (lstat(fname, &st) < 0) {
 			fd = -1;
@@ -1061,6 +1084,11 @@ static int add_patterns(const char *fname, const char *base, int baselen,
 			fd = open(fname, O_RDONLY);
 			if (fd < 0)
 				warn_on_fopen_errors(fname);
+			else if (S_ISLNK(st.st_mode) && fstat(fd, &st) < 0) {
+				warn_on_fopen_errors(fname);
+				close(fd);
+				fd = -1;
+			}
 		}
 	} else {
 		fd = open(fname, O_RDONLY);
