@@ -1162,7 +1162,7 @@ static int add_patterns(const char *fname, const char *base, int baselen,
 	 * We do want to keep the conditional block for the sake of Windows,
 	 * though, so let's use the `NOT_CONSTANT()` trick to suppress that error.
 	 */
-	if (NOT_CONSTANT(is_fscache_enabled())) {
+	if (NOT_CONSTANT(is_fscache_enabled(fname))) {
 		if (lstat(fname, &st) < 0) {
 			fd = -1;
 		} else {
