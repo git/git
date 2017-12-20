@@ -970,6 +970,7 @@ git_rebase__interactive () {
 	init_revisions_and_shortrevisions
 
 	git rebase--helper --make-script ${keep_empty:+--keep-empty} \
+		${rebase_merges:+--rebase-merges} \
 		$revisions ${restrict_revision+^$restrict_revision} >"$todo" ||
 	die "$(gettext "Could not generate todo list")"
 

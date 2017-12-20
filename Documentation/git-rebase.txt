@@ -378,6 +378,23 @@ The commit list format can be changed by setting the configuration option
 rebase.instructionFormat.  A customized instruction format will automatically
 have the long commit hash prepended to the format.
 
+-r::
+--rebase-merges::
+	By default, a rebase will simply drop merge commits and only rebase
+	the non-merge commits. With this option, it will try to preserve
+	the branching structure within the commits that are to be rebased,
+	by recreating the merge commits. If a merge commit resolved any merge
+	or contained manual amendments, then they will have to be re-applied
+	manually.
++
+This mode is similar in spirit to `--preserve-merges`, but in contrast to
+that option works well in interactive rebases: commits can be reordered,
+inserted and dropped at will.
++
+It is currently only possible to recreate the merge commits using the
+`recursive` merge strategy; Different merge strategies can be used only via
+explicit `exec git merge -s <strategy> [...]` commands.
+
 -p::
 --preserve-merges::
 	Recreate merge commits instead of flattening the history by replaying
@@ -780,7 +797,8 @@ BUGS
 The todo list presented by `--preserve-merges --interactive` does not
 represent the topology of the revision graph.  Editing commits and
 rewording their commit messages should work fine, but attempts to
-reorder commits tend to produce counterintuitive results.
+reorder commits tend to produce counterintuitive results. Use
+`--rebase-merges` in such scenarios instead.
 
 For example, an attempt to rearrange
 ------------
