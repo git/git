@@ -736,7 +736,7 @@ vcxproj:
 	 done && \
 	 echo '  </Target>' && \
 	 echo '</Project>') >git/LinkOrCopyBuiltins.targets
-	git add git/LinkOrCopyBuiltins.targets
+	git add -f git/LinkOrCopyBuiltins.targets
 
 	# Add common-cmds.h
 	$(MAKE) MSVC=1 SKIP_VCPKG=1 prefix=/mingw64 common-cmds.h
