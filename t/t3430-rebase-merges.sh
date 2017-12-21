@@ -329,4 +329,38 @@ test_expect_success 'labels that are object IDs are rewritten' '
 	! grep "^label $third$" .git/ORIGINAL-TODO
 '
 
+test_expect_success 'octopus merges' '
+	git checkout -b three &&
+	test_commit before-octopus &&
+	test_commit three &&
+	git checkout -b two HEAD^ &&
+	test_commit two &&
+	git checkout -b one HEAD^ &&
+	test_commit one &&
+	test_tick &&
+	(GIT_AUTHOR_NAME="Hank" GIT_AUTHOR_EMAIL="hank@sea.world" \
+	 git merge -m "Tüntenfüsch" two three) &&
+
+	: fast forward if possible &&
+	before="$(git rev-parse --verify HEAD)" &&
+	test_tick &&
+	git rebase -i -r HEAD^^ &&
+	test_cmp_rev HEAD $before &&
+
+	test_tick &&
+	git rebase -i --force -r HEAD^^ &&
+	test "Hank" = "$(git show -s --format=%an HEAD)" &&
+	test "$before" != $(git rev-parse HEAD) &&
+	test_cmp_graph HEAD^^.. <<-\EOF
+	*-.   Tüntenfüsch
+	|\ \
+	| | * three
+	| * | two
+	| |/
+	* | one
+	|/
+	o before-octopus
+	EOF
+'
+
 test_done
