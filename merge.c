@@ -1,4 +1,6 @@
 #include "cache.h"
+#include "diff.h"
+#include "diffcore.h"
 #include "lockfile.h"
 #include "commit.h"
 #include "run-command.h"
@@ -13,6 +15,37 @@ static const char *merge_argument(struct commit *commit)
 		return oid_to_hex(&commit->object.oid);
 	else
 		return EMPTY_TREE_SHA1_HEX;
+}
+
+int index_has_changes(struct strbuf *sb)
+{
+	struct object_id head;
+	int i;
+
+	if (!get_oid_tree("HEAD", &head)) {
+		struct diff_options opt;
+
+		diff_setup(&opt);
+		DIFF_OPT_SET(&opt, EXIT_WITH_STATUS);
+		if (!sb)
+			DIFF_OPT_SET(&opt, QUICK);
+		do_diff_cache(&head, &opt);
+		diffcore_std(&opt);
+		for (i = 0; sb && i < diff_queued_diff.nr; i++) {
+			if (i)
+				strbuf_addch(sb, ' ');
+			strbuf_addstr(sb, diff_queued_diff.queue[i]->two->path);
+		}
+		diff_flush(&opt);
+		return DIFF_OPT_TST(&opt, HAS_CHANGES) != 0;
+	} else {
+		for (i = 0; sb && i < active_nr; i++) {
+			if (i)
+				strbuf_addch(sb, ' ');
+			strbuf_addstr(sb, active_cache[i]->name);
+		}
+		return !!active_nr;
+	}
 }
 
 int try_merge_command(const char *strategy, size_t xopts_nr,
