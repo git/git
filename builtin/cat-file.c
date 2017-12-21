@@ -420,9 +420,8 @@ static int batch_objects(struct batch_options *opt)
 	 * object.
 	 */
 	memset(&data, 0, sizeof(data));
-	data.mark_query = 1;
-	strbuf_expand(&buf, opt->format.format, expand_format, &data);
-	data.mark_query = 0;
+	opt->format.cat_file_data = &data;
+	verify_ref_format(&opt->format);
 	if (opt->cmdmode)
 		data.split_on_whitespace = 1;
 

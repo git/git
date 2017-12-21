@@ -119,6 +119,12 @@ struct ref_format {
 
 	/* Internal state to ref-filter */
 	int need_color_reset_at_eol;
+
+	/*
+	 * Helps to move all formatting logic from cat-file to ref-filter,
+	 * hopefully would be reduced later.
+	 */
+	struct expand_data *cat_file_data;
 };
 
 #define REF_FORMAT_INIT { NULL, 0, -1 }

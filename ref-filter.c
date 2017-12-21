@@ -392,6 +392,31 @@ struct atom_value {
 	struct used_atom *atom;
 };
 
+static int is_atom(const char *atom, const char *s, int slen)
+{
+	int alen = strlen(atom);
+	return alen == slen && !memcmp(atom, s, alen);
+}
+
+static void expand_atom_into_fields(const char *atom, int len,
+				    struct expand_data *data)
+{
+	if (is_atom("objectname", atom, len))
+		; /* do nothing */
+	else if (is_atom("objecttype", atom, len))
+		data->info.typep = &data->type;
+	else if (is_atom("objectsize", atom, len))
+		data->info.sizep = &data->size;
+	else if (is_atom("objectsize:disk", atom, len))
+		data->info.disk_sizep = &data->disk_size;
+	else if (is_atom("rest", atom, len))
+		data->split_on_whitespace = 1;
+	else if (is_atom("deltabase", atom, len))
+		data->info.delta_base_sha1 = data->delta_base_oid.hash;
+	else
+		die("unknown format element: %.*s", len, atom);
+}
+
 /*
  * Used to parse format string and sort specifiers
  */
@@ -709,12 +734,18 @@ int verify_ref_format(struct ref_format *format)
 		if (!ep)
 			return error(_("malformed format string %s"), sp);
 		/* sp points at "%(" and ep points at the closing ")" */
-		at = parse_ref_filter_atom(format, valid_atom,
-					   ARRAY_SIZE(valid_atom), sp + 2, ep);
-		cp = ep + 1;
 
-		if (skip_prefix(used_atom[at].name, "color:", &color))
-			format->need_color_reset_at_eol = !!strcmp(color, "reset");
+		if (format->cat_file_data)
+			expand_atom_into_fields(sp + 2, ep - sp - 2,
+						format->cat_file_data);
+		else {
+			at = parse_ref_filter_atom(format, valid_atom,
+						   ARRAY_SIZE(valid_atom), sp + 2, ep);
+			if (skip_prefix(used_atom[at].name, "color:", &color))
+				format->need_color_reset_at_eol = !!strcmp(color, "reset");
+		}
+
+		cp = ep + 1;
 	}
 	if (format->need_color_reset_at_eol && !want_color(format->use_color))
 		format->need_color_reset_at_eol = 0;
