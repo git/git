@@ -41,11 +41,13 @@ in the section header, like in the example below:
 --------
 
 Subsection names are case sensitive and can contain any characters except
-newline (doublequote `"` and backslash can be included by escaping them
-as `\"` and `\\`, respectively).  Section headers cannot span multiple
-lines.  Variables may belong directly to a section or to a given subsection.
-You can have `[section]` if you have `[section "subsection"]`, but you
-don't need to.
+newline and the null byte. Doublequote `"` and backslash can be included
+by escaping them as `\"` and `\\`, respectively. Backslashes preceding
+other characters are dropped when reading; for example, `\t` is read as
+`t` and `\0` is read as `0` Section headers cannot span multiple lines.
+Variables may belong directly to a section or to a given subsection. You
+can have `[section]` if you have `[section "subsection"]`, but you don't
+need to.
 
 There is also a deprecated `[section.subsection]` syntax. With this
 syntax, the subsection name is converted to lower-case and is also
