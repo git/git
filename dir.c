@@ -788,8 +788,9 @@ static int add_excludes(const char *fname, const char *base, int baselen,
 			fd = open(fname, O_RDONLY);
 			if (fd < 0)
 				warn_on_fopen_errors(fname);
-			if (S_ISLNK(st.st_mode) && fstat(fd, &st) < 0) {
+			else if (S_ISLNK(st.st_mode) && fstat(fd, &st) < 0) {
 				warn_on_fopen_errors(fname);
+				close(fd);
 				fd = -1;
 			}
 		}
