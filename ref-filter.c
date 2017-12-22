@@ -100,6 +100,7 @@ static struct used_atom {
 	} u;
 } *used_atom;
 static int used_atom_cnt, need_tagged, need_symref;
+struct expand_data *cat_file_info;
 
 static void color_atom_parser(const struct ref_format *format, struct used_atom *atom, const char *color_value)
 {
@@ -251,6 +252,16 @@ static void objectname_atom_parser(const struct ref_format *format, struct used_
 		die(_("unrecognized %%(objectname) argument: %s"), arg);
 }
 
+static void objectsize_atom_parser(const struct ref_format *format, struct used_atom *atom, const char *arg)
+{
+	if (!arg)
+		; /* default to normal object size */
+	else if (!strcmp(arg, "disk"))
+		cat_file_info->info.disk_sizep = &cat_file_info->disk_size;
+	else
+		die(_("urecognized %%(objectsize) argument: %s"), arg);
+}
+
 static void refname_atom_parser(const struct ref_format *format, struct used_atom *atom, const char *arg)
 {
 	refname_atom_parser_internal(&atom->u.refname, arg, atom->name);
@@ -371,6 +382,14 @@ static struct valid_atom {
 	{ "else" },
 };
 
+static struct valid_atom valid_cat_file_atom[] = {
+	{ "objectname" },
+	{ "objecttype" },
+	{ "objectsize", FIELD_ULONG, objectsize_atom_parser },
+	{ "rest" },
+	{ "deltabase" },
+};
+
 #define REF_FORMATTING_STATE_INIT  { 0, NULL }
 
 struct ref_formatting_stack {
@@ -401,20 +420,14 @@ static int is_atom(const char *atom, const char *s, int slen)
 static void expand_atom_into_fields(const char *atom, int len,
 				    struct expand_data *data)
 {
-	if (is_atom("objectname", atom, len))
-		; /* do nothing */
-	else if (is_atom("objecttype", atom, len))
+	if (is_atom("objecttype", atom, len))
 		data->info.typep = &data->type;
 	else if (is_atom("objectsize", atom, len))
 		data->info.sizep = &data->size;
-	else if (is_atom("objectsize:disk", atom, len))
-		data->info.disk_sizep = &data->disk_size;
 	else if (is_atom("rest", atom, len))
 		data->split_on_whitespace = 1;
 	else if (is_atom("deltabase", atom, len))
 		data->info.delta_base_sha1 = data->delta_base_oid.hash;
-	else
-		die("unknown format element: %.*s", len, atom);
 }
 
 /*
@@ -483,6 +496,8 @@ static int parse_ref_filter_atom(const struct ref_format *format,
 		need_tagged = 1;
 	if (!strcmp(valid_atom[i].name, "symref"))
 		need_symref = 1;
+	if (cat_file_info)
+		expand_atom_into_fields(atom, atom_len, cat_file_info);
 	return at;
 }
 
@@ -726,6 +741,7 @@ int verify_ref_format(struct ref_format *format)
 {
 	const char *cp, *sp;
 
+	cat_file_info = format->cat_file_data;
 	format->need_color_reset_at_eol = 0;
 	for (cp = format->format; *cp && (sp = find_next(cp)); ) {
 		const char *color, *ep = strchr(sp, ')');
@@ -735,10 +751,10 @@ int verify_ref_format(struct ref_format *format)
 			return error(_("malformed format string %s"), sp);
 		/* sp points at "%(" and ep points at the closing ")" */
 
-		if (format->cat_file_data)
-			expand_atom_into_fields(sp + 2, ep - sp - 2,
-						format->cat_file_data);
-		else {
+		if (format->cat_file_data) {
+			at = parse_ref_filter_atom(format, valid_cat_file_atom,
+						   ARRAY_SIZE(valid_cat_file_atom), sp + 2, ep);
+		} else {
 			at = parse_ref_filter_atom(format, valid_atom,
 						   ARRAY_SIZE(valid_atom), sp + 2, ep);
 			if (skip_prefix(used_atom[at].name, "color:", &color))
