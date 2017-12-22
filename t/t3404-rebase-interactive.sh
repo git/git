@@ -1318,6 +1318,16 @@ test_expect_success 'editor saves as CR/LF' '
 
 SQ="'"
 test_expect_success 'rebase -i --gpg-sign=<key-id>' '
+	test_when_finished "test_might_fail git rebase --abort" &&
+	set_fake_editor &&
+	FAKE_LINES="edit 1" git rebase -i --gpg-sign="\"S I Gner\"" HEAD^ \
+		>out 2>err &&
+	test_i18ngrep "$SQ-S\"S I Gner\"$SQ" err
+'
+
+test_expect_success 'rebase -i --gpg-sign=<key-id> overrides commit.gpgSign' '
+	test_when_finished "test_might_fail git rebase --abort" &&
+	test_config commit.gpgsign true &&
 	set_fake_editor &&
 	FAKE_LINES="edit 1" git rebase -i --gpg-sign="\"S I Gner\"" HEAD^ \
 		>out 2>err &&
