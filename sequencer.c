@@ -493,7 +493,7 @@ static int is_index_unchanged(void)
 	struct commit *head_commit;
 
 	if (!resolve_ref_unsafe("HEAD", RESOLVE_REF_READING, &head_oid, NULL))
-		return error(_("could not resolve HEAD commit\n"));
+		return error(_("could not resolve HEAD commit"));
 
 	head_commit = lookup_commit(&head_oid);
 
@@ -513,7 +513,7 @@ static int is_index_unchanged(void)
 
 	if (!cache_tree_fully_valid(active_cache_tree))
 		if (cache_tree_update(&the_index, 0))
-			return error(_("unable to update cache tree\n"));
+			return error(_("unable to update cache tree"));
 
 	return !oidcmp(&active_cache_tree->oid,
 		       &head_commit->tree->object.oid);
@@ -699,12 +699,12 @@ static int is_original_commit_empty(struct commit *commit)
 	const struct object_id *ptree_oid;
 
 	if (parse_commit(commit))
-		return error(_("could not parse commit %s\n"),
+		return error(_("could not parse commit %s"),
 			     oid_to_hex(&commit->object.oid));
 	if (commit->parents) {
 		struct commit *parent = commit->parents->item;
 		if (parse_commit(parent))
-			return error(_("could not parse parent commit %s\n"),
+			return error(_("could not parse parent commit %s"),
 				oid_to_hex(&parent->object.oid));
 		ptree_oid = &parent->tree->object.oid;
 	} else {
