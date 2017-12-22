@@ -893,7 +893,8 @@ fi
 if test t != "$preserve_merges"
 then
 	git rebase--helper --make-script ${keep_empty:+--keep-empty} \
-		$revisions ${restrict_revision+^$restrict_revision} >"$todo"
+		$revisions ${restrict_revision+^$restrict_revision} >"$todo" ||
+	die "$(gettext "Could not generate todo list")"
 else
 	format=$(git config --get rebase.instructionFormat)
 	# the 'rev-list .. | sed' requires %m to parse; the instruction requires %H to parse
