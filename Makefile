@@ -2274,14 +2274,14 @@ endif
 po/build/locale/%/LC_MESSAGES/git.mo: po/%.po
 	$(QUIET_MSGFMT)mkdir -p $(dir $@) && $(MSGFMT) -o $@ $<
 
-PMFILES := $(wildcard perl/*.pm perl/*/*.pm perl/*/*/*.pm perl/*/*/*/*.pm)
-PMCFILES := $(patsubst perl/%.pm,perl/build/lib/%.pmc,$(PMFILES))
+LIB_PERL := $(wildcard perl/Git.pm perl/Git/*.pm perl/Git/*/*.pm perl/Git/*/*/*.pm)
+LIB_PERL_GEN := $(patsubst perl/%.pm,perl/build/lib/%.pm,$(LIB_PERL))
 
 ifndef NO_PERL
-all:: $(PMCFILES)
+all:: $(LIB_PERL_GEN)
 endif
 
-perl/build/lib/%.pmc: perl/%.pm
+perl/build/lib/%.pm: perl/%.pm
 	$(QUIET_GEN)mkdir -p $(dir $@) && \
 	sed -e 's|@@LOCALEDIR@@|$(localedir_SQ)|g' < $< > $@
 

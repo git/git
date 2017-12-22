@@ -39,7 +39,7 @@ sub import {
 	require Error;
     };
 
-    local @_ = ($caller, @_);
+    unshift @_, $caller;
     goto &Error::import;
 }
 
