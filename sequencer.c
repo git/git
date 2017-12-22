@@ -2586,7 +2586,10 @@ int transform_todos(unsigned flags)
 			strbuf_addf(&buf, " %s", oid);
 		}
 		/* add all the rest */
-		strbuf_addf(&buf, " %.*s\n", item->arg_len, item->arg);
+		if (!item->arg_len)
+			strbuf_addch(&buf, '\n');
+		else
+			strbuf_addf(&buf, " %.*s\n", item->arg_len, item->arg);
 	}
 
 	i = write_message(buf.buf, buf.len, todo_file, 0);
