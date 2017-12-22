@@ -404,9 +404,9 @@ See also REBASING MERGES below.
 	commits a merge commit introduces. Merge conflict resolutions or manual
 	amendments to merge commits are not preserved.
 +
-This uses the `--interactive` machinery internally, but combining it
-with the `--interactive` option explicitly is generally not a good
-idea unless you know what you are doing (see BUGS below).
+This uses the `--interactive` machinery internally, but was not designed for
+interactive use. It is a much better idea to use `--rebase-merges` if you
+want to preserve branch topology *and* rebase interactively.
 
 -x <cmd>::
 --exec <cmd>::
@@ -580,7 +580,8 @@ $ git rebase -i HEAD~5
 
 And move the first patch to the end of the list.
 
-You might want to preserve merges, if you have a history like this:
+You might want to recreate the commit topology, including merges, if you
+have a history like this:
 
 ------------------
            X
@@ -593,9 +594,22 @@ You might want to preserve merges, if you have a history like this:
 Suppose you want to rebase the side branch starting at "A" to "Q". Make
 sure that the current HEAD is "B", and call
 
------------------------------
-$ git rebase -i -p --onto Q O
------------------------------
+--------------------------------------------
+$ git rebase -i --rebase-merges --onto Q O
+--------------------------------------------
+
+This will create a todo list that contains not only "pick" commands,
+but also uses the "label" command to mark the then-current revision
+with a name that can be used by the "reset" command to jump to a
+previously labeled branch point, and by the "merge" command to create
+merge commits.
+
+The syntax of the "merge" command is: `merge -C <original> <label> #
+<oneline>`. This will merge the revision that was previously marked with
+the given label, and use the commit message of the original merge
+commit. For convenience, `merge <label>` allows to create new merge
+commits without any original merge commit; in this case, Git will open
+an automatically generated merge commit message in the editor.
 
 Reordering and editing commits usually creates untested intermediate
 steps.  You may want to check that your history editing did not break
