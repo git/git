@@ -1261,18 +1261,23 @@ static int parse_insn_line(struct todo_item *item, const char *bol, char *eol)
 	if (i >= TODO_COMMENT)
 		return -1;
 
+	/* Eat up extra spaces/ tabs before object name */
+	padding = strspn(bol, " \t");
+	bol += padding;
+
 	if (item->command == TODO_NOOP) {
+		if (bol != eol)
+			return error(_("%s does not accept arguments: '%s'"),
+				     command_to_string(item->command), bol);
 		item->commit = NULL;
 		item->arg = bol;
 		item->arg_len = eol - bol;
 		return 0;
 	}
 
-	/* Eat up extra spaces/ tabs before object name */
-	padding = strspn(bol, " \t");
 	if (!padding)
-		return -1;
-	bol += padding;
+		return error(_("missing arguments for %s"),
+			     command_to_string(item->command));
 
 	if (item->command == TODO_EXEC) {
 		item->commit = NULL;
