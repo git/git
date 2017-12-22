@@ -67,19 +67,29 @@ static int write_terms(const char *bad, const char *good)
 	FILE *fp = NULL;
 	int res;
 
-	if (!strcmp(bad, good))
-		return error(_("please use two different terms"));
+	if (!strcmp(bad, good)) {
+		/*
+		 * Don't `return error()` since we would end up with
+		 * a negative value passed to exit(3) in the callchain.
+		 * Although this can be changed once it is not exposed
+		 * to cmd_bisect__helper.
+		 */
+		error(_("please use two different terms"));
+		return 1;
+	}
 
 	if (check_term_format(bad, "bad") || check_term_format(good, "good"))
-		return -1;
+		return 1;
 
 	fp = fopen(git_path_bisect_terms(), "w");
-	if (!fp)
-		return error_errno(_("could not open the file BISECT_TERMS"));
+	if (!fp) {
+		error_errno(_("could not open the file BISECT_TERMS"));
+		return 1;
+	}
 
 	res = fprintf(fp, "%s\n%s\n", bad, good);
 	res |= fclose(fp);
-	return (res < 0) ? -1 : 0;
+	return (res < 0) ? 1 : 0;
 }
 
 static int is_expected_rev(const char *expected_hex)
@@ -139,18 +149,23 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 	case NEXT_ALL:
 		return bisect_next_all(prefix, no_checkout);
 	case WRITE_TERMS:
-		if (argc != 2)
-			return error(_("--write-terms requires two arguments"));
+		if (argc != 2) {
+			error(_("--write-terms requires two arguments"));
+			return 1;
+		}
 		return write_terms(argv[0], argv[1]);
 	case BISECT_CLEAN_STATE:
-		if (argc != 0)
-			return error(_("--bisect-clean-state requires no arguments"));
+		if (argc != 0) {
+			error(_("--bisect-clean-state requires no arguments"));
+			return 1;
+		}
 		return bisect_clean_state();
 	case CHECK_EXPECTED_REVS:
 		check_expected_revs(argv, argc);
 		return 0;
 	default:
-		return error("BUG: unknown subcommand '%d'", cmdmode);
+		error("BUG: unknown subcommand '%d'", cmdmode);
+		return 1;
 	}
 	return 0;
 }
