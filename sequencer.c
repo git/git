@@ -1013,9 +1013,7 @@ static int do_pick_commit(enum todo_command command, struct commit *commit,
 			opts);
 		if (res || command != TODO_REWORD)
 			goto leave;
-		flags |= EDIT_MSG | AMEND_MSG;
-		if (command == TODO_REWORD)
-			flags |= VERIFY_MSG;
+		flags |= EDIT_MSG | AMEND_MSG | VERIFY_MSG;
 		msg_file = NULL;
 		goto fast_forward_edit;
 	}
