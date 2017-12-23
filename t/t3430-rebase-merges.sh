@@ -241,4 +241,76 @@ test_expect_success 'refuse to merge ancestors of HEAD' '
 	test_cmp_rev HEAD $before
 '
 
+test_expect_success 'root commits' '
+	git checkout --orphan unrelated &&
+	(GIT_AUTHOR_NAME="Parsnip" GIT_AUTHOR_EMAIL="root@example.com" \
+	 test_commit second-root) &&
+	test_commit third-root &&
+	cat >script-from-scratch <<-\EOF &&
+	pick third-root
+	label first-branch
+	reset [new root]
+	pick second-root
+	merge first-branch # Merge the 3rd root
+	EOF
+	test_config sequence.editor \""$PWD"/replace-editor.sh\" &&
+	test_tick &&
+	git rebase -i --force --root -r &&
+	test "Parsnip" = "$(git show -s --format=%an HEAD^)" &&
+	test $(git rev-parse second-root^0) != $(git rev-parse HEAD^) &&
+	test $(git rev-parse second-root:second-root.t) = \
+		$(git rev-parse HEAD^:second-root.t) &&
+	test_cmp_graph HEAD <<-\EOF &&
+	*   Merge the 3rd root
+	|\
+	| * third-root
+	* second-root
+	EOF
+
+	: fast forward if possible &&
+	before="$(git rev-parse --verify HEAD)" &&
+	test_might_fail git config --unset sequence.editor &&
+	test_tick &&
+	git rebase -i --root -r &&
+	test_cmp_rev HEAD $before
+'
+
+test_expect_success 'a "merge" into a root commit is a fast-forward' '
+	head=$(git rev-parse HEAD) &&
+	cat >script-from-scratch <<-EOF &&
+	reset [new root]
+	merge $head
+	EOF
+	test_config sequence.editor \""$PWD"/replace-editor.sh\" &&
+	test_tick &&
+	git rebase -i -r HEAD^ &&
+	test_cmp_rev HEAD $head
+'
+
+test_expect_success 'A root commit can be a cousin, treat it that way' '
+	git checkout --orphan khnum &&
+	test_commit yama &&
+	git checkout -b asherah master &&
+	test_commit shamkat &&
+	git merge --allow-unrelated-histories khnum &&
+	test_tick &&
+	git rebase -f -r HEAD^ &&
+	! test_cmp_rev HEAD^2 khnum &&
+	test_cmp_graph HEAD^.. <<-\EOF &&
+	*   Merge branch '\''khnum'\'' into asherah
+	|\
+	| * yama
+	o shamkat
+	EOF
+	test_tick &&
+	git rebase --rebase-merges=rebase-cousins HEAD^ &&
+	test_cmp_graph HEAD^.. <<-\EOF
+	*   Merge branch '\''khnum'\'' into asherah
+	|\
+	| * yama
+	|/
+	o shamkat
+	EOF
+'
+
 test_done
