@@ -1477,12 +1477,13 @@ static void populate_value(struct ref_array_item *ref)
 
 	for (i = 0; i < used_atom_cnt; i++) {
 		struct atom_value *v = &ref->value[i];
-		if (v->s == NULL)
-			goto need_obj;
+		if (v->s == NULL) {
+			break;
+		}
 	}
-	return;
+	if (used_atom_cnt <= i)
+		return;
 
- need_obj:
 	buf = get_obj(&ref->objectname, &obj, &size, &eaten);
 	if (!buf)
 		die(_("missing object %s for %s"),
