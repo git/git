@@ -929,8 +929,7 @@ static int remove_redundant(struct commit **array, int cnt)
 			if (work[j]->object.flags & PARENT1)
 				redundant[filled_index[j]] = 1;
 		clear_commit_marks(array[i], all_flags);
-		for (j = 0; j < filled; j++)
-			clear_commit_marks(work[j], all_flags);
+		clear_commit_marks_many(filled, work, all_flags);
 		free_commit_list(common);
 	}
 
