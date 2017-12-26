@@ -183,26 +183,26 @@ static int is_atom(const char *atom, const char *s, int slen)
 }
 
 static void expand_atom(struct strbuf *sb, const char *atom, int len,
-			 struct expand_data *data)
+			 struct ref_array_item *item)
 {
 	if (is_atom("objectname", atom, len))
-		strbuf_addstr(sb, oid_to_hex(&data->oid));
+		strbuf_addstr(sb, oid_to_hex(&item->objectname));
 	else if (is_atom("objecttype", atom, len))
-		strbuf_addstr(sb, typename(data->type));
+		strbuf_addstr(sb, typename(item->type));
 	else if (is_atom("objectsize", atom, len))
-		strbuf_addf(sb, "%lu", data->size);
+		strbuf_addf(sb, "%lu", item->size);
 	else if (is_atom("objectsize:disk", atom, len))
-		strbuf_addf(sb, "%"PRIuMAX, (uintmax_t)data->disk_size);
+		strbuf_addf(sb, "%"PRIuMAX, (uintmax_t)item->disk_size);
 	else if (is_atom("rest", atom, len))
-		strbuf_addstr(sb, data->rest);
+		strbuf_addstr(sb, item->rest);
 	else if (is_atom("deltabase", atom, len))
-		strbuf_addstr(sb, oid_to_hex(&data->delta_base_oid));
+		strbuf_addstr(sb, oid_to_hex(&item->delta_base_oid));
 }
 
-static size_t expand_format(struct strbuf *sb, const char *start, void *vdata)
+static size_t expand_format(struct strbuf *sb, const char *start, void *data)
 {
 	const char *end;
-	struct expand_data *data = vdata;
+	struct ref_array_item *item = data;
 
 	if (*start != '(')
 		return 0;
@@ -210,7 +210,7 @@ static size_t expand_format(struct strbuf *sb, const char *start, void *vdata)
 	if (!end)
 		die("format element '%s' does not end in ')'", start);
 
-	expand_atom(sb, start + 1, end - start - 1, data);
+	expand_atom(sb, start + 1, end - start - 1, item);
 	return end - start + 1;
 }
 
@@ -282,6 +282,7 @@ static void batch_object_write(const char *obj_name, struct batch_options *opt,
 			       struct expand_data *data)
 {
 	struct strbuf buf = STRBUF_INIT;
+	struct ref_array_item item;
 
 	if (!data->skip_object_info &&
 	    sha1_object_info_extended(data->oid.hash, &data->info,
@@ -292,7 +293,14 @@ static void batch_object_write(const char *obj_name, struct batch_options *opt,
 		return;
 	}
 
-	strbuf_expand(&buf, opt->format.format, expand_format, data);
+	item.objectname = data->oid;
+	item.type = data->type;
+	item.size = data->size;
+	item.disk_size = data->disk_size;
+	item.rest = data->rest;
+	item.delta_base_oid = data->delta_base_oid;
+
+	strbuf_expand(&buf, opt->format.format, expand_format, &item);
 	strbuf_addch(&buf, '\n');
 	batch_write(opt, buf.buf, buf.len);
 	strbuf_release(&buf);
