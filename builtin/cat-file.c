@@ -193,10 +193,9 @@ static void expand_atom(struct strbuf *sb, const char *atom, int len,
 		strbuf_addf(sb, "%lu", data->size);
 	else if (is_atom("objectsize:disk", atom, len))
 		strbuf_addf(sb, "%"PRIuMAX, (uintmax_t)data->disk_size);
-	else if (is_atom("rest", atom, len)) {
-		if (data->rest)
-			strbuf_addstr(sb, data->rest);
-	} else if (is_atom("deltabase", atom, len))
+	else if (is_atom("rest", atom, len))
+		strbuf_addstr(sb, data->rest);
+	else if (is_atom("deltabase", atom, len))
 		strbuf_addstr(sb, oid_to_hex(&data->delta_base_oid));
 	else
 		die("unknown format element: %.*s", len, atom);
