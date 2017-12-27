@@ -34,10 +34,10 @@ struct submodule_update_strategy {
 #define SUBMODULE_UPDATE_STRATEGY_INIT {SM_UPDATE_UNSPECIFIED, NULL}
 
 extern int is_gitmodules_unmerged(const struct index_state *istate);
-extern int is_staging_gitmodules_ok(const struct index_state *istate);
+extern int is_staging_gitmodules_ok(struct index_state *istate);
 extern int update_path_in_gitmodules(const char *oldpath, const char *newpath);
 extern int remove_path_from_gitmodules(const char *path);
-extern void stage_updated_gitmodules(void);
+extern void stage_updated_gitmodules(struct index_state *istate);
 extern void set_diffopt_flags_from_submodule_config(struct diff_options *,
 		const char *path);
 extern int git_default_submodule_config(const char *var, const char *value, void *cb);
@@ -76,10 +76,12 @@ extern int should_update_submodules(void);
  */
 extern const struct submodule *submodule_from_ce(const struct cache_entry *ce);
 extern void check_for_new_submodule_commits(struct object_id *oid);
-extern int fetch_populated_submodules(const struct argv_array *options,
-			       const char *prefix, int command_line_option,
-			       int default_option,
-			       int quiet, int max_parallel_jobs);
+extern int fetch_populated_submodules(struct repository *r,
+				      const struct argv_array *options,
+				      const char *prefix,
+				      int command_line_option,
+				      int default_option,
+				      int quiet, int max_parallel_jobs);
 extern unsigned is_submodule_modified(const char *path, int ignore_untracked);
 extern int submodule_uses_gitfile(const char *path);
 
