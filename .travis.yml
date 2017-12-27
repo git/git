@@ -42,6 +42,7 @@ matrix:
     - env: jobname=Linux32
       os: linux
       compiler:
+      addons:
       services:
         - docker
       before_install:
