@@ -120,6 +120,13 @@ UI, Workflows & Features
    who are used to seeing abbreviated object names and find them
    confusing with the range syntax.
 
+ * With a configuration variable rebase.abbreviateCommands set,
+   "git rebase -i" produces the todo list with a single-letter
+   command names.
+
+ * "git worktree add" learned to run the post-checkout hook, just like
+   "git checkout" does, after the initial checkout.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -182,6 +189,17 @@ Performance, Internal Implementation, Development Support etc.
 
  * The tracing infrastructure has been optimized for cases where no
    tracing is requested.
+
+ * In preparation for implementing narrow/partial clone, the object
+   walking machinery has been taught a way to tell it to "filter" some
+   objects from enumeration.
+
+ * A few structures and variables that are implementation details of
+   the decorate API have been renamed and then the API got documented
+   better.
+
+ * Assorted updates for TravisCI integration.
+   (merge 4f26366679 sg/travis-fixes later to maint).
 
 Also contains various documentation updates and code clean-ups.
 
@@ -374,6 +392,19 @@ Fixes since v2.15
    lost.
    (merge abfb04d0c7 ls/editor-waiting-message later to maint).
 
+ * The "safe crlf" check incorrectly triggered for contents that does
+   not use CRLF as line endings, which has been corrected.
+   (merge 649f1f0948 tb/check-crlf-for-safe-crlf later to maint).
+
+ * "git clone --shared" to borrow from a (secondary) worktree did not
+   work, even though "git clone --local" did.  Both are now accepted.
+   (merge b3b05971c1 es/clone-shared-worktree later to maint).
+
+ * The build procedure now allows not just the repositories but also
+   the refs to be used to take pre-formatted manpages and html
+   documents to install.
+   (merge 65289e9dcd rb/quick-install-doc later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge 1a1fc2d5b5 rd/man-prune-progress later to maint).
    (merge 0ba014035a rd/man-reflog-add-n later to maint).
@@ -384,3 +415,13 @@ Fixes since v2.15
    (merge 5e83cca0b8 jk/no-optional-locks later to maint).
    (merge 826c778f7c js/hashmap-update-sample later to maint).
    (merge 176b2d328c sg/setup-doc-update later to maint).
+   (merge 1b09073514 rs/am-builtin-leakfix later to maint).
+   (merge addcf6cfde rs/fmt-merge-msg-string-leak-fix later to maint).
+   (merge c3ff8f6c14 rs/strbuf-read-once-reset-length later to maint).
+   (merge 6b0eb884f9 db/doc-workflows-neuter-the-maintainer later to maint).
+   (merge 8c87bdfb21 jk/cvsimport-quoting later to maint).
+   (merge 176cb979fe rs/fmt-merge-msg-leakfix later to maint).
+   (merge 5a03360e73 tb/delimit-pretty-trailers-args-with-comma later to maint).
+   (merge d0e6326026 ot/pretty later to maint).
+   (merge 44103f4197 sb/test-helper-excludes later to maint).
+   (merge 170078693f jt/transport-no-more-rsync later to maint).
