@@ -22,7 +22,9 @@ skip_branch_tip_with_tag () {
 }
 
 # Set 'exit on error' for all CI scripts to let the caller know that
-# something went wrong
+# something went wrong.
+# Set tracing executed commands, primarily setting environment variables
+# and installing dependencies.
 set -ex
 
 skip_branch_tip_with_tag

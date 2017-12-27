@@ -5,6 +5,9 @@
 
 . ${0%/*}/lib-travisci.sh
 
+# Tracing executed commands would produce too much noise in the loop below.
+set +x
+
 for TEST_EXIT in t/test-results/*.exit
 do
 	if [ "$(cat "$TEST_EXIT")" != "0" ]

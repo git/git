@@ -6,6 +6,8 @@
 #   run-linux32-build.sh [host-user-id]
 #
 
+set -x
+
 # Update packages to the latest available versions
 linux32 --32bit i386 sh -c '
     apt update >/dev/null &&
