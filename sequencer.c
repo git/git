@@ -795,7 +795,7 @@ static const char *command_to_string(const enum todo_command command)
 	die("Unknown command: %d", command);
 }
 
-static const char command_to_char(const enum todo_command command)
+static char command_to_char(const enum todo_command command)
 {
 	if (command < TODO_COMMENT && todo_command_info[command].c)
 		return todo_command_info[command].c;
