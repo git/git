@@ -444,4 +444,33 @@ test_expect_success 'git worktree --no-guess-remote option overrides config' '
 	)
 '
 
+post_checkout_hook () {
+	test_when_finished "rm -f .git/hooks/post-checkout" &&
+	mkdir -p .git/hooks &&
+	write_script .git/hooks/post-checkout <<-\EOF
+	echo $* >hook.actual
+	EOF
+}
+
+test_expect_success '"add" invokes post-checkout hook (branch)' '
+	post_checkout_hook &&
+	printf "%s %s 1\n" $_z40 $(git rev-parse HEAD) >hook.expect &&
+	git worktree add gumby &&
+	test_cmp hook.expect hook.actual
+'
+
+test_expect_success '"add" invokes post-checkout hook (detached)' '
+	post_checkout_hook &&
+	printf "%s %s 1\n" $_z40 $(git rev-parse HEAD) >hook.expect &&
+	git worktree add --detach grumpy &&
+	test_cmp hook.expect hook.actual
+'
+
+test_expect_success '"add --no-checkout" suppresses post-checkout hook' '
+	post_checkout_hook &&
+	rm -f hook.actual &&
+	git worktree add --no-checkout gloopy &&
+	test_path_is_missing hook.actual
+'
+
 test_done
