@@ -469,8 +469,8 @@ static void wt_status_collect_changed_cb(struct diff_queue_struct *q,
 			oidcpy(&d->oid_index, &p->one->oid);
 			break;
 
-		case DIFF_STATUS_UNKNOWN:
-			die("BUG: worktree status unknown???");
+		default:
+			die("BUG: unhandled diff-files status '%c'", p->status);
 			break;
 		}
 
@@ -549,6 +549,10 @@ static void wt_status_collect_updated_cb(struct diff_queue_struct *q,
 			 * code will output the stage values directly and not use the
 			 * values in these fields.
 			 */
+			break;
+
+		default:
+			die("BUG: unhandled diff-index status '%c'", p->status);
 			break;
 		}
 	}
