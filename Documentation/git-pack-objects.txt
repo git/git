@@ -12,7 +12,8 @@ SYNOPSIS
 'git pack-objects' [-q | --progress | --all-progress] [--all-progress-implied]
 	[--no-reuse-delta] [--delta-base-offset] [--non-empty]
 	[--local] [--incremental] [--window=<n>] [--depth=<n>]
-	[--revs [--unpacked | --all]] [--stdout | base-name]
+	[--revs [--unpacked | --all]]
+	[--stdout [--filter=<filter-spec>] | base-name]
 	[--shallow] [--keep-true-parents] < object-list
 
 
@@ -235,6 +236,25 @@ So does `git bundle` (see linkgit:git-bundle[1]) when it creates a bundle.
 --keep-true-parents::
 	With this option, parents that are hidden by grafts are packed
 	nevertheless.
+
+--filter=<filter-spec>::
+	Requires `--stdout`.  Omits certain objects (usually blobs) from
+	the resulting packfile.  See linkgit:git-rev-list[1] for valid
+	`<filter-spec>` forms.
+
+--no-filter::
+	Turns off any previous `--filter=` argument.
+
+--missing=<missing-action>::
+	A debug option to help with future "partial clone" development.
+	This option specifies how missing objects are handled.
++
+The form '--missing=error' requests that pack-objects stop with an error if
+a missing object is encountered.  This is the default action.
++
+The form '--missing=allow-any' will allow object traversal to continue
+if a missing object is encountered.  Missing objects will silently be
+omitted from the results.
 
 SEE ALSO
 --------

@@ -706,6 +706,47 @@ ifdef::git-rev-list[]
 --unpacked::
 	Only useful with `--objects`; print the object IDs that are not
 	in packs.
+
+--filter=<filter-spec>::
+	Only useful with one of the `--objects*`; omits objects (usually
+	blobs) from the list of printed objects.  The '<filter-spec>'
+	may be one of the following:
++
+The form '--filter=blob:none' omits all blobs.
++
+The form '--filter=blob:limit=<n>[kmg]' omits blobs larger than n bytes
+or units.  n may be zero.  The suffixes k, m, and g can be used to name
+units in KiB, MiB, or GiB.  For example, 'blob:limit=1k' is the same
+as 'blob:limit=1024'.
++
+The form '--filter=sparse:oid=<blob-ish>' uses a sparse-checkout
+specification contained in the blob (or blob-expression) '<blob-ish>'
+to omit blobs that would not be not required for a sparse checkout on
+the requested refs.
++
+The form '--filter=sparse:path=<path>' similarly uses a sparse-checkout
+specification contained in <path>.
+
+--no-filter::
+	Turn off any previous `--filter=` argument.
+
+--filter-print-omitted::
+	Only useful with `--filter=`; prints a list of the objects omitted
+	by the filter.	Object IDs are prefixed with a ``~'' character.
+
+--missing=<missing-action>::
+	A debug option to help with future "partial clone" development.
+	This option specifies how missing objects are handled.
++
+The form '--missing=error' requests that rev-list stop with an error if
+a missing object is encountered.  This is the default action.
++
+The form '--missing=allow-any' will allow object traversal to continue
+if a missing object is encountered.  Missing objects will silently be
+omitted from the results.
++
+The form '--missing=print' is like 'allow-any', but will also print a
+list of the missing objects.  Object IDs are prefixed with a ``?'' character.
 endif::git-rev-list[]
 
 --no-walk[=(sorted|unsorted)]::

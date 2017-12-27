@@ -15,6 +15,8 @@
 #include "diff.h"
 #include "revision.h"
 #include "list-objects.h"
+#include "list-objects-filter.h"
+#include "list-objects-filter-options.h"
 #include "pack-objects.h"
 #include "progress.h"
 #include "refs.h"
@@ -78,6 +80,15 @@ static unsigned long max_delta_cache_size = 256 * 1024 * 1024;
 static unsigned long cache_max_small_delta_size = 1000;
 
 static unsigned long window_memory_limit = 0;
+
+static struct list_objects_filter_options filter_options;
+
+enum missing_action {
+	MA_ERROR = 0,    /* fail if any missing objects are encountered */
+	MA_ALLOW_ANY,    /* silently allow ALL missing objects */
+};
+static enum missing_action arg_missing_action;
+static show_object_fn fn_show_object;
 
 /*
  * stats
@@ -2553,6 +2564,42 @@ static void show_object(struct object *obj, const char *name, void *data)
 	obj->flags |= OBJECT_ADDED;
 }
 
+static void show_object__ma_allow_any(struct object *obj, const char *name, void *data)
+{
+	assert(arg_missing_action == MA_ALLOW_ANY);
+
+	/*
+	 * Quietly ignore ALL missing objects.  This avoids problems with
+	 * staging them now and getting an odd error later.
+	 */
+	if (!has_object_file(&obj->oid))
+		return;
+
+	show_object(obj, name, data);
+}
+
+static int option_parse_missing_action(const struct option *opt,
+				       const char *arg, int unset)
+{
+	assert(arg);
+	assert(!unset);
+
+	if (!strcmp(arg, "error")) {
+		arg_missing_action = MA_ERROR;
+		fn_show_object = show_object;
+		return 0;
+	}
+
+	if (!strcmp(arg, "allow-any")) {
+		arg_missing_action = MA_ALLOW_ANY;
+		fn_show_object = show_object__ma_allow_any;
+		return 0;
+	}
+
+	die(_("invalid value for --missing"));
+	return 0;
+}
+
 static void show_edge(struct commit *commit)
 {
 	add_preferred_base(&commit->object.oid);
@@ -2817,7 +2864,12 @@ static void get_object_list(int ac, const char **av)
 	if (prepare_revision_walk(&revs))
 		die("revision walk setup failed");
 	mark_edges_uninteresting(&revs, show_edge);
-	traverse_commit_list(&revs, show_commit, show_object, NULL);
+
+	if (!fn_show_object)
+		fn_show_object = show_object;
+	traverse_commit_list_filtered(&filter_options, &revs,
+				      show_commit, fn_show_object, NULL,
+				      NULL);
 
 	if (unpack_unreachable_expiration) {
 		revs.ignore_missing_links = 1;
@@ -2953,6 +3005,10 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 			 N_("use a bitmap index if available to speed up counting objects")),
 		OPT_BOOL(0, "write-bitmap-index", &write_bitmap_index,
 			 N_("write a bitmap index together with the pack index")),
+		OPT_PARSE_LIST_OBJECTS_FILTER(&filter_options),
+		{ OPTION_CALLBACK, 0, "missing", NULL, N_("action"),
+		  N_("handling for missing objects"), PARSE_OPT_NONEG,
+		  option_parse_missing_action },
 		OPT_END(),
 	};
 
@@ -3028,6 +3084,12 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		die("--keep-unreachable and --unpack-unreachable are incompatible.");
 	if (!rev_list_all || !rev_list_reflog || !rev_list_index)
 		unpack_unreachable_expiration = 0;
+
+	if (filter_options.choice) {
+		if (!pack_to_stdout)
+			die("cannot use --filter without --stdout.");
+		use_bitmap_index = 0;
+	}
 
 	/*
 	 * "soft" reasons not to use bitmaps - for on-disk repack by default we want
