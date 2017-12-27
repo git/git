@@ -162,5 +162,65 @@ test_expect_success 'commit: ita entries ignored in empty commit check' '
 	)
 '
 
+test_expect_success 'rename detection finds the right names' '
+	git init rename-detection &&
+	(
+		cd rename-detection &&
+		echo contents >first &&
+		git add first &&
+		git commit -m first &&
+		mv first third &&
+		git add -N third &&
+
+		git status | grep -v "^?" >actual.1 &&
+		test_i18ngrep "renamed: *first -> third" actual.1 &&
+
+		git status --porcelain | grep -v "^?" >actual.2 &&
+		cat >expected.2 <<-\EOF &&
+		 R first -> third
+		EOF
+		test_cmp expected.2 actual.2 &&
+
+		hash=12f00e90b6ef79117ce6e650416b8cf517099b78 &&
+		git status --porcelain=v2 | grep -v "^?" >actual.3 &&
+		cat >expected.3 <<-EOF &&
+		2 .R N... 100644 100644 100644 $hash $hash R100 third	first
+		EOF
+		test_cmp expected.3 actual.3
+	)
+'
+
+test_expect_success 'double rename detection in status' '
+	git init rename-detection-2 &&
+	(
+		cd rename-detection-2 &&
+		echo contents >first &&
+		git add first &&
+		git commit -m first &&
+		git mv first second &&
+		mv second third &&
+		git add -N third &&
+
+		git status | grep -v "^?" >actual.1 &&
+		test_i18ngrep "renamed: *first -> second" actual.1 &&
+		test_i18ngrep "renamed: *second -> third" actual.1 &&
+
+		git status --porcelain | grep -v "^?" >actual.2 &&
+		cat >expected.2 <<-\EOF &&
+		R  first -> second
+		 R second -> third
+		EOF
+		test_cmp expected.2 actual.2 &&
+
+		hash=12f00e90b6ef79117ce6e650416b8cf517099b78 &&
+		git status --porcelain=v2 | grep -v "^?" >actual.3 &&
+		cat >expected.3 <<-EOF &&
+		2 R. N... 100644 100644 100644 $hash $hash R100 second	first
+		2 .R N... 100644 100644 100644 $hash $hash R100 third	second
+		EOF
+		test_cmp expected.3 actual.3
+	)
+'
+
 test_done
 

@@ -361,8 +361,6 @@ static void wt_longstatus_print_change_data(struct wt_status *s,
 	switch (change_type) {
 	case WT_STATUS_UPDATED:
 		status = d->index_status;
-		if (d->rename_source)
-			one_name = d->rename_source;
 		break;
 	case WT_STATUS_CHANGED:
 		if (d->new_submodule_commits || d->dirty_submodule) {
@@ -382,6 +380,14 @@ static void wt_longstatus_print_change_data(struct wt_status *s,
 		die("BUG: unhandled change_type %d in wt_longstatus_print_change_data",
 		    change_type);
 	}
+
+	/*
+	 * Only pick up the rename it's relevant. If the rename is for
+	 * the changed section and we're printing the updated section,
+	 * ignore it.
+	 */
+	if (d->rename_status == status)
+		one_name = d->rename_source;
 
 	one = quote_path(one_name, s->prefix, &onebuf);
 	two = quote_path(two_name, s->prefix, &twobuf);
@@ -434,7 +440,7 @@ static void wt_status_collect_changed_cb(struct diff_queue_struct *q,
 		struct wt_status_change_data *d;
 
 		p = q->queue[i];
-		it = string_list_insert(&s->change, p->one->path);
+		it = string_list_insert(&s->change, p->two->path);
 		d = it->util;
 		if (!d) {
 			d = xcalloc(1, sizeof(*d));
@@ -461,6 +467,14 @@ static void wt_status_collect_changed_cb(struct diff_queue_struct *q,
 			/* mode_worktree is zero for a delete. */
 			break;
 
+		case DIFF_STATUS_COPIED:
+		case DIFF_STATUS_RENAMED:
+			if (d->rename_status)
+				die("BUG: multiple renames on the same target? how?");
+			d->rename_source = xstrdup(p->one->path);
+			d->rename_score = p->score * 100 / MAX_SCORE;
+			d->rename_status = p->status;
+			/* fallthru */
 		case DIFF_STATUS_MODIFIED:
 		case DIFF_STATUS_TYPE_CHANGED:
 		case DIFF_STATUS_UNMERGED:
@@ -532,6 +546,8 @@ static void wt_status_collect_updated_cb(struct diff_queue_struct *q,
 
 		case DIFF_STATUS_COPIED:
 		case DIFF_STATUS_RENAMED:
+			if (d->rename_status)
+				die("BUG: multiple renames on the same target? how?");
 			d->rename_source = xstrdup(p->one->path);
 			d->rename_score = p->score * 100 / MAX_SCORE;
 			d->rename_status = p->status;
