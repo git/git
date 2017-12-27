@@ -25,6 +25,18 @@ test_expect_success 'git status' '
 	test_cmp expect actual
 '
 
+test_expect_success 'git status with porcelain v2' '
+	git status --porcelain=v2 | grep -v "^?" >actual &&
+	nam1=d00491fd7e5bb6fa28c517a0bb32b8b506539d4d &&
+	nam2=ce013625030ba8dba906f756967f9e9ca394464a &&
+	cat >expect <<-EOF &&
+	1 DA N... 100644 000000 100644 $nam1 $_z40 1.t
+	1 A. N... 000000 100644 100644 $_z40 $nam2 elif
+	1 .A N... 000000 000000 100644 $_z40 $_z40 file
+	EOF
+	test_cmp expect actual
+'
+
 test_expect_success 'check result of "add -N"' '
 	git ls-files -s file >actual &&
 	empty=$(git hash-object --stdin </dev/null) &&
