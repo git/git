@@ -895,7 +895,7 @@ static void export_marks(char *file)
 {
 	unsigned int i;
 	uint32_t mark;
-	struct object_decoration *deco = idnums.hash;
+	struct decoration_entry *deco = idnums.entries;
 	FILE *f;
 	int e = 0;
 
