@@ -39,6 +39,7 @@ MAN7_TXT += gitworkflows.txt
 MAN_TXT = $(MAN1_TXT) $(MAN5_TXT) $(MAN7_TXT)
 MAN_XML = $(patsubst %.txt,%.xml,$(MAN_TXT))
 MAN_HTML = $(patsubst %.txt,%.html,$(MAN_TXT))
+GIT_MAN_REF = master
 
 OBSOLETE_HTML += everyday.html
 OBSOLETE_HTML += git-remote-helpers.html
@@ -437,14 +438,14 @@ require-manrepo::
 	then echo "git-manpages repository must exist at $(MAN_REPO)"; exit 1; fi
 
 quick-install-man: require-manrepo
-	'$(SHELL_PATH_SQ)' ./install-doc-quick.sh $(MAN_REPO) $(DESTDIR)$(mandir)
+	'$(SHELL_PATH_SQ)' ./install-doc-quick.sh $(MAN_REPO) $(DESTDIR)$(mandir) $(GIT_MAN_REF)
 
 require-htmlrepo::
 	@if test ! -d $(HTML_REPO); \
 	then echo "git-htmldocs repository must exist at $(HTML_REPO)"; exit 1; fi
 
 quick-install-html: require-htmlrepo
-	'$(SHELL_PATH_SQ)' ./install-doc-quick.sh $(HTML_REPO) $(DESTDIR)$(htmldir)
+	'$(SHELL_PATH_SQ)' ./install-doc-quick.sh $(HTML_REPO) $(DESTDIR)$(htmldir) $(GIT_MAN_REF)
 
 print-man1:
 	@for i in $(MAN1_TXT); do echo $$i; done
