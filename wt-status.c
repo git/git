@@ -361,8 +361,8 @@ static void wt_longstatus_print_change_data(struct wt_status *s,
 	switch (change_type) {
 	case WT_STATUS_UPDATED:
 		status = d->index_status;
-		if (d->head_path)
-			one_name = d->head_path;
+		if (d->rename_source)
+			one_name = d->rename_source;
 		break;
 	case WT_STATUS_CHANGED:
 		if (d->new_submodule_commits || d->dirty_submodule) {
@@ -392,7 +392,7 @@ static void wt_longstatus_print_change_data(struct wt_status *s,
 		die("BUG: unhandled diff status %c", status);
 	len = label_width - utf8_strwidth(what);
 	assert(len >= 0);
-	if (status == DIFF_STATUS_COPIED || status == DIFF_STATUS_RENAMED)
+	if (one_name != two_name)
 		status_printf_more(s, c, "%s%.*s%s -> %s",
 				   what, len, padding, one, two);
 	else
@@ -532,8 +532,9 @@ static void wt_status_collect_updated_cb(struct diff_queue_struct *q,
 
 		case DIFF_STATUS_COPIED:
 		case DIFF_STATUS_RENAMED:
-			d->head_path = xstrdup(p->one->path);
-			d->score = p->score * 100 / MAX_SCORE;
+			d->rename_source = xstrdup(p->one->path);
+			d->rename_score = p->score * 100 / MAX_SCORE;
+			d->rename_status = p->status;
 			/* fallthru */
 		case DIFF_STATUS_MODIFIED:
 		case DIFF_STATUS_TYPE_CHANGED:
@@ -1691,13 +1692,14 @@ static void wt_shortstatus_status(struct string_list_item *it,
 	putchar(' ');
 	if (s->null_termination) {
 		fprintf(stdout, "%s%c", it->string, 0);
-		if (d->head_path)
-			fprintf(stdout, "%s%c", d->head_path, 0);
+		if (d->rename_source)
+			fprintf(stdout, "%s%c", d->rename_source, 0);
 	} else {
 		struct strbuf onebuf = STRBUF_INIT;
 		const char *one;
-		if (d->head_path) {
-			one = quote_path(d->head_path, s->prefix, &onebuf);
+
+		if (d->rename_source) {
+			one = quote_path(d->rename_source, s->prefix, &onebuf);
 			if (*one != '"' && strchr(one, ' ') != NULL) {
 				putchar('"');
 				strbuf_addch(&onebuf, '"');
@@ -2001,10 +2003,10 @@ static void wt_porcelain_v2_print_changed_entry(
 	struct wt_status *s)
 {
 	struct wt_status_change_data *d = it->util;
-	struct strbuf buf_index = STRBUF_INIT;
-	struct strbuf buf_head = STRBUF_INIT;
-	const char *path_index = NULL;
-	const char *path_head = NULL;
+	struct strbuf buf = STRBUF_INIT;
+	struct strbuf buf_from = STRBUF_INIT;
+	const char *path = NULL;
+	const char *path_from = NULL;
 	char key[3];
 	char submodule_token[5];
 	char sep_char, eol_char;
@@ -2023,8 +2025,8 @@ static void wt_porcelain_v2_print_changed_entry(
 		 */
 		sep_char = '\0';
 		eol_char = '\0';
-		path_index = it->string;
-		path_head = d->head_path;
+		path = it->string;
+		path_from = d->rename_source;
 	} else {
 		/*
 		 * Path(s) are C-quoted if necessary. Current path is ALWAYS first.
@@ -2034,27 +2036,27 @@ static void wt_porcelain_v2_print_changed_entry(
 		 */
 		sep_char = '\t';
 		eol_char = '\n';
-		path_index = quote_path(it->string, s->prefix, &buf_index);
-		if (d->head_path)
-			path_head = quote_path(d->head_path, s->prefix, &buf_head);
+		path = quote_path(it->string, s->prefix, &buf);
+		if (d->rename_source)
+			path_from = quote_path(d->rename_source, s->prefix, &buf_from);
 	}
 
-	if (path_head)
+	if (path_from)
 		fprintf(s->fp, "2 %s %s %06o %06o %06o %s %s %c%d %s%c%s%c",
 				key, submodule_token,
 				d->mode_head, d->mode_index, d->mode_worktree,
 				oid_to_hex(&d->oid_head), oid_to_hex(&d->oid_index),
-				key[0], d->score,
-				path_index, sep_char, path_head, eol_char);
+				d->rename_status, d->rename_score,
+				path, sep_char, path_from, eol_char);
 	else
 		fprintf(s->fp, "1 %s %s %06o %06o %06o %s %s %s%c",
 				key, submodule_token,
 				d->mode_head, d->mode_index, d->mode_worktree,
 				oid_to_hex(&d->oid_head), oid_to_hex(&d->oid_index),
-				path_index, eol_char);
+				path, eol_char);
 
-	strbuf_release(&buf_index);
-	strbuf_release(&buf_head);
+	strbuf_release(&buf);
+	strbuf_release(&buf_from);
 }
 
 /*
