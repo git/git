@@ -412,6 +412,12 @@ int cmd_version(int argc, const char **argv, const char *prefix)
 	printf("git version %s\n", git_version_string);
 
 	if (build_options) {
+		printf("cpu: %s\n", GIT_HOST_CPU);
+		if (git_built_from_commit_string[0])
+			printf("built from commit: %s\n",
+			       git_built_from_commit_string);
+		else
+			printf("no commit associated with this build\n");
 		printf("sizeof-long: %d\n", (int)sizeof(long));
 		/* NEEDSWORK: also save and output GIT-BUILD_OPTIONS? */
 	}
