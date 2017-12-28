@@ -127,6 +127,24 @@ UI, Workflows & Features
  * "git worktree add" learned to run the post-checkout hook, just like
    "git checkout" does, after the initial checkout.
 
+ * "git svn" has been updated to strip CRs in the commit messages, as
+   recent versions of Subversion rejects them.
+
+ * "git imap-send" did not correctly quote the folder name when
+   making a request to the server, which has been corrected.
+
+ * Error messages from "git rebase" have been somewhat cleaned up.
+
+ * Git has been taught to support an https:// URL used for http.proxy
+   when using recent versions of libcurl.
+
+ * "git merge" learned to pay attention to merge.verifySignatures
+   configuration variable and pretend as if '--verify-signatures'
+   option was given from the command line.
+
+ * "git describe" was taught to dig trees deeper to find a
+   <commit-ish>:<path> that refers to a given blob object.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -200,6 +218,12 @@ Performance, Internal Implementation, Development Support etc.
 
  * Assorted updates for TravisCI integration.
    (merge 4f26366679 sg/travis-fixes later to maint).
+
+ * Introduce a helper to simplify code to parse a common pattern that
+   expects either "--key" or "--key=<something>".
+
+ * "git version --build-options" learned to report the host CPU and
+   the exact commit object name the binary was built from.
 
 Also contains various documentation updates and code clean-ups.
 
@@ -405,6 +429,10 @@ Fixes since v2.15
    documents to install.
    (merge 65289e9dcd rb/quick-install-doc later to maint).
 
+ * Update the shell prompt script (in contrib/) to strip trailing CR
+   from strings read from various "state" files.
+   (merge 041fe8fc83 ra/prompt-eread-fix later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge 1a1fc2d5b5 rd/man-prune-progress later to maint).
    (merge 0ba014035a rd/man-reflog-add-n later to maint).
@@ -425,3 +453,6 @@ Fixes since v2.15
    (merge d0e6326026 ot/pretty later to maint).
    (merge 44103f4197 sb/test-helper-excludes later to maint).
    (merge 170078693f jt/transport-no-more-rsync later to maint).
+   (merge c07b3adff1 bw/path-doc later to maint).
+   (merge bf9d7df950 tz/lib-git-svn-svnserve-tests later to maint).
+   (merge dec366c9a8 sr/http-sslverify-config-doc later to maint).
