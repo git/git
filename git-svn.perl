@@ -1865,6 +1865,7 @@ sub get_commit_entry {
 			}
 		}
 		$msgbuf =~ s/\s+$//s;
+		$msgbuf =~ s/\r\n/\n/sg; # SVN 1.6+ disallows CRLF
 		if ($Git::SVN::_add_author_from && defined($author)
 		    && !$saw_from) {
 			$msgbuf .= "\n\nFrom: $author";
