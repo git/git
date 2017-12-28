@@ -1412,6 +1412,7 @@ static CURL *setup_curl(struct imap_server_conf *srvc, struct credential *cred)
 {
 	CURL *curl;
 	struct strbuf path = STRBUF_INIT;
+	char *uri_encoded_folder;
 
 	if (curl_global_init(CURL_GLOBAL_ALL) != CURLE_OK)
 		die("curl_global_init failed");
@@ -1429,7 +1430,12 @@ static CURL *setup_curl(struct imap_server_conf *srvc, struct credential *cred)
 	strbuf_addstr(&path, server.host);
 	if (!path.len || path.buf[path.len - 1] != '/')
 		strbuf_addch(&path, '/');
-	strbuf_addstr(&path, server.folder);
+
+	uri_encoded_folder = curl_easy_escape(curl, server.folder, 0);
+	if (!uri_encoded_folder)
+		die("failed to encode server folder");
+	strbuf_addstr(&path, uri_encoded_folder);
+	curl_free(uri_encoded_folder);
 
 	curl_easy_setopt(curl, CURLOPT_URL, path.buf);
 	strbuf_release(&path);
