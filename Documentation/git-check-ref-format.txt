@@ -79,16 +79,21 @@ reference name expressions (see linkgit:gitrevisions[7]):
 
 With the `--branch` option, the command takes a name and checks if
 it can be used as a valid branch name (e.g. when creating a new
-branch).  The rule `git check-ref-format --branch $name` implements
+branch). But be cautious when using the
+previous checkout syntax that may refer to a detached HEAD state.
+The rule `git check-ref-format --branch $name` implements
 may be stricter than what `git check-ref-format refs/heads/$name`
 says (e.g. a dash may appear at the beginning of a ref component,
 but it is explicitly forbidden at the beginning of a branch name).
 When run with `--branch` option in a repository, the input is first
-expanded for the ``previous branch syntax''
-`@{-n}`.  For example, `@{-1}` is a way to refer the last branch you
-were on.  This option should be used by porcelains to accept this
-syntax anywhere a branch name is expected, so they can act as if you
-typed the branch name.
+expanded for the ``previous checkout syntax''
+`@{-n}`.  For example, `@{-1}` is a way to refer the last thing that
+was checked out using "git checkout" operation. This option should be
+used by porcelains to accept this syntax anywhere a branch name is
+expected, so they can act as if you typed the branch name. As an
+exception note that, the ``previous checkout operation'' might result
+in a commit object name when the N-th last thing checked out was not
+a branch.
 
 OPTIONS
 -------
@@ -116,7 +121,7 @@ OPTIONS
 EXAMPLES
 --------
 
-* Print the name of the previous branch:
+* Print the name of the previous thing checked out:
 +
 ------------
 $ git check-ref-format --branch @{-1}
