@@ -1467,6 +1467,21 @@ int populate_value(struct ref_array_item *ref)
 			ref->symref = "";
 	}
 
+	if (cat_file_info) {
+		if (!cat_file_info->skip_object_info &&
+		    sha1_object_info_extended(ref->objectname.hash, &cat_file_info->info,
+					      OBJECT_INFO_LOOKUP_REPLACE) < 0) {
+			const char *e = ref->start_of_request;
+			printf("%s missing\n", e ? e : oid_to_hex(&ref->objectname));
+			fflush(stdout);
+			return -1;
+		}
+		ref->type = cat_file_info->type;
+		ref->size = cat_file_info->size;
+		ref->disk_size = cat_file_info->disk_size;
+		ref->delta_base_oid = cat_file_info->delta_base_oid;
+	}
+
 	/* Fill in specials first */
 	for (i = 0; i < used_atom_cnt; i++) {
 		struct used_atom *atom = &used_atom[i];

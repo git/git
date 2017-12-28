@@ -45,6 +45,8 @@ struct ref_array_item {
 	off_t disk_size;
 	const char *rest;
 	struct object_id delta_base_oid;
+	/* Need it for better explanation in error log. */
+	const char *start_of_request;
 	char refname[FLEX_ARRAY];
 };
 

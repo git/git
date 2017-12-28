@@ -284,21 +284,11 @@ static void batch_object_write(const char *obj_name, struct batch_options *opt,
 	struct strbuf buf = STRBUF_INIT;
 	struct ref_array_item item;
 
-	if (!data->skip_object_info &&
-	    sha1_object_info_extended(data->oid.hash, &data->info,
-				      OBJECT_INFO_LOOKUP_REPLACE) < 0) {
-		printf("%s missing\n",
-		       obj_name ? obj_name : oid_to_hex(&data->oid));
-		fflush(stdout);
-		return;
-	}
-
 	item.objectname = data->oid;
-	item.type = data->type;
-	item.size = data->size;
-	item.disk_size = data->disk_size;
 	item.rest = data->rest;
-	item.delta_base_oid = data->delta_base_oid;
+	item.start_of_request = obj_name;
+
+	if (populate_value(&item)) return;
 
 	strbuf_expand(&buf, opt->format.format, expand_format, &item);
 	strbuf_addch(&buf, '\n');
