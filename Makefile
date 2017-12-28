@@ -23,7 +23,6 @@ all::
 # it at all).
 #
 # Define NO_OPENSSL environment variable if you do not have OpenSSL.
-# This also implies BLK_SHA1.
 #
 # Define USE_LIBPCRE if you have and want to use libpcre. Various
 # commands such as log and grep offer runtime options to use
@@ -1260,7 +1259,6 @@ ifndef NO_OPENSSL
 	endif
 else
 	BASIC_CFLAGS += -DNO_OPENSSL
-	BLK_SHA1 = 1
 	OPENSSL_LIBSSL =
 endif
 ifdef NO_OPENSSL
