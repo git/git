@@ -1403,6 +1403,23 @@ static const char *get_refname(struct used_atom *atom, struct ref_array_item *re
 	return show_ref(&atom->u.refname, ref->refname);
 }
 
+static int check_and_fill_for_cat(struct ref_array_item *ref)
+{
+	if (!cat_file_info->skip_object_info &&
+	    sha1_object_info_extended(ref->oid.hash, &cat_file_info->info,
+				      OBJECT_INFO_LOOKUP_REPLACE) < 0) {
+		const char *e = ref->objectname;
+		printf("%s missing\n", e ? e : oid_to_hex(&ref->oid));
+		fflush(stdout);
+		return -1;
+	}
+	ref->type = cat_file_info->type;
+	ref->size = cat_file_info->size;
+	ref->disk_size = cat_file_info->disk_size;
+	ref->delta_base_oid = &cat_file_info->delta_base_oid;
+	return 0;
+}
+
 /*
  * Parse the object referred by ref, and grab needed value.
  * Return 0 if everything was successful, -1 otherwise.
@@ -1423,6 +1440,9 @@ int populate_value(struct ref_array_item *ref)
 		if (!ref->symref)
 			ref->symref = "";
 	}
+
+	if (cat_file_info && check_and_fill_for_cat(ref))
+		return -1;
 
 	/* Fill in specials first */
 	for (i = 0; i < used_atom_cnt; i++) {
