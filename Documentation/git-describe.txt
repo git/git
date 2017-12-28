@@ -3,14 +3,14 @@ git-describe(1)
 
 NAME
 ----
-git-describe - Describe a commit using the most recent tag reachable from it
-
+git-describe - Give an object a human readable name based on an available ref
 
 SYNOPSIS
 --------
 [verse]
 'git describe' [--all] [--tags] [--contains] [--abbrev=<n>] [<commit-ish>...]
 'git describe' [--all] [--tags] [--contains] [--abbrev=<n>] --dirty[=<mark>]
+'git describe' <blob>
 
 DESCRIPTION
 -----------
@@ -23,6 +23,12 @@ abbreviated object name of the most recent commit.
 By default (without --all or --tags) `git describe` only shows
 annotated tags.  For more information about creating annotated tags
 see the -a and -s options to linkgit:git-tag[1].
+
+If the given object refers to a blob, it will be described
+as `<commit-ish>:<path>`, such that the blob can be found
+at `<path>` in the `<commit-ish>`, which itself describes the
+first commit in which this blob occurs in a reverse revision walk
+from HEAD.
 
 OPTIONS
 -------
@@ -185,6 +191,14 @@ has the fewest commits different from the input commit-ish will be
 selected and output.  Here fewest commits different is defined as
 the number of commits which would be shown by `git log tag..input`
 will be the smallest number of commits possible.
+
+BUGS
+----
+
+Tree objects as well as tag objects not pointing at commits, cannot be described.
+When describing blobs, the lightweight tags pointing at blobs are ignored,
+but the blob is still described as <committ-ish>:<path> despite the lightweight
+tag being favorable.
 
 GIT
 ---
