@@ -1968,8 +1968,8 @@ empty string.
 
 http.sslVerify::
 	Whether to verify the SSL certificate when fetching or pushing
-	over HTTPS. Can be overridden by the `GIT_SSL_NO_VERIFY` environment
-	variable.
+	over HTTPS. Defaults to true. Can be overridden by the
+	`GIT_SSL_NO_VERIFY` environment variable.
 
 http.sslCert::
 	File containing the SSL certificate when fetching or pushing
