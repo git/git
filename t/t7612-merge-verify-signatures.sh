@@ -35,27 +35,72 @@ test_expect_success GPG 'create signed commits' '
 '
 
 test_expect_success GPG 'merge unsigned commit with verification' '
+	test_when_finished "git reset --hard && git checkout initial" &&
 	test_must_fail git merge --ff-only --verify-signatures side-unsigned 2>mergeerror &&
 	test_i18ngrep "does not have a GPG signature" mergeerror
 '
 
+test_expect_success GPG 'merge unsigned commit with merge.verifySignatures=true' '
+	test_when_finished "git reset --hard && git checkout initial" &&
+	test_config merge.verifySignatures true &&
+	test_must_fail git merge --ff-only side-unsigned 2>mergeerror &&
+	test_i18ngrep "does not have a GPG signature" mergeerror
+'
+
 test_expect_success GPG 'merge commit with bad signature with verification' '
+	test_when_finished "git reset --hard && git checkout initial" &&
 	test_must_fail git merge --ff-only --verify-signatures $(cat forged.commit) 2>mergeerror &&
 	test_i18ngrep "has a bad GPG signature" mergeerror
 '
 
+test_expect_success GPG 'merge commit with bad signature with merge.verifySignatures=true' '
+	test_when_finished "git reset --hard && git checkout initial" &&
+	test_config merge.verifySignatures true &&
+	test_must_fail git merge --ff-only $(cat forged.commit) 2>mergeerror &&
+	test_i18ngrep "has a bad GPG signature" mergeerror
+'
+
 test_expect_success GPG 'merge commit with untrusted signature with verification' '
+	test_when_finished "git reset --hard && git checkout initial" &&
 	test_must_fail git merge --ff-only --verify-signatures side-untrusted 2>mergeerror &&
 	test_i18ngrep "has an untrusted GPG signature" mergeerror
 '
 
+test_expect_success GPG 'merge commit with untrusted signature with merge.verifySignatures=true' '
+	test_when_finished "git reset --hard && git checkout initial" &&
+	test_config merge.verifySignatures true &&
+	test_must_fail git merge --ff-only side-untrusted 2>mergeerror &&
+	test_i18ngrep "has an untrusted GPG signature" mergeerror
+'
+
 test_expect_success GPG 'merge signed commit with verification' '
+	test_when_finished "git reset --hard && git checkout initial" &&
 	git merge --verbose --ff-only --verify-signatures side-signed >mergeoutput &&
 	test_i18ngrep "has a good GPG signature" mergeoutput
 '
 
+test_expect_success GPG 'merge signed commit with merge.verifySignatures=true' '
+	test_when_finished "git reset --hard && git checkout initial" &&
+	test_config merge.verifySignatures true &&
+	git merge --verbose --ff-only side-signed >mergeoutput &&
+	test_i18ngrep "has a good GPG signature" mergeoutput
+'
+
 test_expect_success GPG 'merge commit with bad signature without verification' '
+	test_when_finished "git reset --hard && git checkout initial" &&
 	git merge $(cat forged.commit)
+'
+
+test_expect_success GPG 'merge commit with bad signature with merge.verifySignatures=false' '
+	test_when_finished "git reset --hard && git checkout initial" &&
+	test_config merge.verifySignatures false &&
+	git merge $(cat forged.commit)
+'
+
+test_expect_success GPG 'merge commit with bad signature with merge.verifySignatures=true and --no-verify-signatures' '
+	test_when_finished "git reset --hard && git checkout initial" &&
+	test_config merge.verifySignatures true &&
+	git merge --no-verify-signatures $(cat forged.commit)
 '
 
 test_done
