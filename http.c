@@ -866,6 +866,11 @@ static CURL *get_curl_handle(void)
 			curl_easy_setopt(result,
 				CURLOPT_PROXYTYPE, CURLPROXY_SOCKS4);
 #endif
+#if LIBCURL_VERSION_NUM >= 0x073400
+		else if (starts_with(curl_http_proxy, "https"))
+			curl_easy_setopt(result,
+				CURLOPT_PROXYTYPE, CURLPROXY_HTTPS);
+#endif
 		if (strstr(curl_http_proxy, "://"))
 			credential_from_url(&proxy_auth, curl_http_proxy);
 		else {
