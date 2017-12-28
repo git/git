@@ -17,6 +17,7 @@
 #include "string-list.h"
 #include "sha1-array.h"
 #include "sigchain.h"
+#include "transport-internal.h"
 
 static void set_upstreams(struct transport *transport, struct ref *refs,
 	int pretend)
@@ -607,6 +608,15 @@ static int disconnect_git(struct transport *transport)
 	return 0;
 }
 
+static struct transport_vtable taken_over_vtable = {
+	NULL,
+	get_refs_via_connect,
+	fetch_refs_via_pack,
+	git_transport_push,
+	NULL,
+	disconnect_git
+};
+
 void transport_take_over(struct transport *transport,
 			 struct child_process *child)
 {
@@ -624,11 +634,7 @@ void transport_take_over(struct transport *transport,
 	data->got_remote_heads = 0;
 	transport->data = data;
 
-	transport->set_option = NULL;
-	transport->get_refs_list = get_refs_via_connect;
-	transport->fetch = fetch_refs_via_pack;
-	transport->push_refs = git_transport_push;
-	transport->disconnect = disconnect_git;
+	transport->vtable = &taken_over_vtable;
 	transport->smart_options = &(data->options);
 
 	transport->cannot_reuse = 1;
@@ -751,6 +757,24 @@ void transport_check_allowed(const char *type)
 		die("transport '%s' not allowed", type);
 }
 
+static struct transport_vtable bundle_vtable = {
+	NULL,
+	get_refs_from_bundle,
+	fetch_refs_from_bundle,
+	NULL,
+	NULL,
+	close_bundle
+};
+
+static struct transport_vtable builtin_smart_vtable = {
+	NULL,
+	get_refs_via_connect,
+	fetch_refs_via_pack,
+	git_transport_push,
+	connect_git,
+	disconnect_git
+};
+
 struct transport *transport_get(struct remote *remote, const char *url)
 {
 	const char *helper;
@@ -787,9 +811,7 @@ struct transport *transport_get(struct remote *remote, const char *url)
 		struct bundle_transport_data *data = xcalloc(1, sizeof(*data));
 		transport_check_allowed("file");
 		ret->data = data;
-		ret->get_refs_list = get_refs_from_bundle;
-		ret->fetch = fetch_refs_from_bundle;
-		ret->disconnect = close_bundle;
+		ret->vtable = &bundle_vtable;
 		ret->smart_options = NULL;
 	} else if (!is_url(url)
 		|| starts_with(url, "file://")
@@ -804,12 +826,7 @@ struct transport *transport_get(struct remote *remote, const char *url)
 		 */
 		struct git_transport_data *data = xcalloc(1, sizeof(*data));
 		ret->data = data;
-		ret->set_option = NULL;
-		ret->get_refs_list = get_refs_via_connect;
-		ret->fetch = fetch_refs_via_pack;
-		ret->push_refs = git_transport_push;
-		ret->connect = connect_git;
-		ret->disconnect = disconnect_git;
+		ret->vtable = &builtin_smart_vtable;
 		ret->smart_options = &(data->options);
 
 		data->conn = NULL;
@@ -843,9 +860,9 @@ int transport_set_option(struct transport *transport,
 		git_reports = set_git_option(transport->smart_options,
 					     name, value);
 
-	if (transport->set_option)
-		protocol_reports = transport->set_option(transport, name,
-							value);
+	if (transport->vtable->set_option)
+		protocol_reports = transport->vtable->set_option(transport,
+								 name, value);
 
 	/* If either report is 0, report 0 (success). */
 	if (!git_reports || !protocol_reports)
@@ -968,7 +985,7 @@ int transport_push(struct transport *transport,
 	*reject_reasons = 0;
 	transport_verify_remote_names(refspec_nr, refspec);
 
-	if (transport->push_refs) {
+	if (transport->vtable->push_refs) {
 		struct ref *remote_refs;
 		struct ref *local_refs = get_local_heads();
 		int match_flags = MATCH_REFS_NONE;
@@ -981,7 +998,7 @@ int transport_push(struct transport *transport,
 		if (check_push_refs(local_refs, refspec_nr, refspec) < 0)
 			return -1;
 
-		remote_refs = transport->get_refs_list(transport, 1);
+		remote_refs = transport->vtable->get_refs_list(transport, 1);
 
 		if (flags & TRANSPORT_PUSH_ALL)
 			match_flags |= MATCH_REFS_ALL;
@@ -1056,7 +1073,7 @@ int transport_push(struct transport *transport,
 		}
 
 		if (!(flags & TRANSPORT_RECURSE_SUBMODULES_ONLY))
-			push_ret = transport->push_refs(transport, remote_refs, flags);
+			push_ret = transport->vtable->push_refs(transport, remote_refs, flags);
 		else
 			push_ret = 0;
 		err = push_had_errors(remote_refs);
@@ -1090,7 +1107,7 @@ int transport_push(struct transport *transport,
 const struct ref *transport_get_remote_refs(struct transport *transport)
 {
 	if (!transport->got_remote_refs) {
-		transport->remote_refs = transport->get_refs_list(transport, 0);
+		transport->remote_refs = transport->vtable->get_refs_list(transport, 0);
 		transport->got_remote_refs = 1;
 	}
 
@@ -1127,7 +1144,7 @@ int transport_fetch_refs(struct transport *transport, struct ref *refs)
 			heads[nr_heads++] = rm;
 	}
 
-	rc = transport->fetch(transport, nr_heads, heads);
+	rc = transport->vtable->fetch(transport, nr_heads, heads);
 
 	free(heads);
 	return rc;
@@ -1144,8 +1161,8 @@ void transport_unlock_pack(struct transport *transport)
 int transport_connect(struct transport *transport, const char *name,
 		      const char *exec, int fd[2])
 {
-	if (transport->connect)
-		return transport->connect(transport, name, exec, fd);
+	if (transport->vtable->connect)
+		return transport->vtable->connect(transport, name, exec, fd);
 	else
 		die("Operation not supported by protocol");
 }
@@ -1153,8 +1170,8 @@ int transport_connect(struct transport *transport, const char *name,
 int transport_disconnect(struct transport *transport)
 {
 	int ret = 0;
-	if (transport->disconnect)
-		ret = transport->disconnect(transport);
+	if (transport->vtable->disconnect)
+		ret = transport->vtable->disconnect(transport);
 	free(transport);
 	return ret;
 }

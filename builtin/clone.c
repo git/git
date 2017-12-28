@@ -1083,9 +1083,6 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		warning(_("--local is ignored"));
 	transport->cloning = 1;
 
-	if (!transport->get_refs_list || (!is_local && !transport->fetch))
-		die(_("Don't know how to clone %s"), transport->url);
-
 	transport_set_option(transport, TRANS_OPT_KEEP, "yes");
 
 	if (option_depth)

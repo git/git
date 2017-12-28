@@ -11,6 +11,7 @@
 #include "sigchain.h"
 #include "argv-array.h"
 #include "refs.h"
+#include "transport-internal.h"
 
 static int debug;
 
@@ -650,7 +651,7 @@ static int fetch(struct transport *transport,
 
 	if (process_connect(transport, 0)) {
 		do_take_over(transport);
-		return transport->fetch(transport, nr_heads, to_fetch);
+		return transport->vtable->fetch(transport, nr_heads, to_fetch);
 	}
 
 	count = 0;
@@ -990,7 +991,7 @@ static int push_refs(struct transport *transport,
 
 	if (process_connect(transport, 1)) {
 		do_take_over(transport);
-		return transport->push_refs(transport, remote_refs, flags);
+		return transport->vtable->push_refs(transport, remote_refs, flags);
 	}
 
 	if (!remote_refs) {
@@ -1038,7 +1039,7 @@ static struct ref *get_refs_list(struct transport *transport, int for_push)
 
 	if (process_connect(transport, for_push)) {
 		do_take_over(transport);
-		return transport->get_refs_list(transport, for_push);
+		return transport->vtable->get_refs_list(transport, for_push);
 	}
 
 	if (data->push && for_push)
@@ -1086,6 +1087,15 @@ static struct ref *get_refs_list(struct transport *transport, int for_push)
 	return ret;
 }
 
+static struct transport_vtable vtable = {
+	set_helper_option,
+	get_refs_list,
+	fetch,
+	push_refs,
+	connect_helper,
+	release_helper
+};
+
 int transport_helper_init(struct transport *transport, const char *name)
 {
 	struct helper_data *data = xcalloc(1, sizeof(*data));
@@ -1097,12 +1107,7 @@ int transport_helper_init(struct transport *transport, const char *name)
 		debug = 1;
 
 	transport->data = data;
-	transport->set_option = set_helper_option;
-	transport->get_refs_list = get_refs_list;
-	transport->fetch = fetch;
-	transport->push_refs = push_refs;
-	transport->disconnect = release_helper;
-	transport->connect = connect_helper;
+	transport->vtable = &vtable;
 	transport->smart_options = &(data->transport_options);
 	return 0;
 }
