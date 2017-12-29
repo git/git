@@ -2665,7 +2665,7 @@ _git_config ()
 _git_remote ()
 {
 	local subcommands="
-		add rename remove set-head set-branches
+		add rename remove rm set-head set-branches
 		get-url set-url show prune update
 		"
 	local subcommand="$(__git_find_on_cmdline "$subcommands")"
