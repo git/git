@@ -99,8 +99,8 @@ linux-clang|linux-gcc)
 	export LINUX_P4_VERSION="16.2"
 	export LINUX_GIT_LFS_VERSION="1.5.2"
 
-	P4_PATH="$(pwd)/custom/p4"
-	GIT_LFS_PATH="$(pwd)/custom/git-lfs"
+	P4_PATH="$HOME/custom/p4"
+	GIT_LFS_PATH="$HOME/custom/git-lfs"
 	export PATH="$GIT_LFS_PATH:$P4_PATH:$PATH"
 	;;
 osx-clang|osx-gcc)
