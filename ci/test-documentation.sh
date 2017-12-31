@@ -25,3 +25,5 @@ sed '/^GIT_VERSION = / d' stderr.log
 ! test -s stderr.log
 test -s Documentation/git.html
 grep '<meta name="generator" content="Asciidoctor ' Documentation/git.html
+
+save_good_tree
