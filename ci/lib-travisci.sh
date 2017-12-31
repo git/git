@@ -27,6 +27,8 @@ skip_branch_tip_with_tag () {
 # and installing dependencies.
 set -ex
 
+mkdir -p "$HOME/travis-cache"
+
 skip_branch_tip_with_tag
 
 if test -z "$jobname"
