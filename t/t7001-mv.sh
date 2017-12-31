@@ -39,6 +39,12 @@ test_expect_success \
     grep "^R100..*path1/COPYING..*path0/COPYING"'
 
 test_expect_success \
+    'mv --dry-run does not move file' \
+    'git mv -n path0/COPYING MOVED &&
+     test -f path0/COPYING &&
+     test ! -f MOVED'
+
+test_expect_success \
     'checking -k on non-existing file' \
     'git mv -k idontexist path0'
 
