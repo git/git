@@ -23,4 +23,6 @@ docker run \
 	daald/ubuntu32:xenial \
 	/usr/src/git/ci/run-linux32-build.sh $(id -u $USER)
 
+check_unignored_build_artifacts
+
 save_good_tree
