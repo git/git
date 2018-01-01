@@ -93,10 +93,10 @@ int init_apply_state(struct apply_state *state,
 	strbuf_init(&state->root, 0);
 
 	git_apply_config();
-	if (apply_default_whitespace && parse_whitespace_option(state, apply_default_whitespace))
+	if ((apply_default_whitespace && parse_whitespace_option(state, apply_default_whitespace)) ||
+	(apply_default_ignorewhitespace && parse_ignorewhitespace_option(state, apply_default_ignorewhitespace)))
 		return -1;
-	if (apply_default_ignorewhitespace && parse_ignorewhitespace_option(state, apply_default_ignorewhitespace))
-		return -1;
+
 	return 0;
 }
 
@@ -435,9 +435,8 @@ static int is_dev_null(const char *str)
 
 static int name_terminate(int c, int terminate)
 {
-	if (c == ' ' && !(terminate & TERM_SPACE))
-		return 0;
-	if (c == '\t' && !(terminate & TERM_TAB))
+	if ((c == ' ' && !(terminate & TERM_SPACE)) || 
+		(c == '\t' && !(terminate & TERM_TAB)))
 		return 0;
 
 	return 1;
@@ -676,11 +675,9 @@ static char *find_name_common(struct apply_state *state,
 		if (c == '/' && !--p_value)
 			start = line;
 	}
-	if (!start)
+	if (!start || !line)
 		return squash_slash(xstrdup_or_null(def));
 	len = line - start;
-	if (!len)
-		return squash_slash(xstrdup_or_null(def));
 
 	/*
 	 * Generally we prefer the shorter name, especially
