@@ -197,8 +197,6 @@ static void expand_atom(struct strbuf *sb, const char *atom, int len,
 		strbuf_addstr(sb, data->rest);
 	else if (is_atom("deltabase", atom, len))
 		strbuf_addstr(sb, oid_to_hex(&data->delta_base_oid));
-	else
-		die("unknown format element: %.*s", len, atom);
 }
 
 static size_t expand_format(struct strbuf *sb, const char *start, void *vdata)
