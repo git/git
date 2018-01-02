@@ -473,7 +473,9 @@ static void clone_local(const char *src_repo, const char *dest_repo)
 }
 
 static const char *junk_work_tree;
+static int junk_work_tree_flags;
 static const char *junk_git_dir;
+static int junk_git_dir_flags;
 static enum {
 	JUNK_LEAVE_NONE,
 	JUNK_LEAVE_REPO,
@@ -502,12 +504,12 @@ static void remove_junk(void)
 
 	if (junk_git_dir) {
 		strbuf_addstr(&sb, junk_git_dir);
-		remove_dir_recursively(&sb, 0);
+		remove_dir_recursively(&sb, junk_git_dir_flags);
 		strbuf_reset(&sb);
 	}
 	if (junk_work_tree) {
 		strbuf_addstr(&sb, junk_work_tree);
-		remove_dir_recursively(&sb, 0);
+		remove_dir_recursively(&sb, junk_work_tree_flags);
 	}
 	strbuf_release(&sb);
 }
@@ -974,14 +976,24 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		if (safe_create_leading_directories_const(work_tree) < 0)
 			die_errno(_("could not create leading directories of '%s'"),
 				  work_tree);
-		if (!dest_exists && mkdir(work_tree, 0777))
+		if (dest_exists)
+			junk_work_tree_flags |= REMOVE_DIR_KEEP_TOPLEVEL;
+		else if (mkdir(work_tree, 0777))
 			die_errno(_("could not create work tree dir '%s'"),
 				  work_tree);
 		junk_work_tree = work_tree;
 		set_git_work_tree(work_tree);
 	}
 
-	junk_git_dir = real_git_dir ? real_git_dir : git_dir;
+	if (real_git_dir) {
+		if (dir_exists(real_git_dir))
+			junk_git_dir_flags |= REMOVE_DIR_KEEP_TOPLEVEL;
+		junk_git_dir = real_git_dir;
+	} else {
+		if (dest_exists)
+			junk_git_dir_flags |= REMOVE_DIR_KEEP_TOPLEVEL;
+		junk_git_dir = git_dir;
+	}
 	if (safe_create_leading_directories_const(git_dir) < 0)
 		die(_("could not create leading directories of '%s'"), git_dir);
 
