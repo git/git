@@ -22,7 +22,7 @@ test_expect_success \
 # Need a repo to clone
 test_create_repo foo
 
-# clone doesn't like it if there is no HEAD. Is that a bug?
+# create some objects so that we can corrupt the repo later
 (cd foo && touch file && git add file && git commit -m 'add file' >/dev/null 2>&1)
 
 # source repository given to git clone should be relative to the
