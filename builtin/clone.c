@@ -863,10 +863,15 @@ static void dissociate_from_references(void)
 	free(alternates);
 }
 
+static int dir_exists(const char *path)
+{
+	struct stat sb;
+	return !stat(path, &sb);
+}
+
 int cmd_clone(int argc, const char **argv, const char *prefix)
 {
 	int is_bundle = 0, is_local;
-	struct stat buf;
 	const char *repo_name, *repo, *work_tree, *git_dir;
 	char *path, *dir;
 	int dest_exists;
@@ -940,7 +945,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		dir = guess_dir_name(repo_name, is_bundle, option_bare);
 	strip_trailing_slashes(dir);
 
-	dest_exists = !stat(dir, &buf);
+	dest_exists = dir_exists(dir);
 	if (dest_exists && !is_empty_dir(dir))
 		die(_("destination path '%s' already exists and is not "
 			"an empty directory."), dir);
@@ -951,7 +956,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		work_tree = NULL;
 	else {
 		work_tree = getenv("GIT_WORK_TREE");
-		if (work_tree && !stat(work_tree, &buf))
+		if (work_tree && dir_exists(work_tree))
 			die(_("working tree '%s' already exists."), work_tree);
 	}
 
