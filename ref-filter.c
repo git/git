@@ -493,8 +493,6 @@ static int parse_ref_filter_atom(const struct ref_format *format,
 		need_tagged = 1;
 	if (!strcmp(valid_atom[i].name, "symref"))
 		need_symref = 1;
-	if (cat_file_info && !strcmp(valid_atom[i].name, "rest"))
-		cat_file_info->split_on_whitespace = 1;
 	return at;
 }
 
@@ -728,6 +726,21 @@ static const char *find_next(const char *cp)
 		cp++;
 	}
 	return NULL;
+}
+
+/* Search for atom in given format. */
+int is_atom_used(const struct ref_format *format, const char *atom)
+{
+	const char *cp, *sp;
+	for (cp = format->format; *cp && (sp = find_next(cp)); ) {
+		const char *ep = strchr(sp, ')');
+		int atom_len = ep - sp - 2;
+		sp += 2;
+		if (atom_len == strlen(atom) && !memcmp(sp, atom, atom_len))
+			return 1;
+		cp = ep + 1;
+	}
+	return 0;
 }
 
 /*

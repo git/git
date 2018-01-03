@@ -382,8 +382,7 @@ static int batch_objects(struct batch_options *opt)
 {
 	struct strbuf buf = STRBUF_INIT;
 	struct expand_data data;
-	int save_warning;
-	int retval = 0;
+	int save_warning, is_rest, retval = 0;
 
 	if (!opt->format.format)
 		opt->format.format = "%(objectname) %(objecttype) %(objectsize)";
@@ -395,8 +394,6 @@ static int batch_objects(struct batch_options *opt)
 	memset(&data, 0, sizeof(data));
 	opt->format.cat_file_data = &data;
 	verify_ref_format(&opt->format);
-	if (opt->cmdmode)
-		data.split_on_whitespace = 1;
 
 	if (opt->all_objects) {
 		struct object_info empty = OBJECT_INFO_INIT;
@@ -435,9 +432,10 @@ static int batch_objects(struct batch_options *opt)
 	 */
 	save_warning = warn_on_object_refname_ambiguity;
 	warn_on_object_refname_ambiguity = 0;
+	is_rest = opt->cmdmode || is_atom_used(&opt->format, "rest");
 
 	while (strbuf_getline(&buf, stdin) != EOF) {
-		if (data.split_on_whitespace) {
+		if (is_rest) {
 			/*
 			 * Split at first whitespace, tying off the beginning
 			 * of the string and saving the remainder (or NULL) in

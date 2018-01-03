@@ -87,13 +87,6 @@ struct expand_data {
 	struct object_id delta_base_oid;
 
 	/*
-	 * Whether to split the input on whitespace before feeding it to
-	 * get_sha1; this is decided during the mark_query phase based on
-	 * whether we have a %(rest) token in our format.
-	 */
-	int split_on_whitespace;
-
-	/*
 	 * After a mark_query run, this object_info is set up to be
 	 * passed to sha1_object_info_extended. It will point to the data
 	 * elements above, so you can retrieve the response from there.
@@ -185,5 +178,8 @@ void pretty_print_ref(const char *name, const unsigned char *sha1,
 
 /* Fill the values of request and prepare all data for final string creation */
 int populate_value(struct ref_array_item *ref);
+
+/* Search for atom in given format. */
+int is_atom_used(const struct ref_format *format, const char *atom);
 
 #endif /*  REF_FILTER_H  */
