@@ -101,6 +101,7 @@ static struct used_atom {
 } *used_atom;
 static int used_atom_cnt, need_tagged, need_symref;
 struct expand_data *cat_file_info;
+static int is_cat = 0;
 
 static void color_atom_parser(const struct ref_format *format, struct used_atom *atom, const char *color_value)
 {
@@ -493,7 +494,7 @@ static int parse_ref_filter_atom(const struct ref_format *format,
 		need_tagged = 1;
 	if (!strcmp(valid_atom[i].name, "symref"))
 		need_symref = 1;
-	if (cat_file_info && !strcmp(valid_atom[i].name, "rest"))
+	if (is_cat && !strcmp(valid_atom[i].name, "rest"))
 		cat_file_info->split_on_whitespace = 1;
 	return at;
 }
@@ -739,6 +740,7 @@ int verify_ref_format(struct ref_format *format)
 	const char *cp, *sp;
 
 	cat_file_info = format->cat_file_data;
+	is_cat = format->is_cat;
 	format->need_color_reset_at_eol = 0;
 	for (cp = format->format; *cp && (sp = find_next(cp)); ) {
 		const char *color, *ep = strchr(sp, ')');
@@ -748,7 +750,7 @@ int verify_ref_format(struct ref_format *format)
 			return error(_("malformed format string %s"), sp);
 		/* sp points at "%(" and ep points at the closing ")" */
 
-		if (format->cat_file_data) {
+		if (is_cat) {
 			at = parse_ref_filter_atom(format, valid_cat_file_atom,
 						   ARRAY_SIZE(valid_cat_file_atom), sp + 2, ep);
 		} else {
@@ -1464,7 +1466,7 @@ int populate_value(struct ref_array_item *ref)
 			ref->symref = "";
 	}
 
-	if (cat_file_info) {
+	if (is_cat) {
 		if (!cat_file_info->skip_object_info &&
 		    sha1_object_info_extended(ref->objectname.hash, &cat_file_info->info,
 					      OBJECT_INFO_LOOKUP_REPLACE) < 0) {

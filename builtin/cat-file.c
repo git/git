@@ -393,6 +393,7 @@ static int batch_objects(struct batch_options *opt)
 	 */
 	memset(&data, 0, sizeof(data));
 	opt->format.cat_file_data = &data;
+	opt->format.is_cat = 1;
 	verify_ref_format(&opt->format);
 	if (opt->cmdmode)
 		data.split_on_whitespace = 1;
