@@ -494,8 +494,8 @@ static int parse_ref_filter_atom(const struct ref_format *format,
 		need_tagged = 1;
 	if (!strcmp(valid_atom[i].name, "symref"))
 		need_symref = 1;
-	if (is_cat && !strcmp(valid_atom[i].name, "rest"))
-		cat_file_info->split_on_whitespace = 1;
+	if (!strcmp(valid_atom[i].name, "rest"))
+		*format->split_on_whitespace = 1;
 	return at;
 }
 
