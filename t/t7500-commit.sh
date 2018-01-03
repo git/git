@@ -130,8 +130,8 @@ EOF
 test_expect_success 'commit message from template with whitespace issue' '
 	echo "content galore" >>foo &&
 	git add foo &&
-	GIT_EDITOR="$TEST_DIRECTORY"/t7500/add-whitespaced-content git commit \
-		--template "$TEMPLATE" &&
+	GIT_EDITOR=\""$TEST_DIRECTORY"\"/t7500/add-whitespaced-content \
+	git commit --template "$TEMPLATE" &&
 	commit_msg_is "commit message"
 '
 
