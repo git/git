@@ -395,15 +395,10 @@ static int batch_objects(struct batch_options *opt)
 	opt->format.cat_file_data = &data;
 	opt->format.is_cat = 1;
 	opt->format.split_on_whitespace = &data.split_on_whitespace;
+	opt->format.all_objects = opt->all_objects;
 	verify_ref_format(&opt->format);
 	if (opt->cmdmode)
 		data.split_on_whitespace = 1;
-
-	if (opt->all_objects) {
-		struct object_info empty = OBJECT_INFO_INIT;
-		if (!memcmp(&data.info, &empty, sizeof(empty)))
-			data.skip_object_info = 1;
-	}
 
 	/*
 	 * If we are printing out the object, then always fill in the type,
