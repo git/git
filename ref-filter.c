@@ -255,11 +255,27 @@ static void objectname_atom_parser(const struct ref_format *format, struct used_
 static void objectsize_atom_parser(const struct ref_format *format, struct used_atom *atom, const char *arg)
 {
 	if (!arg)
-		; /* default to normal object size */
+		cat_file_info->info.sizep = &cat_file_info->size;
 	else if (!strcmp(arg, "disk"))
 		cat_file_info->info.disk_sizep = &cat_file_info->disk_size;
 	else
 		die(_("urecognized %%(objectsize) argument: %s"), arg);
+}
+
+static void objecttype_atom_parser(const struct ref_format *format, struct used_atom *atom, const char *arg)
+{
+	if (!arg)
+		cat_file_info->info.typep = &cat_file_info->type;
+	else
+		die(_("urecognized %%(objecttype) argument: %s"), arg);
+}
+
+static void deltabase_atom_parser(const struct ref_format *format, struct used_atom *atom, const char *arg)
+{
+	if (!arg)
+		cat_file_info->info.delta_base_sha1 = cat_file_info->delta_base_oid.hash;
+	else
+		die(_("urecognized %%(deltabase) argument: %s"), arg);
 }
 
 static void refname_atom_parser(const struct ref_format *format, struct used_atom *atom, const char *arg)
@@ -384,10 +400,10 @@ static struct valid_atom {
 
 static struct valid_atom valid_cat_file_atom[] = {
 	{ "objectname" },
-	{ "objecttype" },
+	{ "objecttype", FIELD_STR, objecttype_atom_parser },
 	{ "objectsize", FIELD_ULONG, objectsize_atom_parser },
 	{ "rest" },
-	{ "deltabase" },
+	{ "deltabase", FIELD_STR, deltabase_atom_parser },
 };
 
 #define REF_FORMATTING_STATE_INIT  { 0, NULL }
@@ -410,25 +426,6 @@ struct atom_value {
 	uintmax_t value; /* used for sorting when not FIELD_STR */
 	struct used_atom *atom;
 };
-
-static int is_atom(const char *atom, const char *s, int slen)
-{
-	int alen = strlen(atom);
-	return alen == slen && !memcmp(atom, s, alen);
-}
-
-static void expand_atom_into_fields(const char *atom, int len,
-				    struct expand_data *data)
-{
-	if (is_atom("objecttype", atom, len))
-		data->info.typep = &data->type;
-	else if (is_atom("objectsize", atom, len))
-		data->info.sizep = &data->size;
-	else if (is_atom("rest", atom, len))
-		data->split_on_whitespace = 1;
-	else if (is_atom("deltabase", atom, len))
-		data->info.delta_base_sha1 = data->delta_base_oid.hash;
-}
 
 /*
  * Used to parse format string and sort specifiers
@@ -496,8 +493,8 @@ static int parse_ref_filter_atom(const struct ref_format *format,
 		need_tagged = 1;
 	if (!strcmp(valid_atom[i].name, "symref"))
 		need_symref = 1;
-	if (cat_file_info)
-		expand_atom_into_fields(atom, atom_len, cat_file_info);
+	if (cat_file_info && !strcmp(valid_atom[i].name, "rest"))
+		cat_file_info->split_on_whitespace = 1;
 	return at;
 }
 
