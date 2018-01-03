@@ -21,6 +21,7 @@
 #include "resolve-undo.h"
 #include "submodule-config.h"
 #include "submodule.h"
+#include "fscache.h"
 
 static const char * const checkout_usage[] = {
 	N_("git checkout [<options>] <branch>"),
@@ -360,6 +361,7 @@ static int checkout_paths(const struct checkout_opts *opts,
 	state.istate = &the_index;
 
 	enable_delayed_checkout(&state);
+	enable_fscache(1);
 	for (pos = 0; pos < active_nr; pos++) {
 		struct cache_entry *ce = active_cache[pos];
 		if (ce->ce_flags & CE_MATCHED) {
@@ -374,6 +376,7 @@ static int checkout_paths(const struct checkout_opts *opts,
 			pos = skip_same_name(ce, pos) - 1;
 		}
 	}
+	enable_fscache(0);
 	errs |= finish_delayed_checkout(&state);
 
 	if (write_locked_index(&the_index, lock_file, COMMIT_LOCK))
