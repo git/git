@@ -2058,6 +2058,8 @@ int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs,
 		return 0;
 	if (abf == AHEAD_BEHIND_QUICK)
 		return 1;
+	if (abf != AHEAD_BEHIND_FULL)
+		BUG("stat_tracking_info: invalid abf '%d'", abf);
 
 	/* Run "rev-list --left-right ours...theirs" internally... */
 	argv_array_push(&argv, ""); /* ignored */
