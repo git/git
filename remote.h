@@ -257,8 +257,9 @@ enum match_refs_flags {
 
 /* Flags for --ahead-behind option. */
 enum ahead_behind_flags {
-	AHEAD_BEHIND_QUICK = 0,  /* just eq/neq reporting */
-	AHEAD_BEHIND_FULL  = 1,  /* traditional a/b reporting */
+	AHEAD_BEHIND_UNSPECIFIED = -1,
+	AHEAD_BEHIND_QUICK       =  0,  /* just eq/neq reporting */
+	AHEAD_BEHIND_FULL        =  1,  /* traditional a/b reporting */
 };
 
 /* Reporting of tracking info */
