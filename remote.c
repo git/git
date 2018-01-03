@@ -2007,16 +2007,23 @@ int ref_newer(const struct object_id *new_oid, const struct object_id *old_oid)
 }
 
 /*
- * Compare a branch with its upstream, and save their differences (number
- * of commits) in *num_ours and *num_theirs. The name of the upstream branch
- * (or NULL if no upstream is defined) is returned via *upstream_name, if it
- * is not itself NULL.
+ * Lookup the upstream branch for the given branch and if present, optionally
+ * compute the commit ahead/behind values for the pair.
+ *
+ * If abf is AHEAD_BEHIND_FULL, compute the full ahead/behind and return the
+ * counts in *num_ours and *num_theirs.  If abf is AHEAD_BEHIND_QUICK, skip
+ * the (potentially expensive) a/b computation (*num_ours and *num_theirs are
+ * set to zero).
+ *
+ * The name of the upstream branch (or NULL if no upstream is defined) is
+ * returned via *upstream_name, if it is not itself NULL.
  *
  * Returns -1 if num_ours and num_theirs could not be filled in (e.g., no
- * upstream defined, or ref does not exist), 0 otherwise.
+ * upstream defined, or ref does not exist).  Returns 0 if the commits are
+ * identical.  Returns 1 if commits are different.
  */
 int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs,
-		       const char **upstream_name)
+		       const char **upstream_name, enum ahead_behind_flags abf)
 {
 	struct object_id oid;
 	struct commit *ours, *theirs;
@@ -2044,11 +2051,13 @@ int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs,
 	if (!ours)
 		return -1;
 
+	*num_theirs = *num_ours = 0;
+
 	/* are we the same? */
-	if (theirs == ours) {
-		*num_theirs = *num_ours = 0;
+	if (theirs == ours)
 		return 0;
-	}
+	if (abf == AHEAD_BEHIND_QUICK)
+		return 1;
 
 	/* Run "rev-list --left-right ours...theirs" internally... */
 	argv_array_push(&argv, ""); /* ignored */
@@ -2064,8 +2073,6 @@ int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs,
 		die("revision walk setup failed");
 
 	/* ... and count the commits on each side. */
-	*num_ours = 0;
-	*num_theirs = 0;
 	while (1) {
 		struct commit *c = get_revision(&revs);
 		if (!c)
@@ -2081,7 +2088,7 @@ int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs,
 	clear_commit_marks(theirs, ALL_REV_FLAGS);
 
 	argv_array_clear(&argv);
-	return 0;
+	return 1;
 }
 
 /*
@@ -2094,7 +2101,8 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb)
 	char *base;
 	int upstream_is_gone = 0;
 
-	if (stat_tracking_info(branch, &ours, &theirs, &full_base) < 0) {
+	if (stat_tracking_info(branch, &ours, &theirs, &full_base,
+			       AHEAD_BEHIND_FULL) < 0) {
 		if (!full_base)
 			return 0;
 		upstream_is_gone = 1;
