@@ -118,6 +118,7 @@ struct ref_format {
 	 * hopefully would be reduced later.
 	 */
 	struct expand_data *cat_file_data;
+	unsigned all_objects : 1;
 };
 
 #define REF_FORMAT_INIT { NULL, 0, -1 }
