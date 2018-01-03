@@ -229,8 +229,10 @@ static struct commit_list *best_bisection_sorted(struct commit_list *list, int n
 		if (i < cnt - 1)
 			p = p->next;
 	}
-	free_commit_list(p->next);
-	p->next = NULL;
+	if (p) {
+		free_commit_list(p->next);
+		p->next = NULL;
+	}
 	strbuf_release(&buf);
 	free(array);
 	return list;
