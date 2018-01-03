@@ -2096,15 +2096,16 @@ int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs,
 /*
  * Return true when there is anything to report, otherwise false.
  */
-int format_tracking_info(struct branch *branch, struct strbuf *sb)
+int format_tracking_info(struct branch *branch, struct strbuf *sb,
+			 enum ahead_behind_flags abf)
 {
-	int ours, theirs;
+	int ours, theirs, sti;
 	const char *full_base;
 	char *base;
 	int upstream_is_gone = 0;
 
-	if (stat_tracking_info(branch, &ours, &theirs, &full_base,
-			       AHEAD_BEHIND_FULL) < 0) {
+	sti = stat_tracking_info(branch, &ours, &theirs, &full_base, abf);
+	if (sti < 0) {
 		if (!full_base)
 			return 0;
 		upstream_is_gone = 1;
@@ -2118,10 +2119,17 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb)
 		if (advice_status_hints)
 			strbuf_addstr(sb,
 				_("  (use \"git branch --unset-upstream\" to fixup)\n"));
-	} else if (!ours && !theirs) {
+	} else if (!sti) {
 		strbuf_addf(sb,
 			_("Your branch is up to date with '%s'.\n"),
 			base);
+	} else if (abf == AHEAD_BEHIND_QUICK) {
+		strbuf_addf(sb,
+			    _("Your branch and '%s' refer to different commits.\n"),
+			    base);
+		if (advice_status_hints)
+			strbuf_addf(sb, _("  (use \"%s\" for details)\n"),
+				    "git status --ahead-behind");
 	} else if (!theirs) {
 		strbuf_addf(sb,
 			Q_("Your branch is ahead of '%s' by %d commit.\n",
