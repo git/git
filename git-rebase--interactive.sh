@@ -392,9 +392,12 @@ pick_one_preserving_merges () {
 			new_parents=${new_parents# $first_parent}
 			merge_args="--no-log --no-ff"
 			if ! do_with_author output eval \
-			'git merge ${gpg_sign_opt:+"$gpg_sign_opt"} \
-				$allow_rerere_autoupdate $merge_args \
-				$strategy_args -m "$msg_content" $new_parents'
+				git merge ${gpg_sign_opt:+$(git rev-parse \
+					--sq-quote "$gpg_sign_opt")} \
+				$allow_rerere_autoupdate "$merge_args" \
+				"$strategy_args" \
+				-m $(git rev-parse --sq-quote "$msg_content") \
+				"$new_parents"
 			then
 				printf "%s\n" "$msg_content" > "$GIT_DIR"/MERGE_MSG
 				die_with_patch $sha1 "$(eval_gettext "Error redoing merge \$sha1")"
