@@ -2412,6 +2412,9 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 	    revs->diffopt.flags.follow_renames)
 		revs->diff = 1;
 
+	if (revs->diffopt.objfind)
+		revs->simplify_history = 0;
+
 	if (revs->topo_order)
 		revs->limited = 1;
 

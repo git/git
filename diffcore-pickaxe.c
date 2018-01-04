@@ -124,11 +124,18 @@ static int pickaxe_match(struct diff_filepair *p, struct diff_options *o,
 	mmfile_t mf1, mf2;
 	int ret;
 
-	if (!o->pickaxe[0])
-		return 0;
-
 	/* ignore unmerged */
 	if (!DIFF_FILE_VALID(p->one) && !DIFF_FILE_VALID(p->two))
+		return 0;
+
+	if (o->objfind) {
+		return  (DIFF_FILE_VALID(p->one) &&
+			 oidset_contains(o->objfind, &p->one->oid)) ||
+			(DIFF_FILE_VALID(p->two) &&
+			 oidset_contains(o->objfind, &p->two->oid));
+	}
+
+	if (!o->pickaxe[0])
 		return 0;
 
 	if (o->flags.allow_textconv) {
@@ -226,20 +233,22 @@ void diffcore_pickaxe(struct diff_options *o)
 			cflags |= REG_ICASE;
 		regcomp_or_die(&regex, needle, cflags);
 		regexp = &regex;
-	} else if (o->pickaxe_opts & DIFF_PICKAXE_IGNORE_CASE &&
-		   has_non_ascii(needle)) {
-		struct strbuf sb = STRBUF_INIT;
-		int cflags = REG_NEWLINE | REG_ICASE;
+	} else if (opts & DIFF_PICKAXE_KIND_S) {
+		if (o->pickaxe_opts & DIFF_PICKAXE_IGNORE_CASE &&
+		    has_non_ascii(needle)) {
+			struct strbuf sb = STRBUF_INIT;
+			int cflags = REG_NEWLINE | REG_ICASE;
 
-		basic_regex_quote_buf(&sb, needle);
-		regcomp_or_die(&regex, sb.buf, cflags);
-		strbuf_release(&sb);
-		regexp = &regex;
-	} else {
-		kws = kwsalloc(o->pickaxe_opts & DIFF_PICKAXE_IGNORE_CASE
-			       ? tolower_trans_tbl : NULL);
-		kwsincr(kws, needle, strlen(needle));
-		kwsprep(kws);
+			basic_regex_quote_buf(&sb, needle);
+			regcomp_or_die(&regex, sb.buf, cflags);
+			strbuf_release(&sb);
+			regexp = &regex;
+		} else {
+			kws = kwsalloc(o->pickaxe_opts & DIFF_PICKAXE_IGNORE_CASE
+				       ? tolower_trans_tbl : NULL);
+			kwsincr(kws, needle, strlen(needle));
+			kwsprep(kws);
+		}
 	}
 
 	/* Might want to warn when both S and G are on; I don't care... */
@@ -248,7 +257,7 @@ void diffcore_pickaxe(struct diff_options *o)
 
 	if (regexp)
 		regfree(regexp);
-	else
+	if (kws)
 		kwsfree(kws);
 	return;
 }
