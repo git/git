@@ -91,7 +91,6 @@ struct diff_flags {
 	unsigned override_submodule_config:1;
 	unsigned dirstat_by_line:1;
 	unsigned funccontext:1;
-	unsigned pickaxe_ignore_case:1;
 	unsigned default_follow_renames:1;
 };
 
@@ -326,6 +325,8 @@ extern void diff_setup_done(struct diff_options *);
 
 #define DIFF_PICKAXE_KIND_S	4 /* traditional plumbing counter */
 #define DIFF_PICKAXE_KIND_G	8 /* grep in the patch */
+
+#define DIFF_PICKAXE_IGNORE_CASE	32
 
 extern void diffcore_std(struct diff_options *);
 extern void diffcore_fix_diff_index(struct diff_options *);
