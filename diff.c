@@ -4107,20 +4107,15 @@ void diff_setup(struct diff_options *options)
 
 void diff_setup_done(struct diff_options *options)
 {
-	int count = 0;
+	unsigned check_mask = DIFF_FORMAT_NAME |
+			      DIFF_FORMAT_NAME_STATUS |
+			      DIFF_FORMAT_CHECKDIFF |
+			      DIFF_FORMAT_NO_OUTPUT;
 
 	if (options->set_default)
 		options->set_default(options);
 
-	if (options->output_format & DIFF_FORMAT_NAME)
-		count++;
-	if (options->output_format & DIFF_FORMAT_NAME_STATUS)
-		count++;
-	if (options->output_format & DIFF_FORMAT_CHECKDIFF)
-		count++;
-	if (options->output_format & DIFF_FORMAT_NO_OUTPUT)
-		count++;
-	if (count > 1)
+	if (HAS_MULTI_BITS(options->output_format & check_mask))
 		die(_("--name-only, --name-status, --check and -s are mutually exclusive"));
 
 	if (HAS_MULTI_BITS(options->pickaxe_opts & DIFF_PICKAXE_KINDS_MASK))
