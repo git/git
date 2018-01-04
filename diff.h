@@ -146,7 +146,7 @@ struct diff_options {
 	int skip_stat_unmatch;
 	int line_termination;
 	int output_format;
-	int pickaxe_opts;
+	unsigned pickaxe_opts;
 	int rename_score;
 	int rename_limit;
 	int needed_rename_limit;
