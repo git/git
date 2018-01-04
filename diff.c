@@ -4173,7 +4173,7 @@ void diff_setup_done(struct diff_options *options)
 	/*
 	 * Also pickaxe would not work very well if you do not say recursive
 	 */
-	if (options->pickaxe)
+	if (options->pickaxe_opts & DIFF_PICKAXE_KINDS_MASK)
 		options->flags.recursive = 1;
 	/*
 	 * When patches are generated, submodules diffed against the work tree
@@ -5777,7 +5777,7 @@ void diffcore_std(struct diff_options *options)
 		if (options->break_opt != -1)
 			diffcore_merge_broken();
 	}
-	if (options->pickaxe)
+	if (options->pickaxe_opts & DIFF_PICKAXE_KINDS_MASK)
 		diffcore_pickaxe(options);
 	if (options->orderfile)
 		diffcore_order(options->orderfile);

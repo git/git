@@ -326,6 +326,8 @@ extern void diff_setup_done(struct diff_options *);
 #define DIFF_PICKAXE_KIND_S	4 /* traditional plumbing counter */
 #define DIFF_PICKAXE_KIND_G	8 /* grep in the patch */
 
+#define DIFF_PICKAXE_KINDS_MASK (DIFF_PICKAXE_KIND_S | DIFF_PICKAXE_KIND_G)
+
 #define DIFF_PICKAXE_IGNORE_CASE	32
 
 extern void diffcore_std(struct diff_options *);

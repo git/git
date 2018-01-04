@@ -1438,7 +1438,7 @@ void diff_tree_combined(const struct object_id *oid,
 			opt->flags.follow_renames	||
 			opt->break_opt != -1	||
 			opt->detect_rename	||
-			opt->pickaxe		||
+			(opt->pickaxe_opts & DIFF_PICKAXE_KINDS_MASK)	||
 			opt->filter;
 
 
