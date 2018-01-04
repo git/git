@@ -251,7 +251,6 @@ void diffcore_pickaxe(struct diff_options *o)
 		}
 	}
 
-	/* Might want to warn when both S and G are on; I don't care... */
 	pickaxe(&diff_queued_diff, o, regexp, kws,
 		(opts & DIFF_PICKAXE_KIND_G) ? diff_grep : has_changes);
 

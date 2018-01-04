@@ -4123,6 +4123,9 @@ void diff_setup_done(struct diff_options *options)
 	if (count > 1)
 		die(_("--name-only, --name-status, --check and -s are mutually exclusive"));
 
+	if (HAS_MULTI_BITS(options->pickaxe_opts & DIFF_PICKAXE_KINDS_MASK))
+		die(_("-G, -S and --find-object are mutually exclusive"));
+
 	/*
 	 * Most of the time we can say "there are changes"
 	 * only by checking if there are changed paths, but
