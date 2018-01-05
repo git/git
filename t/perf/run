@@ -137,6 +137,9 @@ run_subsection () {
 	get_var_from_env_or_config "GIT_PERF_MAKE_COMMAND" "perf" "makeCommand"
 	get_var_from_env_or_config "GIT_PERF_MAKE_OPTS" "perf" "makeOpts"
 
+	get_var_from_env_or_config "GIT_PERF_REPO_NAME" "perf" "repoName"
+	export GIT_PERF_REPO_NAME
+
 	GIT_PERF_AGGREGATING_LATER=t
 	export GIT_PERF_AGGREGATING_LATER
 
