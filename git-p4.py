@@ -1178,6 +1178,12 @@ class Command:
         self.needsGit = True
         self.verbose = False
 
+    # This is required for the "append" cloneExclude action
+    def ensure_value(self, attr, value):
+        if not hasattr(self, attr) or getattr(self, attr) is None:
+            setattr(self, attr, value)
+        return getattr(self, attr)
+
 class P4UserMap:
     def __init__(self):
         self.userMapFromPerforceServer = False
@@ -1343,9 +1349,10 @@ class P4Submit(Command, P4UserMap):
                 optparse.make_option("--shelve", dest="shelve", action="store_true",
                                      help="Shelve instead of submit. Shelved files are reverted, "
                                      "restoring the workspace to the state before the shelve"),
-                optparse.make_option("--update-shelve", dest="update_shelve", action="store", type="int",
+                optparse.make_option("--update-shelve", dest="update_shelve", action="append", type="int",
                                      metavar="CHANGELIST",
-                                     help="update an existing shelved changelist, implies --shelve")
+                                     help="update an existing shelved changelist, implies --shelve, "
+                                           "repeat in-order for multiple shelved changelists")
         ]
         self.description = "Submit changes from git to the perforce depot."
         self.usage += " [name of git branch to submit into perforce depot]"
@@ -1354,7 +1361,7 @@ class P4Submit(Command, P4UserMap):
         self.preserveUser = gitConfigBool("git-p4.preserveUser")
         self.dry_run = False
         self.shelve = False
-        self.update_shelve = None
+        self.update_shelve = list()
         self.prepare_p4_only = False
         self.conflict_behavior = None
         self.isWindows = (platform.system() == "Windows")
@@ -1809,9 +1816,10 @@ class P4Submit(Command, P4UserMap):
             mode = filesToChangeExecBit[f]
             setP4ExecBit(f, mode)
 
-        if self.update_shelve:
-            print("all_files = %s" % str(all_files))
-            p4_reopen_in_change(self.update_shelve, all_files)
+        update_shelve = 0
+        if len(self.update_shelve) > 0:
+            update_shelve = self.update_shelve.pop(0)
+            p4_reopen_in_change(update_shelve, all_files)
 
         #
         # Build p4 change description, starting with the contents
@@ -1821,7 +1829,7 @@ class P4Submit(Command, P4UserMap):
         logMessage = logMessage.strip()
         (logMessage, jobs) = self.separate_jobs_from_description(logMessage)
 
-        template = self.prepareSubmitTemplate(self.update_shelve)
+        template = self.prepareSubmitTemplate(update_shelve)
         submitTemplate = self.prepareLogMessage(template, logMessage, jobs)
 
         if self.preserveUser:
@@ -1894,7 +1902,7 @@ class P4Submit(Command, P4UserMap):
                     message = message.replace("\r\n", "\n")
                 submitTemplate = message[:message.index(separatorLine)]
 
-                if self.update_shelve:
+                if update_shelve:
                     p4_write_pipe(['shelve', '-r', '-i'], submitTemplate)
                 elif self.shelve:
                     p4_write_pipe(['shelve', '-i'], submitTemplate)
@@ -2012,6 +2020,10 @@ class P4Submit(Command, P4UserMap):
         else:
             return False
 
+        for i in self.update_shelve:
+            if i <= 0:
+                sys.exit("invalid changelist %d" % i)
+
         if self.master:
             allowSubmit = gitConfig("git-p4.allowSubmit")
             if len(allowSubmit) > 0 and not self.master in allowSubmit.split(","):
@@ -2022,7 +2034,7 @@ class P4Submit(Command, P4UserMap):
         if len(self.origin) == 0:
             self.origin = upstream
 
-        if self.update_shelve:
+        if len(self.update_shelve) > 0:
             self.shelve = True
 
         if self.preserveUser:
@@ -2133,6 +2145,11 @@ class P4Submit(Command, P4UserMap):
 
         if gitConfigBool("git-p4.detectCopiesHarder"):
             self.diffOpts += " --find-copies-harder"
+
+        num_shelves = len(self.update_shelve)
+        if num_shelves > 0 and num_shelves != len(commits):
+            sys.exit("number of commits (%d) must match number of shelved changelist (%d)" %
+                     (len(commits), num_shelves))
 
         #
         # Apply the commits, one at a time.  On failure, ask if should
@@ -2403,12 +2420,6 @@ class P4Sync(Command, P4UserMap):
 
         if gitConfig("git-p4.syncFromOrigin") == "false":
             self.syncWithOrigin = False
-
-    # This is required for the "append" cloneExclude action
-    def ensure_value(self, attr, value):
-        if not hasattr(self, attr) or getattr(self, attr) is None:
-            setattr(self, attr, value)
-        return getattr(self, attr)
 
     # Force a checkpoint in fast-import and wait for it to finish
     def checkpoint(self):
