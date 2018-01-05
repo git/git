@@ -100,13 +100,6 @@ sub read_descr {
 	return $line;
 }
 
-my %descrs;
-my $descrlen = 4; # "Test"
-for my $t (@subtests) {
-	$descrs{$t} = $shorttests{$t}.": ".read_descr("$resultsdir/$t.descr");
-	$descrlen = length $descrs{$t} if length $descrs{$t}>$descrlen;
-}
-
 sub have_duplicate {
 	my %seen;
 	for (@_) {
@@ -122,54 +115,65 @@ sub have_slash {
 	return 0;
 }
 
-my %newdirabbrevs = %dirabbrevs;
-while (!have_duplicate(values %newdirabbrevs)) {
-	%dirabbrevs = %newdirabbrevs;
-	last if !have_slash(values %dirabbrevs);
-	%newdirabbrevs = %dirabbrevs;
-	for (values %newdirabbrevs) {
-		s{^[^/]*/}{};
+sub print_default_results {
+	my %descrs;
+	my $descrlen = 4; # "Test"
+	for my $t (@subtests) {
+		$descrs{$t} = $shorttests{$t}.": ".read_descr("$resultsdir/$t.descr");
+		$descrlen = length $descrs{$t} if length $descrs{$t}>$descrlen;
 	}
-}
 
-my %times;
-my @colwidth = ((0)x@dirs);
-for my $i (0..$#dirs) {
-	my $d = $dirs[$i];
-	my $w = length (exists $dirabbrevs{$d} ? $dirabbrevs{$d} : $dirnames{$d});
-	$colwidth[$i] = $w if $w > $colwidth[$i];
-}
-for my $t (@subtests) {
-	my $firstr;
+	my %newdirabbrevs = %dirabbrevs;
+	while (!have_duplicate(values %newdirabbrevs)) {
+		%dirabbrevs = %newdirabbrevs;
+		last if !have_slash(values %dirabbrevs);
+		%newdirabbrevs = %dirabbrevs;
+		for (values %newdirabbrevs) {
+			s{^[^/]*/}{};
+		}
+	}
+
+	my %times;
+	my @colwidth = ((0)x@dirs);
 	for my $i (0..$#dirs) {
 		my $d = $dirs[$i];
-		$times{$prefixes{$d}.$t} = [get_times("$resultsdir/$prefixes{$d}$t.times")];
-		my ($r,$u,$s) = @{$times{$prefixes{$d}.$t}};
-		my $w = length format_times($r,$u,$s,$firstr);
+		my $w = length (exists $dirabbrevs{$d} ? $dirabbrevs{$d} : $dirnames{$d});
 		$colwidth[$i] = $w if $w > $colwidth[$i];
-		$firstr = $r unless defined $firstr;
+	}
+	for my $t (@subtests) {
+		my $firstr;
+		for my $i (0..$#dirs) {
+			my $d = $dirs[$i];
+			$times{$prefixes{$d}.$t} = [get_times("$resultsdir/$prefixes{$d}$t.times")];
+			my ($r,$u,$s) = @{$times{$prefixes{$d}.$t}};
+			my $w = length format_times($r,$u,$s,$firstr);
+			$colwidth[$i] = $w if $w > $colwidth[$i];
+			$firstr = $r unless defined $firstr;
+		}
+	}
+	my $totalwidth = 3*@dirs+$descrlen;
+	$totalwidth += $_ for (@colwidth);
+
+	printf "%-${descrlen}s", "Test";
+	for my $i (0..$#dirs) {
+		my $d = $dirs[$i];
+		printf "   %-$colwidth[$i]s", (exists $dirabbrevs{$d} ? $dirabbrevs{$d} : $dirnames{$d});
+	}
+	print "\n";
+	print "-"x$totalwidth, "\n";
+	for my $t (@subtests) {
+		printf "%-${descrlen}s", $descrs{$t};
+		my $firstr;
+		for my $i (0..$#dirs) {
+			my $d = $dirs[$i];
+			my ($r,$u,$s) = @{$times{$prefixes{$d}.$t}};
+			printf "   %-$colwidth[$i]s", format_times($r,$u,$s,$firstr);
+			$firstr = $r unless defined $firstr;
+		}
+		print "\n";
 	}
 }
-my $totalwidth = 3*@dirs+$descrlen;
-$totalwidth += $_ for (@colwidth);
 
 binmode STDOUT, ":utf8" or die "PANIC on binmode: $!";
 
-printf "%-${descrlen}s", "Test";
-for my $i (0..$#dirs) {
-	my $d = $dirs[$i];
-	printf "   %-$colwidth[$i]s", (exists $dirabbrevs{$d} ? $dirabbrevs{$d} : $dirnames{$d});
-}
-print "\n";
-print "-"x$totalwidth, "\n";
-for my $t (@subtests) {
-	printf "%-${descrlen}s", $descrs{$t};
-	my $firstr;
-	for my $i (0..$#dirs) {
-		my $d = $dirs[$i];
-		my ($r,$u,$s) = @{$times{$prefixes{$d}.$t}};
-		printf "   %-$colwidth[$i]s", format_times($r,$u,$s,$firstr);
-		$firstr = $r unless defined $firstr;
-	}
-	print "\n";
-}
+print_default_results();
