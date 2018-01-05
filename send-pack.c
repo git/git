@@ -58,35 +58,25 @@ static int pack_objects(int fd, struct ref *refs, struct oid_array *extra, struc
 	 * the revision parameters to it via its stdin and
 	 * let its stdout go back to the other end.
 	 */
-	const char *argv[] = {
-		"pack-objects",
-		"--all-progress-implied",
-		"--revs",
-		"--stdout",
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-	};
 	struct child_process po = CHILD_PROCESS_INIT;
 	FILE *po_in;
 	int i;
 	int rc;
 
-	i = 4;
+	argv_array_push(&po.args, "pack-objects");
+	argv_array_push(&po.args, "--all-progress-implied");
+	argv_array_push(&po.args, "--revs");
+	argv_array_push(&po.args, "--stdout");
 	if (args->use_thin_pack)
-		argv[i++] = "--thin";
+		argv_array_push(&po.args, "--thin");
 	if (args->use_ofs_delta)
-		argv[i++] = "--delta-base-offset";
+		argv_array_push(&po.args, "--delta-base-offset");
 	if (args->quiet || !args->progress)
-		argv[i++] = "-q";
+		argv_array_push(&po.args, "-q");
 	if (args->progress)
-		argv[i++] = "--progress";
+		argv_array_push(&po.args, "--progress");
 	if (is_repository_shallow())
-		argv[i++] = "--shallow";
-	po.argv = argv;
+		argv_array_push(&po.args, "--shallow");
 	po.in = -1;
 	po.out = args->stateless_rpc ? -1 : fd;
 	po.git_cmd = 1;
