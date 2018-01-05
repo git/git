@@ -2139,6 +2139,9 @@ int oneway_merge(const struct cache_entry * const *src,
 			    ie_match_stat(o->src_index, old, &st, CE_MATCH_IGNORE_VALID|CE_MATCH_IGNORE_SKIP_WORKTREE))
 				update |= CE_UPDATE;
 		}
+		if (o->update && S_ISGITLINK(old->ce_mode) &&
+		    should_update_submodules() && !verify_uptodate(old, o))
+			update |= CE_UPDATE;
 		add_entry(o, old, update, 0);
 		return 0;
 	}
