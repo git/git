@@ -6,18 +6,21 @@ test_description="merges with unrelated index changes"
 
 # Testcase for some simple merges
 #   A
-#   o-----o B
+#   o-------o B
 #    \
-#     \---o C
+#     \-----o C
 #      \
-#       \-o D
+#       \---o D
 #        \
-#         o E
+#         \-o E
+#          \
+#           o F
 #   Commit A: some file a
 #   Commit B: adds file b, modifies end of a
 #   Commit C: adds file c
 #   Commit D: adds file d, modifies beginning of a
 #   Commit E: renames a->subdir/a, adds subdir/e
+#   Commit F: empty commit
 
 test_expect_success 'setup trivial merges' '
 	test_seq 1 10 >a &&
@@ -29,6 +32,7 @@ test_expect_success 'setup trivial merges' '
 	git branch C &&
 	git branch D &&
 	git branch E &&
+	git branch F &&
 
 	git checkout B &&
 	echo b >b &&
@@ -52,7 +56,10 @@ test_expect_success 'setup trivial merges' '
 	git mv a subdir/a &&
 	echo e >subdir/e &&
 	git add subdir &&
-	test_tick && git commit -m E
+	test_tick && git commit -m E &&
+
+	git checkout F &&
+	test_tick && git commit --allow-empty -m F
 '
 
 test_expect_success 'ff update' '
@@ -103,6 +110,15 @@ test_expect_success 'recursive' '
 	touch random_file && git add random_file &&
 
 	test_must_fail git merge -s recursive C^0
+'
+
+test_expect_success 'recursive, when merge branch matches merge base' '
+	git reset --hard &&
+	git checkout B^0 &&
+
+	touch random_file && git add random_file &&
+
+	test_must_fail git merge -s recursive F^0
 '
 
 test_expect_success 'octopus, unrelated file touched' '

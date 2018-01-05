@@ -1147,43 +1147,6 @@ static void refresh_and_write_cache(void)
 }
 
 /**
- * Returns 1 if the index differs from HEAD, 0 otherwise. When on an unborn
- * branch, returns 1 if there are entries in the index, 0 otherwise. If an
- * strbuf is provided, the space-separated list of files that differ will be
- * appended to it.
- */
-static int index_has_changes(struct strbuf *sb)
-{
-	struct object_id head;
-	int i;
-
-	if (!get_oid_tree("HEAD", &head)) {
-		struct diff_options opt;
-
-		diff_setup(&opt);
-		opt.flags.exit_with_status = 1;
-		if (!sb)
-			opt.flags.quick = 1;
-		do_diff_cache(&head, &opt);
-		diffcore_std(&opt);
-		for (i = 0; sb && i < diff_queued_diff.nr; i++) {
-			if (i)
-				strbuf_addch(sb, ' ');
-			strbuf_addstr(sb, diff_queued_diff.queue[i]->two->path);
-		}
-		diff_flush(&opt);
-		return opt.flags.has_changes != 0;
-	} else {
-		for (i = 0; sb && i < active_nr; i++) {
-			if (i)
-				strbuf_addch(sb, ' ');
-			strbuf_addstr(sb, active_cache[i]->name);
-		}
-		return !!active_nr;
-	}
-}
-
-/**
  * Dies with a user-friendly message on how to proceed after resolving the
  * problem. This message can be overridden with state->resolvemsg.
  */
