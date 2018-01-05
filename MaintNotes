@@ -173,8 +173,8 @@ feature release).  These days, maintenance releases are named by
 incrementing the last digit of three-dotted decimal name (e.g. "2.12.1"
 was the first maintenance release for the "2.12" series).
 
-New features never go to the 'maint' branch.  This branch is also
-merged into "master" to propagate the fixes forward as needed.
+New features never go to the 'maint' branch.  It is merged into "master"
+primarily to propagate the description in the release notes forward.
 
 A new development does not usually happen on "master". When you send a
 series of patches, after review on the mailing list, a separate topic
