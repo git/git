@@ -1,16 +1,21 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Dec 2017, #05; Wed, 27)
-X-master-at: 29533fb16899725af9306e0c3b83da8954c0e48a
-X-next-at: 6967081ed51529cca3ee7e069552338903ad0b30
+Subject: What's cooking in git.git (Jan 2018, #01; Fri, 5)
+X-master-at: 36438dc19dd2a305dddebd44bf7a65f1a220075b
+X-next-at: 530d649a790d987a1100dafee4f7a635c11cd855
 
-What's cooking in git.git (Dec 2017, #05; Wed, 27)
+What's cooking in git.git (Jan 2018, #01; Fri, 5)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
+
+The tip of 'master' has been tagged as 2.16-rc1; I am aware that a
+handful of larger topics are on the list, yet to be picked up, but
+now we are pretty much in feature-freeze mode before the release;
+please shift your attention to fixes from shiny new toys.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -20,319 +25,509 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* bw/submodule-sans-cache-compat (2017-12-12) 3 commits
-  (merged to 'next' on 2017-12-14 at 6893bdeed3)
- + submodule: convert get_next_submodule to not rely on the_index
- + submodule: used correct index in is_staging_gitmodules_ok
- + submodule: convert stage_updated_gitmodules to take a struct index_state
+* bp/fsmonitor (2017-12-18) 1 commit
+  (merged to 'next' on 2017-12-27 at ce216e2978)
+ + p7519: improve check for prerequisite WATCHMAN
 
- Code clean-up.
+ Test fix.
 
 
-* db/doc-workflows-neuter-the-maintainer (2017-12-08) 1 commit
-  (merged to 'next' on 2017-12-14 at 740788d890)
- + doc: reword gitworkflows.txt for neutrality
-
- Docfix.
-
-
-* es/clone-shared-worktree (2017-12-11) 1 commit
-  (merged to 'next' on 2017-12-14 at 248ef92bda)
- + clone: support 'clone --shared' from a worktree
-
- "git clone --shared" to borrow from a (secondary) worktree did not
- work, even though "git clone --local" did.  Both are now accepted.
-
-
-* es/worktree-checkout-hook (2017-12-07) 1 commit
-  (merged to 'next' on 2017-12-14 at 907d958351)
- + worktree: invoke post-checkout hook (unless --no-checkout)
-
- "git worktree add" learned to run the post-checkout hook, just like
- "git checkout" does, after the initial checkout.
-
-
-* jh/object-filtering (2017-12-05) 9 commits
-  (merged to 'next' on 2017-12-05 at 3a56b51085)
- + rev-list: support --no-filter argument
- + list-objects-filter-options: support --no-filter
- + list-objects-filter-options: fix 'keword' typo in comment
-  (merged to 'next' on 2017-11-27 at e5008c3b28)
- + pack-objects: add list-objects filtering
- + rev-list: add list-objects filtering support
- + list-objects: filter objects in traverse_commit_list
- + oidset: add iterator methods to oidset
- + oidmap: add oidmap iterator methods
- + dir: allow exclusions from blob in addition to file
- (this branch is used by jh/fsck-promisors and jh/partial-clone.)
-
- In preparation for implementing narrow/partial clone, the object
- walking machinery has been taught a way to tell it to "filter" some
- objects from enumeration.
-
-
-* jk/cvsimport-quoting (2017-12-08) 1 commit
-  (merged to 'next' on 2017-12-14 at ea99dc966c)
- + cvsimport: apply shell-quoting regex globally
-
- Typo/Logico fix.
-
-
-* jt/decorate-api (2017-12-08) 1 commit
-  (merged to 'next' on 2017-12-14 at b14858df40)
- + decorate: clean up and document API
-
- A few structures and variables that are implementation details of
- the decorate API have been renamed and then the API got documented
- better.
-
-
-* jt/transport-no-more-rsync (2017-12-12) 1 commit
-  (merged to 'next' on 2017-12-14 at 456913ad25)
- + transport: remove unused "push" in vtable
- (this branch is used by jt/transport-hide-vtable.)
-
- Code clean-up.
-
-
-* ks/branch-cleanup (2017-12-07) 4 commits
-  (merged to 'next' on 2017-12-14 at af0a906984)
- + builtin/branch: strip refs/heads/ using skip_prefix
- + branch: update warning message shown when copying a misnamed branch
- + branch: group related arguments of create_branch()
- + branch: improve documentation and naming of create_branch() parameters
-
- Code clean-up.
-
-
-* lb/rebase-i-short-command-names (2017-12-05) 9 commits
-  (merged to 'next' on 2017-12-14 at 0637be0782)
- + t3404: add test case for abbreviated commands
- + rebase -i: learn to abbreviate command names
- + rebase -i -x: add exec commands via the rebase--helper
- + rebase -i: update functions to use a flags parameter
- + rebase -i: replace reference to sha1 with oid
- + rebase -i: refactor transform_todo_ids
- + rebase -i: set commit to null in exec commands
- + Documentation: use preferred name for the 'todo list' script
- + Documentation: move rebase.* configs to new file
-
- With a configuration variable rebase.abbreviateCommands set,
- "git rebase -i" produces the todo list with a single-letter
- command names.
-
-
-* ot/pretty (2017-12-12) 2 commits
-  (merged to 'next' on 2017-12-14 at d80fe80aed)
- + format: create docs for pretty.h
- + format: create pretty.h file
-
- Code clean-up.
-
-
-* rb/quick-install-doc (2017-12-12) 1 commit
-  (merged to 'next' on 2017-12-14 at 96c17a83fa)
- + install-doc-quick: allow specifying what ref to install
-
- The build procedure now allows not just the repositories but also
- the refs to be used to take pre-formatted manpages and html
- documents to install.
-
-
-* rs/am-builtin-leakfix (2017-12-07) 1 commit
-  (merged to 'next' on 2017-12-14 at 30bf70d2cb)
- + am: release strbuf after use in split_mail_mbox()
-
- Leakfix.
-
-
-* rs/fmt-merge-msg-leakfix (2017-12-08) 1 commit
-  (merged to 'next' on 2017-12-14 at b87794d837)
- + transport-helper: plug strbuf and string_list leaks
-
- Leakfix.
-
-
-* rs/fmt-merge-msg-string-leak-fix (2017-12-07) 1 commit
-  (merged to 'next' on 2017-12-14 at 26fa3fe23e)
- + fmt-merge-msg: avoid leaking strbuf in shortlog()
-
- Leakfix.
-
-
-* rs/strbuf-read-once-reset-length (2017-12-07) 1 commit
-  (merged to 'next' on 2017-12-14 at 6d12e08217)
- + strbuf: release memory on read error in strbuf_read_once()
-
- Leakfix.
-
-
-* sb/test-helper-excludes (2017-12-12) 1 commit
-  (merged to 'next' on 2017-12-14 at 3bfbc1c65e)
- + t/helper: ignore everything but sources
-
- Simplify the ignore rules for t/helper directory.
-
-
-* tb/check-crlf-for-safe-crlf (2017-12-08) 2 commits
-  (merged to 'next' on 2017-12-08 at 5279b80103)
- + t0027: Adapt the new MIX tests to Windows
-  (merged to 'next' on 2017-12-05 at 7adaa1fe01)
- + convert: tighten the safe autocrlf handling
-
- The "safe crlf" check incorrectly triggered for contents that does
- not use CRLF as line endings, which has been corrected.
-
-
-* tb/delimit-pretty-trailers-args-with-comma (2017-12-08) 1 commit
-  (merged to 'next' on 2017-12-14 at 7bf4f561ad)
- + docs/pretty-formats: mention commas in %(trailers) syntax
+* bw/path-doc (2017-12-13) 1 commit
+  (merged to 'next' on 2017-12-19 at 2cddee77ca)
+ + path: document path functions
 
  Doc updates.
 
---------------------------------------------------
-[New Topics]
 
-* ab/commit-m-with-fixup (2017-12-22) 2 commits
- - commit: add support for --fixup <commit> -m"<extra message>"
- - commit doc: document that -c, -C, -F and --fixup with -m error
+* cc/skip-to-optional-val (2017-12-11) 7 commits
+  (merged to 'next' on 2017-12-27 at 1b189d8556)
+ + t4045: reindent to make helpers readable
+ + diff: add tests for --relative without optional prefix value
+ + diff: use skip_to_optional_arg_default() in parsing --relative
+ + diff: use skip_to_optional_arg_default()
+ + diff: use skip_to_optional_arg()
+ + index-pack: use skip_to_optional_arg()
+ + git-compat-util: introduce skip_to_optional_arg()
 
- "git commit --fixup" did not allow "-m<message>" option to be used
- at the same time; allow it to annotate resulting commit with more
- text.
+ Introduce a helper to simplify code to parse a common pattern that
+ expects either "--key" or "--key=<something>".
 
 
 * db/doc-config-section-names-with-bs (2017-12-22) 1 commit
- - config.txt: document behavior of backslashes in subsections
+  (merged to 'next' on 2017-12-28 at e744b99449)
+ + config.txt: document behavior of backslashes in subsections
 
  Doc update.
 
- Will merge to 'next'.
-
 
 * ew/empty-merge-with-dirty-index (2017-12-22) 1 commit
- - Merge branch 'ew/empty-merge-with-dirty-index-maint' into ew/empty-merge-with-dirty-index
+  (merged to 'next' on 2017-12-28 at 17aa5ec010)
+ + Merge branch 'ew/empty-merge-with-dirty-index-maint' into ew/empty-merge-with-dirty-index
  (this branch uses ew/empty-merge-with-dirty-index-maint.)
 
  "git merge -s recursive" did not correctly abort when the index is
  dirty, if the merged tree happened to be the same as the current
  HEAD, which has been fixed.
 
- Will merge to 'next'.
-
 
 * ew/empty-merge-with-dirty-index-maint (2017-12-22) 3 commits
- - merge-recursive: avoid incorporating uncommitted changes in a merge
- - move index_has_changes() from builtin/am.c to merge.c for reuse
- - t6044: recursive can silently incorporate dirty changes in a merge
+ + merge-recursive: avoid incorporating uncommitted changes in a merge
+ + move index_has_changes() from builtin/am.c to merge.c for reuse
+ + t6044: recursive can silently incorporate dirty changes in a merge
  (this branch is used by ew/empty-merge-with-dirty-index.)
 
  "git merge -s recursive" did not correctly abort when the index is
  dirty, if the merged tree happened to be the same as the current
  HEAD, which has been fixed.
 
- Will merge to 'next'.
+
+* ew/svn-crlf (2017-12-14) 2 commits
+  (merged to 'next' on 2017-12-27 at 1b81bd634d)
+ + Merge branch 'svn-crlf' of git://bogomips.org/git-svn into ew/svn-crlf
+ + git-svn: convert CRLF to LF in commit message to SVN
+
+ "git svn" has been updated to strip CRs in the commit messages, as
+ recent versions of Subversion rejects them.
+
+
+* hi/merge-verify-sig-config (2017-12-19) 3 commits
+  (merged to 'next' on 2017-12-27 at 34360fb1c1)
+ + t5573, t7612: clean up after unexpected success of 'pull' and 'merge'
+  (merged to 'next' on 2017-12-14 at cdc511dc36)
+ + t: add tests for pull --verify-signatures
+ + merge: add config option for verifySignatures
+
+ "git merge" learned to pay attention to merge.verifySignatures
+ configuration variable and pretend as if '--verify-signatures'
+ option was given from the command line.
 
 
 * jd/fix-strbuf-add-urlencode-bytes (2017-12-22) 1 commit
- - strbuf: fix urlencode format string on signed char
+  (merged to 'next' on 2017-12-28 at 7f4f291966)
+ + strbuf: fix urlencode format string on signed char
 
  Bytes with high-bit set were encoded incorrectly and made
  credential helper fail.
 
- Will merge to 'next'.
+
+* jh/memihash-opt (2017-12-22) 1 commit
+  (merged to 'next' on 2017-12-28 at bf96e0d849)
+ + t/helper/test-lazy-name-hash: fix compilation
+
+ Squelch compiler warning.
 
 
-* ld/p4-multiple-shelves (2017-12-22) 1 commit
- - git-p4: update multiple shelved change lists
-
- "git p4" update.
-
- Will merge to 'next'.
+* jh/partial-clone-doc (2017-12-14) 1 commit
+  (merged to 'next' on 2017-12-27 at 3695847773)
+ + partial-clone: design doc
 
 
-* rs/use-argv-array-in-child-process (2017-12-22) 2 commits
- - send-pack: use internal argv_array of struct child_process
- - http: use internal argv_array of struct child_process
+* jk/test-suite-tracing (2017-12-08) 4 commits
+  (merged to 'next' on 2017-12-27 at 7034a51474)
+ + t/Makefile: introduce TEST_SHELL_PATH
+ + test-lib: make "-x" work with "--verbose-log"
+ + t5615: avoid re-using descriptor 4
+ + test-lib: silence "-x" cleanup under bash
 
- Code cleanup.
-
- Will merge to 'next'.
-
-
-* tb/test-lint-wc-l (2017-12-22) 1 commit
- - check-non-portable-shell.pl: `wc -l` may have leading WS
-
- Test update.
-
- Will merge to 'next'.
+ Assorted fixes around running tests with "-x" tracing option.
 
 
-* bw/oidmap-autoinit (2017-12-27) 1 commit
- - oidmap: ensure map is initialized
+* js/enhanced-version-info (2017-12-14) 2 commits
+  (merged to 'next' on 2017-12-27 at a95dd96a78)
+ + version --build-options: report commit, too, if possible
+ + version --build-options: also report host CPU
 
-
-* dk/describe-all-output-fix (2017-12-27) 1 commit
- - describe: prepend "tags/" when describing tags with embedded name
-
- An old regression in "git describe --all $annotated_tag^0" has been
- fixed.
-
- Will merge to 'next'.
+ "git version --build-options" learned to report the host CPU and
+ the exact commit object name the binary was built from.
 
 
 * js/sequencer-cleanups (2017-12-27) 5 commits
- - sequencer: do not invent whitespace when transforming OIDs
- - sequencer: report when noop has an argument
- - sequencer: remove superfluous conditional
- - sequencer: strip bogus LF at end of error messages
- - rebase: do not continue when the todo list generation failed
+  (merged to 'next' on 2017-12-28 at 23c10afb09)
+ + sequencer: do not invent whitespace when transforming OIDs
+ + sequencer: report when noop has an argument
+ + sequencer: remove superfluous conditional
+ + sequencer: strip bogus LF at end of error messages
+ + rebase: do not continue when the todo list generation failed
 
  Code cleanup.
 
+
+* jt/transport-hide-vtable (2017-12-14) 2 commits
+  (merged to 'next' on 2017-12-27 at 8dc27cfb53)
+ + transport: make transport vtable more private
+ + clone, fetch: remove redundant transport check
+
+ Code clean-up.
+
+
+* ks/doc-previous-checkout (2017-12-19) 1 commit
+  (merged to 'next' on 2017-12-27 at c706239a69)
+ + Doc/check-ref-format: clarify information about @{-N} syntax
+
+ Doc update.
+
+
+* ks/rebase-error-messages (2017-12-19) 3 commits
+  (merged to 'next' on 2017-12-27 at 80c62260ad)
+ + rebase: rebasing can also be done when HEAD is detached
+ + rebase: distinguish user input by quoting it
+ + rebase: consistently use branch_name variable
+
+ Error messages from "git rebase" have been somewhat cleaned up.
+
+
+* ld/p4-multiple-shelves (2017-12-22) 1 commit
+  (merged to 'next' on 2017-12-28 at 6c29703427)
+ + git-p4: update multiple shelved change lists
+
+ "git p4" update.
+
+
+* nm/imap-send-quote-server-folder-name (2017-12-18) 1 commit
+  (merged to 'next' on 2017-12-27 at 79326a0b77)
+ + imap-send: URI encode server folder
+
+ "git imap-send" did not correctly quote the folder name when
+ making a request to the server, which has been corrected.
+
+
+* ra/prompt-eread-fix (2017-12-06) 2 commits
+  (merged to 'next' on 2017-12-27 at ae870af11d)
+ + git-prompt: fix reading files with windows line endings
+ + git-prompt: make __git_eread intended use explicit
+
+ Update the shell prompt script (in contrib/) to strip trailing CR
+ from strings read from various "state" files.
+
+
+* rs/use-argv-array-in-child-process (2017-12-22) 2 commits
+  (merged to 'next' on 2017-12-28 at 829a621ace)
+ + send-pack: use internal argv_array of struct child_process
+ + http: use internal argv_array of struct child_process
+
+ Code cleanup.
+
+
+* sb/describe-blob (2017-12-19) 7 commits
+  (merged to 'next' on 2017-12-27 at 1249ca9213)
+ + builtin/describe.c: describe a blob
+ + builtin/describe.c: factor out describe_commit
+ + builtin/describe.c: print debug statements earlier
+ + builtin/describe.c: rename `oid` to avoid variable shadowing
+ + revision.h: introduce blob/tree walking in order of the commits
+ + list-objects.c: factor out traverse_trees_and_blobs
+ + t6120: fix typo in test name
+
+ "git describe" was taught to dig trees deeper to find a
+ <commit-ish>:<path> that refers to a given blob object.
+
+
+* sr/http-sslverify-config-doc (2017-12-18) 1 commit
+  (merged to 'next' on 2017-12-27 at 84a461c4b5)
+ + config: document default value of http.sslVerify
+
+ Docfix.
+
+
+* tb/test-lint-wc-l (2017-12-22) 1 commit
+  (merged to 'next' on 2017-12-28 at 4d91ed6d51)
+ + check-non-portable-shell.pl: `wc -l` may have leading WS
+
+ Test update.
+
+
+* tz/lib-git-svn-svnserve-tests (2017-12-14) 2 commits
+  (merged to 'next' on 2017-12-27 at 54513f6e20)
+ + t/lib-git-svn.sh: improve svnserve tests with parallel make test
+ + t/lib-git-svn: cleanup inconsistent tab/space usage
+
+
+* ws/curl-http-proxy-over-https (2017-12-19) 1 commit
+  (merged to 'next' on 2017-12-27 at 895bf2f94b)
+ + http: support CURLPROXY_HTTPS
+
+ Git has been taught to support an https:// URL used for http.proxy
+ when using recent versions of libcurl.
+
+--------------------------------------------------
+[New Topics]
+
+* ab/dc-sha1-loose-ends (2017-12-28) 1 commit
+  (merged to 'next' on 2018-01-05 at 7186e81793)
+ + Makefile: NO_OPENSSL=1 should no longer imply BLK_SHA1=1
+
+ Tying loose ends for the recent integration work of
+ collision-detecting SHA-1 implementation.
+
+ Will merge to 'master'.
+
+
+* ab/wildmatch-tests (2018-01-04) 7 commits
+ - wildmatch test: create & test files on disk in addition to in-memory
+ - wildmatch test: perform all tests under all wildmatch() modes
+ - wildmatch test: remove dead fnmatch() test code
+ - wildmatch test: use a paranoia pattern from nul_match()
+ - wildmatch test: don't try to vertically align our output
+ - wildmatch test: use more standard shell style
+ - wildmatch test: indent with tabs, not spaces
+
+ More tests for wildmatch functions.
+
  Will merge to 'next'.
 
 
-* nd/fix-untracked-cache-invalidation (2017-12-27) 3 commits
- - update-index doc: note a fixed bug in the untracked cache
- - dir.c: fix missing dir invalidation in untracked code
- - status: add a failing test showing a core.untrackedCache bug
+* cc/codespeed (2018-01-05) 7 commits
+ - perf/run: read GIT_PERF_REPO_NAME from perf.repoName
+ - perf/run: learn to send output to codespeed server
+ - perf/run: learn about perf.codespeedOutput
+ - perf/run: add conf_opts argument to get_var_from_env_or_config()
+ - perf/aggregate: implement codespeed JSON output
+ - perf/aggregate: refactor printing results
+ - perf/aggregate: fix checking ENV{GIT_PERF_SUBSECTION}
 
-
-* nd/ita-wt-renames-in-status (2017-12-27) 6 commits
- - wt-status.c: handle worktree renames
- - wt-status.c: rename rename-related fields in wt_status_change_data
- - wt-status.c: catch unhandled diff status codes
- - wt-status.c: coding style fix
- - Use DIFF_DETECT_RENAME for detect_rename assignments
- - t2203: test status output with porcelain v2 format
-
- "git status" after moving a path in the working tree (hence making
- it appear "removed") and then adding with the -N option (hence
- making that appear "added") detected it as a rename, but did not
- report the  old and new pathnames correctly.
+ "perf" test output can be sent to codespeed server.
 
  Will merge to 'next'.
 
 
-* sg/travis-skip-identical-test (2017-12-27) 2 commits
- - travis-ci: record and skip successfully built trees
- - travis-ci: don't try to create the cache directory unnecessarily
- (this branch uses sg/travis-fixes.)
+* rs/lose-leak-pending (2017-12-28) 9 commits
+  (merged to 'next' on 2018-01-05 at 05305f7f2f)
+ + commit: remove unused function clear_commit_marks_for_object_array()
+ + revision: remove the unused flag leak_pending
+ + checkout: avoid using the rev_info flag leak_pending
+ + bundle: avoid using the rev_info flag leak_pending
+ + bisect: avoid using the rev_info flag leak_pending
+ + object: add clear_commit_marks_all()
+ + ref-filter: use clear_commit_marks_many() in do_merge_filter()
+ + commit: use clear_commit_marks_many() in remove_redundant()
+ + commit: avoid allocation in clear_commit_marks_many()
 
- Avoid repeatedly testing the same tree in TravisCI that have been
- tested successfully already.
+ API clean-up around revision traversal.
+
+ Will cook in 'next'.
+
+
+* sb/diff-blobfind-pickaxe (2018-01-04) 6 commits
+ - diff: use HAS_MULTI_BITS instead of counting bits manually
+ - diff: properly error out when combining multiple pickaxe options
+ - diffcore: add a pickaxe option to find a specific blob
+ - diff: introduce DIFF_PICKAXE_KINDS_MASK
+ - diff: migrate diff_flags.pickaxe_ignore_case to a pickaxe_opts bit
+ - diff.h: make pickaxe_opts an unsigned bit field
+
+ "diff" family of commands learned "--find-object=<object-id>" option
+ to limit the findings to changes that involve the named object.
+
+ Will merge to 'next'.
+
+
+* ab/perf-grep-threads (2018-01-04) 1 commit
+ - perf: amend the grep tests to test grep.threads
+
+ More perf tests for threaded grep
+
+ Will merge to 'next'.
+
+
+* bc/submitting-patches-in-asciidoc (2018-01-03) 1 commit
+  (merged to 'next' on 2018-01-05 at 92dd960a56)
+ + doc/SubmittingPatches: improve text formatting
+
+ Doc readability update.
+
+ Will merge to 'master'.
+
+
+* bw/protocol-v1 (2018-01-04) 1 commit
+  (merged to 'next' on 2018-01-05 at 47a5e0039a)
+ + http: fix v1 protocol tests with apache httpd < 2.4
+
+ Test fix for a topic already in 'master'.
+
+ Will merge to 'master'.
+
+
+* bw/protocol-v2 (2018-01-04) 26 commits
+ - remote-curl: implement connect-half-duplex command
+ - remote-curl: create copy of the service name
+ - pkt-line: add packet_buf_write_len function
+ - transport-helper: introduce connect-half-duplex
+ - transport-helper: refactor process_connect_service
+ - transport-helper: remove name parameter
+ - fetch-pack: perform a fetch using v2
+ - upload-pack: introduce fetch server command
+ - push: pass ref patterns when pushing
+ - fetch: pass ref patterns when fetching
+ - ls-remote: pass ref patterns when requesting a remote's refs
+ - transport: convert transport_get_remote_refs to take a list of ref patterns
+ - transport: convert get_refs_list to take a list of ref patterns
+ - connect: request remote refs using v2
+ - ls-refs: introduce ls-refs server command
+ - serve: introduce git-serve
+ - protocol: introduce enum protocol_version value protocol_v2
+ - transport: store protocol version
+ - connect: discover protocol version outside of get_remote_heads
+ - connect: convert get_remote_heads to use struct packet_reader
+ - transport: use get_refs_via_connect to get refs
+ - upload-pack: factor out processing lines
+ - upload-pack: convert to a builtin
+ - pkt-line: add delim packet support
+ - pkt-line: introduce struct packet_reader
+ - pkt-line: introduce packet_read_with_status
+
+
+* jh/status-no-ahead-behind (2018-01-04) 4 commits
+ - status: support --no-ahead-behind in long format
+ - status: update short status to respect --no-ahead-behind
+ - status: add --[no-]ahead-behind to status and commit for V2 format.
+ - stat_tracking_info: return +1 when branches not equal
+
+
+* jk/abort-clone-with-existing-dest (2018-01-03) 4 commits
+ - clone: do not clean up directories we didn't create
+ - clone: factor out dir_exists() helper
+ - t5600: modernize style
+ - t5600: fix outdated comment about unborn HEAD
+
+
+* jk/doc-diff-options (2018-01-04) 1 commit
+  (merged to 'next' on 2018-01-05 at 11a42ea807)
+ + docs/diff-options: clarify scope of diff-filter types
+
+ Doc update.
+
+ Will merge to 'master'.
+
+
+* js/test-with-ws-in-path (2018-01-03) 2 commits
+  (merged to 'next' on 2018-01-05 at 6438e1c186)
+ + t0302 & t3900: add forgotten quotes
+ + Allow the test suite to pass in a directory whose name contains spaces
+
+ Test fixes.
+
+ Will merge to 'master'.
+
+
+* ls/checkout-encoding (2018-01-04) 6 commits
+ - utf8.c: mark utf{16,32}_{be,le}_bom symbols static
+ - convert: add support for 'checkout-encoding' attribute
+ - utf8: add function to detect a missing UTF-16/32 BOM
+ - utf8: add function to detect prohibited UTF-16/32 BOM
+ - strbuf: add xstrdup_toupper()
+ - convert_to_git(): checksafe becomes an integer
+
+ The new "checkout-encoding" attribute can ask Git to convert the
+ contents to the specified encoding when checking out to the working
+ tree (and the other way around when checking in).
+
+
+* ma/bisect-leakfix (2018-01-03) 1 commit
+ - bisect: fix a regression causing a segfault
+
+ Will merge to 'next'.
+
+
+* mm/send-email-fallback-to-local-mail-address (2018-01-05) 3 commits
+ - send-email: add test for Linux's get_maintainer.pl
+ - Remove now useless email-address parsing code
+ - send-email: add and use a local copy of Mail::Address
+
+ Instead of maintaining home-grown email address parsing code, ship
+ a copy of reasonably recent Mail::Address to be used as a fallback
+ in 'git send-email' when the platform lacks it.
+
+
+* sb/submodule-update-reset-fix (2018-01-05) 4 commits
+ - submodule: submodule_move_head omits old argument in forced case
+ - unpack-trees: oneway_merge to update submodules
+ - t/lib-submodule-update.sh: fix test ignoring ignored files in submodules
+ - t/lib-submodule-update.sh: clarify test
+
+ When resetting the working tree files recursively, the working tree
+ of submodules are now also reset to match.
+
+
+* sg/travis-check-untracked (2018-01-03) 2 commits
+  (merged to 'next' on 2018-01-05 at 424bed2fb0)
+ + travis-ci: check that all build artifacts are .gitignore-d
+ + travis-ci: don't store P4 and Git LFS in the working tree
+ (this branch uses sg/travis-fixes and sg/travis-skip-identical-test.)
+
+ Will merge to 'master'.
+
+
+* js/fix-merge-arg-quoting-in-rebase-p (2018-01-05) 1 commit
+ - rebase -p: fix quoting when calling `git merge`
+
+ "git rebase -p -X<option>" did not propagate the option properly
+ down to underlying merge strategy backend.
+
+ Will merge to 'next' and then to 'master'.
 
 --------------------------------------------------
 [Stalled]
 
-* jc/merge-symlink-ours-theirs (2017-09-26) 1 commit
- - merge: teach -Xours/-Xtheirs to symbolic link merge
+* pb/bisect-helper-2 (2017-10-28) 8 commits
+ - t6030: make various test to pass GETTEXT_POISON tests
+ - bisect--helper: `bisect_start` shell function partially in C
+ - bisect--helper: `get_terms` & `bisect_terms` shell function in C
+ - bisect--helper: `bisect_next_check` shell function in C
+ - bisect--helper: `check_and_set_terms` shell function in C
+ - wrapper: move is_empty_file() and rename it as is_empty_or_missing_file()
+ - bisect--helper: `bisect_write` shell function in C
+ - bisect--helper: `bisect_reset` shell function in C
 
- "git merge -Xours/-Xtheirs" learned to use our/their version when
- resolving a conflicting updates to a symbolic link.
+ Expecting a reroll.
+ cf. <0102015f5e5ee171-f30f4868-886f-47a1-a4e4-b4936afc545d-000000@eu-west-1.amazonses.com>
 
- Needs review.
+
+* dj/runtime-prefix (2017-12-05) 4 commits
+ . exec_cmd: RUNTIME_PREFIX on some POSIX systems
+ . Makefile: add Perl runtime prefix support
+ . Makefile: add support for "perllibdir"
+ . Makefile: generate Perl header from template file
+
+ A build-time option has been added to allow Git to be told to refer
+ to its associated files relative to the main binary, in the same
+ way that has been possible on Windows for quite some time, for
+ Linux, BSDs and Darwin.
+
+ Tentatively kicked out of 'next' to see how well another topic
+ ab/simplify-perl-makefile that heavily conflicts with this fares.
+
+
+* mk/http-backend-content-length (2017-11-27) 4 commits
+ - SQUASH???
+ - t5560-http-backend-noserver.sh: add CONTENT_LENGTH cases
+ - SQUASH???
+ - http-backend: respect CONTENT_LENGTH as specified by rfc3875
+
+ The http-backend (used for smart-http transport) used to slurp the
+ whole input until EOF, without paying attention to CONTENT_LENGTH
+ that is supplied in the environment and instead expecting the Web
+ server to close the input stream.  This has been fixed.
+
+ Expecting a reroll.
+ Suggested fixes to be used when rerolling is queued, but I'd
+ prefer _not_ squashing them myself.
+
+ Also, it may be too complex solution for the problem.
+ cf. <20171204171308.GA13332@sigill.intra.peff.net>
+
+
+* cc/require-tcl-tk-for-build (2017-11-29) 2 commits
+ - travis-ci: avoid new tcl/tk build requirement
+ - Makefile: check that tcl/tk is installed
+
+ A first-time builder of Git may have installed neither tclsh nor
+ msgfmt, in which case git-gui and gitk part will fail and break the
+ build.  As a workaround, refuse to run a build when tclsh is not
+ installed and NO_TCLTK is not set.
+
+ Undecided.
+ I still feel that requring tclsh to be installed, with or without
+ "escape hatch" for experts, may be too heavy-handed.
 
 
 * mg/merge-base-fork-point (2017-09-17) 3 commits
@@ -413,72 +608,75 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* ew/svn-crlf (2017-12-14) 2 commits
-  (merged to 'next' on 2017-12-27 at 1b81bd634d)
- + Merge branch 'svn-crlf' of git://bogomips.org/git-svn into ew/svn-crlf
- + git-svn: convert CRLF to LF in commit message to SVN
+* jc/merge-symlink-ours-theirs (2018-01-03) 1 commit
+  (merged to 'next' on 2018-01-05 at 63ebfc45eb)
+ + merge: teach -Xours/-Xtheirs to symbolic link merge
 
- "git svn" has been updated to strip CRs in the commit messages, as
- recent versions of Subversion rejects them.
+ "git merge -Xours/-Xtheirs" learned to use our/their version when
+ resolving a conflicting updates to a symbolic link.
 
- Will merge to 'master'.
-
-
-* tz/lib-git-svn-svnserve-tests (2017-12-14) 2 commits
-  (merged to 'next' on 2017-12-27 at 54513f6e20)
- + t/lib-git-svn.sh: improve svnserve tests with parallel make test
- + t/lib-git-svn: cleanup inconsistent tab/space usage
-
- Will merge to 'master'.
+ Will cook in 'next'.
 
 
-* bp/fsmonitor (2017-12-18) 1 commit
-  (merged to 'next' on 2017-12-27 at ce216e2978)
- + p7519: improve check for prerequisite WATCHMAN
+* ab/commit-m-with-fixup (2017-12-22) 2 commits
+ - commit: add support for --fixup <commit> -m"<extra message>"
+ - commit doc: document that -c, -C, -F and --fixup with -m error
 
- Test fix.
-
- Will merge to 'master'.
-
-
-* js/enhanced-version-info (2017-12-14) 2 commits
-  (merged to 'next' on 2017-12-27 at a95dd96a78)
- + version --build-options: report commit, too, if possible
- + version --build-options: also report host CPU
-
- "git version --build-options" learned to report the host CPU and
- the exact commit object name the binary was built from.
-
- Will merge to 'master'.
+ "git commit --fixup" did not allow "-m<message>" option to be used
+ at the same time; allow it to annotate resulting commit with more
+ text.
 
 
-* jt/transport-hide-vtable (2017-12-14) 2 commits
-  (merged to 'next' on 2017-12-27 at 8dc27cfb53)
- + transport: make transport vtable more private
- + clone, fetch: remove redundant transport check
-
- Code clean-up.
-
- Will merge to 'master'.
+* bw/oidmap-autoinit (2017-12-27) 1 commit
+ - oidmap: ensure map is initialized
 
 
-* ks/rebase-error-messages (2017-12-19) 3 commits
-  (merged to 'next' on 2017-12-27 at 80c62260ad)
- + rebase: rebasing can also be done when HEAD is detached
- + rebase: distinguish user input by quoting it
- + rebase: consistently use branch_name variable
+* dk/describe-all-output-fix (2017-12-27) 1 commit
+  (merged to 'next' on 2017-12-28 at c6254494e3)
+ + describe: prepend "tags/" when describing tags with embedded name
 
- Error messages from "git rebase" have been somewhat cleaned up.
+ An old regression in "git describe --all $annotated_tag^0" has been
+ fixed.
 
- Will merge to 'master'.
+ Will cook in 'next'.
 
 
-* nm/imap-send-quote-server-folder-name (2017-12-18) 1 commit
-  (merged to 'next' on 2017-12-27 at 79326a0b77)
- + imap-send: URI encode server folder
+* nd/fix-untracked-cache-invalidation (2018-01-04) 5 commits
+ - dir.c: stop ignoring opendir() error in open_cached_dir()
+ - update-index doc: note a fixed bug in the untracked cache
+ - dir.c: fix missing dir invalidation in untracked code
+ - dir.c: avoid stat() in valid_cached_dir()
+ - status: add a failing test showing a core.untrackedCache bug
 
- "git imap-send" did not correctly quote the folder name when
- making a request to the server, which has been corrected.
+ Some bugs around "untracked cache" feature have been fixed.
+
+
+* nd/ita-wt-renames-in-status (2017-12-27) 6 commits
+  (merged to 'next' on 2017-12-28 at 7610331a11)
+ + wt-status.c: handle worktree renames
+ + wt-status.c: rename rename-related fields in wt_status_change_data
+ + wt-status.c: catch unhandled diff status codes
+ + wt-status.c: coding style fix
+ + Use DIFF_DETECT_RENAME for detect_rename assignments
+ + t2203: test status output with porcelain v2 format
+
+ "git status" after moving a path in the working tree (hence making
+ it appear "removed") and then adding with the -N option (hence
+ making that appear "added") detected it as a rename, but did not
+ report the  old and new pathnames correctly.
+
+ Will cook in 'next'.
+
+
+* sg/travis-skip-identical-test (2018-01-02) 3 commits
+  (merged to 'next' on 2018-01-05 at 41914fc43e)
+ + travis-ci: record and skip successfully built trees
+ + travis-ci: create the cache directory early in the build process
+ + travis-ci: print the "tip of branch is exactly at tag" message in color
+ (this branch is used by sg/travis-check-untracked; uses sg/travis-fixes.)
+
+ Avoid repeatedly testing the same tree in TravisCI that have been
+ tested successfully already.
 
  Will merge to 'master'.
 
@@ -491,109 +689,30 @@ of the repositories listed at
  Undecided.
 
 
-* sr/http-sslverify-config-doc (2017-12-18) 1 commit
-  (merged to 'next' on 2017-12-27 at 84a461c4b5)
- + config: document default value of http.sslVerify
-
- Docfix.
-
- Will merge to 'master'.
-
-
-* jh/memihash-opt (2017-12-22) 1 commit
- - t/helper/test-lazy-name-hash: fix compilation
-
- Squelch compiler warning.
-
- Will merge to 'next'.
-
-
-* ks/doc-previous-checkout (2017-12-19) 1 commit
-  (merged to 'next' on 2017-12-27 at c706239a69)
- + Doc/check-ref-format: clarify information about @{-N} syntax
-
- Doc update.
-
- Will merge to 'master'.
-
-
-* rs/revision-keep-pending (2017-12-19) 1 commit
-  (merged to 'next' on 2017-12-27 at 20a9527941)
- + revision: introduce prepare_revision_walk_extended()
-
- Code clean-up.
-
- Will merge to 'master'.
-
-
-* ws/curl-http-proxy-over-https (2017-12-19) 1 commit
-  (merged to 'next' on 2017-12-27 at 895bf2f94b)
- + http: support CURLPROXY_HTTPS
-
- Git has been taught to support an https:// URL used for http.proxy
- when using recent versions of libcurl.
-
- Will merge to 'master'.
-
-
-* av/fsmonitor-updates (2017-12-19) 5 commits
- - fsmonitor: Remove debugging lines from t/t7519-status-fsmonitor.sh
- - fsmonitor: complete the last line of test-dump-fsmonitor output
+* av/fsmonitor-updates (2018-01-04) 6 commits
+ - fsmonitor: use fsmonitor data in `git diff`
+ - fsmonitor: remove debugging lines from t/t7519-status-fsmonitor.sh
+ - fsmonitor: make output of test-dump-fsmonitor more concise
  - fsmonitor: update helper tool, now that flags are filled later
- - fsmonitor: include dir.h for untracked_cache_invalidate_path()
+ - fsmonitor: stop inline'ing mark_fsmonitor_valid / _invalid
  - dir.c: update comments to match argument name
 
+ Code clean-up on fsmonitor integration, plus optional utilization
+ of the fsmonitor data in diff-files.
 
-* jh/partial-clone-doc (2017-12-14) 1 commit
-  (merged to 'next' on 2017-12-27 at 3695847773)
- + partial-clone: design doc
-
- Will merge to 'master'.
-
-
-* jk/test-suite-tracing (2017-12-08) 4 commits
-  (merged to 'next' on 2017-12-27 at 7034a51474)
- + t/Makefile: introduce TEST_SHELL_PATH
- + test-lib: make "-x" work with "--verbose-log"
- + t5615: avoid re-using descriptor 4
- + test-lib: silence "-x" cleanup under bash
-
- Assorted fixes around running tests with "-x" tracing option.
-
- Will merge to 'master'.
-
-
-* hi/merge-verify-sig-config (2017-12-19) 3 commits
-  (merged to 'next' on 2017-12-27 at 34360fb1c1)
- + t5573, t7612: clean up after unexpected success of 'pull' and 'merge'
-  (merged to 'next' on 2017-12-14 at cdc511dc36)
- + t: add tests for pull --verify-signatures
- + merge: add config option for verifySignatures
-
- "git merge" learned to pay attention to merge.verifySignatures
- configuration variable and pretend as if '--verify-signatures'
- option was given from the command line.
-
- Will merge to 'master'.
+ Undecided.
+ cf. <alpine.DEB.2.21.1.1801042335130.32@MININT-6BKU6QN.europe.corp.microsoft.com>
 
 
 * sg/travis-fixes (2017-12-27) 4 commits
- - travis-ci: only print test failures if there are test results available
- - travis-ci: save prove state for the 32 bit Linux build
- - travis-ci: don't install default addon packages for the 32 bit Linux build
- - travis-ci: fine tune the use of 'set -x' in 'ci/*' scripts
- (this branch is used by sg/travis-skip-identical-test.)
+  (merged to 'next' on 2017-12-28 at 6496308a5b)
+ + travis-ci: only print test failures if there are test results available
+ + travis-ci: save prove state for the 32 bit Linux build
+ + travis-ci: don't install default addon packages for the 32 bit Linux build
+ + travis-ci: fine tune the use of 'set -x' in 'ci/*' scripts
+ (this branch is used by sg/travis-check-untracked and sg/travis-skip-identical-test.)
 
  Assorted updates for TravisCI integration.
-
- Will merge to 'next'.
-
-
-* bw/path-doc (2017-12-13) 1 commit
-  (merged to 'next' on 2017-12-19 at 2cddee77ca)
- + path: document path functions
-
- Doc updates.
 
  Will merge to 'master'.
 
@@ -611,75 +730,18 @@ of the repositories listed at
  cf. <xmqqk1xw6c24.fsf@gitster.mtv.corp.google.com>
 
 
-* ab/simplify-perl-makefile (2017-12-22) 2 commits
- - perl: avoid *.pmc and fix Error.pm further
+* ab/simplify-perl-makefile (2018-01-03) 3 commits
+  (merged to 'next' on 2018-01-03 at ecd1f51af2)
+ + perl: treat PERLLIB_EXTRA as an extra path again
+  (merged to 'next' on 2017-12-28 at d189d91ec6)
+ + perl: avoid *.pmc and fix Error.pm further
   (merged to 'next' on 2017-12-13 at 1b791d2503)
  + Makefile: replace perl/Makefile.PL with simple make rules
 
  The build procedure for perl/ part has been greatly simplified by
  weaning ourselves off of MakeMaker.
 
- Waiting for an Ack.
-
-
-* cc/skip-to-optional-val (2017-12-11) 7 commits
-  (merged to 'next' on 2017-12-27 at 1b189d8556)
- + t4045: reindent to make helpers readable
- + diff: add tests for --relative without optional prefix value
- + diff: use skip_to_optional_arg_default() in parsing --relative
- + diff: use skip_to_optional_arg_default()
- + diff: use skip_to_optional_arg()
- + index-pack: use skip_to_optional_arg()
- + git-compat-util: introduce skip_to_optional_arg()
-
- Introduce a helper to simplify code to parse a common pattern that
- expects either "--key" or "--key=<something>".
-
- Will merge to 'master'.
-
-
-* ra/prompt-eread-fix (2017-12-06) 2 commits
-  (merged to 'next' on 2017-12-27 at ae870af11d)
- + git-prompt: fix reading files with windows line endings
- + git-prompt: make __git_eread intended use explicit
-
- Update the shell prompt script (in contrib/) to strip trailing CR
- from strings read from various "state" files.
-
- Will merge to 'master'.
-
-
-* cc/require-tcl-tk-for-build (2017-11-29) 2 commits
- - travis-ci: avoid new tcl/tk build requirement
- - Makefile: check that tcl/tk is installed
-
- A first-time builder of Git may have installed neither tclsh nor
- msgfmt, in which case git-gui and gitk part will fail and break the
- build.  As a workaround, refuse to run a build when tclsh is not
- installed and NO_TCLTK is not set.
-
- Undecided.
- I still feel that requring tclsh to be installed, with or without
- "escape hatch" for experts, may be too heavy-handed.
-
-
-* mk/http-backend-content-length (2017-11-27) 4 commits
- - SQUASH???
- - t5560-http-backend-noserver.sh: add CONTENT_LENGTH cases
- - SQUASH???
- - http-backend: respect CONTENT_LENGTH as specified by rfc3875
-
- The http-backend (used for smart-http transport) used to slurp the
- whole input until EOF, without paying attention to CONTENT_LENGTH
- that is supplied in the environment and instead expecting the Web
- server to close the input stream.  This has been fixed.
-
- Expecting a reroll.
- Suggested fixes to be used when rerolling is queued, but I'd
- prefer _not_ squashing them myself.
-
- Also, it may be too complex solution for the problem.
- cf. <20171204171308.GA13332@sigill.intra.peff.net>
+ Will cook in 'next'.
 
 
 * en/rename-directory-detection (2017-12-13) 35 commits
@@ -725,22 +787,12 @@ of the repositories listed at
  want to move to z/d by taking the hint that the entire directory
  'x' moved to 'z'.
 
- Needs review.
-
-
-* sb/diff-blobfind (2017-12-12) 1 commit
-  (merged to 'next' on 2017-12-13 at 9a27a20c5f)
- + diffcore: add a filter to find a specific blob
-
- "git diff" family of commands learned --blobfind=<object-name> that
- allows you to limit the output only to a change that involves the
- named blob object (either changing the contents from or to it).
-
- Will merge to 'master'.
+ A rerolled version exists; it needs to be picked up.
 
 
 * pw/sequencer-in-process-commit (2017-12-22) 11 commits
- - sequencer: assign only free()able strings to gpg_sign
+  (merged to 'next' on 2017-12-28 at c496b3fa29)
+ + sequencer: assign only free()able strings to gpg_sign
   (merged to 'next' on 2017-12-13 at ec4d2b9c84)
  + sequencer: improve config handling
   (merged to 'next' on 2017-12-06 at a4212f7ebd)
@@ -761,22 +813,7 @@ of the repositories listed at
  gives performance boost for a few tens of percents in some sample
  scenarios.
 
- Will merge to 'next'.
-
-
-* dj/runtime-prefix (2017-12-05) 4 commits
- . exec_cmd: RUNTIME_PREFIX on some POSIX systems
- . Makefile: add Perl runtime prefix support
- . Makefile: add support for "perllibdir"
- . Makefile: generate Perl header from template file
-
- A build-time option has been added to allow Git to be told to refer
- to its associated files relative to the main binary, in the same
- way that has been possible on Windows for quite some time, for
- Linux, BSDs and Darwin.
-
- Tentatively kicked out of 'next' to see how well another topic
- ab/simplify-perl-makefile that heavily conflicts with this fares.
+ Will cook in 'next'.
 
 
 * jh/fsck-promisors (2017-12-08) 10 commits
@@ -823,36 +860,6 @@ of the repositories listed at
  introduced by the jh/fsck-promisors topic.
 
 
-* sb/describe-blob (2017-12-19) 7 commits
-  (merged to 'next' on 2017-12-27 at 1249ca9213)
- + builtin/describe.c: describe a blob
- + builtin/describe.c: factor out describe_commit
- + builtin/describe.c: print debug statements earlier
- + builtin/describe.c: rename `oid` to avoid variable shadowing
- + revision.h: introduce blob/tree walking in order of the commits
- + list-objects.c: factor out traverse_trees_and_blobs
- + t6120: fix typo in test name
-
- "git describe" was taught to dig trees deeper to find a
- <commit-ish>:<path> that refers to a given blob object.
-
- Will merge to 'master'.
-
-
-* pb/bisect-helper-2 (2017-10-28) 8 commits
- - t6030: make various test to pass GETTEXT_POISON tests
- - bisect--helper: `bisect_start` shell function partially in C
- - bisect--helper: `get_terms` & `bisect_terms` shell function in C
- - bisect--helper: `bisect_next_check` shell function in C
- - bisect--helper: `check_and_set_terms` shell function in C
- - wrapper: move is_empty_file() and rename it as is_empty_or_missing_file()
- - bisect--helper: `bisect_write` shell function in C
- - bisect--helper: `bisect_reset` shell function in C
-
- Expecting a reroll.
- cf. <0102015f5e5ee171-f30f4868-886f-47a1-a4e4-b4936afc545d-000000@eu-west-1.amazonses.com>
-
-
 * ot/mru-on-list (2017-10-01) 1 commit
  - mru: use double-linked list from list.h
 
@@ -863,13 +870,34 @@ of the repositories listed at
 
 
 * jm/svn-pushmergeinfo-fix (2017-09-17) 1 commit
- - git-svn: fix svn.pushmergeinfo handling of svn+ssh usernames.
+  (merged to 'next' on 2018-01-05 at 6cb237ea44)
+ + git-svn: fix svn.pushmergeinfo handling of svn+ssh usernames.
 
  "git svn dcommit" did not take into account the fact that a
  svn+ssh:// URL with a username@ (typically used for pushing) refers
  to the same SVN repository without the username@ and failed when
  svn.pushmergeinfo option is set.
 
- Needs a test, perhaps as a follow-up patch.
+ Will cook in 'next'.
 
- Will merge to 'next'.
+--------------------------------------------------
+[Discarded]
+
+* rs/revision-keep-pending (2017-12-19) 1 commit
+  (merged to 'next' on 2017-12-27 at 20a9527941)
+ + revision: introduce prepare_revision_walk_extended()
+
+ Reverted out of 'next' to give a chance to its reworked successor,
+ queued on the rs/lose-leak-pending topic.
+
+
+* sb/diff-blobfind (2017-12-12) 1 commit
+  (merged to 'next' on 2017-12-13 at 9a27a20c5f)
+ + diffcore: add a filter to find a specific blob
+
+ "git diff" family of commands learned --blobfind=<object-name> that
+ allows you to limit the output only to a change that involves the
+ named blob object (either changing the contents from or to it).
+
+ Reverted out of 'next' to give a chance to its reworked successor,
+ queued on the sb/diff-blobfind-pickaxe topic.
