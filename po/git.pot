@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2017-12-31 10:45+0800\n"
+"POT-Creation-Date: 2018-01-07 07:50+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -572,7 +572,7 @@ msgstr[1] ""
 msgid "Unable to write new index file"
 msgstr ""
 
-#: apply.c:4921 apply.c:4924 builtin/am.c:2257 builtin/am.c:2260
+#: apply.c:4921 apply.c:4924 builtin/am.c:2220 builtin/am.c:2223
 #: builtin/clone.c:116 builtin/fetch.c:116 builtin/pull.c:193
 #: builtin/submodule--helper.c:369 builtin/submodule--helper.c:860
 #: builtin/submodule--helper.c:863 builtin/submodule--helper.c:1230
@@ -589,7 +589,7 @@ msgstr ""
 msgid "apply changes matching the given path"
 msgstr ""
 
-#: apply.c:4927 builtin/am.c:2266
+#: apply.c:4927 builtin/am.c:2229
 msgid "num"
 msgstr ""
 
@@ -649,7 +649,7 @@ msgstr ""
 msgid "ensure at least <n> lines of context match"
 msgstr ""
 
-#: apply.c:4959 builtin/am.c:2245 builtin/interpret-trailers.c:95
+#: apply.c:4959 builtin/am.c:2208 builtin/interpret-trailers.c:95
 #: builtin/interpret-trailers.c:97 builtin/interpret-trailers.c:99
 #: builtin/pack-objects.c:3009
 msgid "action"
@@ -693,7 +693,7 @@ msgstr ""
 msgid "do not trust the line counts in the hunk headers"
 msgstr ""
 
-#: apply.c:4983 builtin/am.c:2254
+#: apply.c:4983 builtin/am.c:2217
 msgid "root"
 msgstr ""
 
@@ -942,8 +942,8 @@ msgstr ""
 msgid "--reverse and --first-parent together require specified latest commit"
 msgstr ""
 
-#: blame.c:1797 bundle.c:169 ref-filter.c:1981 sequencer.c:1179
-#: sequencer.c:2367 builtin/commit.c:1066 builtin/log.c:364 builtin/log.c:918
+#: blame.c:1797 bundle.c:169 ref-filter.c:1981 sequencer.c:1177
+#: sequencer.c:2370 builtin/commit.c:1066 builtin/log.c:364 builtin/log.c:918
 #: builtin/log.c:1368 builtin/log.c:1697 builtin/log.c:1945 builtin/merge.c:369
 #: builtin/shortlog.c:191
 msgid "revision walk setup failed"
@@ -1098,8 +1098,8 @@ msgstr ""
 msgid "unrecognized header: %s%s (%d)"
 msgstr ""
 
-#: bundle.c:88 sequencer.c:1357 sequencer.c:1804 sequencer.c:2631
-#: sequencer.c:2657 sequencer.c:2748 sequencer.c:2850 builtin/commit.c:782
+#: bundle.c:88 sequencer.c:1360 sequencer.c:1807 sequencer.c:2637
+#: sequencer.c:2663 sequencer.c:2754 sequencer.c:2856 builtin/commit.c:782
 #, c-format
 msgid "could not open '%s'"
 msgstr ""
@@ -1166,8 +1166,8 @@ msgstr ""
 msgid "invalid color value: %.*s"
 msgstr ""
 
-#: commit.c:41 sequencer.c:1611 builtin/am.c:421 builtin/am.c:465
-#: builtin/am.c:1471 builtin/am.c:2106
+#: commit.c:41 sequencer.c:1614 builtin/am.c:421 builtin/am.c:465
+#: builtin/am.c:1434 builtin/am.c:2069
 #, c-format
 msgid "could not parse %s"
 msgstr ""
@@ -1938,11 +1938,11 @@ msgstr ""
 msgid "Unable to create '%s.lock': %s"
 msgstr ""
 
-#: merge.c:41
+#: merge.c:74
 msgid "failed to read the cache"
 msgstr ""
 
-#: merge.c:95 builtin/am.c:1980 builtin/am.c:2014 builtin/checkout.c:379
+#: merge.c:128 builtin/am.c:1943 builtin/am.c:1977 builtin/checkout.c:379
 #: builtin/checkout.c:600 builtin/clone.c:754
 msgid "unable to write new index file"
 msgstr ""
@@ -2158,36 +2158,41 @@ msgstr ""
 msgid "Adding %s"
 msgstr ""
 
-#: merge-recursive.c:1955
+#: merge-recursive.c:1958
+#, c-format
+msgid "Dirty index: cannot merge (dirty: %s)"
+msgstr ""
+
+#: merge-recursive.c:1962
 msgid "Already up to date!"
 msgstr ""
 
-#: merge-recursive.c:1964
+#: merge-recursive.c:1971
 #, c-format
 msgid "merging of trees %s and %s failed"
 msgstr ""
 
-#: merge-recursive.c:2061
+#: merge-recursive.c:2068
 msgid "Merging:"
 msgstr ""
 
-#: merge-recursive.c:2074
+#: merge-recursive.c:2081
 #, c-format
 msgid "found %u common ancestor:"
 msgid_plural "found %u common ancestors:"
 msgstr[0] ""
 msgstr[1] ""
 
-#: merge-recursive.c:2113
+#: merge-recursive.c:2120
 msgid "merge returned no commit"
 msgstr ""
 
-#: merge-recursive.c:2176
+#: merge-recursive.c:2183
 #, c-format
 msgid "Could not parse object '%s'"
 msgstr ""
 
-#: merge-recursive.c:2190 builtin/merge.c:656 builtin/merge.c:815
+#: merge-recursive.c:2197 builtin/merge.c:656 builtin/merge.c:815
 msgid "Unable to write index."
 msgstr ""
 
@@ -2371,12 +2376,12 @@ msgid ""
 "Using version %i"
 msgstr ""
 
-#: read-cache.c:2370 sequencer.c:2725 wrapper.c:658 builtin/merge.c:1048
+#: read-cache.c:2370 sequencer.c:2731 wrapper.c:658 builtin/merge.c:1048
 #, c-format
 msgid "could not close '%s'"
 msgstr ""
 
-#: read-cache.c:2442 sequencer.c:1366 sequencer.c:2093
+#: read-cache.c:2442 sequencer.c:1369 sequencer.c:2096
 #, c-format
 msgid "could not stat '%s'"
 msgstr ""
@@ -2782,35 +2787,35 @@ msgid ""
 "You can disable this warning with `git config advice.ignoredHook false`."
 msgstr ""
 
-#: send-pack.c:151
+#: send-pack.c:141
 #, c-format
 msgid "unable to parse remote unpack status: %s"
 msgstr ""
 
-#: send-pack.c:153
+#: send-pack.c:143
 #, c-format
 msgid "remote unpack failed: %s"
 msgstr ""
 
-#: send-pack.c:316
+#: send-pack.c:306
 msgid "failed to sign the push certificate"
 msgstr ""
 
-#: send-pack.c:429
+#: send-pack.c:419
 msgid "the receiving end does not support --signed push"
 msgstr ""
 
-#: send-pack.c:431
+#: send-pack.c:421
 msgid ""
 "not sending a push certificate since the receiving end does not support --"
 "signed push"
 msgstr ""
 
-#: send-pack.c:443
+#: send-pack.c:433
 msgid "the receiving end does not support --atomic push"
 msgstr ""
 
-#: send-pack.c:448
+#: send-pack.c:438
 msgid "the receiving end does not support push options"
 msgstr ""
 
@@ -2844,13 +2849,13 @@ msgid ""
 "and commit the result with 'git commit'"
 msgstr ""
 
-#: sequencer.c:297 sequencer.c:1715
+#: sequencer.c:297 sequencer.c:1718
 #, c-format
 msgid "could not lock '%s'"
 msgstr ""
 
-#: sequencer.c:300 sequencer.c:1592 sequencer.c:1720 sequencer.c:1734
-#: sequencer.c:2723 sequencer.c:2794 wrapper.c:656
+#: sequencer.c:300 sequencer.c:1595 sequencer.c:1723 sequencer.c:1737
+#: sequencer.c:2729 sequencer.c:2800 wrapper.c:656
 #, c-format
 msgid "could not write to '%s'"
 msgstr ""
@@ -2860,12 +2865,12 @@ msgstr ""
 msgid "could not write eol to '%s'"
 msgstr ""
 
-#: sequencer.c:308 sequencer.c:1597 sequencer.c:1722
+#: sequencer.c:308 sequencer.c:1600 sequencer.c:1725
 #, c-format
 msgid "failed to finalize '%s'."
 msgstr ""
 
-#: sequencer.c:332 sequencer.c:829 sequencer.c:1618 builtin/am.c:259
+#: sequencer.c:332 sequencer.c:829 sequencer.c:1621 builtin/am.c:259
 #: builtin/commit.c:754 builtin/merge.c:1046
 #, c-format
 msgid "could not read '%s'"
@@ -2894,11 +2899,11 @@ msgid "%s: Unable to write new index file"
 msgstr ""
 
 #: sequencer.c:496
-msgid "could not resolve HEAD commit\n"
+msgid "could not resolve HEAD commit"
 msgstr ""
 
 #: sequencer.c:516
-msgid "unable to update cache tree\n"
+msgid "unable to update cache tree"
 msgstr ""
 
 #: sequencer.c:600
@@ -2920,12 +2925,12 @@ msgstr ""
 
 #: sequencer.c:702
 #, c-format
-msgid "could not parse commit %s\n"
+msgid "could not parse commit %s"
 msgstr ""
 
 #: sequencer.c:707
 #, c-format
-msgid "could not parse parent commit %s\n"
+msgid "could not parse parent commit %s"
 msgstr ""
 
 #: sequencer.c:836
@@ -2949,7 +2954,7 @@ msgstr ""
 msgid "This is a combination of %d commits."
 msgstr ""
 
-#: sequencer.c:857 sequencer.c:2742
+#: sequencer.c:857 sequencer.c:2748
 msgid "need a HEAD to fixup"
 msgstr ""
 
@@ -3016,158 +3021,168 @@ msgstr ""
 
 #. TRANSLATORS: The first %s will be a "todo" command like
 #. "revert" or "pick", the second %s a SHA1.
-#: sequencer.c:1025
+#: sequencer.c:1023
 #, c-format
 msgid "%s: cannot parse parent commit %s"
 msgstr ""
 
-#: sequencer.c:1088 sequencer.c:1864
+#: sequencer.c:1086 sequencer.c:1867
 #, c-format
 msgid "could not rename '%s' to '%s'"
 msgstr ""
 
-#: sequencer.c:1139
+#: sequencer.c:1137
 #, c-format
 msgid "could not revert %s... %s"
 msgstr ""
 
-#: sequencer.c:1140
+#: sequencer.c:1138
 #, c-format
 msgid "could not apply %s... %s"
 msgstr ""
 
-#: sequencer.c:1182
+#: sequencer.c:1180
 msgid "empty commit set passed"
 msgstr ""
 
-#: sequencer.c:1192
+#: sequencer.c:1190
 #, c-format
 msgid "git %s: failed to read the index"
 msgstr ""
 
-#: sequencer.c:1198
+#: sequencer.c:1196
 #, c-format
 msgid "git %s: failed to refresh the index"
 msgstr ""
 
-#: sequencer.c:1319
+#: sequencer.c:1270
+#, c-format
+msgid "%s does not accept arguments: '%s'"
+msgstr ""
+
+#: sequencer.c:1279
+#, c-format
+msgid "missing arguments for %s"
+msgstr ""
+
+#: sequencer.c:1322
 #, c-format
 msgid "invalid line %d: %.*s"
 msgstr ""
 
-#: sequencer.c:1327
+#: sequencer.c:1330
 #, c-format
 msgid "cannot '%s' without a previous commit"
 msgstr ""
 
-#: sequencer.c:1360 sequencer.c:2522 sequencer.c:2557 sequencer.c:2636
-#: sequencer.c:2662 sequencer.c:2752 sequencer.c:2853
+#: sequencer.c:1363 sequencer.c:2525 sequencer.c:2560 sequencer.c:2642
+#: sequencer.c:2668 sequencer.c:2758 sequencer.c:2859
 #, c-format
 msgid "could not read '%s'."
 msgstr ""
 
-#: sequencer.c:1372
+#: sequencer.c:1375
 msgid "please fix this using 'git rebase --edit-todo'."
 msgstr ""
 
-#: sequencer.c:1374
+#: sequencer.c:1377
 #, c-format
 msgid "unusable instruction sheet: '%s'"
 msgstr ""
 
-#: sequencer.c:1379
+#: sequencer.c:1382
 msgid "no commits parsed."
 msgstr ""
 
-#: sequencer.c:1390
+#: sequencer.c:1393
 msgid "cannot cherry-pick during a revert."
 msgstr ""
 
-#: sequencer.c:1392
+#: sequencer.c:1395
 msgid "cannot revert during a cherry-pick."
-msgstr ""
-
-#: sequencer.c:1459
-#, c-format
-msgid "invalid key: %s"
 msgstr ""
 
 #: sequencer.c:1462
 #, c-format
+msgid "invalid key: %s"
+msgstr ""
+
+#: sequencer.c:1465
+#, c-format
 msgid "invalid value for %s: %s"
 msgstr ""
 
-#: sequencer.c:1528
+#: sequencer.c:1531
 #, c-format
 msgid "malformed options sheet: '%s'"
 msgstr ""
 
-#: sequencer.c:1566
+#: sequencer.c:1569
 msgid "a cherry-pick or revert is already in progress"
 msgstr ""
 
-#: sequencer.c:1567
+#: sequencer.c:1570
 msgid "try \"git cherry-pick (--continue | --quit | --abort)\""
 msgstr ""
 
-#: sequencer.c:1570
+#: sequencer.c:1573
 #, c-format
 msgid "could not create sequencer directory '%s'"
 msgstr ""
 
-#: sequencer.c:1585
+#: sequencer.c:1588
 msgid "could not lock HEAD"
 msgstr ""
 
-#: sequencer.c:1643 sequencer.c:2227
+#: sequencer.c:1646 sequencer.c:2230
 msgid "no cherry-pick or revert in progress"
 msgstr ""
 
-#: sequencer.c:1645
+#: sequencer.c:1648
 msgid "cannot resolve HEAD"
 msgstr ""
 
-#: sequencer.c:1647 sequencer.c:1682
+#: sequencer.c:1650 sequencer.c:1685
 msgid "cannot abort from a branch yet to be born"
 msgstr ""
 
-#: sequencer.c:1668 builtin/grep.c:713
+#: sequencer.c:1671 builtin/grep.c:713
 #, c-format
 msgid "cannot open '%s'"
 msgstr ""
 
-#: sequencer.c:1670
+#: sequencer.c:1673
 #, c-format
 msgid "cannot read '%s': %s"
 msgstr ""
 
-#: sequencer.c:1671
+#: sequencer.c:1674
 msgid "unexpected end of file"
 msgstr ""
 
-#: sequencer.c:1677
+#: sequencer.c:1680
 #, c-format
 msgid "stored pre-cherry-pick HEAD file '%s' is corrupt"
 msgstr ""
 
-#: sequencer.c:1688
+#: sequencer.c:1691
 msgid "You seem to have moved HEAD. Not rewinding, check your HEAD!"
 msgstr ""
 
-#: sequencer.c:1829 sequencer.c:2125
+#: sequencer.c:1832 sequencer.c:2128
 msgid "cannot read HEAD"
 msgstr ""
 
-#: sequencer.c:1869 builtin/difftool.c:639
+#: sequencer.c:1872 builtin/difftool.c:639
 #, c-format
 msgid "could not copy '%s' to '%s'"
 msgstr ""
 
-#: sequencer.c:1888
+#: sequencer.c:1891
 msgid "could not read index"
 msgstr ""
 
-#: sequencer.c:1893
+#: sequencer.c:1896
 #, c-format
 msgid ""
 "execution failed: %s\n"
@@ -3177,11 +3192,11 @@ msgid ""
 "\n"
 msgstr ""
 
-#: sequencer.c:1899
+#: sequencer.c:1902
 msgid "and made changes to the index and/or the working tree\n"
 msgstr ""
 
-#: sequencer.c:1905
+#: sequencer.c:1908
 #, c-format
 msgid ""
 "execution succeeded: %s\n"
@@ -3192,17 +3207,17 @@ msgid ""
 "\n"
 msgstr ""
 
-#: sequencer.c:1964
+#: sequencer.c:1967
 #, c-format
 msgid "Applied autostash.\n"
 msgstr ""
 
-#: sequencer.c:1976
+#: sequencer.c:1979
 #, c-format
 msgid "cannot store %s"
 msgstr ""
 
-#: sequencer.c:1979 git-rebase.sh:175
+#: sequencer.c:1982 git-rebase.sh:175
 #, c-format
 msgid ""
 "Applying autostash resulted in conflicts.\n"
@@ -3210,108 +3225,108 @@ msgid ""
 "You can run \"git stash pop\" or \"git stash drop\" at any time.\n"
 msgstr ""
 
-#: sequencer.c:2061
+#: sequencer.c:2064
 #, c-format
 msgid "Stopped at %s...  %.*s\n"
 msgstr ""
 
-#: sequencer.c:2103
+#: sequencer.c:2106
 #, c-format
 msgid "unknown command %d"
 msgstr ""
 
-#: sequencer.c:2133
+#: sequencer.c:2136
 msgid "could not read orig-head"
 msgstr ""
 
-#: sequencer.c:2138 sequencer.c:2739
+#: sequencer.c:2141 sequencer.c:2745
 msgid "could not read 'onto'"
 msgstr ""
 
-#: sequencer.c:2145
+#: sequencer.c:2148
 #, c-format
 msgid "could not update %s"
 msgstr ""
 
-#: sequencer.c:2152
+#: sequencer.c:2155
 #, c-format
 msgid "could not update HEAD to %s"
 msgstr ""
 
-#: sequencer.c:2236
+#: sequencer.c:2239
 msgid "cannot rebase: You have unstaged changes."
 msgstr ""
 
-#: sequencer.c:2241
+#: sequencer.c:2244
 msgid "could not remove CHERRY_PICK_HEAD"
 msgstr ""
 
-#: sequencer.c:2250
+#: sequencer.c:2253
 msgid "cannot amend non-existing commit"
 msgstr ""
 
-#: sequencer.c:2252
+#: sequencer.c:2255
 #, c-format
 msgid "invalid file: '%s'"
 msgstr ""
 
-#: sequencer.c:2254
+#: sequencer.c:2257
 #, c-format
 msgid "invalid contents: '%s'"
 msgstr ""
 
-#: sequencer.c:2257
+#: sequencer.c:2260
 msgid ""
 "\n"
 "You have uncommitted changes in your working tree. Please, commit them\n"
 "first and then run 'git rebase --continue' again."
 msgstr ""
 
-#: sequencer.c:2267
+#: sequencer.c:2270
 msgid "could not commit staged changes."
 msgstr ""
 
-#: sequencer.c:2347
+#: sequencer.c:2350
 #, c-format
 msgid "%s: can't cherry-pick a %s"
 msgstr ""
 
-#: sequencer.c:2351
+#: sequencer.c:2354
 #, c-format
 msgid "%s: bad revision"
 msgstr ""
 
-#: sequencer.c:2384
+#: sequencer.c:2387
 msgid "can't revert as initial commit"
 msgstr ""
 
-#: sequencer.c:2489
+#: sequencer.c:2492
 msgid "make_script: unhandled options"
 msgstr ""
 
-#: sequencer.c:2492
+#: sequencer.c:2495
 msgid "make_script: error preparing revisions"
 msgstr ""
 
-#: sequencer.c:2526 sequencer.c:2561
+#: sequencer.c:2529 sequencer.c:2564
 #, c-format
 msgid "unusable todo list: '%s'"
 msgstr ""
 
-#: sequencer.c:2609
+#: sequencer.c:2615
 #, c-format
 msgid ""
 "unrecognized setting %s for option rebase.missingCommitsCheck. Ignoring."
 msgstr ""
 
-#: sequencer.c:2689
+#: sequencer.c:2695
 #, c-format
 msgid ""
 "Warning: some commits may have been dropped accidentally.\n"
 "Dropped commits (newer to older):\n"
 msgstr ""
 
-#: sequencer.c:2696
+#: sequencer.c:2702
 #, c-format
 msgid ""
 "To avoid this message, use \"drop\" to explicitly remove a commit.\n"
@@ -3322,7 +3337,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: sequencer.c:2708
+#: sequencer.c:2714
 #, c-format
 msgid ""
 "You can fix this with 'git rebase --edit-todo' and then run 'git rebase --"
@@ -3330,18 +3345,18 @@ msgid ""
 "Or you can abort the rebase with 'git rebase --abort'.\n"
 msgstr ""
 
-#: sequencer.c:2721 sequencer.c:2788 wrapper.c:225 wrapper.c:395
+#: sequencer.c:2727 sequencer.c:2794 wrapper.c:225 wrapper.c:395
 #: builtin/am.c:779
 #, c-format
 msgid "could not open '%s' for writing"
 msgstr ""
 
-#: sequencer.c:2769
+#: sequencer.c:2775
 #, c-format
 msgid "could not parse commit '%s'"
 msgstr ""
 
-#: sequencer.c:2891
+#: sequencer.c:2897
 msgid "the script was already rearranged."
 msgstr ""
 
@@ -4627,80 +4642,80 @@ msgstr ""
 msgid "unable to write index file"
 msgstr ""
 
-#: builtin/am.c:1197
+#: builtin/am.c:1160
 #, c-format
 msgid "When you have resolved this problem, run \"%s --continue\"."
 msgstr ""
 
-#: builtin/am.c:1198
+#: builtin/am.c:1161
 #, c-format
 msgid "If you prefer to skip this patch, run \"%s --skip\" instead."
 msgstr ""
 
-#: builtin/am.c:1199
+#: builtin/am.c:1162
 #, c-format
 msgid "To restore the original branch and stop patching, run \"%s --abort\"."
 msgstr ""
 
-#: builtin/am.c:1306
+#: builtin/am.c:1269
 msgid "Patch is empty."
 msgstr ""
 
-#: builtin/am.c:1372
+#: builtin/am.c:1335
 #, c-format
 msgid "invalid ident line: %.*s"
 msgstr ""
 
-#: builtin/am.c:1394
+#: builtin/am.c:1357
 #, c-format
 msgid "unable to parse commit %s"
 msgstr ""
 
-#: builtin/am.c:1587
+#: builtin/am.c:1550
 msgid "Repository lacks necessary blobs to fall back on 3-way merge."
 msgstr ""
 
-#: builtin/am.c:1589
+#: builtin/am.c:1552
 msgid "Using index info to reconstruct a base tree..."
 msgstr ""
 
-#: builtin/am.c:1608
+#: builtin/am.c:1571
 msgid ""
 "Did you hand edit your patch?\n"
 "It does not apply to blobs recorded in its index."
 msgstr ""
 
-#: builtin/am.c:1614
+#: builtin/am.c:1577
 msgid "Falling back to patching base and 3-way merge..."
 msgstr ""
 
-#: builtin/am.c:1639
+#: builtin/am.c:1602
 msgid "Failed to merge in the changes."
 msgstr ""
 
-#: builtin/am.c:1663 builtin/merge.c:642
+#: builtin/am.c:1626 builtin/merge.c:642
 msgid "git write-tree failed to write a tree"
 msgstr ""
 
-#: builtin/am.c:1670
+#: builtin/am.c:1633
 msgid "applying to an empty history"
 msgstr ""
 
-#: builtin/am.c:1683 builtin/commit.c:1798 builtin/merge.c:825
+#: builtin/am.c:1646 builtin/commit.c:1798 builtin/merge.c:825
 #: builtin/merge.c:850
 msgid "failed to write commit object"
 msgstr ""
 
-#: builtin/am.c:1716 builtin/am.c:1720
+#: builtin/am.c:1679 builtin/am.c:1683
 #, c-format
 msgid "cannot resume: %s does not exist."
 msgstr ""
 
-#: builtin/am.c:1736
+#: builtin/am.c:1699
 msgid "cannot be interactive without stdin connected to a terminal."
 msgstr ""
 
-#: builtin/am.c:1741
+#: builtin/am.c:1704
 msgid "Commit Body is:"
 msgstr ""
 
@@ -4708,42 +4723,42 @@ msgstr ""
 #. in your translation. The program will only accept English
 #. input at this point.
 #.
-#: builtin/am.c:1751
+#: builtin/am.c:1714
 msgid "Apply? [y]es/[n]o/[e]dit/[v]iew patch/[a]ccept all: "
 msgstr ""
 
-#: builtin/am.c:1801
+#: builtin/am.c:1764
 #, c-format
 msgid "Dirty index: cannot apply patches (dirty: %s)"
 msgstr ""
 
-#: builtin/am.c:1841 builtin/am.c:1913
+#: builtin/am.c:1804 builtin/am.c:1876
 #, c-format
 msgid "Applying: %.*s"
 msgstr ""
 
-#: builtin/am.c:1857
+#: builtin/am.c:1820
 msgid "No changes -- Patch already applied."
 msgstr ""
 
-#: builtin/am.c:1865
+#: builtin/am.c:1828
 #, c-format
 msgid "Patch failed at %s %.*s"
 msgstr ""
 
-#: builtin/am.c:1871
+#: builtin/am.c:1834
 #, c-format
 msgid "The copy of the patch that failed is found in: %s"
 msgstr ""
 
-#: builtin/am.c:1916
+#: builtin/am.c:1879
 msgid ""
 "No changes - did you forget to use 'git add'?\n"
 "If there is nothing left to stage, chances are that something else\n"
 "already introduced the same changes; you might want to skip this patch."
 msgstr ""
 
-#: builtin/am.c:1923
+#: builtin/am.c:1886
 msgid ""
 "You still have unmerged paths in your index.\n"
 "You should 'git add' each file with resolved conflicts to mark them as "
@@ -4751,91 +4766,91 @@ msgid ""
 "You might run `git rm` on a file to accept \"deleted by them\" for it."
 msgstr ""
 
-#: builtin/am.c:2030 builtin/am.c:2034 builtin/am.c:2046 builtin/reset.c:332
+#: builtin/am.c:1993 builtin/am.c:1997 builtin/am.c:2009 builtin/reset.c:332
 #: builtin/reset.c:340
 #, c-format
 msgid "Could not parse object '%s'."
 msgstr ""
 
-#: builtin/am.c:2082
+#: builtin/am.c:2045
 msgid "failed to clean index"
 msgstr ""
 
-#: builtin/am.c:2117
+#: builtin/am.c:2080
 msgid ""
 "You seem to have moved HEAD since the last 'am' failure.\n"
 "Not rewinding to ORIG_HEAD"
 msgstr ""
 
-#: builtin/am.c:2180
+#: builtin/am.c:2143
 #, c-format
 msgid "Invalid value for --patch-format: %s"
 msgstr ""
 
-#: builtin/am.c:2213
+#: builtin/am.c:2176
 msgid "git am [<options>] [(<mbox> | <Maildir>)...]"
 msgstr ""
 
-#: builtin/am.c:2214
+#: builtin/am.c:2177
 msgid "git am [<options>] (--continue | --skip | --abort)"
 msgstr ""
 
-#: builtin/am.c:2220
+#: builtin/am.c:2183
 msgid "run interactively"
 msgstr ""
 
-#: builtin/am.c:2222
+#: builtin/am.c:2185
 msgid "historical option -- no-op"
 msgstr ""
 
-#: builtin/am.c:2224
+#: builtin/am.c:2187
 msgid "allow fall back on 3way merging if needed"
 msgstr ""
 
-#: builtin/am.c:2225 builtin/init-db.c:484 builtin/prune-packed.c:57
+#: builtin/am.c:2188 builtin/init-db.c:484 builtin/prune-packed.c:57
 #: builtin/repack.c:180
 msgid "be quiet"
 msgstr ""
 
-#: builtin/am.c:2227
+#: builtin/am.c:2190
 msgid "add a Signed-off-by line to the commit message"
 msgstr ""
 
-#: builtin/am.c:2230
+#: builtin/am.c:2193
 msgid "recode into utf8 (default)"
 msgstr ""
 
-#: builtin/am.c:2232
+#: builtin/am.c:2195
 msgid "pass -k flag to git-mailinfo"
 msgstr ""
 
-#: builtin/am.c:2234
+#: builtin/am.c:2197
 msgid "pass -b flag to git-mailinfo"
 msgstr ""
 
-#: builtin/am.c:2236
+#: builtin/am.c:2199
 msgid "pass -m flag to git-mailinfo"
 msgstr ""
 
-#: builtin/am.c:2238
+#: builtin/am.c:2201
 msgid "pass --keep-cr flag to git-mailsplit for mbox format"
 msgstr ""
 
-#: builtin/am.c:2241
+#: builtin/am.c:2204
 msgid "do not pass --keep-cr flag to git-mailsplit independent of am.keepcr"
 msgstr ""
 
-#: builtin/am.c:2244
+#: builtin/am.c:2207
 msgid "strip everything before a scissors line"
 msgstr ""
 
-#: builtin/am.c:2246 builtin/am.c:2249 builtin/am.c:2252 builtin/am.c:2255
-#: builtin/am.c:2258 builtin/am.c:2261 builtin/am.c:2264 builtin/am.c:2267
-#: builtin/am.c:2273
+#: builtin/am.c:2209 builtin/am.c:2212 builtin/am.c:2215 builtin/am.c:2218
+#: builtin/am.c:2221 builtin/am.c:2224 builtin/am.c:2227 builtin/am.c:2230
+#: builtin/am.c:2236
 msgid "pass it through git-apply"
 msgstr ""
 
-#: builtin/am.c:2263 builtin/fmt-merge-msg.c:665 builtin/fmt-merge-msg.c:668
+#: builtin/am.c:2226 builtin/fmt-merge-msg.c:665 builtin/fmt-merge-msg.c:668
 #: builtin/grep.c:845 builtin/merge.c:205 builtin/pull.c:145 builtin/pull.c:203
 #: builtin/repack.c:189 builtin/repack.c:193 builtin/repack.c:195
 #: builtin/show-branch.c:631 builtin/show-ref.c:169 builtin/tag.c:377
@@ -4843,79 +4858,79 @@ msgstr ""
 msgid "n"
 msgstr ""
 
-#: builtin/am.c:2269 builtin/branch.c:629 builtin/for-each-ref.c:38
+#: builtin/am.c:2232 builtin/branch.c:629 builtin/for-each-ref.c:38
 #: builtin/replace.c:444 builtin/tag.c:412 builtin/verify-tag.c:39
 msgid "format"
 msgstr ""
 
-#: builtin/am.c:2270
+#: builtin/am.c:2233
 msgid "format the patch(es) are in"
 msgstr ""
 
-#: builtin/am.c:2276
+#: builtin/am.c:2239
 msgid "override error message when patch failure occurs"
 msgstr ""
 
-#: builtin/am.c:2278
+#: builtin/am.c:2241
 msgid "continue applying patches after resolving a conflict"
 msgstr ""
 
-#: builtin/am.c:2281
+#: builtin/am.c:2244
 msgid "synonyms for --continue"
 msgstr ""
 
-#: builtin/am.c:2284
+#: builtin/am.c:2247
 msgid "skip the current patch"
 msgstr ""
 
-#: builtin/am.c:2287
+#: builtin/am.c:2250
 msgid "restore the original branch and abort the patching operation."
 msgstr ""
 
-#: builtin/am.c:2291
+#: builtin/am.c:2254
 msgid "lie about committer date"
 msgstr ""
 
-#: builtin/am.c:2293
+#: builtin/am.c:2256
 msgid "use current timestamp for author date"
 msgstr ""
 
-#: builtin/am.c:2295 builtin/commit.c:1636 builtin/merge.c:236
+#: builtin/am.c:2258 builtin/commit.c:1636 builtin/merge.c:236
 #: builtin/pull.c:178 builtin/revert.c:112 builtin/tag.c:392
 msgid "key-id"
 msgstr ""
 
-#: builtin/am.c:2296
+#: builtin/am.c:2259
 msgid "GPG-sign commits"
 msgstr ""
 
-#: builtin/am.c:2299
+#: builtin/am.c:2262
 msgid "(internal use for git-rebase)"
 msgstr ""
 
-#: builtin/am.c:2317
+#: builtin/am.c:2280
 msgid ""
 "The -b/--binary option has been a no-op for long time, and\n"
 "it will be removed. Please do not use it anymore."
 msgstr ""
 
-#: builtin/am.c:2324
+#: builtin/am.c:2287
 msgid "failed to read the index"
 msgstr ""
 
-#: builtin/am.c:2339
+#: builtin/am.c:2302
 #, c-format
 msgid "previous rebase directory %s still exists but mbox given."
 msgstr ""
 
-#: builtin/am.c:2363
+#: builtin/am.c:2326
 #, c-format
 msgid ""
 "Stray %s directory found.\n"
 "Use \"git am --abort\" to remove it."
 msgstr ""
 
-#: builtin/am.c:2369
+#: builtin/am.c:2332
 msgid "Resolve operation not in progress, we are not resuming."
 msgstr ""
 
@@ -14661,7 +14676,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: git-rebase--interactive.sh:835 git-rebase--interactive.sh:994
+#: git-rebase--interactive.sh:835 git-rebase--interactive.sh:995
 msgid "Could not execute editor"
 msgstr ""
 
@@ -14687,21 +14702,25 @@ msgstr ""
 msgid "Could not init rewritten commits"
 msgstr ""
 
-#: git-rebase--interactive.sh:972
+#: git-rebase--interactive.sh:897
+msgid "Could not generate todo list"
+msgstr ""
+
+#: git-rebase--interactive.sh:973
 #, sh-format
 msgid "Rebase $shortrevisions onto $shortonto ($todocount command)"
 msgid_plural "Rebase $shortrevisions onto $shortonto ($todocount commands)"
 msgstr[0] ""
 msgstr[1] ""
 
-#: git-rebase--interactive.sh:977
+#: git-rebase--interactive.sh:978
 msgid ""
 "\n"
 "However, if you remove everything, the rebase will be aborted.\n"
 "\n"
 msgstr ""
 
-#: git-rebase--interactive.sh:984
+#: git-rebase--interactive.sh:985
 msgid "Note that empty commits are commented out"
 msgstr ""
 
