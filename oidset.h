@@ -27,7 +27,7 @@ struct oidset {
 
 static inline void oidset_init(struct oidset *set, size_t initial_size)
 {
-	return oidmap_init(&set->map, initial_size);
+	oidmap_init(&set->map, initial_size);
 }
 
 /**
