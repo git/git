@@ -2199,7 +2199,7 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 	struct stat st;
 	struct ondisk_cache_entry_extended ondisk;
 	struct strbuf previous_name_buf = STRBUF_INIT, *previous_name;
-	int drop_cache_tree = 0;
+	int drop_cache_tree = istate->drop_cache_tree;
 
 	for (i = removed = extended = 0; i < entries; i++) {
 		if (cache[i]->ce_flags & CE_REMOVE)
