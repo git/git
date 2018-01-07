@@ -1568,7 +1568,7 @@ int hold_locked_index(struct lock_file *lk, int lock_flags)
 
 int read_index(struct index_state *istate)
 {
-	return read_index_from(istate, get_index_file());
+	return read_index_from(istate, get_index_file(), get_git_dir());
 }
 
 static struct cache_entry *cache_entry_from_ondisk(struct ondisk_cache_entry *ondisk,
@@ -1824,20 +1824,19 @@ unmap:
  * This way, shared index can be removed if they have not been used
  * for some time.
  */
-static void freshen_shared_index(char *base_sha1_hex, int warn)
+static void freshen_shared_index(const char *shared_index, int warn)
 {
-	char *shared_index = git_pathdup("sharedindex.%s", base_sha1_hex);
 	if (!check_and_freshen_file(shared_index, 1) && warn)
 		warning("could not freshen shared index '%s'", shared_index);
-	free(shared_index);
 }
 
-int read_index_from(struct index_state *istate, const char *path)
+int read_index_from(struct index_state *istate, const char *path,
+		    const char *gitdir)
 {
 	struct split_index *split_index;
 	int ret;
 	char *base_sha1_hex;
-	const char *base_path;
+	char *base_path;
 
 	/* istate->initialized covers both .git/index and .git/sharedindex.xxx */
 	if (istate->initialized)
@@ -1857,16 +1856,17 @@ int read_index_from(struct index_state *istate, const char *path)
 		split_index->base = xcalloc(1, sizeof(*split_index->base));
 
 	base_sha1_hex = sha1_to_hex(split_index->base_sha1);
-	base_path = git_path("sharedindex.%s", base_sha1_hex);
+	base_path = xstrfmt("%s/sharedindex.%s", gitdir, base_sha1_hex);
 	ret = do_read_index(split_index->base, base_path, 1);
 	if (hashcmp(split_index->base_sha1, split_index->base->sha1))
 		die("broken index, expect %s in %s, got %s",
 		    base_sha1_hex, base_path,
 		    sha1_to_hex(split_index->base->sha1));
 
-	freshen_shared_index(base_sha1_hex, 0);
+	freshen_shared_index(base_path, 0);
 	merge_base_index(istate);
 	post_read_index_from(istate);
+	free(base_path);
 	return ret;
 }
 
@@ -2521,8 +2521,11 @@ int write_locked_index(struct index_state *istate, struct lock_file *lock,
 	ret = write_split_index(istate, lock, flags);
 
 	/* Freshen the shared index only if the split-index was written */
-	if (!ret && !new_shared_index)
-		freshen_shared_index(sha1_to_hex(si->base_sha1), 1);
+	if (!ret && !new_shared_index) {
+		const char *shared_index = git_path("sharedindex.%s",
+						    sha1_to_hex(si->base_sha1));
+		freshen_shared_index(shared_index, 1);
+	}
 
 	return ret;
 }
