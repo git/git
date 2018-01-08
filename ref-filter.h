@@ -125,7 +125,6 @@ struct ref_format {
 	 * Helps to move all formatting logic from cat-file to ref-filter,
 	 * hopefully would be reduced later.
 	 */
-	struct expand_data *cat_file_data;
 	int is_cat;
 	int *split_on_whitespace;
 	int all_objects;

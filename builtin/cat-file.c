@@ -289,6 +289,7 @@ static void batch_object_write(const char *obj_name, struct batch_options *opt,
 	item.start_of_request = obj_name;
 
 	if (populate_value(&item)) return;
+	data->type = item.type;
 
 	strbuf_expand(&buf, opt->format.format, expand_format, &item);
 	strbuf_addch(&buf, '\n');
@@ -392,7 +393,6 @@ static int batch_objects(struct batch_options *opt)
 	 * object.
 	 */
 	memset(&data, 0, sizeof(data));
-	opt->format.cat_file_data = &data;
 	opt->format.is_cat = 1;
 	opt->format.split_on_whitespace = &data.split_on_whitespace;
 	opt->format.all_objects = opt->all_objects;
