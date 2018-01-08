@@ -292,6 +292,7 @@ static void batch_object_write(const char *obj_name, struct batch_options *opt,
 	if (populate_value(&item))
 		return;
 
+	data->type = item.type;
 	strbuf_expand(&buf, opt->format.format, expand_format, &item);
 	strbuf_addch(&buf, '\n');
 	batch_write(opt, buf.buf, buf.len);
@@ -392,7 +393,7 @@ static int batch_objects(struct batch_options *opt)
 	 * sha1_object_info_extended for each object.
 	 */
 	memset(&data, 0, sizeof(data));
-	opt->format.cat_file_data = &data;
+	opt->format.is_cat_file = 1;
 	opt->format.all_objects = opt->all_objects;
 	verify_ref_format(&opt->format);
 

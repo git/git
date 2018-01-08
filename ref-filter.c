@@ -100,7 +100,7 @@ static struct used_atom {
 	} u;
 } *used_atom;
 static int used_atom_cnt, need_tagged, need_symref;
-struct expand_data *cat_file_info;
+struct expand_data cat_file_info;
 
 static void color_atom_parser(const struct ref_format *format, struct used_atom *atom, const char *color_value)
 {
@@ -255,9 +255,9 @@ static void objectname_atom_parser(const struct ref_format *format, struct used_
 static void objectsize_atom_parser(const struct ref_format *format, struct used_atom *atom, const char *arg)
 {
 	if (!arg)
-		cat_file_info->info.sizep = &cat_file_info->size;
+		cat_file_info.info.sizep = &cat_file_info.size;
 	else if (!strcmp(arg, "disk"))
-		cat_file_info->info.disk_sizep = &cat_file_info->disk_size;
+		cat_file_info.info.disk_sizep = &cat_file_info.disk_size;
 	else
 		die(_("urecognized %%(objectsize) argument: %s"), arg);
 }
@@ -265,7 +265,7 @@ static void objectsize_atom_parser(const struct ref_format *format, struct used_
 static void objecttype_atom_parser(const struct ref_format *format, struct used_atom *atom, const char *arg)
 {
 	if (!arg)
-		cat_file_info->info.typep = &cat_file_info->type;
+		cat_file_info.info.typep = &cat_file_info.type;
 	else
 		die(_("urecognized %%(objecttype) argument: %s"), arg);
 }
@@ -273,7 +273,7 @@ static void objecttype_atom_parser(const struct ref_format *format, struct used_
 static void deltabase_atom_parser(const struct ref_format *format, struct used_atom *atom, const char *arg)
 {
 	if (!arg)
-		cat_file_info->info.delta_base_sha1 = cat_file_info->delta_base_oid.hash;
+		cat_file_info.info.delta_base_sha1 = cat_file_info.delta_base_oid.hash;
 	else
 		die(_("urecognized %%(deltabase) argument: %s"), arg);
 }
@@ -751,7 +751,7 @@ int verify_ref_format(struct ref_format *format)
 {
 	const char *cp, *sp;
 
-	cat_file_info = format->cat_file_data;
+	cat_file_info.is_cat_file = format->is_cat_file;
 	format->need_color_reset_at_eol = 0;
 	for (cp = format->format; *cp && (sp = find_next(cp)); ) {
 		const char *color, *ep = strchr(sp, ')');
@@ -761,7 +761,7 @@ int verify_ref_format(struct ref_format *format)
 			return error(_("malformed format string %s"), sp);
 		/* sp points at "%(" and ep points at the closing ")" */
 
-		if (format->cat_file_data)
+		if (cat_file_info.is_cat_file)
 			at = parse_ref_filter_atom(format, valid_cat_file_atom,
 						   ARRAY_SIZE(valid_cat_file_atom), sp + 2, ep);
 		else {
@@ -775,10 +775,10 @@ int verify_ref_format(struct ref_format *format)
 	}
 	if (format->need_color_reset_at_eol && !want_color(format->use_color))
 		format->need_color_reset_at_eol = 0;
-	if (cat_file_info && format->all_objects) {
+	if (cat_file_info.is_cat_file && format->all_objects) {
 		struct object_info empty = OBJECT_INFO_INIT;
-		if (!memcmp(&cat_file_info->info, &empty, sizeof(empty)))
-			cat_file_info->skip_object_info = 1;
+		if (!memcmp(&cat_file_info.info, &empty, sizeof(empty)))
+			cat_file_info.skip_object_info = 1;
 	}
 	return 0;
 }
@@ -1420,18 +1420,20 @@ static const char *get_refname(struct used_atom *atom, struct ref_array_item *re
 
 static int check_and_fill_for_cat(struct ref_array_item *ref)
 {
-	if (!cat_file_info->skip_object_info &&
-	    sha1_object_info_extended(ref->oid.hash, &cat_file_info->info,
+	if (!cat_file_info.info.typep)
+		cat_file_info.info.typep = &cat_file_info.type;
+	if (!cat_file_info.skip_object_info &&
+	    sha1_object_info_extended(ref->oid.hash, &cat_file_info.info,
 				      OBJECT_INFO_LOOKUP_REPLACE) < 0) {
 		const char *e = ref->objectname;
 		printf("%s missing\n", e ? e : oid_to_hex(&ref->oid));
 		fflush(stdout);
 		return -1;
 	}
-	ref->type = cat_file_info->type;
-	ref->size = cat_file_info->size;
-	ref->disk_size = cat_file_info->disk_size;
-	ref->delta_base_oid = &cat_file_info->delta_base_oid;
+	ref->type = cat_file_info.type;
+	ref->size = cat_file_info.size;
+	ref->disk_size = cat_file_info.disk_size;
+	ref->delta_base_oid = &cat_file_info.delta_base_oid;
 	return 0;
 }
 
@@ -1456,7 +1458,7 @@ int populate_value(struct ref_array_item *ref)
 			ref->symref = "";
 	}
 
-	if (cat_file_info && check_and_fill_for_cat(ref))
+	if (cat_file_info.is_cat_file && check_and_fill_for_cat(ref))
 		return -1;
 
 	/* Fill in specials first */

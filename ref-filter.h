@@ -99,6 +99,7 @@ struct expand_data {
 	 * optimized out.
 	 */
 	unsigned skip_object_info : 1;
+	unsigned is_cat_file : 1;
 };
 
 struct ref_format {
@@ -113,12 +114,8 @@ struct ref_format {
 	/* Internal state to ref-filter */
 	int need_color_reset_at_eol;
 
-	/*
-	 * Helps to move all formatting logic from cat-file to ref-filter,
-	 * hopefully would be reduced later.
-	 */
-	struct expand_data *cat_file_data;
 	unsigned all_objects : 1;
+	unsigned is_cat_file : 1;
 };
 
 #define REF_FORMAT_INIT { NULL, 0, -1 }
