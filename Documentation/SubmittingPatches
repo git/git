@@ -261,7 +261,7 @@ not a text/plain, it's something else.
 
 Send your patch with "To:" set to the mailing list, with "cc:" listing
 people who are involved in the area you are touching (the output from
-+git blame _$path_+ and +git shortlog {litdd}no-merges _$path_+ would help to
+`git blame $path` and `git shortlog --no-merges $path` would help to
 identify them), to solicit comments and reviews.
 
 :1: footnote:[The current maintainer: gitster@pobox.com]
