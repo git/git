@@ -1407,7 +1407,7 @@ static const char *get_refname(struct used_atom *atom, struct ref_array_item *re
  * Parse the object referred by ref, and grab needed value.
  * Return 0 if everything was successful, -1 otherwise.
  */
-static int populate_value(struct ref_array_item *ref)
+int populate_value(struct ref_array_item *ref)
 {
 	void *buf;
 	struct object *obj;
