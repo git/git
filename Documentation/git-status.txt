@@ -137,6 +137,12 @@ ignored, then the directory is not shown, but all contents are shown.
 	update it afterwards if any changes were detected. Defaults to
 	`--lock-index`.
 
+--ahead-behind::
+--no-ahead-behind::
+	EXPERIMENTAL, Display or do not display detailed ahead/behind
+	counts for the branch relative to its upstream branch.  Defaults
+	to true.
+
 <pathspec>...::
 	See the 'pathspec' entry in linkgit:gitglossary[7].
 
