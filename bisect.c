@@ -131,7 +131,7 @@ static void show_list(const char *debug, int counted, int nr,
 		unsigned flags = commit->object.flags;
 		enum object_type type;
 		unsigned long size;
-		char *buf = read_sha1_file(commit->object.sha1, &type, &size);
+		char *buf = read_sha1_file(commit->object.oid.hash, &type, &size);
 		const char *subject_start;
 		int subject_len;
 
@@ -143,10 +143,10 @@ static void show_list(const char *debug, int counted, int nr,
 			fprintf(stderr, "%3d", weight(p));
 		else
 			fprintf(stderr, "---");
-		fprintf(stderr, " %.*s", 8, sha1_to_hex(commit->object.sha1));
+		fprintf(stderr, " %.*s", 8, sha1_to_hex(commit->object.oid.hash));
 		for (pp = commit->parents; pp; pp = pp->next)
 			fprintf(stderr, " %.*s", 8,
-				sha1_to_hex(pp->item->object.sha1));
+				sha1_to_hex(pp->item->object.oid.hash));
 
 		subject_len = find_commit_subject(buf, &subject_start);
 		if (subject_len)
