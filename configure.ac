@@ -241,7 +241,6 @@ AC_MSG_NOTICE([CHECKS for site configuration])
 # a bundled SHA1 routine optimized for PowerPC.
 #
 # Define NO_OPENSSL environment variable if you do not have OpenSSL.
-# This also implies BLK_SHA1.
 #
 # Define OPENSSLDIR=/foo/bar if your openssl header and library files are in
 # /foo/bar/include and /foo/bar/lib directories.
