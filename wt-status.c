@@ -1011,7 +1011,7 @@ static void wt_longstatus_print_tracking(struct wt_status *s)
 	if (!skip_prefix(s->branch, "refs/heads/", &branch_name))
 		return;
 	branch = branch_get(branch_name);
-	if (!format_tracking_info(branch, &sb))
+	if (!format_tracking_info(branch, &sb, s->ahead_behind_flags))
 		return;
 
 	i = 0;
