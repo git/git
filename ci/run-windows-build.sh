@@ -99,3 +99,5 @@ gfwci "action=log&buildId=$BUILD_ID" | cut -c 30-
 
 # Set exit code for TravisCI
 test "$RESULT" = "success"
+
+save_good_tree

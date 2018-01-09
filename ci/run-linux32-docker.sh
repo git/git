@@ -22,3 +22,5 @@ docker run \
 	--volume "${HOME}/travis-cache:/tmp/travis-cache" \
 	daald/ubuntu32:xenial \
 	/usr/src/git/ci/run-linux32-build.sh $(id -u $USER)
+
+save_good_tree
