@@ -1454,7 +1454,7 @@ static void need_object(struct ref_array_item *ref) {
 /*
  * Parse the object referred by ref, and grab needed value.
  */
-static void populate_value(struct ref_array_item *ref)
+int populate_value(struct ref_array_item *ref)
 {
 	int i;
 
@@ -1575,7 +1575,7 @@ static void populate_value(struct ref_array_item *ref)
 			break;
 		}
 	}
-	return;
+	return 0;
 }
 
 /*
