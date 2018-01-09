@@ -130,6 +130,11 @@ ignored, then the directory is not shown, but all contents are shown.
 	without options are equivalent to 'always' and 'never'
 	respectively.
 
+--ahead-behind::
+--no-ahead-behind::
+	Display or do not display detailed ahead/behind counts for the
+	branch relative to its upstream branch.  Defaults to true.
+
 <pathspec>...::
 	See the 'pathspec' entry in linkgit:gitglossary[7].
 
