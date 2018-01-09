@@ -257,10 +257,18 @@ enum match_refs_flags {
 	MATCH_REFS_FOLLOW_TAGS	= (1 << 3)
 };
 
+/* Flags for --ahead-behind option. */
+enum ahead_behind_flags {
+	AHEAD_BEHIND_UNSPECIFIED = -1,
+	AHEAD_BEHIND_QUICK       =  0,  /* just eq/neq reporting */
+	AHEAD_BEHIND_FULL        =  1,  /* traditional a/b reporting */
+};
+
 /* Reporting of tracking info */
 int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs,
-		       const char **upstream_name);
-int format_tracking_info(struct branch *branch, struct strbuf *sb);
+		       const char **upstream_name, enum ahead_behind_flags abf);
+int format_tracking_info(struct branch *branch, struct strbuf *sb,
+			 enum ahead_behind_flags abf);
 
 struct ref *get_local_heads(void);
 /*
