@@ -469,6 +469,12 @@ ifndef::git-format-patch[]
 +
 Also, these upper-case letters can be downcased to exclude.  E.g.
 `--diff-filter=ad` excludes added and deleted paths.
++
+Note that not all diffs can feature all types. For instance, diffs
+from the index to the working tree can never have Added entries
+(because the set of paths included in the diff is limited by what is in
+the index).  Similarly, copied and renamed entries cannot appear if
+detection for those types is disabled.
 
 -S<string>::
 	Look for differences that change the number of occurrences of
