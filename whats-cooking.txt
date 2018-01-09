@@ -1,21 +1,16 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jan 2018, #01; Fri, 5)
-X-master-at: 36438dc19dd2a305dddebd44bf7a65f1a220075b
-X-next-at: 530d649a790d987a1100dafee4f7a635c11cd855
+Subject: What's cooking in git.git (Jan 2018, #02; Tue, 9)
+X-master-at: 6366dd9000a3f67e47a30d94375a88dabc18ec6f
+X-next-at: 55033e839aa0788e7eca704bfa5a1834e6ee1cde
 
-What's cooking in git.git (Jan 2018, #01; Fri, 5)
+What's cooking in git.git (Jan 2018, #02; Tue, 9)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
-
-The tip of 'master' has been tagged as 2.16-rc1; I am aware that a
-handful of larger topics are on the list, yet to be picked up, but
-now we are pretty much in feature-freeze mode before the release;
-please shift your attention to fixes from shiny new toys.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -24,6 +19,21 @@ of the repositories listed at
 
 --------------------------------------------------
 [Graduated to "master"]
+
+* ab/dc-sha1-loose-ends (2017-12-28) 1 commit
+  (merged to 'next' on 2018-01-05 at 7186e81793)
+ + Makefile: NO_OPENSSL=1 should no longer imply BLK_SHA1=1
+
+ Tying loose ends for the recent integration work of
+ collision-detecting SHA-1 implementation.
+
+
+* bc/submitting-patches-in-asciidoc (2018-01-03) 1 commit
+  (merged to 'next' on 2018-01-05 at 92dd960a56)
+ + doc/SubmittingPatches: improve text formatting
+
+ Doc readability update.
+
 
 * bp/fsmonitor (2017-12-18) 1 commit
   (merged to 'next' on 2017-12-27 at ce216e2978)
@@ -37,6 +47,13 @@ of the repositories listed at
  + path: document path functions
 
  Doc updates.
+
+
+* bw/protocol-v1 (2018-01-04) 1 commit
+  (merged to 'next' on 2018-01-05 at 47a5e0039a)
+ + http: fix v1 protocol tests with apache httpd < 2.4
+
+ Test fix for a topic already in 'master'.
 
 
 * cc/skip-to-optional-val (2017-12-11) 7 commits
@@ -58,27 +75,6 @@ of the repositories listed at
  + config.txt: document behavior of backslashes in subsections
 
  Doc update.
-
-
-* ew/empty-merge-with-dirty-index (2017-12-22) 1 commit
-  (merged to 'next' on 2017-12-28 at 17aa5ec010)
- + Merge branch 'ew/empty-merge-with-dirty-index-maint' into ew/empty-merge-with-dirty-index
- (this branch uses ew/empty-merge-with-dirty-index-maint.)
-
- "git merge -s recursive" did not correctly abort when the index is
- dirty, if the merged tree happened to be the same as the current
- HEAD, which has been fixed.
-
-
-* ew/empty-merge-with-dirty-index-maint (2017-12-22) 3 commits
- + merge-recursive: avoid incorporating uncommitted changes in a merge
- + move index_has_changes() from builtin/am.c to merge.c for reuse
- + t6044: recursive can silently incorporate dirty changes in a merge
- (this branch is used by ew/empty-merge-with-dirty-index.)
-
- "git merge -s recursive" did not correctly abort when the index is
- dirty, if the merged tree happened to be the same as the current
- HEAD, which has been fixed.
 
 
 * ew/svn-crlf (2017-12-14) 2 commits
@@ -122,6 +118,13 @@ of the repositories listed at
  + partial-clone: design doc
 
 
+* jk/doc-diff-options (2018-01-04) 1 commit
+  (merged to 'next' on 2018-01-05 at 11a42ea807)
+ + docs/diff-options: clarify scope of diff-filter types
+
+ Doc update.
+
+
 * jk/test-suite-tracing (2017-12-08) 4 commits
   (merged to 'next' on 2017-12-27 at 7034a51474)
  + t/Makefile: introduce TEST_SHELL_PATH
@@ -150,6 +153,14 @@ of the repositories listed at
  + rebase: do not continue when the todo list generation failed
 
  Code cleanup.
+
+
+* js/test-with-ws-in-path (2018-01-03) 2 commits
+  (merged to 'next' on 2018-01-05 at 6438e1c186)
+ + t0302 & t3900: add forgotten quotes
+ + Allow the test suite to pass in a directory whose name contains spaces
+
+ Test fixes.
 
 
 * jt/transport-hide-vtable (2017-12-14) 2 commits
@@ -222,6 +233,41 @@ of the repositories listed at
  <commit-ish>:<path> that refers to a given blob object.
 
 
+* sg/travis-check-untracked (2018-01-03) 2 commits
+  (merged to 'next' on 2018-01-05 at 424bed2fb0)
+ + travis-ci: check that all build artifacts are .gitignore-d
+ + travis-ci: don't store P4 and Git LFS in the working tree
+ (this branch uses sg/travis-fixes and sg/travis-skip-identical-test.)
+
+ Will cook in 'next'.
+
+
+* sg/travis-fixes (2017-12-27) 4 commits
+  (merged to 'next' on 2017-12-28 at 6496308a5b)
+ + travis-ci: only print test failures if there are test results available
+ + travis-ci: save prove state for the 32 bit Linux build
+ + travis-ci: don't install default addon packages for the 32 bit Linux build
+ + travis-ci: fine tune the use of 'set -x' in 'ci/*' scripts
+ (this branch is used by sg/travis-check-untracked and sg/travis-skip-identical-test.)
+
+ Assorted updates for TravisCI integration.
+
+ Will cook in 'next'.
+
+
+* sg/travis-skip-identical-test (2018-01-02) 3 commits
+  (merged to 'next' on 2018-01-05 at 41914fc43e)
+ + travis-ci: record and skip successfully built trees
+ + travis-ci: create the cache directory early in the build process
+ + travis-ci: print the "tip of branch is exactly at tag" message in color
+ (this branch is used by sg/travis-check-untracked; uses sg/travis-fixes.)
+
+ Avoid repeatedly testing the same tree in TravisCI that have been
+ tested successfully already.
+
+ Will cook in 'next'.
+
+
 * sr/http-sslverify-config-doc (2017-12-18) 1 commit
   (merged to 'next' on 2017-12-27 at 84a461c4b5)
  + config: document default value of http.sslVerify
@@ -252,42 +298,34 @@ of the repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* ab/dc-sha1-loose-ends (2017-12-28) 1 commit
-  (merged to 'next' on 2018-01-05 at 7186e81793)
- + Makefile: NO_OPENSSL=1 should no longer imply BLK_SHA1=1
-
- Tying loose ends for the recent integration work of
- collision-detecting SHA-1 implementation.
-
- Will merge to 'master'.
-
-
 * ab/wildmatch-tests (2018-01-04) 7 commits
- - wildmatch test: create & test files on disk in addition to in-memory
- - wildmatch test: perform all tests under all wildmatch() modes
- - wildmatch test: remove dead fnmatch() test code
- - wildmatch test: use a paranoia pattern from nul_match()
- - wildmatch test: don't try to vertically align our output
- - wildmatch test: use more standard shell style
- - wildmatch test: indent with tabs, not spaces
+  (merged to 'next' on 2018-01-09 at 09f0b84098)
+ + wildmatch test: create & test files on disk in addition to in-memory
+ + wildmatch test: perform all tests under all wildmatch() modes
+ + wildmatch test: remove dead fnmatch() test code
+ + wildmatch test: use a paranoia pattern from nul_match()
+ + wildmatch test: don't try to vertically align our output
+ + wildmatch test: use more standard shell style
+ + wildmatch test: indent with tabs, not spaces
 
  More tests for wildmatch functions.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * cc/codespeed (2018-01-05) 7 commits
- - perf/run: read GIT_PERF_REPO_NAME from perf.repoName
- - perf/run: learn to send output to codespeed server
- - perf/run: learn about perf.codespeedOutput
- - perf/run: add conf_opts argument to get_var_from_env_or_config()
- - perf/aggregate: implement codespeed JSON output
- - perf/aggregate: refactor printing results
- - perf/aggregate: fix checking ENV{GIT_PERF_SUBSECTION}
+  (merged to 'next' on 2018-01-09 at 5599f7a085)
+ + perf/run: read GIT_PERF_REPO_NAME from perf.repoName
+ + perf/run: learn to send output to codespeed server
+ + perf/run: learn about perf.codespeedOutput
+ + perf/run: add conf_opts argument to get_var_from_env_or_config()
+ + perf/aggregate: implement codespeed JSON output
+ + perf/aggregate: refactor printing results
+ + perf/aggregate: fix checking ENV{GIT_PERF_SUBSECTION}
 
  "perf" test output can be sent to codespeed server.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * rs/lose-leak-pending (2017-12-28) 9 commits
@@ -308,43 +346,27 @@ of the repositories listed at
 
 
 * sb/diff-blobfind-pickaxe (2018-01-04) 6 commits
- - diff: use HAS_MULTI_BITS instead of counting bits manually
- - diff: properly error out when combining multiple pickaxe options
- - diffcore: add a pickaxe option to find a specific blob
- - diff: introduce DIFF_PICKAXE_KINDS_MASK
- - diff: migrate diff_flags.pickaxe_ignore_case to a pickaxe_opts bit
- - diff.h: make pickaxe_opts an unsigned bit field
+  (merged to 'next' on 2018-01-09 at 1c7bace3e7)
+ + diff: use HAS_MULTI_BITS instead of counting bits manually
+ + diff: properly error out when combining multiple pickaxe options
+ + diffcore: add a pickaxe option to find a specific blob
+ + diff: introduce DIFF_PICKAXE_KINDS_MASK
+ + diff: migrate diff_flags.pickaxe_ignore_case to a pickaxe_opts bit
+ + diff.h: make pickaxe_opts an unsigned bit field
 
  "diff" family of commands learned "--find-object=<object-id>" option
  to limit the findings to changes that involve the named object.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * ab/perf-grep-threads (2018-01-04) 1 commit
- - perf: amend the grep tests to test grep.threads
+  (merged to 'next' on 2018-01-09 at 8fe1d71894)
+ + perf: amend the grep tests to test grep.threads
 
  More perf tests for threaded grep
 
- Will merge to 'next'.
-
-
-* bc/submitting-patches-in-asciidoc (2018-01-03) 1 commit
-  (merged to 'next' on 2018-01-05 at 92dd960a56)
- + doc/SubmittingPatches: improve text formatting
-
- Doc readability update.
-
- Will merge to 'master'.
-
-
-* bw/protocol-v1 (2018-01-04) 1 commit
-  (merged to 'next' on 2018-01-05 at 47a5e0039a)
- + http: fix v1 protocol tests with apache httpd < 2.4
-
- Test fix for a topic already in 'master'.
-
- Will merge to 'master'.
+ Will cook in 'next'.
 
 
 * bw/protocol-v2 (2018-01-04) 26 commits
@@ -375,6 +397,8 @@ of the repositories listed at
  - pkt-line: introduce struct packet_reader
  - pkt-line: introduce packet_read_with_status
 
+ The beginning of the next-gen transfer protocol.
+
 
 * jh/status-no-ahead-behind (2018-01-04) 4 commits
  - status: support --no-ahead-behind in long format
@@ -382,40 +406,30 @@ of the repositories listed at
  - status: add --[no-]ahead-behind to status and commit for V2 format.
  - stat_tracking_info: return +1 when branches not equal
 
+ Still in flux.
+
 
 * jk/abort-clone-with-existing-dest (2018-01-03) 4 commits
- - clone: do not clean up directories we didn't create
- - clone: factor out dir_exists() helper
- - t5600: modernize style
- - t5600: fix outdated comment about unborn HEAD
+  (merged to 'next' on 2018-01-09 at 789a55a9e1)
+ + clone: do not clean up directories we didn't create
+ + clone: factor out dir_exists() helper
+ + t5600: modernize style
+ + t5600: fix outdated comment about unborn HEAD
+
+ "git clone $there $here" is allowed even when here directory exists
+ as long as it is an empty directory, but the command incorrectly
+ removed it upon a failure of the operation.
+
+ Will cook in 'next'.
 
 
-* jk/doc-diff-options (2018-01-04) 1 commit
-  (merged to 'next' on 2018-01-05 at 11a42ea807)
- + docs/diff-options: clarify scope of diff-filter types
-
- Doc update.
-
- Will merge to 'master'.
-
-
-* js/test-with-ws-in-path (2018-01-03) 2 commits
-  (merged to 'next' on 2018-01-05 at 6438e1c186)
- + t0302 & t3900: add forgotten quotes
- + Allow the test suite to pass in a directory whose name contains spaces
-
- Test fixes.
-
- Will merge to 'master'.
-
-
-* ls/checkout-encoding (2018-01-04) 6 commits
- - utf8.c: mark utf{16,32}_{be,le}_bom symbols static
+* ls/checkout-encoding (2018-01-08) 6 commits
  - convert: add support for 'checkout-encoding' attribute
+ - convert_to_git(): safe_crlf/checksafe becomes int conv_flags
  - utf8: add function to detect a missing UTF-16/32 BOM
  - utf8: add function to detect prohibited UTF-16/32 BOM
  - strbuf: add xstrdup_toupper()
- - convert_to_git(): checksafe becomes an integer
+ - strbuf: remove unnecessary NUL assignment in xstrdup_tolower()
 
  The new "checkout-encoding" attribute can ask Git to convert the
  contents to the specified encoding when checking out to the working
@@ -423,19 +437,24 @@ of the repositories listed at
 
 
 * ma/bisect-leakfix (2018-01-03) 1 commit
- - bisect: fix a regression causing a segfault
+  (merged to 'next' on 2018-01-09 at af04bd5436)
+ + bisect: fix a regression causing a segfault
 
- Will merge to 'next'.
+ A hotfix for a recent update that broke 'git bisect'.
+
+ Will merge to 'master'.
 
 
-* mm/send-email-fallback-to-local-mail-address (2018-01-05) 3 commits
+* mm/send-email-fallback-to-local-mail-address (2018-01-08) 3 commits
  - send-email: add test for Linux's get_maintainer.pl
- - Remove now useless email-address parsing code
+ - perl/Git: remove now useless email-address parsing code
  - send-email: add and use a local copy of Mail::Address
 
  Instead of maintaining home-grown email address parsing code, ship
  a copy of reasonably recent Mail::Address to be used as a fallback
  in 'git send-email' when the platform lacks it.
+
+ Will merge to 'next'.
 
 
 * sb/submodule-update-reset-fix (2018-01-05) 4 commits
@@ -447,23 +466,74 @@ of the repositories listed at
  When resetting the working tree files recursively, the working tree
  of submodules are now also reset to match.
 
-
-* sg/travis-check-untracked (2018-01-03) 2 commits
-  (merged to 'next' on 2018-01-05 at 424bed2fb0)
- + travis-ci: check that all build artifacts are .gitignore-d
- + travis-ci: don't store P4 and Git LFS in the working tree
- (this branch uses sg/travis-fixes and sg/travis-skip-identical-test.)
-
- Will merge to 'master'.
+ Will merge to 'next'.
 
 
 * js/fix-merge-arg-quoting-in-rebase-p (2018-01-05) 1 commit
- - rebase -p: fix quoting when calling `git merge`
+  (merged to 'next' on 2018-01-09 at 57950f1843)
+ + rebase -p: fix quoting when calling `git merge`
 
  "git rebase -p -X<option>" did not propagate the option properly
  down to underlying merge strategy backend.
 
- Will merge to 'next' and then to 'master'.
+ Will merge to 'master'.
+
+
+* as/read-tree-prefix-doc-fix (2018-01-09) 1 commit
+ - doc/read-tree: remove obsolete remark
+
+ Doc update.
+
+ Will merge to 'next'.
+
+
+* jh/object-filtering (2018-01-08) 1 commit
+ - oidset: don't return value from oidset_init
+
+ Hotfix for a topic already in 'master'.
+
+ Will merge to 'next'.
+
+
+* pc/submodule-helper (2018-01-09) 2 commits
+ - submodule: port submodule subcommand 'deinit' from shell to C
+ - submodule: port submodule subcommand 'sync' from shell to C
+
+ Rewrite two more "git submodule" subcommands in C.
+
+ Will segfault.
+ cf. <xmqqpo6i4uns.fsf@gitster.mtv.corp.google.com>
+
+
+* sb/blame-color (2018-01-08) 4 commits
+ - builtin/blame: highlight recently changed lines
+ - builtin/blame: add option to color metadata fields separately
+ - builtin/blame: dim uninteresting metadata
+ - color.h: document and modernize header
+
+
+* sg/travis-build-during-script-phase (2018-01-08) 1 commit
+ - travis-ci: build Git during the 'script' phase
+
+ Still under discussion.
+ cf. <5DE3FA05-2347-4BE7-8A1A-A6E5FEEC7C2B@gmail.com>
+
+
+* tg/stash-with-pathspec-fix (2018-01-08) 1 commit
+ - stash: don't delete untracked files that match pathspec
+
+ "git stash -- <pathspec>" incorrectly blew away untracked files in
+ the directory that matched the pathspec, which has been corrected.
+
+ Will merge to 'next'.
+
+
+* ys/bisect-object-id-missing-conversion-fix (2018-01-09) 1 commit
+ - bisect: debug: convert struct object to object_id
+
+ Fix for a commented-out code to adjust it to a rather old API change.
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -608,6 +678,29 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* ew/empty-merge-with-dirty-index (2018-01-09) 1 commit
+  (merged to 'next' on 2018-01-09 at 851bc45d06)
+ + Merge branch 'ew/empty-merge-with-dirty-index-maint' into ew/empty-merge-with-dirty-index
+ (this branch uses ew/empty-merge-with-dirty-index-maint.)
+
+ "git merge -s recursive" did not correctly abort when the index is
+ dirty, if the merged tree happened to be the same as the current
+ HEAD, which has been fixed.
+
+ Will merge to 'master'.
+
+
+* ew/empty-merge-with-dirty-index-maint (2018-01-09) 1 commit
+ + merge-recursive: do not look at the index during recursive merge
+ (this branch is used by ew/empty-merge-with-dirty-index.)
+
+ "git merge -s recursive" did not correctly abort when the index is
+ dirty, if the merged tree happened to be the same as the current
+ HEAD, which has been fixed.
+
+ Will merge to 'master' (as part of the above).
+
+
 * jc/merge-symlink-ours-theirs (2018-01-03) 1 commit
   (merged to 'next' on 2018-01-05 at 63ebfc45eb)
  + merge: teach -Xours/-Xtheirs to symbolic link merge
@@ -626,9 +719,15 @@ of the repositories listed at
  at the same time; allow it to annotate resulting commit with more
  text.
 
+ Will merge to 'next'.
+
 
 * bw/oidmap-autoinit (2017-12-27) 1 commit
  - oidmap: ensure map is initialized
+
+ Code clean-up.
+
+ Will merge to 'next'.
 
 
 * dk/describe-all-output-fix (2017-12-27) 1 commit
@@ -650,6 +749,8 @@ of the repositories listed at
 
  Some bugs around "untracked cache" feature have been fixed.
 
+ Will merge to 'next'.
+
 
 * nd/ita-wt-renames-in-status (2017-12-27) 6 commits
   (merged to 'next' on 2017-12-28 at 7610331a11)
@@ -666,19 +767,6 @@ of the repositories listed at
  report the  old and new pathnames correctly.
 
  Will cook in 'next'.
-
-
-* sg/travis-skip-identical-test (2018-01-02) 3 commits
-  (merged to 'next' on 2018-01-05 at 41914fc43e)
- + travis-ci: record and skip successfully built trees
- + travis-ci: create the cache directory early in the build process
- + travis-ci: print the "tip of branch is exactly at tag" message in color
- (this branch is used by sg/travis-check-untracked; uses sg/travis-fixes.)
-
- Avoid repeatedly testing the same tree in TravisCI that have been
- tested successfully already.
-
- Will merge to 'master'.
 
 
 * np/send-email-header-parsing (2017-12-15) 1 commit
@@ -702,19 +790,6 @@ of the repositories listed at
 
  Undecided.
  cf. <alpine.DEB.2.21.1.1801042335130.32@MININT-6BKU6QN.europe.corp.microsoft.com>
-
-
-* sg/travis-fixes (2017-12-27) 4 commits
-  (merged to 'next' on 2017-12-28 at 6496308a5b)
- + travis-ci: only print test failures if there are test results available
- + travis-ci: save prove state for the 32 bit Linux build
- + travis-ci: don't install default addon packages for the 32 bit Linux build
- + travis-ci: fine tune the use of 'set -x' in 'ci/*' scripts
- (this branch is used by sg/travis-check-untracked and sg/travis-skip-identical-test.)
-
- Assorted updates for TravisCI integration.
-
- Will merge to 'master'.
 
 
 * ab/sha1dc-build (2017-12-12) 4 commits
