@@ -42,8 +42,9 @@ OPTIONS
 	<object>.
 
 -e::
-	Suppress all output; instead exit with zero status if <object>
-	exists and is a valid object.
+	Exit with zero status if <object> exists and is a valid
+	object. If <object> is of an invalid format exit with non-zero and
+	emits an error on stderr.
 
 -p::
 	Pretty-print the contents of <object> based on its type.
@@ -168,7 +169,7 @@ If `-t` is specified, one of the <type>.
 
 If `-s` is specified, the size of the <object> in bytes.
 
-If `-e` is specified, no output.
+If `-e` is specified, no output, unless the <object> is malformed.
 
 If `-p` is specified, the contents of <object> are pretty-printed.
 
