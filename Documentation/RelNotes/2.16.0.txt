@@ -441,6 +441,15 @@ Fixes since v2.15
    credential helper fail.
    (merge 4c267f2ae3 jd/fix-strbuf-add-urlencode-bytes later to maint).
 
+ * "git rebase -p -X<option>" did not propagate the option properly
+   down to underlying merge strategy backend.
+   (merge dd6fb0053c js/fix-merge-arg-quoting-in-rebase-p later to maint).
+
+ * "git merge -s recursive" did not correctly abort when the index is
+   dirty, if the merged tree happened to be the same as the current
+   HEAD, which has been fixed.
+   (merge f309e8e768 ew/empty-merge-with-dirty-index-maint later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge 1a1fc2d5b5 rd/man-prune-progress later to maint).
    (merge 0ba014035a rd/man-reflog-add-n later to maint).
@@ -467,3 +476,4 @@ Fixes since v2.15
    (merge 3f824e91c8 jk/test-suite-tracing later to maint).
    (merge 1feb061701 db/doc-config-section-names-with-bs later to maint).
    (merge 74dea0e13c jh/memihash-opt later to maint).
+   (merge 2e9fdc795c ma/bisect-leakfix later to maint).
