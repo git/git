@@ -678,4 +678,54 @@ test_expect_success 'merge-recursive remembers the names of all base trees' '
 	test_cmp expect actual
 '
 
+test_expect_success 'merge-recursive internal merge resolves to the sameness' '
+	git reset --hard HEAD &&
+
+	# We are going to create a history leading to two criss-cross
+	# branches A and B.  The common ancestor at the bottom, O0,
+	# has two child commits O1 and O2, both of which will be merge
+	# base between A and B, like so:
+	#
+	#       O1---A
+	#      /  \ /
+	#    O0    .
+	#      \  / \
+	#       O2---B
+	#
+	# The recently added "check to see if the index is different from
+	# the tree into which something else is getting merged" check must
+	# NOT kick in when an inner merge between O1 and O2 is made.  Both
+	# O1 and O2 happen to have the same tree as O0 in this test to
+	# trigger the bug---whether the inner merge is made by merging O2
+	# into O1 or O1 into O2, their common ancestor O0 and the branch
+	# being merged have the same tree.  We should not trigger the "is
+	# the index dirty?" check in this case.
+
+	echo "zero" >file &&
+	git add file &&
+	test_tick &&
+	git commit -m "O0" &&
+	O0=$(git rev-parse HEAD) &&
+
+	test_tick &&
+	git commit --allow-empty -m "O1" &&
+	O1=$(git rev-parse HEAD) &&
+
+	git reset --hard $O0 &&
+	test_tick &&
+	git commit --allow-empty -m "O2" &&
+	O2=$(git rev-parse HEAD) &&
+
+	test_tick &&
+	git merge -s ours $O1 &&
+	B=$(git rev-parse HEAD) &&
+
+	git reset --hard $O1 &&
+	test_tick &&
+	git merge -s ours $O2 &&
+	A=$(git rev-parse HEAD) &&
+
+	git merge $B
+'
+
 test_done

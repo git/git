@@ -1954,7 +1954,7 @@ int merge_trees(struct merge_options *o,
 	if (oid_eq(&common->object.oid, &merge->object.oid)) {
 		struct strbuf sb = STRBUF_INIT;
 
-		if (index_has_changes(&sb)) {
+		if (!o->call_depth && index_has_changes(&sb)) {
 			err(o, _("Dirty index: cannot merge (dirty: %s)"),
 			    sb.buf);
 			return 0;
