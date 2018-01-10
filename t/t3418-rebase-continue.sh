@@ -74,6 +74,20 @@ test_expect_success 'rebase --continue remembers merge strategy and options' '
 	test -f funny.was.run
 '
 
+test_expect_success 'rebase passes merge strategy options correctly' '
+	rm -fr .git/rebase-* &&
+	git reset --hard commit-new-file-F3-on-topic-branch &&
+	test_commit theirs-to-merge &&
+	git reset --hard HEAD^ &&
+	test_commit some-commit &&
+	test_tick &&
+	git merge --no-ff theirs-to-merge &&
+	FAKE_LINES="1 edit 2 3" git rebase -i -f -p -m \
+		-s recursive --strategy-option=theirs HEAD~2 &&
+	test_commit force-change &&
+	git rebase --continue
+'
+
 test_expect_success 'setup rerere database' '
 	rm -fr .git/rebase-* &&
 	git reset --hard commit-new-file-F3-on-topic-branch &&
