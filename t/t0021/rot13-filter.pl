@@ -31,7 +31,22 @@
 #
 
 use 5.008;
-use lib (split(/:/, $ENV{GITPERLLIB}));
+sub gitperllib {
+	# Git assumes that all path lists are Unix-y colon-separated ones. But
+	# when the Git for Windows executes the test suite, its MSYS2 Bash
+	# calls git.exe, and colon-separated path lists are converted into
+	# Windows-y semicolon-separated lists of *Windows* paths (which
+	# naturally contain a colon after the drive letter, so splitting by
+	# colons simply does not cut it).
+	#
+	# Detect semicolon-separated path list and handle them appropriately.
+
+	if ($ENV{GITPERLLIB} =~ /;/) {
+		return split(/;/, $ENV{GITPERLLIB});
+	}
+	return split(/:/, $ENV{GITPERLLIB});
+}
+use lib (gitperllib());
 use strict;
 use warnings;
 use IO::File;
