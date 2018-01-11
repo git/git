@@ -118,7 +118,7 @@ OPTIONS
 --[no-]guess-remote::
 	With `worktree add <path>`, without `<commit-ish>`, instead
 	of creating a new branch from HEAD, if there exists a tracking
-	branch in exactly one remote matching the basename of `<path>,
+	branch in exactly one remote matching the basename of `<path>`,
 	base the new branch on the remote-tracking branch, and mark
 	the remote-tracking branch as "upstream" from the new branch.
 +
