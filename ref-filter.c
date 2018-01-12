@@ -359,8 +359,8 @@ static struct valid_atom {
 	void (*parser)(const struct ref_format *format, struct used_atom *atom, const char *arg);
 } valid_atom[] = {
 	{ "refname" , FIELD_STR, refname_atom_parser },
-	{ "objecttype" },
-	{ "objectsize", FIELD_ULONG },
+	{ "objecttype", FIELD_STR, objecttype_atom_parser },
+	{ "objectsize", FIELD_ULONG, objectsize_atom_parser },
 	{ "objectname", FIELD_STR, objectname_atom_parser },
 	{ "tree" },
 	{ "parent" },
@@ -397,12 +397,6 @@ static struct valid_atom {
 	{ "if", FIELD_STR, if_atom_parser },
 	{ "then" },
 	{ "else" },
-};
-
-static struct valid_atom valid_cat_file_atom[] = {
-	{ "objectname" },
-	{ "objecttype", FIELD_STR, objecttype_atom_parser },
-	{ "objectsize", FIELD_ULONG, objectsize_atom_parser },
 	{ "rest" },
 	{ "deltabase", FIELD_STR, deltabase_atom_parser },
 };
@@ -432,7 +426,6 @@ struct atom_value {
  * Used to parse format string and sort specifiers
  */
 static int parse_ref_filter_atom(const struct ref_format *format,
-				 const struct valid_atom *valid_atom, int n_atoms,
 				 const char *atom, const char *ep)
 {
 	const char *sp;
@@ -462,13 +455,13 @@ static int parse_ref_filter_atom(const struct ref_format *format,
 	atom_len = (arg ? arg : ep) - sp;
 
 	/* Is the atom a valid one? */
-	for (i = 0; i < n_atoms; i++) {
+	for (i = 0; i < ARRAY_SIZE(valid_atom); i++) {
 		int len = strlen(valid_atom[i].name);
 		if (len == atom_len && !memcmp(valid_atom[i].name, sp, len))
 			break;
 	}
 
-	if (n_atoms <= i)
+	if (ARRAY_SIZE(valid_atom) <= i)
 		die(_("unknown field name: %.*s"), (int)(ep-atom), atom);
 
 	/* Add it in, including the deref prefix */
@@ -749,15 +742,9 @@ int verify_ref_format(struct ref_format *format)
 			return error(_("malformed format string %s"), sp);
 		/* sp points at "%(" and ep points at the closing ")" */
 
-		if (is_cat) {
-			at = parse_ref_filter_atom(format, valid_cat_file_atom,
-						   ARRAY_SIZE(valid_cat_file_atom), sp + 2, ep);
-		} else {
-			at = parse_ref_filter_atom(format, valid_atom,
-						   ARRAY_SIZE(valid_atom), sp + 2, ep);
-			if (skip_prefix(used_atom[at].name, "color:", &color))
-				format->need_color_reset_at_eol = !!strcmp(color, "reset");
-		}
+		at = parse_ref_filter_atom(format, sp + 2, ep);
+		if (skip_prefix(used_atom[at].name, "color:", &color))
+			format->need_color_reset_at_eol = !!strcmp(color, "reset");
 
 		cp = ep + 1;
 	}
@@ -2210,9 +2197,7 @@ void format_ref_array_item(struct ref_array_item *info,
 		if (cp < sp)
 			append_literal(cp, sp, &state);
 		get_ref_atom_value(info,
-				   parse_ref_filter_atom(format, valid_atom,
-							 ARRAY_SIZE(valid_atom),
-							 sp + 2, ep),
+				   parse_ref_filter_atom(format, sp + 2, ep),
 				   &atomv);
 		atomv->handler(atomv, &state);
 	}
@@ -2260,8 +2245,7 @@ static int parse_sorting_atom(const char *atom)
 	 */
 	struct ref_format dummy = REF_FORMAT_INIT;
 	const char *end = atom + strlen(atom);
-	return parse_ref_filter_atom(&dummy, valid_atom,
-				     ARRAY_SIZE(valid_atom), atom, end);
+	return parse_ref_filter_atom(&dummy, atom, end);
 }
 
 /*  If no sorting option is given, use refname to sort as default */
