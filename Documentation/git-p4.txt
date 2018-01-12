@@ -157,6 +157,12 @@ The p4 changes will be created as the user invoking 'git p4 submit'. The
 according to the author of the Git commit.  This option requires admin
 privileges in p4, which can be granted using 'p4 protect'.
 
+To shelve changes instead of submitting, use `--shelve` and `--update-shelve`:
+
+----
+$ git p4 submit --shelve
+$ git p4 submit --update-shelve 1234 --update-shelve 2345
+----
 
 OPTIONS
 -------
@@ -310,7 +316,7 @@ These options can be used to modify 'git p4 submit' behavior.
 
 --update-shelve CHANGELIST::
 	Update an existing shelved changelist with this commit. Implies
-	--shelve.
+	--shelve. Repeat for multiple shelved changelists.
 
 --conflict=(ask|skip|quit)::
 	Conflicts can occur when applying a commit to p4.  When this

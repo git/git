@@ -19,5 +19,10 @@ docker run \
 	--env GIT_TEST_OPTS \
 	--env GIT_TEST_CLONE_2GB \
 	--volume "${PWD}:/usr/src/git" \
+	--volume "${HOME}/travis-cache:/tmp/travis-cache" \
 	daald/ubuntu32:xenial \
 	/usr/src/git/ci/run-linux32-build.sh $(id -u $USER)
+
+check_unignored_build_artifacts
+
+save_good_tree

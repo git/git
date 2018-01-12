@@ -2030,7 +2030,6 @@ int finish_http_pack_request(struct http_pack_request *preq)
 	char *tmp_idx;
 	size_t len;
 	struct child_process ip = CHILD_PROCESS_INIT;
-	const char *ip_argv[8];
 
 	close_pack_index(p);
 
@@ -2046,13 +2045,9 @@ int finish_http_pack_request(struct http_pack_request *preq)
 		die("BUG: pack tmpfile does not end in .pack.temp?");
 	tmp_idx = xstrfmt("%.*s.idx.temp", (int)len, preq->tmpfile);
 
-	ip_argv[0] = "index-pack";
-	ip_argv[1] = "-o";
-	ip_argv[2] = tmp_idx;
-	ip_argv[3] = preq->tmpfile;
-	ip_argv[4] = NULL;
-
-	ip.argv = ip_argv;
+	argv_array_push(&ip.args, "index-pack");
+	argv_array_pushl(&ip.args, "-o", tmp_idx, NULL);
+	argv_array_push(&ip.args, preq->tmpfile);
 	ip.git_cmd = 1;
 	ip.no_stdin = 1;
 	ip.no_stdout = 1;

@@ -23,7 +23,6 @@ all::
 # it at all).
 #
 # Define NO_OPENSSL environment variable if you do not have OpenSSL.
-# This also implies BLK_SHA1.
 #
 # Define USE_LIBPCRE if you have and want to use libpcre. Various
 # commands such as log and grep offer runtime options to use
@@ -426,6 +425,10 @@ all::
 # to say "export LESS=FRX (and LV=-c) if the environment variable
 # LESS (and LV) is not set, respectively".
 #
+# Define TEST_SHELL_PATH if you want to use a shell besides SHELL_PATH for
+# running the test scripts (e.g., bash has better support for "set -x"
+# tracing).
+#
 # When cross-compiling, define HOST_CPU as the canonical name of the CPU on
 # which the built Git will run (for instance "x86_64").
 
@@ -732,6 +735,8 @@ endif
 
 export PERL_PATH
 export PYTHON_PATH
+
+TEST_SHELL_PATH = $(SHELL_PATH)
 
 LIB_FILE = libgit.a
 XDIFF_LIB = xdiff/lib.a
@@ -1269,7 +1274,6 @@ ifndef NO_OPENSSL
 	endif
 else
 	BASIC_CFLAGS += -DNO_OPENSSL
-	BLK_SHA1 = 1
 	OPENSSL_LIBSSL =
 endif
 ifdef NO_OPENSSL
@@ -1738,6 +1742,7 @@ prefix_SQ = $(subst ','\'',$(prefix))
 gitwebdir_SQ = $(subst ','\'',$(gitwebdir))
 
 SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
+TEST_SHELL_PATH_SQ = $(subst ','\'',$(TEST_SHELL_PATH))
 PERL_PATH_SQ = $(subst ','\'',$(PERL_PATH))
 PYTHON_PATH_SQ = $(subst ','\'',$(PYTHON_PATH))
 TCLTK_PATH_SQ = $(subst ','\'',$(TCLTK_PATH))
@@ -2370,6 +2375,7 @@ GIT-LDFLAGS: FORCE
 # and the first level quoting from the shell that runs "echo".
 GIT-BUILD-OPTIONS: FORCE
 	@echo SHELL_PATH=\''$(subst ','\'',$(SHELL_PATH_SQ))'\' >$@+
+	@echo TEST_SHELL_PATH=\''$(subst ','\'',$(TEST_SHELL_PATH_SQ))'\' >>$@+
 	@echo PERL_PATH=\''$(subst ','\'',$(PERL_PATH_SQ))'\' >>$@+
 	@echo DIFF=\''$(subst ','\'',$(subst ','\'',$(DIFF)))'\' >>$@+
 	@echo PYTHON_PATH=\''$(subst ','\'',$(PYTHON_PATH_SQ))'\' >>$@+

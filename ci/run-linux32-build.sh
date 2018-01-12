@@ -6,6 +6,8 @@
 #   run-linux32-build.sh [host-user-id]
 #
 
+set -x
+
 # Update packages to the latest available versions
 linux32 --32bit i386 sh -c '
     apt update >/dev/null &&
@@ -25,6 +27,7 @@ test -z $HOST_UID || (CI_USER="ci" && useradd -u $HOST_UID $CI_USER) &&
 # Build and test
 linux32 --32bit i386 su -m -l $CI_USER -c '
     cd /usr/src/git &&
+    ln -s /tmp/travis-cache/.prove t/.prove &&
     make --jobs=2 &&
     make --quiet test
 '

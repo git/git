@@ -493,7 +493,7 @@ static int is_index_unchanged(void)
 	struct commit *head_commit;
 
 	if (!resolve_ref_unsafe("HEAD", RESOLVE_REF_READING, &head_oid, NULL))
-		return error(_("could not resolve HEAD commit\n"));
+		return error(_("could not resolve HEAD commit"));
 
 	head_commit = lookup_commit(&head_oid);
 
@@ -513,7 +513,7 @@ static int is_index_unchanged(void)
 
 	if (!cache_tree_fully_valid(active_cache_tree))
 		if (cache_tree_update(&the_index, 0))
-			return error(_("unable to update cache tree\n"));
+			return error(_("unable to update cache tree"));
 
 	return !oidcmp(&active_cache_tree->oid,
 		       &head_commit->tree->object.oid);
@@ -699,12 +699,12 @@ static int is_original_commit_empty(struct commit *commit)
 	const struct object_id *ptree_oid;
 
 	if (parse_commit(commit))
-		return error(_("could not parse commit %s\n"),
+		return error(_("could not parse commit %s"),
 			     oid_to_hex(&commit->object.oid));
 	if (commit->parents) {
 		struct commit *parent = commit->parents->item;
 		if (parse_commit(parent))
-			return error(_("could not parse parent commit %s\n"),
+			return error(_("could not parse parent commit %s"),
 				oid_to_hex(&parent->object.oid));
 		ptree_oid = &parent->tree->object.oid;
 	} else {
@@ -1013,9 +1013,7 @@ static int do_pick_commit(enum todo_command command, struct commit *commit,
 			opts);
 		if (res || command != TODO_REWORD)
 			goto leave;
-		flags |= EDIT_MSG | AMEND_MSG;
-		if (command == TODO_REWORD)
-			flags |= VERIFY_MSG;
+		flags |= EDIT_MSG | AMEND_MSG | VERIFY_MSG;
 		msg_file = NULL;
 		goto fast_forward_edit;
 	}
@@ -1263,18 +1261,23 @@ static int parse_insn_line(struct todo_item *item, const char *bol, char *eol)
 	if (i >= TODO_COMMENT)
 		return -1;
 
+	/* Eat up extra spaces/ tabs before object name */
+	padding = strspn(bol, " \t");
+	bol += padding;
+
 	if (item->command == TODO_NOOP) {
+		if (bol != eol)
+			return error(_("%s does not accept arguments: '%s'"),
+				     command_to_string(item->command), bol);
 		item->commit = NULL;
 		item->arg = bol;
 		item->arg_len = eol - bol;
 		return 0;
 	}
 
-	/* Eat up extra spaces/ tabs before object name */
-	padding = strspn(bol, " \t");
 	if (!padding)
-		return -1;
-	bol += padding;
+		return error(_("missing arguments for %s"),
+			     command_to_string(item->command));
 
 	if (item->command == TODO_EXEC) {
 		item->commit = NULL;
@@ -2583,7 +2586,10 @@ int transform_todos(unsigned flags)
 			strbuf_addf(&buf, " %s", oid);
 		}
 		/* add all the rest */
-		strbuf_addf(&buf, " %.*s\n", item->arg_len, item->arg);
+		if (!item->arg_len)
+			strbuf_addch(&buf, '\n');
+		else
+			strbuf_addf(&buf, " %.*s\n", item->arg_len, item->arg);
 	}
 
 	i = write_message(buf.buf, buf.len, todo_file, 0);
