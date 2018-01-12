@@ -341,7 +341,7 @@ Fixes since v2.15
  * Command line completion (in contrib/) has been taught about the
    "--copy" option of "git branch".
 
- * When "git rebase" prepared an mailbox of changes and fed it to "git
+ * When "git rebase" prepared a mailbox of changes and fed it to "git
    am" to replay them, it was confused when a stray "From " happened
    to be in the log message of one of the replayed changes.  This has
    been corrected.
