@@ -2472,31 +2472,18 @@ static int clean_shared_index_files(const char *current_hex)
 }
 
 static int write_shared_index(struct index_state *istate,
-			      struct lock_file *lock, unsigned flags)
+			      struct tempfile **temp)
 {
-	struct tempfile *real_temp;
-	struct tempfile **temp = &real_temp;
 	struct split_index *si = istate->split_index;
 	int ret;
 
-	real_temp = mks_tempfile(git_path("sharedindex_XXXXXX"));
-	if (!real_temp) {
-		hashclr(si->base_sha1);
-		return do_write_locked_index(istate, lock, flags);
-	}
-	temp = &real_temp;
 	move_cache_to_base_index(istate);
 	ret = do_write_index(si->base, *temp, 1);
-	if (ret) {
-		delete_tempfile(temp);
+	if (ret)
 		return ret;
-	}
 	ret = adjust_shared_perm(get_tempfile_path(*temp));
 	if (ret) {
-		int save_errno = errno;
 		error("cannot fix permission bits on %s", get_tempfile_path(*temp));
-		delete_tempfile(temp);
-		errno = save_errno;
 		return ret;
 	}
 	ret = rename_tempfile(temp,
@@ -2567,7 +2554,21 @@ int write_locked_index(struct index_state *istate, struct lock_file *lock,
 	new_shared_index = istate->cache_changed & SPLIT_INDEX_ORDERED;
 
 	if (new_shared_index) {
-		ret = write_shared_index(istate, lock, flags);
+		struct tempfile *temp;
+		int saved_errno;
+
+		temp = mks_tempfile(git_path("sharedindex_XXXXXX"));
+		if (!temp) {
+			hashclr(si->base_sha1);
+			ret = do_write_locked_index(istate, lock, flags);
+		} else
+			ret = write_shared_index(istate, &temp);
+
+		saved_errno = errno;
+		if (is_tempfile_active(temp))
+			delete_tempfile(&temp);
+		errno = saved_errno;
+
 		if (ret)
 			goto out;
 	}
