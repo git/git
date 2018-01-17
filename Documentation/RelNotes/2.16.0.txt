@@ -62,8 +62,11 @@ UI, Workflows & Features
  * The SubmittingPatches document has been converted to produce an
    HTML version via AsciiDoc/Asciidoctor.
 
- * We learned to talk to watchman to speed up "git status" and other
-   operations that need to see which paths have been modified.
+ * We learned to optionally talk to a file system monitor via new
+   fsmonitor extension to speed up "git status" and other operations
+   that need to see which paths have been modified.  Currently we only
+   support "watchman".  See File System Monitor section of
+   git-update-index(1) for more detail.
 
  * The "diff" family of commands learned to ignore differences in
    carriage return at the end of line.
