@@ -52,6 +52,7 @@ static int reset_index(const struct object_id *oid, int reset_type, int quiet)
 	struct tree *tree;
 	struct unpack_trees_options opts;
 	int ret = -1;
+	int unpack_result;
 
 	memset(&opts, 0, sizeof(opts));
 	opts.head_idx = 1;
@@ -91,7 +92,11 @@ static int reset_index(const struct object_id *oid, int reset_type, int quiet)
 	}
 	nr++;
 
-	if (unpack_trees(nr, desc, &opts))
+	enable_fscache(1);
+	unpack_result = unpack_trees(nr, desc, &opts);
+	enable_fscache(0);
+
+	if (unpack_result)
 		goto out;
 
 	if (reset_type == MIXED || reset_type == HARD) {
