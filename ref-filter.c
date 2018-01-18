@@ -1465,7 +1465,21 @@ int populate_value(struct ref_array_item *ref)
 			name++;
 		}
 
-		if (starts_with(name, "refname"))
+		if (cat_file_info.is_cat_file) {
+			if (starts_with(name, "objectname"))
+				v->s = oid_to_hex(&ref->oid);
+			else if (starts_with(name, "objecttype"))
+				v->s = typename(ref->type);
+			else if (starts_with(name, "objectsize")) {
+				v->s = xstrfmt("%lu", ref->size);
+			} else if (starts_with(name, "objectsize:disk")) {
+				v->s = xstrfmt("%"PRIuMAX, (uintmax_t)ref->disk_size);
+			} else if (starts_with(name, "rest"))
+				v->s = ref->rest;
+			else if (starts_with(name, "deltabase"))
+				v->s = xstrdup(oid_to_hex(ref->delta_base_oid));
+			continue;
+		} else if (starts_with(name, "refname"))
 			refname = get_refname(atom, ref);
 		else if (starts_with(name, "symref"))
 			refname = get_symref(atom, ref);
@@ -2207,6 +2221,7 @@ int format_ref_array_item(struct ref_array_item *info,
 {
 	const char *cp, *sp, *ep;
 	struct ref_formatting_state state = REF_FORMATTING_STATE_INIT;
+	int retval = 0;
 
 	state.quote_style = format->quote_style;
 	push_stack_element(&state.stack);
@@ -2223,6 +2238,8 @@ int format_ref_array_item(struct ref_array_item *info,
 			return -1;
 		atomv->handler(atomv, &state);
 	}
+	if (cat_file_info.is_cat_file && strlen(format->format) == 0)
+		retval = check_and_fill_for_cat(info);
 	if (*cp) {
 		sp = cp + strlen(cp);
 		append_literal(cp, sp, &state);
@@ -2236,7 +2253,7 @@ int format_ref_array_item(struct ref_array_item *info,
 		die(_("format: %%(end) atom missing"));
 	strbuf_addbuf(final_buf, &state.stack->output);
 	pop_stack_element(&state.stack);
-	return 0;
+	return retval;
 }
 
 int show_ref_array_item(struct ref_array_item *info,

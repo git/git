@@ -176,45 +176,6 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 	return 0;
 }
 
-static int is_atom(const char *atom, const char *s, int slen)
-{
-	int alen = strlen(atom);
-	return alen == slen && !memcmp(atom, s, alen);
-}
-
-static void expand_atom(struct strbuf *sb, const char *atom, int len,
-			 struct ref_array_item *item)
-{
-	if (is_atom("objectname", atom, len))
-		strbuf_addstr(sb, oid_to_hex(&item->oid));
-	else if (is_atom("objecttype", atom, len))
-		strbuf_addstr(sb, typename(item->type));
-	else if (is_atom("objectsize", atom, len))
-		strbuf_addf(sb, "%lu", item->size);
-	else if (is_atom("objectsize:disk", atom, len))
-		strbuf_addf(sb, "%"PRIuMAX, (uintmax_t)item->disk_size);
-	else if (is_atom("rest", atom, len)) {
-		if (item->rest)
-			strbuf_addstr(sb, item->rest);
-	} else if (is_atom("deltabase", atom, len))
-		strbuf_addstr(sb, oid_to_hex(item->delta_base_oid));
-}
-
-static size_t expand_format(struct strbuf *sb, const char *start, void *data)
-{
-	const char *end;
-	struct ref_array_item *item = data;
-
-	if (*start != '(')
-		return 0;
-	end = strchr(start + 1, ')');
-	if (!end)
-		die("format element '%s' does not end in ')'", start);
-
-	expand_atom(sb, start + 1, end - start - 1, item);
-	return end - start + 1;
-}
-
 static void batch_write(struct batch_options *opt, const void *data, int len)
 {
 	if (opt->buffer_output) {
@@ -282,23 +243,19 @@ static void print_object_or_die(struct batch_options *opt, struct expand_data *d
 static void batch_object_write(const char *obj_name, struct batch_options *opt,
 			       struct expand_data *data)
 {
-	struct strbuf buf = STRBUF_INIT;
 	struct ref_array_item item = {0};
 
 	item.oid = data->oid;
 	item.rest = data->rest;
 	item.objectname = obj_name;
 
-	if (populate_value(&item))
+	if (show_ref_array_item(&item, &opt->format))
 		return;
-
-	data->type = item.type;
-	strbuf_expand(&buf, opt->format.format, expand_format, &item);
-	strbuf_addch(&buf, '\n');
-	batch_write(opt, buf.buf, buf.len);
-	strbuf_release(&buf);
+	if (!opt->buffer_output)
+		fflush(stdout);
 
 	if (opt->print_contents) {
+		data->type = item.type;
 		print_object_or_die(opt, data);
 		batch_write(opt, "\n", 1);
 	}
