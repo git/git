@@ -40,6 +40,13 @@ struct ref_array_item {
 	const char *symref;
 	struct commit *commit;
 	struct atom_value *value;
+	enum object_type type;
+	unsigned long size;
+	off_t disk_size;
+	const char *rest;
+	struct object_id delta_base_oid;
+	/* Need it for better explanation in error log. */
+	const char *start_of_request;
 	char refname[FLEX_ARRAY];
 };
 
@@ -72,6 +79,36 @@ struct ref_filter {
 		verbose;
 };
 
+struct expand_data {
+	struct object_id oid;
+	enum object_type type;
+	unsigned long size;
+	off_t disk_size;
+	const char *rest;
+	struct object_id delta_base_oid;
+
+	/*
+	 * Whether to split the input on whitespace before feeding it to
+	 * get_sha1; this is decided during the mark_query phase based on
+	 * whether we have a %(rest) token in our format.
+	 */
+	int split_on_whitespace;
+
+	/*
+	 * After a mark_query run, this object_info is set up to be
+	 * passed to sha1_object_info_extended. It will point to the data
+	 * elements above, so you can retrieve the response from there.
+	 */
+	struct object_info info;
+
+	/*
+	 * This flag will be true if the requested batch format and options
+	 * don't require us to call sha1_object_info, which can then be
+	 * optimized out.
+	 */
+	unsigned skip_object_info : 1;
+};
+
 struct ref_format {
 	/*
 	 * Set these to define the format; make sure you call
@@ -83,6 +120,14 @@ struct ref_format {
 
 	/* Internal state to ref-filter */
 	int need_color_reset_at_eol;
+
+	/*
+	 * Helps to move all formatting logic from cat-file to ref-filter,
+	 * hopefully would be reduced later.
+	 */
+	int is_cat;
+	int *split_on_whitespace;
+	int all_objects;
 };
 
 #define REF_FORMAT_INIT { NULL, 0, -1 }
@@ -134,5 +179,8 @@ void setup_ref_filter_porcelain_msg(void);
  */
 void pretty_print_ref(const char *name, const unsigned char *sha1,
 		      const struct ref_format *format);
+
+/* Fill the values of request and prepare all data for final string creation */
+int populate_value(struct ref_array_item *ref);
 
 #endif /*  REF_FILTER_H  */

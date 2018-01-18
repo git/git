@@ -13,15 +13,16 @@
 #include "tree-walk.h"
 #include "sha1-array.h"
 #include "packfile.h"
+#include "ref-filter.h"
 
 struct batch_options {
+	struct ref_format format;
 	int enabled;
 	int follow_symlinks;
 	int print_contents;
 	int buffer_output;
 	int all_objects;
 	int cmdmode; /* may be 'w' or 'c' for --filters or --textconv */
-	const char *format;
 };
 
 static const char *force_path;
@@ -175,42 +176,6 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 	return 0;
 }
 
-struct expand_data {
-	struct object_id oid;
-	enum object_type type;
-	unsigned long size;
-	off_t disk_size;
-	const char *rest;
-	struct object_id delta_base_oid;
-
-	/*
-	 * If mark_query is true, we do not expand anything, but rather
-	 * just mark the object_info with items we wish to query.
-	 */
-	int mark_query;
-
-	/*
-	 * Whether to split the input on whitespace before feeding it to
-	 * get_sha1; this is decided during the mark_query phase based on
-	 * whether we have a %(rest) token in our format.
-	 */
-	int split_on_whitespace;
-
-	/*
-	 * After a mark_query run, this object_info is set up to be
-	 * passed to sha1_object_info_extended. It will point to the data
-	 * elements above, so you can retrieve the response from there.
-	 */
-	struct object_info info;
-
-	/*
-	 * This flag will be true if the requested batch format and options
-	 * don't require us to call sha1_object_info, which can then be
-	 * optimized out.
-	 */
-	unsigned skip_object_info : 1;
-};
-
 static int is_atom(const char *atom, const char *s, int slen)
 {
 	int alen = strlen(atom);
@@ -218,46 +183,26 @@ static int is_atom(const char *atom, const char *s, int slen)
 }
 
 static void expand_atom(struct strbuf *sb, const char *atom, int len,
-			void *vdata)
+			 struct ref_array_item *item)
 {
-	struct expand_data *data = vdata;
-
-	if (is_atom("objectname", atom, len)) {
-		if (!data->mark_query)
-			strbuf_addstr(sb, oid_to_hex(&data->oid));
-	} else if (is_atom("objecttype", atom, len)) {
-		if (data->mark_query)
-			data->info.typep = &data->type;
-		else
-			strbuf_addstr(sb, typename(data->type));
-	} else if (is_atom("objectsize", atom, len)) {
-		if (data->mark_query)
-			data->info.sizep = &data->size;
-		else
-			strbuf_addf(sb, "%lu", data->size);
-	} else if (is_atom("objectsize:disk", atom, len)) {
-		if (data->mark_query)
-			data->info.disk_sizep = &data->disk_size;
-		else
-			strbuf_addf(sb, "%"PRIuMAX, (uintmax_t)data->disk_size);
-	} else if (is_atom("rest", atom, len)) {
-		if (data->mark_query)
-			data->split_on_whitespace = 1;
-		else if (data->rest)
-			strbuf_addstr(sb, data->rest);
-	} else if (is_atom("deltabase", atom, len)) {
-		if (data->mark_query)
-			data->info.delta_base_sha1 = data->delta_base_oid.hash;
-		else
-			strbuf_addstr(sb,
-				      oid_to_hex(&data->delta_base_oid));
-	} else
-		die("unknown format element: %.*s", len, atom);
+	if (is_atom("objectname", atom, len))
+		strbuf_addstr(sb, oid_to_hex(&item->objectname));
+	else if (is_atom("objecttype", atom, len))
+		strbuf_addstr(sb, typename(item->type));
+	else if (is_atom("objectsize", atom, len))
+		strbuf_addf(sb, "%lu", item->size);
+	else if (is_atom("objectsize:disk", atom, len))
+		strbuf_addf(sb, "%"PRIuMAX, (uintmax_t)item->disk_size);
+	else if (is_atom("rest", atom, len))
+		strbuf_addstr(sb, item->rest);
+	else if (is_atom("deltabase", atom, len))
+		strbuf_addstr(sb, oid_to_hex(&item->delta_base_oid));
 }
 
 static size_t expand_format(struct strbuf *sb, const char *start, void *data)
 {
 	const char *end;
+	struct ref_array_item *item = data;
 
 	if (*start != '(')
 		return 0;
@@ -265,8 +210,7 @@ static size_t expand_format(struct strbuf *sb, const char *start, void *data)
 	if (!end)
 		die("format element '%s' does not end in ')'", start);
 
-	expand_atom(sb, start + 1, end - start - 1, data);
-
+	expand_atom(sb, start + 1, end - start - 1, item);
 	return end - start + 1;
 }
 
@@ -338,17 +282,16 @@ static void batch_object_write(const char *obj_name, struct batch_options *opt,
 			       struct expand_data *data)
 {
 	struct strbuf buf = STRBUF_INIT;
+	struct ref_array_item item;
 
-	if (!data->skip_object_info &&
-	    sha1_object_info_extended(data->oid.hash, &data->info,
-				      OBJECT_INFO_LOOKUP_REPLACE) < 0) {
-		printf("%s missing\n",
-		       obj_name ? obj_name : oid_to_hex(&data->oid));
-		fflush(stdout);
-		return;
-	}
+	item.objectname = data->oid;
+	item.rest = data->rest;
+	item.start_of_request = obj_name;
 
-	strbuf_expand(&buf, opt->format, expand_format, data);
+	if (populate_value(&item)) return;
+	data->type = item.type;
+
+	strbuf_expand(&buf, opt->format.format, expand_format, &item);
 	strbuf_addch(&buf, '\n');
 	batch_write(opt, buf.buf, buf.len);
 	strbuf_release(&buf);
@@ -441,8 +384,8 @@ static int batch_objects(struct batch_options *opt)
 	int save_warning;
 	int retval = 0;
 
-	if (!opt->format)
-		opt->format = "%(objectname) %(objecttype) %(objectsize)";
+	if (!opt->format.format)
+		opt->format.format = "%(objectname) %(objecttype) %(objectsize)";
 
 	/*
 	 * Expand once with our special mark_query flag, which will prime the
@@ -450,17 +393,12 @@ static int batch_objects(struct batch_options *opt)
 	 * object.
 	 */
 	memset(&data, 0, sizeof(data));
-	data.mark_query = 1;
-	strbuf_expand(&buf, opt->format, expand_format, &data);
-	data.mark_query = 0;
+	opt->format.is_cat = 1;
+	opt->format.split_on_whitespace = &data.split_on_whitespace;
+	opt->format.all_objects = opt->all_objects;
+	verify_ref_format(&opt->format);
 	if (opt->cmdmode)
 		data.split_on_whitespace = 1;
-
-	if (opt->all_objects) {
-		struct object_info empty = OBJECT_INFO_INIT;
-		if (!memcmp(&data.info, &empty, sizeof(empty)))
-			data.skip_object_info = 1;
-	}
 
 	/*
 	 * If we are printing out the object, then always fill in the type,
@@ -543,7 +481,7 @@ static int batch_option_callback(const struct option *opt,
 
 	bo->enabled = 1;
 	bo->print_contents = !strcmp(opt->long_name, "batch");
-	bo->format = arg;
+	bo->format.format = arg;
 
 	return 0;
 }
@@ -552,7 +490,7 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 {
 	int opt = 0;
 	const char *exp_type = NULL, *obj_name = NULL;
-	struct batch_options batch = {0};
+	struct batch_options batch = { REF_FORMAT_INIT };
 	int unknown_type = 0;
 
 	const struct option options[] = {

@@ -100,6 +100,8 @@ static struct used_atom {
 	} u;
 } *used_atom;
 static int used_atom_cnt, need_tagged, need_symref;
+struct expand_data cat_file_info;
+static int is_cat = 0;
 
 static void color_atom_parser(const struct ref_format *format, struct used_atom *atom, const char *color_value)
 {
@@ -251,6 +253,32 @@ static void objectname_atom_parser(const struct ref_format *format, struct used_
 		die(_("unrecognized %%(objectname) argument: %s"), arg);
 }
 
+static void objectsize_atom_parser(const struct ref_format *format, struct used_atom *atom, const char *arg)
+{
+	if (!arg)
+		cat_file_info.info.sizep = &cat_file_info.size;
+	else if (!strcmp(arg, "disk"))
+		cat_file_info.info.disk_sizep = &cat_file_info.disk_size;
+	else
+		die(_("urecognized %%(objectsize) argument: %s"), arg);
+}
+
+static void objecttype_atom_parser(const struct ref_format *format, struct used_atom *atom, const char *arg)
+{
+	if (!arg)
+		cat_file_info.info.typep = &cat_file_info.type;
+	else
+		die(_("urecognized %%(objecttype) argument: %s"), arg);
+}
+
+static void deltabase_atom_parser(const struct ref_format *format, struct used_atom *atom, const char *arg)
+{
+	if (!arg)
+		cat_file_info.info.delta_base_sha1 = cat_file_info.delta_base_oid.hash;
+	else
+		die(_("urecognized %%(deltabase) argument: %s"), arg);
+}
+
 static void refname_atom_parser(const struct ref_format *format, struct used_atom *atom, const char *arg)
 {
 	refname_atom_parser_internal(&atom->u.refname, arg, atom->name);
@@ -325,14 +353,14 @@ static void head_atom_parser(const struct ref_format *format, struct used_atom *
 	atom->u.head = resolve_refdup("HEAD", RESOLVE_REF_READING, NULL, NULL);
 }
 
-static struct {
+static struct valid_atom {
 	const char *name;
 	cmp_type cmp_type;
 	void (*parser)(const struct ref_format *format, struct used_atom *atom, const char *arg);
 } valid_atom[] = {
 	{ "refname" , FIELD_STR, refname_atom_parser },
-	{ "objecttype" },
-	{ "objectsize", FIELD_ULONG },
+	{ "objecttype", FIELD_STR, objecttype_atom_parser },
+	{ "objectsize", FIELD_ULONG, objectsize_atom_parser },
 	{ "objectname", FIELD_STR, objectname_atom_parser },
 	{ "tree" },
 	{ "parent" },
@@ -369,6 +397,8 @@ static struct {
 	{ "if", FIELD_STR, if_atom_parser },
 	{ "then" },
 	{ "else" },
+	{ "rest" },
+	{ "deltabase", FIELD_STR, deltabase_atom_parser },
 };
 
 #define REF_FORMATTING_STATE_INIT  { 0, NULL }
@@ -457,6 +487,8 @@ static int parse_ref_filter_atom(const struct ref_format *format,
 		need_tagged = 1;
 	if (!strcmp(valid_atom[i].name, "symref"))
 		need_symref = 1;
+	if (!strcmp(valid_atom[i].name, "rest"))
+		*format->split_on_whitespace = 1;
 	return at;
 }
 
@@ -700,6 +732,7 @@ int verify_ref_format(struct ref_format *format)
 {
 	const char *cp, *sp;
 
+	is_cat = format->is_cat;
 	format->need_color_reset_at_eol = 0;
 	for (cp = format->format; *cp && (sp = find_next(cp)); ) {
 		const char *color, *ep = strchr(sp, ')');
@@ -708,14 +741,20 @@ int verify_ref_format(struct ref_format *format)
 		if (!ep)
 			return error(_("malformed format string %s"), sp);
 		/* sp points at "%(" and ep points at the closing ")" */
-		at = parse_ref_filter_atom(format, sp + 2, ep);
-		cp = ep + 1;
 
+		at = parse_ref_filter_atom(format, sp + 2, ep);
 		if (skip_prefix(used_atom[at].name, "color:", &color))
 			format->need_color_reset_at_eol = !!strcmp(color, "reset");
+
+		cp = ep + 1;
 	}
 	if (format->need_color_reset_at_eol && !want_color(format->use_color))
 		format->need_color_reset_at_eol = 0;
+	if (is_cat && format->all_objects) {
+		struct object_info empty = OBJECT_INFO_INIT;
+		if (!memcmp(&cat_file_info.info, &empty, sizeof(empty)))
+			cat_file_info.skip_object_info = 1;
+	}
 	return 0;
 }
 
@@ -1354,16 +1393,60 @@ static const char *get_refname(struct used_atom *atom, struct ref_array_item *re
 	return show_ref(&atom->u.refname, ref->refname);
 }
 
+static void need_object(struct ref_array_item *ref) {
+	struct object *obj;
+	const struct object_id *tagged;
+	unsigned long size;
+	int eaten;
+	void *buf = get_obj(&ref->objectname, &obj, &size, &eaten);
+	if (!buf)
+		die(_("missing object %s for %s"),
+		    oid_to_hex(&ref->objectname), ref->refname);
+	if (!obj)
+		die(_("parse_object_buffer failed on %s for %s"),
+		    oid_to_hex(&ref->objectname), ref->refname);
+
+	grab_values(ref->value, 0, obj, buf, size);
+	if (!eaten)
+		free(buf);
+
+	/*
+	 * If there is no atom that wants to know about tagged
+	 * object, we are done.
+	 */
+	if (!need_tagged || (obj->type != OBJ_TAG))
+		return;
+
+	/*
+	 * If it is a tag object, see if we use a value that derefs
+	 * the object, and if we do grab the object it refers to.
+	 */
+	tagged = &((struct tag *)obj)->tagged->oid;
+
+	/*
+	 * NEEDSWORK: This derefs tag only once, which
+	 * is good to deal with chains of trust, but
+	 * is not consistent with what deref_tag() does
+	 * which peels the onion to the core.
+	 */
+	buf = get_obj(tagged, &obj, &size, &eaten);
+	if (!buf)
+		die(_("missing object %s for %s"),
+		    oid_to_hex(tagged), ref->refname);
+	if (!obj)
+		die(_("parse_object_buffer failed on %s for %s"),
+		    oid_to_hex(tagged), ref->refname);
+	grab_values(ref->value, 1, obj, buf, size);
+	if (!eaten)
+		free(buf);
+}
+
 /*
  * Parse the object referred by ref, and grab needed value.
  */
-static void populate_value(struct ref_array_item *ref)
+int populate_value(struct ref_array_item *ref)
 {
-	void *buf;
-	struct object *obj;
-	int eaten, i;
-	unsigned long size;
-	const struct object_id *tagged;
+	int i;
 
 	ref->value = xcalloc(used_atom_cnt, sizeof(struct atom_value));
 
@@ -1372,6 +1455,22 @@ static void populate_value(struct ref_array_item *ref)
 					     NULL, NULL);
 		if (!ref->symref)
 			ref->symref = "";
+	}
+
+	if (is_cat) {
+		if (!cat_file_info.info.typep) cat_file_info.info.typep = &cat_file_info.type;
+		if (!cat_file_info.skip_object_info &&
+		    sha1_object_info_extended(ref->objectname.hash, &cat_file_info.info,
+					      OBJECT_INFO_LOOKUP_REPLACE) < 0) {
+			const char *e = ref->start_of_request;
+			printf("%s missing\n", e ? e : oid_to_hex(&ref->objectname));
+			fflush(stdout);
+			return -1;
+		}
+		ref->type = cat_file_info.type;
+		ref->size = cat_file_info.size;
+		ref->disk_size = cat_file_info.disk_size;
+		ref->delta_base_oid = cat_file_info.delta_base_oid;
 	}
 
 	/* Fill in specials first */
@@ -1477,53 +1576,12 @@ static void populate_value(struct ref_array_item *ref)
 
 	for (i = 0; i < used_atom_cnt; i++) {
 		struct atom_value *v = &ref->value[i];
-		if (v->s == NULL)
-			goto need_obj;
+		if (v->s == NULL) {
+			need_object(ref);
+			break;
+		}
 	}
-	return;
-
- need_obj:
-	buf = get_obj(&ref->objectname, &obj, &size, &eaten);
-	if (!buf)
-		die(_("missing object %s for %s"),
-		    oid_to_hex(&ref->objectname), ref->refname);
-	if (!obj)
-		die(_("parse_object_buffer failed on %s for %s"),
-		    oid_to_hex(&ref->objectname), ref->refname);
-
-	grab_values(ref->value, 0, obj, buf, size);
-	if (!eaten)
-		free(buf);
-
-	/*
-	 * If there is no atom that wants to know about tagged
-	 * object, we are done.
-	 */
-	if (!need_tagged || (obj->type != OBJ_TAG))
-		return;
-
-	/*
-	 * If it is a tag object, see if we use a value that derefs
-	 * the object, and if we do grab the object it refers to.
-	 */
-	tagged = &((struct tag *)obj)->tagged->oid;
-
-	/*
-	 * NEEDSWORK: This derefs tag only once, which
-	 * is good to deal with chains of trust, but
-	 * is not consistent with what deref_tag() does
-	 * which peels the onion to the core.
-	 */
-	buf = get_obj(tagged, &obj, &size, &eaten);
-	if (!buf)
-		die(_("missing object %s for %s"),
-		    oid_to_hex(tagged), ref->refname);
-	if (!obj)
-		die(_("parse_object_buffer failed on %s for %s"),
-		    oid_to_hex(tagged), ref->refname);
-	grab_values(ref->value, 1, obj, buf, size);
-	if (!eaten)
-		free(buf);
+	return 0;
 }
 
 /*
