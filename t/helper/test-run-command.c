@@ -56,6 +56,15 @@ int cmd_main(int argc, const char **argv)
 
 	if (argc < 3)
 		return 1;
+	while (!strcmp(argv[1], "env")) {
+		if (!argv[2])
+			die("env specifier without a value");
+		argv_array_push(&proc.env_array, argv[2]);
+		argv += 2;
+		argc -= 2;
+	}
+	if (argc < 3)
+		return 1;
 	proc.argv = (const char **)argv + 2;
 
 	if (!strcmp(argv[1], "start-command-ENOENT")) {
