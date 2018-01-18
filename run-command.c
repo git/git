@@ -6,6 +6,7 @@
 #include "thread-utils.h"
 #include "strbuf.h"
 #include "string-list.h"
+#include "quote.h"
 
 void child_process_init(struct child_process *child)
 {
@@ -556,6 +557,20 @@ static int wait_or_whine(pid_t pid, const char *argv0, int in_signal)
 	return code;
 }
 
+static void trace_run_command(const struct child_process *cp)
+{
+	struct strbuf buf = STRBUF_INIT;
+
+	if (!trace_want(&trace_default_key))
+		return;
+
+	strbuf_addf(&buf, "trace: run_command:");
+	sq_quote_argv_pretty(&buf, cp->argv);
+
+	trace_printf("%s", buf.buf);
+	strbuf_release(&buf);
+}
+
 int start_command(struct child_process *cmd)
 {
 	int need_in, need_out, need_err;
@@ -624,7 +639,8 @@ fail_pipe:
 		cmd->err = fderr[0];
 	}
 
-	trace_argv_printf(cmd->argv, "trace: run_command:");
+	trace_run_command(cmd);
+
 	fflush(NULL);
 
 #ifndef GIT_WINDOWS_NATIVE
