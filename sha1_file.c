@@ -253,8 +253,8 @@ static void fill_sha1_path(struct strbuf *buf, const unsigned char *sha1)
 
 void sha1_file_name(struct strbuf *buf, const unsigned char *sha1)
 {
-	strbuf_addf(buf, "%s/", get_object_directory());
-
+	strbuf_addstr(buf, get_object_directory());
+	strbuf_addch(buf, '/');
 	fill_sha1_path(buf, sha1);
 }
 
