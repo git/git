@@ -622,6 +622,11 @@ static void trace_run_command(const struct child_process *cp)
 		return;
 
 	strbuf_addf(&buf, "trace: run_command:");
+	if (cp->dir) {
+		strbuf_addstr(&buf, " cd ");
+		sq_quote_buf_pretty(&buf, cp->dir);
+		strbuf_addch(&buf, ';');
+	}
 	/*
 	 * The caller is responsible for initializing cp->env from
 	 * cp->env_array if needed. We only check one place.
