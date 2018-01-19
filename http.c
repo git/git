@@ -16,6 +16,7 @@
 #include "string-list.h"
 
 static struct trace_key trace_curl = TRACE_KEY_INIT(CURL);
+static int trace_curl_data = 1;
 static struct string_list cookies_to_redact = STRING_LIST_INIT_DUP;
 #if LIBCURL_VERSION_NUM >= 0x070a08
 long int git_curl_ipresolve = CURL_IPRESOLVE_WHATEVER;
@@ -695,24 +696,32 @@ static int curl_trace(CURL *handle, curl_infotype type, char *data, size_t size,
 		curl_dump_header(text, (unsigned char *)data, size, DO_FILTER);
 		break;
 	case CURLINFO_DATA_OUT:
-		text = "=> Send data";
-		curl_dump_data(text, (unsigned char *)data, size);
+		if (trace_curl_data) {
+			text = "=> Send data";
+			curl_dump_data(text, (unsigned char *)data, size);
+		}
 		break;
 	case CURLINFO_SSL_DATA_OUT:
-		text = "=> Send SSL data";
-		curl_dump_data(text, (unsigned char *)data, size);
+		if (trace_curl_data) {
+			text = "=> Send SSL data";
+			curl_dump_data(text, (unsigned char *)data, size);
+		}
 		break;
 	case CURLINFO_HEADER_IN:
 		text = "<= Recv header";
 		curl_dump_header(text, (unsigned char *)data, size, NO_FILTER);
 		break;
 	case CURLINFO_DATA_IN:
-		text = "<= Recv data";
-		curl_dump_data(text, (unsigned char *)data, size);
+		if (trace_curl_data) {
+			text = "<= Recv data";
+			curl_dump_data(text, (unsigned char *)data, size);
+		}
 		break;
 	case CURLINFO_SSL_DATA_IN:
-		text = "<= Recv SSL data";
-		curl_dump_data(text, (unsigned char *)data, size);
+		if (trace_curl_data) {
+			text = "<= Recv SSL data";
+			curl_dump_data(text, (unsigned char *)data, size);
+		}
 		break;
 
 	default:		/* we ignore unknown types by default */
@@ -857,6 +866,8 @@ static CURL *get_curl_handle(void)
 	if (getenv("GIT_CURL_VERBOSE"))
 		curl_easy_setopt(result, CURLOPT_VERBOSE, 1L);
 	setup_curl_trace(result);
+	if (getenv("GIT_TRACE_CURL_NO_DATA"))
+		trace_curl_data = 0;
 	if (getenv("GIT_REDACT_COOKIES")) {
 		string_list_split(&cookies_to_redact,
 				  getenv("GIT_REDACT_COOKIES"), ',', -1);

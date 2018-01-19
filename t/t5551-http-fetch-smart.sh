@@ -385,5 +385,17 @@ test_expect_success 'GIT_REDACT_COOKIES handles empty values' '
 	grep "Cookie:.*Foo=<redacted>" err
 '
 
+test_expect_success 'GIT_TRACE_CURL_NO_DATA prevents data from being traced' '
+	rm -rf clone &&
+	GIT_TRACE_CURL=true \
+		git clone $HTTPD_URL/smart/repo.git clone 2>err &&
+	grep "=> Send data" err &&
+
+	rm -rf clone &&
+	GIT_TRACE_CURL=true GIT_TRACE_CURL_NO_DATA=1 \
+		git clone $HTTPD_URL/smart/repo.git clone 2>err &&
+	! grep "=> Send data" err
+'
+
 stop_httpd
 test_done
