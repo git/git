@@ -1428,7 +1428,7 @@ static int check_and_fill_for_cat(struct ref_array_item *ref)
  * Parse the object referred by ref, and grab needed value.
  * Return 0 if everything was successful, -1 otherwise.
  */
-int populate_value(struct ref_array_item *ref)
+static int populate_value(struct ref_array_item *ref)
 {
 	void *buf;
 	struct object *obj;

@@ -174,9 +174,6 @@ void setup_ref_filter_porcelain_msg(void);
 void pretty_print_ref(const char *name, const unsigned char *sha1,
 		      const struct ref_format *format);
 
-/* Fill the values of request and prepare all data for final string creation */
-int populate_value(struct ref_array_item *ref);
-
 /* Search for atom in given format. */
 int is_atom_used(const struct ref_format *format, const char *atom);
 
