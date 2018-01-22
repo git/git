@@ -824,8 +824,12 @@ static void grab_common_values(struct atom_value *val, int deref, struct object 
 		else if (!strcmp(name, "objectsize")) {
 			v->value = sz;
 			v->s = xstrfmt("%lu", sz);
-		}
-		else if (deref)
+		} else if (!strcmp(name, "objectsize:disk")) {
+			if (cat_file_info.is_cat_file) {
+				v->value = cat_file_info.disk_size;
+				v->s = xstrfmt("%"PRIuMAX, (uintmax_t)v->value);
+			}
+		} else if (deref)
 			grab_objectname(name, obj->oid.hash, v, &used_atom[i]);
 	}
 }
@@ -1465,21 +1469,7 @@ static int populate_value(struct ref_array_item *ref)
 			name++;
 		}
 
-		if (cat_file_info.is_cat_file) {
-			if (starts_with(name, "objectname"))
-				v->s = oid_to_hex(&ref->oid);
-			else if (starts_with(name, "objecttype"))
-				v->s = typename(ref->type);
-			else if (starts_with(name, "objectsize")) {
-				v->s = xstrfmt("%lu", ref->size);
-			} else if (starts_with(name, "objectsize:disk")) {
-				v->s = xstrfmt("%"PRIuMAX, (uintmax_t)ref->disk_size);
-			} else if (starts_with(name, "rest"))
-				v->s = ref->rest;
-			else if (starts_with(name, "deltabase"))
-				v->s = xstrdup(oid_to_hex(ref->delta_base_oid));
-			continue;
-		} else if (starts_with(name, "refname"))
+		if (starts_with(name, "refname"))
 			refname = get_refname(atom, ref);
 		else if (starts_with(name, "symref"))
 			refname = get_symref(atom, ref);
@@ -1534,6 +1524,15 @@ static int populate_value(struct ref_array_item *ref)
 				v->s = "*";
 			else
 				v->s = " ";
+			continue;
+		} else if (starts_with(name, "rest")) {
+			v->s = ref->rest ? ref->rest : "";
+			continue;
+		} else if (starts_with(name, "deltabase")) {
+			if (ref->delta_base_oid)
+				v->s = xstrdup(oid_to_hex(ref->delta_base_oid));
+			else
+				v->s = "";
 			continue;
 		} else if (starts_with(name, "align")) {
 			v->handler = align_atom_handler;
