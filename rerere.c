@@ -159,8 +159,8 @@ static struct rerere_dir *find_rerere_dir(const char *hex)
 		ALLOC_GROW(rerere_dir, rerere_dir_nr + 1, rerere_dir_alloc);
 		/* ... and add it in. */
 		rerere_dir_nr++;
-		memmove(rerere_dir + pos + 1, rerere_dir + pos,
-			(rerere_dir_nr - pos - 1) * sizeof(*rerere_dir));
+		MOVE_ARRAY(rerere_dir + pos + 1, rerere_dir + pos,
+			   rerere_dir_nr - pos - 1);
 		rerere_dir[pos] = rr_dir;
 		scan_rerere_dir(rr_dir);
 	}
