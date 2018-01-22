@@ -1356,8 +1356,9 @@ static const char *get_refname(struct used_atom *atom, struct ref_array_item *re
 
 /*
  * Parse the object referred by ref, and grab needed value.
+ * Return 0 if everything was successful, -1 otherwise.
  */
-static void populate_value(struct ref_array_item *ref)
+static int populate_value(struct ref_array_item *ref)
 {
 	void *buf;
 	struct object *obj;
@@ -1482,7 +1483,7 @@ static void populate_value(struct ref_array_item *ref)
 		}
 	}
 	if (used_atom_cnt <= i)
-		return;
+		return 0;
 
 	buf = get_obj(&ref->objectname, &obj, &size, &eaten);
 	if (!buf)
@@ -1501,7 +1502,7 @@ static void populate_value(struct ref_array_item *ref)
 	 * object, we are done.
 	 */
 	if (!need_tagged || (obj->type != OBJ_TAG))
-		return;
+		return 0;
 
 	/*
 	 * If it is a tag object, see if we use a value that derefs
@@ -1525,19 +1526,24 @@ static void populate_value(struct ref_array_item *ref)
 	grab_values(ref->value, 1, obj, buf, size);
 	if (!eaten)
 		free(buf);
+
+	return 0;
 }
 
 /*
  * Given a ref, return the value for the atom.  This lazily gets value
  * out of the object by calling populate value.
+ * Return 0 if everything was successful, -1 otherwise.
  */
-static void get_ref_atom_value(struct ref_array_item *ref, int atom, struct atom_value **v)
+static int get_ref_atom_value(struct ref_array_item *ref, int atom, struct atom_value **v)
 {
+	int retval = 0;
 	if (!ref->value) {
-		populate_value(ref);
+		retval = populate_value(ref);
 		fill_missing_values(ref->value);
 	}
 	*v = &ref->value[atom];
+	return retval;
 }
 
 /*
@@ -2122,7 +2128,7 @@ static void append_literal(const char *cp, const char *ep, struct ref_formatting
 	}
 }
 
-void format_ref_array_item(struct ref_array_item *info,
+int format_ref_array_item(struct ref_array_item *info,
 			   const struct ref_format *format,
 			   struct strbuf *final_buf)
 {
@@ -2138,9 +2144,10 @@ void format_ref_array_item(struct ref_array_item *info,
 		ep = strchr(sp, ')');
 		if (cp < sp)
 			append_literal(cp, sp, &state);
-		get_ref_atom_value(info,
-				   parse_ref_filter_atom(format, sp + 2, ep),
-				   &atomv);
+		if (get_ref_atom_value(info,
+				       parse_ref_filter_atom(format, sp + 2, ep),
+				       &atomv))
+			return -1;
 		atomv->handler(atomv, &state);
 	}
 	if (*cp) {
@@ -2156,17 +2163,21 @@ void format_ref_array_item(struct ref_array_item *info,
 		die(_("format: %%(end) atom missing"));
 	strbuf_addbuf(final_buf, &state.stack->output);
 	pop_stack_element(&state.stack);
+	return 0;
 }
 
-void show_ref_array_item(struct ref_array_item *info,
+int show_ref_array_item(struct ref_array_item *info,
 			 const struct ref_format *format)
 {
 	struct strbuf final_buf = STRBUF_INIT;
+	int retval = format_ref_array_item(info, format, &final_buf);
 
-	format_ref_array_item(info, format, &final_buf);
-	fwrite(final_buf.buf, 1, final_buf.len, stdout);
+	if (!retval) {
+		fwrite(final_buf.buf, 1, final_buf.len, stdout);
+		putchar('\n');
+	}
 	strbuf_release(&final_buf);
-	putchar('\n');
+	return retval;
 }
 
 void pretty_print_ref(const char *name, const unsigned char *sha1,
