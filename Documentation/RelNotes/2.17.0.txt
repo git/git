@@ -1,0 +1,19 @@
+Git 2.17 Release Notes
+======================
+
+Updates since v2.16
+-------------------
+
+UI, Workflows & Features
+
+
+Performance, Internal Implementation, Development Support etc.
+
+
+Also contains various documentation updates and code clean-ups.
+
+
+Fixes since v2.16
+-----------------
+
+ * Other minor doc, test and build updates and code cleanups.
