@@ -6,8 +6,18 @@ Updates since v2.16
 
 UI, Workflows & Features
 
+ * "diff" family of commands learned "--find-object=<object-id>" option
+   to limit the findings to changes that involve the named object.
+   (merge 4d8c51aa19 sb/diff-blobfind-pickaxe later to maint).
+
 
 Performance, Internal Implementation, Development Support etc.
+
+ * More perf tests for threaded grep
+   (merge 7b31b55db1 ab/perf-grep-threads later to maint).
+
+ * "perf" test output can be sent to codespeed server.
+   (merge 19cf57a92e cc/codespeed later to maint).
 
 
 Also contains various documentation updates and code clean-ups.
@@ -16,4 +26,59 @@ Also contains various documentation updates and code clean-ups.
 Fixes since v2.16
 -----------------
 
+ * An old regression in "git describe --all $annotated_tag^0" has been
+   fixed.
+   (merge 1bba00130a dk/describe-all-output-fix later to maint).
+
+ * "git status" after moving a path in the working tree (hence making
+   it appear "removed") and then adding with the -N option (hence
+   making that appear "added") detected it as a rename, but did not
+   report the  old and new pathnames correctly.
+   (merge 176ea74793 nd/ita-wt-renames-in-status later to maint).
+
+ * "git svn dcommit" did not take into account the fact that a
+   svn+ssh:// URL with a username@ (typically used for pushing) refers
+   to the same SVN repository without the username@ and failed when
+   svn.pushmergeinfo option is set.
+   (merge 8aaed892fd jm/svn-pushmergeinfo-fix later to maint).
+
+ * API clean-up around revision traversal.
+   (merge 6fcec2f9ae rs/lose-leak-pending later to maint).
+
+ * "git merge -Xours/-Xtheirs" learned to use our/their version when
+   resolving a conflicting updates to a symbolic link.
+   (merge fd48b46474 jc/merge-symlink-ours-theirs later to maint).
+
+ * "git clone $there $here" is allowed even when here directory exists
+   as long as it is an empty directory, but the command incorrectly
+   removed it upon a failure of the operation.
+   (merge d45420c1c8 jk/abort-clone-with-existing-dest later to maint).
+
+ * "git commit --fixup" did not allow "-m<message>" option to be used
+   at the same time; allow it to annotate resulting commit with more
+   text.
+   (merge 30884c9afc ab/commit-m-with-fixup later to maint).
+
+ * When resetting the working tree files recursively, the working tree
+   of submodules are now also reset to match.
+   (merge 7dcc1f4df8 sb/submodule-update-reset-fix later to maint).
+
+ * "git stash -- <pathspec>" incorrectly blew away untracked files in
+   the directory that matched the pathspec, which has been corrected.
+   (merge bba067d2fa tg/stash-with-pathspec-fix later to maint).
+
+ * Instead of maintaining home-grown email address parsing code, ship
+   a copy of reasonably recent Mail::Address to be used as a fallback
+   in 'git send-email' when the platform lacks it.
+   (merge d60be8acab mm/send-email-fallback-to-local-mail-address later to maint).
+
+ * "git add -p" was taught to ignore local changes to submodules as
+   they do not interfere with the partial addition of regular changes
+   anyway.
+   (merge 12434efc1d nd/add-i-ignore-submodules later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
+   (merge e2a5a028c7 bw/oidmap-autoinit later to maint).
+   (merge f0a6068a9f ys/bisect-object-id-missing-conversion-fix later to maint).
+   (merge 30221a3389 as/read-tree-prefix-doc-fix later to maint).
+   (merge 9bd2ce5432 ab/doc-cat-file-e-still-shows-errors later to maint).
