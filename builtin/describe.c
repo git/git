@@ -274,10 +274,13 @@ static void append_name(struct commit_name *n, struct strbuf *dst)
 		n->name_checked = 1;
 	}
 
-	if (n->tag)
+	if (n->tag) {
+		if (all)
+			strbuf_addstr(dst, "tags/");
 		strbuf_addstr(dst, n->tag->tag);
-	else
+	} else {
 		strbuf_addstr(dst, n->path);
+	}
 }
 
 static void append_suffix(int depth, const struct object_id *oid, struct strbuf *dst)
