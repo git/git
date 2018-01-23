@@ -1251,6 +1251,11 @@ static int git_default_core_config(const char *var, const char *value)
 		return 0;
 	}
 
+	if (!strcmp(var, "core.partialclonefilter")) {
+		return git_config_string(&core_partial_clone_filter_default,
+					 var, value);
+	}
+
 	/* Add other config variables here and to Documentation/config.txt. */
 	return 0;
 }
