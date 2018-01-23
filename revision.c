@@ -2078,7 +2078,7 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->grep_filter.pattern_type_option = GREP_PATTERN_TYPE_ERE;
 	} else if (!strcmp(arg, "--regexp-ignore-case") || !strcmp(arg, "-i")) {
 		revs->grep_filter.ignore_case = 1;
-		revs->diffopt.flags.pickaxe_ignore_case = 1;
+		revs->diffopt.pickaxe_opts |= DIFF_PICKAXE_IGNORE_CASE;
 	} else if (!strcmp(arg, "--fixed-strings") || !strcmp(arg, "-F")) {
 		revs->grep_filter.pattern_type_option = GREP_PATTERN_TYPE_FIXED;
 	} else if (!strcmp(arg, "--perl-regexp") || !strcmp(arg, "-P")) {
@@ -2409,10 +2409,13 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 		revs->diff = 1;
 
 	/* Pickaxe, diff-filter and rename following need diffs */
-	if (revs->diffopt.pickaxe ||
+	if ((revs->diffopt.pickaxe_opts & DIFF_PICKAXE_KINDS_MASK) ||
 	    revs->diffopt.filter ||
 	    revs->diffopt.flags.follow_renames)
 		revs->diff = 1;
+
+	if (revs->diffopt.objfind)
+		revs->simplify_history = 0;
 
 	if (revs->topo_order)
 		revs->limited = 1;
