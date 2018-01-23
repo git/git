@@ -157,6 +157,8 @@ static char *cached_accept_language;
 
 static char *http_ssl_backend;
 
+static int http_schannel_check_revoke = 1;
+
 size_t fread_buffer(char *ptr, size_t eltsize, size_t nmemb, void *buffer_)
 {
 	size_t size = eltsize * nmemb;
@@ -307,6 +309,11 @@ static int http_options(const char *var, const char *value, void *cb)
 	if (!strcmp("http.sslbackend", var)) {
 		free(http_ssl_backend);
 		http_ssl_backend = xstrdup_or_null(value);
+		return 0;
+	}
+
+	if (!strcmp("http.schannelcheckrevoke", var)) {
+		http_schannel_check_revoke = git_config_bool(var, value);
 		return 0;
 	}
 
@@ -810,6 +817,16 @@ static CURL *get_curl_handle(void)
 				curl_deleg);
 	}
 #endif
+
+	if (http_ssl_backend && !strcmp("schannel", http_ssl_backend) &&
+	    !http_schannel_check_revoke) {
+#if LIBCURL_VERSION_NUM >= 0x072c00
+		curl_easy_setopt(result, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NO_REVOKE);
+#else
+		warning("CURLSSLOPT_NO_REVOKE not applied to curl SSL options because\n"
+			"your curl version is too old (>= 7.44.0)");
+#endif
+	}
 
 	if (http_proactive_auth)
 		init_curl_http_auth(result);
