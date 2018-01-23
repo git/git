@@ -81,12 +81,11 @@ OPTIONS
 * when both sides add a path identically.  The resolution
   is to add that path.
 
---prefix=<prefix>/::
+--prefix=<prefix>::
 	Keep the current index contents, and read the contents
 	of the named tree-ish under the directory at `<prefix>`.
 	The command will refuse to overwrite entries that already
-	existed in the original index file. Note that the `<prefix>/`
-	value must end with a slash.
+	existed in the original index file.
 
 --exclude-per-directory=<gitignore>::
 	When running the command with `-u` and `-m` options, the
