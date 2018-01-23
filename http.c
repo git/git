@@ -318,7 +318,7 @@ static int http_options(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
-	if (!strcmp("http.schannel.checkrevoke", var)) {
+	if (!strcmp("http.schannelcheckrevoke", var)) {
 		http_schannel_check_revoke = git_config_bool(var, value);
 		return 0;
 	}
@@ -831,7 +831,7 @@ static CURL *get_curl_handle(void)
 
 	if (http_ssl_backend && !strcmp("schannel", http_ssl_backend) &&
 	    !http_schannel_check_revoke) {
-#if LIBCURL_VERSION_NUM >= 0x074400
+#if LIBCURL_VERSION_NUM >= 0x072c00
 		curl_easy_setopt(result, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NO_REVOKE);
 #else
 		warning("CURLSSLOPT_NO_REVOKE not applied to curl SSL options because\n"
