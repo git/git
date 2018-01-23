@@ -9,6 +9,7 @@
 #include "list-objects.h"
 #include "list-objects-filter.h"
 #include "list-objects-filter-options.h"
+#include "packfile.h"
 
 static void process_blob(struct rev_info *revs,
 			 struct blob *blob,
@@ -28,6 +29,20 @@ static void process_blob(struct rev_info *revs,
 	if (!obj)
 		die("bad blob object");
 	if (obj->flags & (UNINTERESTING | SEEN))
+		return;
+
+	/*
+	 * Pre-filter known-missing objects when explicitly requested.
+	 * Otherwise, a missing object error message may be reported
+	 * later (depending on other filtering criteria).
+	 *
+	 * Note that this "--exclude-promisor-objects" pre-filtering
+	 * may cause the actual filter to report an incomplete list
+	 * of missing objects.
+	 */
+	if (revs->exclude_promisor_objects &&
+	    !has_object_file(&obj->oid) &&
+	    is_promisor_object(&obj->oid))
 		return;
 
 	pathlen = path->len;
@@ -91,6 +106,8 @@ static void process_tree(struct rev_info *revs,
 		all_entries_interesting: entry_not_interesting;
 	int baselen = base->len;
 	enum list_objects_filter_result r = LOFR_MARK_SEEN | LOFR_DO_SHOW;
+	int gently = revs->ignore_missing_links ||
+		     revs->exclude_promisor_objects;
 
 	if (!revs->tree_objects)
 		return;
@@ -98,9 +115,19 @@ static void process_tree(struct rev_info *revs,
 		die("bad tree object");
 	if (obj->flags & (UNINTERESTING | SEEN))
 		return;
-	if (parse_tree_gently(tree, revs->ignore_missing_links) < 0) {
+	if (parse_tree_gently(tree, gently) < 0) {
 		if (revs->ignore_missing_links)
 			return;
+
+		/*
+		 * Pre-filter known-missing tree objects when explicitly
+		 * requested.  This may cause the actual filter to report
+		 * an incomplete list of missing objects.
+		 */
+		if (revs->exclude_promisor_objects &&
+		    is_promisor_object(&obj->oid))
+			return;
+
 		die("bad tree object %s", oid_to_hex(&obj->oid));
 	}
 

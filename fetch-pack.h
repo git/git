@@ -29,6 +29,14 @@ struct fetch_pack_args {
 	unsigned cloning:1;
 	unsigned update_shallow:1;
 	unsigned deepen:1;
+	unsigned from_promisor:1;
+
+	/*
+	 * If 1, fetch_pack() will also not modify any object flags.
+	 * This allows fetch_pack() to safely be called by any function,
+	 * regardless of which object flags it uses (if any).
+	 */
+	unsigned no_dependents:1;
 };
 
 /*
