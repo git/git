@@ -701,7 +701,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		}
 	}
 
-	if (have_option_m) {
+	if (have_option_m && !fixup_message) {
 		strbuf_addbuf(&sb, &message);
 		hook_arg1 = "message";
 	} else if (logfile && !strcmp(logfile, "-")) {
@@ -731,6 +731,8 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		ctx.output_encoding = get_commit_output_encoding();
 		format_commit_message(commit, "fixup! %s\n\n",
 				      &sb, &ctx);
+		if (have_option_m)
+			strbuf_addbuf(&sb, &message);
 		hook_arg1 = "message";
 	} else if (!stat(git_path_merge_msg(), &statbuf)) {
 		/*
@@ -1197,8 +1199,8 @@ static int parse_and_validate_options(int argc, const char *argv[],
 		f++;
 	if (f > 1)
 		die(_("Only one of -c/-C/-F/--fixup can be used."));
-	if (have_option_m && f > 0)
-		die((_("Option -m cannot be combined with -c/-C/-F/--fixup.")));
+	if (have_option_m && (edit_message || use_message || logfile))
+		die((_("Option -m cannot be combined with -c/-C/-F.")));
 	if (f || have_option_m)
 		template_file = NULL;
 	if (edit_message)
