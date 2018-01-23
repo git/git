@@ -246,7 +246,7 @@ static int parse_ws_error_highlight(const char *arg)
  */
 void init_diff_ui_defaults(void)
 {
-	diff_detect_rename_default = 1;
+	diff_detect_rename_default = DIFF_DETECT_RENAME;
 }
 
 int git_diff_heuristic_config(const char *var, const char *value, void *cb)
