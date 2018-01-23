@@ -105,7 +105,8 @@ get_var_from_env_or_config () {
 	env_var="$1"
 	conf_sec="$2"
 	conf_var="$3"
-	# $4 can be set to a default value
+	conf_opts="$4" # optional
+	# $5 can be set to a default value
 
 	# Do nothing if the env variable is already set
 	eval "test -z \"\${$env_var+x}\"" || return
@@ -116,18 +117,18 @@ get_var_from_env_or_config () {
 	if test -n "$GIT_PERF_SUBSECTION"
 	then
 		var="$conf_sec.$GIT_PERF_SUBSECTION.$conf_var"
-		conf_value=$(git config -f "$GIT_PERF_CONFIG_FILE" "$var") &&
+		conf_value=$(git config $conf_opts -f "$GIT_PERF_CONFIG_FILE" "$var") &&
 		eval "$env_var=\"$conf_value\"" && return
 	fi
 	var="$conf_sec.$conf_var"
-	conf_value=$(git config -f "$GIT_PERF_CONFIG_FILE" "$var") &&
+	conf_value=$(git config $conf_opts -f "$GIT_PERF_CONFIG_FILE" "$var") &&
 	eval "$env_var=\"$conf_value\"" && return
 
-	test -n "${4+x}" && eval "$env_var=\"$4\""
+	test -n "${5+x}" && eval "$env_var=\"$5\""
 }
 
 run_subsection () {
-	get_var_from_env_or_config "GIT_PERF_REPEAT_COUNT" "perf" "repeatCount" 3
+	get_var_from_env_or_config "GIT_PERF_REPEAT_COUNT" "perf" "repeatCount" "--int" 3
 	export GIT_PERF_REPEAT_COUNT
 
 	get_var_from_env_or_config "GIT_PERF_DIRS_OR_REVS" "perf" "dirsOrRevs"
@@ -136,6 +137,9 @@ run_subsection () {
 	get_var_from_env_or_config "GIT_PERF_MAKE_COMMAND" "perf" "makeCommand"
 	get_var_from_env_or_config "GIT_PERF_MAKE_OPTS" "perf" "makeOpts"
 
+	get_var_from_env_or_config "GIT_PERF_REPO_NAME" "perf" "repoName"
+	export GIT_PERF_REPO_NAME
+
 	GIT_PERF_AGGREGATING_LATER=t
 	export GIT_PERF_AGGREGATING_LATER
 
@@ -143,9 +147,24 @@ run_subsection () {
 		set -- . "$@"
 	fi
 
+	codespeed_opt=
+	test "$GIT_PERF_CODESPEED_OUTPUT" = "true" && codespeed_opt="--codespeed"
+
 	run_dirs "$@"
-	./aggregate.perl "$@"
+
+	if test -z "$GIT_PERF_SEND_TO_CODESPEED"
+	then
+		./aggregate.perl $codespeed_opt "$@"
+	else
+		json_res_file="test-results/$GIT_PERF_SUBSECTION/aggregate.json"
+		./aggregate.perl --codespeed "$@" | tee "$json_res_file"
+		send_data_url="$GIT_PERF_SEND_TO_CODESPEED/result/add/json/"
+		curl -v --request POST --data-urlencode "json=$(cat "$json_res_file")" "$send_data_url"
+	fi
 }
+
+get_var_from_env_or_config "GIT_PERF_CODESPEED_OUTPUT" "perf" "codespeedOutput" "--bool"
+get_var_from_env_or_config "GIT_PERF_SEND_TO_CODESPEED" "perf" "sendToCodespeed"
 
 cd "$(dirname $0)"
 . ../../GIT-BUILD-OPTIONS
