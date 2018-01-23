@@ -1006,8 +1006,8 @@ static int want_object_in_pack(const struct object_id *oid,
 			       struct packed_git **found_pack,
 			       off_t *found_offset)
 {
-	struct mru_entry *entry;
 	int want;
+	struct list_head *pos;
 
 	if (!exclude && local && has_loose_object_nonlocal(oid->hash))
 		return 0;
@@ -1023,7 +1023,8 @@ static int want_object_in_pack(const struct object_id *oid,
 			return want;
 	}
 
-	for (entry = packed_git_mru.head; entry; entry = entry->next) {
+	list_for_each(pos, &packed_git_mru.list) {
+		struct mru *entry = list_entry(pos, struct mru, list);
 		struct packed_git *p = entry->item;
 		off_t offset;
 
