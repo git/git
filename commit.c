@@ -547,7 +547,7 @@ void clear_commit_marks_many(int nr, struct commit **commit, unsigned int mark)
 	struct commit_list *list = NULL;
 
 	while (nr--) {
-		commit_list_insert(*commit, &list);
+		clear_commit_marks_1(&list, *commit, mark);
 		commit++;
 	}
 	while (list)
@@ -557,20 +557,6 @@ void clear_commit_marks_many(int nr, struct commit **commit, unsigned int mark)
 void clear_commit_marks(struct commit *commit, unsigned int mark)
 {
 	clear_commit_marks_many(1, &commit, mark);
-}
-
-void clear_commit_marks_for_object_array(struct object_array *a, unsigned mark)
-{
-	struct object *object;
-	struct commit *commit;
-	unsigned int i;
-
-	for (i = 0; i < a->nr; i++) {
-		object = a->objects[i].item;
-		commit = lookup_commit_reference_gently(&object->oid, 1);
-		if (commit)
-			clear_commit_marks(commit, mark);
-	}
 }
 
 struct commit *pop_commit(struct commit_list **stack)
@@ -929,8 +915,7 @@ static int remove_redundant(struct commit **array, int cnt)
 			if (work[j]->object.flags & PARENT1)
 				redundant[filled_index[j]] = 1;
 		clear_commit_marks(array[i], all_flags);
-		for (j = 0; j < filled; j++)
-			clear_commit_marks(work[j], all_flags);
+		clear_commit_marks_many(filled, work, all_flags);
 		free_commit_list(common);
 	}
 

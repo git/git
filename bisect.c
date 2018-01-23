@@ -792,11 +792,9 @@ static void handle_skipped_merge_base(const struct object_id *mb)
  * - If one is "skipped", we can't know but we should warn.
  * - If we don't know, we should check it out and ask the user to test.
  */
-static void check_merge_bases(int no_checkout)
+static void check_merge_bases(int rev_nr, struct commit **rev, int no_checkout)
 {
 	struct commit_list *result;
-	int rev_nr;
-	struct commit **rev = get_bad_and_good_commits(&rev_nr);
 
 	result = get_merge_bases_many(rev[0], rev_nr - 1, rev + 1);
 
@@ -814,34 +812,21 @@ static void check_merge_bases(int no_checkout)
 		}
 	}
 
-	free(rev);
 	free_commit_list(result);
 }
 
-static int check_ancestors(const char *prefix)
+static int check_ancestors(int rev_nr, struct commit **rev, const char *prefix)
 {
 	struct rev_info revs;
-	struct object_array pending_copy;
 	int res;
 
 	bisect_rev_setup(&revs, prefix, "^%s", "%s", 0);
 
-	/* Save pending objects, so they can be cleaned up later. */
-	pending_copy = revs.pending;
-	revs.leak_pending = 1;
-
-	/*
-	 * bisect_common calls prepare_revision_walk right away, which
-	 * (together with .leak_pending = 1) makes us the sole owner of
-	 * the list of pending objects.
-	 */
 	bisect_common(&revs);
 	res = (revs.commits != NULL);
 
 	/* Clean up objects used, as they will be reused. */
-	clear_commit_marks_for_object_array(&pending_copy, ALL_REV_FLAGS);
-
-	object_array_clear(&pending_copy);
+	clear_commit_marks_many(rev_nr, rev, ALL_REV_FLAGS);
 
 	return res;
 }
@@ -858,7 +843,8 @@ static void check_good_are_ancestors_of_bad(const char *prefix, int no_checkout)
 {
 	char *filename = git_pathdup("BISECT_ANCESTORS_OK");
 	struct stat st;
-	int fd;
+	int fd, rev_nr;
+	struct commit **rev;
 
 	if (!current_bad_oid)
 		die(_("a %s revision is needed"), term_bad);
@@ -872,8 +858,10 @@ static void check_good_are_ancestors_of_bad(const char *prefix, int no_checkout)
 		goto done;
 
 	/* Check if all good revs are ancestor of the bad rev. */
-	if (check_ancestors(prefix))
-		check_merge_bases(no_checkout);
+	rev = get_bad_and_good_commits(&rev_nr);
+	if (check_ancestors(rev_nr, rev, prefix))
+		check_merge_bases(rev_nr, rev, no_checkout);
+	free(rev);
 
 	/* Create file BISECT_ANCESTORS_OK. */
 	fd = open(filename, O_CREAT | O_TRUNC | O_WRONLY, 0600);

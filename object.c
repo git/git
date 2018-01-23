@@ -434,3 +434,14 @@ void clear_object_flags(unsigned flags)
 			obj->flags &= ~flags;
 	}
 }
+
+void clear_commit_marks_all(unsigned int flags)
+{
+	int i;
+
+	for (i = 0; i < obj_hash_size; i++) {
+		struct object *obj = obj_hash[i];
+		if (obj && obj->type == OBJ_COMMIT)
+			obj->flags &= ~flags;
+	}
+}
