@@ -927,7 +927,12 @@ static struct ref_iterator *packed_ref_iterator_begin(
 	 */
 	snapshot = get_snapshot(refs);
 
-	if (!snapshot->buf)
+	if (prefix && *prefix)
+		start = find_reference_location(snapshot, prefix, 0);
+	else
+		start = snapshot->start;
+
+	if (start == snapshot->eof)
 		return empty_ref_iterator_begin();
 
 	iter = xcalloc(1, sizeof(*iter));
@@ -936,11 +941,6 @@ static struct ref_iterator *packed_ref_iterator_begin(
 
 	iter->snapshot = snapshot;
 	acquire_snapshot(snapshot);
-
-	if (prefix && *prefix)
-		start = find_reference_location(snapshot, prefix, 0);
-	else
-		start = snapshot->start;
 
 	iter->pos = start;
 	iter->eof = snapshot->eof;
