@@ -31,15 +31,17 @@ mkdir -p "$HOOKDIR"
 echo "#!$SHELL_PATH" > "$HOOK"
 cat >> "$HOOK" <<'EOF'
 
-if test "$2" = commit; then
-  source=$(git rev-parse "$3")
+if test "$2" = commit
+then
+	source=$(git rev-parse "$3")
 else
-  source=${2-default}
+	source=${2-default}
 fi
-if test "$GIT_EDITOR" = :; then
-  sed -e "1s/.*/$source (no editor)/" "$1" > msg.tmp
+if test "$GIT_EDITOR" = :
+then
+	sed -e "1s/.*/$source (no editor)/" "$1" >msg.tmp
 else
-  sed -e "1s/.*/$source/" "$1" > msg.tmp
+	sed -e "1s/.*/$source/" "$1" >msg.tmp
 fi
 mv msg.tmp "$1"
 exit 0
