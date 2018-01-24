@@ -620,8 +620,7 @@ static struct snapshot *create_snapshot(struct packed_ref_store *refs)
 
 	/* If the file has a header line, process it: */
 	if (snapshot->buf < snapshot->eof && *snapshot->buf == '#') {
-		struct strbuf tmp = STRBUF_INIT;
-		char *p, *eol;
+		char *tmp, *p, *eol;
 		struct string_list traits = STRING_LIST_INIT_NODUP;
 
 		eol = memchr(snapshot->buf, '\n',
@@ -631,9 +630,9 @@ static struct snapshot *create_snapshot(struct packed_ref_store *refs)
 					      snapshot->buf,
 					      snapshot->eof - snapshot->buf);
 
-		strbuf_add(&tmp, snapshot->buf, eol - snapshot->buf);
+		tmp = xmemdupz(snapshot->buf, eol - snapshot->buf);
 
-		if (!skip_prefix(tmp.buf, "# pack-refs with:", (const char **)&p))
+		if (!skip_prefix(tmp, "# pack-refs with:", (const char **)&p))
 			die_invalid_line(refs->path,
 					 snapshot->buf,
 					 snapshot->eof - snapshot->buf);
@@ -653,7 +652,7 @@ static struct snapshot *create_snapshot(struct packed_ref_store *refs)
 		snapshot->start = eol + 1;
 
 		string_list_clear(&traits, 0);
-		strbuf_release(&tmp);
+		free(tmp);
 	}
 
 	verify_buffer_safe(snapshot);
