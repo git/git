@@ -458,6 +458,8 @@ static void verify_buffer_safe(struct snapshot *snapshot)
 				 last_line, eof - last_line);
 }
 
+#define SMALL_FILE_SIZE (32*1024)
+
 /*
  * Depending on `mmap_strategy`, either mmap or read the contents of
  * the `packed-refs` file into the snapshot. Return 1 if the file
@@ -495,7 +497,7 @@ static int load_contents(struct snapshot *snapshot)
 
 	if (!size) {
 		return 0;
-	} else if (mmap_strategy == MMAP_NONE) {
+	} else if (mmap_strategy == MMAP_NONE || size <= SMALL_FILE_SIZE) {
 		snapshot->buf = xmalloc(size);
 		bytes_read = read_in_full(fd, snapshot->buf, size);
 		if (bytes_read < 0 || bytes_read != size)
