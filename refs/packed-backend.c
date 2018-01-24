@@ -519,9 +519,11 @@ static int load_contents(struct snapshot *snapshot)
  * `refname` starts. If `mustexist` is true and the reference doesn't
  * exist, then return NULL. If `mustexist` is false and the reference
  * doesn't exist, then return the point where that reference would be
- * inserted. In the latter mode, `refname` doesn't have to be a proper
- * reference name; for example, one could search for "refs/replace/"
- * to find the start of any replace references.
+ * inserted, or `snapshot->eof` (which might be NULL) if it would be
+ * inserted at the end of the file. In the latter mode, `refname`
+ * doesn't have to be a proper reference name; for example, one could
+ * search for "refs/replace/" to find the start of any replace
+ * references.
  *
  * The record is sought using a binary search, so `snapshot->buf` must
  * be sorted.
@@ -551,7 +553,7 @@ static const char *find_reference_location(struct snapshot *snapshot,
 	 */
 	const char *hi = snapshot->eof;
 
-	while (lo < hi) {
+	while (lo != hi) {
 		const char *mid, *rec;
 		int cmp;
 
