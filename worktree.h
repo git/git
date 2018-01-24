@@ -3,6 +3,8 @@
 
 #include "refs.h"
 
+struct strbuf;
+
 struct worktree {
 	char *path;
 	char *id;
@@ -58,6 +60,13 @@ extern int is_main_worktree(const struct worktree *wt);
  * otherwise.
  */
 extern const char *is_worktree_locked(struct worktree *wt);
+
+/*
+ * Return zero if the worktree is in good condition. Error message is
+ * returned if "errmsg" is not NULL.
+ */
+extern int validate_worktree(const struct worktree *wt,
+			     struct strbuf *errmsg);
 
 /*
  * Free up the memory for worktree(s)
