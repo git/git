@@ -2561,8 +2561,9 @@ int write_locked_index(struct index_state *istate, struct lock_file *lock,
 		if (!temp) {
 			hashclr(si->base_sha1);
 			ret = do_write_locked_index(istate, lock, flags);
-		} else
-			ret = write_shared_index(istate, &temp);
+			goto out;
+		}
+		ret = write_shared_index(istate, &temp);
 
 		saved_errno = errno;
 		if (is_tempfile_active(temp))
