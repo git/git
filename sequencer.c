@@ -29,6 +29,8 @@
 const char sign_off_header[] = "Signed-off-by: ";
 static const char cherry_picked_prefix[] = "(cherry picked from commit ";
 
+GIT_PATH_FUNC(git_path_commit_editmsg, "COMMIT_EDITMSG")
+
 GIT_PATH_FUNC(git_path_seq_dir, "sequencer")
 
 static GIT_PATH_FUNC(git_path_todo_file, "sequencer/todo")
@@ -888,6 +890,31 @@ void commit_post_rewrite(const struct commit *old_head,
 	run_rewrite_hook(&old_head->object.oid, new_head);
 }
 
+static int run_prepare_commit_msg_hook(struct strbuf *msg, const char *commit)
+{
+	struct argv_array hook_env = ARGV_ARRAY_INIT;
+	int ret;
+	const char *name;
+
+	name = git_path_commit_editmsg();
+	if (write_message(msg->buf, msg->len, name, 0))
+		return -1;
+
+	argv_array_pushf(&hook_env, "GIT_INDEX_FILE=%s", get_index_file());
+	argv_array_push(&hook_env, "GIT_EDITOR=:");
+	if (commit)
+		ret = run_hook_le(hook_env.argv, "prepare-commit-msg", name,
+				  "commit", commit, NULL);
+	else
+		ret = run_hook_le(hook_env.argv, "prepare-commit-msg", name,
+				  "message", NULL);
+	if (ret)
+		ret = error(_("'prepare-commit-msg' hook failed"));
+	argv_array_clear(&hook_env);
+
+	return ret;
+}
+
 static const char implicit_ident_advice_noconfig[] =
 N_("Your name and email address were configured automatically based\n"
 "on your username and hostname. Please check that they are accurate.\n"
@@ -1048,8 +1075,9 @@ static int try_to_commit(struct strbuf *msg, const char *author,
 	struct commit_list *parents = NULL;
 	struct commit_extra_header *extra = NULL;
 	struct strbuf err = STRBUF_INIT;
-	struct strbuf amend_msg = STRBUF_INIT;
+	struct strbuf commit_msg = STRBUF_INIT;
 	char *amend_author = NULL;
+	const char *hook_commit = NULL;
 	enum commit_msg_cleanup_mode cleanup;
 	int res = 0;
 
@@ -1066,8 +1094,9 @@ static int try_to_commit(struct strbuf *msg, const char *author,
 			const char *orig_message = NULL;
 
 			find_commit_subject(message, &orig_message);
-			msg = &amend_msg;
+			msg = &commit_msg;
 			strbuf_addstr(msg, orig_message);
+			hook_commit = "HEAD";
 		}
 		author = amend_author = get_author(message);
 		unuse_commit_buffer(current_head, message);
@@ -1081,16 +1110,6 @@ static int try_to_commit(struct strbuf *msg, const char *author,
 		commit_list_insert(current_head, &parents);
 	}
 
-	cleanup = (flags & CLEANUP_MSG) ? COMMIT_MSG_CLEANUP_ALL :
-					  opts->default_msg_cleanup;
-
-	if (cleanup != COMMIT_MSG_CLEANUP_NONE)
-		strbuf_stripspace(msg, cleanup == COMMIT_MSG_CLEANUP_ALL);
-	if (!opts->allow_empty_message && message_is_empty(msg, cleanup)) {
-		res = 1; /* run 'git commit' to display error message */
-		goto out;
-	}
-
 	if (write_cache_as_tree(tree.hash, 0, NULL)) {
 		res = error(_("git write-tree failed to write a tree"));
 		goto out;
@@ -1099,6 +1118,30 @@ static int try_to_commit(struct strbuf *msg, const char *author,
 	if (!(flags & ALLOW_EMPTY) && !oidcmp(current_head ?
 					      &current_head->tree->object.oid :
 					      &empty_tree_oid, &tree)) {
+		res = 1; /* run 'git commit' to display error message */
+		goto out;
+	}
+
+	if (find_hook("prepare-commit-msg")) {
+		res = run_prepare_commit_msg_hook(msg, hook_commit);
+		if (res)
+			goto out;
+		if (strbuf_read_file(&commit_msg, git_path_commit_editmsg(),
+				     2048) < 0) {
+			res = error_errno(_("unable to read commit message "
+					      "from '%s'"),
+					    git_path_commit_editmsg());
+			goto out;
+		}
+		msg = &commit_msg;
+	}
+
+	cleanup = (flags & CLEANUP_MSG) ? COMMIT_MSG_CLEANUP_ALL :
+					  opts->default_msg_cleanup;
+
+	if (cleanup != COMMIT_MSG_CLEANUP_NONE)
+		strbuf_stripspace(msg, cleanup == COMMIT_MSG_CLEANUP_ALL);
+	if (!opts->allow_empty_message && message_is_empty(msg, cleanup)) {
 		res = 1; /* run 'git commit' to display error message */
 		goto out;
 	}
@@ -1121,7 +1164,7 @@ static int try_to_commit(struct strbuf *msg, const char *author,
 out:
 	free_commit_extra_headers(extra);
 	strbuf_release(&err);
-	strbuf_release(&amend_msg);
+	strbuf_release(&commit_msg);
 	free(amend_author);
 
 	return res;

@@ -252,10 +252,10 @@ test_rebase () {
 	'
 }
 
-test_rebase failure -i
-test_rebase failure -p
+test_rebase success -i
+test_rebase success -p
 
-test_expect_failure 'with hook (cherry-pick)' '
+test_expect_success 'with hook (cherry-pick)' '
 	test_when_finished "git checkout -f master" &&
 	git checkout -B other b &&
 	git cherry-pick rebase-1 &&
@@ -310,7 +310,7 @@ test_expect_success 'with failing hook (merge)' '
 
 '
 
-test_expect_failure C_LOCALE_OUTPUT 'with failing hook (cherry-pick)' '
+test_expect_success C_LOCALE_OUTPUT 'with failing hook (cherry-pick)' '
 	test_when_finished "git checkout -f master" &&
 	git checkout -B other b &&
 	test_must_fail git cherry-pick rebase-1 2>actual &&

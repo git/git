@@ -66,8 +66,6 @@ N_("If you wish to skip this commit, use:\n"
 "Then \"git cherry-pick --continue\" will resume cherry-picking\n"
 "the remaining commits.\n");
 
-static GIT_PATH_FUNC(git_path_commit_editmsg, "COMMIT_EDITMSG")
-
 static const char *use_message_buffer;
 static struct lock_file index_lock; /* real index */
 static struct lock_file false_lock; /* used only for partial commits */
