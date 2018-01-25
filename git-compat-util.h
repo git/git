@@ -156,7 +156,7 @@
 
 #if defined(WIN32) && !defined(__CYGWIN__) /* Both MinGW and MSVC */
 # if !defined(_WIN32_WINNT)
-#  define _WIN32_WINNT 0x0502
+#  define _WIN32_WINNT 0x0600
 # endif
 #define WIN32_LEAN_AND_MEAN  /* stops windows.h including winsock.h */
 #include <winsock2.h>
