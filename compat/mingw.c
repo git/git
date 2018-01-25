@@ -274,7 +274,6 @@ int mingw_core_config(const char *var, const char *value, void *cb)
 }
 
 static DWORD symlink_file_flags = 0, symlink_directory_flags = 1;
-DECLARE_PROC_ADDR(kernel32.dll, BOOLEAN, CreateSymbolicLinkW, LPCWSTR, LPCWSTR, DWORD);
 
 enum phantom_symlink_result {
 	PHANTOM_SYMLINK_RETRY,
@@ -2722,7 +2721,7 @@ int symlink(const char *target, const char *link)
 	int len;
 
 	/* fail if symlinks are disabled or API is not supported (WinXP) */
-	if (!has_symlinks || !INIT_PROC_ADDR(CreateSymbolicLinkW)) {
+	if (!has_symlinks) {
 		errno = ENOSYS;
 		return -1;
 	}
