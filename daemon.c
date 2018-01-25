@@ -760,10 +760,8 @@ static int execute(void)
 	alarm(0);
 
 	len = strlen(line);
-	if (len && line[len-1] == '\n') {
-		line[--len] = 0;
-		pktlen--;
-	}
+	if (len && line[len-1] == '\n')
+		line[len-1] = 0;
 
 	/* parse additional args hidden behind a NUL byte */
 	if (len != pktlen)

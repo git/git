@@ -196,5 +196,20 @@ test_expect_success 'daemon log records all attributes' '
 	test_cmp expect actual
 '
 
+test_expect_success FAKENC 'hostname interpolation works after LF-stripping' '
+	{
+		printf "git-upload-pack /interp.git\n\0host=localhost" | packetize
+		printf "0000"
+	} >input &&
+	fake_nc "$GIT_DAEMON_HOST_PORT" <input >output &&
+	depacketize <output >output.raw &&
+
+	# just pick out the value of master, which avoids any protocol
+	# particulars
+	perl -lne "print \$1 if m{^(\\S+) refs/heads/master}" <output.raw >actual &&
+	git -C "$repo" rev-parse master >expect &&
+	test_cmp expect actual
+'
+
 stop_git_daemon
 test_done
