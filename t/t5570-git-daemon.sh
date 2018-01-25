@@ -183,5 +183,16 @@ test_expect_success 'hostname cannot break out of directory' '
 		git ls-remote "$GIT_DAEMON_URL/escape.git"
 '
 
+test_expect_success 'daemon log records hostnames' '
+	cat >expect <<-\EOF &&
+	Extended attributes (15 bytes) exist <host=localhost>
+	EOF
+	>daemon.log &&
+	GIT_OVERRIDE_VIRTUAL_HOST=localhost \
+		git ls-remote "$GIT_DAEMON_URL/interp.git" &&
+	grep -i extended.attribute daemon.log | cut -d" " -f2- >actual &&
+	test_cmp expect actual
+'
+
 stop_git_daemon
 test_done

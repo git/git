@@ -759,8 +759,8 @@ static int execute(void)
 	len = strlen(line);
 	if (pktlen != len)
 		loginfo("Extended attributes (%d bytes) exist <%.*s>",
-			(int) pktlen - len,
-			(int) pktlen - len, line + len + 1);
+			(int) pktlen - len - 1,
+			(int) pktlen - len - 1, line + len + 1);
 	if (len && line[len-1] == '\n') {
 		line[--len] = 0;
 		pktlen--;
