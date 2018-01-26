@@ -13,6 +13,10 @@ cat >hello-script <<-EOF
 EOF
 >empty
 
+test_expect_failure MINGW 'subprocess inherits only std handles' '
+	test-tool run-command inherited-handle
+'
+
 test_expect_success 'start_command reports ENOENT' '
 	test-tool run-command start-command-ENOENT ./does-not-exist
 '
