@@ -187,17 +187,8 @@ linkgit:git-rev-parse[1].
 You can specify the information shown for each object by using a custom
 `<format>`. The `<format>` is copied literally to stdout for each
 object, with placeholders of the form `%(atom)` expanded, followed by a
-newline. The available atoms are:
-
-`objectname`::
-	The 40-hex object name of the object.
-
-`objecttype`::
-	The type of the object (the same as `cat-file -t` reports).
-
-`objectsize`::
-	The size, in bytes, of the object (the same as `cat-file -s`
-	reports).
+newline. The available atoms are the same as that of
+linkgit:git-for-each-ref[1], but there are some additional ones:
 
 `objectsize:disk`::
 	The size, in bytes, that the object takes up on disk. See the
