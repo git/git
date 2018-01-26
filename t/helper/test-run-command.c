@@ -50,10 +50,57 @@ static int task_finished(int result,
 	return 1;
 }
 
+static int inherit_handle(const char *argv0)
+{
+	struct child_process cp = CHILD_PROCESS_INIT;
+	char path[PATH_MAX];
+	int tmp;
+
+	/* First, open an inheritable handle */
+	xsnprintf(path, sizeof(path), "out-XXXXXX");
+	tmp = xmkstemp(path);
+
+	argv_array_pushl(&cp.args,
+			 "test-tool", argv0, "inherited-handle-child", NULL);
+	cp.in = -1;
+	cp.no_stdout = cp.no_stderr = 1;
+	if (start_command(&cp) < 0)
+		die("Could not start child process");
+
+	/* Then close it, and try to delete it. */
+	close(tmp);
+	if (unlink(path))
+		die("Could not delete '%s'", path);
+
+	if (close(cp.in) < 0 || finish_command(&cp) < 0)
+		die("Child did not finish");
+
+	return 0;
+}
+
+static int inherit_handle_child(void)
+{
+	struct strbuf buf = STRBUF_INIT;
+
+	if (strbuf_read(&buf, 0, 0) < 0)
+		die("Could not read stdin");
+	printf("Received %s\n", buf.buf);
+	strbuf_release(&buf);
+
+	return 0;
+}
+
 int cmd__run_command(int argc, const char **argv)
 {
 	struct child_process proc = CHILD_PROCESS_INIT;
 	int jobs;
+
+	if (argc < 2)
+		return 1;
+	if (!strcmp(argv[1], "inherited-handle"))
+		exit(inherit_handle(argv[0]));
+	if (!strcmp(argv[1], "inherited-handle-child"))
+		exit(inherit_handle_child());
 
 	if (argc < 3)
 		return 1;
