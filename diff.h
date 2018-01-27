@@ -7,6 +7,7 @@
 #include "tree-walk.h"
 #include "pathspec.h"
 #include "object.h"
+#include "oidset.h"
 
 struct rev_info;
 struct diff_options;
@@ -91,7 +92,6 @@ struct diff_flags {
 	unsigned override_submodule_config:1;
 	unsigned dirstat_by_line:1;
 	unsigned funccontext:1;
-	unsigned pickaxe_ignore_case:1;
 	unsigned default_follow_renames:1;
 };
 
@@ -146,7 +146,7 @@ struct diff_options {
 	int skip_stat_unmatch;
 	int line_termination;
 	int output_format;
-	int pickaxe_opts;
+	unsigned pickaxe_opts;
 	int rename_score;
 	int rename_limit;
 	int needed_rename_limit;
@@ -177,6 +177,8 @@ struct diff_options {
 	const char *word_regex;
 	enum diff_words_type word_diff;
 	enum diff_submodule_format submodule_format;
+
+	struct oidset *objfind;
 
 	/* this is set by diffcore for DIFF_FORMAT_PATCH */
 	int found_changes;
@@ -330,6 +332,13 @@ extern void diff_setup_done(struct diff_options *);
 
 #define DIFF_PICKAXE_KIND_S	4 /* traditional plumbing counter */
 #define DIFF_PICKAXE_KIND_G	8 /* grep in the patch */
+#define DIFF_PICKAXE_KIND_OBJFIND	16 /* specific object IDs */
+
+#define DIFF_PICKAXE_KINDS_MASK (DIFF_PICKAXE_KIND_S | \
+				 DIFF_PICKAXE_KIND_G | \
+				 DIFF_PICKAXE_KIND_OBJFIND)
+
+#define DIFF_PICKAXE_IGNORE_CASE	32
 
 extern void diffcore_std(struct diff_options *);
 extern void diffcore_fix_diff_index(struct diff_options *);

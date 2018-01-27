@@ -134,7 +134,6 @@ int verify_bundle(struct bundle_header *header, int verbose)
 	struct ref_list *p = &header->prerequisites;
 	struct rev_info revs;
 	const char *argv[] = {NULL, "--all", NULL};
-	struct object_array refs;
 	struct commit *commit;
 	int i, ret = 0, req_nr;
 	const char *message = _("Repository lacks these prerequisite commits:");
@@ -157,14 +156,6 @@ int verify_bundle(struct bundle_header *header, int verbose)
 	req_nr = revs.pending.nr;
 	setup_revisions(2, argv, &revs, NULL);
 
-	/* Save pending objects, so they can be cleaned up later. */
-	refs = revs.pending;
-	revs.leak_pending = 1;
-
-	/*
-	 * prepare_revision_walk (together with .leak_pending = 1) makes us
-	 * the sole owner of the list of pending objects.
-	 */
 	if (prepare_revision_walk(&revs))
 		die(_("revision walk setup failed"));
 
@@ -173,18 +164,24 @@ int verify_bundle(struct bundle_header *header, int verbose)
 		if (commit->object.flags & PREREQ_MARK)
 			i--;
 
-	for (i = 0; i < req_nr; i++)
-		if (!(refs.objects[i].item->flags & SHOWN)) {
-			if (++ret == 1)
-				error("%s", message);
-			error("%s %s", oid_to_hex(&refs.objects[i].item->oid),
-				refs.objects[i].name);
-		}
+	for (i = 0; i < p->nr; i++) {
+		struct ref_list_entry *e = p->list + i;
+		struct object *o = parse_object(&e->oid);
+		assert(o); /* otherwise we'd have returned early */
+		if (o->flags & SHOWN)
+			continue;
+		if (++ret == 1)
+			error("%s", message);
+		error("%s %s", oid_to_hex(&e->oid), e->name);
+	}
 
 	/* Clean up objects used, as they will be reused. */
-	clear_commit_marks_for_object_array(&refs, ALL_REV_FLAGS);
-
-	object_array_clear(&refs);
+	for (i = 0; i < p->nr; i++) {
+		struct ref_list_entry *e = p->list + i;
+		commit = lookup_commit_reference_gently(&e->oid, 1);
+		if (commit)
+			clear_commit_marks(commit, ALL_REV_FLAGS);
+	}
 
 	if (verbose) {
 		struct ref_list *r;

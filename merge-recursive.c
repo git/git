@@ -1026,10 +1026,19 @@ static int merge_file_1(struct merge_options *o,
 						       &b->oid,
 						       !o->call_depth);
 		} else if (S_ISLNK(a->mode)) {
-			oidcpy(&result->oid, &a->oid);
-
-			if (!oid_eq(&a->oid, &b->oid))
-				result->clean = 0;
+			switch (o->recursive_variant) {
+			case MERGE_RECURSIVE_NORMAL:
+				oidcpy(&result->oid, &a->oid);
+				if (!oid_eq(&a->oid, &b->oid))
+					result->clean = 0;
+				break;
+			case MERGE_RECURSIVE_OURS:
+				oidcpy(&result->oid, &a->oid);
+				break;
+			case MERGE_RECURSIVE_THEIRS:
+				oidcpy(&result->oid, &b->oid);
+				break;
+			}
 		} else
 			die("BUG: unsupported object type in the tree");
 	}

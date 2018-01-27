@@ -1995,8 +1995,7 @@ static void do_merge_filter(struct ref_filter_cbdata *ref_cbdata)
 			free_array_item(item);
 	}
 
-	for (i = 0; i < old_nr; i++)
-		clear_commit_marks(to_clear[i], ALL_REV_FLAGS);
+	clear_commit_marks_many(old_nr, to_clear, ALL_REV_FLAGS);
 	clear_commit_marks(filter->merge_commit, ALL_REV_FLAGS);
 	free(to_clear);
 }

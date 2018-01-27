@@ -3,6 +3,7 @@
 use lib '../../perl/blib/lib';
 use strict;
 use warnings;
+use JSON;
 use Git;
 
 sub get_times {
@@ -35,10 +36,15 @@ sub format_times {
 	return $out;
 }
 
-my (@dirs, %dirnames, %dirabbrevs, %prefixes, @tests);
+my (@dirs, %dirnames, %dirabbrevs, %prefixes, @tests, $codespeed);
 while (scalar @ARGV) {
 	my $arg = $ARGV[0];
 	my $dir;
+	if ($arg eq "--codespeed") {
+		$codespeed = 1;
+		shift @ARGV;
+		next;
+	}
 	last if -f $arg or $arg eq "--";
 	if (! -d $arg) {
 		my $rev = Git::command_oneline(qw(rev-parse --verify), $arg);
@@ -70,8 +76,10 @@ if (not @tests) {
 }
 
 my $resultsdir = "test-results";
-if ($ENV{GIT_PERF_SUBSECTION} ne "") {
+my $results_section = "";
+if (exists $ENV{GIT_PERF_SUBSECTION} and $ENV{GIT_PERF_SUBSECTION} ne "") {
 	$resultsdir .= "/" . $ENV{GIT_PERF_SUBSECTION};
+	$results_section = $ENV{GIT_PERF_SUBSECTION};
 }
 
 my @subtests;
@@ -100,13 +108,6 @@ sub read_descr {
 	return $line;
 }
 
-my %descrs;
-my $descrlen = 4; # "Test"
-for my $t (@subtests) {
-	$descrs{$t} = $shorttests{$t}.": ".read_descr("$resultsdir/$t.descr");
-	$descrlen = length $descrs{$t} if length $descrs{$t}>$descrlen;
-}
-
 sub have_duplicate {
 	my %seen;
 	for (@_) {
@@ -122,54 +123,117 @@ sub have_slash {
 	return 0;
 }
 
-my %newdirabbrevs = %dirabbrevs;
-while (!have_duplicate(values %newdirabbrevs)) {
-	%dirabbrevs = %newdirabbrevs;
-	last if !have_slash(values %dirabbrevs);
-	%newdirabbrevs = %dirabbrevs;
-	for (values %newdirabbrevs) {
-		s{^[^/]*/}{};
+sub print_default_results {
+	my %descrs;
+	my $descrlen = 4; # "Test"
+	for my $t (@subtests) {
+		$descrs{$t} = $shorttests{$t}.": ".read_descr("$resultsdir/$t.descr");
+		$descrlen = length $descrs{$t} if length $descrs{$t}>$descrlen;
+	}
+
+	my %newdirabbrevs = %dirabbrevs;
+	while (!have_duplicate(values %newdirabbrevs)) {
+		%dirabbrevs = %newdirabbrevs;
+		last if !have_slash(values %dirabbrevs);
+		%newdirabbrevs = %dirabbrevs;
+		for (values %newdirabbrevs) {
+			s{^[^/]*/}{};
+		}
+	}
+
+	my %times;
+	my @colwidth = ((0)x@dirs);
+	for my $i (0..$#dirs) {
+		my $d = $dirs[$i];
+		my $w = length (exists $dirabbrevs{$d} ? $dirabbrevs{$d} : $dirnames{$d});
+		$colwidth[$i] = $w if $w > $colwidth[$i];
+	}
+	for my $t (@subtests) {
+		my $firstr;
+		for my $i (0..$#dirs) {
+			my $d = $dirs[$i];
+			$times{$prefixes{$d}.$t} = [get_times("$resultsdir/$prefixes{$d}$t.times")];
+			my ($r,$u,$s) = @{$times{$prefixes{$d}.$t}};
+			my $w = length format_times($r,$u,$s,$firstr);
+			$colwidth[$i] = $w if $w > $colwidth[$i];
+			$firstr = $r unless defined $firstr;
+		}
+	}
+	my $totalwidth = 3*@dirs+$descrlen;
+	$totalwidth += $_ for (@colwidth);
+
+	printf "%-${descrlen}s", "Test";
+	for my $i (0..$#dirs) {
+		my $d = $dirs[$i];
+		printf "   %-$colwidth[$i]s", (exists $dirabbrevs{$d} ? $dirabbrevs{$d} : $dirnames{$d});
+	}
+	print "\n";
+	print "-"x$totalwidth, "\n";
+	for my $t (@subtests) {
+		printf "%-${descrlen}s", $descrs{$t};
+		my $firstr;
+		for my $i (0..$#dirs) {
+			my $d = $dirs[$i];
+			my ($r,$u,$s) = @{$times{$prefixes{$d}.$t}};
+			printf "   %-$colwidth[$i]s", format_times($r,$u,$s,$firstr);
+			$firstr = $r unless defined $firstr;
+		}
+		print "\n";
 	}
 }
 
-my %times;
-my @colwidth = ((0)x@dirs);
-for my $i (0..$#dirs) {
-	my $d = $dirs[$i];
-	my $w = length (exists $dirabbrevs{$d} ? $dirabbrevs{$d} : $dirnames{$d});
-	$colwidth[$i] = $w if $w > $colwidth[$i];
-}
-for my $t (@subtests) {
-	my $firstr;
-	for my $i (0..$#dirs) {
-		my $d = $dirs[$i];
-		$times{$prefixes{$d}.$t} = [get_times("$resultsdir/$prefixes{$d}$t.times")];
-		my ($r,$u,$s) = @{$times{$prefixes{$d}.$t}};
-		my $w = length format_times($r,$u,$s,$firstr);
-		$colwidth[$i] = $w if $w > $colwidth[$i];
-		$firstr = $r unless defined $firstr;
+sub print_codespeed_results {
+	my ($results_section) = @_;
+
+	my $project = "Git";
+
+	my $executable = `uname -s -m`;
+	chomp $executable;
+
+	if ($results_section ne "") {
+		$executable .= ", " . $results_section;
 	}
+
+	my $environment;
+	if (exists $ENV{GIT_PERF_REPO_NAME} and $ENV{GIT_PERF_REPO_NAME} ne "") {
+		$environment = $ENV{GIT_PERF_REPO_NAME};
+	} elsif (exists $ENV{GIT_TEST_INSTALLED} and $ENV{GIT_TEST_INSTALLED} ne "") {
+		$environment = $ENV{GIT_TEST_INSTALLED};
+		$environment =~ s|/bin-wrappers$||;
+	} else {
+		$environment = `uname -r`;
+		chomp $environment;
+	}
+
+	my @data;
+
+	for my $t (@subtests) {
+		for my $d (@dirs) {
+			my $commitid = $prefixes{$d};
+			$commitid =~ s/^build_//;
+			$commitid =~ s/\.$//;
+			my ($result_value, $u, $s) = get_times("$resultsdir/$prefixes{$d}$t.times");
+
+			my %vals = (
+				"commitid" => $commitid,
+				"project" => $project,
+				"branch" => $dirnames{$d},
+				"executable" => $executable,
+				"benchmark" => $shorttests{$t} . " " . read_descr("$resultsdir/$t.descr"),
+				"environment" => $environment,
+				"result_value" => $result_value,
+			    );
+			push @data, \%vals;
+		}
+	}
+
+	print to_json(\@data, {utf8 => 1, pretty => 1}), "\n";
 }
-my $totalwidth = 3*@dirs+$descrlen;
-$totalwidth += $_ for (@colwidth);
 
 binmode STDOUT, ":utf8" or die "PANIC on binmode: $!";
 
-printf "%-${descrlen}s", "Test";
-for my $i (0..$#dirs) {
-	my $d = $dirs[$i];
-	printf "   %-$colwidth[$i]s", (exists $dirabbrevs{$d} ? $dirabbrevs{$d} : $dirnames{$d});
-}
-print "\n";
-print "-"x$totalwidth, "\n";
-for my $t (@subtests) {
-	printf "%-${descrlen}s", $descrs{$t};
-	my $firstr;
-	for my $i (0..$#dirs) {
-		my $d = $dirs[$i];
-		my ($r,$u,$s) = @{$times{$prefixes{$d}.$t}};
-		printf "   %-$colwidth[$i]s", format_times($r,$u,$s,$firstr);
-		$firstr = $r unless defined $firstr;
-	}
-	print "\n";
+if ($codespeed) {
+	print_codespeed_results($results_section);
+} else {
+	print_default_results();
 }

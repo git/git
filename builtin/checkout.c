@@ -791,7 +791,6 @@ static void orphaned_commit_warning(struct commit *old, struct commit *new)
 {
 	struct rev_info revs;
 	struct object *object = &old->object;
-	struct object_array refs;
 
 	init_revisions(&revs, NULL);
 	setup_revisions(0, NULL, &revs, NULL);
@@ -802,14 +801,6 @@ static void orphaned_commit_warning(struct commit *old, struct commit *new)
 	for_each_ref(add_pending_uninteresting_ref, &revs);
 	add_pending_oid(&revs, "HEAD", &new->object.oid, UNINTERESTING);
 
-	/* Save pending objects, so they can be cleaned up later. */
-	refs = revs.pending;
-	revs.leak_pending = 1;
-
-	/*
-	 * prepare_revision_walk (together with .leak_pending = 1) makes us
-	 * the sole owner of the list of pending objects.
-	 */
 	if (prepare_revision_walk(&revs))
 		die(_("internal error in revision walk"));
 	if (!(old->object.flags & UNINTERESTING))
@@ -818,9 +809,7 @@ static void orphaned_commit_warning(struct commit *old, struct commit *new)
 		describe_detached_head(_("Previous HEAD position was"), old);
 
 	/* Clean up objects used, as they will be reused. */
-	clear_commit_marks_for_object_array(&refs, ALL_REV_FLAGS);
-
-	object_array_clear(&refs);
+	clear_commit_marks_all(ALL_REV_FLAGS);
 }
 
 static int switch_branches(const struct checkout_opts *opts,
