@@ -578,6 +578,8 @@ static void threaded_lazy_init_name_hash(
 
 static void lazy_init_name_hash(struct index_state *istate)
 {
+	uint64_t start = getnanotime();
+
 	if (istate->name_hash_initialized)
 		return;
 	hashmap_init(&istate->name_hash, cache_entry_cmp, NULL, istate->cache_nr);
@@ -600,6 +602,7 @@ static void lazy_init_name_hash(struct index_state *istate)
 	}
 
 	istate->name_hash_initialized = 1;
+	trace_performance_since(start, "initialize name hash");
 }
 
 /*
