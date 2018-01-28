@@ -898,7 +898,7 @@ static int ident_to_git(const char *path, const char *src, size_t len,
 static int ident_to_worktree(const char *path, const char *src, size_t len,
                              struct strbuf *buf, int ident)
 {
-	unsigned char sha1[20];
+	struct object_id oid;
 	char *to_free = NULL, *dollar, *spc;
 	int cnt;
 
@@ -912,7 +912,7 @@ static int ident_to_worktree(const char *path, const char *src, size_t len,
 	/* are we "faking" in place editing ? */
 	if (src == buf->buf)
 		to_free = strbuf_detach(buf, NULL);
-	hash_sha1_file(src, len, "blob", sha1);
+	hash_object_file(src, len, "blob", &oid);
 
 	strbuf_grow(buf, len + cnt * 43);
 	for (;;) {
@@ -969,7 +969,7 @@ static int ident_to_worktree(const char *path, const char *src, size_t len,
 
 		/* step 4: substitute */
 		strbuf_addstr(buf, "Id: ");
-		strbuf_add(buf, sha1_to_hex(sha1), 40);
+		strbuf_addstr(buf, oid_to_hex(&oid));
 		strbuf_addstr(buf, " $");
 	}
 	strbuf_add(buf, src, len);
