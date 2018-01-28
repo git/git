@@ -1243,7 +1243,9 @@ extern int hash_object_file(const void *buf, unsigned long len,
 extern int write_object_file(const void *buf, unsigned long len,
 			     const char *type, struct object_id *oid);
 
-extern int hash_sha1_file_literally(const void *buf, unsigned long len, const char *type, struct object_id *oid, unsigned flags);
+extern int hash_object_file_literally(const void *buf, unsigned long len,
+				      const char *type, struct object_id *oid,
+				      unsigned flags);
 
 extern int pretend_object_file(void *, unsigned long, enum object_type,
 			       struct object_id *oid);
