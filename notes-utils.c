@@ -12,7 +12,7 @@ void create_notes_commit(struct notes_tree *t, struct commit_list *parents,
 
 	assert(t->initialized);
 
-	if (write_notes_tree(t, tree_oid.hash))
+	if (write_notes_tree(t, &tree_oid))
 		die("Failed to write notes tree to database");
 
 	if (!parents) {

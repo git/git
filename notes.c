@@ -1123,11 +1123,12 @@ int for_each_note(struct notes_tree *t, int flags, each_note_fn fn,
 	return for_each_note_helper(t, t->root, 0, 0, flags, fn, cb_data);
 }
 
-int write_notes_tree(struct notes_tree *t, unsigned char *result)
+int write_notes_tree(struct notes_tree *t, struct object_id *result)
 {
 	struct tree_write_stack root;
 	struct write_each_note_data cb_data;
 	int ret;
+	int flags;
 
 	if (!t)
 		t = &default_notes_tree;
@@ -1141,12 +1142,13 @@ int write_notes_tree(struct notes_tree *t, unsigned char *result)
 	cb_data.next_non_note = t->first_non_note;
 
 	/* Write tree objects representing current notes tree */
-	ret = for_each_note(t, FOR_EACH_NOTE_DONT_UNPACK_SUBTREES |
-				FOR_EACH_NOTE_YIELD_SUBTREES,
-			write_each_note, &cb_data) ||
-		write_each_non_note_until(NULL, &cb_data) ||
-		tree_write_stack_finish_subtree(&root) ||
-		write_sha1_file(root.buf.buf, root.buf.len, tree_type, result);
+	flags = FOR_EACH_NOTE_DONT_UNPACK_SUBTREES |
+		FOR_EACH_NOTE_YIELD_SUBTREES;
+	ret = for_each_note(t, flags, write_each_note, &cb_data) ||
+	      write_each_non_note_until(NULL, &cb_data) ||
+	      tree_write_stack_finish_subtree(&root) ||
+	      write_sha1_file(root.buf.buf, root.buf.len, tree_type,
+			      result->hash);
 	strbuf_release(&root.buf);
 	return ret;
 }

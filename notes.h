@@ -217,7 +217,7 @@ int for_each_note(struct notes_tree *t, int flags, each_note_fn fn,
  * Write the given notes_tree structure to the object database
  *
  * Creates a new tree object encapsulating the current state of the given
- * notes_tree, and stores its SHA1 into the 'result' argument.
+ * notes_tree, and stores its object id into the 'result' argument.
  *
  * Returns zero on success, non-zero on failure.
  *
@@ -225,7 +225,7 @@ int for_each_note(struct notes_tree *t, int flags, each_note_fn fn,
  * this function has returned zero. Please also remember to create a
  * corresponding commit object, and update the appropriate notes ref.
  */
-int write_notes_tree(struct notes_tree *t, unsigned char *result);
+int write_notes_tree(struct notes_tree *t, struct object_id *result);
 
 /* Flags controlling the operation of prune */
 #define NOTES_PRUNE_VERBOSE 1
