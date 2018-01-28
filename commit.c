@@ -1567,7 +1567,7 @@ int commit_tree_extended(const char *msg, size_t msg_len,
 		goto out;
 	}
 
-	result = write_sha1_file(buffer.buf, buffer.len, commit_type, ret->hash);
+	result = write_object_file(buffer.buf, buffer.len, commit_type, ret);
 out:
 	strbuf_release(&buffer);
 	return result;

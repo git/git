@@ -69,7 +69,7 @@ static int sent_capabilities;
 static int shallow_update;
 static const char *alt_shallow_file;
 static struct strbuf push_cert = STRBUF_INIT;
-static unsigned char push_cert_sha1[20];
+static struct object_id push_cert_oid;
 static struct signature_check sigcheck;
 static const char *push_cert_nonce;
 static const char *cert_nonce_seed;
@@ -633,8 +633,9 @@ static void prepare_push_cert_sha1(struct child_process *proc)
 		int bogs /* beginning_of_gpg_sig */;
 
 		already_done = 1;
-		if (write_sha1_file(push_cert.buf, push_cert.len, "blob", push_cert_sha1))
-			hashclr(push_cert_sha1);
+		if (write_object_file(push_cert.buf, push_cert.len, "blob",
+				      &push_cert_oid))
+			oidclr(&push_cert_oid);
 
 		memset(&sigcheck, '\0', sizeof(sigcheck));
 		sigcheck.result = 'N';
@@ -655,9 +656,9 @@ static void prepare_push_cert_sha1(struct child_process *proc)
 		strbuf_release(&gpg_status);
 		nonce_status = check_nonce(push_cert.buf, bogs);
 	}
-	if (!is_null_sha1(push_cert_sha1)) {
+	if (!is_null_oid(&push_cert_oid)) {
 		argv_array_pushf(&proc->env_array, "GIT_PUSH_CERT=%s",
-				 sha1_to_hex(push_cert_sha1));
+				 oid_to_hex(&push_cert_oid));
 		argv_array_pushf(&proc->env_array, "GIT_PUSH_CERT_SIGNER=%s",
 				 sigcheck.signer ? sigcheck.signer : "");
 		argv_array_pushf(&proc->env_array, "GIT_PUSH_CERT_KEY=%s",

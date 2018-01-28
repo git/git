@@ -667,7 +667,7 @@ static int tree_write_stack_finish_subtree(struct tree_write_stack *tws)
 		ret = tree_write_stack_finish_subtree(n);
 		if (ret)
 			return ret;
-		ret = write_sha1_file(n->buf.buf, n->buf.len, tree_type, s.hash);
+		ret = write_object_file(n->buf.buf, n->buf.len, tree_type, &s);
 		if (ret)
 			return ret;
 		strbuf_release(&n->buf);
@@ -825,7 +825,7 @@ int combine_notes_concatenate(struct object_id *cur_oid,
 	free(new_msg);
 
 	/* create a new blob object from buf */
-	ret = write_sha1_file(buf, buf_len, blob_type, cur_oid->hash);
+	ret = write_object_file(buf, buf_len, blob_type, cur_oid);
 	free(buf);
 	return ret;
 }
@@ -905,7 +905,7 @@ int combine_notes_cat_sort_uniq(struct object_id *cur_oid,
 				 string_list_join_lines_helper, &buf))
 		goto out;
 
-	ret = write_sha1_file(buf.buf, buf.len, blob_type, cur_oid->hash);
+	ret = write_object_file(buf.buf, buf.len, blob_type, cur_oid);
 
 out:
 	strbuf_release(&buf);
@@ -1147,8 +1147,7 @@ int write_notes_tree(struct notes_tree *t, struct object_id *result)
 	ret = for_each_note(t, flags, write_each_note, &cb_data) ||
 	      write_each_non_note_until(NULL, &cb_data) ||
 	      tree_write_stack_finish_subtree(&root) ||
-	      write_sha1_file(root.buf.buf, root.buf.len, tree_type,
-			      result->hash);
+	      write_object_file(root.buf.buf, root.buf.len, tree_type, result);
 	strbuf_release(&root.buf);
 	return ret;
 }

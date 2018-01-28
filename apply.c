@@ -3554,7 +3554,7 @@ static int try_threeway(struct apply_state *state,
 
 	/* Preimage the patch was prepared for */
 	if (patch->is_new)
-		write_sha1_file("", 0, blob_type, pre_oid.hash);
+		write_object_file("", 0, blob_type, &pre_oid);
 	else if (get_oid(patch->old_sha1_prefix, &pre_oid) ||
 		 read_blob_object(&buf, &pre_oid, patch->old_mode))
 		return error(_("repository lacks the necessary blob to fall back on 3-way merge."));
@@ -3570,7 +3570,7 @@ static int try_threeway(struct apply_state *state,
 		return -1;
 	}
 	/* post_oid is theirs */
-	write_sha1_file(tmp_image.buf, tmp_image.len, blob_type, post_oid.hash);
+	write_object_file(tmp_image.buf, tmp_image.len, blob_type, &post_oid);
 	clear_image(&tmp_image);
 
 	/* our_oid is ours */
@@ -3583,7 +3583,7 @@ static int try_threeway(struct apply_state *state,
 			return error(_("cannot read the current contents of '%s'"),
 				     patch->old_name);
 	}
-	write_sha1_file(tmp_image.buf, tmp_image.len, blob_type, our_oid.hash);
+	write_object_file(tmp_image.buf, tmp_image.len, blob_type, &our_oid);
 	clear_image(&tmp_image);
 
 	/* in-core three-way merge between post and our using pre as base */
@@ -4291,7 +4291,7 @@ static int add_index_file(struct apply_state *state,
 			}
 			fill_stat_cache_info(ce, &st);
 		}
-		if (write_sha1_file(buf, size, blob_type, ce->oid.hash) < 0) {
+		if (write_object_file(buf, size, blob_type, &ce->oid) < 0) {
 			free(ce);
 			return error(_("unable to create backing store "
 				       "for newly created file %s"), path);

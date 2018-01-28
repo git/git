@@ -1009,8 +1009,9 @@ static int merge_file_1(struct merge_options *o,
 			if ((merge_status < 0) || !result_buf.ptr)
 				ret = err(o, _("Failed to execute internal merge"));
 
-			if (!ret && write_sha1_file(result_buf.ptr, result_buf.size,
-						    blob_type, result->oid.hash))
+			if (!ret &&
+			    write_object_file(result_buf.ptr, result_buf.size,
+					      blob_type, &result->oid))
 				ret = err(o, _("Unable to add %s to database"),
 					  a->path);
 
