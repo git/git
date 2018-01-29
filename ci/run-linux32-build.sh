@@ -33,7 +33,13 @@ then
 	CI_USER=root
 else
 	CI_USER=ci
-	useradd -u $HOST_UID $CI_USER
+	if test "$(id -u $CI_USER 2>/dev/null)" = $HOST_UID
+	then
+		echo "user '$CI_USER' already exists with the requested ID $HOST_UID"
+	else
+		useradd -u $HOST_UID $CI_USER
+	fi
+
 	# Due to a bug the test suite was run as root in the past, so
 	# a prove state file created back then is only accessible by
 	# root.  Now that bug is fixed, the test suite is run as a
