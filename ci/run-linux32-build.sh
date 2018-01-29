@@ -26,6 +26,7 @@ test -z $HOST_UID || (CI_USER="ci" && useradd -u $HOST_UID $CI_USER) &&
 
 # Build and test
 linux32 --32bit i386 su -m -l $CI_USER -c '
+    set -x &&
     cd /usr/src/git &&
     ln -s /tmp/travis-cache/.prove t/.prove &&
     make --jobs=2 &&
