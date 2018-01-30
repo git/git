@@ -109,36 +109,36 @@ match_with_ls_files() {
 	then
 		if test -e .git/created_test_file
 		then
-			test_expect_success "$match_function (via ls-files): match dies on '$pattern' '$text'" "
+			test_expect_success EXPENSIVE_ON_WINDOWS "$match_function (via ls-files): match dies on '$pattern' '$text'" "
 				printf '%s' '$text' >expect &&
 				test_must_fail git$ls_files_args ls-files -z -- '$pattern'
 			"
 		else
-			test_expect_failure "$match_function (via ls-files): match skip '$pattern' '$text'" 'false'
+			test_expect_failure EXPENSIVE_ON_WINDOWS "$match_function (via ls-files): match skip '$pattern' '$text'" 'false'
 		fi
 	elif test "$match_expect" = 1
 	then
 		if test -e .git/created_test_file
 		then
-			test_expect_success "$match_function (via ls-files): match '$pattern' '$text'" "
+			test_expect_success EXPENSIVE_ON_WINDOWS "$match_function (via ls-files): match '$pattern' '$text'" "
 				printf '%s' '$text' >expect &&
 				git$ls_files_args ls-files -z -- '$pattern' >actual.raw 2>actual.err &&
 				$match_stdout_stderr_cmp
 			"
 		else
-			test_expect_failure "$match_function (via ls-files): match skip '$pattern' '$text'" 'false'
+			test_expect_failure EXPENSIVE_ON_WINDOWS "$match_function (via ls-files): match skip '$pattern' '$text'" 'false'
 		fi
 	elif test "$match_expect" = 0
 	then
 		if test -e .git/created_test_file
 		then
-			test_expect_success "$match_function (via ls-files): no match '$pattern' '$text'" "
+			test_expect_success EXPENSIVE_ON_WINDOWS "$match_function (via ls-files): no match '$pattern' '$text'" "
 				>expect &&
 				git$ls_files_args ls-files -z -- '$pattern' >actual.raw 2>actual.err &&
 				$match_stdout_stderr_cmp
 			"
 		else
-			test_expect_failure "$match_function (via ls-files): no match skip '$pattern' '$text'" 'false'
+			test_expect_failure EXPENSIVE_ON_WINDOWS "$match_function (via ls-files): no match skip '$pattern' '$text'" 'false'
 		fi
 	else
 		test_expect_success "PANIC: Test framework error. Unknown matches value $match_expect" 'false'
@@ -174,7 +174,7 @@ match() {
 		pattern=${10}
 	fi
 
-	test_expect_success 'cleanup after previous file test' '
+	test_expect_success EXPENSIVE_ON_WINDOWS 'cleanup after previous file test' '
 		if test -e .git/created_test_file
 		then
 			git reset &&
@@ -184,7 +184,7 @@ match() {
 
 	printf '%s' "$text" >.git/expected_test_file
 
-	test_expect_success "setup match file test for $text" '
+	test_expect_success EXPENSIVE_ON_WINDOWS "setup match file test for $text" '
 		file=$(cat .git/expected_test_file) &&
 		if should_create_test_file "$file"
 		then
