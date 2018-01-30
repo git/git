@@ -13,7 +13,7 @@ match() {
 	elif test "$1" = 0
 	then
 		test_expect_success "wildmatch: no match '$2' '$3'" "
-			! test-wildmatch wildmatch '$2' '$3'
+			test_must_fail test-wildmatch wildmatch '$2' '$3'
 		"
 	else
 		test_expect_success "PANIC: Test framework error. Unknown matches value $1" 'false'
@@ -29,7 +29,7 @@ imatch() {
 	elif test "$1" = 0
 	then
 		test_expect_success "iwildmatch: no match '$2' '$3'" "
-			! test-wildmatch iwildmatch '$2' '$3'
+			test_must_fail test-wildmatch iwildmatch '$2' '$3'
 		"
 	else
 		test_expect_success "PANIC: Test framework error. Unknown matches value $1" 'false'
@@ -45,7 +45,7 @@ pathmatch() {
 	elif test "$1" = 0
 	then
 		test_expect_success "pathmatch: no match '$2' '$3'" "
-			! test-wildmatch pathmatch '$2' '$3'
+			test_must_fail test-wildmatch pathmatch '$2' '$3'
 		"
 	else
 		test_expect_success "PANIC: Test framework error. Unknown matches value $1" 'false'
