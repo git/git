@@ -7,11 +7,11 @@ test_description='wildmatch tests'
 match() {
 	if test "$1" = 1
 	then
-		test_expect_success "wildmatch:     match '$3' '$4'" "
+		test_expect_success "wildmatch: match '$3' '$4'" "
 			test-wildmatch wildmatch '$3' '$4'
 		"
 	else
-		test_expect_success "wildmatch:  no match '$3' '$4'" "
+		test_expect_success "wildmatch: no match '$3' '$4'" "
 			! test-wildmatch wildmatch '$3' '$4'
 		"
 	fi
@@ -20,7 +20,7 @@ match() {
 imatch() {
 	if test "$1" = 1
 	then
-		test_expect_success "iwildmatch:    match '$2' '$3'" "
+		test_expect_success "iwildmatch: match '$2' '$3'" "
 			test-wildmatch iwildmatch '$2' '$3'
 		"
 	else
@@ -33,11 +33,11 @@ imatch() {
 pathmatch() {
 	if test "$1" = 1
 	then
-		test_expect_success "pathmatch:     match '$2' '$3'" "
+		test_expect_success "pathmatch: match '$2' '$3'" "
 			test-wildmatch pathmatch '$2' '$3'
 		"
 	else
-		test_expect_success "pathmatch:  no match '$2' '$3'" "
+		test_expect_success "pathmatch: no match '$2' '$3'" "
 			! test-wildmatch pathmatch '$2' '$3'
 		"
 	fi
