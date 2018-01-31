@@ -88,13 +88,15 @@ static void packet_trace(const char *buf, unsigned int len, int write)
 void packet_flush(int fd)
 {
 	packet_trace("0000", 4, 1);
-	write_or_die(fd, "0000", 4);
+	if (write_in_full(fd, "0000", 4) < 0)
+		die_errno(_("unable to write flush packet"));
 }
 
 void packet_delim(int fd)
 {
 	packet_trace("0001", 4, 1);
-	write_or_die(fd, "0001", 4);
+	if (write_in_full(fd, "0001", 4) < 0)
+		die_errno(_("unable to write delim packet"));
 }
 
 int packet_flush_gently(int fd)

@@ -191,8 +191,10 @@ static void send_request(struct fetch_pack_args *args,
 	if (args->stateless_rpc) {
 		send_sideband(fd, -1, buf->buf, buf->len, LARGE_PACKET_MAX);
 		packet_flush(fd);
-	} else
-		write_or_die(fd, buf->buf, buf->len);
+	} else {
+		if (write_in_full(fd, buf->buf, buf->len) < 0)
+			die_errno(_("unable to write to remote"));
+	}
 }
 
 static void insert_one_alternate_object(struct fetch_negotiator *negotiator,
@@ -1163,7 +1165,8 @@ static int send_fetch_request(struct fetch_negotiator *negotiator, int fd_out,
 
 	/* Send request */
 	packet_buf_flush(&req_buf);
-	write_or_die(fd_out, req_buf.buf, req_buf.len);
+	if (write_in_full(fd_out, req_buf.buf, req_buf.len) < 0)
+		die_errno(_("unable to write request to remote"));
 
 	strbuf_release(&req_buf);
 	return ret;

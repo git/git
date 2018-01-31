@@ -12,6 +12,10 @@ cat >hello-script <<-EOF
 	cat hello-script
 EOF
 
+test_expect_success MINGW 'subprocess inherits only std handles' '
+	test-tool run-command inherited-handle
+'
+
 test_expect_success 'start_command reports ENOENT (slash)' '
 	test-tool run-command start-command-ENOENT ./does-not-exist 2>err &&
 	test_i18ngrep "\./does-not-exist" err
@@ -208,6 +212,12 @@ test_expect_success MINGW 'verify curlies are quoted properly' '
 	a{b}c
 	EOF
 	test_cmp expect actual
+'
+
+test_expect_success MINGW 'can spawn with argv[0] containing spaces' '
+	cp "$GIT_BUILD_DIR/t/helper/test-fake-ssh$X" ./ &&
+	test_must_fail "$PWD/test-fake-ssh$X" 2>err &&
+	grep TRASH_DIRECTORY err
 '
 
 test_done

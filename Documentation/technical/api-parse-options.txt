@@ -198,8 +198,10 @@ There are some macros to easily define options:
 	The filename will be prefixed by passing the filename along with
 	the prefix argument of `parse_options()` to `prefix_filename()`.
 
-`OPT_ARGUMENT(long, description)`::
+`OPT_ARGUMENT(long, &int_var, description)`::
 	Introduce a long-option argument that will be kept in `argv[]`.
+	If this option was seen, `int_var` will be set to one (except
+	if a `NULL` pointer was passed).
 
 `OPT_NUMBER_CALLBACK(&var, description, func_ptr)`::
 	Recognize numerical options like -123 and feed the integer as
