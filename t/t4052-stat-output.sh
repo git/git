@@ -19,17 +19,33 @@ test_expect_success 'preparation' '
 	git commit -m message "$name"
 '
 
+cat >expect72 <<-'EOF'
+ ...aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | 1 +
+EOF
+test_expect_success "format-patch: small change with long name gives more space to the name" '
+	git format-patch -1 --stdout >output &&
+	grep " | " output >actual &&
+	test_cmp expect72 actual
+'
+
 while read cmd args
 do
-	cat >expect <<-'EOF'
+	cat >expect80 <<-'EOF'
 	 ...aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | 1 +
 	EOF
 	test_expect_success "$cmd: small change with long name gives more space to the name" '
 		git $cmd $args >output &&
 		grep " | " output >actual &&
-		test_cmp expect actual
+		test_cmp expect80 actual
 	'
+done <<\EOF
+diff HEAD^ HEAD --stat
+show --stat
+log -1 --stat
+EOF
 
+while read cmd args
+do
 	cat >expect <<-'EOF'
 	 ...aaaaaaaaaaaaaaaaaaaaaaaaaaaaa | 1 +
 	EOF
@@ -79,11 +95,11 @@ test_expect_success 'preparation for big change tests' '
 	git commit -m message abcd
 '
 
-cat >expect80 <<'EOF'
- abcd | 1000 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+cat >expect72 <<'EOF'
+ abcd | 1000 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 EOF
-cat >expect80-graph <<'EOF'
-|  abcd | 1000 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+cat >expect72-graph <<'EOF'
+|  abcd | 1000 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 EOF
 cat >expect200 <<'EOF'
  abcd | 1000 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -107,7 +123,7 @@ do
 		test_cmp "$expect-graph" actual
 	'
 done <<\EOF
-ignores expect80 format-patch -1 --stdout
+ignores expect72 format-patch -1 --stdout
 respects expect200 diff HEAD^ HEAD --stat
 respects expect200 show --stat
 respects expect200 log -1 --stat
@@ -135,7 +151,7 @@ do
 		test_cmp "$expect-graph" actual
 	'
 done <<\EOF
-ignores expect80 format-patch -1 --stdout
+ignores expect72 format-patch -1 --stdout
 respects expect40 diff HEAD^ HEAD --stat
 respects expect40 show --stat
 respects expect40 log -1 --stat
@@ -163,7 +179,7 @@ do
 		test_cmp "$expect-graph" actual
 	'
 done <<\EOF
-ignores expect80 format-patch -1 --stdout
+ignores expect72 format-patch -1 --stdout
 respects expect40 diff HEAD^ HEAD --stat
 respects expect40 show --stat
 respects expect40 log -1 --stat
@@ -250,11 +266,11 @@ show --stat
 log -1 --stat
 EOF
 
-cat >expect80 <<'EOF'
- ...aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | 1000 ++++++++++++++++++++
+cat >expect72 <<'EOF'
+ ...aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | 1000 +++++++++++++++++
 EOF
-cat >expect80-graph <<'EOF'
-|  ...aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | 1000 ++++++++++++++++++++
+cat >expect72-graph <<'EOF'
+|  ...aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | 1000 +++++++++++++++++
 EOF
 cat >expect200 <<'EOF'
  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | 1000 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -278,7 +294,7 @@ do
 		test_cmp "$expect-graph" actual
 	'
 done <<\EOF
-ignores expect80 format-patch -1 --stdout
+ignores expect72 format-patch -1 --stdout
 respects expect200 diff HEAD^ HEAD --stat
 respects expect200 show --stat
 respects expect200 log -1 --stat
@@ -308,7 +324,7 @@ do
 		test_cmp "$expect-graph" actual
 	'
 done <<\EOF
-ignores expect80 format-patch -1 --stdout
+ignores expect72 format-patch -1 --stdout
 respects expect1 diff HEAD^ HEAD --stat
 respects expect1 show --stat
 respects expect1 log -1 --stat
