@@ -93,7 +93,7 @@ static int already_written(struct bulk_checkin_state *state, unsigned char sha1[
  * with a new pack.
  */
 static int stream_to_pack(struct bulk_checkin_state *state,
-			  git_SHA_CTX *ctx, off_t *already_hashed_to,
+			  git_hash_ctx *ctx, off_t *already_hashed_to,
 			  int fd, size_t size, enum object_type type,
 			  const char *path, unsigned flags)
 {
@@ -127,7 +127,7 @@ static int stream_to_pack(struct bulk_checkin_state *state,
 				if (rsize < hsize)
 					hsize = rsize;
 				if (hsize)
-					git_SHA1_Update(ctx, ibuf, hsize);
+					the_hash_algo->update_fn(ctx, ibuf, hsize);
 				*already_hashed_to = offset;
 			}
 			s.next_in = ibuf;
@@ -192,7 +192,7 @@ static int deflate_to_pack(struct bulk_checkin_state *state,
 			   unsigned flags)
 {
 	off_t seekback, already_hashed_to;
-	git_SHA_CTX ctx;
+	git_hash_ctx ctx;
 	unsigned char obuf[16384];
 	unsigned header_len;
 	struct hashfile_checkpoint checkpoint;
@@ -204,8 +204,8 @@ static int deflate_to_pack(struct bulk_checkin_state *state,
 
 	header_len = xsnprintf((char *)obuf, sizeof(obuf), "%s %" PRIuMAX,
 			       typename(type), (uintmax_t)size) + 1;
-	git_SHA1_Init(&ctx);
-	git_SHA1_Update(&ctx, obuf, header_len);
+	the_hash_algo->init_fn(&ctx);
+	the_hash_algo->update_fn(&ctx, obuf, header_len);
 
 	/* Note: idx is non-NULL when we are writing */
 	if ((flags & HASH_WRITE_OBJECT) != 0)
@@ -236,7 +236,7 @@ static int deflate_to_pack(struct bulk_checkin_state *state,
 		if (lseek(fd, seekback, SEEK_SET) == (off_t) -1)
 			return error("cannot seek back");
 	}
-	git_SHA1_Final(result_sha1, &ctx);
+	the_hash_algo->final_fn(result_sha1, &ctx);
 	if (!idx)
 		return 0;
 
