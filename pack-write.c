@@ -122,7 +122,7 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 			uint32_t offset = htonl(obj->offset);
 			sha1write(f, &offset, 4);
 		}
-		sha1write(f, obj->oid.hash, 20);
+		sha1write(f, obj->oid.hash, the_hash_algo->rawsz);
 		if ((opts->flags & WRITE_IDX_STRICT) &&
 		    (i && !oidcmp(&list[-2]->oid, &obj->oid)))
 			die("The same object %s appears twice in the pack",
@@ -169,7 +169,7 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 		}
 	}
 
-	sha1write(f, sha1, 20);
+	sha1write(f, sha1, the_hash_algo->rawsz);
 	sha1close(f, NULL, ((opts->flags & WRITE_IDX_VERIFY)
 			    ? CSUM_CLOSE : CSUM_FSYNC));
 	return index_name;
@@ -203,20 +203,20 @@ off_t write_pack_header(struct sha1file *f, uint32_t nr_entries)
  * interested in the resulting SHA1 of pack data above partial_pack_offset.
  */
 void fixup_pack_header_footer(int pack_fd,
-			 unsigned char *new_pack_sha1,
+			 unsigned char *new_pack_hash,
 			 const char *pack_name,
 			 uint32_t object_count,
-			 unsigned char *partial_pack_sha1,
+			 unsigned char *partial_pack_hash,
 			 off_t partial_pack_offset)
 {
 	int aligned_sz, buf_sz = 8 * 1024;
-	git_SHA_CTX old_sha1_ctx, new_sha1_ctx;
+	git_hash_ctx old_hash_ctx, new_hash_ctx;
 	struct pack_header hdr;
 	char *buf;
 	ssize_t read_result;
 
-	git_SHA1_Init(&old_sha1_ctx);
-	git_SHA1_Init(&new_sha1_ctx);
+	the_hash_algo->init_fn(&old_hash_ctx);
+	the_hash_algo->init_fn(&new_hash_ctx);
 
 	if (lseek(pack_fd, 0, SEEK_SET) != 0)
 		die_errno("Failed seeking to start of '%s'", pack_name);
@@ -228,9 +228,9 @@ void fixup_pack_header_footer(int pack_fd,
 			  pack_name);
 	if (lseek(pack_fd, 0, SEEK_SET) != 0)
 		die_errno("Failed seeking to start of '%s'", pack_name);
-	git_SHA1_Update(&old_sha1_ctx, &hdr, sizeof(hdr));
+	the_hash_algo->update_fn(&old_hash_ctx, &hdr, sizeof(hdr));
 	hdr.hdr_entries = htonl(object_count);
-	git_SHA1_Update(&new_sha1_ctx, &hdr, sizeof(hdr));
+	the_hash_algo->update_fn(&new_hash_ctx, &hdr, sizeof(hdr));
 	write_or_die(pack_fd, &hdr, sizeof(hdr));
 	partial_pack_offset -= sizeof(hdr);
 
@@ -238,28 +238,28 @@ void fixup_pack_header_footer(int pack_fd,
 	aligned_sz = buf_sz - sizeof(hdr);
 	for (;;) {
 		ssize_t m, n;
-		m = (partial_pack_sha1 && partial_pack_offset < aligned_sz) ?
+		m = (partial_pack_hash && partial_pack_offset < aligned_sz) ?
 			partial_pack_offset : aligned_sz;
 		n = xread(pack_fd, buf, m);
 		if (!n)
 			break;
 		if (n < 0)
 			die_errno("Failed to checksum '%s'", pack_name);
-		git_SHA1_Update(&new_sha1_ctx, buf, n);
+		the_hash_algo->update_fn(&new_hash_ctx, buf, n);
 
 		aligned_sz -= n;
 		if (!aligned_sz)
 			aligned_sz = buf_sz;
 
-		if (!partial_pack_sha1)
+		if (!partial_pack_hash)
 			continue;
 
-		git_SHA1_Update(&old_sha1_ctx, buf, n);
+		the_hash_algo->update_fn(&old_hash_ctx, buf, n);
 		partial_pack_offset -= n;
 		if (partial_pack_offset == 0) {
-			unsigned char sha1[20];
-			git_SHA1_Final(sha1, &old_sha1_ctx);
-			if (hashcmp(sha1, partial_pack_sha1) != 0)
+			unsigned char hash[GIT_MAX_RAWSZ];
+			the_hash_algo->final_fn(hash, &old_hash_ctx);
+			if (hashcmp(hash, partial_pack_hash) != 0)
 				die("Unexpected checksum for %s "
 				    "(disk corruption?)", pack_name);
 			/*
@@ -267,23 +267,24 @@ void fixup_pack_header_footer(int pack_fd,
 			 * pack, which also means making partial_pack_offset
 			 * big enough not to matter anymore.
 			 */
-			git_SHA1_Init(&old_sha1_ctx);
+			the_hash_algo->init_fn(&old_hash_ctx);
 			partial_pack_offset = ~partial_pack_offset;
 			partial_pack_offset -= MSB(partial_pack_offset, 1);
 		}
 	}
 	free(buf);
 
-	if (partial_pack_sha1)
-		git_SHA1_Final(partial_pack_sha1, &old_sha1_ctx);
-	git_SHA1_Final(new_pack_sha1, &new_sha1_ctx);
-	write_or_die(pack_fd, new_pack_sha1, 20);
+	if (partial_pack_hash)
+		the_hash_algo->final_fn(partial_pack_hash, &old_hash_ctx);
+	the_hash_algo->final_fn(new_pack_hash, &new_hash_ctx);
+	write_or_die(pack_fd, new_pack_hash, the_hash_algo->rawsz);
 	fsync_or_die(pack_fd, pack_name);
 }
 
 char *index_pack_lockfile(int ip_out)
 {
-	char packname[46];
+	char packname[GIT_MAX_HEXSZ + 6];
+	const int len = the_hash_algo->hexsz + 6;
 
 	/*
 	 * The first thing we expect from index-pack's output
@@ -292,9 +293,9 @@ char *index_pack_lockfile(int ip_out)
 	 * case, we need it to remove the corresponding .keep file
 	 * later on.  If we don't get that then tough luck with it.
 	 */
-	if (read_in_full(ip_out, packname, 46) == 46 && packname[45] == '\n') {
+	if (read_in_full(ip_out, packname, len) == len && packname[len-1] == '\n') {
 		const char *name;
-		packname[45] = 0;
+		packname[len-1] = 0;
 		if (skip_prefix(packname, "keep\t", &name))
 			return xstrfmt("%s/pack/pack-%s.keep",
 				       get_object_directory(), name);
