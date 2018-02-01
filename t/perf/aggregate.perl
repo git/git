@@ -37,7 +37,7 @@ sub format_times {
 }
 
 my (@dirs, %dirnames, %dirabbrevs, %prefixes, @tests,
-    $codespeed, $subsection);
+    $codespeed, $subsection, $reponame);
 while (scalar @ARGV) {
 	my $arg = $ARGV[0];
 	my $dir;
@@ -52,6 +52,15 @@ while (scalar @ARGV) {
 		shift @ARGV;
 		if (! $subsection) {
 			die "empty subsection";
+		}
+		next;
+	}
+	if ($arg eq "--reponame") {
+		shift @ARGV;
+		$reponame = $ARGV[0];
+		shift @ARGV;
+		if (! $reponame) {
+			die "empty reponame";
 		}
 		next;
 	}
@@ -210,7 +219,9 @@ sub print_codespeed_results {
 	}
 
 	my $environment;
-	if (exists $ENV{GIT_PERF_REPO_NAME} and $ENV{GIT_PERF_REPO_NAME} ne "") {
+	if ($reponame) {
+		$environment = $reponame;
+	} elsif (exists $ENV{GIT_PERF_REPO_NAME} and $ENV{GIT_PERF_REPO_NAME} ne "") {
 		$environment = $ENV{GIT_PERF_REPO_NAME};
 	} elsif (exists $ENV{GIT_TEST_INSTALLED} and $ENV{GIT_TEST_INSTALLED} ne "") {
 		$environment = $ENV{GIT_TEST_INSTALLED};
