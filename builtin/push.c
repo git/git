@@ -12,11 +12,39 @@
 #include "submodule.h"
 #include "submodule-config.h"
 #include "send-pack.h"
+#include "color.h"
 
 static const char * const push_usage[] = {
 	N_("git push [<options>] [<repository> [<refspec>...]]"),
 	NULL,
 };
+
+static int push_use_color = -1;
+static char push_colors[][COLOR_MAXLEN] = {
+	GIT_COLOR_RESET,
+	GIT_COLOR_RED,	/* ERROR */
+};
+
+enum color_push {
+	PUSH_COLOR_RESET = 0,
+	PUSH_COLOR_ERROR = 1
+};
+
+static int parse_push_color_slot(const char *slot)
+{
+	if (!strcasecmp(slot, "reset"))
+		return PUSH_COLOR_RESET;
+	if (!strcasecmp(slot, "error"))
+		return PUSH_COLOR_ERROR;
+	return -1;
+}
+
+static const char *push_get_color(enum color_push ix)
+{
+	if (want_color_stderr(push_use_color))
+		return push_colors[ix];
+	return "";
+}
 
 static int thin = 1;
 static int deleterefs;
@@ -337,8 +365,11 @@ static int push_with_options(struct transport *transport, int flags)
 		fprintf(stderr, _("Pushing to %s\n"), transport->url);
 	err = transport_push(transport, refspec_nr, refspec, flags,
 			     &reject_reasons);
-	if (err != 0)
+	if (err != 0) {
+		fprintf(stderr, "%s", push_get_color(PUSH_COLOR_ERROR));
 		error(_("failed to push some refs to '%s'"), transport->url);
+		fprintf(stderr, "%s", push_get_color(PUSH_COLOR_RESET));
+	}
 
 	err |= transport_disconnect(transport);
 	if (!err)
@@ -467,6 +498,7 @@ static void set_push_cert_flags(int *flags, int v)
 
 static int git_push_config(const char *k, const char *v, void *cb)
 {
+	const char *slot_name;
 	int *flags = cb;
 	int status;
 
@@ -514,6 +546,16 @@ static int git_push_config(const char *k, const char *v, void *cb)
 			else
 				string_list_append(&push_options_config, v);
 		return 0;
+	} else if (!strcmp(k, "color.push")) {
+		push_use_color = git_config_colorbool(k, v);
+		return 0;
+	} else if (skip_prefix(k, "color.push.", &slot_name)) {
+		int slot = parse_push_color_slot(slot_name);
+		if (slot < 0)
+			return 0;
+		if (!v)
+			return config_error_nonbool(k);
+		return color_parse(v, push_colors[slot]);
 	}
 
 	return git_default_config(k, v, NULL);
