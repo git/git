@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jan 2018, #03; Tue, 23)
+Subject: What's cooking in git.git (Jan 2018, #04; Wed, 31)
 X-master-at: 5be1f00a9a701532232f57958efab4be8c959a29
 X-next-at: de0f0111ea2ad3a2b03a378e6272c2ee476a26ed
 
-What's cooking in git.git (Jan 2018, #03; Tue, 23)
+What's cooking in git.git (Jan 2018, #04; Wed, 31)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,9 +12,13 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-Many topics in 'next' have been merged to 'master' while others are
-tentatively kicked back to 'pu', to give them a chance to be rerolled
-if the authors of them wish to do so.
+Many new topics appeared and are not yet marked with "Will do what"
+labels.  Except for some large ones, I think most are already in
+good shape, but I'd want to double check by re-reading them.
+
+I am migrating my build and integration environment to a different
+machine; if you notice anything out of ordinary, please let me know
+before I decomission and reimage my usual environment ;-)
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -22,426 +26,193 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* ab/commit-m-with-fixup (2017-12-22) 2 commits
-  (merged to 'next' on 2018-01-11 at 41255c464f)
- + commit: add support for --fixup <commit> -m"<extra message>"
- + commit doc: document that -c, -C, -F and --fixup with -m error
-
- "git commit --fixup" did not allow "-m<message>" option to be used
- at the same time; allow it to annotate resulting commit with more
- text.
-
-
-* ab/doc-cat-file-e-still-shows-errors (2018-01-10) 1 commit
-  (merged to 'next' on 2018-01-12 at 080bb1d397)
- + cat-file doc: document that -e will return some output
-
- Doc update.
-
-
-* ab/perf-grep-threads (2018-01-04) 1 commit
-  (merged to 'next' on 2018-01-09 at 91889574fb)
- + perf: amend the grep tests to test grep.threads
-
- More perf tests for threaded grep
-
-
-* as/read-tree-prefix-doc-fix (2018-01-09) 1 commit
-  (merged to 'next' on 2018-01-12 at 895c72e5c3)
- + doc/read-tree: remove obsolete remark
-
- Doc update.
-
-
-* bw/oidmap-autoinit (2017-12-27) 1 commit
-  (merged to 'next' on 2018-01-11 at f941e013b4)
- + oidmap: ensure map is initialized
-
- Code clean-up.
-
-
-* cc/codespeed (2018-01-05) 7 commits
-  (merged to 'next' on 2018-01-09 at 8578089a2b)
- + perf/run: read GIT_PERF_REPO_NAME from perf.repoName
- + perf/run: learn to send output to codespeed server
- + perf/run: learn about perf.codespeedOutput
- + perf/run: add conf_opts argument to get_var_from_env_or_config()
- + perf/aggregate: implement codespeed JSON output
- + perf/aggregate: refactor printing results
- + perf/aggregate: fix checking ENV{GIT_PERF_SUBSECTION}
-
- "perf" test output can be sent to codespeed server.
-
-
-* dk/describe-all-output-fix (2017-12-27) 1 commit
-  (merged to 'next' on 2017-12-28 at c6254494e3)
- + describe: prepend "tags/" when describing tags with embedded name
-
- An old regression in "git describe --all $annotated_tag^0" has been
- fixed.
-
-
-* ew/empty-merge-with-dirty-index (2018-01-09) 1 commit
-  (merged to 'next' on 2018-01-09 at 6bcda11248)
- + Merge branch 'ew/empty-merge-with-dirty-index-maint' into ew/empty-merge-with-dirty-index
- (this branch uses ew/empty-merge-with-dirty-index-maint.)
-
- "git merge -s recursive" did not correctly abort when the index is
- dirty, if the merged tree happened to be the same as the current
- HEAD, which has been fixed.
-
-
-* jc/merge-symlink-ours-theirs (2018-01-03) 1 commit
-  (merged to 'next' on 2018-01-05 at 63ebfc45eb)
- + merge: teach -Xours/-Xtheirs to symbolic link merge
-
- "git merge -Xours/-Xtheirs" learned to use our/their version when
- resolving a conflicting updates to a symbolic link.
-
-
-* jh/object-filtering (2018-01-08) 1 commit
-  (merged to 'next' on 2018-01-11 at 56808f6969)
- + oidset: don't return value from oidset_init
-
- Hotfix for a topic already in 'master'.
-
-
-* jk/abort-clone-with-existing-dest (2018-01-03) 4 commits
-  (merged to 'next' on 2018-01-09 at 3c8e83c3a7)
- + clone: do not clean up directories we didn't create
- + clone: factor out dir_exists() helper
- + t5600: modernize style
- + t5600: fix outdated comment about unborn HEAD
-
- "git clone $there $here" is allowed even when here directory exists
- as long as it is an empty directory, but the command incorrectly
- removed it upon a failure of the operation.
-
-
-* jm/svn-pushmergeinfo-fix (2017-09-17) 1 commit
-  (merged to 'next' on 2018-01-05 at 6cb237ea44)
- + git-svn: fix svn.pushmergeinfo handling of svn+ssh usernames.
-
- "git svn dcommit" did not take into account the fact that a
- svn+ssh:// URL with a username@ (typically used for pushing) refers
- to the same SVN repository without the username@ and failed when
- svn.pushmergeinfo option is set.
-
-
-* js/fix-merge-arg-quoting-in-rebase-p (2018-01-05) 1 commit
-  (merged to 'next' on 2018-01-09 at 91f5601e9c)
- + rebase -p: fix quoting when calling `git merge`
-
- "git rebase -p -X<option>" did not propagate the option properly
- down to underlying merge strategy backend.
-
-
-* js/test-with-ws-in-path (2018-01-10) 1 commit
-  (merged to 'next' on 2018-01-10 at c44db26fe4)
- + t3900: add some more quotes
-
- Hot fix to a test.
-
-
-* ma/bisect-leakfix (2018-01-03) 1 commit
-  (merged to 'next' on 2018-01-09 at 2ef8b59d1b)
- + bisect: fix a regression causing a segfault
-
- A hotfix for a recent update that broke 'git bisect'.
-
-
-* mm/send-email-fallback-to-local-mail-address (2018-01-08) 3 commits
-  (merged to 'next' on 2018-01-17 at dd4867706b)
- + send-email: add test for Linux's get_maintainer.pl
- + perl/Git: remove now useless email-address parsing code
- + send-email: add and use a local copy of Mail::Address
-
- Instead of maintaining home-grown email address parsing code, ship
- a copy of reasonably recent Mail::Address to be used as a fallback
- in 'git send-email' when the platform lacks it.
-
-
-* nd/add-i-ignore-submodules (2018-01-16) 1 commit
-  (merged to 'next' on 2018-01-17 at 632401fd5a)
- + add--interactive: ignore submodule changes except HEAD
-
- "git add -p" was taught to ignore local changes to submodules as
- they do not interfere with the partial addition of regular changes
- anyway.
-
-
-* nd/ita-wt-renames-in-status (2017-12-27) 6 commits
-  (merged to 'next' on 2017-12-28 at 7610331a11)
- + wt-status.c: handle worktree renames
- + wt-status.c: rename rename-related fields in wt_status_change_data
- + wt-status.c: catch unhandled diff status codes
- + wt-status.c: coding style fix
- + Use DIFF_DETECT_RENAME for detect_rename assignments
- + t2203: test status output with porcelain v2 format
-
- "git status" after moving a path in the working tree (hence making
- it appear "removed") and then adding with the -N option (hence
- making that appear "added") detected it as a rename, but did not
- report the  old and new pathnames correctly.
-
-
-* rs/lose-leak-pending (2017-12-28) 9 commits
-  (merged to 'next' on 2018-01-05 at 05305f7f2f)
- + commit: remove unused function clear_commit_marks_for_object_array()
- + revision: remove the unused flag leak_pending
- + checkout: avoid using the rev_info flag leak_pending
- + bundle: avoid using the rev_info flag leak_pending
- + bisect: avoid using the rev_info flag leak_pending
- + object: add clear_commit_marks_all()
- + ref-filter: use clear_commit_marks_many() in do_merge_filter()
- + commit: use clear_commit_marks_many() in remove_redundant()
- + commit: avoid allocation in clear_commit_marks_many()
-
- API clean-up around revision traversal.
-
-
-* sb/diff-blobfind-pickaxe (2018-01-04) 6 commits
-  (merged to 'next' on 2018-01-09 at 2053890477)
- + diff: use HAS_MULTI_BITS instead of counting bits manually
- + diff: properly error out when combining multiple pickaxe options
- + diffcore: add a pickaxe option to find a specific blob
- + diff: introduce DIFF_PICKAXE_KINDS_MASK
- + diff: migrate diff_flags.pickaxe_ignore_case to a pickaxe_opts bit
- + diff.h: make pickaxe_opts an unsigned bit field
-
- "diff" family of commands learned "--find-object=<object-id>" option
- to limit the findings to changes that involve the named object.
-
-
-* sb/submodule-update-reset-fix (2018-01-05) 4 commits
-  (merged to 'next' on 2018-01-11 at e4e84b69a3)
- + submodule: submodule_move_head omits old argument in forced case
- + unpack-trees: oneway_merge to update submodules
- + t/lib-submodule-update.sh: fix test ignoring ignored files in submodules
- + t/lib-submodule-update.sh: clarify test
-
- When resetting the working tree files recursively, the working tree
- of submodules are now also reset to match.
-
-
-* tg/stash-with-pathspec-fix (2018-01-08) 1 commit
-  (merged to 'next' on 2018-01-11 at abfaa14a7b)
- + stash: don't delete untracked files that match pathspec
-
- "git stash -- <pathspec>" incorrectly blew away untracked files in
- the directory that matched the pathspec, which has been corrected.
-
-
-* tg/worktree-create-tracking (2018-01-11) 1 commit
-  (merged to 'next' on 2018-01-11 at df6423dfc4)
- + Documentation/git-worktree.txt: add missing `
-
- Doc hotfix.
-
-
-* ys/bisect-object-id-missing-conversion-fix (2018-01-09) 1 commit
-  (merged to 'next' on 2018-01-11 at ca330c885d)
- + bisect: debug: convert struct object to object_id
-
- Fix for a commented-out code to adjust it to a rather old API change.
-
---------------------------------------------------
 [New Topics]
 
-* nd/trace-with-env (2018-01-19) 7 commits
- - run-command.c: print new cwd in trace_run_command()
- - run-command.c: print env vars in trace_run_command()
- - run-command.c: print program 'git' when tracing git_cmd mode
- - run-command.c: introduce trace_run_command()
- - trace.c: move strbuf_release() out of print_trace_line()
- - trace: avoid unnecessary quoting
- - sq_quote_argv: drop maxlen parameter
+* ab/fetch-prune (2018-01-24) 11 commits
+ - fetch: add a --fetch-prune option and fetch.pruneTags config
+ - fetch tests: add scaffolding for the new fetch.pruneTags
+ - git-fetch & config doc: link to the new PRUNING section
+ - git remote doc: correct dangerous lies about what prune does
+ - git fetch doc: add a new section to explain the ins & outs of pruning
+ - fetch tests: test --prune and refspec interaction
+ - fetch tests: add a tag to be deleted to the pruning tests
+ - fetch tests: re-arrange arguments for future readability
+ - fetch tests: refactor in preparation for testing tag pruning
+ - fetch: stop accessing "remote" variable indirectly
+ - fetch: don't redundantly NULL something calloc() gave us
 
- The tracing machinery learned to report tweaking of environment
- variables as well.
-
- Will merge to 'next'.
-
-
-* cl/t9001-cleanup (2018-01-12) 1 commit
- - t9001: use existing helper in send-email test
-
- Test clean-up.
-
- Will merge to 'next'.
+ Clarify how configured fetch refspecs interact with the "--prune"
+ option of "git fetch", and also add a handy short-hand for getting
+ rid of stale tags that are locally held.
 
 
-* kg/packed-ref-cache-fix (2018-01-16) 1 commit
- - packed_ref_cache: don't use mmap() for small files
+* gs/retire-mru (2018-01-24) 1 commit
+ - mru: Replace mru.[ch] with list.h implementation
+ (this branch uses ot/mru-on-list.)
 
- Avoid mmapping small files while using packed refs (especially ones
- with zero size, which would cause later munmap() to fail).
+ Retire mru API as it does not give enough abstraction over
+ underlying list API to be worth it.
 
  Will merge to 'next'.
 
 
-* ks/submodule-doc-updates (2018-01-16) 2 commits
- - Doc/git-submodule: improve readability and grammar of a sentence
- - Doc/gitsubmodules: make some changes to improve readability and syntax
+* jc/mailinfo-cleanup-fix (2018-01-24) 1 commit
+ - mailinfo: avoid segfault when can't open files
 
- Doc updates.
-
- Will merge to 'next'.
-
-
-* nd/shared-index-fix (2018-01-22) 3 commits
- - read-cache: don't write index twice if we can't write shared index
- - read-cache.c: move tempfile creation/cleanup out of write_shared_index
- - read-cache.c: change type of "temp" in write_shared_index()
-
-
-* rs/describe-unique-abbrev (2018-01-16) 1 commit
- - describe: use strbuf_add_unique_abbrev() for adding short hashes
-
- Code clean-up.
+ Corner case bugfix.
 
  Will merge to 'next'.
 
 
-* tb/crlf-conv-flags (2018-01-16) 1 commit
- - convert_to_git(): safe_crlf/checksafe becomes int conv_flags
+* po/clang-format-functype-weight (2018-01-24) 1 commit
+ - clang-format: adjust penalty for return type line break
 
- Code clean-up.
-
- Will merge to 'next'.
-
-
-* nd/diff-flush-before-warning (2018-01-16) 1 commit
- - diff.c: flush stdout before printing rename warnings
-
- Avoid showing a warning message in the middle of a line of "git
- diff" output.
+ Prevent "clang-format" from breaking line after function return type.
 
  Will merge to 'next'.
 
 
-* rb/hashmap-h-compilation-fix (2018-01-16) 1 commit
- - hashmap.h: remove unused variable
+* po/http-push-error-message (2018-01-24) 1 commit
+ - http-push: improve error log
 
- Code clean-up.
-
- Will merge to 'next'.
-
-
-* cc/sha1-file-name (2018-01-19) 2 commits
- - sha1_file: improve sha1_file_name() perfs
- - sha1_file: remove static strbuf from sha1_file_name()
-
- Code clean-up.
+ Debugging aid.
 
  Will merge to 'next'.
 
 
-* cl/send-email-reply-to (2018-01-17) 2 commits
- - send-email: support separate "Reply-To" address
- - send-email: rename variables for "In-reply-to" to $foo_in_reply_to
+* po/object-id (2018-01-30) 12 commits
+ - sha1_file: rename hash_sha1_file_literally
+ - sha1_file: convert write_loose_object to object_id
+ - sha1_file: convert force_object_loose to object_id
+ - sha1_file: convert write_sha1_file to object_id
+ - notes: convert write_notes_tree to object_id
+ - notes: convert combine_notes_* to object_id
+ - commit: convert commit_tree* to object_id
+ - match-trees: convert splice_tree to object_id
+ - cache: clear whole hash buffer with oidclr
+ - sha1_file: convert hash_sha1_file to object_id
+ - dir: convert struct sha1_stat to use object_id
+ - sha1_file: convert pretend_sha1_file to object_id
 
- "git send-email" learned "--reply-to=<address>" option.
-
- May want to get the log messages updated.
- cf. <CAN0heSqxmLoh33i65JPhyQbmPaAcJcwrTCO+ZD4eb+qh8Pf8+w@mail.gmail.com>
-
-
-* ds/use-get-be64 (2018-01-19) 1 commit
- - packfile: use get_be64() for large offsets
-
- Code clean-up.
-
- Will merge to 'next'.
-
-
-* en/merge-recursive-fixes (2018-01-19) 3 commits
- - merge-recursive: add explanation for src_entry and dst_entry
- - merge-recursive: fix logic ordering issue
- - Tighten and correct a few testcases for merging and cherry-picking
- (this branch is used by en/rename-directory-detection.)
+ Conversion from uchar[20] to struct object_id continues.
 
 
-* jc/worktree-add-short-help (2018-01-17) 1 commit
- - worktree: say that "add" takes an arbitrary commit in short-help
-
-
-* js/rebase-recreate-merge (2018-01-22) 8 commits
- - rebase -i: introduce --recreate-merges=no-rebase-cousins
- - pull: accept --rebase=recreate to recreate the branch topology
- - sequencer: handle autosquash and post-rewrite for merge commands
- - rebase: introduce the --recreate-merges option
- - rebase-helper --make-script: introduce a flag to recreate merges
- - sequencer: fast-forward merge commits, if possible
- - sequencer: introduce the `merge` command
- - sequencer: introduce new commands to reset the revision
-
- "git rebase" learned "--recreate-merges" to transplant the whole
- topology of commit graph elsewhere.
-
-
-* jt/http-redact-cookies (2018-01-19) 2 commits
- - http: support omitting data from traces
- - http: support cookie redaction when tracing
-
- The http tracing code, often used to debug connection issues,
- learned to redact potentially sensitive information from its output
- so that it can be more safely sharable.
+* sg/travis-linux32-sanity (2018-01-30) 5 commits
+ - travis-ci: don't fail if user already exists on 32 bit Linux build job
+ - travis-ci: don't run the test suite as root in the 32 bit Linux build
+ - travis-ci: don't repeat the path of the cache directory
+ - travis-ci: use 'set -e' in the 32 bit Linux build job
+ - travis-ci: use 'set -x' for the commands under 'su' in the 32 bit Linux build
 
  Will merge to 'next'.
 
 
-* mr/packed-ref-store-fix (2018-01-19) 1 commit
- - files_initial_transaction_commit(): only unlock if locked
+* jk/daemon-fixes (2018-01-25) 6 commits
+ - daemon: fix length computation in newline stripping
+ - t/lib-git-daemon: add network-protocol helpers
+ - daemon: handle NULs in extended attribute string
+ - daemon: fix off-by-one in logging extended attributes
+ - t/lib-git-daemon: record daemon log
+ - t5570: use ls-remote instead of clone for interp tests
 
- Crash fix for a corner case where an error codepath tried to unlock
- what it did not acquire lock on.
+
+* jt/long-running-process-doc (2018-01-25) 1 commit
+ - Docs: split out long-running subprocess handshake
+
+
+* nd/format-patch-stat-width (2018-01-25) 2 commits
+ - format-patch: reduce patch diffstat width to 72
+ - format-patch: keep cover-letter diffstat wrapped in 72 columns
+
+
+* nd/list-merge-strategy (2018-01-26) 1 commit
+ - completion: fix completing merge strategies on non-C locales
+
+
+* sb/pull-rebase-submodule (2018-01-25) 1 commit
+ - builtin/pull: respect verbosity settings in submodules
+
+
+* sg/test-i18ngrep (2018-01-26) 10 commits
+ - t: make 'test_i18ngrep' more informative on failure
+ - t: make sure that 'test_i18ngrep' got enough parameters
+ - t: forbid piping into 'test_i18ngrep'
+ - t: move 'test_i18ncmp' and 'test_i18ngrep' to 'test-lib-functions.sh'
+ - t5536: let 'test_i18ngrep' read the file without redirection
+ - t5510: consolidate 'grep' and 'test_i18ngrep' patterns
+ - t4001: don't run 'git status' upstream of a pipe
+ - t6022: don't run 'git merge' upstream of a pipe
+ - t5812: add 'test_i18ngrep's missing filename parameter
+ - t5541: add 'test_i18ngrep's missing filename parameter
+
+
+* bw/c-plus-plus (2018-01-30) 37 commits
+ - replace: rename 'new' variables
+ - trailer: rename 'template' variables
+ - tempfile: rename 'template' variables
+ - wrapper: rename 'template' variables
+ - environment: rename 'namespace' variables
+ - diff: rename 'template' variables
+ - environment: rename 'template' variables
+ - init-db: rename 'template' variables
+ - unpack-trees: rename 'new' variables
+ - trailer: rename 'new' variables
+ - submodule: rename 'new' variables
+ - split-index: rename 'new' variables
+ - remote: rename 'new' variables
+ - ref-filter: rename 'new' variables
+ - read-cache: rename 'new' variables
+ - line-log: rename 'new' variables
+ - imap-send: rename 'new' variables
+ - http: rename 'new' variables
+ - entry: rename 'new' variables
+ - diffcore-delta: rename 'new' variables
+ - diff: rename 'new' variables
+ - diff-lib: rename 'new' variable
+ - commit: rename 'new' variables
+ - combine-diff: rename 'new' variables
+ - remote: rename 'new' variables
+ - reflog: rename 'new' variables
+ - pack-redundant: rename 'new' variables
+ - help: rename 'new' variables
+ - checkout: rename 'new' variables
+ - apply: rename 'new' variables
+ - apply: rename 'try' variables
+ - diff: rename 'this' variables
+ - rev-parse: rename 'this' variable
+ - pack-objects: rename 'this' variables
+ - blame: rename 'this' variables
+ - object: rename function 'typename' to 'type_name'
+ - object_info: change member name from 'typename' to 'type_name'
+
+
+* ew/svn-branch-segfault-fix (2018-01-30) 1 commit
+ - git-svn: control destruction order to avoid segfault
+
+ Workaround for segfault with more recent versions of SVN.
 
  Will merge to 'next'.
 
 
-* rs/strbuf-cocci-workaround (2018-01-19) 1 commit
- - cocci: use format keyword instead of a literal string
+* tz/doc-show-defaults-to-head (2018-01-30) 1 commit
+ - doc: mention 'git show' defaults to HEAD
 
- Update Coccinelle rules to catch and optimize strbuf_addf(&buf, "%s", str)
-
- Will merge to 'next'.
-
-
-* sg/cocci-move-array (2018-01-22) 1 commit
- - Use MOVE_ARRAY
-
- Code clean-up.
+ Doc update.
 
  Will merge to 'next'.
 
 
-* tg/split-index-fixes (2018-01-19) 3 commits
- - travis: run tests with GIT_TEST_SPLIT_INDEX
- - split-index: don't write cache tree with null oid entries
- - read-cache: fix reading the shared index for other repos
-
- The split-index mode had a few corner case bugs fixed.
-
- Will merge to 'next'.
+* nd/ignore-glob-doc-update (2018-01-31) 1 commit
+ - gitignore.txt: elaborate shell glob syntax
 
 
-* jt/fsck-code-cleanup (2018-01-23) 1 commit
- - fsck: fix leak when traversing trees
+* nd/rebase-show-current-patch (2018-01-31) 3 commits
+ - rebase: introduce and use pseudo-ref ORIG_COMMIT
+ - rebase: add --show-current-patch
+ - am: add --show-current-patch
 
 --------------------------------------------------
 [Stalled]
-
-* jh/status-no-ahead-behind (2018-01-04) 4 commits
- - status: support --no-ahead-behind in long format
- - status: update short status to respect --no-ahead-behind
- - status: add --[no-]ahead-behind to status and commit for V2 format.
- - stat_tracking_info: return +1 when branches not equal
-
- Expecting a reroll to finalize the topic.
-
 
 * av/fsmonitor-updates (2018-01-04) 6 commits
  - fsmonitor: use fsmonitor data in `git diff`
@@ -579,8 +350,22 @@ of the repositories listed at
 
  cf. <xmqqmvakcdqw.fsf@gitster.mtv.corp.google.com>
 
+--------------------------------------------------
+[Cooking]
 
-* nd/worktree-move (2017-04-20) 6 commits
+* jh/status-no-ahead-behind (2018-01-24) 4 commits
+ - status: support --no-ahead-behind in long format
+ - status: update short status to respect --no-ahead-behind
+ - status: add --[no-]ahead-behind to status and commit for V2 format.
+ - stat_tracking_info: return +1 when branches not equal
+
+ "git status" can spend a lot of cycles to compute the relation
+ between the current branch and its upstream, which can now be
+ disabled with "--no-ahead-behind" option.
+
+
+* nd/worktree-move (2018-01-24) 7 commits
+ - worktree remove: allow it when $GIT_WORK_TREE is already gone
  - worktree remove: new command
  - worktree move: refuse to move worktrees with submodules
  - worktree move: accept destination as directory
@@ -590,17 +375,203 @@ of the repositories listed at
 
  "git worktree" learned move and remove subcommands.
 
- Expecting a reroll.
- cf. <20170420101024.7593-1-pclouds@gmail.com>
- cf. <20170421145916.mknekgqzhxffu7di@sigill.intra.peff.net>
- cf. <d0e81b1e-5869-299e-f462-4d43dc997bd1@ramsayjones.plus.com>
 
---------------------------------------------------
-[Cooking]
+* nd/trace-with-env (2018-01-19) 7 commits
+ - run-command.c: print new cwd in trace_run_command()
+ - run-command.c: print env vars in trace_run_command()
+ - run-command.c: print program 'git' when tracing git_cmd mode
+ - run-command.c: introduce trace_run_command()
+ - trace.c: move strbuf_release() out of print_trace_line()
+ - trace: avoid unnecessary quoting
+ - sq_quote_argv: drop maxlen parameter
 
-* ab/wildmatch-tests (2018-01-04) 7 commits
+ The tracing machinery learned to report tweaking of environment
+ variables as well.
+
+ Will merge to 'next'.
+
+
+* cl/t9001-cleanup (2018-01-12) 1 commit
+ - t9001: use existing helper in send-email test
+
+ Test clean-up.
+
+ Will merge to 'next'.
+
+
+* kg/packed-ref-cache-fix (2018-01-24) 6 commits
+ - packed_ref_cache: don't use mmap() for small files
+ - load_contents(): don't try to mmap an empty file
+ - packed_ref_iterator_begin(): make optimization more general
+ - find_reference_location(): make function safe for empty snapshots
+ - create_snapshot(): use `xmemdupz()` rather than a strbuf
+ - struct snapshot: store `start` rather than `header_len`
+
+ Avoid mmapping small files while using packed refs (especially ones
+ with zero size, which would cause later munmap() to fail).
+
+
+* ks/submodule-doc-updates (2018-01-16) 2 commits
+ - Doc/git-submodule: improve readability and grammar of a sentence
+ - Doc/gitsubmodules: make some changes to improve readability and syntax
+
+ Doc updates.
+
+ Will merge to 'next'.
+
+
+* nd/shared-index-fix (2018-01-24) 3 commits
+ - read-cache: don't write index twice if we can't write shared index
+ - read-cache.c: move tempfile creation/cleanup out of write_shared_index
+ - read-cache.c: change type of "temp" in write_shared_index()
+
+ Will merge to 'next'.
+
+
+* rs/describe-unique-abbrev (2018-01-16) 1 commit
+ - describe: use strbuf_add_unique_abbrev() for adding short hashes
+
+ Code clean-up.
+
+ Will merge to 'next'.
+
+
+* tb/crlf-conv-flags (2018-01-16) 1 commit
+ - convert_to_git(): safe_crlf/checksafe becomes int conv_flags
+ (this branch is used by ls/checkout-encoding.)
+
+ Code clean-up.
+
+ Will merge to 'next'.
+
+
+* nd/diff-flush-before-warning (2018-01-16) 1 commit
+ - diff.c: flush stdout before printing rename warnings
+
+ Avoid showing a warning message in the middle of a line of "git
+ diff" output.
+
+ Will merge to 'next'.
+
+
+* rb/hashmap-h-compilation-fix (2018-01-16) 1 commit
+ - hashmap.h: remove unused variable
+
+ Code clean-up.
+
+ Will merge to 'next'.
+
+
+* cc/sha1-file-name (2018-01-19) 2 commits
+ - sha1_file: improve sha1_file_name() perfs
+ - sha1_file: remove static strbuf from sha1_file_name()
+
+ Code clean-up.
+
+ Will merge to 'next'.
+
+
+* cl/send-email-reply-to (2018-01-17) 2 commits
+ - send-email: support separate "Reply-To" address
+ - send-email: rename variables for "In-reply-to" to $foo_in_reply_to
+
+ "git send-email" learned "--reply-to=<address>" option.
+
+ May want to get the log messages updated.
+ cf. <CAN0heSqxmLoh33i65JPhyQbmPaAcJcwrTCO+ZD4eb+qh8Pf8+w@mail.gmail.com>
+
+
+* ds/use-get-be64 (2018-01-19) 1 commit
+ - packfile: use get_be64() for large offsets
+
+ Code clean-up.
+
+ Will merge to 'next'.
+
+
+* en/merge-recursive-fixes (2018-01-19) 3 commits
+ - merge-recursive: add explanation for src_entry and dst_entry
+ - merge-recursive: fix logic ordering issue
+ - Tighten and correct a few testcases for merging and cherry-picking
+ (this branch is used by en/rename-directory-detection.)
+
+
+* jc/worktree-add-short-help (2018-01-17) 1 commit
+ - worktree: say that "add" takes an arbitrary commit in short-help
+
+
+* js/rebase-recreate-merge (2018-01-30) 10 commits
+ - rebase -i: introduce --recreate-merges=[no-]rebase-cousins
+ - pull: accept --rebase=recreate to recreate the branch topology
+ - sequencer: handle autosquash and post-rewrite for merge commands
+ - sequencer: make refs generated by the `label` command worktree-local
+ - rebase: introduce the --recreate-merges option
+ - rebase-helper --make-script: introduce a flag to recreate merges
+ - sequencer: fast-forward merge commits, if possible
+ - sequencer: introduce the `merge` command
+ - sequencer: introduce new commands to reset the revision
+ - git-rebase--interactive: clarify arguments
+
+ "git rebase" learned "--recreate-merges" to transplant the whole
+ topology of commit graph elsewhere.
+
+
+* jt/http-redact-cookies (2018-01-19) 2 commits
+ - http: support omitting data from traces
+ - http: support cookie redaction when tracing
+
+ The http tracing code, often used to debug connection issues,
+ learned to redact potentially sensitive information from its output
+ so that it can be more safely sharable.
+
+ Will merge to 'next'.
+
+
+* mr/packed-ref-store-fix (2018-01-19) 1 commit
+ - files_initial_transaction_commit(): only unlock if locked
+
+ Crash fix for a corner case where an error codepath tried to unlock
+ what it did not acquire lock on.
+
+ Will merge to 'next'.
+
+
+* rs/strbuf-cocci-workaround (2018-01-19) 1 commit
+ - cocci: use format keyword instead of a literal string
+
+ Update Coccinelle rules to catch and optimize strbuf_addf(&buf, "%s", str)
+
+ Will merge to 'next'.
+
+
+* sg/cocci-move-array (2018-01-22) 1 commit
+ - Use MOVE_ARRAY
+
+ Code clean-up.
+
+ Will merge to 'next'.
+
+
+* tg/split-index-fixes (2018-01-19) 3 commits
+ - travis: run tests with GIT_TEST_SPLIT_INDEX
+ - split-index: don't write cache tree with null oid entries
+ - read-cache: fix reading the shared index for other repos
+
+ The split-index mode had a few corner case bugs fixed.
+
+ Will merge to 'next'.
+
+
+* jt/fsck-code-cleanup (2018-01-23) 1 commit
+ - fsck: fix leak when traversing trees
+
+
+* ab/wildmatch-tests (2018-01-30) 10 commits
+ - wildmatch test: mark test as EXPENSIVE_ON_WINDOWS
+ - test-lib: add an EXPENSIVE_ON_WINDOWS prerequisite
  - wildmatch test: create & test files on disk in addition to in-memory
  - wildmatch test: perform all tests under all wildmatch() modes
+ - wildmatch test: use test_must_fail, not ! for test-wildmatch
  - wildmatch test: remove dead fnmatch() test code
  - wildmatch test: use a paranoia pattern from nul_match()
  - wildmatch test: don't try to vertically align our output
@@ -613,11 +584,11 @@ of the repositories listed at
  cf. <87vaga9mgf.fsf@evledraar.gmail.com>
 
 
-* bw/protocol-v2 (2018-01-04) 26 commits
- - remote-curl: implement connect-half-duplex command
+* bw/protocol-v2 (2018-01-26) 27 commits
+ - remote-curl: implement stateless-connect command
  - remote-curl: create copy of the service name
  - pkt-line: add packet_buf_write_len function
- - transport-helper: introduce connect-half-duplex
+ - transport-helper: introduce stateless-connect
  - transport-helper: refactor process_connect_service
  - transport-helper: remove name parameter
  - fetch-pack: perform a fetch using v2
@@ -630,6 +601,7 @@ of the repositories listed at
  - connect: request remote refs using v2
  - ls-refs: introduce ls-refs server command
  - serve: introduce git-serve
+ - test-pkt-line: introduce a packet-line test helper
  - protocol: introduce enum protocol_version value protocol_v2
  - transport: store protocol version
  - connect: discover protocol version outside of get_remote_heads
@@ -644,13 +616,14 @@ of the repositories listed at
  The beginning of the next-gen transfer protocol.
 
 
-* ls/checkout-encoding (2018-01-08) 6 commits
- - convert: add support for 'checkout-encoding' attribute
- - convert_to_git(): safe_crlf/checksafe becomes int conv_flags
+* ls/checkout-encoding (2018-01-30) 6 commits
+ - convert: add tracing for 'working-tree-encoding' attribute
+ - convert: add 'working-tree-encoding' attribute
  - utf8: add function to detect a missing UTF-16/32 BOM
  - utf8: add function to detect prohibited UTF-16/32 BOM
  - strbuf: add xstrdup_toupper()
  - strbuf: remove unnecessary NUL assignment in xstrdup_tolower()
+ (this branch uses tb/crlf-conv-flags.)
 
  The new "checkout-encoding" attribute can ask Git to convert the
  contents to the specified encoding when checking out to the working
@@ -680,8 +653,7 @@ of the repositories listed at
  cf. <5DE3FA05-2347-4BE7-8A1A-A6E5FEEC7C2B@gmail.com>
 
 
-* nd/fix-untracked-cache-invalidation (2018-01-19) 6 commits
- - dir.c: print correct errno when opendir() fails
+* nd/fix-untracked-cache-invalidation (2018-01-24) 5 commits
  - dir.c: stop ignoring opendir() error in open_cached_dir()
  - update-index doc: note a fixed bug in the untracked cache
  - dir.c: fix missing dir invalidation in untracked code
@@ -690,8 +662,7 @@ of the repositories listed at
 
  Some bugs around "untracked cache" feature have been fixed.
 
- Kicked back to 'pu' for a reroll.
- cf. <CACsJy8AecDh6Bxo6xCBG+4AY5GCdtZgb2Cs2QXo5MYZvD7XKcQ@mail.gmail.com>
+ Will merge to 'next'.
 
 
 * np/send-email-header-parsing (2017-12-15) 1 commit
@@ -729,7 +700,7 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* en/rename-directory-detection (2018-01-19) 31 commits
+* en/rename-directory-detection (2018-01-31) 31 commits
  - merge-recursive: ensure we write updates for directory-renamed file
  - merge-recursive: avoid spurious rename/rename conflict from dir renames
  - directory rename detection: new testcases showcasing a pair of bugs
@@ -770,9 +741,10 @@ of the repositories listed at
  'x' moved to 'z'.
 
 
-* pw/sequencer-in-process-commit (2018-01-23) 13 commits
+* pw/sequencer-in-process-commit (2018-01-24) 14 commits
  - sequencer: run 'prepare-commit-msg' hook
  - t7505: add tests for cherry-pick and rebase -i/-p
+ - t7505: style fixes
  - sequencer: assign only free()able strings to gpg_sign
  - sequencer: improve config handling
  - t3512/t3513: remove KNOWN_FAILURE_CHERRY_PICK_SEES_EMPTY_COMMIT=1
@@ -791,6 +763,8 @@ of the repositories listed at
  when able, by reusing the codepath "git commit" itself uses, which
  gives performance boost for a few tens of percents in some sample
  scenarios.
+
+ Will merge to 'next'.
 
 
 * jh/fsck-promisors (2017-12-08) 10 commits
@@ -849,9 +823,9 @@ of the repositories listed at
 
 * ot/mru-on-list (2017-10-01) 1 commit
  - mru: use double-linked list from list.h
+ (this branch is used by gs/retire-mru.)
 
  The first step to getting rid of mru API and using the
  doubly-linked list API directly instead.
 
- A follow-up is being worked on; it seems to be almost ready.
- cf. <20180122073701.h7fh7xrkmnzndzj7@untitled>
+ Will merge to 'next'.
