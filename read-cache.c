@@ -1545,8 +1545,8 @@ int verify_ce_order;
 
 static int verify_hdr(struct cache_header *hdr, unsigned long size)
 {
-	git_SHA_CTX c;
-	unsigned char sha1[20];
+	git_hash_ctx c;
+	unsigned char hash[GIT_MAX_RAWSZ];
 	int hdr_version;
 
 	if (hdr->hdr_signature != htonl(CACHE_SIGNATURE))
@@ -1558,10 +1558,10 @@ static int verify_hdr(struct cache_header *hdr, unsigned long size)
 	if (!verify_index_checksum)
 		return 0;
 
-	git_SHA1_Init(&c);
-	git_SHA1_Update(&c, hdr, size - 20);
-	git_SHA1_Final(sha1, &c);
-	if (hashcmp(sha1, (unsigned char *)hdr + size - 20))
+	the_hash_algo->init_fn(&c);
+	the_hash_algo->update_fn(&c, hdr, size - the_hash_algo->rawsz);
+	the_hash_algo->final_fn(hash, &c);
+	if (hashcmp(hash, (unsigned char *)hdr + size - the_hash_algo->rawsz))
 		return error("bad index file sha1 signature");
 	return 0;
 }
@@ -1791,7 +1791,7 @@ int do_read_index(struct index_state *istate, const char *path, int must_exist)
 		die_errno("cannot stat the open index");
 
 	mmap_size = xsize_t(st.st_size);
-	if (mmap_size < sizeof(struct cache_header) + 20)
+	if (mmap_size < sizeof(struct cache_header) + the_hash_algo->rawsz)
 		die("index file smaller than expected");
 
 	mmap = xmmap(NULL, mmap_size, PROT_READ, MAP_PRIVATE, fd, 0);
@@ -1803,7 +1803,7 @@ int do_read_index(struct index_state *istate, const char *path, int must_exist)
 	if (verify_hdr(hdr, mmap_size) < 0)
 		goto unmap;
 
-	hashcpy(istate->sha1, (const unsigned char *)hdr + mmap_size - 20);
+	hashcpy(istate->sha1, (const unsigned char *)hdr + mmap_size - the_hash_algo->rawsz);
 	istate->version = ntohl(hdr->hdr_version);
 	istate->cache_nr = ntohl(hdr->hdr_entries);
 	istate->cache_alloc = alloc_nr(istate->cache_nr);
@@ -1831,7 +1831,7 @@ int do_read_index(struct index_state *istate, const char *path, int must_exist)
 	istate->timestamp.sec = st.st_mtime;
 	istate->timestamp.nsec = ST_MTIME_NSEC(st);
 
-	while (src_offset <= mmap_size - 20 - 8) {
+	while (src_offset <= mmap_size - the_hash_algo->rawsz - 8) {
 		/* After an array of active_nr index entries,
 		 * there can be arbitrary number of extended
 		 * sections, each of which is prefixed with
@@ -1957,11 +1957,11 @@ int unmerged_index(const struct index_state *istate)
 static unsigned char write_buffer[WRITE_BUFFER_SIZE];
 static unsigned long write_buffer_len;
 
-static int ce_write_flush(git_SHA_CTX *context, int fd)
+static int ce_write_flush(git_hash_ctx *context, int fd)
 {
 	unsigned int buffered = write_buffer_len;
 	if (buffered) {
-		git_SHA1_Update(context, write_buffer, buffered);
+		the_hash_algo->update_fn(context, write_buffer, buffered);
 		if (write_in_full(fd, write_buffer, buffered) < 0)
 			return -1;
 		write_buffer_len = 0;
@@ -1969,7 +1969,7 @@ static int ce_write_flush(git_SHA_CTX *context, int fd)
 	return 0;
 }
 
-static int ce_write(git_SHA_CTX *context, int fd, void *data, unsigned int len)
+static int ce_write(git_hash_ctx *context, int fd, void *data, unsigned int len)
 {
 	while (len) {
 		unsigned int buffered = write_buffer_len;
@@ -1991,7 +1991,7 @@ static int ce_write(git_SHA_CTX *context, int fd, void *data, unsigned int len)
 	return 0;
 }
 
-static int write_index_ext_header(git_SHA_CTX *context, int fd,
+static int write_index_ext_header(git_hash_ctx *context, int fd,
 				  unsigned int ext, unsigned int sz)
 {
 	ext = htonl(ext);
@@ -2000,26 +2000,26 @@ static int write_index_ext_header(git_SHA_CTX *context, int fd,
 		(ce_write(context, fd, &sz, 4) < 0)) ? -1 : 0;
 }
 
-static int ce_flush(git_SHA_CTX *context, int fd, unsigned char *sha1)
+static int ce_flush(git_hash_ctx *context, int fd, unsigned char *hash)
 {
 	unsigned int left = write_buffer_len;
 
 	if (left) {
 		write_buffer_len = 0;
-		git_SHA1_Update(context, write_buffer, left);
+		the_hash_algo->update_fn(context, write_buffer, left);
 	}
 
-	/* Flush first if not enough space for SHA1 signature */
-	if (left + 20 > WRITE_BUFFER_SIZE) {
+	/* Flush first if not enough space for hash signature */
+	if (left + the_hash_algo->rawsz > WRITE_BUFFER_SIZE) {
 		if (write_in_full(fd, write_buffer, left) < 0)
 			return -1;
 		left = 0;
 	}
 
-	/* Append the SHA1 signature at the end */
-	git_SHA1_Final(write_buffer + left, context);
-	hashcpy(sha1, write_buffer + left);
-	left += 20;
+	/* Append the hash signature at the end */
+	the_hash_algo->final_fn(write_buffer + left, context);
+	hashcpy(hash, write_buffer + left);
+	left += the_hash_algo->rawsz;
 	return (write_in_full(fd, write_buffer, left) < 0) ? -1 : 0;
 }
 
@@ -2100,7 +2100,7 @@ static void copy_cache_entry_to_ondisk(struct ondisk_cache_entry *ondisk,
 	}
 }
 
-static int ce_write_entry(git_SHA_CTX *c, int fd, struct cache_entry *ce,
+static int ce_write_entry(git_hash_ctx *c, int fd, struct cache_entry *ce,
 			  struct strbuf *previous_name, struct ondisk_cache_entry *ondisk)
 {
 	int size;
@@ -2167,7 +2167,7 @@ static int verify_index_from(const struct index_state *istate, const char *path)
 	int fd;
 	ssize_t n;
 	struct stat st;
-	unsigned char sha1[20];
+	unsigned char hash[GIT_MAX_RAWSZ];
 
 	if (!istate->initialized)
 		return 0;
@@ -2179,14 +2179,14 @@ static int verify_index_from(const struct index_state *istate, const char *path)
 	if (fstat(fd, &st))
 		goto out;
 
-	if (st.st_size < sizeof(struct cache_header) + 20)
+	if (st.st_size < sizeof(struct cache_header) + the_hash_algo->rawsz)
 		goto out;
 
-	n = pread_in_full(fd, sha1, 20, st.st_size - 20);
-	if (n != 20)
+	n = pread_in_full(fd, hash, the_hash_algo->rawsz, st.st_size - the_hash_algo->rawsz);
+	if (n != the_hash_algo->rawsz)
 		goto out;
 
-	if (hashcmp(istate->sha1, sha1))
+	if (hashcmp(istate->sha1, hash))
 		goto out;
 
 	close(fd);
@@ -2235,7 +2235,7 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 			  int strip_extensions)
 {
 	int newfd = tempfile->fd;
-	git_SHA_CTX c;
+	git_hash_ctx c;
 	struct cache_header hdr;
 	int i, err = 0, removed, extended, hdr_version;
 	struct cache_entry **cache = istate->cache;
@@ -2273,7 +2273,7 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 	hdr.hdr_version = htonl(hdr_version);
 	hdr.hdr_entries = htonl(entries - removed);
 
-	git_SHA1_Init(&c);
+	the_hash_algo->init_fn(&c);
 	if (ce_write(&c, newfd, &hdr, sizeof(hdr)) < 0)
 		return -1;
 
