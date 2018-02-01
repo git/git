@@ -21,7 +21,7 @@ static unsigned char buffer[4096];
 static unsigned int offset, len;
 static off_t consumed_bytes;
 static off_t max_input_size;
-static git_SHA_CTX ctx;
+static git_hash_ctx ctx;
 static struct fsck_options fsck_options = FSCK_OPTIONS_STRICT;
 
 /*
@@ -62,7 +62,7 @@ static void *fill(int min)
 	if (min > sizeof(buffer))
 		die("cannot fill %d bytes", min);
 	if (offset) {
-		git_SHA1_Update(&ctx, buffer, offset);
+		the_hash_algo->update_fn(&ctx, buffer, offset);
 		memmove(buffer, buffer + offset, len);
 		offset = 0;
 	}
@@ -345,8 +345,8 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 	struct object_id base_oid;
 
 	if (type == OBJ_REF_DELTA) {
-		hashcpy(base_oid.hash, fill(GIT_SHA1_RAWSZ));
-		use(GIT_SHA1_RAWSZ);
+		hashcpy(base_oid.hash, fill(the_hash_algo->rawsz));
+		use(the_hash_algo->rawsz);
 		delta_data = get_data(delta_size);
 		if (dry_run || !delta_data) {
 			free(delta_data);
@@ -564,15 +564,15 @@ int cmd_unpack_objects(int argc, const char **argv, const char *prefix)
 		/* We don't take any non-flag arguments now.. Maybe some day */
 		usage(unpack_usage);
 	}
-	git_SHA1_Init(&ctx);
+	the_hash_algo->init_fn(&ctx);
 	unpack_all();
-	git_SHA1_Update(&ctx, buffer, offset);
-	git_SHA1_Final(oid.hash, &ctx);
+	the_hash_algo->update_fn(&ctx, buffer, offset);
+	the_hash_algo->final_fn(oid.hash, &ctx);
 	if (strict)
 		write_rest();
-	if (hashcmp(fill(GIT_SHA1_RAWSZ), oid.hash))
+	if (hashcmp(fill(the_hash_algo->rawsz), oid.hash))
 		die("final sha1 did not match");
-	use(GIT_SHA1_RAWSZ);
+	use(the_hash_algo->rawsz);
 
 	/* Write the last part of the buffer to stdout */
 	while (len) {
