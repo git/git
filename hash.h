@@ -55,9 +55,15 @@
 /* Number of algorithms supported (including unknown). */
 #define GIT_HASH_NALGOS (GIT_HASH_SHA1 + 1)
 
-typedef void (*git_hash_init_fn)(void *ctx);
-typedef void (*git_hash_update_fn)(void *ctx, const void *in, size_t len);
-typedef void (*git_hash_final_fn)(unsigned char *hash, void *ctx);
+/* A suitably aligned type for stack allocations of hash contexts. */
+union git_hash_ctx {
+	git_SHA_CTX sha1;
+};
+typedef union git_hash_ctx git_hash_ctx;
+
+typedef void (*git_hash_init_fn)(git_hash_ctx *ctx);
+typedef void (*git_hash_update_fn)(git_hash_ctx *ctx, const void *in, size_t len);
+typedef void (*git_hash_final_fn)(unsigned char *hash, git_hash_ctx *ctx);
 
 struct git_hash_algo {
 	/*
@@ -68,9 +74,6 @@ struct git_hash_algo {
 
 	/* A four-byte version identifier, used in pack indices. */
 	uint32_t format_id;
-
-	/* The size of a hash context (e.g. git_SHA_CTX). */
-	size_t ctxsz;
 
 	/* The length of the hash in binary. */
 	size_t rawsz;
