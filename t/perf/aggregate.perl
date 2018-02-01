@@ -253,7 +253,7 @@ sub print_codespeed_results {
 		}
 	}
 
-	print to_json(\@data, {utf8 => 1, pretty => 1}), "\n";
+	print to_json(\@data, {utf8 => 1, pretty => 1, canonical => 1}), "\n";
 }
 
 binmode STDOUT, ":utf8" or die "PANIC on binmode: $!";
