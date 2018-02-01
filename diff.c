@@ -2045,11 +2045,10 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 	}
 }
 
-static char *pprint_rename(const char *a, const char *b)
+static void pprint_rename(struct strbuf *name, const char *a, const char *b)
 {
 	const char *old = a;
 	const char *new = b;
-	struct strbuf name = STRBUF_INIT;
 	int pfx_length, sfx_length;
 	int pfx_adjust_for_slash;
 	int len_a = strlen(a);
@@ -2059,10 +2058,10 @@ static char *pprint_rename(const char *a, const char *b)
 	int qlen_b = quote_c_style(b, NULL, NULL, 0);
 
 	if (qlen_a || qlen_b) {
-		quote_c_style(a, &name, NULL, 0);
-		strbuf_addstr(&name, " => ");
-		quote_c_style(b, &name, NULL, 0);
-		return strbuf_detach(&name, NULL);
+		quote_c_style(a, name, NULL, 0);
+		strbuf_addstr(name, " => ");
+		quote_c_style(b, name, NULL, 0);
+		return;
 	}
 
 	/* Find common prefix */
@@ -2109,19 +2108,18 @@ static char *pprint_rename(const char *a, const char *b)
 	if (b_midlen < 0)
 		b_midlen = 0;
 
-	strbuf_grow(&name, pfx_length + a_midlen + b_midlen + sfx_length + 7);
+	strbuf_grow(name, pfx_length + a_midlen + b_midlen + sfx_length + 7);
 	if (pfx_length + sfx_length) {
-		strbuf_add(&name, a, pfx_length);
-		strbuf_addch(&name, '{');
+		strbuf_add(name, a, pfx_length);
+		strbuf_addch(name, '{');
 	}
-	strbuf_add(&name, a + pfx_length, a_midlen);
-	strbuf_addstr(&name, " => ");
-	strbuf_add(&name, b + pfx_length, b_midlen);
+	strbuf_add(name, a + pfx_length, a_midlen);
+	strbuf_addstr(name, " => ");
+	strbuf_add(name, b + pfx_length, b_midlen);
 	if (pfx_length + sfx_length) {
-		strbuf_addch(&name, '}');
-		strbuf_add(&name, a + len_a - sfx_length, sfx_length);
+		strbuf_addch(name, '}');
+		strbuf_add(name, a + len_a - sfx_length, sfx_length);
 	}
-	return strbuf_detach(&name, NULL);
 }
 
 struct diffstat_t {
@@ -2197,23 +2195,17 @@ static void show_graph(struct strbuf *out, char ch, int cnt,
 
 static void fill_print_name(struct diffstat_file *file)
 {
-	char *pname;
+	struct strbuf pname = STRBUF_INIT;
 
 	if (file->print_name)
 		return;
 
-	if (!file->is_renamed) {
-		struct strbuf buf = STRBUF_INIT;
-		if (quote_c_style(file->name, &buf, NULL, 0)) {
-			pname = strbuf_detach(&buf, NULL);
-		} else {
-			pname = file->name;
-			strbuf_release(&buf);
-		}
-	} else {
-		pname = pprint_rename(file->from_name, file->name);
-	}
-	file->print_name = pname;
+	if (file->is_renamed)
+		pprint_rename(&pname, file->from_name, file->name);
+	else
+		quote_c_style(file->name, &pname, NULL, 0);
+
+	file->print_name = strbuf_detach(&pname, NULL);
 }
 
 static void print_stat_summary_inserts_deletes(struct diff_options *options,
@@ -2797,8 +2789,7 @@ static void free_diffstat_info(struct diffstat_t *diffstat)
 	int i;
 	for (i = 0; i < diffstat->nr; i++) {
 		struct diffstat_file *f = diffstat->files[i];
-		if (f->name != f->print_name)
-			free(f->print_name);
+		free(f->print_name);
 		free(f->name);
 		free(f->from_name);
 		free(f);
@@ -5224,10 +5215,12 @@ static void show_rename_copy(struct diff_options *opt, const char *renamecopy,
 		struct diff_filepair *p)
 {
 	struct strbuf sb = STRBUF_INIT;
-	char *names = pprint_rename(p->one->path, p->two->path);
+	struct strbuf names = STRBUF_INIT;
+
+	pprint_rename(&names, p->one->path, p->two->path);
 	strbuf_addf(&sb, " %s %s (%d%%)\n",
-			renamecopy, names, similarity_index(p));
-	free(names);
+		    renamecopy, names.buf, similarity_index(p));
+	strbuf_release(&names);
 	emit_diff_symbol(opt, DIFF_SYMBOL_SUMMARY,
 				 sb.buf, sb.len, 0);
 	show_mode_change(opt, p, 0);
