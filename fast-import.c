@@ -1092,15 +1092,15 @@ static int store_object(
 	unsigned char hdr[96];
 	struct object_id oid;
 	unsigned long hdrlen, deltalen;
-	git_SHA_CTX c;
+	git_hash_ctx c;
 	git_zstream s;
 
 	hdrlen = xsnprintf((char *)hdr, sizeof(hdr), "%s %lu",
 			   typename(type), (unsigned long)dat->len) + 1;
-	git_SHA1_Init(&c);
-	git_SHA1_Update(&c, hdr, hdrlen);
-	git_SHA1_Update(&c, dat->buf, dat->len);
-	git_SHA1_Final(oid.hash, &c);
+	the_hash_algo->init_fn(&c);
+	the_hash_algo->update_fn(&c, hdr, hdrlen);
+	the_hash_algo->update_fn(&c, dat->buf, dat->len);
+	the_hash_algo->final_fn(oid.hash, &c);
 	if (oidout)
 		oidcpy(oidout, &oid);
 
@@ -1118,11 +1118,13 @@ static int store_object(
 		return 1;
 	}
 
-	if (last && last->data.buf && last->depth < max_depth && dat->len > 20) {
+	if (last && last->data.buf && last->depth < max_depth
+		&& dat->len > the_hash_algo->rawsz) {
+
 		delta_count_attempts_by_type[type]++;
 		delta = diff_delta(last->data.buf, last->data.len,
 			dat->buf, dat->len,
-			&deltalen, dat->len - 20);
+			&deltalen, dat->len - the_hash_algo->rawsz);
 	} else
 		delta = NULL;
 
@@ -1231,7 +1233,7 @@ static void stream_blob(uintmax_t len, struct object_id *oidout, uintmax_t mark)
 	struct object_id oid;
 	unsigned long hdrlen;
 	off_t offset;
-	git_SHA_CTX c;
+	git_hash_ctx c;
 	git_zstream s;
 	struct sha1file_checkpoint checkpoint;
 	int status = Z_OK;
@@ -1246,8 +1248,8 @@ static void stream_blob(uintmax_t len, struct object_id *oidout, uintmax_t mark)
 
 	hdrlen = xsnprintf((char *)out_buf, out_sz, "blob %" PRIuMAX, len) + 1;
 
-	git_SHA1_Init(&c);
-	git_SHA1_Update(&c, out_buf, hdrlen);
+	the_hash_algo->init_fn(&c);
+	the_hash_algo->update_fn(&c, out_buf, hdrlen);
 
 	crc32_begin(pack_file);
 
@@ -1265,7 +1267,7 @@ static void stream_blob(uintmax_t len, struct object_id *oidout, uintmax_t mark)
 			if (!n && feof(stdin))
 				die("EOF in data (%" PRIuMAX " bytes remaining)", len);
 
-			git_SHA1_Update(&c, in_buf, n);
+			the_hash_algo->update_fn(&c, in_buf, n);
 			s.next_in = in_buf;
 			s.avail_in = n;
 			len -= n;
@@ -1291,7 +1293,7 @@ static void stream_blob(uintmax_t len, struct object_id *oidout, uintmax_t mark)
 		}
 	}
 	git_deflate_end(&s);
-	git_SHA1_Final(oid.hash, &c);
+	the_hash_algo->final_fn(oid.hash, &c);
 
 	if (oidout)
 		oidcpy(oidout, &oid);
@@ -1350,11 +1352,11 @@ static void *gfi_unpack_entry(
 {
 	enum object_type type;
 	struct packed_git *p = all_packs[oe->pack_id];
-	if (p == pack_data && p->pack_size < (pack_size + 20)) {
+	if (p == pack_data && p->pack_size < (pack_size + the_hash_algo->rawsz)) {
 		/* The object is stored in the packfile we are writing to
 		 * and we have modified it since the last time we scanned
 		 * back to read a previously written object.  If an old
-		 * window covered [p->pack_size, p->pack_size + 20) its
+		 * window covered [p->pack_size, p->pack_size + rawsz) its
 		 * data is stale and is not valid.  Closing all windows
 		 * and updating the packfile length ensures we can read
 		 * the newly written data.
@@ -1362,13 +1364,13 @@ static void *gfi_unpack_entry(
 		close_pack_windows(p);
 		sha1flush(pack_file);
 
-		/* We have to offer 20 bytes additional on the end of
+		/* We have to offer rawsz bytes additional on the end of
 		 * the packfile as the core unpacker code assumes the
 		 * footer is present at the file end and must promise
-		 * at least 20 bytes within any window it maps.  But
+		 * at least rawsz bytes within any window it maps.  But
 		 * we don't actually create the footer here.
 		 */
-		p->pack_size = pack_size + 20;
+		p->pack_size = pack_size + the_hash_algo->rawsz;
 	}
 	return unpack_entry(p, oe->idx.offset, &type, sizep);
 }
@@ -2204,7 +2206,7 @@ static void construct_path_with_fanout(const char *hex_sha1,
 		unsigned char fanout, char *path)
 {
 	unsigned int i = 0, j = 0;
-	if (fanout >= 20)
+	if (fanout >= the_hash_algo->rawsz)
 		die("Too large fanout (%u)", fanout);
 	while (fanout) {
 		path[i++] = hex_sha1[j++];
@@ -2212,8 +2214,8 @@ static void construct_path_with_fanout(const char *hex_sha1,
 		path[i++] = '/';
 		fanout--;
 	}
-	memcpy(path + i, hex_sha1 + j, GIT_SHA1_HEXSZ - j);
-	path[i + GIT_SHA1_HEXSZ - j] = '\0';
+	memcpy(path + i, hex_sha1 + j, the_hash_algo->hexsz - j);
+	path[i + the_hash_algo->hexsz - j] = '\0';
 }
 
 static uintmax_t do_change_note_fanout(
