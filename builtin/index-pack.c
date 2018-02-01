@@ -1241,7 +1241,7 @@ static void resolve_deltas(void)
  * - append objects to convert thin pack to full pack if required
  * - write the final pack hash
  */
-static void fix_unresolved_deltas(struct sha1file *f);
+static void fix_unresolved_deltas(struct hashfile *f);
 static void conclude_pack(int fix_thin_pack, const char *curr_pack, unsigned char *pack_hash)
 {
 	if (nr_ref_deltas + nr_ofs_deltas == nr_resolved_deltas) {
@@ -1252,7 +1252,7 @@ static void conclude_pack(int fix_thin_pack, const char *curr_pack, unsigned cha
 	}
 
 	if (fix_thin_pack) {
-		struct sha1file *f;
+		struct hashfile *f;
 		unsigned char read_hash[GIT_MAX_RAWSZ], tail_hash[GIT_MAX_RAWSZ];
 		struct strbuf msg = STRBUF_INIT;
 		int nr_unresolved = nr_ofs_deltas + nr_ref_deltas - nr_resolved_deltas;
@@ -1262,7 +1262,7 @@ static void conclude_pack(int fix_thin_pack, const char *curr_pack, unsigned cha
 		REALLOC_ARRAY(objects, nr_objects + nr_unresolved + 1);
 		memset(objects + nr_objects + 1, 0,
 		       nr_unresolved * sizeof(*objects));
-		f = sha1fd(output_fd, curr_pack);
+		f = hashfd(output_fd, curr_pack);
 		fix_unresolved_deltas(f);
 		strbuf_addf(&msg, Q_("completed with %d local object",
 				     "completed with %d local objects",
@@ -1270,7 +1270,7 @@ static void conclude_pack(int fix_thin_pack, const char *curr_pack, unsigned cha
 			    nr_objects - nr_objects_initial);
 		stop_progress_msg(&progress, msg.buf);
 		strbuf_release(&msg);
-		sha1close(f, tail_hash, 0);
+		hashclose(f, tail_hash, 0);
 		hashcpy(read_hash, pack_hash);
 		fixup_pack_header_footer(output_fd, pack_hash,
 					 curr_pack, nr_objects,
@@ -1286,7 +1286,7 @@ static void conclude_pack(int fix_thin_pack, const char *curr_pack, unsigned cha
 		    nr_ofs_deltas + nr_ref_deltas - nr_resolved_deltas);
 }
 
-static int write_compressed(struct sha1file *f, void *in, unsigned int size)
+static int write_compressed(struct hashfile *f, void *in, unsigned int size)
 {
 	git_zstream stream;
 	int status;
@@ -1300,7 +1300,7 @@ static int write_compressed(struct sha1file *f, void *in, unsigned int size)
 		stream.next_out = outbuf;
 		stream.avail_out = sizeof(outbuf);
 		status = git_deflate(&stream, Z_FINISH);
-		sha1write(f, outbuf, sizeof(outbuf) - stream.avail_out);
+		hashwrite(f, outbuf, sizeof(outbuf) - stream.avail_out);
 	} while (status == Z_OK);
 
 	if (status != Z_STREAM_END)
@@ -1310,7 +1310,7 @@ static int write_compressed(struct sha1file *f, void *in, unsigned int size)
 	return size;
 }
 
-static struct object_entry *append_obj_to_pack(struct sha1file *f,
+static struct object_entry *append_obj_to_pack(struct hashfile *f,
 			       const unsigned char *sha1, void *buf,
 			       unsigned long size, enum object_type type)
 {
@@ -1327,7 +1327,7 @@ static struct object_entry *append_obj_to_pack(struct sha1file *f,
 	}
 	header[n++] = c;
 	crc32_begin(f);
-	sha1write(f, header, n);
+	hashwrite(f, header, n);
 	obj[0].size = size;
 	obj[0].hdr_size = n;
 	obj[0].type = type;
@@ -1335,7 +1335,7 @@ static struct object_entry *append_obj_to_pack(struct sha1file *f,
 	obj[1].idx.offset = obj[0].idx.offset + n;
 	obj[1].idx.offset += write_compressed(f, buf, size);
 	obj[0].idx.crc32 = crc32_end(f);
-	sha1flush(f);
+	hashflush(f);
 	hashcpy(obj->idx.oid.hash, sha1);
 	return obj;
 }
@@ -1347,7 +1347,7 @@ static int delta_pos_compare(const void *_a, const void *_b)
 	return a->obj_no - b->obj_no;
 }
 
-static void fix_unresolved_deltas(struct sha1file *f)
+static void fix_unresolved_deltas(struct hashfile *f)
 {
 	struct ref_delta_entry **sorted_by_pos;
 	int i;

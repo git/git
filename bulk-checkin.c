@@ -12,7 +12,7 @@ static struct bulk_checkin_state {
 	unsigned plugged:1;
 
 	char *pack_tmp_name;
-	struct sha1file *f;
+	struct hashfile *f;
 	off_t offset;
 	struct pack_idx_option pack_idx_opts;
 
@@ -35,9 +35,9 @@ static void finish_bulk_checkin(struct bulk_checkin_state *state)
 		unlink(state->pack_tmp_name);
 		goto clear_exit;
 	} else if (state->nr_written == 1) {
-		sha1close(state->f, oid.hash, CSUM_FSYNC);
+		hashclose(state->f, oid.hash, CSUM_FSYNC);
 	} else {
-		int fd = sha1close(state->f, oid.hash, 0);
+		int fd = hashclose(state->f, oid.hash, 0);
 		fixup_pack_header_footer(fd, oid.hash, state->pack_tmp_name,
 					 state->nr_written, oid.hash,
 					 state->offset);
@@ -149,7 +149,7 @@ static int stream_to_pack(struct bulk_checkin_state *state,
 					return -1;
 				}
 
-				sha1write(state->f, obuf, written);
+				hashwrite(state->f, obuf, written);
 				state->offset += written;
 			}
 			s.next_out = obuf;
@@ -195,7 +195,7 @@ static int deflate_to_pack(struct bulk_checkin_state *state,
 	git_SHA_CTX ctx;
 	unsigned char obuf[16384];
 	unsigned header_len;
-	struct sha1file_checkpoint checkpoint;
+	struct hashfile_checkpoint checkpoint;
 	struct pack_idx_entry *idx = NULL;
 
 	seekback = lseek(fd, 0, SEEK_CUR);
@@ -216,7 +216,7 @@ static int deflate_to_pack(struct bulk_checkin_state *state,
 	while (1) {
 		prepare_to_stream(state, flags);
 		if (idx) {
-			sha1file_checkpoint(state->f, &checkpoint);
+			hashfile_checkpoint(state->f, &checkpoint);
 			idx->offset = state->offset;
 			crc32_begin(state->f);
 		}
@@ -230,7 +230,7 @@ static int deflate_to_pack(struct bulk_checkin_state *state,
 		 */
 		if (!idx)
 			die("BUG: should not happen");
-		sha1file_truncate(state->f, &checkpoint);
+		hashfile_truncate(state->f, &checkpoint);
 		state->offset = checkpoint.offset;
 		finish_bulk_checkin(state);
 		if (lseek(fd, seekback, SEEK_SET) == (off_t) -1)
@@ -242,7 +242,7 @@ static int deflate_to_pack(struct bulk_checkin_state *state,
 
 	idx->crc32 = crc32_end(state->f);
 	if (already_written(state, result_sha1)) {
-		sha1file_truncate(state->f, &checkpoint);
+		hashfile_truncate(state->f, &checkpoint);
 		state->offset = checkpoint.offset;
 		free(idx);
 	} else {

@@ -46,7 +46,7 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 			   int nr_objects, const struct pack_idx_option *opts,
 			   const unsigned char *sha1)
 {
-	struct sha1file *f;
+	struct hashfile *f;
 	struct pack_idx_entry **sorted_by_sha, **list, **last;
 	off_t last_obj_offset = 0;
 	uint32_t array[256];
@@ -68,7 +68,7 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 
 	if (opts->flags & WRITE_IDX_VERIFY) {
 		assert(index_name);
-		f = sha1fd_check(index_name);
+		f = hashfd_check(index_name);
 	} else {
 		if (!index_name) {
 			struct strbuf tmp_file = STRBUF_INIT;
@@ -80,7 +80,7 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 			if (fd < 0)
 				die_errno("unable to create '%s'", index_name);
 		}
-		f = sha1fd(fd, index_name);
+		f = hashfd(fd, index_name);
 	}
 
 	/* if last object's offset is >= 2^31 we should use index V2 */
@@ -91,7 +91,7 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 		struct pack_idx_header hdr;
 		hdr.idx_signature = htonl(PACK_IDX_SIGNATURE);
 		hdr.idx_version = htonl(index_version);
-		sha1write(f, &hdr, sizeof(hdr));
+		hashwrite(f, &hdr, sizeof(hdr));
 	}
 
 	/*
@@ -110,7 +110,7 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 		array[i] = htonl(next - sorted_by_sha);
 		list = next;
 	}
-	sha1write(f, array, 256 * 4);
+	hashwrite(f, array, 256 * 4);
 
 	/*
 	 * Write the actual SHA1 entries..
@@ -120,9 +120,9 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 		struct pack_idx_entry *obj = *list++;
 		if (index_version < 2) {
 			uint32_t offset = htonl(obj->offset);
-			sha1write(f, &offset, 4);
+			hashwrite(f, &offset, 4);
 		}
-		sha1write(f, obj->oid.hash, the_hash_algo->rawsz);
+		hashwrite(f, obj->oid.hash, the_hash_algo->rawsz);
 		if ((opts->flags & WRITE_IDX_STRICT) &&
 		    (i && !oidcmp(&list[-2]->oid, &obj->oid)))
 			die("The same object %s appears twice in the pack",
@@ -137,7 +137,7 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 		for (i = 0; i < nr_objects; i++) {
 			struct pack_idx_entry *obj = *list++;
 			uint32_t crc32_val = htonl(obj->crc32);
-			sha1write(f, &crc32_val, 4);
+			hashwrite(f, &crc32_val, 4);
 		}
 
 		/* write the 32-bit offset table */
@@ -150,7 +150,7 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 				  ? (0x80000000 | nr_large_offset++)
 				  : obj->offset);
 			offset = htonl(offset);
-			sha1write(f, &offset, 4);
+			hashwrite(f, &offset, 4);
 		}
 
 		/* write the large offset table */
@@ -164,25 +164,25 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 				continue;
 			split[0] = htonl(offset >> 32);
 			split[1] = htonl(offset & 0xffffffff);
-			sha1write(f, split, 8);
+			hashwrite(f, split, 8);
 			nr_large_offset--;
 		}
 	}
 
-	sha1write(f, sha1, the_hash_algo->rawsz);
-	sha1close(f, NULL, ((opts->flags & WRITE_IDX_VERIFY)
+	hashwrite(f, sha1, the_hash_algo->rawsz);
+	hashclose(f, NULL, ((opts->flags & WRITE_IDX_VERIFY)
 			    ? CSUM_CLOSE : CSUM_FSYNC));
 	return index_name;
 }
 
-off_t write_pack_header(struct sha1file *f, uint32_t nr_entries)
+off_t write_pack_header(struct hashfile *f, uint32_t nr_entries)
 {
 	struct pack_header hdr;
 
 	hdr.hdr_signature = htonl(PACK_SIGNATURE);
 	hdr.hdr_version = htonl(PACK_VERSION);
 	hdr.hdr_entries = htonl(nr_entries);
-	sha1write(f, &hdr, sizeof(hdr));
+	hashwrite(f, &hdr, sizeof(hdr));
 	return sizeof(hdr);
 }
 
@@ -333,14 +333,14 @@ int encode_in_pack_object_header(unsigned char *hdr, int hdr_len,
 	return n;
 }
 
-struct sha1file *create_tmp_packfile(char **pack_tmp_name)
+struct hashfile *create_tmp_packfile(char **pack_tmp_name)
 {
 	struct strbuf tmpname = STRBUF_INIT;
 	int fd;
 
 	fd = odb_mkstemp(&tmpname, "pack/tmp_pack_XXXXXX");
 	*pack_tmp_name = strbuf_detach(&tmpname, NULL);
-	return sha1fd(fd, *pack_tmp_name);
+	return hashfd(fd, *pack_tmp_name);
 }
 
 void finish_tmp_packfile(struct strbuf *name_buffer,
