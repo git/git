@@ -1652,27 +1652,16 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 	si.StartupInfo.hStdOutput = winansi_get_osfhandle(fhout);
 	si.StartupInfo.hStdError = winansi_get_osfhandle(fherr);
 
+	/* The list of handles cannot contain duplicates */
 	if (si.StartupInfo.hStdInput != INVALID_HANDLE_VALUE)
 		stdhandles[stdhandles_count++] = si.StartupInfo.hStdInput;
-	if (si.StartupInfo.hStdOutput != INVALID_HANDLE_VALUE)
+	if (si.StartupInfo.hStdOutput != INVALID_HANDLE_VALUE &&
+	    si.StartupInfo.hStdOutput != si.StartupInfo.hStdInput)
 		stdhandles[stdhandles_count++] = si.StartupInfo.hStdOutput;
-	if (si.StartupInfo.hStdError != INVALID_HANDLE_VALUE)
+	if (si.StartupInfo.hStdError != INVALID_HANDLE_VALUE &&
+	    si.StartupInfo.hStdError != si.StartupInfo.hStdInput &&
+	    si.StartupInfo.hStdError != si.StartupInfo.hStdOutput)
 		stdhandles[stdhandles_count++] = si.StartupInfo.hStdError;
-
-	/* The list of handles cannot contain duplicates */
-	if (stdhandles_count == 3) {
-		if (stdhandles[2] == stdhandles[0])
-			stdhandles_count =
-				stdhandles[2] == stdhandles[1] ? 1 : 2;
-		else if (stdhandles[2] == stdhandles[1])
-			stdhandles_count = 2;
-		else if (stdhandles[1] == stdhandles[0]) {
-			stdhandles_count = 2;
-			stdhandles[1] = stdhandles[2];
-		}
-	} else if (stdhandles_count == 2 && stdhandles[1] == stdhandles[0])
-		stdhandles_count = 1;
-
 	if (stdhandles_count)
 		si.StartupInfo.dwFlags |= STARTF_USESTDHANDLES;
 
