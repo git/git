@@ -99,3 +99,27 @@ int sha1_pos(const unsigned char *sha1, void *table, size_t nr,
 	} while (lo < hi);
 	return -lo-1;
 }
+
+int bsearch_hash(const unsigned char *sha1, const void *fanout_,
+		 const void *table_, size_t stride)
+{
+	const uint32_t *fanout = fanout_;
+	const unsigned char *table = table_;
+	int hi, lo;
+
+	hi = ntohl(fanout[*sha1]);
+	lo = ((*sha1 == 0x0) ? 0 : ntohl(fanout[*sha1 - 1]));
+
+	while (lo < hi) {
+		unsigned mi = lo + (hi - lo) / 2;
+		int cmp = hashcmp(table + mi * stride, sha1);
+
+		if (!cmp)
+			return mi;
+		if (cmp > 0)
+			hi = mi;
+		else
+			lo = mi + 1;
+	}
+	return -lo - 1;
+}
