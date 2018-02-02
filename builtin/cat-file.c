@@ -186,7 +186,7 @@ static void expand_atom(struct strbuf *sb, const char *atom, int len,
 			 struct ref_array_item *item)
 {
 	if (is_atom("objectname", atom, len))
-		strbuf_addstr(sb, oid_to_hex(&item->objectname));
+		strbuf_addstr(sb, oid_to_hex(&item->oid));
 	else if (is_atom("objecttype", atom, len))
 		strbuf_addstr(sb, typename(item->type));
 	else if (is_atom("objectsize", atom, len))
@@ -294,7 +294,7 @@ static void batch_object_write(const char *obj_name, struct batch_options *opt,
 		return;
 	}
 
-	item.objectname = data->oid;
+	item.oid = data->oid;
 	item.type = data->type;
 	item.size = data->size;
 	item.disk_size = data->disk_size;

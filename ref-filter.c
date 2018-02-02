@@ -1489,7 +1489,7 @@ int populate_value(struct ref_array_item *ref)
 				v->s = xstrdup(buf + 1);
 			}
 			continue;
-		} else if (!deref && grab_objectname(name, ref->objectname.hash, v, atom)) {
+		} else if (!deref && grab_objectname(name, ref->oid.hash, v, atom)) {
 			continue;
 		} else if (!strcmp(name, "HEAD")) {
 			if (atom->u.head && !strcmp(ref->refname, atom->u.head))
@@ -1534,13 +1534,13 @@ int populate_value(struct ref_array_item *ref)
 	if (used_atom_cnt <= i)
 		return 0;
 
-	buf = get_obj(&ref->objectname, &obj, &size, &eaten);
+	buf = get_obj(&ref->oid, &obj, &size, &eaten);
 	if (!buf)
 		die(_("missing object %s for %s"),
-		    oid_to_hex(&ref->objectname), ref->refname);
+		    oid_to_hex(&ref->oid), ref->refname);
 	if (!obj)
 		die(_("parse_object_buffer failed on %s for %s"),
-		    oid_to_hex(&ref->objectname), ref->refname);
+		    oid_to_hex(&ref->oid), ref->refname);
 
 	grab_values(ref->value, 0, obj, buf, size);
 	if (!eaten)
@@ -1890,7 +1890,7 @@ static struct ref_array_item *new_ref_array_item(const char *refname,
 {
 	struct ref_array_item *ref;
 	FLEX_ALLOC_STR(ref, refname, refname);
-	hashcpy(ref->objectname.hash, objectname);
+	hashcpy(ref->oid.hash, objectname);
 	ref->flag = flag;
 
 	return ref;
