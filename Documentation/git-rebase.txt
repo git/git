@@ -244,6 +244,11 @@ leave out at most one of A and B, in which case it defaults to HEAD.
 	Keep the commits that do not change anything from its
 	parents in the result.
 
+--allow-empty-message::
+	By default, rebasing commits with an empty message will fail.
+	This option overrides that behavior, allowing commits with empty
+	messages to be rebased.
+
 --skip::
 	Restart the rebasing process by skipping the current patch.
 
