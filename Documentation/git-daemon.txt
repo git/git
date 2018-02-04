@@ -20,6 +20,7 @@ SYNOPSIS
 	     [--inetd |
 	      [--listen=<host_or_ipaddr>] [--port=<n>]
 	      [--user=<user> [--group=<group>]]]
+	     [--log-destination=(stderr|syslog|none)]
 	     [<directory>...]
 
 DESCRIPTION
@@ -80,7 +81,8 @@ OPTIONS
 	do not have the 'git-daemon-export-ok' file.
 
 --inetd::
-	Have the server run as an inetd service. Implies --syslog.
+	Have the server run as an inetd service. Implies --syslog (may be
+	overridden with `--log-destination=`).
 	Incompatible with --detach, --port, --listen, --user and --group
 	options.
 
@@ -110,8 +112,28 @@ OPTIONS
 	zero for no limit.
 
 --syslog::
-	Log to syslog instead of stderr. Note that this option does not imply
-	--verbose, thus by default only error conditions will be logged.
+	Short for `--log-destination=syslog`.
+
+--log-destination=<destination>::
+	Send log messages to the specified destination.
+	Note that this option does not imply --verbose,
+	thus by default only error conditions will be logged.
+	The <destination> must be one of:
++
+--
+stderr::
+	Write to standard error.
+	Note that if `--detach` is specified,
+	the process disconnects from the real standard error,
+	making this destination effectively equivalent to `none`.
+syslog::
+	Write to syslog, using the `git-daemon` identifier.
+none::
+	Disable all logging.
+--
++
+The default destination is `syslog` if `--inetd` or `--detach` is specified,
+otherwise `stderr`.
 
 --user-path::
 --user-path=<path>::
