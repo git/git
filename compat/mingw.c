@@ -1753,6 +1753,17 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 	if (!ret && restrict_handle_inheritance && stdhandles_count) {
 		DWORD err = GetLastError();
 		if (err != ERROR_NO_SYSTEM_RESOURCES &&
+		    /*
+		     * On Windows 7 and earlier, handles on pipes and character
+		     * devices are inherited automatically, and cannot be
+		     * specified in the thread handle list. Rather than trying
+		     * to catch each and every corner case (and running the
+		     * chance of *still* forgetting a few), let's just fall
+		     * back to creating the process without trying to limit the
+		     * handle inheritance.
+		     */
+		    !(err == ERROR_INVALID_PARAMETER &&
+		      GetVersion() >> 16 < 9200) &&
 		    !getenv("SUPPRESS_HANDLE_INHERITANCE_WARNING")) {
 			struct strbuf buf = STRBUF_INIT;
 			DWORD fl;
