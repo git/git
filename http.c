@@ -753,7 +753,8 @@ static CURL *get_curl_handle(void)
 	}
 #endif
 
-	if (!strcmp("schannel", http_ssl_backend) && !http_schannel_check_revoke) {
+	if (http_ssl_backend && !strcmp("schannel", http_ssl_backend) &&
+	    !http_schannel_check_revoke) {
 #if LIBCURL_VERSION_NUM >= 0x074400
 		curl_easy_setopt(result, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NO_REVOKE);
 #else
