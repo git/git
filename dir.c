@@ -2297,7 +2297,8 @@ int read_directory(struct dir_struct *dir, struct index_state *istate,
 				 dir->untracked->gitignore_invalidated,
 				 dir->untracked->dir_invalidated,
 				 dir->untracked->dir_opened);
-		if (dir->untracked == istate->untracked &&
+		if (getenv("GIT_TEST_UNTRACKED_CACHE") &&
+			dir->untracked == istate->untracked &&
 		    (dir->untracked->dir_opened ||
 		     dir->untracked->gitignore_invalidated ||
 		     dir->untracked->dir_invalidated))

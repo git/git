@@ -14,6 +14,9 @@ test_description='test untracked cache'
 # See <20160803174522.5571-1-pclouds@gmail.com> if you want to know
 # more.
 
+GIT_TEST_UNTRACKED_CACHE=true
+export GIT_TEST_UNTRACKED_CACHE
+
 sync_mtime () {
 	find . -type d -ls >/dev/null
 }
