@@ -475,7 +475,7 @@ squash_msg () {
 
 toptree_for_commit () {
 	commit="$1"
-	git log -1 --pretty=format:'%T' "$commit" -- || exit $?
+	git log --no-show-signature -1 --pretty=format:'%T' "$commit" -- || exit $?
 }
 
 subtree_for_commit () {
