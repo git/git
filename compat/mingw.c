@@ -1755,8 +1755,7 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 		restrict_handle_inheritance = 0;
 		flags &= ~EXTENDED_STARTUPINFO_PRESENT;
 		ret = CreateProcessW(*wcmd ? wcmd : NULL, wargs, NULL, NULL,
-			     stdhandles_count ? TRUE : FALSE,
-			     flags, wenvblk, dir ? wdir : NULL,
+			     TRUE, flags, wenvblk, dir ? wdir : NULL,
 			     &si.StartupInfo, &pi);
 	}
 
