@@ -1593,7 +1593,7 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 			      const char *dir, const char *prepend_cmd,
 			      int fhin, int fhout, int fherr)
 {
-	static int atexit_handler_initialized;
+	static int atexit_handler_initialized, restrict_handle_inheritance = 1;
 	STARTUPINFOEXW si;
 	PROCESS_INFORMATION pi;
 	LPPROC_THREAD_ATTRIBUTE_LIST attr_list = NULL;
@@ -1722,7 +1722,7 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 	wenvblk = make_environment_block(deltaenv);
 
 	memset(&pi, 0, sizeof(pi));
-	if (stdhandles_count &&
+	if (restrict_handle_inheritance && stdhandles_count &&
 	    (InitializeProcThreadAttributeList(NULL, 1, 0, &size) ||
 	     GetLastError() == ERROR_INSUFFICIENT_BUFFER) &&
 	    (attr_list = (LPPROC_THREAD_ATTRIBUTE_LIST)
@@ -1741,6 +1741,25 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 			     stdhandles_count ? TRUE : FALSE,
 			     flags, wenvblk, dir ? wdir : NULL,
 			     &si.StartupInfo, &pi);
+
+	/*
+	 * On Windows 2008 R2, it seems that specifying certain types of handles
+	 * (such as FILE_TYPE_CHAR or FILE_TYPE_PIPE) will always produce an
+	 * error. Rather than playing finicky and fragile games, let's just try
+	 * to detect this situation and simply try again without restricting any
+	 * handle inheritance. This is still better than failing to create
+	 * processes.
+	 */
+	if (!ret && GetLastError() == ERROR_NO_SYSTEM_RESOURCES &&
+	    restrict_handle_inheritance && stdhandles_count) {
+		restrict_handle_inheritance = 0;
+		flags &= ~EXTENDED_STARTUPINFO_PRESENT;
+		ret = CreateProcessW(*wcmd ? wcmd : NULL, wargs, NULL, NULL,
+			     stdhandles_count ? TRUE : FALSE,
+			     flags, wenvblk, dir ? wdir : NULL,
+			     &si.StartupInfo, &pi);
+	}
+
 	if (!ret)
 		errno = err_win_to_posix(GetLastError());
 
