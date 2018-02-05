@@ -649,6 +649,15 @@ static int blame_move_callback(const struct option *option, const char *arg, int
 	return 0;
 }
 
+static int is_a_rev(const char *name)
+{
+	struct object_id oid;
+
+	if (get_oid(name, &oid))
+		return 0;
+	return OBJ_NONE < sha1_object_info(oid.hash, NULL);
+}
+
 int cmd_blame(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info revs;
@@ -845,16 +854,15 @@ parse_done:
 	} else {
 		if (argc < 2)
 			usage_with_options(blame_opt_usage, options);
-		path = add_prefix(prefix, argv[argc - 1]);
-		if (argc == 3 && !file_exists(path)) { /* (2b) */
+		if (argc == 3 && is_a_rev(argv[argc - 1])) { /* (2b) */
 			path = add_prefix(prefix, argv[1]);
 			argv[1] = argv[2];
+		} else {	/* (2a) */
+			if (argc == 2 && is_a_rev(argv[1]) && !get_git_work_tree())
+				die("missing <path> to blame");
+			path = add_prefix(prefix, argv[argc - 1]);
 		}
 		argv[argc - 1] = "--";
-
-		setup_work_tree();
-		if (!file_exists(path))
-			die_errno("cannot stat path '%s'", path);
 	}
 
 	revs.disable_stdin = 1;
