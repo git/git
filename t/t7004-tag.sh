@@ -452,6 +452,21 @@ test_expect_success \
 	test_cmp expect actual
 '
 
+get_tag_header annotated-tag-edit $commit commit $time >expect
+echo "An edited message" >>expect
+test_expect_success 'set up editor' '
+	write_script fakeeditor <<-\EOF
+	sed -e "s/A message/An edited message/g" <"$1" >"$1-"
+	mv "$1-" "$1"
+	EOF
+'
+test_expect_success \
+	'creating an annotated tag with -m message --edit should succeed' '
+	GIT_EDITOR=./fakeeditor git tag -m "A message" --edit annotated-tag-edit &&
+	get_tag_msg annotated-tag-edit >actual &&
+	test_cmp expect actual
+'
+
 cat >msgfile <<EOF
 Another message
 in a file.
@@ -462,6 +477,21 @@ test_expect_success \
 	'creating an annotated tag with -F messagefile should succeed' '
 	git tag -F msgfile file-annotated-tag &&
 	get_tag_msg file-annotated-tag >actual &&
+	test_cmp expect actual
+'
+
+get_tag_header file-annotated-tag-edit $commit commit $time >expect
+sed -e "s/Another message/Another edited message/g" msgfile >>expect
+test_expect_success 'set up editor' '
+	write_script fakeeditor <<-\EOF
+	sed -e "s/Another message/Another edited message/g" <"$1" >"$1-"
+	mv "$1-" "$1"
+	EOF
+'
+test_expect_success \
+	'creating an annotated tag with -F messagefile --edit should succeed' '
+	GIT_EDITOR=./fakeeditor git tag -F msgfile --edit file-annotated-tag-edit &&
+	get_tag_msg file-annotated-tag-edit >actual &&
 	test_cmp expect actual
 '
 
