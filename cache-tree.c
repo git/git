@@ -608,7 +608,7 @@ int write_index_as_tree(unsigned char *sha1, struct index_state *index_state, co
 
 	hold_lock_file_for_update(&lock_file, index_path, LOCK_DIE_ON_ERROR);
 
-	entries = read_index_from(index_state, index_path);
+	entries = read_index_from(index_state, index_path, get_git_dir());
 	if (entries < 0) {
 		ret = WRITE_TREE_UNREADABLE_INDEX;
 		goto out;
