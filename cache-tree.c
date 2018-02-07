@@ -84,9 +84,8 @@ static struct cache_tree_sub *find_subtree(struct cache_tree *it,
 	down->namelen = pathlen;
 
 	if (pos < it->subtree_nr)
-		memmove(it->down + pos + 1,
-			it->down + pos,
-			sizeof(down) * (it->subtree_nr - pos - 1));
+		MOVE_ARRAY(it->down + pos + 1, it->down + pos,
+			   it->subtree_nr - pos - 1);
 	it->down[pos] = down;
 	return down;
 }

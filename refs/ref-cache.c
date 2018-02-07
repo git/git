@@ -238,10 +238,8 @@ int remove_entry_from_dir(struct ref_dir *dir, const char *refname)
 		return -1;
 	entry = dir->entries[entry_index];
 
-	memmove(&dir->entries[entry_index],
-		&dir->entries[entry_index + 1],
-		(dir->nr - entry_index - 1) * sizeof(*dir->entries)
-		);
+	MOVE_ARRAY(&dir->entries[entry_index],
+		   &dir->entries[entry_index + 1], dir->nr - entry_index - 1);
 	dir->nr--;
 	if (dir->sorted > entry_index)
 		dir->sorted--;

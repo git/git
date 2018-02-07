@@ -57,8 +57,8 @@ static int add_rename_dst(struct diff_filespec *two)
 	ALLOC_GROW(rename_dst, rename_dst_nr + 1, rename_dst_alloc);
 	rename_dst_nr++;
 	if (first < rename_dst_nr)
-		memmove(rename_dst + first + 1, rename_dst + first,
-			(rename_dst_nr - first - 1) * sizeof(*rename_dst));
+		MOVE_ARRAY(rename_dst + first + 1, rename_dst + first,
+			   rename_dst_nr - first - 1);
 	rename_dst[first].two = alloc_filespec(two->path);
 	fill_filespec(rename_dst[first].two, &two->oid, two->oid_valid,
 		      two->mode);
@@ -98,8 +98,8 @@ static struct diff_rename_src *register_rename_src(struct diff_filepair *p)
 	ALLOC_GROW(rename_src, rename_src_nr + 1, rename_src_alloc);
 	rename_src_nr++;
 	if (first < rename_src_nr)
-		memmove(rename_src + first + 1, rename_src + first,
-			(rename_src_nr - first - 1) * sizeof(*rename_src));
+		MOVE_ARRAY(rename_src + first + 1, rename_src + first,
+			   rename_src_nr - first - 1);
 	rename_src[first].p = p;
 	rename_src[first].score = score;
 	return &(rename_src[first]);
