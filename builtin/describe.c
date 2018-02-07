@@ -383,7 +383,7 @@ static void describe_commit(struct object_id *oid, struct strbuf *dst)
 	if (!match_cnt) {
 		struct object_id *cmit_oid = &cmit->object.oid;
 		if (always) {
-			strbuf_addstr(dst, find_unique_abbrev(cmit_oid->hash, abbrev));
+			strbuf_add_unique_abbrev(dst, cmit_oid->hash, abbrev);
 			if (suffix)
 				strbuf_addstr(dst, suffix);
 			return;
