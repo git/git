@@ -1020,3 +1020,37 @@ nongit () {
 		"$@"
 	)
 }
+
+# convert stdin to pktline representation; note that empty input becomes an
+# empty packet, not a flush packet (for that you can just print 0000 yourself).
+packetize() {
+	cat >packetize.tmp &&
+	len=$(wc -c <packetize.tmp) &&
+	printf '%04x%s' "$(($len + 4))" &&
+	cat packetize.tmp &&
+	rm -f packetize.tmp
+}
+
+# Parse the input as a series of pktlines, writing the result to stdout.
+# Sideband markers are removed automatically, and the output is routed to
+# stderr if appropriate.
+#
+# NUL bytes are converted to "\\0" for ease of parsing with text tools.
+depacketize () {
+	perl -e '
+		while (read(STDIN, $len, 4) == 4) {
+			if ($len eq "0000") {
+				print "FLUSH\n";
+			} else {
+				read(STDIN, $buf, hex($len) - 4);
+				$buf =~ s/\0/\\0/g;
+				if ($buf =~ s/^[\x2\x3]//) {
+					print STDERR $buf;
+				} else {
+					$buf =~ s/^\x1//;
+					print $buf;
+				}
+			}
+		}
+	'
+}

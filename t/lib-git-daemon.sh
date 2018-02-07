@@ -32,7 +32,8 @@ LIB_GIT_DAEMON_PORT=${LIB_GIT_DAEMON_PORT-${this_test#t}}
 
 GIT_DAEMON_PID=
 GIT_DAEMON_DOCUMENT_ROOT_PATH="$PWD"/repo
-GIT_DAEMON_URL=git://127.0.0.1:$LIB_GIT_DAEMON_PORT
+GIT_DAEMON_HOST_PORT=127.0.0.1:$LIB_GIT_DAEMON_PORT
+GIT_DAEMON_URL=git://$GIT_DAEMON_HOST_PORT
 
 start_git_daemon() {
 	if test -n "$GIT_DAEMON_PID"
@@ -53,11 +54,19 @@ start_git_daemon() {
 		"$@" "$GIT_DAEMON_DOCUMENT_ROOT_PATH" \
 		>&3 2>git_daemon_output &
 	GIT_DAEMON_PID=$!
+	>daemon.log
 	{
-		read line <&7
-		echo >&4 "$line"
-		cat <&7 >&4 &
-	} 7<git_daemon_output &&
+		read -r line <&7
+		printf "%s\n" "$line"
+		printf >&4 "%s\n" "$line"
+		(
+			while read -r line <&7
+			do
+				printf "%s\n" "$line"
+				printf >&4 "%s\n" "$line"
+			done
+		) &
+	} 7<git_daemon_output >>"$TRASH_DIRECTORY/daemon.log" &&
 
 	# Check expected output
 	if test x"$(expr "$line" : "\[[0-9]*\] \(.*\)")" != x"Ready to rumble"
@@ -90,3 +99,25 @@ stop_git_daemon() {
 	GIT_DAEMON_PID=
 	rm -f git_daemon_output
 }
+
+# A stripped-down version of a netcat client, that connects to a "host:port"
+# given in $1, sends its stdin followed by EOF, then dumps the response (until
+# EOF) to stdout.
+fake_nc() {
+	if ! test_declared_prereq FAKENC
+	then
+		echo >&4 "fake_nc: need to declare FAKENC prerequisite"
+		return 127
+	fi
+	perl -Mstrict -MIO::Socket::INET -e '
+		my $s = IO::Socket::INET->new(shift)
+			or die "unable to open socket: $!";
+		print $s <STDIN>;
+		$s->shutdown(1);
+		print <$s>;
+	' "$@"
+}
+
+test_lazy_prereq FAKENC '
+	perl -MIO::Socket::INET -e "exit 0"
+'
