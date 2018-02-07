@@ -1750,14 +1750,40 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 	 * handle inheritance. This is still better than failing to create
 	 * processes.
 	 */
-	if (!ret && GetLastError() == ERROR_NO_SYSTEM_RESOURCES &&
-	    restrict_handle_inheritance && stdhandles_count) {
+	if (!ret && restrict_handle_inheritance && stdhandles_count) {
+		DWORD err = GetLastError();
+		if (err != ERROR_NO_SYSTEM_RESOURCES &&
+		    !getenv("SUPPRESS_HANDLE_INHERITANCE_WARNING")) {
+			struct strbuf buf = STRBUF_INIT;
+			DWORD fl;
+			int i;
+
+			setenv("SUPPRESS_HANDLE_INHERITANCE_WARNING", "1", 1);
+
+			for (i = 0; i < stdhandles_count; i++) {
+				HANDLE h = stdhandles[i];
+				strbuf_addf(&buf, "handle #%d: %p (type %lx, "
+					    "handle info (%d) %lx\n", i, h,
+					    GetFileType(h),
+					    GetHandleInformation(h, &fl),
+					    fl);
+			}
+			strbuf_addstr(&buf, "\nThis is a bug; please report it "
+				      "at\nhttps://github.com/git-for-windows/"
+				      "git/issues/new\n\n"
+				      "To suppress this warning, please set "
+				      "the environment variable\n\n"
+				      "\tSUPPRESS_HANDLE_INHERITANCE_WARNING=1"
+				      "\n");
+			warning("failed to restrict file handles (%ld)\n\n%s",
+				err, buf.buf);
+			strbuf_release(&buf);
+		}
 		restrict_handle_inheritance = 0;
 		flags &= ~EXTENDED_STARTUPINFO_PRESENT;
 		ret = CreateProcessW(*wcmd ? wcmd : NULL, wargs, NULL, NULL,
-			     stdhandles_count ? TRUE : FALSE,
-			     flags, wenvblk, dir ? wdir : NULL,
-			     &si.StartupInfo, &pi);
+				     TRUE, flags, wenvblk, dir ? wdir : NULL,
+				     &si.StartupInfo, &pi);
 	}
 
 	if (!ret)
