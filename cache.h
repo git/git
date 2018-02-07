@@ -960,12 +960,10 @@ extern void check_repository_format(void);
 #define TYPE_CHANGED    0x0040
 
 /*
- * Return the name of the file in the local object database that would
- * be used to store a loose object with the specified sha1.  The
- * return value is a pointer to a statically allocated buffer that is
- * overwritten each time the function is called.
+ * Put in `buf` the name of the file in the local object database that
+ * would be used to store a loose object with the specified sha1.
  */
-extern const char *sha1_file_name(const unsigned char *sha1);
+extern void sha1_file_name(struct strbuf *buf, const unsigned char *sha1);
 
 /*
  * Return an abbreviated sha1 unique within this repository's object database.

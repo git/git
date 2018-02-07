@@ -2168,7 +2168,7 @@ struct http_object_request *new_http_object_request(const char *base_url,
 	unsigned char *sha1)
 {
 	char *hex = sha1_to_hex(sha1);
-	const char *filename;
+	struct strbuf filename = STRBUF_INIT;
 	char prevfile[PATH_MAX];
 	int prevlocal;
 	char prev_buf[PREV_BUF_SIZE];
@@ -2180,14 +2180,15 @@ struct http_object_request *new_http_object_request(const char *base_url,
 	hashcpy(freq->sha1, sha1);
 	freq->localfile = -1;
 
-	filename = sha1_file_name(sha1);
+	sha1_file_name(&filename, sha1);
 	snprintf(freq->tmpfile, sizeof(freq->tmpfile),
-		 "%s.temp", filename);
+		 "%s.temp", filename.buf);
 
-	snprintf(prevfile, sizeof(prevfile), "%s.prev", filename);
+	snprintf(prevfile, sizeof(prevfile), "%s.prev", filename.buf);
 	unlink_or_warn(prevfile);
 	rename(freq->tmpfile, prevfile);
 	unlink_or_warn(freq->tmpfile);
+	strbuf_release(&filename);
 
 	if (freq->localfile != -1)
 		error("fd leakage in start: %d", freq->localfile);
@@ -2302,6 +2303,7 @@ void process_http_object_request(struct http_object_request *freq)
 int finish_http_object_request(struct http_object_request *freq)
 {
 	struct stat st;
+	struct strbuf filename = STRBUF_INIT;
 
 	close(freq->localfile);
 	freq->localfile = -1;
@@ -2327,8 +2329,10 @@ int finish_http_object_request(struct http_object_request *freq)
 		unlink_or_warn(freq->tmpfile);
 		return -1;
 	}
-	freq->rename =
-		finalize_object_file(freq->tmpfile, sha1_file_name(freq->sha1));
+
+	sha1_file_name(&filename, freq->sha1);
+	freq->rename = finalize_object_file(freq->tmpfile, filename.buf);
+	strbuf_release(&filename);
 
 	return freq->rename;
 }
