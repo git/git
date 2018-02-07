@@ -65,7 +65,7 @@ static inline void mark_fsmonitor_invalid(struct index_state *istate, struct cac
 {
 	if (core_fsmonitor) {
 		ce->ce_flags &= ~CE_FSMONITOR_VALID;
-		untracked_cache_invalidate_path(istate, ce->name);
+		untracked_cache_invalidate_path(istate, ce->name, 1);
 		trace_printf_key(&trace_fsmonitor, "mark_fsmonitor_invalid '%s'", ce->name);
 	}
 }

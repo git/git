@@ -314,4 +314,43 @@ test_expect_success 'splitting the index results in the same state' '
 	test_cmp expect actual
 '
 
+test_expect_success UNTRACKED_CACHE 'ignore .git changes when invalidating UNTR' '
+	test_create_repo dot-git &&
+	(
+		cd dot-git &&
+		mkdir -p .git/hooks &&
+		: >tracked &&
+		: >modified &&
+		mkdir dir1 &&
+		: >dir1/tracked &&
+		: >dir1/modified &&
+		mkdir dir2 &&
+		: >dir2/tracked &&
+		: >dir2/modified &&
+		write_integration_script &&
+		git config core.fsmonitor .git/hooks/fsmonitor-test &&
+		git update-index --untracked-cache &&
+		git update-index --fsmonitor &&
+		GIT_TRACE_UNTRACKED_STATS="$TRASH_DIRECTORY/trace-before" \
+		git status &&
+		test-dump-untracked-cache >../before
+	) &&
+	cat >>dot-git/.git/hooks/fsmonitor-test <<-\EOF &&
+	printf ".git\0"
+	printf ".git/index\0"
+	printf "dir1/.git\0"
+	printf "dir1/.git/index\0"
+	EOF
+	(
+		cd dot-git &&
+		GIT_TRACE_UNTRACKED_STATS="$TRASH_DIRECTORY/trace-after" \
+		git status &&
+		test-dump-untracked-cache >../after
+	) &&
+	grep "directory invalidation" trace-before >>before &&
+	grep "directory invalidation" trace-after >>after &&
+	# UNTR extension unchanged, dir invalidation count unchanged
+	test_cmp before after
+'
+
 test_done

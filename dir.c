@@ -1712,7 +1712,7 @@ static enum path_treatment treat_path(struct dir_struct *dir,
 	if (!de)
 		return treat_path_fast(dir, untracked, cdir, istate, path,
 				       baselen, pathspec);
-	if (is_dot_or_dotdot(de->d_name) || !strcmp(de->d_name, ".git"))
+	if (is_dot_or_dotdot(de->d_name) || !fspathcmp(de->d_name, ".git"))
 		return path_none;
 	strbuf_setlen(path, baselen);
 	strbuf_addstr(path, de->d_name);
@@ -2909,9 +2909,11 @@ static int invalidate_one_component(struct untracked_cache *uc,
 }
 
 void untracked_cache_invalidate_path(struct index_state *istate,
-				     const char *path)
+				     const char *path, int safe_path)
 {
 	if (!istate->untracked || !istate->untracked->root)
+		return;
+	if (!safe_path && !verify_path(path))
 		return;
 	invalidate_one_component(istate->untracked, istate->untracked->root,
 				 path, strlen(path));
@@ -2920,13 +2922,13 @@ void untracked_cache_invalidate_path(struct index_state *istate,
 void untracked_cache_remove_from_index(struct index_state *istate,
 				       const char *path)
 {
-	untracked_cache_invalidate_path(istate, path);
+	untracked_cache_invalidate_path(istate, path, 1);
 }
 
 void untracked_cache_add_to_index(struct index_state *istate,
 				  const char *path)
 {
-	untracked_cache_invalidate_path(istate, path);
+	untracked_cache_invalidate_path(istate, path, 1);
 }
 
 /* Update gitfile and core.worktree setting to connect work tree and git dir */

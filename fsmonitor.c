@@ -130,7 +130,7 @@ static void fsmonitor_refresh_callback(struct index_state *istate, const char *n
 	 * as it could be a new untracked file.
 	 */
 	trace_printf_key(&trace_fsmonitor, "fsmonitor_refresh_callback '%s'", name);
-	untracked_cache_invalidate_path(istate, name);
+	untracked_cache_invalidate_path(istate, name, 0);
 }
 
 void refresh_fsmonitor(struct index_state *istate)
