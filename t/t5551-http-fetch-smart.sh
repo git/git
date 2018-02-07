@@ -364,5 +364,38 @@ test_expect_success 'custom http headers' '
 		submodule update sub
 '
 
+test_expect_success 'GIT_REDACT_COOKIES redacts cookies' '
+	rm -rf clone &&
+	echo "Set-Cookie: Foo=1" >cookies &&
+	echo "Set-Cookie: Bar=2" >>cookies &&
+	GIT_TRACE_CURL=true GIT_REDACT_COOKIES=Bar,Baz \
+		git -c "http.cookieFile=$(pwd)/cookies" clone \
+		$HTTPD_URL/smart/repo.git clone 2>err &&
+	grep "Cookie:.*Foo=1" err &&
+	grep "Cookie:.*Bar=<redacted>" err &&
+	! grep "Cookie:.*Bar=2" err
+'
+
+test_expect_success 'GIT_REDACT_COOKIES handles empty values' '
+	rm -rf clone &&
+	echo "Set-Cookie: Foo=" >cookies &&
+	GIT_TRACE_CURL=true GIT_REDACT_COOKIES=Foo \
+		git -c "http.cookieFile=$(pwd)/cookies" clone \
+		$HTTPD_URL/smart/repo.git clone 2>err &&
+	grep "Cookie:.*Foo=<redacted>" err
+'
+
+test_expect_success 'GIT_TRACE_CURL_NO_DATA prevents data from being traced' '
+	rm -rf clone &&
+	GIT_TRACE_CURL=true \
+		git clone $HTTPD_URL/smart/repo.git clone 2>err &&
+	grep "=> Send data" err &&
+
+	rm -rf clone &&
+	GIT_TRACE_CURL=true GIT_TRACE_CURL_NO_DATA=1 \
+		git clone $HTTPD_URL/smart/repo.git clone 2>err &&
+	! grep "=> Send data" err
+'
+
 stop_httpd
 test_done
