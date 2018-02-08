@@ -180,7 +180,13 @@ static void mark_object_reachable(struct object *obj)
 
 static int traverse_one_object(struct object *obj)
 {
-	return fsck_walk(obj, obj, &fsck_walk_options);
+	int result = fsck_walk(obj, obj, &fsck_walk_options);
+
+	if (obj->type == OBJ_TREE) {
+		struct tree *tree = (struct tree *)obj;
+		free_tree_buffer(tree);
+	}
+	return result;
 }
 
 static int traverse_reachable(void)
