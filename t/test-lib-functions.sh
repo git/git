@@ -733,14 +733,30 @@ test_i18ngrep () {
 
 	if test -n "$GETTEXT_POISON"
 	then
-	    : # pretend success
-	elif test "x!" = "x$1"
+		# pretend success
+		return 0
+	fi
+
+	if test "x!" = "x$1"
 	then
 		shift
-		! grep "$@"
+		! grep "$@" && return 0
+
+		echo >&2 "error: '! grep $@' did find a match in:"
 	else
-		grep "$@"
+		grep "$@" && return 0
+
+		echo >&2 "error: 'grep $@' didn't find a match in:"
 	fi
+
+	if test -s "$last_arg"
+	then
+		cat >&2 "$last_arg"
+	else
+		echo >&2 "<File '$last_arg' is empty>"
+	fi
+
+	return 1
 }
 
 # Call any command "$@" but be more verbose about its
