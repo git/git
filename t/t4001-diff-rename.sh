@@ -134,11 +134,15 @@ test_expect_success 'favour same basenames over different ones' '
 	git rm path1 &&
 	mkdir subdir &&
 	git mv another-path subdir/path1 &&
-	git status | test_i18ngrep "renamed: .*path1 -> subdir/path1"'
+	git status >out &&
+	test_i18ngrep "renamed: .*path1 -> subdir/path1" out
+'
 
 test_expect_success 'favour same basenames even with minor differences' '
 	git show HEAD:path1 | sed "s/15/16/" > subdir/path1 &&
-	git status | test_i18ngrep "renamed: .*path1 -> subdir/path1"'
+	git status >out &&
+	test_i18ngrep "renamed: .*path1 -> subdir/path1" out
+'
 
 test_expect_success 'two files with same basename and same content' '
 	git reset --hard &&
@@ -148,7 +152,8 @@ test_expect_success 'two files with same basename and same content' '
 	git add dir &&
 	git commit -m 2 &&
 	git mv dir other-dir &&
-	git status | test_i18ngrep "renamed: .*dir/A/file -> other-dir/A/file"
+	git status >out &&
+	test_i18ngrep "renamed: .*dir/A/file -> other-dir/A/file" out
 '
 
 test_expect_success 'setup for many rename source candidates' '
