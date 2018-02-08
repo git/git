@@ -242,10 +242,12 @@ test_expect_success 'merge of identical changes in a renamed file' '
 	rm -f A M N &&
 	git reset --hard &&
 	git checkout change+rename &&
-	GIT_MERGE_VERBOSITY=3 git merge change | test_i18ngrep "^Skipped B" &&
+	GIT_MERGE_VERBOSITY=3 git merge change >out &&
+	test_i18ngrep "^Skipped B" out &&
 	git reset --hard HEAD^ &&
 	git checkout change &&
-	GIT_MERGE_VERBOSITY=3 git merge change+rename | test_i18ngrep "^Skipped B"
+	GIT_MERGE_VERBOSITY=3 git merge change+rename >out &&
+	test_i18ngrep "^Skipped B" out
 '
 
 test_expect_success 'setup for rename + d/f conflicts' '
