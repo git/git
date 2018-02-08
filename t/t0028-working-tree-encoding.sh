@@ -209,4 +209,45 @@ test_expect_success 'error if encoding garbage is already in Git' '
 	git reset --hard $BEFORE_STATE
 '
 
+test_expect_success 'check roundtrip encoding' '
+	text="hallo there!\nroundtrip test here!" &&
+	printf "$text" | iconv -f UTF-8 -t SHIFT-JIS >roundtrip.shift &&
+	printf "$text" | iconv -f UTF-8 -t UTF-16 >roundtrip.utf16 &&
+	echo "*.shift text working-tree-encoding=SHIFT-JIS" >>.gitattributes &&
+
+	# SHIFT-JIS encoded files are round-trip checked by default...
+	GIT_TRACE=1 git add .gitattributes roundtrip.shift 2>&1 >/dev/null |
+		grep "Checking roundtrip encoding for SHIFT-JIS" &&
+	git reset &&
+
+	# ... unless we overwrite the Git config!
+	test_config core.checkRoundTripEncoding "garbage" &&
+	! GIT_TRACE=1 git add .gitattributes roundtrip.shift 2>&1 >/dev/null |
+		grep "Checking roundtrip encoding for SHIFT-JIS" &&
+	test_unconfig core.checkRoundTripEncoding &&
+	git reset &&
+
+	# UTF-16 encoded files should not be round-trip checked by default...
+	! GIT_TRACE=1 git add roundtrip.utf16 2>&1 >/dev/null |
+		grep "Checking roundtrip encoding for UTF-16" &&
+	git reset &&
+
+	# ... unless we tell Git to check it!
+	test_config_global core.checkRoundTripEncoding "UTF-16, UTF-32" &&
+	GIT_TRACE=1 git add roundtrip.utf16 2>&1 >/dev/null |
+		grep "Checking roundtrip encoding for UTF-16" &&
+	git reset &&
+
+	# ... unless we tell Git to check it!
+	# (here we also check that the casing of the encoding is irrelevant)
+	test_config_global core.checkRoundTripEncoding "UTF-32, utf-16" &&
+	GIT_TRACE=1 git add roundtrip.utf16 2>&1 >/dev/null |
+		grep "Checking roundtrip encoding for UTF-16" &&
+	git reset &&
+
+	# cleanup
+	rm roundtrip.shift roundtrip.utf16 &&
+	git reset --hard HEAD
+'
+
 test_done

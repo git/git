@@ -298,6 +298,13 @@ number of pitfalls:
   older Git versions and alternative Git implementations such as JGit
   or libgit2 (as of February 2018).
 
+- Reencoding content to non-UTF encodings can cause errors as the
+  conversion might not be UTF-8 round trip safe. If you suspect your
+  encoding to not be round trip safe, then add it to `core.checkRoundtripEncoding`
+  to make Git check the round trip encoding (see linkgit:git-config[1]).
+  SHIFT-JIS (Japanese character set) is known to have round trip issues
+  with UTF-8 and is checked by default.
+
 - Reencoding content requires resources that might slow down certain
   Git operations (e.g 'git checkout' or 'git add').
 
