@@ -771,7 +771,16 @@ static void invalidate_directory(struct untracked_cache *uc,
 				 struct untracked_cache_dir *dir)
 {
 	int i;
-	uc->dir_invalidated++;
+
+	/*
+	 * Invalidation increment here is just roughly correct. If
+	 * untracked_nr or any of dirs[].recurse is non-zero, we
+	 * should increment dir_invalidated too. But that's more
+	 * expensive to do.
+	 */
+	if (dir->valid)
+		uc->dir_invalidated++;
+
 	dir->valid = 0;
 	dir->untracked_nr = 0;
 	for (i = 0; i < dir->dirs_nr; i++)
@@ -1770,7 +1779,7 @@ static enum path_treatment treat_path(struct dir_struct *dir,
 	if (!de)
 		return treat_path_fast(dir, untracked, cdir, istate, path,
 				       baselen, pathspec);
-	if (is_dot_or_dotdot(de->d_name) || !strcmp(de->d_name, ".git"))
+	if (is_dot_or_dotdot(de->d_name) || !fspathcmp(de->d_name, ".git"))
 		return path_none;
 	strbuf_setlen(path, baselen);
 	strbuf_addstr(path, de->d_name);
@@ -1806,24 +1815,19 @@ static int valid_cached_dir(struct dir_struct *dir,
 	 */
 	refresh_fsmonitor(istate);
 	if (!(dir->untracked->use_fsmonitor && untracked->valid)) {
-		if (stat(path->len ? path->buf : ".", &st)) {
-			invalidate_directory(dir->untracked, untracked);
+		if (lstat(path->len ? path->buf : ".", &st)) {
 			memset(&untracked->stat_data, 0, sizeof(untracked->stat_data));
 			return 0;
 		}
 		if (!untracked->valid ||
 			match_stat_data_racy(istate, &untracked->stat_data, &st)) {
-			if (untracked->valid)
-				invalidate_directory(dir->untracked, untracked);
 			fill_stat_data(&untracked->stat_data, &st);
 			return 0;
 		}
 	}
 
-	if (untracked->check_only != !!check_only) {
-		invalidate_directory(dir->untracked, untracked);
+	if (untracked->check_only != !!check_only)
 		return 0;
-	}
 
 	/*
 	 * prep_exclude will be called eventually on this directory,
@@ -1850,13 +1854,20 @@ static int open_cached_dir(struct cached_dir *cdir,
 			   struct strbuf *path,
 			   int check_only)
 {
+	const char *c_path;
+
 	memset(cdir, 0, sizeof(*cdir));
 	cdir->untracked = untracked;
 	if (valid_cached_dir(dir, untracked, istate, path, check_only))
 		return 0;
-	cdir->fdir = opendir(path->len ? path->buf : ".");
-	if (dir->untracked)
+	c_path = path->len ? path->buf : ".";
+	cdir->fdir = opendir(c_path);
+	if (!cdir->fdir)
+		warning_errno(_("could not open directory '%s'"), c_path);
+	if (dir->untracked) {
+		invalidate_directory(dir->untracked, untracked);
 		dir->untracked->dir_opened++;
+	}
 	if (!cdir->fdir)
 		return -1;
 	return 0;
@@ -2966,9 +2977,11 @@ static int invalidate_one_component(struct untracked_cache *uc,
 }
 
 void untracked_cache_invalidate_path(struct index_state *istate,
-				     const char *path)
+				     const char *path, int safe_path)
 {
 	if (!istate->untracked || !istate->untracked->root)
+		return;
+	if (!safe_path && !verify_path(path))
 		return;
 	invalidate_one_component(istate->untracked, istate->untracked->root,
 				 path, strlen(path));
@@ -2977,13 +2990,13 @@ void untracked_cache_invalidate_path(struct index_state *istate,
 void untracked_cache_remove_from_index(struct index_state *istate,
 				       const char *path)
 {
-	untracked_cache_invalidate_path(istate, path);
+	untracked_cache_invalidate_path(istate, path, 1);
 }
 
 void untracked_cache_add_to_index(struct index_state *istate,
 				  const char *path)
 {
-	untracked_cache_invalidate_path(istate, path);
+	untracked_cache_invalidate_path(istate, path, 1);
 }
 
 /* Update gitfile and core.worktree setting to connect work tree and git dir */

@@ -22,6 +22,12 @@ avoid_racy() {
 	sleep 1
 }
 
+status_is_clean() {
+	>../status.expect &&
+	git status --porcelain >../status.actual &&
+	test_cmp ../status.expect ../status.actual
+}
+
 test_lazy_prereq UNTRACKED_CACHE '
 	{ git update-index --test-untracked-cache; ret=$?; } &&
 	test $ret -ne 1
@@ -681,6 +687,87 @@ test_expect_success 'untracked cache survives a commit' '
 	git commit -m commit &&
 	test-dump-untracked-cache >../after &&
 	test_cmp ../before ../after
+'
+
+test_expect_success 'teardown worktree' '
+	cd ..
+'
+
+test_expect_success SYMLINKS 'setup worktree for symlink test' '
+	git init worktree-symlink &&
+	cd worktree-symlink &&
+	git config core.untrackedCache true &&
+	mkdir one two &&
+	touch one/file two/file &&
+	git add one/file two/file &&
+	git commit -m"first commit" &&
+	git rm -rf one &&
+	ln -s two one &&
+	git add one &&
+	git commit -m"second commit"
+'
+
+test_expect_success SYMLINKS '"status" after symlink replacement should be clean with UC=true' '
+	git checkout HEAD~ &&
+	status_is_clean &&
+	status_is_clean &&
+	git checkout master &&
+	avoid_racy &&
+	status_is_clean &&
+	status_is_clean
+'
+
+test_expect_success SYMLINKS '"status" after symlink replacement should be clean with UC=false' '
+	git config core.untrackedCache false &&
+	git checkout HEAD~ &&
+	status_is_clean &&
+	status_is_clean &&
+	git checkout master &&
+	avoid_racy &&
+	status_is_clean &&
+	status_is_clean
+'
+
+test_expect_success 'setup worktree for non-symlink test' '
+	git init worktree-non-symlink &&
+	cd worktree-non-symlink &&
+	git config core.untrackedCache true &&
+	mkdir one two &&
+	touch one/file two/file &&
+	git add one/file two/file &&
+	git commit -m"first commit" &&
+	git rm -rf one &&
+	cp two/file one &&
+	git add one &&
+	git commit -m"second commit"
+'
+
+test_expect_success '"status" after file replacement should be clean with UC=true' '
+	git checkout HEAD~ &&
+	status_is_clean &&
+	status_is_clean &&
+	git checkout master &&
+	avoid_racy &&
+	status_is_clean &&
+	test-dump-untracked-cache >../actual &&
+	grep -F "recurse valid" ../actual >../actual.grep &&
+	cat >../expect.grep <<EOF &&
+/ 0000000000000000000000000000000000000000 recurse valid
+/two/ 0000000000000000000000000000000000000000 recurse valid
+EOF
+	status_is_clean &&
+	test_cmp ../expect.grep ../actual.grep
+'
+
+test_expect_success '"status" after file replacement should be clean with UC=false' '
+	git config core.untrackedCache false &&
+	git checkout HEAD~ &&
+	status_is_clean &&
+	status_is_clean &&
+	git checkout master &&
+	avoid_racy &&
+	status_is_clean &&
+	status_is_clean
 '
 
 test_done
