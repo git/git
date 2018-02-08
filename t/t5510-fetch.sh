@@ -222,12 +222,9 @@ test_expect_success 'fetch uses remote ref names to describe new refs' '
 	(
 		cd descriptive &&
 		git fetch o 2>actual &&
-		grep " -> refs/crazyheads/descriptive-branch$" actual |
-		test_i18ngrep "new branch" &&
-		grep " -> descriptive-tag$" actual |
-		test_i18ngrep "new tag" &&
-		grep " -> crazy$" actual |
-		test_i18ngrep "new ref"
+		test_i18ngrep "new branch.* -> refs/crazyheads/descriptive-branch$" actual &&
+		test_i18ngrep "new tag.* -> descriptive-tag$" actual &&
+		test_i18ngrep "new ref.* -> crazy$" actual
 	) &&
 	git checkout master
 '
