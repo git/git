@@ -719,6 +719,18 @@ test_i18ncmp () {
 # under GETTEXT_POISON this pretends that the command produced expected
 # results.
 test_i18ngrep () {
+	eval "last_arg=\${$#}"
+
+	test -f "$last_arg" ||
+	error "bug in the test script: test_i18ngrep requires a file" \
+	      "to read as the last parameter"
+
+	if test $# -lt 2 ||
+	   { test "x!" = "x$1" && test $# -lt 3 ; }
+	then
+		error "bug in the test script: too few parameters to test_i18ngrep"
+	fi
+
 	if test -n "$GETTEXT_POISON"
 	then
 	    : # pretend success
