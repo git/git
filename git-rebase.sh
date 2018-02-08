@@ -24,6 +24,7 @@ m,merge!           use merging strategies to rebase
 i,interactive!     let the user edit the list of commits to rebase
 x,exec=!           add exec lines after each commit of the editable list
 k,keep-empty	   preserve empty commits during rebase
+allow-empty-message allow rebasing commits with empty messages
 f,force-rebase!    force rebase even if branch is up to date
 X,strategy-option=! pass the argument through to the merge strategy
 stat!              display a diffstat of what changed upstream
@@ -89,6 +90,7 @@ action=
 preserve_merges=
 autosquash=
 keep_empty=
+allow_empty_message=
 test "$(git config --bool rebase.autosquash)" = "true" && autosquash=t
 case "$(git config --bool commit.gpgsign)" in
 true)	gpg_sign_opt=-S ;;
@@ -261,6 +263,9 @@ do
 		;;
 	--keep-empty)
 		keep_empty=yes
+		;;
+	--allow-empty-message)
+		allow_empty_message=--allow-empty-message
 		;;
 	--preserve-merges)
 		preserve_merges=t

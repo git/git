@@ -281,7 +281,7 @@ pick_one () {
 
 	test -d "$rewritten" &&
 		pick_one_preserving_merges "$@" && return
-	output eval git cherry-pick $allow_rerere_autoupdate \
+	output eval git cherry-pick $allow_rerere_autoupdate $allow_empty_message \
 			${gpg_sign_opt:+$(git rev-parse --sq-quote "$gpg_sign_opt")} \
 			"$strategy_args" $empty_args $ff "$@"
 
@@ -406,6 +406,7 @@ pick_one_preserving_merges () {
 			;;
 		*)
 			output eval git cherry-pick $allow_rerere_autoupdate \
+				$allow_empty_message \
 				${gpg_sign_opt:+$(git rev-parse --sq-quote "$gpg_sign_opt")} \
 				"$strategy_args" "$@" ||
 				die_with_patch $sha1 "$(eval_gettext "Could not pick \$sha1")"
@@ -559,7 +560,8 @@ do_next () {
 
 		mark_action_done
 		do_pick $sha1 "$rest"
-		git commit --amend --no-post-rewrite ${gpg_sign_opt:+"$gpg_sign_opt"} || {
+		git commit --amend --no-post-rewrite ${gpg_sign_opt:+"$gpg_sign_opt"} \
+			$allow_empty_message || {
 			warn "$(eval_gettext "\
 Could not amend commit after successfully picking \$sha1... \$rest
 This is most likely due to an empty commit message, or the pre-commit hook
@@ -607,7 +609,7 @@ you are able to reword the commit.")"
 			# This is an intermediate commit; its message will only be
 			# used in case of trouble.  So use the long version:
 			do_with_author output git commit --amend --no-verify -F "$squash_msg" \
-				${gpg_sign_opt:+"$gpg_sign_opt"} ||
+				${gpg_sign_opt:+"$gpg_sign_opt"} $allow_empty_message ||
 				die_failed_squash $sha1 "$rest"
 			;;
 		*)
@@ -615,13 +617,13 @@ you are able to reword the commit.")"
 			if test -f "$fixup_msg"
 			then
 				do_with_author git commit --amend --no-verify -F "$fixup_msg" \
-					${gpg_sign_opt:+"$gpg_sign_opt"} ||
+					${gpg_sign_opt:+"$gpg_sign_opt"} $allow_empty_message ||
 					die_failed_squash $sha1 "$rest"
 			else
 				cp "$squash_msg" "$GIT_DIR"/SQUASH_MSG || exit
 				rm -f "$GIT_DIR"/MERGE_MSG
 				do_with_author git commit --amend --no-verify -F "$GIT_DIR"/SQUASH_MSG -e \
-					${gpg_sign_opt:+"$gpg_sign_opt"} ||
+					${gpg_sign_opt:+"$gpg_sign_opt"} $allow_empty_message ||
 					die_failed_squash $sha1 "$rest"
 			fi
 			rm -f "$squash_msg" "$fixup_msg"
@@ -754,7 +756,8 @@ case "$action" in
 continue)
 	if test ! -d "$rewritten"
 	then
-		exec git rebase--helper ${force_rebase:+--no-ff} --continue
+		exec git rebase--helper ${force_rebase:+--no-ff} $allow_empty_message \
+			--continue
 	fi
 	# do we have anything to commit?
 	if git diff-index --cached --quiet HEAD --
@@ -794,11 +797,11 @@ In both cases, once you're done, continue with:
 You have uncommitted changes in your working tree. Please commit them
 first and then run 'git rebase --continue' again.")"
 			do_with_author git commit --amend --no-verify -F "$msg" -e \
-				${gpg_sign_opt:+"$gpg_sign_opt"} ||
+				${gpg_sign_opt:+"$gpg_sign_opt"} $allow_empty_message ||
 				die "$(gettext "Could not commit staged changes.")"
 		else
 			do_with_author git commit --no-verify -F "$msg" -e \
-				${gpg_sign_opt:+"$gpg_sign_opt"} ||
+				${gpg_sign_opt:+"$gpg_sign_opt"} $allow_empty_message ||
 				die "$(gettext "Could not commit staged changes.")"
 		fi
 	fi
@@ -817,7 +820,8 @@ skip)
 
 	if test ! -d "$rewritten"
 	then
-		exec git rebase--helper ${force_rebase:+--no-ff} --continue
+		exec git rebase--helper ${force_rebase:+--no-ff} $allow_empty_message \
+			--continue
 	fi
 	do_rest
 	return 0
@@ -1016,7 +1020,8 @@ checkout_onto
 if test -z "$rebase_root" && test ! -d "$rewritten"
 then
 	require_clean_work_tree "rebase"
-	exec git rebase--helper ${force_rebase:+--no-ff} --continue
+	exec git rebase--helper ${force_rebase:+--no-ff} $allow_empty_message \
+		--continue
 fi
 do_rest
 
