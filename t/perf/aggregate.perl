@@ -36,13 +36,32 @@ sub format_times {
 	return $out;
 }
 
-my (@dirs, %dirnames, %dirabbrevs, %prefixes, @tests, $codespeed);
+my (@dirs, %dirnames, %dirabbrevs, %prefixes, @tests,
+    $codespeed, $subsection, $reponame);
 while (scalar @ARGV) {
 	my $arg = $ARGV[0];
 	my $dir;
 	if ($arg eq "--codespeed") {
 		$codespeed = 1;
 		shift @ARGV;
+		next;
+	}
+	if ($arg eq "--subsection") {
+		shift @ARGV;
+		$subsection = $ARGV[0];
+		shift @ARGV;
+		if (! $subsection) {
+			die "empty subsection";
+		}
+		next;
+	}
+	if ($arg eq "--reponame") {
+		shift @ARGV;
+		$reponame = $ARGV[0];
+		shift @ARGV;
+		if (! $reponame) {
+			die "empty reponame";
+		}
 		next;
 	}
 	last if -f $arg or $arg eq "--";
@@ -76,10 +95,15 @@ if (not @tests) {
 }
 
 my $resultsdir = "test-results";
-my $results_section = "";
-if (exists $ENV{GIT_PERF_SUBSECTION} and $ENV{GIT_PERF_SUBSECTION} ne "") {
-	$resultsdir .= "/" . $ENV{GIT_PERF_SUBSECTION};
-	$results_section = $ENV{GIT_PERF_SUBSECTION};
+
+if (! $subsection and
+    exists $ENV{GIT_PERF_SUBSECTION} and
+    $ENV{GIT_PERF_SUBSECTION} ne "") {
+	$subsection = $ENV{GIT_PERF_SUBSECTION};
+}
+
+if ($subsection) {
+	$resultsdir .= "/" . $subsection;
 }
 
 my @subtests;
@@ -183,19 +207,21 @@ sub print_default_results {
 }
 
 sub print_codespeed_results {
-	my ($results_section) = @_;
+	my ($subsection) = @_;
 
 	my $project = "Git";
 
 	my $executable = `uname -s -m`;
 	chomp $executable;
 
-	if ($results_section ne "") {
-		$executable .= ", " . $results_section;
+	if ($subsection) {
+		$executable .= ", " . $subsection;
 	}
 
 	my $environment;
-	if (exists $ENV{GIT_PERF_REPO_NAME} and $ENV{GIT_PERF_REPO_NAME} ne "") {
+	if ($reponame) {
+		$environment = $reponame;
+	} elsif (exists $ENV{GIT_PERF_REPO_NAME} and $ENV{GIT_PERF_REPO_NAME} ne "") {
 		$environment = $ENV{GIT_PERF_REPO_NAME};
 	} elsif (exists $ENV{GIT_TEST_INSTALLED} and $ENV{GIT_TEST_INSTALLED} ne "") {
 		$environment = $ENV{GIT_TEST_INSTALLED};
@@ -227,13 +253,13 @@ sub print_codespeed_results {
 		}
 	}
 
-	print to_json(\@data, {utf8 => 1, pretty => 1}), "\n";
+	print to_json(\@data, {utf8 => 1, pretty => 1, canonical => 1}), "\n";
 }
 
 binmode STDOUT, ":utf8" or die "PANIC on binmode: $!";
 
 if ($codespeed) {
-	print_codespeed_results($results_section);
+	print_codespeed_results($subsection);
 } else {
 	print_default_results();
 }
