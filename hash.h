@@ -18,8 +18,8 @@
 #ifndef platform_SHA_CTX
 /*
  * platform's underlying implementation of SHA-1; could be OpenSSL,
- * blk_SHA, Apple CommonCrypto, etc...  Note that including
- * SHA1_HEADER may have already defined platform_SHA_CTX for our
+ * blk_SHA, Apple CommonCrypto, etc...  Note that the relevant
+ * SHA-1 header may have already defined platform_SHA_CTX for our
  * own implementations like block-sha1 and ppc-sha1, so we list
  * the default for OpenSSL compatible SHA-1 implementations here.
  */
