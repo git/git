@@ -3021,16 +3021,16 @@ _git_worktree ()
 	else
 		case "$subcommand,$cur" in
 		add,--*)
-			__gitcomp "--detach"
+			__gitcomp_builtin worktree_add
 			;;
 		list,--*)
-			__gitcomp "--porcelain"
+			__gitcomp_builtin worktree_list
 			;;
 		lock,--*)
-			__gitcomp "--reason"
+			__gitcomp_builtin worktree_lock
 			;;
 		prune,--*)
-			__gitcomp "--dry-run --expire --verbose"
+			__gitcomp_builtin worktree_prune
 			;;
 		*)
 			;;
