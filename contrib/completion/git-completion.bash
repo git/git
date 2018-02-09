@@ -1153,10 +1153,7 @@ _git_add ()
 {
 	case "$cur" in
 	--*)
-		__gitcomp "
-			--interactive --refresh --patch --update --dry-run
-			--ignore-errors --intent-to-add --force --edit --chmod=
-			"
+		__gitcomp_builtin add
 		return
 	esac
 
