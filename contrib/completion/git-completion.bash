@@ -3002,11 +3002,7 @@ _git_tag ()
 
 	case "$cur" in
 	--*)
-		__gitcomp "
-			--list --delete --verify --annotate --message --file
-			--sign --cleanup --local-user --force --column --sort=
-			--contains --no-contains --points-at --merged --no-merged --create-reflog
-			"
+		__gitcomp_builtin tag
 		;;
 	esac
 }
