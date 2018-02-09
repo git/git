@@ -480,6 +480,16 @@ a directory with a file when it comes to the internal structures of
 the untracked cache, but no case has been reported where this resulted in
 wrong "git status" output.
 
+There are also cases where existing indexes written by git versions
+before 2.17 will reference directories that don't exist anymore,
+potentially causing many "could not open directory" warnings to be
+printed on "git status". These are new warnings for existing issues
+that were previously silently discarded.
+
+As with the bug described above the solution is to one-off do a "git
+status" run with `core.untrackedCache=false` to flush out the leftover
+bad data.
+
 File System Monitor
 -------------------
 
