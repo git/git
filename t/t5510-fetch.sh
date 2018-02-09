@@ -552,21 +552,25 @@ test_configured_prune () {
 	fetch_prune=$1
 	remote_origin_prune=$2
 	expected_branch=$3
-	cmdline=$4
+	expected_tag=$4
+	cmdline=$5
 
-	test_expect_success "prune fetch.prune=$1 remote.origin.prune=$2${4:+ $4}; branch:$3" '
+	test_expect_success "prune fetch.prune=$1 remote.origin.prune=$2${5:+ $5}; branch:$3 tag:$4" '
 		# make sure a newbranch is there in . and also in one
 		git branch -f newbranch &&
+		git tag -f newtag &&
 		(
 			cd one &&
 			test_unconfig fetch.prune &&
 			test_unconfig remote.origin.prune &&
 			git fetch &&
-			git rev-parse --verify refs/remotes/origin/newbranch
+			git rev-parse --verify refs/remotes/origin/newbranch &&
+			git rev-parse --verify refs/tags/newtag
 		) &&
 
 		# now remove it
 		git branch -d newbranch &&
+		git tag -d newtag &&
 
 		# then test
 		(
@@ -582,6 +586,14 @@ test_configured_prune () {
 			kept)
 				git rev-parse --verify refs/remotes/origin/newbranch
 				;;
+			esac &&
+			case "$expected_tag" in
+			pruned)
+				test_must_fail git rev-parse --verify refs/tags/newtag
+				;;
+			kept)
+				git rev-parse --verify refs/tags/newtag
+				;;
 			esac
 		)
 	'
@@ -590,44 +602,45 @@ test_configured_prune () {
 # $1 config: fetch.prune
 # $2 config: remote.<name>.prune
 # $3 expect: branch to be pruned?
-# $4 git-fetch $cmdline:
+# $4 expect: tag to be pruned?
+# $5 git-fetch $cmdline:
 #
-#                     $1    $2    $3     $4
-test_configured_prune unset unset kept   ""
-test_configured_prune unset unset kept   "--no-prune"
-test_configured_prune unset unset pruned "--prune"
+#                     $1    $2    $3     $4     $5
+test_configured_prune unset unset kept   kept   ""
+test_configured_prune unset unset kept   kept   "--no-prune"
+test_configured_prune unset unset pruned kept   "--prune"
 
-test_configured_prune false unset kept   ""
-test_configured_prune false unset kept   "--no-prune"
-test_configured_prune false unset pruned "--prune"
+test_configured_prune false unset kept   kept   ""
+test_configured_prune false unset kept   kept   "--no-prune"
+test_configured_prune false unset pruned kept   "--prune"
 
-test_configured_prune true  unset pruned ""
-test_configured_prune true  unset pruned "--prune"
-test_configured_prune true  unset kept   "--no-prune"
+test_configured_prune true  unset pruned kept   ""
+test_configured_prune true  unset pruned kept   "--prune"
+test_configured_prune true  unset kept   kept   "--no-prune"
 
-test_configured_prune unset false kept   ""
-test_configured_prune unset false kept   "--no-prune"
-test_configured_prune unset false pruned "--prune"
+test_configured_prune unset false kept   kept   ""
+test_configured_prune unset false kept   kept   "--no-prune"
+test_configured_prune unset false pruned kept   "--prune"
 
-test_configured_prune false false kept   ""
-test_configured_prune false false kept   "--no-prune"
-test_configured_prune false false pruned "--prune"
+test_configured_prune false false kept   kept   ""
+test_configured_prune false false kept   kept   "--no-prune"
+test_configured_prune false false pruned kept   "--prune"
 
-test_configured_prune true  false kept   ""
-test_configured_prune true  false pruned "--prune"
-test_configured_prune true  false kept   "--no-prune"
+test_configured_prune true  false kept   kept   ""
+test_configured_prune true  false pruned kept   "--prune"
+test_configured_prune true  false kept   kept   "--no-prune"
 
-test_configured_prune unset true  pruned ""
-test_configured_prune unset true  kept   "--no-prune"
-test_configured_prune unset true  pruned "--prune"
+test_configured_prune unset true  pruned kept   ""
+test_configured_prune unset true  kept   kept   "--no-prune"
+test_configured_prune unset true  pruned kept   "--prune"
 
-test_configured_prune false true  pruned ""
-test_configured_prune false true  kept   "--no-prune"
-test_configured_prune false true  pruned "--prune"
+test_configured_prune false true  pruned kept   ""
+test_configured_prune false true  kept   kept   "--no-prune"
+test_configured_prune false true  pruned kept   "--prune"
 
-test_configured_prune true  true  pruned ""
-test_configured_prune true  true  pruned "--prune"
-test_configured_prune true  true  kept   "--no-prune"
+test_configured_prune true  true  pruned kept   ""
+test_configured_prune true  true  pruned kept   "--prune"
+test_configured_prune true  true  kept   kept   "--no-prune"
 
 test_expect_success 'all boundary commits are excluded' '
 	test_commit base &&
