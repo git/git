@@ -22,6 +22,7 @@ static struct refspec s_tag_refspec = {
 	"refs/tags/*"
 };
 
+/* See TAG_REFSPEC for the string version */
 const struct refspec *tag_refspec = &s_tag_refspec;
 
 struct counted_string {
