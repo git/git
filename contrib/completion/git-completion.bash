@@ -1220,12 +1220,8 @@ _git_branch ()
 		__git_complete_refs --cur="${cur##--set-upstream-to=}"
 		;;
 	--*)
-		__gitcomp "
-			--color --no-color --verbose --abbrev= --no-abbrev
-			--track --no-track --contains --no-contains --merged --no-merged
-			--set-upstream-to= --edit-description --list
-			--unset-upstream --delete --move --copy --remotes
-			--column --no-column --sort= --points-at
+		__gitcomp_builtin branch "--no-color --no-abbrev
+			--no-track --no-column
 			"
 		;;
 	*)
