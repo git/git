@@ -1263,11 +1263,7 @@ _git_checkout ()
 		__gitcomp "diff3 merge" "" "${cur##--conflict=}"
 		;;
 	--*)
-		__gitcomp "
-			--quiet --ours --theirs --track --no-track --merge
-			--conflict= --orphan --patch --detach --ignore-skip-worktree-bits
-			--recurse-submodules --no-recurse-submodules
-			"
+		__gitcomp_builtin checkout "--no-track --no-recurse-submodules"
 		;;
 	*)
 		# check if --track, --no-track, or --no-guess was specified
