@@ -1825,7 +1825,7 @@ _git_mv ()
 
 _git_name_rev ()
 {
-	__gitcomp "--tags --all --stdin"
+	__gitcomp_builtin name-rev
 }
 
 _git_notes ()
