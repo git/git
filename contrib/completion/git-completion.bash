@@ -1768,8 +1768,13 @@ _git_merge ()
 
 	case "$cur" in
 	--*)
-		__gitcomp "$__git_merge_options
-			--rerere-autoupdate --no-rerere-autoupdate --abort --continue"
+		__gitcomp_builtin merge "--rerere-autoupdate
+				--no-rerere-autoupdate
+				--no-commit --no-edit --no-ff
+				--no-log --no-progress
+				--no-squash --no-stat
+				--no-verify-signatures
+				"
 		return
 	esac
 	__git_complete_refs
