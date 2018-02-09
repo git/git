@@ -2661,7 +2661,7 @@ _git_replace ()
 {
 	case "$cur" in
 	--*)
-		__gitcomp "--edit --graft --format= --list --delete"
+		__gitcomp_builtin replace
 		return
 		;;
 	esac
