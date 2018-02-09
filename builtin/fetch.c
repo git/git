@@ -1301,8 +1301,8 @@ static int fetch_one(struct remote *remote, int argc, const char **argv)
 						    argv[i], argv[i]);
 			} else
 				refs[j++] = argv[i];
+			ref_nr++;
 		}
-		ref_nr = j;
 	}
 
 	sigchain_push_common(unlock_pack_on_signal);
