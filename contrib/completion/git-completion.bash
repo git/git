@@ -1283,16 +1283,19 @@ _git_cherry ()
 	__git_complete_refs
 }
 
+__git_cherry_pick_inprogress_options="--continue --quit --abort"
+
 _git_cherry_pick ()
 {
 	__git_find_repo_path
 	if [ -f "$__git_repo_path"/CHERRY_PICK_HEAD ]; then
-		__gitcomp "--continue --quit --abort"
+		__gitcomp "$__git_cherry_pick_inprogress_options"
 		return
 	fi
 	case "$cur" in
 	--*)
-		__gitcomp "--edit --no-commit --signoff --strategy= --mainline"
+		__gitcomp_builtin cherry-pick "" \
+			"$__git_cherry_pick_inprogress_options"
 		;;
 	*)
 		__git_complete_refs
