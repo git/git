@@ -1283,7 +1283,10 @@ static int fetch_one(struct remote *remote, int argc, const char **argv, int pru
 	static const char **refs = NULL;
 	struct refspec *refspec;
 	int ref_nr = 0;
+	int j = 0;
 	int exit_code;
+	int maybe_prune_tags;
+	int remote_via_config = remote_is_configured(remote, 0);
 
 	if (!remote)
 		die(_("No remote repository specified.  Please, specify either a URL or a\n"
@@ -1311,13 +1314,21 @@ static int fetch_one(struct remote *remote, int argc, const char **argv, int pru
 			prune_tags = PRUNE_TAGS_BY_DEFAULT;
 	}
 
-	if (prune_tags_ok && prune_tags && remote_is_configured(remote, 0))
+	maybe_prune_tags = prune_tags_ok && prune_tags;
+	if (maybe_prune_tags && remote_via_config)
 		add_prune_tags_to_fetch_refspec(remote);
 
+	if (argc > 0 || (maybe_prune_tags && !remote_via_config)) {
+		size_t nr_alloc = st_add3(argc, maybe_prune_tags, 1);
+		refs = xcalloc(nr_alloc, sizeof(const char *));
+		if (maybe_prune_tags) {
+			refs[j++] = xstrdup("refs/tags/*:refs/tags/*");
+			ref_nr++;
+		}
+	}
+
 	if (argc > 0) {
-		int j = 0;
 		int i;
-		refs = xcalloc(st_add(argc, 1), sizeof(const char *));
 		for (i = 0; i < argc; i++) {
 			if (!strcmp(argv[i], "tag")) {
 				i++;

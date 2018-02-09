@@ -175,24 +175,15 @@ It's reasonable to e.g. configure `fetch.pruneTags=true` in
 run, without making every invocation of `git fetch` without `--prune`
 an error.
 
-Another special case of `--prune-tags` is that
-`refs/tags/*:refs/tags/*` will not be implicitly provided if an URL is
-being fetched. I.e.:
-
-------------------------------------------------
-$ git fetch <url> --prune --prune-tags
-------------------------------------------------
-
-Will prune no tags, as opposed to:
+Pruning tags with `--prune-tags` also works when fetching a URL
+instead of a named remote. These will all prune tags not found on
+origin:
 
 ------------------------------------------------
 $ git fetch origin --prune --prune-tags
-------------------------------------------------
-
-To prune tags given a URL supply the refspec explicitly:
-
-------------------------------------------------
-$ git fetch <url> --prune 'refs/tags/*:refs/tags/*'
+$ git fetch origin --prune 'refs/tags/*:refs/tags/*'
+$ git fetch <url of origin> --prune --prune-tags
+$ git fetch <url of origin> --prune 'refs/tags/*:refs/tags/*'
 ------------------------------------------------
 
 OUTPUT

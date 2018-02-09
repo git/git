@@ -738,18 +738,15 @@ test_configured_prune unset unset unset true pruned  kept \
 	"--prune origin +refs/heads/*:refs/remotes/origin/*"
 
 # Pruning that also takes place if a file:// url replaces a named
-# remote, with the exception of --prune-tags on the command-line
-# (arbitrary limitation).
-#
-# However, because there's no implicit
+# remote. However, because there's no implicit
 # +refs/heads/*:refs/remotes/origin/* refspec and supplying it on the
 # command-line negates --prune-tags, the branches will not be pruned.
 test_configured_prune_type unset unset unset unset kept   kept   "origin --prune-tags" "name"
 test_configured_prune_type unset unset unset unset kept   kept   "origin --prune-tags" "link"
 test_configured_prune_type unset unset unset unset pruned pruned "origin --prune --prune-tags" "name"
-test_configured_prune_type unset unset unset unset kept   kept   "origin --prune --prune-tags" "link"
+test_configured_prune_type unset unset unset unset kept   pruned "origin --prune --prune-tags" "link"
 test_configured_prune_type unset unset unset unset pruned pruned "--prune --prune-tags origin" "name"
-test_configured_prune_type unset unset unset unset kept   kept   "--prune --prune-tags origin" "link"
+test_configured_prune_type unset unset unset unset kept   pruned "--prune --prune-tags origin" "link"
 test_configured_prune_type unset unset true  unset pruned pruned "--prune origin" "name"
 test_configured_prune_type unset unset true  unset kept   pruned "--prune origin" "link"
 test_configured_prune_type unset unset unset true  pruned pruned "--prune origin" "name"
@@ -761,8 +758,9 @@ test_configured_prune_type unset  true true  unset kept   pruned "origin" "link"
 test_configured_prune_type unset  true unset true  pruned pruned "origin" "name"
 test_configured_prune_type unset  true unset true  kept   pruned "origin" "link"
 
-# Interaction between --prune-tags and no "fetch" config in the remote
-# at all.
+# When all remote.origin.fetch settings are deleted a --prune
+# --prune-tags still implicitly supplies refs/tags/*:refs/tags/* so
+# tags, but not tracking branches, will be deleted.
 test_expect_success 'remove remote.origin.fetch "one"' '
 	(
 		cd one &&
@@ -770,7 +768,7 @@ test_expect_success 'remove remote.origin.fetch "one"' '
 	)
 '
 test_configured_prune_type unset unset unset unset kept pruned "origin --prune --prune-tags" "name"
-test_configured_prune_type unset unset unset unset kept kept   "origin --prune --prune-tags" "link"
+test_configured_prune_type unset unset unset unset kept pruned "origin --prune --prune-tags" "link"
 
 test_expect_success 'all boundary commits are excluded' '
 	test_commit base &&
