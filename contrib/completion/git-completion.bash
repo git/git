@@ -2692,19 +2692,19 @@ _git_reset ()
 	__git_complete_refs
 }
 
+__git_revert_inprogress_options="--continue --quit --abort"
+
 _git_revert ()
 {
 	__git_find_repo_path
 	if [ -f "$__git_repo_path"/REVERT_HEAD ]; then
-		__gitcomp "--continue --quit --abort"
+		__gitcomp "$__git_revert_inprogress_options"
 		return
 	fi
 	case "$cur" in
 	--*)
-		__gitcomp "
-			--edit --mainline --no-edit --no-commit --signoff
-			--strategy= --strategy-option=
-			"
+		__gitcomp_builtin revert "--no-edit" \
+			"$__git_revert_inprogress_options"
 		return
 		;;
 	esac
