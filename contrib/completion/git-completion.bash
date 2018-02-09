@@ -2612,7 +2612,7 @@ _git_remote ()
 	if [ -z "$subcommand" ]; then
 		case "$cur" in
 		--*)
-			__gitcomp "--verbose"
+			__gitcomp_builtin remote
 			;;
 		*)
 			__gitcomp "$subcommands"
@@ -2623,33 +2623,33 @@ _git_remote ()
 
 	case "$subcommand,$cur" in
 	add,--*)
-		__gitcomp "--track --master --fetch --tags --no-tags --mirror="
+		__gitcomp_builtin remote_add "--no-tags"
 		;;
 	add,*)
 		;;
 	set-head,--*)
-		__gitcomp "--auto --delete"
+		__gitcomp_builtin remote_set-head
 		;;
 	set-branches,--*)
-		__gitcomp "--add"
+		__gitcomp_builtin remote_set-branches
 		;;
 	set-head,*|set-branches,*)
 		__git_complete_remote_or_refspec
 		;;
 	update,--*)
-		__gitcomp "--prune"
+		__gitcomp_builtin remote_update
 		;;
 	update,*)
 		__gitcomp "$(__git_get_config_variables "remotes")"
 		;;
 	set-url,--*)
-		__gitcomp "--push --add --delete"
+		__gitcomp_builtin remote_set-url
 		;;
 	get-url,--*)
-		__gitcomp "--push --all"
+		__gitcomp_builtin remote_get-url
 		;;
 	prune,--*)
-		__gitcomp "--dry-run"
+		__gitcomp_builtin remote_prune
 		;;
 	*)
 		__gitcomp_nl "$(__git_remotes)"
