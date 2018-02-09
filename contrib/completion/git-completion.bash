@@ -1835,7 +1835,7 @@ _git_notes ()
 
 	case "$subcommand,$cur" in
 	,--*)
-		__gitcomp '--ref'
+		__gitcomp_builtin notes
 		;;
 	,*)
 		case "$prev" in
@@ -1851,15 +1851,17 @@ _git_notes ()
 	add,--reedit-message=*|append,--reedit-message=*)
 		__git_complete_refs --cur="${cur#*=}"
 		;;
-	add,--*|append,--*)
-		__gitcomp '--file= --message= --reedit-message=
-				--reuse-message='
+	add,--*)
+		__gitcomp_builtin notes_add
+		;;
+	append,--*)
+		__gitcomp_builtin notes_append
 		;;
 	copy,--*)
-		__gitcomp '--stdin'
+		__gitcomp_builtin notes_copy
 		;;
 	prune,--*)
-		__gitcomp '--dry-run --verbose'
+		__gitcomp_builtin notes_prune
 		;;
 	prune,*)
 		;;
