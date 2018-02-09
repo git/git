@@ -1448,12 +1448,6 @@ _git_difftool ()
 
 __git_fetch_recurse_submodules="yes on-demand no"
 
-__git_fetch_options="
-	--quiet --verbose --append --upload-pack --force --keep --depth=
-	--tags --no-tags --all --prune --dry-run --recurse-submodules=
-	--unshallow --update-shallow
-"
-
 _git_fetch ()
 {
 	case "$cur" in
@@ -1754,14 +1748,6 @@ _git_log ()
 	__git_complete_revlist
 }
 
-# Common merge options shared by git-merge(1) and git-pull(1).
-__git_merge_options="
-	--no-commit --no-stat --log --no-log --squash --strategy
-	--commit --stat --no-squash --ff --no-ff --ff-only --edit --no-edit
-	--verify-signatures --no-verify-signatures --gpg-sign
-	--quiet --verbose --progress --no-progress
-"
-
 _git_merge ()
 {
 	__git_complete_strategy && return
@@ -1887,12 +1873,11 @@ _git_pull ()
 		return
 		;;
 	--*)
-		__gitcomp "
-			--rebase --no-rebase
-			--autostash --no-autostash
-			$__git_merge_options
-			$__git_fetch_options
-		"
+		__gitcomp_builtin pull "--no-autostash --no-commit --no-edit
+					--no-ff --no-log --no-progress --no-rebase
+					--no-squash --no-stat --no-tags
+					--no-verify-signatures"
+
 		return
 		;;
 	esac
