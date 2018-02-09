@@ -1369,11 +1369,7 @@ _git_describe ()
 {
 	case "$cur" in
 	--*)
-		__gitcomp "
-			--all --tags --contains --abbrev= --candidates=
-			--exact-match --debug --long --match --always --first-parent
-			--exclude --dirty --broken
-			"
+		__gitcomp_builtin describe
 		return
 	esac
 	__git_complete_refs
