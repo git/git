@@ -1928,12 +1928,7 @@ _git_push ()
 		return
 		;;
 	--*)
-		__gitcomp "
-			--all --mirror --tags --dry-run --force --verbose
-			--quiet --prune --delete --follow-tags
-			--receive-pack= --repo= --set-upstream
-			--force-with-lease --force-with-lease= --recurse-submodules=
-		"
+		__gitcomp_builtin push
 		return
 		;;
 	esac
