@@ -60,8 +60,9 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 		OPT_BIT(0, "refs", &flags, N_("do not show peeled tags"), REF_NORMAL),
 		OPT_BOOL(0, "get-url", &get_url,
 			 N_("take url.<base>.insteadOf into account")),
-		OPT_SET_INT(0, "exit-code", &status,
-			    N_("exit with exit code 2 if no matching refs are found"), 2),
+		OPT_SET_INT_F(0, "exit-code", &status,
+			      N_("exit with exit code 2 if no matching refs are found"),
+			      2, PARSE_OPT_NOCOMPLETE),
 		OPT_BOOL(0, "symref", &show_symref_target,
 			 N_("show underlying ref in addition to the object pointed by it")),
 		OPT_END()
