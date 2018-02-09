@@ -2715,7 +2715,7 @@ _git_rm ()
 {
 	case "$cur" in
 	--*)
-		__gitcomp "--cached --dry-run --ignore-unmatch --quiet"
+		__gitcomp_builtin rm
 		return
 		;;
 	esac
