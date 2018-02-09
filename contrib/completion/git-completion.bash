@@ -2773,12 +2773,7 @@ _git_show_branch ()
 {
 	case "$cur" in
 	--*)
-		__gitcomp "
-			--all --remotes --topo-order --date-order --current --more=
-			--list --independent --merge-base --no-name
-			--color --no-color
-			--sha1-name --sparse --topics --reflog
-			"
+		__gitcomp_builtin show-branch "--no-color"
 		return
 		;;
 	esac
