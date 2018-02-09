@@ -38,6 +38,10 @@ static int fetch_prune_config = -1; /* unspecified */
 static int prune = -1; /* unspecified */
 #define PRUNE_BY_DEFAULT 0 /* do we prune by default? */
 
+static int fetch_prune_tags_config = -1; /* unspecified */
+static int prune_tags = -1; /* unspecified */
+#define PRUNE_TAGS_BY_DEFAULT 0 /* do we prune tags by default? */
+
 static int all, append, dry_run, force, keep, multiple, update_head_ok, verbosity, deepen_relative;
 static int progress = -1;
 static int tags = TAGS_DEFAULT, unshallow, update_shallow, deepen;
@@ -61,6 +65,11 @@ static int git_fetch_config(const char *k, const char *v, void *cb)
 {
 	if (!strcmp(k, "fetch.prune")) {
 		fetch_prune_config = git_config_bool(k, v);
+		return 0;
+	}
+
+	if (!strcmp(k, "fetch.prunetags")) {
+		fetch_prune_tags_config = git_config_bool(k, v);
 		return 0;
 	}
 
@@ -126,6 +135,8 @@ static struct option builtin_fetch_options[] = {
 		    N_("number of submodules fetched in parallel")),
 	OPT_BOOL('p', "prune", &prune,
 		 N_("prune remote-tracking branches no longer on remote")),
+	OPT_BOOL('P', "prune-tags", &prune_tags,
+		 N_("prune local tags no longer on remote and clobber changed tags")),
 	{ OPTION_CALLBACK, 0, "recurse-submodules", &recurse_submodules, N_("on-demand"),
 		    N_("control recursive fetching of submodules"),
 		    PARSE_OPT_OPTARG, option_fetch_parse_recurse_submodules },
@@ -1212,6 +1223,8 @@ static void add_options_to_argv(struct argv_array *argv)
 		argv_array_push(argv, "--dry-run");
 	if (prune != -1)
 		argv_array_push(argv, prune ? "--prune" : "--no-prune");
+	if (prune_tags != -1)
+		argv_array_push(argv, prune_tags ? "--prune-tags" : "--no-prune-tags");
 	if (update_head_ok)
 		argv_array_push(argv, "--update-head-ok");
 	if (force)
@@ -1265,7 +1278,7 @@ static int fetch_multiple(struct string_list *list)
 	return result;
 }
 
-static int fetch_one(struct remote *remote, int argc, const char **argv)
+static int fetch_one(struct remote *remote, int argc, const char **argv, int prune_tags_ok)
 {
 	static const char **refs = NULL;
 	struct refspec *refspec;
@@ -1287,6 +1300,19 @@ static int fetch_one(struct remote *remote, int argc, const char **argv)
 		else
 			prune = PRUNE_BY_DEFAULT;
 	}
+
+	if (prune_tags < 0) {
+		/* no command line request */
+		if (0 <= remote->prune_tags)
+			prune_tags = remote->prune_tags;
+		else if (0 <= fetch_prune_tags_config)
+			prune_tags = fetch_prune_tags_config;
+		else
+			prune_tags = PRUNE_TAGS_BY_DEFAULT;
+	}
+
+	if (prune_tags_ok && prune_tags && remote_is_configured(remote, 0))
+		add_prune_tags_to_fetch_refspec(remote);
 
 	if (argc > 0) {
 		int j = 0;
@@ -1368,7 +1394,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 	} else if (argc == 0) {
 		/* No arguments -- use default remote */
 		remote = remote_get(NULL);
-		result = fetch_one(remote, argc, argv);
+		result = fetch_one(remote, argc, argv, 1);
 	} else if (multiple) {
 		/* All arguments are assumed to be remotes or groups */
 		for (i = 0; i < argc; i++)
@@ -1386,7 +1412,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 		} else {
 			/* Zero or one remotes */
 			remote = remote_get(argv[0]);
-			result = fetch_one(remote, argc-1, argv+1);
+			result = fetch_one(remote, argc-1, argv+1, argc == 1);
 		}
 	}
 

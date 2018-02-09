@@ -148,6 +148,53 @@ So be careful when using this with a refspec like
 `refs/tags/*:refs/tags/*`, or any other refspec which might map
 references from multiple remotes to the same local namespace.
 
+Since keeping up-to-date with both branches and tags on the remote is
+a common use-case the `--prune-tags` option can be supplied along with
+`--prune` to prune local tags that don't exist on the remote, and
+force-update those tags that differ. Tag pruning can also be enabled
+with `fetch.pruneTags` or `remote.<name>.pruneTags` in the config. See
+linkgit:git-config[1].
+
+The `--prune-tags` option is equivalent to having
+`refs/tags/*:refs/tags/*` declared in the refspecs of the remote. This
+can lead to some seemingly strange interactions:
+
+------------------------------------------------
+# These both fetch tags
+$ git fetch --no-tags origin 'refs/tags/*:refs/tags/*'
+$ git fetch --no-tags --prune-tags origin
+------------------------------------------------
+
+The reason it doesn't error out when provided without `--prune` or its
+config versions is for flexibility of the configured versions, and to
+maintain a 1=1 mapping between what the command line flags do, and
+what the configuration versions do.
+
+It's reasonable to e.g. configure `fetch.pruneTags=true` in
+`~/.gitconfig` to have tags pruned whenever `git fetch --prune` is
+run, without making every invocation of `git fetch` without `--prune`
+an error.
+
+Another special case of `--prune-tags` is that
+`refs/tags/*:refs/tags/*` will not be implicitly provided if an URL is
+being fetched. I.e.:
+
+------------------------------------------------
+$ git fetch <url> --prune --prune-tags
+------------------------------------------------
+
+Will prune no tags, as opposed to:
+
+------------------------------------------------
+$ git fetch origin --prune --prune-tags
+------------------------------------------------
+
+To prune tags given a URL supply the refspec explicitly:
+
+------------------------------------------------
+$ git fetch <url> --prune 'refs/tags/*:refs/tags/*'
+------------------------------------------------
+
 OUTPUT
 ------
 
