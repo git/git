@@ -548,18 +548,49 @@ set_config_tristate () {
 		;;
 	*)
 		git config "$1" "$2"
+		key=$(echo $1 | sed -e 's/^remote\.origin/fetch/')
+		git_fetch_c="$git_fetch_c -c $key=$2"
 		;;
 	esac
 }
 
 test_configured_prune () {
+	test_configured_prune_type "$@" "name"
+	test_configured_prune_type "$@" "link"
+}
+
+test_configured_prune_type () {
 	fetch_prune=$1
 	remote_origin_prune=$2
 	expected_branch=$3
 	expected_tag=$4
 	cmdline=$5
+	mode=$6
 
-	test_expect_success "prune fetch.prune=$1 remote.origin.prune=$2${5:+ $5}; branch:$3 tag:$4" '
+	if test -z "$cmdline_setup"
+	then
+		test_expect_success 'setup cmdline_setup variable for subsequent test' '
+			remote_url="file://$(git -C one config remote.origin.url)" &&
+			remote_fetch="$(git -C one config remote.origin.fetch)" &&
+			cmdline_setup="\"$remote_url\" \"$remote_fetch\""
+		'
+	fi
+
+	if test "$mode" = 'link'
+	then
+		new_cmdline=""
+
+		if test "$cmdline" = ""
+		then
+			new_cmdline=$cmdline_setup
+		else
+			new_cmdline=$(printf "%s" "$cmdline" | perl -pe 's[origin(?!/)]["'"$remote_url"'"]g')
+		fi
+
+		cmdline="$new_cmdline"
+	fi
+
+	test_expect_success "$mode prune fetch.prune=$1 remote.origin.prune=$2${5:+ $5}; branch:$3 tag:$4" '
 		# make sure a newbranch is there in . and also in one
 		git branch -f newbranch &&
 		git tag -f newtag &&
@@ -567,7 +598,7 @@ test_configured_prune () {
 			cd one &&
 			test_unconfig fetch.prune &&
 			test_unconfig remote.origin.prune &&
-			git fetch &&
+			git fetch '"$cmdline_setup"' &&
 			git rev-parse --verify refs/remotes/origin/newbranch &&
 			git rev-parse --verify refs/tags/newtag
 		) &&
@@ -579,10 +610,15 @@ test_configured_prune () {
 		# then test
 		(
 			cd one &&
+			git_fetch_c="" &&
 			set_config_tristate fetch.prune $fetch_prune &&
 			set_config_tristate remote.origin.prune $remote_origin_prune &&
 
-			git fetch '"$cmdline"' &&
+			if test "$mode" != "link"
+			then
+				git_fetch_c=""
+			fi &&
+			git$git_fetch_c fetch '"$cmdline"' &&
 			case "$expected_branch" in
 			pruned)
 				test_must_fail git rev-parse --verify refs/remotes/origin/newbranch
