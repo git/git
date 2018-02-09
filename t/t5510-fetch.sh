@@ -543,8 +543,12 @@ test_expect_success "should be able to fetch with duplicate refspecs" '
 set_config_tristate () {
 	# var=$1 val=$2
 	case "$2" in
-	unset)  test_unconfig "$1" ;;
-	*)	git config "$1" "$2" ;;
+	unset)
+		test_unconfig "$1"
+		;;
+	*)
+		git config "$1" "$2"
+		;;
 	esac
 }
 
