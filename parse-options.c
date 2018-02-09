@@ -459,6 +459,8 @@ static int show_gitcomp(struct parse_opt_ctx_t *ctx,
 		default:
 			break;
 		}
+		if (opts->flags & PARSE_OPT_COMP_ARG)
+			suffix = "=";
 		printf(" --%s%s", opts->long_name, suffix);
 	}
 	fputc('\n', stdout);

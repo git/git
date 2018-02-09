@@ -39,7 +39,8 @@ enum parse_opt_option_flags {
 	PARSE_OPT_NODASH = 32,
 	PARSE_OPT_LITERAL_ARGHELP = 64,
 	PARSE_OPT_SHELL_EVAL = 256,
-	PARSE_OPT_NOCOMPLETE = 512
+	PARSE_OPT_NOCOMPLETE = 512,
+	PARSE_OPT_COMP_ARG = 1024
 };
 
 struct option;
@@ -92,6 +93,9 @@ typedef int parse_opt_ll_cb(struct parse_opt_ctx_t *ctx,
  *				Useful for options with multiple parameters.
  *   PARSE_OPT_NOCOMPLETE: by default all visible options are completable
  *			   by git-completion.bash. This option suppresses that.
+ *   PARSE_OPT_COMP_ARG: this option forces to git-completion.bash to
+ *			 complete an option as --name= not --name even if
+ *			 the option takes optional argument.
  *
  * `callback`::
  *   pointer to the callback to use for OPTION_CALLBACK or
