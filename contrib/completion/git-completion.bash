@@ -2685,7 +2685,7 @@ _git_reset ()
 
 	case "$cur" in
 	--*)
-		__gitcomp "--merge --mixed --hard --soft --patch --keep"
+		__gitcomp_builtin reset
 		return
 		;;
 	esac
