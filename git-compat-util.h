@@ -131,6 +131,13 @@
 # else
 # define _XOPEN_SOURCE 500
 # endif
+
+/*
+ * On Solaris (and Illumos and friends) the isa_defs.h header defines
+ * _BIG_ENDIAN which is needed by e.g. sha1dc.
+ */
+#include <sys/isa_defs.h>
+
 #elif !defined(__APPLE__) && !defined(__FreeBSD__) && !defined(__USLC__) && \
       !defined(_M_UNIX) && !defined(__sgi) && !defined(__DragonFly__) && \
       !defined(__TANDEM) && !defined(__QNX__) && !defined(__MirBSD__) && \
