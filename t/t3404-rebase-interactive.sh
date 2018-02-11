@@ -227,7 +227,10 @@ test_expect_success 'stop on conflicting pick' '
 
 test_expect_success 'show conflicted patch' '
 	GIT_TRACE=1 git rebase --show-current-patch >/dev/null 2>stderr &&
-	grep "show.*$(cat "$state_dir/stopped-sha")" stderr
+	grep "show.*REBASE_HEAD" stderr &&
+	# the original stopped-sha1 is abbreviated
+	stopped_sha1="$(git rev-parse $(cat ".git/rebase-merge/stopped-sha"))" &&
+	test "$(git rev-parse REBASE_HEAD)" = "$stopped_sha1"
 '
 
 test_expect_success 'abort' '

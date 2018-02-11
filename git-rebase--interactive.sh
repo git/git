@@ -199,12 +199,14 @@ make_patch () {
 
 die_with_patch () {
 	echo "$1" > "$state_dir"/stopped-sha
+	git update-ref REBASE_HEAD "$1"
 	make_patch "$1"
 	die "$2"
 }
 
 exit_with_patch () {
 	echo "$1" > "$state_dir"/stopped-sha
+	git update-ref REBASE_HEAD "$1"
 	make_patch $1
 	git rev-parse --verify HEAD > "$amend"
 	gpg_sign_opt_quoted=${gpg_sign_opt:+$(git rev-parse --sq-quote "$gpg_sign_opt")}
@@ -841,7 +843,7 @@ To continue rebase after editing, run:
 	exit
 	;;
 show-current-patch)
-	exec git show "$(cat "$state_dir/stopped-sha")" --
+	exec git show REBASE_HEAD --
 	;;
 esac
 
@@ -858,6 +860,7 @@ fi
 
 orig_head=$(git rev-parse --verify HEAD) || die "$(gettext "No HEAD?")"
 mkdir -p "$state_dir" || die "$(eval_gettext "Could not create temporary \$state_dir")"
+rm -f "$(git rev-parse --git-path REBASE_HEAD)"
 
 : > "$state_dir"/interactive || die "$(gettext "Could not mark as interactive")"
 write_basic_state

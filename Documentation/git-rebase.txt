@@ -252,7 +252,8 @@ leave out at most one of A and B, in which case it defaults to HEAD.
 
 --show-current-patch::
 	Show the current patch in an interactive rebase or when rebase
-	is stopped because of conflicts.
+	is stopped because of conflicts. This is the equivalent of
+	`git show REBASE_HEAD`.
 
 -m::
 --merge::
