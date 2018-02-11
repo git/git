@@ -16,7 +16,7 @@ SYNOPSIS
 	 [--exclude=<path>] [--include=<path>] [--reject] [-q | --quiet]
 	 [--[no-]scissors] [-S[<keyid>]] [--patch-format=<format>]
 	 [(<mbox> | <Maildir>)...]
-'git am' (--continue | --skip | --abort)
+'git am' (--continue | --skip | --abort | --show-current-patch)
 
 DESCRIPTION
 -----------
@@ -166,6 +166,10 @@ default.   You can use `--no-utf8` to override this.
 
 --abort::
 	Restore the original branch and abort the patching operation.
+
+--show-current-patch::
+	Show the patch being applied when "git am" is stopped because
+	of conflicts.
 
 DISCUSSION
 ----------
