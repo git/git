@@ -137,6 +137,9 @@ skip)
 	finish_rb_merge
 	return
 	;;
+show-current-patch)
+	exec git show "$(cat "$state_dir/current")" --
+	;;
 esac
 
 mkdir -p "$state_dir"

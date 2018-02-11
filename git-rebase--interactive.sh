@@ -840,6 +840,9 @@ To continue rebase after editing, run:
 
 	exit
 	;;
+show-current-patch)
+	exec git show "$(cat "$state_dir/stopped-sha")" --
+	;;
 esac
 
 comment_for_reflog start

@@ -45,6 +45,7 @@ abort!             abort and check out the original branch
 skip!              skip current patch and continue
 edit-todo!         edit the todo list during an interactive rebase
 quit!              abort but keep HEAD where it is
+show-current-patch! show the patch file being applied or merged
 "
 . git-sh-setup
 set_reflog_action rebase
@@ -245,7 +246,7 @@ do
 	--verify)
 		ok_to_skip_pre_rebase=
 		;;
-	--continue|--skip|--abort|--quit|--edit-todo)
+	--continue|--skip|--abort|--quit|--edit-todo|--show-current-patch)
 		test $total_argc -eq 2 || usage
 		action=${1##--}
 		;;
@@ -411,6 +412,10 @@ quit)
 	;;
 edit-todo)
 	run_specific_rebase
+	;;
+show-current-patch)
+	run_specific_rebase
+	die "BUG: run_specific_rebase is not supposed to return here"
 	;;
 esac
 

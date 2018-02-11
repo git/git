@@ -2126,6 +2126,17 @@ static int show_patch(struct am_state *state)
 	const char *patch_path;
 	int len;
 
+	if (!is_null_oid(&state->orig_commit)) {
+		const char *av[4] = { "show", NULL, "--", NULL };
+		char *new_oid_str;
+		int ret;
+
+		av[1] = new_oid_str = xstrdup(oid_to_hex(&state->orig_commit));
+		ret = run_command_v_opt(av, RUN_GIT_CMD);
+		free(new_oid_str);
+		return ret;
+	}
+
 	patch_path = am_path(state, msgnum(state));
 	len = strbuf_read_file(&sb, patch_path, 0);
 	if (len < 0)

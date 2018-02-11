@@ -225,6 +225,11 @@ test_expect_success 'stop on conflicting pick' '
 	test 0 = $(grep -c "^[^#]" < .git/rebase-merge/git-rebase-todo)
 '
 
+test_expect_success 'show conflicted patch' '
+	GIT_TRACE=1 git rebase --show-current-patch >/dev/null 2>stderr &&
+	grep "show.*$(cat "$state_dir/stopped-sha")" stderr
+'
+
 test_expect_success 'abort' '
 	git rebase --abort &&
 	test $(git rev-parse new-branch1) = $(git rev-parse HEAD) &&

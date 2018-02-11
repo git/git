@@ -27,6 +27,9 @@ skip)
 	move_to_original_branch
 	return
 	;;
+show-current-patch)
+	exec git am --show-current-patch
+	;;
 esac
 
 if test -z "$rebase_root"
