@@ -79,7 +79,7 @@ with `--reason`.
 move::
 
 Move a working tree to a new location. Note that the main working tree
-cannot be moved.
+or linked working trees containing submodules cannot be moved.
 
 prune::
 
