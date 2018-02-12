@@ -85,4 +85,15 @@ test_expect_success 'move main worktree' '
 	test_must_fail git worktree move . def
 '
 
+test_expect_success 'move worktree to another dir' '
+	toplevel="$(pwd)" &&
+	mkdir some-dir &&
+	git worktree move destination some-dir &&
+	test_path_is_missing source &&
+	git worktree list --porcelain | grep "^worktree.*/some-dir/destination" &&
+	git -C some-dir/destination log --format=%s >actual2 &&
+	echo init >expected2 &&
+	test_cmp expected2 actual2
+'
+
 test_done

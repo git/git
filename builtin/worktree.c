@@ -631,8 +631,17 @@ static int move_worktree(int ac, const char **av, const char *prefix)
 		die(_("'%s' is not a working tree"), av[0]);
 	if (is_main_worktree(wt))
 		die(_("'%s' is a main working tree"), av[0]);
+	if (is_directory(dst.buf)) {
+		const char *sep = find_last_dir_sep(wt->path);
+
+		if (!sep)
+			die(_("could not figure out destination name from '%s'"),
+			    wt->path);
+		strbuf_trim_trailing_dir_sep(&dst);
+		strbuf_addstr(&dst, sep);
+	}
 	if (file_exists(dst.buf))
-		die(_("target '%s' already exists"), av[1]);
+		die(_("target '%s' already exists"), dst.buf);
 
 	reason = is_worktree_locked(wt);
 	if (reason) {
