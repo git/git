@@ -17,6 +17,7 @@ static const char * const worktree_usage[] = {
 	N_("git worktree add [<options>] <path> [<branch>]"),
 	N_("git worktree list [<options>]"),
 	N_("git worktree lock [<options>] <path>"),
+	N_("git worktree move <worktree> <new-path>"),
 	N_("git worktree prune [<options>]"),
 	N_("git worktree unlock <path>"),
 	NULL
@@ -605,6 +606,56 @@ static int unlock_worktree(int ac, const char **av, const char *prefix)
 	return ret;
 }
 
+static int move_worktree(int ac, const char **av, const char *prefix)
+{
+	struct option options[] = {
+		OPT_END()
+	};
+	struct worktree **worktrees, *wt;
+	struct strbuf dst = STRBUF_INIT;
+	struct strbuf errmsg = STRBUF_INIT;
+	const char *reason;
+	char *path;
+
+	ac = parse_options(ac, av, prefix, options, worktree_usage, 0);
+	if (ac != 2)
+		usage_with_options(worktree_usage, options);
+
+	path = prefix_filename(prefix, av[1]);
+	strbuf_addstr(&dst, path);
+	free(path);
+
+	worktrees = get_worktrees(0);
+	wt = find_worktree(worktrees, prefix, av[0]);
+	if (!wt)
+		die(_("'%s' is not a working tree"), av[0]);
+	if (is_main_worktree(wt))
+		die(_("'%s' is a main working tree"), av[0]);
+	if (file_exists(dst.buf))
+		die(_("target '%s' already exists"), av[1]);
+
+	reason = is_worktree_locked(wt);
+	if (reason) {
+		if (*reason)
+			die(_("cannot move a locked working tree, lock reason: %s"),
+			    reason);
+		die(_("cannot move a locked working tree"));
+	}
+	if (validate_worktree(wt, &errmsg))
+		die(_("validation failed, cannot move working tree: %s"),
+		    errmsg.buf);
+	strbuf_release(&errmsg);
+
+	if (rename(wt->path, dst.buf) == -1)
+		die_errno(_("failed to move '%s' to '%s'"), wt->path, dst.buf);
+
+	update_worktree_location(wt, dst.buf);
+
+	strbuf_release(&dst);
+	free_worktrees(worktrees);
+	return 0;
+}
+
 int cmd_worktree(int ac, const char **av, const char *prefix)
 {
 	struct option options[] = {
@@ -627,5 +678,7 @@ int cmd_worktree(int ac, const char **av, const char *prefix)
 		return lock_worktree(ac - 1, av + 1, prefix);
 	if (!strcmp(av[1], "unlock"))
 		return unlock_worktree(ac - 1, av + 1, prefix);
+	if (!strcmp(av[1], "move"))
+		return move_worktree(ac - 1, av + 1, prefix);
 	usage_with_options(worktree_usage, options);
 }
