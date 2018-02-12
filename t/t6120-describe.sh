@@ -374,4 +374,12 @@ test_expect_success ULIMIT_STACK_SIZE 'describe works in a deep repo' '
 	test_cmp expect actual
 '
 
+test_expect_success 'describe complains about tree object' '
+	test_must_fail git describe HEAD^{tree}
+'
+
+test_expect_success 'describe complains about missing object' '
+	test_must_fail git describe $_z40
+'
+
 test_done
