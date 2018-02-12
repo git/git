@@ -69,6 +69,12 @@ extern int validate_worktree(const struct worktree *wt,
 			     struct strbuf *errmsg);
 
 /*
+ * Update worktrees/xxx/gitdir with the new path.
+ */
+extern void update_worktree_location(struct worktree *wt,
+				     const char *path_);
+
+/*
  * Free up the memory for worktree(s)
  */
 extern void free_worktrees(struct worktree **);

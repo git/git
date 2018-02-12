@@ -326,6 +326,23 @@ done:
 	return ret;
 }
 
+void update_worktree_location(struct worktree *wt, const char *path_)
+{
+	struct strbuf path = STRBUF_INIT;
+
+	if (is_main_worktree(wt))
+		die("BUG: can't relocate main worktree");
+
+	strbuf_realpath(&path, path_, 1);
+	if (fspathcmp(wt->path, path.buf)) {
+		write_file(git_common_path("worktrees/%s/gitdir", wt->id),
+			   "%s/.git", path.buf);
+		free(wt->path);
+		wt->path = strbuf_detach(&path, NULL);
+	}
+	strbuf_release(&path);
+}
+
 int is_worktree_being_rebased(const struct worktree *wt,
 			      const char *target)
 {
