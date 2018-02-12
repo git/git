@@ -96,4 +96,34 @@ test_expect_success 'move worktree to another dir' '
 	test_cmp expected2 actual2
 '
 
+test_expect_success 'remove main worktree' '
+	test_must_fail git worktree remove .
+'
+
+test_expect_success 'move some-dir/destination back' '
+	git worktree move some-dir/destination destination
+'
+
+test_expect_success 'remove locked worktree' '
+	git worktree lock destination &&
+	test_when_finished "git worktree unlock destination" &&
+	test_must_fail git worktree remove destination
+'
+
+test_expect_success 'remove worktree with dirty tracked file' '
+	echo dirty >>destination/init.t &&
+	test_when_finished "git -C destination checkout init.t" &&
+	test_must_fail git worktree remove destination
+'
+
+test_expect_success 'remove worktree with untracked file' '
+	: >destination/untracked &&
+	test_must_fail git worktree remove destination
+'
+
+test_expect_success 'force remove worktree with untracked file' '
+	git worktree remove --force destination &&
+	test_path_is_missing destination
+'
+
 test_done
