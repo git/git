@@ -126,4 +126,21 @@ test_expect_success 'force remove worktree with untracked file' '
 	test_path_is_missing destination
 '
 
+test_expect_success 'remove missing worktree' '
+	git worktree add to-be-gone &&
+	test -d .git/worktrees/to-be-gone &&
+	mv to-be-gone gone &&
+	git worktree remove to-be-gone &&
+	test_path_is_missing .git/worktrees/to-be-gone
+'
+
+test_expect_success 'NOT remove missing-but-locked worktree' '
+	git worktree add gone-but-locked &&
+	git worktree lock gone-but-locked &&
+	test -d .git/worktrees/gone-but-locked &&
+	mv gone-but-locked really-gone-now &&
+	test_must_fail git worktree remove gone-but-locked &&
+	test_path_is_dir .git/worktrees/gone-but-locked
+'
+
 test_done

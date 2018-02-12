@@ -674,7 +674,7 @@ static int move_worktree(int ac, const char **av, const char *prefix)
 			    reason);
 		die(_("cannot move a locked working tree"));
 	}
-	if (validate_worktree(wt, &errmsg))
+	if (validate_worktree(wt, &errmsg, 0))
 		die(_("validation failed, cannot move working tree: %s"),
 		    errmsg.buf);
 	strbuf_release(&errmsg);
@@ -799,15 +799,17 @@ static int remove_worktree(int ac, const char **av, const char *prefix)
 			    reason);
 		die(_("cannot remove a locked working tree"));
 	}
-	if (validate_worktree(wt, &errmsg))
+	if (validate_worktree(wt, &errmsg, WT_VALIDATE_WORKTREE_MISSING_OK))
 		die(_("validation failed, cannot remove working tree: %s"),
 		    errmsg.buf);
 	strbuf_release(&errmsg);
 
-	if (!force)
-		check_clean_worktree(wt, av[0]);
+	if (file_exists(wt->path)) {
+		if (!force)
+			check_clean_worktree(wt, av[0]);
 
-	ret |= delete_git_work_tree(wt);
+		ret |= delete_git_work_tree(wt);
+	}
 	/*
 	 * continue on even if ret is non-zero, there's no going back
 	 * from here.

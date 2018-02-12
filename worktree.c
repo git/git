@@ -267,7 +267,8 @@ static void strbuf_addf_gently(struct strbuf *buf, const char *fmt, ...)
 	va_end(params);
 }
 
-int validate_worktree(const struct worktree *wt, struct strbuf *errmsg)
+int validate_worktree(const struct worktree *wt, struct strbuf *errmsg,
+		      unsigned flags)
 {
 	struct strbuf wt_path = STRBUF_INIT;
 	char *path = NULL;
@@ -300,6 +301,12 @@ int validate_worktree(const struct worktree *wt, struct strbuf *errmsg)
 		strbuf_addf_gently(errmsg,
 				   _("'%s' file does not contain absolute path to the working tree location"),
 				   git_common_path("worktrees/%s/gitdir", wt->id));
+		goto done;
+	}
+
+	if (flags & WT_VALIDATE_WORKTREE_MISSING_OK &&
+	    !file_exists(wt->path)) {
+		ret = 0;
 		goto done;
 	}
 
