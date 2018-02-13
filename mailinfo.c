@@ -1167,11 +1167,13 @@ void clear_mailinfo(struct mailinfo *mi)
 	strbuf_release(&mi->inbody_header_accum);
 	free(mi->message_id);
 
-	for (i = 0; mi->p_hdr_data[i]; i++)
-		strbuf_release(mi->p_hdr_data[i]);
+	if (mi->p_hdr_data)
+		for (i = 0; mi->p_hdr_data[i]; i++)
+			strbuf_release(mi->p_hdr_data[i]);
 	free(mi->p_hdr_data);
-	for (i = 0; mi->s_hdr_data[i]; i++)
-		strbuf_release(mi->s_hdr_data[i]);
+	if (mi->s_hdr_data)
+		for (i = 0; mi->s_hdr_data[i]; i++)
+			strbuf_release(mi->s_hdr_data[i]);
 	free(mi->s_hdr_data);
 
 	while (mi->content < mi->content_top) {
