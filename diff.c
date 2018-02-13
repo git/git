@@ -5471,6 +5471,7 @@ N_("you may want to set your %s variable to at least "
 
 void diff_warn_rename_limit(const char *varname, int needed, int degraded_cc)
 {
+	fflush(stdout);
 	if (degraded_cc)
 		warning(_(degrade_cc_to_c_warning));
 	else if (needed)
