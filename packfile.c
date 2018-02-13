@@ -1712,7 +1712,8 @@ off_t find_pack_entry_one(const unsigned char *sha1,
 {
 	const uint32_t *level1_ofs = p->index_data;
 	const unsigned char *index = p->index_data;
-	unsigned hi, lo, stride;
+	unsigned stride;
+	uint32_t result;
 
 	if (!index) {
 		if (open_pack_index(p))
@@ -1725,8 +1726,6 @@ off_t find_pack_entry_one(const unsigned char *sha1,
 		index += 8;
 	}
 	index += 4 * 256;
-	hi = ntohl(level1_ofs[*sha1]);
-	lo = ((*sha1 == 0x0) ? 0 : ntohl(level1_ofs[*sha1 - 1]));
 	if (p->index_version > 1) {
 		stride = 20;
 	} else {
@@ -1734,17 +1733,8 @@ off_t find_pack_entry_one(const unsigned char *sha1,
 		index += 4;
 	}
 
-	while (lo < hi) {
-		unsigned mi = lo + (hi - lo) / 2;
-		int cmp = hashcmp(index + mi * stride, sha1);
-
-		if (!cmp)
-			return nth_packed_object_offset(p, mi);
-		if (cmp > 0)
-			hi = mi;
-		else
-			lo = mi+1;
-	}
+	if (bsearch_hash(sha1, level1_ofs, index, stride, &result))
+		return nth_packed_object_offset(p, result);
 	return 0;
 }
 
