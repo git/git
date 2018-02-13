@@ -750,9 +750,20 @@ The form '--missing=allow-any' will allow object traversal to continue
 if a missing object is encountered.  Missing objects will silently be
 omitted from the results.
 +
+The form '--missing=allow-promisor' is like 'allow-any', but will only
+allow object traversal to continue for EXPECTED promisor missing objects.
+Unexpected missing objects will raise an error.
++
 The form '--missing=print' is like 'allow-any', but will also print a
 list of the missing objects.  Object IDs are prefixed with a ``?'' character.
 endif::git-rev-list[]
+
+--exclude-promisor-objects::
+	(For internal use only.)  Prefilter object traversal at
+	promisor boundary.  This is used with partial clone.  This is
+	stronger than `--missing=allow-promisor` because it limits the
+	traversal, rather than just silencing errors about missing
+	objects.
 
 --no-walk[=(sorted|unsorted)]::
 	Only show the given commits, but do not traverse their ancestors.
