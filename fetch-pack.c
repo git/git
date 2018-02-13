@@ -29,6 +29,7 @@ static int deepen_not_ok;
 static int fetch_fsck_objects = -1;
 static int transfer_fsck_objects = -1;
 static int agent_supported;
+static int server_supports_filtering;
 static struct lock_file shallow_lock;
 static const char *alternate_shallow_file;
 
@@ -379,6 +380,8 @@ static int find_common(struct fetch_pack_args *args,
 			if (deepen_not_ok)      strbuf_addstr(&c, " deepen-not");
 			if (agent_supported)    strbuf_addf(&c, " agent=%s",
 							    git_user_agent_sanitized());
+			if (args->filter_options.choice)
+				strbuf_addstr(&c, " filter");
 			packet_buf_write(&req_buf, "want %s%s\n", remote_hex, c.buf);
 			strbuf_release(&c);
 		} else
@@ -407,6 +410,9 @@ static int find_common(struct fetch_pack_args *args,
 			packet_buf_write(&req_buf, "deepen-not %s", s->string);
 		}
 	}
+	if (server_supports_filtering && args->filter_options.choice)
+		packet_buf_write(&req_buf, "filter %s",
+				 args->filter_options.filter_spec);
 	packet_buf_flush(&req_buf);
 	state_len = req_buf.len;
 
@@ -711,6 +717,7 @@ static int everything_local(struct fetch_pack_args *args,
 {
 	struct ref *ref;
 	int retval;
+	int old_save_commit_buffer = save_commit_buffer;
 	timestamp_t cutoff = 0;
 
 	save_commit_buffer = 0;
@@ -781,6 +788,9 @@ static int everything_local(struct fetch_pack_args *args,
 		print_verbose(args, _("already have %s (%s)"), oid_to_hex(remote),
 			      ref->name);
 	}
+
+	save_commit_buffer = old_save_commit_buffer;
+
 	return retval;
 }
 
@@ -969,6 +979,13 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 		print_verbose(args, _("Server supports ofs-delta"));
 	else
 		prefer_ofs_delta = 0;
+
+	if (server_supports("filter")) {
+		server_supports_filtering = 1;
+		print_verbose(args, _("Server supports filter"));
+	} else if (args->filter_options.choice) {
+		warning("filtering not recognized by server, ignoring");
+	}
 
 	if ((agent_feature = server_feature_value("agent", &agent_len))) {
 		agent_supported = 1;

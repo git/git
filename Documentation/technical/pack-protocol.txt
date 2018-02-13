@@ -241,6 +241,7 @@ out of what the server said it could do with the first 'want' line.
   upload-request    =  want-list
 		       *shallow-line
 		       *1depth-request
+		       [filter-request]
 		       flush-pkt
 
   want-list         =  first-want
@@ -256,6 +257,8 @@ out of what the server said it could do with the first 'want' line.
   additional-want   =  PKT-LINE("want" SP obj-id)
 
   depth             =  1*DIGIT
+
+  filter-request    =  PKT-LINE("filter" SP filter-spec)
 ----
 
 Clients MUST send all the obj-ids it wants from the reference
@@ -277,6 +280,11 @@ any commits beyond this depth, nor does it want objects needed only to
 complete those commits. Commits whose parents are not received as a
 result are defined as shallow and marked as such in the server. This
 information is sent back to the client in the next step.
+
+The client can optionally request that pack-objects omit various
+objects from the packfile using one of several filtering techniques.
+These are intended for use with partial clone and partial fetch
+operations.  See `rev-list` for possible "filter-spec" values.
 
 Once all the 'want's and 'shallow's (and optional 'deepen') are
 transferred, clients MUST send a flush-pkt, to tell the server side
