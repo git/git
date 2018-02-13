@@ -307,7 +307,7 @@ test_expect_success_multi 'needs work tree' '' '
 		cd .git &&
 		test_check_ignore "foo" 128
 	) &&
-	stderr_contains "fatal: This operation must be run in a work tree"
+	stderr_contains "fatal: this operation must be run in a work tree"
 '
 
 ############################################################################

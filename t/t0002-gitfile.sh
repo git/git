@@ -31,7 +31,7 @@ test_expect_success 'bad setup: invalid .git file format' '
 		echo "git rev-parse accepted an invalid .git file"
 		false
 	fi &&
-	if ! grep "Invalid gitfile format" .err
+	if ! test_i18ngrep "invalid gitfile format" .err
 	then
 		echo "git rev-parse returned wrong error"
 		false
@@ -45,7 +45,7 @@ test_expect_success 'bad setup: invalid .git file path' '
 		echo "git rev-parse accepted an invalid .git file path"
 		false
 	fi &&
-	if ! grep "Not a git repository" .err
+	if ! test_i18ngrep "not a git repository" .err
 	then
 		echo "git rev-parse returned wrong error"
 		false
