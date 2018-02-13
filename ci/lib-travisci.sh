@@ -21,8 +21,6 @@ skip_branch_tip_with_tag () {
 	fi
 }
 
-good_trees_file="$HOME/travis-cache/good-trees"
-
 # Save some info about the current commit's tree, so we can skip the build
 # job if we encounter the same tree again and can provide a useful info
 # message.
@@ -83,7 +81,10 @@ check_unignored_build_artifacts ()
 # and installing dependencies.
 set -ex
 
-mkdir -p "$HOME/travis-cache"
+cache_dir="$HOME/travis-cache"
+good_trees_file="$cache_dir/good-trees"
+
+mkdir -p "$cache_dir"
 
 skip_branch_tip_with_tag
 skip_good_tree

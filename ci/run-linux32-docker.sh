@@ -9,7 +9,9 @@ docker pull daald/ubuntu32:xenial
 
 # Use the following command to debug the docker build locally:
 # $ docker run -itv "${PWD}:/usr/src/git" --entrypoint /bin/bash daald/ubuntu32:xenial
-# root@container:/# /usr/src/git/ci/run-linux32-build.sh
+# root@container:/# /usr/src/git/ci/run-linux32-build.sh <host-user-id>
+
+container_cache_dir=/tmp/travis-cache
 
 docker run \
 	--interactive \
@@ -18,8 +20,9 @@ docker run \
 	--env GIT_PROVE_OPTS \
 	--env GIT_TEST_OPTS \
 	--env GIT_TEST_CLONE_2GB \
+	--env cache_dir="$container_cache_dir" \
 	--volume "${PWD}:/usr/src/git" \
-	--volume "${HOME}/travis-cache:/tmp/travis-cache" \
+	--volume "$cache_dir:$container_cache_dir" \
 	daald/ubuntu32:xenial \
 	/usr/src/git/ci/run-linux32-build.sh $(id -u $USER)
 
