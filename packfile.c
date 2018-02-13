@@ -1713,8 +1713,7 @@ off_t nth_packed_object_offset(const struct packed_git *p, uint32_t n)
 			return off;
 		index += p->num_objects * 4 + (off & 0x7fffffff) * 8;
 		check_pack_index_ptr(p, index);
-		return (((uint64_t)ntohl(*((uint32_t *)(index + 0)))) << 32) |
-				   ntohl(*((uint32_t *)(index + 4)));
+		return get_be64(index);
 	}
 }
 
