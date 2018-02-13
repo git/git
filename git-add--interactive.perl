@@ -1437,8 +1437,12 @@ sub patch_update_file {
 				}
 				next;
 			}
-			elsif ($other =~ /g/ && $line =~ /^g(.*)/) {
+			elsif ($line =~ /^g(.*)/) {
 				my $response = $1;
+				unless ($other =~ /g/) {
+					error_msg __("No other hunks to goto\n");
+					next;
+				}
 				my $no = $ix > 10 ? $ix - 10 : 0;
 				while ($response eq '') {
 					$no = display_hunks(\@hunk, $no);
@@ -1556,7 +1560,11 @@ sub patch_update_file {
 					next;
 				}
 			}
-			elsif ($other =~ /s/ && $line =~ /^s/) {
+			elsif ($line =~ /^s/) {
+				unless ($other =~ /s/) {
+					error_msg __("Sorry, cannot split this hunk\n");
+					next;
+				}
 				my @split = split_hunk($hunk[$ix]{TEXT}, $hunk[$ix]{DISPLAY});
 				if (1 < @split) {
 					print colored $header_color, sprintf(
@@ -1568,7 +1576,11 @@ sub patch_update_file {
 				$num = scalar @hunk;
 				next;
 			}
-			elsif ($other =~ /e/ && $line =~ /^e/) {
+			elsif ($line =~ /^e/) {
+				unless ($other =~ /e/) {
+					error_msg __("Sorry, cannot edit this hunk\n");
+					next;
+				}
 				my $newhunk = edit_hunk_loop($head, \@hunk, $ix);
 				if (defined $newhunk) {
 					splice @hunk, $ix, 1, $newhunk;
