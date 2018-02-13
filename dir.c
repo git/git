@@ -747,8 +747,8 @@ static struct untracked_cache_dir *lookup_untracked(struct untracked_cache *uc,
 	FLEX_ALLOC_MEM(d, name, name, len);
 
 	ALLOC_GROW(dir->dirs, dir->dirs_nr + 1, dir->dirs_alloc);
-	memmove(dir->dirs + first + 1, dir->dirs + first,
-		(dir->dirs_nr - first) * sizeof(*dir->dirs));
+	MOVE_ARRAY(dir->dirs + first + 1, dir->dirs + first,
+		   dir->dirs_nr - first);
 	dir->dirs_nr++;
 	dir->dirs[first] = d;
 	return d;

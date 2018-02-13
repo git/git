@@ -1217,9 +1217,8 @@ int add_index_entry(struct index_state *istate, struct cache_entry *ce, int opti
 	/* Add it in.. */
 	istate->cache_nr++;
 	if (istate->cache_nr > pos + 1)
-		memmove(istate->cache + pos + 1,
-			istate->cache + pos,
-			(istate->cache_nr - pos - 1) * sizeof(ce));
+		MOVE_ARRAY(istate->cache + pos + 1, istate->cache + pos,
+			   istate->cache_nr - pos - 1);
 	set_index_entry(istate, pos, ce);
 	istate->cache_changed |= CE_ENTRY_ADDED;
 	return 0;
