@@ -1653,13 +1653,23 @@ static int handle_renames(struct merge_options *o,
 	return process_renames(o, ri->head_renames, ri->merge_renames);
 }
 
+static void cleanup_rename(struct string_list *rename)
+{
+	const struct rename *re;
+	int i;
+
+	for (i = 0; i < rename->nr; i++) {
+		re = rename->items[i].util;
+		diff_free_filepair(re->pair);
+	}
+	string_list_clear(rename, 1);
+	free(rename);
+}
+
 static void cleanup_renames(struct rename_info *re_info)
 {
-	string_list_clear(re_info->head_renames, 0);
-	string_list_clear(re_info->merge_renames, 0);
-
-	free(re_info->head_renames);
-	free(re_info->merge_renames);
+	cleanup_rename(re_info->head_renames);
+	cleanup_rename(re_info->merge_renames);
 }
 
 static struct object_id *stage_oid(const struct object_id *oid, unsigned mode)
