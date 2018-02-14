@@ -2301,7 +2301,7 @@ static void update_pre_post_images(struct image *preimage,
 				   size_t len, size_t postlen)
 {
 	int i, ctx, reduced;
-	char *new, *old, *fixed;
+	char *new_buf, *old_buf, *fixed;
 	struct image fixed_preimage;
 
 	/*
@@ -2327,25 +2327,25 @@ static void update_pre_post_images(struct image *preimage,
 	 * We trust the caller to tell us if the update can be done
 	 * in place (postlen==0) or not.
 	 */
-	old = postimage->buf;
+	old_buf = postimage->buf;
 	if (postlen)
-		new = postimage->buf = xmalloc(postlen);
+		new_buf = postimage->buf = xmalloc(postlen);
 	else
-		new = old;
+		new_buf = old_buf;
 	fixed = preimage->buf;
 
 	for (i = reduced = ctx = 0; i < postimage->nr; i++) {
 		size_t l_len = postimage->line[i].len;
 		if (!(postimage->line[i].flag & LINE_COMMON)) {
 			/* an added line -- no counterparts in preimage */
-			memmove(new, old, l_len);
-			old += l_len;
-			new += l_len;
+			memmove(new_buf, old_buf, l_len);
+			old_buf += l_len;
+			new_buf += l_len;
 			continue;
 		}
 
 		/* a common context -- skip it in the original postimage */
-		old += l_len;
+		old_buf += l_len;
 
 		/* and find the corresponding one in the fixed preimage */
 		while (ctx < preimage->nr &&
@@ -2365,21 +2365,21 @@ static void update_pre_post_images(struct image *preimage,
 
 		/* and copy it in, while fixing the line length */
 		l_len = preimage->line[ctx].len;
-		memcpy(new, fixed, l_len);
-		new += l_len;
+		memcpy(new_buf, fixed, l_len);
+		new_buf += l_len;
 		fixed += l_len;
 		postimage->line[i].len = l_len;
 		ctx++;
 	}
 
 	if (postlen
-	    ? postlen < new - postimage->buf
-	    : postimage->len < new - postimage->buf)
+	    ? postlen < new_buf - postimage->buf
+	    : postimage->len < new_buf - postimage->buf)
 		die("BUG: caller miscounted postlen: asked %d, orig = %d, used = %d",
-		    (int)postlen, (int) postimage->len, (int)(new - postimage->buf));
+		    (int)postlen, (int) postimage->len, (int)(new_buf - postimage->buf));
 
 	/* Fix the length of the whole thing */
-	postimage->len = new - postimage->buf;
+	postimage->len = new_buf - postimage->buf;
 	postimage->nr -= reduced;
 }
 
@@ -4163,30 +4163,30 @@ static void show_mode_change(struct patch *p, int show_name)
 static void show_rename_copy(struct patch *p)
 {
 	const char *renamecopy = p->is_rename ? "rename" : "copy";
-	const char *old, *new;
+	const char *old_name, *new_name;
 
 	/* Find common prefix */
-	old = p->old_name;
-	new = p->new_name;
+	old_name = p->old_name;
+	new_name = p->new_name;
 	while (1) {
 		const char *slash_old, *slash_new;
-		slash_old = strchr(old, '/');
-		slash_new = strchr(new, '/');
+		slash_old = strchr(old_name, '/');
+		slash_new = strchr(new_name, '/');
 		if (!slash_old ||
 		    !slash_new ||
-		    slash_old - old != slash_new - new ||
-		    memcmp(old, new, slash_new - new))
+		    slash_old - old_name != slash_new - new_name ||
+		    memcmp(old_name, new_name, slash_new - new_name))
 			break;
-		old = slash_old + 1;
-		new = slash_new + 1;
+		old_name = slash_old + 1;
+		new_name = slash_new + 1;
 	}
-	/* p->old_name thru old is the common prefix, and old and new
+	/* p->old_name thru old_name is the common prefix, and old_name and new_name
 	 * through the end of names are renames
 	 */
-	if (old != p->old_name)
+	if (old_name != p->old_name)
 		printf(" %s %.*s{%s => %s} (%d%%)\n", renamecopy,
-		       (int)(old - p->old_name), p->old_name,
-		       old, new, p->score);
+		       (int)(old_name - p->old_name), p->old_name,
+		       old_name, new_name, p->score);
 	else
 		printf(" %s %s => %s (%d%%)\n", renamecopy,
 		       p->old_name, p->new_name, p->score);
