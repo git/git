@@ -284,30 +284,30 @@ static int edit_and_replace(const char *object_ref, int force, int raw)
 {
 	char *tmpfile = git_pathdup("REPLACE_EDITOBJ");
 	enum object_type type;
-	struct object_id old, new, prev;
+	struct object_id old_oid, new_oid, prev;
 	struct strbuf ref = STRBUF_INIT;
 
-	if (get_oid(object_ref, &old) < 0)
+	if (get_oid(object_ref, &old_oid) < 0)
 		die("Not a valid object name: '%s'", object_ref);
 
-	type = sha1_object_info(old.hash, NULL);
+	type = sha1_object_info(old_oid.hash, NULL);
 	if (type < 0)
-		die("unable to get object type for %s", oid_to_hex(&old));
+		die("unable to get object type for %s", oid_to_hex(&old_oid));
 
-	check_ref_valid(&old, &prev, &ref, force);
+	check_ref_valid(&old_oid, &prev, &ref, force);
 	strbuf_release(&ref);
 
-	export_object(&old, type, raw, tmpfile);
+	export_object(&old_oid, type, raw, tmpfile);
 	if (launch_editor(tmpfile, NULL, NULL) < 0)
 		die("editing object file failed");
-	import_object(&new, type, raw, tmpfile);
+	import_object(&new_oid, type, raw, tmpfile);
 
 	free(tmpfile);
 
-	if (!oidcmp(&old, &new))
-		return error("new object is the same as the old one: '%s'", oid_to_hex(&old));
+	if (!oidcmp(&old_oid, &new_oid))
+		return error("new object is the same as the old one: '%s'", oid_to_hex(&old_oid));
 
-	return replace_object_oid(object_ref, &old, "replacement", &new, force);
+	return replace_object_oid(object_ref, &old_oid, "replacement", &new_oid, force);
 }
 
 static void replace_parents(struct strbuf *buf, int argc, const char **argv)
@@ -386,16 +386,16 @@ static void check_mergetags(struct commit *commit, int argc, const char **argv)
 
 static int create_graft(int argc, const char **argv, int force)
 {
-	struct object_id old, new;
+	struct object_id old_oid, new_oid;
 	const char *old_ref = argv[0];
 	struct commit *commit;
 	struct strbuf buf = STRBUF_INIT;
 	const char *buffer;
 	unsigned long size;
 
-	if (get_oid(old_ref, &old) < 0)
+	if (get_oid(old_ref, &old_oid) < 0)
 		die(_("Not a valid object name: '%s'"), old_ref);
-	commit = lookup_commit_or_die(&old, old_ref);
+	commit = lookup_commit_or_die(&old_oid, old_ref);
 
 	buffer = get_commit_buffer(commit, &size);
 	strbuf_add(&buf, buffer, size);
@@ -410,15 +410,15 @@ static int create_graft(int argc, const char **argv, int force)
 
 	check_mergetags(commit, argc, argv);
 
-	if (write_sha1_file(buf.buf, buf.len, commit_type, new.hash))
+	if (write_sha1_file(buf.buf, buf.len, commit_type, new_oid.hash))
 		die(_("could not write replacement commit for: '%s'"), old_ref);
 
 	strbuf_release(&buf);
 
-	if (!oidcmp(&old, &new))
-		return error("new commit is the same as the old one: '%s'", oid_to_hex(&old));
+	if (!oidcmp(&old_oid, &new_oid))
+		return error("new commit is the same as the old one: '%s'", oid_to_hex(&old_oid));
 
-	return replace_object_oid(old_ref, &old, "replacement", &new, force);
+	return replace_object_oid(old_ref, &old_oid, "replacement", &new_oid, force);
 }
 
 int cmd_replace(int argc, const char **argv, const char *prefix)
