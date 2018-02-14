@@ -174,12 +174,12 @@ static void print_all(FILE *outfile, struct list_head *head,
 
 static struct trailer_item *trailer_from_arg(struct arg_item *arg_tok)
 {
-	struct trailer_item *new = xcalloc(sizeof(*new), 1);
-	new->token = arg_tok->token;
-	new->value = arg_tok->value;
+	struct trailer_item *new_item = xcalloc(sizeof(*new_item), 1);
+	new_item->token = arg_tok->token;
+	new_item->value = arg_tok->value;
 	arg_tok->token = arg_tok->value = NULL;
 	free_arg_item(arg_tok);
-	return new;
+	return new_item;
 }
 
 static void add_arg_to_input_list(struct trailer_item *on_tok,
@@ -666,30 +666,30 @@ static void parse_trailer(struct strbuf *tok, struct strbuf *val,
 static struct trailer_item *add_trailer_item(struct list_head *head, char *tok,
 					     char *val)
 {
-	struct trailer_item *new = xcalloc(sizeof(*new), 1);
-	new->token = tok;
-	new->value = val;
-	list_add_tail(&new->list, head);
-	return new;
+	struct trailer_item *new_item = xcalloc(sizeof(*new_item), 1);
+	new_item->token = tok;
+	new_item->value = val;
+	list_add_tail(&new_item->list, head);
+	return new_item;
 }
 
 static void add_arg_item(struct list_head *arg_head, char *tok, char *val,
 			 const struct conf_info *conf,
 			 const struct new_trailer_item *new_trailer_item)
 {
-	struct arg_item *new = xcalloc(sizeof(*new), 1);
-	new->token = tok;
-	new->value = val;
-	duplicate_conf(&new->conf, conf);
+	struct arg_item *new_item = xcalloc(sizeof(*new_item), 1);
+	new_item->token = tok;
+	new_item->value = val;
+	duplicate_conf(&new_item->conf, conf);
 	if (new_trailer_item) {
 		if (new_trailer_item->where != WHERE_DEFAULT)
-			new->conf.where = new_trailer_item->where;
+			new_item->conf.where = new_trailer_item->where;
 		if (new_trailer_item->if_exists != EXISTS_DEFAULT)
-			new->conf.if_exists = new_trailer_item->if_exists;
+			new_item->conf.if_exists = new_trailer_item->if_exists;
 		if (new_trailer_item->if_missing != MISSING_DEFAULT)
-			new->conf.if_missing = new_trailer_item->if_missing;
+			new_item->conf.if_missing = new_trailer_item->if_missing;
 	}
-	list_add_tail(&new->list, arg_head);
+	list_add_tail(&new_item->list, arg_head);
 }
 
 static void process_command_line_args(struct list_head *arg_head,
