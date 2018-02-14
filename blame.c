@@ -998,28 +998,29 @@ unsigned blame_entry_score(struct blame_scoreboard *sb, struct blame_entry *e)
 }
 
 /*
- * best_so_far[] and this[] are both a split of an existing blame_entry
- * that passes blame to the parent.  Maintain best_so_far the best split
- * so far, by comparing this and best_so_far and copying this into
+ * best_so_far[] and potential[] are both a split of an existing blame_entry
+ * that passes blame to the parent.  Maintain best_so_far the best split so
+ * far, by comparing potential and best_so_far and copying potential into
  * bst_so_far as needed.
  */
 static void copy_split_if_better(struct blame_scoreboard *sb,
 				 struct blame_entry *best_so_far,
-				 struct blame_entry *this)
+				 struct blame_entry *potential)
 {
 	int i;
 
-	if (!this[1].suspect)
+	if (!potential[1].suspect)
 		return;
 	if (best_so_far[1].suspect) {
-		if (blame_entry_score(sb, &this[1]) < blame_entry_score(sb, &best_so_far[1]))
+		if (blame_entry_score(sb, &potential[1]) <
+		    blame_entry_score(sb, &best_so_far[1]))
 			return;
 	}
 
 	for (i = 0; i < 3; i++)
-		blame_origin_incref(this[i].suspect);
+		blame_origin_incref(potential[i].suspect);
 	decref_split(best_so_far);
-	memcpy(best_so_far, this, sizeof(struct blame_entry [3]));
+	memcpy(best_so_far, potential, sizeof(struct blame_entry[3]));
 }
 
 /*
@@ -1046,12 +1047,12 @@ static void handle_split(struct blame_scoreboard *sb,
 	if (ent->num_lines <= tlno)
 		return;
 	if (tlno < same) {
-		struct blame_entry this[3];
+		struct blame_entry potential[3];
 		tlno += ent->s_lno;
 		same += ent->s_lno;
-		split_overlap(this, ent, tlno, plno, same, parent);
-		copy_split_if_better(sb, split, this);
-		decref_split(this);
+		split_overlap(potential, ent, tlno, plno, same, parent);
+		copy_split_if_better(sb, split, potential);
+		decref_split(potential);
 	}
 }
 
@@ -1273,7 +1274,7 @@ static void find_copy_in_parent(struct blame_scoreboard *sb,
 			struct diff_filepair *p = diff_queued_diff.queue[i];
 			struct blame_origin *norigin;
 			mmfile_t file_p;
-			struct blame_entry this[3];
+			struct blame_entry potential[3];
 
 			if (!DIFF_FILE_VALID(p->one))
 				continue; /* does not exist in parent */
@@ -1292,10 +1293,10 @@ static void find_copy_in_parent(struct blame_scoreboard *sb,
 
 			for (j = 0; j < num_ents; j++) {
 				find_copy_in_blob(sb, blame_list[j].ent,
-						  norigin, this, &file_p);
+						  norigin, potential, &file_p);
 				copy_split_if_better(sb, blame_list[j].split,
-						     this);
-				decref_split(this);
+						     potential);
+				decref_split(potential);
 			}
 			blame_origin_decref(norigin);
 		}
