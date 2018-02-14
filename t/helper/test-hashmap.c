@@ -30,7 +30,8 @@ static int test_entry_cmp(const void *cmp_data,
 		return strcmp(e1->key, key ? key : e2->key);
 }
 
-static struct test_entry *alloc_test_entry(int hash, char *key, char *value)
+static struct test_entry *alloc_test_entry(unsigned int hash,
+					   char *key, char *value)
 {
 	size_t klen = strlen(key);
 	size_t vlen = strlen(value);
@@ -156,7 +157,7 @@ int cmd_main(int argc, const char **argv)
 	/* process commands from stdin */
 	while (strbuf_getline(&line, stdin) != EOF) {
 		char *cmd, *p1 = NULL, *p2 = NULL;
-		int hash = 0;
+		unsigned int hash = 0;
 		struct test_entry *entry;
 
 		/* break line into command and up to two parameters */
