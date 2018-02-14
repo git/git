@@ -35,7 +35,8 @@ set to `no` at the beginning of them.
 --no-ff::
 	Create a merge commit even when the merge resolves as a
 	fast-forward.  This is the default behaviour when merging an
-	annotated (and possibly signed) tag.
+	annotated (and possibly signed) tag that is not stored in
+	its natural place in 'refs/tags/' hierarchy.
 
 --ff-only::
 	Refuse to merge and exit with a non-zero status unless the
