@@ -194,11 +194,11 @@ static void do_add_man_viewer_info(const char *name,
 				   size_t len,
 				   const char *value)
 {
-	struct man_viewer_info_list *new;
-	FLEX_ALLOC_MEM(new, name, name, len);
-	new->info = xstrdup(value);
-	new->next = man_viewer_info_list;
-	man_viewer_info_list = new;
+	struct man_viewer_info_list *new_man_viewer;
+	FLEX_ALLOC_MEM(new_man_viewer, name, name, len);
+	new_man_viewer->info = xstrdup(value);
+	new_man_viewer->next = man_viewer_info_list;
+	man_viewer_info_list = new_man_viewer;
 }
 
 static int add_man_viewer_path(const char *name,
