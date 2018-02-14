@@ -1000,7 +1000,7 @@ static struct tempfile *trailers_tempfile;
 static FILE *create_in_place_tempfile(const char *file)
 {
 	struct stat st;
-	struct strbuf template = STRBUF_INIT;
+	struct strbuf filename_template = STRBUF_INIT;
 	const char *tail;
 	FILE *outfile;
 
@@ -1014,11 +1014,11 @@ static FILE *create_in_place_tempfile(const char *file)
 	/* Create temporary file in the same directory as the original */
 	tail = strrchr(file, '/');
 	if (tail != NULL)
-		strbuf_add(&template, file, tail - file + 1);
-	strbuf_addstr(&template, "git-interpret-trailers-XXXXXX");
+		strbuf_add(&filename_template, file, tail - file + 1);
+	strbuf_addstr(&filename_template, "git-interpret-trailers-XXXXXX");
 
-	trailers_tempfile = xmks_tempfile_m(template.buf, st.st_mode);
-	strbuf_release(&template);
+	trailers_tempfile = xmks_tempfile_m(filename_template.buf, st.st_mode);
+	strbuf_release(&filename_template);
 	outfile = fdopen_tempfile(trailers_tempfile, "w");
 	if (!outfile)
 		die_errno(_("could not open temporary file"));
