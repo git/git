@@ -162,7 +162,7 @@ enum coalesce_direction { MATCH, BASE, NEW };
 
 /* Coalesce new lines into base by finding LCS */
 static struct lline *coalesce_lines(struct lline *base, int *lenbase,
-				    struct lline *new, int lennew,
+				    struct lline *newline, int lennew,
 				    unsigned long parent, long flags)
 {
 	int **lcs;
@@ -170,12 +170,12 @@ static struct lline *coalesce_lines(struct lline *base, int *lenbase,
 	struct lline *baseend, *newend = NULL;
 	int i, j, origbaselen = *lenbase;
 
-	if (new == NULL)
+	if (newline == NULL)
 		return base;
 
 	if (base == NULL) {
 		*lenbase = lennew;
-		return new;
+		return newline;
 	}
 
 	/*
@@ -200,7 +200,7 @@ static struct lline *coalesce_lines(struct lline *base, int *lenbase,
 		directions[0][j] = NEW;
 
 	for (i = 1, baseend = base; i < origbaselen + 1; i++) {
-		for (j = 1, newend = new; j < lennew + 1; j++) {
+		for (j = 1, newend = newline; j < lennew + 1; j++) {
 			if (match_string_spaces(baseend->line, baseend->len,
 						newend->line, newend->len, flags)) {
 				lcs[i][j] = lcs[i - 1][j - 1] + 1;
@@ -241,7 +241,7 @@ static struct lline *coalesce_lines(struct lline *base, int *lenbase,
 			if (lline->prev)
 				lline->prev->next = lline->next;
 			else
-				new = lline->next;
+				newline = lline->next;
 			if (lline->next)
 				lline->next->prev = lline->prev;
 
@@ -270,7 +270,7 @@ static struct lline *coalesce_lines(struct lline *base, int *lenbase,
 		}
 	}
 
-	newend = new;
+	newend = newline;
 	while (newend) {
 		struct lline *lline = newend;
 		newend = newend->next;
