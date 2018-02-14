@@ -1486,8 +1486,8 @@ static int verify_uptodate_1(const struct cache_entry *ce,
 		add_rejected_path(o, error_type, ce->name);
 }
 
-static int verify_uptodate(const struct cache_entry *ce,
-			   struct unpack_trees_options *o)
+int verify_uptodate(const struct cache_entry *ce,
+		    struct unpack_trees_options *o)
 {
 	if (!o->skip_sparse_checkout && (ce->ce_flags & CE_NEW_SKIP_WORKTREE))
 		return 0;
