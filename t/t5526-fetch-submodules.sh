@@ -485,7 +485,7 @@ test_expect_success "don't fetch submodule when newly recorded commits are alrea
 	)
 '
 
-test_expect_success "'fetch.recurseSubmodules=on-demand' works also without .gitmodule entry" '
+test_expect_success "'fetch.recurseSubmodules=on-demand' works also without .gitmodules entry" '
 	(
 		cd downstream &&
 		git fetch --recurse-submodules
