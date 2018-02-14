@@ -1,5 +1,6 @@
 #include "git-compat-util.h"
 #include "hashmap.h"
+#include "strbuf.h"
 
 struct test_entry
 {
@@ -143,7 +144,7 @@ static void perf_hashmap(unsigned int method, unsigned int rounds)
  */
 int cmd_main(int argc, const char **argv)
 {
-	char line[1024];
+	struct strbuf line = STRBUF_INIT;
 	struct hashmap map;
 	int icase;
 
@@ -152,13 +153,13 @@ int cmd_main(int argc, const char **argv)
 	hashmap_init(&map, test_entry_cmp, &icase, 0);
 
 	/* process commands from stdin */
-	while (fgets(line, sizeof(line), stdin)) {
+	while (strbuf_getline(&line, stdin) != EOF) {
 		char *cmd, *p1 = NULL, *p2 = NULL;
 		int l1 = 0, l2 = 0, hash = 0;
 		struct test_entry *entry;
 
 		/* break line into command and up to two parameters */
-		cmd = strtok(line, DELIM);
+		cmd = strtok(line.buf, DELIM);
 		/* ignore empty lines */
 		if (!cmd || *cmd == '#')
 			continue;
@@ -262,6 +263,7 @@ int cmd_main(int argc, const char **argv)
 		}
 	}
 
+	strbuf_release(&line);
 	hashmap_free(&map, 1);
 	return 0;
 }
