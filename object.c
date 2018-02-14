@@ -26,7 +26,7 @@ static const char *object_type_strings[] = {
 	"tag",		/* OBJ_TAG = 4 */
 };
 
-const char *typename(unsigned int type)
+const char *type_name(unsigned int type)
 {
 	if (type >= ARRAY_SIZE(object_type_strings))
 		return NULL;
@@ -166,7 +166,7 @@ void *object_as_type(struct object *obj, enum object_type type, int quiet)
 		if (!quiet)
 			error("object %s is a %s, not a %s",
 			      oid_to_hex(&obj->oid),
-			      typename(obj->type), typename(type));
+			      type_name(obj->type), type_name(type));
 		return NULL;
 	}
 }
@@ -265,7 +265,7 @@ struct object *parse_object(const struct object_id *oid)
 
 	buffer = read_sha1_file(oid->hash, &type, &size);
 	if (buffer) {
-		if (check_sha1_signature(repl, buffer, size, typename(type)) < 0) {
+		if (check_sha1_signature(repl, buffer, size, type_name(type)) < 0) {
 			free(buffer);
 			error("sha1 mismatch %s", sha1_to_hex(repl));
 			return NULL;

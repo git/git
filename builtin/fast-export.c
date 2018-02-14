@@ -240,7 +240,7 @@ static void export_blob(const struct object_id *oid)
 		buf = read_sha1_file(oid->hash, &type, &size);
 		if (!buf)
 			die ("Could not read blob %s", oid_to_hex(oid));
-		if (check_sha1_signature(oid->hash, buf, size, typename(type)) < 0)
+		if (check_sha1_signature(oid->hash, buf, size, type_name(type)) < 0)
 			die("sha1 mismatch in blob %s", oid_to_hex(oid));
 		object = parse_object_buffer(oid, type, size, buf, &eaten);
 	}
@@ -757,7 +757,7 @@ static void handle_tag(const char *name, struct tag *tag)
 			if (tagged->type != OBJ_COMMIT) {
 				die ("Tag %s tags unexported %s!",
 				     oid_to_hex(&tag->object.oid),
-				     typename(tagged->type));
+				     type_name(tagged->type));
 			}
 			p = (struct commit *)tagged;
 			for (;;) {
@@ -839,7 +839,7 @@ static void get_tags_and_duplicates(struct rev_cmdline_info *info)
 		if (!commit) {
 			warning("%s: Unexpected object of type %s, skipping.",
 				e->name,
-				typename(e->item->type));
+				type_name(e->item->type));
 			continue;
 		}
 
@@ -851,7 +851,7 @@ static void get_tags_and_duplicates(struct rev_cmdline_info *info)
 			continue;
 		default: /* OBJ_TAG (nested tags) is already handled */
 			warning("Tag points to object of unexpected type %s, skipping.",
-				typename(commit->object.type));
+				type_name(commit->object.type));
 			continue;
 		}
 

@@ -520,7 +520,7 @@ static void merge_name(const char *remote, struct strbuf *msg)
 		if (desc && desc->obj && desc->obj->type == OBJ_TAG) {
 			strbuf_addf(msg, "%s\t\t%s '%s'\n",
 				    oid_to_hex(&desc->obj->oid),
-				    typename(desc->obj->type),
+				    type_name(desc->obj->type),
 				    remote);
 			goto cleanup;
 		}

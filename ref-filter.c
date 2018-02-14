@@ -769,7 +769,7 @@ static void grab_common_values(struct atom_value *val, int deref, struct object 
 		if (deref)
 			name++;
 		if (!strcmp(name, "objecttype"))
-			v->s = typename(obj->type);
+			v->s = type_name(obj->type);
 		else if (!strcmp(name, "objectsize")) {
 			v->value = sz;
 			v->s = xstrfmt("%lu", sz);
@@ -795,7 +795,7 @@ static void grab_tag_values(struct atom_value *val, int deref, struct object *ob
 		if (!strcmp(name, "tag"))
 			v->s = tag->tag;
 		else if (!strcmp(name, "type") && tag->tagged)
-			v->s = typename(tag->tagged->type);
+			v->s = type_name(tag->tagged->type);
 		else if (!strcmp(name, "object") && tag->tagged)
 			v->s = xstrdup(oid_to_hex(&tag->tagged->oid));
 	}

@@ -1357,7 +1357,7 @@ int packed_object_info(struct packed_git *p, off_t obj_offset,
 		if (oi->typep)
 			*oi->typep = ptot;
 		if (oi->type_name) {
-			const char *tn = typename(ptot);
+			const char *tn = type_name(ptot);
 			if (tn)
 				strbuf_addstr(oi->type_name, tn);
 		}

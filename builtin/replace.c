@@ -56,8 +56,8 @@ static int show_reference(const char *refname, const struct object_id *oid,
 			obj_type = sha1_object_info(object.hash, NULL);
 			repl_type = sha1_object_info(oid->hash, NULL);
 
-			printf("%s (%s) -> %s (%s)\n", refname, typename(obj_type),
-			       oid_to_hex(oid), typename(repl_type));
+			printf("%s (%s) -> %s (%s)\n", refname, type_name(obj_type),
+			       oid_to_hex(oid), type_name(repl_type));
 		}
 	}
 
@@ -168,8 +168,8 @@ static int replace_object_oid(const char *object_ref,
 		die("Objects must be of the same type.\n"
 		    "'%s' points to a replaced object of type '%s'\n"
 		    "while '%s' points to a replacement object of type '%s'.",
-		    object_ref, typename(obj_type),
-		    replace_ref, typename(repl_type));
+		    object_ref, type_name(obj_type),
+		    replace_ref, type_name(repl_type));
 
 	check_ref_valid(object, &prev, &ref, force);
 
@@ -215,7 +215,7 @@ static void export_object(const struct object_id *oid, enum object_type type,
 	argv_array_push(&cmd.args, "--no-replace-objects");
 	argv_array_push(&cmd.args, "cat-file");
 	if (raw)
-		argv_array_push(&cmd.args, typename(type));
+		argv_array_push(&cmd.args, type_name(type));
 	else
 		argv_array_push(&cmd.args, "-p");
 	argv_array_push(&cmd.args, oid_to_hex(oid));
@@ -355,7 +355,7 @@ static void check_one_mergetag(struct commit *commit,
 	struct tag *tag;
 	int i;
 
-	hash_sha1_file(extra->value, extra->len, typename(OBJ_TAG), tag_oid.hash);
+	hash_sha1_file(extra->value, extra->len, type_name(OBJ_TAG), tag_oid.hash);
 	tag = lookup_tag(&tag_oid);
 	if (!tag)
 		die(_("bad mergetag in commit '%s'"), ref);

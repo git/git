@@ -1096,7 +1096,7 @@ static int store_object(
 	git_zstream s;
 
 	hdrlen = xsnprintf((char *)hdr, sizeof(hdr), "%s %lu",
-			   typename(type), (unsigned long)dat->len) + 1;
+			   type_name(type), (unsigned long)dat->len) + 1;
 	git_SHA1_Init(&c);
 	git_SHA1_Update(&c, hdr, hdrlen);
 	git_SHA1_Update(&c, dat->buf, dat->len);
@@ -2421,7 +2421,7 @@ static void file_change_m(const char *p, struct branch *b)
 		else if (oe) {
 			if (oe->type != OBJ_COMMIT)
 				die("Not a commit (actually a %s): %s",
-					typename(oe->type), command_buf.buf);
+					type_name(oe->type), command_buf.buf);
 		}
 		/*
 		 * Accept the sha1 without checking; it expected to be in
@@ -2448,7 +2448,7 @@ static void file_change_m(const char *p, struct branch *b)
 					command_buf.buf);
 		if (type != expected)
 			die("Not a %s (actually a %s): %s",
-				typename(expected), typename(type),
+				type_name(expected), type_name(type),
 				command_buf.buf);
 	}
 
@@ -2599,14 +2599,14 @@ static void note_change_n(const char *p, struct branch *b, unsigned char *old_fa
 	} else if (oe) {
 		if (oe->type != OBJ_BLOB)
 			die("Not a blob (actually a %s): %s",
-				typename(oe->type), command_buf.buf);
+				type_name(oe->type), command_buf.buf);
 	} else if (!is_null_oid(&oid)) {
 		enum object_type type = sha1_object_info(oid.hash, NULL);
 		if (type < 0)
 			die("Blob not found: %s", command_buf.buf);
 		if (type != OBJ_BLOB)
 			die("Not a blob (actually a %s): %s",
-			    typename(type), command_buf.buf);
+			    type_name(type), command_buf.buf);
 	}
 
 	construct_path_with_fanout(oid_to_hex(&commit_oid), *old_fanout, path);
@@ -2914,7 +2914,7 @@ static void parse_new_tag(const char *arg)
 		    "object %s\n"
 		    "type %s\n"
 		    "tag %s\n",
-		    oid_to_hex(&oid), typename(type), t->name);
+		    oid_to_hex(&oid), type_name(type), t->name);
 	if (tagger)
 		strbuf_addf(&new_data,
 			    "tagger %s\n", tagger);
@@ -2985,10 +2985,10 @@ static void cat_blob(struct object_entry *oe, struct object_id *oid)
 		die("Can't read object %s", oid_to_hex(oid));
 	if (type != OBJ_BLOB)
 		die("Object %s is a %s but a blob was expected.",
-		    oid_to_hex(oid), typename(type));
+		    oid_to_hex(oid), type_name(type));
 	strbuf_reset(&line);
 	strbuf_addf(&line, "%s %s %lu\n", oid_to_hex(oid),
-						typename(type), size);
+						type_name(type), size);
 	cat_blob_write(line.buf, line.len);
 	strbuf_release(&line);
 	cat_blob_write(buf, size);

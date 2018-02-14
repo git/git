@@ -228,7 +228,7 @@ static unsigned check_object(struct object *obj)
 		if (type != obj->type)
 			die(_("object %s: expected type %s, found %s"),
 			    oid_to_hex(&obj->oid),
-			    typename(obj->type), typename(type));
+			    type_name(obj->type), type_name(type));
 		obj->flags |= FLAG_CHECKED;
 		return 1;
 	}
@@ -448,7 +448,7 @@ static void *unpack_entry_data(off_t offset, unsigned long size,
 	int hdrlen;
 
 	if (!is_delta_type(type)) {
-		hdrlen = xsnprintf(hdr, sizeof(hdr), "%s %lu", typename(type), size) + 1;
+		hdrlen = xsnprintf(hdr, sizeof(hdr), "%s %lu", type_name(type), size) + 1;
 		git_SHA1_Init(&c);
 		git_SHA1_Update(&c, hdr, hdrlen);
 	} else
@@ -849,7 +849,7 @@ static void sha1_object(const void *data, struct object_entry *obj_entry,
 			obj = parse_object_buffer(oid, type, size, buf,
 						  &eaten);
 			if (!obj)
-				die(_("invalid %s"), typename(type));
+				die(_("invalid %s"), type_name(type));
 			if (do_fsck_object &&
 			    fsck_object(obj, buf, size, &fsck_options))
 				die(_("Error in object"));
@@ -959,7 +959,7 @@ static void resolve_delta(struct object_entry *delta_obj,
 	if (!result->data)
 		bad_object(delta_obj->idx.offset, _("failed to apply delta"));
 	hash_sha1_file(result->data, result->size,
-		       typename(delta_obj->real_type),
+		       type_name(delta_obj->real_type),
 		       delta_obj->idx.oid.hash);
 	sha1_object(result->data, NULL, result->size, delta_obj->real_type,
 		    &delta_obj->idx.oid);
@@ -1379,7 +1379,7 @@ static void fix_unresolved_deltas(struct sha1file *f)
 			continue;
 
 		if (check_sha1_signature(d->sha1, base_obj->data,
-				base_obj->size, typename(type)))
+				base_obj->size, type_name(type)))
 			die(_("local object %s is corrupt"), sha1_to_hex(d->sha1));
 		base_obj->obj = append_obj_to_pack(f, d->sha1,
 					base_obj->data, base_obj->size, type);
@@ -1588,7 +1588,7 @@ static void show_pack_info(int stat_only)
 			continue;
 		printf("%s %-6s %lu %lu %"PRIuMAX,
 		       oid_to_hex(&obj->idx.oid),
-		       typename(obj->real_type), obj->size,
+		       type_name(obj->real_type), obj->size,
 		       (unsigned long)(obj[1].idx.offset - obj->idx.offset),
 		       (uintmax_t)obj->idx.offset);
 		if (is_delta_type(obj->type)) {

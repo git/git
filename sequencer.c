@@ -2348,7 +2348,7 @@ int sequencer_pick_revisions(struct replay_opts *opts)
 			if (!lookup_commit_reference_gently(&oid, 1)) {
 				enum object_type type = sha1_object_info(oid.hash, NULL);
 				return error(_("%s: can't cherry-pick a %s"),
-					name, typename(type));
+					name, type_name(type));
 			}
 		} else
 			return error(_("%s: bad revision"), name);
