@@ -861,19 +861,19 @@ struct commit_list *get_octopus_merge_bases(struct commit_list *in)
 	commit_list_insert(in->item, &ret);
 
 	for (i = in->next; i; i = i->next) {
-		struct commit_list *new = NULL, *end = NULL;
+		struct commit_list *new_commits = NULL, *end = NULL;
 
 		for (j = ret; j; j = j->next) {
 			struct commit_list *bases;
 			bases = get_merge_bases(i->item, j->item);
-			if (!new)
-				new = bases;
+			if (!new_commits)
+				new_commits = bases;
 			else
 				end->next = bases;
 			for (k = bases; k; k = k->next)
 				end = k;
 		}
-		ret = new;
+		ret = new_commits;
 	}
 	return ret;
 }
@@ -1617,11 +1617,11 @@ struct commit *get_merge_parent(const char *name)
 struct commit_list **commit_list_append(struct commit *commit,
 					struct commit_list **next)
 {
-	struct commit_list *new = xmalloc(sizeof(struct commit_list));
-	new->item = commit;
-	*next = new;
-	new->next = NULL;
-	return &new->next;
+	struct commit_list *new_commit = xmalloc(sizeof(struct commit_list));
+	new_commit->item = commit;
+	*next = new_commit;
+	new_commit->next = NULL;
+	return &new_commit->next;
 }
 
 const char *find_commit_header(const char *msg, const char *key, size_t *out_len)
