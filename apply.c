@@ -2386,8 +2386,8 @@ static void update_pre_post_images(struct image *preimage,
 static int line_by_line_fuzzy_match(struct image *img,
 				    struct image *preimage,
 				    struct image *postimage,
-				    unsigned long try,
-				    int try_lno,
+				    unsigned long current,
+				    int current_lno,
 				    int preimage_limit)
 {
 	int i;
@@ -2404,9 +2404,9 @@ static int line_by_line_fuzzy_match(struct image *img,
 
 	for (i = 0; i < preimage_limit; i++) {
 		size_t prelen = preimage->line[i].len;
-		size_t imglen = img->line[try_lno+i].len;
+		size_t imglen = img->line[current_lno+i].len;
 
-		if (!fuzzy_matchlines(img->buf + try + imgoff, imglen,
+		if (!fuzzy_matchlines(img->buf + current + imgoff, imglen,
 				      preimage->buf + preoff, prelen))
 			return 0;
 		if (preimage->line[i].flag & LINE_COMMON)
@@ -2443,7 +2443,7 @@ static int line_by_line_fuzzy_match(struct image *img,
 	 */
 	extra_chars = preimage_end - preimage_eof;
 	strbuf_init(&fixed, imgoff + extra_chars);
-	strbuf_add(&fixed, img->buf + try, imgoff);
+	strbuf_add(&fixed, img->buf + current, imgoff);
 	strbuf_add(&fixed, preimage_eof, extra_chars);
 	fixed_buf = strbuf_detach(&fixed, &fixed_len);
 	update_pre_post_images(preimage, postimage,
@@ -2455,8 +2455,8 @@ static int match_fragment(struct apply_state *state,
 			  struct image *img,
 			  struct image *preimage,
 			  struct image *postimage,
-			  unsigned long try,
-			  int try_lno,
+			  unsigned long current,
+			  int current_lno,
 			  unsigned ws_rule,
 			  int match_beginning, int match_end)
 {
@@ -2466,12 +2466,12 @@ static int match_fragment(struct apply_state *state,
 	size_t fixed_len, postlen;
 	int preimage_limit;
 
-	if (preimage->nr + try_lno <= img->nr) {
+	if (preimage->nr + current_lno <= img->nr) {
 		/*
 		 * The hunk falls within the boundaries of img.
 		 */
 		preimage_limit = preimage->nr;
-		if (match_end && (preimage->nr + try_lno != img->nr))
+		if (match_end && (preimage->nr + current_lno != img->nr))
 			return 0;
 	} else if (state->ws_error_action == correct_ws_error &&
 		   (ws_rule & WS_BLANK_AT_EOF)) {
@@ -2482,7 +2482,7 @@ static int match_fragment(struct apply_state *state,
 		 * match with img, and the remainder of the preimage
 		 * must be blank.
 		 */
-		preimage_limit = img->nr - try_lno;
+		preimage_limit = img->nr - current_lno;
 	} else {
 		/*
 		 * The hunk extends beyond the end of the img and
@@ -2492,27 +2492,27 @@ static int match_fragment(struct apply_state *state,
 		return 0;
 	}
 
-	if (match_beginning && try_lno)
+	if (match_beginning && current_lno)
 		return 0;
 
 	/* Quick hash check */
 	for (i = 0; i < preimage_limit; i++)
-		if ((img->line[try_lno + i].flag & LINE_PATCHED) ||
-		    (preimage->line[i].hash != img->line[try_lno + i].hash))
+		if ((img->line[current_lno + i].flag & LINE_PATCHED) ||
+		    (preimage->line[i].hash != img->line[current_lno + i].hash))
 			return 0;
 
 	if (preimage_limit == preimage->nr) {
 		/*
 		 * Do we have an exact match?  If we were told to match
-		 * at the end, size must be exactly at try+fragsize,
-		 * otherwise try+fragsize must be still within the preimage,
+		 * at the end, size must be exactly at current+fragsize,
+		 * otherwise current+fragsize must be still within the preimage,
 		 * and either case, the old piece should match the preimage
 		 * exactly.
 		 */
 		if ((match_end
-		     ? (try + preimage->len == img->len)
-		     : (try + preimage->len <= img->len)) &&
-		    !memcmp(img->buf + try, preimage->buf, preimage->len))
+		     ? (current + preimage->len == img->len)
+		     : (current + preimage->len <= img->len)) &&
+		    !memcmp(img->buf + current, preimage->buf, preimage->len))
 			return 1;
 	} else {
 		/*
@@ -2543,7 +2543,7 @@ static int match_fragment(struct apply_state *state,
 	 */
 	if (state->ws_ignore_action == ignore_ws_change)
 		return line_by_line_fuzzy_match(img, preimage, postimage,
-						try, try_lno, preimage_limit);
+						current, current_lno, preimage_limit);
 
 	if (state->ws_error_action != correct_ws_error)
 		return 0;
@@ -2577,10 +2577,10 @@ static int match_fragment(struct apply_state *state,
 	 */
 	strbuf_init(&fixed, preimage->len + 1);
 	orig = preimage->buf;
-	target = img->buf + try;
+	target = img->buf + current;
 	for (i = 0; i < preimage_limit; i++) {
 		size_t oldlen = preimage->line[i].len;
-		size_t tgtlen = img->line[try_lno + i].len;
+		size_t tgtlen = img->line[current_lno + i].len;
 		size_t fixstart = fixed.len;
 		struct strbuf tgtfix;
 		int match;
@@ -2666,8 +2666,8 @@ static int find_pos(struct apply_state *state,
 		    int match_beginning, int match_end)
 {
 	int i;
-	unsigned long backwards, forwards, try;
-	int backwards_lno, forwards_lno, try_lno;
+	unsigned long backwards, forwards, current;
+	int backwards_lno, forwards_lno, current_lno;
 
 	/*
 	 * If match_beginning or match_end is specified, there is no
@@ -2687,25 +2687,25 @@ static int find_pos(struct apply_state *state,
 	if ((size_t) line > img->nr)
 		line = img->nr;
 
-	try = 0;
+	current = 0;
 	for (i = 0; i < line; i++)
-		try += img->line[i].len;
+		current += img->line[i].len;
 
 	/*
 	 * There's probably some smart way to do this, but I'll leave
 	 * that to the smart and beautiful people. I'm simple and stupid.
 	 */
-	backwards = try;
+	backwards = current;
 	backwards_lno = line;
-	forwards = try;
+	forwards = current;
 	forwards_lno = line;
-	try_lno = line;
+	current_lno = line;
 
 	for (i = 0; ; i++) {
 		if (match_fragment(state, img, preimage, postimage,
-				   try, try_lno, ws_rule,
+				   current, current_lno, ws_rule,
 				   match_beginning, match_end))
-			return try_lno;
+			return current_lno;
 
 	again:
 		if (backwards_lno == 0 && forwards_lno == img->nr)
@@ -2718,8 +2718,8 @@ static int find_pos(struct apply_state *state,
 			}
 			backwards_lno--;
 			backwards -= img->line[backwards_lno].len;
-			try = backwards;
-			try_lno = backwards_lno;
+			current = backwards;
+			current_lno = backwards_lno;
 		} else {
 			if (forwards_lno == img->nr) {
 				i++;
@@ -2727,8 +2727,8 @@ static int find_pos(struct apply_state *state,
 			}
 			forwards += img->line[forwards_lno].len;
 			forwards_lno++;
-			try = forwards;
-			try_lno = forwards_lno;
+			current = forwards;
+			current_lno = forwards_lno;
 		}
 
 	}
