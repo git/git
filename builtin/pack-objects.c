@@ -1376,10 +1376,10 @@ static void cleanup_preferred_base(void)
 	it = pbase_tree;
 	pbase_tree = NULL;
 	while (it) {
-		struct pbase_tree *this = it;
-		it = this->next;
-		free(this->pcache.tree_data);
-		free(this);
+		struct pbase_tree *tmp = it;
+		it = tmp->next;
+		free(tmp->pcache.tree_data);
+		free(tmp);
 	}
 
 	for (i = 0; i < ARRAY_SIZE(pbase_tree_cache); i++) {
