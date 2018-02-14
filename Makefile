@@ -2162,6 +2162,8 @@ gettext.sp gettext.s gettext.o: EXTRA_CPPFLAGS = \
 http-push.sp http.sp http-walker.sp remote-curl.sp imap-send.sp: SPARSE_FLAGS += \
 	-DCURL_DISABLE_TYPECHECK
 
+pack-revindex.sp: SPARSE_FLAGS += -Wno-memcpy-max-count
+
 ifdef NO_EXPAT
 http-walker.sp http-walker.s http-walker.o: EXTRA_CPPFLAGS = -DNO_EXPAT
 endif
