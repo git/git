@@ -2078,18 +2078,23 @@ test_expect_success '8b-check: Dual-directory rename, one into the others way, w
 	)
 '
 
-# Testcase 8c, rename+modify/delete
-#   (Related to testcases 5b and 8d)
+# Testcase 8c, modify/delete or rename+modify/delete?
+#   (Related to testcases 5b, 8d, and 9h)
 #   Commit O: z/{b,c,d}
 #   Commit A: y/{b,c}
 #   Commit B: z/{b,c,d_modified,e}
-#   Expected: y/{b,c,e}, CONFLICT(rename+modify/delete: x/d -> y/d or deleted)
+#   Expected: y/{b,c,e}, CONFLICT(modify/delete: on z/d)
 #
-#   Note: This testcase doesn't present any concerns for me...until you
-#         compare it with testcases 5b and 8d.  See notes in 8d for more
-#         details.
+#   Note: It could easily be argued that the correct resolution here is
+#         y/{b,c,e}, CONFLICT(rename/delete: z/d -> y/d vs deleted)
+#         and that the modifed version of d should be present in y/ after
+#         the merge, just marked as conflicted.  Indeed, I previously did
+#         argue that.  But applying directory renames to the side of
+#         history where a file is merely modified results in spurious
+#         rename/rename(1to2) conflicts -- see testcase 9h.  See also
+#         notes in 8d.
 
-test_expect_success '8c-setup: rename+modify/delete' '
+test_expect_success '8c-setup: modify/delete or rename+modify/delete?' '
 	test_create_repo 8c &&
 	(
 		cd 8c &&
@@ -2122,32 +2127,32 @@ test_expect_success '8c-setup: rename+modify/delete' '
 	)
 '
 
-test_expect_success '8c-check: rename+modify/delete' '
+test_expect_success '8c-check: modify/delete or rename+modify/delete' '
 	(
 		cd 8c &&
 
 		git checkout A^0 &&
 
 		test_must_fail git merge -s recursive B^0 >out &&
-		test_i18ngrep "CONFLICT (rename/delete).* z/d.*y/d" out &&
+		test_i18ngrep "CONFLICT (modify/delete).* z/d" out &&
 
 		git ls-files -s >out &&
-		test_line_count = 4 out &&
+		test_line_count = 5 out &&
 		git ls-files -u >out &&
-		test_line_count = 1 out &&
+		test_line_count = 2 out &&
 		git ls-files -o >out &&
 		test_line_count = 1 out &&
 
 		git rev-parse >actual \
-			:0:y/b :0:y/c :0:y/e :3:y/d &&
+			:0:y/b :0:y/c :0:y/e :1:z/d :3:z/d &&
 		git rev-parse >expect \
-			 O:z/b  O:z/c  B:z/e  B:z/d &&
+			 O:z/b  O:z/c  B:z/e  O:z/d  B:z/d &&
 		test_cmp expect actual &&
 
-		test_must_fail git rev-parse :1:y/d &&
-		test_must_fail git rev-parse :2:y/d &&
-		git ls-files -s y/d | grep ^100755 &&
-		test_path_is_file y/d
+		test_must_fail git rev-parse :2:z/d &&
+		git ls-files -s z/d | grep ^100755 &&
+		test_path_is_file z/d &&
+		test_path_is_missing y/d
 	)
 '
 
@@ -2161,16 +2166,6 @@ test_expect_success '8c-check: rename+modify/delete' '
 #
 #   Note: It would also be somewhat reasonable to resolve this as
 #             y/{b,c,e}, CONFLICT(rename/delete: x/d -> y/d or deleted)
-#   The logic being that the only difference between this testcase and 8c
-#   is that there is no modification to d.  That suggests that instead of a
-#   rename/modify vs. delete conflict, we should just have a rename/delete
-#   conflict, otherwise we are being inconsistent.
-#
-#   However...as far as consistency goes, we didn't report a conflict for
-#   path d_1 in testcase 5b due to a different file being in the way.  So,
-#   we seem to be forced to have cases where users can change things
-#   slightly and get what they may perceive as inconsistent results.  It
-#   would be nice to avoid that, but I'm not sure I see how.
 #
 #   In this case, I'm leaning towards: commit A was the one that deleted z/d
 #   and it did the rename of z to y, so the two "conflicts" (rename vs.
@@ -2915,7 +2910,7 @@ test_expect_success '9h-setup: Avoid dir rename on merely modified path' '
 	)
 '
 
-test_expect_failure '9h-check: Avoid dir rename on merely modified path' '
+test_expect_success '9h-check: Avoid dir rename on merely modified path' '
 	(
 		cd 9h &&
 
@@ -3959,7 +3954,7 @@ test_expect_success '12c-setup: Moving one directory hierarchy into another w/ c
 	)
 '
 
-test_expect_failure '12c-check: Moving one directory hierarchy into another w/ content merge' '
+test_expect_success '12c-check: Moving one directory hierarchy into another w/ content merge' '
 	(
 		cd 12c &&
 
