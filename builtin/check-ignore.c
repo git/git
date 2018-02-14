@@ -72,7 +72,7 @@ static int check_ignore(struct dir_struct *dir,
 {
 	const char *full_path;
 	char *seen;
-	int num_ignored = 0, dtype = DT_UNKNOWN, i;
+	int num_ignored = 0, i;
 	struct exclude *exclude;
 	struct pathspec pathspec;
 
@@ -104,6 +104,7 @@ static int check_ignore(struct dir_struct *dir,
 		full_path = pathspec.items[i].match;
 		exclude = NULL;
 		if (!seen[i]) {
+			int dtype = DT_UNKNOWN;
 			exclude = last_exclude_matching(dir, &the_index,
 							full_path, &dtype);
 		}
