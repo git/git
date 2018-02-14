@@ -1673,7 +1673,7 @@ struct pack_entry {
  * usual "XXXXXX" trailer, and the resulting filename is written into the
  * "template" buffer. Returns the open descriptor.
  */
-extern int odb_mkstemp(struct strbuf *template, const char *pattern);
+extern int odb_mkstemp(struct strbuf *temp_filename, const char *pattern);
 
 /*
  * Create a pack .keep file named "name" (which should generally be the output

@@ -247,7 +247,7 @@ char *get_object_directory(void)
 	return the_repository->objectdir;
 }
 
-int odb_mkstemp(struct strbuf *template, const char *pattern)
+int odb_mkstemp(struct strbuf *temp_filename, const char *pattern)
 {
 	int fd;
 	/*
@@ -255,16 +255,16 @@ int odb_mkstemp(struct strbuf *template, const char *pattern)
 	 * restrictive except to remove write permission.
 	 */
 	int mode = 0444;
-	git_path_buf(template, "objects/%s", pattern);
-	fd = git_mkstemp_mode(template->buf, mode);
+	git_path_buf(temp_filename, "objects/%s", pattern);
+	fd = git_mkstemp_mode(temp_filename->buf, mode);
 	if (0 <= fd)
 		return fd;
 
 	/* slow path */
-	/* some mkstemp implementations erase template on failure */
-	git_path_buf(template, "objects/%s", pattern);
-	safe_create_leading_directories(template->buf);
-	return xmkstemp_mode(template->buf, mode);
+	/* some mkstemp implementations erase temp_filename on failure */
+	git_path_buf(temp_filename, "objects/%s", pattern);
+	safe_create_leading_directories(temp_filename->buf);
+	return xmkstemp_mode(temp_filename->buf, mode);
 }
 
 int odb_pack_keep(const char *name)
