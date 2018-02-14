@@ -76,7 +76,7 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 	buf = NULL;
 	switch (opt) {
 	case 't':
-		oi.typename = &sb;
+		oi.type_name = &sb;
 		if (sha1_object_info_extended(oid.hash, &oi, flags) < 0)
 			die("git cat-file: could not get object info");
 		if (sb.len) {

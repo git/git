@@ -1087,8 +1087,8 @@ static int parse_sha1_header_extended(const char *hdr, struct object_info *oi,
 	}
 
 	type = type_from_string_gently(type_buf, type_len, 1);
-	if (oi->typename)
-		strbuf_add(oi->typename, type_buf, type_len);
+	if (oi->type_name)
+		strbuf_add(oi->type_name, type_buf, type_len);
 	/*
 	 * Set type to 0 if its an unknown object and
 	 * we're obtaining the type using '--allow-unknown-type'
@@ -1158,7 +1158,7 @@ static int sha1_loose_object_info(const unsigned char *sha1,
 	 * return value implicitly indicates whether the
 	 * object even exists.
 	 */
-	if (!oi->typep && !oi->typename && !oi->sizep && !oi->contentp) {
+	if (!oi->typep && !oi->type_name && !oi->sizep && !oi->contentp) {
 		const char *path;
 		struct stat st;
 		if (stat_sha1_file(sha1, &st, &path) < 0)
@@ -1239,8 +1239,8 @@ int sha1_object_info_extended(const unsigned char *sha1, struct object_info *oi,
 				*(oi->disk_sizep) = 0;
 			if (oi->delta_base_sha1)
 				hashclr(oi->delta_base_sha1);
-			if (oi->typename)
-				strbuf_addstr(oi->typename, typename(co->type));
+			if (oi->type_name)
+				strbuf_addstr(oi->type_name, typename(co->type));
 			if (oi->contentp)
 				*oi->contentp = xmemdupz(co->buf, co->size);
 			oi->whence = OI_CACHED;

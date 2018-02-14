@@ -1350,16 +1350,16 @@ int packed_object_info(struct packed_git *p, off_t obj_offset,
 		*oi->disk_sizep = revidx[1].offset - obj_offset;
 	}
 
-	if (oi->typep || oi->typename) {
+	if (oi->typep || oi->type_name) {
 		enum object_type ptot;
 		ptot = packed_to_object_type(p, obj_offset, type, &w_curs,
 					     curpos);
 		if (oi->typep)
 			*oi->typep = ptot;
-		if (oi->typename) {
+		if (oi->type_name) {
 			const char *tn = typename(ptot);
 			if (tn)
-				strbuf_addstr(oi->typename, tn);
+				strbuf_addstr(oi->type_name, tn);
 		}
 		if (ptot < 0) {
 			type = OBJ_BAD;

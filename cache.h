@@ -1744,7 +1744,7 @@ struct object_info {
 	unsigned long *sizep;
 	off_t *disk_sizep;
 	unsigned char *delta_base_sha1;
-	struct strbuf *typename;
+	struct strbuf *type_name;
 	void **contentp;
 
 	/* Response */
