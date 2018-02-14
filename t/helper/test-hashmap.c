@@ -32,8 +32,7 @@ static int test_entry_cmp(const void *cmp_data,
 static struct test_entry *alloc_test_entry(int hash, char *key, int klen,
 		char *value, int vlen)
 {
-	struct test_entry *entry = malloc(sizeof(struct test_entry) + klen
-			+ vlen + 2);
+	struct test_entry *entry = xmalloc(st_add4(sizeof(*entry), klen, vlen, 2));
 	hashmap_entry_init(entry, hash);
 	memcpy(entry->key, key, klen + 1);
 	memcpy(entry->key + klen + 1, value, vlen + 1);
