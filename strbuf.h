@@ -1,6 +1,8 @@
 #ifndef STRBUF_H
 #define STRBUF_H
 
+struct string_list;
+
 /**
  * strbuf's are meant to be used with all the usual C string and memory
  * APIs. Given that the length of the buffer is known, it's often better to
@@ -527,6 +529,20 @@ static inline struct strbuf **strbuf_split(const struct strbuf *sb,
 {
 	return strbuf_split_max(sb, terminator, 0);
 }
+
+/*
+ * Adds all strings of a string list to the strbuf, separated by the given
+ * separator.  For example, if sep is
+ *   ', '
+ * and slist contains
+ *   ['element1', 'element2', ..., 'elementN'],
+ * then write:
+ *   'element1, element2, ..., elementN'
+ * to str.  If only one element, just write "element1" to str.
+ */
+extern void strbuf_add_separated_string_list(struct strbuf *str,
+					     const char *sep,
+					     struct string_list *slist);
 
 /**
  * Free a NULL-terminated list of strbufs (for example, the return
