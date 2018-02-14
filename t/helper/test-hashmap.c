@@ -87,7 +87,7 @@ static void perf_hashmap(unsigned int method, unsigned int rounds)
 	ALLOC_ARRAY(entries, TEST_SIZE);
 	ALLOC_ARRAY(hashes, TEST_SIZE);
 	for (i = 0; i < TEST_SIZE; i++) {
-		snprintf(buf, sizeof(buf), "%i", i);
+		xsnprintf(buf, sizeof(buf), "%i", i);
 		entries[i] = alloc_test_entry(0, buf, strlen(buf), "", 0);
 		hashes[i] = hash(method, i, entries[i]->key);
 	}
