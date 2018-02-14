@@ -85,8 +85,8 @@ static void perf_hashmap(unsigned int method, unsigned int rounds)
 	unsigned int *hashes;
 	unsigned int i, j;
 
-	entries = malloc(TEST_SIZE * sizeof(struct test_entry *));
-	hashes = malloc(TEST_SIZE * sizeof(int));
+	ALLOC_ARRAY(entries, TEST_SIZE);
+	ALLOC_ARRAY(hashes, TEST_SIZE);
 	for (i = 0; i < TEST_SIZE; i++) {
 		snprintf(buf, sizeof(buf), "%i", i);
 		entries[i] = alloc_test_entry(0, buf, strlen(buf), "", 0);
