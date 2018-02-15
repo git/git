@@ -574,6 +574,7 @@ static int rebase_submodules(void)
 	cp.no_stdin = 1;
 	argv_array_pushl(&cp.args, "submodule", "update",
 				   "--recursive", "--rebase", NULL);
+	argv_push_verbosity(&cp.args);
 
 	return run_command(&cp);
 }
@@ -586,6 +587,7 @@ static int update_submodules(void)
 	cp.no_stdin = 1;
 	argv_array_pushl(&cp.args, "submodule", "update",
 				   "--recursive", "--checkout", NULL);
+	argv_push_verbosity(&cp.args);
 
 	return run_command(&cp);
 }
