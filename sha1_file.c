@@ -39,32 +39,32 @@ const struct object_id empty_blob_oid = {
 	EMPTY_BLOB_SHA1_BIN_LITERAL
 };
 
-static void git_hash_sha1_init(void *ctx)
+static void git_hash_sha1_init(git_hash_ctx *ctx)
 {
-	git_SHA1_Init((git_SHA_CTX *)ctx);
+	git_SHA1_Init(&ctx->sha1);
 }
 
-static void git_hash_sha1_update(void *ctx, const void *data, size_t len)
+static void git_hash_sha1_update(git_hash_ctx *ctx, const void *data, size_t len)
 {
-	git_SHA1_Update((git_SHA_CTX *)ctx, data, len);
+	git_SHA1_Update(&ctx->sha1, data, len);
 }
 
-static void git_hash_sha1_final(unsigned char *hash, void *ctx)
+static void git_hash_sha1_final(unsigned char *hash, git_hash_ctx *ctx)
 {
-	git_SHA1_Final(hash, (git_SHA_CTX *)ctx);
+	git_SHA1_Final(hash, &ctx->sha1);
 }
 
-static void git_hash_unknown_init(void *ctx)
+static void git_hash_unknown_init(git_hash_ctx *ctx)
 {
 	die("trying to init unknown hash");
 }
 
-static void git_hash_unknown_update(void *ctx, const void *data, size_t len)
+static void git_hash_unknown_update(git_hash_ctx *ctx, const void *data, size_t len)
 {
 	die("trying to update unknown hash");
 }
 
-static void git_hash_unknown_final(unsigned char *hash, void *ctx)
+static void git_hash_unknown_final(unsigned char *hash, git_hash_ctx *ctx)
 {
 	die("trying to finalize unknown hash");
 }
@@ -73,7 +73,6 @@ const struct git_hash_algo hash_algos[GIT_HASH_NALGOS] = {
 	{
 		NULL,
 		0x00000000,
-		0,
 		0,
 		0,
 		git_hash_unknown_init,
@@ -86,7 +85,6 @@ const struct git_hash_algo hash_algos[GIT_HASH_NALGOS] = {
 		"sha-1",
 		/* "sha1", big-endian */
 		0x73686131,
-		sizeof(git_SHA_CTX),
 		GIT_SHA1_RAWSZ,
 		GIT_SHA1_HEXSZ,
 		git_hash_sha1_init,
@@ -792,7 +790,7 @@ int check_sha1_signature(const unsigned char *sha1, void *map,
 	struct object_id real_oid;
 	enum object_type obj_type;
 	struct git_istream *st;
-	git_SHA_CTX c;
+	git_hash_ctx c;
 	char hdr[32];
 	int hdrlen;
 
@@ -809,8 +807,8 @@ int check_sha1_signature(const unsigned char *sha1, void *map,
 	hdrlen = xsnprintf(hdr, sizeof(hdr), "%s %lu", typename(obj_type), size) + 1;
 
 	/* Sha1.. */
-	git_SHA1_Init(&c);
-	git_SHA1_Update(&c, hdr, hdrlen);
+	the_hash_algo->init_fn(&c);
+	the_hash_algo->update_fn(&c, hdr, hdrlen);
 	for (;;) {
 		char buf[1024 * 16];
 		ssize_t readlen = read_istream(st, buf, sizeof(buf));
@@ -821,9 +819,9 @@ int check_sha1_signature(const unsigned char *sha1, void *map,
 		}
 		if (!readlen)
 			break;
-		git_SHA1_Update(&c, buf, readlen);
+		the_hash_algo->update_fn(&c, buf, readlen);
 	}
-	git_SHA1_Final(real_oid.hash, &c);
+	the_hash_algo->final_fn(real_oid.hash, &c);
 	close_istream(st);
 	return hashcmp(sha1, real_oid.hash) ? -1 : 0;
 }
@@ -1447,16 +1445,16 @@ static void write_object_file_prepare(const void *buf, unsigned long len,
 				      const char *type, struct object_id *oid,
 				      char *hdr, int *hdrlen)
 {
-	git_SHA_CTX c;
+	git_hash_ctx c;
 
 	/* Generate the header */
 	*hdrlen = xsnprintf(hdr, *hdrlen, "%s %lu", type, len)+1;
 
 	/* Sha1.. */
-	git_SHA1_Init(&c);
-	git_SHA1_Update(&c, hdr, *hdrlen);
-	git_SHA1_Update(&c, buf, len);
-	git_SHA1_Final(oid->hash, &c);
+	the_hash_algo->init_fn(&c);
+	the_hash_algo->update_fn(&c, hdr, *hdrlen);
+	the_hash_algo->update_fn(&c, buf, len);
+	the_hash_algo->final_fn(oid->hash, &c);
 }
 
 /*
@@ -1579,7 +1577,7 @@ static int write_loose_object(const struct object_id *oid, char *hdr,
 	int fd, ret;
 	unsigned char compressed[4096];
 	git_zstream stream;
-	git_SHA_CTX c;
+	git_hash_ctx c;
 	struct object_id parano_oid;
 	static struct strbuf tmp_file = STRBUF_INIT;
 	static struct strbuf filename = STRBUF_INIT;
@@ -1599,14 +1597,14 @@ static int write_loose_object(const struct object_id *oid, char *hdr,
 	git_deflate_init(&stream, zlib_compression_level);
 	stream.next_out = compressed;
 	stream.avail_out = sizeof(compressed);
-	git_SHA1_Init(&c);
+	the_hash_algo->init_fn(&c);
 
 	/* First header.. */
 	stream.next_in = (unsigned char *)hdr;
 	stream.avail_in = hdrlen;
 	while (git_deflate(&stream, 0) == Z_OK)
 		; /* nothing */
-	git_SHA1_Update(&c, hdr, hdrlen);
+	the_hash_algo->update_fn(&c, hdr, hdrlen);
 
 	/* Then the data itself.. */
 	stream.next_in = (void *)buf;
@@ -1614,7 +1612,7 @@ static int write_loose_object(const struct object_id *oid, char *hdr,
 	do {
 		unsigned char *in0 = stream.next_in;
 		ret = git_deflate(&stream, Z_FINISH);
-		git_SHA1_Update(&c, in0, stream.next_in - in0);
+		the_hash_algo->update_fn(&c, in0, stream.next_in - in0);
 		if (write_buffer(fd, compressed, stream.next_out - compressed) < 0)
 			die("unable to write sha1 file");
 		stream.next_out = compressed;
@@ -1628,7 +1626,7 @@ static int write_loose_object(const struct object_id *oid, char *hdr,
 	if (ret != Z_OK)
 		die("deflateEnd on object %s failed (%d)", oid_to_hex(oid),
 		    ret);
-	git_SHA1_Final(parano_oid.hash, &c);
+	the_hash_algo->final_fn(parano_oid.hash, &c);
 	if (oidcmp(oid, &parano_oid) != 0)
 		die("confused by unstable object source data for %s",
 		    oid_to_hex(oid));
@@ -2126,14 +2124,14 @@ static int check_stream_sha1(git_zstream *stream,
 			     const char *path,
 			     const unsigned char *expected_sha1)
 {
-	git_SHA_CTX c;
+	git_hash_ctx c;
 	unsigned char real_sha1[GIT_MAX_RAWSZ];
 	unsigned char buf[4096];
 	unsigned long total_read;
 	int status = Z_OK;
 
-	git_SHA1_Init(&c);
-	git_SHA1_Update(&c, hdr, stream->total_out);
+	the_hash_algo->init_fn(&c);
+	the_hash_algo->update_fn(&c, hdr, stream->total_out);
 
 	/*
 	 * We already read some bytes into hdr, but the ones up to the NUL
@@ -2152,7 +2150,7 @@ static int check_stream_sha1(git_zstream *stream,
 		if (size - total_read < stream->avail_out)
 			stream->avail_out = size - total_read;
 		status = git_inflate(stream, Z_FINISH);
-		git_SHA1_Update(&c, buf, stream->next_out - buf);
+		the_hash_algo->update_fn(&c, buf, stream->next_out - buf);
 		total_read += stream->next_out - buf;
 	}
 	git_inflate_end(stream);
@@ -2167,7 +2165,7 @@ static int check_stream_sha1(git_zstream *stream,
 		return -1;
 	}
 
-	git_SHA1_Final(real_sha1, &c);
+	the_hash_algo->final_fn(real_sha1, &c);
 	if (hashcmp(expected_sha1, real_sha1)) {
 		error("sha1 mismatch for %s (expected %s)", path,
 		      sha1_to_hex(expected_sha1));
