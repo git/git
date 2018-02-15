@@ -493,4 +493,52 @@ test_expect_success 'add -p works even with color.ui=always' '
 	test_cmp expect actual
 '
 
+test_expect_success 'setup different kinds of dirty submodules' '
+	test_create_repo for-submodules &&
+	(
+		cd for-submodules &&
+		test_commit initial &&
+		test_create_repo dirty-head &&
+		(
+			cd dirty-head &&
+			test_commit initial
+		) &&
+		cp -R dirty-head dirty-otherwise &&
+		cp -R dirty-head dirty-both-ways &&
+		git add dirty-head &&
+		git add dirty-otherwise dirty-both-ways &&
+		git commit -m initial &&
+
+		cd dirty-head &&
+		test_commit updated &&
+		cd ../dirty-both-ways &&
+		test_commit updated &&
+		echo dirty >>initial &&
+		: >untracked &&
+		cd ../dirty-otherwise &&
+		echo dirty >>initial &&
+		: >untracked
+	) &&
+	git -C for-submodules diff-files --name-only >actual &&
+	cat >expected <<-\EOF &&
+	dirty-both-ways
+	dirty-head
+	dirty-otherwise
+	EOF
+	test_cmp expected actual &&
+	git -C for-submodules diff-files --name-only --ignore-submodules=dirty >actual &&
+	cat >expected <<-\EOF &&
+	dirty-both-ways
+	dirty-head
+	EOF
+	test_cmp expected actual
+'
+
+test_expect_success 'status ignores dirty submodules (except HEAD)' '
+	git -C for-submodules add -i </dev/null >output &&
+	grep dirty-head output &&
+	grep dirty-both-ways output &&
+	! grep dirty-otherwise output
+'
+
 test_done
