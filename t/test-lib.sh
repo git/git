@@ -1132,6 +1132,10 @@ test_lazy_prereq EXPENSIVE '
 	test -n "$GIT_TEST_LONG"
 '
 
+test_lazy_prereq EXPENSIVE_ON_WINDOWS '
+	test_have_prereq EXPENSIVE || test_have_prereq !MINGW,!CYGWIN
+'
+
 test_lazy_prereq USR_BIN_TIME '
 	test -x /usr/bin/time
 '
