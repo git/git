@@ -2862,8 +2862,7 @@ int prepare_revision_walk(struct rev_info *revs)
 			}
 		}
 	}
-	if (!revs->leak_pending)
-		object_array_clear(&old_pending);
+	object_array_clear(&old_pending);
 
 	/* Signal whether we need per-parent treesame decoration */
 	if (revs->simplify_merges ||
