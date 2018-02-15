@@ -1064,4 +1064,36 @@ test_expect_success 'stash -k -- <pathspec> leaves unstaged files intact' '
 	test foo,bar = $(cat foo),$(cat bar)
 '
 
+test_expect_success 'stash -- <subdir> leaves untracked files in subdir intact' '
+	git reset &&
+	>subdir/untracked &&
+	>subdir/tracked1 &&
+	>subdir/tracked2 &&
+	git add subdir/tracked* &&
+	git stash -- subdir/ &&
+	test_path_is_missing subdir/tracked1 &&
+	test_path_is_missing subdir/tracked2 &&
+	test_path_is_file subdir/untracked &&
+	git stash pop &&
+	test_path_is_file subdir/tracked1 &&
+	test_path_is_file subdir/tracked2 &&
+	test_path_is_file subdir/untracked
+'
+
+test_expect_success 'stash -- <subdir> works with binary files' '
+	git reset &&
+	>subdir/untracked &&
+	>subdir/tracked &&
+	cp "$TEST_DIRECTORY"/test-binary-1.png subdir/tracked-binary &&
+	git add subdir/tracked* &&
+	git stash -- subdir/ &&
+	test_path_is_missing subdir/tracked &&
+	test_path_is_missing subdir/tracked-binary &&
+	test_path_is_file subdir/untracked &&
+	git stash pop &&
+	test_path_is_file subdir/tracked &&
+	test_path_is_file subdir/tracked-binary &&
+	test_path_is_file subdir/untracked
+'
+
 test_done
