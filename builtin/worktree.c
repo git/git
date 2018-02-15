@@ -14,7 +14,7 @@
 #include "worktree.h"
 
 static const char * const worktree_usage[] = {
-	N_("git worktree add [<options>] <path> [<branch>]"),
+	N_("git worktree add [<options>] <path> [<commit-ish>]"),
 	N_("git worktree list [<options>]"),
 	N_("git worktree lock [<options>] <path>"),
 	N_("git worktree prune [<options>]"),
