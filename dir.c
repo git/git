@@ -231,12 +231,10 @@ int within_depth(const char *name, int namelen,
  *     1 along with { data, size } of the (possibly augmented) buffer
  *       when successful.
  *
- * Optionally updates the given sha1_stat with the given OID (when valid).
+ * Optionally updates the given oid_stat with the given OID (when valid).
  */
-static int do_read_blob(const struct object_id *oid,
-			struct sha1_stat *sha1_stat,
-			size_t *size_out,
-			char **data_out)
+static int do_read_blob(const struct object_id *oid, struct oid_stat *oid_stat,
+			size_t *size_out, char **data_out)
 {
 	enum object_type type;
 	unsigned long sz;
@@ -251,9 +249,9 @@ static int do_read_blob(const struct object_id *oid,
 		return -1;
 	}
 
-	if (sha1_stat) {
-		memset(&sha1_stat->stat, 0, sizeof(sha1_stat->stat));
-		hashcpy(sha1_stat->sha1, oid->hash);
+	if (oid_stat) {
+		memset(&oid_stat->stat, 0, sizeof(oid_stat->stat));
+		oidcpy(&oid_stat->oid, oid);
 	}
 
 	if (sz == 0) {
@@ -654,9 +652,8 @@ void add_exclude(const char *string, const char *base,
 
 static int read_skip_worktree_file_from_index(const struct index_state *istate,
 					      const char *path,
-					      size_t *size_out,
-					      char **data_out,
-					      struct sha1_stat *sha1_stat)
+					      size_t *size_out, char **data_out,
+					      struct oid_stat *oid_stat)
 {
 	int pos, len;
 
@@ -667,7 +664,7 @@ static int read_skip_worktree_file_from_index(const struct index_state *istate,
 	if (!ce_skip_worktree(istate->cache[pos]))
 		return -1;
 
-	return do_read_blob(&istate->cache[pos]->oid, sha1_stat, size_out, data_out);
+	return do_read_blob(&istate->cache[pos]->oid, oid_stat, size_out, data_out);
 }
 
 /*
@@ -795,9 +792,8 @@ static int add_excludes_from_buffer(char *buf, size_t size,
  * ss_valid is non-zero, "ss" must contain good value as input.
  */
 static int add_excludes(const char *fname, const char *base, int baselen,
-			struct exclude_list *el,
-			struct index_state *istate,
-			struct sha1_stat *sha1_stat)
+			struct exclude_list *el, struct index_state *istate,
+			struct oid_stat *oid_stat)
 {
 	struct stat st;
 	int r;
@@ -815,16 +811,16 @@ static int add_excludes(const char *fname, const char *base, int baselen,
 			return -1;
 		r = read_skip_worktree_file_from_index(istate, fname,
 						       &size, &buf,
-						       sha1_stat);
+						       oid_stat);
 		if (r != 1)
 			return r;
 	} else {
 		size = xsize_t(st.st_size);
 		if (size == 0) {
-			if (sha1_stat) {
-				fill_stat_data(&sha1_stat->stat, &st);
-				hashcpy(sha1_stat->sha1, EMPTY_BLOB_SHA1_BIN);
-				sha1_stat->valid = 1;
+			if (oid_stat) {
+				fill_stat_data(&oid_stat->stat, &st);
+				oidcpy(&oid_stat->oid, &empty_blob_oid);
+				oid_stat->valid = 1;
 			}
 			close(fd);
 			return 0;
@@ -837,22 +833,23 @@ static int add_excludes(const char *fname, const char *base, int baselen,
 		}
 		buf[size++] = '\n';
 		close(fd);
-		if (sha1_stat) {
+		if (oid_stat) {
 			int pos;
-			if (sha1_stat->valid &&
-			    !match_stat_data_racy(istate, &sha1_stat->stat, &st))
+			if (oid_stat->valid &&
+			    !match_stat_data_racy(istate, &oid_stat->stat, &st))
 				; /* no content change, ss->sha1 still good */
 			else if (istate &&
 				 (pos = index_name_pos(istate, fname, strlen(fname))) >= 0 &&
 				 !ce_stage(istate->cache[pos]) &&
 				 ce_uptodate(istate->cache[pos]) &&
 				 !would_convert_to_git(istate, fname))
-				hashcpy(sha1_stat->sha1,
-					istate->cache[pos]->oid.hash);
+				oidcpy(&oid_stat->oid,
+				       &istate->cache[pos]->oid);
 			else
-				hash_sha1_file(buf, size, "blob", sha1_stat->sha1);
-			fill_stat_data(&sha1_stat->stat, &st);
-			sha1_stat->valid = 1;
+				hash_object_file(buf, size, "blob",
+						 &oid_stat->oid);
+			fill_stat_data(&oid_stat->stat, &st);
+			oid_stat->valid = 1;
 		}
 	}
 
@@ -930,7 +927,7 @@ struct exclude_list *add_exclude_list(struct dir_struct *dir,
  * Used to set up core.excludesfile and .git/info/exclude lists.
  */
 static void add_excludes_from_file_1(struct dir_struct *dir, const char *fname,
-				     struct sha1_stat *sha1_stat)
+				     struct oid_stat *oid_stat)
 {
 	struct exclude_list *el;
 	/*
@@ -941,7 +938,7 @@ static void add_excludes_from_file_1(struct dir_struct *dir, const char *fname,
 	if (!dir->untracked)
 		dir->unmanaged_exclude_files++;
 	el = add_exclude_list(dir, EXC_FILE, fname);
-	if (add_excludes(fname, "", 0, el, NULL, sha1_stat) < 0)
+	if (add_excludes(fname, "", 0, el, NULL, oid_stat) < 0)
 		die("cannot use %s as an exclude file", fname);
 }
 
@@ -1180,7 +1177,7 @@ static void prep_exclude(struct dir_struct *dir,
 
 	while (current < baselen) {
 		const char *cp;
-		struct sha1_stat sha1_stat;
+		struct oid_stat oid_stat;
 
 		stk = xcalloc(1, sizeof(*stk));
 		if (current < 0) {
@@ -1223,8 +1220,8 @@ static void prep_exclude(struct dir_struct *dir,
 		}
 
 		/* Try to read per-directory file */
-		hashclr(sha1_stat.sha1);
-		sha1_stat.valid = 0;
+		oidclr(&oid_stat.oid);
+		oid_stat.valid = 0;
 		if (dir->exclude_per_dir &&
 		    /*
 		     * If we know that no files have been added in
@@ -1252,7 +1249,7 @@ static void prep_exclude(struct dir_struct *dir,
 			strbuf_addstr(&sb, dir->exclude_per_dir);
 			el->src = strbuf_detach(&sb, NULL);
 			add_excludes(el->src, el->src, stk->baselen, el, istate,
-				     untracked ? &sha1_stat : NULL);
+				     untracked ? &oid_stat : NULL);
 		}
 		/*
 		 * NEEDSWORK: when untracked cache is enabled, prep_exclude()
@@ -1269,9 +1266,9 @@ static void prep_exclude(struct dir_struct *dir,
 		 * order, though, if you do that.
 		 */
 		if (untracked &&
-		    hashcmp(sha1_stat.sha1, untracked->exclude_sha1)) {
+		    hashcmp(oid_stat.oid.hash, untracked->exclude_sha1)) {
 			invalidate_gitignore(dir->untracked, untracked);
-			hashcpy(untracked->exclude_sha1, sha1_stat.sha1);
+			hashcpy(untracked->exclude_sha1, oid_stat.oid.hash);
 		}
 		dir->exclude_stack = stk;
 		current = stk->baselen;
@@ -2228,13 +2225,13 @@ static struct untracked_cache_dir *validate_untracked_cache(struct dir_struct *d
 
 	/* Validate $GIT_DIR/info/exclude and core.excludesfile */
 	root = dir->untracked->root;
-	if (hashcmp(dir->ss_info_exclude.sha1,
-		    dir->untracked->ss_info_exclude.sha1)) {
+	if (oidcmp(&dir->ss_info_exclude.oid,
+		   &dir->untracked->ss_info_exclude.oid)) {
 		invalidate_gitignore(dir->untracked, root);
 		dir->untracked->ss_info_exclude = dir->ss_info_exclude;
 	}
-	if (hashcmp(dir->ss_excludes_file.sha1,
-		    dir->untracked->ss_excludes_file.sha1)) {
+	if (oidcmp(&dir->ss_excludes_file.oid,
+		   &dir->untracked->ss_excludes_file.oid)) {
 		invalidate_gitignore(dir->untracked, root);
 		dir->untracked->ss_excludes_file = dir->ss_excludes_file;
 	}
@@ -2638,8 +2635,8 @@ void write_untracked_extension(struct strbuf *out, struct untracked_cache *untra
 	FLEX_ALLOC_MEM(ouc, exclude_per_dir, untracked->exclude_per_dir, len);
 	stat_data_to_disk(&ouc->info_exclude_stat, &untracked->ss_info_exclude.stat);
 	stat_data_to_disk(&ouc->excludes_file_stat, &untracked->ss_excludes_file.stat);
-	hashcpy(ouc->info_exclude_sha1, untracked->ss_info_exclude.sha1);
-	hashcpy(ouc->excludes_file_sha1, untracked->ss_excludes_file.sha1);
+	hashcpy(ouc->info_exclude_sha1, untracked->ss_info_exclude.oid.hash);
+	hashcpy(ouc->excludes_file_sha1, untracked->ss_excludes_file.oid.hash);
 	ouc->dir_flags = htonl(untracked->dir_flags);
 
 	varint_len = encode_varint(untracked->ident.len, varbuf);
@@ -2816,13 +2813,12 @@ static void read_sha1(size_t pos, void *cb)
 	rd->data += 20;
 }
 
-static void load_sha1_stat(struct sha1_stat *sha1_stat,
-			   const unsigned char *data,
-			   const unsigned char *sha1)
+static void load_oid_stat(struct oid_stat *oid_stat, const unsigned char *data,
+			  const unsigned char *sha1)
 {
-	stat_data_from_disk(&sha1_stat->stat, data);
-	hashcpy(sha1_stat->sha1, sha1);
-	sha1_stat->valid = 1;
+	stat_data_from_disk(&oid_stat->stat, data);
+	hashcpy(oid_stat->oid.hash, sha1);
+	oid_stat->valid = 1;
 }
 
 struct untracked_cache *read_untracked_extension(const void *data, unsigned long sz)
@@ -2850,12 +2846,12 @@ struct untracked_cache *read_untracked_extension(const void *data, unsigned long
 	uc = xcalloc(1, sizeof(*uc));
 	strbuf_init(&uc->ident, ident_len);
 	strbuf_add(&uc->ident, ident, ident_len);
-	load_sha1_stat(&uc->ss_info_exclude,
-		       next + ouc_offset(info_exclude_stat),
-		       next + ouc_offset(info_exclude_sha1));
-	load_sha1_stat(&uc->ss_excludes_file,
-		       next + ouc_offset(excludes_file_stat),
-		       next + ouc_offset(excludes_file_sha1));
+	load_oid_stat(&uc->ss_info_exclude,
+		      next + ouc_offset(info_exclude_stat),
+		      next + ouc_offset(info_exclude_sha1));
+	load_oid_stat(&uc->ss_excludes_file,
+		      next + ouc_offset(excludes_file_stat),
+		      next + ouc_offset(excludes_file_sha1));
 	uc->dir_flags = get_be32(next + ouc_offset(dir_flags));
 	exclude_per_dir = (const char *)next + ouc_offset(exclude_per_dir);
 	uc->exclude_per_dir = xstrdup(exclude_per_dir);

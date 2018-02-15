@@ -399,16 +399,16 @@ static int update_one(struct cache_tree *it,
 	}
 
 	if (repair) {
-		unsigned char sha1[20];
-		hash_sha1_file(buffer.buf, buffer.len, tree_type, sha1);
-		if (has_sha1_file(sha1))
-			hashcpy(it->oid.hash, sha1);
+		struct object_id oid;
+		hash_object_file(buffer.buf, buffer.len, tree_type, &oid);
+		if (has_sha1_file(oid.hash))
+			oidcpy(&it->oid, &oid);
 		else
 			to_invalidate = 1;
-	} else if (dryrun)
-		hash_sha1_file(buffer.buf, buffer.len, tree_type,
-			       it->oid.hash);
-	else if (write_sha1_file(buffer.buf, buffer.len, tree_type, it->oid.hash)) {
+	} else if (dryrun) {
+		hash_object_file(buffer.buf, buffer.len, tree_type, &it->oid);
+	} else if (write_object_file(buffer.buf, buffer.len, tree_type,
+				     &it->oid)) {
 		strbuf_release(&buffer);
 		return -1;
 	}

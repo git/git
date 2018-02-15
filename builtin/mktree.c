@@ -40,7 +40,7 @@ static int ent_compare(const void *a_, const void *b_)
 				 b->name, b->len, b->mode);
 }
 
-static void write_tree(unsigned char *sha1)
+static void write_tree(struct object_id *oid)
 {
 	struct strbuf buf;
 	size_t size;
@@ -57,7 +57,7 @@ static void write_tree(unsigned char *sha1)
 		strbuf_add(&buf, ent->sha1, 20);
 	}
 
-	write_sha1_file(buf.buf, buf.len, tree_type, sha1);
+	write_object_file(buf.buf, buf.len, tree_type, oid);
 	strbuf_release(&buf);
 }
 
@@ -142,7 +142,7 @@ static void mktree_line(char *buf, size_t len, int nul_term_line, int allow_miss
 int cmd_mktree(int ac, const char **av, const char *prefix)
 {
 	struct strbuf sb = STRBUF_INIT;
-	unsigned char sha1[20];
+	struct object_id oid;
 	int nul_term_line = 0;
 	int allow_missing = 0;
 	int is_batch_mode = 0;
@@ -181,8 +181,8 @@ int cmd_mktree(int ac, const char **av, const char *prefix)
 			 */
 			; /* skip creating an empty tree */
 		} else {
-			write_tree(sha1);
-			puts(sha1_to_hex(sha1));
+			write_tree(&oid);
+			puts(oid_to_hex(&oid));
 			fflush(stdout);
 		}
 		used=0; /* reset tree entry buffer for re-use in batch mode */

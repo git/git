@@ -54,10 +54,10 @@ int notes_cache_write(struct notes_cache *c)
 	if (!c->tree.dirty)
 		return 0;
 
-	if (write_notes_tree(&c->tree, tree_oid.hash))
+	if (write_notes_tree(&c->tree, &tree_oid))
 		return -1;
-	if (commit_tree(c->validity, strlen(c->validity), tree_oid.hash, NULL,
-			commit_oid.hash, NULL, NULL) < 0)
+	if (commit_tree(c->validity, strlen(c->validity), &tree_oid, NULL,
+			&commit_oid, NULL, NULL) < 0)
 		return -1;
 	if (update_ref("update notes cache", c->tree.update_ref, &commit_oid,
 		       NULL, 0, UPDATE_REFS_QUIET_ON_ERR) < 0)
@@ -88,7 +88,7 @@ int notes_cache_put(struct notes_cache *c, struct object_id *key_oid,
 {
 	struct object_id value_oid;
 
-	if (write_sha1_file(data, size, "blob", value_oid.hash) < 0)
+	if (write_object_file(data, size, "blob", &value_oid) < 0)
 		return -1;
 	return add_note(&c->tree, key_oid, &value_oid, NULL);
 }

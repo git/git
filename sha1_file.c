@@ -789,7 +789,7 @@ void *xmmap(void *start, size_t length,
 int check_sha1_signature(const unsigned char *sha1, void *map,
 			 unsigned long size, const char *type)
 {
-	unsigned char real_sha1[20];
+	struct object_id real_oid;
 	enum object_type obj_type;
 	struct git_istream *st;
 	git_SHA_CTX c;
@@ -797,8 +797,8 @@ int check_sha1_signature(const unsigned char *sha1, void *map,
 	int hdrlen;
 
 	if (map) {
-		hash_sha1_file(map, size, type, real_sha1);
-		return hashcmp(sha1, real_sha1) ? -1 : 0;
+		hash_object_file(map, size, type, &real_oid);
+		return hashcmp(sha1, real_oid.hash) ? -1 : 0;
 	}
 
 	st = open_istream(sha1, &obj_type, &size, NULL);
@@ -823,9 +823,9 @@ int check_sha1_signature(const unsigned char *sha1, void *map,
 			break;
 		git_SHA1_Update(&c, buf, readlen);
 	}
-	git_SHA1_Final(real_sha1, &c);
+	git_SHA1_Final(real_oid.hash, &c);
 	close_istream(st);
-	return hashcmp(sha1, real_sha1) ? -1 : 0;
+	return hashcmp(sha1, real_oid.hash) ? -1 : 0;
 }
 
 int git_open_cloexec(const char *name, int flags)
@@ -1336,13 +1336,13 @@ static void *read_object(const unsigned char *sha1, enum object_type *type,
 	return content;
 }
 
-int pretend_sha1_file(void *buf, unsigned long len, enum object_type type,
-		      unsigned char *sha1)
+int pretend_object_file(void *buf, unsigned long len, enum object_type type,
+			struct object_id *oid)
 {
 	struct cached_object *co;
 
-	hash_sha1_file(buf, len, typename(type), sha1);
-	if (has_sha1_file(sha1) || find_cached_object(sha1))
+	hash_object_file(buf, len, typename(type), oid);
+	if (has_sha1_file(oid->hash) || find_cached_object(oid->hash))
 		return 0;
 	ALLOC_GROW(cached_objects, cached_object_nr + 1, cached_object_alloc);
 	co = &cached_objects[cached_object_nr++];
@@ -1350,7 +1350,7 @@ int pretend_sha1_file(void *buf, unsigned long len, enum object_type type,
 	co->type = type;
 	co->buf = xmalloc(len);
 	memcpy(co->buf, buf, len);
-	hashcpy(co->sha1, sha1);
+	hashcpy(co->sha1, oid->hash);
 	return 0;
 }
 
@@ -1443,9 +1443,9 @@ void *read_object_with_reference(const unsigned char *sha1,
 	}
 }
 
-static void write_sha1_file_prepare(const void *buf, unsigned long len,
-                                    const char *type, unsigned char *sha1,
-                                    char *hdr, int *hdrlen)
+static void write_object_file_prepare(const void *buf, unsigned long len,
+				      const char *type, struct object_id *oid,
+				      char *hdr, int *hdrlen)
 {
 	git_SHA_CTX c;
 
@@ -1456,7 +1456,7 @@ static void write_sha1_file_prepare(const void *buf, unsigned long len,
 	git_SHA1_Init(&c);
 	git_SHA1_Update(&c, hdr, *hdrlen);
 	git_SHA1_Update(&c, buf, len);
-	git_SHA1_Final(sha1, &c);
+	git_SHA1_Final(oid->hash, &c);
 }
 
 /*
@@ -1509,12 +1509,12 @@ static int write_buffer(int fd, const void *buf, size_t len)
 	return 0;
 }
 
-int hash_sha1_file(const void *buf, unsigned long len, const char *type,
-                   unsigned char *sha1)
+int hash_object_file(const void *buf, unsigned long len, const char *type,
+		     struct object_id *oid)
 {
 	char hdr[32];
 	int hdrlen = sizeof(hdr);
-	write_sha1_file_prepare(buf, len, type, sha1, hdr, &hdrlen);
+	write_object_file_prepare(buf, len, type, oid, hdr, &hdrlen);
 	return 0;
 }
 
@@ -1572,19 +1572,20 @@ static int create_tmpfile(struct strbuf *tmp, const char *filename)
 	return fd;
 }
 
-static int write_loose_object(const unsigned char *sha1, char *hdr, int hdrlen,
-			      const void *buf, unsigned long len, time_t mtime)
+static int write_loose_object(const struct object_id *oid, char *hdr,
+			      int hdrlen, const void *buf, unsigned long len,
+			      time_t mtime)
 {
 	int fd, ret;
 	unsigned char compressed[4096];
 	git_zstream stream;
 	git_SHA_CTX c;
-	unsigned char parano_sha1[20];
+	struct object_id parano_oid;
 	static struct strbuf tmp_file = STRBUF_INIT;
 	static struct strbuf filename = STRBUF_INIT;
 
 	strbuf_reset(&filename);
-	sha1_file_name(&filename, sha1);
+	sha1_file_name(&filename, oid->hash);
 
 	fd = create_tmpfile(&tmp_file, filename.buf);
 	if (fd < 0) {
@@ -1621,13 +1622,16 @@ static int write_loose_object(const unsigned char *sha1, char *hdr, int hdrlen,
 	} while (ret == Z_OK);
 
 	if (ret != Z_STREAM_END)
-		die("unable to deflate new object %s (%d)", sha1_to_hex(sha1), ret);
+		die("unable to deflate new object %s (%d)", oid_to_hex(oid),
+		    ret);
 	ret = git_deflate_end_gently(&stream);
 	if (ret != Z_OK)
-		die("deflateEnd on object %s failed (%d)", sha1_to_hex(sha1), ret);
-	git_SHA1_Final(parano_sha1, &c);
-	if (hashcmp(sha1, parano_sha1) != 0)
-		die("confused by unstable object source data for %s", sha1_to_hex(sha1));
+		die("deflateEnd on object %s failed (%d)", oid_to_hex(oid),
+		    ret);
+	git_SHA1_Final(parano_oid.hash, &c);
+	if (oidcmp(oid, &parano_oid) != 0)
+		die("confused by unstable object source data for %s",
+		    oid_to_hex(oid));
 
 	close_sha1_file(fd);
 
@@ -1660,7 +1664,8 @@ static int freshen_packed_object(const unsigned char *sha1)
 	return 1;
 }
 
-int write_sha1_file(const void *buf, unsigned long len, const char *type, unsigned char *sha1)
+int write_object_file(const void *buf, unsigned long len, const char *type,
+		      struct object_id *oid)
 {
 	char hdr[32];
 	int hdrlen = sizeof(hdr);
@@ -1668,14 +1673,15 @@ int write_sha1_file(const void *buf, unsigned long len, const char *type, unsign
 	/* Normally if we have it in the pack then we do not bother writing
 	 * it out into .git/objects/??/?{38} file.
 	 */
-	write_sha1_file_prepare(buf, len, type, sha1, hdr, &hdrlen);
-	if (freshen_packed_object(sha1) || freshen_loose_object(sha1))
+	write_object_file_prepare(buf, len, type, oid, hdr, &hdrlen);
+	if (freshen_packed_object(oid->hash) || freshen_loose_object(oid->hash))
 		return 0;
-	return write_loose_object(sha1, hdr, hdrlen, buf, len, 0);
+	return write_loose_object(oid, hdr, hdrlen, buf, len, 0);
 }
 
-int hash_sha1_file_literally(const void *buf, unsigned long len, const char *type,
-			     struct object_id *oid, unsigned flags)
+int hash_object_file_literally(const void *buf, unsigned long len,
+			       const char *type, struct object_id *oid,
+			       unsigned flags)
 {
 	char *header;
 	int hdrlen, status = 0;
@@ -1683,20 +1689,20 @@ int hash_sha1_file_literally(const void *buf, unsigned long len, const char *typ
 	/* type string, SP, %lu of the length plus NUL must fit this */
 	hdrlen = strlen(type) + 32;
 	header = xmalloc(hdrlen);
-	write_sha1_file_prepare(buf, len, type, oid->hash, header, &hdrlen);
+	write_object_file_prepare(buf, len, type, oid, header, &hdrlen);
 
 	if (!(flags & HASH_WRITE_OBJECT))
 		goto cleanup;
 	if (freshen_packed_object(oid->hash) || freshen_loose_object(oid->hash))
 		goto cleanup;
-	status = write_loose_object(oid->hash, header, hdrlen, buf, len, 0);
+	status = write_loose_object(oid, header, hdrlen, buf, len, 0);
 
 cleanup:
 	free(header);
 	return status;
 }
 
-int force_object_loose(const unsigned char *sha1, time_t mtime)
+int force_object_loose(const struct object_id *oid, time_t mtime)
 {
 	void *buf;
 	unsigned long len;
@@ -1705,13 +1711,13 @@ int force_object_loose(const unsigned char *sha1, time_t mtime)
 	int hdrlen;
 	int ret;
 
-	if (has_loose_object(sha1))
+	if (has_loose_object(oid->hash))
 		return 0;
-	buf = read_object(sha1, &type, &len);
+	buf = read_object(oid->hash, &type, &len);
 	if (!buf)
-		return error("cannot read sha1_file for %s", sha1_to_hex(sha1));
+		return error("cannot read sha1_file for %s", oid_to_hex(oid));
 	hdrlen = xsnprintf(hdr, sizeof(hdr), "%s %lu", typename(type), len) + 1;
-	ret = write_loose_object(sha1, hdr, hdrlen, buf, len, mtime);
+	ret = write_loose_object(oid, hdr, hdrlen, buf, len, mtime);
 	free(buf);
 
 	return ret;
@@ -1794,9 +1800,9 @@ static int index_mem(struct object_id *oid, void *buf, size_t size,
 	}
 
 	if (write_object)
-		ret = write_sha1_file(buf, size, typename(type), oid->hash);
+		ret = write_object_file(buf, size, typename(type), oid);
 	else
-		ret = hash_sha1_file(buf, size, typename(type), oid->hash);
+		ret = hash_object_file(buf, size, typename(type), oid);
 	if (re_allocated)
 		free(buf);
 	return ret;
@@ -1816,11 +1822,11 @@ static int index_stream_convert_blob(struct object_id *oid, int fd,
 				 get_conv_flags(flags));
 
 	if (write_object)
-		ret = write_sha1_file(sbuf.buf, sbuf.len, typename(OBJ_BLOB),
-				      oid->hash);
+		ret = write_object_file(sbuf.buf, sbuf.len, typename(OBJ_BLOB),
+					oid);
 	else
-		ret = hash_sha1_file(sbuf.buf, sbuf.len, typename(OBJ_BLOB),
-				     oid->hash);
+		ret = hash_object_file(sbuf.buf, sbuf.len, typename(OBJ_BLOB),
+				       oid);
 	strbuf_release(&sbuf);
 	return ret;
 }
@@ -1934,8 +1940,8 @@ int index_path(struct object_id *oid, const char *path, struct stat *st, unsigne
 		if (strbuf_readlink(&sb, path, st->st_size))
 			return error_errno("readlink(\"%s\")", path);
 		if (!(flags & HASH_WRITE_OBJECT))
-			hash_sha1_file(sb.buf, sb.len, blob_type, oid->hash);
-		else if (write_sha1_file(sb.buf, sb.len, blob_type, oid->hash))
+			hash_object_file(sb.buf, sb.len, blob_type, oid);
+		else if (write_object_file(sb.buf, sb.len, blob_type, oid))
 			rc = error("%s: failed to insert into database", path);
 		strbuf_release(&sb);
 		break;
