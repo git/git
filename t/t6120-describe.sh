@@ -122,7 +122,7 @@ test_expect_success 'describe --contains defaults to HEAD without commit-ish' '
 '
 
 : >err.expect
-check_describe A --all A^0
+check_describe tags/A --all A^0
 test_expect_success 'no warning was displayed for A' '
 	test_cmp err.expect err.actual
 '
@@ -373,5 +373,9 @@ test_expect_success ULIMIT_STACK_SIZE 'describe works in a deep repo' '
 	run_with_limited_stack git describe --tags --abbrev=0 HEAD~4000 >actual &&
 	test_cmp expect actual
 '
+
+check_describe tags/A --all A
+check_describe tags/c --all c
+check_describe heads/branch_A --all --match='branch_*' branch_A
 
 test_done
