@@ -597,6 +597,7 @@ static char *parse_host_arg(struct hostinfo *hi, char *extra_args, int buflen)
 		if (strncasecmp("host=", extra_args, 5) == 0) {
 			val = extra_args + 5;
 			vallen = strlen(val) + 1;
+			loginfo("Extended attribute \"host\": %s", val);
 			if (*val) {
 				/* Split <host>:<port> at colon. */
 				char *host;
@@ -647,9 +648,11 @@ static void parse_extra_args(struct hostinfo *hi, struct argv_array *env,
 		}
 	}
 
-	if (git_protocol.len > 0)
+	if (git_protocol.len > 0) {
+		loginfo("Extended attribute \"protocol\": %s", git_protocol.buf);
 		argv_array_pushf(env, GIT_PROTOCOL_ENVIRONMENT "=%s",
 				 git_protocol.buf);
+	}
 	strbuf_release(&git_protocol);
 }
 
@@ -757,14 +760,8 @@ static int execute(void)
 	alarm(0);
 
 	len = strlen(line);
-	if (pktlen != len)
-		loginfo("Extended attributes (%d bytes) exist <%.*s>",
-			(int) pktlen - len,
-			(int) pktlen - len, line + len + 1);
-	if (len && line[len-1] == '\n') {
-		line[--len] = 0;
-		pktlen--;
-	}
+	if (len && line[len-1] == '\n')
+		line[len-1] = 0;
 
 	/* parse additional args hidden behind a NUL byte */
 	if (len != pktlen)

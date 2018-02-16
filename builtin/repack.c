@@ -83,7 +83,8 @@ static void remove_pack_on_signal(int signo)
 
 /*
  * Adds all packs hex strings to the fname list, which do not
- * have a corresponding .keep file.
+ * have a corresponding .keep or .promisor file. These packs are not to
+ * be kept if we are going to pack everything into one file.
  */
 static void get_non_kept_pack_filenames(struct string_list *fname_list)
 {
@@ -101,7 +102,8 @@ static void get_non_kept_pack_filenames(struct string_list *fname_list)
 
 		fname = xmemdupz(e->d_name, len);
 
-		if (!file_exists(mkpath("%s/%s.keep", packdir, fname)))
+		if (!file_exists(mkpath("%s/%s.keep", packdir, fname)) &&
+		    !file_exists(mkpath("%s/%s.promisor", packdir, fname)))
 			string_list_append_nodup(fname_list, fname);
 		else
 			free(fname);
@@ -232,6 +234,8 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	argv_array_push(&cmd.args, "--all");
 	argv_array_push(&cmd.args, "--reflog");
 	argv_array_push(&cmd.args, "--indexed-objects");
+	if (repository_format_partial_clone)
+		argv_array_push(&cmd.args, "--exclude-promisor-objects");
 	if (window)
 		argv_array_pushf(&cmd.args, "--window=%s", window);
 	if (window_memory)

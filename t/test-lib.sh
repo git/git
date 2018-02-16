@@ -939,7 +939,7 @@ then
 	fi
 fi
 
-GITPERLLIB="$GIT_BUILD_DIR"/perl/blib/lib:"$GIT_BUILD_DIR"/perl/blib/arch/auto/Git
+GITPERLLIB="$GIT_BUILD_DIR"/perl/build/lib
 export GITPERLLIB
 test -d "$GIT_BUILD_DIR"/templates/blt || {
 	error "You haven't built things yet, have you?"
@@ -1130,6 +1130,10 @@ test_lazy_prereq AUTOIDENT '
 
 test_lazy_prereq EXPENSIVE '
 	test -n "$GIT_TEST_LONG"
+'
+
+test_lazy_prereq EXPENSIVE_ON_WINDOWS '
+	test_have_prereq EXPENSIVE || test_have_prereq !MINGW,!CYGWIN
 '
 
 test_lazy_prereq USR_BIN_TIME '

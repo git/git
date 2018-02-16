@@ -4,7 +4,7 @@
 #include "git-compat-util.h"
 #include "strbuf.h"
 #include "hashmap.h"
-#include "mru.h"
+#include "list.h"
 #include "advice.h"
 #include "gettext.h"
 #include "convert.h"
@@ -15,31 +15,6 @@
 #include "path.h"
 #include "sha1-array.h"
 #include "repository.h"
-
-#ifndef platform_SHA_CTX
-/*
- * platform's underlying implementation of SHA-1; could be OpenSSL,
- * blk_SHA, Apple CommonCrypto, etc...  Note that including
- * SHA1_HEADER may have already defined platform_SHA_CTX for our
- * own implementations like block-sha1 and ppc-sha1, so we list
- * the default for OpenSSL compatible SHA-1 implementations here.
- */
-#define platform_SHA_CTX	SHA_CTX
-#define platform_SHA1_Init	SHA1_Init
-#define platform_SHA1_Update	SHA1_Update
-#define platform_SHA1_Final    	SHA1_Final
-#endif
-
-#define git_SHA_CTX		platform_SHA_CTX
-#define git_SHA1_Init		platform_SHA1_Init
-#define git_SHA1_Update		platform_SHA1_Update
-#define git_SHA1_Final		platform_SHA1_Final
-
-#ifdef SHA1_MAX_BLOCK_SIZE
-#include "compat/sha1-chunked.h"
-#undef git_SHA1_Update
-#define git_SHA1_Update		git_SHA1_Update_Chunked
-#endif
 
 #include <zlib.h>
 typedef struct git_zstream {
@@ -345,7 +320,8 @@ struct index_state {
 	struct split_index *split_index;
 	struct cache_time timestamp;
 	unsigned name_hash_initialized : 1,
-		 initialized : 1;
+		 initialized : 1,
+		 drop_cache_tree : 1;
 	struct hashmap name_hash;
 	struct hashmap dir_hash;
 	unsigned char sha1[20];
@@ -371,7 +347,7 @@ extern void free_name_hash(struct index_state *istate);
 #define active_cache_tree (the_index.cache_tree)
 
 #define read_cache() read_index(&the_index)
-#define read_cache_from(path) read_index_from(&the_index, (path))
+#define read_cache_from(path) read_index_from(&the_index, (path), (get_git_dir()))
 #define read_cache_preload(pathspec) read_index_preload(&the_index, (pathspec))
 #define is_cache_unborn() is_index_unborn(&the_index)
 #define read_cache_unmerged() read_index_unmerged(&the_index)
@@ -616,7 +592,8 @@ extern int read_index(struct index_state *);
 extern int read_index_preload(struct index_state *, const struct pathspec *pathspec);
 extern int do_read_index(struct index_state *istate, const char *path,
 			 int must_exist); /* for testting only! */
-extern int read_index_from(struct index_state *, const char *path);
+extern int read_index_from(struct index_state *, const char *path,
+			   const char *gitdir);
 extern int is_index_unborn(struct index_state *);
 extern int read_index_unmerged(struct index_state *);
 
@@ -914,10 +891,13 @@ extern int grafts_replace_parents;
 #define GIT_REPO_VERSION 0
 #define GIT_REPO_VERSION_READ 1
 extern int repository_format_precious_objects;
+extern char *repository_format_partial_clone;
+extern const char *core_partial_clone_filter_default;
 
 struct repository_format {
 	int version;
 	int precious_objects;
+	char *partial_clone; /* value of extensions.partialclone */
 	int is_bare;
 	int hash_algo;
 	char *work_tree;
@@ -957,12 +937,10 @@ extern void check_repository_format(void);
 #define TYPE_CHANGED    0x0040
 
 /*
- * Return the name of the file in the local object database that would
- * be used to store a loose object with the specified sha1.  The
- * return value is a pointer to a statically allocated buffer that is
- * overwritten each time the function is called.
+ * Put in `buf` the name of the file in the local object database that
+ * would be used to store a loose object with the specified sha1.
  */
-extern const char *sha1_file_name(const unsigned char *sha1);
+extern void sha1_file_name(struct strbuf *buf, const unsigned char *sha1);
 
 /*
  * Return an abbreviated sha1 unique within this repository's object database.
@@ -1029,7 +1007,7 @@ static inline void hashclr(unsigned char *hash)
 
 static inline void oidclr(struct object_id *oid)
 {
-	hashclr(oid->hash);
+	memset(oid->hash, 0, GIT_MAX_RAWSZ);
 }
 
 
@@ -1047,8 +1025,6 @@ extern const struct object_id empty_tree_oid;
 	"\xe6\x9d\xe2\x9b\xb2\xd1\xd6\x43\x4b\x8b" \
 	"\x29\xae\x77\x5a\xd8\xc2\xe4\x8c\x53\x91"
 extern const struct object_id empty_blob_oid;
-#define EMPTY_BLOB_SHA1_BIN (empty_blob_oid.hash)
-
 
 static inline int is_empty_blob_sha1(const unsigned char *sha1)
 {
@@ -1238,11 +1214,22 @@ static inline const unsigned char *lookup_replace_object(const unsigned char *sh
 
 /* Read and unpack a sha1 file into memory, write memory to a sha1 file */
 extern int sha1_object_info(const unsigned char *, unsigned long *);
-extern int hash_sha1_file(const void *buf, unsigned long len, const char *type, unsigned char *sha1);
-extern int write_sha1_file(const void *buf, unsigned long len, const char *type, unsigned char *return_sha1);
-extern int hash_sha1_file_literally(const void *buf, unsigned long len, const char *type, struct object_id *oid, unsigned flags);
-extern int pretend_sha1_file(void *, unsigned long, enum object_type, unsigned char *);
-extern int force_object_loose(const unsigned char *sha1, time_t mtime);
+
+extern int hash_object_file(const void *buf, unsigned long len,
+			    const char *type, struct object_id *oid);
+
+extern int write_object_file(const void *buf, unsigned long len,
+			     const char *type, struct object_id *oid);
+
+extern int hash_object_file_literally(const void *buf, unsigned long len,
+				      const char *type, struct object_id *oid,
+				      unsigned flags);
+
+extern int pretend_object_file(void *, unsigned long, enum object_type,
+			       struct object_id *oid);
+
+extern int force_object_loose(const struct object_id *oid, time_t mtime);
+
 extern int git_open_cloexec(const char *name, int flags);
 #define git_open(name) git_open_cloexec(name, O_RDONLY)
 extern void *map_sha1_file(const unsigned char *sha1, unsigned long *size);
@@ -1635,6 +1622,7 @@ struct pack_window {
 
 extern struct packed_git {
 	struct packed_git *next;
+	struct list_head mru;
 	struct pack_window *windows;
 	off_t pack_size;
 	const void *index_data;
@@ -1648,7 +1636,8 @@ extern struct packed_git {
 	unsigned pack_local:1,
 		 pack_keep:1,
 		 freshened:1,
-		 do_not_close:1;
+		 do_not_close:1,
+		 pack_promisor:1;
 	unsigned char sha1[20];
 	struct revindex_entry *revindex;
 	/* something like ".git/objects/pack/xxxxx.pack" */
@@ -1656,10 +1645,9 @@ extern struct packed_git {
 } *packed_git;
 
 /*
- * A most-recently-used ordered version of the packed_git list, which can
- * be iterated instead of packed_git (and marked via mru_mark).
+ * A most-recently-used ordered version of the packed_git list.
  */
-extern struct mru packed_git_mru;
+extern struct list_head packed_git_mru;
 
 struct pack_entry {
 	off_t offset;
@@ -1786,6 +1774,14 @@ struct object_info {
 /* Do not retry packed storage after checking packed and loose storage */
 #define OBJECT_INFO_QUICK 8
 extern int sha1_object_info_extended(const unsigned char *, struct object_info *, unsigned flags);
+
+/*
+ * Set this to 0 to prevent sha1_object_info_extended() from fetching missing
+ * blobs. This has a difference only if extensions.partialClone is set.
+ *
+ * Its default value is 1.
+ */
+extern int fetch_if_missing;
 
 /* Dumb servers support */
 extern int update_server_info(int);

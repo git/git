@@ -466,6 +466,13 @@ set by Git if the remote helper has the 'option' capability.
 	Transmit <string> as a push option. As the push option
 	must not contain LF or NUL characters, the string is not encoded.
 
+'option from-promisor' {'true'|'false'}::
+	Indicate that these objects are being fetched from a promisor.
+
+'option no-dependents' {'true'|'false'}::
+	Indicate that only the objects wanted need to be fetched, not
+	their dependents.
+
 SEE ALSO
 --------
 linkgit:git-remote[1]

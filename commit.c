@@ -126,10 +126,8 @@ int register_commit_graft(struct commit_graft *graft, int ignore_dups)
 	ALLOC_GROW(commit_graft, commit_graft_nr + 1, commit_graft_alloc);
 	commit_graft_nr++;
 	if (pos < commit_graft_nr)
-		memmove(commit_graft + pos + 1,
-			commit_graft + pos,
-			(commit_graft_nr - pos - 1) *
-			sizeof(*commit_graft));
+		MOVE_ARRAY(commit_graft + pos + 1, commit_graft + pos,
+			   commit_graft_nr - pos - 1);
 	commit_graft[pos] = graft;
 	return 0;
 }
@@ -1380,9 +1378,8 @@ void free_commit_extra_headers(struct commit_extra_header *extra)
 	}
 }
 
-int commit_tree(const char *msg, size_t msg_len,
-		const unsigned char *tree,
-		struct commit_list *parents, unsigned char *ret,
+int commit_tree(const char *msg, size_t msg_len, const struct object_id *tree,
+		struct commit_list *parents, struct object_id *ret,
 		const char *author, const char *sign_commit)
 {
 	struct commit_extra_header *extra = NULL, **tail = &extra;
@@ -1511,8 +1508,8 @@ N_("Warning: commit message did not conform to UTF-8.\n"
    "variable i18n.commitencoding to the encoding your project uses.\n");
 
 int commit_tree_extended(const char *msg, size_t msg_len,
-			 const unsigned char *tree,
-			 struct commit_list *parents, unsigned char *ret,
+			 const struct object_id *tree,
+			 struct commit_list *parents, struct object_id *ret,
 			 const char *author, const char *sign_commit,
 			 struct commit_extra_header *extra)
 {
@@ -1520,7 +1517,7 @@ int commit_tree_extended(const char *msg, size_t msg_len,
 	int encoding_is_utf8;
 	struct strbuf buffer;
 
-	assert_sha1_type(tree, OBJ_TREE);
+	assert_sha1_type(tree->hash, OBJ_TREE);
 
 	if (memchr(msg, '\0', msg_len))
 		return error("a NUL byte in commit log message not allowed.");
@@ -1529,7 +1526,7 @@ int commit_tree_extended(const char *msg, size_t msg_len,
 	encoding_is_utf8 = is_encoding_utf8(git_commit_encoding);
 
 	strbuf_init(&buffer, 8192); /* should avoid reallocs for the headers */
-	strbuf_addf(&buffer, "tree %s\n", sha1_to_hex(tree));
+	strbuf_addf(&buffer, "tree %s\n", oid_to_hex(tree));
 
 	/*
 	 * NOTE! This ordering means that the same exact tree merged with a
@@ -1568,7 +1565,7 @@ int commit_tree_extended(const char *msg, size_t msg_len,
 		goto out;
 	}
 
-	result = write_sha1_file(buffer.buf, buffer.len, commit_type, ret);
+	result = write_object_file(buffer.buf, buffer.len, commit_type, ret);
 out:
 	strbuf_release(&buffer);
 	return result;

@@ -31,6 +31,11 @@ struct list_objects_filter_options {
 	enum list_objects_filter_choice choice;
 
 	/*
+	 * Choice is LOFC_DISABLED because "--no-filter" was requested.
+	 */
+	unsigned int no_filter : 1;
+
+	/*
 	 * Parsed values (fields) from within the filter-spec.  These are
 	 * choice-specific; not all values will be defined for any given
 	 * choice.
@@ -56,6 +61,19 @@ int opt_parse_list_objects_filter(const struct option *opt,
 	  opt_parse_list_objects_filter }
 
 void list_objects_filter_release(
+	struct list_objects_filter_options *filter_options);
+
+static inline void list_objects_filter_set_no_filter(
+	struct list_objects_filter_options *filter_options)
+{
+	list_objects_filter_release(filter_options);
+	filter_options->no_filter = 1;
+}
+
+void partial_clone_register(
+	const char *remote,
+	const struct list_objects_filter_options *filter_options);
+void partial_clone_get_default_filter_spec(
 	struct list_objects_filter_options *filter_options);
 
 #endif /* LIST_OBJECTS_FILTER_OPTIONS_H */

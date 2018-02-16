@@ -13,7 +13,7 @@
 use 5.008;
 use strict;
 use warnings;
-use Error qw(:try);
+use Git::Error qw(:try);
 use File::Basename qw(dirname);
 use File::Copy;
 use File::Find;

@@ -141,4 +141,41 @@ test_expect_success 'run_command outputs ' '
 	test_cmp expect actual
 '
 
+test_trace () {
+	expect="$1"
+	shift
+	GIT_TRACE=1 test-run-command "$@" run-command true 2>&1 >/dev/null | \
+		sed 's/.* run_command: //' >actual &&
+	echo "$expect true" >expect &&
+	test_cmp expect actual
+}
+
+test_expect_success 'GIT_TRACE with environment variables' '
+	test_trace "abc=1 def=2" env abc=1 env def=2 &&
+	test_trace "abc=2" env abc env abc=1 env abc=2 &&
+	test_trace "abc=2" env abc env abc=2 &&
+	(
+		abc=1 && export abc &&
+		test_trace "def=1" env abc=1 env def=1
+	) &&
+	(
+		abc=1 && export abc &&
+		test_trace "def=1" env abc env abc=1 env def=1
+	) &&
+	test_trace "def=1" env non-exist env def=1 &&
+	test_trace "abc=2" env abc=1 env abc env abc=2 &&
+	(
+		abc=1 def=2 && export abc def &&
+		test_trace "unset abc def;" env abc env def
+	) &&
+	(
+		abc=1 def=2 && export abc def &&
+		test_trace "unset def; abc=3" env abc env def env abc=3
+	) &&
+	(
+		abc=1 && export abc &&
+		test_trace "unset abc;" env abc=2 env abc
+	)
+'
+
 test_done

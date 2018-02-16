@@ -26,7 +26,7 @@
 #include "reachable.h"
 #include "sha1-array.h"
 #include "argv-array.h"
-#include "mru.h"
+#include "list.h"
 #include "packfile.h"
 
 static const char *pack_usage[] = {
@@ -75,6 +75,8 @@ static int use_bitmap_index = -1;
 static int write_bitmap_index;
 static uint16_t write_bitmap_options;
 
+static int exclude_promisor_objects;
+
 static unsigned long delta_cache_size = 0;
 static unsigned long max_delta_cache_size = 256 * 1024 * 1024;
 static unsigned long cache_max_small_delta_size = 1000;
@@ -84,8 +86,9 @@ static unsigned long window_memory_limit = 0;
 static struct list_objects_filter_options filter_options;
 
 enum missing_action {
-	MA_ERROR = 0,    /* fail if any missing objects are encountered */
-	MA_ALLOW_ANY,    /* silently allow ALL missing objects */
+	MA_ERROR = 0,      /* fail if any missing objects are encountered */
+	MA_ALLOW_ANY,      /* silently allow ALL missing objects */
+	MA_ALLOW_PROMISOR, /* silently allow all missing PROMISOR objects */
 };
 static enum missing_action arg_missing_action;
 static show_object_fn fn_show_object;
@@ -161,7 +164,7 @@ static unsigned long do_compress(void **pptr, unsigned long size)
 	return stream.total_out;
 }
 
-static unsigned long write_large_blob_data(struct git_istream *st, struct sha1file *f,
+static unsigned long write_large_blob_data(struct git_istream *st, struct hashfile *f,
 					   const struct object_id *oid)
 {
 	git_zstream stream;
@@ -185,7 +188,7 @@ static unsigned long write_large_blob_data(struct git_istream *st, struct sha1fi
 			stream.next_out = obuf;
 			stream.avail_out = sizeof(obuf);
 			zret = git_deflate(&stream, readlen ? 0 : Z_FINISH);
-			sha1write(f, obuf, stream.next_out - obuf);
+			hashwrite(f, obuf, stream.next_out - obuf);
 			olen += stream.next_out - obuf;
 		}
 		if (stream.avail_in)
@@ -230,7 +233,7 @@ static int check_pack_inflate(struct packed_git *p,
 		stream.total_in == len) ? 0 : -1;
 }
 
-static void copy_pack_data(struct sha1file *f,
+static void copy_pack_data(struct hashfile *f,
 		struct packed_git *p,
 		struct pack_window **w_curs,
 		off_t offset,
@@ -243,14 +246,14 @@ static void copy_pack_data(struct sha1file *f,
 		in = use_pack(p, w_curs, offset, &avail);
 		if (avail > len)
 			avail = (unsigned long)len;
-		sha1write(f, in, avail);
+		hashwrite(f, in, avail);
 		offset += avail;
 		len -= avail;
 	}
 }
 
 /* Return 0 if we will bust the pack-size limit */
-static unsigned long write_no_reuse_object(struct sha1file *f, struct object_entry *entry,
+static unsigned long write_no_reuse_object(struct hashfile *f, struct object_entry *entry,
 					   unsigned long limit, int usable_delta)
 {
 	unsigned long size, datalen;
@@ -323,8 +326,8 @@ static unsigned long write_no_reuse_object(struct sha1file *f, struct object_ent
 			free(buf);
 			return 0;
 		}
-		sha1write(f, header, hdrlen);
-		sha1write(f, dheader + pos, sizeof(dheader) - pos);
+		hashwrite(f, header, hdrlen);
+		hashwrite(f, dheader + pos, sizeof(dheader) - pos);
 		hdrlen += sizeof(dheader) - pos;
 	} else if (type == OBJ_REF_DELTA) {
 		/*
@@ -337,8 +340,8 @@ static unsigned long write_no_reuse_object(struct sha1file *f, struct object_ent
 			free(buf);
 			return 0;
 		}
-		sha1write(f, header, hdrlen);
-		sha1write(f, entry->delta->idx.oid.hash, 20);
+		hashwrite(f, header, hdrlen);
+		hashwrite(f, entry->delta->idx.oid.hash, 20);
 		hdrlen += 20;
 	} else {
 		if (limit && hdrlen + datalen + 20 >= limit) {
@@ -347,13 +350,13 @@ static unsigned long write_no_reuse_object(struct sha1file *f, struct object_ent
 			free(buf);
 			return 0;
 		}
-		sha1write(f, header, hdrlen);
+		hashwrite(f, header, hdrlen);
 	}
 	if (st) {
 		datalen = write_large_blob_data(st, f, &entry->idx.oid);
 		close_istream(st);
 	} else {
-		sha1write(f, buf, datalen);
+		hashwrite(f, buf, datalen);
 		free(buf);
 	}
 
@@ -361,7 +364,7 @@ static unsigned long write_no_reuse_object(struct sha1file *f, struct object_ent
 }
 
 /* Return 0 if we will bust the pack-size limit */
-static off_t write_reuse_object(struct sha1file *f, struct object_entry *entry,
+static off_t write_reuse_object(struct hashfile *f, struct object_entry *entry,
 				unsigned long limit, int usable_delta)
 {
 	struct packed_git *p = entry->in_pack;
@@ -412,8 +415,8 @@ static off_t write_reuse_object(struct sha1file *f, struct object_entry *entry,
 			unuse_pack(&w_curs);
 			return 0;
 		}
-		sha1write(f, header, hdrlen);
-		sha1write(f, dheader + pos, sizeof(dheader) - pos);
+		hashwrite(f, header, hdrlen);
+		hashwrite(f, dheader + pos, sizeof(dheader) - pos);
 		hdrlen += sizeof(dheader) - pos;
 		reused_delta++;
 	} else if (type == OBJ_REF_DELTA) {
@@ -421,8 +424,8 @@ static off_t write_reuse_object(struct sha1file *f, struct object_entry *entry,
 			unuse_pack(&w_curs);
 			return 0;
 		}
-		sha1write(f, header, hdrlen);
-		sha1write(f, entry->delta->idx.oid.hash, 20);
+		hashwrite(f, header, hdrlen);
+		hashwrite(f, entry->delta->idx.oid.hash, 20);
 		hdrlen += 20;
 		reused_delta++;
 	} else {
@@ -430,7 +433,7 @@ static off_t write_reuse_object(struct sha1file *f, struct object_entry *entry,
 			unuse_pack(&w_curs);
 			return 0;
 		}
-		sha1write(f, header, hdrlen);
+		hashwrite(f, header, hdrlen);
 	}
 	copy_pack_data(f, p, &w_curs, offset, datalen);
 	unuse_pack(&w_curs);
@@ -439,7 +442,7 @@ static off_t write_reuse_object(struct sha1file *f, struct object_entry *entry,
 }
 
 /* Return 0 if we will bust the pack-size limit */
-static off_t write_object(struct sha1file *f,
+static off_t write_object(struct hashfile *f,
 			  struct object_entry *entry,
 			  off_t write_offset)
 {
@@ -512,7 +515,7 @@ enum write_one_status {
 	WRITE_ONE_RECURSIVE = 2 /* already scheduled to be written */
 };
 
-static enum write_one_status write_one(struct sha1file *f,
+static enum write_one_status write_one(struct hashfile *f,
 				       struct object_entry *e,
 				       off_t *offset)
 {
@@ -731,7 +734,7 @@ static struct object_entry **compute_write_order(void)
 	return wo;
 }
 
-static off_t write_reused_pack(struct sha1file *f)
+static off_t write_reused_pack(struct hashfile *f)
 {
 	unsigned char buffer[8192];
 	off_t to_write, total;
@@ -762,7 +765,7 @@ static off_t write_reused_pack(struct sha1file *f)
 		if (read_pack > to_write)
 			read_pack = to_write;
 
-		sha1write(f, buffer, read_pack);
+		hashwrite(f, buffer, read_pack);
 		to_write -= read_pack;
 
 		/*
@@ -791,7 +794,7 @@ static const char no_split_warning[] = N_(
 static void write_pack_file(void)
 {
 	uint32_t i = 0, j;
-	struct sha1file *f;
+	struct hashfile *f;
 	off_t offset;
 	uint32_t nr_remaining = nr_result;
 	time_t last_mtime = 0;
@@ -807,7 +810,7 @@ static void write_pack_file(void)
 		char *pack_tmp_name = NULL;
 
 		if (pack_to_stdout)
-			f = sha1fd_throughput(1, "<stdout>", progress_state);
+			f = hashfd_throughput(1, "<stdout>", progress_state);
 		else
 			f = create_tmp_packfile(&pack_tmp_name);
 
@@ -834,11 +837,11 @@ static void write_pack_file(void)
 		 * If so, rewrite it like in fast-import
 		 */
 		if (pack_to_stdout) {
-			sha1close(f, oid.hash, CSUM_CLOSE);
+			hashclose(f, oid.hash, CSUM_CLOSE);
 		} else if (nr_written == nr_remaining) {
-			sha1close(f, oid.hash, CSUM_FSYNC);
+			hashclose(f, oid.hash, CSUM_FSYNC);
 		} else {
-			int fd = sha1close(f, oid.hash, 0);
+			int fd = hashclose(f, oid.hash, 0);
 			fixup_pack_header_footer(fd, oid.hash, pack_tmp_name,
 						 nr_written, oid.hash, offset);
 			close(fd);
@@ -1006,8 +1009,8 @@ static int want_object_in_pack(const struct object_id *oid,
 			       struct packed_git **found_pack,
 			       off_t *found_offset)
 {
-	struct mru_entry *entry;
 	int want;
+	struct list_head *pos;
 
 	if (!exclude && local && has_loose_object_nonlocal(oid->hash))
 		return 0;
@@ -1023,8 +1026,8 @@ static int want_object_in_pack(const struct object_id *oid,
 			return want;
 	}
 
-	for (entry = packed_git_mru.head; entry; entry = entry->next) {
-		struct packed_git *p = entry->item;
+	list_for_each(pos, &packed_git_mru) {
+		struct packed_git *p = list_entry(pos, struct packed_git, mru);
 		off_t offset;
 
 		if (p == *found_pack)
@@ -1041,7 +1044,7 @@ static int want_object_in_pack(const struct object_id *oid,
 			}
 			want = want_found_object(exclude, p);
 			if (!exclude && want > 0)
-				mru_mark(&packed_git_mru, entry);
+				list_move(&p->mru, &packed_git_mru);
 			if (want != -1)
 				return want;
 		}
@@ -2578,6 +2581,20 @@ static void show_object__ma_allow_any(struct object *obj, const char *name, void
 	show_object(obj, name, data);
 }
 
+static void show_object__ma_allow_promisor(struct object *obj, const char *name, void *data)
+{
+	assert(arg_missing_action == MA_ALLOW_PROMISOR);
+
+	/*
+	 * Quietly ignore EXPECTED missing objects.  This avoids problems with
+	 * staging them now and getting an odd error later.
+	 */
+	if (!has_object_file(&obj->oid) && is_promisor_object(&obj->oid))
+		return;
+
+	show_object(obj, name, data);
+}
+
 static int option_parse_missing_action(const struct option *opt,
 				       const char *arg, int unset)
 {
@@ -2592,7 +2609,15 @@ static int option_parse_missing_action(const struct option *opt,
 
 	if (!strcmp(arg, "allow-any")) {
 		arg_missing_action = MA_ALLOW_ANY;
+		fetch_if_missing = 0;
 		fn_show_object = show_object__ma_allow_any;
+		return 0;
+	}
+
+	if (!strcmp(arg, "allow-promisor")) {
+		arg_missing_action = MA_ALLOW_PROMISOR;
+		fetch_if_missing = 0;
+		fn_show_object = show_object__ma_allow_promisor;
 		return 0;
 	}
 
@@ -2768,7 +2793,7 @@ static void loosen_unused_packed_objects(struct rev_info *revs)
 			if (!packlist_find(&to_pack, oid.hash, NULL) &&
 			    !has_sha1_pack_kept_or_nonlocal(&oid) &&
 			    !loosened_object_can_be_discarded(&oid, p->mtime))
-				if (force_object_loose(oid.hash, p->mtime))
+				if (force_object_loose(&oid, p->mtime))
 					die("unable to force loose object");
 		}
 	}
@@ -3009,6 +3034,8 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		{ OPTION_CALLBACK, 0, "missing", NULL, N_("action"),
 		  N_("handling for missing objects"), PARSE_OPT_NONEG,
 		  option_parse_missing_action },
+		OPT_BOOL(0, "exclude-promisor-objects", &exclude_promisor_objects,
+			 N_("do not pack objects in promisor packfiles")),
 		OPT_END(),
 	};
 
@@ -3052,6 +3079,12 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	if (rev_list_unpacked) {
 		use_internal_rev_list = 1;
 		argv_array_push(&rp, "--unpacked");
+	}
+
+	if (exclude_promisor_objects) {
+		use_internal_rev_list = 1;
+		fetch_if_missing = 0;
+		argv_array_push(&rp, "--exclude-promisor-objects");
 	}
 
 	if (!reuse_object)

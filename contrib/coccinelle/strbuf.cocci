@@ -1,21 +1,6 @@
 @ strbuf_addf_with_format_only @
 expression E;
-constant fmt;
-@@
-  strbuf_addf(E,
-(
-  fmt
-|
-  _(fmt)
-)
-  );
-
-@ script:python @
-fmt << strbuf_addf_with_format_only.fmt;
-@@
-cocci.include_match("%" not in fmt)
-
-@ extends strbuf_addf_with_format_only @
+constant fmt !~ "%";
 @@
 - strbuf_addf
 + strbuf_addstr
@@ -29,8 +14,9 @@ cocci.include_match("%" not in fmt)
 
 @@
 expression E1, E2;
+format F =~ "s";
 @@
-- strbuf_addf(E1, "%s", E2);
+- strbuf_addf(E1, "%@F@", E2);
 + strbuf_addstr(E1, E2);
 
 @@

@@ -3,6 +3,7 @@
 
 #include "string-list.h"
 #include "run-command.h"
+#include "list-objects-filter-options.h"
 
 struct oid_array;
 
@@ -12,6 +13,7 @@ struct fetch_pack_args {
 	int depth;
 	const char *deepen_since;
 	const struct string_list *deepen_not;
+	struct list_objects_filter_options filter_options;
 	unsigned deepen_relative:1;
 	unsigned quiet:1;
 	unsigned keep_pack:1;
@@ -29,6 +31,14 @@ struct fetch_pack_args {
 	unsigned cloning:1;
 	unsigned update_shallow:1;
 	unsigned deepen:1;
+	unsigned from_promisor:1;
+
+	/*
+	 * If 1, fetch_pack() will also not modify any object flags.
+	 * This allows fetch_pack() to safely be called by any function,
+	 * regardless of which object flags it uses (if any).
+	 */
+	unsigned no_dependents:1;
 };
 
 /*

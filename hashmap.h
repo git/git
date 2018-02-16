@@ -400,7 +400,6 @@ static inline void hashmap_disable_item_counting(struct hashmap *map)
  */
 static inline void hashmap_enable_item_counting(struct hashmap *map)
 {
-	void *item;
 	unsigned int n = 0;
 	struct hashmap_iter iter;
 
@@ -408,7 +407,7 @@ static inline void hashmap_enable_item_counting(struct hashmap *map)
 		return;
 
 	hashmap_iter_init(map, &iter);
-	while ((item = hashmap_iter_next(&iter)))
+	while (hashmap_iter_next(&iter))
 		n++;
 
 	map->do_count_items = 1;

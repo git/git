@@ -270,8 +270,8 @@ static int note_tree_insert(struct notes_tree *t, struct int_node *tree,
 				if (!oidcmp(&l->val_oid, &entry->val_oid))
 					return 0;
 
-				ret = combine_notes(l->val_oid.hash,
-						    entry->val_oid.hash);
+				ret = combine_notes(&l->val_oid,
+						    &entry->val_oid);
 				if (!ret && is_null_oid(&l->val_oid))
 					note_tree_remove(t, tree, n, entry);
 				free(entry);
@@ -667,7 +667,7 @@ static int tree_write_stack_finish_subtree(struct tree_write_stack *tws)
 		ret = tree_write_stack_finish_subtree(n);
 		if (ret)
 			return ret;
-		ret = write_sha1_file(n->buf.buf, n->buf.len, tree_type, s.hash);
+		ret = write_object_file(n->buf.buf, n->buf.len, tree_type, &s);
 		if (ret)
 			return ret;
 		strbuf_release(&n->buf);
@@ -786,8 +786,8 @@ static int prune_notes_helper(const struct object_id *object_oid,
 	return 0;
 }
 
-int combine_notes_concatenate(unsigned char *cur_sha1,
-		const unsigned char *new_sha1)
+int combine_notes_concatenate(struct object_id *cur_oid,
+			      const struct object_id *new_oid)
 {
 	char *cur_msg = NULL, *new_msg = NULL, *buf;
 	unsigned long cur_len, new_len, buf_len;
@@ -795,18 +795,18 @@ int combine_notes_concatenate(unsigned char *cur_sha1,
 	int ret;
 
 	/* read in both note blob objects */
-	if (!is_null_sha1(new_sha1))
-		new_msg = read_sha1_file(new_sha1, &new_type, &new_len);
+	if (!is_null_oid(new_oid))
+		new_msg = read_sha1_file(new_oid->hash, &new_type, &new_len);
 	if (!new_msg || !new_len || new_type != OBJ_BLOB) {
 		free(new_msg);
 		return 0;
 	}
-	if (!is_null_sha1(cur_sha1))
-		cur_msg = read_sha1_file(cur_sha1, &cur_type, &cur_len);
+	if (!is_null_oid(cur_oid))
+		cur_msg = read_sha1_file(cur_oid->hash, &cur_type, &cur_len);
 	if (!cur_msg || !cur_len || cur_type != OBJ_BLOB) {
 		free(cur_msg);
 		free(new_msg);
-		hashcpy(cur_sha1, new_sha1);
+		oidcpy(cur_oid, new_oid);
 		return 0;
 	}
 
@@ -825,20 +825,20 @@ int combine_notes_concatenate(unsigned char *cur_sha1,
 	free(new_msg);
 
 	/* create a new blob object from buf */
-	ret = write_sha1_file(buf, buf_len, blob_type, cur_sha1);
+	ret = write_object_file(buf, buf_len, blob_type, cur_oid);
 	free(buf);
 	return ret;
 }
 
-int combine_notes_overwrite(unsigned char *cur_sha1,
-		const unsigned char *new_sha1)
+int combine_notes_overwrite(struct object_id *cur_oid,
+			    const struct object_id *new_oid)
 {
-	hashcpy(cur_sha1, new_sha1);
+	oidcpy(cur_oid, new_oid);
 	return 0;
 }
 
-int combine_notes_ignore(unsigned char *cur_sha1,
-		const unsigned char *new_sha1)
+int combine_notes_ignore(struct object_id *cur_oid,
+			 const struct object_id *new_oid)
 {
 	return 0;
 }
@@ -848,17 +848,17 @@ int combine_notes_ignore(unsigned char *cur_sha1,
  * newlines removed.
  */
 static int string_list_add_note_lines(struct string_list *list,
-				      const unsigned char *sha1)
+				      const struct object_id *oid)
 {
 	char *data;
 	unsigned long len;
 	enum object_type t;
 
-	if (is_null_sha1(sha1))
+	if (is_null_oid(oid))
 		return 0;
 
 	/* read_sha1_file NUL-terminates */
-	data = read_sha1_file(sha1, &t, &len);
+	data = read_sha1_file(oid->hash, &t, &len);
 	if (t != OBJ_BLOB || !data || !len) {
 		free(data);
 		return t != OBJ_BLOB || !data;
@@ -884,17 +884,17 @@ static int string_list_join_lines_helper(struct string_list_item *item,
 	return 0;
 }
 
-int combine_notes_cat_sort_uniq(unsigned char *cur_sha1,
-		const unsigned char *new_sha1)
+int combine_notes_cat_sort_uniq(struct object_id *cur_oid,
+				const struct object_id *new_oid)
 {
 	struct string_list sort_uniq_list = STRING_LIST_INIT_DUP;
 	struct strbuf buf = STRBUF_INIT;
 	int ret = 1;
 
 	/* read both note blob objects into unique_lines */
-	if (string_list_add_note_lines(&sort_uniq_list, cur_sha1))
+	if (string_list_add_note_lines(&sort_uniq_list, cur_oid))
 		goto out;
-	if (string_list_add_note_lines(&sort_uniq_list, new_sha1))
+	if (string_list_add_note_lines(&sort_uniq_list, new_oid))
 		goto out;
 	string_list_remove_empty_items(&sort_uniq_list, 0);
 	string_list_sort(&sort_uniq_list);
@@ -905,7 +905,7 @@ int combine_notes_cat_sort_uniq(unsigned char *cur_sha1,
 				 string_list_join_lines_helper, &buf))
 		goto out;
 
-	ret = write_sha1_file(buf.buf, buf.len, blob_type, cur_sha1);
+	ret = write_object_file(buf.buf, buf.len, blob_type, cur_oid);
 
 out:
 	strbuf_release(&buf);
@@ -1123,11 +1123,12 @@ int for_each_note(struct notes_tree *t, int flags, each_note_fn fn,
 	return for_each_note_helper(t, t->root, 0, 0, flags, fn, cb_data);
 }
 
-int write_notes_tree(struct notes_tree *t, unsigned char *result)
+int write_notes_tree(struct notes_tree *t, struct object_id *result)
 {
 	struct tree_write_stack root;
 	struct write_each_note_data cb_data;
 	int ret;
+	int flags;
 
 	if (!t)
 		t = &default_notes_tree;
@@ -1141,12 +1142,12 @@ int write_notes_tree(struct notes_tree *t, unsigned char *result)
 	cb_data.next_non_note = t->first_non_note;
 
 	/* Write tree objects representing current notes tree */
-	ret = for_each_note(t, FOR_EACH_NOTE_DONT_UNPACK_SUBTREES |
-				FOR_EACH_NOTE_YIELD_SUBTREES,
-			write_each_note, &cb_data) ||
-		write_each_non_note_until(NULL, &cb_data) ||
-		tree_write_stack_finish_subtree(&root) ||
-		write_sha1_file(root.buf.buf, root.buf.len, tree_type, result);
+	flags = FOR_EACH_NOTE_DONT_UNPACK_SUBTREES |
+		FOR_EACH_NOTE_YIELD_SUBTREES;
+	ret = for_each_note(t, flags, write_each_note, &cb_data) ||
+	      write_each_non_note_until(NULL, &cb_data) ||
+	      tree_write_stack_finish_subtree(&root) ||
+	      write_object_file(root.buf.buf, root.buf.len, tree_type, result);
 	strbuf_release(&root.buf);
 	return ret;
 }

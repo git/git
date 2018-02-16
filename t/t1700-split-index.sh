@@ -401,4 +401,42 @@ done <<\EOF
 0642 -rw-r---w-
 EOF
 
+test_expect_success POSIXPERM,SANITY 'graceful handling when splitting index is not allowed' '
+	test_create_repo ro &&
+	(
+		cd ro &&
+		test_commit initial &&
+		git update-index --split-index &&
+		test -f .git/sharedindex.*
+	) &&
+	cp ro/.git/index new-index &&
+	test_when_finished "chmod u+w ro/.git" &&
+	chmod u-w ro/.git &&
+	GIT_INDEX_FILE="$(pwd)/new-index" git -C ro update-index --split-index &&
+	chmod u+w ro/.git &&
+	rm ro/.git/sharedindex.* &&
+	GIT_INDEX_FILE=new-index git ls-files >actual &&
+	echo initial.t >expected &&
+	test_cmp expected actual
+'
+
+test_expect_success 'writing split index with null sha1 does not write cache tree' '
+	git config core.splitIndex true &&
+	git config splitIndex.maxPercentChange 0 &&
+	git commit -m "commit" &&
+	{
+		git ls-tree HEAD &&
+		printf "160000 commit $_z40\\tbroken\\n"
+	} >broken-tree &&
+	echo "add broken entry" >msg &&
+
+	tree=$(git mktree <broken-tree) &&
+	test_tick &&
+	commit=$(git commit-tree $tree -p HEAD <msg) &&
+	git update-ref HEAD "$commit" &&
+	GIT_ALLOW_NULL_SHA1=1 git reset --hard &&
+	(test-dump-cache-tree >cache-tree.out || true) &&
+	test_line_count = 0 cache-tree.out
+'
+
 test_done

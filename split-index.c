@@ -238,6 +238,8 @@ void prepare_to_write_split_index(struct index_state *istate)
 				ALLOC_GROW(entries, nr_entries+1, nr_alloc);
 				entries[nr_entries++] = ce;
 			}
+			if (is_null_oid(&ce->oid))
+				istate->drop_cache_tree = 1;
 		}
 	}
 

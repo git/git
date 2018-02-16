@@ -134,10 +134,8 @@ static void create_pack_revindex(struct packed_git *p)
 			if (!(off & 0x80000000)) {
 				p->revindex[i].offset = off;
 			} else {
-				p->revindex[i].offset =
-					((uint64_t)ntohl(*off_64++)) << 32;
-				p->revindex[i].offset |=
-					ntohl(*off_64++);
+				p->revindex[i].offset = get_be64(off_64);
+				off_64 += 2;
 			}
 			p->revindex[i].nr = i;
 		}

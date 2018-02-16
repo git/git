@@ -26,10 +26,11 @@ use Text::ParseWords;
 use Term::ANSIColor;
 use File::Temp qw/ tempdir tempfile /;
 use File::Spec::Functions qw(catdir catfile);
-use Error qw(:try);
+use Git::Error qw(:try);
 use Cwd qw(abs_path cwd);
 use Git;
 use Git::I18N;
+use Git::Mail::Address;
 
 Getopt::Long::Configure qw/ pass_through /;
 
@@ -489,7 +490,7 @@ my ($repoauthor, $repocommitter);
 ($repocommitter) = Git::ident_person(@repo, 'committer');
 
 sub parse_address_line {
-	return Git::parse_mailboxes($_[0]);
+	return map { $_->format } Mail::Address->parse($_[0]);
 }
 
 sub split_addrs {

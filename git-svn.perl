@@ -1200,6 +1200,11 @@ sub cmd_branch {
 	$ctx->copy($src, $rev, $dst)
 		unless $_dry_run;
 
+	# Release resources held by ctx before creating another SVN::Ra
+	# so destruction is orderly.  This seems necessary with SVN 1.9.5
+	# to avoid segfaults.
+	$ctx = undef;
+
 	$gs->fetch_all;
 }
 

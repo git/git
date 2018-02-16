@@ -101,7 +101,7 @@ increase notwithstanding).
 
 
 use Carp qw(carp croak); # but croak is bad - throw instead
-use Error qw(:try);
+use Git::Error qw(:try);
 use Cwd qw(abs_path cwd);
 use IPC::Open2 qw(open2);
 use Fcntl qw(SEEK_SET SEEK_CUR);
@@ -878,77 +878,6 @@ sub ident_person {
 	my ($self, @ident) = _maybe_self(@_);
 	$#ident == 0 and @ident = $self ? $self->ident($ident[0]) : ident($ident[0]);
 	return "$ident[0] <$ident[1]>";
-}
-
-=item parse_mailboxes
-
-Return an array of mailboxes extracted from a string.
-
-=cut
-
-# Very close to Mail::Address's parser, but we still have minor
-# differences in some cases (see t9000 for examples).
-sub parse_mailboxes {
-	my $re_comment = qr/\((?:[^)]*)\)/;
-	my $re_quote = qr/"(?:[^\"\\]|\\.)*"/;
-	my $re_word = qr/(?:[^]["\s()<>:;@\\,.]|\\.)+/;
-
-	# divide the string in tokens of the above form
-	my $re_token = qr/(?:$re_quote|$re_word|$re_comment|\S)/;
-	my @tokens = map { $_ =~ /\s*($re_token)\s*/g } @_;
-	my $end_of_addr_seen = 0;
-
-	# add a delimiter to simplify treatment for the last mailbox
-	push @tokens, ",";
-
-	my (@addr_list, @phrase, @address, @comment, @buffer) = ();
-	foreach my $token (@tokens) {
-		if ($token =~ /^[,;]$/) {
-			# if buffer still contains undeterminated strings
-			# append it at the end of @address or @phrase
-			if ($end_of_addr_seen) {
-				push @phrase, @buffer;
-			} else {
-				push @address, @buffer;
-			}
-
-			my $str_phrase = join ' ', @phrase;
-			my $str_address = join '', @address;
-			my $str_comment = join ' ', @comment;
-
-			# quote are necessary if phrase contains
-			# special characters
-			if ($str_phrase =~ /[][()<>:;@\\,.\000-\037\177]/) {
-				$str_phrase =~ s/(^|[^\\])"/$1/g;
-				$str_phrase = qq["$str_phrase"];
-			}
-
-			# add "<>" around the address if necessary
-			if ($str_address ne "" && $str_phrase ne "") {
-				$str_address = qq[<$str_address>];
-			}
-
-			my $str_mailbox = "$str_phrase $str_address $str_comment";
-			$str_mailbox =~ s/^\s*|\s*$//g;
-			push @addr_list, $str_mailbox if ($str_mailbox);
-
-			@phrase = @address = @comment = @buffer = ();
-			$end_of_addr_seen = 0;
-		} elsif ($token =~ /^\(/) {
-			push @comment, $token;
-		} elsif ($token eq "<") {
-			push @phrase, (splice @address), (splice @buffer);
-		} elsif ($token eq ">") {
-			$end_of_addr_seen = 1;
-			push @address, (splice @buffer);
-		} elsif ($token eq "@" && !$end_of_addr_seen) {
-			push @address, (splice @buffer), "@";
-		} else {
-			push @buffer, $token;
-		}
-	}
-
-	return @addr_list;
 }
 
 =item hash_object ( TYPE, FILENAME )

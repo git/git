@@ -255,6 +255,17 @@ a missing object is encountered.  This is the default action.
 The form '--missing=allow-any' will allow object traversal to continue
 if a missing object is encountered.  Missing objects will silently be
 omitted from the results.
++
+The form '--missing=allow-promisor' is like 'allow-any', but will only
+allow object traversal to continue for EXPECTED promisor missing objects.
+Unexpected missing object will raise an error.
+
+--exclude-promisor-objects::
+	Omit objects that are known to be in the promisor remote.  (This
+	option has the purpose of operating only on locally created objects,
+	so that when we repack, we still maintain a distinction between
+	locally created objects [without .promisor] and objects from the
+	promisor remote [with .promisor].)  This is used with partial clone.
 
 SEE ALSO
 --------

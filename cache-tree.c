@@ -84,9 +84,8 @@ static struct cache_tree_sub *find_subtree(struct cache_tree *it,
 	down->namelen = pathlen;
 
 	if (pos < it->subtree_nr)
-		memmove(it->down + pos + 1,
-			it->down + pos,
-			sizeof(down) * (it->subtree_nr - pos - 1));
+		MOVE_ARRAY(it->down + pos + 1, it->down + pos,
+			   it->subtree_nr - pos - 1);
 	it->down[pos] = down;
 	return down;
 }
@@ -400,16 +399,16 @@ static int update_one(struct cache_tree *it,
 	}
 
 	if (repair) {
-		unsigned char sha1[20];
-		hash_sha1_file(buffer.buf, buffer.len, tree_type, sha1);
-		if (has_sha1_file(sha1))
-			hashcpy(it->oid.hash, sha1);
+		struct object_id oid;
+		hash_object_file(buffer.buf, buffer.len, tree_type, &oid);
+		if (has_sha1_file(oid.hash))
+			oidcpy(&it->oid, &oid);
 		else
 			to_invalidate = 1;
-	} else if (dryrun)
-		hash_sha1_file(buffer.buf, buffer.len, tree_type,
-			       it->oid.hash);
-	else if (write_sha1_file(buffer.buf, buffer.len, tree_type, it->oid.hash)) {
+	} else if (dryrun) {
+		hash_object_file(buffer.buf, buffer.len, tree_type, &it->oid);
+	} else if (write_object_file(buffer.buf, buffer.len, tree_type,
+				     &it->oid)) {
 		strbuf_release(&buffer);
 		return -1;
 	}
@@ -608,7 +607,7 @@ int write_index_as_tree(unsigned char *sha1, struct index_state *index_state, co
 
 	hold_lock_file_for_update(&lock_file, index_path, LOCK_DIE_ON_ERROR);
 
-	entries = read_index_from(index_state, index_path);
+	entries = read_index_from(index_state, index_path, get_git_dir());
 	if (entries < 0) {
 		ret = WRITE_TREE_UNREADABLE_INDEX;
 		goto out;

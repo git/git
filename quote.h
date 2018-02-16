@@ -30,8 +30,16 @@ struct strbuf;
  */
 
 extern void sq_quote_buf(struct strbuf *, const char *src);
-extern void sq_quote_argv(struct strbuf *, const char **argv, size_t maxlen);
+extern void sq_quote_argv(struct strbuf *, const char **argv);
 extern void sq_quotef(struct strbuf *, const char *fmt, ...);
+
+/*
+ * These match their non-pretty variants, except that they avoid
+ * quoting when there are no exotic characters. These should only be used for
+ * human-readable output, as sq_dequote() is not smart enough to dequote it.
+ */
+void sq_quote_buf_pretty(struct strbuf *, const char *src);
+void sq_quote_argv_pretty(struct strbuf *, const char **argv);
 
 /* This unwraps what sq_quote() produces in place, but returns
  * NULL if the input does not look like what sq_quote would have

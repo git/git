@@ -15,6 +15,31 @@
 #include "block-sha1/sha1.h"
 #endif
 
+#ifndef platform_SHA_CTX
+/*
+ * platform's underlying implementation of SHA-1; could be OpenSSL,
+ * blk_SHA, Apple CommonCrypto, etc...  Note that the relevant
+ * SHA-1 header may have already defined platform_SHA_CTX for our
+ * own implementations like block-sha1 and ppc-sha1, so we list
+ * the default for OpenSSL compatible SHA-1 implementations here.
+ */
+#define platform_SHA_CTX	SHA_CTX
+#define platform_SHA1_Init	SHA1_Init
+#define platform_SHA1_Update	SHA1_Update
+#define platform_SHA1_Final    	SHA1_Final
+#endif
+
+#define git_SHA_CTX		platform_SHA_CTX
+#define git_SHA1_Init		platform_SHA1_Init
+#define git_SHA1_Update		platform_SHA1_Update
+#define git_SHA1_Final		platform_SHA1_Final
+
+#ifdef SHA1_MAX_BLOCK_SIZE
+#include "compat/sha1-chunked.h"
+#undef git_SHA1_Update
+#define git_SHA1_Update		git_SHA1_Update_Chunked
+#endif
+
 /*
  * Note that these constants are suitable for indexing the hash_algos array and
  * comparing against each other, but are otherwise arbitrary, so they should not
@@ -30,9 +55,15 @@
 /* Number of algorithms supported (including unknown). */
 #define GIT_HASH_NALGOS (GIT_HASH_SHA1 + 1)
 
-typedef void (*git_hash_init_fn)(void *ctx);
-typedef void (*git_hash_update_fn)(void *ctx, const void *in, size_t len);
-typedef void (*git_hash_final_fn)(unsigned char *hash, void *ctx);
+/* A suitably aligned type for stack allocations of hash contexts. */
+union git_hash_ctx {
+	git_SHA_CTX sha1;
+};
+typedef union git_hash_ctx git_hash_ctx;
+
+typedef void (*git_hash_init_fn)(git_hash_ctx *ctx);
+typedef void (*git_hash_update_fn)(git_hash_ctx *ctx, const void *in, size_t len);
+typedef void (*git_hash_final_fn)(unsigned char *hash, git_hash_ctx *ctx);
 
 struct git_hash_algo {
 	/*
@@ -43,9 +74,6 @@ struct git_hash_algo {
 
 	/* A four-byte version identifier, used in pack indices. */
 	uint32_t format_id;
-
-	/* The size of a hash context (e.g. git_SHA_CTX). */
-	size_t ctxsz;
 
 	/* The length of the hash in binary. */
 	size_t rawsz;

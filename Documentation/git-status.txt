@@ -149,14 +149,15 @@ the status.relativePaths config option below.
 Short Format
 ~~~~~~~~~~~~
 
-In the short-format, the status of each path is shown as
+In the short-format, the status of each path is shown as one of these
+forms
 
-	XY PATH1 -> PATH2
+	XY PATH
+	XY ORIG_PATH -> PATH
 
-where `PATH1` is the path in the `HEAD`, and the " `-> PATH2`" part is
-shown only when `PATH1` corresponds to a different path in the
-index/worktree (i.e. the file is renamed). The `XY` is a two-letter
-status code.
+where `ORIG_PATH` is where the renamed/copied contents came
+from. `ORIG_PATH` is only shown when the entry is renamed or
+copied. The `XY` is a two-letter status code.
 
 The fields (including the `->`) are separated from each other by a
 single space. If a filename contains whitespace or other nonprintable
@@ -192,6 +193,8 @@ in which case `XY` are `!!`.
     [MARC]           index and work tree matches
     [ MARC]     M    work tree changed since index
     [ MARC]     D    deleted in work tree
+    [ D]        R    renamed in work tree
+    [ D]        C    copied in work tree
     -------------------------------------------------
     D           D    unmerged, both deleted
     A           U    unmerged, added by us
@@ -309,13 +312,13 @@ Renamed or copied entries have the following format:
 		of similarity between the source and target of the
 		move or copy). For example "R100" or "C75".
     <path>      The pathname.  In a renamed/copied entry, this
-		is the path in the index and in the working tree.
+		is the target path.
     <sep>       When the `-z` option is used, the 2 pathnames are separated
 		with a NUL (ASCII 0x00) byte; otherwise, a tab (ASCII 0x09)
 		byte separates them.
-    <origPath>  The pathname in the commit at HEAD.  This is only
-		present in a renamed/copied entry, and tells
-		where the renamed/copied contents came from.
+    <origPath>  The pathname in the commit at HEAD or in the index.
+		This is only present in a renamed/copied entry, and
+		tells where the renamed/copied contents came from.
     --------------------------------------------------------
 
 Unmerged entries have the following format; the first character is
