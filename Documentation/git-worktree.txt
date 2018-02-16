@@ -56,6 +56,7 @@ If <commit-ish> is a branch name (call it `<branch>`) and is not found,
 and neither `-b` nor `-B` nor `--detach` are used, but there does
 exist a tracking branch in exactly one remote (call it `<remote>`)
 with a matching name, treat as equivalent to:
++
 ------------
 $ git worktree add --track -b <branch> <path> <remote>/<branch>
 ------------
