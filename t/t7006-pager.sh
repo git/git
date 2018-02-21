@@ -245,13 +245,13 @@ test_expect_success TTY 'git branch --set-upstream-to ignores pager.branch' '
 	! test -e paginated.out
 '
 
-test_expect_success TTY 'git config respects pager.config when setting' '
+test_expect_success TTY 'git config ignores pager.config when setting' '
 	rm -f paginated.out &&
 	test_terminal git -c pager.config config foo.bar bar &&
-	test -e paginated.out
+	! test -e paginated.out
 '
 
-test_expect_failure TTY 'git config --edit ignores pager.config' '
+test_expect_success TTY 'git config --edit ignores pager.config' '
 	rm -f paginated.out editor.used &&
 	write_script editor <<-\EOF &&
 		touch editor.used
@@ -261,10 +261,10 @@ test_expect_failure TTY 'git config --edit ignores pager.config' '
 	test -e editor.used
 '
 
-test_expect_success TTY 'git config --get respects pager.config' '
+test_expect_success TTY 'git config --get ignores pager.config' '
 	rm -f paginated.out &&
 	test_terminal git -c pager.config config --get foo.bar &&
-	test -e paginated.out
+	! test -e paginated.out
 '
 
 test_expect_success TTY 'git config --get-urlmatch defaults to not paging' '
