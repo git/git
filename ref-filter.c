@@ -1494,11 +1494,11 @@ static void populate_value(struct ref_array_item *ref)
 	for (i = 0; i < used_atom_cnt; i++) {
 		struct atom_value *v = &ref->value[i];
 		if (v->s == NULL)
-			goto need_obj;
+			break;
 	}
-	return;
+	if (used_atom_cnt <= i)
+		return;
 
- need_obj:
 	get_object(ref, &ref->objectname, 0, &obj);
 
 	/*
