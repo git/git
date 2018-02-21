@@ -9,7 +9,12 @@
 #define initgroups(x, y) (0) /* nothing */
 #endif
 
-static int log_syslog;
+static enum log_destination {
+	LOG_DESTINATION_UNSET = -1,
+	LOG_DESTINATION_NONE = 0,
+	LOG_DESTINATION_STDERR = 1,
+	LOG_DESTINATION_SYSLOG = 2,
+} log_destination = LOG_DESTINATION_UNSET;
 static int verbose;
 static int reuseaddr;
 static int informative_errors;
@@ -25,6 +30,7 @@ static const char daemon_usage[] =
 "           [--access-hook=<path>]\n"
 "           [--inetd | [--listen=<host_or_ipaddr>] [--port=<n>]\n"
 "                      [--detach] [--user=<user> [--group=<group>]]\n"
+"           [--log-destination=(stderr|syslog|none)]\n"
 "           [<directory>...]";
 
 /* List of acceptable pathname prefixes */
@@ -74,11 +80,14 @@ static const char *get_ip_address(struct hostinfo *hi)
 
 static void logreport(int priority, const char *err, va_list params)
 {
-	if (log_syslog) {
+	switch (log_destination) {
+	case LOG_DESTINATION_SYSLOG: {
 		char buf[1024];
 		vsnprintf(buf, sizeof(buf), err, params);
 		syslog(priority, "%s", buf);
-	} else {
+		break;
+	}
+	case LOG_DESTINATION_STDERR:
 		/*
 		 * Since stderr is set to buffered mode, the
 		 * logging of different processes will not overlap
@@ -88,6 +97,11 @@ static void logreport(int priority, const char *err, va_list params)
 		vfprintf(stderr, err, params);
 		fputc('\n', stderr);
 		fflush(stderr);
+		break;
+	case LOG_DESTINATION_NONE:
+		break;
+	case LOG_DESTINATION_UNSET:
+		BUG("log destination not initialized correctly");
 	}
 }
 
@@ -1286,7 +1300,6 @@ int cmd_main(int argc, const char **argv)
 		}
 		if (!strcmp(arg, "--inetd")) {
 			inetd_mode = 1;
-			log_syslog = 1;
 			continue;
 		}
 		if (!strcmp(arg, "--verbose")) {
@@ -1294,8 +1307,21 @@ int cmd_main(int argc, const char **argv)
 			continue;
 		}
 		if (!strcmp(arg, "--syslog")) {
-			log_syslog = 1;
+			log_destination = LOG_DESTINATION_SYSLOG;
 			continue;
+		}
+		if (skip_prefix(arg, "--log-destination=", &v)) {
+			if (!strcmp(v, "syslog")) {
+				log_destination = LOG_DESTINATION_SYSLOG;
+				continue;
+			} else if (!strcmp(v, "stderr")) {
+				log_destination = LOG_DESTINATION_STDERR;
+				continue;
+			} else if (!strcmp(v, "none")) {
+				log_destination = LOG_DESTINATION_NONE;
+				continue;
+			} else
+				die("unknown log destination '%s'", v);
 		}
 		if (!strcmp(arg, "--export-all")) {
 			export_all_trees = 1;
@@ -1353,7 +1379,6 @@ int cmd_main(int argc, const char **argv)
 		}
 		if (!strcmp(arg, "--detach")) {
 			detach = 1;
-			log_syslog = 1;
 			continue;
 		}
 		if (skip_prefix(arg, "--user=", &v)) {
@@ -1399,7 +1424,14 @@ int cmd_main(int argc, const char **argv)
 		usage(daemon_usage);
 	}
 
-	if (log_syslog) {
+	if (log_destination == LOG_DESTINATION_UNSET) {
+		if (inetd_mode || detach)
+			log_destination = LOG_DESTINATION_SYSLOG;
+		else
+			log_destination = LOG_DESTINATION_STDERR;
+	}
+
+	if (log_destination == LOG_DESTINATION_SYSLOG) {
 		openlog("git-daemon", LOG_PID, LOG_DAEMON);
 		set_die_routine(daemon_die);
 	} else
