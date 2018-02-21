@@ -2149,7 +2149,8 @@ enum resume_mode {
 	RESUME_APPLY,
 	RESUME_RESOLVED,
 	RESUME_SKIP,
-	RESUME_ABORT
+	RESUME_ABORT,
+	RESUME_QUIT
 };
 
 static int git_am_config(const char *k, const char *v, void *cb)
@@ -2249,6 +2250,9 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 		OPT_CMDMODE(0, "abort", &resume,
 			N_("restore the original branch and abort the patching operation."),
 			RESUME_ABORT),
+		OPT_CMDMODE(0, "quit", &resume,
+			N_("abort the patching operation but keep HEAD where it is."),
+			RESUME_QUIT),
 		OPT_BOOL(0, "committer-date-is-author-date",
 			&state.committer_date_is_author_date,
 			N_("lie about committer date")),
@@ -2317,7 +2321,7 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 		 * stray directories.
 		 */
 		if (file_exists(state.dir) && !state.rebasing) {
-			if (resume == RESUME_ABORT) {
+			if (resume == RESUME_ABORT || resume == RESUME_QUIT) {
 				am_destroy(&state);
 				am_state_release(&state);
 				return 0;
@@ -2358,6 +2362,10 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 		break;
 	case RESUME_ABORT:
 		am_abort(&state);
+		break;
+	case RESUME_QUIT:
+		am_rerere_clear();
+		am_destroy(&state);
 		break;
 	default:
 		die("BUG: invalid resume value");
