@@ -29,6 +29,8 @@
 #include "gpg-interface.h"
 #include "progress.h"
 
+#define MAIL_DEFAULT_WRAP 72
+
 /* Set a default date-time format for git log ("log.date" config variable) */
 static const char *default_date_mode = NULL;
 
@@ -1044,7 +1046,7 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 
 	shortlog_init(&log);
 	log.wrap_lines = 1;
-	log.wrap = 72;
+	log.wrap = MAIL_DEFAULT_WRAP;
 	log.in1 = 2;
 	log.in2 = 4;
 	log.file = rev->diffopt.file;
@@ -1061,6 +1063,7 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 
 	memcpy(&opts, &rev->diffopt, sizeof(opts));
 	opts.output_format = DIFF_FORMAT_SUMMARY | DIFF_FORMAT_DIFFSTAT;
+	opts.stat_width = MAIL_DEFAULT_WRAP;
 
 	diff_setup_done(&opts);
 
@@ -1614,6 +1617,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		(!rev.diffopt.output_format ||
 		 rev.diffopt.output_format == DIFF_FORMAT_PATCH))
 		rev.diffopt.output_format = DIFF_FORMAT_DIFFSTAT | DIFF_FORMAT_SUMMARY;
+	if (!rev.diffopt.stat_width)
+		rev.diffopt.stat_width = MAIL_DEFAULT_WRAP;
 
 	/* Always generate a patch */
 	rev.diffopt.output_format |= DIFF_FORMAT_PATCH;
