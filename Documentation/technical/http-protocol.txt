@@ -214,14 +214,17 @@ smart server reply:
    S: Cache-Control: no-cache
    S:
    S: 001e# service=git-upload-pack\n
+   S: 0000
    S: 004895dcfa3633004da0049d3d0fa03f80589cbcaf31 refs/heads/maint\0multi_ack\n
    S: 0042d049f6c27a2244e12041955e262a404c7faba355 refs/heads/master\n
    S: 003c2cb58b79488a98d2721cea644875a8dd0026b115 refs/tags/v1.0\n
    S: 003fa3c2e2402b99163d1d59756e5f207ae21cccba4c refs/tags/v1.0^{}\n
+   S: 0000
 
 The client may send Extra Parameters (see
 Documentation/technical/pack-protocol.txt) as a colon-separated string
-in the Git-Protocol HTTP header.
+in the Git-Protocol HTTP header. Note as well that there is *no* newline
+after the `0000`.
 
 Dumb Server Response
 ^^^^^^^^^^^^^^^^^^^^
@@ -264,8 +267,8 @@ Servers MUST set $servicename to be the request parameter value.
 Servers SHOULD include an LF at the end of this line.
 Clients MUST ignore an LF at the end of the line.
 
-Servers MUST terminate the response with the magic `0000` end
-pkt-line marker.
+Servers MUST follow the first pkt-line, as well as terminate the
+response, with the magic `0000` end pkt-line marker.
 
 The returned response is a pkt-line stream describing each ref and
 its known value.  The stream SHOULD be sorted by name according to
@@ -278,6 +281,7 @@ Extra Parameter.
 
   smart_reply     =  PKT-LINE("# service=$servicename" LF)
 		     *1("version 1")
+		     "0000"
 		     ref_list
 		     "0000"
   ref_list        =  empty_list / non_empty_list
