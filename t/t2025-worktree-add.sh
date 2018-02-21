@@ -451,32 +451,68 @@ test_expect_success 'git worktree --no-guess-remote option overrides config' '
 '
 
 post_checkout_hook () {
-	test_when_finished "rm -f .git/hooks/post-checkout" &&
-	mkdir -p .git/hooks &&
-	write_script .git/hooks/post-checkout <<-\EOF
-	echo $* >hook.actual
+	gitdir=${1:-.git}
+	test_when_finished "rm -f $gitdir/hooks/post-checkout" &&
+	mkdir -p $gitdir/hooks &&
+	write_script $gitdir/hooks/post-checkout <<-\EOF
+	{
+		echo $*
+		git rev-parse --git-dir --show-toplevel
+	} >hook.actual
 	EOF
 }
 
 test_expect_success '"add" invokes post-checkout hook (branch)' '
 	post_checkout_hook &&
-	printf "%s %s 1\n" $_z40 $(git rev-parse HEAD) >hook.expect &&
+	{
+		echo $_z40 $(git rev-parse HEAD) 1 &&
+		echo $(pwd)/.git/worktrees/gumby &&
+		echo $(pwd)/gumby
+	} >hook.expect &&
 	git worktree add gumby &&
-	test_cmp hook.expect hook.actual
+	test_cmp hook.expect gumby/hook.actual
 '
 
 test_expect_success '"add" invokes post-checkout hook (detached)' '
 	post_checkout_hook &&
-	printf "%s %s 1\n" $_z40 $(git rev-parse HEAD) >hook.expect &&
+	{
+		echo $_z40 $(git rev-parse HEAD) 1 &&
+		echo $(pwd)/.git/worktrees/grumpy &&
+		echo $(pwd)/grumpy
+	} >hook.expect &&
 	git worktree add --detach grumpy &&
-	test_cmp hook.expect hook.actual
+	test_cmp hook.expect grumpy/hook.actual
 '
 
 test_expect_success '"add --no-checkout" suppresses post-checkout hook' '
 	post_checkout_hook &&
 	rm -f hook.actual &&
 	git worktree add --no-checkout gloopy &&
-	test_path_is_missing hook.actual
+	test_path_is_missing gloopy/hook.actual
+'
+
+test_expect_success '"add" in other worktree invokes post-checkout hook' '
+	post_checkout_hook &&
+	{
+		echo $_z40 $(git rev-parse HEAD) 1 &&
+		echo $(pwd)/.git/worktrees/guppy &&
+		echo $(pwd)/guppy
+	} >hook.expect &&
+	git -C gloopy worktree add --detach ../guppy &&
+	test_cmp hook.expect guppy/hook.actual
+'
+
+test_expect_success '"add" in bare repo invokes post-checkout hook' '
+	rm -rf bare &&
+	git clone --bare . bare &&
+	{
+		echo $_z40 $(git --git-dir=bare rev-parse HEAD) 1 &&
+		echo $(pwd)/bare/worktrees/goozy &&
+		echo $(pwd)/goozy
+	} >hook.expect &&
+	post_checkout_hook bare &&
+	git -C bare worktree add --detach ../goozy &&
+	test_cmp hook.expect goozy/hook.actual
 '
 
 test_done
