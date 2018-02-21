@@ -705,6 +705,60 @@ test_cmp_bin() {
 	cmp "$@"
 }
 
+# Use this instead of test_cmp to compare files that contain expected and
+# actual output from git commands that can be translated.  When running
+# under GETTEXT_POISON this pretends that the command produced expected
+# results.
+test_i18ncmp () {
+	test -n "$GETTEXT_POISON" || test_cmp "$@"
+}
+
+# Use this instead of "grep expected-string actual" to see if the
+# output from a git command that can be translated either contains an
+# expected string, or does not contain an unwanted one.  When running
+# under GETTEXT_POISON this pretends that the command produced expected
+# results.
+test_i18ngrep () {
+	eval "last_arg=\${$#}"
+
+	test -f "$last_arg" ||
+	error "bug in the test script: test_i18ngrep requires a file" \
+	      "to read as the last parameter"
+
+	if test $# -lt 2 ||
+	   { test "x!" = "x$1" && test $# -lt 3 ; }
+	then
+		error "bug in the test script: too few parameters to test_i18ngrep"
+	fi
+
+	if test -n "$GETTEXT_POISON"
+	then
+		# pretend success
+		return 0
+	fi
+
+	if test "x!" = "x$1"
+	then
+		shift
+		! grep "$@" && return 0
+
+		echo >&2 "error: '! grep $@' did find a match in:"
+	else
+		grep "$@" && return 0
+
+		echo >&2 "error: 'grep $@' didn't find a match in:"
+	fi
+
+	if test -s "$last_arg"
+	then
+		cat >&2 "$last_arg"
+	else
+		echo >&2 "<File '$last_arg' is empty>"
+	fi
+
+	return 1
+}
+
 # Call any command "$@" but be more verbose about its
 # failure. This is handy for commands like "test" which do
 # not output anything when they fail.
