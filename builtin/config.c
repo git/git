@@ -602,7 +602,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 	}
 
 	if (actions & PAGING_ACTIONS)
-		setup_auto_pager("config", 0);
+		setup_auto_pager("config", 1);
 
 	if (actions == ACTION_LIST) {
 		check_argc(argc, 0, 0);

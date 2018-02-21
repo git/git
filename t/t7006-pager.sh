@@ -267,23 +267,23 @@ test_expect_success TTY 'git config --get ignores pager.config' '
 	! test -e paginated.out
 '
 
-test_expect_success TTY 'git config --get-urlmatch defaults to not paging' '
+test_expect_success TTY 'git config --get-urlmatch defaults to paging' '
 	rm -f paginated.out &&
 	test_terminal git -c http."https://foo.com/".bar=foo \
 			  config --get-urlmatch http https://foo.com &&
-	! test -e paginated.out
+	test -e paginated.out
 '
 
 test_expect_success TTY 'git config --get-all respects pager.config' '
 	rm -f paginated.out &&
-	test_terminal git -c pager.config config --get-all foo.bar &&
-	test -e paginated.out
+	test_terminal git -c pager.config=false config --get-all foo.bar &&
+	! test -e paginated.out
 '
 
-test_expect_success TTY 'git config --list defaults to not paging' '
+test_expect_success TTY 'git config --list defaults to paging' '
 	rm -f paginated.out &&
 	test_terminal git config --list &&
-	! test -e paginated.out
+	test -e paginated.out
 '
 
 
