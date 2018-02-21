@@ -46,6 +46,7 @@ then
 	# makes this easy
 	git cherry-pick ${gpg_sign_opt:+"$gpg_sign_opt"} --allow-empty \
 		$allow_rerere_autoupdate --right-only "$revisions" \
+		$allow_empty_message \
 		${restrict_revision+^$restrict_revision}
 	ret=$?
 else
