@@ -55,6 +55,9 @@ struct ref_filter {
 	struct commit_list *with_commit;
 	struct commit_list *no_commit;
 
+	struct string_list with_commit_strs;
+	struct string_list no_commit_strs;
+
 	enum {
 		REF_FILTER_MERGED_NONE = 0,
 		REF_FILTER_MERGED_INCLUDE,

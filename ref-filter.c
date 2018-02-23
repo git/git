@@ -2000,6 +2000,25 @@ static void do_merge_filter(struct ref_filter_cbdata *ref_cbdata)
 	free(to_clear);
 }
 
+int add_str_to_commit_list(struct string_list_item *item, void *commit_list)
+{
+	struct object_id oid;
+	struct commit *commit;
+
+	if (get_oid(item->string, &oid)) {
+		error(_("malformed object name %s"), item->string);
+		exit(1);
+	}
+	commit = lookup_commit_reference(&oid);
+	if (!commit) {
+		error(_("no such commit %s"), item->string);
+		exit(1);
+	}
+	commit_list_insert(commit, commit_list);
+
+	return 0;
+}
+
 /*
  * API for filtering a set of refs. Based on the type of refs the user
  * has requested, we iterate through those refs and apply filters
@@ -2011,6 +2030,10 @@ int filter_refs(struct ref_array *array, struct ref_filter *filter, unsigned int
 	struct ref_filter_cbdata ref_cbdata;
 	int ret = 0;
 	unsigned int broken = 0;
+
+	/* Convert string representation and add to commit list. */
+	for_each_string_list(&filter->with_commit_strs, add_str_to_commit_list, &filter->with_commit);
+	for_each_string_list(&filter->no_commit_strs, add_str_to_commit_list, &filter->no_commit);
 
 	ref_cbdata.array = array;
 	ref_cbdata.filter = filter;

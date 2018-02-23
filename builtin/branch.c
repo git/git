@@ -596,10 +596,10 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		OPT__COLOR(&branch_use_color, N_("use colored output")),
 		OPT_SET_INT('r', "remotes",     &filter.kind, N_("act on remote-tracking branches"),
 			FILTER_REFS_REMOTES),
-		OPT_CONTAINS(&filter.with_commit, N_("print only branches that contain the commit")),
-		OPT_NO_CONTAINS(&filter.no_commit, N_("print only branches that don't contain the commit")),
-		OPT_WITH(&filter.with_commit, N_("print only branches that contain the commit")),
-		OPT_WITHOUT(&filter.no_commit, N_("print only branches that don't contain the commit")),
+		OPT_CONTAINS(&filter.with_commit_strs, N_("print only branches that contain the commit")),
+		OPT_NO_CONTAINS(&filter.no_commit_strs, N_("print only branches that don't contain the commit")),
+		OPT_WITH(&filter.with_commit_strs, N_("print only branches that contain the commit")),
+		OPT_WITHOUT(&filter.no_commit_strs, N_("print only branches that don't contain the commit")),
 		OPT__ABBREV(&filter.abbrev),
 
 		OPT_GROUP(N_("Specific git-branch actions:")),
@@ -657,8 +657,8 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	if (!delete && !rename && !copy && !edit_description && !new_upstream && !unset_upstream && argc == 0)
 		list = 1;
 
-	if (filter.with_commit || filter.merge != REF_FILTER_MERGED_NONE || filter.points_at.nr ||
-	    filter.no_commit)
+	if (filter.with_commit_strs.nr || filter.merge != REF_FILTER_MERGED_NONE || filter.points_at.nr ||
+	    filter.no_commit_strs.nr)
 		list = 1;
 
 	if (!!delete + !!rename + !!copy + !!new_upstream +

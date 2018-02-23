@@ -256,8 +256,9 @@ extern int parse_opt_passthru_argv(const struct option *, const char *, int);
 #define _OPT_CONTAINS_OR_WITH(name, variable, help, flag) \
 	{ OPTION_CALLBACK, 0, name, (variable), N_("commit"), (help), \
 	  PARSE_OPT_LASTARG_DEFAULT | flag, \
-	  parse_opt_commits, (intptr_t) "HEAD" \
+	  parse_opt_string_list, (intptr_t) "HEAD" \
 	}
+
 #define OPT_CONTAINS(v, h) _OPT_CONTAINS_OR_WITH("contains", v, h, PARSE_OPT_NONEG)
 #define OPT_NO_CONTAINS(v, h) _OPT_CONTAINS_OR_WITH("no-contains", v, h, PARSE_OPT_NONEG)
 #define OPT_WITH(v, h) _OPT_CONTAINS_OR_WITH("with", v, h, PARSE_OPT_HIDDEN | PARSE_OPT_NONEG)
