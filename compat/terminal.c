@@ -483,7 +483,7 @@ char *git_terminal_prompt(const char *prompt, int echo)
 
 	/* try shell_prompt first, fall back to CONIN/OUT if bash is missing */
 	char *result = shell_prompt(prompt, echo);
-	if (result || errno != ENOENT)
+	if (result)
 		return result;
 
 #endif
