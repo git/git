@@ -326,6 +326,7 @@ static int grep_oid(struct grep_opt *opt, const struct object_id *oid,
 	}
 
 	grep_source_init(&gs, GREP_SOURCE_OID, pathbuf.buf, path, oid);
+	strbuf_release(&pathbuf);
 
 #ifndef NO_PTHREADS
 	if (num_threads) {
@@ -334,14 +335,12 @@ static int grep_oid(struct grep_opt *opt, const struct object_id *oid,
 		 * its fields, so do not call grep_source_clear()
 		 */
 		add_work(opt, &gs);
-		strbuf_release(&pathbuf);
 		return 0;
 	} else
 #endif
 	{
 		int hit;
 
-		strbuf_release(&pathbuf);
 		hit = grep_source(opt, &gs);
 
 		grep_source_clear(&gs);
@@ -360,6 +359,7 @@ static int grep_file(struct grep_opt *opt, const char *filename)
 		strbuf_addstr(&buf, filename);
 
 	grep_source_init(&gs, GREP_SOURCE_FILE, buf.buf, filename, filename);
+	strbuf_release(&buf);
 
 #ifndef NO_PTHREADS
 	if (num_threads) {
@@ -368,14 +368,12 @@ static int grep_file(struct grep_opt *opt, const char *filename)
 		 * its fields, so do not call grep_source_clear()
 		 */
 		add_work(opt, &gs);
-		strbuf_release(&buf);
 		return 0;
 	} else
 #endif
 	{
 		int hit;
 
-		strbuf_release(&buf);
 		hit = grep_source(opt, &gs);
 
 		grep_source_clear(&gs);
