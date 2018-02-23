@@ -238,7 +238,7 @@ sub pdate($) {
 	my($d) = @_;
 	$d =~ m#(\d\d\d\d)-(\d\d)-(\d\d)T(\d\d):(\d\d):(\d\d)#
 		or die "Unparseable date: $d\n";
-	my $y=$1; $y-=1900 if $y>1900;
+	my $y=$1; $y+=1900 if $y<1000;
 	return timegm($6||0,$5,$4,$3,$2-1,$y);
 }
 

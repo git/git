@@ -534,7 +534,9 @@ If TIME is not supplied, the current local time is used.
 sub get_tz_offset {
 	# some systems don't handle or mishandle %z, so be creative.
 	my $t = shift || time;
-	my $gm = timegm(localtime($t));
+	my @t = localtime($t);
+	$t[5] += 1900;
+	my $gm = timegm(@t);
 	my $sign = qw( + + - )[ $gm <=> $t ];
 	return sprintf("%s%02d%02d", $sign, (gmtime(abs($t - $gm)))[2,1]);
 }
