@@ -85,7 +85,7 @@ test_expect_success "fetch --recurse-submodules -j2 has the same output behaviou
 	add_upstream_commit &&
 	(
 		cd downstream &&
-		GIT_TRACE=$(pwd)/../trace.out git fetch --recurse-submodules -j2 2>../actual.err
+		GIT_TRACE="$TRASH_DIRECTORY/trace.out" git fetch --recurse-submodules -j2 2>../actual.err
 	) &&
 	test_must_be_empty actual.out &&
 	test_i18ncmp expect.err actual.err &&
