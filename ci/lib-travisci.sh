@@ -97,7 +97,7 @@ fi
 export DEVELOPER=1
 export DEFAULT_TEST_TARGET=prove
 export GIT_PROVE_OPTS="--timer --jobs 3 --state=failed,slow,save"
-export GIT_TEST_OPTS="--verbose-log"
+export GIT_TEST_OPTS="--verbose-log -x"
 export GIT_TEST_CLONE_2GB=YesPlease
 
 case "$jobname" in
