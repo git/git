@@ -87,6 +87,9 @@ appropriately before running "make".
 	themselves. Implies `--verbose`. Note that in non-bash shells,
 	this can cause failures in some tests which redirect and test
 	the output of shell functions. Use with caution.
+	Ignored in test scripts that set the variable 'test_untraceable'
+	to a non-empty value, unless it's run with a Bash version
+	supporting BASH_XTRACEFD, i.e. v4.1 or later.
 
 -d::
 --debug::
