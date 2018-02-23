@@ -39,6 +39,10 @@ A few rules for repo setup:
 11. When user's cwd is outside worktree, cwd remains unchanged,
     prefix is NULL.
 "
+
+# This test heavily relies on the standard error of nested function calls.
+test_untraceable=UnfortunatelyYes
+
 . ./test-lib.sh
 
 here=$(pwd)
