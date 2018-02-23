@@ -50,7 +50,7 @@ test_expect_success 'no-op fetch -v stderr is as expected' '
 '
 
 test_expect_success 'no-op fetch without "-v" is quiet' '
-	(cd clone && git fetch) 2>stderr &&
+	(cd clone && git fetch 2>../stderr) &&
 	! test -s stderr
 '
 
