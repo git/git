@@ -42,7 +42,7 @@ commit_subject () {
 
 error_message () {
 	(cd clone &&
-	 test_must_fail git rev-parse --verify "$@")
+	 test_must_fail git rev-parse --verify "$@" 2>../error)
 }
 
 test_expect_success '@{upstream} resolves to correct full name' '
@@ -159,8 +159,8 @@ test_expect_success 'branch@{u} error message when no upstream' '
 	cat >expect <<-EOF &&
 	fatal: no upstream configured for branch ${sq}non-tracking${sq}
 	EOF
-	error_message non-tracking@{u} 2>actual &&
-	test_i18ncmp expect actual
+	error_message non-tracking@{u} &&
+	test_i18ncmp expect error
 '
 
 test_expect_success '@{u} error message when no upstream' '
@@ -175,8 +175,8 @@ test_expect_success 'branch@{u} error message with misspelt branch' '
 	cat >expect <<-EOF &&
 	fatal: no such branch: ${sq}no-such-branch${sq}
 	EOF
-	error_message no-such-branch@{u} 2>actual &&
-	test_i18ncmp expect actual
+	error_message no-such-branch@{u} &&
+	test_i18ncmp expect error
 '
 
 test_expect_success '@{u} error message when not on a branch' '
@@ -192,8 +192,8 @@ test_expect_success 'branch@{u} error message if upstream branch not fetched' '
 	cat >expect <<-EOF &&
 	fatal: upstream branch ${sq}refs/heads/side${sq} not stored as a remote-tracking branch
 	EOF
-	error_message bad-upstream@{u} 2>actual &&
-	test_i18ncmp expect actual
+	error_message bad-upstream@{u} &&
+	test_i18ncmp expect error
 '
 
 test_expect_success 'pull works when tracking a local branch' '
