@@ -101,8 +101,10 @@ static char *shell_prompt(const char *prompt, int echo)
 	const char *read_input[] = {
 		/* Note: call 'bash' explicitly, as 'read -s' is bash-specific */
 		"bash", "-c", echo ?
-		"cat >/dev/tty && read -r line </dev/tty && echo \"$line\"" :
-		"cat >/dev/tty && read -r -s line </dev/tty && echo \"$line\" && echo >/dev/tty",
+		"test \"a$SHELL\" != \"a${SHELL%.exe}\" || exit 127; cat >/dev/tty &&"
+		" read -r line </dev/tty && echo \"$line\"" :
+		"test \"a$SHELL\" != \"a${SHELL%.exe}\" || exit 127; cat >/dev/tty &&"
+		" read -r -s line </dev/tty && echo \"$line\" && echo >/dev/tty",
 		NULL
 	};
 	struct child_process child = CHILD_PROCESS_INIT;
@@ -138,7 +140,10 @@ ret:
 	close(child.out);
 	code = finish_command(&child);
 	if (code) {
-		error("failed to execute prompt script (exit code %d)", code);
+		if (code != 127)
+			error("failed to execute prompt script (exit code %d)",
+			      code);
+
 		return NULL;
 	}
 
