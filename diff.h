@@ -93,6 +93,7 @@ struct diff_flags {
 	unsigned funccontext:1;
 	unsigned pickaxe_ignore_case:1;
 	unsigned default_follow_renames:1;
+	unsigned stat_with_summary:1;
 };
 
 static inline void diff_flags_or(struct diff_flags *a,

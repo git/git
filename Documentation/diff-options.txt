@@ -128,6 +128,14 @@ have to use `--diff-algorithm=default` option.
 These parameters can also be set individually with `--stat-width=<width>`,
 `--stat-name-width=<name-width>` and `--stat-count=<count>`.
 
+--compact-summary::
+	Output a condensed summary of extended header information such
+	as file creations or deletions ("new" or "gone", optionally "+l"
+	if it's a symlink) and mode changes ("+x" or "-x" for adding
+	or removing executable bit respectively) in diffstat. The
+	information is put betwen the filename part and the graph
+	part. Implies `--stat`.
+
 --numstat::
 	Similar to `--stat`, but shows number of added and
 	deleted lines in decimal notation and pathname without
