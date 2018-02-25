@@ -1692,7 +1692,6 @@ sub DESTROY {
 # Pipe implementation for ActiveState Perl.
 
 package Git::activestate_pipe;
-use strict;
 
 sub TIEHANDLE {
 	my ($class, @params) = @_;
