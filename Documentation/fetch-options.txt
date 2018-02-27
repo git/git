@@ -73,7 +73,22 @@ ifndef::git-pull[]
 	are fetched due to an explicit refspec (either on the command
 	line or in the remote configuration, for example if the remote
 	was cloned with the --mirror option), then they are also
-	subject to pruning.
+	subject to pruning. Supplying `--prune-tags` is a shorthand for
+	providing the tag refspec.
++
+See the PRUNING section below for more details.
+
+-P::
+--prune-tags::
+	Before fetching, remove any local tags that no longer exist on
+	the remote if `--prune` is enabled. This option should be used
+	more carefully, unlike `--prune` it will remove any local
+	references (local tags) that have been created. This option is
+	a shorthand for providing the explicit tag refspec along with
+	`--prune`, see the discussion about that in its documentation.
++
+See the PRUNING section below for more details.
+
 endif::git-pull[]
 
 ifndef::git-pull[]

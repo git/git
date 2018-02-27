@@ -22,6 +22,7 @@ static struct refspec s_tag_refspec = {
 	"refs/tags/*"
 };
 
+/* See TAG_REFSPEC for the string version */
 const struct refspec *tag_refspec = &s_tag_refspec;
 
 struct counted_string {
@@ -103,6 +104,17 @@ static void add_fetch_refspec(struct remote *remote, const char *ref)
 	remote->fetch_refspec[remote->fetch_refspec_nr++] = ref;
 }
 
+void add_prune_tags_to_fetch_refspec(struct remote *remote)
+{
+	int nr = remote->fetch_refspec_nr;
+	int bufsize = nr  + 1;
+	int size = sizeof(struct refspec);
+
+	remote->fetch = xrealloc(remote->fetch, size  * bufsize);
+	memcpy(&remote->fetch[nr], tag_refspec, size);
+	add_fetch_refspec(remote, xstrdup(TAG_REFSPEC));
+}
+
 static void add_url(struct remote *remote, const char *url)
 {
 	ALLOC_GROW(remote->url, remote->url_nr + 1, remote->url_alloc);
@@ -173,6 +185,7 @@ static struct remote *make_remote(const char *name, int len)
 
 	ret = xcalloc(1, sizeof(struct remote));
 	ret->prune = -1;  /* unspecified */
+	ret->prune_tags = -1;  /* unspecified */
 	ALLOC_GROW(remotes, remotes_nr + 1, remotes_alloc);
 	remotes[remotes_nr++] = ret;
 	ret->name = xstrndup(name, len);
@@ -391,6 +404,8 @@ static int handle_config(const char *key, const char *value, void *cb)
 		remote->skip_default_update = git_config_bool(key, value);
 	else if (!strcmp(subkey, "prune"))
 		remote->prune = git_config_bool(key, value);
+	else if (!strcmp(subkey, "prunetags"))
+		remote->prune_tags = git_config_bool(key, value);
 	else if (!strcmp(subkey, "url")) {
 		const char *v;
 		if (git_config_string(&v, key, value))

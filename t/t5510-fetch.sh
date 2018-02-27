@@ -540,82 +540,232 @@ test_expect_success "should be able to fetch with duplicate refspecs" '
 set_config_tristate () {
 	# var=$1 val=$2
 	case "$2" in
-	unset)  test_unconfig "$1" ;;
-	*)	git config "$1" "$2" ;;
+	unset)
+		test_unconfig "$1"
+		;;
+	*)
+		git config "$1" "$2"
+		key=$(echo $1 | sed -e 's/^remote\.origin/fetch/')
+		git_fetch_c="$git_fetch_c -c $key=$2"
+		;;
 	esac
 }
 
 test_configured_prune () {
-	fetch_prune=$1 remote_origin_prune=$2 cmdline=$3 expected=$4
+	test_configured_prune_type "$@" "name"
+	test_configured_prune_type "$@" "link"
+}
 
-	test_expect_success "prune fetch.prune=$1 remote.origin.prune=$2${3:+ $3}; $4" '
+test_configured_prune_type () {
+	fetch_prune=$1
+	remote_origin_prune=$2
+	fetch_prune_tags=$3
+	remote_origin_prune_tags=$4
+	expected_branch=$5
+	expected_tag=$6
+	cmdline=$7
+	mode=$8
+
+	if test -z "$cmdline_setup"
+	then
+		test_expect_success 'setup cmdline_setup variable for subsequent test' '
+			remote_url="file://$(git -C one config remote.origin.url)" &&
+			remote_fetch="$(git -C one config remote.origin.fetch)" &&
+			cmdline_setup="\"$remote_url\" \"$remote_fetch\""
+		'
+	fi
+
+	if test "$mode" = 'link'
+	then
+		new_cmdline=""
+
+		if test "$cmdline" = ""
+		then
+			new_cmdline=$cmdline_setup
+		else
+			new_cmdline=$(printf "%s" "$cmdline" | perl -pe 's[origin(?!/)]["'"$remote_url"'"]g')
+		fi
+
+		if test "$fetch_prune_tags" = 'true' ||
+		   test "$remote_origin_prune_tags" = 'true'
+		then
+			if ! printf '%s' "$cmdline\n" | grep -q refs/remotes/origin/
+			then
+				new_cmdline="$new_cmdline refs/tags/*:refs/tags/*"
+			fi
+		fi
+
+		cmdline="$new_cmdline"
+	fi
+
+	test_expect_success "$mode prune fetch.prune=$1 remote.origin.prune=$2 fetch.pruneTags=$3 remote.origin.pruneTags=$4${7:+ $7}; branch:$5 tag:$6" '
 		# make sure a newbranch is there in . and also in one
 		git branch -f newbranch &&
+		git tag -f newtag &&
 		(
 			cd one &&
 			test_unconfig fetch.prune &&
+			test_unconfig fetch.pruneTags &&
 			test_unconfig remote.origin.prune &&
-			git fetch &&
-			git rev-parse --verify refs/remotes/origin/newbranch
+			test_unconfig remote.origin.pruneTags &&
+			git fetch '"$cmdline_setup"' &&
+			git rev-parse --verify refs/remotes/origin/newbranch &&
+			git rev-parse --verify refs/tags/newtag
 		) &&
 
 		# now remove it
 		git branch -d newbranch &&
+		git tag -d newtag &&
 
 		# then test
 		(
 			cd one &&
+			git_fetch_c="" &&
 			set_config_tristate fetch.prune $fetch_prune &&
+			set_config_tristate fetch.pruneTags $fetch_prune_tags &&
 			set_config_tristate remote.origin.prune $remote_origin_prune &&
+			set_config_tristate remote.origin.pruneTags $remote_origin_prune_tags &&
 
-			git fetch $cmdline &&
-			case "$expected" in
+			if test "$mode" != "link"
+			then
+				git_fetch_c=""
+			fi &&
+			git$git_fetch_c fetch '"$cmdline"' &&
+			case "$expected_branch" in
 			pruned)
 				test_must_fail git rev-parse --verify refs/remotes/origin/newbranch
 				;;
 			kept)
 				git rev-parse --verify refs/remotes/origin/newbranch
 				;;
+			esac &&
+			case "$expected_tag" in
+			pruned)
+				test_must_fail git rev-parse --verify refs/tags/newtag
+				;;
+			kept)
+				git rev-parse --verify refs/tags/newtag
+				;;
 			esac
 		)
 	'
 }
 
-test_configured_prune unset unset ""		kept
-test_configured_prune unset unset "--no-prune"	kept
-test_configured_prune unset unset "--prune"	pruned
+# $1 config: fetch.prune
+# $2 config: remote.<name>.prune
+# $3 config: fetch.pruneTags
+# $4 config: remote.<name>.pruneTags
+# $5 expect: branch to be pruned?
+# $6 expect: tag to be pruned?
+# $7 git-fetch $cmdline:
+#
+#                     $1    $2    $3    $4    $5     $6     $7
+test_configured_prune unset unset unset unset kept   kept   ""
+test_configured_prune unset unset unset unset kept   kept   "--no-prune"
+test_configured_prune unset unset unset unset pruned kept   "--prune"
+test_configured_prune unset unset unset unset kept   pruned \
+	"--prune origin refs/tags/*:refs/tags/*"
+test_configured_prune unset unset unset unset pruned pruned \
+	"--prune origin refs/tags/*:refs/tags/* +refs/heads/*:refs/remotes/origin/*"
 
-test_configured_prune false unset ""		kept
-test_configured_prune false unset "--no-prune"	kept
-test_configured_prune false unset "--prune"	pruned
+test_configured_prune false unset unset unset kept   kept   ""
+test_configured_prune false unset unset unset kept   kept   "--no-prune"
+test_configured_prune false unset unset unset pruned kept   "--prune"
 
-test_configured_prune true  unset ""		pruned
-test_configured_prune true  unset "--prune"	pruned
-test_configured_prune true  unset "--no-prune"	kept
+test_configured_prune true  unset unset unset pruned kept   ""
+test_configured_prune true  unset unset unset pruned kept   "--prune"
+test_configured_prune true  unset unset unset kept   kept   "--no-prune"
 
-test_configured_prune unset false ""		kept
-test_configured_prune unset false "--no-prune"	kept
-test_configured_prune unset false "--prune"	pruned
+test_configured_prune unset false unset unset kept   kept   ""
+test_configured_prune unset false unset unset kept   kept   "--no-prune"
+test_configured_prune unset false unset unset pruned kept   "--prune"
 
-test_configured_prune false false ""		kept
-test_configured_prune false false "--no-prune"	kept
-test_configured_prune false false "--prune"	pruned
+test_configured_prune false false unset unset kept   kept   ""
+test_configured_prune false false unset unset kept   kept   "--no-prune"
+test_configured_prune false false unset unset pruned kept   "--prune"
+test_configured_prune false false unset unset kept   pruned \
+	"--prune origin refs/tags/*:refs/tags/*"
+test_configured_prune false false unset unset pruned pruned \
+	"--prune origin refs/tags/*:refs/tags/* +refs/heads/*:refs/remotes/origin/*"
 
-test_configured_prune true  false ""		kept
-test_configured_prune true  false "--prune"	pruned
-test_configured_prune true  false "--no-prune"	kept
+test_configured_prune true  false unset unset kept   kept   ""
+test_configured_prune true  false unset unset pruned kept   "--prune"
+test_configured_prune true  false unset unset kept   kept   "--no-prune"
 
-test_configured_prune unset true  ""		pruned
-test_configured_prune unset true  "--no-prune"	kept
-test_configured_prune unset true  "--prune"	pruned
+test_configured_prune unset true  unset unset pruned kept   ""
+test_configured_prune unset true  unset unset kept   kept   "--no-prune"
+test_configured_prune unset true  unset unset pruned kept   "--prune"
 
-test_configured_prune false true  ""		pruned
-test_configured_prune false true  "--no-prune"	kept
-test_configured_prune false true  "--prune"	pruned
+test_configured_prune false true  unset unset pruned kept   ""
+test_configured_prune false true  unset unset kept   kept   "--no-prune"
+test_configured_prune false true  unset unset pruned kept   "--prune"
 
-test_configured_prune true  true  ""		pruned
-test_configured_prune true  true  "--prune"	pruned
-test_configured_prune true  true  "--no-prune"	kept
+test_configured_prune true  true  unset unset pruned kept   ""
+test_configured_prune true  true  unset unset pruned kept   "--prune"
+test_configured_prune true  true  unset unset kept   kept   "--no-prune"
+test_configured_prune true  true  unset unset kept   pruned \
+	"--prune origin refs/tags/*:refs/tags/*"
+test_configured_prune true  true  unset unset pruned pruned \
+	"--prune origin refs/tags/*:refs/tags/* +refs/heads/*:refs/remotes/origin/*"
+
+# --prune-tags on its own does nothing, needs --prune as well, same
+# for for fetch.pruneTags without fetch.prune
+test_configured_prune unset unset unset unset kept kept     "--prune-tags"
+test_configured_prune unset unset true unset  kept kept     ""
+test_configured_prune unset unset unset true  kept kept     ""
+
+# These will prune the tags
+test_configured_prune unset unset unset unset pruned pruned "--prune --prune-tags"
+test_configured_prune true  unset true  unset pruned pruned ""
+test_configured_prune unset true  unset true  pruned pruned ""
+
+# remote.<name>.pruneTags overrides fetch.pruneTags, just like
+# remote.<name>.prune overrides fetch.prune if set.
+test_configured_prune true  unset true unset pruned pruned  ""
+test_configured_prune false true  false true  pruned pruned ""
+test_configured_prune true  false true  false kept   kept   ""
+
+# When --prune-tags is supplied it's ignored if an explicit refspec is
+# given, same for the configuration options.
+test_configured_prune unset unset unset unset pruned kept \
+	"--prune --prune-tags origin +refs/heads/*:refs/remotes/origin/*"
+test_configured_prune unset unset true  unset pruned kept \
+	"--prune origin +refs/heads/*:refs/remotes/origin/*"
+test_configured_prune unset unset unset true pruned  kept \
+	"--prune origin +refs/heads/*:refs/remotes/origin/*"
+
+# Pruning that also takes place if a file:// url replaces a named
+# remote. However, because there's no implicit
+# +refs/heads/*:refs/remotes/origin/* refspec and supplying it on the
+# command-line negates --prune-tags, the branches will not be pruned.
+test_configured_prune_type unset unset unset unset kept   kept   "origin --prune-tags" "name"
+test_configured_prune_type unset unset unset unset kept   kept   "origin --prune-tags" "link"
+test_configured_prune_type unset unset unset unset pruned pruned "origin --prune --prune-tags" "name"
+test_configured_prune_type unset unset unset unset kept   pruned "origin --prune --prune-tags" "link"
+test_configured_prune_type unset unset unset unset pruned pruned "--prune --prune-tags origin" "name"
+test_configured_prune_type unset unset unset unset kept   pruned "--prune --prune-tags origin" "link"
+test_configured_prune_type unset unset true  unset pruned pruned "--prune origin" "name"
+test_configured_prune_type unset unset true  unset kept   pruned "--prune origin" "link"
+test_configured_prune_type unset unset unset true  pruned pruned "--prune origin" "name"
+test_configured_prune_type unset unset unset true  kept   pruned "--prune origin" "link"
+test_configured_prune_type true  unset true  unset pruned pruned "origin" "name"
+test_configured_prune_type true  unset true  unset kept   pruned "origin" "link"
+test_configured_prune_type unset  true true  unset pruned pruned "origin" "name"
+test_configured_prune_type unset  true true  unset kept   pruned "origin" "link"
+test_configured_prune_type unset  true unset true  pruned pruned "origin" "name"
+test_configured_prune_type unset  true unset true  kept   pruned "origin" "link"
+
+# When all remote.origin.fetch settings are deleted a --prune
+# --prune-tags still implicitly supplies refs/tags/*:refs/tags/* so
+# tags, but not tracking branches, will be deleted.
+test_expect_success 'remove remote.origin.fetch "one"' '
+	(
+		cd one &&
+		git config --unset-all remote.origin.fetch
+	)
+'
+test_configured_prune_type unset unset unset unset kept pruned "origin --prune --prune-tags" "name"
+test_configured_prune_type unset unset unset unset kept pruned "origin --prune --prune-tags" "link"
 
 test_expect_success 'all boundary commits are excluded' '
 	test_commit base &&
