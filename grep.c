@@ -18,6 +18,11 @@ static void std_output(struct grep_opt *opt, const void *buf, size_t size)
 	fwrite(buf, size, 1, stdout);
 }
 
+static void color_set(char *dst, const char *color_bytes)
+{
+	xsnprintf(dst, COLOR_MAXLEN, "%s", color_bytes);
+}
+
 /*
  * Initialize the grep_defaults template with hardcoded defaults.
  * We could let the compiler do this, but without C99 initializers
