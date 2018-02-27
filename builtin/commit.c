@@ -1507,7 +1507,7 @@ static void print_summary(const char *prefix, const struct object_id *oid,
 	rev.show_root_diff = 1;
 	get_commit_format(format.buf, &rev);
 	rev.always_show_header = 0;
-	rev.diffopt.detect_rename = 1;
+	rev.diffopt.detect_rename = DIFF_DETECT_RENAME;
 	rev.diffopt.break_opt = 0;
 	diff_setup_done(&rev.diffopt);
 

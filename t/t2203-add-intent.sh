@@ -25,6 +25,18 @@ test_expect_success 'git status' '
 	test_cmp expect actual
 '
 
+test_expect_success 'git status with porcelain v2' '
+	git status --porcelain=v2 | grep -v "^?" >actual &&
+	nam1=d00491fd7e5bb6fa28c517a0bb32b8b506539d4d &&
+	nam2=ce013625030ba8dba906f756967f9e9ca394464a &&
+	cat >expect <<-EOF &&
+	1 DA N... 100644 000000 100644 $nam1 $_z40 1.t
+	1 A. N... 000000 100644 100644 $_z40 $nam2 elif
+	1 .A N... 000000 000000 100644 $_z40 $_z40 file
+	EOF
+	test_cmp expect actual
+'
+
 test_expect_success 'check result of "add -N"' '
 	git ls-files -s file >actual &&
 	empty=$(git hash-object --stdin </dev/null) &&
@@ -147,6 +159,66 @@ test_expect_success 'commit: ita entries ignored in empty commit check' '
 		: >two &&
 		git add -N two &&
 		test_must_fail git commit -m nothing-new-here
+	)
+'
+
+test_expect_success 'rename detection finds the right names' '
+	git init rename-detection &&
+	(
+		cd rename-detection &&
+		echo contents >first &&
+		git add first &&
+		git commit -m first &&
+		mv first third &&
+		git add -N third &&
+
+		git status | grep -v "^?" >actual.1 &&
+		test_i18ngrep "renamed: *first -> third" actual.1 &&
+
+		git status --porcelain | grep -v "^?" >actual.2 &&
+		cat >expected.2 <<-\EOF &&
+		 R first -> third
+		EOF
+		test_cmp expected.2 actual.2 &&
+
+		hash=12f00e90b6ef79117ce6e650416b8cf517099b78 &&
+		git status --porcelain=v2 | grep -v "^?" >actual.3 &&
+		cat >expected.3 <<-EOF &&
+		2 .R N... 100644 100644 100644 $hash $hash R100 third	first
+		EOF
+		test_cmp expected.3 actual.3
+	)
+'
+
+test_expect_success 'double rename detection in status' '
+	git init rename-detection-2 &&
+	(
+		cd rename-detection-2 &&
+		echo contents >first &&
+		git add first &&
+		git commit -m first &&
+		git mv first second &&
+		mv second third &&
+		git add -N third &&
+
+		git status | grep -v "^?" >actual.1 &&
+		test_i18ngrep "renamed: *first -> second" actual.1 &&
+		test_i18ngrep "renamed: *second -> third" actual.1 &&
+
+		git status --porcelain | grep -v "^?" >actual.2 &&
+		cat >expected.2 <<-\EOF &&
+		R  first -> second
+		 R second -> third
+		EOF
+		test_cmp expected.2 actual.2 &&
+
+		hash=12f00e90b6ef79117ce6e650416b8cf517099b78 &&
+		git status --porcelain=v2 | grep -v "^?" >actual.3 &&
+		cat >expected.3 <<-EOF &&
+		2 R. N... 100644 100644 100644 $hash $hash R100 second	first
+		2 .R N... 100644 100644 100644 $hash $hash R100 third	second
+		EOF
+		test_cmp expected.3 actual.3
 	)
 '
 
