@@ -439,7 +439,7 @@ __git_refs ()
 			track=""
 			;;
 		*)
-			for i in HEAD FETCH_HEAD ORIG_HEAD MERGE_HEAD; do
+			for i in HEAD FETCH_HEAD ORIG_HEAD MERGE_HEAD REBASE_HEAD; do
 				case "$i" in
 				$match*)
 					if [ -e "$dir/$i" ]; then
@@ -1077,7 +1077,7 @@ _git_am ()
 {
 	__git_find_repo_path
 	if [ -d "$__git_repo_path"/rebase-apply ]; then
-		__gitcomp "--skip --continue --resolved --abort --quit"
+		__gitcomp "--skip --continue --resolved --abort --quit --show-current-patch"
 		return
 	fi
 	case "$cur" in
@@ -1992,11 +1992,11 @@ _git_rebase ()
 {
 	__git_find_repo_path
 	if [ -f "$__git_repo_path"/rebase-merge/interactive ]; then
-		__gitcomp "--continue --skip --abort --quit --edit-todo"
+		__gitcomp "--continue --skip --abort --quit --edit-todo --show-current-patch"
 		return
 	elif [ -d "$__git_repo_path"/rebase-apply ] || \
 	     [ -d "$__git_repo_path"/rebase-merge ]; then
-		__gitcomp "--continue --skip --abort --quit"
+		__gitcomp "--continue --skip --abort --quit --show-current-patch"
 		return
 	fi
 	__git_complete_strategy && return

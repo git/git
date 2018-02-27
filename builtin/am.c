@@ -1011,6 +1011,7 @@ static void am_setup(struct am_state *state, enum patch_format patch_format,
 
 	if (mkdir(state->dir, 0777) < 0 && errno != EEXIST)
 		die_errno(_("failed to create directory '%s'"), state->dir);
+	delete_ref(NULL, "REBASE_HEAD", NULL, REF_NO_DEREF);
 
 	if (split_mail(state, patch_format, paths, keep_cr) < 0) {
 		am_destroy(state);
@@ -1110,6 +1111,7 @@ static void am_next(struct am_state *state)
 
 	oidclr(&state->orig_commit);
 	unlink(am_path(state, "original-commit"));
+	delete_ref(NULL, "REBASE_HEAD", NULL, REF_NO_DEREF);
 
 	if (!get_oid("HEAD", &head))
 		write_state_text(state, "abort-safety", oid_to_hex(&head));
@@ -1441,6 +1443,8 @@ static int parse_mail_rebase(struct am_state *state, const char *mail)
 
 	oidcpy(&state->orig_commit, &commit_oid);
 	write_state_text(state, "original-commit", oid_to_hex(&commit_oid));
+	update_ref("am", "REBASE_HEAD", &commit_oid,
+		   NULL, REF_NO_DEREF, UPDATE_REFS_DIE_ON_ERR);
 
 	return 0;
 }
@@ -1831,8 +1835,7 @@ static void am_run(struct am_state *state, int resume)
 			git_config_get_bool("advice.amworkdir", &advice_amworkdir);
 
 			if (advice_amworkdir)
-				printf_ln(_("The copy of the patch that failed is found in: %s"),
-						am_path(state, "patch"));
+				printf_ln(_("Use 'git am --show-current-patch' to see the failed patch"));
 
 			die_user_resolve(state);
 		}
@@ -2121,6 +2124,34 @@ static void am_abort(struct am_state *state)
 	am_destroy(state);
 }
 
+static int show_patch(struct am_state *state)
+{
+	struct strbuf sb = STRBUF_INIT;
+	const char *patch_path;
+	int len;
+
+	if (!is_null_oid(&state->orig_commit)) {
+		const char *av[4] = { "show", NULL, "--", NULL };
+		char *new_oid_str;
+		int ret;
+
+		av[1] = new_oid_str = xstrdup(oid_to_hex(&state->orig_commit));
+		ret = run_command_v_opt(av, RUN_GIT_CMD);
+		free(new_oid_str);
+		return ret;
+	}
+
+	patch_path = am_path(state, msgnum(state));
+	len = strbuf_read_file(&sb, patch_path, 0);
+	if (len < 0)
+		die_errno(_("failed to read '%s'"), patch_path);
+
+	setup_pager();
+	write_in_full(1, sb.buf, sb.len);
+	strbuf_release(&sb);
+	return 0;
+}
+
 /**
  * parse_options() callback that validates and sets opt->value to the
  * PATCH_FORMAT_* enum value corresponding to `arg`.
@@ -2150,7 +2181,8 @@ enum resume_mode {
 	RESUME_RESOLVED,
 	RESUME_SKIP,
 	RESUME_ABORT,
-	RESUME_QUIT
+	RESUME_QUIT,
+	RESUME_SHOW_PATCH
 };
 
 static int git_am_config(const char *k, const char *v, void *cb)
@@ -2172,6 +2204,7 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 	int patch_format = PATCH_FORMAT_UNKNOWN;
 	enum resume_mode resume = RESUME_FALSE;
 	int in_progress;
+	int ret = 0;
 
 	const char * const usage[] = {
 		N_("git am [<options>] [(<mbox> | <Maildir>)...]"),
@@ -2253,6 +2286,9 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 		OPT_CMDMODE(0, "quit", &resume,
 			N_("abort the patching operation but keep HEAD where it is."),
 			RESUME_QUIT),
+		OPT_CMDMODE(0, "show-current-patch", &resume,
+			N_("show the patch being applied."),
+			RESUME_SHOW_PATCH),
 		OPT_BOOL(0, "committer-date-is-author-date",
 			&state.committer_date_is_author_date,
 			N_("lie about committer date")),
@@ -2367,11 +2403,14 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 		am_rerere_clear();
 		am_destroy(&state);
 		break;
+	case RESUME_SHOW_PATCH:
+		ret = show_patch(&state);
+		break;
 	default:
 		die("BUG: invalid resume value");
 	}
 
 	am_state_release(&state);
 
-	return 0;
+	return ret;
 }
