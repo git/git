@@ -633,22 +633,22 @@ test_must_fail () {
 	exit_code=$?
 	if test $exit_code -eq 0 && ! list_contains "$_test_ok" success
 	then
-		echo >&2 "test_must_fail: command succeeded: $*"
+		echo >&4 "test_must_fail: command succeeded: $*"
 		return 1
 	elif test_match_signal 13 $exit_code && list_contains "$_test_ok" sigpipe
 	then
 		return 0
 	elif test $exit_code -gt 129 && test $exit_code -le 192
 	then
-		echo >&2 "test_must_fail: died by signal $(($exit_code - 128)): $*"
+		echo >&4 "test_must_fail: died by signal $(($exit_code - 128)): $*"
 		return 1
 	elif test $exit_code -eq 127
 	then
-		echo >&2 "test_must_fail: command not found: $*"
+		echo >&4 "test_must_fail: command not found: $*"
 		return 1
 	elif test $exit_code -eq 126
 	then
-		echo >&2 "test_must_fail: valgrind error: $*"
+		echo >&4 "test_must_fail: valgrind error: $*"
 		return 1
 	fi
 	return 0
@@ -688,7 +688,7 @@ test_expect_code () {
 		return 0
 	fi
 
-	echo >&2 "test_expect_code: command exited with $exit_code, we wanted $want_code $*"
+	echo >&4 "test_expect_code: command exited with $exit_code, we wanted $want_code $*"
 	return 1
 }
 
@@ -752,18 +752,18 @@ test_i18ngrep () {
 		shift
 		! grep "$@" && return 0
 
-		echo >&2 "error: '! grep $@' did find a match in:"
+		echo >&4 "error: '! grep $@' did find a match in:"
 	else
 		grep "$@" && return 0
 
-		echo >&2 "error: 'grep $@' didn't find a match in:"
+		echo >&4 "error: 'grep $@' didn't find a match in:"
 	fi
 
 	if test -s "$last_arg"
 	then
-		cat >&2 "$last_arg"
+		cat >&4 "$last_arg"
 	else
-		echo >&2 "<File '$last_arg' is empty>"
+		echo >&4 "<File '$last_arg' is empty>"
 	fi
 
 	return 1
@@ -774,7 +774,7 @@ test_i18ngrep () {
 # not output anything when they fail.
 verbose () {
 	"$@" && return 0
-	echo >&2 "command failed: $(git rev-parse --sq-quote "$@")"
+	echo >&4 "command failed: $(git rev-parse --sq-quote "$@")"
 	return 1
 }
 
