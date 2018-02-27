@@ -7,10 +7,6 @@ test_description='Gettext Shell poison'
 
 . ./lib-gettext.sh
 
-test_expect_success GETTEXT_POISON "sanity: \$GIT_INTERNAL_GETTEXT_SH_SCHEME is set (to $GIT_INTERNAL_GETTEXT_SH_SCHEME)" '
-    test -n "$GIT_INTERNAL_GETTEXT_SH_SCHEME"
-'
-
 test_expect_success GETTEXT_POISON 'sanity: $GIT_INTERNAL_GETTEXT_SH_SCHEME" is poison' '
     test "$GIT_INTERNAL_GETTEXT_SH_SCHEME" = "poison"
 '
