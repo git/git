@@ -414,7 +414,7 @@ int fscache_enable(int enable)
 /*
  * Flush cached stats result when fscache is enabled.
  */
-void fscache_flush()
+void fscache_flush(void)
 {
 	if (enabled) {
 		EnterCriticalSection(&mutex);

@@ -366,7 +366,7 @@ static int write_entry(struct cache_entry *ce,
 	}
 
 finish:
-	// Flush cached lstat in fscache after writing disk.
+	/* Flush cached lstat in fscache after writing to disk. */
 	flush_fscache();
 
 	if (state->refresh_cache) {
