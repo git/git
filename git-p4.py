@@ -2480,7 +2480,7 @@ class P4Sync(Command, P4UserMap):
                     if path.startswith(b + "/"):
                         path = path[len(b)+1:]
 
-        elif self.keepRepoPath:
+        if self.keepRepoPath:
             # Preserve everything in relative path name except leading
             # //depot/; just look at first prefix as they all should
             # be in the same depot.
@@ -2490,6 +2490,12 @@ class P4Sync(Command, P4UserMap):
 
         else:
             for p in prefixes:
+		if self.useClientSpec and not self.keepRepoPath:
+                    # when useClientSpec is false, the prefix will contain the depot name but the path will not
+                    # extract the depot name and add it to the path so the match below will do the right thing
+                    depot = re.sub("^(//[^/]+/).*", r'\1', p)
+                    path = depot + path
+
                 if p4PathStartsWith(path, p):
                     path = path[len(p):]
                     break
@@ -2526,8 +2532,8 @@ class P4Sync(Command, P4UserMap):
             # go in a p4 client
             if self.useClientSpec:
                 relPath = self.clientSpecDirs.map_in_client(path)
-            else:
-                relPath = self.stripRepoPath(path, self.depotPaths)
+
+            relPath = self.stripRepoPath(path, self.depotPaths)
 
             for branch in self.knownBranches.keys():
                 # add a trailing slash so that a commit into qt/4.2foo
