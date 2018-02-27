@@ -373,11 +373,8 @@ test_expect_success 'Quoting style: tcl' '
 
 for i in "--perl --shell" "-s --python" "--python --tcl" "--tcl --perl"; do
 	test_expect_success "more than one quoting style: $i" "
-		git for-each-ref $i 2>&1 | (read line &&
-		case \$line in
-		\"error: more than one quoting style\"*) : happy;;
-		*) false
-		esac)
+		test_must_fail git for-each-ref $i 2>err &&
+		grep '^error: more than one quoting style' err
 	"
 done
 
