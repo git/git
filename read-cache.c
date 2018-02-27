@@ -70,20 +70,20 @@ static void replace_index_entry(struct index_state *istate, int nr, struct cache
 
 void rename_index_entry_at(struct index_state *istate, int nr, const char *new_name)
 {
-	struct cache_entry *old = istate->cache[nr], *new;
+	struct cache_entry *old_entry = istate->cache[nr], *new_entry;
 	int namelen = strlen(new_name);
 
-	new = xmalloc(cache_entry_size(namelen));
-	copy_cache_entry(new, old);
-	new->ce_flags &= ~CE_HASHED;
-	new->ce_namelen = namelen;
-	new->index = 0;
-	memcpy(new->name, new_name, namelen + 1);
+	new_entry = xmalloc(cache_entry_size(namelen));
+	copy_cache_entry(new_entry, old_entry);
+	new_entry->ce_flags &= ~CE_HASHED;
+	new_entry->ce_namelen = namelen;
+	new_entry->index = 0;
+	memcpy(new_entry->name, new_name, namelen + 1);
 
-	cache_tree_invalidate_path(istate, old->name);
-	untracked_cache_remove_from_index(istate, old->name);
+	cache_tree_invalidate_path(istate, old_entry->name);
+	untracked_cache_remove_from_index(istate, old_entry->name);
 	remove_index_entry_at(istate, nr);
-	add_index_entry(istate, new, ADD_CACHE_OK_TO_ADD|ADD_CACHE_OK_TO_REPLACE);
+	add_index_entry(istate, new_entry, ADD_CACHE_OK_TO_ADD|ADD_CACHE_OK_TO_REPLACE);
 }
 
 void fill_stat_data(struct stat_data *sd, struct stat *st)
@@ -615,18 +615,18 @@ static struct cache_entry *create_alias_ce(struct index_state *istate,
 					   struct cache_entry *alias)
 {
 	int len;
-	struct cache_entry *new;
+	struct cache_entry *new_entry;
 
 	if (alias->ce_flags & CE_ADDED)
 		die("Will not add file alias '%s' ('%s' already exists in index)", ce->name, alias->name);
 
 	/* Ok, create the new entry using the name of the existing alias */
 	len = ce_namelen(alias);
-	new = xcalloc(1, cache_entry_size(len));
-	memcpy(new->name, alias->name, len);
-	copy_cache_entry(new, ce);
+	new_entry = xcalloc(1, cache_entry_size(len));
+	memcpy(new_entry->name, alias->name, len);
+	copy_cache_entry(new_entry, ce);
 	save_or_free_index_entry(istate, ce);
-	return new;
+	return new_entry;
 }
 
 void set_object_name_for_intent_to_add_entry(struct cache_entry *ce)
@@ -1379,7 +1379,7 @@ int refresh_index(struct index_state *istate, unsigned int flags,
 	added_fmt = (in_porcelain ? "A\t%s\n" : "%s needs update\n");
 	unmerged_fmt = (in_porcelain ? "U\t%s\n" : "%s: needs merge\n");
 	for (i = 0; i < istate->cache_nr; i++) {
-		struct cache_entry *ce, *new;
+		struct cache_entry *ce, *new_entry;
 		int cache_errno = 0;
 		int changed = 0;
 		int filtered = 0;
@@ -1408,10 +1408,10 @@ int refresh_index(struct index_state *istate, unsigned int flags,
 		if (filtered)
 			continue;
 
-		new = refresh_cache_ent(istate, ce, options, &cache_errno, &changed);
-		if (new == ce)
+		new_entry = refresh_cache_ent(istate, ce, options, &cache_errno, &changed);
+		if (new_entry == ce)
 			continue;
-		if (!new) {
+		if (!new_entry) {
 			const char *fmt;
 
 			if (really && cache_errno == EINVAL) {
@@ -1440,7 +1440,7 @@ int refresh_index(struct index_state *istate, unsigned int flags,
 			continue;
 		}
 
-		replace_index_entry(istate, i, new);
+		replace_index_entry(istate, i, new_entry);
 	}
 	trace_performance_since(start, "refresh index");
 	return has_errors;

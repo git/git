@@ -112,7 +112,7 @@ static void mktree_line(char *buf, size_t len, int nul_term_line, int allow_miss
 	mode_type = object_type(mode);
 	if (mode_type != type_from_string(ptr)) {
 		die("entry '%s' object type (%s) doesn't match mode type (%s)",
-			path, ptr, typename(mode_type));
+			path, ptr, type_name(mode_type));
 	}
 
 	/* Check the type of object identified by sha1 */
@@ -131,7 +131,7 @@ static void mktree_line(char *buf, size_t len, int nul_term_line, int allow_miss
 			 * because the new tree entry will never be correct.
 			 */
 			die("entry '%s' object %s is a %s but specified type was (%s)",
-				path, sha1_to_hex(sha1), typename(obj_type), typename(mode_type));
+				path, sha1_to_hex(sha1), type_name(obj_type), type_name(mode_type));
 		}
 	}
 

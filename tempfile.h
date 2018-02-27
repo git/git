@@ -135,58 +135,58 @@ extern struct tempfile *register_tempfile(const char *path);
  */
 
 /* See "mks_tempfile functions" above. */
-extern struct tempfile *mks_tempfile_sm(const char *template,
+extern struct tempfile *mks_tempfile_sm(const char *filename_template,
 					int suffixlen, int mode);
 
 /* See "mks_tempfile functions" above. */
-static inline struct tempfile *mks_tempfile_s(const char *template,
+static inline struct tempfile *mks_tempfile_s(const char *filename_template,
 					      int suffixlen)
 {
-	return mks_tempfile_sm(template, suffixlen, 0600);
+	return mks_tempfile_sm(filename_template, suffixlen, 0600);
 }
 
 /* See "mks_tempfile functions" above. */
-static inline struct tempfile *mks_tempfile_m(const char *template, int mode)
+static inline struct tempfile *mks_tempfile_m(const char *filename_template, int mode)
 {
-	return mks_tempfile_sm(template, 0, mode);
+	return mks_tempfile_sm(filename_template, 0, mode);
 }
 
 /* See "mks_tempfile functions" above. */
-static inline struct tempfile *mks_tempfile(const char *template)
+static inline struct tempfile *mks_tempfile(const char *filename_template)
 {
-	return mks_tempfile_sm(template, 0, 0600);
+	return mks_tempfile_sm(filename_template, 0, 0600);
 }
 
 /* See "mks_tempfile functions" above. */
-extern struct tempfile *mks_tempfile_tsm(const char *template,
+extern struct tempfile *mks_tempfile_tsm(const char *filename_template,
 					 int suffixlen, int mode);
 
 /* See "mks_tempfile functions" above. */
-static inline struct tempfile *mks_tempfile_ts(const char *template,
+static inline struct tempfile *mks_tempfile_ts(const char *filename_template,
 					       int suffixlen)
 {
-	return mks_tempfile_tsm(template, suffixlen, 0600);
+	return mks_tempfile_tsm(filename_template, suffixlen, 0600);
 }
 
 /* See "mks_tempfile functions" above. */
-static inline struct tempfile *mks_tempfile_tm(const char *template, int mode)
+static inline struct tempfile *mks_tempfile_tm(const char *filename_template, int mode)
 {
-	return mks_tempfile_tsm(template, 0, mode);
+	return mks_tempfile_tsm(filename_template, 0, mode);
 }
 
 /* See "mks_tempfile functions" above. */
-static inline struct tempfile *mks_tempfile_t(const char *template)
+static inline struct tempfile *mks_tempfile_t(const char *filename_template)
 {
-	return mks_tempfile_tsm(template, 0, 0600);
+	return mks_tempfile_tsm(filename_template, 0, 0600);
 }
 
 /* See "mks_tempfile functions" above. */
-extern struct tempfile *xmks_tempfile_m(const char *template, int mode);
+extern struct tempfile *xmks_tempfile_m(const char *filename_template, int mode);
 
 /* See "mks_tempfile functions" above. */
-static inline struct tempfile *xmks_tempfile(const char *template)
+static inline struct tempfile *xmks_tempfile(const char *filename_template)
 {
-	return xmks_tempfile_m(template, 0600);
+	return xmks_tempfile_m(filename_template, 0600);
 }
 
 /*

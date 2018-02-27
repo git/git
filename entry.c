@@ -85,12 +85,12 @@ static int create_file(const char *path, unsigned int mode)
 static void *read_blob_entry(const struct cache_entry *ce, unsigned long *size)
 {
 	enum object_type type;
-	void *new = read_sha1_file(ce->oid.hash, &type, size);
+	void *blob_data = read_sha1_file(ce->oid.hash, &type, size);
 
-	if (new) {
+	if (blob_data) {
 		if (type == OBJ_BLOB)
-			return new;
-		free(new);
+			return blob_data;
+		free(blob_data);
 	}
 	return NULL;
 }
@@ -256,7 +256,7 @@ static int write_entry(struct cache_entry *ce,
 	unsigned int ce_mode_s_ifmt = ce->ce_mode & S_IFMT;
 	struct delayed_checkout *dco = state->delayed_checkout;
 	int fd, ret, fstat_done = 0;
-	char *new;
+	char *new_blob;
 	struct strbuf buf = STRBUF_INIT;
 	unsigned long size;
 	ssize_t wrote;
@@ -276,8 +276,8 @@ static int write_entry(struct cache_entry *ce,
 
 	switch (ce_mode_s_ifmt) {
 	case S_IFLNK:
-		new = read_blob_entry(ce, &size);
-		if (!new)
+		new_blob = read_blob_entry(ce, &size);
+		if (!new_blob)
 			return error("unable to read sha1 file of %s (%s)",
 				     path, oid_to_hex(&ce->oid));
 
@@ -288,8 +288,8 @@ static int write_entry(struct cache_entry *ce,
 		if (!has_symlinks || to_tempfile)
 			goto write_file_entry;
 
-		ret = symlink(new, path);
-		free(new);
+		ret = symlink(new_blob, path);
+		free(new_blob);
 		if (ret)
 			return error_errno("unable to create symlink %s", path);
 		break;
@@ -300,11 +300,11 @@ static int write_entry(struct cache_entry *ce,
 		 * bother reading it at all.
 		 */
 		if (dco && dco->state == CE_RETRY) {
-			new = NULL;
+			new_blob = NULL;
 			size = 0;
 		} else {
-			new = read_blob_entry(ce, &size);
-			if (!new)
+			new_blob = read_blob_entry(ce, &size);
+			if (!new_blob)
 				return error("unable to read sha1 file of %s (%s)",
 					     path, oid_to_hex(&ce->oid));
 		}
@@ -313,18 +313,18 @@ static int write_entry(struct cache_entry *ce,
 		 * Convert from git internal format to working tree format
 		 */
 		if (dco && dco->state != CE_NO_DELAY) {
-			ret = async_convert_to_working_tree(ce->name, new,
+			ret = async_convert_to_working_tree(ce->name, new_blob,
 							    size, &buf, dco);
 			if (ret && string_list_has_string(&dco->paths, ce->name)) {
-				free(new);
+				free(new_blob);
 				goto delayed;
 			}
 		} else
-			ret = convert_to_working_tree(ce->name, new, size, &buf);
+			ret = convert_to_working_tree(ce->name, new_blob, size, &buf);
 
 		if (ret) {
-			free(new);
-			new = strbuf_detach(&buf, &newsize);
+			free(new_blob);
+			new_blob = strbuf_detach(&buf, &newsize);
 			size = newsize;
 		}
 		/*
@@ -336,15 +336,15 @@ static int write_entry(struct cache_entry *ce,
 	write_file_entry:
 		fd = open_output_fd(path, ce, to_tempfile);
 		if (fd < 0) {
-			free(new);
+			free(new_blob);
 			return error_errno("unable to create file %s", path);
 		}
 
-		wrote = write_in_full(fd, new, size);
+		wrote = write_in_full(fd, new_blob, size);
 		if (!to_tempfile)
 			fstat_done = fstat_output(fd, state, &st);
 		close(fd);
-		free(new);
+		free(new_blob);
 		if (wrote < 0)
 			return error("unable to write file %s", path);
 		break;

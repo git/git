@@ -117,7 +117,7 @@ int submodule_to_gitdir(struct strbuf *buf, const char *submodule);
 #define SUBMODULE_MOVE_HEAD_FORCE   (1<<1)
 extern int submodule_move_head(const char *path,
 			       const char *old,
-			       const char *new,
+			       const char *new_head,
 			       unsigned flags);
 
 /*
