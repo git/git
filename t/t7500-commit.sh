@@ -272,6 +272,14 @@ test_expect_success 'commit --fixup provides correct one-line commit message' '
 	commit_msg_is "fixup! target message subject line"
 '
 
+test_expect_success 'commit --fixup -m"something" -m"extra"' '
+	commit_for_rebase_autosquash_setup &&
+	git commit --fixup HEAD~1 -m"something" -m"extra" &&
+	commit_msg_is "fixup! target message subject linesomething
+
+extra"
+'
+
 test_expect_success 'commit --squash works with -F' '
 	commit_for_rebase_autosquash_setup &&
 	echo "log message from file" >msgfile &&
@@ -325,7 +333,6 @@ test_expect_success 'invalid message options when using --fixup' '
 	test_must_fail git commit --fixup HEAD~1 --squash HEAD~2 &&
 	test_must_fail git commit --fixup HEAD~1 -C HEAD~2 &&
 	test_must_fail git commit --fixup HEAD~1 -c HEAD~2 &&
-	test_must_fail git commit --fixup HEAD~1 -m "cmdline message" &&
 	test_must_fail git commit --fixup HEAD~1 -F log
 '
 
