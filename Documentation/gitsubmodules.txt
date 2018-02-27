@@ -24,7 +24,7 @@ On the filesystem, a submodule usually (but not always - see FORMS below)
 consists of (i) a Git directory located under the `$GIT_DIR/modules/`
 directory of its superproject, (ii) a working directory inside the
 superproject's working directory, and a `.git` file at the root of
-the submodule’s working directory pointing to (i).
+the submodule's working directory pointing to (i).
 
 Assuming the submodule has a Git directory at `$GIT_DIR/modules/foo/`
 and a working directory at `path/to/bar/`, the superproject tracks the
@@ -33,7 +33,7 @@ in its `.gitmodules` file (see linkgit:gitmodules[5]) of the form
 `submodule.foo.path = path/to/bar`.
 
 The `gitlink` entry contains the object name of the commit that the
-superproject expects the submodule’s working directory to be at.
+superproject expects the submodule's working directory to be at.
 
 The section `submodule.foo.*` in the `.gitmodules` file gives additional
 hints to Git's porcelain layer. For example, the `submodule.foo.url`
@@ -136,27 +136,27 @@ using older versions of Git.
 +
 It is possible to construct these old form repositories manually.
 +
-When deinitialized or deleted (see below), the submodule’s Git
+When deinitialized or deleted (see below), the submodule's Git
 directory is automatically moved to `$GIT_DIR/modules/<name>/`
 of the superproject.
 
  * Deinitialized submodule: A `gitlink`, and a `.gitmodules` entry,
-but no submodule working directory. The submodule’s Git directory
+but no submodule working directory. The submodule's Git directory
 may be there as after deinitializing the Git directory is kept around.
 The directory which is supposed to be the working directory is empty instead.
 +
 A submodule can be deinitialized by running `git submodule deinit`.
 Besides emptying the working directory, this command only modifies
-the superproject’s `$GIT_DIR/config` file, so the superproject’s history
+the superproject's `$GIT_DIR/config` file, so the superproject's history
 is not affected. This can be undone using `git submodule init`.
 
  * Deleted submodule: A submodule can be deleted by running
 `git rm <submodule path> && git commit`. This can be undone
 using `git revert`.
 +
-The deletion removes the superproject’s tracking data, which are
+The deletion removes the superproject's tracking data, which are
 both the `gitlink` entry and the section in the `.gitmodules` file.
-The submodule’s working directory is removed from the file
+The submodule's working directory is removed from the file
 system, but the Git directory is kept around as it to make it
 possible to checkout past commits without requiring fetching
 from another repository.
