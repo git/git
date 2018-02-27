@@ -28,7 +28,7 @@ as a subdirectory of your application.
 
 Subtrees are not to be confused with submodules, which are meant for
 the same task. Unlike submodules, subtrees do not need any special
-constructions (like .gitmodule files or gitlinks) be present in
+constructions (like .gitmodules files or gitlinks) be present in
 your repository, and do not force end-users of your
 repository to do anything special or to understand how subtrees
 work. A subtree is just a subdirectory that can be
