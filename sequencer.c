@@ -514,8 +514,10 @@ static int do_recursive_merge(struct commit *base, struct commit *next,
 		fputs(o.obuf.buf, stdout);
 	strbuf_release(&o.obuf);
 	diff_warn_rename_limit("merge.renamelimit", o.needed_rename_limit, 0);
-	if (clean < 0)
+	if (clean < 0) {
+		rollback_lock_file(&index_lock);
 		return clean;
+	}
 
 	if (active_cache_changed &&
 	    write_locked_index(&the_index, &index_lock, COMMIT_LOCK))
