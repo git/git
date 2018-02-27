@@ -378,4 +378,12 @@ check_describe tags/A --all A
 check_describe tags/c --all c
 check_describe heads/branch_A --all --match='branch_*' branch_A
 
+test_expect_success 'describe complains about tree object' '
+	test_must_fail git describe HEAD^{tree}
+'
+
+test_expect_success 'describe complains about missing object' '
+	test_must_fail git describe $_z40
+'
+
 test_done
