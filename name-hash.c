@@ -699,12 +699,12 @@ void adjust_dirname_case(struct index_state *istate, char *name)
 		if (*ptr == '/') {
 			struct dir_entry *dir;
 
-			ptr++;
-			dir = find_dir_entry(istate, name, ptr - name + 1);
+			dir = find_dir_entry(istate, name, ptr - name);
 			if (dir) {
 				memcpy((void *)startPtr, dir->name + (startPtr - name), ptr - startPtr);
-				startPtr = ptr;
+				startPtr = ptr + 1;
 			}
+			ptr++;
 		}
 	}
 }

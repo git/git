@@ -80,7 +80,21 @@ test_expect_success 'merge (case change)' '
 	git merge topic
 '
 
-
+test_expect_success CASE_INSENSITIVE_FS 'add directory (with different case)' '
+	git reset --hard initial &&
+	mkdir -p dir1/dir2 &&
+	echo >dir1/dir2/a &&
+	echo >dir1/dir2/b &&
+	git add dir1/dir2/a &&
+	git add dir1/DIR2/b &&
+	git ls-files >actual &&
+	cat >expected <<-\EOF &&
+		camelcase
+		dir1/dir2/a
+		dir1/dir2/b
+	EOF
+	test_cmp expected actual
+'
 
 test_expect_failure CASE_INSENSITIVE_FS 'add (with different case)' '
 	git reset --hard initial &&
