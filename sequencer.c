@@ -339,7 +339,7 @@ static void print_advice(int show_hint, struct replay_opts *opts)
 static int write_message(const void *buf, size_t len, const char *filename,
 			 int append_eol)
 {
-	static struct lock_file msg_file;
+	struct lock_file msg_file = LOCK_INIT;
 
 	int msg_fd = hold_lock_file_for_update(&msg_file, filename, 0);
 	if (msg_fd < 0)
@@ -485,7 +485,7 @@ static int do_recursive_merge(struct commit *base, struct commit *next,
 	struct tree *result, *next_tree, *base_tree, *head_tree;
 	int clean;
 	char **xopt;
-	static struct lock_file index_lock;
+	struct lock_file index_lock = LOCK_INIT;
 
 	if (hold_locked_index(&index_lock, LOCK_REPORT_ON_ERROR) < 0)
 		return -1;
@@ -1705,7 +1705,7 @@ static int prepare_revs(struct replay_opts *opts)
 
 static int read_and_refresh_cache(struct replay_opts *opts)
 {
-	static struct lock_file index_lock;
+	struct lock_file index_lock = LOCK_INIT;
 	int index_fd = hold_locked_index(&index_lock, 0);
 	if (read_index_preload(&the_index, NULL) < 0) {
 		rollback_lock_file(&index_lock);
@@ -2099,7 +2099,7 @@ static int create_seq_dir(void)
 
 static int save_head(const char *head)
 {
-	static struct lock_file head_lock;
+	struct lock_file head_lock = LOCK_INIT;
 	struct strbuf buf = STRBUF_INIT;
 	int fd;
 	ssize_t written;
@@ -2224,7 +2224,7 @@ fail:
 
 static int save_todo(struct todo_list *todo_list, struct replay_opts *opts)
 {
-	static struct lock_file todo_lock;
+	struct lock_file todo_lock = LOCK_INIT;
 	const char *todo_path = get_todo_path(opts);
 	int next = todo_list->current, offset, fd;
 
