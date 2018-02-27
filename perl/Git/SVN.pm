@@ -1405,7 +1405,7 @@ sub parse_svn_date {
 		$ENV{TZ} = 'UTC';
 
 		my $epoch_in_UTC =
-		    Time::Local::timelocal($S, $M, $H, $d, $m - 1, $Y - 1900);
+		    Time::Local::timelocal($S, $M, $H, $d, $m - 1, $Y);
 
 		# Determine our local timezone (including DST) at the
 		# time of $epoch_in_UTC.  $Git::SVN::Log::TZ stored the
