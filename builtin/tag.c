@@ -402,10 +402,10 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 
 		OPT_GROUP(N_("Tag listing options")),
 		OPT_COLUMN(0, "column", &colopts, N_("show tag list in columns")),
-		OPT_CONTAINS(&filter.with_commit, N_("print only tags that contain the commit")),
-		OPT_NO_CONTAINS(&filter.no_commit, N_("print only tags that don't contain the commit")),
-		OPT_WITH(&filter.with_commit, N_("print only tags that contain the commit")),
-		OPT_WITHOUT(&filter.no_commit, N_("print only tags that don't contain the commit")),
+		OPT_CONTAINS(&filter.with_commit_strs, N_("print only tags that contain the commit")),
+		OPT_NO_CONTAINS(&filter.no_commit_strs, N_("print only tags that don't contain the commit")),
+		OPT_WITH(&filter.with_commit_strs, N_("print only tags that contain the commit")),
+		OPT_WITHOUT(&filter.no_commit_strs, N_("print only tags that don't contain the commit")),
 		OPT_MERGED(&filter, N_("print only tags that are merged")),
 		OPT_NO_MERGED(&filter, N_("print only tags that are not merged")),
 		OPT_CALLBACK(0 , "sort", sorting_tail, N_("key"),
@@ -441,8 +441,8 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	if (!cmdmode) {
 		if (argc == 0)
 			cmdmode = 'l';
-		else if (filter.with_commit || filter.no_commit ||
-			 filter.points_at.nr || filter.merge_commit ||
+		else if (filter.points_at.nr || filter.merge_commit ||
+			 filter.with_commit_strs.nr || filter.no_commit_strs.nr ||
 			 filter.lines != -1)
 			cmdmode = 'l';
 	}
@@ -479,9 +479,9 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	}
 	if (filter.lines != -1)
 		die(_("-n option is only allowed in list mode"));
-	if (filter.with_commit)
+	if (filter.with_commit_strs.nr)
 		die(_("--contains option is only allowed in list mode"));
-	if (filter.no_commit)
+	if (filter.no_commit_strs.nr)
 		die(_("--no-contains option is only allowed in list mode"));
 	if (filter.points_at.nr)
 		die(_("--points-at option is only allowed in list mode"));
