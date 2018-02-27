@@ -182,7 +182,6 @@ ifeq ($(uname_O),Cygwin)
 	NO_ST_BLOCKS_IN_STRUCT_STAT = YesPlease
 	X = .exe
 	UNRELIABLE_FSTAT = UnfortunatelyYes
-	SPARSE_FLAGS = -isystem /usr/include/w32api -Wno-one-bit-signed-bitfield
 	OBJECT_CREATION_USES_RENAMES = UnfortunatelyNeedsTo
 	MMAP_PREVENTS_DELETE = UnfortunatelyYes
 	COMPAT_OBJS += compat/cygwin.o
