@@ -396,7 +396,7 @@ pick_one_preserving_merges () {
 					--sq-quote "$gpg_sign_opt")} \
 				$allow_rerere_autoupdate "$merge_args" \
 				"$strategy_args" \
-				-m $(git rev-parse --sq-quote "$msg_content") \
+				-m "$(git rev-parse --sq-quote "$msg_content")" \
 				"$new_parents"
 			then
 				printf "%s\n" "$msg_content" > "$GIT_DIR"/MERGE_MSG
