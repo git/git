@@ -118,9 +118,15 @@ static char *sq_dequote_step(char *arg, char **next)
 				*next = NULL;
 			return arg;
 		case '\\':
-			c = *++src;
-			if (need_bs_quote(c) && *++src == '\'') {
-				*dst++ = c;
+			/*
+			 * Allow backslashed characters outside of
+			 * single-quotes only if they need escaping,
+			 * and only if we resume the single-quoted part
+			 * afterward.
+			 */
+			if (need_bs_quote(src[1]) && src[2] == '\'') {
+				*dst++ = src[1];
+				src += 2;
 				continue;
 			}
 		/* Fallthrough */

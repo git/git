@@ -1206,6 +1206,29 @@ test_expect_success 'git -c is not confused by empty environment' '
 	GIT_CONFIG_PARAMETERS="" git -c x.one=1 config --list
 '
 
+sq="'"
+test_expect_success 'detect bogus GIT_CONFIG_PARAMETERS' '
+	cat >expect <<-\EOF &&
+	env.one one
+	env.two two
+	EOF
+	GIT_CONFIG_PARAMETERS="${sq}env.one=one${sq} ${sq}env.two=two${sq}" \
+		git config --get-regexp "env.*" >actual &&
+	test_cmp expect actual &&
+
+	cat >expect <<-EOF &&
+	env.one one${sq}
+	env.two two
+	EOF
+	GIT_CONFIG_PARAMETERS="${sq}env.one=one${sq}\\$sq$sq$sq ${sq}env.two=two${sq}" \
+		git config --get-regexp "env.*" >actual &&
+	test_cmp expect actual &&
+
+	test_must_fail env \
+		GIT_CONFIG_PARAMETERS="${sq}env.one=one${sq}\\$sq ${sq}env.two=two${sq}" \
+		git config --get-regexp "env.*"
+'
+
 test_expect_success 'git config --edit works' '
 	git config -f tmp test.value no &&
 	echo test.value=yes >expect &&
