@@ -655,7 +655,7 @@ library for your script to use.
 		test_expect_code 1 git merge "merge msg" B master
 	'
 
- - test_must_fail <git-command>
+ - test_must_fail [<options>] <git-command>
 
    Run a git command and ensure it fails in a controlled way.  Use
    this instead of "! <git-command>".  When git-command dies due to a
@@ -663,10 +663,20 @@ library for your script to use.
    treats it as just another expected failure, which would let such a
    bug go unnoticed.
 
- - test_might_fail <git-command>
+   Accepts the following options:
+
+     ok=<signal-name>[,<...>]:
+       Don't treat an exit caused by the given signal as error.
+       Multiple signals can be specified as a comma separated list.
+       Currently recognized signal names are: sigpipe, success.
+       (Don't use 'success', use 'test_might_fail' instead.)
+
+ - test_might_fail [<options>] <git-command>
 
    Similar to test_must_fail, but tolerate success, too.  Use this
    instead of "<git-command> || :" to catch failures due to segv.
+
+   Accepts the same options as test_must_fail.
 
  - test_cmp <expected> <actual>
 
