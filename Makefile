@@ -2218,12 +2218,14 @@ $(VCSSVN_LIB): $(VCSSVN_OBJS)
 
 export DEFAULT_EDITOR DEFAULT_PAGER
 
-.PHONY: doc man html info pdf
-doc:
+.PHONY: doc man man-perl html info pdf
+doc: man-perl
 	$(MAKE) -C Documentation all
 
-man:
+man: man-perl
 	$(MAKE) -C Documentation man
+
+man-perl: perl/build/man/man3/Git.3pm
 
 html:
 	$(MAKE) -C Documentation html
@@ -2622,7 +2624,7 @@ endif
 	done && \
 	./check_bindir "z$$bindir" "z$$execdir" "$$bindir/git-add$X"
 
-.PHONY: install-gitweb install-doc install-man install-html install-info install-pdf
+.PHONY: install-gitweb install-doc install-man install-man-perl install-html install-info install-pdf
 .PHONY: quick-install-doc quick-install-man quick-install-html
 install-gitweb:
 	$(MAKE) -C gitweb install
@@ -2633,7 +2635,7 @@ install-doc: install-man-perl
 install-man: install-man-perl
 	$(MAKE) -C Documentation install-man
 
-install-man-perl: perl/build/man/man3/Git.3pm
+install-man-perl: man-perl
 	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(mandir_SQ)/man3'
 	(cd perl/build/man/man3 && $(TAR) cf - .) | \
 	(cd '$(DESTDIR_SQ)$(mandir_SQ)/man3' && umask 022 && $(TAR) xof -)
