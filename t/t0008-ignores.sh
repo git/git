@@ -775,6 +775,26 @@ test_expect_success PIPE 'streaming support for --stdin' '
 	echo "$response" | grep "^::	two"
 '
 
+test_expect_success 'existing file and directory' '
+	test_when_finished "rm one" &&
+	test_when_finished "rmdir top-level-dir" &&
+	>one &&
+	mkdir top-level-dir &&
+	git check-ignore one top-level-dir >actual &&
+	grep one actual &&
+	grep top-level-dir actual
+'
+
+test_expect_success 'existing directory and file' '
+	test_when_finished "rm one" &&
+	test_when_finished "rmdir top-level-dir" &&
+	>one &&
+	mkdir top-level-dir &&
+	git check-ignore top-level-dir one >actual &&
+	grep one actual &&
+	grep top-level-dir actual
+'
+
 ############################################################################
 #
 # test whitespace handling
