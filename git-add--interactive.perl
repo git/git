@@ -1184,7 +1184,13 @@ d - do not apply this hunk or any of the later hunks in the file"),
 );
 
 sub help_patch_cmd {
-	print colored $help_color, __($help_patch_modes{$patch_mode}), "\n", __ <<EOF ;
+	local $_;
+	my $other = $_[0] . ",?";
+	print colored $help_color, __($help_patch_modes{$patch_mode}), "\n",
+		map { "$_\n" } grep {
+			my $c = quotemeta(substr($_, 0, 1));
+			$other =~ /,$c/
+		} split "\n", __ <<EOF ;
 g - select a hunk to go to
 / - search for a hunk matching the given regex
 j - leave this hunk undecided, see next undecided hunk
@@ -1302,39 +1308,39 @@ sub display_hunks {
 
 my %patch_update_prompt_modes = (
 	stage => {
-		mode => N__("Stage mode change [y,n,q,a,d,/%s,?]? "),
-		deletion => N__("Stage deletion [y,n,q,a,d,/%s,?]? "),
-		hunk => N__("Stage this hunk [y,n,q,a,d,/%s,?]? "),
+		mode => N__("Stage mode change [y,n,q,a,d%s,?]? "),
+		deletion => N__("Stage deletion [y,n,q,a,d%s,?]? "),
+		hunk => N__("Stage this hunk [y,n,q,a,d%s,?]? "),
 	},
 	stash => {
-		mode => N__("Stash mode change [y,n,q,a,d,/%s,?]? "),
-		deletion => N__("Stash deletion [y,n,q,a,d,/%s,?]? "),
-		hunk => N__("Stash this hunk [y,n,q,a,d,/%s,?]? "),
+		mode => N__("Stash mode change [y,n,q,a,d%s,?]? "),
+		deletion => N__("Stash deletion [y,n,q,a,d%s,?]? "),
+		hunk => N__("Stash this hunk [y,n,q,a,d%s,?]? "),
 	},
 	reset_head => {
-		mode => N__("Unstage mode change [y,n,q,a,d,/%s,?]? "),
-		deletion => N__("Unstage deletion [y,n,q,a,d,/%s,?]? "),
-		hunk => N__("Unstage this hunk [y,n,q,a,d,/%s,?]? "),
+		mode => N__("Unstage mode change [y,n,q,a,d%s,?]? "),
+		deletion => N__("Unstage deletion [y,n,q,a,d%s,?]? "),
+		hunk => N__("Unstage this hunk [y,n,q,a,d%s,?]? "),
 	},
 	reset_nothead => {
-		mode => N__("Apply mode change to index [y,n,q,a,d,/%s,?]? "),
-		deletion => N__("Apply deletion to index [y,n,q,a,d,/%s,?]? "),
-		hunk => N__("Apply this hunk to index [y,n,q,a,d,/%s,?]? "),
+		mode => N__("Apply mode change to index [y,n,q,a,d%s,?]? "),
+		deletion => N__("Apply deletion to index [y,n,q,a,d%s,?]? "),
+		hunk => N__("Apply this hunk to index [y,n,q,a,d%s,?]? "),
 	},
 	checkout_index => {
-		mode => N__("Discard mode change from worktree [y,n,q,a,d,/%s,?]? "),
-		deletion => N__("Discard deletion from worktree [y,n,q,a,d,/%s,?]? "),
-		hunk => N__("Discard this hunk from worktree [y,n,q,a,d,/%s,?]? "),
+		mode => N__("Discard mode change from worktree [y,n,q,a,d%s,?]? "),
+		deletion => N__("Discard deletion from worktree [y,n,q,a,d%s,?]? "),
+		hunk => N__("Discard this hunk from worktree [y,n,q,a,d%s,?]? "),
 	},
 	checkout_head => {
-		mode => N__("Discard mode change from index and worktree [y,n,q,a,d,/%s,?]? "),
-		deletion => N__("Discard deletion from index and worktree [y,n,q,a,d,/%s,?]? "),
-		hunk => N__("Discard this hunk from index and worktree [y,n,q,a,d,/%s,?]? "),
+		mode => N__("Discard mode change from index and worktree [y,n,q,a,d%s,?]? "),
+		deletion => N__("Discard deletion from index and worktree [y,n,q,a,d%s,?]? "),
+		hunk => N__("Discard this hunk from index and worktree [y,n,q,a,d%s,?]? "),
 	},
 	checkout_nothead => {
-		mode => N__("Apply mode change to index and worktree [y,n,q,a,d,/%s,?]? "),
-		deletion => N__("Apply deletion to index and worktree [y,n,q,a,d,/%s,?]? "),
-		hunk => N__("Apply this hunk to index and worktree [y,n,q,a,d,/%s,?]? "),
+		mode => N__("Apply mode change to index and worktree [y,n,q,a,d%s,?]? "),
+		deletion => N__("Apply deletion to index and worktree [y,n,q,a,d%s,?]? "),
+		hunk => N__("Apply this hunk to index and worktree [y,n,q,a,d%s,?]? "),
 	},
 );
 
@@ -1390,7 +1396,7 @@ sub patch_update_file {
 			$other .= ',J';
 		}
 		if ($num > 1) {
-			$other .= ',g';
+			$other .= ',g,/';
 		}
 		for ($i = 0; $i < $num; $i++) {
 			if (!defined $hunk[$i]{USE}) {
@@ -1431,8 +1437,12 @@ sub patch_update_file {
 				}
 				next;
 			}
-			elsif ($other =~ /g/ && $line =~ /^g(.*)/) {
+			elsif ($line =~ /^g(.*)/) {
 				my $response = $1;
+				unless ($other =~ /g/) {
+					error_msg __("No other hunks to goto\n");
+					next;
+				}
 				my $no = $ix > 10 ? $ix - 10 : 0;
 				while ($response eq '') {
 					$no = display_hunks(\@hunk, $no);
@@ -1478,6 +1488,10 @@ sub patch_update_file {
 			}
 			elsif ($line =~ m|^/(.*)|) {
 				my $regex = $1;
+				unless ($other =~ m|/|) {
+					error_msg __("No other hunks to search\n");
+					next;
+				}
 				if ($1 eq "") {
 					print colored $prompt_color, __("search for regex? ");
 					$regex = <STDIN>;
@@ -1546,7 +1560,11 @@ sub patch_update_file {
 					next;
 				}
 			}
-			elsif ($other =~ /s/ && $line =~ /^s/) {
+			elsif ($line =~ /^s/) {
+				unless ($other =~ /s/) {
+					error_msg __("Sorry, cannot split this hunk\n");
+					next;
+				}
 				my @split = split_hunk($hunk[$ix]{TEXT}, $hunk[$ix]{DISPLAY});
 				if (1 < @split) {
 					print colored $header_color, sprintf(
@@ -1558,7 +1576,11 @@ sub patch_update_file {
 				$num = scalar @hunk;
 				next;
 			}
-			elsif ($other =~ /e/ && $line =~ /^e/) {
+			elsif ($line =~ /^e/) {
+				unless ($other =~ /e/) {
+					error_msg __("Sorry, cannot edit this hunk\n");
+					next;
+				}
 				my $newhunk = edit_hunk_loop($head, \@hunk, $ix);
 				if (defined $newhunk) {
 					splice @hunk, $ix, 1, $newhunk;
