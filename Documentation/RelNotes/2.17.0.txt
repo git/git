@@ -8,7 +8,6 @@ UI, Workflows & Features
 
  * "diff" family of commands learned "--find-object=<object-id>" option
    to limit the findings to changes that involve the named object.
-   (merge 4d8c51aa19 sb/diff-blobfind-pickaxe later to maint).
 
  * "git format-patch" learned to give 72-cols to diffstat, which is
    consistent with other line length limits the subcommand uses for
@@ -19,6 +18,14 @@ UI, Workflows & Features
    syslog) when running it from inetd.
 
  * "git rebase" learned to take "--allow-empty-message" option.
+
+ * "git am" has learned the "--quit" option, in addition to the
+   existing "--abort" option; having the pair mirrors a few other
+   commands like "rebase" and "cherry-pick".
+
+ * "git worktree add" learned to run the post-checkout hook, just like
+   "git clone" runs it upon the initial checkout.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -95,7 +102,6 @@ Fixes since v2.16
    it appear "removed") and then adding with the -N option (hence
    making that appear "added") detected it as a rename, but did not
    report the  old and new pathnames correctly.
-   (merge 176ea74793 nd/ita-wt-renames-in-status later to maint).
 
  * "git svn dcommit" did not take into account the fact that a
    svn+ssh:// URL with a username@ (typically used for pushing) refers
@@ -114,11 +120,9 @@ Fixes since v2.16
  * "git commit --fixup" did not allow "-m<message>" option to be used
    at the same time; allow it to annotate resulting commit with more
    text.
-   (merge 30884c9afc ab/commit-m-with-fixup later to maint).
 
  * When resetting the working tree files recursively, the working tree
    of submodules are now also reset to match.
-   (merge 7dcc1f4df8 sb/submodule-update-reset-fix later to maint).
 
  * "git stash -- <pathspec>" incorrectly blew away untracked files in
    the directory that matched the pathspec, which has been corrected.
@@ -211,9 +215,22 @@ Fixes since v2.16
    and produced bogus results instead.
    (merge ddbbf8eb25 jk/sq-dequote-on-bogus-input later to maint).
 
+ * Many places in "git apply" knew that "/dev/null" that signals
+   "there is no such file on this side of the diff" can be followed by
+   whitespace and garbage when parsing a patch, except for one, which
+   made an otherwise valid patch (e.g. ones from subversion) rejected.
+   (merge e454ad4bec tk/apply-dev-null-verify-name-fix later to maint).
+
+ * We no longer create any *.spec file, so "make clean" should not
+   remove it.
+   (merge 4321bdcabb tz/do-not-clean-spec-file later to maint).
+
+ * "git push" over http transport did not unquote the push-options
+   correctly.
+   (merge 90dce21eb0 jk/push-options-via-transport-fix later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge e2a5a028c7 bw/oidmap-autoinit later to maint).
-   (merge f0a6068a9f ys/bisect-object-id-missing-conversion-fix later to maint).
    (merge ec3b4b06f8 cl/t9001-cleanup later to maint).
    (merge e1b3f3dd38 ks/submodule-doc-updates later to maint).
    (merge fbac558a9b rs/describe-unique-abbrev later to maint).
@@ -235,3 +252,6 @@ Fixes since v2.16
    (merge 4ccf461f56 bp/fsmonitor later to maint).
    (merge a6119f82b1 jk/test-hashmap-updates later to maint).
    (merge 5aea9fe6cc rd/typofix later to maint).
+   (merge e4e5da2796 sb/status-doc-fix later to maint).
+   (merge 7976e901c8 gs/test-unset-xdg-cache-home later to maint).
+   (merge d023df1ee6 tg/worktree-create-tracking later to maint).
