@@ -2218,12 +2218,15 @@ int merge_recursive_generic(struct merge_options *o,
 	hold_locked_index(&lock, LOCK_DIE_ON_ERROR);
 	clean = merge_recursive(o, head_commit, next_commit, ca,
 			result);
-	if (clean < 0)
+	if (clean < 0) {
+		rollback_lock_file(&lock);
 		return clean;
+	}
 
 	if (active_cache_changed &&
 	    write_locked_index(&the_index, &lock, COMMIT_LOCK))
 		return err(o, _("Unable to write index."));
+	rollback_lock_file(&lock);
 
 	return clean ? 0 : 1;
 }
