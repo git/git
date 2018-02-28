@@ -352,10 +352,8 @@ static int write_message(const void *buf, size_t len, const char *filename,
 		rollback_lock_file(&msg_file);
 		return error_errno(_("could not write eol to '%s'"), filename);
 	}
-	if (commit_lock_file(&msg_file) < 0) {
-		rollback_lock_file(&msg_file);
-		return error(_("failed to finalize '%s'."), filename);
-	}
+	if (commit_lock_file(&msg_file) < 0)
+		return error(_("failed to finalize '%s'"), filename);
 
 	return 0;
 }
@@ -2107,10 +2105,8 @@ static int save_head(const char *head)
 	ssize_t written;
 
 	fd = hold_lock_file_for_update(&head_lock, git_path_head_file(), 0);
-	if (fd < 0) {
-		rollback_lock_file(&head_lock);
+	if (fd < 0)
 		return error_errno(_("could not lock HEAD"));
-	}
 	strbuf_addf(&buf, "%s\n", head);
 	written = write_in_full(fd, buf.buf, buf.len);
 	strbuf_release(&buf);
@@ -2119,10 +2115,8 @@ static int save_head(const char *head)
 		return error_errno(_("could not write to '%s'"),
 				   git_path_head_file());
 	}
-	if (commit_lock_file(&head_lock) < 0) {
-		rollback_lock_file(&head_lock);
-		return error(_("failed to finalize '%s'."), git_path_head_file());
-	}
+	if (commit_lock_file(&head_lock) < 0)
+		return error(_("failed to finalize '%s'"), git_path_head_file());
 	return 0;
 }
 
@@ -2246,7 +2240,7 @@ static int save_todo(struct todo_list *todo_list, struct replay_opts *opts)
 			todo_list->buf.len - offset) < 0)
 		return error_errno(_("could not write to '%s'"), todo_path);
 	if (commit_lock_file(&todo_lock) < 0)
-		return error(_("failed to finalize '%s'."), todo_path);
+		return error(_("failed to finalize '%s'"), todo_path);
 
 	if (is_rebase_i(opts)) {
 		const char *done_path = rebase_path_done();
