@@ -184,10 +184,10 @@ in which case `XY` are `!!`.
 
     X          Y     Meaning
     -------------------------------------------------
-              [MD]   not updated
+	     [AMD]   not updated
     M        [ MD]   updated in index
     A        [ MD]   added to index
-    D         [ M]   deleted from index
+    D                deleted from index
     R        [ MD]   renamed in index
     C        [ MD]   copied in index
     [MARC]           index and work tree matches
