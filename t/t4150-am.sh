@@ -1045,4 +1045,16 @@ test_expect_success 'am works with multi-line in-body headers' '
 	git cat-file commit HEAD | grep "^$LONG$"
 '
 
+test_expect_success 'am --quit keeps HEAD where it is' '
+	mkdir .git/rebase-apply &&
+	>.git/rebase-apply/last &&
+	>.git/rebase-apply/next &&
+	git rev-parse HEAD^ >.git/ORIG_HEAD &&
+	git rev-parse HEAD >expected &&
+	git am --quit &&
+	test_path_is_missing .git/rebase-apply &&
+	git rev-parse HEAD >actual &&
+	test_cmp expected actual
+'
+
 test_done
