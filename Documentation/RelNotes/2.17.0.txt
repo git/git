@@ -23,7 +23,6 @@ UI, Workflows & Features
 Performance, Internal Implementation, Development Support etc.
 
  * More perf tests for threaded grep
-   (merge 7b31b55db1 ab/perf-grep-threads later to maint).
 
  * "perf" test output can be sent to codespeed server.
    (merge 19cf57a92e cc/codespeed later to maint).
@@ -79,6 +78,10 @@ Performance, Internal Implementation, Development Support etc.
 
  * More tests for wildmatch functions.
 
+ * The code to binary search starting from a fan-out table (which is
+   how the packfile is indexed with object names) has been refactored
+   into a reusable helper.
+
 Also contains various documentation updates and code clean-ups.
 
 
@@ -87,7 +90,6 @@ Fixes since v2.16
 
  * An old regression in "git describe --all $annotated_tag^0" has been
    fixed.
-   (merge 1bba00130a dk/describe-all-output-fix later to maint).
 
  * "git status" after moving a path in the working tree (hence making
    it appear "removed") and then adding with the -N option (hence
@@ -99,19 +101,15 @@ Fixes since v2.16
    svn+ssh:// URL with a username@ (typically used for pushing) refers
    to the same SVN repository without the username@ and failed when
    svn.pushmergeinfo option is set.
-   (merge 8aaed892fd jm/svn-pushmergeinfo-fix later to maint).
 
  * API clean-up around revision traversal.
-   (merge 6fcec2f9ae rs/lose-leak-pending later to maint).
 
  * "git merge -Xours/-Xtheirs" learned to use our/their version when
    resolving a conflicting updates to a symbolic link.
-   (merge fd48b46474 jc/merge-symlink-ours-theirs later to maint).
 
  * "git clone $there $here" is allowed even when here directory exists
    as long as it is an empty directory, but the command incorrectly
    removed it upon a failure of the operation.
-   (merge d45420c1c8 jk/abort-clone-with-existing-dest later to maint).
 
  * "git commit --fixup" did not allow "-m<message>" option to be used
    at the same time; allow it to annotate resulting commit with more
@@ -124,7 +122,6 @@ Fixes since v2.16
 
  * "git stash -- <pathspec>" incorrectly blew away untracked files in
    the directory that matched the pathspec, which has been corrected.
-   (merge bba067d2fa tg/stash-with-pathspec-fix later to maint).
 
  * Instead of maintaining home-grown email address parsing code, ship
    a copy of reasonably recent Mail::Address to be used as a fallback
@@ -134,7 +131,6 @@ Fixes since v2.16
  * "git add -p" was taught to ignore local changes to submodules as
    they do not interfere with the partial addition of regular changes
    anyway.
-   (merge 12434efc1d nd/add-i-ignore-submodules later to maint).
 
  * Avoid showing a warning message in the middle of a line of "git
    diff" output.
@@ -178,11 +174,46 @@ Fixes since v2.16
  * Test fixes.
    (merge 63b1a175ee sg/test-i18ngrep later to maint).
 
+ * Some bugs around "untracked cache" feature have been fixed.  This
+   will notice corrupt data in the untracked cache left by old and
+   buggy code and issue a warning---the index can be fixed by clearing
+   the untracked cache from it.
+   (merge 0cacebf099 nd/fix-untracked-cache-invalidation later to maint).
+   (merge 7bf0be7501 ab/untracked-cache-invalidation-docs later to maint).
+
+ * "git blame HEAD COPYING" in a bare repository failed to run, while
+   "git blame HEAD -- COPYING" run just fine.  This has been corrected.
+
+ * "git add" files in the same directory, but spelling the directory
+   path in different cases on case insensitive filesystem, corrupted
+   the name hash data structure and led to unexpected results.  This
+   has been corrected.
+   (merge c95525e90d bp/name-hash-dirname-fix later to maint).
+
+ * "git rebase -p" mangled log messages of a merge commit, which is
+   now fixed.
+   (merge ed5144d7eb js/fix-merge-arg-quoting-in-rebase-p later to maint).
+
+ * Some low level protocol codepath could crash when they get an
+   unexpected flush packet, which is now fixed.
+   (merge bb1356dc64 js/packet-read-line-check-null later to maint).
+
+ * "git check-ignore" with multiple paths got confused when one is a
+   file and the other is a directory, which has been fixed.
+   (merge d60771e930 rs/check-ignore-multi later to maint).
+
+ * "git describe $garbage" stopped giving any errors when the garbage
+   happens to be a string with 40 hexadecimal letters.
+   (merge a8e7a2bf0f sb/describe-blob later to maint).
+
+ * Code to unquote single-quoted string (used in the parser for
+   configuration files, etc.) did not diagnose bogus input correctly
+   and produced bogus results instead.
+   (merge ddbbf8eb25 jk/sq-dequote-on-bogus-input later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge e2a5a028c7 bw/oidmap-autoinit later to maint).
    (merge f0a6068a9f ys/bisect-object-id-missing-conversion-fix later to maint).
-   (merge 30221a3389 as/read-tree-prefix-doc-fix later to maint).
-   (merge 9bd2ce5432 ab/doc-cat-file-e-still-shows-errors later to maint).
    (merge ec3b4b06f8 cl/t9001-cleanup later to maint).
    (merge e1b3f3dd38 ks/submodule-doc-updates later to maint).
    (merge fbac558a9b rs/describe-unique-abbrev later to maint).
@@ -197,3 +228,10 @@ Fixes since v2.16
    (merge b780e4407d jc/worktree-add-short-help later to maint).
    (merge ae239fc8e5 rs/cocci-strbuf-addf-to-addstr later to maint).
    (merge 2e22a85e5c nd/ignore-glob-doc-update later to maint).
+   (merge 3738031581 jk/gettext-poison later to maint).
+   (merge 54360a1956 rj/sparse-updates later to maint).
+   (merge 12e31a6b12 sg/doc-test-must-fail-args later to maint).
+   (merge 760f1ad101 bc/doc-interpret-trailers-grammofix later to maint).
+   (merge 4ccf461f56 bp/fsmonitor later to maint).
+   (merge a6119f82b1 jk/test-hashmap-updates later to maint).
+   (merge 5aea9fe6cc rd/typofix later to maint).
