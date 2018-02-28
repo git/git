@@ -950,7 +950,7 @@ static int gitdiff_verify_name(struct apply_state *state,
 		}
 		free(another);
 	} else {
-		if (!starts_with(line, "/dev/null\n"))
+		if (!is_dev_null(line))
 			return error(_("git apply: bad git-diff - expected /dev/null on line %d"), state->linenr);
 	}
 
