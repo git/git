@@ -113,17 +113,23 @@ int checkout_fast_forward(const struct object_id *head,
 	setup_unpack_trees_porcelain(&opts, "merge");
 
 	trees[nr_trees] = parse_tree_indirect(head);
-	if (!trees[nr_trees++])
+	if (!trees[nr_trees++]) {
+		rollback_lock_file(&lock_file);
 		return -1;
+	}
 	trees[nr_trees] = parse_tree_indirect(remote);
-	if (!trees[nr_trees++])
+	if (!trees[nr_trees++]) {
+		rollback_lock_file(&lock_file);
 		return -1;
+	}
 	for (i = 0; i < nr_trees; i++) {
 		parse_tree(trees[i]);
 		init_tree_desc(t+i, trees[i]->buffer, trees[i]->size);
 	}
-	if (unpack_trees(nr_trees, t, &opts))
+	if (unpack_trees(nr_trees, t, &opts)) {
+		rollback_lock_file(&lock_file);
 		return -1;
+	}
 	if (write_locked_index(&the_index, &lock_file, COMMIT_LOCK))
 		return error(_("unable to write new index file"));
 	return 0;
