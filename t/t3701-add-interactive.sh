@@ -10,6 +10,19 @@ then
 	test_done
 fi
 
+diff_cmp () {
+	for x
+	do
+		sed  -e '/^index/s/[0-9a-f]*[1-9a-f][0-9a-f]*\.\./1234567../' \
+		     -e '/^index/s/\.\.[0-9a-f]*[1-9a-f][0-9a-f]*/..9abcdef/' \
+		     -e '/^index/s/ 00*\.\./ 0000000../' \
+		     -e '/^index/s/\.\.00*$/..0000000/' \
+		     -e '/^index/s/\.\.00* /..0000000 /' \
+		     "$x" >"$x.filtered"
+	done
+	test_cmp "$1.filtered" "$2.filtered"
+}
+
 test_expect_success 'setup (initial)' '
 	echo content >file &&
 	git add file &&
@@ -35,7 +48,7 @@ test_expect_success 'setup expected' '
 test_expect_success 'diff works (initial)' '
 	(echo d; echo 1) | git add -i >output &&
 	sed -ne "/new file/,/content/p" <output >diff &&
-	test_cmp expected diff
+	diff_cmp expected diff
 '
 test_expect_success 'revert works (initial)' '
 	git add file &&
@@ -72,7 +85,7 @@ test_expect_success 'setup expected' '
 test_expect_success 'diff works (commit)' '
 	(echo d; echo 1) | git add -i >output &&
 	sed -ne "/^index/,/content/p" <output >diff &&
-	test_cmp expected diff
+	diff_cmp expected diff
 '
 test_expect_success 'revert works (commit)' '
 	git add file &&
@@ -91,7 +104,7 @@ test_expect_success 'dummy edit works' '
 	test_set_editor : &&
 	(echo e; echo a) | git add -p &&
 	git diff > diff &&
-	test_cmp expected diff
+	diff_cmp expected diff
 '
 
 test_expect_success 'setup patch' '
@@ -159,7 +172,7 @@ test_expect_success 'setup expected' '
 test_expect_success 'real edit works' '
 	(echo e; echo n; echo d) | git add -p &&
 	git diff >output &&
-	test_cmp expected output
+	diff_cmp expected output
 '
 
 test_expect_success 'skip files similarly as commit -a' '
@@ -171,7 +184,7 @@ test_expect_success 'skip files similarly as commit -a' '
 	git reset &&
 	git commit -am commit &&
 	git diff >expected &&
-	test_cmp expected output &&
+	diff_cmp expected output &&
 	git reset --hard HEAD^
 '
 rm -f .gitignore
@@ -248,7 +261,7 @@ test_expect_success 'add first line works' '
 	git apply patch &&
 	(echo s; echo y; echo y) | git add -p file &&
 	git diff --cached > diff &&
-	test_cmp expected diff
+	diff_cmp expected diff
 '
 
 test_expect_success 'setup expected' '
@@ -271,7 +284,7 @@ test_expect_success 'deleting a non-empty file' '
 	rm non-empty &&
 	echo y | git add -p non-empty &&
 	git diff --cached >diff &&
-	test_cmp expected diff
+	diff_cmp expected diff
 '
 
 test_expect_success 'setup expected' '
@@ -290,7 +303,7 @@ test_expect_success 'deleting an empty file' '
 	rm empty &&
 	echo y | git add -p empty &&
 	git diff --cached >diff &&
-	test_cmp expected diff
+	diff_cmp expected diff
 '
 
 test_expect_success 'split hunk setup' '
@@ -355,7 +368,7 @@ test_expect_success 'patch mode ignores unmerged entries' '
 	+changed
 	EOF
 	git diff --cached >diff &&
-	test_cmp expected diff
+	diff_cmp expected diff
 '
 
 test_expect_success TTY 'diffs can be colorized' '
@@ -384,7 +397,7 @@ test_expect_success 'patch-mode via -i prompts for files' '
 
 	echo test >expect &&
 	git diff --cached --name-only >actual &&
-	test_cmp expect actual
+	diff_cmp expect actual
 '
 
 test_expect_success 'add -p handles globs' '
