@@ -38,6 +38,15 @@ IPATTERN("fortran",
 	 "|//|\\*\\*|::|[/<>=]="),
 IPATTERN("fountain", "^((\\.[^.]|(int|ext|est|int\\.?/ext|i/e)[. ]).*)$",
 	 "[^ \t-]+"),
+PATTERNS("golang",
+	 /* Functions */
+	 "^[ \t]*(func[ \t]*.*(\\{[ \t]*)?)\n"
+	 /* Structs and interfaces */
+	 "^[ \t]*(type[ \t].*(struct|interface)[ \t]*(\\{[ \t]*)?)",
+	 /* -- */
+	 "[a-zA-Z_][a-zA-Z0-9_]*"
+	 "|[-+0-9.eE]+i?|0[xX]?[0-9a-fA-F]+i?"
+	 "|[-+*/<>%&^|=!:]=|--|\\+\\+|<<=?|>>=?|&\\^=?|&&|\\|\\||<-|\\.{3}"),
 PATTERNS("html", "^[ \t]*(<[Hh][1-6]([ \t].*)?>.*)$",
 	 "[^<>= \t]+"),
 PATTERNS("java",

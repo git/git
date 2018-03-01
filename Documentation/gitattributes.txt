@@ -714,6 +714,8 @@ patterns are available:
 
 - `fountain` suitable for Fountain documents.
 
+- `golang` suitable for source code in the Go language.
+
 - `html` suitable for HTML/XHTML documents.
 
 - `java` suitable for source code in the Java language.
