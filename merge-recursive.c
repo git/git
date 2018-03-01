@@ -2223,10 +2223,9 @@ int merge_recursive_generic(struct merge_options *o,
 		return clean;
 	}
 
-	if (active_cache_changed &&
-	    write_locked_index(&the_index, &lock, COMMIT_LOCK))
+	if (write_locked_index(&the_index, &lock,
+			       COMMIT_LOCK | SKIP_IF_UNCHANGED))
 		return err(o, _("Unable to write index."));
-	rollback_lock_file(&lock);
 
 	return clean ? 0 : 1;
 }

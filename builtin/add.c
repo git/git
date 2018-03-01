@@ -534,10 +534,9 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	unplug_bulk_checkin();
 
 finish:
-	if (active_cache_changed) {
-		if (write_locked_index(&the_index, &lock_file, COMMIT_LOCK))
-			die(_("Unable to write new index file"));
-	}
+	if (write_locked_index(&the_index, &lock_file,
+			       COMMIT_LOCK | SKIP_IF_UNCHANGED))
+		die(_("Unable to write new index file"));
 
 	UNLEAK(pathspec);
 	UNLEAK(dir);
