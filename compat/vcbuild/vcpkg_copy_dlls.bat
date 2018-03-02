@@ -33,4 +33,7 @@ REM ================================================================
 	xcopy /e/s/v/y %inst%\bin\*.dll ..\..\
 	xcopy /e/s/v/y %inst%\bin\*.pdb ..\..\
 
+	xcopy /e/s/v/y %inst%\bin\*.dll ..\..\t\helper\
+	xcopy /e/s/v/y %inst%\bin\*.pdb ..\..\t\helper\
+
 	EXIT /B 0
