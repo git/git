@@ -784,7 +784,7 @@ static const char *setup_discovered_git_dir(const char *gitdir,
 		set_git_dir(gitdir);
 	inside_git_dir = 0;
 	inside_work_tree = 1;
-	if (offset == cwd->len)
+	if (offset >= cwd->len)
 		return NULL;
 
 	/* Make "offset" point past the '/' (already the case for root dirs) */
