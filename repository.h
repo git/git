@@ -26,6 +26,9 @@ struct repository {
 	 */
 	char *objectdir;
 
+	/* Path to extra alternate object database if not NULL */
+	char *alternate_db;
+
 	/*
 	 * Path to the repository's graft file.
 	 * Cannot be NULL after initialization.
@@ -93,6 +96,7 @@ struct set_gitdir_args {
 	const char *object_dir;
 	const char *graft_file;
 	const char *index_file;
+	const char *alternate_db;
 };
 
 extern void repo_set_gitdir(struct repository *repo,
