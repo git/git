@@ -296,6 +296,12 @@ all::
 #
 # Define NO_PERL if you do not want Perl scripts or libraries at all.
 #
+# Define NO_PERL_CPAN_FALLBACKS if you do not want to install bundled
+# copies of CPAN modules that serve as a fallback in case the modules
+# are not available on the system. This option is intended for
+# distributions that want to use their packaged versions of Perl
+# modules, instead of the fallbacks shipped with Git.
+#
 # Define PYTHON_PATH to the path of your Python binary (often /usr/bin/python
 # but /usr/bin/python2.7 on some platforms).
 #
@@ -2305,7 +2311,9 @@ LIB_CPAN_GEN := $(patsubst perl/%.pm,perl/build/lib/%.pm,$(LIB_CPAN))
 
 ifndef NO_PERL
 all:: $(LIB_PERL_GEN)
+ifndef NO_PERL_CPAN_FALLBACKS
 all:: $(LIB_CPAN_GEN)
+endif
 endif
 
 perl/build/lib/%.pm: perl/%.pm
