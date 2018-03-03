@@ -26,13 +26,13 @@ use Text::ParseWords;
 use Term::ANSIColor;
 use File::Temp qw/ tempdir tempfile /;
 use File::Spec::Functions qw(catdir catfile);
-use Git::Error qw(:try);
+use Git::LoadCPAN::Error qw(:try);
 use Cwd qw(abs_path cwd);
 use Git;
 use Git::I18N;
-use Git::Mail::Address;
 use Net::Domain ();
 use Net::SMTP ();
+use Git::LoadCPAN::Mail::Address;
 
 Getopt::Long::Configure qw/ pass_through /;
 

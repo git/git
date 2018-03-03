@@ -1,11 +1,11 @@
-package Git::Mail::Address;
+package Git::LoadCPAN::Mail::Address;
 use 5.008;
 use strict;
 use warnings;
 
 =head1 NAME
 
-Git::Mail::Address - Wrapper for the L<Mail::Address> module, in case it's not installed
+Git::LoadCPAN::Mail::Address - Wrapper for the L<Mail::Address> module, in case it's not installed
 
 =head1 DESCRIPTION
 
