@@ -140,8 +140,6 @@ static int repo_init(struct repository *repo,
 	struct repository_format format;
 	memset(repo, 0, sizeof(*repo));
 
-	repo->ignore_env = 1;
-
 	if (repo_init_gitdir(repo, gitdir))
 		goto error;
 
