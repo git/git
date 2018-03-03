@@ -404,6 +404,14 @@ test_expect_success TTY 'diffFilter filters diff' '
 	grep foo:.*content output
 '
 
+test_expect_success TTY 'detect bogus diffFilter output' '
+	git reset --hard &&
+
+	echo content >test &&
+	test_config interactive.diffFilter "echo too-short" &&
+	printf y | test_must_fail test_terminal git add -p
+'
+
 test_expect_success 'patch-mode via -i prompts for files' '
 	git reset --hard &&
 
