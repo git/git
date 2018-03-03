@@ -11,6 +11,8 @@ use 5.008;
 use strict;
 use warnings;
 
+use File::Temp ();
+use File::Spec ();
 
 BEGIN {
 
@@ -190,7 +192,6 @@ sub repository {
 		};
 
 		if ($dir) {
-			_verify_require();
 			File::Spec->file_name_is_absolute($dir) or $dir = $opts{Directory} . '/' . $dir;
 			$opts{Repository} = abs_path($dir);
 
@@ -1289,8 +1290,6 @@ sub temp_release {
 sub _temp_cache {
 	my ($self, $name) = _maybe_self(@_);
 
-	_verify_require();
-
 	my $temp_fd = \$TEMP_FILEMAP{$name};
 	if (defined $$temp_fd and $$temp_fd->opened) {
 		if ($TEMP_FILES{$$temp_fd}{locked}) {
@@ -1322,11 +1321,6 @@ sub _temp_cache {
 		$TEMP_FILES{$$temp_fd}{fname} = $fname;
 	}
 	$$temp_fd;
-}
-
-sub _verify_require {
-	eval { require File::Temp; require File::Spec; };
-	$@ and throw Error::Simple($@);
 }
 
 =item temp_reset ( FILEHANDLE )
