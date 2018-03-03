@@ -4,10 +4,16 @@
 #include "submodule-config.h"
 
 /* The main repository */
-static struct repository the_repo = {
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &the_index, &hash_algos[GIT_HASH_SHA1], 0, 0
-};
-struct repository *the_repository = &the_repo;
+static struct repository the_repo;
+struct repository *the_repository;
+
+void initialize_the_repository(void)
+{
+	the_repository = &the_repo;
+
+	the_repo.index = &the_index;
+	repo_set_hash_algo(&the_repo, GIT_HASH_SHA1);
+}
 
 static char *git_path_from_env(const char *envvar, const char *git_dir,
 			       const char *path, int fromenv)
@@ -128,7 +134,9 @@ static int read_and_verify_repository_format(struct repository_format *format,
  * Initialize 'repo' based on the provided 'gitdir'.
  * Return 0 upon success and a non-zero value upon failure.
  */
-int repo_init(struct repository *repo, const char *gitdir, const char *worktree)
+static int repo_init(struct repository *repo,
+		     const char *gitdir,
+		     const char *worktree)
 {
 	struct repository_format format;
 	memset(repo, 0, sizeof(*repo));
