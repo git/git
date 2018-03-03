@@ -12,10 +12,12 @@
 package Error;
 
 use strict;
+use warnings;
+
 use vars qw($VERSION);
 use 5.004;
 
-$VERSION = "0.15009";
+$VERSION = "0.17025";
 
 use overload (
 	'""'	   =>	'stringify',
@@ -32,21 +34,35 @@ $Error::THROWN = undef;	# last error thrown, a workaround until die $ref works
 my $LAST;		# Last error created
 my %ERROR;		# Last error associated with package
 
-sub throw_Error_Simple
+sub _throw_Error_Simple
 {
     my $args = shift;
     return Error::Simple->new($args->{'text'});
 }
 
-$Error::ObjectifyCallback = \&throw_Error_Simple;
+$Error::ObjectifyCallback = \&_throw_Error_Simple;
 
 
 # Exported subs are defined in Error::subs
 
+use Scalar::Util ();
+
 sub import {
     shift;
+    my @tags = @_;
     local $Exporter::ExportLevel = $Exporter::ExportLevel + 1;
-    Error::subs->import(@_);
+
+    @tags = grep {
+       if( $_ eq ':warndie' ) {
+          Error::WarnDie->import();
+          0;
+       }
+       else {
+          1;
+       }
+    } @tags;
+
+    Error::subs->import(@tags);
 }
 
 # I really want to use last for the name of this method, but it is a keyword
@@ -107,10 +123,6 @@ sub stacktrace {
     $text;
 }
 
-# Allow error propagation, ie
-#
-# $ber->encode(...) or
-#    return Error->prior($ber)->associate($ldap);
 
 sub associate {
     my $err = shift;
@@ -129,6 +141,7 @@ sub associate {
 
     return;
 }
+
 
 sub new {
     my $self = shift;
@@ -246,6 +259,10 @@ sub value {
 
 package Error::Simple;
 
+use vars qw($VERSION);
+
+$VERSION = "0.17025";
+
 @Error::Simple::ISA = qw(Error);
 
 sub new {
@@ -288,14 +305,6 @@ use vars qw(@EXPORT_OK @ISA %EXPORT_TAGS);
 
 @ISA = qw(Exporter);
 
-
-sub blessed {
-	my $item = shift;
-	local $@; # don't kill an outer $@
-	ref $item and eval { $item->can('can') };
-}
-
-
 sub run_clauses ($$$\@) {
     my($clauses,$err,$wantarray,$result) = @_;
     my $code = undef;
@@ -314,16 +323,17 @@ sub run_clauses ($$$\@) {
 		my $pkg = $catch->[$i];
 		unless(defined $pkg) {
 		    #except
-		    splice(@$catch,$i,2,$catch->[$i+1]->());
+		    splice(@$catch,$i,2,$catch->[$i+1]->($err));
 		    $i -= 2;
 		    next CATCHLOOP;
 		}
-		elsif(blessed($err) && $err->isa($pkg)) {
+		elsif(Scalar::Util::blessed($err) && $err->isa($pkg)) {
 		    $code = $catch->[$i+1];
 		    while(1) {
 			my $more = 0;
-			local($Error::THROWN);
+			local($Error::THROWN, $@);
 			my $ok = eval {
+			    $@ = $err;
 			    if($wantarray) {
 				@{$result} = $code->($err,\$more);
 			    }
@@ -341,10 +351,9 @@ sub run_clauses ($$$\@) {
 			    undef $err;
 			}
 			else {
-			    $err = defined($Error::THROWN)
-				    ? $Error::THROWN : $@;
-                $err = $Error::ObjectifyCallback->({'text' =>$err})
-                    unless ref($err);
+			    $err = $@ || $Error::THROWN;
+				$err = $Error::ObjectifyCallback->({'text' =>$err})
+					unless ref($err);
 			}
 			last CATCH;
 		    };
@@ -357,7 +366,9 @@ sub run_clauses ($$$\@) {
 	if(defined($owise = $clauses->{'otherwise'})) {
 	    my $code = $clauses->{'otherwise'};
 	    my $more = 0;
+        local($Error::THROWN, $@);
 	    my $ok = eval {
+		$@ = $err;
 		if($wantarray) {
 		    @{$result} = $code->($err,\$more);
 		}
@@ -374,11 +385,10 @@ sub run_clauses ($$$\@) {
 		undef $err;
 	    }
 	    else {
-		$err = defined($Error::THROWN)
-			? $Error::THROWN : $@;
+		$err = $@ || $Error::THROWN;
 
-        $err = $Error::ObjectifyCallback->({'text' =>$err})
-            unless ref($err);
+		$err = $Error::ObjectifyCallback->({'text' =>$err})
+			unless ref($err);
 	    }
 	}
     }
@@ -398,7 +408,7 @@ sub try (&;$) {
 
     do {
 	local $Error::THROWN = undef;
-    local $@ = undef;
+	local $@ = undef;
 
 	$ok = eval {
 	    if($wantarray) {
@@ -413,21 +423,21 @@ sub try (&;$) {
 	    1;
 	};
 
-	$err = defined($Error::THROWN) ? $Error::THROWN : $@
+	$err = $@ || $Error::THROWN
 	    unless $ok;
     };
 
     shift @Error::STACK;
 
     $err = run_clauses($clauses,$err,wantarray,@result)
-	unless($ok);
+    unless($ok);
 
     $clauses->{'finally'}->()
 	if(defined($clauses->{'finally'}));
 
     if (defined($err))
     {
-        if (blessed($err) && $err->can('throw'))
+        if (Scalar::Util::blessed($err) && $err->can('throw'))
         {
             throw $err;
         }
@@ -506,11 +516,115 @@ sub otherwise (&;$) {
 }
 
 1;
+
+package Error::WarnDie;
+
+sub gen_callstack($)
+{
+    my ( $start ) = @_;
+
+    require Carp;
+    local $Carp::CarpLevel = $start;
+    my $trace = Carp::longmess("");
+    # Remove try calls from the trace
+    $trace =~ s/(\n\s+\S+__ANON__[^\n]+)?\n\s+eval[^\n]+\n\s+Error::subs::try[^\n]+(?=\n)//sog;
+    $trace =~ s/(\n\s+\S+__ANON__[^\n]+)?\n\s+eval[^\n]+\n\s+Error::subs::run_clauses[^\n]+\n\s+Error::subs::try[^\n]+(?=\n)//sog;
+    my @callstack = split( m/\n/, $trace );
+    return @callstack;
+}
+
+my $old_DIE;
+my $old_WARN;
+
+sub DEATH
+{
+    my ( $e ) = @_;
+
+    local $SIG{__DIE__} = $old_DIE if( defined $old_DIE );
+
+    die @_ if $^S;
+
+    my ( $etype, $message, $location, @callstack );
+    if ( ref($e) && $e->isa( "Error" ) ) {
+        $etype = "exception of type " . ref( $e );
+        $message = $e->text;
+        $location = $e->file . ":" . $e->line;
+        @callstack = split( m/\n/, $e->stacktrace );
+    }
+    else {
+        # Don't apply subsequent layer of message formatting
+        die $e if( $e =~ m/^\nUnhandled perl error caught at toplevel:\n\n/ );
+        $etype = "perl error";
+        my $stackdepth = 0;
+        while( caller( $stackdepth ) =~ m/^Error(?:$|::)/ ) {
+            $stackdepth++
+        }
+
+        @callstack = gen_callstack( $stackdepth + 1 );
+
+        $message = "$e";
+        chomp $message;
+
+        if ( $message =~ s/ at (.*?) line (\d+)\.$// ) {
+            $location = $1 . ":" . $2;
+        }
+        else {
+            my @caller = caller( $stackdepth );
+            $location = $caller[1] . ":" . $caller[2];
+        }
+    }
+
+    shift @callstack;
+    # Do it this way in case there are no elements; we don't print a spurious \n
+    my $callstack = join( "", map { "$_\n"} @callstack );
+
+    die "\nUnhandled $etype caught at toplevel:\n\n  $message\n\nThrown from: $location\n\nFull stack trace:\n\n$callstack\n";
+}
+
+sub TAXES
+{
+    my ( $message ) = @_;
+
+    local $SIG{__WARN__} = $old_WARN if( defined $old_WARN );
+
+    $message =~ s/ at .*? line \d+\.$//;
+    chomp $message;
+
+    my @callstack = gen_callstack( 1 );
+    my $location = shift @callstack;
+
+    # $location already starts in a leading space
+    $message .= $location;
+
+    # Do it this way in case there are no elements; we don't print a spurious \n
+    my $callstack = join( "", map { "$_\n"} @callstack );
+
+    warn "$message:\n$callstack";
+}
+
+sub import
+{
+    $old_DIE  = $SIG{__DIE__};
+    $old_WARN = $SIG{__WARN__};
+
+    $SIG{__DIE__}  = \&DEATH;
+    $SIG{__WARN__} = \&TAXES;
+}
+
+1;
+
 __END__
 
 =head1 NAME
 
 Error - Error/exception handling in an OO-ish way
+
+=head1 WARNING
+
+Using the "Error" module is B<no longer recommended> due to the black-magical
+nature of its syntactic sugar, which often tends to break. Its maintainers
+have stopped actively writing code that uses it, and discourage people
+from doing so. See the "SEE ALSO" section below for better recommendations.
 
 =head1 SYNOPSIS
 
@@ -529,7 +643,7 @@ Error - Error/exception handling in an OO-ish way
     try {
 	do_some_stuff();
 	die "error!" if $condition;
-	throw Error::Simple -text => "Oops!" if $other_condition;
+	throw Error::Simple "Oops!" if $other_condition;
     }
     catch Error::IO with {
 	my $E = shift;
@@ -587,7 +701,7 @@ C<BLOCK> will be passed two arguments. The first will be the error
 being thrown. The second is a reference to a scalar variable. If this
 variable is set by the catch block then, on return from the catch
 block, try will continue processing as if the catch block was never
-found.
+found. The error will also be available in C<$@>.
 
 To propagate the error the catch block may call C<$err-E<gt>throw>
 
@@ -608,7 +722,7 @@ type.
 Catch any error by executing the code in C<BLOCK>
 
 When evaluated C<BLOCK> will be passed one argument, which will be the
-error being processed.
+error being processed. The error will also be available in C<$@>.
 
 Only one otherwise block may be specified per try block
 
@@ -625,12 +739,25 @@ Only one finally block may be specified per try block
 
 =back
 
+=head1 COMPATIBILITY
+
+L<Moose> exports a keyword called C<with> which clashes with Error's. This
+example returns a prototype mismatch error:
+
+    package MyTest;
+
+    use warnings;
+    use Moose;
+    use Error qw(:try);
+
+(Thanks to C<maik.hentsche@amd.com> for the report.).
+
 =head1 CLASS INTERFACE
 
 =head2 CONSTRUCTORS
 
 The C<Error> object is implemented as a HASH. This HASH is initialized
-with the arguments that are passed to its constructor. The elements
+with the arguments that are passed to it's constructor. The elements
 that are used by, or are retrievable by the C<Error> class are listed
 below, other classes may add to these.
 
@@ -654,6 +781,10 @@ error created by a sub in that package, or the last error which passed
 an object blessed into that package as the C<-object> argument.
 
 =over 4
+
+=item Error->new()
+
+See the Error::Simple documentation.
 
 =item throw ( [ ARGS ] )
 
@@ -730,6 +861,13 @@ The line where the constructor of this error was called from
 
 The text of the error
 
+=item $err->associate($obj)
+
+Associates an error with an object to allow error propagation. I.e:
+
+    $ber->encode(...) or
+        return Error->prior($ber)->associate($ldap);
+
 =back
 
 =head2 OVERLOAD METHODS
@@ -759,11 +897,9 @@ to the constructor.
 
 =head1 PRE-DEFINED ERROR CLASSES
 
-=over 4
+=head2 Error::Simple
 
-=item Error::Simple
-
-This class can be used to hold simple error strings and values. Its
+This class can be used to hold simple error strings and values. It's
 constructor takes two arguments. The first is a text value, the second
 is a numeric value. These values are what will be returned by the
 overload methods.
@@ -775,7 +911,6 @@ of the error object.
 This class is used internally if an eval'd block die's with an error
 that is a plain string. (Unless C<$Error::ObjectifyCallback> is modified)
 
-=back
 
 =head1 $Error::ObjectifyCallback
 
@@ -804,6 +939,76 @@ class MyError::Bar by default:
         # Error handling here.
     }
 
+=cut
+
+=head1 MESSAGE HANDLERS
+
+C<Error> also provides handlers to extend the output of the C<warn()> perl
+function, and to handle the printing of a thrown C<Error> that is not caught
+or otherwise handled. These are not installed by default, but are requested
+using the C<:warndie> tag in the C<use> line.
+
+ use Error qw( :warndie );
+
+These new error handlers are installed in C<$SIG{__WARN__}> and
+C<$SIG{__DIE__}>. If these handlers are already defined when the tag is
+imported, the old values are stored, and used during the new code. Thus, to
+arrange for custom handling of warnings and errors, you will need to perform
+something like the following:
+
+ BEGIN {
+   $SIG{__WARN__} = sub {
+     print STDERR "My special warning handler: $_[0]"
+   };
+ }
+
+ use Error qw( :warndie );
+
+Note that setting C<$SIG{__WARN__}> after the C<:warndie> tag has been
+imported will overwrite the handler that C<Error> provides. If this cannot be
+avoided, then the tag can be explicitly C<import>ed later
+
+ use Error;
+
+ $SIG{__WARN__} = ...;
+
+ import Error qw( :warndie );
+
+=head2 EXAMPLE
+
+The C<__DIE__> handler turns messages such as
+
+ Can't call method "foo" on an undefined value at examples/warndie.pl line 16.
+
+into
+
+ Unhandled perl error caught at toplevel:
+
+   Can't call method "foo" on an undefined value
+
+ Thrown from: examples/warndie.pl:16
+
+ Full stack trace:
+
+         main::inner('undef') called at examples/warndie.pl line 20
+         main::outer('undef') called at examples/warndie.pl line 23
+
+=cut
+
+=head1 SEE ALSO
+
+See L<Exception::Class> for a different module providing Object-Oriented
+exception handling, along with a convenient syntax for declaring hierarchies
+for them. It doesn't provide Error's syntactic sugar of C<try { ... }>,
+C<catch { ... }>, etc. which may be a good thing or a bad thing based
+on what you want. (Because Error's syntactic sugar tends to break.)
+
+L<Error::Exception> aims to combine L<Error> and L<Exception::Class>
+"with correct stringification".
+
+L<TryCatch> and L<Try::Tiny> are similar in concept to Error.pm only providing
+a syntax that hopefully breaks less.
+
 =head1 KNOWN BUGS
 
 None, but that does not mean there are not any.
@@ -816,12 +1021,20 @@ The code that inspired me to write this was originally written by
 Peter Seibel <peter@weblogic.com> and adapted by Jesse Glick
 <jglick@sig.bsh.com>.
 
+C<:warndie> handlers added by Paul Evans <leonerd@leonerd.org.uk>
+
 =head1 MAINTAINER
 
-Shlomi Fish <shlomif@iglu.org.il>
+Shlomi Fish, L<http://www.shlomifish.org/> .
 
 =head1 PAST MAINTAINERS
 
 Arun Kumar U <u_arunkumar@yahoo.com>
+
+=head1 COPYRIGHT
+
+Copyright (c) 1997-8  Graham Barr. All rights reserved.
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
 
 =cut
