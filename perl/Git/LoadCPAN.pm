@@ -16,8 +16,7 @@ source.
 Therefore the L<Git::LoadCPAN> namespace shipped with Git contains
 wrapper modules like C<Git::LoadCPAN::Module::Name> that will first
 attempt to load C<Module::Name> from the OS, and if that doesn't work
-will fall back on C<Git::FromCPAN::Module::Name> shipped with Git
-itself.
+will fall back on C<FromCPAN::Module::Name> shipped with Git itself.
 
 Usually distributors will not ship with Git's Git::FromCPAN tree at
 all, preferring to use their own packaging of CPAN modules instead.
@@ -52,7 +51,7 @@ sub import {
 		my $Git_LoadCPAN_pm_root = File::Basename::dirname($Git_LoadCPAN_pm_path) || die "BUG: Can't figure out lib/Git dirname from '$Git_LoadCPAN_pm_path'!";
 
 		require File::Spec;
-		my $Git_pm_FromCPAN_root = File::Spec->catdir($Git_LoadCPAN_pm_root, 'FromCPAN');
+		my $Git_pm_FromCPAN_root = File::Spec->catdir($Git_LoadCPAN_pm_root, '..', 'FromCPAN');
 		die "BUG: '$Git_pm_FromCPAN_root' should be a directory!" unless -d $Git_pm_FromCPAN_root;
 
 		local @INC = ($Git_pm_FromCPAN_root, @INC);
