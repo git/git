@@ -56,6 +56,7 @@ git send-email --dump-aliases
     --[no-]cc               <str>  * Email Cc:
     --[no-]bcc              <str>  * Email Bcc:
     --subject               <str>  * Email "Subject:"
+    --reply-to              <str>  * Email "Reply-To:"
     --in-reply-to           <str>  * Email "In-Reply-To:"
     --[no-]xmailer                 * Add "X-Mailer:" header (default).
     --[no-]annotate                * Review each patch that will be sent in an editor.
@@ -166,7 +167,7 @@ my $re_encoded_word = qr/=\?($re_token)\?($re_token)\?($re_encoded_text)\?=/;
 
 # Variables we fill in automatically, or via prompting:
 my (@to,$no_to,@initial_to,@cc,$no_cc,@initial_cc,@bcclist,$no_bcc,@xh,
-	$initial_in_reply_to,$initial_subject,@files,
+	$initial_in_reply_to,$reply_to,$initial_subject,@files,
 	$author,$sender,$smtp_authpass,$annotate,$use_xmailer,$compose,$time);
 
 my $envelope_sender;
@@ -315,6 +316,7 @@ die __("--dump-aliases incompatible with other options\n")
 $rc = GetOptions(
 		    "sender|from=s" => \$sender,
                     "in-reply-to=s" => \$initial_in_reply_to,
+		    "reply-to=s" => \$reply_to,
 		    "subject=s" => \$initial_subject,
 		    "to=s" => \@initial_to,
 		    "to-cmd=s" => \$to_cmd,
@@ -677,6 +679,7 @@ if ($compose) {
 	my $tpl_sender = $sender || $repoauthor || $repocommitter || '';
 	my $tpl_subject = $initial_subject || '';
 	my $tpl_in_reply_to = $initial_in_reply_to || '';
+	my $tpl_reply_to = $reply_to || '';
 
 	print $c <<EOT1, Git::prefix_lines("GIT: ", __ <<EOT2), <<EOT3;
 From $tpl_sender # This line is ignored.
@@ -688,6 +691,7 @@ for the patch you are writing.
 Clear the body content if you don't wish to send a summary.
 EOT2
 From: $tpl_sender
+Reply-To: $tpl_reply_to
 Subject: $tpl_subject
 In-Reply-To: $tpl_in_reply_to
 
@@ -729,6 +733,9 @@ EOT3
 	}
 	if ($parsed_email{'In-Reply-To'}) {
 		$initial_in_reply_to = delete($parsed_email{'In-Reply-To'});
+	}
+	if ($parsed_email{'Reply-To'}) {
+		$reply_to = delete($parsed_email{'Reply-To'});
 	}
 	if ($parsed_email{'Subject'}) {
 		$initial_subject = delete($parsed_email{'Subject'});
@@ -921,6 +928,12 @@ if (defined $initial_in_reply_to) {
 	$initial_in_reply_to =~ s/^\s*<?//;
 	$initial_in_reply_to =~ s/>?\s*$//;
 	$initial_in_reply_to = "<$initial_in_reply_to>" if $initial_in_reply_to ne '';
+}
+
+if (defined $reply_to) {
+	$reply_to =~ s/^\s+|\s+$//g;
+	($reply_to) = expand_aliases($reply_to);
+	$reply_to = sanitize_address($reply_to);
 }
 
 if (!defined $smtp_server) {
@@ -1353,6 +1366,9 @@ Message-Id: $message_id
 
 		$header .= "In-Reply-To: $in_reply_to\n";
 		$header .= "References: $references\n";
+	}
+	if ($reply_to) {
+		$header .= "Reply-To: $reply_to\n";
 	}
 	if (@xh) {
 		$header .= join("\n", @xh) . "\n";
