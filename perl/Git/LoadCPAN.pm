@@ -19,12 +19,24 @@ attempt to load C<Module::Name> from the OS, and if that doesn't work
 will fall back on C<FromCPAN::Module::Name> shipped with Git itself.
 
 Usually distributors will not ship with Git's Git::FromCPAN tree at
-all, preferring to use their own packaging of CPAN modules instead.
+all via the C<NO_PERL_CPAN_FALLBACKS> option, preferring to use their
+own packaging of CPAN modules instead.
 
 This module is only intended to be used for code shipping in the
 C<git.git> repository. Use it for anything else at your peril!
 
 =cut
+
+# NO_PERL_CPAN_FALLBACKS_STR evades the sed search-replace from the
+# Makefile, and allows for detecting whether the module is loaded from
+# perl/Git as opposed to perl/build/Git, which is useful for one-off
+# testing without having Error.pm et al installed.
+use constant NO_PERL_CPAN_FALLBACKS_STR => '@@' . 'NO_PERL_CPAN_FALLBACKS' . '@@';
+use constant NO_PERL_CPAN_FALLBACKS => (
+	q[@@NO_PERL_CPAN_FALLBACKS@@] ne ''
+	and
+	q[@@NO_PERL_CPAN_FALLBACKS@@] ne NO_PERL_CPAN_FALLBACKS_STR
+);
 
 sub import {
 	shift;
@@ -44,6 +56,25 @@ sub import {
 		1;
 	} or do {
 		my $error = $@ || "Zombie Error";
+
+		if (NO_PERL_CPAN_FALLBACKS) {
+			chomp(my $error = sprintf <<'THEY_PROMISED', $module);
+BUG: The '%s' module is not here, but NO_PERL_CPAN_FALLBACKS was set!
+
+Git needs this Perl module from the CPAN, and will by default ship
+with a copy of it. This Git was built with NO_PERL_CPAN_FALLBACKS,
+meaning that whoever built it promised to provide this module.
+
+You're seeing this error because they broke that promise, and we can't
+load our fallback version, since we were asked not to install it.
+
+If you're seeing this error and didn't package Git yourself the
+package you're using is broken, or your system is broken. This error
+won't appear if Git is built without NO_PERL_CPAN_FALLBACKS (instead
+we'll use our fallback version of the module).
+THEY_PROMISED
+			die $error;
+		}
 
 		my $Git_LoadCPAN_pm_path = $INC{"Git/LoadCPAN.pm"} || die "BUG: Should have our own path from %INC!";
 
