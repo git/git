@@ -657,6 +657,11 @@ config key: svn.authorsfile
 	expected to return a single line of the form "Name <email>",
 	which will be treated as if included in the authors file.
 +
+Due to historical reasons a relative 'filename' is first searched
+relative to the current directory for 'init' and 'clone' and relative
+to the root of the working tree for 'fetch'. If 'filename' is
+not found, it is searched like any other command in '$PATH'.
++
 [verse]
 config key: svn.authorsProg
 
