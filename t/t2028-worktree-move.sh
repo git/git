@@ -7,7 +7,8 @@ test_description='test git worktree move, remove, lock and unlock'
 test_expect_success 'setup' '
 	test_commit init &&
 	git worktree add source &&
-	git worktree list --porcelain | grep "^worktree" >actual &&
+	git worktree list --porcelain >out &&
+	grep "^worktree" out >actual &&
 	cat <<-EOF >expected &&
 	worktree $(pwd)
 	worktree $(pwd)/source
@@ -74,8 +75,9 @@ test_expect_success 'move worktree' '
 	toplevel="$(pwd)" &&
 	git worktree move source destination &&
 	test_path_is_missing source &&
-	git worktree list --porcelain | grep "^worktree.*/destination" &&
-	! git worktree list --porcelain | grep "^worktree.*/source" >empty &&
+	git worktree list --porcelain >out &&
+	grep "^worktree.*/destination" out &&
+	! grep "^worktree.*/source" out &&
 	git -C destination log --format=%s >actual2 &&
 	echo init >expected2 &&
 	test_cmp expected2 actual2
@@ -86,11 +88,12 @@ test_expect_success 'move main worktree' '
 '
 
 test_expect_success 'move worktree to another dir' '
-	toplevel="$(pwd)" &&
 	mkdir some-dir &&
 	git worktree move destination some-dir &&
-	test_path_is_missing source &&
-	git worktree list --porcelain | grep "^worktree.*/some-dir/destination" &&
+	test_when_finished "git worktree move some-dir/destination destination" &&
+	test_path_is_missing destination &&
+	git worktree list --porcelain >out &&
+	grep "^worktree.*/some-dir/destination" out &&
 	git -C some-dir/destination log --format=%s >actual2 &&
 	echo init >expected2 &&
 	test_cmp expected2 actual2
@@ -98,10 +101,6 @@ test_expect_success 'move worktree to another dir' '
 
 test_expect_success 'remove main worktree' '
 	test_must_fail git worktree remove .
-'
-
-test_expect_success 'move some-dir/destination back' '
-	git worktree move some-dir/destination destination
 '
 
 test_expect_success 'remove locked worktree' '
