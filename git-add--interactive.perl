@@ -793,6 +793,11 @@ sub split_hunk {
 		while (++$i < @$text) {
 			my $line = $text->[$i];
 			my $display = $display->[$i];
+			if ($line =~ /^\\/) {
+				push @{$this->{TEXT}}, $line;
+				push @{$this->{DISPLAY}}, $display;
+				next;
+			}
 			if ($line =~ /^ /) {
 				if ($this->{ADDDEL} &&
 				    !defined $next_hunk_start) {
@@ -891,6 +896,9 @@ sub merge_hunk {
 			$n_cnt++;
 			push @line, $line;
 			next;
+		} elsif ($line =~ /^\\/) {
+			push @line, $line;
+			next;
 		}
 
 		last if ($o1_ofs <= $ofs);
@@ -907,6 +915,9 @@ sub merge_hunk {
 		my $line = $this->{TEXT}[$i];
 		if ($line =~ /^\+/) {
 			$n_cnt++;
+			push @line, $line;
+			next;
+		} elsif ($line =~ /^\\/) {
 			push @line, $line;
 			next;
 		}
