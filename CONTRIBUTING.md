@@ -10,11 +10,11 @@ Get the Source
 --------------
 
 Clone the [GitForWindows repository on GitHub](https://github.com/git-for-windows/git).
-It is helpful create your own fork for storing your development branches.
+It is helpful to create your own fork for storing your development branches.
 
-Windows uses CRLF line endings, while Unix systems just use LF. See
+Windows uses different line endings than Unix systems. See
 [this GitHub article on working with line endings](https://help.github.com/articles/dealing-with-line-endings/#refreshing-a-repository-after-changing-line-endings)
-if you have trouble.
+if you have trouble with line endings.
 
 Build the Source
 ----------------
@@ -23,7 +23,7 @@ First, download and install the latest [Git for Windows SDK (64-bit)](https://gi
 When complete, you can run the Git SDK, which creates a new Git Bash terminal window with
 the additional development commands, such as `make`.
 
-    The SDK uses a different credential manager, so you may still want to use normal Git
+    As of time of writing, the SDK uses a different credential manager, so you may still want to use normal Git
     Bash for interacting with your remotes.  Alternatively, use SSH rather than HTTPS and
     avoid credential manager problems.
 
@@ -32,7 +32,7 @@ Here are some helpful variations:
 
 * `make -j[N] DEVELOPER=1`: Compile new sources using up to N concurrent processes.
   The `DEVELOPER` flag turns on all warnings; code failing these warnings will not be
-  accepted upstream.
+  accepted upstream ("upstream" = "the core Git project").
 * `make clean`: Delete all compiled files.
 
 When running `make`, you can use `-j$(nproc)` to automatically use the number of processors
@@ -108,7 +108,7 @@ You can also look at [the unofficial Chromium issues page](https://crbug.com/git
 multi-platform issues. You can look at recent user questions on
 [the Git mailing list](https://public-inbox.org/git).
 
-Here at Microsoft, we are focused almost entirely on [improving performance](https://blogs.msdn.microsoft.com/devops/2018/01/11/microsofts-performance-contributions-to-git-in-2017/).
+Or you can "scratch your own itch", i.e. address an issue you have with Git. The team at Microsoft where the Git for Windows maintainer works, for example, is focused almost entirely on [improving performance](https://blogs.msdn.microsoft.com/devops/2018/01/11/microsofts-performance-contributions-to-git-in-2017/).
 We approach our work by finding something that is slow and try to speed it up. We start our
 investigation by reliably reproducing the slow behavior, then running that example using
 the MSVC build and tracing the results in PerfView.
