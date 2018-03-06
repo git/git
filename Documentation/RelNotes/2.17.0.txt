@@ -26,6 +26,34 @@ UI, Workflows & Features
  * "git worktree add" learned to run the post-checkout hook, just like
    "git clone" runs it upon the initial checkout.
 
+ * "git tag" learned an explicit "--edit" option that allows the
+   message given via "-m" and "-F" to be further edited.
+
+ * "git fetch --prune-tags" may be used as a handy short-hand for
+   getting rid of stale tags that are locally held.
+
+ * The new "--show-current-patch" option gives an end-user facing way
+   to get the diff being applied when "git rebase" (and "git am")
+   stops with a conflict.
+
+ * "git add -p" used to offer "/" (look for a matching hunk) as a
+   choice, even there was only one hunk, which has been corrected.
+   Also the single-key help is now given only for keys that are
+   enabled (e.g. help for '/' won't be shown when there is only one
+   hunk).
+
+ * Since Git 1.7.9, "git merge" defaulted to --no-ff (i.e. even when
+   the side branch being merged is a descendant of the current commit,
+   create a merge commit instead of fast-forwarding) when merging a
+   tag object.  This was appropriate default for integrators who pull
+   signed tags from their downstream contributors, but caused an
+   unnecessary merges when used by downstream contributors who
+   habitually "catch up" their topic branches with tagged releases
+   from the upstream.  Update "git merge" to default to --no-ff only
+   when merging a tag object that does *not* sit at its usual place in
+   refs/tags/ hierarchy, and allow fast-forwarding otherwise, to
+   mitigate the problem.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -88,6 +116,12 @@ Performance, Internal Implementation, Development Support etc.
  * The code to binary search starting from a fan-out table (which is
    how the packfile is indexed with object names) has been refactored
    into a reusable helper.
+
+ * We now avoid using identifiers that clash with C++ keywords.  Even
+   though it is not a goal to compile Git with C++ compilers, changes
+   like this help use of code analysis tools that targets C++ on our
+   codebase.
+
 
 Also contains various documentation updates and code clean-ups.
 
@@ -229,6 +263,14 @@ Fixes since v2.16
    correctly.
    (merge 90dce21eb0 jk/push-options-via-transport-fix later to maint).
 
+ * "git send-email" learned to complain when the batch-size option is
+   not defined when the relogin-delay option is, since these two are
+   mutually required.
+   (merge 9caa70697b xz/send-email-batch-size later to maint).
+
+ * Y2k20 fix ;-) for our perl scripts.
+   (merge a40e06ee33 bw/perl-timegm-timelocal-fix later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge e2a5a028c7 bw/oidmap-autoinit later to maint).
    (merge ec3b4b06f8 cl/t9001-cleanup later to maint).
@@ -255,3 +297,11 @@ Fixes since v2.16
    (merge e4e5da2796 sb/status-doc-fix later to maint).
    (merge 7976e901c8 gs/test-unset-xdg-cache-home later to maint).
    (merge d023df1ee6 tg/worktree-create-tracking later to maint).
+   (merge 4cbe92fd41 sm/mv-dry-run-update later to maint).
+   (merge 75e5e9c3f7 sb/color-h-cleanup later to maint).
+   (merge 2708ef4af6 sg/t6300-modernize later to maint).
+   (merge d88e92d4e0 bw/doc-submodule-recurse-config-with-clone later to maint).
+   (merge f74bbc8dd2 jk/cached-commit-buffer later to maint).
+   (merge 1316416903 ms/non-ascii-ticks later to maint).
+   (merge 878056005e rs/strbuf-read-file-or-whine later to maint).
+   (merge 79f0ba1547 jk/strbuf-read-file-close-error later to maint).
