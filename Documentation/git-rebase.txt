@@ -12,7 +12,7 @@ SYNOPSIS
 	[<upstream> [<branch>]]
 'git rebase' [-i | --interactive] [options] [--exec <cmd>] [--onto <newbase>]
 	--root [<branch>]
-'git rebase' --continue | --skip | --abort | --quit | --edit-todo
+'git rebase' --continue | --skip | --abort | --quit | --edit-todo | --show-current-patch
 
 DESCRIPTION
 -----------
@@ -254,6 +254,11 @@ leave out at most one of A and B, in which case it defaults to HEAD.
 
 --edit-todo::
 	Edit the todo list during an interactive rebase.
+
+--show-current-patch::
+	Show the current patch in an interactive rebase or when rebase
+	is stopped because of conflicts. This is the equivalent of
+	`git show REBASE_HEAD`.
 
 -m::
 --merge::

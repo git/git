@@ -16,7 +16,7 @@ SYNOPSIS
 	 [--exclude=<path>] [--include=<path>] [--reject] [-q | --quiet]
 	 [--[no-]scissors] [-S[<keyid>]] [--patch-format=<format>]
 	 [(<mbox> | <Maildir>)...]
-'git am' (--continue | --skip | --abort | --quit)
+'git am' (--continue | --skip | --abort | --quit | --show-current-patch)
 
 DESCRIPTION
 -----------
@@ -170,6 +170,10 @@ default.   You can use `--no-utf8` to override this.
 --quit::
 	Abort the patching operation but keep HEAD and the index
 	untouched.
+
+--show-current-patch::
+	Show the patch being applied when "git am" is stopped because
+	of conflicts.
 
 DISCUSSION
 ----------
