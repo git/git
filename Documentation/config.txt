@@ -3228,7 +3228,8 @@ submodule.active::
 
 submodule.recurse::
 	Specifies if commands recurse into submodules by default. This
-	applies to all commands that have a `--recurse-submodules` option.
+	applies to all commands that have a `--recurse-submodules` option,
+	except `clone`.
 	Defaults to false.
 
 submodule.fetchJobs::
