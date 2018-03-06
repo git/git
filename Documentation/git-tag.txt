@@ -9,7 +9,7 @@ git-tag - Create, list, delete or verify a tag object signed with GPG
 SYNOPSIS
 --------
 [verse]
-'git tag' [-a | -s | -u <keyid>] [-f] [-m <msg> | -F <file>]
+'git tag' [-a | -s | -u <keyid>] [-f] [-m <msg> | -F <file>] [-e]
 	<tagname> [<commit> | <object>]
 'git tag' -d <tagname>...
 'git tag' [-n[<num>]] -l [--contains <commit>] [--no-contains <commit>]
@@ -166,6 +166,12 @@ This option is only applicable when listing tags without annotation lines.
 	read the message from the standard input.
 	Implies `-a` if none of `-a`, `-s`, or `-u <keyid>`
 	is given.
+
+-e::
+--edit::
+	The message taken from file with `-F` and command line with
+	`-m` are usually used as the tag message unmodified.
+	This option lets you further edit the message taken from these sources.
 
 --cleanup=<mode>::
 	This option sets how the tag message is cleaned up.
