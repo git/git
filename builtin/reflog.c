@@ -289,20 +289,20 @@ static int should_expire_reflog_ent(struct object_id *ooid, struct object_id *no
 				    const char *message, void *cb_data)
 {
 	struct expire_reflog_policy_cb *cb = cb_data;
-	struct commit *old, *new;
+	struct commit *old_commit, *new_commit;
 
 	if (timestamp < cb->cmd.expire_total)
 		return 1;
 
-	old = new = NULL;
+	old_commit = new_commit = NULL;
 	if (cb->cmd.stalefix &&
-	    (!keep_entry(&old, ooid) || !keep_entry(&new, noid)))
+	    (!keep_entry(&old_commit, ooid) || !keep_entry(&new_commit, noid)))
 		return 1;
 
 	if (timestamp < cb->cmd.expire_unreachable) {
 		if (cb->unreachable_expire_kind == UE_ALWAYS)
 			return 1;
-		if (unreachable(cb, old, ooid) || unreachable(cb, new, noid))
+		if (unreachable(cb, old_commit, ooid) || unreachable(cb, new_commit, noid))
 			return 1;
 	}
 

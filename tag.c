@@ -47,7 +47,7 @@ int gpg_verify_tag(const struct object_id *oid, const char *name_to_report,
 				name_to_report ?
 				name_to_report :
 				find_unique_abbrev(oid->hash, DEFAULT_ABBREV),
-				typename(type));
+				type_name(type));
 
 	buf = read_sha1_file(oid->hash, &type, &size);
 	if (!buf)

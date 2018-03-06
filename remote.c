@@ -1985,33 +1985,33 @@ static void unmark_and_free(struct commit_list *list, unsigned int mark)
 int ref_newer(const struct object_id *new_oid, const struct object_id *old_oid)
 {
 	struct object *o;
-	struct commit *old, *new;
+	struct commit *old_commit, *new_commit;
 	struct commit_list *list, *used;
 	int found = 0;
 
 	/*
-	 * Both new and old must be commit-ish and new is descendant of
-	 * old.  Otherwise we require --force.
+	 * Both new_commit and old_commit must be commit-ish and new_commit is descendant of
+	 * old_commit.  Otherwise we require --force.
 	 */
 	o = deref_tag(parse_object(old_oid), NULL, 0);
 	if (!o || o->type != OBJ_COMMIT)
 		return 0;
-	old = (struct commit *) o;
+	old_commit = (struct commit *) o;
 
 	o = deref_tag(parse_object(new_oid), NULL, 0);
 	if (!o || o->type != OBJ_COMMIT)
 		return 0;
-	new = (struct commit *) o;
+	new_commit = (struct commit *) o;
 
-	if (parse_commit(new) < 0)
+	if (parse_commit(new_commit) < 0)
 		return 0;
 
 	used = list = NULL;
-	commit_list_insert(new, &list);
+	commit_list_insert(new_commit, &list);
 	while (list) {
-		new = pop_most_recent_commit(&list, TMP_MARK);
-		commit_list_insert(new, &used);
-		if (new == old) {
+		new_commit = pop_most_recent_commit(&list, TMP_MARK);
+		commit_list_insert(new_commit, &used);
+		if (new_commit == old_commit) {
 			found = 1;
 			break;
 		}

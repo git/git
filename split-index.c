@@ -305,17 +305,17 @@ void save_or_free_index_entry(struct index_state *istate, struct cache_entry *ce
 }
 
 void replace_index_entry_in_base(struct index_state *istate,
-				 struct cache_entry *old,
-				 struct cache_entry *new)
+				 struct cache_entry *old_entry,
+				 struct cache_entry *new_entry)
 {
-	if (old->index &&
+	if (old_entry->index &&
 	    istate->split_index &&
 	    istate->split_index->base &&
-	    old->index <= istate->split_index->base->cache_nr) {
-		new->index = old->index;
-		if (old != istate->split_index->base->cache[new->index - 1])
-			free(istate->split_index->base->cache[new->index - 1]);
-		istate->split_index->base->cache[new->index - 1] = new;
+	    old_entry->index <= istate->split_index->base->cache_nr) {
+		new_entry->index = old_entry->index;
+		if (old_entry != istate->split_index->base->cache[new_entry->index - 1])
+			free(istate->split_index->base->cache[new_entry->index - 1]);
+		istate->split_index->base->cache[new_entry->index - 1] = new_entry;
 	}
 }
 

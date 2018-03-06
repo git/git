@@ -243,28 +243,28 @@ static int show_file(const char *arg, int output_prefix)
 static int try_difference(const char *arg)
 {
 	char *dotdot;
-	struct object_id oid;
-	struct object_id end;
-	const char *next;
-	const char *this;
+	struct object_id start_oid;
+	struct object_id end_oid;
+	const char *end;
+	const char *start;
 	int symmetric;
 	static const char head_by_default[] = "HEAD";
 
 	if (!(dotdot = strstr(arg, "..")))
 		return 0;
-	next = dotdot + 2;
-	this = arg;
-	symmetric = (*next == '.');
+	end = dotdot + 2;
+	start = arg;
+	symmetric = (*end == '.');
 
 	*dotdot = 0;
-	next += symmetric;
+	end += symmetric;
 
-	if (!*next)
-		next = head_by_default;
+	if (!*end)
+		end = head_by_default;
 	if (dotdot == arg)
-		this = head_by_default;
+		start = head_by_default;
 
-	if (this == head_by_default && next == head_by_default &&
+	if (start == head_by_default && end == head_by_default &&
 	    !symmetric) {
 		/*
 		 * Just ".."?  That is not a range but the
@@ -274,14 +274,14 @@ static int try_difference(const char *arg)
 		return 0;
 	}
 
-	if (!get_oid_committish(this, &oid) && !get_oid_committish(next, &end)) {
-		show_rev(NORMAL, &end, next);
-		show_rev(symmetric ? NORMAL : REVERSED, &oid, this);
+	if (!get_oid_committish(start, &start_oid) && !get_oid_committish(end, &end_oid)) {
+		show_rev(NORMAL, &end_oid, end);
+		show_rev(symmetric ? NORMAL : REVERSED, &start_oid, start);
 		if (symmetric) {
 			struct commit_list *exclude;
 			struct commit *a, *b;
-			a = lookup_commit_reference(&oid);
-			b = lookup_commit_reference(&end);
+			a = lookup_commit_reference(&start_oid);
+			b = lookup_commit_reference(&end_oid);
 			exclude = get_merge_bases(a, b);
 			while (exclude) {
 				struct commit *commit = pop_commit(&exclude);
