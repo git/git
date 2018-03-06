@@ -99,6 +99,93 @@ The latter use of the `remote.<repository>.fetch` values can be
 overridden by giving the `--refmap=<refspec>` parameter(s) on the
 command line.
 
+PRUNING
+-------
+
+Git has a default disposition of keeping data unless it's explicitly
+thrown away; this extends to holding onto local references to branches
+on remotes that have themselves deleted those branches.
+
+If left to accumulate, these stale references might make performance
+worse on big and busy repos that have a lot of branch churn, and
+e.g. make the output of commands like `git branch -a --contains
+<commit>` needlessly verbose, as well as impacting anything else
+that'll work with the complete set of known references.
+
+These remote-tracking references can be deleted as a one-off with
+either of:
+
+------------------------------------------------
+# While fetching
+$ git fetch --prune <name>
+
+# Only prune, don't fetch
+$ git remote prune <name>
+------------------------------------------------
+
+To prune references as part of your normal workflow without needing to
+remember to run that, set `fetch.prune` globally, or
+`remote.<name>.prune` per-remote in the config. See
+linkgit:git-config[1].
+
+Here's where things get tricky and more specific. The pruning feature
+doesn't actually care about branches, instead it'll prune local <->
+remote-references as a function of the refspec of the remote (see
+`<refspec>` and <<CRTB,CONFIGURED REMOTE-TRACKING BRANCHES>> above).
+
+Therefore if the refspec for the remote includes
+e.g. `refs/tags/*:refs/tags/*`, or you manually run e.g. `git fetch
+--prune <name> "refs/tags/*:refs/tags/*"` it won't be stale remote
+tracking branches that are deleted, but any local tag that doesn't
+exist on the remote.
+
+This might not be what you expect, i.e. you want to prune remote
+`<name>`, but also explicitly fetch tags from it, so when you fetch
+from it you delete all your local tags, most of which may not have
+come from the `<name>` remote in the first place.
+
+So be careful when using this with a refspec like
+`refs/tags/*:refs/tags/*`, or any other refspec which might map
+references from multiple remotes to the same local namespace.
+
+Since keeping up-to-date with both branches and tags on the remote is
+a common use-case the `--prune-tags` option can be supplied along with
+`--prune` to prune local tags that don't exist on the remote, and
+force-update those tags that differ. Tag pruning can also be enabled
+with `fetch.pruneTags` or `remote.<name>.pruneTags` in the config. See
+linkgit:git-config[1].
+
+The `--prune-tags` option is equivalent to having
+`refs/tags/*:refs/tags/*` declared in the refspecs of the remote. This
+can lead to some seemingly strange interactions:
+
+------------------------------------------------
+# These both fetch tags
+$ git fetch --no-tags origin 'refs/tags/*:refs/tags/*'
+$ git fetch --no-tags --prune-tags origin
+------------------------------------------------
+
+The reason it doesn't error out when provided without `--prune` or its
+config versions is for flexibility of the configured versions, and to
+maintain a 1=1 mapping between what the command line flags do, and
+what the configuration versions do.
+
+It's reasonable to e.g. configure `fetch.pruneTags=true` in
+`~/.gitconfig` to have tags pruned whenever `git fetch --prune` is
+run, without making every invocation of `git fetch` without `--prune`
+an error.
+
+Pruning tags with `--prune-tags` also works when fetching a URL
+instead of a named remote. These will all prune tags not found on
+origin:
+
+------------------------------------------------
+$ git fetch origin --prune --prune-tags
+$ git fetch origin --prune 'refs/tags/*:refs/tags/*'
+$ git fetch <url of origin> --prune --prune-tags
+$ git fetch <url of origin> --prune 'refs/tags/*:refs/tags/*'
+------------------------------------------------
+
 OUTPUT
 ------
 

@@ -1468,7 +1468,7 @@ __git_fetch_recurse_submodules="yes on-demand no"
 __git_fetch_options="
 	--quiet --verbose --append --upload-pack --force --keep --depth=
 	--tags --no-tags --all --prune --dry-run --recurse-submodules=
-	--unshallow --update-shallow
+	--unshallow --update-shallow --prune-tags
 "
 
 _git_fetch ()
