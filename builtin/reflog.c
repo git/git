@@ -52,6 +52,7 @@ struct collect_reflog_cb {
 	int nr;
 };
 
+/* Remember to update object flag allocation in object.h */
 #define INCOMPLETE	(1u<<10)
 #define STUDYING	(1u<<11)
 #define REACHABLE	(1u<<12)

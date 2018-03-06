@@ -2546,6 +2546,7 @@ static void read_object_list_from_stdin(void)
 	}
 }
 
+/* Remember to update object flag allocation in object.h */
 #define OBJECT_ADDED (1u<<20)
 
 static void show_commit(struct commit *commit, void *data)

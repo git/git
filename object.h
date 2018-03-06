@@ -29,7 +29,7 @@ struct object_array {
 /*
  * object flag allocation:
  * revision.h:      0---------10                                26
- * fetch-pack.c:    0---5
+ * fetch-pack.c:    0----5
  * walker.c:        0-2
  * upload-pack.c:       4       11----------------19
  * builtin/blame.c:               12-13
@@ -40,6 +40,10 @@ struct object_array {
  * sha1_name.c:                                     20
  * list-objects-filter.c:                             21
  * builtin/fsck.c:  0--3
+ * builtin/index-pack.c:                            2021
+ * builtin/pack-objects.c:                          20
+ * builtin/reflog.c:          10--12
+ * builtin/unpack-objects.c:                        2021
  */
 #define FLAG_BITS  27
 
