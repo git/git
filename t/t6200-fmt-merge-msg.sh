@@ -512,7 +512,7 @@ test_expect_success 'merge-msg with "merging" an annotated tag' '
 
 	test_when_finished "git reset --hard" &&
 	annote=$(git rev-parse annote) &&
-	git merge --no-commit $annote &&
+	git merge --no-commit --no-ff $annote &&
 	{
 		cat <<-EOF
 		Merge tag '\''$annote'\''
