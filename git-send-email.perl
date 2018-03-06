@@ -379,6 +379,10 @@ unless ($rc) {
 die __("Cannot run git format-patch from outside a repository\n")
 	if $format_patch and not $repo;
 
+die __("`batch-size` and `relogin` must be specified together " .
+	"(via command-line or configuration option)\n")
+	if defined $relogin_delay and not defined $batch_size;
+
 # Now, let's fill any that aren't set in with defaults:
 
 sub read_config {
