@@ -1836,19 +1836,11 @@ _git_notes ()
 	add,--reedit-message=*|append,--reedit-message=*)
 		__git_complete_refs --cur="${cur#*=}"
 		;;
-	add,--*)
-		__gitcomp_builtin notes_add
-		;;
-	append,--*)
-		__gitcomp_builtin notes_append
-		;;
-	copy,--*)
-		__gitcomp_builtin notes_copy
-		;;
-	prune,--*)
-		__gitcomp_builtin notes_prune
+	*,--*)
+		__gitcomp_builtin notes_$subcommand
 		;;
 	prune,*)
+		# this command does not take a ref, do not complete it
 		;;
 	*)
 		case "$prev" in
