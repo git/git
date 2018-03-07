@@ -1815,7 +1815,7 @@ _git_name_rev ()
 
 _git_notes ()
 {
-	local subcommands='add append copy edit list prune remove show'
+	local subcommands='add append copy edit get-ref list merge prune remove show'
 	local subcommand="$(__git_find_on_cmdline "$subcommands")"
 
 	case "$subcommand,$cur" in
@@ -1838,7 +1838,7 @@ _git_notes ()
 	*,--*)
 		__gitcomp_builtin notes_$subcommand
 		;;
-	prune,*)
+	prune,*|get-ref,*)
 		# this command does not take a ref, do not complete it
 		;;
 	*)
