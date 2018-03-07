@@ -1832,8 +1832,7 @@ _git_notes ()
 			;;
 		esac
 		;;
-	add,--reuse-message=*|append,--reuse-message=*|\
-	add,--reedit-message=*|append,--reedit-message=*)
+	*,--reuse-message=*|*,--reedit-message=*)
 		__git_complete_refs --cur="${cur#*=}"
 		;;
 	*,--*)
