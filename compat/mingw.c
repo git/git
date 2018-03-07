@@ -1752,6 +1752,8 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 	 */
 	if (!ret && restrict_handle_inheritance && stdhandles_count) {
 		DWORD err = GetLastError();
+		struct strbuf buf = STRBUF_INIT;
+
 		if (err != ERROR_NO_SYSTEM_RESOURCES &&
 		    /*
 		     * On Windows 7 and earlier, handles on pipes and character
@@ -1765,7 +1767,6 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 		    !(err == ERROR_INVALID_PARAMETER &&
 		      GetVersion() >> 16 < 9200) &&
 		    !getenv("SUPPRESS_HANDLE_INHERITANCE_WARNING")) {
-			struct strbuf buf = STRBUF_INIT;
 			DWORD fl;
 			int i;
 
@@ -1786,15 +1787,16 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 				      "the environment variable\n\n"
 				      "\tSUPPRESS_HANDLE_INHERITANCE_WARNING=1"
 				      "\n");
-			warning("failed to restrict file handles (%ld)\n\n%s",
-				err, buf.buf);
-			strbuf_release(&buf);
 		}
 		restrict_handle_inheritance = 0;
 		flags &= ~EXTENDED_STARTUPINFO_PRESENT;
 		ret = CreateProcessW(*wcmd ? wcmd : NULL, wargs, NULL, NULL,
 				     TRUE, flags, wenvblk, dir ? wdir : NULL,
 				     &si.StartupInfo, &pi);
+		if (ret)
+			warning("failed to restrict file handles (%ld)\n\n%s",
+				err, buf.buf);
+		strbuf_release(&buf);
 	}
 
 	if (!ret)
