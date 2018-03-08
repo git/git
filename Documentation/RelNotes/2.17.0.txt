@@ -54,13 +54,19 @@ UI, Workflows & Features
    refs/tags/ hierarchy, and allow fast-forwarding otherwise, to
    mitigate the problem.
 
+ * "git status" can spend a lot of cycles to compute the relation
+   between the current branch and its upstream, which can now be
+   disabled with "--no-ahead-behind" option.
+
+ * "git diff" and friends learned funcname patterns for Go language
+   source files.
+
 
 Performance, Internal Implementation, Development Support etc.
 
  * More perf tests for threaded grep
 
  * "perf" test output can be sent to codespeed server.
-   (merge 19cf57a92e cc/codespeed later to maint).
 
  * The build procedure for perl/ part has been greatly simplified by
    weaning ourselves off of MakeMaker.
@@ -87,13 +93,10 @@ Performance, Internal Implementation, Development Support etc.
 
  * The tracing machinery learned to report tweaking of environment
    variables as well.
-   (merge 090a09272a nd/trace-with-env later to maint).
 
  * Update Coccinelle rules to catch and optimize strbuf_addf(&buf, "%s", str)
-   (merge cd9a4b6d93 rs/strbuf-cocci-workaround later to maint).
 
  * Prevent "clang-format" from breaking line after function return type.
-   (merge a3715d43e8 po/clang-format-functype-weight later to maint).
 
  * The sequencer infrastructure is shared across "git cherry-pick",
    "git rebase -i", etc., and has always spawned "git commit" when it
@@ -107,7 +110,6 @@ Performance, Internal Implementation, Development Support etc.
 
  * Avoid mmapping small files while using packed refs (especially ones
    with zero size, which would cause later munmap() to fail).
-   (merge ba41a8b600 kg/packed-ref-cache-fix later to maint).
 
  * Conversion from uchar[20] to struct object_id continues.
 
@@ -121,6 +123,16 @@ Performance, Internal Implementation, Development Support etc.
    though it is not a goal to compile Git with C++ compilers, changes
    like this help use of code analysis tools that targets C++ on our
    codebase.
+
+ * The executable is now built in 'script' phase in Travis CI integration,
+   to follow the established practice, rather than during 'before_script'
+   phase.  This allows the CI categorize the failures better ('failed'
+   is project's fault, 'errored' is build environment's).
+   (merge 3c93b82920 sg/travis-build-during-script-phase later to maint).
+
+ * Writing out the index file when the only thing that changed in it
+   is the untracked cache information is often wasteful, and this has
+   been optimized out.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -271,6 +283,26 @@ Fixes since v2.16
  * Y2k20 fix ;-) for our perl scripts.
    (merge a40e06ee33 bw/perl-timegm-timelocal-fix later to maint).
 
+ * Threaded "git grep" has been optimized to avoid allocation in code
+   section that is covered under a mutex.
+   (merge 38ef24dccf rv/grep-cleanup later to maint).
+
+ * "git subtree" script (in contrib/) scripted around "git log", whose
+   output got affected by end-user configuration like log.showsignature
+   (merge 8841b5222c sg/subtree-signed-commits later to maint).
+
+ * While finding unique object name abbreviation, the code may
+   accidentally have read beyond the end of the array of object names
+   in a pack.
+   (merge 21abed500c ds/find-unique-abbrev-optim later to maint).
+
+ * Micro optimization in revision traversal code.
+   (merge ebbed3ba04 ds/mark-parents-uninteresting-optim later to maint).
+
+ * "git commit" used to run "gc --auto" near the end, which was lost
+   when the command was reimplemented in C by mistake.
+   (merge 095c741edd ab/gc-auto-in-commit later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge e2a5a028c7 bw/oidmap-autoinit later to maint).
    (merge ec3b4b06f8 cl/t9001-cleanup later to maint).
@@ -305,3 +337,6 @@ Fixes since v2.16
    (merge 1316416903 ms/non-ascii-ticks later to maint).
    (merge 878056005e rs/strbuf-read-file-or-whine later to maint).
    (merge 79f0ba1547 jk/strbuf-read-file-close-error later to maint).
+   (merge edfb8ba068 ot/ref-filter-cleanup later to maint).
+   (merge 11395a3b4b jc/test-must-be-empty later to maint).
+   (merge 768b9d6db7 mk/doc-pretty-fill later to maint).
