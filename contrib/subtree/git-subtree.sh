@@ -297,7 +297,7 @@ find_latest_squash () {
 	main=
 	sub=
 	git log --grep="^git-subtree-dir: $dir/*\$" \
-		--pretty=format:'START %H%n%s%n%n%b%nEND%n' HEAD |
+		--no-show-signature --pretty=format:'START %H%n%s%n%n%b%nEND%n' HEAD |
 	while read a b junk
 	do
 		debug "$a $b $junk"
@@ -341,7 +341,7 @@ find_existing_splits () {
 	main=
 	sub=
 	git log --grep="^git-subtree-dir: $dir/*\$" \
-		--pretty=format:'START %H%n%s%n%n%b%nEND%n' $revs |
+		--no-show-signature --pretty=format:'START %H%n%s%n%n%b%nEND%n' $revs |
 	while read a b junk
 	do
 		case "$a" in
@@ -382,7 +382,7 @@ copy_commit () {
 	# We're going to set some environment vars here, so
 	# do it in a subshell to get rid of them safely later
 	debug copy_commit "{$1}" "{$2}" "{$3}"
-	git log -1 --pretty=format:'%an%n%ae%n%aD%n%cn%n%ce%n%cD%n%B' "$1" |
+	git log -1 --no-show-signature --pretty=format:'%an%n%ae%n%aD%n%cn%n%ce%n%cD%n%B' "$1" |
 	(
 		read GIT_AUTHOR_NAME
 		read GIT_AUTHOR_EMAIL
@@ -462,8 +462,8 @@ squash_msg () {
 		oldsub_short=$(git rev-parse --short "$oldsub")
 		echo "Squashed '$dir/' changes from $oldsub_short..$newsub_short"
 		echo
-		git log --pretty=tformat:'%h %s' "$oldsub..$newsub"
-		git log --pretty=tformat:'REVERT: %h %s' "$newsub..$oldsub"
+		git log --no-show-signature --pretty=tformat:'%h %s' "$oldsub..$newsub"
+		git log --no-show-signature --pretty=tformat:'REVERT: %h %s' "$newsub..$oldsub"
 	else
 		echo "Squashed '$dir/' content from commit $newsub_short"
 	fi
@@ -475,7 +475,7 @@ squash_msg () {
 
 toptree_for_commit () {
 	commit="$1"
-	git log -1 --pretty=format:'%T' "$commit" -- || exit $?
+	git rev-parse --verify "$commit^{tree}" || exit $?
 }
 
 subtree_for_commit () {
