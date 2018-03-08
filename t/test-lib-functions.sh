@@ -782,7 +782,11 @@ verbose () {
 # otherwise.
 
 test_must_be_empty () {
-	if test -s "$1"
+	if ! test -f "$1"
+	then
+		echo "'$1' is missing"
+		return 1
+	elif test -s "$1"
 	then
 		echo "'$1' is not empty, it contains:"
 		cat "$1"
