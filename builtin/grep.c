@@ -92,8 +92,7 @@ static pthread_cond_t cond_result;
 
 static int skip_first_line;
 
-static void add_work(struct grep_opt *opt, enum grep_source_type type,
-		     const char *name, const char *path, const void *id)
+static void add_work(struct grep_opt *opt, const struct grep_source *gs)
 {
 	grep_lock();
 
@@ -101,7 +100,7 @@ static void add_work(struct grep_opt *opt, enum grep_source_type type,
 		pthread_cond_wait(&cond_write, &grep_mutex);
 	}
 
-	grep_source_init(&todo[todo_end].source, type, name, path, id);
+	todo[todo_end].source = *gs;
 	if (opt->binary != GREP_BINARY_TEXT)
 		grep_source_load_driver(&todo[todo_end].source);
 	todo[todo_end].done = 0;
@@ -317,6 +316,7 @@ static int grep_oid(struct grep_opt *opt, const struct object_id *oid,
 		     const char *path)
 {
 	struct strbuf pathbuf = STRBUF_INIT;
+	struct grep_source gs;
 
 	if (opt->relative && opt->prefix_length) {
 		quote_path_relative(filename + tree_name_len, opt->prefix, &pathbuf);
@@ -325,19 +325,22 @@ static int grep_oid(struct grep_opt *opt, const struct object_id *oid,
 		strbuf_addstr(&pathbuf, filename);
 	}
 
+	grep_source_init(&gs, GREP_SOURCE_OID, pathbuf.buf, path, oid);
+	strbuf_release(&pathbuf);
+
 #ifndef NO_PTHREADS
 	if (num_threads) {
-		add_work(opt, GREP_SOURCE_OID, pathbuf.buf, path, oid);
-		strbuf_release(&pathbuf);
+		/*
+		 * add_work() copies gs and thus assumes ownership of
+		 * its fields, so do not call grep_source_clear()
+		 */
+		add_work(opt, &gs);
 		return 0;
 	} else
 #endif
 	{
-		struct grep_source gs;
 		int hit;
 
-		grep_source_init(&gs, GREP_SOURCE_OID, pathbuf.buf, path, oid);
-		strbuf_release(&pathbuf);
 		hit = grep_source(opt, &gs);
 
 		grep_source_clear(&gs);
@@ -348,25 +351,29 @@ static int grep_oid(struct grep_opt *opt, const struct object_id *oid,
 static int grep_file(struct grep_opt *opt, const char *filename)
 {
 	struct strbuf buf = STRBUF_INIT;
+	struct grep_source gs;
 
 	if (opt->relative && opt->prefix_length)
 		quote_path_relative(filename, opt->prefix, &buf);
 	else
 		strbuf_addstr(&buf, filename);
 
+	grep_source_init(&gs, GREP_SOURCE_FILE, buf.buf, filename, filename);
+	strbuf_release(&buf);
+
 #ifndef NO_PTHREADS
 	if (num_threads) {
-		add_work(opt, GREP_SOURCE_FILE, buf.buf, filename, filename);
-		strbuf_release(&buf);
+		/*
+		 * add_work() copies gs and thus assumes ownership of
+		 * its fields, so do not call grep_source_clear()
+		 */
+		add_work(opt, &gs);
 		return 0;
 	} else
 #endif
 	{
-		struct grep_source gs;
 		int hit;
 
-		grep_source_init(&gs, GREP_SOURCE_FILE, buf.buf, filename, filename);
-		strbuf_release(&buf);
 		hit = grep_source(opt, &gs);
 
 		grep_source_clear(&gs);
