@@ -33,6 +33,7 @@ diffpatterns="
 	css
 	fortran
 	fountain
+	golang
 	html
 	java
 	matlab
