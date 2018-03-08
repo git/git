@@ -136,6 +136,7 @@ void wt_status_prepare(struct wt_status *s)
 	s->ignored.strdup_strings = 1;
 	s->show_branch = -1;  /* unspecified */
 	s->show_stash = 0;
+	s->ahead_behind_flags = AHEAD_BEHIND_UNSPECIFIED;
 	s->display_comment_prefix = 0;
 }
 
@@ -1032,7 +1033,7 @@ static void wt_longstatus_print_tracking(struct wt_status *s)
 	if (!skip_prefix(s->branch, "refs/heads/", &branch_name))
 		return;
 	branch = branch_get(branch_name);
-	if (!format_tracking_info(branch, &sb))
+	if (!format_tracking_info(branch, &sb, s->ahead_behind_flags))
 		return;
 
 	i = 0;
@@ -1793,7 +1794,7 @@ static void wt_shortstatus_print_tracking(struct wt_status *s)
 	const char *base;
 	char *short_base;
 	const char *branch_name;
-	int num_ours, num_theirs;
+	int num_ours, num_theirs, sti;
 	int upstream_is_gone = 0;
 
 	color_fprintf(s->fp, color(WT_STATUS_HEADER, s), "## ");
@@ -1819,7 +1820,9 @@ static void wt_shortstatus_print_tracking(struct wt_status *s)
 
 	color_fprintf(s->fp, branch_color_local, "%s", branch_name);
 
-	if (stat_tracking_info(branch, &num_ours, &num_theirs, &base) < 0) {
+	sti = stat_tracking_info(branch, &num_ours, &num_theirs, &base,
+				 s->ahead_behind_flags);
+	if (sti < 0) {
 		if (!base)
 			goto conclude;
 
@@ -1831,12 +1834,14 @@ static void wt_shortstatus_print_tracking(struct wt_status *s)
 	color_fprintf(s->fp, branch_color_remote, "%s", short_base);
 	free(short_base);
 
-	if (!upstream_is_gone && !num_ours && !num_theirs)
+	if (!upstream_is_gone && !sti)
 		goto conclude;
 
 	color_fprintf(s->fp, header_color, " [");
 	if (upstream_is_gone) {
 		color_fprintf(s->fp, header_color, LABEL(N_("gone")));
+	} else if (s->ahead_behind_flags == AHEAD_BEHIND_QUICK) {
+		color_fprintf(s->fp, header_color, LABEL(N_("different")));
 	} else if (!num_ours) {
 		color_fprintf(s->fp, header_color, LABEL(N_("behind ")));
 		color_fprintf(s->fp, branch_color_remote, "%d", num_theirs);
@@ -1905,18 +1910,19 @@ static void wt_porcelain_print(struct wt_status *s)
  *
  *    <upstream> ::= the upstream branch name, when set.
  *
- *       <ahead> ::= integer ahead value, when upstream set
- *                   and the commit is present (not gone).
+ *       <ahead> ::= integer ahead value or '?'.
  *
- *      <behind> ::= integer behind value, when upstream set
- *                   and commit is present.
- *
+ *      <behind> ::= integer behind value or '?'.
  *
  * The end-of-line is defined by the -z flag.
  *
  *                 <eol> ::= NUL when -z,
  *                           LF when NOT -z.
  *
+ * When an upstream is set and present, the 'branch.ab' line will
+ * be printed with the ahead/behind counts for the branch and the
+ * upstream.  When AHEAD_BEHIND_QUICK is requested and the branches
+ * are different, '?' will be substituted for the actual count.
  */
 static void wt_porcelain_v2_print_tracking(struct wt_status *s)
 {
@@ -1956,14 +1962,25 @@ static void wt_porcelain_v2_print_tracking(struct wt_status *s)
 		/* Lookup stats on the upstream tracking branch, if set. */
 		branch = branch_get(branch_name);
 		base = NULL;
-		ab_info = (stat_tracking_info(branch, &nr_ahead, &nr_behind, &base) == 0);
+		ab_info = stat_tracking_info(branch, &nr_ahead, &nr_behind,
+					     &base, s->ahead_behind_flags);
 		if (base) {
 			base = shorten_unambiguous_ref(base, 0);
 			fprintf(s->fp, "# branch.upstream %s%c", base, eol);
 			free((char *)base);
 
-			if (ab_info)
-				fprintf(s->fp, "# branch.ab +%d -%d%c", nr_ahead, nr_behind, eol);
+			if (ab_info > 0) {
+				/* different */
+				if (nr_ahead || nr_behind)
+					fprintf(s->fp, "# branch.ab +%d -%d%c",
+						nr_ahead, nr_behind, eol);
+				else
+					fprintf(s->fp, "# branch.ab +? -?%c",
+						eol);
+			} else if (!ab_info) {
+				/* same */
+				fprintf(s->fp, "# branch.ab +0 -0%c", eol);
+			}
 		}
 	}
 

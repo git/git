@@ -1249,8 +1249,8 @@ static void fill_remote_ref_details(struct used_atom *atom, const char *refname,
 	if (atom->u.remote_ref.option == RR_REF)
 		*s = show_ref(&atom->u.remote_ref.refname, refname);
 	else if (atom->u.remote_ref.option == RR_TRACK) {
-		if (stat_tracking_info(branch, &num_ours,
-				       &num_theirs, NULL)) {
+		if (stat_tracking_info(branch, &num_ours, &num_theirs,
+				       NULL, AHEAD_BEHIND_FULL) < 0) {
 			*s = xstrdup(msgs.gone);
 		} else if (!num_ours && !num_theirs)
 			*s = "";
@@ -1267,8 +1267,8 @@ static void fill_remote_ref_details(struct used_atom *atom, const char *refname,
 			free((void *)to_free);
 		}
 	} else if (atom->u.remote_ref.option == RR_TRACKSHORT) {
-		if (stat_tracking_info(branch, &num_ours,
-				       &num_theirs, NULL))
+		if (stat_tracking_info(branch, &num_ours, &num_theirs,
+				       NULL, AHEAD_BEHIND_FULL) < 0)
 			return;
 
 		if (!num_ours && !num_theirs)
