@@ -2172,8 +2172,13 @@ static struct untracked_cache_dir *validate_untracked_cache(struct dir_struct *d
 						      const struct pathspec *pathspec)
 {
 	struct untracked_cache_dir *root;
+	static int untracked_cache_disabled = -1;
 
-	if (!dir->untracked || getenv("GIT_DISABLE_UNTRACKED_CACHE"))
+	if (!dir->untracked)
+		return NULL;
+	if (untracked_cache_disabled < 0)
+		untracked_cache_disabled = git_env_bool("GIT_DISABLE_UNTRACKED_CACHE", 0);
+	if (untracked_cache_disabled)
 		return NULL;
 
 	/*
@@ -2297,7 +2302,12 @@ int read_directory(struct dir_struct *dir, struct index_state *istate,
 
 	trace_performance_since(start, "read directory %.*s", len, path);
 	if (dir->untracked) {
+		static int force_untracked_cache = -1;
 		static struct trace_key trace_untracked_stats = TRACE_KEY_INIT(UNTRACKED_STATS);
+
+		if (force_untracked_cache < 0)
+			force_untracked_cache =
+				git_env_bool("GIT_FORCE_UNTRACKED_CACHE", 0);
 		trace_printf_key(&trace_untracked_stats,
 				 "node creation: %u\n"
 				 "gitignore invalidation: %u\n"
@@ -2307,7 +2317,8 @@ int read_directory(struct dir_struct *dir, struct index_state *istate,
 				 dir->untracked->gitignore_invalidated,
 				 dir->untracked->dir_invalidated,
 				 dir->untracked->dir_opened);
-		if (dir->untracked == istate->untracked &&
+		if (force_untracked_cache &&
+			dir->untracked == istate->untracked &&
 		    (dir->untracked->dir_opened ||
 		     dir->untracked->gitignore_invalidated ||
 		     dir->untracked->dir_invalidated))
