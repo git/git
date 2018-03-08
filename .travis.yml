@@ -33,7 +33,6 @@ matrix:
       compiler:
       addons:
       before_install:
-      before_script:
       script:
         - >
           test "$TRAVIS_REPO_SLUG" != "git/git" ||
@@ -46,7 +45,6 @@ matrix:
       services:
         - docker
       before_install:
-      before_script:
       script: ci/run-linux32-docker.sh
     - env: jobname=StaticAnalysis
       os: linux
@@ -56,7 +54,6 @@ matrix:
           packages:
           - coccinelle
       before_install:
-      before_script:
       script: ci/run-static-analysis.sh
       after_failure:
     - env: jobname=Documentation
@@ -68,13 +65,11 @@ matrix:
           - asciidoc
           - xmlto
       before_install:
-      before_script:
       script: ci/test-documentation.sh
       after_failure:
 
 before_install: ci/install-dependencies.sh
-before_script: ci/run-build.sh
-script: ci/run-tests.sh
+script: ci/run-build-and-tests.sh
 after_failure: ci/print-test-failures.sh
 
 notifications:

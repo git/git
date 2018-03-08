@@ -1,12 +1,13 @@
 #!/bin/sh
 #
-# Test Git
+# Build and test Git
 #
 
 . ${0%/*}/lib-travisci.sh
 
 ln -s "$cache_dir/.prove" t/.prove
 
+make --jobs=2
 make --quiet test
 if test "$jobname" = "linux-gcc"
 then
