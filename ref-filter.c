@@ -1354,15 +1354,31 @@ static const char *get_refname(struct used_atom *atom, struct ref_array_item *re
 	return show_ref(&atom->u.refname, ref->refname);
 }
 
+static void get_object(struct ref_array_item *ref, const struct object_id *oid,
+		       int deref, struct object **obj)
+{
+	int eaten;
+	unsigned long size;
+	void *buf = get_obj(oid, obj, &size, &eaten);
+	if (!buf)
+		die(_("missing object %s for %s"),
+		    oid_to_hex(oid), ref->refname);
+	if (!*obj)
+		die(_("parse_object_buffer failed on %s for %s"),
+		    oid_to_hex(oid), ref->refname);
+
+	grab_values(ref->value, deref, *obj, buf, size);
+	if (!eaten)
+		free(buf);
+}
+
 /*
  * Parse the object referred by ref, and grab needed value.
  */
 static void populate_value(struct ref_array_item *ref)
 {
-	void *buf;
 	struct object *obj;
-	int eaten, i;
-	unsigned long size;
+	int i;
 	const struct object_id *tagged;
 
 	ref->value = xcalloc(used_atom_cnt, sizeof(struct atom_value));
@@ -1478,22 +1494,12 @@ static void populate_value(struct ref_array_item *ref)
 	for (i = 0; i < used_atom_cnt; i++) {
 		struct atom_value *v = &ref->value[i];
 		if (v->s == NULL)
-			goto need_obj;
+			break;
 	}
-	return;
+	if (used_atom_cnt <= i)
+		return;
 
- need_obj:
-	buf = get_obj(&ref->objectname, &obj, &size, &eaten);
-	if (!buf)
-		die(_("missing object %s for %s"),
-		    oid_to_hex(&ref->objectname), ref->refname);
-	if (!obj)
-		die(_("parse_object_buffer failed on %s for %s"),
-		    oid_to_hex(&ref->objectname), ref->refname);
-
-	grab_values(ref->value, 0, obj, buf, size);
-	if (!eaten)
-		free(buf);
+	get_object(ref, &ref->objectname, 0, &obj);
 
 	/*
 	 * If there is no atom that wants to know about tagged
@@ -1514,16 +1520,7 @@ static void populate_value(struct ref_array_item *ref)
 	 * is not consistent with what deref_tag() does
 	 * which peels the onion to the core.
 	 */
-	buf = get_obj(tagged, &obj, &size, &eaten);
-	if (!buf)
-		die(_("missing object %s for %s"),
-		    oid_to_hex(tagged), ref->refname);
-	if (!obj)
-		die(_("parse_object_buffer failed on %s for %s"),
-		    oid_to_hex(tagged), ref->refname);
-	grab_values(ref->value, 1, obj, buf, size);
-	if (!eaten)
-		free(buf);
+	get_object(ref, tagged, 1, &obj);
 }
 
 /*
