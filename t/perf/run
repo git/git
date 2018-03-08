@@ -106,7 +106,6 @@ get_var_from_env_or_config () {
 	conf_sec="$2"
 	conf_var="$3"
 	conf_opts="$4" # optional
-	# $5 can be set to a default value
 
 	# Do nothing if the env variable is already set
 	eval "test -z \"\${$env_var+x}\"" || return
@@ -122,13 +121,12 @@ get_var_from_env_or_config () {
 	fi
 	var="$conf_sec.$conf_var"
 	conf_value=$(git config $conf_opts -f "$GIT_PERF_CONFIG_FILE" "$var") &&
-	eval "$env_var=\"$conf_value\"" && return
-
-	test -n "${5+x}" && eval "$env_var=\"$5\""
+	eval "$env_var=\"$conf_value\""
 }
 
 run_subsection () {
-	get_var_from_env_or_config "GIT_PERF_REPEAT_COUNT" "perf" "repeatCount" "--int" 3
+	get_var_from_env_or_config "GIT_PERF_REPEAT_COUNT" "perf" "repeatCount" "--int"
+	: ${GIT_PERF_REPEAT_COUNT:=3}
 	export GIT_PERF_REPEAT_COUNT
 
 	get_var_from_env_or_config "GIT_PERF_DIRS_OR_REVS" "perf" "dirsOrRevs"
