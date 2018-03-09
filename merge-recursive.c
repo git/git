@@ -931,6 +931,7 @@ static int merge_3way(struct merge_options *o,
 	ll_opts.renormalize = o->renormalize;
 	ll_opts.xdl_opts = o->xdl_opts;
 
+	ll_opts.marker_size_inc = o->marker_size_inc;
 	if (o->call_depth) {
 		ll_opts.virtual_ancestor = 1;
 		ll_opts.variant = 0;

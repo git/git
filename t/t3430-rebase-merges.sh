@@ -105,8 +105,8 @@ test_expect_success 'generate correct todo list' '
 
 	reset branch-point # C
 	pick 12bd07b D
-	merge -C 2051b56 E # E
-	merge -C 233d48a H # H
+	merge -R -C 2051b56 E # E
+	merge -R -C 233d48a H # H
 
 	EOF
 
@@ -344,6 +344,288 @@ test_expect_success 'octopus merges' '
 	* | one
 	|/
 	o before-octopus
+	EOF
+'
+
+test_expect_success 'rebase amended merges' '
+	git checkout -b amended-merge A &&
+	test_commit common &&
+	test_commit file1 &&
+	git reset --hard HEAD^ &&
+	test_commit file2 &&
+	git merge -m merge file1 &&
+	echo extra >>file1.t &&
+	git commit --amend -m amended file1.t &&
+	git rebase -i -r -f common &&
+	grep extra file1.t
+'
+
+test_cmp_diff () {
+	q_to_tab >expect &&
+	git diff >actual.diff &&
+	sed -e 's/^\(..[<>]* \)[0-9a-f]*\.\.\. /\1<HASH>... /' \
+		-e '/^index /d' -e 's/ *$//' \
+		<actual.diff >actual &&
+	test_cmp expect actual
+}
+
+# This test case reflects a real-world scenario, where a function was renamed
+# in one topic branch, a caller for the same function was added in a competing
+# topic branch, and upstream introduces conflicting changes for one or the
+# other, or both.
+test_expect_success 'rebase merge commit (realistic example)' '
+	git checkout --orphan rebase-merge &&
+	q_to_tab >main.c <<-\EOF &&
+	int core(void) {
+	Qprintf("Hello, world!\n");
+	}
+	EOF
+	test_tick && git add main.c && git commit -m main &&
+	git checkout -b add-caller &&
+	q_to_tab >>main.c <<-\EOF &&
+	/* caller */
+	void caller(void) {
+	Qcore();
+	}
+	EOF
+	test_tick && git commit -m add-caller -a &&
+	git checkout rebase-merge &&
+	mv main.c main.c.orig &&
+	sed "s/core/hi/g" <main.c.orig >main.c &&
+	test_tick && git commit -m rename-to-hi -a &&
+	git merge --no-commit add-caller &&
+	mv main.c main.c.orig &&
+	sed "s/core/hi/g" <main.c.orig >main.c &&
+	test_tick && git -c core.editor=touch commit -a &&
+	test_cmp_graph <<-\EOF &&
+	*   Merge branch '\''add-caller'\'' into rebase-merge
+	|\
+	| * add-caller
+	* | rename-to-hi
+	|/
+	* main
+	EOF
+
+	: now simulate upstream coming up with conflicting changes for &&
+	: the rename, for the added function, and for both &&
+	git worktree add -b add-event-loop upstream add-caller^ &&
+	(
+		cd upstream &&
+		q_to_tab >>main.c <<-\EOF &&
+		/* main event loop */
+		void event_loop(void) {
+		Q/* TODO: place holder for now */
+		}
+		EOF
+		test_tick && git commit -m add-event-loop -a &&
+
+		git checkout -b rename-to-greeting add-caller^ &&
+		mv main.c main.c.orig &&
+		sed "s/core/greeting/g" <main.c.orig >main.c &&
+		test_tick && git commit -m rename-to-greeting -a &&
+
+		git checkout -b two-conflicts &&
+		q_to_tab >>main.c <<-\EOF &&
+		/* main code */
+		int main(int argc, char **argv) {
+		Qreturn greeting();
+		}
+		EOF
+		test_tick && git commit -m add-main -a
+	) &&
+
+	: now, rebase onto all three of those conflicting upstream branches &&
+	: first, just the renamed function: &&
+	: rename-to-hi must clash with rename-to-greeting &&
+	git checkout -b rebase-1 &&
+	test_must_fail git rebase -ir rename-to-greeting &&
+	test_cmp_diff <<-\EOF &&
+	diff --cc main.c
+	--- a/main.c
+	+++ b/main.c
+	@@@ -1,3 -1,3 +1,7 @@@
+	++<<<<<<< HEAD
+	 +int greeting(void) {
+	++=======
+	+ int hi(void) {
+	++>>>>>>> <HASH>... rename-to-hi
+	  Qprintf("Hello, world!\n");
+	  }
+	EOF
+	: re-rename-to-hi &&
+	git checkout --theirs main.c &&
+	test_tick && git add main.c && test_must_fail git rebase --continue &&
+	: the rebased add-caller still uses greeting instead of hi &&
+	test_cmp_diff <<-\EOF &&
+	diff --cc main.c
+	--- a/main.c
+	+++ b/main.c
+	@@@ -1,4 -1,4 +1,8 @@@
+	++<<<<<<< intermediate merge
+	 +int hi(void) {
+	++=======
+	+ int greeting(void) {
+	++>>>>>>> <HASH>... merge head #1
+	  Qprintf("Hello, world!\n");
+	  }
+	  /* caller */
+	EOF
+	: use hi, i.e. the version in the rebased history so far &&
+	git checkout --ours main.c &&
+	test_tick && git add main.c && git rebase --continue &&
+	test_cmp_graph <<-\EOF &&
+	*   Merge branch '\''add-caller'\'' into rebase-merge
+	|\
+	| * add-caller
+	* | rename-to-hi
+	|/
+	* rename-to-greeting
+	* main
+	EOF
+
+	: second, cause conflict with the added event loop &&
+	git checkout -b rebase-2 rebase-merge &&
+	test_must_fail git rebase -ir add-event-loop &&
+	test_cmp_diff <<-\EOF &&
+	diff --cc main.c
+	--- a/main.c
+	+++ b/main.c
+	@@@ -1,7 -1,7 +1,13 @@@
+	  int core(void) {
+	  Qprintf("Hello, world!\n");
+	  }
+	++<<<<<<< HEAD
+	 +/* main event loop */
+	 +void event_loop(void) {
+	 +Q/* TODO: place holder for now */
+	++=======
+	+ /* caller */
+	+ void caller(void) {
+	+ Qcore();
+	++>>>>>>> <HASH>... add-caller
+	  }
+	EOF
+	: resolve by adding both &&
+	mv main.c main.c.orig &&
+	sed -e "s/^=.*/}/" -e "/^[<>]/d" <main.c.orig >main.c &&
+	test_tick && git add main.c && test_must_fail git rebase --continue &&
+	test_cmp_diff <<-\EOF &&
+	diff --cc main.c
+	--- a/main.c
+	+++ b/main.c
+	@@@ -5,3 -5,7 +5,10 @@@ int hi(void)
+	  void event_loop(void) {
+	  Q/* TODO: place holder for now */
+	  }
+	++<<<<<<<< HEAD
+	++========
+	+ /* caller */
+	+ void caller(void) {
+	+ Qhi();
+	+ }
+	++>>>>>>>> <HASH>... intermediate merge
+	EOF
+	: HEAD renamed core to hi, MERGE_HEAD did more complicated stuff... &&
+	git show MERGE_HEAD:main.c | sed "s/core/hi/g" >main.c &&
+	git add main.c &&
+	test_tick &&
+	git rebase --continue &&
+	test_cmp_graph <<-\EOF &&
+	*   Merge branch '\''add-caller'\'' into rebase-merge
+	|\
+	| * add-caller
+	* | rename-to-hi
+	|/
+	* add-event-loop
+	* main
+	EOF
+
+	: third, cause conflict with the added event loop and the rename &&
+	git checkout -b rebase-3 rebase-merge &&
+	test_must_fail git rebase -ir two-conflicts &&
+	test_cmp_diff <<-\EOF &&
+	diff --cc main.c
+	--- a/main.c
+	+++ b/main.c
+	@@@ -1,7 -1,7 +1,13 @@@
+	 -int core(void) {
+	 +int greeting(void) {
+	  Qprintf("Hello, world!\n");
+	  }
+	++<<<<<<< HEAD
+	 +/* main code */
+	 +int main(int argc, char **argv) {
+	 +Qreturn greeting();
+	++=======
+	+ /* caller */
+	+ void caller(void) {
+	+ Qcore();
+	++>>>>>>> <HASH>... add-caller
+	  }
+	EOF
+	: resolve by adding both &&
+	mv main.c main.c.orig &&
+	sed -e "s/^=.*/}/" -e "/^[<>]/d" <main.c.orig >main.c &&
+	test_tick && git add main.c && test_must_fail git rebase --continue &&
+	: now the renames conflict &&
+	test_cmp_diff <<-\EOF &&
+	diff --cc main.c
+	--- a/main.c
+	+++ b/main.c
+	@@@ -1,7 -1,3 +1,11 @@@
+	++<<<<<<< HEAD
+	 +int greeting(void) {
+	++=======
+	+ int hi(void) {
+	++>>>>>>> <HASH>... rename-to-hi
+	  Qprintf("Hello, world!\n");
+	  }
+	 +/* main code */
+	 +int main(int argc, char **argv) {
+	 +Qreturn greeting();
+	 +}
+	EOF
+	: again, we prefer our rename to hi &&
+	git checkout --theirs main.c &&
+	test_tick && git add main.c && test_must_fail git rebase --continue &&
+	: HEAD renamed core to hi, MERGE_HEAD did more complicated stuff... &&
+	test_cmp_diff <<-\EOF &&
+	diff --cc main.c
+	--- a/main.c
+	+++ b/main.c
+	@@@ -1,7 -1,11 +1,15 @@@
+	++<<<<<<< intermediate merge
+	 +int hi(void) {
+	++=======
+	+ int greeting(void) {
+	++>>>>>>> <HASH>... merge head #1
+	  Qprintf("Hello, world!\n");
+	  }
+	+ /* main code */
+	+ int main(int argc, char **argv) {
+	+ Qreturn greeting();
+	+ }
+	  /* caller */
+	  void caller(void) {
+	 -Qcore();
+	 +Qhi();
+	  }
+	EOF
+	: we really wanted hi, not greeting... &&
+	mv main.c main.c.orig &&
+	sed -e "/^[=<>]/d" -e "/^int greeting/d" -e "s/greeting/hi/g" \
+		<main.c.orig >main.c &&
+	git add main.c &&
+	test_tick && git rebase --continue &&
+	test_cmp_graph <<-\EOF
+	*   Merge branch '\''add-caller'\'' into rebase-merge
+	|\
+	| * add-caller
+	* | rename-to-hi
+	|/
+	* add-main
+	* rename-to-greeting
+	* main
 	EOF
 '
 
