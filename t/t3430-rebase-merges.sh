@@ -105,8 +105,8 @@ test_expect_success 'generate correct todo list' '
 
 	reset branch-point # C
 	pick 12bd07b D
-	merge -C 2051b56 E # E
-	merge -C 233d48a H # H
+	merge -R -C 2051b56 E # E
+	merge -R -C 233d48a H # H
 
 	EOF
 
@@ -345,6 +345,19 @@ test_expect_success 'octopus merges' '
 	|/
 	o before-octopus
 	EOF
+'
+
+test_expect_success 'rebase amended merges' '
+	git checkout -b amended-merge A &&
+	test_commit common &&
+	test_commit file1 &&
+	git reset --hard HEAD^ &&
+	test_commit file2 &&
+	git merge -m merge file1 &&
+	echo extra >>file1.t &&
+	git commit --amend -m amended file1.t &&
+	git rebase -i -r -f common &&
+	grep extra file1.t
 '
 
 test_done

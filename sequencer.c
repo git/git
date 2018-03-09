@@ -1859,7 +1859,8 @@ static int read_and_refresh_cache(struct replay_opts *opts)
 }
 
 enum todo_item_flags {
-	TODO_EDIT_MERGE_MSG = 1
+	TODO_EDIT_MERGE_MSG = 1,
+	TODO_REBASE_MERGES = 2
 };
 
 struct todo_item {
@@ -1952,6 +1953,11 @@ static int parse_insn_line(struct todo_item *item, const char *bol, char *eol)
 	}
 
 	if (item->command == TODO_MERGE) {
+		if (skip_prefix(bol, "-R", &bol)) {
+			item->flags |= TODO_REBASE_MERGES;
+			bol += strspn(bol, " \t");
+		}
+
 		if (skip_prefix(bol, "-C", &bol))
 			bol += strspn(bol, " \t");
 		else if (skip_prefix(bol, "-c", &bol)) {
@@ -2816,6 +2822,304 @@ static struct commit *lookup_label(const char *label, int len,
 	return commit;
 }
 
+struct unmerged_entry {
+	struct hashmap_entry entry;
+	struct {
+		unsigned mode;
+		struct object_id oid;
+	} stages[4];
+	char path[FLEX_ARRAY];
+};
+
+static int unmerged_entry_cmp(const void *dummy, struct unmerged_entry *a,
+			      struct unmerged_entry *b, const char *keydata)
+{
+	return strcmp(a->path, keydata ? keydata : b->path);
+}
+
+static int record_unmerged_entries(struct hashmap *unmerged_entries)
+{
+	struct cache_entry *ce;
+	unsigned int hash;
+	struct unmerged_entry *e;
+	int i, stage;
+	struct string_list list = STRING_LIST_INIT_NODUP;
+
+	if (!unmerged_cache())
+		return 0;
+
+	for (i = 0; i < active_nr; i++) {
+		ce = active_cache[i];
+		stage = ce_stage(ce);
+		if (!stage)
+			continue;
+		hash = strhash(ce->name);
+		e = hashmap_get_from_hash(unmerged_entries, hash, ce->name);
+		if (!e) {
+			FLEX_ALLOC_STR(e, path, ce->name);
+			hashmap_entry_init(e, hash);
+			hashmap_add(unmerged_entries, e);
+		}
+
+		if (!list.nr ||
+		    strcmp(ce->name, list.items[list.nr - 1].string))
+			string_list_append(&list, ce->name);
+
+		if (stage != 2 || is_null_oid(&e->stages[stage].oid)) {
+			e->stages[stage].mode = ce->ce_mode;
+			oidcpy(&e->stages[stage].oid, &ce->oid);
+		}
+	}
+
+	for (i = 0; i < list.nr; i++) {
+		const char *path = list.items[i].string;
+		struct stat st;
+		struct object_id oid;
+
+		if (lstat(path, &st)) {
+			if (remove_file_from_cache(path) >= 0)
+				continue;
+			string_list_clear(&list, 0);
+			return error(_("could not remove '%s' from " "index"),
+				     path);
+		}
+
+		if (index_path(&oid, path, &st, HASH_WRITE_OBJECT) ||
+		    !(ce = make_cache_entry(st.st_mode, oid.hash,
+					    path, 0, 0)) ||
+		    add_cache_entry(ce, 0) < 0) {
+			string_list_clear(&list, 0);
+			return error(_("could not add stage 0 for '%s'"),
+				     path);
+		}
+		ce_mark_uptodate(ce);
+	}
+
+	return 0;
+}
+
+static int replay_unmerged_entries(struct hashmap *unmerged_entries)
+{
+	struct hashmap_iter iter;
+	struct unmerged_entry *entry;
+	struct cache_entry *ce;
+	int i;
+
+	if (!hashmap_get_size(unmerged_entries))
+		return 0;
+
+	hashmap_iter_init(unmerged_entries, &iter);
+	for (entry = hashmap_iter_first(unmerged_entries, &iter);
+	     entry; entry = hashmap_iter_next(&iter)) {
+		for (i = 1; i < 4; i++) {
+			if (is_null_oid(&entry->stages[i].oid))
+				continue;
+
+			if (!(ce = make_cache_entry(entry->stages[i].mode,
+						    entry->stages[i].oid.hash,
+						    entry->path, i, 0)) ||
+			    add_cache_entry(ce, 0))
+				return error(_("could not add stage %d for "
+					       "'%s'"), i, entry->path);
+		}
+	}
+
+	return 0;
+}
+
+static int rebase_merge_commit(struct commit *commit,
+			       struct commit *head_commit,
+			       struct commit_list *to_merge,
+			       struct merge_options *o, int run_commit_flags,
+			       struct lock_file *lock, struct replay_opts *opts)
+{
+	struct strbuf merge_heads = STRBUF_INIT, buf = STRBUF_INIT;
+	struct commit_list *p = commit->parents, *j;
+	int i = 1, clean = 1, clean2;
+	struct tree *tree = NULL;
+	struct hashmap unmerged_entries;
+	struct commit *current_commit = head_commit;
+
+	hashmap_init(&unmerged_entries, (hashmap_cmp_fn)unmerged_entry_cmp,
+		     NULL, 0);
+
+	/*
+	 * To rebase a merge commit, we have to reconcile the changes
+	 * introduced by rebasing every parent commit with the changes
+	 * introduced by the original merge commit (i.e. amendments, different
+	 * merge strategies, etc).
+	 *
+	 * In other words, given a commit history like this, we want to come up
+	 * with a merge between A3' and B3' using all of the available
+	 * information as best as possible:
+	 *
+	 * ---------- A1' - A2' - A3'
+	 * \
+	 * | A1 - A2 - A3
+	 * |              \
+	 * |                M
+	 * \              /
+	 * | B1 - B2 - B3
+	 *  \
+	 *   -------- B1' - B2' - B3'
+	 *
+	 * In particular, we want to make use of the information stored in M.
+	 * To that end, we reconcile the changes introduced by M relative to A3
+	 * and B3 with the changes introduced by A3' relative to A3 and with
+	 * the changes introduced by B3' relative to B3.
+	 *
+	 * The fundamental idea of this function is to perform these
+	 * reconciliations by performing a 3-way merge between A3' and M with
+	 * A3 as the merge base (interpreting A3' and M as changes diverging
+	 * from A3 as a start point), and then merging B3' with B3 as merge
+	 * base).
+	 *
+	 * Note: the idea still holds true even if patches were moved,
+	 * modified, dropped or inserted.
+	 */
+	init_merge_options(o);
+	o->branch1 = "HEAD";
+	strbuf_addf(&buf, "%s... original merge", short_commit_name(commit));
+	o->branch2 = buf.buf;
+	o->buffer_output = 2; /* we want to show it only in case of errors */
+
+	/*
+	 * First, merge A3' (i.e. HEAD) with M, using A3 (i.e. M^) as merge
+	 * base.
+	 */
+	parse_commit(p->item);
+	clean = merge_trees(o, head_commit->tree, commit->tree,
+			    p->item->tree, &tree);
+
+	if (clean <= 0)
+		error(_("while merging %s into %s "
+			"with merge base %s:\n%s"),
+		      short_commit_name(commit),
+		      short_commit_name(head_commit),
+		      short_commit_name(p->item), o->obuf.buf);
+	strbuf_reset(&o->obuf);
+
+	/*
+	 * Then, perform incremental three-way merges with the rebased
+	 * merge heads, using the corresponding original merge commit's parents
+	 * as merge bases.
+	 */
+	i = 1;
+	p = p->next;
+	for (j = to_merge; clean >= 0 && p; j = j->next, p = p->next, i++) {
+		struct object_id *cache_tree_oid;
+
+		if (!j)
+			BUG("we ran out of merge heads (#%d)", i);
+		strbuf_addf(&merge_heads, "%s\n",
+			    oid_to_hex(&j->item->object.oid));
+
+		parse_commit(j->item);
+		parse_commit(p->item);
+
+		if (!oidcmp(&p->item->tree->object.oid,
+			    &j->item->tree->object.oid))
+			continue; /* no changes; skip merge */
+
+		/*
+		 * We cannot have unmerged index entries when calling
+		 * merge_trees(). Therefore, we record the stages of unmerged
+		 * entries, add the contents of the file (with conflict
+		 * markers) to the index, and restore the stages at the end.
+		 *
+		 * If the same file showed up as unmerged multiple times, we
+		 * use the stage 2 ("HEAD") of the first, and stage 1 ("merge
+		 * base") and stage 3 ("merge head") of the last one.
+		 */
+		if (record_unmerged_entries(&unmerged_entries)) {
+			clean = -1;
+			break;
+		}
+
+		/*
+		 * The merge_trees() function does not, in fact, set the tree
+		 * passed in as last parameter when call_depth == 0 (unless
+		 * there is nothing to update). So let's reconstruct the
+		 * current tree from the index.
+		 */
+		if (!(cache_tree_oid = get_cache_tree_oid())) {
+			clean = -1;
+			break;
+		}
+		tree = lookup_tree(cache_tree_oid);
+
+		/* merge_trees() really wants that `head` reflects the current HEAD */
+		if (oidcmp(cache_tree_oid, &current_commit->tree->object.oid)) {
+			const char *msg = "intermediate commit";
+			struct commit_list *parents = NULL;
+			struct object_id oid;
+
+			commit_list_insert(current_commit, &parents);
+			if (commit_tree(msg, strlen(msg), cache_tree_oid,
+					parents, &oid, NULL, NULL) < 0 ||
+			    !(current_commit = lookup_commit(&oid)) ||
+			    update_ref(NULL, "HEAD", &oid, NULL, 0,
+				       UPDATE_REFS_MSG_ON_ERR) < 0) {
+				clean = -1;
+				break;
+			}
+		}
+
+		o->branch1 = "intermediate merge";
+		strbuf_reset(&buf);
+		strbuf_addf(&buf, "%s... merge head #%d",
+			    short_commit_name(j->item), i);
+		o->branch2 = buf.buf;
+		clean2 = merge_trees(o, tree, j->item->tree, p->item->tree,
+				     &tree);
+		if (clean2 <= 0) {
+			error(_("while merging merge head #%d (%s) "
+				"with merge base %s:\n%s"), i,
+			      short_commit_name(j->item),
+			      short_commit_name(p->item), o->obuf.buf);
+			if (clean > clean2)
+				clean = clean2;
+		}
+		strbuf_reset(&o->obuf);
+	}
+	if (!i && j)
+		BUG("unexpected left-over merge head (#%d)", i);
+	strbuf_release(&o->obuf);
+	strbuf_release(&buf);
+
+	if (!clean && replay_unmerged_entries(&unmerged_entries))
+		clean = -1;
+	hashmap_free(&unmerged_entries, 1);
+
+	/* Reset HEAD to the first merge parent, if necessary */
+	if (oidcmp(&head_commit->object.oid, &current_commit->object.oid) &&
+	    update_ref(NULL, "HEAD", &head_commit->object.oid, NULL, 0,
+		       UPDATE_REFS_MSG_ON_ERR) < 0)
+		clean = -1;
+
+	write_message(merge_heads.buf, merge_heads.len,
+		      git_path_merge_head(), 0);
+	write_message("no-ff", 5, git_path_merge_mode(), 0);
+	strbuf_release(&merge_heads);
+
+	if (clean >= 0 &&
+	    write_locked_index(&the_index, lock, COMMIT_LOCK))
+		return error(_("merge: Unable to write new index file"));
+	rollback_lock_file(lock);
+
+	if (!clean) {
+		rerere(opts->allow_rerere_auto);
+		make_patch(commit, opts);
+		return 1;
+	}
+
+	if (clean > 0)
+		return run_git_commit(git_path_merge_msg(), opts,
+				      run_commit_flags);
+
+	return -1;
+}
+
 static int do_merge(struct commit *commit, const char *arg, int arg_len,
 		    int flags, struct replay_opts *opts)
 {
@@ -2829,6 +3133,9 @@ static int do_merge(struct commit *commit, const char *arg, int arg_len,
 	int merge_arg_len, oneline_offset, can_fast_forward, ret, k;
 	static struct lock_file lock;
 	const char *p;
+
+	if ((flags & TODO_REBASE_MERGES) && !commit)
+		return error(_("need an original merge to rebase"));
 
 	if (hold_locked_index(&lock, LOCK_REPORT_ON_ERROR) < 0) {
 		ret = -1;
@@ -2970,6 +3277,12 @@ static int do_merge(struct commit *commit, const char *arg, int arg_len,
 		rollback_lock_file(&lock);
 		ret = fast_forward_to(&commit->object.oid,
 				      &head_commit->object.oid, 0, opts);
+		goto leave_merge;
+	}
+
+	if (flags & TODO_REBASE_MERGES) {
+		ret = rebase_merge_commit(commit, head_commit, to_merge, &o,
+					  run_commit_flags, &lock, opts);
 		goto leave_merge;
 	}
 
@@ -3872,7 +4185,7 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 				*(char *)p1 = '-';
 
 		strbuf_reset(&buf);
-		strbuf_addf(&buf, "%s -C %s",
+		strbuf_addf(&buf, "%s -R -C %s",
 			    cmd_merge, oid_to_hex(&commit->object.oid));
 
 		/* label the tips of merged branches */
@@ -4143,6 +4456,9 @@ int transform_todos(unsigned flags)
 					  oid_to_hex(&item->commit->object.oid);
 
 			if (item->command == TODO_MERGE) {
+				if (item->flags & TODO_REBASE_MERGES)
+					strbuf_addstr(&buf, " -R");
+
 				if (item->flags & TODO_EDIT_MERGE_MSG)
 					strbuf_addstr(&buf, " -c");
 				else

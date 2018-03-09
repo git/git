@@ -383,9 +383,9 @@ have the long commit hash prepended to the format.
 	By default, a rebase will simply drop merge commits and only rebase
 	the non-merge commits. With this option, it will try to preserve
 	the branching structure within the commits that are to be rebased,
-	by recreating the merge commits. If a merge commit resolved any merge
-	or contained manual amendments, then they will have to be re-applied
-	manually.
+	by recreating the merge commits. A best effort will be made to re-use
+	merge conflict resolutions and manual amendments of the original
+	merge commit.
 +
 By default, or when `no-rebase-cousins` was specified, commits which do not
 have `<upstream>` as direct ancestor will keep their original branch point.
@@ -395,10 +395,6 @@ onto `<upstream>` (or `<onto>`, if specified).
 This mode is similar in spirit to `--preserve-merges`, but in contrast to
 that option works well in interactive rebases: commits can be reordered,
 inserted and dropped at will.
-+
-It is currently only possible to recreate the merge commits using the
-`recursive` merge strategy; Different merge strategies can be used only via
-explicit `exec git merge -s <strategy> [...]` commands.
 +
 See also REBASING MERGES below.
 
@@ -853,8 +849,8 @@ pick abcdef Add the feedback button
 label report-a-bug
 
 reset onto
-merge -C a1b2c3 refactor-button # Merge 'refactor-button'
-merge -C 6f5e4d report-a-bug # Merge 'report-a-bug'
+merge -R -C a1b2c3 refactor-button # Merge 'refactor-button'
+merge -R -C 6f5e4d report-a-bug # Merge 'report-a-bug'
 ------------
 
 In contrast to a regular interactive rebase, there are `label`, `reset`
@@ -884,12 +880,17 @@ successful merge so that the user can edit the message.
 If a `merge` command fails for any reason other than merge conflicts (i.e.
 when the merge operation did not even start), it is rescheduled immediately.
 
-At this time, the `merge` command will *always* use the `recursive`
-merge strategy for regular merges, and `octopus` for octopus merges,
-strategy, with no way to choose a different one. To work around
-this, an `exec` command can be used to call `git merge` explicitly,
-using the fact that the labels are worktree-local refs (the ref
-`refs/rewritten/onto` would correspond to the label `onto`, for example).
+The `-R` option passed to the `merge` command tells `git rebase` to make
+a best effort at preserving merge conflict resolutions and manual amendments
+of the original merge commit. If this is not desired, but a recursive (or
+octopus) merge should be performed from scratch, the `-R` option needs to be
+removed from the todo script.
+
+If neither mode is sufficient for the user's needs, e.g. when a merge
+with a different merge strategy should be performed, an `exec` command
+can be used to call `git merge` explicitly, using the fact that the
+labels are worktree-local refs (the ref `refs/rewritten/onto` would
+correspond to the label `onto`, for example).
 
 Note: the first command (`label onto`) labels the revision onto which
 the commits are rebased; The name `onto` is just a convention, as a nod
