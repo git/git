@@ -473,6 +473,14 @@ their values the same way as Boolean valued configuration variables, e.g.
 
 Here are the variables:
 
+System
+~~~~~~
+`HOME`::
+	Specifies the path to the user's home directory. On Windows, if
+	unset, Git will set a process environment variable equal to:
+	`$HOMEDRIVE$HOMEPATH` if both `$HOMEDRIVE` and `$HOMEPATH` exist;
+	otherwise `$USERPROFILE` if `$USERPROFILE` exists.
+
 The Git Repository
 ~~~~~~~~~~~~~~~~~~
 These environment variables apply to 'all' core Git commands. Nb: it
