@@ -11,7 +11,8 @@
 #include "parse-options.h"
 
 static char const * const shortlog_usage[] = {
-	N_("git shortlog [<options>] [<revision-range>] [[--] [<path>...]]"),
+	N_("git shortlog [<options>] [<revision-range>] [[--] <path>...]"),
+	N_("git log --pretty=short | git shortlog [<options>]"),
 	NULL
 };
 
