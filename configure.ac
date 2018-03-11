@@ -280,6 +280,10 @@ AS_HELP_STRING([--with-libpcre],[synonym for --with-libpcre1]),
 AC_ARG_WITH(libpcre1,
 AS_HELP_STRING([--with-libpcre1],[support Perl-compatible regexes via libpcre1 (default is NO)])
 AS_HELP_STRING([],           [ARG can be also prefix for libpcre library and headers]),
+    if test -n "$USE_LIBPCRE1"; then
+        AC_MSG_ERROR([Only supply one of --with-libpcre or its synonym --with-libpcre1!])
+    fi
+
     if test "$withval" = "no"; then
 	USE_LIBPCRE1=
     elif test "$withval" = "yes"; then
