@@ -549,8 +549,8 @@ if test -n "$USE_LIBPCRE1"; then
 GIT_STASH_FLAGS($LIBPCREDIR)
 
 AC_CHECK_LIB([pcre], [pcre_version],
-[USE_LIBPCRE=YesPlease],
-[USE_LIBPCRE=])
+[USE_LIBPCRE1=YesPlease],
+[USE_LIBPCRE1=])
 
 GIT_UNSTASH_FLAGS($LIBPCREDIR)
 
