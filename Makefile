@@ -29,10 +29,10 @@ all::
 # Perl-compatible regular expressions instead of standard or extended
 # POSIX regular expressions.
 #
-# Currently USE_LIBPCRE is a synonym for USE_LIBPCRE1, define
-# USE_LIBPCRE2 instead if you'd like to use version 2 of the PCRE
-# library. The USE_LIBPCRE flag will likely be changed to mean v2 by
-# default in future releases.
+# USE_LIBPCRE is a synonym for USE_LIBPCRE2, define USE_LIBPCRE1
+# instead if you'd like to use the legacy version 1 of the PCRE
+# library. Support for version 1 will likely be removed in some future
+# release of Git, as upstream has all but abandoned it.
 #
 # When using USE_LIBPCRE1, define NO_LIBPCRE1_JIT if the PCRE v1
 # library is compiled without --enable-jit. We will auto-detect
@@ -1164,24 +1164,24 @@ ifdef NO_LIBGEN_H
 	COMPAT_OBJS += compat/basename.o
 endif
 
-USE_LIBPCRE1 ?= $(USE_LIBPCRE)
+USE_LIBPCRE2 ?= $(USE_LIBPCRE)
 
-ifneq (,$(USE_LIBPCRE1))
-	ifdef USE_LIBPCRE2
-$(error Only set USE_LIBPCRE1 (or its alias USE_LIBPCRE) or USE_LIBPCRE2, not both!)
+ifneq (,$(USE_LIBPCRE2))
+	ifdef USE_LIBPCRE1
+$(error Only set USE_LIBPCRE2 (or its alias USE_LIBPCRE) or USE_LIBPCRE1, not both!)
 	endif
 
+	BASIC_CFLAGS += -DUSE_LIBPCRE2
+	EXTLIBS += -lpcre2-8
+endif
+
+ifdef USE_LIBPCRE1
 	BASIC_CFLAGS += -DUSE_LIBPCRE1
 	EXTLIBS += -lpcre
 
 ifdef NO_LIBPCRE1_JIT
 	BASIC_CFLAGS += -DNO_LIBPCRE1_JIT
 endif
-endif
-
-ifdef USE_LIBPCRE2
-	BASIC_CFLAGS += -DUSE_LIBPCRE2
-	EXTLIBS += -lpcre2-8
 endif
 
 ifdef LIBPCREDIR
