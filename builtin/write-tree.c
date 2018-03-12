@@ -19,7 +19,7 @@ int cmd_write_tree(int argc, const char **argv, const char *unused_prefix)
 {
 	int flags = 0, ret;
 	const char *prefix = NULL;
-	unsigned char sha1[20];
+	struct object_id oid;
 	const char *me = "git-write-tree";
 	struct option write_tree_options[] = {
 		OPT_BIT(0, "missing-ok", &flags, N_("allow missing objects"),
@@ -38,10 +38,10 @@ int cmd_write_tree(int argc, const char **argv, const char *unused_prefix)
 	argc = parse_options(argc, argv, unused_prefix, write_tree_options,
 			     write_tree_usage, 0);
 
-	ret = write_cache_as_tree(sha1, flags, prefix);
+	ret = write_cache_as_tree(oid.hash, flags, prefix);
 	switch (ret) {
 	case 0:
-		printf("%s\n", sha1_to_hex(sha1));
+		printf("%s\n", oid_to_hex(&oid));
 		break;
 	case WRITE_TREE_UNREADABLE_INDEX:
 		die("%s: error reading the index", me);
