@@ -513,7 +513,7 @@ static struct object *parse_loose_object(const struct object_id *oid,
 	unsigned long size;
 	int eaten;
 
-	if (read_loose_object(path, oid->hash, &type, &size, &contents) < 0)
+	if (read_loose_object(path, oid, &type, &size, &contents) < 0)
 		return NULL;
 
 	if (!contents && type != OBJ_BLOB)

@@ -2176,7 +2176,7 @@ static int check_stream_sha1(git_zstream *stream,
 }
 
 int read_loose_object(const char *path,
-		      const unsigned char *expected_sha1,
+		      const struct object_id *expected_oid,
 		      enum object_type *type,
 		      unsigned long *size,
 		      void **contents)
@@ -2208,19 +2208,19 @@ int read_loose_object(const char *path,
 	}
 
 	if (*type == OBJ_BLOB) {
-		if (check_stream_sha1(&stream, hdr, *size, path, expected_sha1) < 0)
+		if (check_stream_sha1(&stream, hdr, *size, path, expected_oid->hash) < 0)
 			goto out;
 	} else {
-		*contents = unpack_sha1_rest(&stream, hdr, *size, expected_sha1);
+		*contents = unpack_sha1_rest(&stream, hdr, *size, expected_oid->hash);
 		if (!*contents) {
 			error("unable to unpack contents of %s", path);
 			git_inflate_end(&stream);
 			goto out;
 		}
-		if (check_sha1_signature(expected_sha1, *contents,
+		if (check_sha1_signature(expected_oid->hash, *contents,
 					 *size, type_name(*type))) {
 			error("sha1 mismatch for %s (expected %s)", path,
-			      sha1_to_hex(expected_sha1));
+			      oid_to_hex(expected_oid));
 			free(*contents);
 			goto out;
 		}

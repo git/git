@@ -1241,14 +1241,14 @@ extern int check_sha1_signature(const unsigned char *sha1, void *buf, unsigned l
 extern int finalize_object_file(const char *tmpfile, const char *filename);
 
 /*
- * Open the loose object at path, check its sha1, and return the contents,
+ * Open the loose object at path, check its hash, and return the contents,
  * type, and size. If the object is a blob, then "contents" may return NULL,
  * to allow streaming of large blobs.
  *
  * Returns 0 on success, negative on error (details may be written to stderr).
  */
 int read_loose_object(const char *path,
-		      const unsigned char *expected_sha1,
+		      const struct object_id *expected_oid,
 		      enum object_type *type,
 		      unsigned long *size,
 		      void **contents);
