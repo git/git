@@ -784,8 +784,8 @@ void *xmmap(void *start, size_t length,
  * With "map" == NULL, try reading the object named with "sha1" using
  * the streaming interface and rehash it to do the same.
  */
-int check_sha1_signature(const unsigned char *sha1, void *map,
-			 unsigned long size, const char *type)
+int check_object_signature(const struct object_id *oid, void *map,
+			   unsigned long size, const char *type)
 {
 	struct object_id real_oid;
 	enum object_type obj_type;
@@ -796,10 +796,10 @@ int check_sha1_signature(const unsigned char *sha1, void *map,
 
 	if (map) {
 		hash_object_file(map, size, type, &real_oid);
-		return hashcmp(sha1, real_oid.hash) ? -1 : 0;
+		return oidcmp(oid, &real_oid) ? -1 : 0;
 	}
 
-	st = open_istream(sha1, &obj_type, &size, NULL);
+	st = open_istream(oid->hash, &obj_type, &size, NULL);
 	if (!st)
 		return -1;
 
@@ -823,7 +823,7 @@ int check_sha1_signature(const unsigned char *sha1, void *map,
 	}
 	the_hash_algo->final_fn(real_oid.hash, &c);
 	close_istream(st);
-	return hashcmp(sha1, real_oid.hash) ? -1 : 0;
+	return oidcmp(oid, &real_oid) ? -1 : 0;
 }
 
 int git_open_cloexec(const char *name, int flags)
@@ -2217,7 +2217,7 @@ int read_loose_object(const char *path,
 			git_inflate_end(&stream);
 			goto out;
 		}
-		if (check_sha1_signature(expected_oid->hash, *contents,
+		if (check_object_signature(expected_oid, *contents,
 					 *size, type_name(*type))) {
 			error("sha1 mismatch for %s (expected %s)", path,
 			      oid_to_hex(expected_oid));

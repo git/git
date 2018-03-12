@@ -27,8 +27,11 @@ static int verify_object(const struct object_id *oid, const char *expected_type)
 	const unsigned char *repl = lookup_replace_object(oid->hash);
 
 	if (buffer) {
+		struct object_id reploid;
+		hashcpy(reploid.hash, repl);
+
 		if (type == type_from_string(expected_type))
-			ret = check_sha1_signature(repl, buffer, size, expected_type);
+			ret = check_object_signature(&reploid, buffer, size, expected_type);
 		free(buffer);
 	}
 	return ret;

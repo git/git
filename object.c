@@ -255,7 +255,10 @@ struct object *parse_object(const struct object_id *oid)
 	if ((obj && obj->type == OBJ_BLOB && has_object_file(oid)) ||
 	    (!obj && has_object_file(oid) &&
 	     sha1_object_info(oid->hash, NULL) == OBJ_BLOB)) {
-		if (check_sha1_signature(repl, NULL, 0, NULL) < 0) {
+		struct object_id reploid;
+		hashcpy(reploid.hash, repl);
+
+		if (check_object_signature(&reploid, NULL, 0, NULL) < 0) {
 			error("sha1 mismatch %s", oid_to_hex(oid));
 			return NULL;
 		}
@@ -265,7 +268,10 @@ struct object *parse_object(const struct object_id *oid)
 
 	buffer = read_sha1_file(oid->hash, &type, &size);
 	if (buffer) {
-		if (check_sha1_signature(repl, buffer, size, type_name(type)) < 0) {
+		struct object_id reploid;
+		hashcpy(reploid.hash, repl);
+
+		if (check_object_signature(&reploid, buffer, size, type_name(type)) < 0) {
 			free(buffer);
 			error("sha1 mismatch %s", sha1_to_hex(repl));
 			return NULL;
