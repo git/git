@@ -18,13 +18,13 @@
 /*
  * We refuse to tag something we can't verify. Just because.
  */
-static int verify_object(const unsigned char *sha1, const char *expected_type)
+static int verify_object(const struct object_id *oid, const char *expected_type)
 {
 	int ret = -1;
 	enum object_type type;
 	unsigned long size;
-	void *buffer = read_sha1_file(sha1, &type, &size);
-	const unsigned char *repl = lookup_replace_object(sha1);
+	void *buffer = read_sha1_file(oid->hash, &type, &size);
+	const unsigned char *repl = lookup_replace_object(oid->hash);
 
 	if (buffer) {
 		if (type == type_from_string(expected_type))
@@ -38,8 +38,8 @@ static int verify_tag(char *buffer, unsigned long size)
 {
 	int typelen;
 	char type[20];
-	unsigned char sha1[20];
-	const char *object, *type_line, *tag_line, *tagger_line, *lb, *rb;
+	struct object_id oid;
+	const char *object, *type_line, *tag_line, *tagger_line, *lb, *rb, *p;
 	size_t len;
 
 	if (size < 84)
@@ -52,11 +52,11 @@ static int verify_tag(char *buffer, unsigned long size)
 	if (memcmp(object, "object ", 7))
 		return error("char%d: does not start with \"object \"", 0);
 
-	if (get_sha1_hex(object + 7, sha1))
+	if (parse_oid_hex(object + 7, &oid, &p))
 		return error("char%d: could not get SHA1 hash", 7);
 
 	/* Verify type line */
-	type_line = object + 48;
+	type_line = p + 1;
 	if (memcmp(type_line - 1, "\ntype ", 6))
 		return error("char%d: could not find \"\\ntype \"", 47);
 
@@ -80,8 +80,8 @@ static int verify_tag(char *buffer, unsigned long size)
 	type[typelen] = 0;
 
 	/* Verify that the object matches */
-	if (verify_object(sha1, type))
-		return error("char%d: could not verify object %s", 7, sha1_to_hex(sha1));
+	if (verify_object(&oid, type))
+		return error("char%d: could not verify object %s", 7, oid_to_hex(&oid));
 
 	/* Verify the tag-name: we don't allow control characters or spaces in it */
 	tag_line += 4;
