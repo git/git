@@ -485,10 +485,10 @@ static void fmt_merge_msg_sigs(struct strbuf *out)
 	struct strbuf tagbuf = STRBUF_INIT;
 
 	for (i = 0; i < origins.nr; i++) {
-		unsigned char *sha1 = origins.items[i].util;
+		struct object_id *oid = origins.items[i].util;
 		enum object_type type;
 		unsigned long size, len;
-		char *buf = read_sha1_file(sha1, &type, &size);
+		char *buf = read_sha1_file(oid->hash, &type, &size);
 		struct strbuf sig = STRBUF_INIT;
 
 		if (!buf || type != OBJ_TAG)
