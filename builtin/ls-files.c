@@ -271,7 +271,7 @@ static void show_ru_info(const struct index_state *istate)
 			if (!ui->mode[i])
 				continue;
 			printf("%s%06o %s %d\t", tag_resolve_undo, ui->mode[i],
-			       find_unique_abbrev(ui->sha1[i], abbrev),
+			       find_unique_abbrev(ui->oid[i].hash, abbrev),
 			       i + 1);
 			write_name(path);
 		}
