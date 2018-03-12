@@ -1892,7 +1892,7 @@ static int index_stream(struct object_id *oid, int fd, size_t size,
 			enum object_type type, const char *path,
 			unsigned flags)
 {
-	return index_bulk_checkin(oid->hash, fd, size, type, path, flags);
+	return index_bulk_checkin(oid, fd, size, type, path, flags);
 }
 
 int index_fd(struct object_id *oid, int fd, struct stat *st,

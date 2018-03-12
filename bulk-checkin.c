@@ -60,17 +60,17 @@ clear_exit:
 	reprepare_packed_git();
 }
 
-static int already_written(struct bulk_checkin_state *state, unsigned char sha1[])
+static int already_written(struct bulk_checkin_state *state, struct object_id *oid)
 {
 	int i;
 
 	/* The object may already exist in the repository */
-	if (has_sha1_file(sha1))
+	if (has_sha1_file(oid->hash))
 		return 1;
 
 	/* Might want to keep the list sorted */
 	for (i = 0; i < state->nr_written; i++)
-		if (!hashcmp(state->written[i]->oid.hash, sha1))
+		if (!oidcmp(&state->written[i]->oid, oid))
 			return 1;
 
 	/* This is a new object we need to keep */
@@ -186,7 +186,7 @@ static void prepare_to_stream(struct bulk_checkin_state *state,
 }
 
 static int deflate_to_pack(struct bulk_checkin_state *state,
-			   unsigned char result_sha1[],
+			   struct object_id *result_oid,
 			   int fd, size_t size,
 			   enum object_type type, const char *path,
 			   unsigned flags)
@@ -236,17 +236,17 @@ static int deflate_to_pack(struct bulk_checkin_state *state,
 		if (lseek(fd, seekback, SEEK_SET) == (off_t) -1)
 			return error("cannot seek back");
 	}
-	the_hash_algo->final_fn(result_sha1, &ctx);
+	the_hash_algo->final_fn(result_oid->hash, &ctx);
 	if (!idx)
 		return 0;
 
 	idx->crc32 = crc32_end(state->f);
-	if (already_written(state, result_sha1)) {
+	if (already_written(state, result_oid)) {
 		hashfile_truncate(state->f, &checkpoint);
 		state->offset = checkpoint.offset;
 		free(idx);
 	} else {
-		hashcpy(idx->oid.hash, result_sha1);
+		oidcpy(&idx->oid, result_oid);
 		ALLOC_GROW(state->written,
 			   state->nr_written + 1,
 			   state->alloc_written);
@@ -255,11 +255,11 @@ static int deflate_to_pack(struct bulk_checkin_state *state,
 	return 0;
 }
 
-int index_bulk_checkin(unsigned char *sha1,
+int index_bulk_checkin(struct object_id *oid,
 		       int fd, size_t size, enum object_type type,
 		       const char *path, unsigned flags)
 {
-	int status = deflate_to_pack(&state, sha1, fd, size, type,
+	int status = deflate_to_pack(&state, oid, fd, size, type,
 				     path, flags);
 	if (!state.plugged)
 		finish_bulk_checkin(&state);
