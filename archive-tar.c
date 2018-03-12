@@ -281,7 +281,7 @@ static int write_tar_entry(struct archiver_args *args,
 		buffer = NULL;
 	else if (S_ISLNK(mode) || S_ISREG(mode)) {
 		enum object_type type;
-		buffer = sha1_file_to_archive(args, path, oid->hash, old_mode, &type, &size);
+		buffer = object_file_to_archive(args, path, oid, old_mode, &type, &size);
 		if (!buffer)
 			return error("cannot read %s", oid_to_hex(oid));
 	} else {

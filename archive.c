@@ -63,16 +63,16 @@ static void format_subst(const struct commit *commit,
 	free(to_free);
 }
 
-void *sha1_file_to_archive(const struct archiver_args *args,
-			   const char *path, const unsigned char *sha1,
-			   unsigned int mode, enum object_type *type,
-			   unsigned long *sizep)
+void *object_file_to_archive(const struct archiver_args *args,
+			     const char *path, const struct object_id *oid,
+			     unsigned int mode, enum object_type *type,
+			     unsigned long *sizep)
 {
 	void *buffer;
 	const struct commit *commit = args->convert ? args->commit : NULL;
 
 	path += args->baselen;
-	buffer = read_sha1_file(sha1, type, sizep);
+	buffer = read_sha1_file(oid->hash, type, sizep);
 	if (buffer && S_ISREG(mode)) {
 		struct strbuf buf = STRBUF_INIT;
 		size_t size = 0;

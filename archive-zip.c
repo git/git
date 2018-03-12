@@ -344,8 +344,8 @@ static int write_zip_entry(struct archiver_args *args,
 			flags |= ZIP_STREAM;
 			out = buffer = NULL;
 		} else {
-			buffer = sha1_file_to_archive(args, path, oid->hash, mode,
-						      &type, &size);
+			buffer = object_file_to_archive(args, path, oid, mode,
+							&type, &size);
 			if (!buffer)
 				return error("cannot read %s",
 					     oid_to_hex(oid));
