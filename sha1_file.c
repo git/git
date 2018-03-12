@@ -799,7 +799,7 @@ int check_object_signature(const struct object_id *oid, void *map,
 		return oidcmp(oid, &real_oid) ? -1 : 0;
 	}
 
-	st = open_istream(oid->hash, &obj_type, &size, NULL);
+	st = open_istream(oid, &obj_type, &size, NULL);
 	if (!st)
 		return -1;
 

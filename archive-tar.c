@@ -119,7 +119,7 @@ static int stream_blocked(const struct object_id *oid)
 	char buf[BLOCKSIZE];
 	ssize_t readlen;
 
-	st = open_istream(oid->hash, &type, &sz, NULL);
+	st = open_istream(oid, &type, &sz, NULL);
 	if (!st)
 		return error("cannot stream blob %s", oid_to_hex(oid));
 	for (;;) {
