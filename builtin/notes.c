@@ -118,11 +118,11 @@ static int list_each_note(const struct object_id *object_oid,
 	return 0;
 }
 
-static void copy_obj_to_fd(int fd, const unsigned char *sha1)
+static void copy_obj_to_fd(int fd, const struct object_id *oid)
 {
 	unsigned long size;
 	enum object_type type;
-	char *buf = read_sha1_file(sha1, &type, &size);
+	char *buf = read_sha1_file(oid->hash, &type, &size);
 	if (buf) {
 		if (size)
 			write_or_die(fd, buf, size);
@@ -162,7 +162,7 @@ static void write_commented_object(int fd, const struct object_id *object)
 }
 
 static void prepare_note_data(const struct object_id *object, struct note_data *d,
-		const unsigned char *old_note)
+		const struct object_id *old_note)
 {
 	if (d->use_editor || !d->given) {
 		int fd;
@@ -457,7 +457,7 @@ static int add(int argc, const char **argv, const char *prefix)
 			oid_to_hex(&object));
 	}
 
-	prepare_note_data(&object, &d, note ? note->hash : NULL);
+	prepare_note_data(&object, &d, note);
 	if (d.buf.len || allow_empty) {
 		write_note_data(&d, &new_note);
 		if (add_note(t, &object, &new_note, combine_notes_overwrite))
@@ -602,7 +602,7 @@ static int append_edit(int argc, const char **argv, const char *prefix)
 	t = init_notes_check(argv[0], NOTES_INIT_WRITABLE);
 	note = get_note(t, &object);
 
-	prepare_note_data(&object, &d, edit && note ? note->hash : NULL);
+	prepare_note_data(&object, &d, edit && note ? note : NULL);
 
 	if (note && !edit) {
 		/* Append buf to previous note contents */
