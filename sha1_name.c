@@ -380,7 +380,7 @@ static int show_ambiguous_object(const struct object_id *oid, void *data)
 	}
 
 	advise("  %s %s%s",
-	       find_unique_abbrev(oid->hash, DEFAULT_ABBREV),
+	       find_unique_abbrev(oid, DEFAULT_ABBREV),
 	       type_name(type) ? type_name(type) : "unknown type",
 	       desc.buf);
 
@@ -569,7 +569,7 @@ static void find_abbrev_len_packed(struct min_abbrev_data *mad)
 		find_abbrev_len_for_pack(p, mad);
 }
 
-int find_unique_abbrev_r(char *hex, const unsigned char *sha1, int len)
+int find_unique_abbrev_r(char *hex, const struct object_id *oid, int len)
 {
 	struct disambiguate_state ds;
 	struct min_abbrev_data mad;
@@ -596,14 +596,14 @@ int find_unique_abbrev_r(char *hex, const unsigned char *sha1, int len)
 			len = FALLBACK_DEFAULT_ABBREV;
 	}
 
-	sha1_to_hex_r(hex, sha1);
+	oid_to_hex_r(hex, oid);
 	if (len == GIT_SHA1_HEXSZ || !len)
 		return GIT_SHA1_HEXSZ;
 
 	mad.init_len = len;
 	mad.cur_len = len;
 	mad.hex = hex;
-	mad.hash = sha1;
+	mad.hash = oid->hash;
 
 	find_abbrev_len_packed(&mad);
 
@@ -621,13 +621,13 @@ int find_unique_abbrev_r(char *hex, const unsigned char *sha1, int len)
 	return mad.cur_len;
 }
 
-const char *find_unique_abbrev(const unsigned char *sha1, int len)
+const char *find_unique_abbrev(const struct object_id *oid, int len)
 {
 	static int bufno;
 	static char hexbuffer[4][GIT_MAX_HEXSZ + 1];
 	char *hex = hexbuffer[bufno];
 	bufno = (bufno + 1) % ARRAY_SIZE(hexbuffer);
-	find_unique_abbrev_r(hex, sha1, len);
+	find_unique_abbrev_r(hex, oid, len);
 	return hex;
 }
 

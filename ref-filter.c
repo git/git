@@ -742,13 +742,13 @@ static int grab_objectname(const char *name, const struct object_id *oid,
 {
 	if (starts_with(name, "objectname")) {
 		if (atom->u.objectname.option == O_SHORT) {
-			v->s = xstrdup(find_unique_abbrev(oid->hash, DEFAULT_ABBREV));
+			v->s = xstrdup(find_unique_abbrev(oid, DEFAULT_ABBREV));
 			return 1;
 		} else if (atom->u.objectname.option == O_FULL) {
 			v->s = xstrdup(oid_to_hex(oid));
 			return 1;
 		} else if (atom->u.objectname.option == O_LENGTH) {
-			v->s = xstrdup(find_unique_abbrev(oid->hash, atom->u.objectname.length));
+			v->s = xstrdup(find_unique_abbrev(oid, atom->u.objectname.length));
 			return 1;
 		} else
 			die("BUG: unknown %%(objectname) option");

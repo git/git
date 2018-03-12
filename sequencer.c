@@ -282,7 +282,7 @@ struct commit_message {
 
 static const char *short_commit_name(struct commit *commit)
 {
-	return find_unique_abbrev(commit->object.oid.hash, DEFAULT_ABBREV);
+	return find_unique_abbrev(&commit->object.oid, DEFAULT_ABBREV);
 }
 
 static int get_message(struct commit *commit, struct commit_message *out)

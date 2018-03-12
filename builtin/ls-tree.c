@@ -103,11 +103,11 @@ static int show_tree(const struct object_id *oid, struct strbuf *base,
 			} else
 				xsnprintf(size_text, sizeof(size_text), "-");
 			printf("%06o %s %s %7s\t", mode, type,
-			       find_unique_abbrev(oid->hash, abbrev),
+			       find_unique_abbrev(oid, abbrev),
 			       size_text);
 		} else
 			printf("%06o %s %s\t", mode, type,
-			       find_unique_abbrev(oid->hash, abbrev));
+			       find_unique_abbrev(oid, abbrev));
 	}
 	baselen = base->len;
 	strbuf_addstr(base, pathname);
