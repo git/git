@@ -254,7 +254,7 @@ struct object *parse_object(const struct object_id *oid)
 
 	if ((obj && obj->type == OBJ_BLOB && has_object_file(oid)) ||
 	    (!obj && has_object_file(oid) &&
-	     sha1_object_info(oid->hash, NULL) == OBJ_BLOB)) {
+	     oid_object_info(oid, NULL) == OBJ_BLOB)) {
 		struct object_id reploid;
 		hashcpy(reploid.hash, repl);
 

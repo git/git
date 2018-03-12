@@ -94,7 +94,7 @@ static int show_tree(const struct object_id *oid, struct strbuf *base,
 			char size_text[24];
 			if (!strcmp(type, blob_type)) {
 				unsigned long size;
-				if (sha1_object_info(oid->hash, &size) == OBJ_BAD)
+				if (oid_object_info(oid, &size) == OBJ_BAD)
 					xsnprintf(size_text, sizeof(size_text),
 						  "BAD");
 				else

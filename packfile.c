@@ -1101,7 +1101,7 @@ static int retry_bad_packed_offset(struct packed_git *p, off_t obj_offset)
 		return OBJ_BAD;
 	nth_packed_object_oid(&oid, p, revidx->nr);
 	mark_bad_packed_object(p, oid.hash);
-	type = sha1_object_info(oid.hash, NULL);
+	type = oid_object_info(&oid, NULL);
 	if (type <= OBJ_NONE)
 		return OBJ_BAD;
 	return type;
@@ -1461,7 +1461,7 @@ static void *read_object(const struct object_id *oid, enum object_type *type,
 	oi.sizep = size;
 	oi.contentp = &content;
 
-	if (sha1_object_info_extended(oid->hash, &oi, 0) < 0)
+	if (oid_object_info_extended(oid, &oi, 0) < 0)
 		return NULL;
 	return content;
 }

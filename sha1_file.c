@@ -1222,14 +1222,14 @@ static int sha1_loose_object_info(const unsigned char *sha1,
 
 int fetch_if_missing = 1;
 
-int sha1_object_info_extended(const unsigned char *sha1, struct object_info *oi, unsigned flags)
+int oid_object_info_extended(const struct object_id *oid, struct object_info *oi, unsigned flags)
 {
 	static struct object_info blank_oi = OBJECT_INFO_INIT;
 	struct pack_entry e;
 	int rtype;
 	const unsigned char *real = (flags & OBJECT_INFO_LOOKUP_REPLACE) ?
-				    lookup_replace_object(sha1) :
-				    sha1;
+				    lookup_replace_object(oid->hash) :
+				    oid->hash;
 	int already_retried = 0;
 	struct object_id realoid;
 
@@ -1298,7 +1298,7 @@ int sha1_object_info_extended(const unsigned char *sha1, struct object_info *oi,
 	rtype = packed_object_info(e.p, e.offset, oi);
 	if (rtype < 0) {
 		mark_bad_packed_object(e.p, real);
-		return sha1_object_info_extended(realoid.hash, oi, 0);
+		return oid_object_info_extended(&realoid, oi, 0);
 	} else if (oi->whence == OI_PACKED) {
 		oi->u.packed.offset = e.offset;
 		oi->u.packed.pack = e.p;
@@ -1310,15 +1310,15 @@ int sha1_object_info_extended(const unsigned char *sha1, struct object_info *oi,
 }
 
 /* returns enum object_type or negative */
-int sha1_object_info(const unsigned char *sha1, unsigned long *sizep)
+int oid_object_info(const struct object_id *oid, unsigned long *sizep)
 {
 	enum object_type type;
 	struct object_info oi = OBJECT_INFO_INIT;
 
 	oi.typep = &type;
 	oi.sizep = sizep;
-	if (sha1_object_info_extended(sha1, &oi,
-				      OBJECT_INFO_LOOKUP_REPLACE) < 0)
+	if (oid_object_info_extended(oid, &oi,
+				     OBJECT_INFO_LOOKUP_REPLACE) < 0)
 		return -1;
 	return type;
 }
@@ -1335,7 +1335,7 @@ static void *read_object(const unsigned char *sha1, enum object_type *type,
 
 	hashcpy(oid.hash, sha1);
 
-	if (sha1_object_info_extended(oid.hash, &oi, 0) < 0)
+	if (oid_object_info_extended(&oid, &oi, 0) < 0)
 		return NULL;
 	return content;
 }
@@ -1733,8 +1733,8 @@ int has_sha1_file_with_flags(const unsigned char *sha1, int flags)
 	if (!startup_info->have_repository)
 		return 0;
 	hashcpy(oid.hash, sha1);
-	return sha1_object_info_extended(oid.hash, NULL,
-					 flags | OBJECT_INFO_SKIP_CACHED) >= 0;
+	return oid_object_info_extended(&oid, NULL,
+					flags | OBJECT_INFO_SKIP_CACHED) >= 0;
 }
 
 int has_object_file(const struct object_id *oid)
@@ -1976,7 +1976,7 @@ int read_pack_header(int fd, struct pack_header *header)
 
 void assert_oid_type(const struct object_id *oid, enum object_type expect)
 {
-	enum object_type type = sha1_object_info(oid->hash, NULL);
+	enum object_type type = oid_object_info(oid, NULL);
 	if (type < 0)
 		die("%s is not a valid object", oid_to_hex(oid));
 	if (type != expect)

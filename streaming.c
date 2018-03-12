@@ -117,7 +117,7 @@ static enum input_source istream_source(const unsigned char *sha1,
 
 	oi->typep = type;
 	oi->sizep = &size;
-	status = sha1_object_info_extended(oid.hash, oi, 0);
+	status = oid_object_info_extended(&oid, oi, 0);
 	if (status < 0)
 		return stream_error;
 

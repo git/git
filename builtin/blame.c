@@ -655,7 +655,7 @@ static int is_a_rev(const char *name)
 
 	if (get_oid(name, &oid))
 		return 0;
-	return OBJ_NONE < sha1_object_info(oid.hash, NULL);
+	return OBJ_NONE < oid_object_info(&oid, NULL);
 }
 
 int cmd_blame(int argc, const char **argv, const char *prefix)

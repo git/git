@@ -73,8 +73,7 @@ void bitmap_writer_build_type_index(struct pack_idx_entry **index,
 			break;
 
 		default:
-			real_type = sha1_object_info(entry->idx.oid.hash,
-						     NULL);
+			real_type = oid_object_info(&entry->idx.oid, NULL);
 			break;
 		}
 
