@@ -583,14 +583,14 @@ enum follow_symlinks_result get_tree_entry_follow_symlinks(unsigned char *tree_s
 	struct dir_state *parents = NULL;
 	size_t parents_alloc = 0;
 	size_t i, parents_nr = 0;
-	unsigned char current_tree_sha1[20];
+	struct object_id current_tree_oid;
 	struct strbuf namebuf = STRBUF_INIT;
 	struct tree_desc t;
 	int follows_remaining = GET_TREE_ENTRY_FOLLOW_SYMLINKS_MAX_LINKS;
 
 	init_tree_desc(&t, NULL, 0UL);
 	strbuf_addstr(&namebuf, name);
-	hashcpy(current_tree_sha1, tree_sha1);
+	hashcpy(current_tree_oid.hash, tree_sha1);
 
 	while (1) {
 		int find_result;
@@ -599,22 +599,22 @@ enum follow_symlinks_result get_tree_entry_follow_symlinks(unsigned char *tree_s
 
 		if (!t.buffer) {
 			void *tree;
-			unsigned char root[20];
+			struct object_id root;
 			unsigned long size;
-			tree = read_object_with_reference(current_tree_sha1,
+			tree = read_object_with_reference(current_tree_oid.hash,
 							  tree_type, &size,
-							  root);
+							  root.hash);
 			if (!tree)
 				goto done;
 
 			ALLOC_GROW(parents, parents_nr + 1, parents_alloc);
 			parents[parents_nr].tree = tree;
 			parents[parents_nr].size = size;
-			hashcpy(parents[parents_nr].sha1, root);
+			hashcpy(parents[parents_nr].sha1, root.hash);
 			parents_nr++;
 
 			if (namebuf.buf[0] == '\0') {
-				hashcpy(result, root);
+				hashcpy(result, root.hash);
 				retval = FOUND;
 				goto done;
 			}
@@ -671,14 +671,14 @@ enum follow_symlinks_result get_tree_entry_follow_symlinks(unsigned char *tree_s
 
 		/* Look up the first (or only) path component in the tree. */
 		find_result = find_tree_entry(&t, namebuf.buf,
-					      current_tree_sha1, mode);
+					      current_tree_oid.hash, mode);
 		if (find_result) {
 			goto done;
 		}
 
 		if (S_ISDIR(*mode)) {
 			if (!remainder) {
-				hashcpy(result, current_tree_sha1);
+				hashcpy(result, current_tree_oid.hash);
 				retval = FOUND;
 				goto done;
 			}
@@ -688,7 +688,7 @@ enum follow_symlinks_result get_tree_entry_follow_symlinks(unsigned char *tree_s
 				      1 + first_slash - namebuf.buf);
 		} else if (S_ISREG(*mode)) {
 			if (!remainder) {
-				hashcpy(result, current_tree_sha1);
+				hashcpy(result, current_tree_oid.hash);
 				retval = FOUND;
 			} else {
 				retval = NOT_DIR;
@@ -714,7 +714,7 @@ enum follow_symlinks_result get_tree_entry_follow_symlinks(unsigned char *tree_s
 			 */
 			retval = DANGLING_SYMLINK;
 
-			contents = read_sha1_file(current_tree_sha1, &type,
+			contents = read_sha1_file(current_tree_oid.hash, &type,
 						  &link_len);
 
 			if (!contents)
