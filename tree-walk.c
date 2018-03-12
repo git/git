@@ -492,7 +492,7 @@ struct dir_state {
 	unsigned char sha1[20];
 };
 
-static int find_tree_entry(struct tree_desc *t, const char *name, unsigned char *result, unsigned *mode)
+static int find_tree_entry(struct tree_desc *t, const char *name, struct object_id *result, unsigned *mode)
 {
 	int namelen = strlen(name);
 	while (t->size) {
@@ -511,7 +511,7 @@ static int find_tree_entry(struct tree_desc *t, const char *name, unsigned char 
 		if (cmp < 0)
 			break;
 		if (entrylen == namelen) {
-			hashcpy(result, oid->hash);
+			oidcpy(result, oid);
 			return 0;
 		}
 		if (name[entrylen] != '/')
@@ -519,27 +519,27 @@ static int find_tree_entry(struct tree_desc *t, const char *name, unsigned char 
 		if (!S_ISDIR(*mode))
 			break;
 		if (++entrylen == namelen) {
-			hashcpy(result, oid->hash);
+			oidcpy(result, oid);
 			return 0;
 		}
-		return get_tree_entry(oid->hash, name + entrylen, result, mode);
+		return get_tree_entry(oid, name + entrylen, result, mode);
 	}
 	return -1;
 }
 
-int get_tree_entry(const unsigned char *tree_sha1, const char *name, unsigned char *sha1, unsigned *mode)
+int get_tree_entry(const struct object_id *tree_oid, const char *name, struct object_id *oid, unsigned *mode)
 {
 	int retval;
 	void *tree;
 	unsigned long size;
-	unsigned char root[20];
+	struct object_id root;
 
-	tree = read_object_with_reference(tree_sha1, tree_type, &size, root);
+	tree = read_object_with_reference(tree_oid->hash, tree_type, &size, root.hash);
 	if (!tree)
 		return -1;
 
 	if (name[0] == '\0') {
-		hashcpy(sha1, root);
+		oidcpy(oid, &root);
 		free(tree);
 		return 0;
 	}
@@ -549,7 +549,7 @@ int get_tree_entry(const unsigned char *tree_sha1, const char *name, unsigned ch
 	} else {
 		struct tree_desc t;
 		init_tree_desc(&t, tree, size);
-		retval = find_tree_entry(&t, name, sha1, mode);
+		retval = find_tree_entry(&t, name, oid, mode);
 	}
 	free(tree);
 	return retval;
@@ -671,7 +671,7 @@ enum follow_symlinks_result get_tree_entry_follow_symlinks(unsigned char *tree_s
 
 		/* Look up the first (or only) path component in the tree. */
 		find_result = find_tree_entry(&t, namebuf.buf,
-					      current_tree_oid.hash, mode);
+					      &current_tree_oid, mode);
 		if (find_result) {
 			goto done;
 		}

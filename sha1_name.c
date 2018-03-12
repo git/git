@@ -1529,8 +1529,7 @@ static void diagnose_invalid_oid_path(const char *prefix,
 	if (is_missing_file_error(errno)) {
 		char *fullname = xstrfmt("%s%s", prefix, filename);
 
-		if (!get_tree_entry(tree_oid->hash, fullname,
-				    oid.hash, &mode)) {
+		if (!get_tree_entry(tree_oid, fullname, &oid, &mode)) {
 			die("Path '%s' exists, but not '%s'.\n"
 			    "Did you mean '%.*s:%s' aka '%.*s:./%s'?",
 			    fullname,
@@ -1722,8 +1721,8 @@ static int get_oid_with_context_1(const char *name,
 					filename, oid->hash, &oc->symlink_path,
 					&oc->mode);
 			} else {
-				ret = get_tree_entry(tree_oid.hash, filename,
-						     oid->hash, &oc->mode);
+				ret = get_tree_entry(&tree_oid, filename, oid,
+						     &oc->mode);
 				if (ret && only_to_die) {
 					diagnose_invalid_oid_path(prefix,
 								   filename,

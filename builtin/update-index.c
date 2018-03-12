@@ -592,7 +592,7 @@ static struct cache_entry *read_one_ent(const char *which,
 	int size;
 	struct cache_entry *ce;
 
-	if (get_tree_entry(ent->hash, path, oid.hash, &mode)) {
+	if (get_tree_entry(ent, path, &oid, &mode)) {
 		if (which)
 			error("%s: not in %s branch.", path, which);
 		return NULL;

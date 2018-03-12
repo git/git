@@ -80,7 +80,7 @@ static void verify_working_tree_path(struct commit *work_tree, const char *path)
 		struct object_id blob_oid;
 		unsigned mode;
 
-		if (!get_tree_entry(commit_oid->hash, path, blob_oid.hash, &mode) &&
+		if (!get_tree_entry(commit_oid, path, &blob_oid, &mode) &&
 		    oid_object_info(&blob_oid, NULL) == OBJ_BLOB)
 			return;
 	}
@@ -502,9 +502,7 @@ static int fill_blob_sha1_and_mode(struct blame_origin *origin)
 {
 	if (!is_null_oid(&origin->blob_oid))
 		return 0;
-	if (get_tree_entry(origin->commit->object.oid.hash,
-			   origin->path,
-			   origin->blob_oid.hash, &origin->mode))
+	if (get_tree_entry(&origin->commit->object.oid, origin->path, &origin->blob_oid, &origin->mode))
 		goto error_out;
 	if (oid_object_info(&origin->blob_oid, NULL) != OBJ_BLOB)
 		goto error_out;

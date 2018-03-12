@@ -79,7 +79,7 @@ struct traverse_info {
 	int show_all_errors;
 };
 
-int get_tree_entry(const unsigned char *, const char *, unsigned char *, unsigned *);
+int get_tree_entry(const struct object_id *, const char *, struct object_id *, unsigned *);
 extern char *make_traverse_path(char *path, const struct traverse_info *info, const struct name_entry *n);
 extern void setup_traverse_info(struct traverse_info *info, const char *base);
 
