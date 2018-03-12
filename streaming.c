@@ -14,7 +14,7 @@ enum input_source {
 
 typedef int (*open_istream_fn)(struct git_istream *,
 			       struct object_info *,
-			       const unsigned char *,
+			       const struct object_id *,
 			       enum object_type *);
 typedef int (*close_istream_fn)(struct git_istream *);
 typedef ssize_t (*read_istream_fn)(struct git_istream *, char *, size_t);
@@ -27,7 +27,7 @@ struct stream_vtbl {
 #define open_method_decl(name) \
 	int open_istream_ ##name \
 	(struct git_istream *st, struct object_info *oi, \
-	 const unsigned char *sha1, \
+	 const struct object_id *oid, \
 	 enum object_type *type)
 
 #define close_method_decl(name) \
@@ -142,13 +142,16 @@ struct git_istream *open_istream(const struct object_id *oid,
 	struct object_info oi = OBJECT_INFO_INIT;
 	const unsigned char *real = lookup_replace_object(oid->hash);
 	enum input_source src = istream_source(real, type, &oi);
+	struct object_id realoid;
+
+	hashcpy(realoid.hash, real);
 
 	if (src < 0)
 		return NULL;
 
 	st = xmalloc(sizeof(*st));
-	if (open_istream_tbl[src](st, &oi, real, type)) {
-		if (open_istream_incore(st, &oi, real, type)) {
+	if (open_istream_tbl[src](st, &oi, &realoid, type)) {
+		if (open_istream_incore(st, &oi, &realoid, type)) {
 			free(st);
 			return NULL;
 		}
@@ -338,7 +341,7 @@ static struct stream_vtbl loose_vtbl = {
 
 static open_method_decl(loose)
 {
-	st->u.loose.mapped = map_sha1_file(sha1, &st->u.loose.mapsize);
+	st->u.loose.mapped = map_sha1_file(oid->hash, &st->u.loose.mapsize);
 	if (!st->u.loose.mapped)
 		return -1;
 	if ((unpack_sha1_header(&st->z,
@@ -489,7 +492,7 @@ static struct stream_vtbl incore_vtbl = {
 
 static open_method_decl(incore)
 {
-	st->u.incore.buf = read_sha1_file_extended(sha1, type, &st->size, 0);
+	st->u.incore.buf = read_sha1_file_extended(oid->hash, type, &st->size, 0);
 	st->u.incore.read_ptr = 0;
 	st->vtbl = &incore_vtbl;
 
