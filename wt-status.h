@@ -118,9 +118,9 @@ struct wt_status_state {
 	char *branch;
 	char *onto;
 	char *detached_from;
-	unsigned char detached_sha1[20];
-	unsigned char revert_head_sha1[20];
-	unsigned char cherry_pick_head_sha1[20];
+	struct object_id detached_oid;
+	struct object_id revert_head_oid;
+	struct object_id cherry_pick_head_oid;
 };
 
 size_t wt_status_locate_end(const char *s, size_t len);
