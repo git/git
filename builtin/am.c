@@ -1550,7 +1550,7 @@ static int fall_back_threeway(const struct am_state *state, const char *index_pa
 	discard_cache();
 	read_cache_from(index_path);
 
-	if (write_index_as_tree(orig_tree.hash, &the_index, index_path, 0, NULL))
+	if (write_index_as_tree(&orig_tree, &the_index, index_path, 0, NULL))
 		return error(_("Repository lacks necessary blobs to fall back on 3-way merge."));
 
 	say(state, stdout, _("Using index info to reconstruct a base tree..."));
@@ -1575,7 +1575,7 @@ static int fall_back_threeway(const struct am_state *state, const char *index_pa
 		return error(_("Did you hand edit your patch?\n"
 				"It does not apply to blobs recorded in its index."));
 
-	if (write_index_as_tree(their_tree.hash, &the_index, index_path, 0, NULL))
+	if (write_index_as_tree(&their_tree, &the_index, index_path, 0, NULL))
 		return error("could not write tree");
 
 	say(state, stdout, _("Falling back to patching base and 3-way merge..."));
@@ -1626,7 +1626,7 @@ static void do_commit(const struct am_state *state)
 	if (run_hook_le(NULL, "pre-applypatch", NULL))
 		exit(1);
 
-	if (write_cache_as_tree(tree.hash, 0, NULL))
+	if (write_cache_as_tree(&tree, 0, NULL))
 		die(_("git write-tree failed to write a tree"));
 
 	if (!get_oid_commit("HEAD", &parent)) {
@@ -2004,7 +2004,7 @@ static int clean_index(const struct object_id *head, const struct object_id *rem
 	if (fast_forward_to(head_tree, head_tree, 1))
 		return -1;
 
-	if (write_cache_as_tree(index.hash, 0, NULL))
+	if (write_cache_as_tree(&index, 0, NULL))
 		return -1;
 
 	index_tree = parse_tree_indirect(&index);

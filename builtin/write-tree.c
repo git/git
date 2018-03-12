@@ -38,7 +38,7 @@ int cmd_write_tree(int argc, const char **argv, const char *unused_prefix)
 	argc = parse_options(argc, argv, unused_prefix, write_tree_options,
 			     write_tree_usage, 0);
 
-	ret = write_cache_as_tree(oid.hash, flags, prefix);
+	ret = write_cache_as_tree(&oid, flags, prefix);
 	switch (ret) {
 	case 0:
 		printf("%s\n", oid_to_hex(&oid));

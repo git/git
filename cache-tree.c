@@ -599,7 +599,7 @@ static struct cache_tree *cache_tree_find(struct cache_tree *it, const char *pat
 	return it;
 }
 
-int write_index_as_tree(unsigned char *sha1, struct index_state *index_state, const char *index_path, int flags, const char *prefix)
+int write_index_as_tree(struct object_id *oid, struct index_state *index_state, const char *index_path, int flags, const char *prefix)
 {
 	int entries, was_valid;
 	struct lock_file lock_file = LOCK_INIT;
@@ -640,19 +640,19 @@ int write_index_as_tree(unsigned char *sha1, struct index_state *index_state, co
 			ret = WRITE_TREE_PREFIX_ERROR;
 			goto out;
 		}
-		hashcpy(sha1, subtree->oid.hash);
+		oidcpy(oid, &subtree->oid);
 	}
 	else
-		hashcpy(sha1, index_state->cache_tree->oid.hash);
+		oidcpy(oid, &index_state->cache_tree->oid);
 
 out:
 	rollback_lock_file(&lock_file);
 	return ret;
 }
 
-int write_cache_as_tree(unsigned char *sha1, int flags, const char *prefix)
+int write_cache_as_tree(struct object_id *oid, int flags, const char *prefix)
 {
-	return write_index_as_tree(sha1, &the_index, get_index_file(), flags, prefix);
+	return write_index_as_tree(oid, &the_index, get_index_file(), flags, prefix);
 }
 
 static void prime_cache_tree_rec(struct cache_tree *it, struct tree *tree)
