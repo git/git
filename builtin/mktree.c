@@ -10,13 +10,13 @@
 
 static struct treeent {
 	unsigned mode;
-	unsigned char sha1[20];
+	struct object_id oid;
 	int len;
 	char name[FLEX_ARRAY];
 } **entries;
 static int alloc, used;
 
-static void append_to_tree(unsigned mode, unsigned char *sha1, char *path)
+static void append_to_tree(unsigned mode, struct object_id *oid, char *path)
 {
 	struct treeent *ent;
 	size_t len = strlen(path);
@@ -26,7 +26,7 @@ static void append_to_tree(unsigned mode, unsigned char *sha1, char *path)
 	FLEX_ALLOC_MEM(ent, name, path, len);
 	ent->mode = mode;
 	ent->len = len;
-	hashcpy(ent->sha1, sha1);
+	oidcpy(&ent->oid, oid);
 
 	ALLOC_GROW(entries, used + 1, alloc);
 	entries[used++] = ent;
@@ -54,7 +54,7 @@ static void write_tree(struct object_id *oid)
 	for (i = 0; i < used; i++) {
 		struct treeent *ent = entries[i];
 		strbuf_addf(&buf, "%o %s%c", ent->mode, ent->name, '\0');
-		strbuf_add(&buf, ent->sha1, 20);
+		strbuf_add(&buf, ent->oid.hash, the_hash_algo->rawsz);
 	}
 
 	write_object_file(buf.buf, buf.len, tree_type, oid);
@@ -69,11 +69,12 @@ static const char *mktree_usage[] = {
 static void mktree_line(char *buf, size_t len, int nul_term_line, int allow_missing)
 {
 	char *ptr, *ntr;
+	const char *p;
 	unsigned mode;
 	enum object_type mode_type; /* object type derived from mode */
 	enum object_type obj_type; /* object type derived from sha */
 	char *path, *to_free = NULL;
-	unsigned char sha1[20];
+	struct object_id oid;
 
 	ptr = buf;
 	/*
@@ -85,9 +86,8 @@ static void mktree_line(char *buf, size_t len, int nul_term_line, int allow_miss
 		die("input format error: %s", buf);
 	ptr = ntr + 1; /* type */
 	ntr = strchr(ptr, ' ');
-	if (!ntr || buf + len <= ntr + 40 ||
-	    ntr[41] != '\t' ||
-	    get_sha1_hex(ntr + 1, sha1))
+	if (!ntr || parse_oid_hex(ntr + 1, &oid, &p) ||
+	    *p != '\t')
 		die("input format error: %s", buf);
 
 	/* It is perfectly normal if we do not have a commit from a submodule */
@@ -116,12 +116,12 @@ static void mktree_line(char *buf, size_t len, int nul_term_line, int allow_miss
 	}
 
 	/* Check the type of object identified by sha1 */
-	obj_type = sha1_object_info(sha1, NULL);
+	obj_type = sha1_object_info(oid.hash, NULL);
 	if (obj_type < 0) {
 		if (allow_missing) {
 			; /* no problem - missing objects are presumed to be of the right type */
 		} else {
-			die("entry '%s' object %s is unavailable", path, sha1_to_hex(sha1));
+			die("entry '%s' object %s is unavailable", path, oid_to_hex(&oid));
 		}
 	} else {
 		if (obj_type != mode_type) {
@@ -131,11 +131,11 @@ static void mktree_line(char *buf, size_t len, int nul_term_line, int allow_miss
 			 * because the new tree entry will never be correct.
 			 */
 			die("entry '%s' object %s is a %s but specified type was (%s)",
-				path, sha1_to_hex(sha1), type_name(obj_type), type_name(mode_type));
+				path, oid_to_hex(&oid), type_name(obj_type), type_name(mode_type));
 		}
 	}
 
-	append_to_tree(mode, sha1, path);
+	append_to_tree(mode, &oid, path);
 	free(to_free);
 }
 
