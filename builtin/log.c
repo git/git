@@ -518,7 +518,7 @@ static int show_tag_object(const struct object_id *oid, struct rev_info *rev)
 {
 	unsigned long size;
 	enum object_type type;
-	char *buf = read_sha1_file(oid->hash, &type, &size);
+	char *buf = read_object_file(oid, &type, &size);
 	int offset = 0;
 
 	if (!buf)

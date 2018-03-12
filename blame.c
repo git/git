@@ -297,8 +297,8 @@ static void fill_origin_blob(struct diff_options *opt,
 		    textconv_object(o->path, o->mode, &o->blob_oid, 1, &file->ptr, &file_size))
 			;
 		else
-			file->ptr = read_sha1_file(o->blob_oid.hash, &type,
-						   &file_size);
+			file->ptr = read_object_file(&o->blob_oid, &type,
+						     &file_size);
 		file->size = file_size;
 
 		if (!file->ptr)
@@ -1829,8 +1829,8 @@ void setup_scoreboard(struct blame_scoreboard *sb, const char *path, struct blam
 				    &sb->final_buf_size))
 			;
 		else
-			sb->final_buf = read_sha1_file(o->blob_oid.hash, &type,
-						       &sb->final_buf_size);
+			sb->final_buf = read_object_file(&o->blob_oid, &type,
+							 &sb->final_buf_size);
 
 		if (!sb->final_buf)
 			die(_("cannot read blob %s for path %s"),

@@ -306,7 +306,7 @@ static void *lock_and_read_oid_file(const struct object_id *oid, enum object_typ
 	void *data;
 
 	grep_read_lock();
-	data = read_sha1_file(oid->hash, type, size);
+	data = read_object_file(oid, type, size);
 	grep_read_unlock();
 	return data;
 }

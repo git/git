@@ -1185,12 +1185,12 @@ extern char *xdg_config_home(const char *filename);
  */
 extern char *xdg_cache_home(const char *filename);
 
-extern void *read_sha1_file_extended(const unsigned char *sha1,
-				     enum object_type *type,
-				     unsigned long *size, int lookup_replace);
-static inline void *read_sha1_file(const unsigned char *sha1, enum object_type *type, unsigned long *size)
+extern void *read_object_file_extended(const struct object_id *oid,
+				       enum object_type *type,
+				       unsigned long *size, int lookup_replace);
+static inline void *read_object_file(const struct object_id *oid, enum object_type *type, unsigned long *size)
 {
-	return read_sha1_file_extended(sha1, type, size, 1);
+	return read_object_file_extended(oid, type, size, 1);
 }
 
 /*

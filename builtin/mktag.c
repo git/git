@@ -23,7 +23,7 @@ static int verify_object(const struct object_id *oid, const char *expected_type)
 	int ret = -1;
 	enum object_type type;
 	unsigned long size;
-	void *buffer = read_sha1_file(oid->hash, &type, &size);
+	void *buffer = read_object_file(oid, &type, &size);
 	const unsigned char *repl = lookup_replace_object(oid->hash);
 
 	if (buffer) {

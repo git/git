@@ -306,7 +306,7 @@ static char *get_symlink(const struct object_id *oid, const char *path)
 	} else {
 		enum object_type type;
 		unsigned long size;
-		data = read_sha1_file(oid->hash, &type, &size);
+		data = read_object_file(oid, &type, &size);
 		if (!data)
 			die(_("could not read object %s for symlink %s"),
 				oid_to_hex(oid), path);

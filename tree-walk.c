@@ -713,8 +713,8 @@ enum follow_symlinks_result get_tree_entry_follow_symlinks(unsigned char *tree_s
 			 */
 			retval = DANGLING_SYMLINK;
 
-			contents = read_sha1_file(current_tree_oid.hash, &type,
-						  &link_len);
+			contents = read_object_file(&current_tree_oid, &type,
+						    &link_len);
 
 			if (!contents)
 				goto done;

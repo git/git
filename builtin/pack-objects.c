@@ -122,11 +122,10 @@ static void *get_delta(struct object_entry *entry)
 	void *buf, *base_buf, *delta_buf;
 	enum object_type type;
 
-	buf = read_sha1_file(entry->idx.oid.hash, &type, &size);
+	buf = read_object_file(&entry->idx.oid, &type, &size);
 	if (!buf)
 		die("unable to read %s", oid_to_hex(&entry->idx.oid));
-	base_buf = read_sha1_file(entry->delta->idx.oid.hash, &type,
-				  &base_size);
+	base_buf = read_object_file(&entry->delta->idx.oid, &type, &base_size);
 	if (!base_buf)
 		die("unable to read %s",
 		    oid_to_hex(&entry->delta->idx.oid));
@@ -270,8 +269,7 @@ static unsigned long write_no_reuse_object(struct hashfile *f, struct object_ent
 		    (st = open_istream(&entry->idx.oid, &type, &size, NULL)) != NULL)
 			buf = NULL;
 		else {
-			buf = read_sha1_file(entry->idx.oid.hash, &type,
-					     &size);
+			buf = read_object_file(&entry->idx.oid, &type, &size);
 			if (!buf)
 				die(_("unable to read %s"),
 				    oid_to_hex(&entry->idx.oid));
@@ -1190,7 +1188,7 @@ static struct pbase_tree_cache *pbase_tree_get(const struct object_id *oid)
 	/* Did not find one.  Either we got a bogus request or
 	 * we need to read and perhaps cache.
 	 */
-	data = read_sha1_file(oid->hash, &type, &size);
+	data = read_object_file(oid, &type, &size);
 	if (!data)
 		return NULL;
 	if (type != OBJ_TREE) {
@@ -1870,8 +1868,7 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 	/* Load data if not already done */
 	if (!trg->data) {
 		read_lock();
-		trg->data = read_sha1_file(trg_entry->idx.oid.hash, &type,
-					   &sz);
+		trg->data = read_object_file(&trg_entry->idx.oid, &type, &sz);
 		read_unlock();
 		if (!trg->data)
 			die("object %s cannot be read",
@@ -1884,8 +1881,7 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 	}
 	if (!src->data) {
 		read_lock();
-		src->data = read_sha1_file(src_entry->idx.oid.hash, &type,
-					   &sz);
+		src->data = read_object_file(&src_entry->idx.oid, &type, &sz);
 		read_unlock();
 		if (!src->data) {
 			if (src_entry->preferred_base) {

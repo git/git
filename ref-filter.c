@@ -728,7 +728,7 @@ int verify_ref_format(struct ref_format *format)
 static void *get_obj(const struct object_id *oid, struct object **obj, unsigned long *sz, int *eaten)
 {
 	enum object_type type;
-	void *buf = read_sha1_file(oid->hash, &type, sz);
+	void *buf = read_object_file(oid, &type, sz);
 
 	if (buf)
 		*obj = parse_object_buffer(oid, type, *sz, buf, eaten);

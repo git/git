@@ -1363,17 +1363,17 @@ int pretend_object_file(void *buf, unsigned long len, enum object_type type,
  * deal with them should arrange to call read_object() and give error
  * messages themselves.
  */
-void *read_sha1_file_extended(const unsigned char *sha1,
-			      enum object_type *type,
-			      unsigned long *size,
-			      int lookup_replace)
+void *read_object_file_extended(const struct object_id *oid,
+				enum object_type *type,
+				unsigned long *size,
+				int lookup_replace)
 {
 	void *data;
 	const struct packed_git *p;
 	const char *path;
 	struct stat st;
-	const unsigned char *repl = lookup_replace ? lookup_replace_object(sha1)
-						   : sha1;
+	const unsigned char *repl = lookup_replace ? lookup_replace_object(oid->hash)
+						   : oid->hash;
 
 	errno = 0;
 	data = read_object(repl, type, size);
@@ -1381,12 +1381,12 @@ void *read_sha1_file_extended(const unsigned char *sha1,
 		return data;
 
 	if (errno && errno != ENOENT)
-		die_errno("failed to read object %s", sha1_to_hex(sha1));
+		die_errno("failed to read object %s", oid_to_hex(oid));
 
 	/* die if we replaced an object with one that does not exist */
-	if (repl != sha1)
+	if (repl != oid->hash)
 		die("replacement %s not found for %s",
-		    sha1_to_hex(repl), sha1_to_hex(sha1));
+		    sha1_to_hex(repl), oid_to_hex(oid));
 
 	if (!stat_sha1_file(repl, &st, &path))
 		die("loose object %s (stored in %s) is corrupt",
@@ -1415,7 +1415,7 @@ void *read_object_with_reference(const struct object_id *oid,
 		int ref_length = -1;
 		const char *ref_type = NULL;
 
-		buffer = read_sha1_file(actual_oid.hash, &type, &isize);
+		buffer = read_object_file(&actual_oid, &type, &isize);
 		if (!buffer)
 			return NULL;
 		if (type == required_type) {

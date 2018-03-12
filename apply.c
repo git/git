@@ -3180,7 +3180,7 @@ static int apply_binary(struct apply_state *state,
 		unsigned long size;
 		char *result;
 
-		result = read_sha1_file(oid.hash, &type, &size);
+		result = read_object_file(&oid, &type, &size);
 		if (!result)
 			return error(_("the necessary postimage %s for "
 				       "'%s' cannot be read"),
@@ -3242,7 +3242,7 @@ static int read_blob_object(struct strbuf *buf, const struct object_id *oid, uns
 		unsigned long sz;
 		char *result;
 
-		result = read_sha1_file(oid->hash, &type, &sz);
+		result = read_object_file(oid, &type, &sz);
 		if (!result)
 			return -1;
 		/* XXX read_sha1_file NUL-terminates */

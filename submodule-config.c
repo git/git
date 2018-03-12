@@ -520,7 +520,7 @@ static const struct submodule *config_from(struct submodule_cache *cache,
 	if (submodule)
 		goto out;
 
-	config = read_sha1_file(oid.hash, &type, &config_size);
+	config = read_object_file(&oid, &type, &config_size);
 	if (!config || type != OBJ_BLOB)
 		goto out;
 

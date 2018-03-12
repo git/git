@@ -168,7 +168,7 @@ static void write_tag_body(int fd, const struct object_id *oid)
 	enum object_type type;
 	char *buf, *sp;
 
-	buf = read_sha1_file(oid->hash, &type, &size);
+	buf = read_object_file(oid, &type, &size);
 	if (!buf)
 		return;
 	/* skip header */
@@ -304,7 +304,7 @@ static void create_reflog_msg(const struct object_id *oid, struct strbuf *sb)
 		strbuf_addstr(sb, "object of unknown type");
 		break;
 	case OBJ_COMMIT:
-		if ((buf = read_sha1_file(oid->hash, &type, &size)) != NULL) {
+		if ((buf = read_object_file(oid, &type, &size)) != NULL) {
 			subject_len = find_commit_subject(buf, &subject_start);
 			strbuf_insert(sb, sb->len, subject_start, subject_len);
 		} else {

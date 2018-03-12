@@ -796,13 +796,13 @@ int combine_notes_concatenate(struct object_id *cur_oid,
 
 	/* read in both note blob objects */
 	if (!is_null_oid(new_oid))
-		new_msg = read_sha1_file(new_oid->hash, &new_type, &new_len);
+		new_msg = read_object_file(new_oid, &new_type, &new_len);
 	if (!new_msg || !new_len || new_type != OBJ_BLOB) {
 		free(new_msg);
 		return 0;
 	}
 	if (!is_null_oid(cur_oid))
-		cur_msg = read_sha1_file(cur_oid->hash, &cur_type, &cur_len);
+		cur_msg = read_object_file(cur_oid, &cur_type, &cur_len);
 	if (!cur_msg || !cur_len || cur_type != OBJ_BLOB) {
 		free(cur_msg);
 		free(new_msg);
@@ -858,7 +858,7 @@ static int string_list_add_note_lines(struct string_list *list,
 		return 0;
 
 	/* read_sha1_file NUL-terminates */
-	data = read_sha1_file(oid->hash, &t, &len);
+	data = read_object_file(oid, &t, &len);
 	if (t != OBJ_BLOB || !data || !len) {
 		free(data);
 		return t != OBJ_BLOB || !data;
@@ -1217,7 +1217,7 @@ static void format_note(struct notes_tree *t, const struct object_id *object_oid
 	if (!oid)
 		return;
 
-	if (!(msg = read_sha1_file(oid->hash, &type, &msglen)) || type != OBJ_BLOB) {
+	if (!(msg = read_object_file(oid, &type, &msglen)) || type != OBJ_BLOB) {
 		free(msg);
 		return;
 	}

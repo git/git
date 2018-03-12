@@ -191,7 +191,7 @@ void read_mmblob(mmfile_t *ptr, const struct object_id *oid)
 		return;
 	}
 
-	ptr->ptr = read_sha1_file(oid->hash, &type, &size);
+	ptr->ptr = read_object_file(oid, &type, &size);
 	if (!ptr->ptr || type != OBJ_BLOB)
 		die("unable to read blob object %s", oid_to_hex(oid));
 	ptr->size = size;

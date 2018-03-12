@@ -981,8 +981,8 @@ static int handle_cache(const char *path, unsigned char *sha1, const char *outpu
 			break;
 		i = ce_stage(ce) - 1;
 		if (!mmfile[i].ptr) {
-			mmfile[i].ptr = read_sha1_file(ce->oid.hash, &type,
-						       &size);
+			mmfile[i].ptr = read_object_file(&ce->oid, &type,
+							 &size);
 			mmfile[i].size = size;
 		}
 	}

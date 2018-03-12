@@ -266,7 +266,7 @@ struct object *parse_object(const struct object_id *oid)
 		return lookup_object(oid->hash);
 	}
 
-	buffer = read_sha1_file(oid->hash, &type, &size);
+	buffer = read_object_file(oid, &type, &size);
 	if (buffer) {
 		struct object_id reploid;
 		hashcpy(reploid.hash, repl);

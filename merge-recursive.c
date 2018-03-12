@@ -842,7 +842,7 @@ static int update_file_flags(struct merge_options *o,
 			goto update_index;
 		}
 
-		buf = read_sha1_file(oid->hash, &type, &size);
+		buf = read_object_file(oid, &type, &size);
 		if (!buf)
 			return err(o, _("cannot read object %s '%s'"), oid_to_hex(oid), path);
 		if (type != OBJ_BLOB) {
@@ -1656,7 +1656,7 @@ static int read_oid_strbuf(struct merge_options *o,
 	void *buf;
 	enum object_type type;
 	unsigned long size;
-	buf = read_sha1_file(oid->hash, &type, &size);
+	buf = read_object_file(oid, &type, &size);
 	if (!buf)
 		return err(o, _("cannot read object %s"), oid_to_hex(oid));
 	if (type != OBJ_BLOB) {

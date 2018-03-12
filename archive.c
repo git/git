@@ -72,7 +72,7 @@ void *object_file_to_archive(const struct archiver_args *args,
 	const struct commit *commit = args->convert ? args->commit : NULL;
 
 	path += args->baselen;
-	buffer = read_sha1_file(oid->hash, type, sizep);
+	buffer = read_object_file(oid, type, sizep);
 	if (buffer && S_ISREG(mode)) {
 		struct strbuf buf = STRBUF_INIT;
 		size_t size = 0;
