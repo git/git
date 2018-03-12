@@ -30,6 +30,9 @@
 #include "packfile.h"
 #include "fetch-object.h"
 
+/* The maximum size for an object header. */
+#define MAX_HEADER_LEN 32
+
 const unsigned char null_sha1[GIT_MAX_RAWSZ];
 const struct object_id null_oid;
 const struct object_id empty_tree_oid = {
@@ -791,7 +794,7 @@ int check_object_signature(const struct object_id *oid, void *map,
 	enum object_type obj_type;
 	struct git_istream *st;
 	git_hash_ctx c;
-	char hdr[32];
+	char hdr[MAX_HEADER_LEN];
 	int hdrlen;
 
 	if (map) {
@@ -1150,7 +1153,7 @@ static int sha1_loose_object_info(const unsigned char *sha1,
 	unsigned long mapsize;
 	void *map;
 	git_zstream stream;
-	char hdr[32];
+	char hdr[MAX_HEADER_LEN];
 	struct strbuf hdrbuf = STRBUF_INIT;
 	unsigned long size_scratch;
 
@@ -1514,7 +1517,7 @@ static int write_buffer(int fd, const void *buf, size_t len)
 int hash_object_file(const void *buf, unsigned long len, const char *type,
 		     struct object_id *oid)
 {
-	char hdr[32];
+	char hdr[MAX_HEADER_LEN];
 	int hdrlen = sizeof(hdr);
 	write_object_file_prepare(buf, len, type, oid, hdr, &hdrlen);
 	return 0;
@@ -1669,7 +1672,7 @@ static int freshen_packed_object(const unsigned char *sha1)
 int write_object_file(const void *buf, unsigned long len, const char *type,
 		      struct object_id *oid)
 {
-	char hdr[32];
+	char hdr[MAX_HEADER_LEN];
 	int hdrlen = sizeof(hdr);
 
 	/* Normally if we have it in the pack then we do not bother writing
@@ -1689,7 +1692,7 @@ int hash_object_file_literally(const void *buf, unsigned long len,
 	int hdrlen, status = 0;
 
 	/* type string, SP, %lu of the length plus NUL must fit this */
-	hdrlen = strlen(type) + 32;
+	hdrlen = strlen(type) + MAX_HEADER_LEN;
 	header = xmalloc(hdrlen);
 	write_object_file_prepare(buf, len, type, oid, header, &hdrlen);
 
@@ -1709,7 +1712,7 @@ int force_object_loose(const struct object_id *oid, time_t mtime)
 	void *buf;
 	unsigned long len;
 	enum object_type type;
-	char hdr[32];
+	char hdr[MAX_HEADER_LEN];
 	int hdrlen;
 	int ret;
 
@@ -2191,7 +2194,7 @@ int read_loose_object(const char *path,
 	void *map = NULL;
 	unsigned long mapsize;
 	git_zstream stream;
-	char hdr[32];
+	char hdr[MAX_HEADER_LEN];
 
 	*contents = NULL;
 
