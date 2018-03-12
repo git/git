@@ -320,7 +320,7 @@ static int update_one(struct cache_tree *it,
 		struct cache_tree_sub *sub = NULL;
 		const char *path, *slash;
 		int pathlen, entlen;
-		const unsigned char *sha1;
+		const struct object_id *oid;
 		unsigned mode;
 		int expected_missing = 0;
 		int contains_ita = 0;
@@ -338,7 +338,7 @@ static int update_one(struct cache_tree *it,
 				die("cache-tree.c: '%.*s' in '%s' not found",
 				    entlen, path + baselen, path);
 			i += sub->count;
-			sha1 = sub->cache_tree->oid.hash;
+			oid = &sub->cache_tree->oid;
 			mode = S_IFDIR;
 			contains_ita = sub->cache_tree->entry_count < 0;
 			if (contains_ita) {
@@ -347,19 +347,19 @@ static int update_one(struct cache_tree *it,
 			}
 		}
 		else {
-			sha1 = ce->oid.hash;
+			oid = &ce->oid;
 			mode = ce->ce_mode;
 			entlen = pathlen - baselen;
 			i++;
 		}
 
-		if (is_null_sha1(sha1) ||
-		    (mode != S_IFGITLINK && !missing_ok && !has_sha1_file(sha1))) {
+		if (is_null_oid(oid) ||
+		    (mode != S_IFGITLINK && !missing_ok && !has_object_file(oid))) {
 			strbuf_release(&buffer);
 			if (expected_missing)
 				return -1;
 			return error("invalid object %06o %s for '%.*s'",
-				mode, sha1_to_hex(sha1), entlen+baselen, path);
+				mode, oid_to_hex(oid), entlen+baselen, path);
 		}
 
 		/*
@@ -385,12 +385,12 @@ static int update_one(struct cache_tree *it,
 		/*
 		 * "sub" can be an empty tree if all subentries are i-t-a.
 		 */
-		if (contains_ita && !hashcmp(sha1, EMPTY_TREE_SHA1_BIN))
+		if (contains_ita && !oidcmp(oid, &empty_tree_oid))
 			continue;
 
 		strbuf_grow(&buffer, entlen + 100);
 		strbuf_addf(&buffer, "%o %.*s%c", mode, entlen, path + baselen, '\0');
-		strbuf_add(&buffer, sha1, 20);
+		strbuf_add(&buffer, oid->hash, the_hash_algo->rawsz);
 
 #if DEBUG
 		fprintf(stderr, "cache-tree update-one %o %.*s\n",
@@ -401,7 +401,7 @@ static int update_one(struct cache_tree *it,
 	if (repair) {
 		struct object_id oid;
 		hash_object_file(buffer.buf, buffer.len, tree_type, &oid);
-		if (has_sha1_file(oid.hash))
+		if (has_object_file(&oid))
 			oidcpy(&it->oid, &oid);
 		else
 			to_invalidate = 1;
@@ -465,7 +465,7 @@ static void write_one(struct strbuf *buffer, struct cache_tree *it,
 #endif
 
 	if (0 <= it->entry_count) {
-		strbuf_add(buffer, it->oid.hash, 20);
+		strbuf_add(buffer, it->oid.hash, the_hash_algo->rawsz);
 	}
 	for (i = 0; i < it->subtree_nr; i++) {
 		struct cache_tree_sub *down = it->down[i];
@@ -492,6 +492,7 @@ static struct cache_tree *read_one(const char **buffer, unsigned long *size_p)
 	char *ep;
 	struct cache_tree *it;
 	int i, subtree_nr;
+	const unsigned rawsz = the_hash_algo->rawsz;
 
 	it = NULL;
 	/* skip name, but make sure name exists */
@@ -520,11 +521,11 @@ static struct cache_tree *read_one(const char **buffer, unsigned long *size_p)
 		goto free_return;
 	buf++; size--;
 	if (0 <= it->entry_count) {
-		if (size < 20)
+		if (size < rawsz)
 			goto free_return;
-		hashcpy(it->oid.hash, (const unsigned char*)buf);
-		buf += 20;
-		size -= 20;
+		memcpy(it->oid.hash, (const unsigned char*)buf, rawsz);
+		buf += rawsz;
+		size -= rawsz;
 	}
 
 #if DEBUG
