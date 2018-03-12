@@ -737,18 +737,18 @@ static void *get_obj(const struct object_id *oid, struct object **obj, unsigned 
 	return buf;
 }
 
-static int grab_objectname(const char *name, const unsigned char *sha1,
+static int grab_objectname(const char *name, const struct object_id *oid,
 			   struct atom_value *v, struct used_atom *atom)
 {
 	if (starts_with(name, "objectname")) {
 		if (atom->u.objectname.option == O_SHORT) {
-			v->s = xstrdup(find_unique_abbrev(sha1, DEFAULT_ABBREV));
+			v->s = xstrdup(find_unique_abbrev(oid->hash, DEFAULT_ABBREV));
 			return 1;
 		} else if (atom->u.objectname.option == O_FULL) {
-			v->s = xstrdup(sha1_to_hex(sha1));
+			v->s = xstrdup(oid_to_hex(oid));
 			return 1;
 		} else if (atom->u.objectname.option == O_LENGTH) {
-			v->s = xstrdup(find_unique_abbrev(sha1, atom->u.objectname.length));
+			v->s = xstrdup(find_unique_abbrev(oid->hash, atom->u.objectname.length));
 			return 1;
 		} else
 			die("BUG: unknown %%(objectname) option");
@@ -775,7 +775,7 @@ static void grab_common_values(struct atom_value *val, int deref, struct object 
 			v->s = xstrfmt("%lu", sz);
 		}
 		else if (deref)
-			grab_objectname(name, obj->oid.hash, v, &used_atom[i]);
+			grab_objectname(name, &obj->oid, v, &used_atom[i]);
 	}
 }
 
@@ -1455,7 +1455,7 @@ static void populate_value(struct ref_array_item *ref)
 				v->s = xstrdup(buf + 1);
 			}
 			continue;
-		} else if (!deref && grab_objectname(name, ref->objectname.hash, v, atom)) {
+		} else if (!deref && grab_objectname(name, &ref->objectname, v, atom)) {
 			continue;
 		} else if (!strcmp(name, "HEAD")) {
 			if (atom->u.head && !strcmp(ref->refname, atom->u.head))
