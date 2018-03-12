@@ -1351,7 +1351,7 @@ static void add_preferred_base(struct object_id *oid)
 	if (window <= num_preferred_base++)
 		return;
 
-	data = read_object_with_reference(oid->hash, tree_type, &size, tree_oid.hash);
+	data = read_object_with_reference(oid, tree_type, &size, &tree_oid);
 	if (!data)
 		return;
 

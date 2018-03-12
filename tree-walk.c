@@ -84,8 +84,7 @@ void *fill_tree_descriptor(struct tree_desc *desc, const struct object_id *oid)
 	void *buf = NULL;
 
 	if (oid) {
-		buf = read_object_with_reference(oid->hash, tree_type, &size,
-						 NULL);
+		buf = read_object_with_reference(oid, tree_type, &size, NULL);
 		if (!buf)
 			die("unable to read tree %s", oid_to_hex(oid));
 	}
@@ -534,7 +533,7 @@ int get_tree_entry(const struct object_id *tree_oid, const char *name, struct ob
 	unsigned long size;
 	struct object_id root;
 
-	tree = read_object_with_reference(tree_oid->hash, tree_type, &size, root.hash);
+	tree = read_object_with_reference(tree_oid, tree_type, &size, &root);
 	if (!tree)
 		return -1;
 
@@ -601,9 +600,9 @@ enum follow_symlinks_result get_tree_entry_follow_symlinks(unsigned char *tree_s
 			void *tree;
 			struct object_id root;
 			unsigned long size;
-			tree = read_object_with_reference(current_tree_oid.hash,
+			tree = read_object_with_reference(&current_tree_oid,
 							  tree_type, &size,
-							  root.hash);
+							  &root);
 			if (!tree)
 				goto done;
 

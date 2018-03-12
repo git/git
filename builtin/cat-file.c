@@ -159,7 +159,7 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 			 * fall-back to the usual case.
 			 */
 		}
-		buf = read_object_with_reference(oid.hash, exp_type, &size, NULL);
+		buf = read_object_with_reference(&oid, exp_type, &size, NULL);
 		break;
 
 	default:
