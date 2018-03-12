@@ -1966,13 +1966,13 @@ int read_pack_header(int fd, struct pack_header *header)
 	return 0;
 }
 
-void assert_sha1_type(const unsigned char *sha1, enum object_type expect)
+void assert_oid_type(const struct object_id *oid, enum object_type expect)
 {
-	enum object_type type = sha1_object_info(sha1, NULL);
+	enum object_type type = sha1_object_info(oid->hash, NULL);
 	if (type < 0)
-		die("%s is not a valid object", sha1_to_hex(sha1));
+		die("%s is not a valid object", oid_to_hex(oid));
 	if (type != expect)
-		die("%s is not a valid '%s' object", sha1_to_hex(sha1),
+		die("%s is not a valid '%s' object", oid_to_hex(oid),
 		    type_name(expect));
 }
 

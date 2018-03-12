@@ -1275,7 +1275,7 @@ extern int has_object_file_with_flags(const struct object_id *oid, int flags);
  */
 extern int has_loose_object_nonlocal(const unsigned char *sha1);
 
-extern void assert_sha1_type(const unsigned char *sha1, enum object_type expect);
+extern void assert_oid_type(const struct object_id *oid, enum object_type expect);
 
 /* Helper to check and "touch" a file */
 extern int check_and_freshen_file(const char *fn, int freshen);
