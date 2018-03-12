@@ -1452,7 +1452,7 @@ struct unpack_entry_stack_ent {
 	unsigned long size;
 };
 
-static void *read_object(const unsigned char *sha1, enum object_type *type,
+static void *read_object(const struct object_id *oid, enum object_type *type,
 			 unsigned long *size)
 {
 	struct object_info oi = OBJECT_INFO_INIT;
@@ -1461,7 +1461,7 @@ static void *read_object(const unsigned char *sha1, enum object_type *type,
 	oi.sizep = size;
 	oi.contentp = &content;
 
-	if (sha1_object_info_extended(sha1, &oi, 0) < 0)
+	if (sha1_object_info_extended(oid->hash, &oi, 0) < 0)
 		return NULL;
 	return content;
 }
@@ -1501,11 +1501,11 @@ void *unpack_entry(struct packed_git *p, off_t obj_offset,
 			struct revindex_entry *revidx = find_pack_revindex(p, obj_offset);
 			off_t len = revidx[1].offset - obj_offset;
 			if (check_pack_crc(p, &w_curs, obj_offset, len, revidx->nr)) {
-				const unsigned char *sha1 =
-					nth_packed_object_sha1(p, revidx->nr);
+				struct object_id oid;
+				nth_packed_object_oid(&oid, p, revidx->nr);
 				error("bad packed object CRC for %s",
-				      sha1_to_hex(sha1));
-				mark_bad_packed_object(p, sha1);
+				      oid_to_hex(&oid));
+				mark_bad_packed_object(p, oid.hash);
 				data = NULL;
 				goto out;
 			}
@@ -1588,16 +1588,16 @@ void *unpack_entry(struct packed_git *p, off_t obj_offset,
 			 * of a corrupted pack, and is better than failing outright.
 			 */
 			struct revindex_entry *revidx;
-			const unsigned char *base_sha1;
+			struct object_id base_oid;
 			revidx = find_pack_revindex(p, obj_offset);
 			if (revidx) {
-				base_sha1 = nth_packed_object_sha1(p, revidx->nr);
+				nth_packed_object_oid(&base_oid, p, revidx->nr);
 				error("failed to read delta base object %s"
 				      " at offset %"PRIuMAX" from %s",
-				      sha1_to_hex(base_sha1), (uintmax_t)obj_offset,
+				      oid_to_hex(&base_oid), (uintmax_t)obj_offset,
 				      p->pack_name);
-				mark_bad_packed_object(p, base_sha1);
-				base = read_object(base_sha1, &type, &base_size);
+				mark_bad_packed_object(p, base_oid.hash);
+				base = read_object(&base_oid, &type, &base_size);
 				external_base = base;
 			}
 		}
