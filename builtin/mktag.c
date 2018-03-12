@@ -24,14 +24,11 @@ static int verify_object(const struct object_id *oid, const char *expected_type)
 	enum object_type type;
 	unsigned long size;
 	void *buffer = read_object_file(oid, &type, &size);
-	const unsigned char *repl = lookup_replace_object(oid->hash);
+	const struct object_id *repl = lookup_replace_object(oid);
 
 	if (buffer) {
-		struct object_id reploid;
-		hashcpy(reploid.hash, repl);
-
 		if (type == type_from_string(expected_type))
-			ret = check_object_signature(&reploid, buffer, size, expected_type);
+			ret = check_object_signature(repl, buffer, size, expected_type);
 		free(buffer);
 	}
 	return ret;

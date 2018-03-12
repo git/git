@@ -105,19 +105,16 @@ ssize_t read_istream(struct git_istream *st, void *buf, size_t sz)
 	return st->vtbl->read(st, buf, sz);
 }
 
-static enum input_source istream_source(const unsigned char *sha1,
+static enum input_source istream_source(const struct object_id *oid,
 					enum object_type *type,
 					struct object_info *oi)
 {
 	unsigned long size;
 	int status;
-	struct object_id oid;
-
-	hashcpy(oid.hash, sha1);
 
 	oi->typep = type;
 	oi->sizep = &size;
-	status = oid_object_info_extended(&oid, oi, 0);
+	status = oid_object_info_extended(oid, oi, 0);
 	if (status < 0)
 		return stream_error;
 
@@ -140,18 +137,15 @@ struct git_istream *open_istream(const struct object_id *oid,
 {
 	struct git_istream *st;
 	struct object_info oi = OBJECT_INFO_INIT;
-	const unsigned char *real = lookup_replace_object(oid->hash);
+	const struct object_id *real = lookup_replace_object(oid);
 	enum input_source src = istream_source(real, type, &oi);
-	struct object_id realoid;
-
-	hashcpy(realoid.hash, real);
 
 	if (src < 0)
 		return NULL;
 
 	st = xmalloc(sizeof(*st));
-	if (open_istream_tbl[src](st, &oi, &realoid, type)) {
-		if (open_istream_incore(st, &oi, &realoid, type)) {
+	if (open_istream_tbl[src](st, &oi, real, type)) {
+		if (open_istream_incore(st, &oi, real, type)) {
 			free(st);
 			return NULL;
 		}

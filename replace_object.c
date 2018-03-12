@@ -92,16 +92,16 @@ static void prepare_replace_object(void)
 #define MAXREPLACEDEPTH 5
 
 /*
- * If a replacement for object sha1 has been set up, return the
+ * If a replacement for object oid has been set up, return the
  * replacement object's name (replaced recursively, if necessary).
- * The return value is either sha1 or a pointer to a
+ * The return value is either oid or a pointer to a
  * permanently-allocated value.  This function always respects replace
  * references, regardless of the value of check_replace_refs.
  */
-const unsigned char *do_lookup_replace_object(const unsigned char *sha1)
+const struct object_id *do_lookup_replace_object(const struct object_id *oid)
 {
 	int pos, depth = MAXREPLACEDEPTH;
-	const unsigned char *cur = sha1;
+	const struct object_id *cur = oid;
 
 	prepare_replace_object();
 
@@ -109,11 +109,11 @@ const unsigned char *do_lookup_replace_object(const unsigned char *sha1)
 	do {
 		if (--depth < 0)
 			die("replace depth too high for object %s",
-			    sha1_to_hex(sha1));
+			    oid_to_hex(oid));
 
-		pos = replace_object_pos(cur);
+		pos = replace_object_pos(cur->hash);
 		if (0 <= pos)
-			cur = replace_object[pos]->replacement.hash;
+			cur = &replace_object[pos]->replacement;
 	} while (0 <= pos);
 
 	return cur;
