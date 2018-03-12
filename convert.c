@@ -914,7 +914,7 @@ static int ident_to_worktree(const char *path, const char *src, size_t len,
 		to_free = strbuf_detach(buf, NULL);
 	hash_object_file(src, len, "blob", &oid);
 
-	strbuf_grow(buf, len + cnt * 43);
+	strbuf_grow(buf, len + cnt * (the_hash_algo->hexsz + 3));
 	for (;;) {
 		/* step 1: run to the next '$' */
 		dollar = memchr(src, '$', len);
@@ -1510,7 +1510,7 @@ struct ident_filter {
 	struct stream_filter filter;
 	struct strbuf left;
 	int state;
-	char ident[45]; /* ": x40 $" */
+	char ident[GIT_MAX_HEXSZ + 5]; /* ": x40 $" */
 };
 
 static int is_foreign_ident(const char *str)
@@ -1635,12 +1635,12 @@ static struct stream_filter_vtbl ident_vtbl = {
 	ident_free_fn,
 };
 
-static struct stream_filter *ident_filter(const unsigned char *sha1)
+static struct stream_filter *ident_filter(const struct object_id *oid)
 {
 	struct ident_filter *ident = xmalloc(sizeof(*ident));
 
 	xsnprintf(ident->ident, sizeof(ident->ident),
-		  ": %s $", sha1_to_hex(sha1));
+		  ": %s $", oid_to_hex(oid));
 	strbuf_init(&ident->left, 0);
 	ident->filter.vtbl = &ident_vtbl;
 	ident->state = 0;
@@ -1655,7 +1655,7 @@ static struct stream_filter *ident_filter(const unsigned char *sha1)
  * Note that you would be crazy to set CRLF, smuge/clean or ident to a
  * large binary blob you would want us not to slurp into the memory!
  */
-struct stream_filter *get_stream_filter(const char *path, const unsigned char *sha1)
+struct stream_filter *get_stream_filter(const char *path, const struct object_id *oid)
 {
 	struct conv_attrs ca;
 	struct stream_filter *filter = NULL;
@@ -1668,7 +1668,7 @@ struct stream_filter *get_stream_filter(const char *path, const unsigned char *s
 		return NULL;
 
 	if (ca.ident)
-		filter = ident_filter(sha1);
+		filter = ident_filter(oid);
 
 	if (output_eol(ca.crlf_action) == EOL_CRLF)
 		filter = cascade_filter(filter, lf_to_crlf_filter());

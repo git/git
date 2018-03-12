@@ -93,7 +93,7 @@ extern int would_convert_to_git_filter_fd(const char *path);
 
 struct stream_filter; /* opaque */
 
-extern struct stream_filter *get_stream_filter(const char *path, const unsigned char *);
+extern struct stream_filter *get_stream_filter(const char *path, const struct object_id *);
 extern void free_stream_filter(struct stream_filter *);
 extern int is_null_stream_filter(struct stream_filter *);
 
