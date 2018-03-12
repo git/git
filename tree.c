@@ -10,7 +10,7 @@
 const char *tree_type = "tree";
 
 static int read_one_entry_opt(struct index_state *istate,
-			      const unsigned char *sha1,
+			      const struct object_id *oid,
 			      const char *base, int baselen,
 			      const char *pathname,
 			      unsigned mode, int stage, int opt)
@@ -31,16 +31,16 @@ static int read_one_entry_opt(struct index_state *istate,
 	ce->ce_namelen = baselen + len;
 	memcpy(ce->name, base, baselen);
 	memcpy(ce->name + baselen, pathname, len+1);
-	hashcpy(ce->oid.hash, sha1);
+	oidcpy(&ce->oid, oid);
 	return add_index_entry(istate, ce, opt);
 }
 
-static int read_one_entry(const unsigned char *sha1, struct strbuf *base,
+static int read_one_entry(const struct object_id *oid, struct strbuf *base,
 			  const char *pathname, unsigned mode, int stage,
 			  void *context)
 {
 	struct index_state *istate = context;
-	return read_one_entry_opt(istate, sha1, base->buf, base->len, pathname,
+	return read_one_entry_opt(istate, oid, base->buf, base->len, pathname,
 				  mode, stage,
 				  ADD_CACHE_OK_TO_ADD|ADD_CACHE_SKIP_DFCHECK);
 }
@@ -49,12 +49,12 @@ static int read_one_entry(const unsigned char *sha1, struct strbuf *base,
  * This is used when the caller knows there is no existing entries at
  * the stage that will conflict with the entry being added.
  */
-static int read_one_entry_quick(const unsigned char *sha1, struct strbuf *base,
+static int read_one_entry_quick(const struct object_id *oid, struct strbuf *base,
 				const char *pathname, unsigned mode, int stage,
 				void *context)
 {
 	struct index_state *istate = context;
-	return read_one_entry_opt(istate, sha1, base->buf, base->len, pathname,
+	return read_one_entry_opt(istate, oid, base->buf, base->len, pathname,
 				  mode, stage,
 				  ADD_CACHE_JUST_APPEND);
 }
@@ -83,7 +83,7 @@ static int read_tree_1(struct tree *tree, struct strbuf *base,
 				continue;
 		}
 
-		switch (fn(entry.oid->hash, base,
+		switch (fn(entry.oid, base,
 			   entry.path, entry.mode, stage, context)) {
 		case 0:
 			continue;

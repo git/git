@@ -198,7 +198,7 @@ static int write_directory(struct archiver_context *c)
 	return ret ? -1 : 0;
 }
 
-static int queue_or_write_archive_entry(const unsigned char *sha1,
+static int queue_or_write_archive_entry(const struct object_id *oid,
 		struct strbuf *base, const char *filename,
 		unsigned mode, int stage, void *context)
 {
@@ -224,14 +224,14 @@ static int queue_or_write_archive_entry(const unsigned char *sha1,
 
 		if (check_attr_export_ignore(check))
 			return 0;
-		queue_directory(sha1, base, filename,
+		queue_directory(oid->hash, base, filename,
 				mode, stage, c);
 		return READ_TREE_RECURSIVE;
 	}
 
 	if (write_directory(c))
 		return -1;
-	return write_archive_entry(sha1, base->buf, base->len, filename, mode,
+	return write_archive_entry(oid->hash, base->buf, base->len, filename, mode,
 				   stage, context);
 }
 
@@ -303,7 +303,7 @@ static const struct archiver *lookup_archiver(const char *name)
 	return NULL;
 }
 
-static int reject_entry(const unsigned char *sha1, struct strbuf *base,
+static int reject_entry(const struct object_id *oid, struct strbuf *base,
 			const char *filename, unsigned mode,
 			int stage, void *context)
 {

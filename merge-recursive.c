@@ -335,7 +335,7 @@ struct tree *write_tree_from_memory(struct merge_options *o)
 	return result;
 }
 
-static int save_files_dirs(const unsigned char *sha1,
+static int save_files_dirs(const struct object_id *oid,
 		struct strbuf *base, const char *path,
 		unsigned int mode, int stage, void *context)
 {
