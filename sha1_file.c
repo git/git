@@ -1231,6 +1231,9 @@ int sha1_object_info_extended(const unsigned char *sha1, struct object_info *oi,
 				    lookup_replace_object(sha1) :
 				    sha1;
 	int already_retried = 0;
+	struct object_id realoid;
+
+	hashcpy(realoid.hash, real);
 
 	if (is_null_sha1(real))
 		return -1;
@@ -1295,7 +1298,7 @@ int sha1_object_info_extended(const unsigned char *sha1, struct object_info *oi,
 	rtype = packed_object_info(e.p, e.offset, oi);
 	if (rtype < 0) {
 		mark_bad_packed_object(e.p, real);
-		return sha1_object_info_extended(real, oi, 0);
+		return sha1_object_info_extended(realoid.hash, oi, 0);
 	} else if (oi->whence == OI_PACKED) {
 		oi->u.packed.offset = e.offset;
 		oi->u.packed.pack = e.p;
@@ -1323,13 +1326,16 @@ int sha1_object_info(const unsigned char *sha1, unsigned long *sizep)
 static void *read_object(const unsigned char *sha1, enum object_type *type,
 			 unsigned long *size)
 {
+	struct object_id oid;
 	struct object_info oi = OBJECT_INFO_INIT;
 	void *content;
 	oi.typep = type;
 	oi.sizep = size;
 	oi.contentp = &content;
 
-	if (sha1_object_info_extended(sha1, &oi, 0) < 0)
+	hashcpy(oid.hash, sha1);
+
+	if (sha1_object_info_extended(oid.hash, &oi, 0) < 0)
 		return NULL;
 	return content;
 }
@@ -1723,9 +1729,11 @@ int force_object_loose(const struct object_id *oid, time_t mtime)
 
 int has_sha1_file_with_flags(const unsigned char *sha1, int flags)
 {
+	struct object_id oid;
 	if (!startup_info->have_repository)
 		return 0;
-	return sha1_object_info_extended(sha1, NULL,
+	hashcpy(oid.hash, sha1);
+	return sha1_object_info_extended(oid.hash, NULL,
 					 flags | OBJECT_INFO_SKIP_CACHED) >= 0;
 }
 
