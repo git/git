@@ -70,6 +70,12 @@ struct strbuf {
 extern char strbuf_slopbuf[];
 #define STRBUF_INIT  { .alloc = 0, .len = 0, .buf = strbuf_slopbuf }
 
+/*
+ * Predeclare this here, since cache.h includes this file before it defines the
+ * struct.
+ */
+struct object_id;
+
 /**
  * Life Cycle Functions
  * --------------------
@@ -539,7 +545,7 @@ extern void strbuf_list_free(struct strbuf **);
  * the strbuf `sb`.
  */
 extern void strbuf_add_unique_abbrev(struct strbuf *sb,
-				     const unsigned char *sha1,
+				     const struct object_id *oid,
 				     int abbrev_len);
 
 /**
