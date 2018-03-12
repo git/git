@@ -111,7 +111,7 @@ static void write_trailer(void)
  * queues up writes, so that all our write(2) calls write exactly one
  * full block; pads writes to RECORDSIZE
  */
-static int stream_blocked(const unsigned char *sha1)
+static int stream_blocked(const struct object_id *oid)
 {
 	struct git_istream *st;
 	enum object_type type;
@@ -119,9 +119,9 @@ static int stream_blocked(const unsigned char *sha1)
 	char buf[BLOCKSIZE];
 	ssize_t readlen;
 
-	st = open_istream(sha1, &type, &sz, NULL);
+	st = open_istream(oid->hash, &type, &sz, NULL);
 	if (!st)
-		return error("cannot stream blob %s", sha1_to_hex(sha1));
+		return error("cannot stream blob %s", oid_to_hex(oid));
 	for (;;) {
 		readlen = read_istream(st, buf, sizeof(buf));
 		if (readlen <= 0)
@@ -218,7 +218,7 @@ static void prepare_header(struct archiver_args *args,
 }
 
 static void write_extended_header(struct archiver_args *args,
-				  const unsigned char *sha1,
+				  const struct object_id *oid,
 				  const void *buffer, unsigned long size)
 {
 	struct ustar_header header;
@@ -226,14 +226,14 @@ static void write_extended_header(struct archiver_args *args,
 	memset(&header, 0, sizeof(header));
 	*header.typeflag = TYPEFLAG_EXT_HEADER;
 	mode = 0100666;
-	xsnprintf(header.name, sizeof(header.name), "%s.paxheader", sha1_to_hex(sha1));
+	xsnprintf(header.name, sizeof(header.name), "%s.paxheader", oid_to_hex(oid));
 	prepare_header(args, &header, mode, size);
 	write_blocked(&header, sizeof(header));
 	write_blocked(buffer, size);
 }
 
 static int write_tar_entry(struct archiver_args *args,
-			   const unsigned char *sha1,
+			   const struct object_id *oid,
 			   const char *path, size_t pathlen,
 			   unsigned int mode)
 {
@@ -257,7 +257,7 @@ static int write_tar_entry(struct archiver_args *args,
 		mode = (mode | ((mode & 0100) ? 0777 : 0666)) & ~tar_umask;
 	} else {
 		return error("unsupported file mode: 0%o (SHA1: %s)",
-			     mode, sha1_to_hex(sha1));
+			     mode, oid_to_hex(oid));
 	}
 	if (pathlen > sizeof(header.name)) {
 		size_t plen = get_path_prefix(path, pathlen,
@@ -268,7 +268,7 @@ static int write_tar_entry(struct archiver_args *args,
 			memcpy(header.name, path + plen + 1, rest);
 		} else {
 			xsnprintf(header.name, sizeof(header.name), "%s.data",
-				  sha1_to_hex(sha1));
+				  oid_to_hex(oid));
 			strbuf_append_ext_header(&ext_header, "path",
 						 path, pathlen);
 		}
@@ -276,14 +276,14 @@ static int write_tar_entry(struct archiver_args *args,
 		memcpy(header.name, path, pathlen);
 
 	if (S_ISREG(mode) && !args->convert &&
-	    sha1_object_info(sha1, &size) == OBJ_BLOB &&
+	    sha1_object_info(oid->hash, &size) == OBJ_BLOB &&
 	    size > big_file_threshold)
 		buffer = NULL;
 	else if (S_ISLNK(mode) || S_ISREG(mode)) {
 		enum object_type type;
-		buffer = sha1_file_to_archive(args, path, sha1, old_mode, &type, &size);
+		buffer = sha1_file_to_archive(args, path, oid->hash, old_mode, &type, &size);
 		if (!buffer)
-			return error("cannot read %s", sha1_to_hex(sha1));
+			return error("cannot read %s", oid_to_hex(oid));
 	} else {
 		buffer = NULL;
 		size = 0;
@@ -292,7 +292,7 @@ static int write_tar_entry(struct archiver_args *args,
 	if (S_ISLNK(mode)) {
 		if (size > sizeof(header.linkname)) {
 			xsnprintf(header.linkname, sizeof(header.linkname),
-				  "see %s.paxheader", sha1_to_hex(sha1));
+				  "see %s.paxheader", oid_to_hex(oid));
 			strbuf_append_ext_header(&ext_header, "linkpath",
 			                         buffer, size);
 		} else
@@ -308,7 +308,7 @@ static int write_tar_entry(struct archiver_args *args,
 	prepare_header(args, &header, mode, size_in_header);
 
 	if (ext_header.len > 0) {
-		write_extended_header(args, sha1, ext_header.buf,
+		write_extended_header(args, oid, ext_header.buf,
 				      ext_header.len);
 	}
 	strbuf_release(&ext_header);
@@ -317,7 +317,7 @@ static int write_tar_entry(struct archiver_args *args,
 		if (buffer)
 			write_blocked(buffer, size);
 		else
-			err = stream_blocked(sha1);
+			err = stream_blocked(oid);
 	}
 	free(buffer);
 	return err;

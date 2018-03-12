@@ -121,7 +121,7 @@ static int check_attr_export_subst(const struct attr_check *check)
 	return check && ATTR_TRUE(check->items[1].value);
 }
 
-static int write_archive_entry(const unsigned char *sha1, const char *base,
+static int write_archive_entry(const struct object_id *oid, const char *base,
 		int baselen, const char *filename, unsigned mode, int stage,
 		void *context)
 {
@@ -153,7 +153,7 @@ static int write_archive_entry(const unsigned char *sha1, const char *base,
 	if (S_ISDIR(mode) || S_ISGITLINK(mode)) {
 		if (args->verbose)
 			fprintf(stderr, "%.*s\n", (int)path.len, path.buf);
-		err = write_entry(args, sha1, path.buf, path.len, mode);
+		err = write_entry(args, oid, path.buf, path.len, mode);
 		if (err)
 			return err;
 		return (S_ISDIR(mode) ? READ_TREE_RECURSIVE : 0);
@@ -161,7 +161,7 @@ static int write_archive_entry(const unsigned char *sha1, const char *base,
 
 	if (args->verbose)
 		fprintf(stderr, "%.*s\n", (int)path.len, path.buf);
-	return write_entry(args, sha1, path.buf, path.len, mode);
+	return write_entry(args, oid, path.buf, path.len, mode);
 }
 
 static void queue_directory(const unsigned char *sha1,
@@ -191,7 +191,7 @@ static int write_directory(struct archiver_context *c)
 	d->path[d->len - 1] = '\0'; /* no trailing slash */
 	ret =
 		write_directory(c) ||
-		write_archive_entry(d->oid.hash, d->path, d->baselen,
+		write_archive_entry(&d->oid, d->path, d->baselen,
 				    d->path + d->baselen, d->mode,
 				    d->stage, c) != READ_TREE_RECURSIVE;
 	free(d);
@@ -231,7 +231,7 @@ static int queue_or_write_archive_entry(const struct object_id *oid,
 
 	if (write_directory(c))
 		return -1;
-	return write_archive_entry(oid->hash, base->buf, base->len, filename, mode,
+	return write_archive_entry(oid, base->buf, base->len, filename, mode,
 				   stage, context);
 }
 
@@ -250,7 +250,7 @@ int write_archive_entries(struct archiver_args *args,
 			len--;
 		if (args->verbose)
 			fprintf(stderr, "%.*s\n", (int)len, args->base);
-		err = write_entry(args, args->tree->object.oid.hash, args->base,
+		err = write_entry(args, &args->tree->object.oid, args->base,
 				  len, 040777);
 		if (err)
 			return err;
