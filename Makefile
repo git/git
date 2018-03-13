@@ -474,8 +474,7 @@ ARFLAGS = rcs
 # This can help installing the suite in a relocatable way.
 
 prefix = $(HOME)
-bindir_relative = bin
-bindir = $(prefix)/$(bindir_relative)
+bindir = $(prefix)/bin
 mandir = $(prefix)/share/man
 infodir = $(prefix)/share/info
 gitexecdir = libexec/git-core
@@ -492,6 +491,7 @@ lib = lib
 # DESTDIR =
 pathsep = :
 
+bindir_relative = $(patsubst $(prefix)/%,%,$(bindir))
 mandir_relative = $(patsubst $(prefix)/%,%,$(mandir))
 infodir_relative = $(patsubst $(prefix)/%,%,$(infodir))
 htmldir_relative = $(patsubst $(prefix)/%,%,$(htmldir))
