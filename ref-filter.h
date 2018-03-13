@@ -110,9 +110,10 @@ int verify_ref_format(struct ref_format *format);
 /*  Sort the given ref_array as per the ref_sorting provided */
 void ref_array_sort(struct ref_sorting *sort, struct ref_array *array);
 /*  Based on the given format and quote_style, fill the strbuf */
-void format_ref_array_item(struct ref_array_item *info,
-			   const struct ref_format *format,
-			   struct strbuf *final_buf);
+int format_ref_array_item(struct ref_array_item *info,
+			  const struct ref_format *format,
+			  struct strbuf *final_buf,
+			  struct strbuf *error_buf);
 /*  Print the ref using the given format and quote_style */
 void show_ref_array_item(struct ref_array_item *info, const struct ref_format *format);
 /*  Parse a single sort specifier and add it to the list */
