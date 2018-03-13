@@ -166,7 +166,9 @@ worktree.  The hook is given three parameters: the ref of the previous HEAD,
 the ref of the new HEAD (which may or may not have changed), and a flag
 indicating whether the checkout was a branch checkout (changing branches,
 flag=1) or a file checkout (retrieving a file from the index, flag=0).
-This hook cannot affect the outcome of 'git checkout'.
+
+If this hook exits with a non-zero status, 'git checkout' will exit with the
+same status.
 
 It is also run after 'git clone', unless the --no-checkout (-n) option is
 used. The first parameter given to the hook is the null-ref, the second the
