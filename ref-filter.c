@@ -400,7 +400,8 @@ struct ref_formatting_state {
 
 struct atom_value {
 	const char *s;
-	void (*handler)(struct atom_value *atomv, struct ref_formatting_state *state);
+	int (*handler)(struct atom_value *atomv, struct ref_formatting_state *state,
+		       struct strbuf *err);
 	uintmax_t value; /* used for sorting when not FIELD_STR */
 	struct used_atom *atom;
 };
@@ -494,7 +495,8 @@ static void quote_formatting(struct strbuf *s, const char *str, int quote_style)
 	}
 }
 
-static void append_atom(struct atom_value *v, struct ref_formatting_state *state)
+static int append_atom(struct atom_value *v, struct ref_formatting_state *state,
+		       struct strbuf *unused_err)
 {
 	/*
 	 * Quote formatting is only done when the stack has a single
@@ -506,6 +508,7 @@ static void append_atom(struct atom_value *v, struct ref_formatting_state *state
 		quote_formatting(&state->stack->output, v->s, state->quote_style);
 	else
 		strbuf_addstr(&state->stack->output, v->s);
+	return 0;
 }
 
 static void push_stack_element(struct ref_formatting_stack **stack)
@@ -540,7 +543,8 @@ static void end_align_handler(struct ref_formatting_stack **stack)
 	strbuf_release(&s);
 }
 
-static void align_atom_handler(struct atom_value *atomv, struct ref_formatting_state *state)
+static int align_atom_handler(struct atom_value *atomv, struct ref_formatting_state *state,
+			      struct strbuf *unused_err)
 {
 	struct ref_formatting_stack *new_stack;
 
@@ -548,6 +552,7 @@ static void align_atom_handler(struct atom_value *atomv, struct ref_formatting_s
 	new_stack = state->stack;
 	new_stack->at_end = end_align_handler;
 	new_stack->at_end_data = &atomv->atom->u.align;
+	return 0;
 }
 
 static void if_then_else_handler(struct ref_formatting_stack **stack)
@@ -585,7 +590,8 @@ static void if_then_else_handler(struct ref_formatting_stack **stack)
 	free(if_then_else);
 }
 
-static void if_atom_handler(struct atom_value *atomv, struct ref_formatting_state *state)
+static int if_atom_handler(struct atom_value *atomv, struct ref_formatting_state *state,
+			   struct strbuf *unused_err)
 {
 	struct ref_formatting_stack *new_stack;
 	struct if_then_else *if_then_else = xcalloc(sizeof(struct if_then_else), 1);
@@ -597,6 +603,7 @@ static void if_atom_handler(struct atom_value *atomv, struct ref_formatting_stat
 	new_stack = state->stack;
 	new_stack->at_end = if_then_else_handler;
 	new_stack->at_end_data = if_then_else;
+	return 0;
 }
 
 static int is_empty(const char *s)
@@ -609,7 +616,8 @@ static int is_empty(const char *s)
 	return 1;
 }
 
-static void then_atom_handler(struct atom_value *atomv, struct ref_formatting_state *state)
+static int then_atom_handler(struct atom_value *atomv, struct ref_formatting_state *state,
+			     struct strbuf *err)
 {
 	struct ref_formatting_stack *cur = state->stack;
 	struct if_then_else *if_then_else = NULL;
@@ -617,11 +625,11 @@ static void then_atom_handler(struct atom_value *atomv, struct ref_formatting_st
 	if (cur->at_end == if_then_else_handler)
 		if_then_else = (struct if_then_else *)cur->at_end_data;
 	if (!if_then_else)
-		die(_("format: %%(then) atom used without an %%(if) atom"));
+		return strbuf_addf_ret(err, -1, _("format: %%(then) atom used without an %%(if) atom"));
 	if (if_then_else->then_atom_seen)
-		die(_("format: %%(then) atom used more than once"));
+		return strbuf_addf_ret(err, -1, _("format: %%(then) atom used more than once"));
 	if (if_then_else->else_atom_seen)
-		die(_("format: %%(then) atom used after %%(else)"));
+		return strbuf_addf_ret(err, -1, _("format: %%(then) atom used after %%(else)"));
 	if_then_else->then_atom_seen = 1;
 	/*
 	 * If the 'equals' or 'notequals' attribute is used then
@@ -637,9 +645,11 @@ static void then_atom_handler(struct atom_value *atomv, struct ref_formatting_st
 	} else if (cur->output.len && !is_empty(cur->output.buf))
 		if_then_else->condition_satisfied = 1;
 	strbuf_reset(&cur->output);
+	return 0;
 }
 
-static void else_atom_handler(struct atom_value *atomv, struct ref_formatting_state *state)
+static int else_atom_handler(struct atom_value *atomv, struct ref_formatting_state *state,
+			     struct strbuf *err)
 {
 	struct ref_formatting_stack *prev = state->stack;
 	struct if_then_else *if_then_else = NULL;
@@ -647,24 +657,26 @@ static void else_atom_handler(struct atom_value *atomv, struct ref_formatting_st
 	if (prev->at_end == if_then_else_handler)
 		if_then_else = (struct if_then_else *)prev->at_end_data;
 	if (!if_then_else)
-		die(_("format: %%(else) atom used without an %%(if) atom"));
+		return strbuf_addf_ret(err, -1, _("format: %%(else) atom used without an %%(if) atom"));
 	if (!if_then_else->then_atom_seen)
-		die(_("format: %%(else) atom used without a %%(then) atom"));
+		return strbuf_addf_ret(err, -1, _("format: %%(else) atom used without a %%(then) atom"));
 	if (if_then_else->else_atom_seen)
-		die(_("format: %%(else) atom used more than once"));
+		return strbuf_addf_ret(err, -1, _("format: %%(else) atom used more than once"));
 	if_then_else->else_atom_seen = 1;
 	push_stack_element(&state->stack);
 	state->stack->at_end_data = prev->at_end_data;
 	state->stack->at_end = prev->at_end;
+	return 0;
 }
 
-static void end_atom_handler(struct atom_value *atomv, struct ref_formatting_state *state)
+static int end_atom_handler(struct atom_value *atomv, struct ref_formatting_state *state,
+			    struct strbuf *err)
 {
 	struct ref_formatting_stack *current = state->stack;
 	struct strbuf s = STRBUF_INIT;
 
 	if (!current->at_end)
-		die(_("format: %%(end) atom used without corresponding atom"));
+		return strbuf_addf_ret(err, -1, _("format: %%(end) atom used without corresponding atom"));
 	current->at_end(&state->stack);
 
 	/*  Stack may have been popped within at_end(), hence reset the current pointer */
@@ -681,6 +693,7 @@ static void end_atom_handler(struct atom_value *atomv, struct ref_formatting_sta
 	}
 	strbuf_release(&s);
 	pop_stack_element(&state->stack);
+	return 0;
 }
 
 /*
@@ -2151,7 +2164,10 @@ int format_ref_array_item(struct ref_array_item *info,
 		get_ref_atom_value(info,
 				   parse_ref_filter_atom(format, sp + 2, ep),
 				   &atomv);
-		atomv->handler(atomv, &state);
+		if (atomv->handler(atomv, &state, error_buf)) {
+			pop_stack_element(&state.stack);
+			return -1;
+		}
 	}
 	if (*cp) {
 		sp = cp + strlen(cp);
@@ -2160,7 +2176,10 @@ int format_ref_array_item(struct ref_array_item *info,
 	if (format->need_color_reset_at_eol) {
 		struct atom_value resetv;
 		resetv.s = GIT_COLOR_RESET;
-		append_atom(&resetv, &state);
+		if (append_atom(&resetv, &state, error_buf)) {
+			pop_stack_element(&state.stack);
+			return -1;
+		}
 	}
 	if (state.stack->prev) {
 		pop_stack_element(&state.stack);
