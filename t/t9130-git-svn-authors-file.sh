@@ -27,10 +27,10 @@ test_expect_success 'imported 2 revisions successfully' '
 	(
 		cd x
 		test "$(git rev-list refs/remotes/git-svn | wc -l)" -eq 2 &&
-		git rev-list -1 --pretty=raw refs/remotes/git-svn | \
-		  grep "^author BBBBBBB BBBBBBB <bb@example\.com> " &&
-		git rev-list -1 --pretty=raw refs/remotes/git-svn~1 | \
-		  grep "^author AAAAAAA AAAAAAA <aa@example\.com> "
+		git rev-list -1 --pretty=raw refs/remotes/git-svn >actual &&
+		  grep "^author BBBBBBB BBBBBBB <bb@example\.com> " actual &&
+		git rev-list -1 --pretty=raw refs/remotes/git-svn~1 >actual &&
+		  grep "^author AAAAAAA AAAAAAA <aa@example\.com> " actual
 	)
 	'
 
@@ -44,10 +44,10 @@ test_expect_success 'continues to import once authors have been added' '
 		cd x
 		git svn fetch --authors-file=../svn-authors &&
 		test "$(git rev-list refs/remotes/git-svn | wc -l)" -eq 4 &&
-		git rev-list -1 --pretty=raw refs/remotes/git-svn | \
-		  grep "^author DDDDDDD DDDDDDD <dd@example\.com> " &&
-		git rev-list -1 --pretty=raw refs/remotes/git-svn~1 | \
-		  grep "^author CCCCCCC CCCCCCC <cc@example\.com> "
+		git rev-list -1 --pretty=raw refs/remotes/git-svn >actual &&
+		  grep "^author DDDDDDD DDDDDDD <dd@example\.com> " actual &&
+		git rev-list -1 --pretty=raw refs/remotes/git-svn~1 >actual &&
+		  grep "^author CCCCCCC CCCCCCC <cc@example\.com> " actual
 	)
 	'
 

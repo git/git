@@ -204,8 +204,8 @@ test_expect_success "follow-parent is atomic" '
 test_expect_success "track multi-parent paths" '
 	svn_cmd cp -m "resurrect /glob" "$svnrepo"/r9270 "$svnrepo"/glob &&
 	git svn multi-fetch &&
-	test $(git cat-file commit refs/remotes/glob | \
-	       grep "^parent " | wc -l) -eq 2
+	test $(git cat-file commit refs/remotes/glob >actual &&
+	       grep "^parent " actual | wc -l) -eq 2
 	'
 
 test_expect_success "multi-fetch continues to work" "
