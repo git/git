@@ -114,22 +114,25 @@ static int strbuf_addf_ret(struct strbuf *sb, int ret, const char *fmt, ...)
 	return ret;
 }
 
-static void color_atom_parser(const struct ref_format *format, struct used_atom *atom, const char *color_value)
+static int color_atom_parser(const struct ref_format *format, struct used_atom *atom,
+			     const char *color_value, struct strbuf *err)
 {
 	if (!color_value)
-		die(_("expected format: %%(color:<color>)"));
+		return strbuf_addf_ret(err, -1, _("expected format: %%(color:<color>)"));
 	if (color_parse(color_value, atom->u.color) < 0)
-		die(_("unrecognized color: %%(color:%s)"), color_value);
+		return strbuf_addf_ret(err, -1, _("unrecognized color: %%(color:%s)"),
+				       color_value);
 	/*
 	 * We check this after we've parsed the color, which lets us complain
 	 * about syntactically bogus color names even if they won't be used.
 	 */
 	if (!want_color(format->use_color))
 		color_parse("", atom->u.color);
+	return 0;
 }
 
-static void refname_atom_parser_internal(struct refname_atom *atom,
-					 const char *arg, const char *name)
+static int refname_atom_parser_internal(struct refname_atom *atom, const char *arg,
+					 const char *name, struct strbuf *err)
 {
 	if (!arg)
 		atom->option = R_NORMAL;
@@ -139,16 +142,18 @@ static void refname_atom_parser_internal(struct refname_atom *atom,
 		 skip_prefix(arg, "strip=", &arg)) {
 		atom->option = R_LSTRIP;
 		if (strtol_i(arg, 10, &atom->lstrip))
-			die(_("Integer value expected refname:lstrip=%s"), arg);
+			return strbuf_addf_ret(err, -1, _("Integer value expected refname:lstrip=%s"), arg);
 	} else if (skip_prefix(arg, "rstrip=", &arg)) {
 		atom->option = R_RSTRIP;
 		if (strtol_i(arg, 10, &atom->rstrip))
-			die(_("Integer value expected refname:rstrip=%s"), arg);
+			return strbuf_addf_ret(err, -1, _("Integer value expected refname:rstrip=%s"), arg);
 	} else
-		die(_("unrecognized %%(%s) argument: %s"), name, arg);
+		return strbuf_addf_ret(err, -1, _("unrecognized %%(%s) argument: %s"), name, arg);
+	return 0;
 }
 
-static void remote_ref_atom_parser(const struct ref_format *format, struct used_atom *atom, const char *arg)
+static int remote_ref_atom_parser(const struct ref_format *format, struct used_atom *atom,
+				  const char *arg, struct strbuf *err)
 {
 	struct string_list params = STRING_LIST_INIT_DUP;
 	int i;
@@ -158,9 +163,8 @@ static void remote_ref_atom_parser(const struct ref_format *format, struct used_
 
 	if (!arg) {
 		atom->u.remote_ref.option = RR_REF;
-		refname_atom_parser_internal(&atom->u.remote_ref.refname,
-					     arg, atom->name);
-		return;
+		return refname_atom_parser_internal(&atom->u.remote_ref.refname,
+						    arg, atom->name, err);
 	}
 
 	atom->u.remote_ref.nobracket = 0;
@@ -183,29 +187,38 @@ static void remote_ref_atom_parser(const struct ref_format *format, struct used_
 			atom->u.remote_ref.push_remote = 1;
 		} else {
 			atom->u.remote_ref.option = RR_REF;
-			refname_atom_parser_internal(&atom->u.remote_ref.refname,
-						     arg, atom->name);
+			if (refname_atom_parser_internal(&atom->u.remote_ref.refname,
+							 arg, atom->name, err)) {
+				string_list_clear(&params, 0);
+				return -1;
+			}
 		}
 	}
 
 	string_list_clear(&params, 0);
+	return 0;
 }
 
-static void body_atom_parser(const struct ref_format *format, struct used_atom *atom, const char *arg)
+static int body_atom_parser(const struct ref_format *format, struct used_atom *atom,
+			    const char *arg, struct strbuf *err)
 {
 	if (arg)
-		die(_("%%(body) does not take arguments"));
+		return strbuf_addf_ret(err, -1, _("%%(body) does not take arguments"));
 	atom->u.contents.option = C_BODY_DEP;
+	return 0;
 }
 
-static void subject_atom_parser(const struct ref_format *format, struct used_atom *atom, const char *arg)
+static int subject_atom_parser(const struct ref_format *format, struct used_atom *atom,
+			       const char *arg, struct strbuf *err)
 {
 	if (arg)
-		die(_("%%(subject) does not take arguments"));
+		return strbuf_addf_ret(err, -1, _("%%(subject) does not take arguments"));
 	atom->u.contents.option = C_SUB;
+	return 0;
 }
 
-static void trailers_atom_parser(const struct ref_format *format, struct used_atom *atom, const char *arg)
+static int trailers_atom_parser(const struct ref_format *format, struct used_atom *atom,
+				const char *arg, struct strbuf *err)
 {
 	struct string_list params = STRING_LIST_INIT_DUP;
 	int i;
@@ -218,15 +231,20 @@ static void trailers_atom_parser(const struct ref_format *format, struct used_at
 				atom->u.contents.trailer_opts.unfold = 1;
 			else if (!strcmp(s, "only"))
 				atom->u.contents.trailer_opts.only_trailers = 1;
-			else
-				die(_("unknown %%(trailers) argument: %s"), s);
+			else {
+				strbuf_addf(err, _("unknown %%(trailers) argument: %s"), s);
+				string_list_clear(&params, 0);
+				return -1;
+			}
 		}
 	}
 	atom->u.contents.option = C_TRAILERS;
 	string_list_clear(&params, 0);
+	return 0;
 }
 
-static void contents_atom_parser(const struct ref_format *format, struct used_atom *atom, const char *arg)
+static int contents_atom_parser(const struct ref_format *format, struct used_atom *atom,
+				const char *arg, struct strbuf *err)
 {
 	if (!arg)
 		atom->u.contents.option = C_BARE;
@@ -238,16 +256,19 @@ static void contents_atom_parser(const struct ref_format *format, struct used_at
 		atom->u.contents.option = C_SUB;
 	else if (skip_prefix(arg, "trailers", &arg)) {
 		skip_prefix(arg, ":", &arg);
-		trailers_atom_parser(format, atom, *arg ? arg : NULL);
+		if (trailers_atom_parser(format, atom, *arg ? arg : NULL, err))
+			return -1;
 	} else if (skip_prefix(arg, "lines=", &arg)) {
 		atom->u.contents.option = C_LINES;
 		if (strtoul_ui(arg, 10, &atom->u.contents.nlines))
-			die(_("positive value expected contents:lines=%s"), arg);
+			return strbuf_addf_ret(err, -1, _("positive value expected contents:lines=%s"), arg);
 	} else
-		die(_("unrecognized %%(contents) argument: %s"), arg);
+		return strbuf_addf_ret(err, -1, _("unrecognized %%(contents) argument: %s"), arg);
+	return 0;
 }
 
-static void objectname_atom_parser(const struct ref_format *format, struct used_atom *atom, const char *arg)
+static int objectname_atom_parser(const struct ref_format *format, struct used_atom *atom,
+				  const char *arg, struct strbuf *err)
 {
 	if (!arg)
 		atom->u.objectname.option = O_FULL;
@@ -257,16 +278,18 @@ static void objectname_atom_parser(const struct ref_format *format, struct used_
 		atom->u.objectname.option = O_LENGTH;
 		if (strtoul_ui(arg, 10, &atom->u.objectname.length) ||
 		    atom->u.objectname.length == 0)
-			die(_("positive value expected objectname:short=%s"), arg);
+			return strbuf_addf_ret(err, -1, _("positive value expected objectname:short=%s"), arg);
 		if (atom->u.objectname.length < MINIMUM_ABBREV)
 			atom->u.objectname.length = MINIMUM_ABBREV;
 	} else
-		die(_("unrecognized %%(objectname) argument: %s"), arg);
+		return strbuf_addf_ret(err, -1, _("unrecognized %%(objectname) argument: %s"), arg);
+	return 0;
 }
 
-static void refname_atom_parser(const struct ref_format *format, struct used_atom *atom, const char *arg)
+static int refname_atom_parser(const struct ref_format *format, struct used_atom *atom,
+			       const char *arg, struct strbuf *err)
 {
-	refname_atom_parser_internal(&atom->u.refname, arg, atom->name);
+	return refname_atom_parser_internal(&atom->u.refname, arg, atom->name, err);
 }
 
 static align_type parse_align_position(const char *s)
@@ -280,7 +303,8 @@ static align_type parse_align_position(const char *s)
 	return -1;
 }
 
-static void align_atom_parser(const struct ref_format *format, struct used_atom *atom, const char *arg)
+static int align_atom_parser(const struct ref_format *format, struct used_atom *atom,
+			     const char *arg, struct strbuf *err)
 {
 	struct align *align = &atom->u.align;
 	struct string_list params = STRING_LIST_INIT_DUP;
@@ -288,7 +312,7 @@ static void align_atom_parser(const struct ref_format *format, struct used_atom 
 	unsigned int width = ~0U;
 
 	if (!arg)
-		die(_("expected format: %%(align:<width>,<position>)"));
+		return strbuf_addf_ret(err, -1, _("expected format: %%(align:<width>,<position>)"));
 
 	align->position = ALIGN_LEFT;
 
@@ -299,49 +323,65 @@ static void align_atom_parser(const struct ref_format *format, struct used_atom 
 
 		if (skip_prefix(s, "position=", &s)) {
 			position = parse_align_position(s);
-			if (position < 0)
-				die(_("unrecognized position:%s"), s);
+			if (position < 0) {
+				strbuf_addf(err, _("unrecognized position:%s"), s);
+				string_list_clear(&params, 0);
+				return -1;
+			}
 			align->position = position;
 		} else if (skip_prefix(s, "width=", &s)) {
-			if (strtoul_ui(s, 10, &width))
-				die(_("unrecognized width:%s"), s);
+			if (strtoul_ui(s, 10, &width)) {
+				strbuf_addf(err, _("unrecognized width:%s"), s);
+				string_list_clear(&params, 0);
+				return -1;
+			}
 		} else if (!strtoul_ui(s, 10, &width))
 			;
 		else if ((position = parse_align_position(s)) >= 0)
 			align->position = position;
-		else
-			die(_("unrecognized %%(align) argument: %s"), s);
+		else {
+			strbuf_addf(err, _("unrecognized %%(align) argument: %s"), s);
+			string_list_clear(&params, 0);
+			return -1;
+		}
 	}
 
-	if (width == ~0U)
-		die(_("positive width expected with the %%(align) atom"));
+	if (width == ~0U) {
+		string_list_clear(&params, 0);
+		return strbuf_addf_ret(err, -1, _("positive width expected with the %%(align) atom"));
+	}
 	align->width = width;
 	string_list_clear(&params, 0);
+	return 0;
 }
 
-static void if_atom_parser(const struct ref_format *format, struct used_atom *atom, const char *arg)
+static int if_atom_parser(const struct ref_format *format, struct used_atom *atom,
+			  const char *arg, struct strbuf *err)
 {
 	if (!arg) {
 		atom->u.if_then_else.cmp_status = COMPARE_NONE;
-		return;
+		return 0;
 	} else if (skip_prefix(arg, "equals=", &atom->u.if_then_else.str)) {
 		atom->u.if_then_else.cmp_status = COMPARE_EQUAL;
 	} else if (skip_prefix(arg, "notequals=", &atom->u.if_then_else.str)) {
 		atom->u.if_then_else.cmp_status = COMPARE_UNEQUAL;
-	} else {
-		die(_("unrecognized %%(if) argument: %s"), arg);
-	}
+	} else
+		return strbuf_addf_ret(err, -1, _("unrecognized %%(if) argument: %s"), arg);
+	return 0;
 }
 
-static void head_atom_parser(const struct ref_format *format, struct used_atom *atom, const char *arg)
+static int head_atom_parser(const struct ref_format *format, struct used_atom *atom,
+			    const char *arg, struct strbuf *unused_err)
 {
 	atom->u.head = resolve_refdup("HEAD", RESOLVE_REF_READING, NULL, NULL);
+	return 0;
 }
 
 static struct {
 	const char *name;
 	cmp_type cmp_type;
-	void (*parser)(const struct ref_format *format, struct used_atom *atom, const char *arg);
+	int (*parser)(const struct ref_format *format, struct used_atom *atom,
+		      const char *arg, struct strbuf *err);
 } valid_atom[] = {
 	{ "refname" , FIELD_STR, refname_atom_parser },
 	{ "objecttype" },
@@ -468,8 +508,8 @@ static int parse_ref_filter_atom(const struct ref_format *format,
 		}
 	}
 	memset(&used_atom[at].u, 0, sizeof(used_atom[at].u));
-	if (valid_atom[i].parser)
-		valid_atom[i].parser(format, &used_atom[at], arg);
+	if (valid_atom[i].parser && valid_atom[i].parser(format, &used_atom[at], arg, err))
+		return -1;
 	if (*atom == '*')
 		need_tagged = 1;
 	if (!strcmp(valid_atom[i].name, "symref"))
