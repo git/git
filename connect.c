@@ -62,7 +62,7 @@ static void die_initial_contact(int unexpected)
 		      "and the repository exists."));
 }
 
-static enum protocol_version discover_version(struct packet_reader *reader)
+enum protocol_version discover_version(struct packet_reader *reader)
 {
 	enum protocol_version version = protocol_unknown_version;
 
@@ -233,7 +233,7 @@ enum get_remote_heads_state {
 /*
  * Read all the refs from the other end
  */
-struct ref **get_remote_heads(int in, char *src_buf, size_t src_len,
+struct ref **get_remote_heads(struct packet_reader *reader,
 			      struct ref **list, unsigned int flags,
 			      struct oid_array *extra_have,
 			      struct oid_array *shallow_points)
@@ -241,24 +241,17 @@ struct ref **get_remote_heads(int in, char *src_buf, size_t src_len,
 	struct ref **orig_list = list;
 	int len = 0;
 	enum get_remote_heads_state state = EXPECTING_FIRST_REF;
-	struct packet_reader reader;
 	const char *arg;
-
-	packet_reader_init(&reader, in, src_buf, src_len,
-			   PACKET_READ_CHOMP_NEWLINE |
-			   PACKET_READ_GENTLE_ON_EOF);
-
-	discover_version(&reader);
 
 	*list = NULL;
 
 	while (state != EXPECTING_DONE) {
-		switch (packet_reader_read(&reader)) {
+		switch (packet_reader_read(reader)) {
 		case PACKET_READ_EOF:
 			die_initial_contact(1);
 		case PACKET_READ_NORMAL:
-			len = reader.pktlen;
-			if (len > 4 && skip_prefix(reader.line, "ERR ", &arg))
+			len = reader->pktlen;
+			if (len > 4 && skip_prefix(reader->line, "ERR ", &arg))
 				die("remote error: %s", arg);
 			break;
 		case PACKET_READ_FLUSH:
@@ -270,22 +263,22 @@ struct ref **get_remote_heads(int in, char *src_buf, size_t src_len,
 
 		switch (state) {
 		case EXPECTING_FIRST_REF:
-			process_capabilities(reader.line, &len);
-			if (process_dummy_ref(reader.line)) {
+			process_capabilities(reader->line, &len);
+			if (process_dummy_ref(reader->line)) {
 				state = EXPECTING_SHALLOW;
 				break;
 			}
 			state = EXPECTING_REF;
 			/* fallthrough */
 		case EXPECTING_REF:
-			if (process_ref(reader.line, len, &list, flags, extra_have))
+			if (process_ref(reader->line, len, &list, flags, extra_have))
 				break;
 			state = EXPECTING_SHALLOW;
 			/* fallthrough */
 		case EXPECTING_SHALLOW:
-			if (process_shallow(reader.line, len, shallow_points))
+			if (process_shallow(reader->line, len, shallow_points))
 				break;
-			die("protocol error: unexpected '%s'", reader.line);
+			die("protocol error: unexpected '%s'", reader->line);
 		case EXPECTING_DONE:
 			break;
 		}
