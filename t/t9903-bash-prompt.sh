@@ -735,22 +735,12 @@ test_expect_success 'prompt - hide if pwd ignored - env var set, config unset, p
 	test_cmp expected "$actual"
 '
 
-test_expect_success 'prompt - hide if pwd ignored - inside gitdir (stdout)' '
+test_expect_success 'prompt - hide if pwd ignored - inside gitdir' '
 	printf " (GIT_DIR!)" >expected &&
 	(
 		GIT_PS1_HIDE_IF_PWD_IGNORED=y &&
 		cd .git &&
-		__git_ps1 >"$actual" 2>/dev/null
-	) &&
-	test_cmp expected "$actual"
-'
-
-test_expect_success 'prompt - hide if pwd ignored - inside gitdir (stderr)' '
-	printf "" >expected &&
-	(
-		GIT_PS1_HIDE_IF_PWD_IGNORED=y &&
-		cd .git &&
-		__git_ps1 >/dev/null 2>"$actual"
+		__git_ps1 >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '

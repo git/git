@@ -84,9 +84,10 @@ appropriately before running "make".
 
 -x::
 	Turn on shell tracing (i.e., `set -x`) during the tests
-	themselves. Implies `--verbose`. Note that in non-bash shells,
-	this can cause failures in some tests which redirect and test
-	the output of shell functions. Use with caution.
+	themselves. Implies `--verbose`.
+	Ignored in test scripts that set the variable 'test_untraceable'
+	to a non-empty value, unless it's run with a Bash version
+	supporting BASH_XTRACEFD, i.e. v4.1 or later.
 
 -d::
 --debug::
@@ -451,6 +452,22 @@ Don't:
    the test, as any intermediate step can fail and abort the test,
    causing the next test to start in an unexpected directory.  Do so
    inside a subshell if necessary.
+
+ - save and verify the standard error of compound commands, i.e. group
+   commands, subshells, and shell functions (except test helper
+   functions like 'test_must_fail') like this:
+
+     ( cd dir && git cmd ) 2>error &&
+     test_cmp expect error
+
+   When running the test with '-x' tracing, then the trace of commands
+   executed in the compound command will be included in standard error
+   as well, quite possibly throwing off the subsequent checks examining
+   the output.  Instead, save only the relevant git command's standard
+   error:
+
+     ( cd dir && git cmd 2>../error ) &&
+     test_cmp expect error
 
  - Break the TAP output
 
