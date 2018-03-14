@@ -143,4 +143,15 @@ test_expect_success 'manual prefetch of missing objects' '
 	test_line_count = 0 observed.oids
 '
 
+test_expect_success 'partial clone with transfer.fsckobjects=1 uses index-pack --fsck-objects' '
+	git init src &&
+	test_commit -C src x &&
+	test_config -C src uploadpack.allowfilter 1 &&
+	test_config -C src uploadpack.allowanysha1inwant 1 &&
+
+	GIT_TRACE="$(pwd)/trace" git -c transfer.fsckobjects=1 \
+		clone --filter="blob:none" "file://$(pwd)/src" dst &&
+	grep "git index-pack.*--fsck-objects" trace
+'
+
 test_done
