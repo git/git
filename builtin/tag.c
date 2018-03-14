@@ -397,7 +397,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 			N_("how to strip spaces and #comments from message")),
 		OPT_STRING('u', "local-user", &keyid, N_("key-id"),
 					N_("use another key to sign the tag")),
-		OPT__FORCE(&force, N_("replace the tag if exists")),
+		OPT__FORCE(&force, N_("replace the tag if exists"), 0),
 		OPT_BOOL(0, "create-reflog", &create_reflog, N_("create a reflog")),
 
 		OPT_GROUP(N_("Tag listing options")),

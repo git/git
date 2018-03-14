@@ -168,7 +168,7 @@ static int add(int argc, const char **argv)
 		OPT_STRING('m', "master", &master, N_("branch"), N_("master branch")),
 		{ OPTION_CALLBACK, 0, "mirror", &mirror, N_("push|fetch"),
 			N_("set up remote as a mirror to push to or fetch from"),
-			PARSE_OPT_OPTARG, parse_mirror_opt },
+			PARSE_OPT_OPTARG | PARSE_OPT_COMP_ARG, parse_mirror_opt },
 		OPT_END()
 	};
 

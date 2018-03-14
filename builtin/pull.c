@@ -193,7 +193,7 @@ static struct option pull_options[] = {
 	OPT_PASSTHRU(0, "upload-pack", &opt_upload_pack, N_("path"),
 		N_("path to upload pack on remote end"),
 		0),
-	OPT__FORCE(&opt_force, N_("force overwrite of local branch")),
+	OPT__FORCE(&opt_force, N_("force overwrite of local branch"), 0),
 	OPT_PASSTHRU('t', "tags", &opt_tags, NULL,
 		N_("fetch all tags and associated objects"),
 		PARSE_OPT_NOARG),

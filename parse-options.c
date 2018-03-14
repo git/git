@@ -425,6 +425,48 @@ void parse_options_start(struct parse_opt_ctx_t *ctx,
 	parse_options_check(options);
 }
 
+/*
+ * TODO: we are not completing the --no-XXX form yet because there are
+ * many options that do not suppress it properly.
+ */
+static int show_gitcomp(struct parse_opt_ctx_t *ctx,
+			const struct option *opts)
+{
+	for (; opts->type != OPTION_END; opts++) {
+		const char *suffix = "";
+
+		if (!opts->long_name)
+			continue;
+		if (opts->flags & (PARSE_OPT_HIDDEN | PARSE_OPT_NOCOMPLETE))
+			continue;
+
+		switch (opts->type) {
+		case OPTION_GROUP:
+			continue;
+		case OPTION_STRING:
+		case OPTION_FILENAME:
+		case OPTION_INTEGER:
+		case OPTION_MAGNITUDE:
+		case OPTION_CALLBACK:
+			if (opts->flags & PARSE_OPT_NOARG)
+				break;
+			if (opts->flags & PARSE_OPT_OPTARG)
+				break;
+			if (opts->flags & PARSE_OPT_LASTARG_DEFAULT)
+				break;
+			suffix = "=";
+			break;
+		default:
+			break;
+		}
+		if (opts->flags & PARSE_OPT_COMP_ARG)
+			suffix = "=";
+		printf(" --%s%s", opts->long_name, suffix);
+	}
+	fputc('\n', stdout);
+	exit(0);
+}
+
 static int usage_with_options_internal(struct parse_opt_ctx_t *,
 				       const char * const *,
 				       const struct option *, int, int);
@@ -454,6 +496,10 @@ int parse_options_step(struct parse_opt_ctx_t *ctx,
 		/* lone -h asks for help */
 		if (internal_help && ctx->total == 1 && !strcmp(arg + 1, "h"))
 			goto show_usage;
+
+		/* lone --git-completion-helper is asked by git-completion.bash */
+		if (ctx->total == 1 && !strcmp(arg + 1, "-git-completion-helper"))
+			return show_gitcomp(ctx, options);
 
 		if (arg[1] != '-') {
 			ctx->opt = arg + 1;

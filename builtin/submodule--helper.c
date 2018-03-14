@@ -1019,7 +1019,7 @@ static int module_deinit(int argc, const char **argv, const char *prefix)
 
 	struct option module_deinit_options[] = {
 		OPT__QUIET(&quiet, N_("Suppress submodule status output")),
-		OPT__FORCE(&force, N_("Remove submodule working trees even if they contain local changes")),
+		OPT__FORCE(&force, N_("Remove submodule working trees even if they contain local changes"), 0),
 		OPT_BOOL(0, "all", &all, N_("Unregister all submodules")),
 		OPT_END()
 	};

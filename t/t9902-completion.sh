@@ -1237,17 +1237,19 @@ test_expect_success 'double dash "git" itself' '
 test_expect_success 'double dash "git checkout"' '
 	test_completion "git checkout --" <<-\EOF
 	--quiet Z
+	--detach Z
+	--track Z
+	--orphan=Z
 	--ours Z
 	--theirs Z
-	--track Z
-	--no-track Z
 	--merge Z
-	--conflict=
-	--orphan Z
+	--conflict=Z
 	--patch Z
-	--detach Z
 	--ignore-skip-worktree-bits Z
+	--ignore-other-worktrees Z
 	--recurse-submodules Z
+	--progress Z
+	--no-track Z
 	--no-recurse-submodules Z
 	EOF
 '
