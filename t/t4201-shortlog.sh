@@ -127,6 +127,11 @@ test_expect_success !MINGW 'shortlog can read --format=raw output' '
 	test_cmp expect out
 '
 
+test_expect_success 'shortlog from non-git directory refuses extra arguments' '
+	test_must_fail env GIT_DIR=non-existing git shortlog foo 2>out &&
+	test_i18ngrep "too many arguments" out
+'
+
 test_expect_success 'shortlog should add newline when input line matches wraplen' '
 	cat >expect <<\EOF &&
 A U Thor (2):
