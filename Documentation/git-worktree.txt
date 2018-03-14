@@ -12,7 +12,9 @@ SYNOPSIS
 'git worktree add' [-f] [--detach] [--checkout] [--lock] [-b <new-branch>] <path> [<commit-ish>]
 'git worktree list' [--porcelain]
 'git worktree lock' [--reason <string>] <worktree>
+'git worktree move' <worktree> <new-path>
 'git worktree prune' [-n] [-v] [--expire <expire>]
+'git worktree remove' [--force] <worktree>
 'git worktree unlock' <worktree>
 
 DESCRIPTION
@@ -33,10 +35,6 @@ The working tree's administrative files in the repository (see
 `gc.worktreePruneExpire` in linkgit:git-config[1]), or you can run
 `git worktree prune` in the main or any linked working tree to
 clean up any stale administrative files.
-
-If you move a linked working tree, you need to manually update the
-administrative files so that they do not get pruned automatically. See
-section "DETAILS" for more information.
 
 If a linked working tree is stored on a portable device or network share
 which is not always mounted, you can prevent its administrative files from
@@ -80,9 +78,21 @@ files from being pruned automatically. This also prevents it from
 being moved or deleted. Optionally, specify a reason for the lock
 with `--reason`.
 
+move::
+
+Move a working tree to a new location. Note that the main working tree
+or linked working trees containing submodules cannot be moved.
+
 prune::
 
 Prune working tree information in $GIT_DIR/worktrees.
+
+remove::
+
+Remove a working tree. Only clean working trees (no untracked files
+and no modification in tracked files) can be removed. Unclean working
+trees or ones with submodules can be removed with `--force`. The main
+working tree cannot be removed.
 
 unlock::
 
@@ -93,9 +103,10 @@ OPTIONS
 
 -f::
 --force::
-	By default, `add` refuses to create a new working tree when `<commit-ish>` is a branch name and
-	is already checked out by another working tree. This option overrides
-	that safeguard.
+	By default, `add` refuses to create a new working tree when
+	`<commit-ish>` is a branch name and is already checked out by
+	another working tree and `remove` refuses to remove an unclean
+	working tree. This option overrides that safeguard.
 
 -b <new-branch>::
 -B <new-branch>::
@@ -197,7 +208,7 @@ thumb is do not make any assumption about whether a path belongs to
 $GIT_DIR or $GIT_COMMON_DIR when you need to directly access something
 inside $GIT_DIR. Use `git rev-parse --git-path` to get the final path.
 
-If you move a linked working tree, you need to update the 'gitdir' file
+If you manually move a linked working tree, you need to update the 'gitdir' file
 in the entry's directory. For example, if a linked working tree is moved
 to `/newpath/test-next` and its `.git` file points to
 `/path/main/.git/worktrees/test-next`, then update
@@ -276,13 +287,6 @@ BUGS
 Multiple checkout in general is still experimental, and the support
 for submodules is incomplete. It is NOT recommended to make multiple
 checkouts of a superproject.
-
-git-worktree could provide more automation for tasks currently
-performed manually, such as:
-
-- `remove` to remove a linked working tree and its administrative files (and
-  warn if the working tree is dirty)
-- `mv` to move or rename a working tree and update its administrative files
 
 GIT
 ---

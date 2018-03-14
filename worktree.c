@@ -254,6 +254,102 @@ const char *is_worktree_locked(struct worktree *wt)
 	return wt->lock_reason;
 }
 
+/* convenient wrapper to deal with NULL strbuf */
+static void strbuf_addf_gently(struct strbuf *buf, const char *fmt, ...)
+{
+	va_list params;
+
+	if (!buf)
+		return;
+
+	va_start(params, fmt);
+	strbuf_vaddf(buf, fmt, params);
+	va_end(params);
+}
+
+int validate_worktree(const struct worktree *wt, struct strbuf *errmsg,
+		      unsigned flags)
+{
+	struct strbuf wt_path = STRBUF_INIT;
+	char *path = NULL;
+	int err, ret = -1;
+
+	strbuf_addf(&wt_path, "%s/.git", wt->path);
+
+	if (is_main_worktree(wt)) {
+		if (is_directory(wt_path.buf)) {
+			ret = 0;
+			goto done;
+		}
+		/*
+		 * Main worktree using .git file to point to the
+		 * repository would make it impossible to know where
+		 * the actual worktree is if this function is executed
+		 * from another worktree. No .git file support for now.
+		 */
+		strbuf_addf_gently(errmsg,
+				   _("'%s' at main working tree is not the repository directory"),
+				   wt_path.buf);
+		goto done;
+	}
+
+	/*
+	 * Make sure "gitdir" file points to a real .git file and that
+	 * file points back here.
+	 */
+	if (!is_absolute_path(wt->path)) {
+		strbuf_addf_gently(errmsg,
+				   _("'%s' file does not contain absolute path to the working tree location"),
+				   git_common_path("worktrees/%s/gitdir", wt->id));
+		goto done;
+	}
+
+	if (flags & WT_VALIDATE_WORKTREE_MISSING_OK &&
+	    !file_exists(wt->path)) {
+		ret = 0;
+		goto done;
+	}
+
+	if (!file_exists(wt_path.buf)) {
+		strbuf_addf_gently(errmsg, _("'%s' does not exist"), wt_path.buf);
+		goto done;
+	}
+
+	path = xstrdup_or_null(read_gitfile_gently(wt_path.buf, &err));
+	if (!path) {
+		strbuf_addf_gently(errmsg, _("'%s' is not a .git file, error code %d"),
+				   wt_path.buf, err);
+		goto done;
+	}
+
+	ret = fspathcmp(path, real_path(git_common_path("worktrees/%s", wt->id)));
+
+	if (ret)
+		strbuf_addf_gently(errmsg, _("'%s' does not point back to '%s'"),
+				   wt->path, git_common_path("worktrees/%s", wt->id));
+done:
+	free(path);
+	strbuf_release(&wt_path);
+	return ret;
+}
+
+void update_worktree_location(struct worktree *wt, const char *path_)
+{
+	struct strbuf path = STRBUF_INIT;
+
+	if (is_main_worktree(wt))
+		die("BUG: can't relocate main worktree");
+
+	strbuf_realpath(&path, path_, 1);
+	if (fspathcmp(wt->path, path.buf)) {
+		write_file(git_common_path("worktrees/%s/gitdir", wt->id),
+			   "%s/.git", path.buf);
+		free(wt->path);
+		wt->path = strbuf_detach(&path, NULL);
+	}
+	strbuf_release(&path);
+}
+
 int is_worktree_being_rebased(const struct worktree *wt,
 			      const char *target)
 {

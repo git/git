@@ -17,7 +17,9 @@ static const char * const worktree_usage[] = {
 	N_("git worktree add [<options>] <path> [<commit-ish>]"),
 	N_("git worktree list [<options>]"),
 	N_("git worktree lock [<options>] <path>"),
+	N_("git worktree move <worktree> <new-path>"),
 	N_("git worktree prune [<options>]"),
+	N_("git worktree remove [<options>] <worktree>"),
 	N_("git worktree unlock <path>"),
 	NULL
 };
@@ -619,6 +621,220 @@ static int unlock_worktree(int ac, const char **av, const char *prefix)
 	return ret;
 }
 
+static void validate_no_submodules(const struct worktree *wt)
+{
+	struct index_state istate = { NULL };
+	int i, found_submodules = 0;
+
+	if (read_index_from(&istate, worktree_git_path(wt, "index"),
+			    get_worktree_git_dir(wt)) > 0) {
+		for (i = 0; i < istate.cache_nr; i++) {
+			struct cache_entry *ce = istate.cache[i];
+
+			if (S_ISGITLINK(ce->ce_mode)) {
+				found_submodules = 1;
+				break;
+			}
+		}
+	}
+	discard_index(&istate);
+
+	if (found_submodules)
+		die(_("working trees containing submodules cannot be moved or removed"));
+}
+
+static int move_worktree(int ac, const char **av, const char *prefix)
+{
+	struct option options[] = {
+		OPT_END()
+	};
+	struct worktree **worktrees, *wt;
+	struct strbuf dst = STRBUF_INIT;
+	struct strbuf errmsg = STRBUF_INIT;
+	const char *reason;
+	char *path;
+
+	ac = parse_options(ac, av, prefix, options, worktree_usage, 0);
+	if (ac != 2)
+		usage_with_options(worktree_usage, options);
+
+	path = prefix_filename(prefix, av[1]);
+	strbuf_addstr(&dst, path);
+	free(path);
+
+	worktrees = get_worktrees(0);
+	wt = find_worktree(worktrees, prefix, av[0]);
+	if (!wt)
+		die(_("'%s' is not a working tree"), av[0]);
+	if (is_main_worktree(wt))
+		die(_("'%s' is a main working tree"), av[0]);
+	if (is_directory(dst.buf)) {
+		const char *sep = find_last_dir_sep(wt->path);
+
+		if (!sep)
+			die(_("could not figure out destination name from '%s'"),
+			    wt->path);
+		strbuf_trim_trailing_dir_sep(&dst);
+		strbuf_addstr(&dst, sep);
+	}
+	if (file_exists(dst.buf))
+		die(_("target '%s' already exists"), dst.buf);
+
+	validate_no_submodules(wt);
+
+	reason = is_worktree_locked(wt);
+	if (reason) {
+		if (*reason)
+			die(_("cannot move a locked working tree, lock reason: %s"),
+			    reason);
+		die(_("cannot move a locked working tree"));
+	}
+	if (validate_worktree(wt, &errmsg, 0))
+		die(_("validation failed, cannot move working tree: %s"),
+		    errmsg.buf);
+	strbuf_release(&errmsg);
+
+	if (rename(wt->path, dst.buf) == -1)
+		die_errno(_("failed to move '%s' to '%s'"), wt->path, dst.buf);
+
+	update_worktree_location(wt, dst.buf);
+
+	strbuf_release(&dst);
+	free_worktrees(worktrees);
+	return 0;
+}
+
+/*
+ * Note, "git status --porcelain" is used to determine if it's safe to
+ * delete a whole worktree. "git status" does not ignore user
+ * configuration, so if a normal "git status" shows "clean" for the
+ * user, then it's ok to remove it.
+ *
+ * This assumption may be a bad one. We may want to ignore
+ * (potentially bad) user settings and only delete a worktree when
+ * it's absolutely safe to do so from _our_ point of view because we
+ * know better.
+ */
+static void check_clean_worktree(struct worktree *wt,
+				 const char *original_path)
+{
+	struct argv_array child_env = ARGV_ARRAY_INIT;
+	struct child_process cp;
+	char buf[1];
+	int ret;
+
+	/*
+	 * Until we sort this out, all submodules are "dirty" and
+	 * will abort this function.
+	 */
+	validate_no_submodules(wt);
+
+	argv_array_pushf(&child_env, "%s=%s/.git",
+			 GIT_DIR_ENVIRONMENT, wt->path);
+	argv_array_pushf(&child_env, "%s=%s",
+			 GIT_WORK_TREE_ENVIRONMENT, wt->path);
+	memset(&cp, 0, sizeof(cp));
+	argv_array_pushl(&cp.args, "status",
+			 "--porcelain", "--ignore-submodules=none",
+			 NULL);
+	cp.env = child_env.argv;
+	cp.git_cmd = 1;
+	cp.dir = wt->path;
+	cp.out = -1;
+	ret = start_command(&cp);
+	if (ret)
+		die_errno(_("failed to run 'git status' on '%s'"),
+			  original_path);
+	ret = xread(cp.out, buf, sizeof(buf));
+	if (ret)
+		die(_("'%s' is dirty, use --force to delete it"),
+		    original_path);
+	close(cp.out);
+	ret = finish_command(&cp);
+	if (ret)
+		die_errno(_("failed to run 'git status' on '%s', code %d"),
+			  original_path, ret);
+}
+
+static int delete_git_work_tree(struct worktree *wt)
+{
+	struct strbuf sb = STRBUF_INIT;
+	int ret = 0;
+
+	strbuf_addstr(&sb, wt->path);
+	if (remove_dir_recursively(&sb, 0)) {
+		error_errno(_("failed to delete '%s'"), sb.buf);
+		ret = -1;
+	}
+	strbuf_release(&sb);
+	return ret;
+}
+
+static int delete_git_dir(struct worktree *wt)
+{
+	struct strbuf sb = STRBUF_INIT;
+	int ret = 0;
+
+	strbuf_addstr(&sb, git_common_path("worktrees/%s", wt->id));
+	if (remove_dir_recursively(&sb, 0)) {
+		error_errno(_("failed to delete '%s'"), sb.buf);
+		ret = -1;
+	}
+	strbuf_release(&sb);
+	return ret;
+}
+
+static int remove_worktree(int ac, const char **av, const char *prefix)
+{
+	int force = 0;
+	struct option options[] = {
+		OPT_BOOL(0, "force", &force,
+			 N_("force removing even if the worktree is dirty")),
+		OPT_END()
+	};
+	struct worktree **worktrees, *wt;
+	struct strbuf errmsg = STRBUF_INIT;
+	const char *reason;
+	int ret = 0;
+
+	ac = parse_options(ac, av, prefix, options, worktree_usage, 0);
+	if (ac != 1)
+		usage_with_options(worktree_usage, options);
+
+	worktrees = get_worktrees(0);
+	wt = find_worktree(worktrees, prefix, av[0]);
+	if (!wt)
+		die(_("'%s' is not a working tree"), av[0]);
+	if (is_main_worktree(wt))
+		die(_("'%s' is a main working tree"), av[0]);
+	reason = is_worktree_locked(wt);
+	if (reason) {
+		if (*reason)
+			die(_("cannot remove a locked working tree, lock reason: %s"),
+			    reason);
+		die(_("cannot remove a locked working tree"));
+	}
+	if (validate_worktree(wt, &errmsg, WT_VALIDATE_WORKTREE_MISSING_OK))
+		die(_("validation failed, cannot remove working tree: %s"),
+		    errmsg.buf);
+	strbuf_release(&errmsg);
+
+	if (file_exists(wt->path)) {
+		if (!force)
+			check_clean_worktree(wt, av[0]);
+
+		ret |= delete_git_work_tree(wt);
+	}
+	/*
+	 * continue on even if ret is non-zero, there's no going back
+	 * from here.
+	 */
+	ret |= delete_git_dir(wt);
+
+	free_worktrees(worktrees);
+	return ret;
+}
+
 int cmd_worktree(int ac, const char **av, const char *prefix)
 {
 	struct option options[] = {
@@ -641,5 +857,9 @@ int cmd_worktree(int ac, const char **av, const char *prefix)
 		return lock_worktree(ac - 1, av + 1, prefix);
 	if (!strcmp(av[1], "unlock"))
 		return unlock_worktree(ac - 1, av + 1, prefix);
+	if (!strcmp(av[1], "move"))
+		return move_worktree(ac - 1, av + 1, prefix);
+	if (!strcmp(av[1], "remove"))
+		return remove_worktree(ac - 1, av + 1, prefix);
 	usage_with_options(worktree_usage, options);
 }

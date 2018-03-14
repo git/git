@@ -179,6 +179,9 @@ extern void strbuf_trim(struct strbuf *);
 extern void strbuf_rtrim(struct strbuf *);
 extern void strbuf_ltrim(struct strbuf *);
 
+/* Strip trailing directory separators */
+extern void strbuf_trim_trailing_dir_sep(struct strbuf *);
+
 /**
  * Replace the contents of the strbuf with a reencoded form.  Returns -1
  * on error, 0 on success.
