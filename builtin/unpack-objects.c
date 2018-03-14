@@ -158,6 +158,7 @@ struct obj_info {
 	struct object *obj;
 };
 
+/* Remember to update object flag allocation in object.h */
 #define FLAG_OPEN (1u<<20)
 #define FLAG_WRITTEN (1u<<21)
 

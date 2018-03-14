@@ -49,6 +49,7 @@ struct thread_local {
 	int pack_fd;
 };
 
+/* Remember to update object flag allocation in object.h */
 #define FLAG_LINK (1u<<20)
 #define FLAG_CHECKED (1u<<21)
 
