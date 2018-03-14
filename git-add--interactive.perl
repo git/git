@@ -705,6 +705,14 @@ sub parse_diff {
 	}
 	my (@hunk) = { TEXT => [], DISPLAY => [], TYPE => 'header' };
 
+	if (@colored && @colored != @diff) {
+		print STDERR
+		  "fatal: mismatched output from interactive.diffFilter\n",
+		  "hint: Your filter must maintain a one-to-one correspondence\n",
+		  "hint: between its input and output lines.\n";
+		exit 1;
+	}
+
 	for (my $i = 0; $i < @diff; $i++) {
 		if ($diff[$i] =~ /^@@ /) {
 			push @hunk, { TEXT => [], DISPLAY => [],

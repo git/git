@@ -397,6 +397,26 @@ test_expect_success TTY 'diffs can be colorized' '
 	grep "$(printf "\\033")" output
 '
 
+test_expect_success TTY 'diffFilter filters diff' '
+	git reset --hard &&
+
+	echo content >test &&
+	test_config interactive.diffFilter "sed s/^/foo:/" &&
+	printf y | test_terminal git add -p >output 2>&1 &&
+
+	# avoid depending on the exact coloring or content of the prompts,
+	# and just make sure we saw our diff prefixed
+	grep foo:.*content output
+'
+
+test_expect_success TTY 'detect bogus diffFilter output' '
+	git reset --hard &&
+
+	echo content >test &&
+	test_config interactive.diffFilter "echo too-short" &&
+	printf y | test_must_fail test_terminal git add -p
+'
+
 test_expect_success 'patch-mode via -i prompts for files' '
 	git reset --hard &&
 
