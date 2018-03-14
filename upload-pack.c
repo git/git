@@ -6,7 +6,6 @@
 #include "tag.h"
 #include "object.h"
 #include "commit.h"
-#include "exec_cmd.h"
 #include "diff.h"
 #include "revision.h"
 #include "list-objects.h"
@@ -15,15 +14,10 @@
 #include "sigchain.h"
 #include "version.h"
 #include "string-list.h"
-#include "parse-options.h"
 #include "argv-array.h"
 #include "prio-queue.h"
 #include "protocol.h"
-
-static const char * const upload_pack_usage[] = {
-	N_("git upload-pack [<options>] <dir>"),
-	NULL
-};
+#include "upload-pack.h"
 
 /* Remember to update object flag allocation in object.h */
 #define THEY_HAVE	(1u << 11)
@@ -61,7 +55,6 @@ static int keepalive = 5;
  * otherwise maximum packet size (up to 65520 bytes).
  */
 static int use_sideband;
-static int advertise_refs;
 static int stateless_rpc;
 static const char *pack_objects_hook;
 
@@ -977,33 +970,6 @@ static int find_symref(const char *refname, const struct object_id *oid,
 	return 0;
 }
 
-static void upload_pack(void)
-{
-	struct string_list symref = STRING_LIST_INIT_DUP;
-
-	head_ref_namespaced(find_symref, &symref);
-
-	if (advertise_refs || !stateless_rpc) {
-		reset_timeout();
-		head_ref_namespaced(send_ref, &symref);
-		for_each_namespaced_ref(send_ref, &symref);
-		advertise_shallow_grafts(1);
-		packet_flush(1);
-	} else {
-		head_ref_namespaced(check_ref, NULL);
-		for_each_namespaced_ref(check_ref, NULL);
-	}
-	string_list_clear(&symref, 1);
-	if (advertise_refs)
-		return;
-
-	receive_needs();
-	if (want_obj.nr) {
-		get_common_commits();
-		create_pack_file();
-	}
-}
-
 static int upload_pack_config(const char *var, const char *value, void *unused)
 {
 	if (!strcmp("uploadpack.allowtipsha1inwant", var)) {
@@ -1032,58 +998,35 @@ static int upload_pack_config(const char *var, const char *value, void *unused)
 	return parse_hide_refs_config(var, value, "uploadpack");
 }
 
-int cmd_main(int argc, const char **argv)
+void upload_pack(struct upload_pack_options *options)
 {
-	const char *dir;
-	int strict = 0;
-	struct option options[] = {
-		OPT_BOOL(0, "stateless-rpc", &stateless_rpc,
-			 N_("quit after a single request/response exchange")),
-		OPT_BOOL(0, "advertise-refs", &advertise_refs,
-			 N_("exit immediately after initial ref advertisement")),
-		OPT_BOOL(0, "strict", &strict,
-			 N_("do not try <directory>/.git/ if <directory> is no Git directory")),
-		OPT_INTEGER(0, "timeout", &timeout,
-			    N_("interrupt transfer after <n> seconds of inactivity")),
-		OPT_END()
-	};
+	struct string_list symref = STRING_LIST_INIT_DUP;
 
-	packet_trace_identity("upload-pack");
-	check_replace_refs = 0;
-
-	argc = parse_options(argc, argv, NULL, options, upload_pack_usage, 0);
-
-	if (argc != 1)
-		usage_with_options(upload_pack_usage, options);
-
-	if (timeout)
-		daemon_mode = 1;
-
-	setup_path();
-
-	dir = argv[0];
-
-	if (!enter_repo(dir, strict))
-		die("'%s' does not appear to be a git repository", dir);
+	stateless_rpc = options->stateless_rpc;
+	timeout = options->timeout;
+	daemon_mode = options->daemon_mode;
 
 	git_config(upload_pack_config, NULL);
 
-	switch (determine_protocol_version_server()) {
-	case protocol_v1:
-		/*
-		 * v1 is just the original protocol with a version string,
-		 * so just fall through after writing the version string.
-		 */
-		if (advertise_refs || !stateless_rpc)
-			packet_write_fmt(1, "version 1\n");
+	head_ref_namespaced(find_symref, &symref);
 
-		/* fallthrough */
-	case protocol_v0:
-		upload_pack();
-		break;
-	case protocol_unknown_version:
-		BUG("unknown protocol version");
+	if (options->advertise_refs || !stateless_rpc) {
+		reset_timeout();
+		head_ref_namespaced(send_ref, &symref);
+		for_each_namespaced_ref(send_ref, &symref);
+		advertise_shallow_grafts(1);
+		packet_flush(1);
+	} else {
+		head_ref_namespaced(check_ref, NULL);
+		for_each_namespaced_ref(check_ref, NULL);
 	}
+	string_list_clear(&symref, 1);
+	if (options->advertise_refs)
+		return;
 
-	return 0;
+	receive_needs();
+	if (want_obj.nr) {
+		get_common_commits();
+		create_pack_file();
+	}
 }
