@@ -93,6 +93,7 @@ struct diff_flags {
 	unsigned dirstat_by_line:1;
 	unsigned funccontext:1;
 	unsigned default_follow_renames:1;
+	unsigned stat_with_summary:1;
 };
 
 static inline void diff_flags_or(struct diff_flags *a,
