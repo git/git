@@ -339,7 +339,7 @@ static void print_advice(int show_hint, struct replay_opts *opts)
 static int write_message(const void *buf, size_t len, const char *filename,
 			 int append_eol)
 {
-	static struct lock_file msg_file;
+	struct lock_file msg_file = LOCK_INIT;
 
 	int msg_fd = hold_lock_file_for_update(&msg_file, filename, 0);
 	if (msg_fd < 0)
@@ -352,10 +352,8 @@ static int write_message(const void *buf, size_t len, const char *filename,
 		rollback_lock_file(&msg_file);
 		return error_errno(_("could not write eol to '%s'"), filename);
 	}
-	if (commit_lock_file(&msg_file) < 0) {
-		rollback_lock_file(&msg_file);
-		return error(_("failed to finalize '%s'."), filename);
-	}
+	if (commit_lock_file(&msg_file) < 0)
+		return error(_("failed to finalize '%s'"), filename);
 
 	return 0;
 }
@@ -485,7 +483,7 @@ static int do_recursive_merge(struct commit *base, struct commit *next,
 	struct tree *result, *next_tree, *base_tree, *head_tree;
 	int clean;
 	char **xopt;
-	static struct lock_file index_lock;
+	struct lock_file index_lock = LOCK_INIT;
 
 	if (hold_locked_index(&index_lock, LOCK_REPORT_ON_ERROR) < 0)
 		return -1;
@@ -514,8 +512,10 @@ static int do_recursive_merge(struct commit *base, struct commit *next,
 		fputs(o.obuf.buf, stdout);
 	strbuf_release(&o.obuf);
 	diff_warn_rename_limit("merge.renamelimit", o.needed_rename_limit, 0);
-	if (clean < 0)
+	if (clean < 0) {
+		rollback_lock_file(&index_lock);
 		return clean;
+	}
 
 	if (active_cache_changed &&
 	    write_locked_index(&the_index, &index_lock, COMMIT_LOCK))
@@ -1705,7 +1705,7 @@ static int prepare_revs(struct replay_opts *opts)
 
 static int read_and_refresh_cache(struct replay_opts *opts)
 {
-	static struct lock_file index_lock;
+	struct lock_file index_lock = LOCK_INIT;
 	int index_fd = hold_locked_index(&index_lock, 0);
 	if (read_index_preload(&the_index, NULL) < 0) {
 		rollback_lock_file(&index_lock);
@@ -2108,16 +2108,14 @@ static int create_seq_dir(void)
 
 static int save_head(const char *head)
 {
-	static struct lock_file head_lock;
+	struct lock_file head_lock = LOCK_INIT;
 	struct strbuf buf = STRBUF_INIT;
 	int fd;
 	ssize_t written;
 
 	fd = hold_lock_file_for_update(&head_lock, git_path_head_file(), 0);
-	if (fd < 0) {
-		rollback_lock_file(&head_lock);
+	if (fd < 0)
 		return error_errno(_("could not lock HEAD"));
-	}
 	strbuf_addf(&buf, "%s\n", head);
 	written = write_in_full(fd, buf.buf, buf.len);
 	strbuf_release(&buf);
@@ -2126,10 +2124,8 @@ static int save_head(const char *head)
 		return error_errno(_("could not write to '%s'"),
 				   git_path_head_file());
 	}
-	if (commit_lock_file(&head_lock) < 0) {
-		rollback_lock_file(&head_lock);
-		return error(_("failed to finalize '%s'."), git_path_head_file());
-	}
+	if (commit_lock_file(&head_lock) < 0)
+		return error(_("failed to finalize '%s'"), git_path_head_file());
 	return 0;
 }
 
@@ -2233,7 +2229,7 @@ fail:
 
 static int save_todo(struct todo_list *todo_list, struct replay_opts *opts)
 {
-	static struct lock_file todo_lock;
+	struct lock_file todo_lock = LOCK_INIT;
 	const char *todo_path = get_todo_path(opts);
 	int next = todo_list->current, offset, fd;
 
@@ -2253,7 +2249,7 @@ static int save_todo(struct todo_list *todo_list, struct replay_opts *opts)
 			todo_list->buf.len - offset) < 0)
 		return error_errno(_("could not write to '%s'"), todo_path);
 	if (commit_lock_file(&todo_lock) < 0)
-		return error(_("failed to finalize '%s'."), todo_path);
+		return error(_("failed to finalize '%s'"), todo_path);
 
 	if (is_rebase_i(opts)) {
 		const char *done_path = rebase_path_done();
