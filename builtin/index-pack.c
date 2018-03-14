@@ -828,7 +828,7 @@ static void sha1_object(const void *data, struct object_entry *obj_entry,
 		free(has_data);
 	}
 
-	if (strict) {
+	if (strict || do_fsck_object) {
 		read_lock();
 		if (type == OBJ_BLOB) {
 			struct blob *blob = lookup_blob(oid);
@@ -854,7 +854,7 @@ static void sha1_object(const void *data, struct object_entry *obj_entry,
 			if (do_fsck_object &&
 			    fsck_object(obj, buf, size, &fsck_options))
 				die(_("Error in object"));
-			if (fsck_walk(obj, NULL, &fsck_options))
+			if (strict && fsck_walk(obj, NULL, &fsck_options))
 				die(_("Not all child objects of %s are reachable"), oid_to_hex(&obj->oid));
 
 			if (obj->type == OBJ_TREE) {
@@ -1689,6 +1689,8 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 			} else if (!strcmp(arg, "--check-self-contained-and-connected")) {
 				strict = 1;
 				check_self_contained_and_connected = 1;
+			} else if (!strcmp(arg, "--fsck-objects")) {
+				do_fsck_object = 1;
 			} else if (!strcmp(arg, "--verify")) {
 				verify = 1;
 			} else if (!strcmp(arg, "--verify-stat")) {

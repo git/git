@@ -262,4 +262,9 @@ EOF
     grep "^warning:.* expected .tagger. line" err
 '
 
+test_expect_success 'index-pack --fsck-objects also warns upon missing tagger in tag' '
+    git index-pack --fsck-objects tag-test-${pack1}.pack 2>err &&
+    grep "^warning:.* expected .tagger. line" err
+'
+
 test_done
