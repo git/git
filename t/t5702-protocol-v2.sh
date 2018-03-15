@@ -244,6 +244,30 @@ test_expect_success 'fetch with http:// using protocol v2' '
 	grep "git< version 2" log
 '
 
+test_expect_success 'push with http:// and a config of v2 does not request v2' '
+	test_when_finished "rm -f log" &&
+	# Till v2 for push is designed, make sure that if a client has
+	# protocol.version configured to use v2, that the client instead falls
+	# back and uses v0.
+
+	test_commit -C http_child three &&
+
+	# Push to another branch, as the target repository has the
+	# master branch checked out and we cannot push into it.
+	GIT_TRACE_PACKET="$(pwd)/log" git -C http_child -c protocol.version=2 \
+		push origin HEAD:client_branch &&
+
+	git -C http_child log -1 --format=%s >actual &&
+	git -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" log -1 --format=%s client_branch >expect &&
+	test_cmp expect actual &&
+
+	# Client didnt request to use protocol v2
+	! grep "Git-Protocol: version=2" log &&
+	# Server didnt respond using protocol v2
+	! grep "git< version 2" log
+'
+
+
 stop_httpd
 
 test_done
