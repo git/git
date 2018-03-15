@@ -9,7 +9,10 @@ package Git;
 
 use 5.008;
 use strict;
+use warnings;
 
+use File::Temp ();
+use File::Spec ();
 
 BEGIN {
 
@@ -101,7 +104,7 @@ increase notwithstanding).
 
 
 use Carp qw(carp croak); # but croak is bad - throw instead
-use Git::Error qw(:try);
+use Git::LoadCPAN::Error qw(:try);
 use Cwd qw(abs_path cwd);
 use IPC::Open2 qw(open2);
 use Fcntl qw(SEEK_SET SEEK_CUR);
@@ -189,7 +192,6 @@ sub repository {
 		};
 
 		if ($dir) {
-			_verify_require();
 			File::Spec->file_name_is_absolute($dir) or $dir = $opts{Directory} . '/' . $dir;
 			$opts{Repository} = abs_path($dir);
 
@@ -1290,8 +1292,6 @@ sub temp_release {
 sub _temp_cache {
 	my ($self, $name) = _maybe_self(@_);
 
-	_verify_require();
-
 	my $temp_fd = \$TEMP_FILEMAP{$name};
 	if (defined $$temp_fd and $$temp_fd->opened) {
 		if ($TEMP_FILES{$$temp_fd}{locked}) {
@@ -1323,11 +1323,6 @@ sub _temp_cache {
 		$TEMP_FILES{$$temp_fd}{fname} = $fname;
 	}
 	$$temp_fd;
-}
-
-sub _verify_require {
-	eval { require File::Temp; require File::Spec; };
-	$@ and throw Error::Simple($@);
 }
 
 =item temp_reset ( FILEHANDLE )
@@ -1694,7 +1689,6 @@ sub DESTROY {
 # Pipe implementation for ActiveState Perl.
 
 package Git::activestate_pipe;
-use strict;
 
 sub TIEHANDLE {
 	my ($class, @params) = @_;

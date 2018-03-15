@@ -88,9 +88,9 @@ Issues of note:
 	export GIT_EXEC_PATH PATH GITPERLLIB
 
  - By default (unless NO_PERL is provided) Git will ship various perl
-   scripts & libraries it needs. However, for simplicity it doesn't
-   use the ExtUtils::MakeMaker toolchain to decide where to place the
-   perl libraries. Depending on the system this can result in the perl
+   scripts. However, for simplicity it doesn't use the
+   ExtUtils::MakeMaker toolchain to decide where to place the perl
+   libraries. Depending on the system this can result in the perl
    libraries not being where you'd like them if they're expected to be
    used by things other than Git itself.
 
@@ -101,6 +101,11 @@ Issues of note:
 
    Will result in e.g. perllibdir=/usr/share/perl/5.26.1 on Debian,
    perllibdir=/usr/share/perl5 (which we'd use by default) on CentOS.
+
+ - Unless NO_PERL is provided Git will ship various perl libraries it
+   needs. Distributors of Git will usually want to set
+   NO_PERL_CPAN_FALLBACKS if NO_PERL is not provided to use their own
+   copies of the CPAN modules Git needs.
 
  - Git is reasonably self-sufficient, but does depend on a few external
    programs and libraries.  Git can be used without most of them by adding
