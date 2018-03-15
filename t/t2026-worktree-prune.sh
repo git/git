@@ -78,10 +78,9 @@ test_expect_success 'not prune locked checkout' '
 
 test_expect_success 'not prune recent checkouts' '
 	test_when_finished rm -r .git/worktrees &&
-	mkdir zz &&
-	mkdir -p .git/worktrees/jlm &&
-	echo "$(pwd)"/zz >.git/worktrees/jlm/gitdir &&
-	rmdir zz &&
+	git worktree add jlm HEAD &&
+	test -d .git/worktrees/jlm &&
+	rm -rf jlm &&
 	git worktree prune --verbose --expire=2.days.ago &&
 	test -d .git/worktrees/jlm
 '
