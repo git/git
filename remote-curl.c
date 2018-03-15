@@ -291,6 +291,19 @@ static int show_http_message(struct strbuf *type, struct strbuf *charset,
 	return 0;
 }
 
+static int get_protocol_http_header(enum protocol_version version,
+				    struct strbuf *header)
+{
+	if (version > 0) {
+		strbuf_addf(header, GIT_PROTOCOL_HEADER ": version=%d",
+			    version);
+
+		return 1;
+	}
+
+	return 0;
+}
+
 static struct discovery *discover_refs(const char *service, int for_push)
 {
 	struct strbuf exp = STRBUF_INIT;
@@ -299,6 +312,8 @@ static struct discovery *discover_refs(const char *service, int for_push)
 	struct strbuf buffer = STRBUF_INIT;
 	struct strbuf refs_url = STRBUF_INIT;
 	struct strbuf effective_url = STRBUF_INIT;
+	struct strbuf protocol_header = STRBUF_INIT;
+	struct string_list extra_headers = STRING_LIST_INIT_DUP;
 	struct discovery *last = last_discovery;
 	int http_ret, maybe_smart = 0;
 	struct http_get_options http_options;
@@ -318,11 +333,16 @@ static struct discovery *discover_refs(const char *service, int for_push)
 		strbuf_addf(&refs_url, "service=%s", service);
 	}
 
+	/* Add the extra Git-Protocol header */
+	if (get_protocol_http_header(get_protocol_version_config(), &protocol_header))
+		string_list_append(&extra_headers, protocol_header.buf);
+
 	memset(&http_options, 0, sizeof(http_options));
 	http_options.content_type = &type;
 	http_options.charset = &charset;
 	http_options.effective_url = &effective_url;
 	http_options.base_url = &url;
+	http_options.extra_headers = &extra_headers;
 	http_options.initial_request = 1;
 	http_options.no_cache = 1;
 	http_options.keep_error = 1;
@@ -389,6 +409,8 @@ static struct discovery *discover_refs(const char *service, int for_push)
 	strbuf_release(&charset);
 	strbuf_release(&effective_url);
 	strbuf_release(&buffer);
+	strbuf_release(&protocol_header);
+	string_list_clear(&extra_headers, 0);
 	last_discovery = last;
 	return last;
 }
@@ -425,6 +447,7 @@ struct rpc_state {
 	char *service_url;
 	char *hdr_content_type;
 	char *hdr_accept;
+	char *protocol_header;
 	char *buf;
 	size_t alloc;
 	size_t len;
@@ -611,6 +634,10 @@ static int post_rpc(struct rpc_state *rpc)
 	headers = curl_slist_append(headers, needs_100_continue ?
 		"Expect: 100-continue" : "Expect:");
 
+	/* Add the extra Git-Protocol header */
+	if (rpc->protocol_header)
+		headers = curl_slist_append(headers, rpc->protocol_header);
+
 retry:
 	slot = get_active_slot();
 
@@ -751,6 +778,11 @@ static int rpc_service(struct rpc_state *rpc, struct discovery *heads)
 	strbuf_addf(&buf, "Accept: application/x-%s-result", svc);
 	rpc->hdr_accept = strbuf_detach(&buf, NULL);
 
+	if (get_protocol_http_header(heads->version, &buf))
+		rpc->protocol_header = strbuf_detach(&buf, NULL);
+	else
+		rpc->protocol_header = NULL;
+
 	while (!err) {
 		int n = packet_read(rpc->out, NULL, NULL, rpc->buf, rpc->alloc, 0);
 		if (!n)
@@ -778,6 +810,7 @@ static int rpc_service(struct rpc_state *rpc, struct discovery *heads)
 	free(rpc->service_url);
 	free(rpc->hdr_content_type);
 	free(rpc->hdr_accept);
+	free(rpc->protocol_header);
 	free(rpc->buf);
 	strbuf_release(&buf);
 	return err;
