@@ -4,7 +4,14 @@
 #include "pkt-line.h"
 #include "version.h"
 #include "argv-array.h"
+#include "ls-refs.h"
 #include "serve.h"
+
+static int always_advertise(struct repository *r,
+			    struct strbuf *value)
+{
+	return 1;
+}
 
 static int agent_advertise(struct repository *r,
 			   struct strbuf *value)
@@ -46,6 +53,7 @@ struct protocol_capability {
 
 static struct protocol_capability capabilities[] = {
 	{ "agent", agent_advertise, NULL },
+	{ "ls-refs", always_advertise, ls_refs },
 };
 
 static void advertise_capabilities(void)
