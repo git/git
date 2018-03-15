@@ -1028,11 +1028,38 @@ int transport_push(struct transport *transport,
 		int porcelain = flags & TRANSPORT_PUSH_PORCELAIN;
 		int pretend = flags & TRANSPORT_PUSH_DRY_RUN;
 		int push_ret, ret, err;
+		struct refspec *tmp_rs;
+		struct argv_array ref_prefixes = ARGV_ARRAY_INIT;
+		int i;
 
 		if (check_push_refs(local_refs, refspec_nr, refspec) < 0)
 			return -1;
 
-		remote_refs = transport->vtable->get_refs_list(transport, 1, NULL);
+		tmp_rs = parse_push_refspec(refspec_nr, refspec);
+		for (i = 0; i < refspec_nr; i++) {
+			const char *prefix = NULL;
+
+			if (tmp_rs[i].dst)
+				prefix = tmp_rs[i].dst;
+			else if (tmp_rs[i].src && !tmp_rs[i].exact_sha1)
+				prefix = tmp_rs[i].src;
+
+			if (prefix) {
+				const char *glob = strchr(prefix, '*');
+				if (glob)
+					argv_array_pushf(&ref_prefixes, "%.*s",
+							 (int)(glob - prefix),
+							 prefix);
+				else
+					expand_ref_prefix(&ref_prefixes, prefix);
+			}
+		}
+
+		remote_refs = transport->vtable->get_refs_list(transport, 1,
+							       &ref_prefixes);
+
+		argv_array_clear(&ref_prefixes);
+		free_refspec(refspec_nr, tmp_rs);
 
 		if (flags & TRANSPORT_PUSH_ALL)
 			match_flags |= MATCH_REFS_ALL;
