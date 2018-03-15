@@ -849,6 +849,9 @@ Report bugs to the Git mailing list <git@vger.kernel.org> where the
 development and maintenance is primarily done.  You do not have to be
 subscribed to the list to send a message there.
 
+Issues which are security relevant should be disclosed privately to
+the Git Security mailing list <git-security@googlegroups.com>.
+
 SEE ALSO
 --------
 linkgit:gittutorial[7], linkgit:gittutorial-2[7],
