@@ -82,6 +82,28 @@ int server_supports_v2(const char *c, int die_on_error)
 	return 0;
 }
 
+int server_supports_feature(const char *c, const char *feature,
+			    int die_on_error)
+{
+	int i;
+
+	for (i = 0; i < server_capabilities_v2.argc; i++) {
+		const char *out;
+		if (skip_prefix(server_capabilities_v2.argv[i], c, &out) &&
+		    (!*out || *(out++) == '=')) {
+			if (parse_feature_request(out, feature))
+				return 1;
+			else
+				break;
+		}
+	}
+
+	if (die_on_error)
+		die("server doesn't support feature '%s'", feature);
+
+	return 0;
+}
+
 static void process_capabilities_v2(struct packet_reader *reader)
 {
 	while (packet_reader_read(reader) == PACKET_READ_NORMAL)

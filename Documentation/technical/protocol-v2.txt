@@ -255,6 +255,10 @@ A `fetch` request can take the following arguments:
 	to its base by position in pack rather than by an oid.  That is,
 	they can read OBJ_OFS_DELTA (ake type 6) in a packfile.
 
+If the 'shallow' feature is advertised the following arguments can be
+included in the clients request as well as the potential addition of the
+'shallow-info' section in the server's response as explained below.
+
     shallow <oid>
 	A client must notify the server of all commits for which it only
 	has shallow copies (meaning that it doesn't have the parents of
@@ -338,13 +342,13 @@ header.
 	  further negotiation is needed.
 
     shallow-info section
-	If the client has requested a shallow fetch/clone, a shallow
-	client requests a fetch or the server is shallow then the
-	server's response may include a shallow-info section.  The
-	shallow-info section will be included if (due to one of the
-	above conditions) the server needs to inform the client of any
-	shallow boundaries or adjustments to the clients already
-	existing shallow boundaries.
+	* If the client has requested a shallow fetch/clone, a shallow
+	  client requests a fetch or the server is shallow then the
+	  server's response may include a shallow-info section.  The
+	  shallow-info section will be included if (due to one of the
+	  above conditions) the server needs to inform the client of any
+	  shallow boundaries or adjustments to the clients already
+	  existing shallow boundaries.
 
 	* Always begins with the section header "shallow-info"
 
