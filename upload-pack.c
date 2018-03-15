@@ -710,7 +710,6 @@ static void deepen(int depth, int deepen_relative,
 	}
 
 	send_unshallow(shallows);
-	packet_flush(1);
 }
 
 static void deepen_by_rev_list(int ac, const char **av,
@@ -722,7 +721,53 @@ static void deepen_by_rev_list(int ac, const char **av,
 	send_shallow(result);
 	free_commit_list(result);
 	send_unshallow(shallows);
-	packet_flush(1);
+}
+
+/* Returns 1 if a shallow list is sent or 0 otherwise */
+static int send_shallow_list(int depth, int deepen_rev_list,
+			     timestamp_t deepen_since,
+			     struct string_list *deepen_not,
+			     struct object_array *shallows)
+{
+	int ret = 0;
+
+	if (depth > 0 && deepen_rev_list)
+		die("git upload-pack: deepen and deepen-since (or deepen-not) cannot be used together");
+	if (depth > 0) {
+		deepen(depth, deepen_relative, shallows);
+		ret = 1;
+	} else if (deepen_rev_list) {
+		struct argv_array av = ARGV_ARRAY_INIT;
+		int i;
+
+		argv_array_push(&av, "rev-list");
+		if (deepen_since)
+			argv_array_pushf(&av, "--max-age=%"PRItime, deepen_since);
+		if (deepen_not->nr) {
+			argv_array_push(&av, "--not");
+			for (i = 0; i < deepen_not->nr; i++) {
+				struct string_list_item *s = deepen_not->items + i;
+				argv_array_push(&av, s->string);
+			}
+			argv_array_push(&av, "--not");
+		}
+		for (i = 0; i < want_obj.nr; i++) {
+			struct object *o = want_obj.objects[i].item;
+			argv_array_push(&av, oid_to_hex(&o->oid));
+		}
+		deepen_by_rev_list(av.argc, av.argv, shallows);
+		argv_array_clear(&av);
+		ret = 1;
+	} else {
+		if (shallows->nr > 0) {
+			int i;
+			for (i = 0; i < shallows->nr; i++)
+				register_shallow(&shallows->objects[i].item->oid);
+		}
+	}
+
+	shallow_nr += shallows->nr;
+	return ret;
 }
 
 static int process_shallow(const char *line, struct object_array *shallows)
@@ -884,40 +929,10 @@ static void receive_needs(void)
 
 	if (depth == 0 && !deepen_rev_list && shallows.nr == 0)
 		return;
-	if (depth > 0 && deepen_rev_list)
-		die("git upload-pack: deepen and deepen-since (or deepen-not) cannot be used together");
-	if (depth > 0)
-		deepen(depth, deepen_relative, &shallows);
-	else if (deepen_rev_list) {
-		struct argv_array av = ARGV_ARRAY_INIT;
-		int i;
 
-		argv_array_push(&av, "rev-list");
-		if (deepen_since)
-			argv_array_pushf(&av, "--max-age=%"PRItime, deepen_since);
-		if (deepen_not.nr) {
-			argv_array_push(&av, "--not");
-			for (i = 0; i < deepen_not.nr; i++) {
-				struct string_list_item *s = deepen_not.items + i;
-				argv_array_push(&av, s->string);
-			}
-			argv_array_push(&av, "--not");
-		}
-		for (i = 0; i < want_obj.nr; i++) {
-			struct object *o = want_obj.objects[i].item;
-			argv_array_push(&av, oid_to_hex(&o->oid));
-		}
-		deepen_by_rev_list(av.argc, av.argv, &shallows);
-		argv_array_clear(&av);
-	}
-	else
-		if (shallows.nr > 0) {
-			int i;
-			for (i = 0; i < shallows.nr; i++)
-				register_shallow(&shallows.objects[i].item->oid);
-		}
-
-	shallow_nr += shallows.nr;
+	if (send_shallow_list(depth, deepen_rev_list, deepen_since,
+			      &deepen_not, &shallows))
+		packet_flush(1);
 	object_array_clear(&shallows);
 }
 
@@ -1071,6 +1086,13 @@ struct upload_pack_data {
 	struct object_array wants;
 	struct oid_array haves;
 
+	struct object_array shallows;
+	struct string_list deepen_not;
+	int depth;
+	timestamp_t deepen_since;
+	int deepen_rev_list;
+	int deepen_relative;
+
 	unsigned stateless_rpc : 1;
 
 	unsigned use_thin_pack : 1;
@@ -1084,16 +1106,22 @@ static void upload_pack_data_init(struct upload_pack_data *data)
 {
 	struct object_array wants = OBJECT_ARRAY_INIT;
 	struct oid_array haves = OID_ARRAY_INIT;
+	struct object_array shallows = OBJECT_ARRAY_INIT;
+	struct string_list deepen_not = STRING_LIST_INIT_DUP;
 
 	memset(data, 0, sizeof(*data));
 	data->wants = wants;
 	data->haves = haves;
+	data->shallows = shallows;
+	data->deepen_not = deepen_not;
 }
 
 static void upload_pack_data_clear(struct upload_pack_data *data)
 {
 	object_array_clear(&data->wants);
 	oid_array_clear(&data->haves);
+	object_array_clear(&data->shallows);
+	string_list_clear(&data->deepen_not, 0);
 }
 
 static int parse_want(const char *line)
@@ -1174,6 +1202,22 @@ static void process_args(struct packet_reader *request,
 		}
 		if (!strcmp(arg, "done")) {
 			data->done = 1;
+			continue;
+		}
+
+		/* Shallow related arguments */
+		if (process_shallow(arg, &data->shallows))
+			continue;
+		if (process_deepen(arg, &data->depth))
+			continue;
+		if (process_deepen_since(arg, &data->deepen_since,
+					 &data->deepen_rev_list))
+			continue;
+		if (process_deepen_not(arg, &data->deepen_not,
+				       &data->deepen_rev_list))
+			continue;
+		if (!strcmp(arg, "deepen-relative")) {
+			data->deepen_relative = 1;
 			continue;
 		}
 
@@ -1272,6 +1316,23 @@ static int process_haves_and_send_acks(struct upload_pack_data *data)
 	return ret;
 }
 
+static void send_shallow_info(struct upload_pack_data *data)
+{
+	/* No shallow info needs to be sent */
+	if (!data->depth && !data->deepen_rev_list && !data->shallows.nr &&
+	    !is_repository_shallow())
+		return;
+
+	packet_write_fmt(1, "shallow-info\n");
+
+	if (!send_shallow_list(data->depth, data->deepen_rev_list,
+			       data->deepen_since, &data->deepen_not,
+			       &data->shallows) && is_repository_shallow())
+		deepen(INFINITE_DEPTH, data->deepen_relative, &data->shallows);
+
+	packet_delim(1);
+}
+
 enum fetch_state {
 	FETCH_PROCESS_ARGS = 0,
 	FETCH_SEND_ACKS,
@@ -1319,6 +1380,8 @@ int upload_pack_v2(struct repository *r, struct argv_array *keys,
 				state = FETCH_DONE;
 			break;
 		case FETCH_SEND_PACK:
+			send_shallow_info(&data);
+
 			packet_write_fmt(1, "packfile\n");
 			create_pack_file();
 			state = FETCH_DONE;
@@ -1330,4 +1393,12 @@ int upload_pack_v2(struct repository *r, struct argv_array *keys,
 
 	upload_pack_data_clear(&data);
 	return 0;
+}
+
+int upload_pack_advertise(struct repository *r,
+			  struct strbuf *value)
+{
+	if (value)
+		strbuf_addstr(value, "shallow");
+	return 1;
 }

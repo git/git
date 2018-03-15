@@ -255,12 +255,43 @@ A `fetch` request can take the following arguments:
 	to its base by position in pack rather than by an oid.  That is,
 	they can read OBJ_OFS_DELTA (ake type 6) in a packfile.
 
+    shallow <oid>
+	A client must notify the server of all commits for which it only
+	has shallow copies (meaning that it doesn't have the parents of
+	a commit) by supplying a 'shallow <oid>' line for each such
+	object so that the server is aware of the limitations of the
+	client's history.  This is so that the server is aware that the
+	client may not have all objects reachable from such commits.
+
+    deepen <depth>
+	Requests that the fetch/clone should be shallow having a commit
+	depth of <depth> relative to the remote side.
+
+    deepen-relative
+	Requests that the semantics of the "deepen" command be changed
+	to indicate that the depth requested is relative to the client's
+	current shallow boundary, instead of relative to the requested
+	commits.
+
+    deepen-since <timestamp>
+	Requests that the shallow clone/fetch should be cut at a
+	specific time, instead of depth.  Internally it's equivalent to
+	doing "git rev-list --max-age=<timestamp>". Cannot be used with
+	"deepen".
+
+    deepen-not <rev>
+	Requests that the shallow clone/fetch should be cut at a
+	specific revision specified by '<rev>', instead of a depth.
+	Internally it's equivalent of doing "git rev-list --not <rev>".
+	Cannot be used with "deepen", but can be used with
+	"deepen-since".
+
 The response of `fetch` is broken into a number of sections separated by
 delimiter packets (0001), with each section beginning with its section
 header.
 
     output = *section
-    section = (acknowledgments | packfile)
+    section = (acknowledgments | shallow-info | packfile)
 	      (flush-pkt | delim-pkt)
 
     acknowledgments = PKT-LINE("acknowledgments" LF)
@@ -269,6 +300,11 @@ header.
     ready = PKT-LINE("ready" LF)
     nak = PKT-LINE("NAK" LF)
     ack = PKT-LINE("ACK" SP obj-id LF)
+
+    shallow-info = PKT-LINE("shallow-info" LF)
+		   *PKT-LINE((shallow | unshallow) LF)
+    shallow = "shallow" SP obj-id
+    unshallow = "unshallow" SP obj-id
 
     packfile = PKT-LINE("packfile" LF)
 	       *PKT-LINE(%x01-03 *%x00-ff)
@@ -300,6 +336,35 @@ header.
 	  its response.  This is because the server will have already
 	  determined the objects it plans to send to the client and no
 	  further negotiation is needed.
+
+    shallow-info section
+	If the client has requested a shallow fetch/clone, a shallow
+	client requests a fetch or the server is shallow then the
+	server's response may include a shallow-info section.  The
+	shallow-info section will be included if (due to one of the
+	above conditions) the server needs to inform the client of any
+	shallow boundaries or adjustments to the clients already
+	existing shallow boundaries.
+
+	* Always begins with the section header "shallow-info"
+
+	* If a positive depth is requested, the server will compute the
+	  set of commits which are no deeper than the desired depth.
+
+	* The server sends a "shallow obj-id" line for each commit whose
+	  parents will not be sent in the following packfile.
+
+	* The server sends an "unshallow obj-id" line for each commit
+	  which the client has indicated is shallow, but is no longer
+	  shallow as a result of the fetch (due to its parents being
+	  sent in the following packfile).
+
+	* The server MUST NOT send any "unshallow" lines for anything
+	  which the client has not indicated was shallow as a part of
+	  its request.
+
+	* This section is only included if a packfile section is also
+	  included in the response.
 
     packfile section
 	* This section is only included if the client has sent 'want'

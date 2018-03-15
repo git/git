@@ -16,4 +16,8 @@ struct packet_reader;
 extern int upload_pack_v2(struct repository *r, struct argv_array *keys,
 			  struct packet_reader *request);
 
+struct strbuf;
+extern int upload_pack_advertise(struct repository *r,
+				 struct strbuf *value);
+
 #endif /* UPLOAD_PACK_H */
