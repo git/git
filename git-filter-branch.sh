@@ -310,7 +310,7 @@ git rev-list --reverse --topo-order --default HEAD \
 	die "Could not get the commits"
 commits=$(wc -l <../revs | tr -d " ")
 
-test $commits -eq 0 && die "Found nothing to rewrite"
+test $commits -eq 0 && die_with_status 2 "Found nothing to rewrite"
 
 # Rewrite the commits
 report_progress ()
