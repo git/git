@@ -32,6 +32,19 @@ test_expect_success 'list refs with git:// using protocol v2' '
 	test_cmp actual expect
 '
 
+test_expect_success 'ref advertisment is filtered with ls-remote using protocol v2' '
+	test_when_finished "rm -f log" &&
+
+	GIT_TRACE_PACKET="$(pwd)/log" git -c protocol.version=2 \
+		ls-remote "$GIT_DAEMON_URL/parent" master >actual &&
+
+	cat >expect <<-EOF &&
+	$(git -C "$daemon_parent" rev-parse refs/heads/master)$(printf "\t")refs/heads/master
+	EOF
+
+	test_cmp actual expect
+'
+
 stop_git_daemon
 
 # Test protocol v2 with 'file://' transport
@@ -51,6 +64,19 @@ test_expect_success 'list refs with file:// using protocol v2' '
 	grep "git< version 2" log &&
 
 	git ls-remote --symref "file://$(pwd)/file_parent" >expect &&
+	test_cmp actual expect
+'
+
+test_expect_success 'ref advertisment is filtered with ls-remote using protocol v2' '
+	test_when_finished "rm -f log" &&
+
+	GIT_TRACE_PACKET="$(pwd)/log" git -c protocol.version=2 \
+		ls-remote "file://$(pwd)/file_parent" master >actual &&
+
+	cat >expect <<-EOF &&
+	$(git -C file_parent rev-parse refs/heads/master)$(printf "\t")refs/heads/master
+	EOF
+
 	test_cmp actual expect
 '
 
