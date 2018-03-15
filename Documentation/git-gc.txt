@@ -15,8 +15,9 @@ DESCRIPTION
 -----------
 Runs a number of housekeeping tasks within the current repository,
 such as compressing file revisions (to reduce disk space and increase
-performance) and removing unreachable objects which may have been
-created from prior invocations of 'git add'.
+performance), removing unreachable objects which may have been
+created from prior invocations of 'git add', packing refs, pruning
+reflog, rerere metadata or stale working trees.
 
 Users are encouraged to run this task on a regular basis within
 each repository to maintain good disk space utilization and good
@@ -45,20 +46,25 @@ OPTIONS
 	With this option, 'git gc' checks whether any housekeeping is
 	required; if not, it exits without performing any work.
 	Some git commands run `git gc --auto` after performing
-	operations that could create many loose objects.
+	operations that could create many loose objects. Housekeeping
+	is required if there are too many loose objects or too many
+	packs in the repository.
 +
-Housekeeping is required if there are too many loose objects or
-too many packs in the repository. If the number of loose objects
-exceeds the value of the `gc.auto` configuration variable, then
-all loose objects are combined into a single pack using
-`git repack -d -l`.  Setting the value of `gc.auto` to 0
-disables automatic packing of loose objects.
+If the number of loose objects exceeds the value of the `gc.auto`
+configuration variable, then all loose objects are combined into a
+single pack using `git repack -d -l`.  Setting the value of `gc.auto`
+to 0 disables automatic packing of loose objects.
 +
 If the number of packs exceeds the value of `gc.autoPackLimit`,
 then existing packs (except those marked with a `.keep` file)
 are consolidated into a single pack by using the `-A` option of
 'git repack'. Setting `gc.autoPackLimit` to 0 disables
 automatic consolidation of packs.
++
+If houskeeping is required due to many loose objects or packs, all
+other housekeeping tasks (e.g. rerere, working trees, reflog...) will
+be performed as well.
+
 
 --prune=<date>::
 	Prune loose objects older than date (default is 2 weeks ago,
@@ -132,6 +138,10 @@ controls --depth option in linkgit:git-repack[1]. This defaults to 50.
 The optional configuration variable `gc.pruneExpire` controls how old
 the unreferenced loose objects have to be before they are pruned.  The
 default is "2 weeks ago".
+
+Optional configuration variable `gc.worktreePruneExpire` controls how
+old a stale working tree should be before `git worktree prune` deletes
+it. Default is "3 months ago".
 
 
 Notes
