@@ -401,18 +401,40 @@ out:
 	strbuf_release(&sb_dst);
 }
 
+/*
+ * Returns true (1) if the src encoding name matches the dst encoding
+ * name directly or one of its alternative names. E.g. UTF-16BE is the
+ * same as UTF16BE.
+ */
+static int same_utf_encoding(const char *src, const char *dst)
+{
+	if (istarts_with(src, "utf") && istarts_with(dst, "utf")) {
+		/* src[3] or dst[3] might be '\0' */
+		int i = (src[3] == '-' ? 4 : 3);
+		int j = (dst[3] == '-' ? 4 : 3);
+		return !strcasecmp(src+i, dst+j);
+	}
+	return 0;
+}
+
 int is_encoding_utf8(const char *name)
 {
 	if (!name)
 		return 1;
-	if (!strcasecmp(name, "utf-8") || !strcasecmp(name, "utf8"))
+	if (same_utf_encoding("utf-8", name))
 		return 1;
 	return 0;
 }
 
 int same_encoding(const char *src, const char *dst)
 {
-	if (is_encoding_utf8(src) && is_encoding_utf8(dst))
+	static const char utf8[] = "UTF-8";
+
+	if (!src)
+		src = utf8;
+	if (!dst)
+		dst = utf8;
+	if (same_utf_encoding(src, dst))
 		return 1;
 	return !strcasecmp(src, dst);
 }
