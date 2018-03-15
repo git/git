@@ -5,6 +5,7 @@
 #include "parse-options.h"
 #include "protocol.h"
 #include "upload-pack.h"
+#include "serve.h"
 
 static const char * const upload_pack_usage[] = {
 	N_("git upload-pack [<options>] <dir>"),
@@ -16,6 +17,7 @@ int cmd_upload_pack(int argc, const char **argv, const char *prefix)
 	const char *dir;
 	int strict = 0;
 	struct upload_pack_options opts = { 0 };
+	struct serve_options serve_opts = SERVE_OPTIONS_INIT;
 	struct option options[] = {
 		OPT_BOOL(0, "stateless-rpc", &opts.stateless_rpc,
 			 N_("quit after a single request/response exchange")),
@@ -48,11 +50,9 @@ int cmd_upload_pack(int argc, const char **argv, const char *prefix)
 
 	switch (determine_protocol_version_server()) {
 	case protocol_v2:
-		/*
-		 * fetch support for protocol v2 has not been implemented yet,
-		 * so ignore the request to use v2 and fallback to using v0.
-		 */
-		upload_pack(&opts);
+		serve_opts.advertise_capabilities = opts.advertise_refs;
+		serve_opts.stateless_rpc = opts.stateless_rpc;
+		serve(&serve_opts);
 		break;
 	case protocol_v1:
 		/*
