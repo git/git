@@ -95,6 +95,30 @@ test_expect_success 'pull with git:// using protocol v2' '
 	grep "fetch< version 2" log
 '
 
+test_expect_success 'push with git:// and a config of v2 does not request v2' '
+	test_when_finished "rm -f log" &&
+
+	# Till v2 for push is designed, make sure that if a client has
+	# protocol.version configured to use v2, that the client instead falls
+	# back and uses v0.
+
+	test_commit -C daemon_child three &&
+
+	# Push to another branch, as the target repository has the
+	# master branch checked out and we cannot push into it.
+	GIT_TRACE_PACKET="$(pwd)/log" git -C daemon_child -c protocol.version=2 \
+		push origin HEAD:client_branch &&
+
+	git -C daemon_child log -1 --format=%s >actual &&
+	git -C "$daemon_parent" log -1 --format=%s client_branch >expect &&
+	test_cmp expect actual &&
+
+	# Client requested to use protocol v2
+	! grep "push> .*\\\0\\\0version=2\\\0$" log &&
+	# Server responded using protocol v2
+	! grep "push< version 2" log
+'
+
 stop_git_daemon
 
 # Test protocol v2 with 'file://' transport

@@ -1218,6 +1218,14 @@ struct child_process *git_connect(int fd[2], const char *url,
 	enum protocol protocol;
 	enum protocol_version version = get_protocol_version_config();
 
+	/*
+	 * NEEDSWORK: If we are trying to use protocol v2 and we are planning
+	 * to perform a push, then fallback to v0 since the client doesn't know
+	 * how to push yet using v2.
+	 */
+	if (version == protocol_v2 && !strcmp("git-receive-pack", prog))
+		version = protocol_v0;
+
 	/* Without this we cannot rely on waitpid() to tell
 	 * what happened to our children.
 	 */
