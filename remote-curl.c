@@ -188,7 +188,12 @@ static struct ref *parse_git_refs(struct discovery *heads, int for_push)
 	heads->version = discover_version(&reader);
 	switch (heads->version) {
 	case protocol_v2:
-		die("support for protocol v2 not implemented yet");
+		/*
+		 * Do nothing.  This isn't a list of refs but rather a
+		 * capability advertisement.  Client would have run
+		 * 'stateless-connect' so we'll dump this capability listing
+		 * and let them request the refs themselves.
+		 */
 		break;
 	case protocol_v1:
 	case protocol_v0:
@@ -1085,6 +1090,202 @@ static void parse_push(struct strbuf *buf)
 	free(specs);
 }
 
+/*
+ * Used to represent the state of a connection to an HTTP server when
+ * communicating using git's wire-protocol version 2.
+ */
+struct proxy_state {
+	char *service_name;
+	char *service_url;
+	struct curl_slist *headers;
+	struct strbuf request_buffer;
+	int in;
+	int out;
+	struct packet_reader reader;
+	size_t pos;
+	int seen_flush;
+};
+
+static void proxy_state_init(struct proxy_state *p, const char *service_name,
+			     enum protocol_version version)
+{
+	struct strbuf buf = STRBUF_INIT;
+
+	memset(p, 0, sizeof(*p));
+	p->service_name = xstrdup(service_name);
+
+	p->in = 0;
+	p->out = 1;
+	strbuf_init(&p->request_buffer, 0);
+
+	strbuf_addf(&buf, "%s%s", url.buf, p->service_name);
+	p->service_url = strbuf_detach(&buf, NULL);
+
+	p->headers = http_copy_default_headers();
+
+	strbuf_addf(&buf, "Content-Type: application/x-%s-request", p->service_name);
+	p->headers = curl_slist_append(p->headers, buf.buf);
+	strbuf_reset(&buf);
+
+	strbuf_addf(&buf, "Accept: application/x-%s-result", p->service_name);
+	p->headers = curl_slist_append(p->headers, buf.buf);
+	strbuf_reset(&buf);
+
+	p->headers = curl_slist_append(p->headers, "Transfer-Encoding: chunked");
+
+	/* Add the Git-Protocol header */
+	if (get_protocol_http_header(version, &buf))
+		p->headers = curl_slist_append(p->headers, buf.buf);
+
+	packet_reader_init(&p->reader, p->in, NULL, 0,
+			   PACKET_READ_GENTLE_ON_EOF);
+
+	strbuf_release(&buf);
+}
+
+static void proxy_state_clear(struct proxy_state *p)
+{
+	free(p->service_name);
+	free(p->service_url);
+	curl_slist_free_all(p->headers);
+	strbuf_release(&p->request_buffer);
+}
+
+/*
+ * CURLOPT_READFUNCTION callback function.
+ * Attempts to copy over a single packet-line at a time into the
+ * curl provided buffer.
+ */
+static size_t proxy_in(char *buffer, size_t eltsize,
+		       size_t nmemb, void *userdata)
+{
+	size_t max;
+	struct proxy_state *p = userdata;
+	size_t avail = p->request_buffer.len - p->pos;
+
+
+	if (eltsize != 1)
+		BUG("curl read callback called with size = %"PRIuMAX" != 1",
+		    (uintmax_t)eltsize);
+	max = nmemb;
+
+	if (!avail) {
+		if (p->seen_flush) {
+			p->seen_flush = 0;
+			return 0;
+		}
+
+		strbuf_reset(&p->request_buffer);
+		switch (packet_reader_read(&p->reader)) {
+		case PACKET_READ_EOF:
+			die("unexpected EOF when reading from parent process");
+		case PACKET_READ_NORMAL:
+			packet_buf_write_len(&p->request_buffer, p->reader.line,
+					     p->reader.pktlen);
+			break;
+		case PACKET_READ_DELIM:
+			packet_buf_delim(&p->request_buffer);
+			break;
+		case PACKET_READ_FLUSH:
+			packet_buf_flush(&p->request_buffer);
+			p->seen_flush = 1;
+			break;
+		}
+		p->pos = 0;
+		avail = p->request_buffer.len;
+	}
+
+	if (max < avail)
+		avail = max;
+	memcpy(buffer, p->request_buffer.buf + p->pos, avail);
+	p->pos += avail;
+	return avail;
+}
+
+static size_t proxy_out(char *buffer, size_t eltsize,
+			size_t nmemb, void *userdata)
+{
+	size_t size;
+	struct proxy_state *p = userdata;
+
+	if (eltsize != 1)
+		BUG("curl read callback called with size = %"PRIuMAX" != 1",
+		    (uintmax_t)eltsize);
+	size = nmemb;
+
+	write_or_die(p->out, buffer, size);
+	return size;
+}
+
+/* Issues a request to the HTTP server configured in `p` */
+static int proxy_request(struct proxy_state *p)
+{
+	struct active_request_slot *slot;
+
+	slot = get_active_slot();
+
+	curl_easy_setopt(slot->curl, CURLOPT_NOBODY, 0);
+	curl_easy_setopt(slot->curl, CURLOPT_POST, 1);
+	curl_easy_setopt(slot->curl, CURLOPT_URL, p->service_url);
+	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, p->headers);
+
+	/* Setup function to read request from client */
+	curl_easy_setopt(slot->curl, CURLOPT_READFUNCTION, proxy_in);
+	curl_easy_setopt(slot->curl, CURLOPT_READDATA, p);
+
+	/* Setup function to write server response to client */
+	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, proxy_out);
+	curl_easy_setopt(slot->curl, CURLOPT_WRITEDATA, p);
+
+	if (run_slot(slot, NULL) != HTTP_OK)
+		return -1;
+
+	return 0;
+}
+
+static int stateless_connect(const char *service_name)
+{
+	struct discovery *discover;
+	struct proxy_state p;
+
+	/*
+	 * Run the info/refs request and see if the server supports protocol
+	 * v2.  If and only if the server supports v2 can we successfully
+	 * establish a stateless connection, otherwise we need to tell the
+	 * client to fallback to using other transport helper functions to
+	 * complete their request.
+	 */
+	discover = discover_refs(service_name, 0);
+	if (discover->version != protocol_v2) {
+		printf("fallback\n");
+		fflush(stdout);
+		return -1;
+	} else {
+		/* Stateless Connection established */
+		printf("\n");
+		fflush(stdout);
+	}
+
+	proxy_state_init(&p, service_name, discover->version);
+
+	/*
+	 * Dump the capability listing that we got from the server earlier
+	 * during the info/refs request.
+	 */
+	write_or_die(p.out, discover->buf, discover->len);
+
+	/* Peek the next packet line.  Until we see EOF keep sending POSTs */
+	while (packet_reader_peek(&p.reader) != PACKET_READ_EOF) {
+		if (proxy_request(&p)) {
+			/* We would have an err here */
+			break;
+		}
+	}
+
+	proxy_state_clear(&p);
+	return 0;
+}
+
 int cmd_main(int argc, const char **argv)
 {
 	struct strbuf buf = STRBUF_INIT;
@@ -1153,12 +1354,16 @@ int cmd_main(int argc, const char **argv)
 			fflush(stdout);
 
 		} else if (!strcmp(buf.buf, "capabilities")) {
+			printf("stateless-connect\n");
 			printf("fetch\n");
 			printf("option\n");
 			printf("push\n");
 			printf("check-connectivity\n");
 			printf("\n");
 			fflush(stdout);
+		} else if (skip_prefix(buf.buf, "stateless-connect ", &arg)) {
+			if (!stateless_connect(arg))
+				break;
 		} else {
 			error("remote-curl: unknown command '%s' from git", buf.buf);
 			return 1;
