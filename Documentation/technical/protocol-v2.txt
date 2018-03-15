@@ -199,3 +199,128 @@ The output of ls-refs is as follows:
     ref-attribute = (symref | peeled)
     symref = "symref-target:" symref-target
     peeled = "peeled:" obj-id
+
+ fetch
+~~~~~~~
+
+`fetch` is the command used to fetch a packfile in v2.  It can be looked
+at as a modified version of the v1 fetch where the ref-advertisement is
+stripped out (since the `ls-refs` command fills that role) and the
+message format is tweaked to eliminate redundancies and permit easy
+addition of future extensions.
+
+Additional features not supported in the base command will be advertised
+as the value of the command in the capability advertisement in the form
+of a space separated list of features: "<command>=<feature 1> <feature 2>"
+
+A `fetch` request can take the following arguments:
+
+    want <oid>
+	Indicates to the server an object which the client wants to
+	retrieve.  Wants can be anything and are not limited to
+	advertised objects.
+
+    have <oid>
+	Indicates to the server an object which the client has locally.
+	This allows the server to make a packfile which only contains
+	the objects that the client needs. Multiple 'have' lines can be
+	supplied.
+
+    done
+	Indicates to the server that negotiation should terminate (or
+	not even begin if performing a clone) and that the server should
+	use the information supplied in the request to construct the
+	packfile.
+
+    thin-pack
+	Request that a thin pack be sent, which is a pack with deltas
+	which reference base objects not contained within the pack (but
+	are known to exist at the receiving end). This can reduce the
+	network traffic significantly, but it requires the receiving end
+	to know how to "thicken" these packs by adding the missing bases
+	to the pack.
+
+    no-progress
+	Request that progress information that would normally be sent on
+	side-band channel 2, during the packfile transfer, should not be
+	sent.  However, the side-band channel 3 is still used for error
+	responses.
+
+    include-tag
+	Request that annotated tags should be sent if the objects they
+	point to are being sent.
+
+    ofs-delta
+	Indicate that the client understands PACKv2 with delta referring
+	to its base by position in pack rather than by an oid.  That is,
+	they can read OBJ_OFS_DELTA (ake type 6) in a packfile.
+
+The response of `fetch` is broken into a number of sections separated by
+delimiter packets (0001), with each section beginning with its section
+header.
+
+    output = *section
+    section = (acknowledgments | packfile)
+	      (flush-pkt | delim-pkt)
+
+    acknowledgments = PKT-LINE("acknowledgments" LF)
+		      (nak | *ack)
+		      (ready)
+    ready = PKT-LINE("ready" LF)
+    nak = PKT-LINE("NAK" LF)
+    ack = PKT-LINE("ACK" SP obj-id LF)
+
+    packfile = PKT-LINE("packfile" LF)
+	       *PKT-LINE(%x01-03 *%x00-ff)
+
+    acknowledgments section
+	* If the client determines that it is finished with negotiations
+	  by sending a "done" line, the acknowledgments sections MUST be
+	  omitted from the server's response.
+
+	* Always begins with the section header "acknowledgments"
+
+	* The server will respond with "NAK" if none of the object ids sent
+	  as have lines were common.
+
+	* The server will respond with "ACK obj-id" for all of the
+	  object ids sent as have lines which are common.
+
+	* A response cannot have both "ACK" lines as well as a "NAK"
+	  line.
+
+	* The server will respond with a "ready" line indicating that
+	  the server has found an acceptable common base and is ready to
+	  make and send a packfile (which will be found in the packfile
+	  section of the same response)
+
+	* If the server has found a suitable cut point and has decided
+	  to send a "ready" line, then the server can decide to (as an
+	  optimization) omit any "ACK" lines it would have sent during
+	  its response.  This is because the server will have already
+	  determined the objects it plans to send to the client and no
+	  further negotiation is needed.
+
+    packfile section
+	* This section is only included if the client has sent 'want'
+	  lines in its request and either requested that no more
+	  negotiation be done by sending 'done' or if the server has
+	  decided it has found a sufficient cut point to produce a
+	  packfile.
+
+	* Always begins with the section header "packfile"
+
+	* The transmission of the packfile begins immediately after the
+	  section header
+
+	* The data transfer of the packfile is always multiplexed, using
+	  the same semantics of the 'side-band-64k' capability from
+	  protocol version 1.  This means that each packet, during the
+	  packfile data stream, is made up of a leading 4-byte pkt-line
+	  length (typical of the pkt-line format), followed by a 1-byte
+	  stream code, followed by the actual data.
+
+	  The stream code can be one of:
+		1 - pack data
+		2 - progress messages
+		3 - fatal error message just before stream aborts
