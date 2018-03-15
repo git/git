@@ -61,6 +61,10 @@ UI, Workflows & Features
  * "git diff" and friends learned funcname patterns for Go language
    source files.
 
+ * "git send-email" learned "--reply-to=<address>" option.
+
+ * Funcname pattern used for C# now recognizes "async" keyword.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -133,6 +137,8 @@ Performance, Internal Implementation, Development Support etc.
  * Writing out the index file when the only thing that changed in it
    is the untracked cache information is often wasteful, and this has
    been optimized out.
+
+ * Various pieces of Perl code we have have been cleaned up.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -303,6 +309,9 @@ Fixes since v2.16
    when the command was reimplemented in C by mistake.
    (merge 095c741edd ab/gc-auto-in-commit later to maint).
 
+ * Allow running a couple of tests with "sh -x".
+   (merge c20bf94abc sg/cvs-tests-with-x later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge e2a5a028c7 bw/oidmap-autoinit later to maint).
    (merge ec3b4b06f8 cl/t9001-cleanup later to maint).
@@ -340,3 +349,4 @@ Fixes since v2.16
    (merge edfb8ba068 ot/ref-filter-cleanup later to maint).
    (merge 11395a3b4b jc/test-must-be-empty later to maint).
    (merge 768b9d6db7 mk/doc-pretty-fill later to maint).
+   (merge 2caa7b8d27 ab/man-sec-list later to maint).
