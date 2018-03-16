@@ -75,6 +75,20 @@ Performance, Internal Implementation, Development Support etc.
  * The build procedure for perl/ part has been greatly simplified by
    weaning ourselves off of MakeMaker.
 
+ * Perl 5.8 or greater has been required since Git 1.7.4 released in
+   2010, but we continued to assume some core modules may not exist and
+   used a conditional "eval { require <<module>> }"; we no longer do
+   this.  Some platforms (Fedora/RedHat/CentOS, for example) ship Perl
+   without all core modules by default (e.g. Digest::MD5, File::Temp,
+   File::Spec, Net::Domain, Net::SMTP).  Users on such platforms may
+   need to install these additional modules.
+
+ * As a convenience, we install copies of Perl modules we require which
+   are not part of the core Perl distribution (e.g. Error and
+   Mail::Address).  Users and packagers whose operating system provides
+   these modules can set NO_PERL_CPAN_FALLBACKS to avoid installing the
+   bundled modules.
+
  * In preparation for implementing narrow/partial clone, the machinery
    for checking object connectivity used by gc and fsck has been
    taught that a missing object is OK when it is referenced by a
