@@ -3045,7 +3045,7 @@ _git_tag ()
 	while [ $c -lt $cword ]; do
 		i="${words[c]}"
 		case "$i" in
-		-d|-v)
+		-d|--delete|-v|--verify)
 			__gitcomp_direct "$(__git_tags "" "$cur" " ")"
 			return
 			;;
