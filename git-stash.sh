@@ -315,9 +315,9 @@ push_stash () {
 
 		if test $# != 0
 		then
-			git add -u -- "$@" |
-			git checkout-index -z --force --stdin
-			git diff-index -p --cached --binary HEAD -- "$@" | git apply --index -R
+			git add -u -- "$@"
+			git diff-index -p --cached --binary HEAD -- "$@" |
+			git apply --index -R
 		else
 			git reset --hard -q
 		fi
