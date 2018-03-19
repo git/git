@@ -627,12 +627,12 @@ then
 				print H "$_:$f\n" or die;
 			}
 			close(H) or die;' || die "Unable to save state")
-	state_tree=$(/bin/echo -e "100644 blob $state_blob\tfilter.map" | git mktree)
+	state_tree=$(printf '100644 blob %s\tfilter.map\n' "$state_blob" | git mktree)
 	if test -n "$state_commit"
 	then
-		state_commit=$(/bin/echo "Sync" | git commit-tree "$state_tree" -p "$state_commit")
+		state_commit=$(echo "Sync" | git commit-tree "$state_tree" -p "$state_commit")
 	else
-		state_commit=$(/bin/echo "Sync" | git commit-tree "$state_tree" )
+		state_commit=$(echo "Sync" | git commit-tree "$state_tree" )
 	fi
 	git update-ref "$state_branch" "$state_commit"
 fi
