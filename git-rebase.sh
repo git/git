@@ -472,6 +472,8 @@ fi
 
 if test -n "$signoff"
 then
+	test -n "$preserve_merges" &&
+		die "$(gettext "error: cannot combine '--signoff' with '--preserve-merges'")"
 	git_am_opt="$git_am_opt $signoff"
 	force_rebase=t
 fi
