@@ -263,6 +263,9 @@ do
 	--keep-empty)
 		keep_empty=yes
 		;;
+	--no-keep-empty)
+		keep_empty=
+		;;
 	--preserve-merges)
 		preserve_merges=t
 		test -z "$interactive_rebase" && interactive_rebase=implied
