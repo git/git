@@ -60,6 +60,7 @@ $(gettext 'Resolve all conflicts manually, mark them as resolved with
 You can instead skip this commit: run "git rebase --skip".
 To abort and get back to the state before "git rebase", run "git rebase --abort".')
 "
+squash_onto=
 unset onto
 unset restrict_revision
 cmd=
