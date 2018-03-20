@@ -90,6 +90,7 @@ action=
 preserve_merges=
 autosquash=
 keep_empty=
+signoff=
 test "$(git config --bool rebase.autosquash)" = "true" && autosquash=t
 case "$(git config --bool commit.gpgsign)" in
 true)	gpg_sign_opt=-S ;;
@@ -119,6 +120,10 @@ read_basic_state () {
 		allow_rerere_autoupdate="$(cat "$state_dir"/allow_rerere_autoupdate)"
 	test -f "$state_dir"/gpg_sign_opt &&
 		gpg_sign_opt="$(cat "$state_dir"/gpg_sign_opt)"
+	test -f "$state_dir"/signoff && {
+		signoff="$(cat "$state_dir"/signoff)"
+		force_rebase=t
+	}
 }
 
 write_basic_state () {
@@ -133,6 +138,7 @@ write_basic_state () {
 	test -n "$allow_rerere_autoupdate" && echo "$allow_rerere_autoupdate" > \
 		"$state_dir"/allow_rerere_autoupdate
 	test -n "$gpg_sign_opt" && echo "$gpg_sign_opt" > "$state_dir"/gpg_sign_opt
+	test -n "$signoff" && echo "$signoff" >"$state_dir"/signoff
 }
 
 output () {
@@ -328,7 +334,13 @@ do
 	--ignore-whitespace)
 		git_am_opt="$git_am_opt $1"
 		;;
-	--committer-date-is-author-date|--ignore-date|--signoff|--no-signoff)
+	--signoff)
+		signoff=--signoff
+		;;
+	--no-signoff)
+		signoff=
+		;;
+	--committer-date-is-author-date|--ignore-date)
 		git_am_opt="$git_am_opt $1"
 		force_rebase=t
 		;;
@@ -456,6 +468,12 @@ fi
 if test -t 2 && test -z "$GIT_QUIET"
 then
 	git_format_patch_opt="$git_format_patch_opt --progress"
+fi
+
+if test -n "$signoff"
+then
+	git_am_opt="$git_am_opt $signoff"
+	force_rebase=t
 fi
 
 if test -z "$rebase_root"
