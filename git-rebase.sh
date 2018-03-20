@@ -452,6 +452,11 @@ then
 	test -z "$interactive_rebase" && interactive_rebase=implied
 fi
 
+if test -n "$keep_empty"
+then
+	test -z "$interactive_rebase" && interactive_rebase=implied
+fi
+
 if test -n "$interactive_rebase"
 then
 	type=interactive
