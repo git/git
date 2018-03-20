@@ -1767,7 +1767,7 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 		    !(err == ERROR_INVALID_PARAMETER &&
 		      GetVersion() >> 16 < 9200) &&
 		    !getenv("SUPPRESS_HANDLE_INHERITANCE_WARNING")) {
-			DWORD fl;
+			DWORD fl = 0;
 			int i;
 
 			setenv("SUPPRESS_HANDLE_INHERITANCE_WARNING", "1", 1);
