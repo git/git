@@ -40,7 +40,7 @@ the other tree did, declaring 'our' history contains all that happened in it.
 
 theirs;;
 	This is the opposite of 'ours'; note that, unlike 'ours', there is
-	no 'theirs' merge stragegy to confuse this merge option with.
+	no 'theirs' merge strategy to confuse this merge option with.
 
 patience;;
 	With this option, 'merge-recursive' spends a little extra time
