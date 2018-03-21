@@ -886,8 +886,17 @@ static int get_pack(struct fetch_pack_args *args,
 	    ? fetch_fsck_objects
 	    : transfer_fsck_objects >= 0
 	    ? transfer_fsck_objects
-	    : 0)
-		argv_array_push(&cmd.args, "--strict");
+	    : 0) {
+		if (args->from_promisor)
+			/*
+			 * We cannot use --strict in index-pack because it
+			 * checks both broken objects and links, but we only
+			 * want to check for broken objects.
+			 */
+			argv_array_push(&cmd.args, "--fsck-objects");
+		else
+			argv_array_push(&cmd.args, "--strict");
+	}
 
 	cmd.in = demux.out;
 	cmd.git_cmd = 1;
