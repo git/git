@@ -65,6 +65,11 @@ UI, Workflows & Features
 
  * Funcname pattern used for C# now recognizes "async" keyword.
 
+ * In a way similar to how "git tag" learned to honor the pager
+   setting only in the list mode, "git config" learned to ignore the
+   pager setting when it is used for setting values (i.e. when the
+   purpose of the operation is not to "show").
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -153,6 +158,9 @@ Performance, Internal Implementation, Development Support etc.
    been optimized out.
 
  * Various pieces of Perl code we have have been cleaned up.
+
+ * Internal API clean-up to allow write_locked_index() optionally skip
+   writing the in-core index when it is not modified.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -326,6 +334,24 @@ Fixes since v2.16
  * Allow running a couple of tests with "sh -x".
    (merge c20bf94abc sg/cvs-tests-with-x later to maint).
 
+ * The codepath to replace an existing entry in the index had a bug in
+   updating the name hash structure, which has been fixed.
+   (merge 0e267b7a24 bp/refresh-cache-ent-rehash-fix later to maint).
+
+ * The transfer.fsckobjects configuration tells "git fetch" to
+   validate the data and connected-ness of objects in the received
+   pack; the code to perform this check has been taught about the
+   narrow clone's convention that missing objects that are reachable
+   from objects in a pack that came from a promissor remote is OK.
+
+ * There was an unused file-scope static variable left in http.c when
+   building for versions of libCURL that is older than 7.19.4, which
+   has been fixed.
+   (merge b8fd6008ec rj/http-code-cleanup later to maint).
+
+ * Shell script portability fix.
+   (merge 206a6ae013 ml/filter-branch-portability-fix later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge e2a5a028c7 bw/oidmap-autoinit later to maint).
    (merge ec3b4b06f8 cl/t9001-cleanup later to maint).
@@ -364,3 +390,9 @@ Fixes since v2.16
    (merge 11395a3b4b jc/test-must-be-empty later to maint).
    (merge 768b9d6db7 mk/doc-pretty-fill later to maint).
    (merge 2caa7b8d27 ab/man-sec-list later to maint).
+   (merge 40c17eb184 ks/t3200-typofix later to maint).
+   (merge bd9958c358 dp/merge-strategy-doc-fix later to maint).
+   (merge 9ee0540a40 js/ming-strftime later to maint).
+   (merge 1775e990f7 tz/complete-tag-delete-tagname later to maint).
+   (merge 00a4b03501 rj/warning-uninitialized-fix later to maint).
+   (merge b635ed97a0 jk/attributes-path-doc later to maint).
