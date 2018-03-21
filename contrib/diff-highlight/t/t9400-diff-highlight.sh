@@ -52,8 +52,8 @@ test_strip_patch_header () {
 # dh_test_setup_history generates a contrived graph such that we have at least
 # 1 nesting (E) and 2 nestings (F).
 #
-#	      A branch
-#	     /
+#	  A branch
+#	 /
 #	D---E---F master
 #
 #	git log --all --graph
