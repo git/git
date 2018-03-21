@@ -264,6 +264,15 @@ test_expect_success 'diff-highlight works with the --graph option' '
 	test_cmp graph.exp graph.act
 '
 
+# Just reuse the previous graph test, but with --color.  Our trimming
+# doesn't know about color, so just sanity check that something got
+# highlighted.
+test_expect_success 'diff-highlight works with color graph' '
+	git log --branches -p --date-order --graph --color |
+		"$DIFF_HIGHLIGHT" | trim_graph | left_trim >graph &&
+	grep "\[7m" graph
+'
+
 # Most combined diffs won't meet diff-highlight's line-number filter. So we
 # create one here where one side drops a line and the other modifies it. That
 # should result in a diff like:
