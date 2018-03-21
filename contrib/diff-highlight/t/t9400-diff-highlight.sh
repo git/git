@@ -310,4 +310,32 @@ test_expect_success 'diff-highlight ignores combined diffs' '
 	test_cmp expect actual
 '
 
+test_expect_success 'diff-highlight handles --graph with leading dash' '
+	cat >file <<-\EOF &&
+	before
+	the old line
+	-leading dash
+	EOF
+	git add file &&
+	git commit -m before &&
+
+	sed s/old/new/ <file >file.tmp &&
+	mv file.tmp file &&
+	git add file &&
+	git commit -m after &&
+
+	cat >expect <<-EOF &&
+	--- a/file
+	+++ b/file
+	@@ -1,3 +1,3 @@
+	 before
+	-the ${CW}old${CR} line
+	+the ${CW}new${CR} line
+	 -leading dash
+	EOF
+	git log --graph -p -1 | "$DIFF_HIGHLIGHT" >actual.raw &&
+	trim_graph <actual.raw | sed -n "/^---/,\$p" >actual &&
+	test_cmp expect actual
+'
+
 test_done
