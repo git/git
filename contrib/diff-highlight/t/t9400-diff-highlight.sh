@@ -52,9 +52,9 @@ test_strip_patch_header () {
 # dh_test_setup_history generates a contrived graph such that we have at least
 # 1 nesting (E) and 2 nestings (F).
 #
-#	  A branch
+#	  A master
 #	 /
-#	D---E---F master
+#	D---E---F branch
 #
 #	git log --all --graph
 #	* commit
@@ -74,18 +74,22 @@ dh_test_setup_history () {
 
 	cat file1 >file &&
 	git add file &&
+	test_tick &&
 	git commit -m "D" &&
 
 	git checkout -b branch &&
 	cat file2 >file &&
-	git commit -a -m "A" &&
-
-	git checkout master &&
-	cat file2 >file &&
+	test_tick &&
 	git commit -a -m "E" &&
 
 	cat file3 >file &&
-	git commit -a -m "F"
+	test_tick &&
+	git commit -a -m "F" &&
+
+	git checkout master &&
+	cat file2 >file &&
+	test_tick &&
+	git commit -a -m "A"
 }
 
 left_trim () {
