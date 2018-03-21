@@ -52,15 +52,17 @@ test_strip_patch_header () {
 # dh_test_setup_history generates a contrived graph such that we have at least
 # 1 nesting (E) and 2 nestings (F).
 #
-#	  A master
+#	  A---B master
 #	 /
 #	D---E---F branch
 #
 #	git log --all --graph
 #	* commit
-#	|    A
+#	|    B
 #	| * commit
 #	| |    F
+#	* | commit
+#	| |    A
 #	| * commit
 #	|/
 #	|    E
@@ -78,14 +80,20 @@ dh_test_setup_history () {
 	test_tick &&
 	git commit -a -m "E" &&
 
+	git checkout master &&
+	echo file2 >file &&
+	test_tick &&
+	git commit -a -m "A" &&
+
+	git checkout branch &&
 	echo file3 >file &&
 	test_tick &&
 	git commit -a -m "F" &&
 
 	git checkout master &&
-	echo file2 >file &&
+	echo file3 >file &&
 	test_tick &&
-	git commit -a -m "A"
+	git commit -a -m "B"
 }
 
 left_trim () {
@@ -246,12 +254,12 @@ test_expect_failure 'diff-highlight treats combining code points as a unit' '
 test_expect_success 'diff-highlight works with the --graph option' '
 	dh_test_setup_history &&
 
-	# topo-order so that the order of the commits is the same as with --graph
+	# date-order so that the commits are interleaved for both
 	# trim graph elements so we can do a diff
 	# trim leading space because our trim_graph is not perfect
-	git log --branches -p --topo-order |
+	git log --branches -p --date-order |
 		"$DIFF_HIGHLIGHT" | left_trim >graph.exp &&
-	git log --branches -p --graph |
+	git log --branches -p --date-order --graph |
 		"$DIFF_HIGHLIGHT" | trim_graph | left_trim >graph.act &&
 	test_cmp graph.exp graph.act
 '
