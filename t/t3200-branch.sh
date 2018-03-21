@@ -528,7 +528,7 @@ test_expect_success 'git branch -c -f o/q o/p should work when o/p exists' '
 	git branch -c -f o/q o/p
 '
 
-test_expect_success 'git branch -c qq rr/qq should fail when r exists' '
+test_expect_success 'git branch -c qq rr/qq should fail when rr exists' '
 	git branch qq &&
 	git branch rr &&
 	test_must_fail git branch -c qq rr/qq
