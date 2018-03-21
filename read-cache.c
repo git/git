@@ -62,6 +62,7 @@ static void replace_index_entry(struct index_state *istate, int nr, struct cache
 	replace_index_entry_in_base(istate, old, ce);
 	remove_name_hash(istate, old);
 	free(old);
+	ce->ce_flags &= ~CE_HASHED;
 	set_index_entry(istate, nr, ce);
 	ce->ce_flags |= CE_UPDATE_IN_BASE;
 	mark_fsmonitor_invalid(istate, ce);
@@ -1324,7 +1325,8 @@ static struct cache_entry *refresh_cache_ent(struct index_state *istate,
 
 	size = ce_size(ce);
 	updated = xmalloc(size);
-	memcpy(updated, ce, size);
+	copy_cache_entry(updated, ce);
+	memcpy(updated->name, ce->name, ce->ce_namelen + 1);
 	fill_stat_cache_info(updated, &st);
 	/*
 	 * If ignore_valid is not set, we should leave CE_VALID bit
