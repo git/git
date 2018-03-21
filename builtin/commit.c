@@ -389,13 +389,9 @@ static const char *prepare_index(int argc, const char **argv, const char *prefix
 		if (active_cache_changed
 		    || !cache_tree_fully_valid(active_cache_tree))
 			update_main_cache_tree(WRITE_TREE_SILENT);
-		if (active_cache_changed) {
-			if (write_locked_index(&the_index, &index_lock,
-					       COMMIT_LOCK))
-				die(_("unable to write new_index file"));
-		} else {
-			rollback_lock_file(&index_lock);
-		}
+		if (write_locked_index(&the_index, &index_lock,
+				       COMMIT_LOCK | SKIP_IF_UNCHANGED))
+			die(_("unable to write new_index file"));
 		commit_style = COMMIT_AS_IS;
 		ret = get_index_file();
 		goto out;

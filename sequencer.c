@@ -517,15 +517,14 @@ static int do_recursive_merge(struct commit *base, struct commit *next,
 		return clean;
 	}
 
-	if (active_cache_changed &&
-	    write_locked_index(&the_index, &index_lock, COMMIT_LOCK))
+	if (write_locked_index(&the_index, &index_lock,
+			       COMMIT_LOCK | SKIP_IF_UNCHANGED))
 		/*
 		 * TRANSLATORS: %s will be "revert", "cherry-pick" or
 		 * "rebase -i".
 		 */
 		return error(_("%s: Unable to write new index file"),
 			_(action_name(opts)));
-	rollback_lock_file(&index_lock);
 
 	if (!clean)
 		append_conflicts_hint(msgbuf);
@@ -1713,13 +1712,13 @@ static int read_and_refresh_cache(struct replay_opts *opts)
 			_(action_name(opts)));
 	}
 	refresh_index(&the_index, REFRESH_QUIET|REFRESH_UNMERGED, NULL, NULL, NULL);
-	if (the_index.cache_changed && index_fd >= 0) {
-		if (write_locked_index(&the_index, &index_lock, COMMIT_LOCK)) {
+	if (index_fd >= 0) {
+		if (write_locked_index(&the_index, &index_lock,
+				       COMMIT_LOCK | SKIP_IF_UNCHANGED)) {
 			return error(_("git %s: failed to refresh the index"),
 				_(action_name(opts)));
 		}
 	}
-	rollback_lock_file(&index_lock);
 	return 0;
 }
 
