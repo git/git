@@ -536,7 +536,7 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 		mark_edges_uninteresting(&revs, show_edge);
 
 	if (bisect_list) {
-		int reaches = reaches, all = all;
+		int reaches, all;
 
 		find_bisection(&revs.commits, &reaches, &all, bisect_find_all);
 
