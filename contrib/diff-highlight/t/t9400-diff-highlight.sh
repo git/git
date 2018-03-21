@@ -68,26 +68,22 @@ test_strip_patch_header () {
 #	     D
 #
 dh_test_setup_history () {
-	echo "file1" >file1 &&
-	echo "file2" >file2 &&
-	echo "file3" >file3 &&
-
-	cat file1 >file &&
+	echo file1 >file &&
 	git add file &&
 	test_tick &&
 	git commit -m "D" &&
 
 	git checkout -b branch &&
-	cat file2 >file &&
+	echo file2 >file &&
 	test_tick &&
 	git commit -a -m "E" &&
 
-	cat file3 >file &&
+	echo file3 >file &&
 	test_tick &&
 	git commit -a -m "F" &&
 
 	git checkout master &&
-	cat file2 >file &&
+	echo file2 >file &&
 	test_tick &&
 	git commit -a -m "A"
 }
