@@ -1267,9 +1267,11 @@ int sha1_object_info_extended(const unsigned char *sha1, struct object_info *oi,
 			return 0;
 
 		/* Not a loose object; someone else may have just packed it. */
-		reprepare_packed_git();
-		if (find_pack_entry(real, &e))
-			break;
+		if (!(flags & OBJECT_INFO_QUICK)) {
+			reprepare_packed_git();
+			if (find_pack_entry(real, &e))
+				break;
+		}
 
 		/* Check if it is a missing object */
 		if (fetch_if_missing && repository_format_partial_clone &&
