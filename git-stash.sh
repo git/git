@@ -310,7 +310,7 @@ push_stash () {
 		test "$untracked" = "all" && CLEAN_X_OPTION=-x || CLEAN_X_OPTION=
 		if test -n "$untracked" && test $# = 0
 		then
-			git clean --force --quiet -d $CLEAN_X_OPTION -- "$@"
+			git clean --force --quiet -d $CLEAN_X_OPTION
 		fi
 
 		if test $# != 0
