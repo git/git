@@ -283,6 +283,7 @@ int cmd_shortlog(int argc, const char **argv, const char *prefix)
 	for (;;) {
 		switch (parse_options_step(&ctx, options, shortlog_usage)) {
 		case PARSE_OPT_HELP:
+		case PARSE_OPT_ERROR:
 			exit(129);
 		case PARSE_OPT_DONE:
 			goto parse_done;
