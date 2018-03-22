@@ -512,32 +512,16 @@ static void find_abbrev_len_for_pack(struct packed_git *p,
 				     struct min_abbrev_data *mad)
 {
 	int match = 0;
-	uint32_t num, last, first = 0;
+	uint32_t num, first = 0;
 	struct object_id oid;
+	const struct object_id *mad_oid;
 
 	if (open_pack_index(p) || !p->num_objects)
 		return;
 
 	num = p->num_objects;
-	last = num;
-	while (first < last) {
-		uint32_t mid = first + (last - first) / 2;
-		const unsigned char *current;
-		int cmp;
-
-		current = nth_packed_object_sha1(p, mid);
-		cmp = hashcmp(mad->oid->hash, current);
-		if (!cmp) {
-			match = 1;
-			first = mid;
-			break;
-		}
-		if (cmp > 0) {
-			first = mid + 1;
-			continue;
-		}
-		last = mid;
-	}
+	mad_oid = mad->oid;
+	match = bsearch_pack(mad_oid, p, &first);
 
 	/*
 	 * first is now the position in the packfile where we would insert
