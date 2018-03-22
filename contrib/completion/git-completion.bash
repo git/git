@@ -280,6 +280,10 @@ __gitcomp ()
 	esac
 }
 
+# Clear the variables caching builtins' options when (re-)sourcing
+# the completion script.
+unset $(set |sed -ne 's/^\(__gitcomp_builtin_[a-zA-Z0-9_][a-zA-Z0-9_]*\)=.*/\1/p') 2>/dev/null
+
 # This function is equivalent to
 #
 #    __gitcomp "$(git xxx --git-completion-helper) ..."
