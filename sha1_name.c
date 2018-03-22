@@ -480,7 +480,7 @@ struct min_abbrev_data {
 	unsigned int init_len;
 	unsigned int cur_len;
 	char *hex;
-	const unsigned char *hash;
+	const struct object_id *oid;
 };
 
 static inline char get_hex_char_from_oid(const struct object_id *oid,
@@ -526,7 +526,7 @@ static void find_abbrev_len_for_pack(struct packed_git *p,
 		int cmp;
 
 		current = nth_packed_object_sha1(p, mid);
-		cmp = hashcmp(mad->hash, current);
+		cmp = hashcmp(mad->oid->hash, current);
 		if (!cmp) {
 			match = 1;
 			first = mid;
@@ -603,7 +603,7 @@ int find_unique_abbrev_r(char *hex, const struct object_id *oid, int len)
 	mad.init_len = len;
 	mad.cur_len = len;
 	mad.hex = hex;
-	mad.hash = oid->hash;
+	mad.oid = oid;
 
 	find_abbrev_len_packed(&mad);
 
