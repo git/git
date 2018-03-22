@@ -79,6 +79,14 @@ extern struct packed_git *add_packed_git(const char *path, size_t path_len, int 
 extern void check_pack_index_ptr(const struct packed_git *p, const void *ptr);
 
 /*
+ * Perform binary search on a pack-index for a given oid. Packfile is expected to
+ * have a valid pack-index.
+ *
+ * See 'bsearch_hash' for more information.
+ */
+int bsearch_pack(const struct object_id *oid, const struct packed_git *p, uint32_t *result);
+
+/*
  * Return the SHA-1 of the nth object within the specified packfile.
  * Open the index if it is not already open.  The return value points
  * at the SHA-1 within the mmapped index.  Return NULL if there is an

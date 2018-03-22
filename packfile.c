@@ -1654,6 +1654,29 @@ out:
 	return data;
 }
 
+int bsearch_pack(const struct object_id *oid, const struct packed_git *p, uint32_t *result)
+{
+	const unsigned char *index_fanout = p->index_data;
+	const unsigned char *index_lookup;
+	int index_lookup_width;
+
+	if (!index_fanout)
+		BUG("bsearch_pack called without a valid pack-index");
+
+	index_lookup = index_fanout + 4 * 256;
+	if (p->index_version == 1) {
+		index_lookup_width = 24;
+		index_lookup += 4;
+	} else {
+		index_lookup_width = 20;
+		index_fanout += 8;
+		index_lookup += 8;
+	}
+
+	return bsearch_hash(oid->hash, (const uint32_t*)index_fanout,
+			    index_lookup, index_lookup_width, result);
+}
+
 const unsigned char *nth_packed_object_sha1(struct packed_git *p,
 					    uint32_t n)
 {
@@ -1720,30 +1743,17 @@ off_t nth_packed_object_offset(const struct packed_git *p, uint32_t n)
 off_t find_pack_entry_one(const unsigned char *sha1,
 				  struct packed_git *p)
 {
-	const uint32_t *level1_ofs = p->index_data;
 	const unsigned char *index = p->index_data;
-	unsigned stride;
+	struct object_id oid;
 	uint32_t result;
 
 	if (!index) {
 		if (open_pack_index(p))
 			return 0;
-		level1_ofs = p->index_data;
-		index = p->index_data;
-	}
-	if (p->index_version > 1) {
-		level1_ofs += 2;
-		index += 8;
-	}
-	index += 4 * 256;
-	if (p->index_version > 1) {
-		stride = 20;
-	} else {
-		stride = 24;
-		index += 4;
 	}
 
-	if (bsearch_hash(sha1, level1_ofs, index, stride, &result))
+	hashcpy(oid.hash, sha1);
+	if (bsearch_pack(&oid, p, &result))
 		return nth_packed_object_offset(p, result);
 	return 0;
 }
