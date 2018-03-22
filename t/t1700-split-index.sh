@@ -401,4 +401,23 @@ done <<\EOF
 0642 -rw-r---w-
 EOF
 
+test_expect_success 'writing split index with null sha1 does not write cache tree' '
+	git config core.splitIndex true &&
+	git config splitIndex.maxPercentChange 0 &&
+	git commit -m "commit" &&
+	{
+		git ls-tree HEAD &&
+		printf "160000 commit $_z40\\tbroken\\n"
+	} >broken-tree &&
+	echo "add broken entry" >msg &&
+
+	tree=$(git mktree <broken-tree) &&
+	test_tick &&
+	commit=$(git commit-tree $tree -p HEAD <msg) &&
+	git update-ref HEAD "$commit" &&
+	GIT_ALLOW_NULL_SHA1=1 git reset --hard &&
+	(test-dump-cache-tree >cache-tree.out || true) &&
+	test_line_count = 0 cache-tree.out
+'
+
 test_done
