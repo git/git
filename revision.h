@@ -90,7 +90,6 @@ struct rev_info {
 	unsigned int	dense:1,
 			prune:1,
 			no_walk:2,
-			show_all:1,
 			remove_empty_trees:1,
 			simplify_history:1,
 			topo_order:1,
