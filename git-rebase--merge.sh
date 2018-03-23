@@ -104,15 +104,6 @@ finish_rb_merge () {
 	say All done.
 }
 
-# The whole contents of this file is run by dot-sourcing it from
-# inside a shell function.  It used to be that "return"s we see
-# below were not inside any function, and expected to return
-# to the function that dot-sourced us.
-#
-# However, older (9.x) versions of FreeBSD /bin/sh misbehave on such a
-# construct and continue to run the statements that follow such a "return".
-# As a work-around, we introduce an extra layer of a function
-# here, and immediately call it after defining it.
 git_rebase__merge () {
 
 case "$action" in
@@ -171,5 +162,3 @@ done
 finish_rb_merge
 
 }
-# ... and then we call the whole thing.
-git_rebase__merge
