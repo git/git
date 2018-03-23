@@ -673,18 +673,15 @@ int foreach_alt_odb(alt_odb_fn fn, void *cb)
 	return r;
 }
 
-void prepare_alt_odb_the_repository(void)
+void prepare_alt_odb(struct repository *r)
 {
-	if (the_repository->objects->alt_odb_tail)
+	if (r->objects->alt_odb_tail)
 		return;
 
-	the_repository->objects->alt_odb_tail =
-			&the_repository->objects->alt_odb_list;
-	link_alt_odb_entries(the_repository,
-			     the_repository->objects->alternate_db,
-			     PATH_SEP, NULL, 0);
+	r->objects->alt_odb_tail = &r->objects->alt_odb_list;
+	link_alt_odb_entries(r, r->objects->alternate_db, PATH_SEP, NULL, 0);
 
-	read_info_alternates(the_repository, get_object_directory(), 0);
+	read_info_alternates(r, r->objects->objectdir, 0);
 }
 
 /* Returns 1 if we have successfully freshened the file, 0 otherwise. */
