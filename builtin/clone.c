@@ -27,6 +27,7 @@
 #include "connected.h"
 #include "packfile.h"
 #include "list-objects-filter-options.h"
+#include "object-store.h"
 
 /*
  * Overall FIXMEs:

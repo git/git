@@ -13,6 +13,7 @@
 #include "tag.h"
 #include "tree-walk.h"
 #include "tree.h"
+#include "object-store.h"
 
 char *odb_pack_name(struct strbuf *buf,
 		    const unsigned char *sha1,

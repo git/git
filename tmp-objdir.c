@@ -6,6 +6,7 @@
 #include "strbuf.h"
 #include "argv-array.h"
 #include "quote.h"
+#include "object-store.h"
 
 struct tmp_objdir {
 	struct strbuf path;
