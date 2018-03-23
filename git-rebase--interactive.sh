@@ -307,17 +307,14 @@ pick_one_preserving_merges () {
 	esac
 	sha1=$(git rev-parse $sha1)
 
-	if test -f "$state_dir"/current-commit
+	if test -f "$state_dir"/current-commit && test "$fast_forward" = t
 	then
-		if test "$fast_forward" = t
-		then
-			while read current_commit
-			do
-				git rev-parse HEAD > "$rewritten"/$current_commit
-			done <"$state_dir"/current-commit
-			rm "$state_dir"/current-commit ||
-				die "$(gettext "Cannot write current commit's replacement sha1")"
-		fi
+		while read current_commit
+		do
+			git rev-parse HEAD > "$rewritten"/$current_commit
+		done <"$state_dir"/current-commit
+		rm "$state_dir"/current-commit ||
+			die "$(gettext "Cannot write current commit's replacement sha1")"
 	fi
 
 	echo $sha1 >> "$state_dir"/current-commit
