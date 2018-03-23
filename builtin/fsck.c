@@ -719,7 +719,7 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 
 		fsck_object_dir(get_object_directory());
 
-		prepare_alt_odb();
+		prepare_alt_odb(the_repository);
 		alt_odb_list = the_repository->objects->alt_odb_list;
 		for (alt = alt_odb_list; alt; alt = alt->next)
 			fsck_object_dir(alt->path);
