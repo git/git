@@ -100,6 +100,14 @@ struct raw_object_store {
 	struct list_head packed_git_mru;
 
 	/*
+	 * A fast, rough count of the number of objects in the repository.
+	 * These two fields are not meant for direct access. Use
+	 * approximate_object_count() instead.
+	 */
+	unsigned long approximate_object_count;
+	unsigned approximate_object_count_valid : 1;
+
+	/*
 	 * Whether packed_git has already been populated with this repository's
 	 * packs.
 	 */
