@@ -1793,7 +1793,7 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 		ret = CreateProcessW(*wcmd ? wcmd : NULL, wargs, NULL, NULL,
 				     TRUE, flags, wenvblk, dir ? wdir : NULL,
 				     &si.StartupInfo, &pi);
-		if (ret) {
+		if (ret && buf.len) {
 			errno = err_win_to_posix(GetLastError());
 			warning("failed to restrict file handles (%ld)\n\n%s",
 				err, buf.buf);
