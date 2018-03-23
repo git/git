@@ -267,7 +267,7 @@ There are many virtual machine alternatives available, if you do not have such a
   network if shut down incorrectly).
 * Provide as many cores to your VM as you can (for parallel builds).
 * Restart your VM, but do not connect.
-* Use `ssh` in Git Bash, doownload [PuTTY](http://www.putty.org/), or use your favorite SSH client to connect to the VM through SSH.
+* Use `ssh` in Git Bash, download [PuTTY](http://www.putty.org/), or use your favorite SSH client to connect to the VM through SSH.
 
 In order to build and use `git`, you will need the following libraries via `apt-get`:
 
