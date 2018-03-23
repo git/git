@@ -82,6 +82,10 @@ struct repository {
 
 extern struct repository *the_repository;
 
+/*
+ * Define a custom repository layout. Any field can be NULL, which
+ * will default back to the path according to the default layout.
+ */
 struct set_gitdir_args {
 	const char *commondir;
 	const char *object_dir;
@@ -92,7 +96,7 @@ struct set_gitdir_args {
 
 extern void repo_set_gitdir(struct repository *repo,
 			    const char *root,
-			    const struct set_gitdir_args *optional);
+			    const struct set_gitdir_args *extra_args);
 extern void repo_set_worktree(struct repository *repo, const char *path);
 extern void repo_set_hash_algo(struct repository *repo, int algo);
 extern void initialize_the_repository(void);
