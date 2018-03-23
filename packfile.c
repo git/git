@@ -803,6 +803,7 @@ static void prepare_packed_git_one(struct repository *r, char *objdir, int local
 	strbuf_release(&path);
 }
 
+static void prepare_packed_git(struct repository *r);
 /*
  * Give a fast, rough count of the number of objects in the repository. This
  * ignores loose objects completely. If you have a lot of them, then either
@@ -883,7 +884,7 @@ static void prepare_packed_git_mru(struct repository *r)
 		list_add_tail(&p->mru, &r->objects->packed_git_mru);
 }
 
-void prepare_packed_git(struct repository *r)
+static void prepare_packed_git(struct repository *r)
 {
 	struct alternate_object_database *alt;
 
@@ -907,11 +908,13 @@ void reprepare_packed_git(struct repository *r)
 
 struct packed_git *get_packed_git(struct repository *r)
 {
+	prepare_packed_git(r);
 	return r->objects->packed_git;
 }
 
 struct list_head *get_packed_git_mru(struct repository *r)
 {
+	prepare_packed_git(r);
 	return &r->objects->packed_git_mru;
 }
 
