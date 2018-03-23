@@ -29,6 +29,7 @@
 #include "quote.h"
 #include "packfile.h"
 #include "fetch-object.h"
+#include "object-store.h"
 
 const unsigned char null_sha1[GIT_MAX_RAWSZ];
 const struct object_id null_oid;
@@ -671,7 +672,8 @@ void prepare_alt_odb(void)
 		return;
 
 	alt_odb_tail = &alt_odb_list;
-	link_alt_odb_entries(the_repository->alternate_db, PATH_SEP, NULL, 0);
+	link_alt_odb_entries(the_repository->objects->alternate_db,
+			     PATH_SEP, NULL, 0);
 
 	read_info_alternates(get_object_directory(), 0);
 }

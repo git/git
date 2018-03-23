@@ -4,6 +4,7 @@
 #include "tree.h"
 #include "commit.h"
 #include "tag.h"
+#include "object-store.h"
 
 static struct object **obj_hash;
 static int nr_objs, obj_hash_size;
@@ -444,4 +445,17 @@ void clear_commit_marks_all(unsigned int flags)
 		if (obj && obj->type == OBJ_COMMIT)
 			obj->flags &= ~flags;
 	}
+}
+
+struct raw_object_store *raw_object_store_new(void)
+{
+	struct raw_object_store *o = xmalloc(sizeof(*o));
+
+	memset(o, 0, sizeof(*o));
+	return o;
+}
+void raw_object_store_clear(struct raw_object_store *o)
+{
+	FREE_AND_NULL(o->objectdir);
+	FREE_AND_NULL(o->alternate_db);
 }

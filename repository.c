@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "repository.h"
+#include "object-store.h"
 #include "config.h"
 #include "submodule-config.h"
 
@@ -12,6 +13,7 @@ void initialize_the_repository(void)
 	the_repository = &the_repo;
 
 	the_repo.index = &the_index;
+	the_repo.objects = raw_object_store_new();
 	repo_set_hash_algo(&the_repo, GIT_HASH_SHA1);
 }
 
@@ -58,10 +60,10 @@ void repo_set_gitdir(struct repository *repo,
 	free(old_gitdir);
 
 	repo_set_commondir(repo, o->commondir);
-	expand_base_dir(&repo->objectdir, o->object_dir,
+	expand_base_dir(&repo->objects->objectdir, o->object_dir,
 			repo->commondir, "objects");
-	free(repo->alternate_db);
-	repo->alternate_db = xstrdup_or_null(o->alternate_db);
+	free(repo->objects->alternate_db);
+	repo->objects->alternate_db = xstrdup_or_null(o->alternate_db);
 	expand_base_dir(&repo->graft_file, o->graft_file,
 			repo->commondir, "info/grafts");
 	expand_base_dir(&repo->index_file, o->index_file,
@@ -140,6 +142,8 @@ static int repo_init(struct repository *repo,
 	struct repository_format format;
 	memset(repo, 0, sizeof(*repo));
 
+	repo->objects = raw_object_store_new();
+
 	if (repo_init_gitdir(repo, gitdir))
 		goto error;
 
@@ -214,12 +218,13 @@ void repo_clear(struct repository *repo)
 {
 	FREE_AND_NULL(repo->gitdir);
 	FREE_AND_NULL(repo->commondir);
-	FREE_AND_NULL(repo->objectdir);
-	FREE_AND_NULL(repo->alternate_db);
 	FREE_AND_NULL(repo->graft_file);
 	FREE_AND_NULL(repo->index_file);
 	FREE_AND_NULL(repo->worktree);
 	FREE_AND_NULL(repo->submodule_prefix);
+
+	raw_object_store_clear(repo->objects);
+	FREE_AND_NULL(repo->objects);
 
 	if (repo->config) {
 		git_configset_clear(repo->config);

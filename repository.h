@@ -2,9 +2,10 @@
 #define REPOSITORY_H
 
 struct config_set;
-struct index_state;
-struct submodule_cache;
 struct git_hash_algo;
+struct index_state;
+struct raw_object_store;
+struct submodule_cache;
 
 struct repository {
 	/* Environment */
@@ -21,13 +22,9 @@ struct repository {
 	char *commondir;
 
 	/*
-	 * Path to the repository's object store.
-	 * Cannot be NULL after initialization.
+	 * Holds any information related to accessing the raw object content.
 	 */
-	char *objectdir;
-
-	/* Path to extra alternate object database if not NULL */
-	char *alternate_db;
+	struct raw_object_store *objects;
 
 	/*
 	 * Path to the repository's graft file.
