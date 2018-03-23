@@ -898,11 +898,11 @@ void prepare_packed_git(struct repository *r)
 	r->objects->packed_git_initialized = 1;
 }
 
-void reprepare_packed_git_the_repository(void)
+void reprepare_packed_git(struct repository *r)
 {
-	the_repository->objects->approximate_object_count_valid = 0;
-	the_repository->objects->packed_git_initialized = 0;
-	prepare_packed_git(the_repository);
+	r->objects->approximate_object_count_valid = 0;
+	r->objects->packed_git_initialized = 0;
+	prepare_packed_git(r);
 }
 
 struct packed_git *get_packed_git(struct repository *r)
