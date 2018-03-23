@@ -1,5 +1,6 @@
 #include "builtin.h"
 #include "cache.h"
+#include "repository.h"
 #include "config.h"
 #include "commit.h"
 #include "tree.h"
@@ -714,9 +715,12 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 		for_each_loose_object(mark_loose_for_connectivity, NULL, 0);
 		for_each_packed_object(mark_packed_for_connectivity, NULL, 0);
 	} else {
+		struct alternate_object_database *alt_odb_list;
+
 		fsck_object_dir(get_object_directory());
 
 		prepare_alt_odb();
+		alt_odb_list = the_repository->objects->alt_odb_list;
 		for (alt = alt_odb_list; alt; alt = alt->next)
 			fsck_object_dir(alt->path);
 
