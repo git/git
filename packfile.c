@@ -873,14 +873,14 @@ static void rearrange_packed_git(void)
 		set_next_packed_git, sort_pack);
 }
 
-static void prepare_packed_git_mru(void)
+static void prepare_packed_git_mru(struct repository *r)
 {
 	struct packed_git *p;
 
-	INIT_LIST_HEAD(&the_repository->objects->packed_git_mru);
+	INIT_LIST_HEAD(&r->objects->packed_git_mru);
 
-	for (p = the_repository->objects->packed_git; p; p = p->next)
-		list_add_tail(&p->mru, &the_repository->objects->packed_git_mru);
+	for (p = r->objects->packed_git; p; p = p->next)
+		list_add_tail(&p->mru, &r->objects->packed_git_mru);
 }
 
 void prepare_packed_git(void)
@@ -894,7 +894,7 @@ void prepare_packed_git(void)
 	for (alt = the_repository->objects->alt_odb_list; alt; alt = alt->next)
 		prepare_packed_git_one(alt->path, 0);
 	rearrange_packed_git();
-	prepare_packed_git_mru();
+	prepare_packed_git_mru(the_repository);
 	the_repository->objects->packed_git_initialized = 1;
 }
 
