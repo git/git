@@ -899,7 +899,7 @@ void prepare_packed_git_the_repository(void)
 	the_repository->objects->packed_git_initialized = 1;
 }
 
-void reprepare_packed_git(void)
+void reprepare_packed_git_the_repository(void)
 {
 	the_repository->objects->approximate_object_count_valid = 0;
 	the_repository->objects->packed_git_initialized = 0;

@@ -1274,7 +1274,7 @@ int sha1_object_info_extended(const unsigned char *sha1, struct object_info *oi,
 			return 0;
 
 		/* Not a loose object; someone else may have just packed it. */
-		reprepare_packed_git();
+		reprepare_packed_git(the_repository);
 		if (find_pack_entry(real, &e))
 			break;
 
