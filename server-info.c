@@ -1,9 +1,11 @@
 #include "cache.h"
+#include "repository.h"
 #include "refs.h"
 #include "object.h"
 #include "commit.h"
 #include "tag.h"
 #include "packfile.h"
+#include "object-store.h"
 
 /*
  * Create the file "path" by writing to a temporary file and renaming
@@ -200,7 +202,7 @@ static void init_pack_info(const char *infofile, int force)
 	objdirlen = strlen(objdir);
 
 	prepare_packed_git();
-	for (p = packed_git; p; p = p->next) {
+	for (p = get_packed_git(the_repository); p; p = p->next) {
 		/* we ignore things on alternate path since they are
 		 * not available to the pullers in general.
 		 */
@@ -210,7 +212,7 @@ static void init_pack_info(const char *infofile, int force)
 	}
 	num_pack = i;
 	info = xcalloc(num_pack, sizeof(struct pack_info *));
-	for (i = 0, p = packed_git; p; p = p->next) {
+	for (i = 0, p = get_packed_git(the_repository); p; p = p->next) {
 		if (!p->pack_local)
 			continue;
 		info[i] = xcalloc(1, sizeof(struct pack_info));

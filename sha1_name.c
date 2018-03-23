@@ -197,7 +197,8 @@ static void find_short_packed_object(struct disambiguate_state *ds)
 	struct packed_git *p;
 
 	prepare_packed_git();
-	for (p = packed_git; p && !ds->ambiguous; p = p->next)
+	for (p = get_packed_git(the_repository); p && !ds->ambiguous;
+	     p = p->next)
 		unique_in_pack(p, ds);
 }
 
@@ -567,7 +568,7 @@ static void find_abbrev_len_packed(struct min_abbrev_data *mad)
 	struct packed_git *p;
 
 	prepare_packed_git();
-	for (p = packed_git; p; p = p->next)
+	for (p = get_packed_git(the_repository); p; p = p->next)
 		find_abbrev_len_for_pack(p, mad);
 }
 
