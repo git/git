@@ -961,8 +961,6 @@ git_rebase__interactive () {
 	setup_reflog_action
 	init_basic_state
 
-	merges_option="--no-merges --cherry-pick"
-
 	init_revisions_and_shortrevisions
 
 	git rebase--helper --make-script ${keep_empty:+--keep-empty} \
@@ -996,22 +994,16 @@ git_rebase__interactive__preserve_merges () {
 			die "$(gettext "Could not init rewritten commits")"
 	fi
 
-	# No cherry-pick because our first pass is to determine
-	# parents to rewrite and skipping dropped commits would
-	# prematurely end our probe
-	merges_option=
-
 	init_revisions_and_shortrevisions
 
 	format=$(git config --get rebase.instructionFormat)
 	# the 'rev-list .. | sed' requires %m to parse; the instruction requires %H to parse
-	git rev-list $merges_option --format="%m%H ${format:-%s}" \
+	git rev-list --format="%m%H ${format:-%s}" \
 		--reverse --left-right --topo-order \
 		$revisions ${restrict_revision+^$restrict_revision} | \
 		sed -n "s/^>//p" |
 	while read -r sha1 rest
 	do
-
 		if test -z "$keep_empty" && is_empty_commit $sha1 && ! is_merge_commit $sha1
 		then
 			comment_out="$comment_char "
