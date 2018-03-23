@@ -1511,7 +1511,7 @@ test_expect_success 'sourcing the completion script clears cached porcelain comm
 	verbose test -z "$__git_porcelain_commands"
 '
 
-test_expect_success 'sourcing the completion script clears cached merge strategies' '
+test_expect_success !GETTEXT_POISON 'sourcing the completion script clears cached merge strategies' '
 	__git_compute_merge_strategies &&
 	verbose test -n "$__git_merge_strategies" &&
 	. "$GIT_BUILD_DIR/contrib/completion/git-completion.bash" &&
