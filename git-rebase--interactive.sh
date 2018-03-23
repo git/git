@@ -741,27 +741,26 @@ get_missing_commit_check_level () {
 }
 
 git_rebase__interactive () {
-
-case "$action" in
-continue)
-	if test ! -d "$rewritten"
-	then
-		exec git rebase--helper ${force_rebase:+--no-ff} $allow_empty_message \
-			--continue
-	fi
-	# do we have anything to commit?
-	if git diff-index --cached --quiet HEAD --
-	then
-		# Nothing to commit -- skip this commit
-
-		test ! -f "$GIT_DIR"/CHERRY_PICK_HEAD ||
-		rm "$GIT_DIR"/CHERRY_PICK_HEAD ||
-		die "$(gettext "Could not remove CHERRY_PICK_HEAD")"
-	else
-		if ! test -f "$author_script"
+	case "$action" in
+	continue)
+		if test ! -d "$rewritten"
 		then
-			gpg_sign_opt_quoted=${gpg_sign_opt:+$(git rev-parse --sq-quote "$gpg_sign_opt")}
-			die "$(eval_gettext "\
+			exec git rebase--helper ${force_rebase:+--no-ff} $allow_empty_message \
+				--continue
+		fi
+		# do we have anything to commit?
+		if git diff-index --cached --quiet HEAD --
+		then
+			# Nothing to commit -- skip this commit
+
+			test ! -f "$GIT_DIR"/CHERRY_PICK_HEAD ||
+			rm "$GIT_DIR"/CHERRY_PICK_HEAD ||
+			die "$(gettext "Could not remove CHERRY_PICK_HEAD")"
+		else
+			if ! test -f "$author_script"
+			then
+				gpg_sign_opt_quoted=${gpg_sign_opt:+$(git rev-parse --sq-quote "$gpg_sign_opt")}
+				die "$(eval_gettext "\
 You have staged changes in your working tree.
 If these changes are meant to be
 squashed into the previous commit, run:
@@ -776,197 +775,197 @@ In both cases, once you're done, continue with:
 
   git rebase --continue
 ")"
-		fi
-		. "$author_script" ||
-			die "$(gettext "Error trying to find the author identity to amend commit")"
-		if test -f "$amend"
-		then
-			current_head=$(git rev-parse --verify HEAD)
-			test "$current_head" = $(cat "$amend") ||
-			die "$(gettext "\
+			fi
+			. "$author_script" ||
+				die "$(gettext "Error trying to find the author identity to amend commit")"
+			if test -f "$amend"
+			then
+				current_head=$(git rev-parse --verify HEAD)
+				test "$current_head" = $(cat "$amend") ||
+				die "$(gettext "\
 You have uncommitted changes in your working tree. Please commit them
 first and then run 'git rebase --continue' again.")"
-			do_with_author git commit --amend --no-verify -F "$msg" -e \
-				${gpg_sign_opt:+"$gpg_sign_opt"} $allow_empty_message ||
-				die "$(gettext "Could not commit staged changes.")"
-		else
-			do_with_author git commit --no-verify -F "$msg" -e \
-				${gpg_sign_opt:+"$gpg_sign_opt"} $allow_empty_message ||
-				die "$(gettext "Could not commit staged changes.")"
+				do_with_author git commit --amend --no-verify -F "$msg" -e \
+					${gpg_sign_opt:+"$gpg_sign_opt"} $allow_empty_message ||
+					die "$(gettext "Could not commit staged changes.")"
+			else
+				do_with_author git commit --no-verify -F "$msg" -e \
+					${gpg_sign_opt:+"$gpg_sign_opt"} $allow_empty_message ||
+					die "$(gettext "Could not commit staged changes.")"
+			fi
 		fi
-	fi
 
-	if test -r "$state_dir"/stopped-sha
-	then
-		record_in_rewritten "$(cat "$state_dir"/stopped-sha)"
-	fi
+		if test -r "$state_dir"/stopped-sha
+		then
+			record_in_rewritten "$(cat "$state_dir"/stopped-sha)"
+		fi
 
-	require_clean_work_tree "rebase"
-	do_rest
-	return 0
-	;;
-skip)
-	git rerere clear
+		require_clean_work_tree "rebase"
+		do_rest
+		return 0
+		;;
+	skip)
+		git rerere clear
 
-	if test ! -d "$rewritten"
-	then
-		exec git rebase--helper ${force_rebase:+--no-ff} $allow_empty_message \
-			--continue
-	fi
-	do_rest
-	return 0
-	;;
-edit-todo)
-	git stripspace --strip-comments <"$todo" >"$todo".new
-	mv -f "$todo".new "$todo"
-	collapse_todo_ids
-	append_todo_help
-	gettext "
+		if test ! -d "$rewritten"
+		then
+			exec git rebase--helper ${force_rebase:+--no-ff} $allow_empty_message \
+				--continue
+		fi
+		do_rest
+		return 0
+		;;
+	edit-todo)
+		git stripspace --strip-comments <"$todo" >"$todo".new
+		mv -f "$todo".new "$todo"
+		collapse_todo_ids
+		append_todo_help
+		gettext "
 You are editing the todo file of an ongoing interactive rebase.
 To continue rebase after editing, run:
     git rebase --continue
 
 " | git stripspace --comment-lines >>"$todo"
 
-	git_sequence_editor "$todo" ||
-		die "$(gettext "Could not execute editor")"
-	expand_todo_ids
+		git_sequence_editor "$todo" ||
+			die "$(gettext "Could not execute editor")"
+		expand_todo_ids
 
-	exit
-	;;
-show-current-patch)
-	exec git show REBASE_HEAD --
-	;;
-esac
-
-comment_for_reflog start
-
-if test ! -z "$switch_to"
-then
-	GIT_REFLOG_ACTION="$GIT_REFLOG_ACTION: checkout $switch_to"
-	output git checkout "$switch_to" -- ||
-		die "$(eval_gettext "Could not checkout \$switch_to")"
+		exit
+		;;
+	show-current-patch)
+		exec git show REBASE_HEAD --
+		;;
+	esac
 
 	comment_for_reflog start
-fi
 
-orig_head=$(git rev-parse --verify HEAD) || die "$(gettext "No HEAD?")"
-mkdir -p "$state_dir" || die "$(eval_gettext "Could not create temporary \$state_dir")"
-rm -f "$(git rev-parse --git-path REBASE_HEAD)"
-
-: > "$state_dir"/interactive || die "$(gettext "Could not mark as interactive")"
-write_basic_state
-if test t = "$preserve_merges"
-then
-	if test -z "$rebase_root"
+	if test ! -z "$switch_to"
 	then
-		mkdir "$rewritten" &&
-		for c in $(git merge-base --all $orig_head $upstream)
-		do
-			echo $onto > "$rewritten"/$c ||
-				die "$(gettext "Could not init rewritten commits")"
-		done
-	else
-		mkdir "$rewritten" &&
-		echo $onto > "$rewritten"/root ||
-			die "$(gettext "Could not init rewritten commits")"
+		GIT_REFLOG_ACTION="$GIT_REFLOG_ACTION: checkout $switch_to"
+		output git checkout "$switch_to" -- ||
+			die "$(eval_gettext "Could not checkout \$switch_to")"
+
+		comment_for_reflog start
 	fi
-	# No cherry-pick because our first pass is to determine
-	# parents to rewrite and skipping dropped commits would
-	# prematurely end our probe
-	merges_option=
-else
-	merges_option="--no-merges --cherry-pick"
-fi
 
-shorthead=$(git rev-parse --short $orig_head)
-shortonto=$(git rev-parse --short $onto)
-if test -z "$rebase_root"
-	# this is now equivalent to ! -z "$upstream"
-then
-	shortupstream=$(git rev-parse --short $upstream)
-	revisions=$upstream...$orig_head
-	shortrevisions=$shortupstream..$shorthead
-else
-	revisions=$onto...$orig_head
-	shortrevisions=$shorthead
-fi
-if test t != "$preserve_merges"
-then
-	git rebase--helper --make-script ${keep_empty:+--keep-empty} \
-		$revisions ${restrict_revision+^$restrict_revision} >"$todo" ||
-	die "$(gettext "Could not generate todo list")"
-else
-	format=$(git config --get rebase.instructionFormat)
-	# the 'rev-list .. | sed' requires %m to parse; the instruction requires %H to parse
-	git rev-list $merges_option --format="%m%H ${format:-%s}" \
-		--reverse --left-right --topo-order \
-		$revisions ${restrict_revision+^$restrict_revision} | \
-		sed -n "s/^>//p" |
-	while read -r sha1 rest
-	do
+	orig_head=$(git rev-parse --verify HEAD) || die "$(gettext "No HEAD?")"
+	mkdir -p "$state_dir" || die "$(eval_gettext "Could not create temporary \$state_dir")"
+	rm -f "$(git rev-parse --git-path REBASE_HEAD)"
 
-		if test -z "$keep_empty" && is_empty_commit $sha1 && ! is_merge_commit $sha1
-		then
-			comment_out="$comment_char "
-		else
-			comment_out=
-		fi
-
+	: > "$state_dir"/interactive || die "$(gettext "Could not mark as interactive")"
+	write_basic_state
+	if test t = "$preserve_merges"
+	then
 		if test -z "$rebase_root"
 		then
-			preserve=t
-			for p in $(git rev-list --parents -1 $sha1 | cut -d' ' -s -f2-)
+			mkdir "$rewritten" &&
+			for c in $(git merge-base --all $orig_head $upstream)
 			do
-				if test -f "$rewritten"/$p
-				then
-					preserve=f
-				fi
+				echo $onto > "$rewritten"/$c ||
+					die "$(gettext "Could not init rewritten commits")"
 			done
 		else
-			preserve=f
+			mkdir "$rewritten" &&
+			echo $onto > "$rewritten"/root ||
+				die "$(gettext "Could not init rewritten commits")"
 		fi
-		if test f = "$preserve"
-		then
-			touch "$rewritten"/$sha1
-			printf '%s\n' "${comment_out}pick $sha1 $rest" >>"$todo"
-		fi
-	done
-fi
+		# No cherry-pick because our first pass is to determine
+		# parents to rewrite and skipping dropped commits would
+		# prematurely end our probe
+		merges_option=
+	else
+		merges_option="--no-merges --cherry-pick"
+	fi
 
-# Watch for commits that been dropped by --cherry-pick
-if test t = "$preserve_merges"
-then
-	mkdir "$dropped"
-	# Save all non-cherry-picked changes
-	git rev-list $revisions --left-right --cherry-pick | \
-		sed -n "s/^>//p" > "$state_dir"/not-cherry-picks
-	# Now all commits and note which ones are missing in
-	# not-cherry-picks and hence being dropped
-	git rev-list $revisions |
-	while read rev
-	do
-		if test -f "$rewritten"/$rev &&
-		   ! sane_grep "$rev" "$state_dir"/not-cherry-picks >/dev/null
-		then
-			# Use -f2 because if rev-list is telling us this commit is
-			# not worthwhile, we don't want to track its multiple heads,
-			# just the history of its first-parent for others that will
-			# be rebasing on top of it
-			git rev-list --parents -1 $rev | cut -d' ' -s -f2 > "$dropped"/$rev
-			sha1=$(git rev-list -1 $rev)
-			sane_grep -v "^[a-z][a-z]* $sha1" <"$todo" > "${todo}2" ; mv "${todo}2" "$todo"
-			rm "$rewritten"/$rev
-		fi
-	done
-fi
+	shorthead=$(git rev-parse --short $orig_head)
+	shortonto=$(git rev-parse --short $onto)
+	if test -z "$rebase_root"
+		# this is now equivalent to ! -z "$upstream"
+	then
+		shortupstream=$(git rev-parse --short $upstream)
+		revisions=$upstream...$orig_head
+		shortrevisions=$shortupstream..$shorthead
+	else
+		revisions=$onto...$orig_head
+		shortrevisions=$shorthead
+	fi
+	if test t != "$preserve_merges"
+	then
+		git rebase--helper --make-script ${keep_empty:+--keep-empty} \
+			$revisions ${restrict_revision+^$restrict_revision} >"$todo" ||
+		die "$(gettext "Could not generate todo list")"
+	else
+		format=$(git config --get rebase.instructionFormat)
+		# the 'rev-list .. | sed' requires %m to parse; the instruction requires %H to parse
+		git rev-list $merges_option --format="%m%H ${format:-%s}" \
+			--reverse --left-right --topo-order \
+			$revisions ${restrict_revision+^$restrict_revision} | \
+			sed -n "s/^>//p" |
+		while read -r sha1 rest
+		do
 
-test -s "$todo" || echo noop >> "$todo"
-test -z "$autosquash" || git rebase--helper --rearrange-squash || exit
-test -n "$cmd" && git rebase--helper --add-exec-commands "$cmd"
+			if test -z "$keep_empty" && is_empty_commit $sha1 && ! is_merge_commit $sha1
+			then
+				comment_out="$comment_char "
+			else
+				comment_out=
+			fi
 
-todocount=$(git stripspace --strip-comments <"$todo" | wc -l)
-todocount=${todocount##* }
+			if test -z "$rebase_root"
+			then
+				preserve=t
+				for p in $(git rev-list --parents -1 $sha1 | cut -d' ' -s -f2-)
+				do
+					if test -f "$rewritten"/$p
+					then
+						preserve=f
+					fi
+				done
+			else
+				preserve=f
+			fi
+			if test f = "$preserve"
+			then
+				touch "$rewritten"/$sha1
+				printf '%s\n' "${comment_out}pick $sha1 $rest" >>"$todo"
+			fi
+		done
+	fi
+
+	# Watch for commits that been dropped by --cherry-pick
+	if test t = "$preserve_merges"
+	then
+		mkdir "$dropped"
+		# Save all non-cherry-picked changes
+		git rev-list $revisions --left-right --cherry-pick | \
+			sed -n "s/^>//p" > "$state_dir"/not-cherry-picks
+		# Now all commits and note which ones are missing in
+		# not-cherry-picks and hence being dropped
+		git rev-list $revisions |
+		while read rev
+		do
+			if test -f "$rewritten"/$rev &&
+			   ! sane_grep "$rev" "$state_dir"/not-cherry-picks >/dev/null
+			then
+				# Use -f2 because if rev-list is telling us this commit is
+				# not worthwhile, we don't want to track its multiple heads,
+				# just the history of its first-parent for others that will
+				# be rebasing on top of it
+				git rev-list --parents -1 $rev | cut -d' ' -s -f2 > "$dropped"/$rev
+				sha1=$(git rev-list -1 $rev)
+				sane_grep -v "^[a-z][a-z]* $sha1" <"$todo" > "${todo}2" ; mv "${todo}2" "$todo"
+				rm "$rewritten"/$rev
+			fi
+		done
+	fi
+
+	test -s "$todo" || echo noop >> "$todo"
+	test -z "$autosquash" || git rebase--helper --rearrange-squash || exit
+	test -n "$cmd" && git rebase--helper --add-exec-commands "$cmd"
+
+	todocount=$(git stripspace --strip-comments <"$todo" | wc -l)
+	todocount=${todocount##* }
 
 cat >>"$todo" <<EOF
 
@@ -975,48 +974,47 @@ $comment_char $(eval_ngettext \
 	"Rebase \$shortrevisions onto \$shortonto (\$todocount commands)" \
 	"$todocount")
 EOF
-append_todo_help
-gettext "
-However, if you remove everything, the rebase will be aborted.
+	append_todo_help
+	gettext "
+	However, if you remove everything, the rebase will be aborted.
 
-" | git stripspace --comment-lines >>"$todo"
+	" | git stripspace --comment-lines >>"$todo"
 
-if test -z "$keep_empty"
-then
-	printf '%s\n' "$comment_char $(gettext "Note that empty commits are commented out")" >>"$todo"
-fi
+	if test -z "$keep_empty"
+	then
+		printf '%s\n' "$comment_char $(gettext "Note that empty commits are commented out")" >>"$todo"
+	fi
 
 
-has_action "$todo" ||
-	return 2
+	has_action "$todo" ||
+		return 2
 
-cp "$todo" "$todo".backup
-collapse_todo_ids
-git_sequence_editor "$todo" ||
-	die_abort "$(gettext "Could not execute editor")"
+	cp "$todo" "$todo".backup
+	collapse_todo_ids
+	git_sequence_editor "$todo" ||
+		die_abort "$(gettext "Could not execute editor")"
 
-has_action "$todo" ||
-	return 2
+	has_action "$todo" ||
+		return 2
 
-git rebase--helper --check-todo-list || {
-	ret=$?
+	git rebase--helper --check-todo-list || {
+		ret=$?
+		checkout_onto
+		exit $ret
+	}
+
+	expand_todo_ids
+
+	test -d "$rewritten" || test -n "$force_rebase" ||
+	onto="$(git rebase--helper --skip-unnecessary-picks)" ||
+	die "Could not skip unnecessary pick commands"
+
 	checkout_onto
-	exit $ret
-}
-
-expand_todo_ids
-
-test -d "$rewritten" || test -n "$force_rebase" ||
-onto="$(git rebase--helper --skip-unnecessary-picks)" ||
-die "Could not skip unnecessary pick commands"
-
-checkout_onto
-if test -z "$rebase_root" && test ! -d "$rewritten"
-then
-	require_clean_work_tree "rebase"
-	exec git rebase--helper ${force_rebase:+--no-ff} $allow_empty_message \
-		--continue
-fi
-do_rest
-
+	if test -z "$rebase_root" && test ! -d "$rewritten"
+	then
+		require_clean_work_tree "rebase"
+		exec git rebase--helper ${force_rebase:+--no-ff} $allow_empty_message \
+			--continue
+	fi
+	do_rest
 }
