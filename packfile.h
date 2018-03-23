@@ -123,7 +123,12 @@ extern int packed_object_info(struct packed_git *pack, off_t offset, struct obje
 extern void mark_bad_packed_object(struct packed_git *p, const unsigned char *sha1);
 extern const struct packed_git *has_packed_and_bad(const unsigned char *sha1);
 
-extern int find_pack_entry(const unsigned char *sha1, struct pack_entry *e);
+/*
+ * Iff a pack file in the given repository contains the object named by sha1,
+ * return true and store its location to e.
+ */
+#define find_pack_entry(r, s, e) find_pack_entry_##r(s, e)
+extern int find_pack_entry_the_repository(const unsigned char *sha1, struct pack_entry *e);
 
 extern int has_sha1_pack(const unsigned char *sha1);
 

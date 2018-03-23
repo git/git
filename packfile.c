@@ -1845,11 +1845,7 @@ static int fill_pack_entry(const unsigned char *sha1,
 	return 1;
 }
 
-/*
- * Iff a pack file contains the object named by sha1, return true and
- * store its location to e.
- */
-int find_pack_entry(const unsigned char *sha1, struct pack_entry *e)
+int find_pack_entry_the_repository(const unsigned char *sha1, struct pack_entry *e)
 {
 	struct list_head *pos;
 
@@ -1871,7 +1867,7 @@ int find_pack_entry(const unsigned char *sha1, struct pack_entry *e)
 int has_sha1_pack(const unsigned char *sha1)
 {
 	struct pack_entry e;
-	return find_pack_entry(sha1, &e);
+	return find_pack_entry(the_repository, sha1, &e);
 }
 
 int has_pack_index(const unsigned char *sha1)
