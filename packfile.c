@@ -1845,19 +1845,18 @@ static int fill_pack_entry(const unsigned char *sha1,
 	return 1;
 }
 
-int find_pack_entry_the_repository(const unsigned char *sha1, struct pack_entry *e)
+int find_pack_entry(struct repository *r, const unsigned char *sha1, struct pack_entry *e)
 {
 	struct list_head *pos;
 
-	prepare_packed_git(the_repository);
-	if (!the_repository->objects->packed_git)
+	prepare_packed_git(r);
+	if (!r->objects->packed_git)
 		return 0;
 
-	list_for_each(pos, &the_repository->objects->packed_git_mru) {
+	list_for_each(pos, &r->objects->packed_git_mru) {
 		struct packed_git *p = list_entry(pos, struct packed_git, mru);
 		if (fill_pack_entry(sha1, e, p)) {
-			list_move(&p->mru,
-				  &the_repository->objects->packed_git_mru);
+			list_move(&p->mru, &r->objects->packed_git_mru);
 			return 1;
 		}
 	}
