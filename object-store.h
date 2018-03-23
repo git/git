@@ -127,7 +127,6 @@ void raw_object_store_clear(struct raw_object_store *o);
  */
 void sha1_file_name(struct repository *r, struct strbuf *buf, const unsigned char *sha1);
 
-#define map_sha1_file(r, s, sz) map_sha1_file_##r(s, sz)
-void *map_sha1_file_the_repository(const unsigned char *sha1, unsigned long *size);
+void *map_sha1_file(struct repository *r, const unsigned char *sha1, unsigned long *size);
 
 #endif /* OBJECT_STORE_H */
