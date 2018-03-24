@@ -1286,6 +1286,12 @@ _git_checkout ()
 
 _git_cherry ()
 {
+	case "$cur" in
+	--*)
+		__gitcomp_builtin cherry
+		return
+	esac
+
 	__git_complete_refs
 }
 
