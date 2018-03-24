@@ -1,3 +1,4 @@
+#include "test-tool.h"
 #include "cache.h"
 #include "parse-options.h"
 
@@ -184,14 +185,14 @@ static void analyze_run(void)
 	}
 }
 
-int cmd_main(int argc, const char **argv)
+int cmd__lazy_init_name_hash(int argc, const char **argv)
 {
 	const char *usage[] = {
-		"test-lazy-init-name-hash -d (-s | -m)",
-		"test-lazy-init-name-hash -p [-c c]",
-		"test-lazy-init-name-hash -a a [--step s] [-c c]",
-		"test-lazy-init-name-hash (-s | -m) [-c c]",
-		"test-lazy-init-name-hash -s -m [-c c]",
+		"test-tool lazy-init-name-hash -d (-s | -m)",
+		"test-tool lazy-init-name-hash -p [-c c]",
+		"test-tool lazy-init-name-hash -a a [--step s] [-c c]",
+		"test-tool lazy-init-name-hash (-s | -m) [-c c]",
+		"test-tool lazy-init-name-hash -s -m [-c c]",
 		NULL
 	};
 	struct option options[] = {

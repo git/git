@@ -21,7 +21,7 @@ test_expect_success 'no buffer overflow in lazy_init_name_hash' '
 	) |
 	sed "s/^/100644 $EMPTY_BLOB	/" |
 	git update-index --index-info &&
-	test-lazy-init-name-hash -m
+	test-tool lazy-init-name-hash -m
 '
 
 test_done
