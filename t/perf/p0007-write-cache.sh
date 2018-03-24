@@ -23,7 +23,7 @@ test_expect_success "setup repo" '
 
 count=3
 test_perf "write_locked_index $count times ($nr_files files)" "
-	test-write-cache $count
+	test-tool write-cache $count
 "
 
 test_done

@@ -1,9 +1,10 @@
+#include "test-tool.h"
 #include "cache.h"
 #include "lockfile.h"
 
 static struct lock_file index_lock;
 
-int cmd_main(int argc, const char **argv)
+int cmd__write_cache(int argc, const char **argv)
 {
 	int i, cnt = 1, lockfd;
 	if (argc == 2)

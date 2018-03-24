@@ -41,6 +41,7 @@ static struct test_cmd cmds[] = {
 	{ "subprocess", cmd__subprocess },
 	{ "urlmatch-normalization", cmd__urlmatch_normalization },
 	{ "wildmatch", cmd__wildmatch },
+	{ "write-cache", cmd__write_cache },
 };
 
 int cmd_main(int argc, const char **argv)
