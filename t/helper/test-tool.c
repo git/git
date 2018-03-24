@@ -22,6 +22,7 @@ static struct test_cmd cmds[] = {
 	{ "lazy-init-name-hash", cmd__lazy_init_name_hash },
 	{ "match-trees", cmd__match_trees },
 	{ "mergesort", cmd__mergesort },
+	{ "mktemp", cmd__mktemp },
 	{ "sha1", cmd__sha1 },
 };
 

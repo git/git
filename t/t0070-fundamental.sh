@@ -13,7 +13,7 @@ test_expect_success 'character classes (isspace, isalpha etc.)' '
 '
 
 test_expect_success 'mktemp to nonexistent directory prints filename' '
-	test_must_fail test-mktemp doesnotexist/testXXXXXX 2>err &&
+	test_must_fail test-tool mktemp doesnotexist/testXXXXXX 2>err &&
 	grep "doesnotexist/test" err
 '
 
@@ -21,7 +21,7 @@ test_expect_success POSIXPERM,SANITY 'mktemp to unwritable directory prints file
 	mkdir cannotwrite &&
 	chmod -w cannotwrite &&
 	test_when_finished "chmod +w cannotwrite" &&
-	test_must_fail test-mktemp cannotwrite/testXXXXXX 2>err &&
+	test_must_fail test-tool mktemp cannotwrite/testXXXXXX 2>err &&
 	grep "cannotwrite/test" err
 '
 
