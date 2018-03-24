@@ -39,7 +39,7 @@ native_path () {
 	then
 		path=$(cygpath --windows "$path")
 	else
-		path=$(test-path-utils real_path "$path")
+		path=$(test-tool path-utils real_path "$path")
 	fi &&
 	echo "$path"
 }

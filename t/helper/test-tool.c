@@ -24,6 +24,7 @@ static struct test_cmd cmds[] = {
 	{ "mergesort", cmd__mergesort },
 	{ "mktemp", cmd__mktemp },
 	{ "online-cpus", cmd__online_cpus },
+	{ "path-utils", cmd__path_utils },
 	{ "sha1", cmd__sha1 },
 };
 
