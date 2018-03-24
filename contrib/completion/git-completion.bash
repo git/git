@@ -1505,16 +1505,6 @@ _git_fsck ()
 	esac
 }
 
-_git_gc ()
-{
-	case "$cur" in
-	--*)
-		__gitcomp_builtin gc
-		return
-		;;
-	esac
-}
-
 _git_gitk ()
 {
 	_gitk
@@ -1812,11 +1802,6 @@ _git_mv ()
 	else
 		__git_complete_index_file "--cached"
 	fi
-}
-
-_git_name_rev ()
-{
-	__gitcomp_builtin name-rev
 }
 
 _git_notes ()
