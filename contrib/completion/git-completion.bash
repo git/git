@@ -3035,6 +3035,17 @@ _git_worktree ()
 	fi
 }
 
+__git_complete_command () {
+	local command="$1"
+	local completion_func="_git_${command//-/_}"
+	if declare -f $completion_func >/dev/null 2>/dev/null; then
+		$completion_func
+		return 0
+	else
+		return 1
+	fi
+}
+
 __git_main ()
 {
 	local i c=1 command __git_dir __git_repo_path
@@ -3094,14 +3105,12 @@ __git_main ()
 		return
 	fi
 
-	local completion_func="_git_${command//-/_}"
-	declare -f $completion_func >/dev/null 2>/dev/null && $completion_func && return
+	__git_complete_command "$command" && return
 
 	local expansion=$(__git_aliased_command "$command")
 	if [ -n "$expansion" ]; then
 		words[1]=$expansion
-		completion_func="_git_${expansion//-/_}"
-		declare -f $completion_func >/dev/null 2>/dev/null && $completion_func
+		__git_complete_command "$expansion"
 	fi
 }
 
