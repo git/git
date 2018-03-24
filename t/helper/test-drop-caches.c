@@ -1,3 +1,4 @@
+#include "test-tool.h"
 #include "git-compat-util.h"
 
 #if defined(GIT_WINDOWS_NATIVE)
@@ -157,7 +158,7 @@ static int cmd_dropcaches(void)
 
 #endif
 
-int cmd_main(int argc, const char **argv)
+int cmd__drop_caches(int argc, const char **argv)
 {
 	cmd_sync();
 	return cmd_dropcaches();

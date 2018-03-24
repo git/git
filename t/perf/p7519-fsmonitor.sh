@@ -118,7 +118,7 @@ test_expect_success "setup for fsmonitor" '
 '
 
 if test -n "$GIT_PERF_7519_DROP_CACHE"; then
-	test-drop-caches
+	test-tool drop-caches
 fi
 
 test_perf "status (fsmonitor=$INTEGRATION_SCRIPT)" '
@@ -126,7 +126,7 @@ test_perf "status (fsmonitor=$INTEGRATION_SCRIPT)" '
 '
 
 if test -n "$GIT_PERF_7519_DROP_CACHE"; then
-	test-drop-caches
+	test-tool drop-caches
 fi
 
 test_perf "status -uno (fsmonitor=$INTEGRATION_SCRIPT)" '
@@ -134,7 +134,7 @@ test_perf "status -uno (fsmonitor=$INTEGRATION_SCRIPT)" '
 '
 
 if test -n "$GIT_PERF_7519_DROP_CACHE"; then
-	test-drop-caches
+	test-tool drop-caches
 fi
 
 test_perf "status -uall (fsmonitor=$INTEGRATION_SCRIPT)" '
@@ -148,7 +148,7 @@ test_expect_success "setup without fsmonitor" '
 '
 
 if test -n "$GIT_PERF_7519_DROP_CACHE"; then
-	test-drop-caches
+	test-tool drop-caches
 fi
 
 test_perf "status (fsmonitor=$INTEGRATION_SCRIPT)" '
@@ -156,7 +156,7 @@ test_perf "status (fsmonitor=$INTEGRATION_SCRIPT)" '
 '
 
 if test -n "$GIT_PERF_7519_DROP_CACHE"; then
-	test-drop-caches
+	test-tool drop-caches
 fi
 
 test_perf "status -uno (fsmonitor=$INTEGRATION_SCRIPT)" '
@@ -164,7 +164,7 @@ test_perf "status -uno (fsmonitor=$INTEGRATION_SCRIPT)" '
 '
 
 if test -n "$GIT_PERF_7519_DROP_CACHE"; then
-	test-drop-caches
+	test-tool drop-caches
 fi
 
 test_perf "status -uall (fsmonitor=$INTEGRATION_SCRIPT)" '
