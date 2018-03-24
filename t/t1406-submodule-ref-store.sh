@@ -4,7 +4,7 @@ test_description='test submodule ref store api'
 
 . ./test-lib.sh
 
-RUN="test-ref-store submodule:sub"
+RUN="test-tool ref-store submodule:sub"
 
 test_expect_success 'setup' '
 	git init sub &&

@@ -4,7 +4,7 @@ test_description='test main ref store api'
 
 . ./test-lib.sh
 
-RUN="test-ref-store main"
+RUN="test-tool ref-store main"
 
 test_expect_success 'pack_refs(PACK_REFS_ALL | PACK_REFS_PRUNE)' '
 	test_commit one &&
