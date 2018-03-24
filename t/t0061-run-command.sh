@@ -14,13 +14,13 @@ EOF
 >empty
 
 test_expect_success 'start_command reports ENOENT' '
-	test-run-command start-command-ENOENT ./does-not-exist
+	test-tool run-command start-command-ENOENT ./does-not-exist
 '
 
 test_expect_success 'run_command can run a command' '
 	cat hello-script >hello.sh &&
 	chmod +x hello.sh &&
-	test-run-command run-command ./hello.sh >actual 2>err &&
+	test-tool run-command run-command ./hello.sh >actual 2>err &&
 
 	test_cmp hello-script actual &&
 	test_cmp empty err
@@ -31,7 +31,7 @@ test_expect_success !MINGW 'run_command can run a script without a #! line' '
 	cat hello-script
 	EOF
 	chmod +x hello &&
-	test-run-command run-command ./hello >actual 2>err &&
+	test-tool run-command run-command ./hello >actual 2>err &&
 
 	test_cmp hello-script actual &&
 	test_cmp empty err
@@ -45,7 +45,7 @@ test_expect_success 'run_command does not try to execute a directory' '
 	EOF
 
 	PATH=$PWD/bin1:$PWD/bin2:$PATH \
-		test-run-command run-command greet >actual 2>err &&
+		test-tool run-command run-command greet >actual 2>err &&
 	test_cmp bin2/greet actual &&
 	test_cmp empty err
 '
@@ -62,7 +62,7 @@ test_expect_success POSIXPERM 'run_command passes over non-executable file' '
 	EOF
 
 	PATH=$PWD/bin1:$PWD/bin2:$PATH \
-		test-run-command run-command greet >actual 2>err &&
+		test-tool run-command run-command greet >actual 2>err &&
 	test_cmp bin2/greet actual &&
 	test_cmp empty err
 '
@@ -70,7 +70,7 @@ test_expect_success POSIXPERM 'run_command passes over non-executable file' '
 test_expect_success POSIXPERM 'run_command reports EACCES' '
 	cat hello-script >hello.sh &&
 	chmod -x hello.sh &&
-	test_must_fail test-run-command run-command ./hello.sh 2>err &&
+	test_must_fail test-tool run-command run-command ./hello.sh 2>err &&
 
 	grep "fatal: cannot exec.*hello.sh" err
 '
@@ -104,17 +104,17 @@ World
 EOF
 
 test_expect_success 'run_command runs in parallel with more jobs available than tasks' '
-	test-run-command run-command-parallel 5 sh -c "printf \"%s\n%s\n\" Hello World" 2>actual &&
+	test-tool run-command run-command-parallel 5 sh -c "printf \"%s\n%s\n\" Hello World" 2>actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'run_command runs in parallel with as many jobs as tasks' '
-	test-run-command run-command-parallel 4 sh -c "printf \"%s\n%s\n\" Hello World" 2>actual &&
+	test-tool run-command run-command-parallel 4 sh -c "printf \"%s\n%s\n\" Hello World" 2>actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'run_command runs in parallel with more tasks than jobs available' '
-	test-run-command run-command-parallel 3 sh -c "printf \"%s\n%s\n\" Hello World" 2>actual &&
+	test-tool run-command run-command-parallel 3 sh -c "printf \"%s\n%s\n\" Hello World" 2>actual &&
 	test_cmp expect actual
 '
 
@@ -128,7 +128,7 @@ asking for a quick stop
 EOF
 
 test_expect_success 'run_command is asked to abort gracefully' '
-	test-run-command run-command-abort 3 false 2>actual &&
+	test-tool run-command run-command-abort 3 false 2>actual &&
 	test_cmp expect actual
 '
 
@@ -137,14 +137,14 @@ no further jobs available
 EOF
 
 test_expect_success 'run_command outputs ' '
-	test-run-command run-command-no-jobs 3 sh -c "printf \"%s\n%s\n\" Hello World" 2>actual &&
+	test-tool run-command run-command-no-jobs 3 sh -c "printf \"%s\n%s\n\" Hello World" 2>actual &&
 	test_cmp expect actual
 '
 
 test_trace () {
 	expect="$1"
 	shift
-	GIT_TRACE=1 test-run-command "$@" run-command true 2>&1 >/dev/null | \
+	GIT_TRACE=1 test-tool run-command "$@" run-command true 2>&1 >/dev/null | \
 		sed 's/.* run_command: //' >actual &&
 	echo "$expect true" >expect &&
 	test_cmp expect actual

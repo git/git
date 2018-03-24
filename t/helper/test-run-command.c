@@ -8,6 +8,7 @@
  * published by the Free Software Foundation.
  */
 
+#include "test-tool.h"
 #include "git-compat-util.h"
 #include "run-command.h"
 #include "argv-array.h"
@@ -49,7 +50,7 @@ static int task_finished(int result,
 	return 1;
 }
 
-int cmd_main(int argc, const char **argv)
+int cmd__run_command(int argc, const char **argv)
 {
 	struct child_process proc = CHILD_PROCESS_INIT;
 	int jobs;
