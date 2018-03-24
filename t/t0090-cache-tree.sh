@@ -246,9 +246,9 @@ test_expect_success 'switching trees does not invalidate shared index' '
 	git update-index --split-index &&
 	>split &&
 	git add split &&
-	test-dump-split-index .git/index | grep -v ^own >before &&
+	test-tool dump-split-index .git/index | grep -v ^own >before &&
 	git commit -m "as-is" &&
-	test-dump-split-index .git/index | grep -v ^own >after &&
+	test-tool dump-split-index .git/index | grep -v ^own >after &&
 	test_cmp before after
 '
 
