@@ -85,7 +85,7 @@ pack_obj () {
 
 # Compute and append pack trailer to "$1"
 pack_trailer () {
-	test-sha1 -b <"$1" >trailer.tmp &&
+	test-tool sha1 -b <"$1" >trailer.tmp &&
 	cat trailer.tmp >>"$1" &&
 	rm -f trailer.tmp
 }
