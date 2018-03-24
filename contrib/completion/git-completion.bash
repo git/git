@@ -1629,6 +1629,13 @@ _git_ls_remote ()
 
 _git_ls_tree ()
 {
+	case "$cur" in
+	--*)
+		__gitcomp_builtin ls-tree
+		return
+		;;
+	esac
+
 	__git_complete_file
 }
 
