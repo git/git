@@ -1,3 +1,4 @@
+#include "test-tool.h"
 #include "cache.h"
 #include "prio-queue.h"
 
@@ -16,7 +17,7 @@ static void show(int *v)
 	free(v);
 }
 
-int cmd_main(int argc, const char **argv)
+int cmd__prio_queue(int argc, const char **argv)
 {
 	struct prio_queue pq = { intcmp };
 

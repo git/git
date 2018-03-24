@@ -25,6 +25,7 @@ static struct test_cmd cmds[] = {
 	{ "mktemp", cmd__mktemp },
 	{ "online-cpus", cmd__online_cpus },
 	{ "path-utils", cmd__path_utils },
+	{ "prio-queue", cmd__prio_queue },
 	{ "sha1", cmd__sha1 },
 };
 

@@ -19,6 +19,7 @@ int cmd__mergesort(int argc, const char **argv);
 int cmd__mktemp(int argc, const char **argv);
 int cmd__online_cpus(int argc, const char **argv);
 int cmd__path_utils(int argc, const char **argv);
+int cmd__prio_queue(int argc, const char **argv);
 int cmd__sha1(int argc, const char **argv);
 
 #endif

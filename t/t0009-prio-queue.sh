@@ -17,7 +17,7 @@ cat >expect <<'EOF'
 10
 EOF
 test_expect_success 'basic ordering' '
-	test-prio-queue 2 6 3 10 9 5 7 4 5 8 1 dump >actual &&
+	test-tool prio-queue 2 6 3 10 9 5 7 4 5 8 1 dump >actual &&
 	test_cmp expect actual
 '
 
@@ -30,7 +30,7 @@ cat >expect <<'EOF'
 6
 EOF
 test_expect_success 'mixed put and get' '
-	test-prio-queue 6 2 4 get 5 3 get get 1 dump >actual &&
+	test-tool prio-queue 6 2 4 get 5 3 get get 1 dump >actual &&
 	test_cmp expect actual
 '
 
@@ -43,7 +43,7 @@ NULL
 NULL
 EOF
 test_expect_success 'notice empty queue' '
-	test-prio-queue 1 2 get get get 1 2 get get get >actual &&
+	test-tool prio-queue 1 2 get get get 1 2 get get get >actual &&
 	test_cmp expect actual
 '
 
