@@ -31,5 +31,6 @@ int cmd__sha1(int argc, const char **argv);
 int cmd__sigchain(int argc, const char **argv);
 int cmd__strcmp_offset(int argc, const char **argv);
 int cmd__string_list(int argc, const char **argv);
+int cmd__submodule_config(int argc, const char **argv);
 
 #endif

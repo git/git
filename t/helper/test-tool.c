@@ -37,6 +37,7 @@ static struct test_cmd cmds[] = {
 	{ "sigchain", cmd__sigchain },
 	{ "strcmp-offset", cmd__strcmp_offset },
 	{ "string-list", cmd__string_list },
+	{ "submodule-config", cmd__submodule_config },
 };
 
 int cmd_main(int argc, const char **argv)

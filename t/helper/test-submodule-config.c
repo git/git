@@ -1,3 +1,4 @@
+#include "test-tool.h"
 #include "cache.h"
 #include "config.h"
 #include "submodule-config.h"
@@ -10,7 +11,7 @@ static void die_usage(int argc, const char **argv, const char *msg)
 	exit(1);
 }
 
-int cmd_main(int argc, const char **argv)
+int cmd__submodule_config(int argc, const char **argv)
 {
 	const char **arg = argv;
 	int my_argc = argc;
