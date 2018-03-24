@@ -14,6 +14,7 @@ int cmd__genrandom(int argc, const char **argv);
 int cmd__hashmap(int argc, const char **argv);
 int cmd__index_version(int argc, const char **argv);
 int cmd__lazy_init_name_hash(int argc, const char **argv);
+int cmd__match_trees(int argc, const char **argv);
 int cmd__sha1(int argc, const char **argv);
 
 #endif
