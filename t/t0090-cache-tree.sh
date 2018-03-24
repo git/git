@@ -8,13 +8,13 @@ cache-tree extension.
  . ./test-lib.sh
 
 cmp_cache_tree () {
-	test-dump-cache-tree | sed -e '/#(ref)/d' >actual &&
+	test-tool dump-cache-tree | sed -e '/#(ref)/d' >actual &&
 	sed "s/$_x40/SHA/" <actual >filtered &&
 	test_cmp "$1" filtered
 }
 
 # We don't bother with actually checking the SHA1:
-# test-dump-cache-tree already verifies that all existing data is
+# test-tool dump-cache-tree already verifies that all existing data is
 # correct.
 generate_expected_cache_tree_rec () {
 	dir="$1${1:+/}" &&
@@ -47,7 +47,7 @@ test_cache_tree () {
 
 test_invalid_cache_tree () {
 	printf "invalid                                  %s ()\n" "" "$@" >expect &&
-	test-dump-cache-tree |
+	test-tool dump-cache-tree |
 	sed -n -e "s/[0-9]* subtrees//" -e '/#(ref)/d' -e '/^invalid /p' >actual &&
 	test_cmp expect actual
 }
