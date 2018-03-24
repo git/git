@@ -10,7 +10,7 @@ one
 EOF
 
 test_expect_success 'sigchain works' '
-	{ test-sigchain >actual; ret=$?; } &&
+	{ test-tool sigchain >actual; ret=$?; } &&
 	{
 		# Signal death by raise() on Windows acts like exit(3),
 		# regardless of the signal number. So we must allow that
@@ -24,7 +24,7 @@ test_expect_success 'sigchain works' '
 test_expect_success !MINGW 'signals are propagated using shell convention' '
 	# we use exec here to avoid any sub-shell interpretation
 	# of the exit code
-	git config alias.sigterm "!exec test-sigchain" &&
+	git config alias.sigterm "!exec test-tool sigchain" &&
 	test_expect_code 143 git sigterm
 '
 

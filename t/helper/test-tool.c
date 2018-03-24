@@ -34,6 +34,7 @@ static struct test_cmd cmds[] = {
 	{ "scrap-cache-tree", cmd__scrap_cache_tree },
 	{ "sha1-array", cmd__sha1_array },
 	{ "sha1", cmd__sha1 },
+	{ "sigchain", cmd__sigchain },
 };
 
 int cmd_main(int argc, const char **argv)
