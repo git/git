@@ -224,7 +224,7 @@ test_expect_success 'conditional include, early config reading' '
 		echo "[includeIf \"gitdir:foo/\"]path=bar6" >>.git/config &&
 		echo "[test]six=6" >.git/bar6 &&
 		echo 6 >expect &&
-		test-config read_early_config test.six >actual &&
+		test-tool config read_early_config test.six >actual &&
 		test_cmp expect actual
 	)
 '
