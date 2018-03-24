@@ -29,6 +29,8 @@
 # tell the completion to use commit completion.  This also works with aliases
 # of form "!sh -c '...'".  For example, "!sh -c ': git commit ; ... '".
 #
+# Compatible with bash 3.2.57.
+#
 # You can set the following environment variables to influence the behavior of
 # the completion routines:
 #
