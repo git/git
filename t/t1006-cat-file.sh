@@ -282,7 +282,7 @@ test_expect_success "--batch-check with multiple sha1s gives correct format" '
 '
 
 test_expect_success 'setup blobs which are likely to delta' '
-	test-genrandom foo 10240 >foo &&
+	test-tool genrandom foo 10240 >foo &&
 	{ cat foo; echo plus; } >foo-plus &&
 	git add foo foo-plus &&
 	git commit -m foo &&

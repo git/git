@@ -36,7 +36,7 @@ large_git () {
 }
 
 test_expect_success 'create blob' '
-	test-genrandom foo 16384 >file &&
+	test-tool genrandom foo 16384 >file &&
 	git add file
 '
 

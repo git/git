@@ -103,9 +103,9 @@ test_expect_success 'packsize limit' '
 		# mid1 and mid2 will fit within 256k limit but
 		# appending mid3 will bust the limit and will
 		# result in a separate packfile.
-		test-genrandom "a" $(( 66 * 1024 )) >mid1 &&
-		test-genrandom "b" $(( 80 * 1024 )) >mid2 &&
-		test-genrandom "c" $(( 128 * 1024 )) >mid3 &&
+		test-tool genrandom "a" $(( 66 * 1024 )) >mid1 &&
+		test-tool genrandom "b" $(( 80 * 1024 )) >mid2 &&
+		test-tool genrandom "c" $(( 128 * 1024 )) >mid3 &&
 		git add mid1 mid2 mid3 &&
 
 		count=0
