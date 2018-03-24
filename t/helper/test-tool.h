@@ -29,5 +29,6 @@ int cmd__scrap_cache_tree(int argc, const char **argv);
 int cmd__sha1_array(int argc, const char **argv);
 int cmd__sha1(int argc, const char **argv);
 int cmd__sigchain(int argc, const char **argv);
+int cmd__strcmp_offset(int argc, const char **argv);
 
 #endif

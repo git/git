@@ -35,6 +35,7 @@ static struct test_cmd cmds[] = {
 	{ "sha1-array", cmd__sha1_array },
 	{ "sha1", cmd__sha1 },
 	{ "sigchain", cmd__sigchain },
+	{ "strcmp-offset", cmd__strcmp_offset },
 };
 
 int cmd_main(int argc, const char **argv)

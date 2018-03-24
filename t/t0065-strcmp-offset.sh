@@ -8,7 +8,7 @@ while read s1 s2 expect
 do
 	test_expect_success "strcmp_offset($s1, $s2)" '
 		echo "$expect" >expect &&
-		test-strcmp-offset "$s1" "$s2" >actual &&
+		test-tool strcmp-offset "$s1" "$s2" >actual &&
 		test_cmp expect actual
 	'
 done <<-EOF
