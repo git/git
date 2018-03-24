@@ -115,14 +115,14 @@ test_expect_success 'update-index invalidates cache-tree' '
 '
 
 test_expect_success 'write-tree establishes cache-tree' '
-	test-scrap-cache-tree &&
+	test-tool scrap-cache-tree &&
 	git write-tree &&
 	test_cache_tree
 '
 
-test_expect_success 'test-scrap-cache-tree works' '
+test_expect_success 'test-tool scrap-cache-tree works' '
 	git read-tree HEAD &&
-	test-scrap-cache-tree &&
+	test-tool scrap-cache-tree &&
 	test_no_cache_tree
 '
 
@@ -170,7 +170,7 @@ test_expect_success 'commit in child dir has cache-tree' '
 '
 
 test_expect_success 'reset --hard gives cache-tree' '
-	test-scrap-cache-tree &&
+	test-tool scrap-cache-tree &&
 	git reset --hard &&
 	test_cache_tree
 '
