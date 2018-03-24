@@ -9,7 +9,7 @@ Verify wrappers and compatibility functions.
 . ./test-lib.sh
 
 test_expect_success 'character classes (isspace, isalpha etc.)' '
-	test-ctype
+	test-tool ctype
 '
 
 test_expect_success 'mktemp to nonexistent directory prints filename' '
