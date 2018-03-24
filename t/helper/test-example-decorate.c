@@ -1,8 +1,9 @@
+#include "test-tool.h"
 #include "cache.h"
 #include "object.h"
 #include "decorate.h"
 
-int cmd_main(int argc, const char **argv)
+int cmd__example_decorate(int argc, const char **argv)
 {
 	struct decoration n;
 	struct object_id one_oid = { {1} };
