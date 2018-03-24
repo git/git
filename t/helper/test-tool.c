@@ -40,6 +40,7 @@ static struct test_cmd cmds[] = {
 	{ "submodule-config", cmd__submodule_config },
 	{ "subprocess", cmd__subprocess },
 	{ "urlmatch-normalization", cmd__urlmatch_normalization },
+	{ "wildmatch", cmd__wildmatch },
 };
 
 int cmd_main(int argc, const char **argv)
