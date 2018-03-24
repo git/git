@@ -3035,11 +3035,39 @@ _git_worktree ()
 	fi
 }
 
+__git_complete_common () {
+	local command="$1"
+
+	case "$cur" in
+	--*)
+		__gitcomp_builtin "$command"
+		;;
+	esac
+}
+
+__git_cmds_with_parseopt_helper=
+__git_support_parseopt_helper () {
+	test -n "$__git_cmds_with_parseopt_helper" ||
+		__git_cmds_with_parseopt_helper="$(__git --list-parseopt-builtins)"
+
+	case " $__git_cmds_with_parseopt_helper " in
+	*" $1 "*)
+		return 0
+		;;
+	*)
+		return 1
+		;;
+	esac
+}
+
 __git_complete_command () {
 	local command="$1"
 	local completion_func="_git_${command//-/_}"
 	if declare -f $completion_func >/dev/null 2>/dev/null; then
 		$completion_func
+		return 0
+	elif __git_support_parseopt_helper "$command"; then
+		__git_complete_common "$command"
 		return 0
 	else
 		return 1

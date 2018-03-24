@@ -1454,6 +1454,12 @@ test_expect_success 'completion used <cmd> completion for alias: !f() { : git <c
 	EOF
 '
 
+test_expect_success 'completion without explicit _git_xxx function' '
+	test_completion "git version --" <<-\EOF
+	--build-options Z
+	EOF
+'
+
 test_expect_failure 'complete with tilde expansion' '
 	git init tmp && cd tmp &&
 	test_when_finished "cd .. && rm -rf tmp" &&
