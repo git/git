@@ -1,3 +1,4 @@
+#include "test-tool.h"
 #include "git-compat-util.h"
 #include "hashmap.h"
 #include "strbuf.h"
@@ -77,7 +78,7 @@ static unsigned int hash(unsigned int method, unsigned int i, const char *key)
 
 /*
  * Test performance of hashmap.[ch]
- * Usage: time echo "perfhashmap method rounds" | test-hashmap
+ * Usage: time echo "perfhashmap method rounds" | test-tool hashmap
  */
 static void perf_hashmap(unsigned int method, unsigned int rounds)
 {
@@ -144,7 +145,7 @@ static void perf_hashmap(unsigned int method, unsigned int rounds)
  *
  * perfhashmap method rounds -> test hashmap.[ch] performance
  */
-int cmd_main(int argc, const char **argv)
+int cmd__hashmap(int argc, const char **argv)
 {
 	struct strbuf line = STRBUF_INIT;
 	struct hashmap map;
