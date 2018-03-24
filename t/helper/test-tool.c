@@ -38,6 +38,7 @@ static struct test_cmd cmds[] = {
 	{ "strcmp-offset", cmd__strcmp_offset },
 	{ "string-list", cmd__string_list },
 	{ "submodule-config", cmd__submodule_config },
+	{ "subprocess", cmd__subprocess },
 };
 
 int cmd_main(int argc, const char **argv)

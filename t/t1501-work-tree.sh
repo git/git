@@ -341,7 +341,7 @@ test_expect_success 'make_relative_path handles double slashes in GIT_DIR' '
 
 test_expect_success 'relative $GIT_WORK_TREE and git subprocesses' '
 	GIT_DIR=repo.git GIT_WORK_TREE=repo.git/work \
-	test-subprocess --setup-work-tree rev-parse --show-toplevel >actual &&
+	test-tool subprocess --setup-work-tree rev-parse --show-toplevel >actual &&
 	echo "$(pwd)/repo.git/work" >expected &&
 	test_cmp expected actual
 '
