@@ -166,7 +166,7 @@ test_expect_success 'first postimage wins' '
 	git commit -q -a -m "prefer first over second" &&
 	test -f $rr/postimage &&
 
-	oldmtimepost=$(test-chmtime -v -60 $rr/postimage | cut -f 1) &&
+	oldmtimepost=$(test-tool chmtime -v -60 $rr/postimage | cut -f 1) &&
 
 	git checkout -b third master &&
 	git show second^:a1 | sed "s/To die: t/To die! T/" >a1 &&
@@ -179,7 +179,7 @@ test_expect_success 'first postimage wins' '
 '
 
 test_expect_success 'rerere updates postimage timestamp' '
-	newmtimepost=$(test-chmtime -v +0 $rr/postimage | cut -f 1) &&
+	newmtimepost=$(test-tool chmtime -v +0 $rr/postimage | cut -f 1) &&
 	test $oldmtimepost -lt $newmtimepost
 '
 
@@ -220,9 +220,9 @@ test_expect_success 'set up for garbage collection tests' '
 	almost_60_days_ago=$((60-60*86400)) &&
 	just_over_60_days_ago=$((-1-60*86400)) &&
 
-	test-chmtime =$just_over_60_days_ago $rr/preimage &&
-	test-chmtime =$almost_60_days_ago $rr/postimage &&
-	test-chmtime =$almost_15_days_ago $rr2/preimage
+	test-tool chmtime =$just_over_60_days_ago $rr/preimage &&
+	test-tool chmtime =$almost_60_days_ago $rr/postimage &&
+	test-tool chmtime =$almost_15_days_ago $rr2/preimage
 '
 
 test_expect_success 'gc preserves young or recently used records' '
@@ -232,8 +232,8 @@ test_expect_success 'gc preserves young or recently used records' '
 '
 
 test_expect_success 'old records rest in peace' '
-	test-chmtime =$just_over_60_days_ago $rr/postimage &&
-	test-chmtime =$just_over_15_days_ago $rr2/preimage &&
+	test-tool chmtime =$just_over_60_days_ago $rr/postimage &&
+	test-tool chmtime =$just_over_15_days_ago $rr2/preimage &&
 	git rerere gc &&
 	! test -f $rr/preimage &&
 	! test -f $rr2/preimage
@@ -249,8 +249,8 @@ rerere_gc_custom_expiry_test () {
 		>"$rr/postimage" &&
 
 		two_days_ago=$((-2*86400)) &&
-		test-chmtime =$two_days_ago "$rr/preimage" &&
-		test-chmtime =$two_days_ago "$rr/postimage" &&
+		test-tool chmtime =$two_days_ago "$rr/preimage" &&
+		test-tool chmtime =$two_days_ago "$rr/postimage" &&
 
 		find .git/rr-cache -type f | sort >original &&
 
@@ -512,7 +512,7 @@ test_expect_success 'multiple identical conflicts' '
 	count_pre_post 2 0 &&
 
 	# Pretend that the conflicts were made quite some time ago
-	find .git/rr-cache/ -type f | xargs test-chmtime -172800 &&
+	find .git/rr-cache/ -type f | xargs test-tool chmtime -172800 &&
 
 	# Unresolved entries have not expired yet
 	git -c gc.rerereresolved=5 -c gc.rerereunresolved=5 rerere gc &&
@@ -568,7 +568,7 @@ test_expect_success 'multiple identical conflicts' '
 	git rerere &&
 
 	# Pretend that the resolutions are old again
-	find .git/rr-cache/ -type f | xargs test-chmtime -172800 &&
+	find .git/rr-cache/ -type f | xargs test-tool chmtime -172800 &&
 
 	# Resolved entries have not expired yet
 	git -c gc.rerereresolved=5 -c gc.rerereunresolved=5 rerere gc &&

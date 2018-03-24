@@ -7,6 +7,7 @@ struct test_cmd {
 };
 
 static struct test_cmd cmds[] = {
+	{ "chmtime", cmd__chmtime },
 };
 
 int cmd_main(int argc, const char **argv)

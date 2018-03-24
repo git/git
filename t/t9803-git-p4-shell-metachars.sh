@@ -28,7 +28,7 @@ test_expect_success 'shell metachars in filenames' '
 		echo f2 >"file with spaces" &&
 		git add "file with spaces" &&
 		git commit -m "add files" &&
-		P4EDITOR="test-chmtime +5" git p4 submit
+		P4EDITOR="test-tool chmtime +5" git p4 submit
 	) &&
 	(
 		cd "$cli" &&
@@ -47,7 +47,7 @@ test_expect_success 'deleting with shell metachars' '
 		git rm foo\$bar &&
 		git rm file\ with\ spaces &&
 		git commit -m "remove files" &&
-		P4EDITOR="test-chmtime +5" git p4 submit
+		P4EDITOR="test-tool chmtime +5" git p4 submit
 	) &&
 	(
 		cd "$cli" &&

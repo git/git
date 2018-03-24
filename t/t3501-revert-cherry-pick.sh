@@ -86,7 +86,7 @@ test_expect_success 'cherry-pick on stat-dirty working tree' '
 	(
 		cd copy &&
 		git checkout initial &&
-		test-chmtime +40 oops &&
+		test-tool chmtime +40 oops &&
 		git cherry-pick added
 	)
 '

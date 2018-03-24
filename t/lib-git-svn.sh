@@ -49,7 +49,7 @@ rawsvnrepo="$svnrepo"
 svnrepo="file://$svnrepo"
 
 poke() {
-	test-chmtime +1 "$1"
+	test-tool chmtime +1 "$1"
 }
 
 # We need this, because we should pass empty configuration directory to

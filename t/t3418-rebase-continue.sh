@@ -24,7 +24,7 @@ test_expect_success 'interactive rebase --continue works with touched file' '
 	git checkout master &&
 
 	FAKE_LINES="edit 1" git rebase -i HEAD^ &&
-	test-chmtime =-60 F1 &&
+	test-tool chmtime =-60 F1 &&
 	git rebase --continue
 '
 
@@ -36,7 +36,7 @@ test_expect_success 'non-interactive rebase --continue works with touched file' 
 	test_must_fail git rebase --onto master master topic &&
 	echo "Resolved" >F2 &&
 	git add F2 &&
-	test-chmtime =-60 F1 &&
+	test-tool chmtime =-60 F1 &&
 	git rebase --continue
 '
 

@@ -1418,7 +1418,7 @@ test_expect_success 'receive.denyCurrentBranch = updateInstead' '
 		cd testrepo &&
 		git reset --hard HEAD^ &&
 		test $(git -C .. rev-parse HEAD^) = $(git rev-parse HEAD) &&
-		test-chmtime +100 path1
+		test-tool chmtime +100 path1
 	) &&
 	git push testrepo master &&
 	(

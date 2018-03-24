@@ -15,7 +15,7 @@ add_blob() {
 	BLOB_FILE=.git/objects/$(echo $BLOB | sed "s/^../&\//") &&
 	verbose test $((1 + $before)) = $(git count-objects | sed "s/ .*//") &&
 	test_path_is_file $BLOB_FILE &&
-	test-chmtime =+0 $BLOB_FILE
+	test-tool chmtime =+0 $BLOB_FILE
 }
 
 test_expect_success setup '
@@ -33,7 +33,7 @@ test_expect_success 'prune stale packs' '
 	orig_pack=$(echo .git/objects/pack/*.pack) &&
 	: > .git/objects/tmp_1.pack &&
 	: > .git/objects/tmp_2.pack &&
-	test-chmtime =-86501 .git/objects/tmp_1.pack &&
+	test-tool chmtime =-86501 .git/objects/tmp_1.pack &&
 	git prune --expire 1.day &&
 	test_path_is_file $orig_pack &&
 	test_path_is_file .git/objects/tmp_2.pack &&
@@ -47,7 +47,7 @@ test_expect_success 'prune --expire' '
 	git prune --expire=1.hour.ago &&
 	verbose test $((1 + $before)) = $(git count-objects | sed "s/ .*//") &&
 	test_path_is_file $BLOB_FILE &&
-	test-chmtime =-86500 $BLOB_FILE &&
+	test-tool chmtime =-86500 $BLOB_FILE &&
 	git prune --expire 1.day &&
 	verbose test $before = $(git count-objects | sed "s/ .*//") &&
 	test_path_is_missing $BLOB_FILE
@@ -57,11 +57,11 @@ test_expect_success 'prune --expire' '
 test_expect_success 'gc: implicit prune --expire' '
 
 	add_blob &&
-	test-chmtime =-$((2*$week-30)) $BLOB_FILE &&
+	test-tool chmtime =-$((2*$week-30)) $BLOB_FILE &&
 	git gc &&
 	verbose test $((1 + $before)) = $(git count-objects | sed "s/ .*//") &&
 	test_path_is_file $BLOB_FILE &&
-	test-chmtime =-$((2*$week+1)) $BLOB_FILE &&
+	test-tool chmtime =-$((2*$week+1)) $BLOB_FILE &&
 	git gc &&
 	verbose test $before = $(git count-objects | sed "s/ .*//") &&
 	test_path_is_missing $BLOB_FILE
@@ -141,7 +141,7 @@ test_expect_success 'prune: do not prune heads listed as an argument' '
 test_expect_success 'gc --no-prune' '
 
 	add_blob &&
-	test-chmtime =-$((5001*$day)) $BLOB_FILE &&
+	test-tool chmtime =-$((5001*$day)) $BLOB_FILE &&
 	git config gc.pruneExpire 2.days.ago &&
 	git gc --no-prune &&
 	verbose test 1 = $(git count-objects | sed "s/ .*//") &&
@@ -163,7 +163,7 @@ test_expect_success 'gc respects gc.pruneExpire' '
 test_expect_success 'gc --prune=<date>' '
 
 	add_blob &&
-	test-chmtime =-$((5001*$day)) $BLOB_FILE &&
+	test-tool chmtime =-$((5001*$day)) $BLOB_FILE &&
 	git gc --prune=5002.days.ago &&
 	test_path_is_file $BLOB_FILE &&
 	git gc --prune=5000.days.ago &&
@@ -205,7 +205,7 @@ test_expect_success 'prune --expire=never' '
 
 test_expect_success 'gc: prune old objects after local clone' '
 	add_blob &&
-	test-chmtime =-$((2*$week+1)) $BLOB_FILE &&
+	test-tool chmtime =-$((2*$week+1)) $BLOB_FILE &&
 	git clone --no-hardlinks . aclone &&
 	(
 		cd aclone &&
