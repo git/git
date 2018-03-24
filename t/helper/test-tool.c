@@ -11,6 +11,7 @@ static struct test_cmd cmds[] = {
 	{ "config", cmd__config },
 	{ "ctype", cmd__ctype },
 	{ "date", cmd__date },
+	{ "delta", cmd__delta },
 	{ "lazy-init-name-hash", cmd__lazy_init_name_hash },
 	{ "sha1", cmd__sha1 },
 };
