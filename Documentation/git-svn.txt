@@ -635,7 +635,8 @@ config key: svn.findcopiesharder
 
 -A<filename>::
 --authors-file=<filename>::
-	Syntax is compatible with the file used by 'git cvsimport':
+	Syntax is compatible with the file used by 'git cvsimport' but
+	an empty email address can be supplied with '<>':
 +
 ------------------------------------------------------------------------
 	loginname = Joe User <user@example.com>
@@ -654,8 +655,9 @@ config key: svn.authorsfile
 	If this option is specified, for each SVN committer name that
 	does not exist in the authors file, the given file is executed
 	with the committer name as the first argument.  The program is
-	expected to return a single line of the form "Name <email>",
-	which will be treated as if included in the authors file.
+	expected to return a single line of the form "Name <email>" or
+	"Name <>", which will be treated as if included in the authors
+	file.
 +
 Due to historical reasons a relative 'filename' is first searched
 relative to the current directory for 'init' and 'clone' and relative

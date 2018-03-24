@@ -108,6 +108,20 @@ test_expect_success !MINGW 'fresh clone with svn.authors-file in config' '
 	)
 '
 
+cat >> svn-authors <<EOF
+ff = FFFFFFF FFFFFFF <>
+EOF
+
+test_expect_success 'authors-file imported user without email' '
+	svn_cmd mkdir -m aa/branches/ff --username ff "$svnrepo/aa/branches/ff" &&
+	(
+		cd aa-work &&
+		git svn fetch --authors-file=../svn-authors &&
+		git rev-list -1 --pretty=raw refs/remotes/origin/ff | \
+		  grep "^author FFFFFFF FFFFFFF <> "
+	)
+	'
+
 test_debug 'GIT_DIR=gitconfig.clone/.git git log'
 
 test_done
