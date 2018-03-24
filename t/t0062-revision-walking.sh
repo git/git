@@ -26,7 +26,7 @@ test_expect_success 'setup' '
 '
 
 test_expect_success 'revision walking can be done twice' '
-	test-revision-walking run-twice >run_twice_actual &&
+	test-tool revision-walking run-twice >run_twice_actual &&
 	test_cmp run_twice_expected run_twice_actual
 '
 
