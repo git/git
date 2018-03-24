@@ -12,7 +12,7 @@ test_expect_success 'enable split index' '
 	git config splitIndex.maxPercentChange 100 &&
 	git update-index --split-index &&
 	test-tool dump-split-index .git/index >actual &&
-	indexversion=$(test-index-version <.git/index) &&
+	indexversion=$(test-tool index-version <.git/index) &&
 	if test "$indexversion" = "4"
 	then
 		own=432ef4b63f32193984f339431fd50ca796493569

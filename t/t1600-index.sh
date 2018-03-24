@@ -68,7 +68,7 @@ test_expect_success 'GIT_INDEX_VERSION takes precedence over config' '
 		git config --add index.version 2 &&
 		git add a 2>&1 &&
 		echo 4 >expect &&
-		test-index-version <.git/index >actual &&
+		test-tool index-version <.git/index >actual &&
 		test_cmp expect actual
 	)
 '
