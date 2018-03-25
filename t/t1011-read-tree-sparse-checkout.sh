@@ -15,8 +15,11 @@ test_description='sparse checkout tests
 . "$TEST_DIRECTORY"/lib-read-tree.sh
 
 test_expect_success 'setup' '
+	test_commit init &&
+	echo modified >>init.t &&
+
 	cat >expected <<-EOF &&
-	100644 77f0ba1734ed79d12881f81b36ee134de6a3327b 0	init.t
+	100644 $(git hash-object init.t) 0	init.t
 	100644 $EMPTY_BLOB 0	sub/added
 	100644 $EMPTY_BLOB 0	sub/addedtoo
 	100644 $EMPTY_BLOB 0	subsub/added
@@ -28,8 +31,6 @@ test_expect_success 'setup' '
 	H subsub/added
 	EOF
 
-	test_commit init &&
-	echo modified >>init.t &&
 	mkdir sub subsub &&
 	touch sub/added sub/addedtoo subsub/added &&
 	git add init.t sub/added sub/addedtoo subsub/added &&
