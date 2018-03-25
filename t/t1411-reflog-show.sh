@@ -10,6 +10,7 @@ test_expect_success 'setup' '
 	git commit -m one
 '
 
+commit=$(git rev-parse --short HEAD)
 cat >expect <<'EOF'
 Reflog: HEAD@{0} (C O Mitter <committer@example.com>)
 Reflog message: commit (initial): one
@@ -20,8 +21,8 @@ test_expect_success 'log -g shows reflog headers' '
 	test_cmp expect actual
 '
 
-cat >expect <<'EOF'
-e46513e HEAD@{0}: commit (initial): one
+cat >expect <<EOF
+$commit HEAD@{0}: commit (initial): one
 EOF
 test_expect_success 'oneline reflog format' '
 	git log -g -1 --oneline >actual &&
@@ -33,8 +34,8 @@ test_expect_success 'reflog default format' '
 	test_cmp expect actual
 '
 
-cat >expect <<'EOF'
-commit e46513e
+cat >expect <<EOF
+commit $commit
 Reflog: HEAD@{0} (C O Mitter <committer@example.com>)
 Reflog message: commit (initial): one
 Author: A U Thor <author@example.com>
@@ -56,8 +57,8 @@ test_expect_success 'using @{now} syntax shows reflog date (multiline)' '
 	test_cmp expect actual
 '
 
-cat >expect <<'EOF'
-e46513e HEAD@{Thu Apr 7 15:13:13 2005 -0700}: commit (initial): one
+cat >expect <<EOF
+$commit HEAD@{Thu Apr 7 15:13:13 2005 -0700}: commit (initial): one
 EOF
 test_expect_success 'using @{now} syntax shows reflog date (oneline)' '
 	git log -g -1 --oneline HEAD@{now} >actual &&
@@ -82,8 +83,8 @@ test_expect_success 'using --date= shows reflog date (multiline)' '
 	test_cmp expect actual
 '
 
-cat >expect <<'EOF'
-e46513e HEAD@{Thu Apr 7 15:13:13 2005 -0700}: commit (initial): one
+cat >expect <<EOF
+$commit HEAD@{Thu Apr 7 15:13:13 2005 -0700}: commit (initial): one
 EOF
 test_expect_success 'using --date= shows reflog date (oneline)' '
 	git log -g -1 --oneline --date=default >actual &&
@@ -109,8 +110,8 @@ test_expect_success 'log.date does not invoke "--date" magic (multiline)' '
 	test_cmp expect actual
 '
 
-cat >expect <<'EOF'
-e46513e HEAD@{0}: commit (initial): one
+cat >expect <<EOF
+$commit HEAD@{0}: commit (initial): one
 EOF
 test_expect_success 'log.date does not invoke "--date" magic (oneline)' '
 	test_config log.date raw &&
