@@ -75,7 +75,7 @@ msgstr ""
 "Project-Id-Version: git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
 "POT-Creation-Date: 2018-03-16 07:29+0800\n"
-"PO-Revision-Date: 2018-03-17 16:20+0100\n"
+"PO-Revision-Date: 2018-03-23 23:03+0100\n"
 "Last-Translator: Jean-Noël Avila <jn.avila@free.fr>\n"
 "Language-Team: Jean-Noël Avila <jn.avila@free.fr>\n"
 "Language: fr\n"
@@ -3024,7 +3024,7 @@ msgid "Your branch and '%s' refer to different commits.\n"
 msgstr "Votre branche et '%s' font référence à des commits différents.\n"
 
 #: remote.c:2146
-#, c-format, fuzzy
+#, c-format
 msgid "  (use \"%s\" for details)\n"
 msgstr "  (utilisez \"%s\" pour plus de détails)\n"
 
