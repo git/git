@@ -621,7 +621,7 @@ static void trace_run_command(const struct child_process *cp)
 	if (!trace_want(&trace_default_key))
 		return;
 
-	strbuf_addf(&buf, "trace: run_command:");
+	strbuf_addstr(&buf, "trace: run_command:");
 	if (cp->dir) {
 		strbuf_addstr(&buf, " cd ");
 		sq_quote_buf_pretty(&buf, cp->dir);
