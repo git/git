@@ -147,6 +147,11 @@ sub have_slash {
 	return 0;
 }
 
+sub display_dir {
+	my ($d) = @_;
+	return exists $dirabbrevs{$d} ? $dirabbrevs{$d} : $dirnames{$d};
+}
+
 sub print_default_results {
 	my %descrs;
 	my $descrlen = 4; # "Test"
@@ -168,8 +173,7 @@ sub print_default_results {
 	my %times;
 	my @colwidth = ((0)x@dirs);
 	for my $i (0..$#dirs) {
-		my $d = $dirs[$i];
-		my $w = length (exists $dirabbrevs{$d} ? $dirabbrevs{$d} : $dirnames{$d});
+		my $w = length display_dir($dirs[$i]);
 		$colwidth[$i] = $w if $w > $colwidth[$i];
 	}
 	for my $t (@subtests) {
@@ -188,8 +192,7 @@ sub print_default_results {
 
 	printf "%-${descrlen}s", "Test";
 	for my $i (0..$#dirs) {
-		my $d = $dirs[$i];
-		printf "   %-$colwidth[$i]s", (exists $dirabbrevs{$d} ? $dirabbrevs{$d} : $dirnames{$d});
+		printf "   %-$colwidth[$i]s", display_dir($dirs[$i]);
 	}
 	print "\n";
 	print "-"x$totalwidth, "\n";
