@@ -116,10 +116,15 @@ Documentation/technical/repository-version.txt) with extensions
 		objectFormat = newhash
 		compatObjectFormat = sha1
 
-Specifying a repository format extension ensures that versions of Git
-not aware of NewHash do not try to operate on these repositories,
-instead producing an error message:
+The combination of setting `core.repositoryFormatVersion=1` and
+populating `extensions.*` ensures that all versions of Git later than
+`v0.99.9l` will die instead of trying to operate on the NewHash
+repository, instead producing an error message.
 
+	# Between v0.99.9l and v2.7.0
+	$ git status
+	fatal: Expected git repo version <= 0, found 1
+	# After v2.7.0
 	$ git status
 	fatal: unknown repository extensions found:
 		objectformat
