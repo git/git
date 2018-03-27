@@ -187,7 +187,8 @@ test_expect_success 'author information is preserved' '
 			test \$GIT_COMMIT != $(git rev-parse master) || \
 			echo Hallo" \
 		preserved-author) &&
-	test 1 = $(git rev-list --author="B V Uips" preserved-author | wc -l)
+	git rev-list --author="B V Uips" preserved-author >actual &&
+	test_line_count = 1 actual
 '
 
 test_expect_success "remove a certain author's commits" '
@@ -205,7 +206,8 @@ test_expect_success "remove a certain author's commits" '
 	cnt1=$(git rev-list master | wc -l) &&
 	cnt2=$(git rev-list removed-author | wc -l) &&
 	test $cnt1 -eq $(($cnt2 + 1)) &&
-	test 0 = $(git rev-list --author="B V Uips" removed-author | wc -l)
+	git rev-list --author="B V Uips" removed-author >actual &&
+	test_line_count = 0 actual
 '
 
 test_expect_success 'barf on invalid name' '
@@ -258,7 +260,8 @@ test_expect_success 'Subdirectory filter with disappearing trees' '
 	git commit -m "Re-adding foo" &&
 
 	git filter-branch -f --subdirectory-filter foo &&
-	test $(git rev-list master | wc -l) = 3
+	git rev-list master >actual &&
+	test_line_count = 3 actual
 '
 
 test_expect_success 'Tag name filtering retains tag message' '

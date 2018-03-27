@@ -311,8 +311,8 @@ test_expect_success 'unpacking with --strict' '
 	rm -f .git/index &&
 	tail -n 10 LIST | git update-index --index-info &&
 	ST=$(git write-tree) &&
-	PACK5=$( git rev-list --objects "$LIST" "$LI" "$ST" | \
-		git pack-objects test-5 ) &&
+	git rev-list --objects "$LIST" "$LI" "$ST" >actual &&
+	PACK5=$( git pack-objects test-5 <actual ) &&
 	PACK6=$( (
 			echo "$LIST"
 			echo "$LI"
@@ -358,8 +358,8 @@ test_expect_success 'index-pack with --strict' '
 	rm -f .git/index &&
 	tail -n 10 LIST | git update-index --index-info &&
 	ST=$(git write-tree) &&
-	PACK5=$( git rev-list --objects "$LIST" "$LI" "$ST" | \
-		git pack-objects test-5 ) &&
+	git rev-list --objects "$LIST" "$LI" "$ST" >actual &&
+	PACK5=$( git pack-objects test-5 <actual ) &&
 	PACK6=$( (
 			echo "$LIST"
 			echo "$LI"
