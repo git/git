@@ -635,15 +635,6 @@ const struct submodule *submodule_from_path(struct repository *r,
 	return config_from(r->submodule_cache, treeish_name, path, lookup_path);
 }
 
-const struct submodule *submodule_from_cache(struct repository *repo,
-					     const struct object_id *treeish_name,
-					     const char *key)
-{
-	gitmodules_read_check(repo);
-	return config_from(repo->submodule_cache, treeish_name,
-			   key, lookup_path);
-}
-
 void submodule_free(struct repository *r)
 {
 	if (r->submodule_cache)

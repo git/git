@@ -45,9 +45,6 @@ const struct submodule *submodule_from_name(struct repository *r,
 const struct submodule *submodule_from_path(struct repository *r,
 					    const struct object_id *commit_or_tree,
 					    const char *path);
-extern const struct submodule *submodule_from_cache(struct repository *repo,
-						    const struct object_id *treeish_name,
-						    const char *key);
 void submodule_free(struct repository *r);
 
 #endif /* SUBMODULE_CONFIG_H */
