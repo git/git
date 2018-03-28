@@ -1413,7 +1413,7 @@ test_expect_success 'urlmatch with wildcard' '
 '
 
 # good section hygiene
-test_expect_failure '--unset last key removes section (except if commented)' '
+test_expect_success '--unset last key removes section (except if commented)' '
 	cat >.git/config <<-\EOF &&
 	# some generic comment on the configuration file itself
 	# a comment specific to this "section" section.
@@ -1495,7 +1495,7 @@ test_expect_failure '--unset last key removes section (except if commented)' '
 	test_line_count = 3 .git/config
 '
 
-test_expect_failure '--unset-all removes section if empty & uncommented' '
+test_expect_success '--unset-all removes section if empty & uncommented' '
 	cat >.git/config <<-\EOF &&
 	[section]
 	key = value1
