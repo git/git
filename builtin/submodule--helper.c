@@ -1260,8 +1260,7 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 		strbuf_reset(&sb);
 	}
 
-	/* Connect module worktree and git dir */
-	connect_work_tree_and_git_dir(path, sm_gitdir);
+	connect_work_tree_and_git_dir(path, sm_gitdir, 0);
 
 	p = git_pathdup_submodule(path, "config");
 	if (!p)

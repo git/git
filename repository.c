@@ -135,9 +135,9 @@ static int read_and_verify_repository_format(struct repository_format *format,
  * Initialize 'repo' based on the provided 'gitdir'.
  * Return 0 upon success and a non-zero value upon failure.
  */
-static int repo_init(struct repository *repo,
-		     const char *gitdir,
-		     const char *worktree)
+int repo_init(struct repository *repo,
+	      const char *gitdir,
+	      const char *worktree)
 {
 	struct repository_format format;
 	memset(repo, 0, sizeof(*repo));
