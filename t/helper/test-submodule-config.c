@@ -64,7 +64,7 @@ int cmd_main(int argc, const char **argv)
 		arg += 2;
 	}
 
-	submodule_free();
+	submodule_free(the_repository);
 
 	return 0;
 }

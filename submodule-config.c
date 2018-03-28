@@ -642,8 +642,8 @@ const struct submodule *submodule_from_cache(struct repository *repo,
 			   key, lookup_path);
 }
 
-void submodule_free(void)
+void submodule_free(struct repository *r)
 {
-	if (the_repository->submodule_cache)
-		submodule_cache_clear(the_repository->submodule_cache);
+	if (r->submodule_cache)
+		submodule_cache_clear(r->submodule_cache);
 }

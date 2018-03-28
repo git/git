@@ -46,6 +46,6 @@ extern const struct submodule *submodule_from_path(
 extern const struct submodule *submodule_from_cache(struct repository *repo,
 						    const struct object_id *treeish_name,
 						    const char *key);
-extern void submodule_free(void);
+void submodule_free(struct repository *r);
 
 #endif /* SUBMODULE_CONFIG_H */
