@@ -821,6 +821,21 @@ test_expect_success 'moving the superproject does not break submodules' '
 	)
 '
 
+test_expect_success 'moving the submodule does not break the superproject' '
+	(
+		cd addtest2 &&
+		git submodule status
+	) >actual &&
+	sed -e "s/^ \([^ ]* repo\) .*/-\1/" <actual >expect &&
+	mv addtest2/repo addtest2/repo.bak &&
+	test_when_finished "mv addtest2/repo.bak addtest2/repo" &&
+	(
+		cd addtest2 &&
+		git submodule status
+	) >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'submodule add --name allows to replace a submodule with another at the same path' '
 	(
 		cd addtest2 &&
