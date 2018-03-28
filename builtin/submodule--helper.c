@@ -1042,7 +1042,7 @@ static int module_deinit(int argc, const char **argv, const char *prefix)
 		die(_("Use '--all' if you really want to deinitialize all submodules"));
 
 	if (module_list_compute(argc, argv, prefix, &pathspec, &list) < 0)
-		BUG("module_list_compute should not choke on empty pathspec");
+		return 1;
 
 	info.prefix = prefix;
 	if (quiet)
