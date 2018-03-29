@@ -2131,9 +2131,10 @@ static void append_literal(const char *cp, const char *ep, struct ref_formatting
 	}
 }
 
-void format_ref_array_item(struct ref_array_item *info,
+int format_ref_array_item(struct ref_array_item *info,
 			   const struct ref_format *format,
-			   struct strbuf *final_buf)
+			   struct strbuf *final_buf,
+			   struct strbuf *error_buf)
 {
 	const char *cp, *sp, *ep;
 	struct ref_formatting_state state = REF_FORMATTING_STATE_INIT;
@@ -2161,19 +2162,25 @@ void format_ref_array_item(struct ref_array_item *info,
 		resetv.s = GIT_COLOR_RESET;
 		append_atom(&resetv, &state);
 	}
-	if (state.stack->prev)
-		die(_("format: %%(end) atom missing"));
+	if (state.stack->prev) {
+		pop_stack_element(&state.stack);
+		return strbuf_addf_ret(error_buf, -1, _("format: %%(end) atom missing"));
+	}
 	strbuf_addbuf(final_buf, &state.stack->output);
 	pop_stack_element(&state.stack);
+	return 0;
 }
 
 void show_ref_array_item(struct ref_array_item *info,
 			 const struct ref_format *format)
 {
 	struct strbuf final_buf = STRBUF_INIT;
+	struct strbuf error_buf = STRBUF_INIT;
 
-	format_ref_array_item(info, format, &final_buf);
+	if (format_ref_array_item(info, format, &final_buf, &error_buf))
+		die("%s", error_buf.buf);
 	fwrite(final_buf.buf, 1, final_buf.len, stdout);
+	strbuf_release(&error_buf);
 	strbuf_release(&final_buf);
 	putchar('\n');
 }
