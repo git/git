@@ -309,15 +309,15 @@ msgstr "Перечитать"
 
 #: git-gui.sh:2643
 msgid "Stage To Commit"
-msgstr "Добавить в индекс"
+msgstr "Добавить в коммит"
 
 #: git-gui.sh:2649
 msgid "Stage Changed Files To Commit"
-msgstr "Добавить изменённые файлы в индекс"
+msgstr "Добавить изменённые файлы в коммит"
 
 #: git-gui.sh:2655
 msgid "Unstage From Commit"
-msgstr "Убрать из издекса"
+msgstr "Убрать из коммита"
 
 #: git-gui.sh:2661 lib/index.tcl:412
 msgid "Revert Changes"
