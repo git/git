@@ -3364,7 +3364,7 @@ uploadpack.packObjectsHook::
 	stdout.
 
 uploadpack.allowFilter::
-	If this option is set, `upload-pack` will advertise partial
+	If this option is set, `upload-pack` will support partial
 	clone and partial fetch object filtering.
 +
 Note that this configuration variable is ignored if it is seen in the

@@ -391,6 +391,7 @@ static int check_updates(struct unpack_trees_options *o)
 			fetch_objects(repository_format_partial_clone,
 				      &to_fetch);
 		fetch_if_missing = fetch_if_missing_store;
+		oid_array_clear(&to_fetch);
 	}
 	for (i = 0; i < index->cache_nr; i++) {
 		struct cache_entry *ce = index->cache[i];

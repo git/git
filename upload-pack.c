@@ -69,7 +69,7 @@ static int stateless_rpc;
 static const char *pack_objects_hook;
 
 static int filter_capability_requested;
-static int filter_advertise;
+static int allow_filter;
 static struct list_objects_filter_options filter_options;
 
 static void reset_timeout(void)
@@ -846,7 +846,7 @@ static void receive_needs(void)
 			no_progress = 1;
 		if (parse_feature_request(features, "include-tag"))
 			use_include_tag = 1;
-		if (parse_feature_request(features, "filter"))
+		if (allow_filter && parse_feature_request(features, "filter"))
 			filter_capability_requested = 1;
 
 		o = parse_object(&oid_buf);
@@ -976,7 +976,7 @@ static int send_ref(const char *refname, const struct object_id *oid,
 				     " allow-reachable-sha1-in-want" : "",
 			     stateless_rpc ? " no-done" : "",
 			     symref_info.buf,
-			     filter_advertise ? " filter" : "",
+			     allow_filter ? " filter" : "",
 			     git_user_agent_sanitized());
 		strbuf_release(&symref_info);
 	} else {
@@ -1056,7 +1056,7 @@ static int upload_pack_config(const char *var, const char *value, void *unused)
 		if (!strcmp("uploadpack.packobjectshook", var))
 			return git_config_string(&pack_objects_hook, var, value);
 	} else if (!strcmp("uploadpack.allowfilter", var)) {
-		filter_advertise = git_config_bool(var, value);
+		allow_filter = git_config_bool(var, value);
 	}
 	return parse_hide_refs_config(var, value, "uploadpack");
 }
