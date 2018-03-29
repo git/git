@@ -101,6 +101,19 @@ static struct used_atom {
 } *used_atom;
 static int used_atom_cnt, need_tagged, need_symref;
 
+/*
+ * Expand string, append it to strbuf *sb, then return error code ret.
+ * Allow to save few lines of code.
+ */
+static int strbuf_addf_ret(struct strbuf *sb, int ret, const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	strbuf_vaddf(sb, fmt, ap);
+	va_end(ap);
+	return ret;
+}
+
 static void color_atom_parser(const struct ref_format *format, struct used_atom *atom, const char *color_value)
 {
 	if (!color_value)
