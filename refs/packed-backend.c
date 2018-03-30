@@ -5,6 +5,7 @@
 #include "packed-backend.h"
 #include "../iterator.h"
 #include "../lockfile.h"
+#include "../chdir-notify.h"
 
 enum mmap_strategy {
 	/*
@@ -202,6 +203,8 @@ struct ref_store *packed_ref_store_create(const char *path,
 	refs->store_flags = store_flags;
 
 	refs->path = xstrdup(path);
+	chdir_notify_reparent("packed-refs", &refs->path);
+
 	return ref_store;
 }
 
