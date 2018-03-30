@@ -15,6 +15,7 @@ extern struct trace_key trace_default_key;
 
 #define TRACE_KEY_INIT(name) { "GIT_TRACE_" #name, 0, 0, 0 }
 extern struct trace_key trace_perf_key;
+extern struct trace_key trace_setup_key;
 
 extern void trace_repo_setup(const char *prefix);
 extern int trace_want(struct trace_key *key);
