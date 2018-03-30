@@ -13,6 +13,7 @@
 #include "refs.h"
 #include "fmt-merge-msg.h"
 #include "commit.h"
+#include "chdir-notify.h"
 
 int trust_executable_bit = 1;
 int trust_ctime = 1;
@@ -296,12 +297,32 @@ char *get_graft_file(void)
 	return the_repository->graft_file;
 }
 
-void set_git_dir(const char *path)
+static void set_git_dir_1(const char *path)
 {
 	if (setenv(GIT_DIR_ENVIRONMENT, path, 1))
 		die("could not set GIT_DIR to '%s'", path);
 	repo_set_gitdir(the_repository, path);
 	setup_git_env();
+}
+
+static void update_relative_gitdir(const char *name,
+				   const char *old_cwd,
+				   const char *new_cwd,
+				   void *data)
+{
+	char *path = reparent_relative_path(old_cwd, new_cwd, get_git_dir());
+	trace_printf_key(&trace_setup_key,
+			 "setup: move $GIT_DIR to '%s'",
+			 path);
+	set_git_dir_1(path);
+	free(path);
+}
+
+void set_git_dir(const char *path)
+{
+	set_git_dir_1(path);
+	if (!is_absolute_path(path))
+		chdir_notify_register(NULL, update_relative_gitdir, NULL);
 }
 
 const char *get_log_output_encoding(void)

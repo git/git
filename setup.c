@@ -3,6 +3,7 @@
 #include "config.h"
 #include "dir.h"
 #include "string-list.h"
+#include "chdir-notify.h"
 
 static int inside_git_dir = -1;
 static int inside_work_tree = -1;
@@ -378,7 +379,7 @@ int is_inside_work_tree(void)
 
 void setup_work_tree(void)
 {
-	const char *work_tree, *git_dir;
+	const char *work_tree;
 	static int initialized = 0;
 
 	if (initialized)
@@ -388,10 +389,7 @@ void setup_work_tree(void)
 		die(_("unable to set up work tree using invalid config"));
 
 	work_tree = get_git_work_tree();
-	git_dir = get_git_dir();
-	if (!is_absolute_path(git_dir))
-		git_dir = real_path(get_git_dir());
-	if (!work_tree || chdir(work_tree))
+	if (!work_tree || chdir_notify(work_tree))
 		die(_("this operation must be run in a work tree"));
 
 	/*
@@ -401,7 +399,6 @@ void setup_work_tree(void)
 	if (getenv(GIT_WORK_TREE_ENVIRONMENT))
 		setenv(GIT_WORK_TREE_ENVIRONMENT, ".", 1);
 
-	set_git_dir(remove_leading_path(git_dir, work_tree));
 	initialized = 1;
 }
 
