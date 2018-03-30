@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Mar 2018, #05; Wed, 28)
-X-master-at: 03df4959472e7d4b5117bb72ac86e1e2bcf21723
-X-next-at: 3e0db8b7c591f702be63ceb30103f4ddcbbe62ee
+Subject: What's cooking in git.git (Mar 2018, #06; Fri, 30)
+X-master-at: c2a499e6c31ed613a606ffdeb5bb74ab41e9a586
+X-next-at: caa68db14db9f582fb6802d6d3c880bb7760ad52
 
-What's cooking in git.git (Mar 2018, #05; Wed, 28)
+What's cooking in git.git (Mar 2018, #06; Fri, 30)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -22,343 +22,110 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* bp/refresh-cache-ent-rehash-fix (2018-03-15) 1 commit
-  (merged to 'next' on 2018-03-15 at bac8745f08)
- + Fix bugs preventing adding updated cache entries to the name hash
-
- The codepath to replace an existing entry in the index had a bug in
- updating the name hash structure, which has been fixed.
-
-
-* dp/merge-strategy-doc-fix (2018-03-19) 1 commit
-  (merged to 'next' on 2018-03-20 at 317e077588)
- + Documentation/merge-strategies: typofix
-
- Doc fix.
-
-
-* jh/fsck-promisors (2018-03-13) 1 commit
-  (merged to 'next' on 2018-03-15 at 0c283dbe5e)
- + sha1_file: restore OBJECT_INFO_QUICK functionality
-
- A hotfix to a topic that graduated recently.
-
-
-* jk/attributes-path-doc (2018-03-20) 1 commit
-  (merged to 'next' on 2018-03-20 at e965f0c68c)
- + doc/gitattributes: mention non-recursive behavior
-
- Doc update.
-
-
-* js/ming-strftime (2018-03-19) 1 commit
-  (merged to 'next' on 2018-03-20 at a9ca8172c7)
- + mingw: abort on invalid strftime formats
-
-
-* jt/transfer-fsck-with-promissor (2018-03-15) 2 commits
-  (merged to 'next' on 2018-03-15 at 6d1ccc965b)
- + fetch-pack: do not check links for partial fetch
- + index-pack: support checking objects but not links
-
- The transfer.fsckobjects configuration tells "git fetch" to
- validate the data and connected-ness of objects in the received
- pack; the code to perform this check has been taught about the
- narrow clone's convention that missing objects that are reachable
- from objects in a pack that came from a promissor remote is OK.
-
-
-* ks/t3200-typofix (2018-03-15) 1 commit
-  (merged to 'next' on 2018-03-15 at 8b8d397787)
- + t/t3200: fix a typo in a test description
-
- Test typofix.
-
-
-* ma/config-page-only-in-list-mode (2018-02-21) 3 commits
-  (merged to 'next' on 2018-03-15 at 652430af12)
- + config: change default of `pager.config` to "on"
- + config: respect `pager.config` in list/get-mode only
- + t7006: add tests for how git config paginates
-
- In a way similar to how "git tag" learned to honor the pager
- setting only in the list mode, "git config" learned to ignore the
- pager setting when it is used for setting values (i.e. when the
- purpose of the operation is not to "show").
-
-
-* ma/skip-writing-unchanged-index (2018-03-01) 1 commit
-  (merged to 'next' on 2018-03-15 at cdbbc66464)
- + write_locked_index(): add flag to avoid writing unchanged index
-
- Internal API clean-up to allow write_locked_index() optionally skip
- writing the in-core index when it is not modified.
-
-
-* ml/filter-branch-portability-fix (2018-03-19) 1 commit
-  (merged to 'next' on 2018-03-20 at c7c17cfc8b)
- + filter-branch: use printf instead of echo -e
-
- Shell script portability fix.
-
-
-* nd/parseopt-completion (2018-03-23) 2 commits
-  (merged to 'next' on 2018-03-23 at 2bee77135e)
- + t9902: disable test on the list of merge-strategies under GETTEXT_POISON
-  (merged to 'next' on 2018-03-22 at 279765c437)
- + completion: clear cached --options when sourcing the completion script
- (this branch is used by nd/parseopt-completion-more.)
-
- Hotfix for recently graduated topic that give help to completion
- scripts from the Git subcommands that are being completed
-
-
-* pc/submodule-helper (2018-03-27) 1 commit
-  (merged to 'next' on 2018-03-27 at 362e0ef09b)
- + submodule deinit: handle non existing pathspecs gracefully
-
- Hotfix.
-
-
-* rj/http-code-cleanup (2018-03-15) 1 commit
-  (merged to 'next' on 2018-03-15 at 0dfd462ff8)
- + http: fix an unused variable warning for 'curl_no_proxy'
-
- There was an unused file-scope static variable left in http.c when
- building for versions of libCURL that is older than 7.19.4, which
- has been fixed.
-
- This will become unnecessary, when we follow-through the
- jk/drop-ancient-curl topic.
-
-
-* rj/warning-uninitialized-fix (2018-03-20) 2 commits
-  (merged to 'next' on 2018-03-20 at 9ac9d02b0b)
- + read-cache: fix an -Wmaybe-uninitialized warning
- + -Wuninitialized: remove some 'init-self' workarounds
-
- Compilation fix.
-
-
-* tg/stash-doc-typofix (2018-03-27) 1 commit
-  (merged to 'next' on 2018-03-27 at 144a25f09c)
- + git-stash.txt: remove extra square bracket
-
- Hotfix.
-
-
-* tz/complete-tag-delete-tagname (2018-03-19) 1 commit
-  (merged to 'next' on 2018-03-20 at d63d45ff16)
- + completion: complete tags with git tag --delete/--verify
-
-
-* tz/relnotes-1.7-on-perl (2018-03-16) 1 commit
-  (merged to 'next' on 2018-03-20 at ed4b26e581)
- + RelNotes: add details on Perl module changes
-
---------------------------------------------------
-[New Topics]
-
-* ds/bsearch-hash (2018-03-25) 4 commits
- - sha1_name: use bsearch_pack() in unique_in_pack()
- - sha1_name: use bsearch_pack() for abbreviations
- - packfile: define and use bsearch_pack()
- - sha1_name: convert struct min_abbrev_data to object_id
- (this branch uses bc/object-id.)
-
- Code to find the length to uniquely abbreviate object names based
- on packfile content, which is a relatively recent addtion, has been
- optimized to use the same fan-out table.
-
- Will merge to 'next'.
-
-
-* jh/json-writer (2018-03-28) 1 commit
- - json_writer: new routines to create data in JSON format
-
-
-* jk/diff-highlight-graph-fix (2018-03-21) 7 commits
- - diff-highlight: detect --graph by indent
- - diff-highlight: use flush() helper consistently
- - diff-highlight: test graphs with --color
- - diff-highlight: test interleaved parallel lines of history
- - diff-highlight: prefer "echo" to "cat" in tests
- - diff-highlight: use test_tick in graph test
- - diff-highlight: correct test graph diagram
-
- "diff-highlight" filter (in contrib/) learned to undertand "git log
- --graph" output better.
-
- Will merge to 'next'.
-
-
-* ot/libify-get-ref-atom-value (2018-03-21) 6 commits
- - ref-filter: libify get_ref_atom_value()
- - ref-filter: add return value to parsers
- - ref-filter: change parsing function error handling
- - ref-filter: add return value && strbuf to handlers
- - ref-filter: start adding strbufs with errors
- - strbuf: add shortcut to work with error messages
-
- Code restructuring, in preparation for further work.
-
- Will merge to 'next'.
-
-
-* ab/doc-hash-brokenness (2018-03-27) 2 commits
- - doc hash-function-transition: clarify what SHAttered means
- - doc hash-function-transition: clarify how older gits die on NewHash
-
-
-* ab/drop-contrib-examples (2018-03-26) 1 commit
- - Remove contrib/examples/*
-
- Will merge to 'next'.
-
-
-* bc/hash-independent-tests (2018-03-26) 10 commits
- - t2107: abstract away SHA-1-specific constants
- - t2101: abstract away SHA-1-specific constants
- - t2101: modernize test style
- - t2020: abstract away SHA-1 specific constants
- - t1507: abstract away SHA-1-specific constants
- - t1411: abstract away SHA-1-specific constants
- - t1405: sort reflog entries in a hash-independent way
- - t1300: abstract away SHA-1-specific constants
- - t1304: abstract away SHA-1-specific constants
- - t1011: abstract away SHA-1-specific constants
-
-
-* cc/perf-aggregate-sort (2018-03-27) 2 commits
- - perf/aggregate: add --sort-by=regression option
- - perf/aggregate: add display_dir()
-
-
-* jc/test-must-be-empty (2018-03-27) 1 commit
- - test_must_be_empty: simplify file existence check
-
-
 * jh/partial-clone (2018-03-25) 1 commit
   (merged to 'next' on 2018-03-28 at 2a0a7aef8e)
  + unpack-trees: release oid_array after use in check_updates()
 
  Hotfix.
 
- Will merge to 'master'.
+--------------------------------------------------
+[New Topics]
+
+* rs/status-with-removed-submodule (2018-03-28) 1 commit
+  (merged to 'next' on 2018-03-30 at 8a7b618bc1)
+ + submodule: check for NULL return of get_submodule_ref_store()
+
+ "git submodule status" misbehaved on a submodule that has been
+ removed from the working tree.
+
+ Will cook in 'next'.
 
 
-* jk/branch-l-0-deprecation (2018-03-26) 3 commits
- - branch: deprecate "-l" option
- - t: switch "branch -l" to "branch --create-reflog"
- - t3200: unset core.logallrefupdates when testing reflog creation
- (this branch is used by jk/branch-l-1-removal and jk/branch-l-2-reincarnation.)
+* lv/tls-1.3 (2018-03-29) 1 commit
+  (merged to 'next' on 2018-03-30 at 4f13731408)
+ + http: allow use of TLS 1.3
+
+ When built with more recent cURL, GIT_SSL_VERSION can now specify
+ "tlsv1.3" as its value.
+
+ Will cook in 'next'.
 
 
-* jk/branch-l-1-removal (2018-03-26) 1 commit
- - branch: drop deprecated "-l" option
- (this branch is used by jk/branch-l-2-reincarnation; uses jk/branch-l-0-deprecation.)
+* nd/warn-more-for-devs (2018-03-29) 3 commits
+ - Makefile: add EAGER_DEVELOPER mode
+ - Makefile: detect compiler and enable more warnings in DEVELOPER=1
+ - connect.c: mark die_initial_contact() NORETURN
 
-
-* jk/branch-l-2-reincarnation (2018-03-26) 1 commit
- - branch: make "-l" a synonym for "--list"
- (this branch uses jk/branch-l-0-deprecation and jk/branch-l-1-removal.)
-
-
-* jm/mem-pool (2018-03-27) 3 commits
- - Move reusable parts of memory pool into its own file
- - fast-import: introduce mem_pool type
- - fast-import: rename mem_pool type to mp_block
-
-
-* js/runtime-prefix-windows (2018-03-27) 2 commits
- - mingw/msvc: use the new-style RUNTIME_PREFIX helper
- - exec_cmd: provide a new-style RUNTIME_PREFIX helper for Windows
- (this branch uses dj/runtime-prefix.)
-
-
-* nd/combined-test-helper (2018-03-27) 36 commits
- - t/helper: merge test-write-cache into test-tool
- - t/helper: merge test-wildmatch into test-tool
- - t/helper: merge test-urlmatch-normalization into test-tool
- - t/helper: merge test-subprocess into test-tool
- - t/helper: merge test-submodule-config into test-tool
- - t/helper: merge test-string-list into test-tool
- - t/helper: merge test-strcmp-offset into test-tool
- - t/helper: merge test-sigchain into test-tool
- - t/helper: merge test-sha1-array into test-tool
- - t/helper: merge test-scrap-cache-tree into test-tool
- - t/helper: merge test-run-command into test-tool
- - t/helper: merge test-revision-walking into test-tool
- - t/helper: merge test-regex into test-tool
- - t/helper: merge test-ref-store into test-tool
- - t/helper: merge test-read-cache into test-tool
- - t/helper: merge test-prio-queue into test-tool
- - t/helper: merge test-path-utils into test-tool
- - t/helper: merge test-online-cpus into test-tool
- - t/helper: merge test-mktemp into test-tool
- - t/helper: merge (unused) test-mergesort into test-tool
- - t/helper: merge (unused) test-match-trees into test-tool
- - t/helper: merge test-index-version into test-tool
- - t/helper: merge test-hashmap into test-tool
- - t/helper: merge test-genrandom into test-tool
- - t/helper: merge test-example-decorate into test-tool
- - t/helper: merge test-dump-split-index into test-tool
- - t/helper: merge test-dump-cache-tree into test-tool
- - t/helper: merge test-drop-caches into test-tool
- - t/helper: merge (unused) test-delta into test-tool
- - t/helper: merge test-date into test-tool
- - t/helper: merge test-ctype into test-tool
- - t/helper: merge test-config into test-tool
- - t/helper: merge test-lazy-init-name-hash into test-tool
- - t/helper: merge test-sha1 into test-tool
- - t/helper: merge test-chmtime into test-tool
- - t/helper: add an empty test-tool program
-
-
-* nd/parseopt-completion-more (2018-03-25) 8 commits
- - completion: use __gitcomp_builtin in _git_cherry
- - completion: use __gitcomp_builtin in _git_ls_tree
- - completion: delete option-only completion commands
- - completion: add --option completion for most builtin commands
- - completion: factor out _git_xxx calling code
- - completion: mention the oldest version we need to support
- - git.c: add hidden option --list-parseopt-builtins
- - git.c: move cmd_struct declaration up
-
-
-* nd/trace-with-env (2018-03-25) 1 commit
- - run-command: use strbuf_addstr() for adding a string to a strbuf
-
-
-* pk/test-avoid-pipe-hiding-exit-status (2018-03-28) 1 commit
- - test: avoid pipes in git related commands for test
-
-
-* ws/rebase-p (2018-03-23) 8 commits
- - rebase: remove merges_option and a blank line
- - rebase: remove unused code paths from git_rebase__interactive__preserve_merges
- - rebase: remove unused code paths from git_rebase__interactive
- - rebase: add and use git_rebase__interactive__preserve_merges
- - rebase: extract functions out of git_rebase__interactive
- - rebase: reindent function git_rebase__interactive
- - rebase: update invocation of rebase dot-sourced scripts
- - rebase-interactive: simplify pick_on_preserving_merges
-
- Code clean-up.
+ The build procedure "make DEVELOPER=YesPlease" learned to enable a
+ bit more warning options depending on the compiler used to help
+ developers more.  There also is "make EAGER_DEVELOPER=YesPlease"
+ available now, for those who want to help fixing warnings we
+ usually ignore.
 
  Will merge to 'next'.
 
 
-* yk/filter-branch-non-committish-refs (2018-03-25) 1 commit
- - filter-branch: fix errors caused by refs that point at non-committish
+* sb/submodule-move-nested (2018-03-29) 6 commits
+ - submodule: fixup nested submodules after moving the submodule
+ - submodule-config: remove submodule_from_cache
+ - submodule-config: add repository argument to submodule_from_{name, path}
+ - submodule-config: allow submodule_free to handle arbitrary repositories
+ - grep: remove "repo" arg from non-supporting funcs
+ - submodule.h: drop declaration of connect_work_tree_and_git_dir
+ (this branch uses nd/remove-ignore-env-field and sb/object-store; is tangled with sb/packfiles-in-repository.)
+
+ Moving a submodule that itself has submodule in it with "git mv"
+ forgot to make necessary adjustment to the nested sub-submodules;
+ now the codepath learned to recurse into the submodules.
 
 
-* ys/bisect-object-id-missing-conversion-fix (2018-03-25) 1 commit
- - bisect: use oid_to_hex() for converting object_id hashes to hex strings
+* tb/config-type (2018-03-29) 1 commit
+ - builtin/config.c: prefer `--type=bool` over `--bool`, etc.
+ (this branch is used by tb/config-default.)
 
- Code clean-up.
+ The "git config" command uses separate options e.g. "--int",
+ "--bool", etc. to specify what type the caller wants the value to
+ be interpreted as.  A new "--type=<typename>" option has been
+ introduced, which would make it cleaner to define new types.
 
  Will merge to 'next'.
+
+
+* tb/config-default (2018-03-29) 3 commits
+ - builtin/config: introduce `color` type specifier
+ - config.c: introduce 'git_config_color' to parse ANSI colors
+ - builtin/config: introduce `--default`
+ (this branch uses tb/config-type.)
+
+ "git config --get" learned the "--default" option, to help the
+ calling script.  Building on top of the tb/config-type topic, the
+ "git config" learns "--type=color" type.  Taken together, you can
+ do things like "git config --get foo.color --default blue" and get
+ the ANSI color sequence for the color given to foo.color variable,
+ or "blue" if the variable does not exist.
+
+
+* eb/cred-helper-ignore-sigpipe (2018-03-29) 1 commit
+  (merged to 'next' on 2018-03-30 at c48e98c1b1)
+ + credential: ignore SIGPIPE when writing to credential helpers
+
+ When credential helper exits very quickly without reading its
+ input, it used to cause Git to die with SIGPIPE, which has been
+ fixed.
+
+ Will cook in 'next'.
+
+
+* jk/flockfile-stdio (2018-03-30) 1 commit
+ - config: move flockfile() closer to unlocked functions
+
+
+* jk/relative-directory-fix (2018-03-30) 5 commits
+ - refs: use chdir_notify to update cached relative paths
+ - set_work_tree: use chdir_notify
+ - add chdir-notify API
+ - trace.c: export trace_setup_key
+ - set_git_dir: die when setenv() fails
 
 --------------------------------------------------
 [Stalled]
@@ -446,6 +213,290 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* ds/bsearch-hash (2018-03-25) 4 commits
+  (merged to 'next' on 2018-03-29 at 561d5577a7)
+ + sha1_name: use bsearch_pack() in unique_in_pack()
+ + sha1_name: use bsearch_pack() for abbreviations
+ + packfile: define and use bsearch_pack()
+ + sha1_name: convert struct min_abbrev_data to object_id
+ (this branch uses bc/object-id.)
+
+ Code to find the length to uniquely abbreviate object names based
+ on packfile content, which is a relatively recent addtion, has been
+ optimized to use the same fan-out table.
+
+ Will cook in 'next'.
+
+
+* jh/json-writer (2018-03-28) 1 commit
+ - json_writer: new routines to create data in JSON format
+
+ Is this ready for 'next'?
+
+
+* jk/diff-highlight-graph-fix (2018-03-21) 7 commits
+  (merged to 'next' on 2018-03-29 at eb995f66e3)
+ + diff-highlight: detect --graph by indent
+ + diff-highlight: use flush() helper consistently
+ + diff-highlight: test graphs with --color
+ + diff-highlight: test interleaved parallel lines of history
+ + diff-highlight: prefer "echo" to "cat" in tests
+ + diff-highlight: use test_tick in graph test
+ + diff-highlight: correct test graph diagram
+
+ "diff-highlight" filter (in contrib/) learned to undertand "git log
+ --graph" output better.
+
+ Will cook in 'next'.
+
+
+* ot/libify-get-ref-atom-value (2018-03-29) 6 commits
+ - ref-filter: libify get_ref_atom_value()
+ - ref-filter: add return value to parsers
+ - ref-filter: change parsing function error handling
+ - ref-filter: add return value && strbuf to handlers
+ - ref-filter: start adding strbufs with errors
+ - ref-filter: add shortcut to work with strbufs
+
+ Code restructuring, in preparation for further work.
+
+ Will merge to 'next'.
+
+
+* ab/doc-hash-brokenness (2018-03-27) 2 commits
+  (merged to 'next' on 2018-03-29 at e9b2f5cf4a)
+ + doc hash-function-transition: clarify what SHAttered means
+ + doc hash-function-transition: clarify how older gits die on NewHash
+
+ Doc updates.
+
+ Will cook in 'next'.
+
+
+* ab/drop-contrib-examples (2018-03-26) 1 commit
+  (merged to 'next' on 2018-03-29 at 9d8a7603b5)
+ + Remove contrib/examples/*
+
+ Will cook in 'next'.
+
+
+* bc/hash-independent-tests (2018-03-26) 10 commits
+  (merged to 'next' on 2018-03-29 at 11179d9b71)
+ + t2107: abstract away SHA-1-specific constants
+ + t2101: abstract away SHA-1-specific constants
+ + t2101: modernize test style
+ + t2020: abstract away SHA-1 specific constants
+ + t1507: abstract away SHA-1-specific constants
+ + t1411: abstract away SHA-1-specific constants
+ + t1405: sort reflog entries in a hash-independent way
+ + t1300: abstract away SHA-1-specific constants
+ + t1304: abstract away SHA-1-specific constants
+ + t1011: abstract away SHA-1-specific constants
+
+ Tests that rely on the exact hardcoded values of object names have
+ been updated in preparation for hash function migration.
+
+ Will cook in 'next'.
+
+
+* cc/perf-aggregate-sort (2018-03-27) 2 commits
+  (merged to 'next' on 2018-03-29 at 0251068bac)
+ + perf/aggregate: add --sort-by=regression option
+ + perf/aggregate: add display_dir()
+
+ Perf-test update.
+
+ Will cook in 'next'.
+
+
+* jc/test-must-be-empty (2018-03-27) 1 commit
+  (merged to 'next' on 2018-03-29 at 2e64650f23)
+ + test_must_be_empty: simplify file existence check
+
+ Test helper update.
+
+ Will cook in 'next'.
+
+
+* jk/branch-l-0-deprecation (2018-03-26) 3 commits
+  (merged to 'next' on 2018-03-29 at 552cef7913)
+ + branch: deprecate "-l" option
+ + t: switch "branch -l" to "branch --create-reflog"
+ + t3200: unset core.logallrefupdates when testing reflog creation
+ (this branch is used by jk/branch-l-1-removal and jk/branch-l-2-reincarnation.)
+
+ The "-l" option in "git branch -l" is an unfortunate short-hand for
+ "--create-reflog", but many users, both old and new, somehow expect
+ it to be something else, perhaps "--list".  This step deprecates
+ the short-hand and warns about the future removal of the it when it
+ is used.
+
+ Will cook in 'next'.
+
+
+* jk/branch-l-1-removal (2018-03-26) 1 commit
+ - branch: drop deprecated "-l" option
+ (this branch is used by jk/branch-l-2-reincarnation; uses jk/branch-l-0-deprecation.)
+
+ Following the "git branch -l" deprecation, the short-hand is removed.
+
+ Will keep in 'pu'.
+
+
+* jk/branch-l-2-reincarnation (2018-03-26) 1 commit
+ - branch: make "-l" a synonym for "--list"
+ (this branch uses jk/branch-l-0-deprecation and jk/branch-l-1-removal.)
+
+ Following the "git branch -l" removal, "-l" is resurrected as a
+ short-hand for "--list".
+
+ Will keep in 'pu'.
+
+
+* jm/mem-pool (2018-03-27) 3 commits
+  (merged to 'next' on 2018-03-29 at bfce05db6e)
+ + Move reusable parts of memory pool into its own file
+ + fast-import: introduce mem_pool type
+ + fast-import: rename mem_pool type to mp_block
+
+ An reusable "memory pool" implementation has been extracted from
+ fast-import.c, which in turn has become the first user of the
+ mem-pool API.
+
+ Will cook in 'next'.
+
+
+* js/runtime-prefix-windows (2018-03-27) 2 commits
+ - mingw/msvc: use the new-style RUNTIME_PREFIX helper
+ - exec_cmd: provide a new-style RUNTIME_PREFIX helper for Windows
+ (this branch uses dj/runtime-prefix.)
+
+ The Windows port was the first that allowed Git to be installed
+ anywhere by having its components refer to each other with relative
+ pathnames.  The recent dj/runtime-prefix topic extends the idea to
+ other platforms, and its approach has been adopted back in the
+ Windows port.
+
+ Is this, together with the dj/runtime-prefix topic, ready for
+ 'next'?
+
+
+* nd/combined-test-helper (2018-03-27) 36 commits
+  (merged to 'next' on 2018-03-30 at ea73d57c30)
+ + t/helper: merge test-write-cache into test-tool
+ + t/helper: merge test-wildmatch into test-tool
+ + t/helper: merge test-urlmatch-normalization into test-tool
+ + t/helper: merge test-subprocess into test-tool
+ + t/helper: merge test-submodule-config into test-tool
+ + t/helper: merge test-string-list into test-tool
+ + t/helper: merge test-strcmp-offset into test-tool
+ + t/helper: merge test-sigchain into test-tool
+ + t/helper: merge test-sha1-array into test-tool
+ + t/helper: merge test-scrap-cache-tree into test-tool
+ + t/helper: merge test-run-command into test-tool
+ + t/helper: merge test-revision-walking into test-tool
+ + t/helper: merge test-regex into test-tool
+ + t/helper: merge test-ref-store into test-tool
+ + t/helper: merge test-read-cache into test-tool
+ + t/helper: merge test-prio-queue into test-tool
+ + t/helper: merge test-path-utils into test-tool
+ + t/helper: merge test-online-cpus into test-tool
+ + t/helper: merge test-mktemp into test-tool
+ + t/helper: merge (unused) test-mergesort into test-tool
+ + t/helper: merge (unused) test-match-trees into test-tool
+ + t/helper: merge test-index-version into test-tool
+ + t/helper: merge test-hashmap into test-tool
+ + t/helper: merge test-genrandom into test-tool
+ + t/helper: merge test-example-decorate into test-tool
+ + t/helper: merge test-dump-split-index into test-tool
+ + t/helper: merge test-dump-cache-tree into test-tool
+ + t/helper: merge test-drop-caches into test-tool
+ + t/helper: merge (unused) test-delta into test-tool
+ + t/helper: merge test-date into test-tool
+ + t/helper: merge test-ctype into test-tool
+ + t/helper: merge test-config into test-tool
+ + t/helper: merge test-lazy-init-name-hash into test-tool
+ + t/helper: merge test-sha1 into test-tool
+ + t/helper: merge test-chmtime into test-tool
+ + t/helper: add an empty test-tool program
+
+ Small test-helper programs have been consolidated into a single
+ binary.
+
+ Will cook in 'next'.
+
+
+* nd/parseopt-completion-more (2018-03-25) 8 commits
+  (merged to 'next' on 2018-03-29 at 9007b165e2)
+ + completion: use __gitcomp_builtin in _git_cherry
+ + completion: use __gitcomp_builtin in _git_ls_tree
+ + completion: delete option-only completion commands
+ + completion: add --option completion for most builtin commands
+ + completion: factor out _git_xxx calling code
+ + completion: mention the oldest version we need to support
+ + git.c: add hidden option --list-parseopt-builtins
+ + git.c: move cmd_struct declaration up
+
+ The mechanism to use parse-options API to automate the command line
+ completion continues to get extended and polished.
+
+ Will cook in 'next'.
+
+
+* nd/trace-with-env (2018-03-25) 1 commit
+  (merged to 'next' on 2018-03-29 at 6890e2c39b)
+ + run-command: use strbuf_addstr() for adding a string to a strbuf
+
+ Code cleanup.
+
+ Will cook in 'next'.
+
+
+* pk/test-avoid-pipe-hiding-exit-status (2018-03-28) 1 commit
+  (merged to 'next' on 2018-03-30 at 4f3df09139)
+ + test: avoid pipes in git related commands for test
+
+ Test cleanup.
+
+ Will cook in 'next'.
+
+
+* ws/rebase-p (2018-03-23) 8 commits
+  (merged to 'next' on 2018-03-29 at d20ae8510e)
+ + rebase: remove merges_option and a blank line
+ + rebase: remove unused code paths from git_rebase__interactive__preserve_merges
+ + rebase: remove unused code paths from git_rebase__interactive
+ + rebase: add and use git_rebase__interactive__preserve_merges
+ + rebase: extract functions out of git_rebase__interactive
+ + rebase: reindent function git_rebase__interactive
+ + rebase: update invocation of rebase dot-sourced scripts
+ + rebase-interactive: simplify pick_on_preserving_merges
+
+ Code clean-up.
+
+ Will cook in 'next'.
+
+
+* yk/filter-branch-non-committish-refs (2018-03-25) 1 commit
+  (merged to 'next' on 2018-03-29 at 8ac3806bcf)
+ + filter-branch: fix errors caused by refs that point at non-committish
+
+ when refs that do not point at committish are given, "git
+ filter-branch" gave a misleading error messages.  This has been
+ corrected.
+
+ Will cook in 'next'.
+
+
+* ys/bisect-object-id-missing-conversion-fix (2018-03-25) 1 commit
+  (merged to 'next' on 2018-03-29 at 7d988b57d4)
+ + bisect: use oid_to_hex() for converting object_id hashes to hex strings
+
+ Code clean-up.
+
+ Will cook in 'next'.
+
+
 * ml/filter-branch-no-op-error (2018-03-15) 1 commit
   (merged to 'next' on 2018-03-15 at ba8ac48dec)
  + filter-branch: return 2 when nothing to rewrite
@@ -485,8 +536,7 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* pw/rebase-keep-empty-fixes (2018-03-20) 4 commits
- - SQUASH???
+* pw/rebase-keep-empty-fixes (2018-03-29) 3 commits
  - rebase: respect --no-keep-empty
  - rebase -i --keep-empty: don't prune empty commits
  - rebase --root: stop assuming squash_onto is unset
@@ -496,8 +546,10 @@ of the repositories listed at
  other side contained an empty commit (due to the "does an
  equivalent patch exist already?" check), which has been corrected.
 
+ Will merge to 'next'.
 
-* pw/rebase-signoff (2018-03-20) 4 commits
+
+* pw/rebase-signoff (2018-03-29) 4 commits
  - rebase --keep-empty: always use interactive rebase
  - rebase -p: error out if --signoff is given
  - rebase: extend --signoff support
@@ -506,6 +558,8 @@ of the repositories listed at
 
  "git rebase" has learned to honor "--signoff" option when using
  backends other than "am" (but not "--preserve-merges").
+
+ Will merge to 'next'.
 
 
 * dj/runtime-prefix (2018-03-25) 3 commits
@@ -518,6 +572,9 @@ of the repositories listed at
  to its associated files relative to the main binary, in the same
  way that has been possible on Windows for quite some time, for
  Linux, BSDs and Darwin.
+
+ Is this, together with the js/runtime-prefix-windows topic, ready
+ for 'next'?
 
 
 * ti/fetch-everything-local-optim (2018-03-14) 1 commit
@@ -700,13 +757,16 @@ of the repositories listed at
 
 
 * pw/add-p-select (2018-03-16) 3 commits
- - add -p: optimize line selection for short hunks
- - add -p: allow line selection to be inverted
- - add -p: select individual hunk lines
+  (merged to 'next' on 2018-03-30 at eae69f5ded)
+ + add -p: optimize line selection for short hunks
+ + add -p: allow line selection to be inverted
+ + add -p: select individual hunk lines
 
  "git add -p" interactive interface learned to let users choose
  individual added/removed lines to be used in the operation, instead
  of accepting or rejecting a whole hunk.
+
+ Will cook in 'next'.
 
 
 * ld/p4-unshelve (2018-02-22) 1 commit
@@ -737,7 +797,7 @@ of the repositories listed at
  + repository.c: delete dead functions
  + repository.c: move env-related setup code back to environment.c
  + repository: initialize the_repository in main()
- (this branch is used by sb/object-store and sb/packfiles-in-repository.)
+ (this branch is used by sb/object-store, sb/packfiles-in-repository and sb/submodule-move-nested.)
 
  Code clean-up for the "repository" abstraction.
 
@@ -745,34 +805,35 @@ of the repositories listed at
 
 
 * sb/object-store (2018-03-26) 27 commits
- - sha1_file: allow sha1_loose_object_info to handle arbitrary repositories
- - sha1_file: allow map_sha1_file to handle arbitrary repositories
- - sha1_file: allow map_sha1_file_1 to handle arbitrary repositories
- - sha1_file: allow open_sha1_file to handle arbitrary repositories
- - sha1_file: allow stat_sha1_file to handle arbitrary repositories
- - sha1_file: allow sha1_file_name to handle arbitrary repositories
- - sha1_file: add repository argument to sha1_loose_object_info
- - sha1_file: add repository argument to map_sha1_file
- - sha1_file: add repository argument to map_sha1_file_1
- - sha1_file: add repository argument to open_sha1_file
- - sha1_file: add repository argument to stat_sha1_file
- - sha1_file: add repository argument to sha1_file_name
- - sha1_file: allow prepare_alt_odb to handle arbitrary repositories
- - sha1_file: allow link_alt_odb_entries to handle arbitrary repositories
- - sha1_file: add repository argument to prepare_alt_odb
- - sha1_file: add repository argument to link_alt_odb_entries
- - sha1_file: add repository argument to read_info_alternates
- - sha1_file: add repository argument to link_alt_odb_entry
- - sha1_file: add raw_object_store argument to alt_odb_usable
- - pack: move approximate object count to object store
- - pack: move prepare_packed_git_run_once to object store
- - object-store: close all packs upon clearing the object store
- - object-store: move packed_git and packed_git_mru to object store
- - object-store: free alt_odb_list
- - object-store: move alt_odb_list and alt_odb_tail to object store
- - object-store: migrate alternates struct and functions from cache.h
- - repository: introduce raw object store field
- (this branch is used by sb/packfiles-in-repository; uses nd/remove-ignore-env-field.)
+  (merged to 'next' on 2018-03-30 at 93e3475178)
+ + sha1_file: allow sha1_loose_object_info to handle arbitrary repositories
+ + sha1_file: allow map_sha1_file to handle arbitrary repositories
+ + sha1_file: allow map_sha1_file_1 to handle arbitrary repositories
+ + sha1_file: allow open_sha1_file to handle arbitrary repositories
+ + sha1_file: allow stat_sha1_file to handle arbitrary repositories
+ + sha1_file: allow sha1_file_name to handle arbitrary repositories
+ + sha1_file: add repository argument to sha1_loose_object_info
+ + sha1_file: add repository argument to map_sha1_file
+ + sha1_file: add repository argument to map_sha1_file_1
+ + sha1_file: add repository argument to open_sha1_file
+ + sha1_file: add repository argument to stat_sha1_file
+ + sha1_file: add repository argument to sha1_file_name
+ + sha1_file: allow prepare_alt_odb to handle arbitrary repositories
+ + sha1_file: allow link_alt_odb_entries to handle arbitrary repositories
+ + sha1_file: add repository argument to prepare_alt_odb
+ + sha1_file: add repository argument to link_alt_odb_entries
+ + sha1_file: add repository argument to read_info_alternates
+ + sha1_file: add repository argument to link_alt_odb_entry
+ + sha1_file: add raw_object_store argument to alt_odb_usable
+ + pack: move approximate object count to object store
+ + pack: move prepare_packed_git_run_once to object store
+ + object-store: close all packs upon clearing the object store
+ + object-store: move packed_git and packed_git_mru to object store
+ + object-store: free alt_odb_list
+ + object-store: move alt_odb_list and alt_odb_tail to object store
+ + object-store: migrate alternates struct and functions from cache.h
+ + repository: introduce raw object store field
+ (this branch is used by sb/packfiles-in-repository and sb/submodule-move-nested; uses nd/remove-ignore-env-field.)
 
  Refactoring the internal global data structure to make it possible
  to open multiple repositories, work with and then close them.
@@ -780,27 +841,28 @@ of the repositories listed at
  Rerolled by Duy on top of a separate preliminary clean-up topic.
  The resulting structure of the topics looked very sensible.
 
- Waiting for a follow-up discussion.
+ Will cook in 'next'.
 
 
 * sb/packfiles-in-repository (2018-03-26) 12 commits
- - packfile: keep prepare_packed_git() private
- - packfile: allow find_pack_entry to handle arbitrary repositories
- - packfile: add repository argument to find_pack_entry
- - packfile: allow reprepare_packed_git to handle arbitrary repositories
- - packfile: allow prepare_packed_git to handle arbitrary repositories
- - packfile: allow prepare_packed_git_one to handle arbitrary repositories
- - packfile: add repository argument to reprepare_packed_git
- - packfile: add repository argument to prepare_packed_git
- - packfile: add repository argument to prepare_packed_git_one
- - packfile: allow install_packed_git to handle arbitrary repositories
- - packfile: allow rearrange_packed_git to handle arbitrary repositories
- - packfile: allow prepare_packed_git_mru to handle arbitrary repositories
- (this branch uses nd/remove-ignore-env-field and sb/object-store.)
+  (merged to 'next' on 2018-03-30 at caa68db14d)
+ + packfile: keep prepare_packed_git() private
+ + packfile: allow find_pack_entry to handle arbitrary repositories
+ + packfile: add repository argument to find_pack_entry
+ + packfile: allow reprepare_packed_git to handle arbitrary repositories
+ + packfile: allow prepare_packed_git to handle arbitrary repositories
+ + packfile: allow prepare_packed_git_one to handle arbitrary repositories
+ + packfile: add repository argument to reprepare_packed_git
+ + packfile: add repository argument to prepare_packed_git
+ + packfile: add repository argument to prepare_packed_git_one
+ + packfile: allow install_packed_git to handle arbitrary repositories
+ + packfile: allow rearrange_packed_git to handle arbitrary repositories
+ + packfile: allow prepare_packed_git_mru to handle arbitrary repositories
+ (this branch uses nd/remove-ignore-env-field and sb/object-store; is tangled with sb/submodule-move-nested.)
 
  Refactoring of the internal global data structure continues.
 
- Waiting for a follow-up discussion.
+ Will cook in 'next'.
 
 
 * ds/commit-graph (2018-03-14) 17 commits
@@ -825,6 +887,9 @@ of the repositories listed at
  Precompute and store information necessary for ancestry traversal
  in a separate file to optimize graph walking.
 
+ Expecting a reroll.
+ cf. <d76442f9-5f06-998b-8b2a-84b5ca118aaa@gmail.com>
+ cf. <0c2f17fa-5c0e-9539-a081-7827a6678bf1@gmail.com>
  It seems that this topic is getting there.
 
 
@@ -848,6 +913,8 @@ of the repositories listed at
  - worktree: improve message when creating a new worktree
 
  "git worktree add" learned to check out an existing branch.
+
+ Is this ready for 'next'?
 
 
 * js/rebase-recreate-merge (2018-02-23) 12 commits
@@ -873,47 +940,46 @@ of the repositories listed at
 
 
 * bw/protocol-v2 (2018-03-15) 35 commits
- - remote-curl: don't request v2 when pushing
- - remote-curl: implement stateless-connect command
- - http: eliminate "# service" line when using protocol v2
- - http: don't always add Git-Protocol header
- - http: allow providing extra headers for http requests
- - remote-curl: store the protocol version the server responded with
- - remote-curl: create copy of the service name
- - pkt-line: add packet_buf_write_len function
- - transport-helper: introduce stateless-connect
- - transport-helper: refactor process_connect_service
- - transport-helper: remove name parameter
- - connect: don't request v2 when pushing
- - connect: refactor git_connect to only get the protocol version once
- - fetch-pack: support shallow requests
- - fetch-pack: perform a fetch using v2
- - upload-pack: introduce fetch server command
- - push: pass ref prefixes when pushing
- - fetch: pass ref prefixes when fetching
- - ls-remote: pass ref prefixes when requesting a remote's refs
- - transport: convert transport_get_remote_refs to take a list of ref prefixes
- - transport: convert get_refs_list to take a list of ref prefixes
- - connect: request remote refs using v2
- - ls-refs: introduce ls-refs server command
- - serve: introduce git-serve
- - test-pkt-line: introduce a packet-line test helper
- - protocol: introduce enum protocol_version value protocol_v2
- - transport: store protocol version
- - connect: discover protocol version outside of get_remote_heads
- - connect: convert get_remote_heads to use struct packet_reader
- - transport: use get_refs_via_connect to get refs
- - upload-pack: factor out processing lines
- - upload-pack: convert to a builtin
- - pkt-line: add delim packet support
- - pkt-line: allow peeking a packet line without consuming it
- - pkt-line: introduce packet_read_with_status
+  (merged to 'next' on 2018-03-29 at be7f998712)
+ + remote-curl: don't request v2 when pushing
+ + remote-curl: implement stateless-connect command
+ + http: eliminate "# service" line when using protocol v2
+ + http: don't always add Git-Protocol header
+ + http: allow providing extra headers for http requests
+ + remote-curl: store the protocol version the server responded with
+ + remote-curl: create copy of the service name
+ + pkt-line: add packet_buf_write_len function
+ + transport-helper: introduce stateless-connect
+ + transport-helper: refactor process_connect_service
+ + transport-helper: remove name parameter
+ + connect: don't request v2 when pushing
+ + connect: refactor git_connect to only get the protocol version once
+ + fetch-pack: support shallow requests
+ + fetch-pack: perform a fetch using v2
+ + upload-pack: introduce fetch server command
+ + push: pass ref prefixes when pushing
+ + fetch: pass ref prefixes when fetching
+ + ls-remote: pass ref prefixes when requesting a remote's refs
+ + transport: convert transport_get_remote_refs to take a list of ref prefixes
+ + transport: convert get_refs_list to take a list of ref prefixes
+ + connect: request remote refs using v2
+ + ls-refs: introduce ls-refs server command
+ + serve: introduce git-serve
+ + test-pkt-line: introduce a packet-line test helper
+ + protocol: introduce enum protocol_version value protocol_v2
+ + transport: store protocol version
+ + connect: discover protocol version outside of get_remote_heads
+ + connect: convert get_remote_heads to use struct packet_reader
+ + transport: use get_refs_via_connect to get refs
+ + upload-pack: factor out processing lines
+ + upload-pack: convert to a builtin
+ + pkt-line: add delim packet support
+ + pkt-line: allow peeking a packet line without consuming it
+ + pkt-line: introduce packet_read_with_status
 
  The beginning of the next-gen transfer protocol.
 
- Is everybody happy with this version?  One design decision with
- larger consequence "to or not to build in?" has been settled in
- favor of status quo, IIRC.
+ Will cook in 'next'.
 
 
 * ls/checkout-encoding (2018-03-16) 10 commits
@@ -931,6 +997,9 @@ of the repositories listed at
  The new "checkout-encoding" attribute can ask Git to convert the
  contents to the specified encoding when checking out to the working
  tree (and the other way around when checking in).
+
+ Expecting a reroll.
+ cf. <B86BE818-A385-4E0C-9AE1-1E974471CEB9@gmail.com>
 
 
 * en/rename-directory-detection (2018-02-27) 29 commits
