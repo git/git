@@ -2254,6 +2254,11 @@ log.showRoot::
 	Tools like linkgit:git-log[1] or linkgit:git-whatchanged[1], which
 	normally hide the root commit will now show it. True by default.
 
+log.showRootMark::
+	If true, the initial commit in `git log --graph` will be marked
+	with the at sign (`@`). Otherwise the initial commit will be
+	marked with the default asterisk sign (`*`). False by default.
+
 log.showSignature::
 	If true, makes linkgit:git-log[1], linkgit:git-show[1], and
 	linkgit:git-whatchanged[1] assume `--show-signature`.
