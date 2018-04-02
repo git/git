@@ -1,0 +1,10 @@
+git-commit-graph(1)
+===================
+
+NAME
+----
+git-commit-graph - Write and verify Git commit graph files
+
+GIT
+---
+Part of the linkgit:git[1] suite
