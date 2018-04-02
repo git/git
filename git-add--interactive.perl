@@ -1564,7 +1564,7 @@ sub patch_update_file {
 					error_msg __("No other hunks to search\n");
 					next;
 				}
-				if ($1 eq "") {
+				if ($regex eq "") {
 					print colored $prompt_color, __("search for regex? ");
 					$regex = <STDIN>;
 					if (defined $regex) {
