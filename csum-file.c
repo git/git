@@ -53,7 +53,7 @@ void hashflush(struct hashfile *f)
 	}
 }
 
-int hashclose(struct hashfile *f, unsigned char *result, unsigned int flags)
+int finalize_hashfile(struct hashfile *f, unsigned char *result, unsigned int flags)
 {
 	int fd;
 
