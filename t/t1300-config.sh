@@ -108,6 +108,7 @@ bar = foo
 [beta]
 baz = multiple \
 lines
+foo = bar
 EOF
 
 test_expect_success 'unset with cont. lines' '
@@ -118,6 +119,7 @@ cat > expect <<\EOF
 [alpha]
 bar = foo
 [beta]
+foo = bar
 EOF
 
 test_expect_success 'unset with cont. lines is correct' 'test_cmp expect .git/config'
