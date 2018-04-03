@@ -1588,7 +1588,7 @@ test_expect_success '--local requires a repo' '
 	test_expect_code 128 nongit git config --local foo.bar
 '
 
-test_expect_failure '--replace-all does not invent newlines' '
+test_expect_success '--replace-all does not invent newlines' '
 	q_to_tab >.git/config <<-\EOF &&
 	[abc]key
 	QkeepSection

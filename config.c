@@ -2617,6 +2617,7 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 			store.seen = 1;
 
 		for (i = 0, copy_begin = 0; i < store.seen; i++) {
+			new_line = 0;
 			if (store.offset[i] == 0) {
 				store.offset[i] = copy_end = contents_sz;
 			} else if (store.state != KEY_SEEN) {
