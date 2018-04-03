@@ -3,6 +3,12 @@
 test_description='test git-http-backend'
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-httpd.sh
+
+if ! test_have_prereq CURL; then
+	skip_all='skipping raw http-backend tests, curl not available'
+	test_done
+fi
+
 start_httpd
 
 GET() {
