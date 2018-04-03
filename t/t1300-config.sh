@@ -1390,7 +1390,7 @@ test_expect_success 'urlmatch with wildcard' '
 '
 
 # good section hygiene
-test_expect_failure 'unsetting the last key in a section removes header' '
+test_expect_failure '--unset last key removes section (except if commented)' '
 	cat >.git/config <<-\EOF &&
 	# some generic comment on the configuration file itself
 	# a comment specific to this "section" section.
@@ -1404,6 +1404,25 @@ test_expect_failure 'unsetting the last key in a section removes header' '
 
 	cat >expect <<-\EOF &&
 	# some generic comment on the configuration file itself
+	# a comment specific to this "section" section.
+	[section]
+	# some intervening lines
+	# that should also be dropped
+
+	# please be careful when you update the above variable
+	EOF
+
+	git config --unset section.key &&
+	test_cmp expect .git/config &&
+
+	cat >.git/config <<-\EOF &&
+	[section]
+	key = value
+	[next-section]
+	EOF
+
+	cat >expect <<-\EOF &&
+	[next-section]
 	EOF
 
 	git config --unset section.key &&
