@@ -2624,7 +2624,7 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 			} else
 				copy_end = find_beginning_of_line(
 					contents, contents_sz,
-					store.offset[i]-2, &new_line);
+					store.offset[i], &new_line);
 
 			if (copy_end > 0 && contents[copy_end-1] != '\n')
 				new_line = 1;
