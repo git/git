@@ -1588,4 +1588,25 @@ test_expect_success '--local requires a repo' '
 	test_expect_code 128 nongit git config --local foo.bar
 '
 
+test_expect_failure '--replace-all does not invent newlines' '
+	q_to_tab >.git/config <<-\EOF &&
+	[abc]key
+	QkeepSection
+	[xyz]
+	Qkey = 1
+	[abc]
+	Qkey = a
+	EOF
+	q_to_tab >expect <<-\EOF &&
+	[abc]
+	QkeepSection
+	[xyz]
+	Qkey = 1
+	[abc]
+	Qkey = b
+	EOF
+	git config --replace-all abc.key b &&
+	test_cmp .git/config expect
+'
+
 test_done
