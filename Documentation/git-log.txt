@@ -205,6 +205,11 @@ log.showRoot::
 	`git log -p` output would be shown without a diff attached.
 	The default is `true`.
 
+log.showRootMark::
+	If true, the initial commit in `git log --graph` will be marked
+	with the at sign (`@`). Otherwise the initial commit will be
+	marked with the default asterisk sign (`*`). False by default.
+
 log.showSignature::
 	If `true`, `git log` and related commands will act as if the
 	`--show-signature` option was passed to them.

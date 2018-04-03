@@ -456,6 +456,22 @@ test_expect_success 'simple log --graph' '
 '
 
 cat > expect <<EOF
+* Second
+* sixth
+* fifth
+* fourth
+* third
+* second
+@ initial
+EOF
+
+test_expect_success 'simple log --graph' '
+	test_config log.showRootMark true &&
+	git log --graph --pretty=tformat:%s >actual &&
+	test_cmp expect actual
+'
+
+cat > expect <<EOF
 123 * Second
 123 * sixth
 123 * fifth
