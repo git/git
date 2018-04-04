@@ -746,8 +746,8 @@ vcxproj:
 	git add -f $(SCRIPT_LIB) $(SCRIPT_SH_GEN) $(SCRIPT_PERL_GEN)
 
 	# Add Perl module
-	$(MAKE) -C perl
-	git add -f perl/blib/lib
+	$(MAKE) $(LIB_PERL_GEN)
+	git add -f perl/build
 
 	# Add bin-wrappers, for testing
 	rm -rf bin-wrappers/
