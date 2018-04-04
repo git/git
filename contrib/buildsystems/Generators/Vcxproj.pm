@@ -74,8 +74,8 @@ sub createProject {
     $cflags =~ s/</&lt;/g;
     $cflags =~ s/>/&gt;/g;
 
-    my $libs_release = '';
-    my $libs_debug = '';
+    my $libs_release = "\n    ";
+    my $libs_debug = "\n    ";
     if (!$static_library) {
       $libs_release = join(";", sort(grep /^(?!libgit\.lib|xdiff\/lib\.lib|vcs-svn\/lib\.lib)/, @{$$build_structure{"$prefix${name}_LIBS"}}));
       $libs_debug = $libs_release;
