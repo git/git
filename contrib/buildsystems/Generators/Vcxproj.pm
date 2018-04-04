@@ -227,7 +227,7 @@ EOM
     print F << "EOM";
   </ItemGroup>
 EOM
-    if (!$static_library || $target eq 'vcs-svn') {
+    if (!$static_library || $target =~ 'vcs-svn') {
       my $uuid_libgit = $$build_structure{"LIBS_libgit_GUID"};
       my $uuid_xdiff_lib = $$build_structure{"LIBS_xdiff/lib_GUID"};
 
