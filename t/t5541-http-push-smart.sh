@@ -377,5 +377,17 @@ test_expect_success 'push status output scrubs password' '
 	grep "^To $HTTPD_URL/smart/test_repo.git" status
 '
 
+test_expect_success 'colorize errors/hints' '
+	cd "$ROOT_PATH"/test_repo_clone &&
+	test_must_fail git -c color.transport=always -c color.advice=always \
+		-c color.push=always \
+		push origin origin/master^:master 2>act &&
+	test_decode_color <act >decoded &&
+	test_i18ngrep "<RED>.*rejected.*<RESET>" decoded &&
+	test_i18ngrep "<RED>error: failed to push some refs" decoded &&
+	test_i18ngrep "<YELLOW>hint: " decoded &&
+	test_i18ngrep ! "^hint: " decoded
+'
+
 stop_httpd
 test_done
