@@ -319,18 +319,20 @@ int git_config_colorbool(const char *var, const char *value)
 	return GIT_COLOR_AUTO;
 }
 
-static int check_auto_color(void)
+static int check_auto_color(int fd)
 {
-	if (color_stdout_is_tty < 0)
-		color_stdout_is_tty = isatty(1);
-	if (color_stdout_is_tty || (pager_in_use() && pager_use_color)) {
+	static int color_stderr_is_tty = -1;
+	int *is_tty_p = fd == 1 ? &color_stdout_is_tty : &color_stderr_is_tty;
+	if (*is_tty_p < 0)
+		*is_tty_p = isatty(fd);
+	if (*is_tty_p || (fd == 1 && pager_in_use() && pager_use_color)) {
 		if (!is_terminal_dumb())
 			return 1;
 	}
 	return 0;
 }
 
-int want_color(int var)
+int want_color_fd(int fd, int var)
 {
 	/*
 	 * NEEDSWORK: This function is sometimes used from multiple threads, and
@@ -339,15 +341,15 @@ int want_color(int var)
 	 * is listed in .tsan-suppressions for the time being.
 	 */
 
-	static int want_auto = -1;
+	static int want_auto[3] = { -1, -1, -1 };
 
 	if (var < 0)
 		var = git_use_color_default;
 
 	if (var == GIT_COLOR_AUTO) {
-		if (want_auto < 0)
-			want_auto = check_auto_color();
-		return want_auto;
+		if (want_auto[fd] < 0)
+			want_auto[fd] = check_auto_color(fd);
+		return want_auto[fd];
 	}
 	return var;
 }
