@@ -53,7 +53,7 @@ The notable options are:
 	not be returned even if all of its contents are ignored. In
 	this case, the contents are returned as individual entries.
 +
-If this is set, files and directories that explicity match an ignore
+If this is set, files and directories that explicitly match an ignore
 pattern are reported. Implicity ignored directories (directories that
 do not match an ignore pattern, but whose contents are all ignored)
 are not reported, instead all of the contents are reported.

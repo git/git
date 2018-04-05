@@ -121,7 +121,7 @@ refname::
 	stripping with positive <N>, or it becomes the full refname if
 	stripping with negative <N>.  Neither is an error.
 +
-`strip` can be used as a synomym to `lstrip`.
+`strip` can be used as a synonym to `lstrip`.
 
 objecttype::
 	The type of the object (`blob`, `tree`, `commit`, `tag`).

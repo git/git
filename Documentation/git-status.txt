@@ -113,7 +113,7 @@ The possible options are:
 	- 'matching'    - Shows ignored files and directories matching an
 			  ignore pattern.
 +
-When 'matching' mode is specified, paths that explicity match an
+When 'matching' mode is specified, paths that explicitly match an
 ignored pattern are shown. If a directory matches an ignore pattern,
 then it is shown, but not paths contained in the ignored directory. If
 a directory does not match an ignore pattern, but all contents are
