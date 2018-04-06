@@ -56,7 +56,7 @@ test_expect_success 'deleted branches have their tracking branches removed' '
 test_expect_success 'already deleted tracking branches ignored' '
 	git branch -d -r origin/b3 &&
 	git push origin :b3 >output 2>&1 &&
-	! grep error output
+	! grep "^error: " output
 '
 
 test_done
