@@ -298,7 +298,13 @@ void free_commit_buffer(struct commit *commit)
 
 struct tree *get_commit_tree(const struct commit *commit)
 {
-	return commit->maybe_tree;
+	if (commit->maybe_tree || !commit->object.parsed)
+		return commit->maybe_tree;
+
+	if (commit->graph_pos == COMMIT_NOT_FROM_GRAPH)
+		BUG("commit has NULL tree, but was not loaded from commit-graph");
+
+	return get_commit_tree_in_graph(commit);
 }
 
 struct object_id *get_commit_tree_oid(const struct commit *commit)

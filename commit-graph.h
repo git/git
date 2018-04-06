@@ -17,6 +17,8 @@ char *get_commit_graph_filename(const char *obj_dir);
  */
 int parse_commit_in_graph(struct commit *item);
 
+struct tree *get_commit_tree_in_graph(const struct commit *c);
+
 struct commit_graph {
 	int graph_fd;
 
