@@ -398,7 +398,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 		if (!obj)
 			die(_("invalid object '%s' given."), name);
 		if (obj->type == OBJ_COMMIT)
-			obj = &((struct commit *)obj)->tree->object;
+			obj = &((struct commit *)obj)->maybe_tree->object;
 
 		if (obj->type == OBJ_TREE) {
 			obj->flags |= flags;

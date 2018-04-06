@@ -439,8 +439,8 @@ static void file_change(struct diff_options *options,
 static int rev_compare_tree(struct rev_info *revs,
 			    struct commit *parent, struct commit *commit)
 {
-	struct tree *t1 = parent->tree;
-	struct tree *t2 = commit->tree;
+	struct tree *t1 = parent->maybe_tree;
+	struct tree *t2 = commit->maybe_tree;
 
 	if (!t1)
 		return REV_TREE_NEW;
@@ -476,7 +476,7 @@ static int rev_compare_tree(struct rev_info *revs,
 static int rev_same_tree_as_empty(struct rev_info *revs, struct commit *commit)
 {
 	int retval;
-	struct tree *t1 = commit->tree;
+	struct tree *t1 = commit->maybe_tree;
 
 	if (!t1)
 		return 0;
@@ -614,7 +614,7 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 	if (!revs->prune)
 		return;
 
-	if (!commit->tree)
+	if (!commit->maybe_tree)
 		return;
 
 	if (!commit->parents) {

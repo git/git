@@ -22,7 +22,7 @@ struct commit {
 	unsigned int index;
 	timestamp_t date;
 	struct commit_list *parents;
-	struct tree *tree;
+	struct tree *maybe_tree;
 	uint32_t graph_pos;
 };
 
