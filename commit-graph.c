@@ -369,7 +369,7 @@ static void write_graph_chunk_data(struct hashfile *f, int hash_len,
 		uint32_t packedDate[2];
 
 		parse_commit(*list);
-		hashwrite(f, (*list)->maybe_tree->object.oid.hash, hash_len);
+		hashwrite(f, get_commit_tree_oid(*list)->hash, hash_len);
 
 		parent = (*list)->parents;
 

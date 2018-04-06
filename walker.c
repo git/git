@@ -87,7 +87,7 @@ static int process_commit(struct walker *walker, struct commit *commit)
 	walker_say(walker, "walk %s\n", oid_to_hex(&commit->object.oid));
 
 	if (walker->get_tree) {
-		if (process(walker, &commit->maybe_tree->object))
+		if (process(walker, &get_commit_tree(commit)->object))
 			return -1;
 		if (!walker->get_all)
 			walker->get_tree = 0;

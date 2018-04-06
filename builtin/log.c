@@ -1064,8 +1064,8 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 
 	diff_setup_done(&opts);
 
-	diff_tree_oid(&origin->maybe_tree->object.oid,
-		      &head->maybe_tree->object.oid,
+	diff_tree_oid(get_commit_tree_oid(origin),
+		      get_commit_tree_oid(head),
 		      "", &opts);
 	diffcore_std(&opts);
 	diff_flush(&opts);

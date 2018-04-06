@@ -1161,10 +1161,11 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 		strbuf_addstr(sb, diff_get_color(c->auto_color, DIFF_RESET));
 		return 1;
 	case 'T':		/* tree hash */
-		strbuf_addstr(sb, oid_to_hex(&commit->maybe_tree->object.oid));
+		strbuf_addstr(sb, oid_to_hex(get_commit_tree_oid(commit)));
 		return 1;
 	case 't':		/* abbreviated tree hash */
-		strbuf_add_unique_abbrev(sb, commit->maybe_tree->object.oid.hash,
+		strbuf_add_unique_abbrev(sb,
+					 get_commit_tree_oid(commit)->hash,
 					 c->pretty_ctx->abbrev);
 		return 1;
 	case 'P':		/* parent hashes */
