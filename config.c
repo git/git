@@ -2297,6 +2297,7 @@ struct config_store_data {
 	struct {
 		size_t begin, end;
 		enum config_event_t type;
+		int is_keys_section;
 	} *parsed;
 	unsigned int parsed_nr, parsed_alloc, *seen, seen_nr, seen_alloc;
 	unsigned int key_seen:1, section_seen:1, is_keys_section:1;
@@ -2325,16 +2326,19 @@ static int store_aux_event(enum config_event_t type,
 	store->parsed[store->parsed_nr].begin = begin;
 	store->parsed[store->parsed_nr].end = end;
 	store->parsed[store->parsed_nr].type = type;
-	store->parsed_nr++;
 
 	if (type == CONFIG_EVENT_SECTION) {
 		if (cf->var.len < 2 || cf->var.buf[cf->var.len - 1] != '.')
 			BUG("Invalid section name '%s'", cf->var.buf);
 
 		/* Is this the section we were looking for? */
-		store->is_keys_section = cf->var.len - 1 == store->baselen &&
+		store->is_keys_section =
+			store->parsed[store->parsed_nr].is_keys_section =
+			cf->var.len - 1 == store->baselen &&
 			!strncasecmp(cf->var.buf, store->key, store->baselen);
 	}
+
+	store->parsed_nr++;
 
 	return 0;
 }
@@ -2465,6 +2469,87 @@ static ssize_t write_pair(int fd, const char *key, const char *value,
 	strbuf_release(&sb);
 
 	return ret;
+}
+
+/*
+ * If we are about to unset the last key(s) in a section, and if there are
+ * no comments surrounding (or included in) the section, we will want to
+ * extend begin/end to remove the entire section.
+ *
+ * Note: the parameter `seen_ptr` points to the index into the store.seen
+ * array.  * This index may be incremented if a section has more than one
+ * entry (which all are to be removed).
+ */
+static void maybe_remove_section(struct config_store_data *store,
+				 const char *contents,
+				 size_t *begin_offset, size_t *end_offset,
+				 int *seen_ptr)
+{
+	size_t begin;
+	int i, seen, section_seen = 0;
+
+	/*
+	 * First, ensure that this is the first key, and that there are no
+	 * comments before the entry nor before the section header.
+	 */
+	seen = *seen_ptr;
+	for (i = store->seen[seen]; i > 0; i--) {
+		enum config_event_t type = store->parsed[i - 1].type;
+
+		if (type == CONFIG_EVENT_COMMENT)
+			/* There is a comment before this entry or section */
+			return;
+		if (type == CONFIG_EVENT_ENTRY) {
+			if (!section_seen)
+				/* This is not the section's first entry. */
+				return;
+			/* We encountered no comment before the section. */
+			break;
+		}
+		if (type == CONFIG_EVENT_SECTION) {
+			if (!store->parsed[i - 1].is_keys_section)
+				break;
+			section_seen = 1;
+		}
+	}
+	begin = store->parsed[i].begin;
+
+	/*
+	 * Next, make sure that we are removing he last key(s) in the section,
+	 * and that there are no comments that are possibly about the current
+	 * section.
+	 */
+	for (i = store->seen[seen] + 1; i < store->parsed_nr; i++) {
+		enum config_event_t type = store->parsed[i].type;
+
+		if (type == CONFIG_EVENT_COMMENT)
+			return;
+		if (type == CONFIG_EVENT_SECTION) {
+			if (store->parsed[i].is_keys_section)
+				continue;
+			break;
+		}
+		if (type == CONFIG_EVENT_ENTRY) {
+			if (++seen < store->seen_nr &&
+			    i == store->seen[seen])
+				/* We want to remove this entry, too */
+				continue;
+			/* There is another entry in this section. */
+			return;
+		}
+	}
+
+	/*
+	 * We are really removing the last entry/entries from this section, and
+	 * there are no enclosed or surrounding comments. Remove the entire,
+	 * now-empty section.
+	 */
+	*seen_ptr = seen;
+	*begin_offset = begin;
+	if (i < store->parsed_nr)
+		*end_offset = store->parsed[i].begin;
+	else
+		*end_offset = store->parsed[store->parsed_nr - 1].end;
 }
 
 int git_config_set_in_file_gently(const char *config_filename,
@@ -2689,6 +2774,10 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 			} else {
 				replace_end = store.parsed[j].end;
 				copy_end = store.parsed[j].begin;
+				if (!value)
+					maybe_remove_section(&store, contents,
+							     &copy_end,
+							     &replace_end, &i);
 				/*
 				 * Swallow preceding white-space on the same
 				 * line.
