@@ -2336,6 +2336,12 @@ static int store_aux_event(enum config_event_t type,
 			store->parsed[store->parsed_nr].is_keys_section =
 			cf->var.len - 1 == store->baselen &&
 			!strncasecmp(cf->var.buf, store->key, store->baselen);
+		if (store->is_keys_section) {
+			store->section_seen = 1;
+			ALLOC_GROW(store->seen, store->seen_nr + 1,
+				   store->seen_alloc);
+			store->seen[store->seen_nr] = store->parsed_nr;
+		}
 	}
 
 	store->parsed_nr++;
@@ -2770,7 +2776,13 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 
 			new_line = 0;
 			if (!store.key_seen) {
-				replace_end = copy_end = store.parsed[j].end;
+				copy_end = store.parsed[j].end;
+				/* include '\n' when copying section header */
+				if (copy_end > 0 && copy_end < contents_sz &&
+				    contents[copy_end - 1] != '\n' &&
+				    contents[copy_end] == '\n')
+					copy_end++;
+				replace_end = copy_end;
 			} else {
 				replace_end = store.parsed[j].end;
 				copy_end = store.parsed[j].begin;

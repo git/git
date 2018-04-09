@@ -1483,7 +1483,7 @@ test_expect_success '--unset-all removes section if empty & uncommented' '
 	test_line_count = 0 .git/config
 '
 
-test_expect_failure 'adding a key into an empty section reuses header' '
+test_expect_success 'adding a key into an empty section reuses header' '
 	cat >.git/config <<-\EOF &&
 	[section]
 	EOF
