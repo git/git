@@ -518,7 +518,7 @@ static int show_tag_object(const struct object_id *oid, struct rev_info *rev)
 {
 	unsigned long size;
 	enum object_type type;
-	char *buf = read_sha1_file(oid->hash, &type, &size);
+	char *buf = read_object_file(oid, &type, &size);
 	int offset = 0;
 
 	if (!buf)
@@ -541,7 +541,7 @@ static int show_tag_object(const struct object_id *oid, struct rev_info *rev)
 	return 0;
 }
 
-static int show_tree_object(const unsigned char *sha1,
+static int show_tree_object(const struct object_id *oid,
 		struct strbuf *base,
 		const char *pathname, unsigned mode, int stage, void *context)
 {
@@ -1873,12 +1873,12 @@ static void print_commit(char sign, struct commit *commit, int verbose,
 {
 	if (!verbose) {
 		fprintf(file, "%c %s\n", sign,
-		       find_unique_abbrev(commit->object.oid.hash, abbrev));
+		       find_unique_abbrev(&commit->object.oid, abbrev));
 	} else {
 		struct strbuf buf = STRBUF_INIT;
 		pp_commit_easy(CMIT_FMT_ONELINE, commit, &buf);
 		fprintf(file, "%c %s %s\n", sign,
-		       find_unique_abbrev(commit->object.oid.hash, abbrev),
+		       find_unique_abbrev(&commit->object.oid, abbrev),
 		       buf.buf);
 		strbuf_release(&buf);
 	}

@@ -122,11 +122,10 @@ static void *get_delta(struct object_entry *entry)
 	void *buf, *base_buf, *delta_buf;
 	enum object_type type;
 
-	buf = read_sha1_file(entry->idx.oid.hash, &type, &size);
+	buf = read_object_file(&entry->idx.oid, &type, &size);
 	if (!buf)
 		die("unable to read %s", oid_to_hex(&entry->idx.oid));
-	base_buf = read_sha1_file(entry->delta->idx.oid.hash, &type,
-				  &base_size);
+	base_buf = read_object_file(&entry->delta->idx.oid, &type, &base_size);
 	if (!base_buf)
 		die("unable to read %s",
 		    oid_to_hex(&entry->delta->idx.oid));
@@ -267,11 +266,10 @@ static unsigned long write_no_reuse_object(struct hashfile *f, struct object_ent
 	if (!usable_delta) {
 		if (entry->type == OBJ_BLOB &&
 		    entry->size > big_file_threshold &&
-		    (st = open_istream(entry->idx.oid.hash, &type, &size, NULL)) != NULL)
+		    (st = open_istream(&entry->idx.oid, &type, &size, NULL)) != NULL)
 			buf = NULL;
 		else {
-			buf = read_sha1_file(entry->idx.oid.hash, &type,
-					     &size);
+			buf = read_object_file(&entry->idx.oid, &type, &size);
 			if (!buf)
 				die(_("unable to read %s"),
 				    oid_to_hex(&entry->idx.oid));
@@ -1190,7 +1188,7 @@ static struct pbase_tree_cache *pbase_tree_get(const struct object_id *oid)
 	/* Did not find one.  Either we got a bogus request or
 	 * we need to read and perhaps cache.
 	 */
-	data = read_sha1_file(oid->hash, &type, &size);
+	data = read_object_file(oid, &type, &size);
 	if (!data)
 		return NULL;
 	if (type != OBJ_TREE) {
@@ -1351,7 +1349,7 @@ static void add_preferred_base(struct object_id *oid)
 	if (window <= num_preferred_base++)
 		return;
 
-	data = read_object_with_reference(oid->hash, tree_type, &size, tree_oid.hash);
+	data = read_object_with_reference(oid, tree_type, &size, &tree_oid);
 	if (!data)
 		return;
 
@@ -1516,7 +1514,7 @@ static void check_object(struct object_entry *entry)
 		unuse_pack(&w_curs);
 	}
 
-	entry->type = sha1_object_info(entry->idx.oid.hash, &entry->size);
+	entry->type = oid_object_info(&entry->idx.oid, &entry->size);
 	/*
 	 * The error condition is checked in prepare_pack().  This is
 	 * to permit a missing preferred base object to be ignored
@@ -1578,8 +1576,7 @@ static void drop_reused_delta(struct object_entry *entry)
 		 * And if that fails, the error will be recorded in entry->type
 		 * and dealt with in prepare_pack().
 		 */
-		entry->type = sha1_object_info(entry->idx.oid.hash,
-					       &entry->size);
+		entry->type = oid_object_info(&entry->idx.oid, &entry->size);
 	}
 }
 
@@ -1871,8 +1868,7 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 	/* Load data if not already done */
 	if (!trg->data) {
 		read_lock();
-		trg->data = read_sha1_file(trg_entry->idx.oid.hash, &type,
-					   &sz);
+		trg->data = read_object_file(&trg_entry->idx.oid, &type, &sz);
 		read_unlock();
 		if (!trg->data)
 			die("object %s cannot be read",
@@ -1885,8 +1881,7 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 	}
 	if (!src->data) {
 		read_lock();
-		src->data = read_sha1_file(src_entry->idx.oid.hash, &type,
-					   &sz);
+		src->data = read_object_file(&src_entry->idx.oid, &type, &sz);
 		read_unlock();
 		if (!src->data) {
 			if (src_entry->preferred_base) {
@@ -2709,7 +2704,7 @@ static void add_objects_in_unpacked_packs(struct rev_info *revs)
 static int add_loose_object(const struct object_id *oid, const char *path,
 			    void *data)
 {
-	enum object_type type = sha1_object_info(oid->hash, NULL);
+	enum object_type type = oid_object_info(oid, NULL);
 
 	if (type < 0) {
 		warning("loose object at %s could not be examined", path);

@@ -955,14 +955,14 @@ extern void sha1_file_name(struct strbuf *buf, const unsigned char *sha1);
  * more calls to find_unique_abbrev are made.
  *
  * The `_r` variant writes to a buffer supplied by the caller, which must be at
- * least `GIT_SHA1_HEXSZ + 1` bytes. The return value is the number of bytes
+ * least `GIT_MAX_HEXSZ + 1` bytes. The return value is the number of bytes
  * written (excluding the NUL terminator).
  *
  * Note that while this version avoids the static buffer, it is not fully
  * reentrant, as it calls into other non-reentrant git code.
  */
-extern const char *find_unique_abbrev(const unsigned char *sha1, int len);
-extern int find_unique_abbrev_r(char *hex, const unsigned char *sha1, int len);
+extern const char *find_unique_abbrev(const struct object_id *oid, int len);
+extern int find_unique_abbrev_r(char *hex, const struct object_id *oid, int len);
 
 extern const unsigned char null_sha1[GIT_MAX_RAWSZ];
 extern const struct object_id null_oid;
@@ -1189,19 +1189,19 @@ extern char *xdg_config_home(const char *filename);
  */
 extern char *xdg_cache_home(const char *filename);
 
-extern void *read_sha1_file_extended(const unsigned char *sha1,
-				     enum object_type *type,
-				     unsigned long *size, int lookup_replace);
-static inline void *read_sha1_file(const unsigned char *sha1, enum object_type *type, unsigned long *size)
+extern void *read_object_file_extended(const struct object_id *oid,
+				       enum object_type *type,
+				       unsigned long *size, int lookup_replace);
+static inline void *read_object_file(const struct object_id *oid, enum object_type *type, unsigned long *size)
 {
-	return read_sha1_file_extended(sha1, type, size, 1);
+	return read_object_file_extended(oid, type, size, 1);
 }
 
 /*
  * This internal function is only declared here for the benefit of
  * lookup_replace_object().  Please do not call it directly.
  */
-extern const unsigned char *do_lookup_replace_object(const unsigned char *sha1);
+extern const struct object_id *do_lookup_replace_object(const struct object_id *oid);
 
 /*
  * If object sha1 should be replaced, return the replacement object's
@@ -1209,15 +1209,15 @@ extern const unsigned char *do_lookup_replace_object(const unsigned char *sha1);
  * either sha1 or a pointer to a permanently-allocated value.  When
  * object replacement is suppressed, always return sha1.
  */
-static inline const unsigned char *lookup_replace_object(const unsigned char *sha1)
+static inline const struct object_id *lookup_replace_object(const struct object_id *oid)
 {
 	if (!check_replace_refs)
-		return sha1;
-	return do_lookup_replace_object(sha1);
+		return oid;
+	return do_lookup_replace_object(oid);
 }
 
-/* Read and unpack a sha1 file into memory, write memory to a sha1 file */
-extern int sha1_object_info(const unsigned char *, unsigned long *);
+/* Read and unpack an object file into memory, write memory to an object file */
+extern int oid_object_info(const struct object_id *, unsigned long *);
 
 extern int hash_object_file(const void *buf, unsigned long len,
 			    const char *type, struct object_id *oid);
@@ -1240,19 +1240,19 @@ extern void *map_sha1_file(const unsigned char *sha1, unsigned long *size);
 extern int unpack_sha1_header(git_zstream *stream, unsigned char *map, unsigned long mapsize, void *buffer, unsigned long bufsiz);
 extern int parse_sha1_header(const char *hdr, unsigned long *sizep);
 
-extern int check_sha1_signature(const unsigned char *sha1, void *buf, unsigned long size, const char *type);
+extern int check_object_signature(const struct object_id *oid, void *buf, unsigned long size, const char *type);
 
 extern int finalize_object_file(const char *tmpfile, const char *filename);
 
 /*
- * Open the loose object at path, check its sha1, and return the contents,
+ * Open the loose object at path, check its hash, and return the contents,
  * type, and size. If the object is a blob, then "contents" may return NULL,
  * to allow streaming of large blobs.
  *
  * Returns 0 on success, negative on error (details may be written to stderr).
  */
 int read_loose_object(const char *path,
-		      const unsigned char *expected_sha1,
+		      const struct object_id *expected_oid,
 		      enum object_type *type,
 		      unsigned long *size,
 		      void **contents);
@@ -1279,7 +1279,7 @@ extern int has_object_file_with_flags(const struct object_id *oid, int flags);
  */
 extern int has_loose_object_nonlocal(const unsigned char *sha1);
 
-extern void assert_sha1_type(const unsigned char *sha1, enum object_type expect);
+extern void assert_oid_type(const struct object_id *oid, enum object_type expect);
 
 /* Helper to check and "touch" a file */
 extern int check_and_freshen_file(const char *fn, int freshen);
@@ -1435,10 +1435,10 @@ extern int df_name_compare(const char *name1, int len1, int mode1, const char *n
 extern int name_compare(const char *name1, size_t len1, const char *name2, size_t len2);
 extern int cache_name_stage_compare(const char *name1, int len1, int stage1, const char *name2, int len2, int stage2);
 
-extern void *read_object_with_reference(const unsigned char *sha1,
+extern void *read_object_with_reference(const struct object_id *oid,
 					const char *required_type,
 					unsigned long *size,
-					unsigned char *sha1_ret);
+					struct object_id *oid_ret);
 
 extern struct object *peel_to_type(const char *name, int namelen,
 				   struct object *o, enum object_type);
@@ -1779,7 +1779,7 @@ struct object_info {
 #define OBJECT_INFO_QUICK 8
 /* Do not check loose object */
 #define OBJECT_INFO_IGNORE_LOOSE 16
-extern int sha1_object_info_extended(const unsigned char *, struct object_info *, unsigned flags);
+extern int oid_object_info_extended(const struct object_id *, struct object_info *, unsigned flags);
 
 /*
  * Set this to 0 to prevent sha1_object_info_extended() from fetching missing

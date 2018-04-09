@@ -85,7 +85,7 @@ static int create_file(const char *path, unsigned int mode)
 static void *read_blob_entry(const struct cache_entry *ce, unsigned long *size)
 {
 	enum object_type type;
-	void *blob_data = read_sha1_file(ce->oid.hash, &type, size);
+	void *blob_data = read_object_file(&ce->oid, &type, size);
 
 	if (blob_data) {
 		if (type == OBJ_BLOB)
@@ -266,7 +266,7 @@ static int write_entry(struct cache_entry *ce,
 
 	if (ce_mode_s_ifmt == S_IFREG) {
 		struct stream_filter *filter = get_stream_filter(ce->name,
-								 ce->oid.hash);
+								 &ce->oid);
 		if (filter &&
 		    !streaming_write_entry(ce, path, filter,
 					   state, to_tempfile,

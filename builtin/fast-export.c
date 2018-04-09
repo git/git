@@ -237,10 +237,10 @@ static void export_blob(const struct object_id *oid)
 		object = (struct object *)lookup_blob(oid);
 		eaten = 0;
 	} else {
-		buf = read_sha1_file(oid->hash, &type, &size);
+		buf = read_object_file(oid, &type, &size);
 		if (!buf)
 			die ("Could not read blob %s", oid_to_hex(oid));
-		if (check_sha1_signature(oid->hash, buf, size, type_name(type)) < 0)
+		if (check_object_signature(oid, buf, size, type_name(type)) < 0)
 			die("sha1 mismatch in blob %s", oid_to_hex(oid));
 		object = parse_object_buffer(oid, type, size, buf, &eaten);
 	}
@@ -682,7 +682,7 @@ static void handle_tag(const char *name, struct tag *tag)
 		return;
 	}
 
-	buf = read_sha1_file(tag->object.oid.hash, &type, &size);
+	buf = read_object_file(&tag->object.oid, &type, &size);
 	if (!buf)
 		die ("Could not read tag %s", oid_to_hex(&tag->object.oid));
 	message = memmem(buf, size, "\n\n", 2);
@@ -947,7 +947,7 @@ static void import_marks(char *input_file)
 		if (last_idnum < mark)
 			last_idnum = mark;
 
-		type = sha1_object_info(oid.hash, NULL);
+		type = oid_object_info(&oid, NULL);
 		if (type < 0)
 			die("object not found: %s", oid_to_hex(&oid));
 

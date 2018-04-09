@@ -306,7 +306,7 @@ static char *grab_blob(const struct object_id *oid, unsigned int mode,
 		*size = fill_textconv(textconv, df, &blob);
 		free_filespec(df);
 	} else {
-		blob = read_sha1_file(oid->hash, &type, size);
+		blob = read_object_file(oid, &type, size);
 		if (type != OBJ_BLOB)
 			die("object '%s' is not a blob!", oid_to_hex(oid));
 	}
@@ -915,11 +915,11 @@ static void show_combined_header(struct combine_diff_path *elem,
 			 "", elem->path, line_prefix, c_meta, c_reset);
 	printf("%s%sindex ", line_prefix, c_meta);
 	for (i = 0; i < num_parent; i++) {
-		abb = find_unique_abbrev(elem->parent[i].oid.hash,
+		abb = find_unique_abbrev(&elem->parent[i].oid,
 					 abbrev);
 		printf("%s%s", i ? "," : "", abb);
 	}
-	abb = find_unique_abbrev(elem->oid.hash, abbrev);
+	abb = find_unique_abbrev(&elem->oid, abbrev);
 	printf("..%s%s\n", abb, c_reset);
 
 	if (mode_differs) {

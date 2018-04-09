@@ -65,7 +65,7 @@ static const char *printable_type(struct object *obj)
 	const char *ret;
 
 	if (obj->type == OBJ_NONE) {
-		enum object_type type = sha1_object_info(obj->oid.hash, NULL);
+		enum object_type type = oid_object_info(&obj->oid, NULL);
 		if (type > 0)
 			object_as_type(obj, type, 0);
 	}
@@ -513,7 +513,7 @@ static struct object *parse_loose_object(const struct object_id *oid,
 	unsigned long size;
 	int eaten;
 
-	if (read_loose_object(path, oid->hash, &type, &size, &contents) < 0)
+	if (read_loose_object(path, oid, &type, &size, &contents) < 0)
 		return NULL;
 
 	if (!contents && type != OBJ_BLOB)

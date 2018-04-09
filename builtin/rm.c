@@ -178,7 +178,7 @@ static int check_local_mod(struct object_id *head, int index_only)
 		 * way as changed from the HEAD.
 		 */
 		if (no_head
-		     || get_tree_entry(head->hash, name, oid.hash, &mode)
+		     || get_tree_entry(head, name, &oid, &mode)
 		     || ce->ce_mode != create_ce_mode(mode)
 		     || oidcmp(&ce->oid, &oid))
 			staged_changes = 1;

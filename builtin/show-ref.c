@@ -29,7 +29,7 @@ static void show_one(const char *refname, const struct object_id *oid)
 	if (quiet)
 		return;
 
-	hex = find_unique_abbrev(oid->hash, abbrev);
+	hex = find_unique_abbrev(oid, abbrev);
 	if (hash_only)
 		printf("%s\n", hex);
 	else
@@ -39,7 +39,7 @@ static void show_one(const char *refname, const struct object_id *oid)
 		return;
 
 	if (!peel_ref(refname, &peeled)) {
-		hex = find_unique_abbrev(peeled.hash, abbrev);
+		hex = find_unique_abbrev(&peeled, abbrev);
 		printf("%s %s^{}\n", hex, refname);
 	}
 }

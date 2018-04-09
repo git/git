@@ -540,9 +540,9 @@ static void show_submodule_header(struct diff_options *o, const char *path,
 
 output_header:
 	strbuf_addf(&sb, "Submodule %s ", path);
-	strbuf_add_unique_abbrev(&sb, one->hash, DEFAULT_ABBREV);
+	strbuf_add_unique_abbrev(&sb, one, DEFAULT_ABBREV);
 	strbuf_addstr(&sb, (fast_backward || fast_forward) ? ".." : "...");
-	strbuf_add_unique_abbrev(&sb, two->hash, DEFAULT_ABBREV);
+	strbuf_add_unique_abbrev(&sb, two, DEFAULT_ABBREV);
 	if (message)
 		strbuf_addf(&sb, " %s\n", message);
 	else
@@ -817,7 +817,7 @@ static int check_has_commit(const struct object_id *oid, void *data)
 {
 	struct has_commit_data *cb = data;
 
-	enum object_type type = sha1_object_info(oid->hash, NULL);
+	enum object_type type = oid_object_info(oid, NULL);
 
 	switch (type) {
 	case OBJ_COMMIT:

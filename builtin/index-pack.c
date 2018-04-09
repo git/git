@@ -59,7 +59,7 @@ struct ofs_delta_entry {
 };
 
 struct ref_delta_entry {
-	unsigned char sha1[20];
+	struct object_id oid;
 	int obj_no;
 };
 
@@ -222,7 +222,7 @@ static unsigned check_object(struct object *obj)
 
 	if (!(obj->flags & FLAG_CHECKED)) {
 		unsigned long size;
-		int type = sha1_object_info(obj->oid.hash, &size);
+		int type = oid_object_info(&obj->oid, &size);
 		if (type <= 0)
 			die(_("did not receive expected object %s"),
 			      oid_to_hex(&obj->oid));
@@ -672,18 +672,18 @@ static void find_ofs_delta_children(off_t offset,
 	*last_index = last;
 }
 
-static int compare_ref_delta_bases(const unsigned char *sha1,
-				   const unsigned char *sha2,
+static int compare_ref_delta_bases(const struct object_id *oid1,
+				   const struct object_id *oid2,
 				   enum object_type type1,
 				   enum object_type type2)
 {
 	int cmp = type1 - type2;
 	if (cmp)
 		return cmp;
-	return hashcmp(sha1, sha2);
+	return oidcmp(oid1, oid2);
 }
 
-static int find_ref_delta(const unsigned char *sha1, enum object_type type)
+static int find_ref_delta(const struct object_id *oid, enum object_type type)
 {
 	int first = 0, last = nr_ref_deltas;
 
@@ -692,7 +692,7 @@ static int find_ref_delta(const unsigned char *sha1, enum object_type type)
 		struct ref_delta_entry *delta = &ref_deltas[next];
 		int cmp;
 
-		cmp = compare_ref_delta_bases(sha1, delta->sha1,
+		cmp = compare_ref_delta_bases(oid, &delta->oid,
 					      type, objects[delta->obj_no].type);
 		if (!cmp)
 			return next;
@@ -705,11 +705,11 @@ static int find_ref_delta(const unsigned char *sha1, enum object_type type)
 	return -first-1;
 }
 
-static void find_ref_delta_children(const unsigned char *sha1,
+static void find_ref_delta_children(const struct object_id *oid,
 				    int *first_index, int *last_index,
 				    enum object_type type)
 {
-	int first = find_ref_delta(sha1, type);
+	int first = find_ref_delta(oid, type);
 	int last = first;
 	int end = nr_ref_deltas - 1;
 
@@ -718,9 +718,9 @@ static void find_ref_delta_children(const unsigned char *sha1,
 		*last_index = -1;
 		return;
 	}
-	while (first > 0 && !hashcmp(ref_deltas[first - 1].sha1, sha1))
+	while (first > 0 && !oidcmp(&ref_deltas[first - 1].oid, oid))
 		--first;
-	while (last < end && !hashcmp(ref_deltas[last + 1].sha1, sha1))
+	while (last < end && !oidcmp(&ref_deltas[last + 1].oid, oid))
 		++last;
 	*first_index = first;
 	*last_index = last;
@@ -772,7 +772,7 @@ static int check_collison(struct object_entry *entry)
 
 	memset(&data, 0, sizeof(data));
 	data.entry = entry;
-	data.st = open_istream(entry->idx.oid.hash, &type, &size, NULL);
+	data.st = open_istream(&entry->idx.oid, &type, &size, NULL);
 	if (!data.st)
 		return -1;
 	if (size != entry->size || type != entry->type)
@@ -811,12 +811,12 @@ static void sha1_object(const void *data, struct object_entry *obj_entry,
 		enum object_type has_type;
 		unsigned long has_size;
 		read_lock();
-		has_type = sha1_object_info(oid->hash, &has_size);
+		has_type = oid_object_info(oid, &has_size);
 		if (has_type < 0)
 			die(_("cannot read existing object info %s"), oid_to_hex(oid));
 		if (has_type != type || has_size != size)
 			die(_("SHA1 COLLISION FOUND WITH %s !"), oid_to_hex(oid));
-		has_data = read_sha1_file(oid->hash, &has_type, &has_size);
+		has_data = read_object_file(oid, &has_type, &has_size);
 		read_unlock();
 		if (!data)
 			data = new_data = get_data_from_pack(obj_entry);
@@ -992,7 +992,7 @@ static struct base_data *find_unresolved_deltas_1(struct base_data *base,
 						  struct base_data *prev_base)
 {
 	if (base->ref_last == -1 && base->ofs_last == -1) {
-		find_ref_delta_children(base->obj->idx.oid.hash,
+		find_ref_delta_children(&base->obj->idx.oid,
 					&base->ref_first, &base->ref_last,
 					OBJ_REF_DELTA);
 
@@ -1076,7 +1076,7 @@ static int compare_ref_delta_entry(const void *a, const void *b)
 	const struct ref_delta_entry *delta_a = a;
 	const struct ref_delta_entry *delta_b = b;
 
-	return hashcmp(delta_a->sha1, delta_b->sha1);
+	return oidcmp(&delta_a->oid, &delta_b->oid);
 }
 
 static void resolve_base(struct object_entry *obj)
@@ -1142,7 +1142,7 @@ static void parse_pack_objects(unsigned char *hash)
 			ofs_delta++;
 		} else if (obj->type == OBJ_REF_DELTA) {
 			ALLOC_GROW(ref_deltas, nr_ref_deltas + 1, ref_deltas_alloc);
-			hashcpy(ref_deltas[nr_ref_deltas].sha1, ref_delta_oid.hash);
+			oidcpy(&ref_deltas[nr_ref_deltas].oid, &ref_delta_oid);
 			ref_deltas[nr_ref_deltas].obj_no = i;
 			nr_ref_deltas++;
 		} else if (!data) {
@@ -1374,14 +1374,15 @@ static void fix_unresolved_deltas(struct hashfile *f)
 
 		if (objects[d->obj_no].real_type != OBJ_REF_DELTA)
 			continue;
-		base_obj->data = read_sha1_file(d->sha1, &type, &base_obj->size);
+		base_obj->data = read_object_file(&d->oid, &type,
+						  &base_obj->size);
 		if (!base_obj->data)
 			continue;
 
-		if (check_sha1_signature(d->sha1, base_obj->data,
+		if (check_object_signature(&d->oid, base_obj->data,
 				base_obj->size, type_name(type)))
-			die(_("local object %s is corrupt"), sha1_to_hex(d->sha1));
-		base_obj->obj = append_obj_to_pack(f, d->sha1,
+			die(_("local object %s is corrupt"), oid_to_hex(&d->oid));
+		base_obj->obj = append_obj_to_pack(f, d->oid.hash,
 					base_obj->data, base_obj->size, type);
 		find_unresolved_deltas(base_obj);
 		display_progress(progress, nr_resolved_deltas);

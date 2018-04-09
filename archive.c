@@ -63,16 +63,16 @@ static void format_subst(const struct commit *commit,
 	free(to_free);
 }
 
-void *sha1_file_to_archive(const struct archiver_args *args,
-			   const char *path, const unsigned char *sha1,
-			   unsigned int mode, enum object_type *type,
-			   unsigned long *sizep)
+void *object_file_to_archive(const struct archiver_args *args,
+			     const char *path, const struct object_id *oid,
+			     unsigned int mode, enum object_type *type,
+			     unsigned long *sizep)
 {
 	void *buffer;
 	const struct commit *commit = args->convert ? args->commit : NULL;
 
 	path += args->baselen;
-	buffer = read_sha1_file(sha1, type, sizep);
+	buffer = read_object_file(oid, type, sizep);
 	if (buffer && S_ISREG(mode)) {
 		struct strbuf buf = STRBUF_INIT;
 		size_t size = 0;
@@ -121,7 +121,7 @@ static int check_attr_export_subst(const struct attr_check *check)
 	return check && ATTR_TRUE(check->items[1].value);
 }
 
-static int write_archive_entry(const unsigned char *sha1, const char *base,
+static int write_archive_entry(const struct object_id *oid, const char *base,
 		int baselen, const char *filename, unsigned mode, int stage,
 		void *context)
 {
@@ -153,7 +153,7 @@ static int write_archive_entry(const unsigned char *sha1, const char *base,
 	if (S_ISDIR(mode) || S_ISGITLINK(mode)) {
 		if (args->verbose)
 			fprintf(stderr, "%.*s\n", (int)path.len, path.buf);
-		err = write_entry(args, sha1, path.buf, path.len, mode);
+		err = write_entry(args, oid, path.buf, path.len, mode);
 		if (err)
 			return err;
 		return (S_ISDIR(mode) ? READ_TREE_RECURSIVE : 0);
@@ -161,7 +161,7 @@ static int write_archive_entry(const unsigned char *sha1, const char *base,
 
 	if (args->verbose)
 		fprintf(stderr, "%.*s\n", (int)path.len, path.buf);
-	return write_entry(args, sha1, path.buf, path.len, mode);
+	return write_entry(args, oid, path.buf, path.len, mode);
 }
 
 static void queue_directory(const unsigned char *sha1,
@@ -191,14 +191,14 @@ static int write_directory(struct archiver_context *c)
 	d->path[d->len - 1] = '\0'; /* no trailing slash */
 	ret =
 		write_directory(c) ||
-		write_archive_entry(d->oid.hash, d->path, d->baselen,
+		write_archive_entry(&d->oid, d->path, d->baselen,
 				    d->path + d->baselen, d->mode,
 				    d->stage, c) != READ_TREE_RECURSIVE;
 	free(d);
 	return ret ? -1 : 0;
 }
 
-static int queue_or_write_archive_entry(const unsigned char *sha1,
+static int queue_or_write_archive_entry(const struct object_id *oid,
 		struct strbuf *base, const char *filename,
 		unsigned mode, int stage, void *context)
 {
@@ -224,14 +224,14 @@ static int queue_or_write_archive_entry(const unsigned char *sha1,
 
 		if (check_attr_export_ignore(check))
 			return 0;
-		queue_directory(sha1, base, filename,
+		queue_directory(oid->hash, base, filename,
 				mode, stage, c);
 		return READ_TREE_RECURSIVE;
 	}
 
 	if (write_directory(c))
 		return -1;
-	return write_archive_entry(sha1, base->buf, base->len, filename, mode,
+	return write_archive_entry(oid, base->buf, base->len, filename, mode,
 				   stage, context);
 }
 
@@ -250,7 +250,7 @@ int write_archive_entries(struct archiver_args *args,
 			len--;
 		if (args->verbose)
 			fprintf(stderr, "%.*s\n", (int)len, args->base);
-		err = write_entry(args, args->tree->object.oid.hash, args->base,
+		err = write_entry(args, &args->tree->object.oid, args->base,
 				  len, 040777);
 		if (err)
 			return err;
@@ -303,7 +303,7 @@ static const struct archiver *lookup_archiver(const char *name)
 	return NULL;
 }
 
-static int reject_entry(const unsigned char *sha1, struct strbuf *base,
+static int reject_entry(const struct object_id *oid, struct strbuf *base,
 			const char *filename, unsigned mode,
 			int stage, void *context)
 {
@@ -397,8 +397,8 @@ static void parse_treeish_arg(const char **argv,
 		unsigned int mode;
 		int err;
 
-		err = get_tree_entry(tree->object.oid.hash, prefix,
-				     tree_oid.hash, &mode);
+		err = get_tree_entry(&tree->object.oid, prefix, &tree_oid,
+				     &mode);
 		if (err || !S_ISDIR(mode))
 			die("current working directory is untracked");
 

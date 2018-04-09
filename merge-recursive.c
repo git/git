@@ -290,7 +290,7 @@ static void output_commit_title(struct merge_options *o, struct commit *commit)
 		strbuf_addf(&o->obuf, "virtual %s\n",
 			merge_remote_util(commit)->name);
 	else {
-		strbuf_add_unique_abbrev(&o->obuf, commit->object.oid.hash,
+		strbuf_add_unique_abbrev(&o->obuf, &commit->object.oid,
 					 DEFAULT_ABBREV);
 		strbuf_addch(&o->obuf, ' ');
 		if (parse_commit(commit) != 0)
@@ -402,7 +402,7 @@ struct tree *write_tree_from_memory(struct merge_options *o)
 	return result;
 }
 
-static int save_files_dirs(const unsigned char *sha1,
+static int save_files_dirs(const struct object_id *oid,
 		struct strbuf *base, const char *path,
 		unsigned int mode, int stage, void *context)
 {
@@ -427,16 +427,16 @@ static void get_files_dirs(struct merge_options *o, struct tree *tree)
 	read_tree_recursive(tree, "", 0, 0, &match_all, save_files_dirs, o);
 }
 
-static int get_tree_entry_if_blob(const unsigned char *tree,
+static int get_tree_entry_if_blob(struct tree *tree,
 				  const char *path,
-				  unsigned char *hashy,
+				  struct object_id *hashy,
 				  unsigned int *mode_o)
 {
 	int ret;
 
-	ret = get_tree_entry(tree, path, hashy, mode_o);
+	ret = get_tree_entry(&tree->object.oid, path, hashy, mode_o);
 	if (S_ISDIR(*mode_o)) {
-		hashcpy(hashy, null_sha1);
+		oidcpy(hashy, &null_oid);
 		*mode_o = 0;
 	}
 	return ret;
@@ -452,12 +452,12 @@ static struct stage_data *insert_stage_data(const char *path,
 {
 	struct string_list_item *item;
 	struct stage_data *e = xcalloc(1, sizeof(struct stage_data));
-	get_tree_entry_if_blob(o->object.oid.hash, path,
-			       e->stages[1].oid.hash, &e->stages[1].mode);
-	get_tree_entry_if_blob(a->object.oid.hash, path,
-			       e->stages[2].oid.hash, &e->stages[2].mode);
-	get_tree_entry_if_blob(b->object.oid.hash, path,
-			       e->stages[3].oid.hash, &e->stages[3].mode);
+	get_tree_entry_if_blob(o, path,
+			       &e->stages[1].oid, &e->stages[1].mode);
+	get_tree_entry_if_blob(a, path,
+			       &e->stages[2].oid, &e->stages[2].mode);
+	get_tree_entry_if_blob(b, path,
+			       &e->stages[3].oid, &e->stages[3].mode);
 	item = string_list_insert(entries, path);
 	item->util = e;
 	return e;
@@ -891,7 +891,7 @@ static int update_file_flags(struct merge_options *o,
 			goto update_index;
 		}
 
-		buf = read_sha1_file(oid->hash, &type, &size);
+		buf = read_object_file(oid, &type, &size);
 		if (!buf)
 			return err(o, _("cannot read object %s '%s'"), oid_to_hex(oid), path);
 		if (type != OBJ_BLOB) {
@@ -1559,11 +1559,11 @@ static struct diff_queue_struct *get_diffpairs(struct merge_options *o,
 
 static int tree_has_path(struct tree *tree, const char *path)
 {
-	unsigned char hashy[GIT_MAX_RAWSZ];
+	struct object_id hashy;
 	unsigned int mode_o;
 
-	return !get_tree_entry(tree->object.oid.hash, path,
-			       hashy, &mode_o);
+	return !get_tree_entry(&tree->object.oid, path,
+			       &hashy, &mode_o);
 }
 
 /*
@@ -2159,9 +2159,9 @@ static void apply_directory_rename_modifications(struct merge_options *o,
 	 * the various conflict_rename_*() functions update the index
 	 * explicitly rather than relying on unpack_trees() to have done it.
 	 */
-	get_tree_entry(tree->object.oid.hash,
+	get_tree_entry(&tree->object.oid,
 		       pair->two->path,
-		       re->dst_entry->stages[stage].oid.hash,
+		       &re->dst_entry->stages[stage].oid,
 		       &re->dst_entry->stages[stage].mode);
 
 	/* Update pair status */
@@ -2646,7 +2646,7 @@ static int read_oid_strbuf(struct merge_options *o,
 	void *buf;
 	enum object_type type;
 	unsigned long size;
-	buf = read_sha1_file(oid->hash, &type, &size);
+	buf = read_object_file(oid, &type, &size);
 	if (!buf)
 		return err(o, _("cannot read object %s"), oid_to_hex(oid));
 	if (type != OBJ_BLOB) {

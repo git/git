@@ -27,7 +27,7 @@ void free_tree_buffer(struct tree *tree);
 struct tree *parse_tree_indirect(const struct object_id *oid);
 
 #define READ_TREE_RECURSIVE 1
-typedef int (*read_tree_fn_t)(const unsigned char *, struct strbuf *, const char *, unsigned int, int, void *);
+typedef int (*read_tree_fn_t)(const struct object_id *, struct strbuf *, const char *, unsigned int, int, void *);
 
 extern int read_tree_recursive(struct tree *tree,
 			       const char *base, int baselen,

@@ -99,7 +99,8 @@ static int delete_tag(const char *name, const char *ref,
 {
 	if (delete_ref(NULL, ref, oid, 0))
 		return 1;
-	printf(_("Deleted tag '%s' (was %s)\n"), name, find_unique_abbrev(oid->hash, DEFAULT_ABBREV));
+	printf(_("Deleted tag '%s' (was %s)\n"), name,
+	       find_unique_abbrev(oid, DEFAULT_ABBREV));
 	return 0;
 }
 
@@ -167,7 +168,7 @@ static void write_tag_body(int fd, const struct object_id *oid)
 	enum object_type type;
 	char *buf, *sp;
 
-	buf = read_sha1_file(oid->hash, &type, &size);
+	buf = read_object_file(oid, &type, &size);
 	if (!buf)
 		return;
 	/* skip header */
@@ -211,7 +212,7 @@ static void create_tag(const struct object_id *object, const char *tag,
 	struct strbuf header = STRBUF_INIT;
 	char *path = NULL;
 
-	type = sha1_object_info(object->hash, NULL);
+	type = oid_object_info(object, NULL);
 	if (type <= OBJ_NONE)
 	    die(_("bad object type."));
 
@@ -293,17 +294,17 @@ static void create_reflog_msg(const struct object_id *oid, struct strbuf *sb)
 		strbuf_addstr(sb, rla);
 	} else {
 		strbuf_addstr(sb, "tag: tagging ");
-		strbuf_add_unique_abbrev(sb, oid->hash, DEFAULT_ABBREV);
+		strbuf_add_unique_abbrev(sb, oid, DEFAULT_ABBREV);
 	}
 
 	strbuf_addstr(sb, " (");
-	type = sha1_object_info(oid->hash, NULL);
+	type = oid_object_info(oid, NULL);
 	switch (type) {
 	default:
 		strbuf_addstr(sb, "object of unknown type");
 		break;
 	case OBJ_COMMIT:
-		if ((buf = read_sha1_file(oid->hash, &type, &size)) != NULL) {
+		if ((buf = read_object_file(oid, &type, &size)) != NULL) {
 			subject_len = find_commit_subject(buf, &subject_start);
 			strbuf_insert(sb, sb->len, subject_start, subject_len);
 		} else {
@@ -558,7 +559,8 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 		die("%s", err.buf);
 	ref_transaction_free(transaction);
 	if (force && !is_null_oid(&prev) && oidcmp(&prev, &object))
-		printf(_("Updated tag '%s' (was %s)\n"), tag, find_unique_abbrev(prev.hash, DEFAULT_ABBREV));
+		printf(_("Updated tag '%s' (was %s)\n"), tag,
+		       find_unique_abbrev(&prev, DEFAULT_ABBREV));
 
 	UNLEAK(buf);
 	UNLEAK(ref);

@@ -238,7 +238,7 @@ static int finish_object_disambiguation(struct disambiguate_state *ds,
 
 static int disambiguate_commit_only(const struct object_id *oid, void *cb_data_unused)
 {
-	int kind = sha1_object_info(oid->hash, NULL);
+	int kind = oid_object_info(oid, NULL);
 	return kind == OBJ_COMMIT;
 }
 
@@ -247,7 +247,7 @@ static int disambiguate_committish_only(const struct object_id *oid, void *cb_da
 	struct object *obj;
 	int kind;
 
-	kind = sha1_object_info(oid->hash, NULL);
+	kind = oid_object_info(oid, NULL);
 	if (kind == OBJ_COMMIT)
 		return 1;
 	if (kind != OBJ_TAG)
@@ -262,7 +262,7 @@ static int disambiguate_committish_only(const struct object_id *oid, void *cb_da
 
 static int disambiguate_tree_only(const struct object_id *oid, void *cb_data_unused)
 {
-	int kind = sha1_object_info(oid->hash, NULL);
+	int kind = oid_object_info(oid, NULL);
 	return kind == OBJ_TREE;
 }
 
@@ -271,7 +271,7 @@ static int disambiguate_treeish_only(const struct object_id *oid, void *cb_data_
 	struct object *obj;
 	int kind;
 
-	kind = sha1_object_info(oid->hash, NULL);
+	kind = oid_object_info(oid, NULL);
 	if (kind == OBJ_TREE || kind == OBJ_COMMIT)
 		return 1;
 	if (kind != OBJ_TAG)
@@ -286,7 +286,7 @@ static int disambiguate_treeish_only(const struct object_id *oid, void *cb_data_
 
 static int disambiguate_blob_only(const struct object_id *oid, void *cb_data_unused)
 {
-	int kind = sha1_object_info(oid->hash, NULL);
+	int kind = oid_object_info(oid, NULL);
 	return kind == OBJ_BLOB;
 }
 
@@ -365,7 +365,7 @@ static int show_ambiguous_object(const struct object_id *oid, void *data)
 	if (ds->fn && !ds->fn(oid, ds->cb_data))
 		return 0;
 
-	type = sha1_object_info(oid->hash, NULL);
+	type = oid_object_info(oid, NULL);
 	if (type == OBJ_COMMIT) {
 		struct commit *commit = lookup_commit(oid);
 		if (commit) {
@@ -380,7 +380,7 @@ static int show_ambiguous_object(const struct object_id *oid, void *data)
 	}
 
 	advise("  %s %s%s",
-	       find_unique_abbrev(oid->hash, DEFAULT_ABBREV),
+	       find_unique_abbrev(oid, DEFAULT_ABBREV),
 	       type_name(type) ? type_name(type) : "unknown type",
 	       desc.buf);
 
@@ -569,7 +569,7 @@ static void find_abbrev_len_packed(struct min_abbrev_data *mad)
 		find_abbrev_len_for_pack(p, mad);
 }
 
-int find_unique_abbrev_r(char *hex, const unsigned char *sha1, int len)
+int find_unique_abbrev_r(char *hex, const struct object_id *oid, int len)
 {
 	struct disambiguate_state ds;
 	struct min_abbrev_data mad;
@@ -596,14 +596,14 @@ int find_unique_abbrev_r(char *hex, const unsigned char *sha1, int len)
 			len = FALLBACK_DEFAULT_ABBREV;
 	}
 
-	sha1_to_hex_r(hex, sha1);
+	oid_to_hex_r(hex, oid);
 	if (len == GIT_SHA1_HEXSZ || !len)
 		return GIT_SHA1_HEXSZ;
 
 	mad.init_len = len;
 	mad.cur_len = len;
 	mad.hex = hex;
-	mad.hash = sha1;
+	mad.hash = oid->hash;
 
 	find_abbrev_len_packed(&mad);
 
@@ -621,13 +621,13 @@ int find_unique_abbrev_r(char *hex, const unsigned char *sha1, int len)
 	return mad.cur_len;
 }
 
-const char *find_unique_abbrev(const unsigned char *sha1, int len)
+const char *find_unique_abbrev(const struct object_id *oid, int len)
 {
 	static int bufno;
 	static char hexbuffer[4][GIT_MAX_HEXSZ + 1];
 	char *hex = hexbuffer[bufno];
 	bufno = (bufno + 1) % ARRAY_SIZE(hexbuffer);
-	find_unique_abbrev_r(hex, sha1, len);
+	find_unique_abbrev_r(hex, oid, len);
 	return hex;
 }
 
@@ -1529,8 +1529,7 @@ static void diagnose_invalid_oid_path(const char *prefix,
 	if (is_missing_file_error(errno)) {
 		char *fullname = xstrfmt("%s%s", prefix, filename);
 
-		if (!get_tree_entry(tree_oid->hash, fullname,
-				    oid.hash, &mode)) {
+		if (!get_tree_entry(tree_oid, fullname, &oid, &mode)) {
 			die("Path '%s' exists, but not '%s'.\n"
 			    "Did you mean '%.*s:%s' aka '%.*s:./%s'?",
 			    fullname,
@@ -1722,8 +1721,8 @@ static int get_oid_with_context_1(const char *name,
 					filename, oid->hash, &oc->symlink_path,
 					&oc->mode);
 			} else {
-				ret = get_tree_entry(tree_oid.hash, filename,
-						     oid->hash, &oc->mode);
+				ret = get_tree_entry(&tree_oid, filename, oid,
+						     &oc->mode);
 				if (ret && only_to_die) {
 					diagnose_invalid_oid_path(prefix,
 								   filename,

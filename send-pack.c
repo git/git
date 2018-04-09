@@ -37,14 +37,14 @@ int option_parse_push_signed(const struct option *opt,
 	die("bad %s argument: %s", opt->long_name, arg);
 }
 
-static void feed_object(const unsigned char *sha1, FILE *fh, int negative)
+static void feed_object(const struct object_id *oid, FILE *fh, int negative)
 {
-	if (negative && !has_sha1_file(sha1))
+	if (negative && !has_sha1_file(oid->hash))
 		return;
 
 	if (negative)
 		putc('^', fh);
-	fputs(sha1_to_hex(sha1), fh);
+	fputs(oid_to_hex(oid), fh);
 	putc('\n', fh);
 }
 
@@ -89,13 +89,13 @@ static int pack_objects(int fd, struct ref *refs, struct oid_array *extra, struc
 	 */
 	po_in = xfdopen(po.in, "w");
 	for (i = 0; i < extra->nr; i++)
-		feed_object(extra->oid[i].hash, po_in, 1);
+		feed_object(&extra->oid[i], po_in, 1);
 
 	while (refs) {
 		if (!is_null_oid(&refs->old_oid))
-			feed_object(refs->old_oid.hash, po_in, 1);
+			feed_object(&refs->old_oid, po_in, 1);
 		if (!is_null_oid(&refs->new_oid))
-			feed_object(refs->new_oid.hash, po_in, 0);
+			feed_object(&refs->new_oid, po_in, 0);
 		refs = refs->next;
 	}
 

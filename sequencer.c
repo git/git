@@ -282,7 +282,7 @@ struct commit_message {
 
 static const char *short_commit_name(struct commit *commit)
 {
-	return find_unique_abbrev(commit->object.oid.hash, DEFAULT_ABBREV);
+	return find_unique_abbrev(&commit->object.oid, DEFAULT_ABBREV);
 }
 
 static int get_message(struct commit *commit, struct commit_message *out)
@@ -1112,7 +1112,7 @@ static int try_to_commit(struct strbuf *msg, const char *author,
 		commit_list_insert(current_head, &parents);
 	}
 
-	if (write_cache_as_tree(tree.hash, 0, NULL)) {
+	if (write_cache_as_tree(&tree, 0, NULL)) {
 		res = error(_("git write-tree failed to write a tree"));
 		goto out;
 	}
@@ -1474,7 +1474,7 @@ static int do_pick_commit(enum todo_command command, struct commit *commit,
 		 * that represents the "current" state for merge-recursive
 		 * to work on.
 		 */
-		if (write_cache_as_tree(head.hash, 0, NULL))
+		if (write_cache_as_tree(&head, 0, NULL))
 			return error(_("your index file is unmerged."));
 	} else {
 		unborn = get_oid("HEAD", &head);
@@ -2876,7 +2876,8 @@ int sequencer_pick_revisions(struct replay_opts *opts)
 
 		if (!get_oid(name, &oid)) {
 			if (!lookup_commit_reference_gently(&oid, 1)) {
-				enum object_type type = sha1_object_info(oid.hash, NULL);
+				enum object_type type = oid_object_info(&oid,
+									NULL);
 				return error(_("%s: can't cherry-pick a %s"),
 					name, type_name(type));
 			}

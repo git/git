@@ -273,7 +273,7 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 			       bname.buf,
 			       (flags & REF_ISBROKEN) ? "broken"
 			       : (flags & REF_ISSYMREF) ? target
-			       : find_unique_abbrev(oid.hash, DEFAULT_ABBREV));
+			       : find_unique_abbrev(&oid, DEFAULT_ABBREV));
 		}
 		delete_branch_config(bname.buf);
 

@@ -77,7 +77,7 @@ static void add_recent_object(const struct object_id *oid,
 	 * later processing, and the revision machinery expects
 	 * commits and tags to have been parsed.
 	 */
-	type = sha1_object_info(oid->hash, NULL);
+	type = oid_object_info(oid, NULL);
 	if (type < 0)
 		die("unable to get object info for %s", oid_to_hex(oid));
 

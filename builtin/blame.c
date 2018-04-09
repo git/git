@@ -499,7 +499,7 @@ static int read_ancestry(const char *graft_file)
 
 static int update_auto_abbrev(int auto_abbrev, struct blame_origin *suspect)
 {
-	const char *uniq = find_unique_abbrev(suspect->commit->object.oid.hash,
+	const char *uniq = find_unique_abbrev(&suspect->commit->object.oid,
 					      auto_abbrev);
 	int len = strlen(uniq);
 	if (auto_abbrev < len)
@@ -655,7 +655,7 @@ static int is_a_rev(const char *name)
 
 	if (get_oid(name, &oid))
 		return 0;
-	return OBJ_NONE < sha1_object_info(oid.hash, NULL);
+	return OBJ_NONE < oid_object_info(&oid, NULL);
 }
 
 int cmd_blame(int argc, const char **argv, const char *prefix)

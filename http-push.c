@@ -361,7 +361,7 @@ static void start_put(struct transfer_request *request)
 	ssize_t size;
 	git_zstream stream;
 
-	unpacked = read_sha1_file(request->obj->oid.hash, &type, &len);
+	unpacked = read_object_file(&request->obj->oid, &type, &len);
 	hdrlen = xsnprintf(hdr, sizeof(hdr), "%s %lu", type_name(type), len) + 1;
 
 	/* Set it up */

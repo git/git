@@ -60,7 +60,7 @@ static void *result(struct merge_list *entry, unsigned long *size)
 	const char *path = entry->path;
 
 	if (!entry->stage)
-		return read_sha1_file(entry->blob->object.oid.hash, &type, size);
+		return read_object_file(&entry->blob->object.oid, &type, size);
 	base = NULL;
 	if (entry->stage == 1) {
 		base = entry->blob;
@@ -82,7 +82,8 @@ static void *origin(struct merge_list *entry, unsigned long *size)
 	enum object_type type;
 	while (entry) {
 		if (entry->stage == 2)
-			return read_sha1_file(entry->blob->object.oid.hash, &type, size);
+			return read_object_file(&entry->blob->object.oid,
+						&type, size);
 		entry = entry->link;
 	}
 	return NULL;

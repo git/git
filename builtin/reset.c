@@ -109,7 +109,7 @@ static void print_new_head_line(struct commit *commit)
 	struct strbuf buf = STRBUF_INIT;
 
 	printf(_("HEAD is now at %s"),
-		find_unique_abbrev(commit->object.oid.hash, DEFAULT_ABBREV));
+		find_unique_abbrev(&commit->object.oid, DEFAULT_ABBREV));
 
 	pp_commit_easy(CMIT_FMT_ONELINE, commit, &buf);
 	if (buf.len > 0)

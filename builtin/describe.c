@@ -285,7 +285,7 @@ static void append_name(struct commit_name *n, struct strbuf *dst)
 
 static void append_suffix(int depth, const struct object_id *oid, struct strbuf *dst)
 {
-	strbuf_addf(dst, "-%d-g%s", depth, find_unique_abbrev(oid->hash, abbrev));
+	strbuf_addf(dst, "-%d-g%s", depth, find_unique_abbrev(oid, abbrev));
 }
 
 static void describe_commit(struct object_id *oid, struct strbuf *dst)
@@ -383,7 +383,7 @@ static void describe_commit(struct object_id *oid, struct strbuf *dst)
 	if (!match_cnt) {
 		struct object_id *cmit_oid = &cmit->object.oid;
 		if (always) {
-			strbuf_add_unique_abbrev(dst, cmit_oid->hash, abbrev);
+			strbuf_add_unique_abbrev(dst, cmit_oid, abbrev);
 			if (suffix)
 				strbuf_addstr(dst, suffix);
 			return;
@@ -502,7 +502,7 @@ static void describe(const char *arg, int last_one)
 
 	if (cmit)
 		describe_commit(&oid, &sb);
-	else if (sha1_object_info(oid.hash, NULL) == OBJ_BLOB)
+	else if (oid_object_info(&oid, NULL) == OBJ_BLOB)
 		describe_blob(oid, &sb);
 	else
 		die(_("%s is neither a commit nor blob"), arg);

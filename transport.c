@@ -367,7 +367,7 @@ static void print_ok_ref_status(struct ref *ref, int porcelain, int summary_widt
 		char type;
 		const char *msg;
 
-		strbuf_add_unique_abbrev(&quickref, ref->old_oid.hash,
+		strbuf_add_unique_abbrev(&quickref, &ref->old_oid,
 					 DEFAULT_ABBREV);
 		if (ref->forced_update) {
 			strbuf_addstr(&quickref, "...");
@@ -378,7 +378,7 @@ static void print_ok_ref_status(struct ref *ref, int porcelain, int summary_widt
 			type = ' ';
 			msg = NULL;
 		}
-		strbuf_add_unique_abbrev(&quickref, ref->new_oid.hash,
+		strbuf_add_unique_abbrev(&quickref, &ref->new_oid,
 					 DEFAULT_ABBREV);
 
 		print_ref_status(type, quickref.buf, ref, ref->peer_ref, msg,
@@ -461,7 +461,7 @@ static int print_one_push_status(struct ref *ref, const char *dest, int count,
 static int measure_abbrev(const struct object_id *oid, int sofar)
 {
 	char hex[GIT_MAX_HEXSZ + 1];
-	int w = find_unique_abbrev_r(hex, oid->hash, DEFAULT_ABBREV);
+	int w = find_unique_abbrev_r(hex, oid, DEFAULT_ABBREV);
 
 	return (w < sofar) ? sofar : w;
 }

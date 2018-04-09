@@ -639,7 +639,7 @@ static int read_tree_trivial(struct object_id *common, struct object_id *head,
 
 static void write_tree_trivial(struct object_id *oid)
 {
-	if (write_cache_as_tree(oid->hash, 0, NULL))
+	if (write_cache_as_tree(oid, 0, NULL))
 		die(_("git write-tree failed to write a tree"));
 }
 
@@ -1324,7 +1324,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 
 			check_commit_signature(commit, &signature_check);
 
-			find_unique_abbrev_r(hex, commit->object.oid.hash, DEFAULT_ABBREV);
+			find_unique_abbrev_r(hex, &commit->object.oid, DEFAULT_ABBREV);
 			switch (signature_check.result) {
 			case 'G':
 				break;
@@ -1417,9 +1417,9 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 
 		if (verbosity >= 0) {
 			printf(_("Updating %s..%s\n"),
-			       find_unique_abbrev(head_commit->object.oid.hash,
+			       find_unique_abbrev(&head_commit->object.oid,
 						  DEFAULT_ABBREV),
-			       find_unique_abbrev(remoteheads->item->object.oid.hash,
+			       find_unique_abbrev(&remoteheads->item->object.oid,
 						  DEFAULT_ABBREV));
 		}
 		strbuf_addstr(&msg, "Fast-forward");

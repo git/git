@@ -811,7 +811,7 @@ static int fsck_tag_buffer(struct tag *tag, const char *data,
 		enum object_type type;
 
 		buffer = to_free =
-			read_sha1_file(tag->object.oid.hash, &type, &size);
+			read_object_file(&tag->object.oid, &type, &size);
 		if (!buffer)
 			return report(options, &tag->object,
 				FSCK_MSG_MISSING_TAG_OBJECT,
