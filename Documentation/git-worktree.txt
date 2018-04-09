@@ -232,7 +232,7 @@ The worktree list command has two output formats.  The default format shows the
 details on a single line with columns.  For example:
 
 ------------
-S git worktree list
+$ git worktree list
 /path/to/bare-source            (bare)
 /path/to/linked-worktree        abcd1234 [master]
 /path/to/other-linked-worktree  1234abc  (detached HEAD)
@@ -247,7 +247,7 @@ if the value is true.  An empty line indicates the end of a worktree.  For
 example:
 
 ------------
-S git worktree list --porcelain
+$ git worktree list --porcelain
 worktree /path/to/bare-source
 bare
 
