@@ -222,6 +222,14 @@ this purpose, they are instead rewritten to point at the nearest ancestor that
 was not excluded.
 
 
+EXIT STATUS
+-----------
+
+On success, the exit status is `0`.  If the filter can't find any commits to
+rewrite, the exit status is `2`.  On any other error, the exit status may be
+any other non-zero value.
+
+
 Examples
 --------
 
