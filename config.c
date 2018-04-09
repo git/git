@@ -2296,7 +2296,7 @@ struct config_store_data {
 	int multi_replace;
 	size_t *seen;
 	unsigned int seen_nr, seen_alloc;
-	enum { START, SECTION_SEEN, SECTION_END_SEEN, KEY_SEEN } state;
+	unsigned int key_seen:1, section_seen:1, is_keys_section:1;
 };
 
 static int matches(const char *key, const char *value,
@@ -2319,8 +2319,7 @@ static int store_aux(const char *key, const char *value, void *cb)
 	size_t section_len;
 	struct config_store_data *store = cb;
 
-	switch (store->state) {
-	case KEY_SEEN:
+	if (store->key_seen) {
 		if (matches(key, value, store)) {
 			if (store->seen_nr == 1 && store->multi_replace == 0) {
 				warning(_("%s has multiple values"), key);
@@ -2332,8 +2331,8 @@ static int store_aux(const char *key, const char *value, void *cb)
 			store->seen[store->seen_nr] = cf->do_ftell(cf);
 			store->seen_nr++;
 		}
-		break;
-	case SECTION_SEEN:
+		return 0;
+	} else if (store->is_keys_section) {
 		/*
 		 * What we are looking for is in store->key (both
 		 * section and var), and its section part is baselen
@@ -2348,10 +2347,9 @@ static int store_aux(const char *key, const char *value, void *cb)
 
 		if ((section_len != store->baselen) ||
 		    memcmp(key, store->key, section_len+1)) {
-			store->state = SECTION_END_SEEN;
-			break;
+			store->is_keys_section = 0;
+			return 0;
 		}
-
 		/*
 		 * Do not increment matches: this is no match, but we
 		 * just made sure we are in the desired section.
@@ -2359,27 +2357,29 @@ static int store_aux(const char *key, const char *value, void *cb)
 		ALLOC_GROW(store->seen, store->seen_nr + 1,
 			   store->seen_alloc);
 		store->seen[store->seen_nr] = cf->do_ftell(cf);
-		/* fallthru */
-	case SECTION_END_SEEN:
-	case START:
-		if (matches(key, value, store)) {
-			ALLOC_GROW(store->seen, store->seen_nr + 1,
-				   store->seen_alloc);
-			store->seen[store->seen_nr] = cf->do_ftell(cf);
-			store->state = KEY_SEEN;
-			store->seen_nr++;
-		} else {
-			if (strrchr(key, '.') - key == store->baselen &&
-			      !strncmp(key, store->key, store->baselen)) {
-					store->state = SECTION_SEEN;
-					ALLOC_GROW(store->seen,
-						   store->seen_nr + 1,
-						   store->seen_alloc);
-					store->seen[store->seen_nr] =
-						cf->do_ftell(cf);
-			}
+	}
+
+	if (matches(key, value, store)) {
+		ALLOC_GROW(store->seen, store->seen_nr + 1,
+			   store->seen_alloc);
+		store->seen[store->seen_nr] = cf->do_ftell(cf);
+		store->seen_nr++;
+		store->key_seen = 1;
+		store->section_seen = 1;
+		store->is_keys_section = 1;
+	} else {
+		if (strrchr(key, '.') - key == store->baselen &&
+		      !strncmp(key, store->key, store->baselen)) {
+				store->section_seen = 1;
+				store->is_keys_section = 1;
+				ALLOC_GROW(store->seen,
+					   store->seen_nr + 1,
+					   store->seen_alloc);
+				store->seen[store->seen_nr] =
+					cf->do_ftell(cf);
 		}
 	}
+
 	return 0;
 }
 
@@ -2637,7 +2637,6 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 
 		ALLOC_GROW(store.seen, 1, store.seen_alloc);
 		store.seen[0] = 0;
-		store.state = START;
 		store.seen_nr = 0;
 
 		/*
@@ -2705,7 +2704,7 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 			new_line = 0;
 			if (store.seen[i] == 0) {
 				store.seen[i] = copy_end = contents_sz;
-			} else if (store.state != KEY_SEEN) {
+			} else if (!store.key_seen) {
 				copy_end = store.seen[i];
 			} else
 				copy_end = find_beginning_of_line(
@@ -2729,7 +2728,7 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 
 		/* write the pair (value == NULL means unset) */
 		if (value != NULL) {
-			if (store.state == START) {
+			if (!store.section_seen) {
 				if (write_section(fd, key, &store) < 0)
 					goto write_err_out;
 			}
