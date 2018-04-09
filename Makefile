@@ -335,6 +335,13 @@ all::
 # when hardlinking a file to another name and unlinking the original file right
 # away (some NTFS drivers seem to zero the contents in that scenario).
 #
+# Define INSTALL_SYMLINKS if you prefer to have everything that can be
+# symlinked between bin/ and libexec/ to use relative symlinks between
+# the two. This option overrides NO_CROSS_DIRECTORY_HARDLINKS and
+# NO_INSTALL_HARDLINKS which will also use symlinking by indirection
+# within the same directory in some cases, INSTALL_SYMLINKS will
+# always symlink to the final target directly.
+#
 # Define NO_CROSS_DIRECTORY_HARDLINKS if you plan to distribute the installed
 # programs as a tar, where bin/ and libexec/ might be on different file systems.
 #
@@ -474,8 +481,7 @@ ARFLAGS = rcs
 # This can help installing the suite in a relocatable way.
 
 prefix = $(HOME)
-bindir_relative = bin
-bindir = $(prefix)/$(bindir_relative)
+bindir = $(prefix)/bin
 mandir = $(prefix)/share/man
 infodir = $(prefix)/share/info
 gitexecdir = libexec/git-core
@@ -492,8 +498,10 @@ lib = lib
 # DESTDIR =
 pathsep = :
 
+bindir_relative = $(patsubst $(prefix)/%,%,$(bindir))
 mandir_relative = $(patsubst $(prefix)/%,%,$(mandir))
 infodir_relative = $(patsubst $(prefix)/%,%,$(infodir))
+gitexecdir_relative = $(patsubst $(prefix)/%,%,$(gitexecdir))
 htmldir_relative = $(patsubst $(prefix)/%,%,$(htmldir))
 
 export prefix bindir sharedir sysconfdir gitwebdir perllibdir localedir
@@ -1741,6 +1749,7 @@ infodir_relative_SQ = $(subst ','\'',$(infodir_relative))
 perllibdir_SQ = $(subst ','\'',$(perllibdir))
 localedir_SQ = $(subst ','\'',$(localedir))
 gitexecdir_SQ = $(subst ','\'',$(gitexecdir))
+gitexecdir_relative_SQ = $(subst ','\'',$(gitexecdir_relative))
 template_dir_SQ = $(subst ','\'',$(template_dir))
 htmldir_relative_SQ = $(subst ','\'',$(htmldir_relative))
 prefix_SQ = $(subst ','\'',$(prefix))
@@ -2606,35 +2615,44 @@ endif
 
 	bindir=$$(cd '$(DESTDIR_SQ)$(bindir_SQ)' && pwd) && \
 	execdir=$$(cd '$(DESTDIR_SQ)$(gitexec_instdir_SQ)' && pwd) && \
+	destdir_from_execdir_SQ=$$(echo '$(gitexecdir_relative_SQ)' | sed -e 's|[^/][^/]*|..|g') && \
 	{ test "$$bindir/" = "$$execdir/" || \
 	  for p in git$X $(filter $(install_bindir_programs),$(ALL_PROGRAMS)); do \
 		$(RM) "$$execdir/$$p" && \
-		test -z "$(NO_INSTALL_HARDLINKS)$(NO_CROSS_DIRECTORY_HARDLINKS)" && \
-		ln "$$bindir/$$p" "$$execdir/$$p" 2>/dev/null || \
-		cp "$$bindir/$$p" "$$execdir/$$p" || exit; \
+		test -n "$(INSTALL_SYMLINKS)" && \
+		ln -s "$$destdir_from_execdir_SQ/$(bindir_relative_SQ)/$$p" "$$execdir/$$p" || \
+		{ test -z "$(NO_INSTALL_HARDLINKS)$(NO_CROSS_DIRECTORY_HARDLINKS)" && \
+		  ln "$$bindir/$$p" "$$execdir/$$p" 2>/dev/null || \
+		  cp "$$bindir/$$p" "$$execdir/$$p" || exit; } \
 	  done; \
 	} && \
 	for p in $(filter $(install_bindir_programs),$(BUILT_INS)); do \
 		$(RM) "$$bindir/$$p" && \
-		test -z "$(NO_INSTALL_HARDLINKS)" && \
-		ln "$$bindir/git$X" "$$bindir/$$p" 2>/dev/null || \
-		ln -s "git$X" "$$bindir/$$p" 2>/dev/null || \
-		cp "$$bindir/git$X" "$$bindir/$$p" || exit; \
+		test -n "$(INSTALL_SYMLINKS)" && \
+		ln -s "git$X" "$$bindir/$$p" || \
+		{ test -z "$(NO_INSTALL_HARDLINKS)" && \
+		  ln "$$bindir/git$X" "$$bindir/$$p" 2>/dev/null || \
+		  ln -s "git$X" "$$bindir/$$p" 2>/dev/null || \
+		  cp "$$bindir/git$X" "$$bindir/$$p" || exit; } \
 	done && \
 	for p in $(BUILT_INS); do \
 		$(RM) "$$execdir/$$p" && \
-		test -z "$(NO_INSTALL_HARDLINKS)" && \
-		ln "$$execdir/git$X" "$$execdir/$$p" 2>/dev/null || \
-		ln -s "git$X" "$$execdir/$$p" 2>/dev/null || \
-		cp "$$execdir/git$X" "$$execdir/$$p" || exit; \
+		test -n "$(INSTALL_SYMLINKS)" && \
+		ln -s "$$destdir_from_execdir_SQ/$(bindir_relative_SQ)/git$X" "$$execdir/$$p" || \
+		{ test -z "$(NO_INSTALL_HARDLINKS)" && \
+		  ln "$$execdir/git$X" "$$execdir/$$p" 2>/dev/null || \
+		  ln -s "git$X" "$$execdir/$$p" 2>/dev/null || \
+		  cp "$$execdir/git$X" "$$execdir/$$p" || exit; } \
 	done && \
 	remote_curl_aliases="$(REMOTE_CURL_ALIASES)" && \
 	for p in $$remote_curl_aliases; do \
 		$(RM) "$$execdir/$$p" && \
-		test -z "$(NO_INSTALL_HARDLINKS)" && \
-		ln "$$execdir/git-remote-http$X" "$$execdir/$$p" 2>/dev/null || \
-		ln -s "git-remote-http$X" "$$execdir/$$p" 2>/dev/null || \
-		cp "$$execdir/git-remote-http$X" "$$execdir/$$p" || exit; \
+		test -n "$(INSTALL_SYMLINKS)" && \
+		ln -s "git-remote-http$X" "$$execdir/$$p" || \
+		{ test -z "$(NO_INSTALL_HARDLINKS)" && \
+		  ln "$$execdir/git-remote-http$X" "$$execdir/$$p" 2>/dev/null || \
+		  ln -s "git-remote-http$X" "$$execdir/$$p" 2>/dev/null || \
+		  cp "$$execdir/git-remote-http$X" "$$execdir/$$p" || exit; } \
 	done && \
 	./check_bindir "z$$bindir" "z$$execdir" "$$bindir/git-add$X"
 
