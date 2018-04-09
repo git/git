@@ -2294,10 +2294,9 @@ struct config_store_data {
 	int do_not_match;
 	regex_t *value_regex;
 	int multi_replace;
-	size_t *offset;
-	unsigned int offset_alloc;
+	size_t *seen;
+	unsigned int seen_nr, seen_alloc;
 	enum { START, SECTION_SEEN, SECTION_END_SEEN, KEY_SEEN } state;
-	unsigned int seen;
 };
 
 static int matches(const char *key, const char *value,
@@ -2323,15 +2322,15 @@ static int store_aux(const char *key, const char *value, void *cb)
 	switch (store->state) {
 	case KEY_SEEN:
 		if (matches(key, value, store)) {
-			if (store->seen == 1 && store->multi_replace == 0) {
+			if (store->seen_nr == 1 && store->multi_replace == 0) {
 				warning(_("%s has multiple values"), key);
 			}
 
-			ALLOC_GROW(store->offset, store->seen + 1,
-				   store->offset_alloc);
+			ALLOC_GROW(store->seen, store->seen_nr + 1,
+				   store->seen_alloc);
 
-			store->offset[store->seen] = cf->do_ftell(cf);
-			store->seen++;
+			store->seen[store->seen_nr] = cf->do_ftell(cf);
+			store->seen_nr++;
 		}
 		break;
 	case SECTION_SEEN:
@@ -2357,26 +2356,26 @@ static int store_aux(const char *key, const char *value, void *cb)
 		 * Do not increment matches: this is no match, but we
 		 * just made sure we are in the desired section.
 		 */
-		ALLOC_GROW(store->offset, store->seen + 1,
-			   store->offset_alloc);
-		store->offset[store->seen] = cf->do_ftell(cf);
+		ALLOC_GROW(store->seen, store->seen_nr + 1,
+			   store->seen_alloc);
+		store->seen[store->seen_nr] = cf->do_ftell(cf);
 		/* fallthru */
 	case SECTION_END_SEEN:
 	case START:
 		if (matches(key, value, store)) {
-			ALLOC_GROW(store->offset, store->seen + 1,
-				   store->offset_alloc);
-			store->offset[store->seen] = cf->do_ftell(cf);
+			ALLOC_GROW(store->seen, store->seen_nr + 1,
+				   store->seen_alloc);
+			store->seen[store->seen_nr] = cf->do_ftell(cf);
 			store->state = KEY_SEEN;
-			store->seen++;
+			store->seen_nr++;
 		} else {
 			if (strrchr(key, '.') - key == store->baselen &&
 			      !strncmp(key, store->key, store->baselen)) {
 					store->state = SECTION_SEEN;
-					ALLOC_GROW(store->offset,
-						   store->seen + 1,
-						   store->offset_alloc);
-					store->offset[store->seen] =
+					ALLOC_GROW(store->seen,
+						   store->seen_nr + 1,
+						   store->seen_alloc);
+					store->seen[store->seen_nr] =
 						cf->do_ftell(cf);
 			}
 		}
@@ -2636,10 +2635,10 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 			}
 		}
 
-		ALLOC_GROW(store.offset, 1, store.offset_alloc);
-		store.offset[0] = 0;
+		ALLOC_GROW(store.seen, 1, store.seen_alloc);
+		store.seen[0] = 0;
 		store.state = START;
-		store.seen = 0;
+		store.seen_nr = 0;
 
 		/*
 		 * After this, store.offset will contain the *end* offset
@@ -2667,8 +2666,8 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 		}
 
 		/* if nothing to unset, or too many matches, error out */
-		if ((store.seen == 0 && value == NULL) ||
-				(store.seen > 1 && multi_replace == 0)) {
+		if ((store.seen_nr == 0 && value == NULL) ||
+		    (store.seen_nr > 1 && multi_replace == 0)) {
 			ret = CONFIG_NOTHING_SET;
 			goto out_free;
 		}
@@ -2699,19 +2698,19 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 			goto out_free;
 		}
 
-		if (store.seen == 0)
-			store.seen = 1;
+		if (store.seen_nr == 0)
+			store.seen_nr = 1;
 
-		for (i = 0, copy_begin = 0; i < store.seen; i++) {
+		for (i = 0, copy_begin = 0; i < store.seen_nr; i++) {
 			new_line = 0;
-			if (store.offset[i] == 0) {
-				store.offset[i] = copy_end = contents_sz;
+			if (store.seen[i] == 0) {
+				store.seen[i] = copy_end = contents_sz;
 			} else if (store.state != KEY_SEEN) {
-				copy_end = store.offset[i];
+				copy_end = store.seen[i];
 			} else
 				copy_end = find_beginning_of_line(
 					contents, contents_sz,
-					store.offset[i], &new_line);
+					store.seen[i], &new_line);
 
 			if (copy_end > 0 && contents[copy_end-1] != '\n')
 				new_line = 1;
@@ -2725,7 +2724,7 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 				    write_str_in_full(fd, "\n") < 0)
 					goto write_err_out;
 			}
-			copy_begin = store.offset[i];
+			copy_begin = store.seen[i];
 		}
 
 		/* write the pair (value == NULL means unset) */
