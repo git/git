@@ -2288,7 +2288,7 @@ void git_die_config(const char *key, const char *err, ...)
  * Find all the stuff for git_config_set() below.
  */
 
-static struct {
+struct config_store_data {
 	int baselen;
 	char *key;
 	int do_not_match;
@@ -2298,56 +2298,58 @@ static struct {
 	unsigned int offset_alloc;
 	enum { START, SECTION_SEEN, SECTION_END_SEEN, KEY_SEEN } state;
 	unsigned int seen;
-} store;
+};
 
-static int matches(const char *key, const char *value)
+static int matches(const char *key, const char *value,
+		   const struct config_store_data *store)
 {
-	if (strcmp(key, store.key))
+	if (strcmp(key, store->key))
 		return 0; /* not ours */
-	if (!store.value_regex)
+	if (!store->value_regex)
 		return 1; /* always matches */
-	if (store.value_regex == CONFIG_REGEX_NONE)
+	if (store->value_regex == CONFIG_REGEX_NONE)
 		return 0; /* never matches */
 
-	return store.do_not_match ^
-		(value && !regexec(store.value_regex, value, 0, NULL, 0));
+	return store->do_not_match ^
+		(value && !regexec(store->value_regex, value, 0, NULL, 0));
 }
 
 static int store_aux(const char *key, const char *value, void *cb)
 {
 	const char *ep;
 	size_t section_len;
+	struct config_store_data *store = cb;
 
-	switch (store.state) {
+	switch (store->state) {
 	case KEY_SEEN:
-		if (matches(key, value)) {
-			if (store.seen == 1 && store.multi_replace == 0) {
+		if (matches(key, value, store)) {
+			if (store->seen == 1 && store->multi_replace == 0) {
 				warning(_("%s has multiple values"), key);
 			}
 
-			ALLOC_GROW(store.offset, store.seen + 1,
-				   store.offset_alloc);
+			ALLOC_GROW(store->offset, store->seen + 1,
+				   store->offset_alloc);
 
-			store.offset[store.seen] = cf->do_ftell(cf);
-			store.seen++;
+			store->offset[store->seen] = cf->do_ftell(cf);
+			store->seen++;
 		}
 		break;
 	case SECTION_SEEN:
 		/*
-		 * What we are looking for is in store.key (both
+		 * What we are looking for is in store->key (both
 		 * section and var), and its section part is baselen
 		 * long.  We found key (again, both section and var).
 		 * We would want to know if this key is in the same
 		 * section as what we are looking for.  We already
 		 * know we are in the same section as what should
-		 * hold store.key.
+		 * hold store->key.
 		 */
 		ep = strrchr(key, '.');
 		section_len = ep - key;
 
-		if ((section_len != store.baselen) ||
-		    memcmp(key, store.key, section_len+1)) {
-			store.state = SECTION_END_SEEN;
+		if ((section_len != store->baselen) ||
+		    memcmp(key, store->key, section_len+1)) {
+			store->state = SECTION_END_SEEN;
 			break;
 		}
 
@@ -2355,26 +2357,27 @@ static int store_aux(const char *key, const char *value, void *cb)
 		 * Do not increment matches: this is no match, but we
 		 * just made sure we are in the desired section.
 		 */
-		ALLOC_GROW(store.offset, store.seen + 1,
-			   store.offset_alloc);
-		store.offset[store.seen] = cf->do_ftell(cf);
+		ALLOC_GROW(store->offset, store->seen + 1,
+			   store->offset_alloc);
+		store->offset[store->seen] = cf->do_ftell(cf);
 		/* fallthru */
 	case SECTION_END_SEEN:
 	case START:
-		if (matches(key, value)) {
-			ALLOC_GROW(store.offset, store.seen + 1,
-				   store.offset_alloc);
-			store.offset[store.seen] = cf->do_ftell(cf);
-			store.state = KEY_SEEN;
-			store.seen++;
+		if (matches(key, value, store)) {
+			ALLOC_GROW(store->offset, store->seen + 1,
+				   store->offset_alloc);
+			store->offset[store->seen] = cf->do_ftell(cf);
+			store->state = KEY_SEEN;
+			store->seen++;
 		} else {
-			if (strrchr(key, '.') - key == store.baselen &&
-			      !strncmp(key, store.key, store.baselen)) {
-					store.state = SECTION_SEEN;
-					ALLOC_GROW(store.offset,
-						   store.seen + 1,
-						   store.offset_alloc);
-					store.offset[store.seen] = cf->do_ftell(cf);
+			if (strrchr(key, '.') - key == store->baselen &&
+			      !strncmp(key, store->key, store->baselen)) {
+					store->state = SECTION_SEEN;
+					ALLOC_GROW(store->offset,
+						   store->seen + 1,
+						   store->offset_alloc);
+					store->offset[store->seen] =
+						cf->do_ftell(cf);
 			}
 		}
 	}
@@ -2389,31 +2392,33 @@ static int write_error(const char *filename)
 	return 4;
 }
 
-static struct strbuf store_create_section(const char *key)
+static struct strbuf store_create_section(const char *key,
+					  const struct config_store_data *store)
 {
 	const char *dot;
 	int i;
 	struct strbuf sb = STRBUF_INIT;
 
-	dot = memchr(key, '.', store.baselen);
+	dot = memchr(key, '.', store->baselen);
 	if (dot) {
 		strbuf_addf(&sb, "[%.*s \"", (int)(dot - key), key);
-		for (i = dot - key + 1; i < store.baselen; i++) {
+		for (i = dot - key + 1; i < store->baselen; i++) {
 			if (key[i] == '"' || key[i] == '\\')
 				strbuf_addch(&sb, '\\');
 			strbuf_addch(&sb, key[i]);
 		}
 		strbuf_addstr(&sb, "\"]\n");
 	} else {
-		strbuf_addf(&sb, "[%.*s]\n", store.baselen, key);
+		strbuf_addf(&sb, "[%.*s]\n", store->baselen, key);
 	}
 
 	return sb;
 }
 
-static ssize_t write_section(int fd, const char *key)
+static ssize_t write_section(int fd, const char *key,
+			     const struct config_store_data *store)
 {
-	struct strbuf sb = store_create_section(key);
+	struct strbuf sb = store_create_section(key, store);
 	ssize_t ret;
 
 	ret = write_in_full(fd, sb.buf, sb.len);
@@ -2422,11 +2427,12 @@ static ssize_t write_section(int fd, const char *key)
 	return ret;
 }
 
-static ssize_t write_pair(int fd, const char *key, const char *value)
+static ssize_t write_pair(int fd, const char *key, const char *value,
+			  const struct config_store_data *store)
 {
 	int i;
 	ssize_t ret;
-	int length = strlen(key + store.baselen + 1);
+	int length = strlen(key + store->baselen + 1);
 	const char *quote = "";
 	struct strbuf sb = STRBUF_INIT;
 
@@ -2446,7 +2452,7 @@ static ssize_t write_pair(int fd, const char *key, const char *value)
 		quote = "\"";
 
 	strbuf_addf(&sb, "\t%.*s = %s",
-		    length, key + store.baselen + 1, quote);
+		    length, key + store->baselen + 1, quote);
 
 	for (i = 0; value[i]; i++)
 		switch (value[i]) {
@@ -2556,6 +2562,9 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 	char *filename_buf = NULL;
 	char *contents = NULL;
 	size_t contents_sz;
+	struct config_store_data store;
+
+	memset(&store, 0, sizeof(store));
 
 	/* parse-key returns negative; flip the sign to feed exit(3) */
 	ret = 0 - git_config_parse_key(key, &store.key, &store.baselen);
@@ -2598,8 +2607,8 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 		}
 
 		store.key = (char *)key;
-		if (write_section(fd, key) < 0 ||
-		    write_pair(fd, key, value) < 0)
+		if (write_section(fd, key, &store) < 0 ||
+		    write_pair(fd, key, value, &store) < 0)
 			goto write_err_out;
 	} else {
 		struct stat st;
@@ -2638,7 +2647,7 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 		 * As a side effect, we make sure to transform only a valid
 		 * existing config file.
 		 */
-		if (git_config_from_file(store_aux, config_filename, NULL)) {
+		if (git_config_from_file(store_aux, config_filename, &store)) {
 			error("invalid config file %s", config_filename);
 			free(store.key);
 			if (store.value_regex != NULL &&
@@ -2722,10 +2731,10 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 		/* write the pair (value == NULL means unset) */
 		if (value != NULL) {
 			if (store.state == START) {
-				if (write_section(fd, key) < 0)
+				if (write_section(fd, key, &store) < 0)
 					goto write_err_out;
 			}
-			if (write_pair(fd, key, value) < 0)
+			if (write_pair(fd, key, value, &store) < 0)
 				goto write_err_out;
 		}
 
@@ -2849,7 +2858,8 @@ static int section_name_is_ok(const char *name)
 
 /* if new_name == NULL, the section is removed instead */
 static int git_config_copy_or_rename_section_in_file(const char *config_filename,
-				      const char *old_name, const char *new_name, int copy)
+				      const char *old_name,
+				      const char *new_name, int copy)
 {
 	int ret = 0, remove = 0;
 	char *filename_buf = NULL;
@@ -2859,6 +2869,9 @@ static int git_config_copy_or_rename_section_in_file(const char *config_filename
 	FILE *config_file = NULL;
 	struct stat st;
 	struct strbuf copystr = STRBUF_INIT;
+	struct config_store_data store;
+
+	memset(&store, 0, sizeof(store));
 
 	if (new_name && !section_name_is_ok(new_name)) {
 		ret = error("invalid section name: %s", new_name);
@@ -2928,7 +2941,7 @@ static int git_config_copy_or_rename_section_in_file(const char *config_filename
 				}
 				store.baselen = strlen(new_name);
 				if (!copy) {
-					if (write_section(out_fd, new_name) < 0) {
+					if (write_section(out_fd, new_name, &store) < 0) {
 						ret = write_error(get_lock_file_path(&lock));
 						goto out;
 					}
@@ -2949,7 +2962,7 @@ static int git_config_copy_or_rename_section_in_file(const char *config_filename
 						output[0] = '\t';
 					}
 				} else {
-					copystr = store_create_section(new_name);
+					copystr = store_create_section(new_name, &store);
 				}
 			}
 			remove = 0;
