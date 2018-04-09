@@ -228,4 +228,56 @@ test_expect_success 'stash previously ignored file' '
 	test_path_is_file ignored.d/foo
 '
 
+test_expect_success 'stash -u -- <untracked> doesnt print error' '
+	>untracked &&
+	git stash push -u -- untracked 2>actual &&
+	test_path_is_missing untracked &&
+	test_line_count = 0 actual
+'
+
+test_expect_success 'stash -u -- <untracked> leaves rest of working tree in place' '
+	>tracked &&
+	git add tracked &&
+	>untracked &&
+	git stash push -u -- untracked &&
+	test_path_is_missing untracked &&
+	test_path_is_file tracked
+'
+
+test_expect_success 'stash -u -- <tracked> <untracked> clears changes in both' '
+	>tracked &&
+	git add tracked &&
+	>untracked &&
+	git stash push -u -- tracked untracked &&
+	test_path_is_missing tracked &&
+	test_path_is_missing untracked
+'
+
+test_expect_success 'stash --all -- <ignored> stashes ignored file' '
+	>ignored.d/bar &&
+	git stash push --all -- ignored.d/bar &&
+	test_path_is_missing ignored.d/bar
+'
+
+test_expect_success 'stash --all -- <tracked> <ignored> clears changes in both' '
+	>tracked &&
+	git add tracked &&
+	>ignored.d/bar &&
+	git stash push --all -- tracked ignored.d/bar &&
+	test_path_is_missing tracked &&
+	test_path_is_missing ignored.d/bar
+'
+
+test_expect_success 'stash -u -- <ignored> leaves ignored file alone' '
+	>ignored.d/bar &&
+	git stash push -u -- ignored.d/bar &&
+	test_path_is_file ignored.d/bar
+'
+
+test_expect_success 'stash -u -- <non-existant> shows no changes when there are none' '
+	git stash push -u -- non-existant >actual &&
+	echo "No local changes to save" >expect &&
+	test_i18ncmp expect actual
+'
+
 test_done

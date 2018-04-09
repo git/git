@@ -39,7 +39,7 @@ fi
 no_changes () {
 	git diff-index --quiet --cached HEAD --ignore-submodules -- "$@" &&
 	git diff-files --quiet --ignore-submodules -- "$@" &&
-	(test -z "$untracked" || test -z "$(untracked_files)")
+	(test -z "$untracked" || test -z "$(untracked_files "$@")")
 }
 
 untracked_files () {
@@ -315,16 +315,18 @@ push_stash () {
 	if test -z "$patch_mode"
 	then
 		test "$untracked" = "all" && CLEAN_X_OPTION=-x || CLEAN_X_OPTION=
-		if test -n "$untracked"
+		if test -n "$untracked" && test $# = 0
 		then
-			git clean --force --quiet -d $CLEAN_X_OPTION -- "$@"
+			git clean --force --quiet -d $CLEAN_X_OPTION
 		fi
 
 		if test $# != 0
 		then
-			git add -u -- "$@" |
-			git checkout-index -z --force --stdin
-			git diff-index -p --cached --binary HEAD -- "$@" | git apply --index -R
+			test -z "$untracked" && UPDATE_OPTION="-u" || UPDATE_OPTION=
+			test "$untracked" = "all" && FORCE_OPTION="--force" || FORCE_OPTION=
+			git add $UPDATE_OPTION $FORCE_OPTION -- "$@"
+			git diff-index -p --cached --binary HEAD -- "$@" |
+			git apply --index -R
 		else
 			git reset --hard -q
 		fi
