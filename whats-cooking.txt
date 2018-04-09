@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Mar 2018, #06; Fri, 30)
-X-master-at: c2a499e6c31ed613a606ffdeb5bb74ab41e9a586
-X-next-at: caa68db14db9f582fb6802d6d3c880bb7760ad52
+Subject: What's cooking in git.git (Apr 2018, #01; Mon, 9)
+X-master-at: 468165c1d8a442994a825f3684528361727cd8c0
+X-next-at: 0c8726318caac19d9d977b9d5c971576311abb84
 
-What's cooking in git.git (Mar 2018, #06; Fri, 30)
+What's cooking in git.git (Apr 2018, #01; Mon, 9)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,7 +12,18 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-Git 2.17 final is expected to be tagged by early next week.
+I try to summarize what each topic is about immediately after the
+list of commits on the topic, which may be followed by a short term
+plan for the topic ("Will merge to 'next'", etc.), possibly followed
+by a reminder (e.g. "cf. <message-id>") to help me recall the reason
+behind the plan.  Please do not read more than that into "cf." (e.g.
+the ones listed are not more important than other messages in the
+same thread).
+
+The tip of 'next' has not been rewind post 2.17 release.  I plan to
+flush as many solid topics that have been cooking there down to
+'master' first without merging anything new to 'next', and then
+do so sometime in this week.  Let's see how it goes.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -22,113 +33,206 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* jh/partial-clone (2018-03-25) 1 commit
-  (merged to 'next' on 2018-03-28 at 2a0a7aef8e)
- + unpack-trees: release oid_array after use in check_updates()
+* pw/add-p-single (2018-03-31) 1 commit
+  (merged to 'next' on 2018-03-31 at 43a177f941)
+ + add -p: fix 2.17.0-rc* regression due to moved code
 
  Hotfix.
 
 --------------------------------------------------
 [New Topics]
 
-* rs/status-with-removed-submodule (2018-03-28) 1 commit
-  (merged to 'next' on 2018-03-30 at 8a7b618bc1)
- + submodule: check for NULL return of get_submodule_ref_store()
+* ab/simplify-perl-makefile (2018-04-09) 2 commits
+ - SQUASH???
+ - perl: fix installing modules from contrib
 
- "git submodule status" misbehaved on a submodule that has been
- removed from the working tree.
-
- Will cook in 'next'.
+ Recent simplification of build procedure forgot a bit of tweak to
+ the build procedure of contrib/mw-to-git/
 
 
-* lv/tls-1.3 (2018-03-29) 1 commit
-  (merged to 'next' on 2018-03-30 at 4f13731408)
- + http: allow use of TLS 1.3
+* ak/bisect-doc-typofix (2018-04-07) 1 commit
+ - Documentation/git-bisect.txt: git bisect term → git bisect terms
 
- When built with more recent cURL, GIT_SSL_VERSION can now specify
- "tlsv1.3" as its value.
-
- Will cook in 'next'.
-
-
-* nd/warn-more-for-devs (2018-03-29) 3 commits
- - Makefile: add EAGER_DEVELOPER mode
- - Makefile: detect compiler and enable more warnings in DEVELOPER=1
- - connect.c: mark die_initial_contact() NORETURN
-
- The build procedure "make DEVELOPER=YesPlease" learned to enable a
- bit more warning options depending on the compiler used to help
- developers more.  There also is "make EAGER_DEVELOPER=YesPlease"
- available now, for those who want to help fixing warnings we
- usually ignore.
+ Docfix.
 
  Will merge to 'next'.
 
 
-* sb/submodule-move-nested (2018-03-29) 6 commits
- - submodule: fixup nested submodules after moving the submodule
- - submodule-config: remove submodule_from_cache
- - submodule-config: add repository argument to submodule_from_{name, path}
- - submodule-config: allow submodule_free to handle arbitrary repositories
- - grep: remove "repo" arg from non-supporting funcs
- - submodule.h: drop declaration of connect_work_tree_and_git_dir
- (this branch uses nd/remove-ignore-env-field and sb/object-store; is tangled with sb/packfiles-in-repository.)
+* bw/commit-partial-from-subdirectory-fix (2018-04-05) 1 commit
+ - commit: allow partial commits with relative paths
 
- Moving a submodule that itself has submodule in it with "git mv"
- forgot to make necessary adjustment to the nested sub-submodules;
- now the codepath learned to recurse into the submodules.
-
-
-* tb/config-type (2018-03-29) 1 commit
- - builtin/config.c: prefer `--type=bool` over `--bool`, etc.
- (this branch is used by tb/config-default.)
-
- The "git config" command uses separate options e.g. "--int",
- "--bool", etc. to specify what type the caller wants the value to
- be interpreted as.  A new "--type=<typename>" option has been
- introduced, which would make it cleaner to define new types.
+ "cd sub/dir && git commit ../path" ought to record the changes to
+ the file "sub/path", but this regressed long time ago.
 
  Will merge to 'next'.
 
 
-* tb/config-default (2018-03-29) 3 commits
- - builtin/config: introduce `color` type specifier
- - config.c: introduce 'git_config_color' to parse ANSI colors
- - builtin/config: introduce `--default`
- (this branch uses tb/config-type.)
-
- "git config --get" learned the "--default" option, to help the
- calling script.  Building on top of the tb/config-type topic, the
- "git config" learns "--type=color" type.  Taken together, you can
- do things like "git config --get foo.color --default blue" and get
- the ANSI color sequence for the color given to foo.color variable,
- or "blue" if the variable does not exist.
+* ds/lazy-load-trees (2018-04-07) 5 commits
+ - commit-graph: lazy-load trees for commits
+ - treewide: replace maybe_tree with accessor methods
+ - commit: create get_commit_tree() method
+ - treewide: rename tree to maybe_tree
+ - Merge branch 'bw/c-plus-plus' into ds/lazy-load-trees
+ (this branch uses ds/commit-graph.)
 
 
-* eb/cred-helper-ignore-sigpipe (2018-03-29) 1 commit
-  (merged to 'next' on 2018-03-30 at c48e98c1b1)
- + credential: ignore SIGPIPE when writing to credential helpers
+* jk/t5561-missing-curl (2018-04-05) 2 commits
+ - t5561: skip tests if curl is not available
+ - t5561: drop curl stderr redirects
 
- When credential helper exits very quickly without reading its
- input, it used to cause Git to die with SIGPIPE, which has been
- fixed.
+ Test fixes.
 
- Will cook in 'next'.
+ Will merge to 'next'.
 
 
-* jk/flockfile-stdio (2018-03-30) 1 commit
- - config: move flockfile() closer to unlocked functions
+* ks/branch-list-detached-rebase-i (2018-04-05) 2 commits
+ - t3200: verify "branch --list" sanity when rebasing from detached HEAD
+ - branch --list: print useful info whilst interactive rebasing a detached HEAD
+
+ "git branch --list" during an interrupted "rebase -i" now lets
+ users distinguish the case where a detached HEAD is being rebased
+ and a normal branch is being rebased.
+
+ Will merge to 'next'.
 
 
-* jk/relative-directory-fix (2018-03-30) 5 commits
- - refs: use chdir_notify to update cached relative paths
- - set_work_tree: use chdir_notify
- - add chdir-notify API
- - trace.c: export trace_setup_key
- - set_git_dir: die when setenv() fails
+* lw/daemon-log-destination (2018-04-09) 1 commit
+ - daemon.c: fix condition for redirecting stderr
+
+ Recent introduction of "--log-destination" option to "git daemon"
+ did not work well when the daemon was run under "--inetd" mode.
+
+ Will merge to 'next'.
+
+
+* mn/send-email-credential-doc (2018-04-08) 1 commit
+ - send-email: simplify Gmail example in the documentation
+
+ Doc update.
+
+ Will merge to 'next'.
+
+
+* nd/worktree-move (2018-04-05) 1 commit
+ - t2028: tighten grep expression to make "move worktree" test more robust
+ (this branch is used by es/worktree-docs.)
+
+ Test update.
+
+ Will merge to 'next'.
+
+
+* ab/git-svn-get-record-typofix (2018-04-09) 1 commit
+ - git-svn: avoid warning on undef readline()
+
+ "git svn" had a minor thinko/typo which has been fixed.
+
+
+* br/mergetools-guiffy (2018-04-06) 1 commit
+ - mergetools: add support for guiffy
+
+ "git mergetools" learned talking to guiffy.
+
+ Will merge to 'next'.
+
+
+* en/doc-typoes (2018-04-09) 2 commits
+ - Documentation: normalize spelling of 'normalised'
+ - Documentation: fix several one-character-off spelling errors
+
+ Docfix.
+
+ Will merge to 'next'.
+
+
+* hn/sort-ls-remote (2018-04-09) 1 commit
+ - ls-remote: create '--sort' option
+ (this branch uses jk/ref-array-push.)
+
+ "git ls-remote" learned an option to allow sorting its output based
+ on the refnames being shown.
+
+
+* jk/ref-array-push (2018-04-09) 3 commits
+ - ref-filter: factor ref_array pushing into its own function
+ - ref-filter: make ref_array_item allocation more consistent
+ - ref-filter: use "struct object_id" consistently
+ (this branch is used by hn/sort-ls-remote.)
+
+ API clean-up aournd ref-filter code.
+
+ Will merge to 'next'.
+
+
+* js/empty-config-section-fix (2018-04-06) 14 commits
+ - git_config_set: reuse empty sections
+ - git config --unset: remove empty sections (in the common case)
+ - git_config_set: make use of the config parser's event stream
+ - git_config_set: do not use a state machine
+ - config_set_store: rename some fields for consistency
+ - config: avoid using the global variable `store`
+ - config: introduce an optional event stream while parsing
+ - t1300: `--unset-all` can leave an empty section behind (bug)
+ - t1300: remove unreasonable expectation from TODO
+ - t1300: avoid relying on a bug
+ - config --replace-all: avoid extra line breaks
+ - t1300: demonstrate that --replace-all can "invent" newlines
+ - t1300: rename it to reflect that `repo-config` was deprecated
+ - git_config_set: fix off-by-two
+
+ "git config --unset a.b", when "a.b" is the last variable in an
+ otherwise empty section "a", left an empty section "a" behind, and
+ worse yet, a subsequent "git config a.c value" did not reuse that
+ empty shell and instead created a new one.  These have been
+ (partially) corrected.
+
+ Reroll exists, which needs to be picked up.
+
+
+* js/t5404-path-fix (2018-04-09) 1 commit
+ - t5404: relax overzealous test
+
+ Test fix.
+
+ Will merge to 'next'.
+
+
+* ps/test-chmtime-get (2018-04-09) 1 commit
+ - t/helper: 'test-chmtime (--get|-g)' to print only the mtime
+
+ Test cleanup.
+
+ Will merge to 'next'.
+
+
+* es/fread-reads-dir-autoconf-fix (2018-04-09) 1 commit
+ - configure.ac: fix botched FREAD_READS_DIRECTORIES check
+
+ Small fix to the autoconf build procedure.
+
+ Will merge to 'next'.
+
+
+* es/worktree-docs (2018-04-09) 2 commits
+ - git-worktree.txt: unify command-line prompt in example blocks
+ - git-worktree.txt: recommend 'git worktree remove' over manual deletion
+ (this branch uses nd/worktree-move.)
+
+ Doc updates.
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
+
+* ld/p4-unshelve (2018-02-22) 1 commit
+ - git-p4: add unshelve command
+
+ "git p4" learned to "unshelve" shelved commit from P4.
+
+ Will hold, perhaps drop and use format-change that uses a proper "diff".
+ cf. <CAE5ih7_ooDMqVtTMoQ70s5XCkncr04HY0JkqSp1UmKQeG81oaA@mail.gmail.com>
+
 
 * sb/blame-color (2018-02-13) 3 commits
  - builtin/blame: highlight recently changed lines
@@ -213,6 +317,114 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* rs/status-with-removed-submodule (2018-03-28) 1 commit
+  (merged to 'next' on 2018-03-30 at 8a7b618bc1)
+ + submodule: check for NULL return of get_submodule_ref_store()
+
+ "git submodule status" misbehaved on a submodule that has been
+ removed from the working tree.
+
+ Will merge to 'master'.
+
+
+* lv/tls-1.3 (2018-03-29) 1 commit
+  (merged to 'next' on 2018-03-30 at 4f13731408)
+ + http: allow use of TLS 1.3
+
+ When built with more recent cURL, GIT_SSL_VERSION can now specify
+ "tlsv1.3" as its value.
+
+ Will merge to 'master'.
+
+
+* nd/warn-more-for-devs (2018-03-29) 3 commits
+ - Makefile: add EAGER_DEVELOPER mode
+ - Makefile: detect compiler and enable more warnings in DEVELOPER=1
+ - connect.c: mark die_initial_contact() NORETURN
+
+ The build procedure "make DEVELOPER=YesPlease" learned to enable a
+ bit more warning options depending on the compiler used to help
+ developers more.  There also is "make EAGER_DEVELOPER=YesPlease"
+ available now, for those who want to help fixing warnings we
+ usually ignore.
+
+ Will merge to 'next'.
+
+
+* sb/submodule-move-nested (2018-03-29) 6 commits
+ - submodule: fixup nested submodules after moving the submodule
+ - submodule-config: remove submodule_from_cache
+ - submodule-config: add repository argument to submodule_from_{name, path}
+ - submodule-config: allow submodule_free to handle arbitrary repositories
+ - grep: remove "repo" arg from non-supporting funcs
+ - submodule.h: drop declaration of connect_work_tree_and_git_dir
+ (this branch uses nd/remove-ignore-env-field and sb/object-store; is tangled with sb/packfiles-in-repository.)
+
+ Moving a submodule that itself has submodule in it with "git mv"
+ forgot to make necessary adjustment to the nested sub-submodules;
+ now the codepath learned to recurse into the submodules.
+
+
+* tb/config-type (2018-03-29) 1 commit
+ - builtin/config.c: prefer `--type=bool` over `--bool`, etc.
+ (this branch is used by tb/config-default.)
+
+ The "git config" command uses separate options e.g. "--int",
+ "--bool", etc. to specify what type the caller wants the value to
+ be interpreted as.  A new "--type=<typename>" option has been
+ introduced, which would make it cleaner to define new types.
+
+ Will merge to 'next'.
+
+
+* tb/config-default (2018-03-29) 3 commits
+ - builtin/config: introduce `color` type specifier
+ - config.c: introduce 'git_config_color' to parse ANSI colors
+ - builtin/config: introduce `--default`
+ (this branch uses tb/config-type.)
+
+ "git config --get" learned the "--default" option, to help the
+ calling script.  Building on top of the tb/config-type topic, the
+ "git config" learns "--type=color" type.  Taken together, you can
+ do things like "git config --get foo.color --default blue" and get
+ the ANSI color sequence for the color given to foo.color variable,
+ or "blue" if the variable does not exist.
+
+
+* eb/cred-helper-ignore-sigpipe (2018-03-29) 1 commit
+  (merged to 'next' on 2018-03-30 at c48e98c1b1)
+ + credential: ignore SIGPIPE when writing to credential helpers
+
+ When credential helper exits very quickly without reading its
+ input, it used to cause Git to die with SIGPIPE, which has been
+ fixed.
+
+ Will merge to 'master'.
+
+
+* jk/flockfile-stdio (2018-03-30) 1 commit
+ - config: move flockfile() closer to unlocked functions
+
+ Code clean-up.
+
+ Will merge to 'next'.
+
+
+* jk/relative-directory-fix (2018-03-30) 5 commits
+ - refs: use chdir_notify to update cached relative paths
+ - set_work_tree: use chdir_notify
+ - add chdir-notify API
+ - trace.c: export trace_setup_key
+ - set_git_dir: die when setenv() fails
+
+ Some codepaths, including the refs API, get and keep relative
+ paths, that go out of sync when the process does chdir(2).  The
+ chdir-notify API is introduced to let these codepaths adjust these
+ cached paths to the new current directory.
+
+ Will merge to 'next'.
+
+
 * ds/bsearch-hash (2018-03-25) 4 commits
   (merged to 'next' on 2018-03-29 at 561d5577a7)
  + sha1_name: use bsearch_pack() in unique_in_pack()
@@ -225,13 +437,13 @@ of the repositories listed at
  on packfile content, which is a relatively recent addtion, has been
  optimized to use the same fan-out table.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * jh/json-writer (2018-03-28) 1 commit
  - json_writer: new routines to create data in JSON format
 
- Is this ready for 'next'?
+ Will merge to 'next'.
 
 
 * jk/diff-highlight-graph-fix (2018-03-21) 7 commits
@@ -247,7 +459,7 @@ of the repositories listed at
  "diff-highlight" filter (in contrib/) learned to undertand "git log
  --graph" output better.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * ot/libify-get-ref-atom-value (2018-03-29) 6 commits
@@ -270,14 +482,14 @@ of the repositories listed at
 
  Doc updates.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * ab/drop-contrib-examples (2018-03-26) 1 commit
   (merged to 'next' on 2018-03-29 at 9d8a7603b5)
  + Remove contrib/examples/*
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * bc/hash-independent-tests (2018-03-26) 10 commits
@@ -296,7 +508,7 @@ of the repositories listed at
  Tests that rely on the exact hardcoded values of object names have
  been updated in preparation for hash function migration.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * cc/perf-aggregate-sort (2018-03-27) 2 commits
@@ -306,7 +518,7 @@ of the repositories listed at
 
  Perf-test update.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * jc/test-must-be-empty (2018-03-27) 1 commit
@@ -315,7 +527,7 @@ of the repositories listed at
 
  Test helper update.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * jk/branch-l-0-deprecation (2018-03-26) 3 commits
@@ -353,7 +565,8 @@ of the repositories listed at
  Will keep in 'pu'.
 
 
-* jm/mem-pool (2018-03-27) 3 commits
+* jm/mem-pool (2018-03-30) 4 commits
+ - SQUASH??? fast-import: fix a sparse 'NULL pointer' warning
   (merged to 'next' on 2018-03-29 at bfce05db6e)
  + Move reusable parts of memory pool into its own file
  + fast-import: introduce mem_pool type
@@ -363,7 +576,7 @@ of the repositories listed at
  fast-import.c, which in turn has become the first user of the
  mem-pool API.
 
- Will cook in 'next'.
+ Will kick back to 'pu' to be reworked.
 
 
 * js/runtime-prefix-windows (2018-03-27) 2 commits
@@ -377,8 +590,9 @@ of the repositories listed at
  other platforms, and its approach has been adopted back in the
  Windows port.
 
- Is this, together with the dj/runtime-prefix topic, ready for
- 'next'?
+ Will merge to 'next'.
+ cf. <65a25131-9278-62c8-4d13-b8531209825d@kdbg.org>
+ cf. <nycvar.QRO.7.76.6.1804031511510.5026@qfpub.tvgsbejvaqbjf.bet>
 
 
 * nd/combined-test-helper (2018-03-27) 36 commits
@@ -423,7 +637,7 @@ of the repositories listed at
  Small test-helper programs have been consolidated into a single
  binary.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * nd/parseopt-completion-more (2018-03-25) 8 commits
@@ -440,7 +654,7 @@ of the repositories listed at
  The mechanism to use parse-options API to automate the command line
  completion continues to get extended and polished.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * nd/trace-with-env (2018-03-25) 1 commit
@@ -449,7 +663,7 @@ of the repositories listed at
 
  Code cleanup.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * pk/test-avoid-pipe-hiding-exit-status (2018-03-28) 1 commit
@@ -458,7 +672,7 @@ of the repositories listed at
 
  Test cleanup.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * ws/rebase-p (2018-03-23) 8 commits
@@ -474,7 +688,7 @@ of the repositories listed at
 
  Code clean-up.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * yk/filter-branch-non-committish-refs (2018-03-25) 1 commit
@@ -485,7 +699,7 @@ of the repositories listed at
  filter-branch" gave a misleading error messages.  This has been
  corrected.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * ys/bisect-object-id-missing-conversion-fix (2018-03-25) 1 commit
@@ -494,7 +708,7 @@ of the repositories listed at
 
  Code clean-up.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * ml/filter-branch-no-op-error (2018-03-15) 1 commit
@@ -505,7 +719,7 @@ of the repositories listed at
  the callers to tell the case where there was no new commits to
  rewrite from other error cases.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * ab/install-symlinks (2018-03-15) 3 commits
@@ -518,7 +732,7 @@ of the repositories listed at
  (instead of hardlinks and copies) to install "git-foo" for built-in
  commands, whose binaries are all identical.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * tg/stash-untracked-with-pathspec-fix (2018-03-21) 4 commits
@@ -533,7 +747,7 @@ of the repositories listed at
  error message when there was no tracked files that match the
  <pathspec>, which has been fixed.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * pw/rebase-keep-empty-fixes (2018-03-29) 3 commits
@@ -573,8 +787,7 @@ of the repositories listed at
  way that has been possible on Windows for quite some time, for
  Linux, BSDs and Darwin.
 
- Is this, together with the js/runtime-prefix-windows topic, ready
- for 'next'?
+ Will merge to 'next'.
 
 
 * ti/fetch-everything-local-optim (2018-03-14) 1 commit
@@ -591,7 +804,7 @@ of the repositories listed at
  cases, fetching into a repository with many loose objects from a
  repository with small number of refs.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * ab/nuke-emacs-contrib (2018-03-13) 1 commit
@@ -601,7 +814,11 @@ of the repositories listed at
  The scripts in contrib/emacs/ have outlived their usefulness and
  have been removed.
 
- Will cook in 'next'.
+ Will kick back to 'pu'.
+
+ There were some noises about better migration strategy that lets
+ git.el to nudge users to magit or something when used.  Is it
+ something we want to pursue further?
 
 
 * bc/object-id (2018-03-14) 36 commits
@@ -646,7 +863,7 @@ of the repositories listed at
 
  Conversion from uchar[20] to struct object_id continues.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * ma/shortlog-revparse (2018-03-15) 3 commits
@@ -660,7 +877,7 @@ of the repositories listed at
  extra and unwanted arguments on its command line instead in such a
  case.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * ab/pcre-v2 (2018-03-14) 3 commits
@@ -675,7 +892,7 @@ of the repositories listed at
  and USE_LIBPCRE2 can be used to explicitly choose which version to
  use, as before.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * bb/git-gui-ssh-key-files (2018-03-02) 2 commits
@@ -704,7 +921,8 @@ of the repositories listed at
  the current theme.
 
 
-* nd/pack-objects-pack-struct (2018-03-26) 13 commits
+* nd/pack-objects-pack-struct (2018-04-02) 15 commits
+ - ci: exercise the whole test suite with uncommon code in pack-objects
  - pack-objects: reorder members to shrink struct object_entry
  - pack-objects: shrink delta_size field in struct object_entry
  - pack-objects: shrink size field in struct object_entry
@@ -718,6 +936,7 @@ of the repositories listed at
  - pack-objects: use bitfield for object_entry::dfs_state
  - pack-objects: turn type and in_pack_type to bitfields
  - pack-objects: a bit of document about struct object_entry
+ - t/README: mention about running the test suite in special modes
 
  "git pack-objects" needs to allocate tons of "struct object_entry"
  while doing its work, and shrinking its size helps the performance
@@ -753,7 +972,7 @@ of the repositories listed at
  by assuming how "git worktree move" moves an existing worktree to a
  different place.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * pw/add-p-select (2018-03-16) 3 commits
@@ -766,16 +985,12 @@ of the repositories listed at
  individual added/removed lines to be used in the operation, instead
  of accepting or rejecting a whole hunk.
 
- Will cook in 'next'.
+ Will kick back to 'pu'.
 
-
-* ld/p4-unshelve (2018-02-22) 1 commit
- - git-p4: add unshelve command
-
- "git p4" learned to "unshelve" shelved commit from P4.
-
- Will hold, perhaps drop and use format-change that uses a proper "diff".
- cf. <CAE5ih7_ooDMqVtTMoQ70s5XCkncr04HY0JkqSp1UmKQeG81oaA@mail.gmail.com>
+ There was a brief discussion about this topic not doing as good a
+ job as it is advertised as---has it been resolved, or do we want to
+ run with what we have for now?
+ cf. <878ta8vyqe.fsf@evledraar.gmail.com>
 
 
 * ps/contains-id-error-message (2018-03-22) 1 commit
@@ -785,7 +1000,7 @@ of the repositories listed at
  "git tag --contains no-such-commit" gave a full list of options
  after giving an error message.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * nd/remove-ignore-env-field (2018-03-23) 6 commits
@@ -801,7 +1016,7 @@ of the repositories listed at
 
  Code clean-up for the "repository" abstraction.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * sb/object-store (2018-03-26) 27 commits
@@ -841,7 +1056,7 @@ of the repositories listed at
  Rerolled by Duy on top of a separate preliminary clean-up topic.
  The resulting structure of the topics looked very sensible.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * sb/packfiles-in-repository (2018-03-26) 12 commits
@@ -862,11 +1077,10 @@ of the repositories listed at
 
  Refactoring of the internal global data structure continues.
 
- Will cook in 'next'.
+ Is this ready for 'master' by now?
 
 
-* ds/commit-graph (2018-03-14) 17 commits
- - SQUASH??? sparse fixes
+* ds/commit-graph (2018-04-02) 16 commits
  - commit-graph: implement "--additive" option
  - commit-graph: build graph from starting commits
  - commit-graph: read only from specific pack-indexes
@@ -874,7 +1088,7 @@ of the repositories listed at
  - commit-graph: close under reachability
  - commit-graph: add core.commitGraph setting
  - commit-graph: implement git commit-graph read
- - commit-graph: implement 'git-commit-graph write'
+ - commit-graph: implement git-commit-graph write
  - commit-graph: implement write_commit_graph()
  - commit-graph: create git-commit-graph builtin
  - graph: add commit graph design document
@@ -883,13 +1097,12 @@ of the repositories listed at
  - csum-file: rename hashclose() to finalize_hashfile()
  - Merge branch 'jk/cached-commit-buffer' into HEAD
  - Merge branch 'jt/binsearch-with-fanout' into HEAD
+ (this branch is used by ds/lazy-load-trees.)
 
  Precompute and store information necessary for ancestry traversal
  in a separate file to optimize graph walking.
 
- Expecting a reroll.
- cf. <d76442f9-5f06-998b-8b2a-84b5ca118aaa@gmail.com>
- cf. <0c2f17fa-5c0e-9539-a081-7827a6678bf1@gmail.com>
+ Ready???
  It seems that this topic is getting there.
 
 
@@ -904,17 +1117,18 @@ of the repositories listed at
  e.g. cf. <20180206150044.1bffbb573c088d38c8e44bf5@google.com>
 
 
-* tg/worktree-add-existing-branch (2018-03-27) 6 commits
- - t2025: rename now outdated branch name
+* tg/worktree-add-existing-branch (2018-04-02) 6 commits
  - worktree: teach "add" to check out existing branches
  - worktree: factor out dwim_branch function
- - worktree: remove force_new_branch from struct add_opts
  - worktree: be clearer when "add" dwim-ery kicks in
  - worktree: improve message when creating a new worktree
+ - reset: introduce show-new-head-line option
+ - worktree: remove extra members from struct add_opts
 
  "git worktree add" learned to check out an existing branch.
 
- Is this ready for 'next'?
+ Expecting a reroll.
+ cf. <20180408143034.GK2629@hank> <20180408142417.GJ2629@hank>
 
 
 * js/rebase-recreate-merge (2018-02-23) 12 commits
@@ -979,7 +1193,7 @@ of the repositories listed at
 
  The beginning of the next-gen transfer protocol.
 
- Will cook in 'next'.
+ Is this ready for 'master' by now?
 
 
 * ls/checkout-encoding (2018-03-16) 10 commits
@@ -1042,4 +1256,4 @@ of the repositories listed at
  to be overwritten during merge has also been fixed as part of this
  work.
 
- Will cook in 'next'.
+ Will merge to 'master'.
