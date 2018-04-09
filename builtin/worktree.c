@@ -101,16 +101,9 @@ static int prune_worktree(const char *id, struct strbuf *reason)
 	}
 	path[len] = '\0';
 	if (!file_exists(path)) {
-		struct stat st_link;
 		free(path);
-		/*
-		 * the repo is moved manually and has not been
-		 * accessed since?
-		 */
-		if (!stat(git_path("worktrees/%s/link", id), &st_link) &&
-		    st_link.st_nlink > 1)
-			return 0;
-		if (st.st_mtime <= expire) {
+		if (stat(git_path("worktrees/%s/index", id), &st) ||
+		    st.st_mtime <= expire) {
 			strbuf_addf(reason, _("Removing worktrees/%s: gitdir file points to non-existent location"), id);
 			return 1;
 		} else {

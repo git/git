@@ -275,11 +275,6 @@ worktrees/<id>/locked::
 	or manually by `git worktree prune`. The file may contain a string
 	explaining why the repository is locked.
 
-worktrees/<id>/link::
-	If this file exists, it is a hard link to the linked .git
-	file. It is used to detect if the linked repository is
-	manually removed.
-
 SEE ALSO
 --------
 linkgit:git-init[1],
