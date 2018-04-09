@@ -1426,7 +1426,50 @@ test_expect_failure '--unset last key removes section (except if commented)' '
 	EOF
 
 	git config --unset section.key &&
-	test_cmp expect .git/config
+	test_cmp expect .git/config &&
+
+	q_to_tab >.git/config <<-\EOF &&
+	[one]
+	Qkey = "multiline \
+	QQ# with comment"
+	[two]
+	key = true
+	EOF
+	git config --unset two.key &&
+	! grep two .git/config &&
+
+	q_to_tab >.git/config <<-\EOF &&
+	[one]
+	Qkey = "multiline \
+	QQ# with comment"
+	[one]
+	key = true
+	EOF
+	git config --unset-all one.key &&
+	test_line_count = 0 .git/config &&
+
+	q_to_tab >.git/config <<-\EOF &&
+	[one]
+	Qkey = true
+	Q# a comment not at the start
+	[two]
+	Qkey = true
+	EOF
+	git config --unset two.key &&
+	grep two .git/config &&
+
+	q_to_tab >.git/config <<-\EOF &&
+	[one]
+	Qkey = not [two "subsection"]
+	[two "subsection"]
+	[two "subsection"]
+	Qkey = true
+	[TWO "subsection"]
+	[one]
+	EOF
+	git config --unset two.subsection.key &&
+	test "not [two subsection]" = "$(git config one.key)" &&
+	test_line_count = 3 .git/config
 '
 
 test_expect_failure 'adding a key into an empty section reuses header' '
