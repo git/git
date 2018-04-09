@@ -254,25 +254,25 @@ GIT_PARSE_WITH([openssl]))
 # Perl-compatible regular expressions instead of standard or extended
 # POSIX regular expressions.
 #
-# Currently USE_LIBPCRE is a synonym for USE_LIBPCRE1, define
-# USE_LIBPCRE2 instead if you'd like to use version 2 of the PCRE
-# library. The USE_LIBPCRE flag will likely be changed to mean v2 by
-# default in future releases.
+# USE_LIBPCRE is a synonym for USE_LIBPCRE2, define USE_LIBPCRE1
+# instead if you'd like to use the legacy version 1 of the PCRE
+# library. Support for version 1 will likely be removed in some future
+# release of Git, as upstream has all but abandoned it.
 #
 # Define LIBPCREDIR=/foo/bar if your PCRE header and library files are in
 # /foo/bar/include and /foo/bar/lib directories.
 #
 AC_ARG_WITH(libpcre,
-AS_HELP_STRING([--with-libpcre],[synonym for --with-libpcre1]),
+AS_HELP_STRING([--with-libpcre],[synonym for --with-libpcre2]),
     if test "$withval" = "no"; then
-	USE_LIBPCRE1=
+	USE_LIBPCRE2=
     elif test "$withval" = "yes"; then
-	USE_LIBPCRE1=YesPlease
+	USE_LIBPCRE2=YesPlease
     else
-	USE_LIBPCRE1=YesPlease
+	USE_LIBPCRE2=YesPlease
 	LIBPCREDIR=$withval
 	AC_MSG_NOTICE([Setting LIBPCREDIR to $LIBPCREDIR])
-        dnl USE_LIBPCRE1 can still be modified below, so don't substitute
+        dnl USE_LIBPCRE2 can still be modified below, so don't substitute
         dnl it yet.
 	GIT_CONF_SUBST([LIBPCREDIR])
     fi)
@@ -296,6 +296,10 @@ AS_HELP_STRING([],           [ARG can be also prefix for libpcre library and hea
 AC_ARG_WITH(libpcre2,
 AS_HELP_STRING([--with-libpcre2],[support Perl-compatible regexes via libpcre2 (default is NO)])
 AS_HELP_STRING([],           [ARG can be also prefix for libpcre library and headers]),
+    if test -n "$USE_LIBPCRE2"; then
+        AC_MSG_ERROR([Only supply one of --with-libpcre or its synonym --with-libpcre2!])
+    fi
+
     if test -n "$USE_LIBPCRE1"; then
         AC_MSG_ERROR([Only supply one of --with-libpcre1 or --with-libpcre2!])
     fi
@@ -549,8 +553,8 @@ if test -n "$USE_LIBPCRE1"; then
 GIT_STASH_FLAGS($LIBPCREDIR)
 
 AC_CHECK_LIB([pcre], [pcre_version],
-[USE_LIBPCRE=YesPlease],
-[USE_LIBPCRE=])
+[USE_LIBPCRE1=YesPlease],
+[USE_LIBPCRE1=])
 
 GIT_UNSTASH_FLAGS($LIBPCREDIR)
 
