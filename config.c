@@ -2294,8 +2294,11 @@ struct config_store_data {
 	int do_not_match;
 	regex_t *value_regex;
 	int multi_replace;
-	size_t *seen;
-	unsigned int seen_nr, seen_alloc;
+	struct {
+		size_t begin, end;
+		enum config_event_t type;
+	} *parsed;
+	unsigned int parsed_nr, parsed_alloc, *seen, seen_nr, seen_alloc;
 	unsigned int key_seen:1, section_seen:1, is_keys_section:1;
 };
 
@@ -2313,10 +2316,31 @@ static int matches(const char *key, const char *value,
 		(value && !regexec(store->value_regex, value, 0, NULL, 0));
 }
 
+static int store_aux_event(enum config_event_t type,
+			   size_t begin, size_t end, void *data)
+{
+	struct config_store_data *store = data;
+
+	ALLOC_GROW(store->parsed, store->parsed_nr + 1, store->parsed_alloc);
+	store->parsed[store->parsed_nr].begin = begin;
+	store->parsed[store->parsed_nr].end = end;
+	store->parsed[store->parsed_nr].type = type;
+	store->parsed_nr++;
+
+	if (type == CONFIG_EVENT_SECTION) {
+		if (cf->var.len < 2 || cf->var.buf[cf->var.len - 1] != '.')
+			BUG("Invalid section name '%s'", cf->var.buf);
+
+		/* Is this the section we were looking for? */
+		store->is_keys_section = cf->var.len - 1 == store->baselen &&
+			!strncasecmp(cf->var.buf, store->key, store->baselen);
+	}
+
+	return 0;
+}
+
 static int store_aux(const char *key, const char *value, void *cb)
 {
-	const char *ep;
-	size_t section_len;
 	struct config_store_data *store = cb;
 
 	if (store->key_seen) {
@@ -2328,55 +2352,21 @@ static int store_aux(const char *key, const char *value, void *cb)
 			ALLOC_GROW(store->seen, store->seen_nr + 1,
 				   store->seen_alloc);
 
-			store->seen[store->seen_nr] = cf->do_ftell(cf);
+			store->seen[store->seen_nr] = store->parsed_nr;
 			store->seen_nr++;
 		}
-		return 0;
 	} else if (store->is_keys_section) {
 		/*
-		 * What we are looking for is in store->key (both
-		 * section and var), and its section part is baselen
-		 * long.  We found key (again, both section and var).
-		 * We would want to know if this key is in the same
-		 * section as what we are looking for.  We already
-		 * know we are in the same section as what should
-		 * hold store->key.
+		 * Do not increment matches yet: this may not be a match, but we
+		 * are in the desired section.
 		 */
-		ep = strrchr(key, '.');
-		section_len = ep - key;
-
-		if ((section_len != store->baselen) ||
-		    memcmp(key, store->key, section_len+1)) {
-			store->is_keys_section = 0;
-			return 0;
-		}
-		/*
-		 * Do not increment matches: this is no match, but we
-		 * just made sure we are in the desired section.
-		 */
-		ALLOC_GROW(store->seen, store->seen_nr + 1,
-			   store->seen_alloc);
-		store->seen[store->seen_nr] = cf->do_ftell(cf);
-	}
-
-	if (matches(key, value, store)) {
-		ALLOC_GROW(store->seen, store->seen_nr + 1,
-			   store->seen_alloc);
-		store->seen[store->seen_nr] = cf->do_ftell(cf);
-		store->seen_nr++;
-		store->key_seen = 1;
+		ALLOC_GROW(store->seen, store->seen_nr + 1, store->seen_alloc);
+		store->seen[store->seen_nr] = store->parsed_nr;
 		store->section_seen = 1;
-		store->is_keys_section = 1;
-	} else {
-		if (strrchr(key, '.') - key == store->baselen &&
-		      !strncmp(key, store->key, store->baselen)) {
-				store->section_seen = 1;
-				store->is_keys_section = 1;
-				ALLOC_GROW(store->seen,
-					   store->seen_nr + 1,
-					   store->seen_alloc);
-				store->seen[store->seen_nr] =
-					cf->do_ftell(cf);
+
+		if (matches(key, value, store)) {
+			store->seen_nr++;
+			store->key_seen = 1;
 		}
 	}
 
@@ -2475,32 +2465,6 @@ static ssize_t write_pair(int fd, const char *key, const char *value,
 	strbuf_release(&sb);
 
 	return ret;
-}
-
-static ssize_t find_beginning_of_line(const char *contents, size_t size,
-	size_t offset_, int *found_bracket)
-{
-	size_t equal_offset = size, bracket_offset = size;
-	ssize_t offset;
-
-contline:
-	for (offset = offset_-2; offset > 0
-			&& contents[offset] != '\n'; offset--)
-		switch (contents[offset]) {
-			case '=': equal_offset = offset; break;
-			case ']': bracket_offset = offset; break;
-		}
-	if (offset > 0 && contents[offset-1] == '\\') {
-		offset_ = offset;
-		goto contline;
-	}
-	if (bracket_offset < equal_offset) {
-		*found_bracket = 1;
-		offset = bracket_offset+1;
-	} else
-		offset++;
-
-	return offset;
 }
 
 int git_config_set_in_file_gently(const char *config_filename,
@@ -2613,6 +2577,7 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 		struct stat st;
 		size_t copy_begin, copy_end;
 		int i, new_line = 0;
+		struct config_options opts;
 
 		if (value_regex == NULL)
 			store.value_regex = NULL;
@@ -2635,17 +2600,24 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 			}
 		}
 
-		ALLOC_GROW(store.seen, 1, store.seen_alloc);
-		store.seen[0] = 0;
-		store.seen_nr = 0;
+		ALLOC_GROW(store.parsed, 1, store.parsed_alloc);
+		store.parsed[0].end = 0;
+
+		memset(&opts, 0, sizeof(opts));
+		opts.event_fn = store_aux_event;
+		opts.event_fn_data = &store;
 
 		/*
-		 * After this, store.offset will contain the *end* offset
-		 * of the last match, or remain at 0 if no match was found.
+		 * After this, store.parsed will contain offsets of all the
+		 * parsed elements, and store.seen will contain a list of
+		 * matches, as indices into store.parsed.
+		 *
 		 * As a side effect, we make sure to transform only a valid
 		 * existing config file.
 		 */
-		if (git_config_from_file(store_aux, config_filename, &store)) {
+		if (git_config_from_file_with_options(store_aux,
+						      config_filename,
+						      &store, &opts)) {
 			error("invalid config file %s", config_filename);
 			free(store.key);
 			if (store.value_regex != NULL &&
@@ -2697,19 +2669,39 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 			goto out_free;
 		}
 
-		if (store.seen_nr == 0)
+		if (store.seen_nr == 0) {
+			if (!store.seen_alloc) {
+				/* Did not see key nor section */
+				ALLOC_GROW(store.seen, 1, store.seen_alloc);
+				store.seen[0] = store.parsed_nr
+					- !!store.parsed_nr;
+			}
 			store.seen_nr = 1;
+		}
 
 		for (i = 0, copy_begin = 0; i < store.seen_nr; i++) {
+			size_t replace_end;
+			int j = store.seen[i];
+
 			new_line = 0;
-			if (store.seen[i] == 0) {
-				store.seen[i] = copy_end = contents_sz;
-			} else if (!store.key_seen) {
-				copy_end = store.seen[i];
-			} else
-				copy_end = find_beginning_of_line(
-					contents, contents_sz,
-					store.seen[i], &new_line);
+			if (!store.key_seen) {
+				replace_end = copy_end = store.parsed[j].end;
+			} else {
+				replace_end = store.parsed[j].end;
+				copy_end = store.parsed[j].begin;
+				/*
+				 * Swallow preceding white-space on the same
+				 * line.
+				 */
+				while (copy_end > 0 ) {
+					char c = contents[copy_end - 1];
+
+					if (isspace(c) && c != '\n')
+						copy_end--;
+					else
+						break;
+				}
+			}
 
 			if (copy_end > 0 && contents[copy_end-1] != '\n')
 				new_line = 1;
@@ -2723,7 +2715,7 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 				    write_str_in_full(fd, "\n") < 0)
 					goto write_err_out;
 			}
-			copy_begin = store.seen[i];
+			copy_begin = replace_end;
 		}
 
 		/* write the pair (value == NULL means unset) */
