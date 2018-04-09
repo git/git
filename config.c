@@ -653,7 +653,45 @@ static int get_base_var(struct strbuf *name)
 	}
 }
 
-static int git_parse_source(config_fn_t fn, void *data)
+struct parse_event_data {
+	enum config_event_t previous_type;
+	size_t previous_offset;
+	const struct config_options *opts;
+};
+
+static int do_event(enum config_event_t type, struct parse_event_data *data)
+{
+	size_t offset;
+
+	if (!data->opts || !data->opts->event_fn)
+		return 0;
+
+	if (type == CONFIG_EVENT_WHITESPACE &&
+	    data->previous_type == type)
+		return 0;
+
+	offset = cf->do_ftell(cf);
+	/*
+	 * At EOF, the parser always "inserts" an extra '\n', therefore
+	 * the end offset of the event is the current file position, otherwise
+	 * we will already have advanced to the next event.
+	 */
+	if (type != CONFIG_EVENT_EOF)
+		offset--;
+
+	if (data->previous_type != CONFIG_EVENT_EOF &&
+	    data->opts->event_fn(data->previous_type, data->previous_offset,
+				 offset, data->opts->event_fn_data) < 0)
+		return -1;
+
+	data->previous_type = type;
+	data->previous_offset = offset;
+
+	return 0;
+}
+
+static int git_parse_source(config_fn_t fn, void *data,
+			    const struct config_options *opts)
 {
 	int comment = 0;
 	int baselen = 0;
@@ -664,8 +702,15 @@ static int git_parse_source(config_fn_t fn, void *data)
 	/* U+FEFF Byte Order Mark in UTF8 */
 	const char *bomptr = utf8_bom;
 
+	/* For the parser event callback */
+	struct parse_event_data event_data = {
+		CONFIG_EVENT_EOF, 0, opts
+	};
+
 	for (;;) {
-		int c = get_next_char();
+		int c;
+
+		c = get_next_char();
 		if (bomptr && *bomptr) {
 			/* We are at the file beginning; skip UTF8-encoded BOM
 			 * if present. Sane editors won't put this in on their
@@ -682,18 +727,33 @@ static int git_parse_source(config_fn_t fn, void *data)
 			}
 		}
 		if (c == '\n') {
-			if (cf->eof)
+			if (cf->eof) {
+				if (do_event(CONFIG_EVENT_EOF, &event_data) < 0)
+					return -1;
 				return 0;
+			}
+			if (do_event(CONFIG_EVENT_WHITESPACE, &event_data) < 0)
+				return -1;
 			comment = 0;
 			continue;
 		}
-		if (comment || isspace(c))
+		if (comment)
 			continue;
+		if (isspace(c)) {
+			if (do_event(CONFIG_EVENT_WHITESPACE, &event_data) < 0)
+					return -1;
+			continue;
+		}
 		if (c == '#' || c == ';') {
+			if (do_event(CONFIG_EVENT_COMMENT, &event_data) < 0)
+					return -1;
 			comment = 1;
 			continue;
 		}
 		if (c == '[') {
+			if (do_event(CONFIG_EVENT_SECTION, &event_data) < 0)
+					return -1;
+
 			/* Reset prior to determining a new stem */
 			strbuf_reset(var);
 			if (get_base_var(var) < 0 || var->len < 1)
@@ -704,6 +764,10 @@ static int git_parse_source(config_fn_t fn, void *data)
 		}
 		if (!isalpha(c))
 			break;
+
+		if (do_event(CONFIG_EVENT_ENTRY, &event_data) < 0)
+			return -1;
+
 		/*
 		 * Truncate the var name back to the section header
 		 * stem prior to grabbing the suffix part of the name
@@ -714,6 +778,9 @@ static int git_parse_source(config_fn_t fn, void *data)
 		if (get_value(fn, data, var) < 0)
 			break;
 	}
+
+	if (do_event(CONFIG_EVENT_ERROR, &event_data) < 0)
+		return -1;
 
 	switch (cf->origin_type) {
 	case CONFIG_ORIGIN_BLOB:
@@ -1390,7 +1457,8 @@ int git_default_config(const char *var, const char *value, void *dummy)
  * fgetc, ungetc, ftell of top need to be initialized before calling
  * this function.
  */
-static int do_config_from(struct config_source *top, config_fn_t fn, void *data)
+static int do_config_from(struct config_source *top, config_fn_t fn, void *data,
+			  const struct config_options *opts)
 {
 	int ret;
 
@@ -1402,7 +1470,7 @@ static int do_config_from(struct config_source *top, config_fn_t fn, void *data)
 	strbuf_init(&top->var, 1024);
 	cf = top;
 
-	ret = git_parse_source(fn, data);
+	ret = git_parse_source(fn, data, opts);
 
 	/* pop config-file parsing state stack */
 	strbuf_release(&top->value);
@@ -1415,7 +1483,7 @@ static int do_config_from(struct config_source *top, config_fn_t fn, void *data)
 static int do_config_from_file(config_fn_t fn,
 		const enum config_origin_type origin_type,
 		const char *name, const char *path, FILE *f,
-		void *data)
+		void *data, const struct config_options *opts)
 {
 	struct config_source top;
 
@@ -1428,15 +1496,18 @@ static int do_config_from_file(config_fn_t fn,
 	top.do_ungetc = config_file_ungetc;
 	top.do_ftell = config_file_ftell;
 
-	return do_config_from(&top, fn, data);
+	return do_config_from(&top, fn, data, opts);
 }
 
 static int git_config_from_stdin(config_fn_t fn, void *data)
 {
-	return do_config_from_file(fn, CONFIG_ORIGIN_STDIN, "", NULL, stdin, data);
+	return do_config_from_file(fn, CONFIG_ORIGIN_STDIN, "", NULL, stdin,
+				   data, NULL);
 }
 
-int git_config_from_file(config_fn_t fn, const char *filename, void *data)
+int git_config_from_file_with_options(config_fn_t fn, const char *filename,
+				      void *data,
+				      const struct config_options *opts)
 {
 	int ret = -1;
 	FILE *f;
@@ -1444,11 +1515,17 @@ int git_config_from_file(config_fn_t fn, const char *filename, void *data)
 	f = fopen_or_warn(filename, "r");
 	if (f) {
 		flockfile(f);
-		ret = do_config_from_file(fn, CONFIG_ORIGIN_FILE, filename, filename, f, data);
+		ret = do_config_from_file(fn, CONFIG_ORIGIN_FILE, filename,
+					  filename, f, data, opts);
 		funlockfile(f);
 		fclose(f);
 	}
 	return ret;
+}
+
+int git_config_from_file(config_fn_t fn, const char *filename, void *data)
+{
+	return git_config_from_file_with_options(fn, filename, data, NULL);
 }
 
 int git_config_from_mem(config_fn_t fn, const enum config_origin_type origin_type,
@@ -1467,7 +1544,7 @@ int git_config_from_mem(config_fn_t fn, const enum config_origin_type origin_typ
 	top.do_ungetc = config_buf_ungetc;
 	top.do_ftell = config_buf_ftell;
 
-	return do_config_from(&top, fn, data);
+	return do_config_from(&top, fn, data, NULL);
 }
 
 int git_config_from_blob_oid(config_fn_t fn,

@@ -28,15 +28,40 @@ enum config_origin_type {
 	CONFIG_ORIGIN_CMDLINE
 };
 
+enum config_event_t {
+	CONFIG_EVENT_SECTION,
+	CONFIG_EVENT_ENTRY,
+	CONFIG_EVENT_WHITESPACE,
+	CONFIG_EVENT_COMMENT,
+	CONFIG_EVENT_EOF,
+	CONFIG_EVENT_ERROR
+};
+
+/*
+ * The parser event function (if not NULL) is called with the event type and
+ * the begin/end offsets of the parsed elements.
+ *
+ * Note: for CONFIG_EVENT_ENTRY (i.e. config variables), the trailing newline
+ * character is considered part of the element.
+ */
+typedef int (*config_parser_event_fn_t)(enum config_event_t type,
+					size_t begin_offset, size_t end_offset,
+					void *event_fn_data);
+
 struct config_options {
 	unsigned int respect_includes : 1;
 	const char *commondir;
 	const char *git_dir;
+	config_parser_event_fn_t event_fn;
+	void *event_fn_data;
 };
 
 typedef int (*config_fn_t)(const char *, const char *, void *);
 extern int git_default_config(const char *, const char *, void *);
 extern int git_config_from_file(config_fn_t fn, const char *, void *);
+extern int git_config_from_file_with_options(config_fn_t fn, const char *,
+					     void *,
+					     const struct config_options *);
 extern int git_config_from_mem(config_fn_t fn, const enum config_origin_type,
 					const char *name, const char *buf, size_t len, void *data);
 extern int git_config_from_blob_oid(config_fn_t fn, const char *name,
