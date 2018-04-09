@@ -11,7 +11,8 @@
 #include "parse-options.h"
 
 static char const * const shortlog_usage[] = {
-	N_("git shortlog [<options>] [<revision-range>] [[--] [<path>...]]"),
+	N_("git shortlog [<options>] [<revision-range>] [[--] <path>...]"),
+	N_("git log --pretty=short | git shortlog [<options>]"),
 	NULL
 };
 
@@ -291,6 +292,11 @@ int cmd_shortlog(int argc, const char **argv, const char *prefix)
 	}
 parse_done:
 	argc = parse_options_end(&ctx);
+
+	if (nongit && argc > 1) {
+		error(_("too many arguments given outside repository"));
+		usage_with_options(shortlog_usage, options);
+	}
 
 	if (setup_revisions(argc, argv, &rev, NULL) != 1) {
 		error(_("unrecognized argument: %s"), argv[1]);
