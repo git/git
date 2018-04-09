@@ -1472,6 +1472,17 @@ test_expect_failure '--unset last key removes section (except if commented)' '
 	test_line_count = 3 .git/config
 '
 
+test_expect_failure '--unset-all removes section if empty & uncommented' '
+	cat >.git/config <<-\EOF &&
+	[section]
+	key = value1
+	key = value2
+	EOF
+
+	git config --unset-all section.key &&
+	test_line_count = 0 .git/config
+'
+
 test_expect_failure 'adding a key into an empty section reuses header' '
 	cat >.git/config <<-\EOF &&
 	[section]
