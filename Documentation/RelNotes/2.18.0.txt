@@ -1,0 +1,67 @@
+Git 2.18 Release Notes
+======================
+
+Updates since v2.17
+-------------------
+
+UI, Workflows & Features
+
+ * Rename detection logic in "diff" family that is used in "merge" has
+   learned to guess when all of x/a, x/b and x/c have moved to z/a,
+   z/b and z/c, it is likely that x/d added in the meantime would also
+   want to move to z/d by taking the hint that the entire directory
+   'x' moved to 'z'.  A bug causing dirty files involved in a rename
+   to be overwritten during merge has also been fixed as part of this
+   work.
+
+ * "git filter-branch" learned to use a different exit code to allow
+   the callers to tell the case where there was no new commits to
+   rewrite from other error cases.
+
+
+
+Performance, Internal Implementation, Development Support etc.
+
+ * A "git fetch" from a repository with insane number of refs into a
+   repository that is already up-to-date still wasted too many cycles
+   making many lstat(2) calls to see if these objects at the tips
+   exist as loose objects locally.  These lstat(2) calls are optimized
+   away by enumerating all loose objects beforehand.
+   It is unknown if the new strategy negatively affects existing use
+   cases, fetching into a repository with many loose objects from a
+   repository with small number of refs.
+
+ * Git can be built to use either v1 or v2 of the PCRE library, and so
+   far, the build-time configuration USE_LIBPCRE=YesPlease instructed
+   the build procedure to use v1, but now it means v2.  USE_LIBPCRE1
+   and USE_LIBPCRE2 can be used to explicitly choose which version to
+   use, as before.
+
+ * The build procedure learned to optionally use symbolic links
+   (instead of hardlinks and copies) to install "git-foo" for built-in
+   commands, whose binaries are all identical.
+
+ * Conversion from uchar[20] to struct object_id continues.
+
+ * The way "git worktree prune" worked internally has been simplified,
+   by assuming how "git worktree move" moves an existing worktree to a
+   different place.
+
+Also contains various documentation updates and code clean-ups.
+
+
+Fixes since v2.17
+-----------------
+
+ * "git shortlog cruft" aborted with a BUG message when run outside a
+   Git repository.  The command has been taught to complain about
+   extra and unwanted arguments on its command line instead in such a
+   case.
+   (merge 4aa0161e83 ma/shortlog-revparse later to maint).
+
+ * "git stash push -u -- <pathspec>" gave an unnecessary and confusing
+   error message when there was no tracked files that match the
+   <pathspec>, which has been fixed.
+   (merge 353278687e tg/stash-untracked-with-pathspec-fix later to maint).
+
+ * Other minor doc, test and build updates and code cleanups.
