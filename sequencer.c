@@ -3031,6 +3031,8 @@ static int rebase_merge_commit(struct commit *commit,
 		 * use the stage 2 ("HEAD") of the first, and stage 1 ("merge
 		 * base") and stage 3 ("merge head") of the last one.
 		 */
+		if (unmerged_cache())
+			rerere(opts->allow_rerere_auto);
 		if (record_unmerged_entries(&unmerged_entries)) {
 			clean = -1;
 			break;
@@ -3101,6 +3103,11 @@ static int rebase_merge_commit(struct commit *commit,
 		      git_path_merge_head(), 0);
 	write_message("no-ff", 5, git_path_merge_mode(), 0);
 	strbuf_release(&merge_heads);
+
+	if (!clean) {
+		rerere(opts->allow_rerere_auto);
+		make_patch(commit, opts);
+	}
 
 	if (clean >= 0 &&
 	    write_locked_index(&the_index, lock, COMMIT_LOCK))
