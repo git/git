@@ -1,7 +1,7 @@
 object access API
 =================
 
-Talk about <sha1_file.c> and <object.h> family, things like
+Talk about <sha1-file.c> and <object.h> family, things like
 
 * read_sha1_file()
 * read_object_with_reference()
