@@ -5,6 +5,18 @@
 
 char *get_commit_graph_filename(const char *obj_dir);
 
+/*
+ * Given a commit struct, try to fill the commit struct info, including:
+ *  1. tree object
+ *  2. date
+ *  3. parents.
+ *
+ * Returns 1 if and only if the commit was found in the packed graph.
+ *
+ * See parse_commit_buffer() for the fallback after this call.
+ */
+int parse_commit_in_graph(struct commit *item);
+
 struct commit_graph {
 	int graph_fd;
 
