@@ -240,6 +240,10 @@ Valid `<type>`'s include:
 	using `--file`, `--global`, etc) and `on` when searching all
 	config files.
 
+--default <value>::
+  When using `--get`, and the requested variable is not found, behave as if
+  <value> were the value assigned to the that variable.
+
 CONFIGURATION
 -------------
 `pager.config` is only respected when listing configuration, i.e., when

@@ -26,6 +26,7 @@ static char term = '\n';
 static int use_global_config, use_system_config, use_local_config;
 static struct git_config_source given_config_source;
 static int actions, type;
+static char *default_value;
 static int end_null;
 static int respect_includes_opt = -1;
 static struct config_options config_options;
@@ -149,6 +150,7 @@ static struct option builtin_config_options[] = {
 	OPT_BOOL(0, "name-only", &omit_values, N_("show variable names only")),
 	OPT_BOOL(0, "includes", &respect_includes_opt, N_("respect include directives on lookup")),
 	OPT_BOOL(0, "show-origin", &show_origin, N_("show origin of config (file, standard input, blob, command line)")),
+	OPT_STRING(0, "default", &default_value, N_("value"), N_("with --get, use default value when missing entry")),
 	OPT_END(),
 };
 
@@ -312,6 +314,16 @@ static int get_value(const char *key_, const char *regex_)
 
 	config_with_options(collect_config, &values,
 			    &given_config_source, &config_options);
+
+	if (!values.nr && default_value) {
+		struct strbuf *item;
+		ALLOC_GROW(values.items, values.nr + 1, values.alloc);
+		item = &values.items[values.nr++];
+		strbuf_init(item, 0);
+		if (format_config(item, key_, default_value) < 0)
+			die(_("failed to format default config value: %s"),
+				default_value);
+	}
 
 	ret = !values.nr;
 
@@ -649,6 +661,12 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		error("--show-origin is only applicable to --get, --get-all, "
 			  "--get-regexp, and --list.");
 		usage_with_options(builtin_config_usage, builtin_config_options);
+	}
+
+	if (default_value && !(actions & ACTION_GET)) {
+		error("--default is only applicable to --get");
+		usage_with_options(builtin_config_usage,
+			builtin_config_options);
 	}
 
 	if (actions & PAGING_ACTIONS)
