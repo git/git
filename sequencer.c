@@ -2803,6 +2803,13 @@ static int do_merge(struct commit *commit, const char *arg, int arg_len,
 	write_message("no-ff", 5, git_path_merge_mode(), 0);
 
 	bases = get_merge_bases(head_commit, merge_commit);
+	if (bases && !oidcmp(&merge_commit->object.oid,
+			     &bases->item->object.oid)) {
+		ret = 0;
+		/* skip merging an ancestor of HEAD */
+		goto leave_merge;
+	}
+
 	for (j = bases; j; j = j->next)
 		commit_list_insert(j->item, &reversed);
 	free_commit_list(bases);
