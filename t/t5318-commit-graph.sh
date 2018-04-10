@@ -26,10 +26,28 @@ test_expect_success 'create commits and repack' '
 	git repack
 '
 
+graph_read_expect() {
+	OPTIONAL=""
+	NUM_CHUNKS=3
+	if test ! -z $2
+	then
+		OPTIONAL=" $2"
+		NUM_CHUNKS=$((3 + $(echo "$2" | wc -w)))
+	fi
+	cat >expect <<- EOF
+	header: 43475048 1 1 $NUM_CHUNKS 0
+	num_commits: $1
+	chunks: oid_fanout oid_lookup commit_metadata$OPTIONAL
+	EOF
+	git commit-graph read >output &&
+	test_cmp expect output
+}
+
 test_expect_success 'write graph' '
 	cd "$TRASH_DIRECTORY/full" &&
 	graph1=$(git commit-graph write) &&
-	test_path_is_file $objdir/info/commit-graph
+	test_path_is_file $objdir/info/commit-graph &&
+	graph_read_expect "3"
 '
 
 test_expect_success 'Add more commits' '
@@ -72,7 +90,8 @@ test_expect_success 'Add more commits' '
 test_expect_success 'write graph with merges' '
 	cd "$TRASH_DIRECTORY/full" &&
 	git commit-graph write &&
-	test_path_is_file $objdir/info/commit-graph
+	test_path_is_file $objdir/info/commit-graph &&
+	graph_read_expect "10" "large_edges"
 '
 
 test_expect_success 'Add one more commit' '
@@ -99,13 +118,15 @@ test_expect_success 'Add one more commit' '
 test_expect_success 'write graph with new commit' '
 	cd "$TRASH_DIRECTORY/full" &&
 	git commit-graph write &&
-	test_path_is_file $objdir/info/commit-graph
+	test_path_is_file $objdir/info/commit-graph &&
+	graph_read_expect "11" "large_edges"
 '
 
 test_expect_success 'write graph with nothing new' '
 	cd "$TRASH_DIRECTORY/full" &&
 	git commit-graph write &&
-	test_path_is_file $objdir/info/commit-graph
+	test_path_is_file $objdir/info/commit-graph &&
+	graph_read_expect "11" "large_edges"
 '
 
 test_expect_success 'setup bare repo' '
@@ -118,7 +139,8 @@ test_expect_success 'setup bare repo' '
 test_expect_success 'write graph in bare repo' '
 	cd "$TRASH_DIRECTORY/bare" &&
 	git commit-graph write &&
-	test_path_is_file $baredir/info/commit-graph
+	test_path_is_file $baredir/info/commit-graph &&
+	graph_read_expect "11" "large_edges"
 '
 
 test_done

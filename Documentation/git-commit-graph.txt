@@ -9,6 +9,7 @@ git-commit-graph - Write and verify Git commit graph files
 SYNOPSIS
 --------
 [verse]
+'git commit-graph read' [--object-dir <dir>]
 'git commit-graph write' <options> [--object-dir <dir>]
 
 
@@ -35,6 +36,11 @@ COMMANDS
 Write a commit graph file based on the commits found in packfiles.
 Includes all commits from the existing commit graph file.
 
+'read'::
+
+Read a graph file given by the commit-graph file and output basic
+details about the graph file. Used for debugging purposes.
+
 
 EXAMPLES
 --------
@@ -43,6 +49,12 @@ EXAMPLES
 +
 ------------------------------------------------
 $ git commit-graph write
+------------------------------------------------
+
+* Read basic information from the commit-graph file.
++
+------------------------------------------------
+$ git commit-graph read
 ------------------------------------------------
 
 

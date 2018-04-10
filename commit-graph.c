@@ -39,9 +39,144 @@
 			GRAPH_OID_LEN + 8)
 
 
-static char *get_commit_graph_filename(const char *obj_dir)
+char *get_commit_graph_filename(const char *obj_dir)
 {
 	return xstrfmt("%s/info/commit-graph", obj_dir);
+}
+
+static struct commit_graph *alloc_commit_graph(void)
+{
+	struct commit_graph *g = xcalloc(1, sizeof(*g));
+	g->graph_fd = -1;
+
+	return g;
+}
+
+struct commit_graph *load_commit_graph_one(const char *graph_file)
+{
+	void *graph_map;
+	const unsigned char *data, *chunk_lookup;
+	size_t graph_size;
+	struct stat st;
+	uint32_t i;
+	struct commit_graph *graph;
+	int fd = git_open(graph_file);
+	uint64_t last_chunk_offset;
+	uint32_t last_chunk_id;
+	uint32_t graph_signature;
+	unsigned char graph_version, hash_version;
+
+	if (fd < 0)
+		return NULL;
+	if (fstat(fd, &st)) {
+		close(fd);
+		return NULL;
+	}
+	graph_size = xsize_t(st.st_size);
+
+	if (graph_size < GRAPH_MIN_SIZE) {
+		close(fd);
+		die("graph file %s is too small", graph_file);
+	}
+	graph_map = xmmap(NULL, graph_size, PROT_READ, MAP_PRIVATE, fd, 0);
+	data = (const unsigned char *)graph_map;
+
+	graph_signature = get_be32(data);
+	if (graph_signature != GRAPH_SIGNATURE) {
+		error("graph signature %X does not match signature %X",
+		      graph_signature, GRAPH_SIGNATURE);
+		goto cleanup_fail;
+	}
+
+	graph_version = *(unsigned char*)(data + 4);
+	if (graph_version != GRAPH_VERSION) {
+		error("graph version %X does not match version %X",
+		      graph_version, GRAPH_VERSION);
+		goto cleanup_fail;
+	}
+
+	hash_version = *(unsigned char*)(data + 5);
+	if (hash_version != GRAPH_OID_VERSION) {
+		error("hash version %X does not match version %X",
+		      hash_version, GRAPH_OID_VERSION);
+		goto cleanup_fail;
+	}
+
+	graph = alloc_commit_graph();
+
+	graph->hash_len = GRAPH_OID_LEN;
+	graph->num_chunks = *(unsigned char*)(data + 6);
+	graph->graph_fd = fd;
+	graph->data = graph_map;
+	graph->data_len = graph_size;
+
+	last_chunk_id = 0;
+	last_chunk_offset = 8;
+	chunk_lookup = data + 8;
+	for (i = 0; i < graph->num_chunks; i++) {
+		uint32_t chunk_id = get_be32(chunk_lookup + 0);
+		uint64_t chunk_offset = get_be64(chunk_lookup + 4);
+		int chunk_repeated = 0;
+
+		chunk_lookup += GRAPH_CHUNKLOOKUP_WIDTH;
+
+		if (chunk_offset > graph_size - GIT_MAX_RAWSZ) {
+			error("improper chunk offset %08x%08x", (uint32_t)(chunk_offset >> 32),
+			      (uint32_t)chunk_offset);
+			goto cleanup_fail;
+		}
+
+		switch (chunk_id) {
+		case GRAPH_CHUNKID_OIDFANOUT:
+			if (graph->chunk_oid_fanout)
+				chunk_repeated = 1;
+			else
+				graph->chunk_oid_fanout = (uint32_t*)(data + chunk_offset);
+			break;
+
+		case GRAPH_CHUNKID_OIDLOOKUP:
+			if (graph->chunk_oid_lookup)
+				chunk_repeated = 1;
+			else
+				graph->chunk_oid_lookup = data + chunk_offset;
+			break;
+
+		case GRAPH_CHUNKID_DATA:
+			if (graph->chunk_commit_data)
+				chunk_repeated = 1;
+			else
+				graph->chunk_commit_data = data + chunk_offset;
+			break;
+
+		case GRAPH_CHUNKID_LARGEEDGES:
+			if (graph->chunk_large_edges)
+				chunk_repeated = 1;
+			else
+				graph->chunk_large_edges = data + chunk_offset;
+			break;
+		}
+
+		if (chunk_repeated) {
+			error("chunk id %08x appears multiple times", chunk_id);
+			goto cleanup_fail;
+		}
+
+		if (last_chunk_id == GRAPH_CHUNKID_OIDLOOKUP)
+		{
+			graph->num_commits = (chunk_offset - last_chunk_offset)
+					     / graph->hash_len;
+		}
+
+		last_chunk_id = chunk_id;
+		last_chunk_offset = chunk_offset;
+	}
+
+	return graph;
+
+cleanup_fail:
+	munmap(graph_map, graph_size);
+	close(fd);
+	exit(1);
 }
 
 static void write_graph_chunk_fanout(struct hashfile *f,
