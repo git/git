@@ -7,7 +7,7 @@
 #include "sequencer.h"
 #include "tag.h"
 #include "run-command.h"
-#include "exec_cmd.h"
+#include "exec-cmd.h"
 #include "utf8.h"
 #include "cache-tree.h"
 #include "diff.h"

@@ -1,6 +1,6 @@
 #include "cache.h"
 #include "quote.h"
-#include "exec_cmd.h"
+#include "exec-cmd.h"
 #include "strbuf.h"
 #include "run-command.h"
 

@@ -6,7 +6,7 @@
 #include "tag.h"
 #include "object.h"
 #include "commit.h"
-#include "exec_cmd.h"
+#include "exec-cmd.h"
 #include "diff.h"
 #include "revision.h"
 #include "list-objects.h"

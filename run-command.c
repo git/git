@@ -1,6 +1,6 @@
 #include "cache.h"
 #include "run-command.h"
-#include "exec_cmd.h"
+#include "exec-cmd.h"
 #include "sigchain.h"
 #include "argv-array.h"
 #include "thread-utils.h"

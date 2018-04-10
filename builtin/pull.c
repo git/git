@@ -9,7 +9,7 @@
 #include "config.h"
 #include "builtin.h"
 #include "parse-options.h"
-#include "exec_cmd.h"
+#include "exec-cmd.h"
 #include "run-command.h"
 #include "sha1-array.h"
 #include "remote.h"

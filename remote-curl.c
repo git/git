@@ -4,7 +4,7 @@
 #include "strbuf.h"
 #include "walker.h"
 #include "http.h"
-#include "exec_cmd.h"
+#include "exec-cmd.h"
 #include "run-command.h"
 #include "pkt-line.h"
 #include "string-list.h"
