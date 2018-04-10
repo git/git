@@ -251,8 +251,18 @@ done < "$tempdir"/backup-refs
 
 # The refs should be updated if their heads were rewritten
 git rev-parse --no-flags --revs-only --symbolic-full-name \
-	--default HEAD "$@" > "$tempdir"/raw-heads || exit
-sed -e '/^^/d' "$tempdir"/raw-heads >"$tempdir"/heads
+	--default HEAD "$@" > "$tempdir"/raw-refs || exit
+while read ref
+do
+	case "$ref" in ^?*) continue ;; esac
+
+	if git rev-parse --verify "$ref"^0 >/dev/null 2>&1
+	then
+		echo "$ref"
+	else
+		warn "WARNING: not rewriting '$ref' (not a committish)"
+	fi
+done >"$tempdir"/heads <"$tempdir"/raw-refs
 
 test -s "$tempdir"/heads ||
 	die "You must specify a ref to rewrite."
