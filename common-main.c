@@ -34,6 +34,8 @@ int main(int argc, const char **argv)
 
 	git_setup_gettext();
 
+	initialize_the_repository();
+
 	attr_start();
 
 	git_extract_argv0_path(argv[0]);

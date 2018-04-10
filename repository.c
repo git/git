@@ -4,64 +4,68 @@
 #include "submodule-config.h"
 
 /* The main repository */
-static struct repository the_repo = {
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &the_index, &hash_algos[GIT_HASH_SHA1], 0, 0
-};
-struct repository *the_repository = &the_repo;
+static struct repository the_repo;
+struct repository *the_repository;
 
-static char *git_path_from_env(const char *envvar, const char *git_dir,
-			       const char *path, int fromenv)
+void initialize_the_repository(void)
 {
-	if (fromenv) {
-		const char *value = getenv(envvar);
-		if (value)
-			return xstrdup(value);
-	}
+	the_repository = &the_repo;
 
-	return xstrfmt("%s/%s", git_dir, path);
+	the_repo.index = &the_index;
+	repo_set_hash_algo(&the_repo, GIT_HASH_SHA1);
 }
 
-static int find_common_dir(struct strbuf *sb, const char *gitdir, int fromenv)
+static void expand_base_dir(char **out, const char *in,
+			    const char *base_dir, const char *def_in)
 {
-	if (fromenv) {
-		const char *value = getenv(GIT_COMMON_DIR_ENVIRONMENT);
-		if (value) {
-			strbuf_addstr(sb, value);
-			return 1;
-		}
-	}
-
-	return get_common_dir_noenv(sb, gitdir);
+	free(*out);
+	if (in)
+		*out = xstrdup(in);
+	else
+		*out = xstrfmt("%s/%s", base_dir, def_in);
 }
 
-static void repo_setup_env(struct repository *repo)
+static void repo_set_commondir(struct repository *repo,
+			       const char *commondir)
 {
 	struct strbuf sb = STRBUF_INIT;
 
-	repo->different_commondir = find_common_dir(&sb, repo->gitdir,
-						    !repo->ignore_env);
 	free(repo->commondir);
+
+	if (commondir) {
+		repo->different_commondir = 1;
+		repo->commondir = xstrdup(commondir);
+		return;
+	}
+
+	repo->different_commondir = get_common_dir_noenv(&sb, repo->gitdir);
 	repo->commondir = strbuf_detach(&sb, NULL);
-	free(repo->objectdir);
-	repo->objectdir = git_path_from_env(DB_ENVIRONMENT, repo->commondir,
-					    "objects", !repo->ignore_env);
-	free(repo->graft_file);
-	repo->graft_file = git_path_from_env(GRAFT_ENVIRONMENT, repo->commondir,
-					     "info/grafts", !repo->ignore_env);
-	free(repo->index_file);
-	repo->index_file = git_path_from_env(INDEX_ENVIRONMENT, repo->gitdir,
-					     "index", !repo->ignore_env);
 }
 
-void repo_set_gitdir(struct repository *repo, const char *path)
+void repo_set_gitdir(struct repository *repo,
+		     const char *root,
+		     const struct set_gitdir_args *o)
 {
-	const char *gitfile = read_gitfile(path);
+	const char *gitfile = read_gitfile(root);
+	/*
+	 * repo->gitdir is saved because the caller could pass "root"
+	 * that also points to repo->gitdir. We want to keep it alive
+	 * until after xstrdup(root). Then we can free it.
+	 */
 	char *old_gitdir = repo->gitdir;
 
-	repo->gitdir = xstrdup(gitfile ? gitfile : path);
-	repo_setup_env(repo);
-
+	repo->gitdir = xstrdup(gitfile ? gitfile : root);
 	free(old_gitdir);
+
+	repo_set_commondir(repo, o->commondir);
+	expand_base_dir(&repo->objectdir, o->object_dir,
+			repo->commondir, "objects");
+	free(repo->alternate_db);
+	repo->alternate_db = xstrdup_or_null(o->alternate_db);
+	expand_base_dir(&repo->graft_file, o->graft_file,
+			repo->commondir, "info/grafts");
+	expand_base_dir(&repo->index_file, o->index_file,
+			repo->gitdir, "index");
 }
 
 void repo_set_hash_algo(struct repository *repo, int hash_algo)
@@ -79,6 +83,7 @@ static int repo_init_gitdir(struct repository *repo, const char *gitdir)
 	int error = 0;
 	char *abspath = NULL;
 	const char *resolved_gitdir;
+	struct set_gitdir_args args = { NULL };
 
 	abspath = real_pathdup(gitdir, 0);
 	if (!abspath) {
@@ -93,7 +98,7 @@ static int repo_init_gitdir(struct repository *repo, const char *gitdir)
 		goto out;
 	}
 
-	repo_set_gitdir(repo, resolved_gitdir);
+	repo_set_gitdir(repo, resolved_gitdir, &args);
 
 out:
 	free(abspath);
@@ -128,12 +133,12 @@ static int read_and_verify_repository_format(struct repository_format *format,
  * Initialize 'repo' based on the provided 'gitdir'.
  * Return 0 upon success and a non-zero value upon failure.
  */
-int repo_init(struct repository *repo, const char *gitdir, const char *worktree)
+static int repo_init(struct repository *repo,
+		     const char *gitdir,
+		     const char *worktree)
 {
 	struct repository_format format;
 	memset(repo, 0, sizeof(*repo));
-
-	repo->ignore_env = 1;
 
 	if (repo_init_gitdir(repo, gitdir))
 		goto error;
@@ -210,6 +215,7 @@ void repo_clear(struct repository *repo)
 	FREE_AND_NULL(repo->gitdir);
 	FREE_AND_NULL(repo->commondir);
 	FREE_AND_NULL(repo->objectdir);
+	FREE_AND_NULL(repo->alternate_db);
 	FREE_AND_NULL(repo->graft_file);
 	FREE_AND_NULL(repo->index_file);
 	FREE_AND_NULL(repo->worktree);

@@ -668,15 +668,11 @@ int foreach_alt_odb(alt_odb_fn fn, void *cb)
 
 void prepare_alt_odb(void)
 {
-	const char *alt;
-
 	if (alt_odb_tail)
 		return;
 
-	alt = getenv(ALTERNATE_DB_ENVIRONMENT);
-
 	alt_odb_tail = &alt_odb_list;
-	link_alt_odb_entries(alt, PATH_SEP, NULL, 0);
+	link_alt_odb_entries(the_repository->alternate_db, PATH_SEP, NULL, 0);
 
 	read_info_alternates(get_object_directory(), 0);
 }
