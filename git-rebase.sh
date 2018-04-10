@@ -197,6 +197,7 @@ run_specific_rebase () {
 		autosquash=
 	fi
 	. git-rebase--$type
+	git_rebase__$type${preserve_merges:+__preserve_merges}
 	ret=$?
 	if test $ret -eq 0
 	then
