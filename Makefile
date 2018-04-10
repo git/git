@@ -441,6 +441,13 @@ all::
 #
 # When cross-compiling, define HOST_CPU as the canonical name of the CPU on
 # which the built Git will run (for instance "x86_64").
+#
+# Define RUNTIME_PREFIX to configure Git to resolve its ancillary tooling and
+# support files relative to the location of the runtime binary, rather than
+# hard-coding them into the binary. Git installations built with RUNTIME_PREFIX
+# can be moved to arbitrary filesystem locations. RUNTIME_PREFIX also causes
+# Perl scripts to use a modified entry point header allowing them to resolve
+# support files at runtime.
 
 GIT-VERSION-FILE: FORCE
 	@$(SHELL_PATH) ./GIT-VERSION-GEN
@@ -478,6 +485,8 @@ ARFLAGS = rcs
 #   mandir
 #   infodir
 #   htmldir
+#   localedir
+#   perllibdir
 # This can help installing the suite in a relocatable way.
 
 prefix = $(HOME)
@@ -502,7 +511,9 @@ bindir_relative = $(patsubst $(prefix)/%,%,$(bindir))
 mandir_relative = $(patsubst $(prefix)/%,%,$(mandir))
 infodir_relative = $(patsubst $(prefix)/%,%,$(infodir))
 gitexecdir_relative = $(patsubst $(prefix)/%,%,$(gitexecdir))
+localedir_relative = $(patsubst $(prefix)/%,%,$(localedir))
 htmldir_relative = $(patsubst $(prefix)/%,%,$(htmldir))
+perllibdir_relative = $(patsubst $(prefix)/%,%,$(perllibdir))
 
 export prefix bindir sharedir sysconfdir gitwebdir perllibdir localedir
 
@@ -1751,11 +1762,13 @@ mandir_relative_SQ = $(subst ','\'',$(mandir_relative))
 infodir_relative_SQ = $(subst ','\'',$(infodir_relative))
 perllibdir_SQ = $(subst ','\'',$(perllibdir))
 localedir_SQ = $(subst ','\'',$(localedir))
+localedir_relative_SQ = $(subst ','\'',$(localedir_relative))
 gitexecdir_SQ = $(subst ','\'',$(gitexecdir))
 gitexecdir_relative_SQ = $(subst ','\'',$(gitexecdir_relative))
 template_dir_SQ = $(subst ','\'',$(template_dir))
 htmldir_relative_SQ = $(subst ','\'',$(htmldir_relative))
 prefix_SQ = $(subst ','\'',$(prefix))
+perllibdir_relative_SQ = $(subst ','\'',$(perllibdir_relative))
 gitwebdir_SQ = $(subst ','\'',$(gitwebdir))
 
 SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
@@ -1765,6 +1778,31 @@ PYTHON_PATH_SQ = $(subst ','\'',$(PYTHON_PATH))
 TCLTK_PATH_SQ = $(subst ','\'',$(TCLTK_PATH))
 DIFF_SQ = $(subst ','\'',$(DIFF))
 PERLLIB_EXTRA_SQ = $(subst ','\'',$(PERLLIB_EXTRA))
+
+# RUNTIME_PREFIX's resolution logic requires resource paths to be expressed
+# relative to each other and share an installation path.
+#
+# This is a dependency in:
+# - Git's binary RUNTIME_PREFIX logic in (see "exec_cmd.c").
+# - The runtime prefix Perl header (see
+#   "perl/header_templates/runtime_prefix.template.pl").
+ifdef RUNTIME_PREFIX
+
+ifneq ($(filter /%,$(firstword $(gitexecdir_relative))),)
+$(error RUNTIME_PREFIX requires a relative gitexecdir, not: $(gitexecdir))
+endif
+
+ifneq ($(filter /%,$(firstword $(localedir_relative))),)
+$(error RUNTIME_PREFIX requires a relative localedir, not: $(localedir))
+endif
+
+ifndef NO_PERL
+ifneq ($(filter /%,$(firstword $(perllibdir_relative))),)
+$(error RUNTIME_PREFIX requires a relative perllibdir, not: $(perllibdir))
+endif
+endif
+
+endif
 
 # We must filter out any object files from $(GITLIBS),
 # as it is typically used like:
@@ -1986,9 +2024,30 @@ git.res: git.rc GIT-VERSION-FILE
 # This makes sure we depend on the NO_PERL setting itself.
 $(SCRIPT_PERL_GEN): GIT-BUILD-OPTIONS
 
+# Used for substitution in Perl modules. Disabled when using RUNTIME_PREFIX
+# since the locale directory is injected.
+perl_localedir_SQ = $(localedir_SQ)
+
 ifndef NO_PERL
 PERL_HEADER_TEMPLATE = perl/header_templates/fixed_prefix.template.pl
 PERL_DEFINES = $(PERL_PATH_SQ):$(PERLLIB_EXTRA_SQ):$(perllibdir_SQ)
+
+PERL_DEFINES := $(PERL_PATH_SQ) $(PERLLIB_EXTRA_SQ) $(perllibdir_SQ)
+PERL_DEFINES += $(RUNTIME_PREFIX)
+
+# Support Perl runtime prefix. In this mode, a different header is installed
+# into Perl scripts.
+ifdef RUNTIME_PREFIX
+
+PERL_HEADER_TEMPLATE = perl/header_templates/runtime_prefix.template.pl
+
+# Don't export a fixed $(localedir) path; it will be resolved by the Perl header
+# at runtime.
+perl_localedir_SQ =
+
+endif
+
+PERL_DEFINES += $(gitexecdir) $(perllibdir) $(localedir)
 
 $(SCRIPT_PERL_GEN): % : %.perl GIT-PERL-DEFINES GIT-PERL-HEADER GIT-VERSION-FILE
 	$(QUIET_GEN)$(RM) $@ $@+ && \
@@ -2002,6 +2061,7 @@ $(SCRIPT_PERL_GEN): % : %.perl GIT-PERL-DEFINES GIT-PERL-HEADER GIT-VERSION-FILE
 	chmod +x $@+ && \
 	mv $@+ $@
 
+PERL_DEFINES := $(subst $(space),:,$(PERL_DEFINES))
 GIT-PERL-DEFINES: FORCE
 	@FLAGS='$(PERL_DEFINES)'; \
 	    if test x"$$FLAGS" != x"`cat $@ 2>/dev/null`" ; then \
@@ -2017,6 +2077,9 @@ GIT-PERL-HEADER: $(PERL_HEADER_TEMPLATE) GIT-PERL-DEFINES Makefile
 	sed -e 's=@@PATHSEP@@=$(pathsep)=g' \
 	    -e 's=@@INSTLIBDIR@@='$$INSTLIBDIR'=g' \
 	    -e 's=@@PERLLIBDIR@@='$(perllibdir_SQ)'=g' \
+	    -e 's=@@PERLLIBDIR_REL@@=$(perllibdir_relative_SQ)=g' \
+	    -e 's=@@GITEXECDIR_REL@@=$(gitexecdir_relative_SQ)=g' \
+	    -e 's=@@LOCALEDIR_REL@@=$(localedir_relative_SQ)=g' \
 	    $< >$@+ && \
 	mv $@+ $@
 
@@ -2340,7 +2403,7 @@ endif
 
 perl/build/lib/%.pm: perl/%.pm
 	$(QUIET_GEN)mkdir -p $(dir $@) && \
-	sed -e 's|@@LOCALEDIR@@|$(localedir_SQ)|g' \
+	sed -e 's|@@LOCALEDIR@@|$(perl_localedir_SQ)|g' \
 	    -e 's|@@NO_PERL_CPAN_FALLBACKS@@|$(NO_PERL_CPAN_FALLBACKS_SQ)|g' \
 	< $< > $@
 
