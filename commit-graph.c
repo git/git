@@ -553,7 +553,8 @@ void write_commit_graph(const char *obj_dir,
 			const char **pack_indexes,
 			int nr_packs,
 			const char **commit_hex,
-			int nr_commits)
+			int nr_commits,
+			int append)
 {
 	struct packed_oid_list oids;
 	struct packed_commit_list commits;
@@ -571,9 +572,23 @@ void write_commit_graph(const char *obj_dir,
 	oids.nr = 0;
 	oids.alloc = approximate_object_count() / 4;
 
+	if (append) {
+		prepare_commit_graph_one(obj_dir);
+		if (commit_graph)
+			oids.alloc += commit_graph->num_commits;
+	}
+
 	if (oids.alloc < 1024)
 		oids.alloc = 1024;
 	ALLOC_ARRAY(oids.list, oids.alloc);
+
+	if (append && commit_graph) {
+		for (i = 0; i < commit_graph->num_commits; i++) {
+			const unsigned char *hash = commit_graph->chunk_oid_lookup +
+				commit_graph->hash_len * i;
+			hashcpy(oids.list[oids.nr++].hash, hash);
+		}
+	}
 
 	if (pack_indexes) {
 		struct strbuf packname = STRBUF_INIT;

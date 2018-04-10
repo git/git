@@ -190,6 +190,16 @@ test_expect_success 'build graph from commits with closure' '
 graph_git_behavior 'graph from commits, commit 8 vs merge 1' full commits/8 merge/1
 graph_git_behavior 'graph from commits, commit 8 vs merge 2' full commits/8 merge/2
 
+test_expect_success 'build graph from commits with append' '
+	cd "$TRASH_DIRECTORY/full" &&
+	git rev-parse merge/3 | git commit-graph write --stdin-commits --append &&
+	test_path_is_file $objdir/info/commit-graph &&
+	graph_read_expect "10" "large_edges"
+'
+
+graph_git_behavior 'append graph, commit 8 vs merge 1' full commits/8 merge/1
+graph_git_behavior 'append graph, commit 8 vs merge 2' full commits/8 merge/2
+
 test_expect_success 'setup bare repo' '
 	cd "$TRASH_DIRECTORY" &&
 	git clone --bare --no-local full bare &&

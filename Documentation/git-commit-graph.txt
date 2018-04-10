@@ -43,6 +43,9 @@ With the `--stdin-commits` option, generate the new commit graph by
 walking commits starting at the commits specified in stdin as a list
 of OIDs in hex, one OID per line. (Cannot be combined with
 --stdin-packs.)
++
+With the `--append` option, include all commits that are present in the
+existing commit-graph file.
 
 'read'::
 
@@ -70,6 +73,13 @@ $ echo <pack-index> | git commit-graph write --stdin-packs
 +
 ------------------------------------------------
 $ git show-ref -s | git commit-graph write --stdin-commits
+------------------------------------------------
+
+* Write a graph file containing all commits in the current
+* commit-graph file along with those reachable from HEAD.
++
+------------------------------------------------
+$ git rev-parse HEAD | git commit-graph write --stdin-commits --append
 ------------------------------------------------
 
 * Read basic information from the commit-graph file.

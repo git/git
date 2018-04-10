@@ -8,7 +8,7 @@
 static char const * const builtin_commit_graph_usage[] = {
 	N_("git commit-graph [--object-dir <objdir>]"),
 	N_("git commit-graph read [--object-dir <objdir>]"),
-	N_("git commit-graph write [--object-dir <objdir>] [--stdin-packs|--stdin-commits]"),
+	N_("git commit-graph write [--object-dir <objdir>] [--append] [--stdin-packs|--stdin-commits]"),
 	NULL
 };
 
@@ -18,7 +18,7 @@ static const char * const builtin_commit_graph_read_usage[] = {
 };
 
 static const char * const builtin_commit_graph_write_usage[] = {
-	N_("git commit-graph write [--object-dir <objdir>] [--stdin-packs|--stdin-commits]"),
+	N_("git commit-graph write [--object-dir <objdir>] [--append] [--stdin-packs|--stdin-commits]"),
 	NULL
 };
 
@@ -26,6 +26,7 @@ static struct opts_commit_graph {
 	const char *obj_dir;
 	int stdin_packs;
 	int stdin_commits;
+	int append;
 } opts;
 
 static int graph_read(int argc, const char **argv)
@@ -94,6 +95,8 @@ static int graph_write(int argc, const char **argv)
 			N_("scan pack-indexes listed by stdin for commits")),
 		OPT_BOOL(0, "stdin-commits", &opts.stdin_commits,
 			N_("start walk at commits listed by stdin")),
+		OPT_BOOL(0, "append", &opts.append,
+			N_("include all commits already in the commit-graph file")),
 		OPT_END(),
 	};
 
@@ -131,7 +134,8 @@ static int graph_write(int argc, const char **argv)
 			   pack_indexes,
 			   packs_nr,
 			   commit_hex,
-			   commits_nr);
+			   commits_nr,
+			   opts.append);
 
 	return 0;
 }
