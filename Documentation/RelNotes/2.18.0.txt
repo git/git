@@ -47,6 +47,16 @@ Performance, Internal Implementation, Development Support etc.
    by assuming how "git worktree move" moves an existing worktree to a
    different place.
 
+ * Code clean-up for the "repository" abstraction.
+   (merge 00a3da2a13 nd/remove-ignore-env-field later to maint).
+
+ * Code to find the length to uniquely abbreviate object names based
+   on packfile content, which is a relatively recent addtion, has been
+   optimized to use the same fan-out table.
+
+ * The mechanism to use parse-options API to automate the command line
+   completion continues to get extended and polished.
+
 Also contains various documentation updates and code clean-ups.
 
 
@@ -64,4 +74,19 @@ Fixes since v2.17
    <pathspec>, which has been fixed.
    (merge 353278687e tg/stash-untracked-with-pathspec-fix later to maint).
 
+ * "git tag --contains no-such-commit" gave a full list of options
+   after giving an error message.
+   (merge 3bb0923f06 ps/contains-id-error-message later to maint).
+
+ * "diff-highlight" filter (in contrib/) learned to undertand "git log
+   --graph" output better.
+   (merge 4551fbba14 jk/diff-highlight-graph-fix later to maint).
+
+ * when refs that do not point at committish are given, "git
+   filter-branch" gave a misleading error messages.  This has been
+   corrected.
+   (merge f78ab355e7 yk/filter-branch-non-committish-refs later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
+   (merge 248f66ed8e nd/trace-with-env later to maint).
+   (merge 14ced5562c ys/bisect-object-id-missing-conversion-fix later to maint).
