@@ -144,6 +144,24 @@ static int git_get_exec_path_darwin(struct strbuf *buf)
 }
 #endif /* HAVE_NS_GET_EXECUTABLE_PATH */
 
+#ifdef HAVE_WPGMPTR
+/*
+ * Resolves the executable path by using the global variable _wpgmptr.
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+static int git_get_exec_path_wpgmptr(struct strbuf *buf)
+{
+	int len = wcslen(_wpgmptr) * 3 + 1;
+	strbuf_grow(buf, len);
+	len = xwcstoutf(buf->buf, _wpgmptr, len);
+	if (len < 0)
+		return -1;
+	buf->len += len;
+	return 0;
+}
+#endif /* HAVE_WPGMPTR */
+
 /*
  * Resolves the absolute path of the current executable.
  *
@@ -177,6 +195,10 @@ static int git_get_exec_path(struct strbuf *buf, const char *argv0)
 #ifdef PROCFS_EXECUTABLE_PATH
 		git_get_exec_path_procfs(buf) &&
 #endif /* PROCFS_EXECUTABLE_PATH */
+
+#ifdef HAVE_WPGMPTR
+		git_get_exec_path_wpgmptr(buf) &&
+#endif /* HAVE_WPGMPTR */
 
 		git_get_exec_path_from_argv0(buf, argv0)) {
 		return -1;
