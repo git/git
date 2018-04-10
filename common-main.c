@@ -32,13 +32,13 @@ int main(int argc, const char **argv)
 	 */
 	sanitize_stdfds();
 
+	git_resolve_executable_dir(argv[0]);
+
 	git_setup_gettext();
 
 	initialize_the_repository();
 
 	attr_start();
-
-	git_extract_argv0_path(argv[0]);
 
 	restore_sigpipe_to_default();
 
