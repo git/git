@@ -367,6 +367,50 @@ static int add_packed_commits(const struct object_id *oid,
 	return 0;
 }
 
+static void add_missing_parents(struct packed_oid_list *oids, struct commit *commit)
+{
+	struct commit_list *parent;
+	for (parent = commit->parents; parent; parent = parent->next) {
+		if (!(parent->item->object.flags & UNINTERESTING)) {
+			ALLOC_GROW(oids->list, oids->nr + 1, oids->alloc);
+			oidcpy(&oids->list[oids->nr], &(parent->item->object.oid));
+			oids->nr++;
+			parent->item->object.flags |= UNINTERESTING;
+		}
+	}
+}
+
+static void close_reachable(struct packed_oid_list *oids)
+{
+	int i;
+	struct commit *commit;
+
+	for (i = 0; i < oids->nr; i++) {
+		commit = lookup_commit(&oids->list[i]);
+		if (commit)
+			commit->object.flags |= UNINTERESTING;
+	}
+
+	/*
+	 * As this loop runs, oids->nr may grow, but not more
+	 * than the number of missing commits in the reachable
+	 * closure.
+	 */
+	for (i = 0; i < oids->nr; i++) {
+		commit = lookup_commit(&oids->list[i]);
+
+		if (commit && !parse_commit(commit))
+			add_missing_parents(oids, commit);
+	}
+
+	for (i = 0; i < oids->nr; i++) {
+		commit = lookup_commit(&oids->list[i]);
+
+		if (commit)
+			commit->object.flags &= ~UNINTERESTING;
+	}
+}
+
 void write_commit_graph(const char *obj_dir)
 {
 	struct packed_oid_list oids;
@@ -390,6 +434,7 @@ void write_commit_graph(const char *obj_dir)
 	ALLOC_ARRAY(oids.list, oids.alloc);
 
 	for_each_packed_object(add_packed_commits, &oids, 0);
+	close_reachable(&oids);
 
 	QSORT(oids.list, oids.nr, commit_compare);
 
