@@ -177,6 +177,19 @@ test_expect_success 'build graph from latest pack with closure' '
 graph_git_behavior 'graph from pack, commit 8 vs merge 1' full commits/8 merge/1
 graph_git_behavior 'graph from pack, commit 8 vs merge 2' full commits/8 merge/2
 
+test_expect_success 'build graph from commits with closure' '
+	cd "$TRASH_DIRECTORY/full" &&
+	git tag -a -m "merge" tag/merge merge/2 &&
+	git rev-parse tag/merge >commits-in &&
+	git rev-parse merge/1 >>commits-in &&
+	cat commits-in | git commit-graph write --stdin-commits &&
+	test_path_is_file $objdir/info/commit-graph &&
+	graph_read_expect "6"
+'
+
+graph_git_behavior 'graph from commits, commit 8 vs merge 1' full commits/8 merge/1
+graph_git_behavior 'graph from commits, commit 8 vs merge 2' full commits/8 merge/2
+
 test_expect_success 'setup bare repo' '
 	cd "$TRASH_DIRECTORY" &&
 	git clone --bare --no-local full bare &&

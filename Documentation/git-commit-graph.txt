@@ -36,7 +36,13 @@ COMMANDS
 Write a commit graph file based on the commits found in packfiles.
 +
 With the `--stdin-packs` option, generate the new commit graph by
-walking objects only in the specified pack-indexes.
+walking objects only in the specified pack-indexes. (Cannot be combined
+with --stdin-commits.)
++
+With the `--stdin-commits` option, generate the new commit graph by
+walking commits starting at the commits specified in stdin as a list
+of OIDs in hex, one OID per line. (Cannot be combined with
+--stdin-packs.)
 
 'read'::
 
@@ -58,6 +64,12 @@ $ git commit-graph write
 +
 ------------------------------------------------
 $ echo <pack-index> | git commit-graph write --stdin-packs
+------------------------------------------------
+
+* Write a graph file containing all reachable commits.
++
+------------------------------------------------
+$ git show-ref -s | git commit-graph write --stdin-commits
 ------------------------------------------------
 
 * Read basic information from the commit-graph file.
