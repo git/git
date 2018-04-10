@@ -1973,6 +1973,8 @@ GIT-PERL-DEFINES: FORCE
 		echo "$$FLAGS" >$@; \
 	    fi
 
+perllibdir:
+	@echo '$(perllibdir_SQ)'
 
 .PHONY: gitweb
 gitweb:
