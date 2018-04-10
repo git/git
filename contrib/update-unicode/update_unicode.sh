@@ -6,7 +6,7 @@
 #Cf Format          a format control character
 #
 cd "$(dirname "$0")"
-UNICODEWIDTH_H=$(git rev-parse --show-toplevel)/unicode_width.h
+UNICODEWIDTH_H=$(git rev-parse --show-toplevel)/unicode-width.h
 
 wget -N http://www.unicode.org/Public/UCD/latest/ucd/UnicodeData.txt \
 	http://www.unicode.org/Public/UCD/latest/ucd/EastAsianWidth.txt &&
