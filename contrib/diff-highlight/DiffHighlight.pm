@@ -21,37 +21,82 @@ my $RESET = "\x1b[m";
 my $COLOR = qr/\x1b\[[0-9;]*m/;
 my $BORING = qr/$COLOR|\s/;
 
-# The patch portion of git log -p --graph should only ever have preceding | and
-# not / or \ as merge history only shows up on the commit line.
-my $GRAPH = qr/$COLOR?\|$COLOR?\s+/;
-
 my @removed;
 my @added;
 my $in_hunk;
+my $graph_indent = 0;
 
 our $line_cb = sub { print @_ };
 our $flush_cb = sub { local $| = 1 };
 
-sub handle_line {
+# Count the visible width of a string, excluding any terminal color sequences.
+sub visible_width {
 	local $_ = shift;
+	my $ret = 0;
+	while (length) {
+		if (s/^$COLOR//) {
+			# skip colors
+		} elsif (s/^.//) {
+			$ret++;
+		}
+	}
+	return $ret;
+}
+
+# Return a substring of $str, omitting $len visible characters from the
+# beginning, where terminal color sequences do not count as visible.
+sub visible_substr {
+	my ($str, $len) = @_;
+	while ($len > 0) {
+		if ($str =~ s/^$COLOR//) {
+			next
+		}
+		$str =~ s/^.//;
+		$len--;
+	}
+	return $str;
+}
+
+sub handle_line {
+	my $orig = shift;
+	local $_ = $orig;
+
+	# match a graph line that begins a commit
+	if (/^(?:$COLOR?\|$COLOR?[ ])* # zero or more leading "|" with space
+	         $COLOR?\*$COLOR?[ ]   # a "*" with its trailing space
+	      (?:$COLOR?\|$COLOR?[ ])* # zero or more trailing "|"
+	                         [ ]*  # trailing whitespace for merges
+	    /x) {
+	        my $graph_prefix = $&;
+
+		# We must flush before setting graph indent, since the
+		# new commit may be indented differently from what we
+		# queued.
+		flush();
+		$graph_indent = visible_width($graph_prefix);
+
+	} elsif ($graph_indent) {
+		if (length($_) < $graph_indent) {
+			$graph_indent = 0;
+		} else {
+			$_ = visible_substr($_, $graph_indent);
+		}
+	}
 
 	if (!$in_hunk) {
-		$line_cb->($_);
-		$in_hunk = /^$GRAPH*$COLOR*\@\@ /;
+		$line_cb->($orig);
+		$in_hunk = /^$COLOR*\@\@ /;
 	}
-	elsif (/^$GRAPH*$COLOR*-/) {
-		push @removed, $_;
+	elsif (/^$COLOR*-/) {
+		push @removed, $orig;
 	}
-	elsif (/^$GRAPH*$COLOR*\+/) {
-		push @added, $_;
+	elsif (/^$COLOR*\+/) {
+		push @added, $orig;
 	}
 	else {
-		show_hunk(\@removed, \@added);
-		@removed = ();
-		@added = ();
-
-		$line_cb->($_);
-		$in_hunk = /^$GRAPH*$COLOR*[\@ ]/;
+		flush();
+		$line_cb->($orig);
+		$in_hunk = /^$COLOR*[\@ ]/;
 	}
 
 	# Most of the time there is enough output to keep things streaming,
@@ -71,6 +116,8 @@ sub flush {
 	# Flush any queued hunk (this can happen when there is no trailing
 	# context in the final diff of the input).
 	show_hunk(\@removed, \@added);
+	@removed = ();
+	@added = ();
 }
 
 sub highlight_stdin {
@@ -226,8 +273,8 @@ sub is_pair_interesting {
 	my $suffix_a = join('', @$a[($sa+1)..$#$a]);
 	my $suffix_b = join('', @$b[($sb+1)..$#$b]);
 
-	return $prefix_a !~ /^$GRAPH*$COLOR*-$BORING*$/ ||
-	       $prefix_b !~ /^$GRAPH*$COLOR*\+$BORING*$/ ||
+	return visible_substr($prefix_a, $graph_indent) !~ /^$COLOR*-$BORING*$/ ||
+	       visible_substr($prefix_b, $graph_indent) !~ /^$COLOR*\+$BORING*$/ ||
 	       $suffix_a !~ /^$BORING*$/ ||
 	       $suffix_b !~ /^$BORING*$/;
 }
