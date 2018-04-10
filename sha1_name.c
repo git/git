@@ -150,31 +150,14 @@ static int match_sha(unsigned len, const unsigned char *a, const unsigned char *
 static void unique_in_pack(struct packed_git *p,
 			   struct disambiguate_state *ds)
 {
-	uint32_t num, last, i, first = 0;
+	uint32_t num, i, first = 0;
 	const struct object_id *current = NULL;
 
 	if (open_pack_index(p) || !p->num_objects)
 		return;
 
 	num = p->num_objects;
-	last = num;
-	while (first < last) {
-		uint32_t mid = first + (last - first) / 2;
-		const unsigned char *current;
-		int cmp;
-
-		current = nth_packed_object_sha1(p, mid);
-		cmp = hashcmp(ds->bin_pfx.hash, current);
-		if (!cmp) {
-			first = mid;
-			break;
-		}
-		if (cmp > 0) {
-			first = mid+1;
-			continue;
-		}
-		last = mid;
-	}
+	bsearch_pack(&ds->bin_pfx, p, &first);
 
 	/*
 	 * At this point, "first" is the location of the lowest object
@@ -480,7 +463,7 @@ struct min_abbrev_data {
 	unsigned int init_len;
 	unsigned int cur_len;
 	char *hex;
-	const unsigned char *hash;
+	const struct object_id *oid;
 };
 
 static inline char get_hex_char_from_oid(const struct object_id *oid,
@@ -512,32 +495,16 @@ static void find_abbrev_len_for_pack(struct packed_git *p,
 				     struct min_abbrev_data *mad)
 {
 	int match = 0;
-	uint32_t num, last, first = 0;
+	uint32_t num, first = 0;
 	struct object_id oid;
+	const struct object_id *mad_oid;
 
 	if (open_pack_index(p) || !p->num_objects)
 		return;
 
 	num = p->num_objects;
-	last = num;
-	while (first < last) {
-		uint32_t mid = first + (last - first) / 2;
-		const unsigned char *current;
-		int cmp;
-
-		current = nth_packed_object_sha1(p, mid);
-		cmp = hashcmp(mad->hash, current);
-		if (!cmp) {
-			match = 1;
-			first = mid;
-			break;
-		}
-		if (cmp > 0) {
-			first = mid + 1;
-			continue;
-		}
-		last = mid;
-	}
+	mad_oid = mad->oid;
+	match = bsearch_pack(mad_oid, p, &first);
 
 	/*
 	 * first is now the position in the packfile where we would insert
@@ -603,7 +570,7 @@ int find_unique_abbrev_r(char *hex, const struct object_id *oid, int len)
 	mad.init_len = len;
 	mad.cur_len = len;
 	mad.hex = hex;
-	mad.hash = oid->hash;
+	mad.oid = oid;
 
 	find_abbrev_len_packed(&mad);
 
