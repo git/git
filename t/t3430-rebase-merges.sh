@@ -287,5 +287,30 @@ test_expect_success 'a "merge" into a root commit is a fast-forward' '
 	test_cmp_rev HEAD $head
 '
 
+test_expect_success 'A root commit can be a cousin, treat it that way' '
+	git checkout --orphan khnum &&
+	test_commit yama &&
+	git checkout -b asherah master &&
+	test_commit shamkat &&
+	git merge --allow-unrelated-histories khnum &&
+	test_tick &&
+	git rebase -f -r HEAD^ &&
+	! test_cmp_rev HEAD^2 khnum &&
+	test_cmp_graph HEAD^.. <<-\EOF &&
+	*   Merge branch '\''khnum'\'' into asherah
+	|\
+	| * yama
+	o shamkat
+	EOF
+	test_tick &&
+	git rebase --rebase-merges=rebase-cousins HEAD^ &&
+	test_cmp_graph HEAD^.. <<-\EOF
+	*   Merge branch '\''khnum'\'' into asherah
+	|\
+	| * yama
+	|/
+	o shamkat
+	EOF
+'
 
 test_done
