@@ -167,6 +167,16 @@ test_expect_success 'write graph with nothing new' '
 graph_git_behavior 'cleared graph, commit 8 vs merge 1' full commits/8 merge/1
 graph_git_behavior 'cleared graph, commit 8 vs merge 2' full commits/8 merge/2
 
+test_expect_success 'build graph from latest pack with closure' '
+	cd "$TRASH_DIRECTORY/full" &&
+	cat new-idx | git commit-graph write --stdin-packs &&
+	test_path_is_file $objdir/info/commit-graph &&
+	graph_read_expect "9" "large_edges"
+'
+
+graph_git_behavior 'graph from pack, commit 8 vs merge 1' full commits/8 merge/1
+graph_git_behavior 'graph from pack, commit 8 vs merge 2' full commits/8 merge/2
+
 test_expect_success 'setup bare repo' '
 	cd "$TRASH_DIRECTORY" &&
 	git clone --bare --no-local full bare &&

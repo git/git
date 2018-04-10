@@ -34,7 +34,9 @@ COMMANDS
 'write'::
 
 Write a commit graph file based on the commits found in packfiles.
-Includes all commits from the existing commit graph file.
++
+With the `--stdin-packs` option, generate the new commit graph by
+walking objects only in the specified pack-indexes.
 
 'read'::
 
@@ -49,6 +51,13 @@ EXAMPLES
 +
 ------------------------------------------------
 $ git commit-graph write
+------------------------------------------------
+
+* Write a graph file, extending the current graph file using commits
+* in <pack-index>.
++
+------------------------------------------------
+$ echo <pack-index> | git commit-graph write --stdin-packs
 ------------------------------------------------
 
 * Read basic information from the commit-graph file.
