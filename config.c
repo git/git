@@ -16,6 +16,7 @@
 #include "string-list.h"
 #include "utf8.h"
 #include "dir.h"
+#include "color.h"
 
 struct config_source {
 	struct config_source *prev;
@@ -997,6 +998,15 @@ int git_config_expiry_date(timestamp_t *timestamp, const char *var, const char *
 	if (parse_expiry_date(value, timestamp))
 		return error(_("'%s' for '%s' is not a valid timestamp"),
 			     value, var);
+	return 0;
+}
+
+int git_config_color(char *dest, const char *var, const char *value)
+{
+	if (!value)
+		return config_error_nonbool(var);
+	if (color_parse(value, dest) < 0)
+		return -1;
 	return 0;
 }
 
