@@ -11,8 +11,8 @@ sane_unset GIT_FSMONITOR_TEST
 test_expect_success 'enable split index' '
 	git config splitIndex.maxPercentChange 100 &&
 	git update-index --split-index &&
-	test-dump-split-index .git/index >actual &&
-	indexversion=$(test-index-version <.git/index) &&
+	test-tool dump-split-index .git/index >actual &&
+	indexversion=$(test-tool index-version <.git/index) &&
 	if test "$indexversion" = "4"
 	then
 		own=432ef4b63f32193984f339431fd50ca796493569
@@ -39,7 +39,7 @@ test_expect_success 'add one file' '
 	EOF
 	test_cmp ls-files.expect ls-files.actual &&
 
-	test-dump-split-index .git/index | sed "/^own/d" >actual &&
+	test-tool dump-split-index .git/index | sed "/^own/d" >actual &&
 	cat >expect <<-EOF &&
 	base $base
 	100644 $EMPTY_BLOB 0	one
@@ -57,8 +57,8 @@ test_expect_success 'disable split index' '
 	EOF
 	test_cmp ls-files.expect ls-files.actual &&
 
-	BASE=$(test-dump-split-index .git/index | grep "^own" | sed "s/own/base/") &&
-	test-dump-split-index .git/index | sed "/^own/d" >actual &&
+	BASE=$(test-tool dump-split-index .git/index | grep "^own" | sed "s/own/base/") &&
+	test-tool dump-split-index .git/index | sed "/^own/d" >actual &&
 	cat >expect <<-EOF &&
 	not a split index
 	EOF
@@ -73,7 +73,7 @@ test_expect_success 'enable split index again, "one" now belongs to base index"'
 	EOF
 	test_cmp ls-files.expect ls-files.actual &&
 
-	test-dump-split-index .git/index | sed "/^own/d" >actual &&
+	test-tool dump-split-index .git/index | sed "/^own/d" >actual &&
 	cat >expect <<-EOF &&
 	$BASE
 	replacements:
@@ -91,7 +91,7 @@ test_expect_success 'modify original file, base index untouched' '
 	EOF
 	test_cmp ls-files.expect ls-files.actual &&
 
-	test-dump-split-index .git/index | sed "/^own/d" >actual &&
+	test-tool dump-split-index .git/index | sed "/^own/d" >actual &&
 	q_to_tab >expect <<-EOF &&
 	$BASE
 	100644 2e0996000b7e9019eabcad29391bf0f5c7702f0b 0Q
@@ -111,7 +111,7 @@ test_expect_success 'add another file, which stays index' '
 	EOF
 	test_cmp ls-files.expect ls-files.actual &&
 
-	test-dump-split-index .git/index | sed "/^own/d" >actual &&
+	test-tool dump-split-index .git/index | sed "/^own/d" >actual &&
 	q_to_tab >expect <<-EOF &&
 	$BASE
 	100644 2e0996000b7e9019eabcad29391bf0f5c7702f0b 0Q
@@ -130,7 +130,7 @@ test_expect_success 'remove file not in base index' '
 	EOF
 	test_cmp ls-files.expect ls-files.actual &&
 
-	test-dump-split-index .git/index | sed "/^own/d" >actual &&
+	test-tool dump-split-index .git/index | sed "/^own/d" >actual &&
 	q_to_tab >expect <<-EOF &&
 	$BASE
 	100644 2e0996000b7e9019eabcad29391bf0f5c7702f0b 0Q
@@ -147,7 +147,7 @@ test_expect_success 'remove file in base index' '
 	EOF
 	test_cmp ls-files.expect ls-files.actual &&
 
-	test-dump-split-index .git/index | sed "/^own/d" >actual &&
+	test-tool dump-split-index .git/index | sed "/^own/d" >actual &&
 	cat >expect <<-EOF &&
 	$BASE
 	replacements:
@@ -165,7 +165,7 @@ test_expect_success 'add original file back' '
 	EOF
 	test_cmp ls-files.expect ls-files.actual &&
 
-	test-dump-split-index .git/index | sed "/^own/d" >actual &&
+	test-tool dump-split-index .git/index | sed "/^own/d" >actual &&
 	cat >expect <<-EOF &&
 	$BASE
 	100644 $EMPTY_BLOB 0	one
@@ -195,7 +195,7 @@ test_expect_success 'unify index, two files remain' '
 	EOF
 	test_cmp ls-files.expect ls-files.actual &&
 
-	test-dump-split-index .git/index | sed "/^own/d" >actual &&
+	test-tool dump-split-index .git/index | sed "/^own/d" >actual &&
 	cat >expect <<-EOF &&
 	not a split index
 	EOF
@@ -229,8 +229,8 @@ test_expect_success 'set core.splitIndex config variable to true' '
 	100644 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0	two
 	EOF
 	test_cmp ls-files.expect ls-files.actual &&
-	BASE=$(test-dump-split-index .git/index | grep "^base") &&
-	test-dump-split-index .git/index | sed "/^own/d" >actual &&
+	BASE=$(test-tool dump-split-index .git/index | grep "^base") &&
+	test-tool dump-split-index .git/index | sed "/^own/d" >actual &&
 	cat >expect <<-EOF &&
 	$BASE
 	replacements:
@@ -248,7 +248,7 @@ test_expect_success 'set core.splitIndex config variable to false' '
 	100644 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0	two
 	EOF
 	test_cmp ls-files.expect ls-files.actual &&
-	test-dump-split-index .git/index | sed "/^own/d" >actual &&
+	test-tool dump-split-index .git/index | sed "/^own/d" >actual &&
 	cat >expect <<-EOF &&
 	not a split index
 	EOF
@@ -259,8 +259,8 @@ test_expect_success 'set core.splitIndex config variable to true' '
 	git config core.splitIndex true &&
 	: >three &&
 	git update-index --add three &&
-	BASE=$(test-dump-split-index .git/index | grep "^base") &&
-	test-dump-split-index .git/index | sed "/^own/d" >actual &&
+	BASE=$(test-tool dump-split-index .git/index | grep "^base") &&
+	test-tool dump-split-index .git/index | sed "/^own/d" >actual &&
 	cat >expect <<-EOF &&
 	$BASE
 	replacements:
@@ -269,7 +269,7 @@ test_expect_success 'set core.splitIndex config variable to true' '
 	test_cmp expect actual &&
 	: >four &&
 	git update-index --add four &&
-	test-dump-split-index .git/index | sed "/^own/d" >actual &&
+	test-tool dump-split-index .git/index | sed "/^own/d" >actual &&
 	cat >expect <<-EOF &&
 	$BASE
 	100644 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0	four
@@ -283,8 +283,8 @@ test_expect_success 'check behavior with splitIndex.maxPercentChange unset' '
 	git config --unset splitIndex.maxPercentChange &&
 	: >five &&
 	git update-index --add five &&
-	BASE=$(test-dump-split-index .git/index | grep "^base") &&
-	test-dump-split-index .git/index | sed "/^own/d" >actual &&
+	BASE=$(test-tool dump-split-index .git/index | grep "^base") &&
+	test-tool dump-split-index .git/index | sed "/^own/d" >actual &&
 	cat >expect <<-EOF &&
 	$BASE
 	replacements:
@@ -293,7 +293,7 @@ test_expect_success 'check behavior with splitIndex.maxPercentChange unset' '
 	test_cmp expect actual &&
 	: >six &&
 	git update-index --add six &&
-	test-dump-split-index .git/index | sed "/^own/d" >actual &&
+	test-tool dump-split-index .git/index | sed "/^own/d" >actual &&
 	cat >expect <<-EOF &&
 	$BASE
 	100644 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0	six
@@ -307,8 +307,8 @@ test_expect_success 'check splitIndex.maxPercentChange set to 0' '
 	git config splitIndex.maxPercentChange 0 &&
 	: >seven &&
 	git update-index --add seven &&
-	BASE=$(test-dump-split-index .git/index | grep "^base") &&
-	test-dump-split-index .git/index | sed "/^own/d" >actual &&
+	BASE=$(test-tool dump-split-index .git/index | grep "^base") &&
+	test-tool dump-split-index .git/index | sed "/^own/d" >actual &&
 	cat >expect <<-EOF &&
 	$BASE
 	replacements:
@@ -317,8 +317,8 @@ test_expect_success 'check splitIndex.maxPercentChange set to 0' '
 	test_cmp expect actual &&
 	: >eight &&
 	git update-index --add eight &&
-	BASE=$(test-dump-split-index .git/index | grep "^base") &&
-	test-dump-split-index .git/index | sed "/^own/d" >actual &&
+	BASE=$(test-tool dump-split-index .git/index | grep "^base") &&
+	test-tool dump-split-index .git/index | sed "/^own/d" >actual &&
 	cat >expect <<-EOF &&
 	$BASE
 	replacements:
@@ -332,12 +332,12 @@ test_expect_success 'shared index files expire after 2 weeks by default' '
 	git update-index --add ten &&
 	test $(ls .git/sharedindex.* | wc -l) -gt 2 &&
 	just_under_2_weeks_ago=$((5-14*86400)) &&
-	test-chmtime =$just_under_2_weeks_ago .git/sharedindex.* &&
+	test-tool chmtime =$just_under_2_weeks_ago .git/sharedindex.* &&
 	: >eleven &&
 	git update-index --add eleven &&
 	test $(ls .git/sharedindex.* | wc -l) -gt 2 &&
 	just_over_2_weeks_ago=$((-1-14*86400)) &&
-	test-chmtime =$just_over_2_weeks_ago .git/sharedindex.* &&
+	test-tool chmtime =$just_over_2_weeks_ago .git/sharedindex.* &&
 	: >twelve &&
 	git update-index --add twelve &&
 	test $(ls .git/sharedindex.* | wc -l) -le 2
@@ -345,12 +345,12 @@ test_expect_success 'shared index files expire after 2 weeks by default' '
 
 test_expect_success 'check splitIndex.sharedIndexExpire set to 16 days' '
 	git config splitIndex.sharedIndexExpire "16.days.ago" &&
-	test-chmtime =$just_over_2_weeks_ago .git/sharedindex.* &&
+	test-tool chmtime =$just_over_2_weeks_ago .git/sharedindex.* &&
 	: >thirteen &&
 	git update-index --add thirteen &&
 	test $(ls .git/sharedindex.* | wc -l) -gt 2 &&
 	just_over_16_days_ago=$((-1-16*86400)) &&
-	test-chmtime =$just_over_16_days_ago .git/sharedindex.* &&
+	test-tool chmtime =$just_over_16_days_ago .git/sharedindex.* &&
 	: >fourteen &&
 	git update-index --add fourteen &&
 	test $(ls .git/sharedindex.* | wc -l) -le 2
@@ -359,13 +359,13 @@ test_expect_success 'check splitIndex.sharedIndexExpire set to 16 days' '
 test_expect_success 'check splitIndex.sharedIndexExpire set to "never" and "now"' '
 	git config splitIndex.sharedIndexExpire never &&
 	just_10_years_ago=$((-365*10*86400)) &&
-	test-chmtime =$just_10_years_ago .git/sharedindex.* &&
+	test-tool chmtime =$just_10_years_ago .git/sharedindex.* &&
 	: >fifteen &&
 	git update-index --add fifteen &&
 	test $(ls .git/sharedindex.* | wc -l) -gt 2 &&
 	git config splitIndex.sharedIndexExpire now &&
 	just_1_second_ago=-1 &&
-	test-chmtime =$just_1_second_ago .git/sharedindex.* &&
+	test-tool chmtime =$just_1_second_ago .git/sharedindex.* &&
 	: >sixteen &&
 	git update-index --add sixteen &&
 	test $(ls .git/sharedindex.* | wc -l) -le 2
@@ -435,7 +435,7 @@ test_expect_success 'writing split index with null sha1 does not write cache tre
 	commit=$(git commit-tree $tree -p HEAD <msg) &&
 	git update-ref HEAD "$commit" &&
 	GIT_ALLOW_NULL_SHA1=1 git reset --hard &&
-	(test-dump-cache-tree >cache-tree.out || true) &&
+	(test-tool dump-cache-tree >cache-tree.out || true) &&
 	test_line_count = 0 cache-tree.out
 '
 

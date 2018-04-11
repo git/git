@@ -4,7 +4,7 @@ test_description='Test the lazy init name hash with various folder structures'
 
 . ./test-lib.sh
 
-if test 1 -eq $($GIT_BUILD_DIR/t/helper/test-online-cpus)
+if test 1 -eq $($GIT_BUILD_DIR/t/helper/test-tool online-cpus)
 then
 	skip_all='skipping lazy-init tests, single cpu'
 	test_done
@@ -21,7 +21,7 @@ test_expect_success 'no buffer overflow in lazy_init_name_hash' '
 	) |
 	sed "s/^/100644 $EMPTY_BLOB	/" |
 	git update-index --index-info &&
-	test-lazy-init-name-hash -m
+	test-tool lazy-init-name-hash -m
 '
 
 test_done

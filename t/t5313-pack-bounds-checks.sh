@@ -163,8 +163,8 @@ test_expect_success 'bogus offset inside v2 extended table' '
 
 test_expect_success 'bogus OFS_DELTA in packfile' '
 	# Generate a pack with a delta in it.
-	base=$(test-genrandom foo 3000 | git hash-object --stdin -w) &&
-	delta=$(test-genrandom foo 2000 | git hash-object --stdin -w) &&
+	base=$(test-tool genrandom foo 3000 | git hash-object --stdin -w) &&
+	delta=$(test-tool genrandom foo 2000 | git hash-object --stdin -w) &&
 	do_pack "$base $delta" --delta-base-offset &&
 	rm -f .git/objects/??/* &&
 

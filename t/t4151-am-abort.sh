@@ -171,7 +171,7 @@ test_expect_success 'am --skip leaves index stat info alone' '
 	git checkout -f --orphan skip-stat-info &&
 	git reset &&
 	test_commit skip-should-be-untouched &&
-	test-chmtime =0 skip-should-be-untouched.t &&
+	test-tool chmtime =0 skip-should-be-untouched.t &&
 	git update-index --refresh &&
 	git diff-files --exit-code --quiet &&
 	test_must_fail git am 0001-*.patch &&
@@ -183,7 +183,7 @@ test_expect_success 'am --abort leaves index stat info alone' '
 	git checkout -f --orphan abort-stat-info &&
 	git reset &&
 	test_commit abort-should-be-untouched &&
-	test-chmtime =0 abort-should-be-untouched.t &&
+	test-tool chmtime =0 abort-should-be-untouched.t &&
 	git update-index --refresh &&
 	git diff-files --exit-code --quiet &&
 	test_must_fail git am 0001-*.patch &&

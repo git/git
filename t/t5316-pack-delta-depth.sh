@@ -47,7 +47,7 @@ test_description='pack-objects breaks long cross-pack delta chains'
 # repeatedly-modified file to generate the delta chain).
 
 test_expect_success 'create series of packs' '
-	test-genrandom foo 4096 >content &&
+	test-tool genrandom foo 4096 >content &&
 	prev= &&
 	for i in $(test_seq 1 10)
 	do

@@ -79,12 +79,12 @@ match_with_function() {
 	if test "$match_expect" = 1
 	then
 		test_expect_success "$match_function: match '$text' '$pattern'" "
-			test-wildmatch $match_function '$text' '$pattern'
+			test-tool wildmatch $match_function '$text' '$pattern'
 		"
 	elif test "$match_expect" = 0
 	then
 		test_expect_success "$match_function: no match '$text' '$pattern'" "
-			test_must_fail test-wildmatch $match_function '$text' '$pattern'
+			test_must_fail test-tool wildmatch $match_function '$text' '$pattern'
 		"
 	else
 		test_expect_success "PANIC: Test framework error. Unknown matches value $match_expect" 'false'
@@ -148,7 +148,7 @@ match_with_ls_files() {
 match() {
 	if test "$#" = 6
 	then
-		# When test-wildmatch and git ls-files produce the same
+		# When test-tool wildmatch and git ls-files produce the same
 		# result.
 		match_glob=$1
 		match_file_glob=$match_glob
@@ -204,19 +204,19 @@ match() {
 		fi
 	'
 
-	# $1: Case sensitive glob match: test-wildmatch & ls-files
+	# $1: Case sensitive glob match: test-tool wildmatch & ls-files
 	match_with_function "$text" "$pattern" $match_glob "wildmatch"
 	match_with_ls_files "$text" "$pattern" $match_file_glob "wildmatch" " --glob-pathspecs"
 
-	# $2: Case insensitive glob match: test-wildmatch & ls-files
+	# $2: Case insensitive glob match: test-tool wildmatch & ls-files
 	match_with_function "$text" "$pattern" $match_iglob "iwildmatch"
 	match_with_ls_files "$text" "$pattern" $match_file_iglob "iwildmatch" " --glob-pathspecs --icase-pathspecs"
 
-	# $3: Case sensitive path match: test-wildmatch & ls-files
+	# $3: Case sensitive path match: test-tool wildmatch & ls-files
 	match_with_function "$text" "$pattern" $match_pathmatch "pathmatch"
 	match_with_ls_files "$text" "$pattern" $match_file_pathmatch "pathmatch" ""
 
-	# $4: Case insensitive path match: test-wildmatch & ls-files
+	# $4: Case insensitive path match: test-tool wildmatch & ls-files
 	match_with_function "$text" "$pattern" $match_pathmatchi "ipathmatch"
 	match_with_ls_files "$text" "$pattern" $match_file_pathmatchi "ipathmatch" " --icase-pathspecs"
 }

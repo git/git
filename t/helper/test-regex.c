@@ -1,3 +1,4 @@
+#include "test-tool.h"
 #include "git-compat-util.h"
 #include "gettext.h"
 
@@ -36,7 +37,7 @@ static int test_regex_bug(void)
 	return 0;
 }
 
-int cmd_main(int argc, const char **argv)
+int cmd__regex(int argc, const char **argv)
 {
 	const char *pat;
 	const char *str;
@@ -47,8 +48,8 @@ int cmd_main(int argc, const char **argv)
 	if (argc == 2 && !strcmp(argv[1], "--bug"))
 		return test_regex_bug();
 	else if (argc < 3)
-		usage("test-regex --bug\n"
-		      "test-regex <pattern> <string> [<options>]");
+		usage("test-tool regex --bug\n"
+		      "test-tool regex <pattern> <string> [<options>]");
 
 	argv++;
 	pat = *argv++;

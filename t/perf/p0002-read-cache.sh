@@ -8,7 +8,7 @@ test_perf_default_repo
 
 count=1000
 test_perf "read_cache/discard_cache $count times" "
-	test-read-cache $count
+	test-tool read-cache $count
 "
 
 test_done

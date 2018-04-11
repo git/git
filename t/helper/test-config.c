@@ -1,3 +1,4 @@
+#include "test-tool.h"
 #include "cache.h"
 #include "config.h"
 #include "string-list.h"
@@ -32,7 +33,7 @@
  * Examples:
  *
  * To print the value with highest priority for key "foo.bAr Baz.rock":
- * 	test-config get_value "foo.bAr Baz.rock"
+ * 	test-tool config get_value "foo.bAr Baz.rock"
  *
  */
 
@@ -77,7 +78,7 @@ static int early_config_cb(const char *var, const char *value, void *vdata)
 	return 0;
 }
 
-int cmd_main(int argc, const char **argv)
+int cmd__config(int argc, const char **argv)
 {
 	int i, val;
 	const char *v;

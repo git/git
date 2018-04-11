@@ -180,7 +180,7 @@ test_expect_success 'receive-pack runs auto-gc in remote repo' '
 	    # And create a file that follows the temporary object naming
 	    # convention for the auto-gc to remove
 	    : >.git/objects/tmp_test_object &&
-	    test-chmtime =-1209601 .git/objects/tmp_test_object
+	    test-tool chmtime =-1209601 .git/objects/tmp_test_object
 	) &&
 	(
 	    cd parent &&

@@ -554,6 +554,7 @@ SCRIPT_PERL =
 SCRIPT_PYTHON =
 SCRIPT_SH =
 SCRIPT_LIB =
+TEST_BUILTINS_OBJS =
 TEST_PROGRAMS_NEED_X =
 
 # Having this variable in your environment would break pipelines because
@@ -659,47 +660,49 @@ X =
 
 PROGRAMS += $(patsubst %.o,git-%$X,$(PROGRAM_OBJS))
 
-TEST_PROGRAMS_NEED_X += test-chmtime
-TEST_PROGRAMS_NEED_X += test-ctype
-TEST_PROGRAMS_NEED_X += test-config
-TEST_PROGRAMS_NEED_X += test-date
-TEST_PROGRAMS_NEED_X += test-delta
-TEST_PROGRAMS_NEED_X += test-drop-caches
-TEST_PROGRAMS_NEED_X += test-dump-cache-tree
+TEST_BUILTINS_OBJS += test-chmtime.o
+TEST_BUILTINS_OBJS += test-config.o
+TEST_BUILTINS_OBJS += test-ctype.o
+TEST_BUILTINS_OBJS += test-date.o
+TEST_BUILTINS_OBJS += test-delta.o
+TEST_BUILTINS_OBJS += test-drop-caches.o
+TEST_BUILTINS_OBJS += test-dump-cache-tree.o
+TEST_BUILTINS_OBJS += test-dump-split-index.o
+TEST_BUILTINS_OBJS += test-example-decorate.o
+TEST_BUILTINS_OBJS += test-genrandom.o
+TEST_BUILTINS_OBJS += test-hashmap.o
+TEST_BUILTINS_OBJS += test-index-version.o
+TEST_BUILTINS_OBJS += test-lazy-init-name-hash.o
+TEST_BUILTINS_OBJS += test-match-trees.o
+TEST_BUILTINS_OBJS += test-mergesort.o
+TEST_BUILTINS_OBJS += test-mktemp.o
+TEST_BUILTINS_OBJS += test-online-cpus.o
+TEST_BUILTINS_OBJS += test-path-utils.o
+TEST_BUILTINS_OBJS += test-prio-queue.o
+TEST_BUILTINS_OBJS += test-read-cache.o
+TEST_BUILTINS_OBJS += test-ref-store.o
+TEST_BUILTINS_OBJS += test-regex.o
+TEST_BUILTINS_OBJS += test-revision-walking.o
+TEST_BUILTINS_OBJS += test-run-command.o
+TEST_BUILTINS_OBJS += test-scrap-cache-tree.o
+TEST_BUILTINS_OBJS += test-sha1-array.o
+TEST_BUILTINS_OBJS += test-sha1.o
+TEST_BUILTINS_OBJS += test-sigchain.o
+TEST_BUILTINS_OBJS += test-strcmp-offset.o
+TEST_BUILTINS_OBJS += test-string-list.o
+TEST_BUILTINS_OBJS += test-submodule-config.o
+TEST_BUILTINS_OBJS += test-subprocess.o
+TEST_BUILTINS_OBJS += test-urlmatch-normalization.o
+TEST_BUILTINS_OBJS += test-wildmatch.o
+TEST_BUILTINS_OBJS += test-write-cache.o
+
 TEST_PROGRAMS_NEED_X += test-dump-fsmonitor
-TEST_PROGRAMS_NEED_X += test-dump-split-index
 TEST_PROGRAMS_NEED_X += test-dump-untracked-cache
-TEST_PROGRAMS_NEED_X += test-example-decorate
 TEST_PROGRAMS_NEED_X += test-fake-ssh
-TEST_PROGRAMS_NEED_X += test-genrandom
-TEST_PROGRAMS_NEED_X += test-hashmap
-TEST_PROGRAMS_NEED_X += test-index-version
-TEST_PROGRAMS_NEED_X += test-lazy-init-name-hash
 TEST_PROGRAMS_NEED_X += test-line-buffer
-TEST_PROGRAMS_NEED_X += test-match-trees
-TEST_PROGRAMS_NEED_X += test-mergesort
-TEST_PROGRAMS_NEED_X += test-mktemp
-TEST_PROGRAMS_NEED_X += test-online-cpus
 TEST_PROGRAMS_NEED_X += test-parse-options
-TEST_PROGRAMS_NEED_X += test-path-utils
-TEST_PROGRAMS_NEED_X += test-prio-queue
-TEST_PROGRAMS_NEED_X += test-read-cache
-TEST_PROGRAMS_NEED_X += test-write-cache
-TEST_PROGRAMS_NEED_X += test-ref-store
-TEST_PROGRAMS_NEED_X += test-regex
-TEST_PROGRAMS_NEED_X += test-revision-walking
-TEST_PROGRAMS_NEED_X += test-run-command
-TEST_PROGRAMS_NEED_X += test-scrap-cache-tree
-TEST_PROGRAMS_NEED_X += test-sha1
-TEST_PROGRAMS_NEED_X += test-sha1-array
-TEST_PROGRAMS_NEED_X += test-sigchain
-TEST_PROGRAMS_NEED_X += test-strcmp-offset
-TEST_PROGRAMS_NEED_X += test-string-list
-TEST_PROGRAMS_NEED_X += test-submodule-config
-TEST_PROGRAMS_NEED_X += test-subprocess
 TEST_PROGRAMS_NEED_X += test-svn-fe
-TEST_PROGRAMS_NEED_X += test-urlmatch-normalization
-TEST_PROGRAMS_NEED_X += test-wildmatch
+TEST_PROGRAMS_NEED_X += test-tool
 
 TEST_PROGRAMS = $(patsubst %,t/helper/%$X,$(TEST_PROGRAMS_NEED_X))
 
@@ -2092,7 +2095,7 @@ VCSSVN_OBJS += vcs-svn/fast_export.o
 VCSSVN_OBJS += vcs-svn/svndiff.o
 VCSSVN_OBJS += vcs-svn/svndump.o
 
-TEST_OBJS := $(patsubst %$X,%.o,$(TEST_PROGRAMS))
+TEST_OBJS := $(patsubst %$X,%.o,$(TEST_PROGRAMS)) $(patsubst %,t/helper/%,$(TEST_BUILTINS_OBJS))
 OBJECTS := $(LIB_OBJS) $(BUILTIN_OBJS) $(PROGRAM_OBJS) $(TEST_OBJS) \
 	$(XDIFF_OBJS) \
 	$(VCSSVN_OBJS) \
@@ -2503,10 +2506,12 @@ t/helper/test-svn-fe$X: $(VCSSVN_LIB)
 
 .PRECIOUS: $(TEST_OBJS)
 
+t/helper/test-tool$X: $(patsubst %,t/helper/%,$(TEST_BUILTINS_OBJS))
+
 t/helper/test-%$X: t/helper/test-%.o GIT-LDFLAGS $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(filter %.a,$^) $(LIBS)
 
-check-sha1:: t/helper/test-sha1$X
+check-sha1:: t/helper/test-tool$X
 	t/helper/test-sha1.sh
 
 SP_OBJ = $(patsubst %.o,%.sp,$(C_OBJ))

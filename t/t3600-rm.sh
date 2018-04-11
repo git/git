@@ -232,7 +232,7 @@ test_expect_success 'Call "rm" from outside the work tree' '
 test_expect_success 'refresh index before checking if it is up-to-date' '
 
 	git reset --hard &&
-	test-chmtime -86400 frotz/nitfol &&
+	test-tool chmtime -86400 frotz/nitfol &&
 	git rm frotz/nitfol &&
 	test ! -f frotz/nitfol
 

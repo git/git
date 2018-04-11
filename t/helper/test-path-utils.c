@@ -1,3 +1,4 @@
+#include "test-tool.h"
 #include "cache.h"
 #include "string-list.h"
 
@@ -170,7 +171,7 @@ static struct test_data dirname_data[] = {
 	{ NULL,              NULL     }
 };
 
-int cmd_main(int argc, const char **argv)
+int cmd__path_utils(int argc, const char **argv)
 {
 	if (argc == 3 && !strcmp(argv[1], "normalize_path_copy")) {
 		char *buf = xmallocz(strlen(argv[2]));

@@ -711,13 +711,13 @@ test_expect_success 'rebase -i continue with unstaged submodule' '
 test_expect_success 'avoid unnecessary reset' '
 	git checkout master &&
 	git reset --hard &&
-	test-chmtime =123456789 file3 &&
+	test-tool chmtime =123456789 file3 &&
 	git update-index --refresh &&
 	HEAD=$(git rev-parse HEAD) &&
 	set_fake_editor &&
 	git rebase -i HEAD~4 &&
 	test $HEAD = $(git rev-parse HEAD) &&
-	MTIME=$(test-chmtime -v +0 file3 | sed 's/[^0-9].*$//') &&
+	MTIME=$(test-tool chmtime -v +0 file3 | sed 's/[^0-9].*$//') &&
 	test 123456789 = $MTIME
 '
 

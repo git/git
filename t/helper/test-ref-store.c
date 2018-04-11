@@ -1,3 +1,4 @@
+#include "test-tool.h"
 #include "cache.h"
 #include "refs.h"
 #include "worktree.h"
@@ -275,7 +276,7 @@ static struct command commands[] = {
 	{ NULL, NULL }
 };
 
-int cmd_main(int argc, const char **argv)
+int cmd__ref_store(int argc, const char **argv)
 {
 	struct ref_store *refs;
 	const char *func;

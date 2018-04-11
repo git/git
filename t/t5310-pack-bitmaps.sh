@@ -284,7 +284,7 @@ test_expect_success JGIT 'jgit can read our bitmaps' '
 '
 
 test_expect_success 'splitting packs does not generate bogus bitmaps' '
-	test-genrandom foo $((1024 * 1024)) >rand &&
+	test-tool genrandom foo $((1024 * 1024)) >rand &&
 	git add rand &&
 	git commit -m "commit with big file" &&
 	git -c pack.packSizeLimit=500k repack -adb &&

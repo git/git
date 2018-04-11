@@ -73,7 +73,7 @@ make_pack () {
 }
 
 test_expect_success 'setup' '
-	test-genrandom base 4096 >base &&
+	test-tool genrandom base 4096 >base &&
 	for i in one two
 	do
 		# we want shared content here to encourage deltas...

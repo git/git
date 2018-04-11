@@ -19,7 +19,7 @@ write_script rot13-filter.pl "$PERL_PATH" \
 generate_random_characters () {
 	LEN=$1
 	NAME=$2
-	test-genrandom some-seed $LEN |
+	test-tool genrandom some-seed $LEN |
 		perl -pe "s/./chr((ord($&) % 26) + ord('a'))/sge" >"$TEST_ROOT/$NAME"
 }
 
@@ -267,7 +267,7 @@ test_expect_success 'filtering large input to small output should use little mem
 '
 
 test_expect_success 'filter that does not read is fine' '
-	test-genrandom foo $((128 * 1024 + 1)) >big &&
+	test-tool genrandom foo $((128 * 1024 + 1)) >big &&
 	echo "big filter=epipe" >.gitattributes &&
 	test_config filter.epipe.clean "echo xyzzy" &&
 	git add big &&

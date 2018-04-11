@@ -914,7 +914,7 @@ test_expect_success 'get --expiry-date' '
 	invalid1 = "abc"
 	EOF
 	cat >expect <<-EOF &&
-	$(test-date timestamp $rel)
+	$(test-tool date timestamp $rel)
 	1275666415
 	1510441871
 	1510348087

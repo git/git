@@ -73,7 +73,7 @@ test_expect_success 'diff identical, but newly created symlink and file' '
 	>expected &&
 	rm -f frotz nitfol &&
 	echo xyzzy >nitfol &&
-	test-chmtime +10 nitfol &&
+	test-tool chmtime +10 nitfol &&
 	if test_have_prereq SYMLINKS
 	then
 		ln -s xyzzy frotz

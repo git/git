@@ -41,7 +41,7 @@ test_expect_success 'configuration parsing with error' '
 	EOF
 	(
 		cd repo &&
-		test_must_fail test-submodule-config "" s 2>actual &&
+		test_must_fail test-tool submodule-config "" s 2>actual &&
 		test_i18ngrep "bad config" actual
 	)
 '
@@ -55,7 +55,7 @@ EOF
 
 test_expect_success 'test parsing and lookup of submodule config by path' '
 	(cd super &&
-		test-submodule-config \
+		test-tool submodule-config \
 			HEAD^ a \
 			HEAD b \
 			HEAD^ submodule \
@@ -67,7 +67,7 @@ test_expect_success 'test parsing and lookup of submodule config by path' '
 
 test_expect_success 'test parsing and lookup of submodule config by name' '
 	(cd super &&
-		test-submodule-config --name \
+		test-tool submodule-config --name \
 			HEAD^ a \
 			HEAD a \
 			HEAD^ submodule \
@@ -89,7 +89,7 @@ test_expect_success 'error in one submodule config lets continue' '
 		git add .gitmodules &&
 		mv .gitmodules.bak .gitmodules &&
 		git commit -m "add error" &&
-		test-submodule-config \
+		test-tool submodule-config \
 			HEAD b \
 			HEAD submodule \
 				>actual &&
@@ -100,7 +100,7 @@ test_expect_success 'error in one submodule config lets continue' '
 test_expect_success 'error message contains blob reference' '
 	(cd super &&
 		sha1=$(git rev-parse HEAD) &&
-		test-submodule-config \
+		test-tool submodule-config \
 			HEAD b \
 			HEAD submodule \
 				2>actual_err &&
@@ -114,9 +114,9 @@ test_expect_success 'using different treeishs works' '
 		git tag new_tag &&
 		tree=$(git rev-parse HEAD^{tree}) &&
 		commit=$(git rev-parse HEAD^{commit}) &&
-		test-submodule-config $commit b >expect &&
-		test-submodule-config $tree b >actual.1 &&
-		test-submodule-config new_tag b >actual.2 &&
+		test-tool submodule-config $commit b >expect &&
+		test-tool submodule-config $tree b >actual.1 &&
+		test-tool submodule-config new_tag b >actual.2 &&
 		test_cmp expect actual.1 &&
 		test_cmp expect actual.2
 	)
@@ -130,7 +130,7 @@ test_expect_success 'error in history in fetchrecursesubmodule lets continue' '
 		git config --unset -f .gitmodules \
 			submodule.submodule.fetchrecursesubmodules &&
 		git commit -m "add error in fetchrecursesubmodules" &&
-		test-submodule-config \
+		test-tool submodule-config \
 			HEAD b \
 			HEAD submodule \
 				>actual &&

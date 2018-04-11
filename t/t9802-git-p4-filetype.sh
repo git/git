@@ -237,7 +237,7 @@ test_expect_success 'ignore apple' '
 	build_gendouble &&
 	(
 		cd "$cli" &&
-		test-genrandom apple 1024 >double.png &&
+		test-tool genrandom apple 1024 >double.png &&
 		"$PYTHON_PATH" "$TRASH_DIRECTORY/gendouble.py" >%double.png &&
 		p4 add -t apple double.png &&
 		p4 submit -d appledouble

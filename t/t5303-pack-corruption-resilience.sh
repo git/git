@@ -19,14 +19,14 @@ test_description='resilience to pack corruptions with redundant objects'
 # 3) object header is always 2 bytes.
 
 create_test_files() {
-    test-genrandom "foo" 2000 > file_1 &&
-    test-genrandom "foo" 1800 > file_2 &&
-    test-genrandom "foo" 1800 > file_3 &&
+    test-tool genrandom "foo" 2000 > file_1 &&
+    test-tool genrandom "foo" 1800 > file_2 &&
+    test-tool genrandom "foo" 1800 > file_3 &&
     echo " base " >> file_1 &&
     echo " delta1 " >> file_2 &&
     echo " delta delta2 " >> file_3 &&
-    test-genrandom "bar" 150 >> file_2 &&
-    test-genrandom "baz" 100 >> file_3
+    test-tool genrandom "bar" 150 >> file_2 &&
+    test-tool genrandom "baz" 100 >> file_3
 }
 
 create_new_pack() {

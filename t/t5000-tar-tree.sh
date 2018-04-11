@@ -101,7 +101,7 @@ test_expect_success \
      ten=0123456789 && hundred=$ten$ten$ten$ten$ten$ten$ten$ten$ten$ten &&
      echo long filename >a/four$hundred &&
      mkdir a/bin &&
-     test-genrandom "frotz" 500000 >a/bin/sh &&
+     test-tool genrandom "frotz" 500000 >a/bin/sh &&
      printf "A\$Format:%s\$O" "$SUBSTFORMAT" >a/substfile1 &&
      printf "A not substituted O" >a/substfile2 &&
      if test_have_prereq SYMLINKS; then
@@ -192,7 +192,7 @@ test_expect_success \
     'validate file modification time' \
     'mkdir extract &&
      "$TAR" xf b.tar -C extract a/a &&
-     test-chmtime -v +0 extract/a/a |cut -f 1 >b.mtime &&
+     test-tool chmtime -v +0 extract/a/a |cut -f 1 >b.mtime &&
      echo "1117231200" >expected.mtime &&
      test_cmp expected.mtime b.mtime'
 

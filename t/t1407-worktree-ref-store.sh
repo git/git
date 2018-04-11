@@ -4,8 +4,8 @@ test_description='test worktree ref store api'
 
 . ./test-lib.sh
 
-RWT="test-ref-store worktree:wt"
-RMAIN="test-ref-store worktree:main"
+RWT="test-tool ref-store worktree:wt"
+RMAIN="test-tool ref-store worktree:main"
 
 test_expect_success 'setup' '
 	test_commit first &&

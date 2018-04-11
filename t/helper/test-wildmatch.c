@@ -1,6 +1,7 @@
+#include "test-tool.h"
 #include "cache.h"
 
-int cmd_main(int argc, const char **argv)
+int cmd__wildmatch(int argc, const char **argv)
 {
 	int i;
 	for (i = 2; i < argc; i++) {

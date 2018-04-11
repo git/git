@@ -8,14 +8,15 @@
  * published by the Free Software Foundation.
  */
 
+#include "test-tool.h"
 #include "git-compat-util.h"
 #include "delta.h"
 #include "cache.h"
 
 static const char usage_str[] =
-	"test-delta (-d|-p) <from_file> <data_file> <out_file>";
+	"test-tool delta (-d|-p) <from_file> <data_file> <out_file>";
 
-int cmd_main(int argc, const char **argv)
+int cmd__delta(int argc, const char **argv)
 {
 	int fd;
 	struct stat st;

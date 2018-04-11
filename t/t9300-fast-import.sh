@@ -2654,7 +2654,7 @@ test_expect_success 'R: corrupt lines do not mess marks file' '
 ##
 test_expect_success 'R: blob bigger than threshold' '
 	blobsize=$((2*1024*1024 + 53)) &&
-	test-genrandom bar $blobsize >expect &&
+	test-tool genrandom bar $blobsize >expect &&
 	cat >input <<-INPUT_END &&
 	commit refs/heads/big-file
 	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
