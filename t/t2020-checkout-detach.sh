@@ -189,8 +189,12 @@ test_expect_success 'no advice given for explicit detached head state' '
 # Detached HEAD tests for GIT_PRINT_SHA1_ELLIPSIS (new format)
 test_expect_success 'describe_detached_head prints no SHA-1 ellipsis when not asked to' "
 
+	commit=$(git rev-parse --short=12 master^) &&
+	commit2=$(git rev-parse --short=12 master~2) &&
+	commit3=$(git rev-parse --short=12 master~3) &&
+
 	# The first detach operation is more chatty than the following ones.
-	cat >1st_detach <<-'EOF' &&
+	cat >1st_detach <<-EOF &&
 	Note: checking out 'HEAD^'.
 
 	You are in 'detached HEAD' state. You can look around, make experimental
@@ -202,18 +206,18 @@ test_expect_success 'describe_detached_head prints no SHA-1 ellipsis when not as
 
 	  git checkout -b <new-branch-name>
 
-	HEAD is now at 7c7cd714e262 three
+	HEAD is now at \$commit three
 	EOF
 
 	# The remaining ones just show info about previous and current HEADs.
-	cat >2nd_detach <<-'EOF' &&
-	Previous HEAD position was 7c7cd714e262 three
-	HEAD is now at 139b20d8e6c5 two
+	cat >2nd_detach <<-EOF &&
+	Previous HEAD position was \$commit three
+	HEAD is now at \$commit2 two
 	EOF
 
-	cat >3rd_detach <<-'EOF' &&
-	Previous HEAD position was 139b20d8e6c5 two
-	HEAD is now at d79ce1670bdc one
+	cat >3rd_detach <<-EOF &&
+	Previous HEAD position was \$commit2 two
+	HEAD is now at \$commit3 one
 	EOF
 
 	reset &&
@@ -261,8 +265,12 @@ test_expect_success 'describe_detached_head prints no SHA-1 ellipsis when not as
 # Detached HEAD tests for GIT_PRINT_SHA1_ELLIPSIS (old format)
 test_expect_success 'describe_detached_head does print SHA-1 ellipsis when asked to' "
 
+	commit=$(git rev-parse --short=12 master^) &&
+	commit2=$(git rev-parse --short=12 master~2) &&
+	commit3=$(git rev-parse --short=12 master~3) &&
+
 	# The first detach operation is more chatty than the following ones.
-	cat >1st_detach <<-'EOF' &&
+	cat >1st_detach <<-EOF &&
 	Note: checking out 'HEAD^'.
 
 	You are in 'detached HEAD' state. You can look around, make experimental
@@ -274,18 +282,18 @@ test_expect_success 'describe_detached_head does print SHA-1 ellipsis when asked
 
 	  git checkout -b <new-branch-name>
 
-	HEAD is now at 7c7cd714e262... three
+	HEAD is now at \$commit... three
 	EOF
 
 	# The remaining ones just show info about previous and current HEADs.
-	cat >2nd_detach <<-'EOF' &&
-	Previous HEAD position was 7c7cd714e262... three
-	HEAD is now at 139b20d8e6c5... two
+	cat >2nd_detach <<-EOF &&
+	Previous HEAD position was \$commit... three
+	HEAD is now at \$commit2... two
 	EOF
 
-	cat >3rd_detach <<-'EOF' &&
-	Previous HEAD position was 139b20d8e6c5... two
-	HEAD is now at d79ce1670bdc... one
+	cat >3rd_detach <<-EOF &&
+	Previous HEAD position was \$commit2... two
+	HEAD is now at \$commit3... one
 	EOF
 
 	reset &&

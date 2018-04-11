@@ -209,8 +209,9 @@ test_expect_success '@{u} works when tracking a local branch' '
 	test refs/heads/master = "$(full_name @{u})"
 '
 
+commit=$(git rev-parse HEAD)
 cat >expect <<EOF
-commit 8f489d01d0cc65c3b0f09504ec50b5ed02a70bd5
+commit $commit
 Reflog: master@{0} (C O Mitter <committer@example.com>)
 Reflog message: branch: Created from HEAD
 Author: A U Thor <author@example.com>
@@ -224,7 +225,7 @@ test_expect_success 'log -g other@{u}' '
 '
 
 cat >expect <<EOF
-commit 8f489d01d0cc65c3b0f09504ec50b5ed02a70bd5
+commit $commit
 Reflog: master@{Thu Apr 7 15:17:13 2005 -0700} (C O Mitter <committer@example.com>)
 Reflog message: branch: Created from HEAD
 Author: A U Thor <author@example.com>

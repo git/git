@@ -1587,10 +1587,10 @@ test_expect_success '--show-origin stdin with file include' '
 '
 
 test_expect_success !MINGW '--show-origin blob' '
-	cat >expect <<-\EOF &&
-		blob:a9d9f9e555b5c6f07cbe09d3f06fe3df11e09c08	user.custom=true
-	EOF
 	blob=$(git hash-object -w "$CUSTOM_CONFIG_FILE") &&
+	cat >expect <<-EOF &&
+		blob:$blob	user.custom=true
+	EOF
 	git config --blob=$blob --show-origin --list >output &&
 	test_cmp expect output
 '
