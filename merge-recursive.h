@@ -24,6 +24,7 @@ struct merge_options {
 	int needed_rename_limit;
 	int show_rename_progress;
 	int call_depth;
+	unsigned marker_size_inc;
 	struct strbuf obuf;
 	struct hashmap current_file_dir_set;
 	struct string_list df_conflict_file_set;

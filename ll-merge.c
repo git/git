@@ -386,6 +386,7 @@ int ll_merge(mmbuffer_t *result_buf,
 			driver = find_ll_merge_driver(driver->recursive);
 		marker_size += 2;
 	}
+	marker_size += opts->marker_size_inc;
 	return driver->fn(driver, result_buf, path, ancestor, ancestor_label,
 			  ours, our_label, theirs, their_label,
 			  opts, marker_size);

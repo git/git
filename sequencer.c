@@ -2982,6 +2982,8 @@ static int rebase_merge_commit(struct commit *commit,
 	strbuf_addf(&buf, "%s... original merge", short_commit_name(commit));
 	o->branch2 = buf.buf;
 	o->buffer_output = 2; /* we want to show it only in case of errors */
+	for (j = to_merge; j; j = j->next)
+		o->marker_size_inc++;
 
 	/*
 	 * First, merge A3' (i.e. HEAD) with M, using A3 (i.e. M^) as merge
@@ -3016,6 +3018,7 @@ static int rebase_merge_commit(struct commit *commit,
 
 		parse_commit(j->item);
 		parse_commit(p->item);
+		o->marker_size_inc--;
 
 		if (!oidcmp(&p->item->tree->object.oid,
 			    &j->item->tree->object.oid))

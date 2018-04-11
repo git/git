@@ -518,11 +518,11 @@ test_expect_success 'rebase merge commit (realistic example)' '
 	  Qprintf("Hello, world!\n");
 	  }
 	++<<<<<<< intermediate merge
-	++<<<<<<< HEAD
+	++<<<<<<<< HEAD
 	 +/* main event loop */
 	 +void event_loop(void) {
 	 +Q/* TODO: place holder for now */
-	++=======
+	++========
 	++=======
 	++/* main event loop */
 	++void event_loop(void) {
@@ -532,7 +532,7 @@ test_expect_success 'rebase merge commit (realistic example)' '
 	+ /* caller */
 	+ void caller(void) {
 	+ Qhi();
-	++>>>>>>> <HASH>... original merge
+	++>>>>>>>> <HASH>... original merge
 	  }
 	EOF
 	: HEAD renamed core to hi, MERGE_HEAD did more complicated stuff... &&
