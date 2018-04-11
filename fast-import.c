@@ -209,8 +209,8 @@ struct last_object {
 	unsigned no_swap : 1;
 };
 
-struct mem_pool {
-	struct mem_pool *next_pool;
+struct mp_block {
+	struct mp_block *next_block;
 	char *next_free;
 	char *end;
 	uintmax_t space[FLEX_ARRAY]; /* more */
@@ -304,9 +304,9 @@ static int global_argc;
 static const char **global_argv;
 
 /* Memory pools */
-static size_t mem_pool_alloc = 2*1024*1024 - sizeof(struct mem_pool);
+static size_t mem_pool_alloc = 2*1024*1024 - sizeof(struct mp_block);
 static size_t total_allocd;
-static struct mem_pool *mem_pool;
+static struct mp_block *mp_block_head;
 
 /* Atom management */
 static unsigned int atom_table_sz = 4451;
@@ -636,14 +636,14 @@ static unsigned int hc_str(const char *s, size_t len)
 
 static void *pool_alloc(size_t len)
 {
-	struct mem_pool *p;
+	struct mp_block *p;
 	void *r;
 
 	/* round up to a 'uintmax_t' alignment */
 	if (len & (sizeof(uintmax_t) - 1))
 		len += sizeof(uintmax_t) - (len & (sizeof(uintmax_t) - 1));
 
-	for (p = mem_pool; p; p = p->next_pool)
+	for (p = mp_block_head; p; p = p->next_block)
 		if ((p->end - p->next_free >= len))
 			break;
 
@@ -652,12 +652,12 @@ static void *pool_alloc(size_t len)
 			total_allocd += len;
 			return xmalloc(len);
 		}
-		total_allocd += sizeof(struct mem_pool) + mem_pool_alloc;
-		p = xmalloc(st_add(sizeof(struct mem_pool), mem_pool_alloc));
-		p->next_pool = mem_pool;
+		total_allocd += sizeof(struct mp_block) + mem_pool_alloc;
+		p = xmalloc(st_add(sizeof(struct mp_block), mem_pool_alloc));
+		p->next_block = mp_block_head;
 		p->next_free = (char *) p->space;
 		p->end = p->next_free + mem_pool_alloc;
-		mem_pool = p;
+		mp_block_head = p;
 	}
 
 	r = p->next_free;
