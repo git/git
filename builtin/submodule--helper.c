@@ -655,9 +655,13 @@ static void status_submodule(const char *path, const struct object_id *ce_oid,
 			     displaypath);
 	} else if (!(flags & OPT_CACHED)) {
 		struct object_id oid;
+		struct ref_store *refs = get_submodule_ref_store(path);
 
-		if (refs_head_ref(get_submodule_ref_store(path),
-				  handle_submodule_head_ref, &oid))
+		if (!refs) {
+			print_status(flags, '-', path, ce_oid, displaypath);
+			goto cleanup;
+		}
+		if (refs_head_ref(refs, handle_submodule_head_ref, &oid))
 			die(_("could not resolve HEAD ref inside the "
 			      "submodule '%s'"), path);
 
