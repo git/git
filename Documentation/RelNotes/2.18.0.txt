@@ -18,6 +18,8 @@ UI, Workflows & Features
    the callers to tell the case where there was no new commits to
    rewrite from other error cases.
 
+ * When built with more recent cURL, GIT_SSL_VERSION can now specify
+   "tlsv1.3" as its value.
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -57,6 +59,23 @@ Performance, Internal Implementation, Development Support etc.
  * The mechanism to use parse-options API to automate the command line
    completion continues to get extended and polished.
 
+ * Copies of old scripted Porcelain commands in contrib/examples/ have
+   been removed.
+
+ * Some tests that rely on the exact hardcoded values of object names
+   have been updated in preparation for hash function migration.
+
+ * Perf-test update.
+
+ * Test helper update.
+
+ * The effort continues to refactor the internal global data structure
+   to make it possible to open multiple repositories, work with and
+   then close them,
+
+ * Small test-helper programs have been consolidated into a single
+   binary.
+
 Also contains various documentation updates and code clean-ups.
 
 
@@ -87,6 +106,17 @@ Fixes since v2.17
    corrected.
    (merge f78ab355e7 yk/filter-branch-non-committish-refs later to maint).
 
+ * "git submodule status" misbehaved on a submodule that has been
+   removed from the working tree.
+   (merge 74b6bda32f rs/status-with-removed-submodule later to maint).
+
+ * When credential helper exits very quickly without reading its
+   input, it used to cause Git to die with SIGPIPE, which has been
+   fixed.
+   (merge a0d51e8d0e eb/cred-helper-ignore-sigpipe later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge 248f66ed8e nd/trace-with-env later to maint).
    (merge 14ced5562c ys/bisect-object-id-missing-conversion-fix later to maint).
+   (merge 5988eb631a ab/doc-hash-brokenness later to maint).
+   (merge a4d4e32a70 pk/test-avoid-pipe-hiding-exit-status later to maint).
