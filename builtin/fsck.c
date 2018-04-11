@@ -70,7 +70,7 @@ static const char *printable_type(struct object *obj)
 			object_as_type(obj, type, 0);
 	}
 
-	ret = typename(obj->type);
+	ret = type_name(obj->type);
 	if (!ret)
 		ret = "unknown";
 
@@ -137,7 +137,7 @@ static int mark_object(struct object *obj, int type, void *data, struct fsck_opt
 		printf("broken link from %7s %s\n",
 			   printable_type(parent), describe_object(parent));
 		printf("broken link from %7s %s\n",
-			   (type == OBJ_ANY ? "unknown" : typename(type)), "unknown");
+			   (type == OBJ_ANY ? "unknown" : type_name(type)), "unknown");
 		errors_found |= ERROR_REACHABLE;
 		return 1;
 	}

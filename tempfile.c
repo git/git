@@ -165,11 +165,11 @@ struct tempfile *register_tempfile(const char *path)
 	return tempfile;
 }
 
-struct tempfile *mks_tempfile_sm(const char *template, int suffixlen, int mode)
+struct tempfile *mks_tempfile_sm(const char *filename_template, int suffixlen, int mode)
 {
 	struct tempfile *tempfile = new_tempfile();
 
-	strbuf_add_absolute_path(&tempfile->filename, template);
+	strbuf_add_absolute_path(&tempfile->filename, filename_template);
 	tempfile->fd = git_mkstemps_mode(tempfile->filename.buf, suffixlen, mode);
 	if (tempfile->fd < 0) {
 		deactivate_tempfile(tempfile);
@@ -179,7 +179,7 @@ struct tempfile *mks_tempfile_sm(const char *template, int suffixlen, int mode)
 	return tempfile;
 }
 
-struct tempfile *mks_tempfile_tsm(const char *template, int suffixlen, int mode)
+struct tempfile *mks_tempfile_tsm(const char *filename_template, int suffixlen, int mode)
 {
 	struct tempfile *tempfile = new_tempfile();
 	const char *tmpdir;
@@ -188,7 +188,7 @@ struct tempfile *mks_tempfile_tsm(const char *template, int suffixlen, int mode)
 	if (!tmpdir)
 		tmpdir = "/tmp";
 
-	strbuf_addf(&tempfile->filename, "%s/%s", tmpdir, template);
+	strbuf_addf(&tempfile->filename, "%s/%s", tmpdir, filename_template);
 	tempfile->fd = git_mkstemps_mode(tempfile->filename.buf, suffixlen, mode);
 	if (tempfile->fd < 0) {
 		deactivate_tempfile(tempfile);
@@ -198,12 +198,12 @@ struct tempfile *mks_tempfile_tsm(const char *template, int suffixlen, int mode)
 	return tempfile;
 }
 
-struct tempfile *xmks_tempfile_m(const char *template, int mode)
+struct tempfile *xmks_tempfile_m(const char *filename_template, int mode)
 {
 	struct tempfile *tempfile;
 	struct strbuf full_template = STRBUF_INIT;
 
-	strbuf_add_absolute_path(&full_template, template);
+	strbuf_add_absolute_path(&full_template, filename_template);
 	tempfile = mks_tempfile_m(full_template.buf, mode);
 	if (!tempfile)
 		die_errno("Unable to create temporary file '%s'",

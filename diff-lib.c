@@ -304,7 +304,7 @@ static int get_stat_data(const struct cache_entry *ce,
 }
 
 static void show_new_file(struct rev_info *revs,
-			  const struct cache_entry *new,
+			  const struct cache_entry *new_file,
 			  int cached, int match_missing)
 {
 	const struct object_id *oid;
@@ -315,16 +315,16 @@ static void show_new_file(struct rev_info *revs,
 	 * New file in the index: it might actually be different in
 	 * the working tree.
 	 */
-	if (get_stat_data(new, &oid, &mode, cached, match_missing,
+	if (get_stat_data(new_file, &oid, &mode, cached, match_missing,
 	    &dirty_submodule, &revs->diffopt) < 0)
 		return;
 
-	diff_index_show_file(revs, "+", new, oid, !is_null_oid(oid), mode, dirty_submodule);
+	diff_index_show_file(revs, "+", new_file, oid, !is_null_oid(oid), mode, dirty_submodule);
 }
 
 static int show_modified(struct rev_info *revs,
-			 const struct cache_entry *old,
-			 const struct cache_entry *new,
+			 const struct cache_entry *old_entry,
+			 const struct cache_entry *new_entry,
 			 int report_missing,
 			 int cached, int match_missing)
 {
@@ -332,47 +332,47 @@ static int show_modified(struct rev_info *revs,
 	const struct object_id *oid;
 	unsigned dirty_submodule = 0;
 
-	if (get_stat_data(new, &oid, &mode, cached, match_missing,
+	if (get_stat_data(new_entry, &oid, &mode, cached, match_missing,
 			  &dirty_submodule, &revs->diffopt) < 0) {
 		if (report_missing)
-			diff_index_show_file(revs, "-", old,
-					     &old->oid, 1, old->ce_mode,
+			diff_index_show_file(revs, "-", old_entry,
+					     &old_entry->oid, 1, old_entry->ce_mode,
 					     0);
 		return -1;
 	}
 
 	if (revs->combine_merges && !cached &&
-	    (oidcmp(oid, &old->oid) || oidcmp(&old->oid, &new->oid))) {
+	    (oidcmp(oid, &old_entry->oid) || oidcmp(&old_entry->oid, &new_entry->oid))) {
 		struct combine_diff_path *p;
-		int pathlen = ce_namelen(new);
+		int pathlen = ce_namelen(new_entry);
 
 		p = xmalloc(combine_diff_path_size(2, pathlen));
 		p->path = (char *) &p->parent[2];
 		p->next = NULL;
-		memcpy(p->path, new->name, pathlen);
+		memcpy(p->path, new_entry->name, pathlen);
 		p->path[pathlen] = 0;
 		p->mode = mode;
 		oidclr(&p->oid);
 		memset(p->parent, 0, 2 * sizeof(struct combine_diff_parent));
 		p->parent[0].status = DIFF_STATUS_MODIFIED;
-		p->parent[0].mode = new->ce_mode;
-		oidcpy(&p->parent[0].oid, &new->oid);
+		p->parent[0].mode = new_entry->ce_mode;
+		oidcpy(&p->parent[0].oid, &new_entry->oid);
 		p->parent[1].status = DIFF_STATUS_MODIFIED;
-		p->parent[1].mode = old->ce_mode;
-		oidcpy(&p->parent[1].oid, &old->oid);
+		p->parent[1].mode = old_entry->ce_mode;
+		oidcpy(&p->parent[1].oid, &old_entry->oid);
 		show_combined_diff(p, 2, revs->dense_combined_merges, revs);
 		free(p);
 		return 0;
 	}
 
-	oldmode = old->ce_mode;
-	if (mode == oldmode && !oidcmp(oid, &old->oid) && !dirty_submodule &&
+	oldmode = old_entry->ce_mode;
+	if (mode == oldmode && !oidcmp(oid, &old_entry->oid) && !dirty_submodule &&
 	    !revs->diffopt.flags.find_copies_harder)
 		return 0;
 
 	diff_change(&revs->diffopt, oldmode, mode,
-		    &old->oid, oid, 1, !is_null_oid(oid),
-		    old->name, 0, dirty_submodule);
+		    &old_entry->oid, oid, 1, !is_null_oid(oid),
+		    old_entry->name, 0, dirty_submodule);
 	return 0;
 }
 

@@ -821,7 +821,7 @@ static int fsck_tag_buffer(struct tag *tag, const char *data,
 			ret = report(options, &tag->object,
 				FSCK_MSG_TAG_OBJECT_NOT_TAG,
 				"expected tag got %s",
-			    typename(type));
+			    type_name(type));
 			goto done;
 		}
 	}

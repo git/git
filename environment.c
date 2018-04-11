@@ -101,7 +101,7 @@ int ignore_untracked_cache_config;
 /* This is set by setup_git_dir_gently() and/or git_default_config() */
 char *git_work_tree_cfg;
 
-static char *namespace;
+static char *git_namespace;
 
 static const char *super_prefix;
 
@@ -159,8 +159,8 @@ void setup_git_env(void)
 	free(git_replace_ref_base);
 	git_replace_ref_base = xstrdup(replace_ref_base ? replace_ref_base
 							  : "refs/replace/");
-	free(namespace);
-	namespace = expand_namespace(getenv(GIT_NAMESPACE_ENVIRONMENT));
+	free(git_namespace);
+	git_namespace = expand_namespace(getenv(GIT_NAMESPACE_ENVIRONMENT));
 	shallow_file = getenv(GIT_SHALLOW_FILE_ENVIRONMENT);
 	if (shallow_file)
 		set_alternate_shallow_file(shallow_file, 0);
@@ -194,9 +194,9 @@ const char *get_git_common_dir(void)
 
 const char *get_git_namespace(void)
 {
-	if (!namespace)
+	if (!git_namespace)
 		BUG("git environment hasn't been setup");
-	return namespace;
+	return git_namespace;
 }
 
 const char *strip_namespace(const char *namespaced_ref)
@@ -250,7 +250,7 @@ char *get_object_directory(void)
 	return the_repository->objectdir;
 }
 
-int odb_mkstemp(struct strbuf *template, const char *pattern)
+int odb_mkstemp(struct strbuf *temp_filename, const char *pattern)
 {
 	int fd;
 	/*
@@ -258,16 +258,16 @@ int odb_mkstemp(struct strbuf *template, const char *pattern)
 	 * restrictive except to remove write permission.
 	 */
 	int mode = 0444;
-	git_path_buf(template, "objects/%s", pattern);
-	fd = git_mkstemp_mode(template->buf, mode);
+	git_path_buf(temp_filename, "objects/%s", pattern);
+	fd = git_mkstemp_mode(temp_filename->buf, mode);
 	if (0 <= fd)
 		return fd;
 
 	/* slow path */
-	/* some mkstemp implementations erase template on failure */
-	git_path_buf(template, "objects/%s", pattern);
-	safe_create_leading_directories(template->buf);
-	return xmkstemp_mode(template->buf, mode);
+	/* some mkstemp implementations erase temp_filename on failure */
+	git_path_buf(temp_filename, "objects/%s", pattern);
+	safe_create_leading_directories(temp_filename->buf);
+	return xmkstemp_mode(temp_filename->buf, mode);
 }
 
 int odb_pack_keep(const char *name)

@@ -220,7 +220,7 @@ static void create_tag(const struct object_id *object, const char *tag,
 		    "tag %s\n"
 		    "tagger %s\n\n",
 		    oid_to_hex(object),
-		    typename(type),
+		    type_name(type),
 		    tag,
 		    git_committer_info(IDENT_STRICT));
 

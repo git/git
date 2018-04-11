@@ -381,7 +381,7 @@ static int show_ambiguous_object(const struct object_id *oid, void *data)
 
 	advise("  %s %s%s",
 	       find_unique_abbrev(oid->hash, DEFAULT_ABBREV),
-	       typename(type) ? typename(type) : "unknown type",
+	       type_name(type) ? type_name(type) : "unknown type",
 	       desc.buf);
 
 	strbuf_release(&desc);
@@ -901,8 +901,8 @@ struct object *peel_to_type(const char *name, int namelen,
 			if (name)
 				error("%.*s: expected %s type, but the object "
 				      "dereferences to %s type",
-				      namelen, name, typename(expected_type),
-				      typename(o->type));
+				      namelen, name, type_name(expected_type),
+				      type_name(o->type));
 			return NULL;
 		}
 	}

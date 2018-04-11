@@ -322,7 +322,7 @@ static void read_branches(void)
 
 struct ref_states {
 	struct remote *remote;
-	struct string_list new, stale, tracked, heads, push;
+	struct string_list new_refs, stale, tracked, heads, push;
 	int queried;
 };
 
@@ -337,12 +337,12 @@ static int get_ref_states(const struct ref *remote_refs, struct ref_states *stat
 			die(_("Could not get fetch map for refspec %s"),
 				states->remote->fetch_refspec[i]);
 
-	states->new.strdup_strings = 1;
+	states->new_refs.strdup_strings = 1;
 	states->tracked.strdup_strings = 1;
 	states->stale.strdup_strings = 1;
 	for (ref = fetch_map; ref; ref = ref->next) {
 		if (!ref->peer_ref || !ref_exists(ref->peer_ref->name))
-			string_list_append(&states->new, abbrev_branch(ref->name));
+			string_list_append(&states->new_refs, abbrev_branch(ref->name));
 		else
 			string_list_append(&states->tracked, abbrev_branch(ref->name));
 	}
@@ -356,7 +356,7 @@ static int get_ref_states(const struct ref *remote_refs, struct ref_states *stat
 	free_refs(stale_refs);
 	free_refs(fetch_map);
 
-	string_list_sort(&states->new);
+	string_list_sort(&states->new_refs);
 	string_list_sort(&states->tracked);
 	string_list_sort(&states->stale);
 
@@ -546,8 +546,8 @@ static int add_branch_for_removal(const char *refname,
 }
 
 struct rename_info {
-	const char *old;
-	const char *new;
+	const char *old_name;
+	const char *new_name;
 	struct string_list *remote_branches;
 };
 
@@ -560,7 +560,7 @@ static int read_remote_branches(const char *refname,
 	int flag;
 	const char *symref;
 
-	strbuf_addf(&buf, "refs/remotes/%s/", rename->old);
+	strbuf_addf(&buf, "refs/remotes/%s/", rename->old_name);
 	if (starts_with(refname, buf.buf)) {
 		item = string_list_append(rename->remote_branches, xstrdup(refname));
 		symref = resolve_ref_unsafe(refname, RESOLVE_REF_READING,
@@ -615,36 +615,36 @@ static int mv(int argc, const char **argv)
 	if (argc != 3)
 		usage_with_options(builtin_remote_rename_usage, options);
 
-	rename.old = argv[1];
-	rename.new = argv[2];
+	rename.old_name = argv[1];
+	rename.new_name = argv[2];
 	rename.remote_branches = &remote_branches;
 
-	oldremote = remote_get(rename.old);
+	oldremote = remote_get(rename.old_name);
 	if (!remote_is_configured(oldremote, 1))
-		die(_("No such remote: %s"), rename.old);
+		die(_("No such remote: %s"), rename.old_name);
 
-	if (!strcmp(rename.old, rename.new) && oldremote->origin != REMOTE_CONFIG)
+	if (!strcmp(rename.old_name, rename.new_name) && oldremote->origin != REMOTE_CONFIG)
 		return migrate_file(oldremote);
 
-	newremote = remote_get(rename.new);
+	newremote = remote_get(rename.new_name);
 	if (remote_is_configured(newremote, 1))
-		die(_("remote %s already exists."), rename.new);
+		die(_("remote %s already exists."), rename.new_name);
 
-	strbuf_addf(&buf, "refs/heads/test:refs/remotes/%s/test", rename.new);
+	strbuf_addf(&buf, "refs/heads/test:refs/remotes/%s/test", rename.new_name);
 	if (!valid_fetch_refspec(buf.buf))
-		die(_("'%s' is not a valid remote name"), rename.new);
+		die(_("'%s' is not a valid remote name"), rename.new_name);
 
 	strbuf_reset(&buf);
-	strbuf_addf(&buf, "remote.%s", rename.old);
-	strbuf_addf(&buf2, "remote.%s", rename.new);
+	strbuf_addf(&buf, "remote.%s", rename.old_name);
+	strbuf_addf(&buf2, "remote.%s", rename.new_name);
 	if (git_config_rename_section(buf.buf, buf2.buf) < 1)
 		return error(_("Could not rename config section '%s' to '%s'"),
 				buf.buf, buf2.buf);
 
 	strbuf_reset(&buf);
-	strbuf_addf(&buf, "remote.%s.fetch", rename.new);
+	strbuf_addf(&buf, "remote.%s.fetch", rename.new_name);
 	git_config_set_multivar(buf.buf, NULL, NULL, 1);
-	strbuf_addf(&old_remote_context, ":refs/remotes/%s/", rename.old);
+	strbuf_addf(&old_remote_context, ":refs/remotes/%s/", rename.old_name);
 	for (i = 0; i < oldremote->fetch_refspec_nr; i++) {
 		char *ptr;
 
@@ -655,8 +655,8 @@ static int mv(int argc, const char **argv)
 			refspec_updated = 1;
 			strbuf_splice(&buf2,
 				      ptr-buf2.buf + strlen(":refs/remotes/"),
-				      strlen(rename.old), rename.new,
-				      strlen(rename.new));
+				      strlen(rename.old_name), rename.new_name,
+				      strlen(rename.new_name));
 		} else
 			warning(_("Not updating non-default fetch refspec\n"
 				  "\t%s\n"
@@ -670,10 +670,10 @@ static int mv(int argc, const char **argv)
 	for (i = 0; i < branch_list.nr; i++) {
 		struct string_list_item *item = branch_list.items + i;
 		struct branch_info *info = item->util;
-		if (info->remote_name && !strcmp(info->remote_name, rename.old)) {
+		if (info->remote_name && !strcmp(info->remote_name, rename.old_name)) {
 			strbuf_reset(&buf);
 			strbuf_addf(&buf, "branch.%s.remote", item->string);
-			git_config_set(buf.buf, rename.new);
+			git_config_set(buf.buf, rename.new_name);
 		}
 	}
 
@@ -703,8 +703,8 @@ static int mv(int argc, const char **argv)
 			continue;
 		strbuf_reset(&buf);
 		strbuf_addstr(&buf, item->string);
-		strbuf_splice(&buf, strlen("refs/remotes/"), strlen(rename.old),
-				rename.new, strlen(rename.new));
+		strbuf_splice(&buf, strlen("refs/remotes/"), strlen(rename.old_name),
+				rename.new_name, strlen(rename.new_name));
 		strbuf_reset(&buf2);
 		strbuf_addf(&buf2, "remote: renamed %s to %s",
 				item->string, buf.buf);
@@ -718,12 +718,12 @@ static int mv(int argc, const char **argv)
 			continue;
 		strbuf_reset(&buf);
 		strbuf_addstr(&buf, item->string);
-		strbuf_splice(&buf, strlen("refs/remotes/"), strlen(rename.old),
-				rename.new, strlen(rename.new));
+		strbuf_splice(&buf, strlen("refs/remotes/"), strlen(rename.old_name),
+				rename.new_name, strlen(rename.new_name));
 		strbuf_reset(&buf2);
 		strbuf_addstr(&buf2, item->util);
-		strbuf_splice(&buf2, strlen("refs/remotes/"), strlen(rename.old),
-				rename.new, strlen(rename.new));
+		strbuf_splice(&buf2, strlen("refs/remotes/"), strlen(rename.old_name),
+				rename.new_name, strlen(rename.new_name));
 		strbuf_reset(&buf3);
 		strbuf_addf(&buf3, "remote: renamed %s to %s",
 				item->string, buf.buf);
@@ -822,7 +822,7 @@ static void clear_push_info(void *util, const char *string)
 
 static void free_remote_ref_states(struct ref_states *states)
 {
-	string_list_clear(&states->new, 0);
+	string_list_clear(&states->new_refs, 0);
 	string_list_clear(&states->stale, 1);
 	string_list_clear(&states->tracked, 0);
 	string_list_clear(&states->heads, 0);
@@ -907,7 +907,7 @@ static int show_remote_info_item(struct string_list_item *item, void *cb_data)
 	if (states->queried) {
 		const char *fmt = "%s";
 		const char *arg = "";
-		if (string_list_has_string(&states->new, name)) {
+		if (string_list_has_string(&states->new_refs, name)) {
 			fmt = _(" new (next fetch will store in remotes/%s)");
 			arg = states->remote->name;
 		} else if (string_list_has_string(&states->tracked, name))
@@ -1176,7 +1176,7 @@ static int show(int argc, const char **argv)
 
 		/* remote branch info */
 		info.width = 0;
-		for_each_string_list(&states.new, add_remote_to_show_info, &info);
+		for_each_string_list(&states.new_refs, add_remote_to_show_info, &info);
 		for_each_string_list(&states.tracked, add_remote_to_show_info, &info);
 		for_each_string_list(&states.stale, add_remote_to_show_info, &info);
 		if (info.list->nr)

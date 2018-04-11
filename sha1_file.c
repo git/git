@@ -804,7 +804,7 @@ int check_sha1_signature(const unsigned char *sha1, void *map,
 		return -1;
 
 	/* Generate the header */
-	hdrlen = xsnprintf(hdr, sizeof(hdr), "%s %lu", typename(obj_type), size) + 1;
+	hdrlen = xsnprintf(hdr, sizeof(hdr), "%s %lu", type_name(obj_type), size) + 1;
 
 	/* Sha1.. */
 	the_hash_algo->init_fn(&c);
@@ -1094,8 +1094,8 @@ static int parse_sha1_header_extended(const char *hdr, struct object_info *oi,
 	}
 
 	type = type_from_string_gently(type_buf, type_len, 1);
-	if (oi->typename)
-		strbuf_add(oi->typename, type_buf, type_len);
+	if (oi->type_name)
+		strbuf_add(oi->type_name, type_buf, type_len);
 	/*
 	 * Set type to 0 if its an unknown object and
 	 * we're obtaining the type using '--allow-unknown-type'
@@ -1165,7 +1165,7 @@ static int sha1_loose_object_info(const unsigned char *sha1,
 	 * return value implicitly indicates whether the
 	 * object even exists.
 	 */
-	if (!oi->typep && !oi->typename && !oi->sizep && !oi->contentp) {
+	if (!oi->typep && !oi->type_name && !oi->sizep && !oi->contentp) {
 		const char *path;
 		struct stat st;
 		if (stat_sha1_file(sha1, &st, &path) < 0)
@@ -1249,8 +1249,8 @@ int sha1_object_info_extended(const unsigned char *sha1, struct object_info *oi,
 				*(oi->disk_sizep) = 0;
 			if (oi->delta_base_sha1)
 				hashclr(oi->delta_base_sha1);
-			if (oi->typename)
-				strbuf_addstr(oi->typename, typename(co->type));
+			if (oi->type_name)
+				strbuf_addstr(oi->type_name, type_name(co->type));
 			if (oi->contentp)
 				*oi->contentp = xmemdupz(co->buf, co->size);
 			oi->whence = OI_CACHED;
@@ -1339,7 +1339,7 @@ int pretend_object_file(void *buf, unsigned long len, enum object_type type,
 {
 	struct cached_object *co;
 
-	hash_object_file(buf, len, typename(type), oid);
+	hash_object_file(buf, len, type_name(type), oid);
 	if (has_sha1_file(oid->hash) || find_cached_object(oid->hash))
 		return 0;
 	ALLOC_GROW(cached_objects, cached_object_nr + 1, cached_object_alloc);
@@ -1714,7 +1714,7 @@ int force_object_loose(const struct object_id *oid, time_t mtime)
 	buf = read_object(oid->hash, &type, &len);
 	if (!buf)
 		return error("cannot read sha1_file for %s", oid_to_hex(oid));
-	hdrlen = xsnprintf(hdr, sizeof(hdr), "%s %lu", typename(type), len) + 1;
+	hdrlen = xsnprintf(hdr, sizeof(hdr), "%s %lu", type_name(type), len) + 1;
 	ret = write_loose_object(oid, hdr, hdrlen, buf, len, mtime);
 	free(buf);
 
@@ -1798,9 +1798,9 @@ static int index_mem(struct object_id *oid, void *buf, size_t size,
 	}
 
 	if (write_object)
-		ret = write_object_file(buf, size, typename(type), oid);
+		ret = write_object_file(buf, size, type_name(type), oid);
 	else
-		ret = hash_object_file(buf, size, typename(type), oid);
+		ret = hash_object_file(buf, size, type_name(type), oid);
 	if (re_allocated)
 		free(buf);
 	return ret;
@@ -1820,10 +1820,10 @@ static int index_stream_convert_blob(struct object_id *oid, int fd,
 				 get_conv_flags(flags));
 
 	if (write_object)
-		ret = write_object_file(sbuf.buf, sbuf.len, typename(OBJ_BLOB),
+		ret = write_object_file(sbuf.buf, sbuf.len, type_name(OBJ_BLOB),
 					oid);
 	else
-		ret = hash_object_file(sbuf.buf, sbuf.len, typename(OBJ_BLOB),
+		ret = hash_object_file(sbuf.buf, sbuf.len, type_name(OBJ_BLOB),
 				       oid);
 	strbuf_release(&sbuf);
 	return ret;
@@ -1973,7 +1973,7 @@ void assert_sha1_type(const unsigned char *sha1, enum object_type expect)
 		die("%s is not a valid object", sha1_to_hex(sha1));
 	if (type != expect)
 		die("%s is not a valid '%s' object", sha1_to_hex(sha1),
-		    typename(expect));
+		    type_name(expect));
 }
 
 int for_each_file_in_obj_subdir(unsigned int subdir_nr,
@@ -2218,7 +2218,7 @@ int read_loose_object(const char *path,
 			goto out;
 		}
 		if (check_sha1_signature(expected_sha1, *contents,
-					 *size, typename(*type))) {
+					 *size, type_name(*type))) {
 			error("sha1 mismatch for %s (expected %s)", path,
 			      sha1_to_hex(expected_sha1));
 			free(*contents);

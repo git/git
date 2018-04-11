@@ -1504,7 +1504,7 @@ struct diff_words_style_elem {
 
 struct diff_words_style {
 	enum diff_words_type type;
-	struct diff_words_style_elem new, old, ctx;
+	struct diff_words_style_elem new_word, old_word, ctx;
 	const char *newline;
 };
 
@@ -1655,12 +1655,12 @@ static void fn_out_diff_words_aux(void *priv, char *line, unsigned long len)
 	}
 	if (minus_begin != minus_end) {
 		fn_out_diff_words_write_helper(diff_words->opt,
-				&style->old, style->newline,
+				&style->old_word, style->newline,
 				minus_end - minus_begin, minus_begin);
 	}
 	if (plus_begin != plus_end) {
 		fn_out_diff_words_write_helper(diff_words->opt,
-				&style->new, style->newline,
+				&style->new_word, style->newline,
 				plus_end - plus_begin, plus_begin);
 	}
 
@@ -1758,7 +1758,7 @@ static void diff_words_show(struct diff_words_data *diff_words)
 		emit_diff_symbol(diff_words->opt, DIFF_SYMBOL_WORD_DIFF,
 				 line_prefix, strlen(line_prefix), 0);
 		fn_out_diff_words_write_helper(diff_words->opt,
-			&style->old, style->newline,
+			&style->old_word, style->newline,
 			diff_words->minus.text.size,
 			diff_words->minus.text.ptr);
 		diff_words->minus.text.size = 0;
@@ -1883,8 +1883,8 @@ static void init_diff_words_data(struct emit_callback *ecbdata,
 	}
 	if (want_color(o->use_color)) {
 		struct diff_words_style *st = ecbdata->diff_words->style;
-		st->old.color = diff_get_color_opt(o, DIFF_FILE_OLD);
-		st->new.color = diff_get_color_opt(o, DIFF_FILE_NEW);
+		st->old_word.color = diff_get_color_opt(o, DIFF_FILE_OLD);
+		st->new_word.color = diff_get_color_opt(o, DIFF_FILE_NEW);
 		st->ctx.color = diff_get_color_opt(o, DIFF_CONTEXT);
 	}
 }
@@ -2047,8 +2047,8 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 
 static char *pprint_rename(const char *a, const char *b)
 {
-	const char *old = a;
-	const char *new = b;
+	const char *old_name = a;
+	const char *new_name = b;
 	struct strbuf name = STRBUF_INIT;
 	int pfx_length, sfx_length;
 	int pfx_adjust_for_slash;
@@ -2067,16 +2067,16 @@ static char *pprint_rename(const char *a, const char *b)
 
 	/* Find common prefix */
 	pfx_length = 0;
-	while (*old && *new && *old == *new) {
-		if (*old == '/')
-			pfx_length = old - a + 1;
-		old++;
-		new++;
+	while (*old_name && *new_name && *old_name == *new_name) {
+		if (*old_name == '/')
+			pfx_length = old_name - a + 1;
+		old_name++;
+		new_name++;
 	}
 
 	/* Find common suffix */
-	old = a + len_a;
-	new = b + len_b;
+	old_name = a + len_a;
+	new_name = b + len_b;
 	sfx_length = 0;
 	/*
 	 * If there is a common prefix, it must end in a slash.  In
@@ -2087,13 +2087,13 @@ static char *pprint_rename(const char *a, const char *b)
 	 * underrun the input strings.
 	 */
 	pfx_adjust_for_slash = (pfx_length ? 1 : 0);
-	while (a + pfx_length - pfx_adjust_for_slash <= old &&
-	       b + pfx_length - pfx_adjust_for_slash <= new &&
-	       *old == *new) {
-		if (*old == '/')
-			sfx_length = len_a - (old - a);
-		old--;
-		new--;
+	while (a + pfx_length - pfx_adjust_for_slash <= old_name &&
+	       b + pfx_length - pfx_adjust_for_slash <= new_name &&
+	       *old_name == *new_name) {
+		if (*old_name == '/')
+			sfx_length = len_a - (old_name - a);
+		old_name--;
+		new_name--;
 	}
 
 	/*
@@ -2594,14 +2594,14 @@ struct dirstat_dir {
 static long gather_dirstat(struct diff_options *opt, struct dirstat_dir *dir,
 		unsigned long changed, const char *base, int baselen)
 {
-	unsigned long this_dir = 0;
+	unsigned long sum_changes = 0;
 	unsigned int sources = 0;
 	const char *line_prefix = diff_line_prefix(opt);
 
 	while (dir->nr) {
 		struct dirstat_file *f = dir->files;
 		int namelen = strlen(f->name);
-		unsigned long this;
+		unsigned long changes;
 		char *slash;
 
 		if (namelen < baselen)
@@ -2611,15 +2611,15 @@ static long gather_dirstat(struct diff_options *opt, struct dirstat_dir *dir,
 		slash = strchr(f->name + baselen, '/');
 		if (slash) {
 			int newbaselen = slash + 1 - f->name;
-			this = gather_dirstat(opt, dir, changed, f->name, newbaselen);
+			changes = gather_dirstat(opt, dir, changed, f->name, newbaselen);
 			sources++;
 		} else {
-			this = f->changed;
+			changes = f->changed;
 			dir->files++;
 			dir->nr--;
 			sources += 2;
 		}
-		this_dir += this;
+		sum_changes += changes;
 	}
 
 	/*
@@ -2629,8 +2629,8 @@ static long gather_dirstat(struct diff_options *opt, struct dirstat_dir *dir,
 	 *    under this directory (sources == 1).
 	 */
 	if (baselen && sources != 1) {
-		if (this_dir) {
-			int permille = this_dir * 1000 / changed;
+		if (sum_changes) {
+			int permille = sum_changes * 1000 / changed;
 			if (permille >= dir->permille) {
 				fprintf(opt->file, "%s%4d.%01d%% %.*s\n", line_prefix,
 					permille / 10, permille % 10, baselen, base);
@@ -2639,7 +2639,7 @@ static long gather_dirstat(struct diff_options *opt, struct dirstat_dir *dir,
 			}
 		}
 	}
-	return this_dir;
+	return sum_changes;
 }
 
 static int dirstat_compare(const void *_a, const void *_b)
@@ -3660,15 +3660,15 @@ static void prep_temp_blob(const char *path, struct diff_tempfile *temp,
 			   int mode)
 {
 	struct strbuf buf = STRBUF_INIT;
-	struct strbuf template = STRBUF_INIT;
+	struct strbuf tempfile = STRBUF_INIT;
 	char *path_dup = xstrdup(path);
 	const char *base = basename(path_dup);
 
 	/* Generate "XXXXXX_basename.ext" */
-	strbuf_addstr(&template, "XXXXXX_");
-	strbuf_addstr(&template, base);
+	strbuf_addstr(&tempfile, "XXXXXX_");
+	strbuf_addstr(&tempfile, base);
 
-	temp->tempfile = mks_tempfile_ts(template.buf, strlen(base) + 1);
+	temp->tempfile = mks_tempfile_ts(tempfile.buf, strlen(base) + 1);
 	if (!temp->tempfile)
 		die_errno("unable to create temp-file");
 	if (convert_to_working_tree(path,
@@ -3683,7 +3683,7 @@ static void prep_temp_blob(const char *path, struct diff_tempfile *temp,
 	oid_to_hex_r(temp->hex, oid);
 	xsnprintf(temp->mode, sizeof(temp->mode), "%06o", mode);
 	strbuf_release(&buf);
-	strbuf_release(&template);
+	strbuf_release(&tempfile);
 	free(path_dup);
 }
 

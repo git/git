@@ -48,17 +48,17 @@ static inline void llist_item_put(struct llist_item *item)
 
 static inline struct llist_item *llist_item_get(void)
 {
-	struct llist_item *new;
+	struct llist_item *new_item;
 	if ( free_nodes ) {
-		new = free_nodes;
+		new_item = free_nodes;
 		free_nodes = free_nodes->next;
 	} else {
 		int i = 1;
-		ALLOC_ARRAY(new, BLKSIZE);
+		ALLOC_ARRAY(new_item, BLKSIZE);
 		for (; i < BLKSIZE; i++)
-			llist_item_put(&new[i]);
+			llist_item_put(&new_item[i]);
 	}
-	return new;
+	return new_item;
 }
 
 static void llist_free(struct llist *list)
@@ -80,26 +80,26 @@ static inline void llist_init(struct llist **list)
 static struct llist * llist_copy(struct llist *list)
 {
 	struct llist *ret;
-	struct llist_item *new, *old, *prev;
+	struct llist_item *new_item, *old_item, *prev;
 
 	llist_init(&ret);
 
 	if ((ret->size = list->size) == 0)
 		return ret;
 
-	new = ret->front = llist_item_get();
-	new->sha1 = list->front->sha1;
+	new_item = ret->front = llist_item_get();
+	new_item->sha1 = list->front->sha1;
 
-	old = list->front->next;
-	while (old) {
-		prev = new;
-		new = llist_item_get();
-		prev->next = new;
-		new->sha1 = old->sha1;
-		old = old->next;
+	old_item = list->front->next;
+	while (old_item) {
+		prev = new_item;
+		new_item = llist_item_get();
+		prev->next = new_item;
+		new_item->sha1 = old_item->sha1;
+		old_item = old_item->next;
 	}
-	new->next = NULL;
-	ret->back = new;
+	new_item->next = NULL;
+	ret->back = new_item;
 
 	return ret;
 }
@@ -108,24 +108,24 @@ static inline struct llist_item *llist_insert(struct llist *list,
 					      struct llist_item *after,
 					       const unsigned char *sha1)
 {
-	struct llist_item *new = llist_item_get();
-	new->sha1 = sha1;
-	new->next = NULL;
+	struct llist_item *new_item = llist_item_get();
+	new_item->sha1 = sha1;
+	new_item->next = NULL;
 
 	if (after != NULL) {
-		new->next = after->next;
-		after->next = new;
+		new_item->next = after->next;
+		after->next = new_item;
 		if (after == list->back)
-			list->back = new;
+			list->back = new_item;
 	} else {/* insert in front */
 		if (list->size == 0)
-			list->back = new;
+			list->back = new_item;
 		else
-			new->next = list->front;
-		list->front = new;
+			new_item->next = list->front;
+		list->front = new_item;
 	}
 	list->size++;
-	return new;
+	return new_item;
 }
 
 static inline struct llist_item *llist_insert_back(struct llist *list,
