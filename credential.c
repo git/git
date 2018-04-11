@@ -5,6 +5,7 @@
 #include "run-command.h"
 #include "url.h"
 #include "prompt.h"
+#include "sigchain.h"
 
 void credential_init(struct credential *c)
 {
@@ -227,8 +228,10 @@ static int run_credential_helper(struct credential *c,
 		return -1;
 
 	fp = xfdopen(helper.in, "w");
+	sigchain_push(SIGPIPE, SIG_IGN);
 	credential_write(c, fp);
 	fclose(fp);
+	sigchain_pop(SIGPIPE);
 
 	if (want_output) {
 		int r;
