@@ -21,6 +21,7 @@
 #include "remote.h"
 #include "worktree.h"
 #include "parse-options.h"
+#include "object-store.h"
 
 static int config_update_recurse_submodules = RECURSE_SUBMODULES_OFF;
 static struct string_list changed_submodule_names = STRING_LIST_INIT_DUP;

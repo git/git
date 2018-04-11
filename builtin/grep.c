@@ -22,6 +22,7 @@
 #include "pathspec.h"
 #include "submodule.h"
 #include "submodule-config.h"
+#include "object-store.h"
 
 static char const * const grep_usage[] = {
 	N_("git grep [<options>] [-e] <pattern> [<rev>...] [[--] <path>...]"),
@@ -439,7 +440,7 @@ static int grep_submodule(struct grep_opt *opt, struct repository *superproject,
 	 * object.
 	 */
 	grep_read_lock();
-	add_to_alternates_memory(submodule.objectdir);
+	add_to_alternates_memory(submodule.objects->objectdir);
 	grep_read_unlock();
 
 	if (oid) {

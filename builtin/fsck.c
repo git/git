@@ -1,5 +1,6 @@
 #include "builtin.h"
 #include "cache.h"
+#include "repository.h"
 #include "config.h"
 #include "commit.h"
 #include "tree.h"
@@ -16,6 +17,7 @@
 #include "streaming.h"
 #include "decorate.h"
 #include "packfile.h"
+#include "object-store.h"
 
 #define REACHABLE 0x0001
 #define SEEN      0x0002
@@ -719,9 +721,12 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 		for_each_loose_object(mark_loose_for_connectivity, NULL, 0);
 		for_each_packed_object(mark_packed_for_connectivity, NULL, 0);
 	} else {
+		struct alternate_object_database *alt_odb_list;
+
 		fsck_object_dir(get_object_directory());
 
-		prepare_alt_odb();
+		prepare_alt_odb(the_repository);
+		alt_odb_list = the_repository->objects->alt_odb_list;
 		for (alt = alt_odb_list; alt; alt = alt->next)
 			fsck_object_dir(alt->path);
 
@@ -733,7 +738,8 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 			prepare_packed_git();
 
 			if (show_progress) {
-				for (p = packed_git; p; p = p->next) {
+				for (p = get_packed_git(the_repository); p;
+				     p = p->next) {
 					if (open_pack_index(p))
 						continue;
 					total += p->num_objects;
@@ -741,7 +747,8 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 
 				progress = start_progress(_("Checking objects"), total);
 			}
-			for (p = packed_git; p; p = p->next) {
+			for (p = get_packed_git(the_repository); p;
+			     p = p->next) {
 				/* verify gives error messages itself */
 				if (verify_pack(p, fsck_obj_buffer,
 						progress, count))

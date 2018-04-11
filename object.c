@@ -4,6 +4,8 @@
 #include "tree.h"
 #include "commit.h"
 #include "tag.h"
+#include "object-store.h"
+#include "packfile.h"
 
 static struct object **obj_hash;
 static int nr_objs, obj_hash_size;
@@ -444,4 +446,44 @@ void clear_commit_marks_all(unsigned int flags)
 		if (obj && obj->type == OBJ_COMMIT)
 			obj->flags &= ~flags;
 	}
+}
+
+struct raw_object_store *raw_object_store_new(void)
+{
+	struct raw_object_store *o = xmalloc(sizeof(*o));
+
+	memset(o, 0, sizeof(*o));
+	INIT_LIST_HEAD(&o->packed_git_mru);
+	return o;
+}
+
+static void free_alt_odb(struct alternate_object_database *alt)
+{
+	strbuf_release(&alt->scratch);
+	oid_array_clear(&alt->loose_objects_cache);
+	free(alt);
+}
+
+static void free_alt_odbs(struct raw_object_store *o)
+{
+	while (o->alt_odb_list) {
+		struct alternate_object_database *next;
+
+		next = o->alt_odb_list->next;
+		free_alt_odb(o->alt_odb_list);
+		o->alt_odb_list = next;
+	}
+}
+
+void raw_object_store_clear(struct raw_object_store *o)
+{
+	FREE_AND_NULL(o->objectdir);
+	FREE_AND_NULL(o->alternate_db);
+
+	free_alt_odbs(o);
+	o->alt_odb_tail = NULL;
+
+	INIT_LIST_HEAD(&o->packed_git_mru);
+	close_all_packs(o);
+	o->packed_git = NULL;
 }

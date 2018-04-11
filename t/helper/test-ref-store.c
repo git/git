@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "refs.h"
 #include "worktree.h"
+#include "object-store.h"
 
 static const char *notnull(const char *arg, const char *name)
 {

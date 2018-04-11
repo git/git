@@ -11,6 +11,7 @@
 #include "list-objects.h"
 #include "packfile.h"
 #include "worktree.h"
+#include "object-store.h"
 
 struct connectivity_progress {
 	struct progress *progress;

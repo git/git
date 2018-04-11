@@ -16,6 +16,7 @@
 #include "revision.h"
 #include "diffcore.h"
 #include "diff.h"
+#include "object-store.h"
 
 #define OPT_QUIET (1 << 0)
 #define OPT_CACHED (1 << 1)
