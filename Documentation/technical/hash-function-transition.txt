@@ -28,11 +28,30 @@ advantages:
   address stored content.
 
 Over time some flaws in SHA-1 have been discovered by security
-researchers. https://shattered.io demonstrated a practical SHA-1 hash
-collision. As a result, SHA-1 cannot be considered cryptographically
-secure any more. This impacts the communication of hash values because
-we cannot trust that a given hash value represents the known good
-version of content that the speaker intended.
+researchers. On 23 February 2017 the SHAttered attack
+(https://shattered.io) demonstrated a practical SHA-1 hash collision.
+
+Git v2.13.0 and later subsequently moved to a hardened SHA-1
+implementation by default, which isn't vulnerable to the SHAttered
+attack.
+
+Thus Git has in effect already migrated to a new hash that isn't SHA-1
+and doesn't share its vulnerabilities, its new hash function just
+happens to produce exactly the same output for all known inputs,
+except two PDFs published by the SHAttered researchers, and the new
+implementation (written by those researchers) claims to detect future
+cryptanalytic collision attacks.
+
+Regardless, it's considered prudent to move past any variant of SHA-1
+to a new hash. There's no guarantee that future attacks on SHA-1 won't
+be published in the future, and those attacks may not have viable
+mitigations.
+
+If SHA-1 and its variants were to be truly broken, Git's hash function
+could not be considered cryptographically secure any more. This would
+impact the communication of hash values because we could not trust
+that a given hash value represented the known good version of content
+that the speaker intended.
 
 SHA-1 still possesses the other properties such as fast object lookup
 and safe error checking, but other hash functions are equally suitable
@@ -116,10 +135,15 @@ Documentation/technical/repository-version.txt) with extensions
 		objectFormat = newhash
 		compatObjectFormat = sha1
 
-Specifying a repository format extension ensures that versions of Git
-not aware of NewHash do not try to operate on these repositories,
-instead producing an error message:
+The combination of setting `core.repositoryFormatVersion=1` and
+populating `extensions.*` ensures that all versions of Git later than
+`v0.99.9l` will die instead of trying to operate on the NewHash
+repository, instead producing an error message.
 
+	# Between v0.99.9l and v2.7.0
+	$ git status
+	fatal: Expected git repo version <= 0, found 1
+	# After v2.7.0
 	$ git status
 	fatal: unknown repository extensions found:
 		objectformat
