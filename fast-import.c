@@ -216,6 +216,19 @@ struct mp_block {
 	uintmax_t space[FLEX_ARRAY]; /* more */
 };
 
+struct mem_pool {
+	struct mp_block *mp_block;
+
+	/*
+	 * The amount of available memory to grow the pool by.
+	 * This size does not include the overhead for the mp_block.
+	 */
+	size_t block_alloc;
+
+	/* The total amount of memory allocated by the pool. */
+	size_t pool_alloc;
+};
+
 struct atom_str {
 	struct atom_str *next_atom;
 	unsigned short str_len;
@@ -304,9 +317,8 @@ static int global_argc;
 static const char **global_argv;
 
 /* Memory pools */
-static size_t mem_pool_alloc = 2*1024*1024 - sizeof(struct mp_block);
-static size_t total_allocd;
-static struct mp_block *mp_block_head;
+static struct mem_pool fi_mem_pool =  {NULL, 2*1024*1024 -
+				       sizeof(struct mp_block), 0 };
 
 /* Atom management */
 static unsigned int atom_table_sz = 4451;
@@ -341,6 +353,7 @@ static unsigned int tree_entry_alloc = 1000;
 static void *avail_tree_entry;
 static unsigned int avail_tree_table_sz = 100;
 static struct avail_tree_content **avail_tree_table;
+static size_t tree_entry_allocd;
 static struct strbuf old_tree = STRBUF_INIT;
 static struct strbuf new_tree = STRBUF_INIT;
 
@@ -634,7 +647,21 @@ static unsigned int hc_str(const char *s, size_t len)
 	return r;
 }
 
-static void *pool_alloc(size_t len)
+static struct mp_block *mem_pool_alloc_block(struct mem_pool *mem_pool, size_t block_alloc)
+{
+	struct mp_block *p;
+
+	mem_pool->pool_alloc += sizeof(struct mp_block) + block_alloc;
+	p = xmalloc(st_add(sizeof(struct mp_block), block_alloc));
+	p->next_block = mem_pool->mp_block;
+	p->next_free = (char *)p->space;
+	p->end = p->next_free + block_alloc;
+	mem_pool->mp_block = p;
+
+	return p;
+}
+
+static void *mem_pool_alloc(struct mem_pool *mem_pool, size_t len)
 {
 	struct mp_block *p;
 	void *r;
@@ -643,21 +670,17 @@ static void *pool_alloc(size_t len)
 	if (len & (sizeof(uintmax_t) - 1))
 		len += sizeof(uintmax_t) - (len & (sizeof(uintmax_t) - 1));
 
-	for (p = mp_block_head; p; p = p->next_block)
-		if ((p->end - p->next_free >= len))
+	for (p = mem_pool->mp_block; p; p = p->next_block)
+		if (p->end - p->next_free >= len)
 			break;
 
 	if (!p) {
-		if (len >= (mem_pool_alloc/2)) {
-			total_allocd += len;
+		if (len >= (mem_pool->block_alloc / 2)) {
+			mem_pool->pool_alloc += len;
 			return xmalloc(len);
 		}
-		total_allocd += sizeof(struct mp_block) + mem_pool_alloc;
-		p = xmalloc(st_add(sizeof(struct mp_block), mem_pool_alloc));
-		p->next_block = mp_block_head;
-		p->next_free = (char *) p->space;
-		p->end = p->next_free + mem_pool_alloc;
-		mp_block_head = p;
+
+		p = mem_pool_alloc_block(mem_pool, mem_pool->block_alloc);
 	}
 
 	r = p->next_free;
@@ -665,10 +688,10 @@ static void *pool_alloc(size_t len)
 	return r;
 }
 
-static void *pool_calloc(size_t count, size_t size)
+static void *mem_pool_calloc(struct mem_pool *mem_pool, size_t count, size_t size)
 {
-	size_t len = count * size;
-	void *r = pool_alloc(len);
+	size_t len = st_mult(count, size);
+	void *r = mem_pool_alloc(mem_pool, len);
 	memset(r, 0, len);
 	return r;
 }
@@ -676,7 +699,7 @@ static void *pool_calloc(size_t count, size_t size)
 static char *pool_strdup(const char *s)
 {
 	size_t len = strlen(s) + 1;
-	char *r = pool_alloc(len);
+	char *r = mem_pool_alloc(&fi_mem_pool, len);
 	memcpy(r, s, len);
 	return r;
 }
@@ -685,7 +708,7 @@ static void insert_mark(uintmax_t idnum, struct object_entry *oe)
 {
 	struct mark_set *s = marks;
 	while ((idnum >> s->shift) >= 1024) {
-		s = pool_calloc(1, sizeof(struct mark_set));
+		s = mem_pool_calloc(&fi_mem_pool, 1, sizeof(struct mark_set));
 		s->shift = marks->shift + 10;
 		s->data.sets[0] = marks;
 		marks = s;
@@ -694,7 +717,7 @@ static void insert_mark(uintmax_t idnum, struct object_entry *oe)
 		uintmax_t i = idnum >> s->shift;
 		idnum -= i << s->shift;
 		if (!s->data.sets[i]) {
-			s->data.sets[i] = pool_calloc(1, sizeof(struct mark_set));
+			s->data.sets[i] = mem_pool_calloc(&fi_mem_pool, 1, sizeof(struct mark_set));
 			s->data.sets[i]->shift = s->shift - 10;
 		}
 		s = s->data.sets[i];
@@ -732,7 +755,7 @@ static struct atom_str *to_atom(const char *s, unsigned short len)
 		if (c->str_len == len && !strncmp(s, c->str_dat, len))
 			return c;
 
-	c = pool_alloc(sizeof(struct atom_str) + len + 1);
+	c = mem_pool_alloc(&fi_mem_pool, sizeof(struct atom_str) + len + 1);
 	c->str_len = len;
 	memcpy(c->str_dat, s, len);
 	c->str_dat[len] = 0;
@@ -763,7 +786,7 @@ static struct branch *new_branch(const char *name)
 	if (check_refname_format(name, REFNAME_ALLOW_ONELEVEL))
 		die("Branch name doesn't conform to GIT standards: %s", name);
 
-	b = pool_calloc(1, sizeof(struct branch));
+	b = mem_pool_calloc(&fi_mem_pool, 1, sizeof(struct branch));
 	b->name = pool_strdup(name);
 	b->table_next_branch = branch_table[hc];
 	b->branch_tree.versions[0].mode = S_IFDIR;
@@ -799,7 +822,7 @@ static struct tree_content *new_tree_content(unsigned int cnt)
 			avail_tree_table[hc] = f->next_avail;
 	} else {
 		cnt = cnt & 7 ? ((cnt / 8) + 1) * 8 : cnt;
-		f = pool_alloc(sizeof(*t) + sizeof(t->entries[0]) * cnt);
+		f = mem_pool_alloc(&fi_mem_pool, sizeof(*t) + sizeof(t->entries[0]) * cnt);
 		f->entry_capacity = cnt;
 	}
 
@@ -844,7 +867,7 @@ static struct tree_entry *new_tree_entry(void)
 
 	if (!avail_tree_entry) {
 		unsigned int n = tree_entry_alloc;
-		total_allocd += n * sizeof(struct tree_entry);
+		tree_entry_allocd += n * sizeof(struct tree_entry);
 		ALLOC_ARRAY(e, n);
 		avail_tree_entry = e;
 		while (n-- > 1) {
@@ -2862,7 +2885,7 @@ static void parse_new_tag(const char *arg)
 	enum object_type type;
 	const char *v;
 
-	t = pool_alloc(sizeof(struct tag));
+	t = mem_pool_alloc(&fi_mem_pool, sizeof(struct tag));
 	memset(t, 0, sizeof(struct tag));
 	t->name = pool_strdup(arg);
 	if (last_tag)
@@ -3461,12 +3484,12 @@ int cmd_main(int argc, const char **argv)
 	atom_table = xcalloc(atom_table_sz, sizeof(struct atom_str*));
 	branch_table = xcalloc(branch_table_sz, sizeof(struct branch*));
 	avail_tree_table = xcalloc(avail_tree_table_sz, sizeof(struct avail_tree_content*));
-	marks = pool_calloc(1, sizeof(struct mark_set));
+	marks = mem_pool_calloc(&fi_mem_pool, 1, sizeof(struct mark_set));
 
 	global_argc = argc;
 	global_argv = argv;
 
-	rc_free = pool_alloc(cmd_save * sizeof(*rc_free));
+	rc_free = mem_pool_alloc(&fi_mem_pool, cmd_save * sizeof(*rc_free));
 	for (i = 0; i < (cmd_save - 1); i++)
 		rc_free[i].next = &rc_free[i + 1];
 	rc_free[cmd_save - 1].next = NULL;
@@ -3541,8 +3564,8 @@ int cmd_main(int argc, const char **argv)
 		fprintf(stderr, "Total branches:  %10lu (%10lu loads     )\n", branch_count, branch_load_count);
 		fprintf(stderr, "      marks:     %10" PRIuMAX " (%10" PRIuMAX " unique    )\n", (((uintmax_t)1) << marks->shift) * 1024, marks_set_count);
 		fprintf(stderr, "      atoms:     %10u\n", atom_cnt);
-		fprintf(stderr, "Memory total:    %10" PRIuMAX " KiB\n", (total_allocd + alloc_count*sizeof(struct object_entry))/1024);
-		fprintf(stderr, "       pools:    %10lu KiB\n", (unsigned long)(total_allocd/1024));
+		fprintf(stderr, "Memory total:    %10" PRIuMAX " KiB\n", (tree_entry_allocd + fi_mem_pool.pool_alloc + alloc_count*sizeof(struct object_entry))/1024);
+		fprintf(stderr, "       pools:    %10lu KiB\n", (unsigned long)((tree_entry_allocd + fi_mem_pool.pool_alloc) /1024));
 		fprintf(stderr, "     objects:    %10" PRIuMAX " KiB\n", (alloc_count*sizeof(struct object_entry))/1024);
 		fprintf(stderr, "---------------------------------------------------------------------\n");
 		pack_report();
