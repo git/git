@@ -63,6 +63,9 @@ static struct {
 	{ "tlsv1.1", CURL_SSLVERSION_TLSv1_1 },
 	{ "tlsv1.2", CURL_SSLVERSION_TLSv1_2 },
 #endif
+#if LIBCURL_VERSION_NUM >= 0x073400
+	{ "tlsv1.3", CURL_SSLVERSION_TLSv1_3 },
+#endif
 };
 #if LIBCURL_VERSION_NUM >= 0x070903
 static const char *ssl_key;
