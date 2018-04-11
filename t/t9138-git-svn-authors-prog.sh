@@ -9,7 +9,9 @@ test_description='git svn authors prog tests'
 
 write_script svn-authors-prog "$PERL_PATH" <<-\EOF
 	$_ = shift;
-	if (s/-sub$//)  {
+	if (s/-hermit//) {
+		print "$_ <>\n";
+	} elsif (s/-sub$//)  {
 		print "$_ <$_\@sub.example.com>\n";
 	} else {
 		print "$_ <$_\@example.com>\n";
@@ -68,6 +70,28 @@ test_expect_success 'authors-file overrode authors-prog' '
 
 git --git-dir=x/.git config --unset svn.authorsfile
 git --git-dir=x/.git config --unset svn.authorsprog
+
+test_expect_success 'authors-prog imported user without email' '
+	svn mkdir -m gg --username gg-hermit "$svnrepo"/gg &&
+	(
+		cd x &&
+		git svn fetch --authors-prog=../svn-authors-prog &&
+		git rev-list -1 --pretty=raw refs/remotes/git-svn | \
+		  grep "^author gg <> "
+	)
+'
+
+test_expect_success 'imported without authors-prog and authors-file' '
+	svn mkdir -m hh --username hh "$svnrepo"/hh &&
+	(
+		uuid=$(svn info "$svnrepo" |
+			sed -n "s/^Repository UUID: //p") &&
+		cd x &&
+		git svn fetch &&
+		git rev-list -1 --pretty=raw refs/remotes/git-svn | \
+		  grep "^author hh <hh@$uuid> "
+	)
+'
 
 test_expect_success 'authors-prog handled special characters in username' '
 	svn mkdir -m bad --username "xyz; touch evil" "$svnrepo"/bad &&
