@@ -513,27 +513,17 @@ test_expect_success 'rebase merge commit (realistic example)' '
 	diff --cc main.c
 	--- a/main.c
 	+++ b/main.c
-	@@@ -1,7 -1,7 +1,20 @@@
-	  int hi(void) {
-	  Qprintf("Hello, world!\n");
+	@@@ -5,3 -5,7 +5,10 @@@ int hi(void)
+	  void event_loop(void) {
+	  Q/* TODO: place holder for now */
 	  }
-	++<<<<<<< intermediate merge
 	++<<<<<<<< HEAD
-	 +/* main event loop */
-	 +void event_loop(void) {
-	 +Q/* TODO: place holder for now */
 	++========
-	++=======
-	++/* main event loop */
-	++void event_loop(void) {
-	++Q/* TODO: place holder for now */
-	++}
-	++>>>>>>> <HASH>... merge head #1
 	+ /* caller */
 	+ void caller(void) {
 	+ Qhi();
-	++>>>>>>>> <HASH>... original merge
-	  }
+	+ }
+	++>>>>>>>> <HASH>... intermediate merge
 	EOF
 	: HEAD renamed core to hi, MERGE_HEAD did more complicated stuff... &&
 	git show MERGE_HEAD:main.c | sed "s/core/hi/g" >main.c &&

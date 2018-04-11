@@ -2993,7 +2993,99 @@ static int rebase_merge_commit(struct commit *commit,
 	clean = merge_trees(o, head_commit->tree, commit->tree,
 			    p->item->tree, &tree);
 
-	if (clean <= 0)
+	if (!clean && to_merge) {
+		/*
+		 * Okay, this already caused conflicts. If we now merge B3',
+		 * we may end up with nested merge conflicts. Ugly.
+		 *
+		 * If merging M and B3' does not cause merge conflicts, we can
+		 * avoid the nested merge conflicts by merging that clean merge
+		 * result into A3' (discarding the result of the merge between
+		 * A3' and M).
+		 */
+		struct index_state copy;
+		int clean2;
+
+		if (!p->next)
+			BUG("mismatching number of parents");
+
+		/*
+		 * Stash the current index away for later (when merge_trees()
+		 * learns to operate on an index other than `the_index`, this
+		 * won't be necessary).
+		 */
+		memcpy(&copy, &the_index, sizeof(the_index));
+		memset(&the_index, 0, sizeof(the_index));
+
+		/*
+		 * We won't use the result if there are conflicts, so let's not
+		 * bother with more information about the branches to merge.
+		 */
+		o->branch1 = "original merge";
+		o->branch2 = "merge head #1";
+		o->call_depth = 1; /* do not update worktree */
+
+		parse_tree(commit->tree);
+		prime_cache_tree(&the_index, commit->tree);
+		clean2 = merge_trees(o, commit->tree, to_merge->item->tree,
+				     p->next->item->tree, &tree);
+		strbuf_reset(&o->obuf);
+		o->call_depth = 0;
+
+		discard_cache();
+		memcpy(&the_index, &copy, sizeof(the_index));
+		if (clean2 > 0) {
+			/*
+			 * No merge conflicts between M and B3', so let's merge
+			 * the result into A3' (i.e. HEAD).
+			 */
+			struct tree_desc desc;
+			struct unpack_trees_options unpack_tree_opts = { 0 };
+			struct tree *head_tree = head_commit->tree;
+
+			unpack_tree_opts.head_idx = 1;
+			unpack_tree_opts.src_index = &the_index;
+			unpack_tree_opts.dst_index = &the_index;
+			unpack_tree_opts.fn = oneway_merge;
+			unpack_tree_opts.merge = 1;
+			unpack_tree_opts.update = 1;
+			unpack_tree_opts.reset = 1;
+
+			if (!fill_tree_descriptor(&desc, &head_tree->object.oid))
+				clean = error(_("failed to find tree of %s"),
+					      oid_to_hex(&head_tree->object.oid));
+			else if (unpack_trees(1, &desc, &unpack_tree_opts))
+				clean = -1;
+			else {
+				prime_cache_tree(&the_index, head_tree);
+
+				o->branch1 = "HEAD";
+				strbuf_reset(&buf);
+				strbuf_addf(&buf, "%s... intermediate merge",
+					    find_unique_abbrev(&tree->object.oid,
+							       DEFAULT_ABBREV));
+				o->branch2 = buf.buf;
+				clean = merge_trees(o, head_commit->tree, tree,
+						    p->item->tree, &tree);
+
+				if (clean <= 0)
+					error(_("while merging %s into %s "
+						"with merge base %s:\n%s"),
+					      find_unique_abbrev(&tree->object.oid,
+								 DEFAULT_ABBREV),
+					      short_commit_name(head_commit),
+					      short_commit_name(p->item), o->obuf.buf);
+				strbuf_reset(&o->obuf);
+
+				strbuf_addf(&merge_heads, "%s\n",
+					    oid_to_hex(&to_merge->item->object.oid));
+				to_merge = to_merge->next;
+				p = p->next;
+			}
+		}
+	}
+
+	if (clean <= 0 && o->obuf.len)
 		error(_("while merging %s into %s "
 			"with merge base %s:\n%s"),
 		      short_commit_name(commit),
