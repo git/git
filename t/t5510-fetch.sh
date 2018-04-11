@@ -840,8 +840,8 @@ test_expect_success C_LOCALE_OUTPUT 'fetch aligned output' '
 	test_commit looooooooooooong-tag &&
 	(
 		cd full-output &&
-		git -c fetch.output=full fetch origin 2>&1 | \
-			grep -e "->" | cut -c 22- >../actual
+		git -c fetch.output=full fetch origin >actual 2>&1 &&
+		grep -e "->" actual | cut -c 22- >../actual
 	) &&
 	cat >expect <<-\EOF &&
 	master               -> origin/master
@@ -855,8 +855,8 @@ test_expect_success C_LOCALE_OUTPUT 'fetch compact output' '
 	test_commit extraaa &&
 	(
 		cd compact &&
-		git -c fetch.output=compact fetch origin 2>&1 | \
-			grep -e "->" | cut -c 22- >../actual
+		git -c fetch.output=compact fetch origin >actual 2>&1 &&
+		grep -e "->" actual | cut -c 22- >../actual
 	) &&
 	cat >expect <<-\EOF &&
 	master     -> origin/*
