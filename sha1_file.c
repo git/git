@@ -1240,7 +1240,7 @@ int oid_object_info_extended(const struct object_id *oid, struct object_info *oi
 	int already_retried = 0;
 
 	if (flags & OBJECT_INFO_LOOKUP_REPLACE)
-		real = lookup_replace_object(oid);
+		real = lookup_replace_object(the_repository, oid);
 
 	if (is_null_oid(real))
 		return -1;
@@ -1384,8 +1384,8 @@ void *read_object_file_extended(const struct object_id *oid,
 	const struct packed_git *p;
 	const char *path;
 	struct stat st;
-	const struct object_id *repl = lookup_replace ? lookup_replace_object(oid)
-						      : oid;
+	const struct object_id *repl = lookup_replace ?
+		lookup_replace_object(the_repository, oid) : oid;
 
 	errno = 0;
 	data = read_object(repl->hash, type, size);

@@ -247,7 +247,7 @@ struct object *parse_object(const struct object_id *oid)
 	unsigned long size;
 	enum object_type type;
 	int eaten;
-	const struct object_id *repl = lookup_replace_object(oid);
+	const struct object_id *repl = lookup_replace_object(the_repository, oid);
 	void *buffer;
 	struct object *obj;
 

@@ -23,7 +23,8 @@ extern const struct object_id *do_lookup_replace_object_the_repository(const str
  * either sha1 or a pointer to a permanently-allocated value.  When
  * object replacement is suppressed, always return sha1.
  */
-static inline const struct object_id *lookup_replace_object(const struct object_id *oid)
+#define lookup_replace_object(r, s) lookup_replace_object_##r(s)
+static inline const struct object_id *lookup_replace_object_the_repository(const struct object_id *oid)
 {
 	if (!check_replace_refs ||
 	    (the_repository->objects->replace_map &&
