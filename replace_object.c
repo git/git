@@ -31,18 +31,16 @@ static int register_replace_ref(const char *refname,
 	return 0;
 }
 
-#define prepare_replace_object(r) \
-	prepare_replace_object_##r()
-static void prepare_replace_object_the_repository(void)
+static void prepare_replace_object(struct repository *r)
 {
-	if (the_repository->objects->replace_map)
+	if (r->objects->replace_map)
 		return;
 
-	the_repository->objects->replace_map =
+	r->objects->replace_map =
 		xmalloc(sizeof(*the_repository->objects->replace_map));
-	oidmap_init(the_repository->objects->replace_map, 0);
+	oidmap_init(r->objects->replace_map, 0);
 
-	for_each_replace_ref(the_repository, register_replace_ref, NULL);
+	for_each_replace_ref(r, register_replace_ref, NULL);
 }
 
 /* We allow "recursive" replacement. Only within reason, though */
