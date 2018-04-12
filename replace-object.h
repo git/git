@@ -14,8 +14,8 @@ struct replace_object {
  * This internal function is only declared here for the benefit of
  * lookup_replace_object().  Please do not call it directly.
  */
-#define do_lookup_replace_object(r, s) do_lookup_replace_object_##r(s)
-extern const struct object_id *do_lookup_replace_object_the_repository(const struct object_id *oid);
+extern const struct object_id *do_lookup_replace_object(struct repository *r,
+							const struct object_id *oid);
 
 /*
  * If object sha1 should be replaced, return the replacement object's

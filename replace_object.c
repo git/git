@@ -53,17 +53,18 @@ static void prepare_replace_object(struct repository *r)
  * permanently-allocated value.  This function always respects replace
  * references, regardless of the value of check_replace_refs.
  */
-const struct object_id *do_lookup_replace_object_the_repository(const struct object_id *oid)
+const struct object_id *do_lookup_replace_object(struct repository *r,
+						 const struct object_id *oid)
 {
 	int depth = MAXREPLACEDEPTH;
 	const struct object_id *cur = oid;
 
-	prepare_replace_object(the_repository);
+	prepare_replace_object(r);
 
 	/* Try to recursively replace the object */
 	while (depth-- > 0) {
 		struct replace_object *repl_obj =
-			oidmap_get(the_repository->objects->replace_map, cur);
+			oidmap_get(r->objects->replace_map, cur);
 		if (!repl_obj)
 			return cur;
 		cur = &repl_obj->replacement;
