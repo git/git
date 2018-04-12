@@ -23,14 +23,14 @@ extern const struct object_id *do_lookup_replace_object(struct repository *r,
  * either sha1 or a pointer to a permanently-allocated value.  When
  * object replacement is suppressed, always return sha1.
  */
-#define lookup_replace_object(r, s) lookup_replace_object_##r(s)
-static inline const struct object_id *lookup_replace_object_the_repository(const struct object_id *oid)
+static inline const struct object_id *lookup_replace_object(struct repository *r,
+							    const struct object_id *oid)
 {
 	if (!check_replace_refs ||
-	    (the_repository->objects->replace_map &&
-	     the_repository->objects->replace_map->map.tablesize == 0))
+	    (r->objects->replace_map &&
+	     r->objects->replace_map->map.tablesize == 0))
 		return oid;
-	return do_lookup_replace_object(the_repository, oid);
+	return do_lookup_replace_object(r, oid);
 }
 
 #endif /* REPLACE_OBJECT_H */
