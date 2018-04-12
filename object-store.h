@@ -99,7 +99,7 @@ struct raw_object_store {
 	 * Objects that should be substituted by other objects
 	 * (see git-replace(1)).
 	 */
-	struct oidmap replace_map;
+	struct oidmap *replace_map;
 
 	/*
 	 * private data
