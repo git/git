@@ -26,6 +26,9 @@ struct repository {
 	 */
 	struct raw_object_store *objects;
 
+	/* The store in which the refs are held. */
+	struct ref_store *refs;
+
 	/*
 	 * Path to the repository's graft file.
 	 * Cannot be NULL after initialization.

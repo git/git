@@ -760,9 +760,7 @@ int reflog_expire(const char *refname, const struct object_id *oid,
 
 int ref_storage_backend_exists(const char *name);
 
-#define get_main_ref_store(r) \
-	get_main_ref_store_##r()
-struct ref_store *get_main_ref_store_the_repository(void);
+struct ref_store *get_main_ref_store(struct repository *r);
 /*
  * Return the ref_store instance for the specified submodule. For the
  * main repository, use submodule==NULL; such a call cannot fail. For
