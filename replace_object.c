@@ -1,14 +1,10 @@
 #include "cache.h"
 #include "oidmap.h"
+#include "object-store.h"
+#include "replace-object.h"
 #include "refs.h"
+#include "repository.h"
 #include "commit.h"
-
-struct replace_object {
-	struct oidmap_entry original;
-	struct object_id replacement;
-};
-
-static struct oidmap replace_map = OIDMAP_INIT;
 
 static int register_replace_ref(const char *refname,
 				const struct object_id *oid,
@@ -29,7 +25,7 @@ static int register_replace_ref(const char *refname,
 	oidcpy(&repl_obj->replacement, oid);
 
 	/* Register new object */
-	if (oidmap_put(&replace_map, repl_obj))
+	if (oidmap_put(&the_repository->objects->replace_map, repl_obj))
 		die("duplicate replace ref: %s", refname);
 
 	return 0;
@@ -44,7 +40,7 @@ static void prepare_replace_object(void)
 
 	for_each_replace_ref(register_replace_ref, NULL);
 	replace_object_prepared = 1;
-	if (!replace_map.map.tablesize)
+	if (!the_repository->objects->replace_map.map.tablesize)
 		check_replace_refs = 0;
 }
 
@@ -67,7 +63,8 @@ const struct object_id *do_lookup_replace_object(const struct object_id *oid)
 
 	/* Try to recursively replace the object */
 	while (depth-- > 0) {
-		struct replace_object *repl_obj = oidmap_get(&replace_map, cur);
+		struct replace_object *repl_obj =
+			oidmap_get(&the_repository->objects->replace_map, cur);
 		if (!repl_obj)
 			return cur;
 		cur = &repl_obj->replacement;
