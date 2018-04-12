@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "object.h"
+#include "replace-object.h"
 #include "blob.h"
 #include "tree.h"
 #include "commit.h"

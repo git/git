@@ -23,6 +23,7 @@
 #include "sha1-lookup.h"
 #include "bulk-checkin.h"
 #include "repository.h"
+#include "replace-object.h"
 #include "streaming.h"
 #include "dir.h"
 #include "list.h"
