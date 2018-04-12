@@ -14,7 +14,8 @@ struct replace_object {
  * This internal function is only declared here for the benefit of
  * lookup_replace_object().  Please do not call it directly.
  */
-extern const struct object_id *do_lookup_replace_object(const struct object_id *oid);
+#define do_lookup_replace_object(r, s) do_lookup_replace_object_##r(s)
+extern const struct object_id *do_lookup_replace_object_the_repository(const struct object_id *oid);
 
 /*
  * If object sha1 should be replaced, return the replacement object's
@@ -28,7 +29,7 @@ static inline const struct object_id *lookup_replace_object(const struct object_
 	    (the_repository->objects->replace_map &&
 	     the_repository->objects->replace_map->map.tablesize == 0))
 		return oid;
-	return do_lookup_replace_object(oid);
+	return do_lookup_replace_object(the_repository, oid);
 }
 
 #endif /* REPLACE_OBJECT_H */

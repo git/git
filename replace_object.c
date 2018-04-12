@@ -55,7 +55,7 @@ static void prepare_replace_object_the_repository(void)
  * permanently-allocated value.  This function always respects replace
  * references, regardless of the value of check_replace_refs.
  */
-const struct object_id *do_lookup_replace_object(const struct object_id *oid)
+const struct object_id *do_lookup_replace_object_the_repository(const struct object_id *oid)
 {
 	int depth = MAXREPLACEDEPTH;
 	const struct object_id *cur = oid;
