@@ -41,9 +41,6 @@ static void prepare_replace_object(void)
 	oidmap_init(the_repository->objects->replace_map, 0);
 
 	for_each_replace_ref(register_replace_ref, NULL);
-
-	if (!the_repository->objects->replace_map->map.tablesize)
-		check_replace_refs = 0;
 }
 
 /* We allow "recursive" replacement. Only within reason, though */

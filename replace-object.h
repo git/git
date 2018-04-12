@@ -3,6 +3,7 @@
 
 #include "oidmap.h"
 #include "repository.h"
+#include "object-store.h"
 
 struct replace_object {
 	struct oidmap_entry original;
@@ -23,7 +24,9 @@ extern const struct object_id *do_lookup_replace_object(const struct object_id *
  */
 static inline const struct object_id *lookup_replace_object(const struct object_id *oid)
 {
-	if (!check_replace_refs)
+	if (!check_replace_refs ||
+	    (the_repository->objects->replace_map &&
+	     the_repository->objects->replace_map->map.tablesize == 0))
 		return oid;
 	return do_lookup_replace_object(oid);
 }
