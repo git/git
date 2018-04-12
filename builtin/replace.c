@@ -14,6 +14,8 @@
 #include "refs.h"
 #include "parse-options.h"
 #include "run-command.h"
+#include "object-store.h"
+#include "repository.h"
 #include "tag.h"
 
 static const char * const git_replace_usage[] = {
@@ -83,7 +85,7 @@ static int list_replace_refs(const char *pattern, const char *format)
 		    "valid formats are 'short', 'medium' and 'long'\n",
 		    format);
 
-	for_each_replace_ref(show_reference, (void *)&data);
+	for_each_replace_ref(the_repository, show_reference, (void *)&data);
 
 	return 0;
 }

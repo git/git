@@ -40,7 +40,7 @@ static void prepare_replace_object(void)
 		xmalloc(sizeof(*the_repository->objects->replace_map));
 	oidmap_init(the_repository->objects->replace_map, 0);
 
-	for_each_replace_ref(register_replace_ref, NULL);
+	for_each_replace_ref(the_repository, register_replace_ref, NULL);
 }
 
 /* We allow "recursive" replacement. Only within reason, though */
