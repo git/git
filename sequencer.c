@@ -2927,6 +2927,19 @@ static int replay_unmerged_entries(struct hashmap *unmerged_entries)
 	return 0;
 }
 
+/* TODO: make it output something like this in case of merge conflicts:
+
+        There were conflicts merging the original merge
+                deadbee (Merge 'side-branch')
+        with its rebased first parent
+                b1ab1ab (Rename 'core()' to 'hi()')
+        and its rebased second parent
+                ceeceec (Call core() in the event loop)
+
+        The intermediate merge(s) are available as
+                abcdef6 (intermediate merge)
+*/
+
 static int rebase_merge_commit(struct commit *commit,
 			       struct commit *head_commit,
 			       struct commit_list *to_merge,
