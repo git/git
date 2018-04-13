@@ -1056,7 +1056,7 @@ test_expect_success GPG \
 	git tag -s -F sigblanknonlfile blanknonlfile-signed-tag &&
 	get_tag_msg blanknonlfile-signed-tag >actual &&
 	test_cmp expect actual &&
-	git tag -v signed-tag
+	git tag -v blanknonlfile-signed-tag
 '
 
 # messages with commented lines for signed tags:
