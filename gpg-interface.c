@@ -101,11 +101,16 @@ void print_signature_buffer(const struct signature_check *sigc, unsigned flags)
 		fputs(output, stderr);
 }
 
+static int is_gpg_start(const char *line)
+{
+	return starts_with(line, PGP_SIGNATURE) ||
+		starts_with(line, PGP_MESSAGE);
+}
+
 size_t parse_signature(const char *buf, size_t size)
 {
 	size_t len = 0;
-	while (len < size && !starts_with(buf + len, PGP_SIGNATURE) &&
-			!starts_with(buf + len, PGP_MESSAGE)) {
+	while (len < size && !is_gpg_start(buf + len)) {
 		const char *eol = memchr(buf + len, '\n', size - len);
 		len += eol ? eol - (buf + len) + 1 : size - len;
 	}
