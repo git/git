@@ -101,12 +101,6 @@ void print_signature_buffer(const struct signature_check *sigc, unsigned flags)
 		fputs(output, stderr);
 }
 
-/*
- * Look at GPG signed content (e.g. a signed tag object), whose
- * payload is followed by a detached signature on it.  Return the
- * offset where the embedded detached signature begins, or the end of
- * the data when there is no such signature.
- */
 size_t parse_signature(const char *buf, unsigned long size)
 {
 	char *eol;
@@ -151,12 +145,6 @@ const char *get_signing_key(void)
 	return git_committer_info(IDENT_STRICT|IDENT_NO_DATE);
 }
 
-/*
- * Create a detached signature for the contents of "buffer" and append
- * it after "signature"; "buffer" and "signature" can be the same
- * strbuf instance, which would cause the detached signature appended
- * at the end.
- */
 int sign_buffer(struct strbuf *buffer, struct strbuf *signature, const char *signing_key)
 {
 	struct child_process gpg = CHILD_PROCESS_INIT;
@@ -198,11 +186,6 @@ int sign_buffer(struct strbuf *buffer, struct strbuf *signature, const char *sig
 	return 0;
 }
 
-/*
- * Run "gpg" to see if the payload matches the detached signature.
- * gpg_output, when set, receives the diagnostic output from GPG.
- * gpg_status, when set, receives the status output from GPG.
- */
 int verify_signed_buffer(const char *payload, size_t payload_size,
 			 const char *signature, size_t signature_size,
 			 struct strbuf *gpg_output, struct strbuf *gpg_status)
