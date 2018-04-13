@@ -110,11 +110,17 @@ static int is_gpg_start(const char *line)
 size_t parse_signature(const char *buf, size_t size)
 {
 	size_t len = 0;
-	while (len < size && !is_gpg_start(buf + len)) {
-		const char *eol = memchr(buf + len, '\n', size - len);
+	size_t match = size;
+	while (len < size) {
+		const char *eol;
+
+		if (is_gpg_start(buf + len))
+			match = len;
+
+		eol = memchr(buf + len, '\n', size - len);
 		len += eol ? eol - (buf + len) + 1 : size - len;
 	}
-	return len;
+	return match;
 }
 
 void set_signing_key(const char *key)

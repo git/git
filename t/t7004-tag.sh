@@ -1059,6 +1059,17 @@ test_expect_success GPG \
 	git tag -v blanknonlfile-signed-tag
 '
 
+test_expect_success GPG 'signed tag with embedded PGP message' '
+	cat >msg <<-\EOF &&
+	-----BEGIN PGP MESSAGE-----
+
+	this is not a real PGP message
+	-----END PGP MESSAGE-----
+	EOF
+	git tag -s -F msg confusing-pgp-message &&
+	git tag -v confusing-pgp-message
+'
+
 # messages with commented lines for signed tags:
 
 cat >sigcommentsfile <<EOF
