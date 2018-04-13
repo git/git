@@ -101,7 +101,7 @@ void print_signature_buffer(const struct signature_check *sigc, unsigned flags)
 		fputs(output, stderr);
 }
 
-size_t parse_signature(const char *buf, unsigned long size)
+size_t parse_signature(const char *buf, size_t size)
 {
 	char *eol;
 	size_t len = 0;

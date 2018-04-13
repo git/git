@@ -31,7 +31,7 @@ void signature_check_clear(struct signature_check *sigc);
  * offset where the embedded detached signature begins, or the end of
  * the data when there is no such signature.
  */
-size_t parse_signature(const char *buf, unsigned long size);
+size_t parse_signature(const char *buf, size_t size);
 
 void parse_gpg_output(struct signature_check *);
 
