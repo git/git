@@ -32,7 +32,9 @@ enum dfs_state {
  *
  * "size" is the uncompressed object size. Compressed size of the raw
  * data for an object in a pack is not stored anywhere but is computed
- * and made available when reverse .idx is made.
+ * and made available when reverse .idx is made. Note that when a
+ * delta is reused, "size" is the uncompressed _delta_ size, not the
+ * canonical one after the delta has been applied.
  *
  * "hash" contains a path name hash which is used for sorting the
  * delta list and also during delta searching. Once prepare_pack()

@@ -1418,6 +1418,7 @@ static void check_object(struct object_entry *entry)
 		off_t ofs;
 		unsigned char *buf, c;
 		enum object_type type;
+		unsigned long in_pack_size;
 
 		buf = use_pack(p, &w_curs, entry->in_pack_offset, &avail);
 
@@ -1427,7 +1428,7 @@ static void check_object(struct object_entry *entry)
 		 */
 		used = unpack_object_header_buffer(buf, avail,
 						   &type,
-						   &entry->size);
+						   &in_pack_size);
 		if (used == 0)
 			goto give_up;
 
@@ -1444,6 +1445,7 @@ static void check_object(struct object_entry *entry)
 		default:
 			/* Not a delta hence we've already got all we need. */
 			oe_set_type(entry, entry->in_pack_type);
+			entry->size = in_pack_size;
 			entry->in_pack_header_size = used;
 			if (oe_type(entry) < OBJ_COMMIT || oe_type(entry) > OBJ_BLOB)
 				goto give_up;
@@ -1500,6 +1502,7 @@ static void check_object(struct object_entry *entry)
 			 * circular deltas.
 			 */
 			oe_set_type(entry, entry->in_pack_type);
+			entry->size = in_pack_size; /* delta size */
 			SET_DELTA(entry, base_entry);
 			entry->delta_size = entry->size;
 			entry->delta_sibling_idx = base_entry->delta_child_idx;
@@ -1509,13 +1512,15 @@ static void check_object(struct object_entry *entry)
 		}
 
 		if (oe_type(entry)) {
+			off_t delta_pos;
+
 			/*
 			 * This must be a delta and we already know what the
 			 * final object type is.  Let's extract the actual
 			 * object size from the delta header.
 			 */
-			entry->size = get_size_from_delta(p, &w_curs,
-					entry->in_pack_offset + entry->in_pack_header_size);
+			delta_pos = entry->in_pack_offset + entry->in_pack_header_size;
+			entry->size = get_size_from_delta(p, &w_curs, delta_pos);
 			if (entry->size == 0)
 				goto give_up;
 			unuse_pack(&w_curs);
