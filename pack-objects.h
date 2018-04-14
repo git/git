@@ -28,6 +28,10 @@ enum dfs_state {
 };
 
 /*
+ * The size of struct nearly determines pack-objects's memory
+ * consumption. This struct is packed tight for that reason. When you
+ * add or reorder something in this struct, think a bit about this.
+ *
  * basic object info
  * -----------------
  * idx.oid is filled up before delta searching starts. idx.crc32 is
@@ -76,34 +80,44 @@ enum dfs_state {
  */
 struct object_entry {
 	struct pack_idx_entry idx;
+	void *delta_data;	/* cached delta (uncompressed) */
+	off_t in_pack_offset;
+	uint32_t hash;			/* name hint hash */
 	unsigned size_:OE_SIZE_BITS;
 	unsigned size_valid:1;
-	unsigned in_pack_idx:OE_IN_PACK_BITS;	/* already in pack */
-	off_t in_pack_offset;
 	uint32_t delta_idx;	/* delta base object */
 	uint32_t delta_child_idx; /* deltified objects who bases me */
 	uint32_t delta_sibling_idx; /* other deltified objects who
 				     * uses the same base as me
 				     */
-	void *delta_data;	/* cached delta (uncompressed) */
 	unsigned delta_size_:OE_DELTA_SIZE_BITS; /* delta data size (uncompressed) */
 	unsigned delta_size_valid:1;
+	unsigned in_pack_idx:OE_IN_PACK_BITS;	/* already in pack */
 	unsigned z_delta_size:OE_Z_DELTA_BITS;
-	unsigned type_:TYPE_BITS;
-	unsigned in_pack_type:TYPE_BITS; /* could be delta */
 	unsigned type_valid:1;
-	uint32_t hash;			/* name hint hash */
-	unsigned char in_pack_header_size;
+	unsigned type_:TYPE_BITS;
+	unsigned no_try_delta:1;
+	unsigned in_pack_type:TYPE_BITS; /* could be delta */
 	unsigned preferred_base:1; /*
 				    * we do not pack this, but is available
 				    * to be used as the base object to delta
 				    * objects against.
 				    */
-	unsigned no_try_delta:1;
 	unsigned tagged:1; /* near the very tip of refs */
 	unsigned filled:1; /* assigned write-order */
 	unsigned dfs_state:OE_DFS_STATE_BITS;
+	unsigned char in_pack_header_size;
 	unsigned depth:OE_DEPTH_BITS;
+
+	/*
+	 * pahole results on 64-bit linux (gcc and clang)
+	 *
+	 *   size: 80, bit_padding: 20 bits, holes: 8 bits
+	 *
+	 * and on 32-bit (gcc)
+	 *
+	 *   size: 76, bit_padding: 20 bits, holes: 8 bits
+	 */
 };
 
 struct packing_data {
