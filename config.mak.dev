@@ -1,4 +1,6 @@
+ifeq ($(filter no-error,$(DEVOPTS)),)
 CFLAGS += -Werror
+endif
 CFLAGS += -Wdeclaration-after-statement
 CFLAGS += -Wno-format-zero-length
 CFLAGS += -Wold-style-definition

@@ -435,6 +435,16 @@ all::
 # Define DEVELOPER to enable more compiler warnings. Compiler version
 # and family are auto detected, but could be overridden by defining
 # COMPILER_FEATURES (see config.mak.dev)
+#
+# When DEVELOPER is set, DEVOPTS can be used to control compiler
+# options.  This variable contains keywords separated by
+# whitespace. The following keywords are are recognized:
+#
+#    no-error:
+#
+#        suppresses the -Werror that implicitly comes with
+#        DEVELOPER=1. Useful for getting the full set of errors
+#        without immediately dying, or for logging them.
 
 GIT-VERSION-FILE: FORCE
 	@$(SHELL_PATH) ./GIT-VERSION-GEN
