@@ -59,8 +59,9 @@ struct object_entry {
 	void *delta_data;	/* cached delta (uncompressed) */
 	unsigned long delta_size;	/* delta data size (uncompressed) */
 	unsigned long z_delta_size;	/* delta data size (compressed) */
-	enum object_type type;
-	enum object_type in_pack_type;	/* could be delta */
+	unsigned type_:TYPE_BITS;
+	unsigned in_pack_type:TYPE_BITS; /* could be delta */
+	unsigned type_valid:1;
 	uint32_t hash;			/* name hint hash */
 	unsigned int in_pack_pos;
 	unsigned char in_pack_header_size;
@@ -121,6 +122,21 @@ static inline uint32_t pack_name_hash(const char *name)
 		hash = (hash >> 2) + (c << 24);
 	}
 	return hash;
+}
+
+static inline enum object_type oe_type(const struct object_entry *e)
+{
+	return e->type_valid ? e->type_ : OBJ_BAD;
+}
+
+static inline void oe_set_type(struct object_entry *e,
+			       enum object_type type)
+{
+	if (type >= OBJ_ANY)
+		BUG("OBJ_ANY cannot be set in pack-objects code");
+
+	e->type_valid = type >= OBJ_NONE;
+	e->type_ = (unsigned)type;
 }
 
 #endif
