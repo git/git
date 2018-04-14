@@ -1742,7 +1742,7 @@ static void get_object_details(void)
 	for (i = 0; i < to_pack.nr_objects; i++) {
 		struct object_entry *entry = sorted_by_offset[i];
 		check_object(entry);
-		if (big_file_threshold < entry->size)
+		if (entry->type_valid && big_file_threshold < entry->size)
 			entry->no_try_delta = 1;
 	}
 
@@ -2453,7 +2453,7 @@ static void prepare_pack(int window, int depth)
 			 */
 			continue;
 
-		if (entry->size < 50)
+		if (!entry->type_valid || entry->size < 50)
 			continue;
 
 		if (entry->no_try_delta)
