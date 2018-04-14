@@ -3068,6 +3068,12 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	if (pack_to_stdout != !base_name || argc)
 		usage_with_options(pack_usage, pack_objects_options);
 
+	if (depth >= (1 << OE_DEPTH_BITS)) {
+		warning(_("delta chain depth %d is too deep, forcing %d"),
+			depth, (1 << OE_DEPTH_BITS) - 1);
+		depth = (1 << OE_DEPTH_BITS) - 1;
+	}
+
 	argv_array_push(&rp, "pack-objects");
 	if (thin) {
 		use_internal_rev_list = 1;
