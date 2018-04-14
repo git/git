@@ -7,6 +7,11 @@
 #define OE_DEPTH_BITS		12
 #define OE_IN_PACK_BITS		10
 #define OE_Z_DELTA_BITS		20
+/*
+ * Note that oe_set_size() becomes expensive when the given size is
+ * above this limit. Don't lower it too much.
+ */
+#define OE_SIZE_BITS		31
 
 /*
  * State flags for depth-first search used for analyzing delta cycles.
@@ -70,7 +75,8 @@ enum dfs_state {
  */
 struct object_entry {
 	struct pack_idx_entry idx;
-	unsigned long size;	/* uncompressed size */
+	unsigned size_:OE_SIZE_BITS;
+	unsigned size_valid:1;
 	unsigned in_pack_idx:OE_IN_PACK_BITS;	/* already in pack */
 	off_t in_pack_offset;
 	uint32_t delta_idx;	/* delta base object */
@@ -115,6 +121,8 @@ struct packing_data {
 	 */
 	struct packed_git **in_pack_by_idx;
 	struct packed_git **in_pack;
+
+	uintmax_t oe_size_limit;
 };
 
 void prepare_packing_data(struct packing_data *pdata);
@@ -252,6 +260,53 @@ static inline void oe_set_delta_sibling(struct packing_data *pack,
 		e->delta_sibling_idx = (delta - pack->objects) + 1;
 	else
 		e->delta_sibling_idx = 0;
+}
+
+unsigned long oe_get_size_slow(struct packing_data *pack,
+			       const struct object_entry *e);
+static inline unsigned long oe_size(struct packing_data *pack,
+				    const struct object_entry *e)
+{
+	if (e->size_valid)
+		return e->size_;
+
+	return oe_get_size_slow(pack, e);
+}
+
+static inline int oe_size_less_than(struct packing_data *pack,
+				    const struct object_entry *lhs,
+				    unsigned long rhs)
+{
+	if (lhs->size_valid)
+		return lhs->size_ < rhs;
+	if (rhs < pack->oe_size_limit) /* rhs < 2^x <= lhs ? */
+		return 0;
+	return oe_get_size_slow(pack, lhs) < rhs;
+}
+
+static inline int oe_size_greater_than(struct packing_data *pack,
+				       const struct object_entry *lhs,
+				       unsigned long rhs)
+{
+	if (lhs->size_valid)
+		return lhs->size_ > rhs;
+	if (rhs < pack->oe_size_limit) /* rhs < 2^x <= lhs ? */
+		return 1;
+	return oe_get_size_slow(pack, lhs) > rhs;
+}
+
+static inline void oe_set_size(struct packing_data *pack,
+			       struct object_entry *e,
+			       unsigned long size)
+{
+	if (size < pack->oe_size_limit) {
+		e->size_ = size;
+		e->size_valid = 1;
+	} else {
+		e->size_valid = 0;
+		if (oe_get_size_slow(pack, e) != size)
+			BUG("'size' is supposed to be the object size!");
+	}
 }
 
 #endif

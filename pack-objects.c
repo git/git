@@ -143,6 +143,9 @@ void prepare_packing_data(struct packing_data *pdata)
 	} else {
 		prepare_in_pack_by_idx(pdata);
 	}
+
+	pdata->oe_size_limit = git_env_ulong("GIT_TEST_OE_SIZE",
+					     1U << OE_SIZE_BITS);
 }
 
 struct object_entry *packlist_alloc(struct packing_data *pdata,

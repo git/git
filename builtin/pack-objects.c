@@ -32,6 +32,8 @@
 #include "object-store.h"
 
 #define IN_PACK(obj) oe_in_pack(&to_pack, obj)
+#define SIZE(obj) oe_size(&to_pack, obj)
+#define SET_SIZE(obj,size) oe_set_size(&to_pack, obj, size)
 #define DELTA(obj) oe_delta(&to_pack, obj)
 #define DELTA_CHILD(obj) oe_delta_child(&to_pack, obj)
 #define DELTA_SIBLING(obj) oe_delta_sibling(&to_pack, obj)
@@ -276,7 +278,7 @@ static unsigned long write_no_reuse_object(struct hashfile *f, struct object_ent
 
 	if (!usable_delta) {
 		if (oe_type(entry) == OBJ_BLOB &&
-		    entry->size > big_file_threshold &&
+		    oe_size_greater_than(&to_pack, entry, big_file_threshold) &&
 		    (st = open_istream(&entry->idx.oid, &type, &size, NULL)) != NULL)
 			buf = NULL;
 		else {
@@ -385,12 +387,13 @@ static off_t write_reuse_object(struct hashfile *f, struct object_entry *entry,
 	unsigned char header[MAX_PACK_OBJECT_HEADER],
 		      dheader[MAX_PACK_OBJECT_HEADER];
 	unsigned hdrlen;
+	unsigned long entry_size = SIZE(entry);
 
 	if (DELTA(entry))
 		type = (allow_ofs_delta && DELTA(entry)->idx.offset) ?
 			OBJ_OFS_DELTA : OBJ_REF_DELTA;
 	hdrlen = encode_in_pack_object_header(header, sizeof(header),
-					      type, entry->size);
+					      type, entry_size);
 
 	offset = entry->in_pack_offset;
 	revidx = find_pack_revindex(p, offset);
@@ -407,7 +410,7 @@ static off_t write_reuse_object(struct hashfile *f, struct object_entry *entry,
 	datalen -= entry->in_pack_header_size;
 
 	if (!pack_to_stdout && p->index_version == 1 &&
-	    check_pack_inflate(p, &w_curs, offset, datalen, entry->size)) {
+	    check_pack_inflate(p, &w_curs, offset, datalen, entry_size)) {
 		error("corrupt packed object for %s",
 		      oid_to_hex(&entry->idx.oid));
 		unuse_pack(&w_curs);
@@ -1408,6 +1411,8 @@ static void cleanup_preferred_base(void)
 
 static void check_object(struct object_entry *entry)
 {
+	unsigned long canonical_size;
+
 	if (IN_PACK(entry)) {
 		struct packed_git *p = IN_PACK(entry);
 		struct pack_window *w_curs = NULL;
@@ -1445,7 +1450,7 @@ static void check_object(struct object_entry *entry)
 		default:
 			/* Not a delta hence we've already got all we need. */
 			oe_set_type(entry, entry->in_pack_type);
-			entry->size = in_pack_size;
+			SET_SIZE(entry, in_pack_size);
 			entry->in_pack_header_size = used;
 			if (oe_type(entry) < OBJ_COMMIT || oe_type(entry) > OBJ_BLOB)
 				goto give_up;
@@ -1502,9 +1507,9 @@ static void check_object(struct object_entry *entry)
 			 * circular deltas.
 			 */
 			oe_set_type(entry, entry->in_pack_type);
-			entry->size = in_pack_size; /* delta size */
+			SET_SIZE(entry, in_pack_size); /* delta size */
 			SET_DELTA(entry, base_entry);
-			entry->delta_size = entry->size;
+			entry->delta_size = in_pack_size;
 			entry->delta_sibling_idx = base_entry->delta_child_idx;
 			SET_DELTA_CHILD(base_entry, entry);
 			unuse_pack(&w_curs);
@@ -1520,9 +1525,10 @@ static void check_object(struct object_entry *entry)
 			 * object size from the delta header.
 			 */
 			delta_pos = entry->in_pack_offset + entry->in_pack_header_size;
-			entry->size = get_size_from_delta(p, &w_curs, delta_pos);
-			if (entry->size == 0)
+			canonical_size = get_size_from_delta(p, &w_curs, delta_pos);
+			if (canonical_size == 0)
 				goto give_up;
+			SET_SIZE(entry, canonical_size);
 			unuse_pack(&w_curs);
 			return;
 		}
@@ -1536,13 +1542,17 @@ static void check_object(struct object_entry *entry)
 		unuse_pack(&w_curs);
 	}
 
-	oe_set_type(entry, oid_object_info(&entry->idx.oid, &entry->size));
-	/*
-	 * The error condition is checked in prepare_pack().  This is
-	 * to permit a missing preferred base object to be ignored
-	 * as a preferred base.  Doing so can result in a larger
-	 * pack file, but the transfer will still take place.
-	 */
+	oe_set_type(entry, oid_object_info(&entry->idx.oid, &canonical_size));
+	if (entry->type_valid) {
+		SET_SIZE(entry, canonical_size);
+	} else {
+		/*
+		 * Bad object type is checked in prepare_pack().  This is
+		 * to permit a missing preferred base object to be ignored
+		 * as a preferred base.  Doing so can result in a larger
+		 * pack file, but the transfer will still take place.
+		 */
+	}
 }
 
 static int pack_offset_sort(const void *_a, const void *_b)
@@ -1582,6 +1592,7 @@ static void drop_reused_delta(struct object_entry *entry)
 	unsigned *idx = &to_pack.objects[entry->delta_idx - 1].delta_child_idx;
 	struct object_info oi = OBJECT_INFO_INIT;
 	enum object_type type;
+	unsigned long size;
 
 	while (*idx) {
 		struct object_entry *oe = &to_pack.objects[*idx - 1];
@@ -1594,7 +1605,7 @@ static void drop_reused_delta(struct object_entry *entry)
 	SET_DELTA(entry, NULL);
 	entry->depth = 0;
 
-	oi.sizep = &entry->size;
+	oi.sizep = &size;
 	oi.typep = &type;
 	if (packed_object_info(IN_PACK(entry), entry->in_pack_offset, &oi) < 0) {
 		/*
@@ -1603,11 +1614,11 @@ static void drop_reused_delta(struct object_entry *entry)
 		 * And if that fails, the error will be recorded in oe_type(entry)
 		 * and dealt with in prepare_pack().
 		 */
-		oe_set_type(entry, oid_object_info(&entry->idx.oid,
-						   &entry->size));
+		oe_set_type(entry, oid_object_info(&entry->idx.oid, &size));
 	} else {
 		oe_set_type(entry, type);
 	}
+	SET_SIZE(entry, size);
 }
 
 /*
@@ -1747,7 +1758,8 @@ static void get_object_details(void)
 	for (i = 0; i < to_pack.nr_objects; i++) {
 		struct object_entry *entry = sorted_by_offset[i];
 		check_object(entry);
-		if (entry->type_valid && big_file_threshold < entry->size)
+		if (entry->type_valid &&
+		    oe_size_greater_than(&to_pack, entry, big_file_threshold))
 			entry->no_try_delta = 1;
 	}
 
@@ -1776,6 +1788,8 @@ static int type_size_sort(const void *_a, const void *_b)
 	const struct object_entry *b = *(struct object_entry **)_b;
 	enum object_type a_type = oe_type(a);
 	enum object_type b_type = oe_type(b);
+	unsigned long a_size = SIZE(a);
+	unsigned long b_size = SIZE(b);
 
 	if (a_type > b_type)
 		return -1;
@@ -1789,9 +1803,9 @@ static int type_size_sort(const void *_a, const void *_b)
 		return -1;
 	if (a->preferred_base < b->preferred_base)
 		return 1;
-	if (a->size > b->size)
+	if (a_size > b_size)
 		return -1;
-	if (a->size < b->size)
+	if (a_size < b_size)
 		return 1;
 	return a < b ? -1 : (a > b);  /* newest first */
 }
@@ -1844,6 +1858,46 @@ static pthread_mutex_t progress_mutex;
 
 #endif
 
+/*
+ * Return the size of the object without doing any delta
+ * reconstruction (so non-deltas are true object sizes, but deltas
+ * return the size of the delta data).
+ */
+unsigned long oe_get_size_slow(struct packing_data *pack,
+			       const struct object_entry *e)
+{
+	struct packed_git *p;
+	struct pack_window *w_curs;
+	unsigned char *buf;
+	enum object_type type;
+	unsigned long used, avail, size;
+
+	if (e->type_ != OBJ_OFS_DELTA && e->type_ != OBJ_REF_DELTA) {
+		read_lock();
+		if (oid_object_info(&e->idx.oid, &size) < 0)
+			die(_("unable to get size of %s"),
+			    oid_to_hex(&e->idx.oid));
+		read_unlock();
+		return size;
+	}
+
+	p = oe_in_pack(pack, e);
+	if (!p)
+		BUG("when e->type is a delta, it must belong to a pack");
+
+	read_lock();
+	w_curs = NULL;
+	buf = use_pack(p, &w_curs, e->in_pack_offset, &avail);
+	used = unpack_object_header_buffer(buf, avail, &type, &size);
+	if (used == 0)
+		die(_("unable to parse object header of %s"),
+		    oid_to_hex(&e->idx.oid));
+
+	unuse_pack(&w_curs);
+	read_unlock();
+	return size;
+}
+
 static int try_delta(struct unpacked *trg, struct unpacked *src,
 		     unsigned max_depth, unsigned long *mem_usage)
 {
@@ -1878,7 +1932,7 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 		return 0;
 
 	/* Now some size filtering heuristics. */
-	trg_size = trg_entry->size;
+	trg_size = SIZE(trg_entry);
 	if (!DELTA(trg_entry)) {
 		max_size = trg_size/2 - 20;
 		ref_depth = 1;
@@ -1890,7 +1944,7 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 						(max_depth - ref_depth + 1);
 	if (max_size == 0)
 		return 0;
-	src_size = src_entry->size;
+	src_size = SIZE(src_entry);
 	sizediff = src_size < trg_size ? trg_size - src_size : 0;
 	if (sizediff >= max_size)
 		return 0;
@@ -2008,7 +2062,7 @@ static unsigned long free_unpacked(struct unpacked *n)
 	free_delta_index(n->index);
 	n->index = NULL;
 	if (n->data) {
-		freed_mem += n->entry->size;
+		freed_mem += SIZE(n->entry);
 		FREE_AND_NULL(n->data);
 	}
 	n->entry = NULL;
@@ -2458,7 +2512,8 @@ static void prepare_pack(int window, int depth)
 			 */
 			continue;
 
-		if (!entry->type_valid || entry->size < 50)
+		if (!entry->type_valid ||
+		    oe_size_less_than(&to_pack, entry, 50))
 			continue;
 
 		if (entry->no_try_delta)
