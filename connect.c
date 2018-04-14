@@ -46,7 +46,7 @@ int check_ref_type(const struct ref *ref, int flags)
 	return check_ref(ref->name, flags);
 }
 
-static void die_initial_contact(int unexpected)
+static NORETURN void die_initial_contact(int unexpected)
 {
 	if (unexpected)
 		die(_("The remote end hung up upon initial contact"));
