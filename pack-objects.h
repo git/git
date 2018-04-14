@@ -12,6 +12,7 @@
  * above this limit. Don't lower it too much.
  */
 #define OE_SIZE_BITS		31
+#define OE_DELTA_SIZE_BITS	20
 
 /*
  * State flags for depth-first search used for analyzing delta cycles.
@@ -85,7 +86,8 @@ struct object_entry {
 				     * uses the same base as me
 				     */
 	void *delta_data;	/* cached delta (uncompressed) */
-	unsigned long delta_size;	/* delta data size (uncompressed) */
+	unsigned delta_size_:OE_DELTA_SIZE_BITS; /* delta data size (uncompressed) */
+	unsigned delta_size_valid:1;
 	unsigned z_delta_size:OE_Z_DELTA_BITS;
 	unsigned type_:TYPE_BITS;
 	unsigned in_pack_type:TYPE_BITS; /* could be delta */
@@ -307,6 +309,25 @@ static inline void oe_set_size(struct packing_data *pack,
 		if (oe_get_size_slow(pack, e) != size)
 			BUG("'size' is supposed to be the object size!");
 	}
+}
+
+static inline unsigned long oe_delta_size(struct packing_data *pack,
+					  const struct object_entry *e)
+{
+	if (e->delta_size_valid)
+		return e->delta_size_;
+	return oe_size(pack, e);
+}
+
+static inline void oe_set_delta_size(struct packing_data *pack,
+				     struct object_entry *e,
+				     unsigned long size)
+{
+	e->delta_size_ = size;
+	e->delta_size_valid = e->delta_size_ == size;
+	if (!e->delta_size_valid && size != oe_size(pack, e))
+		BUG("this can only happen in check_object() "
+		    "where delta size is the same as entry size");
 }
 
 #endif
