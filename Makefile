@@ -445,6 +445,12 @@ all::
 #        suppresses the -Werror that implicitly comes with
 #        DEVELOPER=1. Useful for getting the full set of errors
 #        without immediately dying, or for logging them.
+#
+#    extra-all:
+#
+#        The DEVELOPER mode enables -Wextra with a few exceptions. By
+#        setting this flag the exceptions are removed, and all of
+#        -Wextra is used.
 
 GIT-VERSION-FILE: FORCE
 	@$(SHELL_PATH) ./GIT-VERSION-GEN
