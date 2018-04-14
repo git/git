@@ -293,6 +293,17 @@ and know what setup is needed for it.  Or when you want to run
 everything up to a certain test.
 
 
+Running tests with special setups
+---------------------------------
+
+The whole test suite could be run to test some special features
+that cannot be easily covered by a few specific test cases. These
+could be enabled by running the test suite with correct GIT_TEST_
+environment set.
+
+GIT_TEST_SPLIT_INDEX=<boolean> forces split-index mode on the whole
+test suite. Accept any boolean values that are accepted by git-config.
+
 Naming Tests
 ------------
 
