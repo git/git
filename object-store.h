@@ -69,6 +69,7 @@ struct packed_git {
 	int index_version;
 	time_t mtime;
 	int pack_fd;
+	int index;              /* for builtin/pack-objects.c */
 	unsigned pack_local:1,
 		 pack_keep:1,
 		 freshened:1,

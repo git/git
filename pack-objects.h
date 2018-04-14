@@ -1,8 +1,11 @@
 #ifndef PACK_OBJECTS_H
 #define PACK_OBJECTS_H
 
+#include "object-store.h"
+
 #define OE_DFS_STATE_BITS	2
 #define OE_DEPTH_BITS		12
+#define OE_IN_PACK_BITS		10
 
 /*
  * State flags for depth-first search used for analyzing delta cycles.
@@ -65,7 +68,7 @@ enum dfs_state {
 struct object_entry {
 	struct pack_idx_entry idx;
 	unsigned long size;	/* uncompressed size */
-	struct packed_git *in_pack;	/* already in pack */
+	unsigned in_pack_idx:OE_IN_PACK_BITS;	/* already in pack */
 	off_t in_pack_offset;
 	struct object_entry *delta;	/* delta base object */
 	struct object_entry *delta_child; /* deltified objects who bases me */
@@ -100,8 +103,18 @@ struct packing_data {
 	uint32_t index_size;
 
 	unsigned int *in_pack_pos;
+
+	/*
+	 * Only one of these can be non-NULL and they have different
+	 * sizes. if in_pack_by_idx is allocated, oe_in_pack() returns
+	 * the pack of an object using in_pack_idx field. If not,
+	 * in_pack[] array is used the same way as in_pack_pos[]
+	 */
+	struct packed_git **in_pack_by_idx;
+	struct packed_git **in_pack;
 };
 
+void prepare_packing_data(struct packing_data *pdata);
 struct object_entry *packlist_alloc(struct packing_data *pdata,
 				    const unsigned char *sha1,
 				    uint32_t index_pos);
@@ -156,6 +169,29 @@ static inline void oe_set_in_pack_pos(const struct packing_data *pack,
 				      unsigned int pos)
 {
 	pack->in_pack_pos[e - pack->objects] = pos;
+}
+
+static inline struct packed_git *oe_in_pack(const struct packing_data *pack,
+					    const struct object_entry *e)
+{
+	if (pack->in_pack_by_idx)
+		return pack->in_pack_by_idx[e->in_pack_idx];
+	else
+		return pack->in_pack[e - pack->objects];
+}
+
+void oe_map_new_pack(struct packing_data *pack,
+		     struct packed_git *p);
+static inline void oe_set_in_pack(struct packing_data *pack,
+				  struct object_entry *e,
+				  struct packed_git *p)
+{
+	if (!p->index)
+		oe_map_new_pack(pack, p);
+	if (pack->in_pack_by_idx)
+		e->in_pack_idx = p->index;
+	else
+		pack->in_pack[e - pack->objects] = p;
 }
 
 #endif
