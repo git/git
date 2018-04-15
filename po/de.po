@@ -15052,7 +15052,7 @@ msgstr "Kann gesperrtes Arbeitsverzeichnis nicht verschieben, Sperrgrund: %s"
 
 #: builtin/worktree.c:692
 msgid "cannot move a locked working tree"
-msgstr "Kann gesperrtes Arbeitsverzeichnisses nicht verschieben."
+msgstr "Kann gesperrtes Arbeitsverzeichnis nicht verschieben."
 
 #: builtin/worktree.c:695
 #, c-format
@@ -16991,7 +16991,7 @@ msgstr "Löschung im Arbeitsverzeichnis verwerfen [y,n,q,a,d%s,?]? "
 #: git-add--interactive.perl:1405
 #, perl-format
 msgid "Discard this hunk from worktree [y,n,q,a,d%s,?]? "
-msgstr "diesen Patch-Block im Arbeitsverzeichnis verwerfen [y,n,q,a,d%s,?]? "
+msgstr "Diesen Patch-Block im Arbeitsverzeichnis verwerfen [y,n,q,a,d%s,?]? "
 
 #: git-add--interactive.perl:1408
 #, perl-format
