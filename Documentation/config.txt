@@ -1564,6 +1564,11 @@ gc.bigPackThreshold::
 	except that all packs that meet the threshold are kept, not
 	just the base pack. Defaults to zero. Common unit suffixes of
 	'k', 'm', or 'g' are supported.
++
+Note that if the number of kept packs is more than gc.autoPackLimit,
+this configuration variable is ignored, all packs except the base pack
+will be repacked. After this the number of packs should go below
+gc.autoPackLimit and gc.bigPackThreshold should be respected again.
 
 gc.logExpiry::
 	If the file gc.log exists, then `git gc --auto` won't run
