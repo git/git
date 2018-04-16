@@ -1427,6 +1427,97 @@ test_expect_success 'complete files' '
 	test_completion "git add mom" "momified"
 '
 
+# The next tests only care about how the completion script deals with
+# unusual characters in path names.  By defining a custom completion
+# function to list untracked files they won't be influenced by future
+# changes of the completion functions of real git commands, and we
+# don't have to bother with adding files to the index in these tests.
+_git_test_path_comp ()
+{
+	__git_complete_index_file --others
+}
+
+test_expect_failure 'complete files - escaped characters on cmdline' '
+	test_when_finished "rm -rf \"New|Dir\"" &&
+	mkdir "New|Dir" &&
+	>"New|Dir/New&File.c" &&
+
+	test_completion "git test-path-comp N" \
+			"New|Dir" &&	# Bash will turn this into "New\|Dir/"
+	test_completion "git test-path-comp New\\|D" \
+			"New|Dir" &&
+	test_completion "git test-path-comp New\\|Dir/N" \
+			"New|Dir/New&File.c" &&	# Bash will turn this into
+						# "New\|Dir/New\&File.c "
+	test_completion "git test-path-comp New\\|Dir/New\\&F" \
+			"New|Dir/New&File.c"
+'
+
+test_expect_failure 'complete files - quoted characters on cmdline' '
+	test_when_finished "rm -r \"New(Dir\"" &&
+	mkdir "New(Dir" &&
+	>"New(Dir/New)File.c" &&
+
+	test_completion "git test-path-comp \"New(D" "New(Dir" &&
+	test_completion "git test-path-comp \"New(Dir/New)F" \
+			"New(Dir/New)File.c"
+'
+
+test_expect_failure 'complete files - UTF-8 in ls-files output' '
+	test_when_finished "rm -r árvíztűrő" &&
+	mkdir árvíztűrő &&
+	>"árvíztűrő/Сайн яваарай" &&
+
+	test_completion "git test-path-comp á" "árvíztűrő" &&
+	test_completion "git test-path-comp árvíztűrő/С" \
+			"árvíztűrő/Сайн яваарай"
+'
+
+if test_have_prereq !MINGW &&
+   mkdir 'New\Dir' 2>/dev/null &&
+   touch 'New\Dir/New"File.c' 2>/dev/null
+then
+	test_set_prereq FUNNYNAMES_BS_DQ
+else
+	say "Your filesystem does not allow \\ and \" in filenames."
+	rm -rf 'New\Dir'
+fi
+test_expect_failure FUNNYNAMES_BS_DQ \
+    'complete files - C-style escapes in ls-files output' '
+	test_when_finished "rm -r \"New\\\\Dir\"" &&
+
+	test_completion "git test-path-comp N" "New\\Dir" &&
+	test_completion "git test-path-comp New\\\\D" "New\\Dir" &&
+	test_completion "git test-path-comp New\\\\Dir/N" \
+			"New\\Dir/New\"File.c" &&
+	test_completion "git test-path-comp New\\\\Dir/New\\\"F" \
+			"New\\Dir/New\"File.c"
+'
+
+if test_have_prereq !MINGW &&
+   mkdir $'New\034Special\035Dir' 2>/dev/null &&
+   touch $'New\034Special\035Dir/New\036Special\037File' 2>/dev/null
+then
+	test_set_prereq FUNNYNAMES_SEPARATORS
+else
+	say 'Your filesystem does not allow special separator characters (FS, GS, RS, US) in filenames.'
+	rm -rf $'New\034Special\035Dir'
+fi
+test_expect_failure FUNNYNAMES_SEPARATORS \
+    'complete files - \nnn-escaped control characters in ls-files output' '
+	test_when_finished "rm -r '$'New\034Special\035Dir''" &&
+
+	# Note: these will be literal separator characters on the cmdline.
+	test_completion "git test-path-comp N" "'$'New\034Special\035Dir''" &&
+	test_completion "git test-path-comp '$'New\034S''" \
+			"'$'New\034Special\035Dir''" &&
+	test_completion "git test-path-comp '$'New\034Special\035Dir/''" \
+			"'$'New\034Special\035Dir/New\036Special\037File''" &&
+	test_completion "git test-path-comp '$'New\034Special\035Dir/New\036S''" \
+			"'$'New\034Special\035Dir/New\036Special\037File''"
+'
+
+
 test_expect_success "completion uses <cmd> completion for alias: !sh -c 'git <cmd> ...'" '
 	test_config alias.co "!sh -c '"'"'git checkout ...'"'"'" &&
 	test_completion "git co m" <<-\EOF
