@@ -1515,6 +1515,7 @@ test_expect_success 'complete files - UTF-8 in ls-files output' '
 			"árvíztűrő/Сайн яваарай"
 '
 
+# Testing with a path containing a backslash is important.
 if test_have_prereq !MINGW &&
    mkdir 'New\Dir' 2>/dev/null &&
    touch 'New\Dir/New"File.c' 2>/dev/null

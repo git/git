@@ -436,11 +436,11 @@ __git_ls_files_helper ()
 {
 	if [ "$2" == "--committable" ]; then
 		__git -C "$1" -c core.quotePath=false diff-index \
-			--name-only --relative HEAD
+			--name-only --relative HEAD -- "${3//\\/\\\\}*"
 	else
 		# NOTE: $2 is not quoted in order to support multiple options
 		__git -C "$1" -c core.quotePath=false ls-files \
-			--exclude-standard $2
+			--exclude-standard $2 -- "${3//\\/\\\\}*"
 	fi
 }
 
@@ -451,11 +451,12 @@ __git_ls_files_helper ()
 #    If provided, only files within the specified directory are listed.
 #    Sub directories are never recursed.  Path must have a trailing
 #    slash.
+# 3: List only paths matching this path component (optional).
 __git_index_files ()
 {
-	local root="$2" file
+	local root="$2" match="$3" file
 
-	__git_ls_files_helper "$root" "$1" |
+	__git_ls_files_helper "$root" "$1" "$match" |
 	while read -r file; do
 		case "$file" in
 		?*/*) echo "${file%%/*}" ;;
@@ -483,7 +484,7 @@ __git_complete_index_file ()
 		cur_="$dequoted_word"
 	esac
 
-	__gitcomp_file "$(__git_index_files "$1" "$pfx")" "$pfx" "$cur_"
+	__gitcomp_file "$(__git_index_files "$1" "$pfx" "$cur_")" "$pfx" "$cur_"
 }
 
 # Lists branches from the local repository.
