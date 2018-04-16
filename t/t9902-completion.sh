@@ -400,6 +400,46 @@ test_expect_success '__gitdir - remote as argument' '
 	test_cmp expected "$actual"
 '
 
+
+test_expect_success '__git_dequote - plain unquoted word' '
+	__git_dequote unquoted-word &&
+	verbose test unquoted-word = "$dequoted_word"
+'
+
+# input:    b\a\c\k\'\\\"s\l\a\s\h\es
+# expected: back'\"slashes
+test_expect_success '__git_dequote - backslash escaped' '
+	__git_dequote "b\a\c\k\\'\''\\\\\\\"s\l\a\s\h\es" &&
+	verbose test "back'\''\\\"slashes" = "$dequoted_word"
+'
+
+# input:    sin'gle\' '"quo'ted
+# expected: single\ "quoted
+test_expect_success '__git_dequote - single quoted' '
+	__git_dequote "'"sin'gle\\\\' '\\\"quo'ted"'" &&
+	verbose test '\''single\ "quoted'\'' = "$dequoted_word"
+'
+
+# input:    dou"ble\\" "\"\quot"ed
+# expected: double\ "\quoted
+test_expect_success '__git_dequote - double quoted' '
+	__git_dequote '\''dou"ble\\" "\"\quot"ed'\'' &&
+	verbose test '\''double\ "\quoted'\'' = "$dequoted_word"
+'
+
+# input: 'open single quote
+test_expect_success '__git_dequote - open single quote' '
+	__git_dequote "'\''open single quote" &&
+	verbose test "open single quote" = "$dequoted_word"
+'
+
+# input: "open double quote
+test_expect_success '__git_dequote - open double quote' '
+	__git_dequote "\"open double quote" &&
+	verbose test "open double quote" = "$dequoted_word"
+'
+
+
 test_expect_success '__gitcomp_direct - puts everything into COMPREPLY as-is' '
 	sed -e "s/Z$//g" >expected <<-EOF &&
 	with-trailing-space Z
@@ -1437,7 +1477,7 @@ _git_test_path_comp ()
 	__git_complete_index_file --others
 }
 
-test_expect_failure 'complete files - escaped characters on cmdline' '
+test_expect_success 'complete files - escaped characters on cmdline' '
 	test_when_finished "rm -rf \"New|Dir\"" &&
 	mkdir "New|Dir" &&
 	>"New|Dir/New&File.c" &&
@@ -1453,11 +1493,13 @@ test_expect_failure 'complete files - escaped characters on cmdline' '
 			"New|Dir/New&File.c"
 '
 
-test_expect_failure 'complete files - quoted characters on cmdline' '
+test_expect_success 'complete files - quoted characters on cmdline' '
 	test_when_finished "rm -r \"New(Dir\"" &&
 	mkdir "New(Dir" &&
 	>"New(Dir/New)File.c" &&
 
+	# Testing with an opening but without a corresponding closing
+	# double quote is important.
 	test_completion "git test-path-comp \"New(D" "New(Dir" &&
 	test_completion "git test-path-comp \"New(Dir/New)F" \
 			"New(Dir/New)File.c"

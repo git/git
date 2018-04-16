@@ -94,6 +94,70 @@ __git ()
 		${__git_dir:+--git-dir="$__git_dir"} "$@" 2>/dev/null
 }
 
+# Removes backslash escaping, single quotes and double quotes from a word,
+# stores the result in the variable $dequoted_word.
+# 1: The word to dequote.
+__git_dequote ()
+{
+	local rest="$1" len ch
+
+	dequoted_word=""
+
+	while test -n "$rest"; do
+		len=${#dequoted_word}
+		dequoted_word="$dequoted_word${rest%%[\\\'\"]*}"
+		rest="${rest:$((${#dequoted_word}-$len))}"
+
+		case "${rest:0:1}" in
+		\\)
+			ch="${rest:1:1}"
+			case "$ch" in
+			$'\n')
+				;;
+			*)
+				dequoted_word="$dequoted_word$ch"
+				;;
+			esac
+			rest="${rest:2}"
+			;;
+		\')
+			rest="${rest:1}"
+			len=${#dequoted_word}
+			dequoted_word="$dequoted_word${rest%%\'*}"
+			rest="${rest:$((${#dequoted_word}-$len+1))}"
+			;;
+		\")
+			rest="${rest:1}"
+			while test -n "$rest" ; do
+				len=${#dequoted_word}
+				dequoted_word="$dequoted_word${rest%%[\\\"]*}"
+				rest="${rest:$((${#dequoted_word}-$len))}"
+				case "${rest:0:1}" in
+				\\)
+					ch="${rest:1:1}"
+					case "$ch" in
+					\"|\\|\$|\`)
+						dequoted_word="$dequoted_word$ch"
+						;;
+					$'\n')
+						;;
+					*)
+						dequoted_word="$dequoted_word\\$ch"
+						;;
+					esac
+					rest="${rest:2}"
+					;;
+				\")
+					rest="${rest:1}"
+					break
+					;;
+				esac
+			done
+			;;
+		esac
+	done
+}
+
 # The following function is based on code from:
 #
 #   bash_completion - programmable completion functions for bash 3.2+
@@ -406,13 +470,17 @@ __git_index_files ()
 # The exception is --committable, which finds the files appropriate commit.
 __git_complete_index_file ()
 {
-	local pfx="" cur_="$cur"
+	local dequoted_word pfx="" cur_
 
-	case "$cur_" in
+	__git_dequote "$cur"
+
+	case "$dequoted_word" in
 	?*/*)
-		pfx="${cur_%/*}/"
-		cur_="${cur_##*/}"
+		pfx="${dequoted_word%/*}/"
+		cur_="${dequoted_word##*/}"
 		;;
+	*)
+		cur_="$dequoted_word"
 	esac
 
 	__gitcomp_file "$(__git_index_files "$1" "$pfx")" "$pfx" "$cur_"
