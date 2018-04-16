@@ -406,6 +406,23 @@ __gitcomp_nl ()
 	__gitcomp_nl_append "$@"
 }
 
+# Fills the COMPREPLY array with prefiltered paths without any additional
+# processing.
+# Callers must take care of providing only paths that match the current path
+# to be completed and adding any prefix path components, if necessary.
+# 1: List of newline-separated matching paths, complete with all prefix
+#    path componens.
+__gitcomp_file_direct ()
+{
+	local IFS=$'\n'
+
+	COMPREPLY=($1)
+
+	# use a hack to enable file mode in bash < 4
+	compopt -o filenames +o nospace 2>/dev/null ||
+	compgen -f /non-existing-dir/ > /dev/null
+}
+
 # Generates completion reply with compgen from newline-separated possible
 # completion filenames.
 # It accepts 1 to 3 arguments:
@@ -457,14 +474,14 @@ __git_index_files ()
 	local root="$2" match="$3"
 
 	__git_ls_files_helper "$root" "$1" "$match" |
-	awk -F / '{
+	awk -F / -v pfx="${2//\\/\\\\}" '{
 		paths[$1] = 1
 	}
 	END {
 		for (p in paths) {
 			if (substr(p, 1, 1) != "\"") {
 				# No special characters, easy!
-				print p
+				print pfx p
 				continue
 			}
 
@@ -483,7 +500,7 @@ __git_index_files ()
 				# skip it.
 				continue
 			else
-				print p
+				print pfx p
 		}
 	}
 	function dequote(p,    bs_idx, out, esc, esc_idx, dec) {
@@ -547,7 +564,7 @@ __git_complete_index_file ()
 		cur_="$dequoted_word"
 	esac
 
-	__gitcomp_file "$(__git_index_files "$1" "$pfx" "$cur_")" "$pfx" "$cur_"
+	__gitcomp_file_direct "$(__git_index_files "$1" "$pfx" "$cur_")"
 }
 
 # Lists branches from the local repository.
@@ -3346,6 +3363,15 @@ if [[ -n ${ZSH_VERSION-} ]]; then
 		local IFS=$'\n'
 		compset -P '*[=:]'
 		compadd -Q -S "${4- }" -p "${2-}" -- ${=1} && _ret=0
+	}
+
+	__gitcomp_file_direct ()
+	{
+		emulate -L zsh
+
+		local IFS=$'\n'
+		compset -P '*[=:]'
+		compadd -Q -f -- ${=1} && _ret=0
 	}
 
 	__gitcomp_file ()
