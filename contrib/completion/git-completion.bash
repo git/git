@@ -454,15 +454,12 @@ __git_ls_files_helper ()
 # 3: List only paths matching this path component (optional).
 __git_index_files ()
 {
-	local root="$2" match="$3" file
+	local root="$2" match="$3"
 
 	__git_ls_files_helper "$root" "$1" "$match" |
-	while read -r file; do
-		case "$file" in
-		?*/*) echo "${file%%/*}" ;;
-		*) echo "$file" ;;
-		esac
-	done | sort | uniq
+	awk -F / '{
+		print $1
+	}' | sort | uniq
 }
 
 # __git_complete_index_file requires 1 argument:
