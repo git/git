@@ -387,7 +387,7 @@ __git_ls_files_helper ()
 #    slash.
 __git_index_files ()
 {
-	local root="${2-.}" file
+	local root="$2" file
 
 	__git_ls_files_helper "$root" "$1" |
 	while read -r file; do
@@ -408,13 +408,12 @@ __git_complete_index_file ()
 
 	case "$cur_" in
 	?*/*)
-		pfx="${cur_%/*}"
+		pfx="${cur_%/*}/"
 		cur_="${cur_##*/}"
-		pfx="${pfx}/"
 		;;
 	esac
 
-	__gitcomp_file "$(__git_index_files "$1" ${pfx:+"$pfx"})" "$pfx" "$cur_"
+	__gitcomp_file "$(__git_index_files "$1" "$pfx")" "$pfx" "$cur_"
 }
 
 # Lists branches from the local repository.
