@@ -461,8 +461,70 @@ __git_index_files ()
 		paths[$1] = 1
 	}
 	END {
-		for (p in paths)
-			print p
+		for (p in paths) {
+			if (substr(p, 1, 1) != "\"") {
+				# No special characters, easy!
+				print p
+				continue
+			}
+
+			# The path is quoted.
+			p = dequote(p)
+			if (p == "")
+				continue
+
+			# Even when a directory name itself does not contain
+			# any special characters, it will still be quoted if
+			# any of its (stripped) trailing path components do.
+			# Because of this we may have seen the same direcory
+			# both quoted and unquoted.
+			if (p in paths)
+				# We have seen the same directory unquoted,
+				# skip it.
+				continue
+			else
+				print p
+		}
+	}
+	function dequote(p,    bs_idx, out, esc, esc_idx, dec) {
+		# Skip opening double quote.
+		p = substr(p, 2)
+
+		# Interpret backslash escape sequences.
+		while ((bs_idx = index(p, "\\")) != 0) {
+			out = out substr(p, 1, bs_idx - 1)
+			esc = substr(p, bs_idx + 1, 1)
+			p = substr(p, bs_idx + 2)
+
+			if ((esc_idx = index("abtvfr\"\\", esc)) != 0) {
+				# C-style one-character escape sequence.
+				out = out substr("\a\b\t\v\f\r\"\\",
+						 esc_idx, 1)
+			} else if (esc == "n") {
+				# Uh-oh, a newline character.
+				# We cant reliably put a pathname
+				# containing a newline into COMPREPLY,
+				# and the newline would create a mess.
+				# Skip this path.
+				return ""
+			} else {
+				# Must be a \nnn octal value, then.
+				dec = esc             * 64 + \
+				      substr(p, 1, 1) * 8  + \
+				      substr(p, 2, 1)
+				out = out sprintf("%c", dec)
+				p = substr(p, 3)
+			}
+		}
+		# Drop closing double quote, if there is one.
+		# (There isnt any if this is a directory, as it was
+		# already stripped with the trailing path components.)
+		if (substr(p, length(p), 1) == "\"")
+			out = out substr(p, 1, length(p) - 1)
+		else
+			out = out p
+
+		return out
 	}'
 }
 

@@ -1527,7 +1527,7 @@ else
 	say "Your filesystem does not allow \\ and \" in filenames."
 	rm -rf 'New\Dir'
 fi
-test_expect_failure FUNNYNAMES_BS_DQ \
+test_expect_success FUNNYNAMES_BS_DQ \
     'complete files - C-style escapes in ls-files output' '
 	test_when_finished "rm -r \"New\\\\Dir\"" &&
 
@@ -1548,7 +1548,7 @@ else
 	say 'Your filesystem does not allow special separator characters (FS, GS, RS, US) in filenames.'
 	rm -rf $'New\034Special\035Dir'
 fi
-test_expect_failure FUNNYNAMES_SEPARATORS \
+test_expect_success FUNNYNAMES_SEPARATORS \
     'complete files - \nnn-escaped control characters in ls-files output' '
 	test_when_finished "rm -r '$'New\034Special\035Dir''" &&
 
@@ -1560,6 +1560,19 @@ test_expect_failure FUNNYNAMES_SEPARATORS \
 			"'$'New\034Special\035Dir/New\036Special\037File''" &&
 	test_completion "git test-path-comp '$'New\034Special\035Dir/New\036S''" \
 			"'$'New\034Special\035Dir/New\036Special\037File''"
+'
+
+test_expect_success FUNNYNAMES_BS_DQ \
+    'complete files - removing repeated quoted path components' '
+	test_when_finished rm -rf NewDir &&
+	mkdir NewDir &&    # A dirname which in itself would not be quoted ...
+	>NewDir/0-file &&
+	>NewDir/1\"file && # ... but here the file makes the dirname quoted ...
+	>NewDir/2-file &&
+	>NewDir/3\"file && # ... and here, too.
+
+	# Still, we should only list it once.
+	test_completion "git test-path-comp New" "NewDir"
 '
 
 
