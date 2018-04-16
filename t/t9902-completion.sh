@@ -84,10 +84,11 @@ test_completion ()
 	then
 		printf '%s\n' "$2" >expected
 	else
-		sed -e 's/Z$//' >expected
+		sed -e 's/Z$//' |sort >expected
 	fi &&
 	run_completion "$1" &&
-	test_cmp expected out
+	sort out >out_sorted &&
+	test_cmp expected out_sorted
 }
 
 # Test __gitcomp.
@@ -1405,6 +1406,7 @@ test_expect_success 'complete files' '
 
 	echo "expected" > .gitignore &&
 	echo "out" >> .gitignore &&
+	echo "out_sorted" >> .gitignore &&
 
 	git add .gitignore &&
 	test_completion "git commit " ".gitignore" &&
