@@ -458,8 +458,12 @@ __git_index_files ()
 
 	__git_ls_files_helper "$root" "$1" "$match" |
 	awk -F / '{
-		print $1
-	}' | sort | uniq
+		paths[$1] = 1
+	}
+	END {
+		for (p in paths)
+			print p
+	}'
 }
 
 # __git_complete_index_file requires 1 argument:
