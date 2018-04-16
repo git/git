@@ -1463,7 +1463,7 @@ test_expect_failure 'complete files - quoted characters on cmdline' '
 			"New(Dir/New)File.c"
 '
 
-test_expect_failure 'complete files - UTF-8 in ls-files output' '
+test_expect_success 'complete files - UTF-8 in ls-files output' '
 	test_when_finished "rm -r árvíztűrő" &&
 	mkdir árvíztűrő &&
 	>"árvíztűrő/Сайн яваарай" &&

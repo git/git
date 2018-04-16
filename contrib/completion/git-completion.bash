@@ -371,10 +371,12 @@ __gitcomp_file ()
 __git_ls_files_helper ()
 {
 	if [ "$2" == "--committable" ]; then
-		__git -C "$1" diff-index --name-only --relative HEAD
+		__git -C "$1" -c core.quotePath=false diff-index \
+			--name-only --relative HEAD
 	else
 		# NOTE: $2 is not quoted in order to support multiple options
-		__git -C "$1" ls-files --exclude-standard $2
+		__git -C "$1" -c core.quotePath=false ls-files \
+			--exclude-standard $2
 	fi
 }
 
