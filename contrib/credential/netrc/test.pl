@@ -88,6 +88,19 @@ ok(scalar keys %$cred == 2, "Got 2 'host:port kills host' keys");
 is($cred->{password}, 'bobwillknow', "Got correct 'host:port kills host' password");
 is($cred->{username}, 'bob', "Got correct 'host:port kills host' username");
 
+diag 'Testing netrc file decryption by git config gpg.program setting\n';
+$cred = run_credential( ['-f', $netrcGpg, 'get']
+                      , { host => 'git-config-gpg' }
+                      );
+
+ok(scalar keys %$cred == 2, 'Got keys decrypted by git config option');
+
+diag 'Testing netrc file decryption by gpg option\n';
+$cred = run_credential( ['-f', $netrcGpg, '-g', 'test.command-option-gpg', 'get']
+                      , { host => 'command-option-gpg' }
+                      );
+
+ok(scalar keys %$cred == 2, 'Got keys decrypted by command option');
 
 sub run_credential
 {
