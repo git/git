@@ -398,6 +398,25 @@ __git_index_files ()
 	done | sort | uniq
 }
 
+# __git_complete_index_file requires 1 argument:
+# 1: the options to pass to ls-file
+#
+# The exception is --committable, which finds the files appropriate commit.
+__git_complete_index_file ()
+{
+	local pfx="" cur_="$cur"
+
+	case "$cur_" in
+	?*/*)
+		pfx="${cur_%/*}"
+		cur_="${cur_##*/}"
+		pfx="${pfx}/"
+		;;
+	esac
+
+	__gitcomp_file "$(__git_index_files "$1" ${pfx:+"$pfx"})" "$pfx" "$cur_"
+}
+
 # Lists branches from the local repository.
 # 1: A prefix to be added to each listed branch (optional).
 # 2: List only branches matching this word (optional; list all branches if
@@ -712,26 +731,6 @@ __git_complete_revlist_file ()
 		__git_complete_refs
 		;;
 	esac
-}
-
-
-# __git_complete_index_file requires 1 argument:
-# 1: the options to pass to ls-file
-#
-# The exception is --committable, which finds the files appropriate commit.
-__git_complete_index_file ()
-{
-	local pfx="" cur_="$cur"
-
-	case "$cur_" in
-	?*/*)
-		pfx="${cur_%/*}"
-		cur_="${cur_##*/}"
-		pfx="${pfx}/"
-		;;
-	esac
-
-	__gitcomp_file "$(__git_index_files "$1" ${pfx:+"$pfx"})" "$pfx" "$cur_"
 }
 
 __git_complete_file ()
