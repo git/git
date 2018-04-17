@@ -73,7 +73,7 @@ them.
 	Consider only commits that are enough to explain how the files
 	that match the specified paths came to be.
 +
-Paths may need to be prefixed with "\-- " to separate them from
+Paths may need to be prefixed with `--` to separate them from
 options or the revision range, when confusion arises.
 
 MAPPING AUTHORS
