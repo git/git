@@ -300,7 +300,7 @@ origin +master` to force a push to the `master` branch). See the
 	These options are passed to linkgit:git-send-pack[1]. A thin transfer
 	significantly reduces the amount of sent data when the sender and
 	receiver share many of the same objects in common. The default is
-	\--thin.
+	`--thin`.
 
 -q::
 --quiet::

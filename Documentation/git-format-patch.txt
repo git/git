@@ -47,7 +47,7 @@ There are two ways to specify which commits to operate on.
 
 The first rule takes precedence in the case of a single <commit>.  To
 apply the second rule, i.e., format everything since the beginning of
-history up until <commit>, use the '\--root' option: `git format-patch
+history up until <commit>, use the `--root` option: `git format-patch
 --root <commit>`.  If you want to format only <commit> itself, you
 can do this with `git format-patch -1 <commit>`.
 
