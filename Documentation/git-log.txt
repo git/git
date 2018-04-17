@@ -9,7 +9,7 @@ git-log - Show commit logs
 SYNOPSIS
 --------
 [verse]
-'git log' [<options>] [<revision range>] [[\--] <path>...]
+'git log' [<options>] [<revision range>] [[--] <path>...]
 
 DESCRIPTION
 -----------
@@ -90,7 +90,7 @@ include::line-range-format.txt[]
 	ways to spell <revision range>, see the 'Specifying Ranges'
 	section of linkgit:gitrevisions[7].
 
-[\--] <path>...::
+[--] <path>...::
 	Show only commits that are enough to explain how the files
 	that match the specified paths came to be.  See 'History
 	Simplification' below for details and other simplification
