@@ -169,13 +169,11 @@ void git_setup_gettext(void)
 	if (!is_absolute_path(podir))
 		podir = p = system_path(podir);
 
-	if (is_directory(podir)) {
-		bindtextdomain("git", podir);
-		setlocale(LC_MESSAGES, "");
-		setlocale(LC_TIME, "");
-		init_gettext_charset("git");
-		textdomain("git");
-	}
+	bindtextdomain("git", podir);
+	setlocale(LC_MESSAGES, "");
+	setlocale(LC_TIME, "");
+	init_gettext_charset("git");
+	textdomain("git");
 
 	free(p);
 }
