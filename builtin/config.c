@@ -61,6 +61,60 @@ static int show_origin;
 #define TYPE_PATH		4
 #define TYPE_EXPIRY_DATE	5
 
+#define OPT_CALLBACK_VALUE(s, l, v, h, i) \
+	{ OPTION_CALLBACK, (s), (l), (v), NULL, (h), PARSE_OPT_NOARG | \
+	PARSE_OPT_NONEG, option_parse_type, (i) }
+
+static struct option builtin_config_options[];
+
+static int option_parse_type(const struct option *opt, const char *arg,
+			     int unset)
+{
+	int new_type, *to_type;
+
+	if (unset) {
+		*((int *) opt->value) = 0;
+		return 0;
+	}
+
+	/*
+	 * To support '--<type>' style flags, begin with new_type equal to
+	 * opt->defval.
+	 */
+	new_type = opt->defval;
+	if (!new_type) {
+		if (!strcmp(arg, "bool"))
+			new_type = TYPE_BOOL;
+		else if (!strcmp(arg, "int"))
+			new_type = TYPE_INT;
+		else if (!strcmp(arg, "bool-or-int"))
+			new_type = TYPE_BOOL_OR_INT;
+		else if (!strcmp(arg, "path"))
+			new_type = TYPE_PATH;
+		else if (!strcmp(arg, "expiry-date"))
+			new_type = TYPE_EXPIRY_DATE;
+		else
+			die(_("unrecognized --type argument, %s"), arg);
+	}
+
+	to_type = opt->value;
+	if (*to_type && *to_type != new_type) {
+		/*
+		 * Complain when there is a new type not equal to the old type.
+		 * This allows for combinations like '--int --type=int' and
+		 * '--type=int --type=int', but disallows ones like '--type=bool
+		 * --int' and '--type=bool
+		 * --type=int'.
+		 */
+		error("only one type at a time.");
+		usage_with_options(builtin_config_usage,
+			builtin_config_options);
+	}
+	*to_type = new_type;
+
+	return 0;
+}
+
 static struct option builtin_config_options[] = {
 	OPT_GROUP(N_("Config file location")),
 	OPT_BOOL(0, "global", &use_global_config, N_("use global config file")),
@@ -84,11 +138,12 @@ static struct option builtin_config_options[] = {
 	OPT_BIT(0, "get-color", &actions, N_("find the color configured: slot [default]"), ACTION_GET_COLOR),
 	OPT_BIT(0, "get-colorbool", &actions, N_("find the color setting: slot [stdout-is-tty]"), ACTION_GET_COLORBOOL),
 	OPT_GROUP(N_("Type")),
-	OPT_SET_INT(0, "bool", &type, N_("value is \"true\" or \"false\""), TYPE_BOOL),
-	OPT_SET_INT(0, "int", &type, N_("value is decimal number"), TYPE_INT),
-	OPT_SET_INT(0, "bool-or-int", &type, N_("value is --bool or --int"), TYPE_BOOL_OR_INT),
-	OPT_SET_INT(0, "path", &type, N_("value is a path (file or directory name)"), TYPE_PATH),
-	OPT_SET_INT(0, "expiry-date", &type, N_("value is an expiry date"), TYPE_EXPIRY_DATE),
+	OPT_CALLBACK('t', "type", &type, "", N_("value is given this type"), option_parse_type),
+	OPT_CALLBACK_VALUE(0, "bool", &type, N_("value is \"true\" or \"false\""), TYPE_BOOL),
+	OPT_CALLBACK_VALUE(0, "int", &type, N_("value is decimal number"), TYPE_INT),
+	OPT_CALLBACK_VALUE(0, "bool-or-int", &type, N_("value is --bool or --int"), TYPE_BOOL_OR_INT),
+	OPT_CALLBACK_VALUE(0, "path", &type, N_("value is a path (file or directory name)"), TYPE_PATH),
+	OPT_CALLBACK_VALUE(0, "expiry-date", &type, N_("value is an expiry date"), TYPE_EXPIRY_DATE),
 	OPT_GROUP(N_("Other")),
 	OPT_BOOL('z', "null", &end_null, N_("terminate values with NUL byte")),
 	OPT_BOOL(0, "name-only", &omit_values, N_("show variable names only")),

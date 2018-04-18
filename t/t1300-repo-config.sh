@@ -1613,13 +1613,65 @@ test_expect_success '--local requires a repo' '
 
 cat >.git/config <<-\EOF &&
 [core]
+foo = true
 number = 10
+big = 1M
 EOF
 
-test_expect_success 'later legacy specifiers are given precedence' '
-	git config --bool --int core.number >actual &&
-	echo 10 >expect &&
+test_expect_success 'identical modern --type specifiers are allowed' '
+	git config --type=int --type=int core.big >actual &&
+	echo 1048576 >expect &&
 	test_cmp expect actual
+'
+
+test_expect_success 'identical legacy --type specifiers are allowed' '
+	git config --int --int core.big >actual &&
+	echo 1048576 >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'identical mixed --type specifiers are allowed' '
+	git config --int --type=int core.big >actual &&
+	echo 1048576 >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'non-identical modern --type specifiers are not allowed' '
+	test_must_fail git config --type=int --type=bool core.big 2>error &&
+	test_i18ngrep "only one type at a time" error
+'
+
+test_expect_success 'non-identical legacy --type specifiers are not allowed' '
+	test_must_fail git config --int --bool core.big 2>error &&
+	test_i18ngrep "only one type at a time" error
+'
+
+test_expect_success 'non-identical mixed --type specifiers are not allowed' '
+	test_must_fail git config --type=int --bool core.big 2>error &&
+	test_i18ngrep "only one type at a time" error
+'
+
+test_expect_success '--type allows valid type specifiers' '
+	echo "true" >expect &&
+	git config --type=bool core.foo >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--no-type unsets type specifiers' '
+	echo "10" >expect &&
+	git config --type=bool --no-type core.number >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'unset type specifiers may be reset to conflicting ones' '
+	echo 1048576 >expect &&
+	git config --type=bool --no-type --type=int core.big >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--type rejects unknown specifiers' '
+	test_must_fail git config --type=nonsense core.foo 2>error &&
+	test_i18ngrep "unrecognized --type argument" error
 '
 
 test_done
