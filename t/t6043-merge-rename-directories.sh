@@ -3298,7 +3298,7 @@ test_expect_success '11a-setup: Avoid losing dirty contents with simple rename' 
 	)
 '
 
-test_expect_failure '11a-check: Avoid losing dirty contents with simple rename' '
+test_expect_success '11a-check: Avoid losing dirty contents with simple rename' '
 	(
 		cd 11a &&
 
