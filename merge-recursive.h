@@ -29,6 +29,7 @@ struct merge_options {
 	struct hashmap current_file_dir_set;
 	struct string_list df_conflict_file_set;
 	struct unpack_trees_options unpack_opts;
+	struct index_state orig_index;
 };
 
 /*

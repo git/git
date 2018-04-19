@@ -344,6 +344,7 @@ static int git_merge_trees(struct merge_options *o,
 {
 	int rc;
 	struct tree_desc t[3];
+	struct index_state tmp_index = { NULL };
 
 	memset(&o->unpack_opts, 0, sizeof(o->unpack_opts));
 	if (o->call_depth)
@@ -354,7 +355,7 @@ static int git_merge_trees(struct merge_options *o,
 	o->unpack_opts.head_idx = 2;
 	o->unpack_opts.fn = threeway_merge;
 	o->unpack_opts.src_index = &the_index;
-	o->unpack_opts.dst_index = &the_index;
+	o->unpack_opts.dst_index = &tmp_index;
 	setup_unpack_trees_porcelain(&o->unpack_opts, "merge");
 
 	init_tree_desc_from_tree(t+0, common);
@@ -362,13 +363,18 @@ static int git_merge_trees(struct merge_options *o,
 	init_tree_desc_from_tree(t+2, merge);
 
 	rc = unpack_trees(3, t, &o->unpack_opts);
-	/*
-	 * unpack_trees NULLifies src_index, but it's used in verify_uptodate,
-	 * so set to the new index which will usually have modification
-	 * timestamp info copied over.
-	 */
-	o->unpack_opts.src_index = &the_index;
 	cache_tree_free(&active_cache_tree);
+
+	/*
+	 * Update the_index to match the new results, AFTER saving a copy
+	 * in o->orig_index.  Update src_index to point to the saved copy.
+	 * (verify_uptodate() checks src_index, and the original index is
+	 * the one that had the necessary modification timestamps.)
+	 */
+	o->orig_index = the_index;
+	the_index = tmp_index;
+	o->unpack_opts.src_index = &o->orig_index;
+
 	return rc;
 }
 
@@ -773,31 +779,59 @@ static int dir_in_way(const char *path, int check_working_copy, int empty_ok)
 		!(empty_ok && is_empty_dir(path));
 }
 
-static int was_tracked(const char *path)
+/*
+ * Returns whether path was tracked in the index before the merge started
+ */
+static int was_tracked(struct merge_options *o, const char *path)
 {
-	int pos = cache_name_pos(path, strlen(path));
+	int pos = index_name_pos(&o->orig_index, path, strlen(path));
 
 	if (0 <= pos)
-		/* we have been tracking this path */
+		/* we were tracking this path before the merge */
 		return 1;
 
-	/*
-	 * Look for an unmerged entry for the path,
-	 * specifically stage #2, which would indicate
-	 * that "our" side before the merge started
-	 * had the path tracked (and resulted in a conflict).
-	 */
-	for (pos = -1 - pos;
-	     pos < active_nr && !strcmp(path, active_cache[pos]->name);
-	     pos++)
-		if (ce_stage(active_cache[pos]) == 2)
-			return 1;
 	return 0;
 }
 
 static int would_lose_untracked(const char *path)
 {
-	return !was_tracked(path) && file_exists(path);
+	/*
+	 * This may look like it can be simplified to:
+	 *   return !was_tracked(o, path) && file_exists(path)
+	 * but it can't.  This function needs to know whether path was in
+	 * the working tree due to EITHER having been tracked in the index
+	 * before the merge OR having been put into the working copy and
+	 * index by unpack_trees().  Due to that either-or requirement, we
+	 * check the current index instead of the original one.
+	 *
+	 * Note that we do not need to worry about merge-recursive itself
+	 * updating the index after unpack_trees() and before calling this
+	 * function, because we strictly require all code paths in
+	 * merge-recursive to update the working tree first and the index
+	 * second.  Doing otherwise would break
+	 * update_file()/would_lose_untracked(); see every comment in this
+	 * file which mentions "update_stages".
+	 */
+	int pos = cache_name_pos(path, strlen(path));
+
+	if (pos < 0)
+		pos = -1 - pos;
+	while (pos < active_nr &&
+	       !strcmp(path, active_cache[pos]->name)) {
+		/*
+		 * If stage #0, it is definitely tracked.
+		 * If it has stage #2 then it was tracked
+		 * before this merge started.  All other
+		 * cases the path was not tracked.
+		 */
+		switch (ce_stage(active_cache[pos])) {
+		case 0:
+		case 2:
+			return 0;
+		}
+		pos++;
+	}
+	return file_exists(path);
 }
 
 static int was_dirty(struct merge_options *o, const char *path)
@@ -805,7 +839,7 @@ static int was_dirty(struct merge_options *o, const char *path)
 	struct cache_entry *ce;
 	int dirty = 1;
 
-	if (o->call_depth || !was_tracked(path))
+	if (o->call_depth || !was_tracked(o, path))
 		return !dirty;
 
 	ce = cache_file_exists(path, strlen(path), ignore_case);
@@ -2419,7 +2453,7 @@ static int process_renames(struct merge_options *o,
 			 * add-source case).
 			 */
 			remove_file(o, 1, ren1_src,
-				    renamed_stage == 2 || !was_tracked(ren1_src));
+				    renamed_stage == 2 || !was_tracked(o, ren1_src));
 
 			oidcpy(&src_other.oid,
 			       &ren1->src_entry->stages[other_stage].oid);
@@ -2812,7 +2846,7 @@ static int merge_content(struct merge_options *o,
 				if (update_stages(o, path, &one, &a, &b))
 					return -1;
 			} else {
-				int file_from_stage2 = was_tracked(path);
+				int file_from_stage2 = was_tracked(o, path);
 				struct diff_filespec merged;
 				oidcpy(&merged.oid, &mfi.oid);
 				merged.mode = mfi.mode;
@@ -3080,6 +3114,15 @@ cleanup:
 	}
 	else
 		clean = 1;
+
+	/* Free the extra index left from git_merge_trees() */
+	/*
+	 * FIXME: Need to also free data allocated by
+	 * setup_unpack_trees_porcelain() tucked away in o->unpack_opts.msgs,
+	 * but the problem is that only half of it refers to dynamically
+	 * allocated data, while the other half points at static strings.
+	 */
+	discard_index(&o->orig_index);
 
 	if (o->call_depth && !(*result = write_tree_from_memory(o)))
 		return -1;
