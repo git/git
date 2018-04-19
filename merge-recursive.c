@@ -316,7 +316,7 @@ static int add_cacheinfo(struct merge_options *o,
 
 	ce = make_cache_entry(mode, oid ? oid->hash : null_sha1, path, stage, 0);
 	if (!ce)
-		return err(o, _("addinfo_cache failed for path '%s'"), path);
+		return err(o, _("add_cacheinfo failed for path '%s'; merge aborting."), path);
 
 	ret = add_cache_entry(ce, options);
 	if (refresh) {
@@ -324,7 +324,7 @@ static int add_cacheinfo(struct merge_options *o,
 
 		nce = refresh_cache_entry(ce, CE_MATCH_REFRESH | CE_MATCH_IGNORE_MISSING);
 		if (!nce)
-			return err(o, _("addinfo_cache failed for path '%s'"), path);
+			return err(o, _("add_cacheinfo failed to refresh for path '%s'; merge aborting."), path);
 		if (nce != ce)
 			ret = add_cache_entry(nce, options);
 	}
@@ -942,7 +942,9 @@ static int update_file_flags(struct merge_options *o,
 	}
  update_index:
 	if (!ret && update_cache)
-		add_cacheinfo(o, mode, oid, path, 0, update_wd, ADD_CACHE_OK_TO_ADD);
+		if (add_cacheinfo(o, mode, oid, path, 0, update_wd,
+				  ADD_CACHE_OK_TO_ADD))
+			return -1;
 	return ret;
 }
 
@@ -2783,8 +2785,9 @@ static int merge_content(struct merge_options *o,
 		 */
 		path_renamed_outside_HEAD = !path2 || !strcmp(path, path2);
 		if (!path_renamed_outside_HEAD) {
-			add_cacheinfo(o, mfi.mode, &mfi.oid, path,
-				      0, (!o->call_depth), 0);
+			if (add_cacheinfo(o, mfi.mode, &mfi.oid, path,
+					  0, (!o->call_depth), 0))
+				return -1;
 			return mfi.clean;
 		}
 	} else
