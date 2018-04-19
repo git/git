@@ -842,9 +842,9 @@ static int was_dirty(struct merge_options *o, const char *path)
 	if (o->call_depth || !was_tracked(o, path))
 		return !dirty;
 
-	ce = cache_file_exists(path, strlen(path), ignore_case);
-	dirty = (ce->ce_stat_data.sd_mtime.sec > 0 &&
-		 verify_uptodate(ce, &o->unpack_opts) != 0);
+	ce = index_file_exists(o->unpack_opts.src_index,
+			       path, strlen(path), ignore_case);
+	dirty = verify_uptodate(ce, &o->unpack_opts) != 0;
 	return dirty;
 }
 
