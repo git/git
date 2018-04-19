@@ -2727,7 +2727,7 @@ static int handle_modify_delete(struct merge_options *o,
 
 static int merge_content(struct merge_options *o,
 			 const char *path,
-			 int file_in_way,
+			 int is_dirty,
 			 struct object_id *o_oid, int o_mode,
 			 struct object_id *a_oid, int a_mode,
 			 struct object_id *b_oid, int b_mode,
@@ -2803,7 +2803,7 @@ static int merge_content(struct merge_options *o,
 				return -1;
 	}
 
-	if (df_conflict_remains || file_in_way) {
+	if (df_conflict_remains || is_dirty) {
 		char *new_path;
 		if (o->call_depth) {
 			remove_file_from_cache(path);
@@ -2825,6 +2825,10 @@ static int merge_content(struct merge_options *o,
 
 		}
 		new_path = unique_path(o, path, rename_conflict_info->branch1);
+		if (is_dirty) {
+			output(o, 1, _("Refusing to lose dirty file at %s"),
+			       path);
+		}
 		output(o, 1, _("Adding as %s instead"), new_path);
 		if (update_file(o, 0, &mfi.oid, mfi.mode, new_path)) {
 			free(new_path);
@@ -2834,7 +2838,7 @@ static int merge_content(struct merge_options *o,
 		mfi.clean = 0;
 	} else if (update_file(o, mfi.clean, &mfi.oid, mfi.mode, path))
 		return -1;
-	return mfi.clean;
+	return !is_dirty && mfi.clean;
 }
 
 static int conflict_rename_normal(struct merge_options *o,
@@ -2844,21 +2848,10 @@ static int conflict_rename_normal(struct merge_options *o,
 				  struct object_id *b_oid, unsigned int b_mode,
 				  struct rename_conflict_info *ci)
 {
-	int clean_merge;
-	int file_in_the_way = 0;
-
-	if (was_dirty(o, path)) {
-		file_in_the_way = 1;
-		output(o, 1, _("Refusing to lose dirty file at %s"), path);
-	}
-
 	/* Merge the content and write it out */
-	clean_merge = merge_content(o, path, file_in_the_way,
-				    o_oid, o_mode, a_oid, a_mode, b_oid, b_mode,
-				    ci);
-	if (clean_merge > 0 && file_in_the_way)
-		clean_merge = 0;
-	return clean_merge;
+	return merge_content(o, path, was_dirty(o, path),
+			     o_oid, o_mode, a_oid, a_mode, b_oid, b_mode,
+			     ci);
 }
 
 /* Per entry merge function */
@@ -2981,7 +2974,8 @@ static int process_entry(struct merge_options *o,
 	} else if (a_oid && b_oid) {
 		/* Case C: Added in both (check for same permissions) and */
 		/* case D: Modified in both, but differently. */
-		clean_merge = merge_content(o, path, 0 /* file_in_way */,
+		int is_dirty = 0; /* unpack_trees would have bailed if dirty */
+		clean_merge = merge_content(o, path, is_dirty,
 					    o_oid, o_mode, a_oid, a_mode, b_oid, b_mode,
 					    NULL);
 	} else if (!o_oid && !a_oid && !b_oid) {
