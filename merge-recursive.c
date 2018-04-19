@@ -1992,7 +1992,7 @@ static void compute_collisions(struct hashmap *collisions,
 		char *new_path;
 		struct diff_filepair *pair = pairs->queue[i];
 
-		if (pair->status == 'D')
+		if (pair->status != 'A' && pair->status != 'R')
 			continue;
 		dir_rename_ent = check_dir_renamed(pair->two->path,
 						   dir_renames);
@@ -2219,7 +2219,7 @@ static struct string_list *get_renames(struct merge_options *o,
 		struct diff_filepair *pair = pairs->queue[i];
 		char *new_path; /* non-NULL only with directory renames */
 
-		if (pair->status == 'D') {
+		if (pair->status != 'A' && pair->status != 'R') {
 			diff_free_filepair(pair);
 			continue;
 		}
