@@ -32,7 +32,7 @@ int main(int argc, const char **argv)
 	 */
 	sanitize_stdfds();
 
-	git_extract_argv0_path(argv[0]);
+	git_resolve_executable_dir(argv[0]);
 
 	git_setup_gettext();
 
