@@ -780,6 +780,25 @@ static int dir_in_way(const char *path, int check_working_copy, int empty_ok)
 }
 
 /*
+ * Returns whether path was tracked in the index before the merge started,
+ * and its oid and mode match the specified values
+ */
+static int was_tracked_and_matches(struct merge_options *o, const char *path,
+				   const struct object_id *oid, unsigned mode)
+{
+	int pos = index_name_pos(&o->orig_index, path, strlen(path));
+	struct cache_entry *ce;
+
+	if (0 > pos)
+		/* we were not tracking this path before the merge */
+		return 0;
+
+	/* See if the file we were tracking before matches */
+	ce = o->orig_index.cache[pos];
+	return (oid_eq(&ce->oid, oid) && ce->ce_mode == mode);
+}
+
+/*
  * Returns whether path was tracked in the index before the merge started
  */
 static int was_tracked(struct merge_options *o, const char *path)
@@ -2821,23 +2840,20 @@ static int merge_content(struct merge_options *o,
 				       o->branch2, path2, &mfi))
 		return -1;
 
-	if (mfi.clean && !df_conflict_remains &&
-	    oid_eq(&mfi.oid, a_oid) && mfi.mode == a_mode) {
-		int path_renamed_outside_HEAD;
+	/*
+	 * We can skip updating the working tree file iff:
+	 *   a) The merge is clean
+	 *   b) The merge matches what was in HEAD (content, mode, pathname)
+	 *   c) The target path is usable (i.e. not involved in D/F conflict)
+	 */
+	if (mfi.clean &&
+	    was_tracked_and_matches(o, path, &mfi.oid, mfi.mode) &&
+	    !df_conflict_remains) {
 		output(o, 3, _("Skipped %s (merged same as existing)"), path);
-		/*
-		 * The content merge resulted in the same file contents we
-		 * already had.  We can return early if those file contents
-		 * are recorded at the correct path (which may not be true
-		 * if the merge involves a rename).
-		 */
-		path_renamed_outside_HEAD = !path2 || !strcmp(path, path2);
-		if (!path_renamed_outside_HEAD) {
-			if (add_cacheinfo(o, mfi.mode, &mfi.oid, path,
-					  0, (!o->call_depth && !is_dirty), 0))
-				return -1;
-			return mfi.clean;
-		}
+		if (add_cacheinfo(o, mfi.mode, &mfi.oid, path,
+				  0, (!o->call_depth && !is_dirty), 0))
+			return -1;
+		return mfi.clean;
 	}
 
 	if (!mfi.clean) {

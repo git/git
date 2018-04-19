@@ -64,7 +64,7 @@ test_expect_success '1a-setup: Modify(A)/Modify(B), change on B subset of A' '
 	)
 '
 
-test_expect_failure '1a-check-L: Modify(A)/Modify(B), change on B subset of A' '
+test_expect_success '1a-check-L: Modify(A)/Modify(B), change on B subset of A' '
 	test_when_finished "git -C 1a reset --hard" &&
 	test_when_finished "git -C 1a clean -fd" &&
 	(
@@ -160,7 +160,7 @@ test_expect_success '2a-setup: Modify(A)/rename(B)' '
 	)
 '
 
-test_expect_failure '2a-check-L: Modify/rename, merge into modify side' '
+test_expect_success '2a-check-L: Modify/rename, merge into modify side' '
 	test_when_finished "git -C 2a reset --hard" &&
 	test_when_finished "git -C 2a clean -fd" &&
 	(
@@ -360,7 +360,7 @@ test_expect_success '2c-setup: Modify b & add c VS rename b->c' '
 	)
 '
 
-test_expect_failure '2c-check: Modify b & add c VS rename b->c' '
+test_expect_success '2c-check: Modify b & add c VS rename b->c' '
 	(
 		cd 2c &&
 
@@ -456,7 +456,7 @@ test_expect_success '3a-setup: bq_1->foo/bq_2 on A, foo/->bar/ on B' '
 	)
 '
 
-test_expect_failure '3a-check-L: bq_1->foo/bq_2 on A, foo/->bar/ on B' '
+test_expect_success '3a-check-L: bq_1->foo/bq_2 on A, foo/->bar/ on B' '
 	test_when_finished "git -C 3a reset --hard" &&
 	test_when_finished "git -C 3a clean -fd" &&
 	(
@@ -579,7 +579,7 @@ test_expect_success '3b-check-L: bq_1->foo/bq_2 on A, foo/->bar/ on B' '
 	)
 '
 
-test_expect_failure '3b-check-R: bq_1->foo/bq_2 on A, foo/->bar/ on B' '
+test_expect_success '3b-check-R: bq_1->foo/bq_2 on A, foo/->bar/ on B' '
 	test_when_finished "git -C 3b reset --hard" &&
 	test_when_finished "git -C 3b clean -fd" &&
 	(
