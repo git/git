@@ -1668,6 +1668,12 @@ struct rename_info {
 	struct string_list *merge_renames;
 };
 
+static void initial_cleanup_rename(struct diff_queue_struct *pairs)
+{
+	free(pairs->queue);
+	free(pairs);
+}
+
 static int handle_renames(struct merge_options *o,
 			  struct tree *common,
 			  struct tree *head,
@@ -1698,16 +1704,13 @@ static int handle_renames(struct merge_options *o,
 	 * data structures are still needed and referenced in
 	 * process_entry().  But there are a few things we can free now.
 	 */
-
-	free(head_pairs->queue);
-	free(head_pairs);
-	free(merge_pairs->queue);
-	free(merge_pairs);
+	initial_cleanup_rename(head_pairs);
+	initial_cleanup_rename(merge_pairs);
 
 	return clean;
 }
 
-static void cleanup_rename(struct string_list *rename)
+static void final_cleanup_rename(struct string_list *rename)
 {
 	const struct rename *re;
 	int i;
@@ -1723,10 +1726,10 @@ static void cleanup_rename(struct string_list *rename)
 	free(rename);
 }
 
-static void cleanup_renames(struct rename_info *re_info)
+static void final_cleanup_renames(struct rename_info *re_info)
 {
-	cleanup_rename(re_info->head_renames);
-	cleanup_rename(re_info->merge_renames);
+	final_cleanup_rename(re_info->head_renames);
+	final_cleanup_rename(re_info->merge_renames);
 }
 
 static struct object_id *stage_oid(const struct object_id *oid, unsigned mode)
@@ -2129,7 +2132,7 @@ int merge_trees(struct merge_options *o,
 		}
 
 cleanup:
-		cleanup_renames(&re_info);
+		final_cleanup_renames(&re_info);
 
 		string_list_clear(entries, 1);
 		free(entries);
