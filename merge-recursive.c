@@ -2786,7 +2786,7 @@ static int merge_content(struct merge_options *o,
 		path_renamed_outside_HEAD = !path2 || !strcmp(path, path2);
 		if (!path_renamed_outside_HEAD) {
 			if (add_cacheinfo(o, mfi.mode, &mfi.oid, path,
-					  0, (!o->call_depth), 0))
+					  0, (!o->call_depth && !is_dirty), 0))
 				return -1;
 			return mfi.clean;
 		}
