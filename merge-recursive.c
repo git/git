@@ -1063,12 +1063,13 @@ static int merge_3way(struct merge_options *o,
 }
 
 static int merge_file_1(struct merge_options *o,
-					   const struct diff_filespec *one,
-					   const struct diff_filespec *a,
-					   const struct diff_filespec *b,
-					   const char *branch1,
-					   const char *branch2,
-					   struct merge_file_info *result)
+			const struct diff_filespec *one,
+			const struct diff_filespec *a,
+			const struct diff_filespec *b,
+			const char *filename,
+			const char *branch1,
+			const char *branch2,
+			struct merge_file_info *result)
 {
 	result->merge = 0;
 	result->clean = 1;
@@ -1148,18 +1149,22 @@ static int merge_file_1(struct merge_options *o,
 			die("BUG: unsupported object type in the tree");
 	}
 
+	if (result->merge)
+		output(o, 2, _("Auto-merging %s"), filename);
+
 	return 0;
 }
 
 static int merge_file_special_markers(struct merge_options *o,
-			   const struct diff_filespec *one,
-			   const struct diff_filespec *a,
-			   const struct diff_filespec *b,
-			   const char *branch1,
-			   const char *filename1,
-			   const char *branch2,
-			   const char *filename2,
-			   struct merge_file_info *mfi)
+				      const struct diff_filespec *one,
+				      const struct diff_filespec *a,
+				      const struct diff_filespec *b,
+				      const char *target_filename,
+				      const char *branch1,
+				      const char *filename1,
+				      const char *branch2,
+				      const char *filename2,
+				      struct merge_file_info *mfi)
 {
 	char *side1 = NULL;
 	char *side2 = NULL;
@@ -1170,22 +1175,23 @@ static int merge_file_special_markers(struct merge_options *o,
 	if (filename2)
 		side2 = xstrfmt("%s:%s", branch2, filename2);
 
-	ret = merge_file_1(o, one, a, b,
+	ret = merge_file_1(o, one, a, b, target_filename,
 			   side1 ? side1 : branch1,
 			   side2 ? side2 : branch2, mfi);
+
 	free(side1);
 	free(side2);
 	return ret;
 }
 
 static int merge_file_one(struct merge_options *o,
-					 const char *path,
-					 const struct object_id *o_oid, int o_mode,
-					 const struct object_id *a_oid, int a_mode,
-					 const struct object_id *b_oid, int b_mode,
-					 const char *branch1,
-					 const char *branch2,
-					 struct merge_file_info *mfi)
+			  const char *path,
+			  const struct object_id *o_oid, int o_mode,
+			  const struct object_id *a_oid, int a_mode,
+			  const struct object_id *b_oid, int b_mode,
+			  const char *branch1,
+			  const char *branch2,
+			  struct merge_file_info *mfi)
 {
 	struct diff_filespec one, a, b;
 
@@ -1196,7 +1202,7 @@ static int merge_file_one(struct merge_options *o,
 	a.mode = a_mode;
 	oidcpy(&b.oid, b_oid);
 	b.mode = b_mode;
-	return merge_file_1(o, &one, &a, &b, branch1, branch2, mfi);
+	return merge_file_1(o, &one, &a, &b, path, branch1, branch2, mfi);
 }
 
 static int conflict_rename_dir(struct merge_options *o,
@@ -1474,6 +1480,8 @@ static int conflict_rename_rename_2to1(struct merge_options *o,
 	struct diff_filespec *c1 = ci->pair1->two;
 	struct diff_filespec *c2 = ci->pair2->two;
 	char *path = c1->path; /* == c2->path */
+	char *path_side_1_desc;
+	char *path_side_2_desc;
 	struct merge_file_info mfi_c1;
 	struct merge_file_info mfi_c2;
 	int ret;
@@ -1487,13 +1495,19 @@ static int conflict_rename_rename_2to1(struct merge_options *o,
 	remove_file(o, 1, a->path, o->call_depth || would_lose_untracked(a->path));
 	remove_file(o, 1, b->path, o->call_depth || would_lose_untracked(b->path));
 
+	path_side_1_desc = xstrfmt("%s (was %s)", path, a->path);
+	path_side_2_desc = xstrfmt("%s (was %s)", path, b->path);
 	if (merge_file_special_markers(o, a, c1, &ci->ren1_other,
+				       path_side_1_desc,
 				       o->branch1, c1->path,
 				       o->branch2, ci->ren1_other.path, &mfi_c1) ||
 	    merge_file_special_markers(o, b, &ci->ren2_other, c2,
+				       path_side_2_desc,
 				       o->branch1, ci->ren2_other.path,
 				       o->branch2, c2->path, &mfi_c2))
 		return -1;
+	free(path_side_1_desc);
+	free(path_side_2_desc);
 
 	if (o->call_depth) {
 		/*
@@ -2802,7 +2816,7 @@ static int merge_content(struct merge_options *o,
 			       S_ISGITLINK(pair1->two->mode)))
 			df_conflict_remains = 1;
 	}
-	if (merge_file_special_markers(o, &one, &a, &b,
+	if (merge_file_special_markers(o, &one, &a, &b, path,
 				       o->branch1, path1,
 				       o->branch2, path2, &mfi))
 		return -1;
@@ -2824,8 +2838,7 @@ static int merge_content(struct merge_options *o,
 				return -1;
 			return mfi.clean;
 		}
-	} else
-		output(o, 2, _("Auto-merging %s"), path);
+	}
 
 	if (!mfi.clean) {
 		if (S_ISGITLINK(mfi.mode))
