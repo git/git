@@ -38,7 +38,11 @@ int parse_opt_approxidate_cb(const struct option *opt, const char *arg,
 int parse_opt_expiry_date_cb(const struct option *opt, const char *arg,
 			     int unset)
 {
-	return parse_expiry_date(arg, (timestamp_t *)opt->value);
+	if (unset)
+		arg = "never";
+	if (parse_expiry_date(arg, (timestamp_t *)opt->value))
+		die(_("malformed expiration date '%s'"), arg);
+	return 0;
 }
 
 int parse_opt_color_flag_cb(const struct option *opt, const char *arg,
