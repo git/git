@@ -48,7 +48,7 @@ static const char *system_prefix(void)
 	    !(prefix = strip_path_suffix(executable_dirname, GIT_EXEC_PATH)) &&
 	    !(prefix = strip_path_suffix(executable_dirname, BINDIR)) &&
 	    !(prefix = strip_path_suffix(executable_dirname, "git"))) {
-		prefix = PREFIX;
+		prefix = FALLBACK_RUNTIME_PREFIX;
 		trace_printf("RUNTIME_PREFIX requested, "
 				"but prefix computation failed.  "
 				"Using static fallback '%s'.\n", prefix);
@@ -243,7 +243,7 @@ void git_resolve_executable_dir(const char *argv0)
  */
 static const char *system_prefix(void)
 {
-	return PREFIX;
+	return FALLBACK_RUNTIME_PREFIX;
 }
 
 /*
