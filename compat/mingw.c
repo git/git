@@ -3374,6 +3374,14 @@ static void adjust_symlink_flags(void)
 
 }
 
+static BOOL WINAPI handle_ctrl_c(DWORD ctrl_type)
+{
+	if (ctrl_type != CTRL_C_EVENT)
+		return FALSE; /* we did not handle this */
+	mingw_raise(SIGINT);
+	return TRUE; /* we did handle this */
+}
+
 #if defined(_MSC_VER)
 
 #ifdef _DEBUG
@@ -3411,6 +3419,8 @@ int msc_startup(int argc, wchar_t **w_argv, wchar_t **w_env)
 #ifdef USE_MSVC_CRTDBG
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #endif
+
+	SetConsoleCtrlHandler(handle_ctrl_c, TRUE);
 
 	fsync_object_files = 1;
 	maybe_redirect_std_handles();
@@ -3479,6 +3489,8 @@ void mingw_startup(void)
 	char *buffer;
 	wchar_t **wenv, **wargv;
 	_startupinfo si;
+
+	SetConsoleCtrlHandler(handle_ctrl_c, TRUE);
 
 	fsync_object_files = 1;
 	maybe_redirect_std_handles();
