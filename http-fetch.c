@@ -56,9 +56,6 @@ int cmd_main(int argc, const char **argv)
 
 	http_init(NULL, url, 0);
 	walker = get_http_walker(url);
-	walker->get_tree = 1;
-	walker->get_history = 1;
-	walker->get_all = 1;
 	walker->get_verbosely = get_verbosely;
 	walker->get_recover = get_recover;
 

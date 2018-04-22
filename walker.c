@@ -72,6 +72,8 @@ static struct commit_list *complete = NULL;
 
 static int process_commit(struct walker *walker, struct commit *commit)
 {
+	struct commit_list *parents;
+
 	if (parse_commit(commit))
 		return -1;
 
@@ -86,19 +88,14 @@ static int process_commit(struct walker *walker, struct commit *commit)
 
 	walker_say(walker, "walk %s\n", oid_to_hex(&commit->object.oid));
 
-	if (walker->get_tree) {
-		if (process(walker, &commit->tree->object))
+	if (process(walker, &commit->tree->object))
+		return -1;
+
+	for (parents = commit->parents; parents; parents = parents->next) {
+		if (process(walker, &parents->item->object))
 			return -1;
-		if (!walker->get_all)
-			walker->get_tree = 0;
 	}
-	if (walker->get_history) {
-		struct commit_list *parents = commit->parents;
-		for (; parents; parents = parents->next) {
-			if (process(walker, &parents->item->object))
-				return -1;
-		}
-	}
+
 	return 0;
 }
 
