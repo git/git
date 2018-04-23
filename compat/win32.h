@@ -6,7 +6,7 @@
 #include <windows.h>
 #endif
 
-extern int file_attr_to_st_mode (DWORD attr, DWORD tag);
+extern int file_attr_to_st_mode (DWORD attr, DWORD tag, const char *path);
 
 static inline int get_file_attr(const char *fname, WIN32_FILE_ATTRIBUTE_DATA *fdata)
 {
