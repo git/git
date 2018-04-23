@@ -980,7 +980,7 @@ int mingw_lstat(const char *file_name, struct stat *buf)
 		buf->st_uid = 0;
 		buf->st_nlink = 1;
 		buf->st_mode = file_attr_to_st_mode(fdata.dwFileAttributes,
-				reparse_tag);
+				reparse_tag, file_name);
 		buf->st_size = S_ISLNK(buf->st_mode) ? link_len :
 			fdata.nFileSizeLow | (((off_t) fdata.nFileSizeHigh) << 32);
 		buf->st_dev = buf->st_rdev = 0; /* not used by Git */
@@ -1031,7 +1031,7 @@ static int get_file_info_by_handle(HANDLE hnd, struct stat *buf)
 	buf->st_gid = 0;
 	buf->st_uid = 0;
 	buf->st_nlink = 1;
-	buf->st_mode = file_attr_to_st_mode(fdata.dwFileAttributes, 0);
+	buf->st_mode = file_attr_to_st_mode(fdata.dwFileAttributes, 0, NULL);
 	buf->st_size = fdata.nFileSizeLow |
 		(((off_t)fdata.nFileSizeHigh)<<32);
 	buf->st_dev = buf->st_rdev = 0; /* not used by Git */
@@ -3708,12 +3708,25 @@ int is_inside_windows_container(void)
 	return inside_container;
 }
 
-int file_attr_to_st_mode (DWORD attr, DWORD tag)
+int file_attr_to_st_mode (DWORD attr, DWORD tag, const char *path)
 {
 	int fMode = S_IREAD;
-	if ((attr & FILE_ATTRIBUTE_REPARSE_POINT) && tag == IO_REPARSE_TAG_SYMLINK)
-		fMode |= S_IFLNK;
-	else if (attr & FILE_ATTRIBUTE_DIRECTORY)
+	if ((attr & FILE_ATTRIBUTE_REPARSE_POINT) &&
+	    tag == IO_REPARSE_TAG_SYMLINK) {
+		int flag = S_IFLNK;
+		char buf[MAX_LONG_PATH];
+
+		/*
+		 * Windows containers' mapped volumes are marked as reparse
+		 * points and look like symbolic links, but they are not.
+		 */
+		if (path && is_inside_windows_container() &&
+		    readlink(path, buf, sizeof(buf)) > 27 &&
+		    starts_with(buf, "/ContainerMappedDirectories/"))
+			flag = S_IFDIR;
+
+		fMode |= flag;
+	} else if (attr & FILE_ATTRIBUTE_DIRECTORY)
 		fMode |= S_IFDIR;
 	else
 		fMode |= S_IFREG;
