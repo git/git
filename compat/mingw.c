@@ -2592,6 +2592,13 @@ repeat:
 		return 0;
 	gle = GetLastError();
 
+	if (gle == ERROR_ACCESS_DENIED && is_inside_windows_container()) {
+		/* Fall back to copy to destination & remove source */
+		if (CopyFileW(wpold, wpnew, FALSE) && !mingw_unlink(pold))
+			return 0;
+		gle = GetLastError();
+	}
+
 	/* revert file attributes on failure */
 	if (attrs != INVALID_FILE_ATTRIBUTES)
 		SetFileAttributesW(wpnew, attrs);
