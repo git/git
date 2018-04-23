@@ -180,7 +180,30 @@ static struct fsentry *fseentry_create_entry(struct fscache *cache, struct fsent
 
 	fse = fsentry_alloc(cache, list, buf, len);
 
-	fse->st_mode = file_attr_to_st_mode(fdata->FileAttributes, fdata->EaSize);
+	/*
+	 * On certain Windows versions, host directories mapped into
+	 * Windows Containers ("Volumes", see https://docs.docker.com/storage/volumes/)
+	 * look like symbolic links, but their targets are paths that
+	 * are valid only in kernel mode.
+	 *
+	 * Let's work around this by detecting that situation and
+	 * telling Git that these are *not* symbolic links.
+	 */
+	if (fdata->FileAttributes & FILE_ATTRIBUTE_REPARSE_POINT &&
+	    fdata->EaSize == IO_REPARSE_TAG_SYMLINK &&
+	    sizeof(buf) > (list ? list->len + 1 : 0) + fse->len + 1 &&
+	    is_inside_windows_container()) {
+		size_t off = 0;
+		if (list) {
+			memcpy(buf, list->name, list->len);
+			buf[list->len] = '/';
+			off = list->len + 1;
+		}
+		memcpy(buf + off, fse->name, fse->len);
+		buf[off + fse->len] = '\0';
+	}
+
+	fse->st_mode = file_attr_to_st_mode(fdata->FileAttributes, fdata->EaSize, buf);
 	fse->u.s.st_size = S_ISLNK(fse->st_mode) ? MAX_LONG_PATH :
 			fdata->EndOfFile.LowPart | (((off_t)fdata->EndOfFile.HighPart) << 32);
 	filetime_to_timespec((FILETIME *)&(fdata->LastAccessTime), &(fse->u.s.st_atim));
