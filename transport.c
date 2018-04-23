@@ -218,7 +218,7 @@ static struct ref *get_refs_via_connect(struct transport *transport, int for_pus
 	switch (data->version) {
 	case protocol_v2:
 		get_remote_refs(data->fd[1], &reader, &refs, for_push,
-				ref_prefixes);
+				ref_prefixes, transport->server_options);
 		break;
 	case protocol_v1:
 	case protocol_v0:

@@ -154,6 +154,22 @@ test_expect_success 'ref advertisment is filtered with ls-remote using protocol 
 	test_cmp actual expect
 '
 
+test_expect_success 'server-options are sent when using ls-remote' '
+	test_when_finished "rm -f log" &&
+
+	GIT_TRACE_PACKET="$(pwd)/log" git -c protocol.version=2 \
+		ls-remote -o hello -o world "file://$(pwd)/file_parent" master >actual &&
+
+	cat >expect <<-EOF &&
+	$(git -C file_parent rev-parse refs/heads/master)$(printf "\t")refs/heads/master
+	EOF
+
+	test_cmp actual expect &&
+	grep "server-option=hello" log &&
+	grep "server-option=world" log
+'
+
+
 test_expect_success 'clone with file:// using protocol v2' '
 	test_when_finished "rm -f log" &&
 

@@ -45,6 +45,7 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 	const char *uploadpack = NULL;
 	const char **pattern = NULL;
 	struct argv_array ref_prefixes = ARGV_ARRAY_INIT;
+	struct string_list server_options = STRING_LIST_INIT_DUP;
 
 	struct remote *remote;
 	struct transport *transport;
@@ -67,6 +68,7 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 			      2, PARSE_OPT_NOCOMPLETE),
 		OPT_BOOL(0, "symref", &show_symref_target,
 			 N_("show underlying ref in addition to the object pointed by it")),
+		OPT_STRING_LIST('o', "server-option", &server_options, N_("server-specific"), N_("option to transmit")),
 		OPT_END()
 	};
 
@@ -107,6 +109,8 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 	transport = transport_get(remote, NULL);
 	if (uploadpack != NULL)
 		transport_set_option(transport, TRANS_OPT_UPLOADPACK, uploadpack);
+	if (server_options.nr)
+		transport->server_options = &server_options;
 
 	ref = transport_get_remote_refs(transport, &ref_prefixes);
 	if (transport_disconnect(transport))

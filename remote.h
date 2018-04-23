@@ -153,6 +153,7 @@ void free_refs(struct ref *ref);
 struct oid_array;
 struct packet_reader;
 struct argv_array;
+struct string_list;
 extern struct ref **get_remote_heads(struct packet_reader *reader,
 				     struct ref **list, unsigned int flags,
 				     struct oid_array *extra_have,
@@ -161,7 +162,8 @@ extern struct ref **get_remote_heads(struct packet_reader *reader,
 /* Used for protocol v2 in order to retrieve refs from a remote */
 extern struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
 				    struct ref **list, int for_push,
-				    const struct argv_array *ref_prefixes);
+				    const struct argv_array *ref_prefixes,
+				    const struct string_list *server_options);
 
 int resolve_remote_symref(struct ref *ref, struct ref *list);
 int ref_newer(const struct object_id *new_oid, const struct object_id *old_oid);
