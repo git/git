@@ -3668,3 +3668,35 @@ int uname(struct utsname *buf)
 		  "%u", (v >> 16) & 0x7fff);
 	return 0;
 }
+
+/*
+ * Based on https://stackoverflow.com/questions/43002803
+ *
+ * [HKLM\SYSTEM\CurrentControlSet\Services\cexecsvc]
+ * "DisplayName"="@%systemroot%\\system32\\cexecsvc.exe,-100"
+ * "ErrorControl"=dword:00000001
+ * "ImagePath"=hex(2):25,00,73,00,79,00,73,00,74,00,65,00,6d,00,72,00,6f,00,
+ *    6f,00,74,00,25,00,5c,00,73,00,79,00,73,00,74,00,65,00,6d,00,33,00,32,00,
+ *    5c,00,63,00,65,00,78,00,65,00,63,00,73,00,76,00,63,00,2e,00,65,00,78,00,
+ *    65,00,00,00
+ * "Start"=dword:00000002
+ * "Type"=dword:00000010
+ * "Description"="@%systemroot%\\system32\\cexecsvc.exe,-101"
+ * "ObjectName"="LocalSystem"
+ * "ServiceSidType"=dword:00000001
+ */
+int is_inside_windows_container(void)
+{
+	static int inside_container = -1; /* -1 uninitialized */
+	const char *key = "SYSTEM\\CurrentControlSet\\Services\\cexecsvc";
+	HKEY handle = NULL;
+
+	if (inside_container != -1)
+		return inside_container;
+
+	inside_container = ERROR_SUCCESS ==
+		RegOpenKeyExA(HKEY_LOCAL_MACHINE, key, 0, KEY_READ, &handle);
+	RegCloseKey(handle);
+
+	return inside_container;
+}
