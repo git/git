@@ -393,3 +393,13 @@ header.
 		1 - pack data
 		2 - progress messages
 		3 - fatal error message just before stream aborts
+
+ server-option
+~~~~~~~~~~~~~~~
+
+If advertised, indicates that any number of server specific options can be
+included in a request.  This is done by sending each option as a
+"server-option=<option>" capability line in the capability-list section of
+a request.
+
+The provided options must not contain a NUL or LF character.
