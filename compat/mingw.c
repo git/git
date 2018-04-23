@@ -4042,3 +4042,17 @@ int is_inside_windows_container(void)
 
 	return inside_container;
 }
+
+int file_attr_to_st_mode (DWORD attr, DWORD tag)
+{
+	int fMode = S_IREAD;
+	if ((attr & FILE_ATTRIBUTE_REPARSE_POINT) && tag == IO_REPARSE_TAG_SYMLINK)
+		fMode |= S_IFLNK;
+	else if (attr & FILE_ATTRIBUTE_DIRECTORY)
+		fMode |= S_IFDIR;
+	else
+		fMode |= S_IFREG;
+	if (!(attr & FILE_ATTRIBUTE_READONLY))
+		fMode |= S_IWRITE;
+	return fMode;
+}
