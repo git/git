@@ -13,4 +13,11 @@ extern int parse_feature_request(const char *features, const char *feature);
 extern const char *server_feature_value(const char *feature, int *len_ret);
 extern int url_is_local_not_ssh(const char *url);
 
+struct packet_reader;
+extern enum protocol_version discover_version(struct packet_reader *reader);
+
+extern int server_supports_v2(const char *c, int die_on_error);
+extern int server_supports_feature(const char *c, const char *feature,
+				   int die_on_error);
+
 #endif

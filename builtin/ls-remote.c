@@ -2,6 +2,7 @@
 #include "cache.h"
 #include "transport.h"
 #include "remote.h"
+#include "refs.h"
 
 static const char * const ls_remote_usage[] = {
 	N_("git ls-remote [--heads] [--tags] [--refs] [--upload-pack=<exec>]\n"
@@ -43,6 +44,7 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 	int show_symref_target = 0;
 	const char *uploadpack = NULL;
 	const char **pattern = NULL;
+	struct argv_array ref_prefixes = ARGV_ARRAY_INIT;
 
 	struct remote *remote;
 	struct transport *transport;
@@ -75,8 +77,17 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 	if (argc > 1) {
 		int i;
 		pattern = xcalloc(argc, sizeof(const char *));
-		for (i = 1; i < argc; i++)
+		for (i = 1; i < argc; i++) {
+			const char *glob;
 			pattern[i - 1] = xstrfmt("*/%s", argv[i]);
+
+			glob = strchr(argv[i], '*');
+			if (glob)
+				argv_array_pushf(&ref_prefixes, "%.*s",
+						 (int)(glob - argv[i]), argv[i]);
+			else
+				expand_ref_prefix(&ref_prefixes, argv[i]);
+		}
 	}
 
 	remote = remote_get(dest);
@@ -97,7 +108,7 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 	if (uploadpack != NULL)
 		transport_set_option(transport, TRANS_OPT_UPLOADPACK, uploadpack);
 
-	ref = transport_get_remote_refs(transport);
+	ref = transport_get_remote_refs(transport, &ref_prefixes);
 	if (transport_disconnect(transport))
 		return 1;
 

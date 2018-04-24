@@ -13,6 +13,7 @@
 #include "tag.h"
 #include "submodule.h"
 #include "worktree.h"
+#include "argv-array.h"
 
 /*
  * List of all available backends
@@ -499,6 +500,19 @@ int refname_match(const char *abbrev_name, const char *full_name)
 	}
 
 	return 0;
+}
+
+/*
+ * Given a 'prefix' expand it by the rules in 'ref_rev_parse_rules' and add
+ * the results to 'prefixes'
+ */
+void expand_ref_prefix(struct argv_array *prefixes, const char *prefix)
+{
+	const char **p;
+	int len = strlen(prefix);
+
+	for (p = ref_rev_parse_rules; *p; p++)
+		argv_array_pushf(prefixes, *p, len, prefix);
 }
 
 /*
