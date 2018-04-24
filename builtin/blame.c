@@ -49,6 +49,7 @@ static int abbrev = -1;
 static int no_whole_file_rename;
 static int show_progress;
 static char repeated_meta_color[COLOR_MAXLEN];
+static int coloring_mode;
 
 static struct date_mode blame_date_mode = { DATE_ISO8601 };
 static size_t blame_date_width;
@@ -702,6 +703,20 @@ static int git_blame_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
+	if (!strcmp(var, "blame.coloring")) {
+		if (!strcmp(value, "repeatedLines")) {
+			coloring_mode |= OUTPUT_COLOR_LINE;
+		} else if (!strcmp(value, "highlightRecent")) {
+			coloring_mode |= OUTPUT_SHOW_AGE_WITH_COLOR;
+		} else if (!strcmp(value, "none")) {
+			coloring_mode &= ~(OUTPUT_COLOR_LINE |
+					    OUTPUT_SHOW_AGE_WITH_COLOR);
+		} else {
+			warning(_("invalid value for blame.coloring"));
+			return 0;
+		}
+	}
+
 	if (git_diff_heuristic_config(var, value, cb) < 0)
 		return -1;
 	if (userdiff_config(var, value) < 0)
@@ -1036,6 +1051,9 @@ parse_done:
 	blame_sort_final(&sb);
 
 	blame_coalesce(&sb);
+
+	if (!(output_option & (OUTPUT_COLOR_LINE | OUTPUT_SHOW_AGE_WITH_COLOR)))
+		output_option |= coloring_mode;
 
 	if (!(output_option & OUTPUT_PORCELAIN)) {
 		find_alignment(&sb, &output_option);

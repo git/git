@@ -1240,6 +1240,11 @@ everything older than one year blue, recent changes between one month and
 one year old are kept white, and lines introduced within the last month are
 colored red.
 
+blame.coloring::
+	This determines the coloring scheme to be applied to blame
+	output. It can be 'repeatedLines', 'highlightRecent',
+	or 'none' which is the default.
+
 color.ui::
 	This variable determines the default value for variables such
 	as `color.diff` and `color.grep` that control the use of color
