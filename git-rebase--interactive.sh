@@ -285,7 +285,7 @@ pick_one () {
 		pick_one_preserving_merges "$@" && return
 	output eval git cherry-pick $allow_rerere_autoupdate $allow_empty_message \
 			${gpg_sign_opt:+$(git rev-parse --sq-quote "$gpg_sign_opt")} \
-			"$strategy_args" $empty_args $ff "$@"
+			$signoff "$strategy_args" $empty_args $ff "$@"
 
 	# If cherry-pick dies it leaves the to-be-picked commit unrecorded. Reschedule
 	# previous task so this commit is not lost.
@@ -524,10 +524,10 @@ do_pick () {
 		# resolve before manually running git commit --amend then git
 		# rebase --continue.
 		git commit --allow-empty --allow-empty-message --amend \
-			   --no-post-rewrite -n -q -C $sha1 &&
+			   --no-post-rewrite -n -q -C $sha1 $signoff &&
 			pick_one -n $sha1 &&
 			git commit --allow-empty --allow-empty-message \
-				   --amend --no-post-rewrite -n -q -C $sha1 \
+				   --amend --no-post-rewrite -n -q -C $sha1 $signoff \
 				   ${gpg_sign_opt:+"$gpg_sign_opt"} ||
 				   die_with_patch $sha1 "$(eval_gettext "Could not apply \$sha1... \$rest")"
 	else

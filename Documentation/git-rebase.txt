@@ -364,9 +364,10 @@ default is `--no-fork-point`, otherwise the default is `--fork-point`.
 	Incompatible with the --interactive option.
 
 --signoff::
-	This flag is passed to 'git am' to sign off all the rebased
-	commits (see linkgit:git-am[1]). Incompatible with the
-	--interactive option.
+	Add a Signed-off-by: trailer to all the rebased commits. Note
+	that if `--interactive` is given then only commits marked to be
+	picked, edited or reworded will have the trailer added. Incompatible
+	with the `--preserve-merges` option.
 
 -i::
 --interactive::

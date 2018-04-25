@@ -32,60 +32,47 @@ else
 fi
 
 ret=0
-if test -n "$keep_empty"
+rm -f "$GIT_DIR/rebased-patches"
+
+git format-patch -k --stdout --full-index --cherry-pick --right-only \
+	--src-prefix=a/ --dst-prefix=b/ --no-renames --no-cover-letter \
+	--pretty=mboxrd \
+	$git_format_patch_opt \
+	"$revisions" ${restrict_revision+^$restrict_revision} \
+	>"$GIT_DIR/rebased-patches"
+ret=$?
+
+if test 0 != $ret
 then
-	# we have to do this the hard way.  git format-patch completely squashes
-	# empty commits and even if it didn't the format doesn't really lend
-	# itself well to recording empty patches.  fortunately, cherry-pick
-	# makes this easy
-	git cherry-pick ${gpg_sign_opt:+"$gpg_sign_opt"} --allow-empty \
-		$allow_rerere_autoupdate --right-only "$revisions" \
-		$allow_empty_message \
-		${restrict_revision+^$restrict_revision}
-	ret=$?
-else
 	rm -f "$GIT_DIR/rebased-patches"
+	case "$head_name" in
+	refs/heads/*)
+		git checkout -q "$head_name"
+		;;
+	*)
+		git checkout -q "$orig_head"
+		;;
+	esac
 
-	git format-patch -k --stdout --full-index --cherry-pick --right-only \
-		--src-prefix=a/ --dst-prefix=b/ --no-renames --no-cover-letter \
-		--pretty=mboxrd \
-		$git_format_patch_opt \
-		"$revisions" ${restrict_revision+^$restrict_revision} \
-		>"$GIT_DIR/rebased-patches"
-	ret=$?
+	cat >&2 <<-EOF
 
-	if test 0 != $ret
-	then
-		rm -f "$GIT_DIR/rebased-patches"
-		case "$head_name" in
-		refs/heads/*)
-			git checkout -q "$head_name"
-			;;
-		*)
-			git checkout -q "$orig_head"
-			;;
-		esac
+	git encountered an error while preparing the patches to replay
+	these revisions:
 
-		cat >&2 <<-EOF
+	    $revisions
 
-		git encountered an error while preparing the patches to replay
-		these revisions:
-
-		    $revisions
-
-		As a result, git cannot rebase them.
-		EOF
-		return $ret
-	fi
-
-	git am $git_am_opt --rebasing --resolvemsg="$resolvemsg" \
-		--patch-format=mboxrd \
-		$allow_rerere_autoupdate \
-		${gpg_sign_opt:+"$gpg_sign_opt"} <"$GIT_DIR/rebased-patches"
-	ret=$?
-
-	rm -f "$GIT_DIR/rebased-patches"
+	As a result, git cannot rebase them.
+	EOF
+	return $ret
 fi
+
+git am $git_am_opt --rebasing --resolvemsg="$resolvemsg" \
+	--patch-format=mboxrd \
+	$allow_rerere_autoupdate \
+	${gpg_sign_opt:+"$gpg_sign_opt"} <"$GIT_DIR/rebased-patches"
+ret=$?
+
+rm -f "$GIT_DIR/rebased-patches"
 
 if test 0 != $ret
 then
