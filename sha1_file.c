@@ -1307,7 +1307,7 @@ int oid_object_info_extended_the_repository(const struct object_id *oid, struct 
 		 * information below, so return early.
 		 */
 		return 0;
-	rtype = packed_object_info(e.p, e.offset, oi);
+	rtype = packed_object_info(the_repository, e.p, e.offset, oi);
 	if (rtype < 0) {
 		mark_bad_packed_object(e.p, real->hash);
 		return oid_object_info_extended(the_repository, real, oi, 0);

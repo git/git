@@ -1333,8 +1333,8 @@ static void add_delta_base_cache(struct packed_git *p, off_t base_offset,
 	hashmap_add(&delta_base_cache, ent);
 }
 
-int packed_object_info(struct packed_git *p, off_t obj_offset,
-		       struct object_info *oi)
+int packed_object_info_the_repository(struct packed_git *p, off_t obj_offset,
+				      struct object_info *oi)
 {
 	struct pack_window *w_curs = NULL;
 	unsigned long size;
