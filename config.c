@@ -1426,6 +1426,7 @@ static int do_config_from_file(config_fn_t fn,
 		void *data)
 {
 	struct config_source top;
+	int ret;
 
 	top.u.file = f;
 	top.origin_type = origin_type;
@@ -1436,7 +1437,10 @@ static int do_config_from_file(config_fn_t fn,
 	top.do_ungetc = config_file_ungetc;
 	top.do_ftell = config_file_ftell;
 
-	return do_config_from(&top, fn, data);
+	flockfile(f);
+	ret = do_config_from(&top, fn, data);
+	funlockfile(f);
+	return ret;
 }
 
 static int git_config_from_stdin(config_fn_t fn, void *data)
@@ -1451,9 +1455,7 @@ int git_config_from_file(config_fn_t fn, const char *filename, void *data)
 
 	f = fopen_or_warn(filename, "r");
 	if (f) {
-		flockfile(f);
 		ret = do_config_from_file(fn, CONFIG_ORIGIN_FILE, filename, filename, f, data);
-		funlockfile(f);
 		fclose(f);
 	}
 	return ret;
