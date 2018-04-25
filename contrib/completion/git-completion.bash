@@ -390,12 +390,7 @@ __git_index_files ()
 	local root="${2-.}" file
 
 	__git_ls_files_helper "$root" "$1" |
-	while read -r file; do
-		case "$file" in
-		?*/*) echo "${file%%/*}" ;;
-		*) echo "$file" ;;
-		esac
-	done | sort | uniq
+	cut -f1 -d/ | sort | uniq
 }
 
 # Lists branches from the local repository.
