@@ -927,7 +927,7 @@ AC_RUN_IFELSE(
 	[AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT],
 		[[
 		FILE *f = fopen(".", "r");
-		return f)]])],
+		return f != NULL;]])],
 	[ac_cv_fread_reads_directories=no],
 	[ac_cv_fread_reads_directories=yes])
 ])
