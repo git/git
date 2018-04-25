@@ -27,11 +27,12 @@ out more than one branch at a time.  With `git worktree add` a new working
 tree is associated with the repository.  This new working tree is called a
 "linked working tree" as opposed to the "main working tree" prepared by "git
 init" or "git clone".  A repository has one main working tree (if it's not a
-bare repository) and zero or more linked working trees.
+bare repository) and zero or more linked working trees. When you are done
+with a linked working tree, remove it with `git worktree remove`.
 
-When you are done with a linked working tree you can simply delete it.
-The working tree's administrative files in the repository (see
-"DETAILS" below) will eventually be removed automatically (see
+If a working tree is deleted without using `git worktree remove`, then
+its associated administrative files, which reside in the repository
+(see "DETAILS" below), will eventually be removed automatically (see
 `gc.worktreePruneExpire` in linkgit:git-config[1]), or you can run
 `git worktree prune` in the main or any linked working tree to
 clean up any stale administrative files.
@@ -106,7 +107,7 @@ OPTIONS
 	By default, `add` refuses to create a new working tree when
 	`<commit-ish>` is a branch name and is already checked out by
 	another working tree and `remove` refuses to remove an unclean
-	working tree. This option overrides that safeguard.
+	working tree. This option overrides these safeguards.
 
 -b <new-branch>::
 -B <new-branch>::
@@ -232,7 +233,7 @@ The worktree list command has two output formats.  The default format shows the
 details on a single line with columns.  For example:
 
 ------------
-S git worktree list
+$ git worktree list
 /path/to/bare-source            (bare)
 /path/to/linked-worktree        abcd1234 [master]
 /path/to/other-linked-worktree  1234abc  (detached HEAD)
@@ -247,7 +248,7 @@ if the value is true.  An empty line indicates the end of a worktree.  For
 example:
 
 ------------
-S git worktree list --porcelain
+$ git worktree list --porcelain
 worktree /path/to/bare-source
 bare
 
@@ -278,8 +279,7 @@ $ pushd ../temp
 # ... hack hack hack ...
 $ git commit -a -m 'emergency fix for boss'
 $ popd
-$ rm -rf ../temp
-$ git worktree prune
+$ git worktree remove ../temp
 ------------
 
 BUGS
