@@ -3,10 +3,16 @@
 test_description='test git-http-backend'
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-httpd.sh
+
+if ! test_have_prereq CURL; then
+	skip_all='skipping raw http-backend tests, curl not available'
+	test_done
+fi
+
 start_httpd
 
 GET() {
-	curl --include "$HTTPD_URL/$SMART/repo.git/$1" >out 2>/dev/null &&
+	curl --include "$HTTPD_URL/$SMART/repo.git/$1" >out &&
 	tr '\015' Q <out |
 	sed '
 		s/Q$//
@@ -19,7 +25,7 @@ GET() {
 POST() {
 	curl --include --data "$2" \
 	--header "Content-Type: application/x-$1-request" \
-	"$HTTPD_URL/smart/repo.git/$1" >out 2>/dev/null &&
+	"$HTTPD_URL/smart/repo.git/$1" >out &&
 	tr '\015' Q <out |
 	sed '
 		s/Q$//
