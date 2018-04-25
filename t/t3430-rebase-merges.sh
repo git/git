@@ -215,4 +215,12 @@ test_expect_success 'post-rewrite hook and fixups work for merges' '
 	test_cmp expect actual
 '
 
+test_expect_success 'refuse to merge ancestors of HEAD' '
+	echo "merge HEAD^" >script-from-scratch &&
+	test_config -C wt sequence.editor \""$PWD"/replace-editor.sh\" &&
+	before="$(git rev-parse HEAD)" &&
+	git rebase -i HEAD &&
+	test_cmp_rev HEAD $before
+'
+
 test_done
