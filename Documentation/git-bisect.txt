@@ -165,8 +165,8 @@ To get a reminder of the currently used terms, use
 git bisect terms
 ------------------------------------------------
 
-You can get just the old (respectively new) term with `git bisect term
---term-old` or `git bisect term --term-good`.
+You can get just the old (respectively new) term with `git bisect terms
+--term-old` or `git bisect terms --term-good`.
 
 If you would like to use your own terms instead of "bad"/"good" or
 "new"/"old", you can choose any names you like (except existing bisect
