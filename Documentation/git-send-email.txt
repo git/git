@@ -255,7 +255,7 @@ must be used for each option.
 
 --batch-size=<num>::
 	Some email servers (e.g. smtp.163.com) limit the number emails to be
-	sent per session (connection) and this will lead to a faliure when
+	sent per session (connection) and this will lead to a failure when
 	sending many messages.  With this option, send-email will disconnect after
 	sending $<num> messages and wait for a few seconds (see --relogin-delay)
 	and reconnect, to work around such a limit.  You may want to

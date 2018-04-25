@@ -568,7 +568,7 @@ the normal order.
 --
 +
 Patterns have the same syntax and semantics as patterns used for
-fnmantch(3) without the FNM_PATHNAME flag, except a pathname also
+fnmatch(3) without the FNM_PATHNAME flag, except a pathname also
 matches a pattern if removing any number of the final pathname
 components matches the pattern.  For example, the pattern "`foo*bar`"
 matches "`fooasdfbar`" and "`foo/bar/baz/asdf`" but not "`foobarx`".
@@ -592,7 +592,7 @@ endif::git-format-patch[]
 	Treat all files as text.
 
 --ignore-cr-at-eol::
-	Ignore carrige-return at the end of line when doing a comparison.
+	Ignore carriage-return at the end of line when doing a comparison.
 
 --ignore-space-at-eol::
 	Ignore changes in whitespace at EOL.
