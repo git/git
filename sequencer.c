@@ -3001,7 +3001,7 @@ int sequencer_make_script(FILE *out, int argc, const char **argv,
 	init_revisions(&revs, NULL);
 	revs.verbose_header = 1;
 	revs.max_parents = 1;
-	revs.cherry_pick = 1;
+	revs.cherry_mark = 1;
 	revs.limited = 1;
 	revs.reverse = 1;
 	revs.right_only = 1;
@@ -3026,8 +3026,12 @@ int sequencer_make_script(FILE *out, int argc, const char **argv,
 		return error(_("make_script: error preparing revisions"));
 
 	while ((commit = get_revision(&revs))) {
+		int is_empty  = is_original_commit_empty(commit);
+
+		if (!is_empty && (commit->object.flags & PATCHSAME))
+			continue;
 		strbuf_reset(&buf);
-		if (!keep_empty && is_original_commit_empty(commit))
+		if (!keep_empty && is_empty)
 			strbuf_addf(&buf, "%c ", comment_line_char);
 		strbuf_addf(&buf, "%s %s ", insn,
 			    oid_to_hex(&commit->object.oid));
