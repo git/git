@@ -1469,8 +1469,10 @@ struct unpack_entry_stack_ent {
 	unsigned long size;
 };
 
-static void *read_object(const struct object_id *oid, enum object_type *type,
-			 unsigned long *size)
+#define read_object(r, o, t, s) read_object_##r(o, t, s)
+static void *read_object_the_repository(const struct object_id *oid,
+					enum object_type *type,
+					unsigned long *size)
 {
 	struct object_info oi = OBJECT_INFO_INIT;
 	void *content;
@@ -1614,7 +1616,7 @@ void *unpack_entry(struct packed_git *p, off_t obj_offset,
 				      oid_to_hex(&base_oid), (uintmax_t)obj_offset,
 				      p->pack_name);
 				mark_bad_packed_object(p, base_oid.hash);
-				base = read_object(&base_oid, &type, &base_size);
+				base = read_object(the_repository, &base_oid, &type, &base_size);
 				external_base = base;
 			}
 		}
