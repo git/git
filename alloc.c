@@ -94,6 +94,7 @@ void *alloc_commit_node(void)
 	c->object.type = OBJ_COMMIT;
 	c->index = alloc_commit_index();
 	c->graph_pos = COMMIT_NOT_FROM_GRAPH;
+	c->generation = GENERATION_NUMBER_INFINITY;
 	return c;
 }
 

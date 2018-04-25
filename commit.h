@@ -10,6 +10,9 @@
 #include "pretty.h"
 
 #define COMMIT_NOT_FROM_GRAPH 0xFFFFFFFF
+#define GENERATION_NUMBER_INFINITY 0xFFFFFFFF
+#define GENERATION_NUMBER_MAX 0x3FFFFFFF
+#define GENERATION_NUMBER_ZERO 0
 
 struct commit_list {
 	struct commit *item;
@@ -30,6 +33,7 @@ struct commit {
 	 */
 	struct tree *maybe_tree;
 	uint32_t graph_pos;
+	uint32_t generation;
 };
 
 extern int save_commit_buffer;

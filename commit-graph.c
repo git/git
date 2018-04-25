@@ -262,6 +262,8 @@ static int fill_commit_in_graph(struct commit *item, struct commit_graph *g, uin
 	date_low = get_be32(commit_data + g->hash_len + 12);
 	item->date = (timestamp_t)((date_high << 32) | date_low);
 
+	item->generation = get_be32(commit_data + g->hash_len + 8) >> 2;
+
 	pptr = &item->parents;
 
 	edge_value = get_be32(commit_data + g->hash_len);
