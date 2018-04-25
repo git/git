@@ -72,12 +72,11 @@ test_expect_success 'move locked worktree' '
 '
 
 test_expect_success 'move worktree' '
-	toplevel="$(pwd)" &&
 	git worktree move source destination &&
 	test_path_is_missing source &&
 	git worktree list --porcelain >out &&
-	grep "^worktree.*/destination" out &&
-	! grep "^worktree.*/source" out &&
+	grep "^worktree.*/destination$" out &&
+	! grep "^worktree.*/source$" out &&
 	git -C destination log --format=%s >actual2 &&
 	echo init >expected2 &&
 	test_cmp expected2 actual2
@@ -93,7 +92,7 @@ test_expect_success 'move worktree to another dir' '
 	test_when_finished "git worktree move some-dir/destination destination" &&
 	test_path_is_missing destination &&
 	git worktree list --porcelain >out &&
-	grep "^worktree.*/some-dir/destination" out &&
+	grep "^worktree.*/some-dir/destination$" out &&
 	git -C some-dir/destination log --format=%s >actual2 &&
 	echo init >expected2 &&
 	test_cmp expected2 actual2
