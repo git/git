@@ -21,6 +21,29 @@ UI, Workflows & Features
  * When built with more recent cURL, GIT_SSL_VERSION can now specify
    "tlsv1.3" as its value.
 
+ * "git gui" learned that "~/.ssh/id_ecdsa.pub" and
+   "~/.ssh/id_ed25519.pub" are also possible SSH key files.
+   (merge 2e2f0288ef bb/git-gui-ssh-key-files later to maint).
+
+ * "git gui" performs commit upon CTRL/CMD+ENTER but the
+   CTRL/CMD+KP_ENTER (i.e. enter key on the numpad) did not have the
+   same key binding.  It now does.
+   (merge 28a1d94a06 bp/git-gui-bind-kp-enter later to maint).
+
+ * "git gui" has been taught to work with old versions of tk (like
+   8.5.7) that do not support "ttk::style theme use" as a way to query
+   the current theme.
+   (merge 4891961105 cb/git-gui-ttk-style later to maint).
+
+ * "git rebase" has learned to honor "--signoff" option when using
+   backends other than "am" (but not "--preserve-merges").
+
+ * "git branch --list" during an interrupted "rebase -i" now lets
+   users distinguish the case where a detached HEAD is being rebased
+   and a normal branch is being rebased.
+
+ * "git mergetools" learned talking to guiffy.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -76,6 +99,25 @@ Performance, Internal Implementation, Development Support etc.
  * Small test-helper programs have been consolidated into a single
    binary.
 
+ * API clean-up around ref-filter code.
+
+ * Shell completion (in contrib) that gives list of paths have been
+   optimized somewhat.
+
+ * The index file is updated to record the fsmonitor section after a
+   full scan was made, to avoid wasting the effort that has already
+   spent.
+
+ * Performance measuring framework in t/perf learned to help bisecting
+   performance regressions.
+
+ * Some multi-word source filenames are being renamed to separate
+   words with dashes instead of underscores.
+
+ * An reusable "memory pool" implementation has been extracted from
+   fast-import.c, which in turn has become the first user of the
+   mem-pool API.
+
 Also contains various documentation updates and code clean-ups.
 
 
@@ -115,8 +157,44 @@ Fixes since v2.17
    fixed.
    (merge a0d51e8d0e eb/cred-helper-ignore-sigpipe later to maint).
 
+ * "git rebase --keep-empty" still removed an empty commit if the
+   other side contained an empty commit (due to the "does an
+   equivalent patch exist already?" check), which has been corrected.
+   (merge 3d946165e1 pw/rebase-keep-empty-fixes later to maint).
+
+ * Some codepaths, including the refs API, get and keep relative
+   paths, that go out of sync when the process does chdir(2).  The
+   chdir-notify API is introduced to let these codepaths adjust these
+   cached paths to the new current directory.
+   (merge fb9c2d2703 jk/relative-directory-fix later to maint).
+
+ * "cd sub/dir && git commit ../path" ought to record the changes to
+   the file "sub/path", but this regressed long time ago.
+   (merge 86238e07ef bw/commit-partial-from-subdirectory-fix later to maint).
+
+ * Recent introduction of "--log-destination" option to "git daemon"
+   did not work well when the daemon was run under "--inetd" mode.
+   (merge e67d906d73 lw/daemon-log-destination later to maint).
+
+ * Small fix to the autoconf build procedure.
+   (merge 249482daf0 es/fread-reads-dir-autoconf-fix later to maint).
+
+ * Fix an unexploitable (because the oversized contents are not under
+   attacker's control) buffer overflow.
+   (merge d8579accfa bp/fsmonitor-bufsize-fix later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge 248f66ed8e nd/trace-with-env later to maint).
    (merge 14ced5562c ys/bisect-object-id-missing-conversion-fix later to maint).
    (merge 5988eb631a ab/doc-hash-brokenness later to maint).
    (merge a4d4e32a70 pk/test-avoid-pipe-hiding-exit-status later to maint).
+   (merge 05e293c1ac jk/flockfile-stdio later to maint).
+   (merge e9184b0789 jk/t5561-missing-curl later to maint).
+   (merge b1801b85a3 nd/worktree-move later to maint).
+   (merge bbd374dd20 ak/bisect-doc-typofix later to maint).
+   (merge 4855f06fb3 mn/send-email-credential-doc later to maint).
+   (merge 8523b1e355 en/doc-typoes later to maint).
+   (merge 43b44ccfe7 js/t5404-path-fix later to maint).
+   (merge decf711fc1 ps/test-chmtime-get later to maint).
+   (merge 22d11a6e8e es/worktree-docs later to maint).
+   (merge 92a5dbbc22 tg/use-git-contacts later to maint).
