@@ -1192,8 +1192,7 @@ static inline void *read_object_file(const struct object_id *oid, enum object_ty
 }
 
 /* Read and unpack an object file into memory, write memory to an object file */
-#define oid_object_info(r, o, f) oid_object_info_##r(o, f)
-int oid_object_info_the_repository(const struct object_id *, unsigned long *);
+int oid_object_info(struct repository *r, const struct object_id *, unsigned long *);
 
 extern int hash_object_file(const void *buf, unsigned long len,
 			    const char *type, struct object_id *oid);
@@ -1675,9 +1674,9 @@ struct object_info {
 /* Do not check loose object */
 #define OBJECT_INFO_IGNORE_LOOSE 16
 
-#define oid_object_info_extended(r, oid, oi, flags) \
-	oid_object_info_extended_##r(oid, oi, flags)
-int oid_object_info_extended_the_repository(const struct object_id *, struct object_info *, unsigned flags);
+int oid_object_info_extended(struct repository *r,
+			     const struct object_id *,
+			     struct object_info *, unsigned flags);
 
 /*
  * Set this to 0 to prevent sha1_object_info_extended() from fetching missing
