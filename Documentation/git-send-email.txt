@@ -473,16 +473,7 @@ edit ~/.gitconfig to specify your account settings:
 
 If you have multifactor authentication setup on your gmail account, you will
 need to generate an app-specific password for use with 'git send-email'. Visit
-https://security.google.com/settings/security/apppasswords to setup an
-app-specific password.  Once setup, you can store it with the credentials
-helper:
-
-	$ git credential fill
-	protocol=smtp
-	host=smtp.gmail.com
-	username=youname@gmail.com
-	password=app-password
-
+https://security.google.com/settings/security/apppasswords to create it.
 
 Once your commits are ready to be sent to the mailing list, run the
 following commands:
@@ -490,6 +481,11 @@ following commands:
 	$ git format-patch --cover-letter -M origin/master -o outgoing/
 	$ edit outgoing/0000-*
 	$ git send-email outgoing/*
+
+The first time you run it, you will be prompted for your credentials.  Enter the
+app-specific or your regular password as appropriate.  If you have credential
+helper configured (see linkgit:git-credential[1]), the password will be saved in
+the credential store so you won't have to type it the next time.
 
 Note: the following perl modules are required
       Net::SMTP::SSL, MIME::Base64 and Authen::SASL
