@@ -2561,6 +2561,17 @@ static const char *reflog_message(struct replay_opts *opts,
 	return buf.buf;
 }
 
+static const char rescheduled_advice[] =
+N_("Could not execute the todo command\n"
+"\n"
+"    %.*s"
+"\n"
+"It has been rescheduled; To edit the command before continuing, please\n"
+"edit the todo list first:\n"
+"\n"
+"    git rebase --edit-todo\n"
+"    git rebase --continue\n");
+
 static int pick_commits(struct todo_list *todo_list, struct replay_opts *opts)
 {
 	int res = 0;
@@ -2606,6 +2617,11 @@ static int pick_commits(struct todo_list *todo_list, struct replay_opts *opts)
 					opts, is_final_fixup(todo_list));
 			if (is_rebase_i(opts) && res < 0) {
 				/* Reschedule */
+				advise(_(rescheduled_advice),
+				       get_item_line_length(todo_list,
+							    todo_list->current),
+				       get_item_line(todo_list,
+						     todo_list->current));
 				todo_list->current--;
 				if (save_todo(todo_list, opts))
 					return -1;
