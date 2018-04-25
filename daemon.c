@@ -1459,7 +1459,7 @@ int cmd_main(int argc, const char **argv)
 		die("base-path '%s' does not exist or is not a directory",
 		    base_path);
 
-	if (inetd_mode) {
+	if (log_destination != LOG_DESTINATION_STDERR) {
 		if (!freopen("/dev/null", "w", stderr))
 			die_errno("failed to redirect stderr to /dev/null");
 	}
