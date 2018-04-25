@@ -1279,7 +1279,7 @@ static void *cache_or_unpack_entry(struct packed_git *p, off_t base_offset,
 
 	ent = get_delta_base_cache_entry(p, base_offset);
 	if (!ent)
-		return unpack_entry(p, base_offset, type, base_size);
+		return unpack_entry(the_repository, p, base_offset, type, base_size);
 
 	if (type)
 		*type = ent->type;
@@ -1485,8 +1485,9 @@ static void *read_object_the_repository(const struct object_id *oid,
 	return content;
 }
 
-void *unpack_entry(struct packed_git *p, off_t obj_offset,
-		   enum object_type *final_type, unsigned long *final_size)
+void *unpack_entry_the_repository(struct packed_git *p, off_t obj_offset,
+				  enum object_type *final_type,
+				  unsigned long *final_size)
 {
 	struct pack_window *w_curs = NULL;
 	off_t curpos = obj_offset;
