@@ -7,7 +7,7 @@
 #include "config.h"
 #include "refs.h"
 #include "builtin.h"
-#include "exec_cmd.h"
+#include "exec-cmd.h"
 #include "parse-options.h"
 
 #ifndef DEFAULT_GIT_TEMPLATE_DIR

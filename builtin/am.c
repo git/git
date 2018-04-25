@@ -6,7 +6,7 @@
 #include "cache.h"
 #include "config.h"
 #include "builtin.h"
-#include "exec_cmd.h"
+#include "exec-cmd.h"
 #include "parse-options.h"
 #include "dir.h"
 #include "run-command.h"

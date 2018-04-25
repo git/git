@@ -1,5 +1,5 @@
 #include "cache.h"
-#include "exec_cmd.h"
+#include "exec-cmd.h"
 #include "quote.h"
 #include "argv-array.h"
 #define MAX_ARGS	32

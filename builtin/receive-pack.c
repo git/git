@@ -7,7 +7,7 @@
 #include "pkt-line.h"
 #include "sideband.h"
 #include "run-command.h"
-#include "exec_cmd.h"
+#include "exec-cmd.h"
 #include "commit.h"
 #include "object.h"
 #include "remote.h"

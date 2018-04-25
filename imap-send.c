@@ -24,7 +24,7 @@
 #include "cache.h"
 #include "config.h"
 #include "credential.h"
-#include "exec_cmd.h"
+#include "exec-cmd.h"
 #include "run-command.h"
 #include "parse-options.h"
 #ifdef NO_OPENSSL

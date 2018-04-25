@@ -37,7 +37,7 @@ struct object_array {
  * bundle.c:                                        16
  * http-push.c:                                     16-----19
  * commit.c:                                        16-----19
- * sha1_name.c:                                              20
+ * sha1-name.c:                                              20
  * list-objects-filter.c:                                      21
  * builtin/fsck.c:           0--3
  * builtin/index-pack.c:                                     2021

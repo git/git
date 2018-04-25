@@ -81,7 +81,7 @@ static int git_wcwidth(ucs_char_t ch)
 	/*
 	 * Sorted list of non-overlapping intervals of non-spacing characters,
 	 */
-#include "unicode_width.h"
+#include "unicode-width.h"
 
 	/* test for 8-bit control characters */
 	if (ch == 0)

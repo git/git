@@ -6,7 +6,7 @@
 #include "blob.h"
 #include "refs.h"
 #include "builtin.h"
-#include "exec_cmd.h"
+#include "exec-cmd.h"
 #include "parse-options.h"
 #include "revision.h"
 #include "diff.h"

@@ -10,7 +10,7 @@
 #define NO_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
 #include "config.h"
-#include "exec_cmd.h"
+#include "exec-cmd.h"
 #include "attr.h"
 #include "dir.h"
 #include "utf8.h"

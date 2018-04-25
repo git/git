@@ -819,7 +819,7 @@ LIB_OBJS += ewah/bitmap.o
 LIB_OBJS += ewah/ewah_bitmap.o
 LIB_OBJS += ewah/ewah_io.o
 LIB_OBJS += ewah/ewah_rlw.o
-LIB_OBJS += exec_cmd.o
+LIB_OBJS += exec-cmd.o
 LIB_OBJS += fetch-object.o
 LIB_OBJS += fetch-pack.o
 LIB_OBJS += fsck.o
@@ -889,7 +889,7 @@ LIB_OBJS += refs/packed-backend.o
 LIB_OBJS += refs/ref-cache.o
 LIB_OBJS += ref-filter.o
 LIB_OBJS += remote.o
-LIB_OBJS += replace_object.o
+LIB_OBJS += replace-object.o
 LIB_OBJS += repository.o
 LIB_OBJS += rerere.o
 LIB_OBJS += resolve-undo.o
@@ -901,8 +901,8 @@ LIB_OBJS += server-info.o
 LIB_OBJS += setup.o
 LIB_OBJS += sha1-array.o
 LIB_OBJS += sha1-lookup.o
-LIB_OBJS += sha1_file.o
-LIB_OBJS += sha1_name.o
+LIB_OBJS += sha1-file.o
+LIB_OBJS += sha1-name.o
 LIB_OBJS += shallow.o
 LIB_OBJS += sideband.o
 LIB_OBJS += sigchain.o
@@ -937,7 +937,7 @@ LIB_OBJS += walker.o
 LIB_OBJS += wildmatch.o
 LIB_OBJS += worktree.o
 LIB_OBJS += wrapper.o
-LIB_OBJS += write_or_die.o
+LIB_OBJS += write-or-die.o
 LIB_OBJS += ws.o
 LIB_OBJS += wt-status.o
 LIB_OBJS += xdiff-interface.o
@@ -2156,8 +2156,8 @@ else
 $(OBJECTS): $(LIB_H)
 endif
 
-exec_cmd.sp exec_cmd.s exec_cmd.o: GIT-PREFIX
-exec_cmd.sp exec_cmd.s exec_cmd.o: EXTRA_CPPFLAGS = \
+exec-cmd.sp exec-cmd.s exec-cmd.o: GIT-PREFIX
+exec-cmd.sp exec-cmd.s exec-cmd.o: EXTRA_CPPFLAGS = \
 	'-DGIT_EXEC_PATH="$(gitexecdir_SQ)"' \
 	'-DBINDIR="$(bindir_relative_SQ)"' \
 	'-DPREFIX="$(prefix_SQ)"'

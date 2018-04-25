@@ -6,7 +6,7 @@
 #include "refs.h"
 #include "diff.h"
 #include "revision.h"
-#include "exec_cmd.h"
+#include "exec-cmd.h"
 #include "remote.h"
 #include "list-objects.h"
 #include "sigchain.h"

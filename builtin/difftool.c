@@ -15,7 +15,7 @@
 #include "config.h"
 #include "builtin.h"
 #include "run-command.h"
-#include "exec_cmd.h"
+#include "exec-cmd.h"
 #include "parse-options.h"
 #include "argv-array.h"
 #include "strbuf.h"

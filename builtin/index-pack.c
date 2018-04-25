@@ -9,7 +9,7 @@
 #include "tree.h"
 #include "progress.h"
 #include "fsck.h"
-#include "exec_cmd.h"
+#include "exec-cmd.h"
 #include "streaming.h"
 #include "thread-utils.h"
 #include "packfile.h"
@@ -1593,7 +1593,7 @@ static void read_idx_option(struct pack_idx_option *opts, const char *pack_name)
 	/*
 	 * Get rid of the idx file as we do not need it anymore.
 	 * NEEDSWORK: extract this bit from free_pack_by_name() in
-	 * sha1_file.c, perhaps?  It shouldn't matter very much as we
+	 * sha1-file.c, perhaps?  It shouldn't matter very much as we
 	 * know we haven't installed this pack (hence we never have
 	 * read anything from it).
 	 */

@@ -9,7 +9,7 @@
 #include "config.h"
 #include "repository.h"
 #include "lockfile.h"
-#include "exec_cmd.h"
+#include "exec-cmd.h"
 #include "strbuf.h"
 #include "quote.h"
 #include "hashmap.h"

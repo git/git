@@ -6,7 +6,7 @@
 #include "pkt-line.h"
 #include "commit.h"
 #include "tag.h"
-#include "exec_cmd.h"
+#include "exec-cmd.h"
 #include "pack.h"
 #include "sideband.h"
 #include "fetch-pack.h"
