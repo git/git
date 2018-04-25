@@ -218,8 +218,7 @@ static int list_paths(struct string_list *list, const char *with_tree,
 
 	if (with_tree) {
 		char *max_prefix = common_prefix(pattern);
-		overlay_tree_on_index(&the_index, with_tree,
-				      max_prefix ? max_prefix : prefix);
+		overlay_tree_on_index(&the_index, with_tree, max_prefix);
 		free(max_prefix);
 	}
 

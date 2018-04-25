@@ -52,6 +52,18 @@ test_expect_success PERL 'can use paths with --interactive' '
 	git reset --hard HEAD^
 '
 
+test_expect_success 'removed files and relative paths' '
+	test_when_finished "rm -rf foo" &&
+	git init foo &&
+	>foo/foo.txt &&
+	git -C foo add foo.txt &&
+	git -C foo commit -m first &&
+	git -C foo rm foo.txt &&
+
+	mkdir -p foo/bar &&
+	git -C foo/bar commit -m second ../foo.txt
+'
+
 test_expect_success 'using invalid commit with -C' '
 	test_must_fail git commit --allow-empty -C bogus
 '
