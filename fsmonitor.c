@@ -185,6 +185,9 @@ void refresh_fsmonitor(struct index_state *istate)
 		for (i = 0; i < istate->cache_nr; i++)
 			istate->cache[i]->ce_flags &= ~CE_FSMONITOR_VALID;
 
+		/* If we're going to check every file, ensure we save the results */
+		istate->cache_changed |= FSMONITOR_CHANGED;
+
 		if (istate->untracked)
 			istate->untracked->use_fsmonitor = 0;
 	}
