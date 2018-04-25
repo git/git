@@ -1104,7 +1104,9 @@ static const unsigned char *get_delta_base_sha1(struct packed_git *p,
 		return NULL;
 }
 
-static int retry_bad_packed_offset(struct packed_git *p, off_t obj_offset)
+#define retry_bad_packed_offset(r, p, o) \
+	retry_bad_packed_offset_##r(p, o)
+static int retry_bad_packed_offset_the_repository(struct packed_git *p, off_t obj_offset)
 {
 	int type;
 	struct revindex_entry *revidx;
@@ -1153,7 +1155,7 @@ static enum object_type packed_to_object_type(struct packed_git *p,
 		if (type <= OBJ_NONE) {
 			/* If getting the base itself fails, we first
 			 * retry the base, otherwise unwind */
-			type = retry_bad_packed_offset(p, base_offset);
+			type = retry_bad_packed_offset(the_repository, p, base_offset);
 			if (type > OBJ_NONE)
 				goto out;
 			goto unwind;
@@ -1181,7 +1183,7 @@ out:
 unwind:
 	while (poi_stack_nr) {
 		obj_offset = poi_stack[--poi_stack_nr];
-		type = retry_bad_packed_offset(p, obj_offset);
+		type = retry_bad_packed_offset(the_repository, p, obj_offset);
 		if (type > OBJ_NONE)
 			goto out;
 	}
