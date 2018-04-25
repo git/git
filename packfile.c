@@ -1124,11 +1124,13 @@ static int retry_bad_packed_offset_the_repository(struct packed_git *p, off_t ob
 
 #define POI_STACK_PREALLOC 64
 
-static enum object_type packed_to_object_type(struct packed_git *p,
-					      off_t obj_offset,
-					      enum object_type type,
-					      struct pack_window **w_curs,
-					      off_t curpos)
+#define packed_to_object_type(r, p, o, t, w, c) \
+	packed_to_object_type_##r(p, o, t, w, c)
+static enum object_type packed_to_object_type_the_repository(struct packed_git *p,
+							     off_t obj_offset,
+							     enum object_type type,
+							     struct pack_window **w_curs,
+							     off_t curpos)
 {
 	off_t small_poi_stack[POI_STACK_PREALLOC];
 	off_t *poi_stack = small_poi_stack;
@@ -1378,8 +1380,8 @@ int packed_object_info(struct packed_git *p, off_t obj_offset,
 
 	if (oi->typep || oi->type_name) {
 		enum object_type ptot;
-		ptot = packed_to_object_type(p, obj_offset, type, &w_curs,
-					     curpos);
+		ptot = packed_to_object_type(the_repository, p, obj_offset,
+					     type, &w_curs, curpos);
 		if (oi->typep)
 			*oi->typep = ptot;
 		if (oi->type_name) {
