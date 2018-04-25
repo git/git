@@ -1582,7 +1582,7 @@ static int in_commit_list(const struct commit_list *want, struct commit *c)
 }
 
 /*
- * Test whether the candidate or one of its parents is contained in the list.
+ * Test whether the candidate is contained in the list.
  * Do not recurse to find out, though, but return -1 if inconclusive.
  */
 static enum contains_result contains_test(struct commit *candidate,
