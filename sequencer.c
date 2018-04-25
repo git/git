@@ -1871,6 +1871,23 @@ static int count_commands(struct todo_list *todo_list)
 	return count;
 }
 
+static int get_item_line_offset(struct todo_list *todo_list, int index)
+{
+	return index < todo_list->nr ?
+		todo_list->items[index].offset_in_buf : todo_list->buf.len;
+}
+
+static const char *get_item_line(struct todo_list *todo_list, int index)
+{
+	return todo_list->buf.buf + get_item_line_offset(todo_list, index);
+}
+
+static int get_item_line_length(struct todo_list *todo_list, int index)
+{
+	return get_item_line_offset(todo_list, index + 1)
+		-  get_item_line_offset(todo_list, index);
+}
+
 static ssize_t strbuf_read_file_or_whine(struct strbuf *sb, const char *path)
 {
 	int fd;
@@ -2250,29 +2267,27 @@ static int save_todo(struct todo_list *todo_list, struct replay_opts *opts)
 	fd = hold_lock_file_for_update(&todo_lock, todo_path, 0);
 	if (fd < 0)
 		return error_errno(_("could not lock '%s'"), todo_path);
-	offset = next < todo_list->nr ?
-		todo_list->items[next].offset_in_buf : todo_list->buf.len;
+	offset = get_item_line_offset(todo_list, next);
 	if (write_in_full(fd, todo_list->buf.buf + offset,
 			todo_list->buf.len - offset) < 0)
 		return error_errno(_("could not write to '%s'"), todo_path);
 	if (commit_lock_file(&todo_lock) < 0)
 		return error(_("failed to finalize '%s'"), todo_path);
 
-	if (is_rebase_i(opts)) {
-		const char *done_path = rebase_path_done();
-		int fd = open(done_path, O_CREAT | O_WRONLY | O_APPEND, 0666);
-		int prev_offset = !next ? 0 :
-			todo_list->items[next - 1].offset_in_buf;
+	if (is_rebase_i(opts) && next > 0) {
+		const char *done = rebase_path_done();
+		int fd = open(done, O_CREAT | O_WRONLY | O_APPEND, 0666);
+		int ret = 0;
 
-		if (fd >= 0 && offset > prev_offset &&
-		    write_in_full(fd, todo_list->buf.buf + prev_offset,
-				  offset - prev_offset) < 0) {
-			close(fd);
-			return error_errno(_("could not write to '%s'"),
-					   done_path);
-		}
-		if (fd >= 0)
-			close(fd);
+		if (fd < 0)
+			return 0;
+		if (write_in_full(fd, get_item_line(todo_list, next - 1),
+				  get_item_line_length(todo_list, next - 1))
+		    < 0)
+			ret = error_errno(_("could not write to '%s'"), done);
+		if (close(fd) < 0)
+			ret = error_errno(_("failed to finalize '%s'"), done);
+		return ret;
 	}
 	return 0;
 }
@@ -3307,8 +3322,7 @@ int skip_unnecessary_picks(void)
 		oid = &item->commit->object.oid;
 	}
 	if (i > 0) {
-		int offset = i < todo_list.nr ?
-			todo_list.items[i].offset_in_buf : todo_list.buf.len;
+		int offset = get_item_line_offset(&todo_list, i);
 		const char *done_path = rebase_path_done();
 
 		fd = open(done_path, O_CREAT | O_WRONLY | O_APPEND, 0666);
@@ -3488,12 +3502,10 @@ int rearrange_squash(void)
 				continue;
 
 			while (cur >= 0) {
-				int offset = todo_list.items[cur].offset_in_buf;
-				int end_offset = cur + 1 < todo_list.nr ?
-					todo_list.items[cur + 1].offset_in_buf :
-					todo_list.buf.len;
-				char *bol = todo_list.buf.buf + offset;
-				char *eol = todo_list.buf.buf + end_offset;
+				const char *bol =
+					get_item_line(&todo_list, cur);
+				const char *eol =
+					get_item_line(&todo_list, cur + 1);
 
 				/* replace 'pick', by 'fixup' or 'squash' */
 				command = todo_list.items[cur].command;
