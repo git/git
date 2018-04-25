@@ -3566,7 +3566,7 @@ int file_attr_to_st_mode (DWORD attr, DWORD tag, const char *path)
 		 * points and look like symbolic links, but they are not.
 		 */
 		if (path && is_inside_windows_container() &&
-		    readlink(path, buf, sizeof(buf) >= 0) &&
+		    readlink(path, buf, sizeof(buf)) > 27 &&
 		    starts_with(buf, "/ContainerMappedDirectories/"))
 			flag = S_IFDIR;
 
