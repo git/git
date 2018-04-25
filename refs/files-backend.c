@@ -9,6 +9,7 @@
 #include "../lockfile.h"
 #include "../object.h"
 #include "../dir.h"
+#include "../chdir-notify.h"
 
 /*
  * This backend uses the following flags in `ref_update::flags` for
@@ -105,6 +106,11 @@ static struct ref_store *files_ref_store_create(const char *gitdir,
 	strbuf_addf(&sb, "%s/packed-refs", refs->gitcommondir);
 	refs->packed_ref_store = packed_ref_store_create(sb.buf, flags);
 	strbuf_release(&sb);
+
+	chdir_notify_reparent("files-backend $GIT_DIR",
+			      &refs->gitdir);
+	chdir_notify_reparent("files-backend $GIT_COMMONDIR",
+			      &refs->gitcommondir);
 
 	return ref_store;
 }

@@ -431,4 +431,16 @@ test_expect_success 'error out gracefully on invalid $GIT_WORK_TREE' '
 	)
 '
 
+test_expect_success 'refs work with relative gitdir and work tree' '
+	git init relative &&
+	git -C relative commit --allow-empty -m one &&
+	git -C relative commit --allow-empty -m two &&
+
+	GIT_DIR=relative/.git GIT_WORK_TREE=relative git reset HEAD^ &&
+
+	git -C relative log -1 --format=%s >actual &&
+	echo one >expect &&
+	test_cmp expect actual
+'
+
 test_done

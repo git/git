@@ -26,6 +26,7 @@
 
 struct trace_key trace_default_key = { "GIT_TRACE", 0, 0, 0 };
 struct trace_key trace_perf_key = TRACE_KEY_INIT(PERFORMANCE);
+struct trace_key trace_setup_key = TRACE_KEY_INIT(SETUP);
 
 /* Get a trace file descriptor from "key" env variable. */
 static int get_trace_fd(struct trace_key *key)
@@ -300,11 +301,10 @@ static const char *quote_crnl(const char *path)
 /* FIXME: move prefix to startup_info struct and get rid of this arg */
 void trace_repo_setup(const char *prefix)
 {
-	static struct trace_key key = TRACE_KEY_INIT(SETUP);
 	const char *git_work_tree;
 	char *cwd;
 
-	if (!trace_want(&key))
+	if (!trace_want(&trace_setup_key))
 		return;
 
 	cwd = xgetcwd();
@@ -315,11 +315,11 @@ void trace_repo_setup(const char *prefix)
 	if (!prefix)
 		prefix = "(null)";
 
-	trace_printf_key(&key, "setup: git_dir: %s\n", quote_crnl(get_git_dir()));
-	trace_printf_key(&key, "setup: git_common_dir: %s\n", quote_crnl(get_git_common_dir()));
-	trace_printf_key(&key, "setup: worktree: %s\n", quote_crnl(git_work_tree));
-	trace_printf_key(&key, "setup: cwd: %s\n", quote_crnl(cwd));
-	trace_printf_key(&key, "setup: prefix: %s\n", quote_crnl(prefix));
+	trace_printf_key(&trace_setup_key, "setup: git_dir: %s\n", quote_crnl(get_git_dir()));
+	trace_printf_key(&trace_setup_key, "setup: git_common_dir: %s\n", quote_crnl(get_git_common_dir()));
+	trace_printf_key(&trace_setup_key, "setup: worktree: %s\n", quote_crnl(git_work_tree));
+	trace_printf_key(&trace_setup_key, "setup: cwd: %s\n", quote_crnl(cwd));
+	trace_printf_key(&trace_setup_key, "setup: prefix: %s\n", quote_crnl(prefix));
 
 	free(cwd);
 }
