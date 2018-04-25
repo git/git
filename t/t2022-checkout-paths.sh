@@ -73,8 +73,8 @@ test_expect_success 'do not touch files that are already up-to-date' '
 	git checkout HEAD -- file1 file2 &&
 	echo one >expect &&
 	test_cmp expect file1 &&
-	echo "1000000000	file2" >expect &&
-	test-tool chmtime -v +0 file2 >actual &&
+	echo "1000000000" >expect &&
+	test-tool chmtime --get file2 >actual &&
 	test_cmp expect actual
 '
 

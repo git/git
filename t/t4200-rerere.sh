@@ -166,7 +166,7 @@ test_expect_success 'first postimage wins' '
 	git commit -q -a -m "prefer first over second" &&
 	test -f $rr/postimage &&
 
-	oldmtimepost=$(test-tool chmtime -v -60 $rr/postimage | cut -f 1) &&
+	oldmtimepost=$(test-tool chmtime --get -60 $rr/postimage) &&
 
 	git checkout -b third master &&
 	git show second^:a1 | sed "s/To die: t/To die! T/" >a1 &&
@@ -179,7 +179,7 @@ test_expect_success 'first postimage wins' '
 '
 
 test_expect_success 'rerere updates postimage timestamp' '
-	newmtimepost=$(test-tool chmtime -v +0 $rr/postimage | cut -f 1) &&
+	newmtimepost=$(test-tool chmtime --get $rr/postimage) &&
 	test $oldmtimepost -lt $newmtimepost
 '
 
@@ -512,7 +512,7 @@ test_expect_success 'multiple identical conflicts' '
 	count_pre_post 2 0 &&
 
 	# Pretend that the conflicts were made quite some time ago
-	find .git/rr-cache/ -type f | xargs test-tool chmtime -172800 &&
+	test-tool chmtime -172800 $(find .git/rr-cache/ -type f) &&
 
 	# Unresolved entries have not expired yet
 	git -c gc.rerereresolved=5 -c gc.rerereunresolved=5 rerere gc &&
@@ -568,7 +568,7 @@ test_expect_success 'multiple identical conflicts' '
 	git rerere &&
 
 	# Pretend that the resolutions are old again
-	find .git/rr-cache/ -type f | xargs test-tool chmtime -172800 &&
+	test-tool chmtime -172800 $(find .git/rr-cache/ -type f) &&
 
 	# Resolved entries have not expired yet
 	git -c gc.rerereresolved=5 -c gc.rerereunresolved=5 rerere gc &&

@@ -72,8 +72,7 @@ for repack in '' true; do
 	'
 
 	test_expect_success "simulate time passing ($title)" '
-		find .git/objects -type f |
-		xargs test-tool chmtime -v -86400
+		test-tool chmtime --get -86400 $(find .git/objects -type f)
 	'
 
 	test_expect_success "start writing new commit with old blob ($title)" '
@@ -103,8 +102,7 @@ for repack in '' true; do
 
 	test_expect_success "abandon objects again ($title)" '
 		git reset --hard HEAD^ &&
-		find .git/objects -type f |
-		xargs test-tool chmtime -v -86400
+		test-tool chmtime --get -86400 $(find .git/objects -type f)
 	'
 
 	test_expect_success "start writing new commit with same tree ($title)" '

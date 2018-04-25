@@ -1674,10 +1674,10 @@ test_expect_success '"Initial commit" should not be noted in commit template' '
 test_expect_success '--no-optional-locks prevents index update' '
 	test-tool chmtime =1234567890 .git/index &&
 	git --no-optional-locks status &&
-	test-tool chmtime -v +0 .git/index >out &&
+	test-tool chmtime --get .git/index >out &&
 	grep ^1234567890 out &&
 	git status &&
-	test-tool chmtime -v +0 .git/index >out &&
+	test-tool chmtime --get .git/index >out &&
 	! grep ^1234567890 out
 '
 

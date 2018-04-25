@@ -717,7 +717,7 @@ test_expect_success 'avoid unnecessary reset' '
 	set_fake_editor &&
 	git rebase -i HEAD~4 &&
 	test $HEAD = $(git rev-parse HEAD) &&
-	MTIME=$(test-tool chmtime -v +0 file3 | sed 's/[^0-9].*$//') &&
+	MTIME=$(test-tool chmtime --get file3) &&
 	test 123456789 = $MTIME
 '
 

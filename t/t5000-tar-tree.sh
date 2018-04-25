@@ -192,7 +192,7 @@ test_expect_success \
     'validate file modification time' \
     'mkdir extract &&
      "$TAR" xf b.tar -C extract a/a &&
-     test-tool chmtime -v +0 extract/a/a |cut -f 1 >b.mtime &&
+     test-tool chmtime --get extract/a/a >b.mtime &&
      echo "1117231200" >expected.mtime &&
      test_cmp expected.mtime b.mtime'
 

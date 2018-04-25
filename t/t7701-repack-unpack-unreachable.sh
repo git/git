@@ -55,8 +55,8 @@ test_expect_success '-A with -d option leaves unreachable objects unpacked' '
 
 compare_mtimes ()
 {
-	read tref rest &&
-	while read t rest; do
+	read tref &&
+	while read t; do
 		test "$tref" = "$t" || return 1
 	done
 }
@@ -90,7 +90,7 @@ test_expect_success 'unpacked objects receive timestamp of pack file' '
 	tmppack=".git/objects/pack/tmp_pack" &&
 	ln "$packfile" "$tmppack" &&
 	git repack -A -l -d &&
-	test-tool chmtime -v +0 "$tmppack" "$fsha1path" "$csha1path" "$tsha1path" \
+	test-tool chmtime --get "$tmppack" "$fsha1path" "$csha1path" "$tsha1path" \
 		> mtimes &&
 	compare_mtimes < mtimes
 '

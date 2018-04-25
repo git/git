@@ -247,9 +247,9 @@ test_expect_success '--abort after last commit in sequence' '
 test_expect_success 'cherry-pick does not implicitly stomp an existing operation' '
 	pristine_detach initial &&
 	test_expect_code 1 git cherry-pick base..anotherpick &&
-	test-tool chmtime -v +0 .git/sequencer >expect &&
+	test-tool chmtime --get .git/sequencer >expect &&
 	test_expect_code 128 git cherry-pick unrelatedpick &&
-	test-tool chmtime -v +0 .git/sequencer >actual &&
+	test-tool chmtime --get .git/sequencer >actual &&
 	test_cmp expect actual
 '
 
