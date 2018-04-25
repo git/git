@@ -345,7 +345,7 @@ struct check_mergetag_data {
 	const char **argv;
 };
 
-static void check_one_mergetag(struct commit *commit,
+static int check_one_mergetag(struct commit *commit,
 			       struct commit_extra_header *extra,
 			       void *data)
 {
@@ -368,20 +368,20 @@ static void check_one_mergetag(struct commit *commit,
 		if (get_oid(mergetag_data->argv[i], &oid) < 0)
 			die(_("Not a valid object name: '%s'"), mergetag_data->argv[i]);
 		if (!oidcmp(&tag->tagged->oid, &oid))
-			return; /* found */
+			return 0; /* found */
 	}
 
 	die(_("original commit '%s' contains mergetag '%s' that is discarded; "
 	      "use --edit instead of --graft"), ref, oid_to_hex(&tag_oid));
 }
 
-static void check_mergetags(struct commit *commit, int argc, const char **argv)
+static int check_mergetags(struct commit *commit, int argc, const char **argv)
 {
 	struct check_mergetag_data mergetag_data;
 
 	mergetag_data.argc = argc;
 	mergetag_data.argv = argv;
-	for_each_mergetag(check_one_mergetag, commit, &mergetag_data);
+	return for_each_mergetag(check_one_mergetag, commit, &mergetag_data);
 }
 
 static int create_graft(int argc, const char **argv, int force)
