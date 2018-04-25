@@ -4,6 +4,7 @@ use lib '../../perl/build/lib';
 use strict;
 use warnings;
 use JSON;
+use Getopt::Long;
 use Git;
 
 sub get_times {
@@ -36,46 +37,34 @@ sub format_times {
 	return $out;
 }
 
+sub usage {
+	print <<EOT;
+./aggregate.perl [options] [--] [<dir_or_rev>...] [--] [<test_script>...] >
+
+  Options:
+    --codespeed          * Format output for Codespeed
+    --reponame    <str>  * Send given reponame to codespeed
+    --sort-by     <str>  * Sort output (only "regression" criteria is supported)
+    --subsection  <str>  * Use results from given subsection
+
+EOT
+	exit(1);
+}
+
 my (@dirs, %dirnames, %dirabbrevs, %prefixes, @tests,
     $codespeed, $sortby, $subsection, $reponame);
+
+Getopt::Long::Configure qw/ require_order /;
+
+my $rc = GetOptions("codespeed"     => \$codespeed,
+		    "reponame=s"    => \$reponame,
+		    "sort-by=s"     => \$sortby,
+		    "subsection=s"  => \$subsection);
+usage() unless $rc;
+
 while (scalar @ARGV) {
 	my $arg = $ARGV[0];
 	my $dir;
-	if ($arg eq "--codespeed") {
-		$codespeed = 1;
-		shift @ARGV;
-		next;
-	}
-	if ($arg =~ /--sort-by(?:=(.*))?/) {
-		shift @ARGV;
-		if (defined $1) {
-			$sortby = $1;
-		} else {
-			$sortby = shift @ARGV;
-			if (! defined $sortby) {
-				die "'--sort-by' requires an argument";
-			}
-		}
-		next;
-	}
-	if ($arg eq "--subsection") {
-		shift @ARGV;
-		$subsection = $ARGV[0];
-		shift @ARGV;
-		if (! $subsection) {
-			die "empty subsection";
-		}
-		next;
-	}
-	if ($arg eq "--reponame") {
-		shift @ARGV;
-		$reponame = $ARGV[0];
-		shift @ARGV;
-		if (! $reponame) {
-			die "empty reponame";
-		}
-		next;
-	}
 	last if -f $arg or $arg eq "--";
 	if (! -d $arg) {
 		my $rev = Git::command_oneline(qw(rev-parse --verify), $arg);
@@ -225,7 +214,8 @@ sub print_sorted_results {
 	my ($sortby) = @_;
 
 	if ($sortby ne "regression") {
-		die "only 'regression' is supported as '--sort-by' argument";
+		print "Only 'regression' is supported as '--sort-by' argument\n";
+		usage();
 	}
 
 	my @evolutions;
