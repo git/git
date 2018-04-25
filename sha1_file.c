@@ -1231,7 +1231,7 @@ static int sha1_loose_object_info(struct repository *r,
 
 int fetch_if_missing = 1;
 
-int oid_object_info_extended(const struct object_id *oid, struct object_info *oi, unsigned flags)
+int oid_object_info_extended_the_repository(const struct object_id *oid, struct object_info *oi, unsigned flags)
 {
 	static struct object_info blank_oi = OBJECT_INFO_INIT;
 	struct pack_entry e;
@@ -1310,7 +1310,7 @@ int oid_object_info_extended(const struct object_id *oid, struct object_info *oi
 	rtype = packed_object_info(e.p, e.offset, oi);
 	if (rtype < 0) {
 		mark_bad_packed_object(e.p, real->hash);
-		return oid_object_info_extended(real, oi, 0);
+		return oid_object_info_extended(the_repository, real, oi, 0);
 	} else if (oi->whence == OI_PACKED) {
 		oi->u.packed.offset = e.offset;
 		oi->u.packed.pack = e.p;
@@ -1329,7 +1329,7 @@ int oid_object_info(const struct object_id *oid, unsigned long *sizep)
 
 	oi.typep = &type;
 	oi.sizep = sizep;
-	if (oid_object_info_extended(oid, &oi,
+	if (oid_object_info_extended(the_repository, oid, &oi,
 				     OBJECT_INFO_LOOKUP_REPLACE) < 0)
 		return -1;
 	return type;
@@ -1347,7 +1347,7 @@ static void *read_object(const unsigned char *sha1, enum object_type *type,
 
 	hashcpy(oid.hash, sha1);
 
-	if (oid_object_info_extended(&oid, &oi, 0) < 0)
+	if (oid_object_info_extended(the_repository, &oid, &oi, 0) < 0)
 		return NULL;
 	return content;
 }
@@ -1745,7 +1745,7 @@ int has_sha1_file_with_flags(const unsigned char *sha1, int flags)
 	if (!startup_info->have_repository)
 		return 0;
 	hashcpy(oid.hash, sha1);
-	return oid_object_info_extended(&oid, NULL,
+	return oid_object_info_extended(the_repository, &oid, NULL,
 					flags | OBJECT_INFO_SKIP_CACHED) >= 0;
 }
 

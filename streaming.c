@@ -117,7 +117,7 @@ static enum input_source istream_source(const struct object_id *oid,
 
 	oi->typep = type;
 	oi->sizep = &size;
-	status = oid_object_info_extended(oid, oi, 0);
+	status = oid_object_info_extended(the_repository, oid, oi, 0);
 	if (status < 0)
 		return stream_error;
 

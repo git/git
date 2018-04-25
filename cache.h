@@ -1673,7 +1673,10 @@ struct object_info {
 #define OBJECT_INFO_QUICK 8
 /* Do not check loose object */
 #define OBJECT_INFO_IGNORE_LOOSE 16
-extern int oid_object_info_extended(const struct object_id *, struct object_info *, unsigned flags);
+
+#define oid_object_info_extended(r, oid, oi, flags) \
+	oid_object_info_extended_##r(oid, oi, flags)
+int oid_object_info_extended_the_repository(const struct object_id *, struct object_info *, unsigned flags);
 
 /*
  * Set this to 0 to prevent sha1_object_info_extended() from fetching missing
