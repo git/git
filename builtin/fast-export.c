@@ -947,7 +947,7 @@ static void import_marks(char *input_file)
 		if (last_idnum < mark)
 			last_idnum = mark;
 
-		type = oid_object_info(&oid, NULL);
+		type = oid_object_info(the_repository, &oid, NULL);
 		if (type < 0)
 			die("object not found: %s", oid_to_hex(&oid));
 

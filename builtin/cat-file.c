@@ -116,7 +116,7 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 		/* else fallthrough */
 
 	case 'p':
-		type = oid_object_info(&oid, NULL);
+		type = oid_object_info(the_repository, &oid, NULL);
 		if (type < 0)
 			die("Not a valid object name %s", obj_name);
 
@@ -140,7 +140,7 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 	case 0:
 		if (type_from_string(exp_type) == OBJ_BLOB) {
 			struct object_id blob_oid;
-			if (oid_object_info(&oid, NULL) == OBJ_TAG) {
+			if (oid_object_info(the_repository, &oid, NULL) == OBJ_TAG) {
 				char *buffer = read_object_file(&oid, &type,
 								&size);
 				const char *target;
@@ -151,7 +151,7 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 			} else
 				oidcpy(&blob_oid, &oid);
 
-			if (oid_object_info(&blob_oid, NULL) == OBJ_BLOB)
+			if (oid_object_info(the_repository, &blob_oid, NULL) == OBJ_BLOB)
 				return stream_blob_to_fd(1, &blob_oid, NULL, 0);
 			/*
 			 * we attempted to dereference a tag to a blob

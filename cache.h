@@ -1192,7 +1192,8 @@ static inline void *read_object_file(const struct object_id *oid, enum object_ty
 }
 
 /* Read and unpack an object file into memory, write memory to an object file */
-extern int oid_object_info(const struct object_id *, unsigned long *);
+#define oid_object_info(r, o, f) oid_object_info_##r(o, f)
+int oid_object_info_the_repository(const struct object_id *, unsigned long *);
 
 extern int hash_object_file(const void *buf, unsigned long len,
 			    const char *type, struct object_id *oid);

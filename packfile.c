@@ -1114,7 +1114,7 @@ static int retry_bad_packed_offset(struct packed_git *p, off_t obj_offset)
 		return OBJ_BAD;
 	nth_packed_object_oid(&oid, p, revidx->nr);
 	mark_bad_packed_object(p, oid.hash);
-	type = oid_object_info(&oid, NULL);
+	type = oid_object_info(the_repository, &oid, NULL);
 	if (type <= OBJ_NONE)
 		return OBJ_BAD;
 	return type;

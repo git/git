@@ -1322,7 +1322,7 @@ int oid_object_info_extended_the_repository(const struct object_id *oid, struct 
 }
 
 /* returns enum object_type or negative */
-int oid_object_info(const struct object_id *oid, unsigned long *sizep)
+int oid_object_info_the_repository(const struct object_id *oid, unsigned long *sizep)
 {
 	enum object_type type;
 	struct object_info oi = OBJECT_INFO_INIT;
@@ -1988,7 +1988,7 @@ int read_pack_header(int fd, struct pack_header *header)
 
 void assert_oid_type(const struct object_id *oid, enum object_type expect)
 {
-	enum object_type type = oid_object_info(oid, NULL);
+	enum object_type type = oid_object_info(the_repository, oid, NULL);
 	if (type < 0)
 		die("%s is not a valid object", oid_to_hex(oid));
 	if (type != expect)
