@@ -6,6 +6,7 @@
 test_description='git branch assorted tests'
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-rebase.sh
 
 test_expect_success 'prepare a trivial repository' '
 	echo Hello >A &&
@@ -1244,6 +1245,29 @@ test_expect_success '--merged catches invalid object names' '
 
 test_expect_success '--merged is incompatible with --no-merged' '
 	test_must_fail git branch --merged HEAD --no-merged HEAD
+'
+
+test_expect_success '--list during rebase' '
+	test_when_finished "reset_rebase" &&
+	git checkout master &&
+	FAKE_LINES="1 edit 2" &&
+	export FAKE_LINES &&
+	set_fake_editor &&
+	git rebase -i HEAD~2 &&
+	git branch --list >actual &&
+	test_i18ngrep "rebasing master" actual
+'
+
+test_expect_success '--list during rebase from detached HEAD' '
+	test_when_finished "reset_rebase && git checkout master" &&
+	git checkout master^0 &&
+	oid=$(git rev-parse --short HEAD) &&
+	FAKE_LINES="1 edit 2" &&
+	export FAKE_LINES &&
+	set_fake_editor &&
+	git rebase -i HEAD~2 &&
+	git branch --list >actual &&
+	test_i18ngrep "rebasing detached HEAD $oid" actual
 '
 
 test_expect_success 'tracking with unexpected .fetch refspec' '
