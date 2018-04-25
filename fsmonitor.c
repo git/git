@@ -104,7 +104,7 @@ static int query_fsmonitor(int version, uint64_t last_update, struct strbuf *que
 	if (!(argv[0] = core_fsmonitor))
 		return -1;
 
-	snprintf(ver, sizeof(version), "%d", version);
+	snprintf(ver, sizeof(ver), "%d", version);
 	snprintf(date, sizeof(date), "%" PRIuMAX, (uintmax_t)last_update);
 	argv[1] = ver;
 	argv[2] = date;
