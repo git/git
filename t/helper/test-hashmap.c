@@ -243,7 +243,7 @@ int cmd__hashmap(int argc, const char **argv)
 
 			/* test that strintern works */
 			const char *i1 = strintern(p1);
-			const char *i2 = strintern(p1);
+			const char *i2 = strintern(p2);
 			if (strcmp(i1, p1))
 				printf("strintern(%s) returns %s\n", p1, i1);
 			else if (i1 == p1)

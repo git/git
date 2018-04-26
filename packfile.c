@@ -137,7 +137,7 @@ static int check_packed_git_idx(const char *path, struct packed_git *p)
 			munmap(idx_map, idx_size);
 			return error("wrong index v1 file size in %s", path);
 		}
-	} else if (version == 2) {
+	} else {
 		/*
 		 * Minimum size:
 		 *  - 8 bytes of header

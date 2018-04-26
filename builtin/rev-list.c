@@ -165,7 +165,7 @@ static void show_commit(struct commit *commit, void *data)
 			 * happens with CMIT_FMT_USERFORMAT when the
 			 * format doesn't explicitly end in a newline.)
 			 */
-			if (buf.len && buf.buf[buf.len - 1] == '\n')
+			if (buf.buf[buf.len - 1] == '\n')
 				graph_show_padding(revs->graph);
 			putchar(info->hdr_termination);
 		} else {

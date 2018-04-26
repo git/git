@@ -252,8 +252,7 @@ static struct lline *coalesce_lines(struct lline *base, int *lenbase,
 			if (baseend) {
 				lline->next = baseend->next;
 				lline->prev = baseend;
-				if (lline->prev)
-					lline->prev->next = lline;
+				lline->prev->next = lline;
 			}
 			else {
 				lline->next = base;
