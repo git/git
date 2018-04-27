@@ -2773,19 +2773,16 @@ static int continue_single_pick(void)
 	return run_command_v_opt(argv, RUN_GIT_CMD);
 }
 
-static int commit_staged_changes(struct replay_opts *opts)
+static int commit_staged_changes(struct replay_opts *opts,
+				 struct todo_list *todo_list)
 {
 	unsigned int flags = ALLOW_EMPTY | EDIT_MSG;
+	unsigned int final_fixup = 0, is_clean;
 
 	if (has_unstaged_changes(1))
 		return error(_("cannot rebase: You have unstaged changes."));
-	if (!has_uncommitted_changes(0)) {
-		const char *cherry_pick_head = git_path_cherry_pick_head();
 
-		if (file_exists(cherry_pick_head) && unlink(cherry_pick_head))
-			return error(_("could not remove CHERRY_PICK_HEAD"));
-		return 0;
-	}
+	is_clean = !has_uncommitted_changes(0);
 
 	if (file_exists(rebase_path_amend())) {
 		struct strbuf rev = STRBUF_INIT;
@@ -2798,19 +2795,107 @@ static int commit_staged_changes(struct replay_opts *opts)
 		if (get_oid_hex(rev.buf, &to_amend))
 			return error(_("invalid contents: '%s'"),
 				rebase_path_amend());
-		if (oidcmp(&head, &to_amend))
+		if (!is_clean && oidcmp(&head, &to_amend))
 			return error(_("\nYou have uncommitted changes in your "
 				       "working tree. Please, commit them\n"
 				       "first and then run 'git rebase "
 				       "--continue' again."));
+		/*
+		 * When skipping a failed fixup/squash, we need to edit the
+		 * commit message, the current fixup list and count, and if it
+		 * was the last fixup/squash in the chain, we need to clean up
+		 * the commit message and if there was a squash, let the user
+		 * edit it.
+		 */
+		if (is_clean && !oidcmp(&head, &to_amend) &&
+		    opts->current_fixup_count > 0 &&
+		    file_exists(rebase_path_stopped_sha())) {
+			const char *p = opts->current_fixups.buf;
+			int len = opts->current_fixups.len;
+
+			opts->current_fixup_count--;
+			if (!len)
+				BUG("Incorrect current_fixups:\n%s", p);
+			while (len && p[len - 1] != '\n')
+				len--;
+			strbuf_setlen(&opts->current_fixups, len);
+			if (write_message(p, len, rebase_path_current_fixups(),
+					  0) < 0)
+				return error(_("could not write file: '%s'"),
+					     rebase_path_current_fixups());
+
+			/*
+			 * If a fixup/squash in a fixup/squash chain failed, the
+			 * commit message is already correct, no need to commit
+			 * it again.
+			 *
+			 * Only if it is the final command in the fixup/squash
+			 * chain, and only if the chain is longer than a single
+			 * fixup/squash command (which was just skipped), do we
+			 * actually need to re-commit with a cleaned up commit
+			 * message.
+			 */
+			if (opts->current_fixup_count > 0 &&
+			    !is_fixup(peek_command(todo_list, 0))) {
+				final_fixup = 1;
+				/*
+				 * If there was not a single "squash" in the
+				 * chain, we only need to clean up the commit
+				 * message, no need to bother the user with
+				 * opening the commit message in the editor.
+				 */
+				if (!starts_with(p, "squash ") &&
+				    !strstr(p, "\nsquash "))
+					flags = (flags & ~EDIT_MSG) | CLEANUP_MSG;
+			} else if (is_fixup(peek_command(todo_list, 0))) {
+				/*
+				 * We need to update the squash message to skip
+				 * the latest commit message.
+				 */
+				struct commit *commit;
+				const char *path = rebase_path_squash_msg();
+
+				if (parse_head(&commit) ||
+				    !(p = get_commit_buffer(commit, NULL)) ||
+				    write_message(p, strlen(p), path, 0)) {
+					unuse_commit_buffer(commit, p);
+					return error(_("could not write file: "
+						       "'%s'"), path);
+				}
+				unuse_commit_buffer(commit, p);
+			}
+		}
 
 		strbuf_release(&rev);
 		flags |= AMEND_MSG;
 	}
 
-	if (run_git_commit(rebase_path_message(), opts, flags))
+	if (is_clean) {
+		const char *cherry_pick_head = git_path_cherry_pick_head();
+
+		if (file_exists(cherry_pick_head) && unlink(cherry_pick_head))
+			return error(_("could not remove CHERRY_PICK_HEAD"));
+		if (!final_fixup)
+			return 0;
+	}
+
+	if (run_git_commit(final_fixup ? NULL : rebase_path_message(),
+			   opts, flags))
 		return error(_("could not commit staged changes."));
 	unlink(rebase_path_amend());
+	if (final_fixup) {
+		unlink(rebase_path_fixup_msg());
+		unlink(rebase_path_squash_msg());
+	}
+	if (opts->current_fixup_count > 0) {
+		/*
+		 * Whether final fixup or not, we just cleaned up the commit
+		 * message...
+		 */
+		unlink(rebase_path_current_fixups());
+		strbuf_reset(&opts->current_fixups);
+		opts->current_fixup_count = 0;
+	}
 	return 0;
 }
 
@@ -2822,14 +2907,16 @@ int sequencer_continue(struct replay_opts *opts)
 	if (read_and_refresh_cache(opts))
 		return -1;
 
+	if (read_populate_opts(opts))
+		return -1;
 	if (is_rebase_i(opts)) {
-		if (commit_staged_changes(opts))
+		if ((res = read_populate_todo(&todo_list, opts)))
+			goto release_todo_list;
+		if (commit_staged_changes(opts, &todo_list))
 			return -1;
 	} else if (!file_exists(get_todo_path(opts)))
 		return continue_single_pick();
-	if (read_populate_opts(opts))
-		return -1;
-	if ((res = read_populate_todo(&todo_list, opts)))
+	else if ((res = read_populate_todo(&todo_list, opts)))
 		goto release_todo_list;
 
 	if (!is_rebase_i(opts)) {
