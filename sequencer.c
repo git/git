@@ -74,13 +74,6 @@ static GIT_PATH_FUNC(rebase_path_message, "rebase-merge/message")
  * previous commit and from the first squash/fixup commit are written
  * to it. The commit message for each subsequent squash/fixup commit
  * is appended to the file as it is processed.
- *
- * The first line of the file is of the form
- *     # This is a combination of $count commits.
- * where $count is the number of commits whose messages have been
- * written to the file so far (including the initial "pick" commit).
- * Each time that a commit message is processed, this line is read and
- * updated. It is deleted just before the combined commit is made.
  */
 static GIT_PATH_FUNC(rebase_path_squash_msg, "rebase-merge/message-squash")
 /*
@@ -91,6 +84,11 @@ static GIT_PATH_FUNC(rebase_path_squash_msg, "rebase-merge/message-squash")
  * commit without opening the editor.)
  */
 static GIT_PATH_FUNC(rebase_path_fixup_msg, "rebase-merge/message-fixup")
+/*
+ * This file contains the list fixup/squash commands that have been
+ * accumulated into message-fixup or message-squash so far.
+ */
+static GIT_PATH_FUNC(rebase_path_current_fixups, "rebase-merge/current-fixups")
 /*
  * A script to set the GIT_AUTHOR_NAME, GIT_AUTHOR_EMAIL, and
  * GIT_AUTHOR_DATE that will be used for the commit that is currently
@@ -252,6 +250,7 @@ int sequencer_remove_state(struct replay_opts *opts)
 	for (i = 0; i < opts->xopts_nr; i++)
 		free(opts->xopts[i]);
 	free(opts->xopts);
+	strbuf_release(&opts->current_fixups);
 
 	strbuf_addstr(&dir, get_dir(opts));
 	remove_dir_recursively(&dir, 0);
@@ -1328,34 +1327,23 @@ static int update_squash_messages(enum todo_command command,
 		struct commit *commit, struct replay_opts *opts)
 {
 	struct strbuf buf = STRBUF_INIT;
-	int count, res;
+	int res;
 	const char *message, *body;
 
-	if (file_exists(rebase_path_squash_msg())) {
+	if (opts->current_fixup_count > 0) {
 		struct strbuf header = STRBUF_INIT;
-		char *eol, *p;
+		char *eol;
 
-		if (strbuf_read_file(&buf, rebase_path_squash_msg(), 2048) <= 0)
+		if (strbuf_read_file(&buf, rebase_path_squash_msg(), 9) <= 0)
 			return error(_("could not read '%s'"),
 				rebase_path_squash_msg());
 
-		p = buf.buf + 1;
-		eol = strchrnul(buf.buf, '\n');
-		if (buf.buf[0] != comment_line_char ||
-		    (p += strcspn(p, "0123456789\n")) == eol)
-			return error(_("unexpected 1st line of squash message:"
-				       "\n\n\t%.*s"),
-				     (int)(eol - buf.buf), buf.buf);
-		count = strtol(p, NULL, 10);
-
-		if (count < 1)
-			return error(_("invalid 1st line of squash message:\n"
-				       "\n\t%.*s"),
-				     (int)(eol - buf.buf), buf.buf);
+		eol = buf.buf[0] != comment_line_char ?
+			buf.buf : strchrnul(buf.buf, '\n');
 
 		strbuf_addf(&header, "%c ", comment_line_char);
-		strbuf_addf(&header,
-			    _("This is a combination of %d commits."), ++count);
+		strbuf_addf(&header, _("This is a combination of %d commits."),
+			    opts->current_fixup_count + 2);
 		strbuf_splice(&buf, 0, eol - buf.buf, header.buf, header.len);
 		strbuf_release(&header);
 	} else {
@@ -1378,10 +1366,8 @@ static int update_squash_messages(enum todo_command command,
 				     rebase_path_fixup_msg());
 		}
 
-		count = 2;
 		strbuf_addf(&buf, "%c ", comment_line_char);
-		strbuf_addf(&buf, _("This is a combination of %d commits."),
-			    count);
+		strbuf_addf(&buf, _("This is a combination of %d commits."), 2);
 		strbuf_addf(&buf, "\n%c ", comment_line_char);
 		strbuf_addstr(&buf, _("This is the 1st commit message:"));
 		strbuf_addstr(&buf, "\n\n");
@@ -1398,13 +1384,14 @@ static int update_squash_messages(enum todo_command command,
 	if (command == TODO_SQUASH) {
 		unlink(rebase_path_fixup_msg());
 		strbuf_addf(&buf, "\n%c ", comment_line_char);
-		strbuf_addf(&buf, _("This is the commit message #%d:"), count);
+		strbuf_addf(&buf, _("This is the commit message #%d:"),
+			    ++opts->current_fixup_count);
 		strbuf_addstr(&buf, "\n\n");
 		strbuf_addstr(&buf, body);
 	} else if (command == TODO_FIXUP) {
 		strbuf_addf(&buf, "\n%c ", comment_line_char);
 		strbuf_addf(&buf, _("The commit message #%d will be skipped:"),
-			    count);
+			    ++opts->current_fixup_count);
 		strbuf_addstr(&buf, "\n\n");
 		strbuf_add_commented_lines(&buf, body, strlen(body));
 	} else
@@ -1413,6 +1400,17 @@ static int update_squash_messages(enum todo_command command,
 
 	res = write_message(buf.buf, buf.len, rebase_path_squash_msg(), 0);
 	strbuf_release(&buf);
+
+	if (!res) {
+		strbuf_addf(&opts->current_fixups, "%s%s %s",
+			    opts->current_fixups.len ? "\n" : "",
+			    command_to_string(command),
+			    oid_to_hex(&commit->object.oid));
+		res = write_message(opts->current_fixups.buf,
+				    opts->current_fixups.len,
+				    rebase_path_current_fixups(), 0);
+	}
+
 	return res;
 }
 
@@ -1675,6 +1673,9 @@ fast_forward_edit:
 	if (!res && final_fixup) {
 		unlink(rebase_path_fixup_msg());
 		unlink(rebase_path_squash_msg());
+		unlink(rebase_path_current_fixups());
+		strbuf_reset(&opts->current_fixups);
+		opts->current_fixup_count = 0;
 	}
 
 leave:
@@ -2046,6 +2047,16 @@ static int read_populate_opts(struct replay_opts *opts)
 		read_strategy_opts(opts, &buf);
 		strbuf_release(&buf);
 
+		if (read_oneliner(&opts->current_fixups,
+				  rebase_path_current_fixups(), 1)) {
+			const char *p = opts->current_fixups.buf;
+			opts->current_fixup_count = 1;
+			while ((p = strchr(p, '\n'))) {
+				opts->current_fixup_count++;
+				p++;
+			}
+		}
+
 		return 0;
 	}
 
@@ -2392,10 +2403,9 @@ static int error_with_patch(struct commit *commit,
 static int error_failed_squash(struct commit *commit,
 	struct replay_opts *opts, int subject_len, const char *subject)
 {
-	if (rename(rebase_path_squash_msg(), rebase_path_message()))
-		return error(_("could not rename '%s' to '%s'"),
+	if (copy_file(rebase_path_message(), rebase_path_squash_msg(), 0666))
+		return error(_("could not copy '%s' to '%s'"),
 			rebase_path_squash_msg(), rebase_path_message());
-	unlink(rebase_path_fixup_msg());
 	unlink(git_path_merge_msg());
 	if (copy_file(git_path_merge_msg(), rebase_path_message(), 0666))
 		return error(_("could not copy '%s' to '%s'"),

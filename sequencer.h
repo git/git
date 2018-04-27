@@ -44,10 +44,14 @@ struct replay_opts {
 	char **xopts;
 	size_t xopts_nr, xopts_alloc;
 
+	/* Used by fixup/squash */
+	struct strbuf current_fixups;
+	int current_fixup_count;
+
 	/* Only used by REPLAY_NONE */
 	struct rev_info *revs;
 };
-#define REPLAY_OPTS_INIT { -1 }
+#define REPLAY_OPTS_INIT { .action = -1, .current_fixups = STRBUF_INIT }
 
 /* Call this to setup defaults before parsing command line options */
 void sequencer_init_config(struct replay_opts *opts);
