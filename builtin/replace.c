@@ -428,7 +428,7 @@ static int check_mergetags(struct commit *commit, int argc, const char **argv)
 	return for_each_mergetag(check_one_mergetag, commit, &mergetag_data);
 }
 
-static int create_graft(int argc, const char **argv, int force)
+static int create_graft(int argc, const char **argv, int force, int gentle)
 {
 	struct object_id old_oid, new_oid;
 	const char *old_ref = argv[0];
@@ -470,8 +470,13 @@ static int create_graft(int argc, const char **argv, int force)
 
 	strbuf_release(&buf);
 
-	if (!oidcmp(&old_oid, &new_oid))
+	if (!oidcmp(&old_oid, &new_oid)) {
+		if (gentle) {
+			warning("graft for '%s' unnecessary", oid_to_hex(&old_oid));
+			return 0;
+		}
 		return error("new commit is the same as the old one: '%s'", oid_to_hex(&old_oid));
+	}
 
 	return replace_object_oid(old_ref, &old_oid, "replacement", &new_oid, force);
 }
@@ -547,7 +552,7 @@ int cmd_replace(int argc, const char **argv, const char *prefix)
 		if (argc < 1)
 			usage_msg_opt("-g needs at least one argument",
 				      git_replace_usage, options);
-		return create_graft(argc, argv, force);
+		return create_graft(argc, argv, force, 0);
 
 	case MODE_LIST:
 		if (argc > 1)
