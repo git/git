@@ -8,15 +8,10 @@ repo, and therefore grafts are introduced pretending that
 these commits have no parents.
 *********************************************************
 
-The basic idea is to write the SHA-1s of shallow commits into
-$GIT_DIR/shallow, and handle its contents like the contents
-of $GIT_DIR/info/grafts (with the difference that shallow
-cannot contain parent information).
-
-This information is stored in a new file instead of grafts, or
-even the config, since the user should not touch that file
-at all (even throughout development of the shallow clone, it
-was never manually edited!).
+$GIT_DIR/shallow lists commit object names and tells Git to
+pretend as if they are root commits (e.g. "git log" traversal
+stops after showing them; "git fsck" does not complain saying
+the commits listed on their "parent" lines do not exist).
 
 Each line contains exactly one SHA-1. When read, a commit_graft
 will be constructed, which has nr_parent < 0 to make it easier
