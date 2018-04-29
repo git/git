@@ -3096,12 +3096,22 @@ __git_main ()
 	fi
 
 	local completion_func="_git_${command//-/_}"
+	if ! declare -f $completion_func >/dev/null 2>/dev/null &&
+		declare -f _completion_loader >/dev/null 2>/dev/null
+	then
+		_completion_loader "git-$command"
+	fi
 	declare -f $completion_func >/dev/null 2>/dev/null && $completion_func && return
 
 	local expansion=$(__git_aliased_command "$command")
 	if [ -n "$expansion" ]; then
 		words[1]=$expansion
 		completion_func="_git_${expansion//-/_}"
+		if ! declare -f $completion_func >/dev/null 2>/dev/null &&
+			declare -f _completion_loader >/dev/null 2>/dev/null
+		then
+			_completion_loader "git-$expansion"
+		fi
 		declare -f $completion_func >/dev/null 2>/dev/null && $completion_func
 	fi
 }
