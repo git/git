@@ -423,7 +423,7 @@ reason::
 	refs, no explanation is needed. For a failed ref, the reason for
 	failure is described.
 
-Note about fast-forwards
+NOTE ABOUT FAST-FORWARDS
 ------------------------
 
 When an update changes a branch (or more in general, a ref) that used to
@@ -510,7 +510,7 @@ overwrite it. In other words, "git push --force" is a method reserved for
 a case where you do mean to lose history.
 
 
-Examples
+EXAMPLES
 --------
 
 `git push`::

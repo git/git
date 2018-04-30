@@ -84,7 +84,7 @@ be performed as well.
 	Force `git gc` to run even if there may be another `git gc`
 	instance running on this repository.
 
-Configuration
+CONFIGURATION
 -------------
 
 The optional configuration variable `gc.reflogExpire` can be
@@ -144,7 +144,7 @@ old a stale working tree should be before `git worktree prune` deletes
 it. Default is "3 months ago".
 
 
-Notes
+NOTES
 -----
 
 'git gc' tries very hard not to delete objects that are referenced

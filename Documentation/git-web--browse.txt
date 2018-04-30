@@ -84,7 +84,7 @@ variable exists then 'git web{litdd}browse' will treat the specified tool
 as a custom command and will use a shell eval to run the command with
 the URLs passed as arguments.
 
-Note about konqueror
+NOTE ABOUT KONQUEROR
 --------------------
 
 When 'konqueror' is specified by a command-line option or a

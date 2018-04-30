@@ -273,7 +273,7 @@ or `--mirror` is given)
 :git-clone: 1
 include::urls.txt[]
 
-Examples
+EXAMPLES
 --------
 
 * Clone from upstream:

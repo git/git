@@ -77,7 +77,7 @@ EXAMPLES
 	Concatenates the contents of said Makefiles in the head
 	of the branch `master`.
 
-Discussion
+DISCUSSION
 ----------
 
 include::i18n.txt[]

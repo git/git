@@ -61,8 +61,8 @@ OPTIONS
 --always::
 	Show uniquely abbreviated commit object as fallback.
 
-EXAMPLE
--------
+EXAMPLES
+--------
 
 Given a commit, find out where it is relative to the local refs. Say somebody
 wrote you about that fantastic commit 33db5f4d9027a10e477ccf054b2c1ab94f74c85a.

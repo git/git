@@ -240,7 +240,7 @@ When `git apply` is used as a "better GNU patch", the user can pass
 the `--unsafe-paths` option to override this safety check.  This option
 has no effect when `--index` or `--cached` is in use.
 
-Configuration
+CONFIGURATION
 -------------
 
 apply.ignoreWhitespace::
@@ -251,7 +251,7 @@ apply.whitespace::
 	When no `--whitespace` flag is given from the command
 	line, this configuration item is used as the default.
 
-Submodules
+SUBMODULES
 ----------
 If the patch contains any changes to submodules then 'git apply'
 treats these changes as follows.

@@ -203,7 +203,7 @@ The remote configuration is achieved using the `remote.origin.url` and
 `remote.origin.fetch` configuration variables.  (See
 linkgit:git-config[1]).
 
-Examples
+EXAMPLES
 --------
 
 * Add a new remote, fetch, and check out a branch from it

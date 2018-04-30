@@ -120,7 +120,7 @@ modifications are performed.  Note that while each individual
 <ref> is updated or deleted atomically, a concurrent reader may
 still see a subset of the modifications.
 
-Logging Updates
+LOGGING UPDATES
 ---------------
 If config parameter "core.logAllRefUpdates" is true and the ref is one under
 "refs/heads/", "refs/remotes/", "refs/notes/", or the symbolic ref HEAD; or

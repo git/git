@@ -228,7 +228,7 @@ will remove the intended effect of the option.
 	cleaner names.
 	The same applies to directories ending '/' and paths with '//'
 
-Using --refresh
+USING --REFRESH
 ---------------
 `--refresh` does not calculate a new sha1 file or bring the index
 up to date for mode/content changes. But what it *does* do is to
@@ -239,7 +239,7 @@ the stat entry is out of date.
 For example, you'd want to do this after doing a 'git read-tree', to link
 up the stat index details with the proper files.
 
-Using --cacheinfo or --info-only
+USING --CACHEINFO OR --INFO-ONLY
 --------------------------------
 `--cacheinfo` is used to register a file that is not in the
 current working directory.  This is useful for minimum-checkout
@@ -261,7 +261,7 @@ useful when the file is available, but you do not wish to update the
 object database.
 
 
-Using --index-info
+USING --INDEX-INFO
 ------------------
 
 `--index-info` is a more powerful mechanism that lets you feed
@@ -317,7 +317,7 @@ $ git ls-files -s
 ------------
 
 
-Using ``assume unchanged'' bit
+USING ``ASSUME UNCHANGED'' BIT
 ------------------------------
 
 Many operations in Git depend on your filesystem to have an
@@ -350,7 +350,7 @@ the index (use `git update-index --really-refresh` if you want
 to mark them as "assume unchanged").
 
 
-Examples
+EXAMPLES
 --------
 To update and refresh only the files already checked out:
 
@@ -387,7 +387,7 @@ M foo.c
 <9> now it checks with lstat(2) and finds it has been changed.
 
 
-Skip-worktree bit
+SKIP-WORKTREE BIT
 -----------------
 
 Skip-worktree bit can be defined in one (long) sentence: When reading
@@ -407,7 +407,7 @@ Although this bit looks similar to assume-unchanged bit, its goal is
 different from assume-unchanged bit's. Skip-worktree also takes
 precedence over assume-unchanged bit when both are set.
 
-Split index
+SPLIT INDEX
 -----------
 
 This mode is designed for repositories with very large indexes, and
@@ -432,7 +432,7 @@ To avoid deleting a shared index file that is still used, its
 modification time is updated to the current time everytime a new split
 index based on the shared index file is either created or read from.
 
-Untracked cache
+UNTRACKED CACHE
 ---------------
 
 This cache is meant to speed up commands that involve determining
@@ -490,7 +490,7 @@ As with the bug described above the solution is to one-off do a "git
 status" run with `core.untrackedCache=false` to flush out the leftover
 bad data.
 
-File System Monitor
+FILE SYSTEM MONITOR
 -------------------
 
 This feature is intended to speed up git operations for repos that have
@@ -518,7 +518,7 @@ file system monitor is added to or removed from the index the next time
 a command reads the index. When `--[no-]fsmonitor` are used, the file
 system monitor is immediately added to or removed from the index.
 
-Configuration
+CONFIGURATION
 -------------
 
 The command honors `core.filemode` configuration variable.  If

@@ -136,8 +136,8 @@ Using direct mode with SSL:
 .........................
 
 
-EXAMPLE
--------
+EXAMPLES
+--------
 To submit patches using GMail's IMAP interface, first, edit your ~/.gitconfig
 to specify your account settings:
 

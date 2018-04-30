@@ -55,7 +55,7 @@ OPTIONS
 	The remote refs to update.
 
 
-Specifying the Refs
+SPECIFYING THE REFS
 -------------------
 
 A '<ref>' specification can be either a single pattern, or a pair
