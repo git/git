@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Apr 2018, #03; Wed, 25)
+Subject: What's cooking in git.git (Apr 2018, #04; Mon, 30)
 X-master-at: 1f1cddd558b54bb0ce19c8ace353fd07b758510d
-X-next-at: 969e05fae2431648e30fa9034c7319a06e8575d5
+X-next-at: 4582c99ba8a159afafa295e51d1d3387967af0a0
 
-What's cooking in git.git (Apr 2018, #03; Wed, 25)
+What's cooking in git.git (Apr 2018, #04; Mon, 30)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -18,567 +18,47 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* ak/bisect-doc-typofix (2018-04-07) 1 commit
-  (merged to 'next' on 2018-04-17 at eafdeb0248)
- + Documentation/git-bisect.txt: git bisect term → git bisect terms
-
- Docfix.
-
-
-* bb/git-gui-ssh-key-files (2018-03-02) 2 commits
-  (merged to 'next' on 2018-04-17 at e439f0398d)
- + Merge branch 'bb/ssh-key-files' of git-gui into bb/git-gui-ssh-key-files
- + git-gui: search for all current SSH key types
-
- "git gui" learned that "~/.ssh/id_ecdsa.pub" and
- "~/.ssh/id_ed25519.pub" are also possible SSH key files.
-
-
-* bp/fsmonitor-bufsize-fix (2018-04-11) 1 commit
-  (merged to 'next' on 2018-04-17 at 70a7091e06)
- + fsmonitor: fix incorrect buffer size when printing version number
-
- Fix an unexploitable (because the oversized contents are not under
- attacker's control) buffer overflow.
-
-
-* bp/fsmonitor-prime-index (2018-04-11) 1 commit
-  (merged to 'next' on 2018-04-17 at 765edccdf0)
- + fsmonitor: force index write after full scan
-
- The index file is updated to record the fsmonitor section after a
- full scan was made, to avoid wasting the effort that has already
- spent.
-
-
-* bp/git-gui-bind-kp-enter (2018-03-02) 2 commits
-  (merged to 'next' on 2018-04-17 at 35828e90e2)
- + Merge branch 'bp/bind-kp-enter' of git-gui into bp/git-gui-bind-kp-enter
- + git-gui: bind CTRL/CMD+numpad ENTER to do_commit
-
- "git gui" performs commit upon CTRL/CMD+ENTER but the
- CTRL/CMD+KP_ENTER (i.e. enter key on the numpad) did not have the
- same key binding.  It now does.
-
-
-* br/mergetools-guiffy (2018-04-06) 1 commit
-  (merged to 'next' on 2018-04-17 at 8ec0697d5d)
- + mergetools: add support for guiffy
-
- "git mergetools" learned talking to guiffy.
-
-
-* bw/commit-partial-from-subdirectory-fix (2018-04-05) 1 commit
-  (merged to 'next' on 2018-04-17 at 1e56bbc14d)
- + commit: allow partial commits with relative paths
-
- "cd sub/dir && git commit ../path" ought to record the changes to
- the file "sub/path", but this regressed long time ago.
-
-
-* cb/bash-completion-ls-files-processing (2018-04-10) 1 commit
-  (merged to 'next' on 2018-04-17 at 956b155366)
- + completion: improve ls-files filter performance
-
- Shell completion (in contrib) that gives list of paths have been
- optimized somewhat.
-
-
-* cb/git-gui-ttk-style (2018-03-05) 2 commits
-  (merged to 'next' on 2018-04-17 at 1a4f677a0d)
- + Merge branch 'cb/ttk-style' of git-gui into cb/git-gui-ttk-style
- + git-gui: workaround ttk:style theme use
-
- "git gui" has been taught to work with old versions of tk (like
- 8.5.7) that do not support "ttk::style theme use" as a way to query
- the current theme.
-
-
-* cc/perf-bisect (2018-04-11) 2 commits
-  (merged to 'next' on 2018-04-17 at 62a1498dd0)
- + t/perf: add scripts to bisect performance regressions
- + perf/run: add --subsection option
-
- Performance measuring framework in t/perf learned to help bisecting
- performance regressions.
-
-
-* en/doc-typoes (2018-04-09) 2 commits
-  (merged to 'next' on 2018-04-17 at 81e5c8da18)
- + Documentation: normalize spelling of 'normalised'
- + Documentation: fix several one-character-off spelling errors
-
- Docfix.
-
-
-* es/fread-reads-dir-autoconf-fix (2018-04-09) 1 commit
-  (merged to 'next' on 2018-04-17 at 538601fef3)
- + configure.ac: fix botched FREAD_READS_DIRECTORIES check
-
- Small fix to the autoconf build procedure.
-
-
-* es/worktree-docs (2018-04-09) 2 commits
-  (merged to 'next' on 2018-04-17 at 15a098e9b1)
- + git-worktree.txt: unify command-line prompt in example blocks
- + git-worktree.txt: recommend 'git worktree remove' over manual deletion
- (this branch uses nd/worktree-move.)
-
- Doc updates.
-
-
-* jk/flockfile-stdio (2018-03-30) 1 commit
-  (merged to 'next' on 2018-04-17 at e11bd565f4)
- + config: move flockfile() closer to unlocked functions
-
- Code clean-up.
-
-
-* jk/ref-array-push (2018-04-09) 3 commits
-  (merged to 'next' on 2018-04-17 at 61859b271b)
- + ref-filter: factor ref_array pushing into its own function
- + ref-filter: make ref_array_item allocation more consistent
- + ref-filter: use "struct object_id" consistently
- (this branch is used by hn/sort-ls-remote.)
-
- API clean-up aournd ref-filter code.
-
-
-* jk/relative-directory-fix (2018-03-30) 5 commits
-  (merged to 'next' on 2018-04-17 at 1b8cc9dcb4)
- + refs: use chdir_notify to update cached relative paths
- + set_work_tree: use chdir_notify
- + add chdir-notify API
- + trace.c: export trace_setup_key
- + set_git_dir: die when setenv() fails
-
- Some codepaths, including the refs API, get and keep relative
- paths, that go out of sync when the process does chdir(2).  The
- chdir-notify API is introduced to let these codepaths adjust these
- cached paths to the new current directory.
-
-
-* jk/t5561-missing-curl (2018-04-05) 2 commits
-  (merged to 'next' on 2018-04-17 at d8592fa6c2)
- + t5561: skip tests if curl is not available
- + t5561: drop curl stderr redirects
-
- Test fixes.
-
-
-* jm/mem-pool (2018-04-12) 3 commits
-  (merged to 'next' on 2018-04-17 at 8a3641ab3a)
- + mem-pool: move reusable parts of memory pool into its own file
- + fast-import: introduce mem_pool type
- + fast-import: rename mem_pool type to mp_block
-
- An reusable "memory pool" implementation has been extracted from
- fast-import.c, which in turn has become the first user of the
- mem-pool API.
-
-
-* js/t5404-path-fix (2018-04-09) 1 commit
-  (merged to 'next' on 2018-04-17 at 94092f2896)
- + t5404: relax overzealous test
-
- Test fix.
-
-
-* ks/branch-list-detached-rebase-i (2018-04-05) 2 commits
-  (merged to 'next' on 2018-04-17 at 5c2842c3f9)
- + t3200: verify "branch --list" sanity when rebasing from detached HEAD
- + branch --list: print useful info whilst interactive rebasing a detached HEAD
-
- "git branch --list" during an interrupted "rebase -i" now lets
- users distinguish the case where a detached HEAD is being rebased
- and a normal branch is being rebased.
-
-
-* lw/daemon-log-destination (2018-04-09) 1 commit
-  (merged to 'next' on 2018-04-17 at b06cdcc45e)
- + daemon.c: fix condition for redirecting stderr
-
- Recent introduction of "--log-destination" option to "git daemon"
- did not work well when the daemon was run under "--inetd" mode.
-
-
-* mn/send-email-credential-doc (2018-04-08) 1 commit
-  (merged to 'next' on 2018-04-17 at c4db21eb9b)
- + send-email: simplify Gmail example in the documentation
-
- Doc update.
-
-
-* nd/worktree-move (2018-04-05) 1 commit
-  (merged to 'next' on 2018-04-17 at 11ca393110)
- + t2028: tighten grep expression to make "move worktree" test more robust
- (this branch is used by es/worktree-docs.)
-
- Test update.
-
-
-* ps/test-chmtime-get (2018-04-09) 1 commit
-  (merged to 'next' on 2018-04-17 at dcb138d8b1)
- + t/helper: 'test-chmtime (--get|-g)' to print only the mtime
-
- Test cleanup.
-
-
-* pw/rebase-keep-empty-fixes (2018-03-29) 3 commits
-  (merged to 'next' on 2018-04-17 at 10a4d92060)
- + rebase: respect --no-keep-empty
- + rebase -i --keep-empty: don't prune empty commits
- + rebase --root: stop assuming squash_onto is unset
- (this branch is used by pw/rebase-signoff.)
-
- "git rebase --keep-empty" still removed an empty commit if the
- other side contained an empty commit (due to the "does an
- equivalent patch exist already?" check), which has been corrected.
-
-
-* pw/rebase-signoff (2018-03-29) 4 commits
-  (merged to 'next' on 2018-04-17 at fbdc16e20e)
- + rebase --keep-empty: always use interactive rebase
- + rebase -p: error out if --signoff is given
- + rebase: extend --signoff support
- + Merge branch 'pw/rebase-keep-empty-fixes' into pw/rebase-signoff
- (this branch uses pw/rebase-keep-empty-fixes.)
-
- "git rebase" has learned to honor "--signoff" option when using
- backends other than "am" (but not "--preserve-merges").
-
-
-* sb/filenames-with-dashes (2018-04-11) 6 commits
-  (merged to 'next' on 2018-04-17 at 45fdeb5cb1)
- + replace_object.c: rename to use dash in file name
- + sha1_file.c: rename to use dash in file name
- + sha1_name.c: rename to use dash in file name
- + exec_cmd: rename to use dash in file name
- + unicode_width.h: rename to use dash in file name
- + write_or_die.c: rename to use dashes in file name
-
- Rename bunch of source files to more consistently use dashes
- instead of underscores to connect words.
-
-
-* tg/use-git-contacts (2018-04-12) 1 commit
-  (merged to 'next' on 2018-04-17 at 26cf8c1d8c)
- + SubmittingPatches: mention the git contacts command
-
- Doc update.
-
---------------------------------------------------
 [New Topics]
 
-* ma/double-dashes-in-docs (2018-04-18) 4 commits
-  (merged to 'next' on 2018-04-25 at aaac2dc63c)
- + git-submodule.txt: quote usage in monospace, drop backslash
- + git-[short]log.txt: unify quoted standalone --
- + doc: convert [\--] to [--]
- + doc: convert \--option to --option
+* cc/perf-aggregate-unknown-option (2018-04-26) 1 commit
+ - perf/aggregate: use Getopt::Long for option parsing
 
- Doc formatting updates.
-
- Will merge to 'master'.
-
-
-* sb/worktree-remove-opt-force (2018-04-18) 1 commit
-  (merged to 'next' on 2018-04-25 at 0367d52a4b)
- + worktree: accept -f as short for --force for removal
-
- "git worktree remove" learned that "-f" is a shorthand for
- "--force" option, just like for "git worktree add".
-
- Will merge to 'master'.
-
-
-* sg/completion-clear-cached (2018-04-18) 1 commit
-  (merged to 'next' on 2018-04-25 at 9178da6c3d)
- + completion: reduce overhead of clearing cached --options
-
- The completion script (in contrib/) learned to clear cached list of
- command line options upon dot-sourcing it again in a more efficient
- way.
-
- Will merge to 'master'.
-
-
-* sg/doc-gc-quote-mismatch-fix (2018-04-18) 1 commit
-  (merged to 'next' on 2018-04-25 at bc3d1abf45)
- + docs/git-gc: fix minor rendering issue
-
- Doc formatting fix.
-
- Will merge to 'master'.
-
-
-* js/ident-date-fix (2018-04-19) 1 commit
- - sequencer: reset the committer date before commits
-
- During a "rebase -i" session, the code could give older timestamp
- to commits created by later "pick" than an earlier "reword", which
- has been corrected.
+ Perf-test helper updates.
 
  Will merge to 'next'.
 
 
-* nd/submodule-status-fix (2018-04-19) 1 commit
- - submodule--helper: don't print null in 'submodule status'
+* ab/perl-python-attrs (2018-04-27) 3 commits
+ - .gitattributes: add a diff driver for Python
+ - .gitattributes: use the "perl" differ for Perl
+ - .gitattributes: add *.pl extension for Perl
 
- "git submodule status" did not check the symbolic revision name it
- computed for the submodule HEAD is not the NULL, and threw it at
- printf routines, which has been corrected.
-
- Will merge to 'next'.
-
-
-* sa/send-email-dedup-some-headers (2018-04-19) 1 commit
- - send-email: avoid duplicate In-Reply-To/References
-
- When fed input that already has In-Reply-To: and/or References:
- headers and told to add the same information, "git send-email"
- added these headers separately, instead of appending to an existing
- one, which is a violation of the RFC.  This has been corrected.
+ We learned that our source files with ".pl" and ".py" extensions
+ are Perl and Python files respectively and changes to them are
+ better viewed as such with appropriate diff drivers.
 
  Will merge to 'next'.
 
 
-* tg/demote-stash-save-in-completion (2018-04-20) 2 commits
- - completion: make stash -p and alias for stash push -p
- - completion: stop showing 'save' for stash by default
+* is/parsing-line-range (2018-04-27) 2 commits
+ . log: prevent error if line range ends past end of file
+ . blame: prevent error if range ends past end of file
 
- THe command line completion (in contrib/) has been taught that "git
- stash save" has been deprecated ("git stash push" is the preferred
- spellingin the new world) and does not offer it as a possible
- completion candidate when "git stash push" can be.
+ Parsing of -L[<N>][,[<M>]] parameters "git blame" and "git log"
+ take has been tweaked.
 
- Will merge to 'next'.
+ Seems to break a few tests.
 
 
-* tz/doc-git-urls-reference (2018-04-20) 1 commit
- - doc/clone: update caption for GIT URLS cross-reference
+* js/test-unset-prereq (2018-04-30) 1 commit
+ - tests: introduce test_unset_prereq, for debugging
 
- Doc fix.
+ Test debugging aid.
 
  Will merge to 'next'.
-
-
-* js/deprecate-grafts (2018-04-24) 11 commits
- - Remove obsolete script to convert grafts to replace refs
- - technical/shallow: describe why shallow cannot use replace refs
- - technical/shallow: describe the relationship with replace refs
- - filter-branch: stop suggesting to use grafts
- - Deprecate support for .git/info/grafts
- - Add a test for `git replace --convert-graft-file`
- - replace: introduce --convert-graft-file
- - replace: "libify" create_graft() and callees
- - replace: avoid using die() to indicate a bug
- - commit: Let the callback of for_each_mergetag return on error
- - argv_array: offer to split a string by whitespace
-
- The functionality of "$GIT_DIR/info/grafts" has been superseded by
- the "refs/replace/" mechanism for some time now, but the internal
- code had support for it in many places, which has been cleaned up
- in order to drop support of the "grafts" mechanism.
-
-
-* js/rebase-i-clean-msg-after-fixup-continue (2018-04-24) 4 commits
- - rebase --skip: clean up commit message after a failed fixup/squash
- - sequencer: leave a tell-tale when a fixup/squash failed
- - rebase -i: Handle "combination of <n> commits" with GETTEXT_POISON
- - rebase -i: demonstrate bugs with fixup!/squash! commit messages
-
- "git rebase -i" sometimes left intermediate "# This is a
- combination of N commits" message meant for the human consumption
- inside an editor in the final result in certain corner cases, which
- has been fixed.
-
- Will merge to 'next'.
-
-
-* ma/fast-export-skip-merge-fix (2018-04-21) 1 commit
- - fast-export: fix regression skipping some merge-commits
-
- "git fast-export" had a regression in v2.15.0 era where it skipped
- some merge commits in certain cases, which has been corrected.
-
- Will merge to 'next'.
-
-
-* bw/server-options (2018-04-24) 4 commits
- - fetch: send server options when using protocol v2
- - ls-remote: send server options when using protocol v2
- - serve: introduce the server-option capability
- - Merge branch 'bw/protocol-v2' into HEAD
- (this branch uses bw/protocol-v2.)
-
- The transport protocol v2 is getting updated further.
-
-
-* jc/parseopt-expiry-errors (2018-04-23) 2 commits
- - parseopt: handle malformed --expire arguments more nicely
- - gc: do not upcase error message shown with die()
-
- "git gc --prune=nonsense" spent long time repacking and then
- silently failed when underlying "git prune --expire=nonsense"
- failed to parse its command line.  This has been corrected.
-
- Will merge to 'next'.
-
-
-* js/colored-push-errors (2018-04-24) 4 commits
- - config: document the settings to colorize push errors/hints
- - push: test to verify that push errors are colored
- - push: colorize errors
- - color: introduce support for colorizing stderr
-
- Error messages from "git push" can be painted for more visibility.
-
- Will merge to 'next'.
-
-
-* js/runtime-prefix (2018-04-24) 8 commits
- - Avoid multiple PREFIX definitions
- - git_setup_gettext: plug memory leak
- - gettext: avoid initialization if the locale dir is not present
-  (merged to 'next' on 2018-04-17 at a69aaa7a22)
- + mingw/msvc: use the new-style RUNTIME_PREFIX helper
- + exec_cmd: provide a new-style RUNTIME_PREFIX helper for Windows
- + exec_cmd: RUNTIME_PREFIX on some POSIX systems
- + Makefile: add Perl runtime prefix support
- + Makefile: generate Perl header from template file
- (this branch is tangled with dj/runtime-prefix.)
-
- Will merge to 'next'.
-
-
-* ma/http-walker-no-partial (2018-04-24) 2 commits
- - walker: drop fields of `struct walker` which are always 1
- - http-fetch: make `-a` standard behaviour
-
- "git http-fetch" (deprecated) had an optional and experimental
- "feature" to fetch only commits and/or trees, which nobody used.
- This has been removed.
-
- Will merge to 'next'.
-
-
-* bc/object-id (2018-04-24) 41 commits
- - merge-one-file: compute empty blob object ID
- - add--interactive: compute the empty tree value
- - Update shell scripts to compute empty tree object ID
- - sha1_file: only expose empty object constants through git_hash_algo
- - dir: use the_hash_algo for empty blob object ID
- - sequencer: use the_hash_algo for empty tree object ID
- - cache-tree: use is_empty_tree_oid
- - sha1_file: convert cached object code to struct object_id
- - builtin/reset: convert use of EMPTY_TREE_SHA1_BIN
- - builtin/receive-pack: convert one use of EMPTY_TREE_SHA1_HEX
- - wt-status: convert two uses of EMPTY_TREE_SHA1_HEX
- - submodule: convert several uses of EMPTY_TREE_SHA1_HEX
- - sequencer: convert one use of EMPTY_TREE_SHA1_HEX
- - merge: convert empty tree constant to the_hash_algo
- - builtin/merge: switch tree functions to use object_id
- - builtin/am: convert uses of EMPTY_TREE_SHA1_BIN to the_hash_algo
- - builtin/receive-pack: avoid hard-coded constants for push certs
- - diff: specify abbreviation size in terms of the_hash_algo
- - upload-pack: replace use of several hard-coded constants
- - revision: replace use of hard-coded constants
- - http: eliminate hard-coded constants
- - dir: convert struct untracked_cache_dir to object_id
- - commit: convert uses of get_sha1_hex to get_oid_hex
- - index-pack: abstract away hash function constant
- - pack-redundant: convert linked lists to use struct object_id
- - Update struct index_state to use struct object_id
- - split-index: convert struct split_index to object_id
- - submodule-config: convert structures to object_id
- - fsck: convert static functions to struct object_id
- - tree-walk: convert get_tree_entry_follow_symlinks to object_id
- - tree-walk: avoid hard-coded 20 constant
- - pack-redundant: abstract away hash algorithm
- - pack-objects: abstract away hash algorithm
- - packfile: abstract away hash constant values
- - packfile: convert find_pack_entry to object_id
- - sha1_file: convert freshen functions to object_id
- - packfile: convert has_sha1_pack to object_id
- - packfile: remove unused member from struct pack_entry
- - Remove unused member in struct object_context
- - server-info: remove unused members from struct pack_info
- - cache: add a function to read an object ID from a buffer
-
- Conversion from uchar[20] to struct object_id continues.
-
-
-* sb/oid-object-info (2018-04-25) 9 commits
- - cache.h: allow oid_object_info to handle arbitrary repositories
- - packfile: add repository argument to cache_or_unpack_entry
- - packfile: add repository argument to unpack_entry
- - packfile: add repository argument to read_object
- - packfile: add repository argument to packed_object_info
- - packfile: add repository argument to packed_to_object_type
- - packfile: add repository argument to retry_bad_packed_offset
- - cache.h: add repository argument to oid_object_info
- - cache.h: add repository argument to oid_object_info_extended
- (this branch uses sb/object-store-replace.)
-
- The codepath around object-info API has been taught to take the
- repository object (which in turn tells the API which object store
- the objects are to be located).
-
-
-* en/unpack-trees-split-index-fix (2018-04-24) 1 commit
- - unpack_trees: fix breakage when o->src_index != o->dst_index
-
- The split-index feature had a long-standing and dormant bug in
- certain use of the in-core merge machinery, which has been fixed.
-
- Will merge to 'next'.
-
-
-* bp/merge-rename-config (2018-04-25) 2 commits
- - merge: add merge.aggressive config setting
- - merge: add merge.renames config setting
-
-
-* en/git-debugger (2018-04-25) 1 commit
- - Make running git under other debugger-like programs easy
-
-
-* js/no-pager-shorthand (2018-04-25) 1 commit
- - git: add -N as a short option for --no-pager
-
- "git --no-pager cmd" did not have short-and-sweet single letter
- option.
-
-
-* sb/diff-color-move-more (2018-04-25) 7 commits
- - diff.c: add --color-moved-ignore-space-delta option
- - diff.c: decouple white space treatment from move detection algorithm
- - diff.c: add a blocks mode for moved code detection
- - diff.c: adjust hash function signature to match hashmap expectation
- - diff.c: do not pass diff options as keydata to hashmap
- - xdiff/xdiffi.c: remove unneeded function declarations
- - xdiff/xdiff.h: remove unused flags
-
- "git diff --color-moved" feature has further been tweaked.
-
 
 --------------------------------------------------
 [Stalled]
-
-* fg/completion-external (2018-04-11) 1 commit
- - completion: load completion file for external subcommand
-
- The command line completion mechanism (in contrib/) learned to load
- custom completion file for "git $command" where $command is a
- custom "git-$command" that the end user has on the $PATH when using
- newer version of bash.
-
- Hold.
- cf. <CAM0VKj=pDVxfJtUZx7c6uCmPxwQFPBOQYdd7NH=YnVG86iK0Pw@mail.gmail.com>
-
 
 * ld/p4-unshelve (2018-02-22) 1 commit
  - git-p4: add unshelve command
@@ -662,6 +142,335 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* fg/completion-external (2018-04-30) 1 commit
+ - completion: load completion file for external subcommand
+
+ The command line completion mechanism (in contrib/) learned to load
+ custom completion file for "git $command" where $command is a
+ custom "git-$command" that the end user has on the $PATH when using
+ newer version of bash.
+
+
+* ma/double-dashes-in-docs (2018-04-18) 4 commits
+  (merged to 'next' on 2018-04-25 at aaac2dc63c)
+ + git-submodule.txt: quote usage in monospace, drop backslash
+ + git-[short]log.txt: unify quoted standalone --
+ + doc: convert [\--] to [--]
+ + doc: convert \--option to --option
+
+ Doc formatting updates.
+
+ Will merge to 'master'.
+
+
+* sb/worktree-remove-opt-force (2018-04-18) 1 commit
+  (merged to 'next' on 2018-04-25 at 0367d52a4b)
+ + worktree: accept -f as short for --force for removal
+
+ "git worktree remove" learned that "-f" is a shorthand for
+ "--force" option, just like for "git worktree add".
+
+ Will merge to 'master'.
+
+
+* sg/completion-clear-cached (2018-04-18) 1 commit
+  (merged to 'next' on 2018-04-25 at 9178da6c3d)
+ + completion: reduce overhead of clearing cached --options
+
+ The completion script (in contrib/) learned to clear cached list of
+ command line options upon dot-sourcing it again in a more efficient
+ way.
+
+ Will merge to 'master'.
+
+
+* sg/doc-gc-quote-mismatch-fix (2018-04-18) 1 commit
+  (merged to 'next' on 2018-04-25 at bc3d1abf45)
+ + docs/git-gc: fix minor rendering issue
+
+ Doc formatting fix.
+
+ Will merge to 'master'.
+
+
+* js/ident-date-fix (2018-04-19) 1 commit
+  (merged to 'next' on 2018-04-30 at d50ec2f4c1)
+ + sequencer: reset the committer date before commits
+
+ During a "rebase -i" session, the code could give older timestamp
+ to commits created by later "pick" than an earlier "reword", which
+ has been corrected.
+
+ Will merge to 'master'.
+
+
+* nd/submodule-status-fix (2018-04-19) 1 commit
+  (merged to 'next' on 2018-04-30 at 34d1f9ca83)
+ + submodule--helper: don't print null in 'submodule status'
+
+ "git submodule status" did not check the symbolic revision name it
+ computed for the submodule HEAD is not the NULL, and threw it at
+ printf routines, which has been corrected.
+
+ Will merge to 'master'.
+
+
+* sa/send-email-dedup-some-headers (2018-04-19) 1 commit
+  (merged to 'next' on 2018-04-30 at 2a1fd8217e)
+ + send-email: avoid duplicate In-Reply-To/References
+
+ When fed input that already has In-Reply-To: and/or References:
+ headers and told to add the same information, "git send-email"
+ added these headers separately, instead of appending to an existing
+ one, which is a violation of the RFC.  This has been corrected.
+
+ Will merge to 'master'.
+
+
+* tg/demote-stash-save-in-completion (2018-04-20) 2 commits
+  (merged to 'next' on 2018-04-30 at 93d0af5375)
+ + completion: make stash -p and alias for stash push -p
+ + completion: stop showing 'save' for stash by default
+
+ The command line completion (in contrib/) has been taught that "git
+ stash save" has been deprecated ("git stash push" is the preferred
+ spelling in the new world) and does not offer it as a possible
+ completion candidate when "git stash push" can be.
+
+ Will merge to 'master'.
+
+
+* tz/doc-git-urls-reference (2018-04-20) 1 commit
+  (merged to 'next' on 2018-04-30 at 39926c99fd)
+ + doc/clone: update caption for GIT URLS cross-reference
+
+ Doc fix.
+
+ Will merge to 'master'.
+
+
+* js/deprecate-grafts (2018-04-30) 12 commits
+ - Remove obsolete script to convert grafts to replace refs
+ - technical/shallow: describe why shallow cannot use replace refs
+ - technical/shallow: stop referring to grafts
+ - filter-branch: stop suggesting to use grafts
+ - Deprecate support for .git/info/grafts
+ - Add a test for `git replace --convert-graft-file`
+ - replace: introduce --convert-graft-file
+ - replace: prepare create_graft() for converting graft files wholesale
+ - replace: "libify" create_graft() and callees
+ - replace: avoid using die() to indicate a bug
+ - commit: Let the callback of for_each_mergetag return on error
+ - argv_array: offer to split a string by whitespace
+
+ The functionality of "$GIT_DIR/info/grafts" has been superseded by
+ the "refs/replace/" mechanism for some time now, but the internal
+ code had support for it in many places, which has been cleaned up
+ in order to drop support of the "grafts" mechanism.
+
+ Will merge to 'next'.
+
+
+* js/rebase-i-clean-msg-after-fixup-continue (2018-04-30) 4 commits
+ - rebase --skip: clean up commit message after a failed fixup/squash
+ - sequencer: always commit without editing when asked for
+ - rebase -i: Handle "combination of <n> commits" with GETTEXT_POISON
+ - rebase -i: demonstrate bugs with fixup!/squash! commit messages
+
+ "git rebase -i" sometimes left intermediate "# This is a
+ combination of N commits" message meant for the human consumption
+ inside an editor in the final result in certain corner cases, which
+ has been fixed.
+
+ Will merge to 'next'.
+
+
+* ma/fast-export-skip-merge-fix (2018-04-21) 1 commit
+  (merged to 'next' on 2018-04-30 at f7fca02ab1)
+ + fast-export: fix regression skipping some merge-commits
+
+ "git fast-export" had a regression in v2.15.0 era where it skipped
+ some merge commits in certain cases, which has been corrected.
+
+ Will merge to 'master'.
+
+
+* bw/server-options (2018-04-24) 4 commits
+ - fetch: send server options when using protocol v2
+ - ls-remote: send server options when using protocol v2
+ - serve: introduce the server-option capability
+ - Merge branch 'bw/protocol-v2' into HEAD
+ (this branch uses bw/protocol-v2.)
+
+ The transport protocol v2 is getting updated further.
+
+ Will merge to 'next'.
+
+
+* jc/parseopt-expiry-errors (2018-04-23) 2 commits
+  (merged to 'next' on 2018-04-30 at 637085f3d8)
+ + parseopt: handle malformed --expire arguments more nicely
+ + gc: do not upcase error message shown with die()
+
+ "git gc --prune=nonsense" spent long time repacking and then
+ silently failed when underlying "git prune --expire=nonsense"
+ failed to parse its command line.  This has been corrected.
+
+ Will merge to 'master'.
+
+
+* js/colored-push-errors (2018-04-24) 4 commits
+  (merged to 'next' on 2018-04-30 at 31076c52a2)
+ + config: document the settings to colorize push errors/hints
+ + push: test to verify that push errors are colored
+ + push: colorize errors
+ + color: introduce support for colorizing stderr
+
+ Error messages from "git push" can be painted for more visibility.
+
+ Will merge to 'master'.
+
+
+* js/runtime-prefix (2018-04-24) 8 commits
+  (merged to 'next' on 2018-04-30 at c6cfccf40e)
+ + Avoid multiple PREFIX definitions
+ + git_setup_gettext: plug memory leak
+ + gettext: avoid initialization if the locale dir is not present
+  (merged to 'next' on 2018-04-17 at a69aaa7a22)
+ + mingw/msvc: use the new-style RUNTIME_PREFIX helper
+ + exec_cmd: provide a new-style RUNTIME_PREFIX helper for Windows
+ + exec_cmd: RUNTIME_PREFIX on some POSIX systems
+ + Makefile: add Perl runtime prefix support
+ + Makefile: generate Perl header from template file
+ (this branch is tangled with dj/runtime-prefix.)
+
+ Will merge to 'master'.
+
+
+* ma/http-walker-no-partial (2018-04-24) 2 commits
+  (merged to 'next' on 2018-04-30 at 4582c99ba8)
+ + walker: drop fields of `struct walker` which are always 1
+ + http-fetch: make `-a` standard behaviour
+
+ "git http-fetch" (deprecated) had an optional and experimental
+ "feature" to fetch only commits and/or trees, which nobody used.
+ This has been removed.
+
+ Will merge to 'master'.
+
+
+* bc/object-id (2018-04-24) 41 commits
+ - merge-one-file: compute empty blob object ID
+ - add--interactive: compute the empty tree value
+ - Update shell scripts to compute empty tree object ID
+ - sha1_file: only expose empty object constants through git_hash_algo
+ - dir: use the_hash_algo for empty blob object ID
+ - sequencer: use the_hash_algo for empty tree object ID
+ - cache-tree: use is_empty_tree_oid
+ - sha1_file: convert cached object code to struct object_id
+ - builtin/reset: convert use of EMPTY_TREE_SHA1_BIN
+ - builtin/receive-pack: convert one use of EMPTY_TREE_SHA1_HEX
+ - wt-status: convert two uses of EMPTY_TREE_SHA1_HEX
+ - submodule: convert several uses of EMPTY_TREE_SHA1_HEX
+ - sequencer: convert one use of EMPTY_TREE_SHA1_HEX
+ - merge: convert empty tree constant to the_hash_algo
+ - builtin/merge: switch tree functions to use object_id
+ - builtin/am: convert uses of EMPTY_TREE_SHA1_BIN to the_hash_algo
+ - builtin/receive-pack: avoid hard-coded constants for push certs
+ - diff: specify abbreviation size in terms of the_hash_algo
+ - upload-pack: replace use of several hard-coded constants
+ - revision: replace use of hard-coded constants
+ - http: eliminate hard-coded constants
+ - dir: convert struct untracked_cache_dir to object_id
+ - commit: convert uses of get_sha1_hex to get_oid_hex
+ - index-pack: abstract away hash function constant
+ - pack-redundant: convert linked lists to use struct object_id
+ - Update struct index_state to use struct object_id
+ - split-index: convert struct split_index to object_id
+ - submodule-config: convert structures to object_id
+ - fsck: convert static functions to struct object_id
+ - tree-walk: convert get_tree_entry_follow_symlinks to object_id
+ - tree-walk: avoid hard-coded 20 constant
+ - pack-redundant: abstract away hash algorithm
+ - pack-objects: abstract away hash algorithm
+ - packfile: abstract away hash constant values
+ - packfile: convert find_pack_entry to object_id
+ - sha1_file: convert freshen functions to object_id
+ - packfile: convert has_sha1_pack to object_id
+ - packfile: remove unused member from struct pack_entry
+ - Remove unused member in struct object_context
+ - server-info: remove unused members from struct pack_info
+ - cache: add a function to read an object ID from a buffer
+
+ Conversion from uchar[20] to struct object_id continues.
+
+ Expecting a reroll.
+ cf. <20180426011337.GA722934@genre.crustytoothpaste.net>
+
+
+* sb/oid-object-info (2018-04-26) 9 commits
+ - cache.h: allow oid_object_info to handle arbitrary repositories
+ - packfile: add repository argument to cache_or_unpack_entry
+ - packfile: add repository argument to unpack_entry
+ - packfile: add repository argument to read_object
+ - packfile: add repository argument to packed_object_info
+ - packfile: add repository argument to packed_to_object_type
+ - packfile: add repository argument to retry_bad_packed_offset
+ - cache.h: add repository argument to oid_object_info
+ - cache.h: add repository argument to oid_object_info_extended
+ (this branch uses sb/object-store-replace.)
+
+ The codepath around object-info API has been taught to take the
+ repository object (which in turn tells the API which object store
+ the objects are to be located).
+
+ Will merge to 'next'.
+
+
+* en/unpack-trees-split-index-fix (2018-04-24) 1 commit
+ - unpack_trees: fix breakage when o->src_index != o->dst_index
+
+ The split-index feature had a long-standing and dormant bug in
+ certain use of the in-core merge machinery, which has been fixed.
+
+ Hold.
+ cf. <CACsJy8DyP_mXXJKn52Jzqe63N3GLpXePCr8ha97Lv9hr6u-M0w@mail.gmail.com>
+
+
+* bp/merge-rename-config (2018-04-25) 2 commits
+ - merge: add merge.aggressive config setting
+ - merge: add merge.renames config setting
+
+
+* en/git-debugger (2018-04-25) 1 commit
+ - Make running git under other debugger-like programs easy
+
+ Dev support.
+
+ Will merge to 'next'.
+
+
+* js/no-pager-shorthand (2018-04-25) 1 commit
+ - git: add -N as a short option for --no-pager
+
+ "git --no-pager cmd" did not have short-and-sweet single letter
+ option. Now it does.
+
+ Will merge to 'next'.
+
+
+* sb/diff-color-move-more (2018-04-25) 7 commits
+ - diff.c: add --color-moved-ignore-space-delta option
+ - diff.c: decouple white space treatment from move detection algorithm
+ - diff.c: add a blocks mode for moved code detection
+ - diff.c: adjust hash function signature to match hashmap expectation
+ - diff.c: do not pass diff options as keydata to hashmap
+ - xdiff/xdiffi.c: remove unneeded function declarations
+ - xdiff/xdiff.h: remove unused flags
+
+ "git diff --color-moved" feature has further been tweaked.
+
+
 * so/glossary-ancestor (2018-04-17) 1 commit
   (merged to 'next' on 2018-04-25 at 0a849fee00)
  + glossary: substitute "ancestor" for "direct ancestor" in 'push' description.
@@ -672,44 +481,42 @@ of the repositories listed at
 
 
 * bt/gpg-interface (2018-04-16) 7 commits
- - gpg-interface: find the last gpg signature line
- - gpg-interface: extract gpg line matching helper
- - gpg-interface: fix const-correctness of "eol" pointer
- - gpg-interface: use size_t for signature buffer size
- - gpg-interface: modernize function declarations
- - gpg-interface: handle bool user.signingkey
- - t7004: fix mistaken tag name
+  (merged to 'next' on 2018-04-30 at 50c507b7d8)
+ + gpg-interface: find the last gpg signature line
+ + gpg-interface: extract gpg line matching helper
+ + gpg-interface: fix const-correctness of "eol" pointer
+ + gpg-interface: use size_t for signature buffer size
+ + gpg-interface: modernize function declarations
+ + gpg-interface: handle bool user.signingkey
+ + t7004: fix mistaken tag name
 
  What is queued here is only the obviously correct and
  uncontroversial code clean-up part, which is an earlier 7 patches,
  of a larger series.
 
- The remainder that is not queued introuces a few configuration
+ The remainder that is not queued introduces a few configuration
  variables to deal with e-signature backends with different
  signature format.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* ds/generation-numbers (2018-04-11) 10 commits
+* ds/generation-numbers (2018-04-26) 10 commits
+ - commit-graph.txt: update design document
+ - merge: check config before loading commits
  - commit: add short-circuit to paint_down_to_common()
  - commit: use generation numbers for in_merge_bases()
  - ref-filter: use generation number for --contains
- - commit-graph.txt: update future work
- - commit.c: use generation to halt paint walk
+ - commit-graph: always load commit-graph information
  - commit: use generations in paint_down_to_common()
  - commit-graph: compute generation numbers
  - commit: add generation number to struct commmit
- - merge: check config before loading commits
- - object.c: parse commit in graph first
- (this branch uses ds/commit-graph; is tangled with ds/lazy-load-trees.)
+ - ref-filter: fix outdated comment on in_commit_list
+ (this branch uses ds/commit-graph and ds/lazy-load-trees.)
 
  A recently added "commit-graph" datafile has learned to store
  pre-computed generation numbers to speed up the decisions to stop
  history traversal.
-
- Expecting a reroll.
- cf. <cc58d8c1-f8de-4841-934f-56e4ad7729aa@gmail.com>
 
 
 * en/rename-directory-detection-reboot (2018-04-25) 36 commits
@@ -753,24 +560,24 @@ of the repositories listed at
  Reboot of an attempt to detect wholesale directory renames and use
  it while merging.
 
- Expecting a reroll.
- cf. <CABPp-BHZ-agTY77iqe9BxLC2ijrcKO+UPk83Bn+0cckA3fJFYg@mail.gmail.com>
+ Will merge to 'next'.
 
 
-* nd/command-list (2018-04-24) 6 commits
+* nd/command-list (2018-04-30) 10 commits
+ - completion: let git provide the completable command list
  - help: use command-list.txt for the source of guides
  - help: add "-a --verbose" to list all commands with synopsis
- - git.c: implement --list-cmds=porcelain
- - generate-cmdlist.sh: keep all information in common-cmds.h
- - git.c: implement --list-cmds=all and use it in git-completion.bash
+ - git: support --list-cmds=list-<category>
+ - completion: implement and use --list-cmds=main,others
  - git.c: convert --list-*builtins to --list-cmds=*
+ - Remove common-cmds.h
+ - help: use command-list.h for common command list
+ - generate-cmds.sh: export all commands to command-list.h
+ - generate-cmds.sh: factor out synopsis extract code
 
  The list of commands with their various attributes were spread
  across a few places in the build procedure, but it now is getting a
  bit more consolidated to allow more automation.
-
- Expecting a reroll.
- Bash-isms and other things need to be fixed.
 
 
 * sb/object-store-replace (2018-04-12) 15 commits
@@ -868,7 +675,7 @@ of the repositories listed at
  + commit: create get_commit_tree() method
  + treewide: rename tree to maybe_tree
  + Merge branch 'bw/c-plus-plus' into ds/lazy-load-trees
- (this branch uses ds/commit-graph; is tangled with ds/generation-numbers.)
+ (this branch is used by ds/generation-numbers; uses ds/commit-graph.)
 
  The code has been taught to use the duplicated information stored
  in the commit-graph file to learn the tree object name for a commit
@@ -879,20 +686,22 @@ of the repositories listed at
 
 
 * ab/git-svn-get-record-typofix (2018-04-09) 1 commit
- - git-svn: avoid warning on undef readline()
+  (merged to 'next' on 2018-04-30 at 23f875f6b9)
+ + git-svn: avoid warning on undef readline()
 
  "git svn" had a minor thinko/typo which has been fixed.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * hn/sort-ls-remote (2018-04-09) 1 commit
- - ls-remote: create '--sort' option
+  (merged to 'next' on 2018-04-30 at 244ca5d30a)
+ + ls-remote: create '--sort' option
 
  "git ls-remote" learned an option to allow sorting its output based
  on the refnames being shown.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * js/empty-config-section-fix (2018-04-09) 15 commits
@@ -965,9 +774,7 @@ of the repositories listed at
  be interpreted as.  A new "--type=<typename>" option has been
  introduced, which would make it cleaner to define new types.
 
- Expecting a final reroll.
- cf. <20180411034941.GA63158@syl.local>
- This looked more or less ready, IIRC
+ Will merge to 'master'.
 
 
 * tb/config-default (2018-04-23) 3 commits
@@ -984,7 +791,7 @@ of the repositories listed at
  the ANSI color sequence for the color given to foo.color variable,
  or "blue" if the variable does not exist.
 
- Will wait on the tb/config-type topic.
+ Will merge to 'master'.
 
 
 * jh/json-writer (2018-03-28) 1 commit
@@ -1175,7 +982,7 @@ of the repositories listed at
  e.g. cf. <20180206150044.1bffbb573c088d38c8e44bf5@google.com>
 
 
-* tg/worktree-add-existing-branch (2018-04-25) 4 commits
+* tg/worktree-add-existing-branch (2018-04-30) 4 commits
  - worktree: teach "add" to check out existing branches
  - worktree: factor out dwim_branch function
  - worktree: improve message when creating a new worktree
@@ -1183,10 +990,10 @@ of the repositories listed at
 
  "git worktree add" learned to check out an existing branch.
 
- Is this ready for 'next'?
+ Will merge to 'next'.
 
 
-* js/rebase-recreate-merge (2018-04-24) 16 commits
+* js/rebase-recreate-merge (2018-04-26) 17 commits
  - rebase -i --rebase-merges: add a section to the man page
  - rebase -i: introduce --rebase-merges=[no-]rebase-cousins
  - pull: accept --rebase=merges to recreate the branch topology
@@ -1198,6 +1005,7 @@ of the repositories listed at
  - rebase-helper --make-script: introduce a flag to rebase merges
  - sequencer: fast-forward `merge` commands, if possible
  - sequencer: introduce the `merge` command
+ - sequencer: introduce new commands to reset the revision
  - git-rebase--interactive: clarify arguments
  - sequencer: offer helpful advice when a command was rescheduled
  - sequencer: refactor how original todo list lines are accessed
@@ -1206,9 +1014,6 @@ of the repositories listed at
 
  "git rebase" learned "--rebase-merges" to transplant the whole
  topology of commit graph elsewhere.
-
- Was on hold.  What's the donness of this thing?
- cf. <nycvar.QRO.7.76.6.1804210017020.4241@ZVAVAG-6OXH6DA.rhebcr.pbec.zvpebfbsg.pbz>
 
 
 * bw/protocol-v2 (2018-03-15) 35 commits
@@ -1252,7 +1057,7 @@ of the repositories listed at
 
  The beginning of the next-gen transfer protocol.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * ls/checkout-encoding (2018-04-16) 10 commits
@@ -1273,8 +1078,6 @@ of the repositories listed at
  tree (and the other way around when checking in).
 
  Will merge to 'master'.
- This looked more or less ready for 'next'.  Please stop me if there
- are remaining issues I forgot about.
 
 --------------------------------------------------
 [Discarded]
