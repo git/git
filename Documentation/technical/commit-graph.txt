@@ -77,6 +77,29 @@ in the commit graph. We can treat these commits as having "infinite"
 generation number and walk until reaching commits with known generation
 number.
 
+We use the macro GENERATION_NUMBER_INFINITY = 0xFFFFFFFF to mark commits not
+in the commit-graph file. If a commit-graph file was written by a version
+of Git that did not compute generation numbers, then those commits will
+have generation number represented by the macro GENERATION_NUMBER_ZERO = 0.
+
+Since the commit-graph file is closed under reachability, we can guarantee
+the following weaker condition on all commits:
+
+    If A and B are commits with generation numbers N amd M, respectively,
+    and N < M, then A cannot reach B.
+
+Note how the strict inequality differs from the inequality when we have
+fully-computed generation numbers. Using strict inequality may result in
+walking a few extra commits, but the simplicity in dealing with commits
+with generation number *_INFINITY or *_ZERO is valuable.
+
+We use the macro GENERATION_NUMBER_MAX = 0x3FFFFFFF to for commits whose
+generation numbers are computed to be at least this value. We limit at
+this value since it is the largest value that can be stored in the
+commit-graph file using the 30 bits available to generation numbers. This
+presents another case where a commit can have generation number equal to
+that of a parent.
+
 Design Details
 --------------
 
@@ -98,18 +121,14 @@ Future Work
 - The 'commit-graph' subcommand does not have a "verify" mode that is
   necessary for integration with fsck.
 
-- The file format includes room for precomputed generation numbers. These
-  are not currently computed, so all generation numbers will be marked as
-  0 (or "uncomputed"). A later patch will include this calculation.
-
 - After computing and storing generation numbers, we must make graph
   walks aware of generation numbers to gain the performance benefits they
   enable. This will mostly be accomplished by swapping a commit-date-ordered
   priority queue with one ordered by generation number. The following
   operations are important candidates:
 
-    - paint_down_to_common()
     - 'log --topo-order'
+    - 'tag --merged'
 
 - Currently, parse_commit_gently() requires filling in the root tree
   object for a commit. This passes through lookup_tree() and consequently
