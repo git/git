@@ -2,6 +2,7 @@
 #include "git-compat-util.h"
 
 #if defined(GIT_WINDOWS_NATIVE)
+#include "lazyload.h"
 
 static int cmd_sync(void)
 {
@@ -82,8 +83,7 @@ static int cmd_dropcaches(void)
 {
 	HANDLE hProcess = GetCurrentProcess();
 	HANDLE hToken;
-	HMODULE ntdll;
-	DWORD(WINAPI *NtSetSystemInformation)(INT, PVOID, ULONG);
+	DECLARE_PROC_ADDR(ntdll.dll, DWORD, NtSetSystemInformation, INT, PVOID, ULONG);
 	SYSTEM_MEMORY_LIST_COMMAND command;
 	int status;
 
@@ -95,14 +95,8 @@ static int cmd_dropcaches(void)
 
 	CloseHandle(hToken);
 
-	ntdll = LoadLibrary("ntdll.dll");
-	if (!ntdll)
-		return error("Can't load ntdll.dll, wrong Windows version?");
-
-	NtSetSystemInformation =
-		(DWORD(WINAPI *)(INT, PVOID, ULONG))GetProcAddress(ntdll, "NtSetSystemInformation");
-	if (!NtSetSystemInformation)
-		return error("Can't get function addresses, wrong Windows version?");
+	if (!INIT_PROC_ADDR(NtSetSystemInformation))
+		return error("Could not find NtSetSystemInformation() function");
 
 	command = MemoryPurgeStandbyList;
 	status = NtSetSystemInformation(
@@ -114,8 +108,6 @@ static int cmd_dropcaches(void)
 		error("Insufficient privileges to purge the standby list, need admin access");
 	else if (status != STATUS_SUCCESS)
 		error("Unable to execute the memory list command %d", status);
-
-	FreeLibrary(ntdll);
 
 	return status;
 }
