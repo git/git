@@ -245,6 +245,13 @@ static struct commit_list **insert_parent_or_die(struct commit_graph *g,
 	return &commit_list_insert(c, pptr)->next;
 }
 
+static void fill_commit_graph_info(struct commit *item, struct commit_graph *g, uint32_t pos)
+{
+	const unsigned char *commit_data = g->chunk_commit_data + GRAPH_DATA_WIDTH * pos;
+	item->graph_pos = pos;
+	item->generation = get_be32(commit_data + g->hash_len + 8) >> 2;
+}
+
 static int fill_commit_in_graph(struct commit *item, struct commit_graph *g, uint32_t pos)
 {
 	uint32_t edge_value;
@@ -292,29 +299,38 @@ static int fill_commit_in_graph(struct commit *item, struct commit_graph *g, uin
 	return 1;
 }
 
+static int find_commit_in_graph(struct commit *item, struct commit_graph *g, uint32_t *pos)
+{
+	if (item->graph_pos != COMMIT_NOT_FROM_GRAPH) {
+		*pos = item->graph_pos;
+		return 1;
+	} else {
+		return bsearch_graph(g, &(item->object.oid), pos);
+	}
+}
+
 int parse_commit_in_graph(struct commit *item)
 {
+	uint32_t pos;
+
 	if (!core_commit_graph)
 		return 0;
 	if (item->object.parsed)
 		return 1;
-
 	prepare_commit_graph();
-	if (commit_graph) {
-		uint32_t pos;
-		int found;
-		if (item->graph_pos != COMMIT_NOT_FROM_GRAPH) {
-			pos = item->graph_pos;
-			found = 1;
-		} else {
-			found = bsearch_graph(commit_graph, &(item->object.oid), &pos);
-		}
-
-		if (found)
-			return fill_commit_in_graph(item, commit_graph, pos);
-	}
-
+	if (commit_graph && find_commit_in_graph(item, commit_graph, &pos))
+		return fill_commit_in_graph(item, commit_graph, pos);
 	return 0;
+}
+
+void load_commit_graph_info(struct commit *item)
+{
+	uint32_t pos;
+	if (!core_commit_graph)
+		return;
+	prepare_commit_graph();
+	if (commit_graph && find_commit_in_graph(item, commit_graph, &pos))
+		fill_commit_graph_info(item, commit_graph, pos);
 }
 
 static struct tree *load_tree_for_commit(struct commit_graph *g, struct commit *c)

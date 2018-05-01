@@ -17,6 +17,14 @@ char *get_commit_graph_filename(const char *obj_dir);
  */
 int parse_commit_in_graph(struct commit *item);
 
+/*
+ * It is possible that we loaded commit contents from the commit buffer,
+ * but we also want to ensure the commit-graph content is correctly
+ * checked and filled. Fill the graph_pos and generation members of
+ * the given commit.
+ */
+void load_commit_graph_info(struct commit *item);
+
 struct tree *get_commit_tree_in_graph(const struct commit *c);
 
 struct commit_graph {
