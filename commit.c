@@ -1056,12 +1056,19 @@ int in_merge_bases_many(struct commit *commit, int nr_reference, struct commit *
 {
 	struct commit_list *bases;
 	int ret = 0, i;
+	uint32_t min_generation = GENERATION_NUMBER_INFINITY;
 
 	if (parse_commit(commit))
 		return ret;
-	for (i = 0; i < nr_reference; i++)
+	for (i = 0; i < nr_reference; i++) {
 		if (parse_commit(reference[i]))
 			return ret;
+		if (reference[i]->generation < min_generation)
+			min_generation = reference[i]->generation;
+	}
+
+	if (commit->generation > min_generation)
+		return ret;
 
 	bases = paint_down_to_common(commit, nr_reference, reference);
 	if (commit->object.flags & PARENT2)
