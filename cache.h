@@ -1572,7 +1572,6 @@ struct pack_window {
 
 struct pack_entry {
 	off_t offset;
-	unsigned char sha1[20];
 	struct packed_git *p;
 };
 

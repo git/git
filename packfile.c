@@ -1833,7 +1833,6 @@ static int fill_pack_entry(const unsigned char *sha1,
 		return 0;
 	e->offset = offset;
 	e->p = p;
-	hashcpy(e->sha1, sha1);
 	return 1;
 }
 
