@@ -899,6 +899,12 @@ static int fsck_tag(struct tag *tag, const char *data,
 	return fsck_tag_buffer(tag, data, size, options);
 }
 
+static int fsck_blob(struct blob *blob, const char *buf,
+		     unsigned long size, struct fsck_options *options)
+{
+	return 0;
+}
+
 int fsck_object(struct object *obj, void *data, unsigned long size,
 	struct fsck_options *options)
 {
@@ -906,7 +912,7 @@ int fsck_object(struct object *obj, void *data, unsigned long size,
 		return report(options, obj, FSCK_MSG_BAD_OBJECT_SHA1, "no valid object to fsck");
 
 	if (obj->type == OBJ_BLOB)
-		return 0;
+		return fsck_blob((struct blob *)obj, data, size, options);
 	if (obj->type == OBJ_TREE)
 		return fsck_tree((struct tree *) obj, options);
 	if (obj->type == OBJ_COMMIT)

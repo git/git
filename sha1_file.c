@@ -2209,7 +2209,7 @@ int read_loose_object(const char *path,
 		goto out;
 	}
 
-	if (*type == OBJ_BLOB) {
+	if (*type == OBJ_BLOB && *size > big_file_threshold) {
 		if (check_stream_sha1(&stream, hdr, *size, path, expected_sha1) < 0)
 			goto out;
 	} else {
