@@ -2047,7 +2047,8 @@ int http_get_info_packs(const char *base_url, struct packed_git **packs_head)
 	int ret = 0, i = 0;
 	char *url, *data;
 	struct strbuf buf = STRBUF_INIT;
-	unsigned char sha1[20];
+	unsigned char hash[GIT_MAX_RAWSZ];
+	const unsigned hexsz = the_hash_algo->hexsz;
 
 	end_url_with_slash(&buf, base_url);
 	strbuf_addstr(&buf, "objects/info/packs");
@@ -2063,13 +2064,13 @@ int http_get_info_packs(const char *base_url, struct packed_git **packs_head)
 		switch (data[i]) {
 		case 'P':
 			i++;
-			if (i + 52 <= buf.len &&
+			if (i + hexsz + 12 <= buf.len &&
 			    starts_with(data + i, " pack-") &&
-			    starts_with(data + i + 46, ".pack\n")) {
-				get_sha1_hex(data + i + 6, sha1);
-				fetch_and_setup_pack_index(packs_head, sha1,
+			    starts_with(data + i + hexsz + 6, ".pack\n")) {
+				get_sha1_hex(data + i + 6, hash);
+				fetch_and_setup_pack_index(packs_head, hash,
 						      base_url);
-				i += 51;
+				i += hexsz + 11;
 				break;
 			}
 		default:
