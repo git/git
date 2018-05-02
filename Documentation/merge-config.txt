@@ -35,7 +35,8 @@ include::fmt-merge-msg-config.txt[]
 merge.renameLimit::
 	The number of files to consider when performing rename detection
 	during a merge; if not specified, defaults to the value of
-	diff.renameLimit.
+	diff.renameLimit. This setting has no effect if rename detection
+	is turned off.
 
 merge.renormalize::
 	Tell Git that canonical representation of files in the

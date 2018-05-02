@@ -112,7 +112,8 @@ diff.orderFile::
 
 diff.renameLimit::
 	The number of files to consider when performing the copy/rename
-	detection; equivalent to the 'git diff' option `-l`.
+	detection; equivalent to the 'git diff' option `-l`. This setting
+	has no effect if rename detection is turned off.
 
 diff.renames::
 	Whether and how Git detects renames.  If set to "false",
