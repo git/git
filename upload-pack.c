@@ -450,7 +450,7 @@ static int get_common_commits(void)
 				break;
 			default:
 				got_common = 1;
-				memcpy(last_hex, oid_to_hex(&oid), 41);
+				oid_to_hex_r(last_hex, &oid);
 				if (multi_ack == 2)
 					packet_write_fmt(1, "ACK %s common\n", last_hex);
 				else if (multi_ack)
@@ -492,7 +492,7 @@ static int do_reachable_revlist(struct child_process *cmd,
 		"rev-list", "--stdin", NULL,
 	};
 	struct object *o;
-	char namebuf[42]; /* ^ + SHA-1 + LF */
+	char namebuf[GIT_MAX_HEXSZ + 2]; /* ^ + hash + LF */
 	int i;
 
 	cmd->argv = argv;
@@ -561,15 +561,17 @@ static int get_reachable_list(struct object_array *src,
 	struct child_process cmd = CHILD_PROCESS_INIT;
 	int i;
 	struct object *o;
-	char namebuf[42]; /* ^ + SHA-1 + LF */
+	char namebuf[GIT_MAX_HEXSZ + 2]; /* ^ + hash + LF */
+	const unsigned hexsz = the_hash_algo->hexsz;
 
 	if (do_reachable_revlist(&cmd, src, reachable) < 0)
 		return -1;
 
-	while ((i = read_in_full(cmd.out, namebuf, 41)) == 41) {
+	while ((i = read_in_full(cmd.out, namebuf, hexsz + 1)) == hexsz + 1) {
 		struct object_id sha1;
+		const char *p;
 
-		if (namebuf[40] != '\n' || get_oid_hex(namebuf, &sha1))
+		if (parse_oid_hex(namebuf, &sha1, &p) || *p != '\n')
 			break;
 
 		o = lookup_object(sha1.hash);
@@ -820,11 +822,9 @@ static void receive_needs(void)
 			continue;
 		}
 		if (!skip_prefix(line, "want ", &arg) ||
-		    get_oid_hex(arg, &oid_buf))
+		    parse_oid_hex(arg, &oid_buf, &features))
 			die("git upload-pack: protocol error, "
-			    "expected to get sha, not '%s'", line);
-
-		features = arg + 40;
+			    "expected to get object ID, not '%s'", line);
 
 		if (parse_feature_request(features, "deepen-relative"))
 			deepen_relative = 1;
