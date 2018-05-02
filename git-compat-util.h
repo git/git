@@ -1052,7 +1052,7 @@ int git_qsort_s(void *base, size_t nmemb, size_t size,
 
 #define QSORT_S(base, n, compar, ctx) do {			\
 	if (qsort_s((base), (n), sizeof(*(base)), compar, ctx))	\
-		die("BUG: qsort_s() failed");			\
+		BUG("qsort_s() failed");			\
 } while (0)
 
 #ifndef REG_STARTEND

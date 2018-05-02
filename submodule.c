@@ -2043,7 +2043,7 @@ const char *get_superproject_working_tree(void)
 
 		if (super_sub_len > cwd_len ||
 		    strcmp(&cwd[cwd_len - super_sub_len], super_sub))
-			die (_("BUG: returned path string doesn't match cwd?"));
+			BUG("returned path string doesn't match cwd?");
 
 		super_wt = xstrdup(cwd);
 		super_wt[cwd_len - super_sub_len] = '\0';
