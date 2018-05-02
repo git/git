@@ -709,42 +709,42 @@ int check_and_freshen_file(const char *fn, int freshen)
 	return 1;
 }
 
-static int check_and_freshen_local(const unsigned char *sha1, int freshen)
+static int check_and_freshen_local(const struct object_id *oid, int freshen)
 {
 	static struct strbuf buf = STRBUF_INIT;
 
 	strbuf_reset(&buf);
-	sha1_file_name(the_repository, &buf, sha1);
+	sha1_file_name(the_repository, &buf, oid->hash);
 
 	return check_and_freshen_file(buf.buf, freshen);
 }
 
-static int check_and_freshen_nonlocal(const unsigned char *sha1, int freshen)
+static int check_and_freshen_nonlocal(const struct object_id *oid, int freshen)
 {
 	struct alternate_object_database *alt;
 	prepare_alt_odb(the_repository);
 	for (alt = the_repository->objects->alt_odb_list; alt; alt = alt->next) {
-		const char *path = alt_sha1_path(alt, sha1);
+		const char *path = alt_sha1_path(alt, oid->hash);
 		if (check_and_freshen_file(path, freshen))
 			return 1;
 	}
 	return 0;
 }
 
-static int check_and_freshen(const unsigned char *sha1, int freshen)
+static int check_and_freshen(const struct object_id *oid, int freshen)
 {
-	return check_and_freshen_local(sha1, freshen) ||
-	       check_and_freshen_nonlocal(sha1, freshen);
+	return check_and_freshen_local(oid, freshen) ||
+	       check_and_freshen_nonlocal(oid, freshen);
 }
 
-int has_loose_object_nonlocal(const unsigned char *sha1)
+int has_loose_object_nonlocal(const struct object_id *oid)
 {
-	return check_and_freshen_nonlocal(sha1, 0);
+	return check_and_freshen_nonlocal(oid, 0);
 }
 
-static int has_loose_object(const unsigned char *sha1)
+static int has_loose_object(const struct object_id *oid)
 {
-	return check_and_freshen(sha1, 0);
+	return check_and_freshen(oid, 0);
 }
 
 static void mmap_limit_check(size_t length)
@@ -1661,15 +1661,15 @@ static int write_loose_object(const struct object_id *oid, char *hdr,
 	return finalize_object_file(tmp_file.buf, filename.buf);
 }
 
-static int freshen_loose_object(const unsigned char *sha1)
+static int freshen_loose_object(const struct object_id *oid)
 {
-	return check_and_freshen(sha1, 1);
+	return check_and_freshen(oid, 1);
 }
 
-static int freshen_packed_object(const unsigned char *sha1)
+static int freshen_packed_object(const struct object_id *oid)
 {
 	struct pack_entry e;
-	if (!find_pack_entry(the_repository, sha1, &e))
+	if (!find_pack_entry(the_repository, oid->hash, &e))
 		return 0;
 	if (e.p->freshened)
 		return 1;
@@ -1689,7 +1689,7 @@ int write_object_file(const void *buf, unsigned long len, const char *type,
 	 * it out into .git/objects/??/?{38} file.
 	 */
 	write_object_file_prepare(buf, len, type, oid, hdr, &hdrlen);
-	if (freshen_packed_object(oid->hash) || freshen_loose_object(oid->hash))
+	if (freshen_packed_object(oid) || freshen_loose_object(oid))
 		return 0;
 	return write_loose_object(oid, hdr, hdrlen, buf, len, 0);
 }
@@ -1708,7 +1708,7 @@ int hash_object_file_literally(const void *buf, unsigned long len,
 
 	if (!(flags & HASH_WRITE_OBJECT))
 		goto cleanup;
-	if (freshen_packed_object(oid->hash) || freshen_loose_object(oid->hash))
+	if (freshen_packed_object(oid) || freshen_loose_object(oid))
 		goto cleanup;
 	status = write_loose_object(oid, header, hdrlen, buf, len, 0);
 
@@ -1726,7 +1726,7 @@ int force_object_loose(const struct object_id *oid, time_t mtime)
 	int hdrlen;
 	int ret;
 
-	if (has_loose_object(oid->hash))
+	if (has_loose_object(oid))
 		return 0;
 	buf = read_object(oid->hash, &type, &len);
 	if (!buf)

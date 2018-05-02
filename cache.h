@@ -1275,7 +1275,7 @@ extern int has_object_file_with_flags(const struct object_id *oid, int flags);
  * with the specified name.  This function does not respect replace
  * references.
  */
-extern int has_loose_object_nonlocal(const unsigned char *sha1);
+extern int has_loose_object_nonlocal(const struct object_id *oid);
 
 extern void assert_oid_type(const struct object_id *oid, enum object_type expect);
 

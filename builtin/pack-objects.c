@@ -1012,7 +1012,7 @@ static int want_object_in_pack(const struct object_id *oid,
 	int want;
 	struct list_head *pos;
 
-	if (!exclude && local && has_loose_object_nonlocal(oid->hash))
+	if (!exclude && local && has_loose_object_nonlocal(oid))
 		return 0;
 
 	/*
