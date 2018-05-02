@@ -73,4 +73,8 @@ test_expect_success 'clone evil superproject' '
 	! grep "RUNNING POST CHECKOUT" output
 '
 
+test_expect_success 'fsck detects evil superproject' '
+	test_must_fail git fsck
+'
+
 test_done
