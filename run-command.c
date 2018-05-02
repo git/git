@@ -471,15 +471,12 @@ struct atfork_state {
 	sigset_t old;
 };
 
-#ifndef NO_PTHREADS
-static void bug_die(int err, const char *msg)
-{
-	if (err) {
-		errno = err;
-		die_errno("BUG: %s", msg);
-	}
-}
-#endif
+#define CHECK_BUG(err, msg) \
+	do { \
+		int e = (err); \
+		if (e) \
+			BUG("%s: %s", msg, strerror(e)); \
+	} while(0)
 
 static void atfork_prepare(struct atfork_state *as)
 {
@@ -491,9 +488,9 @@ static void atfork_prepare(struct atfork_state *as)
 	if (sigprocmask(SIG_SETMASK, &all, &as->old))
 		die_errno("sigprocmask");
 #else
-	bug_die(pthread_sigmask(SIG_SETMASK, &all, &as->old),
+	CHECK_BUG(pthread_sigmask(SIG_SETMASK, &all, &as->old),
 		"blocking all signals");
-	bug_die(pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &as->cs),
+	CHECK_BUG(pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &as->cs),
 		"disabling cancellation");
 #endif
 }
@@ -504,9 +501,9 @@ static void atfork_parent(struct atfork_state *as)
 	if (sigprocmask(SIG_SETMASK, &as->old, NULL))
 		die_errno("sigprocmask");
 #else
-	bug_die(pthread_setcancelstate(as->cs, NULL),
+	CHECK_BUG(pthread_setcancelstate(as->cs, NULL),
 		"re-enabling cancellation");
-	bug_die(pthread_sigmask(SIG_SETMASK, &as->old, NULL),
+	CHECK_BUG(pthread_sigmask(SIG_SETMASK, &as->old, NULL),
 		"restoring signal mask");
 #endif
 }
