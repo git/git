@@ -711,30 +711,31 @@ static int fsck_ident(const char **ident, struct object *obj, struct fsck_option
 static int fsck_commit_buffer(struct commit *commit, const char *buffer,
 	unsigned long size, struct fsck_options *options)
 {
-	unsigned char tree_sha1[20], sha1[20];
+	struct object_id tree_oid, oid;
 	struct commit_graft *graft;
 	unsigned parent_count, parent_line_count = 0, author_count;
 	int err;
 	const char *buffer_begin = buffer;
+	const char *p;
 
 	if (verify_headers(buffer, size, &commit->object, options))
 		return -1;
 
 	if (!skip_prefix(buffer, "tree ", &buffer))
 		return report(options, &commit->object, FSCK_MSG_MISSING_TREE, "invalid format - expected 'tree' line");
-	if (get_sha1_hex(buffer, tree_sha1) || buffer[40] != '\n') {
+	if (parse_oid_hex(buffer, &tree_oid, &p) || *p != '\n') {
 		err = report(options, &commit->object, FSCK_MSG_BAD_TREE_SHA1, "invalid 'tree' line format - bad sha1");
 		if (err)
 			return err;
 	}
-	buffer += 41;
+	buffer = p + 1;
 	while (skip_prefix(buffer, "parent ", &buffer)) {
-		if (get_sha1_hex(buffer, sha1) || buffer[40] != '\n') {
+		if (parse_oid_hex(buffer, &oid, &p) || *p != '\n') {
 			err = report(options, &commit->object, FSCK_MSG_BAD_PARENT_SHA1, "invalid 'parent' line format - bad sha1");
 			if (err)
 				return err;
 		}
-		buffer += 41;
+		buffer = p + 1;
 		parent_line_count++;
 	}
 	graft = lookup_commit_graft(&commit->object.oid);
@@ -773,7 +774,7 @@ static int fsck_commit_buffer(struct commit *commit, const char *buffer,
 	if (err)
 		return err;
 	if (!commit->tree) {
-		err = report(options, &commit->object, FSCK_MSG_BAD_TREE, "could not load commit's tree %s", sha1_to_hex(tree_sha1));
+		err = report(options, &commit->object, FSCK_MSG_BAD_TREE, "could not load commit's tree %s", oid_to_hex(&tree_oid));
 		if (err)
 			return err;
 	}
@@ -799,11 +800,12 @@ static int fsck_commit(struct commit *commit, const char *data,
 static int fsck_tag_buffer(struct tag *tag, const char *data,
 	unsigned long size, struct fsck_options *options)
 {
-	unsigned char sha1[20];
+	struct object_id oid;
 	int ret = 0;
 	const char *buffer;
 	char *to_free = NULL, *eol;
 	struct strbuf sb = STRBUF_INIT;
+	const char *p;
 
 	if (data)
 		buffer = data;
@@ -834,12 +836,12 @@ static int fsck_tag_buffer(struct tag *tag, const char *data,
 		ret = report(options, &tag->object, FSCK_MSG_MISSING_OBJECT, "invalid format - expected 'object' line");
 		goto done;
 	}
-	if (get_sha1_hex(buffer, sha1) || buffer[40] != '\n') {
+	if (parse_oid_hex(buffer, &oid, &p) || *p != '\n') {
 		ret = report(options, &tag->object, FSCK_MSG_BAD_OBJECT_SHA1, "invalid 'object' line format - bad sha1");
 		if (ret)
 			goto done;
 	}
-	buffer += 41;
+	buffer = p + 1;
 
 	if (!skip_prefix(buffer, "type ", &buffer)) {
 		ret = report(options, &tag->object, FSCK_MSG_MISSING_TYPE_ENTRY, "invalid format - expected 'type' line");
