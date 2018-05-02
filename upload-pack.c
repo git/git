@@ -1252,7 +1252,7 @@ static void process_args(struct packet_reader *request,
 		}
 
 		/* ignore unknown lines maybe? */
-		die("unexpect line: '%s'", arg);
+		die("unexpected line: '%s'", arg);
 	}
 }
 
