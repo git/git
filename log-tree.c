@@ -362,7 +362,8 @@ void fmt_output_email_subject(struct strbuf *sb, struct rev_info *opt)
 
 void log_write_email_headers(struct rev_info *opt, struct commit *commit,
 			     const char **extra_headers_p,
-			     int *need_8bit_cte_p)
+			     int *need_8bit_cte_p,
+			     int maybe_multipart)
 {
 	const char *extra_headers = opt->extra_headers;
 	const char *name = oid_to_hex(opt->zero_commit ?
@@ -385,7 +386,7 @@ void log_write_email_headers(struct rev_info *opt, struct commit *commit,
 			       opt->ref_message_ids->items[i].string);
 		graph_show_oneline(opt->graph);
 	}
-	if (opt->mime_boundary) {
+	if (opt->mime_boundary && maybe_multipart) {
 		static char subject_buffer[1024];
 		static char buffer[1024];
 		struct strbuf filename =  STRBUF_INIT;
@@ -610,7 +611,7 @@ void show_log(struct rev_info *opt)
 
 	if (cmit_fmt_is_mail(opt->commit_format)) {
 		log_write_email_headers(opt, commit, &extra_headers,
-					&ctx.need_8bit_cte);
+					&ctx.need_8bit_cte, 1);
 		ctx.rev = opt;
 		ctx.print_email_subject = 1;
 	} else if (opt->commit_format != CMIT_FMT_USERFORMAT) {

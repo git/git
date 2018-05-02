@@ -1661,6 +1661,15 @@ test_expect_success 'format-patch --base with --attach' '
 	test_write_lines 1 2 >expect &&
 	test_cmp expect actual
 '
+test_expect_success 'format-patch --attach cover-letter only is non-multipart' '
+	test_when_finished "rm -fr patches" &&
+	git format-patch -o patches --cover-letter --attach=mimemime --base=HEAD~ -1 &&
+	! egrep "^--+mimemime" patches/0000*.patch &&
+	egrep "^--+mimemime$" patches/0001*.patch >output &&
+	test_line_count = 2 output &&
+	egrep "^--+mimemime--$" patches/0001*.patch >output &&
+	test_line_count = 1 output
+'
 
 test_expect_success 'format-patch --pretty=mboxrd' '
 	sp=" " &&
