@@ -1543,12 +1543,13 @@ static void read_v2_anomalous_offsets(struct packed_git *p,
 {
 	const uint32_t *idx1, *idx2;
 	uint32_t i;
+	const uint32_t hashwords = the_hash_algo->rawsz / sizeof(uint32_t);
 
 	/* The address of the 4-byte offset table */
 	idx1 = (((const uint32_t *)p->index_data)
 		+ 2 /* 8-byte header */
 		+ 256 /* fan out */
-		+ 5 * p->num_objects /* 20-byte SHA-1 table */
+		+ hashwords * p->num_objects /* object ID table */
 		+ p->num_objects /* CRC32 table */
 		);
 
