@@ -20,7 +20,7 @@ int cmd__dump_split_index(int ac, const char **av)
 		printf("not a split index\n");
 		return 0;
 	}
-	printf("base %s\n", sha1_to_hex(si->base_sha1));
+	printf("base %s\n", oid_to_hex(&si->base_oid));
 	for (i = 0; i < the_index.cache_nr; i++) {
 		struct cache_entry *ce = the_index.cache[i];
 		printf("%06o %s %d\t%s\n", ce->ce_mode,

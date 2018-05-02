@@ -18,12 +18,12 @@ int read_link_extension(struct index_state *istate,
 	struct split_index *si;
 	int ret;
 
-	if (sz < 20)
+	if (sz < the_hash_algo->rawsz)
 		return error("corrupt link extension (too short)");
 	si = init_split_index(istate);
-	hashcpy(si->base_sha1, data);
-	data += 20;
-	sz -= 20;
+	hashcpy(si->base_oid.hash, data);
+	data += the_hash_algo->rawsz;
+	sz -= the_hash_algo->rawsz;
 	if (!sz)
 		return 0;
 	si->delete_bitmap = ewah_new();
@@ -45,7 +45,7 @@ int write_link_extension(struct strbuf *sb,
 			 struct index_state *istate)
 {
 	struct split_index *si = istate->split_index;
-	strbuf_add(sb, si->base_sha1, 20);
+	strbuf_add(sb, si->base_oid.hash, the_hash_algo->rawsz);
 	if (!si->delete_bitmap && !si->replace_bitmap)
 		return 0;
 	ewah_serialize_strbuf(si->delete_bitmap, sb);

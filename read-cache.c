@@ -1878,7 +1878,7 @@ int read_index_from(struct index_state *istate, const char *path,
 	uint64_t start = getnanotime();
 	struct split_index *split_index;
 	int ret;
-	char *base_sha1_hex;
+	char *base_oid_hex;
 	char *base_path;
 
 	/* istate->initialized covers both .git/index and .git/sharedindex.xxx */
@@ -1889,7 +1889,7 @@ int read_index_from(struct index_state *istate, const char *path,
 	trace_performance_since(start, "read cache %s", path);
 
 	split_index = istate->split_index;
-	if (!split_index || is_null_sha1(split_index->base_sha1)) {
+	if (!split_index || is_null_oid(&split_index->base_oid)) {
 		post_read_index_from(istate);
 		return ret;
 	}
@@ -1899,12 +1899,12 @@ int read_index_from(struct index_state *istate, const char *path,
 	else
 		split_index->base = xcalloc(1, sizeof(*split_index->base));
 
-	base_sha1_hex = sha1_to_hex(split_index->base_sha1);
-	base_path = xstrfmt("%s/sharedindex.%s", gitdir, base_sha1_hex);
+	base_oid_hex = oid_to_hex(&split_index->base_oid);
+	base_path = xstrfmt("%s/sharedindex.%s", gitdir, base_oid_hex);
 	ret = do_read_index(split_index->base, base_path, 1);
-	if (hashcmp(split_index->base_sha1, split_index->base->sha1))
+	if (hashcmp(split_index->base_oid.hash, split_index->base->sha1))
 		die("broken index, expect %s in %s, got %s",
-		    base_sha1_hex, base_path,
+		    base_oid_hex, base_path,
 		    sha1_to_hex(split_index->base->sha1));
 
 	freshen_shared_index(base_path, 0);
@@ -2499,7 +2499,7 @@ static int write_shared_index(struct index_state *istate,
 	ret = rename_tempfile(temp,
 			      git_path("sharedindex.%s", sha1_to_hex(si->base->sha1)));
 	if (!ret) {
-		hashcpy(si->base_sha1, si->base->sha1);
+		hashcpy(si->base_oid.hash, si->base->sha1);
 		clean_shared_index_files(sha1_to_hex(si->base->sha1));
 	}
 
@@ -2554,13 +2554,13 @@ int write_locked_index(struct index_state *istate, struct lock_file *lock,
 	if (!si || alternate_index_output ||
 	    (istate->cache_changed & ~EXTMASK)) {
 		if (si)
-			hashclr(si->base_sha1);
+			oidclr(&si->base_oid);
 		ret = do_write_locked_index(istate, lock, flags);
 		goto out;
 	}
 
 	if (getenv("GIT_TEST_SPLIT_INDEX")) {
-		int v = si->base_sha1[0];
+		int v = si->base_oid.hash[0];
 		if ((v & 15) < 6)
 			istate->cache_changed |= SPLIT_INDEX_ORDERED;
 	}
@@ -2575,7 +2575,7 @@ int write_locked_index(struct index_state *istate, struct lock_file *lock,
 
 		temp = mks_tempfile(git_path("sharedindex_XXXXXX"));
 		if (!temp) {
-			hashclr(si->base_sha1);
+			oidclr(&si->base_oid);
 			ret = do_write_locked_index(istate, lock, flags);
 			goto out;
 		}
@@ -2595,7 +2595,7 @@ int write_locked_index(struct index_state *istate, struct lock_file *lock,
 	/* Freshen the shared index only if the split-index was written */
 	if (!ret && !new_shared_index) {
 		const char *shared_index = git_path("sharedindex.%s",
-						    sha1_to_hex(si->base_sha1));
+						    oid_to_hex(&si->base_oid));
 		freshen_shared_index(shared_index, 1);
 	}
 
