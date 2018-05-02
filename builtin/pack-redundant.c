@@ -252,13 +252,14 @@ static void cmp_two_packs(struct pack_list *p1, struct pack_list *p2)
 	unsigned long p1_off = 0, p2_off = 0, p1_step, p2_step;
 	const unsigned char *p1_base, *p2_base;
 	struct llist_item *p1_hint = NULL, *p2_hint = NULL;
+	const unsigned int hashsz = the_hash_algo->rawsz;
 
 	p1_base = p1->pack->index_data;
 	p2_base = p2->pack->index_data;
 	p1_base += 256 * 4 + ((p1->pack->index_version < 2) ? 4 : 8);
 	p2_base += 256 * 4 + ((p2->pack->index_version < 2) ? 4 : 8);
-	p1_step = (p1->pack->index_version < 2) ? 24 : 20;
-	p2_step = (p2->pack->index_version < 2) ? 24 : 20;
+	p1_step = hashsz + ((p1->pack->index_version < 2) ? 4 : 0);
+	p2_step = hashsz + ((p2->pack->index_version < 2) ? 4 : 0);
 
 	while (p1_off < p1->pack->num_objects * p1_step &&
 	       p2_off < p2->pack->num_objects * p2_step)
@@ -359,13 +360,14 @@ static size_t sizeof_union(struct packed_git *p1, struct packed_git *p2)
 	size_t ret = 0;
 	unsigned long p1_off = 0, p2_off = 0, p1_step, p2_step;
 	const unsigned char *p1_base, *p2_base;
+	const unsigned int hashsz = the_hash_algo->rawsz;
 
 	p1_base = p1->index_data;
 	p2_base = p2->index_data;
 	p1_base += 256 * 4 + ((p1->index_version < 2) ? 4 : 8);
 	p2_base += 256 * 4 + ((p2->index_version < 2) ? 4 : 8);
-	p1_step = (p1->index_version < 2) ? 24 : 20;
-	p2_step = (p2->index_version < 2) ? 24 : 20;
+	p1_step = hashsz + ((p1->index_version < 2) ? 4 : 0);
+	p2_step = hashsz + ((p2->index_version < 2) ? 4 : 0);
 
 	while (p1_off < p1->num_objects * p1_step &&
 	       p2_off < p2->num_objects * p2_step)
@@ -558,7 +560,7 @@ static struct pack_list * add_pack(struct packed_git *p)
 
 	base = p->index_data;
 	base += 256 * 4 + ((p->index_version < 2) ? 4 : 8);
-	step = (p->index_version < 2) ? 24 : 20;
+	step = the_hash_algo->rawsz + ((p->index_version < 2) ? 4 : 0);
 	while (off < p->num_objects * step) {
 		llist_insert_back(l.all_objects, base + off);
 		off += step;
