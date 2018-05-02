@@ -12,6 +12,7 @@
 #include "argv-array.h"
 #include "packfile.h"
 #include "object-store.h"
+#include "protocol.h"
 
 static const char content_type[] = "Content-Type";
 static const char content_length[] = "Content-Length";
@@ -468,8 +469,11 @@ static void get_info_refs(struct strbuf *hdr, char *arg)
 		hdr_str(hdr, content_type, buf.buf);
 		end_headers(hdr);
 
-		packet_write_fmt(1, "# service=git-%s\n", svc->name);
-		packet_flush(1);
+
+		if (determine_protocol_version_server() != protocol_v2) {
+			packet_write_fmt(1, "# service=git-%s\n", svc->name);
+			packet_flush(1);
+		}
 
 		argv[0] = svc->name;
 		run_service(argv, 0);

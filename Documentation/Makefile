@@ -78,6 +78,7 @@ TECH_DOCS += technical/pack-heuristics
 TECH_DOCS += technical/pack-protocol
 TECH_DOCS += technical/protocol-capabilities
 TECH_DOCS += technical/protocol-common
+TECH_DOCS += technical/protocol-v2
 TECH_DOCS += technical/racy-git
 TECH_DOCS += technical/send-pack-pipeline
 TECH_DOCS += technical/shallow
