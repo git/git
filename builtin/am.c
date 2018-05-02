@@ -1542,7 +1542,7 @@ static int fall_back_threeway(const struct am_state *state, const char *index_pa
 	char *their_tree_name;
 
 	if (get_oid("HEAD", &our_tree) < 0)
-		hashcpy(our_tree.hash, EMPTY_TREE_SHA1_BIN);
+		oidcpy(&our_tree, the_hash_algo->empty_tree);
 
 	if (build_fake_ancestor(state, index_path))
 		return error("could not build fake ancestor");
@@ -2042,7 +2042,7 @@ static void am_skip(struct am_state *state)
 	am_rerere_clear();
 
 	if (get_oid("HEAD", &head))
-		hashcpy(head.hash, EMPTY_TREE_SHA1_BIN);
+		oidcpy(&head, the_hash_algo->empty_tree);
 
 	if (clean_index(&head, &head))
 		die(_("failed to clean index"));
@@ -2105,11 +2105,11 @@ static void am_abort(struct am_state *state)
 	curr_branch = resolve_refdup("HEAD", 0, &curr_head, NULL);
 	has_curr_head = curr_branch && !is_null_oid(&curr_head);
 	if (!has_curr_head)
-		hashcpy(curr_head.hash, EMPTY_TREE_SHA1_BIN);
+		oidcpy(&curr_head, the_hash_algo->empty_tree);
 
 	has_orig_head = !get_oid("ORIG_HEAD", &orig_head);
 	if (!has_orig_head)
-		hashcpy(orig_head.hash, EMPTY_TREE_SHA1_BIN);
+		oidcpy(&orig_head, the_hash_algo->empty_tree);
 
 	clean_index(&curr_head, &orig_head);
 
