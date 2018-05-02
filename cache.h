@@ -1008,6 +1008,11 @@ static inline void oidclr(struct object_id *oid)
 	memset(oid->hash, 0, GIT_MAX_RAWSZ);
 }
 
+static inline void oidread(struct object_id *oid, const unsigned char *hash)
+{
+	memcpy(oid->hash, hash, the_hash_algo->rawsz);
+}
+
 
 #define EMPTY_TREE_SHA1_HEX \
 	"4b825dc642cb6eb9a060e54bf8d69288fbee4904"

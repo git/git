@@ -90,7 +90,7 @@ struct string_list *resolve_undo_read(const char *data, unsigned long size)
 				continue;
 			if (size < rawsz)
 				goto error;
-			memcpy(ui->oid[i].hash, (const unsigned char *)data, rawsz);
+			oidread(&ui->oid[i], (const unsigned char *)data);
 			size -= rawsz;
 			data += rawsz;
 		}
