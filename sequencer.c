@@ -1119,7 +1119,7 @@ static int try_to_commit(struct strbuf *msg, const char *author,
 
 	if (!(flags & ALLOW_EMPTY) && !oidcmp(current_head ?
 					      &current_head->tree->object.oid :
-					      &empty_tree_oid, &tree)) {
+					      the_hash_algo->empty_tree, &tree)) {
 		res = 1; /* run 'git commit' to display error message */
 		goto out;
 	}
