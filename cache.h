@@ -1049,6 +1049,9 @@ static inline int is_empty_tree_oid(const struct object_id *oid)
 	return !oidcmp(oid, the_hash_algo->empty_tree);
 }
 
+const char *empty_tree_oid_hex(void);
+const char *empty_blob_oid_hex(void);
+
 /* set default permissions by passing mode arguments to open(2) */
 int git_mkstemps_mode(char *pattern, int suffix_len, int mode);
 int git_mkstemp_mode(char *pattern, int mode);

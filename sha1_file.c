@@ -100,6 +100,18 @@ const struct git_hash_algo hash_algos[GIT_HASH_NALGOS] = {
 	},
 };
 
+const char *empty_tree_oid_hex(void)
+{
+	static char buf[GIT_MAX_HEXSZ + 1];
+	return oid_to_hex_r(buf, the_hash_algo->empty_tree);
+}
+
+const char *empty_blob_oid_hex(void)
+{
+	static char buf[GIT_MAX_HEXSZ + 1];
+	return oid_to_hex_r(buf, the_hash_algo->empty_blob);
+}
+
 /*
  * This is meant to hold a *small* number of objects that you would
  * want read_sha1_file() to be able to return, but yet you do not want
