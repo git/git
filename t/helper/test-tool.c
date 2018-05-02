@@ -47,7 +47,9 @@ static struct test_cmd cmds[] = {
 int cmd_main(int argc, const char **argv)
 {
 	int i;
+	extern int BUG_exit_code;
 
+	BUG_exit_code = 99;
 	if (argc < 2)
 		die("I need a test name!");
 
