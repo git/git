@@ -1698,7 +1698,6 @@ static int get_oid_with_context_1(const char *name,
 								   name, len);
 				}
 			}
-			hashcpy(oc->tree, tree_oid.hash);
 			if (flags & GET_OID_RECORD_PATH)
 				oc->path = xstrdup(filename);
 
