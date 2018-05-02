@@ -828,7 +828,7 @@ static int add_excludes(const char *fname, const char *base, int baselen,
 		if (size == 0) {
 			if (oid_stat) {
 				fill_stat_data(&oid_stat->stat, &st);
-				oidcpy(&oid_stat->oid, &empty_blob_oid);
+				oidcpy(&oid_stat->oid, the_hash_algo->empty_blob);
 				oid_stat->valid = 1;
 			}
 			close(fd);
