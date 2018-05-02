@@ -403,11 +403,11 @@ static void am_load(struct am_state *state)
 	struct strbuf sb = STRBUF_INIT;
 
 	if (read_state_file(&sb, state, "next", 1) < 0)
-		die("BUG: state file 'next' does not exist");
+		BUG("state file 'next' does not exist");
 	state->cur = strtol(sb.buf, NULL, 10);
 
 	if (read_state_file(&sb, state, "last", 1) < 0)
-		die("BUG: state file 'last' does not exist");
+		BUG("state file 'last' does not exist");
 	state->last = strtol(sb.buf, NULL, 10);
 
 	if (read_author_script(state) < 0)
@@ -986,7 +986,7 @@ static int split_mail(struct am_state *state, enum patch_format patch_format,
 	case PATCH_FORMAT_MBOXRD:
 		return split_mail_mbox(state, paths, keep_cr, 1);
 	default:
-		die("BUG: invalid patch_format");
+		BUG("invalid patch_format");
 	}
 	return -1;
 }
@@ -1041,7 +1041,7 @@ static void am_setup(struct am_state *state, enum patch_format patch_format,
 		str = "b";
 		break;
 	default:
-		die("BUG: invalid value for state->keep");
+		BUG("invalid value for state->keep");
 	}
 
 	write_state_text(state, "keep", str);
@@ -1058,7 +1058,7 @@ static void am_setup(struct am_state *state, enum patch_format patch_format,
 		str = "t";
 		break;
 	default:
-		die("BUG: invalid value for state->scissors");
+		BUG("invalid value for state->scissors");
 	}
 	write_state_text(state, "scissors", str);
 
@@ -1216,7 +1216,7 @@ static int parse_mail(struct am_state *state, const char *mail)
 		mi.keep_non_patch_brackets_in_subject = 1;
 		break;
 	default:
-		die("BUG: invalid value for state->keep");
+		BUG("invalid value for state->keep");
 	}
 
 	if (state->message_id)
@@ -1232,7 +1232,7 @@ static int parse_mail(struct am_state *state, const char *mail)
 		mi.use_scissors = 1;
 		break;
 	default:
-		die("BUG: invalid value for state->scissors");
+		BUG("invalid value for state->scissors");
 	}
 
 	mi.input = xfopen(mail, "r");
@@ -1463,7 +1463,7 @@ static int run_apply(const struct am_state *state, const char *index_file)
 	int options = 0;
 
 	if (init_apply_state(&apply_state, NULL))
-		die("BUG: init_apply_state() failed");
+		BUG("init_apply_state() failed");
 
 	argv_array_push(&apply_opts, "apply");
 	argv_array_pushv(&apply_opts, state->git_apply_opts.argv);
@@ -1489,7 +1489,7 @@ static int run_apply(const struct am_state *state, const char *index_file)
 		apply_state.apply_verbosity = verbosity_silent;
 
 	if (check_apply_state(&apply_state, force_apply))
-		die("BUG: check_apply_state() failed");
+		BUG("check_apply_state() failed");
 
 	argv_array_push(&apply_paths, am_path(state, "patch"));
 
@@ -2407,7 +2407,7 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 		ret = show_patch(&state);
 		break;
 	default:
-		die("BUG: invalid resume value");
+		BUG("invalid resume value");
 	}
 
 	am_state_release(&state);

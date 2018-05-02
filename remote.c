@@ -1819,7 +1819,7 @@ static const char *branch_get_push_1(struct branch *branch, struct strbuf *err)
 		}
 	}
 
-	die("BUG: unhandled push situation");
+	BUG("unhandled push situation");
 }
 
 const char *branch_get_push(struct branch *branch, struct strbuf *err)

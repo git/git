@@ -461,7 +461,7 @@ static int add(int argc, const char **argv, const char *prefix)
 	if (d.buf.len || allow_empty) {
 		write_note_data(&d, &new_note);
 		if (add_note(t, &object, &new_note, combine_notes_overwrite))
-			die("BUG: combine_notes_overwrite failed");
+			BUG("combine_notes_overwrite failed");
 		commit_notes(t, "Notes added by 'git notes add'");
 	} else {
 		fprintf(stderr, _("Removing note for object %s\n"),
@@ -544,7 +544,7 @@ static int copy(int argc, const char **argv, const char *prefix)
 	}
 
 	if (add_note(t, &object, from_note, combine_notes_overwrite))
-		die("BUG: combine_notes_overwrite failed");
+		BUG("combine_notes_overwrite failed");
 	commit_notes(t, "Notes added by 'git notes copy'");
 out:
 	free_notes(t);
@@ -621,7 +621,7 @@ static int append_edit(int argc, const char **argv, const char *prefix)
 	if (d.buf.len || allow_empty) {
 		write_note_data(&d, &new_note);
 		if (add_note(t, &object, &new_note, combine_notes_overwrite))
-			die("BUG: combine_notes_overwrite failed");
+			BUG("combine_notes_overwrite failed");
 		logmsg = xstrfmt("Notes added by 'git notes %s'", argv[0]);
 	} else {
 		fprintf(stderr, _("Removing note for object %s\n"),
@@ -831,7 +831,7 @@ static int merge(int argc, const char **argv, const char *prefix)
 		const char *short_ref = NULL;
 
 		if (!skip_prefix(o.local_ref, "refs/notes/", &short_ref))
-			die("BUG: local ref %s is outside of refs/notes/",
+			BUG("local ref %s is outside of refs/notes/",
 			    o.local_ref);
 
 		strbuf_addf(&merge_key, "notes.%s.mergeStrategy", short_ref);

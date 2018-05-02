@@ -823,7 +823,7 @@ static void write_refspec_config(const char *src_ref_prefix,
 			} else if (remote_head_points_at) {
 				const char *head = remote_head_points_at->name;
 				if (!skip_prefix(head, "refs/heads/", &head))
-					die("BUG: remote HEAD points at non-head?");
+					BUG("remote HEAD points at non-head?");
 
 				strbuf_addf(&value, "+%s:%s%s", remote_head_points_at->name,
 						branch_top->buf, head);

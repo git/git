@@ -298,7 +298,7 @@ static void apply_arg_if_exists(struct trailer_item *in_tok,
 			free_arg_item(arg_tok);
 		break;
 	default:
-		die("BUG: trailer.c: unhandled value %d",
+		BUG("trailer.c: unhandled value %d",
 		    arg_tok->conf.if_exists);
 	}
 }
@@ -323,7 +323,7 @@ static void apply_arg_if_missing(struct list_head *head,
 			list_add(&to_add->list, head);
 		break;
 	default:
-		die("BUG: trailer.c: unhandled value %d",
+		BUG("trailer.c: unhandled value %d",
 		    arg_tok->conf.if_missing);
 	}
 }
@@ -557,7 +557,7 @@ static int git_trailer_config(const char *conf_key, const char *value, void *cb)
 			warning(_("unknown value '%s' for key '%s'"), value, conf_key);
 		break;
 	default:
-		die("BUG: trailer.c: unhandled type %d", type);
+		BUG("trailer.c: unhandled type %d", type);
 	}
 	return 0;
 }

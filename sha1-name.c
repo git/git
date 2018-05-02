@@ -384,7 +384,7 @@ static int get_short_oid(const char *name, int len, struct object_id *oid,
 		return -1;
 
 	if (HAS_MULTI_BITS(flags & GET_OID_DISAMBIGUATORS))
-		die("BUG: multiple get_short_oid disambiguator flags");
+		BUG("multiple get_short_oid disambiguator flags");
 
 	if (flags & GET_OID_COMMIT)
 		ds.fn = disambiguate_commit_only;
@@ -1729,6 +1729,6 @@ void maybe_die_on_misspelt_object_name(const char *name, const char *prefix)
 int get_oid_with_context(const char *str, unsigned flags, struct object_id *oid, struct object_context *oc)
 {
 	if (flags & GET_OID_FOLLOW_SYMLINKS && flags & GET_OID_ONLY_TO_DIE)
-		die("BUG: incompatible flags for get_sha1_with_context");
+		BUG("incompatible flags for get_sha1_with_context");
 	return get_oid_with_context_1(str, flags, NULL, oid, oc);
 }

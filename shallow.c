@@ -20,7 +20,7 @@ static char *alternate_shallow_file;
 void set_alternate_shallow_file(const char *path, int override)
 {
 	if (is_shallow != -1)
-		die("BUG: is_repository_shallow must not be called before set_alternate_shallow_file");
+		BUG("is_repository_shallow must not be called before set_alternate_shallow_file");
 	if (alternate_shallow_file && !override)
 		return;
 	free(alternate_shallow_file);
@@ -218,7 +218,7 @@ struct commit_list *get_shallow_commits_by_rev_list(int ac, const char **av,
 static void check_shallow_file_for_update(void)
 {
 	if (is_shallow == -1)
-		die("BUG: shallow must be initialized by now");
+		BUG("shallow must be initialized by now");
 
 	if (!stat_validity_check(&shallow_stat, git_path_shallow()))
 		die("shallow file has changed since we read it");
@@ -446,7 +446,7 @@ static uint32_t *paint_alloc(struct paint_info *info)
 	void *p;
 	if (!info->pool_count || size > info->end - info->free) {
 		if (size > POOL_SIZE)
-			die("BUG: pool size too small for %d in paint_alloc()",
+			BUG("pool size too small for %d in paint_alloc()",
 			    size);
 		info->pool_count++;
 		REALLOC_ARRAY(info->pools, info->pool_count);

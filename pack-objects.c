@@ -58,7 +58,7 @@ static void rehash_objects(struct packing_data *pdata)
 						       &found);
 
 		if (found)
-			die("BUG: Duplicate object in hash");
+			BUG("Duplicate object in hash");
 
 		pdata->index[ix] = i + 1;
 		entry++;

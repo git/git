@@ -519,7 +519,7 @@ static struct object *parse_loose_object(const struct object_id *oid,
 		return NULL;
 
 	if (!contents && type != OBJ_BLOB)
-		die("BUG: read_loose_object streamed a non-blob");
+		BUG("read_loose_object streamed a non-blob");
 
 	obj = parse_object_buffer(oid, type, size, contents, &eaten);
 

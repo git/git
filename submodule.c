@@ -1398,7 +1398,7 @@ unsigned is_submodule_modified(const char *path, int ignore_untracked)
 		    buf.buf[0] == '2') {
 			/* T = line type, XY = status, SSSS = submodule state */
 			if (buf.len < strlen("T XY SSSS"))
-				die("BUG: invalid status --porcelain=2 line %s",
+				BUG("invalid status --porcelain=2 line %s",
 				    buf.buf);
 
 			if (buf.buf[5] == 'S' && buf.buf[8] == 'U')
@@ -1607,7 +1607,7 @@ int submodule_move_head(const char *path,
 	sub = submodule_from_path(&null_oid, path);
 
 	if (!sub)
-		die("BUG: could not get submodule information for '%s'", path);
+		BUG("could not get submodule information for '%s'", path);
 
 	if (old_head && !(flags & SUBMODULE_MOVE_HEAD_FORCE)) {
 		/* Check if the submodule has a dirty index. */
@@ -1965,7 +1965,7 @@ void absorb_git_dir_into_superproject(const char *prefix,
 		struct strbuf sb = STRBUF_INIT;
 
 		if (flags & ~ABSORB_GITDIR_RECURSE_SUBMODULES)
-			die("BUG: we don't know how to pass the flags down?");
+			BUG("we don't know how to pass the flags down?");
 
 		strbuf_addstr(&sb, get_super_prefix_or_empty());
 		strbuf_addstr(&sb, path);

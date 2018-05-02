@@ -1806,7 +1806,7 @@ void setup_scoreboard(struct blame_scoreboard *sb, const char *path, struct blam
 			l->item = c;
 			if (add_decoration(&sb->revs->children,
 					   &c->parents->item->object, l))
-				die("BUG: not unique item in first-parent chain");
+				BUG("not unique item in first-parent chain");
 			c = c->parents->item;
 		}
 

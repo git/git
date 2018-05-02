@@ -264,7 +264,7 @@ static const char *wt_status_unmerged_status_string(int stagemask)
 	case 7:
 		return _("both modified:");
 	default:
-		die("BUG: unhandled unmerged status %x", stagemask);
+		BUG("unhandled unmerged status %x", stagemask);
 	}
 }
 
@@ -377,7 +377,7 @@ static void wt_longstatus_print_change_data(struct wt_status *s,
 		status = d->worktree_status;
 		break;
 	default:
-		die("BUG: unhandled change_type %d in wt_longstatus_print_change_data",
+		BUG("unhandled change_type %d in wt_longstatus_print_change_data",
 		    change_type);
 	}
 
@@ -395,7 +395,7 @@ static void wt_longstatus_print_change_data(struct wt_status *s,
 	status_printf(s, color(WT_STATUS_HEADER, s), "\t");
 	what = wt_status_diff_status_string(status);
 	if (!what)
-		die("BUG: unhandled diff status %c", status);
+		BUG("unhandled diff status %c", status);
 	len = label_width - utf8_strwidth(what);
 	assert(len >= 0);
 	if (one_name != two_name)
@@ -470,7 +470,7 @@ static void wt_status_collect_changed_cb(struct diff_queue_struct *q,
 		case DIFF_STATUS_COPIED:
 		case DIFF_STATUS_RENAMED:
 			if (d->rename_status)
-				die("BUG: multiple renames on the same target? how?");
+				BUG("multiple renames on the same target? how?");
 			d->rename_source = xstrdup(p->one->path);
 			d->rename_score = p->score * 100 / MAX_SCORE;
 			d->rename_status = p->status;
@@ -484,7 +484,7 @@ static void wt_status_collect_changed_cb(struct diff_queue_struct *q,
 			break;
 
 		default:
-			die("BUG: unhandled diff-files status '%c'", p->status);
+			BUG("unhandled diff-files status '%c'", p->status);
 			break;
 		}
 
@@ -547,7 +547,7 @@ static void wt_status_collect_updated_cb(struct diff_queue_struct *q,
 		case DIFF_STATUS_COPIED:
 		case DIFF_STATUS_RENAMED:
 			if (d->rename_status)
-				die("BUG: multiple renames on the same target? how?");
+				BUG("multiple renames on the same target? how?");
 			d->rename_source = xstrdup(p->one->path);
 			d->rename_score = p->score * 100 / MAX_SCORE;
 			d->rename_status = p->status;
@@ -569,7 +569,7 @@ static void wt_status_collect_updated_cb(struct diff_queue_struct *q,
 			break;
 
 		default:
-			die("BUG: unhandled diff-index status '%c'", p->status);
+			BUG("unhandled diff-index status '%c'", p->status);
 			break;
 		}
 	}
@@ -2158,7 +2158,7 @@ static void wt_porcelain_v2_print_unmerged_entry(
 	case 6: key = "AA"; break; /* both added */
 	case 7: key = "UU"; break; /* both modified */
 	default:
-		die("BUG: unhandled unmerged status %x", d->stagemask);
+		BUG("unhandled unmerged status %x", d->stagemask);
 	}
 
 	/*
@@ -2185,7 +2185,7 @@ static void wt_porcelain_v2_print_unmerged_entry(
 		sum |= (1 << (stage - 1));
 	}
 	if (sum != d->stagemask)
-		die("BUG: observed stagemask 0x%x != expected stagemask 0x%x", sum, d->stagemask);
+		BUG("observed stagemask 0x%x != expected stagemask 0x%x", sum, d->stagemask);
 
 	if (s->null_termination)
 		path_index = it->string;
@@ -2289,7 +2289,7 @@ void wt_status_print(struct wt_status *s)
 		wt_porcelain_v2_print(s);
 		break;
 	case STATUS_FORMAT_UNSPECIFIED:
-		die("BUG: finalize_deferred_config() should have been called");
+		BUG("finalize_deferred_config() should have been called");
 		break;
 	case STATUS_FORMAT_NONE:
 	case STATUS_FORMAT_LONG:

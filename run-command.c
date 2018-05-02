@@ -245,7 +245,7 @@ int sane_execvp(const char *file, char * const argv[])
 static const char **prepare_shell_cmd(struct argv_array *out, const char **argv)
 {
 	if (!argv[0])
-		die("BUG: shell command is empty");
+		BUG("shell command is empty");
 
 	if (strcspn(argv[0], "|&;<>()$`\\\"' \t\n*?[#~=%") != strlen(argv[0])) {
 #ifndef GIT_WINDOWS_NATIVE
@@ -383,7 +383,7 @@ static void child_err_spew(struct child_process *cmd, struct child_err *cerr)
 static void prepare_cmd(struct argv_array *out, const struct child_process *cmd)
 {
 	if (!cmd->argv[0])
-		die("BUG: command is empty");
+		BUG("command is empty");
 
 	/*
 	 * Add SHELL_PATH so in the event exec fails with ENOEXEC we can
@@ -964,7 +964,7 @@ int run_command(struct child_process *cmd)
 	int code;
 
 	if (cmd->out < 0 || cmd->err < 0)
-		die("BUG: run_command with a pipe can cause deadlock");
+		BUG("run_command with a pipe can cause deadlock");
 
 	code = start_command(cmd);
 	if (code)
@@ -1554,7 +1554,7 @@ static void pp_init(struct parallel_processes *pp,
 
 	pp->data = data;
 	if (!get_next_task)
-		die("BUG: you need to specify a get_next_task function");
+		BUG("you need to specify a get_next_task function");
 	pp->get_next_task = get_next_task;
 
 	pp->start_failure = start_failure ? start_failure : default_start_failure;
@@ -1616,7 +1616,7 @@ static int pp_start_one(struct parallel_processes *pp)
 		if (pp->children[i].state == GIT_CP_FREE)
 			break;
 	if (i == pp->max_processes)
-		die("BUG: bookkeeping is hard");
+		BUG("bookkeeping is hard");
 
 	code = pp->get_next_task(&pp->children[i].process,
 				 &pp->children[i].err,

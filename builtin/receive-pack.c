@@ -1378,7 +1378,7 @@ static void warn_if_skipped_connectivity_check(struct command *commands,
 		}
 	}
 	if (!checked_connectivity)
-		die("BUG: connectivity check skipped???");
+		BUG("connectivity check skipped???");
 }
 
 static void execute_commands_non_atomic(struct command *commands,

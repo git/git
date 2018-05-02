@@ -517,7 +517,7 @@ static void anonymize_ident_line(const char **beg, const char **end)
 	/* skip "committer", "author", "tagger", etc */
 	end_of_header = strchr(*beg, ' ');
 	if (!end_of_header)
-		die("BUG: malformed line fed to anonymize_ident_line: %.*s",
+		BUG("malformed line fed to anonymize_ident_line: %.*s",
 		    (int)(*end - *beg), *beg);
 	end_of_header++;
 	strbuf_add(out, *beg, end_of_header - *beg);

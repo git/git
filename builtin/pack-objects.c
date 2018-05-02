@@ -1620,7 +1620,7 @@ static void break_delta_chains(struct object_entry *entry)
 		 * is a bug.
 		 */
 		if (cur->dfs_state != DFS_NONE)
-			die("BUG: confusing delta dfs state in first pass: %d",
+			BUG("confusing delta dfs state in first pass: %d",
 			    cur->dfs_state);
 
 		/*
@@ -1677,7 +1677,7 @@ static void break_delta_chains(struct object_entry *entry)
 		if (cur->dfs_state == DFS_DONE)
 			break;
 		else if (cur->dfs_state != DFS_ACTIVE)
-			die("BUG: confusing delta dfs state in second pass: %d",
+			BUG("confusing delta dfs state in second pass: %d",
 			    cur->dfs_state);
 
 		/*

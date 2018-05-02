@@ -539,7 +539,7 @@ static int run_fetch(const char *repo, const char **refspecs)
 		argv_array_push(&args, repo);
 		argv_array_pushv(&args, refspecs);
 	} else if (*refspecs)
-		die("BUG: refspecs without repo?");
+		BUG("refspecs without repo?");
 	ret = run_command_v_opt(args.argv, RUN_GIT_CMD);
 	argv_array_clear(&args);
 	return ret;

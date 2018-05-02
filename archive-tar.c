@@ -441,7 +441,7 @@ static int write_tar_filter_archive(const struct archiver *ar,
 	int r;
 
 	if (!ar->data)
-		die("BUG: tar-filter archiver called with no filter defined");
+		BUG("tar-filter archiver called with no filter defined");
 
 	strbuf_addstr(&cmd, ar->data);
 	if (args->compression_level >= 0)

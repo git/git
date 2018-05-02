@@ -230,7 +230,7 @@ static int deflate_to_pack(struct bulk_checkin_state *state,
 		 * pack, and write into it.
 		 */
 		if (!idx)
-			die("BUG: should not happen");
+			BUG("should not happen");
 		hashfile_truncate(state->f, &checkpoint);
 		state->offset = checkpoint.offset;
 		finish_bulk_checkin(state);

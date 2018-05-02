@@ -391,7 +391,7 @@ int init_db(const char *git_dir, const char *real_git_dir,
 		else if (get_shared_repository() == PERM_EVERYBODY)
 			xsnprintf(buf, sizeof(buf), "%d", OLD_PERM_EVERYBODY);
 		else
-			die("BUG: invalid value for shared_repository");
+			BUG("invalid value for shared_repository");
 		git_config_set("core.sharedrepository", buf);
 		git_config_set("receive.denyNonFastforwards", "true");
 	}

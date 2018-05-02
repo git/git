@@ -643,9 +643,9 @@ int xsnprintf(char *dst, size_t max, const char *fmt, ...)
 	va_end(ap);
 
 	if (len < 0)
-		die("BUG: your snprintf is broken");
+		BUG("your snprintf is broken");
 	if (len >= max)
-		die("BUG: attempt to snprintf into too-small buffer");
+		BUG("attempt to snprintf into too-small buffer");
 	return len;
 }
 

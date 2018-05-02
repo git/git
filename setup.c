@@ -539,7 +539,7 @@ void read_gitfile_error_die(int error_code, const char *path, const char *dir)
 	case READ_GITFILE_ERR_NOT_A_REPO:
 		die(_("not a git repository: %s"), dir);
 	default:
-		die("BUG: unknown error code");
+		BUG("unknown error code");
 	}
 }
 
@@ -1086,7 +1086,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 		      "Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set)."),
 		    dir.buf);
 	default:
-		die("BUG: unhandled setup_git_directory_1() result");
+		BUG("unhandled setup_git_directory_1() result");
 	}
 
 	if (prefix)

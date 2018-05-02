@@ -13,7 +13,7 @@ static struct sigchain_signal signals[SIGCHAIN_MAX_SIGNALS];
 static void check_signum(int sig)
 {
 	if (sig < 1 || sig >= SIGCHAIN_MAX_SIGNALS)
-		die("BUG: signal out of range: %d", sig);
+		BUG("signal out of range: %d", sig);
 }
 
 int sigchain_push(int sig, sigchain_fun f)

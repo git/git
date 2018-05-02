@@ -404,7 +404,7 @@ static void compile_pcre1_regexp(struct grep_pat *p, const struct grep_opt *opt)
 			die("Couldn't allocate PCRE JIT stack");
 		pcre_assign_jit_stack(p->pcre1_extra_info, NULL, p->pcre1_jit_stack);
 	} else if (p->pcre1_jit_on != 0) {
-		die("BUG: The pcre1_jit_on variable should be 0 or 1, not %d",
+		BUG("The pcre1_jit_on variable should be 0 or 1, not %d",
 		    p->pcre1_jit_on);
 	}
 #endif
@@ -550,7 +550,7 @@ static void compile_pcre2_pattern(struct grep_pat *p, const struct grep_opt *opt
 			die("Couldn't allocate PCRE2 match context");
 		pcre2_jit_stack_assign(p->pcre2_match_context, NULL, p->pcre2_jit_stack);
 	} else if (p->pcre2_jit_on != 0) {
-		die("BUG: The pcre2_jit_on variable should be 0 or 1, not %d",
+		BUG("The pcre2_jit_on variable should be 0 or 1, not %d",
 		    p->pcre1_jit_on);
 	}
 }
@@ -917,10 +917,10 @@ static struct grep_expr *prep_header_patterns(struct grep_opt *opt)
 
 	for (p = opt->header_list; p; p = p->next) {
 		if (p->token != GREP_PATTERN_HEAD)
-			die("BUG: a non-header pattern in grep header list.");
+			BUG("a non-header pattern in grep header list.");
 		if (p->field < GREP_HEADER_FIELD_MIN ||
 		    GREP_HEADER_FIELD_MAX <= p->field)
-			die("BUG: unknown header field %d", p->field);
+			BUG("unknown header field %d", p->field);
 		compile_regexp(p, opt);
 	}
 
@@ -933,7 +933,7 @@ static struct grep_expr *prep_header_patterns(struct grep_opt *opt)
 
 		h = compile_pattern_atom(&pp);
 		if (!h || pp != p->next)
-			die("BUG: malformed header expr");
+			BUG("malformed header expr");
 		if (!header_group[p->field]) {
 			header_group[p->field] = h;
 			continue;
@@ -1652,7 +1652,7 @@ static int fill_textconv_grep(struct userdiff_driver *driver,
 		fill_filespec(df, &null_oid, 0, 0100644);
 		break;
 	default:
-		die("BUG: attempt to textconv something without a path?");
+		BUG("attempt to textconv something without a path?");
 	}
 
 	/*
@@ -1748,7 +1748,7 @@ static int grep_source_1(struct grep_opt *opt, struct grep_source *gs, int colle
 		case GREP_BINARY_TEXT:
 			break;
 		default:
-			die("BUG: unknown binary handling mode");
+			BUG("unknown binary handling mode");
 		}
 	}
 
@@ -2072,7 +2072,7 @@ static int grep_source_load(struct grep_source *gs)
 	case GREP_SOURCE_BUF:
 		return gs->buf ? 0 : -1;
 	}
-	die("BUG: invalid grep_source type to load");
+	BUG("invalid grep_source type to load");
 }
 
 void grep_source_load_driver(struct grep_source *gs)

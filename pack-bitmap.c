@@ -255,7 +255,7 @@ static char *pack_bitmap_filename(struct packed_git *p)
 	size_t len;
 
 	if (!strip_suffix(p->pack_name, ".pack", &len))
-		die("BUG: pack_name does not end in .pack");
+		BUG("pack_name does not end in .pack");
 	return xstrfmt("%.*s.bitmap", (int)len, p->pack_name);
 }
 
@@ -723,13 +723,13 @@ int prepare_bitmap_walk(struct rev_info *revs)
 		revs->ignore_missing_links = 0;
 
 		if (haves_bitmap == NULL)
-			die("BUG: failed to perform bitmap walk");
+			BUG("failed to perform bitmap walk");
 	}
 
 	wants_bitmap = find_objects(revs, wants, haves_bitmap);
 
 	if (!wants_bitmap)
-		die("BUG: failed to perform bitmap walk");
+		BUG("failed to perform bitmap walk");
 
 	if (haves_bitmap)
 		bitmap_and_not(wants_bitmap, haves_bitmap);

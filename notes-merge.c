@@ -442,7 +442,7 @@ static int merge_one_change(struct notes_merge_options *o,
 			printf("Using remote notes for %s\n",
 						oid_to_hex(&p->obj));
 		if (add_note(t, &p->obj, &p->remote, combine_notes_overwrite))
-			die("BUG: combine_notes_overwrite failed");
+			BUG("combine_notes_overwrite failed");
 		return 0;
 	case NOTES_MERGE_RESOLVE_UNION:
 		if (o->verbosity >= 2)
@@ -490,7 +490,7 @@ static int merge_changes(struct notes_merge_options *o,
 			trace_printf("\t\t\tno local change, adopted remote\n");
 			if (add_note(t, &p->obj, &p->remote,
 				     combine_notes_overwrite))
-				die("BUG: combine_notes_overwrite failed");
+				BUG("combine_notes_overwrite failed");
 		} else {
 			/* need file-level merge between local and remote */
 			trace_printf("\t\t\tneed content-level merge\n");
