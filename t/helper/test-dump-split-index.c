@@ -14,7 +14,7 @@ int cmd__dump_split_index(int ac, const char **av)
 	int i;
 
 	do_read_index(&the_index, av[1], 1);
-	printf("own %s\n", sha1_to_hex(the_index.sha1));
+	printf("own %s\n", oid_to_hex(&the_index.oid));
 	si = the_index.split_index;
 	if (!si) {
 		printf("not a split index\n");

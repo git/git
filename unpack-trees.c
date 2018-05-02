@@ -1287,7 +1287,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 	o->result.split_index = o->src_index->split_index;
 	if (o->result.split_index)
 		o->result.split_index->refcount++;
-	hashcpy(o->result.sha1, o->src_index->sha1);
+	oidcpy(&o->result.oid, &o->src_index->oid);
 	o->merge_size = len;
 	mark_all_ce_unused(o->src_index);
 

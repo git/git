@@ -324,7 +324,7 @@ struct index_state {
 		 drop_cache_tree : 1;
 	struct hashmap name_hash;
 	struct hashmap dir_hash;
-	unsigned char sha1[20];
+	struct object_id oid;
 	struct untracked_cache *untracked;
 	uint64_t fsmonitor_last_update;
 	struct ewah_bitmap *fsmonitor_dirty;
