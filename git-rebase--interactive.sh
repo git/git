@@ -81,6 +81,8 @@ rewritten_pending="$state_dir"/rewritten-pending
 # and leaves CR at the end instead.
 cr=$(printf "\015")
 
+empty_tree=$(git hash-object -t tree /dev/null)
+
 strategy_args=${strategy:+--strategy=$strategy}
 test -n "$strategy_opts" &&
 eval '
@@ -238,7 +240,7 @@ is_empty_commit() {
 		die "$(eval_gettext "\$sha1: not a commit that can be picked")"
 	}
 	ptree=$(git rev-parse -q --verify "$1"^^{tree} 2>/dev/null) ||
-		ptree=4b825dc642cb6eb9a060e54bf8d69288fbee4904
+		ptree=$empty_tree
 	test "$tree" = "$ptree"
 }
 
