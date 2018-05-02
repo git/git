@@ -309,4 +309,22 @@ test_expect_success 'last wins in --find-renames=<m> --rename-threshold=<n>' '
 	check_threshold_0
 '
 
+test_expect_success 'merge.renames disables rename detection' '
+	git read-tree --reset -u HEAD &&
+	git -c merge.renames=false merge-recursive $tail &&
+	check_no_renames
+'
+
+test_expect_success 'merge.renames defaults to diff.renames' '
+	git read-tree --reset -u HEAD &&
+	git -c diff.renames=false merge-recursive $tail &&
+	check_no_renames
+'
+
+test_expect_success 'merge.renames overrides diff.renames' '
+	git read-tree --reset -u HEAD &&
+	test_must_fail git -c diff.renames=false -c merge.renames=true merge-recursive $tail &&
+	$check_50
+'
+
 test_done

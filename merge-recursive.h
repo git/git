@@ -18,7 +18,8 @@ struct merge_options {
 	unsigned renormalize : 1;
 	long xdl_opts;
 	int verbosity;
-	int detect_rename;
+	int diff_detect_rename;
+	int merge_detect_rename;
 	int diff_rename_limit;
 	int merge_rename_limit;
 	int rename_score;
@@ -56,6 +57,12 @@ struct collision_entry {
 	struct string_list source_files;
 	unsigned reported_already:1;
 };
+
+static inline int merge_detect_rename(struct merge_options *o)
+{
+	return o->merge_detect_rename >= 0 ? o->merge_detect_rename :
+		o->diff_detect_rename >= 0 ? o->diff_detect_rename : 1;
+}
 
 /* merge_trees() but with recursive ancestor consolidation */
 int merge_recursive(struct merge_options *o,

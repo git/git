@@ -1603,7 +1603,15 @@ static struct diff_queue_struct *get_diffpairs(struct merge_options *o,
 	diff_setup(&opts);
 	opts.flags.recursive = 1;
 	opts.flags.rename_empty = 0;
-	opts.detect_rename = DIFF_DETECT_RENAME;
+	opts.detect_rename = merge_detect_rename(o);
+	/*
+	 * We do not have logic to handle the detection of copies.  In
+	 * fact, it may not even make sense to add such logic: would we
+	 * really want a change to a base file to be propagated through
+	 * multiple other files by a merge?
+	 */
+	if (opts.detect_rename > DIFF_DETECT_RENAME)
+		opts.detect_rename = DIFF_DETECT_RENAME;
 	opts.rename_limit = o->merge_rename_limit >= 0 ? o->merge_rename_limit :
 			    o->diff_rename_limit >= 0 ? o->diff_rename_limit :
 			    1000;
@@ -2643,7 +2651,7 @@ static int handle_renames(struct merge_options *o,
 	ri->head_renames = NULL;
 	ri->merge_renames = NULL;
 
-	if (!o->detect_rename)
+	if (!merge_detect_rename(o))
 		return 1;
 
 	head_pairs = get_diffpairs(o, common, head);
@@ -3324,9 +3332,18 @@ int merge_recursive_generic(struct merge_options *o,
 
 static void merge_recursive_config(struct merge_options *o)
 {
+	char *value = NULL;
 	git_config_get_int("merge.verbosity", &o->verbosity);
 	git_config_get_int("diff.renamelimit", &o->diff_rename_limit);
 	git_config_get_int("merge.renamelimit", &o->merge_rename_limit);
+	if (!git_config_get_string("diff.renames", &value)) {
+		o->diff_detect_rename = git_config_rename("diff.renames", value);
+		free(value);
+	}
+	if (!git_config_get_string("merge.renames", &value)) {
+		o->merge_detect_rename = git_config_rename("merge.renames", value);
+		free(value);
+	}
 	git_config(git_xmerge_config, NULL);
 }
 
@@ -3339,7 +3356,8 @@ void init_merge_options(struct merge_options *o)
 	o->diff_rename_limit = -1;
 	o->merge_rename_limit = -1;
 	o->renormalize = 0;
-	o->detect_rename = 1;
+	o->diff_detect_rename = -1;
+	o->merge_detect_rename = -1;
 	merge_recursive_config(o);
 	merge_verbosity = getenv("GIT_MERGE_VERBOSITY");
 	if (merge_verbosity)
@@ -3390,16 +3408,16 @@ int parse_merge_opt(struct merge_options *o, const char *s)
 	else if (!strcmp(s, "no-renormalize"))
 		o->renormalize = 0;
 	else if (!strcmp(s, "no-renames"))
-		o->detect_rename = 0;
+		o->merge_detect_rename = 0;
 	else if (!strcmp(s, "find-renames")) {
-		o->detect_rename = 1;
+		o->merge_detect_rename = 1;
 		o->rename_score = 0;
 	}
 	else if (skip_prefix(s, "find-renames=", &arg) ||
 		 skip_prefix(s, "rename-threshold=", &arg)) {
 		if ((o->rename_score = parse_rename_score(&arg)) == -1 || *arg != 0)
 			return -1;
-		o->detect_rename = 1;
+		o->merge_detect_rename = 1;
 	}
 	else
 		return -1;

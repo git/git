@@ -38,6 +38,11 @@ merge.renameLimit::
 	diff.renameLimit. This setting has no effect if rename detection
 	is turned off.
 
+merge.renames::
+	Whether and how Git detects renames.  If set to "false",
+	rename detection is disabled. If set to "true", basic rename
+	detection is enabled.  Defaults to the value of diff.renames.
+
 merge.renormalize::
 	Tell Git that canonical representation of files in the
 	repository has changed over time (e.g. earlier commits record
