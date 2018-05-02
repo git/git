@@ -134,7 +134,7 @@ extern const struct packed_git *has_packed_and_bad(const unsigned char *sha1);
  * Iff a pack file in the given repository contains the object named by sha1,
  * return true and store its location to e.
  */
-extern int find_pack_entry(struct repository *r, const unsigned char *sha1, struct pack_entry *e);
+extern int find_pack_entry(struct repository *r, const struct object_id *oid, struct pack_entry *e);
 
 extern int has_object_pack(const struct object_id *oid);
 

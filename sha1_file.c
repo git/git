@@ -1268,7 +1268,7 @@ int oid_object_info_extended(const struct object_id *oid, struct object_info *oi
 	}
 
 	while (1) {
-		if (find_pack_entry(the_repository, real->hash, &e))
+		if (find_pack_entry(the_repository, real, &e))
 			break;
 
 		if (flags & OBJECT_INFO_IGNORE_LOOSE)
@@ -1281,7 +1281,7 @@ int oid_object_info_extended(const struct object_id *oid, struct object_info *oi
 		/* Not a loose object; someone else may have just packed it. */
 		if (!(flags & OBJECT_INFO_QUICK)) {
 			reprepare_packed_git(the_repository);
-			if (find_pack_entry(the_repository, real->hash, &e))
+			if (find_pack_entry(the_repository, real, &e))
 				break;
 		}
 
@@ -1669,7 +1669,7 @@ static int freshen_loose_object(const struct object_id *oid)
 static int freshen_packed_object(const struct object_id *oid)
 {
 	struct pack_entry e;
-	if (!find_pack_entry(the_repository, oid->hash, &e))
+	if (!find_pack_entry(the_repository, oid, &e))
 		return 0;
 	if (e.p->freshened)
 		return 1;

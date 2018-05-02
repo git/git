@@ -1805,7 +1805,7 @@ struct packed_git *find_sha1_pack(const unsigned char *sha1,
 
 }
 
-static int fill_pack_entry(const unsigned char *sha1,
+static int fill_pack_entry(const struct object_id *oid,
 			   struct pack_entry *e,
 			   struct packed_git *p)
 {
@@ -1814,11 +1814,11 @@ static int fill_pack_entry(const unsigned char *sha1,
 	if (p->num_bad_objects) {
 		unsigned i;
 		for (i = 0; i < p->num_bad_objects; i++)
-			if (!hashcmp(sha1, p->bad_object_sha1 + 20 * i))
+			if (!hashcmp(oid->hash, p->bad_object_sha1 + 20 * i))
 				return 0;
 	}
 
-	offset = find_pack_entry_one(sha1, p);
+	offset = find_pack_entry_one(oid->hash, p);
 	if (!offset)
 		return 0;
 
@@ -1836,7 +1836,7 @@ static int fill_pack_entry(const unsigned char *sha1,
 	return 1;
 }
 
-int find_pack_entry(struct repository *r, const unsigned char *sha1, struct pack_entry *e)
+int find_pack_entry(struct repository *r, const struct object_id *oid, struct pack_entry *e)
 {
 	struct list_head *pos;
 
@@ -1846,7 +1846,7 @@ int find_pack_entry(struct repository *r, const unsigned char *sha1, struct pack
 
 	list_for_each(pos, &r->objects->packed_git_mru) {
 		struct packed_git *p = list_entry(pos, struct packed_git, mru);
-		if (fill_pack_entry(sha1, e, p)) {
+		if (fill_pack_entry(oid, e, p)) {
 			list_move(&p->mru, &r->objects->packed_git_mru);
 			return 1;
 		}
@@ -1857,7 +1857,7 @@ int find_pack_entry(struct repository *r, const unsigned char *sha1, struct pack
 int has_object_pack(const struct object_id *oid)
 {
 	struct pack_entry e;
-	return find_pack_entry(the_repository, oid->hash, &e);
+	return find_pack_entry(the_repository, oid, &e);
 }
 
 int has_pack_index(const unsigned char *sha1)
