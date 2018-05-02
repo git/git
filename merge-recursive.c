@@ -356,6 +356,7 @@ static int git_merge_trees(struct merge_options *o,
 	o->unpack_opts.fn = threeway_merge;
 	o->unpack_opts.src_index = &the_index;
 	o->unpack_opts.dst_index = &tmp_index;
+	o->unpack_opts.aggressive = !merge_detect_rename(o);
 	setup_unpack_trees_porcelain(&o->unpack_opts, "merge");
 
 	init_tree_desc_from_tree(t+0, common);
