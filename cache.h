@@ -1013,22 +1013,6 @@ static inline void oidread(struct object_id *oid, const unsigned char *hash)
 	memcpy(oid->hash, hash, the_hash_algo->rawsz);
 }
 
-
-#define EMPTY_TREE_SHA1_HEX \
-	"4b825dc642cb6eb9a060e54bf8d69288fbee4904"
-#define EMPTY_TREE_SHA1_BIN_LITERAL \
-	 "\x4b\x82\x5d\xc6\x42\xcb\x6e\xb9\xa0\x60" \
-	 "\xe5\x4b\xf8\xd6\x92\x88\xfb\xee\x49\x04"
-extern const struct object_id empty_tree_oid;
-#define EMPTY_TREE_SHA1_BIN (empty_tree_oid.hash)
-
-#define EMPTY_BLOB_SHA1_HEX \
-	"e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
-#define EMPTY_BLOB_SHA1_BIN_LITERAL \
-	"\xe6\x9d\xe2\x9b\xb2\xd1\xd6\x43\x4b\x8b" \
-	"\x29\xae\x77\x5a\xd8\xc2\xe4\x8c\x53\x91"
-extern const struct object_id empty_blob_oid;
-
 static inline int is_empty_blob_sha1(const unsigned char *sha1)
 {
 	return !hashcmp(sha1, the_hash_algo->empty_blob->hash);
