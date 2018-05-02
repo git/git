@@ -853,7 +853,7 @@ static void sha1_object(const void *data, struct object_entry *obj_entry,
 				die(_("invalid %s"), type_name(type));
 			if (do_fsck_object &&
 			    fsck_object(obj, buf, size, &fsck_options))
-				die(_("Error in object"));
+				die(_("fsck error in packed object"));
 			if (strict && fsck_walk(obj, NULL, &fsck_options))
 				die(_("Not all child objects of %s are reachable"), oid_to_hex(&obj->oid));
 
