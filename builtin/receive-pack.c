@@ -968,7 +968,7 @@ static const char *push_to_deploy(unsigned char *sha1,
 		return "Working directory has unstaged changes";
 
 	/* diff-index with either HEAD or an empty tree */
-	diff_index[4] = head_has_history() ? "HEAD" : EMPTY_TREE_SHA1_HEX;
+	diff_index[4] = head_has_history() ? "HEAD" : empty_tree_oid_hex();
 
 	child_process_init(&child);
 	child.argv = diff_index;
