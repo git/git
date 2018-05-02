@@ -227,7 +227,7 @@ static void check_reachable_object(struct object *obj)
 	if (!(obj->flags & HAS_OBJ)) {
 		if (is_promisor_object(&obj->oid))
 			return;
-		if (has_sha1_pack(obj->oid.hash))
+		if (has_object_pack(&obj->oid))
 			return; /* it is in pack - forget about it */
 		printf("missing %s %s\n", printable_type(obj),
 			describe_object(obj));
