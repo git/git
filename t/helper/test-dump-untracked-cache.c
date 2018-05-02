@@ -23,7 +23,7 @@ static void dump(struct untracked_cache_dir *ucd, struct strbuf *base)
 	len = base->len;
 	strbuf_addf(base, "%s/", ucd->name);
 	printf("%s %s", base->buf,
-	       sha1_to_hex(ucd->exclude_sha1));
+	       oid_to_hex(&ucd->exclude_oid));
 	if (ucd->recurse)
 		fputs(" recurse", stdout);
 	if (ucd->check_only)
