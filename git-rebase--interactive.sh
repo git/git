@@ -894,6 +894,8 @@ init_revisions_and_shortrevisions () {
 	else
 		revisions=$onto...$orig_head
 		shortrevisions=$shorthead
+		test -z "$squash_onto" ||
+		echo "$squash_onto" >"$state_dir"/squash-onto
 	fi
 }
 
@@ -948,7 +950,7 @@ EOF
 	die "Could not skip unnecessary pick commands"
 
 	checkout_onto
-	if test -z "$rebase_root" && test ! -d "$rewritten"
+	if test ! -d "$rewritten"
 	then
 		require_clean_work_tree "rebase"
 		exec git rebase--helper ${force_rebase:+--no-ff} $allow_empty_message \
