@@ -2747,18 +2747,34 @@ static int do_reset(const char *name, int len, struct replay_opts *opts)
 	if (hold_locked_index(&lock, LOCK_REPORT_ON_ERROR) < 0)
 		return -1;
 
-	/* Determine the length of the label */
-	for (i = 0; i < len; i++)
-		if (isspace(name[i]))
-			len = i;
+	if (len == 10 && !strncmp("[new root]", name, len)) {
+		if (!opts->have_squash_onto) {
+			const char *hex;
+			if (commit_tree("", 0, the_hash_algo->empty_tree,
+					NULL, &opts->squash_onto,
+					NULL, NULL))
+				return error(_("writing fake root commit"));
+			opts->have_squash_onto = 1;
+			hex = oid_to_hex(&opts->squash_onto);
+			if (write_message(hex, strlen(hex),
+					  rebase_path_squash_onto(), 0))
+				return error(_("writing squash-onto"));
+		}
+		oidcpy(&oid, &opts->squash_onto);
+	} else {
+		/* Determine the length of the label */
+		for (i = 0; i < len; i++)
+			if (isspace(name[i]))
+				len = i;
 
-	strbuf_addf(&ref_name, "refs/rewritten/%.*s", len, name);
-	if (get_oid(ref_name.buf, &oid) &&
-	    get_oid(ref_name.buf + strlen("refs/rewritten/"), &oid)) {
-		error(_("could not read '%s'"), ref_name.buf);
-		rollback_lock_file(&lock);
-		strbuf_release(&ref_name);
-		return -1;
+		strbuf_addf(&ref_name, "refs/rewritten/%.*s", len, name);
+		if (get_oid(ref_name.buf, &oid) &&
+		    get_oid(ref_name.buf + strlen("refs/rewritten/"), &oid)) {
+			error(_("could not read '%s'"), ref_name.buf);
+			rollback_lock_file(&lock);
+			strbuf_release(&ref_name);
+			return -1;
+		}
 	}
 
 	memset(&unpack_tree_opts, 0, sizeof(unpack_tree_opts));
