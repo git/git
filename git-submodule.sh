@@ -465,7 +465,7 @@ cmd_update()
 			GIT_QUIET=1
 			;;
 		--progress)
-			progress="--progress"
+			progress=1
 			;;
 		-i|--init)
 			init=1
@@ -542,14 +542,14 @@ cmd_update()
 
 	{
 	git submodule--helper update-clone ${GIT_QUIET:+--quiet} \
-		${progress:+"$progress"} \
+		${progress:+"--progress"} \
 		${wt_prefix:+--prefix "$wt_prefix"} \
 		${prefix:+--recursive-prefix "$prefix"} \
 		${update:+--update "$update"} \
 		${reference:+"$reference"} \
 		${depth:+--depth "$depth"} \
-		${recommend_shallow:+"$recommend_shallow"} \
-		${jobs:+$jobs} \
+		$recommend_shallow \
+		$jobs \
 		"$@" || echo "#unmatched" $?
 	} | {
 	err=
