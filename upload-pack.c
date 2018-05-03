@@ -1376,6 +1376,8 @@ int upload_pack_v2(struct repository *r, struct argv_array *keys,
 	enum fetch_state state = FETCH_PROCESS_ARGS;
 	struct upload_pack_data data;
 
+	git_config(upload_pack_config, NULL);
+
 	upload_pack_data_init(&data);
 	use_sideband = LARGE_PACKET_MAX;
 

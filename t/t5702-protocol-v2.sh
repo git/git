@@ -201,6 +201,20 @@ test_expect_success 'ref advertisment is filtered during fetch using protocol v2
 	! grep "refs/tags/three" log
 '
 
+test_expect_success 'upload-pack respects config using protocol v2' '
+	git init server &&
+	write_script server/.git/hook <<-\EOF &&
+		touch hookout
+		"$@"
+	EOF
+	test_commit -C server one &&
+
+	test_config_global uploadpack.packobjectshook ./hook &&
+	test_path_is_missing server/.git/hookout &&
+	git -c protocol.version=2 clone "file://$(pwd)/server" client &&
+	test_path_is_file server/.git/hookout
+'
+
 # Test protocol v2 with 'http://' transport
 #
 . "$TEST_DIRECTORY"/lib-httpd.sh
