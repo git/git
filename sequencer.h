@@ -44,6 +44,10 @@ struct replay_opts {
 	char **xopts;
 	size_t xopts_nr, xopts_alloc;
 
+	/* placeholder commit for -i --root */
+	struct object_id squash_onto;
+	int have_squash_onto;
+
 	/* Only used by REPLAY_NONE */
 	struct rev_info *revs;
 };
