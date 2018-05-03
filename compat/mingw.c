@@ -297,7 +297,7 @@ static enum phantom_symlink_result process_phantom_symlink(
 		return PHANTOM_SYMLINK_DONE;
 
 	/* let Windows resolve the link by opening it */
-	hnd = CreateFileW(wlink, 0,
+	hnd = CreateFileW(wtarget, 0,
 			FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL,
 			OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
 	if (hnd == INVALID_HANDLE_VALUE) {
