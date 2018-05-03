@@ -126,6 +126,22 @@ test_expect_success 'submodule add' '
 	test_cmp empty untracked
 '
 
+test_create_repo parent &&
+test_commit -C parent one
+
+test_expect_success 'redirected submodule add does not show progress' '
+	git -C addtest submodule add "file://$submodurl/parent" submod-redirected \
+		2>err &&
+	! grep % err &&
+	test_i18ngrep ! "Checking connectivity" err
+'
+
+test_expect_success 'redirected submodule add --progress does show progress' '
+	git -C addtest submodule add --progress "file://$submodurl/parent" \
+		submod-redirected-progress 2>err && \
+	grep % err
+'
+
 test_expect_success 'submodule add to .gitignored path fails' '
 	(
 		cd addtest-ignore &&

@@ -239,6 +239,13 @@ OPTIONS
 --quiet::
 	Only print error messages.
 
+--progress::
+	This option is only valid for add and update commands.
+	Progress status is reported on the standard error stream
+	by default when it is attached to a terminal, unless -q
+	is specified. This flag forces progress status even if the
+	standard error stream is not directed to a terminal.
+
 --all::
 	This option is only valid for the deinit command. Unregister all
 	submodules in the working tree.
