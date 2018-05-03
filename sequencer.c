@@ -3903,7 +3903,8 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 		}
 
 		if (!commit)
-			fprintf(out, "%s onto\n", cmd_reset);
+			fprintf(out, "%s %s\n", cmd_reset,
+				rebase_cousins ? "onto" : "[new root]");
 		else {
 			const char *to = NULL;
 
