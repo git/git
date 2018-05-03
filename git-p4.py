@@ -183,6 +183,18 @@ def write_pipe(c, stdin):
 
     return val
 
+def iconv(str, incoming):
+    charset = gitConfig('git-p4.charset')
+    if charset:
+        try:
+            if incoming:
+                str = str.decode(charset, 'replace').encode('utf8', 'replace')
+            else:
+                str = str.decode('utf8', 'replace').encode(charset, 'replace')
+        except:
+            pass
+    return str
+
 def p4_write_pipe(c, stdin):
     real_cmd = p4_build_cmd(c)
     return write_pipe(real_cmd, stdin)
@@ -417,6 +429,9 @@ def p4_describe(change, shelved=False):
     if "time" not in d:
         die("p4 describe -s %d returned no \"time\": %s" % (change, str(d)))
 
+    for k in d:
+        d[k] = iconv(d[k], True)
+    
     return d
 
 #
@@ -1361,8 +1376,11 @@ class P4UserMap:
         for output in p4CmdList("users"):
             if "User" not in output:
                 continue
-            self.users[output["User"]] = output["FullName"] + " <" + output["Email"] + ">"
-            self.emails[output["Email"]] = output["User"]
+            user = iconv(output["User"], True)
+            fullname = iconv(output["FullName"], True)
+            email = iconv(output["Email"], True)
+            self.users[user] = fullname + " <" + email + ">"
+            self.emails[email] = user
 
         mapUserConfigRegex = re.compile(r"^\s*(\S+)\s*=\s*(.+)\s*<(\S+)>\s*$", re.VERBOSE)
         for mapUserConfig in gitConfigList("git-p4.mapUser"):
@@ -2059,6 +2077,7 @@ class P4Submit(Command, P4UserMap):
                 if self.isWindows:
                     message = message.replace("\r\n", "\n")
                 submitTemplate = message[:message.index(separatorLine)]
+                submitTemplate = iconv(submitTemplate, False)
 
                 if update_shelve:
                     p4_write_pipe(['shelve', '-r', '-i'], submitTemplate)
