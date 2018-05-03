@@ -562,9 +562,23 @@ static int do_recursive_merge(struct commit *base, struct commit *next,
 	return !clean;
 }
 
+static struct object_id *get_cache_tree_oid(void)
+{
+	if (!active_cache_tree)
+		active_cache_tree = cache_tree();
+
+	if (!cache_tree_fully_valid(active_cache_tree))
+		if (cache_tree_update(&the_index, 0)) {
+			error(_("unable to update cache tree"));
+			return NULL;
+		}
+
+	return &active_cache_tree->oid;
+}
+
 static int is_index_unchanged(void)
 {
-	struct object_id head_oid;
+	struct object_id head_oid, *cache_tree_oid;
 	struct commit *head_commit;
 
 	if (!resolve_ref_unsafe("HEAD", RESOLVE_REF_READING, &head_oid, NULL))
@@ -583,15 +597,10 @@ static int is_index_unchanged(void)
 	if (parse_commit(head_commit))
 		return -1;
 
-	if (!active_cache_tree)
-		active_cache_tree = cache_tree();
+	if (!(cache_tree_oid = get_cache_tree_oid()))
+		return -1;
 
-	if (!cache_tree_fully_valid(active_cache_tree))
-		if (cache_tree_update(&the_index, 0))
-			return error(_("unable to update cache tree"));
-
-	return !oidcmp(&active_cache_tree->oid,
-		       &head_commit->tree->object.oid);
+	return !oidcmp(cache_tree_oid, &head_commit->tree->object.oid);
 }
 
 static int write_author_script(const char *message)
