@@ -275,4 +275,17 @@ test_expect_success 'root commits' '
 	test_cmp_rev HEAD $before
 '
 
+test_expect_success 'a "merge" into a root commit is a fast-forward' '
+	head=$(git rev-parse HEAD) &&
+	cat >script-from-scratch <<-EOF &&
+	reset [new root]
+	merge $head
+	EOF
+	test_config sequence.editor \""$PWD"/replace-editor.sh\" &&
+	test_tick &&
+	git rebase -i -r HEAD^ &&
+	test_cmp_rev HEAD $head
+'
+
+
 test_done

@@ -2870,6 +2870,18 @@ static int do_merge(struct commit *commit, const char *arg, int arg_len,
 		goto leave_merge;
 	}
 
+	if (opts->have_squash_onto &&
+	    !oidcmp(&head_commit->object.oid, &opts->squash_onto)) {
+		/*
+		 * When the user tells us to "merge" something into a
+		 * "[new root]", let's simply fast-forward to the merge head.
+		 */
+		rollback_lock_file(&lock);
+		ret = fast_forward_to(&merge_commit->object.oid,
+				       &head_commit->object.oid, 0, opts);
+		goto leave_merge;
+	}
+
 	if (commit) {
 		const char *message = get_commit_buffer(commit, NULL);
 		const char *body;
