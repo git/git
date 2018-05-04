@@ -572,8 +572,11 @@ int cmd_unpack_objects(int argc, const char **argv, const char *prefix)
 	unpack_all();
 	the_hash_algo->update_fn(&ctx, buffer, offset);
 	the_hash_algo->final_fn(oid.hash, &ctx);
-	if (strict)
+	if (strict) {
 		write_rest();
+		if (fsck_finish(&fsck_options))
+			die(_("fsck error in pack objects"));
+	}
 	if (hashcmp(fill(the_hash_algo->rawsz), oid.hash))
 		die("final sha1 did not match");
 	use(the_hash_algo->rawsz);
