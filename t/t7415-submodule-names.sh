@@ -77,4 +77,11 @@ test_expect_success 'fsck detects evil superproject' '
 	test_must_fail git fsck
 '
 
+test_expect_success 'transfer.fsckObjects detects evil superproject (unpack)' '
+	rm -rf dst.git &&
+	git init --bare dst.git &&
+	git -C dst.git config transfer.fsckObjects true &&
+	test_must_fail git push dst.git HEAD
+'
+
 test_done
