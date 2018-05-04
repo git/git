@@ -6,6 +6,7 @@ Exercise the name-checking function on a variety of names, and then give a
 real-world setup that confirms we catch this in practice.
 '
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-pack.sh
 
 test_expect_success 'check names' '
 	cat >expect <<-\EOF &&
@@ -82,6 +83,43 @@ test_expect_success 'transfer.fsckObjects detects evil superproject (unpack)' '
 	git init --bare dst.git &&
 	git -C dst.git config transfer.fsckObjects true &&
 	test_must_fail git push dst.git HEAD
+'
+
+test_expect_success 'transfer.fsckObjects detects evil superproject (index)' '
+	rm -rf dst.git &&
+	git init --bare dst.git &&
+	git -C dst.git config transfer.fsckObjects true &&
+	git -C dst.git config transfer.unpackLimit 1 &&
+	test_must_fail git push dst.git HEAD
+'
+
+# Normally our packs contain commits followed by trees followed by blobs. This
+# reverses the order, which requires backtracking to find the context of a
+# blob. We'll start with a fresh gitmodules-only tree to make it simpler.
+test_expect_success 'create oddly ordered pack' '
+	git checkout --orphan odd &&
+	git rm -rf --cached . &&
+	git add .gitmodules &&
+	git commit -m odd &&
+	{
+		pack_header 3 &&
+		pack_obj $(git rev-parse HEAD:.gitmodules) &&
+		pack_obj $(git rev-parse HEAD^{tree}) &&
+		pack_obj $(git rev-parse HEAD)
+	} >odd.pack &&
+	pack_trailer odd.pack
+'
+
+test_expect_success 'transfer.fsckObjects handles odd pack (unpack)' '
+	rm -rf dst.git &&
+	git init --bare dst.git &&
+	test_must_fail git -C dst.git unpack-objects --strict <odd.pack
+'
+
+test_expect_success 'transfer.fsckObjects handles odd pack (index)' '
+	rm -rf dst.git &&
+	git init --bare dst.git &&
+	test_must_fail git -C dst.git index-pack --strict --stdin <odd.pack
 '
 
 test_done
