@@ -63,6 +63,7 @@ static struct oidset gitmodules_done = OIDSET_INIT;
 	FUNC(GITMODULES_BLOB, ERROR) \
 	FUNC(GITMODULES_PARSE, ERROR) \
 	FUNC(GITMODULES_NAME, ERROR) \
+	FUNC(GITMODULES_SYMLINK, ERROR) \
 	/* warnings */ \
 	FUNC(BAD_FILEMODE, WARN) \
 	FUNC(EMPTY_NAME, WARN) \
@@ -576,8 +577,14 @@ static int fsck_tree(struct tree *item, struct fsck_options *options)
 		has_dotgit |= is_hfs_dotgit(name) || is_ntfs_dotgit(name);
 		has_zero_pad |= *(char *)desc.buffer == '0';
 
-		if (is_hfs_dotgitmodules(name) || is_ntfs_dotgitmodules(name))
-			oidset_insert(&gitmodules_found, oid);
+		if (is_hfs_dotgitmodules(name) || is_ntfs_dotgitmodules(name)) {
+			if (!S_ISLNK(mode))
+				oidset_insert(&gitmodules_found, oid);
+			else
+				retval += report(options, &item->object,
+						 FSCK_MSG_GITMODULES_SYMLINK,
+						 ".gitmodules is a symbolic link");
+		}
 
 		if (update_tree_entry_gently(&desc)) {
 			retval += report(options, &item->object, FSCK_MSG_BAD_TREE, "cannot be parsed as a tree");

@@ -122,4 +122,33 @@ test_expect_success 'transfer.fsckObjects handles odd pack (index)' '
 	test_must_fail git -C dst.git index-pack --strict --stdin <odd.pack
 '
 
+test_expect_success 'fsck detects symlinked .gitmodules file' '
+	git init symlink &&
+	(
+		cd symlink &&
+
+		# Make the tree directly to avoid index restrictions.
+		#
+		# Because symlinks store the target as a blob, choose
+		# a pathname that could be parsed as a .gitmodules file
+		# to trick naive non-symlink-aware checking.
+		tricky="[foo]bar=true" &&
+		content=$(git hash-object -w ../.gitmodules) &&
+		target=$(printf "$tricky" | git hash-object -w --stdin) &&
+		tree=$(
+			{
+				printf "100644 blob $content\t$tricky\n" &&
+				printf "120000 blob $target\t.gitmodules\n"
+			} | git mktree
+		) &&
+		commit=$(git commit-tree $tree) &&
+
+		# Check not only that we fail, but that it is due to the
+		# symlink detector; this grep string comes from the config
+		# variable name and will not be translated.
+		test_must_fail git fsck 2>output &&
+		grep gitmodulesSymlink output
+	)
+'
+
 test_done
