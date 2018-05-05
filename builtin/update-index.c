@@ -399,7 +399,7 @@ static int add_cacheinfo(unsigned int mode, const struct object_id *oid,
 	int size, len, option;
 	struct cache_entry *ce;
 
-	if (!verify_path(path))
+	if (!verify_path(path, mode))
 		return error("Invalid path '%s'", path);
 
 	len = strlen(path);
@@ -452,7 +452,7 @@ static void update_one(const char *path)
 		stat_errno = errno;
 	} /* else stat is valid */
 
-	if (!verify_path(path)) {
+	if (!verify_path(path, st.st_mode)) {
 		fprintf(stderr, "Ignoring path %s\n", path);
 		return;
 	}
@@ -543,7 +543,7 @@ static void read_index_info(int nul_term_line)
 			path_name = uq.buf;
 		}
 
-		if (!verify_path(path_name)) {
+		if (!verify_path(path_name, mode)) {
 			fprintf(stderr, "Ignoring path %s\n", path_name);
 			continue;
 		}
