@@ -732,7 +732,7 @@ struct cache_entry *make_cache_entry(unsigned int mode,
 	int size, len;
 	struct cache_entry *ce, *ret;
 
-	if (!verify_path(path)) {
+	if (!verify_path(path, mode)) {
 		error("Invalid path '%s'", path);
 		return NULL;
 	}
@@ -796,7 +796,7 @@ int ce_same_name(const struct cache_entry *a, const struct cache_entry *b)
  * Also, we don't want double slashes or slashes at the
  * end that can make pathnames ambiguous.
  */
-static int verify_dotfile(const char *rest)
+static int verify_dotfile(const char *rest, unsigned mode)
 {
 	/*
 	 * The first character was '.', but that
@@ -814,6 +814,9 @@ static int verify_dotfile(const char *rest)
 	 * case-insensitively here, even if ignore_case is not set.
 	 * This outlaws ".GIT" everywhere out of an abundance of caution,
 	 * since there's really no good reason to allow it.
+	 *
+	 * Once we've seen ".git", we can also find ".gitmodules", etc (also
+	 * case-insensitively).
 	 */
 	case 'g':
 	case 'G':
@@ -823,6 +826,14 @@ static int verify_dotfile(const char *rest)
 			break;
 		if (rest[3] == '\0' || is_dir_sep(rest[3]))
 			return 0;
+		if (S_ISLNK(mode)) {
+			rest += 3;
+			if ((skip_iprefix(rest, "modules", &rest) ||
+			     skip_iprefix(rest, "ignore", &rest) ||
+			     skip_iprefix(rest, "attributes", &rest)) &&
+			    (*rest == '\0' || is_dir_sep(*rest)))
+				return 0;
+		}
 		break;
 	case '.':
 		if (rest[1] == '\0' || is_dir_sep(rest[1]))
@@ -831,7 +842,7 @@ static int verify_dotfile(const char *rest)
 	return 1;
 }
 
-int verify_path(const char *path)
+int verify_path(const char *path, unsigned mode)
 {
 	char c;
 
@@ -844,12 +855,29 @@ int verify_path(const char *path)
 			return 1;
 		if (is_dir_sep(c)) {
 inside:
-			if (protect_hfs && is_hfs_dotgit(path))
-				return 0;
-			if (protect_ntfs && is_ntfs_dotgit(path))
-				return 0;
+			if (protect_hfs) {
+				if (is_hfs_dotgit(path))
+					return 0;
+				if (S_ISLNK(mode)) {
+					if (is_hfs_dotgitmodules(path) ||
+					    is_hfs_dotgitignore(path) ||
+					    is_hfs_dotgitattributes(path))
+						return 0;
+				}
+			}
+			if (protect_ntfs) {
+				if (is_ntfs_dotgit(path))
+					return 0;
+				if (S_ISLNK(mode)) {
+					if (is_ntfs_dotgitmodules(path) ||
+					    is_ntfs_dotgitignore(path) ||
+					    is_ntfs_dotgitattributes(path))
+						return 0;
+				}
+			}
+
 			c = *path++;
-			if ((c == '.' && !verify_dotfile(path)) ||
+			if ((c == '.' && !verify_dotfile(path, mode)) ||
 			    is_dir_sep(c) || c == '\0')
 				return 0;
 		}
@@ -1166,7 +1194,7 @@ static int add_index_entry_with_check(struct index_state *istate, struct cache_e
 
 	if (!ok_to_add)
 		return -1;
-	if (!verify_path(ce->name))
+	if (!verify_path(ce->name, ce->ce_mode))
 		return error("Invalid path '%s'", ce->name);
 
 	if (!skip_df_check &&
