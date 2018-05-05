@@ -2177,7 +2177,7 @@ _git_config ()
 		__gitcomp "$__git_log_date_formats"
 		return
 		;;
-	sendemail.aliasesfiletype)
+	sendemail.aliasfiletype)
 		__gitcomp "mutt mailrc pine elm gnus"
 		return
 		;;
