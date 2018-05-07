@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Apr 2018, #04; Mon, 30)
+Subject: What's cooking in git.git (May 2018, #01; Mon, 7)
 X-master-at: 1f1cddd558b54bb0ce19c8ace353fd07b758510d
-X-next-at: 4582c99ba8a159afafa295e51d1d3387967af0a0
+X-next-at: d54016d9e3a3ac00b0483d3779ff96f3882b7094
 
-What's cooking in git.git (Apr 2018, #04; Mon, 30)
+What's cooking in git.git (May 2018, #01; Mon, 7)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -20,24 +20,316 @@ of the repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* cc/perf-aggregate-unknown-option (2018-04-26) 1 commit
- - perf/aggregate: use Getopt::Long for option parsing
+* tb/test-apfs-utf8-normalization (2018-05-02) 1 commit
+ - test: correct detection of UTF8_NFD_TO_NFC for APFS
 
- Perf-test helper updates.
+ A test to see if the filesystem normalizes UTF-8 filename has been
+ updated to check what we need to know in a more direct way, i.e. a
+ path created in NFC form can be accessed with NFD form (or vice
+ versa) to cope with APFS as well as HFS.
+
+ Will merge to 'next'.
+
+
+* ab/get-short-oid (2018-05-02) 12 commits
+ - get_short_oid: document & warn if we ignore the type selector
+ - config doc: document core.disambiguate
+ - get_short_oid / peel_onion: ^{commit} should be commit, not committish
+ - get_short_oid / peel_onion: ^{tree} should be tree, not treeish
+ - get_short_oid: learn to disambiguate by ^{blob}
+ - get_short_oid: learn to disambiguate by ^{tag}
+ - get_short_oid: sort ambiguous objects by type, then SHA-1
+ - sha1-name.c: move around the collect_ambiguous() function
+ - cache.h: add comment explaining the order in object_type
+ - git-p4: change "commitish" typo to "committish"
+ - sha1-array.h: align function arguments
+ - sha1-name.c: remove stray newline
+
+
+* ah/misc-doc-updates (2018-05-06) 7 commits
+ - doc: normalize [--options] to [options] in git-diff
+ - doc: add note about shell quoting to revision.txt
+ - git-svn: remove ''--add-author-from' for 'commit-diff'
+ - doc: add '-d' and '-o' for 'git push'
+ - doc: clarify ignore rules for git ls-files
+ - doc: align 'diff --no-index' in text and synopsis
+ - doc: improve formatting in githooks.txt
+
+ Misc doc fixes.
 
  Will merge to 'next'.
 
 
-* ab/perl-python-attrs (2018-04-27) 3 commits
- - .gitattributes: add a diff driver for Python
- - .gitattributes: use the "perl" differ for Perl
- - .gitattributes: add *.pl extension for Perl
+* bc/format-patch-cover-no-attach (2018-05-02) 1 commit
+ - format-patch: make cover letters always text/plain
 
- We learned that our source files with ".pl" and ".py" extensions
- are Perl and Python files respectively and changes to them are
- better viewed as such with appropriate diff drivers.
+ "git format-patch --cover --attach" created a broken MIME multipart
+ message for the cover letter, which has been fixed by keeping the
+ cover letter as plain text file.
 
  Will merge to 'next'.
+
+
+* bp/test-drop-caches (2018-05-04) 1 commit
+ - test-drop-caches: simplify delay loading of NtSetSystemInformation
+
+ Code simplification.
+
+ Will merge to 'next'.
+
+
+* cc/perf-bisect (2018-05-06) 1 commit
+ - perf/bisect_run_script: disable codespeed
+
+ Performance test updates.
+
+ Will merge to 'next'.
+
+
+* cf/submodule-progress-dissociate (2018-05-04) 3 commits
+ - submodule: add --dissociate option to add/update commands
+ - submodule: add --progress option to add command
+ - submodule: clean up subsititions in script
+
+ "git submodule update" and "git submodule add" supported the
+ "--reference" option to borrow objects from a neighbouring local
+ repository like "git clone" does, but lacked the more recent
+ invention "--dissociate".  Also "git submodule add" has been taught
+ to take the "--progress" option.
+
+ Is this ready for 'next'?  Should "git submodule -h" list the new
+ options in its short help?
+
+
+* dd/send-email-reedit (2018-05-06) 1 commit
+ - git-send-email: allow re-editing of message
+
+ "git send-email" can sometimes offer confirmation dialog "Send this
+ email?" with choices 'Yes', 'No', 'Quit', and 'All'.  A new action
+ 'Edit' has been added to this dialog's choice.
+ 
+ Waiting briefly for an ack or two.
+ cf. <xmqq4ljlsahj.fsf@gitster-ct.c.googlers.com>
+
+
+* em/status-rename-config (2018-05-06) 1 commit
+ - wt-status: use settings from git_diff_ui_config
+
+ "git status" learned to pay attention to UI related diff
+ configuration variables such as diff.renames.
+
+ Will merge to 'next'.
+
+
+* jm/cache-entry-from-mem-pool (2018-05-02) 5 commits
+ - block alloc: add validations around cache_entry lifecyle
+ - block alloc: allocate cache entries from mem_pool
+ - mem-pool: fill out functionality
+ - block alloc: add lifecycle APIs for cache_entry structs
+ - read-cache: teach refresh_cache_entry() to take istate
+
+ For a large tree, the index needs to hold many cache entries
+ allocated on heap.  These cache entries are now allocated out of a
+ dedicated memory pool to amortize malloc(3) overhead.
+
+ Needs review.  
+ Is the "caller always knows which pool an entry came from and calls
+ the right kind of free" a feasible approach?
+
+
+* js/branch-diff (2018-05-06) 18 commits
+ - completion: support branch-diff
+ - branch-diff: add a man page
+ - branch-diff --dual-color: work around bogus white-space warning
+ - branch-diff: offer to dual-color the diffs
+ - diff: add an internal option to dual-color diffs of diffs
+ - color: provide inverted colors, too
+ - branch-diff: use color for the commit pairs
+ - branch-diff: add tests
+ - branch-diff: do not show "function names" in hunk headers
+ - branch-diff: adjust the output of the commit pairs
+ - branch-diff: suppress the diff headers
+ - branch-diff: indent the diffs just like tbdiff
+ - branch-diff: right-trim commit messages
+ - branch-diff: also show the diff between patches
+ - branch-diff: improve the order of the shown commits
+ - branch-diff: first rudimentary implementation
+ - Add a new builtin: branch-diff
+ - Add a function to solve least-cost assignment problems
+
+ "git tbdiff" that lets us compare individual patches in two
+ iterations of a topic has been rewritten and made into a built-in
+ command.
+
+ Expecting a reroll.
+ cf. <nycvar.QRO.7.76.6.1805052351560.77@tvgsbejvaqbjf.bet>
+
+
+* js/sequencer-and-root-commits (2018-05-06) 6 commits
+ - rebase --rebase-merges: root commits can be cousins, too
+ - rebase --rebase-merges: a "merge" into a new root is a fast-forward
+ - sequencer: allow introducing new root commits
+ - rebase -i --root: let the sequencer handle even the initial part
+ - sequencer: learn about the special "fake root commit" handling
+ - sequencer: extract helper to update active_cache_tree
+ (this branch uses js/rebase-recreate-merge.)
+
+ The implementation of "git rebase -i --root" has been updaed to use
+ the sequencer machinery more.
+
+ Will merge to 'next'.
+
+
+* js/use-bug-macro (2018-05-06) 4 commits
+ - Convert remaining die*(BUG) messages
+ - Replace all die("BUG: ...") calls by BUG() ones
+ - run-command: use BUG() to report bugs, not die()
+ - test-tool: help verifying BUG() code paths
+
+
+* jt/partial-clone-proto-v2 (2018-05-06) 4 commits
+ - {fetch,upload}-pack: support filter in protocol v2
+ - upload-pack: read config when serving protocol v2
+ - upload-pack: fix error message typo
+ - Merge branch 'bw/protocol-v2' into jt/partial-clone-proto-v2
+ (this branch uses bw/protocol-v2; is tangled with bw/server-options.)
+
+ Transfer protocol v2 learned to support the partial clone.
+
+ Will merge to 'next'.
+
+
+* ma/doc-expand-tabs (2018-05-02) 1 commit
+ - revisions.txt: expand tabs to spaces in diagram
+
+ Fix one instance of asciidoctor's misformatting by expanding a tab
+ into spaces in a literal block.
+
+ Will discard.  This approach is less maintainable than the approach
+ taken by bc/asciidoctor-tab-width topic.
+
+
+* nd/completion-aliasfiletype-typofix (2018-05-06) 1 commit
+ - completion: fix misspelled config key aliasesfiletype
+
+ Typofix.
+
+ Will merge to 'next'.
+
+
+* nd/doc-header (2018-05-02) 1 commit
+ - doc: keep first level section header in upper case
+
+ Doc formatting fix.
+
+ Will merge to 'next'.
+
+
+* nd/pack-unreachable-objects-doc (2018-05-06) 1 commit
+ - pack-objects: validation and documentation about unreachable options
+
+ Doc update.
+
+ Will merge to 'next'.
+
+
+* sb/object-store-alloc (2018-05-02) 14 commits
+ - alloc.c: include alloc.h
+ - alloc: allow arbitrary repositories for alloc functions
+ - object: allow create_object to handle arbitrary repositories
+ - object: allow grow_object_hash to handle arbitrary repositories
+ - alloc: add repository argument to alloc_commit_index
+ - alloc: add repository argument to alloc_report
+ - alloc: add repository argument to alloc_object_node
+ - alloc: add repository argument to alloc_tag_node
+ - alloc: add repository argument to alloc_commit_node
+ - alloc: add repository argument to alloc_tree_node
+ - alloc: add repository argument to alloc_blob_node
+ - object: add repository argument to grow_object_hash
+ - object: add repository argument to create_object
+ - repository: introduce object parser field
+ (this branch uses sb/object-store-replace and sb/oid-object-info.)
+
+ The conversion to pass "the_repository" and then "a_repository"
+ throughout the object access API continues.
+
+
+* tb/grep-column (2018-05-06) 7 commits
+ - contrib/git-jump/git-jump: jump to match column in addition to line
+ - grep.c: add configuration variables to show matched option
+ - builtin/grep.c: add '--column' option to 'git-grep(1)'
+ - grep.c: display column number of first match
+ - grep.[ch]: extend grep_opt to allow showing matched column
+ - grep.c: expose matched column in match_line()
+ - Documentation/config.txt: camel-case lineNumber for consistency
+
+ "git grep" learned the "--column" option that gives not just the
+ line number but the column number of the hit.
+
+
+* bc/asciidoctor-tab-width (2018-05-07) 2 commits
+ - Documentation: render revisions correctly under Asciidoctor
+ - Documentation: use 8-space tabs with Asciidoctor
+
+ Asciidoctor gives a reasonable imitation for AsciiDoc, but does not
+ render illustration in a literal block correctly when indented with
+ HT by default. The problem is fixed by forcing 8-space tabs.
+
+ Will merge to 'next'.
+
+
+* bc/mailmap-self (2018-05-07) 1 commit
+ - mailmap: update brian m. carlson's email address
+
+ Will merge to 'next'.
+
+--------------------------------------------------
+[Stalled]
+
+* pc/submodule-helper-foreach (2018-02-02) 5 commits
+ - submodule: port submodule subcommand 'foreach' from shell to C
+ - submodule foreach: document variable '$displaypath'
+ - submodule foreach: clarify the '$toplevel' variable documentation
+ - submodule foreach: document '$sm_path' instead of '$path'
+ - submodule foreach: correct '$path' in nested submodules from a subdirectory
+
+ Expecting a response to review comments
+ e.g. cf. <20180206150044.1bffbb573c088d38c8e44bf5@google.com>
+
+
+* pw/add-p-select (2018-03-16) 3 commits
+ - add -p: optimize line selection for short hunks
+ - add -p: allow line selection to be inverted
+ - add -p: select individual hunk lines
+
+ "git add -p" interactive interface learned to let users choose
+ individual added/removed lines to be used in the operation, instead
+ of accepting or rejecting a whole hunk.
+
+ Expecting a reroll to reignite the discussion.
+ cf. <9895c7b7-eac4-28c1-90c6-443acd1131b7@talktalk.net>
+
+
+* jh/json-writer (2018-03-28) 1 commit
+ - json_writer: new routines to create data in JSON format
+
+ Preparatory code to later add json output for unspecified telemetry
+ data.
+
+ We do not add random code that does not have real users to our
+ codebase, so let's have it wait until such a real code materializes
+ before too long.
+
+
+* hn/bisect-first-parent (2018-04-21) 1 commit
+ - bisect: create 'bisect_flags' parameter in find_bisection()
+
+ Preliminary code update to allow passing more flags down the
+ bisection codepath in the future.
+
+ We do not add random code that does not have real users to our
+ codebase, so let's have it wait until such a real code materializes
+ before too long.
 
 
 * is/parsing-line-range (2018-04-27) 2 commits
@@ -49,16 +341,6 @@ of the repositories listed at
 
  Seems to break a few tests.
 
-
-* js/test-unset-prereq (2018-04-30) 1 commit
- - tests: introduce test_unset_prereq, for debugging
-
- Test debugging aid.
-
- Will merge to 'next'.
-
---------------------------------------------------
-[Stalled]
 
 * ld/p4-unshelve (2018-02-22) 1 commit
  - git-p4: add unshelve command
@@ -142,6 +424,35 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* cc/perf-aggregate-unknown-option (2018-04-26) 1 commit
+ - perf/aggregate: use Getopt::Long for option parsing
+
+ Perf-test helper updates.
+
+ Will merge to 'next'.
+
+
+* ab/perl-python-attrs (2018-04-27) 3 commits
+ - .gitattributes: add a diff driver for Python
+ - .gitattributes: use the "perl" differ for Perl
+ - .gitattributes: add *.pl extension for Perl
+
+ We learned that our source files with ".pl" and ".py" extensions
+ are Perl and Python files respectively and changes to them are
+ better viewed as such with appropriate diff drivers.
+
+ Will merge to 'next'.
+
+
+* js/test-unset-prereq (2018-04-30) 1 commit
+ - tests: introduce test_unset_prereq, for debugging
+
+ Test debugging aid.
+
+ Will merge to 'next'.
+ cf. <20180507115950.3887-1-szeder.dev@gmail.com>
+
+
 * fg/completion-external (2018-04-30) 1 commit
  - completion: load completion file for external subcommand
 
@@ -149,6 +460,9 @@ of the repositories listed at
  custom completion file for "git $command" where $command is a
  custom "git-$command" that the end user has on the $PATH when using
  newer version of bash.
+
+ Will merge to 'next'.
+ cf. <CAM0VKjkTu+OkLM3gvX73mWugxArCVmqRBmWGHiKuLiLRNkkNow@mail.gmail.com>
 
 
 * ma/double-dashes-in-docs (2018-04-18) 4 commits
@@ -271,7 +585,7 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* js/rebase-i-clean-msg-after-fixup-continue (2018-04-30) 4 commits
+* js/rebase-i-clean-msg-after-fixup-continue (2018-05-02) 4 commits
  - rebase --skip: clean up commit message after a failed fixup/squash
  - sequencer: always commit without editing when asked for
  - rebase -i: Handle "combination of <n> commits" with GETTEXT_POISON
@@ -300,7 +614,7 @@ of the repositories listed at
  - ls-remote: send server options when using protocol v2
  - serve: introduce the server-option capability
  - Merge branch 'bw/protocol-v2' into HEAD
- (this branch uses bw/protocol-v2.)
+ (this branch uses bw/protocol-v2; is tangled with jt/partial-clone-proto-v2.)
 
  The transport protocol v2 is getting updated further.
 
@@ -359,7 +673,7 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* bc/object-id (2018-04-24) 41 commits
+* bc/object-id (2018-05-02) 42 commits
  - merge-one-file: compute empty blob object ID
  - add--interactive: compute the empty tree value
  - Update shell scripts to compute empty tree object ID
@@ -376,6 +690,7 @@ of the repositories listed at
  - merge: convert empty tree constant to the_hash_algo
  - builtin/merge: switch tree functions to use object_id
  - builtin/am: convert uses of EMPTY_TREE_SHA1_BIN to the_hash_algo
+ - sha1-file: add functions for hex empty tree and blob OIDs
  - builtin/receive-pack: avoid hard-coded constants for push certs
  - diff: specify abbreviation size in terms of the_hash_algo
  - upload-pack: replace use of several hard-coded constants
@@ -395,7 +710,7 @@ of the repositories listed at
  - pack-objects: abstract away hash algorithm
  - packfile: abstract away hash constant values
  - packfile: convert find_pack_entry to object_id
- - sha1_file: convert freshen functions to object_id
+ - sha1-file: convert freshen functions to object_id
  - packfile: convert has_sha1_pack to object_id
  - packfile: remove unused member from struct pack_entry
  - Remove unused member in struct object_context
@@ -403,9 +718,6 @@ of the repositories listed at
  - cache: add a function to read an object ID from a buffer
 
  Conversion from uchar[20] to struct object_id continues.
-
- Expecting a reroll.
- cf. <20180426011337.GA722934@genre.crustytoothpaste.net>
 
 
 * sb/oid-object-info (2018-04-26) 9 commits
@@ -418,7 +730,7 @@ of the repositories listed at
  - packfile: add repository argument to retry_bad_packed_offset
  - cache.h: add repository argument to oid_object_info
  - cache.h: add repository argument to oid_object_info_extended
- (this branch uses sb/object-store-replace.)
+ (this branch is used by sb/object-store-alloc; uses sb/object-store-replace.)
 
  The codepath around object-info API has been taught to take the
  repository object (which in turn tells the API which object store
@@ -427,19 +739,21 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* en/unpack-trees-split-index-fix (2018-04-24) 1 commit
+* en/unpack-trees-split-index-fix (2018-05-02) 1 commit
  - unpack_trees: fix breakage when o->src_index != o->dst_index
 
  The split-index feature had a long-standing and dormant bug in
  certain use of the in-core merge machinery, which has been fixed.
 
- Hold.
- cf. <CACsJy8DyP_mXXJKn52Jzqe63N3GLpXePCr8ha97Lv9hr6u-M0w@mail.gmail.com>
+ Will merge to 'next'.
+ cf. <CACsJy8CeDhrT9GXe9q5gqsAeq_sSQ8jyF2nMOFxzjwKtE31oPQ@mail.gmail.com>
 
 
-* bp/merge-rename-config (2018-04-25) 2 commits
- - merge: add merge.aggressive config setting
+* bp/merge-rename-config (2018-05-04) 3 commits
+ - merge: pass aggressive when rename detection is turned off
  - merge: add merge.renames config setting
+ - merge: update documentation for {merge,diff}.renameLimit
+ (this branch uses en/rename-directory-detection-reboot.)
 
 
 * en/git-debugger (2018-04-25) 1 commit
@@ -450,8 +764,8 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* js/no-pager-shorthand (2018-04-25) 1 commit
- - git: add -N as a short option for --no-pager
+* js/no-pager-shorthand (2018-05-04) 1 commit
+ - git: add -P as a short option for --no-pager
 
  "git --no-pager cmd" did not have short-and-sweet single letter
  option. Now it does.
@@ -501,9 +815,10 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* ds/generation-numbers (2018-04-26) 10 commits
+* ds/generation-numbers (2018-05-02) 11 commits
  - commit-graph.txt: update design document
  - merge: check config before loading commits
+ - commit: use generation number in remove_redundant()
  - commit: add short-circuit to paint_down_to_common()
  - commit: use generation numbers for in_merge_bases()
  - ref-filter: use generation number for --contains
@@ -517,6 +832,8 @@ of the repositories listed at
  A recently added "commit-graph" datafile has learned to store
  pre-computed generation numbers to speed up the decisions to stop
  history traversal.
+
+ Is this ready for 'next'?
 
 
 * en/rename-directory-detection-reboot (2018-04-25) 36 commits
@@ -556,9 +873,15 @@ of the repositories listed at
  - directory rename detection: testcases to avoid taking detection too far
  - directory rename detection: directory splitting testcases
  - directory rename detection: basic testcases
+ (this branch is used by bp/merge-rename-config.)
 
- Reboot of an attempt to detect wholesale directory renames and use
- it while merging.
+ Rename detection logic in "diff" family that is used in "merge" has
+ learned to guess when all of x/a, x/b and x/c have moved to z/a,
+ z/b and z/c, it is likely that x/d added in the meantime would also
+ want to move to z/d by taking the hint that the entire directory
+ 'x' moved to 'z'.  Incidentally, this avoids updating a file in the
+ working tree after a (non-trivial) merge whose result matches what
+ our side originally had.
 
  Will merge to 'next'.
 
@@ -579,6 +902,8 @@ of the repositories listed at
  across a few places in the build procedure, but it now is getting a
  bit more consolidated to allow more automation.
 
+ Is this ready for 'next'.
+
 
 * sb/object-store-replace (2018-04-12) 15 commits
   (merged to 'next' on 2018-04-25 at 9a213fb505)
@@ -597,24 +922,13 @@ of the repositories listed at
  + object-store: move lookup_replace_object to replace-object.h
  + replace-object: move replace_map to object store
  + replace_object: use oidmap
- (this branch is used by sb/oid-object-info.)
+ (this branch is used by sb/object-store-alloc and sb/oid-object-info.)
 
  The effort to pass the repository in-core structure throughout the
  API continues.  This round deals with the code that implements the
  refs/replace/ mechanism.
 
  Will merge to 'master'.
-
-
-* hn/bisect-first-parent (2018-04-21) 1 commit
- - bisect: create 'bisect_flags' parameter in find_bisection()
-
- Preliminary code update to allow passing more flags down the
- bisection codepath in the future.
-
- We do not add random code that does not have real users to our
- codebase, so let's have it wait until such a real code materializes
- before too long.
 
 
 * sg/complete-paths (2018-04-17) 11 commits
@@ -655,6 +969,8 @@ of the repositories listed at
  and also paint lines in different colors depending on the age of
  the commit.
 
+ Is this ready for 'next'?
+
 
 * ab/simplify-perl-makefile (2018-04-19) 2 commits
   (merged to 'next' on 2018-04-25 at 906cf21682)
@@ -668,7 +984,9 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* ds/lazy-load-trees (2018-04-11) 5 commits
+* ds/lazy-load-trees (2018-05-02) 6 commits
+  (merged to 'next' on 2018-05-02 at d54016d9e3)
+ + coccinelle: avoid wrong transformation suggestions from commit.cocci
   (merged to 'next' on 2018-04-25 at b90813f421)
  + commit-graph: lazy-load trees for commits
  + treewide: replace maybe_tree with accessor methods
@@ -794,17 +1112,6 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* jh/json-writer (2018-03-28) 1 commit
- - json_writer: new routines to create data in JSON format
-
- Preparatory code to later add json output for unspecified telemetry
- data.
-
- We do not add random code that does not have real users to our
- codebase, so let's have it wait until such a real code materializes
- before too long.
-
-
 * ot/libify-get-ref-atom-value (2018-03-29) 6 commits
   (merged to 'next' on 2018-04-25 at 056bcaa69c)
  + ref-filter: libify get_ref_atom_value()
@@ -906,10 +1213,8 @@ of the repositories listed at
  while doing its work, and shrinking its size helps the performance
  quite a bit.
 
- What's the doneness of this thing?  The interdiff since previous
- rounds looked reasonable, but I didn't see this round otherwise
- scrutinized by reviewers.  The numbers given in the commit near the
- tip do look impressive, though ;-)
+ Will merge to 'next'.
+ cf. <CACsJy8CuVRy4UPEwXJJYAjePEz5zjKMLhRjh9UFw0DPYTzobkw@mail.gmail.com>
 
 
 * nd/repack-keep-pack (2018-04-16) 7 commits
@@ -927,22 +1232,8 @@ of the repositories listed at
  marked with ".keep" so that it is left untouched while objects in
  other packs and loose ones are repacked.
 
- What's the doneness of this thing?  The interdiff since the earlier
- one looked reasonable, but I didn't see this round otherwise
- scrutinized by reviewers.
-
-
-* pw/add-p-select (2018-03-16) 3 commits
- - add -p: optimize line selection for short hunks
- - add -p: allow line selection to be inverted
- - add -p: select individual hunk lines
-
- "git add -p" interactive interface learned to let users choose
- individual added/removed lines to be used in the operation, instead
- of accepting or rejecting a whole hunk.
-
- Expecting a reroll to reignite the discussion.
- cf. <9895c7b7-eac4-28c1-90c6-443acd1131b7@talktalk.net>
+ Will merge to 'next'.
+ cf. <CACsJy8CuVRy4UPEwXJJYAjePEz5zjKMLhRjh9UFw0DPYTzobkw@mail.gmail.com>
 
 
 * ds/commit-graph (2018-04-11) 16 commits
@@ -969,17 +1260,6 @@ of the repositories listed at
  in a separate file to optimize graph walking.
 
  Will merge to 'master'.
-
-
-* pc/submodule-helper-foreach (2018-02-02) 5 commits
- - submodule: port submodule subcommand 'foreach' from shell to C
- - submodule foreach: document variable '$displaypath'
- - submodule foreach: clarify the '$toplevel' variable documentation
- - submodule foreach: document '$sm_path' instead of '$path'
- - submodule foreach: correct '$path' in nested submodules from a subdirectory
-
- Expecting a response to review comments
- e.g. cf. <20180206150044.1bffbb573c088d38c8e44bf5@google.com>
 
 
 * tg/worktree-add-existing-branch (2018-04-30) 4 commits
@@ -1011,9 +1291,12 @@ of the repositories listed at
  - sequencer: refactor how original todo list lines are accessed
  - sequencer: make rearrange_squash() a bit more obvious
  - sequencer: avoid using errno clobbered by rollback_lock_file()
+ (this branch is used by js/sequencer-and-root-commits.)
 
  "git rebase" learned "--rebase-merges" to transplant the whole
  topology of commit graph elsewhere.
+
+ Will merge to 'next'.
 
 
 * bw/protocol-v2 (2018-03-15) 35 commits
@@ -1053,7 +1336,7 @@ of the repositories listed at
  + pkt-line: add delim packet support
  + pkt-line: allow peeking a packet line without consuming it
  + pkt-line: introduce packet_read_with_status
- (this branch is used by bw/server-options.)
+ (this branch is used by bw/server-options and jt/partial-clone-proto-v2.)
 
  The beginning of the next-gen transfer protocol.
 
