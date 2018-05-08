@@ -102,6 +102,14 @@ Capabilities for Pushing
 +
 Supported commands: 'connect'.
 
+'stateless-connect'::
+	Experimental; for internal use only.
+	Can attempt to connect to a remote server for communication
+	using git's wire-protocol version 2.  See the documentation
+	for the stateless-connect command for more information.
++
+Supported commands: 'stateless-connect'.
+
 'push'::
 	Can discover remote refs and push local commits and the
 	history leading up to them to new or existing remote refs.
@@ -135,6 +143,14 @@ Capabilities for Fetching
 	requires a bidirectional, full-duplex connection.
 +
 Supported commands: 'connect'.
+
+'stateless-connect'::
+	Experimental; for internal use only.
+	Can attempt to connect to a remote server for communication
+	using git's wire-protocol version 2.  See the documentation
+	for the stateless-connect command for more information.
++
+Supported commands: 'stateless-connect'.
 
 'fetch'::
 	Can discover remote refs and transfer objects reachable from
@@ -374,6 +390,22 @@ Supported if the helper has the "export" capability.
 	the connection ends, the remote helper exits.
 +
 Supported if the helper has the "connect" capability.
+
+'stateless-connect' <service>::
+	Experimental; for internal use only.
+	Connects to the given remote service for communication using
+	git's wire-protocol version 2.  Valid replies to this command
+	are empty line (connection established), 'fallback' (no smart
+	transport support, fall back to dumb transports) and just
+	exiting with error message printed (can't connect, don't bother
+	trying to fall back).  After line feed terminating the positive
+	(empty) response, the output of the service starts.  Messages
+	(both request and response) must consist of zero or more
+	PKT-LINEs, terminating in a flush packet. The client must not
+	expect the server to store any state in between request-response
+	pairs.  After the connection ends, the remote helper exits.
++
+Supported if the helper has the "stateless-connect" capability.
 
 If a fatal error occurs, the program writes the error message to
 stderr and exits. The caller should expect that a suitable error

@@ -91,6 +91,12 @@ void packet_flush(int fd)
 	write_or_die(fd, "0000", 4);
 }
 
+void packet_delim(int fd)
+{
+	packet_trace("0001", 4, 1);
+	write_or_die(fd, "0001", 4);
+}
+
 int packet_flush_gently(int fd)
 {
 	packet_trace("0000", 4, 1);
@@ -103,6 +109,12 @@ void packet_buf_flush(struct strbuf *buf)
 {
 	packet_trace("0000", 4, 1);
 	strbuf_add(buf, "0000", 4);
+}
+
+void packet_buf_delim(struct strbuf *buf)
+{
+	packet_trace("0001", 4, 1);
+	strbuf_add(buf, "0001", 4);
 }
 
 static void set_packet_header(char *buf, const int size)
@@ -203,6 +215,22 @@ void packet_buf_write(struct strbuf *buf, const char *fmt, ...)
 	va_end(args);
 }
 
+void packet_buf_write_len(struct strbuf *buf, const char *data, size_t len)
+{
+	size_t orig_len, n;
+
+	orig_len = buf->len;
+	strbuf_addstr(buf, "0000");
+	strbuf_add(buf, data, len);
+	n = buf->len - orig_len;
+
+	if (n > LARGE_PACKET_MAX)
+		die("protocol error: impossibly long line");
+
+	set_packet_header(&buf->buf[orig_len], n);
+	packet_trace(data, len, 1);
+}
+
 int write_packetized_from_fd(int fd_in, int fd_out)
 {
 	static char buf[LARGE_PACKET_DATA_MAX];
@@ -280,28 +308,43 @@ static int packet_length(const char *linelen)
 	return (val < 0) ? val : (val << 8) | hex2chr(linelen + 2);
 }
 
-int packet_read(int fd, char **src_buf, size_t *src_len,
-		char *buffer, unsigned size, int options)
+enum packet_read_status packet_read_with_status(int fd, char **src_buffer,
+						size_t *src_len, char *buffer,
+						unsigned size, int *pktlen,
+						int options)
 {
-	int len, ret;
+	int len;
 	char linelen[4];
 
-	ret = get_packet_data(fd, src_buf, src_len, linelen, 4, options);
-	if (ret < 0)
-		return ret;
-	len = packet_length(linelen);
-	if (len < 0)
-		die("protocol error: bad line length character: %.4s", linelen);
-	if (!len) {
-		packet_trace("0000", 4, 0);
-		return 0;
+	if (get_packet_data(fd, src_buffer, src_len, linelen, 4, options) < 0) {
+		*pktlen = -1;
+		return PACKET_READ_EOF;
 	}
-	len -= 4;
-	if (len >= size)
+
+	len = packet_length(linelen);
+
+	if (len < 0) {
+		die("protocol error: bad line length character: %.4s", linelen);
+	} else if (!len) {
+		packet_trace("0000", 4, 0);
+		*pktlen = 0;
+		return PACKET_READ_FLUSH;
+	} else if (len == 1) {
+		packet_trace("0001", 4, 0);
+		*pktlen = 0;
+		return PACKET_READ_DELIM;
+	} else if (len < 4) {
 		die("protocol error: bad line length %d", len);
-	ret = get_packet_data(fd, src_buf, src_len, buffer, len, options);
-	if (ret < 0)
-		return ret;
+	}
+
+	len -= 4;
+	if ((unsigned)len >= size)
+		die("protocol error: bad line length %d", len);
+
+	if (get_packet_data(fd, src_buffer, src_len, buffer, len, options) < 0) {
+		*pktlen = -1;
+		return PACKET_READ_EOF;
+	}
 
 	if ((options & PACKET_READ_CHOMP_NEWLINE) &&
 	    len && buffer[len-1] == '\n')
@@ -309,7 +352,19 @@ int packet_read(int fd, char **src_buf, size_t *src_len,
 
 	buffer[len] = 0;
 	packet_trace(buffer, len, 0);
-	return len;
+	*pktlen = len;
+	return PACKET_READ_NORMAL;
+}
+
+int packet_read(int fd, char **src_buffer, size_t *src_len,
+		char *buffer, unsigned size, int options)
+{
+	int pktlen = -1;
+
+	packet_read_with_status(fd, src_buffer, src_len, buffer, size,
+				&pktlen, options);
+
+	return pktlen;
 }
 
 static char *packet_read_line_generic(int fd,
@@ -376,4 +431,54 @@ ssize_t read_packetized_to_strbuf(int fd_in, struct strbuf *sb_out)
 		return packet_len;
 	}
 	return sb_out->len - orig_len;
+}
+
+/* Packet Reader Functions */
+void packet_reader_init(struct packet_reader *reader, int fd,
+			char *src_buffer, size_t src_len,
+			int options)
+{
+	memset(reader, 0, sizeof(*reader));
+
+	reader->fd = fd;
+	reader->src_buffer = src_buffer;
+	reader->src_len = src_len;
+	reader->buffer = packet_buffer;
+	reader->buffer_size = sizeof(packet_buffer);
+	reader->options = options;
+}
+
+enum packet_read_status packet_reader_read(struct packet_reader *reader)
+{
+	if (reader->line_peeked) {
+		reader->line_peeked = 0;
+		return reader->status;
+	}
+
+	reader->status = packet_read_with_status(reader->fd,
+						 &reader->src_buffer,
+						 &reader->src_len,
+						 reader->buffer,
+						 reader->buffer_size,
+						 &reader->pktlen,
+						 reader->options);
+
+	if (reader->status == PACKET_READ_NORMAL)
+		reader->line = reader->buffer;
+	else
+		reader->line = NULL;
+
+	return reader->status;
+}
+
+enum packet_read_status packet_reader_peek(struct packet_reader *reader)
+{
+	/* Only allow peeking a single line */
+	if (reader->line_peeked)
+		return reader->status;
+
+	/* Peek a line by reading it and setting peeked flag */
+	packet_reader_read(reader);
+	reader->line_peeked = 1;
+	return reader->status;
 }
