@@ -596,8 +596,12 @@ static void print_status(unsigned int flags, char state, const char *path,
 
 	printf("%c%s %s", state, oid_to_hex(oid), displaypath);
 
-	if (state == ' ' || state == '+')
-		printf(" (%s)", compute_rev_name(path, oid_to_hex(oid)));
+	if (state == ' ' || state == '+') {
+		const char *name = compute_rev_name(path, oid_to_hex(oid));
+
+		if (name)
+			printf(" (%s)", name);
+	}
 
 	printf("\n");
 }
