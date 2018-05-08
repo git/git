@@ -1642,10 +1642,15 @@ foreach my $t (@files) {
 			elsif (/^Content-Transfer-Encoding: (.*)/i) {
 				$xfer_encoding = $1 if not defined $xfer_encoding;
 			}
+			elsif (/^In-Reply-To: (.*)/i) {
+				$in_reply_to = $1;
+			}
+			elsif (/^References: (.*)/i) {
+				$references = $1;
+			}
 			elsif (!/^Date:\s/i && /^[-A-Za-z]+:\s+\S/) {
 				push @xh, $_;
 			}
-
 		} else {
 			# In the traditional
 			# "send lots of email" format,
