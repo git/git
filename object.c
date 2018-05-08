@@ -8,17 +8,14 @@
 #include "object-store.h"
 #include "packfile.h"
 
-static struct object **obj_hash;
-static int nr_objs, obj_hash_size;
-
 unsigned int get_max_object_index(void)
 {
-	return obj_hash_size;
+	return the_repository->parsed_objects->obj_hash_size;
 }
 
 struct object *get_indexed_object(unsigned int idx)
 {
-	return obj_hash[idx];
+	return the_repository->parsed_objects->obj_hash[idx];
 }
 
 static const char *object_type_strings[] = {
@@ -90,15 +87,16 @@ struct object *lookup_object(const unsigned char *sha1)
 	unsigned int i, first;
 	struct object *obj;
 
-	if (!obj_hash)
+	if (!the_repository->parsed_objects->obj_hash)
 		return NULL;
 
-	first = i = hash_obj(sha1, obj_hash_size);
-	while ((obj = obj_hash[i]) != NULL) {
+	first = i = hash_obj(sha1,
+			     the_repository->parsed_objects->obj_hash_size);
+	while ((obj = the_repository->parsed_objects->obj_hash[i]) != NULL) {
 		if (!hashcmp(sha1, obj->oid.hash))
 			break;
 		i++;
-		if (i == obj_hash_size)
+		if (i == the_repository->parsed_objects->obj_hash_size)
 			i = 0;
 	}
 	if (obj && i != first) {
@@ -107,7 +105,8 @@ struct object *lookup_object(const unsigned char *sha1)
 		 * that we do not need to walk the hash table the next
 		 * time we look for it.
 		 */
-		SWAP(obj_hash[i], obj_hash[first]);
+		SWAP(the_repository->parsed_objects->obj_hash[i],
+		     the_repository->parsed_objects->obj_hash[first]);
 	}
 	return obj;
 }
@@ -124,19 +123,19 @@ static void grow_object_hash(void)
 	 * Note that this size must always be power-of-2 to match hash_obj
 	 * above.
 	 */
-	int new_hash_size = obj_hash_size < 32 ? 32 : 2 * obj_hash_size;
+	int new_hash_size = the_repository->parsed_objects->obj_hash_size < 32 ? 32 : 2 * the_repository->parsed_objects->obj_hash_size;
 	struct object **new_hash;
 
 	new_hash = xcalloc(new_hash_size, sizeof(struct object *));
-	for (i = 0; i < obj_hash_size; i++) {
-		struct object *obj = obj_hash[i];
+	for (i = 0; i < the_repository->parsed_objects->obj_hash_size; i++) {
+		struct object *obj = the_repository->parsed_objects->obj_hash[i];
 		if (!obj)
 			continue;
 		insert_obj_hash(obj, new_hash, new_hash_size);
 	}
-	free(obj_hash);
-	obj_hash = new_hash;
-	obj_hash_size = new_hash_size;
+	free(the_repository->parsed_objects->obj_hash);
+	the_repository->parsed_objects->obj_hash = new_hash;
+	the_repository->parsed_objects->obj_hash_size = new_hash_size;
 }
 
 void *create_object(const unsigned char *sha1, void *o)
@@ -147,11 +146,12 @@ void *create_object(const unsigned char *sha1, void *o)
 	obj->flags = 0;
 	hashcpy(obj->oid.hash, sha1);
 
-	if (obj_hash_size - 1 <= nr_objs * 2)
+	if (the_repository->parsed_objects->obj_hash_size - 1 <= the_repository->parsed_objects->nr_objs * 2)
 		grow_object_hash();
 
-	insert_obj_hash(obj, obj_hash, obj_hash_size);
-	nr_objs++;
+	insert_obj_hash(obj, the_repository->parsed_objects->obj_hash,
+			the_repository->parsed_objects->obj_hash_size);
+	the_repository->parsed_objects->nr_objs++;
 	return obj;
 }
 
@@ -431,8 +431,8 @@ void clear_object_flags(unsigned flags)
 {
 	int i;
 
-	for (i=0; i < obj_hash_size; i++) {
-		struct object *obj = obj_hash[i];
+	for (i=0; i < the_repository->parsed_objects->obj_hash_size; i++) {
+		struct object *obj = the_repository->parsed_objects->obj_hash[i];
 		if (obj)
 			obj->flags &= ~flags;
 	}
@@ -442,11 +442,18 @@ void clear_commit_marks_all(unsigned int flags)
 {
 	int i;
 
-	for (i = 0; i < obj_hash_size; i++) {
-		struct object *obj = obj_hash[i];
+	for (i = 0; i < the_repository->parsed_objects->obj_hash_size; i++) {
+		struct object *obj = the_repository->parsed_objects->obj_hash[i];
 		if (obj && obj->type == OBJ_COMMIT)
 			obj->flags &= ~flags;
 	}
+}
+
+struct parsed_object_pool *parsed_object_pool_new(void)
+{
+	struct parsed_object_pool *o = xmalloc(sizeof(*o));
+	memset(o, 0, sizeof(*o));
+	return o;
 }
 
 struct raw_object_store *raw_object_store_new(void)
@@ -487,4 +494,14 @@ void raw_object_store_clear(struct raw_object_store *o)
 	INIT_LIST_HEAD(&o->packed_git_mru);
 	close_all_packs(o);
 	o->packed_git = NULL;
+}
+
+void parsed_object_pool_clear(struct parsed_object_pool *o)
+{
+	/*
+	 * TOOD free objects in o->obj_hash.
+	 *
+	 * As objects are allocated in slabs (see alloc.c), we do
+	 * not need to free each object, but each slab instead.
+	 */
 }
