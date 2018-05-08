@@ -1149,6 +1149,8 @@ static int try_to_commit(struct strbuf *msg, const char *author,
 		goto out;
 	}
 
+	reset_ident_date();
+
 	if (commit_tree_extended(msg->buf, msg->len, &tree, parents,
 				 oid, author, opts->gpg_sign, extra)) {
 		res = error(_("failed to write commit object"));
