@@ -651,8 +651,11 @@ static void handle_tail(struct object_array *commits, struct rev_info *revs,
 	struct commit *commit;
 	while (commits->nr) {
 		commit = (struct commit *)object_array_pop(commits);
-		if (has_unshown_parent(commit))
+		if (has_unshown_parent(commit)) {
+			/* Queue again, to be handled later */
+			add_object_array(&commit->object, NULL, commits);
 			return;
+		}
 		handle_commit(commit, revs, paths_of_changed_objects);
 	}
 }

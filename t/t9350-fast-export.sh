@@ -538,4 +538,22 @@ test_expect_success 'when using -C, do not declare copy when source of copy is a
 	test_cmp expected actual
 '
 
+test_expect_success 'merge commit gets exported with --import-marks' '
+	test_create_repo merging &&
+	(
+		cd merging &&
+		test_commit initial &&
+		git checkout -b topic &&
+		test_commit on-topic &&
+		git checkout master &&
+		test_commit on-master &&
+		test_tick &&
+		git merge --no-ff -m Yeah topic &&
+
+		echo ":1 $(git rev-parse HEAD^^)" >marks &&
+		git fast-export --import-marks=marks master >out &&
+		grep Yeah out
+	)
+'
+
 test_done
