@@ -108,6 +108,7 @@ bar = foo
 [beta]
 baz = multiple \
 lines
+foo = bar
 EOF
 
 test_expect_success 'unset with cont. lines' '
@@ -118,6 +119,7 @@ cat > expect <<\EOF
 [alpha]
 bar = foo
 [beta]
+foo = bar
 EOF
 
 test_expect_success 'unset with cont. lines is correct' 'test_cmp expect .git/config'
@@ -1411,7 +1413,7 @@ test_expect_success 'urlmatch with wildcard' '
 '
 
 # good section hygiene
-test_expect_failure 'unsetting the last key in a section removes header' '
+test_expect_success '--unset last key removes section (except if commented)' '
 	cat >.git/config <<-\EOF &&
 	# some generic comment on the configuration file itself
 	# a comment specific to this "section" section.
@@ -1425,13 +1427,86 @@ test_expect_failure 'unsetting the last key in a section removes header' '
 
 	cat >expect <<-\EOF &&
 	# some generic comment on the configuration file itself
+	# a comment specific to this "section" section.
+	[section]
+	# some intervening lines
+	# that should also be dropped
+
+	# please be careful when you update the above variable
 	EOF
 
 	git config --unset section.key &&
-	test_cmp expect .git/config
+	test_cmp expect .git/config &&
+
+	cat >.git/config <<-\EOF &&
+	[section]
+	key = value
+	[next-section]
+	EOF
+
+	cat >expect <<-\EOF &&
+	[next-section]
+	EOF
+
+	git config --unset section.key &&
+	test_cmp expect .git/config &&
+
+	q_to_tab >.git/config <<-\EOF &&
+	[one]
+	Qkey = "multiline \
+	QQ# with comment"
+	[two]
+	key = true
+	EOF
+	git config --unset two.key &&
+	! grep two .git/config &&
+
+	q_to_tab >.git/config <<-\EOF &&
+	[one]
+	Qkey = "multiline \
+	QQ# with comment"
+	[one]
+	key = true
+	EOF
+	git config --unset-all one.key &&
+	test_line_count = 0 .git/config &&
+
+	q_to_tab >.git/config <<-\EOF &&
+	[one]
+	Qkey = true
+	Q# a comment not at the start
+	[two]
+	Qkey = true
+	EOF
+	git config --unset two.key &&
+	grep two .git/config &&
+
+	q_to_tab >.git/config <<-\EOF &&
+	[one]
+	Qkey = not [two "subsection"]
+	[two "subsection"]
+	[two "subsection"]
+	Qkey = true
+	[TWO "subsection"]
+	[one]
+	EOF
+	git config --unset two.subsection.key &&
+	test "not [two subsection]" = "$(git config one.key)" &&
+	test_line_count = 3 .git/config
 '
 
-test_expect_failure 'adding a key into an empty section reuses header' '
+test_expect_success '--unset-all removes section if empty & uncommented' '
+	cat >.git/config <<-\EOF &&
+	[section]
+	key = value1
+	key = value2
+	EOF
+
+	git config --unset-all section.key &&
+	test_line_count = 0 .git/config
+'
+
+test_expect_success 'adding a key into an empty section reuses header' '
 	cat >.git/config <<-\EOF &&
 	[section]
 	EOF
@@ -1609,6 +1684,27 @@ test_expect_success '--local requires a repo' '
 	# we expect 128 to ensure that we do not simply
 	# fail to find anything and return code "1"
 	test_expect_code 128 nongit git config --local foo.bar
+'
+
+test_expect_success '--replace-all does not invent newlines' '
+	q_to_tab >.git/config <<-\EOF &&
+	[abc]key
+	QkeepSection
+	[xyz]
+	Qkey = 1
+	[abc]
+	Qkey = a
+	EOF
+	q_to_tab >expect <<-\EOF &&
+	[abc]
+	QkeepSection
+	[xyz]
+	Qkey = 1
+	[abc]
+	Qkey = b
+	EOF
+	git config --replace-all abc.key b &&
+	test_cmp .git/config expect
 '
 
 test_done
