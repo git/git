@@ -554,7 +554,7 @@ sub get_record {
 	my ($fh, $rs) = @_;
 	local $/ = $rs;
 	my $rec = <$fh>;
-	chomp $rec if defined $rs;
+	chomp $rec if defined $rec;
 	$rec;
 }
 
