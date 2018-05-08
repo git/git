@@ -2775,12 +2775,20 @@ _git_show_branch ()
 _git_stash ()
 {
 	local save_opts='--all --keep-index --no-keep-index --quiet --patch --include-untracked'
-	local subcommands='push save list show apply clear drop pop create branch'
-	local subcommand="$(__git_find_on_cmdline "$subcommands")"
+	local subcommands='push list show apply clear drop pop create branch'
+	local subcommand="$(__git_find_on_cmdline "$subcommands save")"
+	if [ -n "$(__git_find_on_cmdline "-p")" ]; then
+		subcommand="push"
+	fi
 	if [ -z "$subcommand" ]; then
 		case "$cur" in
 		--*)
 			__gitcomp "$save_opts"
+			;;
+		sa*)
+			if [ -z "$(__git_find_on_cmdline "$save_opts")" ]; then
+				__gitcomp "save"
+			fi
 			;;
 		*)
 			if [ -z "$(__git_find_on_cmdline "$save_opts")" ]; then
