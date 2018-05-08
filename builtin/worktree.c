@@ -783,8 +783,9 @@ static int remove_worktree(int ac, const char **av, const char *prefix)
 {
 	int force = 0;
 	struct option options[] = {
-		OPT_BOOL(0, "force", &force,
-			 N_("force removing even if the worktree is dirty")),
+		OPT__FORCE(&force,
+			 N_("force removing even if the worktree is dirty"),
+			 PARSE_OPT_NOCOMPLETE),
 		OPT_END()
 	};
 	struct worktree **worktrees, *wt;

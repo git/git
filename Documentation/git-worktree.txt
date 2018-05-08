@@ -14,7 +14,7 @@ SYNOPSIS
 'git worktree lock' [--reason <string>] <worktree>
 'git worktree move' <worktree> <new-path>
 'git worktree prune' [-n] [-v] [--expire <expire>]
-'git worktree remove' [--force] <worktree>
+'git worktree remove' [-f] <worktree>
 'git worktree unlock' <worktree>
 
 DESCRIPTION
