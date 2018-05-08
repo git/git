@@ -44,6 +44,44 @@ UI, Workflows & Features
 
  * "git mergetools" learned talking to guiffy.
 
+ * The scripts in contrib/emacs/ have outlived their usefulness and
+   have been replaced with a stub that errors out and tells the user
+   there are replacements.
+
+ * The new "checkout-encoding" attribute can ask Git to convert the
+   contents to the specified encoding when checking out to the working
+   tree (and the other way around when checking in).
+
+ * The "git config" command uses separate options e.g. "--int",
+   "--bool", etc. to specify what type the caller wants the value to
+   be interpreted as.  A new "--type=<typename>" option has been
+   introduced, which would make it cleaner to define new types.
+
+ * "git config --get" learned the "--default" option, to help the
+   calling script.  Building on top of the above changes, the
+   "git config" learns "--type=color" type.  Taken together, you can
+   do things like "git config --get foo.color --default blue" and get
+   the ANSI color sequence for the color given to foo.color variable,
+   or "blue" if the variable does not exist.
+
+ * "git ls-remote" learned an option to allow sorting its output based
+   on the refnames being shown.
+
+ * The command line completion (in contrib/) has been taught that "git
+   stash save" has been deprecated ("git stash push" is the preferred
+   spelling in the new world) and does not offer it as a possible
+   completion candidate when "git stash push" can be.
+
+ * "git gc --prune=nonsense" spent long time repacking and then
+   silently failed when underlying "git prune --expire=nonsense"
+   failed to parse its command line.  This has been corrected.
+
+ * Error messages from "git push" can be painted for more visibility.
+
+ * "git http-fetch" (deprecated) had an optional and experimental
+   "feature" to fetch only commits and/or trees, which nobody used.
+   This has been removed.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -118,6 +156,30 @@ Performance, Internal Implementation, Development Support etc.
    fast-import.c, which in turn has become the first user of the
    mem-pool API.
 
+ * A build-time option has been added to allow Git to be told to refer
+   to its associated files relative to the main binary, in the same
+   way that has been possible on Windows for quite some time, for
+   Linux, BSDs and Darwin.
+
+ * Precompute and store information necessary for ancestry traversal
+   in a separate file to optimize graph walking.
+
+ * The effort to pass the repository in-core structure throughout the
+   API continues.  This round deals with the code that implements the
+   refs/replace/ mechanism.
+
+ * The build procedure "make DEVELOPER=YesPlease" learned to enable a
+   bit more warning options depending on the compiler used to help
+   developers more.  There also is "make DEVOPTS=tokens" knob
+   available now, for those who want to help fixing warnings we
+   usually ignore, for example.
+
+ * A new version of the transport protocol is being worked on.
+
+ * The code to interface to GPG has been restructured somewhat to make
+   it cleaner to integrate with other types of signature systems later.
+
+
 Also contains various documentation updates and code clean-ups.
 
 
@@ -183,6 +245,53 @@ Fixes since v2.17
    attacker's control) buffer overflow.
    (merge d8579accfa bp/fsmonitor-bufsize-fix later to maint).
 
+ * Recent simplification of build procedure forgot a bit of tweak to
+   the build procedure of contrib/mw-to-git/
+   (merge d8698987f3 ab/simplify-perl-makefile later to maint).
+
+ * Moving a submodule that itself has submodule in it with "git mv"
+   forgot to make necessary adjustment to the nested sub-submodules;
+   now the codepath learned to recurse into the submodules.
+
+ * "git config --unset a.b", when "a.b" is the last variable in an
+   otherwise empty section "a", left an empty section "a" behind, and
+   worse yet, a subsequent "git config a.c value" did not reuse that
+   empty shell and instead created a new one.  These have been
+   (partially) corrected.
+   (merge c71d8bb38a js/empty-config-section-fix later to maint).
+
+ * "git worktree remove" learned that "-f" is a shorthand for
+   "--force" option, just like for "git worktree add".
+   (merge d228eea514 sb/worktree-remove-opt-force later to maint).
+
+ * The completion script (in contrib/) learned to clear cached list of
+   command line options upon dot-sourcing it again in a more efficient
+   way.
+   (merge 94408dc71c sg/completion-clear-cached later to maint).
+
+ * "git svn" had a minor thinko/typo which has been fixed.
+   (merge 51db271587 ab/git-svn-get-record-typofix later to maint).
+
+ * During a "rebase -i" session, the code could give older timestamp
+   to commits created by later "pick" than an earlier "reword", which
+   has been corrected.
+   (merge 12f7babd6b js/ident-date-fix later to maint).
+
+ * "git submodule status" did not check the symbolic revision name it
+   computed for the submodule HEAD is not the NULL, and threw it at
+   printf routines, which has been corrected.
+   (merge 0b5e2ea7cf nd/submodule-status-fix later to maint).
+
+ * When fed input that already has In-Reply-To: and/or References:
+   headers and told to add the same information, "git send-email"
+   added these headers separately, instead of appending to an existing
+   one, which is a violation of the RFC.  This has been corrected.
+   (merge 256be1d3f0 sa/send-email-dedup-some-headers later to maint).
+
+ * "git fast-export" had a regression in v2.15.0 era where it skipped
+   some merge commits in certain cases, which has been corrected.
+   (merge be011bbe00 ma/fast-export-skip-merge-fix later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge 248f66ed8e nd/trace-with-env later to maint).
    (merge 14ced5562c ys/bisect-object-id-missing-conversion-fix later to maint).
@@ -198,3 +307,6 @@ Fixes since v2.17
    (merge decf711fc1 ps/test-chmtime-get later to maint).
    (merge 22d11a6e8e es/worktree-docs later to maint).
    (merge 92a5dbbc22 tg/use-git-contacts later to maint).
+   (merge adc887221f tq/t1510 later to maint).
+   (merge bed21a8ad6 sg/doc-gc-quote-mismatch-fix later to maint).
+   (merge 73364e4f10 tz/doc-git-urls-reference later to maint).
