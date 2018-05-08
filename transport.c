@@ -20,6 +20,56 @@
 #include "transport-internal.h"
 #include "protocol.h"
 #include "object-store.h"
+#include "color.h"
+
+static int transport_use_color = -1;
+static char transport_colors[][COLOR_MAXLEN] = {
+	GIT_COLOR_RESET,
+	GIT_COLOR_RED		/* REJECTED */
+};
+
+enum color_transport {
+	TRANSPORT_COLOR_RESET = 0,
+	TRANSPORT_COLOR_REJECTED = 1
+};
+
+static int transport_color_config(void)
+{
+	const char *keys[] = {
+		"color.transport.reset",
+		"color.transport.rejected"
+	}, *key = "color.transport";
+	char *value;
+	int i;
+	static int initialized;
+
+	if (initialized)
+		return 0;
+	initialized = 1;
+
+	if (!git_config_get_string(key, &value))
+		transport_use_color = git_config_colorbool(key, value);
+
+	if (!want_color_stderr(transport_use_color))
+		return 0;
+
+	for (i = 0; i < ARRAY_SIZE(keys); i++)
+		if (!git_config_get_string(keys[i], &value)) {
+			if (!value)
+				return config_error_nonbool(keys[i]);
+			if (color_parse(value, transport_colors[i]) < 0)
+				return -1;
+		}
+
+	return 0;
+}
+
+static const char *transport_get_color(enum color_transport ix)
+{
+	if (want_color_stderr(transport_use_color))
+		return transport_colors[ix];
+	return "";
+}
 
 static void set_upstreams(struct transport *transport, struct ref *refs,
 	int pretend)
@@ -373,7 +423,13 @@ static void print_ref_status(char flag, const char *summary,
 		else
 			fprintf(stdout, "%s\n", summary);
 	} else {
-		fprintf(stderr, " %c %-*s ", flag, summary_width, summary);
+		const char *red = "", *reset = "";
+		if (push_had_errors(to)) {
+			red = transport_get_color(TRANSPORT_COLOR_REJECTED);
+			reset = transport_get_color(TRANSPORT_COLOR_RESET);
+		}
+		fprintf(stderr, " %s%c %-*s%s ", red, flag, summary_width,
+			summary, reset);
 		if (from)
 			fprintf(stderr, "%s -> %s", prettify_refname(from->name), prettify_refname(to->name));
 		else
@@ -522,6 +578,9 @@ void transport_print_push_status(const char *dest, struct ref *refs,
 	char *head;
 	int summary_width = transport_summary_width(refs);
 
+	if (transport_color_config() < 0)
+		warning(_("could not parse transport.color.* config"));
+
 	head = resolve_refdup("HEAD", RESOLVE_REF_READING, NULL, NULL);
 
 	if (verbose) {
@@ -587,6 +646,9 @@ static int git_transport_push(struct transport *transport, struct ref *remote_re
 	struct git_transport_data *data = transport->data;
 	struct send_pack_args args;
 	int ret = 0;
+
+	if (transport_color_config() < 0)
+		return -1;
 
 	if (!data->got_remote_heads)
 		get_refs_via_connect(transport, 1, NULL);
@@ -1035,6 +1097,9 @@ int transport_push(struct transport *transport,
 {
 	*reject_reasons = 0;
 	transport_verify_remote_names(refspec_nr, refspec);
+
+	if (transport_color_config() < 0)
+		return -1;
 
 	if (transport->vtable->push_refs) {
 		struct ref *remote_refs;

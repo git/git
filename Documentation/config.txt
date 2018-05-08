@@ -1098,6 +1098,16 @@ clean.requireForce::
 	A boolean to make git-clean do nothing unless given -f,
 	-i or -n.   Defaults to true.
 
+color.advice::
+	A boolean to enable/disable color in hints (e.g. when a push
+	failed, see `advice.*` for a list).  May be set to `always`,
+	`false` (or `never`) or `auto` (or `true`), in which case colors
+	are used only when the error output goes to a terminal. If
+	unset, then the value of `color.ui` is used (`auto` by default).
+
+color.advice.hint::
+	Use customized color for hints.
+
 color.branch::
 	A boolean to enable/disable color in the output of
 	linkgit:git-branch[1]. May be set to `always`,
@@ -1200,6 +1210,15 @@ color.pager::
 	A boolean to enable/disable colored output when the pager is in
 	use (default is true).
 
+color.push::
+	A boolean to enable/disable color in push errors. May be set to
+	`always`, `false` (or `never`) or `auto` (or `true`), in which
+	case colors are used only when the error output goes to a terminal.
+	If unset, then the value of `color.ui` is used (`auto` by default).
+
+color.push.error::
+	Use customized color for push errors.
+
 color.showBranch::
 	A boolean to enable/disable color in the output of
 	linkgit:git-show-branch[1]. May be set to `always`,
@@ -1227,6 +1246,15 @@ color.status.<slot>::
 	respectively, when branch and tracking information is displayed in the
 	status short-format), or
 	`unmerged` (files which have unmerged changes).
+
+color.transport::
+	A boolean to enable/disable color when pushes are rejected. May be
+	set to `always`, `false` (or `never`) or `auto` (or `true`), in which
+	case colors are used only when the error output goes to a terminal.
+	If unset, then the value of `color.ui` is used (`auto` by default).
+
+color.transport.rejected::
+	Use customized color when a push was rejected.
 
 color.ui::
 	This variable determines the default value for variables such
