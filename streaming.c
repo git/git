@@ -5,6 +5,7 @@
 #include "streaming.h"
 #include "repository.h"
 #include "object-store.h"
+#include "replace-object.h"
 #include "packfile.h"
 
 enum input_source {
@@ -139,7 +140,7 @@ struct git_istream *open_istream(const struct object_id *oid,
 {
 	struct git_istream *st;
 	struct object_info oi = OBJECT_INFO_INIT;
-	const struct object_id *real = lookup_replace_object(oid);
+	const struct object_id *real = lookup_replace_object(the_repository, oid);
 	enum input_source src = istream_source(real, type, &oi);
 
 	if (src < 0)

@@ -1193,25 +1193,6 @@ static inline void *read_object_file(const struct object_id *oid, enum object_ty
 	return read_object_file_extended(oid, type, size, 1);
 }
 
-/*
- * This internal function is only declared here for the benefit of
- * lookup_replace_object().  Please do not call it directly.
- */
-extern const struct object_id *do_lookup_replace_object(const struct object_id *oid);
-
-/*
- * If object sha1 should be replaced, return the replacement object's
- * name (replaced recursively, if necessary).  The return value is
- * either sha1 or a pointer to a permanently-allocated value.  When
- * object replacement is suppressed, always return sha1.
- */
-static inline const struct object_id *lookup_replace_object(const struct object_id *oid)
-{
-	if (!check_replace_refs)
-		return oid;
-	return do_lookup_replace_object(oid);
-}
-
 /* Read and unpack an object file into memory, write memory to an object file */
 extern int oid_object_info(const struct object_id *, unsigned long *);
 

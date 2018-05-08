@@ -62,10 +62,6 @@ struct ref_lock {
 	struct object_id old_oid;
 };
 
-/*
- * Future: need to be in "struct repository"
- * when doing a full libification.
- */
 struct files_ref_store {
 	struct ref_store base;
 	unsigned int store_flags;

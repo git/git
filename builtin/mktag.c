@@ -1,5 +1,6 @@
 #include "builtin.h"
 #include "tag.h"
+#include "replace-object.h"
 
 /*
  * A signature file has a very simple fixed format: four lines
@@ -24,7 +25,7 @@ static int verify_object(const struct object_id *oid, const char *expected_type)
 	enum object_type type;
 	unsigned long size;
 	void *buffer = read_object_file(oid, &type, &size);
-	const struct object_id *repl = lookup_replace_object(oid);
+	const struct object_id *repl = lookup_replace_object(the_repository, oid);
 
 	if (buffer) {
 		if (type == type_from_string(expected_type))
