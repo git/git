@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "tag.h"
 #include "commit.h"
+#include "commit-graph.h"
 #include "pkt-line.h"
 #include "utf8.h"
 #include "diff.h"
@@ -382,6 +383,8 @@ int parse_commit_gently(struct commit *item, int quiet_on_missing)
 	if (!item)
 		return -1;
 	if (item->object.parsed)
+		return 0;
+	if (parse_commit_in_graph(item))
 		return 0;
 	buffer = read_object_file(&item->object.oid, &type, &size);
 	if (!buffer)

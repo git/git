@@ -26,14 +26,15 @@ struct hashfile_checkpoint {
 extern void hashfile_checkpoint(struct hashfile *, struct hashfile_checkpoint *);
 extern int hashfile_truncate(struct hashfile *, struct hashfile_checkpoint *);
 
-/* hashclose flags */
-#define CSUM_CLOSE	1
-#define CSUM_FSYNC	2
+/* finalize_hashfile flags */
+#define CSUM_CLOSE		1
+#define CSUM_FSYNC		2
+#define CSUM_HASH_IN_STREAM	4
 
 extern struct hashfile *hashfd(int fd, const char *name);
 extern struct hashfile *hashfd_check(const char *name);
 extern struct hashfile *hashfd_throughput(int fd, const char *name, struct progress *tp);
-extern int hashclose(struct hashfile *, unsigned char *, unsigned int);
+extern int finalize_hashfile(struct hashfile *, unsigned char *, unsigned int);
 extern void hashwrite(struct hashfile *, const void *, unsigned int);
 extern void hashflush(struct hashfile *f);
 extern void crc32_begin(struct hashfile *);
