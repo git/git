@@ -1,6 +1,7 @@
 #include "builtin.h"
 #include "cache.h"
 #include "transport.h"
+#include "ref-filter.h"
 #include "remote.h"
 #include "refs.h"
 
@@ -45,10 +46,13 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 	const char *uploadpack = NULL;
 	const char **pattern = NULL;
 	struct argv_array ref_prefixes = ARGV_ARRAY_INIT;
+	int i;
 
 	struct remote *remote;
 	struct transport *transport;
 	const struct ref *ref;
+	struct ref_array ref_array;
+	static struct ref_sorting *sorting = NULL, **sorting_tail = &sorting;
 
 	struct option options[] = {
 		OPT__QUIET(&quiet, N_("do not print remote URL")),
@@ -62,6 +66,8 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 		OPT_BIT(0, "refs", &flags, N_("do not show peeled tags"), REF_NORMAL),
 		OPT_BOOL(0, "get-url", &get_url,
 			 N_("take url.<base>.insteadOf into account")),
+		OPT_CALLBACK(0 , "sort", sorting_tail, N_("key"),
+			     N_("field name to sort on"), &parse_opt_ref_sorting),
 		OPT_SET_INT_F(0, "exit-code", &status,
 			      N_("exit with exit code 2 if no matching refs are found"),
 			      2, PARSE_OPT_NOCOMPLETE),
@@ -69,6 +75,8 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 			 N_("show underlying ref in addition to the object pointed by it")),
 		OPT_END()
 	};
+
+	memset(&ref_array, 0, sizeof(ref_array));
 
 	argc = parse_options(argc, argv, prefix, options, ls_remote_usage,
 			     PARSE_OPT_STOP_AT_NON_OPTION);
@@ -101,6 +109,7 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 
 	if (get_url) {
 		printf("%s\n", *remote->url);
+		UNLEAK(sorting);
 		return 0;
 	}
 
@@ -109,20 +118,35 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 		transport_set_option(transport, TRANS_OPT_UPLOADPACK, uploadpack);
 
 	ref = transport_get_remote_refs(transport, &ref_prefixes);
-	if (transport_disconnect(transport))
+	if (transport_disconnect(transport)) {
+		UNLEAK(sorting);
 		return 1;
+	}
 
 	if (!dest && !quiet)
 		fprintf(stderr, "From %s\n", *remote->url);
 	for ( ; ref; ref = ref->next) {
+		struct ref_array_item *item;
 		if (!check_ref_type(ref, flags))
 			continue;
 		if (!tail_match(pattern, ref->name))
 			continue;
+		item = ref_array_push(&ref_array, ref->name, &ref->old_oid);
+		item->symref = xstrdup_or_null(ref->symref);
+	}
+
+	if (sorting)
+		ref_array_sort(sorting, &ref_array);
+
+	for (i = 0; i < ref_array.nr; i++) {
+		const struct ref_array_item *ref = ref_array.items[i];
 		if (show_symref_target && ref->symref)
-			printf("ref: %s\t%s\n", ref->symref, ref->name);
-		printf("%s\t%s\n", oid_to_hex(&ref->old_oid), ref->name);
+			printf("ref: %s\t%s\n", ref->symref, ref->refname);
+		printf("%s\t%s\n", oid_to_hex(&ref->objectname), ref->refname);
 		status = 0; /* we found something */
 	}
+
+	UNLEAK(sorting);
+	UNLEAK(ref_array);
 	return status;
 }

@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git ls-remote' [--heads] [--tags] [--refs] [--upload-pack=<exec>]
-	      [-q | --quiet] [--exit-code] [--get-url]
+	      [-q | --quiet] [--exit-code] [--get-url] [--sort=<key>]
 	      [--symref] [<repository> [<refs>...]]
 
 DESCRIPTION
@@ -60,6 +60,16 @@ OPTIONS
 	upload-pack only shows the symref HEAD, so it will be the only
 	one shown by ls-remote.
 
+--sort=<key>::
+	Sort based on the key given. Prefix `-` to sort in descending order
+	of the value. Supports "version:refname" or "v:refname" (tag names
+	are treated as versions). The "version:refname" sort order can also
+	be affected by the "versionsort.suffix" configuration variable.
+	See linkgit:git-for-each-ref[1] for more sort options, but be aware
+	keys like `committerdate` that require access to the objects
+	themselves will not work for refs whose objects have not yet been
+	fetched from the remote, and will give a `missing object` error.
+
 <repository>::
 	The "remote" repository to query.  This parameter can be
 	either a URL or the name of a remote (see the GIT URLS and
@@ -89,6 +99,10 @@ EXAMPLES
 	f25a265a342aed6041ab0cc484224d9ca54b6f41	refs/tags/v0.99.1
 	c5db5456ae3b0873fc659c19fafdde22313cc441	refs/tags/v0.99.2
 	7ceca275d047c90c0c7d5afb13ab97efdf51bd6e	refs/tags/v0.99.3
+
+SEE ALSO
+--------
+linkgit:git-check-ref-format[1].
 
 GIT
 ---
