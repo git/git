@@ -869,9 +869,6 @@ static int fetch_dumb(int nr_heads, struct ref **to_fetch)
 		targets[i] = xstrdup(oid_to_hex(&to_fetch[i]->old_oid));
 
 	walker = get_http_walker(url.buf);
-	walker->get_all = 1;
-	walker->get_tree = 1;
-	walker->get_history = 1;
 	walker->get_verbosely = options.verbosity >= 3;
 	walker->get_recover = 0;
 	ret = walker_fetch(walker, nr_heads, targets, NULL, NULL);
