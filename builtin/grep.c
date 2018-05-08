@@ -602,8 +602,7 @@ static int grep_tree(struct grep_opt *opt, const struct pathspec *pathspec,
 }
 
 static int grep_object(struct grep_opt *opt, const struct pathspec *pathspec,
-		       struct object *obj, const char *name, const char *path,
-		       struct repository *repo)
+		       struct object *obj, const char *name, const char *path)
 {
 	if (obj->type == OBJ_BLOB)
 		return grep_oid(opt, &obj->oid, name, 0, path);
@@ -630,7 +629,7 @@ static int grep_object(struct grep_opt *opt, const struct pathspec *pathspec,
 		}
 		init_tree_desc(&tree, data, size);
 		hit = grep_tree(opt, pathspec, &tree, &base, base.len,
-				obj->type == OBJ_COMMIT, repo);
+				obj->type == OBJ_COMMIT, the_repository);
 		strbuf_release(&base);
 		free(data);
 		return hit;
@@ -639,7 +638,6 @@ static int grep_object(struct grep_opt *opt, const struct pathspec *pathspec,
 }
 
 static int grep_objects(struct grep_opt *opt, const struct pathspec *pathspec,
-			struct repository *repo,
 			const struct object_array *list)
 {
 	unsigned int i;
@@ -652,11 +650,11 @@ static int grep_objects(struct grep_opt *opt, const struct pathspec *pathspec,
 
 		/* load the gitmodules file for this rev */
 		if (recurse_submodules) {
-			submodule_free();
+			submodule_free(the_repository);
 			gitmodules_config_oid(&real_obj->oid);
 		}
-		if (grep_object(opt, pathspec, real_obj, list->objects[i].name, list->objects[i].path,
-				repo)) {
+		if (grep_object(opt, pathspec, real_obj, list->objects[i].name,
+				list->objects[i].path)) {
 			hit = 1;
 			if (opt->status_only)
 				break;
@@ -1108,7 +1106,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		if (cached)
 			die(_("both --cached and trees are given."));
 
-		hit = grep_objects(&opt, &pathspec, the_repository, &list);
+		hit = grep_objects(&opt, &pathspec, &list);
 	}
 
 	if (num_threads)

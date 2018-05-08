@@ -290,7 +290,7 @@ static void load_gitmodules_file(struct index_state *index,
 		if (!state && ce->ce_flags & CE_WT_REMOVE) {
 			repo_read_gitmodules(the_repository);
 		} else if (state && (ce->ce_flags & CE_UPDATE)) {
-			submodule_free();
+			submodule_free(the_repository);
 			checkout_entry(ce, state, NULL);
 			repo_read_gitmodules(the_repository);
 		}

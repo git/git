@@ -38,7 +38,7 @@ Data Structures
 Functions
 ---------
 
-`void submodule_free()`::
+`void submodule_free(struct repository *r)`::
 
 	Use these to free the internally cached values.
 

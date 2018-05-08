@@ -19,6 +19,7 @@
 #include "varint.h"
 #include "ewah/ewok.h"
 #include "fsmonitor.h"
+#include "submodule-config.h"
 
 /*
  * Tells read_directory_recursive how a file or directory should be treated.
@@ -3010,8 +3011,57 @@ void untracked_cache_add_to_index(struct index_state *istate,
 	untracked_cache_invalidate_path(istate, path, 1);
 }
 
-/* Update gitfile and core.worktree setting to connect work tree and git dir */
-void connect_work_tree_and_git_dir(const char *work_tree_, const char *git_dir_)
+static void connect_wt_gitdir_in_nested(const char *sub_worktree,
+					const char *sub_gitdir)
+{
+	int i;
+	struct repository subrepo;
+	struct strbuf sub_wt = STRBUF_INIT;
+	struct strbuf sub_gd = STRBUF_INIT;
+
+	const struct submodule *sub;
+
+	/* If the submodule has no working tree, we can ignore it. */
+	if (repo_init(&subrepo, sub_gitdir, sub_worktree))
+		return;
+
+	if (repo_read_index(&subrepo) < 0)
+		die("index file corrupt in repo %s", subrepo.gitdir);
+
+	for (i = 0; i < subrepo.index->cache_nr; i++) {
+		const struct cache_entry *ce = subrepo.index->cache[i];
+
+		if (!S_ISGITLINK(ce->ce_mode))
+			continue;
+
+		while (i + 1 < subrepo.index->cache_nr &&
+		       !strcmp(ce->name, subrepo.index->cache[i + 1]->name))
+			/*
+			 * Skip entries with the same name in different stages
+			 * to make sure an entry is returned only once.
+			 */
+			i++;
+
+		sub = submodule_from_path(&subrepo, &null_oid, ce->name);
+		if (!sub || !is_submodule_active(&subrepo, ce->name))
+			/* .gitmodules broken or inactive sub */
+			continue;
+
+		strbuf_reset(&sub_wt);
+		strbuf_reset(&sub_gd);
+		strbuf_addf(&sub_wt, "%s/%s", sub_worktree, sub->path);
+		strbuf_addf(&sub_gd, "%s/modules/%s", sub_gitdir, sub->name);
+
+		connect_work_tree_and_git_dir(sub_wt.buf, sub_gd.buf, 1);
+	}
+	strbuf_release(&sub_wt);
+	strbuf_release(&sub_gd);
+	repo_clear(&subrepo);
+}
+
+void connect_work_tree_and_git_dir(const char *work_tree_,
+				   const char *git_dir_,
+				   int recurse_into_nested)
 {
 	struct strbuf gitfile_sb = STRBUF_INIT;
 	struct strbuf cfg_sb = STRBUF_INIT;
@@ -3041,6 +3091,10 @@ void connect_work_tree_and_git_dir(const char *work_tree_, const char *git_dir_)
 	strbuf_release(&gitfile_sb);
 	strbuf_release(&cfg_sb);
 	strbuf_release(&rel_path);
+
+	if (recurse_into_nested)
+		connect_wt_gitdir_in_nested(work_tree, git_dir);
+
 	free(work_tree);
 	free(git_dir);
 }
@@ -3054,5 +3108,5 @@ void relocate_gitdir(const char *path, const char *old_git_dir, const char *new_
 		die_errno(_("could not migrate git directory from '%s' to '%s'"),
 			old_git_dir, new_git_dir);
 
-	connect_work_tree_and_git_dir(path, new_git_dir);
+	connect_work_tree_and_git_dir(path, new_git_dir, 0);
 }

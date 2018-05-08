@@ -619,31 +619,24 @@ static void gitmodules_read_check(struct repository *repo)
 		repo_read_gitmodules(repo);
 }
 
-const struct submodule *submodule_from_name(const struct object_id *treeish_name,
+const struct submodule *submodule_from_name(struct repository *r,
+					    const struct object_id *treeish_name,
 		const char *name)
 {
-	gitmodules_read_check(the_repository);
-	return config_from(the_repository->submodule_cache, treeish_name, name, lookup_name);
+	gitmodules_read_check(r);
+	return config_from(r->submodule_cache, treeish_name, name, lookup_name);
 }
 
-const struct submodule *submodule_from_path(const struct object_id *treeish_name,
+const struct submodule *submodule_from_path(struct repository *r,
+					    const struct object_id *treeish_name,
 		const char *path)
 {
-	gitmodules_read_check(the_repository);
-	return config_from(the_repository->submodule_cache, treeish_name, path, lookup_path);
+	gitmodules_read_check(r);
+	return config_from(r->submodule_cache, treeish_name, path, lookup_path);
 }
 
-const struct submodule *submodule_from_cache(struct repository *repo,
-					     const struct object_id *treeish_name,
-					     const char *key)
+void submodule_free(struct repository *r)
 {
-	gitmodules_read_check(repo);
-	return config_from(repo->submodule_cache, treeish_name,
-			   key, lookup_path);
-}
-
-void submodule_free(void)
-{
-	if (the_repository->submodule_cache)
-		submodule_cache_clear(the_repository->submodule_cache);
+	if (r->submodule_cache)
+		submodule_cache_clear(r->submodule_cache);
 }

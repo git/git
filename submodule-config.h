@@ -39,13 +39,12 @@ extern int parse_update_recurse_submodules_arg(const char *opt, const char *arg)
 extern int parse_push_recurse_submodules_arg(const char *opt, const char *arg);
 extern void repo_read_gitmodules(struct repository *repo);
 extern void gitmodules_config_oid(const struct object_id *commit_oid);
-extern const struct submodule *submodule_from_name(
-		const struct object_id *commit_or_tree, const char *name);
-extern const struct submodule *submodule_from_path(
-		const struct object_id *commit_or_tree, const char *path);
-extern const struct submodule *submodule_from_cache(struct repository *repo,
-						    const struct object_id *treeish_name,
-						    const char *key);
-extern void submodule_free(void);
+const struct submodule *submodule_from_name(struct repository *r,
+					    const struct object_id *commit_or_tree,
+					    const char *name);
+const struct submodule *submodule_from_path(struct repository *r,
+					    const struct object_id *commit_or_tree,
+					    const char *path);
+void submodule_free(struct repository *r);
 
 #endif /* SUBMODULE_CONFIG_H */

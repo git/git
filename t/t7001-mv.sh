@@ -495,7 +495,7 @@ test_expect_success 'moving a submodule in nested directories' '
 	test_cmp expect actual
 '
 
-test_expect_failure 'moving nested submodules' '
+test_expect_success 'moving nested submodules' '
 	git commit -am "cleanup commit" &&
 	mkdir sub_nested_nested &&
 	(cd sub_nested_nested &&

@@ -276,10 +276,12 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 			die_errno(_("renaming '%s' failed"), src);
 		}
 		if (submodule_gitfile[i]) {
-			if (submodule_gitfile[i] != SUBMODULE_WITH_GITDIR)
-				connect_work_tree_and_git_dir(dst, submodule_gitfile[i]);
 			if (!update_path_in_gitmodules(src, dst))
 				gitmodules_modified = 1;
+			if (submodule_gitfile[i] != SUBMODULE_WITH_GITDIR)
+				connect_work_tree_and_git_dir(dst,
+							      submodule_gitfile[i],
+							      1);
 		}
 
 		if (mode == WORKING_DIRECTORY)
