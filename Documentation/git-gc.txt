@@ -129,7 +129,7 @@ The optional configuration variable `gc.aggressiveWindow` controls how
 much time is spent optimizing the delta compression of the objects in
 the repository when the --aggressive option is specified.  The larger
 the value, the more time is spent optimizing the delta compression.  See
-the documentation for the --window' option in linkgit:git-repack[1] for
+the documentation for the --window option in linkgit:git-repack[1] for
 more details.  This defaults to 250.
 
 Similarly, the optional configuration variable `gc.aggressiveDepth`
