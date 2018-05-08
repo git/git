@@ -1,0 +1,42 @@
+ifeq ($(filter no-error,$(DEVOPTS)),)
+CFLAGS += -Werror
+endif
+CFLAGS += -Wdeclaration-after-statement
+CFLAGS += -Wno-format-zero-length
+CFLAGS += -Wold-style-definition
+CFLAGS += -Woverflow
+CFLAGS += -Wpointer-arith
+CFLAGS += -Wstrict-prototypes
+CFLAGS += -Wunused
+CFLAGS += -Wvla
+
+ifndef COMPILER_FEATURES
+COMPILER_FEATURES := $(shell ./detect-compiler $(CC))
+endif
+
+ifneq ($(filter clang4,$(COMPILER_FEATURES)),)
+CFLAGS += -Wtautological-constant-out-of-range-compare
+endif
+
+ifneq ($(or $(filter gcc6,$(COMPILER_FEATURES)),$(filter clang4,$(COMPILER_FEATURES))),)
+CFLAGS += -Wextra
+# if a function is public, there should be a prototype and the right
+# header file should be included. If not, it should be static.
+CFLAGS += -Wmissing-prototypes
+ifeq ($(filter extra-all,$(DEVOPTS)),)
+# These are disabled because we have these all over the place.
+CFLAGS += -Wno-empty-body
+CFLAGS += -Wno-missing-field-initializers
+CFLAGS += -Wno-sign-compare
+CFLAGS += -Wno-unused-function
+CFLAGS += -Wno-unused-parameter
+endif
+endif
+
+# uninitialized warnings on gcc 4.9.2 in xdiff/xdiffi.c and config.c
+# not worth fixing since newer compilers correctly stop complaining
+ifneq ($(filter gcc4,$(COMPILER_FEATURES)),)
+ifeq ($(filter gcc5,$(COMPILER_FEATURES)),)
+CFLAGS += -Wno-uninitialized
+endif
+endif
