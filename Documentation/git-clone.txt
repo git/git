@@ -260,7 +260,7 @@ or `--mirror` is given)
 
 <repository>::
 	The (possibly remote) repository to clone from.  See the
-	<<URLS,URLS>> section below for more information on specifying
+	<<URLS,GIT URLS>> section below for more information on specifying
 	repositories.
 
 <directory>::
