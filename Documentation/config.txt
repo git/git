@@ -530,6 +530,12 @@ core.autocrlf::
 	This variable can be set to 'input',
 	in which case no output conversion is performed.
 
+core.checkRoundtripEncoding::
+	A comma and/or whitespace separated list of encodings that Git
+	performs UTF-8 round trip checks on if they are used in an
+	`working-tree-encoding` attribute (see linkgit:gitattributes[5]).
+	The default value is `SHIFT-JIS`.
+
 core.symlinks::
 	If false, symbolic links are checked out as small plain files that
 	contain the link text. linkgit:git-update-index[1] and
