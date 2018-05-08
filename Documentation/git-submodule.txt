@@ -213,8 +213,8 @@ sync [--recursive] [--] [<path>...]::
 	submodule URLs change upstream and you need to update your local
 	repositories accordingly.
 +
-"git submodule sync" synchronizes all submodules while
-"git submodule sync \-- A" synchronizes submodule "A" only.
+`git submodule sync` synchronizes all submodules while
+`git submodule sync -- A` synchronizes submodule "A" only.
 +
 If `--recursive` is specified, this command will recurse into the
 registered submodules, and sync any nested submodules within.

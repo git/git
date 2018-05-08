@@ -8,7 +8,7 @@ git-shortlog - Summarize 'git log' output
 SYNOPSIS
 --------
 [verse]
-'git shortlog' [<options>] [<revision range>] [[\--] <path>...]
+'git shortlog' [<options>] [<revision range>] [[--] <path>...]
 git log --pretty=short | 'git shortlog' [<options>]
 
 DESCRIPTION
@@ -69,11 +69,11 @@ them.
 	ways to spell <revision range>, see the "Specifying Ranges"
 	section of linkgit:gitrevisions[7].
 
-[\--] <path>...::
+[--] <path>...::
 	Consider only commits that are enough to explain how the files
 	that match the specified paths came to be.
 +
-Paths may need to be prefixed with "\-- " to separate them from
+Paths may need to be prefixed with `--` to separate them from
 options or the revision range, when confusion arises.
 
 MAPPING AUTHORS

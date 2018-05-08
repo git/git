@@ -8,7 +8,7 @@ gitk - The Git repository browser
 SYNOPSIS
 --------
 [verse]
-'gitk' [<options>] [<revision range>] [\--] [<path>...]
+'gitk' [<options>] [<revision range>] [--] [<path>...]
 
 DESCRIPTION
 -----------
