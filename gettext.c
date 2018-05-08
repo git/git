@@ -159,15 +159,23 @@ static void init_gettext_charset(const char *domain)
 void git_setup_gettext(void)
 {
 	const char *podir = getenv(GIT_TEXT_DOMAIN_DIR_ENVIRONMENT);
+	char *p = NULL;
 
 	if (!podir)
-		podir = system_path(GIT_LOCALE_PATH);
+		podir = p = system_path(GIT_LOCALE_PATH);
+
+	if (!is_directory(podir)) {
+		free(p);
+		return;
+	}
 
 	bindtextdomain("git", podir);
 	setlocale(LC_MESSAGES, "");
 	setlocale(LC_TIME, "");
 	init_gettext_charset("git");
 	textdomain("git");
+
+	free(p);
 }
 
 /* return the number of columns of string 's' in current locale */
