@@ -82,9 +82,9 @@ test_expect_success 'test basic "submodule foreach" usage' '
 
 cat >expect <<EOF
 Entering '../sub1'
-$pwd/clone-foo1-../sub1-$sub1sha1
+$pwd/clone-foo1-sub1-$sub1sha1
 Entering '../sub3'
-$pwd/clone-foo3-../sub3-$sub3sha1
+$pwd/clone-foo3-sub3-$sub3sha1
 EOF
 
 test_expect_success 'test "submodule foreach" from subdirectory' '
@@ -193,6 +193,38 @@ test_expect_success 'test messages from "foreach --recursive" from subdirectory'
 		mkdir untracked &&
 		cd untracked &&
 		git submodule foreach --recursive >../../actual
+	) &&
+	test_i18ncmp expect actual
+'
+sub1sha1=$(cd clone2/sub1 && git rev-parse HEAD)
+sub2sha1=$(cd clone2/sub2 && git rev-parse HEAD)
+sub3sha1=$(cd clone2/sub3 && git rev-parse HEAD)
+nested1sha1=$(cd clone2/nested1 && git rev-parse HEAD)
+nested2sha1=$(cd clone2/nested1/nested2 && git rev-parse HEAD)
+nested3sha1=$(cd clone2/nested1/nested2/nested3 && git rev-parse HEAD)
+submodulesha1=$(cd clone2/nested1/nested2/nested3/submodule && git rev-parse HEAD)
+
+cat >expect <<EOF
+Entering '../nested1'
+toplevel: $pwd/clone2 name: nested1 path: nested1 hash: $nested1sha1
+Entering '../nested1/nested2'
+toplevel: $pwd/clone2/nested1 name: nested2 path: nested2 hash: $nested2sha1
+Entering '../nested1/nested2/nested3'
+toplevel: $pwd/clone2/nested1/nested2 name: nested3 path: nested3 hash: $nested3sha1
+Entering '../nested1/nested2/nested3/submodule'
+toplevel: $pwd/clone2/nested1/nested2/nested3 name: submodule path: submodule hash: $submodulesha1
+Entering '../sub1'
+toplevel: $pwd/clone2 name: foo1 path: sub1 hash: $sub1sha1
+Entering '../sub2'
+toplevel: $pwd/clone2 name: foo2 path: sub2 hash: $sub2sha1
+Entering '../sub3'
+toplevel: $pwd/clone2 name: foo3 path: sub3 hash: $sub3sha1
+EOF
+
+test_expect_success 'test "submodule foreach --recursive" from subdirectory' '
+	(
+		cd clone2/untracked &&
+		git submodule foreach --recursive "echo toplevel: \$toplevel name: \$name path: \$sm_path hash: \$sha1" >../../actual
 	) &&
 	test_i18ncmp expect actual
 '
