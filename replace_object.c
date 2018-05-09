@@ -37,7 +37,7 @@ static void prepare_replace_object(struct repository *r)
 		return;
 
 	r->objects->replace_map =
-		xmalloc(sizeof(*the_repository->objects->replace_map));
+		xmalloc(sizeof(*r->objects->replace_map));
 	oidmap_init(r->objects->replace_map, 0);
 
 	for_each_replace_ref(r, register_replace_ref, NULL);
