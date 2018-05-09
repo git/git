@@ -644,7 +644,7 @@ static int write_pseudoref(const char *pseudoref, const struct object_id *oid,
 {
 	const char *filename;
 	int fd;
-	static struct lock_file lock;
+	struct lock_file lock = LOCK_INIT;
 	struct strbuf buf = STRBUF_INIT;
 	int ret = -1;
 
@@ -654,8 +654,7 @@ static int write_pseudoref(const char *pseudoref, const struct object_id *oid,
 	strbuf_addf(&buf, "%s\n", oid_to_hex(oid));
 
 	filename = git_path("%s", pseudoref);
-	fd = hold_lock_file_for_update_timeout(&lock, filename,
-					       LOCK_DIE_ON_ERROR,
+	fd = hold_lock_file_for_update_timeout(&lock, filename, 0,
 					       get_files_ref_lock_timeout_ms());
 	if (fd < 0) {
 		strbuf_addf(err, "could not open '%s' for writing: %s",
