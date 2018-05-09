@@ -4058,7 +4058,7 @@ static int build_fake_ancestor(struct apply_state *state, struct patch *list)
 {
 	struct patch *patch;
 	struct index_state result = { NULL };
-	static struct lock_file lock;
+	struct lock_file lock = LOCK_INIT;
 	int res;
 
 	/* Once we start supporting the reverse patch, it may be
