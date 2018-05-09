@@ -233,8 +233,6 @@ static int check_local_mod(struct object_id *head, int index_only)
 	return errs;
 }
 
-static struct lock_file lock_file;
-
 static int show_only = 0, force = 0, index_only = 0, recursive = 0, quiet = 0;
 static int ignore_unmatch = 0;
 
@@ -251,6 +249,7 @@ static struct option builtin_rm_options[] = {
 
 int cmd_rm(int argc, const char **argv, const char *prefix)
 {
+	struct lock_file lock_file = LOCK_INIT;
 	int i;
 	struct pathspec pathspec;
 	char *seen;

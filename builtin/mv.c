@@ -72,7 +72,6 @@ static const char *add_slash(const char *path)
 	return path;
 }
 
-static struct lock_file lock_file;
 #define SUBMODULE_WITH_GITDIR ((const char *)1)
 
 static void prepare_move_submodule(const char *src, int first,
@@ -131,6 +130,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 	enum update_mode { BOTH = 0, WORKING_DIRECTORY, INDEX } *modes;
 	struct stat st;
 	struct string_list src_for_dst = STRING_LIST_INIT_NODUP;
+	struct lock_file lock_file = LOCK_INIT;
 
 	git_config(git_default_config, NULL);
 
