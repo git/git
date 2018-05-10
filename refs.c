@@ -684,7 +684,8 @@ static int write_pseudoref(const char *pseudoref, const struct object_id *oid,
 		if (read_ref(pseudoref, &actual_old_oid))
 			die("could not read ref '%s'", pseudoref);
 		if (oidcmp(&actual_old_oid, old_oid)) {
-			strbuf_addf(err, "unexpected sha1 when writing '%s'", pseudoref);
+			strbuf_addf(err, "unexpected object ID when writing '%s'",
+				    pseudoref);
 			rollback_lock_file(&lock);
 			goto done;
 		}
@@ -722,7 +723,8 @@ static int delete_pseudoref(const char *pseudoref, const struct object_id *old_o
 		if (read_ref(pseudoref, &actual_old_oid))
 			die("could not read ref '%s'", pseudoref);
 		if (oidcmp(&actual_old_oid, old_oid)) {
-			warning("Unexpected sha1 when deleting %s", pseudoref);
+			error("unexpected object ID when deleting '%s'",
+			      pseudoref);
 			rollback_lock_file(&lock);
 			return -1;
 		}
