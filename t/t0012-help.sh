@@ -49,6 +49,15 @@ test_expect_success "--help does not work for guides" "
 	test_i18ncmp expect actual
 "
 
+test_expect_success 'git help' '
+	git help >help.output &&
+	test_i18ngrep "^   clone  " help.output &&
+	test_i18ngrep "^   add    " help.output &&
+	test_i18ngrep "^   log    " help.output &&
+	test_i18ngrep "^   commit " help.output &&
+	test_i18ngrep "^   fetch  " help.output
+'
+
 test_expect_success 'generate builtin list' '
 	git --list-builtins >builtins
 '

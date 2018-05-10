@@ -1,13 +1,3 @@
-# common commands are grouped by themes
-# these groups are output by 'git help' in the order declared here.
-# map each common command in the command list to one of these groups.
-### common groups (do not change this line)
-init         start a working area (see also: git help tutorial)
-worktree     work on the current change (see also: git help everyday)
-info         examine the history and state (see also: git help revisions)
-history      grow, mark and tweak your common history
-remote       collaborate (see also: git help workflows)
-
 ### command list (do not change this line, also do not change alignment)
 # command name                          category [category] [category]
 git-add                                 mainporcelain           worktree
