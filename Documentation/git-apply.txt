@@ -113,8 +113,10 @@ explained for the configuration variable `core.quotePath` (see
 linkgit:git-config[1]).
 
 -p<n>::
-	Remove <n> leading slashes from traditional diff paths. The
-	default is 1.
+	Remove <n> leading path components (separated by slashes) from
+	traditional diff paths. E.g., with `-p2`, a patch against
+	`a/dir/file` will be applied directly to `file`. The default is
+	1.
 
 -C<n>::
 	Ensure at least <n> lines of surrounding context match before
