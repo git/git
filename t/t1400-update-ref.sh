@@ -503,12 +503,12 @@ test_expect_success 'delete pseudoref with correct old value' '
 	test_path_is_missing .git/PSEUDOREF
 '
 
-test_expect_failure 'create pseudoref with old OID zero' '
+test_expect_success 'create pseudoref with old OID zero' '
 	git update-ref PSEUDOREF $A $Z &&
 	test $A = $(cat .git/PSEUDOREF)
 '
 
-test_expect_failure 'do not overwrite pseudoref with old OID zero' '
+test_expect_success 'do not overwrite pseudoref with old OID zero' '
 	test_when_finished git update-ref -d PSEUDOREF &&
 	test_must_fail git update-ref PSEUDOREF $B $Z 2>err &&
 	test $A = $(cat .git/PSEUDOREF) &&
