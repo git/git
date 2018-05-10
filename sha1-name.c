@@ -346,7 +346,6 @@ static int show_ambiguous_object(const struct object_id *oid, void *data)
 	struct strbuf desc = STRBUF_INIT;
 	int type;
 
-
 	if (ds->fn && !ds->fn(oid, ds->cb_data))
 		return 0;
 
