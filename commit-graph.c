@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "config.h"
+#include "dir.h"
 #include "git-compat-util.h"
 #include "lockfile.h"
 #include "pack.h"
@@ -640,7 +641,6 @@ void write_commit_graph(const char *obj_dir,
 	struct hashfile *f;
 	uint32_t i, count_distinct = 0;
 	char *graph_name;
-	int fd;
 	struct lock_file lk = LOCK_INIT;
 	uint32_t chunk_ids[5];
 	uint64_t chunk_offsets[5];
@@ -754,23 +754,11 @@ void write_commit_graph(const char *obj_dir,
 	compute_generation_numbers(&commits);
 
 	graph_name = get_commit_graph_filename(obj_dir);
-	fd = hold_lock_file_for_update(&lk, graph_name, 0);
+	if (safe_create_leading_directories(graph_name))
+		die_errno(_("unable to create leading directories of %s"),
+			  graph_name);
 
-	if (fd < 0) {
-		struct strbuf folder = STRBUF_INIT;
-		strbuf_addstr(&folder, graph_name);
-		strbuf_setlen(&folder, strrchr(folder.buf, '/') - folder.buf);
-
-		if (mkdir(folder.buf, 0777) < 0)
-			die_errno(_("cannot mkdir %s"), folder.buf);
-		strbuf_release(&folder);
-
-		fd = hold_lock_file_for_update(&lk, graph_name, LOCK_DIE_ON_ERROR);
-
-		if (fd < 0)
-			die_errno("unable to create '%s'", graph_name);
-	}
-
+	hold_lock_file_for_update(&lk, graph_name, LOCK_DIE_ON_ERROR);
 	f = hashfd(lk.tempfile->fd, lk.tempfile->filename.buf);
 
 	hashwrite_be32(f, GRAPH_SIGNATURE);
