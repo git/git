@@ -42,8 +42,8 @@ void oid_array_clear(struct oid_array *array)
 }
 
 int oid_array_for_each_unique(struct oid_array *array,
-				for_each_oid_fn fn,
-				void *data)
+			      for_each_oid_fn fn,
+			      void *data)
 {
 	int i;
 
