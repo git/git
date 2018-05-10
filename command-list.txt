@@ -8,8 +8,8 @@ info         examine the history and state (see also: git help revisions)
 history      grow, mark and tweak your common history
 remote       collaborate (see also: git help workflows)
 
-### command list (do not change this line)
-# command name                          category [deprecated] [common]
+### command list (do not change this line, also do not change alignment)
+# command name                          category [category] [category]
 git-add                                 mainporcelain           worktree
 git-am                                  mainporcelain
 git-annotate                            ancillaryinterrogators
