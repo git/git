@@ -324,6 +324,7 @@ extern int git_diff_ui_config(const char *var, const char *value, void *cb);
 extern void diff_setup(struct diff_options *);
 extern int diff_opt_parse(struct diff_options *, const char **, int, const char *);
 extern void diff_setup_done(struct diff_options *);
+extern int git_config_rename(const char *var, const char *value);
 
 #define DIFF_DETECT_RENAME	1
 #define DIFF_DETECT_COPY	2

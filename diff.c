@@ -177,7 +177,7 @@ static int parse_submodule_params(struct diff_options *options, const char *valu
 	return 0;
 }
 
-static int git_config_rename(const char *var, const char *value)
+int git_config_rename(const char *var, const char *value)
 {
 	if (!value)
 		return DIFF_DETECT_RENAME;
