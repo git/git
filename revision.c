@@ -114,32 +114,38 @@ static void commit_stack_clear(struct commit_stack *stack)
 	stack->nr = stack->alloc = 0;
 }
 
+static void mark_one_parent_uninteresting(struct commit *commit,
+					  struct commit_stack *pending)
+{
+	struct commit_list *l;
+
+	if (commit->object.flags & UNINTERESTING)
+		return;
+	commit->object.flags |= UNINTERESTING;
+
+	/*
+	 * Normally we haven't parsed the parent
+	 * yet, so we won't have a parent of a parent
+	 * here. However, it may turn out that we've
+	 * reached this commit some other way (where it
+	 * wasn't uninteresting), in which case we need
+	 * to mark its parents recursively too..
+	 */
+	for (l = commit->parents; l; l = l->next)
+		commit_stack_push(pending, l->item);
+}
+
 void mark_parents_uninteresting(struct commit *commit)
 {
 	struct commit_stack pending = COMMIT_STACK_INIT;
 	struct commit_list *l;
 
 	for (l = commit->parents; l; l = l->next)
-		commit_stack_push(&pending, l->item);
+		mark_one_parent_uninteresting(l->item, &pending);
 
-	while (pending.nr > 0) {
-		struct commit *commit = commit_stack_pop(&pending);
-
-		if (commit->object.flags & UNINTERESTING)
-			return;
-		commit->object.flags |= UNINTERESTING;
-
-		/*
-		 * Normally we haven't parsed the parent
-		 * yet, so we won't have a parent of a parent
-		 * here. However, it may turn out that we've
-		 * reached this commit some other way (where it
-		 * wasn't uninteresting), in which case we need
-		 * to mark its parents recursively too..
-		 */
-		for (l = commit->parents; l; l = l->next)
-			commit_stack_push(&pending, l->item);
-	}
+	while (pending.nr > 0)
+		mark_one_parent_uninteresting(commit_stack_pop(&pending),
+					      &pending);
 
 	commit_stack_clear(&pending);
 }
