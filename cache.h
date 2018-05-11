@@ -1188,7 +1188,15 @@ int normalize_path_copy(char *dst, const char *src);
 int longest_ancestor_length(const char *path, struct string_list *prefixes);
 char *strip_path_suffix(const char *path, const char *suffix);
 int daemon_avoid_alias(const char *path);
-extern int is_ntfs_dotgit(const char *name);
+
+/*
+ * These functions match their is_hfs_dotgit() counterparts; see utf8.h for
+ * details.
+ */
+int is_ntfs_dotgit(const char *name);
+int is_ntfs_dotgitmodules(const char *name);
+int is_ntfs_dotgitignore(const char *name);
+int is_ntfs_dotgitattributes(const char *name);
 
 /*
  * Returns true iff "str" could be confused as a command-line option when
