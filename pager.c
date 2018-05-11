@@ -109,10 +109,15 @@ void setup_pager(void)
 		return;
 
 	/*
-	 * force computing the width of the terminal before we redirect
-	 * the standard output to the pager.
+	 * After we redirect standard output, we won't be able to use an ioctl
+	 * to get the terminal size. Let's grab it now, and then set $COLUMNS
+	 * to communicate it to any sub-processes.
 	 */
-	(void) term_columns();
+	{
+		char buf[64];
+		xsnprintf(buf, sizeof(buf), "%d", term_columns());
+		setenv("COLUMNS", buf, 0);
+	}
 
 	setenv("GIT_PAGER_IN_USE", "true", 1);
 
