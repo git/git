@@ -9,15 +9,18 @@ use File::Spec::Functions qw(:DEFAULT rel2abs);
 use IPC::Open2;
 
 BEGIN {
-	# t-git-credential-netrc.sh kicks off our testing, so we have to go from there.
+	# t-git-credential-netrc.sh kicks off our testing, so we have to go
+	# from there.
 	Test::More->builder->current_test(1);
 	Test::More->builder->no_ending(1);
 }
 
 my @global_credential_args = @ARGV;
 my $scriptDir = dirname rel2abs $0;
-my $netrc = catfile $scriptDir, 'test.netrc';
-my $gcNetrc = catfile $scriptDir, 'git-credential-netrc';
+my ($netrc, $netrcGpg, $gcNetrc) = map { catfile $scriptDir, $_; }
+                                       qw(test.netrc
+                                          test.netrc.gpg
+                                          git-credential-netrc);
 local $ENV{PATH} = join ':'
                       , $scriptDir
                       , $ENV{PATH}
@@ -87,6 +90,19 @@ ok(scalar keys %$cred == 2, "Got 2 'host:port kills host' keys");
 is($cred->{password}, 'bobwillknow', "Got correct 'host:port kills host' password");
 is($cred->{username}, 'bob', "Got correct 'host:port kills host' username");
 
+diag 'Testing netrc file decryption by git config gpg.program setting\n';
+$cred = run_credential( ['-f', $netrcGpg, 'get']
+                      , { host => 'git-config-gpg' }
+                      );
+
+ok(scalar keys %$cred == 2, 'Got keys decrypted by git config option');
+
+diag 'Testing netrc file decryption by gpg option\n';
+$cred = run_credential( ['-f', $netrcGpg, '-g', 'test.command-option-gpg', 'get']
+                      , { host => 'command-option-gpg' }
+                      );
+
+ok(scalar keys %$cred == 2, 'Got keys decrypted by command option');
 
 sub run_credential
 {

@@ -18,7 +18,7 @@
 
 	test_expect_success \
     'set up test repository' \
-    :
+    'git config --add gpg.program test.git-config-gpg'
 
 	# The external test will outputs its own plan
 	test_external_has_tap=1
