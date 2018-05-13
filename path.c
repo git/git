@@ -1224,7 +1224,7 @@ static int only_spaces_and_periods(const char *path, size_t len, size_t skip)
 
 int is_ntfs_dotgit(const char *name)
 {
-	int len;
+	size_t len;
 
 	for (len = 0; ; len++)
 		if (!name[len] || name[len] == '\\' || is_dir_sep(name[len])) {
