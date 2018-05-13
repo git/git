@@ -37,7 +37,7 @@ test_expect_success '--cacheinfo does not accept blob null sha1' '
 	echo content >file &&
 	git add file &&
 	git rev-parse :file >expect &&
-	test_must_fail git update-index --cacheinfo 100644 $_z40 file &&
+	test_must_fail git update-index --cacheinfo 100644 $ZERO_OID file &&
 	git rev-parse :file >actual &&
 	test_cmp expect actual
 '
@@ -47,7 +47,7 @@ test_expect_success '--cacheinfo does not accept gitlink null sha1' '
 	(cd submodule && test_commit foo) &&
 	git add submodule &&
 	git rev-parse :submodule >expect &&
-	test_must_fail git update-index --cacheinfo 160000 $_z40 submodule &&
+	test_must_fail git update-index --cacheinfo 160000 $ZERO_OID submodule &&
 	git rev-parse :submodule >actual &&
 	test_cmp expect actual
 '

@@ -6,7 +6,7 @@
 test_description='Test git update-ref and basic ref logging'
 . ./test-lib.sh
 
-Z=$_z40
+Z=$ZERO_OID
 
 m=refs/heads/master
 n_dir=refs/heads/gu

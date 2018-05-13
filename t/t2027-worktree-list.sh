@@ -116,7 +116,7 @@ test_expect_success 'broken main worktree still at the top' '
 		git worktree add linked &&
 		cat >expected <<-EOF &&
 		worktree $(pwd)
-		HEAD $_z40
+		HEAD $ZERO_OID
 
 		EOF
 		cd linked &&

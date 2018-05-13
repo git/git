@@ -59,12 +59,12 @@ test_expect_success 'create trees with duplicate entries' '
 
 test_expect_success 'diff-tree between trees' '
 	{
-		printf ":000000 100644 $_z40 $blob_two A\touter/inner\n" &&
-		printf ":000000 100644 $_z40 $blob_two A\touter/inner\n" &&
-		printf ":000000 100644 $_z40 $blob_two A\touter/inner\n" &&
-		printf ":100644 000000 $blob_two $_z40 D\touter/inner\n" &&
-		printf ":100644 000000 $blob_two $_z40 D\touter/inner\n" &&
-		printf ":100644 000000 $blob_two $_z40 D\touter/inner\n"
+		printf ":000000 100644 $ZERO_OID $blob_two A\touter/inner\n" &&
+		printf ":000000 100644 $ZERO_OID $blob_two A\touter/inner\n" &&
+		printf ":000000 100644 $ZERO_OID $blob_two A\touter/inner\n" &&
+		printf ":100644 000000 $blob_two $ZERO_OID D\touter/inner\n" &&
+		printf ":100644 000000 $blob_two $ZERO_OID D\touter/inner\n" &&
+		printf ":100644 000000 $blob_two $ZERO_OID D\touter/inner\n"
 	} >expect &&
 	git diff-tree -r --no-abbrev one two >actual &&
 	test_cmp expect actual

@@ -426,7 +426,7 @@ test_expect_success 'writing split index with null sha1 does not write cache tre
 	git commit -m "commit" &&
 	{
 		git ls-tree HEAD &&
-		printf "160000 commit $_z40\\tbroken\\n"
+		printf "160000 commit $ZERO_OID\\tbroken\\n"
 	} >broken-tree &&
 	echo "add broken entry" >msg &&
 

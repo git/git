@@ -46,11 +46,11 @@ test_expect_success 'before initial commit, things added' '
 	cat >expect <<-EOF &&
 	# branch.oid (initial)
 	# branch.head master
-	1 A. N... 000000 100644 100644 $_z40 $OID_A dir1/file_a
-	1 A. N... 000000 100644 100644 $_z40 $OID_B dir1/file_b
-	1 A. N... 000000 100644 100644 $_z40 $OID_X file_x
-	1 A. N... 000000 100644 100644 $_z40 $OID_Y file_y
-	1 A. N... 000000 100644 100644 $_z40 $OID_Z file_z
+	1 A. N... 000000 100644 100644 $ZERO_OID $OID_A dir1/file_a
+	1 A. N... 000000 100644 100644 $ZERO_OID $OID_B dir1/file_b
+	1 A. N... 000000 100644 100644 $ZERO_OID $OID_X file_x
+	1 A. N... 000000 100644 100644 $ZERO_OID $OID_Y file_y
+	1 A. N... 000000 100644 100644 $ZERO_OID $OID_Z file_z
 	? actual
 	? expect
 	EOF
@@ -63,11 +63,11 @@ test_expect_success 'before initial commit, things added (-z)' '
 	lf_to_nul >expect <<-EOF &&
 	# branch.oid (initial)
 	# branch.head master
-	1 A. N... 000000 100644 100644 $_z40 $OID_A dir1/file_a
-	1 A. N... 000000 100644 100644 $_z40 $OID_B dir1/file_b
-	1 A. N... 000000 100644 100644 $_z40 $OID_X file_x
-	1 A. N... 000000 100644 100644 $_z40 $OID_Y file_y
-	1 A. N... 000000 100644 100644 $_z40 $OID_Z file_z
+	1 A. N... 000000 100644 100644 $ZERO_OID $OID_A dir1/file_a
+	1 A. N... 000000 100644 100644 $ZERO_OID $OID_B dir1/file_b
+	1 A. N... 000000 100644 100644 $ZERO_OID $OID_X file_x
+	1 A. N... 000000 100644 100644 $ZERO_OID $OID_Y file_y
+	1 A. N... 000000 100644 100644 $ZERO_OID $OID_Z file_z
 	? actual
 	? expect
 	EOF
@@ -128,7 +128,7 @@ test_expect_success 'after first commit, stage existing changes' '
 	# branch.oid $H0
 	# branch.head master
 	1 M. N... 100644 100644 100644 $OID_X $OID_X1 file_x
-	1 D. N... 100644 000000 000000 $OID_Z $_z40 file_z
+	1 D. N... 100644 000000 000000 $OID_Z $ZERO_OID file_z
 	? actual
 	? expect
 	EOF
@@ -145,7 +145,7 @@ test_expect_success 'rename causes 2 path lines' '
 	# branch.oid $H0
 	# branch.head master
 	1 M. N... 100644 100644 100644 $OID_X $OID_X1 file_x
-	1 D. N... 100644 000000 000000 $OID_Z $_z40 file_z
+	1 D. N... 100644 000000 000000 $OID_Z $ZERO_OID file_z
 	2 R. N... 100644 100644 100644 $OID_Y $OID_Y R100 renamed_yQfile_y
 	? actual
 	? expect
@@ -163,7 +163,7 @@ test_expect_success 'rename causes 2 path lines (-z)' '
 	# branch.oid $H0
 	# branch.head master
 	1 M. N... 100644 100644 100644 $OID_X $OID_X1 file_x
-	1 D. N... 100644 000000 000000 $OID_Z $_z40 file_z
+	1 D. N... 100644 000000 000000 $OID_Z $ZERO_OID file_z
 	2 R. N... 100644 100644 100644 $OID_Y $OID_Y R100 renamed_yQfile_y
 	? actual
 	? expect
@@ -246,8 +246,8 @@ test_expect_success 'verify --intent-to-add output' '
 	git add --intent-to-add intent1.add intent2.add &&
 
 	cat >expect <<-EOF &&
-	1 .A N... 000000 000000 100644 $_z40 $_z40 intent1.add
-	1 .A N... 000000 000000 100644 $_z40 $_z40 intent2.add
+	1 .A N... 000000 000000 100644 $ZERO_OID $ZERO_OID intent1.add
+	1 .A N... 000000 000000 100644 $ZERO_OID $ZERO_OID intent2.add
 	EOF
 
 	git status --porcelain=v2 >actual &&
@@ -280,7 +280,7 @@ test_expect_success 'verify AA (add-add) conflict' '
 	cat >expect <<-EOF &&
 	# branch.oid $HM
 	# branch.head AA_M
-	u AA N... 000000 100644 100644 100644 $_z40 $OID_AA_B $OID_AA_A conflict.txt
+	u AA N... 000000 100644 100644 100644 $ZERO_OID $OID_AA_B $OID_AA_A conflict.txt
 	EOF
 
 	git status --porcelain=v2 --branch --untracked-files=all >actual &&
@@ -373,7 +373,7 @@ test_expect_success 'verify upstream fields in branch header' '
 		## Test upstream-gone case. Fake this by pointing origin/master at
 		## a non-existing commit.
 		OLD=$(git rev-parse origin/master) &&
-		NEW=$_z40 &&
+		NEW=$ZERO_OID &&
 		mv .git/packed-refs .git/old-packed-refs &&
 		sed "s/$OLD/$NEW/g" <.git/old-packed-refs >.git/packed-refs &&
 
@@ -469,8 +469,8 @@ test_expect_success 'create and add submodule, submodule appears clean (A. S...)
 		# branch.head master
 		# branch.upstream origin/master
 		# branch.ab +0 -0
-		1 A. N... 000000 100644 100644 $_z40 $HMOD .gitmodules
-		1 A. S... 000000 160000 160000 $_z40 $HSUB sub1
+		1 A. N... 000000 100644 100644 $ZERO_OID $HMOD .gitmodules
+		1 A. S... 000000 160000 160000 $ZERO_OID $HSUB sub1
 		EOF
 
 		git status --porcelain=v2 --branch --untracked-files=all >actual &&
@@ -494,8 +494,8 @@ test_expect_success 'untracked changes in added submodule (AM S..U)' '
 		# branch.head master
 		# branch.upstream origin/master
 		# branch.ab +0 -0
-		1 A. N... 000000 100644 100644 $_z40 $HMOD .gitmodules
-		1 AM S..U 000000 160000 160000 $_z40 $HSUB sub1
+		1 A. N... 000000 100644 100644 $ZERO_OID $HMOD .gitmodules
+		1 AM S..U 000000 160000 160000 $ZERO_OID $HSUB sub1
 		EOF
 
 		git status --porcelain=v2 --branch --untracked-files=all >actual &&
@@ -519,8 +519,8 @@ test_expect_success 'staged changes in added submodule (AM S.M.)' '
 		# branch.head master
 		# branch.upstream origin/master
 		# branch.ab +0 -0
-		1 A. N... 000000 100644 100644 $_z40 $HMOD .gitmodules
-		1 AM S.M. 000000 160000 160000 $_z40 $HSUB sub1
+		1 A. N... 000000 100644 100644 $ZERO_OID $HMOD .gitmodules
+		1 AM S.M. 000000 160000 160000 $ZERO_OID $HSUB sub1
 		EOF
 
 		git status --porcelain=v2 --branch --untracked-files=all >actual &&
@@ -546,8 +546,8 @@ test_expect_success 'staged and unstaged changes in added (AM S.M.)' '
 		# branch.head master
 		# branch.upstream origin/master
 		# branch.ab +0 -0
-		1 A. N... 000000 100644 100644 $_z40 $HMOD .gitmodules
-		1 AM S.M. 000000 160000 160000 $_z40 $HSUB sub1
+		1 A. N... 000000 100644 100644 $ZERO_OID $HMOD .gitmodules
+		1 AM S.M. 000000 160000 160000 $ZERO_OID $HSUB sub1
 		EOF
 
 		git status --porcelain=v2 --branch --untracked-files=all >actual &&
@@ -573,8 +573,8 @@ test_expect_success 'staged and untracked changes in added submodule (AM S.MU)' 
 		# branch.head master
 		# branch.upstream origin/master
 		# branch.ab +0 -0
-		1 A. N... 000000 100644 100644 $_z40 $HMOD .gitmodules
-		1 AM S.MU 000000 160000 160000 $_z40 $HSUB sub1
+		1 A. N... 000000 100644 100644 $ZERO_OID $HMOD .gitmodules
+		1 AM S.MU 000000 160000 160000 $ZERO_OID $HSUB sub1
 		EOF
 
 		git status --porcelain=v2 --branch --untracked-files=all >actual &&
@@ -600,8 +600,8 @@ test_expect_success 'commit within the submodule appears as new commit in super 
 		# branch.head master
 		# branch.upstream origin/master
 		# branch.ab +0 -0
-		1 A. N... 000000 100644 100644 $_z40 $HMOD .gitmodules
-		1 AM SC.. 000000 160000 160000 $_z40 $HSUB sub1
+		1 A. N... 000000 100644 100644 $ZERO_OID $HMOD .gitmodules
+		1 AM SC.. 000000 160000 160000 $ZERO_OID $HSUB sub1
 		EOF
 
 		git status --porcelain=v2 --branch --untracked-files=all >actual &&

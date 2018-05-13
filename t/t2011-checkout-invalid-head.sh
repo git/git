@@ -15,7 +15,7 @@ test_expect_success 'checkout should not start branch from a tree' '
 '
 
 test_expect_success 'checkout master from invalid HEAD' '
-	echo $_z40 >.git/HEAD &&
+	echo $ZERO_OID >.git/HEAD &&
 	git checkout master --
 '
 

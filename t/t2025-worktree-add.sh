@@ -465,7 +465,7 @@ post_checkout_hook () {
 test_expect_success '"add" invokes post-checkout hook (branch)' '
 	post_checkout_hook &&
 	{
-		echo $_z40 $(git rev-parse HEAD) 1 &&
+		echo $ZERO_OID $(git rev-parse HEAD) 1 &&
 		echo $(pwd)/.git/worktrees/gumby &&
 		echo $(pwd)/gumby
 	} >hook.expect &&
@@ -476,7 +476,7 @@ test_expect_success '"add" invokes post-checkout hook (branch)' '
 test_expect_success '"add" invokes post-checkout hook (detached)' '
 	post_checkout_hook &&
 	{
-		echo $_z40 $(git rev-parse HEAD) 1 &&
+		echo $ZERO_OID $(git rev-parse HEAD) 1 &&
 		echo $(pwd)/.git/worktrees/grumpy &&
 		echo $(pwd)/grumpy
 	} >hook.expect &&
@@ -494,7 +494,7 @@ test_expect_success '"add --no-checkout" suppresses post-checkout hook' '
 test_expect_success '"add" in other worktree invokes post-checkout hook' '
 	post_checkout_hook &&
 	{
-		echo $_z40 $(git rev-parse HEAD) 1 &&
+		echo $ZERO_OID $(git rev-parse HEAD) 1 &&
 		echo $(pwd)/.git/worktrees/guppy &&
 		echo $(pwd)/guppy
 	} >hook.expect &&
@@ -506,7 +506,7 @@ test_expect_success '"add" in bare repo invokes post-checkout hook' '
 	rm -rf bare &&
 	git clone --bare . bare &&
 	{
-		echo $_z40 $(git --git-dir=bare rev-parse HEAD) 1 &&
+		echo $ZERO_OID $(git --git-dir=bare rev-parse HEAD) 1 &&
 		echo $(pwd)/bare/worktrees/goozy &&
 		echo $(pwd)/goozy
 	} >hook.expect &&
