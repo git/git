@@ -27,8 +27,8 @@ test_expect_success 'git status' '
 
 test_expect_success 'git status with porcelain v2' '
 	git status --porcelain=v2 | grep -v "^?" >actual &&
-	nam1=d00491fd7e5bb6fa28c517a0bb32b8b506539d4d &&
-	nam2=ce013625030ba8dba906f756967f9e9ca394464a &&
+	nam1=$(echo 1 | git hash-object --stdin) &&
+	nam2=$(git hash-object elif) &&
 	cat >expect <<-EOF &&
 	1 DA N... 100644 000000 100644 $nam1 $ZERO_OID 1.t
 	1 A. N... 000000 100644 100644 $ZERO_OID $nam2 elif
@@ -181,7 +181,7 @@ test_expect_success 'rename detection finds the right names' '
 		EOF
 		test_cmp expected.2 actual.2 &&
 
-		hash=12f00e90b6ef79117ce6e650416b8cf517099b78 &&
+		hash=$(git hash-object third) &&
 		git status --porcelain=v2 | grep -v "^?" >actual.3 &&
 		cat >expected.3 <<-EOF &&
 		2 .R N... 100644 100644 100644 $hash $hash R100 third	first
@@ -212,7 +212,7 @@ test_expect_success 'double rename detection in status' '
 		EOF
 		test_cmp expected.2 actual.2 &&
 
-		hash=12f00e90b6ef79117ce6e650416b8cf517099b78 &&
+		hash=$(git hash-object third) &&
 		git status --porcelain=v2 | grep -v "^?" >actual.3 &&
 		cat >expected.3 <<-EOF &&
 		2 R. N... 100644 100644 100644 $hash $hash R100 second	first
