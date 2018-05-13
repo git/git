@@ -64,6 +64,8 @@ static struct oidset gitmodules_done = OIDSET_INIT;
 	FUNC(GITMODULES_PARSE, ERROR) \
 	FUNC(GITMODULES_NAME, ERROR) \
 	FUNC(GITMODULES_SYMLINK, ERROR) \
+	FUNC(GITIGNORE_SYMLINK, ERROR) \
+	FUNC(GITATTRIBUTES_SYMLINK, ERROR) \
 	/* warnings */ \
 	FUNC(BAD_FILEMODE, WARN) \
 	FUNC(EMPTY_NAME, WARN) \
@@ -584,6 +586,19 @@ static int fsck_tree(struct tree *item, struct fsck_options *options)
 				retval += report(options, &item->object,
 						 FSCK_MSG_GITMODULES_SYMLINK,
 						 ".gitmodules is a symbolic link");
+		}
+
+		if (S_ISLNK(mode)) {
+			if (is_hfs_dotgitignore(name) ||
+			    is_ntfs_dotgitignore(name))
+				retval += report(options, &item->object,
+						 FSCK_MSG_GITIGNORE_SYMLINK,
+						 ".gitignore is a symlink");
+			if (is_hfs_dotgitattributes(name) ||
+			    is_ntfs_dotgitattributes(name))
+				retval += report(options, &item->object,
+						 FSCK_MSG_GITATTRIBUTES_SYMLINK,
+						 ".gitattributes is a symlink");
 		}
 
 		if (update_tree_entry_gently(&desc)) {
