@@ -561,9 +561,7 @@ static int fsck_tree(struct tree *item, struct fsck_options *options)
 		has_empty_name |= !*name;
 		has_dot |= !strcmp(name, ".");
 		has_dotdot |= !strcmp(name, "..");
-		has_dotgit |= (!strcmp(name, ".git") ||
-			       is_hfs_dotgit(name) ||
-			       is_ntfs_dotgit(name));
+		has_dotgit |= is_hfs_dotgit(name) || is_ntfs_dotgit(name);
 		has_zero_pad |= *(char *)desc.buffer == '0';
 		if (update_tree_entry_gently(&desc)) {
 			retval += report(options, &item->object, FSCK_MSG_BAD_TREE, "cannot be parsed as a tree");
