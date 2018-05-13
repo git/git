@@ -810,8 +810,7 @@ static int verify_dotfile(const char *rest)
 
 	switch (*rest) {
 	/*
-	 * ".git" followed by  NUL or slash is bad. This
-	 * shares the path end test with the ".." case.
+	 * ".git" followed by NUL or slash is bad.
 	 */
 	case 'g':
 	case 'G':
@@ -819,8 +818,9 @@ static int verify_dotfile(const char *rest)
 			break;
 		if (rest[2] != 't' && rest[2] != 'T')
 			break;
-		rest += 2;
-	/* fallthrough */
+		if (rest[3] == '\0' || is_dir_sep(rest[3]))
+			return 0;
+		break;
 	case '.':
 		if (rest[1] == '\0' || is_dir_sep(rest[1]))
 			return 0;
