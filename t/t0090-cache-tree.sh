@@ -9,7 +9,7 @@ cache-tree extension.
 
 cmp_cache_tree () {
 	test-tool dump-cache-tree | sed -e '/#(ref)/d' >actual &&
-	sed "s/$_x40/SHA/" <actual >filtered &&
+	sed "s/$OID_REGEX/SHA/" <actual >filtered &&
 	test_cmp "$1" filtered
 }
 

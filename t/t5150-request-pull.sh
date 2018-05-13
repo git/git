@@ -81,7 +81,7 @@ test_expect_success 'setup: two scripts for reading pull requests' '
 	cat <<-EOT >fuzz.sed
 	#!/bin/sed -nf
 	s/$downstream_url_for_sed/URL/g
-	s/$_x40/OBJECT_NAME/g
+	s/$OID_REGEX/OBJECT_NAME/g
 	s/A U Thor/AUTHOR/g
 	s/[-0-9]\{10\} [:0-9]\{8\} [-+][0-9]\{4\}/DATE/g
 	s/        [^ ].*/        SUBJECT/g

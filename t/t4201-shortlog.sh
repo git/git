@@ -59,7 +59,7 @@ test_expect_success 'setup' '
 fuzz() {
 	file=$1 &&
 	sed "
-			s/$_x40/OBJECT_NAME/g
+			s/$OID_REGEX/OBJECT_NAME/g
 			s/$_x35/OBJID/g
 			s/^ \{6\}[CTa].*/      SUBJECT/g
 			s/^ \{8\}[^ ].*/        CONTINUATION/g

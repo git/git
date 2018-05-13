@@ -122,7 +122,7 @@ test_expect_success '--quit keeps HEAD and conflicted index intact' '
 	{
 		git rev-list HEAD |
 		git diff-tree --root --stdin |
-		sed "s/$_x40/OBJID/g"
+		sed "s/$OID_REGEX/OBJID/g"
 	} >actual &&
 	test_cmp expect actual
 '
@@ -220,7 +220,7 @@ test_expect_success 'cherry-pick still writes sequencer state when one commit is
 	{
 		git rev-list HEAD |
 		git diff-tree --root --stdin |
-		sed "s/$_x40/OBJID/g"
+		sed "s/$OID_REGEX/OBJID/g"
 	} >actual &&
 	cat >expect <<-\EOF &&
 	OBJID
@@ -317,7 +317,7 @@ test_expect_success '--continue after resolving conflicts' '
 	{
 		git rev-list HEAD |
 		git diff-tree --root --stdin |
-		sed "s/$_x40/OBJID/g"
+		sed "s/$OID_REGEX/OBJID/g"
 	} >actual.log &&
 	test_cmp expect foo &&
 	test_cmp expect.log actual.log
@@ -334,7 +334,7 @@ test_expect_success '--continue after resolving conflicts and committing' '
 	{
 		git rev-list HEAD |
 		git diff-tree --root --stdin |
-		sed "s/$_x40/OBJID/g"
+		sed "s/$OID_REGEX/OBJID/g"
 	} >actual &&
 	cat >expect <<-\EOF &&
 	OBJID

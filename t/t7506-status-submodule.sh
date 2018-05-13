@@ -18,7 +18,7 @@ test_create_repo_with_commit () {
 }
 
 sanitize_output () {
-	sed -e "s/$_x40/HASH/" -e "s/$_x40/HASH/" output >output2 &&
+	sed -e "s/$OID_REGEX/HASH/" -e "s/$OID_REGEX/HASH/" output >output2 &&
 	mv output2 output
 }
 

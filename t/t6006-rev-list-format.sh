@@ -447,8 +447,8 @@ test_expect_success '--abbrev' '
 	git log -1 --format="%h %h %h" HEAD >actual1 &&
 	git log -1 --abbrev=5 --format="%h %h %h" HEAD >actual2 &&
 	git log -1 --abbrev=5 --format="%H %H %H" HEAD >actual3 &&
-	sed -e "s/$_x40/LONG/g" -e "s/$_x05/SHORT/g" <actual2 >fuzzy2 &&
-	sed -e "s/$_x40/LONG/g" -e "s/$_x05/SHORT/g" <actual3 >fuzzy3 &&
+	sed -e "s/$OID_REGEX/LONG/g" -e "s/$_x05/SHORT/g" <actual2 >fuzzy2 &&
+	sed -e "s/$OID_REGEX/LONG/g" -e "s/$_x05/SHORT/g" <actual3 >fuzzy3 &&
 	test_cmp expect2 fuzzy2 &&
 	test_cmp expect3 fuzzy3 &&
 	! test_cmp actual1 actual2

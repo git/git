@@ -1530,7 +1530,7 @@ test_expect_success 'format-patch --zero-commit' '
 test_expect_success 'From line has expected format' '
 	git format-patch --stdout v2..v1 >patch2 &&
 	grep "^From " patch2 >from &&
-	grep "^From $_x40 Mon Sep 17 00:00:00 2001$" patch2 >filtered &&
+	grep "^From $OID_REGEX Mon Sep 17 00:00:00 2001$" patch2 >filtered &&
 	test_cmp from filtered
 '
 
