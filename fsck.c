@@ -11,6 +11,7 @@
 #include "sha1-array.h"
 #include "decorate.h"
 #include "oidset.h"
+#include "packfile.h"
 
 static struct oidset gitmodules_found = OIDSET_INIT;
 static struct oidset gitmodules_done = OIDSET_INIT;
@@ -974,6 +975,8 @@ int fsck_finish(struct fsck_options *options)
 
 		buf = read_sha1_file(oid->hash, &type, &size);
 		if (!buf) {
+			if (is_promisor_object(&blob->object.oid))
+				continue;
 			ret |= report(options, &blob->object,
 				      FSCK_MSG_GITMODULES_MISSING,
 				      "unable to read .gitmodules blob");
