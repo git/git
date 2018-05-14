@@ -358,10 +358,9 @@ static int process_directory(const char *path, int len, struct stat *st)
 	return error("%s: is a directory - add files inside instead", path);
 }
 
-static int process_path(const char *path)
+static int process_path(const char *path, struct stat *st, int stat_errno)
 {
 	int pos, len;
-	struct stat st;
 	const struct cache_entry *ce;
 
 	len = strlen(path);
@@ -385,13 +384,13 @@ static int process_path(const char *path)
 	 * First things first: get the stat information, to decide
 	 * what to do about the pathname!
 	 */
-	if (lstat(path, &st) < 0)
-		return process_lstat_error(path, errno);
+	if (stat_errno)
+		return process_lstat_error(path, stat_errno);
 
-	if (S_ISDIR(st.st_mode))
-		return process_directory(path, len, &st);
+	if (S_ISDIR(st->st_mode))
+		return process_directory(path, len, st);
 
-	return add_one_path(ce, path, len, &st);
+	return add_one_path(ce, path, len, st);
 }
 
 static int add_cacheinfo(unsigned int mode, const struct object_id *oid,
@@ -443,6 +442,16 @@ static void chmod_path(char flip, const char *path)
 
 static void update_one(const char *path)
 {
+	int stat_errno = 0;
+	struct stat st;
+
+	if (mark_valid_only || mark_skip_worktree_only || force_remove)
+		st.st_mode = 0;
+	else if (lstat(path, &st) < 0) {
+		st.st_mode = 0;
+		stat_errno = errno;
+	} /* else stat is valid */
+
 	if (!verify_path(path)) {
 		fprintf(stderr, "Ignoring path %s\n", path);
 		return;
@@ -464,7 +473,7 @@ static void update_one(const char *path)
 		report("remove '%s'", path);
 		return;
 	}
-	if (process_path(path))
+	if (process_path(path, &st, stat_errno))
 		die("Unable to process path %s", path);
 	report("add '%s'", path);
 }
