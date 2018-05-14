@@ -100,6 +100,7 @@ static struct used_atom {
 	} u;
 } *used_atom;
 static int used_atom_cnt, need_tagged, need_symref;
+static struct expand_data oi_data;
 
 /*
  * Expand string, append it to strbuf *sb, then return error code ret.
@@ -267,6 +268,22 @@ static int contents_atom_parser(const struct ref_format *format, struct used_ato
 	return 0;
 }
 
+static int objecttype_atom_parser(const struct ref_format *format, struct used_atom *atom,
+				  const char *arg, struct strbuf *unused_err)
+{
+	oi_data.use_data = 1;
+	oi_data.info.typep = &oi_data.type;
+	return 0;
+}
+
+static int objectsize_atom_parser(const struct ref_format *format, struct used_atom *atom,
+				  const char *arg, struct strbuf *unused_err)
+{
+	oi_data.use_data = 1;
+	oi_data.info.sizep = &oi_data.size;
+	return 0;
+}
+
 static int objectname_atom_parser(const struct ref_format *format, struct used_atom *atom,
 				  const char *arg, struct strbuf *err)
 {
@@ -383,9 +400,9 @@ static struct {
 	int (*parser)(const struct ref_format *format, struct used_atom *atom,
 		      const char *arg, struct strbuf *err);
 } valid_atom[] = {
-	{ "refname" , FIELD_STR, refname_atom_parser },
-	{ "objecttype" },
-	{ "objectsize", FIELD_ULONG },
+	{ "refname", FIELD_STR, refname_atom_parser },
+	{ "objecttype", FIELD_STR, objecttype_atom_parser },
+	{ "objectsize", FIELD_ULONG, objectsize_atom_parser },
 	{ "objectname", FIELD_STR, objectname_atom_parser },
 	{ "tree" },
 	{ "parent" },
@@ -1207,7 +1224,8 @@ static void fill_missing_values(struct atom_value *val)
  */
 static void grab_values(struct atom_value *val, int deref, struct object *obj, void *buf, unsigned long sz)
 {
-	grab_common_values(val, deref, obj, buf, sz);
+	if (deref || !oi_data.use_data)
+		grab_common_values(val, deref, obj, buf, sz);
 	switch (obj->type) {
 	case OBJ_TAG:
 		grab_tag_values(val, deref, obj, buf, sz);
@@ -1535,6 +1553,13 @@ static int populate_value(struct ref_array_item *ref, struct strbuf *err)
 			}
 			continue;
 		} else if (!deref && grab_objectname(name, &ref->objectname, v, atom)) {
+			continue;
+		} else if (!deref && !strcmp(name, "objecttype") && oi_data.use_data) {
+			v->s = type_name(oi_data.type);
+			continue;
+		} else if (!deref && !strcmp(name, "objectsize") && oi_data.use_data) {
+			v->value = oi_data.size;
+			v->s = xstrfmt("%lu", oi_data.size);
 			continue;
 		} else if (!strcmp(name, "HEAD")) {
 			if (atom->u.head && !strcmp(ref->refname, atom->u.head))
@@ -2156,8 +2181,17 @@ static int cmp_ref_sorting(struct ref_sorting *s, struct ref_array_item *a, stru
 	int (*cmp_fn)(const char *, const char *);
 	struct strbuf err = STRBUF_INIT;
 
+	oi_data.oid = a->objectname;
+	if (oi_data.use_data &&
+	    oid_object_info_extended(the_repository, &oi_data.oid, &oi_data.info, OBJECT_INFO_LOOKUP_REPLACE) < 0)
+		die(_("missing object %s for %s"), oid_to_hex(&a->objectname), a->refname);
 	if (get_ref_atom_value(a, s->atom, &va, &err))
 		die("%s", err.buf);
+
+	oi_data.oid = b->objectname;
+	if (oi_data.use_data &&
+	    oid_object_info_extended(the_repository, &oi_data.oid, &oi_data.info, OBJECT_INFO_LOOKUP_REPLACE) < 0)
+		die(_("missing object %s for %s"), oid_to_hex(&b->objectname), b->refname);
 	if (get_ref_atom_value(b, s->atom, &vb, &err))
 		die("%s", err.buf);
 	strbuf_release(&err);
@@ -2226,6 +2260,11 @@ int format_ref_array_item(struct ref_array_item *info,
 {
 	const char *cp, *sp, *ep;
 	struct ref_formatting_state state = REF_FORMATTING_STATE_INIT;
+	oi_data.oid = info->objectname;
+	if (oi_data.use_data &&
+	    oid_object_info_extended(the_repository, &oi_data.oid, &oi_data.info, OBJECT_INFO_LOOKUP_REPLACE) < 0)
+		return strbuf_addf_ret(error_buf, -1, _("missing object %s for %s"),
+				       oid_to_hex(&info->objectname), info->refname);
 
 	state.quote_style = format->quote_style;
 	push_stack_element(&state.stack);

@@ -85,6 +85,27 @@ struct ref_format {
 	int need_color_reset_at_eol;
 };
 
+struct expand_data {
+	struct object_id oid;
+	enum object_type type;
+	unsigned long size;
+	off_t disk_size;
+	struct object_id delta_base_oid;
+
+	/*
+	 * This object_info is set up to be passed to oid_object_info_extended.
+	 * It will point to the data elements above, so you can retrieve
+	 * the response from there.
+	 */
+	struct object_info info;
+
+	/*
+	 * This flag will be true if the requested format and options
+	 * require us to call oid_object_info_extended.
+	 */
+	unsigned use_data : 1;
+};
+
 #define REF_FORMAT_INIT { NULL, 0, -1 }
 
 /*  Macros for checking --merged and --no-merged options */
