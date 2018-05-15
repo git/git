@@ -3,6 +3,7 @@
 #include "parse-options.h"
 #include "refs.h"
 #include "wildmatch.h"
+#include "object-store.h"
 #include "commit.h"
 #include "remote.h"
 #include "color.h"

@@ -7,6 +7,7 @@
 #include "strbuf.h"
 #include "run-command.h"
 #include "refs.h"
+#include "object-store.h"
 #include "argv-array.h"
 
 static const char * const builtin_remote_usage[] = {

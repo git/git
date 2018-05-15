@@ -3,6 +3,7 @@
 #include "tree.h"
 #include "tree-walk.h"
 #include "cache-tree.h"
+#include "object-store.h"
 
 #ifndef DEBUG
 #define DEBUG 0

@@ -13,6 +13,7 @@
 #include "tree-walk.h"
 #include "sha1-array.h"
 #include "packfile.h"
+#include "object-store.h"
 
 struct batch_options {
 	int enabled;

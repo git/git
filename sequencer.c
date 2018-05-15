@@ -2,6 +2,7 @@
 #include "config.h"
 #include "lockfile.h"
 #include "dir.h"
+#include "object-store.h"
 #include "object.h"
 #include "commit.h"
 #include "sequencer.h"

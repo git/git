@@ -14,6 +14,7 @@
 #include "parse-options.h"
 #include "fetch-pack.h"
 #include "refs.h"
+#include "object-store.h"
 #include "tree.h"
 #include "tree-walk.h"
 #include "unpack-trees.h"

@@ -25,6 +25,7 @@
 #include "tmp-objdir.h"
 #include "oidset.h"
 #include "packfile.h"
+#include "object-store.h"
 #include "protocol.h"
 
 static const char * const receive_pack_usage[] = {

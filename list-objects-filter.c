@@ -11,6 +11,7 @@
 #include "list-objects-filter.h"
 #include "list-objects-filter-options.h"
 #include "oidset.h"
+#include "object-store.h"
 
 /* Remember to update object flag allocation in object.h */
 /*

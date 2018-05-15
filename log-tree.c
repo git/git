@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "config.h"
 #include "diff.h"
+#include "object-store.h"
 #include "commit.h"
 #include "tag.h"
 #include "graph.h"

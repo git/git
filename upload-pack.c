@@ -3,6 +3,7 @@
 #include "refs.h"
 #include "pkt-line.h"
 #include "sideband.h"
+#include "object-store.h"
 #include "tag.h"
 #include "object.h"
 #include "commit.h"

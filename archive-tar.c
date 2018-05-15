@@ -5,6 +5,7 @@
 #include "config.h"
 #include "tar.h"
 #include "archive.h"
+#include "object-store.h"
 #include "streaming.h"
 #include "run-command.h"
 

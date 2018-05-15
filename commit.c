@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "tag.h"
 #include "commit.h"
+#include "object-store.h"
 #include "pkt-line.h"
 #include "utf8.h"
 #include "diff.h"

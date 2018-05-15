@@ -4,6 +4,7 @@
 #include "submodule-config.h"
 #include "submodule.h"
 #include "strbuf.h"
+#include "object-store.h"
 #include "parse-options.h"
 
 /*
