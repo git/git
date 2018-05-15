@@ -177,7 +177,8 @@ bad_graft_data:
 	return NULL;
 }
 
-static int read_graft_file(const char *graft_file)
+#define read_graft_file(r, f) read_graft_file_##r(f)
+static int read_graft_file_the_repository(const char *graft_file)
 {
 	FILE *fp = fopen_or_warn(graft_file, "r");
 	struct strbuf buf = STRBUF_INIT;
@@ -204,7 +205,7 @@ static void prepare_commit_graft(void)
 	if (commit_graft_prepared)
 		return;
 	graft_file = get_graft_file();
-	read_graft_file(graft_file);
+	read_graft_file(the_repository, graft_file);
 	/* make sure shallows are read */
 	is_repository_shallow();
 	commit_graft_prepared = 1;
