@@ -1048,18 +1048,17 @@ static void print_commit(struct commit *commit)
 	strbuf_release(&sb);
 }
 
-#define MERGE_WARNING(path, msg) \
-	warning("Failed to merge submodule %s (%s)", path, msg);
-
-static int merge_submodule(struct object_id *result, const char *path,
+static int merge_submodule(struct merge_options *o,
+			   struct object_id *result, const char *path,
 			   const struct object_id *base, const struct object_id *a,
-			   const struct object_id *b, int search)
+			   const struct object_id *b)
 {
 	struct commit *commit_base, *commit_a, *commit_b;
 	int parent_count;
 	struct object_array merges;
 
 	int i;
+	int search = !o->call_depth;
 
 	/* store a in result in case we fail */
 	oidcpy(result, a);
@@ -1073,21 +1072,21 @@ static int merge_submodule(struct object_id *result, const char *path,
 		return 0;
 
 	if (add_submodule_odb(path)) {
-		MERGE_WARNING(path, "not checked out");
+		output(o, 1, _("Failed to merge submodule %s (not checked out)"), path);
 		return 0;
 	}
 
 	if (!(commit_base = lookup_commit_reference(base)) ||
 	    !(commit_a = lookup_commit_reference(a)) ||
 	    !(commit_b = lookup_commit_reference(b))) {
-		MERGE_WARNING(path, "commits not present");
+		output(o, 1, _("Failed to merge submodule %s (commits not present)"), path);
 		return 0;
 	}
 
 	/* check whether both changes are forward */
 	if (!in_merge_bases(commit_base, commit_a) ||
 	    !in_merge_bases(commit_base, commit_b)) {
-		MERGE_WARNING(path, "commits don't follow merge-base");
+		output(o, 1, _("Failed to merge submodule %s (commits don't follow merge-base)"), path);
 		return 0;
 	}
 
@@ -1116,25 +1115,24 @@ static int merge_submodule(struct object_id *result, const char *path,
 	parent_count = find_first_merges(&merges, path, commit_a, commit_b);
 	switch (parent_count) {
 	case 0:
-		MERGE_WARNING(path, "merge following commits not found");
+		output(o, 1, _("Failed to merge submodule %s (merge following commits not found)"), path);
 		break;
 
 	case 1:
-		MERGE_WARNING(path, "not fast-forward");
-		fprintf(stderr, "Found a possible merge resolution "
-				"for the submodule:\n");
+		output(o, 1, _("Failed to merge submodule %s (not fast-forward)"), path);
+		output(o, 2, _("Found a possible merge resolution for the submodule:\n"));
 		print_commit((struct commit *) merges.objects[0].item);
-		fprintf(stderr,
+		output(o, 2, _(
 			"If this is correct simply add it to the index "
 			"for example\n"
 			"by using:\n\n"
 			"  git update-index --cacheinfo 160000 %s \"%s\"\n\n"
-			"which will accept this suggestion.\n",
+			"which will accept this suggestion.\n"),
 			oid_to_hex(&merges.objects[0].item->oid), path);
 		break;
 
 	default:
-		MERGE_WARNING(path, "multiple merges found");
+		output(o, 1, _("Failed to merge submodule %s (multiple merges found)"), path);
 		for (i = 0; i < merges.nr; i++)
 			print_commit((struct commit *) merges.objects[i].item);
 	}
@@ -1205,12 +1203,11 @@ static int merge_file_1(struct merge_options *o,
 				return ret;
 			result->clean = (merge_status == 0);
 		} else if (S_ISGITLINK(a->mode)) {
-			result->clean = merge_submodule(&result->oid,
+			result->clean = merge_submodule(o, &result->oid,
 						       one->path,
 						       &one->oid,
 						       &a->oid,
-						       &b->oid,
-						       !o->call_depth);
+						       &b->oid);
 		} else if (S_ISLNK(a->mode)) {
 			switch (o->recursive_variant) {
 			case MERGE_RECURSIVE_NORMAL:
