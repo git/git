@@ -308,7 +308,7 @@ static int http_options(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
-	if (!strcmp("http.schannel.checkRevoke", var)) {
+	if (!strcmp("http.schannel.checkrevoke", var)) {
 		http_schannel_check_revoke = git_config_bool(var, value);
 		return 0;
 	}
