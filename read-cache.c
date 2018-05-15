@@ -810,7 +810,10 @@ static int verify_dotfile(const char *rest)
 
 	switch (*rest) {
 	/*
-	 * ".git" followed by NUL or slash is bad.
+	 * ".git" followed by NUL or slash is bad. Note that we match
+	 * case-insensitively here, even if ignore_case is not set.
+	 * This outlaws ".GIT" everywhere out of an abundance of caution,
+	 * since there's really no good reason to allow it.
 	 */
 	case 'g':
 	case 'G':
