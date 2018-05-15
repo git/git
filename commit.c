@@ -197,7 +197,8 @@ static int read_graft_file_the_repository(const char *graft_file)
 	return 0;
 }
 
-static void prepare_commit_graft(void)
+#define prepare_commit_graft(r) prepare_commit_graft_##r()
+static void prepare_commit_graft_the_repository(void)
 {
 	static int commit_graft_prepared;
 	char *graft_file;
@@ -214,7 +215,7 @@ static void prepare_commit_graft(void)
 struct commit_graft *lookup_commit_graft(const struct object_id *oid)
 {
 	int pos;
-	prepare_commit_graft();
+	prepare_commit_graft(the_repository);
 	pos = commit_graft_pos(the_repository, oid->hash);
 	if (pos < 0)
 		return NULL;
