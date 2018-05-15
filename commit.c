@@ -112,7 +112,7 @@ static int commit_graft_pos_the_repository(const unsigned char *sha1)
 			commit_graft_sha1_access);
 }
 
-int register_commit_graft(struct commit_graft *graft, int ignore_dups)
+int register_commit_graft_the_repository(struct commit_graft *graft, int ignore_dups)
 {
 	int pos = commit_graft_pos(the_repository, graft->oid.hash);
 
@@ -188,7 +188,7 @@ static int read_graft_file(const char *graft_file)
 		struct commit_graft *graft = read_graft_line(&buf);
 		if (!graft)
 			continue;
-		if (register_commit_graft(graft, 1))
+		if (register_commit_graft(the_repository, graft, 1))
 			error("duplicate graft data: %s", buf.buf);
 	}
 	fclose(fp);
