@@ -15,6 +15,7 @@
 #include "diff.h"
 #include "diffcore.h"
 #include "tag.h"
+#include "alloc.h"
 #include "unpack-trees.h"
 #include "string-list.h"
 #include "xdiff-interface.h"

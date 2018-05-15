@@ -5,6 +5,7 @@
 #include "tree.h"
 #include "commit.h"
 #include "tag.h"
+#include "alloc.h"
 #include "object-store.h"
 #include "packfile.h"
 
@@ -455,6 +456,13 @@ struct parsed_object_pool *parsed_object_pool_new(void)
 {
 	struct parsed_object_pool *o = xmalloc(sizeof(*o));
 	memset(o, 0, sizeof(*o));
+
+	o->blob_state = allocate_alloc_state();
+	o->tree_state = allocate_alloc_state();
+	o->commit_state = allocate_alloc_state();
+	o->tag_state = allocate_alloc_state();
+	o->object_state = allocate_alloc_state();
+
 	return o;
 }
 
@@ -501,9 +509,39 @@ void raw_object_store_clear(struct raw_object_store *o)
 void parsed_object_pool_clear(struct parsed_object_pool *o)
 {
 	/*
-	 * TOOD free objects in o->obj_hash.
-	 *
 	 * As objects are allocated in slabs (see alloc.c), we do
 	 * not need to free each object, but each slab instead.
+	 *
+	 * Before doing so, we need to free any additional memory
+	 * the objects may hold.
 	 */
+	unsigned i;
+
+	for (i = 0; i < o->obj_hash_size; i++) {
+		struct object *obj = o->obj_hash[i];
+
+		if (!obj)
+			continue;
+
+		if (obj->type == OBJ_TREE)
+			free_tree_buffer((struct tree*)obj);
+		else if (obj->type == OBJ_COMMIT)
+			release_commit_memory((struct commit*)obj);
+		else if (obj->type == OBJ_TAG)
+			release_tag_memory((struct tag*)obj);
+	}
+
+	FREE_AND_NULL(o->obj_hash);
+	o->obj_hash_size = 0;
+
+	clear_alloc_state(o->blob_state);
+	clear_alloc_state(o->tree_state);
+	clear_alloc_state(o->commit_state);
+	clear_alloc_state(o->tag_state);
+	clear_alloc_state(o->object_state);
+	FREE_AND_NULL(o->blob_state);
+	FREE_AND_NULL(o->tree_state);
+	FREE_AND_NULL(o->commit_state);
+	FREE_AND_NULL(o->tag_state);
+	FREE_AND_NULL(o->object_state);
 }

@@ -6,6 +6,7 @@
 #include "diff.h"
 #include "revision.h"
 #include "notes.h"
+#include "alloc.h"
 #include "gpg-interface.h"
 #include "mergesort.h"
 #include "commit-slab.h"
@@ -294,6 +295,17 @@ void free_commit_buffer(struct commit *commit)
 		FREE_AND_NULL(v->buffer);
 		v->size = 0;
 	}
+}
+
+void release_commit_memory(struct commit *c)
+{
+	c->tree = NULL;
+	c->index = 0;
+	free_commit_buffer(c);
+	free_commit_list(c->parents);
+	/* TODO: what about commit->util? */
+
+	c->object.parsed = 0;
 }
 
 const void *detach_commit_buffer(struct commit *commit, unsigned long *sizep)

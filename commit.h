@@ -100,6 +100,12 @@ void unuse_commit_buffer(const struct commit *, const void *buffer);
 void free_commit_buffer(struct commit *);
 
 /*
+ * Release memory related to a commit, including the parent list and
+ * any cached object buffer.
+ */
+void release_commit_memory(struct commit *c);
+
+/*
  * Disassociate any cached object buffer from the commit, but do not free it.
  * The buffer (or NULL, if none) is returned.
  */
