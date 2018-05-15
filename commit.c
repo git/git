@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "tag.h"
 #include "commit.h"
+#include "repository.h"
 #include "object-store.h"
 #include "pkt-line.h"
 #include "utf8.h"
@@ -97,9 +98,6 @@ static timestamp_t parse_commit_date(const char *buf, const char *tail)
 	return parse_timestamp(dateptr, NULL, 10);
 }
 
-static struct commit_graft **commit_graft;
-static int commit_graft_alloc, commit_graft_nr;
-
 static const unsigned char *commit_graft_sha1_access(size_t index, void *table)
 {
 	struct commit_graft **commit_graft_table = table;
@@ -108,7 +106,8 @@ static const unsigned char *commit_graft_sha1_access(size_t index, void *table)
 
 static int commit_graft_pos(const unsigned char *sha1)
 {
-	return sha1_pos(sha1, commit_graft, commit_graft_nr,
+	return sha1_pos(sha1, the_repository->parsed_objects->grafts,
+			the_repository->parsed_objects->grafts_nr,
 			commit_graft_sha1_access);
 }
 
@@ -120,18 +119,22 @@ int register_commit_graft(struct commit_graft *graft, int ignore_dups)
 		if (ignore_dups)
 			free(graft);
 		else {
-			free(commit_graft[pos]);
-			commit_graft[pos] = graft;
+			free(the_repository->parsed_objects->grafts[pos]);
+			the_repository->parsed_objects->grafts[pos] = graft;
 		}
 		return 1;
 	}
 	pos = -pos - 1;
-	ALLOC_GROW(commit_graft, commit_graft_nr + 1, commit_graft_alloc);
-	commit_graft_nr++;
-	if (pos < commit_graft_nr)
-		MOVE_ARRAY(commit_graft + pos + 1, commit_graft + pos,
-			   commit_graft_nr - pos - 1);
-	commit_graft[pos] = graft;
+	ALLOC_GROW(the_repository->parsed_objects->grafts,
+		   the_repository->parsed_objects->grafts_nr + 1,
+		   the_repository->parsed_objects->grafts_alloc);
+	the_repository->parsed_objects->grafts_nr++;
+	if (pos < the_repository->parsed_objects->grafts_nr)
+		memmove(the_repository->parsed_objects->grafts + pos + 1,
+			the_repository->parsed_objects->grafts + pos,
+			(the_repository->parsed_objects->grafts_nr - pos - 1) *
+			sizeof(*the_repository->parsed_objects->grafts));
+	the_repository->parsed_objects->grafts[pos] = graft;
 	return 0;
 }
 
@@ -213,14 +216,14 @@ struct commit_graft *lookup_commit_graft(const struct object_id *oid)
 	pos = commit_graft_pos(oid->hash);
 	if (pos < 0)
 		return NULL;
-	return commit_graft[pos];
+	return the_repository->parsed_objects->grafts[pos];
 }
 
 int for_each_commit_graft(each_commit_graft_fn fn, void *cb_data)
 {
 	int i, ret;
-	for (i = ret = 0; i < commit_graft_nr && !ret; i++)
-		ret = fn(commit_graft[i], cb_data);
+	for (i = ret = 0; i < the_repository->parsed_objects->grafts_nr && !ret; i++)
+		ret = fn(the_repository->parsed_objects->grafts[i], cb_data);
 	return ret;
 }
 
@@ -229,10 +232,11 @@ int unregister_shallow(const struct object_id *oid)
 	int pos = commit_graft_pos(oid->hash);
 	if (pos < 0)
 		return -1;
-	if (pos + 1 < commit_graft_nr)
-		MOVE_ARRAY(commit_graft + pos, commit_graft + pos + 1,
-			   commit_graft_nr - pos - 1);
-	commit_graft_nr--;
+	if (pos + 1 < the_repository->parsed_objects->grafts_nr)
+		MOVE_ARRAY(the_repository->parsed_objects->grafts + pos,
+			   the_repository->parsed_objects->grafts + pos + 1,
+			   the_repository->parsed_objects->grafts_nr - pos - 1);
+	the_repository->parsed_objects->grafts_nr--;
 	return 0;
 }
 
