@@ -104,7 +104,8 @@ static const unsigned char *commit_graft_sha1_access(size_t index, void *table)
 	return commit_graft_table[index]->oid.hash;
 }
 
-static int commit_graft_pos(const unsigned char *sha1)
+#define commit_graft_pos(r, s) commit_graft_pos_##r(s)
+static int commit_graft_pos_the_repository(const unsigned char *sha1)
 {
 	return sha1_pos(sha1, the_repository->parsed_objects->grafts,
 			the_repository->parsed_objects->grafts_nr,
@@ -113,7 +114,7 @@ static int commit_graft_pos(const unsigned char *sha1)
 
 int register_commit_graft(struct commit_graft *graft, int ignore_dups)
 {
-	int pos = commit_graft_pos(graft->oid.hash);
+	int pos = commit_graft_pos(the_repository, graft->oid.hash);
 
 	if (0 <= pos) {
 		if (ignore_dups)
@@ -213,7 +214,7 @@ struct commit_graft *lookup_commit_graft(const struct object_id *oid)
 {
 	int pos;
 	prepare_commit_graft();
-	pos = commit_graft_pos(oid->hash);
+	pos = commit_graft_pos(the_repository, oid->hash);
 	if (pos < 0)
 		return NULL;
 	return the_repository->parsed_objects->grafts[pos];
@@ -229,7 +230,7 @@ int for_each_commit_graft(each_commit_graft_fn fn, void *cb_data)
 
 int unregister_shallow(const struct object_id *oid)
 {
-	int pos = commit_graft_pos(oid->hash);
+	int pos = commit_graft_pos(the_repository, oid->hash);
 	if (pos < 0)
 		return -1;
 	if (pos + 1 < the_repository->parsed_objects->grafts_nr)
