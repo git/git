@@ -1093,11 +1093,11 @@ static int run_pre_push_hook(struct transport *transport,
 }
 
 int transport_push(struct transport *transport,
-		   int refspec_nr, const char **refspec, int flags,
+		   struct refspec *rs, int flags,
 		   unsigned int *reject_reasons)
 {
 	*reject_reasons = 0;
-	transport_verify_remote_names(refspec_nr, refspec);
+	transport_verify_remote_names(rs->raw_nr, rs->raw);
 
 	if (transport_color_config() < 0)
 		return -1;
@@ -1111,16 +1111,14 @@ int transport_push(struct transport *transport,
 		int porcelain = flags & TRANSPORT_PUSH_PORCELAIN;
 		int pretend = flags & TRANSPORT_PUSH_DRY_RUN;
 		int push_ret, ret, err;
-		struct refspec tmp_rs = REFSPEC_INIT_PUSH;
 		struct argv_array ref_prefixes = ARGV_ARRAY_INIT;
 		int i;
 
-		if (check_push_refs(local_refs, refspec_nr, refspec) < 0)
+		if (check_push_refs(local_refs, rs->raw_nr, rs->raw) < 0)
 			return -1;
 
-		refspec_appendn(&tmp_rs, refspec, refspec_nr);
-		for (i = 0; i < tmp_rs.nr; i++) {
-			const struct refspec_item *item = &tmp_rs.items[i];
+		for (i = 0; i < rs->nr; i++) {
+			const struct refspec_item *item = &rs->items[i];
 			const char *prefix = NULL;
 
 			if (item->dst)
@@ -1143,7 +1141,6 @@ int transport_push(struct transport *transport,
 							       &ref_prefixes);
 
 		argv_array_clear(&ref_prefixes);
-		refspec_clear(&tmp_rs);
 
 		if (flags & TRANSPORT_PUSH_ALL)
 			match_flags |= MATCH_REFS_ALL;
@@ -1155,7 +1152,7 @@ int transport_push(struct transport *transport,
 			match_flags |= MATCH_REFS_FOLLOW_TAGS;
 
 		if (match_push_refs(local_refs, &remote_refs,
-				    refspec_nr, refspec, match_flags)) {
+				    rs->raw_nr, rs->raw, match_flags)) {
 			return -1;
 		}
 
@@ -1186,7 +1183,7 @@ int transport_push(struct transport *transport,
 
 			if (!push_unpushed_submodules(&commits,
 						      transport->remote,
-						      refspec, refspec_nr,
+						      rs->raw, rs->raw_nr,
 						      transport->push_options,
 						      pretend)) {
 				oid_array_clear(&commits);

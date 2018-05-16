@@ -197,7 +197,7 @@ void transport_set_verbosity(struct transport *transport, int verbosity,
 #define REJECT_NEEDS_FORCE     0x10
 
 int transport_push(struct transport *connection,
-		   int refspec_nr, const char **refspec, int flags,
+		   struct refspec *rs, int flags,
 		   unsigned int * reject_reasons);
 
 /*
