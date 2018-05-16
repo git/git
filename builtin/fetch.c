@@ -337,7 +337,7 @@ static void find_non_local_tags(struct transport *transport,
 }
 
 static struct ref *get_ref_map(struct transport *transport,
-			       struct refspec_item *refspecs, int refspec_count,
+			       struct refspec *rs,
 			       int tags, int *autotags)
 {
 	int i;
@@ -351,15 +351,16 @@ static struct ref *get_ref_map(struct transport *transport,
 
 	const struct ref *remote_refs;
 
-	for (i = 0; i < refspec_count; i++) {
-		if (!refspecs[i].exact_sha1) {
-			const char *glob = strchr(refspecs[i].src, '*');
+	for (i = 0; i < rs->nr; i++) {
+		const struct refspec_item *item = &rs->items[i];
+		if (!item->exact_sha1) {
+			const char *glob = strchr(item->src, '*');
 			if (glob)
 				argv_array_pushf(&ref_prefixes, "%.*s",
-						 (int)(glob - refspecs[i].src),
-						 refspecs[i].src);
+						 (int)(glob - item->src),
+						 item->src);
 			else
-				expand_ref_prefix(&ref_prefixes, refspecs[i].src);
+				expand_ref_prefix(&ref_prefixes, item->src);
 		}
 	}
 
@@ -367,13 +368,12 @@ static struct ref *get_ref_map(struct transport *transport,
 
 	argv_array_clear(&ref_prefixes);
 
-	if (refspec_count) {
-		struct refspec_item *fetch_refspec;
-		int fetch_refspec_nr;
+	if (rs->nr) {
+		struct refspec *fetch_refspec;
 
-		for (i = 0; i < refspec_count; i++) {
-			get_fetch_map(remote_refs, &refspecs[i], &tail, 0);
-			if (refspecs[i].dst && refspecs[i].dst[0])
+		for (i = 0; i < rs->nr; i++) {
+			get_fetch_map(remote_refs, &rs->items[i], &tail, 0);
+			if (rs->items[i].dst && rs->items[i].dst[0])
 				*autotags = 1;
 		}
 		/* Merge everything on the command line (but not --tags) */
@@ -400,16 +400,13 @@ static struct ref *get_ref_map(struct transport *transport,
 		 * by ref_remove_duplicates() in favor of one of these
 		 * opportunistic entries with FETCH_HEAD_IGNORE.
 		 */
-		if (refmap.nr) {
-			fetch_refspec = refmap.items;
-			fetch_refspec_nr = refmap.nr;
-		} else {
-			fetch_refspec = transport->remote->fetch.items;
-			fetch_refspec_nr = transport->remote->fetch.nr;
-		}
+		if (refmap.nr)
+			fetch_refspec = &refmap;
+		else
+			fetch_refspec = &transport->remote->fetch;
 
-		for (i = 0; i < fetch_refspec_nr; i++)
-			get_fetch_map(ref_map, &fetch_refspec[i], &oref_tail, 1);
+		for (i = 0; i < fetch_refspec->nr; i++)
+			get_fetch_map(ref_map, &fetch_refspec->items[i], &oref_tail, 1);
 	} else if (refmap.nr) {
 		die("--refmap option is only meaningful with command-line refspec(s).");
 	} else {
@@ -1136,7 +1133,7 @@ static int do_fetch(struct transport *transport,
 			goto cleanup;
 	}
 
-	ref_map = get_ref_map(transport, rs->items, rs->nr, tags, &autotags);
+	ref_map = get_ref_map(transport, rs, tags, &autotags);
 	if (!update_head_ok)
 		check_not_current_branch(ref_map);
 
