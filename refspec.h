@@ -41,4 +41,8 @@ void refspec_clear(struct refspec *rs);
 
 int valid_fetch_refspec(const char *refspec);
 
+struct argv_array;
+void refspec_ref_prefixes(const struct refspec *rs,
+			  struct argv_array *ref_prefixes);
+
 #endif /* REFSPEC_H */

@@ -351,18 +351,7 @@ static struct ref *get_ref_map(struct transport *transport,
 
 	const struct ref *remote_refs;
 
-	for (i = 0; i < rs->nr; i++) {
-		const struct refspec_item *item = &rs->items[i];
-		if (!item->exact_sha1) {
-			const char *glob = strchr(item->src, '*');
-			if (glob)
-				argv_array_pushf(&ref_prefixes, "%.*s",
-						 (int)(glob - item->src),
-						 item->src);
-			else
-				expand_ref_prefix(&ref_prefixes, item->src);
-		}
-	}
+	refspec_ref_prefixes(rs, &ref_prefixes);
 
 	remote_refs = transport_get_remote_refs(transport, &ref_prefixes);
 

@@ -1088,30 +1088,11 @@ int transport_push(struct transport *transport,
 		int pretend = flags & TRANSPORT_PUSH_DRY_RUN;
 		int push_ret, ret, err;
 		struct argv_array ref_prefixes = ARGV_ARRAY_INIT;
-		int i;
 
 		if (check_push_refs(local_refs, rs) < 0)
 			return -1;
 
-		for (i = 0; i < rs->nr; i++) {
-			const struct refspec_item *item = &rs->items[i];
-			const char *prefix = NULL;
-
-			if (item->dst)
-				prefix = item->dst;
-			else if (item->src && !item->exact_sha1)
-				prefix = item->src;
-
-			if (prefix) {
-				const char *glob = strchr(prefix, '*');
-				if (glob)
-					argv_array_pushf(&ref_prefixes, "%.*s",
-							 (int)(glob - prefix),
-							 prefix);
-				else
-					expand_ref_prefix(&ref_prefixes, prefix);
-			}
-		}
+		refspec_ref_prefixes(rs, &ref_prefixes);
 
 		remote_refs = transport->vtable->get_refs_list(transport, 1,
 							       &ref_prefixes);

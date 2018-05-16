@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "argv-array.h"
 #include "refs.h"
 #include "refspec.h"
 
@@ -191,4 +192,32 @@ int valid_fetch_refspec(const char *fetch_refspec_str)
 	int ret = parse_refspec(&refspec, fetch_refspec_str, REFSPEC_FETCH);
 	refspec_item_clear(&refspec);
 	return ret;
+}
+
+void refspec_ref_prefixes(const struct refspec *rs,
+			  struct argv_array *ref_prefixes)
+{
+	int i;
+	for (i = 0; i < rs->nr; i++) {
+		const struct refspec_item *item = &rs->items[i];
+		const char *prefix = NULL;
+
+		if (rs->fetch == REFSPEC_FETCH)
+			prefix = item->src;
+		else if (item->dst)
+			prefix = item->dst;
+		else if (item->src && !item->exact_sha1)
+			prefix = item->src;
+
+		if (prefix) {
+			if (item->pattern) {
+				const char *glob = strchr(prefix, '*');
+				argv_array_pushf(ref_prefixes, "%.*s",
+						 (int)(glob - prefix),
+						 prefix);
+			} else {
+				expand_ref_prefix(ref_prefixes, prefix);
+			}
+		}
+	}
 }
