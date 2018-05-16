@@ -77,11 +77,6 @@ static const char *alias_url(const char *url, struct rewrites *r)
 	return xstrfmt("%s%s", r->rewrite[longest_i]->base, url + longest->len);
 }
 
-void add_prune_tags_to_fetch_refspec(struct remote *remote)
-{
-	refspec_append(&remote->fetch, TAG_REFSPEC);
-}
-
 static void add_url(struct remote *remote, const char *url)
 {
 	ALLOC_GROW(remote->url, remote->url_nr + 1, remote->url_alloc);

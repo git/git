@@ -1392,7 +1392,7 @@ static int fetch_one(struct remote *remote, int argc, const char **argv, int pru
 
 	maybe_prune_tags = prune_tags_ok && prune_tags;
 	if (maybe_prune_tags && remote_via_config)
-		add_prune_tags_to_fetch_refspec(remote);
+		refspec_append(&remote->fetch, TAG_REFSPEC);
 
 	if (argc > 0 || (maybe_prune_tags && !remote_via_config)) {
 		size_t nr_alloc = st_add3(argc, maybe_prune_tags, 1);

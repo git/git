@@ -290,6 +290,4 @@ extern int parseopt_push_cas_option(const struct option *, const char *arg, int 
 extern int is_empty_cas(const struct push_cas_option *);
 void apply_push_cas(struct push_cas_option *, struct remote *, struct ref *);
 
-void add_prune_tags_to_fetch_refspec(struct remote *remote);
-
 #endif
