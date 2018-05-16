@@ -14,11 +14,6 @@ struct refspec_item {
 	char *dst;
 };
 
-struct refspec_item *parse_fetch_refspec(int nr_refspec, const char **refspec);
-struct refspec_item *parse_push_refspec(int nr_refspec, const char **refspec);
-
-void free_refspec(int nr_refspec, struct refspec_item *refspec);
-
 #define REFSPEC_FETCH 1
 #define REFSPEC_PUSH 0
 

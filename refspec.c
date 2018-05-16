@@ -121,55 +121,6 @@ static int parse_refspec(struct refspec_item *item, const char *refspec, int fet
 	return 1;
 }
 
-static struct refspec_item *parse_refspec_internal(int nr_refspec, const char **refspec, int fetch, int verify)
-{
-	int i;
-	struct refspec_item *rs = xcalloc(nr_refspec, sizeof(*rs));
-
-	for (i = 0; i < nr_refspec; i++) {
-		if (!parse_refspec(&rs[i], refspec[i], fetch))
-			goto invalid;
-	}
-
-	return rs;
-
- invalid:
-	if (verify) {
-		/*
-		 * nr_refspec must be greater than zero and i must be valid
-		 * since it is only possible to reach this point from within
-		 * the for loop above.
-		 */
-		free_refspec(i+1, rs);
-		return NULL;
-	}
-	die("Invalid refspec '%s'", refspec[i]);
-}
-
-struct refspec_item *parse_fetch_refspec(int nr_refspec, const char **refspec)
-{
-	return parse_refspec_internal(nr_refspec, refspec, 1, 0);
-}
-
-struct refspec_item *parse_push_refspec(int nr_refspec, const char **refspec)
-{
-	return parse_refspec_internal(nr_refspec, refspec, 0, 0);
-}
-
-void free_refspec(int nr_refspec, struct refspec_item *refspec)
-{
-	int i;
-
-	if (!refspec)
-		return;
-
-	for (i = 0; i < nr_refspec; i++) {
-		free(refspec[i].src);
-		free(refspec[i].dst);
-	}
-	free(refspec);
-}
-
 void refspec_item_init(struct refspec_item *item, const char *refspec, int fetch)
 {
 	memset(item, 0, sizeof(*item));
