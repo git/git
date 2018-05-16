@@ -725,7 +725,7 @@ static void query_refspecs_multiple(struct refspec *rs,
 	}
 }
 
-int query_refspecs(struct refspec_item *refs, int ref_count, struct refspec_item *query)
+int query_refspecs(struct refspec *rs, struct refspec_item *query)
 {
 	int i;
 	int find_src = !query->src;
@@ -735,8 +735,8 @@ int query_refspecs(struct refspec_item *refs, int ref_count, struct refspec_item
 	if (find_src && !query->dst)
 		return error("query_refspecs: need either src or dst");
 
-	for (i = 0; i < ref_count; i++) {
-		struct refspec_item *refspec = &refs[i];
+	for (i = 0; i < rs->nr; i++) {
+		struct refspec_item *refspec = &rs->items[i];
 		const char *key = find_src ? refspec->dst : refspec->src;
 		const char *value = find_src ? refspec->src : refspec->dst;
 
@@ -763,7 +763,7 @@ char *apply_refspecs(struct refspec *rs, const char *name)
 	memset(&query, 0, sizeof(struct refspec_item));
 	query.src = (char *)name;
 
-	if (query_refspecs(rs->items, rs->nr, &query))
+	if (query_refspecs(rs, &query))
 		return NULL;
 
 	return query.dst;
@@ -771,7 +771,7 @@ char *apply_refspecs(struct refspec *rs, const char *name)
 
 int remote_find_tracking(struct remote *remote, struct refspec_item *refspec)
 {
-	return query_refspecs(remote->fetch.items, remote->fetch.nr, refspec);
+	return query_refspecs(&remote->fetch, refspec);
 }
 
 static struct ref *alloc_ref_with_prefix(const char *prefix, size_t prefixlen,

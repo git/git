@@ -83,8 +83,7 @@ static const char *map_refspec(const char *ref,
 		struct refspec_item query;
 		memset(&query, 0, sizeof(struct refspec_item));
 		query.src = matched->name;
-		if (!query_refspecs(remote->push.items, remote->push.nr, &query) &&
-		    query.dst) {
+		if (!query_refspecs(&remote->push, &query) && query.dst) {
 			struct strbuf buf = STRBUF_INIT;
 			strbuf_addf(&buf, "%s%s:%s",
 				    query.force ? "+" : "",
