@@ -265,8 +265,6 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 		BUG("unknown protocol version");
 	}
 
-	transport_verify_remote_names(rs.raw_nr, rs.raw);
-
 	local_refs = get_local_heads();
 
 	flags = MATCH_REFS_NONE;
