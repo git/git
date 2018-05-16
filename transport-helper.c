@@ -523,7 +523,7 @@ static int fetch_with_import(struct transport *transport,
 			continue;
 		name = posn->symref ? posn->symref : posn->name;
 		if (data->rs.nr)
-			private = apply_refspecs(data->rs.items, data->rs.nr, name);
+			private = apply_refspecs(&data->rs, name);
 		else
 			private = xstrdup(name);
 		if (private) {
@@ -805,7 +805,7 @@ static int push_update_refs_status(struct helper_data *data,
 			continue;
 
 		/* propagate back the update to the remote namespace */
-		private = apply_refspecs(data->rs.items, data->rs.nr, ref->name);
+		private = apply_refspecs(&data->rs, ref->name);
 		if (!private)
 			continue;
 		update_ref("update by helper", private, &ref->new_oid, NULL,
@@ -942,7 +942,7 @@ static int push_refs_with_export(struct transport *transport,
 		char *private;
 		struct object_id oid;
 
-		private = apply_refspecs(data->rs.items, data->rs.nr, ref->name);
+		private = apply_refspecs(&data->rs, ref->name);
 		if (private && !get_oid(private, &oid)) {
 			strbuf_addf(&buf, "^%s", private);
 			string_list_append_nodup(&revlist_args,

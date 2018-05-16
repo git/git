@@ -831,7 +831,7 @@ static void get_tags_and_duplicates(struct rev_cmdline_info *info)
 
 		if (refspecs.nr) {
 			char *private;
-			private = apply_refspecs(refspecs.items, refspecs.nr, full_name);
+			private = apply_refspecs(&refspecs, full_name);
 			if (private) {
 				free(full_name);
 				full_name = private;

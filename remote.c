@@ -525,8 +525,7 @@ const char *remote_ref_for_branch(struct branch *branch, int for_push,
 			struct remote *remote = remote_get(remote_name);
 
 			if (remote && remote->push.nr &&
-			    (dst = apply_refspecs(remote->push.items,
-						  remote->push.nr,
+			    (dst = apply_refspecs(&remote->push,
 						  branch->refname))) {
 				if (explicit)
 					*explicit = 1;
@@ -757,15 +756,14 @@ int query_refspecs(struct refspec_item *refs, int ref_count, struct refspec_item
 	return -1;
 }
 
-char *apply_refspecs(struct refspec_item *refspecs, int nr_refspec,
-		     const char *name)
+char *apply_refspecs(struct refspec *rs, const char *name)
 {
 	struct refspec_item query;
 
 	memset(&query, 0, sizeof(struct refspec_item));
 	query.src = (char *)name;
 
-	if (query_refspecs(refspecs, nr_refspec, &query))
+	if (query_refspecs(rs->items, rs->nr, &query))
 		return NULL;
 
 	return query.dst;
@@ -1571,7 +1569,7 @@ static const char *tracking_for_push_dest(struct remote *remote,
 {
 	char *ret;
 
-	ret = apply_refspecs(remote->fetch.items, remote->fetch.nr, refname);
+	ret = apply_refspecs(&remote->fetch, refname);
 	if (!ret)
 		return error_buf(err,
 				 _("push destination '%s' on remote '%s' has no local tracking branch"),
@@ -1593,8 +1591,7 @@ static const char *branch_get_push_1(struct branch *branch, struct strbuf *err)
 		char *dst;
 		const char *ret;
 
-		dst = apply_refspecs(remote->push.items, remote->push.nr,
-				     branch->refname);
+		dst = apply_refspecs(&remote->push, branch->refname);
 		if (!dst)
 			return error_buf(err,
 					 _("push refspecs for '%s' do not include '%s'"),
@@ -2203,7 +2200,7 @@ static int remote_tracking(struct remote *remote, const char *refname,
 {
 	char *dst;
 
-	dst = apply_refspecs(remote->fetch.items, remote->fetch.nr, refname);
+	dst = apply_refspecs(&remote->fetch, refname);
 	if (!dst)
 		return -1; /* no tracking ref for refname at remote */
 	if (read_ref(dst, oid))

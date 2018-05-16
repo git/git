@@ -159,8 +159,7 @@ int ref_newer(const struct object_id *new_oid, const struct object_id *old_oid);
 struct ref *ref_remove_duplicates(struct ref *ref_map);
 
 extern int query_refspecs(struct refspec_item *specs, int nr, struct refspec_item *query);
-char *apply_refspecs(struct refspec_item *refspecs, int nr_refspec,
-		     const char *name);
+char *apply_refspecs(struct refspec *rs, const char *name);
 
 int check_push_refs(struct ref *src, int nr_refspec, const char **refspec);
 int match_push_refs(struct ref *src, struct ref **dst,
