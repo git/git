@@ -1127,10 +1127,8 @@ int transport_push(struct transport *transport,
 		if (flags & TRANSPORT_PUSH_FOLLOW_TAGS)
 			match_flags |= MATCH_REFS_FOLLOW_TAGS;
 
-		if (match_push_refs(local_refs, &remote_refs,
-				    rs->raw_nr, rs->raw, match_flags)) {
+		if (match_push_refs(local_refs, &remote_refs, rs, match_flags))
 			return -1;
-		}
 
 		if (transport->smart_options &&
 		    transport->smart_options->cas &&

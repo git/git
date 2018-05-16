@@ -1823,8 +1823,7 @@ int cmd_main(int argc, const char **argv)
 	}
 
 	/* match them up */
-	if (match_push_refs(local_refs, &remote_refs,
-			    rs.raw_nr, rs.raw, push_all)) {
+	if (match_push_refs(local_refs, &remote_refs, &rs, push_all)) {
 		rc = -1;
 		goto cleanup;
 	}
