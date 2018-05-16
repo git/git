@@ -1744,13 +1744,14 @@ static int push_check(int argc, const char **argv, const char *prefix)
 
 	/* Check the refspec */
 	if (argc > 2) {
-		int i, refspec_nr = argc - 2;
+		int i;
 		struct ref *local_refs = get_local_heads();
-		struct refspec_item *refspec = parse_push_refspec(refspec_nr,
-							     argv + 2);
+		struct refspec refspec = REFSPEC_INIT_PUSH;
 
-		for (i = 0; i < refspec_nr; i++) {
-			struct refspec_item *rs = refspec + i;
+		refspec_appendn(&refspec, argv + 2, argc - 2);
+
+		for (i = 0; i < refspec.nr; i++) {
+			const struct refspec_item *rs = &refspec.items[i];
 
 			if (rs->pattern || rs->matching)
 				continue;
@@ -1777,7 +1778,7 @@ static int push_check(int argc, const char **argv, const char *prefix)
 				    rs->src);
 			}
 		}
-		free_refspec(refspec_nr, refspec);
+		refspec_clear(&refspec);
 	}
 	free(head);
 
