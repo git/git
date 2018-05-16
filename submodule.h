@@ -100,9 +100,10 @@ extern int submodule_touches_in_range(struct object_id *a,
 extern int find_unpushed_submodules(struct oid_array *commits,
 				    const char *remotes_name,
 				    struct string_list *needs_pushing);
+struct refspec;
 extern int push_unpushed_submodules(struct oid_array *commits,
 				    const struct remote *remote,
-				    const char **refspec, int refspec_nr,
+				    const struct refspec *rs,
 				    const struct string_list *push_options,
 				    int dry_run);
 /*
