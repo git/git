@@ -1312,7 +1312,7 @@ int check_push_refs(struct ref *src, int nr_refspec, const char **refspec_names)
 int match_push_refs(struct ref *src, struct ref **dst,
 		    int nr_refspec, const char **refspec, int flags)
 {
-	struct refspec_item *rs;
+	struct refspec rs = REFSPEC_INIT_PUSH;
 	int send_all = flags & MATCH_REFS_ALL;
 	int send_mirror = flags & MATCH_REFS_MIRROR;
 	int send_prune = flags & MATCH_REFS_PRUNE;
@@ -1325,8 +1325,8 @@ int match_push_refs(struct ref *src, struct ref **dst,
 		nr_refspec = 1;
 		refspec = default_refspec;
 	}
-	rs = parse_push_refspec(nr_refspec, (const char **) refspec);
-	errs = match_explicit_refs(src, *dst, &dst_tail, rs, nr_refspec);
+	refspec_appendn(&rs, refspec, nr_refspec);
+	errs = match_explicit_refs(src, *dst, &dst_tail, rs.items, rs.nr);
 
 	/* pick the remainder */
 	for (ref = src; ref; ref = ref->next) {
@@ -1335,7 +1335,7 @@ int match_push_refs(struct ref *src, struct ref **dst,
 		const struct refspec_item *pat = NULL;
 		char *dst_name;
 
-		dst_name = get_ref_match(rs, nr_refspec, ref, send_mirror, FROM_SRC, &pat);
+		dst_name = get_ref_match(rs.items, rs.nr, ref, send_mirror, FROM_SRC, &pat);
 		if (!dst_name)
 			continue;
 
@@ -1384,7 +1384,7 @@ int match_push_refs(struct ref *src, struct ref **dst,
 				/* We're already sending something to this ref. */
 				continue;
 
-			src_name = get_ref_match(rs, nr_refspec, ref, send_mirror, FROM_DST, NULL);
+			src_name = get_ref_match(rs.items, rs.nr, ref, send_mirror, FROM_DST, NULL);
 			if (src_name) {
 				if (!src_ref_index.nr)
 					prepare_ref_index(&src_ref_index, src);
@@ -1396,6 +1396,9 @@ int match_push_refs(struct ref *src, struct ref **dst,
 		}
 		string_list_clear(&src_ref_index, 0);
 	}
+
+	refspec_clear(&rs);
+
 	if (errs)
 		return -1;
 	return 0;
