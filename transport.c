@@ -1111,21 +1111,22 @@ int transport_push(struct transport *transport,
 		int porcelain = flags & TRANSPORT_PUSH_PORCELAIN;
 		int pretend = flags & TRANSPORT_PUSH_DRY_RUN;
 		int push_ret, ret, err;
-		struct refspec_item *tmp_rs;
+		struct refspec tmp_rs = REFSPEC_INIT_PUSH;
 		struct argv_array ref_prefixes = ARGV_ARRAY_INIT;
 		int i;
 
 		if (check_push_refs(local_refs, refspec_nr, refspec) < 0)
 			return -1;
 
-		tmp_rs = parse_push_refspec(refspec_nr, refspec);
-		for (i = 0; i < refspec_nr; i++) {
+		refspec_appendn(&tmp_rs, refspec, refspec_nr);
+		for (i = 0; i < tmp_rs.nr; i++) {
+			const struct refspec_item *item = &tmp_rs.items[i];
 			const char *prefix = NULL;
 
-			if (tmp_rs[i].dst)
-				prefix = tmp_rs[i].dst;
-			else if (tmp_rs[i].src && !tmp_rs[i].exact_sha1)
-				prefix = tmp_rs[i].src;
+			if (item->dst)
+				prefix = item->dst;
+			else if (item->src && !item->exact_sha1)
+				prefix = item->src;
 
 			if (prefix) {
 				const char *glob = strchr(prefix, '*');
@@ -1142,7 +1143,7 @@ int transport_push(struct transport *transport,
 							       &ref_prefixes);
 
 		argv_array_clear(&ref_prefixes);
-		free_refspec(refspec_nr, tmp_rs);
+		refspec_clear(&tmp_rs);
 
 		if (flags & TRANSPORT_PUSH_ALL)
 			match_flags |= MATCH_REFS_ALL;
