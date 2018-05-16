@@ -333,10 +333,10 @@ static int get_ref_states(const struct ref *remote_refs, struct ref_states *stat
 	struct ref *ref, *stale_refs;
 	int i;
 
-	for (i = 0; i < states->remote->fetch_refspec_nr; i++)
-		if (get_fetch_map(remote_refs, states->remote->fetch + i, &tail, 1))
+	for (i = 0; i < states->remote->fetch.nr; i++)
+		if (get_fetch_map(remote_refs, &states->remote->fetch.items[i], &tail, 1))
 			die(_("Could not get fetch map for refspec %s"),
-				states->remote->fetch_refspec[i]);
+				states->remote->fetch.raw[i]);
 
 	states->new_refs.strdup_strings = 1;
 	states->tracked.strdup_strings = 1;
@@ -347,8 +347,8 @@ static int get_ref_states(const struct ref *remote_refs, struct ref_states *stat
 		else
 			string_list_append(&states->tracked, abbrev_branch(ref->name));
 	}
-	stale_refs = get_stale_heads(states->remote->fetch,
-				     states->remote->fetch_refspec_nr, fetch_map);
+	stale_refs = get_stale_heads(states->remote->fetch.items,
+				     states->remote->fetch.nr, fetch_map);
 	for (ref = stale_refs; ref; ref = ref->next) {
 		struct string_list_item *item =
 			string_list_append(&states->stale, abbrev_branch(ref->name));
@@ -590,8 +590,8 @@ static int migrate_file(struct remote *remote)
 		git_config_set_multivar(buf.buf, remote->push.raw[i], "^$", 0);
 	strbuf_reset(&buf);
 	strbuf_addf(&buf, "remote.%s.fetch", remote->name);
-	for (i = 0; i < remote->fetch_refspec_nr; i++)
-		git_config_set_multivar(buf.buf, remote->fetch_refspec[i], "^$", 0);
+	for (i = 0; i < remote->fetch.raw_nr; i++)
+		git_config_set_multivar(buf.buf, remote->fetch.raw[i], "^$", 0);
 	if (remote->origin == REMOTE_REMOTES)
 		unlink_or_warn(git_path("remotes/%s", remote->name));
 	else if (remote->origin == REMOTE_BRANCHES)
@@ -646,11 +646,11 @@ static int mv(int argc, const char **argv)
 	strbuf_addf(&buf, "remote.%s.fetch", rename.new_name);
 	git_config_set_multivar(buf.buf, NULL, NULL, 1);
 	strbuf_addf(&old_remote_context, ":refs/remotes/%s/", rename.old_name);
-	for (i = 0; i < oldremote->fetch_refspec_nr; i++) {
+	for (i = 0; i < oldremote->fetch.raw_nr; i++) {
 		char *ptr;
 
 		strbuf_reset(&buf2);
-		strbuf_addstr(&buf2, oldremote->fetch_refspec[i]);
+		strbuf_addstr(&buf2, oldremote->fetch.raw[i]);
 		ptr = strstr(buf2.buf, old_remote_context.buf);
 		if (ptr) {
 			refspec_updated = 1;

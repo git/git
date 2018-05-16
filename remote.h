@@ -30,10 +30,7 @@ struct remote {
 
 	struct refspec push;
 
-	const char **fetch_refspec;
-	struct refspec_item *fetch;
-	int fetch_refspec_nr;
-	int fetch_refspec_alloc;
+	struct refspec fetch;
 
 	/*
 	 * -1 to never fetch tags

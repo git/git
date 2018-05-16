@@ -407,8 +407,8 @@ static struct ref *get_ref_map(struct transport *transport,
 			fetch_refspec = parse_fetch_refspec(refmap_nr, refmap_array);
 			fetch_refspec_nr = refmap_nr;
 		} else {
-			fetch_refspec = transport->remote->fetch;
-			fetch_refspec_nr = transport->remote->fetch_refspec_nr;
+			fetch_refspec = transport->remote->fetch.items;
+			fetch_refspec_nr = transport->remote->fetch.nr;
 		}
 
 		for (i = 0; i < fetch_refspec_nr; i++)
@@ -421,16 +421,16 @@ static struct ref *get_ref_map(struct transport *transport,
 		struct branch *branch = branch_get(NULL);
 		int has_merge = branch_has_merge_config(branch);
 		if (remote &&
-		    (remote->fetch_refspec_nr ||
+		    (remote->fetch.nr ||
 		     /* Note: has_merge implies non-NULL branch->remote_name */
 		     (has_merge && !strcmp(branch->remote_name, remote->name)))) {
-			for (i = 0; i < remote->fetch_refspec_nr; i++) {
-				get_fetch_map(remote_refs, &remote->fetch[i], &tail, 0);
-				if (remote->fetch[i].dst &&
-				    remote->fetch[i].dst[0])
+			for (i = 0; i < remote->fetch.nr; i++) {
+				get_fetch_map(remote_refs, &remote->fetch.items[i], &tail, 0);
+				if (remote->fetch.items[i].dst &&
+				    remote->fetch.items[i].dst[0])
 					*autotags = 1;
 				if (!i && !has_merge && ref_map &&
-				    !remote->fetch[0].pattern)
+				    !remote->fetch.items[0].pattern)
 					ref_map->fetch_head_status = FETCH_HEAD_MERGE;
 			}
 			/*
@@ -1166,8 +1166,8 @@ static int do_fetch(struct transport *transport,
 		if (ref_count) {
 			prune_refs(refs, ref_count, ref_map, transport->url);
 		} else {
-			prune_refs(transport->remote->fetch,
-				   transport->remote->fetch_refspec_nr,
+			prune_refs(transport->remote->fetch.items,
+				   transport->remote->fetch.nr,
 				   ref_map,
 				   transport->url);
 		}
