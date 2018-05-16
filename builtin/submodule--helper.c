@@ -12,6 +12,7 @@
 #include "run-command.h"
 #include "remote.h"
 #include "refs.h"
+#include "refspec.h"
 #include "connect.h"
 #include "revision.h"
 #include "diffcore.h"

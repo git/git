@@ -11,6 +11,7 @@
 #include "bundle.h"
 #include "dir.h"
 #include "refs.h"
+#include "refspec.h"
 #include "branch.h"
 #include "url.h"
 #include "submodule.h"

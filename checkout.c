@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "remote.h"
+#include "refspec.h"
 #include "checkout.h"
 
 struct tracking_name_data {

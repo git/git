@@ -7,6 +7,7 @@
 #include "cache.h"
 #include "config.h"
 #include "refs.h"
+#include "refspec.h"
 #include "commit.h"
 #include "object.h"
 #include "tag.h"

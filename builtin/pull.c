@@ -15,6 +15,7 @@
 #include "remote.h"
 #include "dir.h"
 #include "refs.h"
+#include "refspec.h"
 #include "revision.h"
 #include "submodule.h"
 #include "submodule-config.h"

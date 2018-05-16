@@ -11,6 +11,7 @@
 #include "sigchain.h"
 #include "argv-array.h"
 #include "refs.h"
+#include "refspec.h"
 #include "transport-internal.h"
 #include "protocol.h"
 

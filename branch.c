@@ -3,6 +3,7 @@
 #include "config.h"
 #include "branch.h"
 #include "refs.h"
+#include "refspec.h"
 #include "remote.h"
 #include "commit.h"
 #include "worktree.h"

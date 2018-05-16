@@ -4,6 +4,7 @@
 #include "cache.h"
 #include "config.h"
 #include "refs.h"
+#include "refspec.h"
 #include "run-command.h"
 #include "builtin.h"
 #include "remote.h"

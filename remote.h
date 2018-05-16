@@ -68,18 +68,6 @@ int for_each_remote(each_remote_fn fn, void *priv);
 
 int remote_has_url(struct remote *remote, const char *url);
 
-struct refspec {
-	unsigned force : 1;
-	unsigned pattern : 1;
-	unsigned matching : 1;
-	unsigned exact_sha1 : 1;
-
-	char *src;
-	char *dst;
-};
-
-extern const struct refspec *tag_refspec;
-
 struct ref {
 	struct ref *next;
 	struct object_id old_oid;
@@ -174,12 +162,6 @@ int ref_newer(const struct object_id *new_oid, const struct object_id *old_oid);
  * pointer to the head of the resulting list.
  */
 struct ref *ref_remove_duplicates(struct ref *ref_map);
-
-int valid_fetch_refspec(const char *refspec);
-struct refspec *parse_fetch_refspec(int nr_refspec, const char **refspec);
-extern struct refspec *parse_push_refspec(int nr_refspec, const char **refspec);
-
-void free_refspec(int nr_refspec, struct refspec *refspec);
 
 extern int query_refspecs(struct refspec *specs, int nr, struct refspec *query);
 char *apply_refspecs(struct refspec *refspecs, int nr_refspec,
@@ -312,8 +294,6 @@ extern int parseopt_push_cas_option(const struct option *, const char *arg, int 
 
 extern int is_empty_cas(const struct push_cas_option *);
 void apply_push_cas(struct push_cas_option *, struct remote *, struct ref *);
-
-#define TAG_REFSPEC "refs/tags/*:refs/tags/*"
 
 void add_prune_tags_to_fetch_refspec(struct remote *remote);
 

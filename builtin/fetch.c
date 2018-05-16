@@ -5,6 +5,7 @@
 #include "config.h"
 #include "repository.h"
 #include "refs.h"
+#include "refspec.h"
 #include "commit.h"
 #include "builtin.h"
 #include "string-list.h"
