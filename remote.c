@@ -1282,12 +1282,14 @@ static void prepare_ref_index(struct string_list *ref_index, struct ref *ref)
  */
 int check_push_refs(struct ref *src, int nr_refspec, const char **refspec_names)
 {
-	struct refspec_item *refspec = parse_push_refspec(nr_refspec, refspec_names);
+	struct refspec refspec = REFSPEC_INIT_PUSH;
 	int ret = 0;
 	int i;
 
-	for (i = 0; i < nr_refspec; i++) {
-		struct refspec_item *rs = refspec + i;
+	refspec_appendn(&refspec, refspec_names, nr_refspec);
+
+	for (i = 0; i < refspec.nr; i++) {
+		struct refspec_item *rs = &refspec.items[i];
 
 		if (rs->pattern || rs->matching)
 			continue;
@@ -1295,7 +1297,7 @@ int check_push_refs(struct ref *src, int nr_refspec, const char **refspec_names)
 		ret |= match_explicit_lhs(src, rs, NULL, NULL);
 	}
 
-	free_refspec(nr_refspec, refspec);
+	refspec_clear(&refspec);
 	return ret;
 }
 
