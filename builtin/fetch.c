@@ -1356,10 +1356,8 @@ static inline void fetch_one_setup_partial(struct remote *remote)
 
 static int fetch_one(struct remote *remote, int argc, const char **argv, int prune_tags_ok)
 {
-	static const char **refs = NULL;
-	struct refspec_item *refspec;
-	int ref_nr = 0;
-	int j = 0;
+	struct refspec rs = REFSPEC_INIT_FETCH;
+	int i;
 	int exit_code;
 	int maybe_prune_tags;
 	int remote_via_config = remote_is_configured(remote, 0);
@@ -1394,35 +1392,29 @@ static int fetch_one(struct remote *remote, int argc, const char **argv, int pru
 	if (maybe_prune_tags && remote_via_config)
 		refspec_append(&remote->fetch, TAG_REFSPEC);
 
-	if (argc > 0 || (maybe_prune_tags && !remote_via_config)) {
-		size_t nr_alloc = st_add3(argc, maybe_prune_tags, 1);
-		refs = xcalloc(nr_alloc, sizeof(const char *));
-		if (maybe_prune_tags) {
-			refs[j++] = xstrdup("refs/tags/*:refs/tags/*");
-			ref_nr++;
-		}
-	}
+	if (maybe_prune_tags && (argc || !remote_via_config))
+		refspec_append(&rs, TAG_REFSPEC);
 
-	if (argc > 0) {
-		int i;
-		for (i = 0; i < argc; i++) {
-			if (!strcmp(argv[i], "tag")) {
-				i++;
-				if (i >= argc)
-					die(_("You need to specify a tag name."));
-				refs[j++] = xstrfmt("refs/tags/%s:refs/tags/%s",
-						    argv[i], argv[i]);
-			} else
-				refs[j++] = argv[i];
-			ref_nr++;
+	for (i = 0; i < argc; i++) {
+		if (!strcmp(argv[i], "tag")) {
+			char *tag;
+			i++;
+			if (i >= argc)
+				die(_("You need to specify a tag name."));
+
+			tag = xstrfmt("refs/tags/%s:refs/tags/%s",
+				      argv[i], argv[i]);
+			refspec_append(&rs, tag);
+			free(tag);
+		} else {
+			refspec_append(&rs, argv[i]);
 		}
 	}
 
 	sigchain_push_common(unlock_pack_on_signal);
 	atexit(unlock_pack);
-	refspec = parse_fetch_refspec(ref_nr, refs);
-	exit_code = do_fetch(gtransport, refspec, ref_nr);
-	free_refspec(ref_nr, refspec);
+	exit_code = do_fetch(gtransport, rs.items, rs.nr);
+	refspec_clear(&rs);
 	transport_disconnect(gtransport);
 	gtransport = NULL;
 	return exit_code;
