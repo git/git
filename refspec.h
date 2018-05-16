@@ -14,7 +14,6 @@ struct refspec_item {
 	char *dst;
 };
 
-int valid_fetch_refspec(const char *refspec);
 struct refspec_item *parse_fetch_refspec(int nr_refspec, const char **refspec);
 struct refspec_item *parse_push_refspec(int nr_refspec, const char **refspec);
 
@@ -44,5 +43,7 @@ void refspec_init(struct refspec *rs, int fetch);
 void refspec_append(struct refspec *rs, const char *refspec);
 void refspec_appendn(struct refspec *rs, const char **refspecs, int nr);
 void refspec_clear(struct refspec *rs);
+
+int valid_fetch_refspec(const char *refspec);
 
 #endif /* REFSPEC_H */

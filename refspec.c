@@ -146,15 +146,6 @@ static struct refspec_item *parse_refspec_internal(int nr_refspec, const char **
 	die("Invalid refspec '%s'", refspec[i]);
 }
 
-int valid_fetch_refspec(const char *fetch_refspec_str)
-{
-	struct refspec_item *refspec;
-
-	refspec = parse_refspec_internal(1, &fetch_refspec_str, 1, 1);
-	free_refspec(1, refspec);
-	return !!refspec;
-}
-
 struct refspec_item *parse_fetch_refspec(int nr_refspec, const char **refspec)
 {
 	return parse_refspec_internal(nr_refspec, refspec, 1, 0);
@@ -241,4 +232,12 @@ void refspec_clear(struct refspec *rs)
 	rs->raw_nr = 0;
 
 	rs->fetch = 0;
+}
+
+int valid_fetch_refspec(const char *fetch_refspec_str)
+{
+	struct refspec_item refspec;
+	int ret = parse_refspec(&refspec, fetch_refspec_str, REFSPEC_FETCH);
+	refspec_item_clear(&refspec);
+	return ret;
 }
