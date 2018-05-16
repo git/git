@@ -390,7 +390,7 @@ int transport_refs_pushed(struct ref *ref)
 
 void transport_update_tracking_ref(struct remote *remote, struct ref *ref, int verbose)
 {
-	struct refspec rs;
+	struct refspec_item rs;
 
 	if (ref->status != REF_STATUS_OK && ref->status != REF_STATUS_UPTODATE)
 		return;
@@ -1111,7 +1111,7 @@ int transport_push(struct transport *transport,
 		int porcelain = flags & TRANSPORT_PUSH_PORCELAIN;
 		int pretend = flags & TRANSPORT_PUSH_DRY_RUN;
 		int push_ret, ret, err;
-		struct refspec *tmp_rs;
+		struct refspec_item *tmp_rs;
 		struct argv_array ref_prefixes = ARGV_ARRAY_INIT;
 		int i;
 

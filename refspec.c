@@ -2,7 +2,7 @@
 #include "refs.h"
 #include "refspec.h"
 
-static struct refspec s_tag_refspec = {
+static struct refspec_item s_tag_refspec = {
 	0,
 	1,
 	0,
@@ -12,12 +12,12 @@ static struct refspec s_tag_refspec = {
 };
 
 /* See TAG_REFSPEC for the string version */
-const struct refspec *tag_refspec = &s_tag_refspec;
+const struct refspec_item *tag_refspec = &s_tag_refspec;
 
-static struct refspec *parse_refspec_internal(int nr_refspec, const char **refspec, int fetch, int verify)
+static struct refspec_item *parse_refspec_internal(int nr_refspec, const char **refspec, int fetch, int verify)
 {
 	int i;
-	struct refspec *rs = xcalloc(nr_refspec, sizeof(*rs));
+	struct refspec_item *rs = xcalloc(nr_refspec, sizeof(*rs));
 
 	for (i = 0; i < nr_refspec; i++) {
 		size_t llen;
@@ -135,24 +135,24 @@ static struct refspec *parse_refspec_internal(int nr_refspec, const char **refsp
 
 int valid_fetch_refspec(const char *fetch_refspec_str)
 {
-	struct refspec *refspec;
+	struct refspec_item *refspec;
 
 	refspec = parse_refspec_internal(1, &fetch_refspec_str, 1, 1);
 	free_refspec(1, refspec);
 	return !!refspec;
 }
 
-struct refspec *parse_fetch_refspec(int nr_refspec, const char **refspec)
+struct refspec_item *parse_fetch_refspec(int nr_refspec, const char **refspec)
 {
 	return parse_refspec_internal(nr_refspec, refspec, 1, 0);
 }
 
-struct refspec *parse_push_refspec(int nr_refspec, const char **refspec)
+struct refspec_item *parse_push_refspec(int nr_refspec, const char **refspec)
 {
 	return parse_refspec_internal(nr_refspec, refspec, 0, 0);
 }
 
-void free_refspec(int nr_refspec, struct refspec *refspec)
+void free_refspec(int nr_refspec, struct refspec_item *refspec)
 {
 	int i;
 

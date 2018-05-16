@@ -80,8 +80,8 @@ static const char *map_refspec(const char *ref,
 		return ref;
 
 	if (remote->push) {
-		struct refspec query;
-		memset(&query, 0, sizeof(struct refspec));
+		struct refspec_item query;
+		memset(&query, 0, sizeof(struct refspec_item));
 		query.src = matched->name;
 		if (!query_refspecs(remote->push, remote->push_refspec_nr, &query) &&
 		    query.dst) {

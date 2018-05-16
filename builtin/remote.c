@@ -442,7 +442,7 @@ static int get_push_ref_states_noquery(struct ref_states *states)
 		info->dest = xstrdup(item->string);
 	}
 	for (i = 0; i < remote->push_refspec_nr; i++) {
-		struct refspec *spec = remote->push + i;
+		struct refspec_item *spec = remote->push + i;
 		if (spec->matching)
 			item = string_list_append(&states->push, _("(matching)"));
 		else if (strlen(spec->src))
@@ -462,7 +462,7 @@ static int get_head_names(const struct ref *remote_refs, struct ref_states *stat
 {
 	struct ref *ref, *matches;
 	struct ref *fetch_map = NULL, **fetch_map_tail = &fetch_map;
-	struct refspec refspec;
+	struct refspec_item refspec;
 
 	refspec.force = 0;
 	refspec.pattern = 1;
@@ -515,7 +515,7 @@ static int add_branch_for_removal(const char *refname,
 	const struct object_id *oid, int flags, void *cb_data)
 {
 	struct branches_for_remote *branches = cb_data;
-	struct refspec refspec;
+	struct refspec_item refspec;
 	struct known_remote *kr;
 
 	memset(&refspec, 0, sizeof(refspec));
@@ -834,7 +834,7 @@ static int append_ref_to_tracked_list(const char *refname,
 	const struct object_id *oid, int flags, void *cb_data)
 {
 	struct ref_states *states = cb_data;
-	struct refspec refspec;
+	struct refspec_item refspec;
 
 	if (flags & REF_ISSYMREF)
 		return 0;

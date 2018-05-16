@@ -203,7 +203,7 @@ static void add_merge_config(struct ref **head,
 
 	for (i = 0; i < branch->merge_nr; i++) {
 		struct ref *rm, **old_tail = *tail;
-		struct refspec refspec;
+		struct refspec_item refspec;
 
 		for (rm = *head; rm; rm = rm->next) {
 			if (branch_merge_matches(branch, i, rm->name)) {
@@ -340,7 +340,7 @@ static void find_non_local_tags(struct transport *transport,
 }
 
 static struct ref *get_ref_map(struct transport *transport,
-			       struct refspec *refspecs, int refspec_count,
+			       struct refspec_item *refspecs, int refspec_count,
 			       int tags, int *autotags)
 {
 	int i;
@@ -371,7 +371,7 @@ static struct ref *get_ref_map(struct transport *transport,
 	argv_array_clear(&ref_prefixes);
 
 	if (refspec_count) {
-		struct refspec *fetch_refspec;
+		struct refspec_item *fetch_refspec;
 		int fetch_refspec_nr;
 
 		for (i = 0; i < refspec_count; i++) {
@@ -965,7 +965,7 @@ static int fetch_refs(struct transport *transport, struct ref *ref_map)
 	return ret;
 }
 
-static int prune_refs(struct refspec *refs, int ref_count, struct ref *ref_map,
+static int prune_refs(struct refspec_item *refs, int ref_count, struct ref *ref_map,
 		const char *raw_url)
 {
 	int url_len, i, result = 0;
@@ -1115,7 +1115,7 @@ static void backfill_tags(struct transport *transport, struct ref *ref_map)
 }
 
 static int do_fetch(struct transport *transport,
-		    struct refspec *refs, int ref_count)
+		    struct refspec_item *refs, int ref_count)
 {
 	struct string_list existing_refs = STRING_LIST_INIT_DUP;
 	struct ref *ref_map;
@@ -1357,7 +1357,7 @@ static inline void fetch_one_setup_partial(struct remote *remote)
 static int fetch_one(struct remote *remote, int argc, const char **argv, int prune_tags_ok)
 {
 	static const char **refs = NULL;
-	struct refspec *refspec;
+	struct refspec_item *refspec;
 	int ref_nr = 0;
 	int j = 0;
 	int exit_code;

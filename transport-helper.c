@@ -36,7 +36,7 @@ struct helper_data {
 	char *export_marks;
 	char *import_marks;
 	/* These go from remote name (as in "list") to private name */
-	struct refspec *refspecs;
+	struct refspec_item *refspecs;
 	int refspec_nr;
 	/* Transport options for fetch-pack/send-pack (should one of
 	 * those be invoked).

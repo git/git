@@ -36,7 +36,7 @@ static int use_done_feature;
 static int no_data;
 static int full_tree;
 static struct string_list extra_refs = STRING_LIST_INIT_NODUP;
-static struct refspec *refspecs;
+static struct refspec_item *refspecs;
 static int refspecs_nr;
 static int anonymize;
 
@@ -979,7 +979,7 @@ static void handle_deletes(void)
 {
 	int i;
 	for (i = 0; i < refspecs_nr; i++) {
-		struct refspec *refspec = &refspecs[i];
+		struct refspec_item *refspec = &refspecs[i];
 		if (*refspec->src)
 			continue;
 

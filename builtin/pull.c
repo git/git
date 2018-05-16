@@ -676,7 +676,7 @@ static const char *get_upstream_branch(const char *remote)
  */
 static const char *get_tracking_branch(const char *remote, const char *refspec)
 {
-	struct refspec *spec;
+	struct refspec_item *spec;
 	const char *spec_src;
 	const char *merge_branch;
 

@@ -97,7 +97,7 @@ void add_prune_tags_to_fetch_refspec(struct remote *remote)
 {
 	int nr = remote->fetch_refspec_nr;
 	int bufsize = nr  + 1;
-	int size = sizeof(struct refspec);
+	int size = sizeof(struct refspec_item);
 
 	remote->fetch = xrealloc(remote->fetch, size  * bufsize);
 	memcpy(&remote->fetch[nr], tag_refspec, size);
@@ -724,7 +724,7 @@ static int match_name_with_pattern(const char *key, const char *name,
 	return ret;
 }
 
-static void query_refspecs_multiple(struct refspec *refs, int ref_count, struct refspec *query, struct string_list *results)
+static void query_refspecs_multiple(struct refspec_item *refs, int ref_count, struct refspec_item *query, struct string_list *results)
 {
 	int i;
 	int find_src = !query->src;
@@ -733,7 +733,7 @@ static void query_refspecs_multiple(struct refspec *refs, int ref_count, struct 
 		error("query_refspecs_multiple: need either src or dst");
 
 	for (i = 0; i < ref_count; i++) {
-		struct refspec *refspec = &refs[i];
+		struct refspec_item *refspec = &refs[i];
 		const char *key = find_src ? refspec->dst : refspec->src;
 		const char *value = find_src ? refspec->src : refspec->dst;
 		const char *needle = find_src ? query->dst : query->src;
@@ -750,7 +750,7 @@ static void query_refspecs_multiple(struct refspec *refs, int ref_count, struct 
 	}
 }
 
-int query_refspecs(struct refspec *refs, int ref_count, struct refspec *query)
+int query_refspecs(struct refspec_item *refs, int ref_count, struct refspec_item *query)
 {
 	int i;
 	int find_src = !query->src;
@@ -761,7 +761,7 @@ int query_refspecs(struct refspec *refs, int ref_count, struct refspec *query)
 		return error("query_refspecs: need either src or dst");
 
 	for (i = 0; i < ref_count; i++) {
-		struct refspec *refspec = &refs[i];
+		struct refspec_item *refspec = &refs[i];
 		const char *key = find_src ? refspec->dst : refspec->src;
 		const char *value = find_src ? refspec->src : refspec->dst;
 
@@ -781,12 +781,12 @@ int query_refspecs(struct refspec *refs, int ref_count, struct refspec *query)
 	return -1;
 }
 
-char *apply_refspecs(struct refspec *refspecs, int nr_refspec,
+char *apply_refspecs(struct refspec_item *refspecs, int nr_refspec,
 		     const char *name)
 {
-	struct refspec query;
+	struct refspec_item query;
 
-	memset(&query, 0, sizeof(struct refspec));
+	memset(&query, 0, sizeof(struct refspec_item));
 	query.src = (char *)name;
 
 	if (query_refspecs(refspecs, nr_refspec, &query))
@@ -795,7 +795,7 @@ char *apply_refspecs(struct refspec *refspecs, int nr_refspec,
 	return query.dst;
 }
 
-int remote_find_tracking(struct remote *remote, struct refspec *refspec)
+int remote_find_tracking(struct remote *remote, struct refspec_item *refspec)
 {
 	return query_refspecs(remote->fetch, remote->fetch_refspec_nr, refspec);
 }
@@ -1004,7 +1004,7 @@ static char *guess_ref(const char *name, struct ref *peer)
 }
 
 static int match_explicit_lhs(struct ref *src,
-			      struct refspec *rs,
+			      struct refspec_item *rs,
 			      struct ref **match,
 			      int *allocated_match)
 {
@@ -1030,7 +1030,7 @@ static int match_explicit_lhs(struct ref *src,
 
 static int match_explicit(struct ref *src, struct ref *dst,
 			  struct ref ***dst_tail,
-			  struct refspec *rs)
+			  struct refspec_item *rs)
 {
 	struct ref *matched_src, *matched_dst;
 	int allocated_src;
@@ -1099,7 +1099,7 @@ static int match_explicit(struct ref *src, struct ref *dst,
 }
 
 static int match_explicit_refs(struct ref *src, struct ref *dst,
-			       struct ref ***dst_tail, struct refspec *rs,
+			       struct ref ***dst_tail, struct refspec_item *rs,
 			       int rs_nr)
 {
 	int i, errs;
@@ -1108,10 +1108,10 @@ static int match_explicit_refs(struct ref *src, struct ref *dst,
 	return errs;
 }
 
-static char *get_ref_match(const struct refspec *rs, int rs_nr, const struct ref *ref,
-		int send_mirror, int direction, const struct refspec **ret_pat)
+static char *get_ref_match(const struct refspec_item *rs, int rs_nr, const struct ref *ref,
+		int send_mirror, int direction, const struct refspec_item **ret_pat)
 {
-	const struct refspec *pat;
+	const struct refspec_item *pat;
 	char *name;
 	int i;
 	int matching_refs = -1;
@@ -1282,12 +1282,12 @@ static void prepare_ref_index(struct string_list *ref_index, struct ref *ref)
  */
 int check_push_refs(struct ref *src, int nr_refspec, const char **refspec_names)
 {
-	struct refspec *refspec = parse_push_refspec(nr_refspec, refspec_names);
+	struct refspec_item *refspec = parse_push_refspec(nr_refspec, refspec_names);
 	int ret = 0;
 	int i;
 
 	for (i = 0; i < nr_refspec; i++) {
-		struct refspec *rs = refspec + i;
+		struct refspec_item *rs = refspec + i;
 
 		if (rs->pattern || rs->matching)
 			continue;
@@ -1310,7 +1310,7 @@ int check_push_refs(struct ref *src, int nr_refspec, const char **refspec_names)
 int match_push_refs(struct ref *src, struct ref **dst,
 		    int nr_refspec, const char **refspec, int flags)
 {
-	struct refspec *rs;
+	struct refspec_item *rs;
 	int send_all = flags & MATCH_REFS_ALL;
 	int send_mirror = flags & MATCH_REFS_MIRROR;
 	int send_prune = flags & MATCH_REFS_PRUNE;
@@ -1330,7 +1330,7 @@ int match_push_refs(struct ref *src, struct ref **dst,
 	for (ref = src; ref; ref = ref->next) {
 		struct string_list_item *dst_item;
 		struct ref *dst_peer;
-		const struct refspec *pat = NULL;
+		const struct refspec_item *pat = NULL;
 		char *dst_name;
 
 		dst_name = get_ref_match(rs, nr_refspec, ref, send_mirror, FROM_SRC, &pat);
@@ -1686,7 +1686,7 @@ static int ignore_symref_update(const char *refname)
  * local symbolic ref.
  */
 static struct ref *get_expanded_map(const struct ref *remote_refs,
-				    const struct refspec *refspec)
+				    const struct refspec_item *refspec)
 {
 	const struct ref *ref;
 	struct ref *ret = NULL;
@@ -1751,7 +1751,7 @@ static struct ref *get_local_ref(const char *name)
 }
 
 int get_fetch_map(const struct ref *remote_refs,
-		  const struct refspec *refspec,
+		  const struct refspec_item *refspec,
 		  struct ref ***tail,
 		  int missing_ok)
 {
@@ -2089,7 +2089,7 @@ struct ref *guess_remote_head(const struct ref *head,
 struct stale_heads_info {
 	struct string_list *ref_names;
 	struct ref **stale_refs_tail;
-	struct refspec *refs;
+	struct refspec_item *refs;
 	int ref_count;
 };
 
@@ -2098,9 +2098,9 @@ static int get_stale_heads_cb(const char *refname, const struct object_id *oid,
 {
 	struct stale_heads_info *info = cb_data;
 	struct string_list matches = STRING_LIST_INIT_DUP;
-	struct refspec query;
+	struct refspec_item query;
 	int i, stale = 1;
-	memset(&query, 0, sizeof(struct refspec));
+	memset(&query, 0, sizeof(struct refspec_item));
 	query.dst = (char *)refname;
 
 	query_refspecs_multiple(info->refs, info->ref_count, &query, &matches);
@@ -2131,7 +2131,7 @@ clean_exit:
 	return 0;
 }
 
-struct ref *get_stale_heads(struct refspec *refs, int ref_count, struct ref *fetch_map)
+struct ref *get_stale_heads(struct refspec_item *refs, int ref_count, struct ref *fetch_map)
 {
 	struct ref *ref, *stale_refs = NULL;
 	struct string_list ref_names = STRING_LIST_INIT_NODUP;

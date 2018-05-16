@@ -9,7 +9,7 @@
 #include "worktree.h"
 
 struct tracking {
-	struct refspec spec;
+	struct refspec_item spec;
 	char *src;
 	const char *remote;
 	int matches;
@@ -219,8 +219,8 @@ int validate_new_branchname(const char *name, struct strbuf *ref, int force)
 static int check_tracking_branch(struct remote *remote, void *cb_data)
 {
 	char *tracking_branch = cb_data;
-	struct refspec query;
-	memset(&query, 0, sizeof(struct refspec));
+	struct refspec_item query;
+	memset(&query, 0, sizeof(struct refspec_item));
 	query.dst = tracking_branch;
 	return !remote_find_tracking(remote, &query);
 }
