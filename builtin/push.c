@@ -417,23 +417,6 @@ static int do_push(const char *repo, int flags,
 	if (push_options->nr)
 		flags |= TRANSPORT_PUSH_OPTIONS;
 
-	if ((flags & TRANSPORT_PUSH_ALL) && refspec) {
-		if (!strcmp(*refspec, "refs/tags/*"))
-			return error(_("--all and --tags are incompatible"));
-		return error(_("--all can't be combined with refspecs"));
-	}
-
-	if ((flags & TRANSPORT_PUSH_MIRROR) && refspec) {
-		if (!strcmp(*refspec, "refs/tags/*"))
-			return error(_("--mirror and --tags are incompatible"));
-		return error(_("--mirror can't be combined with refspecs"));
-	}
-
-	if ((flags & (TRANSPORT_PUSH_ALL|TRANSPORT_PUSH_MIRROR)) ==
-				(TRANSPORT_PUSH_ALL|TRANSPORT_PUSH_MIRROR)) {
-		return error(_("--all and --mirror are incompatible"));
-	}
-
 	if (!refspec && !(flags & TRANSPORT_PUSH_ALL)) {
 		if (remote->push.raw_nr) {
 			refspec = remote->push.raw;
@@ -625,6 +608,20 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 		die(_("--delete is incompatible with --all, --mirror and --tags"));
 	if (deleterefs && argc < 2)
 		die(_("--delete doesn't make sense without any refs"));
+	if (flags & TRANSPORT_PUSH_ALL) {
+		if (tags)
+			die(_("--all and --tags are incompatible"));
+		if (argc >= 2)
+			die(_("--all can't be combined with refspecs"));
+	}
+	if (flags & TRANSPORT_PUSH_MIRROR) {
+		if (tags)
+			die(_("--mirror and --tags are incompatible"));
+		if (argc >= 2)
+			die(_("--mirror can't be combined with refspecs"));
+	}
+	if ((flags & TRANSPORT_PUSH_ALL) && (flags & TRANSPORT_PUSH_MIRROR))
+		die(_("--all and --mirror are incompatible"));
 
 	if (recurse_submodules == RECURSE_SUBMODULES_CHECK)
 		flags |= TRANSPORT_RECURSE_SUBMODULES_CHECK;
