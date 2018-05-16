@@ -178,3 +178,67 @@ void free_refspec(int nr_refspec, struct refspec_item *refspec)
 	}
 	free(refspec);
 }
+
+void refspec_item_init(struct refspec_item *item, const char *refspec, int fetch)
+{
+	memset(item, 0, sizeof(*item));
+
+	if (!parse_refspec(item, refspec, fetch))
+		die("Invalid refspec '%s'", refspec);
+}
+
+void refspec_item_clear(struct refspec_item *item)
+{
+	FREE_AND_NULL(item->src);
+	FREE_AND_NULL(item->dst);
+	item->force = 0;
+	item->pattern = 0;
+	item->matching = 0;
+	item->exact_sha1 = 0;
+}
+
+void refspec_init(struct refspec *rs, int fetch)
+{
+	memset(rs, 0, sizeof(*rs));
+	rs->fetch = fetch;
+}
+
+void refspec_append(struct refspec *rs, const char *refspec)
+{
+	struct refspec_item item;
+
+	refspec_item_init(&item, refspec, rs->fetch);
+
+	ALLOC_GROW(rs->items, rs->nr + 1, rs->alloc);
+	rs->items[rs->nr++] = item;
+
+	ALLOC_GROW(rs->raw, rs->raw_nr + 1, rs->raw_alloc);
+	rs->raw[rs->raw_nr++] = xstrdup(refspec);
+}
+
+void refspec_appendn(struct refspec *rs, const char **refspecs, int nr)
+{
+	int i;
+	for (i = 0; i < nr; i++)
+		refspec_append(rs, refspecs[i]);
+}
+
+void refspec_clear(struct refspec *rs)
+{
+	int i;
+
+	for (i = 0; i < rs->nr; i++)
+		refspec_item_clear(&rs->items[i]);
+
+	FREE_AND_NULL(rs->items);
+	rs->alloc = 0;
+	rs->nr = 0;
+
+	for (i = 0; i < rs->raw_nr; i++)
+		free((char *)rs->raw[i]);
+	FREE_AND_NULL(rs->raw);
+	rs->raw_alloc = 0;
+	rs->raw_nr = 0;
+
+	rs->fetch = 0;
+}
