@@ -267,7 +267,7 @@ struct ref *guess_remote_head(const struct ref *head,
 			      int all);
 
 /* Return refs which no longer exist on remote */
-struct ref *get_stale_heads(struct refspec_item *refs, int ref_count, struct ref *fetch_map);
+struct ref *get_stale_heads(struct refspec *rs, struct ref *fetch_map);
 
 /*
  * Compare-and-swap

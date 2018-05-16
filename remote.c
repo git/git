@@ -698,7 +698,9 @@ static int match_name_with_pattern(const char *key, const char *name,
 	return ret;
 }
 
-static void query_refspecs_multiple(struct refspec_item *refs, int ref_count, struct refspec_item *query, struct string_list *results)
+static void query_refspecs_multiple(struct refspec *rs,
+				    struct refspec_item *query,
+				    struct string_list *results)
 {
 	int i;
 	int find_src = !query->src;
@@ -706,8 +708,8 @@ static void query_refspecs_multiple(struct refspec_item *refs, int ref_count, st
 	if (find_src && !query->dst)
 		error("query_refspecs_multiple: need either src or dst");
 
-	for (i = 0; i < ref_count; i++) {
-		struct refspec_item *refspec = &refs[i];
+	for (i = 0; i < rs->nr; i++) {
+		struct refspec_item *refspec = &rs->items[i];
 		const char *key = find_src ? refspec->dst : refspec->src;
 		const char *value = find_src ? refspec->src : refspec->dst;
 		const char *needle = find_src ? query->dst : query->src;
@@ -2068,8 +2070,7 @@ struct ref *guess_remote_head(const struct ref *head,
 struct stale_heads_info {
 	struct string_list *ref_names;
 	struct ref **stale_refs_tail;
-	struct refspec_item *refs;
-	int ref_count;
+	struct refspec *rs;
 };
 
 static int get_stale_heads_cb(const char *refname, const struct object_id *oid,
@@ -2082,7 +2083,7 @@ static int get_stale_heads_cb(const char *refname, const struct object_id *oid,
 	memset(&query, 0, sizeof(struct refspec_item));
 	query.dst = (char *)refname;
 
-	query_refspecs_multiple(info->refs, info->ref_count, &query, &matches);
+	query_refspecs_multiple(info->rs, &query, &matches);
 	if (matches.nr == 0)
 		goto clean_exit; /* No matches */
 
@@ -2110,7 +2111,7 @@ clean_exit:
 	return 0;
 }
 
-struct ref *get_stale_heads(struct refspec_item *refs, int ref_count, struct ref *fetch_map)
+struct ref *get_stale_heads(struct refspec *rs, struct ref *fetch_map)
 {
 	struct ref *ref, *stale_refs = NULL;
 	struct string_list ref_names = STRING_LIST_INIT_NODUP;
@@ -2118,8 +2119,7 @@ struct ref *get_stale_heads(struct refspec_item *refs, int ref_count, struct ref
 
 	info.ref_names = &ref_names;
 	info.stale_refs_tail = &stale_refs;
-	info.refs = refs;
-	info.ref_count = ref_count;
+	info.rs = rs;
 	for (ref = fetch_map; ref; ref = ref->next)
 		string_list_append(&ref_names, ref->name);
 	string_list_sort(&ref_names);
