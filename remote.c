@@ -1255,24 +1255,20 @@ static void prepare_ref_index(struct string_list *ref_index, struct ref *ref)
  * but we can catch some errors early before even talking to the
  * remote side.
  */
-int check_push_refs(struct ref *src, int nr_refspec, const char **refspec_names)
+int check_push_refs(struct ref *src, struct refspec *rs)
 {
-	struct refspec refspec = REFSPEC_INIT_PUSH;
 	int ret = 0;
 	int i;
 
-	refspec_appendn(&refspec, refspec_names, nr_refspec);
+	for (i = 0; i < rs->nr; i++) {
+		struct refspec_item *item = &rs->items[i];
 
-	for (i = 0; i < refspec.nr; i++) {
-		struct refspec_item *rs = &refspec.items[i];
-
-		if (rs->pattern || rs->matching)
+		if (item->pattern || item->matching)
 			continue;
 
-		ret |= match_explicit_lhs(src, rs, NULL, NULL);
+		ret |= match_explicit_lhs(src, item, NULL, NULL);
 	}
 
-	refspec_clear(&refspec);
 	return ret;
 }
 

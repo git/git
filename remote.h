@@ -161,7 +161,7 @@ struct ref *ref_remove_duplicates(struct ref *ref_map);
 int query_refspecs(struct refspec *rs, struct refspec_item *query);
 char *apply_refspecs(struct refspec *rs, const char *name);
 
-int check_push_refs(struct ref *src, int nr_refspec, const char **refspec);
+int check_push_refs(struct ref *src, struct refspec *rs);
 int match_push_refs(struct ref *src, struct ref **dst,
 		    struct refspec *rs, int flags);
 void set_ref_status_for_push(struct ref *remote_refs, int send_mirror,

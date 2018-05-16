@@ -1090,7 +1090,7 @@ int transport_push(struct transport *transport,
 		struct argv_array ref_prefixes = ARGV_ARRAY_INIT;
 		int i;
 
-		if (check_push_refs(local_refs, rs->raw_nr, rs->raw) < 0)
+		if (check_push_refs(local_refs, rs) < 0)
 			return -1;
 
 		for (i = 0; i < rs->nr; i++) {
