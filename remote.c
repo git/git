@@ -77,14 +77,6 @@ static const char *alias_url(const char *url, struct rewrites *r)
 	return xstrfmt("%s%s", r->rewrite[longest_i]->base, url + longest->len);
 }
 
-static void add_push_refspec(struct remote *remote, const char *ref)
-{
-	ALLOC_GROW(remote->push_refspec,
-		   remote->push_refspec_nr + 1,
-		   remote->push_refspec_alloc);
-	remote->push_refspec[remote->push_refspec_nr++] = ref;
-}
-
 static void add_fetch_refspec(struct remote *remote, const char *ref)
 {
 	ALLOC_GROW(remote->fetch_refspec,
@@ -175,9 +167,11 @@ static struct remote *make_remote(const char *name, int len)
 	ret = xcalloc(1, sizeof(struct remote));
 	ret->prune = -1;  /* unspecified */
 	ret->prune_tags = -1;  /* unspecified */
+	ret->name = xstrndup(name, len);
+	refspec_init(&ret->push, REFSPEC_PUSH);
+
 	ALLOC_GROW(remotes, remotes_nr + 1, remotes_alloc);
 	remotes[remotes_nr++] = ret;
-	ret->name = xstrndup(name, len);
 
 	hashmap_entry_init(ret, lookup_entry.hash);
 	replaced = hashmap_put(&remotes_hash, ret);
@@ -275,7 +269,7 @@ static void read_remotes_file(struct remote *remote)
 		if (skip_prefix(buf.buf, "URL:", &v))
 			add_url_alias(remote, xstrdup(skip_spaces(v)));
 		else if (skip_prefix(buf.buf, "Push:", &v))
-			add_push_refspec(remote, xstrdup(skip_spaces(v)));
+			refspec_append(&remote->push, skip_spaces(v));
 		else if (skip_prefix(buf.buf, "Pull:", &v))
 			add_fetch_refspec(remote, xstrdup(skip_spaces(v)));
 	}
@@ -323,8 +317,10 @@ static void read_branches_file(struct remote *remote)
 	 * Cogito compatible push: push current HEAD to remote #branch
 	 * (master if missing)
 	 */
-	add_push_refspec(remote, xstrfmt("HEAD:refs/heads/%s", frag));
+	strbuf_addf(&buf, "HEAD:refs/heads/%s", frag);
+	refspec_append(&remote->push, buf.buf);
 	remote->fetch_tags = 1; /* always auto-follow */
+	strbuf_release(&buf);
 }
 
 static int handle_config(const char *key, const char *value, void *cb)
@@ -409,7 +405,8 @@ static int handle_config(const char *key, const char *value, void *cb)
 		const char *v;
 		if (git_config_string(&v, key, value))
 			return -1;
-		add_push_refspec(remote, v);
+		refspec_append(&remote->push, v);
+		free((char *)v);
 	} else if (!strcmp(subkey, "fetch")) {
 		const char *v;
 		if (git_config_string(&v, key, value))
@@ -542,9 +539,9 @@ const char *remote_ref_for_branch(struct branch *branch, int for_push,
 				pushremote_for_branch(branch, NULL);
 			struct remote *remote = remote_get(remote_name);
 
-			if (remote && remote->push_refspec_nr &&
-			    (dst = apply_refspecs(remote->push,
-						  remote->push_refspec_nr,
+			if (remote && remote->push.nr &&
+			    (dst = apply_refspecs(remote->push.items,
+						  remote->push.nr,
 						  branch->refname))) {
 				if (explicit)
 					*explicit = 1;
@@ -582,7 +579,6 @@ static struct remote *remote_get_1(const char *name,
 	if (!valid_remote(ret))
 		return NULL;
 	ret->fetch = parse_fetch_refspec(ret->fetch_refspec_nr, ret->fetch_refspec);
-	ret->push = parse_push_refspec(ret->push_refspec_nr, ret->push_refspec);
 	return ret;
 }
 
@@ -616,9 +612,6 @@ int for_each_remote(each_remote_fn fn, void *priv)
 		if (!r->fetch)
 			r->fetch = parse_fetch_refspec(r->fetch_refspec_nr,
 						       r->fetch_refspec);
-		if (!r->push)
-			r->push = parse_push_refspec(r->push_refspec_nr,
-						     r->push_refspec);
 		result = fn(r, priv);
 	}
 	return result;
@@ -1613,11 +1606,11 @@ static const char *branch_get_push_1(struct branch *branch, struct strbuf *err)
 				 _("branch '%s' has no remote for pushing"),
 				 branch->name);
 
-	if (remote->push_refspec_nr) {
+	if (remote->push.nr) {
 		char *dst;
 		const char *ret;
 
-		dst = apply_refspecs(remote->push, remote->push_refspec_nr,
+		dst = apply_refspecs(remote->push.items, remote->push.nr,
 				     branch->refname);
 		if (!dst)
 			return error_buf(err,

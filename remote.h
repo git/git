@@ -3,6 +3,7 @@
 
 #include "parse-options.h"
 #include "hashmap.h"
+#include "refspec.h"
 
 enum {
 	REMOTE_UNCONFIGURED = 0,
@@ -27,10 +28,7 @@ struct remote {
 	int pushurl_nr;
 	int pushurl_alloc;
 
-	const char **push_refspec;
-	struct refspec_item *push;
-	int push_refspec_nr;
-	int push_refspec_alloc;
+	struct refspec push;
 
 	const char **fetch_refspec;
 	struct refspec_item *fetch;
