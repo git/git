@@ -1,6 +1,7 @@
 Git for Windows
 ===============
 
+[![Build Status](https://git-for-windows.visualstudio.com/_apis/public/build/definitions/f3317b6a-fa67-40d4-9a33-b652e06943df/3/badge)](https://aka.ms/git-for-windows-builds)
 [![Join the chat at https://gitter.im/git-for-windows/git](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/git-for-windows/git?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 This is [Git for Windows](http://git-for-windows.github.io/), the Windows port
