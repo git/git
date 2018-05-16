@@ -1082,27 +1082,29 @@ static int match_explicit_refs(struct ref *src, struct ref *dst,
 	return errs;
 }
 
-static char *get_ref_match(const struct refspec_item *rs, int rs_nr, const struct ref *ref,
-		int send_mirror, int direction, const struct refspec_item **ret_pat)
+static char *get_ref_match(const struct refspec *rs, const struct ref *ref,
+			   int send_mirror, int direction,
+			   const struct refspec_item **ret_pat)
 {
 	const struct refspec_item *pat;
 	char *name;
 	int i;
 	int matching_refs = -1;
-	for (i = 0; i < rs_nr; i++) {
-		if (rs[i].matching &&
-		    (matching_refs == -1 || rs[i].force)) {
+	for (i = 0; i < rs->nr; i++) {
+		const struct refspec_item *item = &rs->items[i];
+		if (item->matching &&
+		    (matching_refs == -1 || item->force)) {
 			matching_refs = i;
 			continue;
 		}
 
-		if (rs[i].pattern) {
-			const char *dst_side = rs[i].dst ? rs[i].dst : rs[i].src;
+		if (item->pattern) {
+			const char *dst_side = item->dst ? item->dst : item->src;
 			int match;
 			if (direction == FROM_SRC)
-				match = match_name_with_pattern(rs[i].src, ref->name, dst_side, &name);
+				match = match_name_with_pattern(item->src, ref->name, dst_side, &name);
 			else
-				match = match_name_with_pattern(dst_side, ref->name, rs[i].src, &name);
+				match = match_name_with_pattern(dst_side, ref->name, item->src, &name);
 			if (match) {
 				matching_refs = i;
 				break;
@@ -1112,7 +1114,7 @@ static char *get_ref_match(const struct refspec_item *rs, int rs_nr, const struc
 	if (matching_refs == -1)
 		return NULL;
 
-	pat = rs + matching_refs;
+	pat = &rs->items[matching_refs];
 	if (pat->matching) {
 		/*
 		 * "matching refs"; traditionally we pushed everything
@@ -1309,7 +1311,7 @@ int match_push_refs(struct ref *src, struct ref **dst,
 		const struct refspec_item *pat = NULL;
 		char *dst_name;
 
-		dst_name = get_ref_match(rs.items, rs.nr, ref, send_mirror, FROM_SRC, &pat);
+		dst_name = get_ref_match(&rs, ref, send_mirror, FROM_SRC, &pat);
 		if (!dst_name)
 			continue;
 
@@ -1358,7 +1360,7 @@ int match_push_refs(struct ref *src, struct ref **dst,
 				/* We're already sending something to this ref. */
 				continue;
 
-			src_name = get_ref_match(rs.items, rs.nr, ref, send_mirror, FROM_DST, NULL);
+			src_name = get_ref_match(&rs, ref, send_mirror, FROM_DST, NULL);
 			if (src_name) {
 				if (!src_ref_index.nr)
 					prepare_ref_index(&src_ref_index, src);
