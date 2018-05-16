@@ -1073,12 +1073,11 @@ static int match_explicit(struct ref *src, struct ref *dst,
 }
 
 static int match_explicit_refs(struct ref *src, struct ref *dst,
-			       struct ref ***dst_tail, struct refspec_item *rs,
-			       int rs_nr)
+			       struct ref ***dst_tail, struct refspec *rs)
 {
 	int i, errs;
-	for (i = errs = 0; i < rs_nr; i++)
-		errs += match_explicit(src, dst, dst_tail, &rs[i]);
+	for (i = errs = 0; i < rs->nr; i++)
+		errs += match_explicit(src, dst, dst_tail, &rs->items[i]);
 	return errs;
 }
 
@@ -1302,7 +1301,7 @@ int match_push_refs(struct ref *src, struct ref **dst,
 		refspec = default_refspec;
 	}
 	refspec_appendn(&rs, refspec, nr_refspec);
-	errs = match_explicit_refs(src, *dst, &dst_tail, rs.items, rs.nr);
+	errs = match_explicit_refs(src, *dst, &dst_tail, &rs);
 
 	/* pick the remainder */
 	for (ref = src; ref; ref = ref->next) {
