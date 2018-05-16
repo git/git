@@ -1112,7 +1112,7 @@ static void backfill_tags(struct transport *transport, struct ref *ref_map)
 }
 
 static int do_fetch(struct transport *transport,
-		    struct refspec_item *refs, int ref_count)
+		    struct refspec *rs)
 {
 	struct string_list existing_refs = STRING_LIST_INIT_DUP;
 	struct ref *ref_map;
@@ -1136,7 +1136,7 @@ static int do_fetch(struct transport *transport,
 			goto cleanup;
 	}
 
-	ref_map = get_ref_map(transport, refs, ref_count, tags, &autotags);
+	ref_map = get_ref_map(transport, rs->items, rs->nr, tags, &autotags);
 	if (!update_head_ok)
 		check_not_current_branch(ref_map);
 
@@ -1160,8 +1160,8 @@ static int do_fetch(struct transport *transport,
 		 * explicitly (via command line or configuration); we
 		 * don't care whether --tags was specified.
 		 */
-		if (ref_count) {
-			prune_refs(refs, ref_count, ref_map, transport->url);
+		if (rs->nr) {
+			prune_refs(rs->items, rs->nr, ref_map, transport->url);
 		} else {
 			prune_refs(transport->remote->fetch.items,
 				   transport->remote->fetch.nr,
@@ -1410,7 +1410,7 @@ static int fetch_one(struct remote *remote, int argc, const char **argv, int pru
 
 	sigchain_push_common(unlock_pack_on_signal);
 	atexit(unlock_pack);
-	exit_code = do_fetch(gtransport, rs.items, rs.nr);
+	exit_code = do_fetch(gtransport, &rs);
 	refspec_clear(&rs);
 	transport_disconnect(gtransport);
 	gtransport = NULL;
