@@ -464,6 +464,9 @@ struct parsed_object_pool *parsed_object_pool_new(void)
 	o->tag_state = allocate_alloc_state();
 	o->object_state = allocate_alloc_state();
 
+	o->is_shallow = -1;
+	o->shallow_stat = xcalloc(1, sizeof(*o->shallow_stat));
+
 	return o;
 }
 

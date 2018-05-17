@@ -14,22 +14,19 @@
 #include "commit-slab.h"
 #include "revision.h"
 #include "list-objects.h"
+#include "repository.h"
 
-static int is_shallow = -1;
-static struct stat_validity shallow_stat;
-static char *alternate_shallow_file;
-
-void set_alternate_shallow_file_the_repository(const char *path, int override)
+void set_alternate_shallow_file(struct repository *r, const char *path, int override)
 {
-	if (is_shallow != -1)
+	if (r->parsed_objects->is_shallow != -1)
 		die("BUG: is_repository_shallow must not be called before set_alternate_shallow_file");
-	if (alternate_shallow_file && !override)
+	if (r->parsed_objects->alternate_shallow_file && !override)
 		return;
-	free(alternate_shallow_file);
-	alternate_shallow_file = xstrdup_or_null(path);
+	free(r->parsed_objects->alternate_shallow_file);
+	r->parsed_objects->alternate_shallow_file = xstrdup_or_null(path);
 }
 
-int register_shallow_the_repository(const struct object_id *oid)
+int register_shallow(struct repository *r, const struct object_id *oid)
 {
 	struct commit_graft *graft =
 		xmalloc(sizeof(struct commit_graft));
@@ -39,41 +36,41 @@ int register_shallow_the_repository(const struct object_id *oid)
 	graft->nr_parent = -1;
 	if (commit && commit->object.parsed)
 		commit->parents = NULL;
-	return register_commit_graft(the_repository, graft, 0);
+	return register_commit_graft(r, graft, 0);
 }
 
-int is_repository_shallow_the_repository(void)
+int is_repository_shallow(struct repository *r)
 {
 	FILE *fp;
 	char buf[1024];
-	const char *path = alternate_shallow_file;
+	const char *path = r->parsed_objects->alternate_shallow_file;
 
-	if (is_shallow >= 0)
-		return is_shallow;
+	if (r->parsed_objects->is_shallow >= 0)
+		return r->parsed_objects->is_shallow;
 
 	if (!path)
-		path = git_path_shallow(the_repository);
+		path = git_path_shallow(r);
 	/*
 	 * fetch-pack sets '--shallow-file ""' as an indicator that no
 	 * shallow file should be used. We could just open it and it
 	 * will likely fail. But let's do an explicit check instead.
 	 */
 	if (!*path || (fp = fopen(path, "r")) == NULL) {
-		stat_validity_clear(&shallow_stat);
-		is_shallow = 0;
-		return is_shallow;
+		stat_validity_clear(r->parsed_objects->shallow_stat);
+		r->parsed_objects->is_shallow = 0;
+		return r->parsed_objects->is_shallow;
 	}
-	stat_validity_update(&shallow_stat, fileno(fp));
-	is_shallow = 1;
+	stat_validity_update(r->parsed_objects->shallow_stat, fileno(fp));
+	r->parsed_objects->is_shallow = 1;
 
 	while (fgets(buf, sizeof(buf), fp)) {
 		struct object_id oid;
 		if (get_oid_hex(buf, &oid))
 			die("bad shallow line: %s", buf);
-		register_shallow(the_repository, &oid);
+		register_shallow(r, &oid);
 	}
 	fclose(fp);
-	return is_shallow;
+	return r->parsed_objects->is_shallow;
 }
 
 struct commit_list *get_shallow_commits(struct object_array *heads, int depth,
@@ -217,13 +214,12 @@ struct commit_list *get_shallow_commits_by_rev_list(int ac, const char **av,
 	return result;
 }
 
-#define check_shallow_file_for_update(r) check_shallow_file_for_update_##r()
-static void check_shallow_file_for_update_the_repository(void)
+static void check_shallow_file_for_update(struct repository *r)
 {
-	if (is_shallow == -1)
+	if (r->parsed_objects->is_shallow == -1)
 		die("BUG: shallow must be initialized by now");
 
-	if (!stat_validity_check(&shallow_stat, git_path_shallow(the_repository)))
+	if (!stat_validity_check(r->parsed_objects->shallow_stat, git_path_shallow(the_repository)))
 		die("shallow file has changed since we read it");
 }
 

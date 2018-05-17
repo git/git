@@ -190,18 +190,15 @@ extern struct commit_list *get_merge_bases_many_dirty(struct commit *one, int n,
 
 struct oid_array;
 struct ref;
-#define register_shallow(r, o) register_shallow_##r(o);
-extern int register_shallow_the_repository(const struct object_id *oid);
+extern int register_shallow(struct repository *r, const struct object_id *oid);
 extern int unregister_shallow(const struct object_id *oid);
 extern int for_each_commit_graft(each_commit_graft_fn, void *);
-#define is_repository_shallow(r) is_repository_shallow_##r()
-extern int is_repository_shallow_the_repository(void);
+extern int is_repository_shallow(struct repository *r);
 extern struct commit_list *get_shallow_commits(struct object_array *heads,
 		int depth, int shallow_flag, int not_shallow_flag);
 extern struct commit_list *get_shallow_commits_by_rev_list(
 		int ac, const char **av, int shallow_flag, int not_shallow_flag);
-#define set_alternate_shallow_file(r, p, o) set_alternate_shallow_file_##r(p, o)
-extern void set_alternate_shallow_file_the_repository(const char *path, int override);
+extern void set_alternate_shallow_file(struct repository *r, const char *path, int override);
 extern int write_shallow_commits(struct strbuf *out, int use_pack_protocol,
 				 const struct oid_array *extra);
 extern void setup_alternate_shallow(struct lock_file *shallow_lock,

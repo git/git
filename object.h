@@ -16,6 +16,10 @@ struct parsed_object_pool {
 	/* parent substitutions from .git/info/grafts and .git/shallow */
 	struct commit_graft **grafts;
 	int grafts_alloc, grafts_nr;
+
+	int is_shallow;
+	struct stat_validity *shallow_stat;
+	char *alternate_shallow_file;
 };
 
 struct parsed_object_pool *parsed_object_pool_new(void);
