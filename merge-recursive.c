@@ -1093,10 +1093,26 @@ static int merge_submodule(struct merge_options *o,
 	/* Case #1: a is contained in b or vice versa */
 	if (in_merge_bases(commit_a, commit_b)) {
 		oidcpy(result, b);
+		if (show(o, 3)) {
+			output(o, 3, _("Fast-forwarding submodule %s to the following commit:"), path);
+			output_commit_title(o, commit_b);
+		} else if (show(o, 2))
+			output(o, 2, _("Fast-forwarding submodule %s to %s"), path, oid_to_hex(b));
+		else
+			; /* no output */
+
 		return 1;
 	}
 	if (in_merge_bases(commit_b, commit_a)) {
 		oidcpy(result, a);
+		if (show(o, 3)) {
+			output(o, 3, _("Fast-forwarding submodule %s to the following commit:"), path);
+			output_commit_title(o, commit_a);
+		} else if (show(o, 2))
+			output(o, 2, _("Fast-forwarding submodule %s to %s"), path, oid_to_hex(a));
+		else
+			; /* no output */
+
 		return 1;
 	}
 
