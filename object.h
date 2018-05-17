@@ -20,6 +20,8 @@ struct parsed_object_pool {
 	int is_shallow;
 	struct stat_validity *shallow_stat;
 	char *alternate_shallow_file;
+
+	int commit_graft_prepared;
 };
 
 struct parsed_object_pool *parsed_object_pool_new(void);

@@ -196,19 +196,17 @@ static int read_graft_file(struct repository *r, const char *graft_file)
 	return 0;
 }
 
-#define prepare_commit_graft(r) prepare_commit_graft_##r()
-static void prepare_commit_graft_the_repository(void)
+static void prepare_commit_graft(struct repository *r)
 {
-	static int commit_graft_prepared;
 	char *graft_file;
 
-	if (commit_graft_prepared)
+	if (r->parsed_objects->commit_graft_prepared)
 		return;
-	graft_file = get_graft_file(the_repository);
-	read_graft_file(the_repository, graft_file);
+	graft_file = get_graft_file(r);
+	read_graft_file(r, graft_file);
 	/* make sure shallows are read */
-	is_repository_shallow(the_repository);
-	commit_graft_prepared = 1;
+	is_repository_shallow(r);
+	r->parsed_objects->commit_graft_prepared = 1;
 }
 
 struct commit_graft *lookup_commit_graft_the_repository(const struct object_id *oid)
