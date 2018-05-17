@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "config.h"
+#include "color.h"
 
 int advice_push_update_rejected = 1;
 int advice_push_non_ff_current = 1;
@@ -19,6 +20,33 @@ int advice_rm_hints = 1;
 int advice_add_embedded_repo = 1;
 int advice_ignored_hook = 1;
 int advice_waiting_for_editor = 1;
+
+static int advice_use_color = -1;
+static char advice_colors[][COLOR_MAXLEN] = {
+	GIT_COLOR_RESET,
+	GIT_COLOR_YELLOW,	/* HINT */
+};
+
+enum color_advice {
+	ADVICE_COLOR_RESET = 0,
+	ADVICE_COLOR_HINT = 1,
+};
+
+static int parse_advise_color_slot(const char *slot)
+{
+	if (!strcasecmp(slot, "reset"))
+		return ADVICE_COLOR_RESET;
+	if (!strcasecmp(slot, "hint"))
+		return ADVICE_COLOR_HINT;
+	return -1;
+}
+
+static const char *advise_get_color(enum color_advice ix)
+{
+	if (want_color_stderr(advice_use_color))
+		return advice_colors[ix];
+	return "";
+}
 
 static struct {
 	const char *name;
@@ -59,7 +87,10 @@ void advise(const char *advice, ...)
 
 	for (cp = buf.buf; *cp; cp = np) {
 		np = strchrnul(cp, '\n');
-		fprintf(stderr,	_("hint: %.*s\n"), (int)(np - cp), cp);
+		fprintf(stderr,	_("%shint: %.*s%s\n"),
+			advise_get_color(ADVICE_COLOR_HINT),
+			(int)(np - cp), cp,
+			advise_get_color(ADVICE_COLOR_RESET));
 		if (*np)
 			np++;
 	}
@@ -68,8 +99,22 @@ void advise(const char *advice, ...)
 
 int git_default_advice_config(const char *var, const char *value)
 {
-	const char *k;
+	const char *k, *slot_name;
 	int i;
+
+	if (!strcmp(var, "color.advice")) {
+		advice_use_color = git_config_colorbool(var, value);
+		return 0;
+	}
+
+	if (skip_prefix(var, "color.advice.", &slot_name)) {
+		int slot = parse_advise_color_slot(slot_name);
+		if (slot < 0)
+			return 0;
+		if (!value)
+			return config_error_nonbool(var);
+		return color_parse(value, advice_colors[slot]);
+	}
 
 	if (!skip_prefix(var, "advice.", &k))
 		return 0;
