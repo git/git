@@ -276,6 +276,14 @@ static int objecttype_atom_parser(const struct ref_format *format, struct used_a
 	return 0;
 }
 
+static int deltabase_atom_parser(const struct ref_format *format, struct used_atom *atom,
+				  const char *arg, struct strbuf *unused_err)
+{
+	oi_data.use_data = 1;
+	oi_data.info.delta_base_sha1 = oi_data.delta_base_oid.hash;
+	return 0;
+}
+
 static int objectsize_atom_parser(const struct ref_format *format, struct used_atom *atom,
 				  const char *arg, struct strbuf *err)
 {
@@ -409,6 +417,7 @@ static struct {
 	{ "objecttype", FIELD_STR, objecttype_atom_parser },
 	{ "objectsize", FIELD_ULONG, objectsize_atom_parser },
 	{ "objectname", FIELD_STR, objectname_atom_parser },
+	{ "deltabase", FIELD_STR, deltabase_atom_parser },
 	{ "tree" },
 	{ "parent" },
 	{ "numparent", FIELD_ULONG },
@@ -1547,6 +1556,9 @@ static int populate_value(struct ref_array_item *ref, struct strbuf *err)
 				v->value = oi_data.disk_size;
 				v->s = xstrfmt("%" PRIuMAX, (uintmax_t)oi_data.disk_size);
 			}
+			continue;
+		} else if (!deref && !strcmp(name, "deltabase") && oi_data.use_data) {
+			v->s = xstrdup(oid_to_hex(&oi_data.delta_base_oid));
 			continue;
 		} else if (!strcmp(name, "HEAD")) {
 			if (atom->u.head && !strcmp(ref->refname, atom->u.head))
