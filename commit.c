@@ -177,8 +177,7 @@ bad_graft_data:
 	return NULL;
 }
 
-#define read_graft_file(r, f) read_graft_file_##r(f)
-static int read_graft_file_the_repository(const char *graft_file)
+static int read_graft_file(struct repository *r, const char *graft_file)
 {
 	FILE *fp = fopen_or_warn(graft_file, "r");
 	struct strbuf buf = STRBUF_INIT;
@@ -189,7 +188,7 @@ static int read_graft_file_the_repository(const char *graft_file)
 		struct commit_graft *graft = read_graft_line(&buf);
 		if (!graft)
 			continue;
-		if (register_commit_graft(the_repository, graft, 1))
+		if (register_commit_graft(r, graft, 1))
 			error("duplicate graft data: %s", buf.buf);
 	}
 	fclose(fp);
