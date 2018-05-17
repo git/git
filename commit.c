@@ -111,30 +111,31 @@ static int commit_graft_pos(struct repository *r, const unsigned char *sha1)
 			commit_graft_sha1_access);
 }
 
-int register_commit_graft_the_repository(struct commit_graft *graft, int ignore_dups)
+int register_commit_graft(struct repository *r, struct commit_graft *graft,
+			  int ignore_dups)
 {
-	int pos = commit_graft_pos(the_repository, graft->oid.hash);
+	int pos = commit_graft_pos(r, graft->oid.hash);
 
 	if (0 <= pos) {
 		if (ignore_dups)
 			free(graft);
 		else {
-			free(the_repository->parsed_objects->grafts[pos]);
-			the_repository->parsed_objects->grafts[pos] = graft;
+			free(r->parsed_objects->grafts[pos]);
+			r->parsed_objects->grafts[pos] = graft;
 		}
 		return 1;
 	}
 	pos = -pos - 1;
-	ALLOC_GROW(the_repository->parsed_objects->grafts,
-		   the_repository->parsed_objects->grafts_nr + 1,
-		   the_repository->parsed_objects->grafts_alloc);
-	the_repository->parsed_objects->grafts_nr++;
-	if (pos < the_repository->parsed_objects->grafts_nr)
-		memmove(the_repository->parsed_objects->grafts + pos + 1,
-			the_repository->parsed_objects->grafts + pos,
-			(the_repository->parsed_objects->grafts_nr - pos - 1) *
-			sizeof(*the_repository->parsed_objects->grafts));
-	the_repository->parsed_objects->grafts[pos] = graft;
+	ALLOC_GROW(r->parsed_objects->grafts,
+		   r->parsed_objects->grafts_nr + 1,
+		   r->parsed_objects->grafts_alloc);
+	r->parsed_objects->grafts_nr++;
+	if (pos < r->parsed_objects->grafts_nr)
+		memmove(r->parsed_objects->grafts + pos + 1,
+			r->parsed_objects->grafts + pos,
+			(r->parsed_objects->grafts_nr - pos - 1) *
+			sizeof(*r->parsed_objects->grafts));
+	r->parsed_objects->grafts[pos] = graft;
 	return 0;
 }
 

@@ -174,8 +174,7 @@ struct commit_graft {
 typedef int (*each_commit_graft_fn)(const struct commit_graft *, void *);
 
 struct commit_graft *read_graft_line(struct strbuf *line);
-#define register_commit_graft(r, g, i) register_commit_graft_##r(g, i)
-int register_commit_graft_the_repository(struct commit_graft *, int);
+int register_commit_graft(struct repository *r, struct commit_graft *, int);
 #define lookup_commit_graft(r, o) lookup_commit_graft_##r(o)
 struct commit_graft *lookup_commit_graft_the_repository(const struct object_id *oid);
 
