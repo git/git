@@ -217,7 +217,8 @@ struct commit_list *get_shallow_commits_by_rev_list(int ac, const char **av,
 	return result;
 }
 
-static void check_shallow_file_for_update(void)
+#define check_shallow_file_for_update(r) check_shallow_file_for_update_##r()
+static void check_shallow_file_for_update_the_repository(void)
 {
 	if (is_shallow == -1)
 		die("BUG: shallow must be initialized by now");
@@ -319,7 +320,7 @@ void setup_alternate_shallow(struct lock_file *shallow_lock,
 
 	fd = hold_lock_file_for_update(shallow_lock, git_path_shallow(),
 				       LOCK_DIE_ON_ERROR);
-	check_shallow_file_for_update();
+	check_shallow_file_for_update(the_repository);
 	if (write_shallow_commits(&sb, 0, extra)) {
 		if (write_in_full(fd, sb.buf, sb.len) < 0)
 			die_errno("failed to write to %s",
@@ -366,7 +367,7 @@ void prune_shallow(int show_only)
 	}
 	fd = hold_lock_file_for_update(&shallow_lock, git_path_shallow(),
 				       LOCK_DIE_ON_ERROR);
-	check_shallow_file_for_update();
+	check_shallow_file_for_update(the_repository);
 	if (write_shallow_commits_1(&sb, 0, NULL, SEEN_ONLY)) {
 		if (write_in_full(fd, sb.buf, sb.len) < 0)
 			die_errno("failed to write to %s",
