@@ -39,6 +39,11 @@ struct repository {
 	struct ref_store *refs;
 
 	/*
+	 * Contains path to often used file names.
+	 */
+	struct path_cache cached_paths;
+
+	/*
 	 * Path to the repository's graft file.
 	 * Cannot be NULL after initialization.
 	 */

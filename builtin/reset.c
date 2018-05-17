@@ -39,7 +39,7 @@ static const char *reset_type_names[] = {
 
 static inline int is_merge(void)
 {
-	return !access(git_path_merge_head(), F_OK);
+	return !access(git_path_merge_head(the_repository), F_OK);
 }
 
 static int reset_index(const struct object_id *oid, int reset_type, int quiet)
