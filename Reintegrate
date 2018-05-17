@@ -156,7 +156,7 @@ no)
 		esac
 
 		case "$eh" in
-		"" | "#"*)
+		"" | "#"* | [0-9][0-9]-[0-9][0-9]*)
 			echo >&2 "* $branch"
 
 			save=$(git rev-parse --verify HEAD) &&
