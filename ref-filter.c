@@ -277,10 +277,15 @@ static int objecttype_atom_parser(const struct ref_format *format, struct used_a
 }
 
 static int objectsize_atom_parser(const struct ref_format *format, struct used_atom *atom,
-				  const char *arg, struct strbuf *unused_err)
+				  const char *arg, struct strbuf *err)
 {
+	if (!arg)
+		oi_data.info.sizep = &oi_data.size;
+	else if (!strcmp(arg, "disk"))
+		oi_data.info.disk_sizep = &oi_data.disk_size;
+	else
+		return strbuf_addf_ret(err, -1, _("unrecognized %%(objectsize) argument: %s"), arg);
 	oi_data.use_data = 1;
-	oi_data.info.sizep = &oi_data.size;
 	return 0;
 }
 
@@ -1533,9 +1538,15 @@ static int populate_value(struct ref_array_item *ref, struct strbuf *err)
 		} else if (!deref && !strcmp(name, "objecttype") && oi_data.use_data) {
 			v->s = type_name(oi_data.type);
 			continue;
-		} else if (!deref && !strcmp(name, "objectsize") && oi_data.use_data) {
-			v->value = oi_data.size;
-			v->s = xstrfmt("%lu", oi_data.size);
+		} else if (!deref && starts_with(name, "objectsize") && oi_data.use_data) {
+			if (!strcmp(name, "objectsize")) {
+				v->value = oi_data.size;
+				v->s = xstrfmt("%lu", oi_data.size);
+			} else {
+				/* It can be only objectsize:disk, we checked it in parser */
+				v->value = oi_data.disk_size;
+				v->s = xstrfmt("%" PRIuMAX, (uintmax_t)oi_data.disk_size);
+			}
 			continue;
 		} else if (!strcmp(name, "HEAD")) {
 			if (atom->u.head && !strcmp(ref->refname, atom->u.head))
