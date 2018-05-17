@@ -480,6 +480,8 @@ void raw_object_store_clear(struct raw_object_store *o)
 {
 	FREE_AND_NULL(o->objectdir);
 	FREE_AND_NULL(o->alternate_db);
+
+	oidmap_free(o->replace_map, 1);
 	FREE_AND_NULL(o->replace_map);
 
 	free_alt_odbs(o);
