@@ -42,7 +42,7 @@ int register_shallow_the_repository(const struct object_id *oid)
 	return register_commit_graft(the_repository, graft, 0);
 }
 
-int is_repository_shallow(void)
+int is_repository_shallow_the_repository(void)
 {
 	FILE *fp;
 	char buf[1024];
@@ -108,7 +108,7 @@ struct commit_list *get_shallow_commits(struct object_array *heads, int depth,
 		parse_commit_or_die(commit);
 		cur_depth++;
 		if ((depth != INFINITE_DEPTH && cur_depth >= depth) ||
-		    (is_repository_shallow() && !commit->parents &&
+		    (is_repository_shallow(the_repository) && !commit->parents &&
 		     (graft = lookup_commit_graft(the_repository, &commit->object.oid)) != NULL &&
 		     graft->nr_parent < 0)) {
 			commit_list_insert(commit, &result);
@@ -167,7 +167,7 @@ struct commit_list *get_shallow_commits_by_rev_list(int ac, const char **av,
 	 */
 	clear_object_flags(both_flags);
 
-	is_repository_shallow(); /* make sure shallows are read */
+	is_repository_shallow(the_repository); /* make sure shallows are read */
 
 	init_revisions(&revs, NULL);
 	save_commit_buffer = 0;
@@ -345,7 +345,7 @@ static int advertise_shallow_grafts_cb(const struct commit_graft *graft, void *c
 
 void advertise_shallow_grafts(int fd)
 {
-	if (!is_repository_shallow())
+	if (!is_repository_shallow(the_repository))
 		return;
 	for_each_commit_graft(advertise_shallow_grafts_cb, &fd);
 }

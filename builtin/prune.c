@@ -160,7 +160,7 @@ int cmd_prune(int argc, const char **argv, const char *prefix)
 	remove_temporary_files(s);
 	free(s);
 
-	if (is_repository_shallow())
+	if (is_repository_shallow(the_repository))
 		prune_shallow(show_only);
 
 	return 0;
