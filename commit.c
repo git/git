@@ -204,7 +204,7 @@ static void prepare_commit_graft_the_repository(void)
 
 	if (commit_graft_prepared)
 		return;
-	graft_file = get_graft_file();
+	graft_file = get_graft_file(the_repository);
 	read_graft_file(the_repository, graft_file);
 	/* make sure shallows are read */
 	is_repository_shallow(the_repository);

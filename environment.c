@@ -316,11 +316,11 @@ char *get_index_file(void)
 	return the_repository->index_file;
 }
 
-char *get_graft_file(void)
+char *get_graft_file(struct repository *r)
 {
-	if (!the_repository->graft_file)
+	if (!r->graft_file)
 		BUG("git environment hasn't been setup");
-	return the_repository->graft_file;
+	return r->graft_file;
 }
 
 int set_git_dir(const char *path)
