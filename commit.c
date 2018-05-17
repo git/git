@@ -209,14 +209,14 @@ static void prepare_commit_graft(struct repository *r)
 	r->parsed_objects->commit_graft_prepared = 1;
 }
 
-struct commit_graft *lookup_commit_graft_the_repository(const struct object_id *oid)
+struct commit_graft *lookup_commit_graft(struct repository *r, const struct object_id *oid)
 {
 	int pos;
-	prepare_commit_graft(the_repository);
-	pos = commit_graft_pos(the_repository, oid->hash);
+	prepare_commit_graft(r);
+	pos = commit_graft_pos(r, oid->hash);
 	if (pos < 0)
 		return NULL;
-	return the_repository->parsed_objects->grafts[pos];
+	return r->parsed_objects->grafts[pos];
 }
 
 int for_each_commit_graft(each_commit_graft_fn fn, void *cb_data)
