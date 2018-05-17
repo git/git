@@ -189,7 +189,7 @@ void setup_git_env(const char *git_dir)
 	git_namespace = expand_namespace(getenv(GIT_NAMESPACE_ENVIRONMENT));
 	shallow_file = getenv(GIT_SHALLOW_FILE_ENVIRONMENT);
 	if (shallow_file)
-		set_alternate_shallow_file(shallow_file, 0);
+		set_alternate_shallow_file(the_repository, shallow_file, 0);
 }
 
 int is_bare_repository(void)

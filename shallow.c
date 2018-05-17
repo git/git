@@ -19,7 +19,7 @@ static int is_shallow = -1;
 static struct stat_validity shallow_stat;
 static char *alternate_shallow_file;
 
-void set_alternate_shallow_file(const char *path, int override)
+void set_alternate_shallow_file_the_repository(const char *path, int override)
 {
 	if (is_shallow != -1)
 		die("BUG: is_repository_shallow must not be called before set_alternate_shallow_file");

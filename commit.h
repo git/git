@@ -199,7 +199,8 @@ extern struct commit_list *get_shallow_commits(struct object_array *heads,
 		int depth, int shallow_flag, int not_shallow_flag);
 extern struct commit_list *get_shallow_commits_by_rev_list(
 		int ac, const char **av, int shallow_flag, int not_shallow_flag);
-extern void set_alternate_shallow_file(const char *path, int override);
+#define set_alternate_shallow_file(r, p, o) set_alternate_shallow_file_##r(p, o)
+extern void set_alternate_shallow_file_the_repository(const char *path, int override);
 extern int write_shallow_commits(struct strbuf *out, int use_pack_protocol,
 				 const struct oid_array *extra);
 extern void setup_alternate_shallow(struct lock_file *shallow_lock,
