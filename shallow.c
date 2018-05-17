@@ -29,7 +29,7 @@ void set_alternate_shallow_file_the_repository(const char *path, int override)
 	alternate_shallow_file = xstrdup_or_null(path);
 }
 
-int register_shallow(const struct object_id *oid)
+int register_shallow_the_repository(const struct object_id *oid)
 {
 	struct commit_graft *graft =
 		xmalloc(sizeof(struct commit_graft));
@@ -70,7 +70,7 @@ int is_repository_shallow(void)
 		struct object_id oid;
 		if (get_oid_hex(buf, &oid))
 			die("bad shallow line: %s", buf);
-		register_shallow(&oid);
+		register_shallow(the_repository, &oid);
 	}
 	fclose(fp);
 	return is_shallow;
