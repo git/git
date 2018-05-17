@@ -212,7 +212,7 @@ static void prepare_commit_graft_the_repository(void)
 	commit_graft_prepared = 1;
 }
 
-struct commit_graft *lookup_commit_graft(const struct object_id *oid)
+struct commit_graft *lookup_commit_graft_the_repository(const struct object_id *oid)
 {
 	int pos;
 	prepare_commit_graft(the_repository);
@@ -359,7 +359,7 @@ int parse_commit_buffer(struct commit *item, const void *buffer, unsigned long s
 	bufptr += tree_entry_len + 1; /* "tree " + "hex sha1" + "\n" */
 	pptr = &item->parents;
 
-	graft = lookup_commit_graft(&item->object.oid);
+	graft = lookup_commit_graft(the_repository, &item->object.oid);
 	while (bufptr + parent_entry_len < tail && !memcmp(bufptr, "parent ", 7)) {
 		struct commit *new_parent;
 

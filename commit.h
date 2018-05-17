@@ -176,7 +176,8 @@ typedef int (*each_commit_graft_fn)(const struct commit_graft *, void *);
 struct commit_graft *read_graft_line(struct strbuf *line);
 #define register_commit_graft(r, g, i) register_commit_graft_##r(g, i)
 int register_commit_graft_the_repository(struct commit_graft *, int);
-struct commit_graft *lookup_commit_graft(const struct object_id *oid);
+#define lookup_commit_graft(r, o) lookup_commit_graft_##r(o)
+struct commit_graft *lookup_commit_graft_the_repository(const struct object_id *oid);
 
 extern struct commit_list *get_merge_bases(struct commit *rev1, struct commit *rev2);
 extern struct commit_list *get_merge_bases_many(struct commit *one, int n, struct commit **twos);
