@@ -2823,7 +2823,7 @@ int symlink(const char *target, const char *link)
 			return -1;
 		}
 
-		/* over-allocate and fill phantom_smlink_info structure */
+		/* over-allocate and fill phantom_symlink_info structure */
 		psi = xmalloc(sizeof(struct phantom_symlink_info)
 			+ sizeof(wchar_t) * (len + wcslen(wtarget) + 2));
 		psi->wlink = (wchar_t *)(psi + 1);
