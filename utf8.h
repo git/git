@@ -52,8 +52,13 @@ int mbs_chrlen(const char **text, size_t *remainder_p, const char *encoding);
  * The path should be NUL-terminated, but we will match variants of both ".git\0"
  * and ".git/..." (but _not_ ".../.git"). This makes it suitable for both fsck
  * and verify_path().
+ *
+ * Likewise, the is_hfs_dotgitfoo() variants look for ".gitfoo".
  */
 int is_hfs_dotgit(const char *path);
+int is_hfs_dotgitmodules(const char *path);
+int is_hfs_dotgitignore(const char *path);
+int is_hfs_dotgitattributes(const char *path);
 
 typedef enum {
 	ALIGN_LEFT,
