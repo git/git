@@ -163,6 +163,31 @@ static struct submodule *cache_lookup_name(struct submodule_cache *cache,
 	return NULL;
 }
 
+int check_submodule_name(const char *name)
+{
+	/* Disallow empty names */
+	if (!*name)
+		return -1;
+
+	/*
+	 * Look for '..' as a path component. Check both '/' and '\\' as
+	 * separators rather than is_dir_sep(), because we want the name rules
+	 * to be consistent across platforms.
+	 */
+	goto in_component; /* always start inside component */
+	while (*name) {
+		char c = *name++;
+		if (c == '/' || c == '\\') {
+in_component:
+			if (name[0] == '.' && name[1] == '.' &&
+			    (!name[2] || name[2] == '/' || name[2] == '\\'))
+				return -1;
+		}
+	}
+
+	return 0;
+}
+
 static int name_and_item_from_var(const char *var, struct strbuf *name,
 				  struct strbuf *item)
 {
@@ -174,6 +199,12 @@ static int name_and_item_from_var(const char *var, struct strbuf *name,
 		return 0;
 
 	strbuf_add(name, subsection, subsection_len);
+	if (check_submodule_name(name->buf) < 0) {
+		warning(_("ignoring suspicious submodule name: %s"), name->buf);
+		strbuf_release(name);
+		return 0;
+	}
+
 	strbuf_addstr(item, key);
 
 	return 1;
