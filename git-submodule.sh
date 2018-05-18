@@ -229,6 +229,11 @@ Use -f if you really want to add it." >&2
 		sm_name="$sm_path"
 	fi
 
+	if ! git submodule--helper check-name "$sm_name"
+	then
+		die "$(eval_gettext "'$sm_name' is not a valid submodule name")"
+	fi
+
 	# perhaps the path exists and is already a git repo, else clone it
 	if test -e "$sm_path"
 	then
