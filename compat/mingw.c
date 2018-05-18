@@ -2069,7 +2069,7 @@ static int compareenv(const void *v1, const void *v2)
  * environment variable (at least in certain circumstances).
  *
  * Therefore we need to be *really* careful *not* to assume that we have
- * sole control over the environment and reinitalize it when necessary.
+ * sole control over the environment and reinitialize it when necessary.
  */
 static void maybe_reinitialize_environ(void)
 {
