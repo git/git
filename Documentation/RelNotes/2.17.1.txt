@@ -1,0 +1,26 @@
+Git v2.17.1 Release Notes
+=========================
+
+Fixes since v2.17
+-----------------
+
+ * Submodule "names" come from the untrusted .gitmodules file, but
+   we blindly append them to $GIT_DIR/modules to create our on-disk
+   repo paths. This means you can do bad things by putting "../"
+   into the name (among other things).  As these are initially taken
+   from the path the submodule initially bound to the project and
+   then serve as a constant name across moving it in the directory
+   structure, a submodule with a name that does not pass
+   verify_path() check, which rejects a string with a substring
+   "/../" and ".git/" etc., is now ignored.
+
+ * In addition to the above fix that also appears in maintenance
+   releases v2.13.7, v2.14.4, v2.15.2 and v2.16.4, this has support on
+   the server side to reject pushes to repositories that attempt to
+   create such problematic .gitmodules file etc. as tracked contents,
+   to help hosting sites protect their customers by preventing
+   malicious contents from spreading.
+
+Credit for finding this vulnerability and the proof of concept from
+which the test script was adapted goes to Etienne Stalmans.  Credit
+for the fix goes to Jeff King, Johannes Schindelin and others.
