@@ -1209,6 +1209,124 @@ test_expect_success 'teardown after ref completion' '
 	git remote remove other
 '
 
+
+test_path_completion ()
+{
+	test $# = 2 || error "bug in the test script: not 2 parameters to test_path_completion"
+
+	local cur="$1" expected="$2"
+	echo "$expected" >expected &&
+	(
+		# In the following tests calling this function we only
+		# care about how __git_complete_index_file() deals with
+		# unusual characters in path names.  By requesting only
+		# untracked files we dont have to bother adding any
+		# paths to the index in those tests.
+		__git_complete_index_file --others &&
+		print_comp
+	) &&
+	test_cmp expected out
+}
+
+test_expect_success 'setup for path completion tests' '
+	mkdir simple-dir \
+	      "spaces in dir" \
+	      árvíztűrő &&
+	touch simple-dir/simple-file \
+	      "spaces in dir/spaces in file" \
+	      "árvíztűrő/Сайн яваарай" &&
+	if test_have_prereq !MINGW &&
+	   mkdir BS\\dir \
+		 '$'separators\034in\035dir'' &&
+	   touch BS\\dir/DQ\"file \
+		 '$'separators\034in\035dir/sep\036in\037file''
+	then
+		test_set_prereq FUNNYNAMES
+	else
+		rm -rf BS\\dir '$'separators\034in\035dir''
+	fi
+'
+
+test_expect_success '__git_complete_index_file - simple' '
+	test_path_completion simple simple-dir &&  # Bash is supposed to
+						   # add the trailing /.
+	test_path_completion simple-dir/simple simple-dir/simple-file
+'
+
+test_expect_success \
+    '__git_complete_index_file - escaped characters on cmdline' '
+	test_path_completion spac "spaces in dir" &&  # Bash will turn this
+						      # into "spaces\ in\ dir"
+	test_path_completion "spaces\\ i" \
+			     "spaces in dir" &&
+	test_path_completion "spaces\\ in\\ dir/s" \
+			     "spaces in dir/spaces in file" &&
+	test_path_completion "spaces\\ in\\ dir/spaces\\ i" \
+			     "spaces in dir/spaces in file"
+'
+
+test_expect_success \
+    '__git_complete_index_file - quoted characters on cmdline' '
+	# Testing with an opening but without a corresponding closing
+	# double quote is important.
+	test_path_completion \"spac "spaces in dir" &&
+	test_path_completion "\"spaces i" \
+			     "spaces in dir" &&
+	test_path_completion "\"spaces in dir/s" \
+			     "spaces in dir/spaces in file" &&
+	test_path_completion "\"spaces in dir/spaces i" \
+			     "spaces in dir/spaces in file"
+'
+
+test_expect_success '__git_complete_index_file - UTF-8 in ls-files output' '
+	test_path_completion á árvíztűrő &&
+	test_path_completion árvíztűrő/С "árvíztűrő/Сайн яваарай"
+'
+
+test_expect_success FUNNYNAMES \
+    '__git_complete_index_file - C-style escapes in ls-files output' '
+	test_path_completion BS \
+			     BS\\dir &&
+	test_path_completion BS\\\\d \
+			     BS\\dir &&
+	test_path_completion BS\\\\dir/DQ \
+			     BS\\dir/DQ\"file &&
+	test_path_completion BS\\\\dir/DQ\\\"f \
+			     BS\\dir/DQ\"file
+'
+
+test_expect_success FUNNYNAMES \
+    '__git_complete_index_file - \nnn-escaped characters in ls-files output' '
+	test_path_completion sep '$'separators\034in\035dir'' &&
+	test_path_completion '$'separators\034i'' \
+			     '$'separators\034in\035dir'' &&
+	test_path_completion '$'separators\034in\035dir/sep'' \
+			     '$'separators\034in\035dir/sep\036in\037file'' &&
+	test_path_completion '$'separators\034in\035dir/sep\036i'' \
+			     '$'separators\034in\035dir/sep\036in\037file''
+'
+
+test_expect_success FUNNYNAMES \
+    '__git_complete_index_file - removing repeated quoted path components' '
+	test_when_finished rm -r repeated-quoted &&
+	mkdir repeated-quoted &&      # A directory whose name in itself
+				      # would not be quoted ...
+	>repeated-quoted/0-file &&
+	>repeated-quoted/1\"file &&   # ... but here the file makes the
+				      # dirname quoted ...
+	>repeated-quoted/2-file &&
+	>repeated-quoted/3\"file &&   # ... and here, too.
+
+	# Still, we shold only list the directory name only once.
+	test_path_completion repeated repeated-quoted
+'
+
+test_expect_success 'teardown after path completion tests' '
+	rm -rf simple-dir "spaces in dir" árvíztűrő \
+	       BS\\dir '$'separators\034in\035dir''
+'
+
+
 test_expect_success '__git_get_config_variables' '
 	cat >expect <<-EOF &&
 	name-1
@@ -1468,113 +1586,6 @@ test_expect_success 'complete files' '
 	touch momified &&
 	test_completion "git add mom" "momified"
 '
-
-# The next tests only care about how the completion script deals with
-# unusual characters in path names.  By defining a custom completion
-# function to list untracked files they won't be influenced by future
-# changes of the completion functions of real git commands, and we
-# don't have to bother with adding files to the index in these tests.
-_git_test_path_comp ()
-{
-	__git_complete_index_file --others
-}
-
-test_expect_success 'complete files - escaped characters on cmdline' '
-	test_when_finished "rm -rf \"New|Dir\"" &&
-	mkdir "New|Dir" &&
-	>"New|Dir/New&File.c" &&
-
-	test_completion "git test-path-comp N" \
-			"New|Dir" &&	# Bash will turn this into "New\|Dir/"
-	test_completion "git test-path-comp New\\|D" \
-			"New|Dir" &&
-	test_completion "git test-path-comp New\\|Dir/N" \
-			"New|Dir/New&File.c" &&	# Bash will turn this into
-						# "New\|Dir/New\&File.c "
-	test_completion "git test-path-comp New\\|Dir/New\\&F" \
-			"New|Dir/New&File.c"
-'
-
-test_expect_success 'complete files - quoted characters on cmdline' '
-	test_when_finished "rm -r \"New(Dir\"" &&
-	mkdir "New(Dir" &&
-	>"New(Dir/New)File.c" &&
-
-	# Testing with an opening but without a corresponding closing
-	# double quote is important.
-	test_completion "git test-path-comp \"New(D" "New(Dir" &&
-	test_completion "git test-path-comp \"New(Dir/New)F" \
-			"New(Dir/New)File.c"
-'
-
-test_expect_success 'complete files - UTF-8 in ls-files output' '
-	test_when_finished "rm -r árvíztűrő" &&
-	mkdir árvíztűrő &&
-	>"árvíztűrő/Сайн яваарай" &&
-
-	test_completion "git test-path-comp á" "árvíztűrő" &&
-	test_completion "git test-path-comp árvíztűrő/С" \
-			"árvíztűrő/Сайн яваарай"
-'
-
-# Testing with a path containing a backslash is important.
-if test_have_prereq !MINGW &&
-   mkdir 'New\Dir' 2>/dev/null &&
-   touch 'New\Dir/New"File.c' 2>/dev/null
-then
-	test_set_prereq FUNNYNAMES_BS_DQ
-else
-	say "Your filesystem does not allow \\ and \" in filenames."
-	rm -rf 'New\Dir'
-fi
-test_expect_success FUNNYNAMES_BS_DQ \
-    'complete files - C-style escapes in ls-files output' '
-	test_when_finished "rm -r \"New\\\\Dir\"" &&
-
-	test_completion "git test-path-comp N" "New\\Dir" &&
-	test_completion "git test-path-comp New\\\\D" "New\\Dir" &&
-	test_completion "git test-path-comp New\\\\Dir/N" \
-			"New\\Dir/New\"File.c" &&
-	test_completion "git test-path-comp New\\\\Dir/New\\\"F" \
-			"New\\Dir/New\"File.c"
-'
-
-if test_have_prereq !MINGW &&
-   mkdir $'New\034Special\035Dir' 2>/dev/null &&
-   touch $'New\034Special\035Dir/New\036Special\037File' 2>/dev/null
-then
-	test_set_prereq FUNNYNAMES_SEPARATORS
-else
-	say 'Your filesystem does not allow special separator characters (FS, GS, RS, US) in filenames.'
-	rm -rf $'New\034Special\035Dir'
-fi
-test_expect_success FUNNYNAMES_SEPARATORS \
-    'complete files - \nnn-escaped control characters in ls-files output' '
-	test_when_finished "rm -r '$'New\034Special\035Dir''" &&
-
-	# Note: these will be literal separator characters on the cmdline.
-	test_completion "git test-path-comp N" "'$'New\034Special\035Dir''" &&
-	test_completion "git test-path-comp '$'New\034S''" \
-			"'$'New\034Special\035Dir''" &&
-	test_completion "git test-path-comp '$'New\034Special\035Dir/''" \
-			"'$'New\034Special\035Dir/New\036Special\037File''" &&
-	test_completion "git test-path-comp '$'New\034Special\035Dir/New\036S''" \
-			"'$'New\034Special\035Dir/New\036Special\037File''"
-'
-
-test_expect_success FUNNYNAMES_BS_DQ \
-    'complete files - removing repeated quoted path components' '
-	test_when_finished rm -rf NewDir &&
-	mkdir NewDir &&    # A dirname which in itself would not be quoted ...
-	>NewDir/0-file &&
-	>NewDir/1\"file && # ... but here the file makes the dirname quoted ...
-	>NewDir/2-file &&
-	>NewDir/3\"file && # ... and here, too.
-
-	# Still, we should only list it once.
-	test_completion "git test-path-comp New" "NewDir"
-'
-
 
 test_expect_success "completion uses <cmd> completion for alias: !sh -c 'git <cmd> ...'" '
 	test_config alias.co "!sh -c '"'"'git checkout ...'"'"'" &&
