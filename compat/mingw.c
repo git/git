@@ -281,14 +281,52 @@ enum phantom_symlink_result {
 	PHANTOM_SYMLINK_DIRECTORY
 };
 
+static inline int is_wdir_sep(wchar_t wchar)
+{
+	return wchar == L'/' || wchar == L'\\';
+}
+
+static const wchar_t *make_relative_to(const wchar_t *path,
+				       const wchar_t *relative_to, wchar_t *out,
+				       size_t size)
+{
+	size_t i = wcslen(relative_to), len;
+
+	/* Is `path` already absolute? */
+	if (is_wdir_sep(path[0]) ||
+	    (iswalpha(path[0]) && path[1] == L':' && is_wdir_sep(path[2])))
+		return path;
+
+	while (i > 0 && !is_wdir_sep(relative_to[i - 1]))
+		i--;
+
+	/* Is `relative_to` in the current directory? */
+	if (!i)
+		return path;
+
+	len = wcslen(path);
+	if (i + len + 1 > size) {
+		error("Could not make '%S' relative to '%S' (too large)",
+		      path, relative_to);
+		return NULL;
+	}
+
+	memcpy(out, relative_to, i * sizeof(wchar_t));
+	wcscpy(out + i, path);
+	return out;
+}
+
 /*
  * Changes a file symlink to a directory symlink if the target exists and is a
  * directory.
  */
-static enum phantom_symlink_result process_phantom_symlink(
-		const wchar_t *wtarget, const wchar_t *wlink) {
+static enum phantom_symlink_result
+process_phantom_symlink(const wchar_t *wtarget, const wchar_t *wlink)
+{
 	HANDLE hnd;
 	BY_HANDLE_FILE_INFORMATION fdata;
+	wchar_t relative[MAX_LONG_PATH];
+	const wchar_t *rel;
 
 	/* check that wlink is still a file symlink */
 	if ((GetFileAttributesW(wlink)
@@ -296,8 +334,13 @@ static enum phantom_symlink_result process_phantom_symlink(
 			!= FILE_ATTRIBUTE_REPARSE_POINT)
 		return PHANTOM_SYMLINK_DONE;
 
+	/* make it relative, if necessary */
+	rel = make_relative_to(wtarget, wlink, relative, ARRAY_SIZE(relative));
+	if (!rel)
+		return PHANTOM_SYMLINK_DONE;
+
 	/* let Windows resolve the link by opening it */
-	hnd = CreateFileW(wtarget, 0,
+	hnd = CreateFileW(rel, 0,
 			FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL,
 			OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
 	if (hnd == INVALID_HANDLE_VALUE) {
