@@ -23,6 +23,7 @@
 #include "hashmap.h"
 #include "notes-utils.h"
 #include "sigchain.h"
+#include "commit-slab.h"
 
 #define GIT_REFLOG_ACTION "GIT_REFLOG_ACTION"
 
@@ -3160,6 +3161,7 @@ static enum check_level get_missing_commit_check_level(void)
 	return CHECK_IGNORE;
 }
 
+define_commit_slab(commit_seen, unsigned char);
 /*
  * Check if the user dropped some commits by mistake
  * Behaviour determined by rebase.missingCommitsCheck.
@@ -3173,6 +3175,9 @@ int check_todo_list(void)
 	struct todo_list todo_list = TODO_LIST_INIT;
 	struct strbuf missing = STRBUF_INIT;
 	int advise_to_edit_todo = 0, res = 0, i;
+	struct commit_seen commit_seen;
+
+	init_commit_seen(&commit_seen);
 
 	strbuf_addstr(&todo_file, rebase_path_todo());
 	if (strbuf_read_file_or_whine(&todo_list.buf, todo_file.buf) < 0) {
@@ -3189,7 +3194,7 @@ int check_todo_list(void)
 	for (i = 0; i < todo_list.nr; i++) {
 		struct commit *commit = todo_list.items[i].commit;
 		if (commit)
-			commit->util = (void *)1;
+			*commit_seen_at(&commit_seen, commit) = 1;
 	}
 
 	todo_list_release(&todo_list);
@@ -3205,11 +3210,11 @@ int check_todo_list(void)
 	for (i = todo_list.nr - 1; i >= 0; i--) {
 		struct todo_item *item = todo_list.items + i;
 		struct commit *commit = item->commit;
-		if (commit && !commit->util) {
+		if (commit && !*commit_seen_at(&commit_seen, commit)) {
 			strbuf_addf(&missing, " - %s %.*s\n",
 				    short_commit_name(commit),
 				    item->arg_len, item->arg);
-			commit->util = (void *)1;
+			*commit_seen_at(&commit_seen, commit) = 1;
 		}
 	}
 
@@ -3235,6 +3240,7 @@ int check_todo_list(void)
 		"The possible behaviours are: ignore, warn, error.\n\n"));
 
 leave_check:
+	clear_commit_seen(&commit_seen);
 	strbuf_release(&todo_file);
 	todo_list_release(&todo_list);
 
