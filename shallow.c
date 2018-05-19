@@ -12,6 +12,7 @@
 #include "commit-slab.h"
 #include "revision.h"
 #include "list-objects.h"
+#include "commit-slab.h"
 
 static int is_shallow = -1;
 static struct stat_validity shallow_stat;
@@ -74,6 +75,11 @@ int is_repository_shallow(void)
 	return is_shallow;
 }
 
+/*
+ * TODO: use "int" elemtype instead of "int *" when/if commit-slab
+ * supports a "valid" flag.
+ */
+define_commit_slab(commit_depth, int *);
 struct commit_list *get_shallow_commits(struct object_array *heads, int depth,
 		int shallow_flag, int not_shallow_flag)
 {
@@ -82,25 +88,29 @@ struct commit_list *get_shallow_commits(struct object_array *heads, int depth,
 	struct object_array stack = OBJECT_ARRAY_INIT;
 	struct commit *commit = NULL;
 	struct commit_graft *graft;
+	struct commit_depth depths;
 
+	init_commit_depth(&depths);
 	while (commit || i < heads->nr || stack.nr) {
 		struct commit_list *p;
 		if (!commit) {
 			if (i < heads->nr) {
+				int **depth_slot;
 				commit = (struct commit *)
 					deref_tag(heads->objects[i++].item, NULL, 0);
 				if (!commit || commit->object.type != OBJ_COMMIT) {
 					commit = NULL;
 					continue;
 				}
-				if (!commit->util)
-					commit->util = xmalloc(sizeof(int));
-				*(int *)commit->util = 0;
+				depth_slot = commit_depth_at(&depths, commit);
+				if (!*depth_slot)
+					*depth_slot = xmalloc(sizeof(int));
+				**depth_slot = 0;
 				cur_depth = 0;
 			} else {
 				commit = (struct commit *)
 					object_array_pop(&stack);
-				cur_depth = *(int *)commit->util;
+				cur_depth = **commit_depth_at(&depths, commit);
 			}
 		}
 		parse_commit_or_die(commit);
@@ -116,25 +126,31 @@ struct commit_list *get_shallow_commits(struct object_array *heads, int depth,
 		}
 		commit->object.flags |= not_shallow_flag;
 		for (p = commit->parents, commit = NULL; p; p = p->next) {
-			if (!p->item->util) {
-				int *pointer = xmalloc(sizeof(int));
-				p->item->util = pointer;
-				*pointer =  cur_depth;
+			int **depth_slot = commit_depth_at(&depths, p->item);
+			if (!*depth_slot) {
+				*depth_slot = xmalloc(sizeof(int));
+				**depth_slot = cur_depth;
 			} else {
-				int *pointer = p->item->util;
-				if (cur_depth >= *pointer)
+				if (cur_depth >= **depth_slot)
 					continue;
-				*pointer = cur_depth;
+				**depth_slot = cur_depth;
 			}
 			if (p->next)
 				add_object_array(&p->item->object,
 						NULL, &stack);
 			else {
 				commit = p->item;
-				cur_depth = *(int *)commit->util;
+				cur_depth = **commit_depth_at(&depths, commit);
 			}
 		}
 	}
+	for (i = 0; i < depths.slab_count; i++) {
+		int j;
+
+		for (j = 0; j < depths.slab_size; j++)
+			free(depths.slab[i][j]);
+	}
+	clear_commit_depth(&depths);
 
 	return result;
 }
