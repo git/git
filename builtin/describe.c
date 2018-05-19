@@ -15,8 +15,11 @@
 #include "run-command.h"
 #include "revision.h"
 #include "list-objects.h"
+#include "commit-slab.h"
 
 #define MAX_TAGS	(FLAG_BITS - 1)
+
+define_commit_slab(commit_names, struct commit_name *);
 
 static const char * const describe_usage[] = {
 	N_("git describe [<options>] [<commit-ish>...]"),
@@ -37,6 +40,7 @@ static struct string_list patterns = STRING_LIST_INIT_NODUP;
 static struct string_list exclude_patterns = STRING_LIST_INIT_NODUP;
 static int always;
 static const char *suffix, *dirty, *broken;
+static struct commit_names commit_names;
 
 /* diff-index command arguments to check if working tree is dirty. */
 static const char *diff_index_args[] = {
@@ -321,11 +325,14 @@ static void describe_commit(struct object_id *oid, struct strbuf *dst)
 	if (!have_util) {
 		struct hashmap_iter iter;
 		struct commit *c;
-		struct commit_name *n = hashmap_iter_first(&names, &iter);
+		struct commit_name *n;
+
+		init_commit_names(&commit_names);
+		n = hashmap_iter_first(&names, &iter);
 		for (; n; n = hashmap_iter_next(&iter)) {
 			c = lookup_commit_reference_gently(&n->peeled, 1);
 			if (c)
-				c->util = n;
+				*commit_names_at(&commit_names, c) = n;
 		}
 		have_util = 1;
 	}
@@ -336,8 +343,11 @@ static void describe_commit(struct object_id *oid, struct strbuf *dst)
 	while (list) {
 		struct commit *c = pop_commit(&list);
 		struct commit_list *parents = c->parents;
+		struct commit_name **slot;
+
 		seen_commits++;
-		n = c->util;
+		slot = commit_names_peek(&commit_names, c);
+		n = slot ? *slot : NULL;
 		if (n) {
 			if (!tags && !all && n->prio < 2) {
 				unannotated_cnt++;
