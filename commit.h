@@ -303,7 +303,7 @@ struct merge_remote_desc {
 	struct object *obj; /* the named object, could be a tag */
 	char name[FLEX_ARRAY];
 };
-#define merge_remote_util(commit) ((struct merge_remote_desc *)((commit)->util))
+extern struct merge_remote_desc *merge_remote_util(struct commit *);
 extern void set_merge_remote_desc(struct commit *commit,
 				  const char *name, struct object *obj);
 

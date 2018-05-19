@@ -1574,13 +1574,21 @@ out:
 	return result;
 }
 
+define_commit_slab(merge_desc_slab, struct merge_remote_desc *);
+static struct merge_desc_slab merge_desc_slab = COMMIT_SLAB_INIT(1, merge_desc_slab);
+
+struct merge_remote_desc *merge_remote_util(struct commit *commit)
+{
+	return *merge_desc_slab_at(&merge_desc_slab, commit);
+}
+
 void set_merge_remote_desc(struct commit *commit,
 			   const char *name, struct object *obj)
 {
 	struct merge_remote_desc *desc;
 	FLEX_ALLOC_STR(desc, name, name);
 	desc->obj = obj;
-	commit->util = desc;
+	*merge_desc_slab_at(&merge_desc_slab, commit) = desc;
 }
 
 struct commit *get_merge_parent(const char *name)
@@ -1592,7 +1600,7 @@ struct commit *get_merge_parent(const char *name)
 		return NULL;
 	obj = parse_object(&oid);
 	commit = (struct commit *)peel_to_type(name, 0, obj, OBJ_COMMIT);
-	if (commit && !commit->util)
+	if (commit && !merge_remote_util(commit))
 		set_merge_remote_desc(commit, name, obj);
 	return commit;
 }
