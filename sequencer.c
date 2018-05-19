@@ -3362,6 +3362,8 @@ static int subject2item_cmp(const void *fndata,
 	return key ? strcmp(a->subject, key) : strcmp(a->subject, b->subject);
 }
 
+define_commit_slab(commit_todo_item, struct todo_item *);
+
 /*
  * Rearrange the todo list that has both "pick commit-id msg" and "pick
  * commit-id fixup!/squash! msg" in it so that the latter is put immediately
@@ -3378,6 +3380,7 @@ int rearrange_squash(void)
 	struct hashmap subject2item;
 	int res = 0, rearranged = 0, *next, *tail, i;
 	char **subjects;
+	struct commit_todo_item commit_todo;
 
 	if (strbuf_read_file_or_whine(&todo_list.buf, todo_file) < 0)
 		return -1;
@@ -3386,6 +3389,7 @@ int rearrange_squash(void)
 		return -1;
 	}
 
+	init_commit_todo_item(&commit_todo);
 	/*
 	 * The hashmap maps onelines to the respective todo list index.
 	 *
@@ -3416,10 +3420,11 @@ int rearrange_squash(void)
 
 		if (is_fixup(item->command)) {
 			todo_list_release(&todo_list);
+			clear_commit_todo_item(&commit_todo);
 			return error(_("the script was already rearranged."));
 		}
 
-		item->commit->util = item;
+		*commit_todo_item_at(&commit_todo, item->commit) = item;
 
 		parse_commit(item->commit);
 		commit_buffer = get_commit_buffer(item->commit, NULL);
@@ -3446,9 +3451,9 @@ int rearrange_squash(void)
 			else if (!strchr(p, ' ') &&
 				 (commit2 =
 				  lookup_commit_reference_by_name(p)) &&
-				 commit2->util)
+				 *commit_todo_item_at(&commit_todo, commit2))
 				/* found by commit name */
-				i2 = (struct todo_item *)commit2->util
+				i2 = *commit_todo_item_at(&commit_todo, commit2)
 					- todo_list.items;
 			else {
 				/* copy can be a prefix of the commit subject */
@@ -3527,5 +3532,6 @@ int rearrange_squash(void)
 	hashmap_free(&subject2item, 1);
 	todo_list_release(&todo_list);
 
+	clear_commit_todo_item(&commit_todo);
 	return res;
 }
