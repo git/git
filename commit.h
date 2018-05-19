@@ -16,9 +16,13 @@ struct commit_list {
 	struct commit_list *next;
 };
 
+/*
+ * The size of this struct matters in full repo walk operations like
+ * 'git clone' or 'git gc'. Consider using commit-slab to attach data
+ * to a commit instead of adding new fields here.
+ */
 struct commit {
 	struct object object;
-	void *util;
 	unsigned int index;
 	timestamp_t date;
 	struct commit_list *parents;
