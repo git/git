@@ -22,6 +22,11 @@ static int showbranch_use_color = -1;
 
 static struct argv_array default_args = ARGV_ARRAY_INIT;
 
+/*
+ * TODO: convert this use of commit->object.flags to commit-slab
+ * instead to store a pointer to ref name directly. Then use the same
+ * UNINTERESTING definition from revision.h here.
+ */
 #define UNINTERESTING	01
 
 #define REV_SHIFT	 2
