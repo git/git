@@ -27,4 +27,17 @@ struct slabname {							\
 	(stride), 0, NULL \
 }
 
+#define declare_commit_slab_prototypes(slabname, elemtype)		\
+									\
+void init_ ##slabname## _with_stride(struct slabname *s, unsigned stride); \
+void init_ ##slabname(struct slabname *s);				\
+void clear_ ##slabname(struct slabname *s);				\
+elemtype *slabname## _at_peek(struct slabname *s, const struct commit *c, int add_if_missing); \
+elemtype *slabname## _at(struct slabname *s, const struct commit *c);	\
+elemtype *slabname## _peek(struct slabname *s, const struct commit *c)
+
+#define define_shared_commit_slab(slabname, elemtype) \
+	declare_commit_slab(slabname, elemtype); \
+	declare_commit_slab_prototypes(slabname, elemtype)
+
 #endif /* COMMIT_SLAB_HDR_H */

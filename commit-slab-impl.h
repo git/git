@@ -3,11 +3,17 @@
 
 #define MAYBE_UNUSED __attribute__((__unused__))
 
-#define implement_commit_slab(slabname, elemtype) 			\
+#define implement_static_commit_slab(slabname, elemtype) \
+	implement_commit_slab(slabname, elemtype, static MAYBE_UNUSED)
+
+#define implement_shared_commit_slab(slabname, elemtype) \
+	implement_commit_slab(slabname, elemtype, )
+
+#define implement_commit_slab(slabname, elemtype, scope)		\
 									\
 static int stat_ ##slabname## realloc;					\
 									\
-static MAYBE_UNUSED void init_ ##slabname## _with_stride(struct slabname *s, \
+scope void init_ ##slabname## _with_stride(struct slabname *s,		\
 						   unsigned stride)	\
 {									\
 	unsigned int elem_size;						\
@@ -20,12 +26,12 @@ static MAYBE_UNUSED void init_ ##slabname## _with_stride(struct slabname *s, \
 	s->slab = NULL;							\
 }									\
 									\
-static MAYBE_UNUSED void init_ ##slabname(struct slabname *s)		\
+scope void init_ ##slabname(struct slabname *s)				\
 {									\
 	init_ ##slabname## _with_stride(s, 1);				\
 }									\
 									\
-static MAYBE_UNUSED void clear_ ##slabname(struct slabname *s)		\
+scope void clear_ ##slabname(struct slabname *s)			\
 {									\
 	unsigned int i;							\
 	for (i = 0; i < s->slab_count; i++)				\
@@ -34,7 +40,7 @@ static MAYBE_UNUSED void clear_ ##slabname(struct slabname *s)		\
 	FREE_AND_NULL(s->slab);						\
 }									\
 									\
-static MAYBE_UNUSED elemtype *slabname## _at_peek(struct slabname *s,	\
+scope elemtype *slabname## _at_peek(struct slabname *s,			\
 						  const struct commit *c, \
 						  int add_if_missing)   \
 {									\
@@ -62,13 +68,13 @@ static MAYBE_UNUSED elemtype *slabname## _at_peek(struct slabname *s,	\
 	return &s->slab[nth_slab][nth_slot * s->stride];		\
 }									\
 									\
-static MAYBE_UNUSED elemtype *slabname## _at(struct slabname *s,	\
+scope elemtype *slabname## _at(struct slabname *s,			\
 					     const struct commit *c)	\
 {									\
 	return slabname##_at_peek(s, c, 1);				\
 }									\
 									\
-static MAYBE_UNUSED elemtype *slabname## _peek(struct slabname *s,	\
+scope elemtype *slabname## _peek(struct slabname *s,			\
 					     const struct commit *c)	\
 {									\
 	return slabname##_at_peek(s, c, 0);				\
@@ -81,7 +87,7 @@ struct slabname
  * to allow a terminating semicolon, which makes instantiations look
  * like function declarations.  I.e., the expansion of
  *
- *    implement_commit_slab(indegree, int);
+ *    implement_commit_slab(indegree, int, static);
  *
  * ends in 'struct indegree;'.  This would otherwise
  * be a syntax error according (at least) to ISO C.  It's hard to
