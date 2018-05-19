@@ -457,7 +457,7 @@ static void output(struct blame_scoreboard *sb, int option)
 			struct commit *commit = ent->suspect->commit;
 			if (commit->object.flags & MORE_THAN_ONE_PATH)
 				continue;
-			for (suspect = commit->util; suspect; suspect = suspect->next) {
+			for (suspect = get_blame_suspects(commit); suspect; suspect = suspect->next) {
 				if (suspect->guilty && count++) {
 					commit->object.flags |= MORE_THAN_ONE_PATH;
 					break;

@@ -172,4 +172,6 @@ extern void setup_scoreboard(struct blame_scoreboard *sb, const char *path, stru
 
 extern struct blame_entry *blame_entry_prepend(struct blame_entry *head, long start, long end, struct blame_origin *o);
 
+extern struct blame_origin *get_blame_suspects(struct commit *commit);
+
 #endif /* BLAME_H */
