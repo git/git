@@ -66,6 +66,12 @@ test_expect_success 'git help' '
 	test_i18ngrep "^   commit " help.output &&
 	test_i18ngrep "^   fetch  " help.output
 '
+test_expect_success 'git help -g' '
+	git help -g >help.output &&
+	test_i18ngrep "^   attributes " help.output &&
+	test_i18ngrep "^   everyday   " help.output &&
+	test_i18ngrep "^   tutorial   " help.output
+'
 
 test_expect_success 'generate builtin list' '
 	git --list-cmds=builtins >builtins

@@ -1575,6 +1575,13 @@ _git_grep ()
 	__git_complete_refs
 }
 
+__git_all_guides=
+__git_compute_all_guides ()
+{
+	test -n "$__git_all_guides" ||
+	__git_all_guides=$(git --list-cmds=list-guide)
+}
+
 _git_help ()
 {
 	case "$cur" in
@@ -1584,11 +1591,9 @@ _git_help ()
 		;;
 	esac
 	__git_compute_all_commands
-	__gitcomp "$__git_all_commands $(__git_aliases)
-		attributes cli core-tutorial cvs-migration
-		diffcore everyday gitk glossary hooks ignore modules
-		namespaces repository-layout revisions tutorial tutorial-2
-		workflows
+	__git_compute_all_guides
+	__gitcomp "$__git_all_commands $(__git_aliases) $__git_all_guides
+		gitk
 		"
 }
 

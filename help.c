@@ -39,11 +39,13 @@ static struct category_description main_categories[] = {
 	{ 0, NULL }
 };
 
-static const char *drop_prefix(const char *name)
+static const char *drop_prefix(const char *name, uint32_t category)
 {
 	const char *new_name;
 
 	if (skip_prefix(name, "git-", &new_name))
+		return new_name;
+	if (category == CAT_guide && skip_prefix(name, "git", &new_name))
 		return new_name;
 	return name;
 
@@ -66,7 +68,7 @@ static void extract_cmds(struct cmdname_help **p_cmds, uint32_t mask)
 			continue;
 
 		cmds[nr] = *cmd;
-		cmds[nr].name = drop_prefix(cmd->name);
+		cmds[nr].name = drop_prefix(cmd->name, cmd->category);
 
 		nr++;
 	}
@@ -358,9 +360,20 @@ void list_cmds_by_category(struct string_list *list,
 	for (i = 0; i < n; i++) {
 		struct cmdname_help *cmd = command_list + i;
 
-		if (cmd->category & cat_id)
-			string_list_append(list, drop_prefix(cmd->name));
+		if (!(cmd->category & cat_id))
+			continue;
+		string_list_append(list, drop_prefix(cmd->name, cmd->category));
 	}
+}
+
+void list_common_guides_help(void)
+{
+	struct category_description catdesc[] = {
+		{ CAT_guide, N_("The common Git guides are:") },
+		{ 0, NULL }
+	};
+	print_cmd_by_category(catdesc);
+	putchar('\n');
 }
 
 void list_all_cmds_help(void)
