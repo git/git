@@ -167,7 +167,8 @@ foo.bar= ...`) sets `foo.bar` to the empty string which `git config
 	List commands by group. This is an internal/experimental
 	option and may change or be removed in the future. Supported
 	groups are: builtins, parseopt (builtin commands that use
-	parse-options).
+	parse-options), main (all commands in libexec directory),
+	others (all other commands in `$PATH` that have git- prefix).
 
 GIT COMMANDS
 ------------

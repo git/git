@@ -56,6 +56,10 @@ static int list_cmds(const char *spec)
 
 		if (match_token(spec, len, "builtins"))
 			list_builtins(&list, 0);
+		else if (match_token(spec, len, "main"))
+			list_all_main_cmds(&list);
+		else if (match_token(spec, len, "others"))
+			list_all_other_cmds(&list);
 		else
 			die(_("unsupported command listing type '%s'"), spec);
 		spec += len;
