@@ -2333,6 +2333,13 @@ struct config_store_data {
 	unsigned int key_seen:1, section_seen:1, is_keys_section:1;
 };
 
+static void config_store_data_clear(struct config_store_data *store)
+{
+	free(store->parsed);
+	free(store->seen);
+	memset(store, 0, sizeof(*store));
+}
+
 static int matches(const char *key, const char *value,
 		   const struct config_store_data *store)
 {
@@ -2887,6 +2894,7 @@ out_free:
 		munmap(contents, contents_sz);
 	if (in_fd >= 0)
 		close(in_fd);
+	config_store_data_clear(&store);
 	return ret;
 
 write_err_out:
@@ -3127,6 +3135,7 @@ out:
 	rollback_lock_file(&lock);
 out_no_rollback:
 	free(filename_buf);
+	config_store_data_clear(&store);
 	return ret;
 }
 
