@@ -45,6 +45,21 @@ define_categories () {
 	test "$bit" -gt 32 && die "Urgh.. too many categories?"
 }
 
+define_category_names () {
+	echo
+	echo "/* Category names */"
+	echo "static const char *category_names[] = {"
+	bit=0
+	category_list "$1" |
+	while read cat
+	do
+		echo "	\"$cat\", /* (1UL << $bit) */"
+		bit=$(($bit+1))
+	done
+	echo "	NULL"
+	echo "};"
+}
+
 print_command_list () {
 	echo "static struct cmdname_help command_list[] = {"
 
@@ -69,5 +84,7 @@ struct cmdname_help {
 };
 "
 define_categories "$1"
+echo
+define_category_names "$1"
 echo
 print_command_list "$1"
