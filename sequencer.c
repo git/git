@@ -23,6 +23,7 @@
 #include "hashmap.h"
 #include "notes-utils.h"
 #include "sigchain.h"
+#include "alias.h"
 
 #define GIT_REFLOG_ACTION "GIT_REFLOG_ACTION"
 

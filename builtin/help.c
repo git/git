@@ -9,6 +9,7 @@
 #include "run-command.h"
 #include "column.h"
 #include "help.h"
+#include "alias.h"
 
 #ifndef DEFAULT_HELP_FORMAT
 #define DEFAULT_HELP_FORMAT "man"

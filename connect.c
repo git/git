@@ -13,6 +13,7 @@
 #include "transport.h"
 #include "strbuf.h"
 #include "protocol.h"
+#include "alias.h"
 
 static char *server_capabilities;
 static const char *parse_feature_value(const char *, const char *, int *);
