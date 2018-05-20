@@ -77,6 +77,8 @@ static int list_cmds(const char *spec)
 			exclude_helpers_from_list(&list);
 		else if (match_token(spec, len, "alias"))
 			list_aliases(&list);
+		else if (match_token(spec, len, "config"))
+			list_cmds_by_config(&list);
 		else if (len > 5 && !strncmp(spec, "list-", 5)) {
 			struct strbuf sb = STRBUF_INIT;
 
