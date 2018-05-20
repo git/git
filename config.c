@@ -2335,6 +2335,11 @@ struct config_store_data {
 
 static void config_store_data_clear(struct config_store_data *store)
 {
+	if (store->value_regex != NULL &&
+	    store->value_regex != CONFIG_REGEX_NONE) {
+		regfree(store->value_regex);
+		free(store->value_regex);
+	}
 	free(store->parsed);
 	free(store->seen);
 	memset(store, 0, sizeof(*store));
@@ -2722,7 +2727,7 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 			if (regcomp(store.value_regex, value_regex,
 					REG_EXTENDED)) {
 				error("invalid pattern: %s", value_regex);
-				free(store.value_regex);
+				FREE_AND_NULL(store.value_regex);
 				ret = CONFIG_INVALID_PATTERN;
 				goto out_free;
 			}
@@ -2748,21 +2753,11 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 						      &store, &opts)) {
 			error("invalid config file %s", config_filename);
 			free(store.key);
-			if (store.value_regex != NULL &&
-			    store.value_regex != CONFIG_REGEX_NONE) {
-				regfree(store.value_regex);
-				free(store.value_regex);
-			}
 			ret = CONFIG_INVALID_FILE;
 			goto out_free;
 		}
 
 		free(store.key);
-		if (store.value_regex != NULL &&
-		    store.value_regex != CONFIG_REGEX_NONE) {
-			regfree(store.value_regex);
-			free(store.value_regex);
-		}
 
 		/* if nothing to unset, or too many matches, error out */
 		if ((store.seen_nr == 0 && value == NULL) ||
