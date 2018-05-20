@@ -834,51 +834,11 @@ __git_complete_strategy ()
 	return 1
 }
 
-# __git_commands requires 1 argument:
-# 1: the command group, either "all" or "porcelain"
-__git_commands () {
-	case "$1" in
-	porcelain)
-		if test -n "$GIT_TESTING_PORCELAIN_COMMAND_LIST"
-		then
-			printf "%s" "$GIT_TESTING_PORCELAIN_COMMAND_LIST"
-		else
-			git --list-cmds=list-mainporcelain,others,nohelpers,list-complete
-		fi
-		;;
-	all)
-		if test -n "$GIT_TESTING_ALL_COMMAND_LIST"
-		then
-			printf "%s" "$GIT_TESTING_ALL_COMMAND_LIST"
-		else
-			git --list-cmds=main,others,nohelpers
-		fi
-		;;
-	esac
-}
-
-__git_list_all_commands ()
-{
-	__git_commands all
-}
-
 __git_all_commands=
 __git_compute_all_commands ()
 {
 	test -n "$__git_all_commands" ||
-	__git_all_commands=$(__git_list_all_commands)
-}
-
-__git_list_porcelain_commands ()
-{
-	__git_commands porcelain
-}
-
-__git_porcelain_commands=
-__git_compute_porcelain_commands ()
-{
-	test -n "$__git_porcelain_commands" ||
-	__git_porcelain_commands=$(__git_list_porcelain_commands)
+	__git_all_commands=$(git --list-cmds=main,others,alias,nohelpers)
 }
 
 # Lists all set config variables starting with the given section prefix,
@@ -894,11 +854,6 @@ __git_get_config_variables ()
 __git_pretty_aliases ()
 {
 	__git_get_config_variables "pretty"
-}
-
-__git_aliases ()
-{
-	__git_get_config_variables "alias"
 }
 
 # __git_aliased_command requires 1 argument
@@ -1500,13 +1455,6 @@ _git_grep ()
 	__git_complete_refs
 }
 
-__git_all_guides=
-__git_compute_all_guides ()
-{
-	test -n "$__git_all_guides" ||
-	__git_all_guides=$(git --list-cmds=list-guide)
-}
-
 _git_help ()
 {
 	case "$cur" in
@@ -1515,11 +1463,12 @@ _git_help ()
 		return
 		;;
 	esac
-	__git_compute_all_commands
-	__git_compute_all_guides
-	__gitcomp "$__git_all_commands $(__git_aliases) $__git_all_guides
-		gitk
-		"
+	if test -n "$GIT_TESTING_ALL_COMMAND_LIST"
+	then
+		__gitcomp "$GIT_TESTING_ALL_COMMAND_LIST $(git --list-cmds=alias,list-guide) gitk"
+	else
+		__gitcomp "$(git --list-cmds=main,nohelpers,alias,list-guide) gitk"
+	fi
 }
 
 _git_init ()
@@ -3058,8 +3007,14 @@ __git_main ()
 			--help
 			"
 			;;
-		*)     __git_compute_porcelain_commands
-		       __gitcomp "$__git_porcelain_commands $(__git_aliases)" ;;
+		*)
+			if test -n "$GIT_TESTING_PORCELAIN_COMMAND_LIST"
+			then
+				__gitcomp "$GIT_TESTING_PORCELAIN_COMMAND_LIST"
+			else
+				__gitcomp "$(git --list-cmds=list-mainporcelain,others,nohelpers,alias,list-complete)"
+			fi
+			;;
 		esac
 		return
 	fi

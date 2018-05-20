@@ -1192,17 +1192,6 @@ test_expect_success '__git_pretty_aliases' '
 	test_cmp expect actual
 '
 
-test_expect_success '__git_aliases' '
-	cat >expect <<-EOF &&
-	ci
-	co
-	EOF
-	test_config alias.ci commit &&
-	test_config alias.co checkout &&
-	__git_aliases >actual &&
-	test_cmp expect actual
-'
-
 test_expect_success 'basic' '
 	run_completion "git " &&
 	# built-in
@@ -1509,13 +1498,6 @@ test_expect_success 'sourcing the completion script clears cached commands' '
 	verbose test -n "$__git_all_commands" &&
 	. "$GIT_BUILD_DIR/contrib/completion/git-completion.bash" &&
 	verbose test -z "$__git_all_commands"
-'
-
-test_expect_success 'sourcing the completion script clears cached porcelain commands' '
-	__git_compute_porcelain_commands &&
-	verbose test -n "$__git_porcelain_commands" &&
-	. "$GIT_BUILD_DIR/contrib/completion/git-completion.bash" &&
-	verbose test -z "$__git_porcelain_commands"
 '
 
 test_expect_success !GETTEXT_POISON 'sourcing the completion script clears cached merge strategies' '
