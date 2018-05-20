@@ -39,6 +39,18 @@ static int use_pager = -1;
 
 static void list_builtins(struct string_list *list, unsigned int exclude_option);
 
+static void exclude_helpers_from_list(struct string_list *list)
+{
+	int i = 0;
+
+	while (i < list->nr) {
+		if (strstr(list->items[i].string, "--"))
+			unsorted_string_list_delete_item(list, i, 0);
+		else
+			i++;
+	}
+}
+
 static int match_token(const char *spec, int len, const char *token)
 {
 	int token_len = strlen(token);
@@ -61,6 +73,8 @@ static int list_cmds(const char *spec)
 			list_all_main_cmds(&list);
 		else if (match_token(spec, len, "others"))
 			list_all_other_cmds(&list);
+		else if (match_token(spec, len, "nohelpers"))
+			exclude_helpers_from_list(&list);
 		else if (len > 5 && !strncmp(spec, "list-", 5)) {
 			struct strbuf sb = STRBUF_INIT;
 

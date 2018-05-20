@@ -843,7 +843,7 @@ __git_commands () {
 		then
 			printf "%s" "$GIT_TESTING_PORCELAIN_COMMAND_LIST"
 		else
-			git --list-cmds=list-mainporcelain,others,list-complete
+			git --list-cmds=list-mainporcelain,others,nohelpers,list-complete
 		fi
 		;;
 	all)
@@ -851,27 +851,15 @@ __git_commands () {
 		then
 			printf "%s" "$GIT_TESTING_ALL_COMMAND_LIST"
 		else
-			git --list-cmds=main,others
+			git --list-cmds=main,others,nohelpers
 		fi
 		;;
 	esac
 }
 
-__git_list_commands ()
-{
-	local i IFS=" "$'\n'
-	for i in $(__git_commands $1)
-	do
-		case $i in
-		*--*)             : helper pattern;;
-		*) echo $i;;
-		esac
-	done
-}
-
 __git_list_all_commands ()
 {
-	__git_list_commands all
+	__git_commands all
 }
 
 __git_all_commands=
@@ -883,7 +871,7 @@ __git_compute_all_commands ()
 
 __git_list_porcelain_commands ()
 {
-	__git_list_commands porcelain
+	__git_commands porcelain
 }
 
 __git_porcelain_commands=
