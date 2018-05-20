@@ -27,6 +27,17 @@ static struct category_description common_categories[] = {
 	{ CAT_remote, N_("collaborate (see also: git help workflows)") },
 	{ 0, NULL }
 };
+static struct category_description main_categories[] = {
+	{ CAT_mainporcelain, N_("Main Porcelain Commands") },
+	{ CAT_ancillarymanipulators, N_("Ancillary Commands / Manipulators") },
+	{ CAT_ancillaryinterrogators, N_("Ancillary Commands / Interrogators") },
+	{ CAT_foreignscminterface, N_("Interacting with Others") },
+	{ CAT_plumbingmanipulators, N_("Low-level Commands / Manipulators") },
+	{ CAT_plumbinginterrogators, N_("Low-level Commands / Interrogators") },
+	{ CAT_synchingrepositories, N_("Low-level Commands / Synching Repositories") },
+	{ CAT_purehelpers, N_("Low-level Commands / Internal Helpers") },
+	{ 0, NULL }
+};
 
 static const char *drop_prefix(const char *name)
 {
@@ -350,6 +361,11 @@ void list_cmds_by_category(struct string_list *list,
 		if (cmd->category & cat_id)
 			string_list_append(list, drop_prefix(cmd->name));
 	}
+}
+
+void list_all_cmds_help(void)
+{
+	print_cmd_by_category(main_categories);
 }
 
 int is_in_cmdlist(struct cmdnames *c, const char *s)
