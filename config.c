@@ -2335,6 +2335,7 @@ struct config_store_data {
 
 static void config_store_data_clear(struct config_store_data *store)
 {
+	free(store->key);
 	if (store->value_regex != NULL &&
 	    store->value_regex != CONFIG_REGEX_NONE) {
 		regfree(store->value_regex);
@@ -2679,7 +2680,6 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 	fd = hold_lock_file_for_update(&lock, config_filename, 0);
 	if (fd < 0) {
 		error_errno("could not lock config file %s", config_filename);
-		free(store.key);
 		ret = CONFIG_NO_LOCK;
 		goto out_free;
 	}
@@ -2689,8 +2689,6 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 	 */
 	in_fd = open(config_filename, O_RDONLY);
 	if ( in_fd < 0 ) {
-		free(store.key);
-
 		if ( ENOENT != errno ) {
 			error_errno("opening %s", config_filename);
 			ret = CONFIG_INVALID_FILE; /* same as "invalid config file" */
@@ -2702,7 +2700,8 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 			goto out_free;
 		}
 
-		store.key = (char *)key;
+		free(store.key);
+		store.key = xstrdup(key);
 		if (write_section(fd, key, &store) < 0 ||
 		    write_pair(fd, key, value, &store) < 0)
 			goto write_err_out;
@@ -2752,12 +2751,9 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 						      config_filename,
 						      &store, &opts)) {
 			error("invalid config file %s", config_filename);
-			free(store.key);
 			ret = CONFIG_INVALID_FILE;
 			goto out_free;
 		}
-
-		free(store.key);
 
 		/* if nothing to unset, or too many matches, error out */
 		if ((store.seen_nr == 0 && value == NULL) ||
