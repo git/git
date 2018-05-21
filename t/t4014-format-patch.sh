@@ -578,7 +578,11 @@ test_expect_success 'excessive subject' '
 
 	rm -rf patches/ &&
 	git checkout side &&
+	before=$(git hash-object file) &&
+	before=$(git rev-parse --short $before) &&
 	for i in 5 6 1 2 3 A 4 B C 7 8 9 10 D E F; do echo "$i"; done >>file &&
+	after=$(git hash-object file) &&
+	after=$(git rev-parse --short $after) &&
 	git update-index file &&
 	git commit -m "This is an excessively long subject line for a message due to the habit some projects have of not having a short, one-line subject at the start of the commit message, but rather sticking a whole paragraph right at the start as the only thing in the commit message. It had better not become the filename for the patch." &&
 	git format-patch -o patches/ master..side &&
@@ -586,7 +590,6 @@ test_expect_success 'excessive subject' '
 '
 
 test_expect_success 'cover-letter inherits diff options' '
-
 	git mv file foo &&
 	git commit -m foo &&
 	git format-patch --no-renames --cover-letter -1 &&
@@ -616,7 +619,7 @@ test_expect_success 'shortlog of cover-letter wraps overly-long onelines' '
 '
 
 cat > expect << EOF
-index 40f36c6..2dc5c23 100644
+index $before..$after 100644
 --- a/file
 +++ b/file
 @@ -13,4 +13,20 @@ C
@@ -640,7 +643,7 @@ test_expect_success 'format-patch respects -U' '
 cat > expect << EOF
 
 diff --git a/file b/file
-index 40f36c6..2dc5c23 100644
+index $before..$after 100644
 --- a/file
 +++ b/file
 @@ -14,3 +14,19 @@ C
