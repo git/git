@@ -466,9 +466,11 @@ test_expect_success !PTHREADS,C_LOCALE_OUTPUT 'pack-objects --threads=N or pack.
 
 test_expect_success \
     'fake a SHA1 hash collision' \
-    'test -f	.git/objects/c8/2de19312b6c3695c0c18f70709a6c535682a67 &&
-     cp -f	.git/objects/9d/235ed07cd19811a6ceb342de82f190e49c9f68 \
-		.git/objects/c8/2de19312b6c3695c0c18f70709a6c535682a67'
+    'long_a=$(git hash-object a | sed -e "s!^..!&/!") &&
+     long_b=$(git hash-object b | sed -e "s!^..!&/!") &&
+     test -f	.git/objects/$long_b &&
+     cp -f	.git/objects/$long_a \
+		.git/objects/$long_b'
 
 test_expect_success \
     'make sure index-pack detects the SHA1 collision' \
