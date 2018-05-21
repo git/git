@@ -382,6 +382,7 @@ static int unpack_trees_start(struct merge_options *o,
 static void unpack_trees_finish(struct merge_options *o)
 {
 	discard_index(&o->orig_index);
+	clear_unpack_trees_porcelain(&o->unpack_opts);
 }
 
 struct tree *write_tree_from_memory(struct merge_options *o)
