@@ -10,6 +10,13 @@
 #include "utf8.h"
 #include "sha1-array.h"
 #include "decorate.h"
+#include "oidset.h"
+#include "packfile.h"
+#include "submodule-config.h"
+#include "config.h"
+
+static struct oidset gitmodules_found = OIDSET_INIT;
+static struct oidset gitmodules_done = OIDSET_INIT;
 
 #define FSCK_FATAL -1
 #define FSCK_INFO -2
@@ -44,6 +51,7 @@
 	FUNC(MISSING_TAG_ENTRY, ERROR) \
 	FUNC(MISSING_TAG_OBJECT, ERROR) \
 	FUNC(MISSING_TREE, ERROR) \
+	FUNC(MISSING_TREE_OBJECT, ERROR) \
 	FUNC(MISSING_TYPE, ERROR) \
 	FUNC(MISSING_TYPE_ENTRY, ERROR) \
 	FUNC(MULTIPLE_AUTHORS, ERROR) \
@@ -51,6 +59,11 @@
 	FUNC(TREE_NOT_SORTED, ERROR) \
 	FUNC(UNKNOWN_TYPE, ERROR) \
 	FUNC(ZERO_PADDED_DATE, ERROR) \
+	FUNC(GITMODULES_MISSING, ERROR) \
+	FUNC(GITMODULES_BLOB, ERROR) \
+	FUNC(GITMODULES_PARSE, ERROR) \
+	FUNC(GITMODULES_NAME, ERROR) \
+	FUNC(GITMODULES_SYMLINK, ERROR) \
 	/* warnings */ \
 	FUNC(BAD_FILEMODE, WARN) \
 	FUNC(EMPTY_NAME, WARN) \
@@ -561,10 +574,18 @@ static int fsck_tree(struct tree *item, struct fsck_options *options)
 		has_empty_name |= !*name;
 		has_dot |= !strcmp(name, ".");
 		has_dotdot |= !strcmp(name, "..");
-		has_dotgit |= (!strcmp(name, ".git") ||
-			       is_hfs_dotgit(name) ||
-			       is_ntfs_dotgit(name));
+		has_dotgit |= is_hfs_dotgit(name) || is_ntfs_dotgit(name);
 		has_zero_pad |= *(char *)desc.buffer == '0';
+
+		if (is_hfs_dotgitmodules(name) || is_ntfs_dotgitmodules(name)) {
+			if (!S_ISLNK(mode))
+				oidset_insert(&gitmodules_found, oid);
+			else
+				retval += report(options, &item->object,
+						 FSCK_MSG_GITMODULES_SYMLINK,
+						 ".gitmodules is a symbolic link");
+		}
+
 		if (update_tree_entry_gently(&desc)) {
 			retval += report(options, &item->object, FSCK_MSG_BAD_TREE, "cannot be parsed as a tree");
 			break;
@@ -901,6 +922,66 @@ static int fsck_tag(struct tag *tag, const char *data,
 	return fsck_tag_buffer(tag, data, size, options);
 }
 
+struct fsck_gitmodules_data {
+	struct object *obj;
+	struct fsck_options *options;
+	int ret;
+};
+
+static int fsck_gitmodules_fn(const char *var, const char *value, void *vdata)
+{
+	struct fsck_gitmodules_data *data = vdata;
+	const char *subsection, *key;
+	int subsection_len;
+	char *name;
+
+	if (parse_config_key(var, "submodule", &subsection, &subsection_len, &key) < 0 ||
+	    !subsection)
+		return 0;
+
+	name = xmemdupz(subsection, subsection_len);
+	if (check_submodule_name(name) < 0)
+		data->ret |= report(data->options, data->obj,
+				    FSCK_MSG_GITMODULES_NAME,
+				    "disallowed submodule name: %s",
+				    name);
+	free(name);
+
+	return 0;
+}
+
+static int fsck_blob(struct blob *blob, const char *buf,
+		     unsigned long size, struct fsck_options *options)
+{
+	struct fsck_gitmodules_data data;
+
+	if (!oidset_contains(&gitmodules_found, &blob->object.oid))
+		return 0;
+	oidset_insert(&gitmodules_done, &blob->object.oid);
+
+	if (!buf) {
+		/*
+		 * A missing buffer here is a sign that the caller found the
+		 * blob too gigantic to load into memory. Let's just consider
+		 * that an error.
+		 */
+		return report(options, &blob->object,
+			      FSCK_MSG_GITMODULES_PARSE,
+			      ".gitmodules too large to parse");
+	}
+
+	data.obj = &blob->object;
+	data.options = options;
+	data.ret = 0;
+	if (git_config_from_mem(fsck_gitmodules_fn, CONFIG_ORIGIN_BLOB,
+				".gitmodules", buf, size, &data))
+		data.ret |= report(options, &blob->object,
+				   FSCK_MSG_GITMODULES_PARSE,
+				   "could not parse gitmodules blob");
+
+	return data.ret;
+}
+
 int fsck_object(struct object *obj, void *data, unsigned long size,
 	struct fsck_options *options)
 {
@@ -908,7 +989,7 @@ int fsck_object(struct object *obj, void *data, unsigned long size,
 		return report(options, obj, FSCK_MSG_BAD_OBJECT_SHA1, "no valid object to fsck");
 
 	if (obj->type == OBJ_BLOB)
-		return 0;
+		return fsck_blob((struct blob *)obj, data, size, options);
 	if (obj->type == OBJ_TREE)
 		return fsck_tree((struct tree *) obj, options);
 	if (obj->type == OBJ_COMMIT)
@@ -931,4 +1012,53 @@ int fsck_error_function(struct fsck_options *o,
 	}
 	error("object %s: %s", describe_object(o, obj), message);
 	return 1;
+}
+
+int fsck_finish(struct fsck_options *options)
+{
+	int ret = 0;
+	struct oidset_iter iter;
+	const struct object_id *oid;
+
+	oidset_iter_init(&gitmodules_found, &iter);
+	while ((oid = oidset_iter_next(&iter))) {
+		struct blob *blob;
+		enum object_type type;
+		unsigned long size;
+		char *buf;
+
+		if (oidset_contains(&gitmodules_done, oid))
+			continue;
+
+		blob = lookup_blob(oid);
+		if (!blob) {
+			ret |= report(options, &blob->object,
+				      FSCK_MSG_GITMODULES_BLOB,
+				      "non-blob found at .gitmodules");
+			continue;
+		}
+
+		buf = read_sha1_file(oid->hash, &type, &size);
+		if (!buf) {
+			if (is_promisor_object(&blob->object.oid))
+				continue;
+			ret |= report(options, &blob->object,
+				      FSCK_MSG_GITMODULES_MISSING,
+				      "unable to read .gitmodules blob");
+			continue;
+		}
+
+		if (type == OBJ_BLOB)
+			ret |= fsck_blob(blob, buf, size, options);
+		else
+			ret |= report(options, &blob->object,
+				      FSCK_MSG_GITMODULES_BLOB,
+				      "non-blob found at .gitmodules");
+		free(buf);
+	}
+
+
+	oidset_clear(&gitmodules_found);
+	oidset_clear(&gitmodules_done);
+	return ret;
 }
