@@ -619,33 +619,67 @@ static ucs_char_t next_hfs_char(const char **in)
 	}
 }
 
-int is_hfs_dotgit(const char *path)
+static int is_hfs_dot_generic(const char *path,
+			      const char *needle, size_t needle_len)
 {
 	ucs_char_t c;
 
 	c = next_hfs_char(&path);
 	if (c != '.')
 		return 0;
-	c = next_hfs_char(&path);
 
 	/*
 	 * there's a great deal of other case-folding that occurs
-	 * in HFS+, but this is enough to catch anything that will
-	 * convert to ".git"
+	 * in HFS+, but this is enough to catch our fairly vanilla
+	 * hard-coded needles.
 	 */
-	if (c != 'g' && c != 'G')
-		return 0;
-	c = next_hfs_char(&path);
-	if (c != 'i' && c != 'I')
-		return 0;
-	c = next_hfs_char(&path);
-	if (c != 't' && c != 'T')
-		return 0;
+	for (; needle_len > 0; needle++, needle_len--) {
+		c = next_hfs_char(&path);
+
+		/*
+		 * We know our needles contain only ASCII, so we clamp here to
+		 * make the results of tolower() sane.
+		 */
+		if (c > 127)
+			return 0;
+		if (tolower(c) != *needle)
+			return 0;
+	}
+
 	c = next_hfs_char(&path);
 	if (c && !is_dir_sep(c))
 		return 0;
 
 	return 1;
+}
+
+/*
+ * Inline wrapper to make sure the compiler resolves strlen() on literals at
+ * compile time.
+ */
+static inline int is_hfs_dot_str(const char *path, const char *needle)
+{
+	return is_hfs_dot_generic(path, needle, strlen(needle));
+}
+
+int is_hfs_dotgit(const char *path)
+{
+	return is_hfs_dot_str(path, "git");
+}
+
+int is_hfs_dotgitmodules(const char *path)
+{
+	return is_hfs_dot_str(path, "gitmodules");
+}
+
+int is_hfs_dotgitignore(const char *path)
+{
+	return is_hfs_dot_str(path, "gitignore");
+}
+
+int is_hfs_dotgitattributes(const char *path)
+{
+	return is_hfs_dot_str(path, "gitattributes");
 }
 
 const char utf8_bom[] = "\357\273\277";
