@@ -48,4 +48,11 @@ extern int gitmodule_sha1_from_commit(const unsigned char *commit_sha1,
 				      struct strbuf *rev);
 extern void submodule_free(void);
 
+/*
+ * Returns 0 if the name is syntactically acceptable as a submodule "name"
+ * (e.g., that may be found in the subsection of a .gitmodules file) and -1
+ * otherwise.
+ */
+int check_submodule_name(const char *name);
+
 #endif /* SUBMODULE_CONFIG_H */

@@ -3882,9 +3882,9 @@ static int check_unsafe_path(struct patch *patch)
 	if (!patch->is_delete)
 		new_name = patch->new_name;
 
-	if (old_name && !verify_path(old_name))
+	if (old_name && !verify_path(old_name, patch->old_mode))
 		return error(_("invalid path '%s'"), old_name);
-	if (new_name && !verify_path(new_name))
+	if (new_name && !verify_path(new_name, patch->new_mode))
 		return error(_("invalid path '%s'"), new_name);
 	return 0;
 }
