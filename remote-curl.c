@@ -1259,6 +1259,7 @@ static int proxy_request(struct proxy_state *p)
 
 	slot = get_active_slot();
 
+	curl_easy_setopt(slot->curl, CURLOPT_ENCODING, "");
 	curl_easy_setopt(slot->curl, CURLOPT_NOBODY, 0);
 	curl_easy_setopt(slot->curl, CURLOPT_POST, 1);
 	curl_easy_setopt(slot->curl, CURLOPT_URL, p->service_url);
