@@ -608,7 +608,7 @@ extern int write_locked_index(struct index_state *, struct lock_file *lock, unsi
 extern int discard_index(struct index_state *);
 extern void move_index_extensions(struct index_state *dst, struct index_state *src);
 extern int unmerged_index(const struct index_state *);
-extern int verify_path(const char *path);
+extern int verify_path(const char *path, unsigned mode);
 extern int strcmp_offset(const char *s1, const char *s2, size_t *first_change);
 extern int index_dir_exists(struct index_state *istate, const char *name, int namelen);
 extern void adjust_dirname_case(struct index_state *istate, char *name);
@@ -1130,7 +1130,15 @@ int normalize_path_copy(char *dst, const char *src);
 int longest_ancestor_length(const char *path, struct string_list *prefixes);
 char *strip_path_suffix(const char *path, const char *suffix);
 int daemon_avoid_alias(const char *path);
-extern int is_ntfs_dotgit(const char *name);
+
+/*
+ * These functions match their is_hfs_dotgit() counterparts; see utf8.h for
+ * details.
+ */
+int is_ntfs_dotgit(const char *name);
+int is_ntfs_dotgitmodules(const char *name);
+int is_ntfs_dotgitignore(const char *name);
+int is_ntfs_dotgitattributes(const char *name);
 
 /*
  * Returns true iff "str" could be confused as a command-line option when

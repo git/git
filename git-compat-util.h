@@ -978,6 +978,23 @@ static inline int sane_iscase(int x, int is_lower)
 		return (x & 0x20) == 0;
 }
 
+/*
+ * Like skip_prefix, but compare case-insensitively. Note that the comparison
+ * is done via tolower(), so it is strictly ASCII (no multi-byte characters or
+ * locale-specific conversions).
+ */
+static inline int skip_iprefix(const char *str, const char *prefix,
+			       const char **out)
+{
+	do {
+		if (!*prefix) {
+			*out = str;
+			return 1;
+		}
+	} while (tolower(*str++) == tolower(*prefix++));
+	return 0;
+}
+
 static inline int strtoul_ui(char const *s, int base, unsigned int *result)
 {
 	unsigned long ul;
