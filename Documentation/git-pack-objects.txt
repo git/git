@@ -276,6 +276,19 @@ Unexpected missing object will raise an error.
 	locally created objects [without .promisor] and objects from the
 	promisor remote [with .promisor].)  This is used with partial clone.
 
+--keep-unreachable::
+	Objects unreachable from the refs in packs named with
+	--unpacked= option are added to the resulting pack, in
+	addition to the reachable objects that are not in packs marked
+	with *.keep files. This implies `--revs`.
+
+--pack-loose-unreachable::
+	Pack unreachable loose objects (and their loose counterparts
+	removed). This implies `--revs`.
+
+--unpack-unreachable::
+	Keep unreachable objects in loose form. This implies `--revs`.
+
 SEE ALSO
 --------
 linkgit:git-rev-list[1]

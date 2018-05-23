@@ -3241,6 +3241,8 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		fetch_if_missing = 0;
 		argv_array_push(&rp, "--exclude-promisor-objects");
 	}
+	if (unpack_unreachable || keep_unreachable || pack_loose_unreachable)
+		use_internal_rev_list = 1;
 
 	if (!reuse_object)
 		reuse_delta = 0;
