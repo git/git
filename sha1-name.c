@@ -864,7 +864,7 @@ struct object *peel_to_type(const char *name, int namelen,
 		if (o->type == OBJ_TAG)
 			o = ((struct tag*) o)->tagged;
 		else if (o->type == OBJ_COMMIT)
-			o = &(((struct commit *) o)->tree->object);
+			o = &(get_commit_tree(((struct commit *)o))->object);
 		else {
 			if (name)
 				error("%.*s: expected %s type, but the object "

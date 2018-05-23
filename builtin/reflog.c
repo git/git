@@ -154,7 +154,7 @@ static int commit_is_complete(struct commit *commit)
 		for (i = 0; i < found.nr; i++) {
 			struct commit *c =
 				(struct commit *)found.objects[i].item;
-			if (!tree_is_complete(&c->tree->object.oid)) {
+			if (!tree_is_complete(get_commit_tree_oid(c))) {
 				is_incomplete = 1;
 				c->object.flags |= INCOMPLETE;
 			}

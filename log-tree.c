@@ -806,7 +806,7 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 		return 0;
 
 	parse_commit_or_die(commit);
-	oid = &commit->tree->object.oid;
+	oid = get_commit_tree_oid(commit);
 
 	/* Root commit? */
 	parents = get_saved_parents(opt, commit);
@@ -831,7 +831,7 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 			 * we merged _in_.
 			 */
 			parse_commit_or_die(parents->item);
-			diff_tree_oid(&parents->item->tree->object.oid,
+			diff_tree_oid(get_commit_tree_oid(parents->item),
 				      oid, "", &opt->diffopt);
 			log_tree_diff_flush(opt);
 			return !opt->loginfo;
@@ -846,7 +846,7 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 		struct commit *parent = parents->item;
 
 		parse_commit_or_die(parent);
-		diff_tree_oid(&parent->tree->object.oid,
+		diff_tree_oid(get_commit_tree_oid(parent),
 			      oid, "", &opt->diffopt);
 		log_tree_diff_flush(opt);
 

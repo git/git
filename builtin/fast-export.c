@@ -578,11 +578,11 @@ static void handle_commit(struct commit *commit, struct rev_info *rev,
 	    get_object_mark(&commit->parents->item->object) != 0 &&
 	    !full_tree) {
 		parse_commit_or_die(commit->parents->item);
-		diff_tree_oid(&commit->parents->item->tree->object.oid,
-			      &commit->tree->object.oid, "", &rev->diffopt);
+		diff_tree_oid(get_commit_tree_oid(commit->parents->item),
+			      get_commit_tree_oid(commit), "", &rev->diffopt);
 	}
 	else
-		diff_root_tree_oid(&commit->tree->object.oid,
+		diff_root_tree_oid(get_commit_tree_oid(commit),
 				   "", &rev->diffopt);
 
 	/* Export the referenced blobs, and remember the marks. */

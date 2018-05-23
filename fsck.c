@@ -396,9 +396,11 @@ static int fsck_walk_commit(struct commit *commit, void *data, struct fsck_optio
 
 	name = get_object_name(options, &commit->object);
 	if (name)
-		put_object_name(options, &commit->tree->object, "%s:", name);
+		put_object_name(options, &get_commit_tree(commit)->object,
+				"%s:", name);
 
-	result = options->walk((struct object *)commit->tree, OBJ_TREE, data, options);
+	result = options->walk((struct object *)get_commit_tree(commit),
+			       OBJ_TREE, data, options);
 	if (result < 0)
 		return result;
 	res = result;
@@ -772,7 +774,7 @@ static int fsck_commit_buffer(struct commit *commit, const char *buffer,
 	err = fsck_ident(&buffer, &commit->object, options);
 	if (err)
 		return err;
-	if (!commit->tree) {
+	if (!get_commit_tree(commit)) {
 		err = report(options, &commit->object, FSCK_MSG_BAD_TREE, "could not load commit's tree %s", sha1_to_hex(tree_sha1));
 		if (err)
 			return err;

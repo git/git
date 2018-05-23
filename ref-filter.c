@@ -888,7 +888,7 @@ static void grab_commit_values(struct atom_value *val, int deref, struct object 
 		if (deref)
 			name++;
 		if (!strcmp(name, "tree")) {
-			v->s = xstrdup(oid_to_hex(&commit->tree->object.oid));
+			v->s = xstrdup(oid_to_hex(get_commit_tree_oid(commit)));
 		}
 		else if (!strcmp(name, "numparent")) {
 			v->value = commit_list_count(commit->parents);

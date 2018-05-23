@@ -250,7 +250,6 @@ static struct commit_list **insert_parent_or_die(struct commit_graph *g,
 
 static int fill_commit_in_graph(struct commit *item, struct commit_graph *g, uint32_t pos)
 {
-	struct object_id oid;
 	uint32_t edge_value;
 	uint32_t *parent_data_ptr;
 	uint64_t date_low, date_high;
@@ -260,8 +259,7 @@ static int fill_commit_in_graph(struct commit *item, struct commit_graph *g, uin
 	item->object.parsed = 1;
 	item->graph_pos = pos;
 
-	hashcpy(oid.hash, commit_data);
-	item->tree = lookup_tree(&oid);
+	item->maybe_tree = NULL;
 
 	date_high = get_be32(commit_data + g->hash_len + 8) & 0x3;
 	date_low = get_be32(commit_data + g->hash_len + 12);
@@ -320,6 +318,28 @@ int parse_commit_in_graph(struct commit *item)
 	return 0;
 }
 
+static struct tree *load_tree_for_commit(struct commit_graph *g, struct commit *c)
+{
+	struct object_id oid;
+	const unsigned char *commit_data = g->chunk_commit_data +
+					   GRAPH_DATA_WIDTH * (c->graph_pos);
+
+	hashcpy(oid.hash, commit_data);
+	c->maybe_tree = lookup_tree(&oid);
+
+	return c->maybe_tree;
+}
+
+struct tree *get_commit_tree_in_graph(const struct commit *c)
+{
+	if (c->maybe_tree)
+		return c->maybe_tree;
+	if (c->graph_pos == COMMIT_NOT_FROM_GRAPH)
+		BUG("get_commit_tree_in_graph called from non-commit-graph commit");
+
+	return load_tree_for_commit(commit_graph, (struct commit *)c);
+}
+
 static void write_graph_chunk_fanout(struct hashfile *f,
 				     struct commit **commits,
 				     int nr_commits)
@@ -372,7 +392,7 @@ static void write_graph_chunk_data(struct hashfile *f, int hash_len,
 		uint32_t packedDate[2];
 
 		parse_commit(*list);
-		hashwrite(f, (*list)->tree->object.oid.hash, hash_len);
+		hashwrite(f, get_commit_tree_oid(*list)->hash, hash_len);
 
 		parent = (*list)->parents;
 

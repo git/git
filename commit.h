@@ -22,7 +22,13 @@ struct commit {
 	unsigned int index;
 	timestamp_t date;
 	struct commit_list *parents;
-	struct tree *tree;
+
+	/*
+	 * If the commit is loaded from the commit-graph file, then this
+	 * member may be NULL. Only access it through get_commit_tree()
+	 * or get_commit_tree_oid().
+	 */
+	struct tree *maybe_tree;
 	uint32_t graph_pos;
 };
 
@@ -101,6 +107,9 @@ void unuse_commit_buffer(const struct commit *, const void *buffer);
  * Free any cached object buffer associated with the commit.
  */
 void free_commit_buffer(struct commit *);
+
+struct tree *get_commit_tree(const struct commit *);
+struct object_id *get_commit_tree_oid(const struct commit *);
 
 /*
  * Disassociate any cached object buffer from the commit, but do not free it.

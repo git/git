@@ -109,7 +109,7 @@ static int read_tree_1(struct tree *tree, struct strbuf *base,
 				    oid_to_hex(entry.oid),
 				    base->buf, entry.path);
 
-			oidcpy(&oid, &commit->tree->object.oid);
+			oidcpy(&oid, get_commit_tree_oid(commit));
 		}
 		else
 			continue;
@@ -248,7 +248,7 @@ struct tree *parse_tree_indirect(const struct object_id *oid)
 		if (obj->type == OBJ_TREE)
 			return (struct tree *) obj;
 		else if (obj->type == OBJ_COMMIT)
-			obj = &(((struct commit *) obj)->tree->object);
+			obj = &(get_commit_tree(((struct commit *)obj))->object);
 		else if (obj->type == OBJ_TAG)
 			obj = ((struct tag *) obj)->tagged;
 		else

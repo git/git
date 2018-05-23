@@ -500,8 +500,8 @@ static int do_recursive_merge(struct commit *base, struct commit *next,
 	o.show_rename_progress = 1;
 
 	head_tree = parse_tree_indirect(head);
-	next_tree = next ? next->tree : empty_tree();
-	base_tree = base ? base->tree : empty_tree();
+	next_tree = next ? get_commit_tree(next) : empty_tree();
+	base_tree = base ? get_commit_tree(base) : empty_tree();
 
 	for (xopt = opts->xopts; xopt != opts->xopts + opts->xopts_nr; xopt++)
 		parse_merge_opt(&o, *xopt);
@@ -562,7 +562,7 @@ static int is_index_unchanged(void)
 			return error(_("unable to update cache tree"));
 
 	return !oidcmp(&active_cache_tree->oid,
-		       &head_commit->tree->object.oid);
+		       get_commit_tree_oid(head_commit));
 }
 
 static int write_author_script(const char *message)
@@ -1119,7 +1119,7 @@ static int try_to_commit(struct strbuf *msg, const char *author,
 	}
 
 	if (!(flags & ALLOW_EMPTY) && !oidcmp(current_head ?
-					      &current_head->tree->object.oid :
+					      get_commit_tree_oid(current_head) :
 					      &empty_tree_oid, &tree)) {
 		res = 1; /* run 'git commit' to display error message */
 		goto out;
@@ -1219,12 +1219,12 @@ static int is_original_commit_empty(struct commit *commit)
 		if (parse_commit(parent))
 			return error(_("could not parse parent commit %s"),
 				oid_to_hex(&parent->object.oid));
-		ptree_oid = &parent->tree->object.oid;
+		ptree_oid = get_commit_tree_oid(parent);
 	} else {
 		ptree_oid = the_hash_algo->empty_tree; /* commit is root */
 	}
 
-	return !oidcmp(ptree_oid, &commit->tree->object.oid);
+	return !oidcmp(ptree_oid, get_commit_tree_oid(commit));
 }
 
 /*

@@ -600,14 +600,14 @@ int notes_merge(struct notes_merge_options *o,
 			printf("No merge base found; doing history-less merge\n");
 	} else if (!bases->next) {
 		base_oid = &bases->item->object.oid;
-		base_tree_oid = &bases->item->tree->object.oid;
+		base_tree_oid = get_commit_tree_oid(bases->item);
 		if (o->verbosity >= 4)
 			printf("One merge base found (%.7s)\n",
 			       oid_to_hex(base_oid));
 	} else {
 		/* TODO: How to handle multiple merge-bases? */
 		base_oid = &bases->item->object.oid;
-		base_tree_oid = &bases->item->tree->object.oid;
+		base_tree_oid = get_commit_tree_oid(bases->item);
 		if (o->verbosity >= 3)
 			printf("Multiple merge bases found. Using the first "
 				"(%.7s)\n", oid_to_hex(base_oid));
@@ -634,8 +634,9 @@ int notes_merge(struct notes_merge_options *o,
 		goto found_result;
 	}
 
-	result = merge_from_diffs(o, base_tree_oid, &local->tree->object.oid,
-				  &remote->tree->object.oid, local_tree);
+	result = merge_from_diffs(o, base_tree_oid,
+				  get_commit_tree_oid(local),
+				  get_commit_tree_oid(remote), local_tree);
 
 	if (result != 0) { /* non-trivial merge (with or without conflicts) */
 		/* Commit (partial) result */
