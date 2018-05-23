@@ -408,7 +408,8 @@ out:
 
 struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
 			     struct ref **list, int for_push,
-			     const struct argv_array *ref_prefixes)
+			     const struct argv_array *ref_prefixes,
+			     const struct string_list *server_options)
 {
 	int i;
 	*list = NULL;
@@ -418,6 +419,12 @@ struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
 
 	if (server_supports_v2("agent", 0))
 		packet_write_fmt(fd_out, "agent=%s", git_user_agent_sanitized());
+
+	if (server_options && server_options->nr &&
+	    server_supports_v2("server-option", 1))
+		for (i = 0; i < server_options->nr; i++)
+			packet_write_fmt(fd_out, "server-option=%s",
+					 server_options->items[i].string);
 
 	packet_delim(fd_out);
 	/* When pushing we don't want to request the peeled tags */

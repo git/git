@@ -62,6 +62,7 @@ static int shown_url = 0;
 static int refmap_alloc, refmap_nr;
 static const char **refmap_array;
 static struct list_objects_filter_options filter_options;
+static struct string_list server_options = STRING_LIST_INIT_DUP;
 
 static int git_fetch_config(const char *k, const char *v, void *cb)
 {
@@ -170,6 +171,7 @@ static struct option builtin_fetch_options[] = {
 		 N_("accept refs that update .git/shallow")),
 	{ OPTION_CALLBACK, 0, "refmap", NULL, N_("refmap"),
 	  N_("specify fetch refmap"), PARSE_OPT_NONEG, parse_refmap_arg },
+	OPT_STRING_LIST('o', "server-option", &server_options, N_("server-specific"), N_("option to transmit")),
 	OPT_SET_INT('4', "ipv4", &family, N_("use IPv4 addresses only"),
 			TRANSPORT_FAMILY_IPV4),
 	OPT_SET_INT('6', "ipv6", &family, N_("use IPv6 addresses only"),
@@ -1416,6 +1418,9 @@ static int fetch_one(struct remote *remote, int argc, const char **argv, int pru
 			ref_nr++;
 		}
 	}
+
+	if (server_options.nr)
+		gtransport->server_options = &server_options;
 
 	sigchain_push_common(unlock_pack_on_signal);
 	atexit(unlock_pack);

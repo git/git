@@ -154,6 +154,22 @@ test_expect_success 'ref advertisment is filtered with ls-remote using protocol 
 	test_cmp actual expect
 '
 
+test_expect_success 'server-options are sent when using ls-remote' '
+	test_when_finished "rm -f log" &&
+
+	GIT_TRACE_PACKET="$(pwd)/log" git -c protocol.version=2 \
+		ls-remote -o hello -o world "file://$(pwd)/file_parent" master >actual &&
+
+	cat >expect <<-EOF &&
+	$(git -C file_parent rev-parse refs/heads/master)$(printf "\t")refs/heads/master
+	EOF
+
+	test_cmp actual expect &&
+	grep "server-option=hello" log &&
+	grep "server-option=world" log
+'
+
+
 test_expect_success 'clone with file:// using protocol v2' '
 	test_when_finished "rm -f log" &&
 
@@ -199,6 +215,22 @@ test_expect_success 'ref advertisment is filtered during fetch using protocol v2
 	! grep "refs/tags/one" log &&
 	! grep "refs/tags/two" log &&
 	! grep "refs/tags/three" log
+'
+
+test_expect_success 'server-options are sent when fetching' '
+	test_when_finished "rm -f log" &&
+
+	test_commit -C file_parent four &&
+
+	GIT_TRACE_PACKET="$(pwd)/log" git -C file_child -c protocol.version=2 \
+		fetch -o hello -o world origin master &&
+
+	git -C file_child log -1 --format=%s origin/master >actual &&
+	git -C file_parent log -1 --format=%s >expect &&
+	test_cmp expect actual &&
+
+	grep "server-option=hello" log &&
+	grep "server-option=world" log
 '
 
 # Test protocol v2 with 'http://' transport

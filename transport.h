@@ -71,6 +71,12 @@ struct transport {
 	 */
 	const struct string_list *push_options;
 
+	/*
+	 * These strings will be passed to the remote side on each command
+	 * request, if both sides support the server-option capability.
+	 */
+	const struct string_list *server_options;
+
 	char *pack_lockfile;
 	signed verbose : 3;
 	/**

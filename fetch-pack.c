@@ -1174,6 +1174,13 @@ static int send_fetch_request(int fd_out, const struct fetch_pack_args *args,
 		packet_buf_write(&req_buf, "command=fetch");
 	if (server_supports_v2("agent", 0))
 		packet_buf_write(&req_buf, "agent=%s", git_user_agent_sanitized());
+	if (args->server_options && args->server_options->nr &&
+	    server_supports_v2("server-option", 1)) {
+		int i;
+		for (i = 0; i < args->server_options->nr; i++)
+			packet_write_fmt(fd_out, "server-option=%s",
+					 args->server_options->items[i].string);
+	}
 
 	packet_buf_delim(&req_buf);
 	if (args->use_thin_pack)

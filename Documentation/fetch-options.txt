@@ -188,6 +188,14 @@ endif::git-pull[]
 	is specified. This flag forces progress status even if the
 	standard error stream is not directed to a terminal.
 
+-o <option>::
+--server-option=<option>::
+	Transmit the given string to the server when communicating using
+	protocol version 2.  The given string must not contain a NUL or LF
+	character.
+	When multiple `--server-option=<option>` are given, they are all
+	sent to the other side in the order listed on the command line.
+
 -4::
 --ipv4::
 	Use IPv4 addresses only, ignoring IPv6 addresses.

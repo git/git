@@ -10,6 +10,7 @@ test_expect_success 'test capability advertisement' '
 	agent=git/$(git version | cut -d" " -f3)
 	ls-refs
 	fetch=shallow
+	server-option
 	0000
 	EOF
 
@@ -165,6 +166,26 @@ test_expect_success 'symrefs parameter' '
 	$(git rev-parse refs/heads/dev) refs/heads/dev
 	$(git rev-parse refs/heads/master) refs/heads/master
 	$(git rev-parse refs/heads/release) refs/heads/release symref-target:refs/heads/master
+	0000
+	EOF
+
+	git serve --stateless-rpc <in >out &&
+	test-pkt-line unpack <out >actual &&
+	test_cmp actual expect
+'
+
+test_expect_success 'sending server-options' '
+	test-pkt-line pack >in <<-EOF &&
+	command=ls-refs
+	server-option=hello
+	server-option=world
+	0001
+	ref-prefix HEAD
+	0000
+	EOF
+
+	cat >expect <<-EOF &&
+	$(git rev-parse HEAD) HEAD
 	0000
 	EOF
 
