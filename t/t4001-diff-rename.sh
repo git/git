@@ -138,6 +138,18 @@ test_expect_success 'favour same basenames over different ones' '
 	test_i18ngrep "renamed: .*path1 -> subdir/path1" out
 '
 
+test_expect_success 'test diff.renames=true for git status' '
+	git -c diff.renames=true status >out &&
+	test_i18ngrep "renamed: .*path1 -> subdir/path1" out
+'
+
+test_expect_success 'test diff.renames=false for git status' '
+	git -c diff.renames=false status >out &&
+	test_i18ngrep ! "renamed: .*path1 -> subdir/path1" out &&
+	test_i18ngrep "new file: .*subdir/path1" out &&
+	test_i18ngrep "deleted: .*[^/]path1" out
+'
+
 test_expect_success 'favour same basenames even with minor differences' '
 	git show HEAD:path1 | sed "s/15/16/" > subdir/path1 &&
 	git status >out &&
