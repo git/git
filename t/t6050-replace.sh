@@ -444,4 +444,32 @@ test_expect_success GPG '--graft on a commit with a mergetag' '
 	git replace -d $HASH10
 '
 
+test_expect_success '--convert-graft-file' '
+	git checkout -b with-graft-file &&
+	test_commit root2 &&
+	git reset --hard root2^ &&
+	test_commit root1 &&
+	test_commit after-root1 &&
+	test_tick &&
+	git merge -m merge-root2 root2 &&
+
+	: add and convert graft file &&
+	printf "%s\n%s %s\n\n# comment\n%s\n" \
+		$(git rev-parse HEAD^^ HEAD^ HEAD^^ HEAD^2) \
+		>.git/info/grafts &&
+	git replace --convert-graft-file &&
+	test_path_is_missing .git/info/grafts &&
+
+	: verify that the history is now "grafted" &&
+	git rev-list HEAD >out &&
+	test_line_count = 4 out &&
+
+	: create invalid graft file and verify that it is not deleted &&
+	test_when_finished "rm -f .git/info/grafts" &&
+	echo $EMPTY_BLOB $EMPTY_TREE >.git/info/grafts &&
+	test_must_fail git replace --convert-graft-file 2>err &&
+	test_i18ngrep "$EMPTY_BLOB $EMPTY_TREE" err &&
+	test_i18ngrep "$EMPTY_BLOB $EMPTY_TREE" .git/info/grafts
+'
+
 test_done

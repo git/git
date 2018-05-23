@@ -303,10 +303,10 @@ extern const char *find_commit_header(const char *msg, const char *key,
 /* Find the end of the log message, the right place for a new trailer. */
 extern int ignore_non_trailer(const char *buf, size_t len);
 
-typedef void (*each_mergetag_fn)(struct commit *commit, struct commit_extra_header *extra,
+typedef int (*each_mergetag_fn)(struct commit *commit, struct commit_extra_header *extra,
 				 void *cb_data);
 
-extern void for_each_mergetag(each_mergetag_fn fn, struct commit *commit, void *data);
+extern int for_each_mergetag(each_mergetag_fn fn, struct commit *commit, void *data);
 
 struct merge_remote_desc {
 	struct object *obj; /* the named object, could be a tag */

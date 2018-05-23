@@ -488,9 +488,9 @@ static int is_common_merge(const struct commit *commit)
 		&& !commit->parents->next->next);
 }
 
-static void show_one_mergetag(struct commit *commit,
-			      struct commit_extra_header *extra,
-			      void *data)
+static int show_one_mergetag(struct commit *commit,
+			     struct commit_extra_header *extra,
+			     void *data)
 {
 	struct rev_info *opt = (struct rev_info *)data;
 	struct object_id oid;
@@ -502,7 +502,7 @@ static void show_one_mergetag(struct commit *commit,
 	hash_object_file(extra->value, extra->len, type_name(OBJ_TAG), &oid);
 	tag = lookup_tag(&oid);
 	if (!tag)
-		return; /* error message already given */
+		return -1; /* error message already given */
 
 	strbuf_init(&verify_message, 256);
 	if (parse_tag_buffer(tag, extra->value, extra->len))
@@ -536,11 +536,12 @@ static void show_one_mergetag(struct commit *commit,
 
 	show_sig_lines(opt, status, verify_message.buf);
 	strbuf_release(&verify_message);
+	return 0;
 }
 
-static void show_mergetag(struct rev_info *opt, struct commit *commit)
+static int show_mergetag(struct rev_info *opt, struct commit *commit)
 {
-	for_each_mergetag(show_one_mergetag, commit, opt);
+	return for_each_mergetag(show_one_mergetag, commit, opt);
 }
 
 void show_log(struct rev_info *opt)
