@@ -27,7 +27,8 @@ void format_decorations_extended(struct strbuf *sb, const struct commit *commit,
 void show_decorations(struct rev_info *opt, struct commit *commit);
 void log_write_email_headers(struct rev_info *opt, struct commit *commit,
 			     const char **extra_headers_p,
-			     int *need_8bit_cte_p);
+			     int *need_8bit_cte_p,
+			     int maybe_multipart);
 void load_ref_decorations(struct decoration_filter *filter, int flags);
 
 #define FORMAT_PATCH_NAME_MAX 64
