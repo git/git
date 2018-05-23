@@ -3073,10 +3073,17 @@ __git_support_parseopt_helper () {
 __git_complete_command () {
 	local command="$1"
 	local completion_func="_git_${command//-/_}"
-	if declare -f $completion_func >/dev/null 2>/dev/null; then
+	if ! declare -f $completion_func >/dev/null 2>/dev/null &&
+		declare -f _completion_loader >/dev/null 2>/dev/null
+	then
+		_completion_loader "git-$command"
+	fi
+	if declare -f $completion_func >/dev/null 2>/dev/null
+	then
 		$completion_func
 		return 0
-	elif __git_support_parseopt_helper "$command"; then
+	elif __git_support_parseopt_helper "$command"
+	then
 		__git_complete_common "$command"
 		return 0
 	else
