@@ -74,13 +74,6 @@ static GIT_PATH_FUNC(rebase_path_message, "rebase-merge/message")
  * previous commit and from the first squash/fixup commit are written
  * to it. The commit message for each subsequent squash/fixup commit
  * is appended to the file as it is processed.
- *
- * The first line of the file is of the form
- *     # This is a combination of $count commits.
- * where $count is the number of commits whose messages have been
- * written to the file so far (including the initial "pick" commit).
- * Each time that a commit message is processed, this line is read and
- * updated. It is deleted just before the combined commit is made.
  */
 static GIT_PATH_FUNC(rebase_path_squash_msg, "rebase-merge/message-squash")
 /*
@@ -91,6 +84,11 @@ static GIT_PATH_FUNC(rebase_path_squash_msg, "rebase-merge/message-squash")
  * commit without opening the editor.)
  */
 static GIT_PATH_FUNC(rebase_path_fixup_msg, "rebase-merge/message-fixup")
+/*
+ * This file contains the list fixup/squash commands that have been
+ * accumulated into message-fixup or message-squash so far.
+ */
+static GIT_PATH_FUNC(rebase_path_current_fixups, "rebase-merge/current-fixups")
 /*
  * A script to set the GIT_AUTHOR_NAME, GIT_AUTHOR_EMAIL, and
  * GIT_AUTHOR_DATE that will be used for the commit that is currently
@@ -253,6 +251,7 @@ int sequencer_remove_state(struct replay_opts *opts)
 	for (i = 0; i < opts->xopts_nr; i++)
 		free(opts->xopts[i]);
 	free(opts->xopts);
+	strbuf_release(&opts->current_fixups);
 
 	strbuf_addstr(&dir, get_dir(opts));
 	remove_dir_recursively(&dir, 0);
@@ -718,6 +717,8 @@ static int run_git_commit(const char *defmsg, struct replay_opts *opts,
 		argv_array_pushf(&cmd.args, "-S%s", opts->gpg_sign);
 	if (defmsg)
 		argv_array_pushl(&cmd.args, "-F", defmsg, NULL);
+	else if (!(flags & EDIT_MSG))
+		argv_array_pushl(&cmd.args, "-C", "HEAD", NULL);
 	if ((flags & CLEANUP_MSG))
 		argv_array_push(&cmd.args, "--cleanup=strip");
 	if ((flags & EDIT_MSG))
@@ -1331,34 +1332,23 @@ static int update_squash_messages(enum todo_command command,
 		struct commit *commit, struct replay_opts *opts)
 {
 	struct strbuf buf = STRBUF_INIT;
-	int count, res;
+	int res;
 	const char *message, *body;
 
-	if (file_exists(rebase_path_squash_msg())) {
+	if (opts->current_fixup_count > 0) {
 		struct strbuf header = STRBUF_INIT;
-		char *eol, *p;
+		char *eol;
 
-		if (strbuf_read_file(&buf, rebase_path_squash_msg(), 2048) <= 0)
+		if (strbuf_read_file(&buf, rebase_path_squash_msg(), 9) <= 0)
 			return error(_("could not read '%s'"),
 				rebase_path_squash_msg());
 
-		p = buf.buf + 1;
-		eol = strchrnul(buf.buf, '\n');
-		if (buf.buf[0] != comment_line_char ||
-		    (p += strcspn(p, "0123456789\n")) == eol)
-			return error(_("unexpected 1st line of squash message:"
-				       "\n\n\t%.*s"),
-				     (int)(eol - buf.buf), buf.buf);
-		count = strtol(p, NULL, 10);
-
-		if (count < 1)
-			return error(_("invalid 1st line of squash message:\n"
-				       "\n\t%.*s"),
-				     (int)(eol - buf.buf), buf.buf);
+		eol = buf.buf[0] != comment_line_char ?
+			buf.buf : strchrnul(buf.buf, '\n');
 
 		strbuf_addf(&header, "%c ", comment_line_char);
-		strbuf_addf(&header,
-			    _("This is a combination of %d commits."), ++count);
+		strbuf_addf(&header, _("This is a combination of %d commits."),
+			    opts->current_fixup_count + 2);
 		strbuf_splice(&buf, 0, eol - buf.buf, header.buf, header.len);
 		strbuf_release(&header);
 	} else {
@@ -1381,10 +1371,8 @@ static int update_squash_messages(enum todo_command command,
 				     rebase_path_fixup_msg());
 		}
 
-		count = 2;
 		strbuf_addf(&buf, "%c ", comment_line_char);
-		strbuf_addf(&buf, _("This is a combination of %d commits."),
-			    count);
+		strbuf_addf(&buf, _("This is a combination of %d commits."), 2);
 		strbuf_addf(&buf, "\n%c ", comment_line_char);
 		strbuf_addstr(&buf, _("This is the 1st commit message:"));
 		strbuf_addstr(&buf, "\n\n");
@@ -1401,13 +1389,14 @@ static int update_squash_messages(enum todo_command command,
 	if (command == TODO_SQUASH) {
 		unlink(rebase_path_fixup_msg());
 		strbuf_addf(&buf, "\n%c ", comment_line_char);
-		strbuf_addf(&buf, _("This is the commit message #%d:"), count);
+		strbuf_addf(&buf, _("This is the commit message #%d:"),
+			    ++opts->current_fixup_count);
 		strbuf_addstr(&buf, "\n\n");
 		strbuf_addstr(&buf, body);
 	} else if (command == TODO_FIXUP) {
 		strbuf_addf(&buf, "\n%c ", comment_line_char);
 		strbuf_addf(&buf, _("The commit message #%d will be skipped:"),
-			    count);
+			    ++opts->current_fixup_count);
 		strbuf_addstr(&buf, "\n\n");
 		strbuf_add_commented_lines(&buf, body, strlen(body));
 	} else
@@ -1416,6 +1405,17 @@ static int update_squash_messages(enum todo_command command,
 
 	res = write_message(buf.buf, buf.len, rebase_path_squash_msg(), 0);
 	strbuf_release(&buf);
+
+	if (!res) {
+		strbuf_addf(&opts->current_fixups, "%s%s %s",
+			    opts->current_fixups.len ? "\n" : "",
+			    command_to_string(command),
+			    oid_to_hex(&commit->object.oid));
+		res = write_message(opts->current_fixups.buf,
+				    opts->current_fixups.len,
+				    rebase_path_current_fixups(), 0);
+	}
+
 	return res;
 }
 
@@ -1678,6 +1678,9 @@ fast_forward_edit:
 	if (!res && final_fixup) {
 		unlink(rebase_path_fixup_msg());
 		unlink(rebase_path_squash_msg());
+		unlink(rebase_path_current_fixups());
+		strbuf_reset(&opts->current_fixups);
+		opts->current_fixup_count = 0;
 	}
 
 leave:
@@ -2054,6 +2057,16 @@ static int read_populate_opts(struct replay_opts *opts)
 		read_strategy_opts(opts, &buf);
 		strbuf_release(&buf);
 
+		if (read_oneliner(&opts->current_fixups,
+				  rebase_path_current_fixups(), 1)) {
+			const char *p = opts->current_fixups.buf;
+			opts->current_fixup_count = 1;
+			while ((p = strchr(p, '\n'))) {
+				opts->current_fixup_count++;
+				p++;
+			}
+		}
+
 		return 0;
 	}
 
@@ -2400,10 +2413,9 @@ static int error_with_patch(struct commit *commit,
 static int error_failed_squash(struct commit *commit,
 	struct replay_opts *opts, int subject_len, const char *subject)
 {
-	if (rename(rebase_path_squash_msg(), rebase_path_message()))
-		return error(_("could not rename '%s' to '%s'"),
+	if (copy_file(rebase_path_message(), rebase_path_squash_msg(), 0666))
+		return error(_("could not copy '%s' to '%s'"),
 			rebase_path_squash_msg(), rebase_path_message());
-	unlink(rebase_path_fixup_msg());
 	unlink(git_path_merge_msg());
 	if (copy_file(git_path_merge_msg(), rebase_path_message(), 0666))
 		return error(_("could not copy '%s' to '%s'"),
@@ -2769,19 +2781,16 @@ static int continue_single_pick(void)
 	return run_command_v_opt(argv, RUN_GIT_CMD);
 }
 
-static int commit_staged_changes(struct replay_opts *opts)
+static int commit_staged_changes(struct replay_opts *opts,
+				 struct todo_list *todo_list)
 {
 	unsigned int flags = ALLOW_EMPTY | EDIT_MSG;
+	unsigned int final_fixup = 0, is_clean;
 
 	if (has_unstaged_changes(1))
 		return error(_("cannot rebase: You have unstaged changes."));
-	if (!has_uncommitted_changes(0)) {
-		const char *cherry_pick_head = git_path_cherry_pick_head();
 
-		if (file_exists(cherry_pick_head) && unlink(cherry_pick_head))
-			return error(_("could not remove CHERRY_PICK_HEAD"));
-		return 0;
-	}
+	is_clean = !has_uncommitted_changes(0);
 
 	if (file_exists(rebase_path_amend())) {
 		struct strbuf rev = STRBUF_INIT;
@@ -2794,19 +2803,107 @@ static int commit_staged_changes(struct replay_opts *opts)
 		if (get_oid_hex(rev.buf, &to_amend))
 			return error(_("invalid contents: '%s'"),
 				rebase_path_amend());
-		if (oidcmp(&head, &to_amend))
+		if (!is_clean && oidcmp(&head, &to_amend))
 			return error(_("\nYou have uncommitted changes in your "
 				       "working tree. Please, commit them\n"
 				       "first and then run 'git rebase "
 				       "--continue' again."));
+		/*
+		 * When skipping a failed fixup/squash, we need to edit the
+		 * commit message, the current fixup list and count, and if it
+		 * was the last fixup/squash in the chain, we need to clean up
+		 * the commit message and if there was a squash, let the user
+		 * edit it.
+		 */
+		if (is_clean && !oidcmp(&head, &to_amend) &&
+		    opts->current_fixup_count > 0 &&
+		    file_exists(rebase_path_stopped_sha())) {
+			const char *p = opts->current_fixups.buf;
+			int len = opts->current_fixups.len;
+
+			opts->current_fixup_count--;
+			if (!len)
+				BUG("Incorrect current_fixups:\n%s", p);
+			while (len && p[len - 1] != '\n')
+				len--;
+			strbuf_setlen(&opts->current_fixups, len);
+			if (write_message(p, len, rebase_path_current_fixups(),
+					  0) < 0)
+				return error(_("could not write file: '%s'"),
+					     rebase_path_current_fixups());
+
+			/*
+			 * If a fixup/squash in a fixup/squash chain failed, the
+			 * commit message is already correct, no need to commit
+			 * it again.
+			 *
+			 * Only if it is the final command in the fixup/squash
+			 * chain, and only if the chain is longer than a single
+			 * fixup/squash command (which was just skipped), do we
+			 * actually need to re-commit with a cleaned up commit
+			 * message.
+			 */
+			if (opts->current_fixup_count > 0 &&
+			    !is_fixup(peek_command(todo_list, 0))) {
+				final_fixup = 1;
+				/*
+				 * If there was not a single "squash" in the
+				 * chain, we only need to clean up the commit
+				 * message, no need to bother the user with
+				 * opening the commit message in the editor.
+				 */
+				if (!starts_with(p, "squash ") &&
+				    !strstr(p, "\nsquash "))
+					flags = (flags & ~EDIT_MSG) | CLEANUP_MSG;
+			} else if (is_fixup(peek_command(todo_list, 0))) {
+				/*
+				 * We need to update the squash message to skip
+				 * the latest commit message.
+				 */
+				struct commit *commit;
+				const char *path = rebase_path_squash_msg();
+
+				if (parse_head(&commit) ||
+				    !(p = get_commit_buffer(commit, NULL)) ||
+				    write_message(p, strlen(p), path, 0)) {
+					unuse_commit_buffer(commit, p);
+					return error(_("could not write file: "
+						       "'%s'"), path);
+				}
+				unuse_commit_buffer(commit, p);
+			}
+		}
 
 		strbuf_release(&rev);
 		flags |= AMEND_MSG;
 	}
 
-	if (run_git_commit(rebase_path_message(), opts, flags))
+	if (is_clean) {
+		const char *cherry_pick_head = git_path_cherry_pick_head();
+
+		if (file_exists(cherry_pick_head) && unlink(cherry_pick_head))
+			return error(_("could not remove CHERRY_PICK_HEAD"));
+		if (!final_fixup)
+			return 0;
+	}
+
+	if (run_git_commit(final_fixup ? NULL : rebase_path_message(),
+			   opts, flags))
 		return error(_("could not commit staged changes."));
 	unlink(rebase_path_amend());
+	if (final_fixup) {
+		unlink(rebase_path_fixup_msg());
+		unlink(rebase_path_squash_msg());
+	}
+	if (opts->current_fixup_count > 0) {
+		/*
+		 * Whether final fixup or not, we just cleaned up the commit
+		 * message...
+		 */
+		unlink(rebase_path_current_fixups());
+		strbuf_reset(&opts->current_fixups);
+		opts->current_fixup_count = 0;
+	}
 	return 0;
 }
 
@@ -2818,14 +2915,16 @@ int sequencer_continue(struct replay_opts *opts)
 	if (read_and_refresh_cache(opts))
 		return -1;
 
+	if (read_populate_opts(opts))
+		return -1;
 	if (is_rebase_i(opts)) {
-		if (commit_staged_changes(opts))
+		if ((res = read_populate_todo(&todo_list, opts)))
+			goto release_todo_list;
+		if (commit_staged_changes(opts, &todo_list))
 			return -1;
 	} else if (!file_exists(get_todo_path(opts)))
 		return continue_single_pick();
-	if (read_populate_opts(opts))
-		return -1;
-	if ((res = read_populate_todo(&todo_list, opts)))
+	else if ((res = read_populate_todo(&todo_list, opts)))
 		goto release_todo_list;
 
 	if (!is_rebase_i(opts)) {
