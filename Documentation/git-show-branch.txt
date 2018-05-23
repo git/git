@@ -173,8 +173,8 @@ The "fixes" branch adds one commit "Introduce "reset type" flag to
 The current branch is "master".
 
 
-EXAMPLE
--------
+EXAMPLES
+--------
 
 If you keep your primary branches immediately under
 `refs/heads`, and topic branches in subdirectories of

@@ -458,8 +458,8 @@ sendemail.confirm::
 	one of 'always', 'never', 'cc', 'compose', or 'auto'. See `--confirm`
 	in the previous section for the meaning of these values.
 
-EXAMPLE
--------
+EXAMPLES
+--------
 Use gmail as the smtp server
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 To use 'git send-email' to send your patches through the GMail SMTP server,

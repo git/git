@@ -29,8 +29,8 @@ Submit Git changes back to p4 using 'git p4 submit'.  The command
 the updated p4 remote branch.
 
 
-EXAMPLE
--------
+EXAMPLES
+--------
 * Clone a repository:
 +
 ------------

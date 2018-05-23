@@ -37,14 +37,14 @@ include::diff-options.txt[]
 
 include::diff-format.txt[]
 
-Operating Modes
+OPERATING MODES
 ---------------
 You can choose whether you want to trust the index file entirely
 (using the `--cached` flag) or ask the diff logic to show any files
 that don't match the stat state as being "tentatively changed".  Both
 of these operations are very useful indeed.
 
-Cached Mode
+CACHED MODE
 -----------
 If `--cached` is specified, it allows you to ask:
 
@@ -77,7 +77,7 @@ So doing a `git diff-index --cached` is basically very useful when you are
 asking yourself "what have I already marked for being committed, and
 what's the difference to a previous tree".
 
-Non-cached Mode
+NON-CACHED MODE
 ---------------
 The "non-cached" mode takes a different approach, and is potentially
 the more useful of the two in that what it does can't be emulated with

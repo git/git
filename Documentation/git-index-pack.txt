@@ -93,8 +93,8 @@ OPTIONS
 --max-input-size=<size>::
 	Die, if the pack is larger than <size>.
 
-Note
-----
+NOTES
+-----
 
 Once the index has been created, the list of object names is sorted
 and the SHA-1 hash of that list is printed to stdout. If --stdin was

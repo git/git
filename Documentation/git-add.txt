@@ -193,7 +193,7 @@ for "git add --no-all <pathspec>...", i.e. ignored removed files.
 	for command-line options).
 
 
-Configuration
+CONFIGURATION
 -------------
 
 The optional configuration variable `core.excludesFile` indicates a path to a
@@ -226,7 +226,7 @@ Because this example lets the shell expand the asterisk (i.e. you are
 listing the files explicitly), it does not consider
 `subdir/git-foo.sh`.
 
-Interactive mode
+INTERACTIVE MODE
 ----------------
 When the command enters the interactive mode, it shows the
 output of the 'status' subcommand, and then goes into its

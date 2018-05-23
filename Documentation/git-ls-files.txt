@@ -183,7 +183,7 @@ followed by the  ("attr/<eolattr>").
 	Files to show. If no files are given all files which match the other
 	specified criteria are shown.
 
-Output
+OUTPUT
 ------
 'git ls-files' just outputs the filenames unless `--stage` is specified in
 which case it outputs:
@@ -208,7 +208,7 @@ quoted as explained for the configuration variable `core.quotePath`
 verbatim and the line is terminated by a NUL byte.
 
 
-Exclude Patterns
+EXCLUDE PATTERNS
 ----------------
 
 'git ls-files' can use a list of "exclude patterns" when

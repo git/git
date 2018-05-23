@@ -46,8 +46,8 @@ ref that is different from the ref you have locally, you can use the
 its remote name.
 
 
-EXAMPLE
--------
+EXAMPLES
+--------
 
 Imagine that you built your work on your `master` branch on top of
 the `v1.0` release, and want it to be integrated to the project.

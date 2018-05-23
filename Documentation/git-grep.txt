@@ -293,7 +293,7 @@ providing this option will cause it to die.
 For more details about the <pathspec> syntax, see the 'pathspec' entry
 in linkgit:gitglossary[7].
 
-Examples
+EXAMPLES
 --------
 
 `git grep 'time_t' -- '*.[ch]'`::

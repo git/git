@@ -1229,8 +1229,8 @@ to:
 ------------
 
 
-EXAMPLE
--------
+EXAMPLES
+--------
 
 If you have these three `gitattributes` file:
 

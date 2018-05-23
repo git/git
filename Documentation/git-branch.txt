@@ -287,7 +287,7 @@ CONFIGURATION
 `--list` is used or implied. The default is to use a pager.
 See linkgit:git-config[1].
 
-Examples
+EXAMPLES
 --------
 
 Start development from a known tag::
@@ -318,7 +318,7 @@ See linkgit:git-fetch[1].
 is currently checked out) does not have all commits from the test branch.
 
 
-Notes
+NOTES
 -----
 
 If you are creating a branch that you want to checkout immediately, it is

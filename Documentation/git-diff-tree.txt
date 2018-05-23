@@ -116,7 +116,7 @@ include::pretty-options.txt[]
 include::pretty-formats.txt[]
 
 
-Limiting Output
+LIMITING OUTPUT
 ---------------
 If you're only interested in differences in a subset of files, for
 example some architecture-specific files, you might do:

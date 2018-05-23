@@ -139,7 +139,7 @@ Performance and Compression Tuning
 fastimport.unpackLimit::
 	See linkgit:git-config[1]
 
-Performance
+PERFORMANCE
 -----------
 The design of fast-import allows it to import large projects in a minimum
 amount of memory usage and processing time.  Assuming the frontend
@@ -155,7 +155,7 @@ faster if the source data is stored on a different drive than the
 destination Git repository (due to less IO contention).
 
 
-Development Cost
+DEVELOPMENT COST
 ----------------
 A typical frontend for fast-import tends to weigh in at approximately 200
 lines of Perl/Python/Ruby code.  Most developers have been able to
@@ -165,7 +165,7 @@ an ideal situation, given that most conversion tools are throw-away
 (use once, and never look back).
 
 
-Parallel Operation
+PARALLEL OPERATION
 ------------------
 Like 'git push' or 'git fetch', imports handled by fast-import are safe to
 run alongside parallel `git repack -a -d` or `git gc` invocations,
@@ -186,7 +186,7 @@ this only be used on an otherwise quiet repository.  Using --force
 is not necessary for an initial import into an empty repository.
 
 
-Technical Discussion
+TECHNICAL DISCUSSION
 --------------------
 fast-import tracks a set of branches in memory.  Any branch can be created
 or modified at any point during the import process by sending a
@@ -204,7 +204,7 @@ directory also allows fast-import to run very quickly, as it does not
 need to perform any costly file update operations when switching
 between branches.
 
-Input Format
+INPUT FORMAT
 ------------
 With the exception of raw file data (which Git does not interpret)
 the fast-import input format is text (ASCII) based.  This text based
@@ -1131,7 +1131,7 @@ If the `--done` command-line option or `feature done` command is
 in use, the `done` command is mandatory and marks the end of the
 stream.
 
-Responses To Commands
+RESPONSES TO COMMANDS
 ---------------------
 New objects written by fast-import are not available immediately.
 Most fast-import commands have no visible effect until the next
@@ -1160,7 +1160,7 @@ To avoid deadlock, such frontends must completely consume any
 pending output from `progress`, `ls`, `get-mark`, and `cat-blob` before
 performing writes to fast-import that might block.
 
-Crash Reports
+CRASH REPORTS
 -------------
 If fast-import is supplied invalid input it will terminate with a
 non-zero exit status and create a crash report in the top level of
@@ -1247,7 +1247,7 @@ An example crash:
 	END OF CRASH REPORT
 ====
 
-Tips and Tricks
+TIPS AND TRICKS
 ---------------
 The following tips and tricks have been collected from various
 users of fast-import, and are offered here as suggestions.
@@ -1349,7 +1349,7 @@ Your users will feel better knowing how much of the data stream
 has been processed.
 
 
-Packfile Optimization
+PACKFILE OPTIMIZATION
 ---------------------
 When packing a blob fast-import always attempts to deltify against the last
 blob written.  Unless specifically arranged for by the frontend,
@@ -1380,7 +1380,7 @@ to force recomputation of all deltas can significantly reduce the
 final packfile size (30-50% smaller can be quite typical).
 
 
-Memory Utilization
+MEMORY UTILIZATION
 ------------------
 There are a number of factors which affect how much memory fast-import
 requires to perform an import.  Like critical sections of core
@@ -1458,7 +1458,7 @@ and lazy loading of subtrees, allows fast-import to efficiently import
 projects with 2,000+ branches and 45,114+ files in a very limited
 memory footprint (less than 2.7 MiB per active branch).
 
-Signals
+SIGNALS
 -------
 Sending *SIGUSR1* to the 'git fast-import' process ends the current
 packfile early, simulating a `checkpoint` command.  The impatient

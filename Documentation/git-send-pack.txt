@@ -99,7 +99,7 @@ be in a separate packet, and the list must end with a flush packet.
 	The remote refs to update.
 
 
-Specifying the Refs
+SPECIFYING THE REFS
 -------------------
 
 There are three ways to specify which refs to update on the
