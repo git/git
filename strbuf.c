@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "refs.h"
+#include "string-list.h"
 #include "utf8.h"
 
 int starts_with(const char *str, const char *prefix)
@@ -178,6 +179,21 @@ struct strbuf **strbuf_split_buf(const char *str, size_t slen,
 	ALLOC_GROW(ret, nr + 1, alloc); /* In case string was empty */
 	ret[nr] = NULL;
 	return ret;
+}
+
+void strbuf_add_separated_string_list(struct strbuf *str,
+				      const char *sep,
+				      struct string_list *slist)
+{
+	struct string_list_item *item;
+	int sep_needed = 0;
+
+	for_each_string_list_item(item, slist) {
+		if (sep_needed)
+			strbuf_addstr(str, sep);
+		strbuf_addstr(str, item->string);
+		sep_needed = 1;
+	}
 }
 
 void strbuf_list_free(struct strbuf **sbs)
