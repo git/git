@@ -82,6 +82,28 @@ UI, Workflows & Features
    "feature" to fetch only commits and/or trees, which nobody used.
    This has been removed.
 
+ * The functionality of "$GIT_DIR/info/grafts" has been superseded by
+   the "refs/replace/" mechanism for some time now, but the internal
+   code had support for it in many places, which has been cleaned up
+   in order to drop support of the "grafts" mechanism.
+
+ * "git worktree add" learned to check out an existing branch.
+
+ * "git --no-pager cmd" did not have short-and-sweet single letter
+   option. Now it does as "-P".
+   (merge 7213c28818 js/no-pager-shorthand later to maint).
+
+ * "git rebase" learned "--rebase-merges" to transplant the whole
+   topology of commit graph elsewhere.
+
+ * "git status" learned to pay attention to UI related diff
+   configuration variables such as diff.renames.
+
+ * The command line completion mechanism (in contrib/) learned to load
+   custom completion file for "git $command" where $command is a
+   custom "git-$command" that the end user has on the $PATH when using
+   newer version of bash.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -178,6 +200,37 @@ Performance, Internal Implementation, Development Support etc.
 
  * The code to interface to GPG has been restructured somewhat to make
    it cleaner to integrate with other types of signature systems later.
+
+ * The code has been taught to use the duplicated information stored
+   in the commit-graph file to learn the tree object name for a commit
+   to avoid opening and parsing the commit object when it makes sense
+   to do so.
+
+ * "git gc" in a large repository takes a lot of time as it considers
+   to repack all objects into one pack by default.  The command has
+   been taught to pretend as if the largest existing packfile is
+   marked with ".keep" so that it is left untouched while objects in
+   other packs and loose ones are repacked.
+
+ * The transport protocol v2 is getting updated further.
+
+ * The codepath around object-info API has been taught to take the
+   repository object (which in turn tells the API which object store
+   the objects are to be located).
+
+ * Rename detection logic in "diff" family that is used in "merge" has
+   learned to guess when all of x/a, x/b and x/c have moved to z/a,
+   z/b and z/c, it is likely that x/d added in the meantime would also
+   want to move to z/d by taking the hint that the entire directory
+   'x' moved to 'z'.  A bug causing dirty files involved in a rename
+   to be overwritten during merge has also been fixed as part of this
+   work.  Incidentally, this also avoids updating a file in the
+   working tree after a (non-trivial) merge whose result matches what
+   our side originally had.
+
+ * "git pack-objects" needs to allocate tons of "struct object_entry"
+   while doing its work, and shrinking its size helps the performance
+   quite a bit.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -292,6 +345,43 @@ Fixes since v2.17
    some merge commits in certain cases, which has been corrected.
    (merge be011bbe00 ma/fast-export-skip-merge-fix later to maint).
 
+ * The code did not propagate the terminal width to subprocesses via
+   COLUMNS environment variable, which it now does.  This caused
+   trouble to "git column" helper subprocess when "git tag --column=row"
+   tried to list the existing tags on a display with non-default width.
+   (merge b5d5a567fb nd/term-columns later to maint).
+
+ * We learned that our source files with ".pl" and ".py" extensions
+   are Perl and Python files respectively and changes to them are
+   better viewed as such with appropriate diff drivers.
+   (merge 7818b619e2 ab/perl-python-attrs later to maint).
+
+ * "git rebase -i" sometimes left intermediate "# This is a
+   combination of N commits" message meant for the human consumption
+   inside an editor in the final result in certain corner cases, which
+   has been fixed.
+   (merge 15ef69314d js/rebase-i-clean-msg-after-fixup-continue later to maint).
+
+ * A test to see if the filesystem normalizes UTF-8 filename has been
+   updated to check what we need to know in a more direct way, i.e. a
+   path created in NFC form can be accessed with NFD form (or vice
+   versa) to cope with APFS as well as HFS.
+   (merge 742ae10e35 tb/test-apfs-utf8-normalization later to maint).
+
+ * "git format-patch --cover --attach" created a broken MIME multipart
+   message for the cover letter, which has been fixed by keeping the
+   cover letter as plain text file.
+   (merge 50cd54ef4e bc/format-patch-cover-no-attach later to maint).
+
+ * The split-index feature had a long-standing and dormant bug in
+   certain use of the in-core merge machinery, which has been fixed.
+   (merge 7db118303a en/unpack-trees-split-index-fix later to maint).
+
+ * Asciidoctor gives a reasonable imitation for AsciiDoc, but does not
+   render illustration in a literal block correctly when indented with
+   HT by default. The problem is fixed by forcing 8-space tabs.
+   (merge 379805051d bc/asciidoctor-tab-width later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge 248f66ed8e nd/trace-with-env later to maint).
    (merge 14ced5562c ys/bisect-object-id-missing-conversion-fix later to maint).
@@ -310,3 +400,14 @@ Fixes since v2.17
    (merge adc887221f tq/t1510 later to maint).
    (merge bed21a8ad6 sg/doc-gc-quote-mismatch-fix later to maint).
    (merge 73364e4f10 tz/doc-git-urls-reference later to maint).
+   (merge cd1e606bad bc/mailmap-self later to maint).
+   (merge f7997e3682 ao/config-api-doc later to maint).
+   (merge ee930754d8 jk/apply-p-doc later to maint).
+   (merge 011b648646 nd/pack-format-doc later to maint).
+   (merge 87a6bb701a sg/t5310-jgit-bitmap-test later to maint).
+   (merge f6b82970aa sg/t5516-fixes later to maint).
+   (merge 4362da078e sg/t7005-spaces-in-filenames-cleanup later to maint).
+   (merge 7d0ee47c11 js/test-unset-prereq later to maint).
+   (merge 5356a3c354 ah/misc-doc-updates later to maint).
+   (merge 92c4a7a129 nd/completion-aliasfiletype-typofix later to maint).
+   (merge 58bd77b66a nd/pack-unreachable-objects-doc later to maint).
