@@ -94,6 +94,9 @@ mk_child() {
 }
 
 check_push_result () {
+	test $# -ge 3 ||
+	error "bug in the test script: check_push_result requires at least 3 parameters"
+
 	repo_name="$1"
 	shift
 
@@ -553,10 +556,7 @@ test_expect_success 'branch.*.pushremote config order is irrelevant' '
 test_expect_success 'push with dry-run' '
 
 	mk_test testrepo heads/master &&
-	(
-		cd testrepo &&
-		old_commit=$(git show-ref -s --verify refs/heads/master)
-	) &&
+	old_commit=$(git -C testrepo show-ref -s --verify refs/heads/master) &&
 	git push --dry-run testrepo : &&
 	check_push_result testrepo $old_commit heads/master
 '
@@ -612,7 +612,7 @@ test_expect_success 'push does not update local refs on failure' '
 	chmod +x testrepo/.git/hooks/pre-receive &&
 	(
 		cd child &&
-		git pull .. master
+		git pull .. master &&
 		test_must_fail git push &&
 		test $(git rev-parse master) != \
 			$(git rev-parse remotes/origin/master)
