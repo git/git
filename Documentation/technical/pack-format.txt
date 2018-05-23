@@ -36,6 +36,98 @@ Git pack format
 
   - The trailer records 20-byte SHA-1 checksum of all of the above.
 
+=== Object types
+
+Valid object types are:
+
+- OBJ_COMMIT (1)
+- OBJ_TREE (2)
+- OBJ_BLOB (3)
+- OBJ_TAG (4)
+- OBJ_OFS_DELTA (6)
+- OBJ_REF_DELTA (7)
+
+Type 5 is reserved for future expansion. Type 0 is invalid.
+
+=== Deltified representation
+
+Conceptually there are only four object types: commit, tree, tag and
+blob. However to save space, an object could be stored as a "delta" of
+another "base" object. These representations are assigned new types
+ofs-delta and ref-delta, which is only valid in a pack file.
+
+Both ofs-delta and ref-delta store the "delta" to be applied to
+another object (called 'base object') to reconstruct the object. The
+difference between them is, ref-delta directly encodes 20-byte base
+object name. If the base object is in the same pack, ofs-delta encodes
+the offset of the base object in the pack instead.
+
+The base object could also be deltified if it's in the same pack.
+Ref-delta can also refer to an object outside the pack (i.e. the
+so-called "thin pack"). When stored on disk however, the pack should
+be self contained to avoid cyclic dependency.
+
+The delta data is a sequence of instructions to reconstruct an object
+from the base object. If the base object is deltified, it must be
+converted to canonical form first. Each instruction appends more and
+more data to the target object until it's complete. There are two
+supported instructions so far: one for copy a byte range from the
+source object and one for inserting new data embedded in the
+instruction itself.
+
+Each instruction has variable length. Instruction type is determined
+by the seventh bit of the first octet. The following diagrams follow
+the convention in RFC 1951 (Deflate compressed data format).
+
+==== Instruction to copy from base object
+
+  +----------+---------+---------+---------+---------+-------+-------+-------+
+  | 1xxxxxxx | offset1 | offset2 | offset3 | offset4 | size1 | size2 | size3 |
+  +----------+---------+---------+---------+---------+-------+-------+-------+
+
+This is the instruction format to copy a byte range from the source
+object. It encodes the offset to copy from and the number of bytes to
+copy. Offset and size are in little-endian order.
+
+All offset and size bytes are optional. This is to reduce the
+instruction size when encoding small offsets or sizes. The first seven
+bits in the first octet determines which of the next seven octets is
+present. If bit zero is set, offset1 is present. If bit one is set
+offset2 is present and so on.
+
+Note that a more compact instruction does not change offset and size
+encoding. For example, if only offset2 is omitted like below, offset3
+still contains bits 16-23. It does not become offset2 and contains
+bits 8-15 even if it's right next to offset1.
+
+  +----------+---------+---------+
+  | 10000101 | offset1 | offset3 |
+  +----------+---------+---------+
+
+In its most compact form, this instruction only takes up one byte
+(0x80) with both offset and size omitted, which will have default
+values zero. There is another exception: size zero is automatically
+converted to 0x10000.
+
+==== Instruction to add new data
+
+  +----------+============+
+  | 0xxxxxxx |    data    |
+  +----------+============+
+
+This is the instruction to construct target object without the base
+object. The following data is appended to the target object. The first
+seven bits of the first octet determines the size of data in
+bytes. The size must be non-zero.
+
+==== Reserved instruction
+
+  +----------+============
+  | 00000000 |
+  +----------+============
+
+This is the instruction reserved for future expansion.
+
 == Original (version 1) pack-*.idx files have the following format:
 
   - The header consists of 256 4-byte network byte order

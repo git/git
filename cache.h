@@ -373,6 +373,11 @@ extern void free_name_hash(struct index_state *istate);
 #define read_blob_data_from_cache(path, sz) read_blob_data_from_index(&the_index, (path), (sz))
 #endif
 
+/*
+ * Values in this enum (except those outside the 3 bit range) are part
+ * of pack file format. See Documentation/technical/pack-format.txt
+ * for more information.
+ */
 enum object_type {
 	OBJ_BAD = -1,
 	OBJ_NONE = 0,
