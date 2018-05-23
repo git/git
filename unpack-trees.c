@@ -1284,9 +1284,20 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 	o->result.timestamp.sec = o->src_index->timestamp.sec;
 	o->result.timestamp.nsec = o->src_index->timestamp.nsec;
 	o->result.version = o->src_index->version;
-	o->result.split_index = o->src_index->split_index;
-	if (o->result.split_index)
+	if (!o->src_index->split_index) {
+		o->result.split_index = NULL;
+	} else if (o->src_index == o->dst_index) {
+		/*
+		 * o->dst_index (and thus o->src_index) will be discarded
+		 * and overwritten with o->result at the end of this function,
+		 * so just use src_index's split_index to avoid having to
+		 * create a new one.
+		 */
+		o->result.split_index = o->src_index->split_index;
 		o->result.split_index->refcount++;
+	} else {
+		o->result.split_index = init_split_index(&o->result);
+	}
 	hashcpy(o->result.sha1, o->src_index->sha1);
 	o->merge_size = len;
 	mark_all_ce_unused(o->src_index);
@@ -1401,7 +1412,6 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 		}
 	}
 
-	o->src_index = NULL;
 	ret = check_updates(o) ? (-2) : 0;
 	if (o->dst_index) {
 		if (!ret) {
@@ -1412,12 +1422,13 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 						  WRITE_TREE_SILENT |
 						  WRITE_TREE_REPAIR);
 		}
-		move_index_extensions(&o->result, o->dst_index);
+		move_index_extensions(&o->result, o->src_index);
 		discard_index(o->dst_index);
 		*o->dst_index = o->result;
 	} else {
 		discard_index(&o->result);
 	}
+	o->src_index = NULL;
 
 done:
 	clear_exclude_list(&el);
