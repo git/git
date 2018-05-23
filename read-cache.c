@@ -2268,7 +2268,7 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 
 	if (!istate->version) {
 		istate->version = get_index_format_default();
-		if (getenv("GIT_TEST_SPLIT_INDEX"))
+		if (git_env_bool("GIT_TEST_SPLIT_INDEX", 0))
 			init_split_index(istate);
 	}
 
@@ -2559,7 +2559,7 @@ int write_locked_index(struct index_state *istate, struct lock_file *lock,
 		goto out;
 	}
 
-	if (getenv("GIT_TEST_SPLIT_INDEX")) {
+	if (git_env_bool("GIT_TEST_SPLIT_INDEX", 0)) {
 		int v = si->base_sha1[0];
 		if ((v & 15) < 6)
 			istate->cache_changed |= SPLIT_INDEX_ORDERED;

@@ -11,7 +11,10 @@ make --jobs=2
 make --quiet test
 if test "$jobname" = "linux-gcc"
 then
-	GIT_TEST_SPLIT_INDEX=YesPlease make --quiet test
+	export GIT_TEST_SPLIT_INDEX=yes
+	export GIT_TEST_FULL_IN_PACK_ARRAY=true
+	export GIT_TEST_OE_SIZE=10
+	make --quiet test
 fi
 
 check_unignored_build_artifacts

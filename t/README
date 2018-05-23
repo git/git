@@ -293,6 +293,28 @@ and know what setup is needed for it.  Or when you want to run
 everything up to a certain test.
 
 
+Running tests with special setups
+---------------------------------
+
+The whole test suite could be run to test some special features
+that cannot be easily covered by a few specific test cases. These
+could be enabled by running the test suite with correct GIT_TEST_
+environment set.
+
+GIT_TEST_SPLIT_INDEX=<boolean> forces split-index mode on the whole
+test suite. Accept any boolean values that are accepted by git-config.
+
+GIT_TEST_FULL_IN_PACK_ARRAY=<boolean> exercises the uncommon
+pack-objects code path where there are more than 1024 packs even if
+the actual number of packs in repository is below this limit. Accept
+any boolean values that are accepted by git-config.
+
+GIT_TEST_OE_SIZE=<n> exercises the uncommon pack-objects code path
+where we do not cache object size in memory and read it from existing
+packs on demand. This normally only happens when the object size is
+over 2GB. This variable forces the code path on any object larger than
+<n> bytes.
+
 Naming Tests
 ------------
 
