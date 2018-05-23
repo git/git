@@ -294,8 +294,20 @@ write_script () {
 # The single parameter is the prerequisite tag (a simple word, in all
 # capital letters by convention).
 
+test_unset_prereq () {
+	! test_have_prereq "$1" ||
+	satisfied_prereq="${satisfied_prereq% $1 *} ${satisfied_prereq#* $1 }"
+}
+
 test_set_prereq () {
-	satisfied_prereq="$satisfied_prereq$1 "
+	case "$1" in
+	!*)
+		test_unset_prereq "${1#!}"
+		;;
+	*)
+		satisfied_prereq="$satisfied_prereq$1 "
+		;;
+	esac
 }
 satisfied_prereq=" "
 lazily_testable_prereq= lazily_tested_prereq=
