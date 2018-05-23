@@ -206,8 +206,8 @@ test_expect_success 'overrides work between mixed transfer/upload-pack hideRefs'
 	grep refs/tags/magic actual
 '
 
-git fetch origin
 test_expect_success 'ls-remote --symref' '
+	git fetch origin &&
 	cat >expect <<-EOF &&
 	ref: refs/heads/master	HEAD
 	$(git rev-parse HEAD)	HEAD
