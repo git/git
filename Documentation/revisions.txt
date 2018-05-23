@@ -351,6 +351,7 @@ Here are a handful of examples using the Loeliger illustration above,
 with each step in the notation's expansion and selection carefully
 spelt out:
 
+....
    Args   Expanded arguments    Selected commits
    D                            G H D
    D F                          G H I J D F
@@ -373,3 +374,4 @@ spelt out:
 	  = B ^B^1 ^B^2 ^B^3
 	  = B ^D ^E ^F          B
    F^! D  = F ^I ^J D           G H D F
+....
