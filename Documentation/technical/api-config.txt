@@ -47,21 +47,23 @@ will first feed the user-wide one to the callback, and then the
 repo-specific one; by overwriting, the higher-priority repo-specific
 value is left at the end).
 
-The `git_config_with_options` function lets the caller examine config
+The `config_with_options` function lets the caller examine config
 while adjusting some of the default behavior of `git_config`. It should
 almost never be used by "regular" Git code that is looking up
 configuration variables. It is intended for advanced callers like
 `git-config`, which are intentionally tweaking the normal config-lookup
 process. It takes two extra parameters:
 
-`filename`::
-If this parameter is non-NULL, it specifies the name of a file to
-parse for configuration, rather than looking in the usual files. Regular
-`git_config` defaults to `NULL`.
+`config_source`::
+If this parameter is non-NULL, it specifies the source to parse for
+configuration, rather than looking in the usual files. See `struct
+git_config_source` in `config.h` for details. Regular `git_config` defaults
+to `NULL`.
 
-`respect_includes`::
-Specify whether include directives should be followed in parsed files.
-Regular `git_config` defaults to `1`.
+`opts`::
+Specify options to adjust the behavior of parsing config files. See `struct
+config_options` in `config.h` for details. As an example: regular `git_config`
+sets `opts.respect_includes` to `1` by default.
 
 Reading Specific Files
 ----------------------
