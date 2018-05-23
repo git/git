@@ -223,7 +223,7 @@ static int finish_object_disambiguation(struct disambiguate_state *ds,
 
 static int disambiguate_commit_only(const struct object_id *oid, void *cb_data_unused)
 {
-	int kind = oid_object_info(oid, NULL);
+	int kind = oid_object_info(the_repository, oid, NULL);
 	return kind == OBJ_COMMIT;
 }
 
@@ -232,7 +232,7 @@ static int disambiguate_committish_only(const struct object_id *oid, void *cb_da
 	struct object *obj;
 	int kind;
 
-	kind = oid_object_info(oid, NULL);
+	kind = oid_object_info(the_repository, oid, NULL);
 	if (kind == OBJ_COMMIT)
 		return 1;
 	if (kind != OBJ_TAG)
@@ -247,7 +247,7 @@ static int disambiguate_committish_only(const struct object_id *oid, void *cb_da
 
 static int disambiguate_tree_only(const struct object_id *oid, void *cb_data_unused)
 {
-	int kind = oid_object_info(oid, NULL);
+	int kind = oid_object_info(the_repository, oid, NULL);
 	return kind == OBJ_TREE;
 }
 
@@ -256,7 +256,7 @@ static int disambiguate_treeish_only(const struct object_id *oid, void *cb_data_
 	struct object *obj;
 	int kind;
 
-	kind = oid_object_info(oid, NULL);
+	kind = oid_object_info(the_repository, oid, NULL);
 	if (kind == OBJ_TREE || kind == OBJ_COMMIT)
 		return 1;
 	if (kind != OBJ_TAG)
@@ -271,7 +271,7 @@ static int disambiguate_treeish_only(const struct object_id *oid, void *cb_data_
 
 static int disambiguate_blob_only(const struct object_id *oid, void *cb_data_unused)
 {
-	int kind = oid_object_info(oid, NULL);
+	int kind = oid_object_info(the_repository, oid, NULL);
 	return kind == OBJ_BLOB;
 }
 
@@ -350,7 +350,7 @@ static int show_ambiguous_object(const struct object_id *oid, void *data)
 	if (ds->fn && !ds->fn(oid, ds->cb_data))
 		return 0;
 
-	type = oid_object_info(oid, NULL);
+	type = oid_object_info(the_repository, oid, NULL);
 	if (type == OBJ_COMMIT) {
 		struct commit *commit = lookup_commit(oid);
 		if (commit) {

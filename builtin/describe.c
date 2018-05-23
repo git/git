@@ -502,7 +502,7 @@ static void describe(const char *arg, int last_one)
 
 	if (cmit)
 		describe_commit(&oid, &sb);
-	else if (oid_object_info(&oid, NULL) == OBJ_BLOB)
+	else if (oid_object_info(the_repository, &oid, NULL) == OBJ_BLOB)
 		describe_blob(oid, &sb);
 	else
 		die(_("%s is neither a commit nor blob"), arg);

@@ -515,7 +515,7 @@ static int add_packed_commits(const struct object_id *oid,
 	struct object_info oi = OBJECT_INFO_INIT;
 
 	oi.typep = &type;
-	if (packed_object_info(pack, offset, &oi) < 0)
+	if (packed_object_info(the_repository, pack, offset, &oi) < 0)
 		die("unable to get type of object %s", oid_to_hex(oid));
 
 	if (type != OBJ_COMMIT)
