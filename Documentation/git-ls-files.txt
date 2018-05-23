@@ -53,7 +53,8 @@ OPTIONS
 	Show only ignored files in the output. When showing files in the
 	index, print only those matched by an exclude pattern. When
 	showing "other" files, show only those matched by an exclude
-	pattern.
+	pattern. Standard ignore rules are not automatically activated,
+	therefore at least one of the `--exclude*` options is required.
 
 -s::
 --stage::

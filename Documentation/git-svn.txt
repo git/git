@@ -707,7 +707,7 @@ creating the branch or tag.
 config key: svn.useLogAuthor
 
 --add-author-from::
-	When committing to svn from Git (as part of 'commit-diff', 'set-tree' or 'dcommit'
+	When committing to svn from Git (as part of 'set-tree' or 'dcommit'
 	operations), if the existing log message doesn't already have a
 	`From:` or `Signed-off-by:` line, append a `From:` line based on the
 	Git commit's author string.  If you use this, then `--use-log-author`
