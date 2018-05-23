@@ -63,7 +63,7 @@ test_expect_success "fetch test" '
 	git commit -a -m "updated by origin" &&
 	cd two &&
 	git fetch &&
-	test -f .git/refs/heads/one &&
+	git rev-parse --verify refs/heads/one &&
 	mine=$(git rev-parse refs/heads/one) &&
 	his=$(cd ../one && git rev-parse refs/heads/master) &&
 	test "z$mine" = "z$his"
@@ -73,8 +73,8 @@ test_expect_success "fetch test for-merge" '
 	cd "$D" &&
 	cd three &&
 	git fetch &&
-	test -f .git/refs/heads/two &&
-	test -f .git/refs/heads/one &&
+	git rev-parse --verify refs/heads/two &&
+	git rev-parse --verify refs/heads/one &&
 	master_in_two=$(cd ../two && git rev-parse master) &&
 	one_in_two=$(cd ../two && git rev-parse one) &&
 	{

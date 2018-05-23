@@ -30,7 +30,7 @@ add () {
 	test_tick &&
 	commit=$(echo "$text" | git commit-tree $tree $parents) &&
 	eval "$name=$commit; export $name" &&
-	echo $commit > .git/refs/heads/$branch &&
+	git update-ref "refs/heads/$branch" "$commit" &&
 	eval ${branch}TIP=$commit
 }
 
@@ -45,10 +45,10 @@ pull_to_client () {
 
 			case "$heads" in
 			    *A*)
-				    echo $ATIP > .git/refs/heads/A;;
+				    git update-ref refs/heads/A "$ATIP";;
 			esac &&
 			case "$heads" in *B*)
-			    echo $BTIP > .git/refs/heads/B;;
+			    git update-ref refs/heads/B "$BTIP";;
 			esac &&
 			git symbolic-ref HEAD refs/heads/$(echo $heads \
 				| sed -e "s/^\(.\).*$/\1/") &&
@@ -92,8 +92,8 @@ test_expect_success 'setup' '
 		cur=$(($cur+1))
 	done &&
 	add B1 $A1 &&
-	echo $ATIP > .git/refs/heads/A &&
-	echo $BTIP > .git/refs/heads/B &&
+	git update-ref refs/heads/A "$ATIP" &&
+	git update-ref refs/heads/B "$BTIP" &&
 	git symbolic-ref HEAD refs/heads/B
 '
 

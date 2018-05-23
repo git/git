@@ -726,7 +726,7 @@ test_expect_success 'store updates stash ref and reflog' '
 	git reset --hard &&
 	! grep quux bazzy &&
 	git stash store -m quuxery $STASH_ID &&
-	test $(cat .git/refs/stash) = $STASH_ID &&
+	test $(git rev-parse stash) = $STASH_ID &&
 	git reflog --format=%H stash| grep $STASH_ID &&
 	git stash pop &&
 	grep quux bazzy
