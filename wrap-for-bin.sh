@@ -20,10 +20,17 @@ PATH='@@BUILD_DIR@@/bin-wrappers:'"$PATH"
 
 export GIT_EXEC_PATH GITPERLLIB PATH GIT_TEXTDOMAINDIR
 
-if test -n "$GIT_TEST_GDB"
-then
-	unset GIT_TEST_GDB
-	exec gdb --args "${GIT_EXEC_PATH}/@@PROG@@" "$@"
-else
+case "$GIT_DEBUGGER" in
+'')
 	exec "${GIT_EXEC_PATH}/@@PROG@@" "$@"
-fi
+	;;
+1)
+	unset GIT_DEBUGGER
+	exec gdb --args "${GIT_EXEC_PATH}/@@PROG@@" "$@"
+	;;
+*)
+	GIT_DEBUGGER_ARGS="$GIT_DEBUGGER"
+	unset GIT_DEBUGGER
+	exec ${GIT_DEBUGGER_ARGS} "${GIT_EXEC_PATH}/@@PROG@@" "$@"
+	;;
+esac
