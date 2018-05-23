@@ -615,7 +615,8 @@ int dwim_log(const char *str, int len, struct object_id *oid, char **log)
 static int is_per_worktree_ref(const char *refname)
 {
 	return !strcmp(refname, "HEAD") ||
-		starts_with(refname, "refs/bisect/");
+		starts_with(refname, "refs/bisect/") ||
+		starts_with(refname, "refs/rewritten/");
 }
 
 static int is_pseudoref_syntax(const char *refname)

@@ -245,7 +245,9 @@ static int add(int argc, const char **argv)
 struct branch_info {
 	char *remote_name;
 	struct string_list merge;
-	enum { NO_REBASE, NORMAL_REBASE, INTERACTIVE_REBASE } rebase;
+	enum {
+		NO_REBASE, NORMAL_REBASE, INTERACTIVE_REBASE, REBASE_MERGES
+	} rebase;
 };
 
 static struct string_list branch_list = STRING_LIST_INIT_NODUP;
@@ -306,6 +308,8 @@ static int config_read_branches(const char *key, const char *value, void *cb)
 				info->rebase = v;
 			else if (!strcmp(value, "preserve"))
 				info->rebase = NORMAL_REBASE;
+			else if (!strcmp(value, "merges"))
+				info->rebase = REBASE_MERGES;
 			else if (!strcmp(value, "interactive"))
 				info->rebase = INTERACTIVE_REBASE;
 		}
@@ -963,9 +967,15 @@ static int show_local_info_item(struct string_list_item *item, void *cb_data)
 
 	printf("    %-*s ", show_info->width, item->string);
 	if (branch_info->rebase) {
-		printf_ln(branch_info->rebase == INTERACTIVE_REBASE
-			  ? _("rebases interactively onto remote %s")
-			  : _("rebases onto remote %s"), merge->items[0].string);
+		const char *msg;
+		if (branch_info->rebase == INTERACTIVE_REBASE)
+			msg = _("rebases interactively onto remote %s");
+		else if (branch_info->rebase == REBASE_MERGES)
+			msg = _("rebases interactively (with merges) onto "
+				"remote %s");
+		else
+			msg = _("rebases onto remote %s");
+		printf_ln(msg, merge->items[0].string);
 		return 0;
 	} else if (show_info->any_rebase) {
 		printf_ln(_(" merges with remote %s"), merge->items[0].string);

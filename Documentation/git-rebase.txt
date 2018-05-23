@@ -379,6 +379,33 @@ The commit list format can be changed by setting the configuration option
 rebase.instructionFormat.  A customized instruction format will automatically
 have the long commit hash prepended to the format.
 
+-r::
+--rebase-merges[=(rebase-cousins|no-rebase-cousins)]::
+	By default, a rebase will simply drop merge commits from the todo
+	list, and put the rebased commits into a single, linear branch.
+	With `--rebase-merges`, the rebase will instead try to preserve
+	the branching structure within the commits that are to be rebased,
+	by recreating the merge commits. Any resolved merge conflicts or
+	manual amendments in these merge commits will have to be
+	resolved/re-applied manually.
++
+By default, or when `no-rebase-cousins` was specified, commits which do not
+have `<upstream>` as direct ancestor will keep their original branch point,
+i.e. commits that would be excluded by gitlink:git-log[1]'s
+`--ancestry-path` option will keep their original ancestry by default. If
+the `rebase-cousins` mode is turned on, such commits are instead rebased
+onto `<upstream>` (or `<onto>`, if specified).
++
+The `--rebase-merges` mode is similar in spirit to `--preserve-merges`, but
+in contrast to that option works well in interactive rebases: commits can be
+reordered, inserted and dropped at will.
++
+It is currently only possible to recreate the merge commits using the
+`recursive` merge strategy; Different merge strategies can be used only via
+explicit `exec git merge -s <strategy> [...]` commands.
++
+See also REBASING MERGES below.
+
 -p::
 --preserve-merges::
 	Recreate merge commits instead of flattening the history by replaying
@@ -776,12 +803,146 @@ The ripple effect of a "hard case" recovery is especially bad:
 'everyone' downstream from 'topic' will now have to perform a "hard
 case" recovery too!
 
+REBASING MERGES
+-----------------
+
+The interactive rebase command was originally designed to handle
+individual patch series. As such, it makes sense to exclude merge
+commits from the todo list, as the developer may have merged the
+then-current `master` while working on the branch, only to rebase
+all the commits onto `master` eventually (skipping the merge
+commits).
+
+However, there are legitimate reasons why a developer may want to
+recreate merge commits: to keep the branch structure (or "commit
+topology") when working on multiple, inter-related branches.
+
+In the following example, the developer works on a topic branch that
+refactors the way buttons are defined, and on another topic branch
+that uses that refactoring to implement a "Report a bug" button. The
+output of `git log --graph --format=%s -5` may look like this:
+
+------------
+*   Merge branch 'report-a-bug'
+|\
+| * Add the feedback button
+* | Merge branch 'refactor-button'
+|\ \
+| |/
+| * Use the Button class for all buttons
+| * Extract a generic Button class from the DownloadButton one
+------------
+
+The developer might want to rebase those commits to a newer `master`
+while keeping the branch topology, for example when the first topic
+branch is expected to be integrated into `master` much earlier than the
+second one, say, to resolve merge conflicts with changes to the
+DownloadButton class that made it into `master`.
+
+This rebase can be performed using the `--rebase-merges` option.
+It will generate a todo list looking like this:
+
+------------
+label onto
+
+# Branch: refactor-button
+reset onto
+pick 123456 Extract a generic Button class from the DownloadButton one
+pick 654321 Use the Button class for all buttons
+label refactor-button
+
+# Branch: report-a-bug
+reset refactor-button # Use the Button class for all buttons
+pick abcdef Add the feedback button
+label report-a-bug
+
+reset onto
+merge -C a1b2c3 refactor-button # Merge 'refactor-button'
+merge -C 6f5e4d report-a-bug # Merge 'report-a-bug'
+------------
+
+In contrast to a regular interactive rebase, there are `label`, `reset`
+and `merge` commands in addition to `pick` ones.
+
+The `label` command associates a label with the current HEAD when that
+command is executed. These labels are created as worktree-local refs
+(`refs/rewritten/<label>`) that will be deleted when the rebase
+finishes. That way, rebase operations in multiple worktrees linked to
+the same repository do not interfere with one another. If the `label`
+command fails, it is rescheduled immediately, with a helpful message how
+to proceed.
+
+The `reset` command resets the HEAD, index and worktree to the specified
+revision. It is isimilar to an `exec git reset --hard <label>`, but
+refuses to overwrite untracked files. If the `reset` command fails, it is
+rescheduled immediately, with a helpful message how to edit the todo list
+(this typically happens when a `reset` command was inserted into the todo
+list manually and contains a typo).
+
+The `merge` command will merge the specified revision into whatever is
+HEAD at that time. With `-C <original-commit>`, the commit message of
+the specified merge commit will be used. When the `-C` is changed to
+a lower-case `-c`, the message will be opened in an editor after a
+successful merge so that the user can edit the message.
+
+If a `merge` command fails for any reason other than merge conflicts (i.e.
+when the merge operation did not even start), it is rescheduled immediately.
+
+At this time, the `merge` command will *always* use the `recursive`
+merge strategy, with no way to choose a different one. To work around
+this, an `exec` command can be used to call `git merge` explicitly,
+using the fact that the labels are worktree-local refs (the ref
+`refs/rewritten/onto` would correspond to the label `onto`, for example).
+
+Note: the first command (`label onto`) labels the revision onto which
+the commits are rebased; The name `onto` is just a convention, as a nod
+to the `--onto` option.
+
+It is also possible to introduce completely new merge commits from scratch
+by adding a command of the form `merge <merge-head>`. This form will
+generate a tentative commit message and always open an editor to let the
+user edit it. This can be useful e.g. when a topic branch turns out to
+address more than a single concern and wants to be split into two or
+even more topic branches. Consider this todo list:
+
+------------
+pick 192837 Switch from GNU Makefiles to CMake
+pick 5a6c7e Document the switch to CMake
+pick 918273 Fix detection of OpenSSL in CMake
+pick afbecd http: add support for TLS v1.3
+pick fdbaec Fix detection of cURL in CMake on Windows
+------------
+
+The one commit in this list that is not related to CMake may very well
+have been motivated by working on fixing all those bugs introduced by
+switching to CMake, but it addresses a different concern. To split this
+branch into two topic branches, the todo list could be edited like this:
+
+------------
+label onto
+
+pick afbecd http: add support for TLS v1.3
+label tlsv1.3
+
+reset onto
+pick 192837 Switch from GNU Makefiles to CMake
+pick 918273 Fix detection of OpenSSL in CMake
+pick fdbaec Fix detection of cURL in CMake on Windows
+pick 5a6c7e Document the switch to CMake
+label cmake
+
+reset onto
+merge tlsv1.3
+merge cmake
+------------
+
 BUGS
 ----
 The todo list presented by `--preserve-merges --interactive` does not
 represent the topology of the revision graph.  Editing commits and
 rewording their commit messages should work fine, but attempts to
-reorder commits tend to produce counterintuitive results.
+reorder commits tend to produce counterintuitive results. Use
+`--rebase-merges` in such scenarios instead.
 
 For example, an attempt to rearrange
 ------------
