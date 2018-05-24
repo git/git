@@ -316,6 +316,7 @@ Here are some other tips that we use when cleaning up our commits:
 * Make sure the commits are signed off using `git commit (-s|--signoff)`. See
   [SubmittingPatches](https://github.com/git/git/blob/v2.8.1/Documentation/SubmittingPatches#L234-L286)
   for more details about what this sign-off means.
+* Check for whitespace errors using `git diff --check [base]...HEAD` or `git log --check`.
 * Run `git rebase --whitespace=fix` to correct upstream issues with whitespace.
 * Become familiar with interactive rebase (`git rebase -i`) because you will be reordering,
   squashing, and editing commits as your patch or series of patches is reviewed.
