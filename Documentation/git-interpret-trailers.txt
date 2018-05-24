@@ -8,8 +8,8 @@ git-interpret-trailers - add or parse structured information in commit messages
 SYNOPSIS
 --------
 [verse]
-'git interpret-trailers' [options] [(--trailer <token>[(=|:)<value>])...] [<file>...]
-'git interpret-trailers' [options] [--parse] [<file>...]
+'git interpret-trailers' [<options>] [(--trailer <token>[(=|:)<value>])...] [<file>...]
+'git interpret-trailers' [<options>] [--parse] [<file>...]
 
 DESCRIPTION
 -----------

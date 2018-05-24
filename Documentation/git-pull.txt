@@ -9,7 +9,7 @@ git-pull - Fetch from and integrate with another repository or a local branch
 SYNOPSIS
 --------
 [verse]
-'git pull' [options] [<repository> [<refspec>...]]
+'git pull' [<options>] [<repository> [<refspec>...]]
 
 
 DESCRIPTION

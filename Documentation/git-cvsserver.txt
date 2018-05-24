@@ -22,7 +22,7 @@ cvspserver stream tcp nowait nobody /usr/bin/git-cvsserver git-cvsserver pserver
 Usage:
 
 [verse]
-'git-cvsserver' [options] [pserver|server] [<directory> ...]
+'git-cvsserver' [<options>] [pserver|server] [<directory> ...]
 
 OPTIONS
 -------
