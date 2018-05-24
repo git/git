@@ -135,6 +135,13 @@ ignored, then the directory is not shown, but all contents are shown.
 	Display or do not display detailed ahead/behind counts for the
 	branch relative to its upstream branch.  Defaults to true.
 
+--no-lock-index::
+--lock-index::
+	(DEPRECATED: use --no-optional-locks instead)
+	Specifies whether `git status` should try to lock the index and
+	update it afterwards if any changes were detected. Defaults to
+	`--lock-index`.
+
 <pathspec>...::
 	See the 'pathspec' entry in linkgit:gitglossary[7].
 
