@@ -116,9 +116,12 @@ test_expect_failure 'conflict caused if rename not detected' '
 		git checkout -q C^0 &&
 		git merge -s recursive B^0 &&
 
-		test 3 -eq $(git ls-files -s | wc -l) &&
-		test 0 -eq $(git ls-files -u | wc -l) &&
-		test 0 -eq $(git ls-files -o | wc -l) &&
+		git ls-files -s >out &&
+		test_line_count = 3 out &&
+		git ls-files -u >out &&
+		test_line_count = 0 out &&
+		git ls-files -o >out &&
+		test_line_count = 1 out &&
 
 		test_line_count = 6 c &&
 		test $(git rev-parse HEAD:a) = $(git rev-parse B:a) &&
@@ -203,9 +206,12 @@ test_expect_failure 'detect rename/add-source and preserve all data' '
 
 		git merge -s recursive C^0 &&
 
-		test 2 -eq $(git ls-files -s | wc -l) &&
-		test 2 -eq $(git ls-files -u | wc -l) &&
-		test 0 -eq $(git ls-files -o | wc -l) &&
+		git ls-files -s >out &&
+		test_line_count = 2 out &&
+		git ls-files -u >out &&
+		test_line_count = 2 out &&
+		git ls-files -o >out &&
+		test_line_count = 1 out &&
 
 		test -f a &&
 		test -f b &&
@@ -223,9 +229,12 @@ test_expect_failure 'detect rename/add-source and preserve all data, merge other
 
 		git merge -s recursive B^0 &&
 
-		test 2 -eq $(git ls-files -s | wc -l) &&
-		test 2 -eq $(git ls-files -u | wc -l) &&
-		test 0 -eq $(git ls-files -o | wc -l) &&
+		git ls-files -s >out &&
+		test_line_count = 2 out &&
+		git ls-files -u >out &&
+		test_line_count = 2 out &&
+		git ls-files -o >out &&
+		test_line_count = 1 out &&
 
 		test -f a &&
 		test -f b &&
@@ -279,9 +288,12 @@ test_expect_success 'rename/directory conflict + clean content merge' '
 
 		test_must_fail git merge -s recursive right^0 &&
 
-		test 2 -eq $(git ls-files -s | wc -l) &&
-		test 1 -eq $(git ls-files -u | wc -l) &&
-		test 1 -eq $(git ls-files -o | wc -l) &&
+		git ls-files -s >out &&
+		test_line_count = 2 out &&
+		git ls-files -u >out &&
+		test_line_count = 1 out &&
+		git ls-files -o >out &&
+		test_line_count = 2 out &&
 
 		echo 0 >expect &&
 		git cat-file -p base:file >>expect &&
@@ -307,9 +319,12 @@ test_expect_success 'rename/directory conflict + content merge conflict' '
 
 		test_must_fail git merge -s recursive right^0 &&
 
-		test 4 -eq $(git ls-files -s | wc -l) &&
-		test 3 -eq $(git ls-files -u | wc -l) &&
-		test 1 -eq $(git ls-files -o | wc -l) &&
+		git ls-files -s >out &&
+		test_line_count = 4 out &&
+		git ls-files -u >out &&
+		test_line_count = 3 out &&
+		git ls-files -o >out &&
+		test_line_count = 2 out &&
 
 		git cat-file -p left-conflict:newfile >left &&
 		git cat-file -p base:file    >base &&
@@ -367,9 +382,12 @@ test_expect_success 'disappearing dir in rename/directory conflict handled' '
 
 		git merge -s recursive right^0 &&
 
-		test 1 -eq $(git ls-files -s | wc -l) &&
-		test 0 -eq $(git ls-files -u | wc -l) &&
-		test 0 -eq $(git ls-files -o | wc -l) &&
+		git ls-files -s >out &&
+		test_line_count = 1 out &&
+		git ls-files -u >out &&
+		test_line_count = 0 out &&
+		git ls-files -o >out &&
+		test_line_count = 1 out &&
 
 		echo 0 >expect &&
 		git cat-file -p base:sub/file >>expect &&
@@ -426,10 +444,14 @@ test_expect_success 'handle rename/rename (2to1) conflict correctly' '
 		test_must_fail git merge -s recursive C^0 >out &&
 		test_i18ngrep "CONFLICT (rename/rename)" out &&
 
-		test 2 -eq $(git ls-files -s | wc -l) &&
-		test 2 -eq $(git ls-files -u | wc -l) &&
-		test 2 -eq $(git ls-files -u c | wc -l) &&
-		test 3 -eq $(git ls-files -o | wc -l) &&
+		git ls-files -s >out &&
+		test_line_count = 2 out &&
+		git ls-files -u >out &&
+		test_line_count = 2 out &&
+		git ls-files -u c >out &&
+		test_line_count = 2 out &&
+		git ls-files -o >out &&
+		test_line_count = 3 out &&
 
 		test ! -f a &&
 		test ! -f b &&
@@ -476,9 +498,12 @@ test_expect_success 'merge has correct working tree contents' '
 
 		test_must_fail git merge -s recursive B^0 &&
 
-		test 3 -eq $(git ls-files -s | wc -l) &&
-		test 3 -eq $(git ls-files -u | wc -l) &&
-		test 0 -eq $(git ls-files -o | wc -l) &&
+		git ls-files -s >out &&
+		test_line_count = 3 out &&
+		git ls-files -u >out &&
+		test_line_count = 3 out &&
+		git ls-files -o >out &&
+		test_line_count = 1 out &&
 
 		test $(git rev-parse :1:a) = $(git rev-parse A:a) &&
 		test $(git rev-parse :3:b) = $(git rev-parse A:a) &&
@@ -527,8 +552,10 @@ test_expect_failure 'detect conflict with rename/rename(1to2)/add-source merge' 
 
 		test_must_fail git merge -s recursive C^0 &&
 
-		test 4 -eq $(git ls-files -s | wc -l) &&
-		test 0 -eq $(git ls-files -o | wc -l) &&
+		git ls-files -s >out &&
+		test_line_count = 4 out &&
+		git ls-files -o >out &&
+		test_line_count = 1 out &&
 
 		test $(git rev-parse 3:a) = $(git rev-parse C:a) &&
 		test $(git rev-parse 1:a) = $(git rev-parse A:a) &&
@@ -573,8 +600,10 @@ test_expect_failure 'rename/rename/add-source still tracks new a file' '
 		git checkout C^0 &&
 		git merge -s recursive B^0 &&
 
-		test 2 -eq $(git ls-files -s | wc -l) &&
-		test 0 -eq $(git ls-files -o | wc -l) &&
+		git ls-files -s >out &&
+		test_line_count = 2 out &&
+		git ls-files -o >out &&
+		test_line_count = 1 out &&
 
 		test $(git rev-parse HEAD:a) = $(git rev-parse C:a) &&
 		test $(git rev-parse HEAD:b) = $(git rev-parse A:a)
@@ -615,10 +644,14 @@ test_expect_success 'rename/rename/add-dest merge still knows about conflicting 
 		git checkout C^0 &&
 		test_must_fail git merge -s recursive B^0 &&
 
-		test 5 -eq $(git ls-files -s | wc -l) &&
-		test 2 -eq $(git ls-files -u b | wc -l) &&
-		test 2 -eq $(git ls-files -u c | wc -l) &&
-		test 4 -eq $(git ls-files -o | wc -l) &&
+		git ls-files -s >out &&
+		test_line_count = 5 out &&
+		git ls-files -u b >out &&
+		test_line_count = 2 out &&
+		git ls-files -u c >out &&
+		test_line_count = 2 out &&
+		git ls-files -o >out &&
+		test_line_count = 5 out &&
 
 		test $(git rev-parse :1:a) = $(git rev-parse A:a) &&
 		test $(git rev-parse :2:b) = $(git rev-parse C:b) &&
