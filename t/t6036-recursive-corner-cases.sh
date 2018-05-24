@@ -4,12 +4,6 @@ test_description='recursive merge corner cases involving criss-cross merges'
 
 . ./test-lib.sh
 
-get_clean_checkout () {
-	git reset --hard &&
-	git clean -fdqx &&
-	git checkout "$1"
-}
-
 #
 #  L1  L2
 #   o---o
@@ -445,10 +439,12 @@ test_expect_success 'setup differently handled merges of directory/file conflict
 '
 
 test_expect_success 'merge of D & E1 fails but has appropriate contents' '
+	test_when_finished "git -C directory-file reset --hard" &&
+	test_when_finished "git -C directory-file clean -fdqx" &&
 	(
 		cd directory-file &&
 
-		get_clean_checkout D^0 &&
+		git checkout D^0 &&
 
 		test_must_fail git merge -s recursive E1^0 &&
 
@@ -468,10 +464,12 @@ test_expect_success 'merge of D & E1 fails but has appropriate contents' '
 '
 
 test_expect_success 'merge of E1 & D fails but has appropriate contents' '
+	test_when_finished "git -C directory-file reset --hard" &&
+	test_when_finished "git -C directory-file clean -fdqx" &&
 	(
 		cd directory-file &&
 
-		get_clean_checkout E1^0 &&
+		git checkout E1^0 &&
 
 		test_must_fail git merge -s recursive D^0 &&
 
@@ -491,10 +489,12 @@ test_expect_success 'merge of E1 & D fails but has appropriate contents' '
 '
 
 test_expect_success 'merge of D & E2 fails but has appropriate contents' '
+	test_when_finished "git -C directory-file reset --hard" &&
+	test_when_finished "git -C directory-file clean -fdqx" &&
 	(
 		cd directory-file &&
 
-		get_clean_checkout D^0 &&
+		git checkout D^0 &&
 
 		test_must_fail git merge -s recursive E2^0 &&
 
@@ -516,10 +516,12 @@ test_expect_success 'merge of D & E2 fails but has appropriate contents' '
 '
 
 test_expect_success 'merge of E2 & D fails but has appropriate contents' '
+	test_when_finished "git -C directory-file reset --hard" &&
+	test_when_finished "git -C directory-file clean -fdqx" &&
 	(
 		cd directory-file &&
 
-		get_clean_checkout E2^0 &&
+		git checkout E2^0 &&
 
 		test_must_fail git merge -s recursive D^0 &&
 
