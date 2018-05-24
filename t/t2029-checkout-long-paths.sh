@@ -59,7 +59,7 @@ test_expect_success cleanup '
 '
 
 # check that the template used in the test won't be too long:
-abspath="$(pwd -W)"/testdir
+abspath="$(pwd)"/testdir
 test ${#abspath} -gt 230 ||
 test_set_prereq SHORTABSPATH
 
