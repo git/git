@@ -38,7 +38,7 @@ test_expect_success "Does git preserve Gollum's precious artifact?" '
 		test_must_fail git merge -s recursive rename-the-ring &&
 
 		# Make sure git did not delete an untracked file
-		test -f ring
+		test_path_is_file ring
 	)
 '
 
@@ -213,8 +213,8 @@ test_expect_failure 'detect rename/add-source and preserve all data' '
 		git ls-files -o >out &&
 		test_line_count = 1 out &&
 
-		test -f a &&
-		test -f b &&
+		test_path_is_file a &&
+		test_path_is_file b &&
 
 		test $(git rev-parse HEAD:b) = $(git rev-parse A:a) &&
 		test $(git rev-parse HEAD:a) = $(git rev-parse C:a)
@@ -236,8 +236,8 @@ test_expect_failure 'detect rename/add-source and preserve all data, merge other
 		git ls-files -o >out &&
 		test_line_count = 1 out &&
 
-		test -f a &&
-		test -f b &&
+		test_path_is_file a &&
+		test_path_is_file b &&
 
 		test $(git rev-parse HEAD:b) = $(git rev-parse A:a) &&
 		test $(git rev-parse HEAD:a) = $(git rev-parse C:a)
@@ -302,8 +302,8 @@ test_expect_success 'rename/directory conflict + clean content merge' '
 
 		test $(git rev-parse :2:newfile) = $(git hash-object expect) &&
 
-		test -f newfile/realfile &&
-		test -f newfile~HEAD
+		test_path_is_file newfile/realfile &&
+		test_path_is_file newfile~HEAD
 	)
 '
 
@@ -340,8 +340,8 @@ test_expect_success 'rename/directory conflict + content merge conflict' '
 		test $(git rev-parse :2:newfile) = $(git rev-parse left-conflict:newfile) &&
 		test $(git rev-parse :3:newfile) = $(git rev-parse right:file) &&
 
-		test -f newfile/realfile &&
-		test -f newfile~HEAD
+		test_path_is_file newfile/realfile &&
+		test_path_is_file newfile~HEAD
 	)
 '
 
@@ -394,7 +394,7 @@ test_expect_success 'disappearing dir in rename/directory conflict handled' '
 		echo 7 >>expect &&
 		test_cmp expect sub &&
 
-		test -f sub
+		test_path_is_file sub
 	)
 '
 
@@ -453,10 +453,10 @@ test_expect_success 'handle rename/rename (2to1) conflict correctly' '
 		git ls-files -o >out &&
 		test_line_count = 3 out &&
 
-		test ! -f a &&
-		test ! -f b &&
-		test -f c~HEAD &&
-		test -f c~C^0 &&
+		test_path_is_missing a &&
+		test_path_is_missing b &&
+		test_path_is_file c~HEAD &&
+		test_path_is_file c~C^0 &&
 
 		test $(git hash-object c~HEAD) = $(git rev-parse C:a) &&
 		test $(git hash-object c~C^0) = $(git rev-parse B:b)
@@ -509,7 +509,7 @@ test_expect_success 'merge has correct working tree contents' '
 		test $(git rev-parse :3:b) = $(git rev-parse A:a) &&
 		test $(git rev-parse :2:c) = $(git rev-parse A:a) &&
 
-		test ! -f a &&
+		test_path_is_missing a &&
 		test $(git hash-object b) = $(git rev-parse A:a) &&
 		test $(git hash-object c) = $(git rev-parse A:a)
 	)
@@ -562,9 +562,9 @@ test_expect_failure 'detect conflict with rename/rename(1to2)/add-source merge' 
 		test $(git rev-parse 2:b) = $(git rev-parse B:b) &&
 		test $(git rev-parse 3:c) = $(git rev-parse C:c) &&
 
-		test -f a &&
-		test -f b &&
-		test -f c
+		test_path_is_file a &&
+		test_path_is_file b &&
+		test_path_is_file c
 	)
 '
 
@@ -664,8 +664,8 @@ test_expect_success 'rename/rename/add-dest merge still knows about conflicting 
 		test $(git hash-object b~HEAD) = $(git rev-parse C:b) &&
 		test $(git hash-object b~B\^0) = $(git rev-parse B:b) &&
 
-		test ! -f b &&
-		test ! -f c
+		test_path_is_missing b &&
+		test_path_is_missing c
 	)
 '
 

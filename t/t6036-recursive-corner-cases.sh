@@ -488,7 +488,7 @@ test_expect_success 'merge of D & E2 fails but has appropriate contents' '
 		test $(git rev-parse :1:a/file) = $(git rev-parse C:a/file) &&
 		test $(git rev-parse :0:ignore-me) = $(git rev-parse A:ignore-me) &&
 
-		test -f a~HEAD
+		test_path_is_file a~HEAD
 	)
 '
 
@@ -512,7 +512,7 @@ test_expect_success 'merge of E2 & D fails but has appropriate contents' '
 		test $(git rev-parse :1:a/file) = $(git rev-parse C:a/file) &&
 		test $(git rev-parse :0:ignore-me) = $(git rev-parse A:ignore-me) &&
 
-		test -f a~D^0
+		test_path_is_file a~D^0
 	)
 '
 
