@@ -72,11 +72,14 @@ test_expect_success 'merge simple rename+criss-cross with no modifications' '
 		git ls-files -o >out &&
 		test_line_count = 3 out &&
 
-		test $(git rev-parse :2:three) = $(git rev-parse L2:three) &&
-		test $(git rev-parse :3:three) = $(git rev-parse R2:three) &&
-
-		test $(git rev-parse L2:three) = $(git hash-object three~HEAD) &&
-		test $(git rev-parse R2:three) = $(git hash-object three~R2^0)
+		git rev-parse >expect       \
+			L2:three   R2:three \
+			L2:three   R2:three &&
+		git rev-parse   >actual     \
+			:2:three   :3:three &&
+		git hash-object >>actual    \
+			three~HEAD three~R2^0
+		test_cmp expect actual
 	)
 '
 
@@ -145,11 +148,14 @@ test_expect_success 'merge criss-cross + rename merges with basic modification' 
 		git ls-files -o >out &&
 		test_line_count = 3 out &&
 
-		test $(git rev-parse :2:three) = $(git rev-parse L2:three) &&
-		test $(git rev-parse :3:three) = $(git rev-parse R2:three) &&
-
-		test $(git rev-parse L2:three) = $(git hash-object three~HEAD) &&
-		test $(git rev-parse R2:three) = $(git hash-object three~R2^0)
+		git rev-parse >expect       \
+			L2:three   R2:three \
+			L2:three   R2:three &&
+		git rev-parse   >actual     \
+			:2:three   :3:three &&
+		git hash-object >>actual    \
+			three~HEAD three~R2^0
+		test_cmp expect actual
 	)
 '
 
@@ -224,19 +230,23 @@ test_expect_success 'git detects differently handled merges conflict' '
 		git ls-files -o >out &&
 		test_line_count = 1 out &&
 
-		test $(git rev-parse :2:new_a) = $(git rev-parse D:new_a) &&
-		test $(git rev-parse :3:new_a) = $(git rev-parse E:new_a) &&
+		git rev-parse >expect       \
+			D:new_a  E:new_a &&
+		git rev-parse   >actual     \
+			:2:new_a :3:new_a &&
+		test_cmp expect actual
 
-		git cat-file -p B:new_a >>merged &&
-		git cat-file -p C:new_a >>merge-me &&
+		git cat-file -p B:new_a >ours &&
+		git cat-file -p C:new_a >theirs &&
 		>empty &&
 		test_must_fail git merge-file \
 			-L "Temporary merge branch 2" \
 			-L "" \
 			-L "Temporary merge branch 1" \
-			merged empty merge-me &&
-		sed -e "s/^\([<=>]\)/\1\1\1/" merged >merged-internal &&
-		test $(git rev-parse :1:new_a) = $(git hash-object merged-internal)
+			ours empty theirs &&
+		sed -e "s/^\([<=>]\)/\1\1\1/" ours >expect &&
+		git cat-file -p :1:new_a >actual &&
+		test_cmp expect actual
 	)
 '
 
@@ -311,8 +321,11 @@ test_expect_success 'git detects conflict merging criss-cross+modify/delete' '
 		git ls-files -u >out &&
 		test_line_count = 2 out &&
 
-		test $(git rev-parse :1:file) = $(git rev-parse master:file) &&
-		test $(git rev-parse :2:file) = $(git rev-parse B:file)
+		git rev-parse >expect       \
+			master:file  B:file &&
+		git rev-parse   >actual      \
+			:1:file      :2:file &&
+		test_cmp expect actual
 	)
 '
 
@@ -330,8 +343,11 @@ test_expect_success 'git detects conflict merging criss-cross+modify/delete, rev
 		git ls-files -u >out &&
 		test_line_count = 2 out &&
 
-		test $(git rev-parse :1:file) = $(git rev-parse master:file) &&
-		test $(git rev-parse :3:file) = $(git rev-parse B:file)
+		git rev-parse >expect       \
+			master:file  B:file &&
+		git rev-parse   >actual      \
+			:1:file      :3:file &&
+		test_cmp expect actual
 	)
 '
 
@@ -443,8 +459,11 @@ test_expect_success 'merge of D & E1 fails but has appropriate contents' '
 		git ls-files -o >out &&
 		test_line_count = 1 out &&
 
-		test $(git rev-parse :0:ignore-me) = $(git rev-parse A:ignore-me) &&
-		test $(git rev-parse :2:a) = $(git rev-parse B:a)
+		git rev-parse >expect    \
+			A:ignore-me  B:a &&
+		git rev-parse   >actual   \
+			:0:ignore-me :2:a &&
+		test_cmp expect actual
 	)
 '
 
@@ -463,8 +482,11 @@ test_expect_success 'merge of E1 & D fails but has appropriate contents' '
 		git ls-files -o >out &&
 		test_line_count = 1 out &&
 
-		test $(git rev-parse :0:ignore-me) = $(git rev-parse A:ignore-me) &&
-		test $(git rev-parse :3:a) = $(git rev-parse B:a)
+		git rev-parse >expect    \
+			A:ignore-me  B:a &&
+		git rev-parse   >actual   \
+			:0:ignore-me :3:a &&
+		test_cmp expect actual
 	)
 '
 
@@ -483,10 +505,11 @@ test_expect_success 'merge of D & E2 fails but has appropriate contents' '
 		git ls-files -o >out &&
 		test_line_count = 2 out &&
 
-		test $(git rev-parse :2:a) = $(git rev-parse B:a) &&
-		test $(git rev-parse :3:a/file) = $(git rev-parse E2:a/file) &&
-		test $(git rev-parse :1:a/file) = $(git rev-parse C:a/file) &&
-		test $(git rev-parse :0:ignore-me) = $(git rev-parse A:ignore-me) &&
+		git rev-parse >expect    \
+			B:a   E2:a/file  c:a/file   A:ignore-me &&
+		git rev-parse   >actual   \
+			:2:a  :3:a/file  :1:a/file  :0:ignore-me &&
+		test_cmp expect actual
 
 		test_path_is_file a~HEAD
 	)
@@ -507,10 +530,11 @@ test_expect_success 'merge of E2 & D fails but has appropriate contents' '
 		git ls-files -o >out &&
 		test_line_count = 2 out &&
 
-		test $(git rev-parse :3:a) = $(git rev-parse B:a) &&
-		test $(git rev-parse :2:a/file) = $(git rev-parse E2:a/file) &&
-		test $(git rev-parse :1:a/file) = $(git rev-parse C:a/file) &&
-		test $(git rev-parse :0:ignore-me) = $(git rev-parse A:ignore-me) &&
+		git rev-parse >expect    \
+			B:a   E2:a/file  c:a/file   A:ignore-me &&
+		git rev-parse   >actual   \
+			:3:a  :2:a/file  :1:a/file  :0:ignore-me &&
+		test_cmp expect actual
 
 		test_path_is_file a~D^0
 	)
@@ -688,9 +712,15 @@ test_expect_failure 'detect rename/rename/add-source for virtual merge-base' '
 		git ls-files -o >out &&
 		test_line_count = 1 out &&
 
-		test $(git rev-parse HEAD:b) = $(git rev-parse A:a) &&
-		test $(git rev-parse HEAD:c) = $(git rev-parse A:a) &&
-		test "$(cat a)" = "$(printf "1\n2\n3\n4\n5\n6\n7\n8\n")"
+		printf "1\n2\n3\n4\n5\n6\n7\n8\n" >correct &&
+		git rev-parse >expect \
+			A:a   A:a     \
+			correct       &&
+		git rev-parse   >actual  \
+			:0:b  :0:c       &&
+		git hash-object >>actual \
+			a                &&
+		test_cmp expect actual
 	)
 '
 
@@ -765,8 +795,11 @@ test_expect_success 'virtual merge base handles rename/rename(1to2)/add-dest' '
 		git ls-files -o >out &&
 		test_line_count = 1 out &&
 
-		test $(git rev-parse HEAD:a) = $(git rev-parse A:a) &&
-		test $(git rev-parse HEAD:c) = $(git rev-parse E:c)
+		git rev-parse >expect \
+			A:a   E:c     &&
+		git rev-parse   >actual \
+			:0:a  :0:c      &&
+		test_cmp expect actual
 	)
 '
 

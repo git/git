@@ -80,8 +80,11 @@ test_expect_failure 'rename/modify/add-source conflict resolvable' '
 
 		git merge -s recursive C^0 &&
 
-		test $(git rev-parse B:a) = $(git rev-parse b) &&
-		test $(git rev-parse C:a) = $(git rev-parse a)
+		git rev-parse >expect \
+			B:a   C:a     &&
+		git rev-parse >actual \
+			b     c       &&
+		test_cmp expect actual
 	)
 '
 
@@ -124,8 +127,11 @@ test_expect_failure 'conflict caused if rename not detected' '
 		test_line_count = 1 out &&
 
 		test_line_count = 6 c &&
-		test $(git rev-parse HEAD:a) = $(git rev-parse B:a) &&
-		test $(git rev-parse HEAD:b) = $(git rev-parse A:b)
+		git rev-parse >expect \
+			B:a   A:b     &&
+		git rev-parse >actual \
+			:0:a  :0:b    &&
+		test_cmp expect actual
 	)
 '
 
@@ -216,8 +222,11 @@ test_expect_failure 'detect rename/add-source and preserve all data' '
 		test_path_is_file a &&
 		test_path_is_file b &&
 
-		test $(git rev-parse HEAD:b) = $(git rev-parse A:a) &&
-		test $(git rev-parse HEAD:a) = $(git rev-parse C:a)
+		git rev-parse >expect \
+			A:a   C:a     &&
+		git rev-parse >actual \
+			:0:b  :0:a    &&
+		test_cmp expect actual
 	)
 '
 
@@ -239,8 +248,11 @@ test_expect_failure 'detect rename/add-source and preserve all data, merge other
 		test_path_is_file a &&
 		test_path_is_file b &&
 
-		test $(git rev-parse HEAD:b) = $(git rev-parse A:a) &&
-		test $(git rev-parse HEAD:a) = $(git rev-parse C:a)
+		git rev-parse >expect \
+			A:a   C:a     &&
+		git rev-parse >actual \
+			:0:b  :0:a    &&
+		test_cmp expect actual
 	)
 '
 
@@ -336,9 +348,11 @@ test_expect_success 'rename/directory conflict + content merge conflict' '
 			left base right &&
 		test_cmp left newfile~HEAD &&
 
-		test $(git rev-parse :1:newfile) = $(git rev-parse base:file) &&
-		test $(git rev-parse :2:newfile) = $(git rev-parse left-conflict:newfile) &&
-		test $(git rev-parse :3:newfile) = $(git rev-parse right:file) &&
+		git rev-parse >expect                                 \
+			base:file   left-conflict:newfile  right:file &&
+		git rev-parse >actual                                 \
+			:1:newfile  :2:newfile             :3:newfile &&
+		test_cmp expect actual
 
 		test_path_is_file newfile/realfile &&
 		test_path_is_file newfile~HEAD
@@ -458,8 +472,11 @@ test_expect_success 'handle rename/rename (2to1) conflict correctly' '
 		test_path_is_file c~HEAD &&
 		test_path_is_file c~C^0 &&
 
-		test $(git hash-object c~HEAD) = $(git rev-parse C:a) &&
-		test $(git hash-object c~C^0) = $(git rev-parse B:b)
+		git rev-parse >expect   \
+			C:a     B:b     &&
+		git hash-object >actual \
+			c~HEAD  c~C^0   &&
+		test_cmp expect actual
 	)
 '
 
@@ -505,13 +522,15 @@ test_expect_success 'merge has correct working tree contents' '
 		git ls-files -o >out &&
 		test_line_count = 1 out &&
 
-		test $(git rev-parse :1:a) = $(git rev-parse A:a) &&
-		test $(git rev-parse :3:b) = $(git rev-parse A:a) &&
-		test $(git rev-parse :2:c) = $(git rev-parse A:a) &&
-
 		test_path_is_missing a &&
-		test $(git hash-object b) = $(git rev-parse A:a) &&
-		test $(git hash-object c) = $(git rev-parse A:a)
+		git rev-parse >expect   \
+			A:a   A:a   A:a \
+			A:a   A:a       &&
+		git rev-parse >actual    \
+			:1:a  :3:b  :2:c &&
+		git hash-object >>actual \
+			b     c          &&
+		test_cmp expect actual
 	)
 '
 
@@ -557,10 +576,11 @@ test_expect_failure 'detect conflict with rename/rename(1to2)/add-source merge' 
 		git ls-files -o >out &&
 		test_line_count = 1 out &&
 
-		test $(git rev-parse 3:a) = $(git rev-parse C:a) &&
-		test $(git rev-parse 1:a) = $(git rev-parse A:a) &&
-		test $(git rev-parse 2:b) = $(git rev-parse B:b) &&
-		test $(git rev-parse 3:c) = $(git rev-parse C:c) &&
+		git rev-parse >expect         \
+			C:a   A:a   B:b   C:C &&
+		git rev-parse >actual          \
+			:3:a  :1:a  :2:b  :3:c &&
+		test_cmp expect actual
 
 		test_path_is_file a &&
 		test_path_is_file b &&
@@ -605,8 +625,11 @@ test_expect_failure 'rename/rename/add-source still tracks new a file' '
 		git ls-files -o >out &&
 		test_line_count = 1 out &&
 
-		test $(git rev-parse HEAD:a) = $(git rev-parse C:a) &&
-		test $(git rev-parse HEAD:b) = $(git rev-parse A:a)
+		git rev-parse >expect \
+			C:a   A:a     &&
+		git rev-parse >actual \
+			:0:a  :0:b    &&
+		test_cmp expect actual
 	)
 '
 
@@ -653,16 +676,17 @@ test_expect_success 'rename/rename/add-dest merge still knows about conflicting 
 		git ls-files -o >out &&
 		test_line_count = 5 out &&
 
-		test $(git rev-parse :1:a) = $(git rev-parse A:a) &&
-		test $(git rev-parse :2:b) = $(git rev-parse C:b) &&
-		test $(git rev-parse :3:b) = $(git rev-parse B:b) &&
-		test $(git rev-parse :2:c) = $(git rev-parse C:c) &&
-		test $(git rev-parse :3:c) = $(git rev-parse B:c) &&
+		git rev-parse >expect               \
+			A:a   C:b   B:b   C:c   B:c &&
+		git rev-parse >actual                \
+			:1:a  :2:b  :3:b  :2:c  :3:c &&
+		test_cmp expect actual
 
-		test $(git hash-object c~HEAD) = $(git rev-parse C:c) &&
-		test $(git hash-object c~B\^0) = $(git rev-parse B:c) &&
-		test $(git hash-object b~HEAD) = $(git rev-parse C:b) &&
-		test $(git hash-object b~B\^0) = $(git rev-parse B:b) &&
+		git rev-parse >expect               \
+			C:c     B:c     C:b     B:b &&
+		git hash-object >actual                \
+			c~HEAD  c~B\^0  b~HEAD  b~B\^0 &&
+		test_cmp expect actual
 
 		test_path_is_missing b &&
 		test_path_is_missing c
