@@ -352,6 +352,13 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	rev.diffopt.flags.allow_external = 1;
 	rev.diffopt.flags.allow_textconv = 1;
 
+	/*
+	 * Default to intent-to-add entries invisible in the
+	 * index. This makes them show up as new files in diff-files
+	 * and not at all in diff-cached.
+	 */
+	rev.diffopt.ita_invisible_in_index = 1;
+
 	if (nongit)
 		die(_("Not a git repository"));
 	argc = setup_revisions(argc, argv, &rev, NULL);
