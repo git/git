@@ -54,28 +54,28 @@ static struct {
 	const char *name;
 	int *preference;
 } advice_config[] = {
-	{ "pushupdaterejected", &advice_push_update_rejected },
-	{ "pushnonffcurrent", &advice_push_non_ff_current },
-	{ "pushnonffmatching", &advice_push_non_ff_matching },
-	{ "pushalreadyexists", &advice_push_already_exists },
-	{ "pushfetchfirst", &advice_push_fetch_first },
-	{ "pushneedsforce", &advice_push_needs_force },
-	{ "statushints", &advice_status_hints },
-	{ "statusuoption", &advice_status_u_option },
-	{ "commitbeforemerge", &advice_commit_before_merge },
-	{ "resolveconflict", &advice_resolve_conflict },
-	{ "implicitidentity", &advice_implicit_identity },
-	{ "detachedhead", &advice_detached_head },
-	{ "setupstreamfailure", &advice_set_upstream_failure },
-	{ "objectnamewarning", &advice_object_name_warning },
-	{ "rmhints", &advice_rm_hints },
-	{ "addembeddedrepo", &advice_add_embedded_repo },
-	{ "ignoredhook", &advice_ignored_hook },
-	{ "waitingforeditor", &advice_waiting_for_editor },
-	{ "graftfiledeprecated", &advice_graft_file_deprecated },
+	{ "pushUpdateRejected", &advice_push_update_rejected },
+	{ "pushNonFFCurrent", &advice_push_non_ff_current },
+	{ "pushNonFFMatching", &advice_push_non_ff_matching },
+	{ "pushAlreadyExists", &advice_push_already_exists },
+	{ "pushFetchFirst", &advice_push_fetch_first },
+	{ "pushNeedsForce", &advice_push_needs_force },
+	{ "statusHints", &advice_status_hints },
+	{ "statusUoption", &advice_status_u_option },
+	{ "commitBeforeMerge", &advice_commit_before_merge },
+	{ "resolveConflict", &advice_resolve_conflict },
+	{ "implicitIdentity", &advice_implicit_identity },
+	{ "detachedHead", &advice_detached_head },
+	{ "setupStreamFailure", &advice_set_upstream_failure },
+	{ "objectNameWarning", &advice_object_name_warning },
+	{ "rmHints", &advice_rm_hints },
+	{ "addEmbeddedRepo", &advice_add_embedded_repo },
+	{ "ignoredHook", &advice_ignored_hook },
+	{ "waitingForEditor", &advice_waiting_for_editor },
+	{ "graftFileDeprecated", &advice_graft_file_deprecated },
 
 	/* make this an alias for backward compatibility */
-	{ "pushnonfastforward", &advice_push_update_rejected }
+	{ "pushNonFastForward", &advice_push_update_rejected }
 };
 
 void advise(const char *advice, ...)
@@ -123,7 +123,7 @@ int git_default_advice_config(const char *var, const char *value)
 		return 0;
 
 	for (i = 0; i < ARRAY_SIZE(advice_config); i++) {
-		if (strcmp(k, advice_config[i].name))
+		if (strcasecmp(k, advice_config[i].name))
 			continue;
 		*advice_config[i].preference = git_config_bool(var, value);
 		return 0;
