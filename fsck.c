@@ -74,14 +74,15 @@ enum fsck_msg_id {
 #undef MSG_ID
 
 #define STR(x) #x
-#define MSG_ID(id, msg_type) { STR(id), NULL, FSCK_##msg_type },
+#define MSG_ID(id, msg_type) { STR(id), NULL, NULL, FSCK_##msg_type },
 static struct {
 	const char *id_string;
 	const char *downcased;
+	const char *camelcased;
 	int msg_type;
 } msg_id_info[FSCK_MSG_MAX + 1] = {
 	FOREACH_MSG_ID(MSG_ID)
-	{ NULL, NULL, -1 }
+	{ NULL, NULL, NULL, -1 }
 };
 #undef MSG_ID
 
@@ -105,6 +106,20 @@ static void prepare_msg_ids(void)
 			else
 				*(q)++ = tolower(*(p)++);
 		*q = '\0';
+
+		p = msg_id_info[i].id_string;
+		q = xmalloc(len);
+		msg_id_info[i].camelcased = q;
+		while (*p) {
+			if (*p == '_') {
+				p++;
+				if (*p)
+					*q++ = *p++;
+			} else {
+				*q++ = tolower(*p++);
+			}
+		}
+		*q = '\0';
 	}
 }
 
@@ -127,9 +142,8 @@ void list_config_fsck_msg_ids(struct string_list *list, const char *prefix)
 
 	prepare_msg_ids();
 
-	/* TODO: we can do better by producing camelCase names */
 	for (i = 0; i < FSCK_MSG_MAX; i++)
-		list_config_item(list, prefix, msg_id_info[i].downcased);
+		list_config_item(list, prefix, msg_id_info[i].camelcased);
 }
 
 static int fsck_msg_type(enum fsck_msg_id msg_id,
