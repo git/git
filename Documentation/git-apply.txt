@@ -9,7 +9,7 @@ git-apply - Apply a patch to files and/or to the index
 SYNOPSIS
 --------
 [verse]
-'git apply' [--stat] [--numstat] [--summary] [--check] [--index] [--3way]
+'git apply' [--stat] [--numstat] [--summary] [--check] [--index | --intent-to-add] [--3way]
 	  [--apply] [--no-add] [--build-fake-ancestor=<file>] [-R | --reverse]
 	  [--allow-binary-replacement | --binary] [--reject] [-z]
 	  [-p<n>] [-C<n>] [--inaccurate-eof] [--recount] [--cached]
@@ -73,6 +73,14 @@ OPTIONS
 	Apply a patch without touching the working tree. Instead take the
 	cached data, apply the patch, and store the result in the index
 	without using the working tree. This implies `--index`.
+
+--intent-to-add::
+	When applying the patch only to the working tree, mark new
+	files to be added to the index later (see `--intent-to-add`
+	option in linkgit:git-add[1]). This option is ignored unless
+	running in a Git repository and `--index` is not specified.
+	Note that `--index` could be implied by other options such
+	as `--cached` or `--3way`.
 
 -3::
 --3way::

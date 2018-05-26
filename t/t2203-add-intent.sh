@@ -245,6 +245,7 @@ test_expect_success 'diff-files/diff-cached shows ita as new/not-new files' '
 	test_cmp expected2 actual2
 '
 
+
 test_expect_success '"diff HEAD" includes ita as new files' '
 	git reset --hard &&
 	echo new >new-ita &&
@@ -259,6 +260,18 @@ test_expect_success '"diff HEAD" includes ita as new files' '
 	@@ -0,0 +1 @@
 	+new
 	EOF
+	test_cmp expected actual
+'
+
+test_expect_success 'apply --intent-to-add' '
+	git reset --hard &&
+	echo new >new-ita &&
+	git add -N new-ita &&
+	git diff >expected &&
+	grep "new file" expected &&
+	git reset --hard &&
+	git apply --intent-to-add expected &&
+	git diff >actual &&
 	test_cmp expected actual
 '
 

@@ -45,6 +45,7 @@ struct apply_state {
 	int check; /* preimage must match working tree, don't actually apply */
 	int check_index; /* preimage must match the indexed version */
 	int update_index; /* check_index && apply */
+	int ita_only;	  /* add intent-to-add entries to the index */
 
 	/* These control cosmetic aspect of the output */
 	int diffstat; /* just show a diffstat, and don't actually apply */
