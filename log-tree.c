@@ -34,6 +34,7 @@ static const char *color_decorate_slots[] = {
 	[DECORATION_REF_TAG]	= "tag",
 	[DECORATION_REF_STASH]	= "stash",
 	[DECORATION_REF_HEAD]	= "HEAD",
+	[DECORATION_GRAFTED]	= "grafted",
 };
 
 static const char *decorate_get_color(int decorate_use_color, enum decoration_type ix)
