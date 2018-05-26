@@ -245,4 +245,21 @@ test_expect_success 'diff-files/diff-cached shows ita as new/not-new files' '
 	test_cmp expected2 actual2
 '
 
+test_expect_success '"diff HEAD" includes ita as new files' '
+	git reset --hard &&
+	echo new >new-ita &&
+	git add -N new-ita &&
+	git diff HEAD >actual &&
+	cat >expected <<-\EOF &&
+	diff --git a/new-ita b/new-ita
+	new file mode 100644
+	index 0000000..3e75765
+	--- /dev/null
+	+++ b/new-ita
+	@@ -0,0 +1 @@
+	+new
+	EOF
+	test_cmp expected actual
+'
+
 test_done
