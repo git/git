@@ -3245,3 +3245,16 @@ enum config_scope current_config_scope(void)
 	else
 		return current_parsing_scope;
 }
+
+int lookup_config(const char **mapping, int nr_mapping, const char *var)
+{
+	int i;
+
+	for (i = 0; i < nr_mapping; i++) {
+		const char *name = mapping[i];
+
+		if (name && !strcasecmp(var, name))
+			return i;
+	}
+	return -1;
+}
