@@ -389,8 +389,12 @@ static void do_oneway_diff(struct unpack_trees_options *o,
 	struct rev_info *revs = o->unpack_data;
 	int match_missing, cached;
 
-	/* i-t-a entries do not actually exist in the index */
-	if (revs->diffopt.ita_invisible_in_index &&
+	/*
+	 * i-t-a entries do not actually exist in the index (if we're
+	 * looking at its content)
+	 */
+	if (o->index_only &&
+	    revs->diffopt.ita_invisible_in_index &&
 	    idx && ce_intent_to_add(idx)) {
 		idx = NULL;
 		if (!tree)
