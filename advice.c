@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "config.h"
 #include "color.h"
+#include "help.h"
 
 int advice_push_update_rejected = 1;
 int advice_push_non_ff_current = 1;
@@ -129,6 +130,14 @@ int git_default_advice_config(const char *var, const char *value)
 	}
 
 	return 0;
+}
+
+void list_config_advices(struct string_list *list, const char *prefix)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(advice_config); i++)
+		list_config_item(list, prefix, advice_config[i].name);
 }
 
 int error_resolve_conflict(const char *me)

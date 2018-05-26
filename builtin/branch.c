@@ -22,6 +22,7 @@
 #include "wt-status.h"
 #include "ref-filter.h"
 #include "worktree.h"
+#include "help.h"
 
 static const char * const builtin_branch_usage[] = {
 	N_("git branch [<options>] [-r | -a] [--merged | --no-merged]"),
@@ -66,6 +67,8 @@ static const char *color_branch_slots[] = {
 
 static struct string_list output = STRING_LIST_INIT_DUP;
 static unsigned int colopts;
+
+define_list_config_array(color_branch_slots);
 
 static int git_branch_config(const char *var, const char *value, void *cb)
 {

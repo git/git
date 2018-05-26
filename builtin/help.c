@@ -37,6 +37,7 @@ static const char *html_path;
 
 static int show_all = 0;
 static int show_guides = 0;
+static int show_config;
 static int verbose;
 static unsigned int colopts;
 static enum help_format help_format = HELP_FORMAT_NONE;
@@ -45,6 +46,7 @@ static struct option builtin_help_options[] = {
 	OPT_BOOL('a', "all", &show_all, N_("print all available commands")),
 	OPT_HIDDEN_BOOL(0, "exclude-guides", &exclude_guides, N_("exclude guides")),
 	OPT_BOOL('g', "guides", &show_guides, N_("print list of useful guides")),
+	OPT_BOOL('c', "config", &show_config, N_("print all configuration variable names")),
 	OPT_SET_INT('m', "man", &help_format, N_("show man page"), HELP_FORMAT_MAN),
 	OPT_SET_INT('w', "web", &help_format, N_("show manual in web browser"),
 			HELP_FORMAT_WEB),
@@ -442,6 +444,13 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 		printf(_("usage: %s%s"), _(git_usage_string), "\n\n");
 		load_command_list("git-", &main_cmds, &other_cmds);
 		list_commands(colopts, &main_cmds, &other_cmds);
+	}
+
+	if (show_config) {
+		setup_pager();
+		list_config_help();
+		printf("\n%s\n", _("'git help config' for more information"));
+		return 0;
 	}
 
 	if (show_guides)

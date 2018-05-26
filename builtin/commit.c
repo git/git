@@ -32,6 +32,7 @@
 #include "column.h"
 #include "sequencer.h"
 #include "mailmap.h"
+#include "help.h"
 
 static const char * const builtin_commit_usage[] = {
 	N_("git commit [<options>] [--] <pathspec>..."),
@@ -1184,6 +1185,8 @@ static int dry_run_commit(int argc, const char **argv, const char *prefix,
 
 	return commitable ? 0 : 1;
 }
+
+define_list_config_array_extra(color_status_slots, {"added"});
 
 static int parse_status_slot(const char *slot)
 {

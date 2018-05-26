@@ -12,6 +12,7 @@
 #include "gpg-interface.h"
 #include "sequencer.h"
 #include "line-log.h"
+#include "help.h"
 
 static struct decoration name_decoration = { "object names" };
 static int decoration_loaded;
@@ -41,6 +42,8 @@ static const char *decorate_get_color(int decorate_use_color, enum decoration_ty
 		return decoration_colors[ix];
 	return "";
 }
+
+define_list_config_array(color_decorate_slots);
 
 int parse_decorate_color_config(const char *var, const char *slot_name, const char *value)
 {

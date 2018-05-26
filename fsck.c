@@ -10,6 +10,7 @@
 #include "utf8.h"
 #include "sha1-array.h"
 #include "decorate.h"
+#include "help.h"
 
 #define FSCK_FATAL -1
 #define FSCK_INFO -2
@@ -118,6 +119,17 @@ static int parse_msg_id(const char *text)
 			return i;
 
 	return -1;
+}
+
+void list_config_fsck_msg_ids(struct string_list *list, const char *prefix)
+{
+	int i;
+
+	prepare_msg_ids();
+
+	/* TODO: we can do better by producing camelCase names */
+	for (i = 0; i < FSCK_MSG_MAX; i++)
+		list_config_item(list, prefix, msg_id_info[i].downcased);
 }
 
 static int fsck_msg_type(enum fsck_msg_id msg_id,

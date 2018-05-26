@@ -7,6 +7,7 @@
 #include "diffcore.h"
 #include "commit.h"
 #include "quote.h"
+#include "help.h"
 
 static int grep_source_load(struct grep_source *gs);
 static int grep_source_is_binary(struct grep_source *gs);
@@ -79,6 +80,8 @@ static int parse_pattern_type_arg(const char *opt, const char *arg)
 		return GREP_PATTERN_TYPE_PCRE;
 	die("bad %s argument: %s", opt, arg);
 }
+
+define_list_config_array_extra(color_grep_slots, {"match"});
 
 /*
  * Read the configuration file once and store it in
