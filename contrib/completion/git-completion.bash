@@ -1995,7 +1995,15 @@ __git_compute_config_vars ()
 
 _git_config ()
 {
-	case "$prev" in
+	local varname
+
+	if [ "${BASH_VERSINFO[0]:-0}" -ge 4 ]; then
+		varname="${prev,,}"
+	else
+		varname="$(echo "$prev" |tr A-Z a-z)"
+	fi
+
+	case "$varname" in
 	branch.*.remote|branch.*.pushremote)
 		__gitcomp_nl "$(__git_remotes)"
 		return
