@@ -2093,20 +2093,20 @@ _git_config ()
 		;;
 	branch.*.*)
 		local pfx="${cur%.*}." cur_="${cur##*.}"
-		__gitcomp "remote pushremote merge mergeoptions rebase" "$pfx" "$cur_"
+		__gitcomp "remote pushRemote merge mergeOptions rebase" "$pfx" "$cur_"
 		return
 		;;
 	branch.*)
 		local pfx="${cur%.*}." cur_="${cur#*.}"
 		__gitcomp_direct "$(__git_heads "$pfx" "$cur_" ".")"
-		__gitcomp_nl_append $'autosetupmerge\nautosetuprebase\n' "$pfx" "$cur_"
+		__gitcomp_nl_append $'autoSetupMerge\nautoSetupRebase\n' "$pfx" "$cur_"
 		return
 		;;
 	guitool.*.*)
 		local pfx="${cur%.*}." cur_="${cur##*.}"
 		__gitcomp "
-			argprompt cmd confirm needsfile noconsole norescan
-			prompt revprompt revunmerged title
+			argPrompt cmd confirm needsFile noConsole noRescan
+			prompt revPrompt revUnmerged title
 			" "$pfx" "$cur_"
 		return
 		;;
@@ -2135,14 +2135,14 @@ _git_config ()
 		local pfx="${cur%.*}." cur_="${cur##*.}"
 		__gitcomp "
 			url proxy fetch push mirror skipDefaultUpdate
-			receivepack uploadpack tagopt pushurl
+			receivepack uploadpack tagOpt pushurl
 			" "$pfx" "$cur_"
 		return
 		;;
 	remote.*)
 		local pfx="${cur%.*}." cur_="${cur#*.}"
 		__gitcomp_nl "$(__git_remotes)" "$pfx" "$cur_" "."
-		__gitcomp_nl_append "pushdefault" "$pfx" "$cur_"
+		__gitcomp_nl_append "pushDefault" "$pfx" "$cur_"
 		return
 		;;
 	url.*.*)
