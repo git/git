@@ -416,7 +416,7 @@ struct slot_expansion {
 	int found;
 };
 
-void list_config_help(void)
+void list_config_help(int for_human)
 {
 	struct slot_expansion slot_expansions[] = {
 		{ "advice", "*", list_config_advices },
@@ -460,8 +460,36 @@ void list_config_help(void)
 			    e->prefix, e->placeholder);
 
 	string_list_sort(&keys);
-	for (i = 0; i < keys.nr; i++)
-		puts(keys.items[i].string);
+	for (i = 0; i < keys.nr; i++) {
+		const char *var = keys.items[i].string;
+		const char *wildcard, *tag, *cut;
+
+		if (for_human) {
+			puts(var);
+			continue;
+		}
+
+		wildcard = strchr(var, '*');
+		tag = strchr(var, '<');
+
+		if (!wildcard && !tag) {
+			puts(var);
+			continue;
+		}
+
+		if (wildcard && !tag)
+			cut = wildcard;
+		else if (!wildcard && tag)
+			cut = tag;
+		else
+			cut = wildcard < tag ? wildcard : tag;
+
+		/*
+		 * We may produce duplicates, but that's up to
+		 * git-completion.bash to handle
+		 */
+		printf("%.*s\n", (int)(cut - var), var);
+	}
 	string_list_clear(&keys, 0);
 }
 

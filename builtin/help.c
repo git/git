@@ -47,6 +47,7 @@ static struct option builtin_help_options[] = {
 	OPT_HIDDEN_BOOL(0, "exclude-guides", &exclude_guides, N_("exclude guides")),
 	OPT_BOOL('g', "guides", &show_guides, N_("print list of useful guides")),
 	OPT_BOOL('c', "config", &show_config, N_("print all configuration variable names")),
+	OPT_SET_INT_F(0, "config-for-completion", &show_config, "", 2, PARSE_OPT_HIDDEN),
 	OPT_SET_INT('m', "man", &help_format, N_("show man page"), HELP_FORMAT_MAN),
 	OPT_SET_INT('w', "web", &help_format, N_("show manual in web browser"),
 			HELP_FORMAT_WEB),
@@ -447,8 +448,14 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 	}
 
 	if (show_config) {
+		int for_human = show_config == 1;
+
+		if (!for_human) {
+			list_config_help(for_human);
+			return 0;
+		}
 		setup_pager();
-		list_config_help();
+		list_config_help(for_human);
 		printf("\n%s\n", _("'git help config' for more information"));
 		return 0;
 	}
