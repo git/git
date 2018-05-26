@@ -17,6 +17,7 @@ int advice_implicit_identity = 1;
 int advice_detached_head = 1;
 int advice_set_upstream_failure = 1;
 int advice_object_name_warning = 1;
+int advice_amworkdir = 1;
 int advice_rm_hints = 1;
 int advice_add_embedded_repo = 1;
 int advice_ignored_hook = 1;
@@ -68,6 +69,7 @@ static struct {
 	{ "detachedHead", &advice_detached_head },
 	{ "setupStreamFailure", &advice_set_upstream_failure },
 	{ "objectNameWarning", &advice_object_name_warning },
+	{ "amWorkDir", &advice_amworkdir },
 	{ "rmHints", &advice_rm_hints },
 	{ "addEmbeddedRepo", &advice_add_embedded_repo },
 	{ "ignoredHook", &advice_ignored_hook },
