@@ -1245,9 +1245,7 @@ test_expect_success 'double dash "git checkout"' '
 	--orphan=Z
 	--no-orphan Z
 	--ours Z
-	--no-ours Z
 	--theirs Z
-	--no-theirs Z
 	--merge Z
 	--no-merge Z
 	--conflict=Z
