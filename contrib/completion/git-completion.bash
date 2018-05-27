@@ -2158,9 +2158,14 @@ _git_config ()
 		__gitcomp "insteadOf pushInsteadOf" "$pfx" "$cur_"
 		return
 		;;
+	*.*)
+		__git_compute_config_vars
+		__gitcomp "$__git_config_vars"
+		;;
+	*)
+		__git_compute_config_vars
+		__gitcomp "$(echo "$__git_config_vars" | sed 's/\.[^ ]*/./g')"
 	esac
-	__git_compute_config_vars
-	__gitcomp "$__git_config_vars"
 }
 
 _git_remote ()
