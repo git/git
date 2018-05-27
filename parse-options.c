@@ -427,15 +427,12 @@ void parse_options_start(struct parse_opt_ctx_t *ctx,
 	parse_options_check(options);
 }
 
-/*
- * TODO: we are not completing the --no-XXX form yet because there are
- * many options that do not suppress it properly.
- */
 static int show_gitcomp(struct parse_opt_ctx_t *ctx,
 			const struct option *opts)
 {
 	for (; opts->type != OPTION_END; opts++) {
 		const char *suffix = "";
+		int has_unset_form = 0;
 
 		if (!opts->long_name)
 			continue;
@@ -450,6 +447,8 @@ static int show_gitcomp(struct parse_opt_ctx_t *ctx,
 		case OPTION_INTEGER:
 		case OPTION_MAGNITUDE:
 		case OPTION_CALLBACK:
+			has_unset_form = 1;
+
 			if (opts->flags & PARSE_OPT_NOARG)
 				break;
 			if (opts->flags & PARSE_OPT_OPTARG)
@@ -458,12 +457,27 @@ static int show_gitcomp(struct parse_opt_ctx_t *ctx,
 				break;
 			suffix = "=";
 			break;
+		case OPTION_BIT:
+		case OPTION_NEGBIT:
+		case OPTION_COUNTUP:
+		case OPTION_SET_INT:
+			has_unset_form = 1;
+			break;
 		default:
 			break;
 		}
 		if (opts->flags & PARSE_OPT_COMP_ARG)
 			suffix = "=";
 		printf(" --%s%s", opts->long_name, suffix);
+
+		if (has_unset_form && !(opts->flags & PARSE_OPT_NONEG)) {
+			const char *name;
+
+			if (skip_prefix(opts->long_name, "no-", &name))
+				printf(" --%s", name);
+			else
+				printf(" --no-%s", opts->long_name);
+		}
 	}
 	fputc('\n', stdout);
 	exit(0);
