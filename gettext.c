@@ -2,7 +2,8 @@
  * Copyright (c) 2010 Ævar Arnfjörð Bjarmason
  */
 
-#include "git-compat-util.h"
+#include "cache.h"
+#include "exec_cmd.h"
 #include "gettext.h"
 #include "strbuf.h"
 #include "utf8.h"
@@ -159,15 +160,24 @@ static void init_gettext_charset(const char *domain)
 
 void git_setup_gettext(void)
 {
-	const char *podir = getenv("GIT_TEXTDOMAINDIR");
+	const char *podir = getenv(GIT_TEXT_DOMAIN_DIR_ENVIRONMENT);
+	char *p = NULL;
 
 	if (!podir)
-		podir = GIT_LOCALE_PATH;
+		podir = p = system_path(GIT_LOCALE_PATH);
+
+	if (!is_directory(podir)) {
+		free(p);
+		return;
+	}
+
 	bindtextdomain("git", podir);
 	setlocale(LC_MESSAGES, "");
 	setlocale(LC_TIME, "");
 	init_gettext_charset("git");
 	textdomain("git");
+
+	free(p);
 }
 
 /* return the number of columns of string 's' in current locale */
