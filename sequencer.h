@@ -80,6 +80,7 @@ int sequencer_make_script(FILE *out, int argc, const char **argv,
 int sequencer_add_exec_commands(const char *command);
 int transform_todos(unsigned flags);
 int check_todo_list(void);
+int append_todo_help(unsigned edit_todo, unsigned keep_empty);
 int skip_unnecessary_picks(void);
 int rearrange_squash(void);
 
