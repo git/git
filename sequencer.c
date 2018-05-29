@@ -3534,7 +3534,7 @@ static const char *label_oid(struct object_id *oid, const char *label,
 				p[i] = save;
 			}
 		}
-	} else if (((len = strlen(label)) == GIT_SHA1_RAWSZ &&
+	} else if (((len = strlen(label)) == the_hash_algo->hexsz &&
 		    !get_oid_hex(label, &dummy)) ||
 		   (len == 1 && *label == '#') ||
 		   hashmap_get_from_hash(&state->labels,
