@@ -14,6 +14,7 @@
 #include "strbuf.h"
 #include "version.h"
 #include "protocol.h"
+#include "alias.h"
 
 static char *server_capabilities_v1;
 static struct argv_array server_capabilities_v2 = ARGV_ARRAY_INIT;
