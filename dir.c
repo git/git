@@ -2993,7 +2993,7 @@ void untracked_cache_invalidate_path(struct index_state *istate,
 {
 	if (!istate->untracked || !istate->untracked->root)
 		return;
-	if (!safe_path && !verify_path(path))
+	if (!safe_path && !verify_path(path, 0))
 		return;
 	invalidate_one_component(istate->untracked, istate->untracked->root,
 				 path, strlen(path));

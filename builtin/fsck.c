@@ -340,7 +340,7 @@ static void check_connectivity(void)
 	}
 }
 
-static int fsck_obj(struct object *obj)
+static int fsck_obj(struct object *obj, void *buffer, unsigned long size)
 {
 	int err;
 
@@ -354,7 +354,7 @@ static int fsck_obj(struct object *obj)
 
 	if (fsck_walk(obj, NULL, &fsck_obj_options))
 		objerror(obj, "broken links");
-	err = fsck_object(obj, NULL, 0, &fsck_obj_options);
+	err = fsck_object(obj, buffer, size, &fsck_obj_options);
 	if (err)
 		goto out;
 
@@ -399,7 +399,7 @@ static int fsck_obj_buffer(const struct object_id *oid, enum object_type type,
 	}
 	obj->flags &= ~(REACHABLE | SEEN);
 	obj->flags |= HAS_OBJ;
-	return fsck_obj(obj);
+	return fsck_obj(obj, buffer, size);
 }
 
 static int default_refs;
@@ -507,44 +507,42 @@ static void get_default_heads(void)
 	}
 }
 
-static struct object *parse_loose_object(const struct object_id *oid,
-					 const char *path)
-{
-	struct object *obj;
-	void *contents;
-	enum object_type type;
-	unsigned long size;
-	int eaten;
-
-	if (read_loose_object(path, oid, &type, &size, &contents) < 0)
-		return NULL;
-
-	if (!contents && type != OBJ_BLOB)
-		die("BUG: read_loose_object streamed a non-blob");
-
-	obj = parse_object_buffer(oid, type, size, contents, &eaten);
-
-	if (!eaten)
-		free(contents);
-	return obj;
-}
-
 static int fsck_loose(const struct object_id *oid, const char *path, void *data)
 {
-	struct object *obj = parse_loose_object(oid, path);
+	struct object *obj;
+	enum object_type type;
+	unsigned long size;
+	void *contents;
+	int eaten;
 
-	if (!obj) {
+	if (read_loose_object(path, oid, &type, &size, &contents) < 0) {
 		errors_found |= ERROR_OBJECT;
 		error("%s: object corrupt or missing: %s",
 		      oid_to_hex(oid), path);
 		return 0; /* keep checking other objects */
 	}
 
+	if (!contents && type != OBJ_BLOB)
+		BUG("read_loose_object streamed a non-blob");
+
+	obj = parse_object_buffer(oid, type, size, contents, &eaten);
+	if (!obj) {
+		errors_found |= ERROR_OBJECT;
+		error("%s: object could not be parsed: %s",
+		      oid_to_hex(oid), path);
+		if (!eaten)
+			free(contents);
+		return 0; /* keep checking other objects */
+	}
+
 	obj->flags &= ~(REACHABLE | SEEN);
 	obj->flags |= HAS_OBJ;
-	if (fsck_obj(obj))
+	if (fsck_obj(obj, contents, size))
 		errors_found |= ERROR_OBJECT;
-	return 0;
+
+	if (!eaten)
+		free(contents);
+	return 0; /* keep checking other objects, even if we saw an error */
 }
 
 static int fsck_cruft(const char *basename, const char *path, void *data)
@@ -756,6 +754,9 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 			}
 			stop_progress(&progress);
 		}
+
+		if (fsck_finish(&fsck_obj_options))
+			errors_found |= ERROR_OBJECT;
 	}
 
 	for (i = 0; i < argc; i++) {

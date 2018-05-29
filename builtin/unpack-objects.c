@@ -210,7 +210,7 @@ static int check_object(struct object *obj, int type, void *data, struct fsck_op
 	if (!obj_buf)
 		die("Whoops! Cannot find object '%s'", oid_to_hex(&obj->oid));
 	if (fsck_object(obj, obj_buf->buffer, obj_buf->size, &fsck_options))
-		die("Error in object");
+		die("fsck error in packed object");
 	fsck_options.walk = check_object;
 	if (fsck_walk(obj, NULL, &fsck_options))
 		die("Error on reachable objects of %s", oid_to_hex(&obj->oid));
@@ -572,8 +572,11 @@ int cmd_unpack_objects(int argc, const char **argv, const char *prefix)
 	unpack_all();
 	the_hash_algo->update_fn(&ctx, buffer, offset);
 	the_hash_algo->final_fn(oid.hash, &ctx);
-	if (strict)
+	if (strict) {
 		write_rest();
+		if (fsck_finish(&fsck_options))
+			die(_("fsck error in pack objects"));
+	}
 	if (hashcmp(fill(the_hash_algo->rawsz), oid.hash))
 		die("final sha1 did not match");
 	use(the_hash_algo->rawsz);
