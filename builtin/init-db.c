@@ -117,7 +117,7 @@ static void copy_templates(const char *template_dir)
 
 	dir = opendir(template_path.buf);
 	if (!dir) {
-		warning(_("templates not found %s"), template_dir);
+		warning(_("templates not found in %s"), template_dir);
 		goto free_return;
 	}
 
