@@ -332,7 +332,7 @@ test_expect_success 'difftool --extcmd cat arg1' '
 test_expect_success 'difftool --extcmd cat arg2' '
 	echo branch >expect &&
 	git difftool --no-prompt \
-		--extcmd sh\ -c\ \"cat\ \$2\" branch >actual &&
+		--extcmd sh\ -c\ \"cat\ \\\"\$2\\\"\" branch >actual &&
 	test_cmp expect actual
 '
 
