@@ -48,6 +48,10 @@ struct replay_opts {
 	struct strbuf current_fixups;
 	int current_fixup_count;
 
+	/* placeholder commit for -i --root */
+	struct object_id squash_onto;
+	int have_squash_onto;
+
 	/* Only used by REPLAY_NONE */
 	struct rev_info *revs;
 };

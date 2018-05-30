@@ -124,6 +124,12 @@ static GIT_PATH_FUNC(rebase_path_rewritten_pending,
 	"rebase-merge/rewritten-pending")
 
 /*
+ * The path of the file containig the OID of the "squash onto" commit, i.e.
+ * the dummy commit used for `reset [new root]`.
+ */
+static GIT_PATH_FUNC(rebase_path_squash_onto, "rebase-merge/squash-onto")
+
+/*
  * The path of the file listing refs that need to be deleted after the rebase
  * finishes. This is used by the `label` command to record the need for cleanup.
  */
@@ -469,7 +475,8 @@ static int fast_forward_to(const struct object_id *to, const struct object_id *f
 	transaction = ref_transaction_begin(&err);
 	if (!transaction ||
 	    ref_transaction_update(transaction, "HEAD",
-				   to, unborn ? &null_oid : from,
+				   to, unborn && !is_rebase_i(opts) ?
+				   &null_oid : from,
 				   0, sb.buf, &err) ||
 	    ref_transaction_commit(transaction, &err)) {
 		ref_transaction_free(transaction);
@@ -561,9 +568,23 @@ static int do_recursive_merge(struct commit *base, struct commit *next,
 	return !clean;
 }
 
+static struct object_id *get_cache_tree_oid(void)
+{
+	if (!active_cache_tree)
+		active_cache_tree = cache_tree();
+
+	if (!cache_tree_fully_valid(active_cache_tree))
+		if (cache_tree_update(&the_index, 0)) {
+			error(_("unable to update cache tree"));
+			return NULL;
+		}
+
+	return &active_cache_tree->oid;
+}
+
 static int is_index_unchanged(void)
 {
-	struct object_id head_oid;
+	struct object_id head_oid, *cache_tree_oid;
 	struct commit *head_commit;
 
 	if (!resolve_ref_unsafe("HEAD", RESOLVE_REF_READING, &head_oid, NULL))
@@ -582,15 +603,10 @@ static int is_index_unchanged(void)
 	if (parse_commit(head_commit))
 		return -1;
 
-	if (!active_cache_tree)
-		active_cache_tree = cache_tree();
+	if (!(cache_tree_oid = get_cache_tree_oid()))
+		return -1;
 
-	if (!cache_tree_fully_valid(active_cache_tree))
-		if (cache_tree_update(&the_index, 0))
-			return error(_("unable to update cache tree"));
-
-	return !oidcmp(&active_cache_tree->oid,
-		       get_commit_tree_oid(head_commit));
+	return !oidcmp(cache_tree_oid, get_commit_tree_oid(head_commit));
 }
 
 static int write_author_script(const char *message)
@@ -682,6 +698,52 @@ static char *get_author(const char *message)
 	return NULL;
 }
 
+/* Read author-script and return an ident line (author <email> timestamp) */
+static const char *read_author_ident(struct strbuf *buf)
+{
+	const char *keys[] = {
+		"GIT_AUTHOR_NAME=", "GIT_AUTHOR_EMAIL=", "GIT_AUTHOR_DATE="
+	};
+	char *in, *out, *eol;
+	int i = 0, len;
+
+	if (strbuf_read_file(buf, rebase_path_author_script(), 256) <= 0)
+		return NULL;
+
+	/* dequote values and construct ident line in-place */
+	for (in = out = buf->buf; i < 3 && in - buf->buf < buf->len; i++) {
+		if (!skip_prefix(in, keys[i], (const char **)&in)) {
+			warning("could not parse '%s' (looking for '%s'",
+				rebase_path_author_script(), keys[i]);
+			return NULL;
+		}
+
+		eol = strchrnul(in, '\n');
+		*eol = '\0';
+		sq_dequote(in);
+		len = strlen(in);
+
+		if (i > 0) /* separate values by spaces */
+			*(out++) = ' ';
+		if (i == 1) /* email needs to be surrounded by <...> */
+			*(out++) = '<';
+		memmove(out, in, len);
+		out += len;
+		if (i == 1) /* email needs to be surrounded by <...> */
+			*(out++) = '>';
+		in = eol + 1;
+	}
+
+	if (i < 3) {
+		warning("could not parse '%s' (looking for '%s')",
+			rebase_path_author_script(), keys[i]);
+		return NULL;
+	}
+
+	buf->len = out - buf->buf;
+	return buf->buf;
+}
+
 static const char staged_changes_advice[] =
 N_("you have staged changes in your working tree\n"
 "If these changes are meant to be squashed into the previous commit, run:\n"
@@ -701,6 +763,7 @@ N_("you have staged changes in your working tree\n"
 #define AMEND_MSG   (1<<2)
 #define CLEANUP_MSG (1<<3)
 #define VERIFY_MSG  (1<<4)
+#define CREATE_ROOT_COMMIT (1<<5)
 
 /*
  * If we are cherry-pick, and if the merge did not result in
@@ -719,6 +782,40 @@ static int run_git_commit(const char *defmsg, struct replay_opts *opts,
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;
 	const char *value;
+
+	if (flags & CREATE_ROOT_COMMIT) {
+		struct strbuf msg = STRBUF_INIT, script = STRBUF_INIT;
+		const char *author = is_rebase_i(opts) ?
+			read_author_ident(&script) : NULL;
+		struct object_id root_commit, *cache_tree_oid;
+		int res = 0;
+
+		if (!defmsg)
+			BUG("root commit without message");
+
+		if (!(cache_tree_oid = get_cache_tree_oid()))
+			res = -1;
+
+		if (!res)
+			res = strbuf_read_file(&msg, defmsg, 0);
+
+		if (res <= 0)
+			res = error_errno(_("could not read '%s'"), defmsg);
+		else
+			res = commit_tree(msg.buf, msg.len, cache_tree_oid,
+					  NULL, &root_commit, author,
+					  opts->gpg_sign);
+
+		strbuf_release(&msg);
+		strbuf_release(&script);
+		if (!res) {
+			update_ref(NULL, "CHERRY_PICK_HEAD", &root_commit, NULL,
+				   REF_NO_DEREF, UPDATE_REFS_MSG_ON_ERR);
+			res = update_ref(NULL, "HEAD", &root_commit, NULL, 0,
+					 UPDATE_REFS_MSG_ON_ERR);
+		}
+		return res < 0 ? error(_("writing root commit")) : 0;
+	}
 
 	cmd.git_cmd = 1;
 
@@ -1210,7 +1307,8 @@ static int do_commit(const char *msg_file, const char *author,
 {
 	int res = 1;
 
-	if (!(flags & EDIT_MSG) && !(flags & VERIFY_MSG)) {
+	if (!(flags & EDIT_MSG) && !(flags & VERIFY_MSG) &&
+	    !(flags & CREATE_ROOT_COMMIT)) {
 		struct object_id oid;
 		struct strbuf sb = STRBUF_INIT;
 
@@ -1361,6 +1459,22 @@ static int is_noop(const enum todo_command command)
 static int is_fixup(enum todo_command command)
 {
 	return command == TODO_FIXUP || command == TODO_SQUASH;
+}
+
+/* Does this command create a (non-merge) commit? */
+static int is_pick_or_similar(enum todo_command command)
+{
+	switch (command) {
+	case TODO_PICK:
+	case TODO_REVERT:
+	case TODO_EDIT:
+	case TODO_REWORD:
+	case TODO_FIXUP:
+	case TODO_SQUASH:
+		return 1;
+	default:
+		return 0;
+	}
 }
 
 static int update_squash_messages(enum todo_command command,
@@ -1516,7 +1630,14 @@ static int do_pick_commit(enum todo_command command, struct commit *commit,
 			return error(_("your index file is unmerged."));
 	} else {
 		unborn = get_oid("HEAD", &head);
-		if (unborn)
+		/* Do we want to generate a root commit? */
+		if (is_pick_or_similar(command) && opts->have_squash_onto &&
+		    !oidcmp(&head, &opts->squash_onto)) {
+			if (is_fixup(command))
+				return error(_("cannot fixup root commit"));
+			flags |= CREATE_ROOT_COMMIT;
+			unborn = 1;
+		} else if (unborn)
 			oidcpy(&head, the_hash_algo->empty_tree);
 		if (index_differs_from(unborn ? EMPTY_TREE_SHA1_HEX : "HEAD",
 				       NULL, 0))
@@ -2142,6 +2263,12 @@ static int read_populate_opts(struct replay_opts *opts)
 			}
 		}
 
+		if (read_oneliner(&buf, rebase_path_squash_onto(), 0)) {
+			if (get_oid_hex(buf.buf, &opts->squash_onto) < 0)
+				return error(_("unusable squash-onto"));
+			opts->have_squash_onto = 1;
+		}
+
 		return 0;
 	}
 
@@ -2634,18 +2761,34 @@ static int do_reset(const char *name, int len, struct replay_opts *opts)
 	if (hold_locked_index(&lock, LOCK_REPORT_ON_ERROR) < 0)
 		return -1;
 
-	/* Determine the length of the label */
-	for (i = 0; i < len; i++)
-		if (isspace(name[i]))
-			len = i;
+	if (len == 10 && !strncmp("[new root]", name, len)) {
+		if (!opts->have_squash_onto) {
+			const char *hex;
+			if (commit_tree("", 0, the_hash_algo->empty_tree,
+					NULL, &opts->squash_onto,
+					NULL, NULL))
+				return error(_("writing fake root commit"));
+			opts->have_squash_onto = 1;
+			hex = oid_to_hex(&opts->squash_onto);
+			if (write_message(hex, strlen(hex),
+					  rebase_path_squash_onto(), 0))
+				return error(_("writing squash-onto"));
+		}
+		oidcpy(&oid, &opts->squash_onto);
+	} else {
+		/* Determine the length of the label */
+		for (i = 0; i < len; i++)
+			if (isspace(name[i]))
+				len = i;
 
-	strbuf_addf(&ref_name, "refs/rewritten/%.*s", len, name);
-	if (get_oid(ref_name.buf, &oid) &&
-	    get_oid(ref_name.buf + strlen("refs/rewritten/"), &oid)) {
-		error(_("could not read '%s'"), ref_name.buf);
-		rollback_lock_file(&lock);
-		strbuf_release(&ref_name);
-		return -1;
+		strbuf_addf(&ref_name, "refs/rewritten/%.*s", len, name);
+		if (get_oid(ref_name.buf, &oid) &&
+		    get_oid(ref_name.buf + strlen("refs/rewritten/"), &oid)) {
+			error(_("could not read '%s'"), ref_name.buf);
+			rollback_lock_file(&lock);
+			strbuf_release(&ref_name);
+			return -1;
+		}
 	}
 
 	memset(&unpack_tree_opts, 0, sizeof(unpack_tree_opts));
@@ -2738,6 +2881,18 @@ static int do_merge(struct commit *commit, const char *arg, int arg_len,
 
 	if (!merge_commit) {
 		ret = error(_("could not resolve '%s'"), ref_name.buf);
+		goto leave_merge;
+	}
+
+	if (opts->have_squash_onto &&
+	    !oidcmp(&head_commit->object.oid, &opts->squash_onto)) {
+		/*
+		 * When the user tells us to "merge" something into a
+		 * "[new root]", let's simply fast-forward to the merge head.
+		 */
+		rollback_lock_file(&lock);
+		ret = fast_forward_to(&merge_commit->object.oid,
+				       &head_commit->object.oid, 0, opts);
 		goto leave_merge;
 	}
 
@@ -3850,7 +4005,8 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 		}
 
 		if (!commit)
-			fprintf(out, "%s onto\n", cmd_reset);
+			fprintf(out, "%s %s\n", cmd_reset,
+				rebase_cousins ? "onto" : "[new root]");
 		else {
 			const char *to = NULL;
 
