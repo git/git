@@ -91,8 +91,24 @@ int checkout_fast_forward(const struct object_id *head,
 		return -1;
 
 	memset(&trees, 0, sizeof(trees));
-	memset(&opts, 0, sizeof(opts));
 	memset(&t, 0, sizeof(t));
+
+	trees[nr_trees] = parse_tree_indirect(head);
+	if (!trees[nr_trees++]) {
+		rollback_lock_file(&lock_file);
+		return -1;
+	}
+	trees[nr_trees] = parse_tree_indirect(remote);
+	if (!trees[nr_trees++]) {
+		rollback_lock_file(&lock_file);
+		return -1;
+	}
+	for (i = 0; i < nr_trees; i++) {
+		parse_tree(trees[i]);
+		init_tree_desc(t+i, trees[i]->buffer, trees[i]->size);
+	}
+
+	memset(&opts, 0, sizeof(opts));
 	if (overwrite_ignore) {
 		memset(&dir, 0, sizeof(dir));
 		dir.flags |= DIR_SHOW_IGNORED;
@@ -109,24 +125,13 @@ int checkout_fast_forward(const struct object_id *head,
 	opts.fn = twoway_merge;
 	setup_unpack_trees_porcelain(&opts, "merge");
 
-	trees[nr_trees] = parse_tree_indirect(head);
-	if (!trees[nr_trees++]) {
-		rollback_lock_file(&lock_file);
-		return -1;
-	}
-	trees[nr_trees] = parse_tree_indirect(remote);
-	if (!trees[nr_trees++]) {
-		rollback_lock_file(&lock_file);
-		return -1;
-	}
-	for (i = 0; i < nr_trees; i++) {
-		parse_tree(trees[i]);
-		init_tree_desc(t+i, trees[i]->buffer, trees[i]->size);
-	}
 	if (unpack_trees(nr_trees, t, &opts)) {
 		rollback_lock_file(&lock_file);
+		clear_unpack_trees_porcelain(&opts);
 		return -1;
 	}
+	clear_unpack_trees_porcelain(&opts);
+
 	if (write_locked_index(&the_index, &lock_file, COMMIT_LOCK))
 		return error(_("unable to write new index file"));
 	return 0;
