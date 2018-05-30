@@ -2083,6 +2083,7 @@ void release_http_pack_request(struct http_pack_request *preq)
 		preq->packfile = NULL;
 	}
 	preq->slot = NULL;
+	strbuf_release(&preq->tmpfile);
 	free(preq->url);
 	free(preq);
 }
@@ -2105,19 +2106,19 @@ int finish_http_pack_request(struct http_pack_request *preq)
 		lst = &((*lst)->next);
 	*lst = (*lst)->next;
 
-	if (!strip_suffix(preq->tmpfile, ".pack.temp", &len))
+	if (!strip_suffix(preq->tmpfile.buf, ".pack.temp", &len))
 		BUG("pack tmpfile does not end in .pack.temp?");
-	tmp_idx = xstrfmt("%.*s.idx.temp", (int)len, preq->tmpfile);
+	tmp_idx = xstrfmt("%.*s.idx.temp", (int)len, preq->tmpfile.buf);
 
 	argv_array_push(&ip.args, "index-pack");
 	argv_array_pushl(&ip.args, "-o", tmp_idx, NULL);
-	argv_array_push(&ip.args, preq->tmpfile);
+	argv_array_push(&ip.args, preq->tmpfile.buf);
 	ip.git_cmd = 1;
 	ip.no_stdin = 1;
 	ip.no_stdout = 1;
 
 	if (run_command(&ip)) {
-		unlink(preq->tmpfile);
+		unlink(preq->tmpfile.buf);
 		unlink(tmp_idx);
 		free(tmp_idx);
 		return -1;
@@ -2125,7 +2126,7 @@ int finish_http_pack_request(struct http_pack_request *preq)
 
 	unlink(sha1_pack_index_name(p->sha1));
 
-	if (finalize_object_file(preq->tmpfile, sha1_pack_name(p->sha1))
+	if (finalize_object_file(preq->tmpfile.buf, sha1_pack_name(p->sha1))
 	 || finalize_object_file(tmp_idx, sha1_pack_index_name(p->sha1))) {
 		free(tmp_idx);
 		return -1;
@@ -2144,6 +2145,7 @@ struct http_pack_request *new_http_pack_request(
 	struct http_pack_request *preq;
 
 	preq = xcalloc(1, sizeof(*preq));
+	strbuf_init(&preq->tmpfile, 0);
 	preq->target = target;
 
 	end_url_with_slash(&buf, base_url);
@@ -2151,12 +2153,11 @@ struct http_pack_request *new_http_pack_request(
 		sha1_to_hex(target->sha1));
 	preq->url = strbuf_detach(&buf, NULL);
 
-	snprintf(preq->tmpfile, sizeof(preq->tmpfile), "%s.temp",
-		sha1_pack_name(target->sha1));
-	preq->packfile = fopen(preq->tmpfile, "a");
+	strbuf_addf(&preq->tmpfile, "%s.temp", sha1_pack_name(target->sha1));
+	preq->packfile = fopen(preq->tmpfile.buf, "a");
 	if (!preq->packfile) {
 		error("Unable to open local file %s for pack",
-		      preq->tmpfile);
+		      preq->tmpfile.buf);
 		goto abort;
 	}
 
@@ -2183,6 +2184,7 @@ struct http_pack_request *new_http_pack_request(
 	return preq;
 
 abort:
+	strbuf_release(&preq->tmpfile);
 	free(preq->url);
 	free(preq);
 	return NULL;
@@ -2233,7 +2235,7 @@ struct http_object_request *new_http_object_request(const char *base_url,
 {
 	char *hex = sha1_to_hex(sha1);
 	struct strbuf filename = STRBUF_INIT;
-	char prevfile[PATH_MAX];
+	struct strbuf prevfile = STRBUF_INIT;
 	int prevlocal;
 	char prev_buf[PREV_BUF_SIZE];
 	ssize_t prev_read = 0;
@@ -2241,40 +2243,41 @@ struct http_object_request *new_http_object_request(const char *base_url,
 	struct http_object_request *freq;
 
 	freq = xcalloc(1, sizeof(*freq));
+	strbuf_init(&freq->tmpfile, 0);
 	hashcpy(freq->sha1, sha1);
 	freq->localfile = -1;
 
 	sha1_file_name(the_repository, &filename, sha1);
-	snprintf(freq->tmpfile, sizeof(freq->tmpfile),
-		 "%s.temp", filename.buf);
+	strbuf_addf(&freq->tmpfile, "%s.temp", filename.buf);
 
-	snprintf(prevfile, sizeof(prevfile), "%s.prev", filename.buf);
-	unlink_or_warn(prevfile);
-	rename(freq->tmpfile, prevfile);
-	unlink_or_warn(freq->tmpfile);
+	strbuf_addf(&prevfile, "%s.prev", filename.buf);
+	unlink_or_warn(prevfile.buf);
+	rename(freq->tmpfile.buf, prevfile.buf);
+	unlink_or_warn(freq->tmpfile.buf);
 	strbuf_release(&filename);
 
 	if (freq->localfile != -1)
 		error("fd leakage in start: %d", freq->localfile);
-	freq->localfile = open(freq->tmpfile,
+	freq->localfile = open(freq->tmpfile.buf,
 			       O_WRONLY | O_CREAT | O_EXCL, 0666);
 	/*
 	 * This could have failed due to the "lazy directory creation";
 	 * try to mkdir the last path component.
 	 */
 	if (freq->localfile < 0 && errno == ENOENT) {
-		char *dir = strrchr(freq->tmpfile, '/');
+		char *dir = strrchr(freq->tmpfile.buf, '/');
 		if (dir) {
 			*dir = 0;
-			mkdir(freq->tmpfile, 0777);
+			mkdir(freq->tmpfile.buf, 0777);
 			*dir = '/';
 		}
-		freq->localfile = open(freq->tmpfile,
+		freq->localfile = open(freq->tmpfile.buf,
 				       O_WRONLY | O_CREAT | O_EXCL, 0666);
 	}
 
 	if (freq->localfile < 0) {
-		error_errno("Couldn't create temporary file %s", freq->tmpfile);
+		error_errno("Couldn't create temporary file %s",
+			    freq->tmpfile.buf);
 		goto abort;
 	}
 
@@ -2288,7 +2291,7 @@ struct http_object_request *new_http_object_request(const char *base_url,
 	 * If a previous temp file is present, process what was already
 	 * fetched.
 	 */
-	prevlocal = open(prevfile, O_RDONLY);
+	prevlocal = open(prevfile.buf, O_RDONLY);
 	if (prevlocal != -1) {
 		do {
 			prev_read = xread(prevlocal, prev_buf, PREV_BUF_SIZE);
@@ -2305,7 +2308,8 @@ struct http_object_request *new_http_object_request(const char *base_url,
 		} while (prev_read > 0);
 		close(prevlocal);
 	}
-	unlink_or_warn(prevfile);
+	unlink_or_warn(prevfile.buf);
+	strbuf_release(&prevfile);
 
 	/*
 	 * Reset inflate/SHA1 if there was an error reading the previous temp
@@ -2320,7 +2324,7 @@ struct http_object_request *new_http_object_request(const char *base_url,
 			lseek(freq->localfile, 0, SEEK_SET);
 			if (ftruncate(freq->localfile, 0) < 0) {
 				error_errno("Couldn't truncate temporary file %s",
-					    freq->tmpfile);
+					    freq->tmpfile.buf);
 				goto abort;
 			}
 		}
@@ -2350,6 +2354,7 @@ struct http_object_request *new_http_object_request(const char *base_url,
 	return freq;
 
 abort:
+	strbuf_release(&prevfile);
 	free(freq->url);
 	free(freq);
 	return NULL;
@@ -2377,24 +2382,24 @@ int finish_http_object_request(struct http_object_request *freq)
 	if (freq->http_code == 416) {
 		warning("requested range invalid; we may already have all the data.");
 	} else if (freq->curl_result != CURLE_OK) {
-		if (stat(freq->tmpfile, &st) == 0)
+		if (stat(freq->tmpfile.buf, &st) == 0)
 			if (st.st_size == 0)
-				unlink_or_warn(freq->tmpfile);
+				unlink_or_warn(freq->tmpfile.buf);
 		return -1;
 	}
 
 	git_inflate_end(&freq->stream);
 	git_SHA1_Final(freq->real_sha1, &freq->c);
 	if (freq->zret != Z_STREAM_END) {
-		unlink_or_warn(freq->tmpfile);
+		unlink_or_warn(freq->tmpfile.buf);
 		return -1;
 	}
 	if (hashcmp(freq->sha1, freq->real_sha1)) {
-		unlink_or_warn(freq->tmpfile);
+		unlink_or_warn(freq->tmpfile.buf);
 		return -1;
 	}
 	sha1_file_name(the_repository, &filename, freq->sha1);
-	freq->rename = finalize_object_file(freq->tmpfile, filename.buf);
+	freq->rename = finalize_object_file(freq->tmpfile.buf, filename.buf);
 	strbuf_release(&filename);
 
 	return freq->rename;
@@ -2402,7 +2407,7 @@ int finish_http_object_request(struct http_object_request *freq)
 
 void abort_http_object_request(struct http_object_request *freq)
 {
-	unlink_or_warn(freq->tmpfile);
+	unlink_or_warn(freq->tmpfile.buf);
 
 	release_http_object_request(freq);
 }
@@ -2422,4 +2427,5 @@ void release_http_object_request(struct http_object_request *freq)
 		release_active_slot(freq->slot);
 		freq->slot = NULL;
 	}
+	strbuf_release(&freq->tmpfile);
 }

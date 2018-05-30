@@ -207,7 +207,7 @@ struct http_pack_request {
 	struct packed_git *target;
 	struct packed_git **lst;
 	FILE *packfile;
-	char tmpfile[PATH_MAX];
+	struct strbuf tmpfile;
 	struct active_request_slot *slot;
 };
 
@@ -219,7 +219,7 @@ extern void release_http_pack_request(struct http_pack_request *preq);
 /* Helpers for fetching object */
 struct http_object_request {
 	char *url;
-	char tmpfile[PATH_MAX];
+	struct strbuf tmpfile;
 	int localfile;
 	CURLcode curl_result;
 	char errorstr[CURL_ERROR_SIZE];

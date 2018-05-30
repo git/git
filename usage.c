@@ -148,6 +148,7 @@ static const char *fmt_with_err(char *buf, int n, const char *fmt)
 		}
 	}
 	str_error[j] = 0;
+	/* Truncation is acceptable here */
 	snprintf(buf, n, "%s: %s", fmt, str_error);
 	return buf;
 }

@@ -1162,8 +1162,8 @@ char *shorten_unambiguous_ref(const char *refname, int strict)
 		for (i = 0; i < nr_rules; i++) {
 			assert(offset < total_len);
 			scanf_fmts[i] = (char *)&scanf_fmts[nr_rules] + offset;
-			offset += snprintf(scanf_fmts[i], total_len - offset,
-					   ref_rev_parse_rules[i], 2, "%s") + 1;
+			offset += xsnprintf(scanf_fmts[i], total_len - offset,
+					    ref_rev_parse_rules[i], 2, "%s") + 1;
 		}
 	}
 

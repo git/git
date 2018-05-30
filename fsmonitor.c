@@ -97,19 +97,13 @@ void write_fsmonitor_extension(struct strbuf *sb, struct index_state *istate)
 static int query_fsmonitor(int version, uint64_t last_update, struct strbuf *query_result)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
-	char ver[64];
-	char date[64];
-	const char *argv[4];
 
-	if (!(argv[0] = core_fsmonitor))
+	if (!core_fsmonitor)
 		return -1;
 
-	snprintf(ver, sizeof(ver), "%d", version);
-	snprintf(date, sizeof(date), "%" PRIuMAX, (uintmax_t)last_update);
-	argv[1] = ver;
-	argv[2] = date;
-	argv[3] = NULL;
-	cp.argv = argv;
+	argv_array_push(&cp.args, core_fsmonitor);
+	argv_array_pushf(&cp.args, "%d", version);
+	argv_array_pushf(&cp.args, "%" PRIuMAX, (uintmax_t)last_update);
 	cp.use_shell = 1;
 	cp.dir = get_git_work_tree();
 

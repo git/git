@@ -387,11 +387,15 @@ void log_write_email_headers(struct rev_info *opt, struct commit *commit,
 		graph_show_oneline(opt->graph);
 	}
 	if (opt->mime_boundary && maybe_multipart) {
-		static char subject_buffer[1024];
-		static char buffer[1024];
+		static struct strbuf subject_buffer = STRBUF_INIT;
+		static struct strbuf buffer = STRBUF_INIT;
 		struct strbuf filename =  STRBUF_INIT;
 		*need_8bit_cte_p = -1; /* NEVER */
-		snprintf(subject_buffer, sizeof(subject_buffer) - 1,
+
+		strbuf_reset(&subject_buffer);
+		strbuf_reset(&buffer);
+
+		strbuf_addf(&subject_buffer,
 			 "%s"
 			 "MIME-Version: 1.0\n"
 			 "Content-Type: multipart/mixed;"
@@ -406,13 +410,13 @@ void log_write_email_headers(struct rev_info *opt, struct commit *commit,
 			 extra_headers ? extra_headers : "",
 			 mime_boundary_leader, opt->mime_boundary,
 			 mime_boundary_leader, opt->mime_boundary);
-		extra_headers = subject_buffer;
+		extra_headers = subject_buffer.buf;
 
 		if (opt->numbered_files)
 			strbuf_addf(&filename, "%d", opt->nr);
 		else
 			fmt_output_commit(&filename, commit, opt);
-		snprintf(buffer, sizeof(buffer) - 1,
+		strbuf_addf(&buffer,
 			 "\n--%s%s\n"
 			 "Content-Type: text/x-patch;"
 			 " name=\"%s\"\n"
@@ -423,7 +427,7 @@ void log_write_email_headers(struct rev_info *opt, struct commit *commit,
 			 filename.buf,
 			 opt->no_inline ? "attachment" : "inline",
 			 filename.buf);
-		opt->diffopt.stat_sep = buffer;
+		opt->diffopt.stat_sep = buffer.buf;
 		strbuf_release(&filename);
 	}
 	*extra_headers_p = extra_headers;
