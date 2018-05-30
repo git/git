@@ -133,6 +133,15 @@ UI, Workflows & Features
    These object names are now sorted according to their types for
    easier eyeballing.
 
+ * "git fetch $there $refspec" that talks over protocol v2 can take
+   advantage of server-side ref filtering; the code has been extended
+   so that this mechanism triggers also when fetching with configured
+   refspec.
+
+ * Our HTTP client code used to advertise that we accept gzip encoding
+   from the other side; instead, just let cURL library to advertise
+   and negotiate the best one.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -271,6 +280,23 @@ Performance, Internal Implementation, Development Support etc.
    TravisCI.org to get more warnings and errors diagnosed.
 
  * Conversion from uchar[20] to struct object_id continues.
+
+ * By code restructuring of submodule merge in merge-recursive,
+   informational messages from the codepath are now given using the
+   same mechanism as other output, and honor the merge.verbosity
+   configuration.  The code also learned to give a few new messages
+   when a submodule three-way merge resolves cleanly when one side
+   records a descendant of the commit chosen by the other side.
+
+ * Avoid unchecked snprintf() to make future code auditing easier.
+   (merge ac4896f007 jk/snprintf-truncation later to maint).
+
+ * Many tests hardcode the raw object names, which would change once
+   we migrate away from SHA-1.  While some of them must test against
+   exact object names, most of them do not have to use hardcoded
+   constants in the test.  The latter kind of tests have been updated
+   to test the moral equivalent of the original without hardcoding the
+   actual object names.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -461,6 +487,15 @@ Fixes since v2.17
    This has been corrected.
    (merge e30d833671 sb/submodule-update-try-harder later to maint).
 
+ * Error behaviour of "git grep" when it cannot read the index was
+   inconsistent with other commands that uses the index, which has
+   been corrected to error out early.
+   (merge b2aa84c789 sb/grep-die-on-unreadable-index later to maint).
+
+ * We used to call regfree() after regcomp() failed in some codepaths,
+   which have been corrected.
+   (merge 17154b1576 ma/regex-no-regfree-after-comp-fail later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge 248f66ed8e nd/trace-with-env later to maint).
    (merge 14ced5562c ys/bisect-object-id-missing-conversion-fix later to maint).
@@ -491,3 +526,4 @@ Fixes since v2.17
    (merge 92c4a7a129 nd/completion-aliasfiletype-typofix later to maint).
    (merge 58bd77b66a nd/pack-unreachable-objects-doc later to maint).
    (merge 4ed79d5203 sg/t6500-no-redirect-of-stdin later to maint).
+   (merge 17b8a2d6cd jk/config-blob-sans-repo later to maint).
