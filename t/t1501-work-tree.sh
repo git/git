@@ -238,10 +238,10 @@ test_expect_success '_gently() groks relative GIT_DIR & GIT_WORK_TREE' '
 
 test_expect_success 'diff-index respects work tree under .git dir' '
 	cat >diff-index-cached.expected <<-EOF &&
-	:000000 100644 $_z40 $EMPTY_BLOB A	sub/dir/tracked
+	:000000 100644 $ZERO_OID $EMPTY_BLOB A	sub/dir/tracked
 	EOF
 	cat >diff-index.expected <<-EOF &&
-	:000000 100644 $_z40 $_z40 A	sub/dir/tracked
+	:000000 100644 $ZERO_OID $ZERO_OID A	sub/dir/tracked
 	EOF
 
 	(
@@ -257,7 +257,7 @@ test_expect_success 'diff-index respects work tree under .git dir' '
 
 test_expect_success 'diff-files respects work tree under .git dir' '
 	cat >diff-files.expected <<-EOF &&
-	:100644 100644 $EMPTY_BLOB $_z40 M	sub/dir/tracked
+	:100644 100644 $EMPTY_BLOB $ZERO_OID M	sub/dir/tracked
 	EOF
 
 	(

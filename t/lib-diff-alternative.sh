@@ -59,9 +59,11 @@ int main(int argc, char **argv)
 }
 EOF
 
-	cat >expect <<\EOF
+	file1=$(git rev-parse --short $(git hash-object file1))
+	file2=$(git rev-parse --short $(git hash-object file2))
+	cat >expect <<EOF
 diff --git a/file1 b/file2
-index 6faa5a3..e3af329 100644
+index $file1..$file2 100644
 --- a/file1
 +++ b/file2
 @@ -1,26 +1,25 @@
@@ -136,9 +138,11 @@ e
 f
 EOF
 
-	cat >expect <<\EOF
+	uniq1=$(git rev-parse --short $(git hash-object uniq1))
+	uniq2=$(git rev-parse --short $(git hash-object uniq2))
+	cat >expect <<EOF
 diff --git a/uniq1 b/uniq2
-index b414108..0fdf397 100644
+index $uniq1..$uniq2 100644
 --- a/uniq1
 +++ b/uniq2
 @@ -1,6 +1,6 @@

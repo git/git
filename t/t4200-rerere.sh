@@ -243,7 +243,7 @@ rerere_gc_custom_expiry_test () {
 	five_days="$1" right_now="$2"
 	test_expect_success "rerere gc with custom expiry ($five_days, $right_now)" '
 		rm -fr .git/rr-cache &&
-		rr=.git/rr-cache/$_z40 &&
+		rr=.git/rr-cache/$ZERO_OID &&
 		mkdir -p "$rr" &&
 		>"$rr/preimage" &&
 		>"$rr/postimage" &&

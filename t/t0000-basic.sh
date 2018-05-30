@@ -839,7 +839,7 @@ test_expect_success 'writing tree out with git write-tree' '
 '
 
 # we know the shape and contents of the tree and know the object ID for it.
-test_expect_success 'validate object ID of a known tree' '
+test_expect_success SHA1 'validate object ID of a known tree' '
 	test "$tree" = 7bb943559a305bdd6bdee2cef6e5df2413c3d30a
     '
 
@@ -882,7 +882,7 @@ test_expect_success 'showing stage with git ls-files --stage' '
 	git ls-files --stage >current
 '
 
-test_expect_success 'validate git ls-files output for a known tree' '
+test_expect_success SHA1 'validate git ls-files output for a known tree' '
 	cat >expected <<-\EOF &&
 	100644 f87290f8eb2cbbea7857214459a0739927eab154 0	path0
 	120000 15a98433ae33114b085f3eb3bb03b832b3180a01 0	path0sym
@@ -900,7 +900,7 @@ test_expect_success 'writing tree out with git write-tree' '
 	tree=$(git write-tree)
 '
 
-test_expect_success 'validate object ID for a known tree' '
+test_expect_success SHA1 'validate object ID for a known tree' '
 	test "$tree" = 087704a96baf1c2d1c869a8b084481e121c88b5b
 '
 
@@ -908,7 +908,7 @@ test_expect_success 'showing tree with git ls-tree' '
     git ls-tree $tree >current
 '
 
-test_expect_success 'git ls-tree output for a known tree' '
+test_expect_success SHA1 'git ls-tree output for a known tree' '
 	cat >expected <<-\EOF &&
 	100644 blob f87290f8eb2cbbea7857214459a0739927eab154	path0
 	120000 blob 15a98433ae33114b085f3eb3bb03b832b3180a01	path0sym
@@ -924,7 +924,7 @@ test_expect_success 'showing tree with git ls-tree -r' '
 	git ls-tree -r $tree >current
 '
 
-test_expect_success 'git ls-tree -r output for a known tree' '
+test_expect_success SHA1 'git ls-tree -r output for a known tree' '
 	cat >expected <<-\EOF &&
 	100644 blob f87290f8eb2cbbea7857214459a0739927eab154	path0
 	120000 blob 15a98433ae33114b085f3eb3bb03b832b3180a01	path0sym
@@ -943,7 +943,7 @@ test_expect_success 'showing tree with git ls-tree -r -t' '
 	git ls-tree -r -t $tree >current
 '
 
-test_expect_success 'git ls-tree -r output for a known tree' '
+test_expect_success SHA1 'git ls-tree -r output for a known tree' '
 	cat >expected <<-\EOF &&
 	100644 blob f87290f8eb2cbbea7857214459a0739927eab154	path0
 	120000 blob 15a98433ae33114b085f3eb3bb03b832b3180a01	path0sym
@@ -964,7 +964,7 @@ test_expect_success 'writing partial tree out with git write-tree --prefix' '
 	ptree=$(git write-tree --prefix=path3)
 '
 
-test_expect_success 'validate object ID for a known tree' '
+test_expect_success SHA1 'validate object ID for a known tree' '
 	test "$ptree" = 21ae8269cacbe57ae09138dcc3a2887f904d02b3
 '
 
@@ -972,7 +972,7 @@ test_expect_success 'writing partial tree out with git write-tree --prefix' '
 	ptree=$(git write-tree --prefix=path3/subp3)
 '
 
-test_expect_success 'validate object ID for a known tree' '
+test_expect_success SHA1 'validate object ID for a known tree' '
 	test "$ptree" = 3c5e5399f3a333eddecce7a9b9465b63f65f51e2
 '
 
@@ -1006,7 +1006,7 @@ test_expect_success 'git read-tree followed by write-tree should be idempotent' 
 	test "$newtree" = "$tree"
 '
 
-test_expect_success 'validate git diff-files output for a know cache/work tree state' '
+test_expect_success SHA1 'validate git diff-files output for a know cache/work tree state' '
 	cat >expected <<\EOF &&
 :100644 100644 f87290f8eb2cbbea7857214459a0739927eab154 0000000000000000000000000000000000000000 M	path0
 :120000 120000 15a98433ae33114b085f3eb3bb03b832b3180a01 0000000000000000000000000000000000000000 M	path0sym
@@ -1033,21 +1033,21 @@ test_expect_success 'no diff after checkout and git update-index --refresh' '
 ################################################################
 P=087704a96baf1c2d1c869a8b084481e121c88b5b
 
-test_expect_success 'git commit-tree records the correct tree in a commit' '
+test_expect_success SHA1 'git commit-tree records the correct tree in a commit' '
 	commit0=$(echo NO | git commit-tree $P) &&
 	tree=$(git show --pretty=raw $commit0 |
 		 sed -n -e "s/^tree //p" -e "/^author /q") &&
 	test "z$tree" = "z$P"
 '
 
-test_expect_success 'git commit-tree records the correct parent in a commit' '
+test_expect_success SHA1 'git commit-tree records the correct parent in a commit' '
 	commit1=$(echo NO | git commit-tree $P -p $commit0) &&
 	parent=$(git show --pretty=raw $commit1 |
 		sed -n -e "s/^parent //p" -e "/^author /q") &&
 	test "z$commit0" = "z$parent"
 '
 
-test_expect_success 'git commit-tree omits duplicated parent in a commit' '
+test_expect_success SHA1 'git commit-tree omits duplicated parent in a commit' '
 	commit2=$(echo NO | git commit-tree $P -p $commit0 -p $commit0) &&
 	     parent=$(git show --pretty=raw $commit2 |
 		sed -n -e "s/^parent //p" -e "/^author /q" |

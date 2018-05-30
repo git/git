@@ -140,8 +140,8 @@ test_expect_success setup '
 		echo "# User $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>" &&
 		echo "# Date $test_tick 25200" &&
 		echo "#      $(git show --pretty="%aD" -s second)" &&
-		echo "# Node ID $_z40" &&
-		echo "# Parent  $_z40" &&
+		echo "# Node ID $ZERO_OID" &&
+		echo "# Parent  $ZERO_OID" &&
 		cat msg &&
 		echo &&
 		git diff-tree --no-commit-id -p second

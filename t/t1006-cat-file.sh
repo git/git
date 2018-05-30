@@ -236,8 +236,8 @@ test_expect_success "--batch-check for an empty line" '
 '
 
 test_expect_success 'empty --batch-check notices missing object' '
-	echo "$_z40 missing" >expect &&
-	echo "$_z40" | git cat-file --batch-check="" >actual &&
+	echo "$ZERO_OID missing" >expect &&
+	echo "$ZERO_OID" | git cat-file --batch-check="" >actual &&
 	test_cmp expect actual
 '
 
@@ -294,8 +294,8 @@ test_expect_success 'setup blobs which are likely to delta' '
 
 test_expect_success 'confirm that neither loose blob is a delta' '
 	cat >expect <<-EOF &&
-	$_z40
-	$_z40
+	$ZERO_OID
+	$ZERO_OID
 	EOF
 	git cat-file --batch-check="%(deltabase)" <blobs >actual &&
 	test_cmp expect actual

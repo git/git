@@ -1185,7 +1185,7 @@ test_expect_success PIPE 'N: empty directory reads as missing' '
 	test_cmp expect.response response &&
 	git rev-list read-empty |
 	git diff-tree -r --root --stdin |
-	sed "s/$_x40/OBJNAME/g" >actual &&
+	sed "s/$OID_REGEX/OBJNAME/g" >actual &&
 	test_cmp expect actual
 '
 
@@ -1271,7 +1271,7 @@ test_expect_success 'N: delete directory by copying' '
 	git fast-import <input &&
 	git rev-list N-delete |
 		git diff-tree -r --stdin --root --always |
-		sed -e "s/$_x40/OBJID/g" >actual &&
+		sed -e "s/$OID_REGEX/OBJID/g" >actual &&
 	test_cmp expect actual
 '
 
@@ -2602,7 +2602,7 @@ test_expect_success 'R: terminating "done" within commit' '
 	EOF
 	git rev-list done-ends |
 	git diff-tree -r --stdin --root --always |
-	sed -e "s/$_x40/OBJID/g" >actual &&
+	sed -e "s/$OID_REGEX/OBJID/g" >actual &&
 	test_cmp expect actual
 '
 

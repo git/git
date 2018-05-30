@@ -310,7 +310,7 @@ test_expect_success 'exercise strftime with odd fields' '
 	echo >expected &&
 	git for-each-ref --format="%(authordate:format:)" refs/heads >actual &&
 	test_cmp expected actual &&
-	long="long format -- $_z40$_z40$_z40$_z40$_z40$_z40$_z40" &&
+	long="long format -- $ZERO_OID$ZERO_OID$ZERO_OID$ZERO_OID$ZERO_OID$ZERO_OID$ZERO_OID" &&
 	echo $long >expected &&
 	git for-each-ref --format="%(authordate:format:$long)" refs/heads >actual &&
 	test_cmp expected actual

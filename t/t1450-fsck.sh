@@ -713,7 +713,7 @@ test_expect_success 'fsck notices dangling objects' '
 
 test_expect_success 'fsck $name notices bogus $name' '
 	test_must_fail git fsck bogus &&
-	test_must_fail git fsck $_z40
+	test_must_fail git fsck $ZERO_OID
 '
 
 test_expect_success 'bogus head does not fallback to all heads' '
@@ -723,7 +723,7 @@ test_expect_success 'bogus head does not fallback to all heads' '
 	blob=$(git rev-parse :foo) &&
 	test_when_finished "git rm --cached foo" &&
 	remove_object $blob &&
-	test_must_fail git fsck $_z40 >out 2>&1 &&
+	test_must_fail git fsck $ZERO_OID >out 2>&1 &&
 	! grep $blob out
 '
 

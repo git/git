@@ -40,7 +40,7 @@ test_expect_success 'setup' '
 '
 
 test_output () {
-	sed -e "s/ $_x40	/ X	/" <current >check &&
+	sed -e "s/ $OID_REGEX	/ X	/" <current >check &&
 	test_cmp expected check
 }
 

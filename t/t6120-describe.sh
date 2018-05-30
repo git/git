@@ -383,7 +383,7 @@ test_expect_success 'describe complains about tree object' '
 '
 
 test_expect_success 'describe complains about missing object' '
-	test_must_fail git describe $_z40
+	test_must_fail git describe $ZERO_OID
 '
 
 test_done

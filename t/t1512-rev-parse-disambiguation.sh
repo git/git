@@ -22,6 +22,12 @@ one tagged as v1.0.0.  They all have one regular file each.
 
 . ./test-lib.sh
 
+if ! test_have_prereq SHA1
+then
+	skip_all='not using SHA-1 for objects'
+	test_done
+fi
+
 test_expect_success 'blob and tree' '
 	test_tick &&
 	(

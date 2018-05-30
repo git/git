@@ -31,7 +31,7 @@ test_expect_success setup '
 		cd sub &&
 		git rev-list HEAD
 	) &&
-	echo ":160000 160000 $3 $_z40 M	sub" >expect &&
+	echo ":160000 160000 $3 $ZERO_OID M	sub" >expect &&
 	subtip=$3 subprev=$2
 '
 
@@ -250,7 +250,7 @@ test_expect_success 'conflicted submodule setup' '
 	# 39 efs
 	c=fffffffffffffffffffffffffffffffffffffff &&
 	(
-		echo "000000 $_z40 0	sub" &&
+		echo "000000 $ZERO_OID 0	sub" &&
 		echo "160000 1$c 1	sub" &&
 		echo "160000 2$c 2	sub" &&
 		echo "160000 3$c 3	sub"
@@ -265,7 +265,7 @@ index 2ffffff,3ffffff..0000000
 ++Subproject commit 0000000000000000000000000000000000000000'\'' &&
 
 	hh=$(git rev-parse HEAD) &&
-	sed -e "s/$_z40/$hh/" expect.nosub >expect.withsub
+	sed -e "s/$ZERO_OID/$hh/" expect.nosub >expect.withsub
 
 '
 

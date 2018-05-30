@@ -45,8 +45,9 @@ test_expect_success 'git log -- :' '
 '
 
 test_expect_success 'git log HEAD -- :/' '
+	initial=$(git rev-parse --short HEAD^) &&
 	cat >expected <<-EOF &&
-	24b24cf initial
+	$initial initial
 	EOF
 	(cd sub && git log --oneline HEAD -- :/ >../actual) &&
 	test_cmp expected actual
