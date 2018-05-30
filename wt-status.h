@@ -89,7 +89,9 @@ struct wt_status {
 	int show_stash;
 	int hints;
 	enum ahead_behind_flags ahead_behind_flags;
-
+	int detect_rename;
+	int rename_score;
+	int rename_limit;
 	enum wt_status_format status_format;
 	unsigned char sha1_commit[GIT_MAX_RAWSZ]; /* when not Initial */
 

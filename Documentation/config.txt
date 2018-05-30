@@ -3179,6 +3179,18 @@ status.displayCommentPrefix::
 	behavior of linkgit:git-status[1] in Git 1.8.4 and previous.
 	Defaults to false.
 
+status.renameLimit::
+	The number of files to consider when performing rename detection
+	in linkgit:git-status[1] and linkgit:git-commit[1]. Defaults to
+	the value of diff.renameLimit.
+
+status.renames::
+	Whether and how Git detects renames in linkgit:git-status[1] and
+	linkgit:git-commit[1] .  If set to "false", rename detection is
+	disabled. If set to "true", basic rename detection is enabled.
+	If set to "copies" or "copy", Git will detect copies, as well.
+	Defaults to the value of diff.renames.
+
 status.showStash::
 	If set to true, linkgit:git-status[1] will display the number of
 	entries currently stashed away.

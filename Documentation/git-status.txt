@@ -135,6 +135,16 @@ ignored, then the directory is not shown, but all contents are shown.
 	Display or do not display detailed ahead/behind counts for the
 	branch relative to its upstream branch.  Defaults to true.
 
+--renames::
+--no-renames::
+	Turn on/off rename detection regardless of user configuration.
+	See also linkgit:git-diff[1] `--no-renames`.
+
+--find-renames[=<n>]::
+	Turn on rename detection, optionally setting the similarity
+	threshold.
+	See also linkgit:git-diff[1] `--find-renames`.
+
 <pathspec>...::
 	See the 'pathspec' entry in linkgit:gitglossary[7].
 
