@@ -2333,6 +2333,19 @@ struct config_store_data {
 	unsigned int key_seen:1, section_seen:1, is_keys_section:1;
 };
 
+static void config_store_data_clear(struct config_store_data *store)
+{
+	free(store->key);
+	if (store->value_regex != NULL &&
+	    store->value_regex != CONFIG_REGEX_NONE) {
+		regfree(store->value_regex);
+		free(store->value_regex);
+	}
+	free(store->parsed);
+	free(store->seen);
+	memset(store, 0, sizeof(*store));
+}
+
 static int matches(const char *key, const char *value,
 		   const struct config_store_data *store)
 {
@@ -2667,7 +2680,6 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 	fd = hold_lock_file_for_update(&lock, config_filename, 0);
 	if (fd < 0) {
 		error_errno("could not lock config file %s", config_filename);
-		free(store.key);
 		ret = CONFIG_NO_LOCK;
 		goto out_free;
 	}
@@ -2677,8 +2689,6 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 	 */
 	in_fd = open(config_filename, O_RDONLY);
 	if ( in_fd < 0 ) {
-		free(store.key);
-
 		if ( ENOENT != errno ) {
 			error_errno("opening %s", config_filename);
 			ret = CONFIG_INVALID_FILE; /* same as "invalid config file" */
@@ -2690,7 +2700,8 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 			goto out_free;
 		}
 
-		store.key = (char *)key;
+		free(store.key);
+		store.key = xstrdup(key);
 		if (write_section(fd, key, &store) < 0 ||
 		    write_pair(fd, key, value, &store) < 0)
 			goto write_err_out;
@@ -2715,7 +2726,7 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 			if (regcomp(store.value_regex, value_regex,
 					REG_EXTENDED)) {
 				error("invalid pattern: %s", value_regex);
-				free(store.value_regex);
+				FREE_AND_NULL(store.value_regex);
 				ret = CONFIG_INVALID_PATTERN;
 				goto out_free;
 			}
@@ -2740,21 +2751,8 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 						      config_filename,
 						      &store, &opts)) {
 			error("invalid config file %s", config_filename);
-			free(store.key);
-			if (store.value_regex != NULL &&
-			    store.value_regex != CONFIG_REGEX_NONE) {
-				regfree(store.value_regex);
-				free(store.value_regex);
-			}
 			ret = CONFIG_INVALID_FILE;
 			goto out_free;
-		}
-
-		free(store.key);
-		if (store.value_regex != NULL &&
-		    store.value_regex != CONFIG_REGEX_NONE) {
-			regfree(store.value_regex);
-			free(store.value_regex);
 		}
 
 		/* if nothing to unset, or too many matches, error out */
@@ -2887,6 +2885,7 @@ out_free:
 		munmap(contents, contents_sz);
 	if (in_fd >= 0)
 		close(in_fd);
+	config_store_data_clear(&store);
 	return ret;
 
 write_err_out:
@@ -3127,6 +3126,7 @@ out:
 	rollback_lock_file(&lock);
 out_no_rollback:
 	free(filename_buf);
+	config_store_data_clear(&store);
 	return ret;
 }
 
