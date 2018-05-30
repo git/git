@@ -183,7 +183,7 @@ actually prune them.
 'update'::
 
 Fetch updates for remotes or remote groups in the repository as defined by
-remotes.<group>.  If no group or remote is not specified on the command line,
+remotes.<group>.  If neither group nor remote is specified on the command line,
 the configuration parameter remotes.default will be used; if
 remotes.default is not defined, all remotes which do not have the
 configuration parameter remote.<name>.skipDefaultUpdate set to true will
