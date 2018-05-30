@@ -156,15 +156,14 @@ static void anonymize_path(struct strbuf *out, const char *path,
 	}
 }
 
-/* Since intptr_t is C99, we do not use it here */
-static inline uint32_t *mark_to_ptr(uint32_t mark)
+static inline void *mark_to_ptr(uint32_t mark)
 {
-	return ((uint32_t *)NULL) + mark;
+	return (void *)(uintptr_t)mark;
 }
 
 static inline uint32_t ptr_to_mark(void * mark)
 {
-	return (uint32_t *)mark - (uint32_t *)NULL;
+	return (uint32_t)(uintptr_t)mark;
 }
 
 static inline void mark_object(struct object *object, uint32_t mark)
