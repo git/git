@@ -1247,7 +1247,7 @@ static int try_to_commit(struct strbuf *msg, const char *author,
 
 	if (!(flags & ALLOW_EMPTY) && !oidcmp(current_head ?
 					      get_commit_tree_oid(current_head) :
-					      &empty_tree_oid, &tree)) {
+					      the_hash_algo->empty_tree, &tree)) {
 		res = 1; /* run 'git commit' to display error message */
 		goto out;
 	}
@@ -1639,7 +1639,7 @@ static int do_pick_commit(enum todo_command command, struct commit *commit,
 			unborn = 1;
 		} else if (unborn)
 			oidcpy(&head, the_hash_algo->empty_tree);
-		if (index_differs_from(unborn ? EMPTY_TREE_SHA1_HEX : "HEAD",
+		if (index_differs_from(unborn ? empty_tree_oid_hex() : "HEAD",
 				       NULL, 0))
 			return error_dirty_index(opts);
 	}

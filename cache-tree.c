@@ -385,7 +385,7 @@ static int update_one(struct cache_tree *it,
 		/*
 		 * "sub" can be an empty tree if all subentries are i-t-a.
 		 */
-		if (contains_ita && !oidcmp(oid, &empty_tree_oid))
+		if (contains_ita && is_empty_tree_oid(oid))
 			continue;
 
 		strbuf_grow(&buffer, entlen + 100);
@@ -523,7 +523,7 @@ static struct cache_tree *read_one(const char **buffer, unsigned long *size_p)
 	if (0 <= it->entry_count) {
 		if (size < rawsz)
 			goto free_return;
-		memcpy(it->oid.hash, (const unsigned char*)buf, rawsz);
+		oidread(&it->oid, (const unsigned char *)buf);
 		buf += rawsz;
 		size -= rawsz;
 	}

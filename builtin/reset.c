@@ -314,7 +314,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 	unborn = !strcmp(rev, "HEAD") && get_oid("HEAD", &oid);
 	if (unborn) {
 		/* reset on unborn branch: treat as reset to empty tree */
-		hashcpy(oid.hash, EMPTY_TREE_SHA1_BIN);
+		oidcpy(&oid, the_hash_algo->empty_tree);
 	} else if (!pathspec.nr) {
 		struct commit *commit;
 		if (get_oid_committish(rev, &oid))

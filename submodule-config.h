@@ -1,6 +1,7 @@
 #ifndef SUBMODULE_CONFIG_CACHE_H
 #define SUBMODULE_CONFIG_CACHE_H
 
+#include "cache.h"
 #include "hashmap.h"
 #include "submodule.h"
 #include "strbuf.h"
@@ -17,13 +18,13 @@ struct submodule {
 	const char *ignore;
 	const char *branch;
 	struct submodule_update_strategy update_strategy;
-	/* the sha1 blob id of the responsible .gitmodules file */
-	unsigned char gitmodules_sha1[20];
+	/* the object id of the responsible .gitmodules file */
+	struct object_id gitmodules_oid;
 	int recommend_shallow;
 };
 
 #define SUBMODULE_INIT { NULL, NULL, NULL, RECURSE_SUBMODULES_NONE, \
-	NULL, NULL, SUBMODULE_UPDATE_STRATEGY_INIT, {0}, -1 };
+	NULL, NULL, SUBMODULE_UPDATE_STRATEGY_INIT, { { 0 } }, -1 };
 
 struct submodule_cache;
 struct repository;

@@ -358,7 +358,7 @@ int parse_commit_buffer(struct commit *item, const void *buffer, unsigned long s
 	if (tail <= bufptr + tree_entry_len + 1 || memcmp(bufptr, "tree ", 5) ||
 			bufptr[tree_entry_len] != '\n')
 		return error("bogus commit object %s", oid_to_hex(&item->object.oid));
-	if (get_sha1_hex(bufptr + 5, parent.hash) < 0)
+	if (get_oid_hex(bufptr + 5, &parent) < 0)
 		return error("bad tree pointer in commit %s",
 			     oid_to_hex(&item->object.oid));
 	item->maybe_tree = lookup_tree(&parent);
@@ -370,7 +370,7 @@ int parse_commit_buffer(struct commit *item, const void *buffer, unsigned long s
 		struct commit *new_parent;
 
 		if (tail <= bufptr + parent_entry_len + 1 ||
-		    get_sha1_hex(bufptr + 7, parent.hash) ||
+		    get_oid_hex(bufptr + 7, &parent) ||
 		    bufptr[parent_entry_len] != '\n')
 			return error("bad parents in commit %s", oid_to_hex(&item->object.oid));
 		bufptr += parent_entry_len + 1;

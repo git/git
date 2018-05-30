@@ -3,6 +3,7 @@
 
 /* See Documentation/technical/api-directory-listing.txt */
 
+#include "cache.h"
 #include "strbuf.h"
 
 struct dir_entry {
@@ -118,8 +119,8 @@ struct untracked_cache_dir {
 	/* all data except 'dirs' in this struct are good */
 	unsigned int valid : 1;
 	unsigned int recurse : 1;
-	/* null SHA-1 means this directory does not have .gitignore */
-	unsigned char exclude_sha1[20];
+	/* null object ID means this directory does not have .gitignore */
+	struct object_id exclude_oid;
 	char name[FLEX_ARRAY];
 };
 

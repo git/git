@@ -1762,6 +1762,7 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	const char *arg = argv[0];
 	const char *optarg;
 	int argcount;
+	const unsigned hexsz = the_hash_algo->hexsz;
 
 	/* pseudo revision arguments */
 	if (!strcmp(arg, "--all") || !strcmp(arg, "--branches") ||
@@ -2049,8 +2050,8 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->abbrev = strtoul(optarg, NULL, 10);
 		if (revs->abbrev < MINIMUM_ABBREV)
 			revs->abbrev = MINIMUM_ABBREV;
-		else if (revs->abbrev > 40)
-			revs->abbrev = 40;
+		else if (revs->abbrev > hexsz)
+			revs->abbrev = hexsz;
 	} else if (!strcmp(arg, "--abbrev-commit")) {
 		revs->abbrev_commit = 1;
 		revs->abbrev_commit_given = 1;
@@ -3097,7 +3098,7 @@ enum commit_action get_commit_action(struct rev_info *revs, struct commit *commi
 {
 	if (commit->object.flags & SHOWN)
 		return commit_ignore;
-	if (revs->unpacked && has_sha1_pack(commit->object.oid.hash))
+	if (revs->unpacked && has_object_pack(&commit->object.oid))
 		return commit_ignore;
 	if (commit->object.flags & UNINTERESTING)
 		return commit_ignore;

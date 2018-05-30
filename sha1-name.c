@@ -1685,8 +1685,8 @@ static int get_oid_with_context_1(const char *name,
 			if (new_filename)
 				filename = new_filename;
 			if (flags & GET_OID_FOLLOW_SYMLINKS) {
-				ret = get_tree_entry_follow_symlinks(tree_oid.hash,
-					filename, oid->hash, &oc->symlink_path,
+				ret = get_tree_entry_follow_symlinks(&tree_oid,
+					filename, oid, &oc->symlink_path,
 					&oc->mode);
 			} else {
 				ret = get_tree_entry(&tree_oid, filename, oid,
@@ -1698,7 +1698,6 @@ static int get_oid_with_context_1(const char *name,
 								   name, len);
 				}
 			}
-			hashcpy(oc->tree, tree_oid.hash);
 			if (flags & GET_OID_RECORD_PATH)
 				oc->path = xstrdup(filename);
 

@@ -887,8 +887,8 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				if (read_cache() < 0)
 					die(_("Could not read the index"));
 				if (the_index.split_index) {
-					const unsigned char *sha1 = the_index.split_index->base_sha1;
-					const char *path = git_path("sharedindex.%s", sha1_to_hex(sha1));
+					const struct object_id *oid = &the_index.split_index->base_oid;
+					const char *path = git_path("sharedindex.%s", oid_to_hex(oid));
 					strbuf_reset(&buf);
 					puts(relative_path(path, prefix, &buf));
 				}

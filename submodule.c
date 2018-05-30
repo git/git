@@ -1569,7 +1569,7 @@ static void submodule_reset_index(const char *path)
 				   get_super_prefix_or_empty(), path);
 	argv_array_pushl(&cp.args, "read-tree", "-u", "--reset", NULL);
 
-	argv_array_push(&cp.args, EMPTY_TREE_SHA1_HEX);
+	argv_array_push(&cp.args, empty_tree_oid_hex());
 
 	if (run_command(&cp))
 		die("could not reset submodule index");
@@ -1661,9 +1661,9 @@ int submodule_move_head(const char *path,
 		argv_array_push(&cp.args, "-m");
 
 	if (!(flags & SUBMODULE_MOVE_HEAD_FORCE))
-		argv_array_push(&cp.args, old_head ? old_head : EMPTY_TREE_SHA1_HEX);
+		argv_array_push(&cp.args, old_head ? old_head : empty_tree_oid_hex());
 
-	argv_array_push(&cp.args, new_head ? new_head : EMPTY_TREE_SHA1_HEX);
+	argv_array_push(&cp.args, new_head ? new_head : empty_tree_oid_hex());
 
 	if (run_command(&cp)) {
 		ret = -1;

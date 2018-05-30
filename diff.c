@@ -3472,7 +3472,7 @@ static int reuse_worktree_file(const char *name, const struct object_id *oid, in
 	 * objects however would tend to be slower as they need
 	 * to be individually opened and inflated.
 	 */
-	if (!FAST_WORKING_DIRECTORY && !want_file && has_sha1_pack(oid->hash))
+	if (!FAST_WORKING_DIRECTORY && !want_file && has_object_pack(oid))
 		return 0;
 
 	/*
@@ -3898,13 +3898,14 @@ static void fill_metainfo(struct strbuf *msg,
 		*must_show_header = 0;
 	}
 	if (one && two && oidcmp(&one->oid, &two->oid)) {
-		int abbrev = o->flags.full_index ? 40 : DEFAULT_ABBREV;
+		const unsigned hexsz = the_hash_algo->hexsz;
+		int abbrev = o->flags.full_index ? hexsz : DEFAULT_ABBREV;
 
 		if (o->flags.binary) {
 			mmfile_t mf;
 			if ((!fill_mmfile(&mf, one) && diff_filespec_is_binary(one)) ||
 			    (!fill_mmfile(&mf, two) && diff_filespec_is_binary(two)))
-				abbrev = 40;
+				abbrev = hexsz;
 		}
 		strbuf_addf(msg, "%s%sindex %s..%s", line_prefix, set,
 			    diff_abbrev_oid(&one->oid, abbrev),
@@ -4139,6 +4140,11 @@ void diff_setup_done(struct diff_options *options)
 			      DIFF_FORMAT_NAME_STATUS |
 			      DIFF_FORMAT_CHECKDIFF |
 			      DIFF_FORMAT_NO_OUTPUT;
+	/*
+	 * This must be signed because we're comparing against a potentially
+	 * negative value.
+	 */
+	const int hexsz = the_hash_algo->hexsz;
 
 	if (options->set_default)
 		options->set_default(options);
@@ -4219,8 +4225,8 @@ void diff_setup_done(struct diff_options *options)
 			 */
 			read_cache();
 	}
-	if (40 < options->abbrev)
-		options->abbrev = 40; /* full */
+	if (hexsz < options->abbrev)
+		options->abbrev = hexsz; /* full */
 
 	/*
 	 * It does not make sense to show the first hit we happened
@@ -4798,8 +4804,8 @@ int diff_opt_parse(struct diff_options *options,
 		options->abbrev = strtoul(arg, NULL, 10);
 		if (options->abbrev < MINIMUM_ABBREV)
 			options->abbrev = MINIMUM_ABBREV;
-		else if (40 < options->abbrev)
-			options->abbrev = 40;
+		else if (the_hash_algo->hexsz < options->abbrev)
+			options->abbrev = the_hash_algo->hexsz;
 	}
 	else if ((argcount = parse_long_opt("src-prefix", av, &optarg))) {
 		options->a_prefix = optarg;

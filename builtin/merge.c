@@ -280,7 +280,7 @@ out:
 	return rc;
 }
 
-static void read_empty(unsigned const char *sha1, int verbose)
+static void read_empty(const struct object_id *oid, int verbose)
 {
 	int i = 0;
 	const char *args[7];
@@ -290,15 +290,15 @@ static void read_empty(unsigned const char *sha1, int verbose)
 		args[i++] = "-v";
 	args[i++] = "-m";
 	args[i++] = "-u";
-	args[i++] = EMPTY_TREE_SHA1_HEX;
-	args[i++] = sha1_to_hex(sha1);
+	args[i++] = empty_tree_oid_hex();
+	args[i++] = oid_to_hex(oid);
 	args[i] = NULL;
 
 	if (run_command_v_opt(args, RUN_GIT_CMD))
 		die(_("read-tree failed"));
 }
 
-static void reset_hard(unsigned const char *sha1, int verbose)
+static void reset_hard(const struct object_id *oid, int verbose)
 {
 	int i = 0;
 	const char *args[6];
@@ -308,7 +308,7 @@ static void reset_hard(unsigned const char *sha1, int verbose)
 		args[i++] = "-v";
 	args[i++] = "--reset";
 	args[i++] = "-u";
-	args[i++] = sha1_to_hex(sha1);
+	args[i++] = oid_to_hex(oid);
 	args[i] = NULL;
 
 	if (run_command_v_opt(args, RUN_GIT_CMD))
@@ -324,7 +324,7 @@ static void restore_state(const struct object_id *head,
 	if (is_null_oid(stash))
 		return;
 
-	reset_hard(head->hash, 1);
+	reset_hard(head, 1);
 
 	args[2] = oid_to_hex(stash);
 
@@ -1297,7 +1297,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		if (remoteheads->next)
 			die(_("Can merge only exactly one commit into empty head"));
 		remote_head_oid = &remoteheads->item->object.oid;
-		read_empty(remote_head_oid->hash, 0);
+		read_empty(remote_head_oid, 0);
 		update_ref("initial pull", "HEAD", remote_head_oid, NULL, 0,
 			   UPDATE_REFS_DIE_ON_ERR);
 		goto done;

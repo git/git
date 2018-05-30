@@ -105,7 +105,7 @@ static void entry_extract(struct tree_desc *t, struct name_entry *a)
 static int update_tree_entry_internal(struct tree_desc *desc, struct strbuf *err)
 {
 	const void *buf = desc->buffer;
-	const unsigned char *end = desc->entry.oid->hash + 20;
+	const unsigned char *end = desc->entry.oid->hash + the_hash_algo->rawsz;
 	unsigned long size = desc->size;
 	unsigned long len = end - (const unsigned char *)buf;
 
@@ -488,7 +488,7 @@ int traverse_trees(int n, struct tree_desc *t, struct traverse_info *info)
 struct dir_state {
 	void *tree;
 	unsigned long size;
-	unsigned char sha1[20];
+	struct object_id oid;
 };
 
 static int find_tree_entry(struct tree_desc *t, const char *name, struct object_id *result, unsigned *mode)
@@ -576,7 +576,7 @@ int get_tree_entry(const struct object_id *tree_oid, const char *name, struct ob
  * See the code for enum follow_symlink_result for a description of
  * the return values.
  */
-enum follow_symlinks_result get_tree_entry_follow_symlinks(unsigned char *tree_sha1, const char *name, unsigned char *result, struct strbuf *result_path, unsigned *mode)
+enum follow_symlinks_result get_tree_entry_follow_symlinks(struct object_id *tree_oid, const char *name, struct object_id *result, struct strbuf *result_path, unsigned *mode)
 {
 	int retval = MISSING_OBJECT;
 	struct dir_state *parents = NULL;
@@ -589,7 +589,7 @@ enum follow_symlinks_result get_tree_entry_follow_symlinks(unsigned char *tree_s
 
 	init_tree_desc(&t, NULL, 0UL);
 	strbuf_addstr(&namebuf, name);
-	hashcpy(current_tree_oid.hash, tree_sha1);
+	oidcpy(&current_tree_oid, tree_oid);
 
 	while (1) {
 		int find_result;
@@ -609,11 +609,11 @@ enum follow_symlinks_result get_tree_entry_follow_symlinks(unsigned char *tree_s
 			ALLOC_GROW(parents, parents_nr + 1, parents_alloc);
 			parents[parents_nr].tree = tree;
 			parents[parents_nr].size = size;
-			hashcpy(parents[parents_nr].sha1, root.hash);
+			oidcpy(&parents[parents_nr].oid, &root);
 			parents_nr++;
 
 			if (namebuf.buf[0] == '\0') {
-				hashcpy(result, root.hash);
+				oidcpy(result, &root);
 				retval = FOUND;
 				goto done;
 			}
@@ -663,7 +663,7 @@ enum follow_symlinks_result get_tree_entry_follow_symlinks(unsigned char *tree_s
 
 		/* We could end up here via a symlink to dir/.. */
 		if (namebuf.buf[0] == '\0') {
-			hashcpy(result, parents[parents_nr - 1].sha1);
+			oidcpy(result, &parents[parents_nr - 1].oid);
 			retval = FOUND;
 			goto done;
 		}
@@ -677,7 +677,7 @@ enum follow_symlinks_result get_tree_entry_follow_symlinks(unsigned char *tree_s
 
 		if (S_ISDIR(*mode)) {
 			if (!remainder) {
-				hashcpy(result, current_tree_oid.hash);
+				oidcpy(result, &current_tree_oid);
 				retval = FOUND;
 				goto done;
 			}
@@ -687,7 +687,7 @@ enum follow_symlinks_result get_tree_entry_follow_symlinks(unsigned char *tree_s
 				      1 + first_slash - namebuf.buf);
 		} else if (S_ISREG(*mode)) {
 			if (!remainder) {
-				hashcpy(result, current_tree_oid.hash);
+				oidcpy(result, &current_tree_oid);
 				retval = FOUND;
 			} else {
 				retval = NOT_DIR;

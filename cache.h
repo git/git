@@ -324,7 +324,7 @@ struct index_state {
 		 drop_cache_tree : 1;
 	struct hashmap name_hash;
 	struct hashmap dir_hash;
-	unsigned char sha1[20];
+	struct object_id oid;
 	struct untracked_cache *untracked;
 	uint64_t fsmonitor_last_update;
 	struct ewah_bitmap *fsmonitor_dirty;
@@ -1017,21 +1017,10 @@ static inline void oidclr(struct object_id *oid)
 	memset(oid->hash, 0, GIT_MAX_RAWSZ);
 }
 
-
-#define EMPTY_TREE_SHA1_HEX \
-	"4b825dc642cb6eb9a060e54bf8d69288fbee4904"
-#define EMPTY_TREE_SHA1_BIN_LITERAL \
-	 "\x4b\x82\x5d\xc6\x42\xcb\x6e\xb9\xa0\x60" \
-	 "\xe5\x4b\xf8\xd6\x92\x88\xfb\xee\x49\x04"
-extern const struct object_id empty_tree_oid;
-#define EMPTY_TREE_SHA1_BIN (empty_tree_oid.hash)
-
-#define EMPTY_BLOB_SHA1_HEX \
-	"e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
-#define EMPTY_BLOB_SHA1_BIN_LITERAL \
-	"\xe6\x9d\xe2\x9b\xb2\xd1\xd6\x43\x4b\x8b" \
-	"\x29\xae\x77\x5a\xd8\xc2\xe4\x8c\x53\x91"
-extern const struct object_id empty_blob_oid;
+static inline void oidread(struct object_id *oid, const unsigned char *hash)
+{
+	memcpy(oid->hash, hash, the_hash_algo->rawsz);
+}
 
 static inline int is_empty_blob_sha1(const unsigned char *sha1)
 {
@@ -1052,6 +1041,9 @@ static inline int is_empty_tree_oid(const struct object_id *oid)
 {
 	return !oidcmp(oid, the_hash_algo->empty_tree);
 }
+
+const char *empty_tree_oid_hex(void);
+const char *empty_blob_oid_hex(void);
 
 /* set default permissions by passing mode arguments to open(2) */
 int git_mkstemps_mode(char *pattern, int suffix_len, int mode);
@@ -1268,7 +1260,7 @@ extern int has_object_file_with_flags(const struct object_id *oid, int flags);
  * with the specified name.  This function does not respect replace
  * references.
  */
-extern int has_loose_object_nonlocal(const unsigned char *sha1);
+extern int has_loose_object_nonlocal(const struct object_id *oid);
 
 extern void assert_oid_type(const struct object_id *oid, enum object_type expect);
 
@@ -1299,7 +1291,6 @@ static inline int hex2chr(const char *s)
 #define FALLBACK_DEFAULT_ABBREV 7
 
 struct object_context {
-	unsigned char tree[20];
 	unsigned mode;
 	/*
 	 * symlink_path is only used by get_tree_entry_follow_symlinks,
@@ -1566,7 +1557,6 @@ struct pack_window {
 
 struct pack_entry {
 	off_t offset;
-	unsigned char sha1[20];
 	struct packed_git *p;
 };
 

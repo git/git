@@ -829,7 +829,7 @@ static int add_excludes(const char *fname, const char *base, int baselen,
 		if (size == 0) {
 			if (oid_stat) {
 				fill_stat_data(&oid_stat->stat, &st);
-				oidcpy(&oid_stat->oid, &empty_blob_oid);
+				oidcpy(&oid_stat->oid, the_hash_algo->empty_blob);
 				oid_stat->valid = 1;
 			}
 			close(fd);
@@ -1241,11 +1241,11 @@ static void prep_exclude(struct dir_struct *dir,
 		    (!untracked || !untracked->valid ||
 		     /*
 		      * .. and .gitignore does not exist before
-		      * (i.e. null exclude_sha1). Then we can skip
+		      * (i.e. null exclude_oid). Then we can skip
 		      * loading .gitignore, which would result in
 		      * ENOENT anyway.
 		      */
-		     !is_null_sha1(untracked->exclude_sha1))) {
+		     !is_null_oid(&untracked->exclude_oid))) {
 			/*
 			 * dir->basebuf gets reused by the traversal, but we
 			 * need fname to remain unchanged to ensure the src
@@ -1276,9 +1276,9 @@ static void prep_exclude(struct dir_struct *dir,
 		 * order, though, if you do that.
 		 */
 		if (untracked &&
-		    hashcmp(oid_stat.oid.hash, untracked->exclude_sha1)) {
+		    oidcmp(&oid_stat.oid, &untracked->exclude_oid)) {
 			invalidate_gitignore(dir->untracked, untracked);
-			hashcpy(untracked->exclude_sha1, oid_stat.oid.hash);
+			oidcpy(&untracked->exclude_oid, &oid_stat.oid);
 		}
 		dir->exclude_stack = stk;
 		current = stk->baselen;
@@ -2623,9 +2623,10 @@ static void write_one_dir(struct untracked_cache_dir *untracked,
 		stat_data_to_disk(&stat_data, &untracked->stat_data);
 		strbuf_add(&wd->sb_stat, &stat_data, sizeof(stat_data));
 	}
-	if (!is_null_sha1(untracked->exclude_sha1)) {
+	if (!is_null_oid(&untracked->exclude_oid)) {
 		ewah_set(wd->sha1_valid, i);
-		strbuf_add(&wd->sb_sha1, untracked->exclude_sha1, 20);
+		strbuf_add(&wd->sb_sha1, untracked->exclude_oid.hash,
+			   the_hash_algo->rawsz);
 	}
 
 	intlen = encode_varint(untracked->untracked_nr, intbuf);
@@ -2826,16 +2827,16 @@ static void read_stat(size_t pos, void *cb)
 	ud->valid = 1;
 }
 
-static void read_sha1(size_t pos, void *cb)
+static void read_oid(size_t pos, void *cb)
 {
 	struct read_data *rd = cb;
 	struct untracked_cache_dir *ud = rd->ucd[pos];
-	if (rd->data + 20 > rd->end) {
+	if (rd->data + the_hash_algo->rawsz > rd->end) {
 		rd->data = rd->end + 1;
 		return;
 	}
-	hashcpy(ud->exclude_sha1, rd->data);
-	rd->data += 20;
+	hashcpy(ud->exclude_oid.hash, rd->data);
+	rd->data += the_hash_algo->rawsz;
 }
 
 static void load_oid_stat(struct oid_stat *oid_stat, const unsigned char *data,
@@ -2918,7 +2919,7 @@ struct untracked_cache *read_untracked_extension(const void *data, unsigned long
 	ewah_each_bit(rd.check_only, set_check_only, &rd);
 	rd.data = next + len;
 	ewah_each_bit(rd.valid, read_stat, &rd);
-	ewah_each_bit(rd.sha1_valid, read_sha1, &rd);
+	ewah_each_bit(rd.sha1_valid, read_oid, &rd);
 	next = rd.data;
 
 done:

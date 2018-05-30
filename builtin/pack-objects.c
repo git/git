@@ -279,6 +279,7 @@ static unsigned long write_no_reuse_object(struct hashfile *f, struct object_ent
 	enum object_type type;
 	void *buf;
 	struct git_istream *st = NULL;
+	const unsigned hashsz = the_hash_algo->rawsz;
 
 	if (!usable_delta) {
 		if (oe_type(entry) == OBJ_BLOB &&
@@ -335,7 +336,7 @@ static unsigned long write_no_reuse_object(struct hashfile *f, struct object_ent
 		dheader[pos] = ofs & 127;
 		while (ofs >>= 7)
 			dheader[--pos] = 128 | (--ofs & 127);
-		if (limit && hdrlen + sizeof(dheader) - pos + datalen + 20 >= limit) {
+		if (limit && hdrlen + sizeof(dheader) - pos + datalen + hashsz >= limit) {
 			if (st)
 				close_istream(st);
 			free(buf);
@@ -347,19 +348,19 @@ static unsigned long write_no_reuse_object(struct hashfile *f, struct object_ent
 	} else if (type == OBJ_REF_DELTA) {
 		/*
 		 * Deltas with a base reference contain
-		 * an additional 20 bytes for the base sha1.
+		 * additional bytes for the base object ID.
 		 */
-		if (limit && hdrlen + 20 + datalen + 20 >= limit) {
+		if (limit && hdrlen + hashsz + datalen + hashsz >= limit) {
 			if (st)
 				close_istream(st);
 			free(buf);
 			return 0;
 		}
 		hashwrite(f, header, hdrlen);
-		hashwrite(f, DELTA(entry)->idx.oid.hash, 20);
-		hdrlen += 20;
+		hashwrite(f, DELTA(entry)->idx.oid.hash, hashsz);
+		hdrlen += hashsz;
 	} else {
-		if (limit && hdrlen + datalen + 20 >= limit) {
+		if (limit && hdrlen + datalen + hashsz >= limit) {
 			if (st)
 				close_istream(st);
 			free(buf);
@@ -391,6 +392,7 @@ static off_t write_reuse_object(struct hashfile *f, struct object_entry *entry,
 	unsigned char header[MAX_PACK_OBJECT_HEADER],
 		      dheader[MAX_PACK_OBJECT_HEADER];
 	unsigned hdrlen;
+	const unsigned hashsz = the_hash_algo->rawsz;
 	unsigned long entry_size = SIZE(entry);
 
 	if (DELTA(entry))
@@ -427,7 +429,7 @@ static off_t write_reuse_object(struct hashfile *f, struct object_entry *entry,
 		dheader[pos] = ofs & 127;
 		while (ofs >>= 7)
 			dheader[--pos] = 128 | (--ofs & 127);
-		if (limit && hdrlen + sizeof(dheader) - pos + datalen + 20 >= limit) {
+		if (limit && hdrlen + sizeof(dheader) - pos + datalen + hashsz >= limit) {
 			unuse_pack(&w_curs);
 			return 0;
 		}
@@ -436,16 +438,16 @@ static off_t write_reuse_object(struct hashfile *f, struct object_entry *entry,
 		hdrlen += sizeof(dheader) - pos;
 		reused_delta++;
 	} else if (type == OBJ_REF_DELTA) {
-		if (limit && hdrlen + 20 + datalen + 20 >= limit) {
+		if (limit && hdrlen + hashsz + datalen + hashsz >= limit) {
 			unuse_pack(&w_curs);
 			return 0;
 		}
 		hashwrite(f, header, hdrlen);
-		hashwrite(f, DELTA(entry)->idx.oid.hash, 20);
-		hdrlen += 20;
+		hashwrite(f, DELTA(entry)->idx.oid.hash, hashsz);
+		hdrlen += hashsz;
 		reused_delta++;
 	} else {
-		if (limit && hdrlen + datalen + 20 >= limit) {
+		if (limit && hdrlen + datalen + hashsz >= limit) {
 			unuse_pack(&w_curs);
 			return 0;
 		}
@@ -769,7 +771,7 @@ static off_t write_reused_pack(struct hashfile *f)
 		die_errno("unable to seek in reused packfile");
 
 	if (reuse_packfile_offset < 0)
-		reuse_packfile_offset = reuse_packfile->pack_size - 20;
+		reuse_packfile_offset = reuse_packfile->pack_size - the_hash_algo->rawsz;
 
 	total = to_write = reuse_packfile_offset - sizeof(struct pack_header);
 
@@ -1033,7 +1035,7 @@ static int want_object_in_pack(const struct object_id *oid,
 	int want;
 	struct list_head *pos;
 
-	if (!exclude && local && has_loose_object_nonlocal(oid->hash))
+	if (!exclude && local && has_loose_object_nonlocal(oid))
 		return 0;
 
 	/*
@@ -1467,7 +1469,7 @@ static void check_object(struct object_entry *entry)
 			if (reuse_delta && !entry->preferred_base)
 				base_ref = use_pack(p, &w_curs,
 						entry->in_pack_offset + used, NULL);
-			entry->in_pack_header_size = used + 20;
+			entry->in_pack_header_size = used + the_hash_algo->rawsz;
 			break;
 		case OBJ_OFS_DELTA:
 			buf = use_pack(p, &w_curs,
@@ -1949,7 +1951,7 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 	/* Now some size filtering heuristics. */
 	trg_size = SIZE(trg_entry);
 	if (!DELTA(trg_entry)) {
-		max_size = trg_size/2 - 20;
+		max_size = trg_size/2 - the_hash_algo->rawsz;
 		ref_depth = 1;
 	} else {
 		max_size = DELTA_SIZE(trg_entry);

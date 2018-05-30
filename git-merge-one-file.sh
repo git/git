@@ -120,7 +120,7 @@ case "${1:-.}${2:-.}${3:-.}" in
 	case "$1" in
 	'')
 		echo "Added $4 in both, but differently."
-		orig=$(git unpack-file e69de29bb2d1d6434b8b29ae775ad8c2e48c5391)
+		orig=$(git unpack-file $(git hash-object /dev/null))
 		;;
 	*)
 		echo "Auto-merging $4"
