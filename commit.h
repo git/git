@@ -19,7 +19,6 @@ struct commit_list {
 struct commit {
 	struct object object;
 	void *util;
-	unsigned int index;
 	timestamp_t date;
 	struct commit_list *parents;
 
@@ -30,6 +29,7 @@ struct commit {
 	 */
 	struct tree *maybe_tree;
 	uint32_t graph_pos;
+	unsigned int index;
 };
 
 extern int save_commit_buffer;
