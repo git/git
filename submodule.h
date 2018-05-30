@@ -89,10 +89,8 @@ extern int submodule_uses_gitfile(const char *path);
 #define SUBMODULE_REMOVAL_IGNORE_UNTRACKED (1<<1)
 #define SUBMODULE_REMOVAL_IGNORE_IGNORED_UNTRACKED (1<<2)
 extern int bad_to_remove_submodule(const char *path, unsigned flags);
-extern int merge_submodule(struct object_id *result, const char *path,
-			   const struct object_id *base,
-			   const struct object_id *a,
-			   const struct object_id *b, int search);
+
+int add_submodule_odb(const char *path);
 
 /* Checks if there are submodule changes in a..b. */
 extern int submodule_touches_in_range(struct object_id *a,
