@@ -1330,9 +1330,14 @@ sub file_name_is_absolute {
 	return File::Spec::Functions::file_name_is_absolute($path);
 }
 
-# Returns 1 if the message was sent, and 0 otherwise.
-# In actuality, the whole program dies when there
-# is an error sending a message.
+# Prepares the email, then asks the user what to do.
+#
+# If the user chooses to send the email, it's sent and 1 is returned.
+# If the user chooses not to send the email, 0 is returned.
+# If the user decides they want to make further edits, -1 is returned and the
+# caller is expected to call send_message again after the edits are performed.
+#
+# If an error occurs sending the email, this just dies.
 
 sub send_message {
 	my @recipients = unique_email_list(@to);
@@ -1404,15 +1409,17 @@ Message-Id: $message_id
 
 EOF
 		}
-		# TRANSLATORS: Make sure to include [y] [n] [q] [a] in your
+		# TRANSLATORS: Make sure to include [y] [n] [e] [q] [a] in your
 		# translation. The program will only accept English input
 		# at this point.
-		$_ = ask(__("Send this email? ([y]es|[n]o|[q]uit|[a]ll): "),
-		         valid_re => qr/^(?:yes|y|no|n|quit|q|all|a)/i,
+		$_ = ask(__("Send this email? ([y]es|[n]o|[e]dit|[q]uit|[a]ll): "),
+		         valid_re => qr/^(?:yes|y|no|n|edit|e|quit|q|all|a)/i,
 		         default => $ask_default);
 		die __("Send this email reply required") unless defined $_;
 		if (/^n/i) {
 			return 0;
+		} elsif (/^e/i) {
+			return -1;
 		} elsif (/^q/i) {
 			cleanup_compose_files();
 			exit(0);
@@ -1552,7 +1559,12 @@ $references = $initial_in_reply_to || '';
 $subject = $initial_subject;
 $message_num = 0;
 
-foreach my $t (@files) {
+# Prepares the email, prompts the user, sends it out
+# Returns 0 if an edit was done and the function should be called again, or 1
+# otherwise.
+sub process_file {
+	my ($t) = @_;
+
 	open my $fh, "<", $t or die sprintf(__("can't open file %s"), $t);
 
 	my $author = undef;
@@ -1760,6 +1772,10 @@ foreach my $t (@files) {
 	}
 
 	my $message_was_sent = send_message();
+	if ($message_was_sent == -1) {
+		do_edit($t);
+		return 0;
+	}
 
 	# set up for the next message
 	if ($thread && $message_was_sent &&
@@ -1780,6 +1796,14 @@ foreach my $t (@files) {
 		undef $smtp;
 		undef $auth;
 		sleep($relogin_delay) if defined $relogin_delay;
+	}
+
+	return 1;
+}
+
+foreach my $t (@files) {
+	while (!process_file($t)) {
+		# user edited the file
 	}
 }
 
