@@ -52,12 +52,9 @@ static void mark_tree_contents_uninteresting(struct tree *tree)
 {
 	struct tree_desc desc;
 	struct name_entry entry;
-	struct object *obj = &tree->object;
 
-	if (!has_object_file(&obj->oid))
+	if (parse_tree_gently(tree, 1) < 0)
 		return;
-	if (parse_tree(tree) < 0)
-		die("bad tree %s", oid_to_hex(&obj->oid));
 
 	init_tree_desc(&desc, tree->buffer, tree->size);
 	while (tree_entry(&desc, &entry)) {
@@ -95,50 +92,63 @@ void mark_tree_uninteresting(struct tree *tree)
 	mark_tree_contents_uninteresting(tree);
 }
 
+struct commit_stack {
+	struct commit **items;
+	size_t nr, alloc;
+};
+#define COMMIT_STACK_INIT { NULL, 0, 0 }
+
+static void commit_stack_push(struct commit_stack *stack, struct commit *commit)
+{
+	ALLOC_GROW(stack->items, stack->nr + 1, stack->alloc);
+	stack->items[stack->nr++] = commit;
+}
+
+static struct commit *commit_stack_pop(struct commit_stack *stack)
+{
+	return stack->nr ? stack->items[--stack->nr] : NULL;
+}
+
+static void commit_stack_clear(struct commit_stack *stack)
+{
+	FREE_AND_NULL(stack->items);
+	stack->nr = stack->alloc = 0;
+}
+
+static void mark_one_parent_uninteresting(struct commit *commit,
+					  struct commit_stack *pending)
+{
+	struct commit_list *l;
+
+	if (commit->object.flags & UNINTERESTING)
+		return;
+	commit->object.flags |= UNINTERESTING;
+
+	/*
+	 * Normally we haven't parsed the parent
+	 * yet, so we won't have a parent of a parent
+	 * here. However, it may turn out that we've
+	 * reached this commit some other way (where it
+	 * wasn't uninteresting), in which case we need
+	 * to mark its parents recursively too..
+	 */
+	for (l = commit->parents; l; l = l->next)
+		commit_stack_push(pending, l->item);
+}
+
 void mark_parents_uninteresting(struct commit *commit)
 {
-	struct commit_list *parents = NULL, *l;
+	struct commit_stack pending = COMMIT_STACK_INIT;
+	struct commit_list *l;
 
 	for (l = commit->parents; l; l = l->next)
-		commit_list_insert(l->item, &parents);
+		mark_one_parent_uninteresting(l->item, &pending);
 
-	while (parents) {
-		struct commit *commit = pop_commit(&parents);
+	while (pending.nr > 0)
+		mark_one_parent_uninteresting(commit_stack_pop(&pending),
+					      &pending);
 
-		while (commit) {
-			/*
-			 * A missing commit is ok iff its parent is marked
-			 * uninteresting.
-			 *
-			 * We just mark such a thing parsed, so that when
-			 * it is popped next time around, we won't be trying
-			 * to parse it and get an error.
-			 */
-			if (!commit->object.parsed &&
-			    !has_object_file(&commit->object.oid))
-				commit->object.parsed = 1;
-
-			if (commit->object.flags & UNINTERESTING)
-				break;
-
-			commit->object.flags |= UNINTERESTING;
-
-			/*
-			 * Normally we haven't parsed the parent
-			 * yet, so we won't have a parent of a parent
-			 * here. However, it may turn out that we've
-			 * reached this commit some other way (where it
-			 * wasn't uninteresting), in which case we need
-			 * to mark its parents recursively too..
-			 */
-			if (!commit->parents)
-				break;
-
-			for (l = commit->parents->next; l; l = l->next)
-				commit_list_insert(l->item, &parents);
-			commit = commit->parents->item;
-		}
-	}
+	commit_stack_clear(&pending);
 }
 
 static void add_pending_object_with_path(struct rev_info *revs,
