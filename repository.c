@@ -238,7 +238,8 @@ void repo_clear(struct repository *repo)
 
 	if (repo->index) {
 		discard_index(repo->index);
-		FREE_AND_NULL(repo->index);
+		if (repo->index != &the_index)
+			FREE_AND_NULL(repo->index);
 	}
 }
 
