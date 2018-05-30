@@ -194,4 +194,18 @@ test_expect_success 'sending server-options' '
 	test_cmp actual expect
 '
 
+test_expect_success 'unexpected lines are not allowed in fetch request' '
+	git init server &&
+
+	test-pkt-line pack >in <<-EOF &&
+	command=fetch
+	0001
+	this-is-not-a-command
+	0000
+	EOF
+
+	test_must_fail git -C server serve --stateless-rpc <in >/dev/null 2>err &&
+	grep "unexpected line: .this-is-not-a-command." err
+'
+
 test_done

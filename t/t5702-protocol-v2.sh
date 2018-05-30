@@ -233,6 +233,118 @@ test_expect_success 'server-options are sent when fetching' '
 	grep "server-option=world" log
 '
 
+test_expect_success 'upload-pack respects config using protocol v2' '
+	git init server &&
+	write_script server/.git/hook <<-\EOF &&
+		touch hookout
+		"$@"
+	EOF
+	test_commit -C server one &&
+
+	test_config_global uploadpack.packobjectshook ./hook &&
+	test_path_is_missing server/.git/hookout &&
+	git -c protocol.version=2 clone "file://$(pwd)/server" client &&
+	test_path_is_file server/.git/hookout
+'
+
+test_expect_success 'setup filter tests' '
+	rm -rf server client &&
+	git init server &&
+
+	# 1 commit to create a file, and 1 commit to modify it
+	test_commit -C server message1 a.txt &&
+	test_commit -C server message2 a.txt &&
+	git -C server config protocol.version 2 &&
+	git -C server config uploadpack.allowfilter 1 &&
+	git -C server config uploadpack.allowanysha1inwant 1 &&
+	git -C server config protocol.version 2
+'
+
+test_expect_success 'partial clone' '
+	GIT_TRACE_PACKET="$(pwd)/trace" git -c protocol.version=2 \
+		clone --filter=blob:none "file://$(pwd)/server" client &&
+	grep "version 2" trace &&
+
+	# Ensure that the old version of the file is missing
+	git -C client rev-list master --quiet --objects --missing=print \
+		>observed.oids &&
+	grep "$(git -C server rev-parse message1:a.txt)" observed.oids &&
+
+	# Ensure that client passes fsck
+	git -C client fsck
+'
+
+test_expect_success 'dynamically fetch missing object' '
+	rm "$(pwd)/trace" &&
+	GIT_TRACE_PACKET="$(pwd)/trace" git -C client -c protocol.version=2 \
+		cat-file -p $(git -C server rev-parse message1:a.txt) &&
+	grep "version 2" trace
+'
+
+test_expect_success 'partial fetch' '
+	rm -rf client "$(pwd)/trace" &&
+	git init client &&
+	SERVER="file://$(pwd)/server" &&
+	test_config -C client extensions.partialClone "$SERVER" &&
+
+	GIT_TRACE_PACKET="$(pwd)/trace" git -C client -c protocol.version=2 \
+		fetch --filter=blob:none "$SERVER" master:refs/heads/other &&
+	grep "version 2" trace &&
+
+	# Ensure that the old version of the file is missing
+	git -C client rev-list other --quiet --objects --missing=print \
+		>observed.oids &&
+	grep "$(git -C server rev-parse message1:a.txt)" observed.oids &&
+
+	# Ensure that client passes fsck
+	git -C client fsck
+'
+
+test_expect_success 'do not advertise filter if not configured to do so' '
+	SERVER="file://$(pwd)/server" &&
+
+	rm "$(pwd)/trace" &&
+	git -C server config uploadpack.allowfilter 1 &&
+	GIT_TRACE_PACKET="$(pwd)/trace" git -c protocol.version=2 \
+		ls-remote "$SERVER" &&
+	grep "fetch=.*filter" trace &&
+
+	rm "$(pwd)/trace" &&
+	git -C server config uploadpack.allowfilter 0 &&
+	GIT_TRACE_PACKET="$(pwd)/trace" git -c protocol.version=2 \
+		ls-remote "$SERVER" &&
+	grep "fetch=" trace >fetch_capabilities &&
+	! grep filter fetch_capabilities
+'
+
+test_expect_success 'partial clone warns if filter is not advertised' '
+	rm -rf client &&
+	git -C server config uploadpack.allowfilter 0 &&
+	git -c protocol.version=2 \
+		clone --filter=blob:none "file://$(pwd)/server" client 2>err &&
+	test_i18ngrep "filtering not recognized by server, ignoring" err
+'
+
+test_expect_success 'even with handcrafted request, filter does not work if not advertised' '
+	git -C server config uploadpack.allowfilter 0 &&
+
+	# Custom request that tries to filter even though it is not advertised.
+	test-pkt-line pack >in <<-EOF &&
+	command=fetch
+	0001
+	want $(git -C server rev-parse master)
+	filter blob:none
+	0000
+	EOF
+
+	test_must_fail git -C server serve --stateless-rpc <in >/dev/null 2>err &&
+	grep "unexpected line: .filter blob:none." err &&
+
+	# Exercise to ensure that if advertised, filter works
+	git -C server config uploadpack.allowfilter 1 &&
+	git -C server serve --stateless-rpc <in >/dev/null
+'
+
 # Test protocol v2 with 'http://' transport
 #
 . "$TEST_DIRECTORY"/lib-httpd.sh

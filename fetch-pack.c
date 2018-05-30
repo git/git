@@ -1198,14 +1198,29 @@ static int send_fetch_request(int fd_out, const struct fetch_pack_args *args,
 	else if (is_repository_shallow() || args->deepen)
 		die(_("Server does not support shallow requests"));
 
+	/* Add filter */
+	if (server_supports_feature("fetch", "filter", 0) &&
+	    args->filter_options.choice) {
+		print_verbose(args, _("Server supports filter"));
+		packet_buf_write(&req_buf, "filter %s",
+				 args->filter_options.filter_spec);
+	} else if (args->filter_options.choice) {
+		warning("filtering not recognized by server, ignoring");
+	}
+
 	/* add wants */
 	add_wants(wants, &req_buf);
 
-	/* Add all of the common commits we've found in previous rounds */
-	add_common(&req_buf, common);
+	if (args->no_dependents) {
+		packet_buf_write(&req_buf, "done");
+		ret = 1;
+	} else {
+		/* Add all of the common commits we've found in previous rounds */
+		add_common(&req_buf, common);
 
-	/* Add initial haves */
-	ret = add_haves(&req_buf, haves_to_send, in_vain);
+		/* Add initial haves */
+		ret = add_haves(&req_buf, haves_to_send, in_vain);
+	}
 
 	/* Send request */
 	packet_buf_flush(&req_buf);

@@ -290,6 +290,15 @@ included in the clients request as well as the potential addition of the
 	Cannot be used with "deepen", but can be used with
 	"deepen-since".
 
+If the 'filter' feature is advertised, the following argument can be
+included in the client's request:
+
+    filter <filter-spec>
+	Request that various objects from the packfile be omitted
+	using one of several filtering techniques. These are intended
+	for use with partial clone and partial fetch operations. See
+	`rev-list` for possible "filter-spec" values.
+
 The response of `fetch` is broken into a number of sections separated by
 delimiter packets (0001), with each section beginning with its section
 header.

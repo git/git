@@ -1205,6 +1205,7 @@ static void process_args(struct packet_reader *request,
 {
 	while (packet_reader_read(request) != PACKET_READ_FLUSH) {
 		const char *arg = request->line;
+		const char *p;
 
 		/* process want */
 		if (parse_want(arg))
@@ -1251,8 +1252,13 @@ static void process_args(struct packet_reader *request,
 			continue;
 		}
 
+		if (allow_filter && skip_prefix(arg, "filter ", &p)) {
+			parse_list_objects_filter(&filter_options, p);
+			continue;
+		}
+
 		/* ignore unknown lines maybe? */
-		die("unexpect line: '%s'", arg);
+		die("unexpected line: '%s'", arg);
 	}
 }
 
@@ -1376,6 +1382,8 @@ int upload_pack_v2(struct repository *r, struct argv_array *keys,
 	enum fetch_state state = FETCH_PROCESS_ARGS;
 	struct upload_pack_data data;
 
+	git_config(upload_pack_config, NULL);
+
 	upload_pack_data_init(&data);
 	use_sideband = LARGE_PACKET_MAX;
 
@@ -1428,7 +1436,14 @@ int upload_pack_v2(struct repository *r, struct argv_array *keys,
 int upload_pack_advertise(struct repository *r,
 			  struct strbuf *value)
 {
-	if (value)
+	if (value) {
+		int allow_filter_value;
 		strbuf_addstr(value, "shallow");
+		if (!repo_config_get_bool(the_repository,
+					 "uploadpack.allowfilter",
+					 &allow_filter_value) &&
+		    allow_filter_value)
+			strbuf_addstr(value, " filter");
+	}
 	return 1;
 }
