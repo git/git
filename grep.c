@@ -636,7 +636,6 @@ static void compile_fixed_regexp(struct grep_pat *p, struct grep_opt *opt)
 	if (err) {
 		char errbuf[1024];
 		regerror(err, &p->regexp, errbuf, sizeof(errbuf));
-		regfree(&p->regexp);
 		compile_regexp_failed(p, errbuf);
 	}
 }
@@ -701,7 +700,6 @@ static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 	if (err) {
 		char errbuf[1024];
 		regerror(err, &p->regexp, errbuf, 1024);
-		regfree(&p->regexp);
 		compile_regexp_failed(p, errbuf);
 	}
 }
