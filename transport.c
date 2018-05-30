@@ -737,7 +737,7 @@ void transport_take_over(struct transport *transport,
 	struct git_transport_data *data;
 
 	if (!transport->smart_options)
-		die("BUG: taking over transport requires non-NULL "
+		BUG("taking over transport requires non-NULL "
 		    "smart_options field.");
 
 	data = xcalloc(1, sizeof(*data));
@@ -862,7 +862,7 @@ int is_transport_allowed(const char *type, int from_user)
 		return from_user;
 	}
 
-	die("BUG: invalid protocol_allow_config type");
+	BUG("invalid protocol_allow_config type");
 }
 
 void transport_check_allowed(const char *type)

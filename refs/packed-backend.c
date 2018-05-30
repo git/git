@@ -221,13 +221,13 @@ static struct packed_ref_store *packed_downcast(struct ref_store *ref_store,
 	struct packed_ref_store *refs;
 
 	if (ref_store->be != &refs_be_packed)
-		die("BUG: ref_store is type \"%s\" not \"packed\" in %s",
+		BUG("ref_store is type \"%s\" not \"packed\" in %s",
 		    ref_store->be->name, caller);
 
 	refs = (struct packed_ref_store *)ref_store;
 
 	if ((refs->store_flags & required_flags) != required_flags)
-		die("BUG: unallowed operation (%s), requires %x, has %x\n",
+		BUG("unallowed operation (%s), requires %x, has %x\n",
 		    caller, required_flags, refs->store_flags);
 
 	return refs;
@@ -1036,7 +1036,7 @@ void packed_refs_unlock(struct ref_store *ref_store)
 			"packed_refs_unlock");
 
 	if (!is_lock_file_locked(&refs->lock))
-		die("BUG: packed_refs_unlock() called when not locked");
+		BUG("packed_refs_unlock() called when not locked");
 	rollback_lock_file(&refs->lock);
 }
 
@@ -1089,7 +1089,7 @@ static int write_with_updates(struct packed_ref_store *refs,
 	char *packed_refs_path;
 
 	if (!is_lock_file_locked(&refs->lock))
-		die("BUG: write_with_updates() called while unlocked");
+		BUG("write_with_updates() called while unlocked");
 
 	/*
 	 * If packed-refs is a symlink, we want to overwrite the
@@ -1563,21 +1563,21 @@ static int packed_create_symref(struct ref_store *ref_store,
 			       const char *refname, const char *target,
 			       const char *logmsg)
 {
-	die("BUG: packed reference store does not support symrefs");
+	BUG("packed reference store does not support symrefs");
 }
 
 static int packed_rename_ref(struct ref_store *ref_store,
 			    const char *oldrefname, const char *newrefname,
 			    const char *logmsg)
 {
-	die("BUG: packed reference store does not support renaming references");
+	BUG("packed reference store does not support renaming references");
 }
 
 static int packed_copy_ref(struct ref_store *ref_store,
 			   const char *oldrefname, const char *newrefname,
 			   const char *logmsg)
 {
-	die("BUG: packed reference store does not support copying references");
+	BUG("packed reference store does not support copying references");
 }
 
 static struct ref_iterator *packed_reflog_iterator_begin(struct ref_store *ref_store)
@@ -1610,7 +1610,7 @@ static int packed_create_reflog(struct ref_store *ref_store,
 			       const char *refname, int force_create,
 			       struct strbuf *err)
 {
-	die("BUG: packed reference store does not support reflogs");
+	BUG("packed reference store does not support reflogs");
 }
 
 static int packed_delete_reflog(struct ref_store *ref_store,

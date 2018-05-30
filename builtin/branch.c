@@ -500,7 +500,7 @@ static void copy_or_rename_branch(const char *oldname, const char *newname, int 
 
 	if (!skip_prefix(oldref.buf, "refs/heads/", &interpreted_oldname) ||
 	    !skip_prefix(newref.buf, "refs/heads/", &interpreted_newname)) {
-		die("BUG: expected prefix missing for refs");
+		BUG("expected prefix missing for refs");
 	}
 
 	if (copy)

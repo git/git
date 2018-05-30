@@ -312,7 +312,7 @@ static void print_object_or_die(struct batch_options *opt, struct expand_data *d
 					die("could not convert '%s' %s",
 					    oid_to_hex(oid), data->rest);
 			} else
-				die("BUG: invalid cmdmode: %c", opt->cmdmode);
+				BUG("invalid cmdmode: %c", opt->cmdmode);
 			batch_write(opt, contents, size);
 			free(contents);
 		} else if (stream_blob_to_fd(1, oid, NULL, 0) < 0)
@@ -387,7 +387,7 @@ static void batch_one_object(const char *obj_name, struct batch_options *opt,
 			       (uintmax_t)strlen(obj_name), obj_name);
 			break;
 		default:
-			die("BUG: unknown get_sha1_with_context result %d\n",
+			BUG("unknown get_sha1_with_context result %d\n",
 			       result);
 			break;
 		}

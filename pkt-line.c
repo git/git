@@ -277,7 +277,7 @@ static int get_packet_data(int fd, char **src_buf, size_t *src_size,
 	ssize_t ret;
 
 	if (fd >= 0 && src_buf && *src_buf)
-		die("BUG: multiple sources given to packet_read");
+		BUG("multiple sources given to packet_read");
 
 	/* Read up to "size" bytes from our source, whatever it is. */
 	if (src_buf && *src_buf) {

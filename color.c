@@ -174,7 +174,7 @@ static char *color_output(char *out, int len, const struct color *c, char type)
 		break;
 	case COLOR_ANSI:
 		if (len < 2)
-			die("BUG: color parsing ran out of space");
+			BUG("color parsing ran out of space");
 		*out++ = type;
 		*out++ = '0' + c->value;
 		break;
@@ -256,7 +256,7 @@ int color_parse_mem(const char *value, int value_len, char *dst)
 #undef OUT
 #define OUT(x) do { \
 	if (dst == end) \
-		die("BUG: color parsing ran out of space"); \
+		BUG("color parsing ran out of space"); \
 	*dst++ = (x); \
 } while(0)
 

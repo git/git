@@ -1184,7 +1184,7 @@ static void emit_diff_symbol_from_struct(struct diff_options *o,
 		fputs(o->stat_sep, o->file);
 		break;
 	default:
-		die("BUG: unknown diff symbol");
+		BUG("unknown diff symbol");
 	}
 	strbuf_release(&sb);
 }
@@ -1343,7 +1343,7 @@ static struct diff_tempfile *claim_diff_tempfile(void) {
 	for (i = 0; i < ARRAY_SIZE(diff_temp); i++)
 		if (!diff_temp[i].name)
 			return diff_temp + i;
-	die("BUG: diff is failing to clean up its tempfiles");
+	BUG("diff is failing to clean up its tempfiles");
 }
 
 static void remove_tempfile(void)
@@ -3841,7 +3841,7 @@ static const char *diff_abbrev_oid(const struct object_id *oid, int abbrev)
 		if (abbrev < 0)
 			abbrev = FALLBACK_DEFAULT_ABBREV;
 		if (abbrev > GIT_SHA1_HEXSZ)
-			die("BUG: oid abbreviation out of range: %d", abbrev);
+			BUG("oid abbreviation out of range: %d", abbrev);
 		if (abbrev)
 			hex[abbrev] = '\0';
 		return hex;
@@ -4335,7 +4335,7 @@ static int stat_opt(struct diff_options *options, const char **av)
 	int argcount = 1;
 
 	if (!skip_prefix(arg, "--stat", &arg))
-		die("BUG: stat option does not begin with --stat: %s", arg);
+		BUG("stat option does not begin with --stat: %s", arg);
 	end = (char *)arg;
 
 	switch (*arg) {
@@ -5520,7 +5520,7 @@ static void diff_flush_patch_all_file_pairs(struct diff_options *o)
 	struct diff_queue_struct *q = &diff_queued_diff;
 
 	if (WSEH_NEW & WS_RULE_MASK)
-		die("BUG: WS rules bit mask overlaps with diff symbol flags");
+		BUG("WS rules bit mask overlaps with diff symbol flags");
 
 	if (o->color_moved)
 		o->emitted_symbols = &esm;
@@ -6054,7 +6054,7 @@ size_t fill_textconv(struct userdiff_driver *driver,
 	}
 
 	if (!driver->textconv)
-		die("BUG: fill_textconv called with non-textconv driver");
+		BUG("fill_textconv called with non-textconv driver");
 
 	if (driver->textconv_cache && df->oid_valid) {
 		*outbuf = notes_cache_get(driver->textconv_cache,

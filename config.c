@@ -103,7 +103,7 @@ static int config_buf_ungetc(int c, struct config_source *conf)
 	if (conf->u.buf.pos > 0) {
 		conf->u.buf.pos--;
 		if (conf->u.buf.buf[conf->u.buf.pos] != c)
-			die("BUG: config_buf can only ungetc the same character");
+			BUG("config_buf can only ungetc the same character");
 		return c;
 	}
 
@@ -190,7 +190,7 @@ static int prepare_include_condition_pattern(struct strbuf *pat)
 		strbuf_realpath(&path, cf->path, 1);
 		slash = find_last_dir_sep(path.buf);
 		if (!slash)
-			die("BUG: how is this possible?");
+			BUG("how is this possible?");
 		strbuf_splice(pat, 0, 1, path.buf, slash - path.buf);
 		prefix = slash - path.buf + 1 /* slash */;
 	} else if (!is_absolute_path(pat->buf))
@@ -1814,7 +1814,7 @@ static int configset_add_value(struct config_set *cs, const char *key, const cha
 	l_item->value_index = e->value_list.nr - 1;
 
 	if (!cf)
-		die("BUG: configset_add_value has no source");
+		BUG("configset_add_value has no source");
 	if (cf->name) {
 		kv_info->filename = strintern(cf->name);
 		kv_info->linenr = cf->linenr;
@@ -3208,7 +3208,7 @@ const char *current_config_origin_type(void)
 	else if(cf)
 		type = cf->origin_type;
 	else
-		die("BUG: current_config_origin_type called outside config callback");
+		BUG("current_config_origin_type called outside config callback");
 
 	switch (type) {
 	case CONFIG_ORIGIN_BLOB:
@@ -3222,7 +3222,7 @@ const char *current_config_origin_type(void)
 	case CONFIG_ORIGIN_CMDLINE:
 		return "command line";
 	default:
-		die("BUG: unknown config origin type");
+		BUG("unknown config origin type");
 	}
 }
 
@@ -3234,7 +3234,7 @@ const char *current_config_name(void)
 	else if (cf)
 		name = cf->name;
 	else
-		die("BUG: current_config_name called outside config callback");
+		BUG("current_config_name called outside config callback");
 	return name ? name : "";
 }
 

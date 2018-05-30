@@ -2375,7 +2375,7 @@ static void update_pre_post_images(struct image *preimage,
 	if (postlen
 	    ? postlen < new_buf - postimage->buf
 	    : postimage->len < new_buf - postimage->buf)
-		die("BUG: caller miscounted postlen: asked %d, orig = %d, used = %d",
+		BUG("caller miscounted postlen: asked %d, orig = %d, used = %d",
 		    (int)postlen, (int) postimage->len, (int)(new_buf - postimage->buf));
 
 	/* Fix the length of the whole thing */
@@ -3509,7 +3509,7 @@ static int load_current(struct apply_state *state,
 	unsigned mode = patch->new_mode;
 
 	if (!patch->is_new)
-		die("BUG: patch to %s is not a creation", patch->old_name);
+		BUG("patch to %s is not a creation", patch->old_name);
 
 	pos = cache_name_pos(name, strlen(name));
 	if (pos < 0)

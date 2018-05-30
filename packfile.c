@@ -188,7 +188,7 @@ int open_pack_index(struct packed_git *p)
 		return 0;
 
 	if (!strip_suffix(p->pack_name, ".pack", &len))
-		die("BUG: pack_name does not end in .pack");
+		BUG("pack_name does not end in .pack");
 	idx_name = xstrfmt("%.*s.idx", (int)len, p->pack_name);
 	ret = check_packed_git_idx(idx_name, p);
 	free(idx_name);
@@ -317,7 +317,7 @@ void close_all_packs(struct raw_object_store *o)
 
 	for (p = o->packed_git; p; p = p->next)
 		if (p->do_not_close)
-			die("BUG: want to close pack marked 'do-not-close'");
+			BUG("want to close pack marked 'do-not-close'");
 		else
 			close_pack(p);
 }
@@ -1567,7 +1567,7 @@ void *unpack_entry(struct repository *r, struct packed_git *p, off_t obj_offset,
 	case OBJ_OFS_DELTA:
 	case OBJ_REF_DELTA:
 		if (data)
-			die("BUG: unpack_entry: left loop at a valid delta");
+			BUG("unpack_entry: left loop at a valid delta");
 		break;
 	case OBJ_COMMIT:
 	case OBJ_TREE:

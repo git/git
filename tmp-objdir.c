@@ -127,7 +127,7 @@ struct tmp_objdir *tmp_objdir_create(void)
 	struct tmp_objdir *t;
 
 	if (the_tmp_objdir)
-		die("BUG: only one tmp_objdir can be used at a time");
+		BUG("only one tmp_objdir can be used at a time");
 
 	t = xmalloc(sizeof(*t));
 	strbuf_init(&t->path, 0);

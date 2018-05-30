@@ -824,7 +824,7 @@ static int grab_objectname(const char *name, const struct object_id *oid,
 			v->s = xstrdup(find_unique_abbrev(oid, atom->u.objectname.length));
 			return 1;
 		} else
-			die("BUG: unknown %%(objectname) option");
+			BUG("unknown %%(objectname) option");
 	}
 	return 0;
 }
@@ -1372,7 +1372,7 @@ static void fill_remote_ref_details(struct used_atom *atom, const char *refname,
 		else
 			*s = "";
 	} else
-		die("BUG: unhandled RR_* enum");
+		BUG("unhandled RR_* enum");
 }
 
 char *get_head_description(void)

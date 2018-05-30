@@ -962,10 +962,10 @@ void ref_transaction_free(struct ref_transaction *transaction)
 		/* OK */
 		break;
 	case REF_TRANSACTION_PREPARED:
-		die("BUG: free called on a prepared reference transaction");
+		BUG("free called on a prepared reference transaction");
 		break;
 	default:
-		die("BUG: unexpected reference transaction state");
+		BUG("unexpected reference transaction state");
 		break;
 	}
 
@@ -987,7 +987,7 @@ struct ref_update *ref_transaction_add_update(
 	struct ref_update *update;
 
 	if (transaction->state != REF_TRANSACTION_OPEN)
-		die("BUG: update called for transaction that is not open");
+		BUG("update called for transaction that is not open");
 
 	FLEX_ALLOC_STR(update, refname, refname);
 	ALLOC_GROW(transaction->updates, transaction->nr + 1, transaction->alloc);
@@ -1037,7 +1037,7 @@ int ref_transaction_create(struct ref_transaction *transaction,
 			   struct strbuf *err)
 {
 	if (!new_oid || is_null_oid(new_oid))
-		die("BUG: create called without valid new_oid");
+		BUG("create called without valid new_oid");
 	return ref_transaction_update(transaction, refname, new_oid,
 				      &null_oid, flags, msg, err);
 }
@@ -1049,7 +1049,7 @@ int ref_transaction_delete(struct ref_transaction *transaction,
 			   struct strbuf *err)
 {
 	if (old_oid && is_null_oid(old_oid))
-		die("BUG: delete called with old_oid set to zeros");
+		BUG("delete called with old_oid set to zeros");
 	return ref_transaction_update(transaction, refname,
 				      &null_oid, old_oid,
 				      flags, msg, err);
@@ -1062,7 +1062,7 @@ int ref_transaction_verify(struct ref_transaction *transaction,
 			   struct strbuf *err)
 {
 	if (!old_oid)
-		die("BUG: verify called with old_oid set to NULL");
+		BUG("verify called with old_oid set to NULL");
 	return ref_transaction_update(transaction, refname,
 				      NULL, old_oid,
 				      flags, NULL, err);
@@ -1660,7 +1660,7 @@ static struct ref_store *ref_store_init(const char *gitdir,
 	struct ref_store *refs;
 
 	if (!be)
-		die("BUG: reference backend %s is unknown", be_name);
+		BUG("reference backend %s is unknown", be_name);
 
 	refs = be->init(gitdir, flags);
 	return refs;
@@ -1691,7 +1691,7 @@ static void register_ref_store_map(struct hashmap *map,
 		hashmap_init(map, ref_store_hash_cmp, NULL, 0);
 
 	if (hashmap_put(map, alloc_ref_store_hash_entry(name, refs)))
-		die("BUG: %s ref_store '%s' initialized twice", type, name);
+		BUG("%s ref_store '%s' initialized twice", type, name);
 }
 
 struct ref_store *get_submodule_ref_store(const char *submodule)
@@ -1837,7 +1837,7 @@ int ref_update_reject_duplicates(struct string_list *refnames,
 				    refnames->items[i].string);
 			return 1;
 		} else if (cmp > 0) {
-			die("BUG: ref_update_reject_duplicates() received unsorted list");
+			BUG("ref_update_reject_duplicates() received unsorted list");
 		}
 	}
 	return 0;
@@ -1853,13 +1853,13 @@ int ref_transaction_prepare(struct ref_transaction *transaction,
 		/* Good. */
 		break;
 	case REF_TRANSACTION_PREPARED:
-		die("BUG: prepare called twice on reference transaction");
+		BUG("prepare called twice on reference transaction");
 		break;
 	case REF_TRANSACTION_CLOSED:
-		die("BUG: prepare called on a closed reference transaction");
+		BUG("prepare called on a closed reference transaction");
 		break;
 	default:
-		die("BUG: unexpected reference transaction state");
+		BUG("unexpected reference transaction state");
 		break;
 	}
 
@@ -1886,10 +1886,10 @@ int ref_transaction_abort(struct ref_transaction *transaction,
 		ret = refs->be->transaction_abort(refs, transaction, err);
 		break;
 	case REF_TRANSACTION_CLOSED:
-		die("BUG: abort called on a closed reference transaction");
+		BUG("abort called on a closed reference transaction");
 		break;
 	default:
-		die("BUG: unexpected reference transaction state");
+		BUG("unexpected reference transaction state");
 		break;
 	}
 
@@ -1914,10 +1914,10 @@ int ref_transaction_commit(struct ref_transaction *transaction,
 		/* Fall through to finish. */
 		break;
 	case REF_TRANSACTION_CLOSED:
-		die("BUG: commit called on a closed reference transaction");
+		BUG("commit called on a closed reference transaction");
 		break;
 	default:
-		die("BUG: unexpected reference transaction state");
+		BUG("unexpected reference transaction state");
 		break;
 	}
 
@@ -1998,7 +1998,7 @@ int refs_verify_refname_available(struct ref_store *refs,
 	}
 
 	if (ok != ITER_DONE)
-		die("BUG: error while iterating over references");
+		BUG("error while iterating over references");
 
 	extra_refname = find_descendant_ref(dirname.buf, extras, skip);
 	if (extra_refname)

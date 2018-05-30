@@ -157,7 +157,7 @@ static void all_attrs_init(struct attr_hashmap *map, struct attr_check *check)
 
 	size = hashmap_get_size(&map->map);
 	if (size < check->all_attrs_nr)
-		die("BUG: interned attributes shouldn't be deleted");
+		BUG("interned attributes shouldn't be deleted");
 
 	/*
 	 * If the number of attributes in the global dictionary has increased
@@ -541,7 +541,7 @@ static void check_vector_remove(struct attr_check *check)
 			break;
 
 	if (i >= check_vector.nr)
-		die("BUG: no entry found");
+		BUG("no entry found");
 
 	/* shift entries over */
 	for (; i < check_vector.nr - 1; i++)
@@ -599,11 +599,11 @@ struct attr_check *attr_check_initl(const char *one, ...)
 		const struct git_attr *attr;
 		param = va_arg(params, const char *);
 		if (!param)
-			die("BUG: counted %d != ended at %d",
+			BUG("counted %d != ended at %d",
 			    check->nr, cnt);
 		attr = git_attr(param);
 		if (!attr)
-			die("BUG: %s: not a valid attribute name", param);
+			BUG("%s: not a valid attribute name", param);
 		check->items[cnt].attr = attr;
 	}
 	va_end(params);
@@ -714,7 +714,7 @@ void git_attr_set_direction(enum git_attr_direction new_direction,
 			    struct index_state *istate)
 {
 	if (is_bare_repository() && new_direction != GIT_ATTR_INDEX)
-		die("BUG: non-INDEX attr direction in a bare repo");
+		BUG("non-INDEX attr direction in a bare repo");
 
 	if (new_direction != direction)
 		drop_all_attr_stacks();

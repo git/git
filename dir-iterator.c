@@ -188,7 +188,7 @@ struct dir_iterator *dir_iterator_begin(const char *path)
 	struct dir_iterator *dir_iterator = &iter->base;
 
 	if (!path || !*path)
-		die("BUG: empty path passed to dir_iterator_begin()");
+		BUG("empty path passed to dir_iterator_begin()");
 
 	strbuf_init(&iter->base.path, PATH_MAX);
 	strbuf_addstr(&iter->base.path, path);

@@ -121,7 +121,7 @@ static void files_assert_main_repository(struct files_ref_store *refs,
 	if (refs->store_flags & REF_STORE_MAIN)
 		return;
 
-	die("BUG: operation %s only allowed for main ref store", caller);
+	BUG("operation %s only allowed for main ref store", caller);
 }
 
 /*
@@ -137,13 +137,13 @@ static struct files_ref_store *files_downcast(struct ref_store *ref_store,
 	struct files_ref_store *refs;
 
 	if (ref_store->be != &refs_be_files)
-		die("BUG: ref_store is type \"%s\" not \"files\" in %s",
+		BUG("ref_store is type \"%s\" not \"files\" in %s",
 		    ref_store->be->name, caller);
 
 	refs = (struct files_ref_store *)ref_store;
 
 	if ((refs->store_flags & required_flags) != required_flags)
-		die("BUG: operation %s requires abilities 0x%x, but only have 0x%x",
+		BUG("operation %s requires abilities 0x%x, but only have 0x%x",
 		    caller, required_flags, refs->store_flags);
 
 	return refs;
@@ -162,7 +162,7 @@ static void files_reflog_path(struct files_ref_store *refs,
 		strbuf_addf(sb, "%s/logs/%s", refs->gitcommondir, refname);
 		break;
 	default:
-		die("BUG: unknown ref type %d of ref %s",
+		BUG("unknown ref type %d of ref %s",
 		    ref_type(refname), refname);
 	}
 }
@@ -180,7 +180,7 @@ static void files_ref_path(struct files_ref_store *refs,
 		strbuf_addf(sb, "%s/%s", refs->gitcommondir, refname);
 		break;
 	default:
-		die("BUG: unknown ref type %d of ref %s",
+		BUG("unknown ref type %d of ref %s",
 		    ref_type(refname), refname);
 	}
 }
@@ -2006,7 +2006,7 @@ static int files_for_each_reflog_ent_reverse(struct ref_store *ref_store,
 
 	}
 	if (!ret && sb.len)
-		die("BUG: reverse reflog parser had leftover data");
+		BUG("reverse reflog parser had leftover data");
 
 	fclose(logfp);
 	strbuf_release(&sb);
@@ -2084,7 +2084,7 @@ static int files_reflog_iterator_advance(struct ref_iterator *ref_iterator)
 static int files_reflog_iterator_peel(struct ref_iterator *ref_iterator,
 				   struct object_id *peeled)
 {
-	die("BUG: ref_iterator_peel() called for reflog_iterator");
+	BUG("ref_iterator_peel() called for reflog_iterator");
 }
 
 static int files_reflog_iterator_abort(struct ref_iterator *ref_iterator)
@@ -2869,7 +2869,7 @@ static int files_initial_transaction_commit(struct ref_store *ref_store,
 	assert(err);
 
 	if (transaction->state != REF_TRANSACTION_OPEN)
-		die("BUG: commit called for transaction that is not open");
+		BUG("commit called for transaction that is not open");
 
 	/* Fail if a refname appears more than once in the transaction: */
 	for (i = 0; i < transaction->nr; i++)
@@ -2895,7 +2895,7 @@ static int files_initial_transaction_commit(struct ref_store *ref_store,
 	 */
 	if (refs_for_each_rawref(&refs->base, ref_present,
 				 &affected_refnames))
-		die("BUG: initial ref transaction called with existing refs");
+		BUG("initial ref transaction called with existing refs");
 
 	packed_transaction = ref_store_transaction_begin(refs->packed_ref_store, err);
 	if (!packed_transaction) {
@@ -2908,7 +2908,7 @@ static int files_initial_transaction_commit(struct ref_store *ref_store,
 
 		if ((update->flags & REF_HAVE_OLD) &&
 		    !is_null_oid(&update->old_oid))
-			die("BUG: initial ref transaction with old_sha1 set");
+			BUG("initial ref transaction with old_sha1 set");
 		if (refs_verify_refname_available(&refs->base, update->refname,
 						  &affected_refnames, NULL,
 						  err)) {

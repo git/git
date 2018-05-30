@@ -48,6 +48,7 @@ int cmd_main(int argc, const char **argv)
 {
 	int i;
 
+	BUG_exit_code = 99;
 	if (argc < 2)
 		die("I need a test name!");
 

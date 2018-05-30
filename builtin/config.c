@@ -398,7 +398,7 @@ static char *normalize_value(const char *key, const char *value)
 		return xstrdup(value);
 	}
 
-	die("BUG: cannot normalize type %d", type);
+	BUG("cannot normalize type %d", type);
 }
 
 static int get_color_found;

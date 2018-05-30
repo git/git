@@ -198,7 +198,7 @@ static void parse_pathspec_attr_match(struct pathspec_item *item, const char *va
 	}
 
 	if (item->attr_check->nr != item->attr_match_nr)
-		die("BUG: should have same number of entries");
+		BUG("should have same number of entries");
 
 	string_list_clear(&list, 0);
 }
@@ -422,7 +422,7 @@ static void init_pathspec_item(struct pathspec_item *item, unsigned flags,
 
 	if (pathspec_prefix >= 0 &&
 	    (prefixlen || (prefix && *prefix)))
-		die("BUG: 'prefix' magic is supposed to be used at worktree's root");
+		BUG("'prefix' magic is supposed to be used at worktree's root");
 
 	if ((magic & PATHSPEC_LITERAL) && (magic & PATHSPEC_GLOB))
 		die(_("%s: 'literal' and 'glob' are incompatible"), elt);
@@ -486,7 +486,7 @@ static void init_pathspec_item(struct pathspec_item *item, unsigned flags,
 	/* sanity checks, pathspec matchers assume these are sane */
 	if (item->nowildcard_len > item->len ||
 	    item->prefix         > item->len) {
-		die ("BUG: error initializing pathspec_item");
+		BUG("error initializing pathspec_item");
 	}
 }
 
@@ -545,7 +545,7 @@ void parse_pathspec(struct pathspec *pathspec,
 
 	if ((flags & PATHSPEC_PREFER_CWD) &&
 	    (flags & PATHSPEC_PREFER_FULL))
-		die("BUG: PATHSPEC_PREFER_CWD and PATHSPEC_PREFER_FULL are incompatible");
+		BUG("PATHSPEC_PREFER_CWD and PATHSPEC_PREFER_FULL are incompatible");
 
 	/* No arguments with prefix -> prefix pathspec */
 	if (!entry) {
@@ -553,7 +553,7 @@ void parse_pathspec(struct pathspec *pathspec,
 			return;
 
 		if (!(flags & PATHSPEC_PREFER_CWD))
-			die("BUG: PATHSPEC_PREFER_CWD requires arguments");
+			BUG("PATHSPEC_PREFER_CWD requires arguments");
 
 		pathspec->items = item = xcalloc(1, sizeof(*item));
 		item->match = xstrdup(prefix);
@@ -609,7 +609,7 @@ void parse_pathspec(struct pathspec *pathspec,
 
 	if (pathspec->magic & PATHSPEC_MAXDEPTH) {
 		if (flags & PATHSPEC_KEEP_ORDER)
-			die("BUG: PATHSPEC_MAXDEPTH_VALID and PATHSPEC_KEEP_ORDER are incompatible");
+			BUG("PATHSPEC_MAXDEPTH_VALID and PATHSPEC_KEEP_ORDER are incompatible");
 		QSORT(pathspec->items, pathspec->nr, pathspec_item_cmp);
 	}
 }

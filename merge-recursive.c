@@ -392,7 +392,7 @@ struct tree *write_tree_from_memory(struct merge_options *o)
 				fprintf(stderr, "BUG: %d %.*s\n", ce_stage(ce),
 					(int)ce_namelen(ce), ce->name);
 		}
-		die("BUG: unmerged index entries in merge-recursive.c");
+		BUG("unmerged index entries in merge-recursive.c");
 	}
 
 	if (!active_cache_tree)
@@ -1166,7 +1166,7 @@ static int merge_file_1(struct merge_options *o,
 				break;
 			}
 		} else
-			die("BUG: unsupported object type in the tree");
+			BUG("unsupported object type in the tree");
 	}
 
 	if (result->merge)
@@ -2419,7 +2419,7 @@ static int process_renames(struct merge_options *o,
 			const char *ren2_dst = ren2->pair->two->path;
 			enum rename_type rename_type;
 			if (strcmp(ren1_src, ren2_src) != 0)
-				die("BUG: ren1_src != ren2_src");
+				BUG("ren1_src != ren2_src");
 			ren2->dst_entry->processed = 1;
 			ren2->processed = 1;
 			if (strcmp(ren1_dst, ren2_dst) != 0) {
@@ -2453,7 +2453,7 @@ static int process_renames(struct merge_options *o,
 			ren2 = lookup->util;
 			ren2_dst = ren2->pair->two->path;
 			if (strcmp(ren1_dst, ren2_dst) != 0)
-				die("BUG: ren1_dst != ren2_dst");
+				BUG("ren1_dst != ren2_dst");
 
 			clean_merge = 0;
 			ren2->processed = 1;
@@ -3057,7 +3057,7 @@ static int process_entry(struct merge_options *o,
 		 */
 		remove_file(o, 1, path, !a_mode);
 	} else
-		die("BUG: fatal merge failure, shouldn't happen.");
+		BUG("fatal merge failure, shouldn't happen.");
 
 	return clean_merge;
 }
@@ -3135,7 +3135,7 @@ int merge_trees(struct merge_options *o,
 		for (i = 0; i < entries->nr; i++) {
 			struct stage_data *e = entries->items[i].util;
 			if (!e->processed)
-				die("BUG: unprocessed path??? %s",
+				BUG("unprocessed path??? %s",
 				    entries->items[i].string);
 		}
 

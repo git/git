@@ -210,6 +210,9 @@ void warning(const char *warn, ...)
 	va_end(params);
 }
 
+/* Only set this, ever, from t/helper/, when verifying that bugs are caught. */
+int BUG_exit_code;
+
 static NORETURN void BUG_vfl(const char *file, int line, const char *fmt, va_list params)
 {
 	char prefix[256];
@@ -221,6 +224,8 @@ static NORETURN void BUG_vfl(const char *file, int line, const char *fmt, va_lis
 		snprintf(prefix, sizeof(prefix), "BUG: ");
 
 	vreportf(prefix, fmt, params);
+	if (BUG_exit_code)
+		exit(BUG_exit_code);
 	abort();
 }
 

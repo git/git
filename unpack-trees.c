@@ -398,7 +398,7 @@ static int check_updates(struct unpack_trees_options *o)
 
 		if (ce->ce_flags & CE_UPDATE) {
 			if (ce->ce_flags & CE_WT_REMOVE)
-				die("BUG: both update and delete flags are set on %s",
+				BUG("both update and delete flags are set on %s",
 				    ce->name);
 			display_progress(progress, ++cnt);
 			ce->ce_flags &= ~CE_UPDATE;

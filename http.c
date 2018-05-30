@@ -1846,7 +1846,7 @@ static int update_url_from_redirect(struct strbuf *base,
 		return 0;
 
 	if (!skip_prefix(asked, base->buf, &tail))
-		die("BUG: update_url_from_redirect: %s is not a superset of %s",
+		BUG("update_url_from_redirect: %s is not a superset of %s",
 		    asked, base->buf);
 
 	new_len = got->len;
@@ -1894,7 +1894,7 @@ static int http_request_reauth(const char *url,
 			strbuf_reset(result);
 			break;
 		default:
-			die("BUG: HTTP_KEEP_ERROR is only supported with strbufs");
+			BUG("HTTP_KEEP_ERROR is only supported with strbufs");
 		}
 	}
 
@@ -2105,7 +2105,7 @@ int finish_http_pack_request(struct http_pack_request *preq)
 	*lst = (*lst)->next;
 
 	if (!strip_suffix(preq->tmpfile, ".pack.temp", &len))
-		die("BUG: pack tmpfile does not end in .pack.temp?");
+		BUG("pack tmpfile does not end in .pack.temp?");
 	tmp_idx = xstrfmt("%.*s.idx.temp", (int)len, preq->tmpfile);
 
 	argv_array_push(&ip.args, "index-pack");
@@ -2201,7 +2201,7 @@ static size_t fwrite_sha1_file(char *ptr, size_t eltsize, size_t nmemb,
 		CURLcode c = curl_easy_getinfo(slot->curl, CURLINFO_HTTP_CODE,
 						&slot->http_code);
 		if (c != CURLE_OK)
-			die("BUG: curl_easy_getinfo for HTTP code failed: %s",
+			BUG("curl_easy_getinfo for HTTP code failed: %s",
 				curl_easy_strerror(c));
 		if (slot->http_code >= 300)
 			return size;

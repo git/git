@@ -2108,7 +2108,7 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->ignore_missing = 1;
 	} else if (!strcmp(arg, "--exclude-promisor-objects")) {
 		if (fetch_if_missing)
-			die("BUG: exclude_promisor_objects can only be used when fetch_if_missing is 0");
+			BUG("exclude_promisor_objects can only be used when fetch_if_missing is 0");
 		revs->exclude_promisor_objects = 1;
 	} else {
 		int opts = diff_opt_parse(&revs->diffopt, argv, argc, revs->prefix);
@@ -2174,7 +2174,7 @@ static int handle_revision_pseudo_opt(const char *submodule,
 		 * supported right now, so stick to single worktree.
 		 */
 		if (!revs->single_worktree)
-			die("BUG: --single-worktree cannot be used together with submodule");
+			BUG("--single-worktree cannot be used together with submodule");
 		refs = get_submodule_ref_store(submodule);
 	} else
 		refs = get_main_ref_store(the_repository);

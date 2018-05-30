@@ -23,7 +23,7 @@ struct ref_dir *get_ref_dir(struct ref_entry *entry)
 	dir = &entry->u.subdir;
 	if (entry->flag & REF_INCOMPLETE) {
 		if (!dir->cache->fill_ref_dir)
-			die("BUG: incomplete ref_store without fill_ref_dir function");
+			BUG("incomplete ref_store without fill_ref_dir function");
 
 		dir->cache->fill_ref_dir(dir->cache->ref_store, dir, entry->name);
 		entry->flag &= ~REF_INCOMPLETE;
