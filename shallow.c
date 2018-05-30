@@ -353,7 +353,7 @@ void advertise_shallow_grafts(int fd)
  */
 void prune_shallow(int show_only)
 {
-	static struct lock_file shallow_lock;
+	struct lock_file shallow_lock = LOCK_INIT;
 	struct strbuf sb = STRBUF_INIT;
 	int fd;
 

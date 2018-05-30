@@ -1817,7 +1817,7 @@ static void dump_marks_helper(FILE *f,
 
 static void dump_marks(void)
 {
-	static struct lock_file mark_lock;
+	struct lock_file mark_lock = LOCK_INIT;
 	FILE *f;
 
 	if (!export_marks_file || (import_marks_file && !import_marks_file_done))

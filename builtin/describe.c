@@ -612,7 +612,7 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 				suffix = broken;
 			}
 		} else if (dirty) {
-			static struct lock_file index_lock;
+			struct lock_file index_lock = LOCK_INIT;
 			struct rev_info revs;
 			struct argv_array args = ARGV_ARRAY_INIT;
 			int fd, result;

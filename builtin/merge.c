@@ -647,7 +647,7 @@ static int try_merge_strategy(const char *strategy, struct commit_list *common,
 			      struct commit_list *remoteheads,
 			      struct commit *head)
 {
-	static struct lock_file lock;
+	struct lock_file lock = LOCK_INIT;
 	const char *head_arg = "HEAD";
 
 	hold_locked_index(&lock, LOCK_DIE_ON_ERROR);
@@ -805,7 +805,7 @@ static int merge_trivial(struct commit *head, struct commit_list *remoteheads)
 {
 	struct object_id result_tree, result_commit;
 	struct commit_list *parents, **pptr = &parents;
-	static struct lock_file lock;
+	struct lock_file lock = LOCK_INIT;
 
 	hold_locked_index(&lock, LOCK_DIE_ON_ERROR);
 	refresh_cache(REFRESH_QUIET);

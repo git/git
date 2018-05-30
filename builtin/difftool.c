@@ -610,7 +610,7 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 			continue;
 
 		if (!indices_loaded) {
-			static struct lock_file lock;
+			struct lock_file lock = LOCK_INIT;
 			strbuf_reset(&buf);
 			strbuf_addf(&buf, "%s/wtindex", tmpdir);
 			if (hold_lock_file_for_update(&lock, buf.buf, 0) < 0 ||

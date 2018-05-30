@@ -2991,7 +2991,7 @@ static int files_reflog_expire(struct ref_store *ref_store,
 {
 	struct files_ref_store *refs =
 		files_downcast(ref_store, REF_STORE_WRITE, "reflog_expire");
-	static struct lock_file reflog_lock;
+	struct lock_file reflog_lock = LOCK_INIT;
 	struct expire_reflog_cb cb;
 	struct ref_lock *lock;
 	struct strbuf log_file_sb = STRBUF_INIT;

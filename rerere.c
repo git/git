@@ -703,10 +703,9 @@ out:
 	return ret;
 }
 
-static struct lock_file index_lock;
-
 static void update_paths(struct string_list *update)
 {
+	struct lock_file index_lock = LOCK_INIT;
 	int i;
 
 	hold_locked_index(&index_lock, LOCK_DIE_ON_ERROR);
