@@ -488,7 +488,8 @@ static int grep_cache(struct grep_opt *opt, struct repository *repo,
 		strbuf_addstr(&name, repo->submodule_prefix);
 	}
 
-	repo_read_index(repo);
+	if (repo_read_index(repo) < 0)
+		die("index file corrupt");
 
 	for (nr = 0; nr < repo->index->cache_nr; nr++) {
 		const struct cache_entry *ce = repo->index->cache[nr];
