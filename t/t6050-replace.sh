@@ -4,8 +4,6 @@
 #
 test_description='Tests replace refs functionality'
 
-exec </dev/null
-
 . ./test-lib.sh
 . "$TEST_DIRECTORY/lib-gpg.sh"
 
