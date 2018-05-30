@@ -2359,7 +2359,7 @@ static int store_aux_event(enum config_event_t type,
 
 	if (type == CONFIG_EVENT_SECTION) {
 		if (cf->var.len < 2 || cf->var.buf[cf->var.len - 1] != '.')
-			BUG("Invalid section name '%s'", cf->var.buf);
+			return error("invalid section name '%s'", cf->var.buf);
 
 		/* Is this the section we were looking for? */
 		store->is_keys_section =
