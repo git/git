@@ -15,6 +15,7 @@
 #include "remote.h"
 #include "dir.h"
 #include "refs.h"
+#include "refspec.h"
 #include "revision.h"
 #include "submodule.h"
 #include "submodule-config.h"
@@ -679,12 +680,12 @@ static const char *get_upstream_branch(const char *remote)
  */
 static const char *get_tracking_branch(const char *remote, const char *refspec)
 {
-	struct refspec *spec;
+	struct refspec_item spec;
 	const char *spec_src;
 	const char *merge_branch;
 
-	spec = parse_fetch_refspec(1, &refspec);
-	spec_src = spec->src;
+	refspec_item_init(&spec, refspec, REFSPEC_FETCH);
+	spec_src = spec.src;
 	if (!*spec_src || !strcmp(spec_src, "HEAD"))
 		spec_src = "HEAD";
 	else if (skip_prefix(spec_src, "heads/", &spec_src))
@@ -704,7 +705,7 @@ static const char *get_tracking_branch(const char *remote, const char *refspec)
 	} else
 		merge_branch = NULL;
 
-	free_refspec(1, spec);
+	refspec_item_clear(&spec);
 	return merge_branch;
 }
 

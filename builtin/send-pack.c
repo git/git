@@ -126,8 +126,7 @@ static int send_pack_config(const char *k, const char *v, void *cb)
 
 int cmd_send_pack(int argc, const char **argv, const char *prefix)
 {
-	int i, nr_refspecs = 0;
-	const char **refspecs = NULL;
+	struct refspec rs = REFSPEC_INIT_PUSH;
 	const char *remote_name = NULL;
 	struct remote *remote = NULL;
 	const char *dest = NULL;
@@ -189,8 +188,7 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix, options, send_pack_usage, 0);
 	if (argc > 0) {
 		dest = argv[0];
-		refspecs = (const char **)(argv + 1);
-		nr_refspecs = argc - 1;
+		refspec_appendn(&rs, argv + 1, argc - 1);
 	}
 
 	if (!dest)
@@ -209,31 +207,23 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 	args.push_options = push_options.nr ? &push_options : NULL;
 
 	if (from_stdin) {
-		struct argv_array all_refspecs = ARGV_ARRAY_INIT;
-
-		for (i = 0; i < nr_refspecs; i++)
-			argv_array_push(&all_refspecs, refspecs[i]);
-
 		if (args.stateless_rpc) {
 			const char *buf;
 			while ((buf = packet_read_line(0, NULL)))
-				argv_array_push(&all_refspecs, buf);
+				refspec_append(&rs, buf);
 		} else {
 			struct strbuf line = STRBUF_INIT;
 			while (strbuf_getline(&line, stdin) != EOF)
-				argv_array_push(&all_refspecs, line.buf);
+				refspec_append(&rs, line.buf);
 			strbuf_release(&line);
 		}
-
-		refspecs = all_refspecs.argv;
-		nr_refspecs = all_refspecs.argc;
 	}
 
 	/*
 	 * --all and --mirror are incompatible; neither makes sense
 	 * with any refspecs.
 	 */
-	if ((nr_refspecs > 0 && (send_all || args.send_mirror)) ||
+	if ((rs.nr > 0 && (send_all || args.send_mirror)) ||
 	    (send_all && args.send_mirror))
 		usage_with_options(send_pack_usage, options);
 
@@ -275,8 +265,6 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 		BUG("unknown protocol version");
 	}
 
-	transport_verify_remote_names(nr_refspecs, refspecs);
-
 	local_refs = get_local_heads();
 
 	flags = MATCH_REFS_NONE;
@@ -287,7 +275,7 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 		flags |= MATCH_REFS_MIRROR;
 
 	/* match them up */
-	if (match_push_refs(local_refs, &remote_refs, nr_refspecs, refspecs, flags))
+	if (match_push_refs(local_refs, &remote_refs, &rs, flags))
 		return -1;
 
 	if (!is_empty_cas(&cas))

@@ -968,7 +968,7 @@ int find_unpushed_submodules(struct oid_array *commits,
 
 static int push_submodule(const char *path,
 			  const struct remote *remote,
-			  const char **refspec, int refspec_nr,
+			  const struct refspec *rs,
 			  const struct string_list *push_options,
 			  int dry_run)
 {
@@ -991,8 +991,8 @@ static int push_submodule(const char *path,
 		if (remote->origin != REMOTE_UNCONFIGURED) {
 			int i;
 			argv_array_push(&cp.args, remote->name);
-			for (i = 0; i < refspec_nr; i++)
-				argv_array_push(&cp.args, refspec[i]);
+			for (i = 0; i < rs->raw_nr; i++)
+				argv_array_push(&cp.args, rs->raw[i]);
 		}
 
 		prepare_submodule_repo_env(&cp.env_array);
@@ -1013,7 +1013,7 @@ static int push_submodule(const char *path,
  */
 static void submodule_push_check(const char *path, const char *head,
 				 const struct remote *remote,
-				 const char **refspec, int refspec_nr)
+				 const struct refspec *rs)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
 	int i;
@@ -1023,8 +1023,8 @@ static void submodule_push_check(const char *path, const char *head,
 	argv_array_push(&cp.args, head);
 	argv_array_push(&cp.args, remote->name);
 
-	for (i = 0; i < refspec_nr; i++)
-		argv_array_push(&cp.args, refspec[i]);
+	for (i = 0; i < rs->raw_nr; i++)
+		argv_array_push(&cp.args, rs->raw[i]);
 
 	prepare_submodule_repo_env(&cp.env_array);
 	cp.git_cmd = 1;
@@ -1043,7 +1043,7 @@ static void submodule_push_check(const char *path, const char *head,
 
 int push_unpushed_submodules(struct oid_array *commits,
 			     const struct remote *remote,
-			     const char **refspec, int refspec_nr,
+			     const struct refspec *rs,
 			     const struct string_list *push_options,
 			     int dry_run)
 {
@@ -1069,8 +1069,7 @@ int push_unpushed_submodules(struct oid_array *commits,
 
 		for (i = 0; i < needs_pushing.nr; i++)
 			submodule_push_check(needs_pushing.items[i].string,
-					     head, remote,
-					     refspec, refspec_nr);
+					     head, remote, rs);
 		free(head);
 	}
 
@@ -1078,7 +1077,7 @@ int push_unpushed_submodules(struct oid_array *commits,
 	for (i = 0; i < needs_pushing.nr; i++) {
 		const char *path = needs_pushing.items[i].string;
 		fprintf(stderr, "Pushing submodule '%s'\n", path);
-		if (!push_submodule(path, remote, refspec, refspec_nr,
+		if (!push_submodule(path, remote, rs,
 				    push_options, dry_run)) {
 			fprintf(stderr, "Unable to push submodule '%s'\n", path);
 			ret = 0;

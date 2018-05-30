@@ -14,6 +14,7 @@
 #include "run-command.h"
 #include "diff.h"
 #include "refs.h"
+#include "refspec.h"
 #include "commit.h"
 #include "diffcore.h"
 #include "revision.h"

@@ -11,6 +11,7 @@
 #include "sigchain.h"
 #include "argv-array.h"
 #include "refs.h"
+#include "refspec.h"
 #include "transport-internal.h"
 #include "protocol.h"
 
@@ -35,8 +36,7 @@ struct helper_data {
 	char *export_marks;
 	char *import_marks;
 	/* These go from remote name (as in "list") to private name */
-	struct refspec *refspecs;
-	int refspec_nr;
+	struct refspec rs;
 	/* Transport options for fetch-pack/send-pack (should one of
 	 * those be invoked).
 	 */
@@ -106,9 +106,6 @@ static struct child_process *get_helper(struct transport *transport)
 	struct helper_data *data = transport->data;
 	struct strbuf buf = STRBUF_INIT;
 	struct child_process *helper;
-	const char **refspecs = NULL;
-	int refspec_nr = 0;
-	int refspec_alloc = 0;
 	int duped;
 	int code;
 
@@ -138,6 +135,7 @@ static struct child_process *get_helper(struct transport *transport)
 
 	data->helper = helper;
 	data->no_disconnect_req = 0;
+	refspec_init(&data->rs, REFSPEC_FETCH);
 
 	/*
 	 * Open the output as FILE* so strbuf_getline_*() family of
@@ -183,11 +181,8 @@ static struct child_process *get_helper(struct transport *transport)
 			data->export = 1;
 		else if (!strcmp(capname, "check-connectivity"))
 			data->check_connectivity = 1;
-		else if (!data->refspecs && skip_prefix(capname, "refspec ", &arg)) {
-			ALLOC_GROW(refspecs,
-				   refspec_nr + 1,
-				   refspec_alloc);
-			refspecs[refspec_nr++] = xstrdup(arg);
+		else if (skip_prefix(capname, "refspec ", &arg)) {
+			refspec_append(&data->rs, arg);
 		} else if (!strcmp(capname, "connect")) {
 			data->connect = 1;
 		} else if (!strcmp(capname, "stateless-connect")) {
@@ -206,14 +201,7 @@ static struct child_process *get_helper(struct transport *transport)
 			    capname);
 		}
 	}
-	if (refspecs) {
-		int i;
-		data->refspec_nr = refspec_nr;
-		data->refspecs = parse_fetch_refspec(refspec_nr, refspecs);
-		for (i = 0; i < refspec_nr; i++)
-			free((char *)refspecs[i]);
-		free(refspecs);
-	} else if (data->import || data->bidi_import || data->export) {
+	if (!data->rs.nr && (data->import || data->bidi_import || data->export)) {
 		warning("This remote helper should implement refspec capability.");
 	}
 	strbuf_release(&buf);
@@ -377,8 +365,7 @@ static int release_helper(struct transport *transport)
 {
 	int res = 0;
 	struct helper_data *data = transport->data;
-	free_refspec(data->refspec_nr, data->refspecs);
-	data->refspecs = NULL;
+	refspec_clear(&data->rs);
 	res = disconnect_helper(transport);
 	free(transport->data);
 	return res;
@@ -535,8 +522,8 @@ static int fetch_with_import(struct transport *transport,
 		if (posn->status & REF_STATUS_UPTODATE)
 			continue;
 		name = posn->symref ? posn->symref : posn->name;
-		if (data->refspecs)
-			private = apply_refspecs(data->refspecs, data->refspec_nr, name);
+		if (data->rs.nr)
+			private = apply_refspecs(&data->rs, name);
 		else
 			private = xstrdup(name);
 		if (private) {
@@ -814,11 +801,11 @@ static int push_update_refs_status(struct helper_data *data,
 		if (push_update_ref_status(&buf, &ref, remote_refs))
 			continue;
 
-		if (flags & TRANSPORT_PUSH_DRY_RUN || !data->refspecs || data->no_private_update)
+		if (flags & TRANSPORT_PUSH_DRY_RUN || !data->rs.nr || data->no_private_update)
 			continue;
 
 		/* propagate back the update to the remote namespace */
-		private = apply_refspecs(data->refspecs, data->refspec_nr, ref->name);
+		private = apply_refspecs(&data->rs, ref->name);
 		if (!private)
 			continue;
 		update_ref("update by helper", private, &ref->new_oid, NULL,
@@ -938,7 +925,7 @@ static int push_refs_with_export(struct transport *transport,
 	struct string_list revlist_args = STRING_LIST_INIT_DUP;
 	struct strbuf buf = STRBUF_INIT;
 
-	if (!data->refspecs)
+	if (!data->rs.nr)
 		die("remote-helper doesn't support push; refspec needed");
 
 	set_common_push_options(transport, data->name, flags);
@@ -955,7 +942,7 @@ static int push_refs_with_export(struct transport *transport,
 		char *private;
 		struct object_id oid;
 
-		private = apply_refspecs(data->refspecs, data->refspec_nr, ref->name);
+		private = apply_refspecs(&data->rs, ref->name);
 		if (private && !get_oid(private, &oid)) {
 			strbuf_addf(&buf, "^%s", private);
 			string_list_append_nodup(&revlist_args,

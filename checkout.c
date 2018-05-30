@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "remote.h"
+#include "refspec.h"
 #include "checkout.h"
 
 struct tracking_name_data {
@@ -12,8 +13,8 @@ struct tracking_name_data {
 static int check_tracking_name(struct remote *remote, void *cb_data)
 {
 	struct tracking_name_data *cb = cb_data;
-	struct refspec query;
-	memset(&query, 0, sizeof(struct refspec));
+	struct refspec_item query;
+	memset(&query, 0, sizeof(struct refspec_item));
 	query.src = cb->src_ref;
 	if (remote_find_tracking(remote, &query) ||
 	    get_oid(query.dst, cb->dst_oid)) {

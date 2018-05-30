@@ -7,6 +7,7 @@
 #include "cache.h"
 #include "config.h"
 #include "refs.h"
+#include "refspec.h"
 #include "commit.h"
 #include "object.h"
 #include "tag.h"
@@ -35,8 +36,7 @@ static int use_done_feature;
 static int no_data;
 static int full_tree;
 static struct string_list extra_refs = STRING_LIST_INIT_NODUP;
-static struct refspec *refspecs;
-static int refspecs_nr;
+static struct refspec refspecs = REFSPEC_INIT_FETCH;
 static int anonymize;
 
 static int parse_opt_signed_tag_mode(const struct option *opt,
@@ -828,9 +828,9 @@ static void get_tags_and_duplicates(struct rev_cmdline_info *info)
 		if (dwim_ref(e->name, strlen(e->name), &oid, &full_name) != 1)
 			continue;
 
-		if (refspecs) {
+		if (refspecs.nr) {
 			char *private;
-			private = apply_refspecs(refspecs, refspecs_nr, full_name);
+			private = apply_refspecs(&refspecs, full_name);
 			if (private) {
 				free(full_name);
 				full_name = private;
@@ -976,8 +976,8 @@ static void import_marks(char *input_file)
 static void handle_deletes(void)
 {
 	int i;
-	for (i = 0; i < refspecs_nr; i++) {
-		struct refspec *refspec = &refspecs[i];
+	for (i = 0; i < refspecs.nr; i++) {
+		struct refspec_item *refspec = &refspecs.items[i];
 		if (*refspec->src)
 			continue;
 
@@ -1038,18 +1038,12 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 		usage_with_options (fast_export_usage, options);
 
 	if (refspecs_list.nr) {
-		const char **refspecs_str;
 		int i;
 
-		ALLOC_ARRAY(refspecs_str, refspecs_list.nr);
 		for (i = 0; i < refspecs_list.nr; i++)
-			refspecs_str[i] = refspecs_list.items[i].string;
-
-		refspecs_nr = refspecs_list.nr;
-		refspecs = parse_fetch_refspec(refspecs_nr, refspecs_str);
+			refspec_append(&refspecs, refspecs_list.items[i].string);
 
 		string_list_clear(&refspecs_list, 1);
-		free(refspecs_str);
 	}
 
 	if (use_done_feature)
@@ -1088,7 +1082,7 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 	if (use_done_feature)
 		printf("done\n");
 
-	free_refspec(refspecs_nr, refspecs);
+	refspec_clear(&refspecs);
 
 	return 0;
 }

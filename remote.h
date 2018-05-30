@@ -3,6 +3,7 @@
 
 #include "parse-options.h"
 #include "hashmap.h"
+#include "refspec.h"
 
 enum {
 	REMOTE_UNCONFIGURED = 0,
@@ -27,15 +28,9 @@ struct remote {
 	int pushurl_nr;
 	int pushurl_alloc;
 
-	const char **push_refspec;
-	struct refspec *push;
-	int push_refspec_nr;
-	int push_refspec_alloc;
+	struct refspec push;
 
-	const char **fetch_refspec;
-	struct refspec *fetch;
-	int fetch_refspec_nr;
-	int fetch_refspec_alloc;
+	struct refspec fetch;
 
 	/*
 	 * -1 to never fetch tags
@@ -67,18 +62,6 @@ typedef int each_remote_fn(struct remote *remote, void *priv);
 int for_each_remote(each_remote_fn fn, void *priv);
 
 int remote_has_url(struct remote *remote, const char *url);
-
-struct refspec {
-	unsigned force : 1;
-	unsigned pattern : 1;
-	unsigned matching : 1;
-	unsigned exact_sha1 : 1;
-
-	char *src;
-	char *dst;
-};
-
-extern const struct refspec *tag_refspec;
 
 struct ref {
 	struct ref *next;
@@ -177,19 +160,12 @@ int ref_newer(const struct object_id *new_oid, const struct object_id *old_oid);
  */
 struct ref *ref_remove_duplicates(struct ref *ref_map);
 
-int valid_fetch_refspec(const char *refspec);
-struct refspec *parse_fetch_refspec(int nr_refspec, const char **refspec);
-extern struct refspec *parse_push_refspec(int nr_refspec, const char **refspec);
+int query_refspecs(struct refspec *rs, struct refspec_item *query);
+char *apply_refspecs(struct refspec *rs, const char *name);
 
-void free_refspec(int nr_refspec, struct refspec *refspec);
-
-extern int query_refspecs(struct refspec *specs, int nr, struct refspec *query);
-char *apply_refspecs(struct refspec *refspecs, int nr_refspec,
-		     const char *name);
-
-int check_push_refs(struct ref *src, int nr_refspec, const char **refspec);
+int check_push_refs(struct ref *src, struct refspec *rs);
 int match_push_refs(struct ref *src, struct ref **dst,
-		    int nr_refspec, const char **refspec, int all);
+		    struct refspec *rs, int flags);
 void set_ref_status_for_push(struct ref *remote_refs, int send_mirror,
 	int force_update);
 
@@ -205,7 +181,7 @@ void set_ref_status_for_push(struct ref *remote_refs, int send_mirror,
  * missing_ok is usually false, but when we are adding branch.$name.merge
  * it is Ok if the branch is not at the remote anymore.
  */
-int get_fetch_map(const struct ref *remote_refs, const struct refspec *refspec,
+int get_fetch_map(const struct ref *remote_refs, const struct refspec_item *refspec,
 		  struct ref ***tail, int missing_ok);
 
 struct ref *get_remote_ref(const struct ref *remote_refs, const char *name);
@@ -213,7 +189,7 @@ struct ref *get_remote_ref(const struct ref *remote_refs, const char *name);
 /*
  * For the given remote, reads the refspec's src and sets the other fields.
  */
-int remote_find_tracking(struct remote *remote, struct refspec *refspec);
+int remote_find_tracking(struct remote *remote, struct refspec_item *refspec);
 
 struct branch {
 	const char *name;
@@ -223,7 +199,7 @@ struct branch {
 	const char *pushremote_name;
 
 	const char **merge_name;
-	struct refspec **merge;
+	struct refspec_item **merge;
 	int merge_nr;
 	int merge_alloc;
 
@@ -292,7 +268,7 @@ struct ref *guess_remote_head(const struct ref *head,
 			      int all);
 
 /* Return refs which no longer exist on remote */
-struct ref *get_stale_heads(struct refspec *refs, int ref_count, struct ref *fetch_map);
+struct ref *get_stale_heads(struct refspec *rs, struct ref *fetch_map);
 
 /*
  * Compare-and-swap
@@ -314,9 +290,5 @@ extern int parseopt_push_cas_option(const struct option *, const char *arg, int 
 
 extern int is_empty_cas(const struct push_cas_option *);
 void apply_push_cas(struct push_cas_option *, struct remote *, struct ref *);
-
-#define TAG_REFSPEC "refs/tags/*:refs/tags/*"
-
-void add_prune_tags_to_fetch_refspec(struct remote *remote);
 
 #endif

@@ -11,6 +11,7 @@
 #include "bundle.h"
 #include "dir.h"
 #include "refs.h"
+#include "refspec.h"
 #include "branch.h"
 #include "url.h"
 #include "submodule.h"
@@ -390,7 +391,7 @@ int transport_refs_pushed(struct ref *ref)
 
 void transport_update_tracking_ref(struct remote *remote, struct ref *ref, int verbose)
 {
-	struct refspec rs;
+	struct refspec_item rs;
 
 	if (ref->status != REF_STATUS_OK && ref->status != REF_STATUS_UPTODATE)
 		return;
@@ -617,29 +618,6 @@ void transport_print_push_status(const char *dest, struct ref *refs,
 		}
 	}
 	free(head);
-}
-
-void transport_verify_remote_names(int nr_heads, const char **heads)
-{
-	int i;
-
-	for (i = 0; i < nr_heads; i++) {
-		const char *local = heads[i];
-		const char *remote = strrchr(heads[i], ':');
-
-		if (*local == '+')
-			local++;
-
-		/* A matching refspec is okay.  */
-		if (remote == local && remote[1] == '\0')
-			continue;
-
-		remote = remote ? (remote + 1) : local;
-		if (check_refname_format(remote,
-				REFNAME_ALLOW_ONELEVEL|REFNAME_REFSPEC_PATTERN))
-			die("remote part of refspec is not a valid name in %s",
-				heads[i]);
-	}
 }
 
 static int git_transport_push(struct transport *transport, struct ref *remote_refs, int flags)
@@ -1093,11 +1071,10 @@ static int run_pre_push_hook(struct transport *transport,
 }
 
 int transport_push(struct transport *transport,
-		   int refspec_nr, const char **refspec, int flags,
+		   struct refspec *rs, int flags,
 		   unsigned int *reject_reasons)
 {
 	*reject_reasons = 0;
-	transport_verify_remote_names(refspec_nr, refspec);
 
 	if (transport_color_config() < 0)
 		return -1;
@@ -1111,38 +1088,17 @@ int transport_push(struct transport *transport,
 		int porcelain = flags & TRANSPORT_PUSH_PORCELAIN;
 		int pretend = flags & TRANSPORT_PUSH_DRY_RUN;
 		int push_ret, ret, err;
-		struct refspec *tmp_rs;
 		struct argv_array ref_prefixes = ARGV_ARRAY_INIT;
-		int i;
 
-		if (check_push_refs(local_refs, refspec_nr, refspec) < 0)
+		if (check_push_refs(local_refs, rs) < 0)
 			return -1;
 
-		tmp_rs = parse_push_refspec(refspec_nr, refspec);
-		for (i = 0; i < refspec_nr; i++) {
-			const char *prefix = NULL;
-
-			if (tmp_rs[i].dst)
-				prefix = tmp_rs[i].dst;
-			else if (tmp_rs[i].src && !tmp_rs[i].exact_sha1)
-				prefix = tmp_rs[i].src;
-
-			if (prefix) {
-				const char *glob = strchr(prefix, '*');
-				if (glob)
-					argv_array_pushf(&ref_prefixes, "%.*s",
-							 (int)(glob - prefix),
-							 prefix);
-				else
-					expand_ref_prefix(&ref_prefixes, prefix);
-			}
-		}
+		refspec_ref_prefixes(rs, &ref_prefixes);
 
 		remote_refs = transport->vtable->get_refs_list(transport, 1,
 							       &ref_prefixes);
 
 		argv_array_clear(&ref_prefixes);
-		free_refspec(refspec_nr, tmp_rs);
 
 		if (flags & TRANSPORT_PUSH_ALL)
 			match_flags |= MATCH_REFS_ALL;
@@ -1153,10 +1109,8 @@ int transport_push(struct transport *transport,
 		if (flags & TRANSPORT_PUSH_FOLLOW_TAGS)
 			match_flags |= MATCH_REFS_FOLLOW_TAGS;
 
-		if (match_push_refs(local_refs, &remote_refs,
-				    refspec_nr, refspec, match_flags)) {
+		if (match_push_refs(local_refs, &remote_refs, rs, match_flags))
 			return -1;
-		}
 
 		if (transport->smart_options &&
 		    transport->smart_options->cas &&
@@ -1185,7 +1139,7 @@ int transport_push(struct transport *transport,
 
 			if (!push_unpushed_submodules(&commits,
 						      transport->remote,
-						      refspec, refspec_nr,
+						      rs,
 						      transport->push_options,
 						      pretend)) {
 				oid_array_clear(&commits);

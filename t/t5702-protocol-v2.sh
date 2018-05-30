@@ -345,6 +345,20 @@ test_expect_success 'even with handcrafted request, filter does not work if not 
 	git -C server serve --stateless-rpc <in >/dev/null
 '
 
+test_expect_success 'default refspec is used to filter ref when fetchcing' '
+	test_when_finished "rm -f log" &&
+
+	GIT_TRACE_PACKET="$(pwd)/log" git -C file_child -c protocol.version=2 \
+		fetch origin &&
+
+	git -C file_child log -1 --format=%s three >actual &&
+	git -C file_parent log -1 --format=%s three >expect &&
+	test_cmp expect actual &&
+
+	grep "ref-prefix refs/heads/" log &&
+	grep "ref-prefix refs/tags/" log
+'
+
 # Test protocol v2 with 'http://' transport
 #
 . "$TEST_DIRECTORY"/lib-httpd.sh

@@ -203,7 +203,7 @@ void transport_set_verbosity(struct transport *transport, int verbosity,
 #define REJECT_NEEDS_FORCE     0x10
 
 int transport_push(struct transport *connection,
-		   int refspec_nr, const char **refspec, int flags,
+		   struct refspec *rs, int flags,
 		   unsigned int * reject_reasons);
 
 /*
@@ -233,8 +233,6 @@ int transport_helper_init(struct transport *transport, const char *name);
 int bidirectional_transfer_loop(int input, int output);
 
 /* common methods used by transport.c and builtin/send-pack.c */
-void transport_verify_remote_names(int nr_heads, const char **heads);
-
 void transport_update_tracking_ref(struct remote *remote, struct ref *ref, int verbose);
 
 int transport_refs_pushed(struct ref *ref);

@@ -5,6 +5,7 @@
 #include "config.h"
 #include "repository.h"
 #include "refs.h"
+#include "refspec.h"
 #include "commit.h"
 #include "builtin.h"
 #include "string-list.h"
@@ -59,8 +60,7 @@ static const char *submodule_prefix = "";
 static int recurse_submodules = RECURSE_SUBMODULES_DEFAULT;
 static int recurse_submodules_default = RECURSE_SUBMODULES_ON_DEMAND;
 static int shown_url = 0;
-static int refmap_alloc, refmap_nr;
-static const char **refmap_array;
+static struct refspec refmap = REFSPEC_INIT_FETCH;
 static struct list_objects_filter_options filter_options;
 static struct string_list server_options = STRING_LIST_INIT_DUP;
 
@@ -108,14 +108,12 @@ static int gitmodules_fetch_config(const char *var, const char *value, void *cb)
 
 static int parse_refmap_arg(const struct option *opt, const char *arg, int unset)
 {
-	ALLOC_GROW(refmap_array, refmap_nr + 1, refmap_alloc);
-
 	/*
 	 * "git fetch --refmap='' origin foo"
 	 * can be used to tell the command not to store anywhere
 	 */
-	if (*arg)
-		refmap_array[refmap_nr++] = arg;
+	refspec_append(&refmap, arg);
+
 	return 0;
 }
 
@@ -204,7 +202,7 @@ static void add_merge_config(struct ref **head,
 
 	for (i = 0; i < branch->merge_nr; i++) {
 		struct ref *rm, **old_tail = *tail;
-		struct refspec refspec;
+		struct refspec_item refspec;
 
 		for (rm = *head; rm; rm = rm->next) {
 			if (branch_merge_matches(branch, i, rm->name)) {
@@ -341,7 +339,7 @@ static void find_non_local_tags(struct transport *transport,
 }
 
 static struct ref *get_ref_map(struct transport *transport,
-			       struct refspec *refspecs, int refspec_count,
+			       struct refspec *rs,
 			       int tags, int *autotags)
 {
 	int i;
@@ -355,29 +353,26 @@ static struct ref *get_ref_map(struct transport *transport,
 
 	const struct ref *remote_refs;
 
-	for (i = 0; i < refspec_count; i++) {
-		if (!refspecs[i].exact_sha1) {
-			const char *glob = strchr(refspecs[i].src, '*');
-			if (glob)
-				argv_array_pushf(&ref_prefixes, "%.*s",
-						 (int)(glob - refspecs[i].src),
-						 refspecs[i].src);
-			else
-				expand_ref_prefix(&ref_prefixes, refspecs[i].src);
-		}
+	if (rs->nr)
+		refspec_ref_prefixes(rs, &ref_prefixes);
+	else if (transport->remote && transport->remote->fetch.nr)
+		refspec_ref_prefixes(&transport->remote->fetch, &ref_prefixes);
+
+	if (ref_prefixes.argc &&
+	    (tags == TAGS_SET || (tags == TAGS_DEFAULT && !rs->nr))) {
+		argv_array_push(&ref_prefixes, "refs/tags/");
 	}
 
 	remote_refs = transport_get_remote_refs(transport, &ref_prefixes);
 
 	argv_array_clear(&ref_prefixes);
 
-	if (refspec_count) {
+	if (rs->nr) {
 		struct refspec *fetch_refspec;
-		int fetch_refspec_nr;
 
-		for (i = 0; i < refspec_count; i++) {
-			get_fetch_map(remote_refs, &refspecs[i], &tail, 0);
-			if (refspecs[i].dst && refspecs[i].dst[0])
+		for (i = 0; i < rs->nr; i++) {
+			get_fetch_map(remote_refs, &rs->items[i], &tail, 0);
+			if (rs->items[i].dst && rs->items[i].dst[0])
 				*autotags = 1;
 		}
 		/* Merge everything on the command line (but not --tags) */
@@ -404,17 +399,14 @@ static struct ref *get_ref_map(struct transport *transport,
 		 * by ref_remove_duplicates() in favor of one of these
 		 * opportunistic entries with FETCH_HEAD_IGNORE.
 		 */
-		if (refmap_array) {
-			fetch_refspec = parse_fetch_refspec(refmap_nr, refmap_array);
-			fetch_refspec_nr = refmap_nr;
-		} else {
-			fetch_refspec = transport->remote->fetch;
-			fetch_refspec_nr = transport->remote->fetch_refspec_nr;
-		}
+		if (refmap.nr)
+			fetch_refspec = &refmap;
+		else
+			fetch_refspec = &transport->remote->fetch;
 
-		for (i = 0; i < fetch_refspec_nr; i++)
-			get_fetch_map(ref_map, &fetch_refspec[i], &oref_tail, 1);
-	} else if (refmap_array) {
+		for (i = 0; i < fetch_refspec->nr; i++)
+			get_fetch_map(ref_map, &fetch_refspec->items[i], &oref_tail, 1);
+	} else if (refmap.nr) {
 		die("--refmap option is only meaningful with command-line refspec(s).");
 	} else {
 		/* Use the defaults */
@@ -422,16 +414,16 @@ static struct ref *get_ref_map(struct transport *transport,
 		struct branch *branch = branch_get(NULL);
 		int has_merge = branch_has_merge_config(branch);
 		if (remote &&
-		    (remote->fetch_refspec_nr ||
+		    (remote->fetch.nr ||
 		     /* Note: has_merge implies non-NULL branch->remote_name */
 		     (has_merge && !strcmp(branch->remote_name, remote->name)))) {
-			for (i = 0; i < remote->fetch_refspec_nr; i++) {
-				get_fetch_map(remote_refs, &remote->fetch[i], &tail, 0);
-				if (remote->fetch[i].dst &&
-				    remote->fetch[i].dst[0])
+			for (i = 0; i < remote->fetch.nr; i++) {
+				get_fetch_map(remote_refs, &remote->fetch.items[i], &tail, 0);
+				if (remote->fetch.items[i].dst &&
+				    remote->fetch.items[i].dst[0])
 					*autotags = 1;
 				if (!i && !has_merge && ref_map &&
-				    !remote->fetch[0].pattern)
+				    !remote->fetch.items[0].pattern)
 					ref_map->fetch_head_status = FETCH_HEAD_MERGE;
 			}
 			/*
@@ -966,11 +958,11 @@ static int fetch_refs(struct transport *transport, struct ref *ref_map)
 	return ret;
 }
 
-static int prune_refs(struct refspec *refs, int ref_count, struct ref *ref_map,
-		const char *raw_url)
+static int prune_refs(struct refspec *rs, struct ref *ref_map,
+		      const char *raw_url)
 {
 	int url_len, i, result = 0;
-	struct ref *ref, *stale_refs = get_stale_heads(refs, ref_count, ref_map);
+	struct ref *ref, *stale_refs = get_stale_heads(rs, ref_map);
 	char *url;
 	int summary_width = transport_summary_width(stale_refs);
 	const char *dangling_msg = dry_run
@@ -1116,7 +1108,7 @@ static void backfill_tags(struct transport *transport, struct ref *ref_map)
 }
 
 static int do_fetch(struct transport *transport,
-		    struct refspec *refs, int ref_count)
+		    struct refspec *rs)
 {
 	struct string_list existing_refs = STRING_LIST_INIT_DUP;
 	struct ref *ref_map;
@@ -1140,7 +1132,7 @@ static int do_fetch(struct transport *transport,
 			goto cleanup;
 	}
 
-	ref_map = get_ref_map(transport, refs, ref_count, tags, &autotags);
+	ref_map = get_ref_map(transport, rs, tags, &autotags);
 	if (!update_head_ok)
 		check_not_current_branch(ref_map);
 
@@ -1164,11 +1156,10 @@ static int do_fetch(struct transport *transport,
 		 * explicitly (via command line or configuration); we
 		 * don't care whether --tags was specified.
 		 */
-		if (ref_count) {
-			prune_refs(refs, ref_count, ref_map, transport->url);
+		if (rs->nr) {
+			prune_refs(rs, ref_map, transport->url);
 		} else {
-			prune_refs(transport->remote->fetch,
-				   transport->remote->fetch_refspec_nr,
+			prune_refs(&transport->remote->fetch,
 				   ref_map,
 				   transport->url);
 		}
@@ -1357,10 +1348,8 @@ static inline void fetch_one_setup_partial(struct remote *remote)
 
 static int fetch_one(struct remote *remote, int argc, const char **argv, int prune_tags_ok)
 {
-	static const char **refs = NULL;
-	struct refspec *refspec;
-	int ref_nr = 0;
-	int j = 0;
+	struct refspec rs = REFSPEC_INIT_FETCH;
+	int i;
 	int exit_code;
 	int maybe_prune_tags;
 	int remote_via_config = remote_is_configured(remote, 0);
@@ -1393,29 +1382,24 @@ static int fetch_one(struct remote *remote, int argc, const char **argv, int pru
 
 	maybe_prune_tags = prune_tags_ok && prune_tags;
 	if (maybe_prune_tags && remote_via_config)
-		add_prune_tags_to_fetch_refspec(remote);
+		refspec_append(&remote->fetch, TAG_REFSPEC);
 
-	if (argc > 0 || (maybe_prune_tags && !remote_via_config)) {
-		size_t nr_alloc = st_add3(argc, maybe_prune_tags, 1);
-		refs = xcalloc(nr_alloc, sizeof(const char *));
-		if (maybe_prune_tags) {
-			refs[j++] = xstrdup("refs/tags/*:refs/tags/*");
-			ref_nr++;
-		}
-	}
+	if (maybe_prune_tags && (argc || !remote_via_config))
+		refspec_append(&rs, TAG_REFSPEC);
 
-	if (argc > 0) {
-		int i;
-		for (i = 0; i < argc; i++) {
-			if (!strcmp(argv[i], "tag")) {
-				i++;
-				if (i >= argc)
-					die(_("You need to specify a tag name."));
-				refs[j++] = xstrfmt("refs/tags/%s:refs/tags/%s",
-						    argv[i], argv[i]);
-			} else
-				refs[j++] = argv[i];
-			ref_nr++;
+	for (i = 0; i < argc; i++) {
+		if (!strcmp(argv[i], "tag")) {
+			char *tag;
+			i++;
+			if (i >= argc)
+				die(_("You need to specify a tag name."));
+
+			tag = xstrfmt("refs/tags/%s:refs/tags/%s",
+				      argv[i], argv[i]);
+			refspec_append(&rs, tag);
+			free(tag);
+		} else {
+			refspec_append(&rs, argv[i]);
 		}
 	}
 
@@ -1424,9 +1408,8 @@ static int fetch_one(struct remote *remote, int argc, const char **argv, int pru
 
 	sigchain_push_common(unlock_pack_on_signal);
 	atexit(unlock_pack);
-	refspec = parse_fetch_refspec(ref_nr, refs);
-	exit_code = do_fetch(gtransport, refspec, ref_nr);
-	free_refspec(ref_nr, refspec);
+	exit_code = do_fetch(gtransport, &rs);
+	refspec_clear(&rs);
 	transport_disconnect(gtransport);
 	gtransport = NULL;
 	return exit_code;
