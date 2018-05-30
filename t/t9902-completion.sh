@@ -84,10 +84,11 @@ test_completion ()
 	then
 		printf '%s\n' "$2" >expected
 	else
-		sed -e 's/Z$//' >expected
+		sed -e 's/Z$//' |sort >expected
 	fi &&
 	run_completion "$1" &&
-	test_cmp expected out
+	sort out >out_sorted &&
+	test_cmp expected out_sorted
 }
 
 # Test __gitcomp.
@@ -399,6 +400,46 @@ test_expect_success '__gitdir - remote as argument' '
 	) &&
 	test_cmp expected "$actual"
 '
+
+
+test_expect_success '__git_dequote - plain unquoted word' '
+	__git_dequote unquoted-word &&
+	verbose test unquoted-word = "$dequoted_word"
+'
+
+# input:    b\a\c\k\'\\\"s\l\a\s\h\es
+# expected: back'\"slashes
+test_expect_success '__git_dequote - backslash escaped' '
+	__git_dequote "b\a\c\k\\'\''\\\\\\\"s\l\a\s\h\es" &&
+	verbose test "back'\''\\\"slashes" = "$dequoted_word"
+'
+
+# input:    sin'gle\' '"quo'ted
+# expected: single\ "quoted
+test_expect_success '__git_dequote - single quoted' '
+	__git_dequote "'"sin'gle\\\\' '\\\"quo'ted"'" &&
+	verbose test '\''single\ "quoted'\'' = "$dequoted_word"
+'
+
+# input:    dou"ble\\" "\"\quot"ed
+# expected: double\ "\quoted
+test_expect_success '__git_dequote - double quoted' '
+	__git_dequote '\''dou"ble\\" "\"\quot"ed'\'' &&
+	verbose test '\''double\ "\quoted'\'' = "$dequoted_word"
+'
+
+# input: 'open single quote
+test_expect_success '__git_dequote - open single quote' '
+	__git_dequote "'\''open single quote" &&
+	verbose test "open single quote" = "$dequoted_word"
+'
+
+# input: "open double quote
+test_expect_success '__git_dequote - open double quote' '
+	__git_dequote "\"open double quote" &&
+	verbose test "open double quote" = "$dequoted_word"
+'
+
 
 test_expect_success '__gitcomp_direct - puts everything into COMPREPLY as-is' '
 	sed -e "s/Z$//g" >expected <<-EOF &&
@@ -1168,6 +1209,124 @@ test_expect_success 'teardown after ref completion' '
 	git remote remove other
 '
 
+
+test_path_completion ()
+{
+	test $# = 2 || error "bug in the test script: not 2 parameters to test_path_completion"
+
+	local cur="$1" expected="$2"
+	echo "$expected" >expected &&
+	(
+		# In the following tests calling this function we only
+		# care about how __git_complete_index_file() deals with
+		# unusual characters in path names.  By requesting only
+		# untracked files we dont have to bother adding any
+		# paths to the index in those tests.
+		__git_complete_index_file --others &&
+		print_comp
+	) &&
+	test_cmp expected out
+}
+
+test_expect_success 'setup for path completion tests' '
+	mkdir simple-dir \
+	      "spaces in dir" \
+	      árvíztűrő &&
+	touch simple-dir/simple-file \
+	      "spaces in dir/spaces in file" \
+	      "árvíztűrő/Сайн яваарай" &&
+	if test_have_prereq !MINGW &&
+	   mkdir BS\\dir \
+		 '$'separators\034in\035dir'' &&
+	   touch BS\\dir/DQ\"file \
+		 '$'separators\034in\035dir/sep\036in\037file''
+	then
+		test_set_prereq FUNNYNAMES
+	else
+		rm -rf BS\\dir '$'separators\034in\035dir''
+	fi
+'
+
+test_expect_success '__git_complete_index_file - simple' '
+	test_path_completion simple simple-dir &&  # Bash is supposed to
+						   # add the trailing /.
+	test_path_completion simple-dir/simple simple-dir/simple-file
+'
+
+test_expect_success \
+    '__git_complete_index_file - escaped characters on cmdline' '
+	test_path_completion spac "spaces in dir" &&  # Bash will turn this
+						      # into "spaces\ in\ dir"
+	test_path_completion "spaces\\ i" \
+			     "spaces in dir" &&
+	test_path_completion "spaces\\ in\\ dir/s" \
+			     "spaces in dir/spaces in file" &&
+	test_path_completion "spaces\\ in\\ dir/spaces\\ i" \
+			     "spaces in dir/spaces in file"
+'
+
+test_expect_success \
+    '__git_complete_index_file - quoted characters on cmdline' '
+	# Testing with an opening but without a corresponding closing
+	# double quote is important.
+	test_path_completion \"spac "spaces in dir" &&
+	test_path_completion "\"spaces i" \
+			     "spaces in dir" &&
+	test_path_completion "\"spaces in dir/s" \
+			     "spaces in dir/spaces in file" &&
+	test_path_completion "\"spaces in dir/spaces i" \
+			     "spaces in dir/spaces in file"
+'
+
+test_expect_success '__git_complete_index_file - UTF-8 in ls-files output' '
+	test_path_completion á árvíztűrő &&
+	test_path_completion árvíztűrő/С "árvíztűrő/Сайн яваарай"
+'
+
+test_expect_success FUNNYNAMES \
+    '__git_complete_index_file - C-style escapes in ls-files output' '
+	test_path_completion BS \
+			     BS\\dir &&
+	test_path_completion BS\\\\d \
+			     BS\\dir &&
+	test_path_completion BS\\\\dir/DQ \
+			     BS\\dir/DQ\"file &&
+	test_path_completion BS\\\\dir/DQ\\\"f \
+			     BS\\dir/DQ\"file
+'
+
+test_expect_success FUNNYNAMES \
+    '__git_complete_index_file - \nnn-escaped characters in ls-files output' '
+	test_path_completion sep '$'separators\034in\035dir'' &&
+	test_path_completion '$'separators\034i'' \
+			     '$'separators\034in\035dir'' &&
+	test_path_completion '$'separators\034in\035dir/sep'' \
+			     '$'separators\034in\035dir/sep\036in\037file'' &&
+	test_path_completion '$'separators\034in\035dir/sep\036i'' \
+			     '$'separators\034in\035dir/sep\036in\037file''
+'
+
+test_expect_success FUNNYNAMES \
+    '__git_complete_index_file - removing repeated quoted path components' '
+	test_when_finished rm -r repeated-quoted &&
+	mkdir repeated-quoted &&      # A directory whose name in itself
+				      # would not be quoted ...
+	>repeated-quoted/0-file &&
+	>repeated-quoted/1\"file &&   # ... but here the file makes the
+				      # dirname quoted ...
+	>repeated-quoted/2-file &&
+	>repeated-quoted/3\"file &&   # ... and here, too.
+
+	# Still, we shold only list the directory name only once.
+	test_path_completion repeated repeated-quoted
+'
+
+test_expect_success 'teardown after path completion tests' '
+	rm -rf simple-dir "spaces in dir" árvíztűrő \
+	       BS\\dir '$'separators\034in\035dir''
+'
+
+
 test_expect_success '__git_get_config_variables' '
 	cat >expect <<-EOF &&
 	name-1
@@ -1365,6 +1524,7 @@ test_expect_success 'complete files' '
 
 	echo "expected" > .gitignore &&
 	echo "out" >> .gitignore &&
+	echo "out_sorted" >> .gitignore &&
 
 	git add .gitignore &&
 	test_completion "git commit " ".gitignore" &&

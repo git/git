@@ -94,6 +94,70 @@ __git ()
 		${__git_dir:+--git-dir="$__git_dir"} "$@" 2>/dev/null
 }
 
+# Removes backslash escaping, single quotes and double quotes from a word,
+# stores the result in the variable $dequoted_word.
+# 1: The word to dequote.
+__git_dequote ()
+{
+	local rest="$1" len ch
+
+	dequoted_word=""
+
+	while test -n "$rest"; do
+		len=${#dequoted_word}
+		dequoted_word="$dequoted_word${rest%%[\\\'\"]*}"
+		rest="${rest:$((${#dequoted_word}-$len))}"
+
+		case "${rest:0:1}" in
+		\\)
+			ch="${rest:1:1}"
+			case "$ch" in
+			$'\n')
+				;;
+			*)
+				dequoted_word="$dequoted_word$ch"
+				;;
+			esac
+			rest="${rest:2}"
+			;;
+		\')
+			rest="${rest:1}"
+			len=${#dequoted_word}
+			dequoted_word="$dequoted_word${rest%%\'*}"
+			rest="${rest:$((${#dequoted_word}-$len+1))}"
+			;;
+		\")
+			rest="${rest:1}"
+			while test -n "$rest" ; do
+				len=${#dequoted_word}
+				dequoted_word="$dequoted_word${rest%%[\\\"]*}"
+				rest="${rest:$((${#dequoted_word}-$len))}"
+				case "${rest:0:1}" in
+				\\)
+					ch="${rest:1:1}"
+					case "$ch" in
+					\"|\\|\$|\`)
+						dequoted_word="$dequoted_word$ch"
+						;;
+					$'\n')
+						;;
+					*)
+						dequoted_word="$dequoted_word\\$ch"
+						;;
+					esac
+					rest="${rest:2}"
+					;;
+				\")
+					rest="${rest:1}"
+					break
+					;;
+				esac
+			done
+			;;
+		esac
+	done
+}
+
 # The following function is based on code from:
 #
 #   bash_completion - programmable completion functions for bash 3.2+
@@ -346,6 +410,24 @@ __gitcomp_nl ()
 	__gitcomp_nl_append "$@"
 }
 
+# Fills the COMPREPLY array with prefiltered paths without any additional
+# processing.
+# Callers must take care of providing only paths that match the current path
+# to be completed and adding any prefix path components, if necessary.
+# 1: List of newline-separated matching paths, complete with all prefix
+#    path componens.
+__gitcomp_file_direct ()
+{
+	local IFS=$'\n'
+
+	COMPREPLY=($1)
+
+	# use a hack to enable file mode in bash < 4
+	compopt -o filenames +o nospace 2>/dev/null ||
+	compgen -f /non-existing-dir/ >/dev/null ||
+	true
+}
+
 # Generates completion reply with compgen from newline-separated possible
 # completion filenames.
 # It accepts 1 to 3 arguments:
@@ -365,7 +447,8 @@ __gitcomp_file ()
 
 	# use a hack to enable file mode in bash < 4
 	compopt -o filenames +o nospace 2>/dev/null ||
-	compgen -f /non-existing-dir/ > /dev/null
+	compgen -f /non-existing-dir/ >/dev/null ||
+	true
 }
 
 # Execute 'git ls-files', unless the --committable option is specified, in
@@ -375,10 +458,12 @@ __gitcomp_file ()
 __git_ls_files_helper ()
 {
 	if [ "$2" == "--committable" ]; then
-		__git -C "$1" diff-index --name-only --relative HEAD
+		__git -C "$1" -c core.quotePath=false diff-index \
+			--name-only --relative HEAD -- "${3//\\/\\\\}*"
 	else
 		# NOTE: $2 is not quoted in order to support multiple options
-		__git -C "$1" ls-files --exclude-standard $2
+		__git -C "$1" -c core.quotePath=false ls-files \
+			--exclude-standard $2 -- "${3//\\/\\\\}*"
 	fi
 }
 
@@ -389,12 +474,103 @@ __git_ls_files_helper ()
 #    If provided, only files within the specified directory are listed.
 #    Sub directories are never recursed.  Path must have a trailing
 #    slash.
+# 3: List only paths matching this path component (optional).
 __git_index_files ()
 {
-	local root="${2-.}" file
+	local root="$2" match="$3"
 
-	__git_ls_files_helper "$root" "$1" |
-	cut -f1 -d/ | sort | uniq
+	__git_ls_files_helper "$root" "$1" "$match" |
+	awk -F / -v pfx="${2//\\/\\\\}" '{
+		paths[$1] = 1
+	}
+	END {
+		for (p in paths) {
+			if (substr(p, 1, 1) != "\"") {
+				# No special characters, easy!
+				print pfx p
+				continue
+			}
+
+			# The path is quoted.
+			p = dequote(p)
+			if (p == "")
+				continue
+
+			# Even when a directory name itself does not contain
+			# any special characters, it will still be quoted if
+			# any of its (stripped) trailing path components do.
+			# Because of this we may have seen the same direcory
+			# both quoted and unquoted.
+			if (p in paths)
+				# We have seen the same directory unquoted,
+				# skip it.
+				continue
+			else
+				print pfx p
+		}
+	}
+	function dequote(p,    bs_idx, out, esc, esc_idx, dec) {
+		# Skip opening double quote.
+		p = substr(p, 2)
+
+		# Interpret backslash escape sequences.
+		while ((bs_idx = index(p, "\\")) != 0) {
+			out = out substr(p, 1, bs_idx - 1)
+			esc = substr(p, bs_idx + 1, 1)
+			p = substr(p, bs_idx + 2)
+
+			if ((esc_idx = index("abtvfr\"\\", esc)) != 0) {
+				# C-style one-character escape sequence.
+				out = out substr("\a\b\t\v\f\r\"\\",
+						 esc_idx, 1)
+			} else if (esc == "n") {
+				# Uh-oh, a newline character.
+				# We cant reliably put a pathname
+				# containing a newline into COMPREPLY,
+				# and the newline would create a mess.
+				# Skip this path.
+				return ""
+			} else {
+				# Must be a \nnn octal value, then.
+				dec = esc             * 64 + \
+				      substr(p, 1, 1) * 8  + \
+				      substr(p, 2, 1)
+				out = out sprintf("%c", dec)
+				p = substr(p, 3)
+			}
+		}
+		# Drop closing double quote, if there is one.
+		# (There isnt any if this is a directory, as it was
+		# already stripped with the trailing path components.)
+		if (substr(p, length(p), 1) == "\"")
+			out = out substr(p, 1, length(p) - 1)
+		else
+			out = out p
+
+		return out
+	}'
+}
+
+# __git_complete_index_file requires 1 argument:
+# 1: the options to pass to ls-file
+#
+# The exception is --committable, which finds the files appropriate commit.
+__git_complete_index_file ()
+{
+	local dequoted_word pfx="" cur_
+
+	__git_dequote "$cur"
+
+	case "$dequoted_word" in
+	?*/*)
+		pfx="${dequoted_word%/*}/"
+		cur_="${dequoted_word##*/}"
+		;;
+	*)
+		cur_="$dequoted_word"
+	esac
+
+	__gitcomp_file_direct "$(__git_index_files "$1" "$pfx" "$cur_")"
 }
 
 # Lists branches from the local repository.
@@ -711,26 +887,6 @@ __git_complete_revlist_file ()
 		__git_complete_refs
 		;;
 	esac
-}
-
-
-# __git_complete_index_file requires 1 argument:
-# 1: the options to pass to ls-file
-#
-# The exception is --committable, which finds the files appropriate commit.
-__git_complete_index_file ()
-{
-	local pfx="" cur_="$cur"
-
-	case "$cur_" in
-	?*/*)
-		pfx="${cur_%/*}"
-		cur_="${cur_##*/}"
-		pfx="${pfx}/"
-		;;
-	esac
-
-	__gitcomp_file "$(__git_index_files "$1" ${pfx:+"$pfx"})" "$pfx" "$cur_"
 }
 
 __git_complete_file ()
@@ -3230,6 +3386,15 @@ if [[ -n ${ZSH_VERSION-} ]]; then
 		local IFS=$'\n'
 		compset -P '*[=:]'
 		compadd -Q -S "${4- }" -p "${2-}" -- ${=1} && _ret=0
+	}
+
+	__gitcomp_file_direct ()
+	{
+		emulate -L zsh
+
+		local IFS=$'\n'
+		compset -P '*[=:]'
+		compadd -Q -f -- ${=1} && _ret=0
 	}
 
 	__gitcomp_file ()
