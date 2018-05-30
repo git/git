@@ -104,6 +104,35 @@ UI, Workflows & Features
    custom "git-$command" that the end user has on the $PATH when using
    newer version of bash.
 
+ * "git send-email" can sometimes offer confirmation dialog "Send this
+   email?" with choices 'Yes', 'No', 'Quit', and 'All'.  A new action
+   'Edit' has been added to this dialog's choice.
+
+ * With merge.renames configuration set to false, the recursive merge
+   strategy can be told not to spend cycles trying to find renamed
+   paths and merge them accordingly.
+
+ * "git status" learned to honor a new status.renames configuration to
+   skip rename detection, which could be useful for those who want to
+   do so without disabling the default rename detection done by the
+   "git diff" command.
+
+ * Command line completion (in contrib/) learned to complete pathnames
+   for various commands better.
+
+ * "git blame" learns to unhighlight uninteresting metadata from the
+   originating commit on lines that are the same as the previous one,
+   and also paint lines in different colors depending on the age of
+   the commit.
+
+ * Transfer protocol v2 learned to support the partial clone.
+
+ * When a short hexadecimal string is used to name an object but there
+   are multiple objects that share the string as the prefix of their
+   names, the code lists these ambiguous candidates in a help message.
+   These object names are now sorted according to their types for
+   easier eyeballing.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -231,6 +260,17 @@ Performance, Internal Implementation, Development Support etc.
  * "git pack-objects" needs to allocate tons of "struct object_entry"
    while doing its work, and shrinking its size helps the performance
    quite a bit.
+
+ * The implementation of "git rebase -i --root" has been updated to use
+   the sequencer machinery more.
+
+ * Developer support update, by using BUG() macro instead of die() to
+   mark codepaths that should not happen more clearly.
+
+ * Developer support.  Use newer GCC on one of the builds done at
+   TravisCI.org to get more warnings and errors diagnosed.
+
+ * Conversion from uchar[20] to struct object_id continues.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -382,6 +422,45 @@ Fixes since v2.17
    HT by default. The problem is fixed by forcing 8-space tabs.
    (merge 379805051d bc/asciidoctor-tab-width later to maint).
 
+ * Code clean-up to adjust to a more recent lockfile API convention that
+   allows lockfile instances kept on the stack.
+   (merge 0fa5a2ed8d ma/lockfile-cleanup later to maint).
+
+ * the_repository->index is not a allocated piece of memory but
+   repo_clear() indiscriminately attempted to free(3) it, which has
+   been corrected.
+   (merge 74373b5f10 nd/repo-clear-keep-the-index later to maint).
+
+ * Code clean-up to avoid non-standard-conformant pointer arithmetic.
+   (merge c112084af9 rs/no-null-ptr-arith-in-fast-export later to maint).
+
+ * Code clean-up to turn history traversal more robust in a
+   semi-corrupt repository.
+   (merge 8702b30fd7 jk/unavailable-can-be-missing later to maint).
+
+ * "git update-ref A B" is supposed to ensure that ref A does not yet
+   exist when B is a NULL OID, but this check was not done correctly
+   for pseudo-refs outside refs/ hierarchy, e.g. MERGE_HEAD.
+
+ * "git submodule update" and "git submodule add" supported the
+   "--reference" option to borrow objects from a neighbouring local
+   repository like "git clone" does, but lacked the more recent
+   invention "--dissociate".  Also "git submodule add" has been taught
+   to take the "--progress" option.
+   (merge a0ef29341a cf/submodule-progress-dissociate later to maint).
+
+ * Update credential-netrc helper (in contrib/) to allow customizing
+   the GPG used to decrypt the encrypted .netrc file.
+   (merge 786ef50a23 lm/credential-netrc later to maint).
+
+ * "git submodule update" attempts two different kinds of "git fetch"
+   against the upstream repository to grab a commit bound at the
+   submodule's path, but it incorrectly gave up if the first kind
+   (i.e. a normal fetch) failed, making the second "last resort" one
+   (i.e. fetching an exact commit object by object name) ineffective.
+   This has been corrected.
+   (merge e30d833671 sb/submodule-update-try-harder later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge 248f66ed8e nd/trace-with-env later to maint).
    (merge 14ced5562c ys/bisect-object-id-missing-conversion-fix later to maint).
@@ -411,3 +490,4 @@ Fixes since v2.17
    (merge 5356a3c354 ah/misc-doc-updates later to maint).
    (merge 92c4a7a129 nd/completion-aliasfiletype-typofix later to maint).
    (merge 58bd77b66a nd/pack-unreachable-objects-doc later to maint).
+   (merge 4ed79d5203 sg/t6500-no-redirect-of-stdin later to maint).
