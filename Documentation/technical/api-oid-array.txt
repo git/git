@@ -35,13 +35,18 @@ Functions
 	Free all memory associated with the array and return it to the
 	initial, empty state.
 
+`oid_array_for_each`::
+	Iterate over each element of the list, executing the callback
+	function for each one. Does not sort the list, so any custom
+	hash order is retained. If the callback returns a non-zero
+	value, the iteration ends immediately and the callback's
+	return is propagated; otherwise, 0 is returned.
+
 `oid_array_for_each_unique`::
-	Efficiently iterate over each unique element of the list,
-	executing the callback function for each one. If the array is
-	not sorted, this function has the side effect of sorting it. If
-	the callback returns a non-zero value, the iteration ends
-	immediately and the callback's return is propagated; otherwise,
-	0 is returned.
+	Iterate over each unique element of the list in sorted order,
+	but otherwise behave like `oid_array_for_each`. If the array
+	is not sorted, this function has the side effect of sorting
+	it.
 
 Examples
 --------

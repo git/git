@@ -2099,11 +2099,11 @@ class P4Submit(Command, P4UserMap):
 
         commits = []
         if self.master:
-            commitish = self.master
+            committish = self.master
         else:
-            commitish = 'HEAD'
+            committish = 'HEAD'
 
-        for line in read_pipe_lines(["git", "rev-list", "--no-merges", "%s..%s" % (self.origin, commitish)]):
+        for line in read_pipe_lines(["git", "rev-list", "--no-merges", "%s..%s" % (self.origin, committish)]):
             commits.append(line.strip())
         commits.reverse()
 

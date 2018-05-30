@@ -41,9 +41,26 @@ void oid_array_clear(struct oid_array *array)
 	array->sorted = 0;
 }
 
+
+int oid_array_for_each(struct oid_array *array,
+		       for_each_oid_fn fn,
+		       void *data)
+{
+	int i;
+
+	/* No oid_array_sort() here! See the api-oid-array.txt docs! */
+
+	for (i = 0; i < array->nr; i++) {
+		int ret = fn(array->oid + i, data);
+		if (ret)
+			return ret;
+	}
+	return 0;
+}
+
 int oid_array_for_each_unique(struct oid_array *array,
-				for_each_oid_fn fn,
-				void *data)
+			      for_each_oid_fn fn,
+			      void *data)
 {
 	int i;
 
