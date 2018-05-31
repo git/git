@@ -119,9 +119,9 @@ show_externals () {
       ref="$b"
       ;;
     END)
-      if test -n "$dir" -a -e "$dir" -a "$dir" != "$pass"
+      if test -n "$dir" -a -e "$dir" -a -z "$(echo -e "$pass" | grep "$dir\$")"
       then
-        pass="$dir"
+        pass="$pass\n$dir\n"
         debug ""
         debug "Commit: $commit"
         if test -n "$repo"
