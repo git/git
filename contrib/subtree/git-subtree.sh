@@ -85,6 +85,7 @@ assert () {
 show_externals () {
   debug "Looking for externals..."
   dir=
+  pass=
   rev=
   updated=
   commit=
@@ -118,8 +119,9 @@ show_externals () {
       ref="$b"
       ;;
     END)
-      if test -n "$dir" -a -e "$dir"
+      if test -n "$dir" -a -e "$dir" -a "$dir" != "$pass"
       then
+        pass="$dir"
         debug ""
         debug "Commit: $commit"
         if test -n "$repo"
