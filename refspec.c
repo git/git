@@ -202,6 +202,8 @@ void refspec_ref_prefixes(const struct refspec *rs,
 		const struct refspec_item *item = &rs->items[i];
 		const char *prefix = NULL;
 
+		if (item->exact_sha1)
+			continue;
 		if (rs->fetch == REFSPEC_FETCH)
 			prefix = item->src;
 		else if (item->dst)
