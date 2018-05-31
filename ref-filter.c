@@ -847,29 +847,6 @@ static int grab_objectname(const char *name, const struct object_id *oid,
 }
 
 /* See grab_values */
-static void grab_common_values(struct atom_value *val, int deref, struct object *obj, void *buf, unsigned long sz)
-{
-	int i;
-
-	for (i = 0; i < used_atom_cnt; i++) {
-		const char *name = used_atom[i].name;
-		struct atom_value *v = &val[i];
-		if (!!deref != (*name == '*'))
-			continue;
-		if (deref)
-			name++;
-		if (!strcmp(name, "objecttype"))
-			v->s = type_name(obj->type);
-		else if (!strcmp(name, "objectsize")) {
-			v->value = sz;
-			v->s = xstrfmt("%lu", sz);
-		}
-		else if (deref)
-			grab_objectname(name, &obj->oid, v, &used_atom[i]);
-	}
-}
-
-/* See grab_values */
 static void grab_tag_values(struct atom_value *val, int deref, struct object *obj, void *buf, unsigned long sz)
 {
 	int i;
@@ -1224,8 +1201,6 @@ static void fill_missing_values(struct atom_value *val)
  */
 static void grab_values(struct atom_value *val, int deref, struct object *obj, void *buf, unsigned long sz)
 {
-	if (deref || !oi_data.use_data)
-		grab_common_values(val, deref, obj, buf, sz);
 	switch (obj->type) {
 	case OBJ_TAG:
 		grab_tag_values(val, deref, obj, buf, sz);
@@ -1476,6 +1451,7 @@ static int populate_value(struct ref_array_item *ref, struct strbuf *err)
 {
 	struct object *obj;
 	int i;
+	int need_deref_obj = 0;
 	const struct object_id *tagged;
 
 	ref->value = xcalloc(used_atom_cnt, sizeof(struct atom_value));
@@ -1619,13 +1595,33 @@ static int populate_value(struct ref_array_item *ref, struct strbuf *err)
 	 */
 	tagged = &((struct tag *)obj)->tagged->oid;
 
+	if (oid_object_info_extended(the_repository, tagged, &oi_data.info, OBJECT_INFO_LOOKUP_REPLACE) < 0)
+		return strbuf_addf_ret(err, -1, _("missing object %s for %s"), oid_to_hex(tagged), ref->refname);
+	for (i = 0; i < used_atom_cnt; i++) {
+		const char *name = used_atom[i].name;
+		struct atom_value *v = &ref->value[i];
+
+		if (v->s != NULL || *name != '*')
+			continue;
+		name++;
+		if (starts_with(name, "objectname"))
+			grab_objectname(name, tagged, v, &used_atom[i]);
+		else if (!strcmp(name, "objecttype"))
+			v->s = type_name(oi_data.type);
+		else if (!strcmp(name, "objectsize")) {
+			v->value = oi_data.size;
+			v->s = xstrfmt("%lu", oi_data.size);
+		} else
+			need_deref_obj = 1;
+	}
+
 	/*
 	 * NEEDSWORK: This derefs tag only once, which
 	 * is good to deal with chains of trust, but
 	 * is not consistent with what deref_tag() does
 	 * which peels the onion to the core.
 	 */
-	return get_object(ref, tagged, 1, &obj, err);
+	return need_deref_obj && get_object(ref, tagged, 1, &obj, err);
 }
 
 /*
