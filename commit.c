@@ -196,6 +196,9 @@ static void prepare_commit_graft(void)
 
 	if (commit_graft_prepared)
 		return;
+	if (!startup_info->have_repository)
+		return;
+
 	graft_file = get_graft_file();
 	read_graft_file(graft_file);
 	/* make sure shallows are read */

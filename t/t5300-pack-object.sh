@@ -421,6 +421,12 @@ test_expect_success 'index-pack <pack> works in non-repo' '
 	test_path_is_file foo.idx
 '
 
+test_expect_success 'index-pack --strict <pack> works in non-repo' '
+	rm -f foo.idx &&
+	nongit git index-pack --strict ../foo.pack &&
+	test_path_is_file foo.idx
+'
+
 test_expect_success !PTHREADS,C_LOCALE_OUTPUT 'index-pack --threads=N or pack.threads=N warns when no pthreads' '
 	test_must_fail git index-pack --threads=2 2>err &&
 	grep ^warning: err >warnings &&
