@@ -41,6 +41,7 @@ void setup_ref_filter_porcelain_msg(void)
 
 typedef enum { FIELD_STR, FIELD_ULONG, FIELD_TIME } cmp_type;
 typedef enum { COMPARE_EQUAL, COMPARE_UNEQUAL, COMPARE_NONE } cmp_status;
+typedef enum { SOURCE_NONE = 0, SOURCE_OBJ, SOURCE_OTHER } info_source;
 
 struct align {
 	align_type position;
@@ -73,6 +74,7 @@ struct refname_atom {
 static struct used_atom {
 	const char *name;
 	cmp_type type;
+	info_source source;
 	union {
 		char color[COLOR_MAXLEN];
 		struct align align;
@@ -380,49 +382,50 @@ static int head_atom_parser(const struct ref_format *format, struct used_atom *a
 
 static struct {
 	const char *name;
+	info_source source;
 	cmp_type cmp_type;
 	int (*parser)(const struct ref_format *format, struct used_atom *atom,
 		      const char *arg, struct strbuf *err);
 } valid_atom[] = {
-	{ "refname" , FIELD_STR, refname_atom_parser },
-	{ "objecttype" },
-	{ "objectsize", FIELD_ULONG },
-	{ "objectname", FIELD_STR, objectname_atom_parser },
-	{ "tree" },
-	{ "parent" },
-	{ "numparent", FIELD_ULONG },
-	{ "object" },
-	{ "type" },
-	{ "tag" },
-	{ "author" },
-	{ "authorname" },
-	{ "authoremail" },
-	{ "authordate", FIELD_TIME },
-	{ "committer" },
-	{ "committername" },
-	{ "committeremail" },
-	{ "committerdate", FIELD_TIME },
-	{ "tagger" },
-	{ "taggername" },
-	{ "taggeremail" },
-	{ "taggerdate", FIELD_TIME },
-	{ "creator" },
-	{ "creatordate", FIELD_TIME },
-	{ "subject", FIELD_STR, subject_atom_parser },
-	{ "body", FIELD_STR, body_atom_parser },
-	{ "trailers", FIELD_STR, trailers_atom_parser },
-	{ "contents", FIELD_STR, contents_atom_parser },
-	{ "upstream", FIELD_STR, remote_ref_atom_parser },
-	{ "push", FIELD_STR, remote_ref_atom_parser },
-	{ "symref", FIELD_STR, refname_atom_parser },
-	{ "flag" },
-	{ "HEAD", FIELD_STR, head_atom_parser },
-	{ "color", FIELD_STR, color_atom_parser },
-	{ "align", FIELD_STR, align_atom_parser },
-	{ "end" },
-	{ "if", FIELD_STR, if_atom_parser },
-	{ "then" },
-	{ "else" },
+	{ "refname", SOURCE_NONE, FIELD_STR, refname_atom_parser },
+	{ "objecttype", SOURCE_OTHER },
+	{ "objectsize", SOURCE_OTHER, FIELD_ULONG },
+	{ "objectname", SOURCE_OTHER, FIELD_STR, objectname_atom_parser },
+	{ "tree", SOURCE_OBJ },
+	{ "parent", SOURCE_OBJ },
+	{ "numparent", SOURCE_OBJ, FIELD_ULONG },
+	{ "object", SOURCE_OBJ },
+	{ "type", SOURCE_OBJ },
+	{ "tag", SOURCE_OBJ },
+	{ "author", SOURCE_OBJ },
+	{ "authorname", SOURCE_OBJ },
+	{ "authoremail", SOURCE_OBJ },
+	{ "authordate", SOURCE_OBJ, FIELD_TIME },
+	{ "committer", SOURCE_OBJ },
+	{ "committername", SOURCE_OBJ },
+	{ "committeremail", SOURCE_OBJ },
+	{ "committerdate", SOURCE_OBJ, FIELD_TIME },
+	{ "tagger", SOURCE_OBJ },
+	{ "taggername", SOURCE_OBJ },
+	{ "taggeremail", SOURCE_OBJ },
+	{ "taggerdate", SOURCE_OBJ, FIELD_TIME },
+	{ "creator", SOURCE_OBJ },
+	{ "creatordate", SOURCE_OBJ, FIELD_TIME },
+	{ "subject", SOURCE_OBJ, FIELD_STR, subject_atom_parser },
+	{ "body", SOURCE_OBJ, FIELD_STR, body_atom_parser },
+	{ "trailers", SOURCE_OBJ, FIELD_STR, trailers_atom_parser },
+	{ "contents", SOURCE_OBJ, FIELD_STR, contents_atom_parser },
+	{ "upstream", SOURCE_NONE, FIELD_STR, remote_ref_atom_parser },
+	{ "push", SOURCE_NONE, FIELD_STR, remote_ref_atom_parser },
+	{ "symref", SOURCE_NONE, FIELD_STR, refname_atom_parser },
+	{ "flag", SOURCE_NONE },
+	{ "HEAD", SOURCE_NONE, FIELD_STR, head_atom_parser },
+	{ "color", SOURCE_NONE, FIELD_STR, color_atom_parser },
+	{ "align", SOURCE_NONE, FIELD_STR, align_atom_parser },
+	{ "end", SOURCE_NONE },
+	{ "if", SOURCE_NONE, FIELD_STR, if_atom_parser },
+	{ "then", SOURCE_NONE },
+	{ "else", SOURCE_NONE },
 };
 
 #define REF_FORMATTING_STATE_INIT  { 0, NULL }
@@ -498,6 +501,7 @@ static int parse_ref_filter_atom(const struct ref_format *format,
 	REALLOC_ARRAY(used_atom, used_atom_cnt);
 	used_atom[at].name = xmemdupz(atom, ep - atom);
 	used_atom[at].type = valid_atom[i].cmp_type;
+	used_atom[at].source = valid_atom[i].source;
 	if (arg) {
 		arg = used_atom[at].name + (arg - atom) + 1;
 		if (!*arg) {
