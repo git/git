@@ -12,7 +12,9 @@ UI, Workflows & Features
    want to move to z/d by taking the hint that the entire directory
    'x' moved to 'z'.  A bug causing dirty files involved in a rename
    to be overwritten during merge has also been fixed as part of this
-   work.
+   work.  Incidentally, this also avoids updating a file in the
+   working tree after a (non-trivial) merge whose result matches what
+   our side originally had.
 
  * "git filter-branch" learned to use a different exit code to allow
    the callers to tell the case where there was no new commits to
@@ -255,16 +257,6 @@ Performance, Internal Implementation, Development Support etc.
  * The codepath around object-info API has been taught to take the
    repository object (which in turn tells the API which object store
    the objects are to be located).
-
- * Rename detection logic in "diff" family that is used in "merge" has
-   learned to guess when all of x/a, x/b and x/c have moved to z/a,
-   z/b and z/c, it is likely that x/d added in the meantime would also
-   want to move to z/d by taking the hint that the entire directory
-   'x' moved to 'z'.  A bug causing dirty files involved in a rename
-   to be overwritten during merge has also been fixed as part of this
-   work.  Incidentally, this also avoids updating a file in the
-   working tree after a (non-trivial) merge whose result matches what
-   our side originally had.
 
  * "git pack-objects" needs to allocate tons of "struct object_entry"
    while doing its work, and shrinking its size helps the performance
