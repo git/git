@@ -1,9 +1,12 @@
 #include "cache.h"
+#include "alias.h"
 #include "config.h"
+#include "string-list.h"
 
 struct config_alias_data {
 	const char *alias;
 	char *v;
+	struct string_list *list;
 };
 
 static int config_alias_cb(const char *key, const char *value, void *d)
@@ -11,8 +14,16 @@ static int config_alias_cb(const char *key, const char *value, void *d)
 	struct config_alias_data *data = d;
 	const char *p;
 
-	if (skip_prefix(key, "alias.", &p) && !strcasecmp(p, data->alias))
-		return git_config_string((const char **)&data->v, key, value);
+	if (!skip_prefix(key, "alias.", &p))
+		return 0;
+
+	if (data->alias) {
+		if (!strcasecmp(p, data->alias))
+			return git_config_string((const char **)&data->v,
+						 key, value);
+	} else if (data->list) {
+		string_list_append(data->list, p);
+	}
 
 	return 0;
 }
@@ -24,6 +35,13 @@ char *alias_lookup(const char *alias)
 	read_early_config(config_alias_cb, &data);
 
 	return data.v;
+}
+
+void list_aliases(struct string_list *list)
+{
+	struct config_alias_data data = { NULL, NULL, list };
+
+	read_early_config(config_alias_cb, &data);
 }
 
 #define SPLIT_CMDLINE_BAD_ENDING 1

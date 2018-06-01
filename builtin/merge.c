@@ -35,6 +35,7 @@
 #include "string-list.h"
 #include "packfile.h"
 #include "tag.h"
+#include "alias.h"
 
 #define DEFAULT_TWOHEAD (1<<0)
 #define DEFAULT_OCTOPUS (1<<1)

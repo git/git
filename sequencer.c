@@ -27,6 +27,7 @@
 #include "worktree.h"
 #include "oidmap.h"
 #include "oidset.h"
+#include "alias.h"
 
 #define GIT_REFLOG_ACTION "GIT_REFLOG_ACTION"
 

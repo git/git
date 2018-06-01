@@ -13,7 +13,7 @@ complete ()
 	return 0
 }
 
-# Be careful when updating this list:
+# Be careful when updating these lists:
 #
 # (1) The build tree may have build artifact from different branch, or
 #     the user's $PATH may have a random executable that may begin
@@ -30,7 +30,8 @@ complete ()
 #     completion for "git <TAB>", and a plumbing is excluded.  "add",
 #     "filter-branch" and "ls-files" are listed for this.
 
-GIT_TESTING_COMMAND_COMPLETION='add checkout check-attr filter-branch ls-files'
+GIT_TESTING_ALL_COMMAND_LIST='add checkout check-attr filter-branch ls-files'
+GIT_TESTING_PORCELAIN_COMMAND_LIST='add checkout filter-branch'
 
 . "$GIT_BUILD_DIR/contrib/completion/git-completion.bash"
 
@@ -1350,17 +1351,6 @@ test_expect_success '__git_pretty_aliases' '
 	test_cmp expect actual
 '
 
-test_expect_success '__git_aliases' '
-	cat >expect <<-EOF &&
-	ci
-	co
-	EOF
-	test_config alias.ci commit &&
-	test_config alias.co checkout &&
-	__git_aliases >actual &&
-	test_cmp expect actual
-'
-
 test_expect_success 'basic' '
 	run_completion "git " &&
 	# built-in
@@ -1668,13 +1658,6 @@ test_expect_success 'sourcing the completion script clears cached commands' '
 	verbose test -n "$__git_all_commands" &&
 	. "$GIT_BUILD_DIR/contrib/completion/git-completion.bash" &&
 	verbose test -z "$__git_all_commands"
-'
-
-test_expect_success 'sourcing the completion script clears cached porcelain commands' '
-	__git_compute_porcelain_commands &&
-	verbose test -n "$__git_porcelain_commands" &&
-	. "$GIT_BUILD_DIR/contrib/completion/git-completion.bash" &&
-	verbose test -z "$__git_porcelain_commands"
 '
 
 test_expect_success !GETTEXT_POISON 'sourcing the completion script clears cached merge strategies' '

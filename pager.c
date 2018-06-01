@@ -2,6 +2,7 @@
 #include "config.h"
 #include "run-command.h"
 #include "sigchain.h"
+#include "alias.h"
 
 #ifndef DEFAULT_PAGER
 #define DEFAULT_PAGER "less"

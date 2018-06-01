@@ -182,7 +182,7 @@
 /gitweb/gitweb.cgi
 /gitweb/static/gitweb.js
 /gitweb/static/gitweb.min.*
-/common-cmds.h
+/command-list.h
 *.tar.gz
 *.dsc
 *.deb

@@ -164,6 +164,16 @@ foo.bar= ...`) sets `foo.bar` to the empty string which `git config
 	Do not perform optional operations that require locks. This is
 	equivalent to setting the `GIT_OPTIONAL_LOCKS` to `0`.
 
+--list-cmds=group[,group...]::
+	List commands by group. This is an internal/experimental
+	option and may change or be removed in the future. Supported
+	groups are: builtins, parseopt (builtin commands that use
+	parse-options), main (all commands in libexec directory),
+	others (all other commands in `$PATH` that have git- prefix),
+	list-<category> (see categories in command-list.txt),
+	nohelpers (exclude helper commands), alias and config
+	(retrieve command list from config variable completion.commands)
+
 GIT COMMANDS
 ------------
 
