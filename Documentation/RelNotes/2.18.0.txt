@@ -144,6 +144,9 @@ UI, Workflows & Features
    from the other side; instead, just let cURL library to advertise
    and negotiate the best one.
 
+ * "git p4" learned to "unshelve" shelved commit from P4.
+   (merge 123f631761 ld/p4-unshelve later to maint).
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -289,6 +292,15 @@ Performance, Internal Implementation, Development Support etc.
    constants in the test.  The latter kind of tests have been updated
    to test the moral equivalent of the original without hardcoding the
    actual object names.
+
+ * The list of commands with their various attributes were spread
+   across a few places in the build procedure, but it now is getting a
+   bit more consolidated to allow more automation.
+
+ * Quite a many tests assumed that newly created refs are made as
+   loose refs using the files backend, which have been updated to use
+   proper plumbing like rev-parse and update-ref, to avoid breakage
+   once we start using different ref backends.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -488,6 +500,14 @@ Fixes since v2.17
    which have been corrected.
    (merge 17154b1576 ma/regex-no-regfree-after-comp-fail later to maint).
 
+ * The import-tars script (in contrib/) has been taught to handle
+   tarballs with overly long paths that use PAX extended headers.
+   (merge 12ecea46e3 pa/import-tars-long-names later to maint).
+
+ * "git rev-parse Y..." etc. misbehaved when given endpoints were
+   not committishes.
+   (merge 0ed556d38f en/rev-parse-invalid-range later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge 248f66ed8e nd/trace-with-env later to maint).
    (merge 14ced5562c ys/bisect-object-id-missing-conversion-fix later to maint).
@@ -519,3 +539,5 @@ Fixes since v2.17
    (merge 58bd77b66a nd/pack-unreachable-objects-doc later to maint).
    (merge 4ed79d5203 sg/t6500-no-redirect-of-stdin later to maint).
    (merge 17b8a2d6cd jk/config-blob-sans-repo later to maint).
+   (merge 590551ca2c rd/tag-doc-lightweight later to maint).
+   (merge 44f560fc16 rd/init-typo later to maint).
