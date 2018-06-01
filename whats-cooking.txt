@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (May 2018, #04; Wed, 30)
-X-master-at: f15a486ca1dd67757cb6a3c0545dc2c6ef992bc3
-X-next-at: e295dfb56eed062f935757b69da965cde0bc0927
+Subject: What's cooking in git.git (Jun 2018, #01; Fri, 1)
+X-master-at: c2c7d17b030646b40e6764ba34a5ebf66aee77af
+X-next-at: fd7c087b0d85b48ffb998ee0349e5bb8945e292a
 
-What's cooking in git.git (May 2018, #04; Wed, 30)
+What's cooking in git.git (Jun 2018, #01; Fri, 1)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,345 +12,204 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-The recent fixes in v2.17.1 and downward have been merged to these
-integration branches 'master' and above.
-
 You can find the changes described here in the integration branches
 of the repositories listed at
 
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* ab/get-short-oid (2018-05-11) 5 commits
-  (merged to 'next' on 2018-05-23 at 07e1908439)
- + get_short_oid: sort ambiguous objects by type, then SHA-1
- + sha1-name.c: move around the collect_ambiguous() function
- + git-p4: change "commitish" typo to "committish"
- + sha1-array.h: align function arguments
- + sha1-name.c: remove stray newline
-
- When a short hexadecimal string is used to name an object but there
- are multiple objects that share the string as the prefix of their
- names, the code lists these ambiguous candidates in a help message.
- These object names are now sorted according to their types for
- easier eyeballing.
-
-
-* bc/object-id (2018-05-02) 42 commits
-  (merged to 'next' on 2018-05-23 at 916bcce829)
- + merge-one-file: compute empty blob object ID
- + add--interactive: compute the empty tree value
- + Update shell scripts to compute empty tree object ID
- + sha1_file: only expose empty object constants through git_hash_algo
- + dir: use the_hash_algo for empty blob object ID
- + sequencer: use the_hash_algo for empty tree object ID
- + cache-tree: use is_empty_tree_oid
- + sha1_file: convert cached object code to struct object_id
- + builtin/reset: convert use of EMPTY_TREE_SHA1_BIN
- + builtin/receive-pack: convert one use of EMPTY_TREE_SHA1_HEX
- + wt-status: convert two uses of EMPTY_TREE_SHA1_HEX
- + submodule: convert several uses of EMPTY_TREE_SHA1_HEX
- + sequencer: convert one use of EMPTY_TREE_SHA1_HEX
- + merge: convert empty tree constant to the_hash_algo
- + builtin/merge: switch tree functions to use object_id
- + builtin/am: convert uses of EMPTY_TREE_SHA1_BIN to the_hash_algo
- + sha1-file: add functions for hex empty tree and blob OIDs
- + builtin/receive-pack: avoid hard-coded constants for push certs
- + diff: specify abbreviation size in terms of the_hash_algo
- + upload-pack: replace use of several hard-coded constants
- + revision: replace use of hard-coded constants
- + http: eliminate hard-coded constants
- + dir: convert struct untracked_cache_dir to object_id
- + commit: convert uses of get_sha1_hex to get_oid_hex
- + index-pack: abstract away hash function constant
- + pack-redundant: convert linked lists to use struct object_id
- + Update struct index_state to use struct object_id
- + split-index: convert struct split_index to object_id
- + submodule-config: convert structures to object_id
- + fsck: convert static functions to struct object_id
- + tree-walk: convert get_tree_entry_follow_symlinks to object_id
- + tree-walk: avoid hard-coded 20 constant
- + pack-redundant: abstract away hash algorithm
- + pack-objects: abstract away hash algorithm
- + packfile: abstract away hash constant values
- + packfile: convert find_pack_entry to object_id
- + sha1-file: convert freshen functions to object_id
- + packfile: convert has_sha1_pack to object_id
- + packfile: remove unused member from struct pack_entry
- + Remove unused member in struct object_context
- + server-info: remove unused members from struct pack_info
- + cache: add a function to read an object ID from a buffer
-
- Conversion from uchar[20] to struct object_id continues.
-
-
-* bp/merge-rename-config (2018-05-08) 3 commits
-  (merged to 'next' on 2018-05-22 at 911440a742)
- + merge: pass aggressive when rename detection is turned off
- + merge: add merge.renames config setting
- + merge: update documentation for {merge,diff}.renameLimit
- (this branch is used by ma/unpack-trees-free-msgs.)
-
- With merge.renames configuration set to false, the recursive merge
- strategy can be told not to spend cycles trying to find renamed
- paths and merge them accordingly.
-
-
-* bp/status-rename-config (2018-05-13) 1 commit
-  (merged to 'next' on 2018-05-22 at ffcb0a7aa7)
- + add status config and command line options for rename detection
-
- "git status" learned to honor a new status.renames configuration to
- skip rename detection, which could be useful for those who want to
- do so without disabling the default rename detection done by the
- "git diff" command.
-
-
-* cf/submodule-progress-dissociate (2018-05-22) 3 commits
-  (merged to 'next' on 2018-05-22 at 9b3b96c54b)
- + submodule: add --dissociate option to add/update commands
- + submodule: add --progress option to add command
- + submodule: clean up substitutions in script
-
- "git submodule update" and "git submodule add" supported the
- "--reference" option to borrow objects from a neighbouring local
- repository like "git clone" does, but lacked the more recent
- invention "--dissociate".  Also "git submodule add" has been taught
- to take the "--progress" option.
-
-
-* dd/send-email-reedit (2018-05-06) 1 commit
-  (merged to 'next' on 2018-05-22 at 1f4c98324f)
- + git-send-email: allow re-editing of message
-
- "git send-email" can sometimes offer confirmation dialog "Send this
- email?" with choices 'Yes', 'No', 'Quit', and 'All'.  A new action
- 'Edit' has been added to this dialog's choice.
-
-
-* jk/unavailable-can-be-missing (2018-05-13) 4 commits
-  (merged to 'next' on 2018-05-22 at 91980c5d1e)
- + mark_parents_uninteresting(): avoid most allocation
- + mark_parents_uninteresting(): replace list with stack
- + mark_parents_uninteresting(): drop missing object check
- + mark_tree_contents_uninteresting(): drop missing object check
-
- Code clean-up to turn history traversal more robust in a
- semi-corrupt repository.
-
-
-* js/sequencer-and-root-commits (2018-05-06) 6 commits
-  (merged to 'next' on 2018-05-22 at c1a62f5bc9)
- + rebase --rebase-merges: root commits can be cousins, too
- + rebase --rebase-merges: a "merge" into a new root is a fast-forward
- + sequencer: allow introducing new root commits
- + rebase -i --root: let the sequencer handle even the initial part
- + sequencer: learn about the special "fake root commit" handling
- + sequencer: extract helper to update active_cache_tree
-
- The implementation of "git rebase -i --root" has been updated to use
- the sequencer machinery more.
-
-
-* js/use-bug-macro (2018-05-10) 5 commits
-  (merged to 'next' on 2018-05-22 at fd848c39ae)
- + BUG_exit_code: fix sparse "symbol not declared" warning
- + Convert remaining die*(BUG) messages
- + Replace all die("BUG: ...") calls by BUG() ones
- + run-command: use BUG() to report bugs, not die()
- + test-tool: help verifying BUG() code paths
-
- Developer support update, by using BUG() macro instead of die() to
- mark codepaths that should not happen more clearly.
- Further updates can come on top later.
- cf. <20180507090109.GA367@sigill.intra.peff.net>
-
-
-* jt/partial-clone-proto-v2 (2018-05-06) 4 commits
-  (merged to 'next' on 2018-05-23 at f8b3692e8e)
- + {fetch,upload}-pack: support filter in protocol v2
- + upload-pack: read config when serving protocol v2
- + upload-pack: fix error message typo
- + Merge branch 'bw/protocol-v2' into jt/partial-clone-proto-v2
-
- Transfer protocol v2 learned to support the partial clone.
-
-
-* lm/credential-netrc (2018-05-14) 2 commits
-  (merged to 'next' on 2018-05-23 at c3a0417715)
- + git-credential-netrc: accept gpg option
- + git-credential-netrc: adapt to test framework for git
-
- Update credential-netrc helper (in contrib/) to allow customizing
- the GPG used to decrypt the encrypted .netrc file.
-
-
-* ma/create-pseudoref-with-null-old-oid (2018-05-13) 3 commits
-  (merged to 'next' on 2018-05-22 at c751a19b67)
- + refs: handle zero oid for pseudorefs
- + t1400: add tests around adding/deleting pseudorefs
- + refs.c: refer to "object ID", not "sha1", in error messages
-
- "git update-ref A B" is supposed to ensure that ref A does not yet
- exist when B is a NULL OID, but this check was not done correctly
- for pseudo-refs outside refs/ hierarchy, e.g. MERGE_HEAD.
-
-
-* ma/lockfile-cleanup (2018-05-10) 5 commits
-  (merged to 'next' on 2018-05-22 at e2efbf0b90)
- + lock_file: move static locks into functions
- + lock_file: make function-local locks non-static
- + refs.c: do not die if locking fails in `delete_pseudoref()`
- + refs.c: do not die if locking fails in `write_pseudoref()`
- + t/helper/test-write-cache: clean up lock-handling
-
- Code clean-up to adjust to a more recent lockfile API convention that
- allows lockfile instances kept on the stack.
-
-
-* nd/pack-struct-commit (2018-05-13) 1 commit
-  (merged to 'next' on 2018-05-22 at 38d8a651f0)
- + commit.h: rearrange 'index' to shrink struct commit
-
- Memory optimization.
-
-
-* nd/repo-clear-keep-the-index (2018-05-10) 1 commit
-  (merged to 'next' on 2018-05-22 at 398c7ac4e9)
- + repository: fix free problem with repo_clear(the_repository)
-
- the_repository->index is not a allocated piece of memory but
- repo_clear() indiscriminately attempted to free(3) it, which has
- been corrected.
-
-
-* nd/travis-gcc-8 (2018-05-21) 1 commit
-  (merged to 'next' on 2018-05-22 at d5d54efa72)
- + travis-ci: run gcc-8 on linux-gcc jobs
-
- Developer support.  Use newer GCC on one of the builds done at
- TravisCI.org to get more warnings and errors diagnosed.
-
-
-* rs/no-null-ptr-arith-in-fast-export (2018-05-10) 1 commit
-  (merged to 'next' on 2018-05-22 at db60f06bba)
- + fast-export: avoid NULL pointer arithmetic
-
- Code clean-up to avoid non-standard-conformant pointer arithmetic.
-
-
-* sb/blame-color (2018-04-24) 3 commits
-  (merged to 'next' on 2018-05-23 at 2e9c0daf0b)
- + builtin/blame: add new coloring scheme config
- + builtin/blame: highlight recently changed lines
- + builtin/blame: dim uninteresting metadata lines
-
- "git blame" learns to unhighlight uninteresting metadata from the
- originating commit on lines that are the same as the previous one,
- and also paint lines in different colors depending on the age of
- the commit.
-
-
-* sb/submodule-update-try-harder (2018-05-16) 1 commit
-  (merged to 'next' on 2018-05-23 at 698e6707d7)
- + git-submodule.sh: try harder to fetch a submodule
-
- "git submodule update" attempts two different kinds of "git fetch"
- against the upstream repository to grab a commit bound at the
- submodule's path, but it incorrectly gave up if the first kind
- (i.e. a normal fetch) failed, making the second "last resort" one
- (i.e. fetching an exact commit object by object name) ineffective.
- This has been corrected.
-
-
-* sg/complete-paths (2018-05-21) 13 commits
-  (merged to 'next' on 2018-05-22 at a00b992aec)
- + t9902-completion: exercise __git_complete_index_file() directly
- + completion: don't return with error from __gitcomp_file_direct()
-  (merged to 'next' on 2018-05-08 at 2a11444f90)
- + completion: fill COMPREPLY directly when completing paths
- + completion: improve handling quoted paths in 'git ls-files's output
- + completion: remove repeated dirnames with 'awk' during path completion
- + t9902-completion: ignore COMPREPLY element order in some tests
- + completion: use 'awk' to strip trailing path components
- + completion: let 'ls-files' and 'diff-index' filter matching paths
- + completion: improve handling quoted paths on the command line
- + completion: support completing non-ASCII pathnames
- + completion: simplify prefix path component handling during path completion
- + completion: move __git_complete_index_file() next to its helpers
- + t9902-completion: add tests demonstrating issues with quoted pathnames
-
- Command line completion (in contrib/) learned to complete pathnames
- for various commands better.
-
-
-* sg/t6500-no-redirect-of-stdin (2018-05-09) 1 commit
-  (merged to 'next' on 2018-05-22 at 7019b3a1d5)
- + t6050-replace: don't disable stdin for the whole test script
-
- Test cleanup.
-
---------------------------------------------------
 [New Topics]
 
-* pa/import-tars-long-names (2018-05-24) 1 commit
-  (merged to 'next' on 2018-05-30 at 5e043b2fca)
- + import-tars: read overlong names from pax extended header
+* ag/rebase-p (2018-06-01) 4 commits
+ - rebase: remove -p code from git-rebase--interactive.sh
+ - rebase: use the new git-rebase--preserve-merges.sh
+ - rebase: strip unused code in git-rebase--preserve-merges.sh
+ - rebase: introduce a dedicated backend for --preserve-merges
 
- The import-tars script (in contrib/) has been taught to handle
- tarballs with overly long paths that use PAX extended headers.
-
- Will merge to 'master'.
-
-
-* nd/use-opt-int-set-f (2018-05-24) 1 commit
-  (merged to 'next' on 2018-05-30 at f8f5d612ed)
- + Use OPT_SET_INT_F() for cmdline option specification
-
- Code simplification.
-
- Will merge to 'master'.
+ Separate "rebase -p" codepath out of "rebase -i" implementation to
+ slim down the latter and make it easier to manage.
 
 
-* ds/commit-graph-fsck (2018-05-29) 20 commits
- - commit-graph: update design document
- - gc: automatically write commit-graph files
- - commit-graph: add '--reachable' option
- - fsck: verify commit-graph
- - commit-graph: verify contents match checksum
- - commit-graph: test for corrupted octopus edge
- - commit-graph: verify commit date
- - commit-graph: verify generation number
- - commit-graph: verify parent list
- - commit-graph: verify root tree OIDs
- - commit-graph: verify objects exist
- - commit-graph: verify corrupt OID fanout and lookup
- - commit-graph: verify required chunks are present
- - commit-graph: verify catches corrupt signature
- - commit-graph: add 'verify' subcommand
- - commit-graph: load a root tree from specific graph
- - commit: force commit to parse from object database
- - commit-graph: parse commit from chosen graph
- - commit-graph: fix GRAPH_MIN_SIZE
- - commit-graph: UNLEAK before die()
- (this branch uses ds/commit-graph-lockfile-fix and ds/generation-numbers.)
+* jk/index-pack-maint (2018-06-01) 2 commits
+ - index-pack: handle --strict checks of non-repo packs
+ - prepare_commit_graft: treat non-repository as a noop
 
- Expecting a reroll.
- cf. <ba3b8e06-b5e1-99a1-0fe4-ff97d6da8f15@gmail.com>
+ "index-pack --strict" has been taught to make sure that it runs the
+ final object integrity checks after making the freshly indexed
+ packfile available to itself.
+
+ Will merge to 'next' and then to 'master'.
 
 
-* en/merge-recursive-tests (2018-05-28) 5 commits
- - t6036: prefer test_when_finished to manual cleanup in following test
- - t6036, t6042: prefer test_cmp to sequences of test
- - t6036, t6042: prefer test_path_is_file, test_path_is_missing
- - t6036, t6042: use test_line_count instead of wc -l
- - t6036, t6042: use test_create_repo to keep tests independent
+* ls/complete-remote-update-names (2018-06-01) 1 commit
+ - completion: complete remote names too
 
- Clean up tests in t6xxx series about 'merge' command.
+ "git remote update" can take both a single remote nickname and a
+ nickname for remote groups, and the completion script (in contrib/)
+ has been taught about it.
 
- Will merge to 'next'.
+ Will merge to and cook in 'next'.
+
+
+* nd/remote-update-doc (2018-06-01) 1 commit
+ - remote.txt: update documentation for 'update' command
+
+ "git remote update" can take both a single remote nickname and a
+ nickname for remote groups, but only one of them was documented.
+
+ Will merge to 'next' and then to 'master'.
+
+
+* rd/p4-doc-markup-env (2018-06-01) 1 commit
+ - p4.txt: Use backquotes for variable names
+
+ Doc markup update.
+
+ Will merge to 'next' and then to 'master'.
+
+
+* sb/plug-misc-leaks (2018-06-01) 2 commits
+ - submodule--helper: plug mem leak in print_default_remote
+ - refs/packed-backend.c: close fd of empty file
+
+ Misc leak plugging.
+
+ Will merge to 'next' and then to 'master'.
+
+
+* tg/doc-sec-list (2018-06-01) 2 commits
+ - note git-security@googlegroups.com in more places
+ - SubmittingPatches: replace numbered attributes with names
+
+ Doc update.
+
+ Will merge to 'next' and then to 'master'.
+
+* bw/refspec-api (2018-06-01) 1 commit
+ - refspec-api: avoid uninitialized field in refspec item
+
+ Hotfix.
+
+ Will merge to 'next' and then to 'master'.
+
+--------------------------------------------------
+[Graduated to "master"]
+
+* bw/refspec-api (2018-05-18) 36 commits
+  (merged to 'next' on 2018-05-24 at 83d361419e)
+ + submodule: convert push_unpushed_submodules to take a struct refspec
+ + remote: convert check_push_refs to take a struct refspec
+ + remote: convert match_push_refs to take a struct refspec
+ + http-push: store refspecs in a struct refspec
+ + transport: remove transport_verify_remote_names
+ + send-pack: store refspecs in a struct refspec
+ + transport: convert transport_push to take a struct refspec
+ + push: convert to use struct refspec
+ + push: check for errors earlier
+ + remote: convert match_explicit_refs to take a struct refspec
+ + remote: convert get_ref_match to take a struct refspec
+ + remote: convert query_refspecs to take a struct refspec
+ + remote: convert apply_refspecs to take a struct refspec
+ + remote: convert get_stale_heads to take a struct refspec
+ + fetch: convert prune_refs to take a struct refspec
+ + fetch: convert get_ref_map to take a struct refspec
+ + fetch: convert do_fetch to take a struct refspec
+ + refspec: remove the deprecated functions
+ + fetch: convert refmap to use struct refspec
+ + fetch: convert fetch_one to use struct refspec
+ + transport-helper: convert to use struct refspec
+ + remote: remove add_prune_tags_to_fetch_refspec
+ + remote: convert fetch refspecs to struct refspec
+ + remote: convert push refspecs to struct refspec
+ + fast-export: convert to use struct refspec
+ + clone: convert cmd_clone to use refspec_item_init
+ + remote: convert match_push_refs to use struct refspec
+ + remote: convert check_push_refs to use struct refspec
+ + transport: convert transport_push to use struct refspec
+ + pull: convert get_tracking_branch to use refspec_item_init
+ + submodule--helper: convert push_check to use struct refspec
+ + refspec: convert valid_fetch_refspec to use parse_refspec
+ + refspec: introduce struct refspec
+ + refspec: factor out parsing a single refspec
+ + refspec: rename struct refspec to struct refspec_item
+ + refspec: move refspec parsing logic into its own file
+ (this branch is used by bw/ref-prefix-for-configured-refspec.)
+
+ An API update for handling of refspecs used by fetch & push
+ codepath.
+
+
+* bc/hash-independent-tests (2018-05-21) 28 commits
+  (merged to 'next' on 2018-05-24 at 40fb709f7c)
+ + t5300: abstract away SHA-1-specific constants
+ + t4208: abstract away SHA-1-specific constants
+ + t4045: abstract away SHA-1-specific constants
+ + t4042: abstract away SHA-1-specific constants
+ + t4205: sort log output in a hash-independent way
+ + t/lib-diff-alternative: abstract away SHA-1-specific constants
+ + t4030: abstract away SHA-1-specific constants
+ + t4029: abstract away SHA-1-specific constants
+ + t4029: fix test indentation
+ + t4022: abstract away SHA-1-specific constants
+ + t4020: abstract away SHA-1-specific constants
+ + t4014: abstract away SHA-1-specific constants
+ + t4008: abstract away SHA-1-specific constants
+ + t4007: abstract away SHA-1-specific constants
+ + t3905: abstract away SHA-1-specific constants
+ + t3702: abstract away SHA-1-specific constants
+ + t3103: abstract away SHA-1-specific constants
+ + t2203: abstract away SHA-1-specific constants
+ + t: skip pack tests if not using SHA-1
+ + t4044: skip test if not using SHA-1
+ + t1512: skip test if not using SHA-1
+ + t1007: annotate with SHA1 prerequisite
+ + t0000: annotate with SHA1 prerequisite
+ + t: switch $_x40 to $OID_REGEX
+ + t/test-lib: introduce OID_REGEX
+ + t: switch $_z40 to $ZERO_OID
+ + t/test-lib: introduce ZERO_OID
+ + t/test-lib: add an SHA1 prerequisite
+
+ Many tests hardcode the raw object names, which would change once
+ we migrate away from SHA-1.  While some of them must test against
+ exact object names, most of them do not have to use hardcoded
+ constants in the test.  The latter kind of tests have been updated
+ to test the moral equivalent of the original without hardcoding the
+ actual object names.
+
+
+* bw/ref-prefix-for-configured-refspec (2018-05-18) 2 commits
+  (merged to 'next' on 2018-05-24 at a0d4af6180)
+ + fetch: generate ref-prefixes when using a configured refspec
+ + refspec: consolidate ref-prefix generation logic
+ (this branch uses bw/refspec-api.)
+
+ "git fetch $there $refspec" that talks over protocol v2 can take
+ advantage of server-side ref filtering; the code has been extended
+ so that this mechanism triggers also when fetching with configured
+ refspec.
+
+
+* bw/remote-curl-compressed-responses (2018-05-23) 2 commits
+  (merged to 'next' on 2018-05-24 at 98ee4308dc)
+ + remote-curl: accept compressed responses with protocol v2
+ + remote-curl: accept all encodings supported by curl
+
+ Our HTTP client code used to advertise that we accept gzip encoding
+ from the other side; instead, just let cURL library to advertise
+ and negotiate the best one.
+
+
+* cc/tests-without-assuming-ref-files-backend (2018-05-30) 2 commits
+  (merged to 'next' on 2018-05-30 at e9605bacf0)
+ + t990X: use '.git/objects' as 'deep inside .git' path
+  (merged to 'next' on 2018-05-24 at 19138b162f)
+ + t: make many tests depend less on the refs being files
+
+ Quite a many tests assumed that newly created refs are made as
+ loose refs using the files backend, which have been updated to use
+ proper plumbing like rev-parse and update-ref, to avoid breakage
+ once we start using different ref backends.
 
 
 * en/rev-parse-invalid-range (2018-05-25) 1 commit
@@ -360,16 +219,30 @@ of the repositories listed at
  "git rev-parse Y..." etc. misbehaved when given endpoints were
  not committishes.
 
- Will merge to 'master'.
+
+* jk/config-blob-sans-repo (2018-05-21) 1 commit
+  (merged to 'next' on 2018-05-24 at 3426d9508c)
+ + config: die when --blob is used outside a repository
+
+ Error codepath fix.
 
 
-* jk/show-index (2018-05-29) 2 commits
- - show-index: update documentation for index v2
- - make show-index a builtin
+* jk/snprintf-truncation (2018-05-21) 5 commits
+  (merged to 'next' on 2018-05-24 at 4b78e15f66)
+ + fmt_with_err: add a comment that truncation is OK
+ + shorten_unambiguous_ref: use xsnprintf
+ + fsmonitor: use internal argv_array of struct child_process
+ + log_write_email_headers: use strbufs
+ + http: use strbufs instead of fixed buffers
 
- Modernize a less often used command.
+ Avoid unchecked snprintf() to make future code auditing easier.
 
- Will merge to 'next'.
+
+* js/empty-config-section-fix (2018-05-18) 1 commit
+  (merged to 'next' on 2018-05-24 at 3d0875c7b4)
+ + config: a user-provided invalid section is not a BUG
+
+ Error codepath fix.
 
 
 * js/rebase-recreate-merge (2018-05-30) 2 commits
@@ -379,62 +252,80 @@ of the repositories listed at
 
  Hotfixes.
 
- Will merge to 'master'.
+
+* ld/p4-unshelve (2018-05-24) 1 commit
+  (merged to 'next' on 2018-05-30 at 7367508399)
+ + git-p4: add unshelve command
+
+ "git p4" learned to "unshelve" shelved commit from P4.
 
 
-* jt/submodule-pull-recurse-rebase (2018-05-25) 1 commit
- - submodule: do not pass null OID to setup_revisions
+* ma/config-store-data-clear (2018-05-21) 3 commits
+  (merged to 'next' on 2018-05-24 at cc6e4b9371)
+ + config: let `config_store_data_clear()` handle `key`
+ + config: let `config_store_data_clear()` handle `value_regex`
+ + config: free resources of `struct config_store_data`
 
- "git pull -recurse-submodules --rebase", when the submodule
- repository's history did not have anything common between ours and
- the upstream's, failed to execute.  We need to fetch from them to
- continue even in such a case.
-
- Will merge to 'next'.
+ Leak plugging.
 
 
-* ma/wrapped-info (2018-05-28) 2 commits
- - usage: prefix all lines in `vreportf()`, not just the first
- - usage: extract `prefix_suffix_lines()` from `advise()`
+* ma/regex-no-regfree-after-comp-fail (2018-05-21) 1 commit
+  (merged to 'next' on 2018-05-24 at 3e473da1b5)
+ + regex: do not call `regfree()` if compilation fails
 
- An attempt to help making multi-line messages fed to warning(),
- error(), and friends more easily translatable.
-
- Wait for discussion to settle.
- cf. <20180529213957.GF7964@sigill.intra.peff.net>
+ We used to call regfree() after regcomp() failed in some codepaths,
+ which have been corrected.
 
 
-* nd/complete-config-vars (2018-05-29) 13 commits
- - completion: complete general config vars in two steps
- - log-tree: allow to customize 'grafted' color
- - completion: support case-insensitive config vars
- - completion: keep other config var completion in camelCase
- - completion: drop the hard coded list of config vars
- - am: move advice.amWorkDir parsing back to advice.c
- - advice: keep config name in camelCase in advice_config[]
- - fsck: produce camelCase config key names
- - help: add --config to list all available config
- - fsck: factor out msg_id_info[] lazy initialization code
- - grep: keep all colors in an array
- - Add and use generic name->id mapping code for color slot parsing
- - Merge branch 'nd/command-list' into nd/complete-config-vars
- (this branch uses nd/command-list.)
+* ma/unpack-trees-free-msgs (2018-05-22) 4 commits
+  (merged to 'next' on 2018-05-24 at 84cbd459f7)
+ + unpack_trees_options: free messages when done
+ + argv-array: return the pushed string from argv_push*()
+ + merge-recursive: provide pair of `unpack_trees_{start,finish}()`
+ + merge: setup `opts` later in `checkout_fast_forward()`
 
- Continuing with the idea to programatically enumerate various
- pieces of data required for command line completion, teach the
- codebase to report the list of configuration variables
- subcommands care about to help complete them.
+ Leak plugging.
 
 
-* nd/completion-negation (2018-05-29) 3 commits
- - completion: collapse extra --no-.. options
- - completion: suppress some -no- options
- - parse-options: option to let --git-completion-helper show negative form
+* nd/command-list (2018-05-21) 17 commits
+  (merged to 'next' on 2018-05-24 at 093e983b05)
+ + completion: allow to customize the completable command list
+ + completion: add and use --list-cmds=alias
+ + completion: add and use --list-cmds=nohelpers
+ + Move declaration for alias.c to alias.h
+ + completion: reduce completable command list
+ + completion: let git provide the completable command list
+ + command-list.txt: documentation and guide line
+ + help: use command-list.txt for the source of guides
+ + help: add "-a --verbose" to list all commands with synopsis
+ + git: support --list-cmds=list-<category>
+ + completion: implement and use --list-cmds=main,others
+ + git --list-cmds: collect command list in a string_list
+ + git.c: convert --list-* to --list-cmds=*
+ + Remove common-cmds.h
+ + help: use command-list.h for common command list
+ + generate-cmds.sh: export all commands to command-list.h
+ + generate-cmds.sh: factor out synopsis extract code
+ (this branch is used by nd/complete-config-vars.)
 
- Continuing with the idea to programatically enumerate various
- pieces of data required for command line completion, the codebase
- has been taught to enumerate options prefixed with "--no-" to
- negate them.
+ The list of commands with their various attributes were spread
+ across a few places in the build procedure, but it now is getting a
+ bit more consolidated to allow more automation.
+
+
+* nd/use-opt-int-set-f (2018-05-24) 1 commit
+  (merged to 'next' on 2018-05-30 at f8f5d612ed)
+ + Use OPT_SET_INT_F() for cmdline option specification
+
+ Code simplification.
+
+
+* pa/import-tars-long-names (2018-05-24) 1 commit
+  (merged to 'next' on 2018-05-30 at 5e043b2fca)
+ + import-tars: read overlong names from pax extended header
+
+ The import-tars script (in contrib/) has been taught to handle
+ tarballs with overly long paths that use PAX extended headers.
 
 
 * rd/doc-options-placeholder (2018-05-25) 1 commit
@@ -443,7 +334,12 @@ of the repositories listed at
 
  Docfix.
 
- Will merge to 'master'.
+
+* rd/init-typo (2018-05-30) 1 commit
+  (merged to 'next' on 2018-05-30 at 8813a649eb)
+ + init: fix grammar in "templates not found" msg
+
+ Message fix.
 
 
 * rd/tag-doc-lightweight (2018-05-29) 1 commit
@@ -452,16 +348,28 @@ of the repositories listed at
 
  Docfix.
 
- Will merge to 'master'.
+
+* sb/grep-die-on-unreadable-index (2018-05-16) 1 commit
+  (merged to 'next' on 2018-05-24 at 6d78916503)
+ + grep: handle corrupt index files early
+
+ Error behaviour of "git grep" when it cannot read the index was
+ inconsistent with other commands that uses the index, which has
+ been corrected to error out early.
 
 
-* rd/init-typo (2018-05-30) 1 commit
-  (merged to 'next' on 2018-05-30 at 8813a649eb)
- + init: fix grammar in "templates not found" msg
+* sb/submodule-merge-in-merge-recursive (2018-05-18) 3 commits
+  (merged to 'next' on 2018-05-24 at 6228d22182)
+ + merge-recursive: give notice when submodule commit gets fast-forwarded
+ + merge-recursive: i18n submodule merge output and respect verbosity
+ + submodule.c: move submodule merging to merge-recursive.c
 
- Message fix.
-
- Will merge to 'master'.
+ By code restructuring of submodule merge in merge-recursive,
+ informational messages from the codepath are now given using the
+ same mechanism as other output, and honor the merge.verbosity
+ configuration.  The code also learned to give a few new messages
+ when a submodule three-way merge resolves cleanly when one side
+ records a descendant of the commit chosen by the other side.
 
 --------------------------------------------------
 [Stalled]
@@ -520,14 +428,14 @@ of the repositories listed at
  before too long.
 
 
-* is/parsing-line-range (2018-04-27) 2 commits
+* is/parsing-line-range (2018-06-01) 2 commits
  . log: prevent error if line range ends past end of file
  . blame: prevent error if range ends past end of file
 
  Parsing of -L[<N>][,[<M>]] parameters "git blame" and "git log"
  take has been tweaked.
 
- Seems to break a few tests.
+ Updated.   Still seems to break a few tests.
 
 
 * av/fsmonitor-updates (2018-01-04) 6 commits
@@ -603,6 +511,115 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* ds/commit-graph-fsck (2018-05-29) 20 commits
+ - commit-graph: update design document
+ - gc: automatically write commit-graph files
+ - commit-graph: add '--reachable' option
+ - fsck: verify commit-graph
+ - commit-graph: verify contents match checksum
+ - commit-graph: test for corrupted octopus edge
+ - commit-graph: verify commit date
+ - commit-graph: verify generation number
+ - commit-graph: verify parent list
+ - commit-graph: verify root tree OIDs
+ - commit-graph: verify objects exist
+ - commit-graph: verify corrupt OID fanout and lookup
+ - commit-graph: verify required chunks are present
+ - commit-graph: verify catches corrupt signature
+ - commit-graph: add 'verify' subcommand
+ - commit-graph: load a root tree from specific graph
+ - commit: force commit to parse from object database
+ - commit-graph: parse commit from chosen graph
+ - commit-graph: fix GRAPH_MIN_SIZE
+ - commit-graph: UNLEAK before die()
+ (this branch uses ds/commit-graph-lockfile-fix and ds/generation-numbers.)
+
+ Expecting a reroll.
+ cf. <ba3b8e06-b5e1-99a1-0fe4-ff97d6da8f15@gmail.com>
+
+
+* en/merge-recursive-tests (2018-05-28) 5 commits
+  (merged to 'next' on 2018-06-01 at 8490b560b4)
+ + t6036: prefer test_when_finished to manual cleanup in following test
+ + t6036, t6042: prefer test_cmp to sequences of test
+ + t6036, t6042: prefer test_path_is_file, test_path_is_missing
+ + t6036, t6042: use test_line_count instead of wc -l
+ + t6036, t6042: use test_create_repo to keep tests independent
+
+ Clean up tests in t6xxx series about 'merge' command.
+
+ Will cook in 'next'.
+
+
+* jk/show-index (2018-05-29) 2 commits
+  (merged to 'next' on 2018-06-01 at 4b3382d994)
+ + show-index: update documentation for index v2
+ + make show-index a builtin
+
+ Modernize a less often used command.
+
+ Will cook in 'next'.
+
+
+* jt/submodule-pull-recurse-rebase (2018-05-25) 1 commit
+  (merged to 'next' on 2018-06-01 at cd3e2a1008)
+ + submodule: do not pass null OID to setup_revisions
+
+ "git pull -recurse-submodules --rebase", when the submodule
+ repository's history did not have anything common between ours and
+ the upstream's, failed to execute.  We need to fetch from them to
+ continue even in such a case.
+
+ Will merge to 'master'.
+
+
+* ma/wrapped-info (2018-05-28) 2 commits
+ - usage: prefix all lines in `vreportf()`, not just the first
+ - usage: extract `prefix_suffix_lines()` from `advise()`
+
+ An attempt to help making multi-line messages fed to warning(),
+ error(), and friends more easily translatable.
+
+ Wait for discussion to settle.
+ cf. <20180529213957.GF7964@sigill.intra.peff.net>
+
+
+* nd/complete-config-vars (2018-05-29) 13 commits
+ - completion: complete general config vars in two steps
+ - log-tree: allow to customize 'grafted' color
+ - completion: support case-insensitive config vars
+ - completion: keep other config var completion in camelCase
+ - completion: drop the hard coded list of config vars
+ - am: move advice.amWorkDir parsing back to advice.c
+ - advice: keep config name in camelCase in advice_config[]
+ - fsck: produce camelCase config key names
+ - help: add --config to list all available config
+ - fsck: factor out msg_id_info[] lazy initialization code
+ - grep: keep all colors in an array
+ - Add and use generic name->id mapping code for color slot parsing
+ - Merge branch 'nd/command-list' into nd/complete-config-vars
+
+ Continuing with the idea to programatically enumerate various
+ pieces of data required for command line completion, teach the
+ codebase to report the list of configuration variables
+ subcommands care about to help complete them.
+
+ Will merge to and cook in 'next'.
+
+
+* nd/completion-negation (2018-05-29) 3 commits
+ - completion: collapse extra --no-.. options
+ - completion: suppress some -no- options
+ - parse-options: option to let --git-completion-helper show negative form
+
+ Continuing with the idea to programatically enumerate various
+ pieces of data required for command line completion, the codebase
+ has been taught to enumerate options prefixed with "--no-" to
+ negate them.
+
+ Will merge to and cook in 'next'.
+
+
 * jm/cache-entry-from-mem-pool (2018-05-24) 7 commits
  - block alloc: add validations around cache_entry lifecyle
  - block alloc: allocate cache entries from mem_pool
@@ -619,201 +636,10 @@ of the repositories listed at
  Is this ready for 'next'?
 
 
-* bw/ref-prefix-for-configured-refspec (2018-05-18) 2 commits
-  (merged to 'next' on 2018-05-24 at a0d4af6180)
- + fetch: generate ref-prefixes when using a configured refspec
- + refspec: consolidate ref-prefix generation logic
- (this branch uses bw/refspec-api.)
-
- "git fetch $there $refspec" that talks over protocol v2 can take
- advantage of server-side ref filtering; the code has been extended
- so that this mechanism triggers also when fetching with configured
- refspec.
-
- Will merge to 'master'.
-
-
-* jk/config-blob-sans-repo (2018-05-21) 1 commit
-  (merged to 'next' on 2018-05-24 at 3426d9508c)
- + config: die when --blob is used outside a repository
-
- Error codepath fix.
-
- Will merge to 'master'.
-
-
-* jk/snprintf-truncation (2018-05-21) 5 commits
-  (merged to 'next' on 2018-05-24 at 4b78e15f66)
- + fmt_with_err: add a comment that truncation is OK
- + shorten_unambiguous_ref: use xsnprintf
- + fsmonitor: use internal argv_array of struct child_process
- + log_write_email_headers: use strbufs
- + http: use strbufs instead of fixed buffers
-
- Avoid unchecked snprintf() to make future code auditing easier.
-
- Will merge to 'master'.
-
-
-* js/empty-config-section-fix (2018-05-18) 1 commit
-  (merged to 'next' on 2018-05-24 at 3d0875c7b4)
- + config: a user-provided invalid section is not a BUG
-
- Error codepath fix.
-
- Will merge to 'master'.
-
-
-* ma/config-store-data-clear (2018-05-21) 3 commits
-  (merged to 'next' on 2018-05-24 at cc6e4b9371)
- + config: let `config_store_data_clear()` handle `key`
- + config: let `config_store_data_clear()` handle `value_regex`
- + config: free resources of `struct config_store_data`
-
- Leak plugging.
-
- Will merge to 'master'.
-
-
-* ma/regex-no-regfree-after-comp-fail (2018-05-21) 1 commit
-  (merged to 'next' on 2018-05-24 at 3e473da1b5)
- + regex: do not call `regfree()` if compilation fails
-
- We used to call regfree() after regcomp() failed in some codepaths,
- which have been corrected.
-
- Will merge to 'master'.
-
-
-* ma/unpack-trees-free-msgs (2018-05-22) 4 commits
-  (merged to 'next' on 2018-05-24 at 84cbd459f7)
- + unpack_trees_options: free messages when done
- + argv-array: return the pushed string from argv_push*()
- + merge-recursive: provide pair of `unpack_trees_{start,finish}()`
- + merge: setup `opts` later in `checkout_fast_forward()`
-
- Leak plugging.
-
- Will merge to 'master'.
-
-
 * rm/p4-submit-with-commit-option (2018-05-21) 1 commit
  - git-p4: add options --commit and --disable-rebase
 
  Needs sign-off.
-
-
-* bw/remote-curl-compressed-responses (2018-05-23) 2 commits
-  (merged to 'next' on 2018-05-24 at 98ee4308dc)
- + remote-curl: accept compressed responses with protocol v2
- + remote-curl: accept all encodings supported by curl
-
- Our HTTP client code used to advertise that we accept gzip encoding
- from the other side; instead, just let cURL library to advertise
- and negotiate the best one.
-
- Will merge to 'master'.
-
-
-* cc/tests-without-assuming-ref-files-backend (2018-05-30) 2 commits
-  (merged to 'next' on 2018-05-30 at e9605bacf0)
- + t990X: use '.git/objects' as 'deep inside .git' path
-  (merged to 'next' on 2018-05-24 at 19138b162f)
- + t: make many tests depend less on the refs being files
-
- Quite a many tests assumed that newly created refs are made as
- loose refs using the files backend, which have been updated to use
- proper plumbing like rev-parse and update-ref, to avoid breakage
- once we start using different ref backends.
-
- Will merge to 'master'.
-
-
-* bc/hash-independent-tests (2018-05-21) 28 commits
-  (merged to 'next' on 2018-05-24 at 40fb709f7c)
- + t5300: abstract away SHA-1-specific constants
- + t4208: abstract away SHA-1-specific constants
- + t4045: abstract away SHA-1-specific constants
- + t4042: abstract away SHA-1-specific constants
- + t4205: sort log output in a hash-independent way
- + t/lib-diff-alternative: abstract away SHA-1-specific constants
- + t4030: abstract away SHA-1-specific constants
- + t4029: abstract away SHA-1-specific constants
- + t4029: fix test indentation
- + t4022: abstract away SHA-1-specific constants
- + t4020: abstract away SHA-1-specific constants
- + t4014: abstract away SHA-1-specific constants
- + t4008: abstract away SHA-1-specific constants
- + t4007: abstract away SHA-1-specific constants
- + t3905: abstract away SHA-1-specific constants
- + t3702: abstract away SHA-1-specific constants
- + t3103: abstract away SHA-1-specific constants
- + t2203: abstract away SHA-1-specific constants
- + t: skip pack tests if not using SHA-1
- + t4044: skip test if not using SHA-1
- + t1512: skip test if not using SHA-1
- + t1007: annotate with SHA1 prerequisite
- + t0000: annotate with SHA1 prerequisite
- + t: switch $_x40 to $OID_REGEX
- + t/test-lib: introduce OID_REGEX
- + t: switch $_z40 to $ZERO_OID
- + t/test-lib: introduce ZERO_OID
- + t/test-lib: add an SHA1 prerequisite
-
- Many tests hardcode the raw object names, which would change once
- we migrate away from SHA-1.  While some of them must test against
- exact object names, most of them do not have to use hardcoded
- constants in the test.  The latter kind of tests have been updated
- to test the moral equivalent of the original without hardcoding the
- actual object names.
-
- Will merge to 'master'.
-
-
-* bw/refspec-api (2018-05-18) 36 commits
-  (merged to 'next' on 2018-05-24 at 83d361419e)
- + submodule: convert push_unpushed_submodules to take a struct refspec
- + remote: convert check_push_refs to take a struct refspec
- + remote: convert match_push_refs to take a struct refspec
- + http-push: store refspecs in a struct refspec
- + transport: remove transport_verify_remote_names
- + send-pack: store refspecs in a struct refspec
- + transport: convert transport_push to take a struct refspec
- + push: convert to use struct refspec
- + push: check for errors earlier
- + remote: convert match_explicit_refs to take a struct refspec
- + remote: convert get_ref_match to take a struct refspec
- + remote: convert query_refspecs to take a struct refspec
- + remote: convert apply_refspecs to take a struct refspec
- + remote: convert get_stale_heads to take a struct refspec
- + fetch: convert prune_refs to take a struct refspec
- + fetch: convert get_ref_map to take a struct refspec
- + fetch: convert do_fetch to take a struct refspec
- + refspec: remove the deprecated functions
- + fetch: convert refmap to use struct refspec
- + fetch: convert fetch_one to use struct refspec
- + transport-helper: convert to use struct refspec
- + remote: remove add_prune_tags_to_fetch_refspec
- + remote: convert fetch refspecs to struct refspec
- + remote: convert push refspecs to struct refspec
- + fast-export: convert to use struct refspec
- + clone: convert cmd_clone to use refspec_item_init
- + remote: convert match_push_refs to use struct refspec
- + remote: convert check_push_refs to use struct refspec
- + transport: convert transport_push to use struct refspec
- + pull: convert get_tracking_branch to use refspec_item_init
- + submodule--helper: convert push_check to use struct refspec
- + refspec: convert valid_fetch_refspec to use parse_refspec
- + refspec: introduce struct refspec
- + refspec: factor out parsing a single refspec
- + refspec: rename struct refspec to struct refspec_item
- + refspec: move refspec parsing logic into its own file
- (this branch is used by bw/ref-prefix-for-configured-refspec.)
-
- An API update for handling of refspecs used by fetch & push
- codepath.
-
- Will merge to 'master'.
 
 
 * ds/commit-graph-lockfile-fix (2018-05-22) 1 commit
@@ -823,7 +649,7 @@ of the repositories listed at
 
  Update to ds/generation-numbers topic.
 
- Will merge to 'master'.
+ Wait for ds/generation-numbers
 
 
 * nd/commit-util-to-slab (2018-05-21) 15 commits
@@ -849,7 +675,7 @@ of the repositories listed at
  code.  All of the existing uses of the field has been migrated to a
  more dedicated "commit-slab" mechanism and the field is eliminated.
 
- Will merge to 'master'.
+ Will cook in 'next'.
 
 
 * nd/diff-apply-ita (2018-05-29) 4 commits
@@ -868,19 +694,7 @@ of the repositories listed at
  otherwise working-tree-only application of a patch will add new
  paths to the index marked with the "intent-to-add" bit.
 
- Kicked back to 'pu'.
- cf. <20180526120846.23663-1-pclouds@gmail.com>
-
-
-* sb/grep-die-on-unreadable-index (2018-05-16) 1 commit
-  (merged to 'next' on 2018-05-24 at 6d78916503)
- + grep: handle corrupt index files early
-
- Error behaviour of "git grep" when it cannot read the index was
- inconsistent with other commands that uses the index, which has
- been corrected to error out early.
-
- Will merge to 'master'.
+ Will cook in 'next'.
 
 
 * sb/object-store-grafts (2018-05-18) 19 commits
@@ -908,32 +722,7 @@ of the repositories listed at
  The conversion to pass "the_repository" and then "a_repository"
  throughout the object access API continues.
 
- Is this ready for 'next'?
-
-
-* sb/submodule-merge-in-merge-recursive (2018-05-18) 3 commits
-  (merged to 'next' on 2018-05-24 at 6228d22182)
- + merge-recursive: give notice when submodule commit gets fast-forwarded
- + merge-recursive: i18n submodule merge output and respect verbosity
- + submodule.c: move submodule merging to merge-recursive.c
-
- By code restructuring of submodule merge in merge-recursive,
- informational messages from the codepath are now given using the
- same mechanism as other output, and honor the merge.verbosity
- configuration.  The code also learned to give a few new messages
- when a submodule three-way merge resolves cleanly when one side
- records a descendant of the commit chosen by the other side.
-
- Will merge to 'master'.
-
-
-* ld/p4-unshelve (2018-05-24) 1 commit
-  (merged to 'next' on 2018-05-30 at 7367508399)
- + git-p4: add unshelve command
-
- "git p4" learned to "unshelve" shelved commit from P4.
-
- Will merge to 'master'.
+ Will merge to and cook in 'next'.
 
 
 * pc/submodule-helper-foreach (2018-05-11) 4 commits
@@ -945,7 +734,7 @@ of the repositories listed at
 
  The bulk of "git submodule foreach" has been rewritten in C.
 
- Will merge to and cook in 'next'.
+ Will cook in 'next'.
 
 
 * js/branch-diff (2018-05-16) 19 commits
@@ -996,31 +785,32 @@ of the repositories listed at
  The conversion to pass "the_repository" and then "a_repository"
  throughout the object access API continues.
 
- Is this ready for 'next'?
+ Will merge to and cook in 'next'.
 
 
 * tb/grep-column (2018-05-14) 7 commits
- - contrib/git-jump/git-jump: jump to match column in addition to line
- - grep.c: add configuration variables to show matched option
- - builtin/grep.c: add '--column' option to 'git-grep(1)'
- - grep.c: display column number of first match
- - grep.[ch]: extend grep_opt to allow showing matched column
- - grep.c: expose matched column in match_line()
- - Documentation/config.txt: camel-case lineNumber for consistency
+ . contrib/git-jump/git-jump: jump to match column in addition to line
+ . grep.c: add configuration variables to show matched option
+ . builtin/grep.c: add '--column' option to 'git-grep(1)'
+ . grep.c: display column number of first match
+ . grep.[ch]: extend grep_opt to allow showing matched column
+ . grep.c: expose matched column in match_line()
+ . Documentation/config.txt: camel-case lineNumber for consistency
  (this branch is used by tb/grep-only-matching.)
 
  "git grep" learned the "--column" option that gives not just the
  line number but the column number of the hit.
 
- What's the doneness of this topic?
+ Expecting a reroll.
+ cf. <20180530160908.GA8340@D-10-19-29-76.dhcp4.washington.edu>
 
 
 * tb/grep-only-matching (2018-05-14) 2 commits
- - builtin/grep.c: teach '-o', '--only-matching' to 'git-grep'
- - grep.c: extract show_line_header()
+ . builtin/grep.c: teach '-o', '--only-matching' to 'git-grep'
+ . grep.c: extract show_line_header()
  (this branch uses tb/grep-column.)
 
- What's the doneness of this topic?
+ Waiting on tb/grep-column
 
 
 * sb/diff-color-move-more (2018-05-21) 8 commits
@@ -1059,35 +849,7 @@ of the repositories listed at
  pre-computed generation numbers to speed up the decisions to stop
  history traversal.
 
- Will merge to 'master'.
-
-
-* nd/command-list (2018-05-21) 17 commits
-  (merged to 'next' on 2018-05-24 at 093e983b05)
- + completion: allow to customize the completable command list
- + completion: add and use --list-cmds=alias
- + completion: add and use --list-cmds=nohelpers
- + Move declaration for alias.c to alias.h
- + completion: reduce completable command list
- + completion: let git provide the completable command list
- + command-list.txt: documentation and guide line
- + help: use command-list.txt for the source of guides
- + help: add "-a --verbose" to list all commands with synopsis
- + git: support --list-cmds=list-<category>
- + completion: implement and use --list-cmds=main,others
- + git --list-cmds: collect command list in a string_list
- + git.c: convert --list-* to --list-cmds=*
- + Remove common-cmds.h
- + help: use command-list.h for common command list
- + generate-cmds.sh: export all commands to command-list.h
- + generate-cmds.sh: factor out synopsis extract code
- (this branch is used by nd/complete-config-vars.)
-
- The list of commands with their various attributes were spread
- across a few places in the build procedure, but it now is getting a
- bit more consolidated to allow more automation.
-
- Will merge to 'master'.
+ Will cook in 'next'.
 
 
 * jk/branch-l-0-deprecation (2018-05-25) 5 commits
