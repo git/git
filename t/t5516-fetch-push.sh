@@ -1121,6 +1121,25 @@ test_expect_success 'fetch exact SHA1' '
 	)
 '
 
+test_expect_success 'fetch exact SHA1 in protocol v2' '
+	mk_test testrepo heads/master hidden/one &&
+	git push testrepo master:refs/hidden/one &&
+	git -C testrepo config transfer.hiderefs refs/hidden &&
+	check_push_result testrepo $the_commit hidden/one &&
+
+	mk_child testrepo child &&
+	git -C child config protocol.version 2 &&
+
+	# make sure $the_commit does not exist here
+	git -C child repack -a -d &&
+	git -C child prune &&
+	test_must_fail git -C child cat-file -t $the_commit &&
+
+	# fetching the hidden object succeeds by default
+	# NEEDSWORK: should this match the v0 behavior instead?
+	git -C child fetch -v ../testrepo $the_commit:refs/heads/copy
+'
+
 for configallowtipsha1inwant in true false
 do
 	test_expect_success "shallow fetch reachable SHA1 (but not a ref), allowtipsha1inwant=$configallowtipsha1inwant" '

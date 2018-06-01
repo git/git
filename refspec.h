@@ -42,6 +42,10 @@ void refspec_clear(struct refspec *rs);
 int valid_fetch_refspec(const char *refspec);
 
 struct argv_array;
+/*
+ * Determine what <prefix> values to pass to the peer in ref-prefix lines
+ * (see Documentation/technical/protocol-v2.txt).
+ */
 void refspec_ref_prefixes(const struct refspec *rs,
 			  struct argv_array *ref_prefixes);
 
