@@ -181,7 +181,7 @@ test_expect_success '__git_find_repo_path - cwd is a .git directory' '
 test_expect_success '__git_find_repo_path - parent is a .git directory' '
 	echo "$ROOT/.git" >expected &&
 	(
-		cd .git/refs/heads &&
+		cd .git/objects &&
 		__git_find_repo_path &&
 		echo "$__git_repo_path" >"$actual"
 	) &&

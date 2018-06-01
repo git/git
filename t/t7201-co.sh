@@ -65,7 +65,7 @@ test_expect_success setup '
 test_expect_success "checkout from non-existing branch" '
 
 	git checkout -b delete-me master &&
-	rm .git/refs/heads/delete-me &&
+	git update-ref -d --no-deref refs/heads/delete-me &&
 	test refs/heads/delete-me = "$(git symbolic-ref HEAD)" &&
 	git checkout master &&
 	test refs/heads/master = "$(git symbolic-ref HEAD)"
