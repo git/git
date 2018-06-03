@@ -311,11 +311,12 @@ static const char *parse_cmd_verify(struct ref_transaction *transaction,
 
 static const char *parse_cmd_option(struct strbuf *input, const char *next)
 {
-	if (!strncmp(next, "no-deref", 8) && next[8] == line_termination)
+	const char *rest;
+	if (skip_prefix(next, "no-deref", &rest) && *rest == line_termination)
 		update_flags |= REF_NO_DEREF;
 	else
 		die("option unknown: %s", next);
-	return next + 8;
+	return rest;
 }
 
 static void update_refs_stdin(struct ref_transaction *transaction)
@@ -332,16 +333,16 @@ static void update_refs_stdin(struct ref_transaction *transaction)
 			die("empty command in input");
 		else if (isspace(*next))
 			die("whitespace before command: %s", next);
-		else if (starts_with(next, "update "))
-			next = parse_cmd_update(transaction, &input, next + 7);
-		else if (starts_with(next, "create "))
-			next = parse_cmd_create(transaction, &input, next + 7);
-		else if (starts_with(next, "delete "))
-			next = parse_cmd_delete(transaction, &input, next + 7);
-		else if (starts_with(next, "verify "))
-			next = parse_cmd_verify(transaction, &input, next + 7);
-		else if (starts_with(next, "option "))
-			next = parse_cmd_option(&input, next + 7);
+		else if (skip_prefix(next, "update ", &next))
+			next = parse_cmd_update(transaction, &input, next);
+		else if (skip_prefix(next, "create ", &next))
+			next = parse_cmd_create(transaction, &input, next);
+		else if (skip_prefix(next, "delete ", &next))
+			next = parse_cmd_delete(transaction, &input, next);
+		else if (skip_prefix(next, "verify ", &next))
+			next = parse_cmd_verify(transaction, &input, next);
+		else if (skip_prefix(next, "option ", &next))
+			next = parse_cmd_option(&input, next);
 		else
 			die("unknown command: %s", next);
 
