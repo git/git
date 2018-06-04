@@ -36,6 +36,9 @@ the body to majordomo@vger.kernel.org. The mailing list archives are
 available at <https://public-inbox.org/git/>,
 <http://marc.info/?l=git> and other archival sites.
 
+Issues which are security relevant should be disclosed privately to
+the Git Security mailing list <git-security@googlegroups.com>.
+
 The maintainer frequently sends the "What's cooking" reports that
 list the current status of various development topics to the mailing
 list.  The discussion following them give a good reference for

@@ -176,6 +176,12 @@ that is fine, but please mark it as such.
 [[send-patches]]
 === Sending your patches.
 
+:security-ml: footnoteref:[security-ml,The Git Security mailing list: git-security@googlegroups.com]
+
+Before sending any patches, please note that patches that may be
+security relevant should be submitted privately to the Git Security
+mailing list{security-ml}, instead of the public mailing list.
+
 Learn to use format-patch and send-email if possible.  These commands
 are optimized for the workflow of sending patches, avoiding many ways
 your existing e-mail client that is optimized for "multipart/*" mime
@@ -259,17 +265,24 @@ patch, format it as "multipart/signed", not a text/plain message
 that starts with `-----BEGIN PGP SIGNED MESSAGE-----`.  That is
 not a text/plain, it's something else.
 
+:security-ml-ref: footnoteref:[security-ml]
+
+As mentioned at the beginning of the section, patches that may be
+security relevant should not be submitted to the public mailing list
+mentioned below, but should instead be sent privately to the Git
+Security mailing list{security-ml-ref}.
+
 Send your patch with "To:" set to the mailing list, with "cc:" listing
 people who are involved in the area you are touching (the `git
 contacts` command in `contrib/contacts/` can help to
 identify them), to solicit comments and reviews.
 
-:1: footnote:[The current maintainer: gitster@pobox.com]
-:2: footnote:[The mailing list: git@vger.kernel.org]
+:current-maintainer: footnote:[The current maintainer: gitster@pobox.com]
+:git-ml: footnote:[The mailing list: git@vger.kernel.org]
 
 After the list reached a consensus that it is a good idea to apply the
-patch, re-send it with "To:" set to the maintainer{1} and "cc:" the
-list{2} for inclusion.
+patch, re-send it with "To:" set to the maintainer{current-maintainer} and "cc:" the
+list{git-ml} for inclusion.
 
 Do not forget to add trailers such as `Acked-by:`, `Reviewed-by:` and
 `Tested-by:` lines as necessary to credit people who helped your
