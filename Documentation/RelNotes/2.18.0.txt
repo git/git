@@ -508,6 +508,16 @@ Fixes since v2.17
    not committishes.
    (merge 0ed556d38f en/rev-parse-invalid-range later to maint).
 
+ * "git pull -recurse-submodules --rebase", when the submodule
+   repository's history did not have anything common between ours and
+   the upstream's, failed to execute.  We need to fetch from them to
+   continue even in such a case.
+   (merge 4d36f88be7 jt/submodule-pull-recurse-rebase later to maint).
+
+ * "git remote update" can take both a single remote nickname and a
+   nickname for remote groups, but only one of them was documented.
+   (merge a97447a42a nd/remote-update-doc later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge 248f66ed8e nd/trace-with-env later to maint).
    (merge 14ced5562c ys/bisect-object-id-missing-conversion-fix later to maint).
@@ -541,3 +551,5 @@ Fixes since v2.17
    (merge 17b8a2d6cd jk/config-blob-sans-repo later to maint).
    (merge 590551ca2c rd/tag-doc-lightweight later to maint).
    (merge 44f560fc16 rd/init-typo later to maint).
+   (merge f156a0934a rd/p4-doc-markup-env later to maint).
+   (merge 2a00502b14 tg/doc-sec-list later to maint).
