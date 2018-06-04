@@ -23,7 +23,7 @@ test_expect_success GPG 'create signed commits' '
 	echo 3 >bar && git add bar &&
 	test_tick && git commit -S -m "bad on side" &&
 	git cat-file commit side-bad >raw &&
-	sed -e "s/bad/forged bad/" raw >forged &&
+	sed -e "s/^bad/forged bad/" raw >forged &&
 	git hash-object -w -t commit forged >forged.commit &&
 	git checkout initial &&
 

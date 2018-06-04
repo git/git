@@ -142,8 +142,7 @@ test_expect_success GPG 'show signed commit with signature' '
 
 test_expect_success GPG 'detect fudged signature' '
 	git cat-file commit seventh-signed >raw &&
-
-	sed -e "s/seventh/7th forged/" raw >forged1 &&
+	sed -e "s/^seventh/7th forged/" raw >forged1 &&
 	git hash-object -w -t commit forged1 >forged1.commit &&
 	test_must_fail git verify-commit $(cat forged1.commit) &&
 	git show --pretty=short --show-signature $(cat forged1.commit) >actual1 &&
