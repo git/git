@@ -424,7 +424,7 @@ dedicating a client spec just for 'git p4'.
 The name of the client can be given to 'git p4' in multiple ways.  The
 variable 'git-p4.client' takes precedence if it exists.  Otherwise,
 normal p4 mechanisms of determining the client are used:  environment
-variable P4CLIENT, a file referenced by P4CONFIG, or the local host name.
+variable `P4CLIENT`, a file referenced by `P4CONFIG`, or the local host name.
 
 
 BRANCH DETECTION
@@ -493,22 +493,22 @@ General variables
 ~~~~~~~~~~~~~~~~~
 git-p4.user::
 	User specified as an option to all p4 commands, with '-u <user>'.
-	The environment variable 'P4USER' can be used instead.
+	The environment variable `P4USER` can be used instead.
 
 git-p4.password::
 	Password specified as an option to all p4 commands, with
 	'-P <password>'.
-	The environment variable 'P4PASS' can be used instead.
+	The environment variable `P4PASS` can be used instead.
 
 git-p4.port::
 	Port specified as an option to all p4 commands, with
 	'-p <port>'.
-	The environment variable 'P4PORT' can be used instead.
+	The environment variable `P4PORT` can be used instead.
 
 git-p4.host::
 	Host specified as an option to all p4 commands, with
 	'-h <host>'.
-	The environment variable 'P4HOST' can be used instead.
+	The environment variable `P4HOST` can be used instead.
 
 git-p4.client::
 	Client specified as an option to all p4 commands, with
