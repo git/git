@@ -49,6 +49,8 @@ static int parse_refspec(struct refspec_item *item, const char *refspec, int fet
 		size_t rlen = strlen(++rhs);
 		is_glob = (1 <= rlen && strchr(rhs, '*'));
 		item->dst = xstrndup(rhs, rlen);
+	} else {
+		item->dst = NULL;
 	}
 
 	llen = (rhs ? (rhs - lhs - 1) : strlen(lhs));
