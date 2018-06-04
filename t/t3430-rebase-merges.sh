@@ -70,7 +70,6 @@ test_expect_success 'create completely different structure' '
 	merge -C H second
 	merge onebranch # Merge the topic branch '\''onebranch'\''
 	EOF
-	cp script-from-scratch script-from-scratch-orig &&
 	test_config sequence.editor \""$PWD"/replace-editor.sh\" &&
 	test_tick &&
 	git rebase -i -r A &&
@@ -316,17 +315,17 @@ test_expect_success 'A root commit can be a cousin, treat it that way' '
 
 test_expect_success 'labels that are object IDs are rewritten' '
 	git checkout -b third B &&
-	test_tick &&
 	test_commit I &&
 	third=$(git rev-parse HEAD) &&
 	git checkout -b labels master &&
 	git merge --no-commit third &&
 	test_tick &&
 	git commit -m "Merge commit '\''$third'\'' into labels" &&
-	cp script-from-scratch-orig script-from-scratch &&
+	echo noop >script-from-scratch &&
 	test_config sequence.editor \""$PWD"/replace-editor.sh\" &&
 	test_tick &&
 	git rebase -i -r A &&
+	grep "^label $third-" .git/ORIGINAL-TODO &&
 	! grep "^label $third$" .git/ORIGINAL-TODO
 '
 
