@@ -132,4 +132,25 @@ test_expect_success 'pull rebase recursing fails with conflicts' '
 	test_i18ngrep "locally recorded submodule modifications" err
 '
 
+test_expect_success 'branch has no merge base with remote-tracking counterpart' '
+	rm -rf parent child &&
+
+	test_create_repo a-submodule &&
+	test_commit -C a-submodule foo &&
+
+	test_create_repo parent &&
+	git -C parent submodule add "$(pwd)/a-submodule" &&
+	git -C parent commit -m foo &&
+
+	git clone parent child &&
+
+	# Reset master so that it has no merge base with
+	# refs/remotes/origin/master.
+	OTHER=$(git -C child commit-tree -m bar \
+		$(git -C child rev-parse HEAD^{tree})) &&
+	git -C child reset --hard "$OTHER" &&
+
+	git -C child pull --recurse-submodules --rebase
+'
+
 test_done

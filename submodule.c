@@ -1169,8 +1169,10 @@ int submodule_touches_in_range(struct object_id *excl_oid,
 
 	argv_array_push(&args, "--"); /* args[0] program name */
 	argv_array_push(&args, oid_to_hex(incl_oid));
-	argv_array_push(&args, "--not");
-	argv_array_push(&args, oid_to_hex(excl_oid));
+	if (!is_null_oid(excl_oid)) {
+		argv_array_push(&args, "--not");
+		argv_array_push(&args, oid_to_hex(excl_oid));
+	}
 
 	collect_changed_submodules(&subs, &args);
 	ret = subs.nr;

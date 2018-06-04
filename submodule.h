@@ -92,7 +92,10 @@ extern int bad_to_remove_submodule(const char *path, unsigned flags);
 
 int add_submodule_odb(const char *path);
 
-/* Checks if there are submodule changes in a..b. */
+/*
+ * Checks if there are submodule changes in a..b. If a is the null OID,
+ * checks b and all its ancestors instead.
+ */
 extern int submodule_touches_in_range(struct object_id *a,
 				      struct object_id *b);
 extern int find_unpushed_submodules(struct oid_array *commits,
