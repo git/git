@@ -912,8 +912,10 @@ static int parse_branchname_arg(int argc, const char **argv,
 	 *   (b) If <something> is _not_ a commit, either "--" is present
 	 *       or <something> is not a path, no -t or -b was given, and
 	 *       and there is a tracking branch whose name is <something>
-	 *       in one and only one remote, then this is a short-hand to
-	 *       fork local <something> from that remote-tracking branch.
+	 *       in one and only one remote (or if the branch exists on the
+	 *       remote named in checkout.defaultRemote), then this is a
+	 *       short-hand to fork local <something> from that
+	 *       remote-tracking branch.
 	 *
 	 *   (c) Otherwise, if "--" is present, treat it like case (1).
 	 *
@@ -1277,7 +1279,11 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 				 "If you meant to check out a remote tracking branch on, e.g. 'origin',\n"
 				 "you can do so by fully qualifying the name with the --track option:\n"
 				 "\n"
-				 "    git checkout --track origin/<name>"),
+				 "    git checkout --track origin/<name>\n"
+				 "\n"
+				 "If you'd like to always have checkouts of an ambiguous <name> prefer\n"
+				 "one remote, e.g. the 'origin' remote, consider setting\n"
+				 "checkout.defaultRemote=origin in your config."),
 			       argv[0],
 			       dwim_remotes_matched);
 		return ret;
