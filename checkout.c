@@ -7,10 +7,10 @@ struct tracking_name_data {
 	/* const */ char *src_ref;
 	char *dst_ref;
 	struct object_id *dst_oid;
-	int unique;
+	int num_matches;
 };
 
-#define TRACKING_NAME_DATA_INIT { NULL, NULL, NULL, 1 }
+#define TRACKING_NAME_DATA_INIT { NULL, NULL, NULL, 0 }
 
 static int check_tracking_name(struct remote *remote, void *cb_data)
 {
@@ -23,9 +23,9 @@ static int check_tracking_name(struct remote *remote, void *cb_data)
 		free(query.dst);
 		return 0;
 	}
+	cb->num_matches++;
 	if (cb->dst_ref) {
 		free(query.dst);
-		cb->unique = 0;
 		return 0;
 	}
 	cb->dst_ref = query.dst;
@@ -39,7 +39,7 @@ const char *unique_tracking_name(const char *name, struct object_id *oid)
 	cb_data.dst_oid = oid;
 	for_each_remote(check_tracking_name, &cb_data);
 	free(cb_data.src_ref);
-	if (cb_data.unique)
+	if (cb_data.num_matches == 1)
 		return cb_data.dst_ref;
 	free(cb_data.dst_ref);
 	return NULL;
