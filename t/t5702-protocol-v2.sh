@@ -359,6 +359,53 @@ test_expect_success 'default refspec is used to filter ref when fetchcing' '
 	grep "ref-prefix refs/tags/" log
 '
 
+test_expect_success 'fetch supports various ways of have lines' '
+	rm -rf server client trace &&
+	git init server &&
+	test_commit -C server dwim &&
+	TREE=$(git -C server rev-parse HEAD^{tree}) &&
+	git -C server tag exact \
+		$(git -C server commit-tree -m a "$TREE") &&
+	git -C server tag dwim-unwanted \
+		$(git -C server commit-tree -m b "$TREE") &&
+	git -C server tag exact-unwanted \
+		$(git -C server commit-tree -m c "$TREE") &&
+	git -C server tag prefix1 \
+		$(git -C server commit-tree -m d "$TREE") &&
+	git -C server tag prefix2 \
+		$(git -C server commit-tree -m e "$TREE") &&
+	git -C server tag fetch-by-sha1 \
+		$(git -C server commit-tree -m f "$TREE") &&
+	git -C server tag completely-unrelated \
+		$(git -C server commit-tree -m g "$TREE") &&
+
+	git init client &&
+	GIT_TRACE_PACKET="$(pwd)/trace" git -C client -c protocol.version=2 \
+		fetch "file://$(pwd)/server" \
+		dwim \
+		refs/tags/exact \
+		refs/tags/prefix*:refs/tags/prefix* \
+		"$(git -C server rev-parse fetch-by-sha1)" &&
+
+	# Ensure that the appropriate prefixes are sent (using a sample)
+	grep "fetch> ref-prefix dwim" trace &&
+	grep "fetch> ref-prefix refs/heads/dwim" trace &&
+	grep "fetch> ref-prefix refs/tags/prefix" trace &&
+
+	# Ensure that the correct objects are returned
+	git -C client cat-file -e $(git -C server rev-parse dwim) &&
+	git -C client cat-file -e $(git -C server rev-parse exact) &&
+	git -C client cat-file -e $(git -C server rev-parse prefix1) &&
+	git -C client cat-file -e $(git -C server rev-parse prefix2) &&
+	git -C client cat-file -e $(git -C server rev-parse fetch-by-sha1) &&
+	test_must_fail git -C client cat-file -e \
+		$(git -C server rev-parse dwim-unwanted) &&
+	test_must_fail git -C client cat-file -e \
+		$(git -C server rev-parse exact-unwanted) &&
+	test_must_fail git -C client cat-file -e \
+		$(git -C server rev-parse completely-unrelated)
+'
+
 # Test protocol v2 with 'http://' transport
 #
 . "$TEST_DIRECTORY"/lib-httpd.sh
