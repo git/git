@@ -227,7 +227,8 @@ Then install the prerequisites, and `git` for the initial clone:
 
 ```
 sudo apt-get update
-sudo apt-get install git gcc make libssl-dev libcurl4-openssl-dev libexpat-dev tcl tk gettext git-email
+sudo apt-get install git gcc make libssl-dev libcurl4-openssl-dev \
+		     libexpat-dev tcl tk gettext git-email zlib1g-dev
 ```
 
 Then, clone and build:
@@ -274,7 +275,7 @@ In order to build and use `git`, you will need the following libraries via `apt-
 ```
 sudo apt-get update
 sudo apt-get install git gcc make libssl-dev libcurl4-openssl-dev \
-                     libexpat-dev tcl tk gettext git-email
+                     libexpat-dev tcl tk gettext git-email zlib1g-dev
 ```
 
 To get your code from your Windows machine to the Linux VM, it is easiest to push the branch to your fork of Git and clone your fork in the Linux VM.
