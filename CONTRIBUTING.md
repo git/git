@@ -178,6 +178,9 @@ GIT_PERF_LARGE_REPO=/path/to/large/repo
 GIT_PERF_REPEAT_COUNT=10
 ```
 
+When running the performance tests on Linux, you may see a message "Can't locate JSON.pm in
+@INC" and that means you need to run `sudo cpanm install JSON` to get the JSON perl package.
+
 For running performance tests, it can be helpful to set up a few repositories with strange
 data shapes, such as:
 
@@ -227,7 +230,8 @@ Then install the prerequisites, and `git` for the initial clone:
 
 ```
 sudo apt-get update
-sudo apt-get install git gcc make libssl-dev libcurl4-openssl-dev libexpat-dev tcl tk gettext git-email
+sudo apt-get install git gcc make libssl-dev libcurl4-openssl-dev \
+		     libexpat-dev tcl tk gettext git-email zlib1g-dev
 ```
 
 Then, clone and build:
@@ -274,7 +278,7 @@ In order to build and use `git`, you will need the following libraries via `apt-
 ```
 sudo apt-get update
 sudo apt-get install git gcc make libssl-dev libcurl4-openssl-dev \
-                     libexpat-dev tcl tk gettext git-email
+                     libexpat-dev tcl tk gettext git-email zlib1g-dev
 ```
 
 To get your code from your Windows machine to the Linux VM, it is easiest to push the branch to your fork of Git and clone your fork in the Linux VM.
