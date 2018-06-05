@@ -107,8 +107,8 @@ ifndef::git-pull[]
 	specified refspec (can be given more than once) to map the
 	refs to remote-tracking branches, instead of the values of
 	`remote.*.fetch` configuration variables for the remote
-	repository.  See section on "Configured Remote-tracking
-	Branches" for details.
+	repository.  See section on 
+	<<CRTB,CONFIGURED REMOTE-TRACKING BRANCHES>> for details.
 
 -t::
 --tags::
