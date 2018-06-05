@@ -122,12 +122,16 @@ static int parse_refspec(struct refspec_item *item, const char *refspec, int fet
 	return 1;
 }
 
+int refspec_item_init(struct refspec_item *item, const char *refspec, int fetch)
+{
+	memset(item, 0, sizeof(*item));
+	return parse_refspec(item, refspec, fetch);
+}
+
 void refspec_item_init_or_die(struct refspec_item *item, const char *refspec,
 			      int fetch)
 {
-	memset(item, 0, sizeof(*item));
-
-	if (!parse_refspec(item, refspec, fetch))
+	if (!refspec_item_init(item, refspec, fetch))
 		die("Invalid refspec '%s'", refspec);
 }
 
