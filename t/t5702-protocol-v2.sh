@@ -204,6 +204,7 @@ test_expect_success 'ref advertisment is filtered during fetch using protocol v2
 	test_when_finished "rm -f log" &&
 
 	test_commit -C file_parent three &&
+	git -C file_parent branch unwanted-branch three &&
 
 	GIT_TRACE_PACKET="$(pwd)/log" git -C file_child -c protocol.version=2 \
 		fetch origin master &&
@@ -212,9 +213,8 @@ test_expect_success 'ref advertisment is filtered during fetch using protocol v2
 	git -C file_parent log -1 --format=%s >expect &&
 	test_cmp expect actual &&
 
-	! grep "refs/tags/one" log &&
-	! grep "refs/tags/two" log &&
-	! grep "refs/tags/three" log
+	grep "refs/heads/master" log &&
+	! grep "refs/heads/unwanted-branch" log
 '
 
 test_expect_success 'server-options are sent when fetching' '
@@ -404,6 +404,24 @@ test_expect_success 'fetch supports various ways of have lines' '
 		$(git -C server rev-parse exact-unwanted) &&
 	test_must_fail git -C client cat-file -e \
 		$(git -C server rev-parse completely-unrelated)
+'
+
+test_expect_success 'fetch supports include-tag and tag following' '
+	rm -rf server client trace &&
+	git init server &&
+
+	test_commit -C server to_fetch &&
+	git -C server tag -a annotated_tag -m message &&
+
+	git init client &&
+	GIT_TRACE_PACKET="$(pwd)/trace" git -C client -c protocol.version=2 \
+		fetch "$(pwd)/server" to_fetch:to_fetch &&
+
+	grep "fetch> ref-prefix to_fetch" trace &&
+	grep "fetch> ref-prefix refs/tags/" trace &&
+	grep "fetch> include-tag" trace &&
+
+	git -C client cat-file -e $(git -C client rev-parse annotated_tag)
 '
 
 # Test protocol v2 with 'http://' transport
