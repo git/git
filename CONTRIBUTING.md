@@ -178,6 +178,9 @@ GIT_PERF_LARGE_REPO=/path/to/large/repo
 GIT_PERF_REPEAT_COUNT=10
 ```
 
+When running the performance tests on Linux, you may see a message "Can't locate JSON.pm in
+@INC" and that means you need to run `sudo cpanm install JSON` to get the JSON perl package.
+
 For running performance tests, it can be helpful to set up a few repositories with strange
 data shapes, such as:
 
