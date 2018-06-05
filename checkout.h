@@ -8,6 +8,7 @@
  * tracking branch.  Return the name of the remote if such a branch
  * exists, NULL otherwise.
  */
-extern const char *unique_tracking_name(const char *name, struct object_id *oid);
+extern const char *unique_tracking_name(const char *name,
+					struct object_id *oid);
 
 #endif /* CHECKOUT_H */
