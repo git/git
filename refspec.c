@@ -122,7 +122,8 @@ static int parse_refspec(struct refspec_item *item, const char *refspec, int fet
 	return 1;
 }
 
-void refspec_item_init(struct refspec_item *item, const char *refspec, int fetch)
+void refspec_item_init_or_die(struct refspec_item *item, const char *refspec,
+			      int fetch)
 {
 	memset(item, 0, sizeof(*item));
 
@@ -150,7 +151,7 @@ void refspec_append(struct refspec *rs, const char *refspec)
 {
 	struct refspec_item item;
 
-	refspec_item_init(&item, refspec, rs->fetch);
+	refspec_item_init_or_die(&item, refspec, rs->fetch);
 
 	ALLOC_GROW(rs->items, rs->nr + 1, rs->alloc);
 	rs->items[rs->nr++] = item;
