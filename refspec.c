@@ -194,7 +194,7 @@ void refspec_clear(struct refspec *rs)
 int valid_fetch_refspec(const char *fetch_refspec_str)
 {
 	struct refspec_item refspec;
-	int ret = parse_refspec(&refspec, fetch_refspec_str, REFSPEC_FETCH);
+	int ret = refspec_item_init(&refspec, fetch_refspec_str, REFSPEC_FETCH);
 	refspec_item_clear(&refspec);
 	return ret;
 }
