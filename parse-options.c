@@ -427,12 +427,61 @@ void parse_options_start(struct parse_opt_ctx_t *ctx,
 	parse_options_check(options);
 }
 
+static void show_negated_gitcomp(const struct option *opts, int nr_noopts)
+{
+	int printed_dashdash = 0;
+
+	for (; opts->type != OPTION_END; opts++) {
+		int has_unset_form = 0;
+		const char *name;
+
+		if (!opts->long_name)
+			continue;
+		if (opts->flags & (PARSE_OPT_HIDDEN | PARSE_OPT_NOCOMPLETE))
+			continue;
+		if (opts->flags & PARSE_OPT_NONEG)
+			continue;
+
+		switch (opts->type) {
+		case OPTION_STRING:
+		case OPTION_FILENAME:
+		case OPTION_INTEGER:
+		case OPTION_MAGNITUDE:
+		case OPTION_CALLBACK:
+		case OPTION_BIT:
+		case OPTION_NEGBIT:
+		case OPTION_COUNTUP:
+		case OPTION_SET_INT:
+			has_unset_form = 1;
+			break;
+		default:
+			break;
+		}
+		if (!has_unset_form)
+			continue;
+
+		if (skip_prefix(opts->long_name, "no-", &name)) {
+			if (nr_noopts < 0)
+				printf(" --%s", name);
+		} else if (nr_noopts >= 0) {
+			if (nr_noopts && !printed_dashdash) {
+				printf(" --");
+				printed_dashdash = 1;
+			}
+			printf(" --no-%s", opts->long_name);
+			nr_noopts++;
+		}
+	}
+}
+
 static int show_gitcomp(struct parse_opt_ctx_t *ctx,
 			const struct option *opts)
 {
+	const struct option *original_opts = opts;
+	int nr_noopts = 0;
+
 	for (; opts->type != OPTION_END; opts++) {
 		const char *suffix = "";
-		int has_unset_form = 0;
 
 		if (!opts->long_name)
 			continue;
@@ -447,8 +496,6 @@ static int show_gitcomp(struct parse_opt_ctx_t *ctx,
 		case OPTION_INTEGER:
 		case OPTION_MAGNITUDE:
 		case OPTION_CALLBACK:
-			has_unset_form = 1;
-
 			if (opts->flags & PARSE_OPT_NOARG)
 				break;
 			if (opts->flags & PARSE_OPT_OPTARG)
@@ -457,28 +504,17 @@ static int show_gitcomp(struct parse_opt_ctx_t *ctx,
 				break;
 			suffix = "=";
 			break;
-		case OPTION_BIT:
-		case OPTION_NEGBIT:
-		case OPTION_COUNTUP:
-		case OPTION_SET_INT:
-			has_unset_form = 1;
-			break;
 		default:
 			break;
 		}
 		if (opts->flags & PARSE_OPT_COMP_ARG)
 			suffix = "=";
+		if (starts_with(opts->long_name, "no-"))
+			nr_noopts++;
 		printf(" --%s%s", opts->long_name, suffix);
-
-		if (has_unset_form && !(opts->flags & PARSE_OPT_NONEG)) {
-			const char *name;
-
-			if (skip_prefix(opts->long_name, "no-", &name))
-				printf(" --%s", name);
-			else
-				printf(" --no-%s", opts->long_name);
-		}
 	}
+	show_negated_gitcomp(original_opts, -1);
+	show_negated_gitcomp(original_opts, nr_noopts);
 	fputc('\n', stdout);
 	exit(0);
 }

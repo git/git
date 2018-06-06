@@ -459,6 +459,42 @@ test_expect_success '__gitcomp - suffix' '
 	EOF
 '
 
+test_expect_success '__gitcomp - ignore optional negative options' '
+	test_gitcomp "--" "--abc --def --no-one -- --no-two" <<-\EOF
+	--abc Z
+	--def Z
+	--no-one Z
+	--no-... Z
+	EOF
+'
+
+test_expect_success '__gitcomp - ignore/narrow optional negative options' '
+	test_gitcomp "--a" "--abc --abcdef --no-one -- --no-two" <<-\EOF
+	--abc Z
+	--abcdef Z
+	EOF
+'
+
+test_expect_success '__gitcomp - ignore/narrow optional negative options' '
+	test_gitcomp "--n" "--abc --def --no-one -- --no-two" <<-\EOF
+	--no-one Z
+	--no-... Z
+	EOF
+'
+
+test_expect_success '__gitcomp - expand all negative options' '
+	test_gitcomp "--no-" "--abc --def --no-one -- --no-two" <<-\EOF
+	--no-one Z
+	--no-two Z
+	EOF
+'
+
+test_expect_success '__gitcomp - expand/narrow all negative options' '
+	test_gitcomp "--no-o" "--abc --def --no-one -- --no-two" <<-\EOF
+	--no-one Z
+	EOF
+'
+
 test_expect_success '__gitcomp - doesnt fail because of invalid variable name' '
 	__gitcomp "$invalid_variable_name"
 '
@@ -1237,29 +1273,20 @@ test_expect_success 'double dash "git" itself' '
 test_expect_success 'double dash "git checkout"' '
 	test_completion "git checkout --" <<-\EOF
 	--quiet Z
-	--no-quiet Z
 	--detach Z
-	--no-detach Z
 	--track Z
-	--no-track Z
 	--orphan=Z
-	--no-orphan Z
 	--ours Z
 	--theirs Z
 	--merge Z
-	--no-merge Z
 	--conflict=Z
-	--no-conflict Z
 	--patch Z
-	--no-patch Z
 	--ignore-skip-worktree-bits Z
-	--no-ignore-skip-worktree-bits Z
 	--ignore-other-worktrees Z
-	--no-ignore-other-worktrees Z
 	--recurse-submodules Z
-	--no-recurse-submodules Z
 	--progress Z
-	--no-progress Z
+	--no-quiet Z
+	--no-... Z
 	EOF
 '
 
