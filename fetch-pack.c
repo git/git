@@ -734,12 +734,20 @@ static int add_loose_objects_to_set(const struct object_id *oid,
 	return 0;
 }
 
-static int everything_local(struct fetch_pack_args *args,
-			    struct ref **refs,
-			    struct ref **sought, int nr_sought)
+/*
+ * Mark recent commits available locally and reachable from a local ref as
+ * COMPLETE. If args->no_dependents is false, also mark COMPLETE remote refs as
+ * COMMON_REF (otherwise, we are not planning to participate in negotiation, and
+ * thus do not need COMMON_REF marks).
+ *
+ * The cutoff time for recency is determined by this heuristic: it is the
+ * earliest commit time of the objects in refs that are commits and that we know
+ * the commit time of.
+ */
+static void mark_complete_and_common_ref(struct fetch_pack_args *args,
+					 struct ref **refs)
 {
 	struct ref *ref;
-	int retval;
 	int old_save_commit_buffer = save_commit_buffer;
 	timestamp_t cutoff = 0;
 	struct oidset loose_oid_set = OIDSET_INIT;
@@ -812,7 +820,18 @@ static int everything_local(struct fetch_pack_args *args,
 		}
 	}
 
-	filter_refs(args, refs, sought, nr_sought);
+	save_commit_buffer = old_save_commit_buffer;
+}
+
+/*
+ * Returns 1 if every object pointed to by the given remote refs is available
+ * locally and reachable from a local ref, and 0 otherwise.
+ */
+static int everything_local(struct fetch_pack_args *args,
+			    struct ref **refs)
+{
+	struct ref *ref;
+	int retval;
 
 	for (retval = 1, ref = *refs; ref ; ref = ref->next) {
 		const struct object_id *remote = &ref->old_oid;
@@ -828,8 +847,6 @@ static int everything_local(struct fetch_pack_args *args,
 		print_verbose(args, _("already have %s (%s)"), oid_to_hex(remote),
 			      ref->name);
 	}
-
-	save_commit_buffer = old_save_commit_buffer;
 
 	return retval;
 }
@@ -1053,7 +1070,9 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 	if (!server_supports("deepen-relative") && args->deepen_relative)
 		die(_("Server does not support --deepen"));
 
-	if (everything_local(args, &ref, sought, nr_sought)) {
+	mark_complete_and_common_ref(args, &ref);
+	filter_refs(args, &ref, sought, nr_sought);
+	if (everything_local(args, &ref)) {
 		packet_flush(fd[1]);
 		goto all_done;
 	}
@@ -1377,7 +1396,9 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 			for_each_cached_alternate(insert_one_alternate_object);
 
 			/* Filter 'ref' by 'sought' and those that aren't local */
-			if (everything_local(args, &ref, sought, nr_sought))
+			mark_complete_and_common_ref(args, &ref);
+			filter_refs(args, &ref, sought, nr_sought);
+			if (everything_local(args, &ref))
 				state = FETCH_DONE;
 			else
 				state = FETCH_SEND_REQUEST;
