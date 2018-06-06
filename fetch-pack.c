@@ -336,9 +336,6 @@ static int find_common(struct fetch_pack_args *args,
 
 	if (args->stateless_rpc && multi_ack == 1)
 		die(_("--stateless-rpc requires multi_ack_detailed"));
-	if (marked)
-		for_each_ref(clear_marks, NULL);
-	marked = 1;
 
 	for_each_ref(rev_list_insert_ref_oid, NULL);
 	for_each_cached_alternate(insert_one_alternate_object);
@@ -1070,6 +1067,9 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 	if (!server_supports("deepen-relative") && args->deepen_relative)
 		die(_("Server does not support --deepen"));
 
+	if (marked)
+		for_each_ref(clear_marks, NULL);
+	marked = 1;
 	mark_complete_and_common_ref(args, &ref);
 	filter_refs(args, &ref, sought, nr_sought);
 	if (everything_local(args, &ref)) {
