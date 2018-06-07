@@ -521,6 +521,7 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 				if (max_count >= 0 && max_count < commit_count)
 					commit_count = max_count;
 				printf("%d\n", commit_count);
+				free_bitmap_index(bitmap_git);
 				return 0;
 			}
 		} else if (revs.max_count < 0 &&
@@ -528,6 +529,7 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 			struct bitmap_index *bitmap_git;
 			if ((bitmap_git = prepare_bitmap_walk(&revs))) {
 				traverse_bitmap_commit_list(bitmap_git, &show_object_fast);
+				free_bitmap_index(bitmap_git);
 				return 0;
 			}
 		}

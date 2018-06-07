@@ -66,7 +66,7 @@ struct bitmap_index {
 	/* Number of bitmapped commits */
 	uint32_t entry_count;
 
-	/* Name-hash cache (or NULL if not present). */
+	/* If not NULL, this is a name-hash cache pointing into map. */
 	uint32_t *hashes;
 
 	/*
@@ -350,6 +350,7 @@ struct bitmap_index *prepare_bitmap_git(void)
 	if (!open_pack_bitmap(bitmap_git) && !load_pack_bitmap(bitmap_git))
 		return bitmap_git;
 
+	free_bitmap_index(bitmap_git);
 	return NULL;
 }
 
@@ -690,7 +691,7 @@ struct bitmap_index *prepare_bitmap_walk(struct rev_info *revs)
 	/* try to open a bitmapped pack, but don't parse it yet
 	 * because we may not need to use it */
 	if (open_pack_bitmap(bitmap_git) < 0)
-		return NULL;
+		goto cleanup;
 
 	for (i = 0; i < revs->pending.nr; ++i) {
 		struct object *object = revs->pending.objects[i].item;
@@ -723,11 +724,11 @@ struct bitmap_index *prepare_bitmap_walk(struct rev_info *revs)
 	 * optimize here
 	 */
 	if (haves && !in_bitmapped_pack(bitmap_git, haves))
-		return NULL;
+		goto cleanup;
 
 	/* if we don't want anything, we're done here */
 	if (!wants)
-		return NULL;
+		goto cleanup;
 
 	/*
 	 * now we're going to use bitmaps, so load the actual bitmap entries
@@ -735,7 +736,7 @@ struct bitmap_index *prepare_bitmap_walk(struct rev_info *revs)
 	 * becomes invalidated and we must perform the revwalk through bitmaps
 	 */
 	if (!bitmap_git->loaded && load_pack_bitmap(bitmap_git) < 0)
-		return NULL;
+		goto cleanup;
 
 	object_array_clear(&revs->pending);
 
@@ -761,6 +762,10 @@ struct bitmap_index *prepare_bitmap_walk(struct rev_info *revs)
 
 	bitmap_free(haves_bitmap);
 	return bitmap_git;
+
+cleanup:
+	free_bitmap_index(bitmap_git);
+	return NULL;
 }
 
 int reuse_partial_packfile_from_bitmap(struct bitmap_index *bitmap_git,
@@ -1001,7 +1006,7 @@ void test_bitmap_walk(struct rev_info *revs)
 	else
 		fprintf(stderr, "Mismatch!\n");
 
-	bitmap_free(result);
+	free_bitmap_index(bitmap_git);
 }
 
 static int rebuild_bitmap(uint32_t *reposition,
@@ -1092,4 +1097,22 @@ int rebuild_existing_bitmaps(struct bitmap_index *bitmap_git,
 	free(reposition);
 	bitmap_free(rebuild);
 	return 0;
+}
+
+void free_bitmap_index(struct bitmap_index *b)
+{
+	if (!b)
+		return;
+
+	if (b->map)
+		munmap(b->map, b->map_size);
+	ewah_pool_free(b->commits);
+	ewah_pool_free(b->trees);
+	ewah_pool_free(b->blobs);
+	ewah_pool_free(b->tags);
+	kh_destroy_sha1(b->bitmaps);
+	free(b->ext_index.objects);
+	free(b->ext_index.hashes);
+	bitmap_free(b->result);
+	free(b);
 }
