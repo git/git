@@ -18,6 +18,7 @@ static struct test_cmd cmds[] = {
 	{ "bitmap", cmd__bitmap },
 	{ "bloom", cmd__bloom },
 	{ "chmtime", cmd__chmtime },
+	{ "cmp", cmd__cmp },
 	{ "config", cmd__config },
 	{ "crontab", cmd__crontab },
 	{ "ctype", cmd__ctype },
