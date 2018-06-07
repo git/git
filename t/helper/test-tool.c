@@ -16,6 +16,7 @@ static struct test_cmd cmds[] = {
 	{ "bundle-uri", cmd__bundle_uri },
 	{ "cache-tree", cmd__cache_tree },
 	{ "chmtime", cmd__chmtime },
+	{ "cmp", cmd__cmp },
 	{ "config", cmd__config },
 	{ "crontab", cmd__crontab },
 	{ "csprng", cmd__csprng },
