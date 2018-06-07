@@ -1,0 +1,105 @@
+name: Bug report
+description: Use this template to report bugs.
+body:
+  - type: checkboxes
+    id: search
+    attributes:
+      label: Existing issues matching what you're seeing
+      description: Please search for [open](https://github.com/git-for-windows/git/issues?q=is%3Aopen) or [closed](https://github.com/git-for-windows/git/issues?q=is%3Aclosed) issue matching what you're seeing before submitting a new issue.
+      options:
+        - label: I was not able to find an open or closed issue matching what I'm seeing
+  - type: textarea
+    id: git-for-windows-version
+    attributes:
+      label: Git for Windows version
+      description: Which version of Git for Windows are you using?
+      placeholder: Please insert the output of `git --version --build-options` here
+      render: shell
+    validations:
+      required: true
+  - type: dropdown
+    id: windows-version
+    attributes:
+      label: Windows version
+      description: Which version of Windows are you running?
+      options:
+        - Windows 8.1
+        - Windows 10
+        - Windows 11
+        - Other
+      default: 2
+    validations:
+      required: true
+  - type: dropdown
+    id: windows-arch
+    attributes:
+      label: Windows CPU architecture
+      description: What CPU Archtitecture does your Windows target?
+      options:
+        - i686 (32-bit)
+        - x86_64 (64-bit)
+        - ARM64
+      default: 1
+    validations:
+      required: true
+  - type: textarea
+    id: windows-version-cmd
+    attributes:
+      label: Additional Windows version information
+      description: This provides us with further information about your Windows such as the build number
+      placeholder: Please insert the output of `cmd.exe /c ver` here
+      render: shell
+  - type: textarea
+    id: options
+    attributes:
+      label: Options set during installation
+      description: What options did you set as part of the installation? Or did you choose the defaults?
+      placeholder: |
+        One of the following:
+        > type "C:\Program Files\Git\etc\install-options.txt"
+        > type "C:\Program Files (x86)\Git\etc\install-options.txt"
+        > type "%USERPROFILE%\AppData\Local\Programs\Git\etc\install-options.txt"
+        > type "$env:USERPROFILE\AppData\Local\Programs\Git\etc\install-options.txt"
+        $ cat /etc/install-options.txt
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: other-things
+    attributes:
+      label: Other interesting things
+      description: Any other interesting things about your environment that might be related to the issue you're seeing?
+  - type: input
+    id: terminal
+    attributes:
+      label: Terminal/shell
+      description: Which terminal/shell are you running Git from? e.g Bash/CMD/PowerShell/other
+    validations:
+      required: true
+  - type: textarea
+    id: commands
+    attributes:
+      label: Commands that trigger the issue
+      description: What commands did you run to trigger this issue? If you can provide a [Minimal, Complete, and Verifiable example](http://stackoverflow.com/help/mcve) this will help us understand the issue.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: expected-behaviour
+    attributes:
+      label: Expected behaviour
+      description: What did you expect to occur after running these commands?
+    validations:
+      required: true
+  - type: textarea
+    id: actual-behaviour
+    attributes:
+      label: Actual behaviour
+      description: What actually happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: repository
+    attributes:
+      label: Repository
+      description: If the problem was occurring with a specific repository, can you provide the URL to that repository to help us with testing?
