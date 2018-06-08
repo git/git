@@ -2,6 +2,8 @@
 #include "win32.h"
 #include <conio.h>
 #include <wchar.h>
+#include <aclapi.h>
+#include <sddl.h>
 #include "../strbuf.h"
 #include "../run-command.h"
 #include "../cache.h"
@@ -2570,4 +2572,121 @@ int uname(struct utsname *buf)
 	xsnprintf(buf->version, sizeof(buf->version),
 		  "%u", (v >> 16) & 0x7fff);
 	return 0;
+}
+
+/*
+ * Verify that the file in question is owned by an administrator or system
+ * account, or at least by the current user.
+ *
+ * This function returns 1 if successful, 0 if the file is not owned by any of
+ * these, or -1 on error.
+ */
+static int validate_system_file_ownership(const char *path)
+{
+	WCHAR wpath[MAX_PATH];
+	PSID owner_sid = NULL;
+	PSECURITY_DESCRIPTOR descriptor = NULL;
+	HANDLE token;
+	TOKEN_USER* info = NULL;
+	DWORD err, len;
+	int ret;
+
+	if (xutftowcs_path(wpath, path) < 0)
+		return -1;
+
+	err = GetNamedSecurityInfoW(wpath, SE_FILE_OBJECT,
+				    OWNER_SECURITY_INFORMATION |
+				    DACL_SECURITY_INFORMATION,
+				    &owner_sid, NULL, NULL, NULL, &descriptor);
+
+	/* if the file does not exist, it does not have a valid owner */
+	if (err == ERROR_FILE_NOT_FOUND || err == ERROR_PATH_NOT_FOUND) {
+		ret = 0;
+		owner_sid = NULL;
+		goto finish_validation;
+	}
+
+	if (err != ERROR_SUCCESS) {
+		ret = error(_("failed to validate '%s' (%ld)"), path, err);
+		owner_sid = NULL;
+		goto finish_validation;
+	}
+
+	if (!IsValidSid(owner_sid)) {
+		ret = error(_("invalid owner: '%s'"), path);
+		goto finish_validation;
+	}
+
+	if (IsWellKnownSid(owner_sid, WinBuiltinAdministratorsSid) ||
+	    IsWellKnownSid(owner_sid, WinLocalSystemSid)) {
+		ret = 1;
+		goto finish_validation;
+	}
+
+	/* Obtain current user's SID */
+	if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token) &&
+	    !GetTokenInformation(token, TokenUser, NULL, 0, &len)) {
+		info = xmalloc((size_t)len);
+		if (!GetTokenInformation(token, TokenUser, info, len, &len))
+			FREE_AND_NULL(info);
+	}
+
+	if (!info)
+		ret = 0;
+	else {
+		ret = EqualSid(owner_sid, info->User.Sid) ? 1 : 0;
+		free(info);
+	}
+
+finish_validation:
+	if (!ret && owner_sid) {
+#define MAX_NAME_OR_DOMAIN 256
+		wchar_t owner_name[MAX_NAME_OR_DOMAIN];
+		wchar_t owner_domain[MAX_NAME_OR_DOMAIN];
+		wchar_t *p = NULL;
+		DWORD size = MAX_NAME_OR_DOMAIN;
+		SID_NAME_USE type;
+		char name[3 * MAX_NAME_OR_DOMAIN + 1];
+
+		if (!LookupAccountSidW(NULL, owner_sid, owner_name, &size,
+				       owner_domain, &size, &type) ||
+		    xwcstoutf(name, owner_name, ARRAY_SIZE(name)) < 0) {
+			if (!ConvertSidToStringSidW(owner_sid, &p))
+				strlcpy(name, "(unknown)", ARRAY_SIZE(name));
+			else {
+				if (xwcstoutf(name, p, ARRAY_SIZE(name)) < 0)
+					strlcpy(name, "(some user)",
+						ARRAY_SIZE(name));
+				LocalFree(p);
+			}
+		}
+
+		warning(_("'%s' has a dubious owner: '%s'.\n"
+			  "For security reasons, it is therefore ignored.\n"
+			  "To fix this, please transfer ownership to an "
+			  "admininstrator."),
+			path, name);
+	}
+
+	if (descriptor)
+		LocalFree(descriptor);
+
+	return ret;
+}
+
+const char *program_data_config(void)
+{
+	static struct strbuf path = STRBUF_INIT;
+	static unsigned initialized;
+
+	if (!initialized) {
+		const char *env = mingw_getenv("PROGRAMDATA");
+		if (env) {
+			strbuf_addf(&path, "%s/Git/config", env);
+			if (validate_system_file_ownership(path.buf) != 1)
+				strbuf_setlen(&path, 0);
+		}
+		initialized = 1;
+	}
+	return *path.buf ? path.buf : NULL;
 }
