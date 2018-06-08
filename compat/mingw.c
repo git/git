@@ -1074,11 +1074,19 @@ unsigned int sleep (unsigned int seconds)
 char *mingw_mktemp(char *template)
 {
 	wchar_t wtemplate[MAX_PATH];
+	int offset = 0;
+
 	if (xutftowcs_path(wtemplate, template) < 0)
 		return NULL;
+
+	if (is_dir_sep(template[0]) && !is_dir_sep(template[1]) &&
+	    iswalpha(wtemplate[0]) && wtemplate[1] == L':') {
+		/* We have an absolute path missing the drive prefix */
+		offset = 2;
+	}
 	if (!_wmktemp(wtemplate))
 		return NULL;
-	if (xwcstoutf(template, wtemplate, strlen(template) + 1) < 0)
+	if (xwcstoutf(template, wtemplate + offset, strlen(template) + 1) < 0)
 		return NULL;
 	return template;
 }
