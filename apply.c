@@ -4320,7 +4320,7 @@ static int add_index_file(struct apply_state *state,
 						     "created file '%s'"),
 						   path);
 			}
-			fill_stat_cache_info(ce, &st);
+			fill_stat_cache_info(state->repo->index, ce, &st);
 		}
 		if (write_object_file(buf, size, blob_type, &ce->oid) < 0) {
 			discard_cache_entry(ce);
