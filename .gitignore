@@ -1,6 +1,7 @@
 /GIT-BUILD-OPTIONS
 /GIT-CFLAGS
 /GIT-LDFLAGS
+/GIT-MSVC-GEN
 /GIT-PREFIX
 /GIT-PERL-DEFINES
 /GIT-PERL-HEADER
@@ -222,5 +223,7 @@
 *.user
 *.idb
 *.pdb
+*.ilk
+.vs/
 /Debug/
 /Release/

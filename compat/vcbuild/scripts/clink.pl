@@ -12,18 +12,22 @@
 use strict;
 my @args = ();
 my @cflags = ();
+my @lflags = ();
 my $is_linking = 0;
 while (@ARGV) {
 	my $arg = shift @ARGV;
-	if ("$arg" =~ /^-[DIMGO]/) {
+	if ("$arg" =~ /^-[DIMGOZ]/) {
 		push(@cflags, $arg);
 	} elsif ("$arg" eq "-o") {
 		my $file_out = shift @ARGV;
 		if ("$file_out" =~ /exe$/) {
 			$is_linking = 1;
+			# Create foo.exe and foo.pdb
 			push(@args, "-OUT:$file_out");
 		} else {
+			# Create foo.o and foo.o.pdb
 			push(@args, "-Fo$file_out");
+			push(@args, "-Fd$file_out.pdb");
 		}
 	} elsif ("$arg" eq "-lz") {
 		push(@args, "zlib.lib");
@@ -35,9 +39,11 @@ while (@ARGV) {
 		push(@args, "ssleay32.lib");
 	} elsif ("$arg" eq "-lcurl") {
 		push(@args, "libcurl.lib");
+	} elsif ("$arg" eq "-lexpat") {
+		push(@args, "libexpat.lib");
 	} elsif ("$arg" =~ /^-L/ && "$arg" ne "-LTCG") {
 		$arg =~ s/^-L/-LIBPATH:/;
-		push(@args, $arg);
+		push(@lflags, $arg);
 	} elsif ("$arg" =~ /^-R/) {
 		# eat
 	} else {
@@ -45,10 +51,11 @@ while (@ARGV) {
 	}
 }
 if ($is_linking) {
+	push(@args, @lflags);
 	unshift(@args, "link.exe");
 } else {
 	unshift(@args, "cl.exe");
 	push(@args, @cflags);
 }
-#printf("**** @args\n");
+printf(STDERR "**** @args\n\n\n") if (!defined($ENV{'QUIET_GEN'}));
 exit (system(@args) != 0);
