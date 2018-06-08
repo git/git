@@ -12,16 +12,21 @@ if {$use_ttk} {
 	set NS ttk
 }
 
+set title "Question?"
 if {$argc < 1} {
 	puts stderr "Usage: $argv0 <question>"
 	exit 1
 } else {
+	if {$argc > 2 && [lindex $argv 0] == "--title"} {
+		set title [lindex $argv 1]
+		set argv [lreplace $argv 0 1]
+	}
 	set prompt [join $argv " "]
 }
 
 ${NS}::frame .t
-${NS}::label .t.m -text $prompt -justify center -width 40
-.t.m configure -wraplength 400
+${NS}::label .t.m -text $prompt -justify center -width 400px
+.t.m configure -wraplength 400px
 pack .t.m -side top -fill x -padx 20 -pady 20 -expand 1
 pack .t -side top -fill x -ipadx 20 -ipady 20 -expand 1
 
@@ -47,5 +52,17 @@ proc yes {} {
 	exit 0
 }
 
-wm title . "Question?"
+if {$::tcl_platform(platform) eq {windows}} {
+	set icopath [file dirname [file normalize $argv0]]
+	if {[file tail $icopath] eq {git-core}} {
+		set icopath [file dirname $icopath]
+	}
+	set icopath [file dirname $icopath]
+	set icopath [file join $icopath share git git-for-windows.ico]
+	if {[file exists $icopath]} {
+		wm iconbitmap . -default $icopath
+	}
+}
+
+wm title . $title
 tk::PlaceWindow .
