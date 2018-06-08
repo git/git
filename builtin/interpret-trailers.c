@@ -10,6 +10,7 @@
 #include "parse-options.h"
 #include "string-list.h"
 #include "trailer.h"
+#include "config.h"
 
 static const char * const git_interpret_trailers_usage[] = {
 	N_("git interpret-trailers [--in-place] [--trim-empty] [(--trailer <token>[(=|:)<value>])...] [<file>...]"),
@@ -112,6 +113,7 @@ int cmd_interpret_trailers(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
+	git_config(git_default_config, NULL);
 	argc = parse_options(argc, argv, prefix, options,
 			     git_interpret_trailers_usage, 0);
 
