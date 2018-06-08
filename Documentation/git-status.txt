@@ -149,6 +149,13 @@ ignored, then the directory is not shown, but all contents are shown.
 	threshold.
 	See also linkgit:git-diff[1] `--find-renames`.
 
+--no-lock-index::
+--lock-index::
+	(DEPRECATED: use --no-optional-locks instead)
+	Specifies whether `git status` should try to lock the index and
+	update it afterwards if any changes were detected. Defaults to
+	`--lock-index`.
+
 <pathspec>...::
 	See the 'pathspec' entry in linkgit:gitglossary[7].
 
