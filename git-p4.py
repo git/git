@@ -1368,7 +1368,7 @@ class P4Submit(Command, P4UserMap):
         self.shelve = False
         self.update_shelve = list()
         self.commit = ""
-        self.disable_rebase = False
+        self.disable_rebase = gitConfigBool("git-p4.disableRebase")
         self.prepare_p4_only = False
         self.conflict_behavior = None
         self.isWindows = (platform.system() == "Windows")
