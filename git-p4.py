@@ -561,10 +561,30 @@ def isModeExec(mode):
     # otherwise False.
     return mode[-3:] == "755"
 
+class P4Exception(Exception):
+    """ Base class for exceptions from the p4 client """
+    def __init__(self, exit_code):
+        self.p4ExitCode = exit_code
+
+class P4ServerException(P4Exception):
+    """ Base class for exceptions where we get some kind of marshalled up result from the server """
+    def __init__(self, exit_code, p4_result):
+        super(P4ServerException, self).__init__(exit_code)
+        self.p4_result = p4_result
+        self.code = p4_result[0]['code']
+        self.data = p4_result[0]['data']
+
+class P4RequestSizeException(P4ServerException):
+    """ One of the maxresults or maxscanrows errors """
+    def __init__(self, exit_code, p4_result, limit):
+        super(P4RequestSizeException, self).__init__(exit_code, p4_result)
+        self.limit = limit
+
 def isModeExecChanged(src_mode, dst_mode):
     return isModeExec(src_mode) != isModeExec(dst_mode)
 
-def p4CmdList(cmd, stdin=None, stdin_mode='w+b', cb=None, skip_info=False):
+def p4CmdList(cmd, stdin=None, stdin_mode='w+b', cb=None, skip_info=False,
+        errors_as_exceptions=False):
 
     if isinstance(cmd,basestring):
         cmd = "-G " + cmd
@@ -611,9 +631,25 @@ def p4CmdList(cmd, stdin=None, stdin_mode='w+b', cb=None, skip_info=False):
         pass
     exitCode = p4.wait()
     if exitCode != 0:
-        entry = {}
-        entry["p4ExitCode"] = exitCode
-        result.append(entry)
+        if errors_as_exceptions:
+            if len(result) > 0:
+                data = result[0].get('data')
+                if data:
+                    m = re.search('Too many rows scanned \(over (\d+)\)', data)
+                    if not m:
+                        m = re.search('Request too large \(over (\d+)\)', data)
+
+                    if m:
+                        limit = int(m.group(1))
+                        raise P4RequestSizeException(exitCode, result, limit)
+
+                raise P4ServerException(exitCode, result)
+            else:
+                raise P4Exception(exitCode)
+        else:
+            entry = {}
+            entry["p4ExitCode"] = exitCode
+            result.append(entry)
 
     return result
 
