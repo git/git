@@ -948,7 +948,7 @@ def p4ChangesForPaths(depotPaths, changeRange, requestedBlockSize):
         try:
             (changeStart, changeEnd) = p4ParseNumericChangeRange(parts)
             block_size = chooseBlockSize(requestedBlockSize)
-        except:
+        except ValueError:
             changeStart = parts[0][1:]
             changeEnd = parts[1]
             if requestedBlockSize:
