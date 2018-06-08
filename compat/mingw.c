@@ -3315,6 +3315,7 @@ int msc_startup(int argc, wchar_t **w_argv, wchar_t **w_env)
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #endif
 
+	fsync_object_files = 1;
 	maybe_redirect_std_handles();
 	adjust_symlink_flags();
 
@@ -3382,6 +3383,7 @@ void mingw_startup(void)
 	wchar_t **wenv, **wargv;
 	_startupinfo si;
 
+	fsync_object_files = 1;
 	maybe_redirect_std_handles();
 	adjust_symlink_flags();
 
