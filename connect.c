@@ -915,6 +915,10 @@ static enum protocol parse_connect_url(const char *url_orig, char **ret_host,
 
 	if (protocol == PROTO_LOCAL)
 		path = end;
+	else if (protocol == PROTO_FILE && *host != '/' &&
+		 !has_dos_drive_prefix(host) &&
+		 offset_1st_component(host - 2) > 1)
+		path = host - 2; /* include the leading "//" */
 	else if (protocol == PROTO_FILE && has_dos_drive_prefix(end))
 		path = end; /* "file://$(pwd)" may be "file://C:/projects/repo" */
 	else
