@@ -403,7 +403,7 @@ test_expect_success 'all statuses changed in folder if . is given' '
 '
 
 test_expect_success MINGW 'path is case-insensitive' '
-	path="$(pwd -W)/BLUB" &&
+	path="$(pwd)/BLUB" &&
 	touch "$path" &&
 	downcased="$(echo "$path" | tr A-Z a-z)" &&
 	git add "$downcased"
