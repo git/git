@@ -667,6 +667,7 @@ static void mark_complete_and_common_ref(struct fetch_negotiator *negotiator,
 
 	save_commit_buffer = 0;
 
+	enable_fscache(1);
 	for (ref = *refs; ref; ref = ref->next) {
 		struct object *o;
 
@@ -687,6 +688,7 @@ static void mark_complete_and_common_ref(struct fetch_negotiator *negotiator,
 				cutoff = commit->date;
 		}
 	}
+	enable_fscache(0);
 
 	if (!args->deepen) {
 		for_each_ref(mark_complete_oid, NULL);
