@@ -1010,4 +1010,15 @@ test_expect_success GPG,RUST 'export and import of doubly signed commit' '
 	fi
 '
 
+test_expect_failure 'refs are updated even if no commits need to be exported' '
+	cat > expected <<-EOF &&
+	reset refs/heads/main
+	from $(git rev-parse main)
+
+	EOF
+
+	git fast-export main..main > actual &&
+	test_cmp expected actual
+'
+
 test_done
