@@ -77,17 +77,26 @@ static void restore_term(void)
 	hconin = INVALID_HANDLE_VALUE;
 }
 
-static int disable_echo(void)
+static int set_echo(int echo)
 {
-	hconin = CreateFile("CONIN$", GENERIC_READ | GENERIC_WRITE,
-	    FILE_SHARE_READ, NULL, OPEN_EXISTING,
-	    FILE_ATTRIBUTE_NORMAL, NULL);
+	DWORD new_cmode;
+
+	if (hconin == INVALID_HANDLE_VALUE)
+		hconin = CreateFile("CONIN$", GENERIC_READ | GENERIC_WRITE,
+				    FILE_SHARE_READ, NULL, OPEN_EXISTING,
+				    FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hconin == INVALID_HANDLE_VALUE)
 		return -1;
 
 	GetConsoleMode(hconin, &cmode);
+	new_cmode = cmode | ENABLE_LINE_INPUT;
+	if (echo)
+		new_cmode |= ENABLE_ECHO_INPUT;
+	else
+		new_cmode &= ~ENABLE_ECHO_INPUT;
+
 	sigchain_push_common(restore_term_on_signal);
-	if (!SetConsoleMode(hconin, cmode & (~ENABLE_ECHO_INPUT))) {
+	if (!SetConsoleMode(hconin, new_cmode)) {
 		CloseHandle(hconin);
 		hconin = INVALID_HANDLE_VALUE;
 		return -1;
@@ -96,13 +105,20 @@ static int disable_echo(void)
 	return 0;
 }
 
+static int disable_echo(void)
+{
+	return set_echo(0);
+}
+
 static char *shell_prompt(const char *prompt, int echo)
 {
 	const char *read_input[] = {
 		/* Note: call 'bash' explicitly, as 'read -s' is bash-specific */
 		"bash", "-c", echo ?
-		"cat >/dev/tty && read -r line </dev/tty && echo \"$line\"" :
-		"cat >/dev/tty && read -r -s line </dev/tty && echo \"$line\" && echo >/dev/tty",
+		"test \"a$SHELL\" != \"a${SHELL%.exe}\" || exit 127; cat >/dev/tty &&"
+		" read -r line </dev/tty && echo \"$line\"" :
+		"test \"a$SHELL\" != \"a${SHELL%.exe}\" || exit 127; cat >/dev/tty &&"
+		" read -r -s line </dev/tty && echo \"$line\" && echo >/dev/tty",
 		NULL
 	};
 	struct child_process child = CHILD_PROCESS_INIT;
@@ -138,7 +154,10 @@ ret:
 	close(child.out);
 	code = finish_command(&child);
 	if (code) {
-		error("failed to execute prompt script (exit code %d)", code);
+		if (code != 127)
+			error("failed to execute prompt script (exit code %d)",
+			      code);
+
 		return NULL;
 	}
 
@@ -161,9 +180,11 @@ char *git_terminal_prompt(const char *prompt, int echo)
 
 	/* try shell_prompt first, fall back to CONIN/OUT if bash is missing */
 	char *result = shell_prompt(prompt, echo);
-	if (result || errno != ENOENT)
+	if (result)
 		return result;
 
+	if (echo && set_echo(1))
+		return NULL;
 #endif
 
 	input_fh = fopen(INPUT_PATH, "r" FORCE_TEXT);
