@@ -859,6 +859,7 @@ integration_tests = [
   't7105-reset-patch.sh',
   't7106-reset-unborn-branch.sh',
   't7107-reset-pathspec-file.sh',
+  't7108-reset-stdin.sh',
   't7110-reset-merge.sh',
   't7111-reset-table.sh',
   't7112-reset-submodule.sh',
