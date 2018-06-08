@@ -1475,6 +1475,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 {
 	static int no_renames = -1;
 	static const char *rename_score_arg = (const char *)-1;
+	static int no_lock_index = 0;
 	static struct wt_status s;
 	unsigned int progress_flag = 0;
 	int fd;
@@ -1513,6 +1514,9 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 		OPT_CALLBACK_F('M', "find-renames", &rename_score_arg,
 		  N_("n"), N_("detect renames, optionally set similarity index"),
 		  PARSE_OPT_OPTARG | PARSE_OPT_NONEG, opt_parse_rename_score),
+		OPT_BOOL(0, "no-lock-index", &no_lock_index,
+			 N_("(DEPRECATED: use `git --no-optional-locks status` "
+			    "instead) Do not lock the index")),
 		OPT_END(),
 	};
 
@@ -1528,6 +1532,12 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 			     builtin_status_usage, 0);
 	finalize_colopts(&s.colopts, -1);
 	finalize_deferred_config(&s);
+
+	if (no_lock_index) {
+		warning("--no-lock-index is deprecated, use --no-optional-locks"
+			" instead");
+		setenv(GIT_OPTIONAL_LOCKS_ENVIRONMENT, "false", 1);
+	}
 
 	handle_untracked_files_arg(&s);
 	handle_ignored_arg(&s);
