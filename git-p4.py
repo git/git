@@ -47,8 +47,8 @@ verbose = False
 # Only labels/tags matching this will be imported/exported
 defaultLabelRegexp = r'[a-zA-Z0-9_\-.]+$'
 
-# Grab changes in blocks of this many revisions, unless otherwise requested
-defaultBlockSize = 512
+# The block size is reduced automatically if required
+defaultBlockSize = 1<<20
 
 p4_access_checked = False
 
@@ -958,7 +958,8 @@ def p4ChangesForPaths(depotPaths, changeRange, requestedBlockSize):
     changes = set()
 
     # Retrieve changes a block at a time, to prevent running
-    # into a MaxResults/MaxScanRows error from the server.
+    # into a MaxResults/MaxScanRows error from the server. If
+    # we _do_ hit one of those errors, turn down the block size
 
     while True:
         cmd = ['changes']
@@ -972,10 +973,24 @@ def p4ChangesForPaths(depotPaths, changeRange, requestedBlockSize):
         for p in depotPaths:
             cmd += ["%s...@%s" % (p, revisionRange)]
 
+        # fetch the changes
+        try:
+            result = p4CmdList(cmd, errors_as_exceptions=True)
+        except P4RequestSizeException as e:
+            if not block_size:
+                block_size = e.limit
+            elif block_size > e.limit:
+                block_size = e.limit
+            else:
+                block_size = max(2, block_size // 2)
+
+            if verbose: print("block size error, retrying with block size {0}".format(block_size))
+            continue
+        except P4Exception as e:
+            die('Error retrieving changes description ({0})'.format(e.p4ExitCode))
+
         # Insert changes in chronological order
-        for entry in reversed(p4CmdList(cmd)):
-            if entry.has_key('p4ExitCode'):
-                die('Error retrieving changes descriptions ({})'.format(entry['p4ExitCode']))
+        for entry in reversed(result):
             if not entry.has_key('change'):
                 continue
             changes.add(int(entry['change']))
