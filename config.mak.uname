@@ -15,6 +15,12 @@ ifdef MSVC
 	# avoid the MingW and Cygwin configuration sections
 	uname_S := Windows
 	uname_O := Windows
+
+	# Generate and include makefile variables that point to the
+	# currently installed set of MSVC command line tools.
+GIT-MSVC-GEN: ./compat/vcbuild/find_vs_env.bat
+	@./compat/vcbuild/find_vs_env.bat | sed 's|\\|/|g' >GIT-MSVC-GEN
+-include GIT-MSVC-GEN
 endif
 
 # We choose to avoid "if .. else if .. else .. endif endif"
@@ -349,7 +355,7 @@ ifeq ($(uname_S),Windows)
 	# link.exe next to, and required by, cl.exe, we have to prepend this
 	# onto the existing $PATH.
 	#
-	SANE_TOOL_PATH ?= /c/Program Files (x86)/Microsoft Visual Studio 14.0/VC/bin/amd64
+	SANE_TOOL_PATH ?= $(msvc_bin_dir_msys)
 	HAVE_ALLOCA_H = YesPlease
 	NO_PREAD = YesPlease
 	NEEDS_CRYPTO_WITH_SSL = YesPlease
@@ -409,26 +415,12 @@ ifeq ($(uname_S),Windows)
 	lib =
 	# Path to the unpacked third-party libraries
 	MSVC_DEPS = compat/vcbuild/GEN.DEPS
-	# Compensate for lack of %VCINSTALLDIR%, %LIB%, %LIBPATH%, and etc.
-	# since vcvars*.bat did not get a chance to setup the environment of
-	# the user's shell window.
-	#
-	# TODO If we ask the user to launch a "x64 Native" command prompt
-	# TODO and then have it start a git-bash window, these could be
-	# TODO inherited.  So we wouldn't need to add these lines here.
-	#
-	MSVC_SDK81 = "c:/Program Files (x86)/Windows Kits/8.1"
-	MSVC_SDK10 = "c:/Program Files (x86)/Windows Kits/10"
-	MSVC_VCDIR = "c:/Program Files (x86)/Microsoft Visual Studio 14.0/VC"
 	BASIC_CFLAGS += \
 		     -I$(MSVC_DEPS)/include -I$(MSVC_DEPS)/include/expat -I$(MSVC_DEPS)/include/zlib \
 		     -L$(MSVC_DEPS)/lib \
-		     -I$(MSVC_SDK81)/Include/um -I$(MSVC_SDK81)/Include/shared \
-		     -L$(MSVC_SDK81)/lib/winv6.3/um/x64 \
-		     -I$(MSVC_SDK10)/Include/10.0.10240.0/ucrt \
-		     -L$(MSVC_SDK10)/lib/10.0.10240.0/ucrt/x64 \
-		     -I$(MSVC_VCDIR)/INCLUDE \
-		     -L$(MSVC_VCDIR)/lib/amd64
+		     $(sdk_includes) $(sdk_libs) \
+		     $(msvc_includes) $(msvc_libs)
+
 	# Optionally enable memory leak reporting.
 	# BASIC_CLFAGS += -DUSE_MSVC_CRTDBG
 	BASIC_CFLAGS += -DPROTECT_NTFS_DEFAULT=1
