@@ -1668,6 +1668,8 @@ static int do_git_config_sequence(const struct config_options *opts,
 
 	if (opts->commondir)
 		repo_config = mkpathdup("%s/config", opts->commondir);
+	else if (opts->git_dir)
+		BUG("git_dir without commondir");
 	else
 		repo_config = NULL;
 
