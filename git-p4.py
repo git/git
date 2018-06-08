@@ -1357,7 +1357,9 @@ class P4Submit(Command, P4UserMap):
                                      help="submit only the specified commit(s), one commit or xxx..xxx"),
                 optparse.make_option("--disable-rebase", dest="disable_rebase", action="store_true",
                                      help="Disable rebase after submit is completed. Can be useful if you "
-                                     "work from a local git branch that is not master")
+                                     "work from a local git branch that is not master"),
+                optparse.make_option("--disable-p4sync", dest="disable_p4sync", action="store_true",
+                                     help="Skip Perforce sync of p4/master after submit or shelve"),
         ]
         self.description = "Submit changes from git to the perforce depot."
         self.usage += " [name of git branch to submit into perforce depot]"
@@ -1369,6 +1371,7 @@ class P4Submit(Command, P4UserMap):
         self.update_shelve = list()
         self.commit = ""
         self.disable_rebase = gitConfigBool("git-p4.disableRebase")
+        self.disable_p4sync = gitConfigBool("git-p4.disableP4Sync")
         self.prepare_p4_only = False
         self.conflict_behavior = None
         self.isWindows = (platform.system() == "Windows")
@@ -2229,11 +2232,14 @@ class P4Submit(Command, P4UserMap):
             sync = P4Sync()
             if self.branch:
                 sync.branch = self.branch
-            sync.run([])
+            if self.disable_p4sync:
+                sync.sync_origin_only()
+            else:
+                sync.run([])
 
-            if self.disable_rebase is False:
-                rebase = P4Rebase()
-                rebase.rebase()
+                if not self.disable_rebase:
+                    rebase = P4Rebase()
+                    rebase.rebase()
 
         else:
             if len(applied) == 0:
@@ -3261,6 +3267,14 @@ class P4Sync(Command, P4UserMap):
                 print self.gitError.read()
                 sys.exit(1)
 
+    def sync_origin_only(self):
+        if self.syncWithOrigin:
+            self.hasOrigin = originP4BranchesExist()
+            if self.hasOrigin:
+                if not self.silent:
+                    print 'Syncing with origin first, using "git fetch origin"'
+                system("git fetch origin")
+
     def importHeadRevision(self, revision):
         print "Doing initial import of %s from revision %s into %s" % (' '.join(self.depotPaths), revision, self.branch)
 
@@ -3333,12 +3347,7 @@ class P4Sync(Command, P4UserMap):
         else:
             self.refPrefix = "refs/heads/p4/"
 
-        if self.syncWithOrigin:
-            self.hasOrigin = originP4BranchesExist()
-            if self.hasOrigin:
-                if not self.silent:
-                    print 'Syncing with origin first, using "git fetch origin"'
-                system("git fetch origin")
+        self.sync_origin_only()
 
         branch_arg_given = bool(self.branch)
         if len(self.branch) == 0:
