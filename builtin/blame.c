@@ -411,6 +411,7 @@ static void parse_color_fields(const char *s)
 		die (_("must end with a color"));
 
 	colorfield[colorfield_nr].hop = TIME_MAX;
+	string_list_clear(&l, 0);
 }
 
 static void setup_default_color_by_age(void)
