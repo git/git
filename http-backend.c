@@ -290,7 +290,7 @@ static void write_to_child(int out, const unsigned char *buf, ssize_t len, const
  * hit max_request_buffer we die (we'd rather reject a
  * maliciously large request than chew up infinite memory).
  */
-static ssize_t read_request(int fd, unsigned char **out)
+static ssize_t read_request_eof(int fd, unsigned char **out)
 {
 	size_t len = 0, alloc = 8192;
 	unsigned char *buf = xmalloc(alloc);
@@ -327,7 +327,46 @@ static ssize_t read_request(int fd, unsigned char **out)
 	}
 }
 
-static void inflate_request(const char *prog_name, int out, int buffer_input)
+static ssize_t read_request_fixed_len(int fd, ssize_t req_len, unsigned char **out)
+{
+	unsigned char *buf = NULL;
+	ssize_t cnt = 0;
+
+	if (max_request_buffer < req_len) {
+		die("request was larger than our maximum size (%lu): "
+		    "%" PRIuMAX "; try setting GIT_HTTP_MAX_REQUEST_BUFFER",
+		    max_request_buffer, (uintmax_t)req_len);
+	}
+
+	buf = xmalloc(req_len);
+	cnt = read_in_full(fd, buf, req_len);
+	if (cnt < 0) {
+		free(buf);
+		return -1;
+	}
+	*out = buf;
+	return cnt;
+}
+
+static ssize_t get_content_length(void)
+{
+	ssize_t val = -1;
+	const char *str = getenv("CONTENT_LENGTH");
+
+	if (str && !git_parse_ssize_t(str, &val))
+		die("failed to parse CONTENT_LENGTH: %s", str);
+	return val;
+}
+
+static ssize_t read_request(int fd, unsigned char **out, ssize_t req_len)
+{
+	if (req_len < 0)
+		return read_request_eof(fd, out);
+	else
+		return read_request_fixed_len(fd, req_len, out);
+}
+
+static void inflate_request(const char *prog_name, int out, int buffer_input, ssize_t req_len)
 {
 	git_zstream stream;
 	unsigned char *full_request = NULL;
@@ -345,7 +384,7 @@ static void inflate_request(const char *prog_name, int out, int buffer_input)
 			if (full_request)
 				n = 0; /* nothing left to read */
 			else
-				n = read_request(0, &full_request);
+				n = read_request(0, &full_request, req_len);
 			stream.next_in = full_request;
 		} else {
 			n = xread(0, in_buf, sizeof(in_buf));
@@ -381,10 +420,10 @@ done:
 	free(full_request);
 }
 
-static void copy_request(const char *prog_name, int out)
+static void copy_request(const char *prog_name, int out, ssize_t req_len)
 {
 	unsigned char *buf;
-	ssize_t n = read_request(0, &buf);
+	ssize_t n = read_request(0, &buf, req_len);
 	if (n < 0)
 		die_errno("error reading request body");
 	write_to_child(out, buf, n, prog_name);
@@ -399,6 +438,7 @@ static void run_service(const char **argv, int buffer_input)
 	const char *host = getenv("REMOTE_ADDR");
 	int gzipped_request = 0;
 	struct child_process cld = CHILD_PROCESS_INIT;
+	ssize_t req_len = get_content_length();
 
 	if (encoding && !strcmp(encoding, "gzip"))
 		gzipped_request = 1;
@@ -425,9 +465,9 @@ static void run_service(const char **argv, int buffer_input)
 
 	close(1);
 	if (gzipped_request)
-		inflate_request(argv[0], cld.in, buffer_input);
+		inflate_request(argv[0], cld.in, buffer_input, req_len);
 	else if (buffer_input)
-		copy_request(argv[0], cld.in);
+		copy_request(argv[0], cld.in, req_len);
 	else
 		close(0);
 
