@@ -1476,6 +1476,21 @@ static int handle_change_delete(struct merge_options *o,
 		if (!ret)
 			ret = update_file(o, 0, o_oid, o_mode, update_path);
 	} else {
+		/*
+		 * Despite the four nearly duplicate messages and argument
+		 * lists below and the ugliness of the nested if-statements,
+		 * having complete messages makes the job easier for
+		 * translators.
+		 *
+		 * The slight variance among the cases is due to the fact
+		 * that:
+		 *   1) directory/file conflicts (in effect if
+		 *      !alt_path) could cause us to need to write the
+		 *      file to a different path.
+		 *   2) renames (in effect if !old_path) could mean that
+		 *      there are two names for the path that the user
+		 *      may know the file by.
+		 */
 		if (!alt_path) {
 			if (!old_path) {
 				output(o, 1, _("CONFLICT (%s/delete): %s deleted in %s "
