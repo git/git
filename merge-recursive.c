@@ -998,10 +998,10 @@ static int update_file_flags(struct merge_options *o,
 			ret = err(o,
 				  _("do not know what to do with %06o %s '%s'"),
 				  mode, oid_to_hex(oid), path);
- free_buf:
+	free_buf:
 		free(buf);
 	}
- update_index:
+update_index:
 	if (!ret && update_cache)
 		if (add_cacheinfo(o, mode, oid, path, 0, update_wd,
 				  ADD_CACHE_OK_TO_ADD))
@@ -3326,7 +3326,7 @@ int merge_trees(struct merge_options *o,
 				    entries->items[i].string);
 		}
 
-cleanup:
+	cleanup:
 		final_cleanup_renames(&re_info);
 
 		string_list_clear(entries, 1);
