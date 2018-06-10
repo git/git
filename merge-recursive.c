@@ -539,7 +539,7 @@ static void record_df_conflict_files(struct merge_options *o,
 				     struct string_list *entries)
 {
 	/* If there is a D/F conflict and the file for such a conflict
-	 * currently exist in the working tree, we want to allow it to be
+	 * currently exists in the working tree, we want to allow it to be
 	 * removed to make room for the corresponding directory if needed.
 	 * The files underneath the directories of such D/F conflicts will
 	 * be processed before the corresponding file involved in the D/F
