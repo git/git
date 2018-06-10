@@ -181,7 +181,7 @@ static int oid_eq(const struct object_id *a, const struct object_id *b)
 
 enum rename_type {
 	RENAME_NORMAL = 0,
-	RENAME_DIR,
+	RENAME_VIA_DIR,
 	RENAME_DELETE,
 	RENAME_ONE_FILE_TO_ONE,
 	RENAME_ONE_FILE_TO_TWO,
@@ -1410,11 +1410,17 @@ static int merge_file_one(struct merge_options *o,
 	return merge_file_1(o, &one, &a, &b, path, branch1, branch2, mfi);
 }
 
-static int conflict_rename_dir(struct merge_options *o,
-			       struct diff_filepair *pair,
-			       const char *rename_branch,
-			       const char *other_branch)
+static int conflict_rename_via_dir(struct merge_options *o,
+				   struct diff_filepair *pair,
+				   const char *rename_branch,
+				   const char *other_branch)
 {
+	/*
+	 * Handle file adds that need to be renamed due to directory rename
+	 * detection.  This differs from handle_rename_normal, because
+	 * there is no content merge to do; just move the file into the
+	 * desired final location.
+	 */
 	const struct diff_filespec *dest = pair->two;
 
 	if (!o->call_depth && would_lose_untracked(dest->path)) {
@@ -2692,7 +2698,7 @@ static int process_renames(struct merge_options *o,
 
 			if (oid_eq(&src_other.oid, &null_oid) &&
 			    ren1->add_turned_into_rename) {
-				setup_rename_conflict_info(RENAME_DIR,
+				setup_rename_conflict_info(RENAME_VIA_DIR,
 							   ren1->pair,
 							   NULL,
 							   branch1,
@@ -3138,12 +3144,12 @@ static int process_entry(struct merge_options *o,
 							     b_oid, b_mode,
 							     conflict_info);
 			break;
-		case RENAME_DIR:
+		case RENAME_VIA_DIR:
 			clean_merge = 1;
-			if (conflict_rename_dir(o,
-						conflict_info->pair1,
-						conflict_info->branch1,
-						conflict_info->branch2))
+			if (conflict_rename_via_dir(o,
+						    conflict_info->pair1,
+						    conflict_info->branch1,
+						    conflict_info->branch2))
 				clean_merge = -1;
 			break;
 		case RENAME_DELETE:
