@@ -1410,10 +1410,10 @@ static int merge_file_one(struct merge_options *o,
 	return merge_file_1(o, &one, &a, &b, path, branch1, branch2, mfi);
 }
 
-static int conflict_rename_via_dir(struct merge_options *o,
-				   struct diff_filepair *pair,
-				   const char *rename_branch,
-				   const char *other_branch)
+static int handle_rename_via_dir(struct merge_options *o,
+				 struct diff_filepair *pair,
+				 const char *rename_branch,
+				 const char *other_branch)
 {
 	/*
 	 * Handle file adds that need to be renamed due to directory rename
@@ -1515,10 +1515,10 @@ static int handle_change_delete(struct merge_options *o,
 	return ret;
 }
 
-static int conflict_rename_delete(struct merge_options *o,
-				  struct diff_filepair *pair,
-				  const char *rename_branch,
-				  const char *delete_branch)
+static int handle_rename_delete(struct merge_options *o,
+				struct diff_filepair *pair,
+				const char *rename_branch,
+				const char *delete_branch)
 {
 	const struct diff_filespec *orig = pair->one;
 	const struct diff_filespec *dest = pair->two;
@@ -1620,8 +1620,8 @@ static int handle_file(struct merge_options *o,
 	return ret;
 }
 
-static int conflict_rename_rename_1to2(struct merge_options *o,
-				       struct rename_conflict_info *ci)
+static int handle_rename_rename_1to2(struct merge_options *o,
+				     struct rename_conflict_info *ci)
 {
 	/* One file was renamed in both branches, but to different names. */
 	struct diff_filespec *one = ci->pair1->one;
@@ -1682,8 +1682,8 @@ static int conflict_rename_rename_1to2(struct merge_options *o,
 	return 0;
 }
 
-static int conflict_rename_rename_2to1(struct merge_options *o,
-				       struct rename_conflict_info *ci)
+static int handle_rename_rename_2to1(struct merge_options *o,
+				     struct rename_conflict_info *ci)
 {
 	/* Two files, a & b, were renamed to the same thing, c. */
 	struct diff_filespec *a = ci->pair1->one;
@@ -2425,7 +2425,7 @@ static void apply_directory_rename_modifications(struct merge_options *o,
 	 * "NOTE" in update_stages(), doing so will modify the current
 	 * in-memory index which will break calls to would_lose_untracked()
 	 * that we need to make.  Instead, we need to just make sure that
-	 * the various conflict_rename_*() functions update the index
+	 * the various handle_rename_*() functions update the index
 	 * explicitly rather than relying on unpack_trees() to have done it.
 	 */
 	get_tree_entry(&tree->object.oid,
@@ -2829,12 +2829,12 @@ static void initial_cleanup_rename(struct diff_queue_struct *pairs,
 	free(pairs);
 }
 
-static int handle_renames(struct merge_options *o,
-			  struct tree *common,
-			  struct tree *head,
-			  struct tree *merge,
-			  struct string_list *entries,
-			  struct rename_info *ri)
+static int detect_and_process_renames(struct merge_options *o,
+				      struct tree *common,
+				      struct tree *head,
+				      struct tree *merge,
+				      struct string_list *entries,
+				      struct rename_info *ri)
 {
 	struct diff_queue_struct *head_pairs, *merge_pairs;
 	struct hashmap *dir_re_head, *dir_re_merge;
@@ -3105,12 +3105,12 @@ static int merge_content(struct merge_options *o,
 	return !is_dirty && mfi.clean;
 }
 
-static int conflict_rename_normal(struct merge_options *o,
-				  const char *path,
-				  struct object_id *o_oid, unsigned int o_mode,
-				  struct object_id *a_oid, unsigned int a_mode,
-				  struct object_id *b_oid, unsigned int b_mode,
-				  struct rename_conflict_info *ci)
+static int handle_rename_normal(struct merge_options *o,
+				const char *path,
+				struct object_id *o_oid, unsigned int o_mode,
+				struct object_id *a_oid, unsigned int a_mode,
+				struct object_id *b_oid, unsigned int b_mode,
+				struct rename_conflict_info *ci)
 {
 	/* Merge the content and write it out */
 	return merge_content(o, path, was_dirty(o, path),
@@ -3137,37 +3137,37 @@ static int process_entry(struct merge_options *o,
 		switch (conflict_info->rename_type) {
 		case RENAME_NORMAL:
 		case RENAME_ONE_FILE_TO_ONE:
-			clean_merge = conflict_rename_normal(o,
-							     path,
-							     o_oid, o_mode,
-							     a_oid, a_mode,
-							     b_oid, b_mode,
-							     conflict_info);
+			clean_merge = handle_rename_normal(o,
+							   path,
+							   o_oid, o_mode,
+							   a_oid, a_mode,
+							   b_oid, b_mode,
+							   conflict_info);
 			break;
 		case RENAME_VIA_DIR:
 			clean_merge = 1;
-			if (conflict_rename_via_dir(o,
-						    conflict_info->pair1,
-						    conflict_info->branch1,
-						    conflict_info->branch2))
+			if (handle_rename_via_dir(o,
+						  conflict_info->pair1,
+						  conflict_info->branch1,
+						  conflict_info->branch2))
 				clean_merge = -1;
 			break;
 		case RENAME_DELETE:
 			clean_merge = 0;
-			if (conflict_rename_delete(o,
-						   conflict_info->pair1,
-						   conflict_info->branch1,
-						   conflict_info->branch2))
+			if (handle_rename_delete(o,
+						 conflict_info->pair1,
+						 conflict_info->branch1,
+						 conflict_info->branch2))
 				clean_merge = -1;
 			break;
 		case RENAME_ONE_FILE_TO_TWO:
 			clean_merge = 0;
-			if (conflict_rename_rename_1to2(o, conflict_info))
+			if (handle_rename_rename_1to2(o, conflict_info))
 				clean_merge = -1;
 			break;
 		case RENAME_TWO_FILES_TO_ONE:
 			clean_merge = 0;
-			if (conflict_rename_rename_2to1(o, conflict_info))
+			if (handle_rename_rename_2to1(o, conflict_info))
 				clean_merge = -1;
 			break;
 		default:
@@ -3307,8 +3307,8 @@ int merge_trees(struct merge_options *o,
 		get_files_dirs(o, merge);
 
 		entries = get_unmerged();
-		clean = handle_renames(o, common, head, merge, entries,
-				       &re_info);
+		clean = detect_and_process_renames(o, common, head, merge,
+						   entries, &re_info);
 		record_df_conflict_files(o, entries);
 		if (clean < 0)
 			goto cleanup;
