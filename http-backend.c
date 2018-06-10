@@ -279,6 +279,12 @@ static struct rpc_service *select_service(struct strbuf *hdr, const char *name)
 	return svc;
 }
 
+static void write_to_child(int out, const unsigned char *buf, ssize_t len, const char *prog_name)
+{
+	if (write_in_full(out, buf, len) < 0)
+		die("unable to write to '%s'", prog_name);
+}
+
 /*
  * This is basically strbuf_read(), except that if we
  * hit max_request_buffer we die (we'd rather reject a
@@ -361,9 +367,8 @@ static void inflate_request(const char *prog_name, int out, int buffer_input)
 				die("zlib error inflating request, result %d", ret);
 
 			n = stream.total_out - cnt;
-			if (write_in_full(out, out_buf, n) < 0)
-				die("%s aborted reading request", prog_name);
-			cnt += n;
+			write_to_child(out, out_buf, stream.total_out - cnt, prog_name);
+			cnt = stream.total_out;
 
 			if (ret == Z_STREAM_END)
 				goto done;
@@ -382,8 +387,7 @@ static void copy_request(const char *prog_name, int out)
 	ssize_t n = read_request(0, &buf);
 	if (n < 0)
 		die_errno("error reading request body");
-	if (write_in_full(out, buf, n) < 0)
-		die("%s aborted reading request", prog_name);
+	write_to_child(out, buf, n, prog_name);
 	close(out);
 	free(buf);
 }
