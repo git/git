@@ -39,7 +39,7 @@ if [ -z "$script" ]; then
 		test -f $e && script="$e" && break
 	done
 fi
-ZSH_VERSION='' . "$script"
+GIT_SOURCING_ZSH_COMPLETION=y . "$script"
 
 __gitcomp ()
 {
