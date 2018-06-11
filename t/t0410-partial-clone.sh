@@ -23,7 +23,15 @@ promise_and_delete () {
 	delete_object repo "$HASH"
 }
 
+test_expect_success 'extensions.partialclone without filter' '
+	test_create_repo server &&
+	git clone --filter="blob:none" "file://$(pwd)/server" client &&
+	git -C client config --unset core.partialclonefilter &&
+	git -C client fetch origin
+'
+
 test_expect_success 'missing reflog object, but promised by a commit, passes fsck' '
+	rm -rf repo &&
 	test_create_repo repo &&
 	test_commit -C repo my_commit &&
 

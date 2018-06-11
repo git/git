@@ -146,6 +146,8 @@ void partial_clone_get_default_filter_spec(
 	/*
 	 * Parse default value, but silently ignore it if it is invalid.
 	 */
+	if (!core_partial_clone_filter_default)
+		return;
 	gently_parse_list_objects_filter(filter_options,
 					 core_partial_clone_filter_default,
 					 NULL);
