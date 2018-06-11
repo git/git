@@ -135,13 +135,10 @@ test_expect_success 'fsck detects symlinked .gitmodules file' '
 		tricky="[foo]bar=true" &&
 		content=$(git hash-object -w ../.gitmodules) &&
 		target=$(printf "$tricky" | git hash-object -w --stdin) &&
-		tree=$(
-			{
-				printf "100644 blob $content\t$tricky\n" &&
-				printf "120000 blob $target\t.gitmodules\n"
-			} | git mktree
-		) &&
-		commit=$(git commit-tree $tree) &&
+		{
+			printf "100644 blob $content\t$tricky\n" &&
+			printf "120000 blob $target\t.gitmodules\n"
+		} | git mktree &&
 
 		# Check not only that we fail, but that it is due to the
 		# symlink detector; this grep string comes from the config
