@@ -1047,7 +1047,7 @@ sub recount_edited_hunk {
 			$o_cnt++;
 		} elsif ($mode eq '+') {
 			$n_cnt++;
-		} elsif ($mode eq ' ') {
+		} elsif ($mode eq ' ' or $mode eq "\n") {
 			$o_cnt++;
 			$n_cnt++;
 		}

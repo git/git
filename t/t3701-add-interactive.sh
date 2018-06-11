@@ -175,6 +175,49 @@ test_expect_success 'real edit works' '
 	diff_cmp expected output
 '
 
+test_expect_success 'setup file' '
+	test_write_lines a "" b "" c >file &&
+	git add file &&
+	test_write_lines a "" d "" c >file
+'
+
+test_expect_success 'setup patch' '
+	SP=" " &&
+	NULL="" &&
+	cat >patch <<-EOF
+	@@ -1,4 +1,4 @@
+	 a
+	$NULL
+	-b
+	+f
+	$SP
+	c
+	EOF
+'
+
+test_expect_success 'setup expected' '
+	cat >expected <<-EOF
+	diff --git a/file b/file
+	index b5dd6c9..f910ae9 100644
+	--- a/file
+	+++ b/file
+	@@ -1,5 +1,5 @@
+	 a
+	$SP
+	-f
+	+d
+	$SP
+	 c
+	EOF
+'
+
+test_expect_success 'edit can strip spaces from empty context lines' '
+	test_write_lines e n q | git add -p 2>error &&
+	test_must_be_empty error &&
+	git diff >output &&
+	diff_cmp expected output
+'
+
 test_expect_success 'skip files similarly as commit -a' '
 	git reset &&
 	echo file >.gitignore &&
