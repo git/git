@@ -148,4 +148,22 @@ test_expect_success 'fsck detects symlinked .gitmodules file' '
 	)
 '
 
+test_expect_success 'fsck detects non-blob .gitmodules' '
+	git init non-blob &&
+	(
+		cd non-blob &&
+
+		# As above, make the funny tree directly to avoid index
+		# restrictions.
+		mkdir subdir &&
+		cp ../.gitmodules subdir/file &&
+		git add subdir/file &&
+		git commit -m ok &&
+		git ls-tree HEAD | sed s/subdir/.gitmodules/ | git mktree &&
+
+		test_must_fail git fsck 2>output &&
+		grep gitmodulesBlob output
+	)
+'
+
 test_done
