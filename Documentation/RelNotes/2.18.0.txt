@@ -50,7 +50,7 @@ UI, Workflows & Features
    have been replaced with a stub that errors out and tells the user
    there are replacements.
 
- * The new "checkout-encoding" attribute can ask Git to convert the
+ * The new "working-tree-encoding" attribute can ask Git to convert the
    contents to the specified encoding when checking out to the working
    tree (and the other way around when checking in).
 
@@ -508,7 +508,7 @@ Fixes since v2.17
    not committishes.
    (merge 0ed556d38f en/rev-parse-invalid-range later to maint).
 
- * "git pull -recurse-submodules --rebase", when the submodule
+ * "git pull --recurse-submodules --rebase", when the submodule
    repository's history did not have anything common between ours and
    the upstream's, failed to execute.  We need to fetch from them to
    continue even in such a case.
