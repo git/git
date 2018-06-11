@@ -1484,7 +1484,7 @@ static void final(const char *final_pack_name, const char *curr_pack_name,
 		struct packed_git *p;
 		p = add_packed_git(final_index_name, strlen(final_index_name), 0);
 		if (p)
-			install_packed_git(the_repository, p);
+			install_packed_git(p);
 	}
 
 	if (!from_stdin) {
