@@ -518,6 +518,16 @@ test_expect_success 'test --all, --depth, and explicit tag' '
 	) >out-adt 2>error-adt
 '
 
+test_expect_success 'test --all with tag to non-tip' '
+	git commit --allow-empty -m non-tip &&
+	git commit --allow-empty -m tip &&
+	git tag -m "annotated" non-tip HEAD^ &&
+	(
+		cd client &&
+		git fetch-pack --all ..
+	)
+'
+
 test_expect_success 'shallow fetch with tags does not break the repository' '
 	mkdir repo1 &&
 	(
