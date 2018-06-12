@@ -6,7 +6,7 @@ Updates since v2.17
 
 UI, Workflows & Features
 
- * Rename detection logic in "diff" family that is used in "merge" has
+ * Rename detection logic that is used in "merge" and "cherry-pick" has
    learned to guess when all of x/a, x/b and x/c have moved to z/a,
    z/b and z/c, it is likely that x/d added in the meantime would also
    want to move to z/d by taking the hint that the entire directory
