@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jun 2018, #02; Mon, 4)
-X-master-at: 3e5524907b43337e82a24afbc822078daf7a868f
-X-next-at: 61856ae69a2ceb241a90e47953e18f218e4d5f2f
+Subject: What's cooking in git.git (Jun 2018, #03; Tue, 12)
+X-master-at: 6f333ff2fb28add6d54e9526b8dfdf47bc2b7a9a
+X-next-at: 331a1db143dd028146b93af7da9e32f451bf2002
 
-What's cooking in git.git (Jun 2018, #02; Mon, 4)
+What's cooking in git.git (Jun 2018, #03; Tue, 12)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -18,114 +18,100 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* bc/t3430-fixup (2018-06-04) 1 commit
-  (merged to 'next' on 2018-06-04 at 892aab2dc8)
- + t3430: test clean-up
-
- Test fix.
-
-
-* bw/refspec-api (2018-06-01) 1 commit
-  (merged to 'next' on 2018-06-04 at f244fe357b)
- + refspec-api: avoid uninitialized field in refspec item
-
- Hotfix.
-
-
-* jt/submodule-pull-recurse-rebase (2018-05-25) 1 commit
-  (merged to 'next' on 2018-06-01 at cd3e2a1008)
- + submodule: do not pass null OID to setup_revisions
-
- "git pull -recurse-submodules --rebase", when the submodule
- repository's history did not have anything common between ours and
- the upstream's, failed to execute.  We need to fetch from them to
- continue even in such a case.
-
-
-* nd/remote-update-doc (2018-06-04) 2 commits
-  (merged to 'next' on 2018-06-04 at b2901b60ad)
- + remote: doc typofix
-  (merged to 'next' on 2018-06-04 at 82cce447e5)
- + remote.txt: update documentation for 'update' command
-
- "git remote update" can take both a single remote nickname and a
- nickname for remote groups, but only one of them was documented.
-
-
-* rd/p4-doc-markup-env (2018-06-01) 1 commit
-  (merged to 'next' on 2018-06-04 at 80212295cf)
- + p4.txt: Use backquotes for variable names
-
- Doc markup update.
-
-
-* tg/doc-sec-list (2018-06-01) 2 commits
-  (merged to 'next' on 2018-06-04 at e1f80ffe09)
- + note git-security@googlegroups.com in more places
- + SubmittingPatches: replace numbered attributes with names
-
- Doc update.
-
---------------------------------------------------
 [New Topics]
 
-* ab/checkout-default-remote (2018-06-04) 8 commits
- - checkout & worktree: introduce checkout.defaultRemote
- - checkout: add advice for ambiguous "checkout <branch>"
- - builtin/checkout.c: use "ret" variable for return
- - checkout: pass the "num_matches" up to callers
- - checkout.c]: change "unique" member to "num_matches"
- - checkout.c: introduce an *_INIT macro
- - checkout.h: wrap the arguments to unique_tracking_name()
- - checkout tests: index should be clean after dwim checkout
+* ab/refspec-init-fix (2018-06-11) 3 commits
+ - refspec: initalize `refspec_item` in `valid_fetch_refspec()`
+ - refspec: add back a refspec_item_init() function
+ - refspec: s/refspec_item_init/&_or_die/g
 
-
-* nd/reject-empty-shallow-request (2018-06-04) 1 commit
- - upload-pack: reject shallow requests that would return nothing
-
- "git fetch --shallow-since=<cutoff>" that specifies the cut-off
- point that is newer than the existing history used to end up
- grabbing the entire history.  Such a request now errors out.
-
-
-* pw/add-p-recount (2018-06-04) 1 commit
- - add -p: fix counting empty context lines in edited patches
-
- When user edits the patch in "git add -p" and the user's editor is
- set to strip trailing whitespaces indiscriminately, an empty line
- that is unchanged in the patch would become completely empty
- (instead of a line with a sole SP on it).  The code introduced in
- Git 2.17 timeframe failed to parse such a patch, but now it learned
- to notice the situation and cope with it.
-
- Will merge to and cook in 'next'.
-
-
-* rd/comment-typofix-in-sha1-file (2018-06-04) 1 commit
- - sha1-file.c: correct $GITDIR to $GIT_DIR in a comment
-
- In code comment typofix
+ Make refspec parsing codepath more robust.
 
  Will merge to 'next'.
 
 
-* sg/update-ref-stdin-cleanup (2018-06-04) 1 commit
- - update-ref --stdin: use skip_prefix()
+* as/safecrlf-quiet-fix (2018-06-11) 1 commit
+ - config.c: fix regression for core.safecrlf false
 
- Code cleanup.
+ Fix for 2.17-era regression.
+
+ Will merge to 'next'.
+
+
+* jk/submodule-fsck-loose-fixup (2018-06-11) 2 commits
+  (merged to 'next' on 2018-06-11 at 3eadb39c0a)
+ + fsck: avoid looking at NULL blob->object
+ + t7415: don't bother creating commit for symlink test
+
+ Finishing touches to a topic that already is in 'maint'.
+
+ Will merge to 'master' and then to 'maint'.
+
+
+* sb/submodule-merge-in-merge-recursive (2018-06-11) 1 commit
+  (merged to 'next' on 2018-06-11 at ad05b6bc6a)
+ + merge-submodule: reduce output verbosity
+
+ Finishing touches to a topic that already is in 'master'.
+
+ Will merge to 'master'.
+
+
+* sg/completion-zsh-workaround (2018-06-12) 1 commit
+  (merged to 'next' on 2018-06-12 at 331a1db143)
+ + completion: correct zsh detection when run from git-completion.zsh
+
+ Work around zsh segfaulting when loading git-completion.zsh
+
+ Will merge to 'master'.
+
+
+* sg/gpg-tests-fix (2018-06-11) 2 commits
+ - tests: make forging GPG signed commits and tags more robust
+ - t7510-signed-commit: use 'test_must_fail'
+
+ Some flaky tests have been fixed.
 
  Will merge to 'next'.
 
 
-* cc/tests-without-assuming-ref-files-backend (2018-06-04) 1 commit
- - t9104: kosherly remove remote refs
+* jk/fetch-all-peeled-fix (2018-06-11) 1 commit
+ - fetch-pack: don't try to fetch peel values with --all
 
- Instead of mucking with filesystem directly, use plumbing commands
- update-ref etc. to manipulate the refs in the tests.
 
- Will merge to 'next'.
+* rd/diff-options-typofix (2018-06-11) 1 commit
+ - diff-options.txt: fix minor typos, font inconsistencies, in docs
+
+
+* ld/git-p4-updates (2018-06-12) 6 commits
+ - git-p4: auto-size the block
+ - git-p4: narrow the scope of exceptions caught when parsing an int
+ - git-p4: raise exceptions from p4CmdList based on error from p4 server
+ - git-p4: better error reporting when p4 fails
+ - git-p4: add option to disable syncing of p4/master with p4
+ - git-p4: disable-rebase: allow setting this via configuration
+ (this branch uses rm/p4-submit-with-commit-option.)
+
+
+* en/merge-recursive-cleanup (2018-06-12) 6 commits
+ - merge-recursive: add pointer about unduly complex looking code
+ - merge-recursive: rename conflict_rename_*() family of functions
+ - merge-recursive: clarify the rename_dir/RENAME_DIR meaning
+ - merge-recursive: align labels with their respective code blocks
+ - merge-recursive: fix numerous argument alignment issues
+ - merge-recursive: fix miscellaneous grammar error in comment
+
+
+* jh/partial-clone (2018-06-12) 1 commit
+ - list-objects: check if filter is NULL before using
+
+
+* km/doc-workflows-typofix (2018-06-12) 1 commit
+ - gitworkflows: fix grammar in 'Merge upwards' rule
+
+
+* ms/send-pack-honor-config (2018-06-12) 1 commit
+ - builtin/send-pack: populate the default configs
 
 --------------------------------------------------
 [Stalled]
@@ -223,10 +209,10 @@ of the repositories listed at
  cf. <0102015f5e5ee171-f30f4868-886f-47a1-a4e4-b4936afc545d-000000@eu-west-1.amazonses.com>
 
 
-* mk/http-backend-content-length (2018-06-04) 3 commits
- - SQUASH???
+* mk/http-backend-content-length (2018-06-11) 3 commits
  - http-backend: respect CONTENT_LENGTH for receive-pack
  - http-backend: respect CONTENT_LENGTH as specified by rfc3875
+ - http-backend: cleanup writing to child process
 
  The http-backend (used for smart-http transport) used to slurp the
  whole input until EOF, without paying attention to CONTENT_LENGTH
@@ -259,6 +245,65 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* ab/checkout-default-remote (2018-06-11) 8 commits
+ - checkout & worktree: introduce checkout.defaultRemote
+ - checkout: add advice for ambiguous "checkout <branch>"
+ - builtin/checkout.c: use "ret" variable for return
+ - checkout: pass the "num_matches" up to callers
+ - checkout.c: change "unique" member to "num_matches"
+ - checkout.c: introduce an *_INIT macro
+ - checkout.h: wrap the arguments to unique_tracking_name()
+ - checkout tests: index should be clean after dwim checkout
+
+
+* nd/reject-empty-shallow-request (2018-06-04) 1 commit
+ - upload-pack: reject shallow requests that would return nothing
+
+ "git fetch --shallow-since=<cutoff>" that specifies the cut-off
+ point that is newer than the existing history used to end up
+ grabbing the entire history.  Such a request now errors out.
+
+ Will merge to 'next'.
+
+
+* pw/add-p-recount (2018-06-11) 1 commit
+ - add -p: fix counting empty context lines in edited patches
+
+ When user edits the patch in "git add -p" and the user's editor is
+ set to strip trailing whitespaces indiscriminately, an empty line
+ that is unchanged in the patch would become completely empty
+ (instead of a line with a sole SP on it).  The code introduced in
+ Git 2.17 timeframe failed to parse such a patch, but now it learned
+ to notice the situation and cope with it.
+
+ Will merge to and cook in 'next'.
+
+
+* rd/comment-typofix-in-sha1-file (2018-06-04) 1 commit
+ - sha1-file.c: correct $GITDIR to $GIT_DIR in a comment
+
+ In code comment typofix
+
+ Will merge to 'next'.
+
+
+* sg/update-ref-stdin-cleanup (2018-06-04) 1 commit
+ - update-ref --stdin: use skip_prefix()
+
+ Code cleanup.
+
+ Will merge to 'next'.
+
+
+* cc/tests-without-assuming-ref-files-backend (2018-06-04) 1 commit
+ - t9104: kosherly remove remote refs
+
+ Instead of mucking with filesystem directly, use plumbing commands
+ update-ref etc. to manipulate the refs in the tests.
+
+ Will merge to 'next'.
+
+
 * ag/rebase-p (2018-06-01) 4 commits
  - rebase: remove -p code from git-rebase--interactive.sh
  - rebase: use the new git-rebase--preserve-merges.sh
@@ -271,7 +316,9 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* jk/index-pack-maint (2018-06-01) 2 commits
+* jk/index-pack-maint (2018-06-11) 3 commits
+  (merged to 'next' on 2018-06-11 at f85a566b11)
+ + index-pack: correct install_packed_git() args
   (merged to 'next' on 2018-06-04 at c553a485e8)
  + index-pack: handle --strict checks of non-repo packs
  + prepare_commit_graft: treat non-repository as a noop
@@ -280,7 +327,7 @@ of the repositories listed at
  final object integrity checks after making the freshly indexed
  packfile available to itself.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * ls/complete-remote-update-names (2018-06-01) 1 commit
@@ -390,7 +437,7 @@ of the repositories listed at
  Will merge to and cook in 'next'.
 
 
-* nd/completion-negation (2018-05-29) 3 commits
+* nd/completion-negation (2018-06-11) 3 commits
  - completion: collapse extra --no-.. options
  - completion: suppress some -no- options
  - parse-options: option to let --git-completion-helper show negative form
@@ -419,6 +466,7 @@ of the repositories listed at
 
 * rm/p4-submit-with-commit-option (2018-05-21) 1 commit
  - git-p4: add options --commit and --disable-rebase
+ (this branch is used by ld/git-p4-updates.)
 
  Needs sign-off.
 
@@ -430,7 +478,7 @@ of the repositories listed at
 
  Update to ds/generation-numbers topic.
 
- Wait for ds/generation-numbers
+ Will cook in 'next'.
 
 
 * nd/commit-util-to-slab (2018-05-21) 15 commits
