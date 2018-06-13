@@ -1208,7 +1208,7 @@ static int merge_submodule(struct merge_options *o,
 			output(o, 3, _("Fast-forwarding submodule %s to the following commit:"), path);
 			output_commit_title(o, commit_b);
 		} else if (show(o, 2))
-			output(o, 2, _("Fast-forwarding submodule %s to %s"), path, oid_to_hex(b));
+			output(o, 2, _("Fast-forwarding submodule %s"), path);
 		else
 			; /* no output */
 
@@ -1220,7 +1220,7 @@ static int merge_submodule(struct merge_options *o,
 			output(o, 3, _("Fast-forwarding submodule %s to the following commit:"), path);
 			output_commit_title(o, commit_a);
 		} else if (show(o, 2))
-			output(o, 2, _("Fast-forwarding submodule %s to %s"), path, oid_to_hex(a));
+			output(o, 2, _("Fast-forwarding submodule %s"), path);
 		else
 			; /* no output */
 
