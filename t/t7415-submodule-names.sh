@@ -122,6 +122,16 @@ test_expect_success 'transfer.fsckObjects handles odd pack (index)' '
 	test_must_fail git -C dst.git index-pack --strict --stdin <odd.pack
 '
 
+test_expect_success 'index-pack --strict works for non-repo pack' '
+	rm -rf dst.git &&
+	git init --bare dst.git &&
+	cp odd.pack dst.git &&
+	test_must_fail git -C dst.git index-pack --strict odd.pack 2>output &&
+	# Make sure we fail due to bad gitmodules content, not because we
+	# could not read the blob in the first place.
+	grep gitmodulesName output
+'
+
 test_expect_success 'fsck detects symlinked .gitmodules file' '
 	git init symlink &&
 	(

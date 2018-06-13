@@ -1482,8 +1482,12 @@ static void final(const char *final_pack_name, const char *curr_pack_name,
 	} else
 		chmod(final_index_name, 0444);
 
-	if (do_fsck_object)
-		add_packed_git(final_index_name, strlen(final_index_name), 0);
+	if (do_fsck_object) {
+		struct packed_git *p;
+		p = add_packed_git(final_index_name, strlen(final_index_name), 0);
+		if (p)
+			install_packed_git(the_repository, p);
+	}
 
 	if (!from_stdin) {
 		printf("%s\n", sha1_to_hex(hash));
