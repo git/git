@@ -135,19 +135,34 @@ test_expect_success 'fsck detects symlinked .gitmodules file' '
 		tricky="[foo]bar=true" &&
 		content=$(git hash-object -w ../.gitmodules) &&
 		target=$(printf "$tricky" | git hash-object -w --stdin) &&
-		tree=$(
-			{
-				printf "100644 blob $content\t$tricky\n" &&
-				printf "120000 blob $target\t.gitmodules\n"
-			} | git mktree
-		) &&
-		commit=$(git commit-tree $tree) &&
+		{
+			printf "100644 blob $content\t$tricky\n" &&
+			printf "120000 blob $target\t.gitmodules\n"
+		} | git mktree &&
 
 		# Check not only that we fail, but that it is due to the
 		# symlink detector; this grep string comes from the config
 		# variable name and will not be translated.
 		test_must_fail git fsck 2>output &&
 		grep gitmodulesSymlink output
+	)
+'
+
+test_expect_success 'fsck detects non-blob .gitmodules' '
+	git init non-blob &&
+	(
+		cd non-blob &&
+
+		# As above, make the funny tree directly to avoid index
+		# restrictions.
+		mkdir subdir &&
+		cp ../.gitmodules subdir/file &&
+		git add subdir/file &&
+		git commit -m ok &&
+		git ls-tree HEAD | sed s/subdir/.gitmodules/ | git mktree &&
+
+		test_must_fail git fsck 2>output &&
+		grep gitmodulesBlob output
 	)
 '
 
