@@ -1,3 +1,6 @@
+# The default target of this Makefile is...
+all::
+
 test:
 	./t-git-credential-netrc.sh
 
