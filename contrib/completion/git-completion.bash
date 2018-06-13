@@ -3223,7 +3223,10 @@ __gitk_main ()
 	__git_complete_revlist
 }
 
-if [[ -n ${ZSH_VERSION-} ]]; then
+if [[ -n ${ZSH_VERSION-} ]] &&
+   # Don't define these functions when sourced from 'git-completion.zsh',
+   # it has its own implementations.
+   [[ -z ${GIT_SOURCING_ZSH_COMPLETION-} ]]; then
 	echo "WARNING: this script is deprecated, please see git-completion.zsh" 1>&2
 
 	autoload -U +X compinit && compinit
