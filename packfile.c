@@ -1422,6 +1422,9 @@ static void *unpack_compressed_entry(struct packed_git *p,
 		return NULL;
 	}
 
+	/* versions of zlib can clobber unconsumed portion of outbuf */
+	buffer[size] = '\0';
+
 	return buffer;
 }
 
