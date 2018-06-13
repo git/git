@@ -1,5 +1,4 @@
 #!/usr/bin/perl
-use lib (split(/:/, $ENV{GITPERLLIB}));
 
 use warnings;
 use strict;

@@ -23,9 +23,10 @@
 	# The external test will outputs its own plan
 	test_external_has_tap=1
 
+	export PERL5LIB="$GITPERLLIB"
 	test_external \
 		'git-credential-netrc' \
-		perl "$TEST_DIRECTORY"/../contrib/credential/netrc/test.pl
+		perl "$GIT_BUILD_DIR"/contrib/credential/netrc/test.pl
 
 	test_done
 )
