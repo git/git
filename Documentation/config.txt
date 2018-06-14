@@ -2132,7 +2132,7 @@ http.schannelCheckRevoke::
 	certificate. This option is ignored if cURL lacks support for
 	setting the relevant SSL option at runtime.
 
-http.schannel.useSSLCAInfo::
+http.schannelUseSSLCAInfo::
 	As of cURL v7.60.0, the Secure Channel backend can use the
 	certificate bundle provided via `http.sslCAInfo`, but that would
 	override the Windows Certificate Store. Since this is not desirable

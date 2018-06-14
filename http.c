@@ -323,7 +323,7 @@ static int http_options(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
-	if (!strcmp("http.schannel.usesslcainfo", var)) {
+	if (!strcmp("http.schannelusesslcainfo", var)) {
 		http_schannel_use_ssl_cainfo = git_config_bool(var, value);
 		return 0;
 	}
