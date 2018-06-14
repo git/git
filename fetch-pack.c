@@ -1392,9 +1392,6 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 				for_each_ref(clear_marks, NULL);
 			marked = 1;
 
-			for_each_ref(rev_list_insert_ref_oid, NULL);
-			for_each_cached_alternate(insert_one_alternate_object);
-
 			/* Filter 'ref' by 'sought' and those that aren't local */
 			mark_complete_and_common_ref(args, &ref);
 			filter_refs(args, &ref, sought, nr_sought);
@@ -1402,6 +1399,9 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 				state = FETCH_DONE;
 			else
 				state = FETCH_SEND_REQUEST;
+
+			for_each_ref(rev_list_insert_ref_oid, NULL);
+			for_each_cached_alternate(insert_one_alternate_object);
 			break;
 		case FETCH_SEND_REQUEST:
 			if (send_fetch_request(fd[1], args, ref, &common,
