@@ -517,10 +517,8 @@ static int find_common(struct fetch_pack_args *args,
 					mark_common(commit, 0, 1);
 					retval = 0;
 					got_continue = 1;
-					if (ack == ACK_ready) {
-						clear_prio_queue(&rev_list);
+					if (ack == ACK_ready)
 						got_ready = 1;
-					}
 					break;
 					}
 				}
@@ -530,6 +528,8 @@ static int find_common(struct fetch_pack_args *args,
 				print_verbose(args, _("giving up"));
 				break; /* give up */
 			}
+			if (got_ready)
+				break;
 		}
 	}
 done:
@@ -1096,6 +1096,7 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 		die(_("git fetch-pack: fetch failed."));
 
  all_done:
+	clear_prio_queue(&rev_list);
 	return ref;
 }
 
@@ -1300,7 +1301,6 @@ static int process_acks(struct packet_reader *reader, struct oidset *common)
 		}
 
 		if (!strcmp(reader->line, "ready")) {
-			clear_prio_queue(&rev_list);
 			received_ready = 1;
 			continue;
 		}
@@ -1441,6 +1441,7 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 		}
 	}
 
+	clear_prio_queue(&rev_list);
 	oidset_clear(&common);
 	return ref;
 }
