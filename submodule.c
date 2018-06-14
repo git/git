@@ -740,12 +740,14 @@ static void collect_changed_submodules_cb(struct diff_queue_struct *q,
 		else {
 			name = default_name_or_path(p->two->path);
 			/* make sure name does not collide with existing one */
-			submodule = submodule_from_name(the_repository, commit_oid, name);
+			if (name)
+				submodule = submodule_from_name(the_repository,
+								commit_oid, name);
 			if (submodule) {
 				warning("Submodule in commit %s at path: "
 					"'%s' collides with a submodule named "
 					"the same. Skipping it.",
-					oid_to_hex(commit_oid), name);
+					oid_to_hex(commit_oid), p->two->path);
 				name = NULL;
 			}
 		}
