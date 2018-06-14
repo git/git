@@ -15,10 +15,10 @@
 #include "connect.h"
 #include "transport.h"
 #include "version.h"
-#include "prio-queue.h"
 #include "sha1-array.h"
 #include "oidset.h"
 #include "packfile.h"
+#include "fetch-negotiator.h"
 
 static int transfer_unpack_limit = -1;
 static int fetch_unpack_limit = -1;
@@ -36,24 +36,13 @@ static const char *alternate_shallow_file;
 
 /* Remember to update object flag allocation in object.h */
 #define COMPLETE	(1U << 0)
-#define COMMON		(1U << 1)
-#define COMMON_REF	(1U << 2)
-#define SEEN		(1U << 3)
-#define POPPED		(1U << 4)
-#define ALTERNATE	(1U << 5)
-
-static int marked;
+#define ALTERNATE	(1U << 1)
 
 /*
  * After sending this many "have"s if we do not get any new ACK , we
  * give up traversing our history.
  */
 #define MAX_IN_VAIN 256
-
-struct negotiation_state {
-	struct prio_queue rev_list;
-	int non_common_revs;
-};
 
 static int multi_ack, use_sideband;
 /* Allow specifying sha1 if it is a ref tip. */
@@ -97,8 +86,8 @@ static void cache_one_alternate(const char *refname,
 	cache->items[cache->nr++] = obj;
 }
 
-static void for_each_cached_alternate(struct negotiation_state *ns,
-				      void (*cb)(struct negotiation_state *,
+static void for_each_cached_alternate(struct fetch_negotiator *negotiator,
+				      void (*cb)(struct fetch_negotiator *,
 						 struct object *))
 {
 	static int initialized;
@@ -111,33 +100,17 @@ static void for_each_cached_alternate(struct negotiation_state *ns,
 	}
 
 	for (i = 0; i < cache.nr; i++)
-		cb(ns, cache.items[i]);
+		cb(negotiator, cache.items[i]);
 }
 
-static void rev_list_push(struct negotiation_state *ns,
-			  struct commit *commit, int mark)
-{
-	if (!(commit->object.flags & mark)) {
-		commit->object.flags |= mark;
-
-		if (parse_commit(commit))
-			return;
-
-		prio_queue_put(&ns->rev_list, commit);
-
-		if (!(commit->object.flags & COMMON))
-			ns->non_common_revs++;
-	}
-}
-
-static int rev_list_insert_ref(struct negotiation_state *ns,
+static int rev_list_insert_ref(struct fetch_negotiator *negotiator,
 			       const char *refname,
 			       const struct object_id *oid)
 {
 	struct object *o = deref_tag(parse_object(oid), refname, 0);
 
 	if (o && o->type == OBJ_COMMIT)
-		rev_list_push(ns, (struct commit *)o, SEEN);
+		negotiator->add_tip(negotiator, (struct commit *)o);
 
 	return 0;
 }
@@ -146,98 +119,6 @@ static int rev_list_insert_ref_oid(const char *refname, const struct object_id *
 				   int flag, void *cb_data)
 {
 	return rev_list_insert_ref(cb_data, refname, oid);
-}
-
-static int clear_marks(const char *refname, const struct object_id *oid,
-		       int flag, void *cb_data)
-{
-	struct object *o = deref_tag(parse_object(oid), refname, 0);
-
-	if (o && o->type == OBJ_COMMIT)
-		clear_commit_marks((struct commit *)o,
-				   COMMON | COMMON_REF | SEEN | POPPED);
-	return 0;
-}
-
-/*
-   This function marks a rev and its ancestors as common.
-   In some cases, it is desirable to mark only the ancestors (for example
-   when only the server does not yet know that they are common).
-*/
-
-static void mark_common(struct negotiation_state *ns, struct commit *commit,
-		int ancestors_only, int dont_parse)
-{
-	if (commit != NULL && !(commit->object.flags & COMMON)) {
-		struct object *o = (struct object *)commit;
-
-		if (!ancestors_only)
-			o->flags |= COMMON;
-
-		if (!(o->flags & SEEN))
-			rev_list_push(ns, commit, SEEN);
-		else {
-			struct commit_list *parents;
-
-			if (!ancestors_only && !(o->flags & POPPED))
-				ns->non_common_revs--;
-			if (!o->parsed && !dont_parse)
-				if (parse_commit(commit))
-					return;
-
-			for (parents = commit->parents;
-					parents;
-					parents = parents->next)
-				mark_common(ns, parents->item, 0,
-					    dont_parse);
-		}
-	}
-}
-
-/*
-  Get the next rev to send, ignoring the common.
-*/
-
-static const struct object_id *get_rev(struct negotiation_state *ns)
-{
-	struct commit *commit = NULL;
-
-	while (commit == NULL) {
-		unsigned int mark;
-		struct commit_list *parents;
-
-		if (ns->rev_list.nr == 0 || ns->non_common_revs == 0)
-			return NULL;
-
-		commit = prio_queue_get(&ns->rev_list);
-		parse_commit(commit);
-		parents = commit->parents;
-
-		commit->object.flags |= POPPED;
-		if (!(commit->object.flags & COMMON))
-			ns->non_common_revs--;
-
-		if (commit->object.flags & COMMON) {
-			/* do not send "have", and ignore ancestors */
-			commit = NULL;
-			mark = COMMON | SEEN;
-		} else if (commit->object.flags & COMMON_REF)
-			/* send "have", and ignore ancestors */
-			mark = COMMON | SEEN;
-		else
-			/* send "have", also for its ancestors */
-			mark = SEEN;
-
-		while (parents) {
-			if (!(parents->item->object.flags & SEEN))
-				rev_list_push(ns, parents->item, mark);
-			if (mark & COMMON)
-				mark_common(ns, parents->item, 1, 0);
-			parents = parents->next;
-		}
-	}
-
-	return &commit->object.oid;
 }
 
 enum ack_type {
@@ -306,10 +187,10 @@ static void send_request(struct fetch_pack_args *args,
 		write_or_die(fd, buf->buf, buf->len);
 }
 
-static void insert_one_alternate_object(struct negotiation_state *ns,
+static void insert_one_alternate_object(struct fetch_negotiator *negotiator,
 					struct object *obj)
 {
-	rev_list_insert_ref(ns, NULL, &obj->oid);
+	rev_list_insert_ref(negotiator, NULL, &obj->oid);
 }
 
 #define INITIAL_FLUSH 16
@@ -332,7 +213,7 @@ static int next_flush(int stateless_rpc, int count)
 	return count;
 }
 
-static int find_common(struct negotiation_state *ns,
+static int find_common(struct fetch_negotiator *negotiator,
 		       struct fetch_pack_args *args,
 		       int fd[2], struct object_id *result_oid,
 		       struct ref *refs)
@@ -349,8 +230,8 @@ static int find_common(struct negotiation_state *ns,
 	if (args->stateless_rpc && multi_ack == 1)
 		die(_("--stateless-rpc requires multi_ack_detailed"));
 
-	for_each_ref(rev_list_insert_ref_oid, ns);
-	for_each_cached_alternate(ns, insert_one_alternate_object);
+	for_each_ref(rev_list_insert_ref_oid, negotiator);
+	for_each_cached_alternate(negotiator, insert_one_alternate_object);
 
 	fetching = 0;
 	for ( ; refs ; refs = refs->next) {
@@ -468,7 +349,7 @@ static int find_common(struct negotiation_state *ns,
 	retval = -1;
 	if (args->no_dependents)
 		goto done;
-	while ((oid = get_rev(ns))) {
+	while ((oid = negotiator->next(negotiator))) {
 		packet_buf_write(&req_buf, "have %s\n", oid_to_hex(oid));
 		print_verbose(args, "have %s", oid_to_hex(oid));
 		in_vain++;
@@ -508,8 +389,7 @@ static int find_common(struct negotiation_state *ns,
 					int was_common;
 					if (!commit)
 						die(_("invalid commit %s"), oid_to_hex(result_oid));
-					was_common = commit->object.flags & COMMON;
-					mark_common(ns, commit, 0, 1);
+					was_common = negotiator->ack(negotiator, commit);
 					if (args->stateless_rpc
 					 && ack == ACK_common
 					 && !was_common) {
@@ -718,7 +598,7 @@ static void filter_refs(struct fetch_pack_args *args,
 	*refs = newlist;
 }
 
-static void mark_alternate_complete(struct negotiation_state *unused,
+static void mark_alternate_complete(struct fetch_negotiator *unused,
 				    struct object *obj)
 {
 	mark_complete(&obj->oid);
@@ -756,7 +636,7 @@ static int add_loose_objects_to_set(const struct object_id *oid,
  * earliest commit time of the objects in refs that are commits and that we know
  * the commit time of.
  */
-static void mark_complete_and_common_ref(struct negotiation_state *ns,
+static void mark_complete_and_common_ref(struct fetch_negotiator *negotiator,
 					 struct fetch_pack_args *args,
 					 struct ref **refs)
 {
@@ -825,12 +705,8 @@ static void mark_complete_and_common_ref(struct negotiation_state *ns,
 			if (!o || o->type != OBJ_COMMIT || !(o->flags & COMPLETE))
 				continue;
 
-			if (!(o->flags & SEEN)) {
-				rev_list_push(ns, (struct commit *)o,
-					      COMMON_REF | SEEN);
-
-				mark_common(ns, (struct commit *)o, 1, 1);
-			}
+			negotiator->known_common(negotiator,
+						 (struct commit *)o);
 		}
 	}
 
@@ -1012,7 +888,8 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 	struct object_id oid;
 	const char *agent_feature;
 	int agent_len;
-	struct negotiation_state ns = { { compare_commits_by_commit_date } };
+	struct fetch_negotiator negotiator;
+	fetch_negotiator_init(&negotiator);
 
 	sort_ref_list(&ref, ref_compare_name);
 	QSORT(sought, nr_sought, cmp_ref_by_name);
@@ -1085,16 +962,13 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 	if (!server_supports("deepen-relative") && args->deepen_relative)
 		die(_("Server does not support --deepen"));
 
-	if (marked)
-		for_each_ref(clear_marks, NULL);
-	marked = 1;
-	mark_complete_and_common_ref(&ns, args, &ref);
+	mark_complete_and_common_ref(&negotiator, args, &ref);
 	filter_refs(args, &ref, sought, nr_sought);
 	if (everything_local(args, &ref)) {
 		packet_flush(fd[1]);
 		goto all_done;
 	}
-	if (find_common(&ns, args, fd, &oid, ref) < 0)
+	if (find_common(&negotiator, args, fd, &oid, ref) < 0)
 		if (!args->keep_pack)
 			/* When cloning, it is not unusual to have
 			 * no common commit.
@@ -1114,7 +988,7 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 		die(_("git fetch-pack: fetch failed."));
 
  all_done:
-	clear_prio_queue(&ns.rev_list);
+	negotiator.release(&negotiator);
 	return ref;
 }
 
@@ -1176,14 +1050,15 @@ static void add_common(struct strbuf *req_buf, struct oidset *common)
 	}
 }
 
-static int add_haves(struct negotiation_state *ns, struct strbuf *req_buf,
+static int add_haves(struct fetch_negotiator *negotiator,
+		     struct strbuf *req_buf,
 		     int *haves_to_send, int *in_vain)
 {
 	int ret = 0;
 	int haves_added = 0;
 	const struct object_id *oid;
 
-	while ((oid = get_rev(ns))) {
+	while ((oid = negotiator->next(negotiator))) {
 		packet_buf_write(req_buf, "have %s\n", oid_to_hex(oid));
 		if (++haves_added >= *haves_to_send)
 			break;
@@ -1202,7 +1077,7 @@ static int add_haves(struct negotiation_state *ns, struct strbuf *req_buf,
 	return ret;
 }
 
-static int send_fetch_request(struct negotiation_state *ns, int fd_out,
+static int send_fetch_request(struct fetch_negotiator *negotiator, int fd_out,
 			      const struct fetch_pack_args *args,
 			      const struct ref *wants, struct oidset *common,
 			      int *haves_to_send, int *in_vain)
@@ -1259,7 +1134,7 @@ static int send_fetch_request(struct negotiation_state *ns, int fd_out,
 		add_common(&req_buf, common);
 
 		/* Add initial haves */
-		ret = add_haves(ns, &req_buf, haves_to_send, in_vain);
+		ret = add_haves(negotiator, &req_buf, haves_to_send, in_vain);
 	}
 
 	/* Send request */
@@ -1296,7 +1171,7 @@ static int process_section_header(struct packet_reader *reader,
 	return ret;
 }
 
-static int process_acks(struct negotiation_state *ns,
+static int process_acks(struct fetch_negotiator *negotiator,
 			struct packet_reader *reader,
 			struct oidset *common)
 {
@@ -1317,7 +1192,7 @@ static int process_acks(struct negotiation_state *ns,
 				struct commit *commit;
 				oidset_insert(common, &oid);
 				commit = lookup_commit(&oid);
-				mark_common(ns, commit, 0, 1);
+				negotiator->ack(negotiator, commit);
 			}
 			continue;
 		}
@@ -1395,7 +1270,8 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 	struct packet_reader reader;
 	int in_vain = 0;
 	int haves_to_send = INITIAL_FLUSH;
-	struct negotiation_state ns = { { compare_commits_by_commit_date } };
+	struct fetch_negotiator negotiator;
+	fetch_negotiator_init(&negotiator);
 	packet_reader_init(&reader, fd[0], NULL, 0,
 			   PACKET_READ_CHOMP_NEWLINE);
 
@@ -1411,24 +1287,21 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 			if (args->depth > 0 || args->deepen_since || args->deepen_not)
 				args->deepen = 1;
 
-			if (marked)
-				for_each_ref(clear_marks, NULL);
-			marked = 1;
-
 			/* Filter 'ref' by 'sought' and those that aren't local */
-			mark_complete_and_common_ref(&ns, args, &ref);
+			mark_complete_and_common_ref(&negotiator, args, &ref);
 			filter_refs(args, &ref, sought, nr_sought);
 			if (everything_local(args, &ref))
 				state = FETCH_DONE;
 			else
 				state = FETCH_SEND_REQUEST;
 
-			for_each_ref(rev_list_insert_ref_oid, &ns);
-			for_each_cached_alternate(&ns,
+			for_each_ref(rev_list_insert_ref_oid, &negotiator);
+			for_each_cached_alternate(&negotiator,
 						  insert_one_alternate_object);
 			break;
 		case FETCH_SEND_REQUEST:
-			if (send_fetch_request(&ns, fd[1], args, ref, &common,
+			if (send_fetch_request(&negotiator, fd[1], args, ref,
+					       &common,
 					       &haves_to_send, &in_vain))
 				state = FETCH_GET_PACK;
 			else
@@ -1436,7 +1309,7 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 			break;
 		case FETCH_PROCESS_ACKS:
 			/* Process ACKs/NAKs */
-			switch (process_acks(&ns, &reader, &common)) {
+			switch (process_acks(&negotiator, &reader, &common)) {
 			case 2:
 				state = FETCH_GET_PACK;
 				break;
@@ -1465,7 +1338,7 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 		}
 	}
 
-	clear_prio_queue(&ns.rev_list);
+	negotiator.release(&negotiator);
 	oidset_clear(&common);
 	return ref;
 }
