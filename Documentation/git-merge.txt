@@ -57,7 +57,7 @@ reconstruct the original (pre-merge) changes. Therefore:
 discouraged: while possible, it may leave you in a state that is hard to
 back out of in the case of a conflict.
 
-The fourth syntax ("`git merge --continue`") can only be run after the
+The third syntax ("`git merge --continue`") can only be run after the
 merge has resulted in conflicts.
 
 OPTIONS
