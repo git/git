@@ -217,7 +217,6 @@ void bitmap_and_not(struct bitmap *self, struct bitmap *other);
 void bitmap_or_ewah(struct bitmap *self, struct ewah_bitmap *other);
 void bitmap_or(struct bitmap *self, const struct bitmap *other);
 
-void bitmap_each_bit(struct bitmap *self, ewah_callback callback, void *data);
 size_t bitmap_popcount(struct bitmap *self);
 
 #endif
