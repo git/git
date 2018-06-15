@@ -204,7 +204,6 @@ struct bitmap {
 
 struct bitmap *bitmap_new(void);
 void bitmap_set(struct bitmap *self, size_t pos);
-void bitmap_clear(struct bitmap *self, size_t pos);
 int bitmap_get(struct bitmap *self, size_t pos);
 void bitmap_reset(struct bitmap *self);
 void bitmap_free(struct bitmap *self);
