@@ -9,7 +9,8 @@ const char *git_path_seq_dir(void);
 enum replay_action {
 	REPLAY_REVERT,
 	REPLAY_PICK,
-	REPLAY_INTERACTIVE_REBASE
+	REPLAY_INTERACTIVE_REBASE,
+	REPLAY_REBASE_AM
 };
 
 enum commit_msg_cleanup_mode {
@@ -63,6 +64,8 @@ int sequencer_pick_revisions(struct replay_opts *opts);
 int sequencer_continue(struct replay_opts *opts);
 int sequencer_rollback(struct replay_opts *opts);
 int sequencer_remove_state(struct replay_opts *opts);
+
+int apply_autostash(struct replay_opts *opts);
 
 #define TODO_LIST_KEEP_EMPTY (1U << 0)
 #define TODO_LIST_SHORTEN_IDS (1U << 1)

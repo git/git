@@ -151,6 +151,8 @@ static GIT_PATH_FUNC(rebase_path_strategy, "rebase-merge/strategy")
 static GIT_PATH_FUNC(rebase_path_strategy_opts, "rebase-merge/strategy_opts")
 static GIT_PATH_FUNC(rebase_path_allow_rerere_autoupdate, "rebase-merge/allow_rerere_autoupdate")
 
+static GIT_PATH_FUNC(rebase_path_rebase_apply, "rebase-apply")
+
 static int git_sequencer_config(const char *k, const char *v, void *cb)
 {
 	struct replay_opts *opts = cb;
@@ -201,10 +203,17 @@ static inline int is_rebase_i(const struct replay_opts *opts)
 	return opts->action == REPLAY_INTERACTIVE_REBASE;
 }
 
+static inline int is_rebase_am(const struct replay_opts *opts)
+{
+	return opts->action == REPLAY_REBASE_AM;
+}
+
 static const char *get_dir(const struct replay_opts *opts)
 {
 	if (is_rebase_i(opts))
 		return rebase_path();
+	else if (is_rebase_am(opts))
+		return rebase_path_rebase_apply();
 	return git_path_seq_dir();
 }
 
@@ -303,6 +312,8 @@ static const char *action_name(const struct replay_opts *opts)
 		return N_("cherry-pick");
 	case REPLAY_INTERACTIVE_REBASE:
 		return N_("rebase -i");
+	case REPLAY_REBASE_AM:
+		return N_("rebase--am");
 	}
 	die(_("Unknown action: %d"), opts->action);
 }
@@ -3066,7 +3077,7 @@ static enum todo_command peek_command(struct todo_list *todo_list, int offset)
 	return -1;
 }
 
-static int apply_autostash(struct replay_opts *opts)
+int apply_autostash(struct replay_opts *opts)
 {
 	struct strbuf stash_sha1 = STRBUF_INIT;
 	struct child_process child = CHILD_PROCESS_INIT;
