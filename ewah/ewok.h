@@ -169,11 +169,6 @@ void ewah_or(
 	struct ewah_bitmap *ewah_j,
 	struct ewah_bitmap *out);
 
-void ewah_and_not(
-	struct ewah_bitmap *ewah_i,
-	struct ewah_bitmap *ewah_j,
-	struct ewah_bitmap *out);
-
 void ewah_xor(
 	struct ewah_bitmap *ewah_i,
 	struct ewah_bitmap *ewah_j,
