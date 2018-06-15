@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jun 2018, #03; Tue, 12)
-X-master-at: 6f333ff2fb28add6d54e9526b8dfdf47bc2b7a9a
-X-next-at: 331a1db143dd028146b93af7da9e32f451bf2002
+Subject: What's cooking in git.git (Jun 2018, #04; Fri, 15)
+X-master-at: 68372c88794aba15f853542008cda39def768372
+X-next-at: 013aa6912eb2e1677775c77626d7d5dcd8eaad9f
 
-What's cooking in git.git (Jun 2018, #03; Tue, 12)
+What's cooking in git.git (Jun 2018, #04; Fri, 15)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,30 +12,31 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
+We passed -rc2 mark; there are still a few hotfixes that correct
+obvious bugs introduced during this cycle in trivial ways that need
+to be merged before the final, and I also need to pull the i18n/l10n
+updates, but other than that, I think we are in relatively good
+shape given the upcoming release is fairly a big one judging from
+historical norms.  Knock, knock...
+
 You can find the changes described here in the integration branches
 of the repositories listed at
 
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[New Topics]
+[Graduated to "master"]
 
-* ab/refspec-init-fix (2018-06-11) 3 commits
- - refspec: initalize `refspec_item` in `valid_fetch_refspec()`
- - refspec: add back a refspec_item_init() function
- - refspec: s/refspec_item_init/&_or_die/g
+* jk/index-pack-maint (2018-06-11) 3 commits
+  (merged to 'next' on 2018-06-11 at f85a566b11)
+ + index-pack: correct install_packed_git() args
+  (merged to 'next' on 2018-06-04 at c553a485e8)
+ + index-pack: handle --strict checks of non-repo packs
+ + prepare_commit_graft: treat non-repository as a noop
 
- Make refspec parsing codepath more robust.
-
- Will merge to 'next'.
-
-
-* as/safecrlf-quiet-fix (2018-06-11) 1 commit
- - config.c: fix regression for core.safecrlf false
-
- Fix for 2.17-era regression.
-
- Will merge to 'next'.
+ "index-pack --strict" has been taught to make sure that it runs the
+ final object integrity checks after making the freshly indexed
+ packfile available to itself.
 
 
 * jk/submodule-fsck-loose-fixup (2018-06-11) 2 commits
@@ -45,16 +46,12 @@ of the repositories listed at
 
  Finishing touches to a topic that already is in 'maint'.
 
- Will merge to 'master' and then to 'maint'.
-
 
 * sb/submodule-merge-in-merge-recursive (2018-06-11) 1 commit
   (merged to 'next' on 2018-06-11 at ad05b6bc6a)
  + merge-submodule: reduce output verbosity
 
  Finishing touches to a topic that already is in 'master'.
-
- Will merge to 'master'.
 
 
 * sg/completion-zsh-workaround (2018-06-12) 1 commit
@@ -63,55 +60,171 @@ of the repositories listed at
 
  Work around zsh segfaulting when loading git-completion.zsh
 
+--------------------------------------------------
+[New Topics]
+
+* ab/cred-netrc-no-autodie (2018-06-13) 1 commit
+  (merged to 'next' on 2018-06-14 at 68171b82a7)
+ + git-credential-netrc: remove use of "autodie"
+
+ Hotfix for contrib/ stuff broken by this cycle.
+
  Will merge to 'master'.
 
 
-* sg/gpg-tests-fix (2018-06-11) 2 commits
- - tests: make forging GPG signed commits and tags more robust
- - t7510-signed-commit: use 'test_must_fail'
+* jl/zlib-restore-nul-termination (2018-06-13) 1 commit
+  (merged to 'next' on 2018-06-14 at 3fa108363e)
+ + packfile: correct zlib buffer handling
 
- Some flaky tests have been fixed.
+ Make zlib inflate codepath more robust against versions of zlib
+ that clobber unused portion of outbuf.
+
+ Will merge to 'master'.
+
+
+* rd/doc-remote-tracking-with-hyphen (2018-06-13) 1 commit
+  (merged to 'next' on 2018-06-14 at 013aa6912e)
+ + Use hyphenated "remote-tracking branch" (docs and comments)
+
+ Doc update.
+
+ Will merge to 'master'.
+
+
+* en/rename-directory-detection (2018-06-14) 1 commit
+  (merged to 'next' on 2018-06-14 at 0e4c6bd117)
+ + merge-recursive: use xstrdup() instead of fixed buffer
+
+ Newly added codepath in merge-recursive had potential buffer
+ overrun, which has been fixed.
+
+ Will merge to 'master'.
+
+
+* mw/doc-merge-enumfix (2018-06-14) 1 commit
+  (merged to 'next' on 2018-06-14 at 7074d6d48e)
+ + doc: update the order of the syntax `git merge --continue`
+
+ Fix old merge glitch in Documentation during v2.13-rc0 era.
+
+ Will merge to 'master'.
+
+
+* sb/blame-color (2018-06-14) 1 commit
+  (merged to 'next' on 2018-06-14 at f8cd824d4d)
+ + blame: release string_list after use in parse_color_fields()
+
+ Leakfix.
+
+ Will merge to 'master'.
+
+
+* ks/branch-set-upstream (2018-06-14) 1 commit
+ - t3200: clarify description of --set-upstream test
+
+ A test title has been reworded to clarify it.
+
+
+* jt/fetch-pack-negotiator (2018-06-15) 7 commits
+ - fetch-pack: introduce negotiator API
+ - fetch-pack: move common check and marking together
+ - fetch-pack: make negotiation-related vars local
+ - fetch-pack: use ref adv. to prune "have" sent
+ - fetch-pack: directly end negotiation if ACK ready
+ - fetch-pack: clear marks before re-marking
+ - fetch-pack: split up everything_local()
+
+ Code restructuring and a small fix to transport protocol v2 during
+ fetching.
+
+
+* ag/rebase-i-append-todo-help (2018-06-14) 2 commits
+ - rebase--interactive: rewrite append_todo_help() in C
+ - Merge branch 'ag/rebase-p' into ag/rebase-i-append-todo-help
+ (this branch is used by ag/rebase-i-rewrite-todo; uses ag/rebase-p.)
+
+ Stepwise rewriting of the machinery of "rebase -i" into C continues.
+
+
+* ag/rebase-i-rewrite-todo (2018-06-15) 3 commits
+ - rebase--interactive: rewrite the edit-todo functionality in C
+ - editor: add a function to launch the sequence editor
+ - Merge branch 'bc/t3430-fixup' into ag/rebase-i-rewrite-todo
+ (this branch uses ag/rebase-i-append-todo-help and ag/rebase-p.)
+
+ Stepwise rewriting of the machinery of "rebase -i" into C continues.
+
+
+* sb/fix-fetching-moved-submodules (2018-06-14) 2 commits
+ - t5526: test recursive submodules when fetching moved submodules
+ - submodule: fix NULL correctness in renamed broken submodules
+
+ The code to try seeing if a fetch is necessary in a submodule
+ during a fetch with --recurse-submodules got confused when the path
+ to the submodule was changed in the range of commits in the
+ superproject, sometimes showing "(null)".  This has been corrected.
 
  Will merge to 'next'.
 
 
-* jk/fetch-all-peeled-fix (2018-06-11) 1 commit
- - fetch-pack: don't try to fetch peel values with --all
+* sb/submodule-core-worktree (2018-06-14) 3 commits
+ - submodule deinit: unset core.worktree
+ - submodule: ensure core.worktree is set after update
+ - submodule: unset core.worktree if no working tree is present
+
+ "git submodule" did not correctly adjust core.worktree setting that
+ indicates whether/where a submodule repository has its associated
+ working tree across various state transitions, which has been
+ corrected.
+
+ Will merge to 'next'.
 
 
-* rd/diff-options-typofix (2018-06-11) 1 commit
- - diff-options.txt: fix minor typos, font inconsistencies, in docs
+* jk/ewah-bounds-check (2018-06-15) 2 commits
+ - ewah: adjust callers of ewah_read_mmap()
+ - ewah_read_mmap: bounds-check mmap reads
+ (this branch is used by ds/ewah-cleanup.)
+
+ The code to read compressed bitmap was not careful to avoid reading
+ past the end of the file, which has been corrected.
+
+ Will merge to 'next'.
 
 
-* ld/git-p4-updates (2018-06-12) 6 commits
- - git-p4: auto-size the block
- - git-p4: narrow the scope of exceptions caught when parsing an int
- - git-p4: raise exceptions from p4CmdList based on error from p4 server
- - git-p4: better error reporting when p4 fails
- - git-p4: add option to disable syncing of p4/master with p4
- - git-p4: disable-rebase: allow setting this via configuration
- (this branch uses rm/p4-submit-with-commit-option.)
+* ds/ewah-cleanup (2018-06-15) 9 commits
+ - ewah: drop ewah_serialize_native function
+ - ewah: drop ewah_deserialize function
+ - ewah_io: delete unused 'ewah_serialize()'
+ - ewah_bitmap: delete unused 'ewah_or()'
+ - ewah_bitmap: delete unused 'ewah_not()'
+ - ewah_bitmap: delete unused 'ewah_and_not()'
+ - ewah_bitmap: delete unused 'ewah_and()'
+ - ewah/bitmap.c: delete unused 'bitmap_each_bit()'
+ - ewah/bitmap.c: delete unused 'bitmap_clear()'
+ (this branch uses jk/ewah-bounds-check.)
+
+ Remove unused function definitions and declarations from ewah
+ bitmap subsystem.
+
+ Will merge to 'next'.
 
 
-* en/merge-recursive-cleanup (2018-06-12) 6 commits
- - merge-recursive: add pointer about unduly complex looking code
- - merge-recursive: rename conflict_rename_*() family of functions
- - merge-recursive: clarify the rename_dir/RENAME_DIR meaning
- - merge-recursive: align labels with their respective code blocks
- - merge-recursive: fix numerous argument alignment issues
- - merge-recursive: fix miscellaneous grammar error in comment
+* jc/clean-after-sanity-tests (2018-06-15) 1 commit
+ - tests: clean after SANITY tests
+
+ test cleanup.
+
+ Will merge to 'next'.
 
 
-* jh/partial-clone (2018-06-12) 1 commit
- - list-objects: check if filter is NULL before using
+* es/make-no-iconv (2018-06-15) 1 commit
+ - Makefile: make NO_ICONV really mean "no iconv"
 
+ "make NO_ICONV=NoThanks" did not override NEEDS_LIBICONV
+ (i.e. linkage of -lintl, -liconv, etc. that are platform-specific
+ tweaks), which has been corrected.
 
-* km/doc-workflows-typofix (2018-06-12) 1 commit
- - gitworkflows: fix grammar in 'Merge upwards' rule
-
-
-* ms/send-pack-honor-config (2018-06-12) 1 commit
- - builtin/send-pack: populate the default configs
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -148,8 +261,8 @@ of the repositories listed at
  cf. <9895c7b7-eac4-28c1-90c6-443acd1131b7@talktalk.net>
 
 
-* jh/json-writer (2018-03-28) 1 commit
- - json_writer: new routines to create data in JSON format
+* jh/json-writer (2018-06-13) 1 commit
+ - json_writer: new routines to create JSON data
 
  Preparatory code to later add json output for unspecified telemetry
  data.
@@ -170,16 +283,6 @@ of the repositories listed at
  before too long.
 
 
-* is/parsing-line-range (2018-06-01) 2 commits
- . log: prevent error if line range ends past end of file
- . blame: prevent error if range ends past end of file
-
- Parsing of -L[<N>][,[<M>]] parameters "git blame" and "git log"
- take has been tweaked.
-
- Updated.   Still seems to break a few tests.
-
-
 * av/fsmonitor-updates (2018-01-04) 6 commits
  - fsmonitor: use fsmonitor data in `git diff`
  - fsmonitor: remove debugging lines from t/t7519-status-fsmonitor.sh
@@ -195,7 +298,7 @@ of the repositories listed at
  cf. <alpine.DEB.2.21.1.1801042335130.32@MININT-6BKU6QN.europe.corp.microsoft.com>
 
 
-* pb/bisect-helper-2 (2017-10-28) 8 commits
+* pb/bisect-helper-2 (2018-06-13) 8 commits
  - t6030: make various test to pass GETTEXT_POISON tests
  - bisect--helper: `bisect_start` shell function partially in C
  - bisect--helper: `get_terms` & `bisect_terms` shell function in C
@@ -207,6 +310,11 @@ of the repositories listed at
 
  Expecting a reroll.
  cf. <0102015f5e5ee171-f30f4868-886f-47a1-a4e4-b4936afc545d-000000@eu-west-1.amazonses.com>
+
+ I just rebased the topic to a newer base as it did not build
+ standalone with the base I originally queued the topic on, but
+ otherwise there is no update to address any of the review comments
+ in the thread above---we are still waiting for a reroll.
 
 
 * mk/http-backend-content-length (2018-06-11) 3 commits
@@ -245,6 +353,124 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* is/parsing-line-range (2018-06-15) 2 commits
+ - log: prevent error if line range ends past end of file
+ - blame: prevent error if range ends past end of file
+
+ Parsing of -L[<N>][,[<M>]] parameters "git blame" and "git log"
+ take has been tweaked.
+
+
+* ab/refspec-init-fix (2018-06-11) 3 commits
+  (merged to 'next' on 2018-06-13 at 91d71d8435)
+ + refspec: initalize `refspec_item` in `valid_fetch_refspec()`
+ + refspec: add back a refspec_item_init() function
+ + refspec: s/refspec_item_init/&_or_die/g
+
+ Make refspec parsing codepath more robust.
+
+ Will cook in 'next'.
+
+
+* as/safecrlf-quiet-fix (2018-06-11) 1 commit
+  (merged to 'next' on 2018-06-13 at b163674843)
+ + config.c: fix regression for core.safecrlf false
+
+ Fix for 2.17-era regression.
+
+ Will cook in 'next'.
+
+
+* sg/gpg-tests-fix (2018-06-11) 2 commits
+  (merged to 'next' on 2018-06-13 at f3a05f1c41)
+ + tests: make forging GPG signed commits and tags more robust
+ + t7510-signed-commit: use 'test_must_fail'
+
+ Some flaky tests have been fixed.
+
+ Will cook in 'next'.
+
+
+* jk/fetch-all-peeled-fix (2018-06-13) 2 commits
+  (merged to 'next' on 2018-06-13 at 1333bb9d90)
+ + fetch-pack: test explicitly that --all can fetch tag references pointing to non-commits
+ + fetch-pack: don't try to fetch peel values with --all
+
+ "git fetch-pack --all" used to unnecessarily fail upon seeing an
+ annotated tag that points at an object other than a commit.
+
+ Will cook in 'next'.
+
+
+* rd/diff-options-typofix (2018-06-11) 1 commit
+  (merged to 'next' on 2018-06-13 at a5aa58fa1b)
+ + diff-options.txt: fix minor typos, font inconsistencies, in docs
+
+ Typofix.
+
+ Will merge to 'master'.
+
+
+* ld/git-p4-updates (2018-06-12) 6 commits
+  (merged to 'next' on 2018-06-13 at 4f7e24b3c4)
+ + git-p4: auto-size the block
+ + git-p4: narrow the scope of exceptions caught when parsing an int
+ + git-p4: raise exceptions from p4CmdList based on error from p4 server
+ + git-p4: better error reporting when p4 fails
+ + git-p4: add option to disable syncing of p4/master with p4
+ + git-p4: disable-rebase: allow setting this via configuration
+ (this branch uses rm/p4-submit-with-commit-option.)
+
+ "git p4" updates.
+
+ Will merge to 'master'.
+
+
+* en/merge-recursive-cleanup (2018-06-12) 6 commits
+ - merge-recursive: add pointer about unduly complex looking code
+ - merge-recursive: rename conflict_rename_*() family of functions
+ - merge-recursive: clarify the rename_dir/RENAME_DIR meaning
+ - merge-recursive: align labels with their respective code blocks
+ - merge-recursive: fix numerous argument alignment issues
+ - merge-recursive: fix miscellaneous grammar error in comment
+
+ Code cleanup.
+
+ Will merge to 'next'.
+
+
+* jh/partial-clone (2018-06-12) 1 commit
+  (merged to 'next' on 2018-06-13 at 818f864b0c)
+ + list-objects: check if filter is NULL before using
+
+ The recent addition of "partial clone" experimental feature kicked
+ in when it shouldn't, namely, when there is no partial-clone filter
+ defined even if extensions.partialclone is set.
+
+ Will cook in 'next'.
+
+
+* km/doc-workflows-typofix (2018-06-12) 1 commit
+  (merged to 'next' on 2018-06-13 at 21e6a8e67b)
+ + gitworkflows: fix grammar in 'Merge upwards' rule
+
+ Typofix.
+
+ Will merge to 'master'.
+
+
+* ms/send-pack-honor-config (2018-06-12) 1 commit
+  (merged to 'next' on 2018-06-13 at e2cd933715)
+ + builtin/send-pack: populate the default configs
+
+ "git send-pack --signed" (hence "git push --signed" over the http
+ transport) did not read user ident from the config mechanism to
+ determine whom to sign the push certificate as, which has been
+ corrected.
+
+ Will cook in 'next'.
+
+
 * ab/checkout-default-remote (2018-06-11) 8 commits
  - checkout & worktree: introduce checkout.defaultRemote
  - checkout: add advice for ambiguous "checkout <branch>"
@@ -257,13 +483,14 @@ of the repositories listed at
 
 
 * nd/reject-empty-shallow-request (2018-06-04) 1 commit
- - upload-pack: reject shallow requests that would return nothing
+  (merged to 'next' on 2018-06-13 at d6b6a1c3a7)
+ + upload-pack: reject shallow requests that would return nothing
 
  "git fetch --shallow-since=<cutoff>" that specifies the cut-off
  point that is newer than the existing history used to end up
  grabbing the entire history.  Such a request now errors out.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * pw/add-p-recount (2018-06-11) 1 commit
@@ -276,73 +503,66 @@ of the repositories listed at
  Git 2.17 timeframe failed to parse such a patch, but now it learned
  to notice the situation and cope with it.
 
- Will merge to and cook in 'next'.
+ Will merge to 'next'.
 
 
 * rd/comment-typofix-in-sha1-file (2018-06-04) 1 commit
- - sha1-file.c: correct $GITDIR to $GIT_DIR in a comment
+  (merged to 'next' on 2018-06-13 at 38ef825556)
+ + sha1-file.c: correct $GITDIR to $GIT_DIR in a comment
 
  In code comment typofix
-
- Will merge to 'next'.
-
-
-* sg/update-ref-stdin-cleanup (2018-06-04) 1 commit
- - update-ref --stdin: use skip_prefix()
-
- Code cleanup.
-
- Will merge to 'next'.
-
-
-* cc/tests-without-assuming-ref-files-backend (2018-06-04) 1 commit
- - t9104: kosherly remove remote refs
-
- Instead of mucking with filesystem directly, use plumbing commands
- update-ref etc. to manipulate the refs in the tests.
-
- Will merge to 'next'.
-
-
-* ag/rebase-p (2018-06-01) 4 commits
- - rebase: remove -p code from git-rebase--interactive.sh
- - rebase: use the new git-rebase--preserve-merges.sh
- - rebase: strip unused code in git-rebase--preserve-merges.sh
- - rebase: introduce a dedicated backend for --preserve-merges
-
- Separate "rebase -p" codepath out of "rebase -i" implementation to
- slim down the latter and make it easier to manage.
-
- Will merge to 'next'.
-
-
-* jk/index-pack-maint (2018-06-11) 3 commits
-  (merged to 'next' on 2018-06-11 at f85a566b11)
- + index-pack: correct install_packed_git() args
-  (merged to 'next' on 2018-06-04 at c553a485e8)
- + index-pack: handle --strict checks of non-repo packs
- + prepare_commit_graft: treat non-repository as a noop
-
- "index-pack --strict" has been taught to make sure that it runs the
- final object integrity checks after making the freshly indexed
- packfile available to itself.
 
  Will merge to 'master'.
 
 
+* sg/update-ref-stdin-cleanup (2018-06-04) 1 commit
+  (merged to 'next' on 2018-06-13 at 2b9924760d)
+ + update-ref --stdin: use skip_prefix()
+
+ Code cleanup.
+
+ Will cook in 'next'.
+
+
+* cc/tests-without-assuming-ref-files-backend (2018-06-04) 1 commit
+  (merged to 'next' on 2018-06-13 at 7e2f74431c)
+ + t9104: kosherly remove remote refs
+
+ Instead of mucking with filesystem directly, use plumbing commands
+ update-ref etc. to manipulate the refs in the tests.
+
+ Will cook in 'next'.
+
+
+* ag/rebase-p (2018-06-01) 4 commits
+  (merged to 'next' on 2018-06-13 at dd6f8a51d7)
+ + rebase: remove -p code from git-rebase--interactive.sh
+ + rebase: use the new git-rebase--preserve-merges.sh
+ + rebase: strip unused code in git-rebase--preserve-merges.sh
+ + rebase: introduce a dedicated backend for --preserve-merges
+ (this branch is used by ag/rebase-i-append-todo-help and ag/rebase-i-rewrite-todo.)
+
+ Separate "rebase -p" codepath out of "rebase -i" implementation to
+ slim down the latter and make it easier to manage.
+
+ Will cook in 'next'.
+
+
 * ls/complete-remote-update-names (2018-06-01) 1 commit
- - completion: complete remote names too
+  (merged to 'next' on 2018-06-13 at 86b4d23278)
+ + completion: complete remote names too
 
  "git remote update" can take both a single remote nickname and a
  nickname for remote groups, and the completion script (in contrib/)
  has been taught about it.
 
- Will merge to and cook in 'next'.
+ Will cook in 'next'.
 
 
 * sb/plug-misc-leaks (2018-06-04) 5 commits
- - SQUASH: tentatively cast const-ness away when calling free()
- - sequencer.c: plug mem leak in git_sequencer_config
+  (merged to 'next' on 2018-06-13 at bf68cabe28)
+ + SQUASH: tentatively cast const-ness away when calling free()
+ + sequencer.c: plug mem leak in git_sequencer_config
   (merged to 'next' on 2018-06-04 at fbefac1c7a)
  + sequencer.c: plug leaks in do_pick_commit
  + submodule--helper: plug mem leak in print_default_remote
@@ -350,7 +570,7 @@ of the repositories listed at
 
  Misc leak plugging.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * ds/commit-graph-fsck (2018-05-29) 20 commits
@@ -415,26 +635,27 @@ of the repositories listed at
 
 
 * nd/complete-config-vars (2018-05-29) 13 commits
- - completion: complete general config vars in two steps
- - log-tree: allow to customize 'grafted' color
- - completion: support case-insensitive config vars
- - completion: keep other config var completion in camelCase
- - completion: drop the hard coded list of config vars
- - am: move advice.amWorkDir parsing back to advice.c
- - advice: keep config name in camelCase in advice_config[]
- - fsck: produce camelCase config key names
- - help: add --config to list all available config
- - fsck: factor out msg_id_info[] lazy initialization code
- - grep: keep all colors in an array
- - Add and use generic name->id mapping code for color slot parsing
- - Merge branch 'nd/command-list' into nd/complete-config-vars
+  (merged to 'next' on 2018-06-13 at c2dd5546d0)
+ + completion: complete general config vars in two steps
+ + log-tree: allow to customize 'grafted' color
+ + completion: support case-insensitive config vars
+ + completion: keep other config var completion in camelCase
+ + completion: drop the hard coded list of config vars
+ + am: move advice.amWorkDir parsing back to advice.c
+ + advice: keep config name in camelCase in advice_config[]
+ + fsck: produce camelCase config key names
+ + help: add --config to list all available config
+ + fsck: factor out msg_id_info[] lazy initialization code
+ + grep: keep all colors in an array
+ + Add and use generic name->id mapping code for color slot parsing
+ + Merge branch 'nd/command-list' into nd/complete-config-vars
 
  Continuing with the idea to programatically enumerate various
  pieces of data required for command line completion, teach the
  codebase to report the list of configuration variables
  subcommands care about to help complete them.
 
- Will merge to and cook in 'next'.
+ Will cook in 'next'.
 
 
 * nd/completion-negation (2018-06-11) 3 commits
@@ -447,28 +668,34 @@ of the repositories listed at
  has been taught to enumerate options prefixed with "--no-" to
  negate them.
 
- Will merge to and cook in 'next'.
+ Will merge to 'next'.
 
 
 * jm/cache-entry-from-mem-pool (2018-05-24) 7 commits
- - block alloc: add validations around cache_entry lifecyle
- - block alloc: allocate cache entries from mem_pool
- - mem-pool: fill out functionality
- - mem-pool: add lifecycle management functions
- - mem-pool: only search head block for available space
- - block alloc: add lifecycle APIs for cache_entry structs
- - read-cache: teach refresh_cache_entry() to take istate
+  (merged to 'next' on 2018-06-13 at 34a0e21f3e)
+ + block alloc: add validations around cache_entry lifecyle
+ + block alloc: allocate cache entries from mem_pool
+ + mem-pool: fill out functionality
+ + mem-pool: add lifecycle management functions
+ + mem-pool: only search head block for available space
+ + block alloc: add lifecycle APIs for cache_entry structs
+ + read-cache: teach refresh_cache_entry() to take istate
 
  For a large tree, the index needs to hold many cache entries
  allocated on heap.  These cache entries are now allocated out of a
  dedicated memory pool to amortize malloc(3) overhead.
 
+ Will cook in 'next'.
 
-* rm/p4-submit-with-commit-option (2018-05-21) 1 commit
- - git-p4: add options --commit and --disable-rebase
+
+* rm/p4-submit-with-commit-option (2018-06-12) 1 commit
+  (merged to 'next' on 2018-06-13 at d3a272c733)
+ + git-p4: add options --commit and --disable-rebase
  (this branch is used by ld/git-p4-updates.)
 
- Needs sign-off.
+ "git p4" updates.
+
+ Will merge to 'master'.
 
 
 * ds/commit-graph-lockfile-fix (2018-05-22) 1 commit
@@ -551,7 +778,7 @@ of the repositories listed at
  The conversion to pass "the_repository" and then "a_repository"
  throughout the object access API continues.
 
- Will merge to and cook in 'next'.
+ Will merge to 'next'.
 
 
 * pc/submodule-helper-foreach (2018-05-11) 4 commits
@@ -596,25 +823,26 @@ of the repositories listed at
 
 
 * sb/object-store-alloc (2018-05-16) 13 commits
- - alloc: allow arbitrary repositories for alloc functions
- - object: allow create_object to handle arbitrary repositories
- - object: allow grow_object_hash to handle arbitrary repositories
- - alloc: add repository argument to alloc_commit_index
- - alloc: add repository argument to alloc_report
- - alloc: add repository argument to alloc_object_node
- - alloc: add repository argument to alloc_tag_node
- - alloc: add repository argument to alloc_commit_node
- - alloc: add repository argument to alloc_tree_node
- - alloc: add repository argument to alloc_blob_node
- - object: add repository argument to grow_object_hash
- - object: add repository argument to create_object
- - repository: introduce parsed objects field
+  (merged to 'next' on 2018-06-13 at 2868c2db9d)
+ + alloc: allow arbitrary repositories for alloc functions
+ + object: allow create_object to handle arbitrary repositories
+ + object: allow grow_object_hash to handle arbitrary repositories
+ + alloc: add repository argument to alloc_commit_index
+ + alloc: add repository argument to alloc_report
+ + alloc: add repository argument to alloc_object_node
+ + alloc: add repository argument to alloc_tag_node
+ + alloc: add repository argument to alloc_commit_node
+ + alloc: add repository argument to alloc_tree_node
+ + alloc: add repository argument to alloc_blob_node
+ + object: add repository argument to grow_object_hash
+ + object: add repository argument to create_object
+ + repository: introduce parsed objects field
  (this branch is used by sb/object-store-grafts.)
 
  The conversion to pass "the_repository" and then "a_repository"
  throughout the object access API continues.
 
- Will merge to and cook in 'next'.
+ Will cook in 'next'.
 
 
 * tb/grep-column (2018-05-14) 7 commits
