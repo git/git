@@ -1099,6 +1099,7 @@ EOF
 '
 
 test_expect_success POSIXPERM,SANITY 'status succeeds in a read-only repository' '
+	test_when_finished "chmod 775 .git" &&
 	(
 		chmod a-w .git &&
 		# make dir1/tracked stat-dirty
@@ -1108,9 +1109,6 @@ test_expect_success POSIXPERM,SANITY 'status succeeds in a read-only repository'
 		# make sure "status" succeeded without writing index out
 		git diff-files | grep dir1/tracked
 	)
-	status=$?
-	chmod 775 .git
-	(exit $status)
 '
 
 (cd sm && echo > bar && git add bar && git commit -q -m 'Add bar') && git add sm
