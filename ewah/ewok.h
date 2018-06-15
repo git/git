@@ -96,13 +96,6 @@ ssize_t ewah_read_mmap(struct ewah_bitmap *self, const void *map, size_t len);
 uint32_t ewah_checksum(struct ewah_bitmap *self);
 
 /**
- * Logical not (bitwise negation) in-place on the bitmap
- *
- * This operation is linear time based on the size of the bitmap.
- */
-void ewah_not(struct ewah_bitmap *self);
-
-/**
  * Call the given callback with the position of every single bit
  * that has been set on the bitmap.
  *
