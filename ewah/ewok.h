@@ -179,11 +179,6 @@ void ewah_xor(
 	struct ewah_bitmap *ewah_j,
 	struct ewah_bitmap *out);
 
-void ewah_and(
-	struct ewah_bitmap *ewah_i,
-	struct ewah_bitmap *ewah_j,
-	struct ewah_bitmap *out);
-
 /**
  * Direct word access
  */
