@@ -331,4 +331,17 @@ test_expect_success 'pack reuse respects --incremental' '
 	git show-index <empty.idx >actual &&
 	test_cmp expect actual
 '
+
+test_expect_success 'truncated bitmap fails gracefully' '
+	git repack -ad &&
+	git rev-list --use-bitmap-index --count --all >expect &&
+	bitmap=$(ls .git/objects/pack/*.bitmap) &&
+	test_when_finished "rm -f $bitmap" &&
+	head -c 512 <$bitmap >$bitmap.tmp &&
+	mv -f $bitmap.tmp $bitmap &&
+	git rev-list --use-bitmap-index --count --all >actual 2>stderr &&
+	test_cmp expect actual &&
+	test_i18ngrep corrupt stderr
+'
+
 test_done
