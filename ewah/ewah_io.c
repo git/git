@@ -100,16 +100,6 @@ int ewah_serialize_to(struct ewah_bitmap *self,
 	return (3 * 4) + (self->buffer_size * 8);
 }
 
-static int write_helper(void *fd, const void *buf, size_t len)
-{
-	return write((intptr_t)fd, buf, len);
-}
-
-int ewah_serialize(struct ewah_bitmap *self, int fd)
-{
-	return ewah_serialize_to(self, write_helper, (void *)(intptr_t)fd);
-}
-
 static int write_strbuf(void *user_data, const void *data, size_t len)
 {
 	struct strbuf *sb = user_data;

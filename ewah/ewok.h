@@ -86,7 +86,6 @@ void ewah_free(struct ewah_bitmap *self);
 int ewah_serialize_to(struct ewah_bitmap *self,
 		      int (*write_fun)(void *out, const void *buf, size_t len),
 		      void *out);
-int ewah_serialize(struct ewah_bitmap *self, int fd);
 int ewah_serialize_native(struct ewah_bitmap *self, int fd);
 int ewah_serialize_strbuf(struct ewah_bitmap *self, struct strbuf *);
 
