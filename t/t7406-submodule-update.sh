@@ -65,7 +65,7 @@ test_expect_success 'setup a submodule tree' '
 	 git commit -m "none"
 	) &&
 	git clone . recursivesuper &&
-	( cd recursivesuper
+	( cd recursivesuper &&
 	 git submodule add ../super super
 	)
 '
@@ -245,13 +245,13 @@ test_expect_success 'submodule update --remote should fetch upstream changes wit
 	(
 		cd super &&
 		git submodule update --remote --force submodule &&
-		git -C submodule log -1 --oneline >actual
-		git -C ../submodule log -1 --oneline master >expect
+		git -C submodule log -1 --oneline >actual &&
+		git -C ../submodule log -1 --oneline master >expect &&
 		test_cmp expect actual &&
 		git checkout -b test-branch &&
 		git submodule update --remote --force submodule &&
-		git -C submodule log -1 --oneline >actual
-		git -C ../submodule log -1 --oneline test-branch >expect
+		git -C submodule log -1 --oneline >actual &&
+		git -C ../submodule log -1 --oneline test-branch >expect &&
 		test_cmp expect actual &&
 		git checkout master &&
 		git branch -d test-branch &&
@@ -891,7 +891,7 @@ test_expect_success 'submodule update properly revives a moved submodule' '
 	 rm -rf submodule2 &&
 	 mkdir -p "moved/sub module" &&
 	 git update-index --add --cacheinfo 160000 $H "moved/sub module" &&
-	 git config -f .gitmodules submodule.submodule2.path "moved/sub module"
+	 git config -f .gitmodules submodule.submodule2.path "moved/sub module" &&
 	 git commit -am "post move" &&
 	 git submodule update &&
 	 git status | sed "s/$H2/XXX/" >actual &&
