@@ -1076,7 +1076,7 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 	if (get_pack(args, fd, pack_lockfile))
 		die(_("git fetch-pack: fetch failed."));
 
- all_done:
+all_done:
 	return ref;
 }
 
