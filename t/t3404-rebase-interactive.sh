@@ -971,6 +971,15 @@ test_expect_success 'rebase -i --root fixup root commit' '
 	test 0 = $(git cat-file commit HEAD | grep -c ^parent\ )
 '
 
+test_expect_success 'rebase -i --root reword root commit' '
+	test_when_finished "test_might_fail git rebase --abort" &&
+	git checkout -b reword-root-branch master &&
+	set_fake_editor &&
+	FAKE_LINES="reword 1 2" FAKE_COMMIT_MESSAGE="A changed" \
+	git rebase -i --root &&
+	git show HEAD^ | grep "A changed"
+'
+
 test_expect_success C_LOCALE_OUTPUT 'rebase --edit-todo does not work on non-interactive rebase' '
 	git reset --hard &&
 	git checkout conflict-branch &&
