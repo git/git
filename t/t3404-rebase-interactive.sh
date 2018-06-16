@@ -971,7 +971,7 @@ test_expect_success 'rebase -i --root fixup root commit' '
 	test 0 = $(git cat-file commit HEAD | grep -c ^parent\ )
 '
 
-test_expect_failure 'rebase -i --root reword root commit' '
+test_expect_success 'rebase -i --root reword root commit' '
 	test_when_finished "test_might_fail git rebase --abort" &&
 	git checkout -b reword-root-branch master &&
 	set_fake_editor &&
