@@ -24,6 +24,10 @@
 #          will show username, at-sign, host, colon, cwd, then
 #          various status string, followed by dollar and SP, as
 #          your prompt.
+#	   NOTE: To mimic terminal's default $PROMPT_COMMAND 
+#          (history check on login and update tab title to current dir):
+#            shell_session_history_check
+#            PROMPT_COMMAND='update_terminal_cwd && __git_ps1 "\u@\h:\w" "\\\$ "'
 #        ZSH:  precmd () { __git_ps1 "%n" ":%~$ " "|%s" }
 #          will show username, pipe, then various status string,
 #          followed by colon, cwd, dollar and SP, as your prompt.
