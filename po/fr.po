@@ -74,8 +74,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2018-05-31 23:32+0800\n"
-"PO-Revision-Date: 2018-06-03 16:32+0200\n"
+"POT-Creation-Date: 2018-06-16 22:06+0800\n"
+"PO-Revision-Date: 2018-06-16 20:42+0200\n"
 "Last-Translator: Jean-Noël Avila <jn.avila@free.fr>\n"
 "Language-Team: Jean-Noël Avila <jn.avila@free.fr>\n"
 "Language: fr\n"
@@ -126,7 +126,7 @@ msgstr ""
 msgid "Exiting because of an unresolved conflict."
 msgstr "Abandon à cause de conflit non résolu."
 
-#: advice.c:168 builtin/merge.c:1249
+#: advice.c:168 builtin/merge.c:1250
 msgid "You have not concluded your merge (MERGE_HEAD exists)."
 msgstr "Vous n'avez pas terminé votre fusion (MERGE_HEAD existe)."
 
@@ -841,23 +841,23 @@ msgstr "git archive --remote <dépôt> [--exec <commande>] --list"
 msgid "pathspec '%s' did not match any files"
 msgstr "le chemin '%s' ne correspond à aucun fichier"
 
-#: archive.c:436
+#: archive.c:434
 msgid "fmt"
 msgstr "fmt"
 
-#: archive.c:436
+#: archive.c:434
 msgid "archive format"
 msgstr "format d'archive"
 
-#: archive.c:437 builtin/log.c:1462
+#: archive.c:435 builtin/log.c:1462
 msgid "prefix"
 msgstr "préfixe"
 
-#: archive.c:438
+#: archive.c:436
 msgid "prepend prefix to each pathname in the archive"
 msgstr "préfixer chaque chemin de fichier dans l'archive"
 
-#: archive.c:439 builtin/blame.c:813 builtin/blame.c:814 builtin/config.c:127
+#: archive.c:437 builtin/blame.c:813 builtin/blame.c:814 builtin/config.c:127
 #: builtin/fast-export.c:1007 builtin/fast-export.c:1009 builtin/grep.c:869
 #: builtin/hash-object.c:103 builtin/ls-files.c:551 builtin/ls-files.c:554
 #: builtin/notes.c:405 builtin/notes.c:568 builtin/read-tree.c:119
@@ -865,69 +865,69 @@ msgstr "préfixer chaque chemin de fichier dans l'archive"
 msgid "file"
 msgstr "fichier"
 
-#: archive.c:440 builtin/archive.c:89
+#: archive.c:438 builtin/archive.c:89
 msgid "write the archive to this file"
 msgstr "écrire l'archive dans ce fichier"
 
-#: archive.c:442
+#: archive.c:440
 msgid "read .gitattributes in working directory"
 msgstr "lire .gitattributes dans le répertoire de travail"
 
-#: archive.c:443
+#: archive.c:441
 msgid "report archived files on stderr"
 msgstr "afficher les fichiers archivés sur stderr"
 
-#: archive.c:444
+#: archive.c:442
 msgid "store only"
 msgstr "stockage seulement"
 
-#: archive.c:445
+#: archive.c:443
 msgid "compress faster"
 msgstr "compression rapide"
 
-#: archive.c:453
+#: archive.c:451
 msgid "compress better"
 msgstr "compression efficace"
 
-#: archive.c:456
+#: archive.c:454
 msgid "list supported archive formats"
 msgstr "afficher les formats d'archive supportés"
 
-#: archive.c:458 builtin/archive.c:90 builtin/clone.c:110 builtin/clone.c:113
+#: archive.c:456 builtin/archive.c:90 builtin/clone.c:110 builtin/clone.c:113
 #: builtin/submodule--helper.c:1222 builtin/submodule--helper.c:1593
 msgid "repo"
 msgstr "dépôt"
 
-#: archive.c:459 builtin/archive.c:91
+#: archive.c:457 builtin/archive.c:91
 msgid "retrieve the archive from remote repository <repo>"
 msgstr "récupérer l'archive depuis le dépôt distant <dépôt>"
 
-#: archive.c:460 builtin/archive.c:92 builtin/notes.c:489
+#: archive.c:458 builtin/archive.c:92 builtin/notes.c:489
 msgid "command"
 msgstr "commande"
 
-#: archive.c:461 builtin/archive.c:93
+#: archive.c:459 builtin/archive.c:93
 msgid "path to the remote git-upload-archive command"
 msgstr "chemin vers la commande distante git-upload-archive"
 
-#: archive.c:468
+#: archive.c:466
 msgid "Unexpected option --remote"
 msgstr "Option --remote inattendue"
 
-#: archive.c:470
+#: archive.c:468
 msgid "Option --exec can only be used together with --remote"
 msgstr "L'option --exec ne peut être utilisée qu'en complément de --remote"
 
-#: archive.c:472
+#: archive.c:470
 msgid "Unexpected option --output"
 msgstr "Option --output inattendue"
 
-#: archive.c:494
+#: archive.c:492
 #, c-format
 msgid "Unknown archive format '%s'"
 msgstr "Format d'archive inconnu '%s'"
 
-#: archive.c:501
+#: archive.c:499
 #, c-format
 msgid "Argument not supported for format '%s': -%d"
 msgstr "Argument non supporté pour le format '%s' : -%d"
@@ -1079,9 +1079,9 @@ msgstr ""
 "--reverse et --first-parent ensemble nécessitent la spécification d'un "
 "dernier commit"
 
-#: blame.c:1796 bundle.c:160 ref-filter.c:2075 sequencer.c:1860
-#: sequencer.c:3631 builtin/commit.c:981 builtin/log.c:366 builtin/log.c:920
-#: builtin/log.c:1371 builtin/log.c:1702 builtin/log.c:1950 builtin/merge.c:371
+#: blame.c:1796 bundle.c:160 ref-filter.c:2075 sequencer.c:1861
+#: sequencer.c:3632 builtin/commit.c:981 builtin/log.c:366 builtin/log.c:920
+#: builtin/log.c:1371 builtin/log.c:1702 builtin/log.c:1950 builtin/merge.c:372
 #: builtin/shortlog.c:192
 msgid "revision walk setup failed"
 msgstr "échec de la préparation du parcours des révisions"
@@ -1261,7 +1261,7 @@ msgstr "'%s' ne semble pas être un fichier bundle v2"
 msgid "unrecognized header: %s%s (%d)"
 msgstr "en-tête non reconnu : %s%s (%d)"
 
-#: bundle.c:88 sequencer.c:2080 sequencer.c:2557 builtin/commit.c:755
+#: bundle.c:88 sequencer.c:2081 sequencer.c:2558 builtin/commit.c:755
 #, c-format
 msgid "could not open '%s'"
 msgstr "impossible d'ouvrir '%s'"
@@ -1328,7 +1328,7 @@ msgstr "l'index de groupe a disparu"
 msgid "invalid color value: %.*s"
 msgstr "Valeur invalide de couleur : %.*s"
 
-#: commit.c:43 sequencer.c:2363 builtin/am.c:421 builtin/am.c:465
+#: commit.c:43 sequencer.c:2364 builtin/am.c:421 builtin/am.c:465
 #: builtin/am.c:1436 builtin/am.c:2072 builtin/replace.c:376
 #: builtin/replace.c:448
 #, c-format
@@ -1360,7 +1360,7 @@ msgstr ""
 "Supprimez ce message en lançant\n"
 "\"git config advice.graftFileDeprecated false\""
 
-#: commit.c:1537
+#: commit.c:1540
 msgid ""
 "Warning: commit message did not conform to UTF-8.\n"
 "You may want to amend it after fixing the message, or set the config\n"
@@ -1564,11 +1564,11 @@ msgstr "impossible de régler '%s' à '%s'"
 msgid "could not unset '%s'"
 msgstr "impossible de désinitialiser '%s'"
 
-#: connect.c:60
+#: connect.c:61
 msgid "The remote end hung up upon initial contact"
 msgstr "L'hôte distant a fermé la connexion lors du contact initial"
 
-#: connect.c:62
+#: connect.c:63
 msgid ""
 "Could not read from remote repository.\n"
 "\n"
@@ -1636,7 +1636,9 @@ msgstr "Aucun BOM n'est permis dans '%s' s'il est encodé comme %s"
 msgid ""
 "The file '%s' contains a byte order mark (BOM). Please use UTF-%s as working-"
 "tree-encoding."
-msgstr "Le fichier '%s' contient un marqueur d'ordre d'octets (BOM). Veuillez utiliser UTF-%s comme encodage d'arbre de travail."
+msgstr ""
+"Le fichier '%s' contient un marqueur d'ordre d'octets (BOM). Veuillez "
+"utiliser UTF-%s comme encodage d'arbre de travail."
 
 #: convert.c:304
 #, c-format
@@ -1648,7 +1650,10 @@ msgstr "Un BOM est obligatoire dans '%s' s'il est encodé comme %s"
 msgid ""
 "The file '%s' is missing a byte order mark (BOM). Please use UTF-%sBE or UTF-"
 "%sLE (depending on the byte order) as working-tree-encoding."
-msgstr "Il manque un marqueur d'ordre d'octets (BOM) au fichier '%s'. Veuillez utiliser UTF-%sBE ou UTF-%sLE (selon l'ordre désiré) comme encodage d'arbre de travail."
+msgstr ""
+"Il manque un marqueur d'ordre d'octets (BOM) au fichier '%s'. Veuillez "
+"utiliser UTF-%sBE ou UTF-%sLE (selon l'ordre désiré) comme encodage d'arbre "
+"de travail."
 
 #: convert.c:424
 #, c-format
@@ -1658,7 +1663,9 @@ msgstr "échec de l'encodage de '%s' de %s vers %s"
 #: convert.c:467
 #, c-format
 msgid "encoding '%s' from %s to %s and back is not the same"
-msgstr "encoder '%s' depuis %s vers %s puis inversement ne produit pas le même contenu"
+msgstr ""
+"encoder '%s' depuis %s vers %s puis inversement ne produit pas le même "
+"contenu"
 
 #: convert.c:1225
 msgid "true/false are no valid working-tree-encodings"
@@ -2098,20 +2105,82 @@ msgstr "échec du stat de '%s'"
 msgid "'%s': short read"
 msgstr "'%s' : lecture tronquée"
 
-#: help.c:179
+#: help.c:23
+msgid "start a working area (see also: git help tutorial)"
+msgstr "démarrer une zone de travail (voir aussi : git help tutorial)"
+
+#: help.c:24
+msgid "work on the current change (see also: git help everyday)"
+msgstr ""
+"travailler sur la modification actuelle (voir aussi : git help revisions)"
+
+#: help.c:25
+msgid "examine the history and state (see also: git help revisions)"
+msgstr "examiner l'historique et l'état (voir aussi : git help revisions)"
+
+#: help.c:26
+msgid "grow, mark and tweak your common history"
+msgstr "agrandir, marquer et modifier votre historique"
+
+#: help.c:27
+msgid "collaborate (see also: git help workflows)"
+msgstr "collaborer (voir aussi : git help workflows)"
+
+#: help.c:31
+msgid "Main Porcelain Commands"
+msgstr "Commandes Porcelaine Principales"
+
+#: help.c:32
+msgid "Ancillary Commands / Manipulators"
+msgstr "Commandes Auxiliaires / Manipulateurs"
+
+#: help.c:33
+msgid "Ancillary Commands / Interrogators"
+msgstr "Commandes Auxiliaires / Interrogateurs"
+
+#: help.c:34
+msgid "Interacting with Others"
+msgstr "Interaction avec d'autres développeurs"
+
+#: help.c:35
+msgid "Low-level Commands / Manipulators"
+msgstr "Commandes bas-niveau / Manipulateurs"
+
+#: help.c:36
+msgid "Low-level Commands / Interrogators"
+msgstr "Commandes bas niveau / Interrogateurs"
+
+#: help.c:37
+msgid "Low-level Commands / Synching Repositories"
+msgstr "Commandes bas niveau / Synchronisation de dépôts"
+
+#: help.c:38
+msgid "Low-level Commands / Internal Helpers"
+msgstr "Commandes bas niveau / Assistants internes"
+
+#: help.c:293
 #, c-format
 msgid "available git commands in '%s'"
 msgstr "commandes git disponibles dans '%s'"
 
-#: help.c:186
+#: help.c:300
 msgid "git commands available from elsewhere on your $PATH"
 msgstr "commandes git disponibles depuis un autre endroit de votre $PATH"
 
-#: help.c:217
+#: help.c:309
 msgid "These are common Git commands used in various situations:"
 msgstr "Ci-dessous les commandes Git habituelles dans diverses situations :"
 
-#: help.c:281
+#: help.c:358 git.c:90
+#, c-format
+msgid "unsupported command listing type '%s'"
+msgstr "type de liste de commandes non supporté '%s'"
+
+#: help.c:405
+msgid "The common Git guides are:"
+msgstr "Les guides Git populaires sont :"
+
+#: help.c:467
 #, c-format
 msgid ""
 "'%s' appears to be a git command, but we were not\n"
@@ -2120,33 +2189,33 @@ msgstr ""
 "'%s' semble être une commande git, mais elle n'a pas pu\n"
 "être exécutée. Peut-être git-%s est-elle cassée ?"
 
-#: help.c:336
+#: help.c:526
 msgid "Uh oh. Your system reports no Git commands at all."
 msgstr "Ahem. Votre système n'indique aucune commande Git."
 
-#: help.c:358
+#: help.c:548
 #, c-format
 msgid "WARNING: You called a Git command named '%s', which does not exist."
 msgstr ""
 "ATTENTION : vous avez invoqué une commande Git nommée '%s' qui n'existe pas."
 
-#: help.c:363
+#: help.c:553
 #, c-format
 msgid "Continuing under the assumption that you meant '%s'."
 msgstr "Continuons en supposant que vous avez voulu dire '%s'."
 
-#: help.c:368
+#: help.c:558
 #, c-format
 msgid "Continuing in %0.1f seconds, assuming that you meant '%s'."
 msgstr ""
 "Continuons dans %0.1f secondes en supposant que vous avez voulu dire '%s'."
 
-#: help.c:376
+#: help.c:566
 #, c-format
 msgid "git: '%s' is not a git command. See 'git --help'."
 msgstr "git : '%s' n'est pas une commande git. Voir 'git --help'."
 
-#: help.c:380
+#: help.c:570
 msgid ""
 "\n"
 "The most similar command is"
@@ -2160,16 +2229,16 @@ msgstr[1] ""
 "\n"
 "Les commandes les plus ressemblantes sont"
 
-#: help.c:395
+#: help.c:585
 msgid "git version [<options>]"
 msgstr "git version [<options>]"
 
-#: help.c:462
+#: help.c:652
 #, c-format
 msgid "%s: %s - %s"
 msgstr "%s: %s - %s"
 
-#: help.c:466
+#: help.c:656
 msgid ""
 "\n"
 "Did you mean this?"
@@ -2358,7 +2427,9 @@ msgstr "Échec de fusion du sous-module %s (commits non présents)"
 #: merge-recursive.c:1200
 #, c-format
 msgid "Failed to merge submodule %s (commits don't follow merge-base)"
-msgstr "Échec de la fusion du sous-module %s (les commits ne descendent pas de la base de fusion)"
+msgstr ""
+"Échec de la fusion du sous-module %s (les commits ne descendent pas de la "
+"base de fusion)"
 
 #: merge-recursive.c:1208 merge-recursive.c:1220
 #, c-format
@@ -2367,13 +2438,14 @@ msgstr "Avance rapide du sous-module %s au commit suivant :"
 
 #: merge-recursive.c:1211 merge-recursive.c:1223
 #, c-format
-msgid "Fast-forwarding submodule %s to %s"
-msgstr "Avance rapide du sous-module %s à %s"
+msgid "Fast-forwarding submodule %s"
+msgstr "Avance rapide du sous-module %s"
 
 #: merge-recursive.c:1245
 #, c-format
 msgid "Failed to merge submodule %s (merge following commits not found)"
-msgstr "Échec de fusion du sous-module %s (fusion suivant les commits non trouvée)"
+msgstr ""
+"Échec de fusion du sous-module %s (fusion suivant les commits non trouvée)"
 
 #: merge-recursive.c:1249
 #, c-format
@@ -2423,7 +2495,9 @@ msgstr "Fusion automatique de %s"
 #: merge-recursive.c:1423
 #, c-format
 msgid "Error: Refusing to lose untracked file at %s; writing to %s instead."
-msgstr "Erreur : refus de perdre le fichier non suivi %s ; écriture dans %s à la place."
+msgstr ""
+"Erreur : refus de perdre le fichier non suivi %s ; écriture dans %s à la "
+"place."
 
 #: merge-recursive.c:1475
 #, c-format
@@ -2521,35 +2595,46 @@ msgid ""
 "CONFLICT (directory rename split): Unclear where to place %s because "
 "directory %s was renamed to multiple other directories, with no destination "
 "getting a majority of the files."
-msgstr "CONFLIT (renommage de répertoire coupé) : la place de %s n'est pas claire parce que le répertoire %s a été renommé en plusieurs autres répertoires, sans aucune destination récupérant la majorité des fichiers."
+msgstr ""
+"CONFLIT (renommage de répertoire coupé) : la place de %s n'est pas claire "
+"parce que le répertoire %s a été renommé en plusieurs autres répertoires, "
+"sans aucune destination récupérant la majorité des fichiers."
 
 #: merge-recursive.c:1983
 #, c-format
 msgid ""
 "CONFLICT (implicit dir rename): Existing file/dir at %s in the way of "
 "implicit directory rename(s) putting the following path(s) there: %s."
-msgstr "CONFLIT (renommage implicite de répertoire) : le répertoire/fichier %s gêne des renommages implicites de répertoire déplaçant les chemins suivants : %s."
+msgstr ""
+"CONFLIT (renommage implicite de répertoire) : le répertoire/fichier %s gêne "
+"des renommages implicites de répertoire déplaçant les chemins suivants : %s."
 
 #: merge-recursive.c:1993
 #, c-format
 msgid ""
 "CONFLICT (implicit dir rename): Cannot map more than one path to %s; "
 "implicit directory renames tried to put these paths there: %s"
-msgstr "CONFLIT (renommage implicite de répertoire) : impossible de transformer plusieurs chemins sur %s ; les chemins concernés sont : %s"
+msgstr ""
+"CONFLIT (renommage implicite de répertoire) : impossible de transformer "
+"plusieurs chemins sur %s ; les chemins concernés sont : %s"
 
 #: merge-recursive.c:2085
 #, c-format
 msgid ""
 "CONFLICT (rename/rename): Rename directory %s->%s in %s. Rename directory %s-"
 ">%s in %s"
-msgstr "CONFLIT (renommage/renommage) : renommage du répertoire %s->%s dans %s. Renommage de répertoire %s->%s dans %s"
+msgstr ""
+"CONFLIT (renommage/renommage) : renommage du répertoire %s->%s dans %s. "
+"Renommage de répertoire %s->%s dans %s"
 
 #: merge-recursive.c:2330
 #, c-format
 msgid ""
 "WARNING: Avoiding applying %s -> %s rename to %s, because %s itself was "
 "renamed."
-msgstr "AVERTISSEMENT : ne renomme pas %s->%s dans %s, parce que %s lui-même a été renommé."
+msgstr ""
+"AVERTISSEMENT : ne renomme pas %s->%s dans %s, parce que %s lui-même a été "
+"renommé."
 
 #: merge-recursive.c:2736
 #, c-format
@@ -2665,7 +2750,7 @@ msgstr "la fusion n'a pas retourné de commit"
 msgid "Could not parse object '%s'"
 msgstr "Impossible d'analyser l'objet '%s'"
 
-#: merge-recursive.c:3511 builtin/merge.c:658 builtin/merge.c:815
+#: merge-recursive.c:3511 builtin/merge.c:659 builtin/merge.c:816
 msgid "Unable to write index."
 msgstr "Impossible d'écrire l'index."
 
@@ -2870,12 +2955,12 @@ msgstr ""
 "GIT_INDEX_VERSION est renseigné, mais la valeur est invalide.\n"
 "Utilisation de la version %i"
 
-#: read-cache.c:2404 sequencer.c:4337 wrapper.c:658 builtin/merge.c:1047
+#: read-cache.c:2404 sequencer.c:4338 wrapper.c:658 builtin/merge.c:1048
 #, c-format
 msgid "could not close '%s'"
 msgstr "impossible de fermer '%s'"
 
-#: read-cache.c:2477 sequencer.c:2101 sequencer.c:3233
+#: read-cache.c:2477 sequencer.c:2102 sequencer.c:3234
 #, c-format
 msgid "could not stat '%s'"
 msgstr "stat impossible de '%s'"
@@ -2890,7 +2975,7 @@ msgstr "impossible d'ouvrir le répertoire git : %s"
 msgid "unable to unlink: %s"
 msgstr "échec lors de l'unlink : %s"
 
-#: refs.c:732 sequencer.c:4333 sequencer.c:4392 wrapper.c:225 wrapper.c:395
+#: refs.c:732 sequencer.c:4334 sequencer.c:4393 wrapper.c:225 wrapper.c:395
 #: builtin/am.c:779
 #, c-format
 msgid "could not open '%s' for writing"
@@ -3353,34 +3438,34 @@ msgstr "Le receveur ne gère pas les poussées avec --atomic"
 msgid "the receiving end does not support push options"
 msgstr "Le receveur ne gère pas les options de poussées"
 
-#: sequencer.c:174
+#: sequencer.c:175
 #, c-format
 msgid "invalid commit message cleanup mode '%s'"
 msgstr "mode de nettoyage invalide de message de validation '%s'"
 
-#: sequencer.c:274
+#: sequencer.c:275
 #, c-format
 msgid "could not delete '%s'"
 msgstr "Impossible de supprimer '%s'"
 
-#: sequencer.c:300
+#: sequencer.c:301
 msgid "revert"
 msgstr "revert"
 
-#: sequencer.c:302
+#: sequencer.c:303
 msgid "cherry-pick"
 msgstr "cherry-pick"
 
-#: sequencer.c:304
+#: sequencer.c:305
 msgid "rebase -i"
 msgstr "rebase -i"
 
-#: sequencer.c:306
+#: sequencer.c:307
 #, c-format
 msgid "Unknown action: %d"
 msgstr "Action inconnue : %d"
 
-#: sequencer.c:363
+#: sequencer.c:364
 msgid ""
 "after resolving the conflicts, mark the corrected paths\n"
 "with 'git add <paths>' or 'git rm <paths>'"
@@ -3388,7 +3473,7 @@ msgstr ""
 "après résolution des conflits, marquez les chemins corrigés\n"
 "avec 'git add <chemins>' ou 'git rm <chemins>'"
 
-#: sequencer.c:366
+#: sequencer.c:367
 msgid ""
 "after resolving the conflicts, mark the corrected paths\n"
 "with 'git add <paths>' or 'git rm <paths>'\n"
@@ -3398,45 +3483,45 @@ msgstr ""
 "avec 'git add <chemins>' ou 'git rm <chemins>'\n"
 "puis validez le résultat avec 'git commit'"
 
-#: sequencer.c:379 sequencer.c:2467
+#: sequencer.c:380 sequencer.c:2468
 #, c-format
 msgid "could not lock '%s'"
 msgstr "impossible de verrouiller '%s'"
 
-#: sequencer.c:381 sequencer.c:2345 sequencer.c:2471 sequencer.c:2485
-#: sequencer.c:2693 sequencer.c:4335 sequencer.c:4398 wrapper.c:656
+#: sequencer.c:382 sequencer.c:2346 sequencer.c:2472 sequencer.c:2486
+#: sequencer.c:2694 sequencer.c:4336 sequencer.c:4399 wrapper.c:656
 #, c-format
 msgid "could not write to '%s'"
 msgstr "impossible d'écrire dans '%s'"
 
-#: sequencer.c:386
+#: sequencer.c:387
 #, c-format
 msgid "could not write eol to '%s'"
 msgstr "impossible d'écrire la fin de ligne dans '%s'"
 
-#: sequencer.c:391 sequencer.c:2350 sequencer.c:2473 sequencer.c:2487
-#: sequencer.c:2701
+#: sequencer.c:392 sequencer.c:2351 sequencer.c:2474 sequencer.c:2488
+#: sequencer.c:2702
 #, c-format
 msgid "failed to finalize '%s'"
 msgstr "échec lors de la finalisation de '%s'"
 
-#: sequencer.c:414 sequencer.c:803 sequencer.c:1492 sequencer.c:2370
-#: sequencer.c:2683 sequencer.c:2787 builtin/am.c:259 builtin/commit.c:727
-#: builtin/merge.c:1045
+#: sequencer.c:415 sequencer.c:804 sequencer.c:1493 sequencer.c:2371
+#: sequencer.c:2684 sequencer.c:2788 builtin/am.c:259 builtin/commit.c:727
+#: builtin/merge.c:1046
 #, c-format
 msgid "could not read '%s'"
 msgstr "impossible de lire '%s'"
 
-#: sequencer.c:440
+#: sequencer.c:441
 #, c-format
 msgid "your local changes would be overwritten by %s."
 msgstr "vos modifications locales seraient écrasées par %s."
 
-#: sequencer.c:444
+#: sequencer.c:445
 msgid "commit your changes or stash them to proceed."
 msgstr "validez vos modifications ou les remiser pour continuer."
 
-#: sequencer.c:473
+#: sequencer.c:474
 #, c-format
 msgid "%s: fast-forward"
 msgstr "%s : avance rapide"
@@ -3444,20 +3529,20 @@ msgstr "%s : avance rapide"
 #. TRANSLATORS: %s will be "revert", "cherry-pick" or
 #. "rebase -i".
 #.
-#: sequencer.c:562
+#: sequencer.c:563
 #, c-format
 msgid "%s: Unable to write new index file"
 msgstr "%s: Impossible d'écrire le nouveau fichier index"
 
-#: sequencer.c:578
+#: sequencer.c:579
 msgid "unable to update cache tree"
 msgstr "impossible de mettre à jour l'arbre de cache"
 
-#: sequencer.c:591
+#: sequencer.c:592
 msgid "could not resolve HEAD commit"
 msgstr "impossible de résoudre le commit HEAD"
 
-#: sequencer.c:748
+#: sequencer.c:749
 #, c-format
 msgid ""
 "you have staged changes in your working tree\n"
@@ -3486,15 +3571,15 @@ msgstr ""
 "\n"
 "  git rebase --continue\n"
 
-#: sequencer.c:817
+#: sequencer.c:818
 msgid "writing root commit"
 msgstr "écriture du commit racine"
 
-#: sequencer.c:1042
+#: sequencer.c:1043
 msgid "'prepare-commit-msg' hook failed"
 msgstr "échec du crochet 'prepare-commit-msg'"
 
-#: sequencer.c:1049
+#: sequencer.c:1050
 msgid ""
 "Your name and email address were configured automatically based\n"
 "on your username and hostname. Please check that they are accurate.\n"
@@ -3522,7 +3607,7 @@ msgstr ""
 "\n"
 "    git commit --amend --reset-author\n"
 
-#: sequencer.c:1062
+#: sequencer.c:1063
 msgid ""
 "Your name and email address were configured automatically based\n"
 "on your username and hostname. Please check that they are accurate.\n"
@@ -3548,316 +3633,316 @@ msgstr ""
 "\n"
 "    git commit --amend --reset-author\n"
 
-#: sequencer.c:1102
+#: sequencer.c:1103
 msgid "couldn't look up newly created commit"
 msgstr "impossible de retrouver le commit nouvellement créé"
 
-#: sequencer.c:1104
+#: sequencer.c:1105
 msgid "could not parse newly created commit"
 msgstr "impossible d'analyser le commit nouvellement créé"
 
-#: sequencer.c:1150
+#: sequencer.c:1151
 msgid "unable to resolve HEAD after creating commit"
 msgstr "impossible de résoudre HEAD après création du commit"
 
-#: sequencer.c:1152
+#: sequencer.c:1153
 msgid "detached HEAD"
 msgstr "HEAD détachée"
 
-#: sequencer.c:1156
+#: sequencer.c:1157
 msgid " (root-commit)"
 msgstr " (commit racine)"
 
-#: sequencer.c:1177
+#: sequencer.c:1178
 msgid "could not parse HEAD"
 msgstr "impossible de lire HEAD"
 
-#: sequencer.c:1179
+#: sequencer.c:1180
 #, c-format
 msgid "HEAD %s is not a commit!"
 msgstr "HEAD %s n'est pas un commit !"
 
-#: sequencer.c:1183 builtin/commit.c:1528
+#: sequencer.c:1184 builtin/commit.c:1528
 msgid "could not parse HEAD commit"
 msgstr "impossible d'analyser le commit HEAD"
 
-#: sequencer.c:1234 sequencer.c:1831
+#: sequencer.c:1235 sequencer.c:1832
 msgid "unable to parse commit author"
 msgstr "impossible d'analyser l'auteur du commit"
 
-#: sequencer.c:1244 builtin/am.c:1630 builtin/merge.c:644
+#: sequencer.c:1245 builtin/am.c:1630 builtin/merge.c:645
 msgid "git write-tree failed to write a tree"
 msgstr "git write-tree a échoué à écrire un arbre"
 
-#: sequencer.c:1261 sequencer.c:1316
+#: sequencer.c:1262 sequencer.c:1317
 #, c-format
 msgid "unable to read commit message from '%s'"
 msgstr "impossible de lire le message de validation de '%s'"
 
-#: sequencer.c:1283 builtin/am.c:1650 builtin/commit.c:1631 builtin/merge.c:824
-#: builtin/merge.c:849
+#: sequencer.c:1284 builtin/am.c:1650 builtin/commit.c:1631 builtin/merge.c:825
+#: builtin/merge.c:850
 msgid "failed to write commit object"
 msgstr "échec de l'écriture de l'objet commit"
 
-#: sequencer.c:1343
+#: sequencer.c:1344
 #, c-format
 msgid "could not parse commit %s"
 msgstr "impossible d'analyser le commit %s"
 
-#: sequencer.c:1348
+#: sequencer.c:1349
 #, c-format
 msgid "could not parse parent commit %s"
 msgstr "impossible d'analyser le commit parent %s"
 
-#: sequencer.c:1499 sequencer.c:1524
+#: sequencer.c:1500 sequencer.c:1525
 #, c-format
 msgid "This is a combination of %d commits."
 msgstr "Ceci est la combinaison de %d commits."
 
-#: sequencer.c:1509 sequencer.c:4354
+#: sequencer.c:1510 sequencer.c:4355
 msgid "need a HEAD to fixup"
 msgstr "une HEAD est nécessaire à la correction"
 
-#: sequencer.c:1511 sequencer.c:2728
+#: sequencer.c:1512 sequencer.c:2729
 msgid "could not read HEAD"
 msgstr "Impossible de lire HEAD"
 
-#: sequencer.c:1513
+#: sequencer.c:1514
 msgid "could not read HEAD's commit message"
 msgstr "impossible de lire le message de validation de HEAD"
 
-#: sequencer.c:1519
+#: sequencer.c:1520
 #, c-format
 msgid "cannot write '%s'"
 msgstr "impossible d'écrire '%s'"
 
-#: sequencer.c:1526 git-rebase--interactive.sh:457
+#: sequencer.c:1527 git-rebase--interactive.sh:457
 msgid "This is the 1st commit message:"
 msgstr "Ceci est le premier message de validation :"
 
-#: sequencer.c:1534
+#: sequencer.c:1535
 #, c-format
 msgid "could not read commit message of %s"
 msgstr "impossible de lire le message de validation de %s"
 
-#: sequencer.c:1541
+#: sequencer.c:1542
 #, c-format
 msgid "This is the commit message #%d:"
 msgstr "Ceci est le message de validation numéro %d :"
 
-#: sequencer.c:1547
+#: sequencer.c:1548
 #, c-format
 msgid "The commit message #%d will be skipped:"
 msgstr "Le message de validation %d sera ignoré :"
 
-#: sequencer.c:1552
+#: sequencer.c:1553
 #, c-format
 msgid "unknown command: %d"
 msgstr "commande inconnue : %d"
 
-#: sequencer.c:1630
+#: sequencer.c:1631
 msgid "your index file is unmerged."
 msgstr "votre fichier d'index n'est pas fusionné."
 
-#: sequencer.c:1637
+#: sequencer.c:1638
 msgid "cannot fixup root commit"
 msgstr "impossible de réparer le commit racine"
 
-#: sequencer.c:1656
+#: sequencer.c:1657
 #, c-format
 msgid "commit %s is a merge but no -m option was given."
 msgstr "le commit %s est une fusion mais l'option -m n'a pas été spécifiée."
 
-#: sequencer.c:1664
+#: sequencer.c:1665
 #, c-format
 msgid "commit %s does not have parent %d"
 msgstr "le commit %s n'a pas de parent %d"
 
-#: sequencer.c:1668
+#: sequencer.c:1669
 #, c-format
 msgid "mainline was specified but commit %s is not a merge."
 msgstr ""
 "une branche principale a été spécifiée mais le commit %s n'est pas une "
 "fusion."
 
-#: sequencer.c:1674
+#: sequencer.c:1675
 #, c-format
 msgid "cannot get commit message for %s"
 msgstr "impossible d'obtenir un message de validation pour %s"
 
 #. TRANSLATORS: The first %s will be a "todo" command like
 #. "revert" or "pick", the second %s a SHA1.
-#: sequencer.c:1693
+#: sequencer.c:1694
 #, c-format
 msgid "%s: cannot parse parent commit %s"
 msgstr "%s : impossible d'analyser le commit parent %s"
 
-#: sequencer.c:1758
+#: sequencer.c:1759
 #, c-format
 msgid "could not rename '%s' to '%s'"
 msgstr "impossible de renommer '%s' en '%s'"
 
-#: sequencer.c:1812
+#: sequencer.c:1813
 #, c-format
 msgid "could not revert %s... %s"
 msgstr "impossible d'annuler %s... %s"
 
-#: sequencer.c:1813
+#: sequencer.c:1814
 #, c-format
 msgid "could not apply %s... %s"
 msgstr "impossible d'appliquer %s... %s"
 
-#: sequencer.c:1863
+#: sequencer.c:1864
 msgid "empty commit set passed"
 msgstr "l'ensemble de commits spécifié est vide"
 
-#: sequencer.c:1873
+#: sequencer.c:1874
 #, c-format
 msgid "git %s: failed to read the index"
 msgstr "git %s : échec à la lecture de l'index"
 
-#: sequencer.c:1880
+#: sequencer.c:1881
 #, c-format
 msgid "git %s: failed to refresh the index"
 msgstr "git %s : échec du rafraîchissement de l'index"
 
-#: sequencer.c:1960
+#: sequencer.c:1961
 #, c-format
 msgid "%s does not accept arguments: '%s'"
 msgstr "%s n'accepte pas d'argument : '%s'"
 
-#: sequencer.c:1969
+#: sequencer.c:1970
 #, c-format
 msgid "missing arguments for %s"
 msgstr "argument manquant pour %s"
 
-#: sequencer.c:2028
+#: sequencer.c:2029
 #, c-format
 msgid "invalid line %d: %.*s"
 msgstr "ligne %d invalide : %.*s"
 
-#: sequencer.c:2036
+#: sequencer.c:2037
 #, c-format
 msgid "cannot '%s' without a previous commit"
 msgstr "'%s' impossible avec le commit précédent"
 
-#: sequencer.c:2084 sequencer.c:4137 sequencer.c:4172
+#: sequencer.c:2085 sequencer.c:4138 sequencer.c:4173
 #, c-format
 msgid "could not read '%s'."
 msgstr "impossible de lire '%s'."
 
-#: sequencer.c:2107
+#: sequencer.c:2108
 msgid "please fix this using 'git rebase --edit-todo'."
 msgstr "veuillez corriger ceci en utilisant 'git rebase --edit-todo'."
 
-#: sequencer.c:2109
+#: sequencer.c:2110
 #, c-format
 msgid "unusable instruction sheet: '%s'"
 msgstr "feuille d'instruction inutilisable : '%s'"
 
-#: sequencer.c:2114
+#: sequencer.c:2115
 msgid "no commits parsed."
 msgstr "aucun commit analysé."
 
-#: sequencer.c:2125
+#: sequencer.c:2126
 msgid "cannot cherry-pick during a revert."
 msgstr "impossible de picorer pendant l'annulation d'un commit."
 
-#: sequencer.c:2127
+#: sequencer.c:2128
 msgid "cannot revert during a cherry-pick."
 msgstr "impossible d'annuler un commit pendant un picorage."
 
-#: sequencer.c:2194
+#: sequencer.c:2195
 #, c-format
 msgid "invalid key: %s"
 msgstr "clé invalide : %s"
 
-#: sequencer.c:2197
+#: sequencer.c:2198
 #, c-format
 msgid "invalid value for %s: %s"
 msgstr "valeur invalide pour %s : %s"
 
-#: sequencer.c:2268
+#: sequencer.c:2269
 msgid "unusable squash-onto"
 msgstr "\"écrase-sur\" inutilisable"
 
-#: sequencer.c:2284
+#: sequencer.c:2285
 #, c-format
 msgid "malformed options sheet: '%s'"
 msgstr "feuille d'options malformée : %s"
 
-#: sequencer.c:2322
+#: sequencer.c:2323
 msgid "a cherry-pick or revert is already in progress"
 msgstr "un picorage ou un retour est déjà en cours"
 
-#: sequencer.c:2323
+#: sequencer.c:2324
 msgid "try \"git cherry-pick (--continue | --quit | --abort)\""
 msgstr "essayez \"git cherry-pick (--continue|--quit|-- abort)\""
 
-#: sequencer.c:2326
+#: sequencer.c:2327
 #, c-format
 msgid "could not create sequencer directory '%s'"
 msgstr "impossible de créer le répertoire de séquenceur '%s'"
 
-#: sequencer.c:2340
+#: sequencer.c:2341
 msgid "could not lock HEAD"
 msgstr "impossible de verrouiller HEAD"
 
-#: sequencer.c:2395 sequencer.c:3402
+#: sequencer.c:2396 sequencer.c:3403
 msgid "no cherry-pick or revert in progress"
 msgstr "aucun picorage ou retour en cours"
 
-#: sequencer.c:2397
+#: sequencer.c:2398
 msgid "cannot resolve HEAD"
 msgstr "impossible de résoudre HEAD"
 
-#: sequencer.c:2399 sequencer.c:2434
+#: sequencer.c:2400 sequencer.c:2435
 msgid "cannot abort from a branch yet to be born"
 msgstr "impossible d'abandonner depuis une branche non encore créée"
 
-#: sequencer.c:2420 builtin/grep.c:720
+#: sequencer.c:2421 builtin/grep.c:720
 #, c-format
 msgid "cannot open '%s'"
 msgstr "impossible d'ouvrir '%s'"
 
-#: sequencer.c:2422
+#: sequencer.c:2423
 #, c-format
 msgid "cannot read '%s': %s"
 msgstr "impossible de lire '%s' : %s"
 
-#: sequencer.c:2423
+#: sequencer.c:2424
 msgid "unexpected end of file"
 msgstr "fin de fichier inattendue"
 
-#: sequencer.c:2429
+#: sequencer.c:2430
 #, c-format
 msgid "stored pre-cherry-pick HEAD file '%s' is corrupt"
 msgstr "le fichier HEAD de préparation de picorage '%s' est corrompu"
 
-#: sequencer.c:2440
+#: sequencer.c:2441
 msgid "You seem to have moved HEAD. Not rewinding, check your HEAD!"
 msgstr ""
 "Vous semblez avoir déplacé la HEAD. Pas de rembobinage, vérifiez votre HEAD !"
 
-#: sequencer.c:2544 sequencer.c:3320
+#: sequencer.c:2545 sequencer.c:3321
 #, c-format
 msgid "could not update %s"
 msgstr "impossible de mettre à jour %s"
 
-#: sequencer.c:2582 sequencer.c:3300
+#: sequencer.c:2583 sequencer.c:3301
 msgid "cannot read HEAD"
 msgstr "impossible de lire HEAD"
 
-#: sequencer.c:2617 sequencer.c:2621 builtin/difftool.c:639
+#: sequencer.c:2618 sequencer.c:2622 builtin/difftool.c:639
 #, c-format
 msgid "could not copy '%s' to '%s'"
 msgstr "impossible de copier '%s' vers '%s'"
 
-#: sequencer.c:2640
+#: sequencer.c:2641
 msgid "could not read index"
 msgstr "impossible de lire l'index"
 
-#: sequencer.c:2645
+#: sequencer.c:2646
 #, c-format
 msgid ""
 "execution failed: %s\n"
@@ -3872,11 +3957,11 @@ msgstr ""
 "git rebase --continue\n"
 "\n"
 
-#: sequencer.c:2651
+#: sequencer.c:2652
 msgid "and made changes to the index and/or the working tree\n"
 msgstr "et a mis à jour l'index ou l'arbre de travail\n"
 
-#: sequencer.c:2657
+#: sequencer.c:2658
 #, c-format
 msgid ""
 "execution succeeded: %s\n"
@@ -3893,62 +3978,62 @@ msgstr ""
 "  git rebase --continue\n"
 "\n"
 
-#: sequencer.c:2770
+#: sequencer.c:2771
 msgid "writing fake root commit"
 msgstr "écriture d'un commit racine bidon"
 
-#: sequencer.c:2775
+#: sequencer.c:2776
 msgid "writing squash-onto"
 msgstr "écriture de 'écraser-sur'"
 
-#: sequencer.c:2810
+#: sequencer.c:2811
 #, c-format
 msgid "failed to find tree of %s"
 msgstr "impossible de trouver l'arbre de %s"
 
-#: sequencer.c:2828
+#: sequencer.c:2829
 msgid "could not write index"
 msgstr "impossible d'écrire l'index"
 
-#: sequencer.c:2860
+#: sequencer.c:2861
 msgid "cannot merge without a current revision"
 msgstr "impossible de fusionner avec une révision courante"
 
-#: sequencer.c:2883
+#: sequencer.c:2884
 #, c-format
 msgid "could not resolve '%s'"
 msgstr "impossible de résoudre '%s'"
 
-#: sequencer.c:2905
+#: sequencer.c:2906
 #, c-format
 msgid "could not get commit message of '%s'"
 msgstr "impossible de lire le message de validation de '%s'"
 
-#: sequencer.c:2915 sequencer.c:2940
+#: sequencer.c:2916 sequencer.c:2941
 #, c-format
 msgid "could not write '%s'"
 msgstr "impossible d'écrire '%s'"
 
-#: sequencer.c:3004
+#: sequencer.c:3005
 #, c-format
 msgid "could not even attempt to merge '%.*s'"
 msgstr "impossible de seulement essayer de fusionner '%.*s'"
 
-#: sequencer.c:3020
+#: sequencer.c:3021
 msgid "merge: Unable to write new index file"
 msgstr "fusion : Impossible d'écrire le nouveau fichier index"
 
-#: sequencer.c:3087
+#: sequencer.c:3088
 #, c-format
 msgid "Applied autostash.\n"
 msgstr "Autoremisage appliqué.\n"
 
-#: sequencer.c:3099
+#: sequencer.c:3100
 #, c-format
 msgid "cannot store %s"
 msgstr "impossible de stocker %s"
 
-#: sequencer.c:3102 git-rebase.sh:188
+#: sequencer.c:3103 git-rebase.sh:188
 #, c-format
 msgid ""
 "Applying autostash resulted in conflicts.\n"
@@ -3959,7 +4044,7 @@ msgstr ""
 "Vos  modifications sont à l'abri dans la remise.\n"
 "Vous pouvez lancer \"git stash pop\" ou \"git stash drop\" à tout moment.\n"
 
-#: sequencer.c:3133
+#: sequencer.c:3134
 #, c-format
 msgid ""
 "Could not execute the todo command\n"
@@ -3980,48 +4065,48 @@ msgstr ""
 "    git rebase --edit-todo\n"
 "    git rebase --continue\n"
 
-#: sequencer.c:3201
+#: sequencer.c:3202
 #, c-format
 msgid "Stopped at %s...  %.*s\n"
 msgstr "arrêt à %s... %.*s\n"
 
-#: sequencer.c:3263
+#: sequencer.c:3264
 #, c-format
 msgid "unknown command %d"
 msgstr "commande inconnue %d"
 
-#: sequencer.c:3308
+#: sequencer.c:3309
 msgid "could not read orig-head"
 msgstr "impossible de lire orig-head"
 
-#: sequencer.c:3313 sequencer.c:4351
+#: sequencer.c:3314 sequencer.c:4352
 msgid "could not read 'onto'"
 msgstr "impossible de lire 'onto'"
 
-#: sequencer.c:3327
+#: sequencer.c:3328
 #, c-format
 msgid "could not update HEAD to %s"
 msgstr "impossible de mettre à jour HEAD sur %s"
 
-#: sequencer.c:3413
+#: sequencer.c:3414
 msgid "cannot rebase: You have unstaged changes."
 msgstr "impossible de rebaser : vous avez des modifications non indexées."
 
-#: sequencer.c:3422
+#: sequencer.c:3423
 msgid "cannot amend non-existing commit"
 msgstr "impossible de corriger un commit non-existant"
 
-#: sequencer.c:3424
+#: sequencer.c:3425
 #, c-format
 msgid "invalid file: '%s'"
 msgstr "fichier invalide : '%s'"
 
-#: sequencer.c:3426
+#: sequencer.c:3427
 #, c-format
 msgid "invalid contents: '%s'"
 msgstr "contenu invalide : '%s'"
 
-#: sequencer.c:3429
+#: sequencer.c:3430
 msgid ""
 "\n"
 "You have uncommitted changes in your working tree. Please, commit them\n"
@@ -4031,54 +4116,54 @@ msgstr ""
 "Vous avez des modifications non validées dans votre copie de travail.\n"
 "Veuillez les valider d'abord, puis relancer 'git rebase --continue'."
 
-#: sequencer.c:3454 sequencer.c:3492
+#: sequencer.c:3455 sequencer.c:3493
 #, c-format
 msgid "could not write file: '%s'"
 msgstr "impossible d'écrire le fichier : '%s'"
 
-#: sequencer.c:3507
+#: sequencer.c:3508
 msgid "could not remove CHERRY_PICK_HEAD"
 msgstr "impossible de supprimer CHERRY_PICK_HEAD"
 
-#: sequencer.c:3514
+#: sequencer.c:3515
 msgid "could not commit staged changes."
 msgstr "impossible de valider les modifications indexées."
 
-#: sequencer.c:3611
+#: sequencer.c:3612
 #, c-format
 msgid "%s: can't cherry-pick a %s"
 msgstr "%s : impossible de picorer un %s"
 
-#: sequencer.c:3615
+#: sequencer.c:3616
 #, c-format
 msgid "%s: bad revision"
 msgstr "%s : mauvaise révision"
 
-#: sequencer.c:3648
+#: sequencer.c:3649
 msgid "can't revert as initial commit"
 msgstr "impossible d'annuler en tant que commit initial"
 
-#: sequencer.c:4097
+#: sequencer.c:4098
 msgid "make_script: unhandled options"
 msgstr "make_script : options non gérées"
 
-#: sequencer.c:4100
+#: sequencer.c:4101
 msgid "make_script: error preparing revisions"
 msgstr "make_script : erreur lors de la préparation des révisions"
 
-#: sequencer.c:4141 sequencer.c:4176
+#: sequencer.c:4142 sequencer.c:4177
 #, c-format
 msgid "unusable todo list: '%s'"
 msgstr "liste à faire inutilisable : '%s'"
 
-#: sequencer.c:4235
+#: sequencer.c:4236
 #, c-format
 msgid ""
 "unrecognized setting %s for option rebase.missingCommitsCheck. Ignoring."
 msgstr ""
 "paramètre non reconnu %s pour l'option rebase.missingCommitsCheck. Ignoré."
 
-#: sequencer.c:4301
+#: sequencer.c:4302
 #, c-format
 msgid ""
 "Warning: some commits may have been dropped accidentally.\n"
@@ -4087,7 +4172,7 @@ msgstr ""
 "Attention : certains commits ont pu être accidentellement supprimés.\n"
 "Commits supprimés (du plus jeune au plus vieux) :\n"
 
-#: sequencer.c:4308
+#: sequencer.c:4309
 #, c-format
 msgid ""
 "To avoid this message, use \"drop\" to explicitly remove a commit.\n"
@@ -4105,7 +4190,7 @@ msgstr ""
 "Les comportements disponibles sont : ignore, warn, error.\n"
 "\n"
 
-#: sequencer.c:4320
+#: sequencer.c:4321
 #, c-format
 msgid ""
 "You can fix this with 'git rebase --edit-todo' and then run 'git rebase --"
@@ -4116,12 +4201,12 @@ msgstr ""
 "rebase --continue'.\n"
 "Ou vous pouvez abandonner le rebasage avec 'git rebase --abort'.\n"
 
-#: sequencer.c:4374
+#: sequencer.c:4375
 #, c-format
 msgid "could not parse commit '%s'"
 msgstr "impossible d'analyser le commit '%s'"
 
-#: sequencer.c:4489
+#: sequencer.c:4490
 msgid "the script was already rearranged."
 msgstr "le script a déjà été réarrangé."
 
@@ -4395,27 +4480,27 @@ msgstr "l'entrée de sous-module '%s' (%s) est un %s, pas un commit"
 msgid "Failed to resolve HEAD as a valid ref."
 msgstr "Échec de résolution de HEAD comme référence valide."
 
-#: submodule.c:1373
+#: submodule.c:1375
 #, c-format
 msgid "'%s' not recognized as a git repository"
 msgstr "'%s' n'est pas reconnu comme dépôt git"
 
-#: submodule.c:1511
+#: submodule.c:1513
 #, c-format
 msgid "could not start 'git status' in submodule '%s'"
 msgstr "impossible de démarrer 'git status' dans le sous-module '%s'"
 
-#: submodule.c:1524
+#: submodule.c:1526
 #, c-format
 msgid "could not run 'git status' in submodule '%s'"
 msgstr "impossible de lancer 'git status' dans le sous-module '%s'"
 
-#: submodule.c:1617
+#: submodule.c:1619
 #, c-format
 msgid "submodule '%s' has dirty index"
 msgstr "le sous-module '%s' a un index sale"
 
-#: submodule.c:1716
+#: submodule.c:1718
 #, c-format
 msgid ""
 "relocate_gitdir for submodule '%s' with more than one worktree not supported"
@@ -4423,18 +4508,18 @@ msgstr ""
 "relocate_gitdir pour le sous-module '%s' avec plus d'un arbre de travail "
 "n'est pas supporté"
 
-#: submodule.c:1728 submodule.c:1784
+#: submodule.c:1730 submodule.c:1786
 #, c-format
 msgid "could not lookup name for submodule '%s'"
 msgstr "impossible de trouve le nom pour le sous-module '%s'"
 
-#: submodule.c:1732 builtin/submodule--helper.c:1261
+#: submodule.c:1734 builtin/submodule--helper.c:1261
 #: builtin/submodule--helper.c:1271
 #, c-format
 msgid "could not create directory '%s'"
 msgstr "impossible de créer le répertoire '%s'"
 
-#: submodule.c:1735
+#: submodule.c:1737
 #, c-format
 msgid ""
 "Migrating git directory of '%s%s' from\n"
@@ -4445,16 +4530,16 @@ msgstr ""
 "'%s' sur\n"
 "'%s'\n"
 
-#: submodule.c:1819
+#: submodule.c:1821
 #, c-format
 msgid "could not recurse into submodule '%s'"
 msgstr "récursion impossible dans le sous-module '%s'"
 
-#: submodule.c:1863
+#: submodule.c:1865
 msgid "could not start ls-files in .."
 msgstr "impossible de démarrer ls-files dans .."
 
-#: submodule.c:1902
+#: submodule.c:1904
 #, c-format
 msgid "ls-tree returned unexpected return code %d"
 msgstr "ls-tree a renvoyé un code de retour inattendu %d"
@@ -4910,7 +4995,7 @@ msgid "could not open '%s' for reading and writing"
 msgstr "impossible d'ouvrir '%s' en lecture/écriture"
 
 #: wrapper.c:227 wrapper.c:397 builtin/am.c:320 builtin/am.c:770
-#: builtin/am.c:862 builtin/merge.c:1042
+#: builtin/am.c:862 builtin/merge.c:1043
 #, c-format
 msgid "could not open '%s' for reading"
 msgstr "impossible d'ouvrir '%s' en lecture"
@@ -5449,7 +5534,7 @@ msgstr "suppression de '%s'\n"
 msgid "Unstaged changes after refreshing the index:"
 msgstr "Modifications non indexées après rafraîchissement de l'index :"
 
-#: builtin/add.c:233 builtin/rev-parse.c:888
+#: builtin/add.c:233 builtin/rev-parse.c:892
 msgid "Could not read the index"
 msgstr "Impossible de lire l'index"
 
@@ -5912,7 +5997,7 @@ msgid "pass it through git-apply"
 msgstr "le passer jusqu'à git-apply"
 
 #: builtin/am.c:2260 builtin/commit.c:1332 builtin/fmt-merge-msg.c:665
-#: builtin/fmt-merge-msg.c:668 builtin/grep.c:853 builtin/merge.c:207
+#: builtin/fmt-merge-msg.c:668 builtin/grep.c:853 builtin/merge.c:208
 #: builtin/pull.c:150 builtin/pull.c:208 builtin/repack.c:201
 #: builtin/repack.c:205 builtin/repack.c:207 builtin/show-branch.c:631
 #: builtin/show-ref.c:169 builtin/tag.c:383 parse-options.h:144
@@ -5966,7 +6051,7 @@ msgstr "mentir sur la date de validation"
 msgid "use current timestamp for author date"
 msgstr "utiliser l'horodatage actuel pour la date d'auteur"
 
-#: builtin/am.c:2298 builtin/commit.c:1468 builtin/merge.c:238
+#: builtin/am.c:2298 builtin/commit.c:1468 builtin/merge.c:239
 #: builtin/pull.c:183 builtin/revert.c:112 builtin/tag.c:399
 msgid "key-id"
 msgstr "id-clé"
@@ -6204,7 +6289,8 @@ msgstr "Ignorer les différences d'espace"
 
 #: builtin/blame.c:802
 msgid "color redundant metadata from previous line differently"
-msgstr "colorer différemment les métadonnées redondantes avec la ligne précédente"
+msgstr ""
+"colorer différemment les métadonnées redondantes avec la ligne précédente"
 
 #: builtin/blame.c:803
 msgid "color lines by age"
@@ -7165,7 +7251,7 @@ msgstr "forcer l'extraction (laisser tomber les modifications locales)"
 msgid "perform a 3-way merge with the new branch"
 msgstr "effectuer une fusion à 3 points avec la nouvelle branche"
 
-#: builtin/checkout.c:1131 builtin/merge.c:240
+#: builtin/checkout.c:1131 builtin/merge.c:241
 msgid "update ignored files (default)"
 msgstr "mettre à jour les fichiers ignorés (par défaut)"
 
@@ -7191,7 +7277,7 @@ msgstr ""
 "ne pas vérifier si une autre copie de travail contient le référence fournie"
 
 #: builtin/checkout.c:1145 builtin/clone.c:85 builtin/fetch.c:149
-#: builtin/merge.c:237 builtin/pull.c:128 builtin/push.c:572
+#: builtin/merge.c:238 builtin/pull.c:128 builtin/push.c:572
 #: builtin/send-pack.c:174
 msgid "force progress reporting"
 msgstr "forcer l'affichage de l'état d'avancement"
@@ -8158,7 +8244,9 @@ msgstr "ne pas détecter les renommages"
 
 #: builtin/commit.c:1332
 msgid "detect renames, optionally set similarity index"
-msgstr "détecter les renommages, en spécifiant optionnellement le facteur de similarité"
+msgstr ""
+"détecter les renommages, en spécifiant optionnellement le facteur de "
+"similarité"
 
 #: builtin/commit.c:1352
 msgid "Unsupported combination of ignored and untracked-files arguments"
@@ -8197,7 +8285,7 @@ msgstr "date"
 msgid "override date for commit"
 msgstr "remplacer la date pour la validation"
 
-#: builtin/commit.c:1457 builtin/merge.c:227 builtin/notes.c:402
+#: builtin/commit.c:1457 builtin/merge.c:228 builtin/notes.c:402
 #: builtin/notes.c:565 builtin/tag.c:392
 msgid "message"
 msgstr "message"
@@ -8234,7 +8322,7 @@ msgid "the commit is authored by me now (used with -C/-c/--amend)"
 msgstr ""
 "à présent je suis l'auteur de la validation (utilisé avec -C/-c/--amend)"
 
-#: builtin/commit.c:1463 builtin/log.c:1446 builtin/merge.c:241
+#: builtin/commit.c:1463 builtin/log.c:1446 builtin/merge.c:242
 #: builtin/pull.c:154 builtin/revert.c:105
 msgid "add Signed-off-by:"
 msgstr "ajouter une entrée Signed-off-by :"
@@ -8259,7 +8347,7 @@ msgstr "comment éliminer les espaces et les commentaires # du message"
 msgid "include status in commit message template"
 msgstr "inclure l'état dans le modèle de message de validation"
 
-#: builtin/commit.c:1469 builtin/merge.c:239 builtin/pull.c:184
+#: builtin/commit.c:1469 builtin/merge.c:240 builtin/pull.c:184
 #: builtin/revert.c:113
 msgid "GPG sign commit"
 msgstr "signer la validation avec GPG"
@@ -8358,7 +8446,9 @@ msgstr "git commit-graph read [--object-dir <objdir>]"
 msgid ""
 "git commit-graph write [--object-dir <objdir>] [--append] [--stdin-packs|--"
 "stdin-commits]"
-msgstr "git commit-graph write [--object-dir <objdir>] [--append] [--stdin-packs|--stdin-commits]"
+msgstr ""
+"git commit-graph write [--object-dir <objdir>] [--append] [--stdin-packs|--"
+"stdin-commits]"
 
 #: builtin/commit-graph.c:39 builtin/commit-graph.c:92
 #: builtin/commit-graph.c:147 builtin/fetch.c:161 builtin/log.c:1466
@@ -8380,7 +8470,8 @@ msgstr "commencer le parcours aux commits listés sur stdin"
 
 #: builtin/commit-graph.c:99
 msgid "include all commits already in the commit-graph file"
-msgstr "inclure tous les commits déjà présents dans le fichier de graphe de commits"
+msgstr ""
+"inclure tous les commits déjà présents dans le fichier de graphe de commits"
 
 #: builtin/commit-graph.c:108
 msgid "cannot use both --stdin-commits and --stdin-packs"
@@ -8861,23 +8952,23 @@ msgstr "réalise un diff de répertoire complet"
 msgid "do not prompt before launching a diff tool"
 msgstr "ne pas confirmer avant de lancer l'outil de diff"
 
-#: builtin/difftool.c:705
+#: builtin/difftool.c:704
 msgid "use symlinks in dir-diff mode"
 msgstr "utiliser les liens symboliques en mode de diff de répertoire"
 
-#: builtin/difftool.c:706
+#: builtin/difftool.c:705
 msgid "<tool>"
 msgstr "<outil>"
 
-#: builtin/difftool.c:707
+#: builtin/difftool.c:706
 msgid "use the specified diff tool"
 msgstr "utiliser l'outil de diff spécifié"
 
-#: builtin/difftool.c:709
+#: builtin/difftool.c:708
 msgid "print a list of diff tools that may be used with `--tool`"
 msgstr "afficher une liste des outils de diff utilisables avec `--tool`"
 
-#: builtin/difftool.c:712
+#: builtin/difftool.c:711
 msgid ""
 "make 'git-difftool' exit when an invoked diff tool returns a non - zero exit "
 "code"
@@ -8885,19 +8976,19 @@ msgstr ""
 "provoque la fin de 'git-difftool' si l'outil de diff invoqué renvoie un code "
 "non-nul"
 
-#: builtin/difftool.c:714
+#: builtin/difftool.c:713
 msgid "<command>"
 msgstr "<commande>"
 
-#: builtin/difftool.c:715
+#: builtin/difftool.c:714
 msgid "specify a custom command for viewing diffs"
 msgstr "spécifier une commande personnalisée pour visualiser les différences"
 
-#: builtin/difftool.c:739
+#: builtin/difftool.c:738
 msgid "no <tool> given for --tool=<tool>"
 msgstr "pas d'<outil> spécifié pour --tool=<outil>"
 
-#: builtin/difftool.c:746
+#: builtin/difftool.c:745
 msgid "no <cmd> given for --extcmd=<cmd>"
 msgstr "pas de <commande> spécifié pour --extcmd=<commande>"
 
@@ -9513,7 +9604,7 @@ msgstr "nombre de fils spécifié invalide (%d) pour %s"
 #. variable for tweaking threads, currently
 #. grep.threads
 #.
-#: builtin/grep.c:293 builtin/index-pack.c:1531 builtin/index-pack.c:1723
+#: builtin/grep.c:293 builtin/index-pack.c:1535 builtin/index-pack.c:1727
 #, c-format
 msgid "no threads support, ignoring %s"
 msgstr "pas de support des fils, ignore %s"
@@ -9730,7 +9821,7 @@ msgstr ""
 msgid "unable to resolve revision: %s"
 msgstr "impossible de résoudre la révision : %s"
 
-#: builtin/grep.c:1036 builtin/index-pack.c:1527
+#: builtin/grep.c:1036 builtin/index-pack.c:1531
 #, c-format
 msgid "invalid number of threads specified (%d)"
 msgstr "nombre de fils spécifié invalide (%d)"
@@ -9803,58 +9894,62 @@ msgstr ""
 msgid "process file as it were from this path"
 msgstr "traiter le fichier comme s'il venait de ce chemin"
 
-#: builtin/help.c:43
+#: builtin/help.c:45
 msgid "print all available commands"
 msgstr "afficher toutes les commandes disponibles"
 
-#: builtin/help.c:44
+#: builtin/help.c:46
 msgid "exclude guides"
 msgstr "exclure les guides"
 
-#: builtin/help.c:45
+#: builtin/help.c:47
 msgid "print list of useful guides"
 msgstr "afficher une liste de guides utiles"
 
-#: builtin/help.c:46
+#: builtin/help.c:48
 msgid "show man page"
 msgstr "afficher la page de manuel"
 
-#: builtin/help.c:47
+#: builtin/help.c:49
 msgid "show manual in web browser"
 msgstr "afficher le manuel dans un navigateur web"
 
-#: builtin/help.c:49
+#: builtin/help.c:51
 msgid "show info page"
 msgstr "afficher la page info"
 
-#: builtin/help.c:55
+#: builtin/help.c:53
+msgid "print command description"
+msgstr "afficher la description de la commande"
+
+#: builtin/help.c:58
 msgid "git help [--all] [--guides] [--man | --web | --info] [<command>]"
 msgstr "git help [--all] [--guides] [--man | --web | --info] [<commande>]"
 
-#: builtin/help.c:67
+#: builtin/help.c:70
 #, c-format
 msgid "unrecognized help format '%s'"
 msgstr "format d'aide non reconnu '%s'"
 
-#: builtin/help.c:94
+#: builtin/help.c:97
 msgid "Failed to start emacsclient."
 msgstr "échec de démarrage d'emacsclient."
 
-#: builtin/help.c:107
+#: builtin/help.c:110
 msgid "Failed to parse emacsclient version."
 msgstr "échec d'analyse de la version d'emacsclient."
 
-#: builtin/help.c:115
+#: builtin/help.c:118
 #, c-format
 msgid "emacsclient version '%d' too old (< 22)."
 msgstr "la version d'emacsclient '%d' est trop ancienne (<22)."
 
-#: builtin/help.c:133 builtin/help.c:155 builtin/help.c:165 builtin/help.c:173
+#: builtin/help.c:136 builtin/help.c:158 builtin/help.c:168 builtin/help.c:176
 #, c-format
 msgid "failed to exec '%s'"
 msgstr "échec de l'exécution de '%s'"
 
-#: builtin/help.c:211
+#: builtin/help.c:214
 #, c-format
 msgid ""
 "'%s': path for unsupported man viewer.\n"
@@ -9863,7 +9958,7 @@ msgstr ""
 "'%s' : chemin pour l'utilitaire de visualisation de manuel non supporté.\n"
 "Veuillez utiliser plutôt 'man.<outil>.cmd'."
 
-#: builtin/help.c:223
+#: builtin/help.c:226
 #, c-format
 msgid ""
 "'%s': cmd for supported man viewer.\n"
@@ -9872,62 +9967,25 @@ msgstr ""
 "'%s' : chemin pour l'utilitaire de visualisation de manuel supporté.\n"
 "Veuillez utiliser plutôt 'man.<outil>.cmd'."
 
-#: builtin/help.c:340
+#: builtin/help.c:343
 #, c-format
 msgid "'%s': unknown man viewer."
 msgstr "'%s' : visualiseur de manuel inconnu."
 
-#: builtin/help.c:357
+#: builtin/help.c:360
 msgid "no man viewer handled the request"
 msgstr "aucun visualiseur de manuel n'a pris en charge la demande"
 
-#: builtin/help.c:365
+#: builtin/help.c:368
 msgid "no info viewer handled the request"
 msgstr "aucun visualiseur de 'info' n'a pris en charge la demande"
 
-#: builtin/help.c:407
-msgid "Defining attributes per path"
-msgstr "Définition des attributs par chemin"
-
-#: builtin/help.c:408
-msgid "Everyday Git With 20 Commands Or So"
-msgstr "Git de tous les jours avec à peu près 20 commandes"
-
-#: builtin/help.c:409
-msgid "A Git glossary"
-msgstr "Un glossaire Git"
-
-#: builtin/help.c:410
-msgid "Specifies intentionally untracked files to ignore"
-msgstr "Spécifie les fichiers non-suivis à ignorer intentionnellement"
-
-#: builtin/help.c:411
-msgid "Defining submodule properties"
-msgstr "Définition des propriétés de sous-module"
-
-#: builtin/help.c:412
-msgid "Specifying revisions and ranges for Git"
-msgstr "Spécification des révisions et portées pour Git"
-
-#: builtin/help.c:413
-msgid "A tutorial introduction to Git (for version 1.5.1 or newer)"
-msgstr ""
-"Une introduction pratique à Git (pour les versions 1.5.1 et supérieures)"
-
-#: builtin/help.c:414
-msgid "An overview of recommended workflows with Git"
-msgstr "Un aperçu des flux de travail recommandés avec Git"
-
-#: builtin/help.c:426
-msgid "The common Git guides are:\n"
-msgstr "Les guides Git populaires sont : \n"
-
-#: builtin/help.c:444
+#: builtin/help.c:415
 #, c-format
 msgid "'%s' is aliased to '%s'"
 msgstr "'%s' est un alias de '%s'"
 
-#: builtin/help.c:466 builtin/help.c:483
+#: builtin/help.c:442 builtin/help.c:459
 #, c-format
 msgid "usage: %s%s"
 msgstr "usage : %s%s"
@@ -10175,58 +10233,58 @@ msgstr "impossible de stocker le fichier paquet"
 msgid "cannot store index file"
 msgstr "impossible de stocker le fichier d'index"
 
-#: builtin/index-pack.c:1521
+#: builtin/index-pack.c:1525
 #, c-format
 msgid "bad pack.indexversion=%<PRIu32>"
 msgstr "mauvais pack.indexversion=%<PRIu32>"
 
-#: builtin/index-pack.c:1590
+#: builtin/index-pack.c:1594
 #, c-format
 msgid "Cannot open existing pack file '%s'"
 msgstr "Impossible d'ouvrir le fichier paquet existant '%s'"
 
-#: builtin/index-pack.c:1592
+#: builtin/index-pack.c:1596
 #, c-format
 msgid "Cannot open existing pack idx file for '%s'"
 msgstr "Impossible d'ouvrir le fichier paquet d'index existant pour '%s'"
 
-#: builtin/index-pack.c:1640
+#: builtin/index-pack.c:1644
 #, c-format
 msgid "non delta: %d object"
 msgid_plural "non delta: %d objects"
 msgstr[0] "pas un delta : %d objet"
 msgstr[1] "pas un delta : %d objets"
 
-#: builtin/index-pack.c:1647
+#: builtin/index-pack.c:1651
 #, c-format
 msgid "chain length = %d: %lu object"
 msgid_plural "chain length = %d: %lu objects"
 msgstr[0] "longueur chaînée = %d : %lu objet"
 msgstr[1] "longueur chaînée = %d : %lu objets"
 
-#: builtin/index-pack.c:1684
+#: builtin/index-pack.c:1688
 msgid "Cannot come back to cwd"
 msgstr "Impossible de revenir au répertoire de travail courant"
 
-#: builtin/index-pack.c:1735 builtin/index-pack.c:1738
-#: builtin/index-pack.c:1754 builtin/index-pack.c:1758
+#: builtin/index-pack.c:1739 builtin/index-pack.c:1742
+#: builtin/index-pack.c:1758 builtin/index-pack.c:1762
 #, c-format
 msgid "bad %s"
 msgstr "mauvais %s"
 
-#: builtin/index-pack.c:1774
+#: builtin/index-pack.c:1778
 msgid "--fix-thin cannot be used without --stdin"
 msgstr "--fix-thin ne peut pas être utilisé sans --stdin"
 
-#: builtin/index-pack.c:1776
+#: builtin/index-pack.c:1780
 msgid "--stdin requires a git repository"
 msgstr "--stdin requiert un dépôt git"
 
-#: builtin/index-pack.c:1782
+#: builtin/index-pack.c:1786
 msgid "--verify with no packfile name given"
 msgstr "--verify sans nom de fichier paquet donné"
 
-#: builtin/index-pack.c:1832 builtin/unpack-objects.c:578
+#: builtin/index-pack.c:1836 builtin/unpack-objects.c:578
 msgid "fsck error in pack objects"
 msgstr "erreur de fsck dans les objets paquets"
 
@@ -10267,8 +10325,8 @@ msgstr "modèle %s ignoré"
 
 #: builtin/init-db.c:120
 #, c-format
-msgid "templates not found %s"
-msgstr "modèles non trouvés %s"
+msgid "templates not found in %s"
+msgstr "modèles non trouvés dans %s"
 
 #: builtin/init-db.c:135
 #, c-format
@@ -10962,185 +11020,185 @@ msgstr ""
 msgid "empty mbox: '%s'"
 msgstr "mbox vide : '%s'"
 
-#: builtin/merge.c:50
+#: builtin/merge.c:51
 msgid "git merge [<options>] [<commit>...]"
 msgstr "git merge [<options>] [<commit>...]"
 
-#: builtin/merge.c:51
+#: builtin/merge.c:52
 msgid "git merge --abort"
 msgstr "git merge --abort"
 
-#: builtin/merge.c:52
+#: builtin/merge.c:53
 msgid "git merge --continue"
 msgstr "git merge --continue"
 
-#: builtin/merge.c:109
+#: builtin/merge.c:110
 msgid "switch `m' requires a value"
 msgstr "le commutateur `m' a besoin d'une valeur"
 
-#: builtin/merge.c:146
+#: builtin/merge.c:147
 #, c-format
 msgid "Could not find merge strategy '%s'.\n"
 msgstr "Impossible de trouver la stratégie de fusion '%s'.\n"
 
-#: builtin/merge.c:147
+#: builtin/merge.c:148
 #, c-format
 msgid "Available strategies are:"
 msgstr "Les stratégies disponibles sont :"
 
-#: builtin/merge.c:152
+#: builtin/merge.c:153
 #, c-format
 msgid "Available custom strategies are:"
 msgstr "Les stratégies personnalisées sont :"
 
-#: builtin/merge.c:202 builtin/pull.c:142
+#: builtin/merge.c:203 builtin/pull.c:142
 msgid "do not show a diffstat at the end of the merge"
 msgstr "ne pas afficher un diffstat à la fin de la fusion"
 
-#: builtin/merge.c:205 builtin/pull.c:145
+#: builtin/merge.c:206 builtin/pull.c:145
 msgid "show a diffstat at the end of the merge"
 msgstr "afficher un diffstat à la fin de la fusion"
 
-#: builtin/merge.c:206 builtin/pull.c:148
+#: builtin/merge.c:207 builtin/pull.c:148
 msgid "(synonym to --stat)"
 msgstr "(synonyme de --stat)"
 
-#: builtin/merge.c:208 builtin/pull.c:151
+#: builtin/merge.c:209 builtin/pull.c:151
 msgid "add (at most <n>) entries from shortlog to merge commit message"
 msgstr ""
 "ajouter (au plus <n>) éléments du journal court au message de validation de "
 "la fusion"
 
-#: builtin/merge.c:211 builtin/pull.c:157
+#: builtin/merge.c:212 builtin/pull.c:157
 msgid "create a single commit instead of doing a merge"
 msgstr "créer une validation unique au lieu de faire une fusion"
 
-#: builtin/merge.c:213 builtin/pull.c:160
+#: builtin/merge.c:214 builtin/pull.c:160
 msgid "perform a commit if the merge succeeds (default)"
 msgstr "effectuer une validation si la fusion réussit (défaut)"
 
-#: builtin/merge.c:215 builtin/pull.c:163
+#: builtin/merge.c:216 builtin/pull.c:163
 msgid "edit message before committing"
 msgstr "éditer le message avant la validation"
 
-#: builtin/merge.c:216
+#: builtin/merge.c:217
 msgid "allow fast-forward (default)"
 msgstr "autoriser l'avance rapide (défaut)"
 
-#: builtin/merge.c:218 builtin/pull.c:169
+#: builtin/merge.c:219 builtin/pull.c:169
 msgid "abort if fast-forward is not possible"
 msgstr "abandonner si l'avance rapide n'est pas possible"
 
-#: builtin/merge.c:222 builtin/pull.c:172
+#: builtin/merge.c:223 builtin/pull.c:172
 msgid "verify that the named commit has a valid GPG signature"
 msgstr "vérifier que le commit nommé a une signature GPG valide"
 
-#: builtin/merge.c:223 builtin/notes.c:777 builtin/pull.c:176
+#: builtin/merge.c:224 builtin/notes.c:777 builtin/pull.c:176
 #: builtin/revert.c:109
 msgid "strategy"
 msgstr "stratégie"
 
-#: builtin/merge.c:224 builtin/pull.c:177
+#: builtin/merge.c:225 builtin/pull.c:177
 msgid "merge strategy to use"
 msgstr "stratégie de fusion à utiliser"
 
-#: builtin/merge.c:225 builtin/pull.c:180
+#: builtin/merge.c:226 builtin/pull.c:180
 msgid "option=value"
 msgstr "option=valeur"
 
-#: builtin/merge.c:226 builtin/pull.c:181
+#: builtin/merge.c:227 builtin/pull.c:181
 msgid "option for selected merge strategy"
 msgstr "option pour la stratégie de fusion sélectionnée"
 
-#: builtin/merge.c:228
+#: builtin/merge.c:229
 msgid "merge commit message (for a non-fast-forward merge)"
 msgstr ""
 "message de validation de la fusion (pour une fusion sans avance rapide)"
 
-#: builtin/merge.c:232
+#: builtin/merge.c:233
 msgid "abort the current in-progress merge"
 msgstr "abandonner la fusion en cours"
 
-#: builtin/merge.c:234
+#: builtin/merge.c:235
 msgid "continue the current in-progress merge"
 msgstr "continuer la fusion en cours"
 
-#: builtin/merge.c:236 builtin/pull.c:188
+#: builtin/merge.c:237 builtin/pull.c:188
 msgid "allow merging unrelated histories"
 msgstr "permettre la fusion d'historiques sans rapport"
 
-#: builtin/merge.c:242
+#: builtin/merge.c:243
 msgid "verify commit-msg hook"
 msgstr "vérifier le crochet commit-msg"
 
-#: builtin/merge.c:267
+#: builtin/merge.c:268
 msgid "could not run stash."
 msgstr "impossible de lancer le remisage."
 
-#: builtin/merge.c:272
+#: builtin/merge.c:273
 msgid "stash failed"
 msgstr "échec du remisage"
 
-#: builtin/merge.c:277
+#: builtin/merge.c:278
 #, c-format
 msgid "not a valid object: %s"
 msgstr "pas un objet valide : %s"
 
-#: builtin/merge.c:299 builtin/merge.c:316
+#: builtin/merge.c:300 builtin/merge.c:317
 msgid "read-tree failed"
 msgstr "read-tree a échoué"
 
-#: builtin/merge.c:346
+#: builtin/merge.c:347
 msgid " (nothing to squash)"
 msgstr " (rien à compresser)"
 
-#: builtin/merge.c:357
+#: builtin/merge.c:358
 #, c-format
 msgid "Squash commit -- not updating HEAD\n"
 msgstr "Validation compressée -- HEAD non mise à jour\n"
 
-#: builtin/merge.c:407
+#: builtin/merge.c:408
 #, c-format
 msgid "No merge message -- not updating HEAD\n"
 msgstr "Pas de message de fusion -- pas de mise à jour de HEAD\n"
 
-#: builtin/merge.c:457
+#: builtin/merge.c:458
 #, c-format
 msgid "'%s' does not point to a commit"
 msgstr "'%s' ne pointe pas sur un commit"
 
-#: builtin/merge.c:547
+#: builtin/merge.c:548
 #, c-format
 msgid "Bad branch.%s.mergeoptions string: %s"
 msgstr "Mauvaise chaîne branch.%s.mergeoptions : %s"
 
-#: builtin/merge.c:668
+#: builtin/merge.c:669
 msgid "Not handling anything other than two heads merge."
 msgstr "Impossible de gérer autre chose que la fusion de deux têtes."
 
-#: builtin/merge.c:682
+#: builtin/merge.c:683
 #, c-format
 msgid "Unknown option for merge-recursive: -X%s"
 msgstr "Options inconnue pour merge-recursive : -X%s"
 
-#: builtin/merge.c:697
+#: builtin/merge.c:698
 #, c-format
 msgid "unable to write %s"
 msgstr "impossible d'écrire %s"
 
-#: builtin/merge.c:748
+#: builtin/merge.c:749
 #, c-format
 msgid "Could not read from '%s'"
 msgstr "Impossible de lire depuis '%s'"
 
-#: builtin/merge.c:757
+#: builtin/merge.c:758
 #, c-format
 msgid "Not committing merge; use 'git commit' to complete the merge.\n"
 msgstr ""
 "Pas de validation de la fusion ; utilisez 'git commit' pour terminer la "
 "fusion.\n"
 
-#: builtin/merge.c:763
+#: builtin/merge.c:764
 #, c-format
 msgid ""
 "Please enter a commit message to explain why this merge is necessary,\n"
@@ -11157,70 +11215,70 @@ msgstr ""
 "Les lignes commençant par '%c' seront ignorées, et un message vide\n"
 "abandonne la validation.\n"
 
-#: builtin/merge.c:799
+#: builtin/merge.c:800
 msgid "Empty commit message."
 msgstr "Message de validation vide."
 
-#: builtin/merge.c:818
+#: builtin/merge.c:819
 #, c-format
 msgid "Wonderful.\n"
 msgstr "Merveilleux.\n"
 
-#: builtin/merge.c:871
+#: builtin/merge.c:872
 #, c-format
 msgid "Automatic merge failed; fix conflicts and then commit the result.\n"
 msgstr ""
 "La fusion automatique a échoué ; réglez les conflits et validez le "
 "résultat.\n"
 
-#: builtin/merge.c:910
+#: builtin/merge.c:911
 msgid "No current branch."
 msgstr "Pas de branche courante."
 
-#: builtin/merge.c:912
+#: builtin/merge.c:913
 msgid "No remote for the current branch."
 msgstr "Pas de branche distante pour la branche courante."
 
-#: builtin/merge.c:914
+#: builtin/merge.c:915
 msgid "No default upstream defined for the current branch."
 msgstr "Pas de branche amont par défaut définie pour la branche courante."
 
-#: builtin/merge.c:919
+#: builtin/merge.c:920
 #, c-format
 msgid "No remote-tracking branch for %s from %s"
 msgstr "Pas de branche de suivi pour %s depuis %s"
 
-#: builtin/merge.c:972
+#: builtin/merge.c:973
 #, c-format
 msgid "Bad value '%s' in environment '%s'"
 msgstr "Mauvaise valeur '%s' dans l'environnement '%s'"
 
-#: builtin/merge.c:1074
+#: builtin/merge.c:1075
 #, c-format
 msgid "not something we can merge in %s: %s"
 msgstr "pas possible de fusionner ceci dans %s : %s"
 
-#: builtin/merge.c:1108
+#: builtin/merge.c:1109
 msgid "not something we can merge"
 msgstr "pas possible de fusionner ceci"
 
-#: builtin/merge.c:1210
+#: builtin/merge.c:1211
 msgid "--abort expects no arguments"
 msgstr "--abort n'accepte pas d'argument"
 
-#: builtin/merge.c:1214
+#: builtin/merge.c:1215
 msgid "There is no merge to abort (MERGE_HEAD missing)."
 msgstr "Il n'y a pas de fusion à abandonner (MERGE_HEAD manquant)."
 
-#: builtin/merge.c:1226
+#: builtin/merge.c:1227
 msgid "--continue expects no arguments"
 msgstr "--continue ne supporte aucun argument"
 
-#: builtin/merge.c:1230
+#: builtin/merge.c:1231
 msgid "There is no merge in progress (MERGE_HEAD missing)."
 msgstr "Il n'y a pas de fusion en cours (MERGE_HEAD manquant)."
 
-#: builtin/merge.c:1246
+#: builtin/merge.c:1247
 msgid ""
 "You have not concluded your merge (MERGE_HEAD exists).\n"
 "Please, commit your changes before you merge."
@@ -11228,7 +11286,7 @@ msgstr ""
 "Vous n'avez pas terminé votre fusion (MERGE_HEAD existe).\n"
 "Veuillez valider vos modifications avant de pouvoir fusionner."
 
-#: builtin/merge.c:1253
+#: builtin/merge.c:1254
 msgid ""
 "You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists).\n"
 "Please, commit your changes before you merge."
@@ -11236,114 +11294,114 @@ msgstr ""
 "Vous n'avez pas terminé votre picorage (CHERRY_PICK_HEAD existe).\n"
 "Veuillez valider vos modifications avant de pouvoir fusionner."
 
-#: builtin/merge.c:1256
+#: builtin/merge.c:1257
 msgid "You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists)."
 msgstr "Vous n'avez pas terminé votre picorage (CHERRY_PICK_HEAD existe)."
 
-#: builtin/merge.c:1265
+#: builtin/merge.c:1266
 msgid "You cannot combine --squash with --no-ff."
 msgstr "Vous ne pouvez pas combiner --squash avec --no-ff."
 
-#: builtin/merge.c:1273
+#: builtin/merge.c:1274
 msgid "No commit specified and merge.defaultToUpstream not set."
 msgstr ""
 "Pas de validation spécifiée et merge.defaultToUpstream n'est pas défini."
 
-#: builtin/merge.c:1290
+#: builtin/merge.c:1291
 msgid "Squash commit into empty head not supported yet"
 msgstr "La validation compressée vers une tête vide n'est pas encore supportée"
 
-#: builtin/merge.c:1292
+#: builtin/merge.c:1293
 msgid "Non-fast-forward commit does not make sense into an empty head"
 msgstr "Une validation sans avance rapide n'a pas de sens dans une tête vide"
 
-#: builtin/merge.c:1297
+#: builtin/merge.c:1298
 #, c-format
 msgid "%s - not something we can merge"
 msgstr "%s - pas possible de fusionner ceci"
 
-#: builtin/merge.c:1299
+#: builtin/merge.c:1300
 msgid "Can merge only exactly one commit into empty head"
 msgstr ""
 "Possible de fusionner exactement une seule validation dans une tête vide"
 
-#: builtin/merge.c:1333
+#: builtin/merge.c:1334
 #, c-format
 msgid "Commit %s has an untrusted GPG signature, allegedly by %s."
 msgstr "La validation %s a une signature GPG non fiable, prétendument par %s."
 
-#: builtin/merge.c:1336
+#: builtin/merge.c:1337
 #, c-format
 msgid "Commit %s has a bad GPG signature allegedly by %s."
 msgstr "La validation %s a une mauvaise signature GPG prétendument par %s."
 
-#: builtin/merge.c:1339
+#: builtin/merge.c:1340
 #, c-format
 msgid "Commit %s does not have a GPG signature."
 msgstr "La validation %s n'a pas de signature GPG."
 
-#: builtin/merge.c:1342
+#: builtin/merge.c:1343
 #, c-format
 msgid "Commit %s has a good GPG signature by %s\n"
 msgstr "La validation %s a une signature GPG correcte par %s\n"
 
-#: builtin/merge.c:1401
+#: builtin/merge.c:1402
 msgid "refusing to merge unrelated histories"
 msgstr "refus de fusionner des historiques sans relation"
 
-#: builtin/merge.c:1410
+#: builtin/merge.c:1411
 msgid "Already up to date."
 msgstr "Déjà à jour."
 
-#: builtin/merge.c:1420
+#: builtin/merge.c:1421
 #, c-format
 msgid "Updating %s..%s\n"
 msgstr "Mise à jour %s..%s\n"
 
-#: builtin/merge.c:1461
+#: builtin/merge.c:1462
 #, c-format
 msgid "Trying really trivial in-index merge...\n"
 msgstr "Essai de fusion vraiment triviale dans l'index...\n"
 
-#: builtin/merge.c:1468
+#: builtin/merge.c:1469
 #, c-format
 msgid "Nope.\n"
 msgstr "Non.\n"
 
-#: builtin/merge.c:1493
+#: builtin/merge.c:1494
 msgid "Already up to date. Yeeah!"
 msgstr "Déjà à jour. Ouais !"
 
-#: builtin/merge.c:1499
+#: builtin/merge.c:1500
 msgid "Not possible to fast-forward, aborting."
 msgstr "Pas possible d'avancer rapidement, abandon."
 
-#: builtin/merge.c:1522 builtin/merge.c:1601
+#: builtin/merge.c:1523 builtin/merge.c:1602
 #, c-format
 msgid "Rewinding the tree to pristine...\n"
 msgstr "Retour de l'arbre à l'original...\n"
 
-#: builtin/merge.c:1526
+#: builtin/merge.c:1527
 #, c-format
 msgid "Trying merge strategy %s...\n"
 msgstr "Essai de la stratégie de fusion %s...\n"
 
-#: builtin/merge.c:1592
+#: builtin/merge.c:1593
 #, c-format
 msgid "No merge strategy handled the merge.\n"
 msgstr "Aucune stratégie de fusion n'a pris en charge la fusion.\n"
 
-#: builtin/merge.c:1594
+#: builtin/merge.c:1595
 #, c-format
 msgid "Merge with strategy %s failed.\n"
 msgstr "La fusion avec la stratégie %s a échoué.\n"
 
-#: builtin/merge.c:1603
+#: builtin/merge.c:1604
 #, c-format
 msgid "Using the %s to prepare resolving by hand.\n"
 msgstr "Utilisation de %s pour préparer la résolution à la main.\n"
 
-#: builtin/merge.c:1615
+#: builtin/merge.c:1616
 #, c-format
 msgid "Automatic merge went well; stopped before committing as requested\n"
 msgstr ""
@@ -13893,23 +13951,23 @@ msgstr "rev-list ne supporte l'affichage des notes"
 msgid "cannot combine --use-bitmap-index with object filtering"
 msgstr "impossible de combiner --use-bitmap-index avec le filtrage d'objet"
 
-#: builtin/rev-parse.c:402
+#: builtin/rev-parse.c:406
 msgid "git rev-parse --parseopt [<options>] -- [<args>...]"
 msgstr "git rev-parse --parseopt [<options>] -- [<arguments>...]"
 
-#: builtin/rev-parse.c:407
+#: builtin/rev-parse.c:411
 msgid "keep the `--` passed as an arg"
 msgstr "garder le `--` passé en argument"
 
-#: builtin/rev-parse.c:409
+#: builtin/rev-parse.c:413
 msgid "stop parsing after the first non-option argument"
 msgstr "arrêt de l'analyse après le premier argument qui n'est pas une option"
 
-#: builtin/rev-parse.c:412
+#: builtin/rev-parse.c:416
 msgid "output in stuck long form"
 msgstr "sortie en forme longue fixée"
 
-#: builtin/rev-parse.c:545
+#: builtin/rev-parse.c:549
 msgid ""
 "git rev-parse --parseopt [<options>] -- [<args>...]\n"
 "   or: git rev-parse --sq-quote [<arg>...]\n"
@@ -15415,7 +15473,9 @@ msgstr "Préparation de l'arbre de travail (nouvelle branche '%s')"
 #: builtin/worktree.c:375
 #, c-format
 msgid "Preparing worktree (resetting branch '%s'; was at %s)"
-msgstr "Préparation de l'arbre de travail (réinitialisation de la branche '%s' ; précédemment sur %s)"
+msgstr ""
+"Préparation de l'arbre de travail (réinitialisation de la branche '%s' ; "
+"précédemment sur %s)"
 
 #: builtin/worktree.c:384
 #, c-format
@@ -15612,7 +15672,7 @@ msgstr ""
 msgid "print debugging messages to stderr"
 msgstr "afficher les messages de debug sur stderr"
 
-#: git.c:26
+#: git.c:27
 msgid ""
 "git [--version] [--help] [-C <path>] [-c <name>=<value>]\n"
 "           [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]\n"
@@ -15622,12 +15682,14 @@ msgid ""
 "           <command> [<args>]"
 msgstr ""
 "git [--version] [--help] [-C <chemin>] [-c <nom>=<valeur>]\n"
-"           [--exec-path[=<chemin>]] [--html-path] [--man-path] [--info-path]\n"
-"           [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--bare]\n"
+"           [--exec-path[=<chemin>]] [--html-path] [--man-path] [--info-"
+"path]\n"
+"           [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--"
+"bare]\n"
 "           [--git-dir=<chemin>] [--work-tree=<chemin>] [--namespace=<nom>]\n"
 "           <commande> [<args>]"
 
-#: git.c:33
+#: git.c:34
 msgid ""
 "'git help -a' and 'git help -g' list available subcommands and some\n"
 "concept guides. See 'git help <command>' or 'git help <concept>'\n"
@@ -15637,48 +15699,48 @@ msgstr ""
 "quelques concepts. Voir 'git help <commande>' ou 'git help <concept>'\n"
 "pour en lire plus à propos d'une commande spécifique ou d'un concept."
 
-#: git.c:113
+#: git.c:173
 #, c-format
 msgid "no directory given for --git-dir\n"
 msgstr "aucun répertoire fourni pour --git-dir\n"
 
-#: git.c:127
+#: git.c:187
 #, c-format
 msgid "no namespace given for --namespace\n"
 msgstr "aucun espace de nom fournit pour --namespace\n"
 
-#: git.c:141
+#: git.c:201
 #, c-format
 msgid "no directory given for --work-tree\n"
 msgstr "aucun répertoire fourni pour --work-tree\n"
 
-#: git.c:155
+#: git.c:215
 #, c-format
 msgid "no prefix given for --super-prefix\n"
 msgstr "aucun préfixe fourni pour --super-prefix\n"
 
-#: git.c:177
+#: git.c:237
 #, c-format
 msgid "-c expects a configuration string\n"
 msgstr "-c requiert une chaîne de configuration\n"
 
-#: git.c:215
+#: git.c:275
 #, c-format
 msgid "no directory given for -C\n"
 msgstr "aucun répertoire fourni pour -C\n"
 
-#: git.c:233
+#: git.c:300
 #, c-format
 msgid "unknown option: %s\n"
 msgstr "option inconnue : %s\n"
 
-#: git.c:698
+#: git.c:765
 #, c-format
 msgid "expansion of alias '%s' failed; '%s' is not a git command\n"
 msgstr ""
 "l'expansion de l'alias '%s' a échoué : '%s' n'est pas une commande git\n"
 
-#: git.c:710
+#: git.c:777
 #, c-format
 msgid "failed to run command '%s': %s\n"
 msgstr "échec au lancement de la commande '%s' : %s\n"
@@ -15721,114 +15783,6 @@ msgstr "args"
 msgid "object filtering"
 msgstr "filtrage d'objet"
 
-#: common-cmds.h:9
-msgid "start a working area (see also: git help tutorial)"
-msgstr "démarrer une zone de travail (voir aussi : git help tutorial)"
-
-#: common-cmds.h:10
-msgid "work on the current change (see also: git help everyday)"
-msgstr ""
-"travailler sur la modification actuelle (voir aussi : git help revisions)"
-
-#: common-cmds.h:11
-msgid "examine the history and state (see also: git help revisions)"
-msgstr "examiner l'historique et l'état (voir aussi : git help revisions)"
-
-#: common-cmds.h:12
-msgid "grow, mark and tweak your common history"
-msgstr "agrandir, marquer et modifier votre historique"
-
-#: common-cmds.h:13
-msgid "collaborate (see also: git help workflows)"
-msgstr "collaborer (voir aussi : git help workflows)"
-
-#: common-cmds.h:17
-msgid "Add file contents to the index"
-msgstr "Ajouter le contenu de fichiers dans l'index"
-
-#: common-cmds.h:18
-msgid "Use binary search to find the commit that introduced a bug"
-msgstr "Trouver par recherche binaire la modification qui a introduit un bogue"
-
-#: common-cmds.h:19
-msgid "List, create, or delete branches"
-msgstr "Lister, créer ou supprimer des branches"
-
-#: common-cmds.h:20
-msgid "Switch branches or restore working tree files"
-msgstr "Basculer de branche ou restaurer la copie de travail"
-
-#: common-cmds.h:21
-msgid "Clone a repository into a new directory"
-msgstr "Cloner un dépôt dans un nouveau répertoire"
-
-#: common-cmds.h:22
-msgid "Record changes to the repository"
-msgstr "Enregistrer les modifications dans le dépôt"
-
-#: common-cmds.h:23
-msgid "Show changes between commits, commit and working tree, etc"
-msgstr ""
-"Afficher les changements entre les validations, entre validation et copie de "
-"travail, etc"
-
-#: common-cmds.h:24
-msgid "Download objects and refs from another repository"
-msgstr "Télécharger les objets et références depuis un autre dépôt"
-
-#: common-cmds.h:25
-msgid "Print lines matching a pattern"
-msgstr "Afficher les lignes correspondant à un motif"
-
-#: common-cmds.h:26
-msgid "Create an empty Git repository or reinitialize an existing one"
-msgstr "Créer un dépôt Git vide ou réinitialiser un existant"
-
-#: common-cmds.h:27
-msgid "Show commit logs"
-msgstr "Afficher l'historique des validations"
-
-#: common-cmds.h:28
-msgid "Join two or more development histories together"
-msgstr "Fusionner deux ou plusieurs historiques de développement ensemble"
-
-#: common-cmds.h:29
-msgid "Move or rename a file, a directory, or a symlink"
-msgstr "Déplacer ou renommer un fichier, un répertoire, ou un lien symbolique"
-
-#: common-cmds.h:30
-msgid "Fetch from and integrate with another repository or a local branch"
-msgstr "Rapatrier et intégrer un autre dépôt ou une branche locale"
-
-#: common-cmds.h:31
-msgid "Update remote refs along with associated objects"
-msgstr "Mettre à jour les références distantes ainsi que les objets associés"
-
-#: common-cmds.h:32
-msgid "Reapply commits on top of another base tip"
-msgstr "Réapplication des commits sur le sommet de l'autre base"
-
-#: common-cmds.h:33
-msgid "Reset current HEAD to the specified state"
-msgstr "Réinitialiser la HEAD courante à l'état spécifié"
-
-#: common-cmds.h:34
-msgid "Remove files from the working tree and from the index"
-msgstr "Supprimer des fichiers de la copie de travail et de l'index"
-
-#: common-cmds.h:35
-msgid "Show various types of objects"
-msgstr "Afficher différents types d'objets"
-
-#: common-cmds.h:36
-msgid "Show the working tree status"
-msgstr "Afficher l'état de la copie de travail"
-
-#: common-cmds.h:37
-msgid "Create, list, delete or verify a tag object signed with GPG"
-msgstr ""
-"Créer, lister, supprimer ou vérifier un objet d'étiquette signé avec GPG"
-
 #: parse-options.h:157
 msgid "expiry-date"
 msgstr "date-d'expiration"
@@ -15848,6 +15802,659 @@ msgstr "être plus silencieux"
 #: parse-options.h:259
 msgid "use <n> digits to display SHA-1s"
 msgstr "utiliser <n> chiffres pour afficher les SHA-1s"
+
+#: command-list.h:50
+msgid "Add file contents to the index"
+msgstr "Ajouter le contenu de fichiers dans l'index"
+
+#: command-list.h:51
+msgid "Apply a series of patches from a mailbox"
+msgstr "Appliquer une série de patchs depuis une boîte mail"
+
+#: command-list.h:52
+msgid "Annotate file lines with commit information"
+msgstr "Annoter les lignes du fichier avec l'information de commit"
+
+#: command-list.h:53
+msgid "Apply a patch to files and/or to the index"
+msgstr "Appliquer une patch à des fichiers ou à l'index"
+
+#: command-list.h:54
+msgid "Import an Arch repository into Git"
+msgstr "Importer dans Git un dépôt Arch"
+
+#: command-list.h:55
+msgid "Create an archive of files from a named tree"
+msgstr "Créer une archive des fichiers depuis un arbre nommé"
+
+#: command-list.h:56
+msgid "Use binary search to find the commit that introduced a bug"
+msgstr "Trouver par recherche binaire la modification qui a introduit un bogue"
+
+#: command-list.h:57
+msgid "Show what revision and author last modified each line of a file"
+msgstr ""
+"Montrer la révision et l'auteur qui ont modifié en dernier chaque ligne d'un "
+"fichier"
+
+#: command-list.h:58
+msgid "List, create, or delete branches"
+msgstr "Lister, créer ou supprimer des branches"
+
+#: command-list.h:59
+msgid "Move objects and refs by archive"
+msgstr "Déplacer les objets et références par archive"
+
+#: command-list.h:60
+msgid "Provide content or type and size information for repository objects"
+msgstr ""
+"Fournir les contenu ou l'information de type et taille pour les objets du "
+"dépôt"
+
+#: command-list.h:61
+msgid "Display gitattributes information"
+msgstr "Afficher les informations gitattributes"
+
+#: command-list.h:62
+msgid "Debug gitignore / exclude files"
+msgstr "Déboguer gitignore / les fichiers d'exclusion"
+
+#: command-list.h:63
+msgid "Show canonical names and email addresses of contacts"
+msgstr "Afficher les noms canoniques et les adresses courriel des contacts"
+
+#: command-list.h:64
+msgid "Switch branches or restore working tree files"
+msgstr "Basculer de branche ou restaurer la copie de travail"
+
+#: command-list.h:65
+msgid "Copy files from the index to the working tree"
+msgstr "Copier les fichiers depuis l'index dans la copie de travail"
+
+#: command-list.h:66
+msgid "Ensures that a reference name is well formed"
+msgstr "Assure qu'un nom de référence est bien formé"
+
+#: command-list.h:67
+msgid "Find commits yet to be applied to upstream"
+msgstr "Trouver les commits à appliquer en amont"
+
+#: command-list.h:68
+msgid "Apply the changes introduced by some existing commits"
+msgstr "Appliquer les modifications introduites par des commits existants"
+
+#: command-list.h:69
+msgid "Graphical alternative to git-commit"
+msgstr "Alternative graphique à git-commit"
+
+#: command-list.h:70
+msgid "Remove untracked files from the working tree"
+msgstr "Supprimer les fichiers non-suivis de l'arbre de travail"
+
+#: command-list.h:71
+msgid "Clone a repository into a new directory"
+msgstr "Cloner un dépôt dans un nouveau répertoire"
+
+#: command-list.h:72
+msgid "Display data in columns"
+msgstr "Afficher les données en colonnes"
+
+#: command-list.h:73
+msgid "Record changes to the repository"
+msgstr "Enregistrer les modifications dans le dépôt"
+
+#: command-list.h:74
+msgid "Write and verify Git commit graph files"
+msgstr "Écrire et vérifier les fichiers de graphe de commit Git"
+
+#: command-list.h:75
+msgid "Create a new commit object"
+msgstr "Créer un nouvel objet commit"
+
+#: command-list.h:76
+msgid "Get and set repository or global options"
+msgstr "voir et régler les options globales ou de dépôt"
+
+#: command-list.h:77
+msgid "Count unpacked number of objects and their disk consumption"
+msgstr ""
+"Compter le nombre d'objets non-empaquetés et leur consommation d'espace "
+"disque"
+
+#: command-list.h:78
+msgid "Retrieve and store user credentials"
+msgstr "Récupérer et sauvegarder les certificats d'utilisateur"
+
+#: command-list.h:79
+msgid "Helper to temporarily store passwords in memory"
+msgstr "Assistant pour maintenir temporairement en mémoire les mots de passe"
+
+#: command-list.h:80
+msgid "Helper to store credentials on disk"
+msgstr "Assistant pour sauvegarder les certificats sur disque"
+
+#: command-list.h:81
+msgid "Export a single commit to a CVS checkout"
+msgstr "Exporter un commit unique en extraction CVS"
+
+#: command-list.h:82
+msgid "Salvage your data out of another SCM people love to hate"
+msgstr "Sauver vos données depuis un autre SCM qu'on aime à haïr"
+
+#: command-list.h:83
+msgid "A CVS server emulator for Git"
+msgstr "Un émulateur de serveur CVS pour Git"
+
+#: command-list.h:84
+msgid "A really simple server for Git repositories"
+msgstr "Un serveur vraiment simple pour les dépôts Git"
+
+#: command-list.h:85
+msgid "Give an object a human readable name based on an available ref"
+msgstr ""
+"Baptiser un objet avec un nom lisible à partir d'une référence disponible"
+
+#: command-list.h:86
+msgid "Show changes between commits, commit and working tree, etc"
+msgstr ""
+"Afficher les changements entre les validations, entre validation et copie de "
+"travail, etc"
+
+#: command-list.h:87
+msgid "Compares files in the working tree and the index"
+msgstr "Compare des fichiers de l'arbre de travail et de l'index"
+
+#: command-list.h:88
+msgid "Compare a tree to the working tree or index"
+msgstr "Comparer un arbre avec l'arbre de travail ou l'index"
+
+#: command-list.h:89
+msgid "Compares the content and mode of blobs found via two tree objects"
+msgstr "Compare le contenu et la mode des blobs trouvés via deux objets arbre"
+
+#: command-list.h:90
+msgid "Show changes using common diff tools"
+msgstr "Afficher les modifications en utilisant les outils habituel de diff"
+
+#: command-list.h:91
+msgid "Git data exporter"
+msgstr "Exporteur de données Git"
+
+#: command-list.h:92
+msgid "Backend for fast Git data importers"
+msgstr "Moteur pour les importateurs rapides de données Git"
+
+#: command-list.h:93
+msgid "Download objects and refs from another repository"
+msgstr "Télécharger les objets et références depuis un autre dépôt"
+
+#: command-list.h:94
+msgid "Receive missing objects from another repository"
+msgstr "Télécharger les objets manquants depuis un autre dépôt"
+
+#: command-list.h:95
+msgid "Rewrite branches"
+msgstr "Réécrire les branches"
+
+#: command-list.h:96
+msgid "Produce a merge commit message"
+msgstr "Produire un message de validation de fusion"
+
+#: command-list.h:97
+msgid "Output information on each ref"
+msgstr "Afficher l'information de chaque référence"
+
+#: command-list.h:98
+msgid "Prepare patches for e-mail submission"
+msgstr "Préparer les patchs pour soumission par courriel"
+
+#: command-list.h:99
+msgid "Verifies the connectivity and validity of the objects in the database"
+msgstr ""
+"Vérifier la connectivité et la validité des objets dans la base de données"
+
+#: command-list.h:100
+msgid "Cleanup unnecessary files and optimize the local repository"
+msgstr "Effacer les fichiers non-nécessaires et optimiser le dépôt local"
+
+#: command-list.h:101
+msgid "Extract commit ID from an archive created using git-archive"
+msgstr "Extraire l'ID du commit depuis une archive créée par git-archive"
+
+#: command-list.h:102
+msgid "Print lines matching a pattern"
+msgstr "Afficher les lignes correspondant à un motif"
+
+#: command-list.h:103
+msgid "A portable graphical interface to Git"
+msgstr "Une interface graphique portable pour Git"
+
+#: command-list.h:104
+msgid "Compute object ID and optionally creates a blob from a file"
+msgstr ""
+"Calculer l'ID d'objet et créer optionnellement un blob depuis un fichier"
+
+#: command-list.h:105
+msgid "Display help information about Git"
+msgstr "Afficher l'information d'aide à propos de Git"
+
+#: command-list.h:106
+msgid "Server side implementation of Git over HTTP"
+msgstr "Implantation côté serveur de Git sur HTTP"
+
+#: command-list.h:107
+msgid "Download from a remote Git repository via HTTP"
+msgstr "Télécharger depuis un dépôt Git distant via HTTP"
+
+#: command-list.h:108
+msgid "Push objects over HTTP/DAV to another repository"
+msgstr "Pousser les objets sur un autre dépôt via HTTP/DAV"
+
+#: command-list.h:109
+msgid "Send a collection of patches from stdin to an IMAP folder"
+msgstr "Envoyer un ensemble de patchs depuis stdin vers un répertoire IMAP"
+
+#: command-list.h:110
+msgid "Build pack index file for an existing packed archive"
+msgstr ""
+"Construire un fichier d'index pack depuis une archive compactée existante"
+
+#: command-list.h:111
+msgid "Create an empty Git repository or reinitialize an existing one"
+msgstr "Créer un dépôt Git vide ou réinitialiser un existant"
+
+#: command-list.h:112
+msgid "Instantly browse your working repository in gitweb"
+msgstr "Naviguer instantanément votre dépôt de travail dans gitweb"
+
+#: command-list.h:113
+msgid "add or parse structured information in commit messages"
+msgstr ""
+"ajouter ou analyser l'information structurée dans les messages de validation"
+
+#: command-list.h:114
+msgid "The Git repository browser"
+msgstr "Le navigateur de dépôt Git"
+
+#: command-list.h:115
+msgid "Show commit logs"
+msgstr "Afficher l'historique des validations"
+
+#: command-list.h:116
+msgid "Show information about files in the index and the working tree"
+msgstr ""
+"Afficher l'information à propos des fichiers dans l'index ou l'arbre de "
+"travail"
+
+#: command-list.h:117
+msgid "List references in a remote repository"
+msgstr "Lister les références dans un dépôt distant"
+
+#: command-list.h:118
+msgid "List the contents of a tree object"
+msgstr "Afficher le contenu d'un objet arbre"
+
+#: command-list.h:119
+msgid "Extracts patch and authorship from a single e-mail message"
+msgstr ""
+"Extraire le patch et l'information de d'auteur depuis un simple message de "
+"courriel"
+
+#: command-list.h:120
+msgid "Simple UNIX mbox splitter program"
+msgstr "Programme simple de découpage de mbox UNIX"
+
+#: command-list.h:121
+msgid "Join two or more development histories together"
+msgstr "Fusionner deux ou plusieurs historiques de développement ensemble"
+
+#: command-list.h:122
+msgid "Find as good common ancestors as possible for a merge"
+msgstr "Trouver un ancêtre aussi bon que possible pour une fusion"
+
+#: command-list.h:123
+msgid "Run a three-way file merge"
+msgstr "Lancer une fusion à 3 points"
+
+#: command-list.h:124
+msgid "Run a merge for files needing merging"
+msgstr "Lancer une fusion à 3 points pour les fichiers à fusionner"
+
+#: command-list.h:125
+msgid "The standard helper program to use with git-merge-index"
+msgstr "Le programme assistant standard à utiliser avec git-merge-index"
+
+#: command-list.h:126
+msgid "Run merge conflict resolution tools to resolve merge conflicts"
+msgstr ""
+"Lancer les outils de résolution de conflit de fusion pour résoudre les "
+"conflits de fusion"
+
+#: command-list.h:127
+msgid "Show three-way merge without touching index"
+msgstr "Afficher la fusion à trois points sans modifier l'index"
+
+#: command-list.h:128
+msgid "Creates a tag object"
+msgstr "Créer un objet étiquette"
+
+#: command-list.h:129
+msgid "Build a tree-object from ls-tree formatted text"
+msgstr "Construire un objet arbre depuis une texte formaté comme ls-tree"
+
+#: command-list.h:130
+msgid "Move or rename a file, a directory, or a symlink"
+msgstr "Déplacer ou renommer un fichier, un répertoire, ou un lien symbolique"
+
+#: command-list.h:131
+msgid "Find symbolic names for given revs"
+msgstr "Trouver les noms symboliques pour des révisions données"
+
+#: command-list.h:132
+msgid "Add or inspect object notes"
+msgstr "Ajouter ou inspecter les notes d'un objets"
+
+#: command-list.h:133
+msgid "Import from and submit to Perforce repositories"
+msgstr "Importer et soumettre à des dépôt Perforce"
+
+#: command-list.h:134
+msgid "Create a packed archive of objects"
+msgstr "Créer une archive compactée d'objets"
+
+#: command-list.h:135
+msgid "Find redundant pack files"
+msgstr "Trouver les fichiers pack redondants"
+
+#: command-list.h:136
+msgid "Pack heads and tags for efficient repository access"
+msgstr "Empaqueter les têtes et les étiquettes pour un accès efficace au dépôt"
+
+#: command-list.h:137
+msgid "Routines to help parsing remote repository access parameters"
+msgstr ""
+"Routines pour aider à analyser les paramètres d'accès aux dépôts distants"
+
+#: command-list.h:138
+msgid "Compute unique ID for a patch"
+msgstr "Calculer l'ID unique d'un patch"
+
+#: command-list.h:139
+msgid "Prune all unreachable objects from the object database"
+msgstr ""
+"Éliminer les objets inatteignables depuis la base de données des objets"
+
+#: command-list.h:140
+msgid "Remove extra objects that are already in pack files"
+msgstr "Éliminer les objets qui sont déjà présents dans les fichiers pack"
+
+#: command-list.h:141
+msgid "Fetch from and integrate with another repository or a local branch"
+msgstr "Rapatrier et intégrer un autre dépôt ou une branche locale"
+
+#: command-list.h:142
+msgid "Update remote refs along with associated objects"
+msgstr "Mettre à jour les références distantes ainsi que les objets associés"
+
+#: command-list.h:143
+msgid "Applies a quilt patchset onto the current branch"
+msgstr "Appliquer un patchset quilt sur la branche courante"
+
+#: command-list.h:144
+msgid "Reads tree information into the index"
+msgstr "Lire l'information d'arbre dans l'index"
+
+#: command-list.h:145
+msgid "Reapply commits on top of another base tip"
+msgstr "Réapplication des commits sur le sommet de l'autre base"
+
+#: command-list.h:146
+msgid "Receive what is pushed into the repository"
+msgstr "Recevoir ce qui est poussé dans le dépôt"
+
+#: command-list.h:147
+msgid "Manage reflog information"
+msgstr "Gérer l'information de reflog"
+
+#: command-list.h:148
+msgid "Manage set of tracked repositories"
+msgstr "Gérer un ensemble de dépôts suivis"
+
+#: command-list.h:149
+msgid "Pack unpacked objects in a repository"
+msgstr "Empaqueter les objets non-empaquetés d'un dépôt"
+
+#: command-list.h:150
+msgid "Create, list, delete refs to replace objects"
+msgstr "Créer, lister, supprimer des référence pour remplacer des objets"
+
+#: command-list.h:151
+msgid "Generates a summary of pending changes"
+msgstr "Générer une résumé des modifications en attentes"
+
+#: command-list.h:152
+msgid "Reuse recorded resolution of conflicted merges"
+msgstr "Réutiliser une résolution enregistrée de fusions conflictuelles"
+
+#: command-list.h:153
+msgid "Reset current HEAD to the specified state"
+msgstr "Réinitialiser la HEAD courante à l'état spécifié"
+
+#: command-list.h:154
+msgid "Revert some existing commits"
+msgstr "Inverser des commits existants"
+
+#: command-list.h:155
+msgid "Lists commit objects in reverse chronological order"
+msgstr "Afficher les objets commit dans l'ordre chronologique inverse"
+
+#: command-list.h:156
+msgid "Pick out and massage parameters"
+msgstr "Analyser et préparer les paramètres"
+
+#: command-list.h:157
+msgid "Remove files from the working tree and from the index"
+msgstr "Supprimer des fichiers de la copie de travail et de l'index"
+
+#: command-list.h:158
+msgid "Send a collection of patches as emails"
+msgstr "Envoyer un ensemble de patchs comme courriels"
+
+#: command-list.h:159
+msgid "Push objects over Git protocol to another repository"
+msgstr "Pousser les objets sur un autre dépôt via le protocole Git"
+
+#: command-list.h:160
+msgid "Restricted login shell for Git-only SSH access"
+msgstr "shell de login restreint pour un accès SSH vers Git seulement"
+
+#: command-list.h:161
+msgid "Summarize 'git log' output"
+msgstr "Résumer la sortie de 'git log'"
+
+#: command-list.h:162
+msgid "Show various types of objects"
+msgstr "Afficher différents types d'objets"
+
+#: command-list.h:163
+msgid "Show branches and their commits"
+msgstr "Afficher les branches et leurs commits"
+
+#: command-list.h:164
+msgid "Show packed archive index"
+msgstr "Afficher l'index de l'archive empaquetée"
+
+#: command-list.h:165
+msgid "List references in a local repository"
+msgstr "Lister les références du dépôt local"
+
+#: command-list.h:166
+msgid "Git's i18n setup code for shell scripts"
+msgstr "Le code d'initialisation i18n pour les scripts shell"
+
+#: command-list.h:167
+msgid "Common Git shell script setup code"
+msgstr "Le code d'initialisation commun aux scripts shell Git"
+
+#: command-list.h:168
+msgid "Stash the changes in a dirty working directory away"
+msgstr "Remiser les modifications d'un répertoire de travail sale"
+
+#: command-list.h:169
+msgid "Add file contents to the staging area"
+msgstr "Ajouter le contenu de fichiers à l'index"
+
+#: command-list.h:170
+msgid "Show the working tree status"
+msgstr "Afficher l'état de la copie de travail"
+
+#: command-list.h:171
+msgid "Remove unnecessary whitespace"
+msgstr "Retirer les espaces inutiles"
+
+#: command-list.h:172
+msgid "Initialize, update or inspect submodules"
+msgstr "Initialiser, mettre à jour et inspecter les sous-modules"
+
+#: command-list.h:173
+msgid "Bidirectional operation between a Subversion repository and Git"
+msgstr "Opération Bidirectionnelles entre un dépôt Subversion et Git"
+
+#: command-list.h:174
+msgid "Read, modify and delete symbolic refs"
+msgstr "Lire, modifier et supprimer les références symboliques"
+
+#: command-list.h:175
+msgid "Create, list, delete or verify a tag object signed with GPG"
+msgstr ""
+"Créer, lister, supprimer ou vérifier un objet d'étiquette signé avec GPG"
+
+#: command-list.h:176
+msgid "Creates a temporary file with a blob's contents"
+msgstr "Créer un fichier temporaire avec le contenu d'un blob"
+
+#: command-list.h:177
+msgid "Unpack objects from a packed archive"
+msgstr "Dépaqueter les objets depuis une archive empaquetée"
+
+#: command-list.h:178
+msgid "Register file contents in the working tree to the index"
+msgstr "Enregistrer le contenu d'un fichier de l'arbre de travail dans l'index"
+
+#: command-list.h:179
+msgid "Update the object name stored in a ref safely"
+msgstr ""
+"Mettre à jour le nom d'objet stocké dans une référence en toute sécurité"
+
+#: command-list.h:180
+msgid "Update auxiliary info file to help dumb servers"
+msgstr ""
+"Mettre à jour le fichier d'informations auxiliaires pour aider les serveurs "
+"idiots"
+
+#: command-list.h:181
+msgid "Send archive back to git-archive"
+msgstr "Renvoyer une archive dans git-archive"
+
+#: command-list.h:182
+msgid "Send objects packed back to git-fetch-pack"
+msgstr "Renvoyer des objets empaquetés dans git-fetch-pack"
+
+#: command-list.h:183
+msgid "Show a Git logical variable"
+msgstr "Afficher un variable logique de Git"
+
+#: command-list.h:184
+msgid "Check the GPG signature of commits"
+msgstr "Vérifier la signature GPG de commits"
+
+#: command-list.h:185
+msgid "Validate packed Git archive files"
+msgstr "Valider des fichiers d'archive Git empaquetés"
+
+#: command-list.h:186
+msgid "Check the GPG signature of tags"
+msgstr "Vérifier la signature GPG d'étiquettes"
+
+#: command-list.h:187
+msgid "Git web interface (web frontend to Git repositories)"
+msgstr "Interface web de Git"
+
+#: command-list.h:188
+msgid "Show logs with difference each commit introduces"
+msgstr "Afficher les journaux avec la différence que chaque commit introduit"
+
+#: command-list.h:189
+msgid "Manage multiple working trees"
+msgstr "Gère de arbres de travail multiples"
+
+#: command-list.h:190
+msgid "Create a tree object from the current index"
+msgstr "Créer un objet arbre depuis l'index courant"
+
+#: command-list.h:191
+msgid "Defining attributes per path"
+msgstr "Définition des attributs par chemin"
+
+#: command-list.h:192
+msgid "Git command-line interface and conventions"
+msgstr "interface en ligne de commande et conventions de Git"
+
+#: command-list.h:193
+msgid "A Git core tutorial for developers"
+msgstr "Tutoriel du cœur de Git pour les développeurs"
+
+#: command-list.h:194
+msgid "Git for CVS users"
+msgstr "Git pour les utilisateurs de CVS"
+
+#: command-list.h:195
+msgid "Tweaking diff output"
+msgstr "Bidouillage de la sortie diff"
+
+#: command-list.h:196
+msgid "A useful minimum set of commands for Everyday Git"
+msgstr "Un ensemble minimal utile des commandes de Git pour tous les jours"
+
+#: command-list.h:197
+msgid "A Git Glossary"
+msgstr "Un glossaire Git"
+
+#: command-list.h:198
+msgid "Hooks used by Git"
+msgstr "Crochets utilisés par Git"
+
+#: command-list.h:199
+msgid "Specifies intentionally untracked files to ignore"
+msgstr "Spécifie les fichiers non-suivis à ignorer intentionnellement"
+
+#: command-list.h:200
+msgid "Defining submodule properties"
+msgstr "Définition des propriétés de sous-module"
+
+#: command-list.h:201
+msgid "Git namespaces"
+msgstr "Espaces de nom de Git"
+
+#: command-list.h:202
+msgid "Git Repository Layout"
+msgstr "Disposition d'un dépôt Git"
+
+#: command-list.h:203
+msgid "Specifying revisions and ranges for Git"
+msgstr "Spécification des révisions et portées pour Git"
+
+#: command-list.h:204
+msgid "A tutorial introduction to Git: part two"
+msgstr "Une introduction pratique à Git : deuxième partie"
+
+#: command-list.h:205
+msgid "A tutorial introduction to Git"
+msgstr "Une introduction pratique à Git"
+
+#: command-list.h:206
+msgid "An overview of recommended workflows with Git"
+msgstr "Un aperçu des flux de travail recommandés avec Git"
 
 #: rerere.h:40
 msgid "update the index with reused conflict resolution if possible"
@@ -16616,7 +17223,7 @@ msgid ""
 "e, edit <commit> = use commit, but stop for amending\n"
 "s, squash <commit> = use commit, but meld into previous commit\n"
 "f, fixup <commit> = like \"squash\", but discard this commit's log message\n"
-"x, exec <commit> = run command (the rest of the line) using shell\n"
+"x, exec <command> = run command (the rest of the line) using shell\n"
 "d, drop <commit> = remove commit\n"
 "l, label <label> = label current HEAD with a name\n"
 "t, reset <label> = reset HEAD to a label\n"
@@ -16632,11 +17239,12 @@ msgstr ""
 " p, pick <commit> = utiliser le commit\n"
 " r, reword <commit> = utiliser le commit, mais reformuler son message\n"
 " e, edit <commit> = utiliser le commit, mais s'arrêter pour le modifier\n"
-" s, squash <commit> = utiliser le commit, mais le fusionner avec le précédent\n"
+" s, squash <commit> = utiliser le commit, mais le fusionner avec le "
+"précédent\n"
 " f, fixup <commit> = comme \"squash\", mais en éliminant son message\n"
 " x, exec <commit> = lancer la commande (reste de la ligne) dans un shell\n"
 " d, drop <commit> = supprimer le commit\n"
-" l, label <label> = nommer la HEAD courante\n"
+" l, label <label> = étiqueter la HEAD courante avec un nom\n"
 " t, reset <label> = réinitialiser HEAD à label\n"
 " m, merge [-C <commit> | -c <commit>] <label> [# <uniligne>]\n"
 "         créer un commit de fusion utilisant le message de fusion original\n"
@@ -17929,6 +18537,9 @@ msgstr "%s sauté avec un suffix de sauvegarde '%s'.\n"
 msgid "Do you really want to send %s? [y|N]: "
 msgstr "Souhaitez-vous réellement envoyer %s ?[y|N] : "
 
+#~ msgid "Everyday Git With 20 Commands Or So"
+#~ msgstr "Git de tous les jours avec à peu près 20 commandes"
+
 #~ msgid "Could not open '%s' for writing"
 #~ msgstr "Impossible d'ouvrir '%s' en écriture"
 
@@ -18134,9 +18745,6 @@ msgstr "Souhaitez-vous réellement envoyer %s ?[y|N] : "
 
 #~ msgid "blob object"
 #~ msgstr "objet blob"
-
-#~ msgid "other tag object"
-#~ msgstr "objet étiquette autre"
 
 #~ msgid ""
 #~ "There is nothing to exclude from by :(exclude) patterns.\n"
@@ -18685,9 +19293,6 @@ msgstr "Souhaitez-vous réellement envoyer %s ?[y|N] : "
 
 #~ msgid "no branch specified"
 #~ msgstr "aucune branche spécifiée"
-
-#~ msgid "check a branch out in a separate working directory"
-#~ msgstr "extraire une branche dans un répertoire de travail séparé"
 
 #~ msgid "prune .git/worktrees"
 #~ msgstr "éliminer .git/worktrees"
