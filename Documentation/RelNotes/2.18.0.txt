@@ -324,7 +324,7 @@ Fixes since v2.17
    after giving an error message.
    (merge 3bb0923f06 ps/contains-id-error-message later to maint).
 
- * "diff-highlight" filter (in contrib/) learned to undertand "git log
+ * "diff-highlight" filter (in contrib/) learned to understand "git log
    --graph" output better.
    (merge 4551fbba14 jk/diff-highlight-graph-fix later to maint).
 

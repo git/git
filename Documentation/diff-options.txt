@@ -133,7 +133,7 @@ These parameters can also be set individually with `--stat-width=<width>`,
 	as file creations or deletions ("new" or "gone", optionally "+l"
 	if it's a symlink) and mode changes ("+x" or "-x" for adding
 	or removing executable bit respectively) in diffstat. The
-	information is put betwen the filename part and the graph
+	information is put between the filename part and the graph
 	part. Implies `--stat`.
 
 --numstat::
