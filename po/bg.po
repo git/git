@@ -114,8 +114,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git master\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2018-06-08 09:03+0800\n"
-"PO-Revision-Date: 2018-06-12 09:38+0200\n"
+"POT-Creation-Date: 2018-06-16 22:06+0800\n"
+"PO-Revision-Date: 2018-06-17 13:16+0200\n"
 "Last-Translator: Alexander Shopov <ash@kambanaria.org>\n"
 "Language-Team: Bulgarian <dict@fsa-bg.org>\n"
 "Language: bg\n"
@@ -1394,7 +1394,7 @@ msgstr ""
 "\n"
 "    git config advice.graftFileDeprecated false"
 
-#: commit.c:1537
+#: commit.c:1540
 msgid ""
 "Warning: commit message did not conform to UTF-8.\n"
 "You may want to amend it after fixing the message, or set the config\n"
@@ -2471,8 +2471,8 @@ msgstr "Превъртане на подмодула „%s“ до следно�
 
 #: merge-recursive.c:1211 merge-recursive.c:1223
 #, c-format
-msgid "Fast-forwarding submodule %s to %s"
-msgstr "Превъртане на подмодула „%s“ до „%s“"
+msgid "Fast-forwarding submodule %s"
+msgstr "Превъртане на подмодула „%s“"
 
 #: merge-recursive.c:1245
 #, c-format
@@ -9692,7 +9692,7 @@ msgstr "зададен е неправилен брой нишки (%d) за %s"
 #. variable for tweaking threads, currently
 #. grep.threads
 #.
-#: builtin/grep.c:293 builtin/index-pack.c:1531 builtin/index-pack.c:1723
+#: builtin/grep.c:293 builtin/index-pack.c:1535 builtin/index-pack.c:1727
 #, c-format
 msgid "no threads support, ignoring %s"
 msgstr "липсва поддръжка за нишки.  „%s“ ще се пренебрегне"
@@ -9912,7 +9912,7 @@ msgstr "опциите „--cached“ и „--untracked“ са несъвмес
 msgid "unable to resolve revision: %s"
 msgstr "версията „%s“ не може бъде открита"
 
-#: builtin/grep.c:1036 builtin/index-pack.c:1527
+#: builtin/grep.c:1036 builtin/index-pack.c:1531
 #, c-format
 msgid "invalid number of threads specified (%d)"
 msgstr "зададен е неправилен брой нишки: %d"
@@ -10337,58 +10337,58 @@ msgstr "пакетният файл не може да бъде запазен"
 msgid "cannot store index file"
 msgstr "файлът за индекса не може да бъде съхранен"
 
-#: builtin/index-pack.c:1521
+#: builtin/index-pack.c:1525
 #, c-format
 msgid "bad pack.indexversion=%<PRIu32>"
 msgstr "зададена е неправилна версия пакетиране: „pack.indexversion=%<PRIu32>“"
 
-#: builtin/index-pack.c:1590
+#: builtin/index-pack.c:1594
 #, c-format
 msgid "Cannot open existing pack file '%s'"
 msgstr "Съществуващият пакетен файл „%s“ не може да бъде отворен"
 
-#: builtin/index-pack.c:1592
+#: builtin/index-pack.c:1596
 #, c-format
 msgid "Cannot open existing pack idx file for '%s'"
 msgstr "Съществуващият индекс за пакетния файл „%s“ не може да бъде отворен"
 
-#: builtin/index-pack.c:1640
+#: builtin/index-pack.c:1644
 #, c-format
 msgid "non delta: %d object"
 msgid_plural "non delta: %d objects"
 msgstr[0] "%d обект не е разлика"
 msgstr[1] "%d обекта не са разлика"
 
-#: builtin/index-pack.c:1647
+#: builtin/index-pack.c:1651
 #, c-format
 msgid "chain length = %d: %lu object"
 msgid_plural "chain length = %d: %lu objects"
 msgstr[0] "дължината на веригата е %d: %lu обект"
 msgstr[1] "дължината на веригата е %d: %lu обекта"
 
-#: builtin/index-pack.c:1684
+#: builtin/index-pack.c:1688
 msgid "Cannot come back to cwd"
 msgstr "Процесът не може да се върне към предишната работна директория"
 
-#: builtin/index-pack.c:1735 builtin/index-pack.c:1738
-#: builtin/index-pack.c:1754 builtin/index-pack.c:1758
+#: builtin/index-pack.c:1739 builtin/index-pack.c:1742
+#: builtin/index-pack.c:1758 builtin/index-pack.c:1762
 #, c-format
 msgid "bad %s"
 msgstr "неправилна стойност „%s“"
 
-#: builtin/index-pack.c:1774
+#: builtin/index-pack.c:1778
 msgid "--fix-thin cannot be used without --stdin"
 msgstr "опцията „--fix-thin“ изисква „--stdin“"
 
-#: builtin/index-pack.c:1776
+#: builtin/index-pack.c:1780
 msgid "--stdin requires a git repository"
 msgstr "„--stdin“ изисква хранилище на git"
 
-#: builtin/index-pack.c:1782
+#: builtin/index-pack.c:1786
 msgid "--verify with no packfile name given"
 msgstr "опцията „--verify“ изисква име на пакетен файл"
 
-#: builtin/index-pack.c:1832 builtin/unpack-objects.c:578
+#: builtin/index-pack.c:1836 builtin/unpack-objects.c:578
 msgid "fsck error in pack objects"
 msgstr "грешка при проверка с „fsck“ на пакетните обекти"
 
