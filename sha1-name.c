@@ -1721,7 +1721,7 @@ static int get_oid_with_context_1(const char *name,
 			if (flags & GET_OID_FOLLOW_SYMLINKS) {
 				ret = get_tree_entry_follow_symlinks(&tree_oid,
 					filename, oid, &oc->symlink_path,
-					&oc->mode);
+					&oc->mode, flags);
 			} else {
 				ret = get_tree_entry(&tree_oid, filename, oid,
 						     &oc->mode);

@@ -64,7 +64,7 @@ enum follow_symlinks_result {
 		       */
 };
 
-enum follow_symlinks_result get_tree_entry_follow_symlinks(struct object_id *tree_oid, const char *name, struct object_id *result, struct strbuf *result_path, unsigned *mode);
+enum follow_symlinks_result get_tree_entry_follow_symlinks(struct object_id *tree_oid, const char *name, struct object_id *result, struct strbuf *result_path, unsigned *mode, int flags);
 
 struct traverse_info {
 	const char *traverse_path;
@@ -79,6 +79,7 @@ struct traverse_info {
 	int show_all_errors;
 };
 
+int get_tree_entry_gently(const struct object_id *, const char *, struct object_id *, unsigned *, int);
 int get_tree_entry(const struct object_id *, const char *, struct object_id *, unsigned *);
 extern char *make_traverse_path(char *path, const struct traverse_info *info, const struct name_entry *n);
 extern void setup_traverse_info(struct traverse_info *info, const char *base);

@@ -491,7 +491,9 @@ struct dir_state {
 	struct object_id oid;
 };
 
-static int find_tree_entry(struct tree_desc *t, const char *name, struct object_id *result, unsigned *mode)
+static int find_tree_entry(struct tree_desc *t, const char *name,
+				  struct object_id *result, unsigned *mode,
+				  int flags)
 {
 	int namelen = strlen(name);
 	while (t->size) {
@@ -501,7 +503,11 @@ static int find_tree_entry(struct tree_desc *t, const char *name, struct object_
 
 		oid = tree_entry_extract(t, &entry, mode);
 		entrylen = tree_entry_len(&t->entry);
-		update_tree_entry(t);
+
+		if (!(flags & GET_OID_GENTLY))
+			update_tree_entry(t);
+		else if (update_tree_entry_gently(t))
+			return -1;
 		if (entrylen > namelen)
 			continue;
 		cmp = memcmp(name, entry, entrylen);
@@ -521,19 +527,28 @@ static int find_tree_entry(struct tree_desc *t, const char *name, struct object_
 			oidcpy(result, oid);
 			return 0;
 		}
-		return get_tree_entry(oid, name + entrylen, result, mode);
+		return get_tree_entry_gently(oid, name + entrylen, result, mode, flags);
 	}
 	return -1;
 }
 
-int get_tree_entry(const struct object_id *tree_oid, const char *name, struct object_id *oid, unsigned *mode)
+int get_tree_entry_gently(const struct object_id *tree_oid, const char *name,
+			  struct object_id *oid, unsigned *mode, int flags)
 {
 	int retval;
 	void *tree;
 	unsigned long size;
 	struct object_id root;
 
-	tree = read_object_with_reference(tree_oid, tree_type, &size, &root);
+	if (!(flags & GET_OID_GENTLY)) {
+		tree = read_object_with_reference(tree_oid, tree_type, &size, &root);
+	} else {
+		struct object_info oi = OBJECT_INFO_INIT;
+
+		oi.contentp = tree;
+		if (oid_object_info_extended(the_repository, tree_oid, &oi, 0) < 0)
+			return -1;
+	}
 	if (!tree)
 		return -1;
 
@@ -547,11 +562,25 @@ int get_tree_entry(const struct object_id *tree_oid, const char *name, struct ob
 		retval = -1;
 	} else {
 		struct tree_desc t;
-		init_tree_desc(&t, tree, size);
-		retval = find_tree_entry(&t, name, oid, mode);
+		if (!(flags & GET_OID_GENTLY)) {
+			init_tree_desc(&t, tree, size);
+		} else {
+			if (init_tree_desc_gently(&t, tree, size)) {
+				retval = -1;
+				goto done;
+			}
+		}
+		retval = find_tree_entry(&t, name, oid, mode, flags);
 	}
+done:
 	free(tree);
 	return retval;
+}
+
+int get_tree_entry(const struct object_id *tree_oid, const char *name,
+		   struct object_id *oid, unsigned *mode)
+{
+	return get_tree_entry_gently(tree_oid, name, oid, mode, 0);
 }
 
 /*
@@ -576,7 +605,7 @@ int get_tree_entry(const struct object_id *tree_oid, const char *name, struct ob
  * See the code for enum follow_symlink_result for a description of
  * the return values.
  */
-enum follow_symlinks_result get_tree_entry_follow_symlinks(struct object_id *tree_oid, const char *name, struct object_id *result, struct strbuf *result_path, unsigned *mode)
+enum follow_symlinks_result get_tree_entry_follow_symlinks(struct object_id *tree_oid, const char *name, struct object_id *result, struct strbuf *result_path, unsigned *mode, int flags)
 {
 	int retval = MISSING_OBJECT;
 	struct dir_state *parents = NULL;
@@ -600,9 +629,21 @@ enum follow_symlinks_result get_tree_entry_follow_symlinks(struct object_id *tre
 			void *tree;
 			struct object_id root;
 			unsigned long size;
-			tree = read_object_with_reference(&current_tree_oid,
-							  tree_type, &size,
-							  &root);
+			if (!(flags & GET_OID_GENTLY)) {
+				tree = read_object_with_reference(&current_tree_oid,
+								  tree_type, &size,
+								  &root);
+			} else {
+				struct object_info oi = OBJECT_INFO_INIT;
+
+				oi.contentp = tree;
+				if (oid_object_info_extended(the_repository,
+				    &current_tree_oid, &oi, 0) < 0) {
+					retval = MISSING_OBJECT;
+					goto done;
+				}
+			}
+
 			if (!tree)
 				goto done;
 
@@ -622,7 +663,14 @@ enum follow_symlinks_result get_tree_entry_follow_symlinks(struct object_id *tre
 				goto done;
 
 			/* descend */
-			init_tree_desc(&t, tree, size);
+			if (!(flags & GET_OID_GENTLY)) {
+				init_tree_desc(&t, tree, size);
+			} else {
+				if (init_tree_desc_gently(&t, tree, size)) {
+					retval = MISSING_OBJECT;
+					goto done;
+				}
+			}
 		}
 
 		/* Handle symlinks to e.g. a//b by removing leading slashes */
@@ -656,7 +704,15 @@ enum follow_symlinks_result get_tree_entry_follow_symlinks(struct object_id *tre
 			free(parent->tree);
 			parents_nr--;
 			parent = &parents[parents_nr - 1];
-			init_tree_desc(&t, parent->tree, parent->size);
+			if (!(flags & GET_OID_GENTLY)) {
+				init_tree_desc(&t, parent->tree, parent->size);
+			} else {
+				if (init_tree_desc_gently(&t, parent->tree,
+				    parent->size)) {
+					retval = MISSING_OBJECT;
+					goto done;
+				}
+			}
 			strbuf_remove(&namebuf, 0, remainder ? 3 : 2);
 			continue;
 		}
@@ -670,7 +726,7 @@ enum follow_symlinks_result get_tree_entry_follow_symlinks(struct object_id *tre
 
 		/* Look up the first (or only) path component in the tree. */
 		find_result = find_tree_entry(&t, namebuf.buf,
-					      &current_tree_oid, mode);
+					      &current_tree_oid, mode, flags);
 		if (find_result) {
 			goto done;
 		}
@@ -713,8 +769,19 @@ enum follow_symlinks_result get_tree_entry_follow_symlinks(struct object_id *tre
 			 */
 			retval = DANGLING_SYMLINK;
 
-			contents = read_object_file(&current_tree_oid, &type,
-						    &link_len);
+			if (!(flags & GET_OID_GENTLY)) {
+				contents = read_object_file(&current_tree_oid,
+							    &type, &link_len);
+			} else {
+				struct object_info oi = OBJECT_INFO_INIT;
+				oi.contentp = (void*) contents;
+
+				if (oid_object_info_extended(the_repository,
+				    &current_tree_oid, &oi, 0) < 0) {
+					retval = MISSING_OBJECT;
+					goto done;
+				}
+			}
 
 			if (!contents)
 				goto done;
@@ -735,7 +802,14 @@ enum follow_symlinks_result get_tree_entry_follow_symlinks(struct object_id *tre
 			contents_start = contents;
 
 			parent = &parents[parents_nr - 1];
-			init_tree_desc(&t, parent->tree, parent->size);
+			if (!(flags & GET_OID_GENTLY)) {
+				init_tree_desc(&t, parent->tree, parent->size);
+			} else {
+				if (init_tree_desc_gently(&t, parent->tree, parent->size)) {
+					retval = MISSING_OBJECT;
+					goto done;
+				}
+			}
 			strbuf_splice(&namebuf, 0, len,
 				      contents_start, link_len);
 			if (remainder)
