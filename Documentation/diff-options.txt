@@ -64,7 +64,7 @@ ifndef::git-format-patch[]
 endif::git-format-patch[]
 
 --indent-heuristic::
-	Enable the heuristic that shift diff hunk boundaries to make patches
+	Enable the heuristic that shifts diff hunk boundaries to make patches
 	easier to read. This is the default.
 
 --no-indent-heuristic::
@@ -106,7 +106,7 @@ diff" algorithm internally.
 	low-occurrence common elements".
 --
 +
-For instance, if you configured diff.algorithm variable to a
+For instance, if you configured the `diff.algorithm` variable to a
 non-default value and want to use the default one, then you
 have to use `--diff-algorithm=default` option.
 
@@ -350,7 +350,7 @@ ifndef::git-format-patch[]
 	Warn if changes introduce conflict markers or whitespace errors.
 	What are considered whitespace errors is controlled by `core.whitespace`
 	configuration.  By default, trailing whitespaces (including
-	lines that solely consist of whitespaces) and a space character
+	lines that consist solely of whitespaces) and a space character
 	that is immediately followed by a tab character inside the
 	initial indent of the line are considered whitespace errors.
 	Exits with non-zero status if problems are found. Not compatible
@@ -364,7 +364,7 @@ ifndef::git-format-patch[]
 	this option is not given, and the configuration variable
 	`diff.wsErrorHighlight` is not set, only whitespace errors in
 	`new` lines are highlighted. The whitespace errors are colored
-	whith `color.diff.whitespace`.
+	with `color.diff.whitespace`.
 
 endif::git-format-patch[]
 
