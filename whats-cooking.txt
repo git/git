@@ -1,23 +1,16 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jun 2018, #04; Fri, 15)
-X-master-at: 68372c88794aba15f853542008cda39def768372
-X-next-at: 013aa6912eb2e1677775c77626d7d5dcd8eaad9f
+Subject: What's cooking in git.git (Jun 2018, #05; Mon, 18)
+X-master-at: 242ba98e44d8314fb184d240939614a3c9b424db
+X-next-at: bc9c50bdf60868ed40cbc0564f532ce4092e3b67
 
-What's cooking in git.git (Jun 2018, #04; Fri, 15)
+What's cooking in git.git (Jun 2018, #05; Mon, 18)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
-
-We passed -rc2 mark; there are still a few hotfixes that correct
-obvious bugs introduced during this cycle in trivial ways that need
-to be merged before the final, and I also need to pull the i18n/l10n
-updates, but other than that, I think we are in relatively good
-shape given the upcoming release is fairly a big one judging from
-historical norms.  Knock, knock...
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -27,49 +20,30 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* jk/index-pack-maint (2018-06-11) 3 commits
-  (merged to 'next' on 2018-06-11 at f85a566b11)
- + index-pack: correct install_packed_git() args
-  (merged to 'next' on 2018-06-04 at c553a485e8)
- + index-pack: handle --strict checks of non-repo packs
- + prepare_commit_graft: treat non-repository as a noop
-
- "index-pack --strict" has been taught to make sure that it runs the
- final object integrity checks after making the freshly indexed
- packfile available to itself.
-
-
-* jk/submodule-fsck-loose-fixup (2018-06-11) 2 commits
-  (merged to 'next' on 2018-06-11 at 3eadb39c0a)
- + fsck: avoid looking at NULL blob->object
- + t7415: don't bother creating commit for symlink test
-
- Finishing touches to a topic that already is in 'maint'.
-
-
-* sb/submodule-merge-in-merge-recursive (2018-06-11) 1 commit
-  (merged to 'next' on 2018-06-11 at ad05b6bc6a)
- + merge-submodule: reduce output verbosity
-
- Finishing touches to a topic that already is in 'master'.
-
-
-* sg/completion-zsh-workaround (2018-06-12) 1 commit
-  (merged to 'next' on 2018-06-12 at 331a1db143)
- + completion: correct zsh detection when run from git-completion.zsh
-
- Work around zsh segfaulting when loading git-completion.zsh
-
---------------------------------------------------
-[New Topics]
-
 * ab/cred-netrc-no-autodie (2018-06-13) 1 commit
   (merged to 'next' on 2018-06-14 at 68171b82a7)
  + git-credential-netrc: remove use of "autodie"
 
  Hotfix for contrib/ stuff broken by this cycle.
 
- Will merge to 'master'.
+
+* es/make-no-iconv (2018-06-15) 1 commit
+  (merged to 'next' on 2018-06-18 at b53e9933c9)
+ + Makefile: make NO_ICONV really mean "no iconv"
+
+ "make NO_ICONV=NoThanks" did not override NEEDS_LIBICONV
+ (i.e. linkage of -lintl, -liconv, etc. that are platform-specific
+ tweaks), which has been corrected.
+
+
+* jk/ewah-bounds-check (2018-06-18) 2 commits
+  (merged to 'next' on 2018-06-18 at bf606be1bb)
+ + ewah: adjust callers of ewah_read_mmap()
+ + ewah_read_mmap: bounds-check mmap reads
+ (this branch is used by ds/ewah-cleanup.)
+
+ The code to read compressed bitmap was not careful to avoid reading
+ past the end of the file, which has been corrected.
 
 
 * jl/zlib-restore-nul-termination (2018-06-13) 1 commit
@@ -79,26 +53,41 @@ of the repositories listed at
  Make zlib inflate codepath more robust against versions of zlib
  that clobber unused portion of outbuf.
 
- Will merge to 'master'.
+
+* js/rebase-i-root-fix (2018-06-18) 2 commits
+  (merged to 'next' on 2018-06-18 at a6a1cf01d5)
+ + rebase --root: fix amending root commit messages
+ + rebase --root: demonstrate a bug while amending root commit messages
+
+ A regression to "rebase -i --root" introduced during this cycle has
+ been fixed.
 
 
-* rd/doc-remote-tracking-with-hyphen (2018-06-13) 1 commit
-  (merged to 'next' on 2018-06-14 at 013aa6912e)
- + Use hyphenated "remote-tracking branch" (docs and comments)
+* km/doc-workflows-typofix (2018-06-12) 1 commit
+  (merged to 'next' on 2018-06-13 at 21e6a8e67b)
+ + gitworkflows: fix grammar in 'Merge upwards' rule
 
- Doc update.
-
- Will merge to 'master'.
+ Typofix.
 
 
-* en/rename-directory-detection (2018-06-14) 1 commit
-  (merged to 'next' on 2018-06-14 at 0e4c6bd117)
- + merge-recursive: use xstrdup() instead of fixed buffer
+* ks/branch-set-upstream (2018-06-18) 1 commit
+  (merged to 'next' on 2018-06-18 at 83b0b87013)
+ + t3200: clarify description of --set-upstream test
 
- Newly added codepath in merge-recursive had potential buffer
- overrun, which has been fixed.
+ A test title has been reworded to clarify it.
 
- Will merge to 'master'.
+
+* ld/git-p4-updates (2018-06-12) 6 commits
+  (merged to 'next' on 2018-06-13 at 4f7e24b3c4)
+ + git-p4: auto-size the block
+ + git-p4: narrow the scope of exceptions caught when parsing an int
+ + git-p4: raise exceptions from p4CmdList based on error from p4 server
+ + git-p4: better error reporting when p4 fails
+ + git-p4: add option to disable syncing of p4/master with p4
+ + git-p4: disable-rebase: allow setting this via configuration
+ (this branch uses rm/p4-submit-with-commit-option.)
+
+ "git p4" updates.
 
 
 * mw/doc-merge-enumfix (2018-06-14) 1 commit
@@ -107,7 +96,34 @@ of the repositories listed at
 
  Fix old merge glitch in Documentation during v2.13-rc0 era.
 
- Will merge to 'master'.
+
+* rd/comment-typofix-in-sha1-file (2018-06-04) 1 commit
+  (merged to 'next' on 2018-06-13 at 38ef825556)
+ + sha1-file.c: correct $GITDIR to $GIT_DIR in a comment
+
+ In code comment typofix
+
+
+* rd/diff-options-typofix (2018-06-11) 1 commit
+  (merged to 'next' on 2018-06-13 at a5aa58fa1b)
+ + diff-options.txt: fix minor typos, font inconsistencies, in docs
+
+ Typofix.
+
+
+* rd/doc-remote-tracking-with-hyphen (2018-06-13) 1 commit
+  (merged to 'next' on 2018-06-14 at 013aa6912e)
+ + Use hyphenated "remote-tracking branch" (docs and comments)
+
+ Doc update.
+
+
+* rm/p4-submit-with-commit-option (2018-06-12) 1 commit
+  (merged to 'next' on 2018-06-13 at d3a272c733)
+ + git-p4: add options --commit and --disable-rebase
+ (this branch is used by ld/git-p4-updates.)
+
+ "git p4" updates.
 
 
 * sb/blame-color (2018-06-14) 1 commit
@@ -116,115 +132,33 @@ of the repositories listed at
 
  Leakfix.
 
+
+* sg/t7406-chain-fix (2018-06-18) 1 commit
+  (merged to 'next' on 2018-06-18 at 816d976ea6)
+ + t7406-submodule-update: fix broken &&-chains
+
+ Test fix.
+
+--------------------------------------------------
+[New Topics]
+
+* en/rename-directory-detection-reboot (2018-06-18) 1 commit
+  (merged to 'next' on 2018-06-18 at 95c454d3f4)
+ + merge-recursive: use xstrdup() instead of fixed buffer
+
+ Newly added codepath in merge-recursive had potential buffer
+ overrun, which has been fixed.
+
  Will merge to 'master'.
 
 
-* ks/branch-set-upstream (2018-06-14) 1 commit
- - t3200: clarify description of --set-upstream test
+* tz/cred-netrc-cleanup (2018-06-18) 3 commits
+ - git-credential-netrc: fix exit status when tests fail
+ - git-credential-netrc: use in-tree Git.pm for tests
+ - git-credential-netrc: minor whitespace cleanup in test script
 
- A test title has been reworded to clarify it.
-
-
-* jt/fetch-pack-negotiator (2018-06-15) 7 commits
- - fetch-pack: introduce negotiator API
- - fetch-pack: move common check and marking together
- - fetch-pack: make negotiation-related vars local
- - fetch-pack: use ref adv. to prune "have" sent
- - fetch-pack: directly end negotiation if ACK ready
- - fetch-pack: clear marks before re-marking
- - fetch-pack: split up everything_local()
-
- Code restructuring and a small fix to transport protocol v2 during
- fetching.
-
-
-* ag/rebase-i-append-todo-help (2018-06-14) 2 commits
- - rebase--interactive: rewrite append_todo_help() in C
- - Merge branch 'ag/rebase-p' into ag/rebase-i-append-todo-help
- (this branch is used by ag/rebase-i-rewrite-todo; uses ag/rebase-p.)
-
- Stepwise rewriting of the machinery of "rebase -i" into C continues.
-
-
-* ag/rebase-i-rewrite-todo (2018-06-15) 3 commits
- - rebase--interactive: rewrite the edit-todo functionality in C
- - editor: add a function to launch the sequence editor
- - Merge branch 'bc/t3430-fixup' into ag/rebase-i-rewrite-todo
- (this branch uses ag/rebase-i-append-todo-help and ag/rebase-p.)
-
- Stepwise rewriting of the machinery of "rebase -i" into C continues.
-
-
-* sb/fix-fetching-moved-submodules (2018-06-14) 2 commits
- - t5526: test recursive submodules when fetching moved submodules
- - submodule: fix NULL correctness in renamed broken submodules
-
- The code to try seeing if a fetch is necessary in a submodule
- during a fetch with --recurse-submodules got confused when the path
- to the submodule was changed in the range of commits in the
- superproject, sometimes showing "(null)".  This has been corrected.
-
- Will merge to 'next'.
-
-
-* sb/submodule-core-worktree (2018-06-14) 3 commits
- - submodule deinit: unset core.worktree
- - submodule: ensure core.worktree is set after update
- - submodule: unset core.worktree if no working tree is present
-
- "git submodule" did not correctly adjust core.worktree setting that
- indicates whether/where a submodule repository has its associated
- working tree across various state transitions, which has been
- corrected.
-
- Will merge to 'next'.
-
-
-* jk/ewah-bounds-check (2018-06-15) 2 commits
- - ewah: adjust callers of ewah_read_mmap()
- - ewah_read_mmap: bounds-check mmap reads
- (this branch is used by ds/ewah-cleanup.)
-
- The code to read compressed bitmap was not careful to avoid reading
- past the end of the file, which has been corrected.
-
- Will merge to 'next'.
-
-
-* ds/ewah-cleanup (2018-06-15) 9 commits
- - ewah: drop ewah_serialize_native function
- - ewah: drop ewah_deserialize function
- - ewah_io: delete unused 'ewah_serialize()'
- - ewah_bitmap: delete unused 'ewah_or()'
- - ewah_bitmap: delete unused 'ewah_not()'
- - ewah_bitmap: delete unused 'ewah_and_not()'
- - ewah_bitmap: delete unused 'ewah_and()'
- - ewah/bitmap.c: delete unused 'bitmap_each_bit()'
- - ewah/bitmap.c: delete unused 'bitmap_clear()'
- (this branch uses jk/ewah-bounds-check.)
-
- Remove unused function definitions and declarations from ewah
- bitmap subsystem.
-
- Will merge to 'next'.
-
-
-* jc/clean-after-sanity-tests (2018-06-15) 1 commit
- - tests: clean after SANITY tests
-
- test cleanup.
-
- Will merge to 'next'.
-
-
-* es/make-no-iconv (2018-06-15) 1 commit
- - Makefile: make NO_ICONV really mean "no iconv"
-
- "make NO_ICONV=NoThanks" did not override NEEDS_LIBICONV
- (i.e. linkage of -lintl, -liconv, etc. that are platform-specific
- tweaks), which has been corrected.
-
- Will merge to 'next'.
+ Build and test procedure for netrc credential helper (in contrib/)
+ has been updated.
 
 --------------------------------------------------
 [Stalled]
@@ -353,6 +287,86 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* jt/fetch-pack-negotiator (2018-06-15) 7 commits
+ - fetch-pack: introduce negotiator API
+ - fetch-pack: move common check and marking together
+ - fetch-pack: make negotiation-related vars local
+ - fetch-pack: use ref adv. to prune "have" sent
+ - fetch-pack: directly end negotiation if ACK ready
+ - fetch-pack: clear marks before re-marking
+ - fetch-pack: split up everything_local()
+
+ Code restructuring and a small fix to transport protocol v2 during
+ fetching.
+
+
+* ag/rebase-i-append-todo-help (2018-06-14) 2 commits
+ - rebase--interactive: rewrite append_todo_help() in C
+ - Merge branch 'ag/rebase-p' into ag/rebase-i-append-todo-help
+ (this branch is used by ag/rebase-i-rewrite-todo; uses ag/rebase-p.)
+
+ Stepwise rewriting of the machinery of "rebase -i" into C continues.
+
+
+* ag/rebase-i-rewrite-todo (2018-06-15) 3 commits
+ - rebase--interactive: rewrite the edit-todo functionality in C
+ - editor: add a function to launch the sequence editor
+ - Merge branch 'bc/t3430-fixup' into ag/rebase-i-rewrite-todo
+ (this branch uses ag/rebase-i-append-todo-help and ag/rebase-p.)
+
+ Stepwise rewriting of the machinery of "rebase -i" into C continues.
+
+
+* sb/fix-fetching-moved-submodules (2018-06-14) 2 commits
+ - t5526: test recursive submodules when fetching moved submodules
+ - submodule: fix NULL correctness in renamed broken submodules
+
+ The code to try seeing if a fetch is necessary in a submodule
+ during a fetch with --recurse-submodules got confused when the path
+ to the submodule was changed in the range of commits in the
+ superproject, sometimes showing "(null)".  This has been corrected.
+
+ Will merge to 'next'.
+
+
+* sb/submodule-core-worktree (2018-06-14) 3 commits
+ - submodule deinit: unset core.worktree
+ - submodule: ensure core.worktree is set after update
+ - submodule: unset core.worktree if no working tree is present
+
+ "git submodule" did not correctly adjust core.worktree setting that
+ indicates whether/where a submodule repository has its associated
+ working tree across various state transitions, which has been
+ corrected.
+
+ Will merge to 'next'.
+
+
+* ds/ewah-cleanup (2018-06-18) 9 commits
+ - ewah: drop ewah_serialize_native function
+ - ewah: drop ewah_deserialize function
+ - ewah_io: delete unused 'ewah_serialize()'
+ - ewah_bitmap: delete unused 'ewah_or()'
+ - ewah_bitmap: delete unused 'ewah_not()'
+ - ewah_bitmap: delete unused 'ewah_and_not()'
+ - ewah_bitmap: delete unused 'ewah_and()'
+ - ewah/bitmap.c: delete unused 'bitmap_each_bit()'
+ - ewah/bitmap.c: delete unused 'bitmap_clear()'
+
+ Remove unused function definitions and declarations from ewah
+ bitmap subsystem.
+
+ Will merge to 'next'.
+
+
+* jc/clean-after-sanity-tests (2018-06-15) 1 commit
+ - tests: clean after SANITY tests
+
+ test cleanup.
+
+ Will merge to 'next'.
+
+
 * is/parsing-line-range (2018-06-15) 2 commits
  - log: prevent error if line range ends past end of file
  - blame: prevent error if range ends past end of file
@@ -402,30 +416,6 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* rd/diff-options-typofix (2018-06-11) 1 commit
-  (merged to 'next' on 2018-06-13 at a5aa58fa1b)
- + diff-options.txt: fix minor typos, font inconsistencies, in docs
-
- Typofix.
-
- Will merge to 'master'.
-
-
-* ld/git-p4-updates (2018-06-12) 6 commits
-  (merged to 'next' on 2018-06-13 at 4f7e24b3c4)
- + git-p4: auto-size the block
- + git-p4: narrow the scope of exceptions caught when parsing an int
- + git-p4: raise exceptions from p4CmdList based on error from p4 server
- + git-p4: better error reporting when p4 fails
- + git-p4: add option to disable syncing of p4/master with p4
- + git-p4: disable-rebase: allow setting this via configuration
- (this branch uses rm/p4-submit-with-commit-option.)
-
- "git p4" updates.
-
- Will merge to 'master'.
-
-
 * en/merge-recursive-cleanup (2018-06-12) 6 commits
  - merge-recursive: add pointer about unduly complex looking code
  - merge-recursive: rename conflict_rename_*() family of functions
@@ -448,15 +438,6 @@ of the repositories listed at
  defined even if extensions.partialclone is set.
 
  Will cook in 'next'.
-
-
-* km/doc-workflows-typofix (2018-06-12) 1 commit
-  (merged to 'next' on 2018-06-13 at 21e6a8e67b)
- + gitworkflows: fix grammar in 'Merge upwards' rule
-
- Typofix.
-
- Will merge to 'master'.
 
 
 * ms/send-pack-honor-config (2018-06-12) 1 commit
@@ -504,15 +485,6 @@ of the repositories listed at
  to notice the situation and cope with it.
 
  Will merge to 'next'.
-
-
-* rd/comment-typofix-in-sha1-file (2018-06-04) 1 commit
-  (merged to 'next' on 2018-06-13 at 38ef825556)
- + sha1-file.c: correct $GITDIR to $GIT_DIR in a comment
-
- In code comment typofix
-
- Will merge to 'master'.
 
 
 * sg/update-ref-stdin-cleanup (2018-06-04) 1 commit
@@ -686,16 +658,6 @@ of the repositories listed at
  dedicated memory pool to amortize malloc(3) overhead.
 
  Will cook in 'next'.
-
-
-* rm/p4-submit-with-commit-option (2018-06-12) 1 commit
-  (merged to 'next' on 2018-06-13 at d3a272c733)
- + git-p4: add options --commit and --disable-rebase
- (this branch is used by ld/git-p4-updates.)
-
- "git p4" updates.
-
- Will merge to 'master'.
 
 
 * ds/commit-graph-lockfile-fix (2018-05-22) 1 commit
