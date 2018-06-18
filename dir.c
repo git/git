@@ -2853,7 +2853,8 @@ struct untracked_cache *read_untracked_extension(const void *data, unsigned long
 	struct read_data rd;
 	const unsigned char *next = data, *end = (const unsigned char *)data + sz;
 	const char *ident;
-	int ident_len, len;
+	int ident_len;
+	ssize_t len;
 	const char *exclude_per_dir;
 
 	if (sz <= 1 || end[-1] != '\0')

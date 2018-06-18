@@ -122,16 +122,23 @@ int ewah_serialize_strbuf(struct ewah_bitmap *self, struct strbuf *sb)
 	return ewah_serialize_to(self, write_strbuf, sb);
 }
 
-int ewah_read_mmap(struct ewah_bitmap *self, const void *map, size_t len)
+ssize_t ewah_read_mmap(struct ewah_bitmap *self, const void *map, size_t len)
 {
 	const uint8_t *ptr = map;
+	size_t data_len;
 	size_t i;
 
+	if (len < sizeof(uint32_t))
+		return error("corrupt ewah bitmap: eof before bit size");
 	self->bit_size = get_be32(ptr);
 	ptr += sizeof(uint32_t);
+	len -= sizeof(uint32_t);
 
+	if (len < sizeof(uint32_t))
+		return error("corrupt ewah bitmap: eof before length");
 	self->buffer_size = self->alloc_size = get_be32(ptr);
 	ptr += sizeof(uint32_t);
+	len -= sizeof(uint32_t);
 
 	REALLOC_ARRAY(self->buffer, self->alloc_size);
 
@@ -141,15 +148,25 @@ int ewah_read_mmap(struct ewah_bitmap *self, const void *map, size_t len)
 	 * the endianness conversion in a separate pass to ensure
 	 * we're loading 8-byte aligned words.
 	 */
-	memcpy(self->buffer, ptr, self->buffer_size * sizeof(eword_t));
-	ptr += self->buffer_size * sizeof(eword_t);
+	data_len = st_mult(self->buffer_size, sizeof(eword_t));
+	if (len < data_len)
+		return error("corrupt ewah bitmap: eof in data "
+			     "(%"PRIuMAX" bytes short)",
+			     (uintmax_t)(data_len - len));
+	memcpy(self->buffer, ptr, data_len);
+	ptr += data_len;
+	len -= data_len;
 
 	for (i = 0; i < self->buffer_size; ++i)
 		self->buffer[i] = ntohll(self->buffer[i]);
 
+	if (len < sizeof(uint32_t))
+		return error("corrupt ewah bitmap: eof before rlw");
 	self->rlw = self->buffer + get_be32(ptr);
+	ptr += sizeof(uint32_t);
+	len -= sizeof(uint32_t);
 
-	return (3 * 4) + (self->buffer_size * 8);
+	return ptr - (const uint8_t *)map;
 }
 
 int ewah_deserialize(struct ewah_bitmap *self, int fd)
