@@ -47,8 +47,10 @@ verbose = False
 # Only labels/tags matching this will be imported/exported
 defaultLabelRegexp = r'[a-zA-Z0-9_\-.]+$'
 
-# Grab changes in blocks of this many revisions, unless otherwise requested
-defaultBlockSize = 512
+# The block size is reduced automatically if required
+defaultBlockSize = 1<<20
+
+p4_access_checked = False
 
 def p4_build_cmd(cmd):
     """Build a suitable p4 command line.
@@ -91,6 +93,13 @@ def p4_build_cmd(cmd):
         real_cmd = ' '.join(real_cmd) + ' ' + cmd
     else:
         real_cmd += cmd
+
+    # now check that we can actually talk to the server
+    global p4_access_checked
+    if not p4_access_checked:
+        p4_access_checked = True    # suppress access checks in p4_check_access itself
+        p4_check_access()
+
     return real_cmd
 
 def git_dir(path):
@@ -263,6 +272,52 @@ def p4_system(cmd):
     retcode = subprocess.call(real_cmd, shell=expand)
     if retcode:
         raise CalledProcessError(retcode, real_cmd)
+
+def die_bad_access(s):
+    die("failure accessing depot: {0}".format(s.rstrip()))
+
+def p4_check_access(min_expiration=1):
+    """ Check if we can access Perforce - account still logged in
+    """
+    results = p4CmdList(["login", "-s"])
+
+    if len(results) == 0:
+        # should never get here: always get either some results, or a p4ExitCode
+        assert("could not parse response from perforce")
+
+    result = results[0]
+
+    if 'p4ExitCode' in result:
+        # p4 returned non-zero status, e.g. P4PORT invalid, or p4 not in path
+        die_bad_access("could not run p4")
+
+    code = result.get("code")
+    if not code:
+        # we get here if we couldn't connect and there was nothing to unmarshal
+        die_bad_access("could not connect")
+
+    elif code == "stat":
+        expiry = result.get("TicketExpiration")
+        if expiry:
+            expiry = int(expiry)
+            if expiry > min_expiration:
+                # ok to carry on
+                return
+            else:
+                die_bad_access("perforce ticket expires in {0} seconds".format(expiry))
+
+        else:
+            # account without a timeout - all ok
+            return
+
+    elif code == "error":
+        data = result.get("data")
+        if data:
+            die_bad_access("p4 error: {0}".format(data))
+        else:
+            die_bad_access("unknown error")
+    else:
+        die_bad_access("unknown error code {0}".format(code))
 
 _p4_version_string = None
 def p4_version_string():
@@ -511,10 +566,30 @@ def isModeExec(mode):
     # otherwise False.
     return mode[-3:] == "755"
 
+class P4Exception(Exception):
+    """ Base class for exceptions from the p4 client """
+    def __init__(self, exit_code):
+        self.p4ExitCode = exit_code
+
+class P4ServerException(P4Exception):
+    """ Base class for exceptions where we get some kind of marshalled up result from the server """
+    def __init__(self, exit_code, p4_result):
+        super(P4ServerException, self).__init__(exit_code)
+        self.p4_result = p4_result
+        self.code = p4_result[0]['code']
+        self.data = p4_result[0]['data']
+
+class P4RequestSizeException(P4ServerException):
+    """ One of the maxresults or maxscanrows errors """
+    def __init__(self, exit_code, p4_result, limit):
+        super(P4RequestSizeException, self).__init__(exit_code, p4_result)
+        self.limit = limit
+
 def isModeExecChanged(src_mode, dst_mode):
     return isModeExec(src_mode) != isModeExec(dst_mode)
 
-def p4CmdList(cmd, stdin=None, stdin_mode='w+b', cb=None, skip_info=False):
+def p4CmdList(cmd, stdin=None, stdin_mode='w+b', cb=None, skip_info=False,
+        errors_as_exceptions=False):
 
     if isinstance(cmd,basestring):
         cmd = "-G " + cmd
@@ -561,9 +636,25 @@ def p4CmdList(cmd, stdin=None, stdin_mode='w+b', cb=None, skip_info=False):
         pass
     exitCode = p4.wait()
     if exitCode != 0:
-        entry = {}
-        entry["p4ExitCode"] = exitCode
-        result.append(entry)
+        if errors_as_exceptions:
+            if len(result) > 0:
+                data = result[0].get('data')
+                if data:
+                    m = re.search('Too many rows scanned \(over (\d+)\)', data)
+                    if not m:
+                        m = re.search('Request too large \(over (\d+)\)', data)
+
+                    if m:
+                        limit = int(m.group(1))
+                        raise P4RequestSizeException(exitCode, result, limit)
+
+                raise P4ServerException(exitCode, result)
+            else:
+                raise P4Exception(exitCode)
+        else:
+            entry = {}
+            entry["p4ExitCode"] = exitCode
+            result.append(entry)
 
     return result
 
@@ -868,7 +959,7 @@ def p4ChangesForPaths(depotPaths, changeRange, requestedBlockSize):
         try:
             (changeStart, changeEnd) = p4ParseNumericChangeRange(parts)
             block_size = chooseBlockSize(requestedBlockSize)
-        except:
+        except ValueError:
             changeStart = parts[0][1:]
             changeEnd = parts[1]
             if requestedBlockSize:
@@ -878,7 +969,8 @@ def p4ChangesForPaths(depotPaths, changeRange, requestedBlockSize):
     changes = set()
 
     # Retrieve changes a block at a time, to prevent running
-    # into a MaxResults/MaxScanRows error from the server.
+    # into a MaxResults/MaxScanRows error from the server. If
+    # we _do_ hit one of those errors, turn down the block size
 
     while True:
         cmd = ['changes']
@@ -892,10 +984,24 @@ def p4ChangesForPaths(depotPaths, changeRange, requestedBlockSize):
         for p in depotPaths:
             cmd += ["%s...@%s" % (p, revisionRange)]
 
+        # fetch the changes
+        try:
+            result = p4CmdList(cmd, errors_as_exceptions=True)
+        except P4RequestSizeException as e:
+            if not block_size:
+                block_size = e.limit
+            elif block_size > e.limit:
+                block_size = e.limit
+            else:
+                block_size = max(2, block_size // 2)
+
+            if verbose: print("block size error, retrying with block size {0}".format(block_size))
+            continue
+        except P4Exception as e:
+            die('Error retrieving changes description ({0})'.format(e.p4ExitCode))
+
         # Insert changes in chronological order
-        for entry in reversed(p4CmdList(cmd)):
-            if entry.has_key('p4ExitCode'):
-                die('Error retrieving changes descriptions ({})'.format(entry['p4ExitCode']))
+        for entry in reversed(result):
             if not entry.has_key('change'):
                 continue
             changes.add(int(entry['change']))
@@ -1363,7 +1469,14 @@ class P4Submit(Command, P4UserMap):
                 optparse.make_option("--update-shelve", dest="update_shelve", action="append", type="int",
                                      metavar="CHANGELIST",
                                      help="update an existing shelved changelist, implies --shelve, "
-                                           "repeat in-order for multiple shelved changelists")
+                                           "repeat in-order for multiple shelved changelists"),
+                optparse.make_option("--commit", dest="commit", metavar="COMMIT",
+                                     help="submit only the specified commit(s), one commit or xxx..xxx"),
+                optparse.make_option("--disable-rebase", dest="disable_rebase", action="store_true",
+                                     help="Disable rebase after submit is completed. Can be useful if you "
+                                     "work from a local git branch that is not master"),
+                optparse.make_option("--disable-p4sync", dest="disable_p4sync", action="store_true",
+                                     help="Skip Perforce sync of p4/master after submit or shelve"),
         ]
         self.description = "Submit changes from git to the perforce depot."
         self.usage += " [name of git branch to submit into perforce depot]"
@@ -1373,6 +1486,9 @@ class P4Submit(Command, P4UserMap):
         self.dry_run = False
         self.shelve = False
         self.update_shelve = list()
+        self.commit = ""
+        self.disable_rebase = gitConfigBool("git-p4.disableRebase")
+        self.disable_p4sync = gitConfigBool("git-p4.disableP4Sync")
         self.prepare_p4_only = False
         self.conflict_behavior = None
         self.isWindows = (platform.system() == "Windows")
@@ -2114,9 +2230,18 @@ class P4Submit(Command, P4UserMap):
         else:
             committish = 'HEAD'
 
-        for line in read_pipe_lines(["git", "rev-list", "--no-merges", "%s..%s" % (self.origin, committish)]):
-            commits.append(line.strip())
-        commits.reverse()
+        if self.commit != "":
+            if self.commit.find("..") != -1:
+                limits_ish = self.commit.split("..")
+                for line in read_pipe_lines(["git", "rev-list", "--no-merges", "%s..%s" % (limits_ish[0], limits_ish[1])]):
+                    commits.append(line.strip())
+                commits.reverse()
+            else:
+                commits.append(self.commit)
+        else:
+            for line in read_pipe_lines(["git", "rev-list", "--no-merges", "%s..%s" % (self.origin, committish)]):
+                commits.append(line.strip())
+            commits.reverse()
 
         if self.preserveUser or gitConfigBool("git-p4.skipUserNameCheck"):
             self.checkAuthorship = False
@@ -2224,10 +2349,14 @@ class P4Submit(Command, P4UserMap):
             sync = P4Sync()
             if self.branch:
                 sync.branch = self.branch
-            sync.run([])
+            if self.disable_p4sync:
+                sync.sync_origin_only()
+            else:
+                sync.run([])
 
-            rebase = P4Rebase()
-            rebase.rebase()
+                if not self.disable_rebase:
+                    rebase = P4Rebase()
+                    rebase.rebase()
 
         else:
             if len(applied) == 0:
@@ -3307,6 +3436,14 @@ class P4Sync(Command, P4UserMap):
                 print self.gitError.read()
                 sys.exit(1)
 
+    def sync_origin_only(self):
+        if self.syncWithOrigin:
+            self.hasOrigin = originP4BranchesExist()
+            if self.hasOrigin:
+                if not self.silent:
+                    print 'Syncing with origin first, using "git fetch origin"'
+                system("git fetch origin")
+
     def importHeadRevision(self, revision):
         print "Doing initial import of %s from revision %s into %s" % (' '.join(self.depotPaths), revision, self.branch)
 
@@ -3385,12 +3522,7 @@ class P4Sync(Command, P4UserMap):
         else:
             self.refPrefix = "refs/heads/p4/"
 
-        if self.syncWithOrigin:
-            self.hasOrigin = originP4BranchesExist()
-            if self.hasOrigin:
-                if not self.silent:
-                    print 'Syncing with origin first, using "git fetch origin"'
-                system("git fetch origin")
+        self.sync_origin_only()
 
         branch_arg_given = bool(self.branch)
         if len(self.branch) == 0:
