@@ -1351,17 +1351,19 @@ ifdef APPLE_COMMON_CRYPTO
 	LIB_4_CRYPTO += -framework Security -framework CoreFoundation
 endif
 endif
-ifdef NEEDS_LIBICONV
-	ifdef ICONVDIR
-		BASIC_CFLAGS += -I$(ICONVDIR)/include
-		ICONV_LINK = -L$(ICONVDIR)/$(lib) $(CC_LD_DYNPATH)$(ICONVDIR)/$(lib)
-	else
-		ICONV_LINK =
+ifndef NO_ICONV
+	ifdef NEEDS_LIBICONV
+		ifdef ICONVDIR
+			BASIC_CFLAGS += -I$(ICONVDIR)/include
+			ICONV_LINK = -L$(ICONVDIR)/$(lib) $(CC_LD_DYNPATH)$(ICONVDIR)/$(lib)
+		else
+			ICONV_LINK =
+		endif
+		ifdef NEEDS_LIBINTL_BEFORE_LIBICONV
+			ICONV_LINK += -lintl
+		endif
+		EXTLIBS += $(ICONV_LINK) -liconv
 	endif
-	ifdef NEEDS_LIBINTL_BEFORE_LIBICONV
-		ICONV_LINK += -lintl
-	endif
-	EXTLIBS += $(ICONV_LINK) -liconv
 endif
 ifdef NEEDS_LIBGEN
 	EXTLIBS += -lgen
