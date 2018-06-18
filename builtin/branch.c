@@ -701,7 +701,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		 * If no sorting parameter is given then we default to sorting
 		 * by 'refname'. This would give us an alphabetically sorted
 		 * array with the 'HEAD' ref at the beginning followed by
-		 * local branches 'refs/heads/...' and finally remote-tacking
+		 * local branches 'refs/heads/...' and finally remote-tracking
 		 * branches 'refs/remotes/...'.
 		 */
 		if (!sorting)

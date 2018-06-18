@@ -673,7 +673,7 @@ static const char *get_upstream_branch(const char *remote)
 }
 
 /**
- * Derives the remote tracking branch from the remote and refspec.
+ * Derives the remote-tracking branch from the remote and refspec.
  *
  * FIXME: The current implementation assumes the default mapping of
  * refs/heads/<branch_name> to refs/remotes/<remote_name>/<branch_name>.
@@ -711,7 +711,7 @@ static const char *get_tracking_branch(const char *remote, const char *refspec)
 
 /**
  * Given the repo and refspecs, sets fork_point to the point at which the
- * current branch forked from its remote tracking branch. Returns 0 on success,
+ * current branch forked from its remote-tracking branch. Returns 0 on success,
  * -1 on failure.
  */
 static int get_rebase_fork_point(struct object_id *fork_point, const char *repo,

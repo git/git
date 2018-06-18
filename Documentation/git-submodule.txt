@@ -42,8 +42,8 @@ have to use '../foo.git' instead of './foo.git' - as one might expect
 when following the rules for relative URLs - because the evaluation
 of relative URLs in Git is identical to that of relative directories).
 +
-The default remote is the remote of the remote tracking branch
-of the current branch. If no such remote tracking branch exists or
+The default remote is the remote of the remote-tracking branch
+of the current branch. If no such remote-tracking branch exists or
 the HEAD is detached, "origin" is assumed to be the default remote.
 If the superproject doesn't have a default remote configured
 the superproject is its own authoritative upstream and the current
