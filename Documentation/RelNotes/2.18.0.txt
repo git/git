@@ -530,6 +530,15 @@ Fixes since v2.17
  * Fix old merge glitch in Documentation during v2.13-rc0 era.
    (merge 28cb06020b mw/doc-merge-enumfix later to maint).
 
+ * The code to read compressed bitmap was not careful to avoid reading
+   past the end of the file, which has been corrected.
+   (merge 1140bf01ec jk/ewah-bounds-check later to maint).
+
+ * "make NO_ICONV=NoThanks" did not override NEEDS_LIBICONV
+   (i.e. linkage of -lintl, -liconv, etc. that are platform-specific
+   tweaks), which has been corrected.
+   (merge fdb1fbbc7d es/make-no-iconv later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge 248f66ed8e nd/trace-with-env later to maint).
    (merge 14ced5562c ys/bisect-object-id-missing-conversion-fix later to maint).
@@ -570,3 +579,5 @@ Fixes since v2.17
    (merge 7eedad15df rd/diff-options-typofix later to maint).
    (merge 58ebd936cc km/doc-workflows-typofix later to maint).
    (merge 30aa96cdf8 rd/doc-remote-tracking-with-hyphen later to maint).
+   (merge cf317877e3 ks/branch-set-upstream later to maint).
+   (merge 8de19d6be8 sg/t7406-chain-fix later to maint).
