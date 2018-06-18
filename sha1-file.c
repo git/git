@@ -610,7 +610,7 @@ void add_to_alternates_memory(const char *reference)
 /*
  * Compute the exact path an alternate is at and returns it. In case of
  * error NULL is returned and the human readable error is added to `err`
- * `path` may be relative and should point to $GITDIR.
+ * `path` may be relative and should point to $GIT_DIR.
  * `err` must not be null.
  */
 char *compute_alternate_path(const char *path, struct strbuf *err)
