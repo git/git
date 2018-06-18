@@ -2211,18 +2211,18 @@ static struct hashmap *get_directory_renames(struct diff_queue_struct *pairs,
 static struct dir_rename_entry *check_dir_renamed(const char *path,
 						  struct hashmap *dir_renames)
 {
-	char temp[PATH_MAX];
+	char *temp = xstrdup(path);
 	char *end;
-	struct dir_rename_entry *entry;
+	struct dir_rename_entry *entry = NULL;;
 
-	strcpy(temp, path);
 	while ((end = strrchr(temp, '/'))) {
 		*end = '\0';
 		entry = dir_rename_find_entry(dir_renames, temp);
 		if (entry)
-			return entry;
+			break;
 	}
-	return NULL;
+	free(temp);
+	return entry;
 }
 
 static void compute_collisions(struct hashmap *collisions,
