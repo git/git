@@ -104,7 +104,7 @@ UI, Workflows & Features
  * The command line completion mechanism (in contrib/) learned to load
    custom completion file for "git $command" where $command is a
    custom "git-$command" that the end user has on the $PATH when using
-   newer version of bash.
+   newer version of bash-completion.
 
  * "git send-email" can sometimes offer confirmation dialog "Send this
    email?" with choices 'Yes', 'No', 'Quit', and 'All'.  A new action
