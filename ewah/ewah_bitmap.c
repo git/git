@@ -276,6 +276,18 @@ void ewah_each_bit(struct ewah_bitmap *self, void (*callback)(size_t, void*), vo
 	}
 }
 
+/**
+ * Clear all the bits in the bitmap. Does not free or resize
+ * memory.
+ */
+static void ewah_clear(struct ewah_bitmap *self)
+{
+	self->buffer_size = 1;
+	self->buffer[0] = 0;
+	self->bit_size = 0;
+	self->rlw = self->buffer;
+}
+
 struct ewah_bitmap *ewah_new(void)
 {
 	struct ewah_bitmap *self;
@@ -286,14 +298,6 @@ struct ewah_bitmap *ewah_new(void)
 
 	ewah_clear(self);
 	return self;
-}
-
-void ewah_clear(struct ewah_bitmap *self)
-{
-	self->buffer_size = 1;
-	self->buffer[0] = 0;
-	self->bit_size = 0;
-	self->rlw = self->buffer;
 }
 
 void ewah_free(struct ewah_bitmap *self)

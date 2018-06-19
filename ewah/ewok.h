@@ -73,12 +73,6 @@ void ewah_pool_free(struct ewah_bitmap *self);
 struct ewah_bitmap *ewah_new(void);
 
 /**
- * Clear all the bits in the bitmap. Does not free or resize
- * memory.
- */
-void ewah_clear(struct ewah_bitmap *self);
-
-/**
  * Free all the memory of the bitmap
  */
 void ewah_free(struct ewah_bitmap *self);
