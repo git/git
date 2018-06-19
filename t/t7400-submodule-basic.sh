@@ -126,8 +126,10 @@ test_expect_success 'submodule add' '
 	test_cmp empty untracked
 '
 
-test_create_repo parent &&
-test_commit -C parent one
+test_expect_success 'setup parent and one repository' '
+	test_create_repo parent &&
+	test_commit -C parent one
+'
 
 test_expect_success 'redirected submodule add does not show progress' '
 	git -C addtest submodule add "file://$submodurl/parent" submod-redirected \
