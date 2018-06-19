@@ -1841,7 +1841,7 @@ class P4Submit(Command, P4UserMap):
                     filesToDelete.remove(path)
 
                 dst_mode = int(diff['dst_mode'], 8)
-                if dst_mode == 0120000:
+                if dst_mode == 0o120000:
                     symlinks.add(path)
 
             elif modifier == "D":
