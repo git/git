@@ -3590,7 +3590,7 @@ class P4Sync(Command, P4UserMap):
                             prev_list = prev.split("/")
                             cur_list = cur.split("/")
                             for i in range(0, min(len(cur_list), len(prev_list))):
-                                if cur_list[i] <> prev_list[i]:
+                                if cur_list[i] != prev_list[i]:
                                     i = i - 1
                                     break
 
