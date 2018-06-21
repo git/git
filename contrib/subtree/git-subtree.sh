@@ -15,8 +15,10 @@ git subtree merge --prefix=<prefix> <commit>
 git subtree pull  --prefix=<prefix> <repository> <ref>
 git subtree push  --prefix=<prefix> <repository> <ref>
 git subtree split --prefix=<prefix> <commit...>
+git subtree --list
 --
 h,help        show the help
+l,list        show externals
 q             quiet
 d             show debug messages
 P,prefix=     the name of the subdir to split out
@@ -48,6 +50,9 @@ annotate=
 squash=
 message=
 prefix=
+repo=
+ref=
+list=
 
 debug () {
 	if test -n "$debug"
@@ -75,6 +80,121 @@ assert () {
 	then
 		die "assertion failed: " "$@"
 	fi
+}
+
+show_externals () {
+  debug "Looking for externals..."
+  dir=
+  pass=
+  rev=
+  updated=
+  commit=
+  repo=
+  ref=
+  git log --grep="^git-subtree-dir: .*\$" \
+          --no-show-signature --pretty=format:'START %H%n%s%n%n%b%nEND%n' |
+  while read a b junk
+  do
+    case "$a" in
+    START)
+      commit="$b"
+      ;;
+    git-subtree-dir:)
+      if test -n "$dir"
+      then
+        if test "$dir" = "$b"
+        then
+          break
+        fi
+      fi
+      dir="$b"
+      ;;
+    git-subtree-split:)
+      rev="$b"
+      ;;
+    git-subtree-repo:)
+      repo="$b"
+      ;;
+    git-subtree-ref:)
+      ref="$b"
+      ;;
+    END)
+      if test -n "$dir" -a -e "$dir" -a -z "$(echo -e "$pass" | grep "$dir\$")"
+      then
+        pass="$pass\n$dir\n"
+        debug ""
+        debug "Commit: $commit"
+        if test -n "$repo"
+        then
+          output="$(git ls-remote $repo)"
+          if test -n "$ref"
+          then
+            if $(echo "$output" | grep -q $ref)
+            then
+              hash="$(echo "$output" | grep "$ref\$" | cut -f1 -d$'\t')"
+              if test "$hash" != "$rev"
+              then
+                updated="$rev"
+                rev="$hash"
+              fi
+            fi
+          fi
+
+          output="$(echo "$output" | grep $rev)"
+          if test -n "$output"
+          then
+            echo "$output" |
+            while read h r junk
+            do
+              case "$r" in
+                HEAD)
+                  head="yes"
+                  ;;
+                refs/heads/*)
+                  name=$(basename $r)
+                  type="branch"
+                  echo -n "$dir $repo $type $name"
+                  if test "$head" = "yes"
+                  then
+                    echo " HEAD"
+                  else
+                    echo " $rev"
+                  fi
+                  break
+                  ;;
+                refs/tags/*)
+                  name=$(basename $r)
+                  type="tag"
+                  echo "$dir $repo $type $name $rev"
+                  break
+                  ;;
+              esac
+            done
+            if test -n "$updated"
+            then
+              debug ""
+              debug "The '$dir' subtree seems not updated:"
+              debug "   original revision: $updated"
+              debug "    reemote revision: $rev"
+              debug "You can update '$dir' subtree by following command:"
+              debug ""
+              debug "   git subtree pull --prefix=$dir $repo $ref"
+              debug ""
+            fi
+          fi
+        else
+          echo "$dir $rev"
+        fi
+      fi
+
+      rev=
+      updated=
+      commit=
+      repo=
+      ref=
+      ;;
+    esac
+  done
 }
 
 
@@ -137,6 +257,9 @@ do
 	--no-squash)
 		squash=
 		;;
+	-l)
+		list=yes
+		;;
 	--)
 		break
 		;;
@@ -148,6 +271,12 @@ done
 
 command="$1"
 shift
+
+if test "$list" = "yes"
+then
+  show_externals
+  exit 0
+fi
 
 case "$command" in
 add|merge|pull)
@@ -421,6 +550,18 @@ add_msg () {
 		git-subtree-mainline: $latest_old
 		git-subtree-split: $latest_new
 	EOF
+	if test -n "$repo"
+	then
+		cat <<-EOF
+			git-subtree-repo: $repo
+		EOF
+	fi
+	if test -n "$ref"
+	then
+		cat <<-EOF
+			git-subtree-ref: $ref
+		EOF
+	fi
 }
 
 add_squashed_msg () {
@@ -622,6 +763,8 @@ cmd_add () {
 		# branches fetched via the refspec.
 		ensure_valid_ref_format "$2"
 
+		repo=$1
+		ref=$2
 		cmd_add_repository "$@"
 	else
 		say "error: parameters were '$@'"

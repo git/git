@@ -15,6 +15,7 @@ SYNOPSIS
 'git subtree' push  -P <prefix> <repository> <ref>
 'git subtree' merge -P <prefix> <commit>
 'git subtree' split -P <prefix> [OPTIONS] [<commit>]
+'git subtree' --list
 
 
 DESCRIPTION
@@ -130,6 +131,10 @@ OPTIONS
 -d::
 --debug::
 	Produce even more unnecessary output messages on stderr.
+
+-l::
+--list::
+	Print the list of joined subtrees and exit.
 
 -P <prefix>::
 --prefix=<prefix>::
