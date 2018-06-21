@@ -82,7 +82,7 @@ int transform_todos(unsigned flags);
 int check_todo_list(void);
 int append_todo_help_to_file(unsigned edit_todo, unsigned keep_empty);
 int edit_todo_list(unsigned flags);
-int skip_unnecessary_picks(void);
+int skip_unnecessary_picks(const char **output_oid);
 int rearrange_squash(void);
 
 extern const char sign_off_header[];
