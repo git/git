@@ -4392,7 +4392,7 @@ static int rewrite_file(const char *path, const char *buf, size_t len)
 }
 
 /* skip picking commits whose parents are unchanged */
-int skip_unnecessary_picks(void)
+int skip_unnecessary_picks(const char **output_oid)
 {
 	const char *todo_file = rebase_path_todo();
 	struct strbuf buf = STRBUF_INIT;
@@ -4467,7 +4467,7 @@ int skip_unnecessary_picks(void)
 	}
 
 	todo_list_release(&todo_list);
-	printf("%s\n", oid_to_hex(oid));
+	*output_oid = oid_to_hex(oid);
 
 	return 0;
 }
