@@ -11,7 +11,10 @@ static int run_diff(const char *path1, const char *path2)
 		"diff", "--no-index", NULL, NULL, NULL
 	};
 	const char *env[] = {
-		"GIT_PAGER=cat", NULL
+		"GIT_PAGER=cat",
+		"GIT_DIR=/dev/null",
+		"HOME=/dev/null",
+		NULL
 	};
 
 	argv[2] = path1;
@@ -48,7 +51,10 @@ int cmd__cmp(int argc, const char **argv)
 			if (r1 == EOF)
 				return 0;
 cmp_failed:
-			return !!run_diff(argv[1], argv[2]);
+			if (!run_diff(argv[1], argv[2]))
+				die("Huh? 'diff --no-index %s %s' succeeded",
+				    argv[1], argv[2]);
+			return 1;
 		}
 		if (r1 == EOF || strbuf_cmp(&b0, &b1)) {
 			fclose(f0);
