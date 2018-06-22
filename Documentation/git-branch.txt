@@ -100,8 +100,6 @@ OPTIONS
 	The negated form `--no-create-reflog` only overrides an earlier
 	`--create-reflog`, but currently does not negate the setting of
 	`core.logAllRefUpdates`.
-+
-The `-l` option is a deprecated synonym for `--create-reflog`.
 
 -f::
 --force::
@@ -156,6 +154,7 @@ This option is only applicable in non-verbose mode.
 --all::
 	List both remote-tracking branches and local branches.
 
+-l::
 --list::
 	List branches.  With optional `<pattern>...`, e.g. `git
 	branch --list 'maint-*'`, list only the branches that match
