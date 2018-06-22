@@ -3162,9 +3162,9 @@ int checkout_base_commit(struct replay_opts *opts, const char *commit,
 	return 0;
 }
 
-int checkout_onto(struct replay_opts *opts,
-		  const char *onto_name, const char *onto,
-		  const char *orig_head, unsigned verbose)
+static int checkout_onto(struct replay_opts *opts,
+			 const char *onto_name, const char *onto,
+			 const char *orig_head, unsigned verbose)
 {
 	struct object_id oid;
 	const char *action = reflog_message(opts, "start", "checkout %s", onto_name);
@@ -4425,25 +4425,6 @@ static void append_todo_help(unsigned edit_todo, unsigned keep_empty,
 	}
 }
 
-int append_todo_help_to_file(unsigned edit_todo, unsigned keep_empty)
-{
-	struct strbuf buf = STRBUF_INIT;
-	FILE *todo;
-	int ret;
-
-	todo = fopen_or_warn(rebase_path_todo(), "a");
-	if (!todo)
-		return 1;
-
-	append_todo_help(edit_todo, keep_empty, &buf);
-
-	ret = fputs(buf.buf, todo);
-	fclose(todo);
-	strbuf_release(&buf);
-
-	return ret;
-}
-
 int edit_todo_list(unsigned flags)
 {
 	struct strbuf buf = STRBUF_INIT;
@@ -4492,7 +4473,7 @@ static int rewrite_file(const char *path, const char *buf, size_t len)
 }
 
 /* skip picking commits whose parents are unchanged */
-int skip_unnecessary_picks(const char **output_oid)
+static int skip_unnecessary_picks(const char **output_oid)
 {
 	const char *todo_file = rebase_path_todo();
 	struct strbuf buf = STRBUF_INIT;

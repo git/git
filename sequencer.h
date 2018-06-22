@@ -80,9 +80,7 @@ int sequencer_make_script(FILE *out, int argc, const char **argv,
 int sequencer_add_exec_commands(const char *command);
 int transform_todos(unsigned flags);
 int check_todo_list(void);
-int append_todo_help_to_file(unsigned edit_todo, unsigned keep_empty);
 int edit_todo_list(unsigned flags);
-int skip_unnecessary_picks(const char **output_oid);
 int complete_action(struct replay_opts *opts, unsigned flags,
 		    const char *shortrevisions, const char *onto_name,
 		    const char *onto, const char *orig_head, const char *cmd,
@@ -106,9 +104,6 @@ void commit_post_rewrite(const struct commit *current_head,
 
 int checkout_base_commit(struct replay_opts *opts, const char *commit,
 			 int verbose);
-int checkout_onto(struct replay_opts *opts,
-		  const char *onto_name, const char *onto,
-		  const char *orig_head, unsigned verbose);
 
 #define SUMMARY_INITIAL_COMMIT   (1 << 0)
 #define SUMMARY_SHOW_AUTHOR_DATE (1 << 1)
