@@ -46,6 +46,7 @@ void init_grep_defaults(void)
 	color_set(opt->color_filename, "");
 	color_set(opt->color_function, "");
 	color_set(opt->color_lineno, "");
+	color_set(opt->color_columnno, "");
 	color_set(opt->color_match_context, GIT_COLOR_BOLD_RED);
 	color_set(opt->color_match_selected, GIT_COLOR_BOLD_RED);
 	color_set(opt->color_selected, "");
@@ -155,6 +156,7 @@ void grep_init(struct grep_opt *opt, const char *prefix)
 	opt->extended_regexp_option = def->extended_regexp_option;
 	opt->pattern_type_option = def->pattern_type_option;
 	opt->linenum = def->linenum;
+	opt->columnnum = def->columnnum;
 	opt->max_depth = def->max_depth;
 	opt->pathname = def->pathname;
 	opt->relative = def->relative;
@@ -164,6 +166,7 @@ void grep_init(struct grep_opt *opt, const char *prefix)
 	color_set(opt->color_filename, def->color_filename);
 	color_set(opt->color_function, def->color_function);
 	color_set(opt->color_lineno, def->color_lineno);
+	color_set(opt->color_columnno, def->color_columnno);
 	color_set(opt->color_match_context, def->color_match_context);
 	color_set(opt->color_match_selected, def->color_match_selected);
 	color_set(opt->color_selected, def->color_selected);
@@ -1277,23 +1280,36 @@ static int match_expr_eval(struct grep_opt *opt, struct grep_expr *x, char *bol,
 				     0);
 		break;
 	case GREP_NODE_AND:
-		if (!match_expr_eval(opt, x->u.binary.left, bol, eol, ctx, col,
-				     icol, 0))
-			return 0;
-		h = match_expr_eval(opt, x->u.binary.right, bol, eol, ctx, col,
+		h = match_expr_eval(opt, x->u.binary.left, bol, eol, ctx, col,
 				    icol, 0);
+		if (h || opt->columnnum) {
+			/*
+			 * Don't short-circuit AND when given --column, since a
+			 * NOT earlier in the tree may turn this into an OR. In
+			 * this case, see the below comment.
+			 */
+			h &= match_expr_eval(opt, x->u.binary.right, bol, eol,
+					     ctx, col, icol, 0);
+		}
 		break;
 	case GREP_NODE_OR:
-		if (!collect_hits)
+		if (!(collect_hits || opt->columnnum)) {
+			/*
+			 * Don't short-circuit OR when given --column (or
+			 * collecting hits) to ensure we don't skip a later
+			 * child that would produce an earlier match.
+			 */
 			return (match_expr_eval(opt, x->u.binary.left, bol, eol,
 						ctx, col, icol, 0) ||
 				match_expr_eval(opt, x->u.binary.right, bol,
 						eol, ctx, col, icol, 0));
+		}
 		h = match_expr_eval(opt, x->u.binary.left, bol, eol, ctx, col,
 				    icol, 0);
-		x->u.binary.left->hit |= h;
+		if (collect_hits)
+			x->u.binary.left->hit |= h;
 		h |= match_expr_eval(opt, x->u.binary.right, bol, eol, ctx, col,
-				     icol, 1);
+				     icol, collect_hits);
 		break;
 	default:
 		die("Unexpected node type (internal error) %d", x->node);
@@ -1316,6 +1332,7 @@ static int match_line(struct grep_opt *opt, char *bol, char *eol,
 		      enum grep_context ctx, int collect_hits)
 {
 	struct grep_pat *p;
+	int hit = 0;
 
 	if (opt->extended)
 		return match_expr(opt, bol, eol, ctx, col, icol,
@@ -1325,11 +1342,21 @@ static int match_line(struct grep_opt *opt, char *bol, char *eol,
 	for (p = opt->pattern_list; p; p = p->next) {
 		regmatch_t tmp;
 		if (match_one_pattern(p, bol, eol, ctx, &tmp, 0)) {
-			*col = tmp.rm_so;
-			return 1;
+			hit |= 1;
+			if (!opt->columnnum) {
+				/*
+				 * Without --column, any single match on a line
+				 * is enough to know that it needs to be
+				 * printed. With --column, scan _all_ patterns
+				 * to find the earliest.
+				 */
+				break;
+			}
+			if (*col < 0 || tmp.rm_so < *col)
+				*col = tmp.rm_so;
 		}
 	}
-	return 0;
+	return hit;
 }
 
 static int match_next_pattern(struct grep_pat *p, char *bol, char *eol,
