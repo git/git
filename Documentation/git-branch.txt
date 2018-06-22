@@ -91,7 +91,6 @@ OPTIONS
 -D::
 	Shortcut for `--delete --force`.
 
--l::
 --create-reflog::
 	Create the branch's reflog.  This activates recording of
 	all changes made to the branch ref, enabling use of date
@@ -101,6 +100,8 @@ OPTIONS
 	The negated form `--no-create-reflog` only overrides an earlier
 	`--create-reflog`, but currently does not negate the setting of
 	`core.logAllRefUpdates`.
++
+The `-l` option is a deprecated synonym for `--create-reflog`.
 
 -f::
 --force::
