@@ -64,9 +64,8 @@ When using the http:// or https:// transport a client makes a "smart"
 info/refs request as described in `http-protocol.txt` and requests that
 v2 be used by supplying "version=2" in the `Git-Protocol` header.
 
-   C: Git-Protocol: version=2
-   C:
    C: GET $GIT_URL/info/refs?service=git-upload-pack HTTP/1.0
+   C: Git-Protocol: version=2
 
 A v2 server would reply:
 
