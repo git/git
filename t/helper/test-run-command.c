@@ -200,7 +200,8 @@ static int inherit_handle(const char *argv0)
 	sprintf(path, "out-XXXXXX");
 	tmp = xmkstemp(path);
 
-	argv_array_pushl(&cp.args, argv0, "inherited-handle-child", NULL);
+	argv_array_pushl(&cp.args,
+			 "test-tool", argv0, "inherited-handle-child", NULL);
 	cp.in = -1;
 	cp.no_stdout = cp.no_stderr = 1;
 	if (start_command(&cp) < 0)
@@ -237,6 +238,8 @@ int cmd__run_command(int argc, const char **argv)
 	if (argc > 1 && !strcmp(argv[1], "testsuite"))
 		exit(testsuite(argc - 1, argv + 1));
 
+	if (argc < 2)
+		return 1;
 	if (!strcmp(argv[1], "inherited-handle"))
 		exit(inherit_handle(argv[0]));
 	if (!strcmp(argv[1], "inherited-handle-child"))
