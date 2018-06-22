@@ -52,28 +52,6 @@ void append_todo_help(unsigned edit_todo, unsigned keep_empty,
 	}
 }
 
-int append_todo_help_to_file(unsigned edit_todo, unsigned keep_empty)
-{
-	struct strbuf buf = STRBUF_INIT;
-	FILE *todo;
-	int ret;
-
-	todo = fopen_or_warn(rebase_path_todo(), "a");
-	if (!todo)
-		return 1;
-
-	append_todo_help(edit_todo, keep_empty, &buf);
-
-	ret = fputs(buf.buf, todo);
-	if (ret < 0)
-		error_errno(_("could not append help text to '%s'"), rebase_path_todo());
-
-	fclose(todo);
-	strbuf_release(&buf);
-
-	return ret;
-}
-
 int edit_todo_list(unsigned flags)
 {
 	struct strbuf buf = STRBUF_INIT;
