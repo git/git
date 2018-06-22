@@ -18,7 +18,7 @@ metadata, including:
   the graph file.
 
 These positional references are stored as unsigned 32-bit integers
-corresponding to the array position withing the list of commit OIDs. We
+corresponding to the array position within the list of commit OIDs. We
 use the most-significant bit for special purposes, so we can store at most
 (1 << 31) - 1 (around 2 billion) commits.
 

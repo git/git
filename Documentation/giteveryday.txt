@@ -244,7 +244,7 @@ commands in addition to the ones needed by participants.
 
 This section can also be used by those who respond to `git
 request-pull` or pull-request on GitHub (www.github.com) to
-integrate the work of others into their history. An sub-area
+integrate the work of others into their history. A sub-area
 lieutenant for a repository will act both as a participant and
 as an integrator.
 

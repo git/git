@@ -106,7 +106,7 @@ It is optional: it defaults to 'traditional'.
 The possible options are:
 +
 	- 'traditional' - Shows ignored files and directories, unless
-			  --untracked-files=all is specifed, in which case
+			  --untracked-files=all is specified, in which case
 			  individual files in ignored directories are
 			  displayed.
 	- 'no'	        - Show no ignored files.

@@ -298,7 +298,7 @@ smaller project it is a good discipline to follow it.
 
 The sign-off is a simple line at the end of the explanation for
 the patch, which certifies that you wrote it or otherwise have
-the right to pass it on as a open-source patch.  The rules are
+the right to pass it on as an open-source patch.  The rules are
 pretty simple: if you can certify the below D-C-O:
 
 [[dco]]
@@ -403,7 +403,7 @@ don't demand).  +git log -p {litdd} _$area_you_are_modifying_+ would
 help you find out who they are.
 
 . You get comments and suggestions for improvements.  You may
-  even get them in a "on top of your change" patch form.
+  even get them in an "on top of your change" patch form.
 
 . Polish, refine, and re-send to the list and the people who
   spend their time to improve your patch.  Go back to step (2).

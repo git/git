@@ -199,7 +199,7 @@ OPTIONS
 	.git/NOTES_MERGE_REF symref is updated to the resulting commit.
 
 --abort::
-	Abort/reset a in-progress 'git notes merge', i.e. a notes merge
+	Abort/reset an in-progress 'git notes merge', i.e. a notes merge
 	with conflicts. This simply removes all files related to the
 	notes merge.
 
