@@ -16,9 +16,13 @@ struct commit_list {
 	struct commit_list *next;
 };
 
+/*
+ * The size of this struct matters in full repo walk operations like
+ * 'git clone' or 'git gc'. Consider using commit-slab to attach data
+ * to a commit instead of adding new fields here.
+ */
 struct commit {
 	struct object object;
-	void *util;
 	timestamp_t date;
 	struct commit_list *parents;
 
@@ -312,7 +316,7 @@ struct merge_remote_desc {
 	struct object *obj; /* the named object, could be a tag */
 	char name[FLEX_ARRAY];
 };
-#define merge_remote_util(commit) ((struct merge_remote_desc *)((commit)->util))
+extern struct merge_remote_desc *merge_remote_util(struct commit *);
 extern void set_merge_remote_desc(struct commit *commit,
 				  const char *name, struct object *obj);
 

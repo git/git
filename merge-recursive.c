@@ -286,10 +286,12 @@ static void output(struct merge_options *o, int v, const char *fmt, ...)
 
 static void output_commit_title(struct merge_options *o, struct commit *commit)
 {
+	struct merge_remote_desc *desc;
+
 	strbuf_addchars(&o->obuf, ' ', o->call_depth * 2);
-	if (commit->util)
-		strbuf_addf(&o->obuf, "virtual %s\n",
-			merge_remote_util(commit)->name);
+	desc = merge_remote_util(commit);
+	if (desc)
+		strbuf_addf(&o->obuf, "virtual %s\n", desc->name);
 	else {
 		strbuf_add_unique_abbrev(&o->obuf, &commit->object.oid,
 					 DEFAULT_ABBREV);
