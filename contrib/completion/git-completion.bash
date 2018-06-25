@@ -2142,9 +2142,24 @@ __git_config_get_set_variables ()
 	__git config $config_file --name-only --list
 }
 
+__git_config_vars=
+__git_compute_config_vars ()
+{
+	test -n "$__git_config_vars" ||
+	__git_config_vars="$(git help --config-for-completion | sort | uniq)"
+}
+
 _git_config ()
 {
-	case "$prev" in
+	local varname
+
+	if [ "${BASH_VERSINFO[0]:-0}" -ge 4 ]; then
+		varname="${prev,,}"
+	else
+		varname="$(echo "$prev" |tr A-Z a-z)"
+	fi
+
+	case "$varname" in
 	branch.*.remote|branch.*.pushremote)
 		__gitcomp_nl "$(__git_remotes)"
 		return
@@ -2242,20 +2257,20 @@ _git_config ()
 		;;
 	branch.*.*)
 		local pfx="${cur%.*}." cur_="${cur##*.}"
-		__gitcomp "remote pushremote merge mergeoptions rebase" "$pfx" "$cur_"
+		__gitcomp "remote pushRemote merge mergeOptions rebase" "$pfx" "$cur_"
 		return
 		;;
 	branch.*)
 		local pfx="${cur%.*}." cur_="${cur#*.}"
 		__gitcomp_direct "$(__git_heads "$pfx" "$cur_" ".")"
-		__gitcomp_nl_append $'autosetupmerge\nautosetuprebase\n' "$pfx" "$cur_"
+		__gitcomp_nl_append $'autoSetupMerge\nautoSetupRebase\n' "$pfx" "$cur_"
 		return
 		;;
 	guitool.*.*)
 		local pfx="${cur%.*}." cur_="${cur##*.}"
 		__gitcomp "
-			argprompt cmd confirm needsfile noconsole norescan
-			prompt revprompt revunmerged title
+			argPrompt cmd confirm needsFile noConsole noRescan
+			prompt revPrompt revUnmerged title
 			" "$pfx" "$cur_"
 		return
 		;;
@@ -2284,14 +2299,14 @@ _git_config ()
 		local pfx="${cur%.*}." cur_="${cur##*.}"
 		__gitcomp "
 			url proxy fetch push mirror skipDefaultUpdate
-			receivepack uploadpack tagopt pushurl
+			receivepack uploadpack tagOpt pushurl
 			" "$pfx" "$cur_"
 		return
 		;;
 	remote.*)
 		local pfx="${cur%.*}." cur_="${cur#*.}"
 		__gitcomp_nl "$(__git_remotes)" "$pfx" "$cur_" "."
-		__gitcomp_nl_append "pushdefault" "$pfx" "$cur_"
+		__gitcomp_nl_append "pushDefault" "$pfx" "$cur_"
 		return
 		;;
 	url.*.*)
@@ -2299,333 +2314,14 @@ _git_config ()
 		__gitcomp "insteadOf pushInsteadOf" "$pfx" "$cur_"
 		return
 		;;
+	*.*)
+		__git_compute_config_vars
+		__gitcomp "$__git_config_vars"
+		;;
+	*)
+		__git_compute_config_vars
+		__gitcomp "$(echo "$__git_config_vars" | sed 's/\.[^ ]*/./g')"
 	esac
-	__gitcomp "
-		add.ignoreErrors
-		advice.amWorkDir
-		advice.commitBeforeMerge
-		advice.detachedHead
-		advice.implicitIdentity
-		advice.pushAlreadyExists
-		advice.pushFetchFirst
-		advice.pushNeedsForce
-		advice.pushNonFFCurrent
-		advice.pushNonFFMatching
-		advice.pushUpdateRejected
-		advice.resolveConflict
-		advice.rmHints
-		advice.statusHints
-		advice.statusUoption
-		advice.ignoredHook
-		alias.
-		am.keepcr
-		am.threeWay
-		apply.ignorewhitespace
-		apply.whitespace
-		branch.autosetupmerge
-		branch.autosetuprebase
-		browser.
-		clean.requireForce
-		color.branch
-		color.branch.current
-		color.branch.local
-		color.branch.plain
-		color.branch.remote
-		color.decorate.HEAD
-		color.decorate.branch
-		color.decorate.remoteBranch
-		color.decorate.stash
-		color.decorate.tag
-		color.diff
-		color.diff.commit
-		color.diff.frag
-		color.diff.func
-		color.diff.meta
-		color.diff.new
-		color.diff.old
-		color.diff.plain
-		color.diff.whitespace
-		color.grep
-		color.grep.context
-		color.grep.filename
-		color.grep.function
-		color.grep.linenumber
-		color.grep.match
-		color.grep.selected
-		color.grep.separator
-		color.interactive
-		color.interactive.error
-		color.interactive.header
-		color.interactive.help
-		color.interactive.prompt
-		color.pager
-		color.showbranch
-		color.status
-		color.status.added
-		color.status.changed
-		color.status.header
-		color.status.localBranch
-		color.status.nobranch
-		color.status.remoteBranch
-		color.status.unmerged
-		color.status.untracked
-		color.status.updated
-		color.ui
-		commit.cleanup
-		commit.gpgSign
-		commit.status
-		commit.template
-		commit.verbose
-		core.abbrev
-		core.askpass
-		core.attributesfile
-		core.autocrlf
-		core.bare
-		core.bigFileThreshold
-		core.checkStat
-		core.commentChar
-		core.commitGraph
-		core.compression
-		core.createObject
-		core.deltaBaseCacheLimit
-		core.editor
-		core.eol
-		core.excludesfile
-		core.fileMode
-		core.fsyncobjectfiles
-		core.gitProxy
-		core.hideDotFiles
-		core.hooksPath
-		core.ignoreStat
-		core.ignorecase
-		core.logAllRefUpdates
-		core.loosecompression
-		core.notesRef
-		core.packedGitLimit
-		core.packedGitWindowSize
-		core.packedRefsTimeout
-		core.pager
-		core.precomposeUnicode
-		core.preferSymlinkRefs
-		core.preloadindex
-		core.protectHFS
-		core.protectNTFS
-		core.quotepath
-		core.repositoryFormatVersion
-		core.safecrlf
-		core.sharedRepository
-		core.sparseCheckout
-		core.splitIndex
-		core.sshCommand
-		core.symlinks
-		core.trustctime
-		core.untrackedCache
-		core.warnAmbiguousRefs
-		core.whitespace
-		core.worktree
-		credential.helper
-		credential.useHttpPath
-		credential.username
-		credentialCache.ignoreSIGHUP
-		diff.autorefreshindex
-		diff.external
-		diff.ignoreSubmodules
-		diff.mnemonicprefix
-		diff.noprefix
-		diff.renameLimit
-		diff.renames
-		diff.statGraphWidth
-		diff.submodule
-		diff.suppressBlankEmpty
-		diff.tool
-		diff.wordRegex
-		diff.algorithm
-		difftool.
-		difftool.prompt
-		fetch.recurseSubmodules
-		fetch.unpackLimit
-		format.attach
-		format.cc
-		format.coverLetter
-		format.from
-		format.headers
-		format.numbered
-		format.pretty
-		format.signature
-		format.signoff
-		format.subjectprefix
-		format.suffix
-		format.thread
-		format.to
-		gc.
-		gc.aggressiveDepth
-		gc.aggressiveWindow
-		gc.auto
-		gc.autoDetach
-		gc.autopacklimit
-		gc.logExpiry
-		gc.packrefs
-		gc.pruneexpire
-		gc.reflogexpire
-		gc.reflogexpireunreachable
-		gc.rerereresolved
-		gc.rerereunresolved
-		gc.worktreePruneExpire
-		gitcvs.allbinary
-		gitcvs.commitmsgannotation
-		gitcvs.dbTableNamePrefix
-		gitcvs.dbdriver
-		gitcvs.dbname
-		gitcvs.dbpass
-		gitcvs.dbuser
-		gitcvs.enabled
-		gitcvs.logfile
-		gitcvs.usecrlfattr
-		guitool.
-		gui.blamehistoryctx
-		gui.commitmsgwidth
-		gui.copyblamethreshold
-		gui.diffcontext
-		gui.encoding
-		gui.fastcopyblame
-		gui.matchtrackingbranch
-		gui.newbranchtemplate
-		gui.pruneduringfetch
-		gui.spellingdictionary
-		gui.trustmtime
-		help.autocorrect
-		help.browser
-		help.format
-		http.lowSpeedLimit
-		http.lowSpeedTime
-		http.maxRequests
-		http.minSessions
-		http.noEPSV
-		http.postBuffer
-		http.proxy
-		http.sslCipherList
-		http.sslVersion
-		http.sslCAInfo
-		http.sslCAPath
-		http.sslCert
-		http.sslCertPasswordProtected
-		http.sslKey
-		http.sslVerify
-		http.useragent
-		i18n.commitEncoding
-		i18n.logOutputEncoding
-		imap.authMethod
-		imap.folder
-		imap.host
-		imap.pass
-		imap.port
-		imap.preformattedHTML
-		imap.sslverify
-		imap.tunnel
-		imap.user
-		init.templatedir
-		instaweb.browser
-		instaweb.httpd
-		instaweb.local
-		instaweb.modulepath
-		instaweb.port
-		interactive.singlekey
-		log.date
-		log.decorate
-		log.showroot
-		mailmap.file
-		man.
-		man.viewer
-		merge.
-		merge.conflictstyle
-		merge.log
-		merge.renameLimit
-		merge.renormalize
-		merge.stat
-		merge.tool
-		merge.verbosity
-		mergetool.
-		mergetool.keepBackup
-		mergetool.keepTemporaries
-		mergetool.prompt
-		notes.displayRef
-		notes.rewrite.
-		notes.rewrite.amend
-		notes.rewrite.rebase
-		notes.rewriteMode
-		notes.rewriteRef
-		pack.compression
-		pack.deltaCacheLimit
-		pack.deltaCacheSize
-		pack.depth
-		pack.indexVersion
-		pack.packSizeLimit
-		pack.threads
-		pack.window
-		pack.windowMemory
-		pager.
-		pretty.
-		pull.octopus
-		pull.twohead
-		push.default
-		push.followTags
-		rebase.autosquash
-		rebase.stat
-		receive.autogc
-		receive.denyCurrentBranch
-		receive.denyDeleteCurrent
-		receive.denyDeletes
-		receive.denyNonFastForwards
-		receive.fsckObjects
-		receive.unpackLimit
-		receive.updateserverinfo
-		remote.pushdefault
-		remotes.
-		repack.usedeltabaseoffset
-		rerere.autoupdate
-		rerere.enabled
-		sendemail.
-		sendemail.aliasesfile
-		sendemail.aliasfiletype
-		sendemail.bcc
-		sendemail.cc
-		sendemail.cccmd
-		sendemail.chainreplyto
-		sendemail.confirm
-		sendemail.envelopesender
-		sendemail.from
-		sendemail.identity
-		sendemail.multiedit
-		sendemail.signedoffbycc
-		sendemail.smtpdomain
-		sendemail.smtpencryption
-		sendemail.smtppass
-		sendemail.smtpserver
-		sendemail.smtpserveroption
-		sendemail.smtpserverport
-		sendemail.smtpuser
-		sendemail.suppresscc
-		sendemail.suppressfrom
-		sendemail.thread
-		sendemail.to
-		sendemail.tocmd
-		sendemail.validate
-		sendemail.smtpbatchsize
-		sendemail.smtprelogindelay
-		showbranch.default
-		status.relativePaths
-		status.showUntrackedFiles
-		status.submodulesummary
-		submodule.
-		tar.umask
-		transfer.unpackLimit
-		url.
-		user.email
-		user.name
-		user.signingkey
-		web.browser
-		branch. remote.
-	"
 }
 
 _git_remote ()

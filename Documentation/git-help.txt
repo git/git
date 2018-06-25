@@ -45,6 +45,11 @@ OPTIONS
 	When used with `--verbose` print description for all recognized
 	commands.
 
+-c::
+--config::
+	List all available configuration variables. This is a short
+	summary of the list in linkgit:git-config[1].
+
 -g::
 --guides::
 	Prints a list of useful guides on the standard output. This

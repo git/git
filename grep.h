@@ -62,6 +62,18 @@ enum grep_header_field {
 	GREP_HEADER_FIELD_MAX
 };
 
+enum grep_color {
+	GREP_COLOR_CONTEXT,
+	GREP_COLOR_FILENAME,
+	GREP_COLOR_FUNCTION,
+	GREP_COLOR_LINENO,
+	GREP_COLOR_MATCH_CONTEXT,
+	GREP_COLOR_MATCH_SELECTED,
+	GREP_COLOR_SELECTED,
+	GREP_COLOR_SEP,
+	NR_GREP_COLORS
+};
+
 struct grep_pat {
 	struct grep_pat *next;
 	const char *origin;
@@ -155,14 +167,7 @@ struct grep_opt {
 	int funcbody;
 	int extended_regexp_option;
 	int pattern_type_option;
-	char color_context[COLOR_MAXLEN];
-	char color_filename[COLOR_MAXLEN];
-	char color_function[COLOR_MAXLEN];
-	char color_lineno[COLOR_MAXLEN];
-	char color_match_context[COLOR_MAXLEN];
-	char color_match_selected[COLOR_MAXLEN];
-	char color_selected[COLOR_MAXLEN];
-	char color_sep[COLOR_MAXLEN];
+	char colors[NR_GREP_COLORS][COLOR_MAXLEN];
 	unsigned pre_context;
 	unsigned post_context;
 	unsigned last_shown;

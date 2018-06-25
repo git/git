@@ -12,6 +12,7 @@
 #include "gpg-interface.h"
 #include "sequencer.h"
 #include "line-log.h"
+#include "help.h"
 
 static struct decoration name_decoration = { "object names" };
 static int decoration_loaded;
@@ -27,6 +28,15 @@ static char decoration_colors[][COLOR_MAXLEN] = {
 	GIT_COLOR_BOLD_BLUE,	/* GRAFTED */
 };
 
+static const char *color_decorate_slots[] = {
+	[DECORATION_REF_LOCAL]	= "branch",
+	[DECORATION_REF_REMOTE] = "remoteBranch",
+	[DECORATION_REF_TAG]	= "tag",
+	[DECORATION_REF_STASH]	= "stash",
+	[DECORATION_REF_HEAD]	= "HEAD",
+	[DECORATION_GRAFTED]	= "grafted",
+};
+
 static const char *decorate_get_color(int decorate_use_color, enum decoration_type ix)
 {
 	if (want_color(decorate_use_color))
@@ -34,34 +44,11 @@ static const char *decorate_get_color(int decorate_use_color, enum decoration_ty
 	return "";
 }
 
-static int parse_decorate_color_slot(const char *slot)
-{
-	/*
-	 * We're comparing with 'ignore-case' on
-	 * (because config.c sets them all tolower),
-	 * but let's match the letters in the literal
-	 * string values here with how they are
-	 * documented in Documentation/config.txt, for
-	 * consistency.
-	 *
-	 * We love being consistent, don't we?
-	 */
-	if (!strcasecmp(slot, "branch"))
-		return DECORATION_REF_LOCAL;
-	if (!strcasecmp(slot, "remoteBranch"))
-		return DECORATION_REF_REMOTE;
-	if (!strcasecmp(slot, "tag"))
-		return DECORATION_REF_TAG;
-	if (!strcasecmp(slot, "stash"))
-		return DECORATION_REF_STASH;
-	if (!strcasecmp(slot, "HEAD"))
-		return DECORATION_REF_HEAD;
-	return -1;
-}
+define_list_config_array(color_decorate_slots);
 
 int parse_decorate_color_config(const char *var, const char *slot_name, const char *value)
 {
-	int slot = parse_decorate_color_slot(slot_name);
+	int slot = LOOKUP_CONFIG(color_decorate_slots, slot_name);
 	if (slot < 0)
 		return 0;
 	if (!value)

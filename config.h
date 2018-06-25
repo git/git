@@ -257,4 +257,8 @@ struct key_value_info {
 extern NORETURN void git_die_config(const char *key, const char *err, ...) __attribute__((format(printf, 2, 3)));
 extern NORETURN void git_die_config_linenr(const char *key, const char *filename, int linenr);
 
+#define LOOKUP_CONFIG(mapping, var) \
+	lookup_config(mapping, ARRAY_SIZE(mapping), var)
+int lookup_config(const char **mapping, int nr_mapping, const char *var);
+
 #endif /* CONFIG_H */

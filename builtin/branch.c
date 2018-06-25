@@ -22,6 +22,7 @@
 #include "wt-status.h"
 #include "ref-filter.h"
 #include "worktree.h"
+#include "help.h"
 
 static const char * const builtin_branch_usage[] = {
 	N_("git branch [<options>] [-r | -a] [--merged | --no-merged]"),
@@ -55,25 +56,19 @@ enum color_branch {
 	BRANCH_COLOR_UPSTREAM = 5
 };
 
+static const char *color_branch_slots[] = {
+	[BRANCH_COLOR_RESET]	= "reset",
+	[BRANCH_COLOR_PLAIN]	= "plain",
+	[BRANCH_COLOR_REMOTE]	= "remote",
+	[BRANCH_COLOR_LOCAL]	= "local",
+	[BRANCH_COLOR_CURRENT]	= "current",
+	[BRANCH_COLOR_UPSTREAM] = "upstream",
+};
+
 static struct string_list output = STRING_LIST_INIT_DUP;
 static unsigned int colopts;
 
-static int parse_branch_color_slot(const char *slot)
-{
-	if (!strcasecmp(slot, "plain"))
-		return BRANCH_COLOR_PLAIN;
-	if (!strcasecmp(slot, "reset"))
-		return BRANCH_COLOR_RESET;
-	if (!strcasecmp(slot, "remote"))
-		return BRANCH_COLOR_REMOTE;
-	if (!strcasecmp(slot, "local"))
-		return BRANCH_COLOR_LOCAL;
-	if (!strcasecmp(slot, "current"))
-		return BRANCH_COLOR_CURRENT;
-	if (!strcasecmp(slot, "upstream"))
-		return BRANCH_COLOR_UPSTREAM;
-	return -1;
-}
+define_list_config_array(color_branch_slots);
 
 static int git_branch_config(const char *var, const char *value, void *cb)
 {
@@ -86,7 +81,7 @@ static int git_branch_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 	if (skip_prefix(var, "color.branch.", &slot_name)) {
-		int slot = parse_branch_color_slot(slot_name);
+		int slot = LOOKUP_CONFIG(color_branch_slots, slot_name);
 		if (slot < 0)
 			return 0;
 		if (!value)
