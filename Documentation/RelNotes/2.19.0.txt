@@ -6,9 +6,52 @@ Updates since v2.18
 
 UI, Workflows & Features
 
+ * "git diff" compares the index and the working tree.  For paths
+   added with intent-to-add bit, the command shows the full contents
+   of them as added, but the paths themselves were not marked as new
+   files.  They are now shown as new by default.
+
+   "git apply" learned the "--intent-to-add" option so that an
+   otherwise working-tree-only application of a patch will add new
+   paths to the index marked with the "intent-to-add" bit.
+
 
 Performance, Internal Implementation, Development Support etc.
+
+ * The bulk of "git submodule foreach" has been rewritten in C.
+
+ * The in-core "commit" object had an all-purpose "void *util" field,
+   which was tricky to use especially in library-ish part of the
+   code.  All of the existing uses of the field has been migrated to a
+   more dedicated "commit-slab" mechanism and the field is eliminated.
+
+ * A less often used command "git show-index" has been modernized.
+   (merge fb3010c31f jk/show-index later to maint).
+
+ * The conversion to pass "the_repository" and then "a_repository"
+   throughout the object access API continues.
+
+ * Continuing with the idea to programatically enumerate various
+   pieces of data required for command line completion, teach the
+   codebase to report the list of configuration variables
+   subcommands care about to help complete them.
+
+ * Separate "rebase -p" codepath out of "rebase -i" implementation to
+   slim down the latter and make it easier to manage.
 
 
 Fixes since v2.18
 -----------------
+
+ * "git remote update" can take both a single remote nickname and a
+   nickname for remote groups, and the completion script (in contrib/)
+   has been taught about it.
+   (merge 9cd4382ad5 ls/complete-remote-update-names later to maint).
+
+ * "git fetch --shallow-since=<cutoff>" that specifies the cut-off
+   point that is newer than the existing history used to end up
+   grabbing the entire history.  Such a request now errors out.
+   (merge e34de73c56 nd/reject-empty-shallow-request later to maint).
+
+ * Code cleanup.
+   (merge aee9be2ebe sg/update-ref-stdin-cleanup later to maint).
