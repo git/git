@@ -215,7 +215,9 @@ test_expect_success "multi-fetch continues to work" "
 	"
 
 test_expect_success "multi-fetch works off a 'clean' repository" '
-	rm -rf "$GIT_DIR/svn" "$GIT_DIR/refs/remotes" &&
+	rm -rf "$GIT_DIR/svn" &&
+	git for-each-ref --format="option no-deref%0adelete %(refname)" refs/remotes |
+	git update-ref --stdin &&
 	git reflog expire --all --expire=all &&
 	mkdir "$GIT_DIR/svn" &&
 	git svn multi-fetch
