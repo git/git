@@ -1,0 +1,14 @@
+Git 2.19 Release Notes
+======================
+
+Updates since v2.18
+-------------------
+
+UI, Workflows & Features
+
+
+Performance, Internal Implementation, Development Support etc.
+
+
+Fixes since v2.18
+-----------------
