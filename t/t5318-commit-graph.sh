@@ -221,4 +221,13 @@ test_expect_success 'write graph in bare repo' '
 graph_git_behavior 'bare repo with graph, commit 8 vs merge 1' bare commits/8 merge/1
 graph_git_behavior 'bare repo with graph, commit 8 vs merge 2' bare commits/8 merge/2
 
+test_expect_success 'perform fast-forward merge in full repo' '
+	cd "$TRASH_DIRECTORY/full" &&
+	git checkout -b merge-5-to-8 commits/5 &&
+	git merge commits/8 &&
+	git show-ref -s merge-5-to-8 >output &&
+	git show-ref -s commits/8 >expect &&
+	test_cmp expect output
+'
+
 test_done
