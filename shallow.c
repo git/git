@@ -191,6 +191,9 @@ struct commit_list *get_shallow_commits_by_rev_list(int ac, const char **av,
 		die("revision walk setup failed");
 	traverse_commit_list(&revs, show_commit, NULL, &not_shallow_list);
 
+	if (!not_shallow_list)
+		die("no commits selected for shallow requests");
+
 	/* Mark all reachable commits as NOT_SHALLOW */
 	for (p = not_shallow_list; p; p = p->next)
 		p->item->object.flags |= not_shallow_flag;

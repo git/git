@@ -711,6 +711,17 @@ test_expect_success 'fetch shallow since ...' '
 	test_cmp expected actual
 '
 
+test_expect_success 'clone shallow since selects no commits' '
+	test_create_repo shallow-since-the-future &&
+	(
+	cd shallow-since-the-future &&
+	GIT_COMMITTER_DATE="100000000 +0700" git commit --allow-empty -m one &&
+	GIT_COMMITTER_DATE="200000000 +0700" git commit --allow-empty -m two &&
+	GIT_COMMITTER_DATE="300000000 +0700" git commit --allow-empty -m three &&
+	test_must_fail git clone --shallow-since "900000000 +0700" "file://$(pwd)/." ../shallow111
+	)
+'
+
 test_expect_success 'shallow clone exclude tag two' '
 	test_create_repo shallow-exclude &&
 	(
