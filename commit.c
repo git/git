@@ -7,6 +7,7 @@
 #include "diff.h"
 #include "revision.h"
 #include "notes.h"
+#include "alloc.h"
 #include "gpg-interface.h"
 #include "mergesort.h"
 #include "commit-slab.h"
@@ -52,7 +53,8 @@ struct commit *lookup_commit(const struct object_id *oid)
 {
 	struct object *obj = lookup_object(oid->hash);
 	if (!obj)
-		return create_object(oid->hash, alloc_commit_node());
+		return create_object(the_repository, oid->hash,
+				     alloc_commit_node(the_repository));
 	return object_as_type(obj, OBJ_COMMIT, 0);
 }
 
@@ -323,6 +325,17 @@ struct tree *get_commit_tree(const struct commit *commit)
 struct object_id *get_commit_tree_oid(const struct commit *commit)
 {
 	return &get_commit_tree(commit)->object.oid;
+}
+
+void release_commit_memory(struct commit *c)
+{
+	c->maybe_tree = NULL;
+	c->index = 0;
+	free_commit_buffer(c);
+	free_commit_list(c->parents);
+	/* TODO: what about commit->util? */
+
+	c->object.parsed = 0;
 }
 
 const void *detach_commit_buffer(struct commit *commit, unsigned long *sizep)

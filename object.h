@@ -1,6 +1,22 @@
 #ifndef OBJECT_H
 #define OBJECT_H
 
+struct parsed_object_pool {
+	struct object **obj_hash;
+	int nr_objs, obj_hash_size;
+
+	/* TODO: migrate alloc_states to mem-pool? */
+	struct alloc_state *blob_state;
+	struct alloc_state *tree_state;
+	struct alloc_state *commit_state;
+	struct alloc_state *tag_state;
+	struct alloc_state *object_state;
+	unsigned commit_count;
+};
+
+struct parsed_object_pool *parsed_object_pool_new(void);
+void parsed_object_pool_clear(struct parsed_object_pool *o);
+
 struct object_list {
 	struct object *item;
 	struct object_list *next;
@@ -85,7 +101,7 @@ extern struct object *get_indexed_object(unsigned int);
  */
 struct object *lookup_object(const unsigned char *sha1);
 
-extern void *create_object(const unsigned char *sha1, void *obj);
+extern void *create_object(struct repository *r, const unsigned char *sha1, void *obj);
 
 void *object_as_type(struct object *obj, enum object_type type, int quiet);
 

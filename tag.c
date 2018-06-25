@@ -3,6 +3,7 @@
 #include "commit.h"
 #include "tree.h"
 #include "blob.h"
+#include "alloc.h"
 #include "gpg-interface.h"
 
 const char *tag_type = "tag";
@@ -93,7 +94,8 @@ struct tag *lookup_tag(const struct object_id *oid)
 {
 	struct object *obj = lookup_object(oid->hash);
 	if (!obj)
-		return create_object(oid->hash, alloc_tag_node());
+		return create_object(the_repository, oid->hash,
+				     alloc_tag_node(the_repository));
 	return object_as_type(obj, OBJ_TAG, 0);
 }
 
@@ -112,6 +114,14 @@ static timestamp_t parse_tag_date(const char *buf, const char *tail)
 		return 0;
 	/* dateptr < buf && buf[-1] == '\n', so parsing will stop at buf-1 */
 	return parse_timestamp(dateptr, NULL, 10);
+}
+
+void release_tag_memory(struct tag *t)
+{
+	free(t->tag);
+	t->tagged = NULL;
+	t->object.parsed = 0;
+	t->date = 0;
 }
 
 int parse_tag_buffer(struct tag *item, const void *data, unsigned long size)

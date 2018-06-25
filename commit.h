@@ -120,6 +120,12 @@ struct tree *get_commit_tree(const struct commit *);
 struct object_id *get_commit_tree_oid(const struct commit *);
 
 /*
+ * Release memory related to a commit, including the parent list and
+ * any cached object buffer.
+ */
+void release_commit_memory(struct commit *c);
+
+/*
  * Disassociate any cached object buffer from the commit, but do not free it.
  * The buffer (or NULL, if none) is returned.
  */

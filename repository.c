@@ -2,6 +2,7 @@
 #include "repository.h"
 #include "object-store.h"
 #include "config.h"
+#include "object.h"
 #include "submodule-config.h"
 
 /* The main repository */
@@ -14,6 +15,8 @@ void initialize_the_repository(void)
 
 	the_repo.index = &the_index;
 	the_repo.objects = raw_object_store_new();
+	the_repo.parsed_objects = parsed_object_pool_new();
+
 	repo_set_hash_algo(&the_repo, GIT_HASH_SHA1);
 }
 
@@ -143,6 +146,7 @@ int repo_init(struct repository *repo,
 	memset(repo, 0, sizeof(*repo));
 
 	repo->objects = raw_object_store_new();
+	repo->parsed_objects = parsed_object_pool_new();
 
 	if (repo_init_gitdir(repo, gitdir))
 		goto error;
@@ -225,6 +229,9 @@ void repo_clear(struct repository *repo)
 
 	raw_object_store_clear(repo->objects);
 	FREE_AND_NULL(repo->objects);
+
+	parsed_object_pool_clear(repo->parsed_objects);
+	FREE_AND_NULL(repo->parsed_objects);
 
 	if (repo->config) {
 		git_configset_clear(repo->config);
