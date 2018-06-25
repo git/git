@@ -55,7 +55,7 @@ static char *get_default_remote(void)
 
 static int print_default_remote(int argc, const char **argv, const char *prefix)
 {
-	const char *remote;
+	char *remote;
 
 	if (argc != 1)
 		die(_("submodule--helper print-default-remote takes no arguments"));
@@ -64,6 +64,7 @@ static int print_default_remote(int argc, const char **argv, const char *prefix)
 	if (remote)
 		printf("%s\n", remote);
 
+	free(remote);
 	return 0;
 }
 

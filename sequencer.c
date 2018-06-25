@@ -176,6 +176,7 @@ static int git_sequencer_config(const char *k, const char *v, void *cb)
 			warning(_("invalid commit message cleanup mode '%s'"),
 				  s);
 
+		free((char *)s);
 		return status;
 	}
 
@@ -1774,7 +1775,8 @@ static int do_pick_commit(enum todo_command command, struct commit *commit,
 		res = do_recursive_merge(base, next, base_label, next_label,
 					 &head, &msgbuf, opts);
 		if (res < 0)
-			return res;
+			goto leave;
+
 		res |= write_message(msgbuf.buf, msgbuf.len,
 				     git_path_merge_msg(), 0);
 	} else {

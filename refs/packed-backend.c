@@ -499,6 +499,7 @@ static int load_contents(struct snapshot *snapshot)
 	size = xsize_t(st.st_size);
 
 	if (!size) {
+		close(fd);
 		return 0;
 	} else if (mmap_strategy == MMAP_NONE || size <= SMALL_FILE_SIZE) {
 		snapshot->buf = xmalloc(size);
