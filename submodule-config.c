@@ -716,3 +716,17 @@ void fetch_config_from_gitmodules(int *max_children, int *recurse_submodules)
 	};
 	config_from_gitmodules(gitmodules_fetch_config, &config);
 }
+
+static int gitmodules_update_clone_config(const char *var, const char *value,
+					  void *cb)
+{
+	int *max_jobs = cb;
+	if (!strcmp(var, "submodule.fetchjobs"))
+		*max_jobs = parse_submodule_fetchjobs(var, value);
+	return 0;
+}
+
+void update_clone_config_from_gitmodules(int *max_jobs)
+{
+	config_from_gitmodules(gitmodules_update_clone_config, &max_jobs);
+}

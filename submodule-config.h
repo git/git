@@ -67,5 +67,6 @@ int check_submodule_name(const char *name);
 extern void config_from_gitmodules(config_fn_t fn, void *data);
 
 extern void fetch_config_from_gitmodules(int *max_children, int *recurse_submodules);
+extern void update_clone_config_from_gitmodules(int *max_jobs);
 
 #endif /* SUBMODULE_CONFIG_H */
