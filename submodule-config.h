@@ -57,15 +57,13 @@ void submodule_free(struct repository *r);
 int check_submodule_name(const char *name);
 
 /*
- * Note: This function exists solely to maintain backward compatibility with
- * 'fetch' and 'update_clone' storing configuration in '.gitmodules' and should
- * NOT be used anywhere else.
+ * Note: these helper functions exist solely to maintain backward
+ * compatibility with 'fetch' and 'update_clone' storing configuration in
+ * '.gitmodules'.
  *
- * Runs the provided config function on the '.gitmodules' file found in the
- * working directory.
+ * New helpers to retrieve arbitrary configuration from the '.gitmodules' file
+ * should NOT be added.
  */
-extern void config_from_gitmodules(config_fn_t fn, void *data);
-
 extern void fetch_config_from_gitmodules(int *max_children, int *recurse_submodules);
 extern void update_clone_config_from_gitmodules(int *max_jobs);
 
