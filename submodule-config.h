@@ -2,6 +2,7 @@
 #define SUBMODULE_CONFIG_CACHE_H
 
 #include "cache.h"
+#include "config.h"
 #include "hashmap.h"
 #include "submodule.h"
 #include "strbuf.h"
@@ -54,5 +55,15 @@ void submodule_free(struct repository *r);
  * otherwise.
  */
 int check_submodule_name(const char *name);
+
+/*
+ * Note: This function exists solely to maintain backward compatibility with
+ * 'fetch' and 'update_clone' storing configuration in '.gitmodules' and should
+ * NOT be used anywhere else.
+ *
+ * Runs the provided config function on the '.gitmodules' file found in the
+ * working directory.
+ */
+extern void config_from_gitmodules(config_fn_t fn, void *data);
 
 #endif /* SUBMODULE_CONFIG_H */
