@@ -680,10 +680,10 @@ void submodule_free(struct repository *r)
  * Runs the provided config function on the '.gitmodules' file found in the
  * working directory.
  */
-static void config_from_gitmodules(config_fn_t fn, void *data)
+static void config_from_gitmodules(config_fn_t fn, struct repository *repo, void *data)
 {
-	if (the_repository->worktree) {
-		char *file = repo_worktree_path(the_repository, GITMODULES_FILE);
+	if (repo->worktree) {
+		char *file = repo_worktree_path(repo, GITMODULES_FILE);
 		git_config_from_file(fn, file, data);
 		free(file);
 	}
@@ -714,7 +714,7 @@ void fetch_config_from_gitmodules(int *max_children, int *recurse_submodules)
 		.max_children = max_children,
 		.recurse_submodules = recurse_submodules
 	};
-	config_from_gitmodules(gitmodules_fetch_config, &config);
+	config_from_gitmodules(gitmodules_fetch_config, the_repository, &config);
 }
 
 static int gitmodules_update_clone_config(const char *var, const char *value,
@@ -728,5 +728,5 @@ static int gitmodules_update_clone_config(const char *var, const char *value,
 
 void update_clone_config_from_gitmodules(int *max_jobs)
 {
-	config_from_gitmodules(gitmodules_update_clone_config, &max_jobs);
+	config_from_gitmodules(gitmodules_update_clone_config, the_repository, &max_jobs);
 }
