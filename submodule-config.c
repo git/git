@@ -688,3 +688,31 @@ void config_from_gitmodules(config_fn_t fn, void *data)
 		free(file);
 	}
 }
+
+struct fetch_config {
+	int *max_children;
+	int *recurse_submodules;
+};
+
+static int gitmodules_fetch_config(const char *var, const char *value, void *cb)
+{
+	struct fetch_config *config = cb;
+	if (!strcmp(var, "submodule.fetchjobs")) {
+		*(config->max_children) = parse_submodule_fetchjobs(var, value);
+		return 0;
+	} else if (!strcmp(var, "fetch.recursesubmodules")) {
+		*(config->recurse_submodules) = parse_fetch_recurse_submodules_arg(var, value);
+		return 0;
+	}
+
+	return 0;
+}
+
+void fetch_config_from_gitmodules(int *max_children, int *recurse_submodules)
+{
+	struct fetch_config config = {
+		.max_children = max_children,
+		.recurse_submodules = recurse_submodules
+	};
+	config_from_gitmodules(gitmodules_fetch_config, &config);
+}
