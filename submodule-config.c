@@ -591,6 +591,23 @@ static void submodule_cache_check_init(struct repository *repo)
 	submodule_cache_init(repo->submodule_cache);
 }
 
+/*
+ * Note: This function is private for a reason, the '.gitmodules' file should
+ * not be used as as a mechanism to retrieve arbitrary configuration stored in
+ * the repository.
+ *
+ * Runs the provided config function on the '.gitmodules' file found in the
+ * working directory.
+ */
+static void config_from_gitmodules(config_fn_t fn, struct repository *repo, void *data)
+{
+	if (repo->worktree) {
+		char *file = repo_worktree_path(repo, GITMODULES_FILE);
+		git_config_from_file(fn, file, data);
+		free(file);
+	}
+}
+
 static int gitmodules_cb(const char *var, const char *value, void *data)
 {
 	struct repository *repo = data;
@@ -608,19 +625,11 @@ void repo_read_gitmodules(struct repository *repo)
 {
 	submodule_cache_check_init(repo);
 
-	if (repo->worktree) {
-		char *gitmodules;
+	if (repo_read_index(repo) < 0)
+		return;
 
-		if (repo_read_index(repo) < 0)
-			return;
-
-		gitmodules = repo_worktree_path(repo, GITMODULES_FILE);
-
-		if (!is_gitmodules_unmerged(repo->index))
-			git_config_from_file(gitmodules_cb, gitmodules, repo);
-
-		free(gitmodules);
-	}
+	if (!is_gitmodules_unmerged(repo->index))
+		config_from_gitmodules(gitmodules_cb, repo, repo);
 
 	repo->submodule_cache->gitmodules_read = 1;
 }
@@ -670,23 +679,6 @@ void submodule_free(struct repository *r)
 {
 	if (r->submodule_cache)
 		submodule_cache_clear(r->submodule_cache);
-}
-
-/*
- * Note: This function is private for a reason, the '.gitmodules' file should
- * not be used as as a mechanism to retrieve arbitrary configuration stored in
- * the repository.
- *
- * Runs the provided config function on the '.gitmodules' file found in the
- * working directory.
- */
-static void config_from_gitmodules(config_fn_t fn, struct repository *repo, void *data)
-{
-	if (repo->worktree) {
-		char *file = repo_worktree_path(repo, GITMODULES_FILE);
-		git_config_from_file(fn, file, data);
-		free(file);
-	}
 }
 
 struct fetch_config {
