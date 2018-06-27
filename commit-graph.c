@@ -657,10 +657,8 @@ static void compute_generation_numbers(struct packed_commit_list* commits)
 }
 
 void write_commit_graph(const char *obj_dir,
-			const char **pack_indexes,
-			int nr_packs,
-			const char **commit_hex,
-			int nr_commits,
+			struct string_list *pack_indexes,
+			struct string_list *commit_hex,
 			int append)
 {
 	struct packed_oid_list oids;
@@ -701,10 +699,10 @@ void write_commit_graph(const char *obj_dir,
 		int dirlen;
 		strbuf_addf(&packname, "%s/pack/", obj_dir);
 		dirlen = packname.len;
-		for (i = 0; i < nr_packs; i++) {
+		for (i = 0; i < pack_indexes->nr; i++) {
 			struct packed_git *p;
 			strbuf_setlen(&packname, dirlen);
-			strbuf_addstr(&packname, pack_indexes[i]);
+			strbuf_addstr(&packname, pack_indexes->items[i].string);
 			p = add_packed_git(packname.buf, packname.len, 1);
 			if (!p)
 				die("error adding pack %s", packname.buf);
@@ -717,12 +715,13 @@ void write_commit_graph(const char *obj_dir,
 	}
 
 	if (commit_hex) {
-		for (i = 0; i < nr_commits; i++) {
+		for (i = 0; i < commit_hex->nr; i++) {
 			const char *end;
 			struct object_id oid;
 			struct commit *result;
 
-			if (commit_hex[i] && parse_oid_hex(commit_hex[i], &oid, &end))
+			if (commit_hex->items[i].string &&
+			    parse_oid_hex(commit_hex->items[i].string, &oid, &end))
 				continue;
 
 			result = lookup_commit_reference_gently(&oid, 1);

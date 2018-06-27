@@ -119,13 +119,9 @@ static int graph_read(int argc, const char **argv)
 
 static int graph_write(int argc, const char **argv)
 {
-	const char **pack_indexes = NULL;
-	int packs_nr = 0;
-	const char **commit_hex = NULL;
-	int commits_nr = 0;
-	const char **lines = NULL;
-	int lines_nr = 0;
-	int lines_alloc = 0;
+	struct string_list *pack_indexes = NULL;
+	struct string_list *commit_hex = NULL;
+	struct string_list lines;
 
 	static struct option builtin_commit_graph_write_options[] = {
 		OPT_STRING(0, "object-dir", &opts.obj_dir,
@@ -149,34 +145,25 @@ static int graph_write(int argc, const char **argv)
 	if (!opts.obj_dir)
 		opts.obj_dir = get_object_directory();
 
+	string_list_init(&lines, 0);
 	if (opts.stdin_packs || opts.stdin_commits) {
 		struct strbuf buf = STRBUF_INIT;
-		lines_nr = 0;
-		lines_alloc = 128;
-		ALLOC_ARRAY(lines, lines_alloc);
 
-		while (strbuf_getline(&buf, stdin) != EOF) {
-			ALLOC_GROW(lines, lines_nr + 1, lines_alloc);
-			lines[lines_nr++] = strbuf_detach(&buf, NULL);
-		}
+		while (strbuf_getline(&buf, stdin) != EOF)
+			string_list_append(&lines, strbuf_detach(&buf, NULL));
 
-		if (opts.stdin_packs) {
-			pack_indexes = lines;
-			packs_nr = lines_nr;
-		}
-		if (opts.stdin_commits) {
-			commit_hex = lines;
-			commits_nr = lines_nr;
-		}
+		if (opts.stdin_packs)
+			pack_indexes = &lines;
+		if (opts.stdin_commits)
+			commit_hex = &lines;
 	}
 
 	write_commit_graph(opts.obj_dir,
 			   pack_indexes,
-			   packs_nr,
 			   commit_hex,
-			   commits_nr,
 			   opts.append);
 
+	string_list_clear(&lines, 0);
 	return 0;
 }
 
