@@ -7,6 +7,7 @@
 #include "packfile.h"
 #include "commit.h"
 #include "object.h"
+#include "refs.h"
 #include "revision.h"
 #include "sha1-lookup.h"
 #include "commit-graph.h"
@@ -654,6 +655,25 @@ static void compute_generation_numbers(struct packed_commit_list* commits)
 			}
 		}
 	}
+}
+
+static int add_ref_to_list(const char *refname,
+			   const struct object_id *oid,
+			   int flags, void *cb_data)
+{
+	struct string_list *list = (struct string_list *)cb_data;
+
+	string_list_append(list, oid_to_hex(oid));
+	return 0;
+}
+
+void write_commit_graph_reachable(const char *obj_dir, int append)
+{
+	struct string_list list;
+
+	string_list_init(&list, 1);
+	for_each_ref(add_ref_to_list, &list);
+	write_commit_graph(obj_dir, NULL, &list, append);
 }
 
 void write_commit_graph(const char *obj_dir,
