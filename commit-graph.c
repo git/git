@@ -986,6 +986,12 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g)
 				     oid_to_hex(&cur_oid),
 				     graph_commit->generation,
 				     max_generation + 1);
+
+		if (graph_commit->date != odb_commit->date)
+			graph_report("commit date for commit %s in commit-graph is %"PRItime" != %"PRItime,
+				     oid_to_hex(&cur_oid),
+				     graph_commit->date,
+				     odb_commit->date);
 	}
 
 	return verify_commit_graph_error;
