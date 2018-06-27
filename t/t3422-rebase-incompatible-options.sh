@@ -33,27 +33,27 @@ test_expect_success 'setup' '
 test_rebase_am_only () {
 	opt=$1
 	shift
-	test_expect_failure "$opt incompatible with --merge" "
+	test_expect_success "$opt incompatible with --merge" "
 		git checkout B^0 &&
 		test_must_fail git rebase $opt --merge A
 	"
 
-	test_expect_failure "$opt incompatible with --strategy=ours" "
+	test_expect_success "$opt incompatible with --strategy=ours" "
 		git checkout B^0 &&
 		test_must_fail git rebase $opt --strategy=ours A
 	"
 
-	test_expect_failure "$opt incompatible with --strategy-option=ours" "
+	test_expect_success "$opt incompatible with --strategy-option=ours" "
 		git checkout B^0 &&
 		test_must_fail git rebase $opt --strategy-option=ours A
 	"
 
-	test_expect_failure "$opt incompatible with --interactive" "
+	test_expect_success "$opt incompatible with --interactive" "
 		git checkout B^0 &&
 		test_must_fail git rebase $opt --interactive A
 	"
 
-	test_expect_failure "$opt incompatible with --exec" "
+	test_expect_success "$opt incompatible with --exec" "
 		git checkout B^0 &&
 		test_must_fail git rebase $opt --exec 'true' A
 	"
@@ -70,17 +70,17 @@ test_expect_success '--preserve-merges incompatible with --signoff' '
 	test_must_fail git rebase --preserve-merges --signoff A
 '
 
-test_expect_failure '--preserve-merges incompatible with --rebase-merges' '
+test_expect_success '--preserve-merges incompatible with --rebase-merges' '
 	git checkout B^0 &&
 	test_must_fail git rebase --preserve-merges --rebase-merges A
 '
 
-test_expect_failure '--rebase-merges incompatible with --strategy' '
+test_expect_success '--rebase-merges incompatible with --strategy' '
 	git checkout B^0 &&
 	test_must_fail git rebase --rebase-merges -s resolve A
 '
 
-test_expect_failure '--rebase-merges incompatible with --strategy-option' '
+test_expect_success '--rebase-merges incompatible with --strategy-option' '
 	git checkout B^0 &&
 	test_must_fail git rebase --rebase-merges -Xignore-space-change A
 '

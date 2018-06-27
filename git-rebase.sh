@@ -503,12 +503,47 @@ then
 	git_format_patch_opt="$git_format_patch_opt --progress"
 fi
 
+if test -n "$git_am_opt"; then
+	incompatible_opts=$(echo " $git_am_opt " | \
+			    sed -e 's/ -q / /g' -e 's/^ \(.*\) $/\1/')
+	if test -n "$interactive_rebase"
+	then
+		if test -n "$incompatible_opts"
+		then
+			die "$(gettext "error: cannot combine interactive options (--interactive, --exec, --rebase-merges, --preserve-merges, --keep-empty, --root + --onto) with am options ($incompatible_opts)")"
+		fi
+	fi
+	if test -n "$do_merge"; then
+		if test -n "$incompatible_opts"
+		then
+			die "$(gettext "error: cannot combine merge options (--merge, --strategy, --strategy-option) with am options ($incompatible_opts)")"
+		fi
+	fi
+fi
+
 if test -n "$signoff"
 then
 	test -n "$preserve_merges" &&
 		die "$(gettext "error: cannot combine '--signoff' with '--preserve-merges'")"
 	git_am_opt="$git_am_opt $signoff"
 	force_rebase=t
+fi
+
+if test -n "$preserve_merges"
+then
+	# Note: incompatibility with --signoff handled in signoff block above
+	# Note: incompatibility with --interactive is just a strong warning;
+	#       git-rebase.txt caveats with "unless you know what you are doing"
+	test -n "$rebase_merges" &&
+		die "$(gettext "error: cannot combine '--preserve_merges' with '--rebase-merges'")"
+fi
+
+if test -n "$rebase_merges"
+then
+	test -n "$strategy_opts" &&
+		die "$(gettext "error: cannot combine '--rebase_merges' with '--strategy-option'")"
+	test -n "$strategy" &&
+		die "$(gettext "error: cannot combine '--rebase_merges' with '--strategy'")"
 fi
 
 if test -z "$rebase_root"
