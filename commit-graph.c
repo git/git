@@ -833,6 +833,7 @@ void write_commit_graph(const char *obj_dir,
 	oids.nr = 0;
 }
 
+#define VERIFY_COMMIT_GRAPH_ERROR_HASH 2
 static int verify_commit_graph_error;
 
 static void graph_report(const char *fmt, ...)
@@ -852,8 +853,10 @@ static void graph_report(const char *fmt, ...)
 int verify_commit_graph(struct repository *r, struct commit_graph *g)
 {
 	uint32_t i, cur_fanout_pos = 0;
-	struct object_id prev_oid, cur_oid;
+	struct object_id prev_oid, cur_oid, checksum;
 	int generation_zero = 0;
+	struct hashfile *f;
+	int devnull;
 
 	if (!g) {
 		graph_report("no commit-graph file loaded");
@@ -871,6 +874,15 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g)
 
 	if (verify_commit_graph_error)
 		return verify_commit_graph_error;
+
+	devnull = open("/dev/null", O_WRONLY);
+	f = hashfd(devnull, NULL);
+	hashwrite(f, g->data, g->data_len - g->hash_len);
+	finalize_hashfile(f, checksum.hash, CSUM_CLOSE);
+	if (hashcmp(checksum.hash, g->data + g->data_len - g->hash_len)) {
+		graph_report(_("the commit-graph file has incorrect checksum and is likely corrupt"));
+		verify_commit_graph_error = VERIFY_COMMIT_GRAPH_ERROR_HASH;
+	}
 
 	for (i = 0; i < g->num_commits; i++) {
 		struct commit *graph_commit;
@@ -909,7 +921,7 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g)
 		cur_fanout_pos++;
 	}
 
-	if (verify_commit_graph_error)
+	if (verify_commit_graph_error & ~VERIFY_COMMIT_GRAPH_ERROR_HASH)
 		return verify_commit_graph_error;
 
 	for (i = 0; i < g->num_commits; i++) {
