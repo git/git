@@ -249,6 +249,15 @@ test_expect_success 'git commit-graph verify' '
 
 GRAPH_BYTE_VERSION=4
 GRAPH_BYTE_HASH=5
+GRAPH_BYTE_CHUNK_COUNT=6
+GRAPH_CHUNK_LOOKUP_OFFSET=8
+GRAPH_CHUNK_LOOKUP_WIDTH=12
+GRAPH_CHUNK_LOOKUP_ROWS=5
+GRAPH_BYTE_OID_FANOUT_ID=$GRAPH_CHUNK_LOOKUP_OFFSET
+GRAPH_BYTE_OID_LOOKUP_ID=$(($GRAPH_CHUNK_LOOKUP_OFFSET + \
+			    1 * $GRAPH_CHUNK_LOOKUP_WIDTH))
+GRAPH_BYTE_COMMIT_DATA_ID=$(($GRAPH_CHUNK_LOOKUP_OFFSET + \
+			     2 * $GRAPH_CHUNK_LOOKUP_WIDTH))
 
 # usage: corrupt_graph_and_verify <position> <data> <string>
 # Manipulates the commit-graph file at the position
@@ -281,6 +290,26 @@ test_expect_success 'detect bad version' '
 test_expect_success 'detect bad hash version' '
 	corrupt_graph_and_verify $GRAPH_BYTE_HASH "\02" \
 		"hash version"
+'
+
+test_expect_success 'detect low chunk count' '
+	corrupt_graph_and_verify $GRAPH_BYTE_CHUNK_COUNT "\02" \
+		"missing the .* chunk"
+'
+
+test_expect_success 'detect missing OID fanout chunk' '
+	corrupt_graph_and_verify $GRAPH_BYTE_OID_FANOUT_ID "\0" \
+		"missing the OID Fanout chunk"
+'
+
+test_expect_success 'detect missing OID lookup chunk' '
+	corrupt_graph_and_verify $GRAPH_BYTE_OID_LOOKUP_ID "\0" \
+		"missing the OID Lookup chunk"
+'
+
+test_expect_success 'detect missing commit data chunk' '
+	corrupt_graph_and_verify $GRAPH_BYTE_COMMIT_DATA_ID "\0" \
+		"missing the Commit Data chunk"
 '
 
 test_done
