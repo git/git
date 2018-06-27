@@ -11,6 +11,7 @@
 #include "sha1-lookup.h"
 #include "commit-graph.h"
 #include "object-store.h"
+#include "alloc.h"
 
 #define GRAPH_SIGNATURE 0x43475048 /* "CGPH" */
 #define GRAPH_CHUNKID_OIDFANOUT 0x4f494446 /* "OIDF" */
@@ -242,6 +243,7 @@ static struct commit_list **insert_parent_or_die(struct commit_graph *g,
 {
 	struct commit *c;
 	struct object_id oid;
+
 	hashcpy(oid.hash, g->chunk_oid_lookup + g->hash_len * pos);
 	c = lookup_commit(&oid);
 	if (!c)
@@ -891,6 +893,22 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g)
 				     cur_fanout_pos, fanout_value, i);
 
 		cur_fanout_pos++;
+	}
+
+	if (verify_commit_graph_error)
+		return verify_commit_graph_error;
+
+	for (i = 0; i < g->num_commits; i++) {
+		struct commit *odb_commit;
+
+		hashcpy(cur_oid.hash, g->chunk_oid_lookup + g->hash_len * i);
+
+		odb_commit = (struct commit *)create_object(r, cur_oid.hash, alloc_commit_node(r));
+		if (parse_commit_internal(odb_commit, 0, 0)) {
+			graph_report("failed to parse %s from object database",
+				     oid_to_hex(&cur_oid));
+			continue;
+		}
 	}
 
 	return verify_commit_graph_error;
