@@ -244,6 +244,9 @@ static struct commit_list **insert_parent_or_die(struct commit_graph *g,
 	struct commit *c;
 	struct object_id oid;
 
+	if (pos >= g->num_commits)
+		die("invalid parent position %"PRIu64, pos);
+
 	hashcpy(oid.hash, g->chunk_oid_lookup + g->hash_len * pos);
 	c = lookup_commit(&oid);
 	if (!c)
@@ -907,6 +910,7 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g)
 
 	for (i = 0; i < g->num_commits; i++) {
 		struct commit *graph_commit, *odb_commit;
+		struct commit_list *graph_parents, *odb_parents;
 
 		hashcpy(cur_oid.hash, g->chunk_oid_lookup + g->hash_len * i);
 
@@ -924,6 +928,30 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g)
 				     oid_to_hex(&cur_oid),
 				     oid_to_hex(get_commit_tree_oid(graph_commit)),
 				     oid_to_hex(get_commit_tree_oid(odb_commit)));
+
+		graph_parents = graph_commit->parents;
+		odb_parents = odb_commit->parents;
+
+		while (graph_parents) {
+			if (odb_parents == NULL) {
+				graph_report("commit-graph parent list for commit %s is too long",
+					     oid_to_hex(&cur_oid));
+				break;
+			}
+
+			if (oidcmp(&graph_parents->item->object.oid, &odb_parents->item->object.oid))
+				graph_report("commit-graph parent for %s is %s != %s",
+					     oid_to_hex(&cur_oid),
+					     oid_to_hex(&graph_parents->item->object.oid),
+					     oid_to_hex(&odb_parents->item->object.oid));
+
+			graph_parents = graph_parents->next;
+			odb_parents = odb_parents->next;
+		}
+
+		if (odb_parents != NULL)
+			graph_report("commit-graph parent list for commit %s terminates early",
+				     oid_to_hex(&cur_oid));
 	}
 
 	return verify_commit_graph_error;
