@@ -563,16 +563,6 @@ BEHAVIORAL DIFFERENCES
     The `--keep-empty` option exists for interactive rebases to allow
     it to keep commits that started empty.
 
-  * empty commit messages:
-
-    am-based rebase will silently apply commits with empty commit
-    messages.
-
-    merge-based and interactive-based rebases will by default halt
-    on any such commits.  The `--allow-empty-message` option exists to
-    allow interactive-based rebases to apply such commits without
-    halting.
-
   * directory rename detection:
 
     merge-based and interactive-based rebases work fine with

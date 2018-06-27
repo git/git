@@ -95,7 +95,7 @@ rebase_cousins=
 preserve_merges=
 autosquash=
 keep_empty=
-allow_empty_message=
+allow_empty_message=--allow-empty-message
 signoff=
 test "$(git config --bool rebase.autosquash)" = "true" && autosquash=t
 case "$(git config --bool commit.gpgsign)" in
