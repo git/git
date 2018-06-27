@@ -866,6 +866,8 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g)
 		return verify_commit_graph_error;
 
 	for (i = 0; i < g->num_commits; i++) {
+		struct commit *graph_commit;
+
 		hashcpy(cur_oid.hash, g->chunk_oid_lookup + g->hash_len * i);
 
 		if (i && oidcmp(&prev_oid, &cur_oid) >= 0)
@@ -883,6 +885,11 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g)
 					     cur_fanout_pos, fanout_value, i);
 			cur_fanout_pos++;
 		}
+
+		graph_commit = lookup_commit(&cur_oid);
+		if (!parse_commit_in_graph_one(g, graph_commit))
+			graph_report("failed to parse %s from commit-graph",
+				     oid_to_hex(&cur_oid));
 	}
 
 	while (cur_fanout_pos < 256) {
@@ -899,16 +906,24 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g)
 		return verify_commit_graph_error;
 
 	for (i = 0; i < g->num_commits; i++) {
-		struct commit *odb_commit;
+		struct commit *graph_commit, *odb_commit;
 
 		hashcpy(cur_oid.hash, g->chunk_oid_lookup + g->hash_len * i);
 
+		graph_commit = lookup_commit(&cur_oid);
 		odb_commit = (struct commit *)create_object(r, cur_oid.hash, alloc_commit_node(r));
 		if (parse_commit_internal(odb_commit, 0, 0)) {
 			graph_report("failed to parse %s from object database",
 				     oid_to_hex(&cur_oid));
 			continue;
 		}
+
+		if (oidcmp(&get_commit_tree_in_graph_one(g, graph_commit)->object.oid,
+			   get_commit_tree_oid(odb_commit)))
+			graph_report("root tree OID for commit %s in commit-graph is %s != %s",
+				     oid_to_hex(&cur_oid),
+				     oid_to_hex(get_commit_tree_oid(graph_commit)),
+				     oid_to_hex(get_commit_tree_oid(odb_commit)));
 	}
 
 	return verify_commit_graph_error;
