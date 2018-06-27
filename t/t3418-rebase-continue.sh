@@ -74,7 +74,7 @@ test_expect_success 'rebase --continue remembers merge strategy and options' '
 	test -f funny.was.run
 '
 
-test_expect_failure 'rebase -i --continue handles merge strategy and options' '
+test_expect_success 'rebase -i --continue handles merge strategy and options' '
 	rm -fr .git/rebase-* &&
 	git reset --hard commit-new-file-F2-on-topic-branch &&
 	test_commit "commit-new-file-F3-on-topic-branch-for-dash-i" F3 32 &&
