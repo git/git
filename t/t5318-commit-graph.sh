@@ -235,9 +235,52 @@ test_expect_success 'perform fast-forward merge in full repo' '
 	test_cmp expect output
 '
 
+# the verify tests below expect the commit-graph to contain
+# exactly the commits reachable from the commits/8 branch.
+# If the file changes the set of commits in the list, then the
+# offsets into the binary file will result in different edits
+# and the tests will likely break.
+
 test_expect_success 'git commit-graph verify' '
 	cd "$TRASH_DIRECTORY/full" &&
+	git rev-parse commits/8 | git commit-graph write --stdin-commits &&
 	git commit-graph verify >output
+'
+
+GRAPH_BYTE_VERSION=4
+GRAPH_BYTE_HASH=5
+
+# usage: corrupt_graph_and_verify <position> <data> <string>
+# Manipulates the commit-graph file at the position
+# by inserting the data, then runs 'git commit-graph verify'
+# and places the output in the file 'err'. Test 'err' for
+# the given string.
+corrupt_graph_and_verify() {
+	pos=$1
+	data="${2:-\0}"
+	grepstr=$3
+	cd "$TRASH_DIRECTORY/full" &&
+	test_when_finished mv commit-graph-backup $objdir/info/commit-graph &&
+	cp $objdir/info/commit-graph commit-graph-backup &&
+	printf "$data" | dd of="$objdir/info/commit-graph" bs=1 seek="$pos" conv=notrunc &&
+	test_must_fail git commit-graph verify 2>test_err &&
+	grep -v "^+" test_err >err
+	test_i18ngrep "$grepstr" err
+}
+
+test_expect_success 'detect bad signature' '
+	corrupt_graph_and_verify 0 "\0" \
+		"graph signature"
+'
+
+test_expect_success 'detect bad version' '
+	corrupt_graph_and_verify $GRAPH_BYTE_VERSION "\02" \
+		"graph version"
+'
+
+test_expect_success 'detect bad hash version' '
+	corrupt_graph_and_verify $GRAPH_BYTE_HASH "\02" \
+		"hash version"
 '
 
 test_done
