@@ -11,6 +11,11 @@ test_expect_success 'setup full repo' '
 	objdir=".git/objects"
 '
 
+test_expect_success 'verify graph with no graph file' '
+	cd "$TRASH_DIRECTORY/full" &&
+	git commit-graph verify
+'
+
 test_expect_success 'write graph with no packs' '
 	cd "$TRASH_DIRECTORY/full" &&
 	git commit-graph write --object-dir . &&
@@ -228,6 +233,11 @@ test_expect_success 'perform fast-forward merge in full repo' '
 	git show-ref -s merge-5-to-8 >output &&
 	git show-ref -s commits/8 >expect &&
 	test_cmp expect output
+'
+
+test_expect_success 'git commit-graph verify' '
+	cd "$TRASH_DIRECTORY/full" &&
+	git commit-graph verify >output
 '
 
 test_done

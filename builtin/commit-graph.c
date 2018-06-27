@@ -3,12 +3,19 @@
 #include "dir.h"
 #include "lockfile.h"
 #include "parse-options.h"
+#include "repository.h"
 #include "commit-graph.h"
 
 static char const * const builtin_commit_graph_usage[] = {
 	N_("git commit-graph [--object-dir <objdir>]"),
 	N_("git commit-graph read [--object-dir <objdir>]"),
+	N_("git commit-graph verify [--object-dir <objdir>]"),
 	N_("git commit-graph write [--object-dir <objdir>] [--append] [--stdin-packs|--stdin-commits]"),
+	NULL
+};
+
+static const char * const builtin_commit_graph_verify_usage[] = {
+	N_("git commit-graph verify [--object-dir <objdir>]"),
 	NULL
 };
 
@@ -28,6 +35,36 @@ static struct opts_commit_graph {
 	int stdin_commits;
 	int append;
 } opts;
+
+
+static int graph_verify(int argc, const char **argv)
+{
+	struct commit_graph *graph = NULL;
+	char *graph_name;
+
+	static struct option builtin_commit_graph_verify_options[] = {
+		OPT_STRING(0, "object-dir", &opts.obj_dir,
+			   N_("dir"),
+			   N_("The object directory to store the graph")),
+		OPT_END(),
+	};
+
+	argc = parse_options(argc, argv, NULL,
+			     builtin_commit_graph_verify_options,
+			     builtin_commit_graph_verify_usage, 0);
+
+	if (!opts.obj_dir)
+		opts.obj_dir = get_object_directory();
+
+	graph_name = get_commit_graph_filename(opts.obj_dir);
+	graph = load_commit_graph_one(graph_name);
+	FREE_AND_NULL(graph_name);
+
+	if (!graph)
+		return 0;
+
+	return verify_commit_graph(the_repository, graph);
+}
 
 static int graph_read(int argc, const char **argv)
 {
@@ -165,6 +202,8 @@ int cmd_commit_graph(int argc, const char **argv, const char *prefix)
 	if (argc > 0) {
 		if (!strcmp(argv[0], "read"))
 			return graph_read(argc, argv);
+		if (!strcmp(argv[0], "verify"))
+			return graph_verify(argc, argv);
 		if (!strcmp(argv[0], "write"))
 			return graph_write(argc, argv);
 	}

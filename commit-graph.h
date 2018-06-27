@@ -2,6 +2,7 @@
 #define COMMIT_GRAPH_H
 
 #include "git-compat-util.h"
+#include "repository.h"
 
 char *get_commit_graph_filename(const char *obj_dir);
 
@@ -52,5 +53,7 @@ void write_commit_graph(const char *obj_dir,
 			const char **commit_hex,
 			int nr_commits,
 			int append);
+
+int verify_commit_graph(struct repository *r, struct commit_graph *g);
 
 #endif

@@ -10,6 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git commit-graph read' [--object-dir <dir>]
+'git commit-graph verify' [--object-dir <dir>]
 'git commit-graph write' <options> [--object-dir <dir>]
 
 
@@ -51,6 +52,11 @@ existing commit-graph file.
 
 Read a graph file given by the commit-graph file and output basic
 details about the graph file. Used for debugging purposes.
+
+'verify'::
+
+Read the commit-graph file and verify its contents against the object
+database. Used to check for corrupted data.
 
 
 EXAMPLES
