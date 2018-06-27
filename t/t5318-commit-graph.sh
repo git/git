@@ -245,6 +245,20 @@ test_expect_success 'perform fast-forward merge in full repo' '
 	test_cmp expect output
 '
 
+test_expect_success 'check that gc computes commit-graph' '
+	cd "$TRASH_DIRECTORY/full" &&
+	git commit --allow-empty -m "blank" &&
+	git commit-graph write --reachable &&
+	cp $objdir/info/commit-graph commit-graph-before-gc &&
+	git reset --hard HEAD~1 &&
+	git config gc.writeCommitGraph true &&
+	git gc &&
+	cp $objdir/info/commit-graph commit-graph-after-gc &&
+	! test_cmp commit-graph-before-gc commit-graph-after-gc &&
+	git commit-graph write --reachable &&
+	test_cmp commit-graph-after-gc $objdir/info/commit-graph
+'
+
 # the verify tests below expect the commit-graph to contain
 # exactly the commits reachable from the commits/8 branch.
 # If the file changes the set of commits in the list, then the
