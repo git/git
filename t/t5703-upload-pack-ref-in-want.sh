@@ -211,6 +211,18 @@ test_expect_success 'server is initially ahead - no ref in want' '
 	grep "ERR upload-pack: not our ref" err
 '
 
+test_expect_success 'server is initially ahead - ref in want' '
+	git -C "$REPO" config uploadpack.allowRefInWant true &&
+	rm -rf local &&
+	cp -r "$LOCAL_PRISTINE" local &&
+	inconsistency master 1234567890123456789012345678901234567890 &&
+	git -C local fetch &&
+
+	git -C "$REPO" rev-parse --verify master >expected &&
+	git -C local rev-parse --verify refs/remotes/origin/master >actual &&
+	test_cmp expected actual
+'
+
 test_expect_success 'server is initially behind - no ref in want' '
 	git -C "$REPO" config uploadpack.allowRefInWant false &&
 	rm -rf local &&
@@ -223,6 +235,143 @@ test_expect_success 'server is initially behind - no ref in want' '
 	test_cmp expected actual
 '
 
+test_expect_success 'server is initially behind - ref in want' '
+	git -C "$REPO" config uploadpack.allowRefInWant true &&
+	rm -rf local &&
+	cp -r "$LOCAL_PRISTINE" local &&
+	inconsistency master "master^" &&
+	git -C local fetch &&
+
+	git -C "$REPO" rev-parse --verify "master" >expected &&
+	git -C local rev-parse --verify refs/remotes/origin/master >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'server loses a ref - ref in want' '
+	git -C "$REPO" config uploadpack.allowRefInWant true &&
+	rm -rf local &&
+	cp -r "$LOCAL_PRISTINE" local &&
+	echo "s/master/raster/" >"$HTTPD_ROOT_PATH/one-time-sed" &&
+	test_must_fail git -C local fetch 2>err &&
+
+	grep "ERR unknown ref refs/heads/raster" err
+'
+
 stop_httpd
+
+REPO="$(pwd)/repo"
+LOCAL_PRISTINE="$(pwd)/local_pristine"
+
+# $REPO
+# c(o/foo) d(o/bar)
+#        \ /
+#         b   e(baz)  f(master)
+#          \__  |  __/
+#             \ | /
+#               a
+#
+# $LOCAL_PRISTINE
+#		s32(side)
+#		|
+#		.
+#		.
+#		|
+#		a(master)
+test_expect_success 'setup repos for fetching with ref-in-want tests' '
+	(
+		git init "$REPO" &&
+		cd "$REPO" &&
+		test_commit a &&
+
+		# Local repo with many commits (so that negotiation will take
+		# more than 1 request/response pair)
+		rm -rf "$LOCAL_PRISTINE" &&
+		git clone "file://$REPO" "$LOCAL_PRISTINE" &&
+		cd "$LOCAL_PRISTINE" &&
+		git checkout -b side &&
+		for i in $(seq 1 33); do test_commit s$i; done &&
+
+		# Add novel commits to upstream
+		git checkout master &&
+		cd "$REPO" &&
+		git checkout -b o/foo &&
+		test_commit b &&
+		test_commit c &&
+		git checkout -b o/bar b &&
+		test_commit d &&
+		git checkout -b baz a &&
+		test_commit e &&
+		git checkout master &&
+		test_commit f
+	) &&
+	git -C "$REPO" config uploadpack.allowRefInWant true &&
+	git -C "$LOCAL_PRISTINE" config protocol.version 2
+'
+
+test_expect_success 'fetching with exact OID' '
+	test_when_finished "rm -f log" &&
+
+	rm -rf local &&
+	cp -r "$LOCAL_PRISTINE" local &&
+	GIT_TRACE_PACKET="$(pwd)/log" git -C local fetch origin \
+		$(git -C "$REPO" rev-parse d):refs/heads/actual &&
+
+	git -C "$REPO" rev-parse "d" >expected &&
+	git -C local rev-parse refs/heads/actual >actual &&
+	test_cmp expected actual &&
+	grep "want $(git -C "$REPO" rev-parse d)" log
+'
+
+test_expect_success 'fetching multiple refs' '
+	test_when_finished "rm -f log" &&
+
+	rm -rf local &&
+	cp -r "$LOCAL_PRISTINE" local &&
+	GIT_TRACE_PACKET="$(pwd)/log" git -C local fetch origin master baz &&
+
+	git -C "$REPO" rev-parse "master" "baz" >expected &&
+	git -C local rev-parse refs/remotes/origin/master refs/remotes/origin/baz >actual &&
+	test_cmp expected actual &&
+	grep "want-ref refs/heads/master" log &&
+	grep "want-ref refs/heads/baz" log
+'
+
+test_expect_success 'fetching ref and exact OID' '
+	test_when_finished "rm -f log" &&
+
+	rm -rf local &&
+	cp -r "$LOCAL_PRISTINE" local &&
+	GIT_TRACE_PACKET="$(pwd)/log" git -C local fetch origin \
+		master $(git -C "$REPO" rev-parse b):refs/heads/actual &&
+
+	git -C "$REPO" rev-parse "master" "b" >expected &&
+	git -C local rev-parse refs/remotes/origin/master refs/heads/actual >actual &&
+	test_cmp expected actual &&
+	grep "want $(git -C "$REPO" rev-parse b)" log &&
+	grep "want-ref refs/heads/master" log
+'
+
+test_expect_success 'fetching with wildcard that does not match any refs' '
+	test_when_finished "rm -f log" &&
+
+	rm -rf local &&
+	cp -r "$LOCAL_PRISTINE" local &&
+	git -C local fetch origin refs/heads/none*:refs/heads/* >out &&
+	test_must_be_empty out
+'
+
+test_expect_success 'fetching with wildcard that matches multiple refs' '
+	test_when_finished "rm -f log" &&
+
+	rm -rf local &&
+	cp -r "$LOCAL_PRISTINE" local &&
+	GIT_TRACE_PACKET="$(pwd)/log" git -C local fetch origin refs/heads/o*:refs/heads/o* &&
+
+	git -C "$REPO" rev-parse "o/foo" "o/bar" >expected &&
+	git -C local rev-parse "o/foo" "o/bar" >actual &&
+	test_cmp expected actual &&
+	grep "want-ref refs/heads/o/foo" log &&
+	grep "want-ref refs/heads/o/bar" log
+'
 
 test_done
