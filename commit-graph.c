@@ -843,6 +843,9 @@ static void graph_report(const char *fmt, ...)
 
 int verify_commit_graph(struct repository *r, struct commit_graph *g)
 {
+	uint32_t i, cur_fanout_pos = 0;
+	struct object_id prev_oid, cur_oid;
+
 	if (!g) {
 		graph_report("no commit-graph file loaded");
 		return 1;
@@ -856,6 +859,39 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g)
 		graph_report("commit-graph is missing the OID Lookup chunk");
 	if (!g->chunk_commit_data)
 		graph_report("commit-graph is missing the Commit Data chunk");
+
+	if (verify_commit_graph_error)
+		return verify_commit_graph_error;
+
+	for (i = 0; i < g->num_commits; i++) {
+		hashcpy(cur_oid.hash, g->chunk_oid_lookup + g->hash_len * i);
+
+		if (i && oidcmp(&prev_oid, &cur_oid) >= 0)
+			graph_report("commit-graph has incorrect OID order: %s then %s",
+				     oid_to_hex(&prev_oid),
+				     oid_to_hex(&cur_oid));
+
+		oidcpy(&prev_oid, &cur_oid);
+
+		while (cur_oid.hash[0] > cur_fanout_pos) {
+			uint32_t fanout_value = get_be32(g->chunk_oid_fanout + cur_fanout_pos);
+
+			if (i != fanout_value)
+				graph_report("commit-graph has incorrect fanout value: fanout[%d] = %u != %u",
+					     cur_fanout_pos, fanout_value, i);
+			cur_fanout_pos++;
+		}
+	}
+
+	while (cur_fanout_pos < 256) {
+		uint32_t fanout_value = get_be32(g->chunk_oid_fanout + cur_fanout_pos);
+
+		if (g->num_commits != fanout_value)
+			graph_report("commit-graph has incorrect fanout value: fanout[%d] = %u != %u",
+				     cur_fanout_pos, fanout_value, i);
+
+		cur_fanout_pos++;
+	}
 
 	return verify_commit_graph_error;
 }
