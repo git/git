@@ -362,14 +362,20 @@ static struct tree *load_tree_for_commit(struct commit_graph *g, struct commit *
 	return c->maybe_tree;
 }
 
-struct tree *get_commit_tree_in_graph(const struct commit *c)
+static struct tree *get_commit_tree_in_graph_one(struct commit_graph *g,
+						 const struct commit *c)
 {
 	if (c->maybe_tree)
 		return c->maybe_tree;
 	if (c->graph_pos == COMMIT_NOT_FROM_GRAPH)
-		BUG("get_commit_tree_in_graph called from non-commit-graph commit");
+		BUG("get_commit_tree_in_graph_one called from non-commit-graph commit");
 
-	return load_tree_for_commit(commit_graph, (struct commit *)c);
+	return load_tree_for_commit(g, (struct commit *)c);
+}
+
+struct tree *get_commit_tree_in_graph(const struct commit *c)
+{
+	return get_commit_tree_in_graph_one(commit_graph, c);
 }
 
 static void write_graph_chunk_fanout(struct hashfile *f,
