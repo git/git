@@ -51,8 +51,11 @@ static int graph_read(int argc, const char **argv)
 	graph_name = get_commit_graph_filename(opts.obj_dir);
 	graph = load_commit_graph_one(graph_name);
 
-	if (!graph)
+	if (!graph) {
+		UNLEAK(graph_name);
 		die("graph file %s does not exist", graph_name);
+	}
+
 	FREE_AND_NULL(graph_name);
 
 	printf("header: %08x %d %d %d %d\n",
