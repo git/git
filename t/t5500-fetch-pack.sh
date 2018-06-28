@@ -518,6 +518,47 @@ test_expect_success 'test --all, --depth, and explicit tag' '
 	) >out-adt 2>error-adt
 '
 
+test_expect_success 'test --all with tag to non-tip' '
+	git commit --allow-empty -m non-tip &&
+	git commit --allow-empty -m tip &&
+	git tag -m "annotated" non-tip HEAD^ &&
+	(
+		cd client &&
+		git fetch-pack --all ..
+	)
+'
+
+test_expect_success 'test --all wrt tag to non-commits' '
+	# create tag-to-{blob,tree,commit,tag}, making sure all tagged objects
+	# are reachable only via created tag references.
+	blob=$(echo "hello blob" | git hash-object -t blob -w --stdin) &&
+	git tag -a -m "tag -> blob" tag-to-blob $blob &&
+ \
+	tree=$(printf "100644 blob $blob\tfile" | git mktree) &&
+	git tag -a -m "tag -> tree" tag-to-tree $tree &&
+ \
+	tree2=$(printf "100644 blob $blob\tfile2" | git mktree) &&
+	commit=$(git commit-tree -m "hello commit" $tree) &&
+	git tag -a -m "tag -> commit" tag-to-commit $commit &&
+ \
+	blob2=$(echo "hello blob2" | git hash-object -t blob -w --stdin) &&
+	tag=$(printf "object $blob2\ntype blob\ntag tag-to-blob2\n\
+tagger author A U Thor <author@example.com> 0 +0000\n\nhello tag" | git mktag) &&
+	git tag -a -m "tag -> tag" tag-to-tag $tag &&
+ \
+	# `fetch-pack --all` should succeed fetching all those objects.
+	mkdir fetchall &&
+	(
+		cd fetchall &&
+		git init &&
+		git fetch-pack --all .. &&
+		git cat-file blob $blob >/dev/null &&
+		git cat-file tree $tree >/dev/null &&
+		git cat-file commit $commit >/dev/null &&
+		git cat-file tag $tag >/dev/null
+	)
+'
+
 test_expect_success 'shallow fetch with tags does not break the repository' '
 	mkdir repo1 &&
 	(
