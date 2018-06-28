@@ -54,6 +54,11 @@ struct config_options {
 	const char *git_dir;
 	config_parser_event_fn_t event_fn;
 	void *event_fn_data;
+	enum config_error_action {
+		CONFIG_ERROR_UNSET = 0, /* use source-specific default */
+		CONFIG_ERROR_DIE, /* die() on error */
+		CONFIG_ERROR_ERROR, /* error() on error, return -1 */
+	} error_action;
 };
 
 typedef int (*config_fn_t)(const char *, const char *, void *);
