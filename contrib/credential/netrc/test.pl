@@ -1,5 +1,4 @@
 #!/usr/bin/perl
-use lib (split(/:/, $ENV{GITPERLLIB}));
 
 use warnings;
 use strict;
@@ -12,7 +11,6 @@ BEGIN {
 	# t-git-credential-netrc.sh kicks off our testing, so we have to go
 	# from there.
 	Test::More->builder->current_test(1);
-	Test::More->builder->no_ending(1);
 }
 
 my @global_credential_args = @ARGV;
@@ -103,6 +101,9 @@ $cred = run_credential( ['-f', $netrcGpg, '-g', 'test.command-option-gpg', 'get'
                       );
 
 ok(scalar keys %$cred == 2, 'Got keys decrypted by command option');
+
+my $is_passing = eval { Test::More->is_passing };
+exit($is_passing ? 0 : 1) unless $@ =~ /Can't locate object method/;
 
 sub run_credential
 {
