@@ -390,16 +390,19 @@ core.hideDotFiles::
 	default mode is 'dotGitOnly'.
 
 core.ignoreCase::
-	If true, this option enables various workarounds to enable
+	Internal variable which enables various workarounds to enable
 	Git to work better on filesystems that are not case sensitive,
-	like FAT. For example, if a directory listing finds
-	"makefile" when Git expects "Makefile", Git will assume
+	like APFS, HFS+, FAT, NTFS, etc. For example, if a directory listing
+	finds "makefile" when Git expects "Makefile", Git will assume
 	it is really the same file, and continue to remember it as
 	"Makefile".
 +
 The default is false, except linkgit:git-clone[1] or linkgit:git-init[1]
 will probe and set core.ignoreCase true if appropriate when the repository
 is created.
++
+Git relies on the proper configuration of this variable for your operating
+and file system. Modifying this value may result in unexpected behavior.
 
 core.precomposeUnicode::
 	This option is only used by Mac OS implementation of Git.
