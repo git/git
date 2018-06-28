@@ -179,6 +179,8 @@ test_expect_success 'funny symlink in work tree' '
 
 test_expect_success SANITY 'funny symlink in work tree, un-unlink-able' '
 
+	test_when_finished "chmod u+w a 2>/dev/null; rm -fr a b" &&
+
 	rm -fr a b &&
 	git reset --hard &&
 
@@ -187,10 +189,6 @@ test_expect_success SANITY 'funny symlink in work tree, un-unlink-able' '
 	test_must_fail git read-tree -m -u sym-a sym-a sym-b
 
 '
-
-# clean-up from the above test
-chmod a+w a 2>/dev/null
-rm -fr a b
 
 test_expect_success 'D/F setup' '
 

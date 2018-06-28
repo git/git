@@ -287,6 +287,7 @@ test_expect_success 'init notices EEXIST (2)' '
 '
 
 test_expect_success POSIXPERM,SANITY 'init notices EPERM' '
+	test_when_finished "chmod +w newdir" &&
 	rm -fr newdir &&
 	mkdir newdir &&
 	chmod -w newdir &&
