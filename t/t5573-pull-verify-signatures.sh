@@ -29,7 +29,7 @@ test_expect_success GPG 'create repositories with signed commits' '
 		echo 4 >d && git add d &&
 		test_tick && git commit -S -m "bad" &&
 		git cat-file commit HEAD >raw &&
-		sed -e "s/bad/forged bad/" raw >forged &&
+		sed -e "s/^bad/forged bad/" raw >forged &&
 		git hash-object -w -t commit forged >forged.commit &&
 		git checkout $(cat forged.commit)
 	) &&

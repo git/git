@@ -142,10 +142,9 @@ test_expect_success GPG 'show signed commit with signature' '
 
 test_expect_success GPG 'detect fudged signature' '
 	git cat-file commit seventh-signed >raw &&
-
-	sed -e "s/seventh/7th forged/" raw >forged1 &&
+	sed -e "s/^seventh/7th forged/" raw >forged1 &&
 	git hash-object -w -t commit forged1 >forged1.commit &&
-	! git verify-commit $(cat forged1.commit) &&
+	test_must_fail git verify-commit $(cat forged1.commit) &&
 	git show --pretty=short --show-signature $(cat forged1.commit) >actual1 &&
 	grep "BAD signature from" actual1 &&
 	! grep "Good signature from" actual1
@@ -156,7 +155,7 @@ test_expect_success GPG 'detect fudged signature with NUL' '
 	cat raw >forged2 &&
 	echo Qwik | tr "Q" "\000" >>forged2 &&
 	git hash-object -w -t commit forged2 >forged2.commit &&
-	! git verify-commit $(cat forged2.commit) &&
+	test_must_fail git verify-commit $(cat forged2.commit) &&
 	git show --pretty=short --show-signature $(cat forged2.commit) >actual2 &&
 	grep "BAD signature from" actual2 &&
 	! grep "Good signature from" actual2

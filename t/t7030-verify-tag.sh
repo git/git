@@ -74,7 +74,7 @@ test_expect_success GPG 'verify and show signatures' '
 
 test_expect_success GPG 'detect fudged signature' '
 	git cat-file tag seventh-signed >raw &&
-	sed -e "s/seventh/7th forged/" raw >forged1 &&
+	sed -e "/^tag / s/seventh/7th forged/" raw >forged1 &&
 	git hash-object -w -t tag forged1 >forged1.tag &&
 	test_must_fail git verify-tag $(cat forged1.tag) 2>actual1 &&
 	grep "BAD signature from" actual1 &&
