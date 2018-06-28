@@ -1077,7 +1077,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	if (option_required_reference.nr || option_optional_reference.nr)
 		setup_reference();
 
-	refspec_item_init(&refspec, value.buf, REFSPEC_FETCH);
+	refspec_item_init_or_die(&refspec, value.buf, REFSPEC_FETCH);
 
 	strbuf_reset(&value);
 

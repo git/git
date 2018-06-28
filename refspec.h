@@ -32,7 +32,10 @@ struct refspec {
 	int fetch;
 };
 
-void refspec_item_init(struct refspec_item *item, const char *refspec, int fetch);
+int refspec_item_init(struct refspec_item *item, const char *refspec,
+		      int fetch);
+void refspec_item_init_or_die(struct refspec_item *item, const char *refspec,
+			      int fetch);
 void refspec_item_clear(struct refspec_item *item);
 void refspec_init(struct refspec *rs, int fetch);
 void refspec_append(struct refspec *rs, const char *refspec);

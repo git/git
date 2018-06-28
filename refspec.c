@@ -124,11 +124,16 @@ static int parse_refspec(struct refspec_item *item, const char *refspec, int fet
 	return 1;
 }
 
-void refspec_item_init(struct refspec_item *item, const char *refspec, int fetch)
+int refspec_item_init(struct refspec_item *item, const char *refspec, int fetch)
 {
 	memset(item, 0, sizeof(*item));
+	return parse_refspec(item, refspec, fetch);
+}
 
-	if (!parse_refspec(item, refspec, fetch))
+void refspec_item_init_or_die(struct refspec_item *item, const char *refspec,
+			      int fetch)
+{
+	if (!refspec_item_init(item, refspec, fetch))
 		die("Invalid refspec '%s'", refspec);
 }
 
@@ -152,7 +157,7 @@ void refspec_append(struct refspec *rs, const char *refspec)
 {
 	struct refspec_item item;
 
-	refspec_item_init(&item, refspec, rs->fetch);
+	refspec_item_init_or_die(&item, refspec, rs->fetch);
 
 	ALLOC_GROW(rs->items, rs->nr + 1, rs->alloc);
 	rs->items[rs->nr++] = item;
@@ -191,7 +196,7 @@ void refspec_clear(struct refspec *rs)
 int valid_fetch_refspec(const char *fetch_refspec_str)
 {
 	struct refspec_item refspec;
-	int ret = parse_refspec(&refspec, fetch_refspec_str, REFSPEC_FETCH);
+	int ret = refspec_item_init(&refspec, fetch_refspec_str, REFSPEC_FETCH);
 	refspec_item_clear(&refspec);
 	return ret;
 }

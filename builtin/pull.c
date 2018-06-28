@@ -684,7 +684,7 @@ static const char *get_tracking_branch(const char *remote, const char *refspec)
 	const char *spec_src;
 	const char *merge_branch;
 
-	refspec_item_init(&spec, refspec, REFSPEC_FETCH);
+	refspec_item_init_or_die(&spec, refspec, REFSPEC_FETCH);
 	spec_src = spec.src;
 	if (!*spec_src || !strcmp(spec_src, "HEAD"))
 		spec_src = "HEAD";
