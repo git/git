@@ -1569,8 +1569,10 @@ int git_config_from_file(config_fn_t fn, const char *filename, void *data)
 	return git_config_from_file_with_options(fn, filename, data, NULL);
 }
 
-int git_config_from_mem(config_fn_t fn, const enum config_origin_type origin_type,
-			const char *name, const char *buf, size_t len, void *data)
+int git_config_from_mem(config_fn_t fn,
+			const enum config_origin_type origin_type,
+			const char *name, const char *buf, size_t len,
+			void *data, const struct config_options *opts)
 {
 	struct config_source top;
 
@@ -1585,7 +1587,7 @@ int git_config_from_mem(config_fn_t fn, const enum config_origin_type origin_typ
 	top.do_ungetc = config_buf_ungetc;
 	top.do_ftell = config_buf_ftell;
 
-	return do_config_from(&top, fn, data, NULL);
+	return do_config_from(&top, fn, data, opts);
 }
 
 int git_config_from_blob_oid(config_fn_t fn,
@@ -1606,7 +1608,8 @@ int git_config_from_blob_oid(config_fn_t fn,
 		return error("reference '%s' does not point to a blob", name);
 	}
 
-	ret = git_config_from_mem(fn, CONFIG_ORIGIN_BLOB, name, buf, size, data);
+	ret = git_config_from_mem(fn, CONFIG_ORIGIN_BLOB, name, buf, size,
+				  data, NULL);
 	free(buf);
 
 	return ret;
