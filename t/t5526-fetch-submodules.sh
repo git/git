@@ -574,11 +574,7 @@ test_expect_success "fetch new commits when submodule got renamed" '
 	git clone . downstream_rename &&
 	(
 		cd downstream_rename &&
-		git submodule update --init &&
-# NEEDSWORK: we omitted --recursive for the submodule update here since
-# that does not work. See test 7001 for mv "moving nested submodules"
-# for details. Once that is fixed we should add the --recursive option
-# here.
+		git submodule update --init --recursive &&
 		git checkout -b rename &&
 		git mv submodule submodule_renamed &&
 		(
