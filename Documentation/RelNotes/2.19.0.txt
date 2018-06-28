@@ -39,6 +39,18 @@ Performance, Internal Implementation, Development Support etc.
  * Separate "rebase -p" codepath out of "rebase -i" implementation to
    slim down the latter and make it easier to manage.
 
+ * Make refspec parsing codepath more robust.
+
+ * Some flaky tests have been fixed.
+
+ * Continuing with the idea to programmatically enumerate various
+   pieces of data required for command line completion, the codebase
+   has been taught to enumerate options prefixed with "--no-" to
+   negate them.
+
+ * Build and test procedure for netrc credential helper (in contrib/)
+   has been updated.
+
 
 Fixes since v2.18
 -----------------
@@ -53,5 +65,37 @@ Fixes since v2.18
    grabbing the entire history.  Such a request now errors out.
    (merge e34de73c56 nd/reject-empty-shallow-request later to maint).
 
+ * Fix for 2.17-era regression around `core.safecrlf`.
+   (merge 6cb09125be as/safecrlf-quiet-fix later to maint).
+
+ * The recent addition of "partial clone" experimental feature kicked
+   in when it shouldn't, namely, when there is no partial-clone filter
+   defined even if extensions.partialclone is set.
+   (merge cac1137dc4 jh/partial-clone later to maint).
+
+ * "git send-pack --signed" (hence "git push --signed" over the http
+   transport) did not read user ident from the config mechanism to
+   determine whom to sign the push certificate as, which has been
+   corrected.
+   (merge d067d98887 ms/send-pack-honor-config later to maint).
+
+ * "git fetch-pack --all" used to unnecessarily fail upon seeing an
+   annotated tag that points at an object other than a commit.
+   (merge c12c9df527 jk/fetch-all-peeled-fix later to maint).
+
+ * When user edits the patch in "git add -p" and the user's editor is
+   set to strip trailing whitespaces indiscriminately, an empty line
+   that is unchanged in the patch would become completely empty
+   (instead of a line with a sole SP on it).  The code introduced in
+   Git 2.17 timeframe failed to parse such a patch, but now it learned
+   to notice the situation and cope with it.
+   (merge f4d35a6b49 pw/add-p-recount later to maint).
+
+ * The code to try seeing if a fetch is necessary in a submodule
+   during a fetch with --recurse-submodules got confused when the path
+   to the submodule was changed in the range of commits in the
+   superproject, sometimes showing "(null)".  This has been corrected.
+
  * Code cleanup.
    (merge aee9be2ebe sg/update-ref-stdin-cleanup later to maint).
+   (merge 037714252f jc/clean-after-sanity-tests later to maint).
