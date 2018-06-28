@@ -818,6 +818,9 @@ static int git_parse_source(config_fn_t fn, void *data,
 	case CONFIG_ERROR_ERROR:
 		error_return = error("%s", error_msg);
 		break;
+	case CONFIG_ERROR_SILENT:
+		error_return = -1;
+		break;
 	case CONFIG_ERROR_UNSET:
 		BUG("config error action unset");
 	}

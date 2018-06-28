@@ -58,6 +58,7 @@ struct config_options {
 		CONFIG_ERROR_UNSET = 0, /* use source-specific default */
 		CONFIG_ERROR_DIE, /* die() on error */
 		CONFIG_ERROR_ERROR, /* error() on error, return -1 */
+		CONFIG_ERROR_SILENT, /* return -1 */
 	} error_action;
 };
 
