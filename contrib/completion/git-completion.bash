@@ -330,9 +330,32 @@ __gitcomp ()
 	case "$cur_" in
 	--*=)
 		;;
+	--no-*)
+		local c i=0 IFS=$' \t\n'
+		for c in $1; do
+			if [[ $c == "--" ]]; then
+				continue
+			fi
+			c="$c${4-}"
+			if [[ $c == "$cur_"* ]]; then
+				case $c in
+				--*=*|*.) ;;
+				*) c="$c " ;;
+				esac
+				COMPREPLY[i++]="${2-}$c"
+			fi
+		done
+		;;
 	*)
 		local c i=0 IFS=$' \t\n'
 		for c in $1; do
+			if [[ $c == "--" ]]; then
+				c="--no-...${4-}"
+				if [[ $c == "$cur_"* ]]; then
+					COMPREPLY[i++]="${2-}$c "
+				fi
+				break
+			fi
 			c="$c${4-}"
 			if [[ $c == "$cur_"* ]]; then
 				case $c in
@@ -1161,7 +1184,7 @@ _git_am ()
 		return
 		;;
 	--*)
-		__gitcomp_builtin am "--no-utf8" \
+		__gitcomp_builtin am "" \
 			"$__git_am_inprogress_options"
 		return
 	esac
@@ -1261,9 +1284,7 @@ _git_branch ()
 		__git_complete_refs --cur="${cur##--set-upstream-to=}"
 		;;
 	--*)
-		__gitcomp_builtin branch "--no-color --no-abbrev
-			--no-track --no-column
-			"
+		__gitcomp_builtin branch
 		;;
 	*)
 		if [ $only_local_ref = "y" -a $has_r = "n" ]; then
@@ -1304,7 +1325,7 @@ _git_checkout ()
 		__gitcomp "diff3 merge" "" "${cur##--conflict=}"
 		;;
 	--*)
-		__gitcomp_builtin checkout "--no-track --no-recurse-submodules"
+		__gitcomp_builtin checkout
 		;;
 	*)
 		# check if --track, --no-track, or --no-guess was specified
@@ -1367,7 +1388,7 @@ _git_clone ()
 {
 	case "$cur" in
 	--*)
-		__gitcomp_builtin clone "--no-single-branch"
+		__gitcomp_builtin clone
 		return
 		;;
 	esac
@@ -1400,7 +1421,7 @@ _git_commit ()
 		return
 		;;
 	--*)
-		__gitcomp_builtin commit "--no-edit --verify"
+		__gitcomp_builtin commit
 		return
 	esac
 
@@ -1503,7 +1524,7 @@ _git_fetch ()
 		return
 		;;
 	--*)
-		__gitcomp_builtin fetch "--no-tags"
+		__gitcomp_builtin fetch
 		return
 		;;
 	esac
@@ -1540,7 +1561,7 @@ _git_fsck ()
 {
 	case "$cur" in
 	--*)
-		__gitcomp_builtin fsck "--no-reflogs"
+		__gitcomp_builtin fsck
 		return
 		;;
 	esac
@@ -1646,7 +1667,7 @@ _git_ls_files ()
 {
 	case "$cur" in
 	--*)
-		__gitcomp_builtin ls-files "--no-empty-directory"
+		__gitcomp_builtin ls-files
 		return
 		;;
 	esac
@@ -1797,12 +1818,7 @@ _git_merge ()
 
 	case "$cur" in
 	--*)
-		__gitcomp_builtin merge "--no-rerere-autoupdate
-				--no-commit --no-edit --no-ff
-				--no-log --no-progress
-				--no-squash --no-stat
-				--no-verify-signatures
-				"
+		__gitcomp_builtin merge
 		return
 	esac
 	__git_complete_refs
@@ -1901,10 +1917,7 @@ _git_pull ()
 		return
 		;;
 	--*)
-		__gitcomp_builtin pull "--no-autostash --no-commit --no-edit
-					--no-ff --no-log --no-progress --no-rebase
-					--no-squash --no-stat --no-tags
-					--no-verify-signatures"
+		__gitcomp_builtin pull
 
 		return
 		;;
@@ -2095,7 +2108,7 @@ _git_status ()
 		return
 		;;
 	--*)
-		__gitcomp_builtin status "--no-column"
+		__gitcomp_builtin status
 		return
 		;;
 	esac
@@ -2345,7 +2358,7 @@ _git_remote ()
 
 	case "$subcommand,$cur" in
 	add,--*)
-		__gitcomp_builtin remote_add "--no-tags"
+		__gitcomp_builtin remote_add
 		;;
 	add,*)
 		;;
@@ -2425,7 +2438,7 @@ _git_revert ()
 	fi
 	case "$cur" in
 	--*)
-		__gitcomp_builtin revert "--no-edit" \
+		__gitcomp_builtin revert "" \
 			"$__git_revert_inprogress_options"
 		return
 		;;
@@ -2495,7 +2508,7 @@ _git_show_branch ()
 {
 	case "$cur" in
 	--*)
-		__gitcomp_builtin show-branch "--no-color"
+		__gitcomp_builtin show-branch
 		return
 		;;
 	esac
