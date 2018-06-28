@@ -1396,7 +1396,7 @@ msgid ""
 msgstr ""
 "Não foi possível ler do repositório remoto.\n"
 "\n"
-"Certifica-se que tem os direitos de acesso corretos\n"
+"Certifique-se que tem os direitos de acesso corretos\n"
 "e que o repositório existe."
 
 #: connected.c:63 builtin/fsck.c:190 builtin/prune.c:140
