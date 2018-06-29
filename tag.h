@@ -13,7 +13,8 @@ struct tag {
 };
 #define lookup_tag(r, o) lookup_tag_##r(o)
 extern struct tag *lookup_tag_the_repository(const struct object_id *oid);
-extern int parse_tag_buffer(struct tag *item, const void *data, unsigned long size);
+#define parse_tag_buffer(r, i, d, s) parse_tag_buffer_##r(i, d, s)
+extern int parse_tag_buffer_the_repository(struct tag *item, const void *data, unsigned long size);
 extern int parse_tag(struct tag *item);
 extern void release_tag_memory(struct tag *t);
 extern struct object *deref_tag(struct object *, const char *, int);
