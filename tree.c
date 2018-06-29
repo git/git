@@ -201,7 +201,7 @@ struct tree *lookup_tree(const struct object_id *oid)
 	if (!obj)
 		return create_object(the_repository, oid->hash,
 				     alloc_tree_node(the_repository));
-	return object_as_type(obj, OBJ_TREE, 0);
+	return object_as_type(the_repository, obj, OBJ_TREE, 0);
 }
 
 int parse_tree_buffer(struct tree *item, void *buffer, unsigned long size)
