@@ -467,6 +467,8 @@ struct parsed_object_pool *parsed_object_pool_new(void)
 	o->is_shallow = -1;
 	o->shallow_stat = xcalloc(1, sizeof(*o->shallow_stat));
 
+	o->buffer_slab = allocate_commit_buffer_slab();
+
 	return o;
 }
 
@@ -540,6 +542,9 @@ void parsed_object_pool_clear(struct parsed_object_pool *o)
 
 	FREE_AND_NULL(o->obj_hash);
 	o->obj_hash_size = 0;
+
+	free_commit_buffer_slab(o->buffer_slab);
+	o->buffer_slab = NULL;
 
 	clear_alloc_state(o->blob_state);
 	clear_alloc_state(o->tree_state);

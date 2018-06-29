@@ -1,6 +1,8 @@
 #ifndef OBJECT_H
 #define OBJECT_H
 
+struct buffer_slab;
+
 struct parsed_object_pool {
 	struct object **obj_hash;
 	int nr_objs, obj_hash_size;
@@ -22,6 +24,8 @@ struct parsed_object_pool {
 	char *alternate_shallow_file;
 
 	int commit_graft_prepared;
+
+	struct buffer_slab *buffer_slab;
 };
 
 struct parsed_object_pool *parsed_object_pool_new(void);

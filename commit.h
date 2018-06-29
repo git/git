@@ -89,6 +89,10 @@ static inline int parse_commit(struct commit *item)
 }
 void parse_commit_or_die(struct commit *item);
 
+struct buffer_slab;
+struct buffer_slab *allocate_commit_buffer_slab(void);
+void free_commit_buffer_slab(struct buffer_slab *bs);
+
 /*
  * Associate an object buffer with the commit. The ownership of the
  * memory is handed over to the commit, and must be free()-able.
