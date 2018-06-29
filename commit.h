@@ -67,9 +67,7 @@ struct commit *lookup_commit(struct repository *r, const struct object_id *oid);
 #define lookup_commit_reference(r, o) \
 		lookup_commit_reference_##r(o)
 struct commit *lookup_commit_reference_the_repository(const struct object_id *oid);
-#define lookup_commit_reference_gently(r, o, q) \
-		lookup_commit_reference_gently_##r(o, q)
-struct commit *lookup_commit_reference_gently_the_repository(
+struct commit *lookup_commit_reference_gently(struct repository *r,
 					      const struct object_id *oid,
 					      int quiet);
 struct commit *lookup_commit_reference_by_name(const char *name);

@@ -24,16 +24,16 @@ int save_commit_buffer = 1;
 
 const char *commit_type = "commit";
 
-struct commit *lookup_commit_reference_gently_the_repository(
+struct commit *lookup_commit_reference_gently(struct repository *r,
 		const struct object_id *oid, int quiet)
 {
-	struct object *obj = deref_tag(the_repository,
-				       parse_object(the_repository, oid),
+	struct object *obj = deref_tag(r,
+				       parse_object(r, oid),
 				       NULL, 0);
 
 	if (!obj)
 		return NULL;
-	return object_as_type(the_repository, obj, OBJ_COMMIT, quiet);
+	return object_as_type(r, obj, OBJ_COMMIT, quiet);
 }
 
 struct commit *lookup_commit_reference_the_repository(const struct object_id *oid)
