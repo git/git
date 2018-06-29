@@ -217,7 +217,7 @@ struct object *parse_object_buffer_the_repository(const struct object_id *oid, e
 			if (parse_commit_buffer(the_repository, commit, buffer, size, 1))
 				return NULL;
 			if (!get_cached_commit_buffer(commit, NULL)) {
-				set_commit_buffer(commit, buffer, size);
+				set_commit_buffer(the_repository, commit, buffer, size);
 				*eaten_p = 1;
 			}
 			obj = &commit->object;

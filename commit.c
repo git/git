@@ -262,7 +262,7 @@ struct commit_buffer {
 define_commit_slab(buffer_slab, struct commit_buffer);
 static struct buffer_slab buffer_slab = COMMIT_SLAB_INIT(1, buffer_slab);
 
-void set_commit_buffer(struct commit *commit, void *buffer, unsigned long size)
+void set_commit_buffer_the_repository(struct commit *commit, void *buffer, unsigned long size)
 {
 	struct commit_buffer *v = buffer_slab_at(&buffer_slab, commit);
 	v->buffer = buffer;
@@ -450,7 +450,7 @@ int parse_commit_gently(struct commit *item, int quiet_on_missing)
 	}
 	ret = parse_commit_buffer(the_repository, item, buffer, size, 0);
 	if (save_commit_buffer && !ret) {
-		set_commit_buffer(item, buffer, size);
+		set_commit_buffer(the_repository, item, buffer, size);
 		return 0;
 	}
 	free(buffer);
