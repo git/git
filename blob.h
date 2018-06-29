@@ -9,8 +9,7 @@ struct blob {
 	struct object object;
 };
 
-#define lookup_blob(r, o) lookup_blob_##r(o)
-struct blob *lookup_blob_the_repository(const struct object_id *oid);
+struct blob *lookup_blob(struct repository *r, const struct object_id *oid);
 
 int parse_blob_buffer(struct blob *item, void *buffer, unsigned long size);
 
