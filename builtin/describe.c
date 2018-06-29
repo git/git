@@ -331,7 +331,8 @@ static void describe_commit(struct object_id *oid, struct strbuf *dst)
 		init_commit_names(&commit_names);
 		n = hashmap_iter_first(&names, &iter);
 		for (; n; n = hashmap_iter_next(&iter)) {
-			c = lookup_commit_reference_gently(&n->peeled, 1);
+			c = lookup_commit_reference_gently(the_repository,
+							   &n->peeled, 1);
 			if (c)
 				*commit_names_at(&commit_names, c) = n;
 		}
@@ -509,7 +510,7 @@ static void describe(const char *arg, int last_one)
 
 	if (get_oid(arg, &oid))
 		die(_("Not a valid object name %s"), arg);
-	cmit = lookup_commit_reference_gently(&oid, 1);
+	cmit = lookup_commit_reference_gently(the_repository, &oid, 1);
 
 	if (cmit)
 		describe_commit(&oid, &sb);

@@ -180,7 +180,7 @@ int verify_bundle(struct bundle_header *header, int verbose)
 	/* Clean up objects used, as they will be reused. */
 	for (i = 0; i < p->nr; i++) {
 		struct ref_list_entry *e = p->list + i;
-		commit = lookup_commit_reference_gently(&e->oid, 1);
+		commit = lookup_commit_reference_gently(the_repository, &e->oid, 1);
 		if (commit)
 			clear_commit_marks(commit, ALL_REV_FLAGS);
 	}

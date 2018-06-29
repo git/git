@@ -1149,7 +1149,7 @@ static void add_to_tips(struct tips *tips, const struct object_id *oid)
 
 	if (is_null_oid(oid))
 		return;
-	commit = lookup_commit_reference_gently(oid, 1);
+	commit = lookup_commit_reference_gently(the_repository, oid, 1);
 	if (!commit || (commit->object.flags & TMP_MARK))
 		return;
 	commit->object.flags |= TMP_MARK;
@@ -1211,7 +1211,8 @@ static void add_missing_tags(struct ref *src, struct ref **dst, struct ref ***ds
 
 			if (is_null_oid(&ref->new_oid))
 				continue;
-			commit = lookup_commit_reference_gently(&ref->new_oid,
+			commit = lookup_commit_reference_gently(the_repository,
+								&ref->new_oid,
 								1);
 			if (!commit)
 				/* not pushing a commit, which is not an error */
@@ -1435,8 +1436,8 @@ void set_ref_status_for_push(struct ref *remote_refs, int send_mirror,
 				reject_reason = REF_STATUS_REJECT_ALREADY_EXISTS;
 			else if (!has_object_file(&ref->old_oid))
 				reject_reason = REF_STATUS_REJECT_FETCH_FIRST;
-			else if (!lookup_commit_reference_gently(&ref->old_oid, 1) ||
-				 !lookup_commit_reference_gently(&ref->new_oid, 1))
+			else if (!lookup_commit_reference_gently(the_repository, &ref->old_oid, 1) ||
+				 !lookup_commit_reference_gently(the_repository, &ref->new_oid, 1))
 				reject_reason = REF_STATUS_REJECT_NEEDS_FORCE;
 			else if (!ref_newer(&ref->new_oid, &ref->old_oid))
 				reject_reason = REF_STATUS_REJECT_NONFASTFORWARD;

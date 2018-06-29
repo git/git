@@ -65,7 +65,10 @@ const struct name_decoration *get_name_decoration(const struct object *obj);
 
 struct commit *lookup_commit(const struct object_id *oid);
 struct commit *lookup_commit_reference(const struct object_id *oid);
-struct commit *lookup_commit_reference_gently(const struct object_id *oid,
+#define lookup_commit_reference_gently(r, o, q) \
+		lookup_commit_reference_gently_##r(o, q)
+struct commit *lookup_commit_reference_gently_the_repository(
+					      const struct object_id *oid,
 					      int quiet);
 struct commit *lookup_commit_reference_by_name(const char *name);
 

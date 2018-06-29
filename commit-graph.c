@@ -701,7 +701,7 @@ void write_commit_graph(const char *obj_dir,
 			if (commit_hex[i] && parse_oid_hex(commit_hex[i], &oid, &end))
 				continue;
 
-			result = lookup_commit_reference_gently(&oid, 1);
+			result = lookup_commit_reference_gently(the_repository, &oid, 1);
 
 			if (result) {
 				ALLOC_GROW(oids.list, oids.nr + 1, oids.alloc);
