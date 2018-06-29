@@ -195,13 +195,13 @@ int read_tree(struct tree *tree, int stage, struct pathspec *match,
 	return 0;
 }
 
-struct tree *lookup_tree_the_repository(const struct object_id *oid)
+struct tree *lookup_tree(struct repository *r, const struct object_id *oid)
 {
-	struct object *obj = lookup_object(the_repository, oid->hash);
+	struct object *obj = lookup_object(r, oid->hash);
 	if (!obj)
-		return create_object(the_repository, oid->hash,
-				     alloc_tree_node(the_repository));
-	return object_as_type(the_repository, obj, OBJ_TREE, 0);
+		return create_object(r, oid->hash,
+				     alloc_tree_node(r));
+	return object_as_type(r, obj, OBJ_TREE, 0);
 }
 
 int parse_tree_buffer(struct tree *item, void *buffer, unsigned long size)
