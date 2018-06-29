@@ -84,21 +84,20 @@ static void insert_obj_hash(struct object *obj, struct object **hash, unsigned i
  * Look up the record for the given sha1 in the hash map stored in
  * obj_hash.  Return NULL if it was not found.
  */
-struct object *lookup_object_the_repository(const unsigned char *sha1)
+struct object *lookup_object(struct repository *r, const unsigned char *sha1)
 {
 	unsigned int i, first;
 	struct object *obj;
 
-	if (!the_repository->parsed_objects->obj_hash)
+	if (!r->parsed_objects->obj_hash)
 		return NULL;
 
-	first = i = hash_obj(sha1,
-			     the_repository->parsed_objects->obj_hash_size);
-	while ((obj = the_repository->parsed_objects->obj_hash[i]) != NULL) {
+	first = i = hash_obj(sha1, r->parsed_objects->obj_hash_size);
+	while ((obj = r->parsed_objects->obj_hash[i]) != NULL) {
 		if (!hashcmp(sha1, obj->oid.hash))
 			break;
 		i++;
-		if (i == the_repository->parsed_objects->obj_hash_size)
+		if (i == r->parsed_objects->obj_hash_size)
 			i = 0;
 	}
 	if (obj && i != first) {
@@ -107,8 +106,8 @@ struct object *lookup_object_the_repository(const unsigned char *sha1)
 		 * that we do not need to walk the hash table the next
 		 * time we look for it.
 		 */
-		SWAP(the_repository->parsed_objects->obj_hash[i],
-		     the_repository->parsed_objects->obj_hash[first]);
+		SWAP(r->parsed_objects->obj_hash[i],
+		     r->parsed_objects->obj_hash[first]);
 	}
 	return obj;
 }
