@@ -139,7 +139,7 @@ msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
 "POT-Creation-Date: 2018-06-16 22:06+0800\n"
-"PO-Revision-Date: 2018-06-18 00:28+0800\n"
+"PO-Revision-Date: 2018-07-02 10:22+0800\n"
 "Last-Translator: Jiang Xin <worldhello.net@gmail.com>\n"
 "Language-Team: GitHub <https://github.com/jiangxin/git/>\n"
 "Language: zh_CN\n"
@@ -2324,12 +2324,12 @@ msgstr "（坏提交）\n"
 #: merge-recursive.c:320
 #, c-format
 msgid "add_cacheinfo failed for path '%s'; merge aborting."
-msgstr "addinfo_cache 对路径 '%s' 执行失败，合并终止。"
+msgstr "add_cacheinfo 对路径 '%s' 执行失败，合并终止。"
 
 #: merge-recursive.c:328
 #, c-format
 msgid "add_cacheinfo failed to refresh for path '%s'; merge aborting."
-msgstr "addinfo_cache 无法刷新路径 '%s'，合并终止。"
+msgstr "add_cacheinfo 无法刷新路径 '%s'，合并终止。"
 
 #: merge-recursive.c:410
 msgid "error building trees"
@@ -2541,12 +2541,12 @@ msgstr ""
 #: merge-recursive.c:1733
 #, c-format
 msgid "Renaming %s to %s and %s to %s instead"
-msgstr "而是重命名 %s 至 %s，以及 %s 至 %s"
+msgstr "代之以重命名 %s 至 %s，以及 %s 至 %s"
 
 #: merge-recursive.c:1745
 #, c-format
 msgid "Refusing to lose untracked file at %s, even though it's in the way."
-msgstr "拒绝丢失未跟踪文件 '%s'，即使它妨碍了。"
+msgstr "拒绝在 '%s' 处失去未跟踪文件，即使它存在于重命名中。"
 
 #: merge-recursive.c:1951
 #, c-format
@@ -2554,9 +2554,7 @@ msgid ""
 "CONFLICT (directory rename split): Unclear where to place %s because "
 "directory %s was renamed to multiple other directories, with no destination "
 "getting a majority of the files."
-msgstr ""
-"冲突（分割的目录重命名）：不清楚 %s 应该放在哪里，因为目录 %s 被重命名到多个"
-"其它目录，没有一个目录包含主要的文件。"
+msgstr "冲突（分割的目录重命名）：不清楚 %s 应该放在哪里，因为目录 %s 被重命名到多个其它目录，没有目录包含大部分文件。"
 
 #: merge-recursive.c:1983
 #, c-format
@@ -9321,7 +9319,7 @@ msgstr "无法解析 gc.logexpiry 的值 %s"
 #: builtin/gc.c:539
 #, c-format
 msgid "failed to parse prune expiry value %s"
-msgstr "无法解析 gc.logexpiry 的值 %s"
+msgstr "无法解析清除期限值 %s"
 
 #: builtin/gc.c:559
 #, c-format
