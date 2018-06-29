@@ -1865,13 +1865,13 @@ int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs,
 	/* Cannot stat if what we used to build on no longer exists */
 	if (read_ref(base, &oid))
 		return -1;
-	theirs = lookup_commit_reference(&oid);
+	theirs = lookup_commit_reference(the_repository, &oid);
 	if (!theirs)
 		return -1;
 
 	if (read_ref(branch->refname, &oid))
 		return -1;
-	ours = lookup_commit_reference(&oid);
+	ours = lookup_commit_reference(the_repository, &oid);
 	if (!ours)
 		return -1;
 

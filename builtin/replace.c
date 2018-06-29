@@ -371,7 +371,7 @@ static int replace_parents(struct strbuf *buf, int argc, const char **argv)
 			return error(_("Not a valid object name: '%s'"),
 				     argv[i]);
 		}
-		if (!lookup_commit_reference(&oid)) {
+		if (!lookup_commit_reference(the_repository, &oid)) {
 			strbuf_release(&new_parents);
 			return error(_("could not parse %s"), argv[i]);
 		}
@@ -443,7 +443,7 @@ static int create_graft(int argc, const char **argv, int force, int gentle)
 
 	if (get_oid(old_ref, &old_oid) < 0)
 		return error(_("Not a valid object name: '%s'"), old_ref);
-	commit = lookup_commit_reference(&old_oid);
+	commit = lookup_commit_reference(the_repository, &old_oid);
 	if (!commit)
 		return error(_("could not parse %s"), old_ref);
 

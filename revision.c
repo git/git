@@ -1591,8 +1591,8 @@ static int handle_dotdot_1(const char *arg, char *dotdot,
 		struct commit *a, *b;
 		struct commit_list *exclude;
 
-		a = lookup_commit_reference(&a_obj->oid);
-		b = lookup_commit_reference(&b_obj->oid);
+		a = lookup_commit_reference(the_repository, &a_obj->oid);
+		b = lookup_commit_reference(the_repository, &b_obj->oid);
 		if (!a || !b)
 			return dotdot_missing(arg, dotdot, revs, symmetric);
 

@@ -35,14 +35,14 @@ struct commit *lookup_commit_reference_gently_the_repository(
 	return object_as_type(the_repository, obj, OBJ_COMMIT, quiet);
 }
 
-struct commit *lookup_commit_reference(const struct object_id *oid)
+struct commit *lookup_commit_reference_the_repository(const struct object_id *oid)
 {
 	return lookup_commit_reference_gently(the_repository, oid, 0);
 }
 
 struct commit *lookup_commit_or_die(const struct object_id *oid, const char *ref_name)
 {
-	struct commit *c = lookup_commit_reference(oid);
+	struct commit *c = lookup_commit_reference(the_repository, oid);
 	if (!c)
 		die(_("could not parse %s"), ref_name);
 	if (oidcmp(oid, &c->object.oid)) {
@@ -68,7 +68,7 @@ struct commit *lookup_commit_reference_by_name(const char *name)
 
 	if (get_oid_committish(name, &oid))
 		return NULL;
-	commit = lookup_commit_reference(&oid);
+	commit = lookup_commit_reference(the_repository, &oid);
 	if (parse_commit(commit))
 		return NULL;
 	return commit;

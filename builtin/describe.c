@@ -303,7 +303,7 @@ static void describe_commit(struct object_id *oid, struct strbuf *dst)
 	unsigned long seen_commits = 0;
 	unsigned int unannotated_cnt = 0;
 
-	cmit = lookup_commit_reference(oid);
+	cmit = lookup_commit_reference(the_repository, oid);
 
 	n = find_commit_name(&cmit->object.oid);
 	if (n && (tags || all || n->prio == 2)) {

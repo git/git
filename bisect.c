@@ -724,7 +724,7 @@ static int bisect_checkout(const struct object_id *bisect_rev, int no_checkout)
 
 static struct commit *get_commit_reference(const struct object_id *oid)
 {
-	struct commit *r = lookup_commit_reference(oid);
+	struct commit *r = lookup_commit_reference(the_repository, oid);
 	if (!r)
 		die(_("Not a valid commit name %s"), oid_to_hex(oid));
 	return r;
