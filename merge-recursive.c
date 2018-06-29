@@ -3467,7 +3467,8 @@ static struct commit *get_ref(const struct object_id *oid, const char *name)
 {
 	struct object *object;
 
-	object = deref_tag(parse_object(the_repository, oid), name,
+	object = deref_tag(the_repository, parse_object(the_repository, oid),
+			   name,
 			   strlen(name));
 	if (!object)
 		return NULL;

@@ -126,7 +126,8 @@ static void rev_list_push(struct commit *commit, int mark)
 
 static int rev_list_insert_ref(const char *refname, const struct object_id *oid)
 {
-	struct object *o = deref_tag(parse_object(the_repository, oid),
+	struct object *o = deref_tag(the_repository,
+				     parse_object(the_repository, oid),
 				     refname, 0);
 
 	if (o && o->type == OBJ_COMMIT)
@@ -144,7 +145,8 @@ static int rev_list_insert_ref_oid(const char *refname, const struct object_id *
 static int clear_marks(const char *refname, const struct object_id *oid,
 		       int flag, void *cb_data)
 {
-	struct object *o = deref_tag(parse_object(the_repository, oid),
+	struct object *o = deref_tag(the_repository,
+				     parse_object(the_repository, oid),
 				     refname, 0);
 
 	if (o && o->type == OBJ_COMMIT)
@@ -802,7 +804,8 @@ static int everything_local(struct fetch_pack_args *args,
 		 * Don't mark them common yet; the server has to be told so first.
 		 */
 		for (ref = *refs; ref; ref = ref->next) {
-			struct object *o = deref_tag(lookup_object(the_repository,
+			struct object *o = deref_tag(the_repository,
+						     lookup_object(the_repository,
 						     ref->old_oid.hash),
 						     NULL, 0);
 

@@ -64,7 +64,7 @@ static int add_info_ref(const char *path, const struct object_id *oid,
 		return -1;
 
 	if (o->type == OBJ_TAG) {
-		o = deref_tag(o, path, 0);
+		o = deref_tag(the_repository, o, path, 0);
 		if (o)
 			if (fprintf(fp, "%s	%s^{}\n",
 				oid_to_hex(&o->oid), path) < 0)
