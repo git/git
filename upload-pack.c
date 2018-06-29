@@ -3,6 +3,7 @@
 #include "refs.h"
 #include "pkt-line.h"
 #include "sideband.h"
+#include "object-store.h"
 #include "tag.h"
 #include "object.h"
 #include "commit.h"
@@ -658,7 +659,7 @@ static void send_shallow(struct commit_list *result)
 		if (!(object->flags & (CLIENT_SHALLOW|NOT_SHALLOW))) {
 			packet_write_fmt(1, "shallow %s",
 					 oid_to_hex(&object->oid));
-			register_shallow(&object->oid);
+			register_shallow(the_repository, &object->oid);
 			shallow_nr++;
 		}
 		result = result->next;
@@ -695,14 +696,14 @@ static void send_unshallow(const struct object_array *shallows)
 			add_object_array(object, NULL, &extra_edge_obj);
 		}
 		/* make sure commit traversal conforms to client */
-		register_shallow(&object->oid);
+		register_shallow(the_repository, &object->oid);
 	}
 }
 
 static void deepen(int depth, int deepen_relative,
 		   struct object_array *shallows)
 {
-	if (depth == INFINITE_DEPTH && !is_repository_shallow()) {
+	if (depth == INFINITE_DEPTH && !is_repository_shallow(the_repository)) {
 		int i;
 
 		for (i = 0; i < shallows->nr; i++) {
@@ -782,7 +783,8 @@ static int send_shallow_list(int depth, int deepen_rev_list,
 		if (shallows->nr > 0) {
 			int i;
 			for (i = 0; i < shallows->nr; i++)
-				register_shallow(&shallows->objects[i].item->oid);
+				register_shallow(the_repository,
+						 &shallows->objects[i].item->oid);
 		}
 	}
 
@@ -1356,14 +1358,15 @@ static void send_shallow_info(struct upload_pack_data *data)
 {
 	/* No shallow info needs to be sent */
 	if (!data->depth && !data->deepen_rev_list && !data->shallows.nr &&
-	    !is_repository_shallow())
+	    !is_repository_shallow(the_repository))
 		return;
 
 	packet_write_fmt(1, "shallow-info\n");
 
 	if (!send_shallow_list(data->depth, data->deepen_rev_list,
 			       data->deepen_since, &data->deepen_not,
-			       &data->shallows) && is_repository_shallow())
+			       &data->shallows) &&
+	    is_repository_shallow(the_repository))
 		deepen(INFINITE_DEPTH, data->deepen_relative, &data->shallows);
 
 	packet_delim(1);

@@ -9,6 +9,7 @@
 #include "config.h"
 #include "color.h"
 #include "builtin.h"
+#include "repository.h"
 #include "commit.h"
 #include "diff.h"
 #include "revision.h"
@@ -23,6 +24,7 @@
 #include "line-log.h"
 #include "dir.h"
 #include "progress.h"
+#include "object-store.h"
 #include "blame.h"
 #include "string-list.h"
 
@@ -576,7 +578,7 @@ static int read_ancestry(const char *graft_file)
 		/* The format is just "Commit Parent1 Parent2 ...\n" */
 		struct commit_graft *graft = read_graft_line(&buf);
 		if (graft)
-			register_commit_graft(graft, 0);
+			register_commit_graft(the_repository, graft, 0);
 	}
 	fclose(fp);
 	strbuf_release(&buf);

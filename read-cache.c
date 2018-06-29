@@ -11,6 +11,7 @@
 #include "cache-tree.h"
 #include "refs.h"
 #include "dir.h"
+#include "object-store.h"
 #include "tree.h"
 #include "commit.h"
 #include "blob.h"

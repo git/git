@@ -8,6 +8,7 @@
 #include "cache.h"
 #include "config.h"
 #include "builtin.h"
+#include "object-store.h"
 #include "commit.h"
 #include "run-command.h"
 #include <signal.h>

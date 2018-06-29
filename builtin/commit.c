@@ -168,9 +168,9 @@ static int opt_parse_rename_score(const struct option *opt, const char *arg, int
 
 static void determine_whence(struct wt_status *s)
 {
-	if (file_exists(git_path_merge_head()))
+	if (file_exists(git_path_merge_head(the_repository)))
 		whence = FROM_MERGE;
-	else if (file_exists(git_path_cherry_pick_head())) {
+	else if (file_exists(git_path_cherry_pick_head(the_repository))) {
 		whence = FROM_CHERRY_PICK;
 		if (file_exists(git_path_seq_dir()))
 			sequencer_in_use = 1;
@@ -718,21 +718,21 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		if (have_option_m)
 			strbuf_addbuf(&sb, &message);
 		hook_arg1 = "message";
-	} else if (!stat(git_path_merge_msg(), &statbuf)) {
+	} else if (!stat(git_path_merge_msg(the_repository), &statbuf)) {
 		/*
 		 * prepend SQUASH_MSG here if it exists and a
 		 * "merge --squash" was originally performed
 		 */
-		if (!stat(git_path_squash_msg(), &statbuf)) {
-			if (strbuf_read_file(&sb, git_path_squash_msg(), 0) < 0)
+		if (!stat(git_path_squash_msg(the_repository), &statbuf)) {
+			if (strbuf_read_file(&sb, git_path_squash_msg(the_repository), 0) < 0)
 				die_errno(_("could not read SQUASH_MSG"));
 			hook_arg1 = "squash";
 		} else
 			hook_arg1 = "merge";
-		if (strbuf_read_file(&sb, git_path_merge_msg(), 0) < 0)
+		if (strbuf_read_file(&sb, git_path_merge_msg(the_repository), 0) < 0)
 			die_errno(_("could not read MERGE_MSG"));
-	} else if (!stat(git_path_squash_msg(), &statbuf)) {
-		if (strbuf_read_file(&sb, git_path_squash_msg(), 0) < 0)
+	} else if (!stat(git_path_squash_msg(the_repository), &statbuf)) {
+		if (strbuf_read_file(&sb, git_path_squash_msg(the_repository), 0) < 0)
 			die_errno(_("could not read SQUASH_MSG"));
 		hook_arg1 = "squash";
 	} else if (template_file) {
@@ -813,8 +813,8 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 					"	%s\n"
 					"and try again.\n"),
 				whence == FROM_MERGE ?
-					git_path_merge_head() :
-					git_path_cherry_pick_head());
+					git_path_merge_head(the_repository) :
+					git_path_cherry_pick_head(the_repository));
 		}
 
 		fprintf(s->fp, "\n");
@@ -1564,7 +1564,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		if (!reflog_msg)
 			reflog_msg = "commit (merge)";
 		pptr = commit_list_append(current_head, pptr);
-		fp = xfopen(git_path_merge_head(), "r");
+		fp = xfopen(git_path_merge_head(the_repository), "r");
 		while (strbuf_getline_lf(&m, fp) != EOF) {
 			struct commit *parent;
 
@@ -1575,8 +1575,8 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		}
 		fclose(fp);
 		strbuf_release(&m);
-		if (!stat(git_path_merge_mode(), &statbuf)) {
-			if (strbuf_read_file(&sb, git_path_merge_mode(), 0) < 0)
+		if (!stat(git_path_merge_mode(the_repository), &statbuf)) {
+			if (strbuf_read_file(&sb, git_path_merge_mode(the_repository), 0) < 0)
 				die_errno(_("could not read MERGE_MODE"));
 			if (!strcmp(sb.buf, "no-ff"))
 				allow_fast_forward = 0;
@@ -1639,12 +1639,12 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		die("%s", err.buf);
 	}
 
-	unlink(git_path_cherry_pick_head());
-	unlink(git_path_revert_head());
-	unlink(git_path_merge_head());
-	unlink(git_path_merge_msg());
-	unlink(git_path_merge_mode());
-	unlink(git_path_squash_msg());
+	unlink(git_path_cherry_pick_head(the_repository));
+	unlink(git_path_revert_head(the_repository));
+	unlink(git_path_merge_head(the_repository));
+	unlink(git_path_merge_msg(the_repository));
+	unlink(git_path_merge_mode(the_repository));
+	unlink(git_path_squash_msg(the_repository));
 
 	if (commit_index_files())
 		die (_("Repository has been updated, but unable to write\n"

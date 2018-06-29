@@ -1317,7 +1317,7 @@ static void show_rebase_in_progress(struct wt_status *s,
 			status_printf_ln(s, color,
 				_("  (use \"git rebase --abort\" to check out the original branch)"));
 		}
-	} else if (state->rebase_in_progress || !stat(git_path_merge_msg(), &st)) {
+	} else if (state->rebase_in_progress || !stat(git_path_merge_msg(the_repository), &st)) {
 		print_rebase_state(s, state, color);
 		if (s->hints)
 			status_printf_ln(s, color,
@@ -1552,17 +1552,17 @@ void wt_status_get_state(struct wt_status_state *state,
 	struct stat st;
 	struct object_id oid;
 
-	if (!stat(git_path_merge_head(), &st)) {
+	if (!stat(git_path_merge_head(the_repository), &st)) {
 		state->merge_in_progress = 1;
 	} else if (wt_status_check_rebase(NULL, state)) {
 		;		/* all set */
-	} else if (!stat(git_path_cherry_pick_head(), &st) &&
+	} else if (!stat(git_path_cherry_pick_head(the_repository), &st) &&
 			!get_oid("CHERRY_PICK_HEAD", &oid)) {
 		state->cherry_pick_in_progress = 1;
 		oidcpy(&state->cherry_pick_head_oid, &oid);
 	}
 	wt_status_check_bisect(NULL, state);
-	if (!stat(git_path_revert_head(), &st) &&
+	if (!stat(git_path_revert_head(the_repository), &st) &&
 	    !get_oid("REVERT_HEAD", &oid)) {
 		state->revert_in_progress = 1;
 		oidcpy(&state->revert_head_oid, &oid);

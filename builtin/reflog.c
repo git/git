@@ -1,6 +1,7 @@
 #include "builtin.h"
 #include "config.h"
 #include "lockfile.h"
+#include "object-store.h"
 #include "commit.h"
 #include "refs.h"
 #include "dir.h"

@@ -19,6 +19,7 @@
 #include "sha1-array.h"
 #include "oidset.h"
 #include "packfile.h"
+#include "object-store.h"
 
 static int transfer_unpack_limit = -1;
 static int fetch_unpack_limit = -1;
@@ -396,7 +397,7 @@ static int find_common(struct fetch_pack_args *args,
 		return 1;
 	}
 
-	if (is_repository_shallow())
+	if (is_repository_shallow(the_repository))
 		write_shallow_commits(&req_buf, 1, NULL);
 	if (args->depth > 0)
 		packet_buf_write(&req_buf, "deepen %d", args->depth);
@@ -427,7 +428,7 @@ static int find_common(struct fetch_pack_args *args,
 			if (skip_prefix(line, "shallow ", &arg)) {
 				if (get_oid_hex(arg, &oid))
 					die(_("invalid shallow line: %s"), line);
-				register_shallow(&oid);
+				register_shallow(the_repository, &oid);
 				continue;
 			}
 			if (skip_prefix(line, "unshallow ", &arg)) {
@@ -985,7 +986,7 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 	sort_ref_list(&ref, ref_compare_name);
 	QSORT(sought, nr_sought, cmp_ref_by_name);
 
-	if ((args->depth > 0 || is_repository_shallow()) && !server_supports("shallow"))
+	if ((args->depth > 0 || is_repository_shallow(the_repository)) && !server_supports("shallow"))
 		die(_("Server does not support shallow clients"));
 	if (args->depth > 0 || args->deepen_since || args->deepen_not)
 		args->deepen = 1;
@@ -1083,7 +1084,7 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 static void add_shallow_requests(struct strbuf *req_buf,
 				 const struct fetch_pack_args *args)
 {
-	if (is_repository_shallow())
+	if (is_repository_shallow(the_repository))
 		write_shallow_commits(req_buf, 1, NULL);
 	if (args->depth > 0)
 		packet_buf_write(req_buf, "deepen %d", args->depth);
@@ -1195,7 +1196,7 @@ static int send_fetch_request(int fd_out, const struct fetch_pack_args *args,
 	/* Add shallow-info and deepen request */
 	if (server_supports_feature("fetch", "shallow", 0))
 		add_shallow_requests(&req_buf, args);
-	else if (is_repository_shallow() || args->deepen)
+	else if (is_repository_shallow(the_repository) || args->deepen)
 		die(_("Server does not support shallow requests"));
 
 	/* Add filter */
@@ -1308,7 +1309,7 @@ static void receive_shallow_info(struct fetch_pack_args *args,
 		if (skip_prefix(reader->line, "shallow ", &arg)) {
 			if (get_oid_hex(arg, &oid))
 				die(_("invalid shallow line: %s"), reader->line);
-			register_shallow(&oid);
+			register_shallow(the_repository, &oid);
 			continue;
 		}
 		if (skip_prefix(reader->line, "unshallow ", &arg)) {
@@ -1479,7 +1480,7 @@ static void update_shallow(struct fetch_pack_args *args,
 
 	if (args->deepen && alternate_shallow_file) {
 		if (*alternate_shallow_file == '\0') { /* --unshallow */
-			unlink_or_warn(git_path_shallow());
+			unlink_or_warn(git_path_shallow(the_repository));
 			rollback_lock_file(&shallow_lock);
 		} else
 			commit_lock_file(&shallow_lock);

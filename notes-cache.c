@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "notes-cache.h"
+#include "object-store.h"
 #include "commit.h"
 #include "refs.h"
 

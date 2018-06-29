@@ -8,6 +8,7 @@
 #include "config.h"
 #include "refs.h"
 #include "refspec.h"
+#include "object-store.h"
 #include "commit.h"
 #include "object.h"
 #include "tag.h"

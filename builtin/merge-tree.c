@@ -1,6 +1,7 @@
 #include "builtin.h"
 #include "tree-walk.h"
 #include "xdiff-interface.h"
+#include "object-store.h"
 #include "blob.h"
 #include "exec-cmd.h"
 #include "merge-blobs.h"

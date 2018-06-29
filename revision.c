@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "object-store.h"
 #include "tag.h"
 #include "blob.h"
 #include "tree.h"

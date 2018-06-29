@@ -1,6 +1,8 @@
 #include "cache.h"
+#include "repository.h"
 #include "tempfile.h"
 #include "lockfile.h"
+#include "object-store.h"
 #include "commit.h"
 #include "tag.h"
 #include "pkt-line.h"
@@ -13,22 +15,19 @@
 #include "revision.h"
 #include "list-objects.h"
 #include "commit-slab.h"
+#include "repository.h"
 
-static int is_shallow = -1;
-static struct stat_validity shallow_stat;
-static char *alternate_shallow_file;
-
-void set_alternate_shallow_file(const char *path, int override)
+void set_alternate_shallow_file(struct repository *r, const char *path, int override)
 {
-	if (is_shallow != -1)
+	if (r->parsed_objects->is_shallow != -1)
 		BUG("is_repository_shallow must not be called before set_alternate_shallow_file");
-	if (alternate_shallow_file && !override)
+	if (r->parsed_objects->alternate_shallow_file && !override)
 		return;
-	free(alternate_shallow_file);
-	alternate_shallow_file = xstrdup_or_null(path);
+	free(r->parsed_objects->alternate_shallow_file);
+	r->parsed_objects->alternate_shallow_file = xstrdup_or_null(path);
 }
 
-int register_shallow(const struct object_id *oid)
+int register_shallow(struct repository *r, const struct object_id *oid)
 {
 	struct commit_graft *graft =
 		xmalloc(sizeof(struct commit_graft));
@@ -38,41 +37,41 @@ int register_shallow(const struct object_id *oid)
 	graft->nr_parent = -1;
 	if (commit && commit->object.parsed)
 		commit->parents = NULL;
-	return register_commit_graft(graft, 0);
+	return register_commit_graft(r, graft, 0);
 }
 
-int is_repository_shallow(void)
+int is_repository_shallow(struct repository *r)
 {
 	FILE *fp;
 	char buf[1024];
-	const char *path = alternate_shallow_file;
+	const char *path = r->parsed_objects->alternate_shallow_file;
 
-	if (is_shallow >= 0)
-		return is_shallow;
+	if (r->parsed_objects->is_shallow >= 0)
+		return r->parsed_objects->is_shallow;
 
 	if (!path)
-		path = git_path_shallow();
+		path = git_path_shallow(r);
 	/*
 	 * fetch-pack sets '--shallow-file ""' as an indicator that no
 	 * shallow file should be used. We could just open it and it
 	 * will likely fail. But let's do an explicit check instead.
 	 */
 	if (!*path || (fp = fopen(path, "r")) == NULL) {
-		stat_validity_clear(&shallow_stat);
-		is_shallow = 0;
-		return is_shallow;
+		stat_validity_clear(r->parsed_objects->shallow_stat);
+		r->parsed_objects->is_shallow = 0;
+		return r->parsed_objects->is_shallow;
 	}
-	stat_validity_update(&shallow_stat, fileno(fp));
-	is_shallow = 1;
+	stat_validity_update(r->parsed_objects->shallow_stat, fileno(fp));
+	r->parsed_objects->is_shallow = 1;
 
 	while (fgets(buf, sizeof(buf), fp)) {
 		struct object_id oid;
 		if (get_oid_hex(buf, &oid))
 			die("bad shallow line: %s", buf);
-		register_shallow(&oid);
+		register_shallow(r, &oid);
 	}
 	fclose(fp);
-	return is_shallow;
+	return r->parsed_objects->is_shallow;
 }
 
 /*
@@ -116,8 +115,8 @@ struct commit_list *get_shallow_commits(struct object_array *heads, int depth,
 		parse_commit_or_die(commit);
 		cur_depth++;
 		if ((depth != INFINITE_DEPTH && cur_depth >= depth) ||
-		    (is_repository_shallow() && !commit->parents &&
-		     (graft = lookup_commit_graft(&commit->object.oid)) != NULL &&
+		    (is_repository_shallow(the_repository) && !commit->parents &&
+		     (graft = lookup_commit_graft(the_repository, &commit->object.oid)) != NULL &&
 		     graft->nr_parent < 0)) {
 			commit_list_insert(commit, &result);
 			commit->object.flags |= shallow_flag;
@@ -181,7 +180,7 @@ struct commit_list *get_shallow_commits_by_rev_list(int ac, const char **av,
 	 */
 	clear_object_flags(both_flags);
 
-	is_repository_shallow(); /* make sure shallows are read */
+	is_repository_shallow(the_repository); /* make sure shallows are read */
 
 	init_revisions(&revs, NULL);
 	save_commit_buffer = 0;
@@ -234,12 +233,12 @@ struct commit_list *get_shallow_commits_by_rev_list(int ac, const char **av,
 	return result;
 }
 
-static void check_shallow_file_for_update(void)
+static void check_shallow_file_for_update(struct repository *r)
 {
-	if (is_shallow == -1)
+	if (r->parsed_objects->is_shallow == -1)
 		BUG("shallow must be initialized by now");
 
-	if (!stat_validity_check(&shallow_stat, git_path_shallow()))
+	if (!stat_validity_check(r->parsed_objects->shallow_stat, git_path_shallow(the_repository)))
 		die("shallow file has changed since we read it");
 }
 
@@ -334,9 +333,10 @@ void setup_alternate_shallow(struct lock_file *shallow_lock,
 	struct strbuf sb = STRBUF_INIT;
 	int fd;
 
-	fd = hold_lock_file_for_update(shallow_lock, git_path_shallow(),
+	fd = hold_lock_file_for_update(shallow_lock,
+				       git_path_shallow(the_repository),
 				       LOCK_DIE_ON_ERROR);
-	check_shallow_file_for_update();
+	check_shallow_file_for_update(the_repository);
 	if (write_shallow_commits(&sb, 0, extra)) {
 		if (write_in_full(fd, sb.buf, sb.len) < 0)
 			die_errno("failed to write to %s",
@@ -361,7 +361,7 @@ static int advertise_shallow_grafts_cb(const struct commit_graft *graft, void *c
 
 void advertise_shallow_grafts(int fd)
 {
-	if (!is_repository_shallow())
+	if (!is_repository_shallow(the_repository))
 		return;
 	for_each_commit_graft(advertise_shallow_grafts_cb, &fd);
 }
@@ -381,16 +381,17 @@ void prune_shallow(int show_only)
 		strbuf_release(&sb);
 		return;
 	}
-	fd = hold_lock_file_for_update(&shallow_lock, git_path_shallow(),
+	fd = hold_lock_file_for_update(&shallow_lock,
+				       git_path_shallow(the_repository),
 				       LOCK_DIE_ON_ERROR);
-	check_shallow_file_for_update();
+	check_shallow_file_for_update(the_repository);
 	if (write_shallow_commits_1(&sb, 0, NULL, SEEN_ONLY)) {
 		if (write_in_full(fd, sb.buf, sb.len) < 0)
 			die_errno("failed to write to %s",
 				  get_lock_file_path(&shallow_lock));
 		commit_lock_file(&shallow_lock);
 	} else {
-		unlink(git_path_shallow());
+		unlink(git_path_shallow(the_repository));
 		rollback_lock_file(&shallow_lock);
 	}
 	strbuf_release(&sb);
@@ -415,7 +416,8 @@ void prepare_shallow_info(struct shallow_info *info, struct oid_array *sa)
 	for (i = 0; i < sa->nr; i++) {
 		if (has_object_file(sa->oid + i)) {
 			struct commit_graft *graft;
-			graft = lookup_commit_graft(&sa->oid[i]);
+			graft = lookup_commit_graft(the_repository,
+						    &sa->oid[i]);
 			if (graft && graft->nr_parent < 0)
 				continue;
 			info->ours[info->nr_ours++] = i;

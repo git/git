@@ -2969,7 +2969,7 @@ static void get_object_list(int ac, const char **av)
 	setup_revisions(ac, av, &revs, NULL);
 
 	/* make sure shallows are read */
-	is_repository_shallow();
+	is_repository_shallow(the_repository);
 
 	while (fgets(line, sizeof(line), stdin) != NULL) {
 		int len = strlen(line);
@@ -2987,7 +2987,7 @@ static void get_object_list(int ac, const char **av)
 				struct object_id oid;
 				if (get_oid_hex(line + 10, &oid))
 					die("not an SHA-1 '%s'", line + 10);
-				register_shallow(&oid);
+				register_shallow(the_repository, &oid);
 				use_bitmap_index = 0;
 				continue;
 			}
@@ -3299,7 +3299,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		use_bitmap_index = use_bitmap_index_default;
 
 	/* "hard" reasons not to use bitmaps; these just won't work at all */
-	if (!use_internal_rev_list || (!pack_to_stdout && write_bitmap_index) || is_repository_shallow())
+	if (!use_internal_rev_list || (!pack_to_stdout && write_bitmap_index) || is_repository_shallow(the_repository))
 		use_bitmap_index = 0;
 
 	if (pack_to_stdout || !rev_list_all)

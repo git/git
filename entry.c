@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "blob.h"
+#include "object-store.h"
 #include "dir.h"
 #include "streaming.h"
 #include "submodule.h"

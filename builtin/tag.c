@@ -10,6 +10,7 @@
 #include "config.h"
 #include "builtin.h"
 #include "refs.h"
+#include "object-store.h"
 #include "tag.h"
 #include "run-command.h"
 #include "parse-options.h"

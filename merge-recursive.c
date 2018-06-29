@@ -8,6 +8,7 @@
 #include "advice.h"
 #include "lockfile.h"
 #include "cache-tree.h"
+#include "object-store.h"
 #include "commit.h"
 #include "blob.h"
 #include "builtin.h"
