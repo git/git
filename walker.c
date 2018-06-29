@@ -49,7 +49,8 @@ static int process_tree(struct walker *walker, struct tree *tree)
 		if (S_ISGITLINK(entry.mode))
 			continue;
 		if (S_ISDIR(entry.mode)) {
-			struct tree *tree = lookup_tree(entry.oid);
+			struct tree *tree = lookup_tree(the_repository,
+							entry.oid);
 			if (tree)
 				obj = &tree->object;
 		}

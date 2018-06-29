@@ -344,7 +344,7 @@ static struct tree *load_tree_for_commit(struct commit_graph *g, struct commit *
 					   GRAPH_DATA_WIDTH * (c->graph_pos);
 
 	hashcpy(oid.hash, commit_data);
-	c->maybe_tree = lookup_tree(&oid);
+	c->maybe_tree = lookup_tree(the_repository, &oid);
 
 	return c->maybe_tree;
 }

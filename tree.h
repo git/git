@@ -12,7 +12,8 @@ struct tree {
 	unsigned long size;
 };
 
-struct tree *lookup_tree(const struct object_id *oid);
+#define lookup_tree(r, oid) lookup_tree_##r(oid)
+struct tree *lookup_tree_the_repository(const struct object_id *oid);
 
 int parse_tree_buffer(struct tree *item, void *buffer, unsigned long size);
 

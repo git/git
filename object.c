@@ -200,7 +200,7 @@ struct object *parse_object_buffer_the_repository(const struct object_id *oid, e
 			obj = &blob->object;
 		}
 	} else if (type == OBJ_TREE) {
-		struct tree *tree = lookup_tree(oid);
+		struct tree *tree = lookup_tree(the_repository, oid);
 		if (tree) {
 			obj = &tree->object;
 			if (!tree->buffer)
