@@ -64,12 +64,11 @@ int gpg_verify_tag(const struct object_id *oid, const char *name_to_report,
 	return ret;
 }
 
-struct object *deref_tag_the_repository(struct object *o, const char *warn, int warnlen)
+struct object *deref_tag(struct repository *r, struct object *o, const char *warn, int warnlen)
 {
 	while (o && o->type == OBJ_TAG)
 		if (((struct tag *)o)->tagged)
-			o = parse_object(the_repository,
-					 &((struct tag *)o)->tagged->oid);
+			o = parse_object(r, &((struct tag *)o)->tagged->oid);
 		else
 			o = NULL;
 	if (!o && warn) {
