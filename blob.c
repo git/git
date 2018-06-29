@@ -5,7 +5,7 @@
 
 const char *blob_type = "blob";
 
-struct blob *lookup_blob(const struct object_id *oid)
+struct blob *lookup_blob_the_repository(const struct object_id *oid)
 {
 	struct object *obj = lookup_object(the_repository, oid->hash);
 	if (!obj)

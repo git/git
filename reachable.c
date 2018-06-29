@@ -91,7 +91,7 @@ static void add_recent_object(const struct object_id *oid,
 		obj = (struct object *)lookup_tree(oid);
 		break;
 	case OBJ_BLOB:
-		obj = (struct object *)lookup_blob(oid);
+		obj = (struct object *)lookup_blob(the_repository, oid);
 		break;
 	default:
 		die("unknown object type for %s: %s",
