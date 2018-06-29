@@ -1934,7 +1934,7 @@ static int add_promisor_object(const struct object_id *oid,
 			       void *set_)
 {
 	struct oidset *set = set_;
-	struct object *obj = parse_object(oid);
+	struct object *obj = parse_object(the_repository, oid);
 	if (!obj)
 		return 1;
 

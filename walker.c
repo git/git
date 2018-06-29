@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "walker.h"
+#include "repository.h"
 #include "object-store.h"
 #include "commit.h"
 #include "tree.h"
@@ -178,7 +179,7 @@ static int loop(struct walker *walker)
 			}
 		}
 		if (!obj->type)
-			parse_object(&obj->oid);
+			parse_object(the_repository, &obj->oid);
 		if (process_object(walker, obj))
 			return -1;
 	}

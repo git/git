@@ -120,7 +120,8 @@ void *object_as_type(struct object *obj, enum object_type type, int quiet);
  *
  * Returns NULL if the object is missing or corrupt.
  */
-struct object *parse_object(const struct object_id *oid);
+#define parse_object(r, oid) parse_object_##r(oid)
+struct object *parse_object_the_repository(const struct object_id *oid);
 
 /*
  * Like parse_object, but will die() instead of returning NULL. If the
