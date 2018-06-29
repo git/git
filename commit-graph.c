@@ -242,7 +242,7 @@ static struct commit_list **insert_parent_or_die(struct commit_graph *g,
 	struct commit *c;
 	struct object_id oid;
 	hashcpy(oid.hash, g->chunk_oid_lookup + g->hash_len * pos);
-	c = lookup_commit(&oid);
+	c = lookup_commit(the_repository, &oid);
 	if (!c)
 		die("could not find commit %s", oid_to_hex(&oid));
 	c->graph_pos = pos;
@@ -568,7 +568,7 @@ static void close_reachable(struct packed_oid_list *oids)
 	struct commit *commit;
 
 	for (i = 0; i < oids->nr; i++) {
-		commit = lookup_commit(&oids->list[i]);
+		commit = lookup_commit(the_repository, &oids->list[i]);
 		if (commit)
 			commit->object.flags |= UNINTERESTING;
 	}
@@ -579,14 +579,14 @@ static void close_reachable(struct packed_oid_list *oids)
 	 * closure.
 	 */
 	for (i = 0; i < oids->nr; i++) {
-		commit = lookup_commit(&oids->list[i]);
+		commit = lookup_commit(the_repository, &oids->list[i]);
 
 		if (commit && !parse_commit(commit))
 			add_missing_parents(oids, commit);
 	}
 
 	for (i = 0; i < oids->nr; i++) {
-		commit = lookup_commit(&oids->list[i]);
+		commit = lookup_commit(the_repository, &oids->list[i]);
 
 		if (commit)
 			commit->object.flags &= ~UNINTERESTING;
@@ -737,7 +737,7 @@ void write_commit_graph(const char *obj_dir,
 		if (i > 0 && !oidcmp(&oids.list[i-1], &oids.list[i]))
 			continue;
 
-		commits.list[commits.nr] = lookup_commit(&oids.list[i]);
+		commits.list[commits.nr] = lookup_commit(the_repository, &oids.list[i]);
 		parse_commit(commits.list[commits.nr]);
 
 		for (parent = commits.list[commits.nr]->parents;

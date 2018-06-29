@@ -572,7 +572,7 @@ static void find_merge_parents(struct merge_parents *result,
 		commit_list_insert(parent, &parents);
 		add_merge_parent(result, &obj->oid, &parent->object.oid);
 	}
-	head_commit = lookup_commit(head);
+	head_commit = lookup_commit(the_repository, head);
 	if (head_commit)
 		commit_list_insert(head_commit, &parents);
 	reduce_heads_replace(&parents);

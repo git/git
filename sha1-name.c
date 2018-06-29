@@ -351,7 +351,7 @@ static int show_ambiguous_object(const struct object_id *oid, void *data)
 
 	type = oid_object_info(the_repository, oid, NULL);
 	if (type == OBJ_COMMIT) {
-		struct commit *commit = lookup_commit(oid);
+		struct commit *commit = lookup_commit(the_repository, oid);
 		if (commit) {
 			struct pretty_print_context pp = {0};
 			pp.date_mode.type = DATE_SHORT;
