@@ -570,7 +570,7 @@ static int get_reachable_list(struct object_array *src,
 		if (parse_oid_hex(namebuf, &sha1, &p) || *p != '\n')
 			break;
 
-		o = lookup_object(sha1.hash);
+		o = lookup_object(the_repository, sha1.hash);
 		if (o && o->type == OBJ_COMMIT) {
 			o->flags &= ~TMP_MARK;
 		}
