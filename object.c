@@ -185,21 +185,21 @@ struct object *lookup_unknown_object(const unsigned char *sha1)
 	return obj;
 }
 
-struct object *parse_object_buffer_the_repository(const struct object_id *oid, enum object_type type, unsigned long size, void *buffer, int *eaten_p)
+struct object *parse_object_buffer(struct repository *r, const struct object_id *oid, enum object_type type, unsigned long size, void *buffer, int *eaten_p)
 {
 	struct object *obj;
 	*eaten_p = 0;
 
 	obj = NULL;
 	if (type == OBJ_BLOB) {
-		struct blob *blob = lookup_blob(the_repository, oid);
+		struct blob *blob = lookup_blob(r, oid);
 		if (blob) {
 			if (parse_blob_buffer(blob, buffer, size))
 				return NULL;
 			obj = &blob->object;
 		}
 	} else if (type == OBJ_TREE) {
-		struct tree *tree = lookup_tree(the_repository, oid);
+		struct tree *tree = lookup_tree(r, oid);
 		if (tree) {
 			obj = &tree->object;
 			if (!tree->buffer)
@@ -211,20 +211,20 @@ struct object *parse_object_buffer_the_repository(const struct object_id *oid, e
 			}
 		}
 	} else if (type == OBJ_COMMIT) {
-		struct commit *commit = lookup_commit(the_repository, oid);
+		struct commit *commit = lookup_commit(r, oid);
 		if (commit) {
-			if (parse_commit_buffer(the_repository, commit, buffer, size, 1))
+			if (parse_commit_buffer(r, commit, buffer, size, 1))
 				return NULL;
-			if (!get_cached_commit_buffer(the_repository, commit, NULL)) {
-				set_commit_buffer(the_repository, commit, buffer, size);
+			if (!get_cached_commit_buffer(r, commit, NULL)) {
+				set_commit_buffer(r, commit, buffer, size);
 				*eaten_p = 1;
 			}
 			obj = &commit->object;
 		}
 	} else if (type == OBJ_TAG) {
-		struct tag *tag = lookup_tag(the_repository, oid);
+		struct tag *tag = lookup_tag(r, oid);
 		if (tag) {
-			if (parse_tag_buffer(the_repository, tag, buffer, size))
+			if (parse_tag_buffer(r, tag, buffer, size))
 			       return NULL;
 			obj = &tag->object;
 		}
