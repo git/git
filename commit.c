@@ -269,7 +269,7 @@ void set_commit_buffer_the_repository(struct commit *commit, void *buffer, unsig
 	v->size = size;
 }
 
-const void *get_cached_commit_buffer(const struct commit *commit, unsigned long *sizep)
+const void *get_cached_commit_buffer_the_repository(const struct commit *commit, unsigned long *sizep)
 {
 	struct commit_buffer *v = buffer_slab_peek(&buffer_slab, commit);
 	if (!v) {
@@ -284,7 +284,7 @@ const void *get_cached_commit_buffer(const struct commit *commit, unsigned long 
 
 const void *get_commit_buffer(const struct commit *commit, unsigned long *sizep)
 {
-	const void *ret = get_cached_commit_buffer(commit, sizep);
+	const void *ret = get_cached_commit_buffer(the_repository, commit, sizep);
 	if (!ret) {
 		enum object_type type;
 		unsigned long size;

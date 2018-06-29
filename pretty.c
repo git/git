@@ -630,7 +630,7 @@ const char *logmsg_reencode(const struct commit *commit,
 		 * the cached copy from get_commit_buffer, we need to duplicate it
 		 * to avoid munging the cached copy.
 		 */
-		if (msg == get_cached_commit_buffer(commit, NULL))
+		if (msg == get_cached_commit_buffer(the_repository, commit, NULL))
 			out = xstrdup(msg);
 		else
 			out = (char *)msg;

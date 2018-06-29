@@ -102,7 +102,8 @@ void set_commit_buffer_the_repository(struct commit *, void *buffer, unsigned lo
  * Get any cached object buffer associated with the commit. Returns NULL
  * if none. The resulting memory should not be freed.
  */
-const void *get_cached_commit_buffer(const struct commit *, unsigned long *size);
+#define get_cached_commit_buffer(r, c, s) get_cached_commit_buffer_##r(c, s)
+const void *get_cached_commit_buffer_the_repository(const struct commit *, unsigned long *size);
 
 /*
  * Get the commit's object contents, either from cache or by reading the object
