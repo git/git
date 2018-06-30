@@ -159,18 +159,22 @@ static inline struct blame_origin *blame_origin_incref(struct blame_origin *o)
 		o->refcnt++;
 	return o;
 }
-extern void blame_origin_decref(struct blame_origin *o);
+void blame_origin_decref(struct blame_origin *o);
 
-extern void blame_coalesce(struct blame_scoreboard *sb);
-extern void blame_sort_final(struct blame_scoreboard *sb);
-extern unsigned blame_entry_score(struct blame_scoreboard *sb, struct blame_entry *e);
-extern void assign_blame(struct blame_scoreboard *sb, int opt);
-extern const char *blame_nth_line(struct blame_scoreboard *sb, long lno);
+void blame_coalesce(struct blame_scoreboard *sb);
+void blame_sort_final(struct blame_scoreboard *sb);
+unsigned blame_entry_score(struct blame_scoreboard *sb, struct blame_entry *e);
+void assign_blame(struct blame_scoreboard *sb, int opt);
+const char *blame_nth_line(struct blame_scoreboard *sb, long lno);
 
-extern void init_scoreboard(struct blame_scoreboard *sb);
-extern void setup_scoreboard(struct blame_scoreboard *sb, const char *path, struct blame_origin **orig);
+void init_scoreboard(struct blame_scoreboard *sb);
+void setup_scoreboard(struct blame_scoreboard *sb,
+		      const char *path,
+		      struct blame_origin **orig);
 
-extern struct blame_entry *blame_entry_prepend(struct blame_entry *head, long start, long end, struct blame_origin *o);
+struct blame_entry *blame_entry_prepend(struct blame_entry *head,
+					long start, long end,
+					struct blame_origin *o);
 
 extern struct blame_origin *get_blame_suspects(struct commit *commit);
 
