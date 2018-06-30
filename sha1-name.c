@@ -778,6 +778,7 @@ static int get_oid_basic(const char *str, int len, struct object_id *oid,
 		timestamp_t at_time;
 		timestamp_t co_time;
 		int co_tz, co_cnt;
+		int ret;
 
 		/* Is it asking for N-th entry, or approxidate? */
 		for (i = nth = 0; 0 <= nth && i < reflog_len; i++) {
@@ -802,8 +803,12 @@ static int get_oid_basic(const char *str, int len, struct object_id *oid,
 				return -1;
 			}
 		}
-		if (read_ref_at(real_ref, flags, at_time, nth, oid, NULL,
-				&co_time, &co_tz, &co_cnt)) {
+
+		ret = read_ref_at(real_ref, flags, at_time, nth, oid, NULL,
+				&co_time, &co_tz, &co_cnt);
+		if (ret == -1)
+			return -1;
+		if (ret) {
 			if (!len) {
 				if (starts_with(real_ref, "refs/heads/")) {
 					str = real_ref + 11;
@@ -821,9 +826,12 @@ static int get_oid_basic(const char *str, int len, struct object_id *oid,
 						show_date(co_time, co_tz, DATE_MODE(RFC2822)));
 				}
 			} else {
-				if (flags & GET_OID_QUIETLY) {
-					exit(128);
+				if (flags & GET_OID_GENTLY) {
+					free(real_ref);
+					return -1;
 				}
+				if (flags & GET_OID_QUIETLY)
+					exit(128);
 				die("Log for '%.*s' only has %d entries.",
 				    len, str, co_cnt);
 			}
