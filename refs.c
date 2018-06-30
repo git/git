@@ -932,6 +932,8 @@ int read_ref_at(const char *refname, unsigned int flags, timestamp_t at_time, in
 	for_each_reflog_ent_reverse(refname, read_ref_at_ent, &cb);
 
 	if (!cb.reccnt) {
+		if (flags & GET_OID_GENTLY)
+			return -1;
 		if (flags & GET_OID_QUIETLY)
 			exit(128);
 		else
