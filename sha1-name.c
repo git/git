@@ -1521,11 +1521,12 @@ int get_oid_blob(const char *name, struct object_id *oid)
 }
 
 /* Must be called only when object_name:filename doesn't exist. */
-static void diagnose_invalid_oid_path(const char *prefix,
+static int diagnose_invalid_oid_path(const char *prefix,
 				      const char *filename,
 				      const struct object_id *tree_oid,
 				      const char *object_name,
-				      int object_name_len)
+				      int object_name_len,
+				      int gentle)
 {
 	struct object_id oid;
 	unsigned mode;
@@ -1533,12 +1534,19 @@ static void diagnose_invalid_oid_path(const char *prefix,
 	if (!prefix)
 		prefix = "";
 
-	if (file_exists(filename))
+	if (file_exists(filename)) {
+		if (gentle)
+			return -1;
 		die("Path '%s' exists on disk, but not in '%.*s'.",
 		    filename, object_name_len, object_name);
+	}
 	if (is_missing_file_error(errno)) {
 		char *fullname = xstrfmt("%s%s", prefix, filename);
-
+		if (gentle) {
+			warning(_("%s or %s does not exist."), fullname,
+				filename);
+			return -1;
+		}
 		if (!get_tree_entry(tree_oid, fullname, &oid, &mode)) {
 			die("Path '%s' exists, but not '%s'.\n"
 			    "Did you mean '%.*s:%s' aka '%.*s:./%s'?",
@@ -1552,12 +1560,14 @@ static void diagnose_invalid_oid_path(const char *prefix,
 		die("Path '%s' does not exist in '%.*s'",
 		    filename, object_name_len, object_name);
 	}
+	return 0;
 }
 
 /* Must be called only when :stage:filename doesn't exist. */
-static void diagnose_invalid_index_path(int stage,
+static int diagnose_invalid_index_path(int stage,
 					const char *prefix,
-					const char *filename)
+					const char *filename,
+					int gentle)
 {
 	const struct cache_entry *ce;
 	int pos;
@@ -1574,11 +1584,20 @@ static void diagnose_invalid_index_path(int stage,
 	if (pos < active_nr) {
 		ce = active_cache[pos];
 		if (ce_namelen(ce) == namelen &&
-		    !memcmp(ce->name, filename, namelen))
+		    !memcmp(ce->name, filename, namelen)) {
+			if (gentle) {
+				warning("Path '%s' is in the index "
+					"but not at stage %d.\n"
+					"Did you mean ':%d:%s'?",
+					filename, stage,
+					ce_stage(ce), filename);
+				return -1;
+			}
 			die("Path '%s' is in the index, but not at stage %d.\n"
 			    "Did you mean ':%d:%s'?",
 			    filename, stage,
 			    ce_stage(ce), filename);
+		}
 	}
 
 	/* Confusion between relative and absolute filenames? */
@@ -1590,31 +1609,58 @@ static void diagnose_invalid_index_path(int stage,
 	if (pos < active_nr) {
 		ce = active_cache[pos];
 		if (ce_namelen(ce) == fullname.len &&
-		    !memcmp(ce->name, fullname.buf, fullname.len))
+		    !memcmp(ce->name, fullname.buf, fullname.len)) {
+			if (gentle)
+				return -1;
 			die("Path '%s' is in the index, but not '%s'.\n"
 			    "Did you mean ':%d:%s' aka ':%d:./%s'?",
 			    fullname.buf, filename,
 			    ce_stage(ce), fullname.buf,
 			    ce_stage(ce), filename);
+		}
 	}
 
-	if (file_exists(filename))
+	if (file_exists(filename)) {
+		if (gentle)
+			return -1;
 		die("Path '%s' exists on disk, but not in the index.", filename);
-	if (is_missing_file_error(errno))
+	}
+	if (is_missing_file_error(errno)) {
+		if (gentle)
+			return -1;
 		die("Path '%s' does not exist (neither on disk nor in the index).",
 		    filename);
+	}
 
 	strbuf_release(&fullname);
+	return 0;
 }
 
+static const char *resolve_error = "dummy";
 
-static char *resolve_relative_path(const char *rel)
+static char *resolve_relative_path_gently(const char *rel, int gentle)
 {
 	if (!starts_with(rel, "./") && !starts_with(rel, "../"))
 		return NULL;
 
-	if (!is_inside_work_tree())
+	if (!is_inside_work_tree()) {
+		/*
+		 * `resolve_error` is a dummy variable and it is used to verify
+		 * if there was any problem inside this function. This is
+		 * returned only in the case we want to perform gently,
+		 * otherwise, `exit()` or `die()` can be called.
+		 */
+		if (gentle)
+			return (char*) resolve_error;
 		die("relative path syntax can't be used outside working tree.");
+	}
+
+	if (gentle) {
+		return prefix_path_gently(startup_info->prefix,
+					  startup_info->prefix ?
+					  strlen(startup_info->prefix) : 0,
+					  NULL, rel);
+	}
 
 	/* die() inside prefix_path() if resolved path is outside worktree */
 	return prefix_path(startup_info->prefix,
@@ -1669,7 +1715,16 @@ static int get_oid_with_context_1(const char *name,
 			stage = name[1] - '0';
 			cp = name + 3;
 		}
-		new_path = resolve_relative_path(cp);
+		/*
+		 * Note that `resolve_relative_path_gently()` may die if
+		 * the second parameter is zero. If it is a non-zero value,
+		 * the function will return `resolve_error` on failure. This
+		 * dummy variable is defined as a `static const char *`.
+		 */
+		new_path = resolve_relative_path_gently(cp, flags & GET_OID_GENTLY);
+		if (new_path == resolve_error)
+			return -1;
+
 		if (!new_path) {
 			namelen = namelen - (cp - name);
 		} else {
@@ -1698,8 +1753,11 @@ static int get_oid_with_context_1(const char *name,
 			}
 			pos++;
 		}
-		if (only_to_die && name[1] && name[1] != '/')
-			diagnose_invalid_index_path(stage, prefix, cp);
+		if (only_to_die && name[1] && name[1] != '/' &&
+			diagnose_invalid_index_path(stage, prefix, cp,
+						    flags & GET_OID_GENTLY))
+			return -1;
+
 		free(new_path);
 		return -1;
 	}
@@ -1723,7 +1781,10 @@ static int get_oid_with_context_1(const char *name,
 			const char *filename = cp+1;
 			char *new_filename = NULL;
 
-			new_filename = resolve_relative_path(filename);
+			new_filename = resolve_relative_path_gently(filename,
+								    flags & GET_OID_GENTLY);
+			if (new_filename == resolve_error)
+				return -1;
 			if (new_filename)
 				filename = new_filename;
 			if (flags & GET_OID_FOLLOW_SYMLINKS) {
@@ -1731,13 +1792,14 @@ static int get_oid_with_context_1(const char *name,
 					filename, oid, &oc->symlink_path,
 					&oc->mode, flags);
 			} else {
-				ret = get_tree_entry(&tree_oid, filename, oid,
-						     &oc->mode);
+				ret = get_tree_entry_gently(&tree_oid, filename,
+							    oid, &oc->mode,
+							    flags & GET_OID_GENTLY);
 				if (ret && only_to_die) {
 					diagnose_invalid_oid_path(prefix,
 								   filename,
 								   &tree_oid,
-								   name, len);
+								   name, len, 0);
 				}
 			}
 			if (flags & GET_OID_RECORD_PATH)
@@ -1769,7 +1831,8 @@ void maybe_die_on_misspelt_object_name(const char *name, const char *prefix)
 
 int get_oid_with_context(const char *str, unsigned flags, struct object_id *oid, struct object_context *oc)
 {
-	if (flags & GET_OID_FOLLOW_SYMLINKS && flags & GET_OID_ONLY_TO_DIE)
+	if (flags & (GET_OID_FOLLOW_SYMLINKS | GET_OID_GENTLY) &&
+	    flags & GET_OID_ONLY_TO_DIE)
 		BUG("incompatible flags for get_sha1_with_context");
 	return get_oid_with_context_1(str, flags, NULL, oid, oc);
 }
