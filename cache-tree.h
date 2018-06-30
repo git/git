@@ -51,6 +51,6 @@ int write_index_as_tree(struct object_id *oid, struct index_state *index_state, 
 int write_cache_as_tree(struct object_id *oid, int flags, const char *prefix);
 void prime_cache_tree(struct index_state *, struct tree *);
 
-extern int cache_tree_matches_traversal(struct cache_tree *, struct name_entry *ent, struct traverse_info *info);
+int cache_tree_matches_traversal(struct cache_tree *, struct name_entry *ent, struct traverse_info *info);
 
 #endif
