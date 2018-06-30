@@ -1474,6 +1474,12 @@ int get_oid(const char *name, struct object_id *oid)
 	return get_oid_with_context(name, 0, oid, &unused);
 }
 
+int get_oid_gently(const char *name, struct object_id *oid)
+{
+	struct object_context unused;
+	return get_oid_with_context(name, GET_OID_GENTLY, oid, &unused);
+}
+
 
 /*
  * Many callers know that the user meant to name a commit-ish by
