@@ -50,17 +50,17 @@ struct diff_filespec {
 	struct userdiff_driver *driver;
 };
 
-extern struct diff_filespec *alloc_filespec(const char *);
-extern void free_filespec(struct diff_filespec *);
-extern void fill_filespec(struct diff_filespec *, const struct object_id *,
-			  int, unsigned short);
+struct diff_filespec *alloc_filespec(const char *);
+void free_filespec(struct diff_filespec *);
+void fill_filespec(struct diff_filespec *, const struct object_id *,
+		   int, unsigned short);
 
 #define CHECK_SIZE_ONLY 1
 #define CHECK_BINARY    2
-extern int diff_populate_filespec(struct diff_filespec *, unsigned int);
-extern void diff_free_filespec_data(struct diff_filespec *);
-extern void diff_free_filespec_blob(struct diff_filespec *);
-extern int diff_filespec_is_binary(struct diff_filespec *);
+int diff_populate_filespec(struct diff_filespec *, unsigned int);
+void diff_free_filespec_data(struct diff_filespec *);
+void diff_free_filespec_blob(struct diff_filespec *);
+int diff_filespec_is_binary(struct diff_filespec *);
 
 struct diff_filepair {
 	struct diff_filespec *one;
@@ -86,9 +86,9 @@ struct diff_filepair {
 
 #define DIFF_PAIR_MODE_CHANGED(p) ((p)->one->mode != (p)->two->mode)
 
-extern void diff_free_filepair(struct diff_filepair *);
+void diff_free_filepair(struct diff_filepair *);
 
-extern int diff_unmodified_pair(struct diff_filepair *);
+int diff_unmodified_pair(struct diff_filepair *);
 
 struct diff_queue_struct {
 	struct diff_filepair **queue;
@@ -102,16 +102,16 @@ struct diff_queue_struct {
 	} while (0)
 
 extern struct diff_queue_struct diff_queued_diff;
-extern struct diff_filepair *diff_queue(struct diff_queue_struct *,
-					struct diff_filespec *,
-					struct diff_filespec *);
-extern void diff_q(struct diff_queue_struct *, struct diff_filepair *);
+struct diff_filepair *diff_queue(struct diff_queue_struct *,
+				 struct diff_filespec *,
+				 struct diff_filespec *);
+void diff_q(struct diff_queue_struct *, struct diff_filepair *);
 
-extern void diffcore_break(int);
-extern void diffcore_rename(struct diff_options *);
-extern void diffcore_merge_broken(void);
-extern void diffcore_pickaxe(struct diff_options *);
-extern void diffcore_order(const char *orderfile);
+void diffcore_break(int);
+void diffcore_rename(struct diff_options *);
+void diffcore_merge_broken(void);
+void diffcore_pickaxe(struct diff_options *);
+void diffcore_order(const char *orderfile);
 
 /* low-level interface to diffcore_order */
 struct obj_order {
@@ -138,11 +138,11 @@ void diff_debug_queue(const char *, struct diff_queue_struct *);
 #define diff_debug_queue(a,b) do { /* nothing */ } while (0)
 #endif
 
-extern int diffcore_count_changes(struct diff_filespec *src,
-				  struct diff_filespec *dst,
-				  void **src_count_p,
-				  void **dst_count_p,
-				  unsigned long *src_copied,
-				  unsigned long *literal_added);
+int diffcore_count_changes(struct diff_filespec *src,
+			   struct diff_filespec *dst,
+			   void **src_count_p,
+			   void **dst_count_p,
+			   unsigned long *src_copied,
+			   unsigned long *literal_added);
 
 #endif
