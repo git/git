@@ -122,9 +122,9 @@ merge' may need to update.
 
 To avoid recording unrelated changes in the merge commit,
 'git pull' and 'git merge' will also abort if there are any changes
-registered in the index relative to the `HEAD` commit.  (One
-exception is when the changed index entries are in the state that
-would result from the merge already.)
+registered in the index relative to the `HEAD` commit.  (Special
+narrow exceptions to this rule may exist depending on which merge
+strategy is in use, but generally, the index must match HEAD.)
 
 If all named commits are already ancestors of `HEAD`, 'git merge'
 will exit early with the message "Already up to date."
