@@ -137,6 +137,35 @@ test_expect_success 'merge-recursive, when index==head but head!=HEAD' '
 	test_i18ngrep "Already up to date" out
 '
 
+test_expect_failure 'recursive, when file has staged changes not matching HEAD nor what a merge would give' '
+	git reset --hard &&
+	git checkout B^0 &&
+
+	mkdir subdir &&
+	test_seq 1 10 >subdir/a &&
+	git add subdir/a &&
+
+	# HEAD has no subdir/a; merge would write 1..11 to subdir/a;
+	# Since subdir/a matches neither HEAD nor what the merge would write
+	# to that file, the merge should fail to avoid overwriting what is
+	# currently found in subdir/a
+	test_must_fail git merge -s recursive E^0
+'
+
+test_expect_failure 'recursive, when file has staged changes matching what a merge would give' '
+	git reset --hard &&
+	git checkout B^0 &&
+
+	mkdir subdir &&
+	test_seq 1 11 >subdir/a &&
+	git add subdir/a &&
+
+	# HEAD has no subdir/a; merge would write 1..11 to subdir/a;
+	# Since subdir/a matches what the merge would write to that file,
+	# the merge should be safe to proceed
+	git merge -s recursive E^0
+'
+
 test_expect_success 'octopus, unrelated file touched' '
 	git reset --hard &&
 	git checkout B^0 &&
