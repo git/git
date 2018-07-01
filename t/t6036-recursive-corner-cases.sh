@@ -1189,4 +1189,71 @@ test_expect_failure 'check conflicting entry types (submodule vs symlink)' '
 	)
 '
 
+#
+# criss-cross with regular files that have conflicting modes:
+#
+#      B   D
+#      o---o
+#     / \ / \
+#  A o   X   ? F
+#     \ / \ /
+#      o---o
+#      C   E
+#
+#   Commit A: nothing of note
+#   Commit B: introduce file source_me.bash, not executable
+#   Commit C: introduce file source_me.bash, executable
+#   Commit D: merge B&C, resolving in favor of B
+#   Commit E: merge B&C, resolving in favor of C
+#
+# This is an obvious add/add mode conflict.  Can git detect it?
+
+test_expect_success 'setup conflicting modes for regular file' '
+	test_create_repo regular-file-mode-conflict &&
+	(
+		cd regular-file-mode-conflict &&
+
+		touch irrelevant-file &&
+		git add irrelevant-file &&
+		git commit -m A &&
+		git tag A &&
+
+		git checkout -b B A &&
+		echo "command_to_run" >source_me.bash &&
+		git add source_me.bash &&
+		git commit -m B &&
+
+		git checkout -b C A &&
+		echo "command_to_run" >source_me.bash &&
+		git add source_me.bash &&
+		test_chmod +x source_me.bash &&
+		git commit -m C &&
+
+		git checkout -q B^0 &&
+		git merge -s ours -m D C^0 &&
+		git tag D &&
+
+		git checkout -q C^0 &&
+		git merge -s ours -m E B^0 &&
+		git tag E
+	)
+'
+
+test_expect_failure 'check conflicting modes for regular file' '
+	(
+		cd regular-file-mode-conflict &&
+
+		git checkout D^0 &&
+
+		test_must_fail git merge -s recursive E^0 &&
+
+		git ls-files -s >out &&
+		test_line_count = 3 out &&
+		git ls-files -u >out &&
+		test_line_count = 2 out &&
+		git ls-files -o >out &&
+		test_line_count = 1 out
+	)
+'
+
 test_done
