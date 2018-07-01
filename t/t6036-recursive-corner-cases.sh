@@ -805,4 +805,71 @@ test_expect_success 'virtual merge base handles rename/rename(1to2)/add-dest' '
 	)
 '
 
+#
+# criss-cross with modify/modify on a symlink:
+#
+#      B   D
+#      o---o
+#     / \ / \
+#  A o   X   ? F
+#     \ / \ /
+#      o---o
+#      C   E
+#
+#   Commit A: simple simlink fickle->lagoon
+#   Commit B: redirect fickle->disneyland
+#   Commit C: redirect fickle->home
+#   Commit D: merge B&C, resolving in favor of B
+#   Commit E: merge B&C, resolving in favor of C
+#
+# This is an obvious modify/modify conflict for the symlink 'fickle'.  Can
+# git detect it?
+
+test_expect_success 'setup symlink modify/modify' '
+	test_create_repo symlink-modify-modify &&
+	(
+		cd symlink-modify-modify &&
+
+		test_ln_s_add lagoon fickle &&
+		git commit -m A &&
+		git tag A &&
+
+		git checkout -b B A &&
+		git rm fickle &&
+		test_ln_s_add disneyland fickle &&
+		git commit -m B &&
+
+		git checkout -b C A &&
+		git rm fickle &&
+		test_ln_s_add home fickle &&
+		git add fickle &&
+		git commit -m C &&
+
+		git checkout -q B^0 &&
+		git merge -s ours -m D C^0 &&
+		git tag D &&
+
+		git checkout -q C^0 &&
+		git merge -s ours -m E B^0 &&
+		git tag E
+	)
+'
+
+test_expect_failure 'check symlink modify/modify' '
+	(
+		cd symlink-modify-modify &&
+
+		git checkout D^0 &&
+
+		test_must_fail git merge -s recursive E^0 &&
+
+		git ls-files -s >out &&
+		test_line_count = 3 out &&
+		git ls-files -u >out &&
+		test_line_count = 3 out &&
+		git ls-files -o >out &&
+		test_line_count = 1 out
+	)
+'
+
 test_done
