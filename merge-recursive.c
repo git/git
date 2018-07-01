@@ -1984,9 +1984,9 @@ int merge_trees(struct merge_options *o,
 		struct strbuf sb = STRBUF_INIT;
 
 		if (!o->call_depth && index_has_changes(&the_index, &sb)) {
-			err(o, _("Dirty index: cannot merge (dirty: %s)"),
+			err(o, _("Your local changes to the following files would be overwritten by merge:\n  %s"),
 			    sb.buf);
-			return 0;
+			return -1;
 		}
 		output(o, 0, _("Already up to date!"));
 		*result = head;
