@@ -1114,4 +1114,79 @@ test_expect_failure 'check submodule add/add' '
 	)
 '
 
+#
+# criss-cross with conflicting entry types:
+#
+#      B   D
+#      o---o
+#     / \ / \
+#  A o   X   ? F
+#     \ / \ /
+#      o---o
+#      C   E
+#
+#   Commit A: nothing of note
+#   Commit B: introduce submodule 'path'
+#   Commit C: introduce symlink 'path'
+#   Commit D: merge B&C, resolving in favor of B
+#   Commit E: merge B&C, resolving in favor of C
+#
+# This is an obvious add/add conflict for 'path'.  Can git detect it?
+
+test_expect_success 'setup conflicting entry types (submodule vs symlink)' '
+	test_create_repo submodule-symlink-add-add &&
+	(
+		cd submodule-symlink-add-add &&
+
+		test_create_repo path &&
+		(
+			cd path &&
+			touch file-B &&
+			git add file-B &&
+			git commit -m B &&
+			git tag B
+		) &&
+
+		touch irrelevant-file &&
+		git add irrelevant-file &&
+		git commit -m A &&
+		git tag A &&
+
+		git checkout -b B A &&
+		git -C path reset --hard B &&
+		git add path &&
+		git commit -m B &&
+
+		git checkout -b C A &&
+		rm -rf path/ &&
+		test_ln_s_add irrelevant-file path &&
+		git commit -m C &&
+
+		git checkout -q B^0 &&
+		git merge -s ours -m D C^0 &&
+		git tag D &&
+
+		git checkout -q C^0 &&
+		git merge -s ours -m E B^0 &&
+		git tag E
+	)
+'
+
+test_expect_failure 'check conflicting entry types (submodule vs symlink)' '
+	(
+		cd submodule-symlink-add-add &&
+
+		git checkout D^0 &&
+
+		test_must_fail git merge -s recursive E^0 &&
+
+		git ls-files -s >out &&
+		test_line_count = 3 out &&
+		git ls-files -u >out &&
+		test_line_count = 2 out &&
+		git ls-files -o >out &&
+		test_line_count = 1 out
+	)
+'
+
 test_done
