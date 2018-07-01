@@ -1986,11 +1986,14 @@ int unmerged_index(const struct index_state *istate)
 	return 0;
 }
 
-int index_has_changes(struct strbuf *sb)
+int index_has_changes(const struct index_state *istate, struct strbuf *sb)
 {
 	struct object_id head;
 	int i;
 
+	if (istate != &the_index) {
+		BUG("index_has_changes cannot yet accept istate != &the_index; do_diff_cache needs updating first.");
+	}
 	if (!get_oid_tree("HEAD", &head)) {
 		struct diff_options opt;
 
@@ -2008,12 +2011,12 @@ int index_has_changes(struct strbuf *sb)
 		diff_flush(&opt);
 		return opt.flags.has_changes != 0;
 	} else {
-		for (i = 0; sb && i < the_index.cache_nr; i++) {
+		for (i = 0; sb && i < istate->cache_nr; i++) {
 			if (i)
 				strbuf_addch(sb, ' ');
-			strbuf_addstr(sb, the_index.cache[i]->name);
+			strbuf_addstr(sb, istate->cache[i]->name);
 		}
-		return !!the_index.cache_nr;
+		return !!istate->cache_nr;
 	}
 }
 
