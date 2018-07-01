@@ -126,6 +126,17 @@ test_expect_failure 'recursive, when merge branch matches merge base' '
 	test_path_is_missing .git/MERGE_HEAD
 '
 
+test_expect_failure 'merge-recursive, when index==head but head!=HEAD' '
+	git reset --hard &&
+	git checkout C^0 &&
+
+	# Make index match B
+	git diff C B -- | git apply --cached &&
+	# Merge B & F, with B as "head"
+	git merge-recursive A -- B F > out &&
+	test_i18ngrep "Already up to date" out
+'
+
 test_expect_success 'octopus, unrelated file touched' '
 	git reset --hard &&
 	git checkout B^0 &&
