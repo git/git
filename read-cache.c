@@ -1986,22 +1986,26 @@ int unmerged_index(const struct index_state *istate)
 	return 0;
 }
 
-int index_has_changes(const struct index_state *istate, struct strbuf *sb)
+int index_has_changes(const struct index_state *istate,
+		      struct tree *tree,
+		      struct strbuf *sb)
 {
-	struct object_id head;
+	struct object_id cmp;
 	int i;
 
 	if (istate != &the_index) {
 		BUG("index_has_changes cannot yet accept istate != &the_index; do_diff_cache needs updating first.");
 	}
-	if (!get_oid_tree("HEAD", &head)) {
+	if (tree)
+		cmp = tree->object.oid;
+	if (tree || !get_oid_tree("HEAD", &cmp)) {
 		struct diff_options opt;
 
 		diff_setup(&opt);
 		opt.flags.exit_with_status = 1;
 		if (!sb)
 			opt.flags.quick = 1;
-		do_diff_cache(&head, &opt);
+		do_diff_cache(&cmp, &opt);
 		diffcore_std(&opt);
 		for (i = 0; sb && i < diff_queued_diff.nr; i++) {
 			if (i)

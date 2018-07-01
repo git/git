@@ -126,7 +126,7 @@ test_expect_success 'recursive, when merge branch matches merge base' '
 	test_path_is_missing .git/MERGE_HEAD
 '
 
-test_expect_failure 'merge-recursive, when index==head but head!=HEAD' '
+test_expect_success 'merge-recursive, when index==head but head!=HEAD' '
 	git reset --hard &&
 	git checkout C^0 &&
 
