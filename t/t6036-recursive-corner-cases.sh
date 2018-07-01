@@ -938,4 +938,92 @@ test_expect_failure 'check symlink add/add' '
 	)
 '
 
+#
+# criss-cross with modify/modify on a submodule:
+#
+#      B   D
+#      o---o
+#     / \ / \
+#  A o   X   ? F
+#     \ / \ /
+#      o---o
+#      C   E
+#
+#   Commit A: simple submodule repo
+#   Commit B: update repo
+#   Commit C: update repo differently
+#   Commit D: merge B&C, resolving in favor of B
+#   Commit E: merge B&C, resolving in favor of C
+#
+# This is an obvious modify/modify conflict for the submodule 'repo'.  Can
+# git detect it?
+
+test_expect_success 'setup submodule modify/modify' '
+	test_create_repo submodule-modify-modify &&
+	(
+		cd submodule-modify-modify &&
+
+		test_create_repo submod &&
+		(
+			cd submod &&
+			touch file-A &&
+			git add file-A &&
+			git commit -m A &&
+			git tag A &&
+
+			git checkout -b B A &&
+			touch file-B &&
+			git add file-B &&
+			git commit -m B &&
+			git tag B &&
+
+			git checkout -b C A &&
+			touch file-C &&
+			git add file-C &&
+			git commit -m C &&
+			git tag C
+		) &&
+
+		git -C submod reset --hard A &&
+		git add submod &&
+		git commit -m A &&
+		git tag A &&
+
+		git checkout -b B A &&
+		git -C submod reset --hard B &&
+		git add submod &&
+		git commit -m B &&
+
+		git checkout -b C A &&
+		git -C submod reset --hard C &&
+		git add submod &&
+		git commit -m C &&
+
+		git checkout -q B^0 &&
+		git merge -s ours -m D C^0 &&
+		git tag D &&
+
+		git checkout -q C^0 &&
+		git merge -s ours -m E B^0 &&
+		git tag E
+	)
+'
+
+test_expect_failure 'check submodule modify/modify' '
+	(
+		cd submodule-modify-modify &&
+
+		git checkout D^0 &&
+
+		test_must_fail git merge -s recursive E^0 &&
+
+		git ls-files -s >out &&
+		test_line_count = 3 out &&
+		git ls-files -u >out &&
+		test_line_count = 3 out &&
+		git ls-files -o >out &&
+		test_line_count = 1 out
+	)
+'
+
 test_done
