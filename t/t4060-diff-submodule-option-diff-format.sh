@@ -721,7 +721,7 @@ test_expect_success 'given commit' '
 test_expect_success 'setup .git file for sm2' '
 	(cd sm2 &&
 	 REAL="$(pwd)/../.real" &&
-	 mv .git "$REAL"
+	 mv .git "$REAL" &&
 	 echo "gitdir: $REAL" >.git)
 '
 

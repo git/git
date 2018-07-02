@@ -498,7 +498,7 @@ test_expect_success 'given commit --submodule=short' '
 test_expect_success 'setup .git file for sm2' '
 	(cd sm2 &&
 	 REAL="$(pwd)/../.real" &&
-	 mv .git "$REAL"
+	 mv .git "$REAL" &&
 	 echo "gitdir: $REAL" >.git)
 '
 
@@ -527,7 +527,7 @@ test_expect_success 'diff --submodule with objects referenced by alternates' '
 		git commit -m "sub a"
 	) &&
 	(cd sub_alt &&
-		sha1_before=$(git rev-parse --short HEAD)
+		sha1_before=$(git rev-parse --short HEAD) &&
 		echo b >b &&
 		git add b &&
 		git commit -m b &&

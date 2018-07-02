@@ -27,6 +27,6 @@ test_expect_success 'setup' \
 
 test_expect_success \
 	'check if contextually independent diffs for the same file apply' \
-	'( git diff test~2 test~1; git diff test~1 test~0 )| git apply'
+	'( git diff test~2 test~1 && git diff test~1 test~0 )| git apply'
 
 test_done
