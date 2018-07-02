@@ -42,6 +42,22 @@ the current repository has the same history as the source repository.
 	.git/shallow. This option updates .git/shallow and accept such
 	refs.
 
+--negotiation-tip=<commit|glob>::
+	By default, Git will report, to the server, commits reachable
+	from all local refs to find common commits in an attempt to
+	reduce the size of the to-be-received packfile. If specified,
+	Git will only report commits reachable from the given tips.
+	This is useful to speed up fetches when the user knows which
+	local ref is likely to have commits in common with the
+	upstream ref being fetched.
++
+This option may be specified more than once; if so, Git will report
+commits reachable from any of the given commits.
++
+The argument to this option may be a glob on ref names, a ref, or the (possibly
+abbreviated) SHA-1 of a commit. Specifying a glob is equivalent to specifying
+this option multiple times, one for each matching ref name.
+
 ifndef::git-pull[]
 --dry-run::
 	Show what would be done, without making any changes.
