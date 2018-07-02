@@ -123,7 +123,7 @@ static void replace_entry(size_t pos, void *data)
 	src->ce_flags |= CE_UPDATE_IN_BASE;
 	src->ce_namelen = dst->ce_namelen;
 	copy_cache_entry(dst, src);
-	free(src);
+	discard_cache_entry(src);
 	si->nr_replacements++;
 }
 
@@ -224,7 +224,7 @@ void prepare_to_write_split_index(struct index_state *istate)
 			base->ce_flags = base_flags;
 			if (ret)
 				ce->ce_flags |= CE_UPDATE_IN_BASE;
-			free(base);
+			discard_cache_entry(base);
 			si->base->cache[ce->index - 1] = ce;
 		}
 		for (i = 0; i < si->base->cache_nr; i++) {
@@ -301,7 +301,7 @@ void save_or_free_index_entry(struct index_state *istate, struct cache_entry *ce
 	    ce == istate->split_index->base->cache[ce->index - 1])
 		ce->ce_flags |= CE_REMOVE;
 	else
-		free(ce);
+		discard_cache_entry(ce);
 }
 
 void replace_index_entry_in_base(struct index_state *istate,
@@ -314,7 +314,7 @@ void replace_index_entry_in_base(struct index_state *istate,
 	    old_entry->index <= istate->split_index->base->cache_nr) {
 		new_entry->index = old_entry->index;
 		if (old_entry != istate->split_index->base->cache[new_entry->index - 1])
-			free(istate->split_index->base->cache[new_entry->index - 1]);
+			discard_cache_entry(istate->split_index->base->cache[new_entry->index - 1]);
 		istate->split_index->base->cache[new_entry->index - 1] = new_entry;
 	}
 }
