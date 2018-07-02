@@ -123,9 +123,9 @@ test_expect_success 'checkout -b new my-side@{u} forks from the same' '
 
 test_expect_success 'merge my-side@{u} records the correct name' '
 (
-	cd clone || exit
-	git checkout master || exit
-	git branch -D new ;# can fail but is ok
+	cd clone &&
+	git checkout master &&
+	test_might_fail git branch -D new &&
 	git branch -t new my-side@{u} &&
 	git merge -s ours new@{u} &&
 	git show -s --pretty=tformat:%s >actual &&
