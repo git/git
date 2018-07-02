@@ -352,7 +352,7 @@ test_expect_success 'rename/directory conflict + content merge conflict' '
 			base:file   left-conflict:newfile  right:file &&
 		git rev-parse >actual                                 \
 			:1:newfile  :2:newfile             :3:newfile &&
-		test_cmp expect actual
+		test_cmp expect actual &&
 
 		test_path_is_file newfile/realfile &&
 		test_path_is_file newfile~HEAD
@@ -580,7 +580,7 @@ test_expect_failure 'detect conflict with rename/rename(1to2)/add-source merge' 
 			C:a   A:a   B:b   C:C &&
 		git rev-parse >actual          \
 			:3:a  :1:a  :2:b  :3:c &&
-		test_cmp expect actual
+		test_cmp expect actual &&
 
 		test_path_is_file a &&
 		test_path_is_file b &&
@@ -680,13 +680,13 @@ test_expect_success 'rename/rename/add-dest merge still knows about conflicting 
 			A:a   C:b   B:b   C:c   B:c &&
 		git rev-parse >actual                \
 			:1:a  :2:b  :3:b  :2:c  :3:c &&
-		test_cmp expect actual
+		test_cmp expect actual &&
 
 		git rev-parse >expect               \
 			C:c     B:c     C:b     B:b &&
 		git hash-object >actual                \
 			c~HEAD  c~B\^0  b~HEAD  b~B\^0 &&
-		test_cmp expect actual
+		test_cmp expect actual &&
 
 		test_path_is_missing b &&
 		test_path_is_missing c
