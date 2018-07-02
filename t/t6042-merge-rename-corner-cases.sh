@@ -693,4 +693,70 @@ test_expect_success 'rename/rename/add-dest merge still knows about conflicting 
 	)
 '
 
+# Testcase rad, rename/add/delete
+#   Commit O: foo
+#   Commit A: rm foo, add different bar
+#   Commit B: rename foo->bar
+#   Expected: CONFLICT (rename/add/delete), two-way merged bar
+
+test_expect_success 'rad-setup: rename/add/delete conflict' '
+	test_create_repo rad &&
+	(
+		cd rad &&
+		echo "original file" >foo &&
+		git add foo &&
+		git commit -m "original" &&
+
+		git branch O &&
+		git branch A &&
+		git branch B &&
+
+		git checkout A &&
+		git rm foo &&
+		echo "different file" >bar &&
+		git add bar &&
+		git commit -m "Remove foo, add bar" &&
+
+		git checkout B &&
+		git mv foo bar &&
+		git commit -m "rename foo to bar"
+	)
+'
+
+test_expect_failure 'rad-check: rename/add/delete conflict' '
+	(
+		cd rad &&
+
+		git checkout B^0 &&
+		test_must_fail git merge -s recursive A^0 >out 2>err &&
+
+		# Not sure whether the output should contain just one
+		# "CONFLICT (rename/add/delete)" line, or if it should break
+		# it into a pair of "CONFLICT (rename/delete)" and
+		# "CONFLICT (rename/add)"; allow for either.
+		test_i18ngrep "CONFLICT (rename.*add)" out &&
+		test_i18ngrep "CONFLICT (rename.*delete)" out &&
+		test_must_be_empty err &&
+
+		git ls-files -s >file_count &&
+		test_line_count = 2 file_count &&
+		git ls-files -u >file_count &&
+		test_line_count = 2 file_count &&
+		git ls-files -o >file_count &&
+		test_line_count = 2 file_count &&
+
+		git rev-parse >actual \
+			:2:bar :3:bar &&
+		git rev-parse >expect \
+			B:bar  A:bar  &&
+
+		test_cmp file_is_missing foo &&
+		# bar should have two-way merged contents of the different
+		# versions of bar; check that content from both sides is
+		# present.
+		grep original bar &&
+		grep different bar
+	)
+'
+
 test_done
