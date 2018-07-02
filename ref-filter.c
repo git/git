@@ -1769,6 +1769,15 @@ static int for_each_fullref_in_pattern(struct ref_filter *filter,
 		return for_each_fullref_in("", cb, cb_data, broken);
 	}
 
+	if (filter->ignore_case) {
+		/*
+		 * we can't handle case-insensitive comparisons,
+		 * so just return everything and let the caller
+		 * sort it out.
+		 */
+		return for_each_fullref_in("", cb, cb_data, broken);
+	}
+
 	if (!filter->name_patterns[0]) {
 		/* no patterns; we have to look at everything */
 		return for_each_fullref_in("", cb, cb_data, broken);
