@@ -161,7 +161,7 @@ test_expect_success 'cleanup after failure' '
 test_expect_success 'ktext expansion should not expand multi-line $File::' '
 	(
 		cd "$cli" &&
-		cat >lv.pm <<-\EOF
+		cat >lv.pm <<-\EOF &&
 		my $wanted = sub { my $f = $File::Find::name;
 				    if ( -f && $f =~ /foo/ ) {
 		EOF

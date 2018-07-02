@@ -30,7 +30,7 @@ test_expect_success 'symlinked directory' '
 	(
 		cd "$cli" &&
 		p4 sync &&
-		test -L some/sub/directory/subdir2
+		test -L some/sub/directory/subdir2 &&
 		test_path_is_file some/sub/directory/subdir2/file.t
 	)
 

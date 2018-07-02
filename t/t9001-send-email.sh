@@ -330,7 +330,7 @@ test_expect_success $PREREQ 'Show all headers' '
 
 test_expect_success $PREREQ 'Prompting works' '
 	clean_fake_sendmail &&
-	(echo "to@example.com"
+	(echo "to@example.com" &&
 	 echo ""
 	) | GIT_SEND_EMAIL_NOTTY=1 git send-email \
 		--smtp-server="$(pwd)/fake.sendmail" \
@@ -470,8 +470,8 @@ test_expect_success $PREREQ 'Invalid In-Reply-To' '
 
 test_expect_success $PREREQ 'Valid In-Reply-To when prompting' '
 	clean_fake_sendmail &&
-	(echo "From Example <from@example.com>"
-	 echo "To Example <to@example.com>"
+	(echo "From Example <from@example.com>" &&
+	 echo "To Example <to@example.com>" &&
 	 echo ""
 	) | GIT_SEND_EMAIL_NOTTY=1 git send-email \
 		--smtp-server="$(pwd)/fake.sendmail" \

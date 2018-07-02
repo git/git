@@ -529,7 +529,7 @@ test_expect_success 'prompt - bash color pc mode - branch name' '
 	printf "BEFORE: (${c_green}\${__git_ps1_branch_name}${c_clear}):AFTER\\nmaster" >expected &&
 	(
 		GIT_PS1_SHOWCOLORHINTS=y &&
-		__git_ps1 "BEFORE:" ":AFTER" >"$actual"
+		__git_ps1 "BEFORE:" ":AFTER" >"$actual" &&
 		printf "%s\\n%s" "$PS1" "${__git_ps1_branch_name}" >"$actual"
 	) &&
 	test_cmp expected "$actual"

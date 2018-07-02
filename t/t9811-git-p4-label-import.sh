@@ -133,7 +133,7 @@ test_expect_success 'export git tags to p4' '
 		p4 labels ... | grep LIGHTWEIGHT_TAG &&
 		p4 label -o GIT_TAG_1 | grep "tag created in git:xyzzy" &&
 		p4 sync ...@GIT_TAG_1 &&
-		! test -f main/f10
+		! test -f main/f10 &&
 		p4 sync ...@GIT_TAG_2 &&
 		test -f main/f10
 	)
