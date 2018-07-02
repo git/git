@@ -32,7 +32,7 @@ test_expect_success basics '
 		test_create_repo xyzzy &&
 		cd xyzzy &&
 		>file &&
-		git add file
+		git add file &&
 		git commit -m "sub initial"
 	) &&
 	git add xyzzy &&
