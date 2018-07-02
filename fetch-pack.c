@@ -19,6 +19,7 @@
 #include "sha1-array.h"
 #include "oidset.h"
 #include "packfile.h"
+#include "connected.h"
 
 static int transfer_unpack_limit = -1;
 static int fetch_unpack_limit = -1;
@@ -1596,6 +1597,18 @@ static void update_shallow(struct fetch_pack_args *args,
 	oid_array_clear(&ref);
 }
 
+static int iterate_ref_map(void *cb_data, struct object_id *oid)
+{
+	struct ref **rm = cb_data;
+	struct ref *ref = *rm;
+
+	if (!ref)
+		return -1; /* end of the list */
+	*rm = ref->next;
+	oidcpy(oid, &ref->old_oid);
+	return 0;
+}
+
 struct ref *fetch_pack(struct fetch_pack_args *args,
 		       int fd[], struct child_process *conn,
 		       const struct ref *ref,
@@ -1624,7 +1637,25 @@ struct ref *fetch_pack(struct fetch_pack_args *args,
 		ref_cpy = do_fetch_pack(args, fd, ref, sought, nr_sought,
 					&si, pack_lockfile);
 	reprepare_packed_git(the_repository);
+
+	if (!args->cloning && args->deepen) {
+		struct check_connected_options opt = CHECK_CONNECTED_INIT;
+		struct ref *iterator = ref_cpy;
+		opt.shallow_file = alternate_shallow_file;
+		if (args->deepen)
+			opt.is_deepening_fetch = 1;
+		if (check_connected(iterate_ref_map, &iterator, &opt)) {
+			error(_("remote did not send all necessary objects"));
+			free_refs(ref_cpy);
+			ref_cpy = NULL;
+			rollback_lock_file(&shallow_lock);
+			goto cleanup;
+		}
+		args->connectivity_checked = 1;
+	}
+
 	update_shallow(args, ref_cpy, &si);
+cleanup:
 	clear_shallow_info(&si);
 	return ref_cpy;
 }

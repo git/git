@@ -350,6 +350,7 @@ static int fetch_refs_via_pack(struct transport *transport,
 	data->got_remote_heads = 0;
 	data->options.self_contained_and_connected =
 		args.self_contained_and_connected;
+	data->options.connectivity_checked = args.connectivity_checked;
 
 	if (refs == NULL)
 		ret = -1;

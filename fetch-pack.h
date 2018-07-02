@@ -41,6 +41,21 @@ struct fetch_pack_args {
 	 * regardless of which object flags it uses (if any).
 	 */
 	unsigned no_dependents:1;
+
+	/*
+	 * Because fetch_pack() overwrites the shallow file upon a
+	 * successful deepening non-clone fetch, if this struct
+	 * specifies such a fetch, fetch_pack() needs to perform a
+	 * connectivity check before deciding if a fetch is successful
+	 * (and overwriting the shallow file). fetch_pack() sets this
+	 * field to 1 if such a connectivity check was performed.
+	 *
+	 * This is different from check_self_contained_and_connected
+	 * in that the former allows existing objects in the
+	 * repository to satisfy connectivity needs, whereas the
+	 * latter doesn't.
+	 */
+	unsigned connectivity_checked:1;
 };
 
 /*

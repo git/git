@@ -769,7 +769,7 @@ static int iterate_ref_map(void *cb_data, struct object_id *oid)
 }
 
 static int store_updated_refs(const char *raw_url, const char *remote_name,
-		struct ref *ref_map)
+			      int connectivity_checked, struct ref *ref_map)
 {
 	FILE *fp;
 	struct commit *commit;
@@ -791,10 +791,12 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 	else
 		url = xstrdup("foreign");
 
-	rm = ref_map;
-	if (check_connected(iterate_ref_map, &rm, NULL)) {
-		rc = error(_("%s did not send all necessary objects\n"), url);
-		goto abort;
+	if (!connectivity_checked) {
+		rm = ref_map;
+		if (check_connected(iterate_ref_map, &rm, NULL)) {
+			rc = error(_("%s did not send all necessary objects\n"), url);
+			goto abort;
+		}
 	}
 
 	prepare_format_display(ref_map);
@@ -966,8 +968,11 @@ static int fetch_refs(struct transport *transport, struct ref *ref_map,
 /* Update local refs based on the ref values fetched from a remote */
 static int consume_refs(struct transport *transport, struct ref *ref_map)
 {
+	int connectivity_checked = transport->smart_options
+		? transport->smart_options->connectivity_checked : 0;
 	int ret = store_updated_refs(transport->url,
 				     transport->remote->name,
+				     connectivity_checked,
 				     ref_map);
 	transport_unlock_pack(transport);
 	return ret;
