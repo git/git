@@ -5,18 +5,63 @@
 #include "cache.h"
 #include "mem-pool.h"
 
-static struct mp_block *mem_pool_alloc_block(struct mem_pool *mem_pool, size_t block_alloc)
+#define BLOCK_GROWTH_SIZE 1024*1024 - sizeof(struct mp_block);
+
+/*
+ * Allocate a new mp_block and insert it after the block specified in
+ * `insert_after`. If `insert_after` is NULL, then insert block at the
+ * head of the linked list.
+ */
+static struct mp_block *mem_pool_alloc_block(struct mem_pool *mem_pool, size_t block_alloc, struct mp_block *insert_after)
 {
 	struct mp_block *p;
 
 	mem_pool->pool_alloc += sizeof(struct mp_block) + block_alloc;
 	p = xmalloc(st_add(sizeof(struct mp_block), block_alloc));
-	p->next_block = mem_pool->mp_block;
+
 	p->next_free = (char *)p->space;
 	p->end = p->next_free + block_alloc;
-	mem_pool->mp_block = p;
+
+	if (insert_after) {
+		p->next_block = insert_after->next_block;
+		insert_after->next_block = p;
+	} else {
+		p->next_block = mem_pool->mp_block;
+		mem_pool->mp_block = p;
+	}
 
 	return p;
+}
+
+void mem_pool_init(struct mem_pool **mem_pool, size_t initial_size)
+{
+	struct mem_pool *pool;
+
+	if (*mem_pool)
+		return;
+
+	pool = xcalloc(1, sizeof(*pool));
+
+	pool->block_alloc = BLOCK_GROWTH_SIZE;
+
+	if (initial_size > 0)
+		mem_pool_alloc_block(pool, initial_size, NULL);
+
+	*mem_pool = pool;
+}
+
+void mem_pool_discard(struct mem_pool *mem_pool)
+{
+	struct mp_block *block, *block_to_free;
+
+	while ((block = mem_pool->mp_block))
+	{
+		block_to_free = block;
+		block = block->next_block;
+		free(block_to_free);
+	}
+
+	free(mem_pool);
 }
 
 void *mem_pool_alloc(struct mem_pool *mem_pool, size_t len)
@@ -33,12 +78,10 @@ void *mem_pool_alloc(struct mem_pool *mem_pool, size_t len)
 		p = mem_pool->mp_block;
 
 	if (!p) {
-		if (len >= (mem_pool->block_alloc / 2)) {
-			mem_pool->pool_alloc += len;
-			return xmalloc(len);
-		}
+		if (len >= (mem_pool->block_alloc / 2))
+			return mem_pool_alloc_block(mem_pool, len, mem_pool->mp_block);
 
-		p = mem_pool_alloc_block(mem_pool, mem_pool->block_alloc);
+		p = mem_pool_alloc_block(mem_pool, mem_pool->block_alloc, NULL);
 	}
 
 	r = p->next_free;
