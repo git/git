@@ -673,7 +673,6 @@ test_expect_success 'custom merge driver with checkout -m' '
 		do
 			grep $t arm || exit 1
 		done
-		exit 0
 	) &&
 
 	mv arm expect &&
