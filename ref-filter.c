@@ -1714,7 +1714,7 @@ static int match_name_as_path(const struct ref_filter *filter, const char *refna
 		     refname[plen] == '/' ||
 		     p[plen-1] == '/'))
 			return 1;
-		if (!wildmatch(p, refname, WM_PATHNAME))
+		if (!wildmatch(p, refname, flags))
 			return 1;
 	}
 	return 0;
