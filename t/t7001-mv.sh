@@ -509,7 +509,7 @@ test_expect_success 'moving nested submodules' '
 		touch nested_level1 &&
 		git init &&
 		git add . &&
-		git commit -m "nested level 1"
+		git commit -m "nested level 1" &&
 		git submodule add ../sub_nested_nested &&
 		git commit -m "add nested level 2"
 	) &&

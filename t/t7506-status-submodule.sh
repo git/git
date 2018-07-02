@@ -193,9 +193,9 @@ test_expect_success 'status with added and untracked file in modified submodule 
 
 test_expect_success 'setup .git file for sub' '
 	(cd sub &&
-	 rm -f new-file
+	 rm -f new-file &&
 	 REAL="$(pwd)/../.real" &&
-	 mv .git "$REAL"
+	 mv .git "$REAL" &&
 	 echo "gitdir: $REAL" >.git) &&
 	 echo .real >>.gitignore &&
 	 git commit -m "added .real to .gitignore" .gitignore
@@ -209,12 +209,12 @@ test_expect_success 'status with added file in modified submodule with .git file
 
 test_expect_success 'status with a lot of untracked files in the submodule' '
 	(
-		cd sub
+		cd sub &&
 		i=0 &&
 		while test $i -lt 1024
 		do
-			>some-file-$i
-			i=$(( $i + 1 ))
+			>some-file-$i &&
+			i=$(( $i + 1 )) || exit 1
 		done
 	) &&
 	git status --porcelain sub 2>err.actual &&

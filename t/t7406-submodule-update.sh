@@ -865,9 +865,9 @@ test_expect_success 'submodule update places git-dir in superprojects git-dir re
 	 (cd submodule/subsubmodule &&
 	  git log > ../../expected
 	 ) &&
-	 (cd .git/modules/submodule/modules/subsubmodule
+	 (cd .git/modules/submodule/modules/subsubmodule &&
 	  git log > ../../../../../actual
-	 )
+	 ) &&
 	 test_cmp actual expected
 	)
 '
@@ -886,7 +886,7 @@ test_expect_success 'submodule update properly revives a moved submodule' '
 	 git commit -am "pre move" &&
 	 H2=$(git rev-parse --short HEAD) &&
 	 git status | sed "s/$H/XXX/" >expect &&
-	 H=$(cd submodule2; git rev-parse HEAD) &&
+	 H=$(cd submodule2 && git rev-parse HEAD) &&
 	 git rm --cached submodule2 &&
 	 rm -rf submodule2 &&
 	 mkdir -p "moved/sub module" &&
