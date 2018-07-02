@@ -21,16 +21,16 @@ static struct mp_block *mem_pool_alloc_block(struct mem_pool *mem_pool, size_t b
 
 void *mem_pool_alloc(struct mem_pool *mem_pool, size_t len)
 {
-	struct mp_block *p;
+	struct mp_block *p = NULL;
 	void *r;
 
 	/* round up to a 'uintmax_t' alignment */
 	if (len & (sizeof(uintmax_t) - 1))
 		len += sizeof(uintmax_t) - (len & (sizeof(uintmax_t) - 1));
 
-	for (p = mem_pool->mp_block; p; p = p->next_block)
-		if (p->end - p->next_free >= len)
-			break;
+	if (mem_pool->mp_block &&
+	    mem_pool->mp_block->end - mem_pool->mp_block->next_free >= len)
+		p = mem_pool->mp_block;
 
 	if (!p) {
 		if (len >= (mem_pool->block_alloc / 2)) {
