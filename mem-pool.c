@@ -96,3 +96,45 @@ void *mem_pool_calloc(struct mem_pool *mem_pool, size_t count, size_t size)
 	memset(r, 0, len);
 	return r;
 }
+
+int mem_pool_contains(struct mem_pool *mem_pool, void *mem)
+{
+	struct mp_block *p;
+
+	/* Check if memory is allocated in a block */
+	for (p = mem_pool->mp_block; p; p = p->next_block)
+		if ((mem >= ((void *)p->space)) &&
+		    (mem < ((void *)p->end)))
+			return 1;
+
+	return 0;
+}
+
+void mem_pool_combine(struct mem_pool *dst, struct mem_pool *src)
+{
+	struct mp_block *p;
+
+	/* Append the blocks from src to dst */
+	if (dst->mp_block && src->mp_block) {
+		/*
+		 * src and dst have blocks, append
+		 * blocks from src to dst.
+		 */
+		p = dst->mp_block;
+		while (p->next_block)
+			p = p->next_block;
+
+		p->next_block = src->mp_block;
+	} else if (src->mp_block) {
+		/*
+		 * src has blocks, dst is empty.
+		 */
+		dst->mp_block = src->mp_block;
+	} else {
+		/* src is empty, nothing to do. */
+	}
+
+	dst->pool_alloc += src->pool_alloc;
+	src->pool_alloc = 0;
+	src->mp_block = NULL;
+}
