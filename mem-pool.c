@@ -54,7 +54,8 @@ void mem_pool_discard(struct mem_pool *mem_pool)
 {
 	struct mp_block *block, *block_to_free;
 
-	while ((block = mem_pool->mp_block))
+	block = mem_pool->mp_block;
+	while (block)
 	{
 		block_to_free = block;
 		block = block->next_block;

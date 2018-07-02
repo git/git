@@ -46,6 +46,48 @@
 		 CE_ENTRY_ADDED | CE_ENTRY_REMOVED | CE_ENTRY_CHANGED | \
 		 SPLIT_INDEX_ORDERED | UNTRACKED_CHANGED | FSMONITOR_CHANGED)
 
+
+/*
+ * This is an estimate of the pathname length in the index.  We use
+ * this for V4 index files to guess the un-deltafied size of the index
+ * in memory because of pathname deltafication.  This is not required
+ * for V2/V3 index formats because their pathnames are not compressed.
+ * If the initial amount of memory set aside is not sufficient, the
+ * mem pool will allocate extra memory.
+ */
+#define CACHE_ENTRY_PATH_LENGTH 80
+
+static inline struct cache_entry *mem_pool__ce_alloc(struct mem_pool *mem_pool, size_t len)
+{
+	struct cache_entry *ce;
+	ce = mem_pool_alloc(mem_pool, cache_entry_size(len));
+	ce->mem_pool_allocated = 1;
+	return ce;
+}
+
+static inline struct cache_entry *mem_pool__ce_calloc(struct mem_pool *mem_pool, size_t len)
+{
+	struct cache_entry * ce;
+	ce = mem_pool_calloc(mem_pool, 1, cache_entry_size(len));
+	ce->mem_pool_allocated = 1;
+	return ce;
+}
+
+static struct mem_pool *find_mem_pool(struct index_state *istate)
+{
+	struct mem_pool **pool_ptr;
+
+	if (istate->split_index && istate->split_index->base)
+		pool_ptr = &istate->split_index->base->ce_mem_pool;
+	else
+		pool_ptr = &istate->ce_mem_pool;
+
+	if (!*pool_ptr)
+		mem_pool_init(pool_ptr, 0);
+
+	return *pool_ptr;
+}
+
 struct index_state the_index;
 static const char *alternate_index_output;
 
@@ -746,7 +788,7 @@ int add_file_to_index(struct index_state *istate, const char *path, int flags)
 
 struct cache_entry *make_empty_cache_entry(struct index_state *istate, size_t len)
 {
-	return xcalloc(1, cache_entry_size(len));
+	return mem_pool__ce_calloc(find_mem_pool(istate), len);
 }
 
 struct cache_entry *make_empty_transient_cache_entry(size_t len)
@@ -1668,13 +1710,13 @@ int read_index(struct index_state *istate)
 	return read_index_from(istate, get_index_file(), get_git_dir());
 }
 
-static struct cache_entry *cache_entry_from_ondisk(struct index_state *istate,
+static struct cache_entry *cache_entry_from_ondisk(struct mem_pool *mem_pool,
 						   struct ondisk_cache_entry *ondisk,
 						   unsigned int flags,
 						   const char *name,
 						   size_t len)
 {
-	struct cache_entry *ce = make_empty_cache_entry(istate, len);
+	struct cache_entry *ce = mem_pool__ce_alloc(mem_pool, len);
 
 	ce->ce_stat_data.sd_ctime.sec = get_be32(&ondisk->ctime.sec);
 	ce->ce_stat_data.sd_mtime.sec = get_be32(&ondisk->mtime.sec);
@@ -1716,7 +1758,7 @@ static unsigned long expand_name_field(struct strbuf *name, const char *cp_)
 	return (const char *)ep + 1 - cp_;
 }
 
-static struct cache_entry *create_from_disk(struct index_state *istate,
+static struct cache_entry *create_from_disk(struct mem_pool *mem_pool,
 					    struct ondisk_cache_entry *ondisk,
 					    unsigned long *ent_size,
 					    struct strbuf *previous_name)
@@ -1748,13 +1790,13 @@ static struct cache_entry *create_from_disk(struct index_state *istate,
 		/* v3 and earlier */
 		if (len == CE_NAMEMASK)
 			len = strlen(name);
-		ce = cache_entry_from_ondisk(istate, ondisk, flags, name, len);
+		ce = cache_entry_from_ondisk(mem_pool, ondisk, flags, name, len);
 
 		*ent_size = ondisk_ce_size(ce);
 	} else {
 		unsigned long consumed;
 		consumed = expand_name_field(previous_name, name);
-		ce = cache_entry_from_ondisk(istate, ondisk, flags,
+		ce = cache_entry_from_ondisk(mem_pool, ondisk, flags,
 					     previous_name->buf,
 					     previous_name->len);
 
@@ -1828,6 +1870,22 @@ static void post_read_index_from(struct index_state *istate)
 	tweak_fsmonitor(istate);
 }
 
+static size_t estimate_cache_size_from_compressed(unsigned int entries)
+{
+	return entries * (sizeof(struct cache_entry) + CACHE_ENTRY_PATH_LENGTH);
+}
+
+static size_t estimate_cache_size(size_t ondisk_size, unsigned int entries)
+{
+	long per_entry = sizeof(struct cache_entry) - sizeof(struct ondisk_cache_entry);
+
+	/*
+	 * Account for potential alignment differences.
+	 */
+	per_entry += align_padding_size(sizeof(struct cache_entry), -sizeof(struct ondisk_cache_entry));
+	return ondisk_size + entries * per_entry;
+}
+
 /* remember to discard_cache() before reading a different cache! */
 int do_read_index(struct index_state *istate, const char *path, int must_exist)
 {
@@ -1874,10 +1932,15 @@ int do_read_index(struct index_state *istate, const char *path, int must_exist)
 	istate->cache = xcalloc(istate->cache_alloc, sizeof(*istate->cache));
 	istate->initialized = 1;
 
-	if (istate->version == 4)
+	if (istate->version == 4) {
 		previous_name = &previous_name_buf;
-	else
+		mem_pool_init(&istate->ce_mem_pool,
+			      estimate_cache_size_from_compressed(istate->cache_nr));
+	} else {
 		previous_name = NULL;
+		mem_pool_init(&istate->ce_mem_pool,
+			      estimate_cache_size(mmap_size, istate->cache_nr));
+	}
 
 	src_offset = sizeof(*hdr);
 	for (i = 0; i < istate->cache_nr; i++) {
@@ -1886,7 +1949,7 @@ int do_read_index(struct index_state *istate, const char *path, int must_exist)
 		unsigned long consumed;
 
 		disk_ce = (struct ondisk_cache_entry *)((char *)mmap + src_offset);
-		ce = create_from_disk(istate, disk_ce, &consumed, previous_name);
+		ce = create_from_disk(istate->ce_mem_pool, disk_ce, &consumed, previous_name);
 		set_index_entry(istate, i, ce);
 
 		src_offset += consumed;
@@ -1983,17 +2046,13 @@ int is_index_unborn(struct index_state *istate)
 
 int discard_index(struct index_state *istate)
 {
-	int i;
+	/*
+	 * Cache entries in istate->cache[] should have been allocated
+	 * from the memory pool associated with this index, or from an
+	 * associated split_index. There is no need to free individual
+	 * cache entries.
+	 */
 
-	for (i = 0; i < istate->cache_nr; i++) {
-		if (istate->cache[i]->index &&
-		    istate->split_index &&
-		    istate->split_index->base &&
-		    istate->cache[i]->index <= istate->split_index->base->cache_nr &&
-		    istate->cache[i] == istate->split_index->base->cache[istate->cache[i]->index - 1])
-			continue;
-		discard_cache_entry(istate->cache[i]);
-	}
 	resolve_undo_clear_index(istate);
 	istate->cache_nr = 0;
 	istate->cache_changed = 0;
@@ -2007,6 +2066,12 @@ int discard_index(struct index_state *istate)
 	discard_split_index(istate);
 	free_untracked_cache(istate->untracked);
 	istate->untracked = NULL;
+
+	if (istate->ce_mem_pool) {
+		mem_pool_discard(istate->ce_mem_pool);
+		istate->ce_mem_pool = NULL;
+	}
+
 	return 0;
 }
 
@@ -2798,7 +2863,23 @@ void move_index_extensions(struct index_state *dst, struct index_state *src)
 	src->untracked = NULL;
 }
 
+struct cache_entry *dup_cache_entry(const struct cache_entry *ce,
+				    struct index_state *istate)
+{
+	unsigned int size = ce_size(ce);
+	int mem_pool_allocated;
+	struct cache_entry *new_entry = make_empty_cache_entry(istate, ce_namelen(ce));
+	mem_pool_allocated = new_entry->mem_pool_allocated;
+
+	memcpy(new_entry, ce, size);
+	new_entry->mem_pool_allocated = mem_pool_allocated;
+	return new_entry;
+}
+
 void discard_cache_entry(struct cache_entry *ce)
 {
+	if (ce && ce->mem_pool_allocated)
+		return;
+
 	free(ce);
 }
