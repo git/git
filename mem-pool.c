@@ -50,7 +50,7 @@ void mem_pool_init(struct mem_pool **mem_pool, size_t initial_size)
 	*mem_pool = pool;
 }
 
-void mem_pool_discard(struct mem_pool *mem_pool)
+void mem_pool_discard(struct mem_pool *mem_pool, int invalidate_memory)
 {
 	struct mp_block *block, *block_to_free;
 
@@ -59,6 +59,10 @@ void mem_pool_discard(struct mem_pool *mem_pool)
 	{
 		block_to_free = block;
 		block = block->next_block;
+
+		if (invalidate_memory)
+			memset(block_to_free->space, 0xDD, ((char *)block_to_free->end) - ((char *)block_to_free->space));
+
 		free(block_to_free);
 	}
 

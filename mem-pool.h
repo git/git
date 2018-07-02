@@ -29,7 +29,7 @@ void mem_pool_init(struct mem_pool **mem_pool, size_t initial_size);
 /*
  * Discard a memory pool and free all the memory it is responsible for.
  */
-void mem_pool_discard(struct mem_pool *mem_pool);
+void mem_pool_discard(struct mem_pool *mem_pool, int invalidate_memory);
 
 /*
  * Alloc memory from the mem_pool.

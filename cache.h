@@ -381,6 +381,12 @@ struct cache_entry *make_empty_transient_cache_entry(size_t name_len);
 void discard_cache_entry(struct cache_entry *ce);
 
 /*
+ * Check configuration if we should perform extra validation on cache
+ * entries.
+ */
+int should_validate_cache_entries(void);
+
+/*
  * Duplicate a cache_entry. Allocate memory for the new entry from a
  * memory_pool. Takes into account cache_entry fields that are meant
  * for managing the underlying memory allocation of the cache_entry.

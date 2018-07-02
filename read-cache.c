@@ -2050,8 +2050,10 @@ int discard_index(struct index_state *istate)
 	 * Cache entries in istate->cache[] should have been allocated
 	 * from the memory pool associated with this index, or from an
 	 * associated split_index. There is no need to free individual
-	 * cache entries.
+	 * cache entries. validate_cache_entries can detect when this
+	 * assertion does not hold.
 	 */
+	validate_cache_entries(istate);
 
 	resolve_undo_clear_index(istate);
 	istate->cache_nr = 0;
@@ -2068,11 +2070,43 @@ int discard_index(struct index_state *istate)
 	istate->untracked = NULL;
 
 	if (istate->ce_mem_pool) {
-		mem_pool_discard(istate->ce_mem_pool);
+		mem_pool_discard(istate->ce_mem_pool, should_validate_cache_entries());
 		istate->ce_mem_pool = NULL;
 	}
 
 	return 0;
+}
+
+/*
+ * Validate the cache entries of this index.
+ * All cache entries associated with this index
+ * should have been allocated by the memory pool
+ * associated with this index, or by a referenced
+ * split index.
+ */
+void validate_cache_entries(const struct index_state *istate)
+{
+	int i;
+
+	if (!should_validate_cache_entries() ||!istate || !istate->initialized)
+		return;
+
+	for (i = 0; i < istate->cache_nr; i++) {
+		if (!istate) {
+			die("internal error: cache entry is not allocated from expected memory pool");
+		} else if (!istate->ce_mem_pool ||
+			!mem_pool_contains(istate->ce_mem_pool, istate->cache[i])) {
+			if (!istate->split_index ||
+				!istate->split_index->base ||
+				!istate->split_index->base->ce_mem_pool ||
+				!mem_pool_contains(istate->split_index->base->ce_mem_pool, istate->cache[i])) {
+				die("internal error: cache entry is not allocated from expected memory pool");
+			}
+		}
+	}
+
+	if (istate->split_index)
+		validate_cache_entries(istate->split_index->base);
 }
 
 int unmerged_index(const struct index_state *istate)
@@ -2878,8 +2912,25 @@ struct cache_entry *dup_cache_entry(const struct cache_entry *ce,
 
 void discard_cache_entry(struct cache_entry *ce)
 {
+	if (ce && should_validate_cache_entries())
+		memset(ce, 0xCD, cache_entry_size(ce->ce_namelen));
+
 	if (ce && ce->mem_pool_allocated)
 		return;
 
 	free(ce);
+}
+
+int should_validate_cache_entries(void)
+{
+	static int validate_index_cache_entries = -1;
+
+	if (validate_index_cache_entries < 0) {
+		if (getenv("GIT_TEST_VALIDATE_INDEX_CACHE_ENTRIES"))
+			validate_index_cache_entries = 1;
+		else
+			validate_index_cache_entries = 0;
+	}
+
+	return validate_index_cache_entries;
 }
