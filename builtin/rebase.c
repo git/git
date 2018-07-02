@@ -70,6 +70,7 @@ struct rebase_options {
 	const char *state_dir;
 	struct commit *upstream;
 	const char *upstream_name;
+	const char *upstream_arg;
 	char *head_name;
 	struct object_id orig_head;
 	struct commit *onto;
@@ -310,6 +311,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	};
 	const char *branch_name;
 	int ret, flags;
+	int ok_to_skip_pre_rebase = 0;
 	struct strbuf msg = STRBUF_INIT;
 	struct strbuf revisions = STRBUF_INIT;
 	struct object_id merge_base;
@@ -317,6 +319,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		OPT_STRING(0, "onto", &options.onto_name,
 			   N_("revision"),
 			   N_("rebase onto given branch instead of upstream")),
+		OPT_BOOL(0, "no-verify", &ok_to_skip_pre_rebase,
+			 N_("allow pre-rebase hook to run")),
 		OPT_END(),
 	};
 
@@ -382,6 +386,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		options.upstream = peel_committish(options.upstream_name);
 		if (!options.upstream)
 			die(_("invalid upstream '%s'"), options.upstream_name);
+		options.upstream_arg = options.upstream_name;
 	} else
 		die("TODO: upstream for --root");
 
@@ -429,6 +434,12 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		if (get_oid("HEAD", &options.orig_head))
 			die(_("Could not resolve HEAD to a revision"));
 	}
+
+	/* If a hook exists, give it a chance to interrupt*/
+	if (!ok_to_skip_pre_rebase &&
+	    run_hook_le(NULL, "pre-rebase", options.upstream_arg,
+			argc ? argv[0] : NULL, NULL))
+		die(_("The pre-rebase hook refused to rebase."));
 
 	strbuf_addf(&msg, "rebase: checkout %s", options.onto_name);
 	if (reset_head(&options.onto->object.oid, "checkout", NULL, 1))
