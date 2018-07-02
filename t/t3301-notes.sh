@@ -914,7 +914,7 @@ test_expect_success 'git notes copy --stdin' '
 		${indent}
 		${indent}yet another note
 	EOF
-	(echo $(git rev-parse HEAD~3) $(git rev-parse HEAD^); \
+	(echo $(git rev-parse HEAD~3) $(git rev-parse HEAD^) &&
 	echo $(git rev-parse HEAD~2) $(git rev-parse HEAD)) |
 	git notes copy --stdin &&
 	git log -2 >actual &&
@@ -939,7 +939,7 @@ test_expect_success 'git notes copy --for-rewrite (unconfigured)' '
 	EOF
 	test_commit 14th &&
 	test_commit 15th &&
-	(echo $(git rev-parse HEAD~3) $(git rev-parse HEAD^); \
+	(echo $(git rev-parse HEAD~3) $(git rev-parse HEAD^) &&
 	echo $(git rev-parse HEAD~2) $(git rev-parse HEAD)) |
 	git notes copy --for-rewrite=foo &&
 	git log -2 >actual &&
@@ -972,7 +972,7 @@ test_expect_success 'git notes copy --for-rewrite (enabled)' '
 	EOF
 	test_config notes.rewriteMode overwrite &&
 	test_config notes.rewriteRef "refs/notes/*" &&
-	(echo $(git rev-parse HEAD~3) $(git rev-parse HEAD^); \
+	(echo $(git rev-parse HEAD~3) $(git rev-parse HEAD^) &&
 	echo $(git rev-parse HEAD~2) $(git rev-parse HEAD)) |
 	git notes copy --for-rewrite=foo &&
 	git log -2 >actual &&
@@ -1059,7 +1059,7 @@ test_expect_success 'git notes copy --for-rewrite (append two to one)' '
 	git notes add -f -m"append 2" HEAD^^ &&
 	test_config notes.rewriteMode concatenate &&
 	test_config notes.rewriteRef "refs/notes/*" &&
-	(echo $(git rev-parse HEAD^) $(git rev-parse HEAD);
+	(echo $(git rev-parse HEAD^) $(git rev-parse HEAD) &&
 	echo $(git rev-parse HEAD^^) $(git rev-parse HEAD)) |
 	git notes copy --for-rewrite=foo &&
 	git log -1 >actual &&
