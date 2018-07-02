@@ -506,10 +506,10 @@ test_expect_success 'merge of D & E2 fails but has appropriate contents' '
 		test_line_count = 2 out &&
 
 		git rev-parse >expect    \
-			B:a   E2:a/file  c:a/file   A:ignore-me &&
+			B:a   E2:a/file  C:a/file   A:ignore-me &&
 		git rev-parse   >actual   \
 			:2:a  :3:a/file  :1:a/file  :0:ignore-me &&
-		test_cmp expect actual
+		test_cmp expect actual &&
 
 		test_path_is_file a~HEAD
 	)
@@ -533,10 +533,10 @@ test_expect_success 'merge of E2 & D fails but has appropriate contents' '
 		test_line_count = 2 out &&
 
 		git rev-parse >expect    \
-			B:a   E2:a/file  c:a/file   A:ignore-me &&
+			B:a   E2:a/file  C:a/file   A:ignore-me &&
 		git rev-parse   >actual   \
 			:3:a  :2:a/file  :1:a/file  :0:ignore-me &&
-		test_cmp expect actual
+		test_cmp expect actual &&
 
 		test_path_is_file a~D^0
 	)
