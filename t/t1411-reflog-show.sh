@@ -159,9 +159,9 @@ test_expect_success 'git log -g -p shows diffs vs. parents' '
 	git log -1 -p HEAD^ >log.one &&
 	git log -1 -p HEAD >log.two &&
 	(
-		cat log.one; echo
-		cat log.two; echo
-		cat log.one; echo
+		cat log.one && echo &&
+		cat log.two && echo &&
+		cat log.one && echo &&
 		cat log.two
 	) >expect &&
 	test_cmp expect actual

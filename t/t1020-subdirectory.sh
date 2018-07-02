@@ -148,7 +148,7 @@ test_expect_success 'GIT_PREFIX for built-ins' '
 	(
 		cd dir &&
 		echo "change" >two &&
-		GIT_EXTERNAL_DIFF=./diff git diff >../actual
+		GIT_EXTERNAL_DIFF=./diff git diff >../actual &&
 		git checkout -- two
 	) &&
 	test_cmp expect actual

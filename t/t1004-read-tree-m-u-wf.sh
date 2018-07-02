@@ -210,10 +210,10 @@ test_expect_success 'D/F' '
 	read_tree_u_must_succeed -m -u branch-point side-b side-a &&
 	git ls-files -u >actual &&
 	(
-		a=$(git rev-parse branch-point:subdir/file2)
-		b=$(git rev-parse side-a:subdir/file2/another)
-		echo "100644 $a 1	subdir/file2"
-		echo "100644 $a 2	subdir/file2"
+		a=$(git rev-parse branch-point:subdir/file2) &&
+		b=$(git rev-parse side-a:subdir/file2/another) &&
+		echo "100644 $a 1	subdir/file2" &&
+		echo "100644 $a 2	subdir/file2" &&
 		echo "100644 $b 3	subdir/file2/another"
 	) >expect &&
 	test_cmp expect actual

@@ -34,8 +34,8 @@ test_expect_success 'blob and tree' '
 		for i in 0 1 2 3 4 5 6 7 8 9
 		do
 			echo $i
-		done
-		echo
+		done &&
+		echo &&
 		echo b1rwzyc3
 	) >a0blgqsjc &&
 
@@ -222,7 +222,7 @@ test_expect_success 'more history' '
 
 	test_might_fail git rm -f a0blgqsjc &&
 	(
-		git cat-file blob $side:f5518nwu
+		git cat-file blob $side:f5518nwu &&
 		echo j3l0i9s6
 	) >ab2gs879 &&
 	git add ab2gs879 &&
