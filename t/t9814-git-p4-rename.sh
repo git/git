@@ -9,23 +9,11 @@ test_expect_success 'start p4d' '
 '
 
 # We rely on this behavior to detect for p4 move availability.
-test_expect_success 'p4 help unknown returns 1' '
+test_expect_success '"p4 help unknown" errors out' '
 	(
 		cd "$cli" &&
-		(
-			p4 help client >errs 2>&1
-			echo $? >retval
-		)
-		echo 0 >expected &&
-		test_cmp expected retval &&
-		rm retval &&
-		(
-			p4 help nosuchcommand >errs 2>&1
-			echo $? >retval
-		)
-		echo 1 >expected &&
-		test_cmp expected retval &&
-		rm retval
+		p4 help client &&
+		! p4 help nosuchcommand
 	)
 '
 
