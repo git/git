@@ -191,7 +191,7 @@ test_expect_success 'survive missing objects/pack directory' '
 		mkdir missing-pack &&
 		cd missing-pack &&
 		git init &&
-		GOP=.git/objects/pack
+		GOP=.git/objects/pack &&
 		rm -fr $GOP &&
 		git index-pack --stdin --keep=test <../test-3-${packname_3}.pack &&
 		test -f $GOP/pack-${packname_3}.pack &&

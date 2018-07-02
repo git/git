@@ -15,7 +15,7 @@ test_expect_success setup '
 	git tag mark1.10 &&
 	git show-ref --tags -d | sed -e "s/ /	/" >expected.tag &&
 	(
-		echo "$(git rev-parse HEAD)	HEAD"
+		echo "$(git rev-parse HEAD)	HEAD" &&
 		git show-ref -d	| sed -e "s/ /	/"
 	) >expected.all &&
 
@@ -105,7 +105,7 @@ test_expect_success 'use branch.<name>.remote if possible' '
 	git clone . other.git &&
 	(
 		cd other.git &&
-		echo "$(git rev-parse HEAD)	HEAD"
+		echo "$(git rev-parse HEAD)	HEAD" &&
 		git show-ref	| sed -e "s/ /	/"
 	) >exp &&
 

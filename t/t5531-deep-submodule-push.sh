@@ -354,7 +354,7 @@ test_expect_success 'push succeeds if submodule has no remote and is on the firs
 	git clone a a1 &&
 	(
 		cd a1 &&
-		git init b
+		git init b &&
 		(
 			cd b &&
 			>junk &&

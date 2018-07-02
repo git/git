@@ -237,7 +237,7 @@ test_expect_success 'running index-pack in the object store' '
     rm -f .git/objects/pack/* &&
     cp test-1-${pack1}.pack .git/objects/pack/pack-${pack1}.pack &&
     (
-	cd .git/objects/pack
+	cd .git/objects/pack &&
 	git index-pack pack-${pack1}.pack
     ) &&
     test -f .git/objects/pack/pack-${pack1}.idx
