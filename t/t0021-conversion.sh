@@ -785,7 +785,7 @@ test_expect_success PERL 'missing file in delayed checkout' '
 		cd repo &&
 		git init &&
 		echo "*.a filter=bug" >.gitattributes &&
-		cp "$TEST_ROOT/test.o" missing-delay.a
+		cp "$TEST_ROOT/test.o" missing-delay.a &&
 		git add . &&
 		git commit -m "test commit"
 	) &&
@@ -807,7 +807,7 @@ test_expect_success PERL 'invalid file in delayed checkout' '
 		git init &&
 		echo "*.a filter=bug" >.gitattributes &&
 		cp "$TEST_ROOT/test.o" invalid-delay.a &&
-		cp "$TEST_ROOT/test.o" unfiltered
+		cp "$TEST_ROOT/test.o" unfiltered &&
 		git add . &&
 		git commit -m "test commit"
 	) &&
