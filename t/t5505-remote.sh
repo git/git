@@ -348,17 +348,13 @@ URL: $(pwd)/one
 EOF
 
 test_expect_success 'prune --dry-run' '
-	(
-		cd one &&
-		git branch -m side2 side) &&
+	git -C one branch -m side2 side &&
+	test_when_finished "git -C one branch -m side side2" &&
 	(
 		cd test &&
 		git remote prune --dry-run origin >output &&
 		git rev-parse refs/remotes/origin/side2 &&
 		test_must_fail git rev-parse refs/remotes/origin/side &&
-	(
-		cd ../one &&
-		git branch -m side side2) &&
 		test_i18ncmp expect output
 	)
 '
