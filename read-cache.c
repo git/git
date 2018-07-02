@@ -767,7 +767,7 @@ struct cache_entry *make_cache_entry(unsigned int mode,
 	ce->ce_namelen = len;
 	ce->ce_mode = create_ce_mode(mode);
 
-	ret = refresh_cache_entry(ce, refresh_options);
+	ret = refresh_cache_entry(&the_index, ce, refresh_options);
 	if (ret != ce)
 		free(ce);
 	return ret;
@@ -1473,10 +1473,11 @@ int refresh_index(struct index_state *istate, unsigned int flags,
 	return has_errors;
 }
 
-struct cache_entry *refresh_cache_entry(struct cache_entry *ce,
-					       unsigned int options)
+struct cache_entry *refresh_cache_entry(struct index_state *istate,
+					struct cache_entry *ce,
+					unsigned int options)
 {
-	return refresh_cache_ent(&the_index, ce, options, NULL, NULL);
+	return refresh_cache_ent(istate, ce, options, NULL, NULL);
 }
 
 
