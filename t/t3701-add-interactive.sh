@@ -46,13 +46,13 @@ test_expect_success 'setup expected' '
 '
 
 test_expect_success 'diff works (initial)' '
-	(echo d; echo 1) | git add -i >output &&
+	test_write_lines d 1 | git add -i >output &&
 	sed -ne "/new file/,/content/p" <output >diff &&
 	diff_cmp expected diff
 '
 test_expect_success 'revert works (initial)' '
 	git add file &&
-	(echo r; echo 1) | git add -i &&
+	test_write_lines r 1 | git add -i &&
 	git ls-files >output &&
 	! grep . output
 '
@@ -83,13 +83,13 @@ test_expect_success 'setup expected' '
 '
 
 test_expect_success 'diff works (commit)' '
-	(echo d; echo 1) | git add -i >output &&
+	test_write_lines d 1 | git add -i >output &&
 	sed -ne "/^index/,/content/p" <output >diff &&
 	diff_cmp expected diff
 '
 test_expect_success 'revert works (commit)' '
 	git add file &&
-	(echo r; echo 1) | git add -i &&
+	test_write_lines r 1 | git add -i &&
 	git add -i </dev/null >output &&
 	grep "unchanged *+3/-0 file" output
 '
@@ -102,7 +102,7 @@ test_expect_success 'setup expected' '
 
 test_expect_success 'dummy edit works' '
 	test_set_editor : &&
-	(echo e; echo a) | git add -p &&
+	test_write_lines e a | git add -p &&
 	git diff > diff &&
 	diff_cmp expected diff
 '
@@ -127,7 +127,7 @@ test_expect_success 'setup fake editor' '
 
 test_expect_success 'bad edit rejected' '
 	git reset &&
-	(echo e; echo n; echo d) | git add -p >output &&
+	test_write_lines e n d | git add -p >output &&
 	grep "hunk does not apply" output
 '
 
@@ -140,7 +140,7 @@ test_expect_success 'setup patch' '
 
 test_expect_success 'garbage edit rejected' '
 	git reset &&
-	(echo e; echo n; echo d) | git add -p >output &&
+	test_write_lines e n d | git add -p >output &&
 	grep "hunk does not apply" output
 '
 
@@ -170,7 +170,7 @@ test_expect_success 'setup expected' '
 '
 
 test_expect_success 'real edit works' '
-	(echo e; echo n; echo d) | git add -p &&
+	test_write_lines e n d | git add -p &&
 	git diff >output &&
 	diff_cmp expected output
 '

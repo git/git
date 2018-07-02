@@ -47,7 +47,7 @@ test_expect_success 'paths and -a do not mix' '
 test_expect_success PERL 'can use paths with --interactive' '
 	echo bong-o-bong >file &&
 	# 2: update, 1:st path, that is all, 7: quit
-	( echo 2; echo 1; echo; echo 7 ) |
+	test_write_lines 2 1 "" 7 |
 	git commit -m foo --interactive file &&
 	git reset --hard HEAD^
 '
@@ -293,7 +293,7 @@ test_expect_success PERL 'interactive add' '
 test_expect_success PERL "commit --interactive doesn't change index if editor aborts" '
 	echo zoo >file &&
 	test_must_fail git diff --exit-code >diff1 &&
-	(echo u ; echo "*" ; echo q) |
+	test_write_lines u "*" q |
 	(
 		EDITOR=: &&
 		export EDITOR &&

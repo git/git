@@ -156,7 +156,7 @@ test_expect_success PERL 'commit --interactive gives cache-tree on partial commi
 		return 44;
 	}
 	EOT
-	(echo p; echo 1; echo; echo s; echo n; echo y; echo q) |
+	test_write_lines p 1 "" s n y q |
 	git commit --interactive -m foo &&
 	test_cache_tree
 '

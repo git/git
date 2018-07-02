@@ -509,7 +509,7 @@ test_expect_success 'interrupted squash works as expected' '
 	one=$(git rev-parse HEAD~3) &&
 	set_fake_editor &&
 	test_must_fail env FAKE_LINES="1 squash 3 2" git rebase -i HEAD~3 &&
-	(echo one; echo two; echo four) > conflict &&
+	test_write_lines one two four > conflict &&
 	git add conflict &&
 	test_must_fail git rebase --continue &&
 	echo resolved > conflict &&
@@ -523,10 +523,10 @@ test_expect_success 'interrupted squash works as expected (case 2)' '
 	one=$(git rev-parse HEAD~3) &&
 	set_fake_editor &&
 	test_must_fail env FAKE_LINES="3 squash 1 2" git rebase -i HEAD~3 &&
-	(echo one; echo four) > conflict &&
+	test_write_lines one four > conflict &&
 	git add conflict &&
 	test_must_fail git rebase --continue &&
-	(echo one; echo two; echo four) > conflict &&
+	test_write_lines one two four > conflict &&
 	git add conflict &&
 	test_must_fail git rebase --continue &&
 	echo resolved > conflict &&
