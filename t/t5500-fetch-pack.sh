@@ -533,19 +533,26 @@ test_expect_success 'test --all wrt tag to non-commits' '
 	# are reachable only via created tag references.
 	blob=$(echo "hello blob" | git hash-object -t blob -w --stdin) &&
 	git tag -a -m "tag -> blob" tag-to-blob $blob &&
- \
+
 	tree=$(printf "100644 blob $blob\tfile" | git mktree) &&
 	git tag -a -m "tag -> tree" tag-to-tree $tree &&
- \
+
 	tree2=$(printf "100644 blob $blob\tfile2" | git mktree) &&
 	commit=$(git commit-tree -m "hello commit" $tree) &&
 	git tag -a -m "tag -> commit" tag-to-commit $commit &&
- \
+
 	blob2=$(echo "hello blob2" | git hash-object -t blob -w --stdin) &&
-	tag=$(printf "object $blob2\ntype blob\ntag tag-to-blob2\n\
-tagger author A U Thor <author@example.com> 0 +0000\n\nhello tag" | git mktag) &&
+	tag=$(git mktag <<-EOF
+		object $blob2
+		type blob
+		tag tag-to-blob2
+		tagger author A U Thor <author@example.com> 0 +0000
+
+		hello tag
+	EOF
+	) &&
 	git tag -a -m "tag -> tag" tag-to-tag $tag &&
- \
+
 	# `fetch-pack --all` should succeed fetching all those objects.
 	mkdir fetchall &&
 	(
