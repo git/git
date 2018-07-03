@@ -428,7 +428,9 @@ to clone, that keeps your original intact.
 
 * Clone it with `git clone file:///path/to/repo`.  The clone
   will not have the removed objects.  See linkgit:git-clone[1].  (Note
-  that cloning with a plain path just hardlinks everything!)
+  that cloning with a plain path just hardlinks everything!  Also note
+  that simply using `--no-hardlinks` with a plain path will not work
+  either.)
 
 If you really don't want to clone it, for whatever reasons, check the
 following points instead (in this order).  This is a very destructive
