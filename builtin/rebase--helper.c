@@ -5,6 +5,8 @@
 #include "sequencer.h"
 #include "rebase-interactive.h"
 
+static GIT_PATH_FUNC(path_squash_onto, "rebase-merge/squash-onto")
+
 static const char * const builtin_rebase_helper_usage[] = {
 	N_("git rebase--helper [<options>]"),
 	NULL
@@ -16,6 +18,8 @@ int cmd_rebase__helper(int argc, const char **argv, const char *prefix)
 	unsigned flags = 0, keep_empty = 0, rebase_merges = 0, verbose = 0,
 		autosquash = 0;
 	int abbreviate_commands = 0, rebase_cousins = -1;
+	const char *head_hash, *onto = NULL, *squash_onto = NULL, *upstream = NULL;
+	struct strbuf revisions = STRBUF_INIT, shortrevisions = STRBUF_INIT;
 	enum {
 		CONTINUE = 1, ABORT, MAKE_SCRIPT, SHORTEN_OIDS, EXPAND_OIDS,
 		CHECK_TODO_LIST, REARRANGE_SQUASH, ADD_EXEC, EDIT_TODO,
@@ -38,10 +42,6 @@ int cmd_rebase__helper(int argc, const char **argv, const char *prefix)
 				ABORT),
 		OPT_CMDMODE(0, "make-script", &command,
 			N_("make rebase script"), MAKE_SCRIPT),
-		OPT_CMDMODE(0, "shorten-ids", &command,
-			N_("shorten commit ids in the todo list"), SHORTEN_OIDS),
-		OPT_CMDMODE(0, "expand-ids", &command,
-			N_("expand commit ids in the todo list"), EXPAND_OIDS),
 		OPT_CMDMODE(0, "check-todo-list", &command,
 			N_("check the todo list"), CHECK_TODO_LIST),
 		OPT_CMDMODE(0, "rearrange-squash", &command,
@@ -55,6 +55,11 @@ int cmd_rebase__helper(int argc, const char **argv, const char *prefix)
 			    N_("prepare the branch to be rebased"), PREPARE_BRANCH),
 		OPT_CMDMODE(0, "complete-action", &command,
 			    N_("complete the action"), COMPLETE_ACTION),
+		OPT_STRING(0, "onto", &onto, N_("onto"), N_("onto")),
+		OPT_STRING(0, "squash-onto", &squash_onto, N_("squash-onto"),
+			   N_("squash onto")),
+		OPT_STRING(0, "upstream", &upstream, N_("upstream"),
+			   N_("the upstream commit")),
 		OPT_END()
 	};
 
@@ -73,18 +78,59 @@ int cmd_rebase__helper(int argc, const char **argv, const char *prefix)
 	flags |= abbreviate_commands ? TODO_LIST_ABBREVIATE_CMDS : 0;
 	flags |= rebase_merges ? TODO_LIST_REBASE_MERGES : 0;
 	flags |= rebase_cousins > 0 ? TODO_LIST_REBASE_COUSINS : 0;
-	flags |= command == SHORTEN_OIDS ? TODO_LIST_SHORTEN_IDS : 0;
 
 	if (rebase_cousins >= 0 && !rebase_merges)
 		warning(_("--[no-]rebase-cousins has no effect without "
 			  "--rebase-merges"));
 
+	if (command == MAKE_SCRIPT && !upstream && squash_onto) {
+		FILE *squash_onto_file;
+		int ret;
+
+		squash_onto_file = fopen(path_squash_onto(), "w");
+		if (squash_onto_file == NULL)
+			return error_errno(_("could not open '%s'"), path_squash_onto());
+
+		ret = fputs(squash_onto, squash_onto_file);
+		fclose(squash_onto_file);
+
+		if (ret < 0)
+			return error_errno(_("could not write to '%s'"), path_squash_onto());
+	}
+
+	if (command == COMPLETE_ACTION || command == MAKE_SCRIPT) {
+		const char *shortupstream, *shorthead;
+		struct object_id orig_head;
+
+		if (get_oid("HEAD", &orig_head))
+			die(_("No HEAD?"));
+
+		head_hash = find_unique_abbrev(&orig_head, GIT_MAX_HEXSZ);
+		shorthead = find_unique_abbrev(&orig_head, DEFAULT_ABBREV);
+
+		if (upstream) {
+			struct object_id upstream_oid;
+
+			get_oid(upstream, &upstream_oid);
+			shortupstream = find_unique_abbrev(&upstream_oid, DEFAULT_ABBREV);
+			strbuf_addf(&revisions, "%s...%s", upstream, head_hash);
+			strbuf_addf(&shortrevisions, "%s..%s", shortupstream, shorthead);
+		} else {
+			strbuf_addf(&revisions, "%s...%s", onto, head_hash);
+			strbuf_add(&shortrevisions, shorthead, strlen(shorthead));
+		}
+	}
+
 	if (command == CONTINUE && argc == 1)
 		return !!sequencer_continue(&opts);
 	if (command == ABORT && argc == 1)
 		return !!sequencer_remove_state(&opts);
-	if (command == MAKE_SCRIPT && argc > 1)
-		return !!sequencer_make_script(stdout, argc, argv, flags);
+	if (command == MAKE_SCRIPT && (argc == 1 || argc == 2)) {
+		const char *restrict_rev = (argc == 2) ? argv[1] : NULL;
+		const char *f_argv[3] = {argv[0], revisions.buf, restrict_rev};
+
+		return !!sequencer_make_script(stdout, argc + 1, f_argv, flags);
+	}
 	if ((command == SHORTEN_OIDS || command == EXPAND_OIDS) && argc == 1)
 		return !!transform_todos(flags);
 	if (command == CHECK_TODO_LIST && argc == 1)
@@ -97,9 +143,9 @@ int cmd_rebase__helper(int argc, const char **argv, const char *prefix)
 		return !!edit_todo_list(flags);
 	if (command == PREPARE_BRANCH && argc == 2)
 		return !!prepare_branch_to_be_rebased(&opts, argv[1]);
-	if (command == COMPLETE_ACTION && argc == 6)
-		return !!complete_action(&opts, flags, argv[1], argv[2], argv[3],
-					 argv[4], argv[5], autosquash, keep_empty);
+	if (command == COMPLETE_ACTION && argc == 3)
+		return !!complete_action(&opts, flags, shortrevisions.buf, argv[1], onto,
+					 head_hash, argv[2], autosquash, keep_empty);
 
 	usage_with_options(builtin_rebase_helper_usage, options);
 }
