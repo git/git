@@ -1062,8 +1062,8 @@ msgstr[1] "(à peu près %d étapes)"
 #, c-format
 msgid "Bisecting: %d revision left to test after this %s\n"
 msgid_plural "Bisecting: %d revisions left to test after this %s\n"
-msgstr[0] "Bissection : %d révision à tester après cette %s\n"
-msgstr[1] "Bissection : %d révisions à tester après cette %s\n"
+msgstr[0] "Bissection : %d révision à tester après ceci %s\n"
+msgstr[1] "Bissection : %d révisions à tester après ceci %s\n"
 
 #: blame.c:1756
 msgid "--contents and --reverse do not blend well."
