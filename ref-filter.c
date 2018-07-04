@@ -797,24 +797,6 @@ int verify_ref_format(struct ref_format *format)
 	return 0;
 }
 
-/*
- * Given an object name, read the object data and size, and return a
- * "struct object".  If the object data we are returning is also borrowed
- * by the "struct object" representation, set *eaten as well---it is a
- * signal from parse_object_buffer to us not to free the buffer.
- */
-static void *get_obj(const struct object_id *oid, struct object **obj, unsigned long *sz, int *eaten)
-{
-	enum object_type type;
-	void *buf = read_object_file(oid, &type, sz);
-
-	if (buf)
-		*obj = parse_object_buffer(oid, type, *sz, buf, eaten);
-	else
-		*obj = NULL;
-	return buf;
-}
-
 static int grab_objectname(const char *name, const struct object_id *oid,
 			   struct atom_value *v, struct used_atom *atom)
 {
@@ -1437,21 +1419,25 @@ static const char *get_refname(struct used_atom *atom, struct ref_array_item *re
 }
 
 static int get_object(struct ref_array_item *ref, const struct object_id *oid,
-		       int deref, struct object **obj, struct strbuf *err)
+		      int deref, struct object **obj, struct strbuf *err)
 {
 	/* parse_object_buffer() will set eaten to 0 if free() will be needed */
 	int eaten = 1;
 	int ret = 0;
 	unsigned long size;
-	void *buf = get_obj(oid, obj, &size, &eaten);
+	enum object_type type;
+	void *buf = read_object_file(oid, &type, &size);
 	if (!buf)
 		ret = strbuf_addf_ret(err, -1, _("missing object %s for %s"),
 				      oid_to_hex(oid), ref->refname);
-	else if (!*obj)
-		ret = strbuf_addf_ret(err, -1, _("parse_object_buffer failed on %s for %s"),
-				      oid_to_hex(oid), ref->refname);
-	else
-		grab_values(ref->value, deref, *obj, buf, size);
+	else {
+		*obj = parse_object_buffer(oid, type, size, buf, &eaten);
+		if (!*obj)
+			ret = strbuf_addf_ret(err, -1, _("parse_object_buffer failed on %s for %s"),
+					      oid_to_hex(oid), ref->refname);
+		else
+			grab_values(ref->value, deref, *obj, buf, size);
+	}
 	if (!eaten)
 		free(buf);
 	return ret;
