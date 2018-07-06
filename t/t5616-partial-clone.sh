@@ -154,4 +154,20 @@ test_expect_success 'partial clone with transfer.fsckobjects=1 uses index-pack -
 	grep "git index-pack.*--fsck-objects" trace
 '
 
+test_expect_success 'partial clone fetches blobs pointed to by refs even if normally filtered out' '
+	rm -rf src dst &&
+	git init src &&
+	test_commit -C src x &&
+	test_config -C src uploadpack.allowfilter 1 &&
+	test_config -C src uploadpack.allowanysha1inwant 1 &&
+
+	# Create a tag pointing to a blob.
+	BLOB=$(echo blob-contents | git -C src hash-object --stdin -w) &&
+	git -C src tag myblob "$BLOB" &&
+
+	git clone --filter="blob:none" "file://$(pwd)/src" dst 2>err &&
+	! grep "does not point to a valid object" err &&
+	git -C dst fsck
+'
+
 test_done

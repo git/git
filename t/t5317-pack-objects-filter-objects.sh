@@ -160,6 +160,22 @@ test_expect_success 'verify blob:limit=1k' '
 	test_cmp observed expected
 '
 
+test_expect_success 'verify explicitly specifying oversized blob in input' '
+	git -C r2 ls-files -s large.1000 large.10000 \
+		| awk -f print_2.awk \
+		| sort >expected &&
+	git -C r2 pack-objects --rev --stdout --filter=blob:limit=1k >filter.pack <<-EOF &&
+	HEAD
+	$(git -C r2 rev-parse HEAD:large.10000)
+	EOF
+	git -C r2 index-pack ../filter.pack &&
+	git -C r2 verify-pack -v ../filter.pack \
+		| grep blob \
+		| awk -f print_1.awk \
+		| sort >observed &&
+	test_cmp observed expected
+'
+
 test_expect_success 'verify blob:limit=1m' '
 	git -C r2 ls-files -s large.1000 large.10000 \
 		| awk -f print_2.awk \
