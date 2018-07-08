@@ -401,8 +401,11 @@ have been specified, in which case default to 'compose'.
 +
 --
 		*	Invoke the sendemail-validate hook if present (see linkgit:githooks[5]).
-		*	Warn of patches that contain lines longer than 998 characters; this
-			is due to SMTP limits as described by http://www.ietf.org/rfc/rfc2821.txt.
+		*	Warn of patches that contain lines longer than
+			998 characters unless a suitable transfer encoding
+			('auto', 'base64', or 'quoted-printable') is used;
+			this is due to SMTP limits as described by
+			http://www.ietf.org/rfc/rfc2821.txt.
 --
 +
 Default is the value of `sendemail.validate`; if this is not set,

@@ -479,6 +479,19 @@ test_expect_success $PREREQ 'long lines with auto encoding are quoted-printable'
 	grep "Content-Transfer-Encoding: quoted-printable" msgtxt1
 '
 
+for enc in auto quoted-printable base64
+do
+	test_expect_success $PREREQ "--validate passes with encoding $enc" '
+		git send-email \
+			--from="Example <nobody@example.com>" \
+			--to=nobody@example.com \
+			--smtp-server="$(pwd)/fake.sendmail" \
+			--transfer-encoding=$enc \
+			--validate \
+			$patches longline.patch
+	'
+done
+
 test_expect_success $PREREQ 'Invalid In-Reply-To' '
 	clean_fake_sendmail &&
 	git send-email \

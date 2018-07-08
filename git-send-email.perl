@@ -645,7 +645,7 @@ if (@rev_list_opts) {
 if ($validate) {
 	foreach my $f (@files) {
 		unless (-p $f) {
-			my $error = validate_patch($f);
+			my $error = validate_patch($f, $target_xfer_encoding);
 			$error and die sprintf(__("fatal: %s: %s\nwarning: no patches were sent\n"),
 						  $f, $error);
 		}
@@ -1879,7 +1879,7 @@ sub unique_email_list {
 }
 
 sub validate_patch {
-	my $fn = shift;
+	my ($fn, $xfer_encoding) = @_;
 
 	if ($repo) {
 		my $validate_hook = catfile(catdir($repo->repo_path(), 'hooks'),
@@ -1899,11 +1899,15 @@ sub validate_patch {
 		return $hook_error if $hook_error;
 	}
 
-	open(my $fh, '<', $fn)
-		or die sprintf(__("unable to open %s: %s\n"), $fn, $!);
-	while (my $line = <$fh>) {
-		if (length($line) > 998) {
-			return sprintf(__("%s: patch contains a line longer than 998 characters"), $.);
+	# Any long lines will be automatically fixed if we use a suitable transfer
+	# encoding.
+	unless ($xfer_encoding =~ /^(?:auto|quoted-printable|base64)$/) {
+		open(my $fh, '<', $fn)
+			or die sprintf(__("unable to open %s: %s\n"), $fn, $!);
+		while (my $line = <$fh>) {
+			if (length($line) > 998) {
+				return sprintf(__("%s: patch contains a line longer than 998 characters"), $.);
+			}
 		}
 	}
 	return;
