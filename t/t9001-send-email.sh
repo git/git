@@ -225,6 +225,8 @@ X-Mailer: X-MAILER-STRING
 In-Reply-To: <unique-message-id@example.com>
 References: <unique-message-id@example.com>
 Reply-To: Reply <reply@example.com>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 
 Result: OK
 EOF
@@ -415,6 +417,7 @@ test_expect_success $PREREQ 'reject long lines' '
 		--from="Example <nobody@example.com>" \
 		--to=nobody@example.com \
 		--smtp-server="$(pwd)/fake.sendmail" \
+		--transfer-encoding=8bit \
 		$patches longline.patch \
 		2>errors &&
 	grep longline.patch errors
@@ -609,6 +612,8 @@ Subject: [PATCH 1/1] Second.
 Date: DATE-STRING
 Message-Id: MESSAGE-ID-STRING
 X-Mailer: X-MAILER-STRING
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 
 Result: OK
 EOF
@@ -653,6 +658,8 @@ Subject: [PATCH 1/1] Second.
 Date: DATE-STRING
 Message-Id: MESSAGE-ID-STRING
 X-Mailer: X-MAILER-STRING
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 
 Result: OK
 EOF
@@ -688,6 +695,8 @@ Subject: [PATCH 1/1] Second.
 Date: DATE-STRING
 Message-Id: MESSAGE-ID-STRING
 X-Mailer: X-MAILER-STRING
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 
 Result: OK
 EOF
@@ -714,6 +723,8 @@ Subject: [PATCH 1/1] Second.
 Date: DATE-STRING
 Message-Id: MESSAGE-ID-STRING
 X-Mailer: X-MAILER-STRING
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 
 Result: OK
 EOF
@@ -748,6 +759,8 @@ Subject: [PATCH 1/1] Second.
 Date: DATE-STRING
 Message-Id: MESSAGE-ID-STRING
 X-Mailer: X-MAILER-STRING
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 
 Result: OK
 EOF
@@ -779,6 +792,8 @@ Subject: [PATCH 1/1] Second.
 Date: DATE-STRING
 Message-Id: MESSAGE-ID-STRING
 X-Mailer: X-MAILER-STRING
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 
 Result: OK
 EOF
@@ -810,6 +825,8 @@ Subject: [PATCH 1/1] Second.
 Date: DATE-STRING
 Message-Id: MESSAGE-ID-STRING
 X-Mailer: X-MAILER-STRING
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 
 Result: OK
 EOF
@@ -845,6 +862,8 @@ Subject: [PATCH 1/1] Second.
 Date: DATE-STRING
 Message-Id: MESSAGE-ID-STRING
 X-Mailer: X-MAILER-STRING
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 
 Result: OK
 EOF
@@ -873,6 +892,8 @@ Subject: [PATCH 1/1] Second.
 Date: DATE-STRING
 Message-Id: MESSAGE-ID-STRING
 X-Mailer: X-MAILER-STRING
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 
 Result: OK
 EOF

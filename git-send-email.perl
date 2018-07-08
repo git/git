@@ -231,7 +231,7 @@ my ($validate, $confirm);
 my (@suppress_cc);
 my ($auto_8bit_encoding);
 my ($compose_encoding);
-my ($target_xfer_encoding);
+my $target_xfer_encoding = 'auto';
 
 my ($debug_net_smtp) = 0;		# Net::SMTP, see send_message()
 
@@ -1737,17 +1737,11 @@ sub process_file {
 			}
 		}
 	}
-	if (defined $target_xfer_encoding) {
-		$xfer_encoding = '8bit' if not defined $xfer_encoding;
-		($message, $xfer_encoding) = apply_transfer_encoding(
-			$message, $xfer_encoding, $target_xfer_encoding);
-	}
-	if (defined $xfer_encoding) {
-		push @xh, "Content-Transfer-Encoding: $xfer_encoding";
-	}
-	if (defined $xfer_encoding or $has_content_type) {
-		unshift @xh, 'MIME-Version: 1.0' unless $has_mime_version;
-	}
+	$xfer_encoding = '8bit' if not defined $xfer_encoding;
+	($message, $xfer_encoding) = apply_transfer_encoding(
+		$message, $xfer_encoding, $target_xfer_encoding);
+	push @xh, "Content-Transfer-Encoding: $xfer_encoding";
+	unshift @xh, 'MIME-Version: 1.0' unless $has_mime_version;
 
 	$needs_confirm = (
 		$confirm eq "always" or
