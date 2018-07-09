@@ -334,7 +334,7 @@ static void trace_encoding(const char *context, const char *path,
 	strbuf_addf(&trace, "%s (%s, considered %s):\n", context, path, encoding);
 	for (i = 0; i < len && buf; ++i) {
 		strbuf_addf(
-			&trace,"| \e[2m%2i:\e[0m %2x \e[2m%c\e[0m%c",
+			&trace, "| \033[2m%2i:\033[0m %2x \033[2m%c\033[0m%c",
 			i,
 			(unsigned char) buf[i],
 			(buf[i] > 32 && buf[i] < 127 ? buf[i] : ' '),
