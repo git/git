@@ -480,9 +480,14 @@ test_expect_success 'malformed instruction sheet 2' '
 	test_expect_code 128 git cherry-pick --continue
 '
 
-test_expect_success 'empty commit set' '
+test_expect_success 'empty commit set (no commits to walk)' '
 	pristine_detach initial &&
 	test_expect_code 128 git cherry-pick base..base
+'
+
+test_expect_success 'empty commit set (culled during walk)' '
+	pristine_detach initial &&
+	test_expect_code 128 git cherry-pick -2 --author=no.such.author base
 '
 
 test_expect_success 'malformed instruction sheet 3' '
