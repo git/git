@@ -1,7 +1,7 @@
 #ifndef REFS_REFS_INTERNAL_H
 #define REFS_REFS_INTERNAL_H
 
-#include "iterator.h"   /* for enum iterator_selection */
+#include "iterator.h"
 
 /*
  * Data structures and functions for the internal use of the refs
