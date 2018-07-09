@@ -2138,7 +2138,7 @@ http.schannelUseSSLCAInfo::
 	override the Windows Certificate Store. Since this is not desirable
 	by default, Git will tell cURL not to use that bundle by default
 	when the `schannel` backend was configured via `http.sslBackend`,
-	unless `useSSLCAInfo` overrides this behavior.
+	unless `http.schannelUseSSLCAInfo` overrides this behavior.
 
 http.pinnedpubkey::
 	Public key of the https service. It may either be the filename of
