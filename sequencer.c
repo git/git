@@ -2371,8 +2371,10 @@ int sequencer_pick_revisions(struct replay_opts *opts)
 		if (prepare_revision_walk(opts->revs))
 			return error(_("revision walk setup failed"));
 		cmit = get_revision(opts->revs);
-		if (!cmit || get_revision(opts->revs))
-			return error("BUG: expected exactly one commit from walk");
+		if (!cmit)
+			return error(_("empty commit set passed"));
+		if (get_revision(opts->revs))
+			BUG("unexpected extra commit from walk");
 		return single_pick(cmit, opts);
 	}
 
