@@ -1,0 +1,12 @@
+(
+	if true
+	then
+		while true
+		do
+?!AMP?!			echo "pop"
+			echo "glup"
+?!AMP?!		done
+		foo
+?!AMP?!	fi
+	bar
+>)
