@@ -231,16 +231,8 @@ static int prepare_commit_graph(void)
 
 static void close_commit_graph(void)
 {
-	if (!commit_graph)
-		return;
-
-	if (commit_graph->graph_fd >= 0) {
-		munmap((void *)commit_graph->data, commit_graph->data_len);
-		commit_graph->data = NULL;
-		close(commit_graph->graph_fd);
-	}
-
-	FREE_AND_NULL(commit_graph);
+	free_commit_graph(commit_graph);
+	commit_graph = NULL;
 }
 
 static int bsearch_graph(struct commit_graph *g, struct object_id *oid, uint32_t *pos)
@@ -1032,4 +1024,16 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g)
 	}
 
 	return verify_commit_graph_error;
+}
+
+void free_commit_graph(struct commit_graph *g)
+{
+	if (!g)
+		return;
+	if (g->graph_fd >= 0) {
+		munmap((void *)g->data, g->data_len);
+		g->data = NULL;
+		close(g->graph_fd);
+	}
+	free(g);
 }
