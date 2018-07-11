@@ -5,6 +5,8 @@
 #include "repository.h"
 #include "string-list.h"
 
+struct commit;
+
 char *get_commit_graph_filename(const char *obj_dir);
 
 /*
