@@ -513,6 +513,9 @@ int run_diff_index(struct rev_info *revs, int cached)
 {
 	struct object_array_entry *ent;
 
+	if (revs->pending.nr != 1)
+		BUG("run_diff_index must be passed exactly one tree");
+
 	ent = revs->pending.objects;
 	if (diff_cache(revs, &ent->item->oid, ent->name, cached))
 		exit(128);

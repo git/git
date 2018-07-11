@@ -618,6 +618,18 @@ test_expect_success 'pull --rebase fails on unborn branch with staged changes' '
 	)
 '
 
+test_expect_success 'pull --rebase fails on corrupt HEAD' '
+	test_when_finished "rm -rf corrupt" &&
+	git init corrupt &&
+	(
+		cd corrupt &&
+		test_commit one &&
+		obj=$(git rev-parse --verify HEAD | sed "s#^..#&/#") &&
+		rm -f .git/objects/$obj &&
+		test_must_fail git pull --rebase
+	)
+'
+
 test_expect_success 'setup for detecting upstreamed changes' '
 	mkdir src &&
 	(cd src &&
