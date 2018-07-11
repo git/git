@@ -333,4 +333,92 @@ test_expect_failure 'file/submodule conflict' '
 	)
 '
 
+# Directory/submodule conflict
+#   Commit O: <empty>
+#   Commit A: path (submodule), with sole tracked file named 'world'
+#   Commit B1: path/file
+#   Commit B2: path/world
+#
+#   Expected from merge of A & B1:
+#     Contents under path/ from commit B1 are renamed elsewhere; we do not
+#     want to write files from one of our tracked directories into a submodule
+#
+#   Expected from merge of A & B2:
+#     Similar to last merge, but with a slight twist: we don't want paths
+#     under the submodule to be treated as untracked or in the way.
+
+test_expect_success 'setup directory/submodule conflict' '
+	test_create_repo directory-submodule &&
+	(
+		cd directory-submodule &&
+
+		git commit --allow-empty -m O &&
+
+		git branch A &&
+		git branch B1 &&
+		git branch B2 &&
+
+		git checkout B1 &&
+		mkdir path &&
+		echo contents >path/file &&
+		git add path/file &&
+		git commit -m B1 &&
+
+		git checkout B2 &&
+		mkdir path &&
+		echo contents >path/world &&
+		git add path/world &&
+		git commit -m B2 &&
+
+		git checkout A &&
+		test_create_repo path &&
+		test_commit -C path hello world &&
+		git submodule add ./path &&
+		git commit -m A
+	)
+'
+
+test_expect_failure 'directory/submodule conflict; keep submodule clean' '
+	test_when_finished "git -C directory-submodule reset --hard" &&
+	(
+		cd directory-submodule &&
+
+		git checkout A^0 &&
+		test_must_fail git merge B1^0 &&
+
+		git ls-files -s >out &&
+		test_line_count = 3 out &&
+		git ls-files -u >out &&
+		test_line_count = 1 out &&
+
+		# path/ is still a submodule
+		test_path_is_dir path/.git &&
+
+		echo Checking if contents from B1:path/file showed up &&
+		# Would rather use grep -r, but that is GNU extension...
+		git ls-files -co | xargs grep -q contents 2>/dev/null &&
+
+		# However, B1:path/file should NOT have shown up at path/file,
+		# because we should not write into the submodule
+		test_path_is_missing path/file
+	)
+'
+
+test_expect_failure 'directory/submodule conflict; should not treat submodule files as untracked or in the way' '
+	test_when_finished "git -C directory-submodule/path reset --hard" &&
+	test_when_finished "git -C directory-submodule reset --hard" &&
+	(
+		cd directory-submodule &&
+
+		git checkout A^0 &&
+		test_must_fail git merge B2^0 >out 2>err &&
+
+		# We do not want files within the submodule to prevent the
+		# merge from starting; we should not be writing to such paths
+		# anyway.
+		test_i18ngrep ! "refusing to lose untracked file at" err
+
+	)
+'
+
 test_done
