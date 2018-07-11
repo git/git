@@ -2,6 +2,9 @@
 #define OBJECT_STORE_H
 
 #include "oidmap.h"
+#include "list.h"
+#include "sha1-array.h"
+#include "strbuf.h"
 
 struct alternate_object_database {
 	struct alternate_object_database *next;
