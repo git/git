@@ -106,6 +106,9 @@ struct raw_object_store {
 	 */
 	struct oidmap *replace_map;
 
+	struct commit_graph *commit_graph;
+	unsigned commit_graph_attempted : 1; /* if loading has been attempted */
+
 	/*
 	 * private data
 	 *

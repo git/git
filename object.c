@@ -9,6 +9,7 @@
 #include "alloc.h"
 #include "object-store.h"
 #include "packfile.h"
+#include "commit-graph.h"
 
 unsigned int get_max_object_index(void)
 {
@@ -506,6 +507,10 @@ void raw_object_store_clear(struct raw_object_store *o)
 
 	oidmap_free(o->replace_map, 1);
 	FREE_AND_NULL(o->replace_map);
+
+	free_commit_graph(o->commit_graph);
+	o->commit_graph = NULL;
+	o->commit_graph_attempted = 0;
 
 	free_alt_odbs(o);
 	o->alt_odb_tail = NULL;

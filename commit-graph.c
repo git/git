@@ -183,23 +183,19 @@ cleanup_fail:
 	exit(1);
 }
 
-/* global storage */
-static struct commit_graph *commit_graph = NULL;
-
 static void prepare_commit_graph_one(const char *obj_dir)
 {
 	char *graph_name;
 
-	if (commit_graph)
+	if (the_repository->objects->commit_graph)
 		return;
 
 	graph_name = get_commit_graph_filename(obj_dir);
-	commit_graph = load_commit_graph_one(graph_name);
+	the_repository->objects->commit_graph =
+		load_commit_graph_one(graph_name);
 
 	FREE_AND_NULL(graph_name);
 }
-
-static int prepare_commit_graph_run_once = 0;
 
 /*
  * Return 1 if commit_graph is non-NULL, and 0 otherwise.
@@ -212,9 +208,9 @@ static int prepare_commit_graph(void)
 	struct alternate_object_database *alt;
 	char *obj_dir;
 
-	if (prepare_commit_graph_run_once)
-		return !!commit_graph;
-	prepare_commit_graph_run_once = 1;
+	if (the_repository->objects->commit_graph_attempted)
+		return !!the_repository->objects->commit_graph;
+	the_repository->objects->commit_graph_attempted = 1;
 
 	if (!core_commit_graph)
 		return 0;
@@ -223,16 +219,16 @@ static int prepare_commit_graph(void)
 	prepare_commit_graph_one(obj_dir);
 	prepare_alt_odb(the_repository);
 	for (alt = the_repository->objects->alt_odb_list;
-	     !commit_graph && alt;
+	     !the_repository->objects->commit_graph && alt;
 	     alt = alt->next)
 		prepare_commit_graph_one(alt->path);
-	return !!commit_graph;
+	return !!the_repository->objects->commit_graph;
 }
 
 static void close_commit_graph(void)
 {
-	free_commit_graph(commit_graph);
-	commit_graph = NULL;
+	free_commit_graph(the_repository->objects->commit_graph);
+	the_repository->objects->commit_graph = NULL;
 }
 
 static int bsearch_graph(struct commit_graph *g, struct object_id *oid, uint32_t *pos)
@@ -342,7 +338,7 @@ int parse_commit_in_graph(struct commit *item)
 {
 	if (!prepare_commit_graph())
 		return 0;
-	return parse_commit_in_graph_one(commit_graph, item);
+	return parse_commit_in_graph_one(the_repository->objects->commit_graph, item);
 }
 
 void load_commit_graph_info(struct commit *item)
@@ -350,8 +346,8 @@ void load_commit_graph_info(struct commit *item)
 	uint32_t pos;
 	if (!prepare_commit_graph())
 		return;
-	if (find_commit_in_graph(item, commit_graph, &pos))
-		fill_commit_graph_info(item, commit_graph, pos);
+	if (find_commit_in_graph(item, the_repository->objects->commit_graph, &pos))
+		fill_commit_graph_info(item, the_repository->objects->commit_graph, pos);
 }
 
 static struct tree *load_tree_for_commit(struct commit_graph *g, struct commit *c)
@@ -379,7 +375,7 @@ static struct tree *get_commit_tree_in_graph_one(struct commit_graph *g,
 
 struct tree *get_commit_tree_in_graph(const struct commit *c)
 {
-	return get_commit_tree_in_graph_one(commit_graph, c);
+	return get_commit_tree_in_graph_one(the_repository->objects->commit_graph, c);
 }
 
 static void write_graph_chunk_fanout(struct hashfile *f,
@@ -696,15 +692,17 @@ void write_commit_graph(const char *obj_dir,
 
 	if (append) {
 		prepare_commit_graph_one(obj_dir);
-		if (commit_graph)
-			oids.alloc += commit_graph->num_commits;
+		if (the_repository->objects->commit_graph)
+			oids.alloc += the_repository->objects->commit_graph->num_commits;
 	}
 
 	if (oids.alloc < 1024)
 		oids.alloc = 1024;
 	ALLOC_ARRAY(oids.list, oids.alloc);
 
-	if (append && commit_graph) {
+	if (append && the_repository->objects->commit_graph) {
+		struct commit_graph *commit_graph =
+			the_repository->objects->commit_graph;
 		for (i = 0; i < commit_graph->num_commits; i++) {
 			const unsigned char *hash = commit_graph->chunk_oid_lookup +
 				commit_graph->hash_len * i;
