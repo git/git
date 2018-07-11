@@ -1,0 +1,8 @@
+(
+	foo |
+	bar |
+	baz &&
+	fish |
+?!AMP?!	cow
+	sunder
+>)
