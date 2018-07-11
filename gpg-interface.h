@@ -33,8 +33,6 @@ void signature_check_clear(struct signature_check *sigc);
  */
 size_t parse_signature(const char *buf, size_t size);
 
-void parse_gpg_output(struct signature_check *);
-
 /*
  * Create a detached signature for the contents of "buffer" and append
  * it after "signature"; "buffer" and "signature" can be the same

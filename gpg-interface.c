@@ -35,7 +35,7 @@ static struct {
 	{ 'R', "\n[GNUPG:] REVKEYSIG "},
 };
 
-void parse_gpg_output(struct signature_check *sigc)
+static void parse_gpg_output(struct signature_check *sigc)
 {
 	const char *buf = sigc->gpg_status;
 	int i;
