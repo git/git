@@ -200,14 +200,24 @@ static void prepare_commit_graph_one(const char *obj_dir)
 }
 
 static int prepare_commit_graph_run_once = 0;
-static void prepare_commit_graph(void)
+
+/*
+ * Return 1 if commit_graph is non-NULL, and 0 otherwise.
+ *
+ * On the first invocation, this function attemps to load the commit
+ * graph if the_repository is configured to have one.
+ */
+static int prepare_commit_graph(void)
 {
 	struct alternate_object_database *alt;
 	char *obj_dir;
 
 	if (prepare_commit_graph_run_once)
-		return;
+		return !!commit_graph;
 	prepare_commit_graph_run_once = 1;
+
+	if (!core_commit_graph)
+		return 0;
 
 	obj_dir = get_object_directory();
 	prepare_commit_graph_one(obj_dir);
@@ -216,6 +226,7 @@ static void prepare_commit_graph(void)
 	     !commit_graph && alt;
 	     alt = alt->next)
 		prepare_commit_graph_one(alt->path);
+	return !!commit_graph;
 }
 
 static void close_commit_graph(void)
@@ -337,22 +348,17 @@ static int parse_commit_in_graph_one(struct commit_graph *g, struct commit *item
 
 int parse_commit_in_graph(struct commit *item)
 {
-	if (!core_commit_graph)
+	if (!prepare_commit_graph())
 		return 0;
-
-	prepare_commit_graph();
-	if (commit_graph)
-		return parse_commit_in_graph_one(commit_graph, item);
-	return 0;
+	return parse_commit_in_graph_one(commit_graph, item);
 }
 
 void load_commit_graph_info(struct commit *item)
 {
 	uint32_t pos;
-	if (!core_commit_graph)
+	if (!prepare_commit_graph())
 		return;
-	prepare_commit_graph();
-	if (commit_graph && find_commit_in_graph(item, commit_graph, &pos))
+	if (find_commit_in_graph(item, commit_graph, &pos))
 		fill_commit_graph_info(item, commit_graph, pos);
 }
 
