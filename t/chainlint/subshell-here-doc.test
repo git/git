@@ -1,0 +1,23 @@
+(
+# LINT: stitch together incomplete \-ending lines
+# LINT: swallow here-doc to avoid false positives in content
+	echo wobba \
+	       gorgo snoot \
+	       wafta snurb <<-EOF &&
+	quoth the raven,
+	nevermore...
+	EOF
+
+# LINT: missing "&&" on 'cat'
+	cat <<EOF >bip
+	fish fly high
+	EOF
+
+# LINT: swallow here-doc (EOF is last line of subshell)
+	echo <<-\EOF >bop
+	gomez
+	morticia
+	wednesday
+	pugsly
+	EOF
+)
