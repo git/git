@@ -1,0 +1,9 @@
+(
+	foo &&
+	x=$(
+		echo bar |
+		cat
+>>	) &&
+	echo ok
+>) |
+sort
