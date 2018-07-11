@@ -279,4 +279,58 @@ test_expect_success 'recursive merge with submodule' '
 	 grep "$(cat expect3)" actual > /dev/null)
 '
 
+# File/submodule conflict
+#   Commit O: <empty>
+#   Commit A: path (submodule)
+#   Commit B: path
+#   Expected: path/ is submodule and file contents for B's path are somewhere
+
+test_expect_success 'setup file/submodule conflict' '
+	test_create_repo file-submodule &&
+	(
+		cd file-submodule &&
+
+		git commit --allow-empty -m O &&
+
+		git branch A &&
+		git branch B &&
+
+		git checkout B &&
+		echo content >path &&
+		git add path &&
+		git commit -m B &&
+
+		git checkout A &&
+		test_create_repo path &&
+		test_commit -C path world &&
+		git submodule add ./path &&
+		git commit -m A
+	)
+'
+
+test_expect_failure 'file/submodule conflict' '
+	test_when_finished "git -C file-submodule reset --hard" &&
+	(
+		cd file-submodule &&
+
+		git checkout A^0 &&
+		test_must_fail git merge B^0 &&
+
+		git ls-files -s >out &&
+		test_line_count = 3 out &&
+		git ls-files -u >out &&
+		test_line_count = 2 out &&
+
+		# path/ is still a submodule
+		test_path_is_dir path/.git &&
+
+		# There is a submodule at "path", so B:path cannot be written
+		# there.  We expect it to be written somewhere in the same
+		# directory, though, so just grep for its content in all
+		# files, and ignore "grep: path: Is a directory" message
+		echo Checking if contents from B:path showed up anywhere &&
+		grep -q content * 2>/dev/null
+	)
+'
+
 test_done
