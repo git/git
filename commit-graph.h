@@ -19,7 +19,7 @@ char *get_commit_graph_filename(const char *obj_dir);
  *
  * See parse_commit_buffer() for the fallback after this call.
  */
-int parse_commit_in_graph(struct commit *item);
+int parse_commit_in_graph(struct repository *r, struct commit *item);
 
 /*
  * It is possible that we loaded commit contents from the commit buffer,
@@ -27,9 +27,10 @@ int parse_commit_in_graph(struct commit *item);
  * checked and filled. Fill the graph_pos and generation members of
  * the given commit.
  */
-void load_commit_graph_info(struct commit *item);
+void load_commit_graph_info(struct repository *r, struct commit *item);
 
-struct tree *get_commit_tree_in_graph(const struct commit *c);
+struct tree *get_commit_tree_in_graph(struct repository *r,
+				      const struct commit *c);
 
 struct commit_graph {
 	int graph_fd;

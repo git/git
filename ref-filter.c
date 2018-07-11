@@ -1713,7 +1713,7 @@ static enum contains_result contains_tag_algo(struct commit *candidate,
 
 	for (p = want; p; p = p->next) {
 		struct commit *c = p->item;
-		load_commit_graph_info(c);
+		load_commit_graph_info(the_repository, c);
 		if (c->generation < cutoff)
 			cutoff = c->generation;
 	}

@@ -183,15 +183,15 @@ cleanup_fail:
 	exit(1);
 }
 
-static void prepare_commit_graph_one(const char *obj_dir)
+static void prepare_commit_graph_one(struct repository *r, const char *obj_dir)
 {
 	char *graph_name;
 
-	if (the_repository->objects->commit_graph)
+	if (r->objects->commit_graph)
 		return;
 
 	graph_name = get_commit_graph_filename(obj_dir);
-	the_repository->objects->commit_graph =
+	r->objects->commit_graph =
 		load_commit_graph_one(graph_name);
 
 	FREE_AND_NULL(graph_name);
@@ -203,26 +203,34 @@ static void prepare_commit_graph_one(const char *obj_dir)
  * On the first invocation, this function attemps to load the commit
  * graph if the_repository is configured to have one.
  */
-static int prepare_commit_graph(void)
+static int prepare_commit_graph(struct repository *r)
 {
 	struct alternate_object_database *alt;
 	char *obj_dir;
+	int config_value;
 
-	if (the_repository->objects->commit_graph_attempted)
-		return !!the_repository->objects->commit_graph;
-	the_repository->objects->commit_graph_attempted = 1;
+	if (r->objects->commit_graph_attempted)
+		return !!r->objects->commit_graph;
+	r->objects->commit_graph_attempted = 1;
 
-	if (!core_commit_graph)
+	if (repo_config_get_bool(r, "core.commitgraph", &config_value) ||
+	    !config_value)
+		/*
+		 * This repository is not configured to use commit graphs, so
+		 * do not load one. (But report commit_graph_attempted anyway
+		 * so that commit graph loading is not attempted again for this
+		 * repository.)
+		 */
 		return 0;
 
-	obj_dir = get_object_directory();
-	prepare_commit_graph_one(obj_dir);
-	prepare_alt_odb(the_repository);
-	for (alt = the_repository->objects->alt_odb_list;
-	     !the_repository->objects->commit_graph && alt;
+	obj_dir = r->objects->objectdir;
+	prepare_commit_graph_one(r, obj_dir);
+	prepare_alt_odb(r);
+	for (alt = r->objects->alt_odb_list;
+	     !r->objects->commit_graph && alt;
 	     alt = alt->next)
-		prepare_commit_graph_one(alt->path);
-	return !!the_repository->objects->commit_graph;
+		prepare_commit_graph_one(r, alt->path);
+	return !!r->objects->commit_graph;
 }
 
 static void close_commit_graph(void)
@@ -323,8 +331,6 @@ static int parse_commit_in_graph_one(struct commit_graph *g, struct commit *item
 {
 	uint32_t pos;
 
-	if (!core_commit_graph)
-		return 0;
 	if (item->object.parsed)
 		return 1;
 
@@ -334,20 +340,20 @@ static int parse_commit_in_graph_one(struct commit_graph *g, struct commit *item
 	return 0;
 }
 
-int parse_commit_in_graph(struct commit *item)
+int parse_commit_in_graph(struct repository *r, struct commit *item)
 {
-	if (!prepare_commit_graph())
+	if (!prepare_commit_graph(r))
 		return 0;
-	return parse_commit_in_graph_one(the_repository->objects->commit_graph, item);
+	return parse_commit_in_graph_one(r->objects->commit_graph, item);
 }
 
-void load_commit_graph_info(struct commit *item)
+void load_commit_graph_info(struct repository *r, struct commit *item)
 {
 	uint32_t pos;
-	if (!prepare_commit_graph())
+	if (!prepare_commit_graph(r))
 		return;
-	if (find_commit_in_graph(item, the_repository->objects->commit_graph, &pos))
-		fill_commit_graph_info(item, the_repository->objects->commit_graph, pos);
+	if (find_commit_in_graph(item, r->objects->commit_graph, &pos))
+		fill_commit_graph_info(item, r->objects->commit_graph, pos);
 }
 
 static struct tree *load_tree_for_commit(struct commit_graph *g, struct commit *c)
@@ -373,9 +379,9 @@ static struct tree *get_commit_tree_in_graph_one(struct commit_graph *g,
 	return load_tree_for_commit(g, (struct commit *)c);
 }
 
-struct tree *get_commit_tree_in_graph(const struct commit *c)
+struct tree *get_commit_tree_in_graph(struct repository *r, const struct commit *c)
 {
-	return get_commit_tree_in_graph_one(the_repository->objects->commit_graph, c);
+	return get_commit_tree_in_graph_one(r->objects->commit_graph, c);
 }
 
 static void write_graph_chunk_fanout(struct hashfile *f,
@@ -691,7 +697,7 @@ void write_commit_graph(const char *obj_dir,
 	oids.alloc = approximate_object_count() / 4;
 
 	if (append) {
-		prepare_commit_graph_one(obj_dir);
+		prepare_commit_graph_one(the_repository, obj_dir);
 		if (the_repository->objects->commit_graph)
 			oids.alloc += the_repository->objects->commit_graph->num_commits;
 	}

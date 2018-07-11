@@ -431,4 +431,39 @@ test_expect_success 'git fsck (checks commit-graph)' '
 	test_must_fail git fsck
 '
 
+test_expect_success 'setup non-the_repository tests' '
+	rm -rf repo &&
+	git init repo &&
+	test_commit -C repo one &&
+	test_commit -C repo two &&
+	git -C repo config core.commitGraph true &&
+	git -C repo rev-parse two | \
+		git -C repo commit-graph write --stdin-commits
+'
+
+test_expect_success 'parse_commit_in_graph works for non-the_repository' '
+	test-tool repository parse_commit_in_graph \
+		repo/.git repo "$(git -C repo rev-parse two)" >actual &&
+	echo $(git -C repo log --pretty="%ct" -1) \
+		$(git -C repo rev-parse one) >expect &&
+	test_cmp expect actual &&
+
+	test-tool repository parse_commit_in_graph \
+		repo/.git repo "$(git -C repo rev-parse one)" >actual &&
+	echo $(git -C repo log --pretty="%ct" -1 one) >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'get_commit_tree_in_graph works for non-the_repository' '
+	test-tool repository get_commit_tree_in_graph \
+		repo/.git repo "$(git -C repo rev-parse two)" >actual &&
+	echo $(git -C repo rev-parse two^{tree}) >expect &&
+	test_cmp expect actual &&
+
+	test-tool repository get_commit_tree_in_graph \
+		repo/.git repo "$(git -C repo rev-parse one)" >actual &&
+	echo $(git -C repo rev-parse one^{tree}) >expect &&
+	test_cmp expect actual
+'
+
 test_done
