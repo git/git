@@ -495,7 +495,7 @@ test_expect_success 'setup differently handled merges of directory/file conflict
 		test_write_lines 1 2 3 4 5 6 7 8 >a &&
 		git add a &&
 		git commit -m E3 &&
-		git tag E3
+		git tag E3 &&
 
 		git checkout C^0 &&
 		test_must_fail git merge B^0 &&
