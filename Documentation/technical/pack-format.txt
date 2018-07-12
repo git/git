@@ -296,6 +296,12 @@ CHUNK LOOKUP:
 
 CHUNK DATA:
 
+	Packfile Names (ID: {'P', 'N', 'A', 'M'})
+	    Stores the packfile names as concatenated, null-terminated strings.
+	    Packfiles must be listed in lexicographic order for fast lookups by
+	    name. This is the only chunk not guaranteed to be a multiple of four
+	    bytes in length, so should be the last chunk for alignment reasons.
+
 	(This section intentionally left incomplete.)
 
 TRAILER:

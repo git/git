@@ -6,7 +6,8 @@ test_description='multi-pack-indexes'
 midx_read_expect () {
 	NUM_PACKS=$1
 	cat >expect <<-EOF
-	header: 4d494458 1 0 $NUM_PACKS
+	header: 4d494458 1 1 $NUM_PACKS
+	chunks: pack-names
 	object-dir: .
 	EOF
 	test-tool read-midx . >actual &&

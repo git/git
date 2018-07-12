@@ -14,6 +14,8 @@ struct multi_pack_index {
 	uint32_t num_packs;
 	uint32_t num_objects;
 
+	const unsigned char *chunk_pack_names;
+
 	char object_dir[FLEX_ARRAY];
 };
 
