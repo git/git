@@ -302,6 +302,10 @@ CHUNK DATA:
 	    name. This is the only chunk not guaranteed to be a multiple of four
 	    bytes in length, so should be the last chunk for alignment reasons.
 
+	OID Lookup (ID: {'O', 'I', 'D', 'L'})
+	    The OIDs for all objects in the MIDX are stored in lexicographic
+	    order in this chunk.
+
 	(This section intentionally left incomplete.)
 
 TRAILER:

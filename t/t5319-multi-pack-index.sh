@@ -7,8 +7,8 @@ midx_read_expect () {
 	NUM_PACKS=$1
 	{
 		cat <<-EOF &&
-		header: 4d494458 1 1 $NUM_PACKS
-		chunks: pack-names
+		header: 4d494458 1 2 $NUM_PACKS
+		chunks: pack-names oid-lookup
 		packs:
 		EOF
 		if test $NUM_PACKS -ge 1
