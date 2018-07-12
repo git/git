@@ -252,3 +252,52 @@ Pack file entry: <+
     corresponding packfile.
 
     20-byte SHA-1-checksum of all of the above.
+
+== multi-pack-index (MIDX) files have the following format:
+
+The multi-pack-index files refer to multiple pack-files and loose objects.
+
+In order to allow extensions that add extra data to the MIDX, we organize
+the body into "chunks" and provide a lookup table at the beginning of the
+body. The header includes certain length values, such as the number of packs,
+the number of base MIDX files, hash lengths and types.
+
+All 4-byte numbers are in network order.
+
+HEADER:
+
+	4-byte signature:
+	    The signature is: {'M', 'I', 'D', 'X'}
+
+	1-byte version number:
+	    Git only writes or recognizes version 1.
+
+	1-byte Object Id Version
+	    Git only writes or recognizes version 1 (SHA1).
+
+	1-byte number of "chunks"
+
+	1-byte number of base multi-pack-index files:
+	    This value is currently always zero.
+
+	4-byte number of pack files
+
+CHUNK LOOKUP:
+
+	(C + 1) * 12 bytes providing the chunk offsets:
+	    First 4 bytes describe chunk id. Value 0 is a terminating label.
+	    Other 8 bytes provide offset in current file for chunk to start.
+	    (Chunks are provided in file-order, so you can infer the length
+	    using the next chunk position if necessary.)
+
+	The remaining data in the body is described one chunk at a time, and
+	these chunks may be given in any order. Chunks are required unless
+	otherwise specified.
+
+CHUNK DATA:
+
+	(This section intentionally left incomplete.)
+
+TRAILER:
+
+	20-byte SHA1-checksum of the above contents.
