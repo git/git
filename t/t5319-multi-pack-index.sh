@@ -4,8 +4,9 @@ test_description='multi-pack-indexes'
 . ./test-lib.sh
 
 midx_read_expect () {
+	NUM_PACKS=$1
 	cat >expect <<-EOF
-	header: 4d494458 1 0 0
+	header: 4d494458 1 0 $NUM_PACKS
 	object-dir: .
 	EOF
 	test-tool read-midx . >actual &&
@@ -15,7 +16,7 @@ midx_read_expect () {
 test_expect_success 'write midx with no packs' '
 	test_when_finished rm -f pack/multi-pack-index &&
 	git multi-pack-index --object-dir=. write &&
-	midx_read_expect
+	midx_read_expect 0
 '
 
 generate_objects () {
@@ -65,13 +66,13 @@ test_expect_success 'write midx with one v1 pack' '
 	pack=$(git pack-objects --index-version=1 pack/test <obj-list) &&
 	test_when_finished rm pack/test-$pack.pack pack/test-$pack.idx pack/multi-pack-index &&
 	git multi-pack-index --object-dir=. write &&
-	midx_read_expect
+	midx_read_expect 1
 '
 
 test_expect_success 'write midx with one v2 pack' '
 	git pack-objects --index-version=2,0x40 pack/test <obj-list &&
 	git multi-pack-index --object-dir=. write &&
-	midx_read_expect
+	midx_read_expect 1
 '
 
 test_expect_success 'add more objects' '
@@ -85,7 +86,7 @@ test_expect_success 'add more objects' '
 test_expect_success 'write midx with two packs' '
 	git pack-objects --index-version=1 pack/test-2 <obj-list &&
 	git multi-pack-index --object-dir=. write &&
-	midx_read_expect
+	midx_read_expect 2
 '
 
 test_expect_success 'add more packs' '
@@ -93,13 +94,13 @@ test_expect_success 'add more packs' '
 	do
 		generate_objects $j &&
 		commit_and_list_objects &&
-		git pack-objects --index-version=2 test-pack <obj-list
+		git pack-objects --index-version=2 pack/test-pack <obj-list
 	done
 '
 
 test_expect_success 'write midx with twelve packs' '
 	git multi-pack-index --object-dir=. write &&
-	midx_read_expect
+	midx_read_expect 12
 '
 
 test_done
