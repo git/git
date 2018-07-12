@@ -28,6 +28,12 @@ extern char *sha1_pack_index_name(const unsigned char *sha1);
 
 extern struct packed_git *parse_pack_index(unsigned char *sha1, const char *idx_path);
 
+typedef void each_file_in_pack_dir_fn(const char *full_path, size_t full_path_len,
+				      const char *file_pach, void *data);
+void for_each_file_in_pack_dir(const char *objdir,
+			       each_file_in_pack_dir_fn fn,
+			       void *data);
+
 /* A hook to report invalid files in pack directory */
 #define PACKDIR_FILE_PACK 1
 #define PACKDIR_FILE_IDX 2
