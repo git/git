@@ -37,6 +37,7 @@ struct multi_pack_index *load_multi_pack_index(const char *object_dir)
 	uint32_t hash_version;
 	char *midx_name = get_midx_filename(object_dir);
 	uint32_t i;
+	const char *cur_pack_name;
 
 	fd = git_open(midx_name);
 
@@ -114,6 +115,22 @@ struct multi_pack_index *load_multi_pack_index(const char *object_dir)
 
 	if (!m->chunk_pack_names)
 		die(_("multi-pack-index missing required pack-name chunk"));
+
+	m->pack_names = xcalloc(m->num_packs, sizeof(*m->pack_names));
+
+	cur_pack_name = (const char *)m->chunk_pack_names;
+	for (i = 0; i < m->num_packs; i++) {
+		m->pack_names[i] = cur_pack_name;
+
+		cur_pack_name += strlen(cur_pack_name) + 1;
+
+		if (i && strcmp(m->pack_names[i], m->pack_names[i - 1]) <= 0) {
+			error(_("multi-pack-index pack names out of order: '%s' before '%s'"),
+			      m->pack_names[i - 1],
+			      m->pack_names[i]);
+			goto cleanup_fail;
+		}
+	}
 
 	return m;
 

@@ -5,11 +5,18 @@ test_description='multi-pack-indexes'
 
 midx_read_expect () {
 	NUM_PACKS=$1
-	cat >expect <<-EOF
-	header: 4d494458 1 1 $NUM_PACKS
-	chunks: pack-names
-	object-dir: .
-	EOF
+	{
+		cat <<-EOF &&
+		header: 4d494458 1 1 $NUM_PACKS
+		chunks: pack-names
+		packs:
+		EOF
+		if test $NUM_PACKS -ge 1
+		then
+			ls pack/ | grep idx | sort
+		fi &&
+		printf "object-dir: .\n"
+	} >expect &&
 	test-tool read-midx . >actual &&
 	test_cmp expect actual
 }

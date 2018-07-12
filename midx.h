@@ -16,6 +16,7 @@ struct multi_pack_index {
 
 	const unsigned char *chunk_pack_names;
 
+	const char **pack_names;
 	char object_dir[FLEX_ARRAY];
 };
 
