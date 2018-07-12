@@ -961,6 +961,12 @@ struct packed_git *get_packed_git(struct repository *r)
 	return r->objects->packed_git;
 }
 
+struct multi_pack_index *get_multi_pack_index(struct repository *r)
+{
+	prepare_packed_git(r);
+	return r->objects->multi_pack_index;
+}
+
 struct list_head *get_packed_git_mru(struct repository *r)
 {
 	prepare_packed_git(r);

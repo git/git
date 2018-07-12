@@ -203,6 +203,17 @@ int bsearch_midx(const struct object_id *oid, struct multi_pack_index *m, uint32
 			    MIDX_HASH_LEN, result);
 }
 
+struct object_id *nth_midxed_object_oid(struct object_id *oid,
+					struct multi_pack_index *m,
+					uint32_t n)
+{
+	if (n >= m->num_objects)
+		return NULL;
+
+	hashcpy(oid->hash, m->chunk_oid_lookup + m->hash_len * n);
+	return oid;
+}
+
 static off_t nth_midxed_offset(struct multi_pack_index *m, uint32_t pos)
 {
 	const unsigned char *offset_data;
