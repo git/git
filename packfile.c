@@ -795,6 +795,7 @@ struct prepare_pack_data {
 	struct repository *r;
 	struct string_list *garbage;
 	int local;
+	struct multi_pack_index *m;
 };
 
 static void prepare_pack(const char *full_name, size_t full_name_len,
@@ -805,6 +806,8 @@ static void prepare_pack(const char *full_name, size_t full_name_len,
 	size_t base_len = full_name_len;
 
 	if (strip_suffix_mem(full_name, &base_len, ".idx")) {
+		if (data->m && midx_contains_pack(data->m, file_name))
+			return;
 		/* Don't reopen a pack we already have. */
 		for (p = data->r->objects->packed_git; p; p = p->next) {
 			size_t len;
@@ -838,6 +841,12 @@ static void prepare_packed_git_one(struct repository *r, char *objdir, int local
 {
 	struct prepare_pack_data data;
 	struct string_list garbage = STRING_LIST_INIT_DUP;
+
+	data.m = r->objects->multi_pack_index;
+
+	/* look for the multi-pack-index for this object directory */
+	while (data.m && strcmp(data.m->object_dir, objdir))
+		data.m = data.m->next;
 
 	data.r = r;
 	data.garbage = &garbage;
