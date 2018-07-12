@@ -861,10 +861,13 @@ unsigned long approximate_object_count(void)
 {
 	if (!the_repository->objects->approximate_object_count_valid) {
 		unsigned long count;
+		struct multi_pack_index *m;
 		struct packed_git *p;
 
 		prepare_packed_git(the_repository);
 		count = 0;
+		for (m = get_multi_pack_index(the_repository); m; m = m->next)
+			count += m->num_objects;
 		for (p = the_repository->objects->packed_git; p; p = p->next) {
 			if (open_pack_index(p))
 				continue;
