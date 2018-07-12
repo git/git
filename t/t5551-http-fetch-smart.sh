@@ -98,8 +98,7 @@ GET  /smart/repo.git/info/refs?service=git-upload-pack HTTP/1.1 200
 POST /smart/repo.git/git-upload-pack HTTP/1.1 200
 EOF
 test_expect_success 'used upload-pack service' '
-	strip_access_log >act &&
-	test_cmp exp act
+	check_access_log exp
 '
 
 test_expect_success 'follow redirects (301)' '

@@ -47,8 +47,7 @@ test_expect_success 'no empty path components' '
 	cd "$ROOT_PATH" &&
 	git clone $HTTPD_URL/smart/test_repo.git/ test_repo_clone &&
 
-	strip_access_log >act &&
-	test_cmp exp act
+	check_access_log exp
 '
 
 test_expect_success 'clone remote repository' '
@@ -129,8 +128,7 @@ GET  /smart/test_repo.git/info/refs?service=git-receive-pack HTTP/1.1 200
 POST /smart/test_repo.git/git-receive-pack HTTP/1.1 200
 EOF
 test_expect_success 'used receive-pack service' '
-	strip_access_log >act &&
-	test_cmp exp act
+	check_access_log exp
 '
 
 test_http_push_nonff "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.git \

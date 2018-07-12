@@ -123,8 +123,7 @@ GET  /smart/repo.git/info/refs?service=git-receive-pack HTTP/1.1 403 -
 POST /smart/repo.git/git-receive-pack HTTP/1.1 403 -
 EOF
 test_expect_success 'server request log matches test results' '
-	strip_access_log >act &&
-	test_cmp exp act
+	check_access_log exp
 '
 
 stop_httpd
