@@ -3,6 +3,8 @@
 test_description='multi-pack-indexes'
 . ./test-lib.sh
 
+objdir=.git/objects
+
 midx_read_expect () {
 	NUM_PACKS=$1
 	NUM_OBJECTS=$2
@@ -76,17 +78,34 @@ test_expect_success 'create objects' '
 '
 
 test_expect_success 'write midx with one v1 pack' '
-	pack=$(git pack-objects --index-version=1 pack/test <obj-list) &&
-	test_when_finished rm pack/test-$pack.pack pack/test-$pack.idx pack/multi-pack-index &&
-	git multi-pack-index --object-dir=. write &&
-	midx_read_expect 1 18 4 .
+	pack=$(git pack-objects --index-version=1 $objdir/pack/test <obj-list) &&
+	test_when_finished rm $objdir/pack/test-$pack.pack \
+		$objdir/pack/test-$pack.idx $objdir/pack/multi-pack-index &&
+	git multi-pack-index --object-dir=$objdir write &&
+	midx_read_expect 1 18 4 $objdir
 '
 
+midx_git_two_modes () {
+	git -c core.multiPackIndex=false $1 >expect &&
+	git -c core.multiPackIndex=true $1 >actual &&
+	test_cmp expect actual
+}
+
+compare_results_with_midx () {
+	MSG=$1
+	test_expect_success "check normal git operations: $MSG" '
+		midx_git_two_modes "rev-list --objects --all" &&
+		midx_git_two_modes "log --raw"
+	'
+}
+
 test_expect_success 'write midx with one v2 pack' '
-	git pack-objects --index-version=2,0x40 pack/test <obj-list &&
-	git multi-pack-index --object-dir=. write &&
-	midx_read_expect 1 18 4 .
+	git pack-objects --index-version=2,0x40 $objdir/pack/test <obj-list &&
+	git multi-pack-index --object-dir=$objdir write &&
+	midx_read_expect 1 18 4 $objdir
 '
+
+compare_results_with_midx "one v2 pack"
 
 test_expect_success 'add more objects' '
 	for i in $(test_seq 6 10)
@@ -97,24 +116,30 @@ test_expect_success 'add more objects' '
 '
 
 test_expect_success 'write midx with two packs' '
-	git pack-objects --index-version=1 pack/test-2 <obj-list &&
-	git multi-pack-index --object-dir=. write &&
-	midx_read_expect 2 34 4 .
+	git pack-objects --index-version=1 $objdir/pack/test-2 <obj-list &&
+	git multi-pack-index --object-dir=$objdir write &&
+	midx_read_expect 2 34 4 $objdir
 '
+
+compare_results_with_midx "two packs"
 
 test_expect_success 'add more packs' '
 	for j in $(test_seq 11 20)
 	do
 		generate_objects $j &&
 		commit_and_list_objects &&
-		git pack-objects --index-version=2 pack/test-pack <obj-list
+		git pack-objects --index-version=2 $objdir/pack/test-pack <obj-list
 	done
 '
 
+compare_results_with_midx "mixed mode (two packs + extra)"
+
 test_expect_success 'write midx with twelve packs' '
-	git multi-pack-index --object-dir=. write &&
-	midx_read_expect 12 74 4 .
+	git multi-pack-index --object-dir=$objdir write &&
+	midx_read_expect 12 74 4 $objdir
 '
+
+compare_results_with_midx "twelve packs"
 
 # usage: corrupt_data <file> <pos> [<data>]
 corrupt_data () {

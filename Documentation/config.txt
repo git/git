@@ -908,6 +908,11 @@ core.commitGraph::
 	Enable git commit graph feature. Allows reading from the
 	commit-graph file.
 
+core.multiPackIndex::
+	Use the multi-pack-index file to track multiple packfiles using a
+	single index. See link:technical/multi-pack-index.html[the
+	multi-pack-index design document].
+
 core.sparseCheckout::
 	Enable "sparse checkout" feature. See section "Sparse checkout" in
 	linkgit:git-read-tree[1] for more information.
