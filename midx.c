@@ -5,7 +5,7 @@
 #include "lockfile.h"
 #include "packfile.h"
 #include "object-store.h"
-#include "packfile.h"
+#include "sha1-lookup.h"
 #include "midx.h"
 
 #define MIDX_SIGNATURE 0x4d494458 /* "MIDX" */
@@ -151,6 +151,7 @@ struct multi_pack_index *load_multi_pack_index(const char *object_dir)
 	m->num_objects = ntohl(m->chunk_oid_fanout[255]);
 
 	m->pack_names = xcalloc(m->num_packs, sizeof(*m->pack_names));
+	m->packs = xcalloc(m->num_packs, sizeof(*m->packs));
 
 	cur_pack_name = (const char *)m->chunk_pack_names;
 	for (i = 0; i < m->num_packs; i++) {
@@ -176,6 +177,94 @@ cleanup_fail:
 	if (0 <= fd)
 		close(fd);
 	return NULL;
+}
+
+static int prepare_midx_pack(struct multi_pack_index *m, uint32_t pack_int_id)
+{
+	struct strbuf pack_name = STRBUF_INIT;
+
+	if (pack_int_id >= m->num_packs)
+		BUG("bad pack-int-id");
+
+	if (m->packs[pack_int_id])
+		return 0;
+
+	strbuf_addf(&pack_name, "%s/pack/%s", m->object_dir,
+		    m->pack_names[pack_int_id]);
+
+	m->packs[pack_int_id] = add_packed_git(pack_name.buf, pack_name.len, 1);
+	strbuf_release(&pack_name);
+	return !m->packs[pack_int_id];
+}
+
+int bsearch_midx(const struct object_id *oid, struct multi_pack_index *m, uint32_t *result)
+{
+	return bsearch_hash(oid->hash, m->chunk_oid_fanout, m->chunk_oid_lookup,
+			    MIDX_HASH_LEN, result);
+}
+
+static off_t nth_midxed_offset(struct multi_pack_index *m, uint32_t pos)
+{
+	const unsigned char *offset_data;
+	uint32_t offset32;
+
+	offset_data = m->chunk_object_offsets + pos * MIDX_CHUNK_OFFSET_WIDTH;
+	offset32 = get_be32(offset_data + sizeof(uint32_t));
+
+	if (m->chunk_large_offsets && offset32 & MIDX_LARGE_OFFSET_NEEDED) {
+		if (sizeof(offset32) < sizeof(uint64_t))
+			die(_("multi-pack-index stores a 64-bit offset, but off_t is too small"));
+
+		offset32 ^= MIDX_LARGE_OFFSET_NEEDED;
+		return get_be64(m->chunk_large_offsets + sizeof(uint64_t) * offset32);
+	}
+
+	return offset32;
+}
+
+static uint32_t nth_midxed_pack_int_id(struct multi_pack_index *m, uint32_t pos)
+{
+	return get_be32(m->chunk_object_offsets + pos * MIDX_CHUNK_OFFSET_WIDTH);
+}
+
+static int nth_midxed_pack_entry(struct multi_pack_index *m, struct pack_entry *e, uint32_t pos)
+{
+	uint32_t pack_int_id;
+	struct packed_git *p;
+
+	if (pos >= m->num_objects)
+		return 0;
+
+	pack_int_id = nth_midxed_pack_int_id(m, pos);
+
+	if (prepare_midx_pack(m, pack_int_id))
+		die(_("error preparing packfile from multi-pack-index"));
+	p = m->packs[pack_int_id];
+
+	/*
+	* We are about to tell the caller where they can locate the
+	* requested object.  We better make sure the packfile is
+	* still here and can be accessed before supplying that
+	* answer, as it may have been deleted since the MIDX was
+	* loaded!
+	*/
+	if (!is_pack_valid(p))
+		return 0;
+
+	e->offset = nth_midxed_offset(m, pos);
+	e->p = p;
+
+	return 1;
+}
+
+int fill_midx_entry(const struct object_id *oid, struct pack_entry *e, struct multi_pack_index *m)
+{
+	uint32_t pos;
+
+	if (!bsearch_midx(oid, m, &pos))
+		return 0;
+
+	return nth_midxed_pack_entry(m, e, pos);
 }
 
 int prepare_multi_pack_index_one(struct repository *r, const char *object_dir)

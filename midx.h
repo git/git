@@ -25,10 +25,13 @@ struct multi_pack_index {
 	const unsigned char *chunk_large_offsets;
 
 	const char **pack_names;
+	struct packed_git **packs;
 	char object_dir[FLEX_ARRAY];
 };
 
 struct multi_pack_index *load_multi_pack_index(const char *object_dir);
+int bsearch_midx(const struct object_id *oid, struct multi_pack_index *m, uint32_t *result);
+int fill_midx_entry(const struct object_id *oid, struct pack_entry *e, struct multi_pack_index *m);
 int prepare_multi_pack_index_one(struct repository *r, const char *object_dir);
 
 int write_midx_file(const char *object_dir);
