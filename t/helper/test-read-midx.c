@@ -22,10 +22,12 @@ static int read_midx_file(const char *object_dir)
 
 	if (m->chunk_pack_names)
 		printf(" pack-names");
+	if (m->chunk_oid_fanout)
+		printf(" oid-fanout");
 	if (m->chunk_oid_lookup)
 		printf(" oid-lookup");
 
-	printf("\n");
+	printf("\nnum_objects: %d\n", m->num_objects);
 
 	printf("packs:\n");
 	for (i = 0; i < m->num_packs; i++)
