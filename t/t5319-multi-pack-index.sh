@@ -141,6 +141,15 @@ test_expect_success 'write midx with twelve packs' '
 
 compare_results_with_midx "twelve packs"
 
+test_expect_success 'repack removes multi-pack-index' '
+	test_path_is_file $objdir/pack/multi-pack-index &&
+	git repack -adf &&
+	test_path_is_missing $objdir/pack/multi-pack-index
+'
+
+compare_results_with_midx "after repack"
+
+
 # usage: corrupt_data <file> <pos> [<data>]
 corrupt_data () {
 	file=$1
