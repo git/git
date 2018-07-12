@@ -84,6 +84,8 @@ struct packed_git {
 	char pack_name[FLEX_ARRAY]; /* more */
 };
 
+struct multi_pack_index;
+
 struct raw_object_store {
 	/*
 	 * Path to the repository's object store.

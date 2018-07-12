@@ -1,16 +1,95 @@
 #include "cache.h"
 #include "csum-file.h"
 #include "lockfile.h"
+#include "object-store.h"
 #include "midx.h"
 
 #define MIDX_SIGNATURE 0x4d494458 /* "MIDX" */
 #define MIDX_VERSION 1
+#define MIDX_BYTE_FILE_VERSION 4
+#define MIDX_BYTE_HASH_VERSION 5
+#define MIDX_BYTE_NUM_CHUNKS 6
+#define MIDX_BYTE_NUM_PACKS 8
 #define MIDX_HASH_VERSION 1
 #define MIDX_HEADER_SIZE 12
+#define MIDX_HASH_LEN 20
+#define MIDX_MIN_SIZE (MIDX_HEADER_SIZE + MIDX_HASH_LEN)
 
 static char *get_midx_filename(const char *object_dir)
 {
 	return xstrfmt("%s/pack/multi-pack-index", object_dir);
+}
+
+struct multi_pack_index *load_multi_pack_index(const char *object_dir)
+{
+	struct multi_pack_index *m = NULL;
+	int fd;
+	struct stat st;
+	size_t midx_size;
+	void *midx_map = NULL;
+	uint32_t hash_version;
+	char *midx_name = get_midx_filename(object_dir);
+
+	fd = git_open(midx_name);
+
+	if (fd < 0)
+		goto cleanup_fail;
+	if (fstat(fd, &st)) {
+		error_errno(_("failed to read %s"), midx_name);
+		goto cleanup_fail;
+	}
+
+	midx_size = xsize_t(st.st_size);
+
+	if (midx_size < MIDX_MIN_SIZE) {
+		error(_("multi-pack-index file %s is too small"), midx_name);
+		goto cleanup_fail;
+	}
+
+	FREE_AND_NULL(midx_name);
+
+	midx_map = xmmap(NULL, midx_size, PROT_READ, MAP_PRIVATE, fd, 0);
+
+	FLEX_ALLOC_MEM(m, object_dir, object_dir, strlen(object_dir));
+	m->fd = fd;
+	m->data = midx_map;
+	m->data_len = midx_size;
+
+	m->signature = get_be32(m->data);
+	if (m->signature != MIDX_SIGNATURE) {
+		error(_("multi-pack-index signature 0x%08x does not match signature 0x%08x"),
+		      m->signature, MIDX_SIGNATURE);
+		goto cleanup_fail;
+	}
+
+	m->version = m->data[MIDX_BYTE_FILE_VERSION];
+	if (m->version != MIDX_VERSION) {
+		error(_("multi-pack-index version %d not recognized"),
+		      m->version);
+		goto cleanup_fail;
+	}
+
+	hash_version = m->data[MIDX_BYTE_HASH_VERSION];
+	if (hash_version != MIDX_HASH_VERSION) {
+		error(_("hash version %u does not match"), hash_version);
+		goto cleanup_fail;
+	}
+	m->hash_len = MIDX_HASH_LEN;
+
+	m->num_chunks = m->data[MIDX_BYTE_NUM_CHUNKS];
+
+	m->num_packs = get_be32(m->data + MIDX_BYTE_NUM_PACKS);
+
+	return m;
+
+cleanup_fail:
+	free(m);
+	free(midx_name);
+	if (midx_map)
+		munmap(midx_map, midx_size);
+	if (0 <= fd)
+		close(fd);
+	return NULL;
 }
 
 static size_t write_midx_header(struct hashfile *f,
