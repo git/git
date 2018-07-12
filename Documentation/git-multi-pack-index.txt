@@ -1,0 +1,36 @@
+git-multi-pack-index(1)
+=======================
+
+NAME
+----
+git-multi-pack-index - Write and verify multi-pack-indexes
+
+
+SYNOPSIS
+--------
+[verse]
+'git multi-pack-index' [--object-dir=<dir>]
+
+DESCRIPTION
+-----------
+Write or verify a multi-pack-index (MIDX) file.
+
+OPTIONS
+-------
+
+--object-dir=<dir>::
+	Use given directory for the location of Git objects. We check
+	`<dir>/packs/multi-pack-index` for the current MIDX file, and
+	`<dir>/packs` for the pack-files to index.
+
+
+SEE ALSO
+--------
+See link:technical/multi-pack-index.html[The Multi-Pack-Index Design
+Document] and link:technical/pack-format.html[The Multi-Pack-Index
+Format] for more information on the multi-pack-index feature.
+
+
+GIT
+---
+Part of the linkgit:git[1] suite
