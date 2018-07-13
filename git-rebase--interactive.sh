@@ -57,7 +57,6 @@ init_basic_state () {
 	rm -f "$(git rev-parse --git-path REBASE_HEAD)"
 
 	: > "$state_dir"/interactive || die "$(gettext "Could not mark as interactive")"
-	write_basic_state
 }
 
 git_rebase__interactive () {
@@ -69,6 +68,12 @@ git_rebase__interactive () {
 
 	git rebase--helper --prepare-branch "$switch_to" ${verbose:+--verbose}
 	init_basic_state
+
+	git rebase--helper --init-basic-state ${upstream:+--upstream "$upstream"} \
+		${onto:+--onto "$onto"} ${head_name:+--head-name "$head_name"} \
+		${verbose:+--verbose} ${strategy:+--strategy "$strategy"} \
+		${strategy_opts:+--strategy-opts="$strategy_opts"} \
+		"$allow_rerere_autoupdate" "$gpg_sign_opt" "$signoff" || exit
 
 	git rebase--helper --make-script ${keep_empty:+--keep-empty} \
 		${rebase_merges:+--rebase-merges} \
