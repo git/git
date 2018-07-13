@@ -185,7 +185,7 @@ test_expect_success 'fsck detects corrupt .gitmodules' '
 		git add .gitmodules &&
 		git commit -m "broken gitmodules" &&
 
-		test_must_fail git fsck 2>output &&
+		git fsck 2>output &&
 		grep gitmodulesParse output &&
 		test_i18ngrep ! "bad config" output
 	)
