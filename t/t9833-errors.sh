@@ -26,7 +26,9 @@ test_expect_success 'error handling' '
 	) &&
 	p4 passwd -P newpassword &&
 	(
-		P4PASSWD=badpassword test_must_fail git p4 clone //depot/foo 2>errmsg &&
+		P4PASSWD=badpassword &&
+		export P4PASSWD &&
+		test_must_fail git p4 clone //depot/foo 2>errmsg &&
 		grep -q "failure accessing depot.*P4PASSWD" errmsg
 	)
 '
