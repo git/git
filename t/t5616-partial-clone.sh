@@ -229,9 +229,13 @@ test_expect_success 'when partial cloning, tolerate server not sending target of
 	git -C "$SERVER" tag -m message -a myblob "$BLOB" &&
 
 	# Craft a packfile including the tag, but not the blob it points to.
-	printf "%s\n%s\n--not\n%s\n" \
+	# Also, omit objects referenced from HEAD in order to force a second
+	# fetch (to fetch missing objects) upon the automatic checkout that
+	# happens after a clone.
+	printf "%s\n%s\n--not\n%s\n%s\n" \
 		$(git -C "$SERVER" rev-parse HEAD) \
 		$(git -C "$SERVER" rev-parse myblob) \
+		$(git -C "$SERVER" rev-parse HEAD^{tree}) \
 		$(git -C "$SERVER" rev-parse myblob^{blob}) |
 		git -C "$SERVER" pack-objects --thin --stdout >incomplete.pack &&
 
@@ -249,7 +253,8 @@ test_expect_success 'when partial cloning, tolerate server not sending target of
 
 	# Exercise to make sure it works.
 	git -c protocol.version=2 clone \
-		--filter=blob:none $HTTPD_URL/one_time_sed/server repo &&
+		--filter=blob:none $HTTPD_URL/one_time_sed/server repo 2> err &&
+	! grep "missing object referenced by" err &&
 
 	# Ensure that the one-time-sed script was used.
 	! test -e "$HTTPD_ROOT_PATH/one-time-sed"
