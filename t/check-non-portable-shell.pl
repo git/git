@@ -10,6 +10,8 @@ my $exit_code=0;
 
 sub err {
 	my $msg = shift;
+	s/^\s+//;
+	s/\s+$//;
 	print "$ARGV:$.: error: $msg: $_\n";
 	$exit_code = 1;
 }
