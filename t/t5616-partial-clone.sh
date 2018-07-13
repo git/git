@@ -216,6 +216,45 @@ test_expect_success 'upon cloning, check that all refs point to objects' '
 	! test -e "$HTTPD_ROOT_PATH/one-time-sed"
 '
 
+test_expect_success 'when partial cloning, tolerate server not sending target of tag' '
+	SERVER="$HTTPD_DOCUMENT_ROOT_PATH/server" &&
+	rm -rf "$SERVER" repo &&
+	test_create_repo "$SERVER" &&
+	test_commit -C "$SERVER" foo &&
+	test_config -C "$SERVER" uploadpack.allowfilter 1 &&
+	test_config -C "$SERVER" uploadpack.allowanysha1inwant 1 &&
+
+	# Create an annotated tag pointing to a blob.
+	BLOB=$(echo blob-contents | git -C "$SERVER" hash-object --stdin -w) &&
+	git -C "$SERVER" tag -m message -a myblob "$BLOB" &&
+
+	# Craft a packfile including the tag, but not the blob it points to.
+	printf "%s\n%s\n--not\n%s\n" \
+		$(git -C "$SERVER" rev-parse HEAD) \
+		$(git -C "$SERVER" rev-parse myblob) \
+		$(git -C "$SERVER" rev-parse myblob^{blob}) |
+		git -C "$SERVER" pack-objects --thin --stdout >incomplete.pack &&
+
+	# Replace the existing packfile with the crafted one. The protocol
+	# requires that the packfile be sent in sideband 1, hence the extra
+	# \x01 byte at the beginning.
+	printf "1,/packfile/!c %04x\\\\x01%s0000" \
+		"$(($(wc -c <incomplete.pack) + 5))" \
+		"$(sed_escape <incomplete.pack)" \
+		>"$HTTPD_ROOT_PATH/one-time-sed" &&
+
+	# Use protocol v2 because the sed command looks for the "packfile"
+	# section header.
+	test_config -C "$SERVER" protocol.version 2 &&
+
+	# Exercise to make sure it works.
+	git -c protocol.version=2 clone \
+		--filter=blob:none $HTTPD_URL/one_time_sed/server repo &&
+
+	# Ensure that the one-time-sed script was used.
+	! test -e "$HTTPD_ROOT_PATH/one-time-sed"
+'
+
 stop_httpd
 
 test_done
