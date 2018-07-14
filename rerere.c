@@ -484,12 +484,12 @@ static int handle_file(const char *path, unsigned char *sha1, const char *output
 	io.input = fopen(path, "r");
 	io.io.wrerror = 0;
 	if (!io.input)
-		return error_errno("could not open %s", path);
+		return error_errno("could not open '%s'", path);
 
 	if (output) {
 		io.io.output = fopen(output, "w");
 		if (!io.io.output) {
-			error_errno("could not write %s", output);
+			error_errno("could not write '%s'", output);
 			fclose(io.input);
 			return -1;
 		}
@@ -499,15 +499,15 @@ static int handle_file(const char *path, unsigned char *sha1, const char *output
 
 	fclose(io.input);
 	if (io.io.wrerror)
-		error("there were errors while writing %s (%s)",
+		error("there were errors while writing '%s' (%s)",
 		      path, strerror(io.io.wrerror));
 	if (io.io.output && fclose(io.io.output))
-		io.io.wrerror = error_errno("failed to flush %s", path);
+		io.io.wrerror = error_errno("failed to flush '%s'", path);
 
 	if (hunk_no < 0) {
 		if (output)
 			unlink_or_warn(output);
-		return error("could not parse conflict hunks in %s", path);
+		return error("could not parse conflict hunks in '%s'", path);
 	}
 	if (io.io.wrerror)
 		return -1;
@@ -684,17 +684,17 @@ static int merge(const struct rerere_id *id, const char *path)
 	 * Mark that "postimage" was used to help gc.
 	 */
 	if (utime(rerere_path(id, "postimage"), NULL) < 0)
-		warning_errno("failed utime() on %s",
+		warning_errno("failed utime() on '%s'",
 			      rerere_path(id, "postimage"));
 
 	/* Update "path" with the resolution */
 	f = fopen(path, "w");
 	if (!f)
-		return error_errno("could not open %s", path);
+		return error_errno("could not open '%s'", path);
 	if (fwrite(result.ptr, result.size, 1, f) != 1)
-		error_errno("could not write %s", path);
+		error_errno("could not write '%s'", path);
 	if (fclose(f))
-		return error_errno("writing %s failed", path);
+		return error_errno("writing '%s' failed", path);
 
 out:
 	free(cur.ptr);
@@ -878,7 +878,7 @@ static int is_rerere_enabled(void)
 		return rr_cache_exists;
 
 	if (!rr_cache_exists && mkdir_in_gitdir(git_path_rr_cache()))
-		die("could not create directory %s", git_path_rr_cache());
+		die("could not create directory '%s'", git_path_rr_cache());
 	return 1;
 }
 
@@ -1067,9 +1067,9 @@ static int rerere_forget_one_path(const char *path, struct string_list *rr)
 	filename = rerere_path(id, "postimage");
 	if (unlink(filename)) {
 		if (errno == ENOENT)
-			error("no remembered resolution for %s", path);
+			error("no remembered resolution for '%s'", path);
 		else
-			error_errno("cannot unlink %s", filename);
+			error_errno("cannot unlink '%s'", filename);
 		goto fail_exit;
 	}
 
@@ -1088,7 +1088,7 @@ static int rerere_forget_one_path(const char *path, struct string_list *rr)
 	item = string_list_insert(rr, path);
 	free_rerere_id(item);
 	item->util = id;
-	fprintf(stderr, "Forgot resolution for %s\n", path);
+	fprintf(stderr, "Forgot resolution for '%s'\n", path);
 	return 0;
 
 fail_exit:
