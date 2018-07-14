@@ -484,12 +484,12 @@ static int handle_file(const char *path, unsigned char *sha1, const char *output
 	io.input = fopen(path, "r");
 	io.io.wrerror = 0;
 	if (!io.input)
-		return error_errno("Could not open %s", path);
+		return error_errno("could not open %s", path);
 
 	if (output) {
 		io.io.output = fopen(output, "w");
 		if (!io.io.output) {
-			error_errno("Could not write %s", output);
+			error_errno("could not write %s", output);
 			fclose(io.input);
 			return -1;
 		}
@@ -499,15 +499,15 @@ static int handle_file(const char *path, unsigned char *sha1, const char *output
 
 	fclose(io.input);
 	if (io.io.wrerror)
-		error("There were errors while writing %s (%s)",
+		error("there were errors while writing %s (%s)",
 		      path, strerror(io.io.wrerror));
 	if (io.io.output && fclose(io.io.output))
-		io.io.wrerror = error_errno("Failed to flush %s", path);
+		io.io.wrerror = error_errno("failed to flush %s", path);
 
 	if (hunk_no < 0) {
 		if (output)
 			unlink_or_warn(output);
-		return error("Could not parse conflict hunks in %s", path);
+		return error("could not parse conflict hunks in %s", path);
 	}
 	if (io.io.wrerror)
 		return -1;
@@ -690,11 +690,11 @@ static int merge(const struct rerere_id *id, const char *path)
 	/* Update "path" with the resolution */
 	f = fopen(path, "w");
 	if (!f)
-		return error_errno("Could not open %s", path);
+		return error_errno("could not open %s", path);
 	if (fwrite(result.ptr, result.size, 1, f) != 1)
-		error_errno("Could not write %s", path);
+		error_errno("could not write %s", path);
 	if (fclose(f))
-		return error_errno("Writing %s failed", path);
+		return error_errno("writing %s failed", path);
 
 out:
 	free(cur.ptr);
@@ -720,7 +720,7 @@ static void update_paths(struct string_list *update)
 
 	if (write_locked_index(&the_index, &index_lock,
 			       COMMIT_LOCK | SKIP_IF_UNCHANGED))
-		die("Unable to write new index file");
+		die("unable to write new index file");
 }
 
 static void remove_variant(struct rerere_id *id)
@@ -878,7 +878,7 @@ static int is_rerere_enabled(void)
 		return rr_cache_exists;
 
 	if (!rr_cache_exists && mkdir_in_gitdir(git_path_rr_cache()))
-		die("Could not create directory %s", git_path_rr_cache());
+		die("could not create directory %s", git_path_rr_cache());
 	return 1;
 }
 
@@ -1031,7 +1031,7 @@ static int rerere_forget_one_path(const char *path, struct string_list *rr)
 	 */
 	ret = handle_cache(path, sha1, NULL);
 	if (ret < 1)
-		return error("Could not parse conflict hunks in '%s'", path);
+		return error("could not parse conflict hunks in '%s'", path);
 
 	/* Nuke the recorded resolution for the conflict */
 	id = new_rerere_id(sha1);
@@ -1049,7 +1049,7 @@ static int rerere_forget_one_path(const char *path, struct string_list *rr)
 		handle_cache(path, sha1, rerere_path(id, "thisimage"));
 		if (read_mmfile(&cur, rerere_path(id, "thisimage"))) {
 			free(cur.ptr);
-			error("Failed to update conflicted state in '%s'", path);
+			error("failed to update conflicted state in '%s'", path);
 			goto fail_exit;
 		}
 		cleanly_resolved = !try_merge(id, path, &cur, &result);
