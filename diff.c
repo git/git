@@ -3832,7 +3832,7 @@ static const char *diff_abbrev_oid(const struct object_id *oid, int abbrev)
 		char *hex = oid_to_hex(oid);
 		if (abbrev < 0)
 			abbrev = FALLBACK_DEFAULT_ABBREV;
-		if (abbrev > GIT_SHA1_HEXSZ)
+		if (abbrev > the_hash_algo->hexsz)
 			BUG("oid abbreviation out of range: %d", abbrev);
 		if (abbrev)
 			hex[abbrev] = '\0';
@@ -4947,7 +4947,7 @@ const char *diff_aligned_abbrev(const struct object_id *oid, int len)
 	const char *abbrev;
 
 	/* Do we want all 40 hex characters? */
-	if (len == GIT_SHA1_HEXSZ)
+	if (len == the_hash_algo->hexsz)
 		return oid_to_hex(oid);
 
 	/* An abbreviated value is fine, possibly followed by an ellipsis. */
@@ -4977,7 +4977,7 @@ const char *diff_aligned_abbrev(const struct object_id *oid, int len)
 	 * the automatic sizing is supposed to give abblen that ensures
 	 * uniqueness across all objects (statistically speaking).
 	 */
-	if (abblen < GIT_SHA1_HEXSZ - 3) {
+	if (abblen < the_hash_algo->hexsz - 3) {
 		static char hex[GIT_MAX_HEXSZ + 1];
 		if (len < abblen && abblen <= len + 2)
 			xsnprintf(hex, sizeof(hex), "%s%.*s", abbrev, len+3-abblen, "..");
