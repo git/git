@@ -827,6 +827,7 @@ static int parse_new_style_cacheinfo(const char *arg,
 {
 	unsigned long ul;
 	char *endp;
+	const char *p;
 
 	if (!arg)
 		return -1;
@@ -837,9 +838,9 @@ static int parse_new_style_cacheinfo(const char *arg,
 		return -1; /* not a new-style cacheinfo */
 	*mode = ul;
 	endp++;
-	if (get_oid_hex(endp, oid) || endp[GIT_SHA1_HEXSZ] != ',')
+	if (parse_oid_hex(endp, oid, &p) || *p != ',')
 		return -1;
-	*path = endp + GIT_SHA1_HEXSZ + 1;
+	*path = p + 1;
 	return 0;
 }
 
