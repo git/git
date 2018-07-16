@@ -26,8 +26,9 @@ static int decode_tree_entry(struct tree_desc *desc, const char *buf, unsigned l
 {
 	const char *path;
 	unsigned int mode, len;
+	const unsigned hashsz = the_hash_algo->rawsz;
 
-	if (size < 23 || buf[size - 21]) {
+	if (size < hashsz + 3 || buf[size - (hashsz + 1)]) {
 		strbuf_addstr(err, _("too-short tree object"));
 		return -1;
 	}
