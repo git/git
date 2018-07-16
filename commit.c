@@ -364,8 +364,8 @@ int parse_commit_buffer(struct commit *item, const void *buffer, unsigned long s
 	struct object_id parent;
 	struct commit_list **pptr;
 	struct commit_graft *graft;
-	const int tree_entry_len = GIT_SHA1_HEXSZ + 5;
-	const int parent_entry_len = GIT_SHA1_HEXSZ + 7;
+	const int tree_entry_len = the_hash_algo->hexsz + 5;
+	const int parent_entry_len = the_hash_algo->hexsz + 7;
 
 	if (item->object.parsed)
 		return 0;
