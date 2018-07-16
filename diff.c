@@ -801,6 +801,25 @@ static void add_lines_to_move_detection(struct diff_options *o,
 	}
 }
 
+static void pmb_advance_or_null(struct diff_options *o,
+				struct moved_entry *match,
+				struct hashmap *hm,
+				struct moved_entry **pmb,
+				int pmb_nr)
+{
+	int i;
+	for (i = 0; i < pmb_nr; i++) {
+		struct moved_entry *prev = pmb[i];
+		struct moved_entry *cur = (prev && prev->next_line) ?
+				prev->next_line : NULL;
+		if (cur && !hm->cmpfn(o, cur, match, NULL)) {
+			pmb[i] = cur;
+		} else {
+			pmb[i] = NULL;
+		}
+	}
+}
+
 static int shrink_potential_moved_blocks(struct moved_entry **pmb,
 					 int pmb_nr)
 {
@@ -875,7 +894,6 @@ static void mark_color_as_moved(struct diff_options *o,
 		struct moved_entry *key;
 		struct moved_entry *match = NULL;
 		struct emitted_diff_symbol *l = &o->emitted_symbols->buf[n];
-		int i;
 
 		switch (l->s) {
 		case DIFF_SYMBOL_PLUS:
@@ -906,17 +924,7 @@ static void mark_color_as_moved(struct diff_options *o,
 		if (o->color_moved == COLOR_MOVED_PLAIN)
 			continue;
 
-		/* Check any potential block runs, advance each or nullify */
-		for (i = 0; i < pmb_nr; i++) {
-			struct moved_entry *p = pmb[i];
-			struct moved_entry *pnext = (p && p->next_line) ?
-					p->next_line : NULL;
-			if (pnext && !hm->cmpfn(o, pnext, match, NULL)) {
-				pmb[i] = p->next_line;
-			} else {
-				pmb[i] = NULL;
-			}
-		}
+		pmb_advance_or_null(o, match, hm, pmb, pmb_nr);
 
 		pmb_nr = shrink_potential_moved_blocks(pmb, pmb_nr);
 
