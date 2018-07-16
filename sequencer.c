@@ -3994,7 +3994,7 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 		entry = oidmap_get(&state.commit2label, &commit->object.oid);
 
 		if (entry)
-			fprintf(out, "\n# Branch %s\n", entry->string);
+			fprintf(out, "\n%c Branch %s\n", comment_line_char, entry->string);
 		else
 			fprintf(out, "\n");
 
