@@ -108,14 +108,15 @@ static int handle_line(char *line, struct merge_parents *merge_parents)
 	struct string_list_item *item;
 	int pulling_head = 0;
 	struct object_id oid;
+	const unsigned hexsz = the_hash_algo->hexsz;
 
-	if (len < GIT_SHA1_HEXSZ + 3 || line[GIT_SHA1_HEXSZ] != '\t')
+	if (len < hexsz + 3 || line[hexsz] != '\t')
 		return 1;
 
-	if (starts_with(line + GIT_SHA1_HEXSZ + 1, "not-for-merge"))
+	if (starts_with(line + hexsz + 1, "not-for-merge"))
 		return 0;
 
-	if (line[GIT_SHA1_HEXSZ + 1] != '\t')
+	if (line[hexsz + 1] != '\t')
 		return 2;
 
 	i = get_oid_hex(line, &oid);
@@ -130,7 +131,7 @@ static int handle_line(char *line, struct merge_parents *merge_parents)
 
 	if (line[len - 1] == '\n')
 		line[len - 1] = 0;
-	line += GIT_SHA1_HEXSZ + 2;
+	line += hexsz + 2;
 
 	/*
 	 * At this point, line points at the beginning of comment e.g.
@@ -342,7 +343,7 @@ static void shortlog(const char *name,
 	const struct object_id *oid = &origin_data->oid;
 	int limit = opts->shortlog_len;
 
-	branch = deref_tag(parse_object(oid), oid_to_hex(oid), GIT_SHA1_HEXSZ);
+	branch = deref_tag(parse_object(oid), oid_to_hex(oid), the_hash_algo->hexsz);
 	if (!branch || branch->type != OBJ_COMMIT)
 		return;
 
@@ -545,6 +546,7 @@ static void find_merge_parents(struct merge_parents *result,
 		int len;
 		char *p = in->buf + pos;
 		char *newline = strchr(p, '\n');
+		const char *q;
 		struct object_id oid;
 		struct commit *parent;
 		struct object *obj;
@@ -552,10 +554,9 @@ static void find_merge_parents(struct merge_parents *result,
 		len = newline ? newline - p : strlen(p);
 		pos += len + !!newline;
 
-		if (len < GIT_SHA1_HEXSZ + 3 ||
-		    get_oid_hex(p, &oid) ||
-		    p[GIT_SHA1_HEXSZ] != '\t' ||
-		    p[GIT_SHA1_HEXSZ + 1] != '\t')
+		if (parse_oid_hex(p, &oid, &q) ||
+		    q[0] != '\t' ||
+		    q[1] != '\t')
 			continue; /* skip not-for-merge */
 		/*
 		 * Do not use get_merge_parent() here; we do not have
