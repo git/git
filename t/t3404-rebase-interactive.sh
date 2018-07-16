@@ -264,11 +264,18 @@ test_expect_success 'retain authorship' '
 '
 
 test_expect_success 'retain authorship w/ conflicts' '
+	oGIT_AUTHOR_NAME=$GIT_AUTHOR_NAME &&
+	test_when_finished "GIT_AUTHOR_NAME=\$oGIT_AUTHOR_NAME" &&
+
 	git reset --hard twerp &&
 	test_commit a conflict a conflict-a &&
 	git reset --hard twerp &&
-	GIT_AUTHOR_NAME=AttributeMe \
+
+	GIT_AUTHOR_NAME=AttributeMe &&
+	export GIT_AUTHOR_NAME &&
 	test_commit b conflict b conflict-b &&
+	GIT_AUTHOR_NAME=$oGIT_AUTHOR_NAME &&
+
 	set_fake_editor &&
 	test_must_fail git rebase -i conflict-a &&
 	echo resolved >conflict &&
