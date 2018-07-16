@@ -292,6 +292,23 @@ dimmed_zebra::
 	blocks are considered interesting, the rest is uninteresting.
 --
 
+--color-moved-ws=<modes>::
+	This configures how white spaces are ignored when performing the
+	move detection for `--color-moved`. These modes can be given
+	as a comma separated list:
++
+--
+ignore-space-at-eol::
+	Ignore changes in whitespace at EOL.
+ignore-space-change::
+	Ignore changes in amount of whitespace.  This ignores whitespace
+	at line end, and considers all other sequences of one or
+	more whitespace characters to be equivalent.
+ignore-all-space::
+	Ignore whitespace when comparing lines. This ignores differences
+	even if one line has whitespace where the other line has none.
+--
+
 --word-diff[=<mode>]::
 	Show a word diff, using the <mode> to delimit changed words.
 	By default, words are delimited by whitespace; see
