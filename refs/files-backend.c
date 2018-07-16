@@ -1676,7 +1676,7 @@ static int write_ref_to_lockfile(struct ref_lock *lock,
 		return -1;
 	}
 	fd = get_lock_file_fd(&lock->lk);
-	if (write_in_full(fd, oid_to_hex(oid), GIT_SHA1_HEXSZ) < 0 ||
+	if (write_in_full(fd, oid_to_hex(oid), the_hash_algo->hexsz) < 0 ||
 	    write_in_full(fd, &term, 1) < 0 ||
 	    close_ref_gently(lock) < 0) {
 		strbuf_addf(err,
@@ -3070,7 +3070,7 @@ static int files_reflog_expire(struct ref_store *ref_store,
 			rollback_lock_file(&reflog_lock);
 		} else if (update &&
 			   (write_in_full(get_lock_file_fd(&lock->lk),
-				oid_to_hex(&cb.last_kept_oid), GIT_SHA1_HEXSZ) < 0 ||
+				oid_to_hex(&cb.last_kept_oid), the_hash_algo->hexsz) < 0 ||
 			    write_str_in_full(get_lock_file_fd(&lock->lk), "\n") < 0 ||
 			    close_ref_gently(lock) < 0)) {
 			status |= error("couldn't write %s",
