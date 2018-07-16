@@ -1034,6 +1034,7 @@ static void handle_fetch_head(struct commit_list **remotes, struct strbuf *merge
 	const char *filename;
 	int fd, pos, npos;
 	struct strbuf fetch_head_file = STRBUF_INIT;
+	const unsigned hexsz = the_hash_algo->hexsz;
 
 	if (!merge_names)
 		merge_names = &fetch_head_file;
@@ -1059,16 +1060,16 @@ static void handle_fetch_head(struct commit_list **remotes, struct strbuf *merge
 		else
 			npos = merge_names->len;
 
-		if (npos - pos < GIT_SHA1_HEXSZ + 2 ||
+		if (npos - pos < hexsz + 2 ||
 		    get_oid_hex(merge_names->buf + pos, &oid))
 			commit = NULL; /* bad */
-		else if (memcmp(merge_names->buf + pos + GIT_SHA1_HEXSZ, "\t\t", 2))
+		else if (memcmp(merge_names->buf + pos + hexsz, "\t\t", 2))
 			continue; /* not-for-merge */
 		else {
-			char saved = merge_names->buf[pos + GIT_SHA1_HEXSZ];
-			merge_names->buf[pos + GIT_SHA1_HEXSZ] = '\0';
+			char saved = merge_names->buf[pos + hexsz];
+			merge_names->buf[pos + hexsz] = '\0';
 			commit = get_merge_parent(merge_names->buf + pos);
-			merge_names->buf[pos + GIT_SHA1_HEXSZ] = saved;
+			merge_names->buf[pos + hexsz] = saved;
 		}
 		if (!commit) {
 			if (ptr)
