@@ -52,6 +52,7 @@ struct fetch_negotiator {
 	void *data;
 };
 
-void fetch_negotiator_init(struct fetch_negotiator *negotiator);
+void fetch_negotiator_init(struct fetch_negotiator *negotiator,
+			   const char *algorithm);
 
 #endif
