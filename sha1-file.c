@@ -336,7 +336,7 @@ out:
 static void fill_sha1_path(struct strbuf *buf, const unsigned char *sha1)
 {
 	int i;
-	for (i = 0; i < 20; i++) {
+	for (i = 0; i < the_hash_algo->rawsz; i++) {
 		static char hex[] = "0123456789abcdef";
 		unsigned int val = sha1[i];
 		strbuf_addch(buf, hex[val >> 4]);
@@ -1473,7 +1473,7 @@ void *read_object_with_reference(const struct object_id *oid,
 		}
 		ref_length = strlen(ref_type);
 
-		if (ref_length + GIT_SHA1_HEXSZ > isize ||
+		if (ref_length + the_hash_algo->hexsz > isize ||
 		    memcmp(buffer, ref_type, ref_length) ||
 		    get_oid_hex((char *) buffer + ref_length, &actual_oid)) {
 			free(buffer);
@@ -2062,9 +2062,9 @@ int for_each_file_in_obj_subdir(unsigned int subdir_nr,
 		namelen = strlen(de->d_name);
 		strbuf_setlen(path, baselen);
 		strbuf_add(path, de->d_name, namelen);
-		if (namelen == GIT_SHA1_HEXSZ - 2 &&
+		if (namelen == the_hash_algo->hexsz - 2 &&
 		    !hex_to_bytes(oid.hash + 1, de->d_name,
-				  GIT_SHA1_RAWSZ - 1)) {
+				  the_hash_algo->rawsz - 1)) {
 			if (obj_cb) {
 				r = obj_cb(&oid, path->buf, data);
 				if (r)
