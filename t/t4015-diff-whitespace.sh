@@ -1271,9 +1271,8 @@ test_expect_success 'detect permutations inside moved code -- dimmed_zebra' '
 	test_config color.diff.newMovedDimmed "normal cyan" &&
 	test_config color.diff.oldMovedAlternativeDimmed "normal blue" &&
 	test_config color.diff.newMovedAlternativeDimmed "normal yellow" &&
-	git diff HEAD --no-renames --color-moved=dimmed_zebra --color |
-		grep -v "index" |
-		test_decode_color >actual &&
+	git diff HEAD --no-renames --color-moved=dimmed_zebra --color >actual.raw &&
+	grep -v "index" actual.raw | test_decode_color >actual &&
 	cat <<-\EOF >expected &&
 	<BOLD>diff --git a/lines.txt b/lines.txt<RESET>
 	<BOLD>--- a/lines.txt<RESET>
@@ -1315,9 +1314,8 @@ test_expect_success 'cmd option assumes configured colored-moved' '
 	test_config color.diff.oldMovedAlternativeDimmed "normal blue" &&
 	test_config color.diff.newMovedAlternativeDimmed "normal yellow" &&
 	test_config diff.colorMoved zebra &&
-	git diff HEAD --no-renames --color-moved --color |
-		grep -v "index" |
-		test_decode_color >actual &&
+	git diff HEAD --no-renames --color-moved --color >actual.raw &&
+	grep -v "index" actual.raw | test_decode_color >actual &&
 	cat <<-\EOF >expected &&
 	<BOLD>diff --git a/lines.txt b/lines.txt<RESET>
 	<BOLD>--- a/lines.txt<RESET>
@@ -1395,9 +1393,8 @@ test_expect_success 'move detection ignoring whitespace ' '
 	line 4
 	line 5
 	EOF
-	git diff HEAD --no-renames --color-moved --color |
-		grep -v "index" |
-		test_decode_color >actual &&
+	git diff HEAD --no-renames --color-moved --color >actual.raw &&
+	grep -v "index" actual.raw | test_decode_color >actual &&
 	cat <<-\EOF >expected &&
 	<BOLD>diff --git a/lines.txt b/lines.txt<RESET>
 	<BOLD>--- a/lines.txt<RESET>
@@ -1419,9 +1416,8 @@ test_expect_success 'move detection ignoring whitespace ' '
 	EOF
 	test_cmp expected actual &&
 
-	git diff HEAD --no-renames -w --color-moved --color |
-		grep -v "index" |
-		test_decode_color >actual &&
+	git diff HEAD --no-renames -w --color-moved --color >actual.raw &&
+	grep -v "index" actual.raw | test_decode_color >actual &&
 	cat <<-\EOF >expected &&
 	<BOLD>diff --git a/lines.txt b/lines.txt<RESET>
 	<BOLD>--- a/lines.txt<RESET>
@@ -1459,9 +1455,8 @@ test_expect_success 'move detection ignoring whitespace changes' '
 	line 5
 	EOF
 
-	git diff HEAD --no-renames --color-moved --color |
-		grep -v "index" |
-		test_decode_color >actual &&
+	git diff HEAD --no-renames --color-moved --color >actual.raw &&
+	grep -v "index" actual.raw | test_decode_color >actual &&
 	cat <<-\EOF >expected &&
 	<BOLD>diff --git a/lines.txt b/lines.txt<RESET>
 	<BOLD>--- a/lines.txt<RESET>
@@ -1483,9 +1478,8 @@ test_expect_success 'move detection ignoring whitespace changes' '
 	EOF
 	test_cmp expected actual &&
 
-	git diff HEAD --no-renames -b --color-moved --color |
-		grep -v "index" |
-		test_decode_color >actual &&
+	git diff HEAD --no-renames -b --color-moved --color >actual.raw &&
+	grep -v "index" actual.raw | test_decode_color >actual &&
 	cat <<-\EOF >expected &&
 	<BOLD>diff --git a/lines.txt b/lines.txt<RESET>
 	<BOLD>--- a/lines.txt<RESET>
@@ -1526,9 +1520,8 @@ test_expect_success 'move detection ignoring whitespace at eol' '
 	# avoid cluttering the output with complaints about our eol whitespace
 	test_config core.whitespace -blank-at-eol &&
 
-	git diff HEAD --no-renames --color-moved --color |
-		grep -v "index" |
-		test_decode_color >actual &&
+	git diff HEAD --no-renames --color-moved --color >actual.raw &&
+	grep -v "index" actual.raw | test_decode_color >actual &&
 	cat <<-\EOF >expected &&
 	<BOLD>diff --git a/lines.txt b/lines.txt<RESET>
 	<BOLD>--- a/lines.txt<RESET>
@@ -1550,9 +1543,8 @@ test_expect_success 'move detection ignoring whitespace at eol' '
 	EOF
 	test_cmp expected actual &&
 
-	git diff HEAD --no-renames --ignore-space-at-eol --color-moved --color |
-		grep -v "index" |
-		test_decode_color >actual &&
+	git diff HEAD --no-renames --ignore-space-at-eol --color-moved --color >actual.raw &&
+	grep -v "index" actual.raw | test_decode_color >actual &&
 	cat <<-\EOF >expected &&
 	<BOLD>diff --git a/lines.txt b/lines.txt<RESET>
 	<BOLD>--- a/lines.txt<RESET>
@@ -1597,9 +1589,8 @@ test_expect_success '--color-moved block at end of diff output respects MIN_ALNU
 	irrelevant_line
 	EOF
 
-	git diff HEAD --color-moved=zebra --color --no-renames |
-		grep -v "index" |
-		test_decode_color >actual &&
+	git diff HEAD --color-moved=zebra --color --no-renames >actual.raw &&
+	grep -v "index" actual.raw | test_decode_color >actual &&
 	cat >expected <<-\EOF &&
 	<BOLD>diff --git a/bar b/bar<RESET>
 	<BOLD>--- a/bar<RESET>
@@ -1636,9 +1627,8 @@ test_expect_success '--color-moved respects MIN_ALNUM_COUNT' '
 	nineteen chars 456789
 	EOF
 
-	git diff HEAD --color-moved=zebra --color --no-renames |
-		grep -v "index" |
-		test_decode_color >actual &&
+	git diff HEAD --color-moved=zebra --color --no-renames >actual.raw &&
+	grep -v "index" actual.raw | test_decode_color >actual &&
 	cat >expected <<-\EOF &&
 	<BOLD>diff --git a/bar b/bar<RESET>
 	<BOLD>--- a/bar<RESET>
