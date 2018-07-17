@@ -1832,6 +1832,11 @@ gpg.format::
 	Specifies which key format to use when signing with `--gpg-sign`.
 	Default is "openpgp", that is also the only supported value.
 
+gpg.<format>.program::
+	Use this to customize the program used for the signing format you
+	chose. (see `gpg.program` and `gpg.format`) `gpg.program` can still
+	be used as a legacy synonym for	`gpg.openpgp.program`.
+
 gui.commitMsgWidth::
 	Defines how wide the commit message window is in the
 	linkgit:git-gui[1]. "75" is the default.
