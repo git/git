@@ -7,11 +7,52 @@
 #include "tempfile.h"
 
 static char *configured_signing_key;
-static const char *gpg_format = "openpgp";
-static const char *gpg_program = "gpg";
+struct gpg_format {
+	const char *name;
+	const char *program;
+	const char **verify_args;
+	const char **sigs;
+};
 
-#define PGP_SIGNATURE "-----BEGIN PGP SIGNATURE-----"
-#define PGP_MESSAGE "-----BEGIN PGP MESSAGE-----"
+static const char *openpgp_verify_args[] = {
+	"--keyid-format=long",
+	NULL
+};
+static const char *openpgp_sigs[] = {
+	"-----BEGIN PGP SIGNATURE-----",
+	"-----BEGIN PGP MESSAGE-----",
+	NULL
+};
+
+static struct gpg_format gpg_format[] = {
+	{ .name = "openpgp", .program = "gpg",
+	  .verify_args = openpgp_verify_args,
+	  .sigs = openpgp_sigs
+	},
+};
+
+static struct gpg_format *use_format = &gpg_format[0];
+
+static struct gpg_format *get_format_by_name(const char *str)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(gpg_format); i++)
+		if (!strcmp(gpg_format[i].name, str))
+			return gpg_format + i;
+	return NULL;
+}
+
+static struct gpg_format *get_format_by_sig(const char *sig)
+{
+	int i, j;
+
+	for (i = 0; i < ARRAY_SIZE(gpg_format); i++)
+		for (j = 0; gpg_format[i].sigs[j]; j++)
+			if (starts_with(sig, gpg_format[i].sigs[j]))
+				return gpg_format + i;
+	return NULL;
+}
 
 void signature_check_clear(struct signature_check *sigc)
 {
@@ -102,12 +143,6 @@ void print_signature_buffer(const struct signature_check *sigc, unsigned flags)
 		fputs(output, stderr);
 }
 
-static int is_gpg_start(const char *line)
-{
-	return starts_with(line, PGP_SIGNATURE) ||
-		starts_with(line, PGP_MESSAGE);
-}
-
 size_t parse_signature(const char *buf, size_t size)
 {
 	size_t len = 0;
@@ -115,7 +150,7 @@ size_t parse_signature(const char *buf, size_t size)
 	while (len < size) {
 		const char *eol;
 
-		if (is_gpg_start(buf + len))
+		if (get_format_by_sig(buf + len))
 			match = len;
 
 		eol = memchr(buf + len, '\n', size - len);
@@ -132,6 +167,9 @@ void set_signing_key(const char *key)
 
 int git_gpg_config(const char *var, const char *value, void *cb)
 {
+	struct gpg_format *fmt = NULL;
+	char *fmtname = NULL;
+
 	if (!strcmp(var, "user.signingkey")) {
 		if (!value)
 			return config_error_nonbool(var);
@@ -142,17 +180,20 @@ int git_gpg_config(const char *var, const char *value, void *cb)
 	if (!strcmp(var, "gpg.format")) {
 		if (!value)
 			return config_error_nonbool(var);
-		if (strcmp(value, "openpgp"))
+		fmt = get_format_by_name(value);
+		if (!fmt)
 			return error("unsupported value for %s: %s",
 				     var, value);
-		return git_config_string(&gpg_format, var, value);
+		use_format = fmt;
+		return 0;
 	}
 
-	if (!strcmp(var, "gpg.program")) {
-		if (!value)
-			return config_error_nonbool(var);
-		gpg_program = xstrdup(value);
-		return 0;
+	if (!strcmp(var, "gpg.program"))
+		fmtname = "openpgp";
+
+	if (fmtname) {
+		fmt = get_format_by_name(fmtname);
+		return git_config_string(&fmt->program, var, value);
 	}
 
 	return 0;
@@ -173,7 +214,7 @@ int sign_buffer(struct strbuf *buffer, struct strbuf *signature, const char *sig
 	struct strbuf gpg_status = STRBUF_INIT;
 
 	argv_array_pushl(&gpg.args,
-			 gpg_program,
+			 use_format->program,
 			 "--status-fd=2",
 			 "-bsau", signing_key,
 			 NULL);
@@ -211,6 +252,7 @@ int verify_signed_buffer(const char *payload, size_t payload_size,
 			 struct strbuf *gpg_output, struct strbuf *gpg_status)
 {
 	struct child_process gpg = CHILD_PROCESS_INIT;
+	struct gpg_format *fmt;
 	struct tempfile *temp;
 	int ret;
 	struct strbuf buf = STRBUF_INIT;
@@ -226,10 +268,14 @@ int verify_signed_buffer(const char *payload, size_t payload_size,
 		return -1;
 	}
 
+	fmt = get_format_by_sig(signature);
+	if (!fmt)
+		BUG("bad signature '%s'", signature);
+
+	argv_array_push(&gpg.args, fmt->program);
+	argv_array_pushv(&gpg.args, fmt->verify_args);
 	argv_array_pushl(&gpg.args,
-			 gpg_program,
 			 "--status-fd=1",
-			 "--keyid-format=long",
 			 "--verify", temp->filename.buf, "-",
 			 NULL);
 
