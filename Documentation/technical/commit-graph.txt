@@ -118,9 +118,6 @@ Future Work
 - The commit graph feature currently does not honor commit grafts. This can
   be remedied by duplicating or refactoring the current graft logic.
 
-- The 'commit-graph' subcommand does not have a "verify" mode that is
-  necessary for integration with fsck.
-
 - After computing and storing generation numbers, we must make graph
   walks aware of generation numbers to gain the performance benefits they
   enable. This will mostly be accomplished by swapping a commit-date-ordered
@@ -129,25 +126,6 @@ Future Work
 
     - 'log --topo-order'
     - 'tag --merged'
-
-- Currently, parse_commit_gently() requires filling in the root tree
-  object for a commit. This passes through lookup_tree() and consequently
-  lookup_object(). Also, it calls lookup_commit() when loading the parents.
-  These method calls check the ODB for object existence, even if the
-  consumer does not need the content. For example, we do not need the
-  tree contents when computing merge bases. Now that commit parsing is
-  removed from the computation time, these lookup operations are the
-  slowest operations keeping graph walks from being fast. Consider
-  loading these objects without verifying their existence in the ODB and
-  only loading them fully when consumers need them. Consider a method
-  such as "ensure_tree_loaded(commit)" that fully loads a tree before
-  using commit->tree.
-
-- The current design uses the 'commit-graph' subcommand to generate the graph.
-  When this feature stabilizes enough to recommend to most users, we should
-  add automatic graph writes to common operations that create many commits.
-  For example, one could compute a graph on 'clone', 'fetch', or 'repack'
-  commands.
 
 - A server could provide a commit graph file as part of the network protocol
   to avoid extra calculations by clients. This feature is only of benefit if
