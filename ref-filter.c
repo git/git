@@ -1439,7 +1439,8 @@ static const char *get_refname(struct used_atom *atom, struct ref_array_item *re
 static int get_object(struct ref_array_item *ref, const struct object_id *oid,
 		       int deref, struct object **obj, struct strbuf *err)
 {
-	int eaten;
+	/* parse_object_buffer() will set eaten to 0 if free() will be needed */
+	int eaten = 1;
 	int ret = 0;
 	unsigned long size;
 	void *buf = get_obj(oid, obj, &size, &eaten);
