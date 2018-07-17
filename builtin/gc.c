@@ -442,6 +442,7 @@ static int report_last_gc_error(void)
 {
 	struct strbuf sb = STRBUF_INIT;
 	int ret = 0;
+	ssize_t len;
 	struct stat st;
 	char *gc_log_path = git_pathdup("gc.log");
 
@@ -449,15 +450,17 @@ static int report_last_gc_error(void)
 		if (errno == ENOENT)
 			goto done;
 
-		ret = error_errno(_("Can't stat %s"), gc_log_path);
+		ret = error_errno(_("cannot stat '%s'"), gc_log_path);
 		goto done;
 	}
 
 	if (st.st_mtime < gc_log_expire_time)
 		goto done;
 
-	ret = strbuf_read_file(&sb, gc_log_path, 0);
-	if (ret > 0)
+	len = strbuf_read_file(&sb, gc_log_path, 0);
+	if (len < 0)
+		ret = error_errno(_("cannot read '%s'"), gc_log_path);
+	else if (len > 0)
 		ret = error(_("The last gc run reported the following. "
 			       "Please correct the root cause\n"
 			       "and remove %s.\n"
