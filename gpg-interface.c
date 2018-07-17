@@ -7,6 +7,7 @@
 #include "tempfile.h"
 
 static char *configured_signing_key;
+static const char *gpg_format = "openpgp";
 static const char *gpg_program = "gpg";
 
 #define PGP_SIGNATURE "-----BEGIN PGP SIGNATURE-----"
@@ -136,6 +137,15 @@ int git_gpg_config(const char *var, const char *value, void *cb)
 			return config_error_nonbool(var);
 		set_signing_key(value);
 		return 0;
+	}
+
+	if (!strcmp(var, "gpg.format")) {
+		if (!value)
+			return config_error_nonbool(var);
+		if (strcmp(value, "openpgp"))
+			return error("unsupported value for %s: %s",
+				     var, value);
+		return git_config_string(&gpg_format, var, value);
 	}
 
 	if (!strcmp(var, "gpg.program")) {
