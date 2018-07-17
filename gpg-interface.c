@@ -95,10 +95,11 @@ static void parse_gpg_output(struct signature_check *sigc)
 		sigc->result = sigcheck_gpg_status[i].result;
 		/* The trust messages are not followed by key/signer information */
 		if (sigc->result != 'U') {
-			sigc->key = xmemdupz(found, 16);
+			next = strchrnul(found, ' ');
+			sigc->key = xmemdupz(found, next - found);
 			/* The ERRSIG message is not followed by signer information */
-			if (sigc-> result != 'E') {
-				found += 17;
+			if (*next && sigc-> result != 'E') {
+				found = next + 1;
 				next = strchrnul(found, '\n');
 				sigc->signer = xmemdupz(found, next - found);
 			}
