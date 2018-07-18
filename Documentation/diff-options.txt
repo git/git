@@ -294,8 +294,11 @@ dimmed_zebra::
 
 --color-moved-ws=<modes>::
 	This configures how white spaces are ignored when performing the
-	move detection for `--color-moved`. These modes can be given
-	as a comma separated list:
+	move detection for `--color-moved`.
+ifdef::git-diff[]
+	It can be set by the `diff.colorMovedWS` configuration setting.
+endif::git-diff[]
+	These modes can be given as a comma separated list:
 +
 --
 ignore-space-at-eol::
