@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "object-store.h"
 #include "object.h"
 #include "blob.h"
 #include "tree.h"
@@ -795,7 +796,7 @@ static int fsck_commit_buffer(struct commit *commit, const char *buffer,
 		buffer = p + 1;
 		parent_line_count++;
 	}
-	graft = lookup_commit_graft(&commit->object.oid);
+	graft = lookup_commit_graft(the_repository, &commit->object.oid);
 	parent_count = commit_list_count(commit->parents);
 	if (graft) {
 		if (graft->nr_parent == -1 && !parent_count)

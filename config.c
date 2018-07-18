@@ -14,6 +14,7 @@
 #include "quote.h"
 #include "hashmap.h"
 #include "string-list.h"
+#include "object-store.h"
 #include "utf8.h"
 #include "dir.h"
 #include "color.h"

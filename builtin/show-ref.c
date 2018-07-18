@@ -1,6 +1,7 @@
 #include "builtin.h"
 #include "cache.h"
 #include "refs.h"
+#include "object-store.h"
 #include "object.h"
 #include "tag.h"
 #include "string-list.h"

@@ -883,7 +883,8 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				continue;
 			}
 			if (!strcmp(arg, "--is-shallow-repository")) {
-				printf("%s\n", is_repository_shallow() ? "true"
+				printf("%s\n",
+						is_repository_shallow(the_repository) ? "true"
 						: "false");
 				continue;
 			}

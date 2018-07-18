@@ -6,6 +6,7 @@
 #include "reachable.h"
 #include "parse-options.h"
 #include "progress.h"
+#include "object-store.h"
 
 static const char * const prune_usage[] = {
 	N_("git prune [-n] [-v] [--progress] [--expire <time>] [--] [<head>...]"),
@@ -159,7 +160,7 @@ int cmd_prune(int argc, const char **argv, const char *prefix)
 	remove_temporary_files(s);
 	free(s);
 
-	if (is_repository_shallow())
+	if (is_repository_shallow(the_repository))
 		prune_shallow(show_only);
 
 	return 0;

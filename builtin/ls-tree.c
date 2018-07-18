@@ -5,6 +5,7 @@
  */
 #include "cache.h"
 #include "config.h"
+#include "object-store.h"
 #include "blob.h"
 #include "tree.h"
 #include "commit.h"

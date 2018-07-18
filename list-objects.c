@@ -10,6 +10,7 @@
 #include "list-objects-filter.h"
 #include "list-objects-filter-options.h"
 #include "packfile.h"
+#include "object-store.h"
 
 static void process_blob(struct rev_info *revs,
 			 struct blob *blob,

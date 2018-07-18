@@ -2,6 +2,7 @@
 #include "config.h"
 #include "commit.h"
 #include "refs.h"
+#include "object-store.h"
 #include "pkt-line.h"
 #include "sideband.h"
 #include "run-command.h"
@@ -75,7 +76,7 @@ static int pack_objects(int fd, struct ref *refs, struct oid_array *extra, struc
 		argv_array_push(&po.args, "-q");
 	if (args->progress)
 		argv_array_push(&po.args, "--progress");
-	if (is_repository_shallow())
+	if (is_repository_shallow(the_repository))
 		argv_array_push(&po.args, "--shallow");
 	po.in = -1;
 	po.out = args->stateless_rpc ? -1 : fd;
@@ -220,7 +221,7 @@ static int advertise_shallow_grafts_cb(const struct commit_graft *graft, void *c
 
 static void advertise_shallow_grafts_buf(struct strbuf *sb)
 {
-	if (!is_repository_shallow())
+	if (!is_repository_shallow(the_repository))
 		return;
 	for_each_commit_graft(advertise_shallow_grafts_cb, sb);
 }
@@ -537,7 +538,7 @@ int send_pack(struct send_pack_args *args,
 	}
 
 	if (args->stateless_rpc) {
-		if (!args->dry_run && (cmds_sent || is_repository_shallow())) {
+		if (!args->dry_run && (cmds_sent || is_repository_shallow(the_repository))) {
 			packet_buf_flush(&req_buf);
 			send_sideband(out, -1, req_buf.buf, req_buf.len, LARGE_PACKET_MAX);
 		}

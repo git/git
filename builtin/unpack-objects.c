@@ -1,6 +1,7 @@
 #include "builtin.h"
 #include "cache.h"
 #include "config.h"
+#include "object-store.h"
 #include "object.h"
 #include "delta.h"
 #include "pack.h"

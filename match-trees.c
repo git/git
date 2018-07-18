@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "tree.h"
 #include "tree-walk.h"
+#include "object-store.h"
 
 static int score_missing(unsigned mode, const char *path)
 {

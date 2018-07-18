@@ -11,6 +11,7 @@
 #include "cache.h"
 #include "config.h"
 #include "dir.h"
+#include "object-store.h"
 #include "attr.h"
 #include "refs.h"
 #include "wildmatch.h"

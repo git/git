@@ -12,6 +12,16 @@ struct parsed_object_pool {
 	struct alloc_state *tag_state;
 	struct alloc_state *object_state;
 	unsigned commit_count;
+
+	/* parent substitutions from .git/info/grafts and .git/shallow */
+	struct commit_graft **grafts;
+	int grafts_alloc, grafts_nr;
+
+	int is_shallow;
+	struct stat_validity *shallow_stat;
+	char *alternate_shallow_file;
+
+	int commit_graft_prepared;
 };
 
 struct parsed_object_pool *parsed_object_pool_new(void);

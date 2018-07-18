@@ -4,6 +4,7 @@
 #include "cache.h"
 #include "diff.h"
 #include "diffcore.h"
+#include "object-store.h"
 #include "hashmap.h"
 #include "progress.h"
 

@@ -7,6 +7,7 @@
 #include "cache.h"
 #include "config.h"
 #include "refs.h"
+#include "object-store.h"
 #include "color.h"
 #include "commit.h"
 #include "diff.h"

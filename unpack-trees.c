@@ -16,6 +16,7 @@
 #include "submodule.h"
 #include "submodule-config.h"
 #include "fsmonitor.h"
+#include "object-store.h"
 #include "fetch-object.h"
 
 /*
