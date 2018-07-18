@@ -57,7 +57,7 @@ OPTIONS
 	`xx`; for example `%00` interpolates to `\0` (NUL),
 	`%09` to `\t` (TAB) and `%0a` to `\n` (LF).
 
---color[=<when>]:
+--color[=<when>]::
 	Respect any colors specified in the `--format` option. The
 	`<when>` field must be one of `always`, `never`, or `auto` (if
 	`<when>` is absent, behave as if `always` was given).

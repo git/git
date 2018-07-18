@@ -115,7 +115,7 @@ options for details.
 	variable if it exists, or lexicographic order otherwise. See
 	linkgit:git-config[1].
 
---color[=<when>]:
+--color[=<when>]::
 	Respect any colors specified in the `--format` option. The
 	`<when>` field must be one of `always`, `never`, or `auto` (if
 	`<when>` is absent, behave as if `always` was given).
