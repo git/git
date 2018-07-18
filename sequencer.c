@@ -3219,10 +3219,27 @@ static int pick_commits(struct todo_list *todo_list, struct replay_opts *opts)
 					intend_to_amend();
 				return error_failed_squash(item->commit, opts,
 					item->arg_len, item->arg);
-			} else if (res && is_rebase_i(opts) && item->commit)
+			} else if (res && is_rebase_i(opts) && item->commit) {
+				int to_amend = 0;
+				struct object_id oid;
+
+				/*
+				 * If we are rewording and have either
+				 * fast-forwarded already, or are about to
+				 * create a new root commit, we want to amend,
+				 * otherwise we do not.
+				 */
+				if (item->command == TODO_REWORD &&
+				    !get_oid("HEAD", &oid) &&
+				    (!oidcmp(&item->commit->object.oid, &oid) ||
+				     (opts->have_squash_onto &&
+				      !oidcmp(&opts->squash_onto, &oid))))
+					to_amend = 1;
+
 				return res | error_with_patch(item->commit,
-					item->arg, item->arg_len, opts, res,
-					item->command == TODO_REWORD);
+						item->arg, item->arg_len, opts,
+						res, to_amend);
+			}
 		} else if (item->command == TODO_EXEC) {
 			char *end_of_arg = (char *)(item->arg + item->arg_len);
 			int saved = *end_of_arg;
