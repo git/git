@@ -99,6 +99,101 @@ do
 		test_cmp expected actual
 	'
 
+	test_expect_success "grep -w $L (with --column)" '
+		{
+			echo ${HC}file:5:foo mmap bar
+			echo ${HC}file:14:foo_mmap bar mmap
+			echo ${HC}file:5:foo mmap bar_mmap
+			echo ${HC}file:14:foo_mmap bar mmap baz
+		} >expected &&
+		git grep --column -w -e mmap $H >actual &&
+		test_cmp expected actual
+	'
+
+	test_expect_success "grep -w $L (with --column, extended OR)" '
+		{
+			echo ${HC}file:14:foo_mmap bar mmap
+			echo ${HC}file:19:foo_mmap bar mmap baz
+		} >expected &&
+		git grep --column -w -e mmap$ --or -e baz $H >actual &&
+		test_cmp expected actual
+	'
+
+	test_expect_success "grep -w $L (with --column, --invert)" '
+		{
+			echo ${HC}file:1:foo mmap bar
+			echo ${HC}file:1:foo_mmap bar
+			echo ${HC}file:1:foo_mmap bar mmap
+			echo ${HC}file:1:foo mmap bar_mmap
+		} >expected &&
+		git grep --column --invert -w -e baz $H -- file >actual &&
+		test_cmp expected actual
+	'
+
+	test_expect_success "grep $L (with --column, --invert, extended OR)" '
+		{
+			echo ${HC}hello_world:6:HeLLo_world
+		} >expected &&
+		git grep --column --invert -e ll --or --not -e _ $H -- hello_world \
+			>actual &&
+		test_cmp expected actual
+	'
+
+	test_expect_success "grep $L (with --column, --invert, extended AND)" '
+		{
+			echo ${HC}hello_world:3:Hello world
+			echo ${HC}hello_world:3:Hello_world
+			echo ${HC}hello_world:6:HeLLo_world
+		} >expected &&
+		git grep --column --invert --not -e _ --and --not -e ll $H -- hello_world \
+			>actual &&
+		test_cmp expected actual
+	'
+
+	test_expect_success "grep $L (with --column, double-negation)" '
+		{
+			echo ${HC}file:1:foo_mmap bar mmap baz
+		} >expected &&
+		git grep --column --not \( --not -e foo --or --not -e baz \) $H -- file \
+			>actual &&
+		test_cmp expected actual
+	'
+
+	test_expect_success "grep -w $L (with --column, -C)" '
+		{
+			echo ${HC}file:5:foo mmap bar
+			echo ${HC}file-foo_mmap bar
+			echo ${HC}file:14:foo_mmap bar mmap
+			echo ${HC}file:5:foo mmap bar_mmap
+			echo ${HC}file:14:foo_mmap bar mmap baz
+		} >expected &&
+		git grep --column -w -C1 -e mmap $H >actual &&
+		test_cmp expected actual
+	'
+
+	test_expect_success "grep -w $L (with --line-number, --column)" '
+		{
+			echo ${HC}file:1:5:foo mmap bar
+			echo ${HC}file:3:14:foo_mmap bar mmap
+			echo ${HC}file:4:5:foo mmap bar_mmap
+			echo ${HC}file:5:14:foo_mmap bar mmap baz
+		} >expected &&
+		git grep -n --column -w -e mmap $H >actual &&
+		test_cmp expected actual
+	'
+
+	test_expect_success "grep -w $L (with non-extended patterns, --column)" '
+		{
+			echo ${HC}file:5:foo mmap bar
+			echo ${HC}file:10:foo_mmap bar
+			echo ${HC}file:10:foo_mmap bar mmap
+			echo ${HC}file:5:foo mmap bar_mmap
+			echo ${HC}file:10:foo_mmap bar mmap baz
+		} >expected &&
+		git grep --column -w -e bar -e mmap $H >actual &&
+		test_cmp expected actual
+	'
+
 	test_expect_success "grep -w $L" '
 		{
 			echo ${HC}file:1:foo mmap bar

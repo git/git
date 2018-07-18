@@ -13,7 +13,7 @@ SYNOPSIS
 	   [-v | --invert-match] [-h|-H] [--full-name]
 	   [-E | --extended-regexp] [-G | --basic-regexp]
 	   [-P | --perl-regexp]
-	   [-F | --fixed-strings] [-n | --line-number]
+	   [-F | --fixed-strings] [-n | --line-number] [--column]
 	   [-l | --files-with-matches] [-L | --files-without-match]
 	   [(-O | --open-files-in-pager) [<pager>]]
 	   [-z | --null]
@@ -43,6 +43,9 @@ CONFIGURATION
 
 grep.lineNumber::
 	If set to true, enable `-n` option by default.
+
+grep.column::
+	If set to true, enable the `--column` option by default.
 
 grep.patternType::
 	Set the default matching behavior. Using a value of 'basic', 'extended',
@@ -168,6 +171,10 @@ providing this option will cause it to die.
 -n::
 --line-number::
 	Prefix the line number to matching lines.
+
+--column::
+	Prefix the 1-indexed byte-offset of the first match from the start of the
+	matching line.
 
 -l::
 --files-with-matches::
