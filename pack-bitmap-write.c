@@ -361,11 +361,17 @@ static int date_compare(const void *_a, const void *_b)
 
 void bitmap_writer_reuse_bitmaps(struct packing_data *to_pack)
 {
-	if (prepare_bitmap_git() < 0)
+	struct bitmap_index *bitmap_git;
+	if (!(bitmap_git = prepare_bitmap_git()))
 		return;
 
 	writer.reused = kh_init_sha1();
-	rebuild_existing_bitmaps(to_pack, writer.reused, writer.show_progress);
+	rebuild_existing_bitmaps(bitmap_git, to_pack, writer.reused,
+				 writer.show_progress);
+	/*
+	 * NEEDSWORK: rebuild_existing_bitmaps() makes writer.reused reference
+	 * some bitmaps in bitmap_git, so we can't free the latter.
+	 */
 }
 
 static struct ewah_bitmap *find_reused_bitmap(const unsigned char *sha1)

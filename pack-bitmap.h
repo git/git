@@ -34,13 +34,21 @@ typedef int (*show_reachable_fn)(
 	struct packed_git *found_pack,
 	off_t found_offset);
 
-int prepare_bitmap_git(void);
-void count_bitmap_commit_list(uint32_t *commits, uint32_t *trees, uint32_t *blobs, uint32_t *tags);
-void traverse_bitmap_commit_list(show_reachable_fn show_reachable);
+struct bitmap_index;
+
+struct bitmap_index *prepare_bitmap_git(void);
+void count_bitmap_commit_list(struct bitmap_index *, uint32_t *commits,
+			      uint32_t *trees, uint32_t *blobs, uint32_t *tags);
+void traverse_bitmap_commit_list(struct bitmap_index *,
+				 show_reachable_fn show_reachable);
 void test_bitmap_walk(struct rev_info *revs);
-int prepare_bitmap_walk(struct rev_info *revs);
-int reuse_partial_packfile_from_bitmap(struct packed_git **packfile, uint32_t *entries, off_t *up_to);
-int rebuild_existing_bitmaps(struct packing_data *mapping, khash_sha1 *reused_bitmaps, int show_progress);
+struct bitmap_index *prepare_bitmap_walk(struct rev_info *revs);
+int reuse_partial_packfile_from_bitmap(struct bitmap_index *,
+				       struct packed_git **packfile,
+				       uint32_t *entries, off_t *up_to);
+int rebuild_existing_bitmaps(struct bitmap_index *, struct packing_data *mapping,
+			     khash_sha1 *reused_bitmaps, int show_progress);
+void free_bitmap_index(struct bitmap_index *);
 
 void bitmap_writer_show_progress(int show);
 void bitmap_writer_set_checksum(unsigned char *sha1);
