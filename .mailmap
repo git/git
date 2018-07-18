@@ -35,11 +35,13 @@ Chris Wright <chrisw@sous-sol.org> <chrisw@osdl.org>
 Cord Seele <cowose@gmail.com> <cowose@googlemail.com>
 Christian Couder <chriscool@tuxfamily.org> <christian.couder@gmail.com>
 Christian Stimming <stimming@tuhh.de> <chs@ckiste.goetheallee>
+Christopher Díaz Riveros <chrisadr@gentoo.org> Christopher Diaz Riveros
 Csaba Henk <csaba@gluster.com> <csaba@lowlife.hu>
 Dan Johnson <computerdruid@gmail.com>
 Dana L. How <danahow@gmail.com> <how@deathvalley.cswitch.com>
 Dana L. How <danahow@gmail.com> Dana How
 Daniel Barkalow <barkalow@iabervon.org>
+Daniel Knittl-Frank <knittl89@googlemail.com> knittl
 Daniel Trstenjak <daniel.trstenjak@gmail.com> <daniel.trstenjak@online.de>
 Daniel Trstenjak <daniel.trstenjak@gmail.com> <trsten@science-computing.de>
 David Brown <git@davidb.org> <davidb@quicinc.com>
@@ -57,6 +59,7 @@ Eric S. Raymond <esr@thyrsus.com>
 Eric Wong <e@80x24.org> <normalperson@yhbt.net>
 Erik Faye-Lund <kusmabite@gmail.com> <kusmabite@googlemail.com>
 Eyvind Bernhardsen <eyvind.bernhardsen@gmail.com> <eyvind-git@orakel.ntnu.no>
+Fangyi Zhou <fangyi.zhou@yuriko.moe> Zhou Fangyi
 Florian Achleitner <florian.achleitner.2.6.31@gmail.com> <florian.achleitner2.6.31@gmail.com>
 Franck Bui-Huu <vagabon.xyz@gmail.com> <fbuihuu@gmail.com>
 Frank Lichtenheld <frank@lichtenheld.de> <djpig@debian.org>
@@ -86,6 +89,8 @@ Jason McMullan <mcmullan@netapp.com>
 Jason Riedy <ejr@eecs.berkeley.edu> <ejr@EECS.Berkeley.EDU>
 Jason Riedy <ejr@eecs.berkeley.edu> <ejr@cs.berkeley.edu>
 Jay Soffian <jaysoffian@gmail.com> <jaysoffian+git@gmail.com>
+Jean-Noël Avila <jn.avila@free.fr> Jean-Noel Avila
+Jean-Noël Avila <jn.avila@free.fr> Jean-Noël AVILA
 Jeff King <peff@peff.net> <peff@github.com>
 Jeff Muizelaar <jmuizelaar@mozilla.com> <jeff@infidigm.net>
 Jens Axboe <axboe@kernel.dk> <axboe@suse.de>
@@ -149,6 +154,7 @@ Matt Draisey <matt@draisey.ca> <mattdraisey@sympatico.ca>
 Matt Kraai <kraai@ftbfs.org> <matt.kraai@amo.abbott.com>
 Matt McCutchen <matt@mattmccutchen.net> <hashproduct@gmail.com>
 Matthias Kestenholz <matthias@spinlock.ch> <mk@spinlock.ch>
+Matthias Rüster <matthias.ruester@gmail.com> Matthias Ruester
 Matthias Urlichs <matthias@urlichs.de> <smurf@kiste.(none)>
 Matthias Urlichs <matthias@urlichs.de> <smurf@smurf.noris.de>
 Michael Coleman <tutufan@gmail.com>
@@ -213,6 +219,8 @@ Sean Estabrooks <seanlkml@sympatico.ca>
 Sebastian Schuberth <sschuberth@gmail.com> <sschuberth@visageimaging.com>
 Seth Falcon <seth@userprimary.net> <sfalcon@fhcrc.org>
 Shawn O. Pearce <spearce@spearce.org>
+Wei Shuyu <wsy@dogben.com> Shuyu Wei
+Sidhant Sharma <tigerkid001@gmail.com> Sidhant Sharma [:tk]
 Simon Hausmann <hausmann@kde.org> <simon@lst.de>
 Simon Hausmann <hausmann@kde.org> <shausman@trolltech.com>
 Stefan Beller <stefanbeller@gmail.com> <stefanbeller@googlemail.com>
@@ -253,7 +261,8 @@ Uwe Kleine-König <u.kleine-koenig@pengutronix.de> <ukleinek@informatik.uni-frei
 Uwe Kleine-König <u.kleine-koenig@pengutronix.de> <uzeisberger@io.fsforth.de>
 Uwe Kleine-König <u.kleine-koenig@pengutronix.de> <zeisberg@informatik.uni-freiburg.de>
 Ville Skyttä <ville.skytta@iki.fi> <scop@xemacs.org>
-Vitaly "_Vi" Shukela <public_vi@tut.by>
+Vitaly "_Vi" Shukela <vi0oss@gmail.com> <public_vi@tut.by>
+Vitaly "_Vi" Shukela <vi0oss@gmail.com> Vitaly _Vi Shukela
 W. Trevor King <wking@tremily.us> <wking@drexel.edu>
 William Pursell <bill.pursell@gmail.com>
 YONETANI Tomokazu <y0n3t4n1@gmail.com> <qhwt+git@les.ath.cx>
