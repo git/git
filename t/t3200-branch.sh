@@ -49,9 +49,9 @@ test_expect_success 'git branch HEAD should fail' '
 cat >expect <<EOF
 $ZERO_OID $HEAD $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	branch: Created from master
 EOF
-test_expect_success 'git branch -l d/e/f should create a branch and a log' '
+test_expect_success 'git branch --create-reflog d/e/f should create a branch and a log' '
 	GIT_COMMITTER_DATE="2005-05-26 23:30" \
-	git branch -l d/e/f &&
+	git -c core.logallrefupdates=false branch --create-reflog d/e/f &&
 	test_path_is_file .git/refs/heads/d/e/f &&
 	test_path_is_file .git/logs/refs/heads/d/e/f &&
 	test_cmp expect .git/logs/refs/heads/d/e/f
@@ -82,7 +82,7 @@ test_expect_success 'git branch -m dumps usage' '
 
 test_expect_success 'git branch -m m broken_symref should work' '
 	test_when_finished "git branch -D broken_symref" &&
-	git branch -l m &&
+	git branch --create-reflog m &&
 	git symbolic-ref refs/heads/broken_symref refs/heads/i_am_broken &&
 	git branch -m m broken_symref &&
 	git reflog exists refs/heads/broken_symref &&
@@ -90,13 +90,13 @@ test_expect_success 'git branch -m m broken_symref should work' '
 '
 
 test_expect_success 'git branch -m m m/m should work' '
-	git branch -l m &&
+	git branch --create-reflog m &&
 	git branch -m m m/m &&
 	git reflog exists refs/heads/m/m
 '
 
 test_expect_success 'git branch -m n/n n should work' '
-	git branch -l n/n &&
+	git branch --create-reflog n/n &&
 	git branch -m n/n n &&
 	git reflog exists refs/heads/n
 '
@@ -378,9 +378,9 @@ mv .git/config-saved .git/config
 git config branch.s/s.dummy Hello
 
 test_expect_success 'git branch -m s/s s should work when s/t is deleted' '
-	git branch -l s/s &&
+	git branch --create-reflog s/s &&
 	git reflog exists refs/heads/s/s &&
-	git branch -l s/t &&
+	git branch --create-reflog s/t &&
 	git reflog exists refs/heads/s/t &&
 	git branch -d s/t &&
 	git branch -m s/s s &&
@@ -444,7 +444,7 @@ test_expect_success 'git branch --copy dumps usage' '
 '
 
 test_expect_success 'git branch -c d e should work' '
-	git branch -l d &&
+	git branch --create-reflog d &&
 	git reflog exists refs/heads/d &&
 	git config branch.d.dummy Hello &&
 	git branch -c d e &&
@@ -459,7 +459,7 @@ test_expect_success 'git branch -c d e should work' '
 '
 
 test_expect_success 'git branch --copy is a synonym for -c' '
-	git branch -l copy &&
+	git branch --create-reflog copy &&
 	git reflog exists refs/heads/copy &&
 	git config branch.copy.dummy Hello &&
 	git branch --copy copy copy-to &&
@@ -486,7 +486,7 @@ test_expect_success 'git branch -c ee ef should copy ee to create branch ef' '
 '
 
 test_expect_success 'git branch -c f/f g/g should work' '
-	git branch -l f/f &&
+	git branch --create-reflog f/f &&
 	git reflog exists refs/heads/f/f &&
 	git config branch.f/f.dummy Hello &&
 	git branch -c f/f g/g &&
@@ -497,7 +497,7 @@ test_expect_success 'git branch -c f/f g/g should work' '
 '
 
 test_expect_success 'git branch -c m2 m2 should work' '
-	git branch -l m2 &&
+	git branch --create-reflog m2 &&
 	git reflog exists refs/heads/m2 &&
 	git config branch.m2.dummy Hello &&
 	git branch -c m2 m2 &&
@@ -506,18 +506,18 @@ test_expect_success 'git branch -c m2 m2 should work' '
 '
 
 test_expect_success 'git branch -c zz zz/zz should fail' '
-	git branch -l zz &&
+	git branch --create-reflog zz &&
 	git reflog exists refs/heads/zz &&
 	test_must_fail git branch -c zz zz/zz
 '
 
 test_expect_success 'git branch -c b/b b should fail' '
-	git branch -l b/b &&
+	git branch --create-reflog b/b &&
 	test_must_fail git branch -c b/b b
 '
 
 test_expect_success 'git branch -C o/q o/p should work when o/p exists' '
-	git branch -l o/q &&
+	git branch --create-reflog o/q &&
 	git reflog exists refs/heads/o/q &&
 	git reflog exists refs/heads/o/p &&
 	git branch -C o/q o/p
@@ -570,10 +570,10 @@ test_expect_success 'git branch -C master5 master5 should work when master is ch
 '
 
 test_expect_success 'git branch -C ab cd should overwrite existing config for cd' '
-	git branch -l cd &&
+	git branch --create-reflog cd &&
 	git reflog exists refs/heads/cd &&
 	git config branch.cd.dummy CD &&
-	git branch -l ab &&
+	git branch --create-reflog ab &&
 	git reflog exists refs/heads/ab &&
 	git config branch.ab.dummy AB &&
 	git branch -C ab cd &&
@@ -685,7 +685,7 @@ test_expect_success 'renaming a symref is not allowed' '
 '
 
 test_expect_success SYMLINKS 'git branch -m u v should fail when the reflog for u is a symlink' '
-	git branch -l u &&
+	git branch --create-reflog u &&
 	mv .git/logs/refs/heads/u real-u &&
 	ln -s real-u .git/logs/refs/heads/u &&
 	test_must_fail git branch -m u v
