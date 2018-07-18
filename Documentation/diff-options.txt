@@ -307,6 +307,11 @@ ignore-space-change::
 ignore-all-space::
 	Ignore whitespace when comparing lines. This ignores differences
 	even if one line has whitespace where the other line has none.
+allow-indentation-change::
+	Initially ignore any white spaces in the move detection, then
+	group the moved code blocks only into a block if the change in
+	whitespace is the same per line. This is incompatible with the
+	other modes.
 --
 
 --word-diff[=<mode>]::

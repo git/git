@@ -1814,4 +1814,92 @@ test_expect_success 'only move detection ignores white spaces' '
 	test_cmp expected actual
 '
 
+test_expect_success 'compare whitespace delta across moved blocks' '
+
+	git reset --hard &&
+	q_to_tab <<-\EOF >text.txt &&
+	QIndented
+	QText across
+	Qsome lines
+	QBut! <- this stands out
+	QAdjusting with
+	QQdifferent starting
+	Qwhite spaces
+	QAnother outlier
+	QQQIndented
+	QQQText across
+	QQQfive lines
+	QQQthat has similar lines
+	QQQto previous blocks, but with different indent
+	QQQYetQAnotherQoutlierQ
+	EOF
+
+	git add text.txt &&
+	git commit -m "add text.txt" &&
+
+	q_to_tab <<-\EOF >text.txt &&
+	QQIndented
+	QQText across
+	QQsome lines
+	QQQBut! <- this stands out
+	Adjusting with
+	Qdifferent starting
+	white spaces
+	AnotherQoutlier
+	QQIndented
+	QQText across
+	QQfive lines
+	QQthat has similar lines
+	QQto previous blocks, but with different indent
+	QQYetQAnotherQoutlier
+	EOF
+
+	git diff --color --color-moved --color-moved-ws=allow-indentation-change >actual.raw &&
+	grep -v "index" actual.raw | test_decode_color >actual &&
+
+	q_to_tab <<-\EOF >expected &&
+		<BOLD>diff --git a/text.txt b/text.txt<RESET>
+		<BOLD>--- a/text.txt<RESET>
+		<BOLD>+++ b/text.txt<RESET>
+		<CYAN>@@ -1,14 +1,14 @@<RESET>
+		<BOLD;MAGENTA>-QIndented<RESET>
+		<BOLD;MAGENTA>-QText across<RESET>
+		<BOLD;MAGENTA>-Qsome lines<RESET>
+		<RED>-QBut! <- this stands out<RESET>
+		<BOLD;MAGENTA>-QAdjusting with<RESET>
+		<BOLD;MAGENTA>-QQdifferent starting<RESET>
+		<BOLD;MAGENTA>-Qwhite spaces<RESET>
+		<RED>-QAnother outlier<RESET>
+		<BOLD;MAGENTA>-QQQIndented<RESET>
+		<BOLD;MAGENTA>-QQQText across<RESET>
+		<BOLD;MAGENTA>-QQQfive lines<RESET>
+		<BOLD;MAGENTA>-QQQthat has similar lines<RESET>
+		<BOLD;MAGENTA>-QQQto previous blocks, but with different indent<RESET>
+		<RED>-QQQYetQAnotherQoutlierQ<RESET>
+		<BOLD;CYAN>+<RESET>QQ<BOLD;CYAN>Indented<RESET>
+		<BOLD;CYAN>+<RESET>QQ<BOLD;CYAN>Text across<RESET>
+		<BOLD;CYAN>+<RESET>QQ<BOLD;CYAN>some lines<RESET>
+		<GREEN>+<RESET>QQQ<GREEN>But! <- this stands out<RESET>
+		<BOLD;CYAN>+<RESET><BOLD;CYAN>Adjusting with<RESET>
+		<BOLD;CYAN>+<RESET>Q<BOLD;CYAN>different starting<RESET>
+		<BOLD;CYAN>+<RESET><BOLD;CYAN>white spaces<RESET>
+		<GREEN>+<RESET><GREEN>AnotherQoutlier<RESET>
+		<BOLD;CYAN>+<RESET>QQ<BOLD;CYAN>Indented<RESET>
+		<BOLD;CYAN>+<RESET>QQ<BOLD;CYAN>Text across<RESET>
+		<BOLD;CYAN>+<RESET>QQ<BOLD;CYAN>five lines<RESET>
+		<BOLD;CYAN>+<RESET>QQ<BOLD;CYAN>that has similar lines<RESET>
+		<BOLD;CYAN>+<RESET>QQ<BOLD;CYAN>to previous blocks, but with different indent<RESET>
+		<GREEN>+<RESET>QQ<GREEN>YetQAnotherQoutlier<RESET>
+	EOF
+
+	test_cmp expected actual
+'
+
+test_expect_success 'compare whitespace delta incompatible with other space options' '
+	test_must_fail git diff \
+		--color-moved-ws=allow-indentation-change,ignore-all-space \
+		2>err &&
+	test_i18ngrep allow-indentation-change err
+'
+
 test_done
