@@ -806,7 +806,7 @@ void reset_shared_repository(void);
  * $GIT_NO_REPLACE_OBJECTS is set, but is set to false by some
  * commands that do not want replace references to be active.
  */
-extern int check_replace_refs;
+extern int read_replace_refs;
 extern char *git_replace_ref_base;
 
 extern int fsync_object_files;
