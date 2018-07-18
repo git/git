@@ -15,6 +15,15 @@ UI, Workflows & Features
    otherwise working-tree-only application of a patch will add new
    paths to the index marked with the "intent-to-add" bit.
 
+ * "git grep" learned the "--column" option that gives not just the
+   line number but the column number of the hit.
+
+ * The "-l" option in "git branch -l" is an unfortunate short-hand for
+   "--create-reflog", but many users, both old and new, somehow expect
+   it to be something else, perhaps "--list".  This step warns when "-l"
+   is used as a short-hand for "--create-reflog" and warns about the
+   future repurposing of the it when it is used.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -50,6 +59,18 @@ Performance, Internal Implementation, Development Support etc.
 
  * Build and test procedure for netrc credential helper (in contrib/)
    has been updated.
+
+ * The conversion to pass "the_repository" and then "a_repository"
+   throughout the object access API continues.
+
+ * Remove unused function definitions and declarations from ewah
+   bitmap subsystem.
+
+ * Code preparation to make "git p4" closer to be usable with Python 3.
+
+ * Tighten the API to make it harder to misuse in-tree .gitmodules
+   file, even though it shares the same syntax with configuration
+   files, to read random configuration items from it.
 
 
 Fixes since v2.18
@@ -96,6 +117,43 @@ Fixes since v2.18
    to the submodule was changed in the range of commits in the
    superproject, sometimes showing "(null)".  This has been corrected.
 
- * Code cleanup.
+ * "git submodule" did not correctly adjust core.worktree setting that
+   indicates whether/where a submodule repository has its associated
+   working tree across various state transitions, which has been
+   corrected.
+   (merge 984cd77ddb sb/submodule-core-worktree later to maint).
+
+ * Bugfix for "rebase -i" corner case regression.
+   (merge a9279c6785 pw/rebase-i-keep-reword-after-conflict later to maint).
+
+ * Recently added "--base" option to "git format-patch" command did
+   not correctly generate prereq patch ids.
+   (merge 15b76c1fb3 xy/format-patch-prereq-patch-id-fix later to maint).
+
+ * POSIX portability fix in Makefile to fix a glitch introduced a few
+   releases ago.
+   (merge 6600054e9b dj/runtime-prefix later to maint).
+
+ * "git filter-branch" when used with the "--state-branch" option
+   still attempted to rewrite the commits whose filtered result is
+   known from the previous attempt (which is recorded on the state
+   branch); the command has been corrected not to waste cycles doing
+   so.
+   (merge 709cfe848a mb/filter-branch-optim later to maint).
+
+ * Clarify that setting core.ignoreCase to deviate from reality would
+   not turn a case-incapable filesystem into a case-capable one.
+   (merge 48294b512a ms/core-icase-doc later to maint).
+
+ * Code cleanup, docfix, build fix, etc.
    (merge aee9be2ebe sg/update-ref-stdin-cleanup later to maint).
    (merge 037714252f jc/clean-after-sanity-tests later to maint).
+   (merge 5b26c3c941 en/merge-recursive-cleanup later to maint).
+   (merge 0dcbc0392e bw/config-refer-to-gitsubmodules-doc later to maint).
+   (merge bb4d000e87 bw/protocol-v2 later to maint).
+   (merge 928f0ab4ba vs/typofixes later to maint).
+   (merge d7f590be84 en/rebase-i-microfixes later to maint).
+   (merge 81d395cc85 js/rebase-recreate-merge later to maint).
+   (merge 51d1863168 tz/exclude-doc-smallfixes later to maint).
+   (merge a9aa3c0927 ds/commit-graph later to maint).
+   (merge 5cf8e06474 js/enhanced-version-info later to maint).
