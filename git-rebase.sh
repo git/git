@@ -328,7 +328,7 @@ do
 		do_merge=t
 		;;
 	--strategy-option=*)
-		strategy_opts="$strategy_opts $(git rev-parse --sq-quote "--${1#--strategy-option=}")"
+		strategy_opts="$strategy_opts $(git rev-parse --sq-quote "--${1#--strategy-option=}" | sed -e s/^.//)"
 		do_merge=t
 		test -z "$strategy" && strategy=recursive
 		;;

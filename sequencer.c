@@ -2207,6 +2207,7 @@ static int populate_opts_cb(const char *key, const char *value, void *data)
 static void read_strategy_opts(struct replay_opts *opts, struct strbuf *buf)
 {
 	int i;
+	char *strategy_opts_string;
 
 	strbuf_reset(buf);
 	if (!read_oneliner(buf, rebase_path_strategy(), 0))
@@ -2215,7 +2216,11 @@ static void read_strategy_opts(struct replay_opts *opts, struct strbuf *buf)
 	if (!read_oneliner(buf, rebase_path_strategy_opts(), 0))
 		return;
 
-	opts->xopts_nr = split_cmdline(buf->buf, (const char ***)&opts->xopts);
+	strategy_opts_string = buf->buf;
+	if (*strategy_opts_string == ' ')
+		strategy_opts_string++;
+	opts->xopts_nr = split_cmdline(strategy_opts_string,
+				       (const char ***)&opts->xopts);
 	for (i = 0; i < opts->xopts_nr; i++) {
 		const char *arg = opts->xopts[i];
 
