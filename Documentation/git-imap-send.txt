@@ -68,8 +68,8 @@ imap.tunnel::
 	to the server. Required when imap.host is not set.
 
 imap.host::
-	A URL identifying the server. Use a `imap://` prefix for non-secure
-	connections and a `imaps://` prefix for secure connections.
+	A URL identifying the server. Use an `imap://` prefix for non-secure
+	connections and an `imaps://` prefix for secure connections.
 	Ignored when imap.tunnel is set, but required otherwise.
 
 imap.user::

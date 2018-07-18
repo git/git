@@ -1103,7 +1103,7 @@ _____________
 Combining test suites, git bisect and other systems together
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-We have seen that test suites an git bisect are very powerful when
+We have seen that test suites and git bisect are very powerful when
 used together. It can be even more powerful if you can combine them
 with other systems.
 

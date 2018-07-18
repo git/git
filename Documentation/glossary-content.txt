@@ -334,7 +334,7 @@ The optional colon that terminates the "magic signature" can be
 omitted if the pattern begins with a character that does not belong to
 "magic signature" symbol set and is not a colon.
 +
-In the long form, the leading colon `:` is followed by a open
+In the long form, the leading colon `:` is followed by an open
 parenthesis `(`, a comma-separated list of zero or more "magic words",
 and a close parentheses `)`, and the remainder is the pattern to match
 against the path.
