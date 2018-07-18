@@ -592,6 +592,23 @@ static void submodule_cache_check_init(struct repository *repo)
 	submodule_cache_init(repo->submodule_cache);
 }
 
+/*
+ * Note: This function is private for a reason, the '.gitmodules' file should
+ * not be used as as a mechanism to retrieve arbitrary configuration stored in
+ * the repository.
+ *
+ * Runs the provided config function on the '.gitmodules' file found in the
+ * working directory.
+ */
+static void config_from_gitmodules(config_fn_t fn, struct repository *repo, void *data)
+{
+	if (repo->worktree) {
+		char *file = repo_worktree_path(repo, GITMODULES_FILE);
+		git_config_from_file(fn, file, data);
+		free(file);
+	}
+}
+
 static int gitmodules_cb(const char *var, const char *value, void *data)
 {
 	struct repository *repo = data;
@@ -609,19 +626,11 @@ void repo_read_gitmodules(struct repository *repo)
 {
 	submodule_cache_check_init(repo);
 
-	if (repo->worktree) {
-		char *gitmodules;
+	if (repo_read_index(repo) < 0)
+		return;
 
-		if (repo_read_index(repo) < 0)
-			return;
-
-		gitmodules = repo_worktree_path(repo, GITMODULES_FILE);
-
-		if (!is_gitmodules_unmerged(repo->index))
-			git_config_from_file(gitmodules_cb, gitmodules, repo);
-
-		free(gitmodules);
-	}
+	if (!is_gitmodules_unmerged(repo->index))
+		config_from_gitmodules(gitmodules_cb, repo, repo);
 
 	repo->submodule_cache->gitmodules_read = 1;
 }
@@ -671,4 +680,46 @@ void submodule_free(struct repository *r)
 {
 	if (r->submodule_cache)
 		submodule_cache_clear(r->submodule_cache);
+}
+
+struct fetch_config {
+	int *max_children;
+	int *recurse_submodules;
+};
+
+static int gitmodules_fetch_config(const char *var, const char *value, void *cb)
+{
+	struct fetch_config *config = cb;
+	if (!strcmp(var, "submodule.fetchjobs")) {
+		*(config->max_children) = parse_submodule_fetchjobs(var, value);
+		return 0;
+	} else if (!strcmp(var, "fetch.recursesubmodules")) {
+		*(config->recurse_submodules) = parse_fetch_recurse_submodules_arg(var, value);
+		return 0;
+	}
+
+	return 0;
+}
+
+void fetch_config_from_gitmodules(int *max_children, int *recurse_submodules)
+{
+	struct fetch_config config = {
+		.max_children = max_children,
+		.recurse_submodules = recurse_submodules
+	};
+	config_from_gitmodules(gitmodules_fetch_config, the_repository, &config);
+}
+
+static int gitmodules_update_clone_config(const char *var, const char *value,
+					  void *cb)
+{
+	int *max_jobs = cb;
+	if (!strcmp(var, "submodule.fetchjobs"))
+		*max_jobs = parse_submodule_fetchjobs(var, value);
+	return 0;
+}
+
+void update_clone_config_from_gitmodules(int *max_jobs)
+{
+	config_from_gitmodules(gitmodules_update_clone_config, the_repository, &max_jobs);
 }
