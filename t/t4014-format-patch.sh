@@ -1554,13 +1554,15 @@ test_expect_success 'format-patch -o overrides format.outputDirectory' '
 
 test_expect_success 'format-patch --base' '
 	git checkout side &&
-	git format-patch --stdout --base=HEAD~3 -1 | tail -n 7 >actual &&
+	git format-patch --stdout --base=HEAD~3 -1 | tail -n 7 >actual1 &&
+	git format-patch --stdout --base=HEAD~3 HEAD~.. | tail -n 7 >actual2 &&
 	echo >expected &&
 	echo "base-commit: $(git rev-parse HEAD~3)" >>expected &&
 	echo "prerequisite-patch-id: $(git show --patch HEAD~2 | git patch-id --stable | awk "{print \$1}")" >>expected &&
 	echo "prerequisite-patch-id: $(git show --patch HEAD~1 | git patch-id --stable | awk "{print \$1}")" >>expected &&
 	signature >> expected &&
-	test_cmp expected actual
+	test_cmp expected actual1 &&
+	test_cmp expected actual2
 '
 
 test_expect_success 'format-patch --base errors out when base commit is in revision list' '
