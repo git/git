@@ -113,6 +113,12 @@ test_expect_success 'test GIT_NO_REPLACE_OBJECTS env variable' '
      GIT_NO_REPLACE_OBJECTS=1 git show $HASH2 | grep "A U Thor"
 '
 
+test_expect_success 'test core.usereplacerefs config option' '
+	test_config core.usereplacerefs false &&
+	git cat-file commit $HASH2 | grep "author A U Thor" &&
+	git show $HASH2 | grep "A U Thor"
+'
+
 cat >tag.sig <<EOF
 object $HASH2
 type commit

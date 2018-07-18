@@ -911,6 +911,11 @@ core.commitGraph::
 	Enable git commit graph feature. Allows reading from the
 	commit-graph file.
 
+core.useReplaceRefs::
+	If set to `false`, behave as if the `--no-replace-objects`
+	option was given on the command line. See linkgit:git[1] and
+	linkgit:git-replace[1] for more information.
+
 core.sparseCheckout::
 	Enable "sparse checkout" feature. See section "Sparse checkout" in
 	linkgit:git-read-tree[1] for more information.
