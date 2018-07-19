@@ -3147,7 +3147,10 @@ background_import_then_checkpoint () {
 	echo $! >V.pid
 	# We don't mind if fast-import has already died by the time the test
 	# ends.
-	test_when_finished "exec 8>&-; exec 9>&-; kill $(cat V.pid) || true"
+	test_when_finished "
+		exec 8>&-; exec 9>&-;
+		kill $(cat V.pid) && wait $(cat V.pid)
+		true"
 
 	# Start in the background to ensure we adhere strictly to (blocking)
 	# pipes writing sequence. We want to assume that the write below could
