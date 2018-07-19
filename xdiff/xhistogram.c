@@ -243,6 +243,14 @@ static int fall_back_to_classic_diff(xpparam_t const *xpp, xdfenv_t *env,
 				  line1, count1, line2, count2);
 }
 
+static inline void free_index(struct histindex *index)
+{
+	xdl_free(index->records);
+	xdl_free(index->line_map);
+	xdl_free(index->next_ptrs);
+	xdl_cha_free(&index->rcha);
+}
+
 static int find_lcs(struct histindex *index, struct region *lcs,
 	int line1, int count1, int line2, int count2) {
 	int b_ptr;
@@ -343,10 +351,7 @@ static int histogram_diff(xpparam_t const *xpp, xdfenv_t *env,
 	}
 
 cleanup:
-	xdl_free(index.records);
-	xdl_free(index.line_map);
-	xdl_free(index.next_ptrs);
-	xdl_cha_free(&index.rcha);
+	free_index(&index);
 
 	return result;
 }
