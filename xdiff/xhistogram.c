@@ -233,6 +233,16 @@ static int try_lcs(struct histindex *index, struct region *lcs, int b_ptr,
 	return b_next;
 }
 
+static int fall_back_to_classic_diff(xpparam_t const *xpp, xdfenv_t *env,
+		int line1, int count1, int line2, int count2)
+{
+	xpparam_t xpparam;
+	xpparam.flags = xpp->flags & ~XDF_DIFF_ALGORITHM_MASK;
+
+	return xdl_fall_back_diff(env, &xpparam,
+				  line1, count1, line2, count2);
+}
+
 static int find_lcs(struct histindex *index, struct region *lcs,
 	int line1, int count1, int line2, int count2) {
 	int b_ptr;
@@ -246,16 +256,6 @@ static int find_lcs(struct histindex *index, struct region *lcs,
 		b_ptr = try_lcs(index, lcs, b_ptr, line1, count1, line2, count2);
 
 	return index->has_common && index->max_chain_length < index->cnt;
-}
-
-static int fall_back_to_classic_diff(struct histindex *index,
-		int line1, int count1, int line2, int count2)
-{
-	xpparam_t xpp;
-	xpp.flags = index->xpp->flags & ~XDF_DIFF_ALGORITHM_MASK;
-
-	return xdl_fall_back_diff(index->env, &xpp,
-				  line1, count1, line2, count2);
 }
 
 static int histogram_diff(xpparam_t const *xpp, xdfenv_t *env,
@@ -320,7 +320,7 @@ static int histogram_diff(xpparam_t const *xpp, xdfenv_t *env,
 
 	memset(&lcs, 0, sizeof(lcs));
 	if (find_lcs(&index, &lcs, line1, count1, line2, count2))
-		result = fall_back_to_classic_diff(&index, line1, count1, line2, count2);
+		result = fall_back_to_classic_diff(xpp, env, line1, count1, line2, count2);
 	else {
 		if (lcs.begin1 == 0 && lcs.begin2 == 0) {
 			while (count1--)
