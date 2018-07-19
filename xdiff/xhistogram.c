@@ -318,7 +318,9 @@ static int histogram_diff(xpparam_t const *xpp, xdfenv_t *env,
 {
 	struct region lcs;
 	int lcs_found;
-	int result = -1;
+	int result;
+redo:
+	result = -1;
 
 	if (count1 <= 0 && count2 <= 0)
 		return 0;
@@ -355,11 +357,17 @@ static int histogram_diff(xpparam_t const *xpp, xdfenv_t *env,
 						line2, lcs.begin2 - line2);
 			if (result)
 				goto out;
-			result = histogram_diff(xpp, env,
-						lcs.end1 + 1, LINE_END(1) - lcs.end1,
-						lcs.end2 + 1, LINE_END(2) - lcs.end2);
-			if (result)
-				goto out;
+			/*
+			 * result = histogram_diff(xpp, env,
+			 *            lcs.end1 + 1, LINE_END(1) - lcs.end1,
+			 *            lcs.end2 + 1, LINE_END(2) - lcs.end2);
+			 * but let's optimize tail recursion ourself:
+			*/
+			count1 = LINE_END(1) - lcs.end1;
+			line1 = lcs.end1 + 1;
+			count2 = LINE_END(2) - lcs.end2;
+			line2 = lcs.end2 + 1;
+			goto redo;
 		}
 	}
 out:
