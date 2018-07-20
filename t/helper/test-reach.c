@@ -4,6 +4,7 @@
 #include "commit-reach.h"
 #include "config.h"
 #include "parse-options.h"
+#include "ref-filter.h"
 #include "string-list.h"
 #include "tag.h"
 
@@ -112,6 +113,17 @@ int cmd__reach(int ac, const char **av)
 		print_sorted_commit_ids(list);
 	} else if (!strcmp(av[1], "can_all_from_reach")) {
 		printf("%s(X,Y):%d\n", av[1], can_all_from_reach(X, Y, 1));
+	} else if (!strcmp(av[1], "commit_contains")) {
+		struct ref_filter filter;
+		struct contains_cache cache;
+		init_contains_cache(&cache);
+
+		if (ac > 2 && !strcmp(av[2], "--tag"))
+			filter.with_commit_tag_algo = 1;
+		else
+			filter.with_commit_tag_algo = 0;
+
+		printf("%s(_,A,X,_):%d\n", av[1], commit_contains(&filter, A, X, &cache));
 	}
 
 	exit(0);

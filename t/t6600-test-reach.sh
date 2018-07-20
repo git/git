@@ -205,4 +205,38 @@ test_expect_success 'can_all_from_reach:miss' '
 	test_three_modes can_all_from_reach
 '
 
+test_expect_success 'commit_contains:hit' '
+	cat >input <<-\EOF &&
+	A:commit-7-7
+	X:commit-2-10
+	X:commit-3-9
+	X:commit-4-8
+	X:commit-5-7
+	X:commit-6-6
+	X:commit-7-5
+	X:commit-8-4
+	X:commit-9-3
+	EOF
+	echo "commit_contains(_,A,X,_):1" >expect &&
+	test_three_modes commit_contains &&
+	test_three_modes commit_contains --tag
+'
+
+test_expect_success 'commit_contains:miss' '
+	cat >input <<-\EOF &&
+	A:commit-6-5
+	X:commit-2-10
+	X:commit-3-9
+	X:commit-4-8
+	X:commit-5-7
+	X:commit-6-6
+	X:commit-7-5
+	X:commit-8-4
+	X:commit-9-3
+	EOF
+	echo "commit_contains(_,A,X,_):0" >expect &&
+	test_three_modes commit_contains &&
+	test_three_modes commit_contains --tag
+'
+
 test_done
