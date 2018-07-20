@@ -102,6 +102,10 @@ int cmd__reach(int ac, const char **av)
 		struct commit_list *list = get_merge_bases_many(A, X_nr, X_array);
 		printf("%s(A,X):\n", av[1]);
 		print_sorted_commit_ids(list);
+	} else if (!strcmp(av[1], "reduce_heads")) {
+		struct commit_list *list = reduce_heads(X);
+		printf("%s(X):\n", av[1]);
+		print_sorted_commit_ids(list);
 	}
 
 	exit(0);
