@@ -9,6 +9,7 @@
 int cmd__reach(int ac, const char **av)
 {
 	struct object_id oid_A, oid_B;
+	struct commit *A, *B;
 	struct strbuf buf = STRBUF_INIT;
 	struct repository *r = the_repository;
 
@@ -17,6 +18,7 @@ int cmd__reach(int ac, const char **av)
 	if (ac < 2)
 		exit(1);
 
+	A = B = NULL;
 
 	while (strbuf_getline(&buf, stdin) != EOF) {
 		struct object_id oid;
@@ -44,10 +46,12 @@ int cmd__reach(int ac, const char **av)
 		switch (buf.buf[0]) {
 			case 'A':
 				oidcpy(&oid_A, &oid);
+				A = c;
 				break;
 
 			case 'B':
 				oidcpy(&oid_B, &oid);
+				B = c;
 				break;
 
 			default:
@@ -58,6 +62,8 @@ int cmd__reach(int ac, const char **av)
 
 	if (!strcmp(av[1], "ref_newer"))
 		printf("%s(A,B):%d\n", av[1], ref_newer(&oid_A, &oid_B));
+	else if (!strcmp(av[1], "in_merge_bases"))
+		printf("%s(A,B):%d\n", av[1], in_merge_bases(A, B));
 
 	exit(0);
 }

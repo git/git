@@ -83,4 +83,22 @@ test_expect_success 'ref_newer:hit' '
 	test_three_modes ref_newer
 '
 
+test_expect_success 'in_merge_bases:hit' '
+	cat >input <<-\EOF &&
+	A:commit-5-7
+	B:commit-8-8
+	EOF
+	echo "in_merge_bases(A,B):1" >expect &&
+	test_three_modes in_merge_bases
+'
+
+test_expect_success 'in_merge_bases:miss' '
+	cat >input <<-\EOF &&
+	A:commit-6-8
+	B:commit-5-9
+	EOF
+	echo "in_merge_bases(A,B):0" >expect &&
+	test_three_modes in_merge_bases
+'
+
 test_done
