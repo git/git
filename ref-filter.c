@@ -19,6 +19,7 @@
 #include "wt-status.h"
 #include "commit-slab.h"
 #include "commit-graph.h"
+#include "commit-reach.h"
 
 static struct ref_msg {
 	const char *gone;

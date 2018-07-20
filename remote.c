@@ -12,6 +12,7 @@
 #include "string-list.h"
 #include "mergesort.h"
 #include "argv-array.h"
+#include "commit-reach.h"
 
 enum map_direction { FROM_SRC, FROM_DST };
 

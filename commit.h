@@ -204,13 +204,6 @@ struct commit_graft *read_graft_line(struct strbuf *line);
 int register_commit_graft(struct repository *r, struct commit_graft *, int);
 struct commit_graft *lookup_commit_graft(struct repository *r, const struct object_id *oid);
 
-extern struct commit_list *get_merge_bases(struct commit *rev1, struct commit *rev2);
-extern struct commit_list *get_merge_bases_many(struct commit *one, int n, struct commit **twos);
-extern struct commit_list *get_octopus_merge_bases(struct commit_list *in);
-
-/* To be used only when object flags after this call no longer matter */
-extern struct commit_list *get_merge_bases_many_dirty(struct commit *one, int n, struct commit **twos);
-
 /* largest positive number a signed 32-bit integer can contain */
 #define INFINITE_DEPTH 0x7fffffff
 
@@ -258,31 +251,9 @@ extern int delayed_reachability_test(struct shallow_info *si, int c);
 extern void prune_shallow(int show_only);
 extern struct trace_key trace_shallow;
 
-int is_descendant_of(struct commit *, struct commit_list *);
-int in_merge_bases(struct commit *, struct commit *);
-int in_merge_bases_many(struct commit *, int, struct commit **);
-
 extern int interactive_add(int argc, const char **argv, const char *prefix, int patch);
 extern int run_add_interactive(const char *revision, const char *patch_mode,
 			       const struct pathspec *pathspec);
-
-/*
- * Takes a list of commits and returns a new list where those
- * have been removed that can be reached from other commits in
- * the list. It is useful for, e.g., reducing the commits
- * randomly thrown at the git-merge command and removing
- * redundant commits that the user shouldn't have given to it.
- *
- * This function destroys the STALE bit of the commit objects'
- * flags.
- */
-extern struct commit_list *reduce_heads(struct commit_list *heads);
-
-/*
- * Like `reduce_heads()`, except it replaces the list. Use this
- * instead of `foo = reduce_heads(foo);` to avoid memory leaks.
- */
-extern void reduce_heads_replace(struct commit_list **heads);
 
 struct commit_extra_header {
 	struct commit_extra_header *next;

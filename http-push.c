@@ -14,7 +14,7 @@
 #include "argv-array.h"
 #include "packfile.h"
 #include "object-store.h"
-
+#include "commit-reach.h"
 
 #ifdef EXPAT_NEEDS_XMLPARSE_H
 #include <xmlparse.h>

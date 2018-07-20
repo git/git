@@ -12,6 +12,7 @@
 #include "fmt-merge-msg.h"
 #include "gpg-interface.h"
 #include "repository.h"
+#include "commit-reach.h"
 
 static const char * const fmt_merge_msg_usage[] = {
 	N_("git fmt-merge-msg [-m <message>] [--log[=<n>] | --no-log] [--file <file>]"),
