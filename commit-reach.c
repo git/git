@@ -1,8 +1,10 @@
 #include "cache.h"
 #include "commit.h"
+#include "commit-graph.h"
 #include "decorate.h"
 #include "prio-queue.h"
 #include "tree.h"
+#include "ref-filter.c"
 #include "revision.h"
 #include "tag.h"
 #include "commit-reach.h"
@@ -410,4 +412,123 @@ int ref_newer(const struct object_id *new_oid, const struct object_id *old_oid)
 	unmark_and_free(list, TMP_MARK);
 	unmark_and_free(used, TMP_MARK);
 	return found;
+}
+
+/*
+ * Mimicking the real stack, this stack lives on the heap, avoiding stack
+ * overflows.
+ *
+ * At each recursion step, the stack items points to the commits whose
+ * ancestors are to be inspected.
+ */
+struct contains_stack {
+	int nr, alloc;
+	struct contains_stack_entry {
+		struct commit *commit;
+		struct commit_list *parents;
+	} *contains_stack;
+};
+
+static int in_commit_list(const struct commit_list *want, struct commit *c)
+{
+	for (; want; want = want->next)
+		if (!oidcmp(&want->item->object.oid, &c->object.oid))
+			return 1;
+	return 0;
+}
+
+/*
+ * Test whether the candidate is contained in the list.
+ * Do not recurse to find out, though, but return -1 if inconclusive.
+ */
+static enum contains_result contains_test(struct commit *candidate,
+					  const struct commit_list *want,
+					  struct contains_cache *cache,
+					  uint32_t cutoff)
+{
+	enum contains_result *cached = contains_cache_at(cache, candidate);
+
+	/* If we already have the answer cached, return that. */
+	if (*cached)
+		return *cached;
+
+	/* or are we it? */
+	if (in_commit_list(want, candidate)) {
+		*cached = CONTAINS_YES;
+		return CONTAINS_YES;
+	}
+
+	/* Otherwise, we don't know; prepare to recurse */
+	parse_commit_or_die(candidate);
+
+	if (candidate->generation < cutoff)
+		return CONTAINS_NO;
+
+	return CONTAINS_UNKNOWN;
+}
+
+static void push_to_contains_stack(struct commit *candidate, struct contains_stack *contains_stack)
+{
+	ALLOC_GROW(contains_stack->contains_stack, contains_stack->nr + 1, contains_stack->alloc);
+	contains_stack->contains_stack[contains_stack->nr].commit = candidate;
+	contains_stack->contains_stack[contains_stack->nr++].parents = candidate->parents;
+}
+
+static enum contains_result contains_tag_algo(struct commit *candidate,
+					      const struct commit_list *want,
+					      struct contains_cache *cache)
+{
+	struct contains_stack contains_stack = { 0, 0, NULL };
+	enum contains_result result;
+	uint32_t cutoff = GENERATION_NUMBER_INFINITY;
+	const struct commit_list *p;
+
+	for (p = want; p; p = p->next) {
+		struct commit *c = p->item;
+		load_commit_graph_info(the_repository, c);
+		if (c->generation < cutoff)
+			cutoff = c->generation;
+	}
+
+	result = contains_test(candidate, want, cache, cutoff);
+	if (result != CONTAINS_UNKNOWN)
+		return result;
+
+	push_to_contains_stack(candidate, &contains_stack);
+	while (contains_stack.nr) {
+		struct contains_stack_entry *entry = &contains_stack.contains_stack[contains_stack.nr - 1];
+		struct commit *commit = entry->commit;
+		struct commit_list *parents = entry->parents;
+
+		if (!parents) {
+			*contains_cache_at(cache, commit) = CONTAINS_NO;
+			contains_stack.nr--;
+		}
+		/*
+		 * If we just popped the stack, parents->item has been marked,
+		 * therefore contains_test will return a meaningful yes/no.
+		 */
+		else switch (contains_test(parents->item, want, cache, cutoff)) {
+		case CONTAINS_YES:
+			*contains_cache_at(cache, commit) = CONTAINS_YES;
+			contains_stack.nr--;
+			break;
+		case CONTAINS_NO:
+			entry->parents = parents->next;
+			break;
+		case CONTAINS_UNKNOWN:
+			push_to_contains_stack(parents->item, &contains_stack);
+			break;
+		}
+	}
+	free(contains_stack.contains_stack);
+	return contains_test(candidate, want, cache, cutoff);
+}
+
+int commit_contains(struct ref_filter *filter, struct commit *commit,
+		    struct commit_list *list, struct contains_cache *cache)
+{
+	if (filter->with_commit_tag_algo)
+		return contains_tag_algo(commit, list, cache) == CONTAINS_YES;
+	return is_descendant_of(commit, list);
 }

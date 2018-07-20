@@ -1,8 +1,12 @@
 #ifndef __COMMIT_REACH_H__
 #define __COMMIT_REACH_H__
 
+#include "commit-slab.h"
+
 struct commit;
 struct commit_list;
+struct contains_cache;
+struct ref_filter;
 
 struct commit_list *get_merge_bases_many(struct commit *one,
 					 int n,
@@ -19,7 +23,6 @@ struct commit_list *get_merge_bases_many_dirty(struct commit *one, int n, struct
 int is_descendant_of(struct commit *commit, struct commit_list *with_commit);
 int in_merge_bases_many(struct commit *commit, int nr_reference, struct commit **reference);
 int in_merge_bases(struct commit *commit, struct commit *reference);
-
 
 /*
  * Takes a list of commits and returns a new list where those
@@ -40,5 +43,20 @@ struct commit_list *reduce_heads(struct commit_list *heads);
 void reduce_heads_replace(struct commit_list **heads);
 
 int ref_newer(const struct object_id *new_oid, const struct object_id *old_oid);
+
+/*
+ * Unknown has to be "0" here, because that's the default value for
+ * contains_cache slab entries that have not yet been assigned.
+ */
+enum contains_result {
+	CONTAINS_UNKNOWN = 0,
+	CONTAINS_NO,
+	CONTAINS_YES
+};
+
+define_commit_slab(contains_cache, enum contains_result);
+
+int commit_contains(struct ref_filter *filter, struct commit *commit,
+		    struct commit_list *list, struct contains_cache *cache);
 
 #endif
