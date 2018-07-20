@@ -369,32 +369,44 @@ static int reachable(struct commit *from, unsigned int with_flag,
 	return (from->object.flags & assign_flag);
 }
 
-static int ok_to_give_up(void)
+/*
+ * Determine if every commit in 'from' can reach at least one commit
+ * that is marked with 'with_flag'. As we traverse, use 'assign_flag'
+ * as a marker for commits that are already visited.
+ */
+static int can_all_from_reach_with_flag(struct object_array *from,
+					unsigned int with_flag,
+					unsigned int assign_flag)
 {
 	int i;
 
-	if (!have_obj.nr)
-		return 0;
+	for (i = 0; i < from->nr; i++) {
+		struct object *from_one = from->objects[i].item;
 
-	for (i = 0; i < want_obj.nr; i++) {
-		struct object *want = want_obj.objects[i].item;
-
-		if (want->flags & COMMON_KNOWN)
+		if (from_one->flags & assign_flag)
 			continue;
-		want = deref_tag(the_repository, want, "a want line", 0);
-		if (!want || want->type != OBJ_COMMIT) {
+		from_one = deref_tag(the_repository, from_one, "a from object", 0);
+		if (!from_one || from_one->type != OBJ_COMMIT) {
 			/* no way to tell if this is reachable by
 			 * looking at the ancestry chain alone, so
 			 * leave a note to ourselves not to worry about
 			 * this object anymore.
 			 */
-			want_obj.objects[i].item->flags |= COMMON_KNOWN;
+			from->objects[i].item->flags |= assign_flag;
 			continue;
 		}
-		if (!reachable((struct commit *)want, THEY_HAVE, COMMON_KNOWN))
+		if (!reachable((struct commit *)from_one, with_flag, assign_flag))
 			return 0;
 	}
 	return 1;
+}
+
+static int ok_to_give_up(void)
+{
+	if (!have_obj.nr)
+		return 0;
+
+	return can_all_from_reach_with_flag(&want_obj, THEY_HAVE, COMMON_KNOWN);
 }
 
 static int get_common_commits(void)
