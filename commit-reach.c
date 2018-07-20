@@ -366,20 +366,11 @@ void reduce_heads_replace(struct commit_list **heads)
 	*heads = result;
 }
 
-static void unmark_and_free(struct commit_list *list, unsigned int mark)
-{
-	while (list) {
-		struct commit *commit = pop_commit(&list);
-		commit->object.flags &= ~mark;
-	}
-}
-
 int ref_newer(const struct object_id *new_oid, const struct object_id *old_oid)
 {
 	struct object *o;
 	struct commit *old_commit, *new_commit;
-	struct commit_list *list, *used;
-	int found = 0;
+	struct commit_list *old_commit_list = NULL;
 
 	/*
 	 * Both new_commit and old_commit must be commit-ish and new_commit is descendant of
@@ -400,19 +391,8 @@ int ref_newer(const struct object_id *new_oid, const struct object_id *old_oid)
 	if (parse_commit(new_commit) < 0)
 		return 0;
 
-	used = list = NULL;
-	commit_list_insert(new_commit, &list);
-	while (list) {
-		new_commit = pop_most_recent_commit(&list, TMP_MARK);
-		commit_list_insert(new_commit, &used);
-		if (new_commit == old_commit) {
-			found = 1;
-			break;
-		}
-	}
-	unmark_and_free(list, TMP_MARK);
-	unmark_and_free(used, TMP_MARK);
-	return found;
+	commit_list_insert(old_commit, &old_commit_list);
+	return is_descendant_of(new_commit, old_commit_list);
 }
 
 /*
