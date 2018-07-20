@@ -338,11 +338,14 @@ static int got_oid(const char *hex, struct object_id *oid)
 
 static int ok_to_give_up(void)
 {
+	uint32_t min_generation = GENERATION_NUMBER_ZERO;
+
 	if (!have_obj.nr)
 		return 0;
 
 	return can_all_from_reach_with_flag(&want_obj, THEY_HAVE,
-					    COMMON_KNOWN, oldest_have);
+					    COMMON_KNOWN, oldest_have,
+					    min_generation);
 }
 
 static int get_common_commits(void)
