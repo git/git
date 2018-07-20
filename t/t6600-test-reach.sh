@@ -101,4 +101,26 @@ test_expect_success 'in_merge_bases:miss' '
 	test_three_modes in_merge_bases
 '
 
+test_expect_success 'is_descendant_of:hit' '
+	cat >input <<-\EOF &&
+	A:commit-5-7
+	X:commit-4-8
+	X:commit-6-6
+	X:commit-1-1
+	EOF
+	echo "is_descendant_of(A,X):1" >expect &&
+	test_three_modes is_descendant_of
+'
+
+test_expect_success 'is_descendant_of:miss' '
+	cat >input <<-\EOF &&
+	A:commit-6-8
+	X:commit-5-9
+	X:commit-4-10
+	X:commit-7-6
+	EOF
+	echo "is_descendant_of(A,X):0" >expect &&
+	test_three_modes is_descendant_of
+'
+
 test_done

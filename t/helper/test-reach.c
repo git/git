@@ -10,6 +10,7 @@ int cmd__reach(int ac, const char **av)
 {
 	struct object_id oid_A, oid_B;
 	struct commit *A, *B;
+	struct commit_list *X;
 	struct strbuf buf = STRBUF_INIT;
 	struct repository *r = the_repository;
 
@@ -19,6 +20,7 @@ int cmd__reach(int ac, const char **av)
 		exit(1);
 
 	A = B = NULL;
+	X = NULL;
 
 	while (strbuf_getline(&buf, stdin) != EOF) {
 		struct object_id oid;
@@ -54,6 +56,10 @@ int cmd__reach(int ac, const char **av)
 				B = c;
 				break;
 
+			case 'X':
+				commit_list_insert(c, &X);
+				break;
+
 			default:
 				die("unexpected start of line: %c", buf.buf[0]);
 		}
@@ -64,6 +70,8 @@ int cmd__reach(int ac, const char **av)
 		printf("%s(A,B):%d\n", av[1], ref_newer(&oid_A, &oid_B));
 	else if (!strcmp(av[1], "in_merge_bases"))
 		printf("%s(A,B):%d\n", av[1], in_merge_bases(A, B));
+	else if (!strcmp(av[1], "is_descendant_of"))
+		printf("%s(A,X):%d\n", av[1], is_descendant_of(A, X));
 
 	exit(0);
 }
