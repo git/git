@@ -336,17 +336,18 @@ static int got_oid(const char *hex, struct object_id *oid)
 	return 0;
 }
 
-static int reachable(struct commit *want)
+static int reachable(struct commit *from, unsigned int with_flag,
+		     unsigned int assign_flag)
 {
 	struct prio_queue work = { compare_commits_by_commit_date };
 
-	prio_queue_put(&work, want);
+	prio_queue_put(&work, from);
 	while (work.nr) {
 		struct commit_list *list;
 		struct commit *commit = prio_queue_get(&work);
 
-		if (commit->object.flags & THEY_HAVE) {
-			want->object.flags |= COMMON_KNOWN;
+		if (commit->object.flags & with_flag) {
+			from->object.flags |= assign_flag;
 			break;
 		}
 		if (!commit->object.parsed)
@@ -362,10 +363,10 @@ static int reachable(struct commit *want)
 				prio_queue_put(&work, parent);
 		}
 	}
-	want->object.flags |= REACHABLE;
-	clear_commit_marks(want, REACHABLE);
+	from->object.flags |= REACHABLE;
+	clear_commit_marks(from, REACHABLE);
 	clear_prio_queue(&work);
-	return (want->object.flags & COMMON_KNOWN);
+	return (from->object.flags & assign_flag);
 }
 
 static int ok_to_give_up(void)
@@ -390,7 +391,7 @@ static int ok_to_give_up(void)
 			want_obj.objects[i].item->flags |= COMMON_KNOWN;
 			continue;
 		}
-		if (!reachable((struct commit *)want))
+		if (!reachable((struct commit *)want, THEY_HAVE, COMMON_KNOWN))
 			return 0;
 	}
 	return 1;
