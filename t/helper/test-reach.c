@@ -29,7 +29,7 @@ int cmd__reach(int ac, const char **av)
 {
 	struct object_id oid_A, oid_B;
 	struct commit *A, *B;
-	struct commit_list *X;
+	struct commit_list *X, *Y;
 	struct commit **X_array;
 	int X_nr, X_alloc;
 	struct strbuf buf = STRBUF_INIT;
@@ -41,7 +41,7 @@ int cmd__reach(int ac, const char **av)
 		exit(1);
 
 	A = B = NULL;
-	X = NULL;
+	X = Y = NULL;
 	X_nr = 0;
 	X_alloc = 16;
 	ALLOC_ARRAY(X_array, X_alloc);
@@ -86,6 +86,10 @@ int cmd__reach(int ac, const char **av)
 				X_array[X_nr++] = c;
 				break;
 
+			case 'Y':
+				commit_list_insert(c, &Y);
+				break;
+
 			default:
 				die("unexpected start of line: %c", buf.buf[0]);
 		}
@@ -106,6 +110,8 @@ int cmd__reach(int ac, const char **av)
 		struct commit_list *list = reduce_heads(X);
 		printf("%s(X):\n", av[1]);
 		print_sorted_commit_ids(list);
+	} else if (!strcmp(av[1], "can_all_from_reach")) {
+		printf("%s(X,Y):%d\n", av[1], can_all_from_reach(X, Y, 1));
 	}
 
 	exit(0);

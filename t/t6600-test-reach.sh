@@ -160,4 +160,49 @@ test_expect_success 'reduce_heads' '
 	test_three_modes reduce_heads
 '
 
+test_expect_success 'can_all_from_reach:hit' '
+	cat >input <<-\EOF &&
+	X:commit-2-10
+	X:commit-3-9
+	X:commit-4-8
+	X:commit-5-7
+	X:commit-6-6
+	X:commit-7-5
+	X:commit-8-4
+	X:commit-9-3
+	Y:commit-1-9
+	Y:commit-2-8
+	Y:commit-3-7
+	Y:commit-4-6
+	Y:commit-5-5
+	Y:commit-6-4
+	Y:commit-7-3
+	Y:commit-8-1
+	EOF
+	echo "can_all_from_reach(X,Y):1" >expect &&
+	test_three_modes can_all_from_reach
+'
+
+test_expect_success 'can_all_from_reach:miss' '
+	cat >input <<-\EOF &&
+	X:commit-2-10
+	X:commit-3-9
+	X:commit-4-8
+	X:commit-5-7
+	X:commit-6-6
+	X:commit-7-5
+	X:commit-8-4
+	X:commit-9-3
+	Y:commit-1-9
+	Y:commit-2-8
+	Y:commit-3-7
+	Y:commit-4-6
+	Y:commit-5-5
+	Y:commit-6-4
+	Y:commit-8-5
+	EOF
+	echo "can_all_from_reach(X,Y):0" >expect &&
+	test_three_modes can_all_from_reach
+'
+
 test_done

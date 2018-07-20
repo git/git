@@ -595,3 +595,50 @@ int can_all_from_reach_with_flag(struct object_array *from,
 	}
 	return 1;
 }
+
+int can_all_from_reach(struct commit_list *from, struct commit_list *to,
+		       int cutoff_by_min_date)
+{
+	struct object_array from_objs = OBJECT_ARRAY_INIT;
+	time_t min_commit_date = cutoff_by_min_date ? from->item->date : 0;
+	struct commit_list *from_iter = from, *to_iter = to;
+	int result;
+
+	while (from_iter) {
+		add_object_array(&from_iter->item->object, NULL, &from_objs);
+
+		if (!parse_commit(from_iter->item)) {
+			if (from_iter->item->date < min_commit_date)
+				min_commit_date = from_iter->item->date;
+		}
+
+		from_iter = from_iter->next;
+	}
+
+	while (to_iter) {
+		if (!parse_commit(to_iter->item)) {
+			if (to_iter->item->date < min_commit_date)
+				min_commit_date = to_iter->item->date;
+		}
+
+		to_iter->item->object.flags |= PARENT2;
+
+		to_iter = to_iter->next;
+	}
+
+	result = can_all_from_reach_with_flag(&from_objs, PARENT2, PARENT1,
+					      min_commit_date);
+
+	while (from) {
+		clear_commit_marks(from->item, PARENT1);
+		from = from->next;
+	}
+
+	while (to) {
+		clear_commit_marks(to->item, PARENT2);
+		to = to->next;
+	}
+
+	object_array_clear(&from_objs);
+	return result;
+}
