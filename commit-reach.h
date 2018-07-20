@@ -39,4 +39,6 @@ struct commit_list *reduce_heads(struct commit_list *heads);
  */
 void reduce_heads_replace(struct commit_list **heads);
 
+int ref_newer(const struct object_id *new_oid, const struct object_id *old_oid);
+
 #endif
