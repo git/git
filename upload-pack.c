@@ -337,7 +337,7 @@ static int got_oid(const char *hex, struct object_id *oid)
 }
 
 static int reachable(struct commit *from, unsigned int with_flag,
-		     unsigned int assign_flag)
+		     unsigned int assign_flag, time_t min_commit_date)
 {
 	struct prio_queue work = { compare_commits_by_commit_date };
 
@@ -355,7 +355,7 @@ static int reachable(struct commit *from, unsigned int with_flag,
 		if (commit->object.flags & REACHABLE)
 			continue;
 		commit->object.flags |= REACHABLE;
-		if (commit->date < oldest_have)
+		if (commit->date < min_commit_date)
 			continue;
 		for (list = commit->parents; list; list = list->next) {
 			struct commit *parent = list->item;
@@ -372,11 +372,13 @@ static int reachable(struct commit *from, unsigned int with_flag,
 /*
  * Determine if every commit in 'from' can reach at least one commit
  * that is marked with 'with_flag'. As we traverse, use 'assign_flag'
- * as a marker for commits that are already visited.
+ * as a marker for commits that are already visited. Do not walk
+ * commits with date below 'min_commit_date'.
  */
 static int can_all_from_reach_with_flag(struct object_array *from,
 					unsigned int with_flag,
-					unsigned int assign_flag)
+					unsigned int assign_flag,
+					time_t min_commit_date)
 {
 	int i;
 
@@ -395,7 +397,8 @@ static int can_all_from_reach_with_flag(struct object_array *from,
 			from->objects[i].item->flags |= assign_flag;
 			continue;
 		}
-		if (!reachable((struct commit *)from_one, with_flag, assign_flag))
+		if (!reachable((struct commit *)from_one, with_flag, assign_flag,
+			       min_commit_date))
 			return 0;
 	}
 	return 1;
@@ -406,7 +409,8 @@ static int ok_to_give_up(void)
 	if (!have_obj.nr)
 		return 0;
 
-	return can_all_from_reach_with_flag(&want_obj, THEY_HAVE, COMMON_KNOWN);
+	return can_all_from_reach_with_flag(&want_obj, THEY_HAVE,
+					    COMMON_KNOWN, oldest_have);
 }
 
 static int get_common_commits(void)
