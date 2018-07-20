@@ -10,6 +10,7 @@
 #include "commit-reach.h"
 
 /* Remember to update object flag allocation in object.h */
+#define REACHABLE       (1u<<15)
 #define PARENT1		(1u<<16)
 #define PARENT2		(1u<<17)
 #define STALE		(1u<<18)
@@ -531,4 +532,66 @@ int commit_contains(struct ref_filter *filter, struct commit *commit,
 	if (filter->with_commit_tag_algo)
 		return contains_tag_algo(commit, list, cache) == CONTAINS_YES;
 	return is_descendant_of(commit, list);
+}
+
+int reachable(struct commit *from, unsigned int with_flag,
+	      unsigned int assign_flag, time_t min_commit_date)
+{
+	struct prio_queue work = { compare_commits_by_commit_date };
+
+	prio_queue_put(&work, from);
+	while (work.nr) {
+		struct commit_list *list;
+		struct commit *commit = prio_queue_get(&work);
+
+		if (commit->object.flags & with_flag) {
+			from->object.flags |= assign_flag;
+			break;
+		}
+		if (!commit->object.parsed)
+			parse_object(the_repository, &commit->object.oid);
+		if (commit->object.flags & REACHABLE)
+			continue;
+		commit->object.flags |= REACHABLE;
+		if (commit->date < min_commit_date)
+			continue;
+		for (list = commit->parents; list; list = list->next) {
+			struct commit *parent = list->item;
+			if (!(parent->object.flags & REACHABLE))
+				prio_queue_put(&work, parent);
+		}
+	}
+	from->object.flags |= REACHABLE;
+	clear_commit_marks(from, REACHABLE);
+	clear_prio_queue(&work);
+	return (from->object.flags & assign_flag);
+}
+
+int can_all_from_reach_with_flag(struct object_array *from,
+				 unsigned int with_flag,
+				 unsigned int assign_flag,
+				 time_t min_commit_date)
+{
+	int i;
+
+	for (i = 0; i < from->nr; i++) {
+		struct object *from_one = from->objects[i].item;
+
+		if (from_one->flags & assign_flag)
+			continue;
+		from_one = deref_tag(the_repository, from_one, "a from object", 0);
+		if (!from_one || from_one->type != OBJ_COMMIT) {
+			/* no way to tell if this is reachable by
+			 * looking at the ancestry chain alone, so
+			 * leave a note to ourselves not to worry about
+			 * this object anymore.
+			 */
+			from->objects[i].item->flags |= assign_flag;
+			continue;
+		}
+		if (!reachable((struct commit *)from_one, with_flag, assign_flag,
+			       min_commit_date))
+			return 0;
+	}
+	return 1;
 }

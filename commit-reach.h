@@ -59,4 +59,18 @@ define_commit_slab(contains_cache, enum contains_result);
 int commit_contains(struct ref_filter *filter, struct commit *commit,
 		    struct commit_list *list, struct contains_cache *cache);
 
+int reachable(struct commit *from, unsigned int with_flag,
+	      unsigned int assign_flag, time_t min_commit_date);
+
+/*
+ * Determine if every commit in 'from' can reach at least one commit
+ * that is marked with 'with_flag'. As we traverse, use 'assign_flag'
+ * as a marker for commits that are already visited. Do not walk
+ * commits with date below 'min_commit_date'.
+ */
+int can_all_from_reach_with_flag(struct object_array *from,
+				 unsigned int with_flag,
+				 unsigned int assign_flag,
+				 time_t min_commit_date);
+
 #endif
