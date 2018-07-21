@@ -403,7 +403,7 @@ test_expect_success 'fetch creating new shallow root' '
 		git fetch --depth=1 --progress 2>actual &&
 		# This should fetch only the empty commit, no tree or
 		# blob objects
-		grep "remote: Total 1" actual
+		test_i18ngrep "remote: Total 1" actual
 	)
 '
 
