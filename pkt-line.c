@@ -296,7 +296,7 @@ static int get_packet_data(int fd, char **src_buf, size_t *src_size,
 		if (options & PACKET_READ_GENTLE_ON_EOF)
 			return -1;
 
-		die("The remote end hung up unexpectedly");
+		die("the remote end hung up unexpectedly");
 	}
 
 	return ret;

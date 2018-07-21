@@ -110,7 +110,7 @@ static int option_parse_type(const struct option *opt, const char *arg,
 		 * --int' and '--type=bool
 		 * --type=int'.
 		 */
-		error("only one type at a time.");
+		error("only one type at a time");
 		usage_with_options(builtin_config_usage,
 			builtin_config_options);
 	}
@@ -160,7 +160,11 @@ static struct option builtin_config_options[] = {
 static void check_argc(int argc, int min, int max) {
 	if (argc >= min && argc <= max)
 		return;
-	error("wrong number of arguments");
+	if (min == max)
+		error("wrong number of arguments, should be %d", min);
+	else
+		error("wrong number of arguments, should be from %d to %d",
+		      min, max);
 	usage_with_options(builtin_config_usage, builtin_config_options);
 }
 
@@ -595,7 +599,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 
 	if (use_global_config + use_system_config + use_local_config +
 	    !!given_config_source.file + !!given_config_source.blob > 1) {
-		error("only one config file at a time.");
+		error("only one config file at a time");
 		usage_with_options(builtin_config_usage, builtin_config_options);
 	}
 
@@ -664,7 +668,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 	}
 
 	if (HAS_MULTI_BITS(actions)) {
-		error("only one action at a time.");
+		error("only one action at a time");
 		usage_with_options(builtin_config_usage, builtin_config_options);
 	}
 	if (actions == 0)
@@ -684,7 +688,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 	if (show_origin && !(actions &
 		(ACTION_GET|ACTION_GET_ALL|ACTION_GET_REGEXP|ACTION_LIST))) {
 		error("--show-origin is only applicable to --get, --get-all, "
-			  "--get-regexp, and --list.");
+		      "--get-regexp, and --list");
 		usage_with_options(builtin_config_usage, builtin_config_options);
 	}
 
@@ -819,7 +823,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		if (ret < 0)
 			return ret;
 		if (ret == 0)
-			die("No such section!");
+			die("no such section: %s", argv[0]);
 	}
 	else if (actions == ACTION_REMOVE_SECTION) {
 		int ret;
@@ -830,7 +834,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		if (ret < 0)
 			return ret;
 		if (ret == 0)
-			die("No such section!");
+			die("no such section: %s", argv[0]);
 	}
 	else if (actions == ACTION_GET_COLOR) {
 		check_argc(argc, 1, 2);

@@ -309,7 +309,7 @@ static int write_zip_entry(struct archiver_args *args,
 		if (is_utf8(path))
 			flags |= ZIP_UTF8;
 		else
-			warning("Path is not valid UTF-8: %s", path);
+			warning("path is not valid UTF-8: %s", path);
 	}
 
 	if (pathlen > 0xffff) {

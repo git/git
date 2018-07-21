@@ -71,17 +71,17 @@ static void git_hash_sha1_final(unsigned char *hash, git_hash_ctx *ctx)
 
 static void git_hash_unknown_init(git_hash_ctx *ctx)
 {
-	die("trying to init unknown hash");
+	BUG("trying to init unknown hash");
 }
 
 static void git_hash_unknown_update(git_hash_ctx *ctx, const void *data, size_t len)
 {
-	die("trying to update unknown hash");
+	BUG("trying to update unknown hash");
 }
 
 static void git_hash_unknown_final(unsigned char *hash, git_hash_ctx *ctx)
 {
-	die("trying to finalize unknown hash");
+	BUG("trying to finalize unknown hash");
 }
 
 const struct git_hash_algo hash_algos[GIT_HASH_NALGOS] = {
@@ -379,7 +379,7 @@ static int alt_odb_usable(struct raw_object_store *o,
 	/* Detect cases where alternate disappeared */
 	if (!is_directory(path->buf)) {
 		error("object directory %s does not exist; "
-		      "check .git/objects/info/alternates.",
+		      "check .git/objects/info/alternates",
 		      path->buf);
 		return 0;
 	}

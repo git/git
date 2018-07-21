@@ -44,7 +44,7 @@ test_expect_success 'ls-files -c' '
 		cd top/sub &&
 		for f in ../y*
 		do
-			echo "error: pathspec $sq$f$sq did not match any file(s) known to git."
+			echo "error: pathspec $sq$f$sq did not match any file(s) known to git"
 		done >expect.err &&
 		echo "Did you forget to ${sq}git add${sq}?" >>expect.err &&
 		ls ../x* >expect.out &&
@@ -59,7 +59,7 @@ test_expect_success 'ls-files -o' '
 		cd top/sub &&
 		for f in ../x*
 		do
-			echo "error: pathspec $sq$f$sq did not match any file(s) known to git."
+			echo "error: pathspec $sq$f$sq did not match any file(s) known to git"
 		done >expect.err &&
 		echo "Did you forget to ${sq}git add${sq}?" >>expect.err &&
 		ls ../y* >expect.out &&

@@ -666,7 +666,7 @@ test_expect_success 'test ident field is working' '
 	mkdir ../other_worktree &&
 	cp -R done dthree dtwo four three ../other_worktree &&
 	GIT_WORK_TREE=../other_worktree git status 2>../err &&
-	echo "warning: Untracked cache is disabled on this system or location." >../expect &&
+	echo "warning: untracked cache is disabled on this system or location" >../expect &&
 	test_i18ncmp ../expect ../err
 '
 

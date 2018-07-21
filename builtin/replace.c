@@ -54,7 +54,7 @@ static int show_reference(const char *refname, const struct object_id *oid,
 			enum object_type obj_type, repl_type;
 
 			if (get_oid(refname, &object))
-				return error("Failed to resolve '%s' as a valid ref.", refname);
+				return error("failed to resolve '%s' as a valid ref", refname);
 
 			obj_type = oid_object_info(the_repository, &object,
 						   NULL);
@@ -84,7 +84,7 @@ static int list_replace_refs(const char *pattern, const char *format)
 		data.format = REPLACE_FORMAT_LONG;
 	else
 		return error("invalid replace format '%s'\n"
-			     "valid formats are 'short', 'medium' and 'long'\n",
+			     "valid formats are 'short', 'medium' and 'long'",
 			     format);
 
 	for_each_replace_ref(the_repository, show_reference, (void *)&data);
@@ -108,7 +108,7 @@ static int for_each_replace_name(const char **argv, each_replace_name_fn fn)
 
 	for (p = argv; *p; p++) {
 		if (get_oid(*p, &oid)) {
-			error("Failed to resolve '%s' as a valid ref.", *p);
+			error("failed to resolve '%s' as a valid ref", *p);
 			had_error = 1;
 			continue;
 		}
@@ -118,7 +118,7 @@ static int for_each_replace_name(const char **argv, each_replace_name_fn fn)
 		full_hex = ref.buf + base_len;
 
 		if (read_ref(ref.buf, &oid)) {
-			error("replace ref '%s' not found.", full_hex);
+			error("replace ref '%s' not found", full_hex);
 			had_error = 1;
 			continue;
 		}
@@ -134,7 +134,7 @@ static int delete_replace_ref(const char *name, const char *ref,
 {
 	if (delete_ref(NULL, ref, oid, 0))
 		return 1;
-	printf("Deleted replace ref '%s'\n", name);
+	printf_ln("Deleted replace ref '%s'", name);
 	return 0;
 }
 
@@ -146,7 +146,7 @@ static int check_ref_valid(struct object_id *object,
 	strbuf_reset(ref);
 	strbuf_addf(ref, "%s%s", git_replace_ref_base, oid_to_hex(object));
 	if (check_refname_format(ref->buf, 0))
-		return error("'%s' is not a valid ref name.", ref->buf);
+		return error("'%s' is not a valid ref name", ref->buf);
 
 	if (read_ref(ref->buf, prev))
 		oidclr(prev);
@@ -200,10 +200,10 @@ static int replace_object(const char *object_ref, const char *replace_ref, int f
 	struct object_id object, repl;
 
 	if (get_oid(object_ref, &object))
-		return error("Failed to resolve '%s' as a valid ref.",
+		return error("failed to resolve '%s' as a valid ref",
 			     object_ref);
 	if (get_oid(replace_ref, &repl))
-		return error("Failed to resolve '%s' as a valid ref.",
+		return error("failed to resolve '%s' as a valid ref",
 			     replace_ref);
 
 	return replace_object_oid(object_ref, &object, replace_ref, &repl, force);
@@ -315,7 +315,7 @@ static int edit_and_replace(const char *object_ref, int force, int raw)
 	struct strbuf ref = STRBUF_INIT;
 
 	if (get_oid(object_ref, &old_oid) < 0)
-		return error("Not a valid object name: '%s'", object_ref);
+		return error("not a valid object name: '%s'", object_ref);
 
 	type = oid_object_info(the_repository, &old_oid, NULL);
 	if (type < 0)
@@ -368,7 +368,7 @@ static int replace_parents(struct strbuf *buf, int argc, const char **argv)
 		struct object_id oid;
 		if (get_oid(argv[i], &oid) < 0) {
 			strbuf_release(&new_parents);
-			return error(_("Not a valid object name: '%s'"),
+			return error(_("not a valid object name: '%s'"),
 				     argv[i]);
 		}
 		if (!lookup_commit_reference(&oid)) {
@@ -412,7 +412,7 @@ static int check_one_mergetag(struct commit *commit,
 	for (i = 1; i < mergetag_data->argc; i++) {
 		struct object_id oid;
 		if (get_oid(mergetag_data->argv[i], &oid) < 0)
-			return error(_("Not a valid object name: '%s'"),
+			return error(_("not a valid object name: '%s'"),
 				     mergetag_data->argv[i]);
 		if (!oidcmp(&tag->tagged->oid, &oid))
 			return 0; /* found */
@@ -442,7 +442,7 @@ static int create_graft(int argc, const char **argv, int force, int gentle)
 	unsigned long size;
 
 	if (get_oid(old_ref, &old_oid) < 0)
-		return error(_("Not a valid object name: '%s'"), old_ref);
+		return error(_("not a valid object name: '%s'"), old_ref);
 	commit = lookup_commit_reference(&old_oid);
 	if (!commit)
 		return error(_("could not parse %s"), old_ref);
@@ -457,7 +457,7 @@ static int create_graft(int argc, const char **argv, int force, int gentle)
 	}
 
 	if (remove_signature(&buf)) {
-		warning(_("the original commit '%s' has a gpg signature."), old_ref);
+		warning(_("the original commit '%s' has a gpg signature"), old_ref);
 		warning(_("the signature will be removed in the replacement commit!"));
 	}
 

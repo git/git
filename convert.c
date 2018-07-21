@@ -190,7 +190,7 @@ static enum eol output_eol(enum crlf_action crlf_action)
 		/* fall through */
 		return text_eol_is_crlf() ? EOL_CRLF : EOL_LF;
 	}
-	warning("Illegal crlf_action %d\n", (int)crlf_action);
+	warning("illegal crlf_action %d", (int)crlf_action);
 	return core_eol;
 }
 
@@ -203,7 +203,7 @@ static void check_global_conv_flags_eol(const char *path, enum crlf_action crlf_
 		 * CRLFs would not be restored by checkout
 		 */
 		if (conv_flags & CONV_EOL_RNDTRP_DIE)
-			die(_("CRLF would be replaced by LF in %s."), path);
+			die(_("CRLF would be replaced by LF in %s"), path);
 		else if (conv_flags & CONV_EOL_RNDTRP_WARN)
 			warning(_("CRLF will be replaced by LF in %s.\n"
 				  "The file will have its original line"
@@ -493,7 +493,7 @@ static int encode_to_worktree(const char *path, const char *src, size_t src_len,
 				  &dst_len);
 	if (!dst) {
 		error("failed to encode '%s' from %s to %s",
-			path, default_encoding, enc);
+		      path, default_encoding, enc);
 		return 0;
 	}
 

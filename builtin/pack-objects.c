@@ -148,8 +148,13 @@ static void *get_delta(struct object_entry *entry)
 		    oid_to_hex(&DELTA(entry)->idx.oid));
 	delta_buf = diff_delta(base_buf, base_size,
 			       buf, size, &delta_size, 0);
+	/*
+	 * We succesfully computed this delta once but dropped it for
+	 * memory reasons. Something is very wrong if this time we
+	 * recompute and create a different delta.
+	 */
 	if (!delta_buf || delta_size != DELTA_SIZE(entry))
-		die("delta size changed");
+		BUG("delta size changed");
 	free(buf);
 	free(base_buf);
 	return delta_buf;
@@ -2341,8 +2346,8 @@ static void ll_find_deltas(struct object_entry **list, unsigned list_size,
 		return;
 	}
 	if (progress > pack_to_stdout)
-		fprintf(stderr, "Delta compression using up to %d threads.\n",
-				delta_search_threads);
+		fprintf_ln(stderr, "Delta compression using up to %d threads",
+			   delta_search_threads);
 	p = xcalloc(delta_search_threads, sizeof(*p));
 
 	/* Partition the work amongst work threads. */
@@ -2638,7 +2643,7 @@ static void read_object_list_from_stdin(void)
 			if (feof(stdin))
 				break;
 			if (!ferror(stdin))
-				die("fgets returned NULL, not EOF, not error!");
+				die("BUG: fgets returned NULL, not EOF, not error!");
 			if (errno != EINTR)
 				die_errno("fgets");
 			clearerr(stdin);
@@ -3263,7 +3268,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	if (!pack_to_stdout && !pack_size_limit)
 		pack_size_limit = pack_size_limit_cfg;
 	if (pack_to_stdout && pack_size_limit)
-		die("--max-pack-size cannot be used to build a pack for transfer.");
+		die("--max-pack-size cannot be used to build a pack for transfer");
 	if (pack_size_limit && pack_size_limit < 1024*1024) {
 		warning("minimum pack size limit is 1 MiB");
 		pack_size_limit = 1024*1024;
@@ -3273,13 +3278,13 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		die("--thin cannot be used to build an indexable pack.");
 
 	if (keep_unreachable && unpack_unreachable)
-		die("--keep-unreachable and --unpack-unreachable are incompatible.");
+		die("--keep-unreachable and --unpack-unreachable are incompatible");
 	if (!rev_list_all || !rev_list_reflog || !rev_list_index)
 		unpack_unreachable_expiration = 0;
 
 	if (filter_options.choice) {
 		if (!pack_to_stdout)
-			die("cannot use --filter without --stdout.");
+			die("cannot use --filter without --stdout");
 		use_bitmap_index = 0;
 	}
 
@@ -3353,8 +3358,8 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		prepare_pack(window, depth);
 	write_pack_file();
 	if (progress)
-		fprintf(stderr, "Total %"PRIu32" (delta %"PRIu32"),"
-			" reused %"PRIu32" (delta %"PRIu32")\n",
-			written, written_delta, reused, reused_delta);
+		fprintf_ln(stderr, "Total %"PRIu32" (delta %"PRIu32"),"
+			   " reused %"PRIu32" (delta %"PRIu32")",
+			   written, written_delta, reused, reused_delta);
 	return 0;
 }

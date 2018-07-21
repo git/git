@@ -58,7 +58,7 @@ static NORETURN void die_initial_contact(int unexpected)
 	 * response does not necessarily mean an ACL problem, though.
 	 */
 	if (unexpected)
-		die(_("The remote end hung up upon initial contact"));
+		die(_("the remote end hung up upon initial contact"));
 	else
 		die(_("Could not read from remote repository.\n\n"
 		      "Please make sure you have the correct access rights\n"
@@ -230,7 +230,7 @@ static int process_dummy_ref(const char *line)
 static void check_no_capabilities(const char *line, int len)
 {
 	if (strlen(line) != len)
-		warning("Ignoring capabilities after first line '%s'",
+		warning("ignoring capabilities after first line '%s'",
 			line + strlen(line));
 }
 
@@ -544,7 +544,7 @@ static enum protocol get_protocol(const char *name)
 		return PROTO_SSH;
 	if (!strcmp(name, "file"))
 		return PROTO_FILE;
-	die("I don't handle protocol '%s'", name);
+	die("protocol '%s' is not supported", name);
 }
 
 static char *host_end(char **hoststart, int removebrackets)
@@ -595,8 +595,7 @@ static void enable_keepalive(int sockfd)
 	int ka = 1;
 
 	if (setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, &ka, sizeof(ka)) < 0)
-		fprintf(stderr, "unable to set SO_KEEPALIVE on socket: %s\n",
-			strerror(errno));
+		error_errno("unable to set SO_KEEPALIVE on socket");
 }
 
 #ifndef NO_IPV6
@@ -640,7 +639,7 @@ static int git_tcp_connect_sock(char *host, int flags)
 
 	gai = getaddrinfo(host, port, &hints, &ai);
 	if (gai)
-		die("Unable to look up %s (port %s) (%s)", host, port, gai_strerror(gai));
+		die("unable to look up %s (port %s) (%s)", host, port, gai_strerror(gai));
 
 	if (flags & CONNECT_VERBOSE)
 		fprintf(stderr, "done.\nConnecting to %s (port %s) ... ", host, port);
@@ -670,7 +669,7 @@ static int git_tcp_connect_sock(char *host, int flags)
 	enable_keepalive(sockfd);
 
 	if (flags & CONNECT_VERBOSE)
-		fprintf(stderr, "done.\n");
+		fprintf_ln(stderr, "done.");
 
 	strbuf_release(&error_message);
 
@@ -701,13 +700,13 @@ static int git_tcp_connect_sock(char *host, int flags)
 
 	he = gethostbyname(host);
 	if (!he)
-		die("Unable to look up %s (%s)", host, hstrerror(h_errno));
+		die("unable to look up %s (%s)", host, hstrerror(h_errno));
 	nport = strtoul(port, &ep, 10);
 	if ( ep == port || *ep ) {
 		/* Not numeric */
 		struct servent *se = getservbyname(port,"tcp");
 		if ( !se )
-			die("Unknown port %s", port);
+			die("unknown port %s", port);
 		nport = se->s_port;
 	}
 
@@ -745,7 +744,7 @@ static int git_tcp_connect_sock(char *host, int flags)
 	enable_keepalive(sockfd);
 
 	if (flags & CONNECT_VERBOSE)
-		fprintf(stderr, "done.\n");
+		fprintf_ln(stderr, "done.");
 
 	return sockfd;
 }
@@ -921,7 +920,7 @@ static enum protocol parse_connect_url(const char *url_orig, char **ret_host,
 		path = strchr(end, separator);
 
 	if (!path || !*path)
-		die("No path specified. See 'man git-pull' for valid url syntax");
+		die("no path specified; see 'git help pull' for valid url syntax");
 
 	/*
 	 * null-terminate hostname and point path to ~ for URL's like this:
