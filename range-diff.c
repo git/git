@@ -323,7 +323,7 @@ static void output_pair_header(struct diff_options *diffopt,
 	}
 	strbuf_addf(buf, "%s\n", color_reset);
 
-	fwrite(buf->buf, buf->len, 1, stdout);
+	fwrite(buf->buf, buf->len, 1, diffopt->file);
 }
 
 static struct userdiff_driver no_func_name = {
