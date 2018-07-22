@@ -24,6 +24,7 @@ SYNOPSIS
 		   [--to=<email>] [--cc=<email>]
 		   [--[no-]cover-letter] [--quiet] [--notes[=<ref>]]
 		   [--interdiff=<previous>]
+		   [--range-diff=<previous>]
 		   [--progress]
 		   [<common diff options>]
 		   [ <since> | <revision range> ]
@@ -237,6 +238,15 @@ feeding the result to `git send-email`.
 	naming the tip of the previous series which shares a common base with
 	the series being formatted (for example `git format-patch
 	--cover-letter --interdiff=feature/v1 -3 feature/v2`).
+
+--range-diff=<previous>::
+	As a reviewer aid, insert a range-diff (see linkgit:git-range-diff[1])
+	into the cover letter showing the differences between the previous
+	version of the patch series and the series currently being formatted.
+	`previous` is a single revision naming the tip of the previous
+	series which shares a common base with the series being formatted (for
+	example `git format-patch --cover-letter --range-diff=feature/v1 -3
+	feature/v2`).
 
 --notes[=<ref>]::
 	Append the notes (see linkgit:git-notes[1]) for the commit

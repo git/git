@@ -32,6 +32,7 @@
 #include "commit-slab.h"
 #include "repository.h"
 #include "interdiff.h"
+#include "range-diff.h"
 
 #define MAIL_DEFAULT_WRAP 72
 
@@ -1089,6 +1090,12 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 		fprintf_ln(rev->diffopt.file, "%s", rev->idiff_title);
 		show_interdiff(rev, 0);
 	}
+
+	if (rev->rdiff1) {
+		fprintf_ln(rev->diffopt.file, "%s", _("Range-diff:"));
+		show_range_diff(rev->rdiff1, rev->rdiff2,
+				rev->creation_factor, 1, &rev->diffopt);
+	}
 }
 
 static const char *clean_message_id(const char *msg_id)
@@ -1438,6 +1445,17 @@ static const char *diff_title(struct strbuf *sb, int reroll_count,
 	return sb->buf;
 }
 
+static void infer_range_diff_ranges(struct strbuf *r1,
+				    struct strbuf *r2,
+				    const char *prev,
+				    struct commit *head)
+{
+	const char *head_oid = oid_to_hex(&head->object.oid);
+
+	strbuf_addf(r1, "%s..%s", head_oid, prev);
+	strbuf_addf(r2, "%s..%s", prev, head_oid);
+}
+
 int cmd_format_patch(int argc, const char **argv, const char *prefix)
 {
 	struct commit *commit;
@@ -1467,6 +1485,9 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	struct progress *progress = NULL;
 	struct oid_array idiff_prev = OID_ARRAY_INIT;
 	struct strbuf idiff_title = STRBUF_INIT;
+	const char *rdiff_prev = NULL;
+	struct strbuf rdiff1 = STRBUF_INIT;
+	struct strbuf rdiff2 = STRBUF_INIT;
 
 	const struct option builtin_format_patch_options[] = {
 		{ OPTION_CALLBACK, 'n', "numbered", &numbered, NULL,
@@ -1543,6 +1564,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		OPT_CALLBACK(0, "interdiff", &idiff_prev, N_("rev"),
 			     N_("show changes against <rev> in cover letter or single patch"),
 			     parse_opt_object_name),
+		OPT_STRING(0, "range-diff", &rdiff_prev, N_("refspec"),
+			   N_("show changes against <refspec> in cover letter")),
 		OPT_END()
 	};
 
@@ -1775,6 +1798,16 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 					     _("Interdiff against v%d:"));
 	}
 
+	if (rdiff_prev) {
+		if (!cover_letter)
+			die(_("--range-diff requires --cover-letter"));
+
+		infer_range_diff_ranges(&rdiff1, &rdiff2, rdiff_prev, list[0]);
+		rev.rdiff1 = rdiff1.buf;
+		rev.rdiff2 = rdiff2.buf;
+		rev.creation_factor = RANGE_DIFF_CREATION_FACTOR_DEFAULT;
+	}
+
 	if (!signature) {
 		; /* --no-signature inhibits all signatures */
 	} else if (signature && signature != git_version_string) {
@@ -1898,6 +1931,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 done:
 	oid_array_clear(&idiff_prev);
 	strbuf_release(&idiff_title);
+	strbuf_release(&rdiff1);
+	strbuf_release(&rdiff2);
 	return 0;
 }
 
