@@ -409,8 +409,14 @@ static void output(struct string_list *a, struct string_list *b,
 	strbuf_release(&dashes);
 }
 
+static struct strbuf *output_prefix_cb(struct diff_options *opt, void *data)
+{
+	return data;
+}
+
 int show_range_diff(const char *range1, const char *range2,
-		    int creation_factor, struct diff_options *diffopt)
+		    int creation_factor, int dual_color,
+		    struct diff_options *diffopt)
 {
 	int res = 0;
 
@@ -423,9 +429,23 @@ int show_range_diff(const char *range1, const char *range2,
 		res = error(_("could not parse log for '%s'"), range2);
 
 	if (!res) {
+		struct diff_options opts;
+		struct strbuf indent = STRBUF_INIT;
+
+		memcpy(&opts, diffopt, sizeof(opts));
+		opts.output_format = DIFF_FORMAT_PATCH;
+		opts.flags.suppress_diff_headers = 1;
+		opts.flags.dual_color_diffed_diffs = dual_color;
+		opts.output_prefix = output_prefix_cb;
+		strbuf_addstr(&indent, "    ");
+		opts.output_prefix_data = &indent;
+		diff_setup_done(&opts);
+
 		find_exact_matches(&branch1, &branch2);
 		get_correspondences(&branch1, &branch2, creation_factor);
-		output(&branch1, &branch2, diffopt);
+		output(&branch1, &branch2, &opts);
+
+		strbuf_release(&indent);
 	}
 
 	string_list_clear(&branch1, 1);
