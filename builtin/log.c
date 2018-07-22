@@ -1448,12 +1448,21 @@ static const char *diff_title(struct strbuf *sb, int reroll_count,
 static void infer_range_diff_ranges(struct strbuf *r1,
 				    struct strbuf *r2,
 				    const char *prev,
+				    struct commit *origin,
 				    struct commit *head)
 {
 	const char *head_oid = oid_to_hex(&head->object.oid);
 
-	strbuf_addf(r1, "%s..%s", head_oid, prev);
-	strbuf_addf(r2, "%s..%s", prev, head_oid);
+	if (!strstr(prev, "..")) {
+		strbuf_addf(r1, "%s..%s", head_oid, prev);
+		strbuf_addf(r2, "%s..%s", prev, head_oid);
+	} else if (!origin) {
+		die(_("failed to infer range-diff ranges"));
+	} else {
+		strbuf_addstr(r1, prev);
+		strbuf_addf(r2, "%s..%s",
+			    oid_to_hex(&origin->object.oid), head_oid);
+	}
 }
 
 int cmd_format_patch(int argc, const char **argv, const char *prefix)
@@ -1802,7 +1811,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		if (!cover_letter)
 			die(_("--range-diff requires --cover-letter"));
 
-		infer_range_diff_ranges(&rdiff1, &rdiff2, rdiff_prev, list[0]);
+		infer_range_diff_ranges(&rdiff1, &rdiff2, rdiff_prev,
+					origin, list[0]);
 		rev.rdiff1 = rdiff1.buf;
 		rev.rdiff2 = rdiff2.buf;
 		rev.creation_factor = RANGE_DIFF_CREATION_FACTOR_DEFAULT;

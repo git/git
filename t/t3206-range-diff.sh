@@ -142,7 +142,7 @@ test_expect_success 'changed message' '
 	test_cmp expected actual
 '
 
-for prev in topic
+for prev in topic master..topic
 do
 	test_expect_success "format-patch --range-diff=$prev" '
 		git format-patch --stdout --cover-letter --range-diff=$prev \
