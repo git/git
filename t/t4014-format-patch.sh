@@ -1717,4 +1717,21 @@ test_expect_success 'format-patch --pretty=mboxrd' '
 	test_cmp expect actual
 '
 
+test_expect_success 'interdiff: setup' '
+	git checkout -b boop master &&
+	test_commit fnorp blorp &&
+	test_commit fleep blorp
+'
+
+test_expect_success 'interdiff: cover-letter' '
+	sed "y/q/ /" >expect <<-\EOF &&
+	+fleep
+	--q
+	EOF
+	git format-patch --cover-letter --interdiff=boop~2 -1 boop &&
+	test_i18ngrep "^Interdiff:$" 0000-cover-letter.patch &&
+	sed "1,/^@@ /d; /^-- $/q" <0000-cover-letter.patch >actual &&
+	test_cmp expect actual
+'
+
 test_done
