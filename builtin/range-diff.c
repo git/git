@@ -18,7 +18,7 @@ static struct strbuf *output_prefix_cb(struct diff_options *opt, void *data)
 
 int cmd_range_diff(int argc, const char **argv, const char *prefix)
 {
-	int creation_factor = 60;
+	int creation_factor = RANGE_DIFF_CREATION_FACTOR_DEFAULT;
 	struct diff_options diffopt = { NULL };
 	int simple_color = -1;
 	struct option options[] = {
