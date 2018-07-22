@@ -1576,7 +1576,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			     N_("show changes against <rev> in cover letter or single patch"),
 			     parse_opt_object_name),
 		OPT_STRING(0, "range-diff", &rdiff_prev, N_("refspec"),
-			   N_("show changes against <refspec> in cover letter")),
+			   N_("show changes against <refspec> in cover letter or single patch")),
 		OPT_INTEGER(0, "creation-factor", &creation_factor,
 			    N_("percentage by which creation is weighted")),
 		OPT_END()
@@ -1817,8 +1817,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		die(_("--creation-factor requires --range-diff"));
 
 	if (rdiff_prev) {
-		if (!cover_letter)
-			die(_("--range-diff requires --cover-letter"));
+		if (!cover_letter && total != 1)
+			die(_("--range-diff requires --cover-letter or single patch"));
 
 		infer_range_diff_ranges(&rdiff1, &rdiff2, rdiff_prev,
 					origin, list[0]);
@@ -1867,8 +1867,9 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		print_signature(rev.diffopt.file);
 		total++;
 		start_number--;
-		/* interdiff in cover-letter; omit from patches */
+		/* interdiff/range-diff in cover-letter; omit from patches */
 		rev.idiff_oid1 = NULL;
+		rev.rdiff1 = NULL;
 	}
 	rev.add_signoff = do_signoff;
 
