@@ -1085,7 +1085,7 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 		show_diffstat(rev, origin, head);
 
 	if (rev->idiff_oid1) {
-		fprintf_ln(rev->diffopt.file, "%s", _("Interdiff:"));
+		fprintf_ln(rev->diffopt.file, "%s", rev->idiff_title);
 		show_interdiff(rev);
 	}
 }
@@ -1427,6 +1427,16 @@ static void print_bases(struct base_tree_info *bases, FILE *file)
 	oidclr(&bases->base_commit);
 }
 
+static const char *diff_title(struct strbuf *sb, int reroll_count,
+		       const char *generic, const char *rerolled)
+{
+	if (reroll_count <= 0)
+		strbuf_addstr(sb, generic);
+	else /* RFC may be v0, so allow -v1 to diff against v0 */
+		strbuf_addf(sb, rerolled, reroll_count - 1);
+	return sb->buf;
+}
+
 int cmd_format_patch(int argc, const char **argv, const char *prefix)
 {
 	struct commit *commit;
@@ -1455,6 +1465,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	int show_progress = 0;
 	struct progress *progress = NULL;
 	struct oid_array idiff_prev = OID_ARRAY_INIT;
+	struct strbuf idiff_title = STRBUF_INIT;
 
 	const struct option builtin_format_patch_options[] = {
 		{ OPTION_CALLBACK, 'n', "numbered", &numbered, NULL,
@@ -1758,6 +1769,9 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			die(_("--interdiff requires --cover-letter"));
 		rev.idiff_oid1 = &idiff_prev.oid[idiff_prev.nr - 1];
 		rev.idiff_oid2 = get_commit_tree_oid(list[0]);
+		rev.idiff_title = diff_title(&idiff_title, reroll_count,
+					     _("Interdiff:"),
+					     _("Interdiff against v%d:"));
 	}
 
 	if (!signature) {
@@ -1880,6 +1894,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 
 done:
 	oid_array_clear(&idiff_prev);
+	strbuf_release(&idiff_title);
 	return 0;
 }
 

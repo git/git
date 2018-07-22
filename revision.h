@@ -215,6 +215,7 @@ struct rev_info {
 	/* interdiff */
 	const struct object_id *idiff_oid1;
 	const struct object_id *idiff_oid2;
+	const char *idiff_title;
 
 	/* commit counts */
 	int count_left;

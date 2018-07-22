@@ -1734,4 +1734,9 @@ test_expect_success 'interdiff: cover-letter' '
 	test_cmp expect actual
 '
 
+test_expect_success 'interdiff: reroll-count' '
+	git format-patch --cover-letter --interdiff=boop~2 -v2 -1 boop &&
+	test_i18ngrep "^Interdiff ..* v1:$" v2-0000-cover-letter.patch
+'
+
 test_done
