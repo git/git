@@ -1092,7 +1092,7 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 	}
 
 	if (rev->rdiff1) {
-		fprintf_ln(rev->diffopt.file, "%s", _("Range-diff:"));
+		fprintf_ln(rev->diffopt.file, "%s", rev->rdiff_title);
 		show_range_diff(rev->rdiff1, rev->rdiff2,
 				rev->creation_factor, 1, &rev->diffopt);
 	}
@@ -1497,6 +1497,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	const char *rdiff_prev = NULL;
 	struct strbuf rdiff1 = STRBUF_INIT;
 	struct strbuf rdiff2 = STRBUF_INIT;
+	struct strbuf rdiff_title = STRBUF_INIT;
 
 	const struct option builtin_format_patch_options[] = {
 		{ OPTION_CALLBACK, 'n', "numbered", &numbered, NULL,
@@ -1816,6 +1817,9 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		rev.rdiff1 = rdiff1.buf;
 		rev.rdiff2 = rdiff2.buf;
 		rev.creation_factor = RANGE_DIFF_CREATION_FACTOR_DEFAULT;
+		rev.rdiff_title = diff_title(&rdiff_title, reroll_count,
+					     _("Range-diff:"),
+					     _("Range-diff against v%d:"));
 	}
 
 	if (!signature) {
@@ -1943,6 +1947,7 @@ done:
 	strbuf_release(&idiff_title);
 	strbuf_release(&rdiff1);
 	strbuf_release(&rdiff2);
+	strbuf_release(&rdiff_title);
 	return 0;
 }
 

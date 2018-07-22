@@ -222,6 +222,7 @@ struct rev_info {
 	const char *rdiff1;
 	const char *rdiff2;
 	int creation_factor;
+	const char *rdiff_title;
 
 	/* commit counts */
 	int count_left;
