@@ -3,6 +3,6 @@
 
 struct rev_info;
 
-void show_interdiff(struct rev_info *);
+void show_interdiff(struct rev_info *, int indent);
 
 #endif
