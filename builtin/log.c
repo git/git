@@ -1540,7 +1540,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		OPT_BOOL(0, "progress", &show_progress,
 			 N_("show progress while generating patches")),
 		OPT_CALLBACK(0, "interdiff", &idiff_prev, N_("rev"),
-			     N_("show changes against <rev> in cover letter"),
+			     N_("show changes against <rev> in cover letter or single patch"),
 			     parse_opt_object_name),
 		OPT_END()
 	};
@@ -1765,8 +1765,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		rev.total = total + start_number - 1;
 
 	if (idiff_prev.nr) {
-		if (!cover_letter)
-			die(_("--interdiff requires --cover-letter"));
+		if (!cover_letter && total != 1)
+			die(_("--interdiff requires --cover-letter or single patch"));
 		rev.idiff_oid1 = &idiff_prev.oid[idiff_prev.nr - 1];
 		rev.idiff_oid2 = get_commit_tree_oid(list[0]);
 		rev.idiff_title = diff_title(&idiff_title, reroll_count,
@@ -1811,6 +1811,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		print_signature(rev.diffopt.file);
 		total++;
 		start_number--;
+		/* interdiff in cover-letter; omit from patches */
+		rev.idiff_oid1 = NULL;
 	}
 	rev.add_signoff = do_signoff;
 

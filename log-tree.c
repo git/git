@@ -14,6 +14,7 @@
 #include "sequencer.h"
 #include "line-log.h"
 #include "help.h"
+#include "interdiff.h"
 
 static struct decoration name_decoration = { "object names" };
 static int decoration_loaded;
@@ -736,6 +737,19 @@ void show_log(struct rev_info *opt)
 
 	strbuf_release(&msgbuf);
 	free(ctx.notes_message);
+
+	if (cmit_fmt_is_mail(ctx.fmt) && opt->idiff_oid1) {
+		struct diff_queue_struct dq;
+
+		memcpy(&dq, &diff_queued_diff, sizeof(diff_queued_diff));
+		DIFF_QUEUE_CLEAR(&diff_queued_diff);
+
+		next_commentary_block(opt, NULL);
+		fprintf_ln(opt->diffopt.file, "%s", opt->idiff_title);
+		show_interdiff(opt, 2);
+
+		memcpy(&diff_queued_diff, &dq, sizeof(diff_queued_diff));
+	}
 }
 
 int log_tree_diff_flush(struct rev_info *opt)
