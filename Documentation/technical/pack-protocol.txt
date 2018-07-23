@@ -50,7 +50,8 @@ Each Extra Parameter takes the form of `<key>=<value>` or `<key>`.
 
 Servers that receive any such Extra Parameters MUST ignore all
 unrecognized keys. Currently, the only Extra Parameter recognized is
-"version=1".
+"version" with a value of '1' or '2'.  See protocol-v2.txt for more
+information on protocol version 2.
 
 Git Transport
 -------------
