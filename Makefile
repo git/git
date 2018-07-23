@@ -564,7 +564,7 @@ SPATCH = spatch
 export TCL_PATH TCLTK_PATH
 
 SPARSE_FLAGS =
-SPATCH_FLAGS = --all-includes
+SPATCH_FLAGS = --all-includes --patch .
 
 
 
