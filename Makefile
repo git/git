@@ -2669,10 +2669,16 @@ check: command-list.h
 	fi
 
 C_SOURCES = $(patsubst %.o,%.c,$(C_OBJ))
-%.cocci.patch: %.cocci $(C_SOURCES)
+ifdef DC_SHA1_SUBMODULE
+COCCI_SOURCES = $(filter-out sha1collisiondetection/%,$(C_SOURCES))
+else
+COCCI_SOURCES = $(filter-out sha1dc/%,$(C_SOURCES))
+endif
+
+%.cocci.patch: %.cocci $(COCCI_SOURCES)
 	@echo '    ' SPATCH $<; \
 	ret=0; \
-	for f in $(C_SOURCES); do \
+	for f in $(COCCI_SOURCES); do \
 		$(SPATCH) --sp-file $< $$f $(SPATCH_FLAGS) || \
 			{ ret=$$?; break; }; \
 	done >$@+ 2>$@.log; \
