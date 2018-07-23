@@ -5,6 +5,6 @@
 
 . ${0%/*}/lib-travisci.sh
 
-make coccicheck
+make --jobs=2 coccicheck
 
 save_good_tree
