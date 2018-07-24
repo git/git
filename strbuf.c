@@ -134,7 +134,7 @@ void strbuf_ltrim(struct strbuf *sb)
 int strbuf_reencode(struct strbuf *sb, const char *from, const char *to)
 {
 	char *out;
-	int len;
+	size_t len;
 
 	if (same_encoding(from, to))
 		return 0;

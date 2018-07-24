@@ -389,7 +389,7 @@ static int encode_to_git(const char *path, const char *src, size_t src_len,
 			 struct strbuf *buf, const char *enc, int conv_flags)
 {
 	char *dst;
-	int dst_len;
+	size_t dst_len;
 	int die_on_error = conv_flags & CONV_WRITE_OBJECT;
 
 	/*
@@ -452,7 +452,7 @@ static int encode_to_git(const char *path, const char *src, size_t src_len,
 	 */
 	if (die_on_error && check_roundtrip(enc)) {
 		char *re_src;
-		int re_src_len;
+		size_t re_src_len;
 
 		re_src = reencode_string_len(dst, dst_len,
 					     enc, default_encoding,
@@ -480,7 +480,7 @@ static int encode_to_worktree(const char *path, const char *src, size_t src_len,
 			      struct strbuf *buf, const char *enc)
 {
 	char *dst;
-	int dst_len;
+	size_t dst_len;
 
 	/*
 	 * No encoding is specified or there is nothing to encode.
