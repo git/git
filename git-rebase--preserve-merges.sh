@@ -891,9 +891,9 @@ $comment_char $(eval_ngettext \
 EOF
 	append_todo_help
 	gettext "
-	However, if you remove everything, the rebase will be aborted.
+However, if you remove everything, the rebase will be aborted.
 
-	" | git stripspace --comment-lines >>"$todo"
+" | git stripspace --comment-lines >>"$todo"
 
 	if test -z "$keep_empty"
 	then
