@@ -30,8 +30,8 @@ The Steps of Build Git with VS2008
    the git operations.
 
 3. Inside Git's directory run the command:
-       make common-cmds.h
-   to generate the common-cmds.h file needed to compile git.
+       make command-list.h
+   to generate the command-list.h file needed to compile git.
 
 4. Then either build Git with the GNU Make Makefile in the Git projects
    root
