@@ -24,6 +24,14 @@ UI, Workflows & Features
    is used as a short-hand for "--create-reflog" and warns about the
    future repurposing of the it when it is used.
 
+ * The userdiff pattern for .php has been updated.
+
+ * The content-transfer-encoding of the message "git send-email" sends
+   out by default was 8bit, which can cause trouble when there is an
+   overlong line to bust RFC 5322/2822 limit.  A new option 'auto' to
+   automatically switch to quoted-printable when there is such a line
+   in the payload has been introduced and is made the default.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -71,6 +79,20 @@ Performance, Internal Implementation, Development Support etc.
  * Tighten the API to make it harder to misuse in-tree .gitmodules
    file, even though it shares the same syntax with configuration
    files, to read random configuration items from it.
+
+ * "git fast-import" has been updated to avoid attempting to create
+   delta against a zero-byte-long string, which is pointless.
+
+ * The codebase has been updated to compile cleanly with -pedantic
+   option.
+   (merge 2b647a05d7 bb/pedantic later to maint).
+
+ * The character display width table has been updated to match the
+   latest Unicode standard.
+   (merge 570951eea2 bb/unicode-11-width later to maint).
+
+ * test-lint now looks for broken use of "VAR=VAL shell_func" in test
+   scripts.
 
 
 Fixes since v2.18
@@ -145,6 +167,62 @@ Fixes since v2.18
    not turn a case-incapable filesystem into a case-capable one.
    (merge 48294b512a ms/core-icase-doc later to maint).
 
+ * "fsck.skipList" did not prevent a blob object listed there from
+   being inspected for is contents (e.g. we recently started to
+   inspect the contents of ".gitmodules" for certain malicious
+   patterns), which has been corrected.
+   (merge fb16287719 rj/submodule-fsck-skip later to maint).
+
+ * "git checkout --recurse-submodules another-branch" did not report
+   in which submodule it failed to update the working tree, which
+   resulted in an unhelpful error message.
+   (merge ba95d4e4bd sb/submodule-move-head-error-msg later to maint).
+
+ * "git rebase" behaved slightly differently depending on which one of
+   the three backends gets used; this has been documented and an
+   effort to make them more uniform has begun.
+   (merge b00bf1c9a8 en/rebase-consistency later to maint).
+
+ * The "--ignore-case" option of "git for-each-ref" (and its friends)
+   did not work correctly, which has been fixed.
+   (merge e674eb2528 jk/for-each-ref-icase later to maint).
+
+ * "git fetch" failed to correctly validate the set of objects it
+   received when making a shallow history deeper, which has been
+   corrected.
+   (merge cf1e7c0770 jt/connectivity-check-after-unshallow later to maint).
+
+ * Partial clone support of "git clone" has been updated to correctly
+   validate the objects it receives from the other side.  The server
+   side has been corrected to send objects that are directly
+   requested, even if they may match the filtering criteria (e.g. when
+   doing a "lazy blob" partial clone).
+   (merge a7e67c11b8 jt/partial-clone-fsck-connectivity later to maint).
+
+ * Handling of an empty range by "git cherry-pick" was inconsistent
+   depending on how the range ended up to be empty, which has been
+   corrected.
+   (merge c5e358d073 jk/empty-pick-fix later to maint).
+
+ * "git reset --merge" (hence "git merge ---abort") and "git reset --hard"
+   had trouble working correctly in a sparsely checked out working
+   tree after a conflict, which has been corrected.
+   (merge b33fdfc34c mk/merge-in-sparse-checkout later to maint).
+
+ * Correct a broken use of "VAR=VAL shell_func" in a test.
+   (merge 650161a277 jc/t3404-one-shot-export-fix later to maint).
+
+ * "git rev-parse ':/substring'" did not consider the history leading
+   only to HEAD when looking for a commit with the given substring,
+   when the HEAD is detached.  This has been fixed.
+   (merge 6b3351e799 wc/find-commit-with-pattern-on-detached-head later to maint).
+
+ * Build doc update for Windows.
+   (merge ede8d89bb1 nd/command-list later to maint).
+
+ * core.commentchar is now honored when preparing the list of commits
+   to replay in "rebase -i".
+
  * Code cleanup, docfix, build fix, etc.
    (merge aee9be2ebe sg/update-ref-stdin-cleanup later to maint).
    (merge 037714252f jc/clean-after-sanity-tests later to maint).
@@ -157,3 +235,5 @@ Fixes since v2.18
    (merge 51d1863168 tz/exclude-doc-smallfixes later to maint).
    (merge a9aa3c0927 ds/commit-graph later to maint).
    (merge 5cf8e06474 js/enhanced-version-info later to maint).
+   (merge 6aaded5509 tb/config-default later to maint).
+   (merge 022d2ac1f3 sb/blame-color later to maint).
