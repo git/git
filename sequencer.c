@@ -1864,8 +1864,6 @@ static int prepare_revs(struct replay_opts *opts)
 	if (prepare_revision_walk(opts->revs))
 		return error(_("revision walk setup failed"));
 
-	if (!opts->revs->commits)
-		return error(_("empty commit set passed"));
 	return 0;
 }
 
@@ -2323,6 +2321,10 @@ static int walk_revs_populate_todo(struct todo_list *todo_list,
 			short_commit_name(commit), subject_len, subject);
 		unuse_commit_buffer(commit, commit_buffer);
 	}
+
+	if (!todo_list->nr)
+		return error(_("empty commit set passed"));
+
 	return 0;
 }
 
@@ -3658,8 +3660,10 @@ int sequencer_pick_revisions(struct replay_opts *opts)
 		if (prepare_revision_walk(opts->revs))
 			return error(_("revision walk setup failed"));
 		cmit = get_revision(opts->revs);
-		if (!cmit || get_revision(opts->revs))
-			return error("BUG: expected exactly one commit from walk");
+		if (!cmit)
+			return error(_("empty commit set passed"));
+		if (get_revision(opts->revs))
+			BUG("unexpected extra commit from walk");
 		return single_pick(cmit, opts);
 	}
 
