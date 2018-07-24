@@ -1814,7 +1814,7 @@ static int match_name_as_path(const struct ref_filter *filter, const char *refna
 		     refname[plen] == '/' ||
 		     p[plen-1] == '/'))
 			return 1;
-		if (!wildmatch(p, refname, WM_PATHNAME))
+		if (!wildmatch(p, refname, flags))
 			return 1;
 	}
 	return 0;
@@ -1865,6 +1865,15 @@ static int for_each_fullref_in_pattern(struct ref_filter *filter,
 		 * in this case, the patterns are applied after
 		 * prefixes like "refs/heads/" etc. are stripped off,
 		 * so we have to look at everything:
+		 */
+		return for_each_fullref_in("", cb, cb_data, broken);
+	}
+
+	if (filter->ignore_case) {
+		/*
+		 * we can't handle case-insensitive comparisons,
+		 * so just return everything and let the caller
+		 * sort it out.
 		 */
 		return for_each_fullref_in("", cb, cb_data, broken);
 	}
