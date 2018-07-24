@@ -14,6 +14,8 @@
 #define strcpy(x,y) BANNED(strcpy)
 #undef strcat
 #define strcat(x,y) BANNED(strcat)
+#undef strncpy
+#define strncpy(x,y,n) BANNED(strncpy)
 
 #undef sprintf
 #undef vsprintf
