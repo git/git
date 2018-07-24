@@ -366,7 +366,9 @@ test_expect_success '2c-check: Modify b & add c VS rename b->c' '
 
 		git checkout A^0 &&
 
-		GIT_MERGE_VERBOSITY=3 test_must_fail git merge -s recursive B^0 >out 2>err &&
+		GIT_MERGE_VERBOSITY=3 &&
+		export GIT_MERGE_VERBOSITY &&
+		test_must_fail git merge -s recursive B^0 >out 2>err &&
 
 		test_i18ngrep "CONFLICT (rename/add): Rename b->c" out &&
 		test_i18ngrep ! "Skipped c" out &&
