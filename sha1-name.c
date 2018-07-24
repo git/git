@@ -1650,6 +1650,7 @@ static int get_oid_with_context_1(const char *name,
 			struct commit_list *list = NULL;
 
 			for_each_ref(handle_one_ref, &list);
+			head_ref(handle_one_ref, &list);
 			commit_list_sort_by_date(&list);
 			return get_oid_oneline(name + 2, oid, list);
 		}
