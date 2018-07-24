@@ -18,6 +18,17 @@ struct git_transport_options {
 	unsigned deepen_relative : 1;
 	unsigned from_promisor : 1;
 	unsigned no_dependents : 1;
+
+	/*
+	 * If this transport supports connect or stateless-connect,
+	 * the corresponding field in struct fetch_pack_args is copied
+	 * here after fetching.
+	 *
+	 * See the definition of connectivity_checked in struct
+	 * fetch_pack_args for more information.
+	 */
+	unsigned connectivity_checked:1;
+
 	int depth;
 	const char *deepen_since;
 	const struct string_list *deepen_not;
@@ -218,7 +229,8 @@ int transport_push(struct transport *connection,
 const struct ref *transport_get_remote_refs(struct transport *transport,
 					    const struct argv_array *ref_prefixes);
 
-int transport_fetch_refs(struct transport *transport, struct ref *refs);
+int transport_fetch_refs(struct transport *transport, struct ref *refs,
+			 struct ref **fetched_refs);
 void transport_unlock_pack(struct transport *transport);
 int transport_disconnect(struct transport *transport);
 char *transport_anonymize_url(const char *url);

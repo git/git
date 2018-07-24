@@ -38,6 +38,13 @@ struct check_connected_options {
 	 * Insert these variables into the environment of the child process.
 	 */
 	const char **env;
+
+	/*
+	 * If non-zero, check the ancestry chain completely, not stopping at
+	 * any existing ref. This is necessary when deepening existing refs
+	 * during a fetch.
+	 */
+	unsigned is_deepening_fetch : 1;
 };
 
 #define CHECK_CONNECTED_INIT { 0 }

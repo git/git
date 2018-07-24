@@ -186,4 +186,47 @@ EOF
 	test_cmp expect actual
 '
 
+. "$TEST_DIRECTORY"/lib-httpd.sh
+start_httpd
+
+REPO="$HTTPD_DOCUMENT_ROOT_PATH/repo"
+
+test_expect_success 'shallow fetches check connectivity before writing shallow file' '
+	rm -rf "$REPO" client &&
+
+	git init "$REPO" &&
+	test_commit -C "$REPO" one &&
+	test_commit -C "$REPO" two &&
+	test_commit -C "$REPO" three &&
+
+	git init client &&
+
+	# Use protocol v2 to ensure that shallow information is sent exactly
+	# once by the server, since we are planning to manipulate it.
+	git -C "$REPO" config protocol.version 2 &&
+	git -C client config protocol.version 2 &&
+
+	git -C client fetch --depth=2 "$HTTPD_URL/one_time_sed/repo" master:a_branch &&
+
+	# Craft a situation in which the server sends back an unshallow request
+	# with an empty packfile. This is done by refetching with a shorter
+	# depth (to ensure that the packfile is empty), and overwriting the
+	# shallow line in the response with the unshallow line we want.
+	printf "s/0034shallow %s/0036unshallow %s/" \
+	       "$(git -C "$REPO" rev-parse HEAD)" \
+	       "$(git -C "$REPO" rev-parse HEAD^)" \
+	       >"$HTTPD_ROOT_PATH/one-time-sed" &&
+	test_must_fail git -C client fetch --depth=1 "$HTTPD_URL/one_time_sed/repo" \
+		master:a_branch &&
+
+	# Ensure that the one-time-sed script was used.
+	! test -e "$HTTPD_ROOT_PATH/one-time-sed" &&
+
+	# Ensure that the resulting repo is consistent, despite our failure to
+	# fetch.
+	git -C client fsck
+'
+
+stop_httpd
+
 test_done
