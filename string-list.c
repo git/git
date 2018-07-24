@@ -224,18 +224,28 @@ struct string_list_item *string_list_append(struct string_list *list,
 			list->strdup_strings ? xstrdup(string) : (char *)string);
 }
 
+/*
+ * Encapsulate the compare function pointer because ISO C99 forbids
+ * casting from void * to a function pointer and vice versa.
+ */
+struct string_list_sort_ctx
+{
+	compare_strings_fn cmp;
+};
+
 static int cmp_items(const void *a, const void *b, void *ctx)
 {
-	compare_strings_fn cmp = ctx;
+	struct string_list_sort_ctx *sort_ctx = ctx;
 	const struct string_list_item *one = a;
 	const struct string_list_item *two = b;
-	return cmp(one->string, two->string);
+	return sort_ctx->cmp(one->string, two->string);
 }
 
 void string_list_sort(struct string_list *list)
 {
-	QSORT_S(list->items, list->nr, cmp_items,
-		list->cmp ? list->cmp : strcmp);
+	struct string_list_sort_ctx sort_ctx = {list->cmp ? list->cmp : strcmp};
+
+	QSORT_S(list->items, list->nr, cmp_items, &sort_ctx);
 }
 
 struct string_list_item *unsorted_string_list_lookup(struct string_list *list,
