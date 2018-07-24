@@ -284,7 +284,9 @@ information is sent back to the client in the next step.
 The client can optionally request that pack-objects omit various
 objects from the packfile using one of several filtering techniques.
 These are intended for use with partial clone and partial fetch
-operations.  See `rev-list` for possible "filter-spec" values.
+operations. An object that does not meet a filter-spec value is
+omitted unless explicitly requested in a 'want' line. See `rev-list`
+for possible filter-spec values.
 
 Once all the 'want's and 'shallow's (and optional 'deepen') are
 transferred, clients MUST send a flush-pkt, to tell the server side

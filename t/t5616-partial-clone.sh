@@ -154,4 +154,68 @@ test_expect_success 'partial clone with transfer.fsckobjects=1 uses index-pack -
 	grep "git index-pack.*--fsck-objects" trace
 '
 
+test_expect_success 'partial clone fetches blobs pointed to by refs even if normally filtered out' '
+	rm -rf src dst &&
+	git init src &&
+	test_commit -C src x &&
+	test_config -C src uploadpack.allowfilter 1 &&
+	test_config -C src uploadpack.allowanysha1inwant 1 &&
+
+	# Create a tag pointing to a blob.
+	BLOB=$(echo blob-contents | git -C src hash-object --stdin -w) &&
+	git -C src tag myblob "$BLOB" &&
+
+	git clone --filter="blob:none" "file://$(pwd)/src" dst 2>err &&
+	! grep "does not point to a valid object" err &&
+	git -C dst fsck
+'
+
+. "$TEST_DIRECTORY"/lib-httpd.sh
+start_httpd
+
+# Converts bytes into a form suitable for inclusion in a sed command. For
+# example, "printf 'ab\r\n' | hex_unpack" results in '\x61\x62\x0d\x0a'.
+sed_escape () {
+	perl -e '$/ = undef; $input = <>; print unpack("H2" x length($input), $input)' |
+		sed 's/\(..\)/\\x\1/g'
+}
+
+test_expect_success 'upon cloning, check that all refs point to objects' '
+	SERVER="$HTTPD_DOCUMENT_ROOT_PATH/server" &&
+	rm -rf "$SERVER" repo &&
+	test_create_repo "$SERVER" &&
+	test_commit -C "$SERVER" foo &&
+	test_config -C "$SERVER" uploadpack.allowfilter 1 &&
+	test_config -C "$SERVER" uploadpack.allowanysha1inwant 1 &&
+
+	# Create a tag pointing to a blob.
+	BLOB=$(echo blob-contents | git -C "$SERVER" hash-object --stdin -w) &&
+	git -C "$SERVER" tag myblob "$BLOB" &&
+
+	# Craft a packfile not including that blob.
+	git -C "$SERVER" rev-parse HEAD |
+		git -C "$SERVER" pack-objects --stdout >incomplete.pack &&
+
+	# Replace the existing packfile with the crafted one. The protocol
+	# requires that the packfile be sent in sideband 1, hence the extra
+	# \x01 byte at the beginning.
+	printf "1,/packfile/!c %04x\\\\x01%s0000" \
+		"$(($(wc -c <incomplete.pack) + 5))" \
+		"$(sed_escape <incomplete.pack)" \
+		>"$HTTPD_ROOT_PATH/one-time-sed" &&
+
+	# Use protocol v2 because the sed command looks for the "packfile"
+	# section header.
+	test_config -C "$SERVER" protocol.version 2 &&
+	test_must_fail git -c protocol.version=2 clone \
+		--filter=blob:none $HTTPD_URL/one_time_sed/server repo 2>err &&
+
+	grep "did not send all necessary objects" err &&
+
+	# Ensure that the one-time-sed script was used.
+	! test -e "$HTTPD_ROOT_PATH/one-time-sed"
+'
+
+stop_httpd
+
 test_done

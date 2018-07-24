@@ -48,7 +48,7 @@ static void process_blob(struct rev_info *revs,
 
 	pathlen = path->len;
 	strbuf_addstr(path, name);
-	if (filter_fn)
+	if (!(obj->flags & USER_GIVEN) && filter_fn)
 		r = filter_fn(LOFS_BLOB, obj,
 			      path->buf, &path->buf[pathlen],
 			      filter_data);
@@ -133,7 +133,7 @@ static void process_tree(struct rev_info *revs,
 	}
 
 	strbuf_addstr(base, name);
-	if (filter_fn)
+	if (!(obj->flags & USER_GIVEN) && filter_fn)
 		r = filter_fn(LOFS_BEGIN_TREE, obj,
 			      base->buf, &base->buf[baselen],
 			      filter_data);
@@ -172,7 +172,7 @@ static void process_tree(struct rev_info *revs,
 				     cb_data, filter_fn, filter_data);
 	}
 
-	if (filter_fn) {
+	if (!(obj->flags & USER_GIVEN) && filter_fn) {
 		r = filter_fn(LOFS_END_TREE, obj,
 			      base->buf, &base->buf[baselen],
 			      filter_data);

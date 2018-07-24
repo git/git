@@ -1202,7 +1202,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 
 	update_remote_refs(refs, mapped_refs, remote_head_points_at,
 			   branch_top.buf, reflog_msg.buf, transport,
-			   !is_local && !filter_options.choice);
+			   !is_local);
 
 	update_head(our_head_points_at, remote_head, reflog_msg.buf);
 
