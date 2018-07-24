@@ -477,7 +477,7 @@ char *reencode_string_iconv(const char *in, size_t insz, iconv_t conv, int *outs
 	iconv_ibp cp;
 
 	outsz = insz;
-	outalloc = outsz + 1; /* for terminating NUL */
+	outalloc = st_add(outsz, 1); /* for terminating NUL */
 	out = xmalloc(outalloc);
 	outpos = out;
 	cp = (iconv_ibp)in;
@@ -497,7 +497,7 @@ char *reencode_string_iconv(const char *in, size_t insz, iconv_t conv, int *outs
 			 * converting the rest.
 			 */
 			sofar = outpos - out;
-			outalloc = sofar + insz * 2 + 32;
+			outalloc = st_add3(sofar, st_mult(insz, 2), 32);
 			out = xrealloc(out, outalloc);
 			outpos = out + sofar;
 			outsz = outalloc - sofar - 1;
