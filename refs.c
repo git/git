@@ -787,25 +787,21 @@ int delete_ref(const char *msg, const char *refname,
 			       old_oid, flags);
 }
 
-int copy_reflog_msg(char *buf, const char *msg)
+void copy_reflog_msg(struct strbuf *sb, const char *msg)
 {
-	char *cp = buf;
 	char c;
 	int wasspace = 1;
 
-	*cp++ = '\t';
+	strbuf_addch(sb, '\t');
 	while ((c = *msg++)) {
 		if (wasspace && isspace(c))
 			continue;
 		wasspace = isspace(c);
 		if (wasspace)
 			c = ' ';
-		*cp++ = c;
+		strbuf_addch(sb, c);
 	}
-	while (buf < cp && isspace(cp[-1]))
-		cp--;
-	*cp++ = '\n';
-	return cp - buf;
+	strbuf_rtrim(sb);
 }
 
 int should_autocreate_reflog(const char *refname)
