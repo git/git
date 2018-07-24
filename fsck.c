@@ -316,6 +316,13 @@ static void append_msg_id(struct strbuf *sb, const char *msg_id)
 	strbuf_addstr(sb, ": ");
 }
 
+static int object_on_skiplist(struct fsck_options *opts, struct object *obj)
+{
+	if (opts && opts->skiplist && obj)
+		return oid_array_lookup(opts->skiplist, &obj->oid) >= 0;
+	return 0;
+}
+
 __attribute__((format (printf, 4, 5)))
 static int report(struct fsck_options *options, struct object *object,
 	enum fsck_msg_id id, const char *fmt, ...)
@@ -327,8 +334,7 @@ static int report(struct fsck_options *options, struct object *object,
 	if (msg_type == FSCK_IGNORE)
 		return 0;
 
-	if (options->skiplist && object &&
-			oid_array_lookup(options->skiplist, &object->oid) >= 0)
+	if (object_on_skiplist(options, object))
 		return 0;
 
 	if (msg_type == FSCK_FATAL)
@@ -997,6 +1003,9 @@ static int fsck_blob(struct blob *blob, const char *buf,
 	if (!oidset_contains(&gitmodules_found, &blob->object.oid))
 		return 0;
 	oidset_insert(&gitmodules_done, &blob->object.oid);
+
+	if (object_on_skiplist(options, &blob->object))
+		return 0;
 
 	if (!buf) {
 		/*
