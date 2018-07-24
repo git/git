@@ -1682,7 +1682,7 @@ int submodule_move_head(const char *path,
 	argv_array_push(&cp.args, new_head ? new_head : empty_tree_oid_hex());
 
 	if (run_command(&cp)) {
-		ret = -1;
+		ret = error(_("Submodule '%s' could not be updated."), path);
 		goto out;
 	}
 
