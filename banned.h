@@ -12,5 +12,7 @@
 
 #undef strcpy
 #define strcpy(x,y) BANNED(strcpy)
+#undef strcat
+#define strcat(x,y) BANNED(strcat)
 
 #endif /* BANNED_H */
