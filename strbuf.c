@@ -469,7 +469,7 @@ int strbuf_readlink(struct strbuf *sb, const char *path, size_t hint)
 		hint = 32;
 
 	while (hint < STRBUF_MAXLINK) {
-		int len;
+		ssize_t len;
 
 		strbuf_grow(sb, hint);
 		len = readlink(path, sb->buf, hint);
