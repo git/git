@@ -113,7 +113,7 @@ test_expect_success 'git rebase -m' '
 test_expect_success 'git rebase -m --skip' '
 	git reset --hard D &&
 	clear_hook_input &&
-	test_must_fail git rebase --onto A B &&
+	test_must_fail git rebase -m --onto A B &&
 	test_must_fail git rebase --skip &&
 	echo D > foo &&
 	git add foo &&
