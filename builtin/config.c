@@ -67,7 +67,7 @@ static int show_origin;
 	{ OPTION_CALLBACK, (s), (l), (v), NULL, (h), PARSE_OPT_NOARG | \
 	PARSE_OPT_NONEG, option_parse_type, (i) }
 
-static struct option builtin_config_options[];
+static NORETURN void usage_builtin_config(void);
 
 static int option_parse_type(const struct option *opt, const char *arg,
 			     int unset)
@@ -111,8 +111,7 @@ static int option_parse_type(const struct option *opt, const char *arg,
 		 * --type=int'.
 		 */
 		error("only one type at a time.");
-		usage_with_options(builtin_config_usage,
-			builtin_config_options);
+		usage_builtin_config();
 	}
 	*to_type = new_type;
 
@@ -157,11 +156,16 @@ static struct option builtin_config_options[] = {
 	OPT_END(),
 };
 
+static NORETURN void usage_builtin_config(void)
+{
+	usage_with_options(builtin_config_usage, builtin_config_options);
+}
+
 static void check_argc(int argc, int min, int max) {
 	if (argc >= min && argc <= max)
 		return;
 	error("wrong number of arguments");
-	usage_with_options(builtin_config_usage, builtin_config_options);
+	usage_builtin_config();
 }
 
 static void show_config_origin(struct strbuf *buf)
@@ -596,7 +600,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 	if (use_global_config + use_system_config + use_local_config +
 	    !!given_config_source.file + !!given_config_source.blob > 1) {
 		error("only one config file at a time.");
-		usage_with_options(builtin_config_usage, builtin_config_options);
+		usage_builtin_config();
 	}
 
 	if (use_local_config && nongit)
@@ -660,12 +664,12 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 
 	if ((actions & (ACTION_GET_COLOR|ACTION_GET_COLORBOOL)) && type) {
 		error("--get-color and variable type are incoherent");
-		usage_with_options(builtin_config_usage, builtin_config_options);
+		usage_builtin_config();
 	}
 
 	if (HAS_MULTI_BITS(actions)) {
 		error("only one action at a time.");
-		usage_with_options(builtin_config_usage, builtin_config_options);
+		usage_builtin_config();
 	}
 	if (actions == 0)
 		switch (argc) {
@@ -673,25 +677,24 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		case 2: actions = ACTION_SET; break;
 		case 3: actions = ACTION_SET_ALL; break;
 		default:
-			usage_with_options(builtin_config_usage, builtin_config_options);
+			usage_builtin_config();
 		}
 	if (omit_values &&
 	    !(actions == ACTION_LIST || actions == ACTION_GET_REGEXP)) {
 		error("--name-only is only applicable to --list or --get-regexp");
-		usage_with_options(builtin_config_usage, builtin_config_options);
+		usage_builtin_config();
 	}
 
 	if (show_origin && !(actions &
 		(ACTION_GET|ACTION_GET_ALL|ACTION_GET_REGEXP|ACTION_LIST))) {
 		error("--show-origin is only applicable to --get, --get-all, "
 			  "--get-regexp, and --list.");
-		usage_with_options(builtin_config_usage, builtin_config_options);
+		usage_builtin_config();
 	}
 
 	if (default_value && !(actions & ACTION_GET)) {
 		error("--default is only applicable to --get");
-		usage_with_options(builtin_config_usage,
-			builtin_config_options);
+		usage_builtin_config();
 	}
 
 	if (actions & PAGING_ACTIONS)
