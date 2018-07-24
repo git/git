@@ -1071,7 +1071,9 @@ parse_done:
 		find_alignment(&sb, &output_option);
 		if (!*repeated_meta_color &&
 		    (output_option & OUTPUT_COLOR_LINE))
-			strcpy(repeated_meta_color, GIT_COLOR_CYAN);
+			xsnprintf(repeated_meta_color,
+				  sizeof(repeated_meta_color),
+				  "%s", GIT_COLOR_CYAN);
 	}
 	if (output_option & OUTPUT_ANNOTATE_COMPAT)
 		output_option &= ~(OUTPUT_COLOR_LINE | OUTPUT_SHOW_AGE_WITH_COLOR);
