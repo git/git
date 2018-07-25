@@ -154,7 +154,9 @@ REM ================================================================
    REM Include DOS-style and BASH-style path for bin dir.
 
    echo msvc_bin_dir=%msvc_bin_dir%
-   echo msvc_bin_dir_msys=%msvc_bin_dir:C:=/C%
+   SET X1=%msvc_bin_dir:C:=/C%
+   SET X2=%X1:\=/%
+   echo msvc_bin_dir_msys=%X2%
 
    echo msvc_includes=%msvc_includes%
    echo msvc_libs=%msvc_libs%
