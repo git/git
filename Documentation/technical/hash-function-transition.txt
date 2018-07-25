@@ -814,6 +814,12 @@ Incorporated suggestions from jonathantanmy and sbeller:
 * avoid loose object overhead by packing more aggressively in
   "git gc --auto"
 
+Later history:
+
+ See the history of this file in git.git for the history of subsequent
+ edits. This document history is no longer being maintained as it
+ would now be superfluous to the commit log
+
 [1] http://public-inbox.org/git/CA+55aFzJtejiCjV0e43+9oR3QuJK2PiFiLQemytoLpyJWe6P9w@mail.gmail.com/
 [2] http://public-inbox.org/git/CA+55aFz+gkAsDZ24zmePQuEs1XPS9BP_s8O7Q4wQ7LV7X5-oDA@mail.gmail.com/
 [3] http://public-inbox.org/git/20170306084353.nrns455dvkdsfgo5@sigill.intra.peff.net/
