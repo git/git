@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jul 2018, #02; Wed, 18)
-X-master-at: b7bd9486b055c3f967a870311e704e3bb0654e4f
-X-next-at: 5c9ce644c390ec4ef3ba4adc94e7f4af17ade36b
+Subject: What's cooking in git.git (Jul 2018, #03; Wed, 25)
+X-master-at: ffc6fa0e396238de3a30623912980263b4f283ab
+X-next-at: a71716f1adea8665ad1231d8d929021f562d287b
 
-What's cooking in git.git (Jul 2018, #02; Wed, 18)
+What's cooking in git.git (Jul 2018, #03; Wed, 25)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -30,321 +30,109 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ao/config-from-gitmodules (2018-06-26) 6 commits
-  (merged to 'next' on 2018-07-11 at 5d88dc6fb7)
- + submodule-config: reuse config_from_gitmodules in repo_read_gitmodules
- + submodule-config: pass repository as argument to config_from_gitmodules
- + submodule-config: make 'config_from_gitmodules' private
- + submodule-config: add helper to get 'update-clone' config from .gitmodules
- + submodule-config: add helper function to get 'fetch' config from .gitmodules
- + config: move config_from_gitmodules to submodule-config.c
+* ag/rebase-p (2018-07-06) 1 commit
+  (merged to 'next' on 2018-07-18 at c36ebba99b)
+ + git-rebase--preserve-merges: fix formatting of todo help message
 
- Tighten the API to make it harder to misuse in-tree .gitmodules
- file, even though it shares the same syntax with configuration
- files, to read random configuration items from it.
+ The help message shown in the editor to edit todo list in "rebase -p"
+ has regressed recently, which has been corrected.
 
 
-* bw/config-refer-to-gitsubmodules-doc (2018-06-21) 1 commit
-  (merged to 'next' on 2018-06-29 at da6f49d292)
- + docs: link to gitsubmodules
+* as/sequencer-customizable-comment-char (2018-07-16) 1 commit
+  (merged to 'next' on 2018-07-18 at 4163e23f29)
+ + sequencer: use configured comment character
 
- Docfix.
+ Honor core.commentchar when preparing the list of commits to replay
+ in "rebase -i".
 
 
-* bw/protocol-v2 (2018-06-22) 1 commit
-  (merged to 'next' on 2018-06-29 at 78090cc343)
- + protocol-v2 doc: put HTTP headers after request
+* bb/pedantic (2018-07-09) 8 commits
+  (merged to 'next' on 2018-07-18 at e9d075e8ed)
+ + utf8.c: avoid char overflow
+ + string-list.c: avoid conversion from void * to function pointer
+ + sequencer.c: avoid empty statements at top level
+ + convert.c: replace "\e" escapes with "\033".
+ + fixup! refs/refs-internal.h: avoid forward declaration of an enum
+ + refs/refs-internal.h: avoid forward declaration of an enum
+ + fixup! connect.h: avoid forward declaration of an enum
+ + connect.h: avoid forward declaration of an enum
+ (this branch is used by bb/make-developer-pedantic.)
 
- Doc fix.
+ The codebase has been updated to compile cleanly with -pedantic
+ option.
 
 
-* dj/runtime-prefix (2018-06-26) 1 commit
-  (merged to 'next' on 2018-07-11 at 27d99fef94)
- + Makefile: tweak sed invocation
+* bb/unicode-11-width (2018-07-09) 1 commit
+  (merged to 'next' on 2018-07-18 at 075648ed37)
+ + unicode: update the width tables to Unicode 11
 
- POSIX portability fix in Makefile to fix a glitch introduced a few
- releases ago.
+ The character display width table has been updated to match the
+ latest Unicode standard.
 
 
-* ds/commit-graph (2018-06-28) 1 commit
-  (merged to 'next' on 2018-07-11 at d579f733ed)
- + commit-graph: fix documentation inconsistencies
+* bc/send-email-auto-cte (2018-07-09) 4 commits
+  (merged to 'next' on 2018-07-18 at d16c2a301a)
+ + docs: correct RFC specifying email line length
+ + send-email: automatically determine transfer-encoding
+ + send-email: accept long lines with suitable transfer encoding
+ + send-email: add an auto option for transfer encoding
 
- Docfix.
+ The content-transfer-encoding of the message "git send-email" sends
+ out by default was 8bit, which can cause trouble when there is an
+ overlong line to bust RFC 5322/2822 limit.  A new option 'auto' to
+ automatically switch to quoted-printable when there is such a line
+ in the payload has been introduced and is made the default.
 
 
-* ds/ewah-cleanup (2018-06-21) 10 commits
-  (merged to 'next' on 2018-06-28 at 9cd7c0d54a)
- + ewah: delete unused 'rlwit_discharge_empty()'
- + ewah: drop ewah_serialize_native function
- + ewah: drop ewah_deserialize function
- + ewah_io: delete unused 'ewah_serialize()'
- + ewah_bitmap: delete unused 'ewah_or()'
- + ewah_bitmap: delete unused 'ewah_not()'
- + ewah_bitmap: delete unused 'ewah_and_not()'
- + ewah_bitmap: delete unused 'ewah_and()'
- + ewah/bitmap.c: delete unused 'bitmap_each_bit()'
- + ewah/bitmap.c: delete unused 'bitmap_clear()'
+* bp/log-ref-write-fd-with-strbuf (2018-07-10) 1 commit
+  (merged to 'next' on 2018-07-18 at 25a3a99528)
+ + convert log_ref_write_fd() to use strbuf
 
- Originally merged to 'next' on 2018-06-22
+ Code clean-up.
 
- Remove unused function definitions and declarations from ewah
- bitmap subsystem.
 
+* bw/ref-in-want (2018-06-28) 8 commits
+  (merged to 'next' on 2018-07-18 at 7e9f8db37c)
+ + fetch-pack: implement ref-in-want
+ + fetch-pack: put shallow info in output parameter
+ + fetch: refactor to make function args narrower
+ + fetch: refactor fetch_refs into two functions
+ + fetch: refactor the population of peer ref OIDs
+ + upload-pack: test negotiation with changing repository
+ + upload-pack: implement ref-in-want
+ + test-pkt-line: add unpack-sideband subcommand
+ (this branch is used by bw/fetch-pack-i18n, jt/connectivity-check-after-unshallow, jt/partial-clone-fsck-connectivity and jt/tags-to-promised-blobs-fix.)
 
-* en/merge-recursive-cleanup (2018-06-12) 6 commits
-  (merged to 'next' on 2018-06-28 at 1a3646eb7d)
- + merge-recursive: add pointer about unduly complex looking code
- + merge-recursive: rename conflict_rename_*() family of functions
- + merge-recursive: clarify the rename_dir/RENAME_DIR meaning
- + merge-recursive: align labels with their respective code blocks
- + merge-recursive: fix numerous argument alignment issues
- + merge-recursive: fix miscellaneous grammar error in comment
+ Protocol v2 has been updated to allow slightly out-of-sync set of
+ servers to work together to serve a single client, which would be
+ useful with load-balanced servers that talk smart HTTP transport.
 
- Originally merged to 'next' on 2018-06-19
 
- Code cleanup.
+* en/apply-comment-fix (2018-06-28) 1 commit
+  (merged to 'next' on 2018-07-18 at 31d818f17d)
+ + apply: fix grammar error in comment
 
 
-* en/rebase-i-microfixes (2018-06-27) 3 commits
-  (merged to 'next' on 2018-07-11 at d913ca0f77)
- + git-rebase--merge: modernize "git-$cmd" to "git $cmd"
- + Fix use of strategy options with interactive rebases
- + t3418: add testcase showing problems with rebase -i and strategy options
+* en/rebase-consistency (2018-06-27) 9 commits
+  (merged to 'next' on 2018-07-18 at d597206c79)
+ + git-rebase: make --allow-empty-message the default
+ + t3401: add directory rename testcases for rebase and am
+ + git-rebase.txt: document behavioral differences between modes
+ + directory-rename-detection.txt: technical docs on abilities and limitations
+ + git-rebase.txt: address confusion between --no-ff vs --force-rebase
+ + git-rebase: error out when incompatible options passed
+ + t3422: new testcases for checking when incompatible options passed
+ + git-rebase.sh: update help messages a bit
+ + git-rebase.txt: document incompatible options
 
- Will merge to 'master'.
+ "git rebase" behaved slightly differently depending on which one of
+ the three backends gets used; this has been documented and an
+ effort to make them more uniform has begun.
 
 
-* jk/branch-l-0-deprecation (2018-06-22) 3 commits
-  (merged to 'next' on 2018-06-29 at fac676dfb9)
- + branch: deprecate "-l" option
- + t: switch "branch -l" to "branch --create-reflog"
- + t3200: unset core.logallrefupdates when testing reflog creation
- (this branch is used by jk/branch-l-1-repurpose.)
-
- The "-l" option in "git branch -l" is an unfortunate short-hand for
- "--create-reflog", but many users, both old and new, somehow expect
- it to be something else, perhaps "--list".  This step warns when "-l"
- is used as a short-hand for "--create-reflog" and warns about the
- future repurposing of the it when it is used.
-
-
-* js/enhanced-version-info (2018-06-29) 1 commit
-  (merged to 'next' on 2018-07-11 at 815b2ea2bc)
- + Makefile: fix the "built from commit" code
-
- Build fix.
-
-
-* js/rebase-recreate-merge (2018-06-27) 1 commit
-  (merged to 'next' on 2018-07-11 at eb8f33aaef)
- + rebase: fix documentation formatting
-
- Docfix.
-
-
-* jt/remove-pack-bitmap-global (2018-06-21) 2 commits
-  (merged to 'next' on 2018-06-29 at 852857b04e)
- + pack-bitmap: add free function
- + pack-bitmap: remove bitmap_git global variable
-
- The effort to move globals to per-repository in-core structure
- continues.
-
-
-* ld/p423 (2018-06-19) 6 commits
-  (merged to 'next' on 2018-06-29 at af76acb664)
- + git-p4: python3: fix octal constants
- + git-p4: python3: use print() function
- + git-p4: python3: basestring workaround
- + git-p4: python3: remove backticks
- + git-p4: python3: replace dict.has_key(k) with "k in dict"
- + git-p4: python3: replace <> with !=
-
- Code preparation to make "git p4" closer to be usable with Python 3.
-
-
-* mb/filter-branch-optim (2018-06-26) 1 commit
-  (merged to 'next' on 2018-07-11 at e43a0136c2)
- + filter-branch: skip commits present on --state-branch
-
- "git filter-branch" when used with the "--state-branch" option
- still attempted to rewrite the commits whose filtered result is
- known from the previous attempt (which is recorded on the state
- branch); the command has been corrected not to waste cycles doing
- so.
-
-
-* ms/core-icase-doc (2018-06-28) 1 commit
-  (merged to 'next' on 2018-07-11 at 8f0d71c32d)
- + Documentation: declare "core.ignoreCase" as internal variable
-
- Clarify that setting core.ignoreCase to deviate from reality would
- not turn a case-incapable filesystem into a case-capable one.
-
-
-* pw/rebase-i-keep-reword-after-conflict (2018-06-19) 1 commit
-  (merged to 'next' on 2018-06-29 at 538337be74)
- + sequencer: do not squash 'reword' commits when we hit conflicts
-
- Bugfix for "rebase -i" corner case regression.
-
-
-* sb/mailmap (2018-06-29) 1 commit
-  (merged to 'next' on 2018-07-11 at d9dc53e374)
- + .mailmap: merge different spellings of names
-
- Will merge to 'master'.
-
-
-* sb/object-store-grafts (2018-05-18) 19 commits
-  (merged to 'next' on 2018-06-28 at 02f70d6302)
- + commit: allow lookup_commit_graft to handle arbitrary repositories
- + commit: allow prepare_commit_graft to handle arbitrary repositories
- + shallow: migrate shallow information into the object parser
- + path.c: migrate global git_path_* to take a repository argument
- + cache: convert get_graft_file to handle arbitrary repositories
- + commit: convert read_graft_file to handle arbitrary repositories
- + commit: convert register_commit_graft to handle arbitrary repositories
- + commit: convert commit_graft_pos() to handle arbitrary repositories
- + shallow: add repository argument to is_repository_shallow
- + shallow: add repository argument to check_shallow_file_for_update
- + shallow: add repository argument to register_shallow
- + shallow: add repository argument to set_alternate_shallow_file
- + commit: add repository argument to lookup_commit_graft
- + commit: add repository argument to prepare_commit_graft
- + commit: add repository argument to read_graft_file
- + commit: add repository argument to register_commit_graft
- + commit: add repository argument to commit_graft_pos
- + object: move grafts to object parser
- + object-store: move object access functions to object-store.h
- (this branch is used by jt/commit-graph-per-object-store and sb/object-store-lookup.)
-
- Originally merged to 'next' on 2018-06-22
-
- The conversion to pass "the_repository" and then "a_repository"
- throughout the object access API continues.
-
-
-* sb/submodule-core-worktree (2018-06-19) 3 commits
-  (merged to 'next' on 2018-06-28 at 96e1a8dbd1)
- + submodule deinit: unset core.worktree
- + submodule: ensure core.worktree is set after update
- + submodule: unset core.worktree if no working tree is present
-
- Originally merged to 'next' on 2018-06-22
-
- "git submodule" did not correctly adjust core.worktree setting that
- indicates whether/where a submodule repository has its associated
- working tree across various state transitions, which has been
- corrected.
-
-
-* tb/grep-column (2018-06-22) 7 commits
-  (merged to 'next' on 2018-06-29 at 25dc70426e)
- + contrib/git-jump/git-jump: jump to exact location
- + grep.c: add configuration variables to show matched option
- + builtin/grep.c: add '--column' option to 'git-grep(1)'
- + grep.c: display column number of first match
- + grep.[ch]: extend grep_opt to allow showing matched column
- + grep.c: expose {,inverted} match column in match_line()
- + Documentation/config.txt: camel-case lineNumber for consistency
- (this branch is used by tb/grep-only-matching.)
-
- "git grep" learned the "--column" option that gives not just the
- line number but the column number of the hit.
-
-
-* tz/exclude-doc-smallfixes (2018-06-27) 2 commits
-  (merged to 'next' on 2018-07-11 at 5134f1ca72)
- + dir.c: fix typos in core.excludesfile comment
- + gitignore.txt: clarify default core.excludesfile path
-
- Doc updates.
-
-
-* vs/typofixes (2018-06-22) 1 commit
-  (merged to 'next' on 2018-06-29 at 665c8db2f7)
- + Documentation: spelling and grammar fixes
-
- Doc fix.
-
-
-* xy/format-patch-prereq-patch-id-fix (2018-06-19) 1 commit
-  (merged to 'next' on 2018-06-29 at 0dffc46ce2)
- + format-patch: clear UNINTERESTING flag before prepare_bases
-
- Recently added "--base" option to "git format-patch" command did
- not correctly generate prereq patch ids.
-
---------------------------------------------------
-[New Topics]
-
-* am/sequencer-author-script-fix (2018-07-18) 1 commit
- - sequencer.c: terminate the last line of author-script properly
-
- The author-script that records the author information created by
- the sequencer machinery lacked the closing single quote on the last
- entry.
-
- Fixing this alone may or may not break the reader that may have
- been compensating for this bogus writer.  I think I saw another fix
- to the same source file posted today---if we are fixing, we should
- fix them all at the same time to keep the reader and the writer in
- sync.
-
-
-* bc/sequencer-export-work-tree-as-well (2018-07-16) 1 commit
- - sequencer: pass absolute GIT_WORK_TREE to exec commands
-
- "git rebase" started exporting GIT_DIR environment variable and
- exposing it to hook scripts when part of it got rewritten in C.
- Instead of matching the old scripted Porcelains' behaviour,
- compensate by also exporting GIT_WORK_TREE environment as well to
- lessen the damage.  This can harm existing hooks that want to
- operate on different repository, but the current behaviour is
- already broken for them anyway.
-
- Will merge to 'next'.
-
-
-* bp/test-drop-caches-for-windows (2018-07-12) 1 commit
- - handle lower case drive letters on Windows
-
- A test helper update for Windows.
-
- Will merge to 'next'.
-
-
-* en/abort-df-conflict-fixes (2018-07-16) 2 commits
- - read-cache: fix directory/file conflict handling in read_index_unmerged()
- - t1015: demonstrate directory/file conflict recovery failures
-
- "git merge --abort" etc. did not clean things up properly when
- there were conflicted entries in certain order that are involved
- in D/F conflicts.  This has been corrected.
-
- This may have to be rebased on an older maintenance track before
- moving forward.
-
-
-* es/chain-lint-in-subshell (2018-07-17) 10 commits
- - t/chainlint: add chainlint "specialized" test cases
- - t/chainlint: add chainlint "complex" test cases
- - t/chainlint: add chainlint "cuddled" test cases
- - t/chainlint: add chainlint "loop" and "conditional" test cases
- - t/chainlint: add chainlint "nested subshell" test cases
- - t/chainlint: add chainlint "one-liner" test cases
- - t/chainlint: add chainlint "whitespace" test cases
- - t/chainlint: add chainlint "basic" test cases
- - t/Makefile: add machinery to check correctness of chainlint.sed
- - t/test-lib: teach --chain-lint to detect broken &&-chains in subshells
- (this branch uses es/test-fixes.)
-
- Look for broken "&&" chains that are hidden in subshell, many of
- which have been found and corrected.
-
- Will merge to 'next'.
+* en/t5407-rebase-m-fix (2018-06-28) 1 commit
+  (merged to 'next' on 2018-07-18 at 459875daeb)
+ + t5407: fix test to cover intended arguments
 
 
 * es/test-lint-one-shot-export (2018-07-16) 5 commits
@@ -356,31 +144,17 @@ of the repositories listed at
  + Merge branch 'jc/t3404-one-shot-export-fix' into es/test-lint-one-shot-export
  (this branch uses jc/t3404-one-shot-export-fix.)
 
- Look for broken use of "vAR=VAL shell_func" in test scripts as part
+ Look for broken use of "VAR=VAL shell_func" in test scripts as part
  of test-lint.
 
- Will merge to 'master'.
 
+* hs/push-cert-check-cleanup (2018-07-11) 2 commits
+  (merged to 'next' on 2018-07-18 at 1ed25fbd77)
+ + gpg-interface: make parse_gpg_output static and remove from interface header
+ + builtin/receive-pack: use check_signature from gpg-interface
+ (this branch is used by hs/gpgsm.)
 
-* hs/gpgsm (2018-07-18) 7 commits
- - gpg-interface t: extend the existing GPG tests with GPGSM
- - gpg-interface: introduce new signature format "x509" using gpgsm
- - gpg-interface: introduce new config to select per gpg format program
- - gpg-interface: do not hardcode the key string len anymore
- - gpg-interface: introduce an abstraction for multiple gpg formats
- - t/t7510: check the validation of the new config gpg.format
- - gpg-interface: add new config to select how to sign a commit
- (this branch uses hs/push-cert-check-cleanup.)
-
- Teach "git tag -s" etc. a few configuration varaibles (gpg.format
- that can be set to "openpgp" or "x509", and gpg.<format>.program
- that is used to specify what program to use to deal with the format)
- to allow x.509 certs with CMS via "gpgsm" to be used instead of
- openpgp via "gnupg".
-
- I think this round is mostly ready, except for a minor nit in the
- last step.  I do not mind merging this to 'next' and leave fixing
- of the test to a later clean-up.
+ Code clean-up.
 
 
 * jc/t3404-one-shot-export-fix (2018-07-12) 1 commit
@@ -390,84 +164,80 @@ of the repositories listed at
 
  Correct a broken use of "VAR=VAL shell_func" in a test.
 
- Will merge to 'master'.
+
+* jk/empty-pick-fix (2018-07-11) 2 commits
+  (merged to 'next' on 2018-07-18 at 43bfa862f2)
+ + sequencer: don't say BUG on bogus input
+ + sequencer: handle empty-set cases consistently
+
+ Handling of an empty range by "git cherry-pick" was inconsistent
+ depending on how the range ended up to be empty, which has been
+ corrected.
 
 
-* jk/has-uncommitted-changes-fix (2018-07-11) 1 commit
- - has_uncommitted_changes(): fall back to empty tree
+* jk/fetch-all-peeled-fix (2018-07-06) 1 commit
+  (merged to 'next' on 2018-07-18 at d06c6f1665)
+ + t5500: prettify non-commit tag tests
 
- "git pull --rebase" on a corrupt HEAD caused a segfault.  In
- general we substitute an empty tree object when running the in-core
- equivalent of the diff-index command, and the codepath has been
- corrected to do so as well to fix this issue.
-
- Will merge to 'next'.
+ Test modernization.
 
 
-* jm/send-email-tls-auth-on-batch (2018-07-16) 1 commit
- - send-email: fix tls AUTH when sending batch
+* jk/for-each-ref-icase (2018-07-03) 3 commits
+  (merged to 'next' on 2018-07-18 at 4c86d62adb)
+ + ref-filter: avoid backend filtering with --ignore-case
+ + for-each-ref: consistently pass WM_IGNORECASE flag
+ + t6300: add a test for --ignore-case
 
- "git send-email" when using in a batched mode that limits the
- number of messages sent in a single SMTP session lost the contents
- of the variable used to choose between tls/ssl, unable to send the
- second and later batches, which has been fixed.
-
- Will merge to 'next'.
-
- This is marked to be merged to 'next' already, but I do not mind
- getting an updated version with an improved log message before that
- happens.
+ The "--ignore-case" option of "git for-each-ref" (and its friends)
+ did not work correctly, which has been fixed.
 
 
-* jn/gc-auto (2018-07-17) 3 commits
- - gc: do not return error for prior errors in daemonized mode
- - gc: exit with status 128 on failure
- - gc: improve handling of errors reading gc.log
+* jt/connectivity-check-after-unshallow (2018-07-03) 1 commit
+  (merged to 'next' on 2018-07-18 at 8e7ee889c3)
+ + fetch-pack: write shallow, then check connectivity
+ (this branch is used by jt/partial-clone-fsck-connectivity and jt/tags-to-promised-blobs-fix; uses bw/ref-in-want; is tangled with bw/fetch-pack-i18n.)
 
- "gc --auto" ended up calling exit(-1) upon error, which has been
- corrected to use exit(1).  Also the error reporting behaviour when
- daemonized has been updated to exit with zero status when stopping
- due to a previously discovered error (which implies there is no
- point running gc to improve the situation); we used to exit with
- failure in such a case.
-
- Under discussion.
- cf. <20180717201348.GD26218@sigill.intra.peff.net>
+ "git fetch" failed to correctly validate the set of objects it
+ received when making a shallow history deeper, which has been
+ corrected.
 
 
-* js/rebase-merge-octopus (2018-07-11) 3 commits
- - rebase --rebase-merges: adjust man page for octopus support
- - rebase --rebase-merges: add support for octopus merges
- - merge: allow reading the merge commit message from a file
+* jt/partial-clone-fsck-connectivity (2018-07-09) 2 commits
+  (merged to 'next' on 2018-07-18 at 968fd9c9f0)
+ + clone: check connectivity even if clone is partial
+ + upload-pack: send refs' objects despite "filter"
+ (this branch is used by jt/tags-to-promised-blobs-fix; uses bw/ref-in-want and jt/connectivity-check-after-unshallow; is tangled with bw/fetch-pack-i18n.)
 
- "git rebase --rebase-merges" mode now handles octopus merges as
- well.
-
- Will merge to 'next'.
-
-
-* jt/fetch-negotiator-skipping (2018-07-16) 1 commit
- - negotiator/skipping: skip commits during fetch
- (this branch uses jt/fetch-pack-negotiator; is tangled with jt/fetch-nego-tip.)
-
- Add a server-side knob to skip commits in exponential/fibbonacci
- stride in an attempt to cover wider swath of history with a smaller
- number of iterations, potentially accepting a larger packfile
- transfer, instead of going back one commit a time during common
- ancestor discovery during the "git fetch" transaction.
-
- Will merge to 'next'.
+ Partial clone support of "git clone" has been updated to correctly
+ validate the objects it receives from the other side.  The server
+ side has been corrected to send objects that are directly
+ requested, even if they may match the filtering criteria (e.g. when
+ doing a "lazy blob" partial clone).
 
 
-* jt/tags-to-promised-blobs-fix (2018-07-16) 2 commits
- - tag: don't warn if target is missing but promised
- - revision: tolerate promised targets of tags
- (this branch uses bw/ref-in-want, jt/connectivity-check-after-unshallow and jt/partial-clone-fsck-connectivity.)
+* kn/userdiff-php (2018-07-06) 2 commits
+  (merged to 'next' on 2018-07-18 at 9a533dc33a)
+ + userdiff: support new keywords in PHP hunk header
+ + t4018: add missing test cases for PHP
 
- The lazy clone support had a few places where missing but promised
- objects were not correctly tolerated, which have been fixed.
+ The userdiff pattern for .php has been updated.
 
- Will merge to 'next'.
+
+* mh/fast-import-no-diff-delta-empty (2018-07-06) 1 commit
+  (merged to 'next' on 2018-07-18 at eb393871f4)
+ + fast-import: do not call diff_delta() with empty buffer
+
+ "git fast-import" has been updated to avoid attempting to create
+ delta against a zero-byte-long string, which is pointless.
+
+
+* mk/merge-in-sparse-checkout (2018-07-11) 1 commit
+  (merged to 'next' on 2018-07-18 at d2a6d2684d)
+ + unpack-trees: do not fail reset because of unmerged skipped entry
+
+ "git reset --merge" (hence "git merge ---abort") and "git reset --hard"
+ had trouble working correctly in a sparsely checked out working
+ tree after a conflict, which has been corrected.
 
 
 * nd/command-list (2018-07-16) 1 commit
@@ -476,65 +246,39 @@ of the repositories listed at
 
  Build doc update for Windows.
 
- Will merge to 'master'.
+
+* rj/submodule-fsck-skip (2018-07-03) 1 commit
+  (merged to 'next' on 2018-07-11 at 985f88cf7e)
+ + fsck: check skiplist for object in fsck_blob()
+
+ "fsck.skipList" did not prevent a blob object listed there from
+ being inspected for is contents (e.g. we recently started to
+ inspect the contents of ".gitmodules" for certain malicious
+ patterns), which has been corrected.
 
 
 * sb/blame-color (2018-07-16) 1 commit
   (merged to 'next' on 2018-07-18 at c319268502)
  + blame: prefer xsnprintf to strcpy for colors
+ (this branch is used by jk/banned-function.)
 
  Code clean-up.
 
- Will merge to 'master'.
+
+* sb/submodule-move-head-error-msg (2018-06-25) 1 commit
+  (merged to 'next' on 2018-07-18 at 9e213ad1aa)
+ + submodule.c: report the submodule that an error occurs in
+
+ "git checkout --recurse-submodules another-branch" did not report
+ in which submodule it failed to update the working tree, which
+ resulted in an unhelpful error message.
 
 
-* sb/submodule-update-in-c (2018-07-17) 6 commits
- - submodule--helper: introduce new update-module-mode helper
- - builtin/submodule--helper: factor out method to update a single submodule
- - builtin/submodule--helper: store update_clone information in a struct
- - builtin/submodule--helper: factor out submodule updating
- - git-submodule.sh: rename unused variables
- - git-submodule.sh: align error reporting for update mode to use path
+* tb/config-default (2018-07-06) 1 commit
+  (merged to 'next' on 2018-07-18 at 7994476f6f)
+ + builtin/config: work around an unsized array forward declaration
 
- "git submodule update" is getting rewritten piece-by-piece into C.
-
- It seems to pass its own self-tests standalone, but seems to break
- horribly when merged to 'pu'.
-
-
-* sg/httpd-test-unflake (2018-07-12) 3 commits
- - t/lib-httpd: avoid occasional failures when checking access.log
- - t/lib-httpd: add the strip_access_log() helper function
- - t5541: clean up truncating access log
-
- httpd tests saw occasional breakage due to the way its access log
- gets inspected by the tests, which has been updated to make them
- less flaky.
-
- Will merge to 'next'.
-
-
-* sl/commit-dry-run-with-short-output-fix (2018-07-17) 3 commits
- - commit: fix exit code for --short/--porcelain
- - wt-status: teach wt_status_collect about merges in progress
- - t7501: add merge conflict tests for dry run
-
- Under discussion.
- cf. <xmqqpnzlpyux.fsf@gitster-ct.c.googlers.com>
-
-
-* tg/rerere (2018-07-16) 11 commits
- - rerere: recalculate conflict ID when unresolved conflict is committed
- - rerere: teach rerere to handle nested conflicts
- - rerere: return strbuf from handle path
- - rerere: factor out handle_conflict function
- - rerere: only return whether a path has conflicts or not
- - rerere: fix crash when conflict goes unresolved
- - rerere: add documentation for conflict normalization
- - rerere: mark strings for translation
- - rerere: wrap paths in output in sq
- - rerere: lowercase error messages
- - rerere: unify error messages when read_cache fails
+ Compilation fix.
 
 
 * wc/find-commit-with-pattern-on-detached-head (2018-07-12) 1 commit
@@ -545,11 +289,373 @@ of the repositories listed at
  only to HEAD when looking for a commit with the given substring,
  when the HEAD is detached.  This has been fixed.
 
- Will merge to 'master'.
+--------------------------------------------------
+[New Topics]
+
+* ds/commit-graph-with-grafts (2018-07-19) 8 commits
+ - commit-graph: close_commit_graph before shallow walk
+ - commit-graph: not compatible with uninitialized repo
+ - commit-graph: not compatible with grafts
+ - commit-graph: not compatible with replace objects
+ - test-repository: properly init repo
+ - commit-graph: update design document
+ - refs.c: upgrade for_each_replace_ref to be a each_repo_ref_fn callback
+ - refs.c: migrate internal ref iteration to pass thru repository argument
+ (this branch uses ds/commit-graph-fsck, jt/commit-graph-per-object-store and sb/object-store-lookup; is tangled with ds/reachable.)
+
+ The recently introduced commit-graph auxiliary data is incompatible
+ with mechanisms such as replace & grafts that "breaks" immutable
+ nature of the object reference relationship.  Disable optimizations
+ based on its use (and updating existing commit-graph) when these
+ incompatible features are in use in the repository.
+
+ Will merge to 'next'.
 
 
-* jk/ui-color-always-to-auto (2018-07-18) 1 commit
- - Documentation: fix --color option formatting
+* jk/core-use-replace-refs (2018-07-18) 3 commits
+ - add core.usereplacerefs config option
+ - check_replace_refs: rename to read_replace_refs
+ - check_replace_refs: fix outdated comment
+
+ A new configuration variable core.usereplacerefs has been added,
+ primarily to help server installations that want to ignore the
+ replace mechanism altogether.
+
+ Will merge to 'next'.
+
+
+* nd/i18n (2018-07-23) 23 commits
+ - transport-helper.c: mark more strings for translation
+ - transport.c: mark more strings for translation
+ - sha1-file.c: mark more strings for translation
+ - sequencer.c: mark more strings for translation
+ - replace-object.c: mark more strings for translation
+ - refspec.c: mark more strings for translation
+ - refs.c: mark more strings for translation
+ - pkt-line.c: mark more strings for translation
+ - object.c: mark more strings for translation
+ - exec-cmd.c: mark more strings for translation
+ - environment.c: mark more strings for translation
+ - dir.c: mark more strings for translation
+ - convert.c: mark more strings for translation
+ - connect.c: mark more strings for translation
+ - config.c: mark more strings for translation
+ - commit-graph.c: mark more strings for translation
+ - builtin/replace.c: mark more strings for translation
+ - builtin/pack-objects.c: mark more strings for translation
+ - builtin/grep.c: mark strings for translation
+ - builtin/config.c: mark more strings for translation
+ - archive-zip.c: mark more strings for translation
+ - archive-tar.c: mark more strings for translation
+ - Update messages in preparation for i18n
+
+ Many more strings are prepared for l10n.
+
+ Will merge to 'next'.
+
+
+* sb/histogram-less-memory (2018-07-23) 4 commits
+ - xdiff/histogram: remove tail recursion
+ - xdiff/xhistogram: move index allocation into find_lcs
+ - xdiff/xhistogram: factor out memory cleanup into free_index()
+ - xdiff/xhistogram: pass arguments directly to fall_back_to_classic_diff
+
+ "git diff --histogram" had a bad memory usage pattern, which has
+ been rearranged to reduce the peak usage.
+
+ Will merge to 'next'.
+
+
+* bb/make-developer-pedantic (2018-07-25) 1 commit
+ - Makefile: add a DEVOPTS flag to get pedantic compilation
+
+ "make DEVELOPER=1 DEVOPTS=pedantic" allows developers to compile
+ with -pedantic option, which may catch more problematic program
+ constructs and potential bugs.
+
+ Will merge to 'next' and then to 'master'.
+
+
+* bw/clone-ref-prefixes (2018-07-20) 1 commit
+ - clone: send ref-prefixes when using protocol v2
+
+ The wire-protocol v2 relies on the client to send "ref prefixes" to
+ limit the bandwidth spent on the initial ref advertisement.  "git
+ clone" when learned to speak v2 forgot to do so, which has been
+ corrected.
+
+ Will merge to 'next'.
+
+
+* bw/fetch-pack-i18n (2018-07-23) 1 commit
+ - fetch-pack: mark die strings for translation
+
+ i18n updates.
+
+ Will merge to 'next' and then to 'master'.
+
+
+* bw/protocol-v2 (2018-07-24) 1 commit
+ - pack-protocol: mention and point to docs for protocol v2
+
+ Doc update.
+
+ Will merge to 'next' and then to 'master'.
+
+
+* ds/reachable (2018-07-20) 18 commits
+ - commit-reach: use can_all_from_reach
+ - commit-reach: make can_all_from_reach... linear
+ - commit-reach: replace ref_newer logic
+ - test-reach: test commit_contains
+ - test-reach: test can_all_from_reach_with_flags
+ - test-reach: test reduce_heads
+ - test-reach: test get_merge_bases_many
+ - test-reach: test is_descendant_of
+ - test-reach: test in_merge_bases
+ - test-reach: create new test tool for ref_newer
+ - commit-reach: move can_all_from_reach_with_flags
+ - upload-pack: generalize commit date cutoff
+ - upload-pack: refactor ok_to_give_up()
+ - upload-pack: make reachable() more generic
+ - commit-reach: move commit_contains from ref-filter
+ - commit-reach: move ref_newer from remote.c
+ - commit.h: remove method declarations
+ - commit-reach: move walk methods from commit.c
+ (this branch uses ds/commit-graph-fsck, jt/commit-graph-per-object-store and sb/object-store-lookup; is tangled with ds/commit-graph-with-grafts.)
+
+ The code for computing history reachability has been shuffled,
+ obtained a bunch of new tests to cover them, and then being
+ improved.
+
+ Stuck in review?
+ cf. <20180723203500.231932-1-jonathantanmy@google.com>
+ cf. <20180723204112.233274-1-jonathantanmy@google.com>
+ cf. <CAGZ79kb7tWV=cmboA+nsChAUaiC+fVVM-GBCuWfsypC+-wyaVg@mail.gmail.com>
+
+
+* en/merge-recursive-skip-fix (2018-07-23) 2 commits
+ - merge-recursive: preserve skip_worktree bit when necessary
+ - t3507: add a testcase showing failure with sparse checkout
+
+ When the sparse checkout feature is in use, "git cherry-pick" and
+ other mergy operations lost the skip_worktree bit when a path that
+ is excluded from checkout requires content level merge, which is
+ resolved as the same as the HEAD version, without materializing the
+ merge result in the working tree, which made the path appear as
+ deleted.  This has been corrected by preserving the skip_worktree
+ bit (and not materializing the file in the working tree).
+
+ Stuck in review?
+ cf. <75aa297e-4857-d92a-7041-618ff3b0b77a@gmail.com>
+
+
+* es/format-patch-interdiff (2018-07-23) 6 commits
+ - format-patch: allow --interdiff to apply to a lone-patch
+ - log-tree: show_log: make commentary block delimiting reusable
+ - interdiff: teach show_interdiff() to indent interdiff
+ - format-patch: teach --interdiff to respect -v/--reroll-count
+ - format-patch: add --interdiff option to embed diff in cover letter
+ - format-patch: allow additional generated content in make_cover_letter()
+ (this branch is used by es/format-patch-rangediff.)
+
+ "git format-patch" learned a new "--interdiff" option to explain
+ the difference between this version and the previous atttempt in
+ the cover letter (or after the tree-dashes as a comment).
+
+ Stuck in review?
+ cf. <CAPig+cSuYUYSPTuKx08wcmQM-G12_-W2T4BS07fA=6grM1b8Gw@mail.gmail.com>
+
+
+* es/format-patch-rangediff (2018-07-25) 10 commits
+ - format-patch: allow --range-diff to apply to a lone-patch
+ - format-patch: add --creation-factor tweak for --range-diff
+ - format-patch: teach --range-diff to respect -v/--reroll-count
+ - format-patch: extend --range-diff to accept revision range
+ - format-patch: add --range-diff option to embed diff in cover letter
+ - range-diff: relieve callers of low-level configuration burden
+ - range-diff: publish default creation factor
+ - range-diff: respect diff_option.file rather than assuming 'stdout'
+ - Merge branch 'es/format-patch-interdiff' into es/format-patch-rangediff
+ - Merge branch 'js/range-diff' into es/format-patch-rangediff
+ (this branch uses es/format-patch-interdiff and js/range-diff.)
+
+ "git format-patch" learned a new "--range-diff" option to explain
+ the difference between this version and the previous atttempt in
+ the cover letter (or after the tree-dashes as a comment).
+
+ Need to wait for the prereq topics to solidify a bit more.
+
+
+* jk/banned-function (2018-07-24) 5 commits
+ - banned.h: mark strncpy() as banned
+ - banned.h: mark sprintf() as banned
+ - banned.h: mark strcat() as banned
+ - automatically ban strcpy()
+ - Merge branch 'sb/blame-color' into jk/banned-function
+
+ It is too easy to misuse system API functions such as strcat();
+ these selected functions are now forbidden in this codebase and
+ will cause a compilation failure.
+
+ Will merge to 'next'.
+
+
+* jk/size-t (2018-07-24) 6 commits
+ - strbuf_humanise: use unsigned variables
+ - pass st.st_size as hint for strbuf_readlink()
+ - strbuf_readlink: use ssize_t
+ - strbuf: use size_t for length in intermediate variables
+ - reencode_string: use size_t for string lengths
+ - reencode_string: use st_add/st_mult helpers
+
+ Code clean-up to use size_t/ssize_t when they are the right type.
+
+ Will merge to 'next'.
+
+
+* js/t7406-recursive-submodule-update-order-fix (2018-07-23) 1 commit
+ - t7406: avoid failures solely due to timing issues
+
+ Test fix.
+
+ Will merge to 'next' and then to 'master'.
+
+
+* js/vscode (2018-07-23) 9 commits
+ - vscode: let cSpell work on commit messages, too
+ - vscode: add a dictionary for cSpell
+ - vscode: use 8-space tabs, no trailing ws, etc for Git's source code
+ - vscode: wrap commit messages at column 72 by default
+ - vscode: only overwrite C/C++ settings
+ - mingw: define WIN32 explicitly
+ - cache.h: extract enum declaration from inside a struct declaration
+ - vscode: hard-code a couple defines
+ - contrib: add a script to initialize VS Code configuration
+
+ Add a script (in contrib/) to help users of VSCode work better with
+ our codebase.
+
+ Stuck in review?
+ cf. <20180723165719.GA16420@aiede.svl.corp.google.com>
+ cf. <20180723174108.GA9285@aiede.svl.corp.google.com>
+
+
+* jt/tag-following-with-proto-v2-fix (2018-07-24) 2 commits
+ - fetch: send "refs/tags/" prefix upon CLI refspecs
+ - t5702: test fetch with multiple refspecs at a time
+
+ The wire-protocol v2 relies on the client to send "ref prefixes" to
+ limit the bandwidth spent on the initial ref advertisement.  "git
+ fetch $remote branch:branch" that asks tags that point into the
+ history leading to the "branch" automatically followed sent to
+ narrow prefix and broke the tag following, which has been fixed.
+
+ Will merge to 'next'.
+
+
+* nd/pack-deltify-regression-fix (2018-07-23) 1 commit
+ - pack-objects: fix performance issues on packing large deltas
+
+ In a recent update in 2.18 era, "git pack-objects" started
+ producing a larger than necessary packfiles by missing
+ opportunities to use large deltas.
+
+ Will merge to and cook in 'next'.
+
+
+* sb/trailers-docfix (2018-07-20) 1 commit
+ - Documentation/git-interpret-trailers: explain possible values
+
+ Doc update.
+
+ Will merge to 'next' and then to 'master'.
+
+
+* sg/coccicheck-updates (2018-07-23) 5 commits
+ - coccinelle: extract dedicated make target to clean Coccinelle's results
+ - coccinelle: put sane filenames into output patches
+ - coccinelle: exclude sha1dc source files from static analysis
+ - coccinelle: use $(addsuffix) in 'coccicheck' make target
+ - coccinelle: mark the 'coccicheck' make target as .PHONY
+
+ Update the way we use Coccinelle to find out-of-style code that
+ need to be modernised.
+
+ Will merge to 'next'.
+
+
+* sg/fast-import-dump-refs-on-checkpoint-fix (2018-07-20) 1 commit
+ - t9300: wait for background fast-import process to die after killing it
+
+ Test update.
+
+ Will merge to 'next' and then to 'master'.
+
+
+* sg/travis-cocci-diagnose-failure (2018-07-23) 2 commits
+ - travis-ci: fail if Coccinelle static analysis found something to transform
+ - travis-ci: run Coccinelle static analysis with two parallel jobs
+
+ Update the way we run static analysis tool at TravisCI to make it
+ easier to use its findings.
+
+ Will merge to 'next' and then to 'master'.
+
+
+* ab/newhash-is-sha256 (2018-07-25) 1 commit
+ - doc hash-function-transition: note the lack of a changelog
+
+ Documentation update.
+
+ Waiting for another attempt for the second part.
+
+
+* bb/redecl-enum-fix (2018-07-25) 1 commit
+ - packfile: drop a repeated enum declaration
+
+ Compilation fix.
+
+
+* es/diff-color-move-fix (2018-07-25) 1 commit
+ - diff: --color-moved: rename "dimmed_zebra" to "dimmed-zebra"
+
+ One of the "diff --color-moved" mode "dimmed_zebra" that was named
+ in an unusual way has been deprecated and replaced by
+ "dimmed-zebra".
+
+ Will merge to 'next' and then to 'master'.
+
+
+* jh/structured-logging (2018-07-25) 25 commits
+ - structured-logging: add config data facility
+ - structured-logging: t0420 tests for interacitve child_summary
+ - structured-logging: t0420 tests for child process detail events
+ - structured-logging: add child process classification
+ - structured-logging: add detail-events for child processes
+ - structured-logging: add structured logging to remote-curl
+ - structured-logging: t0420 tests for aux-data
+ - structured-logging: add aux-data for size of sparse-checkout file
+ - structured-logging: add aux-data for index size
+ - structured-logging: add aux-data facility
+ - structured-logging: t0420 tests for timers
+ - structured-logging: add timer around preload_index
+ - structured-logging: add timer around wt-status functions
+ - structured-logging: add timer around do_write_index
+ - structured-logging: add timer around do_read_index
+ - structured-logging: add timer facility
+ - structured-logging: add detail-event for lazy_init_name_hash
+ - structured-logging: add detail-event facility
+ - structured-logging: t0420 basic tests
+ - structured-logging: set sub_command field for checkout command
+ - structured-logging: set sub_command field for branch command
+ - structured-logging: add session-id to log events
+ - structured-logging: add structured logging framework
+ - structured-logging: add STRUCTURED_LOGGING=1 to Makefile
+ - structured-logging: design document
+ (this branch uses jh/json-writer.)
+
+ X-Gah.
 
 --------------------------------------------------
 [Stalled]
@@ -593,7 +699,7 @@ of the repositories listed at
  cf. <alpine.DEB.2.21.1.1801042335130.32@MININT-6BKU6QN.europe.corp.microsoft.com>
 
 
-* pb/bisect-helper-2 (2018-06-13) 8 commits
+* pb/bisect-helper-2 (2018-07-23) 8 commits
  - t6030: make various test to pass GETTEXT_POISON tests
  - bisect--helper: `bisect_start` shell function partially in C
  - bisect--helper: `get_terms` & `bisect_terms` shell function in C
@@ -648,13 +754,243 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* am/sequencer-author-script-fix (2018-07-18) 1 commit
+ - sequencer.c: terminate the last line of author-script properly
+
+ The author-script that records the author information created by
+ the sequencer machinery lacked the closing single quote on the last
+ entry.
+
+ Fixing this alone may or may not break the reader that may have
+ been compensating for this bogus writer.  I think I saw another fix
+ to the same source file posted today---if we are fixing, we should
+ fix them all at the same time to keep the reader and the writer in
+ sync.
+
+
+* bc/sequencer-export-work-tree-as-well (2018-07-16) 1 commit
+  (merged to 'next' on 2018-07-24 at 0b83ade721)
+ + sequencer: pass absolute GIT_WORK_TREE to exec commands
+
+ "git rebase" started exporting GIT_DIR environment variable and
+ exposing it to hook scripts when part of it got rewritten in C.
+ Instead of matching the old scripted Porcelains' behaviour,
+ compensate by also exporting GIT_WORK_TREE environment as well to
+ lessen the damage.  This can harm existing hooks that want to
+ operate on different repository, but the current behaviour is
+ already broken for them anyway.
+
+ Will merge to 'master'.
+
+
+* bp/test-drop-caches-for-windows (2018-07-12) 1 commit
+  (merged to 'next' on 2018-07-24 at 257bb336c6)
+ + handle lower case drive letters on Windows
+
+ A test helper update for Windows.
+
+ Will merge to 'master'.
+
+
+* en/abort-df-conflict-fixes (2018-07-16) 2 commits
+ - read-cache: fix directory/file conflict handling in read_index_unmerged()
+ - t1015: demonstrate directory/file conflict recovery failures
+
+ "git merge --abort" etc. did not clean things up properly when
+ there were conflicted entries in certain order that are involved
+ in D/F conflicts.  This has been corrected.
+
+ This may have to be rebased on an older maintenance track before
+ moving forward.
+
+
+* es/chain-lint-in-subshell (2018-07-17) 10 commits
+  (merged to 'next' on 2018-07-24 at 9370bbdfaf)
+ + t/chainlint: add chainlint "specialized" test cases
+ + t/chainlint: add chainlint "complex" test cases
+ + t/chainlint: add chainlint "cuddled" test cases
+ + t/chainlint: add chainlint "loop" and "conditional" test cases
+ + t/chainlint: add chainlint "nested subshell" test cases
+ + t/chainlint: add chainlint "one-liner" test cases
+ + t/chainlint: add chainlint "whitespace" test cases
+ + t/chainlint: add chainlint "basic" test cases
+ + t/Makefile: add machinery to check correctness of chainlint.sed
+ + t/test-lib: teach --chain-lint to detect broken &&-chains in subshells
+ (this branch uses es/test-fixes.)
+
+ Look for broken "&&" chains that are hidden in subshell, many of
+ which have been found and corrected.
+
+ Will merge to 'master'.
+
+
+* hs/gpgsm (2018-07-20) 7 commits
+ - gpg-interface t: extend the existing GPG tests with GPGSM
+ - gpg-interface: introduce new signature format "x509" using gpgsm
+ - gpg-interface: introduce new config to select per gpg format program
+ - gpg-interface: do not hardcode the key string len anymore
+ - gpg-interface: introduce an abstraction for multiple gpg formats
+ - t/t7510: check the validation of the new config gpg.format
+ - gpg-interface: add new config to select how to sign a commit
+
+ Teach "git tag -s" etc. a few configuration varaibles (gpg.format
+ that can be set to "openpgp" or "x509", and gpg.<format>.program
+ that is used to specify what program to use to deal with the format)
+ to allow x.509 certs with CMS via "gpgsm" to be used instead of
+ openpgp via "gnupg".
+
+ Will merge to 'next'.
+
+
+* jk/has-uncommitted-changes-fix (2018-07-11) 1 commit
+  (merged to 'next' on 2018-07-24 at 2ea14c0afb)
+ + has_uncommitted_changes(): fall back to empty tree
+
+ "git pull --rebase" on a corrupt HEAD caused a segfault.  In
+ general we substitute an empty tree object when running the in-core
+ equivalent of the diff-index command, and the codepath has been
+ corrected to do so as well to fix this issue.
+
+ Will merge to 'master'.
+
+
+* jm/send-email-tls-auth-on-batch (2018-07-16) 1 commit
+  (merged to 'next' on 2018-07-24 at fb3e653f44)
+ + send-email: fix tls AUTH when sending batch
+
+ "git send-email" when using in a batched mode that limits the
+ number of messages sent in a single SMTP session lost the contents
+ of the variable used to choose between tls/ssl, unable to send the
+ second and later batches, which has been fixed.
+
+ Will merge to 'master'.
+
+ This is marked to be merged to 'next' already, but I do not mind
+ getting an updated version with an improved log message before that
+ happens.
+
+
+* jn/gc-auto (2018-07-17) 3 commits
+ - gc: do not return error for prior errors in daemonized mode
+ - gc: exit with status 128 on failure
+ - gc: improve handling of errors reading gc.log
+
+ "gc --auto" ended up calling exit(-1) upon error, which has been
+ corrected to use exit(1).  Also the error reporting behaviour when
+ daemonized has been updated to exit with zero status when stopping
+ due to a previously discovered error (which implies there is no
+ point running gc to improve the situation); we used to exit with
+ failure in such a case.
+
+ Stuck in review?
+ cf. <20180717201348.GD26218@sigill.intra.peff.net>
+
+
+* js/rebase-merge-octopus (2018-07-11) 3 commits
+  (merged to 'next' on 2018-07-24 at 14ad8699de)
+ + rebase --rebase-merges: adjust man page for octopus support
+ + rebase --rebase-merges: add support for octopus merges
+ + merge: allow reading the merge commit message from a file
+
+ "git rebase --rebase-merges" mode now handles octopus merges as
+ well.
+
+ Will merge to 'master'.
+
+
+* jt/fetch-negotiator-skipping (2018-07-16) 1 commit
+  (merged to 'next' on 2018-07-24 at 8e25a49405)
+ + negotiator/skipping: skip commits during fetch
+ (this branch uses jt/fetch-pack-negotiator; is tangled with jt/fetch-nego-tip.)
+
+ Add a server-side knob to skip commits in exponential/fibbonacci
+ stride in an attempt to cover wider swath of history with a smaller
+ number of iterations, potentially accepting a larger packfile
+ transfer, instead of going back one commit a time during common
+ ancestor discovery during the "git fetch" transaction.
+
+ Will merge to 'master'.
+
+
+* jt/tags-to-promised-blobs-fix (2018-07-16) 2 commits
+  (merged to 'next' on 2018-07-24 at 8d7e78a671)
+ + tag: don't warn if target is missing but promised
+ + revision: tolerate promised targets of tags
+
+ The lazy clone support had a few places where missing but promised
+ objects were not correctly tolerated, which have been fixed.
+
+ Will merge to 'master'.
+
+
+* sb/submodule-update-in-c (2018-07-18) 6 commits
+ - submodule--helper: introduce new update-module-mode helper
+ - builtin/submodule--helper: factor out method to update a single submodule
+ - builtin/submodule--helper: store update_clone information in a struct
+ - builtin/submodule--helper: factor out submodule updating
+ - git-submodule.sh: rename unused variables
+ - git-submodule.sh: align error reporting for update mode to use path
+
+ "git submodule update" is getting rewritten piece-by-piece into C.
+
+ It seems to pass its own self-tests standalone, but seems to break
+ horribly when merged to 'pu'.
+
+
+* sg/httpd-test-unflake (2018-07-12) 3 commits
+  (merged to 'next' on 2018-07-24 at b7df820256)
+ + t/lib-httpd: avoid occasional failures when checking access.log
+ + t/lib-httpd: add the strip_access_log() helper function
+ + t5541: clean up truncating access log
+
+ httpd tests saw occasional breakage due to the way its access log
+ gets inspected by the tests, which has been updated to make them
+ less flaky.
+
+ Will merge to 'master'.
+
+
+* sl/commit-dry-run-with-short-output-fix (2018-07-17) 3 commits
+ - commit: fix exit code for --short/--porcelain
+ - wt-status: teach wt_status_collect about merges in progress
+ - t7501: add merge conflict tests for dry run
+
+ "git commit --dry-run" gave a correct exit status even during a
+ conflict resolution toward a merge, but it did not with the
+ "--short" option, which has been corrected.
+
+ Will merge to 'next'.
+
+
+* tg/rerere (2018-07-16) 11 commits
+ - rerere: recalculate conflict ID when unresolved conflict is committed
+ - rerere: teach rerere to handle nested conflicts
+ - rerere: return strbuf from handle path
+ - rerere: factor out handle_conflict function
+ - rerere: only return whether a path has conflicts or not
+ - rerere: fix crash when conflict goes unresolved
+ - rerere: add documentation for conflict normalization
+ - rerere: mark strings for translation
+ - rerere: wrap paths in output in sq
+ - rerere: lowercase error messages
+ - rerere: unify error messages when read_cache fails
+
+
+* jk/ui-color-always-to-auto (2018-07-18) 1 commit
+ - Documentation: fix --color option formatting
+
+ Doc formatting fix.
+
+ Will merge to 'next' and then to 'master'.
+
+
 * jh/json-writer (2018-07-16) 1 commit
  - json_writer: new routines to create JSON data
+ (this branch is used by jh/structured-logging.)
 
  Preparatory code to later add json output for telemetry data.
 
- A series on top that adds telemetry data exists but hasn't been
- picked up yet.
+ Will merge to 'next'.
 
 
 * ag/rebase-i-in-c (2018-07-10) 13 commits
@@ -674,299 +1010,207 @@ of the repositories listed at
 
  Piecemeal rewrite of the remaining "rebase -i" machinery in C.
 
- Expecting a reroll.
-
- The early parts of the series seem solidifying; perhaps with a
- reroll or two, they become 'next' material?
-
-
-* en/apply-comment-fix (2018-06-28) 1 commit
-  (merged to 'next' on 2018-07-18 at 31d818f17d)
- + apply: fix grammar error in comment
-
- Will merge to 'master'.
-
-
-* en/t5407-rebase-m-fix (2018-06-28) 1 commit
-  (merged to 'next' on 2018-07-18 at 459875daeb)
- + t5407: fix test to cover intended arguments
-
- Will merge to 'master'.
+ A reroll (which is rumored to be quite good) exists, but hasn't
+ been picked up yet.
 
 
 * sb/object-store-lookup (2018-06-29) 33 commits
- - commit.c: allow lookup_commit_reference to handle arbitrary repositories
- - commit.c: allow lookup_commit_reference_gently to handle arbitrary repositories
- - tag.c: allow deref_tag to handle arbitrary repositories
- - object.c: allow parse_object to handle arbitrary repositories
- - object.c: allow parse_object_buffer to handle arbitrary repositories
- - commit.c: allow get_cached_commit_buffer to handle arbitrary repositories
- - commit.c: allow set_commit_buffer to handle arbitrary repositories
- - commit.c: migrate the commit buffer to the parsed object store
- - commit-slabs: remove realloc counter outside of slab struct
- - commit.c: allow parse_commit_buffer to handle arbitrary repositories
- - tag: allow parse_tag_buffer to handle arbitrary repositories
- - tag: allow lookup_tag to handle arbitrary repositories
- - commit: allow lookup_commit to handle arbitrary repositories
- - tree: allow lookup_tree to handle arbitrary repositories
- - blob: allow lookup_blob to handle arbitrary repositories
- - object: allow lookup_object to handle arbitrary repositories
- - object: allow object_as_type to handle arbitrary repositories
- - tag: add repository argument to deref_tag
- - tag: add repository argument to parse_tag_buffer
- - tag: add repository argument to lookup_tag
- - commit: add repository argument to get_cached_commit_buffer
- - commit: add repository argument to set_commit_buffer
- - commit: add repository argument to parse_commit_buffer
- - commit: add repository argument to lookup_commit
- - commit: add repository argument to lookup_commit_reference
- - commit: add repository argument to lookup_commit_reference_gently
- - tree: add repository argument to lookup_tree
- - blob: add repository argument to lookup_blob
- - object: add repository argument to object_as_type
- - object: add repository argument to parse_object_buffer
- - object: add repository argument to lookup_object
- - object: add repository argument to parse_object
- - Merge branch 'sb/object-store-grafts' into sb/object-store-lookup
- (this branch is used by jt/commit-graph-per-object-store.)
+  (merged to 'next' on 2018-07-24 at dd96e29376)
+ + commit.c: allow lookup_commit_reference to handle arbitrary repositories
+ + commit.c: allow lookup_commit_reference_gently to handle arbitrary repositories
+ + tag.c: allow deref_tag to handle arbitrary repositories
+ + object.c: allow parse_object to handle arbitrary repositories
+ + object.c: allow parse_object_buffer to handle arbitrary repositories
+ + commit.c: allow get_cached_commit_buffer to handle arbitrary repositories
+ + commit.c: allow set_commit_buffer to handle arbitrary repositories
+ + commit.c: migrate the commit buffer to the parsed object store
+ + commit-slabs: remove realloc counter outside of slab struct
+ + commit.c: allow parse_commit_buffer to handle arbitrary repositories
+ + tag: allow parse_tag_buffer to handle arbitrary repositories
+ + tag: allow lookup_tag to handle arbitrary repositories
+ + commit: allow lookup_commit to handle arbitrary repositories
+ + tree: allow lookup_tree to handle arbitrary repositories
+ + blob: allow lookup_blob to handle arbitrary repositories
+ + object: allow lookup_object to handle arbitrary repositories
+ + object: allow object_as_type to handle arbitrary repositories
+ + tag: add repository argument to deref_tag
+ + tag: add repository argument to parse_tag_buffer
+ + tag: add repository argument to lookup_tag
+ + commit: add repository argument to get_cached_commit_buffer
+ + commit: add repository argument to set_commit_buffer
+ + commit: add repository argument to parse_commit_buffer
+ + commit: add repository argument to lookup_commit
+ + commit: add repository argument to lookup_commit_reference
+ + commit: add repository argument to lookup_commit_reference_gently
+ + tree: add repository argument to lookup_tree
+ + blob: add repository argument to lookup_blob
+ + object: add repository argument to object_as_type
+ + object: add repository argument to parse_object_buffer
+ + object: add repository argument to lookup_object
+ + object: add repository argument to parse_object
+ + Merge branch 'sb/object-store-grafts' into sb/object-store-lookup
+ (this branch is used by ds/commit-graph-with-grafts, ds/reachable and jt/commit-graph-per-object-store.)
 
  lookup_commit_reference() and friends have been updated to find
  in-core object for a specific in-core repository instance.
-
- Will merge to 'next'.
-
-
-* ag/rebase-p (2018-07-06) 1 commit
-  (merged to 'next' on 2018-07-18 at c36ebba99b)
- + git-rebase--preserve-merges: fix formatting of todo help message
-
- The help message shown in the editor to edit todo list in "rebase -p"
- has regressed recently, which has been corrected.
-
- Will merge to 'master'.
-
-
-* bb/pedantic (2018-07-09) 8 commits
-  (merged to 'next' on 2018-07-18 at e9d075e8ed)
- + utf8.c: avoid char overflow
- + string-list.c: avoid conversion from void * to function pointer
- + sequencer.c: avoid empty statements at top level
- + convert.c: replace "\e" escapes with "\033".
- + fixup! refs/refs-internal.h: avoid forward declaration of an enum
- + refs/refs-internal.h: avoid forward declaration of an enum
- + fixup! connect.h: avoid forward declaration of an enum
- + connect.h: avoid forward declaration of an enum
-
- The codebase has been updated to compile cleanly with -pedantic
- option.
-
- Will merge to 'master'.
-
-
-* bb/unicode-11-width (2018-07-09) 1 commit
-  (merged to 'next' on 2018-07-18 at 075648ed37)
- + unicode: update the width tables to Unicode 11
-
- The character display width table has been updated to match the
- latest Unicode standard.
 
  Will merge to 'master'.
 
 
 * bc/object-id (2018-07-16) 16 commits
- - pretty: switch hard-coded constants to the_hash_algo
- - sha1-file: convert constants to uses of the_hash_algo
- - log-tree: switch GIT_SHA1_HEXSZ to the_hash_algo->hexsz
- - diff: switch GIT_SHA1_HEXSZ to use the_hash_algo
- - builtin/merge-recursive: make hash independent
- - builtin/merge: switch to use the_hash_algo
- - builtin/fmt-merge-msg: make hash independent
- - builtin/update-index: simplify parsing of cacheinfo
- - builtin/update-index: convert to using the_hash_algo
- - refs/files-backend: use the_hash_algo for writing refs
- - sha1-name: use the_hash_algo when parsing object names
- - strbuf: allocate space with GIT_MAX_HEXSZ
- - commit: express tree entry constants in terms of the_hash_algo
- - hex: switch to using the_hash_algo
- - tree-walk: replace hard-coded constants with the_hash_algo
- - cache: update object ID functions for the_hash_algo
+  (merged to 'next' on 2018-07-24 at 23680778a9)
+ + pretty: switch hard-coded constants to the_hash_algo
+ + sha1-file: convert constants to uses of the_hash_algo
+ + log-tree: switch GIT_SHA1_HEXSZ to the_hash_algo->hexsz
+ + diff: switch GIT_SHA1_HEXSZ to use the_hash_algo
+ + builtin/merge-recursive: make hash independent
+ + builtin/merge: switch to use the_hash_algo
+ + builtin/fmt-merge-msg: make hash independent
+ + builtin/update-index: simplify parsing of cacheinfo
+ + builtin/update-index: convert to using the_hash_algo
+ + refs/files-backend: use the_hash_algo for writing refs
+ + sha1-name: use the_hash_algo when parsing object names
+ + strbuf: allocate space with GIT_MAX_HEXSZ
+ + commit: express tree entry constants in terms of the_hash_algo
+ + hex: switch to using the_hash_algo
+ + tree-walk: replace hard-coded constants with the_hash_algo
+ + cache: update object ID functions for the_hash_algo
 
  Conversion from uchar[40] to struct object_id continues.
-
- Will merge to 'next'.
-
-
-* bc/send-email-auto-cte (2018-07-09) 4 commits
-  (merged to 'next' on 2018-07-18 at d16c2a301a)
- + docs: correct RFC specifying email line length
- + send-email: automatically determine transfer-encoding
- + send-email: accept long lines with suitable transfer encoding
- + send-email: add an auto option for transfer encoding
-
- The content-transfer-encoding of the message "git send-email" sends
- out by default was 8bit, which can cause trouble when there is an
- overlong line to bust RFC 5322/2822 limit.  A new option 'auto' to
- automatically switch to quoted-printable when there is such a line
- in the payload has been introduced and is made the default.
 
  Will merge to 'master'.
 
 
 * en/dirty-merge-fixes (2018-07-11) 9 commits
- - merge: fix misleading pre-merge check documentation
- - merge-recursive: enforce rule that index matches head before merging
- - t6044: add more testcases with staged changes before a merge is invoked
- - merge-recursive: fix assumption that head tree being merged is HEAD
- - merge-recursive: make sure when we say we abort that we actually abort
- - t6044: add a testcase for index matching head, when head doesn't match HEAD
- - t6044: verify that merges expected to abort actually abort
- - index_has_changes(): avoid assuming operating on the_index
- - read-cache.c: move index_has_changes() from merge.c
+  (merged to 'next' on 2018-07-24 at 7b6ca3507c)
+ + merge: fix misleading pre-merge check documentation
+ + merge-recursive: enforce rule that index matches head before merging
+ + t6044: add more testcases with staged changes before a merge is invoked
+ + merge-recursive: fix assumption that head tree being merged is HEAD
+ + merge-recursive: make sure when we say we abort that we actually abort
+ + t6044: add a testcase for index matching head, when head doesn't match HEAD
+ + t6044: verify that merges expected to abort actually abort
+ + index_has_changes(): avoid assuming operating on the_index
+ + read-cache.c: move index_has_changes() from merge.c
 
  The recursive merge strategy did not properly ensure there was no
  change between HEAD and the index before performing its operation,
  which has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * en/t6036-merge-recursive-tests (2018-07-11) 6 commits
- - t6036: add a failed conflict detection case: regular files, different modes
- - t6036: add a failed conflict detection case with conflicting types
- - t6036: add a failed conflict detection case with submodule add/add
- - t6036: add a failed conflict detection case with submodule modify/modify
- - t6036: add a failed conflict detection case with symlink add/add
- - t6036: add a failed conflict detection case with symlink modify/modify
+  (merged to 'next' on 2018-07-24 at 75055cb6e1)
+ + t6036: add a failed conflict detection case: regular files, different modes
+ + t6036: add a failed conflict detection case with conflicting types
+ + t6036: add a failed conflict detection case with submodule add/add
+ + t6036: add a failed conflict detection case with submodule modify/modify
+ + t6036: add a failed conflict detection case with symlink add/add
+ + t6036: add a failed conflict detection case with symlink modify/modify
 
  Tests to cover various conflicting cases have been added for
  merge-recursive.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * en/t6036-recursive-corner-cases (2018-07-12) 2 commits
- - t6036: fix broken && chain in sub-shell
- - t6036: add lots of detail for directory/file conflicts in recursive case
+  (merged to 'next' on 2018-07-24 at b7b3514ef4)
+ + t6036: fix broken && chain in sub-shell
+ + t6036: add lots of detail for directory/file conflicts in recursive case
 
  Tests to cover more D/F conflict cases have been added for
  merge-recursive.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * en/t6042-insane-merge-rename-testcases (2018-07-03) 3 commits
- - t6042: add testcase covering long chains of rename conflicts
- - t6042: add testcase covering rename/rename(2to1)/delete/delete conflict
- - t6042: add testcase covering rename/add/delete conflict type
+  (merged to 'next' on 2018-07-24 at 65c80f72da)
+ + t6042: add testcase covering long chains of rename conflicts
+ + t6042: add testcase covering rename/rename(2to1)/delete/delete conflict
+ + t6042: add testcase covering rename/add/delete conflict type
 
  Various glitches in the heuristics of merge-recursive strategy have
  been documented in new tests.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
  I am not sure if there is a single "correct" answer everybody can
  agree on for each of these "insane" cases, though.
 
 
 * en/t7405-recursive-submodule-conflicts (2018-07-11) 3 commits
- - t7405: verify 'merge --abort' works after submodule/path conflicts
- - t7405: add a directory/submodule conflict
- - t7405: add a file/submodule conflict
+  (merged to 'next' on 2018-07-24 at 6cb7d02298)
+ + t7405: verify 'merge --abort' works after submodule/path conflicts
+ + t7405: add a directory/submodule conflict
+ + t7405: add a file/submodule conflict
 
  Tests to cover conflict cases that involve submodules have been
  added for merge-recursive.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * es/test-fixes (2018-07-17) 26 commits
- - t5608: fix broken &&-chain
- - t9119: fix broken &&-chains
- - t9000-t9999: fix broken &&-chains
- - t7000-t7999: fix broken &&-chains
- - t6000-t6999: fix broken &&-chains
- - t5000-t5999: fix broken &&-chains
- - t4000-t4999: fix broken &&-chains
- - t3030: fix broken &&-chains
- - t3000-t3999: fix broken &&-chains
- - t2000-t2999: fix broken &&-chains
- - t1000-t1999: fix broken &&-chains
- - t0000-t0999: fix broken &&-chains
- - t9814: simplify convoluted check that command correctly errors out
- - t9001: fix broken "invoke hook" test
- - t7810: use test_expect_code() instead of hand-rolled comparison
- - t7400: fix broken "submodule add/reconfigure --force" test
- - t7201: drop pointless "exit 0" at end of subshell
- - t6036: fix broken "merge fails but has appropriate contents" tests
- - t5505: modernize and simplify hard-to-digest test
- - t5406: use write_script() instead of birthing shell script manually
- - t5405: use test_must_fail() instead of checking exit code manually
- - t/lib-submodule-update: fix "absorbing" test
- - t: drop unnecessary terminating semicolon in subshell
- - t: use sane_unset() rather than 'unset' with broken &&-chain
- - t: use test_write_lines() instead of series of 'echo' commands
- - t: use test_might_fail() instead of manipulating exit code manually
+  (merged to 'next' on 2018-07-24 at fd6796a3ef)
+ + t5608: fix broken &&-chain
+ + t9119: fix broken &&-chains
+ + t9000-t9999: fix broken &&-chains
+ + t7000-t7999: fix broken &&-chains
+ + t6000-t6999: fix broken &&-chains
+ + t5000-t5999: fix broken &&-chains
+ + t4000-t4999: fix broken &&-chains
+ + t3030: fix broken &&-chains
+ + t3000-t3999: fix broken &&-chains
+ + t2000-t2999: fix broken &&-chains
+ + t1000-t1999: fix broken &&-chains
+ + t0000-t0999: fix broken &&-chains
+ + t9814: simplify convoluted check that command correctly errors out
+ + t9001: fix broken "invoke hook" test
+ + t7810: use test_expect_code() instead of hand-rolled comparison
+ + t7400: fix broken "submodule add/reconfigure --force" test
+ + t7201: drop pointless "exit 0" at end of subshell
+ + t6036: fix broken "merge fails but has appropriate contents" tests
+ + t5505: modernize and simplify hard-to-digest test
+ + t5406: use write_script() instead of birthing shell script manually
+ + t5405: use test_must_fail() instead of checking exit code manually
+ + t/lib-submodule-update: fix "absorbing" test
+ + t: drop unnecessary terminating semicolon in subshell
+ + t: use sane_unset() rather than 'unset' with broken &&-chain
+ + t: use test_write_lines() instead of series of 'echo' commands
+ + t: use test_might_fail() instead of manipulating exit code manually
  (this branch is used by es/chain-lint-in-subshell.)
 
  Test clean-up and corrections.
-
- Will merge to 'next'.
-
-
-* jk/empty-pick-fix (2018-07-11) 2 commits
-  (merged to 'next' on 2018-07-18 at 43bfa862f2)
- + sequencer: don't say BUG on bogus input
- + sequencer: handle empty-set cases consistently
-
- Handling of an empty range by "git cherry-pick" was inconsistent
- depending on how the range ended up to be empty, which has been
- corrected.
-
- Will merge to 'master'.
-
-
-* jk/fetch-all-peeled-fix (2018-07-06) 1 commit
-  (merged to 'next' on 2018-07-18 at d06c6f1665)
- + t5500: prettify non-commit tag tests
-
- Test modernization.
-
- Will merge to 'master'.
-
-
-* jk/for-each-ref-icase (2018-07-03) 3 commits
-  (merged to 'next' on 2018-07-18 at 4c86d62adb)
- + ref-filter: avoid backend filtering with --ignore-case
- + for-each-ref: consistently pass WM_IGNORECASE flag
- + t6300: add a test for --ignore-case
-
- The "--ignore-case" option of "git for-each-ref" (and its friends)
- did not work correctly, which has been fixed.
 
  Will merge to 'master'.
 
 
 * jk/fsck-gitmodules-gently (2018-07-16) 6 commits
- - fsck: downgrade gitmodulesParse default to "info"
- - fsck: split ".gitmodules too large" error from parse failure
- - fsck: silence stderr when parsing .gitmodules
- - config: add options parameter to git_config_from_mem
- - config: add CONFIG_ERROR_SILENT handler
- - config: turn die_on_error into caller-facing enum
+  (merged to 'next' on 2018-07-24 at 5b15c800db)
+ + fsck: downgrade gitmodulesParse default to "info"
+ + fsck: split ".gitmodules too large" error from parse failure
+ + fsck: silence stderr when parsing .gitmodules
+ + config: add options parameter to git_config_from_mem
+ + config: add CONFIG_ERROR_SILENT handler
+ + config: turn die_on_error into caller-facing enum
 
  Recent "security fix" to pay attention to contents of ".gitmodules"
  while accepting "git push" was a bit overly strict than necessary,
  which has been adjusted.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* js/range-diff (2018-07-09) 20 commits
+* js/range-diff (2018-07-25) 21 commits
+ - range-diff: use dim/bold cues to improve dual color mode
  - range-diff: make --dual-color the default mode
  - range-diff: left-pad patch numbers
  - completion: support `git range-diff`
- - range-diff: add a man page
- - range-diff --dual-color: work around bogus white-space warning
+ - range-diff: populate the man page
+ - range-diff --dual-color: fix bogus white-space warning
  - range-diff: offer to dual-color the diffs
  - diff: add an internal option to dual-color diffs of diffs
  - color: add the meta color GIT_COLOR_REVERSE
@@ -982,63 +1226,53 @@ of the repositories listed at
  - range-diff: first rudimentary implementation
  - Introduce `range-diff` to compare iterations of a topic branch
  - linear-assignment: a function to solve least-cost assignment problems
+ (this branch is used by es/format-patch-rangediff.)
 
  "git tbdiff" that lets us compare individual patches in two
  iterations of a topic has been rewritten and made into a built-in
  command.
 
- Supersedes js/branch-diff topic that added a similar command under
- a different name.
+ Undecided.  
+
+ Many "The feature is useful" comments without much real review; we
+ know the feature is great as this mimicks tbdiff already so that is
+ not news.
+
+ I've squashed an obvious documentation fix in before rebasing the
+ other topic that depends on it.  I _think_ we would probably be
+ better off to _disable_ whitespace-error coloring altogether when
+ showing diff-of-diff, and get rid of the workaround that only is
+ applicable to the context lines of the outer diff (unless we first
+ define how whitespace errors in diff-of-diff should be colored and
+ implement it correctly, that is, but after seeing these two
+ attempts, it seems that is harder than it is worth).
 
 
 * jt/commit-graph-per-object-store (2018-07-17) 7 commits
- - commit-graph: add repo arg to graph readers
- - commit-graph: store graph in struct object_store
- - commit-graph: add free_commit_graph
- - commit-graph: add missing forward declaration
- - object-store: add missing include
- - commit-graph: refactor preparing commit graph
- - Merge branch 'ds/commit-graph-fsck' into jt/commit-graph-per-object-store
- (this branch uses ds/commit-graph-fsck and sb/object-store-lookup.)
+  (merged to 'next' on 2018-07-24 at 090d1a4d59)
+ + commit-graph: add repo arg to graph readers
+ + commit-graph: store graph in struct object_store
+ + commit-graph: add free_commit_graph
+ + commit-graph: add missing forward declaration
+ + object-store: add missing include
+ + commit-graph: refactor preparing commit graph
+ + Merge branch 'ds/commit-graph-fsck' into jt/commit-graph-per-object-store
+ (this branch is used by ds/commit-graph-with-grafts and ds/reachable; uses ds/commit-graph-fsck and sb/object-store-lookup.)
 
  The singleton commit-graph in-core instance is made per in-core
  repository instance.
-
- Will merge to 'next'.
-
-
-* jt/partial-clone-fsck-connectivity (2018-07-09) 2 commits
-  (merged to 'next' on 2018-07-18 at 968fd9c9f0)
- + clone: check connectivity even if clone is partial
- + upload-pack: send refs' objects despite "filter"
- (this branch is used by jt/tags-to-promised-blobs-fix; uses bw/ref-in-want and jt/connectivity-check-after-unshallow.)
-
- Partial clone support of "git clone" has been updated to correctly
- validate the objects it receives from the other side.  The server
- side has been corrected to send objects that are directly
- requested, even if they may match the filtering criteria (e.g. when
- doing a "lazy blob" partial clone).
 
  Will merge to 'master'.
 
 
 * kg/gc-auto-windows-workaround (2018-07-09) 1 commit
- - gc --auto: release pack files before auto packing
+  (merged to 'next' on 2018-07-24 at 71c05d27b6)
+ + gc --auto: release pack files before auto packing
 
  "git gc --auto" opens file descriptors for the packfiles before
  spawning "git repack/prune", which would upset Windows that does
  not want a process to work on a file that is open by another
  process.  The issue has been worked around.
-
- Will merge to 'next'.
-
-
-* kn/userdiff-php (2018-07-06) 2 commits
-  (merged to 'next' on 2018-07-18 at 9a533dc33a)
- + userdiff: support new keywords in PHP hunk header
- + t4018: add missing test cases for PHP
-
- The userdiff pattern for .php has been updated.
 
  Will merge to 'master'.
 
@@ -1046,15 +1280,11 @@ of the repositories listed at
 * lt/date-human (2018-07-09) 1 commit
  - Add 'human' date format
 
-
-* mh/fast-import-no-diff-delta-empty (2018-07-06) 1 commit
-  (merged to 'next' on 2018-07-18 at eb393871f4)
- + fast-import: do not call diff_delta() with empty buffer
-
- "git fast-import" has been updated to avoid attempting to create
- delta against a zero-byte-long string, which is pointless.
-
- Will merge to 'master'.
+ A new date format "--date=human" that morphs its output depending
+ on how far the time is from the current time has been introduced.
+ "--date=auto" can be used to use this new format when the output is
+ goint to the pager or to the terminal and otherwise the default
+ format.
 
 
 * ot/ref-filter-object-info (2018-07-17) 5 commits
@@ -1073,82 +1303,20 @@ of the repositories listed at
  What's the doneness of this one?
 
 
-* pk/rebase-in-c (2018-07-09) 4 commits
+* pk/rebase-in-c (2018-07-23) 4 commits
  - builtin/rebase: support running "git rebase <upstream>"
  - sequencer: refactor the code to detach HEAD to checkout.c
  - rebase: refactor common shell functions into their own file
  - rebase: start implementing it as a builtin
 
  Piecemeal rewrite of the "rebase" machinery in C.
-
  Expecting a reroll, but it seems that this is getting quite close.
  cf. <CAOZc8M8YmLwJOzG-1jyz8ft4W_tJMwNs6kSV8inX1q_zmDW8Sg@mail.gmail.com>
 
 
-* tb/config-default (2018-07-06) 1 commit
-  (merged to 'next' on 2018-07-18 at 7994476f6f)
- + builtin/config: work around an unsized array forward declaration
-
- Compilation fix.
-
- Will merge to 'master'.
-
-
-* bp/log-ref-write-fd-with-strbuf (2018-07-10) 1 commit
-  (merged to 'next' on 2018-07-18 at 25a3a99528)
- + convert log_ref_write_fd() to use strbuf
-
- Code clean-up.
-
- Will merge to 'master'.
-
-
-* hs/push-cert-check-cleanup (2018-07-11) 2 commits
-  (merged to 'next' on 2018-07-18 at 1ed25fbd77)
- + gpg-interface: make parse_gpg_output static and remove from interface header
- + builtin/receive-pack: use check_signature from gpg-interface
- (this branch is used by hs/gpgsm.)
-
- Code clean-up.
-
- Will merge to 'master'.
-
-
-* mk/merge-in-sparse-checkout (2018-07-11) 1 commit
-  (merged to 'next' on 2018-07-18 at d2a6d2684d)
- + unpack-trees: do not fail reset because of unmerged skipped entry
-
- "git reset --merge" (hence "git merge ---abort") and "git reset --hard"
- had trouble working correctly in a sparsely checked out working
- tree after a conflict, which has been corrected.
-
- Will merge to 'master'.
-
-
-* as/sequencer-customizable-comment-char (2018-07-16) 1 commit
-  (merged to 'next' on 2018-07-18 at 4163e23f29)
- + sequencer: use configured comment character
-
- Honor core.commentchar when preparing the list of commits to replay
- in "rebase -i".
-
- Will merge to 'master'.
-
-
-* jt/connectivity-check-after-unshallow (2018-07-03) 1 commit
-  (merged to 'next' on 2018-07-18 at 8e7ee889c3)
- + fetch-pack: write shallow, then check connectivity
- (this branch is used by jt/partial-clone-fsck-connectivity and jt/tags-to-promised-blobs-fix; uses bw/ref-in-want.)
-
- "git fetch" failed to correctly validate the set of objects it
- received when making a shallow history deeper, which has been
- corrected.
-
- Will merge to 'master'.
-
-
 * jt/fetch-nego-tip (2018-07-03) 1 commit
- - fetch-pack: support negotiation tip whitelist
+  (merged to 'next' on 2018-07-24 at a9e299006d)
+ + fetch-pack: support negotiation tip whitelist
  (this branch uses jt/fetch-pack-negotiator; is tangled with jt/fetch-negotiator-skipping.)
 
  "git fetch" learned a new option "--negotiation-tip" to limit the
@@ -1157,71 +1325,15 @@ of the repositories listed at
  repository has a lot of refs that have little to do with the
  history at the remote it is fetching from.
 
- Will merge to 'next'.
-
-
-* rj/submodule-fsck-skip (2018-07-03) 1 commit
-  (merged to 'next' on 2018-07-11 at 985f88cf7e)
- + fsck: check skiplist for object in fsck_blob()
-
- "fsck.skipList" did not prevent a blob object listed there from
- being inspected for is contents (e.g. we recently started to
- inspect the contents of ".gitmodules" for certain malicious
- patterns), which has been corrected.
-
  Will merge to 'master'.
 
 
 * tb/grep-only-matching (2018-07-09) 2 commits
- - grep.c: teach 'git grep --only-matching'
- - grep.c: extract show_line_header()
+  (merged to 'next' on 2018-07-24 at 7e878b9d95)
+ + grep.c: teach 'git grep --only-matching'
+ + grep.c: extract show_line_header()
 
  "git grep" learned the "--only-matching" option.
-
- Will merge to 'next'.
-
-
-* bw/ref-in-want (2018-06-28) 8 commits
-  (merged to 'next' on 2018-07-18 at 7e9f8db37c)
- + fetch-pack: implement ref-in-want
- + fetch-pack: put shallow info in output parameter
- + fetch: refactor to make function args narrower
- + fetch: refactor fetch_refs into two functions
- + fetch: refactor the population of peer ref OIDs
- + upload-pack: test negotiation with changing repository
- + upload-pack: implement ref-in-want
- + test-pkt-line: add unpack-sideband subcommand
- (this branch is used by jt/connectivity-check-after-unshallow, jt/partial-clone-fsck-connectivity and jt/tags-to-promised-blobs-fix.)
-
- Protocol v2 has been updated to allow slightly out-of-sync set of
- servers to work together to serve a single client, which would be
- useful with load-balanced servers that talk smart HTTP transport.
-
- Will merge to 'master'.
-
-
-* en/rebase-consistency (2018-06-27) 9 commits
-  (merged to 'next' on 2018-07-18 at d597206c79)
- + git-rebase: make --allow-empty-message the default
- + t3401: add directory rename testcases for rebase and am
- + git-rebase.txt: document behavioral differences between modes
- + directory-rename-detection.txt: technical docs on abilities and limitations
- + git-rebase.txt: address confusion between --no-ff vs --force-rebase
- + git-rebase: error out when incompatible options passed
- + t3422: new testcases for checking when incompatible options passed
- + git-rebase.sh: update help messages a bit
- + git-rebase.txt: document incompatible options
-
- "git rebase" behaved slightly differently depending on which one of
- the three backends gets used; this has been documented and an
- effort to make them more uniform has begun.
-
- Will merge to 'master'.
-
-
-* sb/submodule-move-head-error-msg (2018-06-25) 1 commit
-  (merged to 'next' on 2018-07-18 at 9e213ad1aa)
- + submodule.c: report the submodule that an error occurs in
 
  Will merge to 'master'.
 
@@ -1246,7 +1358,7 @@ of the repositories listed at
  - fetch-object: make functions return an error code
 
 
-* ds/multi-pack-index (2018-07-12) 23 commits
+* ds/multi-pack-index (2018-07-20) 23 commits
  - midx: clear midx on repack
  - packfile: skip loading index if in multi-pack-index
  - midx: prevent duplicate packfile loads
@@ -1276,87 +1388,89 @@ of the repositories listed at
  consulting many pack .idx files; a new mechanism to have a single
  file that consolidates all of these .idx files is introduced.
 
- What's the doneness of this one?  I vaguely recall that there was
- an objection against the concept as a whole (i.e. there is a way
- with less damage to gain the same object-abbrev performance); has
- it (and if anything else, they) been resolved in satisfactory
- fashion?
+ Ready to move to 'next', with some known issues to be followed up?
+ cf. <xmqqefg8uplg.fsf@gitster-ct.c.googlers.com>
+ cf. <CAPig+cTU--KrGcv4C_CwBZEuec4dgm_tJqL=CFWKT6vxxR016w@mail.gmail.com>
 
 
 * jt/fetch-pack-negotiator (2018-06-15) 7 commits
- - fetch-pack: introduce negotiator API
- - fetch-pack: move common check and marking together
- - fetch-pack: make negotiation-related vars local
- - fetch-pack: use ref adv. to prune "have" sent
- - fetch-pack: directly end negotiation if ACK ready
- - fetch-pack: clear marks before re-marking
- - fetch-pack: split up everything_local()
+  (merged to 'next' on 2018-07-24 at 438efcd6b1)
+ + fetch-pack: introduce negotiator API
+ + fetch-pack: move common check and marking together
+ + fetch-pack: make negotiation-related vars local
+ + fetch-pack: use ref adv. to prune "have" sent
+ + fetch-pack: directly end negotiation if ACK ready
+ + fetch-pack: clear marks before re-marking
+ + fetch-pack: split up everything_local()
  (this branch is used by jt/fetch-nego-tip and jt/fetch-negotiator-skipping.)
 
  Code restructuring and a small fix to transport protocol v2 during
  fetching.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * is/parsing-line-range (2018-06-15) 2 commits
- - log: prevent error if line range ends past end of file
- - blame: prevent error if range ends past end of file
+  (merged to 'next' on 2018-07-24 at a06b453f32)
+ + log: prevent error if line range ends past end of file
+ + blame: prevent error if range ends past end of file
 
  Parsing of -L[<N>][,[<M>]] parameters "git blame" and "git log"
  take has been tweaked.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ab/checkout-default-remote (2018-06-11) 8 commits
- - checkout & worktree: introduce checkout.defaultRemote
- - checkout: add advice for ambiguous "checkout <branch>"
- - builtin/checkout.c: use "ret" variable for return
- - checkout: pass the "num_matches" up to callers
- - checkout.c: change "unique" member to "num_matches"
- - checkout.c: introduce an *_INIT macro
- - checkout.h: wrap the arguments to unique_tracking_name()
- - checkout tests: index should be clean after dwim checkout
+  (merged to 'next' on 2018-07-24 at 6ef645f485)
+ + checkout & worktree: introduce checkout.defaultRemote
+ + checkout: add advice for ambiguous "checkout <branch>"
+ + builtin/checkout.c: use "ret" variable for return
+ + checkout: pass the "num_matches" up to callers
+ + checkout.c: change "unique" member to "num_matches"
+ + checkout.c: introduce an *_INIT macro
+ + checkout.h: wrap the arguments to unique_tracking_name()
+ + checkout tests: index should be clean after dwim checkout
 
  "git checkout" and "git worktree add" learned to honor
  checkout.defaultRemote when auto-vivifying a local branch out of a
  remote tracking branch in a repository with multiple remotes that
  have tracking branches that share the same names.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ds/commit-graph-fsck (2018-07-16) 23 commits
- - coccinelle: update commit.cocci
- - commit-graph: update design document
- - gc: automatically write commit-graph files
- - commit-graph: add '--reachable' option
- - commit-graph: use string-list API for input
- - fsck: verify commit-graph
- - commit-graph: verify contents match checksum
- - commit-graph: test for corrupted octopus edge
- - commit-graph: verify commit date
- - commit-graph: verify generation number
- - commit-graph: verify parent list
- - commit-graph: verify root tree OIDs
- - commit-graph: verify objects exist
- - commit-graph: verify corrupt OID fanout and lookup
- - commit-graph: verify required chunks are present
- - commit-graph: verify catches corrupt signature
- - commit-graph: add 'verify' subcommand
- - commit-graph: load a root tree from specific graph
- - commit: force commit to parse from object database
- - commit-graph: parse commit from chosen graph
- - commit-graph: fix GRAPH_MIN_SIZE
- - commit-graph: UNLEAK before die()
- - t5318-commit-graph.sh: use core.commitGraph
- (this branch is used by jt/commit-graph-per-object-store.)
+  (merged to 'next' on 2018-07-24 at 6a802adc7a)
+ + coccinelle: update commit.cocci
+ + commit-graph: update design document
+ + gc: automatically write commit-graph files
+ + commit-graph: add '--reachable' option
+ + commit-graph: use string-list API for input
+ + fsck: verify commit-graph
+ + commit-graph: verify contents match checksum
+ + commit-graph: test for corrupted octopus edge
+ + commit-graph: verify commit date
+ + commit-graph: verify generation number
+ + commit-graph: verify parent list
+ + commit-graph: verify root tree OIDs
+ + commit-graph: verify objects exist
+ + commit-graph: verify corrupt OID fanout and lookup
+ + commit-graph: verify required chunks are present
+ + commit-graph: verify catches corrupt signature
+ + commit-graph: add 'verify' subcommand
+ + commit-graph: load a root tree from specific graph
+ + commit: force commit to parse from object database
+ + commit-graph: parse commit from chosen graph
+ + commit-graph: fix GRAPH_MIN_SIZE
+ + commit-graph: UNLEAK before die()
+ + t5318-commit-graph.sh: use core.commitGraph
+ (this branch is used by ds/commit-graph-with-grafts, ds/reachable and jt/commit-graph-per-object-store.)
 
  "git fsck" learns to make sure the optional commit-graph file is in
  a sane state.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ma/wrapped-info (2018-05-28) 2 commits
@@ -1371,123 +1485,39 @@ of the repositories listed at
 
 
 * jm/cache-entry-from-mem-pool (2018-07-03) 8 commits
- - block alloc: add validations around cache_entry lifecyle
- - block alloc: allocate cache entries from mem_pool
- - mem-pool: fill out functionality
- - mem-pool: add life cycle management functions
- - mem-pool: only search head block for available space
- - block alloc: add lifecycle APIs for cache_entry structs
- - read-cache: teach make_cache_entry to take object_id
- - read-cache: teach refresh_cache_entry to take istate
+  (merged to 'next' on 2018-07-24 at 9be51a88dc)
+ + block alloc: add validations around cache_entry lifecyle
+ + block alloc: allocate cache entries from mem_pool
+ + mem-pool: fill out functionality
+ + mem-pool: add life cycle management functions
+ + mem-pool: only search head block for available space
+ + block alloc: add lifecycle APIs for cache_entry structs
+ + read-cache: teach make_cache_entry to take object_id
+ + read-cache: teach refresh_cache_entry to take istate
 
  For a large tree, the index needs to hold many cache entries
  allocated on heap.  These cache entries are now allocated out of a
  dedicated memory pool to amortize malloc(3) overhead.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
  This makes each cache-entry larger by either 4 or 8 bytes, which is
  a bit sad, though.
 
 
-* sb/diff-color-move-more (2018-07-17) 9 commits
- - diff.c: add white space mode to move detection that allows indent changes
- - diff.c: factor advance_or_nullify out of mark_color_as_moved
- - diff.c: decouple white space treatment from move detection algorithm
- - diff.c: add a blocks mode for moved code detection
- - diff.c: adjust hash function signature to match hashmap expectation
- - diff.c: do not pass diff options as keydata to hashmap
- - t4015: avoid git as a pipe input
- - xdiff/xdiffi.c: remove unneeded function declarations
- - xdiff/xdiff.h: remove unused flags
+* sb/diff-color-move-more (2018-07-19) 10 commits
+  (merged to 'next' on 2018-07-24 at 89c893cab2)
+ + diff.c: offer config option to control ws handling in move detection
+ + diff.c: add white space mode to move detection that allows indent changes
+ + diff.c: factor advance_or_nullify out of mark_color_as_moved
+ + diff.c: decouple white space treatment from move detection algorithm
+ + diff.c: add a blocks mode for moved code detection
+ + diff.c: adjust hash function signature to match hashmap expectation
+ + diff.c: do not pass diff options as keydata to hashmap
+ + t4015: avoid git as a pipe input
+ + xdiff/xdiffi.c: remove unneeded function declarations
+ + xdiff/xdiff.h: remove unused flags
 
  "git diff --color-moved" feature has further been tweaked.
 
- Will merge to 'next'.
-
---------------------------------------------------
-[Discarded]
-
-* ag/rebase-i-append-todo-help (2018-06-14) 2 commits
- . rebase--interactive: rewrite append_todo_help() in C
- . Merge branch 'ag/rebase-p' into ag/rebase-i-append-todo-help
- (this branch is used by ag/rebase-i-rewrite-todo.)
-
- Stepwise rewriting of the machinery of "rebase -i" into C continues.
-
- Now part of ag/rebase-i-in-c
-
-
-* ag/rebase-i-rewrite-todo (2018-06-15) 3 commits
- . rebase--interactive: rewrite the edit-todo functionality in C
- . editor: add a function to launch the sequence editor
- . Merge branch 'bc/t3430-fixup' into ag/rebase-i-rewrite-todo
- (this branch uses ag/rebase-i-append-todo-help.)
-
- Stepwise rewriting of the machinery of "rebase -i" into C continues.
-
- Now part of ag/rebase-i-in-c
-
-
-* ab/fetch-tags-noclobber (2018-05-16) 9 commits
- - fixup! push tests: assert re-pushing annotated tags
- - fetch: stop clobbering existing tags without --force
- - fetch tests: add a test clobbering tag behavior
- - fetch tests: correct a comment "remove it" -> "remove them"
- - push doc: correct lies about how push refspecs work
- - push tests: assert re-pushing annotated tags
- - push tests: add more testing for forced tag pushing
- - push tests: fix logic error in "push" test assertion
- - push tests: remove redundant 'git push' invocation
-
- Discarded per request.
- cf. <87po09cnir.fsf@evledraar.gmail.com>
-
-
-* nd/use-the-index-compat-less (2018-06-25) 13 commits
- . wt-status.c: stop using index compat macros
- . sha1-name.c: stop using index compat macros
- . sequencer.c: stop using index compat macros
- . revision.c: stop using index compat macros
- . rerere.c: stop using index compat macros
- . merge.c: stop using index compat macros
- . merge-recursive.c: stop using index compat macros
- . entry.c: stop using index compat macros
- . diff.c: stop using index compat macros
- . diff-lib.c: stop using index compat macros
- . check-racy.c: stop using index compat macros
- . blame.c: stop using index compat macros
- . apply.c: stop using index compat macros
-
- Retracted to be replaced with a more vertical approach where the
- lower-level helper functions are taught to be capable of working on
- an istate instance that is not the_index first, and then upwards to
- support the application layer that wants to work on an arbitrary
- istate instance, as the goal is not a mechanical replacement of
- foo_cache(...) to foo_index(&the_index, ...).
-
-
-* js/branch-diff (2018-05-16) 19 commits
- . fixup! Add a function to solve least-cost assignment problems
- . completion: support branch-diff
- . branch-diff: add a man page
- . branch-diff --dual-color: work around bogus white-space warning
- . branch-diff: offer to dual-color the diffs
- . diff: add an internal option to dual-color diffs of diffs
- . color: provide inverted colors, too
- . branch-diff: use color for the commit pairs
- . branch-diff: add tests
- . branch-diff: do not show "function names" in hunk headers
- . branch-diff: adjust the output of the commit pairs
- . branch-diff: suppress the diff headers
- . branch-diff: indent the diffs just like tbdiff
- . branch-diff: right-trim commit messages
- . branch-diff: also show the diff between patches
- . branch-diff: improve the order of the shown commits
- . branch-diff: first rudimentary implementation
- . Add a new builtin: branch-diff
- . Add a function to solve least-cost assignment problems
-
- "git tbdiff" that lets us compare individual patches in two
- iterations of a topic has been rewritten and made into a built-in
- command.
+ Will merge to 'master'.
