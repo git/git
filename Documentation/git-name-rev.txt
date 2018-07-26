@@ -61,6 +61,10 @@ OPTIONS
 --always::
 	Show uniquely abbreviated commit object as fallback.
 
+--cherry-picks::
+	Also show the commits cherry-picked from the target commits.
+	Cherry-picks are shown indented below their from-commmits.
+
 EXAMPLES
 --------
 

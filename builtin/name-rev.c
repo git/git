@@ -7,8 +7,12 @@
 #include "parse-options.h"
 #include "sha1-lookup.h"
 #include "commit-slab.h"
+#include "trailer.h"
+#include "object-store.h"
 
 #define CUTOFF_DATE_SLOP 86400 /* one day */
+
+static const char cherry_picked_prefix[] = "(cherry picked from commit ";
 
 typedef struct rev_name {
 	const char *tip_name;
@@ -19,9 +23,12 @@ typedef struct rev_name {
 } rev_name;
 
 define_commit_slab(commit_rev_name, struct rev_name *);
+define_commit_slab(commit_cherry_picks, struct object_array *);
 
 static timestamp_t cutoff = TIME_MAX;
 static struct commit_rev_name rev_names;
+static struct commit_cherry_picks cherry_picks;
+static int do_cherry_picks = 0;
 
 /* How many generations are maximally preferred over _one_ merge traversal? */
 #define MERGE_TRAVERSAL_WEIGHT 65535
@@ -36,6 +43,26 @@ static struct rev_name *get_commit_rev_name(struct commit *commit)
 static void set_commit_rev_name(struct commit *commit, struct rev_name *name)
 {
 	*commit_rev_name_at(&rev_names, commit) = name;
+}
+
+static struct object_array *get_commit_cherry_picks(struct commit *commit)
+{
+	struct object_array **slot =
+		commit_cherry_picks_peek(&cherry_picks, commit);
+
+	return slot ? *slot : NULL;
+}
+
+static struct object_array *get_create_commit_cherry_picks(struct commit *commit)
+{
+	struct object_array **slot =
+		commit_cherry_picks_at(&cherry_picks, commit);
+
+	if (!*slot) {
+		*slot = xmalloc(sizeof(struct object_array));
+		**slot = (struct object_array)OBJECT_ARRAY_INIT;
+	}
+	return *slot;
 }
 
 static int is_better_name(struct rev_name *name,
@@ -76,6 +103,47 @@ static int is_better_name(struct rev_name *name,
 	return 0;
 }
 
+static void record_cherry_pick(struct commit *commit)
+{
+	enum object_type type;
+	unsigned long size;
+	void *buffer;
+	struct trailer_info info;
+	int i;
+
+	buffer = read_object_file(&commit->object.oid, &type, &size);
+	trailer_info_get(&info, buffer);
+
+	/* when nested, the last trailer describes the latest cherry-pick */
+	for (i = info.trailer_nr - 1; i >= 0; i--) {
+		const int prefix_len = sizeof(cherry_picked_prefix) - 1;
+		char *line = info.trailers[i];
+
+		if (!strncmp(line, cherry_picked_prefix, prefix_len)) {
+			struct object_id from_oid;
+			struct object *from_object;
+			struct commit *from_commit;
+			struct object_array *from_cps;
+
+			if (get_oid_hex(line + prefix_len, &from_oid)) {
+				fprintf(stderr, "Could not get sha1 from %s", line);
+				break;
+			}
+
+			from_object = parse_object(&from_oid);
+			if (!from_object || from_object->type != OBJ_COMMIT)
+				break;
+
+			from_commit = (struct commit *)from_object;
+			from_cps = get_create_commit_cherry_picks(from_commit);
+			add_object_array(&commit->object, NULL, from_cps);
+			break;
+		}
+	}
+
+	free(buffer);
+}
+
 static void name_rev(struct commit *commit,
 		const char *tip_name, timestamp_t taggerdate,
 		int generation, int distance, int from_tag,
@@ -90,6 +158,10 @@ static void name_rev(struct commit *commit,
 
 	if (commit->date < cutoff)
 		return;
+
+	/* if a cherry pick we see for the first time, remember it */
+	if (do_cherry_picks && !name)
+		record_cherry_pick(commit);
 
 	if (deref) {
 		tip_name = to_free = xstrfmt("%s^0", tip_name);
@@ -402,6 +474,32 @@ static void name_rev_line(char *p, struct name_ref_data *data)
 	strbuf_release(&buf);
 }
 
+static void show_cherry_picks(struct object *obj, int always,
+			      int allow_undefined, int name_only, int level)
+{
+	struct object_array *cps;
+	int i;
+
+	if (obj->type != OBJ_COMMIT)
+		return;
+
+	cps = get_commit_cherry_picks((struct commit *)obj);
+	if (!cps)
+		return;
+
+	for (i = 0; i < cps->nr; i++) {
+		struct object *cherry_pick = cps->objects[i].item;
+		int j;
+
+		for (j = 0; j < level; j++)
+			fputs("  ", stdout);
+
+		show_name(cherry_pick, NULL, always, allow_undefined, name_only);
+		show_cherry_picks(cherry_pick, always, allow_undefined,
+				  name_only, level + 1);
+	}
+}
+
 int cmd_name_rev(int argc, const char **argv, const char *prefix)
 {
 	struct object_array revs = OBJECT_ARRAY_INIT;
@@ -420,6 +518,7 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 		OPT_BOOL(0, "undefined", &allow_undefined, N_("allow to print `undefined` names (default)")),
 		OPT_BOOL(0, "always",     &always,
 			   N_("show abbreviated commit object as fallback")),
+		OPT_BOOL(0, "cherry-picks", &do_cherry_picks, N_("include cherry-picked commits")),
 		{
 			/* A Hidden OPT_BOOL */
 			OPTION_SET_INT, 0, "peel-tag", &peel_tag, NULL,
@@ -430,6 +529,7 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 	};
 
 	init_commit_rev_name(&rev_names);
+	init_commit_cherry_picks(&cherry_picks);
 	git_config(git_default_config, NULL);
 	argc = parse_options(argc, argv, prefix, opts, name_rev_usage, 0);
 	if (all + transform_stdin + !!argc > 1) {
@@ -464,10 +564,9 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 			continue;
 		}
 
-		if (commit) {
+		if (commit)
 			if (cutoff > commit->date)
 				cutoff = commit->date;
-		}
 
 		if (peel_tag) {
 			if (!commit) {
@@ -506,9 +605,17 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 		}
 	} else {
 		int i;
-		for (i = 0; i < revs.nr; i++)
-			show_name(revs.objects[i].item, revs.objects[i].name,
-				  always, allow_undefined, data.name_only);
+		for (i = 0; i < revs.nr; i++) {
+			struct object *obj = revs.objects[i].item;
+			const char *name = revs.objects[i].name;
+
+			show_name(obj, name, always, allow_undefined,
+				  data.name_only);
+
+			if (do_cherry_picks)
+				show_cherry_picks(obj, always, allow_undefined,
+						  data.name_only, 1);
+		}
 	}
 
 	UNLEAK(revs);

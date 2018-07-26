@@ -60,6 +60,11 @@ OPTIONS
 	the tag that comes after the commit, and thus contains it.
 	Automatically implies --tags.
 
+--cherry-picks::
+	Also show the commits cherry-picked from the target commits.
+	Cherry-picks are shown indented below their from-commmits.
+	Can only be used with --contains.
+
 --abbrev=<n>::
 	Instead of using the default 7 hexadecimal digits as the
 	abbreviated object name, use <n> digits, or as many digits
