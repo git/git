@@ -528,9 +528,10 @@ static void describe(const char *arg, int last_one)
 
 int cmd_describe(int argc, const char **argv, const char *prefix)
 {
-	int contains = 0;
+	int contains = 0, cherry_picks = 0;
 	struct option options[] = {
 		OPT_BOOL(0, "contains",   &contains, N_("find the tag that comes after the commit")),
+		OPT_BOOL(0, "cherry-picks", &cherry_picks, N_("also include cherry-picks with --contains")),
 		OPT_BOOL(0, "debug",      &debug, N_("debug search strategy on stderr")),
 		OPT_BOOL(0, "all",        &all, N_("use any ref")),
 		OPT_BOOL(0, "tags",       &tags, N_("use any tag, even unannotated")),
@@ -570,6 +571,8 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 
 	if (longformat && abbrev == 0)
 		die(_("--long is incompatible with --abbrev=0"));
+	if (cherry_picks && !contains)
+		die(_("--cherry-picks can only be used with --contains"));
 
 	if (contains) {
 		struct string_list_item *item;
@@ -579,6 +582,8 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 		argv_array_pushl(&args, "name-rev",
 				 "--peel-tag", "--name-only", "--no-undefined",
 				 NULL);
+		if (cherry_picks)
+			argv_array_push(&args, "--cherry-picks");
 		if (always)
 			argv_array_push(&args, "--always");
 		if (!all) {
