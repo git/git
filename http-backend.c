@@ -373,6 +373,8 @@ static void inflate_request(const char *prog_name, int out, int buffer_input, ss
 	unsigned char in_buf[8192];
 	unsigned char out_buf[8192];
 	unsigned long cnt = 0;
+	int req_len_defined = req_len >= 0;
+	size_t req_remaining_len = req_len;
 
 	memset(&stream, 0, sizeof(stream));
 	git_inflate_init_gzip_only(&stream);
@@ -387,8 +389,15 @@ static void inflate_request(const char *prog_name, int out, int buffer_input, ss
 				n = read_request(0, &full_request, req_len);
 			stream.next_in = full_request;
 		} else {
-			n = xread(0, in_buf, sizeof(in_buf));
+			ssize_t buffer_len;
+			if (req_len_defined && req_remaining_len <= sizeof(in_buf))
+				buffer_len = req_remaining_len;
+			else
+				buffer_len = sizeof(in_buf);
+			n = xread(0, in_buf, buffer_len);
 			stream.next_in = in_buf;
+			if (req_len_defined && n > 0)
+				req_remaining_len -= n;
 		}
 
 		if (n <= 0)
@@ -431,6 +440,23 @@ static void copy_request(const char *prog_name, int out, ssize_t req_len)
 	free(buf);
 }
 
+static void pipe_fixed_length(const char *prog_name, int out, size_t req_len)
+{
+	unsigned char buf[8192];
+	size_t remaining_len = req_len;
+
+	while (remaining_len > 0) {
+		size_t chunk_length = remaining_len > sizeof(buf) ? sizeof(buf) : remaining_len;
+		ssize_t n = xread(0, buf, chunk_length);
+		if (n < 0)
+			die_errno("Reading request failed");
+		write_to_child(out, buf, n, prog_name);
+		remaining_len -= n;
+	}
+
+	close(out);
+}
+
 static void run_service(const char **argv, int buffer_input)
 {
 	const char *encoding = getenv("HTTP_CONTENT_ENCODING");
@@ -457,7 +483,7 @@ static void run_service(const char **argv, int buffer_input)
 				 "GIT_COMMITTER_EMAIL=%s@http.%s", user, host);
 
 	cld.argv = argv;
-	if (buffer_input || gzipped_request)
+	if (buffer_input || gzipped_request || req_len >= 0)
 		cld.in = -1;
 	cld.git_cmd = 1;
 	if (start_command(&cld))
@@ -468,6 +494,8 @@ static void run_service(const char **argv, int buffer_input)
 		inflate_request(argv[0], cld.in, buffer_input, req_len);
 	else if (buffer_input)
 		copy_request(argv[0], cld.in, req_len);
+	else if (req_len >= 0)
+		pipe_fixed_length(argv[0], cld.in, req_len);
 	else
 		close(0);
 
