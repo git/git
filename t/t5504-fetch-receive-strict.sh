@@ -149,8 +149,6 @@ test_expect_success 'push with receive.fsck.missingEmail=warn' '
 	git --git-dir=dst/.git branch -D bogus &&
 	git --git-dir=dst/.git config --add \
 		receive.fsck.missingEmail ignore &&
-	git --git-dir=dst/.git config --add \
-		receive.fsck.badDate warn &&
 	git push --porcelain dst bogus >act 2>&1 &&
 	! grep "missingEmail" act
 '
