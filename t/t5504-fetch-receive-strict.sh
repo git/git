@@ -3,13 +3,16 @@
 test_description='fetch/receive strict mode'
 . ./test-lib.sh
 
-test_expect_success setup '
+test_expect_success 'setup and inject "corrupt or missing" object' '
 	echo hello >greetings &&
 	git add greetings &&
 	git commit -m greetings &&
 
 	S=$(git rev-parse :greetings | sed -e "s|^..|&/|") &&
 	X=$(echo bye | git hash-object -w --stdin | sed -e "s|^..|&/|") &&
+	echo $S >S &&
+	echo $X >X &&
+	cp .git/objects/$S .git/objects/$S.back &&
 	mv -f .git/objects/$X .git/objects/$S &&
 
 	test_must_fail git fsck
@@ -113,6 +116,13 @@ test_expect_success 'push with transfer.fsckobjects' '
 	) &&
 	test_must_fail git push --porcelain dst master:refs/heads/test >act &&
 	test_cmp exp act
+'
+
+test_expect_success 'repair the "corrupt or missing" object' '
+	mv -f .git/objects/$(cat S) .git/objects/$(cat X) &&
+	mv .git/objects/$(cat S).back .git/objects/$(cat S) &&
+	rm -rf .git/objects/$(cat X) &&
+	git fsck
 '
 
 cat >bogus-commit <<EOF
