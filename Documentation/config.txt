@@ -3397,8 +3397,17 @@ transfer.fsckObjects::
 	Defaults to false.
 +
 When set, the fetch or receive will abort in the case of a malformed
-object or a broken link. The result of an abort are only dangling
-objects.
+object or a link to a nonexistent object. In addition, various other
+issues are checked for, including legacy issues (see `fsck.<msg-id>`),
+and potential security issues like the existence of a `.GIT` directory
+or a malicious `.gitmodules` file (see the release notes for v2.2.1
+and v2.17.1 for details). Other sanity and security checks may be
+added in future releases.
++
+On the receiving side, failing fsckObjects will make those objects
+unreachable, see "QUARANTINE ENVIRONMENT" in
+linkgit:git-receive-pack[1]. On the fetch side, malformed objects will
+instead be left unreferenced in the repository.
 
 transfer.hideRefs::
 	String(s) `receive-pack` and `upload-pack` use to decide which
