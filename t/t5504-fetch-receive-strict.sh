@@ -140,8 +140,13 @@ test_expect_success 'push with receive.fsck.skipList' '
 	git init dst &&
 	git --git-dir=dst/.git config receive.fsckObjects true &&
 	test_must_fail git push --porcelain dst bogus &&
-	git --git-dir=dst/.git config receive.fsck.skipList SKIP &&
 	echo $commit >dst/.git/SKIP &&
+
+	# receive.fsck.* does not fall back on fsck.*
+	git --git-dir=dst/.git config fsck.skipList SKIP &&
+	test_must_fail git push --porcelain dst bogus &&
+
+	git --git-dir=dst/.git config receive.fsck.skipList SKIP &&
 	git push --porcelain dst bogus
 '
 
@@ -153,8 +158,15 @@ test_expect_success 'fetch with fetch.fsck.skipList' '
 	git init dst &&
 	git --git-dir=dst/.git config fetch.fsckObjects true &&
 	test_must_fail git --git-dir=dst/.git fetch "file://$(pwd)" $refspec &&
-	git --git-dir=dst/.git config fetch.fsck.skipList dst/.git/SKIP &&
+	git --git-dir=dst/.git config fetch.fsck.skipList /dev/null &&
+	test_must_fail git --git-dir=dst/.git fetch "file://$(pwd)" $refspec &&
 	echo $commit >dst/.git/SKIP &&
+
+	# fetch.fsck.* does not fall back on fsck.*
+	git --git-dir=dst/.git config fsck.skipList dst/.git/SKIP &&
+	test_must_fail git --git-dir=dst/.git fetch "file://$(pwd)" $refspec &&
+
+	git --git-dir=dst/.git config fetch.fsck.skipList dst/.git/SKIP &&
 	git --git-dir=dst/.git fetch "file://$(pwd)" $refspec
 '
 
@@ -166,6 +178,11 @@ test_expect_success 'push with receive.fsck.missingEmail=warn' '
 	git init dst &&
 	git --git-dir=dst/.git config receive.fsckobjects true &&
 	test_must_fail git push --porcelain dst bogus &&
+
+	# receive.fsck.<msg-id> does not fall back on fsck.<msg-id>
+	git --git-dir=dst/.git config fsck.missingEmail warn &&
+	test_must_fail git push --porcelain dst bogus &&
+
 	git --git-dir=dst/.git config \
 		receive.fsck.missingEmail warn &&
 	git push --porcelain dst bogus >act 2>&1 &&
@@ -185,6 +202,11 @@ test_expect_success 'fetch with fetch.fsck.missingEmail=warn' '
 	git init dst &&
 	git --git-dir=dst/.git config fetch.fsckobjects true &&
 	test_must_fail git --git-dir=dst/.git fetch "file://$(pwd)" $refspec &&
+
+	# fetch.fsck.<msg-id> does not fall back on fsck.<msg-id>
+	git --git-dir=dst/.git config fsck.missingEmail warn &&
+	test_must_fail git --git-dir=dst/.git fetch "file://$(pwd)" $refspec &&
+
 	git --git-dir=dst/.git config \
 		fetch.fsck.missingEmail warn &&
 	git --git-dir=dst/.git fetch "file://$(pwd)" $refspec >act 2>&1 &&

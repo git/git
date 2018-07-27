@@ -1619,6 +1619,12 @@ The rest of the documentation discusses `fsck.*` for brevity, but the
 same applies for the corresponding `receive.fsck.*` and
 `fetch.<msg-id>.*`. variables.
 +
+Unlike variables like `color.ui` and `core.editor` the
+`receive.fsck.<msg-id>` and `fetch.fsck.<msg-id>` variables will not
+fall back on the `fsck.<msg-id>` configuration if they aren't set. To
+uniformly configure the same fsck settings in different circumstances
+all three of them they must all set to the same values.
++
 When `fsck.<msg-id>` is set, errors can be switched to warnings and
 vice versa by configuring the `fsck.<msg-id>` setting where the
 `<msg-id>` is the fsck message ID and the value is one of `error`,
@@ -1642,6 +1648,12 @@ fsck.skipList::
 +
 Like `fsck.<msg-id>` this variable has corresponding
 `receive.fsck.skipList` and `fetch.fsck.skipList` variants.
++
+Unlike variables like `color.ui` and `core.editor` the
+`receive.fsck.skipList` and `fetch.fsck.skipList` variables will not
+fall back on the `fsck.skipList` configuration if they aren't set. To
+uniformly configure the same fsck settings in different circumstances
+all three of them they must all set to the same values.
 
 gc.aggressiveDepth::
 	The depth parameter used in the delta compression
