@@ -1637,6 +1637,10 @@ In general, it is better to enumerate existing objects with problems
 with `fsck.skipList`, instead of listing the kind of breakages these
 problematic objects share to be ignored, as doing the latter will
 allow new instances of the same breakages go unnoticed.
++
+Setting an unknown `fsck.<msg-id>` value will cause fsck to die, but
+doing the same for `receive.fsck.<msg-id>` and `fetch.fsck.<msg-id>`
+will only cause git to warn.
 
 fsck.skipList::
 	The path to a sorted list of object names (i.e. one SHA-1 per

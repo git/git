@@ -198,6 +198,10 @@ test_expect_success 'fetch with fetch.fsck.skipList' '
 	git --git-dir=dst/.git fetch "file://$(pwd)" $refspec
 '
 
+test_expect_success 'fsck.<unknownmsg-id> dies' '
+	test_must_fail git -c fsck.whatEver=ignore fsck 2>err &&
+	test_i18ngrep "Unhandled message id: whatever" err
+'
 
 test_expect_success 'push with receive.fsck.missingEmail=warn' '
 	commit="$(git hash-object -t commit -w --stdin <bogus-commit)" &&
@@ -211,10 +215,15 @@ test_expect_success 'push with receive.fsck.missingEmail=warn' '
 	git --git-dir=dst/.git config fsck.missingEmail warn &&
 	test_must_fail git push --porcelain dst bogus &&
 
+	# receive.fsck.<unknownmsg-id> warns
+	git --git-dir=dst/.git config \
+		receive.fsck.whatEver error &&
+
 	git --git-dir=dst/.git config \
 		receive.fsck.missingEmail warn &&
 	git push --porcelain dst bogus >act 2>&1 &&
 	grep "missingEmail" act &&
+	test_i18ngrep "Skipping unknown msg id.*whatever" act &&
 	git --git-dir=dst/.git branch -D bogus &&
 	git --git-dir=dst/.git config --add \
 		receive.fsck.missingEmail ignore &&
@@ -235,10 +244,15 @@ test_expect_success 'fetch with fetch.fsck.missingEmail=warn' '
 	git --git-dir=dst/.git config fsck.missingEmail warn &&
 	test_must_fail git --git-dir=dst/.git fetch "file://$(pwd)" $refspec &&
 
+	# receive.fsck.<unknownmsg-id> warns
+	git --git-dir=dst/.git config \
+		fetch.fsck.whatEver error &&
+
 	git --git-dir=dst/.git config \
 		fetch.fsck.missingEmail warn &&
 	git --git-dir=dst/.git fetch "file://$(pwd)" $refspec >act 2>&1 &&
 	grep "missingEmail" act &&
+	test_i18ngrep "Skipping unknown msg id.*whatever" act &&
 	rm -rf dst &&
 	git init dst &&
 	git --git-dir=dst/.git config fetch.fsckobjects true &&
