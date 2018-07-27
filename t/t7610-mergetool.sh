@@ -620,8 +620,7 @@ test_expect_success 'file with no base' '
 	git checkout -b test$test_count branch1 &&
 	test_must_fail git merge master &&
 	git mergetool --no-prompt --tool mybase -- both &&
-	>expected &&
-	test_cmp expected both
+	test_must_be_empty both
 '
 
 test_expect_success 'custom commands override built-ins' '

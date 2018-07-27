@@ -796,9 +796,8 @@ test_expect_success ':remotename and :remoteref' '
 '
 
 test_expect_success 'for-each-ref --ignore-case ignores case' '
-	>expect &&
 	git for-each-ref --format="%(refname)" refs/heads/MASTER >actual &&
-	test_cmp expect actual &&
+	test_must_be_empty actual &&
 
 	echo refs/heads/master >expect &&
 	git for-each-ref --format="%(refname)" --ignore-case \

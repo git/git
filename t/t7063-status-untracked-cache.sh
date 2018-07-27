@@ -26,9 +26,8 @@ avoid_racy() {
 }
 
 status_is_clean() {
-	>../status.expect &&
 	git status --porcelain >../status.actual &&
-	test_cmp ../status.expect ../status.actual
+	test_must_be_empty ../status.actual
 }
 
 test_lazy_prereq UNTRACKED_CACHE '

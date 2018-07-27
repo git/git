@@ -64,8 +64,7 @@ test_expect_success 'added submodule (subdirectory only)' "
 		cd sub &&
 		git submodule summary . >../actual
 	) &&
-	>expected &&
-	test_cmp expected actual
+	test_must_be_empty actual
 "
 
 test_expect_success 'added submodule (subdirectory with explicit path)' "

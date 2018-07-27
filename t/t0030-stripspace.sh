@@ -110,31 +110,30 @@ test_expect_success \
 
 test_expect_success \
     'only consecutive blank lines should be completely removed' '
-    > expect &&
 
     printf "\n" | git stripspace >actual &&
-    test_cmp expect actual &&
+    test_must_be_empty actual &&
 
     printf "\n\n\n" | git stripspace >actual &&
-    test_cmp expect actual &&
+    test_must_be_empty actual &&
 
     printf "$sss\n$sss\n$sss\n" | git stripspace >actual &&
-    test_cmp expect actual &&
+    test_must_be_empty actual &&
 
     printf "$sss$sss\n$sss\n\n" | git stripspace >actual &&
-    test_cmp expect actual &&
+    test_must_be_empty actual &&
 
     printf "\n$sss\n$sss$sss\n" | git stripspace >actual &&
-    test_cmp expect actual &&
+    test_must_be_empty actual &&
 
     printf "$sss$sss$sss$sss\n\n\n" | git stripspace >actual &&
-    test_cmp expect actual &&
+    test_must_be_empty actual &&
 
     printf "\n$sss$sss$sss$sss\n\n" | git stripspace >actual &&
-    test_cmp expect actual &&
+    test_must_be_empty actual &&
 
     printf "\n\n$sss$sss$sss$sss\n" | git stripspace >actual &&
-    test_cmp expect actual
+    test_must_be_empty actual
 '
 
 test_expect_success \

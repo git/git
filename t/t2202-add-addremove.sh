@@ -48,8 +48,7 @@ test_expect_success 'Just "git add" is a no-op' '
 	>will-not-be-added &&
 	git add &&
 	git diff-index --name-status --cached HEAD >actual &&
-	>expect &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_done

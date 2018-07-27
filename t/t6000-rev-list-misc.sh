@@ -58,8 +58,7 @@ test_expect_success 'rev-list A..B and rev-list ^A B are the same' '
 
 test_expect_success 'propagate uninteresting flag down correctly' '
 	git rev-list --objects ^HEAD^{tree} HEAD^{tree} >actual &&
-	>expect &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'symleft flag bit is propagated down from tag' '

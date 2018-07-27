@@ -114,11 +114,10 @@ test_expect_success 'Exclusion in a non-XDG global ignore file' '
 '
 
 test_expect_success 'Checking XDG ignore file when HOME is unset' '
-	>expected &&
 	(sane_unset HOME &&
 	 git config --unset core.excludesfile &&
 	 git ls-files --exclude-standard --ignored >actual) &&
-	test_cmp expected actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'Checking attributes in the XDG attributes file' '
@@ -132,10 +131,9 @@ test_expect_success 'Checking attributes in the XDG attributes file' '
 '
 
 test_expect_success 'Checking XDG attributes when HOME is unset' '
-	>expected &&
 	(sane_unset HOME &&
 	 git check-attr -a f >actual) &&
-	test_cmp expected actual
+	test_must_be_empty actual
 '
 
 test_expect_success '$XDG_CONFIG_HOME overrides $HOME/.config/git/attributes' '

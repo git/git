@@ -188,9 +188,8 @@ test_expect_success 'git add --refresh with pathspec' '
 	git add foo bar baz && H=$(git rev-parse :foo) && git rm -f foo &&
 	echo "100644 $H 3	foo" | git update-index --index-info &&
 	test-tool chmtime -60 bar baz &&
-	>expect &&
 	git add --refresh bar >actual &&
-	test_cmp expect actual &&
+	test_must_be_empty actual &&
 
 	git diff-files --name-only >actual &&
 	! grep bar actual&&

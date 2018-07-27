@@ -74,8 +74,7 @@ test_expect_success 'diff-tree pathspec' '
 	tree2=$(git write-tree) &&
 	echo "$tree2" &&
 	git diff-tree -r --name-only $tree $tree2 -- pa path1/a >current &&
-	>expected &&
-	test_cmp expected current
+	test_must_be_empty current
 '
 
 test_expect_success 'diff-tree with wildcard shows dir also matches' '

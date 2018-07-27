@@ -155,14 +155,12 @@ test_expect_success 'die with non-2 for wrong repository even with --exit-code' 
 
 test_expect_success 'Report success even when nothing matches' '
 	git ls-remote other.git "refs/nsn/*" >actual &&
-	>expect &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'Report no-match with --exit-code' '
 	test_expect_code 2 git ls-remote --exit-code other.git "refs/nsn/*" >actual &&
-	>expect &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'Report match with --exit-code' '

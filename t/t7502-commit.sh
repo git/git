@@ -393,7 +393,6 @@ EOF
 
 test_expect_success !AUTOIDENT 'do not fire editor when committer is bogus' '
 	>.git/result &&
-	>expect &&
 
 	echo >>negative &&
 	(
@@ -403,7 +402,7 @@ test_expect_success !AUTOIDENT 'do not fire editor when committer is bogus' '
 		export GIT_EDITOR &&
 		test_must_fail git commit -e -m sample -a
 	) &&
-	test_cmp expect .git/result
+	test_must_be_empty .git/result
 '
 
 test_expect_success 'do not fire editor if -m <msg> was given' '
