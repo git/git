@@ -133,6 +133,14 @@ committer Bugs Bunny <bugs@bun.ni> 1234567890 +0000
 This commit object intentionally broken
 EOF
 
+test_expect_success 'fsck with invalid or bogus skipList input' '
+	git -c fsck.skipList=/dev/null -c fsck.missingEmail=ignore fsck &&
+	test_must_fail git -c fsck.skipList=does-not-exist -c fsck.missingEmail=ignore fsck 2>err &&
+	test_i18ngrep "Could not open skip list: does-not-exist" err &&
+	test_must_fail git -c fsck.skipList=.git/config -c fsck.missingEmail=ignore fsck 2>err &&
+	test_i18ngrep "Invalid SHA-1: \[core\]" err
+'
+
 test_expect_success 'push with receive.fsck.skipList' '
 	commit="$(git hash-object -t commit -w --stdin <bogus-commit)" &&
 	git push . $commit:refs/heads/bogus &&
@@ -145,6 +153,16 @@ test_expect_success 'push with receive.fsck.skipList' '
 	# receive.fsck.* does not fall back on fsck.*
 	git --git-dir=dst/.git config fsck.skipList SKIP &&
 	test_must_fail git push --porcelain dst bogus &&
+
+	# Invalid and/or bogus skipList input
+	git --git-dir=dst/.git config receive.fsck.skipList /dev/null &&
+	test_must_fail git push --porcelain dst bogus &&
+	git --git-dir=dst/.git config receive.fsck.skipList does-not-exist &&
+	test_must_fail git push --porcelain dst bogus 2>err &&
+	test_i18ngrep "Could not open skip list: does-not-exist" err &&
+	git --git-dir=dst/.git config receive.fsck.skipList config &&
+	test_must_fail git push --porcelain dst bogus 2>err &&
+	test_i18ngrep "Invalid SHA-1: \[core\]" err &&
 
 	git --git-dir=dst/.git config receive.fsck.skipList SKIP &&
 	git push --porcelain dst bogus
@@ -165,6 +183,16 @@ test_expect_success 'fetch with fetch.fsck.skipList' '
 	# fetch.fsck.* does not fall back on fsck.*
 	git --git-dir=dst/.git config fsck.skipList dst/.git/SKIP &&
 	test_must_fail git --git-dir=dst/.git fetch "file://$(pwd)" $refspec &&
+
+	# Invalid and/or bogus skipList input
+	git --git-dir=dst/.git config fetch.fsck.skipList /dev/null &&
+	test_must_fail git --git-dir=dst/.git fetch "file://$(pwd)" $refspec &&
+	git --git-dir=dst/.git config fetch.fsck.skipList does-not-exist &&
+	test_must_fail git --git-dir=dst/.git fetch "file://$(pwd)" $refspec 2>err &&
+	test_i18ngrep "Could not open skip list: does-not-exist" err &&
+	git --git-dir=dst/.git config fetch.fsck.skipList dst/.git/config &&
+	test_must_fail git --git-dir=dst/.git fetch "file://$(pwd)" $refspec 2>err &&
+	test_i18ngrep "Invalid SHA-1: \[core\]" err &&
 
 	git --git-dir=dst/.git config fetch.fsck.skipList dst/.git/SKIP &&
 	git --git-dir=dst/.git fetch "file://$(pwd)" $refspec
