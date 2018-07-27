@@ -1463,10 +1463,9 @@ fetch.recurseSubmodules::
 
 fetch.fsckObjects::
 	If it is set to true, git-fetch-pack will check all fetched
-	objects. It will abort in the case of a malformed object or a
-	broken link. The result of an abort are only dangling objects.
-	Defaults to false. If not set, the value of `transfer.fsckObjects`
-	is used instead.
+	objects. See `transfer.fsckObjects` for what's
+	checked. Defaults to false. If not set, the value of
+	`transfer.fsckObjects` is used instead.
 
 fetch.unpackLimit::
 	If the number of objects fetched over the Git native
@@ -2889,10 +2888,9 @@ receive.certNonceSlop::
 
 receive.fsckObjects::
 	If it is set to true, git-receive-pack will check all received
-	objects. It will abort in the case of a malformed object or a
-	broken link. The result of an abort are only dangling objects.
-	Defaults to false. If not set, the value of `transfer.fsckObjects`
-	is used instead.
+	objects. See `transfer.fsckObjects` for what's checked.
+	Defaults to false. If not set, the value of
+	`transfer.fsckObjects` is used instead.
 
 receive.fsck.<msg-id>::
 	When `receive.fsckObjects` is set to true, errors can be switched
@@ -3389,6 +3387,10 @@ transfer.fsckObjects::
 	When `fetch.fsckObjects` or `receive.fsckObjects` are
 	not set, the value of this variable is used instead.
 	Defaults to false.
++
+When set, the fetch or receive will abort in the case of a malformed
+object or a broken link. The result of an abort are only dangling
+objects.
 
 transfer.hideRefs::
 	String(s) `receive-pack` and `upload-pack` use to decide which
