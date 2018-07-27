@@ -145,6 +145,20 @@ test_expect_success 'push with receive.fsck.skipList' '
 	git push --porcelain dst bogus
 '
 
+test_expect_success 'fetch with fetch.fsck.skipList' '
+	commit="$(git hash-object -t commit -w --stdin <bogus-commit)" &&
+	refspec=refs/heads/bogus:refs/heads/bogus &&
+	git push . $commit:refs/heads/bogus &&
+	rm -rf dst &&
+	git init dst &&
+	git --git-dir=dst/.git config fetch.fsckObjects true &&
+	test_must_fail git --git-dir=dst/.git fetch "file://$(pwd)" $refspec &&
+	git --git-dir=dst/.git config fetch.fsck.skipList dst/.git/SKIP &&
+	echo $commit >dst/.git/SKIP &&
+	git --git-dir=dst/.git fetch "file://$(pwd)" $refspec
+'
+
+
 test_expect_success 'push with receive.fsck.missingEmail=warn' '
 	commit="$(git hash-object -t commit -w --stdin <bogus-commit)" &&
 	git push . $commit:refs/heads/bogus &&
@@ -163,6 +177,27 @@ test_expect_success 'push with receive.fsck.missingEmail=warn' '
 	! grep "missingEmail" act
 '
 
+test_expect_success 'fetch with fetch.fsck.missingEmail=warn' '
+	commit="$(git hash-object -t commit -w --stdin <bogus-commit)" &&
+	refspec=refs/heads/bogus:refs/heads/bogus &&
+	git push . $commit:refs/heads/bogus &&
+	rm -rf dst &&
+	git init dst &&
+	git --git-dir=dst/.git config fetch.fsckobjects true &&
+	test_must_fail git --git-dir=dst/.git fetch "file://$(pwd)" $refspec &&
+	git --git-dir=dst/.git config \
+		fetch.fsck.missingEmail warn &&
+	git --git-dir=dst/.git fetch "file://$(pwd)" $refspec >act 2>&1 &&
+	grep "missingEmail" act &&
+	rm -rf dst &&
+	git init dst &&
+	git --git-dir=dst/.git config fetch.fsckobjects true &&
+	git --git-dir=dst/.git config \
+		fetch.fsck.missingEmail ignore &&
+	git --git-dir=dst/.git fetch "file://$(pwd)" $refspec >act 2>&1 &&
+	! grep "missingEmail" act
+'
+
 test_expect_success \
 	'receive.fsck.unterminatedHeader=warn triggers error' '
 	rm -rf dst &&
@@ -171,6 +206,17 @@ test_expect_success \
 	git --git-dir=dst/.git config \
 		receive.fsck.unterminatedheader warn &&
 	test_must_fail git push --porcelain dst HEAD >act 2>&1 &&
+	grep "Cannot demote unterminatedheader" act
+'
+
+test_expect_success \
+	'fetch.fsck.unterminatedHeader=warn triggers error' '
+	rm -rf dst &&
+	git init dst &&
+	git --git-dir=dst/.git config fetch.fsckobjects true &&
+	git --git-dir=dst/.git config \
+		fetch.fsck.unterminatedheader warn &&
+	test_must_fail git --git-dir=dst/.git fetch "file://$(pwd)" HEAD &&
 	grep "Cannot demote unterminatedheader" act
 '
 
