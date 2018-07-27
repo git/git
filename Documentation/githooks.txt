@@ -485,6 +485,13 @@ The exit status determines whether git will use the data from the
 hook to limit its search.  On error, it will fall back to verifying
 all files and folders.
 
+p4-pre-submit
+~~~~~~~~~~~~~
+
+This hook is invoked by `git-p4 submit`. It takes no parameters and nothing
+from standard input. Exiting with non-zero status from this script prevent
+`git-p4 submit` from launching. Run `git-p4 submit --help` for details.
+
 GIT
 ---
 Part of the linkgit:git[1] suite
