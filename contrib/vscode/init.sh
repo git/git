@@ -33,6 +33,8 @@ cat >.vscode/settings.json.new <<\EOF ||
         "*.h": "c",
         "*.c": "c"
     },
+    "cSpell.ignorePaths": [
+    ],
     "cSpell.words": [
         "DATAW",
         "DBCACHED",
