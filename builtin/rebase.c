@@ -18,6 +18,7 @@
 #include "lockfile.h"
 #include "parse-options.h"
 #include "commit.h"
+#include "diff.h"
 
 static char const * const builtin_rebase_usage[] = {
 	N_("git rebase [-i] [options] [--exec <cmd>] [--onto <newbase>] "
@@ -81,6 +82,8 @@ struct rebase_options {
 	int dont_finish_rebase;
 	enum {
 		REBASE_NO_QUIET = 1<<0,
+		REBASE_VERBOSE = 1<<1,
+		REBASE_DIFFSTAT = 1<<2,
 	} flags;
 	struct strbuf git_am_opt;
 };
@@ -166,6 +169,10 @@ static int run_specific_rebase(struct rebase_options *opts)
 	add_var(&script_snippet, "GIT_QUIET",
 		opts->flags & REBASE_NO_QUIET ? "" : "t");
 	add_var(&script_snippet, "git_am_opt", opts->git_am_opt.buf);
+	add_var(&script_snippet, "verbose",
+		opts->flags & REBASE_VERBOSE ? "t" : "");
+	add_var(&script_snippet, "diffstat",
+		opts->flags & REBASE_DIFFSTAT ? "t" : "");
 
 	switch (opts->type) {
 	case REBASE_AM:
@@ -311,6 +318,21 @@ static int reset_head(struct object_id *oid, const char *action,
 	return ret;
 }
 
+static int rebase_config(const char *var, const char *value, void *data)
+{
+	struct rebase_options *opts = data;
+
+	if (!strcmp(var, "rebase.stat")) {
+		if (git_config_bool(var, value))
+			opts->flags |= REBASE_DIFFSTAT;
+		else
+			opts->flags &= !REBASE_DIFFSTAT;
+		return 0;
+	}
+
+	return git_default_config(var, value, data);
+}
+
 int cmd_rebase(int argc, const char **argv, const char *prefix)
 {
 	struct rebase_options options = {
@@ -332,7 +354,13 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			 N_("allow pre-rebase hook to run")),
 		OPT_NEGBIT('q', "quiet", &options.flags,
 			   N_("be quiet. implies --no-stat"),
-			   REBASE_NO_QUIET),
+			   REBASE_NO_QUIET| REBASE_VERBOSE | REBASE_DIFFSTAT),
+		OPT_BIT('v', "verbose", &options.flags,
+			N_("display a diffstat of what changed upstream"),
+			REBASE_NO_QUIET | REBASE_VERBOSE | REBASE_DIFFSTAT),
+		{OPTION_NEGBIT, 'n', "no-stat", &options.flags, NULL,
+			N_("do not show diffstat of what changed upstream"),
+			PARSE_OPT_NOARG, NULL, REBASE_DIFFSTAT },
 		OPT_END(),
 	};
 
@@ -360,7 +388,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	trace_repo_setup(prefix);
 	setup_work_tree();
 
-	git_config(git_default_config, NULL);
+	git_config(rebase_config, &options);
+
 	argc = parse_options(argc, argv, prefix,
 			     builtin_rebase_options,
 			     builtin_rebase_usage, 0);
@@ -455,6 +484,33 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	    run_hook_le(NULL, "pre-rebase", options.upstream_arg,
 			argc ? argv[0] : NULL, NULL))
 		die(_("The pre-rebase hook refused to rebase."));
+
+	if (options.flags & REBASE_DIFFSTAT) {
+		struct diff_options opts;
+
+		if (options.flags & REBASE_VERBOSE)
+			printf(_("Changes from %s to %s:\n"),
+				oid_to_hex(&merge_base),
+				oid_to_hex(&options.onto->object.oid));
+
+		/* We want color (if set), but no pager */
+		diff_setup(&opts);
+		opts.stat_width = -1; /* use full terminal width */
+		opts.stat_graph_width = -1; /* respect statGraphWidth config */
+		opts.output_format |=
+			DIFF_FORMAT_SUMMARY | DIFF_FORMAT_DIFFSTAT;
+		opts.detect_rename = DIFF_DETECT_RENAME;
+		diff_setup_done(&opts);
+		diff_tree_oid(&merge_base, &options.onto->object.oid,
+			      "", &opts);
+		diffcore_std(&opts);
+		diff_flush(&opts);
+	}
+
+	/* Detach HEAD and reset the tree */
+	if (options.flags & REBASE_NO_QUIET)
+		printf(_("First, rewinding head to replay your work on top of "
+			 "it...\n"));
 
 	strbuf_addf(&msg, "rebase: checkout %s", options.onto_name);
 	if (reset_head(&options.onto->object.oid, "checkout", NULL, 1))
