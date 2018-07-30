@@ -115,7 +115,19 @@ include Makefile
 vscode-init:
 	@mkdir -p .vscode && \
 	incs= && defs= && \
-	for e in $(ALL_CFLAGS); do \
+	for e in $(ALL_CFLAGS) \
+			'-DGIT_EXEC_PATH="$(gitexecdir_SQ)"' \
+			'-DGIT_LOCALE_PATH="$(localedir_relative_SQ)"' \
+			'-DBINDIR="$(bindir_relative_SQ)"' \
+			'-DFALLBACK_RUNTIME_PREFIX="$(prefix_SQ)"' \
+			'-DDEFAULT_GIT_TEMPLATE_DIR="$(template_dir_SQ)"' \
+			'-DETC_GITCONFIG="$(ETC_GITCONFIG_SQ)"' \
+			'-DETC_GITATTRIBUTES="$(ETC_GITATTRIBUTES_SQ)"' \
+			'-DGIT_LOCALE_PATH="$(localedir_relative_SQ)"' \
+			'-DCURL_DISABLE_TYPECHECK', \
+			'-DGIT_HTML_PATH="$(htmldir_relative_SQ)"' \
+			'-DGIT_MAN_PATH="$(mandir_relative_SQ)"' \
+			'-DGIT_INFO_PATH="$(infodir_relative_SQ)"'; do \
 		case "$$e" in \
 		-I.) \
 			incs="$$(printf '% 16s"$${workspaceRoot}",\n%s' \
