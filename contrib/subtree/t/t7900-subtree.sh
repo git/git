@@ -708,7 +708,7 @@ test_expect_success 'make sure each filename changed exactly once in the entire 
 	test_create_commit "$subtree_test_count/sub proj" sub1 &&
 	(
 		cd "$subtree_test_count" &&
-		git config log.date relative
+		git config log.date relative &&
 		git fetch ./"sub proj" master &&
 		git subtree add --prefix="sub dir" FETCH_HEAD
 	) &&
