@@ -65,7 +65,7 @@ static int do_interactive_rebase(struct replay_opts *opts, unsigned flags,
 				 const char *onto, const char *onto_name,
 				 const char *squash_onto, const char *head_name,
 				 const char *restrict_revision, char *raw_strategies,
-				 const char *cmd, unsigned autosquash)
+				 struct string_list *commands, unsigned autosquash)
 {
 	int ret;
 	const char *head_hash = NULL;
@@ -116,7 +116,7 @@ static int do_interactive_rebase(struct replay_opts *opts, unsigned flags,
 		discard_cache();
 		ret = complete_action(the_repository, opts, flags,
 				      shortrevisions, onto_name, onto,
-				      head_hash, cmd, autosquash);
+				      head_hash, commands, autosquash);
 	}
 
 	free(revisions);
@@ -139,6 +139,7 @@ int cmd_rebase__interactive(int argc, const char **argv, const char *prefix)
 	const char *onto = NULL, *onto_name = NULL, *restrict_revision = NULL,
 		*squash_onto = NULL, *upstream = NULL, *head_name = NULL,
 		*switch_to = NULL, *cmd = NULL;
+	struct string_list commands = STRING_LIST_INIT_DUP;
 	char *raw_strategies = NULL;
 	enum {
 		NONE = 0, CONTINUE, SKIP, EDIT_TODO, SHOW_CURRENT_PATCH,
@@ -221,6 +222,14 @@ int cmd_rebase__interactive(int argc, const char **argv, const char *prefix)
 		warning(_("--[no-]rebase-cousins has no effect without "
 			  "--rebase-merges"));
 
+	if (cmd && *cmd) {
+		string_list_split(&commands, cmd, '\n', -1);
+
+		/* rebase.c adds a new line to cmd after every command,
+		 * so here the last command is always empty */
+		string_list_remove_empty_items(&commands, 0);
+	}
+
 	switch (command) {
 	case NONE:
 		if (!onto && !upstream)
@@ -228,7 +237,7 @@ int cmd_rebase__interactive(int argc, const char **argv, const char *prefix)
 
 		ret = do_interactive_rebase(&opts, flags, switch_to, upstream, onto,
 					    onto_name, squash_onto, head_name, restrict_revision,
-					    raw_strategies, cmd, autosquash);
+					    raw_strategies, &commands, autosquash);
 		break;
 	case SKIP: {
 		struct string_list merge_rr = STRING_LIST_INIT_DUP;
@@ -262,11 +271,12 @@ int cmd_rebase__interactive(int argc, const char **argv, const char *prefix)
 		ret = rearrange_squash(the_repository);
 		break;
 	case ADD_EXEC:
-		ret = sequencer_add_exec_commands(the_repository, cmd);
+		ret = sequencer_add_exec_commands(the_repository, &commands);
 		break;
 	default:
 		BUG("invalid command '%d'", command);
 	}
 
+	string_list_clear(&commands, 0);
 	return !!ret;
 }
