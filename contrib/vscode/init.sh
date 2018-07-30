@@ -13,7 +13,7 @@ die "Could not create .vscode/"
 
 # General settings
 
-cat >.vscode/settings.json <<\EOF ||
+cat >.vscode/settings.json.new <<\EOF ||
 {
     "C_Cpp.intelliSenseEngine": "Default",
     "C_Cpp.intelliSenseEngineFallback": "Disabled",
@@ -51,7 +51,7 @@ esac
 
 # Default build task
 
-cat >.vscode/tasks.json <<EOF ||
+cat >.vscode/tasks.json.new <<EOF ||
 {
     // See https://go.microsoft.com/fwlink/?LinkId=733558
     // for the documentation about the tasks.json format
@@ -73,7 +73,7 @@ die "Could not install default build task"
 
 # Debugger settings
 
-cat >.vscode/launch.json <<EOF ||
+cat >.vscode/launch.json.new <<EOF ||
 {
     // Use IntelliSense to learn about possible attributes.
     // Hover to view descriptions of existing attributes.
@@ -175,3 +175,20 @@ vscode-init:
 	echo '}'
 EOF
 die "Could not write settings for the C/C++ extension"
+
+for file in .vscode/settings.json .vscode/tasks.json .vscode/launch.json
+do
+	if test -f $file
+	then
+		if git diff --no-index --quiet --exit-code $file $file.new
+		then
+			rm $file.new
+		else
+			printf "The file $file.new has these changes:\n\n"
+			git --no-pager diff --no-index $file $file.new
+			printf "\n\nMaybe \`mv $file.new $file\`?\n\n"
+		fi
+	else
+		mv $file.new $file
+	fi
+done
