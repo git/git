@@ -21,6 +21,14 @@ cat >.vscode/settings.json.new <<\EOF ||
         "editor.wordWrap": "wordWrapColumn",
         "editor.wordWrapColumn": 72
     },
+    "[c]": {
+        "editor.detectIndentation": false,
+        "editor.insertSpaces": false,
+        "editor.tabSize": 8,
+        "editor.wordWrap": "wordWrapColumn",
+        "editor.wordWrapColumn": 80,
+        "files.trimTrailingWhitespace": true
+    },
     "files.associations": {
         "*.h": "c",
         "*.c": "c"
