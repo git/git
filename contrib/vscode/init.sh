@@ -17,6 +17,10 @@ cat >.vscode/settings.json.new <<\EOF ||
 {
     "C_Cpp.intelliSenseEngine": "Default",
     "C_Cpp.intelliSenseEngineFallback": "Disabled",
+    "[git-commit]": {
+        "editor.wordWrap": "wordWrapColumn",
+        "editor.wordWrapColumn": 72
+    },
     "files.associations": {
         "*.h": "c",
         "*.c": "c"
