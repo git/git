@@ -971,18 +971,18 @@ test_expect_success 'push requires --force to update lightweight tag' '
 	mk_child testrepo child2 &&
 	(
 		cd child1 &&
-		git tag Tag &&
-		git push ../child2 Tag &&
-		git push ../child2 Tag &&
+		git tag testTag &&
+		git push ../child2 testTag &&
+		git push ../child2 testTag &&
 		>file1 &&
 		git add file1 &&
 		git commit -m "file1" &&
-		git tag -f Tag &&
-		test_must_fail git push ../child2 Tag &&
-		git push --force ../child2 Tag &&
-		git tag -f Tag &&
-		test_must_fail git push ../child2 Tag HEAD~ &&
-		git push --force ../child2 Tag
+		git tag -f testTag &&
+		test_must_fail git push ../child2 testTag &&
+		git push --force ../child2 testTag &&
+		git tag -f testTag &&
+		test_must_fail git push ../child2 testTag HEAD~ &&
+		git push --force ../child2 testTag
 	)
 '
 
