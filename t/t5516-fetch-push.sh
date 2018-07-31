@@ -965,43 +965,51 @@ test_expect_success 'push into aliased refs (inconsistent)' '
 	)
 '
 
-test_expect_success 'force pushing required to update lightweight tag' '
-	mk_test testrepo heads/master &&
-	mk_child testrepo child1 &&
-	mk_child testrepo child2 &&
-	(
-		cd child1 &&
-		git tag testTag &&
-		git push ../child2 testTag &&
-		>file1 &&
-		git add file1 &&
-		git commit -m "file1" &&
-		git tag -f testTag &&
-		test_must_fail git push ../child2 testTag &&
-		git push --force ../child2 testTag &&
-		git tag -f testTag HEAD~ &&
-		test_must_fail git push ../child2 testTag &&
-		git push --force ../child2 testTag &&
+test_force_push_tag () {
+	tag_type_description=$1
+	tag_args=$2
 
-		# Clobbering without + in refspec needs --force
-		git tag -f testTag &&
-		test_must_fail git push ../child2 "refs/tags/*:refs/tags/*" &&
-		git push --force ../child2 "refs/tags/*:refs/tags/*" &&
+	test_expect_success 'force pushing required to update lightweight tag' "
+		mk_test testrepo heads/master &&
+		mk_child testrepo child1 &&
+		mk_child testrepo child2 &&
+		(
+			cd child1 &&
+			git tag testTag &&
+			git push ../child2 testTag &&
+			>file1 &&
+			git add file1 &&
+			git commit -m 'file1' &&
+			git tag $tag_args testTag &&
+			test_must_fail git push ../child2 testTag &&
+			git push --force ../child2 testTag &&
+			git tag $tag_args testTag HEAD~ &&
+			test_must_fail git push ../child2 testTag &&
+			git push --force ../child2 testTag &&
 
-		# Clobbering with + in refspec does not need --force
-		git tag -f testTag HEAD~ &&
-		git push ../child2 "+refs/tags/*:refs/tags/*" &&
+			# Clobbering without + in refspec needs --force
+			git tag -f testTag &&
+			test_must_fail git push ../child2 'refs/tags/*:refs/tags/*' &&
+			git push --force ../child2 'refs/tags/*:refs/tags/*' &&
 
-		# Clobbering with --no-force still obeys + in refspec
-		git tag -f testTag &&
-		git push --no-force ../child2 "+refs/tags/*:refs/tags/*" &&
+			# Clobbering with + in refspec does not need --force
+			git tag -f testTag HEAD~ &&
+			git push ../child2 '+refs/tags/*:refs/tags/*' &&
 
-		# Clobbering with/without --force and "tag <name>" format
-		git tag -f testTag HEAD~ &&
-		test_must_fail git push ../child2 tag testTag &&
-		git push --force ../child2 tag testTag
-	)
-'
+			# Clobbering with --no-force still obeys + in refspec
+			git tag -f testTag &&
+			git push --no-force ../child2 '+refs/tags/*:refs/tags/*' &&
+
+			# Clobbering with/without --force and 'tag <name>' format
+			git tag -f testTag HEAD~ &&
+			test_must_fail git push ../child2 tag testTag &&
+			git push --force ../child2 tag testTag
+		)
+	"
+}
+
+test_force_push_tag "lightweight tag" "-f"
+test_force_push_tag "annotated tag" "-f -a -m'msg'"
 
 test_expect_success 'push --porcelain' '
 	mk_empty testrepo &&
