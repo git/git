@@ -965,7 +965,7 @@ test_expect_success 'push into aliased refs (inconsistent)' '
 	)
 '
 
-test_expect_success 'push requires --force to update lightweight tag' '
+test_expect_success 'force pushing required to update lightweight tag' '
 	mk_test testrepo heads/master &&
 	mk_child testrepo child1 &&
 	mk_child testrepo child2 &&
@@ -981,7 +981,25 @@ test_expect_success 'push requires --force to update lightweight tag' '
 		git push --force ../child2 testTag &&
 		git tag -f testTag HEAD~ &&
 		test_must_fail git push ../child2 testTag &&
-		git push --force ../child2 testTag
+		git push --force ../child2 testTag &&
+
+		# Clobbering without + in refspec needs --force
+		git tag -f testTag &&
+		test_must_fail git push ../child2 "refs/tags/*:refs/tags/*" &&
+		git push --force ../child2 "refs/tags/*:refs/tags/*" &&
+
+		# Clobbering with + in refspec does not need --force
+		git tag -f testTag HEAD~ &&
+		git push ../child2 "+refs/tags/*:refs/tags/*" &&
+
+		# Clobbering with --no-force still obeys + in refspec
+		git tag -f testTag &&
+		git push --no-force ../child2 "+refs/tags/*:refs/tags/*" &&
+
+		# Clobbering with/without --force and "tag <name>" format
+		git tag -f testTag HEAD~ &&
+		test_must_fail git push ../child2 tag testTag &&
+		git push --force ../child2 tag testTag
 	)
 '
 
