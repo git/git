@@ -973,7 +973,6 @@ test_expect_success 'push requires --force to update lightweight tag' '
 		cd child1 &&
 		git tag testTag &&
 		git push ../child2 testTag &&
-		git push ../child2 testTag &&
 		>file1 &&
 		git add file1 &&
 		git commit -m "file1" &&
