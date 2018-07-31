@@ -651,6 +651,7 @@ missing_author:
 			strbuf_addch(&buf, *(message++));
 		else
 			strbuf_addf(&buf, "'\\\\%c'", *(message++));
+	strbuf_addch(&buf, '\'');
 	res = write_message(buf.buf, buf.len, rebase_path_author_script(), 1);
 	strbuf_release(&buf);
 	return res;
@@ -721,7 +722,11 @@ static const char *read_author_ident(struct strbuf *buf)
 
 		eol = strchrnul(in, '\n');
 		*eol = '\0';
-		sq_dequote(in);
+		if (!sq_dequote(in)) {
+			warning(_("bad quoting on %s value in '%s'"),
+				keys[i], rebase_path_author_script());
+			return NULL;
+		}
 		len = strlen(in);
 
 		if (i > 0) /* separate values by spaces */
