@@ -71,9 +71,9 @@
 # incomplete line -- slurp up next line
 :squash
 /\\$/ {
-      N
-      s/\\\n//
-      bsquash
+	N
+	s/\\\n//
+	bsquash
 }
 
 # here-doc -- swallow it to avoid false hits within its body (but keep the
@@ -199,7 +199,7 @@ s/.*\n//
 # "$(...)" -- command substitution; not closing ")"
 /\$([^)][^)]*)[^)]*$/bcheckchain
 # multi-line "$(...\n...)" -- command substitution; treat as nested subshell
-/\$([ 	     ]*$/bnest
+/\$([ 	]*$/bnest
 # "=(...)" -- Bash array assignment; not closing ")"
 /=(/bcheckchain
 # closing "...) &&"
