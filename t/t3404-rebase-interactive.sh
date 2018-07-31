@@ -1384,7 +1384,7 @@ test_expect_success 'valid author header after --root swap' '
 	set_fake_editor &&
 	FAKE_LINES="2 1" git rebase -i --root &&
 	git cat-file commit HEAD^ >out &&
-	grep "^author ..*> @[0-9][0-9]* [-+][0-9][0-9][0-9][0-9]$" out
+	grep "^author ..*> [0-9][0-9]* [-+][0-9][0-9][0-9][0-9]$" out
 '
 
 test_done

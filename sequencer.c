@@ -706,14 +706,16 @@ static const char *read_author_ident(struct strbuf *buf)
 	const char *keys[] = {
 		"GIT_AUTHOR_NAME=", "GIT_AUTHOR_EMAIL=", "GIT_AUTHOR_DATE="
 	};
-	char *in, *out, *eol;
-	int i = 0, len;
+	struct strbuf out = STRBUF_INIT;
+	char *in, *eol;
+	const char *val[3];
+	int i = 0;
 
 	if (strbuf_read_file(buf, rebase_path_author_script(), 256) <= 0)
 		return NULL;
 
 	/* dequote values and construct ident line in-place */
-	for (in = out = buf->buf; i < 3 && in - buf->buf < buf->len; i++) {
+	for (in = buf->buf; i < 3 && in - buf->buf < buf->len; i++) {
 		if (!skip_prefix(in, keys[i], (const char **)&in)) {
 			warning("could not parse '%s' (looking for '%s'",
 				rebase_path_author_script(), keys[i]);
@@ -727,16 +729,7 @@ static const char *read_author_ident(struct strbuf *buf)
 				keys[i], rebase_path_author_script());
 			return NULL;
 		}
-		len = strlen(in);
-
-		if (i > 0) /* separate values by spaces */
-			*(out++) = ' ';
-		if (i == 1) /* email needs to be surrounded by <...> */
-			*(out++) = '<';
-		memmove(out, in, len);
-		out += len;
-		if (i == 1) /* email needs to be surrounded by <...> */
-			*(out++) = '>';
+		val[i] = in;
 		in = eol + 1;
 	}
 
@@ -746,7 +739,9 @@ static const char *read_author_ident(struct strbuf *buf)
 		return NULL;
 	}
 
-	strbuf_setlen(buf, out - buf->buf);
+	strbuf_addstr(&out, fmt_ident(val[0], val[1], val[2], 0));
+	strbuf_swap(buf, &out);
+	strbuf_release(&out);
 	return buf->buf;
 }
 
