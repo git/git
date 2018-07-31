@@ -236,7 +236,6 @@ test_expect_success 'setup content merge + rename/directory conflict' '
 
 test_expect_success 'rename/directory conflict + clean content merge' '
 	git reset --hard &&
-	git reset --hard &&
 	git clean -fdqx &&
 
 	git checkout left-clean^0 &&
@@ -259,7 +258,6 @@ test_expect_success 'rename/directory conflict + clean content merge' '
 '
 
 test_expect_success 'rename/directory conflict + content merge conflict' '
-	git reset --hard &&
 	git reset --hard &&
 	git clean -fdqx &&
 

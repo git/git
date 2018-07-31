@@ -30,7 +30,7 @@ test_expect_success 'setup modify/delete + directory/file conflict' '
 	)
 '
 
-test_expect_failure 'read-tree --reset cleans unmerged entries' '
+test_expect_success 'read-tree --reset cleans unmerged entries' '
 	test_when_finished "git -C df_plus_modify_delete clean -f" &&
 	test_when_finished "git -C df_plus_modify_delete reset --hard" &&
 	(
@@ -45,7 +45,7 @@ test_expect_failure 'read-tree --reset cleans unmerged entries' '
 	)
 '
 
-test_expect_failure 'One reset --hard cleans unmerged entries' '
+test_expect_success 'One reset --hard cleans unmerged entries' '
 	test_when_finished "git -C df_plus_modify_delete clean -f" &&
 	test_when_finished "git -C df_plus_modify_delete reset --hard" &&
 	(
@@ -87,7 +87,7 @@ test_expect_success 'setup directory/file conflict + simple edit/edit' '
 	)
 '
 
-test_expect_failure 'git merge --abort succeeds despite D/F conflict' '
+test_expect_success 'git merge --abort succeeds despite D/F conflict' '
 	test_when_finished "git -C df_plus_edit_edit clean -f" &&
 	test_when_finished "git -C df_plus_edit_edit reset --hard" &&
 	(
@@ -103,7 +103,7 @@ test_expect_failure 'git merge --abort succeeds despite D/F conflict' '
 	)
 '
 
-test_expect_failure 'git am --skip succeeds despite D/F conflict' '
+test_expect_success 'git am --skip succeeds despite D/F conflict' '
 	test_when_finished "git -C df_plus_edit_edit clean -f" &&
 	test_when_finished "git -C df_plus_edit_edit reset --hard" &&
 	(
