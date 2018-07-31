@@ -741,7 +741,7 @@ static const char *read_author_ident(struct strbuf *buf)
 		return NULL;
 	}
 
-	buf->len = out - buf->buf;
+	strbuf_setlen(buf, out - buf->buf);
 	return buf->buf;
 }
 
