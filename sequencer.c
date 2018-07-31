@@ -739,6 +739,15 @@ static const char *read_author_ident(struct strbuf *buf)
 		return NULL;
 	}
 
+	/* validate date since fmt_ident() will die() on bad value */
+	if (parse_date(val[2], &out)){
+		warning(_("invalid date format '%s' in '%s'"),
+			val[2], rebase_path_author_script());
+		strbuf_release(&out);
+		return NULL;
+	}
+
+	strbuf_reset(&out);
 	strbuf_addstr(&out, fmt_ident(val[0], val[1], val[2], 0));
 	strbuf_swap(buf, &out);
 	strbuf_release(&out);
