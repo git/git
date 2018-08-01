@@ -6,9 +6,15 @@
 void fetch_negotiator_init(struct fetch_negotiator *negotiator,
 			   const char *algorithm)
 {
-	if (algorithm && !strcmp(algorithm, "skipping")) {
-		skipping_negotiator_init(negotiator);
-		return;
+	if (algorithm) {
+		if (!strcmp(algorithm, "skipping")) {
+			skipping_negotiator_init(negotiator);
+			return;
+		} else if (!strcmp(algorithm, "default")) {
+			/* Fall through to default initialization */
+		} else {
+			die("unknown fetch negotiation algorithm '%s'", algorithm);
+		}
 	}
 	default_negotiator_init(negotiator);
 }
