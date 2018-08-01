@@ -535,6 +535,41 @@ test_expect_success "should be able to fetch with duplicate refspecs" '
 	)
 '
 
+test_expect_success 'LHS of refspec follows ref disambiguation rules' '
+	mkdir lhs-ambiguous &&
+	(
+		cd lhs-ambiguous &&
+		git init server &&
+		test_commit -C server unwanted &&
+		test_commit -C server wanted &&
+
+		git init client &&
+
+		# Check a name coming after "refs" alphabetically ...
+		git -C server update-ref refs/heads/s wanted &&
+		git -C server update-ref refs/heads/refs/heads/s unwanted &&
+		git -C client fetch ../server +refs/heads/s:refs/heads/checkthis &&
+		git -C server rev-parse wanted >expect &&
+		git -C client rev-parse checkthis >actual &&
+		test_cmp expect actual &&
+
+		# ... and one before.
+		git -C server update-ref refs/heads/q wanted &&
+		git -C server update-ref refs/heads/refs/heads/q unwanted &&
+		git -C client fetch ../server +refs/heads/q:refs/heads/checkthis &&
+		git -C server rev-parse wanted >expect &&
+		git -C client rev-parse checkthis >actual &&
+		test_cmp expect actual &&
+
+		# Tags are preferred over branches like refs/{heads,tags}/*
+		git -C server update-ref refs/tags/t wanted &&
+		git -C server update-ref refs/heads/t unwanted &&
+		git -C client fetch ../server +t:refs/heads/checkthis &&
+		git -C server rev-parse wanted >expect &&
+		git -C client rev-parse checkthis >actual
+	)
+'
+
 # configured prune tests
 
 set_config_tristate () {
