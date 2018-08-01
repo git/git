@@ -36,18 +36,11 @@ struct transport_vtable {
 	 * Fetch the objects for the given refs. Note that this gets
 	 * an array, and should ignore the list structure.
 	 *
-	 * The transport *may* provide, in fetched_refs, the list of refs that
-	 * it fetched.  If the transport knows anything about the fetched refs
-	 * that the caller does not know (for example, shallow status), it
-	 * should provide that list of refs and include that information in the
-	 * list.
-	 *
 	 * If the transport did not get hashes for refs in
 	 * get_refs_list(), it should set the old_sha1 fields in the
 	 * provided refs now.
 	 **/
-	int (*fetch)(struct transport *transport, int refs_nr, struct ref **refs,
-		     struct ref **fetched_refs);
+	int (*fetch)(struct transport *transport, int refs_nr, struct ref **refs);
 
 	/**
 	 * Push the objects and refs. Send the necessary objects, and
