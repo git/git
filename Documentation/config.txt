@@ -1500,6 +1500,8 @@ fetch.negotiationAlgorithm::
 	that never skips commits (unless the server has acknowledged it or one
 	of its descendants).
 	Unknown values will cause 'git fetch' to error out.
++
+See also the `--negotiation-tip` option for linkgit:git-fetch[1].
 
 format.attach::
 	Enable multipart/mixed attachments as the default for
