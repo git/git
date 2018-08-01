@@ -16,6 +16,13 @@ struct fetch_pack_args {
 	const struct string_list *deepen_not;
 	struct list_objects_filter_options filter_options;
 	const struct string_list *server_options;
+
+	/*
+	 * If not NULL, during packfile negotiation, fetch-pack will send "have"
+	 * lines only with these tips and their ancestors.
+	 */
+	const struct oid_array *negotiation_tips;
+
 	unsigned deepen_relative:1;
 	unsigned quiet:1;
 	unsigned keep_pack:1;
