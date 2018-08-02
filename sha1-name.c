@@ -310,7 +310,7 @@ static int init_object_disambiguation(const char *name, int len,
 {
 	int i;
 
-	if (len < MINIMUM_ABBREV || len > GIT_SHA1_HEXSZ)
+	if (len < MINIMUM_ABBREV || len > the_hash_algo->hexsz)
 		return -1;
 
 	memset(ds, 0, sizeof(*ds));
@@ -576,6 +576,8 @@ int find_unique_abbrev_r(char *hex, const struct object_id *oid, int len)
 	struct disambiguate_state ds;
 	struct min_abbrev_data mad;
 	struct object_id oid_ret;
+	const unsigned hexsz = the_hash_algo->hexsz;
+
 	if (len < 0) {
 		unsigned long count = approximate_object_count();
 		/*
@@ -599,8 +601,8 @@ int find_unique_abbrev_r(char *hex, const struct object_id *oid, int len)
 	}
 
 	oid_to_hex_r(hex, oid);
-	if (len == GIT_SHA1_HEXSZ || !len)
-		return GIT_SHA1_HEXSZ;
+	if (len == hexsz || !len)
+		return hexsz;
 
 	mad.init_len = len;
 	mad.cur_len = len;
@@ -706,7 +708,7 @@ static int get_oid_basic(const char *str, int len, struct object_id *oid,
 	int refs_found = 0;
 	int at, reflog_len, nth_prior = 0;
 
-	if (len == GIT_SHA1_HEXSZ && !get_oid_hex(str, oid)) {
+	if (len == the_hash_algo->hexsz && !get_oid_hex(str, oid)) {
 		if (warn_ambiguous_refs && warn_on_object_refname_ambiguity) {
 			refs_found = dwim_ref(str, len, &tmp_oid, &real_ref);
 			if (refs_found > 0) {
@@ -750,7 +752,7 @@ static int get_oid_basic(const char *str, int len, struct object_id *oid,
 		int detached;
 
 		if (interpret_nth_prior_checkout(str, len, &buf) > 0) {
-			detached = (buf.len == GIT_SHA1_HEXSZ && !get_oid_hex(buf.buf, oid));
+			detached = (buf.len == the_hash_algo->hexsz && !get_oid_hex(buf.buf, oid));
 			strbuf_release(&buf);
 			if (detached)
 				return 0;

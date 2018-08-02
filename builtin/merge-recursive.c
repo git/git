@@ -9,10 +9,10 @@ static const char builtin_merge_recursive_usage[] =
 
 static const char *better_branch_name(const char *branch)
 {
-	static char githead_env[8 + GIT_SHA1_HEXSZ + 1];
+	static char githead_env[8 + GIT_MAX_HEXSZ + 1];
 	char *name;
 
-	if (strlen(branch) != GIT_SHA1_HEXSZ)
+	if (strlen(branch) != the_hash_algo->hexsz)
 		return branch;
 	xsnprintf(githead_env, sizeof(githead_env), "GITHEAD_%s", branch);
 	name = getenv(githead_env);

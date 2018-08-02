@@ -50,7 +50,7 @@ int hex_to_bytes(unsigned char *binary, const char *hex, size_t len)
 int get_sha1_hex(const char *hex, unsigned char *sha1)
 {
 	int i;
-	for (i = 0; i < GIT_SHA1_RAWSZ; i++) {
+	for (i = 0; i < the_hash_algo->rawsz; i++) {
 		int val = hex2chr(hex);
 		if (val < 0)
 			return -1;
@@ -69,7 +69,7 @@ int parse_oid_hex(const char *hex, struct object_id *oid, const char **end)
 {
 	int ret = get_oid_hex(hex, oid);
 	if (!ret)
-		*end = hex + GIT_SHA1_HEXSZ;
+		*end = hex + the_hash_algo->hexsz;
 	return ret;
 }
 
@@ -79,7 +79,7 @@ char *sha1_to_hex_r(char *buffer, const unsigned char *sha1)
 	char *buf = buffer;
 	int i;
 
-	for (i = 0; i < GIT_SHA1_RAWSZ; i++) {
+	for (i = 0; i < the_hash_algo->rawsz; i++) {
 		unsigned int val = *sha1++;
 		*buf++ = hex[val >> 4];
 		*buf++ = hex[val & 0xf];

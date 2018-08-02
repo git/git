@@ -972,7 +972,7 @@ extern const struct object_id null_oid;
 
 static inline int hashcmp(const unsigned char *sha1, const unsigned char *sha2)
 {
-	return memcmp(sha1, sha2, GIT_SHA1_RAWSZ);
+	return memcmp(sha1, sha2, the_hash_algo->rawsz);
 }
 
 static inline int oidcmp(const struct object_id *oid1, const struct object_id *oid2)
@@ -992,7 +992,7 @@ static inline int is_null_oid(const struct object_id *oid)
 
 static inline void hashcpy(unsigned char *sha_dst, const unsigned char *sha_src)
 {
-	memcpy(sha_dst, sha_src, GIT_SHA1_RAWSZ);
+	memcpy(sha_dst, sha_src, the_hash_algo->rawsz);
 }
 
 static inline void oidcpy(struct object_id *dst, const struct object_id *src)
@@ -1009,7 +1009,7 @@ static inline struct object_id *oiddup(const struct object_id *src)
 
 static inline void hashclr(unsigned char *hash)
 {
-	memset(hash, 0, GIT_SHA1_RAWSZ);
+	memset(hash, 0, the_hash_algo->rawsz);
 }
 
 static inline void oidclr(struct object_id *oid)

@@ -492,6 +492,7 @@ static void update_one(const char *path)
 
 static void read_index_info(int nul_term_line)
 {
+	const int hexsz = the_hash_algo->hexsz;
 	struct strbuf buf = STRBUF_INIT;
 	struct strbuf uq = STRBUF_INIT;
 	strbuf_getline_fn getline_fn;
@@ -529,7 +530,7 @@ static void read_index_info(int nul_term_line)
 		mode = ul;
 
 		tab = strchr(ptr, '\t');
-		if (!tab || tab - ptr < GIT_SHA1_HEXSZ + 1)
+		if (!tab || tab - ptr < hexsz + 1)
 			goto bad_line;
 
 		if (tab[-2] == ' ' && '0' <= tab[-1] && tab[-1] <= '3') {
@@ -542,8 +543,8 @@ static void read_index_info(int nul_term_line)
 			ptr = tab + 1; /* point at the head of path */
 		}
 
-		if (get_oid_hex(tab - GIT_SHA1_HEXSZ, &oid) ||
-			tab[-(GIT_SHA1_HEXSZ + 1)] != ' ')
+		if (get_oid_hex(tab - hexsz, &oid) ||
+			tab[-(hexsz + 1)] != ' ')
 			goto bad_line;
 
 		path_name = ptr;
@@ -571,7 +572,7 @@ static void read_index_info(int nul_term_line)
 			 * ptr[-1] points at tab,
 			 * ptr[-41] is at the beginning of sha1
 			 */
-			ptr[-(GIT_SHA1_HEXSZ + 2)] = ptr[-1] = 0;
+			ptr[-(hexsz + 2)] = ptr[-1] = 0;
 			if (add_cacheinfo(mode, &oid, path_name, stage))
 				die("git update-index: unable to update %s",
 				    path_name);
@@ -826,6 +827,7 @@ static int parse_new_style_cacheinfo(const char *arg,
 {
 	unsigned long ul;
 	char *endp;
+	const char *p;
 
 	if (!arg)
 		return -1;
@@ -836,9 +838,9 @@ static int parse_new_style_cacheinfo(const char *arg,
 		return -1; /* not a new-style cacheinfo */
 	*mode = ul;
 	endp++;
-	if (get_oid_hex(endp, oid) || endp[GIT_SHA1_HEXSZ] != ',')
+	if (parse_oid_hex(endp, oid, &p) || *p != ',')
 		return -1;
-	*path = endp + GIT_SHA1_HEXSZ + 1;
+	*path = p + 1;
 	return 0;
 }
 
