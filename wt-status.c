@@ -2340,7 +2340,17 @@ int has_uncommitted_changes(int ignore_submodules)
 	if (ignore_submodules)
 		rev_info.diffopt.flags.ignore_submodules = 1;
 	rev_info.diffopt.flags.quick = 1;
+
 	add_head_to_pending(&rev_info);
+	if (!rev_info.pending.nr) {
+		/*
+		 * We have no head (or it's corrupt); use the empty tree,
+		 * which will complain if the index is non-empty.
+		 */
+		struct tree *tree = lookup_tree(the_hash_algo->empty_tree);
+		add_pending_object(&rev_info, &tree->object, "");
+	}
+
 	diff_setup_done(&rev_info.diffopt);
 	result = run_diff_index(&rev_info, 1);
 	return diff_result_code(&rev_info.diffopt, result);
