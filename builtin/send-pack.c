@@ -179,8 +179,7 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 		{ OPTION_CALLBACK,
 		  0, CAS_OPT_NAME, &cas, N_("<refname>:<expect>"),
 		  N_("require old value of ref to be at this value"),
-		  PARSE_OPT_OPTARG | PARSE_OPT_LITERAL_ARGHELP,
-		  parseopt_push_cas_option },
+		  PARSE_OPT_OPTARG, parseopt_push_cas_option },
 		OPT_END()
 	};
 
