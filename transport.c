@@ -320,6 +320,7 @@ static int fetch_refs_via_pack(struct transport *transport,
 	args.filter_options = data->options.filter_options;
 	args.stateless_rpc = transport->stateless_rpc;
 	args.server_options = transport->server_options;
+	args.negotiation_tips = data->options.negotiation_tips;
 
 	if (!data->got_remote_heads)
 		refs_tmp = get_refs_via_connect(transport, 0, NULL);

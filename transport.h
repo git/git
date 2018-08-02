@@ -36,6 +36,16 @@ struct git_transport_options {
 	const char *receivepack;
 	struct push_cas_option *cas;
 	struct list_objects_filter_options filter_options;
+
+	/*
+	 * This is only used during fetch. See the documentation of
+	 * negotiation_tips in struct fetch_pack_args.
+	 *
+	 * This field is only supported by transports that support connect or
+	 * stateless_connect. Set this field directly instead of using
+	 * transport_set_option().
+	 */
+	struct oid_array *negotiation_tips;
 };
 
 enum transport_family {

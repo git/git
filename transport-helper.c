@@ -686,6 +686,9 @@ static int fetch(struct transport *transport,
 			transport, "filter",
 			data->transport_options.filter_options.filter_spec);
 
+	if (data->transport_options.negotiation_tips)
+		warning("Ignoring --negotiation-tip because the protocol does not support it.");
+
 	if (data->fetch)
 		return fetch_with_fetch(transport, nr_heads, to_fetch);
 

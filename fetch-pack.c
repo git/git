@@ -217,6 +217,22 @@ static int next_flush(int stateless_rpc, int count)
 	return count;
 }
 
+static void mark_tips(struct fetch_negotiator *negotiator,
+		      const struct oid_array *negotiation_tips)
+{
+	int i;
+
+	if (!negotiation_tips) {
+		for_each_ref(rev_list_insert_ref_oid, negotiator);
+		return;
+	}
+
+	for (i = 0; i < negotiation_tips->nr; i++)
+		rev_list_insert_ref(negotiator, NULL,
+				    &negotiation_tips->oid[i]);
+	return;
+}
+
 static int find_common(struct fetch_negotiator *negotiator,
 		       struct fetch_pack_args *args,
 		       int fd[2], struct object_id *result_oid,
@@ -234,7 +250,7 @@ static int find_common(struct fetch_negotiator *negotiator,
 	if (args->stateless_rpc && multi_ack == 1)
 		die(_("--stateless-rpc requires multi_ack_detailed"));
 
-	for_each_ref(rev_list_insert_ref_oid, negotiator);
+	mark_tips(negotiator, args->negotiation_tips);
 	for_each_cached_alternate(negotiator, insert_one_alternate_object);
 
 	fetching = 0;
@@ -1332,7 +1348,7 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 			else
 				state = FETCH_SEND_REQUEST;
 
-			for_each_ref(rev_list_insert_ref_oid, &negotiator);
+			mark_tips(&negotiator, args->negotiation_tips);
 			for_each_cached_alternate(&negotiator,
 						  insert_one_alternate_object);
 			break;

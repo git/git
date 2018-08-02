@@ -64,6 +64,7 @@ static int shown_url = 0;
 static struct refspec refmap = REFSPEC_INIT_FETCH;
 static struct list_objects_filter_options filter_options;
 static struct string_list server_options = STRING_LIST_INIT_DUP;
+static struct string_list negotiation_tip = STRING_LIST_INIT_NODUP;
 
 static int git_fetch_config(const char *k, const char *v, void *cb)
 {
@@ -162,6 +163,8 @@ static struct option builtin_fetch_options[] = {
 			TRANSPORT_FAMILY_IPV4),
 	OPT_SET_INT('6', "ipv6", &family, N_("use IPv6 addresses only"),
 			TRANSPORT_FAMILY_IPV6),
+	OPT_STRING_LIST(0, "negotiation-tip", &negotiation_tip, N_("revision"),
+			N_("report that we have only objects reachable from this object")),
 	OPT_PARSE_LIST_OBJECTS_FILTER(&filter_options),
 	OPT_END()
 };
@@ -1060,6 +1063,40 @@ static void set_option(struct transport *transport, const char *name, const char
 			name, transport->url);
 }
 
+
+static int add_oid(const char *refname, const struct object_id *oid, int flags,
+		   void *cb_data)
+{
+	struct oid_array *oids = cb_data;
+
+	oid_array_append(oids, oid);
+	return 0;
+}
+
+static void add_negotiation_tips(struct git_transport_options *smart_options)
+{
+	struct oid_array *oids = xcalloc(1, sizeof(*oids));
+	int i;
+
+	for (i = 0; i < negotiation_tip.nr; i++) {
+		const char *s = negotiation_tip.items[i].string;
+		int old_nr;
+		if (!has_glob_specials(s)) {
+			struct object_id oid;
+			if (get_oid(s, &oid))
+				die("%s is not a valid object", s);
+			oid_array_append(oids, &oid);
+			continue;
+		}
+		old_nr = oids->nr;
+		for_each_glob_ref(add_oid, s, oids);
+		if (old_nr == oids->nr)
+			warning("Ignoring --negotiation-tip=%s because it does not match any refs",
+				s);
+	}
+	smart_options->negotiation_tips = oids;
+}
+
 static struct transport *prepare_transport(struct remote *remote, int deepen)
 {
 	struct transport *transport;
@@ -1085,6 +1122,12 @@ static struct transport *prepare_transport(struct remote *remote, int deepen)
 		set_option(transport, TRANS_OPT_LIST_OBJECTS_FILTER,
 			   filter_options.filter_spec);
 		set_option(transport, TRANS_OPT_FROM_PROMISOR, "1");
+	}
+	if (negotiation_tip.nr) {
+		if (transport->smart_options)
+			add_negotiation_tips(transport->smart_options);
+		else
+			warning("Ignoring --negotiation-tip because the protocol does not support it.");
 	}
 	return transport;
 }
