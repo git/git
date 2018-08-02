@@ -103,13 +103,7 @@ GET  /smart/repo.git/info/refs?service=git-upload-pack HTTP/1.1 200
 POST /smart/repo.git/git-upload-pack HTTP/1.1 200
 EOF
 test_expect_success 'used upload-pack service' '
-	sed -e "
-		s/^.* \"//
-		s/\"//
-		s/ [1-9][0-9]*\$//
-		s/^GET /GET  /
-	" >act <"$HTTPD_ROOT_PATH"/access.log &&
-	test_cmp exp act
+	check_access_log exp
 '
 
 test_expect_success 'follow redirects (301)' '

@@ -288,3 +288,24 @@ expect_askpass() {
 	test_cmp "$TRASH_DIRECTORY/askpass-expect" \
 		 "$TRASH_DIRECTORY/askpass-query"
 }
+
+strip_access_log() {
+	sed -e "
+		s/^.* \"//
+		s/\"//
+		s/ [1-9][0-9]*\$//
+		s/^GET /GET  /
+	" "$HTTPD_ROOT_PATH"/access.log
+}
+
+# Requires one argument: the name of a file containing the expected stripped
+# access log entries.
+check_access_log() {
+	sort "$1" >"$1".sorted &&
+	strip_access_log >access.log.stripped &&
+	sort access.log.stripped >access.log.sorted &&
+	if ! test_cmp "$1".sorted access.log.sorted
+	then
+		test_cmp "$1" access.log.stripped
+	fi
+}

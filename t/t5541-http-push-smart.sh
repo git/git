@@ -38,25 +38,16 @@ GET  /smart/test_repo.git/info/refs?service=git-upload-pack HTTP/1.1 200
 POST /smart/test_repo.git/git-upload-pack HTTP/1.1 200
 EOF
 test_expect_success 'no empty path components' '
+	# Clear the log, so that it does not affect the "used receive-pack
+	# service" test which reads the log too.
+	test_when_finished ">\"\$HTTPD_ROOT_PATH\"/access.log" &&
+
 	# In the URL, add a trailing slash, and see if git appends yet another
 	# slash.
 	cd "$ROOT_PATH" &&
 	git clone $HTTPD_URL/smart/test_repo.git/ test_repo_clone &&
 
-	sed -e "
-		s/^.* \"//
-		s/\"//
-		s/ [1-9][0-9]*\$//
-		s/^GET /GET  /
-	" >act <"$HTTPD_ROOT_PATH"/access.log &&
-
-	# Clear the log, so that it does not affect the "used receive-pack
-	# service" test which reads the log too.
-	#
-	# We do this before the actual comparison to ensure the log is cleared.
-	echo > "$HTTPD_ROOT_PATH"/access.log &&
-
-	test_cmp exp act
+	check_access_log exp
 '
 
 test_expect_success 'clone remote repository' '
@@ -124,7 +115,6 @@ test_expect_success 'rejected update prints status' '
 rm -f "$HTTPD_DOCUMENT_ROOT_PATH/test_repo.git/hooks/update"
 
 cat >exp <<EOF
-
 GET  /smart/test_repo.git/info/refs?service=git-upload-pack HTTP/1.1 200
 POST /smart/test_repo.git/git-upload-pack HTTP/1.1 200
 GET  /smart/test_repo.git/info/refs?service=git-receive-pack HTTP/1.1 200
@@ -138,13 +128,7 @@ GET  /smart/test_repo.git/info/refs?service=git-receive-pack HTTP/1.1 200
 POST /smart/test_repo.git/git-receive-pack HTTP/1.1 200
 EOF
 test_expect_success 'used receive-pack service' '
-	sed -e "
-		s/^.* \"//
-		s/\"//
-		s/ [1-9][0-9]*\$//
-		s/^GET /GET  /
-	" >act <"$HTTPD_ROOT_PATH"/access.log &&
-	test_cmp exp act
+	check_access_log exp
 '
 
 test_http_push_nonff "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.git \
