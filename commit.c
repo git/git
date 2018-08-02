@@ -342,7 +342,7 @@ struct tree *get_commit_tree(const struct commit *commit)
 	if (commit->graph_pos == COMMIT_NOT_FROM_GRAPH)
 		BUG("commit has NULL tree, but was not loaded from commit-graph");
 
-	return get_commit_tree_in_graph(commit);
+	return get_commit_tree_in_graph(the_repository, commit);
 }
 
 struct object_id *get_commit_tree_oid(const struct commit *commit)
@@ -438,7 +438,7 @@ int parse_commit_buffer(struct repository *r, struct commit *item, const void *b
 	item->date = parse_commit_date(bufptr, tail);
 
 	if (check_graph)
-		load_commit_graph_info(item);
+		load_commit_graph_info(the_repository, item);
 
 	return 0;
 }
@@ -454,7 +454,7 @@ int parse_commit_internal(struct commit *item, int quiet_on_missing, int use_com
 		return -1;
 	if (item->object.parsed)
 		return 0;
-	if (use_commit_graph && parse_commit_in_graph(item))
+	if (use_commit_graph && parse_commit_in_graph(the_repository, item))
 		return 0;
 	buffer = read_object_file(&item->object.oid, &type, &size);
 	if (!buffer)

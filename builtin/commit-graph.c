@@ -115,6 +115,8 @@ static int graph_read(int argc, const char **argv)
 		printf(" large_edges");
 	printf("\n");
 
+	free_commit_graph(graph);
+
 	return 0;
 }
 

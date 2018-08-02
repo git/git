@@ -2,6 +2,9 @@
 #define OBJECT_STORE_H
 
 #include "oidmap.h"
+#include "list.h"
+#include "sha1-array.h"
+#include "strbuf.h"
 
 struct alternate_object_database {
 	struct alternate_object_database *next;
@@ -102,6 +105,9 @@ struct raw_object_store {
 	 * (see git-replace(1)).
 	 */
 	struct oidmap *replace_map;
+
+	struct commit_graph *commit_graph;
+	unsigned commit_graph_attempted : 1; /* if loading has been attempted */
 
 	/*
 	 * private data
