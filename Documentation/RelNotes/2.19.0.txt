@@ -32,6 +32,24 @@ UI, Workflows & Features
    automatically switch to quoted-printable when there is such a line
    in the payload has been introduced and is made the default.
 
+ * "git checkout" and "git worktree add" learned to honor
+   checkout.defaultRemote when auto-vivifying a local branch out of a
+   remote tracking branch in a repository with multiple remotes that
+   have tracking branches that share the same names.
+   (merge 8d7b558bae ab/checkout-default-remote later to maint).
+
+ * "git grep" learned the "--only-matching" option.
+
+ * "git rebase --rebase-merges" mode now handles octopus merges as
+   well.
+
+ * Add a server-side knob to skip commits in exponential/fibbonacci
+   stride in an attempt to cover wider swath of history with a smaller
+   number of iterations, potentially accepting a larger packfile
+   transfer, instead of going back one commit a time during common
+   ancestor discovery during the "git fetch" transaction.
+   (merge 42cc7485a2 jt/fetch-negotiator-skipping later to maint).
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -93,6 +111,51 @@ Performance, Internal Implementation, Development Support etc.
 
  * test-lint now looks for broken use of "VAR=VAL shell_func" in test
    scripts.
+
+ * Conversion from uchar[40] to struct object_id continues.
+
+ * Recent "security fix" to pay attention to contents of ".gitmodules"
+   while accepting "git push" was a bit overly strict than necessary,
+   which has been adjusted.
+
+ * "git fsck" learns to make sure the optional commit-graph file is in
+   a sane state.
+
+ * "git diff --color-moved" feature has further been tweaked.
+
+ * Code restructuring and a small fix to transport protocol v2 during
+   fetching.
+
+ * Parsing of -L[<N>][,[<M>]] parameters "git blame" and "git log"
+   take has been tweaked.
+
+ * lookup_commit_reference() and friends have been updated to find
+   in-core object for a specific in-core repository instance.
+
+ * Various glitches in the heuristics of merge-recursive strategy have
+   been documented in new tests.
+
+ * "git fetch" learned a new option "--negotiation-tip" to limit the
+   set of commits it tells the other end as "have", to reduce wasted
+   bandwidth and cycles, which would be helpful when the receiving
+   repository has a lot of refs that have little to do with the
+   history at the remote it is fetching from.
+
+ * For a large tree, the index needs to hold many cache entries
+   allocated on heap.  These cache entries are now allocated out of a
+   dedicated memory pool to amortize malloc(3) overhead.
+
+ * Tests to cover various conflicting cases have been added for
+   merge-recursive.
+
+ * Tests to cover conflict cases that involve submodules have been
+   added for merge-recursive.
+
+ * Look for broken "&&" chains that are hidden in subshell, many of
+   which have been found and corrected.
+
+ * The singleton commit-graph in-core instance is made per in-core
+   repository instance.
 
 
 Fixes since v2.18
@@ -223,6 +286,49 @@ Fixes since v2.18
  * core.commentchar is now honored when preparing the list of commits
    to replay in "rebase -i".
 
+ * "git pull --rebase" on a corrupt HEAD caused a segfault.  In
+   general we substitute an empty tree object when running the in-core
+   equivalent of the diff-index command, and the codepath has been
+   corrected to do so as well to fix this issue.
+   (merge 3506dc9445 jk/has-uncommitted-changes-fix later to maint).
+
+ * httpd tests saw occasional breakage due to the way its access log
+   gets inspected by the tests, which has been updated to make them
+   less flaky.
+   (merge e8b3b2e275 sg/httpd-test-unflake later to maint).
+
+ * Tests to cover more D/F conflict cases have been added for
+   merge-recursive.
+
+ * "git gc --auto" opens file descriptors for the packfiles before
+   spawning "git repack/prune", which would upset Windows that does
+   not want a process to work on a file that is open by another
+   process.  The issue has been worked around.
+   (merge 12e73a3ce4 kg/gc-auto-windows-workaround later to maint).
+
+ * The recursive merge strategy did not properly ensure there was no
+   change between HEAD and the index before performing its operation,
+   which has been corrected.
+   (merge 55f39cf755 en/dirty-merge-fixes later to maint).
+
+ * "git rebase" started exporting GIT_DIR environment variable and
+   exposing it to hook scripts when part of it got rewritten in C.
+   Instead of matching the old scripted Porcelains' behaviour,
+   compensate by also exporting GIT_WORK_TREE environment as well to
+   lessen the damage.  This can harm existing hooks that want to
+   operate on different repository, but the current behaviour is
+   already broken for them anyway.
+   (merge ab5e67d751 bc/sequencer-export-work-tree-as-well later to maint).
+
+ * "git send-email" when using in a batched mode that limits the
+   number of messages sent in a single SMTP session lost the contents
+   of the variable used to choose between tls/ssl, unable to send the
+   second and later batches, which has been fixed.
+   (merge 636f3d7ac5 jm/send-email-tls-auth-on-batch later to maint).
+
+ * The lazy clone support had a few places where missing but promised
+   objects were not correctly tolerated, which have been fixed.
+
  * Code cleanup, docfix, build fix, etc.
    (merge aee9be2ebe sg/update-ref-stdin-cleanup later to maint).
    (merge 037714252f jc/clean-after-sanity-tests later to maint).
@@ -237,3 +343,4 @@ Fixes since v2.18
    (merge 5cf8e06474 js/enhanced-version-info later to maint).
    (merge 6aaded5509 tb/config-default later to maint).
    (merge 022d2ac1f3 sb/blame-color later to maint).
+   (merge 5a06a20e0c bp/test-drop-caches-for-windows later to maint).
