@@ -63,7 +63,7 @@ static struct oidset gitmodules_done = OIDSET_INIT;
 	FUNC(ZERO_PADDED_DATE, ERROR) \
 	FUNC(GITMODULES_MISSING, ERROR) \
 	FUNC(GITMODULES_BLOB, ERROR) \
-	FUNC(GITMODULES_PARSE, ERROR) \
+	FUNC(GITMODULES_LARGE, ERROR) \
 	FUNC(GITMODULES_NAME, ERROR) \
 	FUNC(GITMODULES_SYMLINK, ERROR) \
 	/* warnings */ \
@@ -77,6 +77,7 @@ static struct oidset gitmodules_done = OIDSET_INIT;
 	FUNC(ZERO_PADDED_FILEMODE, WARN) \
 	FUNC(NUL_IN_COMMIT, WARN) \
 	/* infos (reported as warnings, but ignored by default) */ \
+	FUNC(GITMODULES_PARSE, INFO) \
 	FUNC(BAD_TAG_NAME, INFO) \
 	FUNC(MISSING_TAGGER_ENTRY, INFO)
 
@@ -999,6 +1000,7 @@ static int fsck_blob(struct blob *blob, const char *buf,
 		     unsigned long size, struct fsck_options *options)
 {
 	struct fsck_gitmodules_data data;
+	struct config_options config_opts = { 0 };
 
 	if (!oidset_contains(&gitmodules_found, &blob->object.oid))
 		return 0;
@@ -1014,15 +1016,16 @@ static int fsck_blob(struct blob *blob, const char *buf,
 		 * that an error.
 		 */
 		return report(options, &blob->object,
-			      FSCK_MSG_GITMODULES_PARSE,
+			      FSCK_MSG_GITMODULES_LARGE,
 			      ".gitmodules too large to parse");
 	}
 
 	data.obj = &blob->object;
 	data.options = options;
 	data.ret = 0;
+	config_opts.error_action = CONFIG_ERROR_SILENT;
 	if (git_config_from_mem(fsck_gitmodules_fn, CONFIG_ORIGIN_BLOB,
-				".gitmodules", buf, size, &data))
+				".gitmodules", buf, size, &data, &config_opts))
 		data.ret |= report(options, &blob->object,
 				   FSCK_MSG_GITMODULES_PARSE,
 				   "could not parse gitmodules blob");

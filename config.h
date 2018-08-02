@@ -54,6 +54,12 @@ struct config_options {
 	const char *git_dir;
 	config_parser_event_fn_t event_fn;
 	void *event_fn_data;
+	enum config_error_action {
+		CONFIG_ERROR_UNSET = 0, /* use source-specific default */
+		CONFIG_ERROR_DIE, /* die() on error */
+		CONFIG_ERROR_ERROR, /* error() on error, return -1 */
+		CONFIG_ERROR_SILENT, /* return -1 */
+	} error_action;
 };
 
 typedef int (*config_fn_t)(const char *, const char *, void *);
@@ -62,8 +68,11 @@ extern int git_config_from_file(config_fn_t fn, const char *, void *);
 extern int git_config_from_file_with_options(config_fn_t fn, const char *,
 					     void *,
 					     const struct config_options *);
-extern int git_config_from_mem(config_fn_t fn, const enum config_origin_type,
-					const char *name, const char *buf, size_t len, void *data);
+extern int git_config_from_mem(config_fn_t fn,
+			       const enum config_origin_type,
+			       const char *name,
+			       const char *buf, size_t len,
+			       void *data, const struct config_options *opts);
 extern int git_config_from_blob_oid(config_fn_t fn, const char *name,
 				    const struct object_id *oid, void *data);
 extern void git_config_push_parameter(const char *text);

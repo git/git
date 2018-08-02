@@ -32,7 +32,7 @@ struct config_source {
 	enum config_origin_type origin_type;
 	const char *name;
 	const char *path;
-	int die_on_error;
+	enum config_error_action default_error_action;
 	int linenr;
 	int eof;
 	struct strbuf value;
@@ -810,10 +810,21 @@ static int git_parse_source(config_fn_t fn, void *data,
 				      cf->linenr, cf->name);
 	}
 
-	if (cf->die_on_error)
+	switch (opts && opts->error_action ?
+		opts->error_action :
+		cf->default_error_action) {
+	case CONFIG_ERROR_DIE:
 		die("%s", error_msg);
-	else
+		break;
+	case CONFIG_ERROR_ERROR:
 		error_return = error("%s", error_msg);
+		break;
+	case CONFIG_ERROR_SILENT:
+		error_return = -1;
+		break;
+	case CONFIG_ERROR_UNSET:
+		BUG("config error action unset");
+	}
 
 	free(error_msg);
 	return error_return;
@@ -1521,7 +1532,7 @@ static int do_config_from_file(config_fn_t fn,
 	top.origin_type = origin_type;
 	top.name = name;
 	top.path = path;
-	top.die_on_error = 1;
+	top.default_error_action = CONFIG_ERROR_DIE;
 	top.do_fgetc = config_file_fgetc;
 	top.do_ungetc = config_file_ungetc;
 	top.do_ftell = config_file_ftell;
@@ -1559,8 +1570,10 @@ int git_config_from_file(config_fn_t fn, const char *filename, void *data)
 	return git_config_from_file_with_options(fn, filename, data, NULL);
 }
 
-int git_config_from_mem(config_fn_t fn, const enum config_origin_type origin_type,
-			const char *name, const char *buf, size_t len, void *data)
+int git_config_from_mem(config_fn_t fn,
+			const enum config_origin_type origin_type,
+			const char *name, const char *buf, size_t len,
+			void *data, const struct config_options *opts)
 {
 	struct config_source top;
 
@@ -1570,12 +1583,12 @@ int git_config_from_mem(config_fn_t fn, const enum config_origin_type origin_typ
 	top.origin_type = origin_type;
 	top.name = name;
 	top.path = NULL;
-	top.die_on_error = 0;
+	top.default_error_action = CONFIG_ERROR_ERROR;
 	top.do_fgetc = config_buf_fgetc;
 	top.do_ungetc = config_buf_ungetc;
 	top.do_ftell = config_buf_ftell;
 
-	return do_config_from(&top, fn, data, NULL);
+	return do_config_from(&top, fn, data, opts);
 }
 
 int git_config_from_blob_oid(config_fn_t fn,
@@ -1596,7 +1609,8 @@ int git_config_from_blob_oid(config_fn_t fn,
 		return error("reference '%s' does not point to a blob", name);
 	}
 
-	ret = git_config_from_mem(fn, CONFIG_ORIGIN_BLOB, name, buf, size, data);
+	ret = git_config_from_mem(fn, CONFIG_ORIGIN_BLOB, name, buf, size,
+				  data, NULL);
 	free(buf);
 
 	return ret;
