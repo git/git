@@ -960,8 +960,8 @@ rescheduled immediately, with a helpful message how to edit the todo list
 (this typically happens when a `reset` command was inserted into the todo
 list manually and contains a typo).
 
-The `merge` command will merge the specified revision into whatever is
-HEAD at that time. With `-C <original-commit>`, the commit message of
+The `merge` command will merge the specified revision(s) into whatever
+is HEAD at that time. With `-C <original-commit>`, the commit message of
 the specified merge commit will be used. When the `-C` is changed to
 a lower-case `-c`, the message will be opened in an editor after a
 successful merge so that the user can edit the message.
@@ -970,7 +970,8 @@ If a `merge` command fails for any reason other than merge conflicts (i.e.
 when the merge operation did not even start), it is rescheduled immediately.
 
 At this time, the `merge` command will *always* use the `recursive`
-merge strategy, with no way to choose a different one. To work around
+merge strategy for regular merges, and `octopus` for octopus merges,
+strategy, with no way to choose a different one. To work around
 this, an `exec` command can be used to call `git merge` explicitly,
 using the fact that the labels are worktree-local refs (the ref
 `refs/rewritten/onto` would correspond to the label `onto`, for example).

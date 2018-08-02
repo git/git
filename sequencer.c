@@ -2850,6 +2850,26 @@ static int do_reset(const char *name, int len, struct replay_opts *opts)
 	return ret;
 }
 
+static struct commit *lookup_label(const char *label, int len,
+				   struct strbuf *buf)
+{
+	struct commit *commit;
+
+	strbuf_reset(buf);
+	strbuf_addf(buf, "refs/rewritten/%.*s", len, label);
+	commit = lookup_commit_reference_by_name(buf->buf);
+	if (!commit) {
+		/* fall back to non-rewritten ref or commit */
+		strbuf_splice(buf, 0, strlen("refs/rewritten/"), "", 0);
+		commit = lookup_commit_reference_by_name(buf->buf);
+	}
+
+	if (!commit)
+		error(_("could not resolve '%s'"), buf->buf);
+
+	return commit;
+}
+
 static int do_merge(struct commit *commit, const char *arg, int arg_len,
 		    int flags, struct replay_opts *opts)
 {
@@ -2858,8 +2878,9 @@ static int do_merge(struct commit *commit, const char *arg, int arg_len,
 	struct strbuf ref_name = STRBUF_INIT;
 	struct commit *head_commit, *merge_commit, *i;
 	struct commit_list *bases, *j, *reversed = NULL;
+	struct commit_list *to_merge = NULL, **tail = &to_merge;
 	struct merge_options o;
-	int merge_arg_len, oneline_offset, can_fast_forward, ret;
+	int merge_arg_len, oneline_offset, can_fast_forward, ret, k;
 	static struct lock_file lock;
 	const char *p;
 
@@ -2874,26 +2895,34 @@ static int do_merge(struct commit *commit, const char *arg, int arg_len,
 		goto leave_merge;
 	}
 
-	oneline_offset = arg_len;
-	merge_arg_len = strcspn(arg, " \t\n");
-	p = arg + merge_arg_len;
-	p += strspn(p, " \t\n");
-	if (*p == '#' && (!p[1] || isspace(p[1]))) {
-		p += 1 + strspn(p + 1, " \t\n");
-		oneline_offset = p - arg;
-	} else if (p - arg < arg_len)
-		BUG("octopus merges are not supported yet: '%s'", p);
-
-	strbuf_addf(&ref_name, "refs/rewritten/%.*s", merge_arg_len, arg);
-	merge_commit = lookup_commit_reference_by_name(ref_name.buf);
-	if (!merge_commit) {
-		/* fall back to non-rewritten ref or commit */
-		strbuf_splice(&ref_name, 0, strlen("refs/rewritten/"), "", 0);
-		merge_commit = lookup_commit_reference_by_name(ref_name.buf);
+	/*
+	 * For octopus merges, the arg starts with the list of revisions to be
+	 * merged. The list is optionally followed by '#' and the oneline.
+	 */
+	merge_arg_len = oneline_offset = arg_len;
+	for (p = arg; p - arg < arg_len; p += strspn(p, " \t\n")) {
+		if (!*p)
+			break;
+		if (*p == '#' && (!p[1] || isspace(p[1]))) {
+			p += 1 + strspn(p + 1, " \t\n");
+			oneline_offset = p - arg;
+			break;
+		}
+		k = strcspn(p, " \t\n");
+		if (!k)
+			continue;
+		merge_commit = lookup_label(p, k, &ref_name);
+		if (!merge_commit) {
+			ret = error(_("unable to parse '%.*s'"), k, p);
+			goto leave_merge;
+		}
+		tail = &commit_list_insert(merge_commit, tail)->next;
+		p += k;
+		merge_arg_len = p - arg;
 	}
 
-	if (!merge_commit) {
-		ret = error(_("could not resolve '%s'"), ref_name.buf);
+	if (!to_merge) {
+		ret = error(_("nothing to merge: '%.*s'"), arg_len, arg);
 		goto leave_merge;
 	}
 
@@ -2904,8 +2933,13 @@ static int do_merge(struct commit *commit, const char *arg, int arg_len,
 		 * "[new root]", let's simply fast-forward to the merge head.
 		 */
 		rollback_lock_file(&lock);
-		ret = fast_forward_to(&merge_commit->object.oid,
-				       &head_commit->object.oid, 0, opts);
+		if (to_merge->next)
+			ret = error(_("octopus merge cannot be executed on "
+				      "top of a [new root]"));
+		else
+			ret = fast_forward_to(&to_merge->item->object.oid,
+					      &head_commit->object.oid, 0,
+					      opts);
 		goto leave_merge;
 	}
 
@@ -2941,7 +2975,8 @@ static int do_merge(struct commit *commit, const char *arg, int arg_len,
 			p = arg + oneline_offset;
 			len = arg_len - oneline_offset;
 		} else {
-			strbuf_addf(&buf, "Merge branch '%.*s'",
+			strbuf_addf(&buf, "Merge %s '%.*s'",
+				    to_merge->next ? "branches" : "branch",
 				    merge_arg_len, arg);
 			p = buf.buf;
 			len = buf.len;
@@ -2965,28 +3000,76 @@ static int do_merge(struct commit *commit, const char *arg, int arg_len,
 			&head_commit->object.oid);
 
 	/*
-	 * If the merge head is different from the original one, we cannot
+	 * If any merge head is different from the original one, we cannot
 	 * fast-forward.
 	 */
 	if (can_fast_forward) {
-		struct commit_list *second_parent = commit->parents->next;
+		struct commit_list *p = commit->parents->next;
 
-		if (second_parent && !second_parent->next &&
-		    oidcmp(&merge_commit->object.oid,
-			   &second_parent->item->object.oid))
+		for (j = to_merge; j && p; j = j->next, p = p->next)
+			if (oidcmp(&j->item->object.oid,
+				   &p->item->object.oid)) {
+				can_fast_forward = 0;
+				break;
+			}
+		/*
+		 * If the number of merge heads differs from the original merge
+		 * commit, we cannot fast-forward.
+		 */
+		if (j || p)
 			can_fast_forward = 0;
 	}
 
-	if (can_fast_forward && commit->parents->next &&
-	    !commit->parents->next->next &&
-	    !oidcmp(&commit->parents->next->item->object.oid,
-		    &merge_commit->object.oid)) {
+	if (can_fast_forward) {
 		rollback_lock_file(&lock);
 		ret = fast_forward_to(&commit->object.oid,
 				      &head_commit->object.oid, 0, opts);
 		goto leave_merge;
 	}
 
+	if (to_merge->next) {
+		/* Octopus merge */
+		struct child_process cmd = CHILD_PROCESS_INIT;
+
+		if (read_env_script(&cmd.env_array)) {
+			const char *gpg_opt = gpg_sign_opt_quoted(opts);
+
+			ret = error(_(staged_changes_advice), gpg_opt, gpg_opt);
+			goto leave_merge;
+		}
+
+		cmd.git_cmd = 1;
+		argv_array_push(&cmd.args, "merge");
+		argv_array_push(&cmd.args, "-s");
+		argv_array_push(&cmd.args, "octopus");
+		argv_array_push(&cmd.args, "--no-edit");
+		argv_array_push(&cmd.args, "--no-ff");
+		argv_array_push(&cmd.args, "--no-log");
+		argv_array_push(&cmd.args, "--no-stat");
+		argv_array_push(&cmd.args, "-F");
+		argv_array_push(&cmd.args, git_path_merge_msg(the_repository));
+		if (opts->gpg_sign)
+			argv_array_push(&cmd.args, opts->gpg_sign);
+
+		/* Add the tips to be merged */
+		for (j = to_merge; j; j = j->next)
+			argv_array_push(&cmd.args,
+					oid_to_hex(&j->item->object.oid));
+
+		strbuf_release(&ref_name);
+		unlink(git_path_cherry_pick_head(the_repository));
+		rollback_lock_file(&lock);
+
+		rollback_lock_file(&lock);
+		ret = run_command(&cmd);
+
+		/* force re-reading of the cache */
+		if (!ret && (discard_cache() < 0 || read_cache() < 0))
+			ret = error(_("could not read index"));
+		goto leave_merge;
+	}
+
+	merge_commit = to_merge->item;
 	write_message(oid_to_hex(&merge_commit->object.oid), GIT_SHA1_HEXSZ,
 		      git_path_merge_head(the_repository), 0);
 	write_message("no-ff", 5, git_path_merge_mode(the_repository), 0);
@@ -3049,6 +3132,7 @@ static int do_merge(struct commit *commit, const char *arg, int arg_len,
 leave_merge:
 	strbuf_release(&ref_name);
 	rollback_lock_file(&lock);
+	free_commit_list(to_merge);
 	return ret;
 }
 
@@ -3905,7 +3989,6 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 	 */
 	while ((commit = get_revision(revs))) {
 		struct commit_list *to_merge;
-		int is_octopus;
 		const char *p1, *p2;
 		struct object_id *oid;
 		int is_empty;
@@ -3937,11 +4020,6 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 			continue;
 		}
 
-		is_octopus = to_merge && to_merge->next;
-
-		if (is_octopus)
-			BUG("Octopus merges not yet supported");
-
 		/* Create a label */
 		strbuf_reset(&label);
 		if (skip_prefix(oneline.buf, "Merge ", &p1) &&
@@ -3963,13 +4041,17 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 		strbuf_addf(&buf, "%s -C %s",
 			    cmd_merge, oid_to_hex(&commit->object.oid));
 
-		/* label the tip of merged branch */
-		oid = &to_merge->item->object.oid;
-		strbuf_addch(&buf, ' ');
+		/* label the tips of merged branches */
+		for (; to_merge; to_merge = to_merge->next) {
+			oid = &to_merge->item->object.oid;
+			strbuf_addch(&buf, ' ');
 
-		if (!oidset_contains(&interesting, oid))
-			strbuf_addstr(&buf, label_oid(oid, NULL, &state));
-		else {
+			if (!oidset_contains(&interesting, oid)) {
+				strbuf_addstr(&buf, label_oid(oid, NULL,
+							      &state));
+				continue;
+			}
+
 			tips_tail = &commit_list_insert(to_merge->item,
 							tips_tail)->next;
 

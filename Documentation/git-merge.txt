@@ -12,7 +12,7 @@ SYNOPSIS
 'git merge' [-n] [--stat] [--no-commit] [--squash] [--[no-]edit]
 	[-s <strategy>] [-X <strategy-option>] [-S[<keyid>]]
 	[--[no-]allow-unrelated-histories]
-	[--[no-]rerere-autoupdate] [-m <msg>] [<commit>...]
+	[--[no-]rerere-autoupdate] [-m <msg>] [-F <file>] [<commit>...]
 'git merge' --abort
 'git merge' --continue
 
@@ -74,6 +74,14 @@ will be appended to the specified message.
 The 'git fmt-merge-msg' command can be
 used to give a good default for automated 'git merge'
 invocations. The automated message can include the branch description.
+
+-F <file>::
+--file=<file>::
+	Read the commit message to be used for the merge commit (in
+	case one is created).
++
+If `--log` is specified, a shortlog of the commits being merged
+will be appended to the specified message.
 
 --[no-]rerere-autoupdate::
 	Allow the rerere mechanism to update the index with the
