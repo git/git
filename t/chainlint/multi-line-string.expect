@@ -1,0 +1,9 @@
+(
+	x=line 1		line 2		line 3" &&
+?!AMP?!	y=line 1		line2'
+	foobar
+>) &&
+(
+	echo "there's nothing to see here" &&
+	exit
+>)

@@ -1,0 +1,5 @@
+(
+	cat &&
+?!AMP?!	cat
+	foobar
+>)
