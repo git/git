@@ -1479,7 +1479,7 @@ EOF
 							 SSL => 1);
 			}
 		}
-		else {
+		elsif (!$smtp) {
 			$smtp_server_port ||= 25;
 			$smtp ||= Net::SMTP->new($smtp_server,
 						 Hello => $smtp_domain,
@@ -1501,7 +1501,6 @@ EOF
 					$smtp->starttls(ssl_verify_params())
 						or die sprintf(__("STARTTLS failed! %s"), IO::Socket::SSL::errstr());
 				}
-				$smtp_encryption = '';
 				# Send EHLO again to receive fresh
 				# supported commands
 				$smtp->hello($smtp_domain);
