@@ -951,4 +951,455 @@ test_expect_success 'virtual merge base handles rename/rename(1to2)/add-dest' '
 	)
 '
 
+#
+# criss-cross with modify/modify on a symlink:
+#
+#      B   D
+#      o---o
+#     / \ / \
+#  A o   X   ? F
+#     \ / \ /
+#      o---o
+#      C   E
+#
+#   Commit A: simple simlink fickle->lagoon
+#   Commit B: redirect fickle->disneyland
+#   Commit C: redirect fickle->home
+#   Commit D: merge B&C, resolving in favor of B
+#   Commit E: merge B&C, resolving in favor of C
+#
+# This is an obvious modify/modify conflict for the symlink 'fickle'.  Can
+# git detect it?
+
+test_expect_success 'setup symlink modify/modify' '
+	test_create_repo symlink-modify-modify &&
+	(
+		cd symlink-modify-modify &&
+
+		test_ln_s_add lagoon fickle &&
+		git commit -m A &&
+		git tag A &&
+
+		git checkout -b B A &&
+		git rm fickle &&
+		test_ln_s_add disneyland fickle &&
+		git commit -m B &&
+
+		git checkout -b C A &&
+		git rm fickle &&
+		test_ln_s_add home fickle &&
+		git add fickle &&
+		git commit -m C &&
+
+		git checkout -q B^0 &&
+		git merge -s ours -m D C^0 &&
+		git tag D &&
+
+		git checkout -q C^0 &&
+		git merge -s ours -m E B^0 &&
+		git tag E
+	)
+'
+
+test_expect_failure 'check symlink modify/modify' '
+	(
+		cd symlink-modify-modify &&
+
+		git checkout D^0 &&
+
+		test_must_fail git merge -s recursive E^0 &&
+
+		git ls-files -s >out &&
+		test_line_count = 3 out &&
+		git ls-files -u >out &&
+		test_line_count = 3 out &&
+		git ls-files -o >out &&
+		test_line_count = 1 out
+	)
+'
+
+#
+# criss-cross with add/add of a symlink:
+#
+#      B   D
+#      o---o
+#     / \ / \
+#  A o   X   ? F
+#     \ / \ /
+#      o---o
+#      C   E
+#
+#   Commit A: No symlink or path exists yet
+#   Commit B: set up symlink: fickle->disneyland
+#   Commit C: set up symlink: fickle->home
+#   Commit D: merge B&C, resolving in favor of B
+#   Commit E: merge B&C, resolving in favor of C
+#
+# This is an obvious add/add conflict for the symlink 'fickle'.  Can
+# git detect it?
+
+test_expect_success 'setup symlink add/add' '
+	test_create_repo symlink-add-add &&
+	(
+		cd symlink-add-add &&
+
+		touch ignoreme &&
+		git add ignoreme &&
+		git commit -m A &&
+		git tag A &&
+
+		git checkout -b B A &&
+		test_ln_s_add disneyland fickle &&
+		git commit -m B &&
+
+		git checkout -b C A &&
+		test_ln_s_add home fickle &&
+		git add fickle &&
+		git commit -m C &&
+
+		git checkout -q B^0 &&
+		git merge -s ours -m D C^0 &&
+		git tag D &&
+
+		git checkout -q C^0 &&
+		git merge -s ours -m E B^0 &&
+		git tag E
+	)
+'
+
+test_expect_failure 'check symlink add/add' '
+	(
+		cd symlink-add-add &&
+
+		git checkout D^0 &&
+
+		test_must_fail git merge -s recursive E^0 &&
+
+		git ls-files -s >out &&
+		test_line_count = 2 out &&
+		git ls-files -u >out &&
+		test_line_count = 2 out &&
+		git ls-files -o >out &&
+		test_line_count = 1 out
+	)
+'
+
+#
+# criss-cross with modify/modify on a submodule:
+#
+#      B   D
+#      o---o
+#     / \ / \
+#  A o   X   ? F
+#     \ / \ /
+#      o---o
+#      C   E
+#
+#   Commit A: simple submodule repo
+#   Commit B: update repo
+#   Commit C: update repo differently
+#   Commit D: merge B&C, resolving in favor of B
+#   Commit E: merge B&C, resolving in favor of C
+#
+# This is an obvious modify/modify conflict for the submodule 'repo'.  Can
+# git detect it?
+
+test_expect_success 'setup submodule modify/modify' '
+	test_create_repo submodule-modify-modify &&
+	(
+		cd submodule-modify-modify &&
+
+		test_create_repo submod &&
+		(
+			cd submod &&
+			touch file-A &&
+			git add file-A &&
+			git commit -m A &&
+			git tag A &&
+
+			git checkout -b B A &&
+			touch file-B &&
+			git add file-B &&
+			git commit -m B &&
+			git tag B &&
+
+			git checkout -b C A &&
+			touch file-C &&
+			git add file-C &&
+			git commit -m C &&
+			git tag C
+		) &&
+
+		git -C submod reset --hard A &&
+		git add submod &&
+		git commit -m A &&
+		git tag A &&
+
+		git checkout -b B A &&
+		git -C submod reset --hard B &&
+		git add submod &&
+		git commit -m B &&
+
+		git checkout -b C A &&
+		git -C submod reset --hard C &&
+		git add submod &&
+		git commit -m C &&
+
+		git checkout -q B^0 &&
+		git merge -s ours -m D C^0 &&
+		git tag D &&
+
+		git checkout -q C^0 &&
+		git merge -s ours -m E B^0 &&
+		git tag E
+	)
+'
+
+test_expect_failure 'check submodule modify/modify' '
+	(
+		cd submodule-modify-modify &&
+
+		git checkout D^0 &&
+
+		test_must_fail git merge -s recursive E^0 &&
+
+		git ls-files -s >out &&
+		test_line_count = 3 out &&
+		git ls-files -u >out &&
+		test_line_count = 3 out &&
+		git ls-files -o >out &&
+		test_line_count = 1 out
+	)
+'
+
+#
+# criss-cross with add/add on a submodule:
+#
+#      B   D
+#      o---o
+#     / \ / \
+#  A o   X   ? F
+#     \ / \ /
+#      o---o
+#      C   E
+#
+#   Commit A: nothing of note
+#   Commit B: introduce submodule repo
+#   Commit C: introduce submodule repo at different commit
+#   Commit D: merge B&C, resolving in favor of B
+#   Commit E: merge B&C, resolving in favor of C
+#
+# This is an obvious add/add conflict for the submodule 'repo'.  Can
+# git detect it?
+
+test_expect_success 'setup submodule add/add' '
+	test_create_repo submodule-add-add &&
+	(
+		cd submodule-add-add &&
+
+		test_create_repo submod &&
+		(
+			cd submod &&
+			touch file-A &&
+			git add file-A &&
+			git commit -m A &&
+			git tag A &&
+
+			git checkout -b B A &&
+			touch file-B &&
+			git add file-B &&
+			git commit -m B &&
+			git tag B &&
+
+			git checkout -b C A &&
+			touch file-C &&
+			git add file-C &&
+			git commit -m C &&
+			git tag C
+		) &&
+
+		touch irrelevant-file &&
+		git add irrelevant-file &&
+		git commit -m A &&
+		git tag A &&
+
+		git checkout -b B A &&
+		git -C submod reset --hard B &&
+		git add submod &&
+		git commit -m B &&
+
+		git checkout -b C A &&
+		git -C submod reset --hard C &&
+		git add submod &&
+		git commit -m C &&
+
+		git checkout -q B^0 &&
+		git merge -s ours -m D C^0 &&
+		git tag D &&
+
+		git checkout -q C^0 &&
+		git merge -s ours -m E B^0 &&
+		git tag E
+	)
+'
+
+test_expect_failure 'check submodule add/add' '
+	(
+		cd submodule-add-add &&
+
+		git checkout D^0 &&
+
+		test_must_fail git merge -s recursive E^0 &&
+
+		git ls-files -s >out &&
+		test_line_count = 3 out &&
+		git ls-files -u >out &&
+		test_line_count = 2 out &&
+		git ls-files -o >out &&
+		test_line_count = 1 out
+	)
+'
+
+#
+# criss-cross with conflicting entry types:
+#
+#      B   D
+#      o---o
+#     / \ / \
+#  A o   X   ? F
+#     \ / \ /
+#      o---o
+#      C   E
+#
+#   Commit A: nothing of note
+#   Commit B: introduce submodule 'path'
+#   Commit C: introduce symlink 'path'
+#   Commit D: merge B&C, resolving in favor of B
+#   Commit E: merge B&C, resolving in favor of C
+#
+# This is an obvious add/add conflict for 'path'.  Can git detect it?
+
+test_expect_success 'setup conflicting entry types (submodule vs symlink)' '
+	test_create_repo submodule-symlink-add-add &&
+	(
+		cd submodule-symlink-add-add &&
+
+		test_create_repo path &&
+		(
+			cd path &&
+			touch file-B &&
+			git add file-B &&
+			git commit -m B &&
+			git tag B
+		) &&
+
+		touch irrelevant-file &&
+		git add irrelevant-file &&
+		git commit -m A &&
+		git tag A &&
+
+		git checkout -b B A &&
+		git -C path reset --hard B &&
+		git add path &&
+		git commit -m B &&
+
+		git checkout -b C A &&
+		rm -rf path/ &&
+		test_ln_s_add irrelevant-file path &&
+		git commit -m C &&
+
+		git checkout -q B^0 &&
+		git merge -s ours -m D C^0 &&
+		git tag D &&
+
+		git checkout -q C^0 &&
+		git merge -s ours -m E B^0 &&
+		git tag E
+	)
+'
+
+test_expect_failure 'check conflicting entry types (submodule vs symlink)' '
+	(
+		cd submodule-symlink-add-add &&
+
+		git checkout D^0 &&
+
+		test_must_fail git merge -s recursive E^0 &&
+
+		git ls-files -s >out &&
+		test_line_count = 3 out &&
+		git ls-files -u >out &&
+		test_line_count = 2 out &&
+		git ls-files -o >out &&
+		test_line_count = 1 out
+	)
+'
+
+#
+# criss-cross with regular files that have conflicting modes:
+#
+#      B   D
+#      o---o
+#     / \ / \
+#  A o   X   ? F
+#     \ / \ /
+#      o---o
+#      C   E
+#
+#   Commit A: nothing of note
+#   Commit B: introduce file source_me.bash, not executable
+#   Commit C: introduce file source_me.bash, executable
+#   Commit D: merge B&C, resolving in favor of B
+#   Commit E: merge B&C, resolving in favor of C
+#
+# This is an obvious add/add mode conflict.  Can git detect it?
+
+test_expect_success 'setup conflicting modes for regular file' '
+	test_create_repo regular-file-mode-conflict &&
+	(
+		cd regular-file-mode-conflict &&
+
+		touch irrelevant-file &&
+		git add irrelevant-file &&
+		git commit -m A &&
+		git tag A &&
+
+		git checkout -b B A &&
+		echo "command_to_run" >source_me.bash &&
+		git add source_me.bash &&
+		git commit -m B &&
+
+		git checkout -b C A &&
+		echo "command_to_run" >source_me.bash &&
+		git add source_me.bash &&
+		test_chmod +x source_me.bash &&
+		git commit -m C &&
+
+		git checkout -q B^0 &&
+		git merge -s ours -m D C^0 &&
+		git tag D &&
+
+		git checkout -q C^0 &&
+		git merge -s ours -m E B^0 &&
+		git tag E
+	)
+'
+
+test_expect_failure 'check conflicting modes for regular file' '
+	(
+		cd regular-file-mode-conflict &&
+
+		git checkout D^0 &&
+
+		test_must_fail git merge -s recursive E^0 &&
+
+		git ls-files -s >out &&
+		test_line_count = 3 out &&
+		git ls-files -u >out &&
+		test_line_count = 2 out &&
+		git ls-files -o >out &&
+		test_line_count = 1 out
+	)
+'
+
 test_done
