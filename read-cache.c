@@ -6,6 +6,8 @@
 #define NO_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
 #include "config.h"
+#include "diff.h"
+#include "diffcore.h"
 #include "tempfile.h"
 #include "lockfile.h"
 #include "cache-tree.h"
@@ -2118,6 +2120,44 @@ int unmerged_index(const struct index_state *istate)
 			return 1;
 	}
 	return 0;
+}
+
+int index_has_changes(const struct index_state *istate,
+		      struct tree *tree,
+		      struct strbuf *sb)
+{
+	struct object_id cmp;
+	int i;
+
+	if (istate != &the_index) {
+		BUG("index_has_changes cannot yet accept istate != &the_index; do_diff_cache needs updating first.");
+	}
+	if (tree)
+		cmp = tree->object.oid;
+	if (tree || !get_oid_tree("HEAD", &cmp)) {
+		struct diff_options opt;
+
+		diff_setup(&opt);
+		opt.flags.exit_with_status = 1;
+		if (!sb)
+			opt.flags.quick = 1;
+		do_diff_cache(&cmp, &opt);
+		diffcore_std(&opt);
+		for (i = 0; sb && i < diff_queued_diff.nr; i++) {
+			if (i)
+				strbuf_addch(sb, ' ');
+			strbuf_addstr(sb, diff_queued_diff.queue[i]->two->path);
+		}
+		diff_flush(&opt);
+		return opt.flags.has_changes != 0;
+	} else {
+		for (i = 0; sb && i < istate->cache_nr; i++) {
+			if (i)
+				strbuf_addch(sb, ' ');
+			strbuf_addstr(sb, istate->cache[i]->name);
+		}
+		return !!istate->cache_nr;
+	}
 }
 
 #define WRITE_BUFFER_SIZE 8192

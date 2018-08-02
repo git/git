@@ -3281,6 +3281,13 @@ int merge_trees(struct merge_options *o,
 		struct tree **result)
 {
 	int code, clean;
+	struct strbuf sb = STRBUF_INIT;
+
+	if (!o->call_depth && index_has_changes(&the_index, head, &sb)) {
+		err(o, _("Your local changes to the following files would be overwritten by merge:\n  %s"),
+		    sb.buf);
+		return -1;
+	}
 
 	if (o->subtree_shift) {
 		merge = shift_tree_object(head, merge, o->subtree_shift);
@@ -3288,13 +3295,6 @@ int merge_trees(struct merge_options *o,
 	}
 
 	if (oid_eq(&common->object.oid, &merge->object.oid)) {
-		struct strbuf sb = STRBUF_INIT;
-
-		if (!o->call_depth && index_has_changes(&sb)) {
-			err(o, _("Dirty index: cannot merge (dirty: %s)"),
-			    sb.buf);
-			return 0;
-		}
 		output(o, 0, _("Already up to date!"));
 		*result = head;
 		return 1;
