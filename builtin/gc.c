@@ -615,6 +615,7 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 		return -1;
 
 	if (!repository_format_precious_objects) {
+		close_all_packs(the_repository->objects);
 		if (run_command_v_opt(repack.argv, RUN_GIT_CMD))
 			return error(FAILED_RUN, repack.argv[0]);
 
