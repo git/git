@@ -251,6 +251,9 @@ static struct commit *handle_commit(struct rev_info *revs,
 		if (!object) {
 			if (revs->ignore_missing_links || (flags & UNINTERESTING))
 				return NULL;
+			if (revs->exclude_promisor_objects &&
+			    is_promisor_object(&tag->tagged->oid))
+				return NULL;
 			die("bad object %s", oid_to_hex(&tag->tagged->oid));
 		}
 		object->flags |= flags;

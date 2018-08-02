@@ -6,6 +6,7 @@
 #include "blob.h"
 #include "alloc.h"
 #include "gpg-interface.h"
+#include "packfile.h"
 
 const char *tag_type = "tag";
 
@@ -66,12 +67,18 @@ int gpg_verify_tag(const struct object_id *oid, const char *name_to_report,
 
 struct object *deref_tag(struct repository *r, struct object *o, const char *warn, int warnlen)
 {
+	struct object_id *last_oid = NULL;
 	while (o && o->type == OBJ_TAG)
-		if (((struct tag *)o)->tagged)
-			o = parse_object(r, &((struct tag *)o)->tagged->oid);
-		else
+		if (((struct tag *)o)->tagged) {
+			last_oid = &((struct tag *)o)->tagged->oid;
+			o = parse_object(r, last_oid);
+		} else {
+			last_oid = NULL;
 			o = NULL;
+		}
 	if (!o && warn) {
+		if (last_oid && is_promisor_object(last_oid))
+			return NULL;
 		if (!warnlen)
 			warnlen = strlen(warn);
 		error("missing object referenced by '%.*s'", warnlen, warn);
