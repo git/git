@@ -47,7 +47,7 @@ static const char *parse_loc(const char *spec, nth_line_fn_t nth_line,
 			else if (!num)
 				*ret = begin;
 			else
-				*ret = begin + num;
+				*ret = begin + num > 0 ? begin + num : 1;
 			return term;
 		}
 		return spec;
