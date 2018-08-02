@@ -65,6 +65,7 @@ void init_grep_defaults(void)
 	color_set(opt->colors[GREP_COLOR_MATCH_SELECTED], GIT_COLOR_BOLD_RED);
 	color_set(opt->colors[GREP_COLOR_SELECTED], "");
 	color_set(opt->colors[GREP_COLOR_SEP], GIT_COLOR_CYAN);
+	opt->only_matching = 0;
 	opt->color = -1;
 	opt->output = std_output;
 }
@@ -159,6 +160,7 @@ void grep_init(struct grep_opt *opt, const char *prefix)
 	opt->pattern_tail = &opt->pattern_list;
 	opt->header_tail = &opt->header_list;
 
+	opt->only_matching = def->only_matching;
 	opt->color = def->color;
 	opt->extended_regexp_option = def->extended_regexp_option;
 	opt->pattern_type_option = def->pattern_type_option;
@@ -1404,26 +1406,9 @@ static int next_match(struct grep_opt *opt, char *bol, char *eol,
 	return hit;
 }
 
-static void show_line(struct grep_opt *opt, char *bol, char *eol,
-		      const char *name, unsigned lno, ssize_t cno, char sign)
+static void show_line_header(struct grep_opt *opt, const char *name,
+			     unsigned lno, ssize_t cno, char sign)
 {
-	int rest = eol - bol;
-	const char *match_color, *line_color = NULL;
-
-	if (opt->file_break && opt->last_shown == 0) {
-		if (opt->show_hunk_mark)
-			opt->output(opt, "\n", 1);
-	} else if (opt->pre_context || opt->post_context || opt->funcbody) {
-		if (opt->last_shown == 0) {
-			if (opt->show_hunk_mark) {
-				output_color(opt, "--", 2, opt->colors[GREP_COLOR_SEP]);
-				opt->output(opt, "\n", 1);
-			}
-		} else if (lno > opt->last_shown + 1) {
-			output_color(opt, "--", 2, opt->colors[GREP_COLOR_SEP]);
-			opt->output(opt, "\n", 1);
-		}
-	}
 	if (opt->heading && opt->last_shown == 0) {
 		output_color(opt, name, strlen(name), opt->colors[GREP_COLOR_FILENAME]);
 		opt->output(opt, "\n", 1);
@@ -1451,38 +1436,78 @@ static void show_line(struct grep_opt *opt, char *bol, char *eol,
 		output_color(opt, buf, strlen(buf), opt->colors[GREP_COLOR_COLUMNNO]);
 		output_sep(opt, sign);
 	}
-	if (opt->color) {
+}
+
+static void show_line(struct grep_opt *opt, char *bol, char *eol,
+		      const char *name, unsigned lno, ssize_t cno, char sign)
+{
+	int rest = eol - bol;
+	const char *match_color = NULL;
+	const char *line_color = NULL;
+
+	if (opt->file_break && opt->last_shown == 0) {
+		if (opt->show_hunk_mark)
+			opt->output(opt, "\n", 1);
+	} else if (opt->pre_context || opt->post_context || opt->funcbody) {
+		if (opt->last_shown == 0) {
+			if (opt->show_hunk_mark) {
+				output_color(opt, "--", 2, opt->colors[GREP_COLOR_SEP]);
+				opt->output(opt, "\n", 1);
+			}
+		} else if (lno > opt->last_shown + 1) {
+			output_color(opt, "--", 2, opt->colors[GREP_COLOR_SEP]);
+			opt->output(opt, "\n", 1);
+		}
+	}
+	if (!opt->only_matching) {
+		/*
+		 * In case the line we're being called with contains more than
+		 * one match, leave printing each header to the loop below.
+		 */
+		show_line_header(opt, name, lno, cno, sign);
+	}
+	if (opt->color || opt->only_matching) {
 		regmatch_t match;
 		enum grep_context ctx = GREP_CONTEXT_BODY;
 		int ch = *eol;
 		int eflags = 0;
 
-		if (sign == ':')
-			match_color = opt->colors[GREP_COLOR_MATCH_SELECTED];
-		else
-			match_color = opt->colors[GREP_COLOR_MATCH_CONTEXT];
-		if (sign == ':')
-			line_color = opt->colors[GREP_COLOR_SELECTED];
-		else if (sign == '-')
-			line_color = opt->colors[GREP_COLOR_CONTEXT];
-		else if (sign == '=')
-			line_color = opt->colors[GREP_COLOR_FUNCTION];
+		if (opt->color) {
+			if (sign == ':')
+				match_color = opt->colors[GREP_COLOR_MATCH_SELECTED];
+			else
+				match_color = opt->colors[GREP_COLOR_MATCH_CONTEXT];
+			if (sign == ':')
+				line_color = opt->colors[GREP_COLOR_SELECTED];
+			else if (sign == '-')
+				line_color = opt->colors[GREP_COLOR_CONTEXT];
+			else if (sign == '=')
+				line_color = opt->colors[GREP_COLOR_FUNCTION];
+		}
 		*eol = '\0';
 		while (next_match(opt, bol, eol, ctx, &match, eflags)) {
 			if (match.rm_so == match.rm_eo)
 				break;
 
-			output_color(opt, bol, match.rm_so, line_color);
+			if (opt->only_matching)
+				show_line_header(opt, name, lno, cno, sign);
+			else
+				output_color(opt, bol, match.rm_so, line_color);
 			output_color(opt, bol + match.rm_so,
 				     match.rm_eo - match.rm_so, match_color);
+			if (opt->only_matching)
+				opt->output(opt, "\n", 1);
 			bol += match.rm_eo;
+			cno += match.rm_eo;
 			rest -= match.rm_eo;
 			eflags = REG_NOTBOL;
 		}
 		*eol = ch;
 	}
-	output_color(opt, bol, rest, line_color);
-	opt->output(opt, "\n", 1);
+	if (!opt->only_matching) {
+		output_color(opt, bol, rest, line_color);
+		opt->output(opt, "\n", 1);
+	}
 }
 
 #ifndef NO_PTHREADS

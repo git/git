@@ -163,6 +163,7 @@ struct grep_opt {
 	int relative;
 	int pathname;
 	int null_following_name;
+	int only_matching;
 	int color;
 	int max_depth;
 	int funcname;

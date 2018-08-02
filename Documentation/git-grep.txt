@@ -17,7 +17,7 @@ SYNOPSIS
 	   [-l | --files-with-matches] [-L | --files-without-match]
 	   [(-O | --open-files-in-pager) [<pager>]]
 	   [-z | --null]
-	   [-c | --count] [--all-match] [-q | --quiet]
+	   [ -o | --only-matching ] [-c | --count] [--all-match] [-q | --quiet]
 	   [--max-depth <depth>]
 	   [--color[=<when>] | --no-color]
 	   [--break] [--heading] [-p | --show-function]
@@ -200,6 +200,11 @@ providing this option will cause it to die.
 --null::
 	Output \0 instead of the character that normally follows a
 	file name.
+
+-o::
+--only-matching::
+	Print only the matched (non-empty) parts of a matching line, with each such
+	part on a separate output line.
 
 -c::
 --count::
