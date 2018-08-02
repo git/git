@@ -345,40 +345,97 @@ test_expect_success 'git detects conflict merging criss-cross+modify/delete, rev
 	)
 '
 
+#      SORRY FOR THE SUPER LONG DESCRIPTION, BUT THIS NEXT ONE IS HAIRY
 #
 # criss-cross + d/f conflict via add/add:
 #   Commit A: Neither file 'a' nor directory 'a/' exists.
 #   Commit B: Introduce 'a'
 #   Commit C: Introduce 'a/file'
-#   Commit D: Merge B & C, keeping 'a' and deleting 'a/'
-#
-# Two different later cases:
+#   Commit D1: Merge B & C, keeping 'a'    and deleting 'a/'
 #   Commit E1: Merge B & C, deleting 'a' but keeping 'a/file'
-#   Commit E2: Merge B & C, deleting 'a' but keeping a slightly modified 'a/file'
 #
-#      B   D
+#      B   D1 or D2
 #      o---o
 #     / \ / \
 #  A o   X   ? F
 #     \ / \ /
 #      o---o
-#      C   E1 or E2
+#      C   E1 or E2 or E3
 #
-# Merging D & E1 requires we first create a virtual merge base X from
-# merging A & B in memory.  Now, if X could keep both 'a' and 'a/file' in
-# the index, then the merge of D & E1 could be resolved cleanly with both
-# 'a' and 'a/file' removed.  Since git does not currently allow creating
-# such a tree, the best we can do is have X contain both 'a~<unique>' and
-# 'a/file' resulting in the merge of D and E1 having a rename/delete
-# conflict for 'a'.  (Although this merge appears to be unsolvable with git
-# currently, git could do a lot better than it currently does with these
-# d/f conflicts, which is the purpose of this test.)
+# I'll describe D2, E2, & E3 (which are alternatives for D1 & E1) more below...
 #
-# Merge of D & E2 has similar issues for path 'a', but should always result
-# in a modify/delete conflict for path 'a/file'.
+# Merging D1 & E1 requires we first create a virtual merge base X from
+# merging A & B in memory.  There are several possibilities for the merge-base:
+#   1: Keep both 'a' and 'a/file' (assuming crazy filesystem allowing a tree
+#      with a directory and file at same path): results in merge of D1 & E1
+#      being clean with both files deleted.  Bad (no conflict detected).
+#   2: Keep 'a' but not 'a/file': Merging D1 & E1 is clean and matches E1.  Bad.
+#   3: Keep 'a/file' but not 'a': Merging D1 & E1 is clean and matches D1.  Bad.
+#   4: Keep neither file: Merging D1 & E1 reports the D/F add/add conflict.
 #
-# We run each merge in both directions, to check for directional issues
-# with D/F conflict handling.
+# So 4 sounds good for this case, but if we were to merge D1 & E3, where E3
+# is defined as:
+#   Commit E3: Merge B & C, keeping modified a, and deleting a/
+# then we'd get an add/add conflict for 'a', which seems suboptimal.  A little
+# creativity leads us to an alternate choice:
+#   5: Keep 'a' as 'a~$UNIQUE' and a/file; results:
+#        Merge D1 & E1: rename/delete conflict for 'a'; a/file silently deleted
+#        Merge D1 & E3 is clean, as expected.
+#
+# So choice 5 at least provides some kind of conflict for the original case,
+# and can merge cleanly as expected with D1 and E3.  It also made things just
+# slightly funny for merging D1 and e$, where E4 is defined as:
+#   Commit E4: Merge B & C, modifying 'a' and renaming to 'a2', and deleting 'a/'
+# in this case, we'll get a rename/rename(1to2) conflict because a~$UNIQUE
+# gets renamed to 'a' in D1 and to 'a2' in E4.  But that's better than having
+# two files (both 'a' and 'a2') sitting around without the user being notified
+# that we could detect they were related and need to be merged.  Also, choice
+# 5 makes the handling of 'a/file' seem suboptimal.  What if we were to merge
+# D2 and E4, where D2 is:
+#   Commit D2: Merge B & C, renaming 'a'->'a2', keeping 'a/file'
+# This would result in a clean merge with 'a2' having three-way merged
+# contents (good), and deleting 'a/' (bad) -- it doesn't detect the
+# conflict in how the different sides treated a/file differently.
+# Continuing down the creative route:
+#   6: Keep 'a' as 'a~$UNIQUE1' and keep 'a/' as 'a~$UNIQUE2/'; results:
+#        Merge D1 & E1: rename/delete conflict for 'a' and each path under 'a/'.
+#        Merge D1 & E3: clean, as expected.
+#        Merge D1 & E4: rename/rename(1to2) conflict on 'a' vs 'a2'.
+#        Merge D2 & E4: clean for 'a2', rename/delete for a/file
+#
+# Choice 6 could cause rename detection to take longer (providing more targets
+# that need to be searched).  Also, the conflict message for each path under
+# 'a/' might be annoying unless we can detect it at the directory level, print
+# it once, and then suppress it for individual filepaths underneath.
+#
+#
+# As of time of writing, git uses choice 5.  Directory rename detection and
+# rename detection performance improvements might make choice 6 a desirable
+# improvement.  But we can at least document where we fall short for now...
+#
+#
+# Historically, this testcase also used:
+#   Commit E2: Merge B & C, deleting 'a' but keeping slightly modified 'a/file'
+# The merge of D1 & E2 is very similar to D1 & E1 -- it has similar issues for
+# path 'a', but should always result in a modify/delete conflict for path
+# 'a/file'.  These tests ran the two merges
+#   D1 & E1
+#   D1 & E2
+# in both directions, to check for directional issues with D/F conflict
+# handling. Later we added
+#   D1 & E3
+#   D1 & E4
+#   D2 & E4
+# for good measure, though we only ran those one way because we had pretty
+# good confidence in merge-recursive's directional handling of D/F issues.
+#
+# Just to summarize all the intermediate merge commits:
+#   Commit D1: Merge B & C, keeping a    and deleting a/
+#   Commit D2: Merge B & C, renaming a->a2, keeping a/file
+#   Commit E1: Merge B & C, deleting a but keeping a/file
+#   Commit E2: Merge B & C, deleting a but keeping slightly modified a/file
+#   Commit E3: Merge B & C, keeping modified a, and deleting a/
+#   Commit E4: Merge B & C, modifying 'a' and renaming to 'a2', and deleting 'a/'
 #
 
 test_expect_success 'setup differently handled merges of directory/file conflict' '
@@ -395,56 +452,70 @@ test_expect_success 'setup differently handled merges of directory/file conflict
 		git branch B &&
 		git checkout -b C &&
 		mkdir a &&
-		echo 10 >a/file &&
+		test_write_lines a b c d e f g >a/file &&
 		git add a/file &&
 		test_tick &&
 		git commit -m C &&
 
 		git checkout B &&
-		echo 5 >a &&
+		test_write_lines 1 2 3 4 5 6 7 >a &&
 		git add a &&
 		test_tick &&
 		git commit -m B &&
 
 		git checkout B^0 &&
-		test_must_fail git merge C &&
-		git clean -f &&
-		rm -rf a/ &&
-		echo 5 >a &&
-		git add a &&
-		test_tick &&
-		git commit -m D &&
-		git tag D &&
+		git merge -s ours -m D1 C^0 &&
+		git tag D1 &&
+
+		git checkout B^0 &&
+		test_must_fail git merge C^0 &&
+		git clean -fd &&
+		git rm -rf a/ &&
+		git rm a &&
+		git cat-file -p B:a >a2 &&
+		git add a2 &&
+		git commit -m D2 &&
+		git tag D2 &&
 
 		git checkout C^0 &&
-		test_must_fail git merge B &&
-		git clean -f &&
-		git rm --cached a &&
-		echo 10 >a/file &&
-		git add a/file &&
-		test_tick &&
-		git commit -m E1 &&
+		git merge -s ours -m E1 B^0 &&
 		git tag E1 &&
 
 		git checkout C^0 &&
-		test_must_fail git merge B &&
-		git clean -f &&
-		git rm --cached a &&
-		printf "10\n11\n" >a/file &&
+		git merge -s ours -m E2 B^0 &&
+		test_write_lines a b c d e f g h >a/file &&
 		git add a/file &&
-		test_tick &&
-		git commit -m E2 &&
-		git tag E2
+		git commit --amend -C HEAD &&
+		git tag E2 &&
+
+		git checkout C^0 &&
+		test_must_fail git merge B^0 &&
+		git clean -fd &&
+		git rm -rf a/ &&
+		test_write_lines 1 2 3 4 5 6 7 8 >a &&
+		git add a &&
+		git commit -m E3 &&
+		git tag E3 &&
+
+		git checkout C^0 &&
+		test_must_fail git merge B^0 &&
+		git clean -fd &&
+		git rm -rf a/ &&
+		git rm a &&
+		test_write_lines 1 2 3 4 5 6 7 8 >a2 &&
+		git add a2 &&
+		git commit -m E4 &&
+		git tag E4
 	)
 '
 
-test_expect_success 'merge of D & E1 fails but has appropriate contents' '
+test_expect_success 'merge of D1 & E1 fails but has appropriate contents' '
 	test_when_finished "git -C directory-file reset --hard" &&
 	test_when_finished "git -C directory-file clean -fdqx" &&
 	(
 		cd directory-file &&
 
-		git checkout D^0 &&
+		git checkout D1^0 &&
 
 		test_must_fail git merge -s recursive E1^0 &&
 
@@ -463,7 +534,7 @@ test_expect_success 'merge of D & E1 fails but has appropriate contents' '
 	)
 '
 
-test_expect_success 'merge of E1 & D fails but has appropriate contents' '
+test_expect_success 'merge of E1 & D1 fails but has appropriate contents' '
 	test_when_finished "git -C directory-file reset --hard" &&
 	test_when_finished "git -C directory-file clean -fdqx" &&
 	(
@@ -471,7 +542,7 @@ test_expect_success 'merge of E1 & D fails but has appropriate contents' '
 
 		git checkout E1^0 &&
 
-		test_must_fail git merge -s recursive D^0 &&
+		test_must_fail git merge -s recursive D1^0 &&
 
 		git ls-files -s >out &&
 		test_line_count = 2 out &&
@@ -488,13 +559,13 @@ test_expect_success 'merge of E1 & D fails but has appropriate contents' '
 	)
 '
 
-test_expect_success 'merge of D & E2 fails but has appropriate contents' '
+test_expect_success 'merge of D1 & E2 fails but has appropriate contents' '
 	test_when_finished "git -C directory-file reset --hard" &&
 	test_when_finished "git -C directory-file clean -fdqx" &&
 	(
 		cd directory-file &&
 
-		git checkout D^0 &&
+		git checkout D1^0 &&
 
 		test_must_fail git merge -s recursive E2^0 &&
 
@@ -515,7 +586,7 @@ test_expect_success 'merge of D & E2 fails but has appropriate contents' '
 	)
 '
 
-test_expect_success 'merge of E2 & D fails but has appropriate contents' '
+test_expect_success 'merge of E2 & D1 fails but has appropriate contents' '
 	test_when_finished "git -C directory-file reset --hard" &&
 	test_when_finished "git -C directory-file clean -fdqx" &&
 	(
@@ -523,7 +594,7 @@ test_expect_success 'merge of E2 & D fails but has appropriate contents' '
 
 		git checkout E2^0 &&
 
-		test_must_fail git merge -s recursive D^0 &&
+		test_must_fail git merge -s recursive D1^0 &&
 
 		git ls-files -s >out &&
 		test_line_count = 4 out &&
@@ -538,7 +609,82 @@ test_expect_success 'merge of E2 & D fails but has appropriate contents' '
 			:3:a  :2:a/file  :1:a/file  :0:ignore-me &&
 		test_cmp expect actual
 
-		test_path_is_file a~D^0
+		test_path_is_file a~D1^0
+	)
+'
+
+test_expect_success 'merge of D1 & E3 succeeds' '
+	test_when_finished "git -C directory-file reset --hard" &&
+	test_when_finished "git -C directory-file clean -fdqx" &&
+	(
+		cd directory-file &&
+
+		git checkout D1^0 &&
+
+		git merge -s recursive E3^0 &&
+
+		git ls-files -s >out &&
+		test_line_count = 2 out &&
+		git ls-files -u >out &&
+		test_line_count = 0 out &&
+		git ls-files -o >out &&
+		test_line_count = 1 out &&
+
+		git rev-parse >expect    \
+			A:ignore-me  E3:a &&
+		git rev-parse   >actual   \
+			:0:ignore-me :0:a &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'merge of D1 & E4 notifies user a and a2 are related' '
+	test_when_finished "git -C directory-file reset --hard" &&
+	test_when_finished "git -C directory-file clean -fdqx" &&
+	(
+		cd directory-file &&
+
+		git checkout D1^0 &&
+
+		test_must_fail git merge -s recursive E4^0 &&
+
+		git ls-files -s >out &&
+		test_line_count = 4 out &&
+		git ls-files -u >out &&
+		test_line_count = 3 out &&
+		git ls-files -o >out &&
+		test_line_count = 1 out &&
+
+		git rev-parse >expect                  \
+			A:ignore-me  B:a   D1:a  E4:a2 &&
+		git rev-parse   >actual                \
+			:0:ignore-me :1:a~Temporary\ merge\ branch\ 2  :2:a  :3:a2 &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_failure 'merge of D2 & E4 merges a2s & reports conflict for a/file' '
+	test_when_finished "git -C directory-file reset --hard" &&
+	test_when_finished "git -C directory-file clean -fdqx" &&
+	(
+		cd directory-file &&
+
+		git checkout D2^0 &&
+
+		test_must_fail git merge -s recursive E4^0 &&
+
+		git ls-files -s >out &&
+		test_line_count = 3 out &&
+		git ls-files -u >out &&
+		test_line_count = 1 out &&
+		git ls-files -o >out &&
+		test_line_count = 1 out &&
+
+		git rev-parse >expect                 \
+			A:ignore-me  E4:a2  D2:a/file &&
+		git rev-parse   >actual               \
+			:0:ignore-me :0:a2  :2:a/file &&
+		test_cmp expect actual
 	)
 '
 
