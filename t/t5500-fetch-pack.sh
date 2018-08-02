@@ -814,6 +814,39 @@ test_expect_success 'fetching deepen' '
 	)
 '
 
+test_expect_success 'use ref advertisement to prune "have" lines sent' '
+	rm -rf server client &&
+	git init server &&
+	test_commit -C server both_have_1 &&
+	git -C server tag -d both_have_1 &&
+	test_commit -C server both_have_2 &&
+
+	git clone server client &&
+	test_commit -C server server_has &&
+	test_commit -C client client_has &&
+
+	# In both protocol v0 and v2, ensure that the parent of both_have_2 is
+	# not sent as a "have" line. The client should know that the server has
+	# both_have_2, so it only needs to inform the server that it has
+	# both_have_2, and the server can infer the rest.
+
+	rm -f trace &&
+	cp -r client clientv0 &&
+	GIT_TRACE_PACKET="$(pwd)/trace" git -C clientv0 \
+		fetch origin server_has both_have_2 &&
+	grep "have $(git -C client rev-parse client_has)" trace &&
+	grep "have $(git -C client rev-parse both_have_2)" trace &&
+	! grep "have $(git -C client rev-parse both_have_2^)" trace &&
+
+	rm -f trace &&
+	cp -r client clientv2 &&
+	GIT_TRACE_PACKET="$(pwd)/trace" git -C clientv2 -c protocol.version=2 \
+		fetch origin server_has both_have_2 &&
+	grep "have $(git -C client rev-parse client_has)" trace &&
+	grep "have $(git -C client rev-parse both_have_2)" trace &&
+	! grep "have $(git -C client rev-parse both_have_2^)" trace
+'
+
 test_expect_success 'filtering by size' '
 	rm -rf server client &&
 	test_create_repo server &&

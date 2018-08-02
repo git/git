@@ -54,7 +54,8 @@ struct object_array {
 /*
  * object flag allocation:
  * revision.h:               0---------10                              2526
- * fetch-pack.c:             0----5
+ * fetch-pack.c:             01
+ * negotiator/default.c:       2--5
  * walker.c:                 0-2
  * upload-pack.c:                4       11----------------19
  * builtin/blame.c:                        12-13
