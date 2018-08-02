@@ -84,7 +84,7 @@ test_expect_success 'update git svn-cloned repo (option include)' '
 test_expect_success 'SVN-side change inside of ignored www' '
 	(
 		cd s &&
-		echo zaq >> www/test_www.txt
+		echo zaq >> www/test_www.txt &&
 		svn_cmd commit -m "SVN-side change inside of www/test_www.txt" &&
 		svn_cmd up &&
 		svn_cmd log -v | fgrep "SVN-side change inside of www/test_www.txt"
@@ -116,8 +116,8 @@ test_expect_success 'update git svn-cloned repo (option include)' '
 test_expect_success 'SVN-side change in and out of included qqq' '
 	(
 		cd s &&
-		echo cvf >> www/test_www.txt
-		echo ygg >> qqq/test_qqq.txt
+		echo cvf >> www/test_www.txt &&
+		echo ygg >> qqq/test_qqq.txt &&
 		svn_cmd commit -m "SVN-side change in and out of ignored www" &&
 		svn_cmd up &&
 		svn_cmd log -v | fgrep "SVN-side change in and out of ignored www"

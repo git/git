@@ -149,7 +149,7 @@ test_expect_success 'test show-ignore' "
 		svn_cmd up &&
 		svn_cmd propset -R svn:ignore '
 no-such-file*
-' .
+' . &&
 		svn_cmd commit -m 'propset svn:ignore'
 	) &&
 	git svn show-ignore > show-ignore.got &&

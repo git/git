@@ -135,7 +135,7 @@ test_expect_success PERL 'second update has correct .git/cvs-revisions' '
 
 	(cd module-git &&
 	 git log --format="o_fortuna 1.1 %H" -1 HEAD^^ &&
-	 git log --format="o_fortuna 1.2 %H" -1 HEAD^
+	 git log --format="o_fortuna 1.2 %H" -1 HEAD^ &&
 	 git log --format="tick 1.1 %H" -1 HEAD) > expected &&
 	test_cmp expected module-git/.git/cvs-revisions
 '

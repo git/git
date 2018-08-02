@@ -379,7 +379,7 @@ test_expect_success "'--recurse-submodules=on-demand' recurses as deep as necess
 			git config -f .gitmodules submodule.subdir/deepsubmodule.fetchRecursive false
 		) &&
 		git fetch --recurse-submodules=on-demand >../actual.out 2>../actual.err &&
-		git config --unset fetch.recurseSubmodules
+		git config --unset fetch.recurseSubmodules &&
 		(
 			cd submodule &&
 			git config --unset -f .gitmodules submodule.subdir/deepsubmodule.fetchRecursive

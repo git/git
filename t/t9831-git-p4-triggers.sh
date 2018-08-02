@@ -13,7 +13,7 @@ test_expect_success 'init depot' '
 		cd "$cli" &&
 		echo file1 >file1 &&
 		p4 add file1 &&
-		p4 submit -d "change 1"
+		p4 submit -d "change 1" &&
 		echo file2 >file2 &&
 		p4 add file2 &&
 		p4 submit -d "change 2"

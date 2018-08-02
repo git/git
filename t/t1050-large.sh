@@ -108,7 +108,7 @@ test_expect_success 'packsize limit' '
 		test-tool genrandom "c" $(( 128 * 1024 )) >mid3 &&
 		git add mid1 mid2 mid3 &&
 
-		count=0
+		count=0 &&
 		for pi in .git/objects/pack/pack-*.idx
 		do
 			test -f "$pi" && count=$(( $count + 1 ))
@@ -116,8 +116,8 @@ test_expect_success 'packsize limit' '
 		test $count = 2 &&
 
 		(
-			git hash-object --stdin <mid1
-			git hash-object --stdin <mid2
+			git hash-object --stdin <mid1 &&
+			git hash-object --stdin <mid2 &&
 			git hash-object --stdin <mid3
 		) |
 		sort >expect &&

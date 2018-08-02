@@ -528,10 +528,10 @@ test_expect_success 'checkout with --merge' '
 	cat sample >filf &&
 	git checkout -m -- fild file filf &&
 	(
-		echo "<<<<<<< ours"
-		echo ourside
-		echo "======="
-		echo theirside
+		echo "<<<<<<< ours" &&
+		echo ourside &&
+		echo "=======" &&
+		echo theirside &&
 		echo ">>>>>>> theirs"
 	) >merged &&
 	test_cmp expect fild &&
@@ -549,12 +549,12 @@ test_expect_success 'checkout with --merge, in diff3 -m style' '
 	cat sample >filf &&
 	git checkout -m -- fild file filf &&
 	(
-		echo "<<<<<<< ours"
-		echo ourside
-		echo "||||||| base"
-		echo original
-		echo "======="
-		echo theirside
+		echo "<<<<<<< ours" &&
+		echo ourside &&
+		echo "||||||| base" &&
+		echo original &&
+		echo "=======" &&
+		echo theirside &&
 		echo ">>>>>>> theirs"
 	) >merged &&
 	test_cmp expect fild &&
@@ -572,10 +572,10 @@ test_expect_success 'checkout --conflict=merge, overriding config' '
 	cat sample >filf &&
 	git checkout --conflict=merge -- fild file filf &&
 	(
-		echo "<<<<<<< ours"
-		echo ourside
-		echo "======="
-		echo theirside
+		echo "<<<<<<< ours" &&
+		echo ourside &&
+		echo "=======" &&
+		echo theirside &&
 		echo ">>>>>>> theirs"
 	) >merged &&
 	test_cmp expect fild &&
@@ -593,12 +593,12 @@ test_expect_success 'checkout --conflict=diff3' '
 	cat sample >filf &&
 	git checkout --conflict=diff3 -- fild file filf &&
 	(
-		echo "<<<<<<< ours"
-		echo ourside
-		echo "||||||| base"
-		echo original
-		echo "======="
-		echo theirside
+		echo "<<<<<<< ours" &&
+		echo ourside &&
+		echo "||||||| base" &&
+		echo original &&
+		echo "=======" &&
+		echo theirside &&
 		echo ">>>>>>> theirs"
 	) >merged &&
 	test_cmp expect fild &&
@@ -673,7 +673,6 @@ test_expect_success 'custom merge driver with checkout -m' '
 		do
 			grep $t arm || exit 1
 		done
-		exit 0
 	) &&
 
 	mv arm expect &&

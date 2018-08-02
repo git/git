@@ -134,7 +134,7 @@ test_expect_success 'clone --changesfile' '
 	(
 		cd "$git" &&
 		git log --oneline p4/master >lines &&
-		test_line_count = 2 lines
+		test_line_count = 2 lines &&
 		test_path_is_file file1 &&
 		test_path_is_missing file2 &&
 		test_path_is_file file3

@@ -618,7 +618,7 @@ hex2oct () {
 test_expect_success 'clone on case-insensitive fs' '
 	git init icasefs &&
 	(
-		cd icasefs
+		cd icasefs &&
 		o=$(git hash-object -w --stdin </dev/null | hex2oct) &&
 		t=$(printf "100644 X\0${o}100644 x\0${o}" |
 			git hash-object -w -t tree --stdin) &&

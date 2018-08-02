@@ -940,10 +940,9 @@ test_expect_success 'grep from a subdirectory to search wider area (1)' '
 test_expect_success 'grep from a subdirectory to search wider area (2)' '
 	mkdir -p s &&
 	(
-		cd s || exit 1
-		( git grep xxyyzz .. >out ; echo $? >status )
-		! test -s out &&
-		test 1 = $(cat status)
+		cd s &&
+		test_expect_code 1 git grep xxyyzz .. >out &&
+		! test -s out
 	)
 '
 

@@ -72,7 +72,7 @@ test_expect_success 'merge simple rename+criss-cross with no modifications' '
 		git rev-parse   >actual     \
 			:2:three   :3:three &&
 		git hash-object >>actual    \
-			three~HEAD three~R2^0
+			three~HEAD three~R2^0 &&
 		test_cmp expect actual
 	)
 '
@@ -148,7 +148,7 @@ test_expect_success 'merge criss-cross + rename merges with basic modification' 
 		git rev-parse   >actual     \
 			:2:three   :3:three &&
 		git hash-object >>actual    \
-			three~HEAD three~R2^0
+			three~HEAD three~R2^0 &&
 		test_cmp expect actual
 	)
 '
@@ -228,7 +228,7 @@ test_expect_success 'git detects differently handled merges conflict' '
 			D:new_a  E:new_a &&
 		git rev-parse   >actual     \
 			:2:new_a :3:new_a &&
-		test_cmp expect actual
+		test_cmp expect actual &&
 
 		git cat-file -p B:new_a >ours &&
 		git cat-file -p C:new_a >theirs &&
@@ -577,10 +577,10 @@ test_expect_success 'merge of D1 & E2 fails but has appropriate contents' '
 		test_line_count = 2 out &&
 
 		git rev-parse >expect    \
-			B:a   E2:a/file  c:a/file   A:ignore-me &&
+			B:a   E2:a/file  C:a/file   A:ignore-me &&
 		git rev-parse   >actual   \
 			:2:a  :3:a/file  :1:a/file  :0:ignore-me &&
-		test_cmp expect actual
+		test_cmp expect actual &&
 
 		test_path_is_file a~HEAD
 	)
@@ -604,10 +604,10 @@ test_expect_success 'merge of E2 & D1 fails but has appropriate contents' '
 		test_line_count = 2 out &&
 
 		git rev-parse >expect    \
-			B:a   E2:a/file  c:a/file   A:ignore-me &&
+			B:a   E2:a/file  C:a/file   A:ignore-me &&
 		git rev-parse   >actual   \
 			:3:a  :2:a/file  :1:a/file  :0:ignore-me &&
-		test_cmp expect actual
+		test_cmp expect actual &&
 
 		test_path_is_file a~D1^0
 	)

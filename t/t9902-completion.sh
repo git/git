@@ -1103,7 +1103,7 @@ test_expect_success '__git_complete_refs - remote' '
 	master-in-other Z
 	EOF
 	(
-		cur=
+		cur= &&
 		__git_complete_refs --remote=other &&
 		print_comp
 	) &&
@@ -1122,7 +1122,7 @@ test_expect_success '__git_complete_refs - track' '
 	master-in-other Z
 	EOF
 	(
-		cur=
+		cur= &&
 		__git_complete_refs --track &&
 		print_comp
 	) &&

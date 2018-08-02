@@ -259,7 +259,7 @@ test_expect_success 'clone shallow object count' '
 test_expect_success 'pull in shallow repo with missing merge base' '
 	(
 		cd shallow &&
-		git fetch --depth 4 .. A
+		git fetch --depth 4 .. A &&
 		test_must_fail git merge --allow-unrelated-histories FETCH_HEAD
 	)
 '

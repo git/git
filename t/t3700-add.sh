@@ -156,9 +156,9 @@ test_expect_success 'git add with filemode=0, symlinks=0, and unmerged entries' 
 test_expect_success 'git add with filemode=0, symlinks=0 prefers stage 2 over stage 1' '
 	git rm --cached -f file symlink &&
 	(
-		echo "100644 $(git hash-object -w stage1) 1	file"
-		echo "100755 $(git hash-object -w stage2) 2	file"
-		echo "100644 $(printf 1 | git hash-object -w -t blob --stdin) 1	symlink"
+		echo "100644 $(git hash-object -w stage1) 1	file" &&
+		echo "100755 $(git hash-object -w stage2) 2	file" &&
+		echo "100644 $(printf 1 | git hash-object -w -t blob --stdin) 1	symlink" &&
 		echo "120000 $(printf 2 | git hash-object -w -t blob --stdin) 2	symlink"
 	) | git update-index --index-info &&
 	git config core.filemode 0 &&
@@ -265,7 +265,7 @@ test_expect_success 'git add to resolve conflicts on otherwise ignored path' '
 	git reset --hard &&
 	H=$(git rev-parse :1/2/a) &&
 	(
-		echo "100644 $H 1	track-this"
+		echo "100644 $H 1	track-this" &&
 		echo "100644 $H 3	track-this"
 	) | git update-index --index-info &&
 	echo track-this >>.gitignore &&

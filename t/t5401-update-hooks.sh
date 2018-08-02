@@ -82,13 +82,13 @@ test_expect_success 'hooks ran' '
 '
 
 test_expect_success 'pre-receive hook input' '
-	(echo $commit0 $commit1 refs/heads/master;
+	(echo $commit0 $commit1 refs/heads/master &&
 	 echo $commit1 $commit0 refs/heads/tofail
 	) | test_cmp - victim.git/pre-receive.stdin
 '
 
 test_expect_success 'update hook arguments' '
-	(echo refs/heads/master $commit0 $commit1;
+	(echo refs/heads/master $commit0 $commit1 &&
 	 echo refs/heads/tofail $commit1 $commit0
 	) | test_cmp - victim.git/update.args
 '

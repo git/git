@@ -86,7 +86,7 @@ test_expect_success 'push can be used to delete a ref' '
 test_expect_success 'refuse deleting push with denyDeletes' '
 	(
 	    cd victim &&
-	    ( git branch -D extra || : ) &&
+	    test_might_fail git branch -D extra &&
 	    git config receive.denyDeletes true &&
 	    git branch extra master
 	) &&
@@ -119,7 +119,7 @@ test_expect_success 'override denyDeletes with git -c receive-pack' '
 test_expect_success 'denyNonFastforwards trumps --force' '
 	(
 	    cd victim &&
-	    ( git branch -D extra || : ) &&
+	    test_might_fail git branch -D extra &&
 	    git config receive.denyNonFastforwards true
 	) &&
 	victim_orig=$(cd victim && git rev-parse --verify master) &&

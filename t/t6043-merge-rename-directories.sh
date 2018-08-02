@@ -3583,7 +3583,7 @@ test_expect_success '11d-check: Avoid losing not-uptodate with rename + D/F conf
 		grep -q stuff z/c &&
 		test_seq 1 10 >expected &&
 		echo stuff >>expected &&
-		test_cmp expected z/c
+		test_cmp expected z/c &&
 
 		git ls-files -s >out &&
 		test_line_count = 4 out &&

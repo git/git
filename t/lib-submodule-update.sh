@@ -756,7 +756,7 @@ test_submodule_recursing_with_args_common() {
 			: >sub1/untrackedfile &&
 			test_must_fail $command replace_sub1_with_file &&
 			test_superproject_content origin/add_sub1 &&
-			test_submodule_content sub1 origin/add_sub1
+			test_submodule_content sub1 origin/add_sub1 &&
 			test -f sub1/untracked_file
 		)
 	'
@@ -844,7 +844,7 @@ test_submodule_switch_recursing_with_args () {
 			cd submodule_update &&
 			git branch -t add_sub1 origin/add_sub1 &&
 			: >sub1 &&
-			echo sub1 >.git/info/exclude
+			echo sub1 >.git/info/exclude &&
 			$command add_sub1 &&
 			test_superproject_content origin/add_sub1 &&
 			test_submodule_content sub1 origin/add_sub1
@@ -971,7 +971,6 @@ test_submodule_forced_switch_recursing_with_args () {
 			rm -rf .git/modules/sub1 &&
 			$command replace_sub1_with_directory &&
 			test_superproject_content origin/replace_sub1_with_directory &&
-			test_submodule_content sub1 origin/modify_sub1
 			test_git_directory_exists sub1
 		)
 	'

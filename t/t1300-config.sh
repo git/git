@@ -888,7 +888,7 @@ EOF
 
 test_expect_success !MINGW 'get --path copes with unset $HOME' '
 	(
-		unset HOME;
+		sane_unset HOME &&
 		test_must_fail git config --get --path path.home \
 			>result 2>msg &&
 		git config --get --path path.normal >>result &&
