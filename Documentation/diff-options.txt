@@ -276,16 +276,45 @@ plain::
 	that are added somewhere else in the diff. This mode picks up any
 	moved line, but it is not very useful in a review to determine
 	if a block of code was moved without permutation.
-zebra::
+blocks::
 	Blocks of moved text of at least 20 alphanumeric characters
 	are detected greedily. The detected blocks are
-	painted using either the 'color.diff.{old,new}Moved' color or
+	painted using either the 'color.diff.{old,new}Moved' color.
+	Adjacent blocks cannot be told apart.
+zebra::
+	Blocks of moved text are detected as in 'blocks' mode. The blocks
+	are painted using either the 'color.diff.{old,new}Moved' color or
 	'color.diff.{old,new}MovedAlternative'. The change between
 	the two colors indicates that a new block was detected.
 dimmed_zebra::
 	Similar to 'zebra', but additional dimming of uninteresting parts
 	of moved code is performed. The bordering lines of two adjacent
 	blocks are considered interesting, the rest is uninteresting.
+--
+
+--color-moved-ws=<modes>::
+	This configures how white spaces are ignored when performing the
+	move detection for `--color-moved`.
+ifdef::git-diff[]
+	It can be set by the `diff.colorMovedWS` configuration setting.
+endif::git-diff[]
+	These modes can be given as a comma separated list:
++
+--
+ignore-space-at-eol::
+	Ignore changes in whitespace at EOL.
+ignore-space-change::
+	Ignore changes in amount of whitespace.  This ignores whitespace
+	at line end, and considers all other sequences of one or
+	more whitespace characters to be equivalent.
+ignore-all-space::
+	Ignore whitespace when comparing lines. This ignores differences
+	even if one line has whitespace where the other line has none.
+allow-indentation-change::
+	Initially ignore any white spaces in the move detection, then
+	group the moved code blocks only into a block if the change in
+	whitespace is the same per line. This is incompatible with the
+	other modes.
 --
 
 --word-diff[=<mode>]::
