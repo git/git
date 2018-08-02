@@ -3,6 +3,7 @@
 #include "refs.h"
 #include "pkt-line.h"
 #include "sideband.h"
+#include "repository.h"
 #include "object-store.h"
 #include "tag.h"
 #include "object.h"
@@ -312,7 +313,7 @@ static int got_oid(const char *hex, struct object_id *oid)
 	if (!has_object_file(oid))
 		return -1;
 
-	o = parse_object(oid);
+	o = parse_object(the_repository, oid);
 	if (!o)
 		die("oops (%s)", oid_to_hex(oid));
 	if (o->type == OBJ_COMMIT) {
@@ -350,7 +351,7 @@ static int reachable(struct commit *want)
 			break;
 		}
 		if (!commit->object.parsed)
-			parse_object(&commit->object.oid);
+			parse_object(the_repository, &commit->object.oid);
 		if (commit->object.flags & REACHABLE)
 			continue;
 		commit->object.flags |= REACHABLE;
@@ -380,7 +381,7 @@ static int ok_to_give_up(void)
 
 		if (want->flags & COMMON_KNOWN)
 			continue;
-		want = deref_tag(want, "a want line", 0);
+		want = deref_tag(the_repository, want, "a want line", 0);
 		if (!want || want->type != OBJ_COMMIT) {
 			/* no way to tell if this is reachable by
 			 * looking at the ancestry chain alone, so
@@ -570,7 +571,7 @@ static int get_reachable_list(struct object_array *src,
 		if (parse_oid_hex(namebuf, &sha1, &p) || *p != '\n')
 			break;
 
-		o = lookup_object(sha1.hash);
+		o = lookup_object(the_repository, sha1.hash);
 		if (o && o->type == OBJ_COMMIT) {
 			o->flags &= ~TMP_MARK;
 		}
@@ -801,7 +802,7 @@ static int process_shallow(const char *line, struct object_array *shallows)
 		struct object *object;
 		if (get_oid_hex(arg, &oid))
 			die("invalid shallow line: %s", line);
-		object = parse_object(&oid);
+		object = parse_object(the_repository, &oid);
 		if (!object)
 			return 1;
 		if (object->type != OBJ_COMMIT)
@@ -927,7 +928,7 @@ static void receive_needs(void)
 		if (allow_filter && parse_feature_request(features, "filter"))
 			filter_capability_requested = 1;
 
-		o = parse_object(&oid_buf);
+		o = parse_object(the_repository, &oid_buf);
 		if (!o) {
 			packet_write_fmt(1,
 					 "ERR upload-pack: not our ref %s",
@@ -1174,7 +1175,7 @@ static int parse_want(const char *line)
 			die("git upload-pack: protocol error, "
 			    "expected to get oid, not '%s'", line);
 
-		o = parse_object(&oid);
+		o = parse_object(the_repository, &oid);
 		if (!o) {
 			packet_write_fmt(1,
 					 "ERR upload-pack: not our ref %s",
@@ -1316,7 +1317,7 @@ static int process_haves(struct oid_array *haves, struct oid_array *common)
 
 		oid_array_append(common, oid);
 
-		o = parse_object(oid);
+		o = parse_object(the_repository, oid);
 		if (!o)
 			die("oops (%s)", oid_to_hex(oid));
 		if (o->type == OBJ_COMMIT) {

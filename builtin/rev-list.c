@@ -240,7 +240,7 @@ static int finish_object(struct object *obj, const char *name, void *cb_data)
 		return 1;
 	}
 	if (info->revs->verify_objects && !obj->parsed && obj->type != OBJ_COMMIT)
-		parse_object(&obj->oid);
+		parse_object(the_repository, &obj->oid);
 	return 0;
 }
 

@@ -371,7 +371,7 @@ static int replace_parents(struct strbuf *buf, int argc, const char **argv)
 			return error(_("Not a valid object name: '%s'"),
 				     argv[i]);
 		}
-		if (!lookup_commit_reference(&oid)) {
+		if (!lookup_commit_reference(the_repository, &oid)) {
 			strbuf_release(&new_parents);
 			return error(_("could not parse %s"), argv[i]);
 		}
@@ -402,10 +402,10 @@ static int check_one_mergetag(struct commit *commit,
 	int i;
 
 	hash_object_file(extra->value, extra->len, type_name(OBJ_TAG), &tag_oid);
-	tag = lookup_tag(&tag_oid);
+	tag = lookup_tag(the_repository, &tag_oid);
 	if (!tag)
 		return error(_("bad mergetag in commit '%s'"), ref);
-	if (parse_tag_buffer(tag, extra->value, extra->len))
+	if (parse_tag_buffer(the_repository, tag, extra->value, extra->len))
 		return error(_("malformed mergetag in commit '%s'"), ref);
 
 	/* iterate over new parents */
@@ -443,7 +443,7 @@ static int create_graft(int argc, const char **argv, int force, int gentle)
 
 	if (get_oid(old_ref, &old_oid) < 0)
 		return error(_("Not a valid object name: '%s'"), old_ref);
-	commit = lookup_commit_reference(&old_oid);
+	commit = lookup_commit_reference(the_repository, &old_oid);
 	if (!commit)
 		return error(_("could not parse %s"), old_ref);
 

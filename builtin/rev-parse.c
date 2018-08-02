@@ -280,8 +280,8 @@ static int try_difference(const char *arg)
 		if (symmetric) {
 			struct commit_list *exclude;
 			struct commit *a, *b;
-			a = lookup_commit_reference(&start_oid);
-			b = lookup_commit_reference(&end_oid);
+			a = lookup_commit_reference(the_repository, &start_oid);
+			b = lookup_commit_reference(the_repository, &end_oid);
 			if (!a || !b) {
 				*dotdot = '.';
 				return 0;
@@ -333,7 +333,7 @@ static int try_parent_shorthands(const char *arg)
 
 	*dotdot = 0;
 	if (get_oid_committish(arg, &oid) ||
-	    !(commit = lookup_commit_reference(&oid))) {
+	    !(commit = lookup_commit_reference(the_repository, &oid))) {
 		*dotdot = '^';
 		return 0;
 	}
