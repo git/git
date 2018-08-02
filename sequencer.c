@@ -2645,6 +2645,8 @@ static int do_exec(const char *command_line)
 	fprintf(stderr, "Executing: %s\n", command_line);
 	child_argv[0] = command_line;
 	argv_array_pushf(&child_env, "GIT_DIR=%s", absolute_path(get_git_dir()));
+	argv_array_pushf(&child_env, "GIT_WORK_TREE=%s",
+			 absolute_path(get_git_work_tree()));
 	status = run_command_v_opt_cd_env(child_argv, RUN_USING_SHELL, NULL,
 					  child_env.argv);
 
