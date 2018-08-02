@@ -907,9 +907,12 @@ core.notesRef::
 This setting defaults to "refs/notes/commits", and it can be overridden by
 the `GIT_NOTES_REF` environment variable.  See linkgit:git-notes[1].
 
-core.commitGraph::
-	Enable git commit graph feature. Allows reading from the
-	commit-graph file.
+gc.commitGraph::
+	If true, then gc will rewrite the commit-graph file when
+	linkgit:git-gc[1] is run. When using linkgit:git-gc[1]
+	'--auto' the commit-graph will be updated if housekeeping is
+	required. Default is false. See linkgit:git-commit-graph[1]
+	for details.
 
 core.sparseCheckout::
 	Enable "sparse checkout" feature. See section "Sparse checkout" in

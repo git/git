@@ -136,6 +136,10 @@ The optional configuration variable `gc.packRefs` determines if
 it within all non-bare repos or it can be set to a boolean value.
 This defaults to true.
 
+The optional configuration variable `gc.commitGraph` determines if
+'git gc' should run 'git commit-graph write'. This can be set to a
+boolean value. This defaults to false.
+
 The optional configuration variable `gc.aggressiveWindow` controls how
 much time is spent optimizing the delta compression of the objects in
 the repository when the --aggressive option is specified.  The larger

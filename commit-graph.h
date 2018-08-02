@@ -2,6 +2,8 @@
 #define COMMIT_GRAPH_H
 
 #include "git-compat-util.h"
+#include "repository.h"
+#include "string-list.h"
 
 char *get_commit_graph_filename(const char *obj_dir);
 
@@ -46,11 +48,12 @@ struct commit_graph {
 
 struct commit_graph *load_commit_graph_one(const char *graph_file);
 
+void write_commit_graph_reachable(const char *obj_dir, int append);
 void write_commit_graph(const char *obj_dir,
-			const char **pack_indexes,
-			int nr_packs,
-			const char **commit_hex,
-			int nr_commits,
+			struct string_list *pack_indexes,
+			struct string_list *commit_hex,
 			int append);
+
+int verify_commit_graph(struct repository *r, struct commit_graph *g);
 
 #endif
