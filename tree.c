@@ -19,15 +19,13 @@ static int read_one_entry_opt(struct index_state *istate,
 			      unsigned mode, int stage, int opt)
 {
 	int len;
-	unsigned int size;
 	struct cache_entry *ce;
 
 	if (S_ISDIR(mode))
 		return READ_TREE_RECURSIVE;
 
 	len = strlen(pathname);
-	size = cache_entry_size(baselen + len);
-	ce = xcalloc(1, size);
+	ce = make_empty_cache_entry(istate, baselen + len);
 
 	ce->ce_mode = create_ce_mode(mode);
 	ce->ce_flags = create_ce_flags(stage);

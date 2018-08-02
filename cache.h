@@ -15,6 +15,7 @@
 #include "path.h"
 #include "sha1-array.h"
 #include "repository.h"
+#include "mem-pool.h"
 
 #include <zlib.h>
 typedef struct git_zstream {
@@ -156,6 +157,7 @@ struct cache_entry {
 	struct stat_data ce_stat_data;
 	unsigned int ce_mode;
 	unsigned int ce_flags;
+	unsigned int mem_pool_allocated;
 	unsigned int ce_namelen;
 	unsigned int index;	/* for link extension */
 	struct object_id oid;
@@ -227,6 +229,7 @@ static inline void copy_cache_entry(struct cache_entry *dst,
 				    const struct cache_entry *src)
 {
 	unsigned int state = dst->ce_flags & CE_HASHED;
+	int mem_pool_allocated = dst->mem_pool_allocated;
 
 	/* Don't copy hash chain and name */
 	memcpy(&dst->ce_stat_data, &src->ce_stat_data,
@@ -235,6 +238,9 @@ static inline void copy_cache_entry(struct cache_entry *dst,
 
 	/* Restore the hash state */
 	dst->ce_flags = (dst->ce_flags & ~CE_HASHED) | state;
+
+	/* Restore the mem_pool_allocated flag */
+	dst->mem_pool_allocated = mem_pool_allocated;
 }
 
 static inline unsigned create_ce_flags(unsigned stage)
@@ -328,6 +334,7 @@ struct index_state {
 	struct untracked_cache *untracked;
 	uint64_t fsmonitor_last_update;
 	struct ewah_bitmap *fsmonitor_dirty;
+	struct mem_pool *ce_mem_pool;
 };
 
 extern struct index_state the_index;
@@ -338,6 +345,60 @@ extern void add_name_hash(struct index_state *istate, struct cache_entry *ce);
 extern void remove_name_hash(struct index_state *istate, struct cache_entry *ce);
 extern void free_name_hash(struct index_state *istate);
 
+
+/* Cache entry creation and cleanup */
+
+/*
+ * Create cache_entry intended for use in the specified index. Caller
+ * is responsible for discarding the cache_entry with
+ * `discard_cache_entry`.
+ */
+struct cache_entry *make_cache_entry(struct index_state *istate,
+				     unsigned int mode,
+				     const struct object_id *oid,
+				     const char *path,
+				     int stage,
+				     unsigned int refresh_options);
+
+struct cache_entry *make_empty_cache_entry(struct index_state *istate,
+					   size_t name_len);
+
+/*
+ * Create a cache_entry that is not intended to be added to an index.
+ * Caller is responsible for discarding the cache_entry
+ * with `discard_cache_entry`.
+ */
+struct cache_entry *make_transient_cache_entry(unsigned int mode,
+					       const struct object_id *oid,
+					       const char *path,
+					       int stage);
+
+struct cache_entry *make_empty_transient_cache_entry(size_t name_len);
+
+/*
+ * Discard cache entry.
+ */
+void discard_cache_entry(struct cache_entry *ce);
+
+/*
+ * Check configuration if we should perform extra validation on cache
+ * entries.
+ */
+int should_validate_cache_entries(void);
+
+/*
+ * Duplicate a cache_entry. Allocate memory for the new entry from a
+ * memory_pool. Takes into account cache_entry fields that are meant
+ * for managing the underlying memory allocation of the cache_entry.
+ */
+struct cache_entry *dup_cache_entry(const struct cache_entry *ce, struct index_state *istate);
+
+/*
+ * Validate the cache entries in the index.  This is an internal
+ * consistency check that the cache_entry structs are allocated from
+ * the expected memory pool.
+ */
+void validate_cache_entries(const struct index_state *istate);
 
 #ifndef NO_THE_INDEX_COMPATIBILITY_MACROS
 #define active_cache (the_index.cache)
@@ -698,7 +759,6 @@ extern int remove_file_from_index(struct index_state *, const char *path);
 extern int add_to_index(struct index_state *, const char *path, struct stat *, int flags);
 extern int add_file_to_index(struct index_state *, const char *path, int flags);
 
-extern struct cache_entry *make_cache_entry(unsigned int mode, const unsigned char *sha1, const char *path, int stage, unsigned int refresh_options);
 extern int chmod_index_entry(struct index_state *, struct cache_entry *ce, char flip);
 extern int ce_same_name(const struct cache_entry *a, const struct cache_entry *b);
 extern void set_object_name_for_intent_to_add_entry(struct cache_entry *ce);
@@ -751,7 +811,7 @@ extern void fill_stat_cache_info(struct cache_entry *ce, struct stat *st);
 #define REFRESH_IGNORE_SUBMODULES	0x0010	/* ignore submodules */
 #define REFRESH_IN_PORCELAIN	0x0020	/* user friendly output, not "needs update" */
 extern int refresh_index(struct index_state *, unsigned int flags, const struct pathspec *pathspec, char *seen, const char *header_msg);
-extern struct cache_entry *refresh_cache_entry(struct cache_entry *, unsigned int);
+extern struct cache_entry *refresh_cache_entry(struct index_state *, struct cache_entry *, unsigned int);
 
 /*
  * Opportunistically update the index but do not complain if we can't.

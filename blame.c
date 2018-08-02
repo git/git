@@ -176,7 +176,7 @@ static struct commit *fake_working_tree_commit(struct diff_options *opt,
 	struct strbuf buf = STRBUF_INIT;
 	const char *ident;
 	time_t now;
-	int size, len;
+	int len;
 	struct cache_entry *ce;
 	unsigned mode;
 	struct strbuf msg = STRBUF_INIT;
@@ -274,8 +274,7 @@ static struct commit *fake_working_tree_commit(struct diff_options *opt,
 			/* Let's not bother reading from HEAD tree */
 			mode = S_IFREG | 0644;
 	}
-	size = cache_entry_size(len);
-	ce = xcalloc(1, size);
+	ce = make_empty_cache_entry(&the_index, len);
 	oidcpy(&ce->oid, &origin->blob_oid);
 	memcpy(ce->name, path, len);
 	ce->ce_flags = create_ce_flags(0);

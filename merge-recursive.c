@@ -320,7 +320,7 @@ static int add_cacheinfo(struct merge_options *o,
 	struct cache_entry *ce;
 	int ret;
 
-	ce = make_cache_entry(mode, oid ? oid->hash : null_sha1, path, stage, 0);
+	ce = make_cache_entry(&the_index, mode, oid ? oid : &null_oid, path, stage, 0);
 	if (!ce)
 		return err(o, _("add_cacheinfo failed for path '%s'; merge aborting."), path);
 
@@ -328,7 +328,7 @@ static int add_cacheinfo(struct merge_options *o,
 	if (refresh) {
 		struct cache_entry *nce;
 
-		nce = refresh_cache_entry(ce, CE_MATCH_REFRESH | CE_MATCH_IGNORE_MISSING);
+		nce = refresh_cache_entry(&the_index, ce, CE_MATCH_REFRESH | CE_MATCH_IGNORE_MISSING);
 		if (!nce)
 			return err(o, _("add_cacheinfo failed to refresh for path '%s'; merge aborting."), path);
 		if (nce != ce)

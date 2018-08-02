@@ -268,15 +268,14 @@ static int process_lstat_error(const char *path, int err)
 
 static int add_one_path(const struct cache_entry *old, const char *path, int len, struct stat *st)
 {
-	int option, size;
+	int option;
 	struct cache_entry *ce;
 
 	/* Was the old index entry already up-to-date? */
 	if (old && !ce_stage(old) && !ce_match_stat(old, st, 0))
 		return 0;
 
-	size = cache_entry_size(len);
-	ce = xcalloc(1, size);
+	ce = make_empty_cache_entry(&the_index, len);
 	memcpy(ce->name, path, len);
 	ce->ce_flags = create_ce_flags(0);
 	ce->ce_namelen = len;
@@ -285,13 +284,13 @@ static int add_one_path(const struct cache_entry *old, const char *path, int len
 
 	if (index_path(&ce->oid, path, st,
 		       info_only ? 0 : HASH_WRITE_OBJECT)) {
-		free(ce);
+		discard_cache_entry(ce);
 		return -1;
 	}
 	option = allow_add ? ADD_CACHE_OK_TO_ADD : 0;
 	option |= allow_replace ? ADD_CACHE_OK_TO_REPLACE : 0;
 	if (add_cache_entry(ce, option)) {
-		free(ce);
+		discard_cache_entry(ce);
 		return error("%s: cannot add to the index - missing --add option?", path);
 	}
 	return 0;
@@ -402,15 +401,14 @@ static int process_path(const char *path, struct stat *st, int stat_errno)
 static int add_cacheinfo(unsigned int mode, const struct object_id *oid,
 			 const char *path, int stage)
 {
-	int size, len, option;
+	int len, option;
 	struct cache_entry *ce;
 
 	if (!verify_path(path, mode))
 		return error("Invalid path '%s'", path);
 
 	len = strlen(path);
-	size = cache_entry_size(len);
-	ce = xcalloc(1, size);
+	ce = make_empty_cache_entry(&the_index, len);
 
 	oidcpy(&ce->oid, oid);
 	memcpy(ce->name, path, len);
@@ -600,7 +598,6 @@ static struct cache_entry *read_one_ent(const char *which,
 {
 	unsigned mode;
 	struct object_id oid;
-	int size;
 	struct cache_entry *ce;
 
 	if (get_tree_entry(ent, path, &oid, &mode)) {
@@ -613,8 +610,7 @@ static struct cache_entry *read_one_ent(const char *which,
 			error("%s: not a blob in %s branch.", path, which);
 		return NULL;
 	}
-	size = cache_entry_size(namelen);
-	ce = xcalloc(1, size);
+	ce = make_empty_cache_entry(&the_index, namelen);
 
 	oidcpy(&ce->oid, &oid);
 	memcpy(ce->name, path, namelen);
@@ -691,8 +687,8 @@ static int unresolve_one(const char *path)
 	error("%s: cannot add their version to the index.", path);
 	ret = -1;
  free_return:
-	free(ce_2);
-	free(ce_3);
+	discard_cache_entry(ce_2);
+	discard_cache_entry(ce_3);
 	return ret;
 }
 
@@ -759,7 +755,7 @@ static int do_reupdate(int ac, const char **av,
 					   ce->name, ce_namelen(ce), 0);
 		if (old && ce->ce_mode == old->ce_mode &&
 		    !oidcmp(&ce->oid, &old->oid)) {
-			free(old);
+			discard_cache_entry(old);
 			continue; /* unchanged */
 		}
 		/* Be careful.  The working tree may not have the
@@ -770,7 +766,7 @@ static int do_reupdate(int ac, const char **av,
 		path = xstrdup(ce->name);
 		update_one(path);
 		free(path);
-		free(old);
+		discard_cache_entry(old);
 		if (save_nr != active_nr)
 			goto redo;
 	}

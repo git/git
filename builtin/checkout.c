@@ -79,7 +79,7 @@ static int update_some(const struct object_id *oid, struct strbuf *base,
 		return READ_TREE_RECURSIVE;
 
 	len = base->len + strlen(pathname);
-	ce = xcalloc(1, cache_entry_size(len));
+	ce = make_empty_cache_entry(&the_index, len);
 	oidcpy(&ce->oid, oid);
 	memcpy(ce->name, base->buf, base->len);
 	memcpy(ce->name + base->len, pathname, len - base->len);
@@ -98,7 +98,7 @@ static int update_some(const struct object_id *oid, struct strbuf *base,
 		if (ce->ce_mode == old->ce_mode &&
 		    !oidcmp(&ce->oid, &old->oid)) {
 			old->ce_flags |= CE_UPDATE;
-			free(ce);
+			discard_cache_entry(ce);
 			return 0;
 		}
 	}
@@ -232,11 +232,11 @@ static int checkout_merged(int pos, const struct checkout *state)
 	if (write_object_file(result_buf.ptr, result_buf.size, blob_type, &oid))
 		die(_("Unable to add merge result for '%s'"), path);
 	free(result_buf.ptr);
-	ce = make_cache_entry(mode, oid.hash, path, 2, 0);
+	ce = make_transient_cache_entry(mode, &oid, path, 2);
 	if (!ce)
 		die(_("make_cache_entry failed for path '%s'"), path);
 	status = checkout_entry(ce, state, NULL);
-	free(ce);
+	discard_cache_entry(ce);
 	return status;
 }
 

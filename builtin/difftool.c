@@ -322,10 +322,10 @@ static int checkout_path(unsigned mode, struct object_id *oid,
 	struct cache_entry *ce;
 	int ret;
 
-	ce = make_cache_entry(mode, oid->hash, path, 0, 0);
+	ce = make_transient_cache_entry(mode, oid, path, 0);
 	ret = checkout_entry(ce, state, NULL);
 
-	free(ce);
+	discard_cache_entry(ce);
 	return ret;
 }
 
@@ -489,7 +489,7 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 				 * index.
 				 */
 				struct cache_entry *ce2 =
-					make_cache_entry(rmode, roid.hash,
+					make_cache_entry(&wtindex, rmode, &roid,
 							 dst_path, 0, 0);
 
 				add_index_entry(&wtindex, ce2,
