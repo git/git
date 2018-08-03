@@ -539,6 +539,11 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
 	git_config(rebase_config, &options);
 
+	strbuf_reset(&buf);
+	strbuf_addf(&buf, "%s/applying", apply_dir());
+	if(file_exists(buf.buf))
+		die(_("It looks like 'git am' is in progress. Cannot rebase."));
+
 	if (is_directory(apply_dir())) {
 		options.type = REBASE_AM;
 		options.state_dir = apply_dir();
