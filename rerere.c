@@ -384,6 +384,58 @@ static int is_cmarker(char *buf, int marker_char, int marker_size)
 	return isspace(*buf);
 }
 
+static int handle_conflict(struct rerere_io *io, int marker_size, git_SHA_CTX *ctx)
+{
+	enum {
+		RR_SIDE_1 = 0, RR_SIDE_2, RR_ORIGINAL
+	} hunk = RR_SIDE_1;
+	struct strbuf one = STRBUF_INIT, two = STRBUF_INIT;
+	struct strbuf buf = STRBUF_INIT;
+	int has_conflicts = -1;
+
+	while (!io->getline(&buf, io)) {
+		if (is_cmarker(buf.buf, '<', marker_size)) {
+			break;
+		} else if (is_cmarker(buf.buf, '|', marker_size)) {
+			if (hunk != RR_SIDE_1)
+				break;
+			hunk = RR_ORIGINAL;
+		} else if (is_cmarker(buf.buf, '=', marker_size)) {
+			if (hunk != RR_SIDE_1 && hunk != RR_ORIGINAL)
+				break;
+			hunk = RR_SIDE_2;
+		} else if (is_cmarker(buf.buf, '>', marker_size)) {
+			if (hunk != RR_SIDE_2)
+				break;
+			if (strbuf_cmp(&one, &two) > 0)
+				strbuf_swap(&one, &two);
+			has_conflicts = 1;
+			rerere_io_putconflict('<', marker_size, io);
+			rerere_io_putmem(one.buf, one.len, io);
+			rerere_io_putconflict('=', marker_size, io);
+			rerere_io_putmem(two.buf, two.len, io);
+			rerere_io_putconflict('>', marker_size, io);
+			if (ctx) {
+				git_SHA1_Update(ctx, one.buf ? one.buf : "",
+					    one.len + 1);
+				git_SHA1_Update(ctx, two.buf ? two.buf : "",
+					    two.len + 1);
+			}
+			break;
+		} else if (hunk == RR_SIDE_1)
+			strbuf_addbuf(&one, &buf);
+		else if (hunk == RR_ORIGINAL)
+			; /* discard */
+		else if (hunk == RR_SIDE_2)
+			strbuf_addbuf(&two, &buf);
+	}
+	strbuf_release(&one);
+	strbuf_release(&two);
+	strbuf_release(&buf);
+
+	return has_conflicts;
+}
+
 /*
  * Read contents a file with conflicts, normalize the conflicts
  * by (1) discarding the common ancestor version in diff3-style,
@@ -399,70 +451,25 @@ static int is_cmarker(char *buf, int marker_char, int marker_size)
 static int handle_path(unsigned char *sha1, struct rerere_io *io, int marker_size)
 {
 	git_SHA_CTX ctx;
-	int has_conflicts = 0;
-	enum {
-		RR_CONTEXT = 0, RR_SIDE_1, RR_SIDE_2, RR_ORIGINAL
-	} hunk = RR_CONTEXT;
-	struct strbuf one = STRBUF_INIT, two = STRBUF_INIT;
 	struct strbuf buf = STRBUF_INIT;
-
+	int has_conflicts = 0;
 	if (sha1)
 		git_SHA1_Init(&ctx);
 
 	while (!io->getline(&buf, io)) {
 		if (is_cmarker(buf.buf, '<', marker_size)) {
-			if (hunk != RR_CONTEXT)
-				goto bad;
-			hunk = RR_SIDE_1;
-		} else if (is_cmarker(buf.buf, '|', marker_size)) {
-			if (hunk != RR_SIDE_1)
-				goto bad;
-			hunk = RR_ORIGINAL;
-		} else if (is_cmarker(buf.buf, '=', marker_size)) {
-			if (hunk != RR_SIDE_1 && hunk != RR_ORIGINAL)
-				goto bad;
-			hunk = RR_SIDE_2;
-		} else if (is_cmarker(buf.buf, '>', marker_size)) {
-			if (hunk != RR_SIDE_2)
-				goto bad;
-			if (strbuf_cmp(&one, &two) > 0)
-				strbuf_swap(&one, &two);
-			has_conflicts = 1;
-			hunk = RR_CONTEXT;
-			rerere_io_putconflict('<', marker_size, io);
-			rerere_io_putmem(one.buf, one.len, io);
-			rerere_io_putconflict('=', marker_size, io);
-			rerere_io_putmem(two.buf, two.len, io);
-			rerere_io_putconflict('>', marker_size, io);
-			if (sha1) {
-				git_SHA1_Update(&ctx, one.buf ? one.buf : "",
-					    one.len + 1);
-				git_SHA1_Update(&ctx, two.buf ? two.buf : "",
-					    two.len + 1);
-			}
-			strbuf_reset(&one);
-			strbuf_reset(&two);
-		} else if (hunk == RR_SIDE_1)
-			strbuf_addbuf(&one, &buf);
-		else if (hunk == RR_ORIGINAL)
-			; /* discard */
-		else if (hunk == RR_SIDE_2)
-			strbuf_addbuf(&two, &buf);
-		else
+			has_conflicts = handle_conflict(io, marker_size,
+							sha1 ? &ctx : NULL);
+			if (has_conflicts < 0)
+				break;
+		} else
 			rerere_io_putstr(buf.buf, io);
-		continue;
-	bad:
-		hunk = 99; /* force error exit */
-		break;
 	}
-	strbuf_release(&one);
-	strbuf_release(&two);
 	strbuf_release(&buf);
 
 	if (sha1)
 		git_SHA1_Final(sha1, &ctx);
-	if (hunk != RR_CONTEXT)
-		return -1;
+
 	return has_conflicts;
 }
 
