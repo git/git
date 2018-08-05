@@ -138,3 +138,45 @@ SHA1('B<NUL>C<NUL>').
 If there are multiple conflicts in one file, the sha1 is calculated
 the same way with all hunks appended to each other, in the order in
 which they appear in the file, separated by a <NUL> character.
+
+Nested conflicts
+~~~~~~~~~~~~~~~~
+
+Nested conflicts are handled very similarly to "simple" conflicts.
+Similar to simple conflicts, the conflict is first normalized by
+stripping the labels from conflict markers, stripping the common ancestor
+version, and the sorting the conflict hunks, both for the outer and the
+inner conflict.  This is done recursively, so any number of nested
+conflicts can be handled.
+
+The only difference is in how the conflict ID is calculated.  For the
+inner conflict, the conflict markers themselves are not stripped out
+before calculating the sha1.
+
+Say we have the following conflict for example:
+
+    <<<<<<< HEAD
+    1
+    =======
+    <<<<<<< HEAD
+    3
+    =======
+    2
+    >>>>>>> branch-2
+    >>>>>>> branch-3~
+
+After stripping out the labels of the conflict markers, and sorting
+the hunks, the conflict would look as follows:
+
+    <<<<<<<
+    1
+    =======
+    <<<<<<<
+    2
+    =======
+    3
+    >>>>>>>
+    >>>>>>>
+
+and finally the conflict ID would be calculated as:
+`sha1('1<NUL><<<<<<<\n3\n=======\n2\n>>>>>>><NUL>')`
