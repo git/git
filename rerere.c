@@ -302,38 +302,6 @@ static void rerere_io_putstr(const char *str, struct rerere_io *io)
 		ferr_puts(str, io->output, &io->wrerror);
 }
 
-/*
- * Write a conflict marker to io->output (if defined).
- */
-static void rerere_io_putconflict(int ch, int size, struct rerere_io *io)
-{
-	char buf[64];
-
-	while (size) {
-		if (size <= sizeof(buf) - 2) {
-			memset(buf, ch, size);
-			buf[size] = '\n';
-			buf[size + 1] = '\0';
-			size = 0;
-		} else {
-			int sz = sizeof(buf) - 1;
-
-			/*
-			 * Make sure we will not write everything out
-			 * in this round by leaving at least 1 byte
-			 * for the next round, giving the next round
-			 * a chance to add the terminating LF.  Yuck.
-			 */
-			if (size <= sz)
-				sz -= (sz - size) + 1;
-			memset(buf, ch, sz);
-			buf[sz] = '\0';
-			size -= sz;
-		}
-		rerere_io_putstr(buf, io);
-	}
-}
-
 static void rerere_io_putmem(const char *mem, size_t sz, struct rerere_io *io)
 {
 	if (io->output)
@@ -384,7 +352,14 @@ static int is_cmarker(char *buf, int marker_char, int marker_size)
 	return isspace(*buf);
 }
 
-static int handle_conflict(struct rerere_io *io, int marker_size, git_SHA_CTX *ctx)
+static void rerere_strbuf_putconflict(struct strbuf *buf, int ch, size_t size)
+{
+	strbuf_addchars(buf, ch, size);
+	strbuf_addch(buf, '\n');
+}
+
+static int handle_conflict(struct strbuf *out, struct rerere_io *io,
+			   int marker_size, git_SHA_CTX *ctx)
 {
 	enum {
 		RR_SIDE_1 = 0, RR_SIDE_2, RR_ORIGINAL
@@ -410,11 +385,11 @@ static int handle_conflict(struct rerere_io *io, int marker_size, git_SHA_CTX *c
 			if (strbuf_cmp(&one, &two) > 0)
 				strbuf_swap(&one, &two);
 			has_conflicts = 1;
-			rerere_io_putconflict('<', marker_size, io);
-			rerere_io_putmem(one.buf, one.len, io);
-			rerere_io_putconflict('=', marker_size, io);
-			rerere_io_putmem(two.buf, two.len, io);
-			rerere_io_putconflict('>', marker_size, io);
+			rerere_strbuf_putconflict(out, '<', marker_size);
+			strbuf_addbuf(out, &one);
+			rerere_strbuf_putconflict(out, '=', marker_size);
+			strbuf_addbuf(out, &two);
+			rerere_strbuf_putconflict(out, '>', marker_size);
 			if (ctx) {
 				git_SHA1_Update(ctx, one.buf ? one.buf : "",
 					    one.len + 1);
@@ -451,21 +426,24 @@ static int handle_conflict(struct rerere_io *io, int marker_size, git_SHA_CTX *c
 static int handle_path(unsigned char *sha1, struct rerere_io *io, int marker_size)
 {
 	git_SHA_CTX ctx;
-	struct strbuf buf = STRBUF_INIT;
+	struct strbuf buf = STRBUF_INIT, out = STRBUF_INIT;
 	int has_conflicts = 0;
 	if (sha1)
 		git_SHA1_Init(&ctx);
 
 	while (!io->getline(&buf, io)) {
 		if (is_cmarker(buf.buf, '<', marker_size)) {
-			has_conflicts = handle_conflict(io, marker_size,
+			has_conflicts = handle_conflict(&out, io, marker_size,
 							sha1 ? &ctx : NULL);
 			if (has_conflicts < 0)
 				break;
+			rerere_io_putmem(out.buf, out.len, io);
+			strbuf_reset(&out);
 		} else
 			rerere_io_putstr(buf.buf, io);
 	}
 	strbuf_release(&buf);
+	strbuf_release(&out);
 
 	if (sha1)
 		git_SHA1_Final(sha1, &ctx);
