@@ -580,4 +580,25 @@ test_expect_success 'multiple identical conflicts' '
 	count_pre_post 0 0
 '
 
+test_expect_success 'rerere with unexpected conflict markers does not crash' '
+	git reset --hard &&
+
+	git checkout -b branch-1 master &&
+	echo "bar" >test &&
+	git add test &&
+	git commit -q -m two &&
+
+	git reset --hard &&
+	git checkout -b branch-2 master &&
+	echo "foo" >test &&
+	git add test &&
+	git commit -q -a -m one &&
+
+	test_must_fail git merge branch-1 &&
+	echo "<<<<<<< a" >test &&
+	git rerere &&
+
+	git rerere clear
+'
+
 test_done
