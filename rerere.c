@@ -815,7 +815,7 @@ static int do_plain_rerere(struct string_list *rr, int fd)
 		struct rerere_id *id;
 		unsigned char sha1[20];
 		const char *path = conflict.items[i].string;
-		int ret, has_string;
+		int ret;
 
 		/*
 		 * Ask handle_file() to scan and assign a
@@ -823,12 +823,11 @@ static int do_plain_rerere(struct string_list *rr, int fd)
 		 * yet.
 		 */
 		ret = handle_file(path, sha1, NULL);
-		has_string = string_list_has_string(rr, path);
-		if (ret < 0 && has_string) {
+		if (ret != 0 && string_list_has_string(rr, path)) {
 			remove_variant(string_list_lookup(rr, path)->util);
 			string_list_remove(rr, path, 1);
 		}
-		if (ret < 1 || has_string)
+		if (ret < 1)
 			continue;
 
 		id = new_rerere_id(sha1);

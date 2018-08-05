@@ -635,6 +635,13 @@ test_expect_success 'rerere with inner conflict markers' '
 	git commit -q -m "will solve conflicts later" &&
 	test_must_fail git merge A &&
 	cat test >actual &&
+	test_cmp expect actual &&
+
+	git add test &&
+	git commit -m "rerere solved conflict" &&
+	git reset --hard HEAD~ &&
+	test_must_fail git merge A &&
+	cat test >actual &&
 	test_cmp expect actual
 '
 
