@@ -394,10 +394,6 @@ static int is_cmarker(char *buf, int marker_char, int marker_size)
  * and NUL concatenated together.
  *
  * Return the number of conflict hunks found.
- *
- * NEEDSWORK: the logic and theory of operation behind this conflict
- * normalization may deserve to be documented somewhere, perhaps in
- * Documentation/technical/rerere.txt.
  */
 static int handle_path(unsigned char *sha1, struct rerere_io *io, int marker_size)
 {
