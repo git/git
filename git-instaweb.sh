@@ -360,7 +360,7 @@ EOF
 			break
 		fi
 	done
-	for mod in mime dir env log_config authz_core
+	for mod in mime dir env log_config authz_core unixd
 	do
 		if test -e $module_path/mod_${mod}.so
 		then
