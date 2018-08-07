@@ -795,10 +795,17 @@ static int run_git_commit(const char *defmsg, struct replay_opts *opts,
 
 	if ((flags & CREATE_ROOT_COMMIT) && !(flags & AMEND_MSG)) {
 		struct strbuf msg = STRBUF_INIT, script = STRBUF_INIT;
-		const char *author = is_rebase_i(opts) ?
-			read_author_ident(&script) : NULL;
+		const char *author = NULL;
 		struct object_id root_commit, *cache_tree_oid;
 		int res = 0;
+
+		if (is_rebase_i(opts)) {
+			author = read_author_ident(&script);
+			if (!author) {
+				strbuf_release(&script);
+				return -1;
+			}
+		}
 
 		if (!defmsg)
 			BUG("root commit without message");
