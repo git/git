@@ -13,7 +13,7 @@
 
 static const char * const git_stash_helper_usage[] = {
 	N_("git stash--helper list [<options>]"),
-	N_("git stash--helper show [<stash>]"),
+	N_("git stash--helper show [<options>] [<stash>]"),
 	N_("git stash--helper drop [-q|--quiet] [<stash>]"),
 	N_("git stash--helper ( pop | apply ) [--index] [-q|--quiet] [<stash>]"),
 	N_("git stash--helper branch <branchname> [<stash>]"),
@@ -27,7 +27,7 @@ static const char * const git_stash_helper_list_usage[] = {
 };
 
 static const char * const git_stash_helper_show_usage[] = {
-	N_("git stash--helper show [<stash>]"),
+	N_("git stash--helper show [<options>] [<stash>]"),
 	NULL
 };
 
