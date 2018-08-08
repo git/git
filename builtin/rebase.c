@@ -383,6 +383,13 @@ static int run_specific_rebase(struct rebase_options *opts)
 	add_var(&script_snippet, "git_format_patch_opt",
 		opts->git_format_patch_opt.buf);
 
+	if (is_interactive(opts) &&
+	    !(opts->flags & REBASE_INTERACTIVE_EXPLICIT)) {
+		strbuf_addstr(&script_snippet,
+			      "GIT_EDITOR=:; export GIT_EDITOR; ");
+		opts->autosquash = 0;
+	}
+
 	switch (opts->type) {
 	case REBASE_AM:
 		backend = "git-rebase--am";
