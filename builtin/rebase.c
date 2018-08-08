@@ -21,6 +21,7 @@
 #include "diff.h"
 #include "wt-status.h"
 #include "revision.h"
+#include "rerere.h"
 
 static char const * const builtin_rebase_usage[] = {
 	N_("git rebase [-i] [options] [--exec <cmd>] [--onto <newbase>] "
@@ -468,6 +469,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	enum {
 		NO_ACTION,
 		ACTION_CONTINUE,
+		ACTION_SKIP,
 	} action = NO_ACTION;
 	struct option builtin_rebase_options[] = {
 		OPT_STRING(0, "onto", &options.onto_name,
@@ -492,6 +494,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			REBASE_FORCE),
 		OPT_CMDMODE(0, "continue", &action, N_("continue"),
 			    ACTION_CONTINUE),
+		OPT_CMDMODE(0, "skip", &action,
+			    N_("skip current patch and continue"), ACTION_SKIP),
 		OPT_END(),
 	};
 
@@ -586,6 +590,20 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			       "mark them as resolved using git add"));
 			exit(1);
 		}
+		if (read_basic_state(&options))
+			exit(1);
+		goto run_rebase;
+	}
+	case ACTION_SKIP: {
+		struct string_list merge_rr = STRING_LIST_INIT_DUP;
+
+		options.action = "skip";
+
+		rerere_clear(&merge_rr);
+		string_list_clear(&merge_rr, 1);
+
+		if (reset_head(NULL, "reset", NULL, 0) < 0)
+			die(_("could not discard worktree changes"));
 		if (read_basic_state(&options))
 			exit(1);
 		goto run_rebase;
