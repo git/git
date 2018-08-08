@@ -174,7 +174,7 @@ test_expect_success 'submodule update does not fetch already present commits' '
 	  git submodule update > ../actual 2> ../actual.err
 	) &&
 	test_i18ncmp expected actual &&
-	! test -s actual.err
+	test_must_be_empty actual.err
 '
 
 test_expect_success 'submodule update should fail due to local changes' '
@@ -620,8 +620,8 @@ test_expect_success 'submodule update --init skips submodule with update=none' '
 	git clone super cloned &&
 	(cd cloned &&
 	 git submodule update --init &&
-	 test -e submodule/.git &&
-	 test_must_fail test -e none/.git
+	 test_path_exists submodule/.git &&
+	 test_path_is_missing none/.git
 	)
 '
 

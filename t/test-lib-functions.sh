@@ -565,6 +565,14 @@ test_path_is_dir () {
 	fi
 }
 
+test_path_exists () {
+	if ! test -e "$1"
+	then
+		echo "Path $1 doesn't exist. $2"
+		false
+	fi
+}
+
 # Check if the directory exists and is empty as expected, barf otherwise.
 test_dir_is_empty () {
 	test_path_is_dir "$1" &&
