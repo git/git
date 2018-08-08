@@ -98,6 +98,7 @@ struct rebase_options {
 	int allow_empty_message;
 	int rebase_merges, rebase_cousins;
 	char *strategy, *strategy_opts;
+	struct strbuf git_format_patch_opt;
 };
 
 static int is_interactive(struct rebase_options *opts)
@@ -379,6 +380,8 @@ static int run_specific_rebase(struct rebase_options *opts)
 	add_var(&script_snippet, "rebase_root", opts->root ? "t" : "");
 	add_var(&script_snippet, "squash_onto",
 		opts->squash_onto ? oid_to_hex(opts->squash_onto) : "");
+	add_var(&script_snippet, "git_format_patch_opt",
+		opts->git_format_patch_opt.buf);
 
 	switch (opts->type) {
 	case REBASE_AM:
@@ -667,6 +670,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		.git_am_opt = STRBUF_INIT,
 		.allow_rerere_autoupdate  = -1,
 		.allow_empty_message = 1,
+		.git_format_patch_opt = STRBUF_INIT,
 	};
 	const char *branch_name;
 	int ret, flags, total_argc, in_progress = 0;
@@ -1068,6 +1072,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
 	if (options.root && !options.onto_name)
 		imply_interactive(&options, "--root without --onto");
+
+	if (isatty(2) && options.flags & REBASE_NO_QUIET)
+		strbuf_addstr(&options.git_format_patch_opt, " --progress");
 
 	switch (options.type) {
 	case REBASE_MERGE:
