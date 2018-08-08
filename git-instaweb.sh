@@ -326,13 +326,17 @@ EOF
 }
 
 apache2_conf () {
-	if test -z "$module_path"
-	then
-		test -d "/usr/lib/httpd/modules" &&
-			module_path="/usr/lib/httpd/modules"
-		test -d "/usr/lib/apache2/modules" &&
-			module_path="/usr/lib/apache2/modules"
-	fi
+	for candidate in \
+		/etc/httpd \
+		/usr/lib/apache2 \
+		/usr/lib/httpd ;
+	do
+		if test -d "$candidate/modules"
+		then
+			module_path="$candidate/modules"
+			break
+		fi
+	done
 	bind=
 	test x"$local" = xtrue && bind='127.0.0.1:'
 	echo 'text/css css' > "$fqgitdir/mime.types"
