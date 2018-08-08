@@ -16,6 +16,16 @@
 #include "cache-tree.h"
 #include "unpack-trees.h"
 #include "lockfile.h"
+#include "parse-options.h"
+
+static char const * const builtin_rebase_usage[] = {
+	N_("git rebase [-i] [options] [--exec <cmd>] [--onto <newbase>] "
+		"[<upstream>] [<branch>]"),
+	N_("git rebase [-i] [options] [--exec <cmd>] [--onto <newbase>] "
+		"--root [<branch>]"),
+	N_("git rebase --continue | --abort | --skip | --edit-todo"),
+	NULL
+};
 
 static GIT_PATH_FUNC(apply_dir, "rebase-apply")
 static GIT_PATH_FUNC(merge_dir, "rebase-merge")
@@ -301,6 +311,12 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	int ret, flags;
 	struct strbuf msg = STRBUF_INIT;
 	struct strbuf revisions = STRBUF_INIT;
+	struct option builtin_rebase_options[] = {
+		OPT_STRING(0, "onto", &options.onto_name,
+			   N_("revision"),
+			   N_("rebase onto given branch instead of upstream")),
+		OPT_END(),
+	};
 
 	/*
 	 * NEEDSWORK: Once the builtin rebase has been tested enough
@@ -318,13 +334,22 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			BUG("sane_execvp() returned???");
 	}
 
-	if (argc != 2)
-		die(_("Usage: %s <base>"), argv[0]);
+	if (argc == 2 && !strcmp(argv[1], "-h"))
+		usage_with_options(builtin_rebase_usage,
+				   builtin_rebase_options);
+
 	prefix = setup_git_directory();
 	trace_repo_setup(prefix);
 	setup_work_tree();
 
 	git_config(git_default_config, NULL);
+	argc = parse_options(argc, argv, prefix,
+			     builtin_rebase_options,
+			     builtin_rebase_usage, 0);
+
+	if (argc > 2)
+		usage_with_options(builtin_rebase_usage,
+				   builtin_rebase_options);
 
 	switch (options.type) {
 	case REBASE_MERGE:
@@ -343,10 +368,10 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	}
 
 	if (!options.root) {
-		if (argc < 2)
+		if (argc < 1)
 			die("TODO: handle @{upstream}");
 		else {
-			options.upstream_name = argv[1];
+			options.upstream_name = argv[0];
 			argc--;
 			argv++;
 			if (!strcmp(options.upstream_name, "-"))
@@ -377,7 +402,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	 * orig_head -- commit object name of tip of the branch before rebasing
 	 * head_name -- refs/heads/<that-branch> or "detached HEAD"
 	 */
-	if (argc > 1)
+	if (argc > 0)
 		 die("TODO: handle switch_to");
 	else {
 		/* Do not need to switch branches, we are already on it. */
