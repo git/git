@@ -1099,12 +1099,53 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		break;
 	}
 
+	if (options.git_am_opt.len) {
+		const char *p;
+
+		/* all am options except -q are compatible only with --am */
+		strbuf_reset(&buf);
+		strbuf_addbuf(&buf, &options.git_am_opt);
+		strbuf_addch(&buf, ' ');
+		while ((p = strstr(buf.buf, " -q ")))
+			strbuf_splice(&buf, p - buf.buf, 4, " ", 1);
+		strbuf_trim(&buf);
+
+		if (is_interactive(&options) && buf.len)
+			die(_("error: cannot combine interactive options "
+			      "(--interactive, --exec, --rebase-merges, "
+			      "--preserve-merges, --keep-empty, --root + "
+			      "--onto) with am options (%s)"), buf.buf);
+		if (options.type == REBASE_MERGE && buf.len)
+			die(_("error: cannot combine merge options (--merge, "
+			      "--strategy, --strategy-option) with am options "
+			      "(%s)"), buf.buf);
+	}
+
 	if (options.signoff) {
 		if (options.type == REBASE_PRESERVE_MERGES)
 			die("cannot combine '--signoff' with "
 			    "'--preserve-merges'");
 		strbuf_addstr(&options.git_am_opt, " --signoff");
 		options.flags |= REBASE_FORCE;
+	}
+
+	if (options.type == REBASE_PRESERVE_MERGES)
+		/*
+		 * Note: incompatibility with --signoff handled in signoff block above
+		 * Note: incompatibility with --interactive is just a strong warning;
+		 *       git-rebase.txt caveats with "unless you know what you are doing"
+		 */
+		if (options.rebase_merges)
+			die(_("error: cannot combine '--preserve_merges' with "
+			      "'--rebase-merges'"));
+
+	if (options.rebase_merges) {
+		if (strategy_options.nr)
+			die(_("error: cannot combine '--rebase_merges' with "
+			      "'--strategy-option'"));
+		if (options.strategy)
+			die(_("error: cannot combine '--rebase_merges' with "
+			      "'--strategy'"));
 	}
 
 	if (!options.root) {
