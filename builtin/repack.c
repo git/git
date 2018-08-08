@@ -138,6 +138,47 @@ static void remove_redundant_pack(const char *dir_name, const char *base_name)
 	strbuf_release(&buf);
 }
 
+struct pack_objects_args {
+	const char *window;
+	const char *window_memory;
+	const char *depth;
+	const char *threads;
+	const char *max_pack_size;
+	int no_reuse_delta;
+	int no_reuse_object;
+	int quiet;
+	int local;
+};
+
+static void prepare_pack_objects(struct child_process *cmd,
+				 const struct pack_objects_args *args)
+{
+	argv_array_push(&cmd->args, "pack-objects");
+	if (args->window)
+		argv_array_pushf(&cmd->args, "--window=%s", args->window);
+	if (args->window_memory)
+		argv_array_pushf(&cmd->args, "--window-memory=%s", args->window_memory);
+	if (args->depth)
+		argv_array_pushf(&cmd->args, "--depth=%s", args->depth);
+	if (args->threads)
+		argv_array_pushf(&cmd->args, "--threads=%s", args->threads);
+	if (args->max_pack_size)
+		argv_array_pushf(&cmd->args, "--max-pack-size=%s", args->max_pack_size);
+	if (args->no_reuse_delta)
+		argv_array_pushf(&cmd->args, "--no-reuse-delta");
+	if (args->no_reuse_object)
+		argv_array_pushf(&cmd->args, "--no-reuse-object");
+	if (args->local)
+		argv_array_push(&cmd->args,  "--local");
+	if (args->quiet)
+		argv_array_push(&cmd->args,  "--quiet");
+	if (delta_base_offset)
+		argv_array_push(&cmd->args,  "--delta-base-offset");
+	argv_array_push(&cmd->args, packtmp);
+	cmd->git_cmd = 1;
+	cmd->out = -1;
+}
+
 #define ALL_INTO_ONE 1
 #define LOOSEN_UNREACHABLE 2
 
@@ -165,15 +206,9 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	int delete_redundant = 0;
 	const char *unpack_unreachable = NULL;
 	int keep_unreachable = 0;
-	const char *window = NULL, *window_memory = NULL;
-	const char *depth = NULL;
-	const char *threads = NULL;
-	const char *max_pack_size = NULL;
 	struct string_list keep_pack_list = STRING_LIST_INIT_NODUP;
-	int no_reuse_delta = 0, no_reuse_object = 0;
 	int no_update_server_info = 0;
-	int quiet = 0;
-	int local = 0;
+	struct pack_objects_args po_args = {NULL};
 
 	struct option builtin_repack_options[] = {
 		OPT_BIT('a', NULL, &pack_everything,
@@ -183,14 +218,14 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 				   LOOSEN_UNREACHABLE | ALL_INTO_ONE),
 		OPT_BOOL('d', NULL, &delete_redundant,
 				N_("remove redundant packs, and run git-prune-packed")),
-		OPT_BOOL('f', NULL, &no_reuse_delta,
+		OPT_BOOL('f', NULL, &po_args.no_reuse_delta,
 				N_("pass --no-reuse-delta to git-pack-objects")),
-		OPT_BOOL('F', NULL, &no_reuse_object,
+		OPT_BOOL('F', NULL, &po_args.no_reuse_object,
 				N_("pass --no-reuse-object to git-pack-objects")),
 		OPT_BOOL('n', NULL, &no_update_server_info,
 				N_("do not run git-update-server-info")),
-		OPT__QUIET(&quiet, N_("be quiet")),
-		OPT_BOOL('l', "local", &local,
+		OPT__QUIET(&po_args.quiet, N_("be quiet")),
+		OPT_BOOL('l', "local", &po_args.local,
 				N_("pass --local to git-pack-objects")),
 		OPT_BOOL('b', "write-bitmap-index", &write_bitmaps,
 				N_("write bitmap index")),
@@ -198,15 +233,15 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 				N_("with -A, do not loosen objects older than this")),
 		OPT_BOOL('k', "keep-unreachable", &keep_unreachable,
 				N_("with -a, repack unreachable objects")),
-		OPT_STRING(0, "window", &window, N_("n"),
+		OPT_STRING(0, "window", &po_args.window, N_("n"),
 				N_("size of the window used for delta compression")),
-		OPT_STRING(0, "window-memory", &window_memory, N_("bytes"),
+		OPT_STRING(0, "window-memory", &po_args.window_memory, N_("bytes"),
 				N_("same as the above, but limit memory size instead of entries count")),
-		OPT_STRING(0, "depth", &depth, N_("n"),
+		OPT_STRING(0, "depth", &po_args.depth, N_("n"),
 				N_("limits the maximum delta depth")),
-		OPT_STRING(0, "threads", &threads, N_("n"),
+		OPT_STRING(0, "threads", &po_args.threads, N_("n"),
 				N_("limits the maximum number of threads")),
-		OPT_STRING(0, "max-pack-size", &max_pack_size, N_("bytes"),
+		OPT_STRING(0, "max-pack-size", &po_args.max_pack_size, N_("bytes"),
 				N_("maximum size of each packfile")),
 		OPT_BOOL(0, "pack-kept-objects", &pack_kept_objects,
 				N_("repack objects in packs marked with .keep")),
@@ -238,7 +273,8 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 
 	sigchain_push_common(remove_pack_on_signal);
 
-	argv_array_push(&cmd.args, "pack-objects");
+	prepare_pack_objects(&cmd, &po_args);
+
 	argv_array_push(&cmd.args, "--keep-true-parents");
 	if (!pack_kept_objects)
 		argv_array_push(&cmd.args, "--honor-pack-keep");
@@ -251,20 +287,6 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	argv_array_push(&cmd.args, "--indexed-objects");
 	if (repository_format_partial_clone)
 		argv_array_push(&cmd.args, "--exclude-promisor-objects");
-	if (window)
-		argv_array_pushf(&cmd.args, "--window=%s", window);
-	if (window_memory)
-		argv_array_pushf(&cmd.args, "--window-memory=%s", window_memory);
-	if (depth)
-		argv_array_pushf(&cmd.args, "--depth=%s", depth);
-	if (threads)
-		argv_array_pushf(&cmd.args, "--threads=%s", threads);
-	if (max_pack_size)
-		argv_array_pushf(&cmd.args, "--max-pack-size=%s", max_pack_size);
-	if (no_reuse_delta)
-		argv_array_pushf(&cmd.args, "--no-reuse-delta");
-	if (no_reuse_object)
-		argv_array_pushf(&cmd.args, "--no-reuse-object");
 	if (write_bitmaps)
 		argv_array_push(&cmd.args, "--write-bitmap-index");
 
@@ -292,17 +314,6 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		argv_array_push(&cmd.args, "--incremental");
 	}
 
-	if (local)
-		argv_array_push(&cmd.args,  "--local");
-	if (quiet)
-		argv_array_push(&cmd.args,  "--quiet");
-	if (delta_base_offset)
-		argv_array_push(&cmd.args,  "--delta-base-offset");
-
-	argv_array_push(&cmd.args, packtmp);
-
-	cmd.git_cmd = 1;
-	cmd.out = -1;
 	cmd.no_stdin = 1;
 
 	ret = start_command(&cmd);
@@ -320,7 +331,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	if (ret)
 		return ret;
 
-	if (!names.nr && !quiet)
+	if (!names.nr && !po_args.quiet)
 		printf("Nothing new to pack.\n");
 
 	/*
@@ -441,7 +452,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 			if (!string_list_has_string(&names, sha1))
 				remove_redundant_pack(packdir, item->string);
 		}
-		if (!quiet && isatty(2))
+		if (!po_args.quiet && isatty(2))
 			opts |= PRUNE_PACKED_VERBOSE;
 		prune_packed_objects(opts);
 	}
