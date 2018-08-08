@@ -599,7 +599,8 @@ test_expect_success 'submodule update - update=none in .git/config but --checkou
 	 ) &&
 	 git diff --raw | grep "	submodule" &&
 	 git submodule update --checkout &&
-	 test_must_fail git diff --raw \| grep "	submodule" &&
+	 git diff --raw >out &&
+	 ! grep "	submodule" out &&
 	 (cd submodule &&
 	  test_must_fail compare_head
 	 ) &&
