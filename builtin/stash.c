@@ -949,9 +949,8 @@ static int save_untracked_files(struct stash_info *info, struct strbuf *msg)
 {
 	int ret = 0;
 	struct strbuf untracked_msg = STRBUF_INIT;
-	struct strbuf out2 = STRBUF_INIT;
 	struct child_process cp = CHILD_PROCESS_INIT;
-	struct child_process cp2 = CHILD_PROCESS_INIT;
+	struct index_state state = { NULL };
 
 	cp.git_cmd = 1;
 	argv_array_pushl(&cp.args, "update-index", "--add",
@@ -966,15 +965,11 @@ static int save_untracked_files(struct stash_info *info, struct strbuf *msg)
 		goto done;
 	}
 
-	cp2.git_cmd = 1;
-	argv_array_push(&cp2.args, "write-tree");
-	argv_array_pushf(&cp2.env_array, "GIT_INDEX_FILE=%s",
-			 stash_index_path.buf);
-	if (pipe_command(&cp2, NULL, 0, &out2, 0,NULL, 0)) {
+	if (write_index_as_tree(&info->u_tree, &state, stash_index_path.buf, 0,
+				NULL)) {
 		ret = -1;
 		goto done;
 	}
-	get_oid_hex(out2.buf, &info->u_tree);
 
 	if (commit_tree(untracked_msg.buf, untracked_msg.len,
 			&info->u_tree, NULL, &info->u_commit, NULL, NULL)) {
@@ -984,7 +979,6 @@ static int save_untracked_files(struct stash_info *info, struct strbuf *msg)
 
 done:
 	strbuf_release(&untracked_msg);
-	strbuf_release(&out2);
 	remove_path(stash_index_path.buf);
 	return ret;
 }
@@ -994,11 +988,10 @@ static struct strbuf patch = STRBUF_INIT;
 static int stash_patch(struct stash_info *info, const char **argv)
 {
 	int ret = 0;
-	struct strbuf out2 = STRBUF_INIT;
 	struct child_process cp0 = CHILD_PROCESS_INIT;
 	struct child_process cp1 = CHILD_PROCESS_INIT;
-	struct child_process cp2 = CHILD_PROCESS_INIT;
 	struct child_process cp3 = CHILD_PROCESS_INIT;
+	struct index_state state = { NULL };
 
 	remove_path(stash_index_path.buf);
 
@@ -1023,16 +1016,11 @@ static int stash_patch(struct stash_info *info, const char **argv)
 		goto done;
 	}
 
-	cp2.git_cmd = 1;
-	argv_array_push(&cp2.args, "write-tree");
-	argv_array_pushf(&cp2.env_array, "GIT_INDEX_FILE=%s",
-			 stash_index_path.buf);
-	if (pipe_command(&cp2, NULL, 0, &out2, 0,NULL, 0)) {
+	if (write_index_as_tree(&info->w_tree, &state, stash_index_path.buf, 0,
+				NULL)) {
 		ret = -1;
 		goto done;
 	}
-
-	get_oid_hex(out2.buf, &info->w_tree);
 
 	cp3.git_cmd = 1;
 	argv_array_pushl(&cp3.args, "diff-tree", "-p", "HEAD",
@@ -1046,7 +1034,6 @@ static int stash_patch(struct stash_info *info, const char **argv)
 	}
 
 done:
-	strbuf_release(&out2);
 	remove_path(stash_index_path.buf);
 	return ret;
 }
@@ -1056,11 +1043,10 @@ static int stash_working_tree(struct stash_info *info,
 {
 	int ret = 0;
 	struct child_process cp2 = CHILD_PROCESS_INIT;
-	struct child_process cp3 = CHILD_PROCESS_INIT;
-	struct strbuf out3 = STRBUF_INIT;
 	struct argv_array args = ARGV_ARRAY_INIT;
 	struct strbuf diff_output = STRBUF_INIT;
 	struct rev_info rev;
+	struct index_state state = { NULL };
 
 	set_alternate_index_output(stash_index_path.buf);
 	if (reset_tree(&info->i_tree, 0, 0)) {
@@ -1103,20 +1089,18 @@ static int stash_working_tree(struct stash_info *info,
 		goto done;
 	}
 
-	cp3.git_cmd = 1;
-	argv_array_push(&cp3.args, "write-tree");
-	argv_array_pushf(&cp3.env_array, "GIT_INDEX_FILE=%s",
-			 stash_index_path.buf);
-	if (pipe_command(&cp3, NULL, 0, &out3, 0,NULL, 0)) {
+	if (write_index_as_tree(&info->w_tree, &state, stash_index_path.buf, 0,
+				NULL)) {
+
 		ret = -1;
 		goto done;
 	}
 
-	get_oid_hex(out3.buf, &info->w_tree);
+	discard_cache();
+	read_cache();
 
 done:
 	UNLEAK(rev);
-	strbuf_release(&out3);
 	argv_array_clear(&args);
 	object_array_clear(&rev.pending);
 	strbuf_release(&diff_output);
