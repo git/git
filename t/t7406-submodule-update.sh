@@ -481,7 +481,8 @@ test_expect_success 'recursive submodule update - command in .git/config catches
 
 test_expect_success 'submodule init does not copy command into .git/config' '
 	(cd super &&
-	 H=$(git ls-files -s submodule | cut -d" " -f2) &&
+	 git ls-files -s submodule >out &&
+	 H=$(cut -d" " -f2 out) &&
 	 mkdir submodule1 &&
 	 git update-index --add --cacheinfo 160000 $H submodule1 &&
 	 git config -f .gitmodules submodule.submodule1.path submodule1 &&
@@ -579,9 +580,11 @@ test_expect_success 'submodule update - update=none in .git/config' '
 	  git checkout master &&
 	  compare_head
 	 ) &&
-	 git diff --name-only | grep ^submodule$ &&
+	 git diff --name-only >out &&
+	 grep ^submodule$ out &&
 	 git submodule update &&
-	 git diff --name-only | grep ^submodule$ &&
+	 git diff --name-only >out &&
+	 grep ^submodule$ out &&
 	 (cd submodule &&
 	  compare_head
 	 ) &&
@@ -597,7 +600,8 @@ test_expect_success 'submodule update - update=none in .git/config but --checkou
 	  git checkout master &&
 	  compare_head
 	 ) &&
-	 git diff --name-only | grep ^submodule$ &&
+	 git diff --name-only >out &&
+	 grep ^submodule$ out &&
 	 git submodule update --checkout &&
 	 git diff --name-only >out &&
 	 ! grep ^submodule$ out &&
@@ -886,7 +890,8 @@ test_expect_success 'submodule update properly revives a moved submodule' '
 	 H=$(git rev-parse --short HEAD) &&
 	 git commit -am "pre move" &&
 	 H2=$(git rev-parse --short HEAD) &&
-	 git status | sed "s/$H/XXX/" >expect &&
+	 git status >out &&
+	 sed "s/$H/XXX/" out >expect &&
 	 H=$(cd submodule2 && git rev-parse HEAD) &&
 	 git rm --cached submodule2 &&
 	 rm -rf submodule2 &&
@@ -895,7 +900,8 @@ test_expect_success 'submodule update properly revives a moved submodule' '
 	 git config -f .gitmodules submodule.submodule2.path "moved/sub module" &&
 	 git commit -am "post move" &&
 	 git submodule update &&
-	 git status | sed "s/$H2/XXX/" >actual &&
+	 git status > out &&
+	 sed "s/$H2/XXX/" out >actual &&
 	 test_cmp expect actual
 	)
 '
@@ -913,7 +919,7 @@ test_expect_success SYMLINKS 'submodule update can handle symbolic links in pwd'
 
 test_expect_success 'submodule update clone shallow submodule' '
 	test_when_finished "rm -rf super3" &&
-	first=$(git -C cloned submodule status submodule |cut -c2-41) &&
+	first=$(git -C cloned rev-parse HEAD:submodule) &&
 	second=$(git -C submodule rev-parse HEAD) &&
 	commit_count=$(git -C submodule rev-list --count $first^..$second) &&
 	git clone cloned super3 &&
@@ -923,7 +929,8 @@ test_expect_success 'submodule update clone shallow submodule' '
 		sed -e "s#url = ../#url = file://$pwd/#" <.gitmodules >.gitmodules.tmp &&
 		mv -f .gitmodules.tmp .gitmodules &&
 		git submodule update --init --depth=$commit_count &&
-		test 1 = $(git -C submodule log --oneline | wc -l)
+		git -C submodule log --oneline >out &&
+		test_line_count = 1 out
 	)
 '
 
@@ -939,7 +946,8 @@ test_expect_success 'submodule update clone shallow submodule outside of depth' 
 		test_i18ngrep "Direct fetching of that commit failed." actual &&
 		git -C ../submodule config uploadpack.allowReachableSHA1InWant true &&
 		git submodule update --init --depth=1 >actual &&
-		test 1 = $(git -C submodule log --oneline | wc -l)
+		git -C submodule log --oneline >out &&
+		test_line_count = 1 out
 	)
 '
 
