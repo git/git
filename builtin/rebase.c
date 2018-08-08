@@ -1368,6 +1368,24 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		die(_("Could not detach HEAD"));
 	strbuf_release(&msg);
 
+	/*
+	 * If the onto is a proper descendant of the tip of the branch, then
+	 * we just fast-forwarded.
+	 */
+	strbuf_reset(&msg);
+	if (!oidcmp(&merge_base, &options.orig_head)) {
+		printf(_("Fast-forwarded %s to %s. \n"),
+			branch_name, options.onto_name);
+		strbuf_addf(&msg, "rebase finished: %s onto %s",
+			options.head_name ? options.head_name : "detached HEAD",
+			oid_to_hex(&options.onto->object.oid));
+		reset_head(NULL, "Fast-forwarded", options.head_name, 0,
+			   "HEAD", msg.buf);
+		strbuf_release(&msg);
+		ret = !!finish_rebase(&options);
+		goto cleanup;
+	}
+
 	strbuf_addf(&revisions, "%s..%s",
 		    options.root ? oid_to_hex(&options.onto->object.oid) :
 		    (options.restrict_revision ?
