@@ -91,6 +91,7 @@ struct rebase_options {
 		REBASE_INTERACTIVE_EXPLICIT = 1<<4,
 	} flags;
 	struct strbuf git_am_opt;
+	const char *action;
 };
 
 static int is_interactive(struct rebase_options *opts)
@@ -113,6 +114,62 @@ static const char *state_dir_path(const char *filename, struct rebase_options *o
 	strbuf_setlen(&path, prefix_len);
 	strbuf_addstr(&path, filename);
 	return path.buf;
+}
+
+/* Read one file, then strip line endings */
+static int read_one(const char *path, struct strbuf *buf)
+{
+	if (strbuf_read_file(buf, path, 0) < 0)
+		return error_errno(_("could not read '%s'"), path);
+	strbuf_trim_trailing_newline(buf);
+	return 0;
+}
+
+/* Initialize the rebase options from the state directory. */
+static int read_basic_state(struct rebase_options *opts)
+{
+	struct strbuf head_name = STRBUF_INIT;
+	struct strbuf buf = STRBUF_INIT;
+	struct object_id oid;
+
+	if (read_one(state_dir_path("head-name", opts), &head_name) ||
+	    read_one(state_dir_path("onto", opts), &buf))
+		return -1;
+	opts->head_name = starts_with(head_name.buf, "refs/") ?
+		xstrdup(head_name.buf) : NULL;
+	strbuf_release(&head_name);
+	if (get_oid(buf.buf, &oid))
+		return error(_("could not get 'onto': '%s'"), buf.buf);
+	opts->onto = lookup_commit_or_die(&oid, buf.buf);
+
+	/*
+	 * We always write to orig-head, but interactive rebase used to write to
+	 * head. Fall back to reading from head to cover for the case that the
+	 * user upgraded git with an ongoing interactive rebase.
+	 */
+	strbuf_reset(&buf);
+	if (file_exists(state_dir_path("orig-head", opts))) {
+		if (read_one(state_dir_path("orig-head", opts), &buf))
+			return -1;
+	} else if (read_one(state_dir_path("head", opts), &buf))
+		return -1;
+	if (get_oid(buf.buf, &opts->orig_head))
+		return error(_("invalid orig-head: '%s'"), buf.buf);
+
+	strbuf_reset(&buf);
+	if (read_one(state_dir_path("quiet", opts), &buf))
+		return -1;
+	if (buf.len)
+		opts->flags &= ~REBASE_NO_QUIET;
+	else
+		opts->flags |= REBASE_NO_QUIET;
+
+	if (file_exists(state_dir_path("verbose", opts)))
+		opts->flags |= REBASE_VERBOSE;
+
+	strbuf_release(&buf);
+
+	return 0;
 }
 
 static int finish_rebase(struct rebase_options *opts)
@@ -168,12 +225,13 @@ static int run_specific_rebase(struct rebase_options *opts)
 	add_var(&script_snippet, "state_dir", opts->state_dir);
 
 	add_var(&script_snippet, "upstream_name", opts->upstream_name);
-	add_var(&script_snippet, "upstream",
-				 oid_to_hex(&opts->upstream->object.oid));
+	add_var(&script_snippet, "upstream", opts->upstream ?
+		oid_to_hex(&opts->upstream->object.oid) : NULL);
 	add_var(&script_snippet, "head_name",
 		opts->head_name ? opts->head_name : "detached HEAD");
 	add_var(&script_snippet, "orig_head", oid_to_hex(&opts->orig_head));
-	add_var(&script_snippet, "onto", oid_to_hex(&opts->onto->object.oid));
+	add_var(&script_snippet, "onto", opts->onto ?
+		oid_to_hex(&opts->onto->object.oid) : NULL);
 	add_var(&script_snippet, "onto_name", opts->onto_name);
 	add_var(&script_snippet, "revisions", opts->revisions);
 	add_var(&script_snippet, "restrict_revision", opts->restrict_revision ?
@@ -189,6 +247,7 @@ static int run_specific_rebase(struct rebase_options *opts)
 		opts->flags & REBASE_FORCE ? "t" : "");
 	if (opts->switch_to)
 		add_var(&script_snippet, "switch_to", opts->switch_to);
+	add_var(&script_snippet, "action", opts->action ? opts->action : "");
 
 	switch (opts->type) {
 	case REBASE_AM:
@@ -400,12 +459,16 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		.git_am_opt = STRBUF_INIT,
 	};
 	const char *branch_name;
-	int ret, flags, in_progress = 0;
+	int ret, flags, total_argc, in_progress = 0;
 	int ok_to_skip_pre_rebase = 0;
 	struct strbuf msg = STRBUF_INIT;
 	struct strbuf revisions = STRBUF_INIT;
 	struct strbuf buf = STRBUF_INIT;
 	struct object_id merge_base;
+	enum {
+		NO_ACTION,
+		ACTION_CONTINUE,
+	} action = NO_ACTION;
 	struct option builtin_rebase_options[] = {
 		OPT_STRING(0, "onto", &options.onto_name,
 			   N_("revision"),
@@ -427,6 +490,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		OPT_BIT(0, "no-ff", &options.flags,
 			N_("cherry-pick all commits, even if unchanged"),
 			REBASE_FORCE),
+		OPT_CMDMODE(0, "continue", &action, N_("continue"),
+			    ACTION_CONTINUE),
 		OPT_END(),
 	};
 
@@ -480,13 +545,54 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	if (options.type != REBASE_UNSPECIFIED)
 		in_progress = 1;
 
+	total_argc = argc;
 	argc = parse_options(argc, argv, prefix,
 			     builtin_rebase_options,
 			     builtin_rebase_usage, 0);
 
+	if (action != NO_ACTION && total_argc != 2) {
+		usage_with_options(builtin_rebase_usage,
+				   builtin_rebase_options);
+	}
+
 	if (argc > 2)
 		usage_with_options(builtin_rebase_usage,
 				   builtin_rebase_options);
+
+	switch (action) {
+	case ACTION_CONTINUE: {
+		struct object_id head;
+		struct lock_file lock_file = LOCK_INIT;
+		int fd;
+
+		options.action = "continue";
+
+		/* Sanity check */
+		if (get_oid("HEAD", &head))
+			die(_("Cannot read HEAD"));
+
+		fd = hold_locked_index(&lock_file, 0);
+		if (read_index(the_repository->index) < 0)
+			die(_("could not read index"));
+		refresh_index(the_repository->index, REFRESH_QUIET, NULL, NULL,
+			      NULL);
+		if (0 <= fd)
+			update_index_if_able(the_repository->index,
+					     &lock_file);
+		rollback_lock_file(&lock_file);
+
+		if (has_unstaged_changes(1)) {
+			puts(_("You must edit all merge conflicts and then\n"
+			       "mark them as resolved using git add"));
+			exit(1);
+		}
+		if (read_basic_state(&options))
+			exit(1);
+		goto run_rebase;
+	}
+	default:
+		die("TODO");
+	}
 
 	/* Make sure no rebase is in progress */
 	if (in_progress) {
@@ -719,6 +825,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
 	options.revisions = revisions.buf;
 
+run_rebase:
 	ret = !!run_specific_rebase(&options);
 
 cleanup:
