@@ -26,6 +26,8 @@ static const char * const git_stash_helper_usage[] = {
 	N_("git stash--helper [push [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]\n"
 	   "          [-u|--include-untracked] [-a|--all] [-m|--message <message>]\n"
 	   "          [--] [<pathspec>...]]"),
+	N_("git stash--helper save [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]\n"
+	   "          [-u|--include-untracked] [-a|--all] [<message>]"),
 	NULL
 };
 
@@ -78,6 +80,12 @@ static const char * const git_stash_helper_push_usage[] = {
 	N_("git stash--helper [push [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]\n"
 	   "          [-u|--include-untracked] [-a|--all] [-m|--message <message>]\n"
 	   "          [--] [<pathspec>...]]"),
+	NULL
+};
+
+static const char * const git_stash_helper_save_usage[] = {
+	N_("git stash--helper save [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]\n"
+	   "          [-u|--include-untracked] [-a|--all] [<message>]"),
 	NULL
 };
 
@@ -1445,6 +1453,44 @@ static int push_stash(int argc, const char **argv, const char *prefix)
 			     include_untracked, quiet, stash_msg);
 }
 
+static int save_stash(int argc, const char **argv, const char *prefix)
+{
+	int i;
+	int keep_index = -1;
+	int patch_mode = 0;
+	int include_untracked = 0;
+	int quiet = 0;
+	char *stash_msg = NULL;
+	struct strbuf alt_stash_msg = STRBUF_INIT;
+	struct option options[] = {
+		OPT_SET_INT('k', "keep-index", &keep_index,
+			N_("keep index"), 1),
+		OPT_BOOL('p', "patch", &patch_mode,
+			N_("stash in patch mode")),
+		OPT_BOOL('q', "quiet", &quiet,
+			N_("quiet mode")),
+		OPT_BOOL('u', "include-untracked", &include_untracked,
+			 N_("include untracked files in stash")),
+		OPT_SET_INT('a', "all", &include_untracked,
+			    N_("include ignore files"), 2),
+		OPT_STRING('m', "message", &stash_msg, N_("message"),
+			 N_("stash message")),
+		OPT_END()
+	};
+
+	argc = parse_options(argc, argv, prefix, options,
+			     git_stash_helper_save_usage,
+			     0);
+
+	for (i = 0; i < argc; ++i)
+		strbuf_addf(&alt_stash_msg, "%s ", argv[i]);
+
+	stash_msg = strbuf_detach(&alt_stash_msg, NULL);
+
+	return do_push_stash(0, NULL, prefix, keep_index, patch_mode,
+			     include_untracked, quiet, stash_msg);
+}
+
 int cmd_stash__helper(int argc, const char **argv, const char *prefix)
 {
 	pid_t pid = getpid();
@@ -1485,6 +1531,8 @@ int cmd_stash__helper(int argc, const char **argv, const char *prefix)
 		return !!create_stash(argc, argv, prefix);
 	else if (!strcmp(argv[0], "push"))
 		return !!push_stash(argc, argv, prefix);
+	else if (!strcmp(argv[0], "save"))
+		return !!save_stash(argc, argv, prefix);
 
 	usage_msg_opt(xstrfmt(_("unknown subcommand: %s"), argv[0]),
 		      git_stash_helper_usage, options);
