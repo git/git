@@ -471,6 +471,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		ACTION_CONTINUE,
 		ACTION_SKIP,
 		ACTION_ABORT,
+		ACTION_QUIT,
 	} action = NO_ACTION;
 	struct option builtin_rebase_options[] = {
 		OPT_STRING(0, "onto", &options.onto_name,
@@ -500,6 +501,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		OPT_CMDMODE(0, "abort", &action,
 			    N_("abort and check out the original branch"),
 			    ACTION_ABORT),
+		OPT_CMDMODE(0, "quit", &action,
+			    N_("abort but keep HEAD where it is"), ACTION_QUIT),
 		OPT_END(),
 	};
 
@@ -626,6 +629,14 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			die(_("could not move back to %s"),
 			    oid_to_hex(&options.orig_head));
 		ret = finish_rebase(&options);
+		goto cleanup;
+	}
+	case ACTION_QUIT: {
+		strbuf_reset(&buf);
+		strbuf_addstr(&buf, options.state_dir);
+		ret = !!remove_dir_recursively(&buf, 0);
+		if (ret)
+			die(_("could not remove '%s'"), options.state_dir);
 		goto cleanup;
 	}
 	default:
