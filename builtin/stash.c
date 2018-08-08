@@ -819,19 +819,32 @@ static int store_stash(int argc, const char **argv, const char *prefix)
 }
 
 /*
- * `out` will be filled with the names of untracked files. The return value is:
+ * `has_untracked_files` is:
+ * -2 if `get_untracked_files()` hasn't been called
+ * -1 if there were errors
+ *  0 if there are no untracked files
+ *  1 if there are untracked files
+ *
+ * `untracked_files` will be filled with the names of untracked files.
+ * The return value is:
  *
  * = 0 if there are not any untracked files
  * > 0 if there are untracked files
  */
+static struct strbuf untracked_files = STRBUF_INIT;
+static int has_untracked_files = -2;
+
 static int get_untracked_files(const char **argv, const char *prefix,
-			       int include_untracked, struct strbuf *out)
+			       int include_untracked)
 {
 	int max_len;
 	int i;
 	char *seen;
 	struct dir_struct dir;
 	struct pathspec pathspec;
+
+	if (has_untracked_files != -2)
+		return has_untracked_files;
 
 	memset(&dir, 0, sizeof(dir));
 	if (include_untracked != 2)
@@ -849,7 +862,7 @@ static int get_untracked_files(const char **argv, const char *prefix,
 			free(ent);
 			continue;
 		}
-		strbuf_addf(out, "%s\n", ent->name);
+		strbuf_addf(&untracked_files, "%s\n", ent->name);
 		free(ent);
 	}
 
@@ -857,16 +870,25 @@ static int get_untracked_files(const char **argv, const char *prefix,
 	free(dir.ignored);
 	clear_directory(&dir);
 	free(seen);
-	return out->len;
+	has_untracked_files = untracked_files.len;
+	return untracked_files.len;
 }
 
 /*
+ * `changes` is:
+ * -2 if `check_changes()` hasn't been called
+ * -1 if there were any errors
+ *  0 if there are no changes
+ *  1 if there are changes
+ *
  * The return value of `check_changes()` can be:
  *
  * < 0 if there was an error
  * = 0 if there are no changes.
  * > 0 if there are changes.
  */
+static int changes = -2;
+
 static int check_changes(const char **argv, int include_untracked,
 			 const char *prefix)
 {
@@ -874,8 +896,10 @@ static int check_changes(const char **argv, int include_untracked,
 	int ret = 0;
 	struct rev_info rev;
 	struct object_id dummy;
-	struct strbuf out = STRBUF_INIT;
 	struct argv_array args = ARGV_ARRAY_INIT;
+
+	if (changes != -2)
+		return changes;
 
 	init_revisions(&rev, prefix);
 	parse_pathspec(&rev.prune_data, 0, PATHSPEC_PREFER_FULL,
@@ -912,17 +936,16 @@ static int check_changes(const char **argv, int include_untracked,
 	}
 
 	if (include_untracked && get_untracked_files(argv, prefix,
-						     include_untracked, &out))
+						     include_untracked))
 		ret = 1;
 
 done:
-	strbuf_release(&out);
+	changes = ret;
 	argv_array_clear(&args);
 	return ret;
 }
 
-static int save_untracked_files(struct stash_info *info, struct strbuf *msg,
-				struct strbuf *out)
+static int save_untracked_files(struct stash_info *info, struct strbuf *msg)
 {
 	int ret = 0;
 	struct strbuf untracked_msg = STRBUF_INIT;
@@ -937,7 +960,8 @@ static int save_untracked_files(struct stash_info *info, struct strbuf *msg,
 			 stash_index_path.buf);
 
 	strbuf_addf(&untracked_msg, "untracked files on %s\n", msg->buf);
-	if (pipe_command(&cp, out->buf, out->len, NULL, 0, NULL, 0)) {
+	if (pipe_command(&cp, untracked_files.buf, untracked_files.len,
+			 NULL, 0, NULL, 0)) {
 		ret = -1;
 		goto done;
 	}
@@ -1116,7 +1140,6 @@ static int do_create_stash(int argc, const char **argv, const char *prefix,
 	struct commit_list *parents = NULL;
 	struct strbuf msg = STRBUF_INIT;
 	struct strbuf commit_tree_label = STRBUF_INIT;
-	struct strbuf out = STRBUF_INIT;
 	struct strbuf final_stash_msg = STRBUF_INIT;
 
 	read_cache_preload(NULL);
@@ -1158,8 +1181,8 @@ static int do_create_stash(int argc, const char **argv, const char *prefix,
 	}
 
 	if (include_untracked && get_untracked_files(argv, prefix,
-						     include_untracked, &out)) {
-		if (save_untracked_files(info, &msg, &out)) {
+						     include_untracked)) {
+		if (save_untracked_files(info, &msg)) {
 			if (!quiet)
 				printf_ln("Cannot save the untracked files");
 			ret = -1;
@@ -1213,7 +1236,6 @@ static int do_create_stash(int argc, const char **argv, const char *prefix,
 done:
 	strbuf_release(&commit_tree_label);
 	strbuf_release(&msg);
-	strbuf_release(&out);
 	strbuf_release(&final_stash_msg);
 	return ret;
 }
