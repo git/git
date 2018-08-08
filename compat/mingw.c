@@ -3344,7 +3344,7 @@ static void adjust_symlink_flags(void)
 
 }
 
-static WINAPI WINBOOL handle_ctrl_c(DWORD ctrl_type)
+static BOOL WINAPI handle_ctrl_c(DWORD ctrl_type)
 {
 	if (ctrl_type != CTRL_C_EVENT)
 		return FALSE; /* we did not handle this */
