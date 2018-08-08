@@ -431,7 +431,8 @@ static int run_specific_rebase(struct rebase_options *opts)
 #define GIT_REFLOG_ACTION_ENVIRONMENT "GIT_REFLOG_ACTION"
 
 static int reset_head(struct object_id *oid, const char *action,
-		      const char *switch_to_branch, int detach_head)
+		      const char *switch_to_branch, int detach_head,
+		      const char *reflog_orig_head, const char *reflog_head)
 {
 	struct object_id head_oid;
 	struct tree_desc desc;
@@ -506,20 +507,26 @@ static int reset_head(struct object_id *oid, const char *action,
 		old_orig = &oid_old_orig;
 	if (!get_oid("HEAD", &oid_orig)) {
 		orig = &oid_orig;
-		strbuf_addstr(&msg, "updating ORIG_HEAD");
-		update_ref(msg.buf, "ORIG_HEAD", orig, old_orig, 0,
+		if (!reflog_orig_head) {
+			strbuf_addstr(&msg, "updating ORIG_HEAD");
+			reflog_orig_head = msg.buf;
+		}
+		update_ref(reflog_orig_head, "ORIG_HEAD", orig, old_orig, 0,
 			   UPDATE_REFS_MSG_ON_ERR);
 	} else if (old_orig)
 		delete_ref(NULL, "ORIG_HEAD", old_orig, 0);
-	strbuf_setlen(&msg, prefix_len);
-	strbuf_addstr(&msg, "updating HEAD");
+	if (!reflog_head) {
+		strbuf_setlen(&msg, prefix_len);
+		strbuf_addstr(&msg, "updating HEAD");
+		reflog_head = msg.buf;
+	}
 	if (!switch_to_branch)
-		ret = update_ref(msg.buf, "HEAD", oid, orig, REF_NO_DEREF,
+		ret = update_ref(reflog_head, "HEAD", oid, orig, REF_NO_DEREF,
 				 UPDATE_REFS_MSG_ON_ERR);
 	else {
 		ret = create_symref("HEAD", switch_to_branch, msg.buf);
 		if (!ret)
-			ret = update_ref(msg.buf, "HEAD", oid, NULL, 0,
+			ret = update_ref(reflog_head, "HEAD", oid, NULL, 0,
 					 UPDATE_REFS_MSG_ON_ERR);
 	}
 
@@ -900,7 +907,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		rerere_clear(&merge_rr);
 		string_list_clear(&merge_rr, 1);
 
-		if (reset_head(NULL, "reset", NULL, 0) < 0)
+		if (reset_head(NULL, "reset", NULL, 0, NULL, NULL) < 0)
 			die(_("could not discard worktree changes"));
 		if (read_basic_state(&options))
 			exit(1);
@@ -916,7 +923,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		if (read_basic_state(&options))
 			exit(1);
 		if (reset_head(&options.orig_head, "reset",
-			       options.head_name, 0) < 0)
+			       options.head_name, 0, NULL, NULL) < 0)
 			die(_("could not move back to %s"),
 			    oid_to_hex(&options.orig_head));
 		ret = finish_rebase(&options);
@@ -1236,7 +1243,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			write_file(autostash, "%s", buf.buf);
 			printf(_("Created autostash: %s\n"), buf.buf);
 			if (reset_head(&head->object.oid, "reset --hard",
-				       NULL, 0) < 0)
+				       NULL, 0, NULL, NULL) < 0)
 				die(_("could not reset --hard"));
 			printf(_("HEAD is now at %s"),
 			       find_unique_abbrev(&head->object.oid,
@@ -1290,7 +1297,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 				strbuf_addf(&buf, "rebase: checkout %s",
 					    options.switch_to);
 				if (reset_head(&oid, "checkout",
-					       options.head_name, 0) < 0) {
+					       options.head_name, 0,
+					       NULL, NULL) < 0) {
 					ret = !!error(_("could not switch to "
 							"%s"),
 						      options.switch_to);
@@ -1355,7 +1363,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			 "it...\n"));
 
 	strbuf_addf(&msg, "rebase: checkout %s", options.onto_name);
-	if (reset_head(&options.onto->object.oid, "checkout", NULL, 1))
+	if (reset_head(&options.onto->object.oid, "checkout", NULL, 1,
+	    NULL, msg.buf))
 		die(_("Could not detach HEAD"));
 	strbuf_release(&msg);
 
