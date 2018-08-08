@@ -40,6 +40,11 @@ OPTIONS
 Note that users fetching over dumb protocols will have to fetch the
 whole new pack in order to get any contained object, no matter how many
 other objects in that pack they already have locally.
++
+Promisor packfiles are repacked separately: if there are packfiles that
+have an associated ".promisor" file, these packfiles will be repacked
+into another separate pack, and an empty ".promisor" file corresponding
+to the new separate pack will be written.
 
 -A::
 	Same as `-a`, unless `-d` is used.  Then any unreachable

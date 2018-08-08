@@ -8,6 +8,7 @@
 #include "strbuf.h"
 #include "string-list.h"
 #include "argv-array.h"
+#include "packfile.h"
 
 static int delta_base_offset = 1;
 static int pack_kept_objects = -1;
@@ -83,7 +84,7 @@ static void remove_pack_on_signal(int signo)
 
 /*
  * Adds all packs hex strings to the fname list, which do not
- * have a corresponding .keep or .promisor file. These packs are not to
+ * have a corresponding .keep file. These packs are not to
  * be kept if we are going to pack everything into one file.
  */
 static void get_non_kept_pack_filenames(struct string_list *fname_list,
@@ -111,8 +112,7 @@ static void get_non_kept_pack_filenames(struct string_list *fname_list,
 
 		fname = xmemdupz(e->d_name, len);
 
-		if (!file_exists(mkpath("%s/%s.keep", packdir, fname)) &&
-		    !file_exists(mkpath("%s/%s.promisor", packdir, fname)))
+		if (!file_exists(mkpath("%s/%s.keep", packdir, fname)))
 			string_list_append_nodup(fname_list, fname);
 		else
 			free(fname);
@@ -122,7 +122,7 @@ static void get_non_kept_pack_filenames(struct string_list *fname_list,
 
 static void remove_redundant_pack(const char *dir_name, const char *base_name)
 {
-	const char *exts[] = {".pack", ".idx", ".keep", ".bitmap"};
+	const char *exts[] = {".pack", ".idx", ".keep", ".bitmap", ".promisor"};
 	int i;
 	struct strbuf buf = STRBUF_INIT;
 	size_t plen;
@@ -179,6 +179,76 @@ static void prepare_pack_objects(struct child_process *cmd,
 	cmd->out = -1;
 }
 
+/*
+ * Write oid to the given struct child_process's stdin, starting it first if
+ * necessary.
+ */
+static int write_oid(const struct object_id *oid, struct packed_git *pack,
+		     uint32_t pos, void *data)
+{
+	struct child_process *cmd = data;
+
+	if (cmd->in == -1) {
+		if (start_command(cmd))
+			die("Could not start pack-objects to repack promisor objects");
+	}
+
+	xwrite(cmd->in, oid_to_hex(oid), GIT_SHA1_HEXSZ);
+	xwrite(cmd->in, "\n", 1);
+	return 0;
+}
+
+static void repack_promisor_objects(const struct pack_objects_args *args,
+				    struct string_list *names)
+{
+	struct child_process cmd = CHILD_PROCESS_INIT;
+	FILE *out;
+	struct strbuf line = STRBUF_INIT;
+
+	prepare_pack_objects(&cmd, args);
+	cmd.in = -1;
+
+	/*
+	 * NEEDSWORK: Giving pack-objects only the OIDs without any ordering
+	 * hints may result in suboptimal deltas in the resulting pack. See if
+	 * the OIDs can be sent with fake paths such that pack-objects can use a
+	 * {type -> existing pack order} ordering when computing deltas instead
+	 * of a {type -> size} ordering, which may produce better deltas.
+	 */
+	for_each_packed_object(write_oid, &cmd,
+			       FOR_EACH_OBJECT_PROMISOR_ONLY);
+
+	if (cmd.in == -1)
+		/* No packed objects; cmd was never started */
+		return;
+
+	close(cmd.in);
+
+	out = xfdopen(cmd.out, "r");
+	while (strbuf_getline_lf(&line, out) != EOF) {
+		char *promisor_name;
+		int fd;
+		if (line.len != 40)
+			die("repack: Expecting 40 character sha1 lines only from pack-objects.");
+		string_list_append(names, line.buf);
+
+		/*
+		 * pack-objects creates the .pack and .idx files, but not the
+		 * .promisor file. Create the .promisor file, which is empty.
+		 */
+		promisor_name = mkpathdup("%s-%s.promisor", packtmp,
+					  line.buf);
+		fd = open(promisor_name, O_CREAT|O_EXCL|O_WRONLY, 0600);
+		if (fd < 0)
+			die_errno("unable to create '%s'", promisor_name);
+		close(fd);
+		free(promisor_name);
+	}
+	fclose(out);
+	if (finish_command(&cmd))
+		die("Could not finish pack-objects to repack promisor objects");
+}
+
 #define ALL_INTO_ONE 1
 #define LOOSEN_UNREACHABLE 2
 
@@ -191,6 +261,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		{".pack"},
 		{".idx"},
 		{".bitmap", 1},
+		{".promisor", 1},
 	};
 	struct child_process cmd = CHILD_PROCESS_INIT;
 	struct string_list_item *item;
@@ -292,6 +363,8 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 
 	if (pack_everything & ALL_INTO_ONE) {
 		get_non_kept_pack_filenames(&existing_packs, &keep_pack_list);
+
+		repack_promisor_objects(&po_args, &names);
 
 		if (existing_packs.nr && delete_redundant) {
 			if (unpack_unreachable) {
@@ -439,6 +512,8 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	}
 
 	/* End of pack replacement. */
+
+	reprepare_packed_git(the_repository);
 
 	if (delete_redundant) {
 		int opts = 0;

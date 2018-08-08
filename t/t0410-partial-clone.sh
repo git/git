@@ -271,28 +271,91 @@ test_expect_success 'rev-list accepts missing and promised objects on command li
 	git -C repo rev-list --exclude-promisor-objects --objects "$COMMIT" "$TREE" "$BLOB"
 '
 
-test_expect_success 'gc does not repack promisor objects' '
+test_expect_success 'gc repacks promisor objects separately from non-promisor objects' '
 	rm -rf repo &&
 	test_create_repo repo &&
-	test_commit -C repo my_commit &&
+	test_commit -C repo one &&
+	test_commit -C repo two &&
 
-	TREE_HASH=$(git -C repo rev-parse HEAD^{tree}) &&
-	HASH=$(printf "$TREE_HASH\n" | pack_as_from_promisor) &&
+	TREE_ONE=$(git -C repo rev-parse one^{tree}) &&
+	printf "$TREE_ONE\n" | pack_as_from_promisor &&
+	TREE_TWO=$(git -C repo rev-parse two^{tree}) &&
+	printf "$TREE_TWO\n" | pack_as_from_promisor &&
 
 	git -C repo config core.repositoryformatversion 1 &&
 	git -C repo config extensions.partialclone "arbitrary string" &&
 	git -C repo gc &&
 
-	# Ensure that the promisor packfile still exists, and remove it
-	test -e repo/.git/objects/pack/pack-$HASH.pack &&
-	rm repo/.git/objects/pack/pack-$HASH.* &&
+	# Ensure that exactly one promisor packfile exists, and that it
+	# contains the trees but not the commits
+	ls repo/.git/objects/pack/pack-*.promisor >promisorlist &&
+	test_line_count = 1 promisorlist &&
+	PROMISOR_PACKFILE=$(sed "s/.promisor/.pack/" <promisorlist) &&
+	git verify-pack $PROMISOR_PACKFILE -v >out &&
+	grep "$TREE_ONE" out &&
+	grep "$TREE_TWO" out &&
+	! grep "$(git -C repo rev-parse one)" out &&
+	! grep "$(git -C repo rev-parse two)" out &&
 
-	# Ensure that the single other pack contains the commit, but not the tree
+	# Remove the promisor packfile and associated files
+	rm $(sed "s/.promisor//" <promisorlist).* &&
+
+	# Ensure that the single other pack contains the commits, but not the
+	# trees
 	ls repo/.git/objects/pack/pack-*.pack >packlist &&
 	test_line_count = 1 packlist &&
 	git verify-pack repo/.git/objects/pack/pack-*.pack -v >out &&
-	grep "$(git -C repo rev-parse HEAD)" out &&
-	! grep "$TREE_HASH" out
+	grep "$(git -C repo rev-parse one)" out &&
+	grep "$(git -C repo rev-parse two)" out &&
+	! grep "$TREE_ONE" out &&
+	! grep "$TREE_TWO" out
+'
+
+test_expect_success 'gc does not repack promisor objects if there are none' '
+	rm -rf repo &&
+	test_create_repo repo &&
+	test_commit -C repo one &&
+
+	git -C repo config core.repositoryformatversion 1 &&
+	git -C repo config extensions.partialclone "arbitrary string" &&
+	git -C repo gc &&
+
+	# Ensure that only one pack exists
+	ls repo/.git/objects/pack/pack-*.pack >packlist &&
+	test_line_count = 1 packlist
+'
+
+repack_and_check () {
+	rm -rf repo2 &&
+	cp -r repo repo2 &&
+	git -C repo2 repack $1 -d &&
+	git -C repo2 fsck &&
+
+	git -C repo2 cat-file -e $2 &&
+	git -C repo2 cat-file -e $3
+}
+
+test_expect_success 'repack -d does not irreversibly delete promisor objects' '
+	rm -rf repo &&
+	test_create_repo repo &&
+	git -C repo config core.repositoryformatversion 1 &&
+	git -C repo config extensions.partialclone "arbitrary string" &&
+
+	git -C repo commit --allow-empty -m one &&
+	git -C repo commit --allow-empty -m two &&
+	git -C repo commit --allow-empty -m three &&
+	git -C repo commit --allow-empty -m four &&
+	ONE=$(git -C repo rev-parse HEAD^^^) &&
+	TWO=$(git -C repo rev-parse HEAD^^) &&
+	THREE=$(git -C repo rev-parse HEAD^) &&
+
+	printf "$TWO\n" | pack_as_from_promisor &&
+	printf "$THREE\n" | pack_as_from_promisor &&
+	delete_object repo "$ONE" &&
+
+	repack_and_check -a "$TWO" "$THREE" &&
+	repack_and_check -A "$TWO" "$THREE" &&
+	repack_and_check -l "$TWO" "$THREE"
 '
 
 test_expect_success 'gc stops traversal when a missing but promised object is reached' '
