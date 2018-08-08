@@ -577,6 +577,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		usage_with_options(builtin_rebase_usage,
 				   builtin_rebase_options);
 
+	if (action != NO_ACTION && !in_progress)
+		die(_("No rebase in progress?"));
+
 	if (action == ACTION_EDIT_TODO && !is_interactive(&options))
 		die(_("The --edit-todo action can only be used during "
 		      "interactive rebase."));
