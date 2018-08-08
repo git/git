@@ -117,6 +117,9 @@ show [<options>] [<stash>]::
 	You can use stash.showStat and/or stash.showPatch config variables
 	to change the default behavior.
 
+	It accepts any option known to `git diff`, but acts different on
+	`--quiet` option and exit with zero regardless of differences.
+
 pop [--index] [-q|--quiet] [<stash>]::
 
 	Remove a single stashed state from the stash list and apply it
