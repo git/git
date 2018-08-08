@@ -984,21 +984,18 @@ done:
 static int stash_working_tree(struct stash_info *info, const char **argv)
 {
 	int ret = 0;
-	struct child_process cp0 = CHILD_PROCESS_INIT;
 	struct child_process cp1 = CHILD_PROCESS_INIT;
 	struct child_process cp2 = CHILD_PROCESS_INIT;
 	struct child_process cp3 = CHILD_PROCESS_INIT;
 	struct strbuf out1 = STRBUF_INIT;
 	struct strbuf out3 = STRBUF_INIT;
 
-	cp0.git_cmd = 1;
-	argv_array_push(&cp0.args, "read-tree");
-	argv_array_pushf(&cp0.args, "--index-output=%s", stash_index_path.buf);
-	argv_array_pushl(&cp0.args, "-m", oid_to_hex(&info->i_tree), NULL);
-	if (run_command(&cp0)) {
+	set_alternate_index_output(stash_index_path.buf);
+	if (reset_tree(&info->i_tree, 0, 0)) {
 		ret = -1;
 		goto done;
 	}
+	set_alternate_index_output(".git/index");
 
 	cp1.git_cmd = 1;
 	argv_array_pushl(&cp1.args, "diff-index", "--name-only", "-z",
