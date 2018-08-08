@@ -622,6 +622,36 @@ static int parse_opt_interactive(const struct option *opt, const char *arg,
 	return 0;
 }
 
+static void NORETURN error_on_missing_default_upstream(void)
+{
+	struct branch *current_branch = branch_get(NULL);
+
+	printf(_("%s\n"
+		 "Please specify which branch you want to rebase against.\n"
+		 "See git-rebase(1) for details.\n"
+		 "\n"
+		 "    git rebase '<branch>'\n"
+		 "\n"),
+		current_branch ? _("There is no tracking information for "
+			"the current branch.") :
+			_("You are not currently on a branch."));
+
+	if (current_branch) {
+		const char *remote = current_branch->remote_name;
+
+		if (!remote)
+			remote = _("<remote>");
+
+		printf(_("If you wish to set tracking information for this "
+			 "branch you can do so with:\n"
+			 "\n"
+			 "    git branch --set-upstream-to=%s/<branch> %s\n"
+			 "\n"),
+		       remote, current_branch->name);
+	}
+	exit(1);
+}
+
 int cmd_rebase(int argc, const char **argv, const char *prefix)
 {
 	struct rebase_options options = {
@@ -1057,9 +1087,17 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	}
 
 	if (!options.root) {
-		if (argc < 1)
-			die("TODO: handle @{upstream}");
-		else {
+		if (argc < 1) {
+			struct branch *branch;
+
+			branch = branch_get(NULL);
+			options.upstream_name = branch_get_upstream(branch,
+								    NULL);
+			if (!options.upstream_name)
+				error_on_missing_default_upstream();
+			if (fork_point < 0)
+				fork_point = 1;
+		} else {
 			options.upstream_name = argv[0];
 			argc--;
 			argv++;
