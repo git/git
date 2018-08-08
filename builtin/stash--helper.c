@@ -13,6 +13,7 @@
 
 static const char * const git_stash_helper_usage[] = {
 	N_("git stash--helper list [<options>]"),
+	N_("git stash--helper show [<stash>]"),
 	N_("git stash--helper drop [-q|--quiet] [<stash>]"),
 	N_("git stash--helper ( pop | apply ) [--index] [-q|--quiet] [<stash>]"),
 	N_("git stash--helper branch <branchname> [<stash>]"),
@@ -22,6 +23,11 @@ static const char * const git_stash_helper_usage[] = {
 
 static const char * const git_stash_helper_list_usage[] = {
 	N_("git stash--helper list [<options>]"),
+	NULL
+};
+
+static const char * const git_stash_helper_show_usage[] = {
+	N_("git stash--helper show [<stash>]"),
 	NULL
 };
 
@@ -638,6 +644,76 @@ static int list_stash(int argc, const char **argv, const char *prefix)
 	return run_command(&cp);
 }
 
+static int show_stat = 1;
+static int show_patch;
+
+static int git_stash_config(const char *var, const char *value, void *cb)
+{
+	if (!strcmp(var, "stash.showStat")) {
+		show_stat = git_config_bool(var, value);
+		return 0;
+	}
+	if (!strcmp(var, "stash.showPatch")) {
+		show_patch = git_config_bool(var, value);
+		return 0;
+	}
+	return git_default_config(var, value, cb);
+}
+
+static int show_stash(int argc, const char **argv, const char *prefix)
+{
+	int i, ret = 0;
+	struct child_process cp = CHILD_PROCESS_INIT;
+	struct argv_array args_refs = ARGV_ARRAY_INIT;
+	struct stash_info info;
+	struct option options[] = {
+		OPT_END()
+	};
+
+	argc = parse_options(argc, argv, prefix, options,
+			     git_stash_helper_show_usage,
+			     PARSE_OPT_KEEP_UNKNOWN);
+
+	cp.git_cmd = 1;
+	argv_array_push(&cp.args, "diff");
+
+	/* Push arguments which are not options into args_refs. */
+	for (i = 0; i < argc; ++i) {
+		if (argv[i][0] == '-')
+			argv_array_push(&cp.args, argv[i]);
+		else
+			argv_array_push(&args_refs, argv[i]);
+	}
+
+	if (get_stash_info(&info, args_refs.argc, args_refs.argv)) {
+		child_process_clear(&cp);
+		argv_array_clear(&args_refs);
+		return -1;
+	}
+
+	/*
+	 * The config settings are applied only if there are not passed
+	 * any flags.
+	 */
+	if (cp.args.argc == 1) {
+		git_config(git_stash_config, NULL);
+		if (show_stat)
+			argv_array_push(&cp.args, "--stat");
+
+		if (show_patch)
+			argv_array_push(&cp.args, "-p");
+	}
+
+	argv_array_pushl(&cp.args, oid_to_hex(&info.b_commit),
+			 oid_to_hex(&info.w_commit), NULL);
+
+	ret = run_command(&cp);
+
+	free_stash_info(&info);
+	argv_array_clear(&args_refs);
+	return ret;
+}
+
 int cmd_stash__helper(int argc, const char **argv, const char *prefix)
 {
 	pid_t pid = getpid();
@@ -670,6 +746,8 @@ int cmd_stash__helper(int argc, const char **argv, const char *prefix)
 		return !!branch_stash(argc, argv, prefix);
 	else if (!strcmp(argv[0], "list"))
 		return !!list_stash(argc, argv, prefix);
+	else if (!strcmp(argv[0], "show"))
+		return !!show_stash(argc, argv, prefix);
 
 	usage_msg_opt(xstrfmt(_("unknown subcommand: %s"), argv[0]),
 		      git_stash_helper_usage, options);
