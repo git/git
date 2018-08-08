@@ -10,6 +10,8 @@
 #include "run-command.h"
 #include "dir.h"
 #include "rerere.h"
+#include "revision.h"
+#include "log-tree.h"
 
 static const char * const git_stash_helper_usage[] = {
 	N_("git stash--helper list [<options>]"),
@@ -662,56 +664,71 @@ static int git_stash_config(const char *var, const char *value, void *cb)
 
 static int show_stash(int argc, const char **argv, const char *prefix)
 {
-	int i, ret = 0;
-	struct child_process cp = CHILD_PROCESS_INIT;
-	struct argv_array args_refs = ARGV_ARRAY_INIT;
+	int i;
+	int flags = 0;
 	struct stash_info info;
+	struct rev_info rev;
+	struct argv_array stash_args = ARGV_ARRAY_INIT;
 	struct option options[] = {
 		OPT_END()
 	};
 
-	argc = parse_options(argc, argv, prefix, options,
-			     git_stash_helper_show_usage,
-			     PARSE_OPT_KEEP_UNKNOWN);
+	init_diff_ui_defaults();
+	git_config(git_diff_ui_config, NULL);
 
-	cp.git_cmd = 1;
-	argv_array_push(&cp.args, "diff");
+	init_revisions(&rev, prefix);
 
-	/* Push arguments which are not options into args_refs. */
-	for (i = 0; i < argc; ++i) {
-		if (argv[i][0] == '-')
-			argv_array_push(&cp.args, argv[i]);
+	/* Push arguments which are not options into stash_args. */
+	for (i = 1; i < argc; ++i) {
+		if (argv[i][0] != '-')
+			argv_array_push(&stash_args, argv[i]);
 		else
-			argv_array_push(&args_refs, argv[i]);
-	}
-
-	if (get_stash_info(&info, args_refs.argc, args_refs.argv)) {
-		child_process_clear(&cp);
-		argv_array_clear(&args_refs);
-		return -1;
+			flags++;
 	}
 
 	/*
 	 * The config settings are applied only if there are not passed
 	 * any flags.
 	 */
-	if (cp.args.argc == 1) {
+	if (!flags) {
 		git_config(git_stash_config, NULL);
 		if (show_stat)
-			argv_array_push(&cp.args, "--stat");
-
-		if (show_patch)
-			argv_array_push(&cp.args, "-p");
+			rev.diffopt.output_format |= DIFF_FORMAT_DIFFSTAT;
+		if (show_patch) {
+			rev.diffopt.output_format = ~DIFF_FORMAT_NO_OUTPUT;
+			rev.diffopt.output_format |= DIFF_FORMAT_PATCH;
+		}
 	}
 
-	argv_array_pushl(&cp.args, oid_to_hex(&info.b_commit),
-			 oid_to_hex(&info.w_commit), NULL);
+	if (get_stash_info(&info, stash_args.argc, stash_args.argv)) {
+		argv_array_clear(&stash_args);
+		return -1;
+	}
 
-	ret = run_command(&cp);
+	argc = setup_revisions(argc, argv, &rev, NULL);
+	if (!rev.diffopt.output_format)
+		rev.diffopt.output_format = DIFF_FORMAT_PATCH;
+	diff_setup_done(&rev.diffopt);
+	rev.diffopt.flags.recursive = 1;
+	setup_diff_pager(&rev.diffopt);
+
+	/*
+	 * We can return early if there was any option not recognised by
+	 * `diff_opt_parse()`, besides the word `stash`.
+	 */
+	if (argc > 1) {
+		free_stash_info(&info);
+		argv_array_clear(&stash_args);
+		usage_with_options(git_stash_helper_show_usage, options);
+	}
+
+	/* Do the diff thing. */
+	diff_tree_oid(&info.b_commit, &info.w_commit, "", &rev.diffopt);
+	log_tree_diff_flush(&rev);
 
 	free_stash_info(&info);
-	argv_array_clear(&args_refs);
-	return ret;
+	argv_array_clear(&stash_args);
+	return 0;
 }
 
 int cmd_stash__helper(int argc, const char **argv, const char *prefix)
