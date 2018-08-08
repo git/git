@@ -1079,7 +1079,7 @@ done:
 
 static int do_create_stash(int argc, const char **argv, const char *prefix,
 			   const char **stash_msg, int include_untracked,
-			   int patch_mode, struct stash_info *info)
+			   int patch_mode, struct stash_info *info, int quiet)
 {
 	int untracked_commit_option = 0;
 	int ret = 0;
@@ -1105,7 +1105,8 @@ static int do_create_stash(int argc, const char **argv, const char *prefix,
 	}
 
 	if (get_oid("HEAD", &info->b_commit)) {
-		fprintf_ln(stderr, "You do not have the initial commit yet");
+		if (!quiet)
+			fprintf_ln(stderr, "You do not have the initial commit yet");
 		ret = -1;
 		goto done;
 	} else {
@@ -1127,7 +1128,8 @@ static int do_create_stash(int argc, const char **argv, const char *prefix,
 	if (write_cache_as_tree(&info->i_tree, 0, NULL) ||
 	    commit_tree(commit_tree_label.buf, commit_tree_label.len,
 			&info->i_tree, parents, &info->i_commit, NULL, NULL)) {
-		fprintf_ln(stderr, "Cannot save the current index state");
+		if (!quiet)
+			fprintf_ln(stderr, "Cannot save the current index state");
 		ret = -1;
 		goto done;
 	}
@@ -1135,7 +1137,8 @@ static int do_create_stash(int argc, const char **argv, const char *prefix,
 	if (include_untracked && get_untracked_files(argv, 1,
 						     include_untracked, &out)) {
 		if (save_untracked_files(info, &msg, &out)) {
-			printf_ln("Cannot save the untracked files");
+			if (!quiet)
+				printf_ln("Cannot save the untracked files");
 			ret = -1;
 			goto done;
 		}
@@ -1144,14 +1147,16 @@ static int do_create_stash(int argc, const char **argv, const char *prefix,
 	if (patch_mode) {
 		ret = stash_patch(info, argv);
 		if (ret < 0) {
-			printf_ln("Cannot save the current worktree state");
+			if (!quiet)
+				printf_ln("Cannot save the current worktree state");
 			goto done;
 		} else if (ret > 0) {
 			goto done;
 		}
 	} else {
 		if (stash_working_tree(info, argv, prefix)) {
-			printf_ln("Cannot save the current worktree state");
+			if (!quiet)
+				printf_ln("Cannot save the current worktree state");
 			ret = -1;
 			goto done;
 		}
@@ -1176,7 +1181,8 @@ static int do_create_stash(int argc, const char **argv, const char *prefix,
 
 	if (commit_tree(*stash_msg, strlen(*stash_msg), &info->w_tree,
 			parents, &info->w_commit, NULL, NULL)) {
-		printf_ln("Cannot record working tree state");
+		if (!quiet)
+			printf_ln("Cannot record working tree state");
 		ret = -1;
 		goto done;
 	}
@@ -1208,7 +1214,7 @@ static int create_stash(int argc, const char **argv, const char *prefix)
 			     0);
 
 	ret = do_create_stash(argc, argv, prefix, &stash_msg,
-			      include_untracked, 0, &info);
+			      include_untracked, 0, &info, 0);
 
 	if (!ret)
 		printf_ln("%s", oid_to_hex(&info.w_commit));
@@ -1261,25 +1267,31 @@ static int do_push_stash(int argc, const char **argv, const char *prefix,
 		return -1;
 
 	if (!check_changes(argv, include_untracked, prefix)) {
-		fprintf_ln(stdout, "No local changes to save");
+		if (!quiet)
+			fprintf_ln(stdout, "No local changes to save");
 		return 0;
 	}
 
 	if (!reflog_exists(ref_stash) && do_clear_stash()) {
-		fprintf_ln(stderr, "Cannot initialize stash");
+		if (!quiet)
+			fprintf_ln(stderr, "Cannot initialize stash");
 		return -1;
 	}
 
 	if ((ret = do_create_stash(argc, argv, prefix, &stash_msg,
-				   include_untracked, patch_mode, &info)))
+				   include_untracked, patch_mode, &info,
+				   quiet)))
 		return ret;
 
 	if (do_store_stash(oid_to_hex(&info.w_commit), stash_msg, 1)) {
-		fprintf(stderr, "Cannot save the current status");
+		if (!quiet)
+			fprintf_ln(stderr, "Cannot save the current status");
 		return -1;
 	}
 
-	fprintf(stdout, "Saved working directory and index state %s", stash_msg);
+	if (!quiet)
+		fprintf(stdout, "Saved working directory and index state %s",
+			stash_msg);
 
 	if (!patch_mode) {
 		if (include_untracked && ps.nr == 0) {
@@ -1367,7 +1379,8 @@ static int do_push_stash(int argc, const char **argv, const char *prefix,
 		argv_array_pushl(&cp.args, "apply", "-R", NULL);
 
 		if (pipe_command(&cp, patch.buf, patch.len, NULL, 0, NULL, 0)) {
-			fprintf_ln(stderr, "Cannot remove worktree changes");
+			if (!quiet)
+				fprintf_ln(stderr, "Cannot remove worktree changes");
 			return -1;
 		}
 
