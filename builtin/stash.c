@@ -13,6 +13,7 @@
 #include "revision.h"
 #include "log-tree.h"
 #include "diffcore.h"
+#include "apply.h"
 
 static const char * const git_stash_usage[] = {
 	N_("git stash list [<options>]"),
@@ -277,10 +278,6 @@ static int diff_tree_binary(struct strbuf *out, struct object_id *w_commit)
 	struct child_process cp = CHILD_PROCESS_INIT;
 	const char *w_commit_hex = oid_to_hex(w_commit);
 
-	/*
-	 * Diff-tree would not be very hard to replace with a native function,
-	 * however it should be done together with apply_cached.
-	 */
 	cp.git_cmd = 1;
 	argv_array_pushl(&cp.args, "diff-tree", "--binary", NULL);
 	argv_array_pushf(&cp.args, "%s^2^..%s^2", w_commit_hex, w_commit_hex);
@@ -288,18 +285,36 @@ static int diff_tree_binary(struct strbuf *out, struct object_id *w_commit)
 	return pipe_command(&cp, NULL, 0, out, 0, NULL, 0);
 }
 
-static int apply_cached(struct strbuf *out)
+static int apply_patch_from_buf(struct strbuf *patch, int cached, int reverse,
+				int check_index)
 {
-	struct child_process cp = CHILD_PROCESS_INIT;
+	int ret = 0;
+	struct apply_state state;
+	struct argv_array args = ARGV_ARRAY_INIT;
+	const char *patch_path = ".git/stash_patch.patch";
+	FILE *patch_file;
 
-	/*
-	 * Apply currently only reads either from stdin or a file, thus
-	 * apply_all_patches would have to be updated to optionally take a
-	 * buffer.
-	 */
-	cp.git_cmd = 1;
-	argv_array_pushl(&cp.args, "apply", "--cached", NULL);
-	return pipe_command(&cp, out->buf, out->len, NULL, 0, NULL, 0);
+	if (init_apply_state(&state, NULL))
+		return -1;
+
+	state.cached = cached;
+	state.apply_in_reverse = reverse;
+	state.check_index = check_index;
+	if (state.cached)
+		state.check_index = 1;
+	if (state.check_index)
+		state.unsafe_paths = 0;
+
+	patch_file = fopen(patch_path, "w");
+	strbuf_write(patch, patch_file);
+	fclose(patch_file);
+
+	argv_array_push(&args, patch_path);
+	ret = apply_all_patches(&state, args.argc, args.argv, 0);
+
+	remove_path(patch_path);
+	clear_apply_state(&state);
+	return ret;
 }
 
 static int reset_head(const char *prefix)
@@ -418,7 +433,7 @@ static int do_apply_stash(const char *prefix, struct stash_info *info,
 				return -1;
 			}
 
-			ret = apply_cached(&out);
+			ret = apply_patch_from_buf(&out, 1, 0, 0);
 			strbuf_release(&out);
 			if (ret)
 				return -1;
@@ -1341,7 +1356,6 @@ static int do_push_stash(int argc, const char **argv, const char *prefix,
 			int i;
 			struct child_process cp1 = CHILD_PROCESS_INIT;
 			struct child_process cp2 = CHILD_PROCESS_INIT;
-			struct child_process cp3 = CHILD_PROCESS_INIT;
 			struct strbuf out = STRBUF_INIT;
 
 			cp1.git_cmd = 1;
@@ -1365,11 +1379,9 @@ static int do_push_stash(int argc, const char **argv, const char *prefix,
 			if (pipe_command(&cp2, NULL, 0, &out, 0, NULL, 0))
 				return -1;
 
-			cp3.git_cmd = 1;
-			argv_array_pushl(&cp3.args, "apply", "--index", "-R",
-					 NULL);
-			if (pipe_command(&cp3, out.buf, out.len, NULL, 0, NULL,
-					 0))
+			discard_cache();
+			read_cache();
+			if (apply_patch_from_buf(&out, 0, 1, 1))
 				return -1;
 		} else {
 			struct child_process cp = CHILD_PROCESS_INIT;
@@ -1405,12 +1417,7 @@ static int do_push_stash(int argc, const char **argv, const char *prefix,
 				return -1;
 		}
 	} else {
-		struct child_process cp = CHILD_PROCESS_INIT;
-
-		cp.git_cmd = 1;
-		argv_array_pushl(&cp.args, "apply", "-R", NULL);
-
-		if (pipe_command(&cp, patch.buf, patch.len, NULL, 0, NULL, 0)) {
+		if (apply_patch_from_buf(&patch, 0, 1, 0)) {
 			if (!quiet)
 				fprintf_ln(stderr, "Cannot remove worktree changes");
 			return -1;
