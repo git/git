@@ -470,6 +470,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		NO_ACTION,
 		ACTION_CONTINUE,
 		ACTION_SKIP,
+		ACTION_ABORT,
 	} action = NO_ACTION;
 	struct option builtin_rebase_options[] = {
 		OPT_STRING(0, "onto", &options.onto_name,
@@ -496,6 +497,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			    ACTION_CONTINUE),
 		OPT_CMDMODE(0, "skip", &action,
 			    N_("skip current patch and continue"), ACTION_SKIP),
+		OPT_CMDMODE(0, "abort", &action,
+			    N_("abort and check out the original branch"),
+			    ACTION_ABORT),
 		OPT_END(),
 	};
 
@@ -607,6 +611,22 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		if (read_basic_state(&options))
 			exit(1);
 		goto run_rebase;
+	}
+	case ACTION_ABORT: {
+		struct string_list merge_rr = STRING_LIST_INIT_DUP;
+		options.action = "abort";
+
+		rerere_clear(&merge_rr);
+		string_list_clear(&merge_rr, 1);
+
+		if (read_basic_state(&options))
+			exit(1);
+		if (reset_head(&options.orig_head, "reset",
+			       options.head_name, 0) < 0)
+			die(_("could not move back to %s"),
+			    oid_to_hex(&options.orig_head));
+		ret = finish_rebase(&options);
+		goto cleanup;
 	}
 	default:
 		die("TODO");
