@@ -12,6 +12,7 @@
 #include "rerere.h"
 #include "revision.h"
 #include "log-tree.h"
+#include "diffcore.h"
 
 static const char * const git_stash_helper_usage[] = {
 	N_("git stash--helper list [<options>]"),
@@ -295,6 +296,18 @@ static int reset_head(const char *prefix)
 	argv_array_push(&cp.args, "reset");
 
 	return run_command(&cp);
+}
+
+static void add_diff_to_buf(struct diff_queue_struct *q,
+			    struct diff_options *options,
+			    void *data)
+{
+	int i;
+	for (i = 0; i < q->nr; i++) {
+		struct diff_filepair *p = q->queue[i];
+		strbuf_addstr(data, p->one->path);
+		strbuf_addch(data, '\n');
+	}
 }
 
 static int get_newly_staged(struct strbuf *out, struct object_id *c_tree)
@@ -981,14 +994,16 @@ done:
 	return ret;
 }
 
-static int stash_working_tree(struct stash_info *info, const char **argv)
+static int stash_working_tree(struct stash_info *info,
+			      const char **argv, const char *prefix)
 {
 	int ret = 0;
-	struct child_process cp1 = CHILD_PROCESS_INIT;
 	struct child_process cp2 = CHILD_PROCESS_INIT;
 	struct child_process cp3 = CHILD_PROCESS_INIT;
-	struct strbuf out1 = STRBUF_INIT;
 	struct strbuf out3 = STRBUF_INIT;
+	struct argv_array args = ARGV_ARRAY_INIT;
+	struct strbuf diff_output = STRBUF_INIT;
+	struct rev_info rev;
 
 	set_alternate_index_output(stash_index_path.buf);
 	if (reset_tree(&info->i_tree, 0, 0)) {
@@ -997,26 +1012,36 @@ static int stash_working_tree(struct stash_info *info, const char **argv)
 	}
 	set_alternate_index_output(".git/index");
 
-	cp1.git_cmd = 1;
-	argv_array_pushl(&cp1.args, "diff-index", "--name-only", "-z",
-			"HEAD", "--", NULL);
+	argv_array_push(&args, "dummy");
 	if (argv)
-		argv_array_pushv(&cp1.args, argv);
-	argv_array_pushf(&cp1.env_array, "GIT_INDEX_FILE=%s",
-			 stash_index_path.buf);
+		argv_array_pushv(&args, argv);
+	git_config(git_diff_basic_config, NULL);
+	init_revisions(&rev, prefix);
+	args.argc = setup_revisions(args.argc, args.argv, &rev, NULL);
 
-	if (pipe_command(&cp1, NULL, 0, &out1, 0, NULL, 0)) {
+	rev.diffopt.output_format |= DIFF_FORMAT_CALLBACK;
+	rev.diffopt.format_callback = add_diff_to_buf;
+	rev.diffopt.format_callback_data = &diff_output;
+
+	if (read_cache_preload(&rev.diffopt.pathspec) < 0) {
+		ret = -1;
+		goto done;
+	}
+
+	add_pending_object(&rev, parse_object(the_repository, &info->b_commit), "");
+	if (run_diff_index(&rev, 0)) {
 		ret = -1;
 		goto done;
 	}
 
 	cp2.git_cmd = 1;
-	argv_array_pushl(&cp2.args, "update-index", "-z", "--add",
+	argv_array_pushl(&cp2.args, "update-index", "--add",
 			 "--remove", "--stdin", NULL);
 	argv_array_pushf(&cp2.env_array, "GIT_INDEX_FILE=%s",
 			 stash_index_path.buf);
 
-	if (pipe_command(&cp2, out1.buf, out1.len, NULL, 0, NULL, 0)) {
+	if (pipe_command(&cp2, diff_output.buf, diff_output.len,
+			 NULL, 0, NULL, 0)) {
 		ret = -1;
 		goto done;
 	}
@@ -1033,8 +1058,11 @@ static int stash_working_tree(struct stash_info *info, const char **argv)
 	get_oid_hex(out3.buf, &info->w_tree);
 
 done:
-	strbuf_release(&out1);
+	UNLEAK(rev);
 	strbuf_release(&out3);
+	argv_array_clear(&args);
+	object_array_clear(&rev.pending);
+	strbuf_release(&diff_output);
 	remove_path(stash_index_path.buf);
 	return ret;
 }
@@ -1112,7 +1140,7 @@ static int do_create_stash(int argc, const char **argv, const char *prefix,
 			goto done;
 		}
 	} else {
-		if (stash_working_tree(info, argv)) {
+		if (stash_working_tree(info, argv, prefix)) {
 			printf_ln("Cannot save the current worktree state");
 			ret = -1;
 			goto done;
