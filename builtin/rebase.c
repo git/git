@@ -472,6 +472,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		ACTION_SKIP,
 		ACTION_ABORT,
 		ACTION_QUIT,
+		ACTION_EDIT_TODO,
+		ACTION_SHOW_CURRENT_PATCH,
 	} action = NO_ACTION;
 	struct option builtin_rebase_options[] = {
 		OPT_STRING(0, "onto", &options.onto_name,
@@ -503,6 +505,11 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			    ACTION_ABORT),
 		OPT_CMDMODE(0, "quit", &action,
 			    N_("abort but keep HEAD where it is"), ACTION_QUIT),
+		OPT_CMDMODE(0, "edit-todo", &action, N_("edit the todo list "
+			    "during an interactive rebase"), ACTION_EDIT_TODO),
+		OPT_CMDMODE(0, "show-current-patch", &action,
+			    N_("show the patch file being applied or merged"),
+			    ACTION_SHOW_CURRENT_PATCH),
 		OPT_END(),
 	};
 
@@ -569,6 +576,10 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	if (argc > 2)
 		usage_with_options(builtin_rebase_usage,
 				   builtin_rebase_options);
+
+	if (action == ACTION_EDIT_TODO && !is_interactive(&options))
+		die(_("The --edit-todo action can only be used during "
+		      "interactive rebase."));
 
 	switch (action) {
 	case ACTION_CONTINUE: {
@@ -639,8 +650,18 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			die(_("could not remove '%s'"), options.state_dir);
 		goto cleanup;
 	}
+	case ACTION_EDIT_TODO:
+		options.action = "edit-todo";
+		options.dont_finish_rebase = 1;
+		goto run_rebase;
+	case ACTION_SHOW_CURRENT_PATCH:
+		options.action = "show-current-patch";
+		options.dont_finish_rebase = 1;
+		goto run_rebase;
+	case NO_ACTION:
+		break;
 	default:
-		die("TODO");
+		BUG("action: %d", action);
 	}
 
 	/* Make sure no rebase is in progress */
