@@ -813,27 +813,42 @@ static int store_stash(int argc, const char **argv, const char *prefix)
 /*
  * `out` will be filled with the names of untracked files. The return value is:
  *
- * < 0 if there was a bug (any arg given outside the repo will be detected
- *     by `setup_revision()`)
  * = 0 if there are not any untracked files
  * > 0 if there are untracked files
  */
-static int get_untracked_files(const char **argv, int line_term,
+static int get_untracked_files(const char **argv, const char *prefix,
 			       int include_untracked, struct strbuf *out)
 {
-	struct child_process cp = CHILD_PROCESS_INIT;
-	cp.git_cmd = 1;
-	argv_array_pushl(&cp.args, "ls-files", "-o", NULL);
-	if (line_term)
-		argv_array_push(&cp.args, "-z");
-	if (include_untracked != 2)
-		argv_array_push(&cp.args, "--exclude-standard");
-	argv_array_push(&cp.args, "--");
-	if (argv)
-		argv_array_pushv(&cp.args, argv);
+	int max_len;
+	int i;
+	char *seen;
+	struct dir_struct dir;
+	struct pathspec pathspec;
 
-	if (pipe_command(&cp, NULL, 0, out, 0, NULL, 0))
-		return -1;
+	memset(&dir, 0, sizeof(dir));
+	if (include_untracked != 2)
+		setup_standard_excludes(&dir);
+
+	parse_pathspec(&pathspec, 0,
+		       PATHSPEC_PREFER_FULL,
+		       prefix, argv);
+	seen = xcalloc(pathspec.nr, 1);
+
+	max_len = fill_directory(&dir, the_repository->index, &pathspec);
+	for (i = 0; i < dir.nr; i++) {
+		struct dir_entry *ent = dir.entries[i];
+		if (!dir_path_match(ent, &pathspec, max_len, seen)) {
+			free(ent);
+			continue;
+		}
+		strbuf_addf(out, "%s\n", ent->name);
+		free(ent);
+	}
+
+	free(dir.entries);
+	free(dir.ignored);
+	clear_directory(&dir);
+	free(seen);
 	return out->len;
 }
 
@@ -888,7 +903,7 @@ static int check_changes(const char **argv, int include_untracked,
 		goto done;
 	}
 
-	if (include_untracked && get_untracked_files(argv, 0,
+	if (include_untracked && get_untracked_files(argv, prefix,
 						     include_untracked, &out))
 		ret = 1;
 
@@ -908,7 +923,7 @@ static int save_untracked_files(struct stash_info *info, struct strbuf *msg,
 	struct child_process cp2 = CHILD_PROCESS_INIT;
 
 	cp.git_cmd = 1;
-	argv_array_pushl(&cp.args, "update-index", "-z", "--add",
+	argv_array_pushl(&cp.args, "update-index", "--add",
 			 "--remove", "--stdin", NULL);
 	argv_array_pushf(&cp.env_array, "GIT_INDEX_FILE=%s",
 			 stash_index_path.buf);
@@ -1134,7 +1149,7 @@ static int do_create_stash(int argc, const char **argv, const char *prefix,
 		goto done;
 	}
 
-	if (include_untracked && get_untracked_files(argv, 1,
+	if (include_untracked && get_untracked_files(argv, prefix,
 						     include_untracked, &out)) {
 		if (save_untracked_files(info, &msg, &out)) {
 			if (!quiet)
