@@ -363,7 +363,7 @@ test_expect_success 'octopus merges' '
 	EOF
 '
 
-test_expect_failure 'with --autosquash and --exec' '
+test_expect_success 'with --autosquash and --exec' '
 	git checkout -b with-exec H &&
 	echo Booh >B.t &&
 	test_tick &&
