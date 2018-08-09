@@ -61,12 +61,12 @@ static GIT_PATH_FUNC(rebase_path_done, "rebase-merge/done")
  * The file to keep track of how many commands were already processed (e.g.
  * for the prompt).
  */
-static GIT_PATH_FUNC(rebase_path_msgnum, "rebase-merge/msgnum");
+static GIT_PATH_FUNC(rebase_path_msgnum, "rebase-merge/msgnum")
 /*
  * The file to keep track of how many commands are to be processed in total
  * (e.g. for the prompt).
  */
-static GIT_PATH_FUNC(rebase_path_msgtotal, "rebase-merge/end");
+static GIT_PATH_FUNC(rebase_path_msgtotal, "rebase-merge/end")
 /*
  * The commit message that is planned to be used for any changes that
  * need to be committed following a user interaction.
