@@ -149,14 +149,10 @@ extern int has_object_pack(const struct object_id *oid);
 extern int has_pack_index(const unsigned char *sha1);
 
 /*
- * Only iterate over packs obtained from the promisor remote.
- */
-#define FOR_EACH_OBJECT_PROMISOR_ONLY 2
-
-/*
  * Iterate over packed objects in both the local
  * repository and any alternates repositories (unless the
- * FOR_EACH_OBJECT_LOCAL_ONLY flag, defined in cache.h, is set).
+ * FOR_EACH_OBJECT_LOCAL_ONLY flag is set). See cache.h for the complete list
+ * of flags.
  */
 typedef int each_packed_object_fn(const struct object_id *oid,
 				  struct packed_git *pack,

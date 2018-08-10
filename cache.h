@@ -1624,11 +1624,22 @@ int for_each_loose_file_in_objdir_buf(struct strbuf *path,
 				      void *data);
 
 /*
+ * Flags for for_each_*_object(), including for_each_loose below and
+ * for_each_packed in packfile.h.
+ */
+enum for_each_object_flags {
+	/* Iterate only over local objects, not alternates. */
+	FOR_EACH_OBJECT_LOCAL_ONLY = (1<<0),
+
+	/* Only iterate over packs obtained from the promisor remote. */
+	FOR_EACH_OBJECT_PROMISOR_ONLY = (1<<1),
+};
+
+/*
  * Iterate over loose objects in both the local
  * repository and any alternates repositories (unless the
  * LOCAL_ONLY flag is set).
  */
-#define FOR_EACH_OBJECT_LOCAL_ONLY 0x1
 extern int for_each_loose_object(each_loose_object_fn, void *, unsigned flags);
 
 /*
