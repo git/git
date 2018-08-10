@@ -1633,6 +1633,11 @@ enum for_each_object_flags {
 
 	/* Only iterate over packs obtained from the promisor remote. */
 	FOR_EACH_OBJECT_PROMISOR_ONLY = (1<<1),
+
+	/*
+	 * Visit objects within a pack in packfile order rather than .idx order
+	 */
+	FOR_EACH_OBJECT_PACK_ORDER = (1<<2),
 };
 
 /*

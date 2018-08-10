@@ -730,7 +730,7 @@ void write_commit_graph(const char *obj_dir,
 				die("error adding pack %s", packname.buf);
 			if (open_pack_index(p))
 				die("error opening index for %s", packname.buf);
-			for_each_object_in_pack(p, add_packed_commits, &oids);
+			for_each_object_in_pack(p, add_packed_commits, &oids, 0);
 			close_pack(p);
 		}
 		strbuf_release(&packname);

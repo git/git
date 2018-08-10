@@ -153,8 +153,8 @@ extern int has_pack_index(const unsigned char *sha1);
  * By default, this includes both local and alternate packs.
  *
  * Note that some objects may appear twice if they are found in multiple packs.
- * Each pack is visited in an unspecified order. Objects within a pack are
- * visited in pack-idx order (i.e., sorted by oid).
+ * Each pack is visited in an unspecified order. By default, objects within a
+ * pack are visited in pack-idx order (i.e., sorted by oid).
  *
  * The list of flags can be found in cache.h.
  */
@@ -162,7 +162,9 @@ typedef int each_packed_object_fn(const struct object_id *oid,
 				  struct packed_git *pack,
 				  uint32_t pos,
 				  void *data);
-int for_each_object_in_pack(struct packed_git *p, each_packed_object_fn, void *data);
+int for_each_object_in_pack(struct packed_git *p,
+			    each_packed_object_fn, void *data,
+			    enum for_each_object_flags flags);
 int for_each_packed_object(each_packed_object_fn, void *,
 			   enum for_each_object_flags flags);
 
