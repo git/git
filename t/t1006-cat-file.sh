@@ -575,4 +575,15 @@ test_expect_success 'cat-file --batch-all-objects shows all objects' '
 	test_cmp expect actual
 '
 
+# The only user-visible difference is that the objects are no longer sorted,
+# and the resulting sort order is undefined. So we can only check that it
+# produces the same objects as the ordered case, but that at least exercises
+# the code.
+test_expect_success 'cat-file --unordered works' '
+	git -C all-two cat-file --batch-all-objects --unordered \
+				--batch-check="%(objectname)" >actual.unsorted &&
+	sort <actual.unsorted >actual &&
+	test_cmp expect actual
+'
+
 test_done

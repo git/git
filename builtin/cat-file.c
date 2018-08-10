@@ -21,6 +21,7 @@ struct batch_options {
 	int print_contents;
 	int buffer_output;
 	int all_objects;
+	int unordered;
 	int cmdmode; /* may be 'w' or 'c' for --filters or --textconv */
 	const char *format;
 };
@@ -410,6 +411,7 @@ static void batch_one_object(const char *obj_name, struct batch_options *opt,
 struct object_cb_data {
 	struct batch_options *opt;
 	struct expand_data *expand;
+	struct oidset *seen;
 };
 
 static int batch_object_cb(const struct object_id *oid, void *vdata)
@@ -435,6 +437,32 @@ static int collect_packed_object(const struct object_id *oid,
 {
 	oid_array_append(data, oid);
 	return 0;
+}
+
+static int batch_unordered_object(const struct object_id *oid, void *vdata)
+{
+	struct object_cb_data *data = vdata;
+
+	if (oidset_contains(data->seen, oid))
+		return 0;
+	oidset_insert(data->seen, oid);
+
+	return batch_object_cb(oid, data);
+}
+
+static int batch_unordered_loose(const struct object_id *oid,
+				 const char *path,
+				 void *data)
+{
+	return batch_unordered_object(oid, data);
+}
+
+static int batch_unordered_packed(const struct object_id *oid,
+				  struct packed_git *pack,
+				  uint32_t pos,
+				  void *data)
+{
+	return batch_unordered_object(oid, data);
 }
 
 static int batch_objects(struct batch_options *opt)
@@ -473,19 +501,35 @@ static int batch_objects(struct batch_options *opt)
 		data.info.typep = &data.type;
 
 	if (opt->all_objects) {
-		struct oid_array sa = OID_ARRAY_INIT;
 		struct object_cb_data cb;
 
-		for_each_loose_object(collect_loose_object, &sa, 0);
-		for_each_packed_object(collect_packed_object, &sa, 0);
 		if (repository_format_partial_clone)
 			warning("This repository has extensions.partialClone set. Some objects may not be loaded.");
 
 		cb.opt = opt;
 		cb.expand = &data;
-		oid_array_for_each_unique(&sa, batch_object_cb, &cb);
 
-		oid_array_clear(&sa);
+		if (opt->unordered) {
+			struct oidset seen = OIDSET_INIT;
+
+			cb.seen = &seen;
+
+			for_each_loose_object(batch_unordered_loose, &cb, 0);
+			for_each_packed_object(batch_unordered_packed, &cb,
+					       FOR_EACH_OBJECT_PACK_ORDER);
+
+			oidset_clear(&seen);
+		} else {
+			struct oid_array sa = OID_ARRAY_INIT;
+
+			for_each_loose_object(collect_loose_object, &sa, 0);
+			for_each_packed_object(collect_packed_object, &sa, 0);
+
+			oid_array_for_each_unique(&sa, batch_object_cb, &cb);
+
+			oid_array_clear(&sa);
+		}
+
 		return 0;
 	}
 
@@ -586,6 +630,8 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 			 N_("follow in-tree symlinks (used with --batch or --batch-check)")),
 		OPT_BOOL(0, "batch-all-objects", &batch.all_objects,
 			 N_("show all objects with --batch or --batch-check")),
+		OPT_BOOL(0, "unordered", &batch.unordered,
+			 N_("do not order --batch-all-objects output")),
 		OPT_END()
 	};
 

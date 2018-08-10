@@ -104,6 +104,16 @@ OPTIONS
 	buffering; this is much more efficient when invoking
 	`--batch-check` on a large number of objects.
 
+--unordered::
+	When `--batch-all-objects` is in use, visit objects in an
+	order which may be more efficient for accessing the object
+	contents than hash order. The exact details of the order are
+	unspecified, but if you do not require a specific order, this
+	should generally result in faster output, especially with
+	`--batch`.  Note that `cat-file` will still show each object
+	only once, even if it is stored multiple times in the
+	repository.
+
 --allow-unknown-type::
 	Allow -s or -t to query broken/corrupt objects of unknown type.
 
