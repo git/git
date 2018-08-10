@@ -149,10 +149,14 @@ extern int has_object_pack(const struct object_id *oid);
 extern int has_pack_index(const unsigned char *sha1);
 
 /*
- * Iterate over packed objects in both the local
- * repository and any alternates repositories (unless the
- * FOR_EACH_OBJECT_LOCAL_ONLY flag is set). See cache.h for the complete list
- * of flags.
+ * Iterate over all accessible packed objects without respect to reachability.
+ * By default, this includes both local and alternate packs.
+ *
+ * Note that some objects may appear twice if they are found in multiple packs.
+ * Each pack is visited in an unspecified order. Objects within a pack are
+ * visited in pack-idx order (i.e., sorted by oid).
+ *
+ * The list of flags can be found in cache.h.
  */
 typedef int each_packed_object_fn(const struct object_id *oid,
 				  struct packed_git *pack,
