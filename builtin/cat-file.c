@@ -420,18 +420,18 @@ static int batch_object_cb(const struct object_id *oid, void *vdata)
 	return 0;
 }
 
-static int batch_loose_object(const struct object_id *oid,
-			      const char *path,
-			      void *data)
+static int collect_loose_object(const struct object_id *oid,
+				const char *path,
+				void *data)
 {
 	oid_array_append(data, oid);
 	return 0;
 }
 
-static int batch_packed_object(const struct object_id *oid,
-			       struct packed_git *pack,
-			       uint32_t pos,
-			       void *data)
+static int collect_packed_object(const struct object_id *oid,
+				 struct packed_git *pack,
+				 uint32_t pos,
+				 void *data)
 {
 	oid_array_append(data, oid);
 	return 0;
@@ -476,8 +476,8 @@ static int batch_objects(struct batch_options *opt)
 		struct oid_array sa = OID_ARRAY_INIT;
 		struct object_cb_data cb;
 
-		for_each_loose_object(batch_loose_object, &sa, 0);
-		for_each_packed_object(batch_packed_object, &sa, 0);
+		for_each_loose_object(collect_loose_object, &sa, 0);
+		for_each_packed_object(collect_packed_object, &sa, 0);
 		if (repository_format_partial_clone)
 			warning("This repository has extensions.partialClone set. Some objects may not be loaded.");
 
