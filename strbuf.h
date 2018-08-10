@@ -585,6 +585,8 @@ void strbuf_add_unique_abbrev(struct strbuf *sb,
 int launch_editor(const char *path,
 		  struct strbuf *buffer,
 		  const char *const *env);
+extern int launch_sequence_editor(const char *path, struct strbuf *buffer,
+				  const char *const *env);
 
 void strbuf_add_lines(struct strbuf *sb,
 		      const char *prefix,
