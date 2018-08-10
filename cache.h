@@ -1640,7 +1640,8 @@ enum for_each_object_flags {
  * repository and any alternates repositories (unless the
  * LOCAL_ONLY flag is set).
  */
-extern int for_each_loose_object(each_loose_object_fn, void *, unsigned flags);
+int for_each_loose_object(each_loose_object_fn, void *,
+			  enum for_each_object_flags flags);
 
 /*
  * Set this to 0 to prevent sha1_object_info_extended() from fetching missing

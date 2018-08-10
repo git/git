@@ -158,8 +158,9 @@ typedef int each_packed_object_fn(const struct object_id *oid,
 				  struct packed_git *pack,
 				  uint32_t pos,
 				  void *data);
-extern int for_each_object_in_pack(struct packed_git *p, each_packed_object_fn, void *data);
-extern int for_each_packed_object(each_packed_object_fn, void *, unsigned flags);
+int for_each_object_in_pack(struct packed_git *p, each_packed_object_fn, void *data);
+int for_each_packed_object(each_packed_object_fn, void *,
+			   enum for_each_object_flags flags);
 
 /*
  * Return 1 if an object in a promisor packfile is or refers to the given

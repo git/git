@@ -2146,7 +2146,8 @@ static int loose_from_alt_odb(struct alternate_object_database *alt,
 	return r;
 }
 
-int for_each_loose_object(each_loose_object_fn cb, void *data, unsigned flags)
+int for_each_loose_object(each_loose_object_fn cb, void *data,
+			  enum for_each_object_flags flags)
 {
 	struct loose_alt_odb_data alt;
 	int r;
