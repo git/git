@@ -1464,7 +1464,7 @@ static int run_apply(const struct am_state *state, const char *index_file)
 	int force_apply = 0;
 	int options = 0;
 
-	if (init_apply_state(&apply_state, NULL))
+	if (init_apply_state(&apply_state, the_repository, NULL))
 		BUG("init_apply_state() failed");
 
 	argv_array_push(&apply_opts, "apply");

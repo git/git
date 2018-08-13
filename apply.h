@@ -1,6 +1,8 @@
 #ifndef APPLY_H
 #define APPLY_H
 
+struct repository;
+
 enum apply_ws_error_action {
 	nowarn_ws_error,
 	warn_on_ws_error,
@@ -62,6 +64,7 @@ struct apply_state {
 	int unsafe_paths;
 
 	/* Other non boolean parameters */
+	struct repository *repo;
 	const char *index_file;
 	enum apply_verbosity apply_verbosity;
 	const char *fake_ancestor;
@@ -116,6 +119,7 @@ int apply_parse_options(int argc, const char **argv,
 			int *force_apply, int *options,
 			const char * const *apply_usage);
 int init_apply_state(struct apply_state *state,
+		     struct repository *repo,
 		     const char *prefix);
 void clear_apply_state(struct apply_state *state);
 int check_apply_state(struct apply_state *state, int force_apply);
