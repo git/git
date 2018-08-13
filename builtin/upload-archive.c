@@ -43,7 +43,8 @@ int cmd_upload_archive_writer(int argc, const char **argv, const char *prefix)
 	}
 
 	/* parse all options sent by the client */
-	return write_archive(sent_argv.argc, sent_argv.argv, prefix, NULL, 1);
+	return write_archive(sent_argv.argc, sent_argv.argv, prefix,
+			     the_repository, NULL, 1);
 }
 
 __attribute__((format (printf, 1, 2)))
