@@ -44,6 +44,7 @@ struct strbuf;
 #define GIT_COLOR_BG_CYAN	"\033[46m"
 #define GIT_COLOR_FAINT		"\033[2m"
 #define GIT_COLOR_FAINT_ITALIC	"\033[2;3m"
+#define GIT_COLOR_REVERSE	"\033[7m"
 
 /* A special value meaning "no color selected" */
 #define GIT_COLOR_NIL "NIL"
