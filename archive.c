@@ -313,7 +313,7 @@ static int reject_entry(const struct object_id *oid, struct strbuf *base,
 		struct strbuf sb = STRBUF_INIT;
 		strbuf_addbuf(&sb, base);
 		strbuf_addstr(&sb, filename);
-		if (!match_pathspec(context, sb.buf, sb.len, 0, NULL, 1))
+		if (!match_pathspec(&the_index, context, sb.buf, sb.len, 0, NULL, 1))
 			ret = READ_TREE_RECURSIVE;
 		strbuf_release(&sb);
 	}

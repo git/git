@@ -128,7 +128,7 @@ static void show_dir_entry(const char *tag, struct dir_entry *ent)
 	if (len > ent->len)
 		die("git ls-files: internal error - directory entry not superset of prefix");
 
-	if (!dir_path_match(ent, &pathspec, len, ps_matched))
+	if (!dir_path_match(&the_index, ent, &pathspec, len, ps_matched))
 		return;
 
 	fputs(tag, stdout);
@@ -228,7 +228,7 @@ static void show_ce(struct repository *repo, struct dir_struct *dir,
 	if (recurse_submodules && S_ISGITLINK(ce->ce_mode) &&
 	    is_submodule_active(repo, ce->name)) {
 		show_submodule(repo, dir, ce->name);
-	} else if (match_pathspec(&pathspec, fullname, strlen(fullname),
+	} else if (match_pathspec(&the_index, &pathspec, fullname, strlen(fullname),
 				  max_prefix_len, ps_matched,
 				  S_ISDIR(ce->ce_mode) ||
 				  S_ISGITLINK(ce->ce_mode))) {
@@ -264,7 +264,7 @@ static void show_ru_info(const struct index_state *istate)
 		len = strlen(path);
 		if (len < max_prefix_len)
 			continue; /* outside of the prefix */
-		if (!match_pathspec(&pathspec, path, len,
+		if (!match_pathspec(&the_index, &pathspec, path, len,
 				    max_prefix_len, ps_matched, 0))
 			continue; /* uninterested */
 		for (i = 0; i < 3; i++) {

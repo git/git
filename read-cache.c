@@ -1493,7 +1493,7 @@ int refresh_index(struct index_state *istate, unsigned int flags,
 		if (ignore_submodules && S_ISGITLINK(ce->ce_mode))
 			continue;
 
-		if (pathspec && !ce_path_match(ce, pathspec, seen))
+		if (pathspec && !ce_path_match(&the_index, ce, pathspec, seen))
 			filtered = 1;
 
 		if (ce_stage(ce)) {

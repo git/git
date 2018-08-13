@@ -40,7 +40,7 @@ static void chmod_pathspec(struct pathspec *pathspec, char flip)
 	for (i = 0; i < active_nr; i++) {
 		struct cache_entry *ce = active_cache[i];
 
-		if (pathspec && !ce_path_match(ce, pathspec, NULL))
+		if (pathspec && !ce_path_match(&the_index, ce, pathspec, NULL))
 			continue;
 
 		if (chmod_cache_entry(ce, flip) < 0)
@@ -135,7 +135,7 @@ static int renormalize_tracked_files(const struct pathspec *pathspec, int flags)
 			continue; /* do not touch unmerged paths */
 		if (!S_ISREG(ce->ce_mode) && !S_ISLNK(ce->ce_mode))
 			continue; /* do not touch non blobs */
-		if (pathspec && !ce_path_match(ce, pathspec, NULL))
+		if (pathspec && !ce_path_match(&the_index, ce, pathspec, NULL))
 			continue;
 		retval |= add_file_to_cache(ce->name, flags | HASH_RENORMALIZE);
 	}
@@ -155,7 +155,7 @@ static char *prune_directory(struct dir_struct *dir, struct pathspec *pathspec, 
 	i = dir->nr;
 	while (--i >= 0) {
 		struct dir_entry *entry = *src++;
-		if (dir_path_match(entry, pathspec, prefix, seen))
+		if (dir_path_match(&the_index, entry, pathspec, prefix, seen))
 			*dst++ = entry;
 	}
 	dir->nr = dst - dir->entries;
