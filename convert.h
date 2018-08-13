@@ -60,15 +60,18 @@ extern char *check_roundtrip_encoding;
 const char *get_cached_convert_stats_ascii(const struct index_state *istate,
 					   const char *path);
 const char *get_wt_convert_stats_ascii(const char *path);
-const char *get_convert_attr_ascii(const char *path);
+const char *get_convert_attr_ascii(const struct index_state *istate,
+				   const char *path);
 
 /* returns 1 if *dst was used */
 int convert_to_git(const struct index_state *istate,
 		   const char *path, const char *src, size_t len,
 		   struct strbuf *dst, int conv_flags);
-int convert_to_working_tree(const char *path, const char *src,
+int convert_to_working_tree(const struct index_state *istate,
+			    const char *path, const char *src,
 			    size_t len, struct strbuf *dst);
-int async_convert_to_working_tree(const char *path, const char *src,
+int async_convert_to_working_tree(const struct index_state *istate,
+				  const char *path, const char *src,
 				  size_t len, struct strbuf *dst,
 				  void *dco);
 int async_query_available_blobs(const char *cmd,
@@ -86,7 +89,8 @@ void convert_to_git_filter_fd(const struct index_state *istate,
 			      const char *path, int fd,
 			      struct strbuf *dst,
 			      int conv_flags);
-int would_convert_to_git_filter_fd(const char *path);
+int would_convert_to_git_filter_fd(const struct index_state *istate,
+				   const char *path);
 
 /*****************************************************************
  *
@@ -96,7 +100,8 @@ int would_convert_to_git_filter_fd(const char *path);
 
 struct stream_filter; /* opaque */
 
-struct stream_filter *get_stream_filter(const char *path,
+struct stream_filter *get_stream_filter(const struct index_state *istate,
+					const char *path,
 					const struct object_id *);
 void free_stream_filter(struct stream_filter *);
 int is_null_stream_filter(struct stream_filter *);

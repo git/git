@@ -1860,7 +1860,7 @@ static int index_stream_convert_blob(struct object_id *oid, int fd,
 	struct strbuf sbuf = STRBUF_INIT;
 
 	assert(path);
-	assert(would_convert_to_git_filter_fd(path));
+	assert(would_convert_to_git_filter_fd(&the_index, path));
 
 	convert_to_git_filter_fd(&the_index, path, fd, &sbuf,
 				 get_conv_flags(flags));
@@ -1950,7 +1950,7 @@ int index_fd(struct object_id *oid, int fd, struct stat *st,
 	 * Call xsize_t() only when needed to avoid potentially unnecessary
 	 * die() for large files.
 	 */
-	if (type == OBJ_BLOB && path && would_convert_to_git_filter_fd(path))
+	if (type == OBJ_BLOB && path && would_convert_to_git_filter_fd(&the_index, path))
 		ret = index_stream_convert_blob(oid, fd, path, flags);
 	else if (!S_ISREG(st->st_mode))
 		ret = index_pipe(oid, fd, type, path, flags);
