@@ -1,6 +1,8 @@
 #ifndef ATTR_H
 #define ATTR_H
 
+struct index_state;
+
 /* An attribute is a pointer to this opaque structure */
 struct git_attr;
 
@@ -60,13 +62,15 @@ void attr_check_free(struct attr_check *check);
  */
 const char *git_attr_name(const struct git_attr *);
 
-int git_check_attr(const char *path, struct attr_check *check);
+int git_check_attr(const struct index_state *istate,
+		   const char *path, struct attr_check *check);
 
 /*
  * Retrieve all attributes that apply to the specified path.
  * check holds the attributes and their values.
  */
-void git_all_attrs(const char *path, struct attr_check *check);
+void git_all_attrs(const struct index_state *istate,
+		   const char *path, struct attr_check *check);
 
 enum git_attr_direction {
 	GIT_ATTR_CHECKIN,
@@ -74,7 +78,7 @@ enum git_attr_direction {
 	GIT_ATTR_INDEX
 };
 void git_attr_set_direction(enum git_attr_direction new_direction,
-			    struct index_state *istate);
+			    const struct index_state *istate);
 
 void attr_start(void);
 

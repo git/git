@@ -63,9 +63,9 @@ static void check_attr(const char *prefix,
 		prefix_path(prefix, prefix ? strlen(prefix) : 0, file);
 
 	if (collect_all) {
-		git_all_attrs(full_path, check);
+		git_all_attrs(&the_index, full_path, check);
 	} else {
-		if (git_check_attr(full_path, check))
+		if (git_check_attr(&the_index, full_path, check))
 			die("git_check_attr died");
 	}
 	output_attr(check, file);

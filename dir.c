@@ -281,7 +281,7 @@ static int match_attrs(const char *name, int namelen,
 {
 	int i;
 
-	git_check_attr(name, item->attr_check);
+	git_check_attr(&the_index, name, item->attr_check);
 	for (i = 0; i < item->attr_match_nr; i++) {
 		const char *value;
 		int matched;
