@@ -157,6 +157,7 @@ s/.*\n//
 /^[^']*'[^']*$/{
 	/"[^'"]*'[^'"]*"/!bsqstring
 }
+:folded
 # here-doc -- swallow it
 /<<[ 	]*[-\\']*[A-Za-z0-9_]/bheredoc
 # comment or empty line -- discard since final non-comment, non-empty line
@@ -255,7 +256,7 @@ s/"//g
 N
 s/\n//
 /"/!bdqstring
-bcheckchain
+bfolded
 
 # found multi-line single-quoted string '...\n...' -- slurp until end of string
 :sqstring
@@ -263,7 +264,7 @@ s/'//g
 N
 s/\n//
 /'/!bsqstring
-bcheckchain
+bfolded
 
 # found here-doc -- swallow it to avoid false hits within its body (but keep
 # the command to which it was attached)
@@ -278,7 +279,7 @@ N
 }
 s/^<[^>]*>//
 s/\n.*$//
-bcheckchain
+bfolded
 
 # found "case ... in" -- pass through untouched
 :case
