@@ -102,6 +102,7 @@ struct blame_scoreboard {
 	struct commit *final;
 	/* Priority queue for commits with unassigned blame records */
 	struct prio_queue commits;
+	struct repository *repo;
 	struct rev_info *revs;
 	const char *path;
 
