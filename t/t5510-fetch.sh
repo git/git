@@ -613,7 +613,7 @@ test_configured_prune_type () {
 			git rev-parse --verify refs/tags/newtag
 		) &&
 
-		# now remove it
+		# now remove them
 		git branch -d newbranch &&
 		git tag -d newtag &&
 
