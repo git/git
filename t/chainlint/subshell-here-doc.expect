@@ -5,5 +5,6 @@
 >) &&
 (
 	cat >bup &&
+	cat >bup2 &&
 	meep
 >)
