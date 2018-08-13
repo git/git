@@ -1,0 +1,10 @@
+git-range-diff(1)
+=================
+
+NAME
+----
+git-range-diff - Compare two commit ranges (e.g. two versions of a branch)
+
+GIT
+---
+Part of the linkgit:git[1] suite
