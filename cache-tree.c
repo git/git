@@ -652,11 +652,6 @@ out:
 	return ret;
 }
 
-int write_cache_as_tree(struct object_id *oid, int flags, const char *prefix)
-{
-	return write_index_as_tree(oid, &the_index, get_index_file(), flags, prefix);
-}
-
 static void prime_cache_tree_rec(struct cache_tree *it, struct tree *tree)
 {
 	struct tree_desc desc;
@@ -722,11 +717,4 @@ int cache_tree_matches_traversal(struct cache_tree *root,
 	if (it && it->entry_count > 0 && !oidcmp(ent->oid, &it->oid))
 		return it->entry_count;
 	return 0;
-}
-
-int update_main_cache_tree(int flags)
-{
-	if (!the_index.cache_tree)
-		the_index.cache_tree = cache_tree();
-	return cache_tree_update(&the_index, flags);
 }
