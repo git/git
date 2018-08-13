@@ -61,6 +61,22 @@
 # "else", and "fi" in if-then-else likewise must not end with "&&", thus
 # receives similar treatment.
 #
+# Swallowing here-docs with arbitrary tags requires a bit of finesse. When a
+# line such as "cat <<EOF >out" is seen, the here-doc tag is moved to the front
+# of the line enclosed in angle brackets as a sentinel, giving "<EOF>cat >out".
+# As each subsequent line is read, it is appended to the target line and a
+# (whitespace-loose) back-reference match /^<(.*)>\n\1$/ is attempted to see if
+# the content inside "<...>" matches the entirety of the newly-read line. For
+# instance, if the next line read is "some data", when concatenated with the
+# target line, it becomes "<EOF>cat >out\nsome data", and a match is attempted
+# to see if "EOF" matches "some data". Since it doesn't, the next line is
+# attempted. When a line consisting of only "EOF" (and possible whitespace) is
+# encountered, it is appended to the target line giving "<EOF>cat >out\nEOF",
+# in which case the "EOF" inside "<...>" does match the text following the
+# newline, thus the closing here-doc tag has been found. The closing tag line
+# and the "<...>" prefix on the target line are then discarded, leaving just
+# the target line "cat >out".
+#
 # To facilitate regression testing (and manual debugging), a ">" annotation is
 # applied to the line containing ")" which closes a subshell, ">>" to a line
 # closing a nested subshell, and ">>>" to a line closing both at once. This
@@ -78,14 +94,17 @@
 
 # here-doc -- swallow it to avoid false hits within its body (but keep the
 # command to which it was attached)
-/<<[ 	]*[-\\]*EOF[ 	]*/ {
-	s/[ 	]*<<[ 	]*[-\\]*EOF//
-	h
+/<<[ 	]*[-\\]*[A-Za-z0-9_]/ {
+	s/^\(.*\)<<[ 	]*[-\\]*\([A-Za-z0-9_][A-Za-z0-9_]*\)/<\2>\1<</
+	s/[ 	]*<<//
 	:hereslurp
 	N
-	s/.*\n//
-	/^[ 	]*EOF[ 	]*$/!bhereslurp
-	x
+	/^<\([^>]*\)>.*\n[ 	]*\1[ 	]*$/!{
+		s/\n.*$//
+		bhereslurp
+	}
+	s/^<[^>]*>//
+	s/\n.*$//
 }
 
 # one-liner "(...) &&"
@@ -139,9 +158,7 @@ s/.*\n//
 	/"[^'"]*'[^'"]*"/!bsqstring
 }
 # here-doc -- swallow it
-/<<[ 	]*[-\\]*EOF/bheredoc
-/<<[ 	]*[-\\]*EOT/bheredoc
-/<<[ 	]*[-\\]*INPUT_END/bheredoc
+/<<[ 	]*[-\\]*[A-Za-z0-9_]/bheredoc
 # comment or empty line -- discard since final non-comment, non-empty line
 # before closing ")", "done", "elsif", "else", or "fi" will need to be
 # re-visited to drop "suspect" marking since final line of those constructs
@@ -249,23 +266,17 @@ s/\n//
 bcheckchain
 
 # found here-doc -- swallow it to avoid false hits within its body (but keep
-# the command to which it was attached); take care to handle here-docs nested
-# within here-docs by only recognizing closing tag matching outer here-doc
-# opening tag
+# the command to which it was attached)
 :heredoc
-/EOF/{ s/[ 	]*<<[ 	]*[-\\]*EOF//; s/^/EOF/; }
-/EOT/{ s/[ 	]*<<[ 	]*[-\\]*EOT//; s/^/EOT/; }
-/INPUT_END/{ s/[ 	]*<<[ 	]*[-\\]*INPUT_END//; s/^/INPUT_END/; }
+s/^\(.*\)<<[ 	]*[-\\]*\([A-Za-z0-9_][A-Za-z0-9_]*\)/<\2>\1<</
+s/[ 	]*<<//
 :hereslurpsub
 N
-/^EOF.*\n[ 	]*EOF[ 	]*$/bhereclose
-/^EOT.*\n[ 	]*EOT[ 	]*$/bhereclose
-/^INPUT_END.*\n[ 	]*INPUT_END[ 	]*$/bhereclose
-bhereslurpsub
-:hereclose
-s/^EOF//
-s/^EOT//
-s/^INPUT_END//
+/^<\([^>]*\)>.*\n[ 	]*\1[ 	]*$/!{
+	s/\n.*$//
+	bhereslurpsub
+}
+s/^<[^>]*>//
 s/\n.*$//
 bcheckchain
 
