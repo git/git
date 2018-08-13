@@ -1964,6 +1964,45 @@ static int push_check(int argc, const char **argv, const char *prefix)
 	return 0;
 }
 
+static int ensure_core_worktree(int argc, const char **argv, const char *prefix)
+{
+	const struct submodule *sub;
+	const char *path;
+	char *cw;
+	struct repository subrepo;
+
+	if (argc != 2)
+		BUG("submodule--helper connect-gitdir-workingtree <name> <path>");
+
+	path = argv[1];
+
+	sub = submodule_from_path(the_repository, &null_oid, path);
+	if (!sub)
+		BUG("We could get the submodule handle before?");
+
+	if (repo_submodule_init(&subrepo, the_repository, path))
+		die(_("could not get a repository handle for submodule '%s'"), path);
+
+	if (!repo_config_get_string(&subrepo, "core.worktree", &cw)) {
+		char *cfg_file, *abs_path;
+		const char *rel_path;
+		struct strbuf sb = STRBUF_INIT;
+
+		cfg_file = repo_git_path(&subrepo, "config");
+
+		abs_path = absolute_pathdup(path);
+		rel_path = relative_path(abs_path, subrepo.gitdir, &sb);
+
+		git_config_set_in_file(cfg_file, "core.worktree", rel_path);
+
+		free(cfg_file);
+		free(abs_path);
+		strbuf_release(&sb);
+	}
+
+	return 0;
+}
+
 static int absorb_git_dirs(int argc, const char **argv, const char *prefix)
 {
 	int i;
@@ -2029,29 +2068,6 @@ static int check_name(int argc, const char **argv, const char *prefix)
 	return 0;
 }
 
-static int connect_gitdir_workingtree(int argc, const char **argv, const char *prefix)
-{
-	struct strbuf sb = STRBUF_INIT;
-	const char *name, *path;
-	char *sm_gitdir;
-
-	if (argc != 3)
-		BUG("submodule--helper connect-gitdir-workingtree <name> <path>");
-
-	name = argv[1];
-	path = argv[2];
-
-	strbuf_addf(&sb, "%s/modules/%s", get_git_dir(), name);
-	sm_gitdir = absolute_pathdup(sb.buf);
-
-	connect_work_tree_and_git_dir(path, sm_gitdir, 0);
-
-	strbuf_release(&sb);
-	free(sm_gitdir);
-
-	return 0;
-}
-
 #define SUPPORT_SUPER_PREFIX (1<<0)
 
 struct cmd_struct {
@@ -2065,7 +2081,7 @@ static struct cmd_struct commands[] = {
 	{"name", module_name, 0},
 	{"clone", module_clone, 0},
 	{"update-clone", update_clone, 0},
-	{"connect-gitdir-workingtree", connect_gitdir_workingtree, 0},
+	{"ensure-core-worktree", ensure_core_worktree, 0},
 	{"relative-path", resolve_relative_path, 0},
 	{"resolve-relative-url", resolve_relative_url, 0},
 	{"resolve-relative-url-test", resolve_relative_url_test, 0},
