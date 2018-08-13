@@ -12,4 +12,16 @@
 # LINT: starting multi-line single-quoted string
 	echo "there's nothing to see here" &&
 	exit
+) &&
+(
+	echo "xyz" "abc
+		def
+		ghi" &&
+	echo 'xyz' 'abc
+		def
+		ghi' &&
+	echo 'xyz' "abc
+		def
+		ghi" &&
+	barfoo
 )

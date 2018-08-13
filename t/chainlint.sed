@@ -151,10 +151,10 @@ s/.*\n//
 :slurp
 # incomplete line "...\"
 /\\$/bincomplete
-# multi-line quoted string "...\n..."
-/^[^"]*"[^"]*$/bdqstring
-# multi-line quoted string '...\n...' (but not contraction in string "it's so")
-/^[^']*'[^']*$/{
+# multi-line quoted string "...\n..."?
+/"/bdqstring
+# multi-line quoted string '...\n...'? (but not contraction in string "it's")
+/'/{
 	/"[^'"]*'[^'"]*"/!bsqstring
 }
 :folded
@@ -250,20 +250,32 @@ N
 s/\\\n//
 bslurp
 
-# found multi-line double-quoted string "...\n..." -- slurp until end of string
+# check for multi-line double-quoted string "...\n..." -- fold to one line
 :dqstring
-s/"//g
+# remove all quote pairs
+s/"\([^"]*\)"/@!\1@!/g
+# done if no dangling quote
+/"/!bdqdone
+# otherwise, slurp next line and try again
 N
 s/\n//
-/"/!bdqstring
+bdqstring
+:dqdone
+s/@!/"/g
 bfolded
 
-# found multi-line single-quoted string '...\n...' -- slurp until end of string
+# check for multi-line single-quoted string '...\n...' -- fold to one line
 :sqstring
-s/'//g
+# remove all quote pairs
+s/'\([^']*\)'/@!\1@!/g
+# done if no dangling quote
+/'/!bsqdone
+# otherwise, slurp next line and try again
 N
 s/\n//
-/'/!bsqstring
+bsqstring
+:sqdone
+s/@!/'/g
 bfolded
 
 # found here-doc -- swallow it to avoid false hits within its body (but keep
