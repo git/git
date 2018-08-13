@@ -77,8 +77,7 @@ enum git_attr_direction {
 	GIT_ATTR_CHECKOUT,
 	GIT_ATTR_INDEX
 };
-void git_attr_set_direction(enum git_attr_direction new_direction,
-			    const struct index_state *istate);
+void git_attr_set_direction(enum git_attr_direction new_direction);
 
 void attr_start(void);
 

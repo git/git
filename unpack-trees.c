@@ -353,7 +353,7 @@ static int check_updates(struct unpack_trees_options *o)
 	progress = get_progress(o);
 
 	if (o->update)
-		git_attr_set_direction(GIT_ATTR_CHECKOUT, index);
+		git_attr_set_direction(GIT_ATTR_CHECKOUT);
 
 	if (should_update_submodules() && o->update && !o->dry_run)
 		load_gitmodules_file(index, NULL);
@@ -413,7 +413,7 @@ static int check_updates(struct unpack_trees_options *o)
 	stop_progress(&progress);
 	errs |= finish_delayed_checkout(&state);
 	if (o->update)
-		git_attr_set_direction(GIT_ATTR_CHECKIN, NULL);
+		git_attr_set_direction(GIT_ATTR_CHECKIN);
 	return errs != 0;
 }
 

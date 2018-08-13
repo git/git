@@ -120,7 +120,7 @@ int cmd_check_attr(int argc, const char **argv, const char *prefix)
 	}
 
 	if (cached_attrs)
-		git_attr_set_direction(GIT_ATTR_INDEX, NULL);
+		git_attr_set_direction(GIT_ATTR_INDEX);
 
 	doubledash = -1;
 	for (i = 0; doubledash < 0 && i < argc; i++) {

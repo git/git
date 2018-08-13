@@ -274,7 +274,7 @@ int write_archive_entries(struct archiver_args *args,
 		init_tree_desc(&t, args->tree->buffer, args->tree->size);
 		if (unpack_trees(1, &t, &opts))
 			return -1;
-		git_attr_set_direction(GIT_ATTR_INDEX, &the_index);
+		git_attr_set_direction(GIT_ATTR_INDEX);
 	}
 
 	err = read_tree_recursive(args->tree, "", 0, 0, &args->pathspec,

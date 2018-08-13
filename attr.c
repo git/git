@@ -708,10 +708,8 @@ static struct attr_stack *read_attr_from_array(const char **list)
  * another thread could potentially be calling into the attribute system.
  */
 static enum git_attr_direction direction;
-static const struct index_state *use_index;
 
-void git_attr_set_direction(enum git_attr_direction new_direction,
-			    const struct index_state *istate)
+void git_attr_set_direction(enum git_attr_direction new_direction)
 {
 	if (is_bare_repository() && new_direction != GIT_ATTR_INDEX)
 		BUG("non-INDEX attr direction in a bare repo");
@@ -720,7 +718,6 @@ void git_attr_set_direction(enum git_attr_direction new_direction,
 		drop_all_attr_stacks();
 
 	direction = new_direction;
-	use_index = istate;
 }
 
 static struct attr_stack *read_attr_from_file(const char *path, int macro_ok)
@@ -750,17 +747,11 @@ static struct attr_stack *read_attr_from_index(const struct index_state *istate,
 	struct attr_stack *res;
 	char *buf, *sp;
 	int lineno = 0;
-	const struct index_state *to_read_from;
 
-	/*
-	 * Temporary workaround for c24f3abace (apply: file commited
-	 * with CRLF should roundtrip diff and apply - 2017-08-19)
-	 */
-	to_read_from = use_index ? use_index : istate;
-	if (!to_read_from)
+	if (!istate)
 		return NULL;
 
-	buf = read_blob_data_from_index(to_read_from, path, NULL);
+	buf = read_blob_data_from_index(istate, path, NULL);
 	if (!buf)
 		return NULL;
 
