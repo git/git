@@ -9,7 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git range-diff' [--color=[<when>]] [--no-color] [<diff-options>]
-	[--dual-color] [--creation-factor=<factor>]
+	[--no-dual-color] [--creation-factor=<factor>]
 	( <range1> <range2> | <rev1>...<rev2> | <base> <rev1> <rev2> )
 
 DESCRIPTION
@@ -31,11 +31,14 @@ all of their ancestors have been shown.
 
 OPTIONS
 -------
---dual-color::
-	When the commit diffs differ, recreate the original diffs'
-	coloring, and add outer -/+ diff markers with the *background*
-	being red/green to make it easier to see e.g. when there was a
-	change in what exact lines were added.
+--no-dual-color::
+	When the commit diffs differ, `git range-diff` recreates the
+	original diffs' coloring, and adds outer -/+ diff markers with
+	the *background* being red/green to make it easier to see e.g.
+	when there was a change in what exact lines were added. This is
+	known to `range-diff` as "dual coloring". Use `--no-dual-color`
+	to revert to color all lines according to the outer diff markers
+	(and completely ignore the inner diff when it comes to color).
 
 --creation-factor=<percent>::
 	Set the creation/deletion cost fudge factor to `<percent>`.
@@ -118,15 +121,16 @@ line (with a perfect match) is yellow like the commit header of `git
 show`'s output, and the third line colors the old commit red, the new
 one green and the rest like `git show`'s commit header.
 
-The color-coded diff is actually a bit hard to read, though, as it
-colors the entire lines red or green. The line that added "What is
-unexpected" in the old commit, for example, is completely red, even if
-the intent of the old commit was to add something.
+A naive color-coded diff of diffs is actually a bit hard to read,
+though, as it colors the entire lines red or green. The line that added
+"What is unexpected" in the old commit, for example, is completely red,
+even if the intent of the old commit was to add something.
 
-To help with that, use the `--dual-color` mode. In this mode, the diff
-of diffs will retain the original diff colors, and prefix the lines with
--/+ markers that have their *background* red or green, to make it more
-obvious that they describe how the diff itself changed.
+To help with that, `range` uses the `--dual-color` mode by default. In
+this mode, the diff of diffs will retain the original diff colors, and
+prefix the lines with -/+ markers that have their *background* red or
+green, to make it more obvious that they describe how the diff itself
+changed.
 
 
 Algorithm

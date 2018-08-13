@@ -1981,7 +1981,7 @@ _git_range_diff ()
 	case "$cur" in
 	--*)
 		__gitcomp "
-			--creation-factor= --dual-color
+			--creation-factor= --no-dual-color
 			$__git_diff_common_options
 		"
 		return
