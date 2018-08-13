@@ -70,6 +70,12 @@ static char diff_colors[][COLOR_MAXLEN] = {
 	GIT_COLOR_BOLD_YELLOW,	/* NEW_MOVED ALTERNATIVE */
 	GIT_COLOR_FAINT,	/* NEW_MOVED_DIM */
 	GIT_COLOR_FAINT_ITALIC,	/* NEW_MOVED_ALTERNATIVE_DIM */
+	GIT_COLOR_FAINT,	/* CONTEXT_DIM */
+	GIT_COLOR_FAINT_RED,	/* OLD_DIM */
+	GIT_COLOR_FAINT_GREEN,	/* NEW_DIM */
+	GIT_COLOR_BOLD,		/* CONTEXT_BOLD */
+	GIT_COLOR_BOLD_RED,	/* OLD_BOLD */
+	GIT_COLOR_BOLD_GREEN,	/* NEW_BOLD */
 };
 
 static const char *color_diff_slots[] = {
@@ -89,6 +95,12 @@ static const char *color_diff_slots[] = {
 	[DIFF_FILE_NEW_MOVED_ALT]     = "newMovedAlternative",
 	[DIFF_FILE_NEW_MOVED_DIM]     = "newMovedDimmed",
 	[DIFF_FILE_NEW_MOVED_ALT_DIM] = "newMovedAlternativeDimmed",
+	[DIFF_CONTEXT_DIM]	      = "contextDimmed",
+	[DIFF_FILE_OLD_DIM]	      = "oldDimmed",
+	[DIFF_FILE_NEW_DIM]	      = "newDimmed",
+	[DIFF_CONTEXT_BOLD]	      = "contextBold",
+	[DIFF_FILE_OLD_BOLD]	      = "oldBold",
+	[DIFF_FILE_NEW_BOLD]	      = "newBold",
 };
 
 static NORETURN void die_want_option(const char *option_name)
@@ -1294,11 +1306,13 @@ static void emit_diff_symbol_from_struct(struct diff_options *o,
 
 			set_sign = set;
 			if (c == '-')
-				set = diff_get_color_opt(o, DIFF_FILE_OLD);
+				set = diff_get_color_opt(o, DIFF_FILE_OLD_BOLD);
 			else if (c == '@')
 				set = diff_get_color_opt(o, DIFF_FRAGINFO);
-			else if (c != '+')
-				set = diff_get_color_opt(o, DIFF_CONTEXT);
+			else if (c == '+')
+				set = diff_get_color_opt(o, DIFF_FILE_NEW_BOLD);
+			else
+				set = diff_get_color_opt(o, DIFF_CONTEXT_BOLD);
 			flags &= ~DIFF_SYMBOL_CONTENT_WS_MASK;
 		}
 		emit_line_ws_markup(o, set, reset, line, len, set_sign, '+',
@@ -1336,11 +1350,13 @@ static void emit_diff_symbol_from_struct(struct diff_options *o,
 
 			set_sign = set;
 			if (c == '+')
-				set = diff_get_color_opt(o, DIFF_FILE_NEW);
+				set = diff_get_color_opt(o, DIFF_FILE_NEW_DIM);
 			else if (c == '@')
 				set = diff_get_color_opt(o, DIFF_FRAGINFO);
-			else if (c != '-')
-				set = diff_get_color_opt(o, DIFF_CONTEXT);
+			else if (c == '-')
+				set = diff_get_color_opt(o, DIFF_FILE_OLD_DIM);
+			else
+				set = diff_get_color_opt(o, DIFF_CONTEXT_DIM);
 		}
 		emit_line_ws_markup(o, set, reset, line, len, set_sign, '-',
 				    flags & DIFF_SYMBOL_CONTENT_WS_MASK, 0);

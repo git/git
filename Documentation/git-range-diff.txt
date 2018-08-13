@@ -35,10 +35,19 @@ OPTIONS
 	When the commit diffs differ, `git range-diff` recreates the
 	original diffs' coloring, and adds outer -/+ diff markers with
 	the *background* being red/green to make it easier to see e.g.
-	when there was a change in what exact lines were added. This is
-	known to `range-diff` as "dual coloring". Use `--no-dual-color`
-	to revert to color all lines according to the outer diff markers
-	(and completely ignore the inner diff when it comes to color).
+	when there was a change in what exact lines were added.
++
+Additionally, the commit diff lines that are only present in the first commit
+range are shown "dimmed" (this can be overridden using the `color.diff.<slot>`
+config setting where `<slot>` is one of `contextDimmed`, `oldDimmed` and
+`newDimmed`), and the commit diff lines that are only present in the second
+commit range are shown in bold (which can be overridden using the config
+settings `color.diff.<slot>` with `<slot>` being one of `contextBold`,
+`oldBold` or `newBold`).
++
+This is known to `range-diff` as "dual coloring". Use `--no-dual-color`
+to revert to color all lines according to the outer diff markers
+(and completely ignore the inner diff when it comes to color).
 
 --creation-factor=<percent>::
 	Set the creation/deletion cost fudge factor to `<percent>`.
