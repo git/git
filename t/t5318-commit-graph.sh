@@ -254,9 +254,9 @@ test_expect_success 'check that gc computes commit-graph' '
 	git config gc.writeCommitGraph true &&
 	git gc &&
 	cp $objdir/info/commit-graph commit-graph-after-gc &&
-	! test_cmp commit-graph-before-gc commit-graph-after-gc &&
+	! test_cmp_bin commit-graph-before-gc commit-graph-after-gc &&
 	git commit-graph write --reachable &&
-	test_cmp commit-graph-after-gc $objdir/info/commit-graph
+	test_cmp_bin commit-graph-after-gc $objdir/info/commit-graph
 '
 
 # the verify tests below expect the commit-graph to contain
