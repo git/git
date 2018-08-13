@@ -2,6 +2,7 @@
 #include "builtin.h"
 #include "parse-options.h"
 #include "range-diff.h"
+#include "config.h"
 
 static const char * const builtin_range_diff_usage[] = {
 N_("git range-diff [<options>] <old-base>..<old-tip> <new-base>..<new-tip>"),
@@ -13,15 +14,40 @@ NULL
 int cmd_range_diff(int argc, const char **argv, const char *prefix)
 {
 	int creation_factor = 60;
+	struct diff_options diffopt = { NULL };
 	struct option options[] = {
 		OPT_INTEGER(0, "creation-factor", &creation_factor,
 			    N_("Percentage by which creation is weighted")),
 		OPT_END()
 	};
-	int res = 0;
+	int i, j, res = 0;
 	struct strbuf range1 = STRBUF_INIT, range2 = STRBUF_INIT;
 
+	git_config(git_diff_ui_config, NULL);
+
+	diff_setup(&diffopt);
+	diffopt.output_format = DIFF_FORMAT_PATCH;
+
 	argc = parse_options(argc, argv, NULL, options,
+			     builtin_range_diff_usage, PARSE_OPT_KEEP_UNKNOWN |
+			     PARSE_OPT_KEEP_DASHDASH | PARSE_OPT_KEEP_ARGV0);
+
+	for (i = j = 1; i < argc && strcmp("--", argv[i]); ) {
+		int c = diff_opt_parse(&diffopt, argv + i, argc - i, prefix);
+
+		if (!c)
+			argv[j++] = argv[i++];
+		else
+			i += c;
+	}
+	while (i < argc)
+		argv[j++] = argv[i++];
+	argc = j;
+	diff_setup_done(&diffopt);
+
+	/* Make sure that there are no unparsed options */
+	argc = parse_options(argc, argv, NULL,
+			     options + ARRAY_SIZE(options) - 1, /* OPT_END */
 			     builtin_range_diff_usage, 0);
 
 	if (argc == 2) {
@@ -59,7 +85,8 @@ int cmd_range_diff(int argc, const char **argv, const char *prefix)
 		usage_with_options(builtin_range_diff_usage, options);
 	}
 
-	res = show_range_diff(range1.buf, range2.buf, creation_factor);
+	res = show_range_diff(range1.buf, range2.buf, creation_factor,
+			      &diffopt);
 
 	strbuf_release(&range1);
 	strbuf_release(&range2);
