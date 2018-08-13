@@ -4414,16 +4414,6 @@ void diff_setup_done(struct diff_options *options)
 
 	if (options->detect_rename && options->rename_limit < 0)
 		options->rename_limit = diff_rename_limit_default;
-	if (options->setup & DIFF_SETUP_USE_CACHE) {
-		if (!active_cache)
-			/* read-cache does not die even when it fails
-			 * so it is safe for us to do this here.  Also
-			 * it does not smudge active_cache or active_nr
-			 * when it fails, so we do not have to worry about
-			 * cleaning it up ourselves either.
-			 */
-			read_cache();
-	}
 	if (hexsz < options->abbrev)
 		options->abbrev = hexsz; /* full */
 
