@@ -326,7 +326,7 @@ static int write_zip_entry(struct archiver_args *args,
 		compressed_size = 0;
 		buffer = NULL;
 	} else if (S_ISREG(mode) || S_ISLNK(mode)) {
-		enum object_type type = oid_object_info(the_repository, oid,
+		enum object_type type = oid_object_info(args->repo, oid,
 							&size);
 
 		method = 0;
