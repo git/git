@@ -6,4 +6,13 @@
 	) &&
 	echo ok
 ) |
-sort
+sort &&
+(
+	bar &&
+	x=$(echo bar |
+		cat
+	) &&
+	y=$(echo baz |
+		fip) &&
+	echo fail
+)

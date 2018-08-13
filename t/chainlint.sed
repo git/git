@@ -216,7 +216,7 @@ s/.*\n//
 # "$(...)" -- command substitution; not closing ")"
 /\$([^)][^)]*)[^)]*$/bcheckchain
 # multi-line "$(...\n...)" -- command substitution; treat as nested subshell
-/\$([ 	]*$/bnest
+/\$([^)]*$/bnest
 # "=(...)" -- Bash array assignment; not closing ")"
 /=(/bcheckchain
 # closing "...) &&"
