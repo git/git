@@ -338,11 +338,11 @@ static void print_object_or_die(struct batch_options *opt, struct expand_data *d
 	}
 }
 
-static void batch_object_write(const char *obj_name, struct batch_options *opt,
+static void batch_object_write(const char *obj_name,
+			       struct strbuf *scratch,
+			       struct batch_options *opt,
 			       struct expand_data *data)
 {
-	struct strbuf buf = STRBUF_INIT;
-
 	if (!data->skip_object_info &&
 	    oid_object_info_extended(the_repository, &data->oid, &data->info,
 				     OBJECT_INFO_LOOKUP_REPLACE) < 0) {
@@ -352,10 +352,10 @@ static void batch_object_write(const char *obj_name, struct batch_options *opt,
 		return;
 	}
 
-	strbuf_expand(&buf, opt->format, expand_format, data);
-	strbuf_addch(&buf, '\n');
-	batch_write(opt, buf.buf, buf.len);
-	strbuf_release(&buf);
+	strbuf_reset(scratch);
+	strbuf_expand(scratch, opt->format, expand_format, data);
+	strbuf_addch(scratch, '\n');
+	batch_write(opt, scratch->buf, scratch->len);
 
 	if (opt->print_contents) {
 		print_object_or_die(opt, data);
@@ -363,7 +363,9 @@ static void batch_object_write(const char *obj_name, struct batch_options *opt,
 	}
 }
 
-static void batch_one_object(const char *obj_name, struct batch_options *opt,
+static void batch_one_object(const char *obj_name,
+			     struct strbuf *scratch,
+			     struct batch_options *opt,
 			     struct expand_data *data)
 {
 	struct object_context ctx;
@@ -405,20 +407,21 @@ static void batch_one_object(const char *obj_name, struct batch_options *opt,
 		return;
 	}
 
-	batch_object_write(obj_name, opt, data);
+	batch_object_write(obj_name, scratch, opt, data);
 }
 
 struct object_cb_data {
 	struct batch_options *opt;
 	struct expand_data *expand;
 	struct oidset *seen;
+	struct strbuf *scratch;
 };
 
 static int batch_object_cb(const struct object_id *oid, void *vdata)
 {
 	struct object_cb_data *data = vdata;
 	oidcpy(&data->expand->oid, oid);
-	batch_object_write(NULL, data->opt, data->expand);
+	batch_object_write(NULL, data->scratch, data->opt, data->expand);
 	return 0;
 }
 
@@ -509,6 +512,7 @@ static int batch_objects(struct batch_options *opt)
 
 		cb.opt = opt;
 		cb.expand = &data;
+		cb.scratch = &output;
 
 		if (opt->unordered) {
 			struct oidset seen = OIDSET_INIT;
@@ -531,6 +535,7 @@ static int batch_objects(struct batch_options *opt)
 			oid_array_clear(&sa);
 		}
 
+		strbuf_release(&output);
 		return 0;
 	}
 
@@ -559,10 +564,11 @@ static int batch_objects(struct batch_options *opt)
 			data.rest = p;
 		}
 
-		batch_one_object(input.buf, opt, &data);
+		batch_one_object(input.buf, &output, opt, &data);
 	}
 
 	strbuf_release(&input);
+	strbuf_release(&output);
 	warn_on_object_refname_ambiguity = save_warning;
 	return retval;
 }
