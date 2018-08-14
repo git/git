@@ -466,7 +466,8 @@ static int batch_unordered_packed(const struct object_id *oid,
 
 static int batch_objects(struct batch_options *opt)
 {
-	struct strbuf buf = STRBUF_INIT;
+	struct strbuf input = STRBUF_INIT;
+	struct strbuf output = STRBUF_INIT;
 	struct expand_data data;
 	int save_warning;
 	int retval = 0;
@@ -481,8 +482,9 @@ static int batch_objects(struct batch_options *opt)
 	 */
 	memset(&data, 0, sizeof(data));
 	data.mark_query = 1;
-	strbuf_expand(&buf, opt->format, expand_format, &data);
+	strbuf_expand(&output, opt->format, expand_format, &data);
 	data.mark_query = 0;
+	strbuf_release(&output);
 	if (opt->cmdmode)
 		data.split_on_whitespace = 1;
 
@@ -542,14 +544,14 @@ static int batch_objects(struct batch_options *opt)
 	save_warning = warn_on_object_refname_ambiguity;
 	warn_on_object_refname_ambiguity = 0;
 
-	while (strbuf_getline(&buf, stdin) != EOF) {
+	while (strbuf_getline(&input, stdin) != EOF) {
 		if (data.split_on_whitespace) {
 			/*
 			 * Split at first whitespace, tying off the beginning
 			 * of the string and saving the remainder (or NULL) in
 			 * data.rest.
 			 */
-			char *p = strpbrk(buf.buf, " \t");
+			char *p = strpbrk(input.buf, " \t");
 			if (p) {
 				while (*p && strchr(" \t", *p))
 					*p++ = '\0';
@@ -557,10 +559,10 @@ static int batch_objects(struct batch_options *opt)
 			data.rest = p;
 		}
 
-		batch_one_object(buf.buf, opt, &data);
+		batch_one_object(input.buf, opt, &data);
 	}
 
-	strbuf_release(&buf);
+	strbuf_release(&input);
 	warn_on_object_refname_ambiguity = save_warning;
 	return retval;
 }
