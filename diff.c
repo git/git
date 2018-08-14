@@ -1202,8 +1202,7 @@ static void emit_line_ws_markup(struct diff_options *o,
 		emit_line_0(o, set, 0, reset, sign, line, len);
 	else if (!ws) {
 		/* Emit just the prefix, then the rest. */
-		emit_line_0(o, set_sign ? set_sign : set, !!set_sign, reset,
-			    sign, "", 0);
+		emit_line_0(o, set_sign, !!set_sign, reset, sign, "", 0);
 		emit_line_0(o, set, 0, reset, 0, line, len);
 	} else if (blank_at_eof)
 		/* Blank line at EOF - paint '+' as well */
