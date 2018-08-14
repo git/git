@@ -443,9 +443,8 @@ static int batch_unordered_object(const struct object_id *oid, void *vdata)
 {
 	struct object_cb_data *data = vdata;
 
-	if (oidset_contains(data->seen, oid))
+	if (oidset_insert(data->seen, oid))
 		return 0;
-	oidset_insert(data->seen, oid);
 
 	return batch_object_cb(oid, data);
 }
