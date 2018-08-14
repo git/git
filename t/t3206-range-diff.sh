@@ -142,4 +142,43 @@ test_expect_success 'changed message' '
 	test_cmp expected actual
 '
 
+test_expect_success 'dual-coloring' '
+	sed -e "s|^:||" >expect <<-\EOF &&
+	:<YELLOW>1:  a4b3333 = 1:  f686024 s/5/A/<RESET>
+	:<RED>2:  f51d370 <RESET><YELLOW>!<RESET><GREEN> 2:  4ab067d<RESET><YELLOW> s/4/A/<RESET>
+	:    <REVERSE><CYAN>@@ -2,6 +2,8 @@<RESET>
+	:     <RESET>
+	:         s/4/A/<RESET>
+	:     <RESET>
+	:    <REVERSE><GREEN>+<RESET><BOLD>    Also a silly comment here!<RESET>
+	:    <REVERSE><GREEN>+<RESET><BOLD><RESET>
+	:     diff --git a/file b/file<RESET>
+	:    <RED> --- a/file<RESET>
+	:    <GREEN> +++ b/file<RESET>
+	:<RED>3:  0559556 <RESET><YELLOW>!<RESET><GREEN> 3:  b9cb956<RESET><YELLOW> s/11/B/<RESET>
+	:    <REVERSE><CYAN>@@ -10,7 +10,7 @@<RESET>
+	:      9<RESET>
+	:      10<RESET>
+	:    <RED> -11<RESET>
+	:    <REVERSE><RED>-<RESET><FAINT;GREEN>+BB<RESET>
+	:    <REVERSE><GREEN>+<RESET><BOLD;GREEN>+B<RESET>
+	:      12<RESET>
+	:      13<RESET>
+	:      14<RESET>
+	:<RED>4:  d966c5c <RESET><YELLOW>!<RESET><GREEN> 4:  8add5f1<RESET><YELLOW> s/12/B/<RESET>
+	:    <REVERSE><CYAN>@@ -8,7 +8,7 @@<RESET>
+	:    <CYAN> @@<RESET>
+	:      9<RESET>
+	:      10<RESET>
+	:    <REVERSE><RED>-<RESET><FAINT> BB<RESET>
+	:    <REVERSE><GREEN>+<RESET><BOLD> B<RESET>
+	:    <RED> -12<RESET>
+	:    <GREEN> +B<RESET>
+	:      13<RESET>
+	EOF
+	git range-diff changed...changed-message --color --dual-color >actual.raw &&
+	test_decode_color >actual <actual.raw &&
+	test_cmp expect actual
+'
+
 test_done
