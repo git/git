@@ -656,12 +656,14 @@ static void emit_line_0(struct diff_options *o,
 			fputs(set_sign, file);
 		if (first && !nofirst)
 			fputc(first, file);
-		if (set && set != set_sign) {
-			if (set_sign)
-				fputs(reset, file);
-			fputs(set, file);
+		if (len) {
+			if (set && set != set_sign) {
+				if (set_sign)
+					fputs(reset, file);
+				fputs(set, file);
+			}
+			fwrite(line, len, 1, file);
 		}
-		fwrite(line, len, 1, file);
 		fputs(reset, file);
 	}
 	if (has_trailing_carriage_return)
@@ -1207,9 +1209,7 @@ static void emit_line_ws_markup(struct diff_options *o,
 	if (!ws && !set_sign)
 		emit_line_0(o, set, NULL, 0, reset, sign, line, len);
 	else if (!ws) {
-		/* Emit just the prefix, then the rest. */
-		emit_line_0(o, set_sign, NULL, !!set_sign, reset, sign, "", 0);
-		emit_line_0(o, set, NULL, 0, reset, 0, line, len);
+		emit_line_0(o, set_sign, set, !!set_sign, reset, sign, line, len);
 	} else if (blank_at_eof)
 		/* Blank line at EOF - paint '+' as well */
 		emit_line_0(o, ws, NULL, 0, reset, sign, line, len);

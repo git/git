@@ -151,7 +151,7 @@ test_expect_success 'dual-coloring' '
 	:         s/4/A/<RESET>
 	:     <RESET>
 	:    <REVERSE><GREEN>+<RESET><BOLD>    Also a silly comment here!<RESET>
-	:    <REVERSE><GREEN>+<RESET><BOLD><RESET>
+	:    <REVERSE><GREEN>+<RESET>
 	:     diff --git a/file b/file<RESET>
 	:    <RED> --- a/file<RESET>
 	:    <GREEN> +++ b/file<RESET>
