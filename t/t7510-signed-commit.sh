@@ -234,4 +234,30 @@ test_expect_success GPG 'check config gpg.format values' '
 	test_must_fail git commit -S --amend -m "fail"
 '
 
+test_expect_success GPG 'detect fudged commit with double signature' '
+	sed -e "/gpgsig/,/END PGP/d" forged1 >double-base &&
+	sed -n -e "/gpgsig/,/END PGP/p" forged1 | \
+		sed -e "s/^gpgsig//;s/^ //" | gpg --dearmor >double-sig1.sig &&
+	gpg -o double-sig2.sig -u 29472784 --detach-sign double-base &&
+	cat double-sig1.sig double-sig2.sig | gpg --enarmor >double-combined.asc &&
+	sed -e "s/^\(-.*\)ARMORED FILE/\1SIGNATURE/;1s/^/gpgsig /;2,\$s/^/ /" \
+		double-combined.asc > double-gpgsig &&
+	sed -e "/committer/r double-gpgsig" double-base >double-commit &&
+	git hash-object -w -t commit double-commit >double-commit.commit &&
+	test_must_fail git verify-commit $(cat double-commit.commit) &&
+	git show --pretty=short --show-signature $(cat double-commit.commit) >double-actual &&
+	grep "BAD signature from" double-actual &&
+	grep "Good signature from" double-actual
+'
+
+test_expect_success GPG 'show double signature with custom format' '
+	cat >expect <<-\EOF &&
+	E
+
+
+	EOF
+	git log -1 --format="%G?%n%GK%n%GS" $(cat double-commit.commit) >actual &&
+	test_cmp expect actual
+'
+
 test_done
