@@ -23,6 +23,7 @@ SYNOPSIS
 		   [(--reroll-count|-v) <n>]
 		   [--to=<email>] [--cc=<email>]
 		   [--[no-]cover-letter] [--quiet] [--notes[=<ref>]]
+		   [--interdiff=<previous>]
 		   [--progress]
 		   [<common diff options>]
 		   [ <since> | <revision range> ]
@@ -227,6 +228,15 @@ feeding the result to `git send-email`.
 	In addition to the patches, generate a cover letter file
 	containing the branch description, shortlog and the overall diffstat.  You can
 	fill in a description in the file before sending it out.
+
+--interdiff=<previous>::
+	As a reviewer aid, insert an interdiff into the cover letter,
+	or as commentary of the lone patch of a 1-patch series, showing
+	the differences between the previous version of the patch series and
+	the series currently being formatted. `previous` is a single revision
+	naming the tip of the previous series which shares a common base with
+	the series being formatted (for example `git format-patch
+	--cover-letter --interdiff=feature/v1 -3 feature/v2`).
 
 --notes[=<ref>]::
 	Append the notes (see linkgit:git-notes[1]) for the commit
