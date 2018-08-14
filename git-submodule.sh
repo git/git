@@ -516,6 +516,9 @@ cmd_update()
 		-q|--quiet)
 			GIT_QUIET=1
 			;;
+		-v)
+			GIT_QUIET=0
+			;;
 		--progress)
 			progress="--progress"
 			;;
