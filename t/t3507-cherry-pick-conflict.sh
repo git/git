@@ -392,4 +392,17 @@ test_expect_success 'commit --amend -s places the sign-off at the right place' '
 	test_cmp expect actual
 '
 
+test_expect_success 'cherry-pick preserves sparse-checkout' '
+	pristine_detach initial &&
+	test_config core.sparseCheckout true &&
+	test_when_finished "
+		echo \"/*\" >.git/info/sparse-checkout
+		git read-tree --reset -u HEAD
+		rm .git/info/sparse-checkout" &&
+	echo /unrelated >.git/info/sparse-checkout &&
+	git read-tree --reset -u HEAD &&
+	test_must_fail git cherry-pick -Xours picked>actual &&
+	test_i18ngrep ! "Changes not staged for commit:" actual
+'
+
 test_done

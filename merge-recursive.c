@@ -3070,10 +3070,26 @@ static int merge_content(struct merge_options *o,
 	if (mfi.clean &&
 	    was_tracked_and_matches(o, path, &mfi.oid, mfi.mode) &&
 	    !df_conflict_remains) {
+		int pos;
+		struct cache_entry *ce;
+
 		output(o, 3, _("Skipped %s (merged same as existing)"), path);
 		if (add_cacheinfo(o, mfi.mode, &mfi.oid, path,
 				  0, (!o->call_depth && !is_dirty), 0))
 			return -1;
+		/*
+		 * However, add_cacheinfo() will delete the old cache entry
+		 * and add a new one.  We need to copy over any skip_worktree
+		 * flag to avoid making the file appear as if it were
+		 * deleted by the user.
+		 */
+		pos = index_name_pos(&o->orig_index, path, strlen(path));
+		ce = o->orig_index.cache[pos];
+		if (ce_skip_worktree(ce)) {
+			pos = index_name_pos(&the_index, path, strlen(path));
+			ce = the_index.cache[pos];
+			ce->ce_flags |= CE_SKIP_WORKTREE;
+		}
 		return mfi.clean;
 	}
 
