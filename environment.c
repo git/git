@@ -8,6 +8,7 @@
  * are.
  */
 #include "cache.h"
+#include "branch.h"
 #include "repository.h"
 #include "config.h"
 #include "refs.h"

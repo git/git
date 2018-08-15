@@ -6,6 +6,7 @@
  *
  */
 #include "cache.h"
+#include "branch.h"
 #include "config.h"
 #include "repository.h"
 #include "lockfile.h"
