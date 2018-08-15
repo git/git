@@ -363,6 +363,24 @@ test_expect_success 'custom http headers' '
 		submodule update sub
 '
 
+test_expect_success 'using fetch command in remote-curl updates refs' '
+	SERVER="$HTTPD_DOCUMENT_ROOT_PATH/twobranch" &&
+	rm -rf "$SERVER" client &&
+
+	git init "$SERVER" &&
+	test_commit -C "$SERVER" foo &&
+	git -C "$SERVER" update-ref refs/heads/anotherbranch foo &&
+
+	git clone $HTTPD_URL/smart/twobranch client &&
+
+	test_commit -C "$SERVER" bar &&
+	git -C client -c protocol.version=0 fetch &&
+
+	git -C "$SERVER" rev-parse master >expect &&
+	git -C client rev-parse origin/master >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'GIT_REDACT_COOKIES redacts cookies' '
 	rm -rf clone &&
 	echo "Set-Cookie: Foo=1" >cookies &&

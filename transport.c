@@ -151,8 +151,7 @@ static struct ref *get_refs_from_bundle(struct transport *transport,
 }
 
 static int fetch_refs_from_bundle(struct transport *transport,
-			       int nr_heads, struct ref **to_fetch,
-			       struct ref **fetched_refs)
+			       int nr_heads, struct ref **to_fetch)
 {
 	struct bundle_transport_data *data = transport->data;
 	return unbundle(&data->header, data->fd,
@@ -288,8 +287,7 @@ static struct ref *get_refs_via_connect(struct transport *transport, int for_pus
 }
 
 static int fetch_refs_via_pack(struct transport *transport,
-			       int nr_heads, struct ref **to_fetch,
-			       struct ref **fetched_refs)
+			       int nr_heads, struct ref **to_fetch)
 {
 	int ret = 0;
 	struct git_transport_data *data = transport->data;
@@ -358,12 +356,8 @@ static int fetch_refs_via_pack(struct transport *transport,
 	if (report_unmatched_refs(to_fetch, nr_heads))
 		ret = -1;
 
-	if (fetched_refs)
-		*fetched_refs = refs;
-	else
-		free_refs(refs);
-
 	free_refs(refs_tmp);
+	free_refs(refs);
 	free(dest);
 	return ret;
 }
@@ -1223,31 +1217,19 @@ const struct ref *transport_get_remote_refs(struct transport *transport,
 	return transport->remote_refs;
 }
 
-int transport_fetch_refs(struct transport *transport, struct ref *refs,
-			 struct ref **fetched_refs)
+int transport_fetch_refs(struct transport *transport, struct ref *refs)
 {
 	int rc;
 	int nr_heads = 0, nr_alloc = 0, nr_refs = 0;
 	struct ref **heads = NULL;
-	struct ref *nop_head = NULL, **nop_tail = &nop_head;
 	struct ref *rm;
 
 	for (rm = refs; rm; rm = rm->next) {
 		nr_refs++;
 		if (rm->peer_ref &&
 		    !is_null_oid(&rm->old_oid) &&
-		    !oidcmp(&rm->peer_ref->old_oid, &rm->old_oid)) {
-			/*
-			 * These need to be reported as fetched, but we don't
-			 * actually need to fetch them.
-			 */
-			if (fetched_refs) {
-				struct ref *nop_ref = copy_ref(rm);
-				*nop_tail = nop_ref;
-				nop_tail = &nop_ref->next;
-			}
+		    !oidcmp(&rm->peer_ref->old_oid, &rm->old_oid))
 			continue;
-		}
 		ALLOC_GROW(heads, nr_heads + 1, nr_alloc);
 		heads[nr_heads++] = rm;
 	}
@@ -1265,11 +1247,7 @@ int transport_fetch_refs(struct transport *transport, struct ref *refs,
 			heads[nr_heads++] = rm;
 	}
 
-	rc = transport->vtable->fetch(transport, nr_heads, heads, fetched_refs);
-	if (fetched_refs && nop_head) {
-		*nop_tail = *fetched_refs;
-		*fetched_refs = nop_head;
-	}
+	rc = transport->vtable->fetch(transport, nr_heads, heads);
 
 	free(heads);
 	return rc;

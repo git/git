@@ -942,13 +942,11 @@ static int quickfetch(struct ref *ref_map)
 	return check_connected(iterate_ref_map, &rm, &opt);
 }
 
-static int fetch_refs(struct transport *transport, struct ref *ref_map,
-		      struct ref **updated_remote_refs)
+static int fetch_refs(struct transport *transport, struct ref *ref_map)
 {
 	int ret = quickfetch(ref_map);
 	if (ret)
-		ret = transport_fetch_refs(transport, ref_map,
-					   updated_remote_refs);
+		ret = transport_fetch_refs(transport, ref_map);
 	if (!ret)
 		/*
 		 * Keep the new pack's ".keep" file around to allow the caller
@@ -1153,7 +1151,7 @@ static void backfill_tags(struct transport *transport, struct ref *ref_map)
 	transport_set_option(transport, TRANS_OPT_FOLLOWTAGS, NULL);
 	transport_set_option(transport, TRANS_OPT_DEPTH, "0");
 	transport_set_option(transport, TRANS_OPT_DEEPEN_RELATIVE, NULL);
-	if (!fetch_refs(transport, ref_map, NULL))
+	if (!fetch_refs(transport, ref_map))
 		consume_refs(transport, ref_map);
 
 	if (gsecondary) {
@@ -1169,7 +1167,6 @@ static int do_fetch(struct transport *transport,
 	int autotags = (transport->remote->fetch_tags == 1);
 	int retcode = 0;
 	const struct ref *remote_refs;
-	struct ref *updated_remote_refs = NULL;
 	struct argv_array ref_prefixes = ARGV_ARRAY_INIT;
 
 	if (tags == TAGS_DEFAULT) {
@@ -1220,24 +1217,7 @@ static int do_fetch(struct transport *transport,
 				   transport->url);
 		}
 	}
-
-	if (fetch_refs(transport, ref_map, &updated_remote_refs)) {
-		free_refs(ref_map);
-		retcode = 1;
-		goto cleanup;
-	}
-	if (updated_remote_refs) {
-		/*
-		 * Regenerate ref_map using the updated remote refs.  This is
-		 * to account for additional information which may be provided
-		 * by the transport (e.g. shallow info).
-		 */
-		free_refs(ref_map);
-		ref_map = get_ref_map(transport->remote, updated_remote_refs, rs,
-				      tags, &autotags);
-		free_refs(updated_remote_refs);
-	}
-	if (consume_refs(transport, ref_map)) {
+	if (fetch_refs(transport, ref_map) || consume_refs(transport, ref_map)) {
 		free_refs(ref_map);
 		retcode = 1;
 		goto cleanup;
