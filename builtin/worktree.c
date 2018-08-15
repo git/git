@@ -27,6 +27,7 @@ static const char * const worktree_usage[] = {
 struct add_opts {
 	int force;
 	int detach;
+	int quiet;
 	int checkout;
 	int keep_locked;
 };
@@ -303,9 +304,13 @@ static int add_worktree(const char *path, const char *refname,
 	if (!is_branch)
 		argv_array_pushl(&cp.args, "update-ref", "HEAD",
 				 oid_to_hex(&commit->object.oid), NULL);
-	else
+	else {
 		argv_array_pushl(&cp.args, "symbolic-ref", "HEAD",
 				 symref.buf, NULL);
+		if (opts->quiet)
+			argv_array_push(&cp.args, "--quiet");
+	}
+
 	cp.env = child_env.argv;
 	ret = run_command(&cp);
 	if (ret)
@@ -315,6 +320,8 @@ static int add_worktree(const char *path, const char *refname,
 		cp.argv = NULL;
 		argv_array_clear(&cp.args);
 		argv_array_pushl(&cp.args, "reset", "--hard", NULL);
+		if (opts->quiet)
+			argv_array_push(&cp.args, "--quiet");
 		cp.env = child_env.argv;
 		ret = run_command(&cp);
 		if (ret)
@@ -437,6 +444,7 @@ static int add(int ac, const char **av, const char *prefix)
 		OPT_BOOL(0, "detach", &opts.detach, N_("detach HEAD at named commit")),
 		OPT_BOOL(0, "checkout", &opts.checkout, N_("populate the new working tree")),
 		OPT_BOOL(0, "lock", &opts.keep_locked, N_("keep the new working tree locked")),
+		OPT__QUIET(&opts.quiet, N_("suppress progress reporting")),
 		OPT_PASSTHRU(0, "track", &opt_track, NULL,
 			     N_("set up tracking mode (see git-branch(1))"),
 			     PARSE_OPT_NOARG | PARSE_OPT_OPTARG),
@@ -491,8 +499,8 @@ static int add(int ac, const char **av, const char *prefix)
 			}
 		}
 	}
-
-	print_preparing_worktree_line(opts.detach, branch, new_branch, !!new_branch_force);
+	if (!opts.quiet)
+		print_preparing_worktree_line(opts.detach, branch, new_branch, !!new_branch_force);
 
 	if (new_branch) {
 		struct child_process cp = CHILD_PROCESS_INIT;
@@ -500,6 +508,8 @@ static int add(int ac, const char **av, const char *prefix)
 		argv_array_push(&cp.args, "branch");
 		if (new_branch_force)
 			argv_array_push(&cp.args, "--force");
+		if (opts.quiet)
+			argv_array_push(&cp.args, "--quiet");
 		argv_array_push(&cp.args, new_branch);
 		argv_array_push(&cp.args, branch);
 		if (opt_track)

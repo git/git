@@ -252,6 +252,11 @@ test_expect_success 'add -B' '
 	test_cmp_rev master^ poodle
 '
 
+test_expect_success 'add --quiet' '
+	git worktree add --quiet another-worktree master 2>actual &&
+	test_must_be_empty actual
+'
+
 test_expect_success 'local clone from linked checkout' '
 	git clone --local here here-clone &&
 	( cd here-clone && git fsck )
