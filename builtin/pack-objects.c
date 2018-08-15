@@ -1858,18 +1858,30 @@ static int delta_cacheable(unsigned long src_size, unsigned long trg_size,
 
 #ifndef NO_PTHREADS
 
+/* Protect access to object database */
 static pthread_mutex_t read_mutex;
 #define read_lock()		pthread_mutex_lock(&read_mutex)
 #define read_unlock()		pthread_mutex_unlock(&read_mutex)
 
+/* Protect delta_cache_size */
 static pthread_mutex_t cache_mutex;
 #define cache_lock()		pthread_mutex_lock(&cache_mutex)
 #define cache_unlock()		pthread_mutex_unlock(&cache_mutex)
 
+/*
+ * Protect object list partitioning (e.g. struct thread_param) and
+ * progress_state
+ */
 static pthread_mutex_t progress_mutex;
 #define progress_lock()		pthread_mutex_lock(&progress_mutex)
 #define progress_unlock()	pthread_mutex_unlock(&progress_mutex)
 
+/*
+ * Access to struct object_entry is unprotected since each thread owns
+ * a portion of the main object list. Just don't access object entries
+ * ahead in the list because they can be stolen and would need
+ * progress_mutex for protection.
+ */
 #else
 
 #define read_lock()		(void)0
@@ -2251,12 +2263,19 @@ static void try_to_free_from_threads(size_t size)
 static try_to_free_t old_try_to_free_routine;
 
 /*
+ * The main object list is split into smaller lists, each is handed to
+ * one worker.
+ *
  * The main thread waits on the condition that (at least) one of the workers
  * has stopped working (which is indicated in the .working member of
  * struct thread_params).
+ *
  * When a work thread has completed its work, it sets .working to 0 and
  * signals the main thread and waits on the condition that .data_ready
  * becomes 1.
+ *
+ * The main thread steals half of the work from the worker that has
+ * most work left to hand it to the idle worker.
  */
 
 struct thread_params {
