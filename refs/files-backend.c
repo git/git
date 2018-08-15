@@ -363,7 +363,7 @@ stat_ref:
 	/* Follow "normalized" - ie "refs/.." symlinks by hand */
 	if (S_ISLNK(st.st_mode)) {
 		strbuf_reset(&sb_contents);
-		if (strbuf_readlink(&sb_contents, path, 0) < 0) {
+		if (strbuf_readlink(&sb_contents, path, st.st_size) < 0) {
 			if (errno == ENOENT || errno == EINVAL)
 				/* inconsistent with lstat; retry */
 				goto stat_ref;

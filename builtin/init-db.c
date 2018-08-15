@@ -73,7 +73,8 @@ static void copy_templates_1(struct strbuf *path, struct strbuf *template_path,
 			continue;
 		else if (S_ISLNK(st_template.st_mode)) {
 			struct strbuf lnk = STRBUF_INIT;
-			if (strbuf_readlink(&lnk, template_path->buf, 0) < 0)
+			if (strbuf_readlink(&lnk, template_path->buf,
+					    st_template.st_size) < 0)
 				die_errno(_("cannot readlink '%s'"), template_path->buf);
 			if (symlink(lnk.buf, path->buf))
 				die_errno(_("cannot symlink '%s' '%s'"),

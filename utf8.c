@@ -470,14 +470,14 @@ int utf8_fprintf(FILE *stream, const char *format, ...)
 #else
 	typedef char * iconv_ibp;
 #endif
-char *reencode_string_iconv(const char *in, size_t insz, iconv_t conv, int *outsz_p)
+char *reencode_string_iconv(const char *in, size_t insz, iconv_t conv, size_t *outsz_p)
 {
 	size_t outsz, outalloc;
 	char *out, *outpos;
 	iconv_ibp cp;
 
 	outsz = insz;
-	outalloc = outsz + 1; /* for terminating NUL */
+	outalloc = st_add(outsz, 1); /* for terminating NUL */
 	out = xmalloc(outalloc);
 	outpos = out;
 	cp = (iconv_ibp)in;
@@ -497,7 +497,7 @@ char *reencode_string_iconv(const char *in, size_t insz, iconv_t conv, int *outs
 			 * converting the rest.
 			 */
 			sofar = outpos - out;
-			outalloc = sofar + insz * 2 + 32;
+			outalloc = st_add3(sofar, st_mult(insz, 2), 32);
 			out = xrealloc(out, outalloc);
 			outpos = out + sofar;
 			outsz = outalloc - sofar - 1;
@@ -534,9 +534,9 @@ static const char *fallback_encoding(const char *name)
 	return name;
 }
 
-char *reencode_string_len(const char *in, int insz,
+char *reencode_string_len(const char *in, size_t insz,
 			  const char *out_encoding, const char *in_encoding,
-			  int *outsz)
+			  size_t *outsz)
 {
 	iconv_t conv;
 	char *out;

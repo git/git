@@ -134,7 +134,7 @@ void strbuf_ltrim(struct strbuf *sb)
 int strbuf_reencode(struct strbuf *sb, const char *from, const char *to)
 {
 	char *out;
-	int len;
+	size_t len;
 
 	if (same_encoding(from, to))
 		return 0;
@@ -209,7 +209,7 @@ void strbuf_list_free(struct strbuf **sbs)
 
 int strbuf_cmp(const struct strbuf *a, const struct strbuf *b)
 {
-	int len = a->len < b->len ? a->len: b->len;
+	size_t len = a->len < b->len ? a->len: b->len;
 	int cmp = memcmp(a->buf, b->buf, len);
 	if (cmp)
 		return cmp;
@@ -389,7 +389,7 @@ size_t strbuf_expand_dict_cb(struct strbuf *sb, const char *placeholder,
 
 void strbuf_addbuf_percentquote(struct strbuf *dst, const struct strbuf *src)
 {
-	int i, len = src->len;
+	size_t i, len = src->len;
 
 	for (i = 0; i < len; i++) {
 		if (src->buf[i] == '%')
@@ -469,7 +469,7 @@ int strbuf_readlink(struct strbuf *sb, const char *path, size_t hint)
 		hint = 32;
 
 	while (hint < STRBUF_MAXLINK) {
-		int len;
+		ssize_t len;
 
 		strbuf_grow(sb, hint);
 		len = readlink(path, sb->buf, hint);
@@ -734,18 +734,18 @@ void strbuf_humanise_bytes(struct strbuf *buf, off_t bytes)
 {
 	if (bytes > 1 << 30) {
 		strbuf_addf(buf, "%u.%2.2u GiB",
-			    (int)(bytes >> 30),
-			    (int)(bytes & ((1 << 30) - 1)) / 10737419);
+			    (unsigned)(bytes >> 30),
+			    (unsigned)(bytes & ((1 << 30) - 1)) / 10737419);
 	} else if (bytes > 1 << 20) {
-		int x = bytes + 5243;  /* for rounding */
+		unsigned x = bytes + 5243;  /* for rounding */
 		strbuf_addf(buf, "%u.%2.2u MiB",
 			    x >> 20, ((x & ((1 << 20) - 1)) * 100) >> 20);
 	} else if (bytes > 1 << 10) {
-		int x = bytes + 5;  /* for rounding */
+		unsigned x = bytes + 5;  /* for rounding */
 		strbuf_addf(buf, "%u.%2.2u KiB",
 			    x >> 10, ((x & ((1 << 10) - 1)) * 100) >> 10);
 	} else {
-		strbuf_addf(buf, "%u bytes", (int)bytes);
+		strbuf_addf(buf, "%u bytes", (unsigned)bytes);
 	}
 }
 
@@ -960,7 +960,7 @@ static size_t cleanup(char *line, size_t len)
  */
 void strbuf_stripspace(struct strbuf *sb, int skip_comments)
 {
-	int empties = 0;
+	size_t empties = 0;
 	size_t i, j, len, newlen;
 	char *eol;
 
