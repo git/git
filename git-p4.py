@@ -1494,7 +1494,13 @@ class P4Submit(Command, P4UserMap):
                 optparse.make_option("--disable-p4sync", dest="disable_p4sync", action="store_true",
                                      help="Skip Perforce sync of p4/master after submit or shelve"),
         ]
-        self.description = "Submit changes from git to the perforce depot."
+        self.description = """Submit changes from git to the perforce depot.\n
+    The `p4-pre-submit` hook is executed if it exists and is executable.
+    The hook takes no parameters and nothing from standard input. Exiting with
+    non-zero status from this script prevents `git-p4 submit` from launching.
+
+    One usage scenario is to run unit tests in the hook."""
+
         self.usage += " [name of git branch to submit into perforce depot]"
         self.origin = ""
         self.detectRenames = False
@@ -2302,6 +2308,14 @@ class P4Submit(Command, P4UserMap):
         if num_shelves > 0 and num_shelves != len(commits):
             sys.exit("number of commits (%d) must match number of shelved changelist (%d)" %
                      (len(commits), num_shelves))
+
+        hooks_path = gitConfig("core.hooksPath")
+        if len(hooks_path) <= 0:
+            hooks_path = os.path.join(os.environ.get("GIT_DIR", ".git"), "hooks")
+
+        hook_file = os.path.join(hooks_path, "p4-pre-submit")
+        if os.path.isfile(hook_file) and os.access(hook_file, os.X_OK) and subprocess.call([hook_file]) != 0:
+            sys.exit(1)
 
         #
         # Apply the commits, one at a time.  On failure, ask if should

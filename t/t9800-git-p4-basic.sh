@@ -261,6 +261,35 @@ test_expect_success 'unresolvable host in P4PORT should display error' '
 	)
 '
 
+# Test following scenarios:
+#   - Without ".git/hooks/p4-pre-submit" , submit should continue
+#   - With the hook returning 0, submit should continue
+#   - With the hook returning 1, submit should abort
+test_expect_success 'run hook p4-pre-submit before submit' '
+	test_when_finished cleanup_git &&
+	git p4 clone --dest="$git" //depot &&
+	(
+		cd "$git" &&
+		echo "hello world" >hello.txt &&
+		git add hello.txt &&
+		git commit -m "add hello.txt" &&
+		git config git-p4.skipSubmitEdit true &&
+		git p4 submit --dry-run >out &&
+		grep "Would apply" out &&
+		mkdir -p .git/hooks &&
+		write_script .git/hooks/p4-pre-submit <<-\EOF &&
+		exit 0
+		EOF
+		git p4 submit --dry-run >out &&
+		grep "Would apply" out &&
+		write_script .git/hooks/p4-pre-submit <<-\EOF &&
+		exit 1
+		EOF
+		test_must_fail git p4 submit --dry-run >errs 2>&1 &&
+		! grep "Would apply" errs
+	)
+'
+
 test_expect_success 'submit from detached head' '
 	test_when_finished cleanup_git &&
 	git p4 clone --dest="$git" //depot &&
