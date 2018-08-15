@@ -1,12 +1,12 @@
 #ifndef PACKFILE_H
 #define PACKFILE_H
 
+#include "cache.h"
 #include "oidset.h"
 
 /* in object-store.h */
 struct packed_git;
 struct object_info;
-enum object_type;
 
 /*
  * Generate the filename to be used for a pack file with checksum "sha1" and
