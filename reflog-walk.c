@@ -128,7 +128,7 @@ int add_reflog_for_walk(struct reflog_walk_info *info,
 	enum selector_type selector = SELECTOR_NONE;
 
 	if (commit->object.flags & UNINTERESTING)
-		die ("Cannot walk reflogs for %s", name);
+		die("cannot walk reflogs for %s", name);
 
 	branch = xstrdup(name);
 	if (at && at[1] == '{') {
@@ -153,7 +153,7 @@ int add_reflog_for_walk(struct reflog_walk_info *info,
 			free(branch);
 			branch = resolve_refdup("HEAD", 0, NULL, NULL);
 			if (!branch)
-				die ("No current branch");
+				die("no current branch");
 
 		}
 		reflogs = read_complete_reflog(branch);

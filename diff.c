@@ -2071,8 +2071,8 @@ static void init_diff_words_data(struct emit_callback *ecbdata,
 		if (regcomp(ecbdata->diff_words->word_regex,
 			    o->word_regex,
 			    REG_EXTENDED | REG_NEWLINE))
-			die ("Invalid regular expression: %s",
-			     o->word_regex);
+			die("invalid regular expression: %s",
+			    o->word_regex);
 	}
 	for (i = 0; i < ARRAY_SIZE(diff_words_styles); i++) {
 		if (o->word_diff == diff_words_styles[i].type) {

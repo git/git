@@ -628,7 +628,7 @@ int fmt_merge_msg(struct strbuf *in, struct strbuf *out,
 		i++;
 		p[len] = 0;
 		if (handle_line(p, &merge_parents))
-			die ("Error in line %d: %.*s", i, len, p);
+			die("error in line %d: %.*s", i, len, p);
 	}
 
 	if (opts->add_title && srcs.nr)

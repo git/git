@@ -189,7 +189,7 @@ int ref_resolves_to_object(const char *refname,
 	if (flags & REF_ISBROKEN)
 		return 0;
 	if (!has_sha1_file(oid->hash)) {
-		error("%s does not point to a valid object!", refname);
+		error(_("%s does not point to a valid object!"), refname);
 		return 0;
 	}
 	return 1;
@@ -568,9 +568,9 @@ int expand_ref(const char *str, int len, struct object_id *oid, char **ref)
 			if (!warn_ambiguous_refs)
 				break;
 		} else if ((flag & REF_ISSYMREF) && strcmp(fullref.buf, "HEAD")) {
-			warning("ignoring dangling symref %s.", fullref.buf);
+			warning(_("ignoring dangling symref %s"), fullref.buf);
 		} else if ((flag & REF_ISBROKEN) && strchr(fullref.buf, '/')) {
-			warning("ignoring broken ref %s.", fullref.buf);
+			warning(_("ignoring broken ref %s"), fullref.buf);
 		}
 	}
 	strbuf_release(&fullref);
@@ -674,7 +674,7 @@ static int write_pseudoref(const char *pseudoref, const struct object_id *oid,
 	fd = hold_lock_file_for_update_timeout(&lock, filename, 0,
 					       get_files_ref_lock_timeout_ms());
 	if (fd < 0) {
-		strbuf_addf(err, "could not open '%s' for writing: %s",
+		strbuf_addf(err, _("could not open '%s' for writing: %s"),
 			    filename, strerror(errno));
 		goto done;
 	}
@@ -684,18 +684,18 @@ static int write_pseudoref(const char *pseudoref, const struct object_id *oid,
 
 		if (read_ref(pseudoref, &actual_old_oid)) {
 			if (!is_null_oid(old_oid)) {
-				strbuf_addf(err, "could not read ref '%s'",
+				strbuf_addf(err, _("could not read ref '%s'"),
 					    pseudoref);
 				rollback_lock_file(&lock);
 				goto done;
 			}
 		} else if (is_null_oid(old_oid)) {
-			strbuf_addf(err, "ref '%s' already exists",
+			strbuf_addf(err, _("ref '%s' already exists"),
 				    pseudoref);
 			rollback_lock_file(&lock);
 			goto done;
 		} else if (oidcmp(&actual_old_oid, old_oid)) {
-			strbuf_addf(err, "unexpected object ID when writing '%s'",
+			strbuf_addf(err, _("unexpected object ID when writing '%s'"),
 				    pseudoref);
 			rollback_lock_file(&lock);
 			goto done;
@@ -703,7 +703,7 @@ static int write_pseudoref(const char *pseudoref, const struct object_id *oid,
 	}
 
 	if (write_in_full(fd, buf.buf, buf.len) < 0) {
-		strbuf_addf(err, "could not write to '%s'", filename);
+		strbuf_addf(err, _("could not write to '%s'"), filename);
 		rollback_lock_file(&lock);
 		goto done;
 	}
@@ -735,9 +735,9 @@ static int delete_pseudoref(const char *pseudoref, const struct object_id *old_o
 			return -1;
 		}
 		if (read_ref(pseudoref, &actual_old_oid))
-			die("could not read ref '%s'", pseudoref);
+			die(_("could not read ref '%s'"), pseudoref);
 		if (oidcmp(&actual_old_oid, old_oid)) {
-			error("unexpected object ID when deleting '%s'",
+			error(_("unexpected object ID when deleting '%s'"),
 			      pseudoref);
 			rollback_lock_file(&lock);
 			return -1;
@@ -868,13 +868,13 @@ static int read_ref_at_ent(struct object_id *ooid, struct object_id *noid,
 		if (!is_null_oid(&cb->ooid)) {
 			oidcpy(cb->oid, noid);
 			if (oidcmp(&cb->ooid, noid))
-				warning("Log for ref %s has gap after %s.",
+				warning(_("log for ref %s has gap after %s"),
 					cb->refname, show_date(cb->date, cb->tz, DATE_MODE(RFC2822)));
 		}
 		else if (cb->date == cb->at_time)
 			oidcpy(cb->oid, noid);
 		else if (oidcmp(noid, cb->oid))
-			warning("Log for ref %s unexpectedly ended on %s.",
+			warning(_("log for ref %s unexpectedly ended on %s"),
 				cb->refname, show_date(cb->date, cb->tz,
 						       DATE_MODE(RFC2822)));
 		oidcpy(&cb->ooid, ooid);
@@ -932,7 +932,7 @@ int read_ref_at(const char *refname, unsigned int flags, timestamp_t at_time, in
 		if (flags & GET_OID_QUIETLY)
 			exit(128);
 		else
-			die("Log for %s is empty.", refname);
+			die(_("log for %s is empty"), refname);
 	}
 	if (cb.found_it)
 		return 0;
@@ -1024,7 +1024,7 @@ int ref_transaction_update(struct ref_transaction *transaction,
 	if ((new_oid && !is_null_oid(new_oid)) ?
 	    check_refname_format(refname, REFNAME_ALLOW_ONELEVEL) :
 	    !refname_is_safe(refname)) {
-		strbuf_addf(err, "refusing to update ref with bad name '%s'",
+		strbuf_addf(err, _("refusing to update ref with bad name '%s'"),
 			    refname);
 		return -1;
 	}
@@ -1100,7 +1100,7 @@ int refs_update_ref(struct ref_store *refs, const char *msg,
 		}
 	}
 	if (ret) {
-		const char *str = "update_ref failed for ref '%s': %s";
+		const char *str = _("update_ref failed for ref '%s': %s");
 
 		switch (onerr) {
 		case UPDATE_REFS_MSG_ON_ERR:
@@ -1842,7 +1842,7 @@ int ref_update_reject_duplicates(struct string_list *refnames,
 
 		if (!cmp) {
 			strbuf_addf(err,
-				    "multiple updates for ref '%s' not allowed.",
+				    _("multiple updates for ref '%s' not allowed"),
 				    refnames->items[i].string);
 			return 1;
 		} else if (cmp > 0) {
@@ -1970,13 +1970,13 @@ int refs_verify_refname_available(struct ref_store *refs,
 			continue;
 
 		if (!refs_read_raw_ref(refs, dirname.buf, &oid, &referent, &type)) {
-			strbuf_addf(err, "'%s' exists; cannot create '%s'",
+			strbuf_addf(err, _("'%s' exists; cannot create '%s'"),
 				    dirname.buf, refname);
 			goto cleanup;
 		}
 
 		if (extras && string_list_has_string(extras, dirname.buf)) {
-			strbuf_addf(err, "cannot process '%s' and '%s' at the same time",
+			strbuf_addf(err, _("cannot process '%s' and '%s' at the same time"),
 				    refname, dirname.buf);
 			goto cleanup;
 		}
@@ -2000,7 +2000,7 @@ int refs_verify_refname_available(struct ref_store *refs,
 		    string_list_has_string(skip, iter->refname))
 			continue;
 
-		strbuf_addf(err, "'%s' exists; cannot create '%s'",
+		strbuf_addf(err, _("'%s' exists; cannot create '%s'"),
 			    iter->refname, refname);
 		ref_iterator_abort(iter);
 		goto cleanup;
@@ -2011,7 +2011,7 @@ int refs_verify_refname_available(struct ref_store *refs,
 
 	extra_refname = find_descendant_ref(dirname.buf, extras, skip);
 	if (extra_refname)
-		strbuf_addf(err, "cannot process '%s' and '%s' at the same time",
+		strbuf_addf(err, _("cannot process '%s' and '%s' at the same time"),
 			    refname, extra_refname);
 	else
 		ret = 0;

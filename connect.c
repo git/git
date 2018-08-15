@@ -58,7 +58,7 @@ static NORETURN void die_initial_contact(int unexpected)
 	 * response does not necessarily mean an ACL problem, though.
 	 */
 	if (unexpected)
-		die(_("The remote end hung up upon initial contact"));
+		die(_("the remote end hung up upon initial contact"));
 	else
 		die(_("Could not read from remote repository.\n\n"
 		      "Please make sure you have the correct access rights\n"
@@ -78,7 +78,7 @@ int server_supports_v2(const char *c, int die_on_error)
 	}
 
 	if (die_on_error)
-		die("server doesn't support '%s'", c);
+		die(_("server doesn't support '%s'"), c);
 
 	return 0;
 }
@@ -100,7 +100,7 @@ int server_supports_feature(const char *c, const char *feature,
 	}
 
 	if (die_on_error)
-		die("server doesn't support feature '%s'", feature);
+		die(_("server doesn't support feature '%s'"), feature);
 
 	return 0;
 }
@@ -111,7 +111,7 @@ static void process_capabilities_v2(struct packet_reader *reader)
 		argv_array_push(&server_capabilities_v2, reader->line);
 
 	if (reader->status != PACKET_READ_FLUSH)
-		die("expected flush after capabilities");
+		die(_("expected flush after capabilities"));
 }
 
 enum protocol_version discover_version(struct packet_reader *reader)
@@ -230,7 +230,7 @@ static int process_dummy_ref(const char *line)
 static void check_no_capabilities(const char *line, int len)
 {
 	if (strlen(line) != len)
-		warning("Ignoring capabilities after first line '%s'",
+		warning(_("ignoring capabilities after first line '%s'"),
 			line + strlen(line));
 }
 
@@ -249,7 +249,7 @@ static int process_ref(const char *line, int len, struct ref ***list,
 	if (extra_have && !strcmp(name, ".have")) {
 		oid_array_append(extra_have, &old_oid);
 	} else if (!strcmp(name, "capabilities^{}")) {
-		die("protocol error: unexpected capabilities^{}");
+		die(_("protocol error: unexpected capabilities^{}"));
 	} else if (check_ref(name, flags)) {
 		struct ref *ref = alloc_ref(name);
 		oidcpy(&ref->old_oid, &old_oid);
@@ -270,9 +270,9 @@ static int process_shallow(const char *line, int len,
 		return 0;
 
 	if (get_oid_hex(arg, &old_oid))
-		die("protocol error: expected shallow sha-1, got '%s'", arg);
+		die(_("protocol error: expected shallow sha-1, got '%s'"), arg);
 	if (!shallow_points)
-		die("repository on the other end cannot be shallow");
+		die(_("repository on the other end cannot be shallow"));
 	oid_array_append(shallow_points, &old_oid);
 	check_no_capabilities(line, len);
 	return 1;
@@ -307,13 +307,13 @@ struct ref **get_remote_heads(struct packet_reader *reader,
 		case PACKET_READ_NORMAL:
 			len = reader->pktlen;
 			if (len > 4 && skip_prefix(reader->line, "ERR ", &arg))
-				die("remote error: %s", arg);
+				die(_("remote error: %s"), arg);
 			break;
 		case PACKET_READ_FLUSH:
 			state = EXPECTING_DONE;
 			break;
 		case PACKET_READ_DELIM:
-			die("invalid packet");
+			die(_("invalid packet"));
 		}
 
 		switch (state) {
@@ -333,7 +333,7 @@ struct ref **get_remote_heads(struct packet_reader *reader,
 		case EXPECTING_SHALLOW:
 			if (process_shallow(reader->line, len, shallow_points))
 				break;
-			die("protocol error: unexpected '%s'", reader->line);
+			die(_("protocol error: unexpected '%s'"), reader->line);
 		case EXPECTING_DONE:
 			break;
 		}
@@ -441,11 +441,11 @@ struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
 	/* Process response from server */
 	while (packet_reader_read(reader) == PACKET_READ_NORMAL) {
 		if (!process_ref_v2(reader->line, &list))
-			die("invalid ls-refs response: %s", reader->line);
+			die(_("invalid ls-refs response: %s"), reader->line);
 	}
 
 	if (reader->status != PACKET_READ_FLUSH)
-		die("expected flush after ref listing");
+		die(_("expected flush after ref listing"));
 
 	return list;
 }
@@ -544,7 +544,7 @@ static enum protocol get_protocol(const char *name)
 		return PROTO_SSH;
 	if (!strcmp(name, "file"))
 		return PROTO_FILE;
-	die("I don't handle protocol '%s'", name);
+	die(_("protocol '%s' is not supported"), name);
 }
 
 static char *host_end(char **hoststart, int removebrackets)
@@ -595,8 +595,7 @@ static void enable_keepalive(int sockfd)
 	int ka = 1;
 
 	if (setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, &ka, sizeof(ka)) < 0)
-		fprintf(stderr, "unable to set SO_KEEPALIVE on socket: %s\n",
-			strerror(errno));
+		error_errno(_("unable to set SO_KEEPALIVE on socket"));
 }
 
 #ifndef NO_IPV6
@@ -636,14 +635,15 @@ static int git_tcp_connect_sock(char *host, int flags)
 	hints.ai_protocol = IPPROTO_TCP;
 
 	if (flags & CONNECT_VERBOSE)
-		fprintf(stderr, "Looking up %s ... ", host);
+		fprintf(stderr, _("Looking up %s ... "), host);
 
 	gai = getaddrinfo(host, port, &hints, &ai);
 	if (gai)
-		die("Unable to look up %s (port %s) (%s)", host, port, gai_strerror(gai));
+		die(_("unable to look up %s (port %s) (%s)"), host, port, gai_strerror(gai));
 
 	if (flags & CONNECT_VERBOSE)
-		fprintf(stderr, "done.\nConnecting to %s (port %s) ... ", host, port);
+		/* TRANSLATORS: this is the end of "Looking up %s ... " */
+		fprintf(stderr, _("done.\nConnecting to %s (port %s) ... "), host, port);
 
 	for (ai0 = ai; ai; ai = ai->ai_next, cnt++) {
 		sockfd = socket(ai->ai_family,
@@ -665,12 +665,13 @@ static int git_tcp_connect_sock(char *host, int flags)
 	freeaddrinfo(ai0);
 
 	if (sockfd < 0)
-		die("unable to connect to %s:\n%s", host, error_message.buf);
+		die(_("unable to connect to %s:\n%s"), host, error_message.buf);
 
 	enable_keepalive(sockfd);
 
 	if (flags & CONNECT_VERBOSE)
-		fprintf(stderr, "done.\n");
+		/* TRANSLATORS: this is the end of "Connecting to %s (port %s) ... " */
+		fprintf_ln(stderr, _("done."));
 
 	strbuf_release(&error_message);
 
@@ -697,22 +698,23 @@ static int git_tcp_connect_sock(char *host, int flags)
 	get_host_and_port(&host, &port);
 
 	if (flags & CONNECT_VERBOSE)
-		fprintf(stderr, "Looking up %s ... ", host);
+		fprintf(stderr, _("Looking up %s ... "), host);
 
 	he = gethostbyname(host);
 	if (!he)
-		die("Unable to look up %s (%s)", host, hstrerror(h_errno));
+		die(_("unable to look up %s (%s)"), host, hstrerror(h_errno));
 	nport = strtoul(port, &ep, 10);
 	if ( ep == port || *ep ) {
 		/* Not numeric */
 		struct servent *se = getservbyname(port,"tcp");
 		if ( !se )
-			die("Unknown port %s", port);
+			die(_("unknown port %s"), port);
 		nport = se->s_port;
 	}
 
 	if (flags & CONNECT_VERBOSE)
-		fprintf(stderr, "done.\nConnecting to %s (port %s) ... ", host, port);
+		/* TRANSLATORS: this is the end of "Looking up %s ... " */
+		fprintf(stderr, _("done.\nConnecting to %s (port %s) ... "), host, port);
 
 	for (cnt = 0, ap = he->h_addr_list; *ap; ap++, cnt++) {
 		memset(&sa, 0, sizeof sa);
@@ -740,12 +742,13 @@ static int git_tcp_connect_sock(char *host, int flags)
 	}
 
 	if (sockfd < 0)
-		die("unable to connect to %s:\n%s", host, error_message.buf);
+		die(_("unable to connect to %s:\n%s"), host, error_message.buf);
 
 	enable_keepalive(sockfd);
 
 	if (flags & CONNECT_VERBOSE)
-		fprintf(stderr, "done.\n");
+		/* TRANSLATORS: this is the end of "Connecting to %s (port %s) ... " */
+		fprintf_ln(stderr, _("done."));
 
 	return sockfd;
 }
@@ -842,9 +845,9 @@ static struct child_process *git_proxy_connect(int fd[2], char *host)
 	get_host_and_port(&host, &port);
 
 	if (looks_like_command_line_option(host))
-		die("strange hostname '%s' blocked", host);
+		die(_("strange hostname '%s' blocked"), host);
 	if (looks_like_command_line_option(port))
-		die("strange port '%s' blocked", port);
+		die(_("strange port '%s' blocked"), port);
 
 	proxy = xmalloc(sizeof(*proxy));
 	child_process_init(proxy);
@@ -854,7 +857,7 @@ static struct child_process *git_proxy_connect(int fd[2], char *host)
 	proxy->in = -1;
 	proxy->out = -1;
 	if (start_command(proxy))
-		die("cannot start proxy %s", git_proxy_command);
+		die(_("cannot start proxy %s"), git_proxy_command);
 	fd[0] = proxy->out; /* read from proxy stdout */
 	fd[1] = proxy->in;  /* write to proxy stdin */
 	return proxy;
@@ -921,7 +924,7 @@ static enum protocol parse_connect_url(const char *url_orig, char **ret_host,
 		path = strchr(end, separator);
 
 	if (!path || !*path)
-		die("No path specified. See 'man git-pull' for valid url syntax");
+		die(_("no path specified; see 'git help pull' for valid url syntax"));
 
 	/*
 	 * null-terminate hostname and point path to ~ for URL's like this:
@@ -1116,7 +1119,7 @@ static void push_ssh_options(struct argv_array *args, struct argv_array *env,
 		case VARIANT_AUTO:
 			BUG("VARIANT_AUTO passed to push_ssh_options");
 		case VARIANT_SIMPLE:
-			die("ssh variant 'simple' does not support -4");
+			die(_("ssh variant 'simple' does not support -4"));
 		case VARIANT_SSH:
 		case VARIANT_PLINK:
 		case VARIANT_PUTTY:
@@ -1128,7 +1131,7 @@ static void push_ssh_options(struct argv_array *args, struct argv_array *env,
 		case VARIANT_AUTO:
 			BUG("VARIANT_AUTO passed to push_ssh_options");
 		case VARIANT_SIMPLE:
-			die("ssh variant 'simple' does not support -6");
+			die(_("ssh variant 'simple' does not support -6"));
 		case VARIANT_SSH:
 		case VARIANT_PLINK:
 		case VARIANT_PUTTY:
@@ -1145,7 +1148,7 @@ static void push_ssh_options(struct argv_array *args, struct argv_array *env,
 		case VARIANT_AUTO:
 			BUG("VARIANT_AUTO passed to push_ssh_options");
 		case VARIANT_SIMPLE:
-			die("ssh variant 'simple' does not support setting port");
+			die(_("ssh variant 'simple' does not support setting port"));
 		case VARIANT_SSH:
 			argv_array_push(args, "-p");
 			break;
@@ -1168,7 +1171,7 @@ static void fill_ssh_args(struct child_process *conn, const char *ssh_host,
 	enum ssh_variant variant;
 
 	if (looks_like_command_line_option(ssh_host))
-		die("strange hostname '%s' blocked", ssh_host);
+		die(_("strange hostname '%s' blocked"), ssh_host);
 
 	ssh = get_ssh_command();
 	if (ssh) {
@@ -1256,7 +1259,7 @@ struct child_process *git_connect(int fd[2], const char *url,
 		child_process_init(conn);
 
 		if (looks_like_command_line_option(path))
-			die("strange pathname '%s' blocked", path);
+			die(_("strange pathname '%s' blocked"), path);
 
 		strbuf_addstr(&cmd, prog);
 		strbuf_addch(&cmd, ' ');
@@ -1301,7 +1304,7 @@ struct child_process *git_connect(int fd[2], const char *url,
 		argv_array_push(&conn->args, cmd.buf);
 
 		if (start_command(conn))
-			die("unable to fork");
+			die(_("unable to fork"));
 
 		fd[0] = conn->out; /* read from child's stdout */
 		fd[1] = conn->in;  /* write to child's stdin */
