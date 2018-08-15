@@ -1,6 +1,10 @@
 #ifndef LIST_OBJECTS_FILTER_H
 #define LIST_OBJECTS_FILTER_H
 
+struct list_objects_filter_options;
+struct object;
+struct oidset;
+
 /*
  * During list-object traversal we allow certain objects to be
  * filtered (omitted) from the result.  The active filter uses

@@ -1,6 +1,8 @@
 #ifndef CSUM_FILE_H
 #define CSUM_FILE_H
 
+#include "hash.h"
+
 struct progress;
 
 /* A SHA1-protected file */

@@ -5,6 +5,8 @@
 #ifndef LL_MERGE_H
 #define LL_MERGE_H
 
+#include "xdiff/xdiff.h"
+
 struct ll_merge_options {
 	unsigned virtual_ancestor : 1;
 	unsigned variant : 2;	/* favor ours, favor theirs, or union merge */

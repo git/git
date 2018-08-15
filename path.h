@@ -2,6 +2,7 @@
 #define PATH_H
 
 struct repository;
+struct strbuf;
 
 /*
  * The result to all functions which return statically allocated memory may be

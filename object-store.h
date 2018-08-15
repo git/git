@@ -1,6 +1,7 @@
 #ifndef OBJECT_STORE_H
 #define OBJECT_STORE_H
 
+#include "cache.h"
 #include "oidmap.h"
 #include "list.h"
 #include "sha1-array.h"

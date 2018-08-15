@@ -1,8 +1,10 @@
 #ifndef MERGE_RECURSIVE_H
 #define MERGE_RECURSIVE_H
 
-#include "unpack-trees.h"
 #include "string-list.h"
+#include "unpack-trees.h"
+
+struct commit;
 
 struct merge_options {
 	const char *ancestor;

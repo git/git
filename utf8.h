@@ -1,6 +1,8 @@
 #ifndef GIT_UTF8_H
 #define GIT_UTF8_H
 
+struct strbuf;
+
 typedef unsigned int ucs_char_t;  /* assuming 32bit int */
 
 size_t display_mode_esc_sequence_len(const char *s);

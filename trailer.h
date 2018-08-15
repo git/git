@@ -3,6 +3,8 @@
 
 #include "list.h"
 
+struct strbuf;
+
 enum trailer_where {
 	WHERE_DEFAULT,
 	WHERE_END,

@@ -1,6 +1,8 @@
 #ifndef BRANCH_H
 #define BRANCH_H
 
+struct strbuf;
+
 /* Functions for acting on the information about branches. */
 
 /*

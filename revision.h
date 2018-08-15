@@ -1,6 +1,7 @@
 #ifndef REVISION_H
 #define REVISION_H
 
+#include "commit.h"
 #include "parse-options.h"
 #include "grep.h"
 #include "notes.h"

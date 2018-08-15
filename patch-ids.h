@@ -1,6 +1,12 @@
 #ifndef PATCH_IDS_H
 #define PATCH_IDS_H
 
+#include "diff.h"
+#include "hashmap.h"
+
+struct commit;
+struct object_id;
+
 struct patch_id {
 	struct hashmap_entry ent;
 	struct object_id patch_id;

@@ -1,7 +1,11 @@
 #ifndef PRETTY_H
 #define PRETTY_H
 
+#include "cache.h"
+#include "string-list.h"
+
 struct commit;
+struct strbuf;
 
 /* Commit formats */
 enum cmit_fmt {

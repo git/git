@@ -5,6 +5,9 @@
 #include "khash.h"
 #include "pack-objects.h"
 
+struct commit;
+struct rev_info;
+
 struct bitmap_disk_header {
 	char magic[4];
 	uint16_t version;

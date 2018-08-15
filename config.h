@@ -1,6 +1,11 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+#include "hashmap.h"
+#include "string-list.h"
+
+struct object_id;
+
 /* git_config_parse_key() returns these negated: */
 #define CONFIG_INVALID_KEY 1
 #define CONFIG_NO_SECTION_OR_NAME 2

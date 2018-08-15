@@ -1,6 +1,8 @@
 #ifndef PATHSPEC_H
 #define PATHSPEC_H
 
+struct index_state;
+
 /* Pathspec magic */
 #define PATHSPEC_FROMTOP	(1<<0)
 #define PATHSPEC_MAXDEPTH	(1<<1)

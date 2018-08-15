@@ -2,6 +2,7 @@
 #define TEMPFILE_H
 
 #include "list.h"
+#include "strbuf.h"
 
 /*
  * Handle temporary files.

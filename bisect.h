@@ -1,6 +1,8 @@
 #ifndef BISECT_H
 #define BISECT_H
 
+struct commit_list;
+
 /*
  * Find bisection. If something is found, `reaches` will be the number of
  * commits that the best commit reaches. `all` will be the count of

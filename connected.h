@@ -1,6 +1,7 @@
 #ifndef CONNECTED_H
 #define CONNECTED_H
 
+struct object_id;
 struct transport;
 
 /*
