@@ -2590,8 +2590,12 @@ static int error_with_patch(struct commit *commit,
 	const char *subject, int subject_len,
 	struct replay_opts *opts, int exit_code, int to_amend)
 {
-	if (make_patch(commit, opts))
-		return -1;
+	if (commit) {
+		if (make_patch(commit, opts))
+			return -1;
+	} else if (copy_file(rebase_path_message(), git_path_merge_msg(), 0666))
+		return error(_("unable to copy '%s' to '%s'"),
+			     git_path_merge_msg(), rebase_path_message());
 
 	if (to_amend) {
 		if (intend_to_amend())
@@ -2604,9 +2608,19 @@ static int error_with_patch(struct commit *commit,
 			"Once you are satisfied with your changes, run\n"
 			"\n"
 			"  git rebase --continue\n", gpg_sign_opt_quoted(opts));
-	} else if (exit_code)
-		fprintf(stderr, "Could not apply %s... %.*s\n",
-			short_commit_name(commit), subject_len, subject);
+	} else if (exit_code) {
+		if (commit)
+			fprintf(stderr, "Could not apply %s... %.*s\n",
+				short_commit_name(commit),
+				subject_len, subject);
+		else
+			/*
+			 * We don't have the hash of the parent so
+			 * just print the line from the todo file.
+			 */
+			fprintf(stderr, "Could not merge %.*s\n",
+				subject_len, subject);
+	}
 
 	return exit_code;
 }

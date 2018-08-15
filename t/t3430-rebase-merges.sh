@@ -129,7 +129,7 @@ test_expect_success '`reset` refuses to overwrite untracked files' '
 	git rebase --abort
 '
 
-test_expect_success 'failed `merge` writes patch (may be rescheduled, too)' '
+test_expect_success 'failed `merge -C` writes patch (may be rescheduled, too)' '
 	test_when_finished "test_might_fail git rebase --abort" &&
 	git checkout -b conflicting-merge A &&
 
@@ -149,6 +149,19 @@ test_expect_success 'failed `merge` writes patch (may be rescheduled, too)' '
 	test_must_fail git rebase --continue &&
 	! grep "^merge -C .* G$" .git/rebase-merge/git-rebase-todo &&
 	test_path_is_file .git/rebase-merge/patch
+'
+
+SQ="'"
+test_expect_success 'failed `merge <branch>` does not crash' '
+	test_when_finished "test_might_fail git rebase --abort" &&
+	git checkout conflicting-G &&
+
+	echo "merge G" >script-from-scratch &&
+	test_config sequence.editor \""$PWD"/replace-editor.sh\" &&
+	test_tick &&
+	test_must_fail git rebase -ir HEAD &&
+	! grep "^merge G$" .git/rebase-merge/git-rebase-todo &&
+	grep "^Merge branch ${SQ}G${SQ}$" .git/rebase-merge/message
 '
 
 test_expect_success 'with a branch tip that was cherry-picked already' '
