@@ -50,6 +50,21 @@ UI, Workflows & Features
    ancestor discovery during the "git fetch" transaction.
    (merge 42cc7485a2 jt/fetch-negotiator-skipping later to maint).
 
+ * A new configuration variable core.usereplacerefs has been added,
+   primarily to help server installations that want to ignore the
+   replace mechanism altogether.
+
+ * Teach "git tag -s" etc. a few configuration variables (gpg.format
+   that can be set to "openpgp" or "x509", and gpg.<format>.program
+   that is used to specify what program to use to deal with the format)
+   to allow x.509 certs with CMS via "gpgsm" to be used instead of
+   openpgp via "gnupg".
+
+ * Many more strings are prepared for l10n.
+
+ * "git p4 submit" learns to ask its own pre-submit hook if it should
+   continue with submitting.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -156,6 +171,27 @@ Performance, Internal Implementation, Development Support etc.
 
  * The singleton commit-graph in-core instance is made per in-core
    repository instance.
+
+ * "make DEVELOPER=1 DEVOPTS=pedantic" allows developers to compile
+   with -pedantic option, which may catch more problematic program
+   constructs and potential bugs.
+
+ * Preparatory code to later add json output for telemetry data has
+   been added.
+
+ * Update the way we use Coccinelle to find out-of-style code that
+   need to be modernised.
+
+ * It is too easy to misuse system API functions such as strcat();
+   these selected functions are now forbidden in this codebase and
+   will cause a compilation failure.
+
+ * Add a script (in contrib/) to help users of VSCode work better with
+   our codebase.
+
+ * The Travis CI scripts were taught to ship back the test data from
+   failed tests.
+   (merge aea8879a6a sg/travis-retrieve-trash-upon-failure later to maint).
 
 
 Fixes since v2.18
@@ -329,6 +365,40 @@ Fixes since v2.18
  * The lazy clone support had a few places where missing but promised
    objects were not correctly tolerated, which have been fixed.
 
+ * One of the "diff --color-moved" mode "dimmed_zebra" that was named
+   in an unusual way has been deprecated and replaced by
+   "dimmed-zebra".
+   (merge e3f2f5f9cd es/diff-color-moved-fix later to maint).
+
+ * The wire-protocol v2 relies on the client to send "ref prefixes" to
+   limit the bandwidth spent on the initial ref advertisement.  "git
+   clone" when learned to speak v2 forgot to do so, which has been
+   corrected.
+   (merge 402c47d939 bw/clone-ref-prefixes later to maint).
+
+ * "git diff --histogram" had a bad memory usage pattern, which has
+   been rearranged to reduce the peak usage.
+   (merge 79cb2ebb92 sb/histogram-less-memory later to maint).
+
+ * Code clean-up to use size_t/ssize_t when they are the right type.
+   (merge 7726d360b5 jk/size-t later to maint).
+
+ * The wire-protocol v2 relies on the client to send "ref prefixes" to
+   limit the bandwidth spent on the initial ref advertisement.  "git
+   fetch $remote branch:branch" that asks tags that point into the
+   history leading to the "branch" automatically followed sent to
+   narrow prefix and broke the tag following, which has been fixed.
+   (merge 2b554353a5 jt/tag-following-with-proto-v2-fix later to maint).
+
+ * When the sparse checkout feature is in use, "git cherry-pick" and
+   other mergy operations lost the skip_worktree bit when a path that
+   is excluded from checkout requires content level merge, which is
+   resolved as the same as the HEAD version, without materializing the
+   merge result in the working tree, which made the path appear as
+   deleted.  This has been corrected by preserving the skip_worktree
+   bit (and not materializing the file in the working tree).
+   (merge 2b75fb601c en/merge-recursive-skip-fix later to maint).
+
  * Code cleanup, docfix, build fix, etc.
    (merge aee9be2ebe sg/update-ref-stdin-cleanup later to maint).
    (merge 037714252f jc/clean-after-sanity-tests later to maint).
@@ -344,3 +414,10 @@ Fixes since v2.18
    (merge 6aaded5509 tb/config-default later to maint).
    (merge 022d2ac1f3 sb/blame-color later to maint).
    (merge 5a06a20e0c bp/test-drop-caches-for-windows later to maint).
+   (merge dd61cc1c2e jk/ui-color-always-to-auto later to maint).
+   (merge 1e83b9bfdd sb/trailers-docfix later to maint).
+   (merge ab29f1b329 sg/fast-import-dump-refs-on-checkpoint-fix later to maint).
+   (merge 6a8ad880f0 jn/subtree-test-fixes later to maint).
+   (merge ffbd51cc60 nd/pack-objects-threading-doc later to maint).
+   (merge e9dac7be60 es/mw-to-git-chain-fix later to maint).
+   (merge fe583c6c7a rs/remote-mv-leakfix later to maint).
