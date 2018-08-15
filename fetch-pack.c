@@ -1185,13 +1185,13 @@ static int process_section_header(struct packet_reader *reader,
 	int ret;
 
 	if (packet_reader_peek(reader) != PACKET_READ_NORMAL)
-		die("error reading section header '%s'", section);
+		die(_("error reading section header '%s'"), section);
 
 	ret = !strcmp(reader->line, section);
 
 	if (!peek) {
 		if (!ret)
-			die("expected '%s', received '%s'",
+			die(_("expected '%s', received '%s'"),
 			    section, reader->line);
 		packet_reader_read(reader);
 	}
@@ -1230,12 +1230,12 @@ static int process_acks(struct fetch_negotiator *negotiator,
 			continue;
 		}
 
-		die("unexpected acknowledgment line: '%s'", reader->line);
+		die(_("unexpected acknowledgment line: '%s'"), reader->line);
 	}
 
 	if (reader->status != PACKET_READ_FLUSH &&
 	    reader->status != PACKET_READ_DELIM)
-		die("error processing acks: %d", reader->status);
+		die(_("error processing acks: %d"), reader->status);
 
 	/* return 0 if no common, 1 if there are common, or 2 if ready */
 	return received_ready ? 2 : (received_ack ? 1 : 0);
@@ -1272,7 +1272,7 @@ static void receive_shallow_info(struct fetch_pack_args *args,
 
 	if (reader->status != PACKET_READ_FLUSH &&
 	    reader->status != PACKET_READ_DELIM)
-		die("error processing shallow info: %d", reader->status);
+		die(_("error processing shallow info: %d"), reader->status);
 
 	setup_alternate_shallow(&shallow_lock, &alternate_shallow_file, NULL);
 	args->deepen = 1;
@@ -1287,7 +1287,7 @@ static void receive_wanted_refs(struct packet_reader *reader, struct ref *refs)
 		struct ref *r = NULL;
 
 		if (parse_oid_hex(reader->line, &oid, &end) || *end++ != ' ')
-			die("expected wanted-ref, got '%s'", reader->line);
+			die(_("expected wanted-ref, got '%s'"), reader->line);
 
 		for (r = refs; r; r = r->next) {
 			if (!strcmp(end, r->name)) {
@@ -1297,11 +1297,11 @@ static void receive_wanted_refs(struct packet_reader *reader, struct ref *refs)
 		}
 
 		if (!r)
-			die("unexpected wanted-ref: '%s'", reader->line);
+			die(_("unexpected wanted-ref: '%s'"), reader->line);
 	}
 
 	if (reader->status != PACKET_READ_DELIM)
-		die("error processing wanted refs: %d", reader->status);
+		die(_("error processing wanted refs: %d"), reader->status);
 }
 
 enum fetch_state {
