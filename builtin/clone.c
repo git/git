@@ -897,7 +897,8 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	int err = 0, complete_refs_before_fetch = 1;
 	int submodule_progress;
 
-	struct refspec_item refspec;
+	struct refspec rs = REFSPEC_INIT_FETCH;
+	struct argv_array ref_prefixes = ARGV_ARRAY_INIT;
 
 	fetch_if_missing = 0;
 
@@ -1079,7 +1080,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	if (option_required_reference.nr || option_optional_reference.nr)
 		setup_reference();
 
-	refspec_item_init_or_die(&refspec, value.buf, REFSPEC_FETCH);
+	refspec_append(&rs, value.buf);
 
 	strbuf_reset(&value);
 
@@ -1136,10 +1137,18 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	if (transport->smart_options && !deepen && !filter_options.choice)
 		transport->smart_options->check_self_contained_and_connected = 1;
 
-	refs = transport_get_remote_refs(transport, NULL);
+
+	argv_array_push(&ref_prefixes, "HEAD");
+	refspec_ref_prefixes(&rs, &ref_prefixes);
+	if (option_branch)
+		expand_ref_prefix(&ref_prefixes, option_branch);
+	if (!option_no_tags)
+		argv_array_push(&ref_prefixes, "refs/tags/");
+
+	refs = transport_get_remote_refs(transport, &ref_prefixes);
 
 	if (refs) {
-		mapped_refs = wanted_peer_refs(refs, &refspec);
+		mapped_refs = wanted_peer_refs(refs, &rs.items[0]);
 		/*
 		 * transport_get_remote_refs() may return refs with null sha-1
 		 * in mapped_refs (see struct transport->get_refs_list
@@ -1233,6 +1242,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	strbuf_release(&value);
 	junk_mode = JUNK_LEAVE_ALL;
 
-	refspec_item_clear(&refspec);
+	refspec_clear(&rs);
+	argv_array_clear(&ref_prefixes);
 	return err;
 }

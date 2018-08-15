@@ -181,7 +181,12 @@ test_expect_success 'clone with file:// using protocol v2' '
 	test_cmp expect actual &&
 
 	# Server responded using protocol v2
-	grep "clone< version 2" log
+	grep "clone< version 2" log &&
+
+	# Client sent ref-prefixes to filter the ref-advertisement
+	grep "ref-prefix HEAD" log &&
+	grep "ref-prefix refs/heads/" log &&
+	grep "ref-prefix refs/tags/" log
 '
 
 test_expect_success 'fetch with file:// using protocol v2' '
