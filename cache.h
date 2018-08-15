@@ -1423,18 +1423,20 @@ extern void *read_object_with_reference(const struct object_id *oid,
 extern struct object *peel_to_type(const char *name, int namelen,
 				   struct object *o, enum object_type);
 
+enum date_mode_type {
+	DATE_NORMAL = 0,
+	DATE_RELATIVE,
+	DATE_SHORT,
+	DATE_ISO8601,
+	DATE_ISO8601_STRICT,
+	DATE_RFC2822,
+	DATE_STRFTIME,
+	DATE_RAW,
+	DATE_UNIX
+};
+
 struct date_mode {
-	enum date_mode_type {
-		DATE_NORMAL = 0,
-		DATE_RELATIVE,
-		DATE_SHORT,
-		DATE_ISO8601,
-		DATE_ISO8601_STRICT,
-		DATE_RFC2822,
-		DATE_STRFTIME,
-		DATE_RAW,
-		DATE_UNIX
-	} type;
+	enum date_mode_type type;
 	const char *strftime_fmt;
 	int local;
 };

@@ -207,6 +207,7 @@
 /config.mak.autogen
 /config.mak.append
 /configure
+/.vscode/
 /tags
 /TAGS
 /cscope*
