@@ -51,7 +51,7 @@ static void prepare_replace_object(struct repository *r)
  * replacement object's name (replaced recursively, if necessary).
  * The return value is either oid or a pointer to a
  * permanently-allocated value.  This function always respects replace
- * references, regardless of the value of check_replace_refs.
+ * references, regardless of the value of read_replace_refs.
  */
 const struct object_id *do_lookup_replace_object(struct repository *r,
 						 const struct object_id *oid)

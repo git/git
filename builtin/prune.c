@@ -118,7 +118,7 @@ int cmd_prune(int argc, const char **argv, const char *prefix)
 
 	expire = TIME_MAX;
 	save_commit_buffer = 0;
-	check_replace_refs = 0;
+	read_replace_refs = 0;
 	ref_paranoia = 1;
 	init_revisions(&revs, prefix);
 

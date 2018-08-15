@@ -868,11 +868,9 @@ void reset_shared_repository(void);
  * Do replace refs need to be checked this run?  This variable is
  * initialized to true unless --no-replace-object is used or
  * $GIT_NO_REPLACE_OBJECTS is set, but is set to false by some
- * commands that do not want replace references to be active.  As an
- * optimization it is also set to false if replace references have
- * been sought but there were none.
+ * commands that do not want replace references to be active.
  */
-extern int check_replace_refs;
+extern int read_replace_refs;
 extern char *git_replace_ref_base;
 
 extern int fsync_object_files;

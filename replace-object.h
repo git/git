@@ -26,7 +26,7 @@ extern const struct object_id *do_lookup_replace_object(struct repository *r,
 static inline const struct object_id *lookup_replace_object(struct repository *r,
 							    const struct object_id *oid)
 {
-	if (!check_replace_refs ||
+	if (!read_replace_refs ||
 	    (r->objects->replace_map &&
 	     r->objects->replace_map->map.tablesize == 0))
 		return oid;

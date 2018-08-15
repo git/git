@@ -924,6 +924,11 @@ gc.commitGraph::
 	required. Default is false. See linkgit:git-commit-graph[1]
 	for details.
 
+core.useReplaceRefs::
+	If set to `false`, behave as if the `--no-replace-objects`
+	option was given on the command line. See linkgit:git[1] and
+	linkgit:git-replace[1] for more information.
+
 core.sparseCheckout::
 	Enable "sparse checkout" feature. See section "Sparse checkout" in
 	linkgit:git-read-tree[1] for more information.
