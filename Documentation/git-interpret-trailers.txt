@@ -88,7 +88,8 @@ OPTIONS
 	Specify where all new trailers will be added.  A setting
 	provided with '--where' overrides all configuration variables
 	and applies to all '--trailer' options until the next occurrence of
-	'--where' or '--no-where'.
+	'--where' or '--no-where'. Possible values are `after`, `before`,
+	`end` or `start`.
 
 --if-exists <action>::
 --no-if-exists::
@@ -96,7 +97,8 @@ OPTIONS
 	least one trailer with the same <token> in the message.  A setting
 	provided with '--if-exists' overrides all configuration variables
 	and applies to all '--trailer' options until the next occurrence of
-	'--if-exists' or '--no-if-exists'.
+	'--if-exists' or '--no-if-exists'. Possible actions are `addIfDifferent`,
+	`addIfDifferentNeighbor`, `add`, `replace` and `doNothing`.
 
 --if-missing <action>::
 --no-if-missing::
@@ -104,7 +106,8 @@ OPTIONS
 	trailer with the same <token> in the message.  A setting
 	provided with '--if-missing' overrides all configuration variables
 	and applies to all '--trailer' options until the next occurrence of
-	'--if-missing' or '--no-if-missing'.
+	'--if-missing' or '--no-if-missing'. Possible actions are `doNothing`
+	or `add`.
 
 --only-trailers::
 	Output only the trailers, not any other parts of the input.
