@@ -338,11 +338,11 @@ server advertises capability `allow-tip-sha1-in-want` or
 		       request_end
   request_end       =  "0000" / "done"
 
-  want_list         =  PKT-LINE(want NUL cap_list LF)
+  want_list         =  PKT-LINE(want SP cap_list LF)
 		       *(want_pkt)
   want_pkt          =  PKT-LINE(want LF)
   want              =  "want" SP id
-  cap_list          =  *(SP capability) SP
+  cap_list          =  capability *(SP capability)
 
   have_list         =  *PKT-LINE("have" SP id LF)
 
