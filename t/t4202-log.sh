@@ -1556,10 +1556,26 @@ test_expect_success GPG 'setup signed branch' '
 	git commit -S -m signed_commit
 '
 
+test_expect_success GPGSM 'setup signed branch x509' '
+	test_when_finished "git reset --hard && git checkout master" &&
+	git checkout -b signed-x509 master &&
+	echo foo >foo &&
+	git add foo &&
+	test_config gpg.format x509 &&
+	test_config user.signingkey $GIT_COMMITTER_EMAIL &&
+	git commit -S -m signed_commit
+'
+
 test_expect_success GPG 'log --graph --show-signature' '
 	git log --graph --show-signature -n1 signed >actual &&
 	grep "^| gpg: Signature made" actual &&
 	grep "^| gpg: Good signature" actual
+'
+
+test_expect_success GPGSM 'log --graph --show-signature x509' '
+	git log --graph --show-signature -n1 signed-x509 >actual &&
+	grep "^| gpgsm: Signature made" actual &&
+	grep "^| gpgsm: Good signature" actual
 '
 
 test_expect_success GPG 'log --graph --show-signature for merged tag' '
@@ -1579,6 +1595,27 @@ test_expect_success GPG 'log --graph --show-signature for merged tag' '
 	grep "^|\\\  merged tag" actual &&
 	grep "^| | gpg: Signature made" actual &&
 	grep "^| | gpg: Good signature" actual
+'
+
+test_expect_success GPGSM 'log --graph --show-signature for merged tag x509' '
+	test_when_finished "git reset --hard && git checkout master" &&
+	test_config gpg.format x509 &&
+	test_config user.signingkey $GIT_COMMITTER_EMAIL &&
+	git checkout -b plain-x509 master &&
+	echo aaa >bar &&
+	git add bar &&
+	git commit -m bar_commit &&
+	git checkout -b tagged-x509 master &&
+	echo bbb >baz &&
+	git add baz &&
+	git commit -m baz_commit &&
+	git tag -s -m signed_tag_msg signed_tag_x509 &&
+	git checkout plain-x509 &&
+	git merge --no-ff -m msg signed_tag_x509 &&
+	git log --graph --show-signature -n1 plain-x509 >actual &&
+	grep "^|\\\  merged tag" actual &&
+	grep "^| | gpgsm: Signature made" actual &&
+	grep "^| | gpgsm: Good signature" actual
 '
 
 test_expect_success GPG '--no-show-signature overrides --show-signature' '
