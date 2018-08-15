@@ -1192,7 +1192,7 @@ static int do_fetch(struct transport *transport,
 		refspec_ref_prefixes(&transport->remote->fetch, &ref_prefixes);
 
 	if (ref_prefixes.argc &&
-	    (tags == TAGS_SET || (tags == TAGS_DEFAULT && !rs->nr))) {
+	    (tags == TAGS_SET || (tags == TAGS_DEFAULT))) {
 		argv_array_push(&ref_prefixes, "refs/tags/");
 	}
 
