@@ -1,6 +1,11 @@
 ifeq ($(filter no-error,$(DEVOPTS)),)
 CFLAGS += -Werror
 endif
+ifneq ($(filter pedantic,$(DEVOPTS)),)
+CFLAGS += -pedantic
+# don't warn for each N_ use
+CFLAGS += -DUSE_PARENS_AROUND_GETTEXT_N=0
+endif
 CFLAGS += -Wdeclaration-after-statement
 CFLAGS += -Wno-format-zero-length
 CFLAGS += -Wold-style-definition
