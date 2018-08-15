@@ -1305,7 +1305,7 @@ test_expect_success 'detect blocks of moved code' '
 
 '
 
-test_expect_success 'detect permutations inside moved code -- dimmed_zebra' '
+test_expect_success 'detect permutations inside moved code -- dimmed-zebra' '
 	# reuse setup from test before!
 	test_config color.diff.oldMoved "magenta" &&
 	test_config color.diff.newMoved "cyan" &&
@@ -1315,7 +1315,7 @@ test_expect_success 'detect permutations inside moved code -- dimmed_zebra' '
 	test_config color.diff.newMovedDimmed "normal cyan" &&
 	test_config color.diff.oldMovedAlternativeDimmed "normal blue" &&
 	test_config color.diff.newMovedAlternativeDimmed "normal yellow" &&
-	git diff HEAD --no-renames --color-moved=dimmed_zebra --color >actual.raw &&
+	git diff HEAD --no-renames --color-moved=dimmed-zebra --color >actual.raw &&
 	grep -v "index" actual.raw | test_decode_color >actual &&
 	cat <<-\EOF >expected &&
 	<BOLD>diff --git a/lines.txt b/lines.txt<RESET>

@@ -286,10 +286,11 @@ zebra::
 	are painted using either the 'color.diff.{old,new}Moved' color or
 	'color.diff.{old,new}MovedAlternative'. The change between
 	the two colors indicates that a new block was detected.
-dimmed_zebra::
+dimmed-zebra::
 	Similar to 'zebra', but additional dimming of uninteresting parts
 	of moved code is performed. The bordering lines of two adjacent
 	blocks are considered interesting, the rest is uninteresting.
+	`dimmed_zebra` is a deprecated synonym.
 --
 
 --color-moved-ws=<modes>::
