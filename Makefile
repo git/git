@@ -569,7 +569,7 @@ SPATCH = spatch
 export TCL_PATH TCLTK_PATH
 
 SPARSE_FLAGS =
-SPATCH_FLAGS = --all-includes
+SPATCH_FLAGS = --all-includes --patch .
 
 
 
@@ -2680,10 +2680,16 @@ check: command-list.h
 	fi
 
 C_SOURCES = $(patsubst %.o,%.c,$(C_OBJ))
-%.cocci.patch: %.cocci $(C_SOURCES)
+ifdef DC_SHA1_SUBMODULE
+COCCI_SOURCES = $(filter-out sha1collisiondetection/%,$(C_SOURCES))
+else
+COCCI_SOURCES = $(filter-out sha1dc/%,$(C_SOURCES))
+endif
+
+%.cocci.patch: %.cocci $(COCCI_SOURCES)
 	@echo '    ' SPATCH $<; \
 	ret=0; \
-	for f in $(C_SOURCES); do \
+	for f in $(COCCI_SOURCES); do \
 		$(SPATCH) --sp-file $< $$f $(SPATCH_FLAGS) || \
 			{ ret=$$?; break; }; \
 	done >$@+ 2>$@.log; \
@@ -2697,7 +2703,9 @@ C_SOURCES = $(patsubst %.o,%.c,$(C_OBJ))
 	then \
 		echo '    ' SPATCH result: $@; \
 	fi
-coccicheck: $(patsubst %.cocci,%.cocci.patch,$(wildcard contrib/coccinelle/*.cocci))
+coccicheck: $(addsuffix .patch,$(wildcard contrib/coccinelle/*.cocci))
+
+.PHONY: coccicheck
 
 ### Installation rules
 
@@ -2909,7 +2917,10 @@ profile-clean:
 	$(RM) $(addsuffix *.gcda,$(addprefix $(PROFILE_DIR)/, $(object_dirs)))
 	$(RM) $(addsuffix *.gcno,$(addprefix $(PROFILE_DIR)/, $(object_dirs)))
 
-clean: profile-clean coverage-clean
+cocciclean:
+	$(RM) contrib/coccinelle/*.cocci.patch*
+
+clean: profile-clean coverage-clean cocciclean
 	$(RM) *.res
 	$(RM) $(OBJECTS)
 	$(RM) $(LIB_FILE) $(XDIFF_LIB) $(VCSSVN_LIB)
@@ -2921,7 +2932,6 @@ clean: profile-clean coverage-clean
 	$(RM) -r $(GIT_TARNAME) .doc-tmp-dir
 	$(RM) $(GIT_TARNAME).tar.gz git-core_$(GIT_VERSION)-*.tar.gz
 	$(RM) $(htmldocs).tar.gz $(manpages).tar.gz
-	$(RM) contrib/coccinelle/*.cocci.patch*
 	$(MAKE) -C Documentation/ clean
 ifndef NO_PERL
 	$(MAKE) -C gitweb clean
@@ -2937,7 +2947,7 @@ endif
 	$(RM) GIT-USER-AGENT GIT-PREFIX
 	$(RM) GIT-SCRIPT-DEFINES GIT-PERL-DEFINES GIT-PERL-HEADER GIT-PYTHON-VARS
 
-.PHONY: all install profile-clean clean strip
+.PHONY: all install profile-clean cocciclean clean strip
 .PHONY: shell_compatibility_test please_set_SHELL_PATH_to_a_more_modern_shell
 .PHONY: FORCE cscope
 
