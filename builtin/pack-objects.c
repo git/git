@@ -611,7 +611,7 @@ static inline void add_to_write_order(struct object_entry **wo,
 			       unsigned int *endp,
 			       struct object_entry *e)
 {
-	if (e->filled || e->layer != write_layer)
+	if (e->filled || oe_layer(&to_pack, e) != write_layer)
 		return;
 	wo[(*endp)++] = e;
 	e->filled = 1;
@@ -714,7 +714,7 @@ static void compute_layer_order(struct object_entry **wo, unsigned int *wo_end)
 	 * Finally all the rest in really tight order
 	 */
 	for (i = last_untagged; i < to_pack.nr_objects; i++) {
-		if (!objects[i].filled && objects[i].layer == write_layer)
+		if (!objects[i].filled && oe_layer(&to_pack, &objects[i]) == write_layer)
 			add_family_to_write_order(wo, wo_end, &objects[i]);
 	}
 }

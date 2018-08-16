@@ -101,8 +101,6 @@ struct object_entry {
 	unsigned no_try_delta:1;
 	unsigned in_pack_type:TYPE_BITS; /* could be delta */
 
-	unsigned char layer;
-
 	unsigned preferred_base:1; /*
 				    * we do not pack this, but is available
 				    * to be used as the base object to delta
@@ -147,6 +145,7 @@ struct packing_data {
 
 	/* delta islands */
 	unsigned int *tree_depth;
+	unsigned char *layer;
 };
 
 void prepare_packing_data(struct packing_data *pdata);
@@ -367,6 +366,23 @@ static inline void oe_set_tree_depth(struct packing_data *pack,
 	if (!pack->tree_depth)
 		ALLOC_ARRAY(pack->tree_depth, pack->nr_objects);
 	pack->tree_depth[e - pack->objects] = tree_depth;
+}
+
+static inline unsigned char oe_layer(struct packing_data *pack,
+				     struct object_entry *e)
+{
+	if (!pack->layer)
+		return 0;
+	return pack->layer[e - pack->objects];
+}
+
+static inline void oe_set_layer(struct packing_data *pack,
+				struct object_entry *e,
+				unsigned char layer)
+{
+	if (!pack->layer)
+		ALLOC_ARRAY(pack->layer, pack->nr_objects);
+	pack->layer[e - pack->objects] = layer;
 }
 
 #endif

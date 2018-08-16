@@ -488,13 +488,13 @@ int compute_pack_layers(struct packing_data *to_pack)
 		struct object_entry *entry = &to_pack->objects[i];
 		khiter_t pos = kh_get_sha1(island_marks, entry->idx.oid.hash);
 
-		entry->layer = 1;
+		oe_set_layer(to_pack, entry, 1);
 
 		if (pos < kh_end(island_marks)) {
 			struct island_bitmap *bitmap = kh_value(island_marks, pos);
 
 			if (island_bitmap_get(bitmap, island_counter_core))
-				entry->layer = 0;
+				oe_set_layer(to_pack, entry, 0);
 		}
 	}
 
