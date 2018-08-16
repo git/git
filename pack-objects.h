@@ -100,6 +100,10 @@ struct object_entry {
 	unsigned type_:TYPE_BITS;
 	unsigned no_try_delta:1;
 	unsigned in_pack_type:TYPE_BITS; /* could be delta */
+
+	unsigned int tree_depth; /* should be repositioned for packing? */
+	unsigned char layer;
+
 	unsigned preferred_base:1; /*
 				    * we do not pack this, but is available
 				    * to be used as the base object to delta
