@@ -103,7 +103,8 @@ test_expect_success '--quit cleans up sequencer state' '
 	pristine_detach initial &&
 	test_expect_code 1 git cherry-pick base..picked &&
 	git cherry-pick --quit &&
-	test_path_is_missing .git/sequencer
+	test_path_is_missing .git/sequencer &&
+	test_path_is_missing .git/CHERRY_PICK_HEAD
 '
 
 test_expect_success '--quit keeps HEAD and conflicted index intact' '
@@ -132,6 +133,7 @@ test_expect_success '--abort to cancel multiple cherry-pick' '
 	test_expect_code 1 git cherry-pick base..anotherpick &&
 	git cherry-pick --abort &&
 	test_path_is_missing .git/sequencer &&
+	test_path_is_missing .git/CHERRY_PICK_HEAD &&
 	test_cmp_rev initial HEAD &&
 	git update-index --refresh &&
 	git diff-index --exit-code HEAD
@@ -142,6 +144,7 @@ test_expect_success '--abort to cancel single cherry-pick' '
 	test_expect_code 1 git cherry-pick picked &&
 	git cherry-pick --abort &&
 	test_path_is_missing .git/sequencer &&
+	test_path_is_missing .git/CHERRY_PICK_HEAD &&
 	test_cmp_rev initial HEAD &&
 	git update-index --refresh &&
 	git diff-index --exit-code HEAD
@@ -162,6 +165,7 @@ test_expect_success 'cherry-pick --abort to cancel multiple revert' '
 	test_expect_code 1 git revert base..picked &&
 	git cherry-pick --abort &&
 	test_path_is_missing .git/sequencer &&
+	test_path_is_missing .git/CHERRY_PICK_HEAD &&
 	test_cmp_rev anotherpick HEAD &&
 	git update-index --refresh &&
 	git diff-index --exit-code HEAD
@@ -239,6 +243,7 @@ test_expect_success '--abort after last commit in sequence' '
 	test_expect_code 1 git cherry-pick base..picked &&
 	git cherry-pick --abort &&
 	test_path_is_missing .git/sequencer &&
+	test_path_is_missing .git/CHERRY_PICK_HEAD &&
 	test_cmp_rev initial HEAD &&
 	git update-index --refresh &&
 	git diff-index --exit-code HEAD

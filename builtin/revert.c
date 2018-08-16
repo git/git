@@ -7,6 +7,7 @@
 #include "rerere.h"
 #include "dir.h"
 #include "sequencer.h"
+#include "branch.h"
 
 /*
  * This implements the builtins revert and cherry-pick.
@@ -191,8 +192,12 @@ static int run_sequencer(int argc, const char **argv, struct replay_opts *opts)
 	opts->gpg_sign = xstrdup_or_null(opts->gpg_sign);
 	opts->strategy = xstrdup_or_null(opts->strategy);
 
-	if (cmd == 'q')
-		return sequencer_remove_state(opts);
+	if (cmd == 'q') {
+		int ret = sequencer_remove_state(opts);
+		if (!ret)
+			remove_branch_state();
+		return ret;
+	}
 	if (cmd == 'c')
 		return sequencer_continue(opts);
 	if (cmd == 'a')
