@@ -101,7 +101,6 @@ struct object_entry {
 	unsigned no_try_delta:1;
 	unsigned in_pack_type:TYPE_BITS; /* could be delta */
 
-	unsigned int tree_depth; /* should be repositioned for packing? */
 	unsigned char layer;
 
 	unsigned preferred_base:1; /*
@@ -145,6 +144,9 @@ struct packing_data {
 	struct packed_git **in_pack;
 
 	uintmax_t oe_size_limit;
+
+	/* delta islands */
+	unsigned int *tree_depth;
 };
 
 void prepare_packing_data(struct packing_data *pdata);
@@ -348,6 +350,23 @@ static inline void oe_set_delta_size(struct packing_data *pack,
 	if (!e->delta_size_valid && size != oe_size(pack, e))
 		BUG("this can only happen in check_object() "
 		    "where delta size is the same as entry size");
+}
+
+static inline unsigned int oe_tree_depth(struct packing_data *pack,
+					 struct object_entry *e)
+{
+	if (!pack->tree_depth)
+		return 0;
+	return pack->tree_depth[e - pack->objects];
+}
+
+static inline void oe_set_tree_depth(struct packing_data *pack,
+				     struct object_entry *e,
+				     unsigned int tree_depth)
+{
+	if (!pack->tree_depth)
+		ALLOC_ARRAY(pack->tree_depth, pack->nr_objects);
+	pack->tree_depth[e - pack->objects] = tree_depth;
 }
 
 #endif

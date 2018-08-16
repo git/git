@@ -2716,8 +2716,8 @@ static void show_object(struct object *obj, const char *name, void *data)
 			depth++;
 
 		ent = packlist_find(&to_pack, obj->oid.hash, NULL);
-		if (ent && depth > ent->tree_depth)
-			ent->tree_depth = depth;
+		if (ent && depth > oe_tree_depth(&to_pack, ent))
+			oe_set_tree_depth(&to_pack, ent, depth);
 	}
 }
 

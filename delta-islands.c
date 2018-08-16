@@ -224,17 +224,23 @@ static void mark_remote_island_1(struct remote_island *rl, int is_core_island)
 	island_counter++;
 }
 
-static int cmp_tree_depth(const void *va, const void *vb)
+struct tree_islands_todo {
+	struct object_entry *entry;
+	unsigned int depth;
+};
+
+static int tree_depth_compare(const void *a, const void *b)
 {
-	struct object_entry *a = *(struct object_entry **)va;
-	struct object_entry *b = *(struct object_entry **)vb;
-	return a->tree_depth - b->tree_depth;
+	const struct tree_islands_todo *todo_a = a;
+	const struct tree_islands_todo *todo_b = b;
+
+	return todo_a->depth - todo_b->depth;
 }
 
 void resolve_tree_islands(int progress, struct packing_data *to_pack)
 {
 	struct progress *progress_state = NULL;
-	struct object_entry **todo;
+	struct tree_islands_todo *todo;
 	int nr = 0;
 	int i;
 
@@ -250,16 +256,19 @@ void resolve_tree_islands(int progress, struct packing_data *to_pack)
 	 */
 	ALLOC_ARRAY(todo, to_pack->nr_objects);
 	for (i = 0; i < to_pack->nr_objects; i++) {
-		if (oe_type(&to_pack->objects[i]) == OBJ_TREE)
-			todo[nr++] = &to_pack->objects[i];
+		if (oe_type(&to_pack->objects[i]) == OBJ_TREE) {
+			todo[nr].entry = &to_pack->objects[i];
+			todo[nr].depth = oe_tree_depth(to_pack, &to_pack->objects[i]);
+			nr++;
+		}
 	}
-	QSORT(todo, nr, cmp_tree_depth);
+	QSORT(todo, nr, tree_depth_compare);
 
 	if (progress)
 		progress_state = start_progress(_("Propagating island marks"), nr);
 
 	for (i = 0; i < nr; i++) {
-		struct object_entry *ent = todo[i];
+		struct object_entry *ent = todo[i].entry;
 		struct island_bitmap *root_marks;
 		struct tree *tree;
 		struct tree_desc desc;
