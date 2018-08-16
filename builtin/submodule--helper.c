@@ -1024,7 +1024,6 @@ static void sync_submodule_cb(const struct cache_entry *list_item, void *cb_data
 {
 	struct sync_cb *info = cb_data;
 	sync_submodule(list_item->name, info->prefix, info->flags);
-
 }
 
 static int module_sync(int argc, const char **argv, const char *prefix)
