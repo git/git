@@ -412,9 +412,8 @@ test_expect_success '"add" <path> <branch> dwims with checkout.defaultRemote' '
 		git fetch repo_upstream2 &&
 		test_must_fail git worktree add ../foo foo &&
 		git -c checkout.defaultRemote=repo_upstream worktree add ../foo foo &&
-		>status.expect &&
 		git status -uno --porcelain >status.actual &&
-		test_cmp status.expect status.actual
+		test_must_be_empty status.actual
 	) &&
 	(
 		cd foo &&

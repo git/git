@@ -24,9 +24,8 @@ test_branch_upstream () {
 }
 
 status_uno_is_clean () {
-	>status.expect &&
 	git status -uno --porcelain >status.actual &&
-	test_cmp status.expect status.actual
+	test_must_be_empty status.actual
 }
 
 test_expect_success 'setup' '
