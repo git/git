@@ -133,9 +133,9 @@ test_expect_success 'changed message' '
 	    Z
 	    +    Also a silly comment here!
 	    +
-	    Zdiff --git a/file b/file
-	    Z--- a/file
-	    Z+++ b/file
+	    Z diff --git a/file b/file
+	    Z --- a/file
+	    Z +++ b/file
 	3:  147e64e = 3:  b9cb956 s/11/B/
 	4:  a63e992 = 4:  8add5f1 s/12/B/
 	EOF
@@ -152,9 +152,9 @@ test_expect_success 'dual-coloring' '
 	:     <RESET>
 	:    <REVERSE><GREEN>+<RESET><BOLD>    Also a silly comment here!<RESET>
 	:    <REVERSE><GREEN>+<RESET>
-	:     diff --git a/file b/file<RESET>
-	:    <RED> --- a/file<RESET>
-	:    <GREEN> +++ b/file<RESET>
+	:      diff --git a/file b/file<RESET>
+	:      --- a/file<RESET>
+	:      +++ b/file<RESET>
 	:<RED>3:  0559556 <RESET><YELLOW>!<RESET><GREEN> 3:  b9cb956<RESET><YELLOW> s/11/B/<RESET>
 	:    <REVERSE><CYAN>@@ -10,7 +10,7 @@<RESET>
 	:      9<RESET>
