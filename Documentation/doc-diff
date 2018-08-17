@@ -1,0 +1,109 @@
+#!/bin/sh
+
+OPTIONS_SPEC="\
+doc-diff [options] <from> <to> [-- <diff-options>]
+--
+j=n	parallel argument to pass to make
+f	force rebuild; do not rely on cached results
+"
+SUBDIRECTORY_OK=1
+. "$(git --exec-path)/git-sh-setup"
+
+parallel=
+force=
+while test $# -gt 0
+do
+	case "$1" in
+	-j)
+		parallel=$2; shift ;;
+	-f)
+		force=t ;;
+	--)
+		shift; break ;;
+	*)
+		usage ;;
+	esac
+	shift
+done
+
+if test -z "$parallel"
+then
+	parallel=$(getconf _NPROCESSORS_ONLN 2>/dev/null)
+	if test $? != 0 || test -z "$parallel"
+	then
+		parallel=1
+	fi
+fi
+
+test $# -gt 1 || usage
+from=$1; shift
+to=$1; shift
+
+from_oid=$(git rev-parse --verify "$from") || exit 1
+to_oid=$(git rev-parse --verify "$to") || exit 1
+
+cd_to_toplevel
+tmp=Documentation/tmp-doc-diff
+
+if test -n "$force"
+then
+	rm -rf "$tmp"
+fi
+
+# We'll do both builds in a single worktree, which lets "make" reuse
+# results that don't differ between the two trees.
+if ! test -d "$tmp/worktree"
+then
+	git worktree add --detach "$tmp/worktree" "$from" &&
+	dots=$(echo "$tmp/worktree" | sed 's#[^/]*#..#g') &&
+	ln -s "$dots/config.mak" "$tmp/worktree/config.mak"
+fi
+
+# generate_render_makefile <srcdir> <dstdir>
+generate_render_makefile () {
+	find "$1" -type f |
+	while read src
+	do
+		dst=$2/${src#$1/}
+		printf 'all:: %s\n' "$dst"
+		printf '%s: %s\n' "$dst" "$src"
+		printf '\t@echo >&2 "  RENDER $(notdir $@)" && \\\n'
+		printf '\tmkdir -p $(dir $@) && \\\n'
+		printf '\tMANWIDTH=80 man -l $< >$@+ && \\\n'
+		printf '\tmv $@+ $@\n'
+	done
+}
+
+# render_tree <dirname> <committish>
+render_tree () {
+	# Skip install-man entirely if we already have an installed directory.
+	# We can't rely on make here, since "install-man" unconditionally
+	# copies the files (spending effort, but also updating timestamps that
+	# we then can't rely on during the render step). We use "mv" to make
+	# sure we don't get confused by a previous run that failed partway
+	# through.
+	if ! test -d "$tmp/installed/$1"
+	then
+		git -C "$tmp/worktree" checkout "$2" &&
+		make -j$parallel -C "$tmp/worktree" \
+			GIT_VERSION=omitted \
+			SOURCE_DATE_EPOCH=0 \
+			DESTDIR="$PWD/$tmp/installed/$1+" \
+			install-man &&
+		mv "$tmp/installed/$1+" "$tmp/installed/$1"
+	fi &&
+
+	# As with "installed" above, we skip the render if it's already been
+	# done.  So using make here is primarily just about running in
+	# parallel.
+	if ! test -d "$tmp/rendered/$1"
+	then
+		generate_render_makefile "$tmp/installed/$1" "$tmp/rendered/$1+" |
+		make -j$parallel -f - &&
+		mv "$tmp/rendered/$1+" "$tmp/rendered/$1"
+	fi
+}
+
+render_tree $from_oid "$from" &&
+render_tree $to_oid "$to" &&
+git -C $tmp/rendered diff --no-index "$@" $from_oid $to_oid
