@@ -43,6 +43,7 @@ void setup_ref_filter_porcelain_msg(void)
 
 typedef enum { FIELD_STR, FIELD_ULONG, FIELD_TIME } cmp_type;
 typedef enum { COMPARE_EQUAL, COMPARE_UNEQUAL, COMPARE_NONE } cmp_status;
+typedef enum { SOURCE_NONE = 0, SOURCE_OBJ, SOURCE_OTHER } info_source;
 
 struct align {
 	align_type position;
@@ -62,6 +63,17 @@ struct refname_atom {
 	int lstrip, rstrip;
 };
 
+static struct expand_data {
+	struct object_id oid;
+	enum object_type type;
+	unsigned long size;
+	off_t disk_size;
+	struct object_id delta_base_oid;
+	void *content;
+
+	struct object_info info;
+} oi, oi_deref;
+
 /*
  * An atom is a valid field atom listed below, possibly prefixed with
  * a "*" to denote deref_tag().
@@ -75,6 +87,7 @@ struct refname_atom {
 static struct used_atom {
 	const char *name;
 	cmp_type type;
+	info_source source;
 	union {
 		char color[COLOR_MAXLEN];
 		struct align align;
@@ -199,6 +212,30 @@ static int remote_ref_atom_parser(const struct ref_format *format, struct used_a
 	}
 
 	string_list_clear(&params, 0);
+	return 0;
+}
+
+static int objecttype_atom_parser(const struct ref_format *format, struct used_atom *atom,
+				  const char *arg, struct strbuf *err)
+{
+	if (arg)
+		return strbuf_addf_ret(err, -1, _("%%(objecttype) does not take arguments"));
+	if (*atom->name == '*')
+		oi_deref.info.typep = &oi_deref.type;
+	else
+		oi.info.typep = &oi.type;
+	return 0;
+}
+
+static int objectsize_atom_parser(const struct ref_format *format, struct used_atom *atom,
+				  const char *arg, struct strbuf *err)
+{
+	if (arg)
+		return strbuf_addf_ret(err, -1, _("%%(objectsize) does not take arguments"));
+	if (*atom->name == '*')
+		oi_deref.info.sizep = &oi_deref.size;
+	else
+		oi.info.sizep = &oi.size;
 	return 0;
 }
 
@@ -382,49 +419,50 @@ static int head_atom_parser(const struct ref_format *format, struct used_atom *a
 
 static struct {
 	const char *name;
+	info_source source;
 	cmp_type cmp_type;
 	int (*parser)(const struct ref_format *format, struct used_atom *atom,
 		      const char *arg, struct strbuf *err);
 } valid_atom[] = {
-	{ "refname" , FIELD_STR, refname_atom_parser },
-	{ "objecttype" },
-	{ "objectsize", FIELD_ULONG },
-	{ "objectname", FIELD_STR, objectname_atom_parser },
-	{ "tree" },
-	{ "parent" },
-	{ "numparent", FIELD_ULONG },
-	{ "object" },
-	{ "type" },
-	{ "tag" },
-	{ "author" },
-	{ "authorname" },
-	{ "authoremail" },
-	{ "authordate", FIELD_TIME },
-	{ "committer" },
-	{ "committername" },
-	{ "committeremail" },
-	{ "committerdate", FIELD_TIME },
-	{ "tagger" },
-	{ "taggername" },
-	{ "taggeremail" },
-	{ "taggerdate", FIELD_TIME },
-	{ "creator" },
-	{ "creatordate", FIELD_TIME },
-	{ "subject", FIELD_STR, subject_atom_parser },
-	{ "body", FIELD_STR, body_atom_parser },
-	{ "trailers", FIELD_STR, trailers_atom_parser },
-	{ "contents", FIELD_STR, contents_atom_parser },
-	{ "upstream", FIELD_STR, remote_ref_atom_parser },
-	{ "push", FIELD_STR, remote_ref_atom_parser },
-	{ "symref", FIELD_STR, refname_atom_parser },
-	{ "flag" },
-	{ "HEAD", FIELD_STR, head_atom_parser },
-	{ "color", FIELD_STR, color_atom_parser },
-	{ "align", FIELD_STR, align_atom_parser },
-	{ "end" },
-	{ "if", FIELD_STR, if_atom_parser },
-	{ "then" },
-	{ "else" },
+	{ "refname", SOURCE_NONE, FIELD_STR, refname_atom_parser },
+	{ "objecttype", SOURCE_OTHER, FIELD_STR, objecttype_atom_parser },
+	{ "objectsize", SOURCE_OTHER, FIELD_ULONG, objectsize_atom_parser },
+	{ "objectname", SOURCE_OTHER, FIELD_STR, objectname_atom_parser },
+	{ "tree", SOURCE_OBJ },
+	{ "parent", SOURCE_OBJ },
+	{ "numparent", SOURCE_OBJ, FIELD_ULONG },
+	{ "object", SOURCE_OBJ },
+	{ "type", SOURCE_OBJ },
+	{ "tag", SOURCE_OBJ },
+	{ "author", SOURCE_OBJ },
+	{ "authorname", SOURCE_OBJ },
+	{ "authoremail", SOURCE_OBJ },
+	{ "authordate", SOURCE_OBJ, FIELD_TIME },
+	{ "committer", SOURCE_OBJ },
+	{ "committername", SOURCE_OBJ },
+	{ "committeremail", SOURCE_OBJ },
+	{ "committerdate", SOURCE_OBJ, FIELD_TIME },
+	{ "tagger", SOURCE_OBJ },
+	{ "taggername", SOURCE_OBJ },
+	{ "taggeremail", SOURCE_OBJ },
+	{ "taggerdate", SOURCE_OBJ, FIELD_TIME },
+	{ "creator", SOURCE_OBJ },
+	{ "creatordate", SOURCE_OBJ, FIELD_TIME },
+	{ "subject", SOURCE_OBJ, FIELD_STR, subject_atom_parser },
+	{ "body", SOURCE_OBJ, FIELD_STR, body_atom_parser },
+	{ "trailers", SOURCE_OBJ, FIELD_STR, trailers_atom_parser },
+	{ "contents", SOURCE_OBJ, FIELD_STR, contents_atom_parser },
+	{ "upstream", SOURCE_NONE, FIELD_STR, remote_ref_atom_parser },
+	{ "push", SOURCE_NONE, FIELD_STR, remote_ref_atom_parser },
+	{ "symref", SOURCE_NONE, FIELD_STR, refname_atom_parser },
+	{ "flag", SOURCE_NONE },
+	{ "HEAD", SOURCE_NONE, FIELD_STR, head_atom_parser },
+	{ "color", SOURCE_NONE, FIELD_STR, color_atom_parser },
+	{ "align", SOURCE_NONE, FIELD_STR, align_atom_parser },
+	{ "end", SOURCE_NONE },
+	{ "if", SOURCE_NONE, FIELD_STR, if_atom_parser },
+	{ "then", SOURCE_NONE },
+	{ "else", SOURCE_NONE },
 };
 
 #define REF_FORMATTING_STATE_INIT  { 0, NULL }
@@ -500,6 +538,13 @@ static int parse_ref_filter_atom(const struct ref_format *format,
 	REALLOC_ARRAY(used_atom, used_atom_cnt);
 	used_atom[at].name = xmemdupz(atom, ep - atom);
 	used_atom[at].type = valid_atom[i].cmp_type;
+	used_atom[at].source = valid_atom[i].source;
+	if (used_atom[at].source == SOURCE_OBJ) {
+		if (*atom == '*')
+			oi_deref.info.contentp = &oi_deref.content;
+		else
+			oi.info.contentp = &oi.content;
+	}
 	if (arg) {
 		arg = used_atom[at].name + (arg - atom) + 1;
 		if (!*arg) {
@@ -795,25 +840,6 @@ int verify_ref_format(struct ref_format *format)
 	return 0;
 }
 
-/*
- * Given an object name, read the object data and size, and return a
- * "struct object".  If the object data we are returning is also borrowed
- * by the "struct object" representation, set *eaten as well---it is a
- * signal from parse_object_buffer to us not to free the buffer.
- */
-static void *get_obj(const struct object_id *oid, struct object **obj, unsigned long *sz, int *eaten)
-{
-	enum object_type type;
-	void *buf = read_object_file(oid, &type, sz);
-
-	if (buf)
-		*obj = parse_object_buffer(the_repository, oid, type, *sz,
-					   buf, eaten);
-	else
-		*obj = NULL;
-	return buf;
-}
-
 static int grab_objectname(const char *name, const struct object_id *oid,
 			   struct atom_value *v, struct used_atom *atom)
 {
@@ -834,7 +860,7 @@ static int grab_objectname(const char *name, const struct object_id *oid,
 }
 
 /* See grab_values */
-static void grab_common_values(struct atom_value *val, int deref, struct object *obj, void *buf, unsigned long sz)
+static void grab_common_values(struct atom_value *val, int deref, struct expand_data *oi)
 {
 	int i;
 
@@ -846,13 +872,13 @@ static void grab_common_values(struct atom_value *val, int deref, struct object 
 		if (deref)
 			name++;
 		if (!strcmp(name, "objecttype"))
-			v->s = type_name(obj->type);
+			v->s = type_name(oi->type);
 		else if (!strcmp(name, "objectsize")) {
-			v->value = sz;
-			v->s = xstrfmt("%lu", sz);
+			v->value = oi->size;
+			v->s = xstrfmt("%lu", oi->size);
 		}
 		else if (deref)
-			grab_objectname(name, &obj->oid, v, &used_atom[i]);
+			grab_objectname(name, &oi->oid, v, &used_atom[i]);
 	}
 }
 
@@ -1211,7 +1237,6 @@ static void fill_missing_values(struct atom_value *val)
  */
 static void grab_values(struct atom_value *val, int deref, struct object *obj, void *buf, unsigned long sz)
 {
-	grab_common_values(val, deref, obj, buf, sz);
 	switch (obj->type) {
 	case OBJ_TAG:
 		grab_tag_values(val, deref, obj, buf, sz);
@@ -1435,24 +1460,36 @@ static const char *get_refname(struct used_atom *atom, struct ref_array_item *re
 	return show_ref(&atom->u.refname, ref->refname);
 }
 
-static int get_object(struct ref_array_item *ref, const struct object_id *oid,
-		       int deref, struct object **obj, struct strbuf *err)
+static int get_object(struct ref_array_item *ref, int deref, struct object **obj,
+		      struct expand_data *oi, struct strbuf *err)
 {
-	int eaten;
-	int ret = 0;
-	unsigned long size;
-	void *buf = get_obj(oid, obj, &size, &eaten);
-	if (!buf)
-		ret = strbuf_addf_ret(err, -1, _("missing object %s for %s"),
-				      oid_to_hex(oid), ref->refname);
-	else if (!*obj)
-		ret = strbuf_addf_ret(err, -1, _("parse_object_buffer failed on %s for %s"),
-				      oid_to_hex(oid), ref->refname);
-	else
-		grab_values(ref->value, deref, *obj, buf, size);
+	/* parse_object_buffer() will set eaten to 0 if free() will be needed */
+	int eaten = 1;
+	if (oi->info.contentp) {
+		/* We need to know that to use parse_object_buffer properly */
+		oi->info.sizep = &oi->size;
+		oi->info.typep = &oi->type;
+	}
+	if (oid_object_info_extended(the_repository, &oi->oid, &oi->info,
+				     OBJECT_INFO_LOOKUP_REPLACE))
+		return strbuf_addf_ret(err, -1, _("missing object %s for %s"),
+				       oid_to_hex(&oi->oid), ref->refname);
+
+	if (oi->info.contentp) {
+		*obj = parse_object_buffer(the_repository, &oi->oid, oi->type, oi->size, oi->content, &eaten);
+		if (!obj) {
+			if (!eaten)
+				free(oi->content);
+			return strbuf_addf_ret(err, -1, _("parse_object_buffer failed on %s for %s"),
+					       oid_to_hex(&oi->oid), ref->refname);
+		}
+		grab_values(ref->value, deref, *obj, oi->content, oi->size);
+	}
+
+	grab_common_values(ref->value, deref, oi);
 	if (!eaten)
-		free(buf);
-	return ret;
+		free(oi->content);
+	return 0;
 }
 
 /*
@@ -1462,7 +1499,7 @@ static int populate_value(struct ref_array_item *ref, struct strbuf *err)
 {
 	struct object *obj;
 	int i;
-	const struct object_id *tagged;
+	struct object_info empty = OBJECT_INFO_INIT;
 
 	ref->value = xcalloc(used_atom_cnt, sizeof(struct atom_value));
 
@@ -1496,6 +1533,7 @@ static int populate_value(struct ref_array_item *ref, struct strbuf *err)
 			refname = get_symref(atom, ref);
 		else if (starts_with(name, "upstream")) {
 			const char *branch_name;
+			v->s = "";
 			/* only local branches may have an upstream */
 			if (!skip_prefix(ref->refname, "refs/heads/",
 					 &branch_name))
@@ -1508,6 +1546,7 @@ static int populate_value(struct ref_array_item *ref, struct strbuf *err)
 			continue;
 		} else if (atom->u.remote_ref.push) {
 			const char *branch_name;
+			v->s = "";
 			if (!skip_prefix(ref->refname, "refs/heads/",
 					 &branch_name))
 				continue;
@@ -1548,22 +1587,26 @@ static int populate_value(struct ref_array_item *ref, struct strbuf *err)
 			continue;
 		} else if (starts_with(name, "align")) {
 			v->handler = align_atom_handler;
+			v->s = "";
 			continue;
 		} else if (!strcmp(name, "end")) {
 			v->handler = end_atom_handler;
+			v->s = "";
 			continue;
 		} else if (starts_with(name, "if")) {
 			const char *s;
-
+			v->s = "";
 			if (skip_prefix(name, "if:", &s))
 				v->s = xstrdup(s);
 			v->handler = if_atom_handler;
 			continue;
 		} else if (!strcmp(name, "then")) {
 			v->handler = then_atom_handler;
+			v->s = "";
 			continue;
 		} else if (!strcmp(name, "else")) {
 			v->handler = else_atom_handler;
+			v->s = "";
 			continue;
 		} else
 			continue;
@@ -1576,13 +1619,20 @@ static int populate_value(struct ref_array_item *ref, struct strbuf *err)
 
 	for (i = 0; i < used_atom_cnt; i++) {
 		struct atom_value *v = &ref->value[i];
-		if (v->s == NULL)
-			break;
+		if (v->s == NULL && used_atom[i].source == SOURCE_NONE)
+			return strbuf_addf_ret(err, -1, _("missing object %s for %s"),
+					       oid_to_hex(&ref->objectname), ref->refname);
 	}
-	if (used_atom_cnt <= i)
+
+	if (need_tagged)
+		oi.info.contentp = &oi.content;
+	if (!memcmp(&oi.info, &empty, sizeof(empty)) &&
+	    !memcmp(&oi_deref.info, &empty, sizeof(empty)))
 		return 0;
 
-	if (get_object(ref, &ref->objectname, 0, &obj, err))
+
+	oi.oid = ref->objectname;
+	if (get_object(ref, 0, &obj, &oi, err))
 		return -1;
 
 	/*
@@ -1596,7 +1646,7 @@ static int populate_value(struct ref_array_item *ref, struct strbuf *err)
 	 * If it is a tag object, see if we use a value that derefs
 	 * the object, and if we do grab the object it refers to.
 	 */
-	tagged = &((struct tag *)obj)->tagged->oid;
+	oi_deref.oid = ((struct tag *)obj)->tagged->oid;
 
 	/*
 	 * NEEDSWORK: This derefs tag only once, which
@@ -1604,7 +1654,7 @@ static int populate_value(struct ref_array_item *ref, struct strbuf *err)
 	 * is not consistent with what deref_tag() does
 	 * which peels the onion to the core.
 	 */
-	return get_object(ref, tagged, 1, &obj, err);
+	return get_object(ref, 1, &obj, &oi_deref, err);
 }
 
 /*
