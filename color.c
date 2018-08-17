@@ -343,6 +343,9 @@ int want_color_fd(int fd, int var)
 
 	static int want_auto[3] = { -1, -1, -1 };
 
+	if (fd < 1 || fd >= ARRAY_SIZE(want_auto))
+		BUG("file descriptor out of range: %d", fd);
+
 	if (var < 0)
 		var = git_use_color_default;
 
