@@ -38,6 +38,14 @@ static int read_patches(const char *range, struct string_list *list)
 
 	argv_array_pushl(&cp.args, "log", "--no-color", "-p", "--no-merges",
 			"--reverse", "--date-order", "--decorate=no",
+			/*
+			 * Choose indicators that are not used anywhere
+			 * else in diffs, but still look reasonable
+			 * (e.g. will not be confusing when debugging)
+			 */
+			"--output-indicator-new=>",
+			"--output-indicator-old=<",
+			"--output-indicator-context=#",
 			"--no-abbrev-commit", range,
 			NULL);
 	cp.out = -1;
@@ -108,8 +116,18 @@ static int read_patches(const char *range, struct string_list *list)
 			 * we are not interested.
 			 */
 			continue;
-		else
+		else if (line.buf[0] == '>') {
+			strbuf_addch(&buf, '+');
+			strbuf_add(&buf, line.buf + 1, line.len - 1);
+		} else if (line.buf[0] == '<') {
+			strbuf_addch(&buf, '-');
+			strbuf_add(&buf, line.buf + 1, line.len - 1);
+		} else if (line.buf[0] == '#') {
+			strbuf_addch(&buf, ' ');
+			strbuf_add(&buf, line.buf + 1, line.len - 1);
+		} else {
 			strbuf_addbuf(&buf, &line);
+		}
 
 		strbuf_addch(&buf, '\n');
 		util->diffsize++;
