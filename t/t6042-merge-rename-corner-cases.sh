@@ -324,7 +324,6 @@ test_expect_success 'rename/directory conflict + content merge conflict' '
 		cd rename-directory-1 &&
 
 		git reset --hard &&
-		git reset --hard &&
 		git clean -fdqx &&
 
 		git checkout left-conflict^0 &&

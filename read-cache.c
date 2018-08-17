@@ -2808,10 +2808,13 @@ out:
 
 /*
  * Read the index file that is potentially unmerged into given
- * index_state, dropping any unmerged entries.  Returns true if
- * the index is unmerged.  Callers who want to refuse to work
- * from an unmerged state can call this and check its return value,
- * instead of calling read_cache().
+ * index_state, dropping any unmerged entries to stage #0 (potentially
+ * resulting in a path appearing as both a file and a directory in the
+ * index; the caller is responsible to clear out the extra entries
+ * before writing the index to a tree).  Returns true if the index is
+ * unmerged.  Callers who want to refuse to work from an unmerged
+ * state can call this and check its return value, instead of calling
+ * read_cache().
  */
 int read_index_unmerged(struct index_state *istate)
 {
@@ -2833,7 +2836,7 @@ int read_index_unmerged(struct index_state *istate)
 		new_ce->ce_flags = create_ce_flags(0) | CE_CONFLICTED;
 		new_ce->ce_namelen = len;
 		new_ce->ce_mode = ce->ce_mode;
-		if (add_index_entry(istate, new_ce, 0))
+		if (add_index_entry(istate, new_ce, ADD_CACHE_SKIP_DFCHECK))
 			return error("%s: cannot drop to stage #0",
 				     new_ce->name);
 	}
