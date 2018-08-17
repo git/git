@@ -475,8 +475,20 @@ test_expect_success 'pull.rebase=interactive' '
 	false
 	EOF
 	test_set_editor "$TRASH_DIRECTORY/fake-editor" &&
+	test_when_finished "test_might_fail git rebase --abort" &&
 	test_must_fail git pull --rebase=interactive . copy &&
 	test "I was here" = "$(cat fake.out)"
+'
+
+test_expect_success 'pull --rebase=i' '
+	write_script "$TRASH_DIRECTORY/fake-editor" <<-\EOF &&
+	echo I was here, too >fake.out &&
+	false
+	EOF
+	test_set_editor "$TRASH_DIRECTORY/fake-editor" &&
+	test_when_finished "test_might_fail git rebase --abort" &&
+	test_must_fail git pull --rebase=i . copy &&
+	test "I was here, too" = "$(cat fake.out)"
 '
 
 test_expect_success 'pull.rebase=invalid fails' '
