@@ -490,16 +490,24 @@ static const char *ref_rev_parse_rules[] = {
 	NULL
 };
 
+#define NUM_REV_PARSE_RULES (ARRAY_SIZE(ref_rev_parse_rules) - 1)
+
+/*
+ * Is it possible that the caller meant full_name with abbrev_name?
+ * If so return a non-zero value to signal "yes"; the magnitude of
+ * the returned value gives the precedence used for disambiguation.
+ *
+ * If abbrev_name cannot mean full_name, return 0.
+ */
 int refname_match(const char *abbrev_name, const char *full_name)
 {
 	const char **p;
 	const int abbrev_name_len = strlen(abbrev_name);
+	const int num_rules = NUM_REV_PARSE_RULES;
 
-	for (p = ref_rev_parse_rules; *p; p++) {
-		if (!strcmp(full_name, mkpath(*p, abbrev_name_len, abbrev_name))) {
-			return 1;
-		}
-	}
+	for (p = ref_rev_parse_rules; *p; p++)
+		if (!strcmp(full_name, mkpath(*p, abbrev_name_len, abbrev_name)))
+			return &ref_rev_parse_rules[num_rules] - p;
 
 	return 0;
 }
