@@ -268,8 +268,9 @@ int cmd_shortlog(int argc, const char **argv, const char *prefix)
 			 N_("Suppress commit descriptions, only provides commit count")),
 		OPT_BOOL('e', "email", &log.email,
 			 N_("Show the email address of each author")),
-		{ OPTION_CALLBACK, 'w', NULL, &log, N_("w[,i1[,i2]]"),
-			N_("Linewrap output"), PARSE_OPT_OPTARG, &parse_wrap_args },
+		{ OPTION_CALLBACK, 'w', NULL, &log, N_("<w>[,<i1>[,<i2>]]"),
+			N_("Linewrap output"), PARSE_OPT_OPTARG,
+			&parse_wrap_args },
 		OPT_END(),
 	};
 

@@ -660,7 +660,8 @@ int parse_options(int argc, const char **argv, const char *prefix,
 static int usage_argh(const struct option *opts, FILE *outfile)
 {
 	const char *s;
-	int literal = (opts->flags & PARSE_OPT_LITERAL_ARGHELP) || !opts->argh;
+	int literal = (opts->flags & PARSE_OPT_LITERAL_ARGHELP) ||
+		!opts->argh || !!strpbrk(opts->argh, "()<>[]|");
 	if (opts->flags & PARSE_OPT_OPTARG)
 		if (opts->long_name)
 			s = literal ? "[=%s]" : "[=<%s>]";
