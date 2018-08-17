@@ -65,6 +65,14 @@ UI, Workflows & Features
  * "git p4 submit" learns to ask its own pre-submit hook if it should
    continue with submitting.
 
+ * The test performed at the receiving end of "git push" to prevent
+   bad objects from entering repository can be customized via
+   receive.fsck.* configuration variables; we now have gained a
+   counterpart to do the same on the "git fetch" side, with
+   fetch.fsck.* configuration variables.
+
+ * "git pull --rebase=interactive" learned "i" as a short-hand for
+   "interactive".
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -192,6 +200,25 @@ Performance, Internal Implementation, Development Support etc.
  * The Travis CI scripts were taught to ship back the test data from
    failed tests.
    (merge aea8879a6a sg/travis-retrieve-trash-upon-failure later to maint).
+
+ * The parse-options machinery learned to refrain from enclosing
+   placeholder string inside a "<bra" and "ket>" pair automatically
+   without PARSE_OPT_LITERAL_ARGHELP.  Existing help text for option
+   arguments that are not formatted correctly have been identified and
+   fixed.
+   (merge 5f0df44cd7 rs/parse-opt-lithelp later to maint).
+
+ * Noiseword "extern" has been removed from function decls in the
+   header files.
+
+ * A few atoms like %(objecttype) and %(objectsize) in the format
+   specifier of "for-each-ref --format=<format>" can be filled without
+   getting the full contents of the object, but just with the object
+   header.  These cases have been optimized by calling
+   oid_object_info() API (instead of reading and inspecting the data).
+
+ * The end result of documentation update has been made to be
+   inspected more easily to help developers.
 
 
 Fixes since v2.18
@@ -399,6 +426,39 @@ Fixes since v2.18
    bit (and not materializing the file in the working tree).
    (merge 2b75fb601c en/merge-recursive-skip-fix later to maint).
 
+ * The "author-script" file "git rebase -i" creates got broken when
+   we started to move the command away from shell script, which is
+   getting fixed now.
+   (merge 5522bbac20 es/rebase-i-author-script-fix later to maint).
+
+ * The automatic tree-matching in "git merge -s subtree" was broken 5
+   years ago and nobody has noticed since then, which is now fixed.
+   (merge 2ec4150713 jk/merge-subtree-heuristics later to maint).
+
+ * "git fetch $there refs/heads/s" ought to fetch the tip of the
+   branch 's', but when "refs/heads/refs/heads/s", i.e. a branch whose
+   name is "refs/heads/s" exists at the same time, fetched that one
+   instead by mistake.  This has been corrected to honor the usual
+   disambiguation rules for abbreviated refnames.
+   (merge 60650a48c0 jt/refspec-dwim-precedence-fix later to maint).
+
+ * Futureproofing a helper function that can easily be misused.
+   (merge 65bb21e77e es/want-color-fd-defensive later to maint).
+
+ * The http-backend (used for smart-http transport) used to slurp the
+   whole input until EOF, without paying attention to CONTENT_LENGTH
+   that is supplied in the environment and instead expecting the Web
+   server to close the input stream.  This has been fixed.
+   (merge eebfe40962 mk/http-backend-content-length later to maint).
+
+ * "git merge --abort" etc. did not clean things up properly when
+   there were conflicted entries in the index in certain order that
+   are involved in D/F conflicts.  This has been corrected.
+   (merge ad3762042a en/abort-df-conflict-fixes later to maint).
+
+ * "git diff --indent-heuristic" had a bad corner case performance.
+   (merge 301ef85401 sb/indent-heuristic-optim later to maint).
+
  * Code cleanup, docfix, build fix, etc.
    (merge aee9be2ebe sg/update-ref-stdin-cleanup later to maint).
    (merge 037714252f jc/clean-after-sanity-tests later to maint).
@@ -421,3 +481,7 @@ Fixes since v2.18
    (merge ffbd51cc60 nd/pack-objects-threading-doc later to maint).
    (merge e9dac7be60 es/mw-to-git-chain-fix later to maint).
    (merge fe583c6c7a rs/remote-mv-leakfix later to maint).
+   (merge 69885ab015 en/t3031-title-fix later to maint).
+   (merge 8578037bed nd/config-blame-sort later to maint).
+   (merge 8ad169c4ba hn/config-in-code-comment later to maint).
+   (merge b7446fcfdf ar/t4150-am-scissors-test-fix later to maint).
