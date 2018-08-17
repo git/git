@@ -231,6 +231,19 @@ test_perf () {
 	test_wrapper_ test_perf_ "$@"
 }
 
+test_size_ () {
+	say >&3 "running: $2"
+	if test_eval_ "$2" 3>"$base".size; then
+		test_ok_ "$1"
+	else
+		test_failure_ "$@"
+	fi
+}
+
+test_size () {
+	test_wrapper_ test_size_ "$@"
+}
+
 # We extend test_done to print timings at the end (./run disables this
 # and does it after running everything)
 test_at_end_hook_ () {

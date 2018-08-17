@@ -13,10 +13,16 @@ sub get_times {
 	my $line = <$fh>;
 	return undef if not defined $line;
 	close $fh or die "cannot close $name: $!";
-	$line =~ /^(?:(\d+):)?(\d+):(\d+(?:\.\d+)?) (\d+(?:\.\d+)?) (\d+(?:\.\d+)?)$/
-		or die "bad input line: $line";
-	my $rt = ((defined $1 ? $1 : 0.0)*60+$2)*60+$3;
-	return ($rt, $4, $5);
+	# times
+	if ($line =~ /^(?:(\d+):)?(\d+):(\d+(?:\.\d+)?) (\d+(?:\.\d+)?) (\d+(?:\.\d+)?)$/) {
+		my $rt = ((defined $1 ? $1 : 0.0)*60+$2)*60+$3;
+		return ($rt, $4, $5);
+	# size
+	} elsif ($line =~ /^\d+$/) {
+		return $&;
+	} else {
+		die "bad input line: $line";
+	}
 }
 
 sub relative_change {
@@ -32,9 +38,15 @@ sub relative_change {
 
 sub format_times {
 	my ($r, $u, $s, $firstr) = @_;
+	# no value means we did not finish the test
 	if (!defined $r) {
 		return "<missing>";
 	}
+	# a single value means we have a size, not times
+	if (!defined $u) {
+		return format_size($r, $firstr);
+	}
+	# otherwise, we have real/user/system times
 	my $out = sprintf "%.2f(%.2f+%.2f)", $r, $u, $s;
 	$out .= ' ' . relative_change($r, $firstr) if defined $firstr;
 	return $out;
@@ -52,6 +64,25 @@ sub usage {
 
 EOT
 	exit(1);
+}
+
+sub human_size {
+	my $n = shift;
+	my @units = ('', qw(K M G));
+	while ($n > 900 && @units > 1) {
+		$n /= 1000;
+		shift @units;
+	}
+	return $n unless length $units[0];
+	return sprintf '%.1f%s', $n, $units[0];
+}
+
+sub format_size {
+	my ($size, $first) = @_;
+	# match the width of a time: 0.00(0.00+0.00)
+	my $out = sprintf '%15s', human_size($size);
+	$out .= ' ' . relative_change($size, $first) if defined $first;
+	return $out;
 }
 
 my (@dirs, %dirnames, %dirabbrevs, %prefixes, @tests,
@@ -184,7 +215,14 @@ sub print_default_results {
 		my $firstr;
 		for my $i (0..$#dirs) {
 			my $d = $dirs[$i];
-			$times{$prefixes{$d}.$t} = [get_times("$resultsdir/$prefixes{$d}$t.times")];
+			my $base = "$resultsdir/$prefixes{$d}$t";
+			$times{$prefixes{$d}.$t} = [];
+			foreach my $type (qw(times size)) {
+				if (-e "$base.$type") {
+					$times{$prefixes{$d}.$t} = [get_times("$base.$type")];
+					last;
+				}
+			}
 			my ($r,$u,$s) = @{$times{$prefixes{$d}.$t}};
 			my $w = length format_times($r,$u,$s,$firstr);
 			$colwidth[$i] = $w if $w > $colwidth[$i];
