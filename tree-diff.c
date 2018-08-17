@@ -557,9 +557,7 @@ struct combine_diff_path *diff_tree_paths(
 	 * free pre-allocated last element, if any
 	 * (see path_appendnew() for details about why)
 	 */
-	if (p->next) {
-		FREE_AND_NULL(p->next);
-	}
+	FREE_AND_NULL(p->next);
 
 	return p;
 }
