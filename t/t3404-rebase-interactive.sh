@@ -1247,7 +1247,7 @@ rebase_setup_and_clean () {
 		test_might_fail git branch -D $1 &&
 		test_might_fail git rebase --abort
 	" &&
-	git checkout -b $1 master
+	git checkout -b $1 ${2:-master}
 }
 
 test_expect_success 'drop' '
@@ -1422,6 +1422,14 @@ test_expect_success 'rebase -i --gpg-sign=<key-id> overrides commit.gpgSign' '
 	FAKE_LINES="edit 1" git rebase -i --gpg-sign="\"S I Gner\"" HEAD^ \
 		>out 2>err &&
 	test_i18ngrep "$SQ-S\"S I Gner\"$SQ" err
+'
+
+test_expect_success 'valid author header after --root swap' '
+	rebase_setup_and_clean author-header no-conflict-branch &&
+	set_fake_editor &&
+	FAKE_LINES="2 1" git rebase -i --root &&
+	git cat-file commit HEAD^ >out &&
+	grep "^author ..*> [0-9][0-9]* [-+][0-9][0-9][0-9][0-9]$" out
 '
 
 test_done

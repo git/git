@@ -654,6 +654,7 @@ missing_author:
 			strbuf_addch(&buf, *(message++));
 		else
 			strbuf_addf(&buf, "'\\\\%c'", *(message++));
+	strbuf_addch(&buf, '\'');
 	res = write_message(buf.buf, buf.len, rebase_path_author_script(), 1);
 	strbuf_release(&buf);
 	return res;
@@ -708,14 +709,16 @@ static const char *read_author_ident(struct strbuf *buf)
 	const char *keys[] = {
 		"GIT_AUTHOR_NAME=", "GIT_AUTHOR_EMAIL=", "GIT_AUTHOR_DATE="
 	};
-	char *in, *out, *eol;
-	int i = 0, len;
+	struct strbuf out = STRBUF_INIT;
+	char *in, *eol;
+	const char *val[3];
+	int i = 0;
 
 	if (strbuf_read_file(buf, rebase_path_author_script(), 256) <= 0)
 		return NULL;
 
 	/* dequote values and construct ident line in-place */
-	for (in = out = buf->buf; i < 3 && in - buf->buf < buf->len; i++) {
+	for (in = buf->buf; i < 3 && in - buf->buf < buf->len; i++) {
 		if (!skip_prefix(in, keys[i], (const char **)&in)) {
 			warning(_("could not parse '%s' (looking for '%s'"),
 				rebase_path_author_script(), keys[i]);
@@ -724,17 +727,12 @@ static const char *read_author_ident(struct strbuf *buf)
 
 		eol = strchrnul(in, '\n');
 		*eol = '\0';
-		sq_dequote(in);
-		len = strlen(in);
-
-		if (i > 0) /* separate values by spaces */
-			*(out++) = ' ';
-		if (i == 1) /* email needs to be surrounded by <...> */
-			*(out++) = '<';
-		memmove(out, in, len);
-		out += len;
-		if (i == 1) /* email needs to be surrounded by <...> */
-			*(out++) = '>';
+		if (!sq_dequote(in)) {
+			warning(_("bad quoting on %s value in '%s'"),
+				keys[i], rebase_path_author_script());
+			return NULL;
+		}
+		val[i] = in;
 		in = eol + 1;
 	}
 
@@ -744,7 +742,18 @@ static const char *read_author_ident(struct strbuf *buf)
 		return NULL;
 	}
 
-	buf->len = out - buf->buf;
+	/* validate date since fmt_ident() will die() on bad value */
+	if (parse_date(val[2], &out)){
+		warning(_("invalid date format '%s' in '%s'"),
+			val[2], rebase_path_author_script());
+		strbuf_release(&out);
+		return NULL;
+	}
+
+	strbuf_reset(&out);
+	strbuf_addstr(&out, fmt_ident(val[0], val[1], val[2], 0));
+	strbuf_swap(buf, &out);
+	strbuf_release(&out);
 	return buf->buf;
 }
 
