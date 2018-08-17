@@ -1281,7 +1281,9 @@ static void emit_diff_symbol_from_struct(struct diff_options *o,
 			else if (c == '-')
 				set = diff_get_color_opt(o, DIFF_FILE_OLD);
 		}
-		emit_line_ws_markup(o, set_sign, set, reset, ' ', line, len,
+		emit_line_ws_markup(o, set_sign, set, reset,
+				    o->output_indicators[OUTPUT_INDICATOR_CONTEXT],
+				    line, len,
 				    flags & (DIFF_SYMBOL_CONTENT_WS_MASK), 0);
 		break;
 	case DIFF_SYMBOL_PLUS:
@@ -1324,7 +1326,9 @@ static void emit_diff_symbol_from_struct(struct diff_options *o,
 				set = diff_get_color_opt(o, DIFF_CONTEXT_BOLD);
 			flags &= ~DIFF_SYMBOL_CONTENT_WS_MASK;
 		}
-		emit_line_ws_markup(o, set_sign, set, reset, '+', line, len,
+		emit_line_ws_markup(o, set_sign, set, reset,
+				    o->output_indicators[OUTPUT_INDICATOR_NEW],
+				    line, len,
 				    flags & DIFF_SYMBOL_CONTENT_WS_MASK,
 				    flags & DIFF_SYMBOL_CONTENT_BLANK_LINE_EOF);
 		break;
@@ -1367,7 +1371,9 @@ static void emit_diff_symbol_from_struct(struct diff_options *o,
 			else
 				set = diff_get_color_opt(o, DIFF_CONTEXT_DIM);
 		}
-		emit_line_ws_markup(o, set_sign, set, reset, '-', line, len,
+		emit_line_ws_markup(o, set_sign, set, reset,
+				    o->output_indicators[OUTPUT_INDICATOR_OLD],
+				    line, len,
 				    flags & DIFF_SYMBOL_CONTENT_WS_MASK, 0);
 		break;
 	case DIFF_SYMBOL_WORDS_PORCELAIN:
@@ -4382,6 +4388,9 @@ void diff_setup(struct diff_options *options)
 
 	options->file = stdout;
 
+	options->output_indicators[OUTPUT_INDICATOR_NEW] = '+';
+	options->output_indicators[OUTPUT_INDICATOR_OLD] = '-';
+	options->output_indicators[OUTPUT_INDICATOR_CONTEXT] = ' ';
 	options->abbrev = DEFAULT_ABBREV;
 	options->line_termination = '\n';
 	options->break_opt = -1;
@@ -4869,6 +4878,12 @@ int diff_opt_parse(struct diff_options *options,
 		 options->output_format |= DIFF_FORMAT_DIFFSTAT;
 	} else if (!strcmp(arg, "--no-compact-summary"))
 		 options->flags.stat_with_summary = 0;
+	else if (skip_prefix(arg, "--output-indicator-new=", &arg))
+		options->output_indicators[OUTPUT_INDICATOR_NEW] = arg[0];
+	else if (skip_prefix(arg, "--output-indicator-old=", &arg))
+		options->output_indicators[OUTPUT_INDICATOR_OLD] = arg[0];
+	else if (skip_prefix(arg, "--output-indicator-context=", &arg))
+		options->output_indicators[OUTPUT_INDICATOR_CONTEXT] = arg[0];
 
 	/* renames options */
 	else if (starts_with(arg, "-B") ||
