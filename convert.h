@@ -57,35 +57,36 @@ struct delayed_checkout {
 
 extern enum eol core_eol;
 extern char *check_roundtrip_encoding;
-extern const char *get_cached_convert_stats_ascii(const struct index_state *istate,
-						  const char *path);
-extern const char *get_wt_convert_stats_ascii(const char *path);
-extern const char *get_convert_attr_ascii(const char *path);
+const char *get_cached_convert_stats_ascii(const struct index_state *istate,
+					   const char *path);
+const char *get_wt_convert_stats_ascii(const char *path);
+const char *get_convert_attr_ascii(const char *path);
 
 /* returns 1 if *dst was used */
-extern int convert_to_git(const struct index_state *istate,
-			  const char *path, const char *src, size_t len,
-			  struct strbuf *dst, int conv_flags);
-extern int convert_to_working_tree(const char *path, const char *src,
-				   size_t len, struct strbuf *dst);
-extern int async_convert_to_working_tree(const char *path, const char *src,
-					 size_t len, struct strbuf *dst,
-					 void *dco);
-extern int async_query_available_blobs(const char *cmd, struct string_list *available_paths);
-extern int renormalize_buffer(const struct index_state *istate,
-			      const char *path, const char *src, size_t len,
-			      struct strbuf *dst);
+int convert_to_git(const struct index_state *istate,
+		   const char *path, const char *src, size_t len,
+		   struct strbuf *dst, int conv_flags);
+int convert_to_working_tree(const char *path, const char *src,
+			    size_t len, struct strbuf *dst);
+int async_convert_to_working_tree(const char *path, const char *src,
+				  size_t len, struct strbuf *dst,
+				  void *dco);
+int async_query_available_blobs(const char *cmd,
+				struct string_list *available_paths);
+int renormalize_buffer(const struct index_state *istate,
+		       const char *path, const char *src, size_t len,
+		       struct strbuf *dst);
 static inline int would_convert_to_git(const struct index_state *istate,
 				       const char *path)
 {
 	return convert_to_git(istate, path, NULL, 0, NULL, 0);
 }
 /* Precondition: would_convert_to_git_filter_fd(path) == true */
-extern void convert_to_git_filter_fd(const struct index_state *istate,
-				     const char *path, int fd,
-				     struct strbuf *dst,
-				     int conv_flags);
-extern int would_convert_to_git_filter_fd(const char *path);
+void convert_to_git_filter_fd(const struct index_state *istate,
+			      const char *path, int fd,
+			      struct strbuf *dst,
+			      int conv_flags);
+int would_convert_to_git_filter_fd(const char *path);
 
 /*****************************************************************
  *
@@ -95,9 +96,10 @@ extern int would_convert_to_git_filter_fd(const char *path);
 
 struct stream_filter; /* opaque */
 
-extern struct stream_filter *get_stream_filter(const char *path, const struct object_id *);
-extern void free_stream_filter(struct stream_filter *);
-extern int is_null_stream_filter(struct stream_filter *);
+struct stream_filter *get_stream_filter(const char *path,
+					const struct object_id *);
+void free_stream_filter(struct stream_filter *);
+int is_null_stream_filter(struct stream_filter *);
 
 /*
  * Use as much input up to *isize_p and fill output up to *osize_p;
@@ -111,8 +113,8 @@ extern int is_null_stream_filter(struct stream_filter *);
  * such filters know there is no more input coming and it is time for
  * them to produce the remaining output based on the buffered input.
  */
-extern int stream_filter(struct stream_filter *,
-			 const char *input, size_t *isize_p,
-			 char *output, size_t *osize_p);
+int stream_filter(struct stream_filter *,
+		  const char *input, size_t *isize_p,
+		  char *output, size_t *osize_p);
 
 #endif /* CONVERT_H */

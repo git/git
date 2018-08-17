@@ -111,14 +111,14 @@ struct apply_state {
 	int applied_after_fixing_ws;
 };
 
-extern int apply_parse_options(int argc, const char **argv,
-			       struct apply_state *state,
-			       int *force_apply, int *options,
-			       const char * const *apply_usage);
-extern int init_apply_state(struct apply_state *state,
-			    const char *prefix);
-extern void clear_apply_state(struct apply_state *state);
-extern int check_apply_state(struct apply_state *state, int force_apply);
+int apply_parse_options(int argc, const char **argv,
+			struct apply_state *state,
+			int *force_apply, int *options,
+			const char * const *apply_usage);
+int init_apply_state(struct apply_state *state,
+		     const char *prefix);
+void clear_apply_state(struct apply_state *state);
+int check_apply_state(struct apply_state *state, int force_apply);
 
 /*
  * Some aspects of the apply behavior are controlled by the following
@@ -127,9 +127,8 @@ extern int check_apply_state(struct apply_state *state, int force_apply);
 #define APPLY_OPT_INACCURATE_EOF	(1<<0) /* accept inaccurate eof */
 #define APPLY_OPT_RECOUNT		(1<<1) /* accept inaccurate line count */
 
-extern int apply_all_patches(struct apply_state *state,
-			     int argc,
-			     const char **argv,
-			     int options);
+int apply_all_patches(struct apply_state *state,
+		      int argc, const char **argv,
+		      int options);
 
 #endif
