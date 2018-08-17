@@ -83,34 +83,43 @@ static int score_trees(const struct object_id *hash1, const struct object_id *ha
 	int score = 0;
 
 	for (;;) {
-		struct name_entry e1, e2;
-		int got_entry_from_one = tree_entry(&one, &e1);
-		int got_entry_from_two = tree_entry(&two, &e2);
 		int cmp;
 
-		if (got_entry_from_one && got_entry_from_two)
-			cmp = base_name_entries_compare(&e1, &e2);
-		else if (got_entry_from_one)
+		if (one.size && two.size)
+			cmp = base_name_entries_compare(&one.entry, &two.entry);
+		else if (one.size)
 			/* two lacks this entry */
 			cmp = -1;
-		else if (got_entry_from_two)
+		else if (two.size)
 			/* two has more entries */
 			cmp = 1;
 		else
 			break;
 
-		if (cmp < 0)
+		if (cmp < 0) {
 			/* path1 does not appear in two */
-			score += score_missing(e1.mode, e1.path);
-		else if (cmp > 0)
+			score += score_missing(one.entry.mode, one.entry.path);
+			update_tree_entry(&one);
+		} else if (cmp > 0) {
 			/* path2 does not appear in one */
-			score += score_missing(e2.mode, e2.path);
-		else if (oidcmp(e1.oid, e2.oid))
-			/* they are different */
-			score += score_differs(e1.mode, e2.mode, e1.path);
-		else
-			/* same subtree or blob */
-			score += score_matches(e1.mode, e2.mode, e1.path);
+			score += score_missing(two.entry.mode, two.entry.path);
+			update_tree_entry(&two);
+		} else {
+			/* path appears in both */
+			if (oidcmp(one.entry.oid, two.entry.oid)) {
+				/* they are different */
+				score += score_differs(one.entry.mode,
+						       two.entry.mode,
+						       one.entry.path);
+			} else {
+				/* same subtree or blob */
+				score += score_matches(one.entry.mode,
+						       two.entry.mode,
+						       one.entry.path);
+			}
+			update_tree_entry(&one);
+			update_tree_entry(&two);
+		}
 	}
 	free(one_buf);
 	free(two_buf);
