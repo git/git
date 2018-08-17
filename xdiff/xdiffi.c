@@ -575,6 +575,11 @@ static void measure_split(const xdfile_t *xdf, long split,
 #define INDENT_WEIGHT 60
 
 /*
+ * How far do we slide a hunk at most?
+ */
+#define INDENT_HEURISTIC_MAX_SLIDING 100
+
+/*
  * Compute a badness score for the hypothetical split whose measurements are
  * stored in m. The weight factors were determined empirically using the tools and
  * corpus described in
@@ -886,7 +891,12 @@ int xdl_change_compact(xdfile_t *xdf, xdfile_t *xdfo, long flags) {
 			long shift, best_shift = -1;
 			struct split_score best_score;
 
-			for (shift = earliest_end; shift <= g.end; shift++) {
+			shift = earliest_end;
+			if (g.end - groupsize - 1 > shift)
+				shift = g.end - groupsize - 1;
+			if (g.end - INDENT_HEURISTIC_MAX_SLIDING > shift)
+				shift = g.end - INDENT_HEURISTIC_MAX_SLIDING;
+			for (; shift <= g.end; shift++) {
 				struct split_measurement m;
 				struct split_score score = {0, 0};
 
