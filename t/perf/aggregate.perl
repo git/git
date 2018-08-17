@@ -19,21 +19,24 @@ sub get_times {
 	return ($rt, $4, $5);
 }
 
+sub relative_change {
+	my ($r, $firstr) = @_;
+	if ($firstr > 0) {
+		return sprintf "%+.1f%%", 100.0*($r-$firstr)/$firstr;
+	} elsif ($r == 0) {
+		return "=";
+	} else {
+		return "+inf";
+	}
+}
+
 sub format_times {
 	my ($r, $u, $s, $firstr) = @_;
 	if (!defined $r) {
 		return "<missing>";
 	}
 	my $out = sprintf "%.2f(%.2f+%.2f)", $r, $u, $s;
-	if (defined $firstr) {
-		if ($firstr > 0) {
-			$out .= sprintf " %+.1f%%", 100.0*($r-$firstr)/$firstr;
-		} elsif ($r == 0) {
-			$out .= " =";
-		} else {
-			$out .= " +inf";
-		}
-	}
+	$out .= ' ' . relative_change($r, $firstr) if defined $firstr;
 	return $out;
 }
 
