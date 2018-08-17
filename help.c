@@ -693,6 +693,7 @@ int cmd_version(int argc, const char **argv, const char *prefix)
 		else
 			printf("no commit associated with this build\n");
 		printf("sizeof-long: %d\n", (int)sizeof(long));
+		printf("sizeof-size_t: %d\n", (int)sizeof(size_t));
 		/* NEEDSWORK: also save and output GIT-BUILD_OPTIONS? */
 	}
 	return 0;
