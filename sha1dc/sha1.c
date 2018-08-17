@@ -93,13 +93,23 @@
 #define SHA1DC_BIGENDIAN
 
 /* Not under GCC-alike or glibc or *BSD or newlib or <processor whitelist> */
+#elif (defined(_AIX))
+
+/*
+ * Defines Big Endian on a whitelist of OSs that are known to be Big
+ * Endian-only. See
+ * https://public-inbox.org/git/93056823-2740-d072-1ebd-46b440b33d7e@felt.demon.nl/
+ */
+#define SHA1DC_BIGENDIAN
+
+/* Not under GCC-alike or glibc or *BSD or newlib or <processor whitelist> or <os whitelist> */
 #elif defined(SHA1DC_ON_INTEL_LIKE_PROCESSOR)
 /*
  * As a last resort before we do anything else we're not 100% sure
  * about below, we blacklist specific processors here. We could add
  * more, see e.g. https://wiki.debian.org/ArchitectureSpecificsMemo
  */
-#else /* Not under GCC-alike or glibc or *BSD or newlib or <processor whitelist>  or <processor blacklist> */
+#else /* Not under GCC-alike or glibc or *BSD or newlib or <processor whitelist> or <os whitelist> or <processor blacklist> */
 
 /* We do nothing more here for now */
 /*#error "Uncomment this to see if you fall through all the detection"*/
