@@ -995,22 +995,27 @@ apply.whitespace::
 	Tells 'git apply' how to handle whitespaces, in the same way
 	as the `--whitespace` option. See linkgit:git-apply[1].
 
-blame.showRoot::
-	Do not treat root commits as boundaries in linkgit:git-blame[1].
-	This option defaults to false.
-
 blame.blankBoundary::
 	Show blank commit object name for boundary commits in
 	linkgit:git-blame[1]. This option defaults to false.
 
-blame.showEmail::
-	Show the author email instead of author name in linkgit:git-blame[1].
-	This option defaults to false.
+blame.coloring::
+	This determines the coloring scheme to be applied to blame
+	output. It can be 'repeatedLines', 'highlightRecent',
+	or 'none' which is the default.
 
 blame.date::
 	Specifies the format used to output dates in linkgit:git-blame[1].
 	If unset the iso format is used. For supported values,
 	see the discussion of the `--date` option at linkgit:git-log[1].
+
+blame.showEmail::
+	Show the author email instead of author name in linkgit:git-blame[1].
+	This option defaults to false.
+
+blame.showRoot::
+	Do not treat root commits as boundaries in linkgit:git-blame[1].
+	This option defaults to false.
 
 branch.autoSetupMerge::
 	Tells 'git branch' and 'git checkout' to set up new branches
@@ -1148,6 +1153,28 @@ color.advice::
 
 color.advice.hint::
 	Use customized color for hints.
+
+color.blame.highlightRecent::
+	This can be used to color the metadata of a blame line depending
+	on age of the line.
++
+This setting should be set to a comma-separated list of color and date settings,
+starting and ending with a color, the dates should be set from oldest to newest.
+The metadata will be colored given the colors if the the line was introduced
+before the given timestamp, overwriting older timestamped colors.
++
+Instead of an absolute timestamp relative timestamps work as well, e.g.
+2.weeks.ago is valid to address anything older than 2 weeks.
++
+It defaults to 'blue,12 month ago,white,1 month ago,red', which colors
+everything older than one year blue, recent changes between one month and
+one year old are kept white, and lines introduced within the last month are
+colored red.
+
+color.blame.repeatedLines::
+	Use the customized color for the part of git-blame output that
+	is repeated meta information per line (such as commit id,
+	author name, date and timezone). Defaults to cyan.
 
 color.branch::
 	A boolean to enable/disable color in the output of
@@ -1295,33 +1322,6 @@ color.status.<slot>::
 	respectively, when branch and tracking information is displayed in the
 	status short-format), or
 	`unmerged` (files which have unmerged changes).
-
-color.blame.repeatedLines::
-	Use the customized color for the part of git-blame output that
-	is repeated meta information per line (such as commit id,
-	author name, date and timezone). Defaults to cyan.
-
-color.blame.highlightRecent::
-	This can be used to color the metadata of a blame line depending
-	on age of the line.
-+
-This setting should be set to a comma-separated list of color and date settings,
-starting and ending with a color, the dates should be set from oldest to newest.
-The metadata will be colored given the colors if the the line was introduced
-before the given timestamp, overwriting older timestamped colors.
-+
-Instead of an absolute timestamp relative timestamps work as well, e.g.
-2.weeks.ago is valid to address anything older than 2 weeks.
-+
-It defaults to 'blue,12 month ago,white,1 month ago,red', which colors
-everything older than one year blue, recent changes between one month and
-one year old are kept white, and lines introduced within the last month are
-colored red.
-
-blame.coloring::
-	This determines the coloring scheme to be applied to blame
-	output. It can be 'repeatedLines', 'highlightRecent',
-	or 'none' which is the default.
 
 color.transport::
 	A boolean to enable/disable color when pushes are rejected. May be
