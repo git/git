@@ -433,7 +433,9 @@ int cache_tree_update(struct index_state *istate, int flags)
 
 	if (i)
 		return i;
+	trace_performance_enter();
 	i = update_one(it, cache, entries, "", 0, &skip, flags);
+	trace_performance_leave("cache_tree_update");
 	if (i < 0)
 		return i;
 	istate->cache_changed |= CACHE_TREE_CHANGED;

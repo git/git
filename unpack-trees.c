@@ -345,6 +345,7 @@ static int check_updates(struct unpack_trees_options *o)
 	struct checkout state = CHECKOUT_INIT;
 	int i;
 
+	trace_performance_enter();
 	state.force = 1;
 	state.quiet = 1;
 	state.refresh_cache = 1;
@@ -414,6 +415,7 @@ static int check_updates(struct unpack_trees_options *o)
 	errs |= finish_delayed_checkout(&state);
 	if (o->update)
 		git_attr_set_direction(GIT_ATTR_CHECKIN, NULL);
+	trace_performance_leave("check_updates");
 	return errs != 0;
 }
 
@@ -1285,6 +1287,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 	if (len > MAX_UNPACK_TREES)
 		die("unpack_trees takes at most %d trees", MAX_UNPACK_TREES);
 
+	trace_performance_enter();
 	memset(&el, 0, sizeof(el));
 	if (!core_apply_sparse_checkout || !o->update)
 		o->skip_sparse_checkout = 1;
@@ -1357,7 +1360,10 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 			}
 		}
 
-		if (traverse_trees(len, t, &info) < 0)
+		trace_performance_enter();
+		ret = traverse_trees(len, t, &info);
+		trace_performance_leave("traverse_trees");
+		if (ret < 0)
 			goto return_failed;
 	}
 
@@ -1449,6 +1455,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 	o->src_index = NULL;
 
 done:
+	trace_performance_leave("unpack_trees");
 	clear_exclude_list(&el);
 	return ret;
 
