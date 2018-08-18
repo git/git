@@ -15,6 +15,8 @@ test_expect_success 'setup' '
 	echo warning: warning
 	echo prefixerror: error
 	echo " " "error: leading space"
+	echo "    "
+	echo Err
 	exit 0
 	EOF
 	echo 1 >file &&
@@ -44,6 +46,12 @@ test_expect_success 'whole words at line start' '
 	grep "prefixerror: error" decoded
 '
 
+test_expect_success 'short line' '
+	git -C child -c color.remote=always push -f origin HEAD:short-line 2>output &&
+	test_decode_color <output >decoded &&
+	grep "remote: Err" decoded
+'
+
 test_expect_success 'case-insensitive' '
 	git --git-dir child/.git -c color.remote=always push -f origin HEAD:refs/heads/case-insensitive 2>output &&
 	cat output &&
@@ -56,6 +64,12 @@ test_expect_success 'leading space' '
 	git --git-dir child/.git -c color.remote=always push -f origin HEAD:refs/heads/leading-space 2>output &&        cat output &&
 	test_decode_color <output >decoded &&
 	grep "  <BOLD;RED>error<RESET>: leading space" decoded
+'
+
+test_expect_success 'spaces only' '
+	git -C child -c color.remote=always push -f origin HEAD:only-space 2>output &&
+	test_decode_color <output >decoded &&
+	grep "remote:     " decoded
 '
 
 test_expect_success 'no coloring for redirected output' '

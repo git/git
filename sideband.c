@@ -65,6 +65,8 @@ void list_config_color_sideband_slots(struct string_list *list, const char *pref
  * Optionally highlight one keyword in remote output if it appears at the start
  * of the line. This should be called for a single line only, which is
  * passed as the first N characters of the SRC array.
+ *
+ * NEEDSWORK: use "size_t n" instead for clarity.
  */
 static void maybe_colorize_sideband(struct strbuf *dest, const char *src, int n)
 {
@@ -75,7 +77,7 @@ static void maybe_colorize_sideband(struct strbuf *dest, const char *src, int n)
 		return;
 	}
 
-	while (isspace(*src)) {
+	while (0 < n && isspace(*src)) {
 		strbuf_addch(dest, *src);
 		src++;
 		n--;
@@ -84,6 +86,9 @@ static void maybe_colorize_sideband(struct strbuf *dest, const char *src, int n)
 	for (i = 0; i < ARRAY_SIZE(keywords); i++) {
 		struct keyword_entry *p = keywords + i;
 		int len = strlen(p->keyword);
+
+		if (n <= len)
+			continue;
 		/*
 		 * Match case insensitively, so we colorize output from existing
 		 * servers regardless of the case that they use for their
@@ -101,7 +106,6 @@ static void maybe_colorize_sideband(struct strbuf *dest, const char *src, int n)
 	}
 
 	strbuf_add(dest, src, n);
-
 }
 
 
