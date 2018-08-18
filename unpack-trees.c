@@ -1578,6 +1578,8 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 	if (o->dst_index) {
 		move_index_extensions(&o->result, o->src_index);
 		if (!ret) {
+			if (git_env_bool("GIT_TEST_CHECK_CACHE_TREE", 0))
+				cache_tree_verify(&o->result);
 			if (!o->result.cache_tree)
 				o->result.cache_tree = cache_tree();
 			if (!cache_tree_fully_valid(o->result.cache_tree))

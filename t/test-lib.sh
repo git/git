@@ -1083,6 +1083,12 @@ else
 	test_set_prereq C_LOCALE_OUTPUT
 fi
 
+if test -z "$GIT_TEST_CHECK_CACHE_TREE"
+then
+	GIT_TEST_CHECK_CACHE_TREE=true
+	export GIT_TEST_CHECK_CACHE_TREE
+fi
+
 test_lazy_prereq PIPE '
 	# test whether the filesystem supports FIFOs
 	test_have_prereq !MINGW,!CYGWIN &&
