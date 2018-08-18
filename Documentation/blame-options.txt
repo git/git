@@ -41,7 +41,7 @@ include::line-range-format.txt[]
 	Show in a format designed for machine consumption.
 
 --line-porcelain::
-	Show the porcelain format, but output commit information for
+	Show the porcelain format, but the output commit information for
 	each line, not just the first time a commit is referenced.
 	Implies --porcelain.
 
