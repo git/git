@@ -685,6 +685,8 @@ static int traverse_by_cache_tree(int pos, int nr_entries, int nr_names,
 {
 	struct cache_entry *src[MAX_UNPACK_TREES + 1] = { NULL, };
 	struct unpack_trees_options *o = info->data;
+	struct cache_entry *tree_ce = NULL;
+	int ce_len = 0;
 	int i, d;
 
 	if (!o->merge)
@@ -699,30 +701,39 @@ static int traverse_by_cache_tree(int pos, int nr_entries, int nr_names,
 	 * get here in the first place.
 	 */
 	for (i = 0; i < nr_entries; i++) {
-		struct cache_entry *tree_ce;
-		int len, rc;
+		int new_ce_len, len, rc;
 
 		src[0] = o->src_index->cache[pos + i];
 
 		len = ce_namelen(src[0]);
-		tree_ce = xcalloc(1, cache_entry_size(len));
+		new_ce_len = cache_entry_size(len);
+
+		if (new_ce_len > ce_len) {
+			new_ce_len <<= 1;
+			tree_ce = xrealloc(tree_ce, new_ce_len);
+			memset(tree_ce, 0, new_ce_len);
+			ce_len = new_ce_len;
+
+			tree_ce->ce_flags = create_ce_flags(0);
+
+			for (d = 1; d <= nr_names; d++)
+				src[d] = tree_ce;
+		}
 
 		tree_ce->ce_mode = src[0]->ce_mode;
-		tree_ce->ce_flags = create_ce_flags(0);
 		tree_ce->ce_namelen = len;
 		oidcpy(&tree_ce->oid, &src[0]->oid);
 		memcpy(tree_ce->name, src[0]->name, len + 1);
 
-		for (d = 1; d <= nr_names; d++)
-			src[d] = tree_ce;
-
 		rc = call_unpack_fn((const struct cache_entry * const *)src, o);
-		free(tree_ce);
-		if (rc < 0)
+		if (rc < 0) {
+			free(tree_ce);
 			return rc;
+		}
 
 		mark_ce_used(src[0], o);
 	}
+	free(tree_ce);
 	if (o->debug_unpack)
 		printf("Unpacked %d entries from %s to %s using cache-tree\n",
 		       nr_entries,
