@@ -1476,8 +1476,8 @@ int refresh_index(struct index_state *istate, unsigned int flags,
 	const char *typechange_fmt;
 	const char *added_fmt;
 	const char *unmerged_fmt;
-	uint64_t start = getnanotime();
 
+	trace_performance_enter();
 	modified_fmt = (in_porcelain ? "M\t%s\n" : "%s: needs update\n");
 	deleted_fmt = (in_porcelain ? "D\t%s\n" : "%s: needs update\n");
 	typechange_fmt = (in_porcelain ? "T\t%s\n" : "%s needs update\n");
@@ -1547,7 +1547,7 @@ int refresh_index(struct index_state *istate, unsigned int flags,
 
 		replace_index_entry(istate, i, new_entry);
 	}
-	trace_performance_since(start, "refresh index");
+	trace_performance_leave("refresh index");
 	return has_errors;
 }
 
@@ -2002,7 +2002,6 @@ static void freshen_shared_index(const char *shared_index, int warn)
 int read_index_from(struct index_state *istate, const char *path,
 		    const char *gitdir)
 {
-	uint64_t start = getnanotime();
 	struct split_index *split_index;
 	int ret;
 	char *base_oid_hex;
@@ -2012,8 +2011,9 @@ int read_index_from(struct index_state *istate, const char *path,
 	if (istate->initialized)
 		return istate->cache_nr;
 
+	trace_performance_enter();
 	ret = do_read_index(istate, path, 0);
-	trace_performance_since(start, "read cache %s", path);
+	trace_performance_leave("read cache %s", path);
 
 	split_index = istate->split_index;
 	if (!split_index || is_null_oid(&split_index->base_oid)) {
@@ -2021,6 +2021,7 @@ int read_index_from(struct index_state *istate, const char *path,
 		return ret;
 	}
 
+	trace_performance_enter();
 	if (split_index->base)
 		discard_index(split_index->base);
 	else
@@ -2037,8 +2038,8 @@ int read_index_from(struct index_state *istate, const char *path,
 	freshen_shared_index(base_path, 0);
 	merge_base_index(istate);
 	post_read_index_from(istate);
-	trace_performance_since(start, "read cache %s", base_path);
 	free(base_path);
+	trace_performance_leave("read cache %s", base_path);
 	return ret;
 }
 
