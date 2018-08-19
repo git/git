@@ -25,25 +25,19 @@ EXPECTED
 '
 
 test_expect_success 'file add !A, B' '
-	cat >expected <<\EXPECTED &&
-EXPECTED
-
 	git reset --hard initial &&
 	test_commit "add-not-a-b" "ONE" "AAA" &&
 	git merge-tree initial add-not-a-b initial >actual &&
-	test_cmp expected actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'file add A, B (same)' '
-	cat >expected <<\EXPECTED &&
-EXPECTED
-
 	git reset --hard initial &&
 	test_commit "add-a-b-same-A" "ONE" "AAA" &&
 	git reset --hard initial &&
 	test_commit "add-a-b-same-B" "ONE" "AAA" &&
 	git merge-tree initial add-a-b-same-A add-a-b-same-B >actual &&
-	test_cmp expected actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'file add A, B (different)' '
@@ -68,13 +62,10 @@ EXPECTED
 '
 
 test_expect_success 'file change A, !B' '
-	cat >expected <<\EXPECTED &&
-EXPECTED
-
 	git reset --hard initial &&
 	test_commit "change-a-not-b" "initial-file" "BBB" &&
 	git merge-tree initial change-a-not-b initial >actual &&
-	test_cmp expected actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'file change !A, B' '
@@ -94,15 +85,12 @@ EXPECTED
 '
 
 test_expect_success 'file change A, B (same)' '
-	cat >expected <<\EXPECTED &&
-EXPECTED
-
 	git reset --hard initial &&
 	test_commit "change-a-b-same-A" "initial-file" "AAA" &&
 	git reset --hard initial &&
 	test_commit "change-a-b-same-B" "initial-file" "AAA" &&
 	git merge-tree initial change-a-b-same-A change-a-b-same-B >actual &&
-	test_cmp expected actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'file change A, B (different)' '
@@ -175,16 +163,13 @@ AAA" &&
 '
 
 test_expect_success 'file remove A, !B' '
-	cat >expected <<\EXPECTED &&
-EXPECTED
-
 	git reset --hard initial &&
 	test_commit "rm-a-not-b-base" "ONE" "AAA" &&
 	git rm ONE &&
 	git commit -m "rm-a-not-b" &&
 	git tag "rm-a-not-b" &&
 	git merge-tree rm-a-not-b-base rm-a-not-b rm-a-not-b-base >actual &&
-	test_cmp expected actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'file remove !A, B' '
@@ -206,16 +191,13 @@ EXPECTED
 '
 
 test_expect_success 'file remove A, B (same)' '
-	cat >expected <<\EXPECTED &&
-EXPECTED
-
 	git reset --hard initial &&
 	test_commit "rm-a-b-base" "ONE" "AAA" &&
 	git rm ONE &&
 	git commit -m "rm-a-b" &&
 	git tag "rm-a-b" &&
 	git merge-tree rm-a-b-base rm-a-b rm-a-b >actual &&
-	test_cmp expected actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'file change A, remove B' '
@@ -260,13 +242,11 @@ EXPECTED
 '
 
 test_expect_success 'tree add A, B (same)' '
-	cat >expect <<-\EOF &&
-	EOF
 	git reset --hard initial &&
 	mkdir sub &&
 	test_commit "add sub/file" "sub/file" "file" add-tree-A &&
 	git merge-tree initial add-tree-A add-tree-A >actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'tree add A, B (different)' '

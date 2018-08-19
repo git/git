@@ -495,7 +495,6 @@ test_expect_success "'fetch.recurseSubmodules=on-demand' works also without .git
 	git add submodule &&
 	git rm .gitmodules &&
 	git commit -m "new submodule without .gitmodules" &&
-	printf "" >expect.out &&
 	head2=$(git rev-parse --short HEAD) &&
 	echo "From $pwd/." >expect.err.2 &&
 	echo "   $head1..$head2  master     -> origin/master" >>expect.err.2 &&
@@ -514,7 +513,7 @@ test_expect_success "'fetch.recurseSubmodules=on-demand' works also without .git
 		git config --unset fetch.recurseSubmodules &&
 		git reset --hard
 	) &&
-	test_i18ncmp expect.out actual.out &&
+	test_must_be_empty actual.out &&
 	test_i18ncmp expect.err.2 actual.err &&
 	git checkout HEAD^ -- .gitmodules &&
 	git add .gitmodules &&

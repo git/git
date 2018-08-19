@@ -136,13 +136,12 @@ test_expect_success '--date magic does not override explicit @{0} syntax' '
 	test_cmp expect actual
 '
 
-: >expect
 test_expect_success 'empty reflog file' '
 	git branch empty &&
 	git reflog expire --expire=all refs/heads/empty &&
 
 	git log -g empty >actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 # This guards against the alternative of showing the diffs vs. the

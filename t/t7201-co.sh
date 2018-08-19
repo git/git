@@ -116,9 +116,8 @@ test_expect_success "checkout -m with dirty tree" '
 	git diff --name-status side >current.side &&
 	test_cmp expect.side current.side &&
 
-	: >expect.index &&
 	git diff --cached >current.index &&
-	test_cmp expect.index current.index
+	test_must_be_empty current.index
 '
 
 test_expect_success "checkout -m with dirty tree, renamed" '

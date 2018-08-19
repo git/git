@@ -239,10 +239,9 @@ test_expect_success 'git diff between submodule commits [.gitmodules]' '
 '
 
 test_expect_success 'git diff (empty submodule dir)' '
-	: >empty &&
 	rm -rf sub/* sub/.git &&
 	git diff > actual.empty &&
-	test_cmp empty actual.empty
+	test_must_be_empty actual.empty
 '
 
 test_expect_success 'conflicted submodule setup' '

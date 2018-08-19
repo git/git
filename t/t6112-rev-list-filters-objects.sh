@@ -113,12 +113,11 @@ test_expect_success 'verify blob:limit=1k' '
 '
 
 test_expect_success 'verify blob:limit=1m' '
-	cat </dev/null >expected &&
 	git -C r2 rev-list HEAD --quiet --objects --filter-print-omitted --filter=blob:limit=1m \
 		| awk -f print_1.awk \
 		| sed "s/~//" \
 		| sort >observed &&
-	test_cmp observed expected
+	test_must_be_empty observed
 '
 
 # Test sparse:path=<path> filter.

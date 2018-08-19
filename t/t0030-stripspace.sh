@@ -320,22 +320,20 @@ test_expect_success \
 
 test_expect_success \
     'spaces with newline at end should be replaced with empty string' '
-    printf "" >expect &&
-
     echo | git stripspace >actual &&
-    test_cmp expect actual &&
+    test_must_be_empty actual &&
 
     echo "$sss" | git stripspace >actual &&
-    test_cmp expect actual &&
+    test_must_be_empty actual &&
 
     echo "$sss$sss" | git stripspace >actual &&
-    test_cmp expect actual &&
+    test_must_be_empty actual &&
 
     echo "$sss$sss$sss" | git stripspace >actual &&
-    test_cmp expect actual &&
+    test_must_be_empty actual &&
 
     echo "$sss$sss$sss$sss" | git stripspace >actual &&
-    test_cmp expect actual
+    test_must_be_empty actual
 '
 
 test_expect_success \
@@ -349,19 +347,17 @@ test_expect_success \
 
 test_expect_success \
     'spaces without newline at end should be replaced with empty string' '
-    printf "" >expect &&
-
     printf "" | git stripspace >actual &&
-    test_cmp expect actual &&
+    test_must_be_empty actual &&
 
     printf "$sss$sss" | git stripspace >actual &&
-    test_cmp expect actual &&
+    test_must_be_empty actual &&
 
     printf "$sss$sss$sss" | git stripspace >actual &&
-    test_cmp expect actual &&
+    test_must_be_empty actual &&
 
     printf "$sss$sss$sss$sss" | git stripspace >actual &&
-    test_cmp expect actual
+    test_must_be_empty actual
 '
 
 test_expect_success \

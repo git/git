@@ -257,9 +257,7 @@ test_expect_success 'typechanged submodule(blob->submodule)' '
 commit_file sm1 &&
 test_expect_success 'submodule is up to date' '
 	git diff-index -p --submodule=log HEAD >actual &&
-	cat >expected <<-EOF &&
-	EOF
-	test_cmp expected actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'submodule contains untracked content' '

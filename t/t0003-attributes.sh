@@ -208,9 +208,8 @@ test_expect_success 'attribute test: --all option' '
 '
 
 test_expect_success 'attribute test: --cached option' '
-	: >empty &&
 	git check-attr --cached --stdin --all <stdin-all | sort >actual &&
-	test_cmp empty actual &&
+	test_must_be_empty actual &&
 	git add .gitattributes a/.gitattributes a/b/.gitattributes &&
 	git check-attr --cached --stdin --all <stdin-all | sort >actual &&
 	test_cmp specified-all actual

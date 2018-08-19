@@ -217,9 +217,8 @@ do
 	'
 
 	test_expect_success "grep -w $L (w)" '
-		: >expected &&
 		test_must_fail git grep -n -w -e "^w" $H >actual &&
-		test_cmp expected actual
+		test_must_be_empty actual
 	'
 
 	test_expect_success "grep -w $L (x)" '
@@ -239,26 +238,24 @@ do
 	'
 
 	test_expect_success "grep -w $L (y-2)" '
-		: >expected &&
 		if git grep -n -w -e "^y y" $H >actual
 		then
 			echo should not have matched
 			cat actual
 			false
 		else
-			test_cmp expected actual
+			test_must_be_empty actual
 		fi
 	'
 
 	test_expect_success "grep -w $L (z)" '
-		: >expected &&
 		if git grep -n -w -e "^z" $H >actual
 		then
 			echo should not have matched
 			cat actual
 			false
 		else
-			test_cmp expected actual
+			test_must_be_empty actual
 		fi
 	'
 
@@ -604,11 +601,10 @@ z:zzz
 EOF
 
 test_expect_success 'grep -q, silently report matches' '
-	>empty &&
 	git grep -q mmap >actual &&
-	test_cmp empty actual &&
+	test_must_be_empty actual &&
 	test_must_fail git grep -q qfwfq >actual &&
-	test_cmp empty actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'grep -C1 hunk mark between files' '
@@ -701,8 +697,7 @@ test_expect_success 'log grep (9)' '
 
 test_expect_success 'log grep (9)' '
 	git log -g --grep-reflog="commit: third" --author="non-existent" --pretty=tformat:%s >actual &&
-	: >expect &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'log --grep-reflog can only be used under -g' '
@@ -792,15 +787,13 @@ test_expect_success 'log --all-match --grep --grep --author takes intersection' 
 '
 
 test_expect_success 'log --author does not search in timestamp' '
-	: >expect &&
 	git log --author="$GIT_AUTHOR_DATE" >actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'log --committer does not search in timestamp' '
-	: >expect &&
 	git log --committer="$GIT_COMMITTER_DATE" >actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'grep with CE_VALID file' '
@@ -1051,13 +1044,12 @@ test_expect_success 'inside git repository but with --no-index' '
 		echo ".gitignore:.*o*" &&
 		cat is/expect.unignored
 	} >is/expect.full &&
-	: >is/expect.empty &&
 	echo file2:world >is/expect.sub &&
 	(
 		cd is/git &&
 		git init &&
 		test_must_fail git grep o >../actual.full &&
-		test_cmp ../expect.empty ../actual.full &&
+		test_must_be_empty ../actual.full &&
 
 		git grep --untracked o >../actual.unignored &&
 		test_cmp ../expect.unignored ../actual.unignored &&
@@ -1070,7 +1062,7 @@ test_expect_success 'inside git repository but with --no-index' '
 
 		cd sub &&
 		test_must_fail git grep o >../../actual.sub &&
-		test_cmp ../../expect.empty ../../actual.sub &&
+		test_must_be_empty ../../actual.sub &&
 
 		git grep --no-index o >../../actual.sub &&
 		test_cmp ../../expect.sub ../../actual.sub &&
@@ -1236,10 +1228,9 @@ test_expect_success !PCRE 'grep -P pattern errors without PCRE' '
 '
 
 test_expect_success 'grep pattern with grep.extendedRegexp=true' '
-	>empty &&
 	test_must_fail git -c grep.extendedregexp=true \
 		grep "\p{Ps}.*?\p{Pe}" hello.c >actual &&
-	test_cmp empty actual
+	test_must_be_empty actual
 '
 
 test_expect_success PCRE 'grep -P pattern with grep.extendedRegexp=true' '

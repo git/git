@@ -17,7 +17,6 @@ test_commit_this () {
 }
 
 test_expect_success 'setup' '
-	: >empty &&
 	test_file checked-out init &&
 	test_file modify_delete modify_delete_init &&
 	test_commit_this init &&
@@ -38,7 +37,7 @@ test_expect_success 'reset --hard works after the conflict' '
 
 test_expect_success 'is reset properly' '
 	git status --porcelain -- modify_delete >out &&
-	test_cmp empty out &&
+	test_must_be_empty out &&
 	test_path_is_missing modify_delete
 '
 
@@ -52,7 +51,7 @@ test_expect_success 'Merge abort works after the conflict' '
 
 test_expect_success 'is aborted properly' '
 	git status --porcelain -- modify_delete >out &&
-	test_cmp empty out &&
+	test_must_be_empty out &&
 	test_path_is_missing modify_delete
 '
 
