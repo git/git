@@ -483,7 +483,7 @@ test_expect_success 'grep -L -C' '
 
 test_expect_success 'grep --files-without-match --quiet' '
 	git grep --files-without-match --quiet nonexistent_string >actual &&
-	test_cmp /dev/null actual
+	test_must_be_empty actual
 '
 
 cat >expected <<EOF
