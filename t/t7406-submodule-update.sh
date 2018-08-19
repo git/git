@@ -174,7 +174,7 @@ test_expect_success 'submodule update does not fetch already present commits' '
 	  git submodule update > ../actual 2> ../actual.err
 	) &&
 	test_i18ncmp expected actual &&
-	! test -s actual.err
+	test_must_be_empty actual.err
 '
 
 test_expect_success 'submodule update should fail due to local changes' '

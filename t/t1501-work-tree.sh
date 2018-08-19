@@ -41,7 +41,7 @@ test_expect_success 'setup: helper for testing rev-parse' '
 			# rev-parse --show-prefix should output
 			# a single newline when at the top of the work tree,
 			# but we test for that separately.
-			test -z "$4" && ! test -s actual.prefix ||
+			test -z "$4" && test_must_be_empty actual.prefix ||
 			test_cmp expected.prefix actual.prefix
 		fi
 	}

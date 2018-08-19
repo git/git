@@ -941,7 +941,7 @@ test_expect_success 'grep from a subdirectory to search wider area (2)' '
 	(
 		cd s || exit 1
 		( git grep xxyyzz .. >out ; echo $? >status )
-		! test -s out &&
+		test_must_be_empty out &&
 		test 1 = $(cat status)
 	)
 '

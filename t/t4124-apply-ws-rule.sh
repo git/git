@@ -100,7 +100,7 @@ test_expect_success 'whitespace=warn, default rule' '
 test_expect_success 'whitespace=error-all, default rule' '
 
 	test_must_fail apply_patch --whitespace=error-all &&
-	! test -s target
+	test_must_be_empty target
 
 '
 

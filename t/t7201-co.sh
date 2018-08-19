@@ -139,7 +139,7 @@ test_expect_success "checkout -m with dirty tree, renamed" '
 	test_cmp expect uno &&
 	! test -f one &&
 	git diff --cached >current &&
-	! test -s current
+	test_must_be_empty current
 
 '
 
@@ -163,7 +163,7 @@ test_expect_success 'checkout -m with merge conflict' '
 	fill d2 aT d7 aS >expect &&
 	test_cmp current expect &&
 	git diff --cached two >current &&
-	! test -s current
+	test_must_be_empty current
 '
 
 test_expect_success 'format of merge conflict from checkout -m' '

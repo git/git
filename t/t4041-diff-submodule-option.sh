@@ -273,17 +273,17 @@ test_expect_success 'submodule contains untracked content' '
 
 test_expect_success 'submodule contains untracked content (untracked ignored)' '
 	git diff-index -p --ignore-submodules=untracked --submodule=log HEAD >actual &&
-	! test -s actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'submodule contains untracked content (dirty ignored)' '
 	git diff-index -p --ignore-submodules=dirty --submodule=log HEAD >actual &&
-	! test -s actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'submodule contains untracked content (all ignored)' '
 	git diff-index -p --ignore-submodules=all --submodule=log HEAD >actual &&
-	! test -s actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'submodule contains untracked and modifed content' '
@@ -308,13 +308,13 @@ test_expect_success 'submodule contains untracked and modifed content (untracked
 test_expect_success 'submodule contains untracked and modifed content (dirty ignored)' '
 	echo new > sm1/foo6 &&
 	git diff-index -p --ignore-submodules=dirty --submodule=log HEAD >actual &&
-	! test -s actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'submodule contains untracked and modifed content (all ignored)' '
 	echo new > sm1/foo6 &&
 	git diff-index -p --ignore-submodules --submodule=log HEAD >actual &&
-	! test -s actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'submodule contains modifed content' '
@@ -368,7 +368,7 @@ test_expect_success 'modified submodule contains untracked content (dirty ignore
 
 test_expect_success 'modified submodule contains untracked content (all ignored)' '
 	git diff-index -p --ignore-submodules=all --submodule=log HEAD >actual &&
-	! test -s actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'modified submodule contains untracked and modifed content' '
@@ -407,7 +407,7 @@ test_expect_success 'modified submodule contains untracked and modifed content (
 test_expect_success 'modified submodule contains untracked and modifed content (all ignored)' '
 	echo modification >> sm1/foo6 &&
 	git diff-index -p --ignore-submodules --submodule=log HEAD >actual &&
-	! test -s actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'modified submodule contains modifed content' '
