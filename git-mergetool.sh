@@ -491,14 +491,16 @@ main () {
 	printf "%s\n" "$files"
 
 	rc=0
-	for i in $files
+	set -- $files
+	while test $# -ne 0
 	do
 		printf "\n"
-		if ! merge_file "$i"
+		if ! merge_file "$1"
 		then
 			rc=1
-			prompt_after_failed_merge || exit 1
+			test $# -ne 1 && prompt_after_failed_merge || exit 1
 		fi
+		shift
 	done
 
 	exit $rc
