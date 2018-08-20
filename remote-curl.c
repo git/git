@@ -714,7 +714,7 @@ retry:
 
 	} else if (use_gzip && 1024 < rpc->len) {
 		/* The client backend isn't giving us compressed data so
-		 * we can try to deflate it ourselves, this may save on.
+		 * we can try to deflate it ourselves, this may save on
 		 * the transfer time.
 		 */
 		git_zstream stream;
