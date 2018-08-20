@@ -1,6 +1,8 @@
 #ifndef OBJECT_H
 #define OBJECT_H
 
+#include "cache.h"
+
 struct buffer_slab;
 
 struct parsed_object_pool {

@@ -1,6 +1,8 @@
 #ifndef MAILINFO_H
 #define MAILINFO_H
 
+#include "strbuf.h"
+
 #define MAX_BOUNDARIES 5
 
 struct mailinfo {

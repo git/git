@@ -1,6 +1,8 @@
 #ifndef RESOLVE_UNDO_H
 #define RESOLVE_UNDO_H
 
+#include "cache.h"
+
 struct resolve_undo_info {
 	unsigned int mode[3];
 	struct object_id oid[3];

@@ -1,6 +1,11 @@
 #ifndef SEQUENCER_H
 #define SEQUENCER_H
 
+#include "cache.h"
+#include "strbuf.h"
+
+struct commit;
+
 const char *git_path_commit_editmsg(void);
 const char *git_path_seq_dir(void);
 

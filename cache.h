@@ -917,15 +917,6 @@ enum log_refs_config {
 };
 extern enum log_refs_config log_all_ref_updates;
 
-enum branch_track {
-	BRANCH_TRACK_UNSPECIFIED = -1,
-	BRANCH_TRACK_NEVER = 0,
-	BRANCH_TRACK_REMOTE,
-	BRANCH_TRACK_ALWAYS,
-	BRANCH_TRACK_EXPLICIT,
-	BRANCH_TRACK_OVERRIDE
-};
-
 enum rebase_setup_type {
 	AUTOREBASE_NEVER = 0,
 	AUTOREBASE_LOCAL,
@@ -942,7 +933,6 @@ enum push_default_type {
 	PUSH_DEFAULT_UNSPECIFIED
 };
 
-extern enum branch_track git_branch_track;
 extern enum rebase_setup_type autorebase;
 extern enum push_default_type push_default;
 

@@ -1,11 +1,17 @@
 #ifndef SUBMODULE_H
 #define SUBMODULE_H
 
-struct repository;
-struct diff_options;
 struct argv_array;
+struct cache_entry;
+struct diff_options;
+struct index_state;
+struct object_id;
 struct oid_array;
+struct pathspec;
 struct remote;
+struct repository;
+struct string_list;
+struct strbuf;
 
 enum {
 	RECURSE_SUBMODULES_ONLY = -5,

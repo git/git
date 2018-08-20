@@ -4,6 +4,10 @@
 #ifndef DIFFCORE_H
 #define DIFFCORE_H
 
+#include "cache.h"
+
+struct diff_options;
+
 /* This header file is internal between diff.c and its diff transformers
  * (e.g. diffcore-rename, diffcore-pickaxe).  Never include this header
  * in anything else.

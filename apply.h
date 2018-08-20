@@ -1,6 +1,9 @@
 #ifndef APPLY_H
 #define APPLY_H
 
+#include "lockfile.h"
+#include "string-list.h"
+
 struct repository;
 
 enum apply_ws_error_action {

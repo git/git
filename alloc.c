@@ -36,7 +36,7 @@ struct alloc_state {
 	int slab_nr, slab_alloc;
 };
 
-void *allocate_alloc_state(void)
+struct alloc_state *allocate_alloc_state(void)
 {
 	return xcalloc(1, sizeof(struct alloc_state));
 }

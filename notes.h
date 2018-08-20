@@ -3,6 +3,9 @@
 
 #include "string-list.h"
 
+struct object_id;
+struct strbuf;
+
 /*
  * Function type for combining two notes annotating the same object.
  *

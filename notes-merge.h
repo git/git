@@ -2,6 +2,10 @@
 #define NOTES_MERGE_H
 
 #include "notes-utils.h"
+#include "strbuf.h"
+
+struct commit;
+struct object_id;
 
 #define NOTES_MERGE_WORKTREE "NOTES_MERGE_WORKTREE"
 

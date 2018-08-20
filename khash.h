@@ -26,6 +26,9 @@
 #ifndef __AC_KHASH_H
 #define __AC_KHASH_H
 
+#include "cache.h"
+#include "hashmap.h"
+
 #define AC_VERSION_KHASH_H "0.2.8"
 
 typedef uint32_t khint32_t;

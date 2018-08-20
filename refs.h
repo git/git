@@ -3,8 +3,10 @@
 
 struct object_id;
 struct ref_store;
+struct repository;
 struct strbuf;
 struct string_list;
+struct string_list_item;
 struct worktree;
 
 /*

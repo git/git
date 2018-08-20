@@ -1,6 +1,19 @@
 #ifndef BRANCH_H
 #define BRANCH_H
 
+struct strbuf;
+
+enum branch_track {
+	BRANCH_TRACK_UNSPECIFIED = -1,
+	BRANCH_TRACK_NEVER = 0,
+	BRANCH_TRACK_REMOTE,
+	BRANCH_TRACK_ALWAYS,
+	BRANCH_TRACK_EXPLICIT,
+	BRANCH_TRACK_OVERRIDE
+};
+
+extern enum branch_track git_branch_track;
+
 /* Functions for acting on the information about branches. */
 
 /*

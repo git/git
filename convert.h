@@ -7,6 +7,8 @@
 #include "string-list.h"
 
 struct index_state;
+struct object_id;
+struct strbuf;
 
 #define CONV_EOL_RNDTRP_DIE   (1<<0) /* Die if CRLF to LF to CRLF is different */
 #define CONV_EOL_RNDTRP_WARN  (1<<1) /* Warn if CRLF to LF to CRLF is different */

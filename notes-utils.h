@@ -3,6 +3,9 @@
 
 #include "notes.h"
 
+struct commit_list;
+struct object_id;
+
 /*
  * Create new notes commit from the given notes tree
  *

@@ -1,4 +1,6 @@
 #ifndef PRECOMPOSE_UNICODE_H
+#define PRECOMPOSE_UNICODE_H
+
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <dirent.h>
@@ -41,5 +43,4 @@ int precompose_utf8_closedir(PREC_DIR *dirp);
 #define DIR PREC_DIR
 #endif /* PRECOMPOSE_UNICODE_C */
 
-#define  PRECOMPOSE_UNICODE_H
 #endif /* PRECOMPOSE_UNICODE_H */

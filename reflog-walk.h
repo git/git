@@ -3,6 +3,7 @@
 
 #include "cache.h"
 
+struct commit;
 struct reflog_walk_info;
 
 extern void init_reflog_walk(struct reflog_walk_info **info);

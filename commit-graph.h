@@ -4,6 +4,7 @@
 #include "git-compat-util.h"
 #include "repository.h"
 #include "string-list.h"
+#include "cache.h"
 
 struct commit;
 
