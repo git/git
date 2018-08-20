@@ -245,10 +245,10 @@ USING --CACHEINFO OR --INFO-ONLY
 current working directory.  This is useful for minimum-checkout
 merging.
 
-To pretend you have a file with mode and sha1 at path, say:
+To pretend you have a file at path with mode and sha1, say:
 
 ----------------
-$ git update-index --cacheinfo <mode>,<sha1>,<path>
+$ git update-index --add --cacheinfo <mode>,<sha1>,<path>
 ----------------
 
 `--info-only` is used to register files without placing them in the object
