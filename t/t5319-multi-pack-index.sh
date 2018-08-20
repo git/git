@@ -149,6 +149,23 @@ test_expect_success 'repack removes multi-pack-index' '
 
 compare_results_with_midx "after repack"
 
+test_expect_success 'multi-pack-index and alternates' '
+	git init --bare alt.git &&
+	echo $(pwd)/alt.git/objects >.git/objects/info/alternates &&
+	echo content1 >file1 &&
+	altblob=$(GIT_DIR=alt.git git hash-object -w file1) &&
+	git cat-file blob $altblob &&
+	git rev-list --all
+'
+
+compare_results_with_midx "with alternate (local midx)"
+
+test_expect_success 'multi-pack-index in an alternate' '
+	mv .git/objects/pack/* alt.git/objects/pack
+'
+
+compare_results_with_midx "with alternate (remote midx)"
+
 
 # usage: corrupt_data <file> <pos> [<data>]
 corrupt_data () {

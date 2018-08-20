@@ -331,7 +331,7 @@ int midx_contains_pack(struct multi_pack_index *m, const char *idx_name)
 
 int prepare_multi_pack_index_one(struct repository *r, const char *object_dir, int local)
 {
-	struct multi_pack_index *m = r->objects->multi_pack_index;
+	struct multi_pack_index *m;
 	struct multi_pack_index *m_search;
 	int config_value;
 
@@ -339,14 +339,15 @@ int prepare_multi_pack_index_one(struct repository *r, const char *object_dir, i
 	    !config_value)
 		return 0;
 
-	for (m_search = m; m_search; m_search = m_search->next)
+	for (m_search = r->objects->multi_pack_index; m_search; m_search = m_search->next)
 		if (!strcmp(object_dir, m_search->object_dir))
 			return 1;
 
-	r->objects->multi_pack_index = load_multi_pack_index(object_dir, local);
+	m = load_multi_pack_index(object_dir, local);
 
-	if (r->objects->multi_pack_index) {
-		r->objects->multi_pack_index->next = m;
+	if (m) {
+		m->next = r->objects->multi_pack_index;
+		r->objects->multi_pack_index = m;
 		return 1;
 	}
 
