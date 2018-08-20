@@ -1278,7 +1278,7 @@ test_expect_success 'setup for path completion tests' '
 	   touch BS\\dir/DQ\"file \
 		 '$'separators\034in\035dir/sep\036in\037file''
 	then
-		test_set_prereq FUNNYNAMES
+		test_set_prereq FUNNIERNAMES
 	else
 		rm -rf BS\\dir '$'separators\034in\035dir''
 	fi
@@ -1320,7 +1320,7 @@ test_expect_success '__git_complete_index_file - UTF-8 in ls-files output' '
 	test_path_completion árvíztűrő/С "árvíztűrő/Сайн яваарай"
 '
 
-test_expect_success FUNNYNAMES \
+test_expect_success FUNNIERNAMES \
     '__git_complete_index_file - C-style escapes in ls-files output' '
 	test_path_completion BS \
 			     BS\\dir &&
@@ -1332,7 +1332,7 @@ test_expect_success FUNNYNAMES \
 			     BS\\dir/DQ\"file
 '
 
-test_expect_success FUNNYNAMES \
+test_expect_success FUNNIERNAMES \
     '__git_complete_index_file - \nnn-escaped characters in ls-files output' '
 	test_path_completion sep '$'separators\034in\035dir'' &&
 	test_path_completion '$'separators\034i'' \

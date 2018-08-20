@@ -1104,6 +1104,20 @@ test_lazy_prereq CASE_INSENSITIVE_FS '
 	test "$(cat CamelCase)" != good
 '
 
+test_lazy_prereq FUNNYNAMES '
+	test_have_prereq !MINGW &&
+	touch -- \
+		"FUNNYNAMES tab	embedded" \
+		"FUNNYNAMES \"quote embedded\"" \
+		"FUNNYNAMES newline
+embedded" 2>/dev/null &&
+	rm -- \
+		"FUNNYNAMES tab	embedded" \
+		"FUNNYNAMES \"quote embedded\"" \
+		"FUNNYNAMES newline
+embedded" 2>/dev/null
+'
+
 test_lazy_prereq UTF8_NFD_TO_NFC '
 	# check whether FS converts nfd unicode to nfc
 	auml=$(printf "\303\244")

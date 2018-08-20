@@ -14,15 +14,13 @@ test_expect_success \
      git add -- foo bar baz 'space embedded' -q &&
      git commit -m 'add normal files'"
 
-if test_have_prereq !MINGW && touch -- 'tab	embedded' 'newline
-embedded' 2>/dev/null
-then
-	test_set_prereq FUNNYNAMES
-else
+if test_have_prereq !FUNNYNAMES; then
 	say 'Your filesystem does not allow tabs in filenames.'
 fi
 
 test_expect_success FUNNYNAMES 'add files with funny names' "
+     touch -- 'tab	embedded' 'newline
+embedded' &&
      git add -- 'tab	embedded' 'newline
 embedded' &&
      git commit -m 'add files with tabs and newlines'
