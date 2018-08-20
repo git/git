@@ -363,4 +363,21 @@ test_expect_success 'octopus merges' '
 	EOF
 '
 
+test_expect_success 'with --autosquash and --exec' '
+	git checkout -b with-exec H &&
+	echo Booh >B.t &&
+	test_tick &&
+	git commit --fixup B B.t &&
+	write_script show.sh <<-\EOF &&
+	subject="$(git show -s --format=%s HEAD)"
+	content="$(git diff HEAD^! | tail -n 1)"
+	echo "$subject: $content"
+	EOF
+	test_tick &&
+	git rebase -ir --autosquash --exec ./show.sh A >actual &&
+	grep "B: +Booh" actual &&
+	grep "E: +Booh" actual &&
+	grep "G: +G" actual
+'
+
 test_done

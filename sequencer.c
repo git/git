@@ -4255,10 +4255,9 @@ int sequencer_add_exec_commands(const char *commands)
 {
 	const char *todo_file = rebase_path_todo();
 	struct todo_list todo_list = TODO_LIST_INIT;
-	struct todo_item *item;
 	struct strbuf *buf = &todo_list.buf;
 	size_t offset = 0, commands_len = strlen(commands);
-	int i, first;
+	int i, insert;
 
 	if (strbuf_read_file(&todo_list.buf, todo_file, 0) < 0)
 		return error(_("could not read '%s'."), todo_file);
@@ -4268,19 +4267,40 @@ int sequencer_add_exec_commands(const char *commands)
 		return error(_("unusable todo list: '%s'"), todo_file);
 	}
 
-	first = 1;
-	/* insert <commands> before every pick except the first one */
-	for (item = todo_list.items, i = 0; i < todo_list.nr; i++, item++) {
-		if (item->command == TODO_PICK && !first) {
-			strbuf_insert(buf, item->offset_in_buf + offset,
-				      commands, commands_len);
+	/*
+	 * Insert <commands> after every pick. Here, fixup/squash chains
+	 * are considered part of the pick, so we insert the commands *after*
+	 * those chains if there are any.
+	 */
+	insert = -1;
+	for (i = 0; i < todo_list.nr; i++) {
+		enum todo_command command = todo_list.items[i].command;
+
+		if (insert >= 0) {
+			/* skip fixup/squash chains */
+			if (command == TODO_COMMENT)
+				continue;
+			else if (is_fixup(command)) {
+				insert = i + 1;
+				continue;
+			}
+			strbuf_insert(buf,
+				      todo_list.items[insert].offset_in_buf +
+				      offset, commands, commands_len);
 			offset += commands_len;
+			insert = -1;
 		}
-		first = 0;
+
+		if (command == TODO_PICK || command == TODO_MERGE)
+			insert = i + 1;
 	}
 
-	/* append final <commands> */
-	strbuf_add(buf, commands, commands_len);
+	/* insert or append final <commands> */
+	if (insert >= 0 && insert < todo_list.nr)
+		strbuf_insert(buf, todo_list.items[insert].offset_in_buf +
+			      offset, commands, commands_len);
+	else if (insert >= 0 || !offset)
+		strbuf_add(buf, commands, commands_len);
 
 	i = write_message(buf->buf, buf->len, todo_file, 0);
 	todo_list_release(&todo_list);
