@@ -312,7 +312,6 @@ void diff_change(struct diff_options *,
 struct diff_filepair *diff_unmerge(struct diff_options *, const char *path);
 
 #define DIFF_SETUP_REVERSE      	1
-#define DIFF_SETUP_USE_CACHE		2
 #define DIFF_SETUP_USE_SIZE_CACHE	4
 
 /*

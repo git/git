@@ -79,7 +79,7 @@ void *object_file_to_archive(const struct archiver_args *args,
 		size_t size = 0;
 
 		strbuf_attach(&buf, buffer, *sizep, *sizep + 1);
-		convert_to_working_tree(path, buf.buf, buf.len, &buf);
+		convert_to_working_tree(args->repo->index, path, buf.buf, buf.len, &buf);
 		if (commit)
 			format_subst(commit, buf.buf, buf.len, &buf);
 		buffer = strbuf_detach(&buf, &size);
@@ -104,12 +104,13 @@ struct archiver_context {
 	struct directory *bottom;
 };
 
-static const struct attr_check *get_archive_attrs(const char *path)
+static const struct attr_check *get_archive_attrs(struct index_state *istate,
+						  const char *path)
 {
 	static struct attr_check *check;
 	if (!check)
 		check = attr_check_initl("export-ignore", "export-subst", NULL);
-	return git_check_attr(path, check) ? NULL : check;
+	return git_check_attr(istate, path, check) ? NULL : check;
 }
 
 static int check_attr_export_ignore(const struct attr_check *check)
@@ -145,7 +146,7 @@ static int write_archive_entry(const struct object_id *oid, const char *base,
 
 	if (!S_ISDIR(mode)) {
 		const struct attr_check *check;
-		check = get_archive_attrs(path_without_prefix);
+		check = get_archive_attrs(args->repo->index, path_without_prefix);
 		if (check_attr_export_ignore(check))
 			return 0;
 		args->convert = check_attr_export_subst(check);
@@ -220,7 +221,7 @@ static int queue_or_write_archive_entry(const struct object_id *oid,
 		/* Borrow base, but restore its original value when done. */
 		strbuf_addstr(base, filename);
 		strbuf_addch(base, '/');
-		check = get_archive_attrs(base->buf);
+		check = get_archive_attrs(c->args->repo->index, base->buf);
 		strbuf_setlen(base, baselen);
 
 		if (check_attr_export_ignore(check))
@@ -268,13 +269,13 @@ int write_archive_entries(struct archiver_args *args,
 		memset(&opts, 0, sizeof(opts));
 		opts.index_only = 1;
 		opts.head_idx = -1;
-		opts.src_index = &the_index;
-		opts.dst_index = &the_index;
+		opts.src_index = args->repo->index;
+		opts.dst_index = args->repo->index;
 		opts.fn = oneway_merge;
 		init_tree_desc(&t, args->tree->buffer, args->tree->size);
 		if (unpack_trees(1, &t, &opts))
 			return -1;
-		git_attr_set_direction(GIT_ATTR_INDEX, &the_index);
+		git_attr_set_direction(GIT_ATTR_INDEX);
 	}
 
 	err = read_tree_recursive(args->tree, "", 0, 0, &args->pathspec,
@@ -304,33 +305,43 @@ static const struct archiver *lookup_archiver(const char *name)
 	return NULL;
 }
 
+struct path_exists_context {
+	struct pathspec pathspec;
+	struct archiver_args *args;
+};
+
 static int reject_entry(const struct object_id *oid, struct strbuf *base,
 			const char *filename, unsigned mode,
 			int stage, void *context)
 {
 	int ret = -1;
+	struct path_exists_context *ctx = context;
+
 	if (S_ISDIR(mode)) {
 		struct strbuf sb = STRBUF_INIT;
 		strbuf_addbuf(&sb, base);
 		strbuf_addstr(&sb, filename);
-		if (!match_pathspec(context, sb.buf, sb.len, 0, NULL, 1))
+		if (!match_pathspec(ctx->args->repo->index,
+				    &ctx->pathspec,
+				    sb.buf, sb.len, 0, NULL, 1))
 			ret = READ_TREE_RECURSIVE;
 		strbuf_release(&sb);
 	}
 	return ret;
 }
 
-static int path_exists(struct tree *tree, const char *path)
+static int path_exists(struct archiver_args *args, const char *path)
 {
 	const char *paths[] = { path, NULL };
-	struct pathspec pathspec;
+	struct path_exists_context ctx;
 	int ret;
 
-	parse_pathspec(&pathspec, 0, 0, "", paths);
-	pathspec.recursive = 1;
-	ret = read_tree_recursive(tree, "", 0, 0, &pathspec,
-				  reject_entry, &pathspec);
-	clear_pathspec(&pathspec);
+	ctx.args = args;
+	parse_pathspec(&ctx.pathspec, 0, 0, "", paths);
+	ctx.pathspec.recursive = 1;
+	ret = read_tree_recursive(args->tree, "", 0, 0, &ctx.pathspec,
+				  reject_entry, &ctx);
+	clear_pathspec(&ctx.pathspec);
 	return ret != 0;
 }
 
@@ -348,7 +359,7 @@ static void parse_pathspec_arg(const char **pathspec,
 	ar_args->pathspec.recursive = 1;
 	if (pathspec) {
 		while (*pathspec) {
-			if (**pathspec && !path_exists(ar_args->tree, *pathspec))
+			if (**pathspec && !path_exists(ar_args, *pathspec))
 				die(_("pathspec '%s' did not match any files"), *pathspec);
 			pathspec++;
 		}
@@ -510,6 +521,7 @@ static int parse_archive_args(int argc, const char **argv,
 }
 
 int write_archive(int argc, const char **argv, const char *prefix,
+		  struct repository *repo,
 		  const char *name_hint, int remote)
 {
 	const struct archiver *ar = NULL;
@@ -521,6 +533,7 @@ int write_archive(int argc, const char **argv, const char *prefix,
 	init_tar_archiver();
 	init_zip_archiver();
 
+	args.repo = repo;
 	argc = parse_archive_args(argc, argv, &ar, &args, name_hint, remote);
 	if (!startup_info->have_repository) {
 		/*

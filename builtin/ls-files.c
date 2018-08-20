@@ -63,7 +63,7 @@ static void write_eolinfo(const struct index_state *istate,
 		struct stat st;
 		const char *i_txt = "";
 		const char *w_txt = "";
-		const char *a_txt = get_convert_attr_ascii(path);
+		const char *a_txt = get_convert_attr_ascii(istate, path);
 		if (ce && S_ISREG(ce->ce_mode))
 			i_txt = get_cached_convert_stats_ascii(istate,
 							       ce->name);
@@ -121,18 +121,19 @@ static void print_debug(const struct cache_entry *ce)
 	}
 }
 
-static void show_dir_entry(const char *tag, struct dir_entry *ent)
+static void show_dir_entry(const struct index_state *istate,
+			   const char *tag, struct dir_entry *ent)
 {
 	int len = max_prefix_len;
 
 	if (len > ent->len)
 		die("git ls-files: internal error - directory entry not superset of prefix");
 
-	if (!dir_path_match(ent, &pathspec, len, ps_matched))
+	if (!dir_path_match(istate, ent, &pathspec, len, ps_matched))
 		return;
 
 	fputs(tag, stdout);
-	write_eolinfo(NULL, NULL, ent->name);
+	write_eolinfo(istate, NULL, ent->name);
 	write_name(ent->name);
 }
 
@@ -145,7 +146,7 @@ static void show_other_files(const struct index_state *istate,
 		struct dir_entry *ent = dir->entries[i];
 		if (!index_name_is_other(istate, ent->name, ent->len))
 			continue;
-		show_dir_entry(tag_other, ent);
+		show_dir_entry(istate, tag_other, ent);
 	}
 }
 
@@ -196,7 +197,7 @@ static void show_killed_files(const struct index_state *istate,
 			}
 		}
 		if (killed)
-			show_dir_entry(tag_killed, dir->entries[i]);
+			show_dir_entry(istate, tag_killed, dir->entries[i]);
 	}
 }
 
@@ -228,7 +229,7 @@ static void show_ce(struct repository *repo, struct dir_struct *dir,
 	if (recurse_submodules && S_ISGITLINK(ce->ce_mode) &&
 	    is_submodule_active(repo, ce->name)) {
 		show_submodule(repo, dir, ce->name);
-	} else if (match_pathspec(&pathspec, fullname, strlen(fullname),
+	} else if (match_pathspec(repo->index, &pathspec, fullname, strlen(fullname),
 				  max_prefix_len, ps_matched,
 				  S_ISDIR(ce->ce_mode) ||
 				  S_ISGITLINK(ce->ce_mode))) {
@@ -264,7 +265,7 @@ static void show_ru_info(const struct index_state *istate)
 		len = strlen(path);
 		if (len < max_prefix_len)
 			continue; /* outside of the prefix */
-		if (!match_pathspec(&pathspec, path, len,
+		if (!match_pathspec(istate, &pathspec, path, len,
 				    max_prefix_len, ps_matched, 0))
 			continue; /* uninterested */
 		for (i = 0; i < 3; i++) {

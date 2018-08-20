@@ -90,7 +90,8 @@ static struct blame_origin *get_origin(struct commit *commit, const char *path)
 
 
 
-static void verify_working_tree_path(struct commit *work_tree, const char *path)
+static void verify_working_tree_path(struct repository *repo,
+				     struct commit *work_tree, const char *path)
 {
 	struct commit_list *parents;
 	int pos;
@@ -101,15 +102,15 @@ static void verify_working_tree_path(struct commit *work_tree, const char *path)
 		unsigned mode;
 
 		if (!get_tree_entry(commit_oid, path, &blob_oid, &mode) &&
-		    oid_object_info(the_repository, &blob_oid, NULL) == OBJ_BLOB)
+		    oid_object_info(repo, &blob_oid, NULL) == OBJ_BLOB)
 			return;
 	}
 
-	pos = cache_name_pos(path, strlen(path));
+	pos = index_name_pos(repo->index, path, strlen(path));
 	if (pos >= 0)
 		; /* path is in the index */
-	else if (-1 - pos < active_nr &&
-		 !strcmp(active_cache[-1 - pos]->name, path))
+	else if (-1 - pos < repo->index->cache_nr &&
+		 !strcmp(repo->index->cache[-1 - pos]->name, path))
 		; /* path is in the index, unmerged */
 	else
 		die("no such path '%s' in HEAD", path);
@@ -165,7 +166,8 @@ static void set_commit_buffer_from_strbuf(struct commit *c, struct strbuf *sb)
  * Prepare a dummy commit that represents the work tree (or staged) item.
  * Note that annotating work tree item never works in the reverse.
  */
-static struct commit *fake_working_tree_commit(struct diff_options *opt,
+static struct commit *fake_working_tree_commit(struct repository *repo,
+					       struct diff_options *opt,
 					       const char *path,
 					       const char *contents_from)
 {
@@ -181,7 +183,7 @@ static struct commit *fake_working_tree_commit(struct diff_options *opt,
 	unsigned mode;
 	struct strbuf msg = STRBUF_INIT;
 
-	read_cache();
+	read_index(repo->index);
 	time(&now);
 	commit = alloc_commit_node(the_repository);
 	commit->object.parsed = 1;
@@ -193,7 +195,7 @@ static struct commit *fake_working_tree_commit(struct diff_options *opt,
 
 	parent_tail = append_parent(parent_tail, &head_oid);
 	append_merge_parents(parent_tail);
-	verify_working_tree_path(commit, path);
+	verify_working_tree_path(repo, commit, path);
 
 	origin = make_origin(commit, path);
 
@@ -251,7 +253,7 @@ static struct commit *fake_working_tree_commit(struct diff_options *opt,
 		if (strbuf_read(&buf, 0, 0) < 0)
 			die_errno("failed to read from stdin");
 	}
-	convert_to_git(&the_index, path, buf.buf, buf.len, &buf, 0);
+	convert_to_git(repo->index, path, buf.buf, buf.len, &buf, 0);
 	origin->file.ptr = buf.buf;
 	origin->file.size = buf.len;
 	pretend_object_file(buf.buf, buf.len, OBJ_BLOB, &origin->blob_oid);
@@ -262,27 +264,28 @@ static struct commit *fake_working_tree_commit(struct diff_options *opt,
 	 * bits; we are not going to write this index out -- we just
 	 * want to run "diff-index --cached".
 	 */
-	discard_cache();
-	read_cache();
+	discard_index(repo->index);
+	read_index(repo->index);
 
 	len = strlen(path);
 	if (!mode) {
-		int pos = cache_name_pos(path, len);
+		int pos = index_name_pos(repo->index, path, len);
 		if (0 <= pos)
-			mode = active_cache[pos]->ce_mode;
+			mode = repo->index->cache[pos]->ce_mode;
 		else
 			/* Let's not bother reading from HEAD tree */
 			mode = S_IFREG | 0644;
 	}
-	ce = make_empty_cache_entry(&the_index, len);
+	ce = make_empty_cache_entry(repo->index, len);
 	oidcpy(&ce->oid, &origin->blob_oid);
 	memcpy(ce->name, path, len);
 	ce->ce_flags = create_ce_flags(0);
 	ce->ce_namelen = len;
 	ce->ce_mode = create_ce_mode(mode);
-	add_cache_entry(ce, ADD_CACHE_OK_TO_ADD|ADD_CACHE_OK_TO_REPLACE);
+	add_index_entry(repo->index, ce,
+			ADD_CACHE_OK_TO_ADD | ADD_CACHE_OK_TO_REPLACE);
 
-	cache_tree_invalidate_path(&the_index, path);
+	cache_tree_invalidate_path(repo->index, path);
 
 	return commit;
 }
@@ -519,13 +522,14 @@ static void queue_blames(struct blame_scoreboard *sb, struct blame_origin *porig
  *
  * This also fills origin->mode for corresponding tree path.
  */
-static int fill_blob_sha1_and_mode(struct blame_origin *origin)
+static int fill_blob_sha1_and_mode(struct repository *repo,
+				   struct blame_origin *origin)
 {
 	if (!is_null_oid(&origin->blob_oid))
 		return 0;
 	if (get_tree_entry(&origin->commit->object.oid, origin->path, &origin->blob_oid, &origin->mode))
 		goto error_out;
-	if (oid_object_info(the_repository, &origin->blob_oid, NULL) != OBJ_BLOB)
+	if (oid_object_info(repo, &origin->blob_oid, NULL) != OBJ_BLOB)
 		goto error_out;
 	return 0;
  error_out:
@@ -1767,7 +1771,9 @@ void init_scoreboard(struct blame_scoreboard *sb)
 	sb->copy_score = BLAME_DEFAULT_COPY_SCORE;
 }
 
-void setup_scoreboard(struct blame_scoreboard *sb, const char *path, struct blame_origin **orig)
+void setup_scoreboard(struct blame_scoreboard *sb,
+		      const char *path,
+		      struct blame_origin **orig)
 {
 	const char *final_commit_name = NULL;
 	struct blame_origin *o;
@@ -1778,6 +1784,9 @@ void setup_scoreboard(struct blame_scoreboard *sb, const char *path, struct blam
 
 	if (sb->reverse && sb->contents_from)
 		die(_("--contents and --reverse do not blend well."));
+
+	if (!sb->repo)
+		BUG("repo is NULL");
 
 	if (!sb->reverse) {
 		sb->final = find_single_final(sb->revs, &final_commit_name);
@@ -1800,7 +1809,8 @@ void setup_scoreboard(struct blame_scoreboard *sb, const char *path, struct blam
 		 * or "--contents".
 		 */
 		setup_work_tree();
-		sb->final = fake_working_tree_commit(&sb->revs->diffopt,
+		sb->final = fake_working_tree_commit(sb->repo,
+						     &sb->revs->diffopt,
 						     path, sb->contents_from);
 		add_pending_object(sb->revs, &(sb->final->object), ":");
 	}
@@ -1845,7 +1855,7 @@ void setup_scoreboard(struct blame_scoreboard *sb, const char *path, struct blam
 	}
 	else {
 		o = get_origin(sb->final, path);
-		if (fill_blob_sha1_and_mode(o))
+		if (fill_blob_sha1_and_mode(sb->repo, o))
 			die(_("no such path %s in %s"), path, final_commit_name);
 
 		if (sb->revs->diffopt.flags.allow_textconv &&

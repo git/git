@@ -1293,7 +1293,8 @@ struct conv_attrs {
 	const char *working_tree_encoding; /* Supported encoding or default encoding if NULL */
 };
 
-static void convert_attrs(struct conv_attrs *ca, const char *path)
+static void convert_attrs(const struct index_state *istate,
+			  struct conv_attrs *ca, const char *path)
 {
 	static struct attr_check *check;
 
@@ -1305,7 +1306,7 @@ static void convert_attrs(struct conv_attrs *ca, const char *path)
 		git_config(read_convert_config, NULL);
 	}
 
-	if (!git_check_attr(path, check)) {
+	if (!git_check_attr(istate, path, check)) {
 		struct attr_check_item *ccheck = check->items;
 		ca->crlf_action = git_path_check_crlf(ccheck + 4);
 		if (ca->crlf_action == CRLF_UNDEFINED)
@@ -1342,11 +1343,11 @@ static void convert_attrs(struct conv_attrs *ca, const char *path)
 		ca->crlf_action = CRLF_AUTO_INPUT;
 }
 
-int would_convert_to_git_filter_fd(const char *path)
+int would_convert_to_git_filter_fd(const struct index_state *istate, const char *path)
 {
 	struct conv_attrs ca;
 
-	convert_attrs(&ca, path);
+	convert_attrs(istate, &ca, path);
 	if (!ca.drv)
 		return 0;
 
@@ -1361,11 +1362,11 @@ int would_convert_to_git_filter_fd(const char *path)
 	return apply_filter(path, NULL, 0, -1, NULL, ca.drv, CAP_CLEAN, NULL);
 }
 
-const char *get_convert_attr_ascii(const char *path)
+const char *get_convert_attr_ascii(const struct index_state *istate, const char *path)
 {
 	struct conv_attrs ca;
 
-	convert_attrs(&ca, path);
+	convert_attrs(istate, &ca, path);
 	switch (ca.attr_action) {
 	case CRLF_UNDEFINED:
 		return "";
@@ -1394,7 +1395,7 @@ int convert_to_git(const struct index_state *istate,
 	int ret = 0;
 	struct conv_attrs ca;
 
-	convert_attrs(&ca, path);
+	convert_attrs(istate, &ca, path);
 
 	ret |= apply_filter(path, src, len, -1, dst, ca.drv, CAP_CLEAN, NULL);
 	if (!ret && ca.drv && ca.drv->required)
@@ -1426,7 +1427,7 @@ void convert_to_git_filter_fd(const struct index_state *istate,
 			      int conv_flags)
 {
 	struct conv_attrs ca;
-	convert_attrs(&ca, path);
+	convert_attrs(istate, &ca, path);
 
 	assert(ca.drv);
 	assert(ca.drv->clean || ca.drv->process);
@@ -1439,14 +1440,15 @@ void convert_to_git_filter_fd(const struct index_state *istate,
 	ident_to_git(path, dst->buf, dst->len, dst, ca.ident);
 }
 
-static int convert_to_working_tree_internal(const char *path, const char *src,
+static int convert_to_working_tree_internal(const struct index_state *istate,
+					    const char *path, const char *src,
 					    size_t len, struct strbuf *dst,
 					    int normalizing, struct delayed_checkout *dco)
 {
 	int ret = 0, ret_filter = 0;
 	struct conv_attrs ca;
 
-	convert_attrs(&ca, path);
+	convert_attrs(istate, &ca, path);
 
 	ret |= ident_to_worktree(path, src, len, dst, ca.ident);
 	if (ret) {
@@ -1480,22 +1482,25 @@ static int convert_to_working_tree_internal(const char *path, const char *src,
 	return ret | ret_filter;
 }
 
-int async_convert_to_working_tree(const char *path, const char *src,
+int async_convert_to_working_tree(const struct index_state *istate,
+				  const char *path, const char *src,
 				  size_t len, struct strbuf *dst,
 				  void *dco)
 {
-	return convert_to_working_tree_internal(path, src, len, dst, 0, dco);
+	return convert_to_working_tree_internal(istate, path, src, len, dst, 0, dco);
 }
 
-int convert_to_working_tree(const char *path, const char *src, size_t len, struct strbuf *dst)
+int convert_to_working_tree(const struct index_state *istate,
+			    const char *path, const char *src,
+			    size_t len, struct strbuf *dst)
 {
-	return convert_to_working_tree_internal(path, src, len, dst, 0, NULL);
+	return convert_to_working_tree_internal(istate, path, src, len, dst, 0, NULL);
 }
 
 int renormalize_buffer(const struct index_state *istate, const char *path,
 		       const char *src, size_t len, struct strbuf *dst)
 {
-	int ret = convert_to_working_tree_internal(path, src, len, dst, 1, NULL);
+	int ret = convert_to_working_tree_internal(istate, path, src, len, dst, 1, NULL);
 	if (ret) {
 		src = dst->buf;
 		len = dst->len;
@@ -1929,12 +1934,14 @@ static struct stream_filter *ident_filter(const struct object_id *oid)
  * Note that you would be crazy to set CRLF, smuge/clean or ident to a
  * large binary blob you would want us not to slurp into the memory!
  */
-struct stream_filter *get_stream_filter(const char *path, const struct object_id *oid)
+struct stream_filter *get_stream_filter(const struct index_state *istate,
+					const char *path,
+					const struct object_id *oid)
 {
 	struct conv_attrs ca;
 	struct stream_filter *filter = NULL;
 
-	convert_attrs(&ca, path);
+	convert_attrs(istate, &ca, path);
 	if (ca.drv && (ca.drv->process || ca.drv->smudge || ca.drv->clean))
 		return NULL;
 

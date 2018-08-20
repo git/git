@@ -1253,7 +1253,7 @@ static int try_to_commit(struct strbuf *msg, const char *author,
 		commit_list_insert(current_head, &parents);
 	}
 
-	if (write_cache_as_tree(&tree, 0, NULL)) {
+	if (write_index_as_tree(&tree, &the_index, get_index_file(), 0, NULL)) {
 		res = error(_("git write-tree failed to write a tree"));
 		goto out;
 	}
@@ -1639,7 +1639,7 @@ static int do_pick_commit(enum todo_command command, struct commit *commit,
 		 * that represents the "current" state for merge-recursive
 		 * to work on.
 		 */
-		if (write_cache_as_tree(&head, 0, NULL))
+		if (write_index_as_tree(&head, &the_index, get_index_file(), 0, NULL))
 			return error(_("your index file is unmerged."));
 	} else {
 		unborn = get_oid("HEAD", &head);

@@ -63,9 +63,9 @@ static void check_attr(const char *prefix,
 		prefix_path(prefix, prefix ? strlen(prefix) : 0, file);
 
 	if (collect_all) {
-		git_all_attrs(full_path, check);
+		git_all_attrs(&the_index, full_path, check);
 	} else {
-		if (git_check_attr(full_path, check))
+		if (git_check_attr(&the_index, full_path, check))
 			die("git_check_attr died");
 	}
 	output_attr(check, file);
@@ -120,7 +120,7 @@ int cmd_check_attr(int argc, const char **argv, const char *prefix)
 	}
 
 	if (cached_attrs)
-		git_attr_set_direction(GIT_ATTR_INDEX, NULL);
+		git_attr_set_direction(GIT_ATTR_INDEX);
 
 	doubledash = -1;
 	for (i = 0; doubledash < 0 && i < argc; i++) {

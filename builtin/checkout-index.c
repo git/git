@@ -190,6 +190,7 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 
 	argc = parse_options(argc, argv, prefix, builtin_checkout_index_options,
 			builtin_checkout_index_usage, 0);
+	state.istate = &the_index;
 	state.force = force;
 	state.quiet = quiet;
 	state.not_new = not_new;

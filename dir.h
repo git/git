@@ -216,7 +216,8 @@ extern int count_slashes(const char *s);
 extern int simple_length(const char *match);
 extern int no_wildcard(const char *string);
 extern char *common_prefix(const struct pathspec *pathspec);
-extern int match_pathspec(const struct pathspec *pathspec,
+extern int match_pathspec(const struct index_state *istate,
+			  const struct pathspec *pathspec,
 			  const char *name, int namelen,
 			  int prefix, char *seen, int is_dir);
 extern int report_path_error(const char *ps_matched, const struct pathspec *pathspec, const char *prefix);
@@ -326,25 +327,28 @@ extern int git_fnmatch(const struct pathspec_item *item,
 		       const char *pattern, const char *string,
 		       int prefix);
 
-extern int submodule_path_match(const struct pathspec *ps,
+extern int submodule_path_match(const struct index_state *istate,
+				const struct pathspec *ps,
 				const char *submodule_name,
 				char *seen);
 
-static inline int ce_path_match(const struct cache_entry *ce,
+static inline int ce_path_match(const struct index_state *istate,
+				const struct cache_entry *ce,
 				const struct pathspec *pathspec,
 				char *seen)
 {
-	return match_pathspec(pathspec, ce->name, ce_namelen(ce), 0, seen,
+	return match_pathspec(istate, pathspec, ce->name, ce_namelen(ce), 0, seen,
 			      S_ISDIR(ce->ce_mode) || S_ISGITLINK(ce->ce_mode));
 }
 
-static inline int dir_path_match(const struct dir_entry *ent,
+static inline int dir_path_match(const struct index_state *istate,
+				 const struct dir_entry *ent,
 				 const struct pathspec *pathspec,
 				 int prefix, char *seen)
 {
 	int has_trailing_dir = ent->len && ent->name[ent->len - 1] == '/';
 	int len = has_trailing_dir ? ent->len - 1 : ent->len;
-	return match_pathspec(pathspec, ent->name, len, prefix, seen,
+	return match_pathspec(istate, pathspec, ent->name, len, prefix, seen,
 			      has_trailing_dir);
 }
 

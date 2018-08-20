@@ -276,12 +276,13 @@ static int do_read_blob(const struct object_id *oid, struct oid_stat *oid_stat,
 #define DO_MATCH_DIRECTORY (1<<1)
 #define DO_MATCH_SUBMODULE (1<<2)
 
-static int match_attrs(const char *name, int namelen,
+static int match_attrs(const struct index_state *istate,
+		       const char *name, int namelen,
 		       const struct pathspec_item *item)
 {
 	int i;
 
-	git_check_attr(name, item->attr_check);
+	git_check_attr(istate, name, item->attr_check);
 	for (i = 0; i < item->attr_match_nr; i++) {
 		const char *value;
 		int matched;
@@ -318,7 +319,8 @@ static int match_attrs(const char *name, int namelen,
  *
  * It returns 0 when there is no match.
  */
-static int match_pathspec_item(const struct pathspec_item *item, int prefix,
+static int match_pathspec_item(const struct index_state *istate,
+			       const struct pathspec_item *item, int prefix,
 			       const char *name, int namelen, unsigned flags)
 {
 	/* name/namelen has prefix cut off by caller */
@@ -358,7 +360,7 @@ static int match_pathspec_item(const struct pathspec_item *item, int prefix,
 	    strncmp(item->match, name - prefix, item->prefix))
 		return 0;
 
-	if (item->attr_match_nr && !match_attrs(name, namelen, item))
+	if (item->attr_match_nr && !match_attrs(istate, name, namelen, item))
 		return 0;
 
 	/* If the match was just the prefix, we matched */
@@ -426,7 +428,8 @@ static int match_pathspec_item(const struct pathspec_item *item, int prefix,
  * pathspec did not match any names, which could indicate that the
  * user mistyped the nth pathspec.
  */
-static int do_match_pathspec(const struct pathspec *ps,
+static int do_match_pathspec(const struct index_state *istate,
+			     const struct pathspec *ps,
 			     const char *name, int namelen,
 			     int prefix, char *seen,
 			     unsigned flags)
@@ -472,7 +475,7 @@ static int do_match_pathspec(const struct pathspec *ps,
 		 */
 		if (seen && ps->items[i].magic & PATHSPEC_EXCLUDE)
 			seen[i] = MATCHED_FNMATCH;
-		how = match_pathspec_item(ps->items+i, prefix, name,
+		how = match_pathspec_item(istate, ps->items+i, prefix, name,
 					  namelen, flags);
 		if (ps->recursive &&
 		    (ps->magic & PATHSPEC_MAXDEPTH) &&
@@ -496,17 +499,18 @@ static int do_match_pathspec(const struct pathspec *ps,
 	return retval;
 }
 
-int match_pathspec(const struct pathspec *ps,
+int match_pathspec(const struct index_state *istate,
+		   const struct pathspec *ps,
 		   const char *name, int namelen,
 		   int prefix, char *seen, int is_dir)
 {
 	int positive, negative;
 	unsigned flags = is_dir ? DO_MATCH_DIRECTORY : 0;
-	positive = do_match_pathspec(ps, name, namelen,
+	positive = do_match_pathspec(istate, ps, name, namelen,
 				     prefix, seen, flags);
 	if (!(ps->magic & PATHSPEC_EXCLUDE) || !positive)
 		return positive;
-	negative = do_match_pathspec(ps, name, namelen,
+	negative = do_match_pathspec(istate, ps, name, namelen,
 				     prefix, seen,
 				     flags | DO_MATCH_EXCLUDE);
 	return negative ? 0 : positive;
@@ -515,11 +519,12 @@ int match_pathspec(const struct pathspec *ps,
 /**
  * Check if a submodule is a superset of the pathspec
  */
-int submodule_path_match(const struct pathspec *ps,
+int submodule_path_match(const struct index_state *istate,
+			 const struct pathspec *ps,
 			 const char *submodule_name,
 			 char *seen)
 {
-	int matched = do_match_pathspec(ps, submodule_name,
+	int matched = do_match_pathspec(istate, ps, submodule_name,
 					strlen(submodule_name),
 					0, seen,
 					DO_MATCH_DIRECTORY |

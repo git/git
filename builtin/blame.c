@@ -988,6 +988,7 @@ parse_done:
 	sb.revs = &revs;
 	sb.contents_from = contents_from;
 	sb.reverse = reverse;
+	sb.repo = the_repository;
 	setup_scoreboard(&sb, path, &o);
 	lno = sb.num_lines;
 
