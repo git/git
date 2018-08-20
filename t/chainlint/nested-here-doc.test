@@ -1,3 +1,13 @@
+# LINT: inner "EOF" not misintrepreted as closing ARBITRARY here-doc
+cat <<ARBITRARY >foop &&
+naddle
+fub <<EOF
+	nozzle
+	noodle
+EOF
+formp
+ARBITRARY
+
 (
 # LINT: inner "EOF" not misintrepreted as closing INPUT_END here-doc
 	cat <<-\INPUT_END &&

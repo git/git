@@ -20,4 +20,16 @@
 	wednesday
 	pugsly
 	EOF
+) &&
+(
+# LINT: swallow here-doc with arbitrary tag
+	cat <<-\ARBITRARY >bup &&
+	glink
+	FIZZ
+	ARBITRARY
+	cat <<-'ARBITRARY2' >bup2 &&
+	glink
+	FIZZ
+	ARBITRARY2
+	meep
 )
