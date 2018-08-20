@@ -176,7 +176,13 @@ test_expect_success 'multi-pack-index and alternates' '
 compare_results_with_midx "with alternate (local midx)"
 
 test_expect_success 'multi-pack-index in an alternate' '
-	mv .git/objects/pack/* alt.git/objects/pack
+	mv .git/objects/pack/* alt.git/objects/pack &&
+	test_commit add_local_objects &&
+	git repack --local &&
+	git multi-pack-index write &&
+	midx_read_expect 1 3 4 $objdir &&
+	git reset --hard HEAD~1 &&
+	rm -f .git/objects/pack/*
 '
 
 compare_results_with_midx "with alternate (remote midx)"

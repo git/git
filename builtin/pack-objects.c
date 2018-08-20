@@ -31,6 +31,7 @@
 #include "packfile.h"
 #include "object-store.h"
 #include "dir.h"
+#include "midx.h"
 
 #define IN_PACK(obj) oe_in_pack(&to_pack, obj)
 #define SIZE(obj) oe_size(&to_pack, obj)
@@ -1040,6 +1041,7 @@ static int want_object_in_pack(const struct object_id *oid,
 {
 	int want;
 	struct list_head *pos;
+	struct multi_pack_index *m;
 
 	if (!exclude && local && has_loose_object_nonlocal(oid))
 		return 0;
@@ -1054,6 +1056,32 @@ static int want_object_in_pack(const struct object_id *oid,
 		if (want != -1)
 			return want;
 	}
+
+	for (m = get_multi_pack_index(the_repository); m; m = m->next) {
+		struct pack_entry e;
+		if (fill_midx_entry(oid, &e, m)) {
+			struct packed_git *p = e.p;
+			off_t offset;
+
+			if (p == *found_pack)
+				offset = *found_offset;
+			else
+				offset = find_pack_entry_one(oid->hash, p);
+
+			if (offset) {
+				if (!*found_pack) {
+					if (!is_pack_valid(p))
+						continue;
+					*found_offset = offset;
+					*found_pack = p;
+				}
+				want = want_found_object(exclude, p);
+				if (want != -1)
+					return want;
+			}
+		}
+	}
+
 	list_for_each(pos, get_packed_git_mru(the_repository)) {
 		struct packed_git *p = list_entry(pos, struct packed_git, mru);
 		off_t offset;
