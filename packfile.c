@@ -820,9 +820,8 @@ static void prepare_pack(const char *full_name, size_t full_name_len,
 	struct packed_git *p;
 	size_t base_len = full_name_len;
 
-	if (strip_suffix_mem(full_name, &base_len, ".idx")) {
-		if (data->m && midx_contains_pack(data->m, file_name))
-			return;
+	if (strip_suffix_mem(full_name, &base_len, ".idx") &&
+	    !(data->m && midx_contains_pack(data->m, file_name))) {
 		/* Don't reopen a pack we already have. */
 		for (p = data->r->objects->packed_git; p; p = p->next) {
 			size_t len;
@@ -842,6 +841,8 @@ static void prepare_pack(const char *full_name, size_t full_name_len,
 	if (!report_garbage)
 		return;
 
+	if (!strcmp(file_name, "multi-pack-index"))
+		return;
 	if (ends_with(file_name, ".idx") ||
 	    ends_with(file_name, ".pack") ||
 	    ends_with(file_name, ".bitmap") ||
