@@ -1885,26 +1885,38 @@ int has_pack_index(const unsigned char *sha1)
 	return 1;
 }
 
-int for_each_object_in_pack(struct packed_git *p, each_packed_object_fn cb, void *data)
+int for_each_object_in_pack(struct packed_git *p,
+			    each_packed_object_fn cb, void *data,
+			    enum for_each_object_flags flags)
 {
 	uint32_t i;
 	int r = 0;
 
+	if (flags & FOR_EACH_OBJECT_PACK_ORDER)
+		load_pack_revindex(p);
+
 	for (i = 0; i < p->num_objects; i++) {
+		uint32_t pos;
 		struct object_id oid;
 
-		if (!nth_packed_object_oid(&oid, p, i))
-			return error("unable to get sha1 of object %u in %s",
-				     i, p->pack_name);
+		if (flags & FOR_EACH_OBJECT_PACK_ORDER)
+			pos = p->revindex[i].nr;
+		else
+			pos = i;
 
-		r = cb(&oid, p, i, data);
+		if (!nth_packed_object_oid(&oid, p, pos))
+			return error("unable to get sha1 of object %u in %s",
+				     pos, p->pack_name);
+
+		r = cb(&oid, p, pos, data);
 		if (r)
 			break;
 	}
 	return r;
 }
 
-int for_each_packed_object(each_packed_object_fn cb, void *data, unsigned flags)
+int for_each_packed_object(each_packed_object_fn cb, void *data,
+			   enum for_each_object_flags flags)
 {
 	struct packed_git *p;
 	int r = 0;
@@ -1921,7 +1933,7 @@ int for_each_packed_object(each_packed_object_fn cb, void *data, unsigned flags)
 			pack_errors = 1;
 			continue;
 		}
-		r = for_each_object_in_pack(p, cb, data);
+		r = for_each_object_in_pack(p, cb, data, flags);
 		if (r)
 			break;
 	}

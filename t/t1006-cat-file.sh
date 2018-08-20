@@ -550,8 +550,8 @@ test_expect_success 'git cat-file --batch --follow-symlink returns correct sha a
 test_expect_success 'cat-file --batch-all-objects shows all objects' '
 	# make new repos so we know the full set of objects; we will
 	# also make sure that there are some packed and some loose
-	# objects, some referenced and some not, and that there are
-	# some available only via alternates.
+	# objects, some referenced and some not, some duplicates, and that
+	# there are some available only via alternates.
 	git init all-one &&
 	(
 		cd all-one &&
@@ -567,9 +567,22 @@ test_expect_success 'cat-file --batch-all-objects shows all objects' '
 		cd all-two &&
 		echo local-unref | git hash-object -w --stdin
 	) >>expect.unsorted &&
+	git -C all-two rev-parse HEAD:file |
+		git -C all-two pack-objects .git/objects/pack/pack &&
 	sort <expect.unsorted >expect &&
 	git -C all-two cat-file --batch-all-objects \
 				--batch-check="%(objectname)" >actual &&
+	test_cmp expect actual
+'
+
+# The only user-visible difference is that the objects are no longer sorted,
+# and the resulting sort order is undefined. So we can only check that it
+# produces the same objects as the ordered case, but that at least exercises
+# the code.
+test_expect_success 'cat-file --unordered works' '
+	git -C all-two cat-file --batch-all-objects --unordered \
+				--batch-check="%(objectname)" >actual.unsorted &&
+	sort <actual.unsorted >actual &&
 	test_cmp expect actual
 '
 
