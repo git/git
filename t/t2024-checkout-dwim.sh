@@ -86,8 +86,13 @@ test_expect_success 'checkout of branch from multiple remotes fails with advice'
 		checkout foo 2>stderr &&
 	test_branch master &&
 	status_uno_is_clean &&
-	test_i18ngrep ! "^hint: " stderr &&
-	# Make sure the likes of checkout -p do not print this hint
+	test_i18ngrep ! "^hint: " stderr
+'
+
+test_expect_success PERL 'checkout -p with multiple remotes does not print advice' '
+	git checkout -B master &&
+	test_might_fail git branch -D foo &&
+
 	git checkout -p foo 2>stderr &&
 	test_i18ngrep ! "^hint: " stderr &&
 	status_uno_is_clean
