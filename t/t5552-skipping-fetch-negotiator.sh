@@ -28,6 +28,19 @@ have_not_sent () {
 	done
 }
 
+# trace_fetch <client_dir> <server_dir> [args]
+#
+# Trace the packet output of fetch, but make sure we disable the variable
+# in the child upload-pack, so we don't combine the results in the same file.
+trace_fetch () {
+	client=$1; shift
+	server=$1; shift
+	GIT_TRACE_PACKET="$(pwd)/trace" \
+	git -C "$client" fetch \
+	  --upload-pack 'unset GIT_TRACE_PACKET; git-upload-pack' \
+	  "$server" "$@"
+}
+
 test_expect_success 'commits with no parents are sent regardless of skip distance' '
 	git init server &&
 	test_commit -C server to_fetch &&
@@ -42,7 +55,7 @@ test_expect_success 'commits with no parents are sent regardless of skip distanc
 	# "c1" has no parent, it is still sent as "have" even though it would
 	# normally be skipped.
 	test_config -C client fetch.negotiationalgorithm skipping &&
-	GIT_TRACE_PACKET="$(pwd)/trace" git -C client fetch "$(pwd)/server" &&
+	trace_fetch client "$(pwd)/server" &&
 	have_sent c7 c5 c2 c1 &&
 	have_not_sent c6 c4 c3
 '
@@ -88,7 +101,7 @@ test_expect_success 'when two skips collide, favor the larger one' '
 	# the next "have" sent will be "c1" (from "c6" skip 4) and not "c4"
 	# (from "c5side" skip 1).
 	test_config -C client fetch.negotiationalgorithm skipping &&
-	GIT_TRACE_PACKET="$(pwd)/trace" git -C client fetch "$(pwd)/server" &&
+	trace_fetch client "$(pwd)/server" &&
 	have_sent c5side c11 c9 c6 c1 &&
 	have_not_sent c10 c8 c7 c5 c4 c3 c2
 '
@@ -114,7 +127,7 @@ test_expect_success 'use ref advertisement to filter out commits' '
 	# not need to send any ancestors of "c3", but we still need to send "c3"
 	# itself.
 	test_config -C client fetch.negotiationalgorithm skipping &&
-	GIT_TRACE_PACKET="$(pwd)/trace" git -C client fetch origin to_fetch &&
+	trace_fetch client origin to_fetch &&
 	have_sent c5 c4^ c2side &&
 	have_not_sent c4 c4^^ c4^^^
 '
@@ -144,7 +157,7 @@ test_expect_success 'handle clock skew' '
 	# and sent, because (due to clock skew) its only parent has already been
 	# popped off the priority queue.
 	test_config -C client fetch.negotiationalgorithm skipping &&
-	GIT_TRACE_PACKET="$(pwd)/trace" git -C client fetch "$(pwd)/server" &&
+	trace_fetch client "$(pwd)/server" &&
 	have_sent c2 c1 old4 old2 old1 &&
 	have_not_sent old3
 '
@@ -176,7 +189,7 @@ test_expect_success 'do not send "have" with ancestors of commits that server AC
 	test_commit -C server commit-on-b1 &&
 
 	test_config -C client fetch.negotiationalgorithm skipping &&
-	GIT_TRACE_PACKET="$(pwd)/trace" git -C client fetch "$(pwd)/server" to_fetch &&
+	trace_fetch client "$(pwd)/server" to_fetch &&
 	grep "  fetch" trace &&
 
 	# fetch-pack sends 2 requests each containing 16 "have" lines before
