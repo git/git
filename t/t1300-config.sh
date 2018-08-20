@@ -1218,6 +1218,93 @@ test_expect_success 'last one wins: three level vars' '
 	test_cmp expect actual
 '
 
+test_expect_success 'old-fashioned settings are case insensitive' '
+	test_when_finished "rm -f testConfig testConfig_expect testConfig_actual" &&
+
+	cat >testConfig_actual <<-EOF &&
+		[V.A]
+		r = value1
+	EOF
+	q_to_tab >testConfig_expect <<-EOF &&
+		[V.A]
+		Qr = value2
+	EOF
+	git config -f testConfig_actual "v.a.r" value2 &&
+	test_cmp testConfig_expect testConfig_actual &&
+
+	cat >testConfig_actual <<-EOF &&
+		[V.A]
+		r = value1
+	EOF
+	q_to_tab >testConfig_expect <<-EOF &&
+		[V.A]
+		QR = value2
+	EOF
+	git config -f testConfig_actual "V.a.R" value2 &&
+	test_cmp testConfig_expect testConfig_actual &&
+
+	cat >testConfig_actual <<-EOF &&
+		[V.A]
+		r = value1
+	EOF
+	q_to_tab >testConfig_expect <<-EOF &&
+		[V.A]
+		r = value1
+		Qr = value2
+	EOF
+	git config -f testConfig_actual "V.A.r" value2 &&
+	test_cmp testConfig_expect testConfig_actual &&
+
+	cat >testConfig_actual <<-EOF &&
+		[V.A]
+		r = value1
+	EOF
+	q_to_tab >testConfig_expect <<-EOF &&
+		[V.A]
+		r = value1
+		Qr = value2
+	EOF
+	git config -f testConfig_actual "v.A.r" value2 &&
+	test_cmp testConfig_expect testConfig_actual
+'
+
+test_expect_success 'setting different case sensitive subsections ' '
+	test_when_finished "rm -f testConfig testConfig_expect testConfig_actual" &&
+
+	cat >testConfig_actual <<-EOF &&
+		[V "A"]
+		R = v1
+		[K "E"]
+		Y = v1
+		[a "b"]
+		c = v1
+		[d "e"]
+		f = v1
+	EOF
+	q_to_tab >testConfig_expect <<-EOF &&
+		[V "A"]
+		Qr = v2
+		[K "E"]
+		Qy = v2
+		[a "b"]
+		Qc = v2
+		[d "e"]
+		f = v1
+		[d "E"]
+		Qf = v2
+	EOF
+	# exact match
+	git config -f testConfig_actual a.b.c v2 &&
+	# match section and subsection, key is cased differently.
+	git config -f testConfig_actual K.E.y v2 &&
+	# section and key are matched case insensitive, but subsection needs
+	# to match; When writing out new values only the key is adjusted
+	git config -f testConfig_actual v.A.r v2 &&
+	# subsection is not matched:
+	git config -f testConfig_actual d.E.f v2 &&
+	test_cmp testConfig_expect testConfig_actual
+'
+
 for VAR in a .a a. a.0b a."b c". a."b c".0d
 do
 	test_expect_success "git -c $VAR=VAL rejects invalid '$VAR'" '

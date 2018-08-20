@@ -453,6 +453,27 @@ http.sslverify false
 
 include::config.txt[]
 
+BUGS
+----
+When using the deprecated `[section.subsection]` syntax, changing a value
+will result in adding a multi-line key instead of a change, if the subsection
+is given with at least one uppercase character. For example when the config
+looks like
+
+--------
+  [section.subsection]
+    key = value1
+--------
+
+and running `git config section.Subsection.key value2` will result in
+
+--------
+  [section.subsection]
+    key = value1
+    key = value2
+--------
+
+
 GIT
 ---
 Part of the linkgit:git[1] suite
