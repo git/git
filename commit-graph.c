@@ -13,6 +13,8 @@
 #include "commit-graph.h"
 #include "object-store.h"
 #include "alloc.h"
+#include "hashmap.h"
+#include "replace-object.h"
 
 #define GRAPH_SIGNATURE 0x43475048 /* "CGPH" */
 #define GRAPH_CHUNKID_OIDFANOUT 0x4f494446 /* "OIDF" */
@@ -54,6 +56,19 @@ static struct commit_graph *alloc_commit_graph(void)
 	g->graph_fd = -1;
 
 	return g;
+}
+
+extern int read_replace_refs;
+
+static int commit_graph_compatible(struct repository *r)
+{
+	if (read_replace_refs) {
+		prepare_replace_object(r);
+		if (hashmap_get_size(&r->objects->replace_map->map))
+			return 0;
+	}
+
+	return 1;
 }
 
 struct commit_graph *load_commit_graph_one(const char *graph_file)
@@ -221,6 +236,9 @@ static int prepare_commit_graph(struct repository *r)
 		 * so that commit graph loading is not attempted again for this
 		 * repository.)
 		 */
+		return 0;
+
+	if (!commit_graph_compatible(r))
 		return 0;
 
 	obj_dir = r->objects->objectdir;
@@ -692,6 +710,9 @@ void write_commit_graph(const char *obj_dir,
 	int num_chunks;
 	int num_extra_edges;
 	struct commit_list *parent;
+
+	if (!commit_graph_compatible(the_repository))
+		return;
 
 	oids.nr = 0;
 	oids.alloc = approximate_object_count() / 4;

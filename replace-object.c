@@ -32,7 +32,7 @@ static int register_replace_ref(struct repository *r,
 	return 0;
 }
 
-static void prepare_replace_object(struct repository *r)
+void prepare_replace_object(struct repository *r)
 {
 	if (r->objects->replace_map)
 		return;
