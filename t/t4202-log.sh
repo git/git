@@ -340,10 +340,9 @@ test_expect_success PCRE 'log -F -E --perl-regexp --grep=<pcre> uses PCRE' '
 '
 
 test_expect_success 'log with grep.patternType configuration' '
-	>expect &&
 	git -c grep.patterntype=fixed \
 	log -1 --pretty=tformat:%s --grep=s.c.nd >actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'log with grep.patternType configuration and command line' '
@@ -1662,9 +1661,8 @@ test_expect_success 'log diagnoses bogus HEAD' '
 '
 
 test_expect_success 'log does not default to HEAD when rev input is given' '
-	>expect &&
 	git log --branches=does-not-exist >actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'set up --source tests' '

@@ -168,9 +168,8 @@ test_expect_success GPG 'verifying tag with --format' '
 '
 
 test_expect_success GPG 'verifying a forged tag with --format should fail silently' '
-	>expect &&
 	test_must_fail git verify-tag --format="tagname : %(tag)" $(cat forged1.tag) >actual-forged &&
-	test_cmp expect actual-forged
+	test_must_be_empty actual-forged
 '
 
 test_done

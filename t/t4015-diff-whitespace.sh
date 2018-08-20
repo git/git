@@ -93,21 +93,20 @@ test_expect_success 'another test, without options' '
 	git diff >out &&
 	test_cmp expect out &&
 
-	>expect &&
 	git diff -w >out &&
-	test_cmp expect out &&
+	test_must_be_empty out &&
 
 	git diff -w -b >out &&
-	test_cmp expect out &&
+	test_must_be_empty out &&
 
 	git diff -w --ignore-space-at-eol >out &&
-	test_cmp expect out &&
+	test_must_be_empty out &&
 
 	git diff -w -b --ignore-space-at-eol >out &&
-	test_cmp expect out &&
+	test_must_be_empty out &&
 
 	git diff -w --ignore-cr-at-eol >out &&
-	test_cmp expect out &&
+	test_must_be_empty out &&
 
 	tr "Q_" "\015 " <<-\EOF >expect &&
 	diff --git a/x b/x
@@ -182,8 +181,7 @@ test_expect_success 'ignore-blank-lines: only new lines' '
 	test_seq 5 | sed "/3/i\\
 " >x &&
 	git diff --ignore-blank-lines >out &&
-	>expect &&
-	test_cmp expect out
+	test_must_be_empty out
 '
 
 test_expect_success 'ignore-blank-lines: only new lines with space' '
@@ -192,8 +190,7 @@ test_expect_success 'ignore-blank-lines: only new lines with space' '
 	test_seq 5 | sed "/3/i\\
  " >x &&
 	git diff -w --ignore-blank-lines >out &&
-	>expect &&
-	test_cmp expect out
+	test_must_be_empty out
 '
 
 test_expect_success 'ignore-blank-lines: after change' '

@@ -253,10 +253,9 @@ test_suppress_self () {
 
 	mv msgtxt1 msgtxt1-$3 &&
 	sed -e '/^$/q' msgtxt1-$3 >"msghdr1-$3" &&
-	>"expected-no-cc-$3" &&
 
 	(grep '^Cc:' msghdr1-$3 >"actual-no-cc-$3";
-	 test_cmp expected-no-cc-$3 actual-no-cc-$3)
+	 test_must_be_empty actual-no-cc-$3)
 }
 
 test_suppress_self_unquoted () {

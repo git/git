@@ -691,8 +691,7 @@ test_expect_success 'log grep (5)' '
 
 test_expect_success 'log grep (6)' '
 	git log --author=-0700  --pretty=tformat:%s >actual &&
-	>expect &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'log grep (7)' '

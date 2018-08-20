@@ -44,15 +44,13 @@ test_expect_success !MINGW 'log --grep searches in log output encoding (latin1)'
 '
 
 test_expect_success !MINGW 'log --grep does not find non-reencoded values (utf8)' '
-	>expect &&
 	git log --encoding=utf8 --format=%s --grep=$latin1_e >actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'log --grep does not find non-reencoded values (latin1)' '
-	>expect &&
 	git log --encoding=ISO-8859-1 --format=%s --grep=$utf8_e >actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_done

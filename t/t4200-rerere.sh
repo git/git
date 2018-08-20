@@ -267,8 +267,7 @@ rerere_gc_custom_expiry_test () {
 		git -c "gc.rerereresolved=$right_now" \
 		    -c "gc.rerereunresolved=$right_now" rerere gc &&
 		find .git/rr-cache -type f | sort >actual &&
-		>expect &&
-		test_cmp expect actual
+		test_must_be_empty actual
 	'
 }
 
@@ -536,9 +535,8 @@ test_expect_success 'multiple identical conflicts' '
 
 	# We resolved file1 and file2
 	git rerere &&
-	>expect &&
 	git rerere remaining >actual &&
-	test_cmp expect actual &&
+	test_must_be_empty actual &&
 
 	# We must have recorded both of them
 	count_pre_post 2 2 &&
@@ -548,9 +546,8 @@ test_expect_success 'multiple identical conflicts' '
 	test_must_fail git merge six.1 &&
 	git rerere &&
 
-	>expect &&
 	git rerere remaining >actual &&
-	test_cmp expect actual &&
+	test_must_be_empty actual &&
 
 	concat_insert short 6.1 6.2 >file1.expect &&
 	concat_insert long 6.1 6.2 >file2.expect &&

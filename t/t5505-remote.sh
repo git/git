@@ -74,8 +74,7 @@ test_expect_success 'add another remote' '
 		git for-each-ref "--format=%(refname)" refs/remotes |
 		sed -e "/^refs\/remotes\/origin\//d" \
 		    -e "/^refs\/remotes\/second\//d" >actual &&
-		>expect &&
-		test_cmp expect actual
+		test_must_be_empty actual
 	)
 '
 
@@ -112,8 +111,7 @@ test_expect_success C_LOCALE_OUTPUT 'remove remote' '
 		check_remote_track origin master side &&
 		git for-each-ref "--format=%(refname)" refs/remotes |
 		sed -e "/^refs\/remotes\/origin\//d" >actual &&
-		>expect &&
-		test_cmp expect actual
+		test_must_be_empty actual
 	)
 '
 

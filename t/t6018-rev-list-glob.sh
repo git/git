@@ -256,31 +256,27 @@ test_expect_success 'rev-list accumulates multiple --exclude' '
 '
 
 test_expect_failure 'rev-list should succeed with empty output on empty stdin' '
-	>expect &&
 	git rev-list --stdin <expect >actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'rev-list should succeed with empty output with all refs excluded' '
-	>expect &&
 	git rev-list --exclude=* --all >actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'rev-list should succeed with empty output with empty --all' '
 	(
 		test_create_repo empty &&
 		cd empty &&
-		>expect &&
 		git rev-list --all >actual &&
-		test_cmp expect actual
+		test_must_be_empty actual
 	)
 '
 
 test_expect_success 'rev-list should succeed with empty output with empty glob' '
-	>expect &&
 	git rev-list --glob=does-not-match-anything >actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'shortlog accepts --glob/--tags/--remotes' '

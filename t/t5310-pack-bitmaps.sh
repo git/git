@@ -309,9 +309,8 @@ test_expect_success 'pack reuse respects --honor-pack-keep' '
 	done &&
 	reusable_pack --honor-pack-keep >empty.pack &&
 	git index-pack empty.pack &&
-	>expect &&
 	git show-index <empty.idx >actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'pack reuse respects --local' '
@@ -319,17 +318,15 @@ test_expect_success 'pack reuse respects --local' '
 	test_when_finished "mv alt.git/objects/pack/* .git/objects/pack/" &&
 	reusable_pack --local >empty.pack &&
 	git index-pack empty.pack &&
-	>expect &&
 	git show-index <empty.idx >actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'pack reuse respects --incremental' '
 	reusable_pack --incremental >empty.pack &&
 	git index-pack empty.pack &&
-	>expect &&
 	git show-index <empty.idx >actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'truncated bitmap fails gracefully' '

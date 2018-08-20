@@ -101,8 +101,7 @@ match_with_ls_files() {
 
 	match_stdout_stderr_cmp="
 		tr -d '\0' <actual.raw >actual &&
-		>expect.err &&
-		test_cmp expect.err actual.err &&
+		test_must_be_empty actual.err &&
 		test_cmp expect actual"
 
 	if test "$match_expect" = 'E'
