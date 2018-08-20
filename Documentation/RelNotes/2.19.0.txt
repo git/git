@@ -74,6 +74,16 @@ UI, Workflows & Features
  * "git pull --rebase=interactive" learned "i" as a short-hand for
    "interactive".
 
+ * "git instaweb" has been adjusted to run better with newer Apache on
+   RedHat based distros.
+
+ * "git range-diff" is a reimplementation of "git tbdiff" that lets us
+   compare individual patches in two iterations of a topic.
+
+ * The sideband code learned to optionally paint selected keywords at
+   the beginning of incoming lines on the receiving end.
+
+
 Performance, Internal Implementation, Development Support etc.
 
  * The bulk of "git submodule foreach" has been rewritten in C.
@@ -219,6 +229,27 @@ Performance, Internal Implementation, Development Support etc.
 
  * The end result of documentation update has been made to be
    inspected more easily to help developers.
+
+ * The API to iterate over all objects learned to optionally list
+   objects in the order they appear in packfiles, which helps locality
+   of access if the caller accesses these objects while as objects are
+   enumerated.
+
+ * Improve built-in facility to catch broken &&-chain in the tests.
+
+ * The more library-ish parts of the codebase learned to work on the
+   in-core index-state instance that is passed in by their callers,
+   instead of always working on the singleton "the_index" instance.
+
+ * A test prerequisite defined by various test scripts with slightly
+   different semantics has been consolidated into a single copy and
+   made into a lazily defined one.
+   (merge 6ec633059a wc/make-funnynames-shared-lazy-prereq later to maint).
+
+ * After a partial clone, repeated fetches from promisor remote would
+   have accumulated many packfiles marked with .promisor bit without
+   getting them coalesced into fewer packfiles, hurting performance.
+   "git repack" now learned to repack them.
 
 
 Fixes since v2.18
@@ -459,6 +490,49 @@ Fixes since v2.18
  * "git diff --indent-heuristic" had a bad corner case performance.
    (merge 301ef85401 sb/indent-heuristic-optim later to maint).
 
+ * The "--exec" option to "git rebase --rebase-merges" placed the exec
+   commands at wrong places, which has been corrected.
+
+ * "git verify-tag" and "git verify-commit" have been taught to use
+   the exit status of underlying "gpg --verify" to signal bad or
+   untrusted signature they found.
+   (merge 4e5dc9ca17 jc/gpg-status later to maint).
+
+ * "git mergetool" stopped and gave an extra prompt to continue after
+   the last path has been handled, which did not make much sense.
+   (merge d651a54b8a ng/mergetool-lose-final-prompt later to maint).
+
+ * Among the three codepaths we use O_APPEND to open a file for
+   appending, one used for writing GIT_TRACE output requires O_APPEND
+   implementation that behaves sensibly when multiple processes are
+   writing to the same file.  POSIX emulation used in the Windows port
+   has been updated to improve in this area.
+   (merge d641097589 js/mingw-o-append later to maint).
+
+ * "git pull --rebase -v" in a repository with a submodule barfed as
+   an intermediate process did not understand what "-v(erbose)" flag
+   meant, which has been fixed.
+   (merge e84c3cf3dc sb/pull-rebase-submodule later to maint).
+
+ * Recent update to "git config" broke updating variable in a
+   subsection, which has been corrected.
+   (merge bff7df7a87 sb/config-write-fix later to maint).
+
+ * When "git rebase -i" is told to squash two or more commits into
+   one, it labeled the log message for each commit with its number.
+   It correctly called the first one "1st commit", but the next one
+   was "commit #1", which was off-by-one.  This has been corrected.
+   (merge dd2e36ebac pw/rebase-i-squash-number-fix later to maint).
+
+ * "git rebase -i", when a 'merge <branch>' insn in its todo list
+   fails, segfaulted, which has been (minimally) corrected.
+   (merge bc9238bb09 pw/rebase-i-merge-segv-fix later to maint).
+
+ * "git cherry-pick --quit" failed to remove CHERRY_PICK_HEAD even
+   though we won't be in a cherry-pick session after it returns, which
+   has been corrected.
+   (merge 3e7dd99208 nd/cherry-pick-quit-fix later to maint).
+
  * Code cleanup, docfix, build fix, etc.
    (merge aee9be2ebe sg/update-ref-stdin-cleanup later to maint).
    (merge 037714252f jc/clean-after-sanity-tests later to maint).
@@ -485,3 +559,9 @@ Fixes since v2.18
    (merge 8578037bed nd/config-blame-sort later to maint).
    (merge 8ad169c4ba hn/config-in-code-comment later to maint).
    (merge b7446fcfdf ar/t4150-am-scissors-test-fix later to maint).
+   (merge a8132410ee js/typofixes later to maint).
+   (merge 388d0ff6e5 en/update-index-doc later to maint).
+   (merge e05aa688dd jc/update-index-doc later to maint).
+   (merge 10c600172c sg/t5310-empty-input-fix later to maint).
+   (merge 5641eb9465 jh/partial-clone-doc later to maint).
+   (merge 2711b1ad5e ab/submodule-relative-url-tests later to maint).
