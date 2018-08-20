@@ -18,6 +18,8 @@ struct multi_pack_index {
 	uint32_t num_packs;
 	uint32_t num_objects;
 
+	int local;
+
 	const unsigned char *chunk_pack_names;
 	const uint32_t *chunk_oid_fanout;
 	const unsigned char *chunk_oid_lookup;
@@ -29,14 +31,14 @@ struct multi_pack_index {
 	char object_dir[FLEX_ARRAY];
 };
 
-struct multi_pack_index *load_multi_pack_index(const char *object_dir);
+struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local);
 int bsearch_midx(const struct object_id *oid, struct multi_pack_index *m, uint32_t *result);
 struct object_id *nth_midxed_object_oid(struct object_id *oid,
 					struct multi_pack_index *m,
 					uint32_t n);
 int fill_midx_entry(const struct object_id *oid, struct pack_entry *e, struct multi_pack_index *m);
 int midx_contains_pack(struct multi_pack_index *m, const char *idx_name);
-int prepare_multi_pack_index_one(struct repository *r, const char *object_dir);
+int prepare_multi_pack_index_one(struct repository *r, const char *object_dir, int local);
 
 int write_midx_file(const char *object_dir);
 void clear_midx_file(const char *object_dir);

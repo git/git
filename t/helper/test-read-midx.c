@@ -7,7 +7,7 @@
 static int read_midx_file(const char *object_dir)
 {
 	uint32_t i;
-	struct multi_pack_index *m = load_multi_pack_index(object_dir);
+	struct multi_pack_index *m = load_multi_pack_index(object_dir, 1);
 
 	if (!m)
 		return 1;
