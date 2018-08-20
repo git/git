@@ -32,16 +32,16 @@ int cmd_multi_pack_index(int argc, const char **argv,
 		opts.object_dir = get_object_directory();
 
 	if (argc == 0)
-		goto usage;
+		usage_with_options(builtin_multi_pack_index_usage,
+				   builtin_multi_pack_index_options);
 
-	if (!strcmp(argv[0], "write")) {
-		if (argc > 1)
-			goto usage;
-
-		return write_midx_file(opts.object_dir);
+	if (argc > 1) {
+		die(_("too many arguments"));
+		return 1;
 	}
 
-usage:
-	usage_with_options(builtin_multi_pack_index_usage,
-			   builtin_multi_pack_index_options);
+	if (!strcmp(argv[0], "write"))
+		return write_midx_file(opts.object_dir);
+
+	die(_("unrecognized verb: %s"), argv[0]);
 }
