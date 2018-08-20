@@ -268,22 +268,19 @@ USING --INDEX-INFO
 multiple entry definitions from the standard input, and designed
 specifically for scripts.  It can take inputs of three formats:
 
-    . mode         SP sha1          TAB path
-+
-The first format is what "git-apply --index-info"
-reports, and used to reconstruct a partial tree
-that is used for phony merge base tree when falling
-back on 3-way merge.
-
     . mode SP type SP sha1          TAB path
 +
-The second format is to stuff 'git ls-tree' output
-into the index file.
+This format is to stuff `git ls-tree` output into the index.
 
     . mode         SP sha1 SP stage TAB path
 +
 This format is to put higher order stages into the
 index file and matches 'git ls-files --stage' output.
+
+    . mode         SP sha1          TAB path
++
+This format is no longer produced by any Git command, but is
+and will continue to be supported by `update-index --index-info`.
 
 To place a higher stage entry to the index, the path should
 first be removed by feeding a mode=0 entry for the path, and
