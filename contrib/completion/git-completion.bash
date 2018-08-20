@@ -1976,6 +1976,20 @@ _git_push ()
 	__git_complete_remote_or_refspec
 }
 
+_git_range_diff ()
+{
+	case "$cur" in
+	--*)
+		__gitcomp "
+			--creation-factor= --no-dual-color
+			$__git_diff_common_options
+		"
+		return
+		;;
+	esac
+	__git_complete_revlist
+}
+
 _git_rebase ()
 {
 	__git_find_repo_path
