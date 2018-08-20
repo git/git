@@ -13,8 +13,10 @@ Initial setup:
     -- B --                   (first)
    /       \
  A - C - D - E - H            (master)
-       \       /
-         F - G                (second)
+   \    \       /
+    \    F - G                (second)
+     \
+      Conflicting-G
 '
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-rebase.sh
@@ -49,7 +51,9 @@ test_expect_success 'setup' '
 	git merge --no-commit G &&
 	test_tick &&
 	git commit -m H &&
-	git tag -m H H
+	git tag -m H H &&
+	git checkout A &&
+	test_commit conflicting-G G.t
 '
 
 test_expect_success 'create completely different structure' '
@@ -72,7 +76,7 @@ test_expect_success 'create completely different structure' '
 	EOF
 	test_config sequence.editor \""$PWD"/replace-editor.sh\" &&
 	test_tick &&
-	git rebase -i -r A &&
+	git rebase -i -r A master &&
 	test_cmp_graph <<-\EOF
 	*   Merge the topic branch '\''onebranch'\''
 	|\
@@ -125,7 +129,7 @@ test_expect_success '`reset` refuses to overwrite untracked files' '
 	git rebase --abort
 '
 
-test_expect_success 'failed `merge` writes patch (may be rescheduled, too)' '
+test_expect_success 'failed `merge -C` writes patch (may be rescheduled, too)' '
 	test_when_finished "test_might_fail git rebase --abort" &&
 	git checkout -b conflicting-merge A &&
 
@@ -141,11 +145,23 @@ test_expect_success 'failed `merge` writes patch (may be rescheduled, too)' '
 
 	: fail because of merge conflict &&
 	rm G.t .git/rebase-merge/patch &&
-	git reset --hard &&
-	test_commit conflicting-G G.t not-G conflicting-G &&
+	git reset --hard conflicting-G &&
 	test_must_fail git rebase --continue &&
 	! grep "^merge -C .* G$" .git/rebase-merge/git-rebase-todo &&
 	test_path_is_file .git/rebase-merge/patch
+'
+
+SQ="'"
+test_expect_success 'failed `merge <branch>` does not crash' '
+	test_when_finished "test_might_fail git rebase --abort" &&
+	git checkout conflicting-G &&
+
+	echo "merge G" >script-from-scratch &&
+	test_config sequence.editor \""$PWD"/replace-editor.sh\" &&
+	test_tick &&
+	test_must_fail git rebase -ir HEAD &&
+	! grep "^merge G$" .git/rebase-merge/git-rebase-todo &&
+	grep "^Merge branch ${SQ}G${SQ}$" .git/rebase-merge/message
 '
 
 test_expect_success 'with a branch tip that was cherry-picked already' '
