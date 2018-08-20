@@ -280,6 +280,16 @@ static int nth_midxed_pack_entry(struct multi_pack_index *m, struct pack_entry *
 	if (!is_pack_valid(p))
 		return 0;
 
+	if (p->num_bad_objects) {
+		uint32_t i;
+		struct object_id oid;
+		nth_midxed_object_oid(&oid, m, pos);
+		for (i = 0; i < p->num_bad_objects; i++)
+			if (!hashcmp(oid.hash,
+				     p->bad_object_sha1 + the_hash_algo->rawsz * i))
+				return 0;
+	}
+
 	e->offset = nth_midxed_offset(m, pos);
 	e->p = p;
 
