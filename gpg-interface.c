@@ -136,12 +136,13 @@ int check_signature(const char *payload, size_t plen, const char *signature,
 	sigc->gpg_output = strbuf_detach(&gpg_output, NULL);
 	sigc->gpg_status = strbuf_detach(&gpg_status, NULL);
 	parse_gpg_output(sigc);
+	status |= sigc->result != 'G' && sigc->result != 'U';
 
  out:
 	strbuf_release(&gpg_status);
 	strbuf_release(&gpg_output);
 
-	return sigc->result != 'G' && sigc->result != 'U';
+	return !!status;
 }
 
 void print_signature_buffer(const struct signature_check *sigc, unsigned flags)
