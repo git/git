@@ -197,7 +197,7 @@ static void close_midx(struct multi_pack_index *m)
 	FREE_AND_NULL(m->pack_names);
 }
 
-static int prepare_midx_pack(struct multi_pack_index *m, uint32_t pack_int_id)
+int prepare_midx_pack(struct multi_pack_index *m, uint32_t pack_int_id)
 {
 	struct strbuf pack_name = STRBUF_INIT;
 

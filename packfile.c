@@ -972,6 +972,9 @@ static void prepare_packed_git(struct repository *r)
 		prepare_packed_git_one(r, alt->path, 0);
 	}
 	rearrange_packed_git(r);
+
+	r->objects->all_packs = NULL;
+
 	prepare_packed_git_mru(r);
 	r->objects->packed_git_initialized = 1;
 }
@@ -993,6 +996,30 @@ struct multi_pack_index *get_multi_pack_index(struct repository *r)
 {
 	prepare_packed_git(r);
 	return r->objects->multi_pack_index;
+}
+
+struct packed_git *get_all_packs(struct repository *r)
+{
+	prepare_packed_git(r);
+
+	if (!r->objects->all_packs) {
+		struct packed_git *p = r->objects->packed_git;
+		struct multi_pack_index *m;
+
+		for (m = r->objects->multi_pack_index; m; m = m->next) {
+			uint32_t i;
+			for (i = 0; i < m->num_packs; i++) {
+				if (!prepare_midx_pack(m, i)) {
+					m->packs[i]->next = p;
+					p = m->packs[i];
+				}
+			}
+		}
+
+		r->objects->all_packs = p;
+	}
+
+	return r->objects->all_packs;
 }
 
 struct list_head *get_packed_git_mru(struct repository *r)

@@ -130,6 +130,12 @@ struct raw_object_store {
 	struct list_head packed_git_mru;
 
 	/*
+	 * A linked list containing all packfiles, starting with those
+	 * contained in the multi_pack_index.
+	 */
+	struct packed_git *all_packs;
+
+	/*
 	 * A fast, rough count of the number of objects in the repository.
 	 * These two fields are not meant for direct access. Use
 	 * approximate_object_count() instead.

@@ -32,6 +32,7 @@ struct multi_pack_index {
 };
 
 struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local);
+int prepare_midx_pack(struct multi_pack_index *m, uint32_t pack_int_id);
 int bsearch_midx(const struct object_id *oid, struct multi_pack_index *m, uint32_t *result);
 struct object_id *nth_midxed_object_oid(struct object_id *oid,
 					struct multi_pack_index *m,
