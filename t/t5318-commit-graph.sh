@@ -444,25 +444,27 @@ test_expect_success 'setup non-the_repository tests' '
 test_expect_success 'parse_commit_in_graph works for non-the_repository' '
 	test-tool repository parse_commit_in_graph \
 		repo/.git repo "$(git -C repo rev-parse two)" >actual &&
-	echo $(git -C repo log --pretty="%ct" -1) \
-		$(git -C repo rev-parse one) >expect &&
+	{
+		git -C repo log --pretty=format:"%ct " -1 &&
+		git -C repo rev-parse one
+	} >expect &&
 	test_cmp expect actual &&
 
 	test-tool repository parse_commit_in_graph \
 		repo/.git repo "$(git -C repo rev-parse one)" >actual &&
-	echo $(git -C repo log --pretty="%ct" -1 one) >expect &&
+	git -C repo log --pretty="%ct" -1 one >expect &&
 	test_cmp expect actual
 '
 
 test_expect_success 'get_commit_tree_in_graph works for non-the_repository' '
 	test-tool repository get_commit_tree_in_graph \
 		repo/.git repo "$(git -C repo rev-parse two)" >actual &&
-	echo $(git -C repo rev-parse two^{tree}) >expect &&
+	git -C repo rev-parse two^{tree} >expect &&
 	test_cmp expect actual &&
 
 	test-tool repository get_commit_tree_in_graph \
 		repo/.git repo "$(git -C repo rev-parse one)" >actual &&
-	echo $(git -C repo rev-parse one^{tree}) >expect &&
+	git -C repo rev-parse one^{tree} >expect &&
 	test_cmp expect actual
 '
 
