@@ -86,8 +86,14 @@ test_expect_success 'write midx with one v1 pack' '
 '
 
 midx_git_two_modes () {
-	git -c core.multiPackIndex=false $1 >expect &&
-	git -c core.multiPackIndex=true $1 >actual &&
+	if [ "$2" = "sorted" ]
+	then
+		git -c core.multiPackIndex=false $1 | sort >expect &&
+		git -c core.multiPackIndex=true $1 | sort >actual
+	else
+		git -c core.multiPackIndex=false $1 >expect &&
+		git -c core.multiPackIndex=true $1 >actual
+	fi &&
 	test_cmp expect actual
 }
 
@@ -95,7 +101,10 @@ compare_results_with_midx () {
 	MSG=$1
 	test_expect_success "check normal git operations: $MSG" '
 		midx_git_two_modes "rev-list --objects --all" &&
-		midx_git_two_modes "log --raw"
+		midx_git_two_modes "log --raw" &&
+		midx_git_two_modes "count-objects --verbose" &&
+		midx_git_two_modes "cat-file --batch-all-objects --buffer --batch-check" &&
+		midx_git_two_modes "cat-file --batch-all-objects --buffer --batch-check --unsorted" sorted
 	'
 }
 
@@ -148,6 +157,12 @@ test_expect_success 'repack removes multi-pack-index' '
 '
 
 compare_results_with_midx "after repack"
+
+test_expect_success 'multi-pack-index and pack-bitmap' '
+	git -c repack.writeBitmaps=true repack -ad &&
+	git multi-pack-index write &&
+	git rev-list --test-bitmap HEAD
+'
 
 test_expect_success 'multi-pack-index and alternates' '
 	git init --bare alt.git &&
