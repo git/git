@@ -260,10 +260,10 @@ static int prepare_commit_graph(struct repository *r)
 	return !!r->objects->commit_graph;
 }
 
-static void close_commit_graph(void)
+void close_commit_graph(struct repository *r)
 {
-	free_commit_graph(the_repository->objects->commit_graph);
-	the_repository->objects->commit_graph = NULL;
+	free_commit_graph(r->objects->commit_graph);
+	r->objects->commit_graph = NULL;
 }
 
 static int bsearch_graph(struct commit_graph *g, struct object_id *oid, uint32_t *pos)
@@ -875,7 +875,7 @@ void write_commit_graph(const char *obj_dir,
 	write_graph_chunk_data(f, GRAPH_OID_LEN, commits.list, commits.nr);
 	write_graph_chunk_large_edges(f, commits.list, commits.nr);
 
-	close_commit_graph();
+	close_commit_graph(the_repository);
 	finalize_hashfile(f, NULL, CSUM_HASH_IN_STREAM | CSUM_FSYNC);
 	commit_lock_file(&lk);
 

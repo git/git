@@ -59,6 +59,7 @@ void write_commit_graph(const char *obj_dir,
 
 int verify_commit_graph(struct repository *r, struct commit_graph *g);
 
+void close_commit_graph(struct repository *);
 void free_commit_graph(struct commit_graph *);
 
 #endif
