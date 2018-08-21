@@ -40,6 +40,7 @@
 #define DELTA_CHILD(obj) oe_delta_child(&to_pack, obj)
 #define DELTA_SIBLING(obj) oe_delta_sibling(&to_pack, obj)
 #define SET_DELTA(obj, val) oe_set_delta(&to_pack, obj, val)
+#define SET_DELTA_EXT(obj, oid) oe_set_delta_ext(&to_pack, obj, oid)
 #define SET_DELTA_SIZE(obj, val) oe_set_delta_size(&to_pack, obj, val)
 #define SET_DELTA_CHILD(obj, val) oe_set_delta_child(&to_pack, obj, val)
 #define SET_DELTA_SIBLING(obj, val) oe_set_delta_sibling(&to_pack, obj, val)
@@ -59,6 +60,7 @@ static struct packing_data to_pack;
 
 static struct pack_idx_entry **written_list;
 static uint32_t nr_result, nr_written, nr_seen;
+static struct bitmap_index *bitmap_git;
 
 static int non_empty;
 static int reuse_delta = 1, reuse_object = 1;
@@ -79,6 +81,7 @@ static unsigned long pack_size_limit;
 static int depth = 50;
 static int delta_search_threads;
 static int pack_to_stdout;
+static int thin;
 static int num_preferred_base;
 static struct progress *progress_state;
 
@@ -1510,11 +1513,15 @@ static void check_object(struct object_entry *entry)
 			break;
 		}
 
-		if (base_ref && (base_entry = packlist_find(&to_pack, base_ref, NULL))) {
+		if (base_ref && (
+		    (base_entry = packlist_find(&to_pack, base_ref, NULL)) ||
+		    (thin &&
+		     bitmap_has_sha1_in_uninteresting(bitmap_git, base_ref)))) {
 			/*
 			 * If base_ref was set above that means we wish to
-			 * reuse delta data, and we even found that base
-			 * in the list of objects we want to pack. Goodie!
+			 * reuse delta data, and either we found that object in
+			 * the list of objects we want to pack, or it's one we
+			 * know the receiver has.
 			 *
 			 * Depth value does not matter - find_deltas() will
 			 * never consider reused delta as the base object to
@@ -1523,10 +1530,16 @@ static void check_object(struct object_entry *entry)
 			 */
 			oe_set_type(entry, entry->in_pack_type);
 			SET_SIZE(entry, in_pack_size); /* delta size */
-			SET_DELTA(entry, base_entry);
 			SET_DELTA_SIZE(entry, in_pack_size);
-			entry->delta_sibling_idx = base_entry->delta_child_idx;
-			SET_DELTA_CHILD(base_entry, entry);
+
+			if (base_entry) {
+				SET_DELTA(entry, base_entry);
+				entry->delta_sibling_idx = base_entry->delta_child_idx;
+				SET_DELTA_CHILD(base_entry, entry);
+			} else {
+				SET_DELTA_EXT(entry, base_ref);
+			}
+
 			unuse_pack(&w_curs);
 			return;
 		}
@@ -2954,7 +2967,6 @@ static int pack_options_allow_reuse(void)
 
 static int get_object_list_from_bitmap(struct rev_info *revs)
 {
-	struct bitmap_index *bitmap_git;
 	if (!(bitmap_git = prepare_bitmap_walk(revs)))
 		return -1;
 
@@ -2970,7 +2982,6 @@ static int get_object_list_from_bitmap(struct rev_info *revs)
 	}
 
 	traverse_bitmap_commit_list(bitmap_git, &add_object_entry_from_bitmap);
-	free_bitmap_index(bitmap_git);
 	return 0;
 }
 
@@ -3118,7 +3129,6 @@ static int option_parse_unpack_unreachable(const struct option *opt,
 int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 {
 	int use_internal_rev_list = 0;
-	int thin = 0;
 	int shallow = 0;
 	int all_progress_implied = 0;
 	struct argv_array rp = ARGV_ARRAY_INIT;

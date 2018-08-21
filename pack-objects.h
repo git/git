@@ -111,6 +111,7 @@ struct object_entry {
 	unsigned dfs_state:OE_DFS_STATE_BITS;
 	unsigned char in_pack_header_size;
 	unsigned depth:OE_DEPTH_BITS;
+	unsigned ext_base:1; /* delta_idx points outside packlist */
 
 	/*
 	 * pahole results on 64-bit linux (gcc and clang)
@@ -140,6 +141,14 @@ struct packing_data {
 	 */
 	struct packed_git **in_pack_by_idx;
 	struct packed_git **in_pack;
+
+	/*
+	 * This list contains entries for bases which we know the other side
+	 * has (e.g., via reachability bitmaps), but which aren't in our
+	 * "objects" list.
+	 */
+	struct object_entry *ext_bases;
+	uint32_t nr_ext, alloc_ext;
 
 	uintmax_t oe_size_limit;
 };
@@ -228,9 +237,12 @@ static inline struct object_entry *oe_delta(
 		const struct packing_data *pack,
 		const struct object_entry *e)
 {
-	if (e->delta_idx)
+	if (!e->delta_idx)
+		return NULL;
+	if (e->ext_base)
+		return &pack->ext_bases[e->delta_idx - 1];
+	else
 		return &pack->objects[e->delta_idx - 1];
-	return NULL;
 }
 
 static inline void oe_set_delta(struct packing_data *pack,
@@ -242,6 +254,10 @@ static inline void oe_set_delta(struct packing_data *pack,
 	else
 		e->delta_idx = 0;
 }
+
+void oe_set_delta_ext(struct packing_data *pack,
+		      struct object_entry *e,
+		      const unsigned char *sha1);
 
 static inline struct object_entry *oe_delta_child(
 		const struct packing_data *pack,
