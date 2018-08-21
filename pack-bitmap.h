@@ -53,6 +53,13 @@ int rebuild_existing_bitmaps(struct bitmap_index *, struct packing_data *mapping
 			     khash_sha1 *reused_bitmaps, int show_progress);
 void free_bitmap_index(struct bitmap_index *);
 
+/*
+ * After a traversal has been performed on the bitmap_index, this can be
+ * queried to see if a particular object was reachable from any of the
+ * objects flagged as UNINTERESTING.
+ */
+int bitmap_has_sha1_in_uninteresting(struct bitmap_index *, const unsigned char *sha1);
+
 void bitmap_writer_show_progress(int show);
 void bitmap_writer_set_checksum(unsigned char *sha1);
 void bitmap_writer_build_type_index(struct packing_data *to_pack,

@@ -86,6 +86,9 @@ struct bitmap_index {
 	/* Bitmap result of the last performed walk */
 	struct bitmap *result;
 
+	/* "have" bitmap from the last performed walk */
+	struct bitmap *haves;
+
 	/* Version of the bitmap index */
 	unsigned int version;
 
@@ -759,8 +762,8 @@ struct bitmap_index *prepare_bitmap_walk(struct rev_info *revs)
 		bitmap_and_not(wants_bitmap, haves_bitmap);
 
 	bitmap_git->result = wants_bitmap;
+	bitmap_git->haves = haves_bitmap;
 
-	bitmap_free(haves_bitmap);
 	return bitmap_git;
 
 cleanup:
@@ -1114,5 +1117,25 @@ void free_bitmap_index(struct bitmap_index *b)
 	free(b->ext_index.objects);
 	free(b->ext_index.hashes);
 	bitmap_free(b->result);
+	bitmap_free(b->haves);
 	free(b);
+}
+
+int bitmap_has_sha1_in_uninteresting(struct bitmap_index *bitmap_git,
+				     const unsigned char *sha1)
+{
+	int pos;
+
+	if (!bitmap_git)
+		return 0; /* no bitmap loaded */
+	if (!bitmap_git->result)
+		BUG("failed to perform bitmap walk before querying");
+	if (!bitmap_git->haves)
+		return 0; /* walk had no "haves" */
+
+	pos = bitmap_position_packfile(bitmap_git, sha1);
+	if (pos < 0)
+		return 0;
+
+	return bitmap_get(bitmap_git->haves, pos);
 }
