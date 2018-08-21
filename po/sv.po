@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git 2.18.0\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2018-06-08 09:03+0800\n"
-"PO-Revision-Date: 2018-06-08 22:53+0100\n"
+"POT-Creation-Date: 2018-06-16 22:06+0800\n"
+"PO-Revision-Date: 2018-06-26 13:28+0100\n"
 "Last-Translator: Peter Krefting <peter@softwolves.pp.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
 "Language: sv\n"
@@ -1278,7 +1278,7 @@ msgstr ""
 "Slå av detta meddelande genom att skriva\n"
 "\"git config advice.graftFileDeprecated false\""
 
-#: commit.c:1537
+#: commit.c:1540
 msgid ""
 "Warning: commit message did not conform to UTF-8.\n"
 "You may want to amend it after fixing the message, or set the config\n"
@@ -2335,8 +2335,8 @@ msgstr "Snabbspolar undermodulen %s till följande incheckning:"
 
 #: merge-recursive.c:1211 merge-recursive.c:1223
 #, c-format
-msgid "Fast-forwarding submodule %s to %s"
-msgstr "Snabbspolar undermodulen %s till %s"
+msgid "Fast-forwarding submodule %s"
+msgstr "Snabbspolar undermodulen %s"
 
 #: merge-recursive.c:1245
 #, c-format
@@ -9383,7 +9383,7 @@ msgstr "felaktigt antal trådar angivet (%d) för %s"
 #. variable for tweaking threads, currently
 #. grep.threads
 #.
-#: builtin/grep.c:293 builtin/index-pack.c:1531 builtin/index-pack.c:1723
+#: builtin/grep.c:293 builtin/index-pack.c:1535 builtin/index-pack.c:1727
 #, c-format
 msgid "no threads support, ignoring %s"
 msgstr "trådstöd saknas, ignorerar %s"
@@ -9592,7 +9592,7 @@ msgstr "--no-index och --untracked kan inte användas med revisioner"
 msgid "unable to resolve revision: %s"
 msgstr "kan inte slå upp revision: %s"
 
-#: builtin/grep.c:1036 builtin/index-pack.c:1527
+#: builtin/grep.c:1036 builtin/index-pack.c:1531
 #, c-format
 msgid "invalid number of threads specified (%d)"
 msgstr "felaktigt antal trådar angivet (%d)"
@@ -10001,58 +10001,58 @@ msgstr "kan inte spara paketfil"
 msgid "cannot store index file"
 msgstr "kan inte spara indexfil"
 
-#: builtin/index-pack.c:1521
+#: builtin/index-pack.c:1525
 #, c-format
 msgid "bad pack.indexversion=%<PRIu32>"
 msgstr "felaktig pack.indexversion=%<PRIu32>"
 
-#: builtin/index-pack.c:1590
+#: builtin/index-pack.c:1594
 #, c-format
 msgid "Cannot open existing pack file '%s'"
 msgstr "Kan inte öppna befintlig paketfil \"%s\""
 
-#: builtin/index-pack.c:1592
+#: builtin/index-pack.c:1596
 #, c-format
 msgid "Cannot open existing pack idx file for '%s'"
 msgstr "Kan inte öppna befintlig paket-idx-fil för \"%s\""
 
-#: builtin/index-pack.c:1640
+#: builtin/index-pack.c:1644
 #, c-format
 msgid "non delta: %d object"
 msgid_plural "non delta: %d objects"
 msgstr[0] "icke-delta: %d objekt"
 msgstr[1] "icke-delta: %d objekt"
 
-#: builtin/index-pack.c:1647
+#: builtin/index-pack.c:1651
 #, c-format
 msgid "chain length = %d: %lu object"
 msgid_plural "chain length = %d: %lu objects"
 msgstr[0] "kedjelängd = %d: %lu objekt"
 msgstr[1] "kedjelängd = %d: %lu objekt"
 
-#: builtin/index-pack.c:1684
+#: builtin/index-pack.c:1688
 msgid "Cannot come back to cwd"
 msgstr "Kan inte gå tillbaka till arbetskatalogen (cwd)"
 
-#: builtin/index-pack.c:1735 builtin/index-pack.c:1738
-#: builtin/index-pack.c:1754 builtin/index-pack.c:1758
+#: builtin/index-pack.c:1739 builtin/index-pack.c:1742
+#: builtin/index-pack.c:1758 builtin/index-pack.c:1762
 #, c-format
 msgid "bad %s"
 msgstr "felaktig %s"
 
-#: builtin/index-pack.c:1774
+#: builtin/index-pack.c:1778
 msgid "--fix-thin cannot be used without --stdin"
 msgstr "--fix-thin kan inte användas med --stdin"
 
-#: builtin/index-pack.c:1776
+#: builtin/index-pack.c:1780
 msgid "--stdin requires a git repository"
 msgstr "--stdin kräver ett git-arkiv"
 
-#: builtin/index-pack.c:1782
+#: builtin/index-pack.c:1786
 msgid "--verify with no packfile name given"
 msgstr "--verify angavs utan paketfilnamn"
 
-#: builtin/index-pack.c:1832 builtin/unpack-objects.c:578
+#: builtin/index-pack.c:1836 builtin/unpack-objects.c:578
 msgid "fsck error in pack objects"
 msgstr "fsck-fel i packat objekt"
 
