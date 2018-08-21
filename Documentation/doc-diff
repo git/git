@@ -1,4 +1,12 @@
 #!/bin/sh
+#
+# Build two documentation trees and diff the resulting formatted output.
+# Compared to a source diff, this can reveal mistakes in the formatting.
+# For example:
+#
+#   ./doc-diff origin/master HEAD
+#
+# would show the differences introduced by a branch based on master.
 
 OPTIONS_SPEC="\
 doc-diff [options] <from> <to> [-- <diff-options>]
