@@ -256,7 +256,7 @@ test_expect_success 'rev-list accumulates multiple --exclude' '
 '
 
 test_expect_failure 'rev-list should succeed with empty output on empty stdin' '
-	git rev-list --stdin <expect >actual &&
+	git rev-list --stdin </dev/null >actual &&
 	test_must_be_empty actual
 '
 
