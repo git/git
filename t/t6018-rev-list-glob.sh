@@ -255,7 +255,7 @@ test_expect_success 'rev-list accumulates multiple --exclude' '
 	compare rev-list "--exclude=refs/remotes/* --exclude=refs/tags/* --all" --branches
 '
 
-test_expect_failure 'rev-list should succeed with empty output on empty stdin' '
+test_expect_success 'rev-list should succeed with empty output on empty stdin' '
 	git rev-list --stdin </dev/null >actual &&
 	test_must_be_empty actual
 '
