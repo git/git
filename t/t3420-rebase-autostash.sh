@@ -202,7 +202,7 @@ testrebase () {
 		echo dirty >>file3 &&
 		test_must_fail git rebase$type related-onto-branch &&
 		test_path_is_file $dotest/autostash &&
-		! grep dirty file3 &&
+		test_path_is_missing file3 &&
 		rm -rf $dotest &&
 		git reset --hard &&
 		git checkout feature-branch
@@ -216,7 +216,7 @@ testrebase () {
 		echo dirty >>file3 &&
 		test_must_fail git rebase$type related-onto-branch &&
 		test_path_is_file $dotest/autostash &&
-		! grep dirty file3 &&
+		test_path_is_missing file3 &&
 		echo "conflicting-plus-goodbye" >file2 &&
 		git add file2 &&
 		git rebase --continue &&
@@ -233,7 +233,7 @@ testrebase () {
 		echo dirty >>file3 &&
 		test_must_fail git rebase$type related-onto-branch &&
 		test_path_is_file $dotest/autostash &&
-		! grep dirty file3 &&
+		test_path_is_missing file3 &&
 		git rebase --skip &&
 		test_path_is_missing $dotest/autostash &&
 		grep dirty file3 &&
@@ -248,7 +248,7 @@ testrebase () {
 		echo dirty >>file3 &&
 		test_must_fail git rebase$type related-onto-branch &&
 		test_path_is_file $dotest/autostash &&
-		! grep dirty file3 &&
+		test_path_is_missing file3 &&
 		git rebase --abort &&
 		test_path_is_missing $dotest/autostash &&
 		grep dirty file3 &&
