@@ -832,12 +832,6 @@ core.packedRefsTimeout::
 	all; -1 means to try indefinitely. Default is 1000 (i.e.,
 	retry for 1 second).
 
-sequence.editor::
-	Text editor used by `git rebase -i` for editing the rebase instruction file.
-	The value is meant to be interpreted by the shell when it is used.
-	It can be overridden by the `GIT_SEQUENCE_EDITOR` environment variable.
-	When not configured the default commit message editor is used instead.
-
 core.pager::
 	Text viewer for use by Git commands (e.g., 'less').  The value
 	is meant to be interpreted by the shell.  The order of preference
@@ -2687,6 +2681,12 @@ rerere.enabled::
 	repository.
 
 include::sendemail-config.txt[]
+
+sequence.editor::
+	Text editor used by `git rebase -i` for editing the rebase instruction file.
+	The value is meant to be interpreted by the shell when it is used.
+	It can be overridden by the `GIT_SEQUENCE_EDITOR` environment variable.
+	When not configured the default commit message editor is used instead.
 
 showBranch.default::
 	The default set of branches for linkgit:git-show-branch[1].
