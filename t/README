@@ -315,6 +315,10 @@ packs on demand. This normally only happens when the object size is
 over 2GB. This variable forces the code path on any object larger than
 <n> bytes.
 
+GIT_TEST_OE_DELTA_SIZE=<n> exercises the uncomon pack-objects code
+path where deltas larger than this limit require extra memory
+allocation for bookkeeping.
+
 Naming Tests
 ------------
 
