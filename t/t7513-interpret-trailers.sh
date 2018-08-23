@@ -1439,4 +1439,24 @@ test_expect_success 'handling of --- lines in input' '
 	test_cmp expected actual
 '
 
+test_expect_success 'suppress --- handling' '
+	echo "real-trailer: just right" >expected &&
+
+	git interpret-trailers --parse --no-divider >actual <<-\EOF &&
+	subject
+
+	This commit message has a "---" in it, but because we tell
+	interpret-trailers not to respect that, it has no effect.
+
+	not-a-trailer: too soon
+	---
+
+	This is still the commit message body.
+
+	real-trailer: just right
+	EOF
+
+	test_cmp expected actual
+'
+
 test_done

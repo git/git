@@ -1080,7 +1080,11 @@ void trailer_info_get(struct trailer_info *info, const char *str,
 
 	ensure_configured();
 
-	patch_start = find_patch_start(str);
+	if (opts->no_divider)
+		patch_start = strlen(str);
+	else
+		patch_start = find_patch_start(str);
+
 	trailer_end = find_trailer_end(str, patch_start);
 	trailer_start = find_trailer_start(str, trailer_end);
 
