@@ -55,6 +55,20 @@ untracked_files () {
 	git ls-files -o $z $excl_opt -- "$@"
 }
 
+prepare_fallback_ident () {
+	if ! git -c user.useconfigonly=yes var GIT_COMMITTER_IDENT >/dev/null 2>&1
+	then
+		GIT_AUTHOR_NAME="git stash"
+		GIT_AUTHOR_EMAIL=git@stash
+		GIT_COMMITTER_NAME="git stash"
+		GIT_COMMITTER_EMAIL=git@stash
+		export GIT_AUTHOR_NAME
+		export GIT_AUTHOR_EMAIL
+		export GIT_COMMITTER_NAME
+		export GIT_COMMITTER_EMAIL
+	fi
+}
+
 clear_stash () {
 	if test $# != 0
 	then
@@ -66,7 +80,32 @@ clear_stash () {
 	fi
 }
 
+maybe_quiet () {
+	case "$1" in
+	--keep-stdout)
+		shift
+		if test -n "$GIT_QUIET"
+		then
+			eval "$@" 2>/dev/null
+		else
+			eval "$@"
+		fi
+		;;
+	*)
+		if test -n "$GIT_QUIET"
+		then
+			eval "$@" >/dev/null 2>&1
+		else
+			eval "$@"
+		fi
+		;;
+	esac
+}
+
 create_stash () {
+
+	prepare_fallback_ident
+
 	stash_msg=
 	untracked=
 	while test $# != 0
@@ -95,15 +134,18 @@ create_stash () {
 	done
 
 	git update-index -q --refresh
-	if no_changes "$@"
+	if maybe_quiet no_changes "$@"
 	then
 		exit 0
 	fi
 
 	# state of the base commit
-	if b_commit=$(git rev-parse --verify HEAD)
+	if b_commit=$(maybe_quiet --keep-stdout git rev-parse --verify HEAD)
 	then
 		head=$(git rev-list --oneline -n 1 HEAD --)
+	elif test -n "$GIT_QUIET"
+	then
+		exit 1
 	else
 		die "$(gettext "You do not have the initial commit yet")"
 	fi
@@ -298,7 +340,7 @@ push_stash () {
 	test -n "$untracked" || git ls-files --error-unmatch -- "$@" >/dev/null || exit 1
 
 	git update-index -q --refresh
-	if no_changes "$@"
+	if maybe_quiet no_changes "$@"
 	then
 		say "$(gettext "No local changes to save")"
 		exit 0
@@ -353,6 +395,9 @@ save_stash () {
 	while test $# != 0
 	do
 		case "$1" in
+		-q|--quiet)
+			GIT_QUIET=t
+			;;
 		--)
 			shift
 			break
