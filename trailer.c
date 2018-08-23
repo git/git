@@ -585,7 +585,7 @@ static const char *token_from_item(struct arg_item *item, char *tok)
 	return item->conf.name;
 }
 
-static int token_matches_item(const char *tok, struct arg_item *item, int tok_len)
+static int token_matches_item(const char *tok, struct arg_item *item, size_t tok_len)
 {
 	if (!strncasecmp(tok, item->conf.name, tok_len))
 		return 1;
@@ -603,7 +603,7 @@ static int token_matches_item(const char *tok, struct arg_item *item, int tok_le
  * distinguished from the non-well-formed-line case (in which this function
  * returns -1) because some callers of this function need such a distinction.
  */
-static int find_separator(const char *line, const char *separators)
+static ssize_t find_separator(const char *line, const char *separators)
 {
 	int whitespace_found = 0;
 	const char *c;
@@ -630,10 +630,10 @@ static int find_separator(const char *line, const char *separators)
  */
 static void parse_trailer(struct strbuf *tok, struct strbuf *val,
 			 const struct conf_info **conf, const char *trailer,
-			 int separator_pos)
+			 ssize_t separator_pos)
 {
 	struct arg_item *item;
-	int tok_len;
+	size_t tok_len;
 	struct list_head *pos;
 
 	if (separator_pos != -1) {
@@ -721,7 +721,7 @@ static void process_command_line_args(struct list_head *arg_head,
 	list_for_each(pos, new_trailer_head) {
 		struct new_trailer_item *tr =
 			list_entry(pos, struct new_trailer_item, list);
-		int separator_pos = find_separator(tr->text, cl_separators);
+		ssize_t separator_pos = find_separator(tr->text, cl_separators);
 
 		if (separator_pos == 0) {
 			struct strbuf sb = STRBUF_INIT;
@@ -763,9 +763,9 @@ static const char *next_line(const char *str)
 /*
  * Return the position of the start of the last line. If len is 0, return -1.
  */
-static int last_line(const char *buf, size_t len)
+static ssize_t last_line(const char *buf, size_t len)
 {
-	int i;
+	ssize_t i;
 	if (len == 0)
 		return -1;
 	if (len == 1)
@@ -788,7 +788,7 @@ static int last_line(const char *buf, size_t len)
  * Return the position of the start of the patch or the length of str if there
  * is no patch in the message.
  */
-static int find_patch_start(const char *str)
+static size_t find_patch_start(const char *str)
 {
 	const char *s;
 
@@ -804,10 +804,11 @@ static int find_patch_start(const char *str)
  * Return the position of the first trailer line or len if there are no
  * trailers.
  */
-static int find_trailer_start(const char *buf, size_t len)
+static size_t find_trailer_start(const char *buf, size_t len)
 {
 	const char *s;
-	int end_of_title, l, only_spaces = 1;
+	ssize_t end_of_title, l;
+	int only_spaces = 1;
 	int recognized_prefix = 0, trailer_lines = 0, non_trailer_lines = 0;
 	/*
 	 * Number of possible continuation lines encountered. This will be
@@ -838,7 +839,7 @@ static int find_trailer_start(const char *buf, size_t len)
 	     l = last_line(buf, l)) {
 		const char *bol = buf + l;
 		const char **p;
-		int separator_pos;
+		ssize_t separator_pos;
 
 		if (bol[0] == comment_line_char) {
 			non_trailer_lines += possible_continuation_lines;
@@ -899,14 +900,14 @@ continue_outer_loop:
 }
 
 /* Return the position of the end of the trailers. */
-static int find_trailer_end(const char *buf, size_t len)
+static size_t find_trailer_end(const char *buf, size_t len)
 {
 	return len - ignore_non_trailer(buf, len);
 }
 
 static int ends_with_blank_line(const char *buf, size_t len)
 {
-	int ll = last_line(buf, len);
+	ssize_t ll = last_line(buf, len);
 	if (ll < 0)
 		return 0;
 	return is_blank_line(buf + ll);
@@ -939,10 +940,10 @@ static void unfold_value(struct strbuf *val)
 	strbuf_release(&out);
 }
 
-static int process_input_file(FILE *outfile,
-			      const char *str,
-			      struct list_head *head,
-			      const struct process_trailer_options *opts)
+static size_t process_input_file(FILE *outfile,
+				 const char *str,
+				 struct list_head *head,
+				 const struct process_trailer_options *opts)
 {
 	struct trailer_info info;
 	struct strbuf tok = STRBUF_INIT;
@@ -1032,7 +1033,7 @@ void process_trailers(const char *file,
 {
 	LIST_HEAD(head);
 	struct strbuf sb = STRBUF_INIT;
-	int trailer_end;
+	size_t trailer_end;
 	FILE *outfile = stdout;
 
 	ensure_configured();
@@ -1132,7 +1133,7 @@ static void format_trailer_info(struct strbuf *out,
 
 	for (i = 0; i < info->trailer_nr; i++) {
 		char *trailer = info->trailers[i];
-		int separator_pos = find_separator(trailer, separators);
+		ssize_t separator_pos = find_separator(trailer, separators);
 
 		if (separator_pos >= 1) {
 			struct strbuf tok = STRBUF_INIT;
