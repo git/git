@@ -17,6 +17,7 @@
 #include "sha1-lookup.h"
 #include "wt-status.h"
 #include "advice.h"
+#include "refs.h"
 
 static struct commit_extra_header *read_commit_extra_header_lines(const char *buf, size_t len, const char **);
 
@@ -959,6 +960,86 @@ static struct commit_list *merge_bases_many(struct commit *one, int n, struct co
 			commit_list_insert_by_date(commit, &result);
 	}
 	return result;
+}
+
+struct rev_collect {
+	struct commit **commit;
+	int nr;
+	int alloc;
+	unsigned int initial : 1;
+};
+
+static void add_one_commit(struct object_id *oid, struct rev_collect *revs)
+{
+	struct commit *commit;
+
+	if (is_null_oid(oid))
+		return;
+
+	commit = lookup_commit(the_repository, oid);
+	if (!commit ||
+	    (commit->object.flags & TMP_MARK) ||
+	    parse_commit(commit))
+		return;
+
+	ALLOC_GROW(revs->commit, revs->nr + 1, revs->alloc);
+	revs->commit[revs->nr++] = commit;
+	commit->object.flags |= TMP_MARK;
+}
+
+static int collect_one_reflog_ent(struct object_id *ooid, struct object_id *noid,
+				  const char *ident, timestamp_t timestamp,
+				  int tz, const char *message, void *cbdata)
+{
+	struct rev_collect *revs = cbdata;
+
+	if (revs->initial) {
+		revs->initial = 0;
+		add_one_commit(ooid, revs);
+	}
+	add_one_commit(noid, revs);
+	return 0;
+}
+
+struct commit *get_fork_point(const char *refname, struct commit *commit)
+{
+	struct object_id oid;
+	struct rev_collect revs;
+	struct commit_list *bases;
+	int i;
+	struct commit *ret = NULL;
+
+	memset(&revs, 0, sizeof(revs));
+	revs.initial = 1;
+	for_each_reflog_ent(refname, collect_one_reflog_ent, &revs);
+
+	if (!revs.nr && !get_oid(refname, &oid))
+		add_one_commit(&oid, &revs);
+
+	for (i = 0; i < revs.nr; i++)
+		revs.commit[i]->object.flags &= ~TMP_MARK;
+
+	bases = get_merge_bases_many(commit, revs.nr, revs.commit);
+
+	/*
+	 * There should be one and only one merge base, when we found
+	 * a common ancestor among reflog entries.
+	 */
+	if (!bases || bases->next)
+		goto cleanup_return;
+
+	/* And the found one must be one of the reflog entries */
+	for (i = 0; i < revs.nr; i++)
+		if (&bases->item->object == &revs.commit[i]->object)
+			break; /* found */
+	if (revs.nr <= i)
+		goto cleanup_return;
+
+	ret = bases->item;
+
+cleanup_return:
+	free_commit_list(bases);
+	return ret;
 }
 
 struct commit_list *get_octopus_merge_bases(struct commit_list *in)
