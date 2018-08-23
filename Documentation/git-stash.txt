@@ -9,7 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git stash' list [<options>]
-'git stash' show [<stash>]
+'git stash' show [<options>] [<stash>]
 'git stash' drop [-q|--quiet] [<stash>]
 'git stash' ( pop | apply ) [--index] [-q|--quiet] [<stash>]
 'git stash' branch <branchname> [<stash>]
@@ -106,7 +106,7 @@ stash@{1}: On master: 9cc0589... Add git-stash
 The command takes options applicable to the 'git log'
 command to control what is shown and how. See linkgit:git-log[1].
 
-show [<stash>]::
+show [<options>] [<stash>]::
 
 	Show the changes recorded in the stash entry as a diff between the
 	stashed contents and the commit back when the stash entry was first
@@ -116,6 +116,9 @@ show [<stash>]::
 	to view the second most recent entry in patch form).
 	You can use stash.showStat and/or stash.showPatch config variables
 	to change the default behavior.
+
+	It accepts any option known to `git diff`, but acts different on
+	`--quiet` option and exit with zero regardless of differences.
 
 pop [--index] [-q|--quiet] [<stash>]::
 
