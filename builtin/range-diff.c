@@ -25,7 +25,7 @@ int cmd_range_diff(int argc, const char **argv, const char *prefix)
 		OPT_INTEGER(0, "creation-factor", &creation_factor,
 			    N_("Percentage by which creation is weighted")),
 		OPT_BOOL(0, "no-dual-color", &simple_color,
-			    N_("color both diff and diff-between-diffs")),
+			    N_("use simple diff colors")),
 		OPT_END()
 	};
 	int i, j, res = 0;
