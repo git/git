@@ -948,7 +948,7 @@ static size_t process_input_file(FILE *outfile,
 	struct trailer_info info;
 	struct strbuf tok = STRBUF_INIT;
 	struct strbuf val = STRBUF_INIT;
-	int i;
+	size_t i;
 
 	trailer_info_get(&info, str);
 
@@ -1112,7 +1112,7 @@ void trailer_info_get(struct trailer_info *info, const char *str)
 
 void trailer_info_release(struct trailer_info *info)
 {
-	int i;
+	size_t i;
 	for (i = 0; i < info->trailer_nr; i++)
 		free(info->trailers[i]);
 	free(info->trailers);
@@ -1122,7 +1122,7 @@ static void format_trailer_info(struct strbuf *out,
 				const struct trailer_info *info,
 				const struct process_trailer_options *opts)
 {
-	int i;
+	size_t i;
 
 	/* If we want the whole block untouched, we can take the fast path. */
 	if (!opts->only_trailers && !opts->unfold) {
