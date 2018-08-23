@@ -229,6 +229,8 @@ static int has_conforming_footer(struct strbuf *sb, struct strbuf *sob,
 	size_t i;
 	int found_sob = 0, found_sob_last = 0;
 
+	opts.no_divider = 1;
+
 	trailer_info_get(&info, sb->buf, &opts);
 
 	if (info.trailer_start == info.trailer_end)
