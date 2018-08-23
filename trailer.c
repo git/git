@@ -793,7 +793,9 @@ static size_t find_patch_start(const char *str)
 	const char *s;
 
 	for (s = str; *s; s = next_line(s)) {
-		if (starts_with(s, "---"))
+		const char *v;
+
+		if (skip_prefix(s, "---", &v) && isspace(*v))
 			return s - str;
 	}
 
