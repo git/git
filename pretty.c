@@ -1304,6 +1304,9 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 
 	if (skip_prefix(placeholder, "(trailers", &arg)) {
 		struct process_trailer_options opts = PROCESS_TRAILER_OPTIONS_INIT;
+
+		opts.no_divider = 1;
+
 		if (*arg == ':') {
 			arg++;
 			for (;;) {
