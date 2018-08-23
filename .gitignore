@@ -120,7 +120,6 @@
 /git-rebase
 /git-rebase--am
 /git-rebase--common
-/git-rebase--helper
 /git-rebase--interactive
 /git-rebase--merge
 /git-rebase--preserve-merges
