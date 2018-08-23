@@ -224,11 +224,12 @@ static const char *get_todo_path(const struct replay_opts *opts)
 static int has_conforming_footer(struct strbuf *sb, struct strbuf *sob,
 	int ignore_footer)
 {
+	struct process_trailer_options opts = PROCESS_TRAILER_OPTIONS_INIT;
 	struct trailer_info info;
 	size_t i;
 	int found_sob = 0, found_sob_last = 0;
 
-	trailer_info_get(&info, sb->buf);
+	trailer_info_get(&info, sb->buf, &opts);
 
 	if (info.trailer_start == info.trailer_end)
 		return 0;

@@ -950,7 +950,7 @@ static size_t process_input_file(FILE *outfile,
 	struct strbuf val = STRBUF_INIT;
 	size_t i;
 
-	trailer_info_get(&info, str);
+	trailer_info_get(&info, str, opts);
 
 	/* Print lines before the trailers as is */
 	if (!opts->only_trailers)
@@ -1067,7 +1067,8 @@ void process_trailers(const char *file,
 	strbuf_release(&sb);
 }
 
-void trailer_info_get(struct trailer_info *info, const char *str)
+void trailer_info_get(struct trailer_info *info, const char *str,
+		      const struct process_trailer_options *opts)
 {
 	int patch_start, trailer_end, trailer_start;
 	struct strbuf **trailer_lines, **ptr;
@@ -1159,7 +1160,7 @@ void format_trailers_from_commit(struct strbuf *out, const char *msg,
 {
 	struct trailer_info info;
 
-	trailer_info_get(&info, msg);
+	trailer_info_get(&info, msg, opts);
 	format_trailer_info(out, &info, opts);
 	trailer_info_release(&info);
 }
