@@ -542,7 +542,7 @@ static void runcommand_in_submodule_cb(const struct cache_entry *list_item,
 		argv_array_pushv(&cpr.args, info->argv);
 
 		if (run_command(&cpr))
-			die(_("run_command returned non-zero status while"
+			die(_("run_command returned non-zero status while "
 				"recursing in the nested submodules of %s\n."),
 				displaypath);
 	}

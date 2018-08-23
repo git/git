@@ -124,7 +124,7 @@ static const char include_depth_advice[] = N_(
 "	%s\n"
 "from\n"
 "	%s\n"
-"Do you have circular includes?");
+"This might be due to circular includes.");
 static int handle_path_include(const char *path, struct config_include_data *inc)
 {
 	int ret = 0;
