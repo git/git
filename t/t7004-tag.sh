@@ -1353,13 +1353,6 @@ test_expect_success GPGSM \
 	 test_config gpg.format x509 &&
 	 test_must_fail git tag -s -m tail tag-gpg-failure'
 
-# try to produce invalid signature
-test_expect_success GPGSM \
-	'git tag -s fails if gpgsm is misconfigured (bad signature format)' \
-	'test_config gpg.x509.program echo &&
-	 test_config gpg.format x509 &&
-	 test_must_fail git tag -s -m tail tag-gpg-failure'
-
 # try to verify without gpg:
 
 rm -rf gpghome
