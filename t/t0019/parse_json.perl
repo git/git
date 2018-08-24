@@ -34,6 +34,9 @@ sub dump_item {
     } elsif (ref($value) eq 'HASH') {
 	print "$label_in hash\n";
 	dump_hash($label_in, $value);
+    } elsif (ref $value) {
+	my $bool = $value ? 1 : 0;
+	print "$label_in $bool\n";
     } elsif (defined $value) {
 	print "$label_in $value\n";
     } else {
