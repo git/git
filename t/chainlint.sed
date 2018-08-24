@@ -131,9 +131,8 @@ b
 b
 
 :subshell
-# bare "(" line?
+# bare "(" line? -- stash for later printing
 /^[ 	]*([	]*$/ {
-	# stash for later printing
 	h
 	bnextline
 }
