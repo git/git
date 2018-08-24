@@ -1489,7 +1489,7 @@ static int use_builtin_stash(void)
 	cp.git_cmd = 1;
 	if (capture_command(&cp, &out, 6)) {
 		strbuf_release(&out);
-		return 1;
+		return 0;
 	}
 
 	strbuf_trim(&out);
