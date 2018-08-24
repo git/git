@@ -143,7 +143,8 @@ int cmd_rebase__interactive(int argc, const char **argv, const char *prefix)
 	char *raw_strategies = NULL;
 	enum {
 		NONE = 0, CONTINUE, SKIP, EDIT_TODO, SHOW_CURRENT_PATCH,
-		SHORTEN_OIDS, EXPAND_OIDS, CHECK_TODO_LIST, REARRANGE_SQUASH, ADD_EXEC
+		SHORTEN_OIDS, EXPAND_OIDS, CHECK_TODO_LIST, REARRANGE_SQUASH, ADD_EXEC,
+		MAKE_SCRIPT, SKIP_UNNECESSARY_PICKS,
 	} command = 0;
 	struct option options[] = {
 		OPT_BOOL(0, "ff", &opts.allow_ff, N_("allow fast-forward")),
@@ -196,6 +197,10 @@ int cmd_rebase__interactive(int argc, const char **argv, const char *prefix)
 		OPT_RERERE_AUTOUPDATE(&opts.allow_rerere_auto),
 		OPT_BOOL(0, "reschedule-failed-exec", &opts.reschedule_failed_exec,
 			 N_("automatically re-schedule any `exec` that fails")),
+		OPT_CMDMODE(0, "make-script", &command,
+			N_("make rebase script"), MAKE_SCRIPT),
+		OPT_CMDMODE(0, "skip-unnecessary-picks", &command,
+			N_("skip unnecessary picks"), SKIP_UNNECESSARY_PICKS),
 		OPT_END()
 	};
 
@@ -267,6 +272,18 @@ int cmd_rebase__interactive(int argc, const char **argv, const char *prefix)
 	case ADD_EXEC:
 		ret = sequencer_add_exec_commands(the_repository, cmd);
 		break;
+	case MAKE_SCRIPT:
+		ret = sequencer_make_script(the_repository,
+					    stdout, argc, argv, flags);
+		break;
+	case SKIP_UNNECESSARY_PICKS: {
+		struct object_id oid;
+
+		ret = skip_unnecessary_picks(the_repository, &oid);
+		if (!ret)
+			printf("%s\n", oid_to_hex(&oid));
+		break;
+	}
 	default:
 		BUG("invalid command '%d'", command);
 	}
