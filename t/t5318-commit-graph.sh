@@ -134,7 +134,7 @@ test_expect_success 'Add one more commit' '
 	git branch commits/8 &&
 	ls $objdir/pack | grep idx >existing-idx &&
 	git repack &&
-	ls $objdir/pack| grep idx | grep -v --file=existing-idx >new-idx
+	ls $objdir/pack| grep idx | grep -v -f existing-idx >new-idx
 '
 
 # Current graph structure:
