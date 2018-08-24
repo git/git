@@ -1025,7 +1025,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			 &options.allow_rerere_autoupdate,
 			 N_("allow rerere to update index  with resolved "
 			    "conflict")),
-		OPT_BOOL(0, "keep-empty", &options.keep_empty,
+		OPT_BOOL('k', "keep-empty", &options.keep_empty,
 			 N_("preserve empty commits during rebase")),
 		OPT_BOOL(0, "autosquash", &options.autosquash,
 			 N_("move commits that begin with "
