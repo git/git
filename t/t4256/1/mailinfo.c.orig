@@ -237,21 +237,10 @@ static int slurp_attr(const char *line, const char *name, struct strbuf *attr)
 	return 1;
 }
 
-static int has_attr_value(const char *line, const char *name, const char *value)
-{
-	struct strbuf sb = STRBUF_INIT;
-	int rc = slurp_attr(line, name, &sb) && !strcasecmp(sb.buf, value);
-	strbuf_release(&sb);
-	return rc;
-}
-
 static void handle_content_type(struct mailinfo *mi, struct strbuf *line)
 {
 	struct strbuf *boundary = xmalloc(sizeof(struct strbuf));
 	strbuf_init(boundary, line->len);
-
-	mi->format_flowed = has_attr_value(line->buf, "format=", "flowed");
-	mi->delsp = has_attr_value(line->buf, "delsp=", "yes");
 
 	if (slurp_attr(line->buf, "boundary=", boundary)) {
 		strbuf_insert(boundary, 0, "--", 2);
@@ -975,52 +964,6 @@ again:
 	return 1;
 }
 
-static void handle_filter_flowed(struct mailinfo *mi, struct strbuf *line,
-				 struct strbuf *prev)
-{
-	size_t len = line->len;
-	const char *rest;
-
-	if (!mi->format_flowed) {
-		handle_filter(mi, line);
-		return;
-	}
-
-	if (line->buf[len - 1] == '\n') {
-		len--;
-		if (len && line->buf[len - 1] == '\r')
-			len--;
-	}
-
-	/* Keep signature separator as-is. */
-	if (skip_prefix(line->buf, "-- ", &rest) && rest - line->buf == len) {
-		if (prev->len) {
-			handle_filter(mi, prev);
-			strbuf_reset(prev);
-		}
-		handle_filter(mi, line);
-		return;
-	}
-
-	/* Unstuff space-stuffed line. */
-	if (len && line->buf[0] == ' ') {
-		strbuf_remove(line, 0, 1);
-		len--;
-	}
-
-	/* Save flowed line for later, but without the soft line break. */
-	if (len && line->buf[len - 1] == ' ') {
-		strbuf_add(prev, line->buf, len - !!mi->delsp);
-		return;
-	}
-
-	/* Prepend any previous partial lines */
-	strbuf_insert(line, 0, prev->buf, prev->len);
-	strbuf_reset(prev);
-
-	handle_filter(mi, line);
-}
-
 static void handle_body(struct mailinfo *mi, struct strbuf *line)
 {
 	struct strbuf prev = STRBUF_INIT;
@@ -1069,7 +1012,7 @@ static void handle_body(struct mailinfo *mi, struct strbuf *line)
 						strbuf_addbuf(&prev, sb);
 						break;
 					}
-				handle_filter_flowed(mi, sb, &prev);
+				handle_filter(mi, sb);
 			}
 			/*
 			 * The partial chunk is saved in "prev" and will be
@@ -1079,15 +1022,12 @@ static void handle_body(struct mailinfo *mi, struct strbuf *line)
 			break;
 		}
 		default:
-			handle_filter_flowed(mi, line, &prev);
+			handle_filter(mi, line);
 		}
 
 		if (mi->input_error)
 			break;
 	} while (!strbuf_getwholeline(line, mi->input, '\n'));
-
-	if (prev.len)
-		handle_filter(mi, &prev);
 
 	flush_inbody_header_accum(mi);
 
