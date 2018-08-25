@@ -676,8 +676,8 @@ static int index_pos_by_traverse_info(struct name_entry *names,
 
 /*
  * Fast path if we detect that all trees are the same as cache-tree at this
- * path. We'll walk these trees recursively using cache-tree/index instead of
- * ODB since already know what these trees contain.
+ * path. We'll walk these trees in an iterative loop using cache-tree/index
+ * instead of ODB since we already know what these trees contain.
  */
 static int traverse_by_cache_tree(int pos, int nr_entries, int nr_names,
 				  struct name_entry *names,
