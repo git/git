@@ -83,6 +83,13 @@ UI, Workflows & Features
  * The sideband code learned to optionally paint selected keywords at
    the beginning of incoming lines on the receiving end.
 
+ * "git branch --list" learned to take the default sort order from the
+   'branch.sort' configuration variable, just like "git tag --list"
+   pays attention to 'tag.sort'.
+
+ * "git worktree" command learned "--quiet" option to make it less
+   verbose.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -251,6 +258,14 @@ Performance, Internal Implementation, Development Support etc.
    getting them coalesced into fewer packfiles, hurting performance.
    "git repack" now learned to repack them.
 
+ * Partially revert the support for multiple hash functions to regain
+   hash comparison performance; we'd think of a way to do this better
+   in the next cycle.
+
+ * "git help --config" (which is used in command line completion)
+   missed the configuration variables not described in the main
+   config.txt file but are described in another file that is included
+   by it, which has been corrected.
 
 Fixes since v2.18
 -----------------
@@ -300,7 +315,6 @@ Fixes since v2.18
    indicates whether/where a submodule repository has its associated
    working tree across various state transitions, which has been
    corrected.
-   (merge 984cd77ddb sb/submodule-core-worktree later to maint).
 
  * Bugfix for "rebase -i" corner case regression.
    (merge a9279c6785 pw/rebase-i-keep-reword-after-conflict later to maint).
@@ -533,6 +547,15 @@ Fixes since v2.18
    has been corrected.
    (merge 3e7dd99208 nd/cherry-pick-quit-fix later to maint).
 
+ * In a recent update in 2.18 era, "git pack-objects" started
+   producing a larger than necessary packfiles by missing
+   opportunities to use large deltas.  This has been corrected.
+
+ * The meaning of the possible values the "core.checkStat"
+   configuration variable can take were not adequately documented,
+   which has been fixed.
+   (merge 9bf5d4c4e2 nd/config-core-checkstat-doc later to maint).
+
  * Code cleanup, docfix, build fix, etc.
    (merge aee9be2ebe sg/update-ref-stdin-cleanup later to maint).
    (merge 037714252f jc/clean-after-sanity-tests later to maint).
@@ -565,3 +588,13 @@ Fixes since v2.18
    (merge 10c600172c sg/t5310-empty-input-fix later to maint).
    (merge 5641eb9465 jh/partial-clone-doc later to maint).
    (merge 2711b1ad5e ab/submodule-relative-url-tests later to maint).
+   (merge ce528de023 ab/unconditional-free-and-null later to maint).
+   (merge bbc072f5d8 rs/opt-updates later to maint).
+   (merge 69d846f053 jk/use-compat-util-in-test-tool later to maint).
+   (merge 1820703045 js/larger-timestamps later to maint).
+   (merge c8b35b95e1 sg/t4051-fix later to maint).
+   (merge 30612cb670 sg/t0020-conversion-fix later to maint).
+   (merge 15da753709 sg/t7501-thinkofix later to maint).
+   (merge 79b04f9b60 sg/t3903-missing-fix later to maint).
+   (merge 2745817028 sg/t3420-autostash-fix later to maint).
+   (merge 7afb0d6777 sg/test-rebase-editor-fix later to maint).
