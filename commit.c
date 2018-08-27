@@ -656,7 +656,7 @@ struct commit *pop_commit(struct commit_list **stack)
 define_commit_slab(indegree_slab, int);
 
 /* record author-date for each commit object */
-define_commit_slab(author_date_slab, unsigned long);
+define_commit_slab(author_date_slab, timestamp_t);
 
 static void record_author_date(struct author_date_slab *author_date,
 			       struct commit *commit)
