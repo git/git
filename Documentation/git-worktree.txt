@@ -173,6 +173,10 @@ This can also be set up as the default behaviour by using the
 	This format will remain stable across Git versions and regardless of user
 	configuration.  See below for details.
 
+-q::
+--quiet::
+	With 'add', suppress feedback messages.
+
 -v::
 --verbose::
 	With `prune`, report all removals.
