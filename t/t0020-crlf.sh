@@ -160,7 +160,7 @@ test_expect_success 'checkout with autocrlf=input' '
 	git config core.autocrlf input &&
 	git read-tree --reset -u HEAD &&
 	test_must_fail has_cr one &&
-	test_must_fail has_cr two &&
+	test_must_fail has_cr dir/two &&
 	git update-index -- one dir/two &&
 	test "$one" = $(git hash-object --stdin <one) &&
 	test "$two" = $(git hash-object --stdin <dir/two) &&
