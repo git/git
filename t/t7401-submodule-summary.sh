@@ -300,7 +300,7 @@ test_expect_success 'should not fail in an empty repo' "
 	git init xyzzy &&
 	cd xyzzy &&
 	git submodule summary >output 2>&1 &&
-	test_cmp output /dev/null
+	test_must_be_empty output
 "
 
 test_done

@@ -461,11 +461,9 @@ test_expect_success 'Grep author with log.mailmap' '
 	test_cmp expect actual
 '
 
->expect
-
 test_expect_success 'Only grep replaced author with --use-mailmap' '
 	git log --use-mailmap --author "<cto@coompany.xx>" >actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 # git blame

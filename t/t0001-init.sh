@@ -167,9 +167,8 @@ test_expect_success 'reinit' '
 	) &&
 	test_i18ngrep "Initialized empty" again/out1 &&
 	test_i18ngrep "Reinitialized existing" again/out2 &&
-	>again/empty &&
-	test_i18ncmp again/empty again/err1 &&
-	test_i18ncmp again/empty again/err2
+	test_must_be_empty again/err1 &&
+	test_must_be_empty again/err2
 '
 
 test_expect_success 'init with --template' '

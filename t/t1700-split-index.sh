@@ -143,9 +143,7 @@ test_expect_success 'remove file not in base index' '
 test_expect_success 'remove file in base index' '
 	git update-index --force-remove one &&
 	git ls-files --stage >ls-files.actual &&
-	cat >ls-files.expect <<-EOF &&
-	EOF
-	test_cmp ls-files.expect ls-files.actual &&
+	test_must_be_empty ls-files.actual &&
 
 	test-tool dump-split-index .git/index | sed "/^own/d" >actual &&
 	cat >expect <<-EOF &&

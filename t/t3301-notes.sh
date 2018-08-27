@@ -481,10 +481,8 @@ test_expect_success 'list specific note with "git notes list <object>"' '
 '
 
 test_expect_success 'listing non-existing notes fails' '
-	cat >expect <<-EOF &&
-	EOF
 	test_must_fail git notes list HEAD >actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'append to existing note with "git notes append"' '

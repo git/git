@@ -57,9 +57,8 @@ test_expect_success 'git grep -ah ina a' '
 '
 
 test_expect_success 'git grep -I ina a' '
-	: >expect &&
 	test_must_fail git grep -I ina a >actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'git grep -c ina a' '
@@ -81,9 +80,8 @@ test_expect_success 'git grep -L bar a' '
 '
 
 test_expect_success 'git grep -q ina a' '
-	: >expect &&
 	git grep -q ina a >actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'git grep -F ile a' '

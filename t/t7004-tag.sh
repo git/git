@@ -325,11 +325,10 @@ test_expect_success \
 	test_cmp expect actual
 '
 
->expect
 test_expect_success \
 	'listing tags using v.* should print nothing because none have v.' '
 	git tag -l "v.*" > actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 cat >expect <<EOF
@@ -1511,12 +1510,9 @@ test_expect_success 'inverse of the last test, with --no-contains' "
 	test_cmp expected actual
 "
 
-cat > expected <<EOF
-EOF
-
 test_expect_success 'checking that third commit has no tags' "
 	git tag -l --contains $hash3 v* >actual &&
-	test_cmp expected actual
+	test_must_be_empty actual
 "
 
 cat > expected <<EOF

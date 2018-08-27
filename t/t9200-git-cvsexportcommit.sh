@@ -43,11 +43,11 @@ check_entries () {
 	sed -ne '/^\//p' "$1/CVS/Entries" | sort | cut -d/ -f2,3,5 >actual
 	if test -z "$2"
 	then
-		>expected
+		test_must_be_empty actual
 	else
 		printf '%s\n' "$2" | tr '|' '\012' >expected
+		test_cmp expected actual
 	fi
-	test_cmp expected actual
 }
 
 test_expect_success \

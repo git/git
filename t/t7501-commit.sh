@@ -582,13 +582,11 @@ test_expect_success 'same tree (merge and amend merge)' '
 
 	git merge -s ours side -m "empty ok" &&
 	git diff HEAD^ HEAD >actual &&
-	: >expected &&
-	test_cmp expected actual &&
+	test_must_be_empty actual &&
 
 	git commit --amend -m "empty really ok" &&
 	git diff HEAD^ HEAD >actual &&
-	: >expected &&
-	test_cmp expected actual
+	test_must_be_empty actual
 
 '
 

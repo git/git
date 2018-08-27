@@ -277,9 +277,8 @@ test_expect_success 'hide empty ignored sub-directory with --no-empty-directory'
 '
 
 test_expect_success 'pattern matches prefix completely' '
-	: >expect &&
 	git ls-files -i -o --exclude "/three/a.3[abc]" >actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'ls-files with "**" patterns' '
@@ -295,9 +294,8 @@ EOF
 
 
 test_expect_success 'ls-files with "**" patterns and no slashes' '
-	: >expect &&
 	git ls-files -o -i --exclude "one**a.1" >actual &&
-	test_cmp expect actual
+	test_must_be_empty actual
 '
 
 test_done

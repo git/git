@@ -195,8 +195,7 @@ test_expect_success 'rename detection finds the right names' '
 		test_cmp expected.4 actual.4 &&
 
 		git diff --cached --stat >actual.5 &&
-		: >expected.5 &&
-		test_cmp expected.5 actual.5
+		test_must_be_empty actual.5
 
 	)
 '
@@ -241,8 +240,7 @@ test_expect_success 'diff-files/diff-cached shows ita as new/not-new files' '
 	echo " create mode 100644 new-ita" >expected &&
 	test_cmp expected actual &&
 	git diff --cached --summary >actual2 &&
-	: >expected2 &&
-	test_cmp expected2 actual2
+	test_must_be_empty actual2
 '
 
 

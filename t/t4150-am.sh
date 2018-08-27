@@ -652,7 +652,7 @@ test_expect_success 'am -3 -q is quiet' '
 	git checkout -f lorem2 &&
 	git reset base3way --hard &&
 	git am -3 -q lorem-move.patch >output.out 2>&1 &&
-	! test -s output.out
+	test_must_be_empty output.out
 '
 
 test_expect_success 'am pauses on conflict' '
@@ -875,7 +875,7 @@ test_expect_success 'am -q is quiet' '
 	git checkout first &&
 	test_tick &&
 	git am -q <patch1 >output.out 2>&1 &&
-	! test -s output.out
+	test_must_be_empty output.out
 '
 
 test_expect_success 'am empty-file does not infloop' '

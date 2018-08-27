@@ -116,7 +116,7 @@ check_sub_test_lib_test () {
 	name="$1" # stdin is the expected output from the test
 	(
 		cd "$name" &&
-		! test -s err &&
+		test_must_be_empty err &&
 		sed -e 's/^> //' -e 's/Z$//' >expect &&
 		test_cmp expect out
 	)

@@ -161,7 +161,7 @@ test_expect_success 'clone shallow object count' '
 test_expect_success 'clone shallow object count (part 2)' '
 	sed -e "/^in-pack:/d" -e "/^packs:/d" -e "/^size-pack:/d" \
 	    -e "/: 0$/d" count.shallow > count_output &&
-	! test -s count_output
+	test_must_be_empty count_output
 '
 
 test_expect_success 'fsck in shallow repo' '

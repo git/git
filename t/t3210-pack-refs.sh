@@ -127,7 +127,7 @@ test_expect_success 'explicit pack-refs with dangling packed reference' '
 	git reflog expire --expire=all --all &&
 	git prune --expire=all &&
 	git pack-refs --all 2>result &&
-	test_cmp /dev/null result
+	test_must_be_empty result
 '
 
 test_expect_success 'delete ref with dangling packed version' '
@@ -139,7 +139,7 @@ test_expect_success 'delete ref with dangling packed version' '
 	git reflog expire --expire=all --all &&
 	git prune --expire=all &&
 	git branch -d lamb 2>result &&
-	test_cmp /dev/null result
+	test_must_be_empty result
 '
 
 test_expect_success 'delete ref while another dangling packed ref' '
@@ -150,7 +150,7 @@ test_expect_success 'delete ref while another dangling packed ref' '
 	git reflog expire --expire=all --all &&
 	git prune --expire=all &&
 	git branch -d lamb 2>result &&
-	test_cmp /dev/null result
+	test_must_be_empty result
 '
 
 test_expect_success 'pack ref directly below refs/' '

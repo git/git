@@ -104,17 +104,17 @@ test_expect_success 'post-update hook arguments' '
 '
 
 test_expect_success 'all hook stdin is /dev/null' '
-	! test -s victim.git/update.stdin &&
-	! test -s victim.git/post-update.stdin
+	test_must_be_empty victim.git/update.stdin &&
+	test_must_be_empty victim.git/post-update.stdin
 '
 
 test_expect_success 'all *-receive hook args are empty' '
-	! test -s victim.git/pre-receive.args &&
-	! test -s victim.git/post-receive.args
+	test_must_be_empty victim.git/pre-receive.args &&
+	test_must_be_empty victim.git/post-receive.args
 '
 
 test_expect_success 'send-pack produced no output' '
-	! test -s send.out
+	test_must_be_empty send.out
 '
 
 cat <<EOF >expect

@@ -112,8 +112,7 @@ test_expect_success 'prune: do not prune detached HEAD with no reflog' '
 	# (should be removed and disabled by previous test)
 	test_path_is_missing .git/logs &&
 	git prune -n >prune_actual &&
-	: >prune_expected &&
-	test_cmp prune_actual prune_expected
+	test_must_be_empty prune_actual
 
 '
 

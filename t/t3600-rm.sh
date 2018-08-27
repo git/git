@@ -380,7 +380,7 @@ test_expect_success 'rm does not complain when no .gitmodules file is found' '
 	git submodule update &&
 	git rm .gitmodules &&
 	git rm submod >actual 2>actual.err &&
-	! test -s actual.err &&
+	test_must_be_empty actual.err &&
 	! test -d submod &&
 	! test -f submod/.git &&
 	git status -s -uno >actual &&
@@ -398,7 +398,7 @@ test_expect_success 'rm will error out on a modified .gitmodules file unless sta
 	git diff-files --quiet -- submod &&
 	git add .gitmodules &&
 	git rm submod >actual 2>actual.err &&
-	! test -s actual.err &&
+	test_must_be_empty actual.err &&
 	! test -d submod &&
 	! test -f submod/.git &&
 	git status -s -uno >actual &&
@@ -692,7 +692,7 @@ test_expect_success 'checking out a commit after submodule removal needs manual 
 	test_cmp expected actual &&
 	rm -rf submod &&
 	git status -s -uno --ignore-submodules=none >actual &&
-	! test -s actual
+	test_must_be_empty actual
 '
 
 test_expect_success 'rm of d/f when d has become a non-directory' '

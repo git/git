@@ -239,7 +239,7 @@ test_expect_success 'no phantom error when switching trees' '
 	>newdir/one &&
 	git add newdir/one &&
 	git checkout 2>errors &&
-	! test -s errors
+	test_must_be_empty errors
 '
 
 test_expect_success 'switching trees does not invalidate shared index' '

@@ -51,7 +51,7 @@ test_expect_success 'no-op fetch -v stderr is as expected' '
 
 test_expect_success 'no-op fetch without "-v" is quiet' '
 	(cd clone && git fetch 2>../stderr) &&
-	! test -s stderr
+	test_must_be_empty stderr
 '
 
 test_expect_success 'remote detects correct HEAD' '

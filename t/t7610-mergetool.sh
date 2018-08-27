@@ -328,9 +328,8 @@ test_expect_success 'mergetool produces no errors when keepBackup is used' '
 	git checkout -b test$test_count move-to-c &&
 	test_config mergetool.keepBackup true &&
 	test_must_fail git merge move-to-b &&
-	: >expect &&
 	echo d | git mergetool a/a/file.txt 2>actual &&
-	test_cmp expect actual &&
+	test_must_be_empty actual &&
 	! test -d a
 '
 

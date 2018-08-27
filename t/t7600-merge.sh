@@ -38,7 +38,6 @@ printf '%s\n' '1 X' 2 3 4 5 6 7 8 9 >result.1
 printf '%s\n' '1 X' 2 3 4 '5 X' 6 7 8 9 >result.1-5
 printf '%s\n' '1 X' 2 3 4 '5 X' 6 7 8 '9 X' >result.1-5-9
 printf '%s\n' 1 2 3 4 5 6 7 8 '9 Z' >result.9z
->empty
 
 create_merge_msgs () {
 	echo "Merge tag 'c2'" >msg.1-5 &&
@@ -58,8 +57,6 @@ create_merge_msgs () {
 		echo &&
 		git log --no-merges ^HEAD c2 c3
 	} >squash.1-5-9 &&
-	: >msg.nologff &&
-	: >msg.nolognoff &&
 	{
 		echo "* tag 'c3':" &&
 		echo "  commit 3"
@@ -519,7 +516,7 @@ test_expect_success 'tolerate unknown values for merge.ff' '
 	test_tick &&
 	git merge c1 2>message &&
 	verify_head "$c1" &&
-	test_cmp empty message
+	test_must_be_empty message
 '
 
 test_expect_success 'combining --squash and --no-ff is refused' '
@@ -551,13 +548,13 @@ test_expect_success 'merge log message' '
 	git reset --hard c0 &&
 	git merge --no-log c2 &&
 	git show -s --pretty=format:%b HEAD >msg.act &&
-	test_cmp msg.nologff msg.act &&
+	test_must_be_empty msg.act &&
 
 	git reset --hard c0 &&
 	test_config branch.master.mergeoptions "--no-ff" &&
 	git merge --no-log c2 &&
 	git show -s --pretty=format:%b HEAD >msg.act &&
-	test_cmp msg.nolognoff msg.act &&
+	test_must_be_empty msg.act &&
 
 	git merge --log c3 &&
 	git show -s --pretty=format:%b HEAD >msg.act &&

@@ -44,7 +44,7 @@ test_expect_success 'pushing into a repository using a ref namespace' '
 		test_cmp expected actual &&
 		# Try a namespace with no content
 		git ls-remote "ext::git --namespace=garbage %s ../pushee" >actual &&
-		test_cmp /dev/null actual &&
+		test_must_be_empty actual &&
 		git ls-remote pushee-unnamespaced >actual &&
 		sed -e "s|refs/|refs/namespaces/namespace/refs/|" expected >expected.unnamespaced &&
 		test_cmp expected.unnamespaced actual

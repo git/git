@@ -210,7 +210,7 @@ test_expect_success TTY 'push --quiet silences status and progress' '
 	cd "$ROOT_PATH"/test_repo_clone &&
 	test_commit quiet &&
 	test_terminal git push --quiet >output 2>&1 &&
-	test_cmp /dev/null output
+	test_must_be_empty output
 '
 
 test_expect_success TTY 'push --no-progress silences progress but not status' '

@@ -513,10 +513,9 @@ test_expect_success 'prompt - format string starting with dash' '
 
 test_expect_success 'prompt - pc mode' '
 	printf "BEFORE: (\${__git_ps1_branch_name}):AFTER\\nmaster" >expected &&
-	printf "" >expected_output &&
 	(
 		__git_ps1 "BEFORE:" ":AFTER" >"$actual" &&
-		test_cmp expected_output "$actual" &&
+		test_must_be_empty "$actual" &&
 		printf "%s\\n%s" "$PS1" "${__git_ps1_branch_name}" >"$actual"
 	) &&
 	test_cmp expected "$actual"
@@ -712,13 +711,12 @@ test_expect_success 'prompt - hide if pwd ignored - env var set, config disabled
 '
 
 test_expect_success 'prompt - hide if pwd ignored - env var set, config unset' '
-	printf "" >expected &&
 	(
 		cd ignored_dir &&
 		GIT_PS1_HIDE_IF_PWD_IGNORED=y &&
 		__git_ps1 >"$actual"
 	) &&
-	test_cmp expected "$actual"
+	test_must_be_empty "$actual"
 '
 
 test_expect_success 'prompt - hide if pwd ignored - env var set, config unset, pc mode' '

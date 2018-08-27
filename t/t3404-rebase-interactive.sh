@@ -796,16 +796,15 @@ test_expect_success 'always cherry-pick with --no-ff' '
 	git tag original-no-ff-branch &&
 	set_fake_editor &&
 	git rebase -i --no-ff A &&
-	touch empty &&
 	for p in 0 1 2
 	do
 		test ! $(git rev-parse HEAD~$p) = $(git rev-parse original-no-ff-branch~$p) &&
 		git diff HEAD~$p original-no-ff-branch~$p > out &&
-		test_cmp empty out
+		test_must_be_empty out
 	done &&
 	test $(git rev-parse HEAD~3) = $(git rev-parse original-no-ff-branch~3) &&
 	git diff HEAD~3 original-no-ff-branch~3 > out &&
-	test_cmp empty out
+	test_must_be_empty out
 '
 
 test_expect_success 'set up commits with funny messages' '

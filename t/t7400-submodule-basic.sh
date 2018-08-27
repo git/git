@@ -101,7 +101,6 @@ inspect() {
 
 test_expect_success 'submodule add' '
 	echo "refs/heads/master" >expect &&
-	>empty &&
 
 	(
 		cd addtest &&
@@ -123,7 +122,7 @@ test_expect_success 'submodule add' '
 	inspect addtest/submod ../.. &&
 	test_cmp expect heads &&
 	test_cmp expect head &&
-	test_cmp empty untracked
+	test_must_be_empty untracked
 '
 
 test_expect_success 'setup parent and one repository' '
@@ -189,7 +188,6 @@ test_expect_success 'submodule add --branch' '
 	refs/heads/initial
 	refs/heads/master
 	EOF
-	>empty &&
 
 	(
 		cd addtest &&
@@ -202,12 +200,11 @@ test_expect_success 'submodule add --branch' '
 	inspect addtest/submod-branch ../.. &&
 	test_cmp expect-heads heads &&
 	test_cmp expect-head head &&
-	test_cmp empty untracked
+	test_must_be_empty untracked
 '
 
 test_expect_success 'submodule add with ./ in path' '
 	echo "refs/heads/master" >expect &&
-	>empty &&
 
 	(
 		cd addtest &&
@@ -219,12 +216,11 @@ test_expect_success 'submodule add with ./ in path' '
 	inspect addtest/dotsubmod/frotz ../../.. &&
 	test_cmp expect heads &&
 	test_cmp expect head &&
-	test_cmp empty untracked
+	test_must_be_empty untracked
 '
 
 test_expect_success 'submodule add with /././ in path' '
 	echo "refs/heads/master" >expect &&
-	>empty &&
 
 	(
 		cd addtest &&
@@ -236,12 +232,11 @@ test_expect_success 'submodule add with /././ in path' '
 	inspect addtest/dotslashdotsubmod/frotz ../../.. &&
 	test_cmp expect heads &&
 	test_cmp expect head &&
-	test_cmp empty untracked
+	test_must_be_empty untracked
 '
 
 test_expect_success 'submodule add with // in path' '
 	echo "refs/heads/master" >expect &&
-	>empty &&
 
 	(
 		cd addtest &&
@@ -253,12 +248,11 @@ test_expect_success 'submodule add with // in path' '
 	inspect addtest/slashslashsubmod/frotz ../../.. &&
 	test_cmp expect heads &&
 	test_cmp expect head &&
-	test_cmp empty untracked
+	test_must_be_empty untracked
 '
 
 test_expect_success 'submodule add with /.. in path' '
 	echo "refs/heads/master" >expect &&
-	>empty &&
 
 	(
 		cd addtest &&
@@ -270,12 +264,11 @@ test_expect_success 'submodule add with /.. in path' '
 	inspect addtest/realsubmod ../.. &&
 	test_cmp expect heads &&
 	test_cmp expect head &&
-	test_cmp empty untracked
+	test_must_be_empty untracked
 '
 
 test_expect_success 'submodule add with ./, /.. and // in path' '
 	echo "refs/heads/master" >expect &&
-	>empty &&
 
 	(
 		cd addtest &&
@@ -287,7 +280,7 @@ test_expect_success 'submodule add with ./, /.. and // in path' '
 	inspect addtest/realsubmod2 ../.. &&
 	test_cmp expect heads &&
 	test_cmp expect head &&
-	test_cmp empty untracked
+	test_must_be_empty untracked
 '
 
 test_expect_success !CYGWIN 'submodule add with \\ in path' '
@@ -306,7 +299,6 @@ test_expect_success !CYGWIN 'submodule add with \\ in path' '
 
 test_expect_success 'submodule add in subdirectory' '
 	echo "refs/heads/master" >expect &&
-	>empty &&
 
 	mkdir addtest/sub &&
 	(
@@ -319,7 +311,7 @@ test_expect_success 'submodule add in subdirectory' '
 	inspect addtest/realsubmod3 ../.. &&
 	test_cmp expect heads &&
 	test_cmp expect head &&
-	test_cmp empty untracked
+	test_must_be_empty untracked
 '
 
 test_expect_success 'submodule add in subdirectory with relative path should fail' '
@@ -502,8 +494,6 @@ test_expect_success 'checkout superproject with subproject already present' '
 '
 
 test_expect_success 'apply submodule diff' '
-	>empty &&
-
 	git branch second &&
 	(
 		cd init &&
@@ -518,7 +508,7 @@ test_expect_success 'apply submodule diff' '
 	git apply --index P.diff &&
 
 	git diff --cached master >staged &&
-	test_cmp empty staged
+	test_must_be_empty staged
 '
 
 test_expect_success 'update --init' '

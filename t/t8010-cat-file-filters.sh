@@ -47,7 +47,7 @@ test_expect_success 'cat-file --textconv --path=<path> works' '
 test_expect_success '--path=<path> complains without --textconv/--filters' '
 	sha1=$(git rev-parse -q --verify HEAD:world.txt) &&
 	test_must_fail git cat-file --path=hello.txt blob $sha1 >actual 2>err &&
-	test ! -s actual &&
+	test_must_be_empty actual &&
 	grep "path.*needs.*filters" err
 '
 
