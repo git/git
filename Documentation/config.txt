@@ -1219,18 +1219,6 @@ This does not affect linkgit:git-format-patch[1] or the
 'git-diff-{asterisk}' plumbing commands.  Can be overridden on the
 command line with the `--color[=<when>]` option.
 
-diff.colorMoved::
-	If set to either a valid `<mode>` or a true value, moved lines
-	in a diff are colored differently, for details of valid modes
-	see '--color-moved' in linkgit:git-diff[1]. If simply set to
-	true the default color mode will be used. When set to false,
-	moved lines are not colored.
-
-diff.colorMovedWS::
-	When moved lines are colored using e.g. the `diff.colorMoved` setting,
-	this option controls the `<mode>` how spaces are treated
-	for details of valid modes see '--color-moved-ws' in linkgit:git-diff[1].
-
 color.diff.<slot>::
 	Use customized color for diff colorization.  `<slot>` specifies
 	which part of the patch to use the specified color, and is one
