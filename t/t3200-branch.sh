@@ -1305,4 +1305,50 @@ test_expect_success 'tracking with unexpected .fetch refspec' '
 	)
 '
 
+test_expect_success 'configured committerdate sort' '
+	git init sort &&
+	(
+		cd sort &&
+		git config branch.sort committerdate &&
+		test_commit initial &&
+		git checkout -b a &&
+		test_commit a &&
+		git checkout -b c &&
+		test_commit c &&
+		git checkout -b b &&
+		test_commit b &&
+		git branch >actual &&
+		cat >expect <<-\EOF &&
+		  master
+		  a
+		  c
+		* b
+		EOF
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'option override configured sort' '
+	(
+		cd sort &&
+		git config branch.sort committerdate &&
+		git branch --sort=refname >actual &&
+		cat >expect <<-\EOF &&
+		  a
+		* b
+		  c
+		  master
+		EOF
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'invalid sort parameter in configuration' '
+	(
+		cd sort &&
+		git config branch.sort "v:notvalid" &&
+		test_must_fail git branch
+	)
+'
+
 test_done
