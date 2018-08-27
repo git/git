@@ -462,10 +462,20 @@ core.untrackedCache::
 	See linkgit:git-update-index[1]. `keep` by default.
 
 core.checkStat::
-	Determines which stat fields to match between the index
-	and work tree. The user can set this to 'default' or
-	'minimal'. Default (or explicitly 'default'), is to check
-	all fields, including the sub-second part of mtime and ctime.
+	When missing or is set to `default`, many fields in the stat
+	structure are checked to detect if a file has been modified
+	since Git looked at it.  When this configuration variable is
+	set to `minimal`, sub-second part of mtime and ctime, the
+	uid and gid of the owner of the file, the inode number (and
+	the device number, if Git was compiled to use it), are
+	excluded from the check among these fields, leaving only the
+	whole-second part of mtime (and ctime, if `core.trustCtime`
+	is set) and the filesize to be checked.
++
+There are implementations of Git that do not leave usable values in
+some fields (e.g. JGit); by excluding these fields from the
+comparison, the `minimal` mode may help interoperability when the
+same repository is used by these other systems at the same time.
 
 core.quotePath::
 	Commands that output paths (e.g. 'ls-files', 'diff'), will
