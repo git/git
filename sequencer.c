@@ -720,7 +720,7 @@ static const char *read_author_ident(struct strbuf *buf)
 	/* dequote values and construct ident line in-place */
 	for (in = buf->buf; i < 3 && in - buf->buf < buf->len; i++) {
 		if (!skip_prefix(in, keys[i], (const char **)&in)) {
-			warning(_("could not parse '%s' (looking for '%s'"),
+			warning(_("could not parse '%s' (looking for '%s')"),
 				rebase_path_author_script(), keys[i]);
 			return NULL;
 		}
