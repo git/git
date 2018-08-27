@@ -927,12 +927,10 @@ core.notesRef::
 This setting defaults to "refs/notes/commits", and it can be overridden by
 the `GIT_NOTES_REF` environment variable.  See linkgit:git-notes[1].
 
-gc.commitGraph::
-	If true, then gc will rewrite the commit-graph file when
-	linkgit:git-gc[1] is run. When using linkgit:git-gc[1]
-	'--auto' the commit-graph will be updated if housekeeping is
-	required. Default is false. See linkgit:git-commit-graph[1]
-	for details.
+core.commitGraph::
+	If true, then git will read the commit-graph file (if it exists)
+	to parse the graph structure of commits. Defaults to false. See
+	linkgit:git-commit-graph[1] for more information.
 
 core.useReplaceRefs::
 	If set to `false`, behave as if the `--no-replace-objects`
@@ -1766,6 +1764,13 @@ Note that if the number of kept packs is more than gc.autoPackLimit,
 this configuration variable is ignored, all packs except the base pack
 will be repacked. After this the number of packs should go below
 gc.autoPackLimit and gc.bigPackThreshold should be respected again.
+
+gc.writeCommitGraph::
+	If true, then gc will rewrite the commit-graph file when
+	linkgit:git-gc[1] is run. When using linkgit:git-gc[1]
+	'--auto' the commit-graph will be updated if housekeeping is
+	required. Default is false. See linkgit:git-commit-graph[1]
+	for details.
 
 gc.logExpiry::
 	If the file gc.log exists, then `git gc --auto` won't run
