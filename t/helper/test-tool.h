@@ -1,6 +1,8 @@
 #ifndef __TEST_TOOL_H__
 #define __TEST_TOOL_H__
 
+#include "git-compat-util.h"
+
 int cmd__chmtime(int argc, const char **argv);
 int cmd__config(int argc, const char **argv);
 int cmd__ctype(int argc, const char **argv);
