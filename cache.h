@@ -1053,12 +1053,12 @@ static inline int oideq(const struct object_id *oid1, const struct object_id *oi
 
 static inline int is_null_sha1(const unsigned char *sha1)
 {
-	return !hashcmp(sha1, null_sha1);
+	return hasheq(sha1, null_sha1);
 }
 
 static inline int is_null_oid(const struct object_id *oid)
 {
-	return !hashcmp(oid->hash, null_sha1);
+	return hasheq(oid->hash, null_sha1);
 }
 
 static inline void hashcpy(unsigned char *sha_dst, const unsigned char *sha_src)
@@ -1095,7 +1095,7 @@ static inline void oidread(struct object_id *oid, const unsigned char *hash)
 
 static inline int is_empty_blob_sha1(const unsigned char *sha1)
 {
-	return !hashcmp(sha1, the_hash_algo->empty_blob->hash);
+	return hasheq(sha1, the_hash_algo->empty_blob->hash);
 }
 
 static inline int is_empty_blob_oid(const struct object_id *oid)
@@ -1105,7 +1105,7 @@ static inline int is_empty_blob_oid(const struct object_id *oid)
 
 static inline int is_empty_tree_sha1(const unsigned char *sha1)
 {
-	return !hashcmp(sha1, the_hash_algo->empty_tree->hash);
+	return hasheq(sha1, the_hash_algo->empty_tree->hash);
 }
 
 static inline int is_empty_tree_oid(const struct object_id *oid)

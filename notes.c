@@ -147,7 +147,7 @@ static struct leaf_node *note_tree_find(struct notes_tree *t,
 	void **p = note_tree_search(t, &tree, &n, key_sha1);
 	if (GET_PTR_TYPE(*p) == PTR_TYPE_NOTE) {
 		struct leaf_node *l = (struct leaf_node *) CLR_PTR_TYPE(*p);
-		if (!hashcmp(key_sha1, l->key_oid.hash))
+		if (hasheq(key_sha1, l->key_oid.hash))
 			return l;
 	}
 	return NULL;

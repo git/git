@@ -95,7 +95,7 @@ struct object *lookup_object(struct repository *r, const unsigned char *sha1)
 
 	first = i = hash_obj(sha1, r->parsed_objects->obj_hash_size);
 	while ((obj = r->parsed_objects->obj_hash[i]) != NULL) {
-		if (!hashcmp(sha1, obj->oid.hash))
+		if (hasheq(sha1, obj->oid.hash))
 			break;
 		i++;
 		if (i == r->parsed_objects->obj_hash_size)

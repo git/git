@@ -483,7 +483,7 @@ static int fetch_object(struct walker *walker, unsigned char *sha1)
 
 	list_for_each(pos, head) {
 		obj_req = list_entry(pos, struct object_request, node);
-		if (!hashcmp(obj_req->oid.hash, sha1))
+		if (hasheq(obj_req->oid.hash, sha1))
 			break;
 	}
 	if (obj_req == NULL)
