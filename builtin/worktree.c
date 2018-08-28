@@ -740,13 +740,17 @@ static void validate_no_submodules(const struct worktree *wt)
 
 static int move_worktree(int ac, const char **av, const char *prefix)
 {
+	int force = 0;
 	struct option options[] = {
+		OPT__FORCE(&force,
+			 N_("force move even if worktree is dirty or locked"),
+			 PARSE_OPT_NOCOMPLETE),
 		OPT_END()
 	};
 	struct worktree **worktrees, *wt;
 	struct strbuf dst = STRBUF_INIT;
 	struct strbuf errmsg = STRBUF_INIT;
-	const char *reason;
+	const char *reason = NULL;
 	char *path;
 
 	ac = parse_options(ac, av, prefix, options, worktree_usage, 0);
@@ -777,12 +781,13 @@ static int move_worktree(int ac, const char **av, const char *prefix)
 
 	validate_no_submodules(wt);
 
-	reason = is_worktree_locked(wt);
+	if (force < 2)
+		reason = is_worktree_locked(wt);
 	if (reason) {
 		if (*reason)
-			die(_("cannot move a locked working tree, lock reason: %s"),
+			die(_("cannot move a locked working tree, lock reason: %s\nuse 'move -f -f' to override or unlock first"),
 			    reason);
-		die(_("cannot move a locked working tree"));
+		die(_("cannot move a locked working tree;\nuse 'move -f -f' to override or unlock first"));
 	}
 	if (validate_worktree(wt, &errmsg, 0))
 		die(_("validation failed, cannot move working tree: %s"),

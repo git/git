@@ -98,6 +98,20 @@ test_expect_success 'move worktree to another dir' '
 	test_cmp expected2 actual2
 '
 
+test_expect_success 'move locked worktree (force)' '
+	test_when_finished "
+		git worktree unlock flump || :
+		git worktree remove flump || :
+		git worktree unlock ploof || :
+		git worktree remove ploof || :
+		" &&
+	git worktree add --detach flump &&
+	git worktree lock flump &&
+	test_must_fail git worktree move flump ploof" &&
+	test_must_fail git worktree move --force flump ploof" &&
+	git worktree move --force --force flump ploof
+'
+
 test_expect_success 'remove main worktree' '
 	test_must_fail git worktree remove .
 '
