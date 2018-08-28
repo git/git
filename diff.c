@@ -2933,16 +2933,11 @@ static void show_dirstat(struct diff_options *options)
 		struct diff_filepair *p = q->queue[i];
 		const char *name;
 		unsigned long copied, added, damage;
-		int content_changed;
 
 		name = p->two->path ? p->two->path : p->one->path;
 
-		if (p->one->oid_valid && p->two->oid_valid)
-			content_changed = oidcmp(&p->one->oid, &p->two->oid);
-		else
-			content_changed = 1;
-
-		if (!content_changed) {
+		if (p->one->oid_valid && p->two->oid_valid &&
+		    oideq(&p->one->oid, &p->two->oid)) {
 			/*
 			 * The SHA1 has not changed, so pre-/post-content is
 			 * identical. We can therefore skip looking at the
@@ -2989,7 +2984,7 @@ static void show_dirstat(struct diff_options *options)
 		 * made to the preimage.
 		 * If the resulting damage is zero, we know that
 		 * diffcore_count_changes() considers the two entries to
-		 * be identical, but since content_changed is true, we
+		 * be identical, but since the oid changed, we
 		 * know that there must have been _some_ kind of change,
 		 * so we force all entries to have damage > 0.
 		 */
