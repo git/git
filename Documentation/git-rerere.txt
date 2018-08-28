@@ -211,6 +211,12 @@ would conflict the same way as the test merge you resolved earlier.
 'git rerere' will be run by 'git rebase' to help you resolve this
 conflict.
 
+[NOTE] 'git rerere' relies on the conflict markers in the file to
+detect the conflict.  If the file already contains lines that look the
+same as lines with conflict markers, 'git rerere' may fail to record a
+conflict resolution.  To work around this, the `conflict-marker-size`
+setting in linkgit:gitattributes[5] can be used.
+
 GIT
 ---
 Part of the linkgit:git[1] suite
