@@ -241,10 +241,16 @@ static void validate_worktree_add(const char *path, const struct add_opts *opts)
 		goto done;
 
 	locked = !!is_worktree_locked(wt);
+	if ((!locked && opts->force) || (locked && opts->force > 1)) {
+		if (delete_git_dir(wt->id))
+		    die(_("unable to re-add worktree '%s'"), path);
+		goto done;
+	}
+
 	if (locked)
-		die(_("'%s' is a missing but locked worktree;\nuse 'unlock' and 'prune' or 'remove' to clear"), path);
+		die(_("'%s' is a missing but locked worktree;\nuse 'add -f -f' to override, or 'unlock' and 'prune' or 'remove' to clear"), path);
 	else
-		die(_("'%s' is a missing but already registered worktree;\nuse 'prune' or 'remove' to clear"), path);
+		die(_("'%s' is a missing but already registered worktree;\nuse 'add -f' to override, or 'prune' or 'remove' to clear"), path);
 
 done:
 	free_worktrees(worktrees);
