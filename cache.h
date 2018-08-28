@@ -1100,7 +1100,7 @@ static inline int is_empty_blob_sha1(const unsigned char *sha1)
 
 static inline int is_empty_blob_oid(const struct object_id *oid)
 {
-	return !oidcmp(oid, the_hash_algo->empty_blob);
+	return oideq(oid, the_hash_algo->empty_blob);
 }
 
 static inline int is_empty_tree_sha1(const unsigned char *sha1)
@@ -1110,7 +1110,7 @@ static inline int is_empty_tree_sha1(const unsigned char *sha1)
 
 static inline int is_empty_tree_oid(const struct object_id *oid)
 {
-	return !oidcmp(oid, the_hash_algo->empty_tree);
+	return oideq(oid, the_hash_algo->empty_tree);
 }
 
 const char *empty_tree_oid_hex(void);

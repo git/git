@@ -1388,7 +1388,7 @@ void set_ref_status_for_push(struct ref *remote_refs, int send_mirror,
 
 		ref->deletion = is_null_oid(&ref->new_oid);
 		if (!ref->deletion &&
-			!oidcmp(&ref->old_oid, &ref->new_oid)) {
+			oideq(&ref->old_oid, &ref->new_oid)) {
 			ref->status = REF_STATUS_UPTODATE;
 			continue;
 		}
@@ -2049,7 +2049,7 @@ struct ref *guess_remote_head(const struct ref *head,
 	/* If refs/heads/master could be right, it is. */
 	if (!all) {
 		r = find_ref_by_name(refs, "refs/heads/master");
-		if (r && !oidcmp(&r->old_oid, &head->old_oid))
+		if (r && oideq(&r->old_oid, &head->old_oid))
 			return copy_ref(r);
 	}
 
@@ -2057,7 +2057,7 @@ struct ref *guess_remote_head(const struct ref *head,
 	for (r = refs; r; r = r->next) {
 		if (r != head &&
 		    starts_with(r->name, "refs/heads/") &&
-		    !oidcmp(&r->old_oid, &head->old_oid)) {
+		    oideq(&r->old_oid, &head->old_oid)) {
 			*tail = copy_ref(r);
 			tail = &((*tail)->next);
 			if (!all)

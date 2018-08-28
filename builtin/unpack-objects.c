@@ -303,7 +303,7 @@ static void added_object(unsigned nr, enum object_type type,
 	struct delta_info *info;
 
 	while ((info = *p) != NULL) {
-		if (!oidcmp(&info->base_oid, &obj_list[nr].oid) ||
+		if (oideq(&info->base_oid, &obj_list[nr].oid) ||
 		    info->base_offset == obj_list[nr].offset) {
 			*p = info->next;
 			p = &delta_list;

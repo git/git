@@ -366,7 +366,7 @@ static int show_modified(struct rev_info *revs,
 	}
 
 	oldmode = old_entry->ce_mode;
-	if (mode == oldmode && !oidcmp(oid, &old_entry->oid) && !dirty_submodule &&
+	if (mode == oldmode && oideq(oid, &old_entry->oid) && !dirty_submodule &&
 	    !revs->diffopt.flags.find_copies_harder)
 		return 0;
 

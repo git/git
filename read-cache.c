@@ -767,7 +767,7 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 	/* It was suspected to be racily clean, but it turns out to be Ok */
 	was_same = (alias &&
 		    !ce_stage(alias) &&
-		    !oidcmp(&alias->oid, &ce->oid) &&
+		    oideq(&alias->oid, &ce->oid) &&
 		    ce->ce_mode == alias->ce_mode);
 
 	if (pretend)

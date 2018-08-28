@@ -992,7 +992,7 @@ static char *find_branch_name(struct rev_info *rev)
 	tip_oid = &rev->cmdline.rev[positive].item->oid;
 	if (dwim_ref(ref, strlen(ref), &branch_oid, &full_ref) &&
 	    skip_prefix(full_ref, "refs/heads/", &v) &&
-	    !oidcmp(tip_oid, &branch_oid))
+	    oideq(tip_oid, &branch_oid))
 		branch = xstrdup(v);
 	free(full_ref);
 	return branch;
@@ -1703,7 +1703,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		/* Don't say anything if head and upstream are the same. */
 		if (rev.pending.nr == 2) {
 			struct object_array_entry *o = rev.pending.objects;
-			if (oidcmp(&o[0].item->oid, &o[1].item->oid) == 0)
+			if (oideq(&o[0].item->oid, &o[1].item->oid))
 				return 0;
 		}
 		get_patch_ids(&rev, &ids);
@@ -1949,7 +1949,7 @@ int cmd_cherry(int argc, const char **argv, const char *prefix)
 	/* Don't say anything if head and upstream are the same. */
 	if (revs.pending.nr == 2) {
 		struct object_array_entry *o = revs.pending.objects;
-		if (oidcmp(&o[0].item->oid, &o[1].item->oid) == 0)
+		if (oideq(&o[0].item->oid, &o[1].item->oid))
 			return 0;
 	}
 

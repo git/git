@@ -453,8 +453,8 @@ static void wt_status_collect_changed_cb(struct diff_queue_struct *q,
 			d->worktree_status = p->status;
 		if (S_ISGITLINK(p->two->mode)) {
 			d->dirty_submodule = p->two->dirty_submodule;
-			d->new_submodule_commits = !!oidcmp(&p->one->oid,
-							    &p->two->oid);
+			d->new_submodule_commits = !oideq(&p->one->oid,
+							  &p->two->oid);
 			if (s->status_format == STATUS_FORMAT_SHORT)
 				d->worktree_status = short_submodule_status(d);
 		}
@@ -1487,10 +1487,10 @@ static void wt_status_get_detached_from(struct wt_status_state *state)
 
 	if (dwim_ref(cb.buf.buf, cb.buf.len, &oid, &ref) == 1 &&
 	    /* sha1 is a commit? match without further lookup */
-	    (!oidcmp(&cb.noid, &oid) ||
+	    (oideq(&cb.noid, &oid) ||
 	     /* perhaps sha1 is a tag, try to dereference to a commit */
 	     ((commit = lookup_commit_reference_gently(the_repository, &oid, 1)) != NULL &&
-	      !oidcmp(&cb.noid, &commit->object.oid)))) {
+	      oideq(&cb.noid, &commit->object.oid)))) {
 		const char *from = ref;
 		if (!skip_prefix(from, "refs/tags/", &from))
 			skip_prefix(from, "refs/remotes/", &from);
@@ -1500,7 +1500,7 @@ static void wt_status_get_detached_from(struct wt_status_state *state)
 			xstrdup(find_unique_abbrev(&cb.noid, DEFAULT_ABBREV));
 	oidcpy(&state->detached_oid, &cb.noid);
 	state->detached_at = !get_oid("HEAD", &oid) &&
-			     !oidcmp(&oid, &state->detached_oid);
+			     oideq(&oid, &state->detached_oid);
 
 	free(ref);
 	strbuf_release(&cb.buf);

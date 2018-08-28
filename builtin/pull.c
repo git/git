@@ -799,7 +799,7 @@ static int run_rebase(const struct object_id *curr_head,
 	struct argv_array args = ARGV_ARRAY_INIT;
 
 	if (!get_octopus_merge_base(&oct_merge_base, curr_head, merge_head, fork_point))
-		if (!is_null_oid(fork_point) && !oidcmp(&oct_merge_base, fork_point))
+		if (!is_null_oid(fork_point) && oideq(&oct_merge_base, fork_point))
 			fork_point = NULL;
 
 	argv_array_push(&args, "rebase");

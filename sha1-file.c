@@ -149,10 +149,10 @@ static struct cached_object *find_cached_object(const struct object_id *oid)
 	struct cached_object *co = cached_objects;
 
 	for (i = 0; i < cached_object_nr; i++, co++) {
-		if (!oidcmp(&co->oid, oid))
+		if (oideq(&co->oid, oid))
 			return co;
 	}
-	if (!oidcmp(oid, the_hash_algo->empty_tree))
+	if (oideq(oid, the_hash_algo->empty_tree))
 		return &empty_tree;
 	return NULL;
 }

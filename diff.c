@@ -3404,7 +3404,7 @@ static void builtin_diff(const char *name_a,
 		if (!one->data && !two->data &&
 		    S_ISREG(one->mode) && S_ISREG(two->mode) &&
 		    !o->flags.binary) {
-			if (!oidcmp(&one->oid, &two->oid)) {
+			if (oideq(&one->oid, &two->oid)) {
 				if (must_show_header)
 					emit_diff_symbol(o, DIFF_SYMBOL_HEADER,
 							 header.buf, header.len,
@@ -3569,7 +3569,7 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 		return;
 	}
 
-	same_contents = !oidcmp(&one->oid, &two->oid);
+	same_contents = oideq(&one->oid, &two->oid);
 
 	if (diff_filespec_is_binary(one) || diff_filespec_is_binary(two)) {
 		data->is_binary = 1;
@@ -5323,7 +5323,7 @@ int diff_unmodified_pair(struct diff_filepair *p)
 	 * dealing with a change.
 	 */
 	if (one->oid_valid && two->oid_valid &&
-	    !oidcmp(&one->oid, &two->oid) &&
+	    oideq(&one->oid, &two->oid) &&
 	    !one->dirty_submodule && !two->dirty_submodule)
 		return 1; /* no change */
 	if (!one->oid_valid && !two->oid_valid)

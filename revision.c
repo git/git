@@ -3238,7 +3238,7 @@ static void track_linear(struct rev_info *revs, struct commit *commit)
 		struct commit_list *p;
 		for (p = revs->previous_parents; p; p = p->next)
 			if (p->item == NULL || /* first commit */
-			    !oidcmp(&p->item->object.oid, &commit->object.oid))
+			    oideq(&p->item->object.oid, &commit->object.oid))
 				break;
 		revs->linear = p != NULL;
 	}

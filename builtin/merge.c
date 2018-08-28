@@ -1189,7 +1189,7 @@ static int merging_a_throwaway_tag(struct commit *commit)
 	tag_ref = xstrfmt("refs/tags/%s",
 			  ((struct tag *)merge_remote_util(commit)->obj)->tag);
 	if (!read_ref(tag_ref, &oid) &&
-	    !oidcmp(&oid, &merge_remote_util(commit)->obj->oid))
+	    oideq(&oid, &merge_remote_util(commit)->obj->oid))
 		is_throwaway_tag = 0;
 	else
 		is_throwaway_tag = 1;
@@ -1448,7 +1448,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		goto done;
 	} else if (fast_forward != FF_NO && !remoteheads->next &&
 			!common->next &&
-			!oidcmp(&common->item->object.oid, &head_commit->object.oid)) {
+			oideq(&common->item->object.oid, &head_commit->object.oid)) {
 		/* Again the most common case of merging one remote. */
 		struct strbuf msg = STRBUF_INIT;
 		struct commit *commit;

@@ -719,9 +719,9 @@ static void find_ref_delta_children(const struct object_id *oid,
 		*last_index = -1;
 		return;
 	}
-	while (first > 0 && !oidcmp(&ref_deltas[first - 1].oid, oid))
+	while (first > 0 && oideq(&ref_deltas[first - 1].oid, oid))
 		--first;
-	while (last < end && !oidcmp(&ref_deltas[last + 1].oid, oid))
+	while (last < end && oideq(&ref_deltas[last + 1].oid, oid))
 		++last;
 	*first_index = first;
 	*last_index = last;

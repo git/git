@@ -124,7 +124,7 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 		}
 		hashwrite(f, obj->oid.hash, the_hash_algo->rawsz);
 		if ((opts->flags & WRITE_IDX_STRICT) &&
-		    (i && !oidcmp(&list[-2]->oid, &obj->oid)))
+		    (i && oideq(&list[-2]->oid, &obj->oid)))
 			die("The same object %s appears twice in the pack",
 			    oid_to_hex(&obj->oid));
 	}

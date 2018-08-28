@@ -384,7 +384,7 @@ static void show_filemodify(struct diff_queue_struct *q,
 				string_list_insert(changed, spec->path);
 				putchar('\n');
 
-				if (!oidcmp(&ospec->oid, &spec->oid) &&
+				if (oideq(&ospec->oid, &spec->oid) &&
 				    ospec->mode == spec->mode)
 					break;
 			}

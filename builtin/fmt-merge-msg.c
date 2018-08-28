@@ -582,7 +582,7 @@ static void find_merge_parents(struct merge_parents *result,
 	while (parents) {
 		struct commit *cmit = pop_commit(&parents);
 		for (i = 0; i < result->nr; i++)
-			if (!oidcmp(&result->item[i].commit, &cmit->object.oid))
+			if (oideq(&result->item[i].commit, &cmit->object.oid))
 				result->item[i].used = 1;
 	}
 

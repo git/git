@@ -116,7 +116,7 @@ static int use_wt_file(const char *workdir, const char *name,
 			if (is_null_oid(oid)) {
 				oidcpy(oid, &wt_oid);
 				use = 1;
-			} else if (!oidcmp(oid, &wt_oid))
+			} else if (oideq(oid, &wt_oid))
 				use = 1;
 		}
 	}
@@ -438,7 +438,7 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 			strbuf_reset(&buf);
 			strbuf_addf(&buf, "Subproject commit %s",
 				    oid_to_hex(&roid));
-			if (!oidcmp(&loid, &roid))
+			if (oideq(&loid, &roid))
 				strbuf_addstr(&buf, "-dirty");
 			add_left_or_right(&submodules, dst_path, buf.buf, 1);
 			continue;

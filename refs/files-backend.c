@@ -2307,7 +2307,7 @@ static int check_old_oid(struct ref_update *update, struct object_id *oid,
 			 struct strbuf *err)
 {
 	if (!(update->flags & REF_HAVE_OLD) ||
-		   !oidcmp(oid, &update->old_oid))
+		   oideq(oid, &update->old_oid))
 		return 0;
 
 	if (is_null_oid(&update->old_oid))
@@ -2443,7 +2443,7 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 	    !(update->flags & REF_DELETING) &&
 	    !(update->flags & REF_LOG_ONLY)) {
 		if (!(update->type & REF_ISSYMREF) &&
-		    !oidcmp(&lock->old_oid, &update->new_oid)) {
+		    oideq(&lock->old_oid, &update->new_oid)) {
 			/*
 			 * The reference already has the desired
 			 * value, so we don't need to write it.

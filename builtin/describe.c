@@ -190,7 +190,7 @@ static int get_name(const char *path, const struct object_id *oid, int flag, voi
 
 	/* Is it annotated? */
 	if (!peel_ref(path, &peeled)) {
-		is_annotated = !!oidcmp(oid, &peeled);
+		is_annotated = !oideq(oid, &peeled);
 	} else {
 		oidcpy(&peeled, oid);
 		is_annotated = 0;
@@ -469,7 +469,7 @@ static void process_object(struct object *obj, const char *path, void *data)
 {
 	struct process_commit_data *pcd = data;
 
-	if (!oidcmp(&pcd->looking_for, &obj->oid) && !pcd->dst->len) {
+	if (oideq(&pcd->looking_for, &obj->oid) && !pcd->dst->len) {
 		reset_revision_walk();
 		describe_commit(&pcd->current_commit, pcd->dst);
 		strbuf_addf(pcd->dst, ":%s", path);

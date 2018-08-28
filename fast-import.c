@@ -572,7 +572,7 @@ static struct object_entry *find_object(struct object_id *oid)
 	unsigned int h = oid->hash[0] << 8 | oid->hash[1];
 	struct object_entry *e;
 	for (e = object_table[h]; e; e = e->next)
-		if (!oidcmp(oid, &e->idx.oid))
+		if (oideq(oid, &e->idx.oid))
 			return e;
 	return NULL;
 }
@@ -583,7 +583,7 @@ static struct object_entry *insert_object(struct object_id *oid)
 	struct object_entry *e = object_table[h];
 
 	while (e) {
-		if (!oidcmp(oid, &e->idx.oid))
+		if (oideq(oid, &e->idx.oid))
 			return e;
 		e = e->next;
 	}
@@ -1533,7 +1533,7 @@ static int tree_content_set(
 			if (!*slash1) {
 				if (!S_ISDIR(mode)
 						&& e->versions[1].mode == mode
-						&& !oidcmp(&e->versions[1].oid, oid))
+						&& oideq(&e->versions[1].oid, oid))
 					return 0;
 				e->versions[1].mode = mode;
 				oidcpy(&e->versions[1].oid, oid);

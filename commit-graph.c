@@ -779,7 +779,7 @@ void write_commit_graph(const char *obj_dir,
 	num_extra_edges = 0;
 	for (i = 0; i < oids.nr; i++) {
 		int num_parents = 0;
-		if (i > 0 && !oidcmp(&oids.list[i-1], &oids.list[i]))
+		if (i > 0 && oideq(&oids.list[i - 1], &oids.list[i]))
 			continue;
 
 		commits.list[commits.nr] = lookup_commit(the_repository, &oids.list[i]);

@@ -108,3 +108,9 @@ expression E1, E2;
 @@
 - hashcpy(E1.hash, E2->hash)
 + oidcpy(&E1, E2)
+
+@@
+expression E1, E2;
+@@
+- oidcmp(E1, E2) == 0
++ oideq(E1, E2)
