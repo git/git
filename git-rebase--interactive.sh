@@ -16,56 +16,6 @@ todo="$state_dir"/git-rebase-todo
 GIT_CHERRY_PICK_HELP="$resolvemsg"
 export GIT_CHERRY_PICK_HELP
 
-comment_char=$(git config --get core.commentchar 2>/dev/null)
-case "$comment_char" in
-'' | auto)
-	comment_char="#"
-	;;
-?)
-	;;
-*)
-	comment_char=$(echo "$comment_char" | cut -c1)
-	;;
-esac
-
-die_abort () {
-	apply_autostash
-	rm -rf "$state_dir"
-	die "$1"
-}
-
-has_action () {
-	test -n "$(git stripspace --strip-comments <"$1")"
-}
-
-git_sequence_editor () {
-	if test -z "$GIT_SEQUENCE_EDITOR"
-	then
-		GIT_SEQUENCE_EDITOR="$(git config sequence.editor)"
-		if [ -z "$GIT_SEQUENCE_EDITOR" ]
-		then
-			GIT_SEQUENCE_EDITOR="$(git var GIT_EDITOR)" || return $?
-		fi
-	fi
-
-	eval "$GIT_SEQUENCE_EDITOR" '"$@"'
-}
-
-expand_todo_ids() {
-	git rebase--helper --expand-ids
-}
-
-collapse_todo_ids() {
-	git rebase--helper --shorten-ids
-}
-
-get_missing_commit_check_level () {
-	check_level=$(git config --get rebase.missingCommitsCheck)
-	check_level=${check_level:-ignore}
-	# Don't be case sensitive
-	printf '%s' "$check_level" | tr 'A-Z' 'a-z'
-}
-
 # Initiate an action. If the cannot be any
 # further action it  may exec a command
 # or exit and not return.
