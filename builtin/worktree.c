@@ -219,6 +219,12 @@ static const char *worktree_basename(const char *path, int *olen)
 	return name;
 }
 
+static void validate_worktree_add(const char *path, const struct add_opts *opts)
+{
+	if (file_exists(path) && !is_empty_dir(path))
+		die(_("'%s' already exists"), path);
+}
+
 static int add_worktree(const char *path, const char *refname,
 			const struct add_opts *opts)
 {
@@ -233,8 +239,7 @@ static int add_worktree(const char *path, const char *refname,
 	struct commit *commit = NULL;
 	int is_branch = 0;
 
-	if (file_exists(path) && !is_empty_dir(path))
-		die(_("'%s' already exists"), path);
+	validate_worktree_add(path, opts);
 
 	/* is 'refname' a branch or commit? */
 	if (!opts->detach && !strbuf_check_branch_ref(&symref, refname) &&
