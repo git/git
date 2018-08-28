@@ -62,6 +62,11 @@ static int delete_git_dir(const char *id)
 	return ret;
 }
 
+static void delete_worktrees_dir_if_empty(void)
+{
+	rmdir(git_path("worktrees")); /* ignore failed removal */
+}
+
 static int prune_worktree(const char *id, struct strbuf *reason)
 {
 	struct stat st;
@@ -149,7 +154,7 @@ static void prune_worktrees(void)
 	}
 	closedir(dir);
 	if (!show_only)
-		rmdir(git_path("worktrees"));
+		delete_worktrees_dir_if_empty();
 	strbuf_release(&reason);
 }
 
@@ -918,6 +923,7 @@ static int remove_worktree(int ac, const char **av, const char *prefix)
 	 * from here.
 	 */
 	ret |= delete_git_dir(wt->id);
+	delete_worktrees_dir_if_empty();
 
 	free_worktrees(worktrees);
 	return ret;

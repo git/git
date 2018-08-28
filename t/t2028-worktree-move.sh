@@ -173,4 +173,16 @@ test_expect_success 'remove locked worktree (force)' '
 	git worktree remove --force --force gumby
 '
 
+test_expect_success 'remove cleans up .git/worktrees when empty' '
+	git init moog &&
+	(
+		cd moog &&
+		test_commit bim &&
+		git worktree add --detach goom &&
+		test_path_exists .git/worktrees &&
+		git worktree remove goom &&
+		test_path_is_missing .git/worktrees
+	)
+'
+
 test_done
