@@ -76,7 +76,7 @@ test_expect_success 'rebase --keep-empty' '
 '
 
 cat > expect <<EOF
-Nothing to do
+error: nothing to do
 EOF
 
 test_expect_success 'rebase -i with empty HEAD' '
