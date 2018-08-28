@@ -875,13 +875,13 @@ static int remove_worktree(int ac, const char **av, const char *prefix)
 	int force = 0;
 	struct option options[] = {
 		OPT__FORCE(&force,
-			 N_("force removing even if the worktree is dirty"),
+			 N_("force removal even if worktree is dirty or locked"),
 			 PARSE_OPT_NOCOMPLETE),
 		OPT_END()
 	};
 	struct worktree **worktrees, *wt;
 	struct strbuf errmsg = STRBUF_INIT;
-	const char *reason;
+	const char *reason = NULL;
 	int ret = 0;
 
 	ac = parse_options(ac, av, prefix, options, worktree_usage, 0);
@@ -894,12 +894,13 @@ static int remove_worktree(int ac, const char **av, const char *prefix)
 		die(_("'%s' is not a working tree"), av[0]);
 	if (is_main_worktree(wt))
 		die(_("'%s' is a main working tree"), av[0]);
-	reason = is_worktree_locked(wt);
+	if (force < 2)
+		reason = is_worktree_locked(wt);
 	if (reason) {
 		if (*reason)
-			die(_("cannot remove a locked working tree, lock reason: %s"),
+			die(_("cannot remove a locked working tree, lock reason: %s\nuse 'remove -f -f' to override or unlock first"),
 			    reason);
-		die(_("cannot remove a locked working tree"));
+		die(_("cannot remove a locked working tree;\nuse 'remove -f -f' to override or unlock first"));
 	}
 	if (validate_worktree(wt, &errmsg, WT_VALIDATE_WORKTREE_MISSING_OK))
 		die(_("validation failed, cannot remove working tree: %s"),

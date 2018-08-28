@@ -129,6 +129,7 @@ OPTIONS
 twice.
 +
 `remove` refuses to remove an unclean working tree unless `--force` is used.
+To remove a locked working tree, specify `--force` twice.
 
 -b <new-branch>::
 -B <new-branch>::

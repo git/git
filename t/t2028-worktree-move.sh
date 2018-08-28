@@ -163,4 +163,14 @@ test_expect_success 'proper error when worktree not found' '
 	done
 '
 
+test_expect_success 'remove locked worktree (force)' '
+	git worktree add --detach gumby &&
+	test_when_finished "git worktree remove gumby || :" &&
+	git worktree lock gumby &&
+	test_when_finished "git worktree unlock gumby || :" &&
+	test_must_fail git worktree remove gumby &&
+	test_must_fail git worktree remove --force gumby &&
+	git worktree remove --force --force gumby
+'
+
 test_done
