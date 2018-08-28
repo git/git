@@ -4,7 +4,7 @@
 #include "decorate.h"
 #include "prio-queue.h"
 #include "tree.h"
-#include "ref-filter.c"
+#include "ref-filter.h"
 #include "revision.h"
 #include "tag.h"
 #include "commit-reach.h"
