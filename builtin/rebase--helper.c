@@ -17,9 +17,8 @@ int cmd_rebase__helper(int argc, const char **argv, const char *prefix)
 	int abbreviate_commands = 0, rebase_cousins = -1;
 	enum {
 		CONTINUE = 1, ABORT, MAKE_SCRIPT, SHORTEN_OIDS, EXPAND_OIDS,
-		CHECK_TODO_LIST, SKIP_UNNECESSARY_PICKS, REARRANGE_SQUASH,
-		ADD_EXEC, APPEND_TODO_HELP, EDIT_TODO, PREPARE_BRANCH,
-		CHECKOUT_ONTO, COMPLETE_ACTION
+		CHECK_TODO_LIST, REARRANGE_SQUASH, ADD_EXEC, EDIT_TODO, PREPARE_BRANCH,
+		COMPLETE_ACTION
 	} command = 0;
 	struct option options[] = {
 		OPT_BOOL(0, "ff", &opts.allow_ff, N_("allow fast-forward")),
@@ -44,21 +43,15 @@ int cmd_rebase__helper(int argc, const char **argv, const char *prefix)
 			N_("expand commit ids in the todo list"), EXPAND_OIDS),
 		OPT_CMDMODE(0, "check-todo-list", &command,
 			N_("check the todo list"), CHECK_TODO_LIST),
-		OPT_CMDMODE(0, "skip-unnecessary-picks", &command,
-			N_("skip unnecessary picks"), SKIP_UNNECESSARY_PICKS),
 		OPT_CMDMODE(0, "rearrange-squash", &command,
 			N_("rearrange fixup/squash lines"), REARRANGE_SQUASH),
 		OPT_CMDMODE(0, "add-exec-commands", &command,
 			N_("insert exec commands in todo list"), ADD_EXEC),
-		OPT_CMDMODE(0, "append-todo-help", &command,
-			    N_("insert the help in the todo list"), APPEND_TODO_HELP),
 		OPT_CMDMODE(0, "edit-todo", &command,
 			    N_("edit the todo list during an interactive rebase"),
 			    EDIT_TODO),
 		OPT_CMDMODE(0, "prepare-branch", &command,
 			    N_("prepare the branch to be rebased"), PREPARE_BRANCH),
-		OPT_CMDMODE(0, "checkout-onto", &command,
-			    N_("checkout a commit"), CHECKOUT_ONTO),
 		OPT_CMDMODE(0, "complete-action", &command,
 			    N_("complete the action"), COMPLETE_ACTION),
 		OPT_END()
@@ -94,26 +87,14 @@ int cmd_rebase__helper(int argc, const char **argv, const char *prefix)
 		return !!transform_todos(flags);
 	if (command == CHECK_TODO_LIST && argc == 1)
 		return !!check_todo_list();
-	if (command == SKIP_UNNECESSARY_PICKS && argc == 1) {
-		struct object_id oid;
-		int ret = skip_unnecessary_picks(&oid);
-
-		if (!ret)
-			puts(oid_to_hex(&oid));
-		return !!ret;
-	}
 	if (command == REARRANGE_SQUASH && argc == 1)
 		return !!rearrange_squash();
 	if (command == ADD_EXEC && argc == 2)
 		return !!sequencer_add_exec_commands(argv[1]);
-	if (command == APPEND_TODO_HELP && argc == 1)
-		return !!append_todo_help_to_file(0, keep_empty);
 	if (command == EDIT_TODO && argc == 1)
 		return !!edit_todo_list(flags);
 	if (command == PREPARE_BRANCH && argc == 2)
 		return !!prepare_branch_to_be_rebased(&opts, argv[1]);
-	if (command == CHECKOUT_ONTO && argc == 4)
-		return !!checkout_onto(&opts, argv[1], argv[2], argv[3]);
 	if (command == COMPLETE_ACTION && argc == 6)
 		return !!complete_action(&opts, flags, argv[1], argv[2], argv[3],
 					 argv[4], argv[5], autosquash);
