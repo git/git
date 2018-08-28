@@ -62,7 +62,7 @@ static const char *prio_names[] = {
 	N_("head"), N_("lightweight"), N_("annotated"),
 };
 
-static int commit_name_cmp(const void *unused_cmp_data,
+static int commit_name_neq(const void *unused_cmp_data,
 			   const void *entry,
 			   const void *entry_or_key,
 			   const void *peeled)
@@ -70,7 +70,7 @@ static int commit_name_cmp(const void *unused_cmp_data,
 	const struct commit_name *cn1 = entry;
 	const struct commit_name *cn2 = entry_or_key;
 
-	return oidcmp(&cn1->peeled, peeled ? peeled : &cn2->peeled);
+	return !oideq(&cn1->peeled, peeled ? peeled : &cn2->peeled);
 }
 
 static inline struct commit_name *find_commit_name(const struct object_id *peeled)
@@ -596,7 +596,7 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 		return cmd_name_rev(args.argc, args.argv, prefix);
 	}
 
-	hashmap_init(&names, commit_name_cmp, NULL, 0);
+	hashmap_init(&names, commit_name_neq, NULL, 0);
 	for_each_rawref(get_name, NULL);
 	if (!hashmap_get_size(&names) && !always)
 		die(_("No names found, cannot describe anything."));
