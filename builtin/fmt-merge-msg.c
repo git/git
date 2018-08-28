@@ -78,9 +78,9 @@ static struct merge_parent *find_merge_parent(struct merge_parents *table,
 {
 	int i;
 	for (i = 0; i < table->nr; i++) {
-		if (given && oidcmp(&table->item[i].given, given))
+		if (given && !oideq(&table->item[i].given, given))
 			continue;
-		if (commit && oidcmp(&table->item[i].commit, commit))
+		if (commit && !oideq(&table->item[i].commit, commit))
 			continue;
 		return &table->item[i];
 	}

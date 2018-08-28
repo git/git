@@ -45,7 +45,7 @@ static int config_path_cmp(const void *unused_cmp_data,
 	const struct submodule_entry *b = entry_or_key;
 
 	return strcmp(a->config->path, b->config->path) ||
-	       oidcmp(&a->config->gitmodules_oid, &b->config->gitmodules_oid);
+	       !oideq(&a->config->gitmodules_oid, &b->config->gitmodules_oid);
 }
 
 static int config_name_cmp(const void *unused_cmp_data,
@@ -57,7 +57,7 @@ static int config_name_cmp(const void *unused_cmp_data,
 	const struct submodule_entry *b = entry_or_key;
 
 	return strcmp(a->config->name, b->config->name) ||
-	       oidcmp(&a->config->gitmodules_oid, &b->config->gitmodules_oid);
+	       !oideq(&a->config->gitmodules_oid, &b->config->gitmodules_oid);
 }
 
 static struct submodule_cache *submodule_cache_alloc(void)

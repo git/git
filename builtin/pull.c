@@ -902,7 +902,7 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 		oidclr(&curr_head);
 
 	if (!is_null_oid(&orig_head) && !is_null_oid(&curr_head) &&
-			oidcmp(&orig_head, &curr_head)) {
+			!oideq(&orig_head, &curr_head)) {
 		/*
 		 * The fetch involved updating the current branch.
 		 *

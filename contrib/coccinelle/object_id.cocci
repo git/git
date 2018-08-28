@@ -123,3 +123,9 @@ expression E1, E2;
 - hashcmp(E1, E2) == 0
 + hasheq(E1, E2)
   ...>}
+
+@@
+expression E1, E2;
+@@
+- oidcmp(E1, E2) != 0
++ !oideq(E1, E2)

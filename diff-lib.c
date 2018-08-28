@@ -342,7 +342,7 @@ static int show_modified(struct rev_info *revs,
 	}
 
 	if (revs->combine_merges && !cached &&
-	    (oidcmp(oid, &old_entry->oid) || oidcmp(&old_entry->oid, &new_entry->oid))) {
+	    (!oideq(oid, &old_entry->oid) || !oideq(&old_entry->oid, &new_entry->oid))) {
 		struct combine_diff_path *p;
 		int pathlen = ce_namelen(new_entry);
 

@@ -491,7 +491,7 @@ static struct combine_diff_path *ll_diff_tree_paths(
 						continue;
 
 					/* diff(t,pi) != ø */
-					if (oidcmp(t.entry.oid, tp[i].entry.oid) ||
+					if (!oideq(t.entry.oid, tp[i].entry.oid) ||
 					    (t.entry.mode != tp[i].entry.mode))
 						continue;
 

@@ -3765,7 +3765,7 @@ static int reuse_worktree_file(const char *name, const struct object_id *oid, in
 	 * This is not the sha1 we are looking for, or
 	 * unreusable because it is not a regular file.
 	 */
-	if (oidcmp(oid, &ce->oid) || !S_ISREG(ce->ce_mode))
+	if (!oideq(oid, &ce->oid) || !S_ISREG(ce->ce_mode))
 		return 0;
 
 	/*
@@ -4170,7 +4170,7 @@ static void fill_metainfo(struct strbuf *msg,
 	default:
 		*must_show_header = 0;
 	}
-	if (one && two && oidcmp(&one->oid, &two->oid)) {
+	if (one && two && !oideq(&one->oid, &two->oid)) {
 		const unsigned hexsz = the_hash_algo->hexsz;
 		int abbrev = o->flags.full_index ? hexsz : DEFAULT_ABBREV;
 
@@ -5457,7 +5457,7 @@ static void diff_resolve_rename_copy(void)
 			else
 				p->status = DIFF_STATUS_RENAMED;
 		}
-		else if (oidcmp(&p->one->oid, &p->two->oid) ||
+		else if (!oideq(&p->one->oid, &p->two->oid) ||
 			 p->one->mode != p->two->mode ||
 			 p->one->dirty_submodule ||
 			 p->two->dirty_submodule ||

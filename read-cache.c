@@ -2029,7 +2029,7 @@ int read_index_from(struct index_state *istate, const char *path,
 	base_oid_hex = oid_to_hex(&split_index->base_oid);
 	base_path = xstrfmt("%s/sharedindex.%s", gitdir, base_oid_hex);
 	ret = do_read_index(split_index->base, base_path, 1);
-	if (oidcmp(&split_index->base_oid, &split_index->base->oid))
+	if (!oideq(&split_index->base_oid, &split_index->base->oid))
 		die("broken index, expect %s in %s, got %s",
 		    base_oid_hex, base_path,
 		    oid_to_hex(&split_index->base->oid));

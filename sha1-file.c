@@ -825,7 +825,7 @@ int check_object_signature(const struct object_id *oid, void *map,
 
 	if (map) {
 		hash_object_file(map, size, type, &real_oid);
-		return oidcmp(oid, &real_oid) ? -1 : 0;
+		return !oideq(oid, &real_oid) ? -1 : 0;
 	}
 
 	st = open_istream(oid, &obj_type, &size, NULL);
@@ -852,7 +852,7 @@ int check_object_signature(const struct object_id *oid, void *map,
 	}
 	the_hash_algo->final_fn(real_oid.hash, &c);
 	close_istream(st);
-	return oidcmp(oid, &real_oid) ? -1 : 0;
+	return !oideq(oid, &real_oid) ? -1 : 0;
 }
 
 int git_open_cloexec(const char *name, int flags)
@@ -1671,7 +1671,7 @@ static int write_loose_object(const struct object_id *oid, char *hdr,
 		die(_("deflateEnd on object %s failed (%d)"), oid_to_hex(oid),
 		    ret);
 	the_hash_algo->final_fn(parano_oid.hash, &c);
-	if (oidcmp(oid, &parano_oid) != 0)
+	if (!oideq(oid, &parano_oid))
 		die(_("confused by unstable object source data for %s"),
 		    oid_to_hex(oid));
 

@@ -369,7 +369,7 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 		 * commit that is referenced by the tag, and not the tag
 		 * itself.
 		 */
-		if (oidcmp(&oid, &e->item->oid)) {
+		if (!oideq(&oid, &e->item->oid)) {
 			/*
 			 * Is this the positive end of a range expressed
 			 * in terms of a tag (e.g. v2.0 from the range

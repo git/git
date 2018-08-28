@@ -595,7 +595,7 @@ static struct commit_list *skip_away(struct commit_list *list, int count)
 
 	for (i = 0; cur; cur = cur->next, i++) {
 		if (i == index) {
-			if (oidcmp(&cur->item->object.oid, current_bad_oid))
+			if (!oideq(&cur->item->object.oid, current_bad_oid))
 				return cur;
 			if (previous)
 				return previous;

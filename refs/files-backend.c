@@ -841,7 +841,7 @@ static int verify_lock(struct ref_store *ref_store, struct ref_lock *lock,
 			return 0;
 		}
 	}
-	if (old_oid && oidcmp(&lock->old_oid, old_oid)) {
+	if (old_oid && !oideq(&lock->old_oid, old_oid)) {
 		strbuf_addf(err, "ref '%s' is at %s but expected %s",
 			    lock->ref_name,
 			    oid_to_hex(&lock->old_oid),

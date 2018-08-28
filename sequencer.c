@@ -1188,7 +1188,7 @@ static int parse_head(struct commit **head)
 		current_head = lookup_commit_reference(the_repository, &oid);
 		if (!current_head)
 			return error(_("could not parse HEAD"));
-		if (oidcmp(&oid, &current_head->object.oid)) {
+		if (!oideq(&oid, &current_head->object.oid)) {
 			warning(_("HEAD %s is not a commit!"),
 				oid_to_hex(&oid));
 		}
@@ -3034,7 +3034,7 @@ static int do_merge(struct commit *commit, const char *arg, int arg_len,
 		struct commit_list *p = commit->parents->next;
 
 		for (j = to_merge; j && p; j = j->next, p = p->next)
-			if (oidcmp(&j->item->object.oid,
+			if (!oideq(&j->item->object.oid,
 				   &p->item->object.oid)) {
 				can_fast_forward = 0;
 				break;
@@ -3566,7 +3566,7 @@ static int commit_staged_changes(struct replay_opts *opts,
 		if (get_oid_hex(rev.buf, &to_amend))
 			return error(_("invalid contents: '%s'"),
 				rebase_path_amend());
-		if (!is_clean && oidcmp(&head, &to_amend))
+		if (!is_clean && !oideq(&head, &to_amend))
 			return error(_("\nYou have uncommitted changes in your "
 				       "working tree. Please, commit them\n"
 				       "first and then run 'git rebase "
@@ -4545,7 +4545,7 @@ int skip_unnecessary_picks(void)
 		if (item->commit->parents->next)
 			break; /* merge commit */
 		parent_oid = &item->commit->parents->item->object.oid;
-		if (oidcmp(parent_oid, oid))
+		if (!oideq(parent_oid, oid))
 			break;
 		oid = &item->commit->object.oid;
 	}

@@ -559,7 +559,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	    ref_transaction_commit(transaction, &err))
 		die("%s", err.buf);
 	ref_transaction_free(transaction);
-	if (force && !is_null_oid(&prev) && oidcmp(&prev, &object))
+	if (force && !is_null_oid(&prev) && !oideq(&prev, &object))
 		printf(_("Updated tag '%s' (was %s)\n"), tag,
 		       find_unique_abbrev(&prev, DEFAULT_ABBREV));
 

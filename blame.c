@@ -1832,7 +1832,7 @@ void setup_scoreboard(struct blame_scoreboard *sb,
 
 		sb->revs->children.name = "children";
 		while (c->parents &&
-		       oidcmp(&c->object.oid, &sb->final->object.oid)) {
+		       !oideq(&c->object.oid, &sb->final->object.oid)) {
 			struct commit_list *l = xcalloc(1, sizeof(*l));
 
 			l->item = c;
@@ -1842,7 +1842,7 @@ void setup_scoreboard(struct blame_scoreboard *sb,
 			c = c->parents->item;
 		}
 
-		if (oidcmp(&c->object.oid, &sb->final->object.oid))
+		if (!oideq(&c->object.oid, &sb->final->object.oid))
 			die(_("--reverse --first-parent together require range along first-parent chain"));
 	}
 

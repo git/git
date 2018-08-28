@@ -1521,7 +1521,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			 * HEAD^^" would be missed.
 			 */
 			common_one = get_merge_bases(head_commit, j->item);
-			if (oidcmp(&common_one->item->object.oid, &j->item->object.oid)) {
+			if (!oideq(&common_one->item->object.oid, &j->item->object.oid)) {
 				up_to_date = 0;
 				break;
 			}

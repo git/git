@@ -206,7 +206,7 @@ static void note_tree_remove(struct notes_tree *t,
 	if (GET_PTR_TYPE(*p) != PTR_TYPE_NOTE)
 		return; /* type mismatch, nothing to remove */
 	l = (struct leaf_node *) CLR_PTR_TYPE(*p);
-	if (oidcmp(&l->key_oid, &entry->key_oid))
+	if (!oideq(&l->key_oid, &entry->key_oid))
 		return; /* key mismatch, nothing to remove */
 
 	/* we have found a matching entry */

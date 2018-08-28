@@ -286,7 +286,7 @@ static int find_identical_files(struct hashmap *srcs,
 		struct diff_filespec *source = p->filespec;
 
 		/* False hash collision? */
-		if (oidcmp(&source->oid, &target->oid))
+		if (!oideq(&source->oid, &target->oid))
 			continue;
 		/* Non-regular files? If so, the modes must match! */
 		if (!S_ISREG(source->mode) || !S_ISREG(target->mode)) {
