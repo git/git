@@ -15,10 +15,10 @@ expression c;
 identifier f !~ "^(get_commit_tree|get_commit_tree_in_graph_one|load_tree_for_commit)$";
 expression c;
 @@
-  f(...) {...
+  f(...) {<...
 - c->maybe_tree
 + get_commit_tree(c)
-  ...}
+  ...>}
 
 @@
 expression c;

@@ -4545,7 +4545,7 @@ int skip_unnecessary_picks(void)
 		if (item->commit->parents->next)
 			break; /* merge commit */
 		parent_oid = &item->commit->parents->item->object.oid;
-		if (hashcmp(parent_oid->hash, oid->hash))
+		if (oidcmp(parent_oid, oid))
 			break;
 		oid = &item->commit->object.oid;
 	}
