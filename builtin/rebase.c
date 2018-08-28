@@ -246,6 +246,37 @@ static int read_basic_state(struct rebase_options *opts)
 	return 0;
 }
 
+static int write_basic_state(struct rebase_options *opts)
+{
+	write_file(state_dir_path("head-name", opts), "%s",
+		   opts->head_name ? opts->head_name : "detached HEAD");
+	write_file(state_dir_path("onto", opts), "%s",
+		   opts->onto ? oid_to_hex(&opts->onto->object.oid) : "");
+	write_file(state_dir_path("orig-head", opts), "%s",
+		   oid_to_hex(&opts->orig_head));
+	write_file(state_dir_path("quiet", opts), "%s",
+		   opts->flags & REBASE_NO_QUIET ? "" : "t");
+	if (opts->flags & REBASE_VERBOSE)
+		write_file(state_dir_path("verbose", opts), "");
+	if (opts->strategy)
+		write_file(state_dir_path("strategy", opts), "%s",
+			   opts->strategy);
+	if (opts->strategy_opts)
+		write_file(state_dir_path("strategy_opts", opts), "%s",
+			   opts->strategy_opts);
+	if (opts->allow_rerere_autoupdate >= 0)
+		write_file(state_dir_path("allow_rerere_autoupdate", opts),
+			   "-%s-rerere-autoupdate",
+			   opts->allow_rerere_autoupdate ? "" : "-no");
+	if (opts->gpg_sign_opt)
+		write_file(state_dir_path("gpg_sign_opt", opts), "%s",
+			   opts->gpg_sign_opt);
+	if (opts->signoff)
+		write_file(state_dir_path("strategy", opts), "--signoff");
+
+	return 0;
+}
+
 static int apply_autostash(struct rebase_options *opts)
 {
 	const char *path = state_dir_path("autostash", opts);
@@ -331,199 +362,6 @@ static void add_var(struct strbuf *buf, const char *name, const char *value)
 		sq_quote_buf(buf, value);
 		strbuf_addstr(buf, "; ");
 	}
-}
-
-static const char *resolvemsg =
-N_("Resolve all conflicts manually, mark them as resolved with\n"
-"\"git add/rm <conflicted_files>\", then run \"git rebase --continue\".\n"
-"You can instead skip this commit: run \"git rebase --skip\".\n"
-"To abort and get back to the state before \"git rebase\", run "
-"\"git rebase --abort\".");
-
-static int run_specific_rebase(struct rebase_options *opts)
-{
-	const char *argv[] = { NULL, NULL };
-	struct strbuf script_snippet = STRBUF_INIT, buf = STRBUF_INIT;
-	int status;
-	const char *backend, *backend_func;
-
-	if (opts->type == REBASE_INTERACTIVE) {
-		/* Run builtin interactive rebase */
-		struct child_process child = CHILD_PROCESS_INIT;
-
-		argv_array_pushf(&child.env_array, "GIT_CHERRY_PICK_HELP=%s",
-				 resolvemsg);
-		if (!(opts->flags & REBASE_INTERACTIVE_EXPLICIT)) {
-			argv_array_push(&child.env_array, "GIT_EDITOR=:");
-			opts->autosquash = 0;
-		}
-
-		child.git_cmd = 1;
-		argv_array_push(&child.args, "rebase--interactive");
-
-		if (opts->action)
-			argv_array_pushf(&child.args, "--%s", opts->action);
-		if (opts->keep_empty)
-			argv_array_push(&child.args, "--keep-empty");
-		if (opts->rebase_merges)
-			argv_array_push(&child.args, "--rebase-merges");
-		if (opts->rebase_cousins)
-			argv_array_push(&child.args, "--rebase-cousins");
-		if (opts->autosquash)
-			argv_array_push(&child.args, "--autosquash");
-		if (opts->flags & REBASE_VERBOSE)
-			argv_array_push(&child.args, "--verbose");
-		if (opts->flags & REBASE_FORCE)
-			argv_array_push(&child.args, "--no-ff");
-		if (opts->restrict_revision)
-			argv_array_pushf(&child.args,
-					 "--restrict-revision=^%s",
-					 oid_to_hex(&opts->restrict_revision->object.oid));
-		if (opts->upstream)
-			argv_array_pushf(&child.args, "--upstream=%s",
-					 oid_to_hex(&opts->upstream->object.oid));
-		if (opts->onto)
-			argv_array_pushf(&child.args, "--onto=%s",
-					 oid_to_hex(&opts->onto->object.oid));
-		if (opts->squash_onto)
-			argv_array_pushf(&child.args, "--squash-onto=%s",
-					 oid_to_hex(opts->squash_onto));
-		if (opts->onto_name)
-			argv_array_pushf(&child.args, "--onto-name=%s",
-					 opts->onto_name);
-		argv_array_pushf(&child.args, "--head-name=%s",
-				 opts->head_name ?
-				 opts->head_name : "detached HEAD");
-		if (opts->strategy)
-			argv_array_pushf(&child.args, "--strategy=%s",
-					 opts->strategy);
-		if (opts->strategy_opts)
-			argv_array_pushf(&child.args, "--strategy-opts=%s",
-					 opts->strategy_opts);
-		if (opts->switch_to)
-			argv_array_pushf(&child.args, "--switch-to=%s",
-					 opts->switch_to);
-		if (opts->cmd)
-			argv_array_pushf(&child.args, "--cmd=%s", opts->cmd);
-		if (opts->allow_empty_message)
-			argv_array_push(&child.args, "--allow-empty-message");
-		if (opts->allow_rerere_autoupdate > 0)
-			argv_array_push(&child.args, "--rerere-autoupdate");
-		else if (opts->allow_rerere_autoupdate == 0)
-			argv_array_push(&child.args, "--no-rerere-autoupdate");
-		if (opts->gpg_sign_opt)
-			argv_array_push(&child.args, opts->gpg_sign_opt);
-		if (opts->signoff)
-			argv_array_push(&child.args, "--signoff");
-
-		status = run_command(&child);
-		goto finished_rebase;
-	}
-
-	add_var(&script_snippet, "GIT_DIR", absolute_path(get_git_dir()));
-	add_var(&script_snippet, "state_dir", opts->state_dir);
-
-	add_var(&script_snippet, "upstream_name", opts->upstream_name);
-	add_var(&script_snippet, "upstream", opts->upstream ?
-		oid_to_hex(&opts->upstream->object.oid) : NULL);
-	add_var(&script_snippet, "head_name",
-		opts->head_name ? opts->head_name : "detached HEAD");
-	add_var(&script_snippet, "orig_head", oid_to_hex(&opts->orig_head));
-	add_var(&script_snippet, "onto", opts->onto ?
-		oid_to_hex(&opts->onto->object.oid) : NULL);
-	add_var(&script_snippet, "onto_name", opts->onto_name);
-	add_var(&script_snippet, "revisions", opts->revisions);
-	add_var(&script_snippet, "restrict_revision", opts->restrict_revision ?
-		oid_to_hex(&opts->restrict_revision->object.oid) : NULL);
-	add_var(&script_snippet, "GIT_QUIET",
-		opts->flags & REBASE_NO_QUIET ? "" : "t");
-	sq_quote_argv_pretty(&buf, opts->git_am_opts.argv);
-	add_var(&script_snippet, "git_am_opt", buf.buf);
-	strbuf_release(&buf);
-	add_var(&script_snippet, "verbose",
-		opts->flags & REBASE_VERBOSE ? "t" : "");
-	add_var(&script_snippet, "diffstat",
-		opts->flags & REBASE_DIFFSTAT ? "t" : "");
-	add_var(&script_snippet, "force_rebase",
-		opts->flags & REBASE_FORCE ? "t" : "");
-	if (opts->switch_to)
-		add_var(&script_snippet, "switch_to", opts->switch_to);
-	add_var(&script_snippet, "action", opts->action ? opts->action : "");
-	add_var(&script_snippet, "signoff", opts->signoff ? "--signoff" : "");
-	add_var(&script_snippet, "allow_rerere_autoupdate",
-		opts->allow_rerere_autoupdate < 0 ? "" :
-		opts->allow_rerere_autoupdate ?
-		"--rerere-autoupdate" : "--no-rerere-autoupdate");
-	add_var(&script_snippet, "keep_empty", opts->keep_empty ? "yes" : "");
-	add_var(&script_snippet, "autosquash", opts->autosquash ? "t" : "");
-	add_var(&script_snippet, "gpg_sign_opt", opts->gpg_sign_opt);
-	add_var(&script_snippet, "cmd", opts->cmd);
-	add_var(&script_snippet, "allow_empty_message",
-		opts->allow_empty_message ?  "--allow-empty-message" : "");
-	add_var(&script_snippet, "rebase_merges",
-		opts->rebase_merges ? "t" : "");
-	add_var(&script_snippet, "rebase_cousins",
-		opts->rebase_cousins ? "t" : "");
-	add_var(&script_snippet, "strategy", opts->strategy);
-	add_var(&script_snippet, "strategy_opts", opts->strategy_opts);
-	add_var(&script_snippet, "rebase_root", opts->root ? "t" : "");
-	add_var(&script_snippet, "squash_onto",
-		opts->squash_onto ? oid_to_hex(opts->squash_onto) : "");
-	add_var(&script_snippet, "git_format_patch_opt",
-		opts->git_format_patch_opt.buf);
-
-	if (is_interactive(opts) &&
-	    !(opts->flags & REBASE_INTERACTIVE_EXPLICIT)) {
-		strbuf_addstr(&script_snippet,
-			      "GIT_EDITOR=:; export GIT_EDITOR; ");
-		opts->autosquash = 0;
-	}
-
-	switch (opts->type) {
-	case REBASE_AM:
-		backend = "git-rebase--am";
-		backend_func = "git_rebase__am";
-		break;
-	case REBASE_MERGE:
-		backend = "git-rebase--merge";
-		backend_func = "git_rebase__merge";
-		break;
-	case REBASE_PRESERVE_MERGES:
-		backend = "git-rebase--preserve-merges";
-		backend_func = "git_rebase__preserve_merges";
-		break;
-	default:
-		BUG("Unhandled rebase type %d", opts->type);
-		break;
-	}
-
-	strbuf_addf(&script_snippet,
-		    ". git-sh-setup && . git-rebase--common &&"
-		    " . %s && %s", backend, backend_func);
-	argv[0] = script_snippet.buf;
-
-	status = run_command_v_opt(argv, RUN_USING_SHELL);
-finished_rebase:
-	if (opts->dont_finish_rebase)
-		; /* do nothing */
-	else if (opts->type == REBASE_INTERACTIVE)
-		; /* interactive rebase cleans up after itself */
-	else if (status == 0) {
-		if (!file_exists(state_dir_path("stopped-sha", opts)))
-			finish_rebase(opts);
-	} else if (status == 2) {
-		struct strbuf dir = STRBUF_INIT;
-
-		apply_autostash(opts);
-		strbuf_addstr(&dir, opts->state_dir);
-		remove_dir_recursively(&dir, 0);
-		strbuf_release(&dir);
-		die("Nothing to do");
-	}
-
-	strbuf_release(&script_snippet);
-
-	return status ? -1 : 0;
 }
 
 #define GIT_REFLOG_ACTION_ENVIRONMENT "GIT_REFLOG_ACTION"
@@ -643,6 +481,342 @@ leave_reset_head:
 	while (nr)
 		free((void *)desc[--nr].buffer);
 	return ret;
+}
+
+static int move_to_original_branch(struct rebase_options *opts)
+{
+	struct strbuf buf = STRBUF_INIT;
+	int ret;
+
+	if (opts->head_name && opts->onto)
+		strbuf_addf(&buf, "rebase finished: %s onto %s",
+			    opts->head_name,
+			    oid_to_hex(&opts->onto->object.oid));
+	ret = reset_head(NULL, "checkout", opts->head_name, 0,
+			 "HEAD", buf.buf);
+
+	strbuf_release(&buf);
+	return ret;
+}
+
+static const char *resolvemsg =
+N_("Resolve all conflicts manually, mark them as resolved with\n"
+"\"git add/rm <conflicted_files>\", then run \"git rebase --continue\".\n"
+"You can instead skip this commit: run \"git rebase --skip\".\n"
+"To abort and get back to the state before \"git rebase\", run "
+"\"git rebase --abort\".");
+
+static int run_am(struct rebase_options *opts)
+{
+	struct child_process am = CHILD_PROCESS_INIT;
+	struct child_process format_patch = CHILD_PROCESS_INIT;
+	struct strbuf revisions = STRBUF_INIT;
+	int status;
+	char *rebased_patches;
+
+	am.git_cmd = 1;
+	argv_array_push(&am.args, "am");
+
+	if (opts->action && !strcmp("continue", opts->action)) {
+		argv_array_push(&am.args, "--resolved");
+		argv_array_pushf(&am.args, "--resolvemsg=%s", resolvemsg);
+		if (opts->gpg_sign_opt)
+			argv_array_push(&am.args, opts->gpg_sign_opt);
+		status = run_command(&am);
+		if (status)
+			return status;
+
+		discard_cache();
+		return move_to_original_branch(opts);
+	}
+	if (opts->action && !strcmp("skip", opts->action)) {
+		argv_array_push(&am.args, "--skip");
+		argv_array_pushf(&am.args, "--resolvemsg=%s", resolvemsg);
+		status = run_command(&am);
+		if (status)
+			return status;
+
+		discard_cache();
+		return move_to_original_branch(opts);
+	}
+	if (opts->action && !strcmp("show-current-patch", opts->action)) {
+		argv_array_push(&am.args, "--show-current-patch");
+		return run_command(&am);
+	}
+
+	strbuf_addf(&revisions, "%s...%s",
+		    oid_to_hex(opts->root ?
+			       /* this is now equivalent to ! -z "$upstream" */
+			       &opts->onto->object.oid :
+			       &opts->upstream->object.oid),
+		    oid_to_hex(&opts->orig_head));
+
+	rebased_patches = xstrdup(git_path("rebased-patches"));
+	format_patch.out = open(rebased_patches, O_WRONLY | O_CREAT, 0666);
+	if (format_patch.out < 0) {
+		status = error_errno(_("could not write '%s'"),
+				     rebased_patches);
+		free(rebased_patches);
+		argv_array_clear(&am.args);
+		return status;
+	}
+
+	format_patch.git_cmd = 1;
+	argv_array_pushl(&format_patch.args, "format-patch", "-k", "--stdout",
+			 "--full-index", "--cherry-pick", "--right-only",
+			 "--src-prefix=a/", "--dst-prefix=b/", "--no-renames",
+			 "--no-cover-letter", "--pretty=mboxrd", NULL);
+	if (opts->git_format_patch_opt.len)
+		argv_array_split(&format_patch.args,
+				 opts->git_format_patch_opt.buf);
+	argv_array_push(&format_patch.args, revisions.buf);
+	if (opts->restrict_revision)
+		argv_array_pushf(&format_patch.args, "^%s",
+				 oid_to_hex(&opts->restrict_revision->object.oid));
+
+	status = run_command(&format_patch);
+	if (status) {
+		unlink(rebased_patches);
+		free(rebased_patches);
+		argv_array_clear(&am.args);
+
+		reset_head(&opts->orig_head, "checkout", opts->head_name, 0,
+			   "HEAD", NULL);
+		error(_("\ngit encountered an error while preparing the "
+			"patches to replay\n"
+			"these revisions:\n"
+			"\n    %s\n\n"
+			"As a result, git cannot rebase them."),
+		      opts->revisions);
+
+		strbuf_release(&revisions);
+		return status;
+	}
+	strbuf_release(&revisions);
+
+	am.in = open(rebased_patches, O_RDONLY);
+	if (am.in < 0) {
+		status = error_errno(_("could not read '%s'"),
+				     rebased_patches);
+		free(rebased_patches);
+		argv_array_clear(&am.args);
+		return status;
+	}
+
+	argv_array_pushv(&am.args, opts->git_am_opts.argv);
+	argv_array_push(&am.args, "--rebasing");
+	argv_array_pushf(&am.args, "--resolvemsg=%s", resolvemsg);
+	argv_array_push(&am.args, "--patch-format=mboxrd");
+	if (opts->allow_rerere_autoupdate > 0)
+		argv_array_push(&am.args, "--rerere-autoupdate");
+	else if (opts->allow_rerere_autoupdate == 0)
+		argv_array_push(&am.args, "--no-rerere-autoupdate");
+	if (opts->gpg_sign_opt)
+		argv_array_push(&am.args, opts->gpg_sign_opt);
+	status = run_command(&am);
+	unlink(rebased_patches);
+	free(rebased_patches);
+
+	if (!status) {
+		discard_cache();
+		return move_to_original_branch(opts);
+	}
+
+	if (is_directory(opts->state_dir))
+		write_basic_state(opts);
+
+	return status;
+}
+
+static int run_specific_rebase(struct rebase_options *opts)
+{
+	const char *argv[] = { NULL, NULL };
+	struct strbuf script_snippet = STRBUF_INIT, buf = STRBUF_INIT;
+	int status;
+	const char *backend, *backend_func;
+
+	if (opts->type == REBASE_INTERACTIVE) {
+		/* Run builtin interactive rebase */
+		struct child_process child = CHILD_PROCESS_INIT;
+
+		argv_array_pushf(&child.env_array, "GIT_CHERRY_PICK_HELP=%s",
+				 resolvemsg);
+		if (!(opts->flags & REBASE_INTERACTIVE_EXPLICIT)) {
+			argv_array_push(&child.env_array, "GIT_EDITOR=:");
+			opts->autosquash = 0;
+		}
+
+		child.git_cmd = 1;
+		argv_array_push(&child.args, "rebase--interactive");
+
+		if (opts->action)
+			argv_array_pushf(&child.args, "--%s", opts->action);
+		if (opts->keep_empty)
+			argv_array_push(&child.args, "--keep-empty");
+		if (opts->rebase_merges)
+			argv_array_push(&child.args, "--rebase-merges");
+		if (opts->rebase_cousins)
+			argv_array_push(&child.args, "--rebase-cousins");
+		if (opts->autosquash)
+			argv_array_push(&child.args, "--autosquash");
+		if (opts->flags & REBASE_VERBOSE)
+			argv_array_push(&child.args, "--verbose");
+		if (opts->flags & REBASE_FORCE)
+			argv_array_push(&child.args, "--no-ff");
+		if (opts->restrict_revision)
+			argv_array_pushf(&child.args,
+					 "--restrict-revision=^%s",
+					 oid_to_hex(&opts->restrict_revision->object.oid));
+		if (opts->upstream)
+			argv_array_pushf(&child.args, "--upstream=%s",
+					 oid_to_hex(&opts->upstream->object.oid));
+		if (opts->onto)
+			argv_array_pushf(&child.args, "--onto=%s",
+					 oid_to_hex(&opts->onto->object.oid));
+		if (opts->squash_onto)
+			argv_array_pushf(&child.args, "--squash-onto=%s",
+					 oid_to_hex(opts->squash_onto));
+		if (opts->onto_name)
+			argv_array_pushf(&child.args, "--onto-name=%s",
+					 opts->onto_name);
+		argv_array_pushf(&child.args, "--head-name=%s",
+				 opts->head_name ?
+				 opts->head_name : "detached HEAD");
+		if (opts->strategy)
+			argv_array_pushf(&child.args, "--strategy=%s",
+					 opts->strategy);
+		if (opts->strategy_opts)
+			argv_array_pushf(&child.args, "--strategy-opts=%s",
+					 opts->strategy_opts);
+		if (opts->switch_to)
+			argv_array_pushf(&child.args, "--switch-to=%s",
+					 opts->switch_to);
+		if (opts->cmd)
+			argv_array_pushf(&child.args, "--cmd=%s", opts->cmd);
+		if (opts->allow_empty_message)
+			argv_array_push(&child.args, "--allow-empty-message");
+		if (opts->allow_rerere_autoupdate > 0)
+			argv_array_push(&child.args, "--rerere-autoupdate");
+		else if (opts->allow_rerere_autoupdate == 0)
+			argv_array_push(&child.args, "--no-rerere-autoupdate");
+		if (opts->gpg_sign_opt)
+			argv_array_push(&child.args, opts->gpg_sign_opt);
+		if (opts->signoff)
+			argv_array_push(&child.args, "--signoff");
+
+		status = run_command(&child);
+		goto finished_rebase;
+	}
+
+	if (opts->type == REBASE_AM) {
+		status = run_am(opts);
+		goto finished_rebase;
+	}
+
+	add_var(&script_snippet, "GIT_DIR", absolute_path(get_git_dir()));
+	add_var(&script_snippet, "state_dir", opts->state_dir);
+
+	add_var(&script_snippet, "upstream_name", opts->upstream_name);
+	add_var(&script_snippet, "upstream", opts->upstream ?
+		oid_to_hex(&opts->upstream->object.oid) : NULL);
+	add_var(&script_snippet, "head_name",
+		opts->head_name ? opts->head_name : "detached HEAD");
+	add_var(&script_snippet, "orig_head", oid_to_hex(&opts->orig_head));
+	add_var(&script_snippet, "onto", opts->onto ?
+		oid_to_hex(&opts->onto->object.oid) : NULL);
+	add_var(&script_snippet, "onto_name", opts->onto_name);
+	add_var(&script_snippet, "revisions", opts->revisions);
+	add_var(&script_snippet, "restrict_revision", opts->restrict_revision ?
+		oid_to_hex(&opts->restrict_revision->object.oid) : NULL);
+	add_var(&script_snippet, "GIT_QUIET",
+		opts->flags & REBASE_NO_QUIET ? "" : "t");
+	sq_quote_argv_pretty(&buf, opts->git_am_opts.argv);
+	add_var(&script_snippet, "git_am_opt", buf.buf);
+	strbuf_release(&buf);
+	add_var(&script_snippet, "verbose",
+		opts->flags & REBASE_VERBOSE ? "t" : "");
+	add_var(&script_snippet, "diffstat",
+		opts->flags & REBASE_DIFFSTAT ? "t" : "");
+	add_var(&script_snippet, "force_rebase",
+		opts->flags & REBASE_FORCE ? "t" : "");
+	if (opts->switch_to)
+		add_var(&script_snippet, "switch_to", opts->switch_to);
+	add_var(&script_snippet, "action", opts->action ? opts->action : "");
+	add_var(&script_snippet, "signoff", opts->signoff ? "--signoff" : "");
+	add_var(&script_snippet, "allow_rerere_autoupdate",
+		opts->allow_rerere_autoupdate < 0 ? "" :
+		opts->allow_rerere_autoupdate ?
+		"--rerere-autoupdate" : "--no-rerere-autoupdate");
+	add_var(&script_snippet, "keep_empty", opts->keep_empty ? "yes" : "");
+	add_var(&script_snippet, "autosquash", opts->autosquash ? "t" : "");
+	add_var(&script_snippet, "gpg_sign_opt", opts->gpg_sign_opt);
+	add_var(&script_snippet, "cmd", opts->cmd);
+	add_var(&script_snippet, "allow_empty_message",
+		opts->allow_empty_message ?  "--allow-empty-message" : "");
+	add_var(&script_snippet, "rebase_merges",
+		opts->rebase_merges ? "t" : "");
+	add_var(&script_snippet, "rebase_cousins",
+		opts->rebase_cousins ? "t" : "");
+	add_var(&script_snippet, "strategy", opts->strategy);
+	add_var(&script_snippet, "strategy_opts", opts->strategy_opts);
+	add_var(&script_snippet, "rebase_root", opts->root ? "t" : "");
+	add_var(&script_snippet, "squash_onto",
+		opts->squash_onto ? oid_to_hex(opts->squash_onto) : "");
+	add_var(&script_snippet, "git_format_patch_opt",
+		opts->git_format_patch_opt.buf);
+
+	if (is_interactive(opts) &&
+	    !(opts->flags & REBASE_INTERACTIVE_EXPLICIT)) {
+		strbuf_addstr(&script_snippet,
+			      "GIT_EDITOR=:; export GIT_EDITOR; ");
+		opts->autosquash = 0;
+	}
+
+	switch (opts->type) {
+	case REBASE_AM:
+		backend = "git-rebase--am";
+		backend_func = "git_rebase__am";
+		break;
+	case REBASE_MERGE:
+		backend = "git-rebase--merge";
+		backend_func = "git_rebase__merge";
+		break;
+	case REBASE_PRESERVE_MERGES:
+		backend = "git-rebase--preserve-merges";
+		backend_func = "git_rebase__preserve_merges";
+		break;
+	default:
+		BUG("Unhandled rebase type %d", opts->type);
+		break;
+	}
+
+	strbuf_addf(&script_snippet,
+		    ". git-sh-setup && . git-rebase--common &&"
+		    " . %s && %s", backend, backend_func);
+	argv[0] = script_snippet.buf;
+
+	status = run_command_v_opt(argv, RUN_USING_SHELL);
+finished_rebase:
+	if (opts->dont_finish_rebase)
+		; /* do nothing */
+	else if (opts->type == REBASE_INTERACTIVE)
+		; /* interactive rebase cleans up after itself */
+	else if (status == 0) {
+		if (!file_exists(state_dir_path("stopped-sha", opts)))
+			finish_rebase(opts);
+	} else if (status == 2) {
+		struct strbuf dir = STRBUF_INIT;
+
+		apply_autostash(opts);
+		strbuf_addstr(&dir, opts->state_dir);
+		remove_dir_recursively(&dir, 0);
+		strbuf_release(&dir);
+		die("Nothing to do");
+	}
+
+	strbuf_release(&script_snippet);
+
+	return status ? -1 : 0;
 }
 
 static int rebase_config(const char *var, const char *value, void *data)
