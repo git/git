@@ -149,6 +149,10 @@ version, and the sorting the conflict hunks, both for the outer and the
 inner conflict.  This is done recursively, so any number of nested
 conflicts can be handled.
 
+Note that this only works for conflict markers that "cleanly nest".  If
+there are any unmatched conflict markers, rerere will fail to handle
+the conflict and record a conflict resolution.
+
 The only difference is in how the conflict ID is calculated.  For the
 inner conflict, the conflict markers themselves are not stripped out
 before calculating the sha1.
