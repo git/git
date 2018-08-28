@@ -2213,7 +2213,7 @@ static int check_stream_sha1(git_zstream *stream,
 	}
 
 	the_hash_algo->final_fn(real_sha1, &c);
-	if (hashcmp(expected_sha1, real_sha1)) {
+	if (!hasheq(expected_sha1, real_sha1)) {
 		error(_("sha1 mismatch for %s (expected %s)"), path,
 		      sha1_to_hex(expected_sha1));
 		return -1;

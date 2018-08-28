@@ -900,7 +900,7 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g)
 	f = hashfd(devnull, NULL);
 	hashwrite(f, g->data, g->data_len - g->hash_len);
 	finalize_hashfile(f, checksum.hash, CSUM_CLOSE);
-	if (hashcmp(checksum.hash, g->data + g->data_len - g->hash_len)) {
+	if (!hasheq(checksum.hash, g->data + g->data_len - g->hash_len)) {
 		graph_report(_("the commit-graph file has incorrect checksum and is likely corrupt"));
 		verify_commit_graph_error = VERIFY_COMMIT_GRAPH_ERROR_HASH;
 	}

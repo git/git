@@ -517,7 +517,7 @@ static int open_packed_git_1(struct packed_git *p)
 	if (read_result != hashsz)
 		return error("packfile %s signature is unavailable", p->pack_name);
 	idx_hash = ((unsigned char *)p->index_data) + p->index_size - hashsz * 2;
-	if (hashcmp(hash, idx_hash))
+	if (!hasheq(hash, idx_hash))
 		return error("packfile %s does not match index", p->pack_name);
 	return 0;
 }

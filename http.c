@@ -2394,7 +2394,7 @@ int finish_http_object_request(struct http_object_request *freq)
 		unlink_or_warn(freq->tmpfile.buf);
 		return -1;
 	}
-	if (hashcmp(freq->sha1, freq->real_sha1)) {
+	if (!hasheq(freq->sha1, freq->real_sha1)) {
 		unlink_or_warn(freq->tmpfile.buf);
 		return -1;
 	}

@@ -260,7 +260,7 @@ void fixup_pack_header_footer(int pack_fd,
 		if (partial_pack_offset == 0) {
 			unsigned char hash[GIT_MAX_RAWSZ];
 			the_hash_algo->final_fn(hash, &old_hash_ctx);
-			if (hashcmp(hash, partial_pack_hash) != 0)
+			if (!hasheq(hash, partial_pack_hash))
 				die("Unexpected checksum for %s "
 				    "(disk corruption?)", pack_name);
 			/*

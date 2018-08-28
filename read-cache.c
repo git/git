@@ -1668,7 +1668,7 @@ static int verify_hdr(struct cache_header *hdr, unsigned long size)
 	the_hash_algo->init_fn(&c);
 	the_hash_algo->update_fn(&c, hdr, size - the_hash_algo->rawsz);
 	the_hash_algo->final_fn(hash, &c);
-	if (hashcmp(hash, (unsigned char *)hdr + size - the_hash_algo->rawsz))
+	if (!hasheq(hash, (unsigned char *)hdr + size - the_hash_algo->rawsz))
 		return error("bad index file sha1 signature");
 	return 0;
 }
@@ -2395,7 +2395,7 @@ static int verify_index_from(const struct index_state *istate, const char *path)
 	if (n != the_hash_algo->rawsz)
 		goto out;
 
-	if (hashcmp(istate->oid.hash, hash))
+	if (!hasheq(istate->oid.hash, hash))
 		goto out;
 
 	close(fd);
