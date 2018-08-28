@@ -1553,6 +1553,7 @@ void wt_status_get_state(struct wt_status_state *state,
 	struct object_id oid;
 
 	if (!stat(git_path_merge_head(the_repository), &st)) {
+		wt_status_check_rebase(NULL, state);
 		state->merge_in_progress = 1;
 	} else if (wt_status_check_rebase(NULL, state)) {
 		;		/* all set */
@@ -1576,9 +1577,13 @@ static void wt_longstatus_print_state(struct wt_status *s,
 				      struct wt_status_state *state)
 {
 	const char *state_color = color(WT_STATUS_HEADER, s);
-	if (state->merge_in_progress)
+	if (state->merge_in_progress) {
+		if (state->rebase_interactive_in_progress) {
+			show_rebase_information(s, state, state_color);
+			fputs("\n", s->fp);
+		}
 		show_merge_in_progress(s, state, state_color);
-	else if (state->am_in_progress)
+	} else if (state->am_in_progress)
 		show_am_in_progress(s, state, state_color);
 	else if (state->rebase_in_progress || state->rebase_interactive_in_progress)
 		show_rebase_in_progress(s, state, state_color);

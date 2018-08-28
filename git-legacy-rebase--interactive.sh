@@ -95,11 +95,11 @@ git_sequence_editor () {
 }
 
 expand_todo_ids() {
-	git rebase--helper --expand-ids
+	git rebase--interactive --expand-ids
 }
 
 collapse_todo_ids() {
-	git rebase--helper --shorten-ids
+	git rebase--interactive --shorten-ids
 }
 
 # Switch to the branch in $into and notify it in the reflog
@@ -131,12 +131,12 @@ get_missing_commit_check_level () {
 initiate_action () {
 	case "$1" in
 	continue)
-		exec git rebase--helper ${force_rebase:+--no-ff} $allow_empty_message \
+		exec git rebase--interactive ${force_rebase:+--no-ff} $allow_empty_message \
 		     --continue
 		;;
 	skip)
 		git rerere clear
-		exec git rebase--helper ${force_rebase:+--no-ff} $allow_empty_message \
+		exec git rebase--interactive ${force_rebase:+--no-ff} $allow_empty_message \
 		     --continue
 		;;
 	edit-todo)
@@ -207,8 +207,8 @@ init_revisions_and_shortrevisions () {
 
 complete_action() {
 	test -s "$todo" || echo noop >> "$todo"
-	test -z "$autosquash" || git rebase--helper --rearrange-squash || exit
-	test -n "$cmd" && git rebase--helper --add-exec-commands "$cmd"
+	test -z "$autosquash" || git rebase--interactive --rearrange-squash || exit
+	test -n "$cmd" && git rebase--interactive --add-exec-commands --cmd "$cmd"
 
 	todocount=$(git stripspace --strip-comments <"$todo" | wc -l)
 	todocount=${todocount##* }
@@ -243,7 +243,7 @@ EOF
 	has_action "$todo" ||
 		return 2
 
-	git rebase--helper --check-todo-list || {
+	git rebase--interactive --check-todo-list || {
 		ret=$?
 		checkout_onto
 		exit $ret
@@ -252,12 +252,12 @@ EOF
 	expand_todo_ids
 
 	test -n "$force_rebase" ||
-	onto="$(git rebase--helper --skip-unnecessary-picks)" ||
+	onto="$(git rebase--interactive --skip-unnecessary-picks)" ||
 	die "Could not skip unnecessary pick commands"
 
 	checkout_onto
 	require_clean_work_tree "rebase"
-	exec git rebase--helper ${force_rebase:+--no-ff} $allow_empty_message \
+	exec git rebase--interactive ${force_rebase:+--no-ff} $allow_empty_message \
 	     --continue
 }
 
@@ -273,7 +273,7 @@ git_rebase__interactive () {
 
 	init_revisions_and_shortrevisions
 
-	git rebase--helper --make-script ${keep_empty:+--keep-empty} \
+	git rebase--interactive --make-script ${keep_empty:+--keep-empty} \
 		${rebase_merges:+--rebase-merges} \
 		${rebase_cousins:+--rebase-cousins} \
 		$revisions ${restrict_revision+^$restrict_revision} >"$todo" ||
