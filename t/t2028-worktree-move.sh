@@ -141,4 +141,12 @@ test_expect_success 'NOT remove missing-but-locked worktree' '
 	test_path_is_dir .git/worktrees/gone-but-locked
 '
 
+test_expect_success 'proper error when worktree not found' '
+	for i in noodle noodle/bork
+	do
+		test_must_fail git worktree lock $i 2>err &&
+		test_i18ngrep "not a working tree" err || return 1
+	done
+'
+
 test_done
