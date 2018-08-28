@@ -47,16 +47,17 @@ static int git_worktree_config(const char *var, const char *value, void *cb)
 	return git_default_config(var, value, cb);
 }
 
-static int delete_git_dir(struct worktree *wt)
+static int delete_git_dir(const char *id)
 {
 	struct strbuf sb = STRBUF_INIT;
-	int ret = 0;
+	int ret;
 
-	strbuf_addstr(&sb, git_common_path("worktrees/%s", wt->id));
-	if (remove_dir_recursively(&sb, 0)) {
+	strbuf_addstr(&sb, git_common_path("worktrees/%s", id));
+	ret = remove_dir_recursively(&sb, 0);
+	if (ret < 0 && errno == ENOTDIR)
+		ret = unlink(sb.buf);
+	if (ret)
 		error_errno(_("failed to delete '%s'"), sb.buf);
-		ret = -1;
-	}
 	strbuf_release(&sb);
 	return ret;
 }
@@ -130,10 +131,8 @@ static int prune_worktree(const char *id, struct strbuf *reason)
 static void prune_worktrees(void)
 {
 	struct strbuf reason = STRBUF_INIT;
-	struct strbuf path = STRBUF_INIT;
 	DIR *dir = opendir(git_path("worktrees"));
 	struct dirent *d;
-	int ret;
 	if (!dir)
 		return;
 	while ((d = readdir(dir)) != NULL) {
@@ -146,18 +145,12 @@ static void prune_worktrees(void)
 			printf("%s\n", reason.buf);
 		if (show_only)
 			continue;
-		git_path_buf(&path, "worktrees/%s", d->d_name);
-		ret = remove_dir_recursively(&path, 0);
-		if (ret < 0 && errno == ENOTDIR)
-			ret = unlink(path.buf);
-		if (ret)
-			error_errno(_("failed to remove '%s'"), path.buf);
+		delete_git_dir(d->d_name);
 	}
 	closedir(dir);
 	if (!show_only)
 		rmdir(git_path("worktrees"));
 	strbuf_release(&reason);
-	strbuf_release(&path);
 }
 
 static int prune(int ac, const char **av, const char *prefix)
@@ -882,7 +875,7 @@ static int remove_worktree(int ac, const char **av, const char *prefix)
 	 * continue on even if ret is non-zero, there's no going back
 	 * from here.
 	 */
-	ret |= delete_git_dir(wt);
+	ret |= delete_git_dir(wt->id);
 
 	free_worktrees(worktrees);
 	return ret;
