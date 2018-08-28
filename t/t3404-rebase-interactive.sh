@@ -75,6 +75,16 @@ test_expect_success 'rebase --keep-empty' '
 	test_line_count = 6 actual
 '
 
+cat > expect <<EOF
+error: nothing to do
+EOF
+
+test_expect_success 'rebase -i with empty HEAD' '
+	set_fake_editor &&
+	test_must_fail env FAKE_LINES="1 exec_true" git rebase -i HEAD^ >actual 2>&1 &&
+	test_i18ncmp expect actual
+'
+
 test_expect_success 'rebase -i with the exec command' '
 	git checkout master &&
 	(
