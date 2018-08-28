@@ -47,6 +47,20 @@ static int git_worktree_config(const char *var, const char *value, void *cb)
 	return git_default_config(var, value, cb);
 }
 
+static int delete_git_dir(struct worktree *wt)
+{
+	struct strbuf sb = STRBUF_INIT;
+	int ret = 0;
+
+	strbuf_addstr(&sb, git_common_path("worktrees/%s", wt->id));
+	if (remove_dir_recursively(&sb, 0)) {
+		error_errno(_("failed to delete '%s'"), sb.buf);
+		ret = -1;
+	}
+	strbuf_release(&sb);
+	return ret;
+}
+
 static int prune_worktree(const char *id, struct strbuf *reason)
 {
 	struct stat st;
@@ -814,20 +828,6 @@ static int delete_git_work_tree(struct worktree *wt)
 	int ret = 0;
 
 	strbuf_addstr(&sb, wt->path);
-	if (remove_dir_recursively(&sb, 0)) {
-		error_errno(_("failed to delete '%s'"), sb.buf);
-		ret = -1;
-	}
-	strbuf_release(&sb);
-	return ret;
-}
-
-static int delete_git_dir(struct worktree *wt)
-{
-	struct strbuf sb = STRBUF_INIT;
-	int ret = 0;
-
-	strbuf_addstr(&sb, git_common_path("worktrees/%s", wt->id));
 	if (remove_dir_recursively(&sb, 0)) {
 		error_errno(_("failed to delete '%s'"), sb.buf);
 		ret = -1;
