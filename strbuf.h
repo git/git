@@ -245,6 +245,15 @@ void strbuf_addchars(struct strbuf *sb, int c, size_t n);
 void strbuf_insert(struct strbuf *sb, size_t pos, const void *, size_t);
 
 /**
+ * Insert data to the given position of the buffer giving a printf format
+ * string. The contents will be shifted, not overwritten.
+ */
+void strbuf_vinsertf(struct strbuf *sb, size_t pos, const char *fmt,
+		     va_list ap);
+
+void strbuf_insertf(struct strbuf *sb, size_t pos, const char *fmt, ...);
+
+/**
  * Remove given amount of data from a given position of the buffer.
  */
 void strbuf_remove(struct strbuf *sb, size_t pos, size_t len);
@@ -287,6 +296,13 @@ static inline void strbuf_addstr(struct strbuf *sb, const char *s)
  * Copy the contents of another buffer at the end of the current one.
  */
 void strbuf_addbuf(struct strbuf *sb, const struct strbuf *sb2);
+
+/**
+ * Join the arguments into a buffer. `delim` is put between every
+ * two arguments.
+ */
+const char *strbuf_join_argv(struct strbuf *buf, int argc,
+			     const char **argv, char delim);
 
 /**
  * This function can be used to expand a format string containing
