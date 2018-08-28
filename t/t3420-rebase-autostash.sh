@@ -351,4 +351,22 @@ test_expect_success 'autostash is saved on editor failure with conflict' '
 	test_cmp expected file0
 '
 
+test_expect_success 'autostash with dirty submodules' '
+	test_when_finished "git reset --hard && git checkout master" &&
+	git checkout -b with-submodule &&
+	git submodule add ./ sub &&
+	test_tick &&
+	git commit -m add-submodule &&
+	echo changed >sub/file0 &&
+	git rebase -i --autostash HEAD
+'
+
+test_expect_success 'branch is left alone when possible' '
+	git checkout -b unchanged-branch &&
+	echo changed >file0 &&
+	git rebase --autostash unchanged-branch &&
+	test changed = "$(cat file0)" &&
+	test unchanged-branch = "$(git rev-parse --abbrev-ref HEAD)"
+'
+
 test_done

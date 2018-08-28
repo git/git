@@ -78,6 +78,9 @@
 /git-init-db
 /git-interpret-trailers
 /git-instaweb
+/git-legacy-rebase
+/git-legacy-rebase--interactive
+/git-legacy-stash
 /git-log
 /git-ls-files
 /git-ls-remote
@@ -117,7 +120,7 @@
 /git-read-tree
 /git-rebase
 /git-rebase--am
-/git-rebase--helper
+/git-rebase--common
 /git-rebase--interactive
 /git-rebase--merge
 /git-rebase--preserve-merges
