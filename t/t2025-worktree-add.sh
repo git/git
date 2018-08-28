@@ -552,4 +552,11 @@ test_expect_success '"add" in bare repo invokes post-checkout hook' '
 	test_cmp hook.expect goozy/hook.actual
 '
 
+test_expect_success '"add" an existing but missing worktree' '
+	git worktree add --detach pneu &&
+	test_must_fail git worktree add --detach pneu &&
+	rm -fr pneu &&
+	test_must_fail git worktree add --detach pneu
+'
+
 test_done

@@ -221,8 +221,33 @@ static const char *worktree_basename(const char *path, int *olen)
 
 static void validate_worktree_add(const char *path, const struct add_opts *opts)
 {
+	struct worktree **worktrees;
+	struct worktree *wt;
+	int locked;
+
 	if (file_exists(path) && !is_empty_dir(path))
 		die(_("'%s' already exists"), path);
+
+	worktrees = get_worktrees(0);
+	/*
+	 * find_worktree()'s suffix matching may undesirably find the main
+	 * rather than a linked worktree (for instance, when the basenames
+	 * of the main worktree and the one being created are the same).
+	 * We're only interested in linked worktrees, so skip the main
+	 * worktree with +1.
+	 */
+	wt = find_worktree(worktrees + 1, NULL, path);
+	if (!wt)
+		goto done;
+
+	locked = !!is_worktree_locked(wt);
+	if (locked)
+		die(_("'%s' is a missing but locked worktree;\nuse 'unlock' and 'prune' or 'remove' to clear"), path);
+	else
+		die(_("'%s' is a missing but already registered worktree;\nuse 'prune' or 'remove' to clear"), path);
+
+done:
+	free_worktrees(worktrees);
 }
 
 static int add_worktree(const char *path, const char *refname,
