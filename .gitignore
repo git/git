@@ -83,6 +83,8 @@
 /git-interpret-trailers
 /git-instaweb
 /git-legacy-rebase
+/git-legacy-rebase--interactive
+/git-legacy-stash
 /git-log
 /git-ls-files
 /git-ls-remote
