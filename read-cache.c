@@ -213,7 +213,7 @@ static int ce_compare_data(const struct cache_entry *ce, struct stat *st)
 	if (fd >= 0) {
 		struct object_id oid;
 		if (!index_fd(&oid, fd, st, OBJ_BLOB, ce->name, 0))
-			match = oidcmp(&oid, &ce->oid);
+			match = !oideq(&oid, &ce->oid);
 		/* index_fd() closed the file descriptor already */
 	}
 	return match;
@@ -254,7 +254,7 @@ static int ce_compare_gitlink(const struct cache_entry *ce)
 	 */
 	if (resolve_gitlink_ref(ce->name, "HEAD", &oid) < 0)
 		return 0;
-	return oidcmp(&oid, &ce->oid);
+	return !oideq(&oid, &ce->oid);
 }
 
 static int ce_modified_check_fs(const struct cache_entry *ce, struct stat *st)
