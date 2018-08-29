@@ -319,6 +319,10 @@ GIT_TEST_OE_DELTA_SIZE=<n> exercises the uncomon pack-objects code
 path where deltas larger than this limit require extra memory
 allocation for bookkeeping.
 
+GIT_TEST_COMMIT_GRAPH=<boolean>, when true, forces the commit-graph to
+be written after every 'git commit' command, and overrides the
+'core.commitGraph' setting to true.
+
 Naming Tests
 ------------
 
