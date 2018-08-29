@@ -152,7 +152,7 @@ test_expect_success 'rebase --interactive: NO directory rename' '
 	)
 '
 
-test_expect_failure 'rebase (am): NO directory rename' '
+test_expect_success 'rebase (am): NO directory rename' '
 	test_when_finished "git -C no-dir-rename rebase --abort" &&
 	(
 		cd no-dir-rename &&
@@ -190,7 +190,7 @@ test_expect_success 'rebase --merge: NO directory rename' '
 	)
 '
 
-test_expect_failure 'am: NO directory rename' '
+test_expect_success 'am: NO directory rename' '
 	test_when_finished "git -C no-dir-rename am --abort" &&
 	(
 		cd no-dir-rename &&
