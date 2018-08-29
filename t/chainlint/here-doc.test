@@ -21,6 +21,13 @@ boz
 woz
 FUMP
 
+# LINT: swallow "quoted" here-doc
+cat <<"zump" >boo &&
+snoz
+boz
+woz
+zump
+
 # LINT: swallow here-doc (EOF is last line of test)
 horticulture <<\EOF
 gomez

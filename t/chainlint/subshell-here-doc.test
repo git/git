@@ -31,5 +31,9 @@
 	glink
 	FIZZ
 	ARBITRARY2
+	cat <<-"ARBITRARY3" >bup3 &&
+	glink
+	FIZZ
+	ARBITRARY3
 	meep
 )
