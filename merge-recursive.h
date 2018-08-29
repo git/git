@@ -18,6 +18,7 @@ struct merge_options {
 	unsigned renormalize : 1;
 	long xdl_opts;
 	int verbosity;
+	int detect_directory_renames;
 	int diff_detect_rename;
 	int merge_detect_rename;
 	int diff_rename_limit;

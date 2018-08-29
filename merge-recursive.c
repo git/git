@@ -2843,12 +2843,19 @@ static int handle_renames(struct merge_options *o,
 	head_pairs = get_diffpairs(o, common, head);
 	merge_pairs = get_diffpairs(o, common, merge);
 
-	dir_re_head = get_directory_renames(head_pairs, head);
-	dir_re_merge = get_directory_renames(merge_pairs, merge);
+	if (o->detect_directory_renames) {
+		dir_re_head = get_directory_renames(head_pairs, head);
+		dir_re_merge = get_directory_renames(merge_pairs, merge);
 
-	handle_directory_level_conflicts(o,
-					 dir_re_head, head,
-					 dir_re_merge, merge);
+		handle_directory_level_conflicts(o,
+						 dir_re_head, head,
+						 dir_re_merge, merge);
+	} else {
+		dir_re_head  = xmalloc(sizeof(*dir_re_head));
+		dir_re_merge = xmalloc(sizeof(*dir_re_merge));
+		dir_rename_init(dir_re_head);
+		dir_rename_init(dir_re_merge);
+	}
 
 	ri->head_renames  = get_renames(o, head_pairs,
 					dir_re_merge, dir_re_head, head,
@@ -3541,6 +3548,7 @@ void init_merge_options(struct merge_options *o)
 	o->renormalize = 0;
 	o->diff_detect_rename = -1;
 	o->merge_detect_rename = -1;
+	o->detect_directory_renames = 1;
 	merge_recursive_config(o);
 	merge_verbosity = getenv("GIT_MERGE_VERBOSITY");
 	if (merge_verbosity)
