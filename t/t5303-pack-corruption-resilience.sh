@@ -364,7 +364,7 @@ test_expect_success \
 #
 # Note that the literal byte is necessary to get past the uninteresting minimum
 # delta size check.
-test_expect_failure \
+test_expect_success \
     'apply delta with truncated copy parameters' \
     'printf "\5\5\1X\221" > truncated_copy_delta &&
      echo base >base &&
