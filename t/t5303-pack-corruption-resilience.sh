@@ -327,15 +327,15 @@ test_expect_success \
     'printf "\0\1\2XX" > too_big_literal &&
      test_must_fail test-tool delta -p /dev/null too_big_literal /dev/null'
 
-# \5 - five bytes in base
+# \4 - four bytes in base
 # \1 - one byte in result
 # \221 - copy, one byte offset, one byte size
 #   \0 - copy from offset 0
 #   \2 - copy two bytes (one too many)
 test_expect_success \
     'apply delta with too many copied bytes' \
-    'printf "\5\1\221\0\2" > too_big_copy &&
-     echo base >base &&
+    'printf "\4\1\221\0\2" > too_big_copy &&
+     printf base >base &&
      test_must_fail test-tool delta -p base too_big_copy /dev/null'
 
 # \0 - empty base
@@ -356,8 +356,8 @@ test_expect_success \
     'printf "\0\1\221\0\1" > truncated_base &&
      test_must_fail test-tool delta -p /dev/null truncated_base /dev/null'
 
-# \5 - five bytes in base
-# \5 - five bytes in result
+# \4 - four bytes in base
+# \2 - two bytes in result
 # \1 - one literal byte (X)
 # \221 - copy, one byte offset, one byte size
 #        (offset/size missing)
@@ -366,8 +366,8 @@ test_expect_success \
 # delta size check.
 test_expect_success \
     'apply delta with truncated copy parameters' \
-    'printf "\5\5\1X\221" > truncated_copy_delta &&
-     echo base >base &&
+    'printf "\4\2\1X\221" > truncated_copy_delta &&
+     printf base >base &&
      test_must_fail test-tool delta -p base truncated_copy_delta /dev/null'
 
 # \0 - empty base
@@ -379,7 +379,7 @@ test_expect_success \
     'printf "\0\1\1X\1" > tail_garbage_literal &&
      test_must_fail test-tool delta -p /dev/null tail_garbage_literal /dev/null'
 
-# \5 - five bytes in base
+# \4 - four bytes in base
 # \1 - one byte in result
 # \1 - one literal byte (X)
 # \221 - copy, one byte offset, one byte size
@@ -387,8 +387,8 @@ test_expect_success \
 #   \1 - copy 1 byte
 test_expect_success \
     'apply delta with trailing garbage copy' \
-    'printf "\5\1\1X\221\0\1" > tail_garbage_copy &&
-     echo base >base &&
+    'printf "\4\1\1X\221\0\1" > tail_garbage_copy &&
+     printf base >base &&
      test_must_fail test-tool delta -p /dev/null tail_garbage_copy /dev/null'
 
 # \0 - empty base
