@@ -41,7 +41,7 @@ then
 
 	BREW_INSTALL_PACKAGES=
 	export GIT_PROVE_OPTS="--timer --jobs 10 --state=failed,slow,save"
-	export GIT_TEST_OPTS="--quiet --write-junit-xml"
+	export GIT_TEST_OPTS="--verbose-log -x --write-junit-xml"
 fi
 
 skip_branch_tip_with_tag () {
