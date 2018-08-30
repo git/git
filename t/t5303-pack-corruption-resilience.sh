@@ -341,7 +341,7 @@ test_expect_success \
 # \0 - empty base
 # \2 - two bytes in result
 # \2 - two literal bytes (we are short one)
-test_expect_failure \
+test_expect_success \
     'apply delta with too few literal bytes' \
     'printf "\0\2\2X" > truncated_delta &&
      test_must_fail test-tool delta -p /dev/null truncated_delta /dev/null'

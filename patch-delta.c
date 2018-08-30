@@ -56,7 +56,7 @@ void *patch_delta(const void *src_buf, unsigned long src_size,
 			out += cp_size;
 			size -= cp_size;
 		} else if (cmd) {
-			if (cmd > size)
+			if (cmd > size || cmd > top - data)
 				break;
 			memcpy(out, data, cmd);
 			out += cmd;
