@@ -370,4 +370,34 @@ test_expect_failure \
      echo base >base &&
      test_must_fail test-tool delta -p base truncated_copy_delta /dev/null'
 
+# \0 - empty base
+# \1 - one byte in result
+# \1 - one literal byte (X)
+# \1 - trailing garbage command
+test_expect_success \
+    'apply delta with trailing garbage literal' \
+    'printf "\0\1\1X\1" > tail_garbage_literal &&
+     test_must_fail test-tool delta -p /dev/null tail_garbage_literal /dev/null'
+
+# \5 - five bytes in base
+# \1 - one byte in result
+# \1 - one literal byte (X)
+# \221 - copy, one byte offset, one byte size
+#   \0 - copy from offset 0
+#   \1 - copy 1 byte
+test_expect_success \
+    'apply delta with trailing garbage copy' \
+    'printf "\5\1\1X\221\0\1" > tail_garbage_copy &&
+     echo base >base &&
+     test_must_fail test-tool delta -p /dev/null tail_garbage_copy /dev/null'
+
+# \0 - empty base
+# \1 - one byte in result
+# \1 - one literal byte (X)
+# \0 - bogus opcode
+test_expect_success \
+    'apply delta with trailing garbage opcode' \
+    'printf "\0\1\1X\0" > tail_garbage_opcode &&
+     test_must_fail test-tool delta -p /dev/null tail_garbage_opcode /dev/null'
+
 test_done

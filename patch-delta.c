@@ -51,13 +51,13 @@ void *patch_delta(const void *src_buf, unsigned long src_size,
 			if (unsigned_add_overflows(cp_off, cp_size) ||
 			    cp_off + cp_size > src_size ||
 			    cp_size > size)
-				break;
+				goto bad_length;
 			memcpy(out, (char *) src_buf + cp_off, cp_size);
 			out += cp_size;
 			size -= cp_size;
 		} else if (cmd) {
 			if (cmd > size || cmd > top - data)
-				break;
+				goto bad_length;
 			memcpy(out, data, cmd);
 			out += cmd;
 			data += cmd;
@@ -75,6 +75,7 @@ void *patch_delta(const void *src_buf, unsigned long src_size,
 
 	/* sanity check */
 	if (data != top || size != 0) {
+		bad_length:
 		error("delta replay has gone wild");
 		bad:
 		free(dst_buf);
