@@ -82,7 +82,7 @@ generate_render_makefile () {
 	done
 }
 
-# render_tree <dirname> <committish>
+# render_tree <committish_oid>
 render_tree () {
 	# Skip install-man entirely if we already have an installed directory.
 	# We can't rely on make here, since "install-man" unconditionally
@@ -92,7 +92,7 @@ render_tree () {
 	# through.
 	if ! test -d "$tmp/installed/$1"
 	then
-		git -C "$tmp/worktree" checkout "$2" &&
+		git -C "$tmp/worktree" checkout --detach "$1" &&
 		make -j$parallel -C "$tmp/worktree" \
 			GIT_VERSION=omitted \
 			SOURCE_DATE_EPOCH=0 \
@@ -112,6 +112,6 @@ render_tree () {
 	fi
 }
 
-render_tree $from_oid "$from" &&
-render_tree $to_oid "$to" &&
+render_tree $from_oid &&
+render_tree $to_oid &&
 git -C $tmp/rendered diff --no-index "$@" $from_oid $to_oid
