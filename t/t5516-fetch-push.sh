@@ -969,7 +969,7 @@ test_force_push_tag () {
 	tag_type_description=$1
 	tag_args=$2
 
-	test_expect_success 'force pushing required to update lightweight tag' "
+	test_expect_success "force pushing required to update $tag_type_description" "
 		mk_test testrepo heads/master &&
 		mk_child testrepo child1 &&
 		mk_child testrepo child2 &&
