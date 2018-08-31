@@ -104,7 +104,7 @@ test_expect_success 'clone with --no-tags' '
 test_expect_success '--single-branch while HEAD pointing at master' '
 	(
 		cd dir_master &&
-		git fetch &&
+		git fetch --force &&
 		git for-each-ref refs/remotes/origin |
 		sed -e "/HEAD$/d" \
 		    -e "s|/remotes/origin/|/heads/|" >../actual
@@ -115,7 +115,7 @@ test_expect_success '--single-branch while HEAD pointing at master' '
 	test_cmp expect actual &&
 	(
 		cd dir_master &&
-		git fetch --tags &&
+		git fetch --tags --force &&
 		git for-each-ref refs/tags >../actual
 	) &&
 	git for-each-ref refs/tags >expect &&

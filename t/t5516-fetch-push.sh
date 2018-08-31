@@ -1015,7 +1015,7 @@ test_force_fetch_tag () {
 	tag_type_description=$1
 	tag_args=$2
 
-	test_expect_success "fetch will clobber an existing $tag_type_description" "
+	test_expect_success "fetch will not clobber an existing $tag_type_description without --force" "
 		mk_test testrepo heads/master &&
 		mk_child testrepo child1 &&
 		mk_child testrepo child2 &&
@@ -1027,7 +1027,8 @@ test_force_fetch_tag () {
 			git add file1 &&
 			git commit -m 'file1' &&
 			git tag $tag_args testTag &&
-			git -C ../child1 fetch origin tag testTag
+			test_must_fail git -C ../child1 fetch origin tag testTag &&
+			git -C ../child1 fetch origin '+refs/tags/*:refs/tags/*'
 		)
 	"
 }
