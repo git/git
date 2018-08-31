@@ -80,8 +80,6 @@ a tag (annotated or lightweight), and then only if it can fast-forward
 the <dst> ref even if it is not allowed by default (e.g., it is not a
 fast-forward.).
 +
-`tag <tag>` means the same as `refs/tags/<tag>:refs/tags/<tag>`.
-+
 Pushing an empty <src> allows you to delete the <dst> ref from
 the remote repository.
 +
@@ -89,6 +87,8 @@ The special refspec `:` (or `+:` to allow non-fast-forward updates)
 directs Git to push "matching" branches: for every branch that exists on
 the local side, the remote side is updated if a branch of the same name
 already exists on the remote side.
++
+`tag <tag>` means the same as `refs/tags/<tag>:refs/tags/<tag>`.
 
 --all::
 	Push all branches (i.e. refs under `refs/heads/`); cannot be
