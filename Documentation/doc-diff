@@ -77,7 +77,7 @@ generate_render_makefile () {
 		printf '%s: %s\n' "$dst" "$src"
 		printf '\t@echo >&2 "  RENDER $(notdir $@)" && \\\n'
 		printf '\tmkdir -p $(dir $@) && \\\n'
-		printf '\tMANWIDTH=80 man -l $< >$@+ && \\\n'
+		printf '\tMANWIDTH=80 man $< >$@+ && \\\n'
 		printf '\tmv $@+ $@\n'
 	done
 }
