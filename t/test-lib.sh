@@ -95,6 +95,13 @@ done,*)
 	test "$(cat "$BASE.exit")" = 0
 	exit
 	;;
+*' --write-junit-xml '*)
+	# record how to call this script *with* --verbose-log, in case
+	# we encounter a breakage
+	junit_rerun_options_sq="$(printf '%s\n' "$0" --verbose-log -x "$@" |
+		sed -e "s/'/'\\\\''/g" -e "s/^/'/" -e "s/\$/'/" |
+		tr '\012' ' ')"
+	;;
 esac
 
 # For repeatability, reset the environment to known value.
@@ -505,8 +512,18 @@ test_failure_ () {
 		junit_insert="<failure message=\"not ok $test_count -"
 		junit_insert="$junit_insert $(xml_attr_encode "$1")\">"
 		junit_insert="$junit_insert $(xml_attr_encode \
-			"$(printf '%s\n' "$@" | sed 1d)")"
+			"$(if test -n "$GIT_TEST_TEE_OUTPUT_FILE"
+			   then
+				cut -c "$GIT_TEST_TEE_OFFSET-" <"$GIT_TEST_TEE_OUTPUT_FILE"
+			   else
+				printf '%s\n' "$@" | sed 1d
+			   fi)")"
 		junit_insert="$junit_insert</failure>"
+		if test -n "$GIT_TEST_TEE_OUTPUT_FILE"
+		then
+			junit_insert="$junit_insert<system-err>$(xml_attr_encode \
+				"$(cat "$GIT_TEST_TEE_OUTPUT_FILE")")</system-err>"
+		fi
 		write_junit_xml_testcase "$1" "      $junit_insert"
 	fi
 	test_failure=$(($test_failure + 1))
@@ -885,6 +902,10 @@ write_junit_xml_testcase () {
 	write_junit_xml "$(printf '%s\n' \
 		"    <testcase $junit_attrs>" "$@" "    </testcase>")"
 	junit_have_testcase=t
+	if test -n "$GIT_TEST_TEE_OUTPUT_FILE"
+	then
+		GIT_TEST_TEE_OFFSET=$(perl -e 'print -s $ARGV[0]' "$GIT_TEST_TEE_OUTPUT_FILE")
+	fi
 }
 
 test_done () {
@@ -1175,6 +1196,11 @@ then
 		date +%Y-%m-%dT%H:%M:%S)\""
 	write_junit_xml --truncate "<testsuites>" "  <testsuite $junit_attrs>"
 	junit_suite_start=$(test-tool date getnanos)
+	if test -n "$GIT_TEST_TEE_OUTPUT_FILE"
+	then
+		GIT_TEST_TEE_OFFSET=0
+		GIT_TEST_TEE_ERR_OFFSET=0
+	fi
 fi
 
 # Provide an implementation of the 'yes' utility
