@@ -78,8 +78,7 @@ on the remote side.  By default this is only allowed if <dst> is not
 a tag (annotated or lightweight), and then only if it can fast-forward
 <dst>.  By having the optional leading `+`, you can tell Git to update
 the <dst> ref even if it is not allowed by default (e.g., it is not a
-fast-forward.)  This does *not* attempt to merge <src> into <dst>.  See
-EXAMPLES below for details.
+fast-forward.).
 +
 `tag <tag>` means the same as `refs/tags/<tag>:refs/tags/<tag>`.
 +
