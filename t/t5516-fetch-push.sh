@@ -1009,7 +1009,7 @@ test_force_push_tag () {
 }
 
 test_force_push_tag "lightweight tag" "-f"
-test_force_push_tag "annotated tag" "-f -a -m'msg'"
+test_force_push_tag "annotated tag" "-f -a -m'tag message'"
 
 test_expect_success 'push --porcelain' '
 	mk_empty testrepo &&
