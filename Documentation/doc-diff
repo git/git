@@ -10,20 +10,25 @@
 
 OPTIONS_SPEC="\
 doc-diff [options] <from> <to> [-- <diff-options>]
+doc-diff (-c|--clean)
 --
 j=n	parallel argument to pass to make
 f	force rebuild; do not rely on cached results
+c,clean	cleanup temporary working files
 "
 SUBDIRECTORY_OK=1
 . "$(git --exec-path)/git-sh-setup"
 
 parallel=
 force=
+clean=
 while test $# -gt 0
 do
 	case "$1" in
 	-j)
 		parallel=$2; shift ;;
+	-c|--clean)
+		clean=t ;;
 	-f)
 		force=t ;;
 	--)
@@ -33,6 +38,17 @@ do
 	esac
 	shift
 done
+
+cd_to_toplevel
+tmp=Documentation/tmp-doc-diff
+
+if test -n "$clean"
+then
+	test $# -eq 0 || usage
+	git worktree remove --force "$tmp/worktree" 2>/dev/null
+	rm -rf "$tmp"
+	exit 0
+fi
 
 if test -z "$parallel"
 then
@@ -49,9 +65,6 @@ to=$1; shift
 
 from_oid=$(git rev-parse --verify "$from") || exit 1
 to_oid=$(git rev-parse --verify "$to") || exit 1
-
-cd_to_toplevel
-tmp=Documentation/tmp-doc-diff
 
 if test -n "$force"
 then
