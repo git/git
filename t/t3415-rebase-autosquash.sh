@@ -330,7 +330,7 @@ test_expect_success 'wrapped original subject' '
 	test $base = $parent
 '
 
-test_expect_failure 'abort last squash' '
+test_expect_success 'abort last squash' '
 	test_when_finished "test_might_fail git rebase --abort" &&
 	test_when_finished "git checkout master" &&
 
