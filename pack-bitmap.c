@@ -848,9 +848,6 @@ void traverse_bitmap_commit_list(struct bitmap_index *bitmap_git,
 		OBJ_TAG, show_reachable);
 
 	show_extended_objects(bitmap_git, show_reachable);
-
-	bitmap_free(bitmap_git->result);
-	bitmap_git->result = NULL;
 }
 
 static uint32_t count_object_type(struct bitmap_index *bitmap_git,
