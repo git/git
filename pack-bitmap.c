@@ -1128,8 +1128,6 @@ int bitmap_has_sha1_in_uninteresting(struct bitmap_index *bitmap_git,
 
 	if (!bitmap_git)
 		return 0; /* no bitmap loaded */
-	if (!bitmap_git->result)
-		BUG("failed to perform bitmap walk before querying");
 	if (!bitmap_git->haves)
 		return 0; /* walk had no "haves" */
 
