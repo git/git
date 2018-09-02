@@ -13,6 +13,7 @@
 #include "sha1-array.h"
 #include "argv-array.h"
 #include "commit-slab.h"
+#include "object-store.h"
 
 static struct oid_array good_revs;
 static struct oid_array skipped_revs;
@@ -120,13 +121,13 @@ static inline int halfway(struct commit_list *p, int nr)
 	}
 }
 
-#if !DEBUG_BISECT
-#define show_list(a,b,c,d) do { ; } while (0)
-#else
 static void show_list(const char *debug, int counted, int nr,
 		      struct commit_list *list)
 {
 	struct commit_list *p;
+
+	if (!DEBUG_BISECT)
+		return;
 
 	fprintf(stderr, "%s (%d/%d)\n", debug, counted, nr);
 
@@ -145,7 +146,7 @@ static void show_list(const char *debug, int counted, int nr,
 			(flags & TREESAME) ? ' ' : 'T',
 			(flags & UNINTERESTING) ? 'U' : ' ',
 			(flags & COUNTED) ? 'C' : ' ');
-		if (commit->util)
+		if (*commit_weight_at(&commit_weight, p->item))
 			fprintf(stderr, "%3d", weight(p));
 		else
 			fprintf(stderr, "---");
@@ -160,7 +161,6 @@ static void show_list(const char *debug, int counted, int nr,
 		fprintf(stderr, "\n");
 	}
 }
-#endif /* DEBUG_BISECT */
 
 static struct commit_list *best_bisection(struct commit_list *list, int nr)
 {
