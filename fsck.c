@@ -10,7 +10,6 @@
 #include "fsck.h"
 #include "refs.h"
 #include "utf8.h"
-#include "sha1-array.h"
 #include "decorate.h"
 #include "oidset.h"
 #include "packfile.h"
@@ -182,18 +181,9 @@ static int fsck_msg_type(enum fsck_msg_id msg_id,
 
 static void init_skiplist(struct fsck_options *options, const char *path)
 {
-	static struct oid_array skiplist = OID_ARRAY_INIT;
-	int sorted;
 	FILE *fp;
 	struct strbuf sb = STRBUF_INIT;
 	struct object_id oid;
-
-	if (options->skiplist)
-		sorted = options->skiplist->sorted;
-	else {
-		sorted = 1;
-		options->skiplist = &skiplist;
-	}
 
 	fp = fopen(path, "r");
 	if (!fp)
@@ -202,19 +192,12 @@ static void init_skiplist(struct fsck_options *options, const char *path)
 		const char *p;
 		if (parse_oid_hex(sb.buf, &oid, &p) || *p != '\0')
 			die("Invalid SHA-1: %s", sb.buf);
-		oid_array_append(&skiplist, &oid);
-		if (sorted && skiplist.nr > 1 &&
-				oidcmp(&skiplist.oid[skiplist.nr - 2],
-				       &oid) > 0)
-			sorted = 0;
+		oidset_insert(&options->skiplist, &oid);
 	}
 	if (ferror(fp))
 		die_errno("Could not read '%s'", path);
 	fclose(fp);
 	strbuf_release(&sb);
-
-	if (sorted)
-		skiplist.sorted = 1;
 }
 
 static int parse_msg_type(const char *str)
@@ -319,9 +302,7 @@ static void append_msg_id(struct strbuf *sb, const char *msg_id)
 
 static int object_on_skiplist(struct fsck_options *opts, struct object *obj)
 {
-	if (opts && opts->skiplist && obj)
-		return oid_array_lookup(opts->skiplist, &obj->oid) >= 0;
-	return 0;
+	return opts && obj && oidset_contains(&opts->skiplist, &obj->oid);
 }
 
 __attribute__((format (printf, 4, 5)))

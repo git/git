@@ -1731,11 +1731,12 @@ all three of them they must all set to the same values.
 +
 Older versions of Git (before 2.20) documented that the object names
 list should be sorted. This was never a requirement, the object names
-can appear in any order, but when reading the list we track whether
-the list is sorted for the purposes of an internal binary search
-implementation, which can save itself some work with an already sorted
-list. Unless you have a humongous list there's no reason to go out of
-your way to pre-sort the list.
+could appear in any order, but when reading the list we tracked whether
+the list was sorted for the purposes of an internal binary search
+implementation, which could save itself some work with an already sorted
+list. Unless you had a humongous list there was no reason to go out of
+your way to pre-sort the list. After Git version 2.20 a hash implementation
+is used instead, so there's now no reason to pre-sort the list.
 
 gc.aggressiveDepth::
 	The depth parameter used in the delta compression
