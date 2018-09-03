@@ -190,9 +190,6 @@ extern void strbuf_ltrim(struct strbuf *);
 /* Strip trailing directory separators */
 extern void strbuf_trim_trailing_dir_sep(struct strbuf *);
 
-/* Strip trailing LF or CR/LF */
-extern void strbuf_trim_trailing_newline(struct strbuf *sb);
-
 /**
  * Replace the contents of the strbuf with a reencoded form.  Returns -1
  * on error, 0 on success.
@@ -578,8 +575,6 @@ extern void strbuf_add_unique_abbrev(struct strbuf *sb,
  * file's contents are not read into the buffer upon completion.
  */
 extern int launch_editor(const char *path, struct strbuf *buffer, const char *const *env);
-extern int launch_sequence_editor(const char *path, struct strbuf *buffer,
-				  const char *const *env);
 
 extern void strbuf_add_lines(struct strbuf *sb, const char *prefix, const char *buf, size_t size);
 
