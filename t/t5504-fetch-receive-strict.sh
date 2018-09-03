@@ -133,6 +133,10 @@ committer Bugs Bunny <bugs@bun.ni> 1234567890 +0000
 This commit object intentionally broken
 EOF
 
+test_expect_success 'setup bogus commit' '
+	commit="$(git hash-object -t commit -w --stdin <bogus-commit)"
+'
+
 test_expect_success 'fsck with invalid or bogus skipList input' '
 	git -c fsck.skipList=/dev/null -c fsck.missingEmail=ignore fsck &&
 	test_must_fail git -c fsck.skipList=does-not-exist -c fsck.missingEmail=ignore fsck 2>err &&
@@ -142,7 +146,6 @@ test_expect_success 'fsck with invalid or bogus skipList input' '
 '
 
 test_expect_success 'push with receive.fsck.skipList' '
-	commit="$(git hash-object -t commit -w --stdin <bogus-commit)" &&
 	git push . $commit:refs/heads/bogus &&
 	rm -rf dst &&
 	git init dst &&
@@ -169,7 +172,6 @@ test_expect_success 'push with receive.fsck.skipList' '
 '
 
 test_expect_success 'fetch with fetch.fsck.skipList' '
-	commit="$(git hash-object -t commit -w --stdin <bogus-commit)" &&
 	refspec=refs/heads/bogus:refs/heads/bogus &&
 	git push . $commit:refs/heads/bogus &&
 	rm -rf dst &&
@@ -204,7 +206,6 @@ test_expect_success 'fsck.<unknownmsg-id> dies' '
 '
 
 test_expect_success 'push with receive.fsck.missingEmail=warn' '
-	commit="$(git hash-object -t commit -w --stdin <bogus-commit)" &&
 	git push . $commit:refs/heads/bogus &&
 	rm -rf dst &&
 	git init dst &&
@@ -232,7 +233,6 @@ test_expect_success 'push with receive.fsck.missingEmail=warn' '
 '
 
 test_expect_success 'fetch with fetch.fsck.missingEmail=warn' '
-	commit="$(git hash-object -t commit -w --stdin <bogus-commit)" &&
 	refspec=refs/heads/bogus:refs/heads/bogus &&
 	git push . $commit:refs/heads/bogus &&
 	rm -rf dst &&
