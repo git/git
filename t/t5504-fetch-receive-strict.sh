@@ -169,6 +169,27 @@ test_expect_success 'fsck with invalid or bogus skipList input' '
 	test_i18ngrep "Invalid SHA-1: \[core\]" err
 '
 
+test_expect_success 'fsck with invalid or bogus skipList input (comments & empty lines)' '
+	cat >SKIP.with-comment <<-EOF &&
+	# Some bad commit
+	0000000000000000000000000000000000000001
+	EOF
+	test_must_fail git -c fsck.skipList=SKIP.with-comment fsck 2>err-with-comment &&
+	test_i18ngrep "^fatal: Invalid SHA-1: # Some bad commit$" err-with-comment &&
+	cat >SKIP.with-empty-line <<-EOF &&
+	0000000000000000000000000000000000000001
+
+	0000000000000000000000000000000000000002
+	EOF
+	test_must_fail git -c fsck.skipList=SKIP.with-empty-line fsck 2>err-with-empty-line &&
+	test_i18ngrep "^fatal: Invalid SHA-1: " err-with-empty-line
+'
+
+test_expect_failure 'fsck no garbage output from comments & empty lines errors' '
+	test_line_count = 1 err-with-comment &&
+	test_line_count = 1 err-with-empty-line
+'
+
 test_expect_success 'push with receive.fsck.skipList' '
 	git push . $commit:refs/heads/bogus &&
 	rm -rf dst &&
