@@ -1710,7 +1710,7 @@ doing the same for `receive.fsck.<msg-id>` and `fetch.fsck.<msg-id>`
 will only cause git to warn.
 
 fsck.skipList::
-	The path to a sorted list of object names (i.e. one SHA-1 per
+	The path to a list of object names (i.e. one SHA-1 per
 	line) that are known to be broken in a non-fatal way and should
 	be ignored. This feature is useful when an established project
 	should be accepted despite early commits containing errors that
@@ -1725,6 +1725,14 @@ Unlike variables like `color.ui` and `core.editor` the
 fall back on the `fsck.skipList` configuration if they aren't set. To
 uniformly configure the same fsck settings in different circumstances
 all three of them they must all set to the same values.
++
+Older versions of Git (before 2.20) documented that the object names
+list should be sorted. This was never a requirement, the object names
+can appear in any order, but when reading the list we track whether
+the list is sorted for the purposes of an internal binary search
+implementation, which can save itself some work with an already sorted
+list. Unless you have a humongous list there's no reason to go out of
+your way to pre-sort the list.
 
 gc.aggressiveDepth::
 	The depth parameter used in the delta compression

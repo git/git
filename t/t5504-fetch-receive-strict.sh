@@ -142,6 +142,25 @@ test_expect_success 'fsck with no skipList input' '
 	test_i18ngrep "missingEmail" err
 '
 
+test_expect_success 'setup sorted and unsorted skipLists' '
+	cat >SKIP.unsorted <<-EOF &&
+	0000000000000000000000000000000000000004
+	0000000000000000000000000000000000000002
+	$commit
+	0000000000000000000000000000000000000001
+	0000000000000000000000000000000000000003
+	EOF
+	sort SKIP.unsorted >SKIP.sorted
+'
+
+test_expect_success 'fsck with sorted skipList' '
+	git -c fsck.skipList=SKIP.sorted fsck
+'
+
+test_expect_success 'fsck with unsorted skipList' '
+	git -c fsck.skipList=SKIP.unsorted fsck
+'
+
 test_expect_success 'fsck with invalid or bogus skipList input' '
 	git -c fsck.skipList=/dev/null -c fsck.missingEmail=ignore fsck &&
 	test_must_fail git -c fsck.skipList=does-not-exist -c fsck.missingEmail=ignore fsck 2>err &&
