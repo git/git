@@ -185,7 +185,7 @@ test_expect_success 'fsck with invalid or bogus skipList input (comments & empty
 	test_i18ngrep "^fatal: Invalid SHA-1: " err-with-empty-line
 '
 
-test_expect_failure 'fsck no garbage output from comments & empty lines errors' '
+test_expect_success 'fsck no garbage output from comments & empty lines errors' '
 	test_line_count = 1 err-with-comment &&
 	test_line_count = 1 err-with-empty-line
 '
