@@ -1710,7 +1710,7 @@ doing the same for `receive.fsck.<msg-id>` and `fetch.fsck.<msg-id>`
 will only cause git to warn.
 
 fsck.skipList::
-	The path to a list of object names (i.e. one SHA-1 per
+	The path to a list of object names (i.e. one unabbreviated SHA-1 per
 	line) that are known to be broken in a non-fatal way and should
 	be ignored. Comments ('#') and empty lines are not supported, and
 	will error out.

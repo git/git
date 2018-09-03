@@ -190,6 +190,12 @@ test_expect_failure 'fsck no garbage output from comments & empty lines errors' 
 	test_line_count = 1 err-with-empty-line
 '
 
+test_expect_success 'fsck with invalid abbreviated skipList input' '
+	echo $commit | test_copy_bytes 20 >SKIP.abbreviated &&
+	test_must_fail git -c fsck.skipList=SKIP.abbreviated fsck 2>err-abbreviated &&
+	test_i18ngrep "^fatal: Invalid SHA-1: " err-abbreviated
+'
+
 test_expect_success 'push with receive.fsck.skipList' '
 	git push . $commit:refs/heads/bogus &&
 	rm -rf dst &&
