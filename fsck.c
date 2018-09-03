@@ -190,6 +190,20 @@ static void init_skiplist(struct fsck_options *options, const char *path)
 		die("Could not open skip list: %s", path);
 	while (!strbuf_getline(&sb, fp)) {
 		const char *p;
+		const char *hash;
+
+		/*
+		 * Allow trailing comments, leading whitespace
+		 * (including before commits), and empty or whitespace
+		 * only lines.
+		 */
+		hash = strchr(sb.buf, '#');
+		if (hash)
+			strbuf_setlen(&sb, hash - sb.buf);
+		strbuf_trim(&sb);
+		if (!sb.len)
+			continue;
+
 		if (parse_oid_hex(sb.buf, &oid, &p) || *p != '\0')
 			die("Invalid SHA-1: %s", sb.buf);
 		oidset_insert(&options->skiplist, &oid);

@@ -1712,8 +1712,9 @@ will only cause git to warn.
 fsck.skipList::
 	The path to a list of object names (i.e. one unabbreviated SHA-1 per
 	line) that are known to be broken in a non-fatal way and should
-	be ignored. Comments ('#') and empty lines are not supported, and
-	will error out.
+	be ignored. On versions of Git 2.20 and later comments ('#'), empty
+	lines, and any leading and trailing whitespace is ignored. Everything
+	but a SHA-1 per line will error out on older versions.
 +
 This feature is useful when an established project should be accepted
 despite early commits containing errors that can be safely ignored
