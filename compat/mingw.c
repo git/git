@@ -828,7 +828,7 @@ static int has_valid_directory_prefix(wchar_t *wfilename)
 int mingw_lstat(const char *file_name, struct stat *buf)
 {
 	WIN32_FILE_ATTRIBUTE_DATA fdata;
-	WIN32_FIND_DATAW findbuf;
+	WIN32_FIND_DATAW findbuf = { 0 };
 	wchar_t wfilename[MAX_LONG_PATH];
 	int wlen = xutftowcs_long_path(wfilename, file_name);
 	if (wlen < 0)
