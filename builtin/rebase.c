@@ -96,6 +96,7 @@ struct rebase_options {
 	char *cmd;
 	int allow_empty_message;
 	int rebase_merges, rebase_cousins;
+	char *strategy, *strategy_opts;
 };
 
 static int is_interactive(struct rebase_options *opts)
@@ -215,6 +216,22 @@ static int read_basic_state(struct rebase_options *opts)
 			return -1;
 		free(opts->gpg_sign_opt);
 		opts->gpg_sign_opt = xstrdup(buf.buf);
+	}
+
+	if (file_exists(state_dir_path("strategy", opts))) {
+		strbuf_reset(&buf);
+		if (read_one(state_dir_path("strategy", opts), &buf))
+			return -1;
+		free(opts->strategy);
+		opts->strategy = xstrdup(buf.buf);
+	}
+
+	if (file_exists(state_dir_path("strategy_opts", opts))) {
+		strbuf_reset(&buf);
+		if (read_one(state_dir_path("strategy_opts", opts), &buf))
+			return -1;
+		free(opts->strategy_opts);
+		opts->strategy_opts = xstrdup(buf.buf);
 	}
 
 	strbuf_release(&buf);
@@ -356,6 +373,8 @@ static int run_specific_rebase(struct rebase_options *opts)
 		opts->rebase_merges ? "t" : "");
 	add_var(&script_snippet, "rebase_cousins",
 		opts->rebase_cousins ? "t" : "");
+	add_var(&script_snippet, "strategy", opts->strategy);
+	add_var(&script_snippet, "strategy_opts", opts->strategy_opts);
 
 	switch (opts->type) {
 	case REBASE_AM:
@@ -633,6 +652,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	struct string_list exec = STRING_LIST_INIT_NODUP;
 	const char *rebase_merges = NULL;
 	int fork_point = -1;
+	struct string_list strategy_options = STRING_LIST_INIT_NODUP;
 	struct option builtin_rebase_options[] = {
 		OPT_STRING(0, "onto", &options.onto_name,
 			   N_("revision"),
@@ -718,6 +738,12 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			PARSE_OPT_OPTARG, NULL, (intptr_t)""},
 		OPT_BOOL(0, "fork-point", &fork_point,
 			 N_("use 'merge-base --fork-point' to refine upstream")),
+		OPT_STRING('s', "strategy", &options.strategy,
+			   N_("strategy"), N_("use the given merge strategy")),
+		OPT_STRING_LIST('X', "strategy-option", &strategy_options,
+				N_("option"),
+				N_("pass the argument through to the merge "
+				   "strategy")),
 		OPT_END(),
 	};
 
@@ -962,6 +988,37 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			die(_("Unknown mode: %s"), rebase_merges);
 		options.rebase_merges = 1;
 		imply_interactive(&options, "--rebase-merges");
+	}
+
+	if (strategy_options.nr) {
+		int i;
+
+		if (!options.strategy)
+			options.strategy = "recursive";
+
+		strbuf_reset(&buf);
+		for (i = 0; i < strategy_options.nr; i++)
+			strbuf_addf(&buf, " --%s",
+				    strategy_options.items[i].string);
+		options.strategy_opts = xstrdup(buf.buf);
+	}
+
+	if (options.strategy) {
+		options.strategy = xstrdup(options.strategy);
+		switch (options.type) {
+		case REBASE_AM:
+			die(_("--strategy requires --merge or --interactive"));
+		case REBASE_MERGE:
+		case REBASE_INTERACTIVE:
+		case REBASE_PRESERVE_MERGES:
+			/* compatible */
+			break;
+		case REBASE_UNSPECIFIED:
+			options.type = REBASE_MERGE;
+			break;
+		default:
+			BUG("unhandled rebase type (%d)", options.type);
+		}
 	}
 
 	switch (options.type) {
