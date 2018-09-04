@@ -639,7 +639,7 @@ missing_author:
 		else if (*message != '\'')
 			strbuf_addch(&buf, *(message++));
 		else
-			strbuf_addf(&buf, "'\\\\%c'", *(message++));
+			strbuf_addf(&buf, "'\\%c'", *(message++));
 	strbuf_addstr(&buf, "'\nGIT_AUTHOR_EMAIL='");
 	while (*message && *message != '\n' && *message != '\r')
 		if (skip_prefix(message, "> ", &message))
@@ -647,17 +647,35 @@ missing_author:
 		else if (*message != '\'')
 			strbuf_addch(&buf, *(message++));
 		else
-			strbuf_addf(&buf, "'\\\\%c'", *(message++));
+			strbuf_addf(&buf, "'\\%c'", *(message++));
 	strbuf_addstr(&buf, "'\nGIT_AUTHOR_DATE='@");
 	while (*message && *message != '\n' && *message != '\r')
 		if (*message != '\'')
 			strbuf_addch(&buf, *(message++));
 		else
-			strbuf_addf(&buf, "'\\\\%c'", *(message++));
+			strbuf_addf(&buf, "'\\%c'", *(message++));
 	strbuf_addch(&buf, '\'');
 	res = write_message(buf.buf, buf.len, rebase_path_author_script(), 1);
 	strbuf_release(&buf);
 	return res;
+}
+
+
+/*
+ * write_author_script() used to fail to terminate the last line with a "'" and
+ * also escaped "'" incorrectly as "'\\\\''" rather than "'\\''". We check for
+ * the terminating "'" on the last line to see how "'" has been escaped in case
+ * git was upgraded while rebase was stopped.
+ */
+static int quoting_is_broken(const char *s, size_t n)
+{
+	/* Skip any empty lines in case the file was hand edited */
+	while (n > 0 && s[--n] == '\n')
+		; /* empty */
+	if (n > 0 && s[n] != '\'')
+		return 1;
+
+	return 0;
 }
 
 /*
@@ -667,14 +685,18 @@ missing_author:
 static int read_env_script(struct argv_array *env)
 {
 	struct strbuf script = STRBUF_INIT;
-	int i, count = 0;
-	char *p, *p2;
+	int i, count = 0, sq_bug;
+	const char *p2;
+	char *p;
 
 	if (strbuf_read_file(&script, rebase_path_author_script(), 256) <= 0)
 		return -1;
-
+	/* write_author_script() used to quote incorrectly */
+	sq_bug = quoting_is_broken(script.buf, script.len);
 	for (p = script.buf; *p; p++)
-		if (skip_prefix(p, "'\\\\''", (const char **)&p2))
+		if (sq_bug && skip_prefix(p, "'\\\\''", &p2))
+			strbuf_splice(&script, p - script.buf, p2 - p, "'", 1);
+		else if (skip_prefix(p, "'\\''", &p2))
 			strbuf_splice(&script, p - script.buf, p2 - p, "'", 1);
 		else if (*p == '\'')
 			strbuf_splice(&script, p-- - script.buf, 1, "", 0);
@@ -798,10 +820,17 @@ static int run_git_commit(const char *defmsg, struct replay_opts *opts,
 
 	if ((flags & CREATE_ROOT_COMMIT) && !(flags & AMEND_MSG)) {
 		struct strbuf msg = STRBUF_INIT, script = STRBUF_INIT;
-		const char *author = is_rebase_i(opts) ?
-			read_author_ident(&script) : NULL;
+		const char *author = NULL;
 		struct object_id root_commit, *cache_tree_oid;
 		int res = 0;
+
+		if (is_rebase_i(opts)) {
+			author = read_author_ident(&script);
+			if (!author) {
+				strbuf_release(&script);
+				return -1;
+			}
+		}
 
 		if (!defmsg)
 			BUG("root commit without message");
