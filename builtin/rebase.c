@@ -169,7 +169,8 @@ static int run_specific_rebase(struct rebase_options *opts)
 	add_var(&script_snippet, "upstream_name", opts->upstream_name);
 	add_var(&script_snippet, "upstream",
 				 oid_to_hex(&opts->upstream->object.oid));
-	add_var(&script_snippet, "head_name", opts->head_name);
+	add_var(&script_snippet, "head_name",
+		opts->head_name ? opts->head_name : "detached HEAD");
 	add_var(&script_snippet, "orig_head", oid_to_hex(&opts->orig_head));
 	add_var(&script_snippet, "onto", oid_to_hex(&opts->onto->object.oid));
 	add_var(&script_snippet, "onto_name", opts->onto_name);
@@ -250,6 +251,9 @@ static int reset_head(struct object_id *oid, const char *action,
 	struct object_id *orig = NULL, oid_orig,
 		*old_orig = NULL, oid_old_orig;
 	int ret = 0;
+
+	if (switch_to_branch && !starts_with(switch_to_branch, "refs/"))
+		BUG("Not a fully qualified branch: '%s'", switch_to_branch);
 
 	if (hold_locked_index(&lock, LOCK_REPORT_ON_ERROR) < 0)
 		return -1;
@@ -558,7 +562,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	 * branch_name -- branch/commit being rebased, or
 	 * 		  HEAD (already detached)
 	 * orig_head -- commit object name of tip of the branch before rebasing
-	 * head_name -- refs/heads/<that-branch> or "detached HEAD"
+	 * head_name -- refs/heads/<that-branch> or NULL (detached HEAD)
 	 */
 	if (argc > 0)
 		 die("TODO: handle switch_to");
@@ -575,7 +579,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 				branch_name = options.head_name;
 
 		} else {
-			options.head_name = xstrdup("detached HEAD");
+			free(options.head_name);
+			options.head_name = NULL;
 			branch_name = "HEAD";
 		}
 		if (get_oid("HEAD", &options.orig_head))
