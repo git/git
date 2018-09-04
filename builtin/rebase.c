@@ -94,6 +94,7 @@ struct rebase_options {
 	struct strbuf git_am_opt;
 	const char *action;
 	int signoff;
+	int allow_rerere_autoupdate;
 };
 
 static int is_interactive(struct rebase_options *opts)
@@ -173,6 +174,21 @@ static int read_basic_state(struct rebase_options *opts)
 		opts->signoff = 1;
 		opts->flags |= REBASE_FORCE;
 	}
+
+	if (file_exists(state_dir_path("allow_rerere_autoupdate", opts))) {
+		strbuf_reset(&buf);
+		if (read_one(state_dir_path("allow_rerere_autoupdate", opts),
+			    &buf))
+			return -1;
+		if (!strcmp(buf.buf, "--rerere-autoupdate"))
+			opts->allow_rerere_autoupdate = 1;
+		else if (!strcmp(buf.buf, "--no-rerere-autoupdate"))
+			opts->allow_rerere_autoupdate = 0;
+		else
+			warning(_("ignoring invalid allow_rerere_autoupdate: "
+				  "'%s'"), buf.buf);
+	} else
+		opts->allow_rerere_autoupdate = -1;
 
 	strbuf_release(&buf);
 
@@ -256,6 +272,10 @@ static int run_specific_rebase(struct rebase_options *opts)
 		add_var(&script_snippet, "switch_to", opts->switch_to);
 	add_var(&script_snippet, "action", opts->action ? opts->action : "");
 	add_var(&script_snippet, "signoff", opts->signoff ? "--signoff" : "");
+	add_var(&script_snippet, "allow_rerere_autoupdate",
+		opts->allow_rerere_autoupdate < 0 ? "" :
+		opts->allow_rerere_autoupdate ?
+		"--rerere-autoupdate" : "--no-rerere-autoupdate");
 
 	switch (opts->type) {
 	case REBASE_AM:
@@ -488,6 +508,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		.type = REBASE_UNSPECIFIED,
 		.flags = REBASE_NO_QUIET,
 		.git_am_opt = STRBUF_INIT,
+		.allow_rerere_autoupdate  = -1,
 	};
 	const char *branch_name;
 	int ret, flags, total_argc, in_progress = 0;
@@ -553,6 +574,10 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		OPT_SET_INT('p', "preserve-merges", &options.type,
 			    N_("try to recreate merges instead of ignoring "
 			       "them"), REBASE_PRESERVE_MERGES),
+		OPT_BOOL(0, "rerere-autoupdate",
+			 &options.allow_rerere_autoupdate,
+			 N_("allow rerere to update index  with resolved "
+			    "conflict")),
 		OPT_END(),
 	};
 
