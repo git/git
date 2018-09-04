@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Aug 2018, #06; Wed, 29)
-X-master-at: 2f743933341f276111103550fbf383a34dfcfd38
-X-next-at: b1634b371dc2e46f9b43c45fd1857c2e2688f96e
+Subject: What's cooking in git.git (Sep 2018, #01; Tue, 4)
+X-master-at: c05048d43925ab8edcb36663752c2b4541911231
+X-next-at: 5ba43deb5a82c56b2533ebd026d15666a2ce5c5a
 
-What's cooking in git.git (Aug 2018, #06; Wed, 29)
+What's cooking in git.git (Sep 2018, #01; Tue, 4)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,7 +12,7 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-Git 2.19-rc1 is out.  Hopefully the tip of 'master' is more or less
+Git 2.19-rc2 is out.  Hopefully the tip of 'master' is more or less
 identical to the final one without needing much updates.
 
 You can find the changes described here in the integration branches
@@ -22,230 +22,6 @@ of the repositories listed at
 
 --------------------------------------------------
 [Graduated to "master"]
-
-* ab/test-must-be-empty-for-master (2018-08-22) 1 commit
-  (merged to 'next' on 2018-08-22 at 580dfd1024)
- + t6018-rev-list-glob: fix 'empty stdin' test
- (this branch is used by jk/rev-list-stdin-noop-is-ok.)
-
- Test fixes.
-
-
-* ab/unconditional-free-and-null (2018-08-17) 1 commit
-  (merged to 'next' on 2018-08-22 at 2661a3cb96)
- + refactor various if (x) FREE_AND_NULL(x) to just FREE_AND_NULL(x)
-
- Code clean-up.
-
-
-* ds/commit-graph-fsck (2018-08-23) 1 commit
-  (merged to 'next' on 2018-08-23 at cb27eada82)
- + config: fix commit-graph related config docs
-
- Finishing touches to doc.
-
-
-* ep/worktree-quiet-option (2018-08-17) 1 commit
-  (merged to 'next' on 2018-08-22 at 4a0a85e907)
- + worktree: add --quiet option
-
- "git worktree" command learned "--quiet" option to make it less
- verbose.
-
-
-* ja/i18n-message-fixes (2018-08-23) 1 commit
-  (merged to 'next' on 2018-08-23 at 907c1f69a2)
- + i18n: fix mistakes in translated strings
-
- Messages fix.
-
-
-* jk/hashcmp-optim-for-2.19 (2018-08-23) 1 commit
-  (merged to 'next' on 2018-08-23 at e7e8abe0e3)
- + hashcmp: assert constant hash size
-
- Partially revert the support for multiple hash functions to regain
- hash comparison performance; we'd think of a way to do this better
- in the next cycle.
-
-
-* jk/use-compat-util-in-test-tool (2018-08-21) 1 commit
-  (merged to 'next' on 2018-08-22 at 98c3acd8df)
- + test-tool.h: include git-compat-util.h
-
- Dev tool update.
-
-
-* js/larger-timestamps (2018-08-21) 1 commit
-  (merged to 'next' on 2018-08-22 at 23a3d5bcf8)
- + commit: use timestamp_t for author_date_slab
-
- Portability fix.
-
-
-* js/range-diff (2018-08-27) 1 commit
-  (merged to 'next' on 2018-08-27 at ca29413b20)
- + range-diff: update stale summary of --no-dual-color
-
- Finishing touched to help string.
-
-
-* nd/complete-config-vars (2018-08-21) 1 commit
-  (merged to 'next' on 2018-08-22 at 758f937bef)
- + generate-cmdlist.sh: collect config from all config.txt files
-
- "git help --config" (which is used in command line completion)
- missed the configuration variables not described in the main
- config.txt file but are described in another file that is included
- by it, which has been corrected.
-
-
-* nd/config-core-checkstat-doc (2018-08-17) 1 commit
-  (merged to 'next' on 2018-08-22 at 3663026a41)
- + config.txt: clarify core.checkStat
-
- The meaning of the possible values the "core.checkStat"
- configuration variable can take were not adequately documented,
- which has been fixed.
-
-
-* nd/pack-deltify-regression-fix (2018-07-23) 1 commit
-  (merged to 'next' on 2018-08-02 at f3b2bf0fef)
- + pack-objects: fix performance issues on packing large deltas
-
- In a recent update in 2.18 era, "git pack-objects" started
- producing a larger than necessary packfiles by missing
- opportunities to use large deltas, which has been fixed.
-
-
-* rs/opt-updates (2018-08-21) 3 commits
-  (merged to 'next' on 2018-08-22 at 1703b9b489)
- + parseopt: group literal string alternatives in argument help
- + remote: improve argument help for add --mirror
- + checkout-index: improve argument help for --stage
-
- "git cmd -h" updates.
-
-
-* sg/t0020-conversion-fix (2018-08-22) 1 commit
-  (merged to 'next' on 2018-08-22 at 79508284c0)
- + t0020-crlf: check the right file
-
- Test fixes.
-
-
-* sg/t3420-autostash-fix (2018-08-22) 1 commit
-  (merged to 'next' on 2018-08-22 at 569cf2dc3d)
- + t3420-rebase-autostash: don't try to grep non-existing files
-
- Test fixes.
-
-
-* sg/t3903-missing-fix (2018-08-22) 1 commit
-  (merged to 'next' on 2018-08-22 at 22f1240ed5)
- + t3903-stash: don't try to grep non-existing file
-
- Test fixes.
-
-
-* sg/t4051-fix (2018-08-22) 1 commit
-  (merged to 'next' on 2018-08-22 at e1c9adcc14)
- + t4051-diff-function-context: read the right file
-
- Test fixes.
-
-
-* sg/t7501-thinkofix (2018-08-22) 1 commit
-  (merged to 'next' on 2018-08-22 at 69a9b472c7)
- + t7501-commit: drop silly command substitution
-
- Test fixes.
-
-
-* sg/test-must-be-empty (2018-08-21) 4 commits
-  (merged to 'next' on 2018-08-22 at a376680200)
- + tests: use 'test_must_be_empty' instead of 'test_cmp <empty> <out>'
- + tests: use 'test_must_be_empty' instead of 'test_cmp /dev/null <out>'
- + tests: use 'test_must_be_empty' instead of 'test ! -s'
- + tests: use 'test_must_be_empty' instead of '! test -s'
-
- Test fixes.
-
-
-* sg/test-rebase-editor-fix (2018-08-23) 1 commit
-  (merged to 'next' on 2018-08-23 at 504538d005)
- + t/lib-rebase.sh: support explicit 'pick' commands in 'fake_editor.sh'
-
- Test fix.
-
-
-* sm/branch-sort-config (2018-08-16) 1 commit
-  (merged to 'next' on 2018-08-22 at 86d26afa1e)
- + branch: support configuring --sort via .gitconfig
-
- "git branch --list" learned to take the default sort order from the
- 'branch.sort' configuration variable, just like "git tag --list"
- pays attention to 'tag.sort'.
-
---------------------------------------------------
-[New Topics]
-
-* ds/format-commit-graph-docs (2018-08-21) 2 commits
- - commit-graph.txt: improve formatting for asciidoc
- - Docs: Add commit-graph tech docs to Makefile
-
- Design docs for the commit-graph machinery is now made into HTML as
- well as text.
-
-
-* jk/diff-rendered-docs (2018-08-21) 1 commit
-  (merged to 'next' on 2018-08-22 at dd7a2b71cd)
- + SubmittingPatches: mention doc-diff
-
- Dev doc update.
-
- Will cook in 'next'.
-
-
-* jk/pack-delta-reuse-with-bitmap (2018-08-21) 6 commits
-  (merged to 'next' on 2018-08-22 at fc50b59dab)
- + pack-objects: reuse on-disk deltas for thin "have" objects
- + pack-bitmap: save "have" bitmap from walk
- + t/perf: add perf tests for fetches from a bitmapped server
- + t/perf: add infrastructure for measuring sizes
- + t/perf: factor out percent calculations
- + t/perf: factor boilerplate out of test_perf
-
- When creating a thin pack, which allows objects to be made into a
- delta against another object that is not in the resulting pack but
- is known to be present on the receiving end, the code learned to
- take advantage of the reachability bitmap; this allows the server
- to send a delta against a base beyond the "boundary" commit.
-
- Will cook in 'next'.
-
-
-* jk/rev-list-stdin-noop-is-ok (2018-08-22) 1 commit
-  (merged to 'next' on 2018-08-27 at d5916f7bc1)
- + rev-list: make empty --stdin not an error
-
- "git rev-list --stdin </dev/null" used to be an error; it now shows
- no output without an error.  "git rev-list --stdin --default HEAD"
- still falls back to the given default when nothing is given on the
- standard input.
-
- Will cook in 'next'.
-
-
-* js/rebase-in-c-5.5-work-with-rebase-i-in-c (2018-08-29) 2 commits
- - builtin rebase: prepare for builtin rebase -i
- - Merge branch 'ag/rebase-i-in-c' into js/rebase-in-c-5.5-work-with-rebase-i-in-c
- (this branch is used by pk/rebase-in-c-6-final; uses ag/rebase-i-in-c, pk/rebase-in-c, pk/rebase-in-c-2-basic, pk/rebase-in-c-3-acts, pk/rebase-in-c-4-opts and pk/rebase-in-c-5-test.)
-
- "rebase" that has been rewritten learns the new calling convention
- used by "rebase -i" that was rewritten in C, tying the loose end
- between two GSoC topics that stomped on each other's toes.
-
 
 * ab/portable (2018-08-27) 6 commits
   (merged to 'next' on 2018-08-27 at 37640e66ef)
@@ -259,142 +35,170 @@ of the repositories listed at
 
  Portability fix.
 
- Will cook in 'next'.
-
-
-* jk/trailer-fixes (2018-08-23) 8 commits
-  (merged to 'next' on 2018-08-27 at 93b671b8c6)
- + append_signoff: use size_t for string offsets
- + sequencer: ignore "---" divider when parsing trailers
- + pretty, ref-filter: format %(trailers) with no_divider option
- + interpret-trailers: allow suppressing "---" divider
- + interpret-trailers: tighten check for "---" patch boundary
- + trailer: pass process_trailer_opts to trailer_info_get()
- + trailer: use size_t for iterating trailer list
- + trailer: use size_t for string offsets
-
- "git interpret-trailers" and its underlying machinery had a buggy
- code that attempted to ignore patch text after commit log message,
- which triggered in various codepaths that will always get the log
- message alone and never get such an input.
-
- Will cook in 'next'.
-
-
-* tg/rerere-doc-updates (2018-08-29) 2 commits
- - rerere: add note about files with existing conflict markers
- - rerere: mention caveat about unmatched conflict markers
- (this branch uses tg/rerere.)
-
- Clarify a part of technical documentation for rerere.
-
- Will merge to 'next'.
-
 
 * ab/portable-more (2018-08-29) 2 commits
- - tests: fix non-portable iconv invocation
- - tests: fix non-portable "${var:-"str"}" construct
+  (merged to 'next' on 2018-08-31 at d7b44993e4)
+ + tests: fix non-portable iconv invocation
+ + tests: fix non-portable "${var:-"str"}" construct
  (this branch uses ab/portable.)
 
  Portability fix.
 
- Will merge to 'next'.
+
+* ds/commit-graph-lockfile-fix (2018-08-30) 1 commit
+  (merged to 'next' on 2018-09-04 at 0876e6ddcc)
+ + commit: don't use generation numbers if not needed
+
+ "git merge-base" in 2.19-rc1 has performance regression when the
+ (experimental) commit-graph feature is in use, which has been
+ mitigated.
 
 
-* ds/commit-graph-tests (2018-08-29) 1 commit
- - commit-graph: define GIT_TEST_COMMIT_GRAPH
-
- We can now optionally run tests with commit-graph enabled.
-
- Will merge to 'next'.
-
-
-* en/directory-renames-nothanks (2018-08-29) 4 commits
- - SQUASH???
- - am: avoid directory rename detection when calling recursive merge machinery
- - merge-recursive: add ability to turn off directory rename detection
- - t3401: add another directory rename testcase for rebase and am
+* en/directory-renames-nothanks (2018-08-30) 3 commits
+  (merged to 'next' on 2018-08-31 at 91d663d688)
+ + am: avoid directory rename detection when calling recursive merge machinery
+ + merge-recursive: add ability to turn off directory rename detection
+ + t3401: add another directory rename testcase for rebase and am
 
  Recent addition of "directory rename" heuristics to the
  merge-recursive backend makes the command susceptible to false
- positives and false negatives, but the risk is even more grave when
- used in the context of "git am -3", which does not know about any
- surrounding unmodified paths while inspecting a patch.  The
- heuristic is disabled to keep the machinery "more stupid but
- predicable".
-
- Will merge to 'next' after squashing the fix in.
+ positives and false negatives.  In the context of "git am -3",
+ which does not know about surrounding unmodified paths and thus
+ cannot inform the merge machinery about the full trees involved,
+ this risk is particularly severe.  As such, the heuristic is
+ disabled for "git am -3" to keep the machinery "more stupid but
+ predictable".
 
 
 * es/chain-lint-more (2018-08-29) 1 commit
- - chainlint: match "quoted" here-doc tags
+  (merged to 'next' on 2018-08-31 at d456090b62)
+ + chainlint: match "quoted" here-doc tags
 
  The test linter code has learned that the end of here-doc mark
  "EOF" can be quoted in a double-quote pair, not just in a
  single-quote pair.
 
+
+* es/freebsd-iconv-portability (2018-08-31) 1 commit
+  (merged to 'next' on 2018-09-04 at 52baa37dd7)
+ + config.mak.uname: resolve FreeBSD iconv-related compilation warning
+
+ Build fix.
+
+
+* pw/rebase-i-author-script-fix (2018-08-07) 2 commits
+  (merged to 'next' on 2018-08-31 at 7b9f485407)
+ + sequencer: fix quoting in write_author_script
+ + sequencer: handle errors from read_author_ident()
+
+ Recent "git rebase -i" update started to write bogusly formatted
+ author-script, with a matching broken reading code.  These are
+ fixed.
+
+--------------------------------------------------
+[New Topics]
+
+* ab/fetch-tags-noclobber (2018-08-31) 9 commits
+ - fetch: stop clobbering existing tags without --force
+ - fetch: document local ref updates with/without --force
+ - push doc: correct lies about how push refspecs work
+ - push doc: move mention of "tag <tag>" later in the prose
+ - push doc: remove confusing mention of remote merger
+ - fetch tests: add a test for clobbering tag behavior
+ - push tests: use spaces in interpolated string
+ - push tests: make use of unused $1 in test description
+ - fetch: change "branch" to "reference" in --force -h output
+
+ The rules used by "git push" and "git fetch" to determine if a ref
+ can or cannot be updated were inconsistent; specifically, fetching
+ to update existing tags were allowed even though tags are supposed
+ to be unmoving anchoring points.  "git fetch" was taught to forbid
+ updates to existing tags without the "--force" option.
+
+ Will merge to and cook in 'next'.
+ This is a backward incompatible change but in a good way; it may
+ still need to be treated carefully.
+
+
+* es/worktree-forced-ops-fix (2018-08-30) 9 commits
+ - worktree: delete .git/worktrees if empty after 'remove'
+ - worktree: teach 'remove' to override lock when --force given twice
+ - worktree: teach 'move' to override lock when --force given twice
+ - worktree: teach 'add' to respect --force for registered but missing path
+ - worktree: disallow adding same path multiple times
+ - worktree: prepare for more checks of whether path can become worktree
+ - worktree: generalize delete_git_dir() to reduce code duplication
+ - worktree: move delete_git_dir() earlier in file for upcoming new callers
+ - worktree: don't die() in library function find_worktree()
+
+ Various subcommands of "git worktree" take '--force' but did not
+ behave sensibly, which has been corrected.
+
+
+* jk/patch-corrupted-delta-fix (2018-08-30) 6 commits
+ - t5303: use printf to generate delta bases
+ - patch-delta: handle truncated copy parameters
+ - patch-delta: consistently report corruption
+ - patch-delta: fix oob read
+ - t5303: test some corrupt deltas
+ - test-delta: read input into a heap buffer
+
+ Malformed or crafted data in packstream can make our code attempt
+ to read or write past the allocated buffer and abort, instead of
+ reporting an error, which has been fixed.
+
  Will merge to 'next'.
 
 
-* jk/cocci (2018-08-29) 9 commits
- - show_dirstat: simplify same-content check
- - read-cache: use oideq() in ce_compare functions
- - convert hashmap comparison functions to oideq()
- - convert "hashcmp() != 0" to "!hasheq()"
- - convert "oidcmp() != 0" to "!oideq()"
- - convert "hashcmp() == 0" to hasheq()
- - convert "oidcmp() == 0" to oideq()
- - introduce hasheq() and oideq()
- - coccinelle: use <...> for function exclusion
-
- spatch transformation to replace boolean uses of !hashcmp() to
- newly introduced oideq() is added, and applied, to regain
- performance lost due to support of multiple hash algorithms.
-
- Will merge to 'next'.
+* jc/rebase-in-c-9-fixes (2018-09-04) 1 commit
+ - rebase: re-add forgotten -k that stands for --keep-empty
+ (this branch uses ag/rebase-i-in-c, js/rebase-in-c-5.5-work-with-rebase-i-in-c, pk/rebase-in-c, pk/rebase-in-c-2-basic, pk/rebase-in-c-3-acts, pk/rebase-in-c-4-opts, pk/rebase-in-c-5-test and pk/rebase-in-c-6-final.)
 
 
-* js/add-i-coalesce-after-editing-hunk (2018-08-28) 1 commit
- - add -p: coalesce hunks before testing applicability
+* jk/pack-objects-with-bitmap-fix (2018-09-04) 4 commits
+ - pack-bitmap: drop "loaded" flag
+ - traverse_bitmap_commit_list(): don't free result
+ - t5310: test delta reuse with bitmaps
+ - bitmap_has_sha1_in_uninteresting(): drop BUG check
+ (this branch uses jk/pack-delta-reuse-with-bitmap.)
 
- Applicability check after a patch is edited in a "git add -i/p"
- session has been improved.
-
- Will merge to 'next'.
+ Hotfix of the base topic.  It may not be a bad idea to squash these
+ in when the next development cycle opens.
 
 
-* rs/mailinfo-format-flowed (2018-08-29) 1 commit
- - mailinfo: support format=flowed
+* js/rebase-i-autosquash-fix (2018-09-04) 2 commits
+ - rebase -i: be careful to wrap up fixup/squash chains
+ - rebase -i --autosquash: demonstrate a problem skipping the last squash
 
- "git mailinfo" used in "git am" learned to make a best-effort
- recovery of a patch corrupted by MUA that sends text/plain with
- format=flawed option.
+ "git rebase -i" did not clear the state files correctly when a run
+ of "squash/fixup" is aborted and then the user manually amended the
+ commit instead, which has been corrected.
 
  Will merge to 'next'.
 
 
-* sb/submodule-move-head-with-corruption (2018-08-28) 2 commits
- - submodule.c: warn about missing submodule git directories
- - t2013: add test for missing but active submodule
+* nd/bisect-show-list-fix (2018-09-04) 1 commit
+ - bisect.c: make show_list() build again
 
- A corner case in switching to a branch that needs to "check out" a
- submodule is handled a bit better now.
+ Debugging aid update.
 
- Expecting a reroll.
+ Will merge to and cook in 'next'.
 
 
-* tg/conflict-marker-size (2018-08-29) 1 commit
- - .gitattributes: add conflict-marker-size for relevant files
+* nd/optim-reading-index-v4 (2018-09-04) 1 commit
+ - read-cache.c: optimize reading index format v4
 
- Developer aid.
+ The v4 format of the index file uses prefix compression to store
+ the pathnames to save file size.  The codepath to read such a file
+ has been optimized.
 
- Will merge to 'next'.
+ Will merge to and cook in 'next'.
 
 
-* ts/doc-build-manpage-xsl-quietly (2018-08-29) 1 commit
- - Documentation/Makefile: make manpage-base-url.xsl generation quieter
+* sg/doc-trace-appends (2018-09-04) 1 commit
+ - Documentation/git.txt: clarify that GIT_TRACE=/path appends
 
- Build tweak.
+ Docfix.
 
  Will merge to 'next'.
 
@@ -496,6 +300,174 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* ds/format-commit-graph-docs (2018-08-21) 2 commits
+ - commit-graph.txt: improve formatting for asciidoc
+ - Docs: Add commit-graph tech docs to Makefile
+
+ Design docs for the commit-graph machinery is now made into HTML as
+ well as text.
+
+
+* jk/diff-rendered-docs (2018-08-31) 5 commits
+ - doc/Makefile: drop doc-diff worktree and temporary files on "make clean"
+ - doc-diff: add --clean mode to remove temporary working gunk
+ - doc-diff: fix non-portable 'man' invocation
+ - doc-diff: always use oids inside worktree
+  (merged to 'next' on 2018-08-22 at dd7a2b71cd)
+ + SubmittingPatches: mention doc-diff
+
+ Dev doc update.
+
+ Will merge to 'next'.
+
+
+* jk/pack-delta-reuse-with-bitmap (2018-08-21) 6 commits
+  (merged to 'next' on 2018-08-22 at fc50b59dab)
+ + pack-objects: reuse on-disk deltas for thin "have" objects
+ + pack-bitmap: save "have" bitmap from walk
+ + t/perf: add perf tests for fetches from a bitmapped server
+ + t/perf: add infrastructure for measuring sizes
+ + t/perf: factor out percent calculations
+ + t/perf: factor boilerplate out of test_perf
+ (this branch is used by jk/pack-objects-with-bitmap-fix.)
+
+ When creating a thin pack, which allows objects to be made into a
+ delta against another object that is not in the resulting pack but
+ is known to be present on the receiving end, the code learned to
+ take advantage of the reachability bitmap; this allows the server
+ to send a delta against a base beyond the "boundary" commit.
+
+ Will cook in 'next'.
+
+
+* jk/rev-list-stdin-noop-is-ok (2018-08-22) 1 commit
+  (merged to 'next' on 2018-08-27 at d5916f7bc1)
+ + rev-list: make empty --stdin not an error
+
+ "git rev-list --stdin </dev/null" used to be an error; it now shows
+ no output without an error.  "git rev-list --stdin --default HEAD"
+ still falls back to the given default when nothing is given on the
+ standard input.
+
+ Will cook in 'next'.
+
+
+* js/rebase-in-c-5.5-work-with-rebase-i-in-c (2018-08-29) 2 commits
+ - builtin rebase: prepare for builtin rebase -i
+ - Merge branch 'ag/rebase-i-in-c' into js/rebase-in-c-5.5-work-with-rebase-i-in-c
+ (this branch is used by jc/rebase-in-c-9-fixes and pk/rebase-in-c-6-final; uses ag/rebase-i-in-c, pk/rebase-in-c, pk/rebase-in-c-2-basic, pk/rebase-in-c-3-acts, pk/rebase-in-c-4-opts and pk/rebase-in-c-5-test.)
+
+ "rebase" that has been rewritten learns the new calling convention
+ used by "rebase -i" that was rewritten in C, tying the loose end
+ between two GSoC topics that stomped on each other's toes.
+
+
+* jk/trailer-fixes (2018-08-23) 8 commits
+  (merged to 'next' on 2018-08-27 at 93b671b8c6)
+ + append_signoff: use size_t for string offsets
+ + sequencer: ignore "---" divider when parsing trailers
+ + pretty, ref-filter: format %(trailers) with no_divider option
+ + interpret-trailers: allow suppressing "---" divider
+ + interpret-trailers: tighten check for "---" patch boundary
+ + trailer: pass process_trailer_opts to trailer_info_get()
+ + trailer: use size_t for iterating trailer list
+ + trailer: use size_t for string offsets
+
+ "git interpret-trailers" and its underlying machinery had a buggy
+ code that attempted to ignore patch text after commit log message,
+ which triggered in various codepaths that will always get the log
+ message alone and never get such an input.
+
+ Will cook in 'next'.
+
+
+* tg/rerere-doc-updates (2018-08-29) 2 commits
+  (merged to 'next' on 2018-08-31 at ce4fef1a97)
+ + rerere: add note about files with existing conflict markers
+ + rerere: mention caveat about unmatched conflict markers
+ (this branch uses tg/rerere.)
+
+ Clarify a part of technical documentation for rerere.
+
+ Will cook in 'next'.
+
+
+* ds/commit-graph-tests (2018-08-29) 1 commit
+ - commit-graph: define GIT_TEST_COMMIT_GRAPH
+
+ We can now optionally run tests with commit-graph enabled.
+
+ Will merge to 'next'.
+
+
+* jk/cocci (2018-08-29) 9 commits
+  (merged to 'next' on 2018-08-31 at 914b4f17ce)
+ + show_dirstat: simplify same-content check
+ + read-cache: use oideq() in ce_compare functions
+ + convert hashmap comparison functions to oideq()
+ + convert "hashcmp() != 0" to "!hasheq()"
+ + convert "oidcmp() != 0" to "!oideq()"
+ + convert "hashcmp() == 0" to hasheq()
+ + convert "oidcmp() == 0" to oideq()
+ + introduce hasheq() and oideq()
+ + coccinelle: use <...> for function exclusion
+
+ spatch transformation to replace boolean uses of !hashcmp() to
+ newly introduced oideq() is added, and applied, to regain
+ performance lost due to support of multiple hash algorithms.
+
+ Will cook in 'next'.
+
+
+* js/add-i-coalesce-after-editing-hunk (2018-08-28) 1 commit
+ - add -p: coalesce hunks before testing applicability
+
+ Applicability check after a patch is edited in a "git add -i/p"
+ session has been improved.
+
+ Will hold.
+ cf. <e5b2900a-0558-d3bf-8ea1-d526b078bbc2@talktalk.net>
+
+
+* rs/mailinfo-format-flowed (2018-08-29) 1 commit
+  (merged to 'next' on 2018-08-31 at 9e8b92176c)
+ + mailinfo: support format=flowed
+
+ "git mailinfo" used in "git am" learned to make a best-effort
+ recovery of a patch corrupted by MUA that sends text/plain with
+ format=flawed option.
+
+ Will cook in 'next'.
+
+
+* sb/submodule-move-head-with-corruption (2018-08-28) 2 commits
+ - submodule.c: warn about missing submodule git directories
+ - t2013: add test for missing but active submodule
+
+ A corner case in switching to a branch that needs to "check out" a
+ submodule is handled a bit better now.
+
+ Expecting a reroll.
+
+
+* tg/conflict-marker-size (2018-08-29) 1 commit
+  (merged to 'next' on 2018-08-31 at 12099161f0)
+ + .gitattributes: add conflict-marker-size for relevant files
+
+ Developer aid.
+
+ Will cook in 'next'.
+
+
+* ts/doc-build-manpage-xsl-quietly (2018-08-29) 1 commit
+  (merged to 'next' on 2018-08-31 at 7527e0f8d3)
+ + Documentation/Makefile: make manpage-base-url.xsl generation quieter
+
+ Build tweak.
+
+ Will cook in 'next'.
+
+
 * bp/checkout-new-branch-optim (2018-08-16) 1 commit
   (merged to 'next' on 2018-08-27 at e69bfd115f)
  + checkout: optimize "git checkout -b <new_branch>"
@@ -537,7 +509,8 @@ of the repositories listed at
  the submodule name.  URLencode the submodule name before computing
  the name of the directory to make sure they form a flat namespace.
 
- Will cook in 'next'.
+ Expecting further work on the topic.
+ cf. <CAGZ79kYnbjaPoWdda0SM_-_X77mVyYC7JO61OV8nm2yj3Q1OvQ@mail.gmail.com>
 
 
 * cc/delta-islands (2018-08-16) 7 commits
@@ -557,8 +530,9 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* md/filter-trees (2018-08-16) 6 commits
+* md/filter-trees (2018-09-04) 7 commits
  - list-objects-filter: implement filter tree:0
+ - list-objects-filter: use BUG rather than die
  - revision: mark non-user-given objects instead
  - rev-list: handle missing tree objects properly
  - list-objects: always parse trees gently
@@ -568,7 +542,7 @@ of the repositories listed at
  The "rev-list --filter" feature learned to exclude all trees via
  "tree:0" filter.
 
- What's the status of this one?
+ Will merge to 'next'.
 
 
 * ng/status-i-short-for-ignored (2018-08-09) 1 commit
@@ -592,7 +566,7 @@ of the repositories listed at
  - builtin rebase: handle the pre-rebase hook (and add --no-verify)
  - builtin rebase: support `git rebase --onto A...B`
  - builtin rebase: support --onto
- (this branch is used by js/rebase-in-c-5.5-work-with-rebase-i-in-c, pk/rebase-in-c-3-acts, pk/rebase-in-c-4-opts, pk/rebase-in-c-5-test and pk/rebase-in-c-6-final; uses pk/rebase-in-c.)
+ (this branch is used by jc/rebase-in-c-9-fixes, js/rebase-in-c-5.5-work-with-rebase-i-in-c, pk/rebase-in-c-3-acts, pk/rebase-in-c-4-opts, pk/rebase-in-c-5-test and pk/rebase-in-c-6-final; uses pk/rebase-in-c.)
 
 
 * pk/rebase-in-c-3-acts (2018-08-10) 7 commits
@@ -603,7 +577,7 @@ of the repositories listed at
  - builtin rebase: support --abort
  - builtin rebase: support --skip
  - builtin rebase: support --continue
- (this branch is used by js/rebase-in-c-5.5-work-with-rebase-i-in-c, pk/rebase-in-c-4-opts, pk/rebase-in-c-5-test and pk/rebase-in-c-6-final; uses pk/rebase-in-c and pk/rebase-in-c-2-basic.)
+ (this branch is used by jc/rebase-in-c-9-fixes, js/rebase-in-c-5.5-work-with-rebase-i-in-c, pk/rebase-in-c-4-opts, pk/rebase-in-c-5-test and pk/rebase-in-c-6-final; uses pk/rebase-in-c and pk/rebase-in-c-2-basic.)
 
 
 * pk/rebase-in-c-4-opts (2018-08-10) 18 commits
@@ -625,7 +599,7 @@ of the repositories listed at
  - builtin rebase: support --rerere-autoupdate
  - builtin rebase: support --signoff
  - builtin rebase: allow selecting the rebase "backend"
- (this branch is used by js/rebase-in-c-5.5-work-with-rebase-i-in-c, pk/rebase-in-c-5-test and pk/rebase-in-c-6-final; uses pk/rebase-in-c, pk/rebase-in-c-2-basic and pk/rebase-in-c-3-acts.)
+ (this branch is used by jc/rebase-in-c-9-fixes, js/rebase-in-c-5.5-work-with-rebase-i-in-c, pk/rebase-in-c-5-test and pk/rebase-in-c-6-final; uses pk/rebase-in-c, pk/rebase-in-c-2-basic and pk/rebase-in-c-3-acts.)
 
 
 * pk/rebase-in-c-5-test (2018-08-10) 6 commits
@@ -635,41 +609,35 @@ of the repositories listed at
  - builtin rebase: fast-forward to onto if it is a proper descendant
  - builtin rebase: optionally pass custom reflogs to reset_head()
  - builtin rebase: optionally auto-detect the upstream
- (this branch is used by js/rebase-in-c-5.5-work-with-rebase-i-in-c and pk/rebase-in-c-6-final; uses pk/rebase-in-c, pk/rebase-in-c-2-basic, pk/rebase-in-c-3-acts and pk/rebase-in-c-4-opts.)
+ (this branch is used by jc/rebase-in-c-9-fixes, js/rebase-in-c-5.5-work-with-rebase-i-in-c and pk/rebase-in-c-6-final; uses pk/rebase-in-c, pk/rebase-in-c-2-basic, pk/rebase-in-c-3-acts and pk/rebase-in-c-4-opts.)
 
 
 * pk/rebase-in-c-6-final (2018-08-29) 1 commit
  - rebase: default to using the builtin rebase
- (this branch uses ag/rebase-i-in-c, js/rebase-in-c-5.5-work-with-rebase-i-in-c, pk/rebase-in-c, pk/rebase-in-c-2-basic, pk/rebase-in-c-3-acts, pk/rebase-in-c-4-opts and pk/rebase-in-c-5-test.)
+ (this branch is used by jc/rebase-in-c-9-fixes; uses ag/rebase-i-in-c, js/rebase-in-c-5.5-work-with-rebase-i-in-c, pk/rebase-in-c, pk/rebase-in-c-2-basic, pk/rebase-in-c-3-acts, pk/rebase-in-c-4-opts and pk/rebase-in-c-5-test.)
 
 
-* ps/stash-in-c (2018-08-08) 26 commits
- - stash: replace all "git apply" child processes with API calls
+* ps/stash-in-c (2018-08-31) 20 commits
  - stash: replace all `write-tree` child processes with API calls
  - stash: optimize `get_untracked_files()` and `check_changes()`
  - stash: convert `stash--helper.c` into `stash.c`
  - stash: convert save to builtin
- - stash: replace spawning `git ls-files` child process
- - stash: add tests for `git stash push -q`
- - stash: make push to be quiet
+ - stash: make push -q quiet
  - stash: convert push to builtin
- - stash: avoid spawning a "diff-index" process
- - stash: replace spawning a "read-tree" process
  - stash: convert create to builtin
  - stash: convert store to builtin
- - stash: update `git stash show` documentation
- - stash: refactor `show_stash()` to use the diff API
- - stash: change `git stash show` usage text and documentation
+ - stash: mention options in `show` synopsis
  - stash: convert show to builtin
- - stash: implement the "list" command in the builtin
+ - stash: convert list to builtin
  - stash: convert pop to builtin
  - stash: convert branch to builtin
  - stash: convert drop and clear to builtin
  - stash: convert apply to builtin
- - stash: renamed test cases to be more descriptive
+ - stash: add tests for `git stash show` config
+ - stash: rename test cases to be more descriptive
  - stash: update test cases conform to coding guidelines
  - stash: improve option parsing test coverage
- - sha1-name.c: added 'get_oidf', which acts like 'get_oid'
+ - sha1-name.c: add `get_oidf()` which acts like `get_oid()`
 
 
 * nd/clone-case-smashing-warning (2018-08-17) 1 commit
@@ -735,17 +703,6 @@ of the repositories listed at
  An attempt to unflake a test a bit.
 
  Will cook in 'next'.
-
-
-* pw/rebase-i-author-script-fix (2018-08-07) 2 commits
- - sequencer: fix quoting in write_author_script
- - sequencer: handle errors from read_author_ident()
-
- Recent "git rebase -i" update started to write bogusly formatted
- author-script, with a matching broken reading code.  These are
- being fixed.
-
- Will merge to 'next'.
 
 
 * pw/add-p-select (2018-07-26) 4 commits
@@ -814,72 +771,41 @@ of the repositories listed at
 
 
 * es/format-patch-interdiff (2018-07-23) 6 commits
- - format-patch: allow --interdiff to apply to a lone-patch
- - log-tree: show_log: make commentary block delimiting reusable
- - interdiff: teach show_interdiff() to indent interdiff
- - format-patch: teach --interdiff to respect -v/--reroll-count
- - format-patch: add --interdiff option to embed diff in cover letter
- - format-patch: allow additional generated content in make_cover_letter()
+  (merged to 'next' on 2018-08-31 at 63927e0227)
+ + format-patch: allow --interdiff to apply to a lone-patch
+ + log-tree: show_log: make commentary block delimiting reusable
+ + interdiff: teach show_interdiff() to indent interdiff
+ + format-patch: teach --interdiff to respect -v/--reroll-count
+ + format-patch: add --interdiff option to embed diff in cover letter
+ + format-patch: allow additional generated content in make_cover_letter()
  (this branch is used by es/format-patch-rangediff.)
 
  "git format-patch" learned a new "--interdiff" option to explain
  the difference between this version and the previous atttempt in
  the cover letter (or after the tree-dashes as a comment).
 
- What's the doneness of this one?
- cf. <CAPig+cSuYUYSPTuKx08wcmQM-G12_-W2T4BS07fA=6grM1b8Gw@mail.gmail.com>
+ Will cook in 'next'.
 
 
 * es/format-patch-rangediff (2018-08-14) 10 commits
- - format-patch: allow --range-diff to apply to a lone-patch
- - format-patch: add --creation-factor tweak for --range-diff
- - format-patch: teach --range-diff to respect -v/--reroll-count
- - format-patch: extend --range-diff to accept revision range
- - format-patch: add --range-diff option to embed diff in cover letter
- - range-diff: relieve callers of low-level configuration burden
- - range-diff: publish default creation factor
- - range-diff: respect diff_option.file rather than assuming 'stdout'
- - Merge branch 'es/format-patch-interdiff' into es/format-patch-rangediff
- - Merge branch 'js/range-diff' into es/format-patch-rangediff
+  (merged to 'next' on 2018-08-31 at 65627afece)
+ + format-patch: allow --range-diff to apply to a lone-patch
+ + format-patch: add --creation-factor tweak for --range-diff
+ + format-patch: teach --range-diff to respect -v/--reroll-count
+ + format-patch: extend --range-diff to accept revision range
+ + format-patch: add --range-diff option to embed diff in cover letter
+ + range-diff: relieve callers of low-level configuration burden
+ + range-diff: publish default creation factor
+ + range-diff: respect diff_option.file rather than assuming 'stdout'
+ + Merge branch 'es/format-patch-interdiff' into es/format-patch-rangediff
+ + Merge branch 'js/range-diff' into es/format-patch-rangediff
  (this branch uses es/format-patch-interdiff.)
 
  "git format-patch" learned a new "--range-diff" option to explain
- the difference between this version and the previous atttempt in
+ the difference between this version and the previous attempt in
  the cover letter (or after the tree-dashes as a comment).
 
- What's the doneness of this one?
-
-
-* jh/structured-logging (2018-08-28) 26 commits
- - SQUASH??? spatch fix
- - structured-logging: add config data facility
- - structured-logging: t0420 tests for interacitve child_summary
- - structured-logging: t0420 tests for child process detail events
- - structured-logging: add child process classification
- - structured-logging: add detail-events for child processes
- - structured-logging: add structured logging to remote-curl
- - structured-logging: t0420 tests for aux-data
- - structured-logging: add aux-data for size of sparse-checkout file
- - structured-logging: add aux-data for index size
- - structured-logging: add aux-data facility
- - structured-logging: t0420 tests for timers
- - structured-logging: add timer around preload_index
- - structured-logging: add timer around wt-status functions
- - structured-logging: add timer around do_write_index
- - structured-logging: add timer around do_read_index
- - structured-logging: add timer facility
- - structured-logging: add detail-event for lazy_init_name_hash
- - structured-logging: add detail-event facility
- - structured-logging: t0420 basic tests
- - structured-logging: set sub_command field for checkout command
- - structured-logging: set sub_command field for branch command
- - structured-logging: add session-id to log events
- - structured-logging: add structured logging framework
- - structured-logging: add STRUCTURED_LOGGING=1 to Makefile
- - structured-logging: design document
-
- Expecting a reroll.
- cf. <4bc19d36-1242-9e83-a9ed-ed58a681b499@jeffhostetler.com>
+ Will cook in 'next'.
 
 
 * jn/gc-auto (2018-07-17) 3 commits
@@ -955,7 +881,7 @@ of the repositories listed at
  - editor: add a function to launch the sequence editor
  - rebase -i: rewrite append_todo_help() in C
  - sequencer: make three functions and an enum from sequencer.c public
- (this branch is used by js/rebase-in-c-5.5-work-with-rebase-i-in-c and pk/rebase-in-c-6-final.)
+ (this branch is used by jc/rebase-in-c-9-fixes, js/rebase-in-c-5.5-work-with-rebase-i-in-c and pk/rebase-in-c-6-final.)
 
  Rewrite of the remaining "rebase -i" machinery in C.
 
@@ -974,12 +900,14 @@ of the repositories listed at
  - builtin/rebase: support running "git rebase <upstream>"
  - rebase: refactor common shell functions into their own file
  - rebase: start implementing it as a builtin
- (this branch is used by js/rebase-in-c-5.5-work-with-rebase-i-in-c, pk/rebase-in-c-2-basic, pk/rebase-in-c-3-acts, pk/rebase-in-c-4-opts, pk/rebase-in-c-5-test and pk/rebase-in-c-6-final.)
+ (this branch is used by jc/rebase-in-c-9-fixes, js/rebase-in-c-5.5-work-with-rebase-i-in-c, pk/rebase-in-c-2-basic, pk/rebase-in-c-3-acts, pk/rebase-in-c-4-opts, pk/rebase-in-c-5-test and pk/rebase-in-c-6-final.)
 
  Rewrite of the "rebase" machinery in C.
 
 
-* jk/branch-l-1-repurpose (2018-06-22) 1 commit
+* jk/branch-l-1-repurpose (2018-08-30) 2 commits
+  (merged to 'next' on 2018-08-31 at cfa73bbfcb)
+ + doc/git-branch: remove obsolete "-l" references
   (merged to 'next' on 2018-08-08 at d2a08dd08e)
  + branch: make "-l" a synonym for "--list"
 
@@ -1077,3 +1005,34 @@ of the repositories listed at
  as long as it is cleanly made and it is clear that the feature
  won't negatively affect those who do not use it, so a review from
  that point of view may also be appropriate.
+
+
+* jh/structured-logging (2018-08-28) 26 commits
+ . SQUASH??? spatch fix
+ . structured-logging: add config data facility
+ . structured-logging: t0420 tests for interacitve child_summary
+ . structured-logging: t0420 tests for child process detail events
+ . structured-logging: add child process classification
+ . structured-logging: add detail-events for child processes
+ . structured-logging: add structured logging to remote-curl
+ . structured-logging: t0420 tests for aux-data
+ . structured-logging: add aux-data for size of sparse-checkout file
+ . structured-logging: add aux-data for index size
+ . structured-logging: add aux-data facility
+ . structured-logging: t0420 tests for timers
+ . structured-logging: add timer around preload_index
+ . structured-logging: add timer around wt-status functions
+ . structured-logging: add timer around do_write_index
+ . structured-logging: add timer around do_read_index
+ . structured-logging: add timer facility
+ . structured-logging: add detail-event for lazy_init_name_hash
+ . structured-logging: add detail-event facility
+ . structured-logging: t0420 basic tests
+ . structured-logging: set sub_command field for checkout command
+ . structured-logging: set sub_command field for branch command
+ . structured-logging: add session-id to log events
+ . structured-logging: add structured logging framework
+ . structured-logging: add STRUCTURED_LOGGING=1 to Makefile
+ . structured-logging: design document
+
+ Being rerolled with an updated tracing API.
