@@ -97,6 +97,7 @@ struct rebase_options {
 	int allow_rerere_autoupdate;
 	int keep_empty;
 	int autosquash;
+	char *gpg_sign_opt;
 };
 
 static int is_interactive(struct rebase_options *opts)
@@ -209,6 +210,15 @@ static int read_basic_state(struct rebase_options *opts)
 	} else
 		opts->allow_rerere_autoupdate = -1;
 
+	if (file_exists(state_dir_path("gpg_sign_opt", opts))) {
+		strbuf_reset(&buf);
+		if (read_one(state_dir_path("gpg_sign_opt", opts),
+			    &buf))
+			return -1;
+		free(opts->gpg_sign_opt);
+		opts->gpg_sign_opt = xstrdup(buf.buf);
+	}
+
 	strbuf_release(&buf);
 
 	return 0;
@@ -297,6 +307,7 @@ static int run_specific_rebase(struct rebase_options *opts)
 		"--rerere-autoupdate" : "--no-rerere-autoupdate");
 	add_var(&script_snippet, "keep_empty", opts->keep_empty ? "yes" : "");
 	add_var(&script_snippet, "autosquash", opts->autosquash ? "t" : "");
+	add_var(&script_snippet, "gpg_sign_opt", opts->gpg_sign_opt);
 
 	switch (opts->type) {
 	case REBASE_AM:
@@ -462,6 +473,13 @@ static int rebase_config(const char *var, const char *value, void *data)
 		return 0;
 	}
 
+	if (!strcmp(var, "commit.gpgsign")) {
+		free(opts->gpg_sign_opt);
+		opts->gpg_sign_opt = git_config_bool(var, value) ?
+			xstrdup("-S") : NULL;
+		return 0;
+	}
+
 	return git_default_config(var, value, data);
 }
 
@@ -555,6 +573,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	int committer_date_is_author_date = 0;
 	int ignore_date = 0;
 	int ignore_whitespace = 0;
+	const char *gpg_sign = NULL;
 	struct option builtin_rebase_options[] = {
 		OPT_STRING(0, "onto", &options.onto_name,
 			   N_("revision"),
@@ -619,6 +638,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		OPT_BOOL(0, "autosquash", &options.autosquash,
 			 N_("move commits that begin with "
 			    "squash!/fixup! under -i")),
+		{ OPTION_STRING, 'S', "gpg-sign", &gpg_sign, N_("key-id"),
+			N_("GPG-sign commits"),
+			PARSE_OPT_OPTARG, NULL, (intptr_t) "" },
 		OPT_END(),
 	};
 
@@ -820,6 +842,11 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
 	if (options.keep_empty)
 		imply_interactive(&options, "--keep-empty");
+
+	if (gpg_sign) {
+		free(options.gpg_sign_opt);
+		options.gpg_sign_opt = xstrfmt("-S%s", gpg_sign);
+	}
 
 	switch (options.type) {
 	case REBASE_MERGE:
@@ -1046,5 +1073,6 @@ run_rebase:
 cleanup:
 	strbuf_release(&revisions);
 	free(options.head_name);
+	free(options.gpg_sign_opt);
 	return ret;
 }
