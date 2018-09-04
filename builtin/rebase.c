@@ -452,6 +452,29 @@ static int can_fast_forward(struct commit *onto, struct object_id *head_oid,
 	return res && is_linear_history(onto, head);
 }
 
+/* -i followed by -m is still -i */
+static int parse_opt_merge(const struct option *opt, const char *arg, int unset)
+{
+	struct rebase_options *opts = opt->value;
+
+	if (!is_interactive(opts))
+		opts->type = REBASE_MERGE;
+
+	return 0;
+}
+
+/* -i followed by -p is still explicitly interactive, but -p alone is not */
+static int parse_opt_interactive(const struct option *opt, const char *arg,
+				 int unset)
+{
+	struct rebase_options *opts = opt->value;
+
+	opts->type = REBASE_INTERACTIVE;
+	opts->flags |= REBASE_INTERACTIVE_EXPLICIT;
+
+	return 0;
+}
+
 int cmd_rebase(int argc, const char **argv, const char *prefix)
 {
 	struct rebase_options options = {
@@ -510,6 +533,17 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		OPT_CMDMODE(0, "show-current-patch", &action,
 			    N_("show the patch file being applied or merged"),
 			    ACTION_SHOW_CURRENT_PATCH),
+		{ OPTION_CALLBACK, 'm', "merge", &options, NULL,
+			N_("use merging strategies to rebase"),
+			PARSE_OPT_NOARG | PARSE_OPT_NONEG,
+			parse_opt_merge },
+		{ OPTION_CALLBACK, 'i', "interactive", &options, NULL,
+			N_("let the user edit the list of commits to rebase"),
+			PARSE_OPT_NOARG | PARSE_OPT_NONEG,
+			parse_opt_interactive },
+		OPT_SET_INT('p', "preserve-merges", &options.type,
+			    N_("try to recreate merges instead of ignoring "
+			       "them"), REBASE_PRESERVE_MERGES),
 		OPT_END(),
 	};
 
@@ -883,6 +917,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		diffcore_std(&opts);
 		diff_flush(&opts);
 	}
+
+	if (is_interactive(&options))
+		goto run_rebase;
 
 	/* Detach HEAD and reset the tree */
 	if (options.flags & REBASE_NO_QUIET)
