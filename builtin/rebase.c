@@ -19,6 +19,7 @@
 #include "parse-options.h"
 #include "commit.h"
 #include "diff.h"
+#include "wt-status.h"
 
 static char const * const builtin_rebase_usage[] = {
 	N_("git rebase [-i] [options] [--exec <cmd>] [--onto <newbase>] "
@@ -479,6 +480,15 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			die(_("Could not resolve HEAD to a revision"));
 	}
 
+	if (read_index(the_repository->index) < 0)
+		die(_("could not read index"));
+
+	if (require_clean_work_tree("rebase",
+				    _("Please commit or stash them."), 1, 1)) {
+		ret = 1;
+		goto cleanup;
+	}
+
 	/* If a hook exists, give it a chance to interrupt*/
 	if (!ok_to_skip_pre_rebase &&
 	    run_hook_le(NULL, "pre-rebase", options.upstream_arg,
@@ -528,6 +538,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
 	ret = !!run_specific_rebase(&options);
 
+cleanup:
 	strbuf_release(&revisions);
 	free(options.head_name);
 	return ret;
