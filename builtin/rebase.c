@@ -20,6 +20,7 @@
 #include "commit.h"
 #include "diff.h"
 #include "wt-status.h"
+#include "revision.h"
 
 static char const * const builtin_rebase_usage[] = {
 	N_("git rebase [-i] [options] [--exec <cmd>] [--onto <newbase>] "
@@ -88,6 +89,12 @@ struct rebase_options {
 	} flags;
 	struct strbuf git_am_opt;
 };
+
+static int is_interactive(struct rebase_options *opts)
+{
+	return opts->type == REBASE_INTERACTIVE ||
+		opts->type == REBASE_PRESERVE_MERGES;
+}
 
 /* Returns the filename prefixed by the state_dir */
 static const char *state_dir_path(const char *filename, struct rebase_options *opts)
@@ -334,6 +341,46 @@ static int rebase_config(const char *var, const char *value, void *data)
 	return git_default_config(var, value, data);
 }
 
+/*
+ * Determines whether the commits in from..to are linear, i.e. contain
+ * no merge commits. This function *expects* `from` to be an ancestor of
+ * `to`.
+ */
+static int is_linear_history(struct commit *from, struct commit *to)
+{
+	while (to && to != from) {
+		parse_commit(to);
+		if (!to->parents)
+			return 1;
+		if (to->parents->next)
+			return 0;
+		to = to->parents->item;
+	}
+	return 1;
+}
+
+static int can_fast_forward(struct commit *onto, struct object_id *head_oid,
+			    struct object_id *merge_base)
+{
+	struct commit *head = lookup_commit(the_repository, head_oid);
+	struct commit_list *merge_bases;
+	int res;
+
+	if (!head)
+		return 0;
+
+	merge_bases = get_merge_bases(onto, head);
+	if (merge_bases && !merge_bases->next) {
+		oidcpy(merge_base, &merge_bases->item->object.oid);
+		res = !oidcmp(merge_base, &onto->object.oid);
+	} else {
+		oidcpy(merge_base, &null_oid);
+		res = 0;
+	}
+	free_commit_list(merge_bases);
+	return res && is_linear_history(onto, head);
+}
+
 int cmd_rebase(int argc, const char **argv, const char *prefix)
 {
 	struct rebase_options options = {
@@ -487,6 +534,31 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 				    _("Please commit or stash them."), 1, 1)) {
 		ret = 1;
 		goto cleanup;
+	}
+
+	/*
+	 * Now we are rebasing commits upstream..orig_head (or with --root,
+	 * everything leading up to orig_head) on top of onto.
+	 */
+
+	/*
+	 * Check if we are already based on onto with linear history,
+	 * but this should be done only when upstream and onto are the same
+	 * and if this is not an interactive rebase.
+	 */
+	if (can_fast_forward(options.onto, &options.orig_head, &merge_base) &&
+	    !is_interactive(&options) && !options.restrict_revision &&
+	    !oidcmp(&options.upstream->object.oid, &options.onto->object.oid)) {
+		int flag;
+
+		if (!(options.flags & REBASE_NO_QUIET))
+			; /* be quiet */
+		else if (!strcmp(branch_name, "HEAD") &&
+			 resolve_ref_unsafe("HEAD", 0, NULL, &flag))
+			puts(_("HEAD is up to date, rebase forced."));
+		else
+			printf(_("Current branch %s is up to date, rebase "
+				 "forced.\n"), branch_name);
 	}
 
 	/* If a hook exists, give it a chance to interrupt*/
