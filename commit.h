@@ -212,6 +212,8 @@ extern struct commit_list *get_octopus_merge_bases(struct commit_list *in);
 /* To be used only when object flags after this call no longer matter */
 extern struct commit_list *get_merge_bases_many_dirty(struct commit *one, int n, struct commit **twos);
 
+struct commit *get_fork_point(const char *refname, struct commit *commit);
+
 /* largest positive number a signed 32-bit integer can contain */
 #define INFINITE_DEPTH 0x7fffffff
 
