@@ -79,6 +79,10 @@ struct rebase_options {
 	int root;
 	struct commit *restrict_revision;
 	int dont_finish_rebase;
+	enum {
+		REBASE_NO_QUIET = 1<<0,
+	} flags;
+	struct strbuf git_am_opt;
 };
 
 /* Returns the filename prefixed by the state_dir */
@@ -159,6 +163,9 @@ static int run_specific_rebase(struct rebase_options *opts)
 	add_var(&script_snippet, "revisions", opts->revisions);
 	add_var(&script_snippet, "restrict_revision", opts->restrict_revision ?
 		oid_to_hex(&opts->restrict_revision->object.oid) : NULL);
+	add_var(&script_snippet, "GIT_QUIET",
+		opts->flags & REBASE_NO_QUIET ? "" : "t");
+	add_var(&script_snippet, "git_am_opt", opts->git_am_opt.buf);
 
 	switch (opts->type) {
 	case REBASE_AM:
@@ -308,6 +315,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 {
 	struct rebase_options options = {
 		.type = REBASE_UNSPECIFIED,
+		.flags = REBASE_NO_QUIET,
+		.git_am_opt = STRBUF_INIT,
 	};
 	const char *branch_name;
 	int ret, flags;
@@ -321,6 +330,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			   N_("rebase onto given branch instead of upstream")),
 		OPT_BOOL(0, "no-verify", &ok_to_skip_pre_rebase,
 			 N_("allow pre-rebase hook to run")),
+		OPT_NEGBIT('q', "quiet", &options.flags,
+			   N_("be quiet. implies --no-stat"),
+			   REBASE_NO_QUIET),
 		OPT_END(),
 	};
 
@@ -356,6 +368,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	if (argc > 2)
 		usage_with_options(builtin_rebase_usage,
 				   builtin_rebase_options);
+
+	if (!(options.flags & REBASE_NO_QUIET))
+		strbuf_addstr(&options.git_am_opt, " -q");
 
 	switch (options.type) {
 	case REBASE_MERGE:
