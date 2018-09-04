@@ -63,12 +63,6 @@ static int use_builtin_rebase(void)
 	return ret;
 }
 
-static int apply_autostash(void)
-{
-	warning("TODO");
-	return 0;
-}
-
 struct rebase_options {
 	enum rebase_type type;
 	const char *state_dir;
@@ -98,6 +92,7 @@ struct rebase_options {
 	int keep_empty;
 	int autosquash;
 	char *gpg_sign_opt;
+	int autostash;
 };
 
 static int is_interactive(struct rebase_options *opts)
@@ -224,13 +219,56 @@ static int read_basic_state(struct rebase_options *opts)
 	return 0;
 }
 
+static int apply_autostash(struct rebase_options *opts)
+{
+	const char *path = state_dir_path("autostash", opts);
+	struct strbuf autostash = STRBUF_INIT;
+	struct child_process stash_apply = CHILD_PROCESS_INIT;
+
+	if (!file_exists(path))
+		return 0;
+
+	if (read_one(state_dir_path("autostash", opts), &autostash))
+		return error(_("Could not read '%s'"), path);
+	argv_array_pushl(&stash_apply.args,
+			 "stash", "apply", autostash.buf, NULL);
+	stash_apply.git_cmd = 1;
+	stash_apply.no_stderr = stash_apply.no_stdout =
+		stash_apply.no_stdin = 1;
+	if (!run_command(&stash_apply))
+		printf(_("Applied autostash.\n"));
+	else {
+		struct argv_array args = ARGV_ARRAY_INIT;
+		int res = 0;
+
+		argv_array_pushl(&args,
+				 "stash", "store", "-m", "autostash", "-q",
+				 autostash.buf, NULL);
+		if (run_command_v_opt(args.argv, RUN_GIT_CMD))
+			res = error(_("Cannot store %s"), autostash.buf);
+		argv_array_clear(&args);
+		strbuf_release(&autostash);
+		if (res)
+			return res;
+
+		fprintf(stderr,
+			_("Applying autostash resulted in conflicts.\n"
+			  "Your changes are safe in the stash.\n"
+			  "You can run \"git stash pop\" or \"git stash drop\" "
+			  "at any time.\n"));
+	}
+
+	strbuf_release(&autostash);
+	return 0;
+}
+
 static int finish_rebase(struct rebase_options *opts)
 {
 	struct strbuf dir = STRBUF_INIT;
 	const char *argv_gc_auto[] = { "gc", "--auto", NULL };
 
 	delete_ref(NULL, "REBASE_HEAD", NULL, REF_NO_DEREF);
-	apply_autostash();
+	apply_autostash(opts);
 	close_all_packs(the_repository->objects);
 	/*
 	 * We ignore errors in 'gc --auto', since the
@@ -345,7 +383,7 @@ static int run_specific_rebase(struct rebase_options *opts)
 	} else if (status == 2) {
 		struct strbuf dir = STRBUF_INIT;
 
-		apply_autostash();
+		apply_autostash(opts);
 		strbuf_addstr(&dir, opts->state_dir);
 		remove_dir_recursively(&dir, 0);
 		strbuf_release(&dir);
@@ -477,6 +515,11 @@ static int rebase_config(const char *var, const char *value, void *data)
 		free(opts->gpg_sign_opt);
 		opts->gpg_sign_opt = git_config_bool(var, value) ?
 			xstrdup("-S") : NULL;
+		return 0;
+	}
+
+	if (!strcmp(var, "rebase.autostash")) {
+		opts->autostash = git_config_bool(var, value);
 		return 0;
 	}
 
@@ -647,6 +690,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 				N_("whitespace"), N_("passed to 'git apply'")),
 		OPT_SET_INT('C', NULL, &opt_c, N_("passed to 'git apply'"),
 			    REBASE_AM),
+		OPT_BOOL(0, "autostash", &options.autostash,
+			 N_("automatically stash/stash pop before and after")),
 		OPT_END(),
 	};
 
@@ -975,6 +1020,62 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
 	if (read_index(the_repository->index) < 0)
 		die(_("could not read index"));
+
+	if (options.autostash) {
+		struct lock_file lock_file = LOCK_INIT;
+		int fd;
+
+		fd = hold_locked_index(&lock_file, 0);
+		refresh_cache(REFRESH_QUIET);
+		if (0 <= fd)
+			update_index_if_able(&the_index, &lock_file);
+		rollback_lock_file(&lock_file);
+
+		if (has_unstaged_changes(0) || has_uncommitted_changes(0)) {
+			const char *autostash =
+				state_dir_path("autostash", &options);
+			struct child_process stash = CHILD_PROCESS_INIT;
+			struct object_id oid;
+			struct commit *head =
+				lookup_commit_reference(the_repository,
+							&options.orig_head);
+
+			argv_array_pushl(&stash.args,
+					 "stash", "create", "autostash", NULL);
+			stash.git_cmd = 1;
+			stash.no_stdin = 1;
+			strbuf_reset(&buf);
+			if (capture_command(&stash, &buf, GIT_MAX_HEXSZ))
+				die(_("Cannot autostash"));
+			strbuf_trim_trailing_newline(&buf);
+			if (get_oid(buf.buf, &oid))
+				die(_("Unexpected stash response: '%s'"),
+				    buf.buf);
+			strbuf_reset(&buf);
+			strbuf_add_unique_abbrev(&buf, &oid, DEFAULT_ABBREV);
+
+			if (safe_create_leading_directories_const(autostash))
+				die(_("Could not create directory for '%s'"),
+				    options.state_dir);
+			write_file(autostash, "%s", buf.buf);
+			printf(_("Created autostash: %s\n"), buf.buf);
+			if (reset_head(&head->object.oid, "reset --hard",
+				       NULL, 0) < 0)
+				die(_("could not reset --hard"));
+			printf(_("HEAD is now at %s"),
+			       find_unique_abbrev(&head->object.oid,
+						  DEFAULT_ABBREV));
+			strbuf_reset(&buf);
+			pp_commit_easy(CMIT_FMT_ONELINE, head, &buf);
+			if (buf.len > 0)
+				printf(" %s", buf.buf);
+			putchar('\n');
+
+			if (discard_index(the_repository->index) < 0 ||
+				read_index(the_repository->index) < 0)
+				die(_("could not read index"));
+		}
+	}
 
 	if (require_clean_work_tree("rebase",
 				    _("Please commit or stash them."), 1, 1)) {
