@@ -93,6 +93,7 @@ struct rebase_options {
 	} flags;
 	struct strbuf git_am_opt;
 	const char *action;
+	int signoff;
 };
 
 static int is_interactive(struct rebase_options *opts)
@@ -167,6 +168,11 @@ static int read_basic_state(struct rebase_options *opts)
 
 	if (file_exists(state_dir_path("verbose", opts)))
 		opts->flags |= REBASE_VERBOSE;
+
+	if (file_exists(state_dir_path("signoff", opts))) {
+		opts->signoff = 1;
+		opts->flags |= REBASE_FORCE;
+	}
 
 	strbuf_release(&buf);
 
@@ -249,6 +255,7 @@ static int run_specific_rebase(struct rebase_options *opts)
 	if (opts->switch_to)
 		add_var(&script_snippet, "switch_to", opts->switch_to);
 	add_var(&script_snippet, "action", opts->action ? opts->action : "");
+	add_var(&script_snippet, "signoff", opts->signoff ? "--signoff" : "");
 
 	switch (opts->type) {
 	case REBASE_AM:
@@ -513,6 +520,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		{OPTION_NEGBIT, 'n', "no-stat", &options.flags, NULL,
 			N_("do not show diffstat of what changed upstream"),
 			PARSE_OPT_NOARG, NULL, REBASE_DIFFSTAT },
+		OPT_BOOL(0, "signoff", &options.signoff,
+			 N_("add a Signed-off-by: line to each commit")),
 		OPT_BIT('f', "force-rebase", &options.flags,
 			N_("cherry-pick all commits, even if unchanged"),
 			REBASE_FORCE),
@@ -743,6 +752,14 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		options.type = REBASE_AM;
 		options.state_dir = apply_dir();
 		break;
+	}
+
+	if (options.signoff) {
+		if (options.type == REBASE_PRESERVE_MERGES)
+			die("cannot combine '--signoff' with "
+			    "'--preserve-merges'");
+		strbuf_addstr(&options.git_am_opt, " --signoff");
+		options.flags |= REBASE_FORCE;
 	}
 
 	if (!options.root) {
