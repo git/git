@@ -6,5 +6,6 @@
 (
 	cat >bup &&
 	cat >bup2 &&
+	cat >bup3 &&
 	meep
 >)
