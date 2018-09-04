@@ -192,7 +192,17 @@ ifeq ($(uname_O),Cygwin)
 endif
 ifeq ($(uname_S),FreeBSD)
 	NEEDS_LIBICONV = YesPlease
-	OLD_ICONV = YesPlease
+	# Versions up to 10.1 require OLD_ICONV; 10.2 and beyond don't.
+	# A typical version string looks like "10.2-RELEASE".
+	ifeq ($(shell expr "$(uname_R)" : '[1-9]\.'),2)
+		OLD_ICONV = YesPlease
+	endif
+	ifeq ($(firstword $(subst -, ,$(uname_R))),10.0)
+		OLD_ICONV = YesPlease
+	endif
+	ifeq ($(firstword $(subst -, ,$(uname_R))),10.1)
+		OLD_ICONV = YesPlease
+	endif
 	NO_MEMMEM = YesPlease
 	BASIC_CFLAGS += -I/usr/local/include
 	BASIC_LDFLAGS += -L/usr/local/lib
