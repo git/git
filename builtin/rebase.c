@@ -527,6 +527,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		ACTION_SHOW_CURRENT_PATCH,
 	} action = NO_ACTION;
 	int committer_date_is_author_date = 0;
+	int ignore_whitespace = 0;
 	struct option builtin_rebase_options[] = {
 		OPT_STRING(0, "onto", &options.onto_name,
 			   N_("revision"),
@@ -542,6 +543,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		{OPTION_NEGBIT, 'n', "no-stat", &options.flags, NULL,
 			N_("do not show diffstat of what changed upstream"),
 			PARSE_OPT_NOARG, NULL, REBASE_DIFFSTAT },
+		OPT_BOOL(0, "ignore-whitespace", &ignore_whitespace,
+			 N_("passed to 'git apply'")),
 		OPT_BOOL(0, "signoff", &options.signoff,
 			 N_("add a Signed-off-by: line to each commit")),
 		OPT_BOOL(0, "committer-date-is-author-date",
@@ -772,6 +775,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			      " --committer-date-is-author-date");
 		options.flags |= REBASE_FORCE;
 	}
+
+	if (ignore_whitespace)
+		strbuf_addstr(&options.git_am_opt, " --ignore-whitespace");
 
 	switch (options.type) {
 	case REBASE_MERGE:
