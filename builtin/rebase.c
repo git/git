@@ -526,6 +526,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		ACTION_EDIT_TODO,
 		ACTION_SHOW_CURRENT_PATCH,
 	} action = NO_ACTION;
+	int committer_date_is_author_date = 0;
 	struct option builtin_rebase_options[] = {
 		OPT_STRING(0, "onto", &options.onto_name,
 			   N_("revision"),
@@ -543,6 +544,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			PARSE_OPT_NOARG, NULL, REBASE_DIFFSTAT },
 		OPT_BOOL(0, "signoff", &options.signoff,
 			 N_("add a Signed-off-by: line to each commit")),
+		OPT_BOOL(0, "committer-date-is-author-date",
+			 &committer_date_is_author_date,
+			 N_("passed to 'git am'")),
 		OPT_BIT('f', "force-rebase", &options.flags,
 			N_("cherry-pick all commits, even if unchanged"),
 			REBASE_FORCE),
@@ -762,6 +766,12 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
 	if (!(options.flags & REBASE_NO_QUIET))
 		strbuf_addstr(&options.git_am_opt, " -q");
+
+	if (committer_date_is_author_date) {
+		strbuf_addstr(&options.git_am_opt,
+			      " --committer-date-is-author-date");
+		options.flags |= REBASE_FORCE;
+	}
 
 	switch (options.type) {
 	case REBASE_MERGE:
