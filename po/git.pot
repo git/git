@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2018-08-21 08:28+0800\n"
+"POT-Creation-Date: 2018-09-04 08:50+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -655,7 +655,7 @@ msgstr ""
 
 #: apply.c:4974 builtin/am.c:2242 builtin/interpret-trailers.c:95
 #: builtin/interpret-trailers.c:97 builtin/interpret-trailers.c:99
-#: builtin/pack-objects.c:3205
+#: builtin/pack-objects.c:3202
 msgid "action"
 msgstr ""
 
@@ -984,42 +984,42 @@ msgid_plural "Bisecting: %d revisions left to test after this %s\n"
 msgstr[0] ""
 msgstr[1] ""
 
-#: blame.c:1786
+#: blame.c:1784
 msgid "--contents and --reverse do not blend well."
 msgstr ""
 
-#: blame.c:1800
+#: blame.c:1798
 msgid "cannot use --contents with final commit object name"
 msgstr ""
 
-#: blame.c:1821
+#: blame.c:1819
 msgid "--reverse and --first-parent together require specified latest commit"
 msgstr ""
 
-#: blame.c:1830 bundle.c:162 ref-filter.c:2154 sequencer.c:1874
+#: blame.c:1828 bundle.c:162 ref-filter.c:2154 sequencer.c:1874
 #: sequencer.c:3772 builtin/commit.c:994 builtin/log.c:372 builtin/log.c:926
 #: builtin/log.c:1381 builtin/log.c:1713 builtin/log.c:1963 builtin/merge.c:404
-#: builtin/pack-objects.c:3032 builtin/pack-objects.c:3047
+#: builtin/pack-objects.c:3029 builtin/pack-objects.c:3044
 #: builtin/shortlog.c:192
 msgid "revision walk setup failed"
 msgstr ""
 
-#: blame.c:1848
+#: blame.c:1846
 msgid ""
 "--reverse --first-parent together require range along first-parent chain"
 msgstr ""
 
-#: blame.c:1859
+#: blame.c:1857
 #, c-format
 msgid "no such path %s in %s"
 msgstr ""
 
-#: blame.c:1870
+#: blame.c:1868
 #, c-format
 msgid "cannot read blob %s for path %s"
 msgstr ""
 
-#: branch.c:54
+#: branch.c:52
 #, c-format
 msgid ""
 "\n"
@@ -1028,85 +1028,85 @@ msgid ""
 "\"git branch --set-upstream-to=%s%s%s\"."
 msgstr ""
 
-#: branch.c:68
+#: branch.c:66
 #, c-format
 msgid "Not setting branch %s as its own upstream."
 msgstr ""
 
-#: branch.c:94
+#: branch.c:92
 #, c-format
 msgid "Branch '%s' set up to track remote branch '%s' from '%s' by rebasing."
 msgstr ""
 
-#: branch.c:95
+#: branch.c:93
 #, c-format
 msgid "Branch '%s' set up to track remote branch '%s' from '%s'."
 msgstr ""
 
-#: branch.c:99
+#: branch.c:97
 #, c-format
 msgid "Branch '%s' set up to track local branch '%s' by rebasing."
 msgstr ""
 
-#: branch.c:100
+#: branch.c:98
 #, c-format
 msgid "Branch '%s' set up to track local branch '%s'."
 msgstr ""
 
-#: branch.c:105
+#: branch.c:103
 #, c-format
 msgid "Branch '%s' set up to track remote ref '%s' by rebasing."
 msgstr ""
 
-#: branch.c:106
+#: branch.c:104
 #, c-format
 msgid "Branch '%s' set up to track remote ref '%s'."
 msgstr ""
 
-#: branch.c:110
+#: branch.c:108
 #, c-format
 msgid "Branch '%s' set up to track local ref '%s' by rebasing."
 msgstr ""
 
-#: branch.c:111
+#: branch.c:109
 #, c-format
 msgid "Branch '%s' set up to track local ref '%s'."
 msgstr ""
 
-#: branch.c:120
+#: branch.c:118
 msgid "Unable to write upstream branch configuration"
 msgstr ""
 
-#: branch.c:157
+#: branch.c:155
 #, c-format
 msgid "Not tracking: ambiguous information for ref %s"
 msgstr ""
 
-#: branch.c:190
+#: branch.c:188
 #, c-format
 msgid "'%s' is not a valid branch name."
 msgstr ""
 
-#: branch.c:209
+#: branch.c:207
 #, c-format
 msgid "A branch named '%s' already exists."
 msgstr ""
 
-#: branch.c:214
+#: branch.c:212
 msgid "Cannot force update the current branch."
 msgstr ""
 
-#: branch.c:234
+#: branch.c:232
 #, c-format
 msgid "Cannot setup tracking information; starting point '%s' is not a branch."
 msgstr ""
 
-#: branch.c:236
+#: branch.c:234
 #, c-format
 msgid "the requested upstream branch '%s' does not exist"
 msgstr ""
 
-#: branch.c:238
+#: branch.c:236
 msgid ""
 "\n"
 "If you are planning on basing your work on an upstream\n"
@@ -1118,27 +1118,27 @@ msgid ""
 "\"git push -u\" to set the upstream config as you push."
 msgstr ""
 
-#: branch.c:281
+#: branch.c:279
 #, c-format
 msgid "Not a valid object name: '%s'."
 msgstr ""
 
-#: branch.c:301
+#: branch.c:299
 #, c-format
 msgid "Ambiguous object name: '%s'."
 msgstr ""
 
-#: branch.c:306
+#: branch.c:304
 #, c-format
 msgid "Not a valid branch point: '%s'."
 msgstr ""
 
-#: branch.c:360
+#: branch.c:358
 #, c-format
 msgid "'%s' is already checked out at '%s'"
 msgstr ""
 
-#: branch.c:383
+#: branch.c:381
 #, c-format
 msgid "HEAD of working tree %s is not updated"
 msgstr ""
@@ -1286,7 +1286,7 @@ msgstr ""
 msgid "could not find commit %s"
 msgstr ""
 
-#: commit-graph.c:565 builtin/pack-objects.c:2571
+#: commit-graph.c:565 builtin/pack-objects.c:2568
 #, c-format
 msgid "unable to get type of object %s"
 msgstr ""
@@ -1330,7 +1330,7 @@ msgid ""
 "\t%s\n"
 "from\n"
 "\t%s\n"
-"Do you have circular includes?"
+"This might be due to circular includes."
 msgstr ""
 
 #: config.c:139
@@ -1492,7 +1492,7 @@ msgstr ""
 msgid "must be one of nothing, matching, simple, upstream or current"
 msgstr ""
 
-#: config.c:1489 builtin/pack-objects.c:3282
+#: config.c:1489 builtin/pack-objects.c:3279
 #, c-format
 msgid "bad pack compression level %d"
 msgstr ""
@@ -3929,19 +3929,14 @@ msgstr ""
 msgid "could not resolve HEAD commit"
 msgstr ""
 
-#: sequencer.c:723
+#: sequencer.c:723 sequencer.c:740
 #, c-format
-msgid "could not parse '%s' (looking for '%s'"
+msgid "could not parse '%s' (looking for '%s')"
 msgstr ""
 
 #: sequencer.c:731
 #, c-format
 msgid "bad quoting on %s value in '%s'"
-msgstr ""
-
-#: sequencer.c:740
-#, c-format
-msgid "could not parse '%s' (looking for '%s')"
 msgstr ""
 
 #: sequencer.c:747
@@ -5028,7 +5023,7 @@ msgstr ""
 msgid "submodule entry '%s' (%s) is a %s, not a commit"
 msgstr ""
 
-#: submodule.c:1071 builtin/branch.c:662 builtin/submodule--helper.c:1888
+#: submodule.c:1071 builtin/branch.c:670 builtin/submodule--helper.c:1888
 msgid "Failed to resolve HEAD as a valid ref."
 msgstr ""
 
@@ -6602,7 +6597,7 @@ msgstr ""
 msgid "n"
 msgstr ""
 
-#: builtin/am.c:2266 builtin/branch.c:643 builtin/for-each-ref.c:38
+#: builtin/am.c:2266 builtin/branch.c:651 builtin/for-each-ref.c:38
 #: builtin/replace.c:543 builtin/tag.c:420 builtin/verify-tag.c:39
 msgid "format"
 msgstr ""
@@ -6972,138 +6967,138 @@ msgstr ""
 msgid "git branch [<options>] [-r | -a] [--format]"
 msgstr ""
 
-#: builtin/branch.c:143
+#: builtin/branch.c:151
 #, c-format
 msgid ""
 "deleting branch '%s' that has been merged to\n"
 "         '%s', but not yet merged to HEAD."
 msgstr ""
 
-#: builtin/branch.c:147
+#: builtin/branch.c:155
 #, c-format
 msgid ""
 "not deleting branch '%s' that is not yet merged to\n"
 "         '%s', even though it is merged to HEAD."
 msgstr ""
 
-#: builtin/branch.c:161
+#: builtin/branch.c:169
 #, c-format
 msgid "Couldn't look up commit object for '%s'"
 msgstr ""
 
-#: builtin/branch.c:165
+#: builtin/branch.c:173
 #, c-format
 msgid ""
 "The branch '%s' is not fully merged.\n"
 "If you are sure you want to delete it, run 'git branch -D %s'."
 msgstr ""
 
-#: builtin/branch.c:178
+#: builtin/branch.c:186
 msgid "Update of config-file failed"
 msgstr ""
 
-#: builtin/branch.c:209
+#: builtin/branch.c:217
 msgid "cannot use -a with -d"
 msgstr ""
 
-#: builtin/branch.c:215
+#: builtin/branch.c:223
 msgid "Couldn't look up commit object for HEAD"
 msgstr ""
 
-#: builtin/branch.c:229
+#: builtin/branch.c:237
 #, c-format
 msgid "Cannot delete branch '%s' checked out at '%s'"
 msgstr ""
 
-#: builtin/branch.c:244
+#: builtin/branch.c:252
 #, c-format
 msgid "remote-tracking branch '%s' not found."
 msgstr ""
 
-#: builtin/branch.c:245
+#: builtin/branch.c:253
 #, c-format
 msgid "branch '%s' not found."
 msgstr ""
 
-#: builtin/branch.c:260
+#: builtin/branch.c:268
 #, c-format
 msgid "Error deleting remote-tracking branch '%s'"
 msgstr ""
 
-#: builtin/branch.c:261
+#: builtin/branch.c:269
 #, c-format
 msgid "Error deleting branch '%s'"
 msgstr ""
 
-#: builtin/branch.c:268
+#: builtin/branch.c:276
 #, c-format
 msgid "Deleted remote-tracking branch %s (was %s).\n"
 msgstr ""
 
-#: builtin/branch.c:269
+#: builtin/branch.c:277
 #, c-format
 msgid "Deleted branch %s (was %s).\n"
 msgstr ""
 
-#: builtin/branch.c:413 builtin/tag.c:59
+#: builtin/branch.c:421 builtin/tag.c:59
 msgid "unable to parse format string"
 msgstr ""
 
-#: builtin/branch.c:450
+#: builtin/branch.c:458
 #, c-format
 msgid "Branch %s is being rebased at %s"
 msgstr ""
 
-#: builtin/branch.c:454
+#: builtin/branch.c:462
 #, c-format
 msgid "Branch %s is being bisected at %s"
 msgstr ""
 
-#: builtin/branch.c:471
+#: builtin/branch.c:479
 msgid "cannot copy the current branch while not on any."
 msgstr ""
 
-#: builtin/branch.c:473
+#: builtin/branch.c:481
 msgid "cannot rename the current branch while not on any."
 msgstr ""
 
-#: builtin/branch.c:484
+#: builtin/branch.c:492
 #, c-format
 msgid "Invalid branch name: '%s'"
 msgstr ""
 
-#: builtin/branch.c:511
+#: builtin/branch.c:519
 msgid "Branch rename failed"
 msgstr ""
 
-#: builtin/branch.c:513
+#: builtin/branch.c:521
 msgid "Branch copy failed"
 msgstr ""
 
-#: builtin/branch.c:517
+#: builtin/branch.c:525
 #, c-format
 msgid "Created a copy of a misnamed branch '%s'"
 msgstr ""
 
-#: builtin/branch.c:520
+#: builtin/branch.c:528
 #, c-format
 msgid "Renamed a misnamed branch '%s' away"
 msgstr ""
 
-#: builtin/branch.c:526
+#: builtin/branch.c:534
 #, c-format
 msgid "Branch renamed to %s, but HEAD is not updated!"
 msgstr ""
 
-#: builtin/branch.c:535
+#: builtin/branch.c:543
 msgid "Branch is renamed, but update of config-file failed"
 msgstr ""
 
-#: builtin/branch.c:537
+#: builtin/branch.c:545
 msgid "Branch is copied, but update of config-file failed"
 msgstr ""
 
-#: builtin/branch.c:553
+#: builtin/branch.c:561
 #, c-format
 msgid ""
 "Please edit the description for the branch\n"
@@ -7111,223 +7106,223 @@ msgid ""
 "Lines starting with '%c' will be stripped.\n"
 msgstr ""
 
-#: builtin/branch.c:594
+#: builtin/branch.c:602
 msgid "Generic options"
 msgstr ""
 
-#: builtin/branch.c:596
+#: builtin/branch.c:604
 msgid "show hash and subject, give twice for upstream branch"
 msgstr ""
 
-#: builtin/branch.c:597
+#: builtin/branch.c:605
 msgid "suppress informational messages"
 msgstr ""
 
-#: builtin/branch.c:598
+#: builtin/branch.c:606
 msgid "set up tracking mode (see git-pull(1))"
 msgstr ""
 
-#: builtin/branch.c:600
+#: builtin/branch.c:608
 msgid "do not use"
 msgstr ""
 
-#: builtin/branch.c:602
+#: builtin/branch.c:610
 msgid "upstream"
 msgstr ""
 
-#: builtin/branch.c:602
+#: builtin/branch.c:610
 msgid "change the upstream info"
 msgstr ""
 
-#: builtin/branch.c:603
+#: builtin/branch.c:611
 msgid "Unset the upstream info"
 msgstr ""
 
-#: builtin/branch.c:604
+#: builtin/branch.c:612
 msgid "use colored output"
 msgstr ""
 
-#: builtin/branch.c:605
+#: builtin/branch.c:613
 msgid "act on remote-tracking branches"
 msgstr ""
 
-#: builtin/branch.c:607 builtin/branch.c:609
+#: builtin/branch.c:615 builtin/branch.c:617
 msgid "print only branches that contain the commit"
 msgstr ""
 
-#: builtin/branch.c:608 builtin/branch.c:610
+#: builtin/branch.c:616 builtin/branch.c:618
 msgid "print only branches that don't contain the commit"
 msgstr ""
 
-#: builtin/branch.c:613
+#: builtin/branch.c:621
 msgid "Specific git-branch actions:"
 msgstr ""
 
-#: builtin/branch.c:614
+#: builtin/branch.c:622
 msgid "list both remote-tracking and local branches"
 msgstr ""
 
-#: builtin/branch.c:616
+#: builtin/branch.c:624
 msgid "delete fully merged branch"
 msgstr ""
 
-#: builtin/branch.c:617
+#: builtin/branch.c:625
 msgid "delete branch (even if not merged)"
 msgstr ""
 
-#: builtin/branch.c:618
+#: builtin/branch.c:626
 msgid "move/rename a branch and its reflog"
 msgstr ""
 
-#: builtin/branch.c:619
+#: builtin/branch.c:627
 msgid "move/rename a branch, even if target exists"
 msgstr ""
 
-#: builtin/branch.c:620
+#: builtin/branch.c:628
 msgid "copy a branch and its reflog"
 msgstr ""
 
-#: builtin/branch.c:621
+#: builtin/branch.c:629
 msgid "copy a branch, even if target exists"
 msgstr ""
 
-#: builtin/branch.c:622
+#: builtin/branch.c:630
 msgid "list branch names"
 msgstr ""
 
-#: builtin/branch.c:623
+#: builtin/branch.c:631
 msgid "create the branch's reflog"
 msgstr ""
 
-#: builtin/branch.c:626
+#: builtin/branch.c:634
 msgid "deprecated synonym for --create-reflog"
 msgstr ""
 
-#: builtin/branch.c:631
+#: builtin/branch.c:639
 msgid "edit the description for the branch"
 msgstr ""
 
-#: builtin/branch.c:632
+#: builtin/branch.c:640
 msgid "force creation, move/rename, deletion"
 msgstr ""
 
-#: builtin/branch.c:633
+#: builtin/branch.c:641
 msgid "print only branches that are merged"
 msgstr ""
 
-#: builtin/branch.c:634
+#: builtin/branch.c:642
 msgid "print only branches that are not merged"
 msgstr ""
 
-#: builtin/branch.c:635
+#: builtin/branch.c:643
 msgid "list branches in columns"
 msgstr ""
 
-#: builtin/branch.c:636 builtin/for-each-ref.c:40 builtin/ls-remote.c:70
+#: builtin/branch.c:644 builtin/for-each-ref.c:40 builtin/ls-remote.c:70
 #: builtin/tag.c:413
 msgid "key"
 msgstr ""
 
-#: builtin/branch.c:637 builtin/for-each-ref.c:41 builtin/ls-remote.c:71
+#: builtin/branch.c:645 builtin/for-each-ref.c:41 builtin/ls-remote.c:71
 #: builtin/tag.c:414
 msgid "field name to sort on"
 msgstr ""
 
-#: builtin/branch.c:639 builtin/for-each-ref.c:43 builtin/notes.c:410
+#: builtin/branch.c:647 builtin/for-each-ref.c:43 builtin/notes.c:410
 #: builtin/notes.c:413 builtin/notes.c:573 builtin/notes.c:576
 #: builtin/tag.c:416
 msgid "object"
 msgstr ""
 
-#: builtin/branch.c:640
+#: builtin/branch.c:648
 msgid "print only branches of the object"
 msgstr ""
 
-#: builtin/branch.c:642 builtin/for-each-ref.c:49 builtin/tag.c:423
+#: builtin/branch.c:650 builtin/for-each-ref.c:49 builtin/tag.c:423
 msgid "sorting and filtering are case insensitive"
 msgstr ""
 
-#: builtin/branch.c:643 builtin/for-each-ref.c:38 builtin/tag.c:421
+#: builtin/branch.c:651 builtin/for-each-ref.c:38 builtin/tag.c:421
 #: builtin/verify-tag.c:39
 msgid "format to use for the output"
 msgstr ""
 
-#: builtin/branch.c:666 builtin/clone.c:739
+#: builtin/branch.c:674 builtin/clone.c:739
 msgid "HEAD not found below refs/heads!"
 msgstr ""
 
-#: builtin/branch.c:689
+#: builtin/branch.c:697
 msgid "--column and --verbose are incompatible"
 msgstr ""
 
-#: builtin/branch.c:709 builtin/branch.c:761 builtin/branch.c:770
+#: builtin/branch.c:717 builtin/branch.c:769 builtin/branch.c:778
 msgid "branch name required"
 msgstr ""
 
-#: builtin/branch.c:737
+#: builtin/branch.c:745
 msgid "Cannot give description to detached HEAD"
 msgstr ""
 
-#: builtin/branch.c:742
+#: builtin/branch.c:750
 msgid "cannot edit description of more than one branch"
 msgstr ""
 
-#: builtin/branch.c:749
+#: builtin/branch.c:757
 #, c-format
 msgid "No commit on branch '%s' yet."
 msgstr ""
 
-#: builtin/branch.c:752
+#: builtin/branch.c:760
 #, c-format
 msgid "No branch named '%s'."
 msgstr ""
 
-#: builtin/branch.c:767
+#: builtin/branch.c:775
 msgid "too many branches for a copy operation"
 msgstr ""
 
-#: builtin/branch.c:776
+#: builtin/branch.c:784
 msgid "too many arguments for a rename operation"
 msgstr ""
 
-#: builtin/branch.c:781
+#: builtin/branch.c:789
 msgid "too many arguments to set new upstream"
 msgstr ""
 
-#: builtin/branch.c:785
+#: builtin/branch.c:793
 #, c-format
 msgid ""
 "could not set upstream of HEAD to %s when it does not point to any branch."
 msgstr ""
 
-#: builtin/branch.c:788 builtin/branch.c:810 builtin/branch.c:826
+#: builtin/branch.c:796 builtin/branch.c:818 builtin/branch.c:834
 #, c-format
 msgid "no such branch '%s'"
 msgstr ""
 
-#: builtin/branch.c:792
+#: builtin/branch.c:800
 #, c-format
 msgid "branch '%s' does not exist"
 msgstr ""
 
-#: builtin/branch.c:804
+#: builtin/branch.c:812
 msgid "too many arguments to unset upstream"
 msgstr ""
 
-#: builtin/branch.c:808
+#: builtin/branch.c:816
 msgid "could not unset upstream of HEAD when it does not point to any branch."
 msgstr ""
 
-#: builtin/branch.c:814
+#: builtin/branch.c:822
 #, c-format
 msgid "Branch '%s' has no upstream information"
 msgstr ""
 
-#: builtin/branch.c:829
+#: builtin/branch.c:837
 msgid "-a and -r options to 'git branch' do not make sense with a branch name"
 msgstr ""
 
-#: builtin/branch.c:832
+#: builtin/branch.c:840
 msgid ""
 "the '--set-upstream' option is no longer supported. Please use '--track' or "
 "'--set-upstream-to' instead."
@@ -7447,6 +7442,7 @@ msgid "terminate input and output records by a NUL character"
 msgstr ""
 
 #: builtin/check-ignore.c:20 builtin/checkout.c:1120 builtin/gc.c:503
+#: builtin/worktree.c:447
 msgid "suppress progress reporting"
 msgstr ""
 
@@ -7538,7 +7534,7 @@ msgstr ""
 #: builtin/checkout-index.c:173 builtin/column.c:31
 #: builtin/submodule--helper.c:1361 builtin/submodule--helper.c:1364
 #: builtin/submodule--helper.c:1372 builtin/submodule--helper.c:1736
-#: builtin/worktree.c:610
+#: builtin/worktree.c:620
 msgid "string"
 msgstr ""
 
@@ -7705,7 +7701,7 @@ msgstr ""
 msgid "only one reference expected, %d given."
 msgstr ""
 
-#: builtin/checkout.c:993 builtin/worktree.c:240 builtin/worktree.c:389
+#: builtin/checkout.c:993 builtin/worktree.c:241 builtin/worktree.c:396
 #, c-format
 msgid "invalid reference: %s"
 msgstr ""
@@ -7736,8 +7732,8 @@ msgid "Cannot switch branch to a non-commit '%s'"
 msgstr ""
 
 #: builtin/checkout.c:1121 builtin/checkout.c:1123 builtin/clone.c:119
-#: builtin/remote.c:168 builtin/remote.c:170 builtin/worktree.c:433
-#: builtin/worktree.c:435
+#: builtin/remote.c:168 builtin/remote.c:170 builtin/worktree.c:440
+#: builtin/worktree.c:442
 msgid "branch"
 msgstr ""
 
@@ -7753,7 +7749,7 @@ msgstr ""
 msgid "create reflog for new branch"
 msgstr ""
 
-#: builtin/checkout.c:1126 builtin/worktree.c:437
+#: builtin/checkout.c:1126 builtin/worktree.c:444
 msgid "detach HEAD at named commit"
 msgstr ""
 
@@ -8086,7 +8082,7 @@ msgid "use --reference only while cloning"
 msgstr ""
 
 #: builtin/clone.c:117 builtin/column.c:27 builtin/merge-file.c:44
-#: builtin/pack-objects.c:3194 builtin/repack.c:320
+#: builtin/pack-objects.c:3191 builtin/repack.c:320
 msgid "name"
 msgstr ""
 
@@ -8111,7 +8107,7 @@ msgstr ""
 msgid "create a shallow clone of that depth"
 msgstr ""
 
-#: builtin/clone.c:125 builtin/fetch.c:141 builtin/pack-objects.c:3185
+#: builtin/clone.c:125 builtin/fetch.c:141 builtin/pack-objects.c:3182
 #: parse-options.h:154
 msgid "time"
 msgstr ""
@@ -8282,7 +8278,7 @@ msgid "working tree '%s' already exists."
 msgstr ""
 
 #: builtin/clone.c:984 builtin/clone.c:1005 builtin/difftool.c:271
-#: builtin/worktree.c:246 builtin/worktree.c:276
+#: builtin/worktree.c:247 builtin/worktree.c:277
 #, c-format
 msgid "could not create leading directories of '%s'"
 msgstr ""
@@ -8654,7 +8650,7 @@ msgid "version"
 msgstr ""
 
 #: builtin/commit.c:1311 builtin/commit.c:1486 builtin/push.c:558
-#: builtin/worktree.c:581
+#: builtin/worktree.c:591
 msgid "machine-readable output"
 msgstr ""
 
@@ -10089,7 +10085,7 @@ msgstr ""
 #. grep.threads
 #.
 #: builtin/grep.c:293 builtin/index-pack.c:1536 builtin/index-pack.c:1728
-#: builtin/pack-objects.c:2639
+#: builtin/pack-objects.c:2636
 #, c-format
 msgid "no threads support, ignoring %s"
 msgstr ""
@@ -10306,12 +10302,12 @@ msgstr ""
 msgid "unable to resolve revision: %s"
 msgstr ""
 
-#: builtin/grep.c:1044 builtin/index-pack.c:1532 builtin/pack-objects.c:2635
+#: builtin/grep.c:1044 builtin/index-pack.c:1532 builtin/pack-objects.c:2632
 #, c-format
 msgid "invalid number of threads specified (%d)"
 msgstr ""
 
-#: builtin/grep.c:1049 builtin/pack-objects.c:3289
+#: builtin/grep.c:1049 builtin/pack-objects.c:3286
 msgid "no threads support, ignoring --threads"
 msgstr ""
 
@@ -10646,7 +10642,7 @@ msgstr ""
 msgid "Resolving deltas"
 msgstr ""
 
-#: builtin/index-pack.c:1224 builtin/pack-objects.c:2410
+#: builtin/index-pack.c:1224 builtin/pack-objects.c:2407
 #, c-format
 msgid "unable to create thread: %s"
 msgstr ""
@@ -10711,7 +10707,7 @@ msgstr ""
 msgid "cannot store index file"
 msgstr ""
 
-#: builtin/index-pack.c:1526 builtin/pack-objects.c:2648
+#: builtin/index-pack.c:1526 builtin/pack-objects.c:2645
 #, c-format
 msgid "bad pack.indexversion=%<PRIu32>"
 msgstr ""
@@ -12475,7 +12471,7 @@ msgstr ""
 msgid "read object names from the standard input"
 msgstr ""
 
-#: builtin/notes.c:945 builtin/prune.c:108 builtin/worktree.c:151
+#: builtin/notes.c:945 builtin/prune.c:108 builtin/worktree.c:152
 msgid "do not remove, show only"
 msgstr ""
 
@@ -12605,262 +12601,262 @@ msgstr ""
 msgid "suboptimal pack - out of memory"
 msgstr ""
 
-#: builtin/pack-objects.c:2369
+#: builtin/pack-objects.c:2366
 #, c-format
 msgid "Delta compression using up to %d threads"
 msgstr ""
 
-#: builtin/pack-objects.c:2505
+#: builtin/pack-objects.c:2502
 #, c-format
 msgid "unable to pack objects reachable from tag %s"
 msgstr ""
 
-#: builtin/pack-objects.c:2589
+#: builtin/pack-objects.c:2586
 msgid "Compressing objects"
 msgstr ""
 
-#: builtin/pack-objects.c:2595
+#: builtin/pack-objects.c:2592
 msgid "inconsistency with delta count"
 msgstr ""
 
-#: builtin/pack-objects.c:2674
+#: builtin/pack-objects.c:2671
 #, c-format
 msgid ""
 "expected edge object ID, got garbage:\n"
 " %s"
 msgstr ""
 
-#: builtin/pack-objects.c:2680
+#: builtin/pack-objects.c:2677
 #, c-format
 msgid ""
 "expected object ID, got garbage:\n"
 " %s"
 msgstr ""
 
-#: builtin/pack-objects.c:2760
+#: builtin/pack-objects.c:2757
 msgid "invalid value for --missing"
 msgstr ""
 
-#: builtin/pack-objects.c:2819 builtin/pack-objects.c:2927
+#: builtin/pack-objects.c:2816 builtin/pack-objects.c:2924
 msgid "cannot open pack index"
 msgstr ""
 
-#: builtin/pack-objects.c:2850
+#: builtin/pack-objects.c:2847
 #, c-format
 msgid "loose object at %s could not be examined"
 msgstr ""
 
-#: builtin/pack-objects.c:2935
+#: builtin/pack-objects.c:2932
 msgid "unable to force loose object"
 msgstr ""
 
-#: builtin/pack-objects.c:3022
+#: builtin/pack-objects.c:3019
 #, c-format
 msgid "not a rev '%s'"
 msgstr ""
 
-#: builtin/pack-objects.c:3025
+#: builtin/pack-objects.c:3022
 #, c-format
 msgid "bad revision '%s'"
 msgstr ""
 
-#: builtin/pack-objects.c:3045
+#: builtin/pack-objects.c:3042
 msgid "unable to add recent objects"
 msgstr ""
 
-#: builtin/pack-objects.c:3095
+#: builtin/pack-objects.c:3092
 #, c-format
 msgid "unsupported index version %s"
 msgstr ""
 
-#: builtin/pack-objects.c:3099
+#: builtin/pack-objects.c:3096
 #, c-format
 msgid "bad index version '%s'"
 msgstr ""
 
-#: builtin/pack-objects.c:3130
+#: builtin/pack-objects.c:3127
 msgid "do not show progress meter"
 msgstr ""
 
-#: builtin/pack-objects.c:3132
+#: builtin/pack-objects.c:3129
 msgid "show progress meter"
 msgstr ""
 
-#: builtin/pack-objects.c:3134
+#: builtin/pack-objects.c:3131
 msgid "show progress meter during object writing phase"
 msgstr ""
 
-#: builtin/pack-objects.c:3137
+#: builtin/pack-objects.c:3134
 msgid "similar to --all-progress when progress meter is shown"
 msgstr ""
 
-#: builtin/pack-objects.c:3138
+#: builtin/pack-objects.c:3135
 msgid "<version>[,<offset>]"
 msgstr ""
 
-#: builtin/pack-objects.c:3139
+#: builtin/pack-objects.c:3136
 msgid "write the pack index file in the specified idx format version"
 msgstr ""
 
-#: builtin/pack-objects.c:3142
+#: builtin/pack-objects.c:3139
 msgid "maximum size of each output pack file"
 msgstr ""
 
-#: builtin/pack-objects.c:3144
+#: builtin/pack-objects.c:3141
 msgid "ignore borrowed objects from alternate object store"
 msgstr ""
 
-#: builtin/pack-objects.c:3146
+#: builtin/pack-objects.c:3143
 msgid "ignore packed objects"
 msgstr ""
 
-#: builtin/pack-objects.c:3148
+#: builtin/pack-objects.c:3145
 msgid "limit pack window by objects"
 msgstr ""
 
-#: builtin/pack-objects.c:3150
+#: builtin/pack-objects.c:3147
 msgid "limit pack window by memory in addition to object limit"
 msgstr ""
 
-#: builtin/pack-objects.c:3152
+#: builtin/pack-objects.c:3149
 msgid "maximum length of delta chain allowed in the resulting pack"
 msgstr ""
 
-#: builtin/pack-objects.c:3154
+#: builtin/pack-objects.c:3151
 msgid "reuse existing deltas"
 msgstr ""
 
-#: builtin/pack-objects.c:3156
+#: builtin/pack-objects.c:3153
 msgid "reuse existing objects"
 msgstr ""
 
-#: builtin/pack-objects.c:3158
+#: builtin/pack-objects.c:3155
 msgid "use OFS_DELTA objects"
 msgstr ""
 
-#: builtin/pack-objects.c:3160
+#: builtin/pack-objects.c:3157
 msgid "use threads when searching for best delta matches"
 msgstr ""
 
-#: builtin/pack-objects.c:3162
+#: builtin/pack-objects.c:3159
 msgid "do not create an empty pack output"
 msgstr ""
 
-#: builtin/pack-objects.c:3164
+#: builtin/pack-objects.c:3161
 msgid "read revision arguments from standard input"
 msgstr ""
 
-#: builtin/pack-objects.c:3166
+#: builtin/pack-objects.c:3163
 msgid "limit the objects to those that are not yet packed"
 msgstr ""
 
-#: builtin/pack-objects.c:3169
+#: builtin/pack-objects.c:3166
 msgid "include objects reachable from any reference"
 msgstr ""
 
-#: builtin/pack-objects.c:3172
+#: builtin/pack-objects.c:3169
 msgid "include objects referred by reflog entries"
 msgstr ""
 
-#: builtin/pack-objects.c:3175
+#: builtin/pack-objects.c:3172
 msgid "include objects referred to by the index"
 msgstr ""
 
-#: builtin/pack-objects.c:3178
+#: builtin/pack-objects.c:3175
 msgid "output pack to stdout"
 msgstr ""
 
-#: builtin/pack-objects.c:3180
+#: builtin/pack-objects.c:3177
 msgid "include tag objects that refer to objects to be packed"
 msgstr ""
 
-#: builtin/pack-objects.c:3182
+#: builtin/pack-objects.c:3179
 msgid "keep unreachable objects"
 msgstr ""
 
-#: builtin/pack-objects.c:3184
+#: builtin/pack-objects.c:3181
 msgid "pack loose unreachable objects"
 msgstr ""
 
-#: builtin/pack-objects.c:3186
+#: builtin/pack-objects.c:3183
 msgid "unpack unreachable objects newer than <time>"
 msgstr ""
 
-#: builtin/pack-objects.c:3189
+#: builtin/pack-objects.c:3186
 msgid "create thin packs"
 msgstr ""
 
-#: builtin/pack-objects.c:3191
+#: builtin/pack-objects.c:3188
 msgid "create packs suitable for shallow fetches"
 msgstr ""
 
-#: builtin/pack-objects.c:3193
+#: builtin/pack-objects.c:3190
 msgid "ignore packs that have companion .keep file"
 msgstr ""
 
-#: builtin/pack-objects.c:3195
+#: builtin/pack-objects.c:3192
 msgid "ignore this pack"
 msgstr ""
 
-#: builtin/pack-objects.c:3197
+#: builtin/pack-objects.c:3194
 msgid "pack compression level"
 msgstr ""
 
-#: builtin/pack-objects.c:3199
+#: builtin/pack-objects.c:3196
 msgid "do not hide commits by grafts"
 msgstr ""
 
-#: builtin/pack-objects.c:3201
+#: builtin/pack-objects.c:3198
 msgid "use a bitmap index if available to speed up counting objects"
 msgstr ""
 
-#: builtin/pack-objects.c:3203
+#: builtin/pack-objects.c:3200
 msgid "write a bitmap index together with the pack index"
 msgstr ""
 
-#: builtin/pack-objects.c:3206
+#: builtin/pack-objects.c:3203
 msgid "handling for missing objects"
 msgstr ""
 
-#: builtin/pack-objects.c:3209
+#: builtin/pack-objects.c:3206
 msgid "do not pack objects in promisor packfiles"
 msgstr ""
 
-#: builtin/pack-objects.c:3233
+#: builtin/pack-objects.c:3230
 #, c-format
 msgid "delta chain depth %d is too deep, forcing %d"
 msgstr ""
 
-#: builtin/pack-objects.c:3238
+#: builtin/pack-objects.c:3235
 #, c-format
 msgid "pack.deltaCacheLimit is too high, forcing %d"
 msgstr ""
 
-#: builtin/pack-objects.c:3294
+#: builtin/pack-objects.c:3291
 msgid "--max-pack-size cannot be used to build a pack for transfer"
 msgstr ""
 
-#: builtin/pack-objects.c:3296
+#: builtin/pack-objects.c:3293
 msgid "minimum pack size limit is 1 MiB"
 msgstr ""
 
-#: builtin/pack-objects.c:3301
+#: builtin/pack-objects.c:3298
 msgid "--thin cannot be used to build an indexable pack"
 msgstr ""
 
-#: builtin/pack-objects.c:3304
+#: builtin/pack-objects.c:3301
 msgid "--keep-unreachable and --unpack-unreachable are incompatible"
 msgstr ""
 
-#: builtin/pack-objects.c:3310
+#: builtin/pack-objects.c:3307
 msgid "cannot use --filter without --stdout"
 msgstr ""
 
-#: builtin/pack-objects.c:3366
+#: builtin/pack-objects.c:3363
 msgid "Enumerating objects"
 msgstr ""
 
-#: builtin/pack-objects.c:3385
+#: builtin/pack-objects.c:3382
 #, c-format
 msgid "Total %<PRIu32> (delta %<PRIu32>), reused %<PRIu32> (delta %<PRIu32>)"
 msgstr ""
@@ -13317,7 +13313,7 @@ msgid "Percentage by which creation is weighted"
 msgstr ""
 
 #: builtin/range-diff.c:28
-msgid "color both diff and diff-between-diffs"
+msgid "use simple diff colors"
 msgstr ""
 
 #: builtin/range-diff.c:75 builtin/range-diff.c:79
@@ -13623,10 +13619,6 @@ msgstr ""
 
 #: builtin/remote.c:170
 msgid "master branch"
-msgstr ""
-
-#: builtin/remote.c:171
-msgid "push|fetch"
 msgstr ""
 
 #: builtin/remote.c:172
@@ -14102,7 +14094,7 @@ msgstr ""
 msgid "--keep-unreachable and -A are incompatible"
 msgstr ""
 
-#: builtin/repack.c:510 builtin/worktree.c:139
+#: builtin/repack.c:510 builtin/worktree.c:140
 #, c-format
 msgid "failed to remove '%s'"
 msgstr ""
@@ -14991,8 +14983,8 @@ msgstr ""
 #: builtin/submodule--helper.c:545
 #, c-format
 msgid ""
-"run_command returned non-zero status whilerecursing in the nested submodules "
-"of %s\n"
+"run_command returned non-zero status while recursing in the nested "
+"submodules of %s\n"
 "."
 msgstr ""
 
@@ -15877,213 +15869,213 @@ msgstr ""
 msgid "git worktree unlock <path>"
 msgstr ""
 
-#: builtin/worktree.c:58
+#: builtin/worktree.c:59
 #, c-format
 msgid "Removing worktrees/%s: not a valid directory"
 msgstr ""
 
-#: builtin/worktree.c:64
+#: builtin/worktree.c:65
 #, c-format
 msgid "Removing worktrees/%s: gitdir file does not exist"
 msgstr ""
 
-#: builtin/worktree.c:69 builtin/worktree.c:78
+#: builtin/worktree.c:70 builtin/worktree.c:79
 #, c-format
 msgid "Removing worktrees/%s: unable to read gitdir file (%s)"
 msgstr ""
 
-#: builtin/worktree.c:88
+#: builtin/worktree.c:89
 #, c-format
 msgid ""
 "Removing worktrees/%s: short read (expected %<PRIuMAX> bytes, read "
 "%<PRIuMAX>)"
 msgstr ""
 
-#: builtin/worktree.c:96
+#: builtin/worktree.c:97
 #, c-format
 msgid "Removing worktrees/%s: invalid gitdir file"
 msgstr ""
 
-#: builtin/worktree.c:105
+#: builtin/worktree.c:106
 #, c-format
 msgid "Removing worktrees/%s: gitdir file points to non-existent location"
 msgstr ""
 
-#: builtin/worktree.c:152
+#: builtin/worktree.c:153
 msgid "report pruned working trees"
 msgstr ""
 
-#: builtin/worktree.c:154
+#: builtin/worktree.c:155
 msgid "expire working trees older than <time>"
 msgstr ""
 
-#: builtin/worktree.c:229
+#: builtin/worktree.c:230
 #, c-format
 msgid "'%s' already exists"
 msgstr ""
 
-#: builtin/worktree.c:260
+#: builtin/worktree.c:261
 #, c-format
 msgid "could not create directory of '%s'"
 msgstr ""
 
-#: builtin/worktree.c:373 builtin/worktree.c:379
+#: builtin/worktree.c:380 builtin/worktree.c:386
 #, c-format
 msgid "Preparing worktree (new branch '%s')"
 msgstr ""
 
-#: builtin/worktree.c:375
+#: builtin/worktree.c:382
 #, c-format
 msgid "Preparing worktree (resetting branch '%s'; was at %s)"
 msgstr ""
 
-#: builtin/worktree.c:384
+#: builtin/worktree.c:391
 #, c-format
 msgid "Preparing worktree (checking out '%s')"
 msgstr ""
 
-#: builtin/worktree.c:390
+#: builtin/worktree.c:397
 #, c-format
 msgid "Preparing worktree (detached HEAD %s)"
 msgstr ""
 
-#: builtin/worktree.c:431
+#: builtin/worktree.c:438
 msgid "checkout <branch> even if already checked out in other worktree"
 msgstr ""
 
-#: builtin/worktree.c:434
+#: builtin/worktree.c:441
 msgid "create a new branch"
 msgstr ""
 
-#: builtin/worktree.c:436
+#: builtin/worktree.c:443
 msgid "create or reset a branch"
 msgstr ""
 
-#: builtin/worktree.c:438
+#: builtin/worktree.c:445
 msgid "populate the new working tree"
 msgstr ""
 
-#: builtin/worktree.c:439
+#: builtin/worktree.c:446
 msgid "keep the new working tree locked"
 msgstr ""
 
-#: builtin/worktree.c:441
+#: builtin/worktree.c:449
 msgid "set up tracking mode (see git-branch(1))"
 msgstr ""
 
-#: builtin/worktree.c:444
+#: builtin/worktree.c:452
 msgid "try to match the new branch name with a remote-tracking branch"
 msgstr ""
 
-#: builtin/worktree.c:452
+#: builtin/worktree.c:460
 msgid "-b, -B, and --detach are mutually exclusive"
 msgstr ""
 
-#: builtin/worktree.c:511
+#: builtin/worktree.c:521
 msgid "--[no-]track can only be used if a new branch is created"
 msgstr ""
 
-#: builtin/worktree.c:611
+#: builtin/worktree.c:621
 msgid "reason for locking"
 msgstr ""
 
-#: builtin/worktree.c:623 builtin/worktree.c:656 builtin/worktree.c:710
-#: builtin/worktree.c:850
+#: builtin/worktree.c:633 builtin/worktree.c:666 builtin/worktree.c:720
+#: builtin/worktree.c:860
 #, c-format
 msgid "'%s' is not a working tree"
 msgstr ""
 
-#: builtin/worktree.c:625 builtin/worktree.c:658
+#: builtin/worktree.c:635 builtin/worktree.c:668
 msgid "The main working tree cannot be locked or unlocked"
 msgstr ""
 
-#: builtin/worktree.c:630
+#: builtin/worktree.c:640
 #, c-format
 msgid "'%s' is already locked, reason: %s"
 msgstr ""
 
-#: builtin/worktree.c:632
+#: builtin/worktree.c:642
 #, c-format
 msgid "'%s' is already locked"
 msgstr ""
 
-#: builtin/worktree.c:660
+#: builtin/worktree.c:670
 #, c-format
 msgid "'%s' is not locked"
 msgstr ""
 
-#: builtin/worktree.c:685
+#: builtin/worktree.c:695
 msgid "working trees containing submodules cannot be moved or removed"
 msgstr ""
 
-#: builtin/worktree.c:712 builtin/worktree.c:852
+#: builtin/worktree.c:722 builtin/worktree.c:862
 #, c-format
 msgid "'%s' is a main working tree"
 msgstr ""
 
-#: builtin/worktree.c:717
+#: builtin/worktree.c:727
 #, c-format
 msgid "could not figure out destination name from '%s'"
 msgstr ""
 
-#: builtin/worktree.c:723
+#: builtin/worktree.c:733
 #, c-format
 msgid "target '%s' already exists"
 msgstr ""
 
-#: builtin/worktree.c:730
+#: builtin/worktree.c:740
 #, c-format
 msgid "cannot move a locked working tree, lock reason: %s"
 msgstr ""
 
-#: builtin/worktree.c:732
+#: builtin/worktree.c:742
 msgid "cannot move a locked working tree"
 msgstr ""
 
-#: builtin/worktree.c:735
+#: builtin/worktree.c:745
 #, c-format
 msgid "validation failed, cannot move working tree: %s"
 msgstr ""
 
-#: builtin/worktree.c:740
+#: builtin/worktree.c:750
 #, c-format
 msgid "failed to move '%s' to '%s'"
 msgstr ""
 
-#: builtin/worktree.c:788
+#: builtin/worktree.c:798
 #, c-format
 msgid "failed to run 'git status' on '%s'"
 msgstr ""
 
-#: builtin/worktree.c:792
+#: builtin/worktree.c:802
 #, c-format
 msgid "'%s' is dirty, use --force to delete it"
 msgstr ""
 
-#: builtin/worktree.c:797
+#: builtin/worktree.c:807
 #, c-format
 msgid "failed to run 'git status' on '%s', code %d"
 msgstr ""
 
-#: builtin/worktree.c:808 builtin/worktree.c:822
+#: builtin/worktree.c:818 builtin/worktree.c:832
 #, c-format
 msgid "failed to delete '%s'"
 msgstr ""
 
-#: builtin/worktree.c:834
+#: builtin/worktree.c:844
 msgid "force removing even if the worktree is dirty"
 msgstr ""
 
-#: builtin/worktree.c:856
+#: builtin/worktree.c:866
 #, c-format
 msgid "cannot remove a locked working tree, lock reason: %s"
 msgstr ""
 
-#: builtin/worktree.c:858
+#: builtin/worktree.c:868
 msgid "cannot remove a locked working tree"
 msgstr ""
 
-#: builtin/worktree.c:861
+#: builtin/worktree.c:871
 #, c-format
 msgid "validation failed, cannot remove working tree: %s"
 msgstr ""
