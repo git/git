@@ -267,6 +267,11 @@ Performance, Internal Implementation, Development Support etc.
    config.txt file but are described in another file that is included
    by it, which has been corrected.
 
+ * The test linter code has learned that the end of here-doc mark
+   "EOF" can be quoted in a double-quote pair, not just in a
+   single-quote pair.
+
+
 Fixes since v2.18
 -----------------
 
@@ -556,6 +561,23 @@ Fixes since v2.18
    which has been fixed.
    (merge 9bf5d4c4e2 nd/config-core-checkstat-doc later to maint).
 
+ * Recent "git rebase -i" update started to write bogusly formatted
+   author-script, with a matching broken reading code.  These are
+   fixed.
+
+ * Recent addition of "directory rename" heuristics to the
+   merge-recursive backend makes the command susceptible to false
+   positives and false negatives.  In the context of "git am -3",
+   which does not know about surrounding unmodified paths and thus
+   cannot inform the merge machinery about the full trees involved,
+   this risk is particularly severe.  As such, the heuristic is
+   disabled for "git am -3" to keep the machinery "more stupid but
+   predictable".
+
+ * "git merge-base" in 2.19-rc1 has performance regression when the
+   (experimental) commit-graph feature is in use, which has been
+   mitigated.
+
  * Code cleanup, docfix, build fix, etc.
    (merge aee9be2ebe sg/update-ref-stdin-cleanup later to maint).
    (merge 037714252f jc/clean-after-sanity-tests later to maint).
@@ -598,3 +620,4 @@ Fixes since v2.18
    (merge 79b04f9b60 sg/t3903-missing-fix later to maint).
    (merge 2745817028 sg/t3420-autostash-fix later to maint).
    (merge 7afb0d6777 sg/test-rebase-editor-fix later to maint).
+   (merge 6c6ce21baa es/freebsd-iconv-portability later to maint).
