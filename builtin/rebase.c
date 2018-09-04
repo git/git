@@ -95,6 +95,7 @@ struct rebase_options {
 	int autostash;
 	char *cmd;
 	int allow_empty_message;
+	int rebase_merges, rebase_cousins;
 };
 
 static int is_interactive(struct rebase_options *opts)
@@ -351,6 +352,10 @@ static int run_specific_rebase(struct rebase_options *opts)
 	add_var(&script_snippet, "cmd", opts->cmd);
 	add_var(&script_snippet, "allow_empty_message",
 		opts->allow_empty_message ?  "--allow-empty-message" : "");
+	add_var(&script_snippet, "rebase_merges",
+		opts->rebase_merges ? "t" : "");
+	add_var(&script_snippet, "rebase_cousins",
+		opts->rebase_cousins ? "t" : "");
 
 	switch (opts->type) {
 	case REBASE_AM:
@@ -626,6 +631,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	int opt_c = -1;
 	struct string_list whitespace = STRING_LIST_INIT_NODUP;
 	struct string_list exec = STRING_LIST_INIT_NODUP;
+	const char *rebase_merges = NULL;
 	struct option builtin_rebase_options[] = {
 		OPT_STRING(0, "onto", &options.onto_name,
 			   N_("revision"),
@@ -705,6 +711,10 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		OPT_BOOL(0, "allow-empty-message",
 			 &options.allow_empty_message,
 			 N_("allow rebasing commits with empty messages")),
+		{OPTION_STRING, 'r', "rebase-merges", &rebase_merges,
+			N_("mode"),
+			N_("try to rebase merges instead of skipping them"),
+			PARSE_OPT_OPTARG, NULL, (intptr_t)""},
 		OPT_END(),
 	};
 
@@ -938,6 +948,17 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		for (i = 0; i < exec.nr; i++)
 			strbuf_addf(&buf, "exec %s\n", exec.items[i].string);
 		options.cmd = xstrdup(buf.buf);
+	}
+
+	if (rebase_merges) {
+		if (!*rebase_merges)
+			; /* default mode; do nothing */
+		else if (!strcmp("rebase-cousins", rebase_merges))
+			options.rebase_cousins = 1;
+		else if (strcmp("no-rebase-cousins", rebase_merges))
+			die(_("Unknown mode: %s"), rebase_merges);
+		options.rebase_merges = 1;
+		imply_interactive(&options, "--rebase-merges");
 	}
 
 	switch (options.type) {
