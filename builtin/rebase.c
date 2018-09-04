@@ -96,6 +96,7 @@ struct rebase_options {
 	int signoff;
 	int allow_rerere_autoupdate;
 	int keep_empty;
+	int autosquash;
 };
 
 static int is_interactive(struct rebase_options *opts)
@@ -295,6 +296,7 @@ static int run_specific_rebase(struct rebase_options *opts)
 		opts->allow_rerere_autoupdate ?
 		"--rerere-autoupdate" : "--no-rerere-autoupdate");
 	add_var(&script_snippet, "keep_empty", opts->keep_empty ? "yes" : "");
+	add_var(&script_snippet, "autosquash", opts->autosquash ? "t" : "");
 
 	switch (opts->type) {
 	case REBASE_AM:
@@ -455,6 +457,11 @@ static int rebase_config(const char *var, const char *value, void *data)
 		return 0;
 	}
 
+	if (!strcmp(var, "rebase.autosquash")) {
+		opts->autosquash = git_config_bool(var, value);
+		return 0;
+	}
+
 	return git_default_config(var, value, data);
 }
 
@@ -609,6 +616,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			    "conflict")),
 		OPT_BOOL('k', "keep-empty", &options.keep_empty,
 			 N_("preserve empty commits during rebase")),
+		OPT_BOOL(0, "autosquash", &options.autosquash,
+			 N_("move commits that begin with "
+			    "squash!/fixup! under -i")),
 		OPT_END(),
 	};
 
