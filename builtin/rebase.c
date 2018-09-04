@@ -94,6 +94,7 @@ struct rebase_options {
 	char *gpg_sign_opt;
 	int autostash;
 	char *cmd;
+	int allow_empty_message;
 };
 
 static int is_interactive(struct rebase_options *opts)
@@ -348,6 +349,8 @@ static int run_specific_rebase(struct rebase_options *opts)
 	add_var(&script_snippet, "autosquash", opts->autosquash ? "t" : "");
 	add_var(&script_snippet, "gpg_sign_opt", opts->gpg_sign_opt);
 	add_var(&script_snippet, "cmd", opts->cmd);
+	add_var(&script_snippet, "allow_empty_message",
+		opts->allow_empty_message ?  "--allow-empty-message" : "");
 
 	switch (opts->type) {
 	case REBASE_AM:
@@ -598,6 +601,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		.flags = REBASE_NO_QUIET,
 		.git_am_opt = STRBUF_INIT,
 		.allow_rerere_autoupdate  = -1,
+		.allow_empty_message = 1,
 	};
 	const char *branch_name;
 	int ret, flags, total_argc, in_progress = 0;
@@ -698,6 +702,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		OPT_STRING_LIST('x', "exec", &exec, N_("exec"),
 				N_("add exec lines after each commit of the "
 				   "editable list")),
+		OPT_BOOL(0, "allow-empty-message",
+			 &options.allow_empty_message,
+			 N_("allow rebasing commits with empty messages")),
 		OPT_END(),
 	};
 
