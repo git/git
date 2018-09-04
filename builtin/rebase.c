@@ -574,6 +574,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	int ignore_date = 0;
 	int ignore_whitespace = 0;
 	const char *gpg_sign = NULL;
+	int opt_c = -1;
+	struct string_list whitespace = STRING_LIST_INIT_NODUP;
 	struct option builtin_rebase_options[] = {
 		OPT_STRING(0, "onto", &options.onto_name,
 			   N_("revision"),
@@ -641,6 +643,10 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		{ OPTION_STRING, 'S', "gpg-sign", &gpg_sign, N_("key-id"),
 			N_("GPG-sign commits"),
 			PARSE_OPT_OPTARG, NULL, (intptr_t) "" },
+		OPT_STRING_LIST(0, "whitespace", &whitespace,
+				N_("whitespace"), N_("passed to 'git apply'")),
+		OPT_SET_INT('C', NULL, &opt_c, N_("passed to 'git apply'"),
+			    REBASE_AM),
 		OPT_END(),
 	};
 
@@ -846,6 +852,23 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	if (gpg_sign) {
 		free(options.gpg_sign_opt);
 		options.gpg_sign_opt = xstrfmt("-S%s", gpg_sign);
+	}
+
+	if (opt_c >= 0)
+		strbuf_addf(&options.git_am_opt, " -C%d", opt_c);
+
+	if (whitespace.nr) {
+		int i;
+
+		for (i = 0; i < whitespace.nr; i++) {
+			const char *item = whitespace.items[i].string;
+
+			strbuf_addf(&options.git_am_opt, " --whitespace=%s",
+				    item);
+
+			if ((!strcmp(item, "fix")) || (!strcmp(item, "strip")))
+				options.flags |= REBASE_FORCE;
+		}
 	}
 
 	switch (options.type) {
