@@ -682,7 +682,7 @@ test_expect_success 'invalid ref of the form "n", n >= N' '
 	git stash drop
 '
 
-test_expect_success 'branch: should not drop the stash if the branch exists' '
+test_expect_success 'branch: do not drop the stash if the branch exists' '
 	git stash clear &&
 	echo foo >file &&
 	git add file &&
@@ -707,7 +707,7 @@ test_expect_success 'branch: should not drop the stash if the apply fails' '
 	git rev-parse stash@{0} --
 '
 
-test_expect_success 'apply: shows same status as git status (relative to ./)' '
+test_expect_success 'apply: show same status as git status (relative to ./)' '
 	git stash clear &&
 	echo 1 >subdir/subfile1 &&
 	echo 2 >subdir/subfile2 &&
@@ -1048,7 +1048,7 @@ test_expect_success 'stash push -p with pathspec shows no changes only once' '
 	test_i18ncmp expect actual
 '
 
-test_expect_success 'push: <pathspec> shows no changes when there are none' '
+test_expect_success 'push <pathspec>: show no changes when there are none' '
 	>foo &&
 	git add foo &&
 	git commit -m "tmp" &&
@@ -1066,6 +1066,7 @@ test_expect_success 'push: <pathspec> not in the repository errors out' '
 
 test_expect_success 'push: -q is quiet with changes' '
 	>foo &&
+	git add foo &&
 	git stash push -q >output 2>&1 &&
 	test_must_be_empty output
 '
@@ -1077,12 +1078,13 @@ test_expect_success 'push: -q is quiet with no changes' '
 
 test_expect_success 'push: -q is quiet even if there is no initial commit' '
 	git init foo_dir &&
-	cd foo_dir &&
-	touch bar &&
-	test_must_fail git stash push -q >output 2>&1 &&
-	test_must_be_empty output &&
-	cd .. &&
-	rm -rf foo_dir
+	test_when_finished rm -rf foo_dir &&
+	(
+		cd foo_dir &&
+		>bar &&
+		test_must_fail git stash push -q >output 2>&1 &&
+		test_must_be_empty output
+	)
 '
 
 test_expect_success 'untracked files are left in place when -u is not given' '

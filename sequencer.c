@@ -4703,7 +4703,7 @@ int complete_action(struct replay_opts *opts, unsigned flags,
 
 	if (!lstat(todo_file, &st) && st.st_size == 0 &&
 	    write_message("noop\n", 5, todo_file, 0))
-		return error_errno(_("could not write '%s'"), todo_file);
+		return -1;
 
 	if (autosquash && rearrange_squash())
 		return -1;
@@ -4736,7 +4736,7 @@ int complete_action(struct replay_opts *opts, unsigned flags,
 
 	if (write_message(buf->buf, buf->len, todo_file, 0)) {
 		todo_list_release(&todo_list);
-		return error_errno(_("could not write '%s'"), todo_file);
+		return -1;
 	}
 
 	if (copy_file(rebase_path_todo_backup(), todo_file, 0666))
@@ -4778,7 +4778,9 @@ int complete_action(struct replay_opts *opts, unsigned flags,
 	if (opts->allow_ff && skip_unnecessary_picks(&oid))
 		return error(_("could not skip unnecessary pick commands"));
 
-	checkout_onto(opts, onto_name, oid_to_hex(&oid), orig_head);
+	if (checkout_onto(opts, onto_name, oid_to_hex(&oid), orig_head))
+		return -1;
+;
 	if (require_clean_work_tree("rebase", "", 1, 1))
 		return -1;
 

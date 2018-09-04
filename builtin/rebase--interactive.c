@@ -206,6 +206,9 @@ int cmd_rebase__interactive(int argc, const char **argv, const char *prefix)
 	opts.allow_ff = 1;
 	opts.allow_empty = 1;
 
+	if (argc == 1)
+		usage_with_options(builtin_rebase_interactive_usage, options);
+
 	argc = parse_options(argc, argv, NULL, options,
 			builtin_rebase_interactive_usage, PARSE_OPT_KEEP_ARGV0);
 
@@ -223,6 +226,9 @@ int cmd_rebase__interactive(int argc, const char **argv, const char *prefix)
 
 	switch (command) {
 	case NONE:
+		if (!onto && !upstream)
+			die(_("a base commit must be provided with --upstream or --onto"));
+
 		ret = do_interactive_rebase(&opts, flags, switch_to, upstream, onto,
 					    onto_name, squash_onto, head_name, restrict_revision,
 					    raw_strategies, cmd, autosquash);
