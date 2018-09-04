@@ -93,6 +93,7 @@ struct rebase_options {
 	int autosquash;
 	char *gpg_sign_opt;
 	int autostash;
+	char *cmd;
 };
 
 static int is_interactive(struct rebase_options *opts)
@@ -346,6 +347,7 @@ static int run_specific_rebase(struct rebase_options *opts)
 	add_var(&script_snippet, "keep_empty", opts->keep_empty ? "yes" : "");
 	add_var(&script_snippet, "autosquash", opts->autosquash ? "t" : "");
 	add_var(&script_snippet, "gpg_sign_opt", opts->gpg_sign_opt);
+	add_var(&script_snippet, "cmd", opts->cmd);
 
 	switch (opts->type) {
 	case REBASE_AM:
@@ -619,6 +621,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	const char *gpg_sign = NULL;
 	int opt_c = -1;
 	struct string_list whitespace = STRING_LIST_INIT_NODUP;
+	struct string_list exec = STRING_LIST_INIT_NODUP;
 	struct option builtin_rebase_options[] = {
 		OPT_STRING(0, "onto", &options.onto_name,
 			   N_("revision"),
@@ -692,6 +695,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			    REBASE_AM),
 		OPT_BOOL(0, "autostash", &options.autostash,
 			 N_("automatically stash/stash pop before and after")),
+		OPT_STRING_LIST('x', "exec", &exec, N_("exec"),
+				N_("add exec lines after each commit of the "
+				   "editable list")),
 		OPT_END(),
 	};
 
@@ -914,6 +920,17 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			if ((!strcmp(item, "fix")) || (!strcmp(item, "strip")))
 				options.flags |= REBASE_FORCE;
 		}
+	}
+
+	if (exec.nr) {
+		int i;
+
+		imply_interactive(&options, "--exec");
+
+		strbuf_reset(&buf);
+		for (i = 0; i < exec.nr; i++)
+			strbuf_addf(&buf, "exec %s\n", exec.items[i].string);
+		options.cmd = xstrdup(buf.buf);
 	}
 
 	switch (options.type) {
@@ -1198,5 +1215,6 @@ cleanup:
 	strbuf_release(&revisions);
 	free(options.head_name);
 	free(options.gpg_sign_opt);
+	free(options.cmd);
 	return ret;
 }
