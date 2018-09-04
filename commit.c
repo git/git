@@ -874,6 +874,9 @@ static struct commit_list *paint_down_to_common(struct commit *one, int n,
 	int i;
 	uint32_t last_gen = GENERATION_NUMBER_INFINITY;
 
+	if (!min_generation)
+		queue.compare = compare_commits_by_commit_date;
+
 	one->object.flags |= PARENT1;
 	if (!n) {
 		commit_list_append(one, &result);
@@ -891,7 +894,7 @@ static struct commit_list *paint_down_to_common(struct commit *one, int n,
 		struct commit_list *parents;
 		int flags;
 
-		if (commit->generation > last_gen)
+		if (min_generation && commit->generation > last_gen)
 			BUG("bad generation skip %8x > %8x at %s",
 			    commit->generation, last_gen,
 			    oid_to_hex(&commit->object.oid));
