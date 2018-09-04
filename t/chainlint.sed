@@ -97,11 +97,11 @@
 /<<[ 	]*[-\\']*[A-Za-z0-9_]/ {
 	s/^\(.*\)<<[ 	]*[-\\']*\([A-Za-z0-9_][A-Za-z0-9_]*\)'*/<\2>\1<</
 	s/[ 	]*<<//
-	:hereslurp
+	:hered
 	N
 	/^<\([^>]*\)>.*\n[ 	]*\1[ 	]*$/!{
 		s/\n.*$//
-		bhereslurp
+		bhered
 	}
 	s/^<[^>]*>//
 	s/\n.*$//
@@ -131,9 +131,8 @@ b
 b
 
 :subshell
-# bare "(" line?
+# bare "(" line? -- stash for later printing
 /^[ 	]*([	]*$/ {
-	# stash for later printing
 	h
 	bnextline
 }
@@ -150,7 +149,7 @@ s/.*\n//
 
 :slurp
 # incomplete line "...\"
-/\\$/bincomplete
+/\\$/bicmplte
 # multi-line quoted string "...\n..."?
 /"/bdqstring
 # multi-line quoted string '...\n...'? (but not contraction in string "it's")
@@ -172,7 +171,7 @@ s/.*\n//
 	/"[^"]*#[^"]*"/!s/[ 	]#.*$//
 }
 # one-liner "case ... esac"
-/^[ 	]*case[ 	]*..*esac/bcheckchain
+/^[ 	]*case[ 	]*..*esac/bchkchn
 # multi-line "case ... esac"
 /^[ 	]*case[ 	]..*[ 	]in/bcase
 # multi-line "for ... done" or "while ... done"
@@ -201,32 +200,32 @@ s/.*\n//
 /^[ 	]*fi[ 	]*[<>|]/bdone
 /^[ 	]*fi[ 	]*)/bdone
 # nested one-liner "(...) &&"
-/^[ 	]*(.*)[ 	]*&&[ 	]*$/bcheckchain
+/^[ 	]*(.*)[ 	]*&&[ 	]*$/bchkchn
 # nested one-liner "(...)"
-/^[ 	]*(.*)[ 	]*$/bcheckchain
+/^[ 	]*(.*)[ 	]*$/bchkchn
 # nested one-liner "(...) >x" (or "2>x" or "<x" or "|x")
-/^[ 	]*(.*)[ 	]*[0-9]*[<>|]/bcheckchain
+/^[ 	]*(.*)[ 	]*[0-9]*[<>|]/bchkchn
 # nested multi-line "(...\n...)"
 /^[ 	]*(/bnest
 # multi-line "{...\n...}"
 /^[ 	]*{/bblock
 # closing ")" on own line -- exit subshell
-/^[ 	]*)/bclosesolo
+/^[ 	]*)/bclssolo
 # "$((...))" -- arithmetic expansion; not closing ")"
-/\$(([^)][^)]*))[^)]*$/bcheckchain
+/\$(([^)][^)]*))[^)]*$/bchkchn
 # "$(...)" -- command substitution; not closing ")"
-/\$([^)][^)]*)[^)]*$/bcheckchain
+/\$([^)][^)]*)[^)]*$/bchkchn
 # multi-line "$(...\n...)" -- command substitution; treat as nested subshell
 /\$([^)]*$/bnest
 # "=(...)" -- Bash array assignment; not closing ")"
-/=(/bcheckchain
+/=(/bchkchn
 # closing "...) &&"
 /)[ 	]*&&[ 	]*$/bclose
 # closing "...)"
 /)[ 	]*$/bclose
 # closing "...) >x" (or "2>x" or "<x" or "|x")
 /)[ 	]*[<>|]/bclose
-:checkchain
+:chkchn
 # mark suspect if line uses ";" internally rather than "&&" (but not ";" in a
 # string and not ";;" in one-liner "case...esac")
 /;/{
@@ -245,7 +244,7 @@ n
 bslurp
 
 # found incomplete line "...\" -- slurp up next line
-:incomplete
+:icmplte
 N
 s/\\\n//
 bslurp
@@ -283,11 +282,11 @@ bfolded
 :heredoc
 s/^\(.*\)<<[ 	]*[-\\']*\([A-Za-z0-9_][A-Za-z0-9_]*\)'*/<\2>\1<</
 s/[ 	]*<<//
-:hereslurpsub
+:heredsub
 N
 /^<\([^>]*\)>.*\n[ 	]*\1[ 	]*$/!{
 	s/\n.*$//
-	bhereslurpsub
+	bheredsub
 }
 s/^<[^>]*>//
 s/\n.*$//
@@ -317,43 +316,43 @@ x
 # is 'done' or 'fi' cuddled with ")" to close subshell?
 /done.*)/bclose
 /fi.*)/bclose
-bcheckchain
+bchkchn
 
 # found nested multi-line "(...\n...)" -- pass through untouched
 :nest
 x
-:nestslurp
+:nstslurp
 n
 # closing ")" on own line -- stop nested slurp
-/^[ 	]*)/bnestclose
+/^[ 	]*)/bnstclose
 # comment -- not closing ")" if in comment
-/^[ 	]*#/bnestcontinue
+/^[ 	]*#/bnstcnt
 # "$((...))" -- arithmetic expansion; not closing ")"
-/\$(([^)][^)]*))[^)]*$/bnestcontinue
+/\$(([^)][^)]*))[^)]*$/bnstcnt
 # "$(...)" -- command substitution; not closing ")"
-/\$([^)][^)]*)[^)]*$/bnestcontinue
+/\$([^)][^)]*)[^)]*$/bnstcnt
 # closing "...)" -- stop nested slurp
-/)/bnestclose
-:nestcontinue
+/)/bnstclose
+:nstcnt
 x
-bnestslurp
-:nestclose
+bnstslurp
+:nstclose
 s/^/>>/
 # is it "))" which closes nested and parent subshells?
 /)[ 	]*)/bslurp
-bcheckchain
+bchkchn
 
 # found multi-line "{...\n...}" block -- pass through untouched
 :block
 x
 n
 # closing "}" -- stop block slurp
-/}/bcheckchain
+/}/bchkchn
 bblock
 
 # found closing ")" on own line -- drop "suspect" from final line of subshell
 # since that line legitimately lacks "&&" and exit subshell loop
-:closesolo
+:clssolo
 x
 s/?!AMP?!//
 p

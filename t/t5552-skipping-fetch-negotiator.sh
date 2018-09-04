@@ -46,7 +46,7 @@ test_expect_success 'commits with no parents are sent regardless of skip distanc
 	test_commit -C server to_fetch &&
 
 	git init client &&
-	for i in $(seq 7)
+	for i in $(test_seq 7)
 	do
 		test_commit -C client c$i
 	done &&
@@ -89,7 +89,7 @@ test_expect_success 'when two skips collide, favor the larger one' '
 	test_commit -C server to_fetch &&
 
 	git init client &&
-	for i in $(seq 11)
+	for i in $(test_seq 11)
 	do
 		test_commit -C client c$i
 	done &&
@@ -168,14 +168,14 @@ test_expect_success 'do not send "have" with ancestors of commits that server AC
 	test_commit -C server to_fetch &&
 
 	git init client &&
-	for i in $(seq 8)
+	for i in $(test_seq 8)
 	do
 		git -C client checkout --orphan b$i &&
 		test_commit -C client b$i.c0
 	done &&
-	for j in $(seq 19)
+	for j in $(test_seq 19)
 	do
-		for i in $(seq 8)
+		for i in $(test_seq 8)
 		do
 			git -C client checkout b$i &&
 			test_commit -C client b$i.c$j
@@ -205,7 +205,7 @@ test_expect_success 'do not send "have" with ancestors of commits that server AC
 
 	# fetch-pack should thus not send any more commits in the b1 branch, but
 	# should still send the others (in this test, just check b2).
-	for i in $(seq 0 8)
+	for i in $(test_seq 0 8)
 	do
 		have_not_sent b1.c$i
 	done &&

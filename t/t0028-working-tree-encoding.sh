@@ -203,7 +203,11 @@ test_expect_success 'error if encoding garbage is already in Git' '
 	test_i18ngrep "error: BOM is required" err.out
 '
 
-test_expect_success 'check roundtrip encoding' '
+test_lazy_prereq ICONV_SHIFT_JIS '
+	iconv -f UTF-8 -t SHIFT-JIS </dev/null
+'
+
+test_expect_success ICONV_SHIFT_JIS 'check roundtrip encoding' '
 	test_when_finished "rm -f roundtrip.shift roundtrip.utf16" &&
 	test_when_finished "git reset --hard HEAD" &&
 

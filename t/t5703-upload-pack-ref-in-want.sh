@@ -176,7 +176,7 @@ test_expect_success 'setup repos for change-while-negotiating test' '
 		git clone "http://127.0.0.1:$LIB_HTTPD_PORT/smart/repo" "$LOCAL_PRISTINE" &&
 		cd "$LOCAL_PRISTINE" &&
 		git checkout -b side &&
-		for i in $(seq 1 33); do test_commit s$i; done &&
+		for i in $(test_seq 1 33); do test_commit s$i; done &&
 
 		# Add novel commits to upstream
 		git checkout master &&
@@ -289,7 +289,7 @@ test_expect_success 'setup repos for fetching with ref-in-want tests' '
 		git clone "file://$REPO" "$LOCAL_PRISTINE" &&
 		cd "$LOCAL_PRISTINE" &&
 		git checkout -b side &&
-		for i in $(seq 1 33); do test_commit s$i; done &&
+		for i in $(test_seq 1 33); do test_commit s$i; done &&
 
 		# Add novel commits to upstream
 		git checkout master &&
