@@ -17,6 +17,7 @@
 #include "unpack-trees.h"
 #include "lockfile.h"
 #include "parse-options.h"
+#include "commit.h"
 
 static char const * const builtin_rebase_usage[] = {
 	N_("git rebase [-i] [options] [--exec <cmd>] [--onto <newbase>] "
@@ -311,6 +312,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	int ret, flags;
 	struct strbuf msg = STRBUF_INIT;
 	struct strbuf revisions = STRBUF_INIT;
+	struct object_id merge_base;
 	struct option builtin_rebase_options[] = {
 		OPT_STRING(0, "onto", &options.onto_name,
 			   N_("revision"),
@@ -387,7 +389,11 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	if (!options.onto_name)
 		options.onto_name = options.upstream_name;
 	if (strstr(options.onto_name, "...")) {
-		die("TODO");
+		if (get_oid_mb(options.onto_name, &merge_base) < 0)
+			die(_("'%s': need exactly one merge base"),
+			    options.onto_name);
+		options.onto = lookup_commit_or_die(&merge_base,
+						    options.onto_name);
 	} else {
 		options.onto = peel_committish(options.onto_name);
 		if (!options.onto)
