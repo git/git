@@ -527,6 +527,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		ACTION_SHOW_CURRENT_PATCH,
 	} action = NO_ACTION;
 	int committer_date_is_author_date = 0;
+	int ignore_date = 0;
 	int ignore_whitespace = 0;
 	struct option builtin_rebase_options[] = {
 		OPT_STRING(0, "onto", &options.onto_name,
@@ -549,6 +550,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			 N_("add a Signed-off-by: line to each commit")),
 		OPT_BOOL(0, "committer-date-is-author-date",
 			 &committer_date_is_author_date,
+			 N_("passed to 'git am'")),
+		OPT_BOOL(0, "ignore-date", &ignore_date,
 			 N_("passed to 'git am'")),
 		OPT_BIT('f', "force-rebase", &options.flags,
 			N_("cherry-pick all commits, even if unchanged"),
@@ -778,6 +781,11 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
 	if (ignore_whitespace)
 		strbuf_addstr(&options.git_am_opt, " --ignore-whitespace");
+
+	if (ignore_date) {
+		strbuf_addstr(&options.git_am_opt, " --ignore-date");
+		options.flags |= REBASE_FORCE;
+	}
 
 	switch (options.type) {
 	case REBASE_MERGE:
