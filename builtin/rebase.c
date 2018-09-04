@@ -76,6 +76,7 @@ struct rebase_options {
 	const char *revisions;
 	const char *switch_to;
 	int root;
+	struct object_id *squash_onto;
 	struct commit *restrict_revision;
 	int dont_finish_rebase;
 	enum {
@@ -375,6 +376,9 @@ static int run_specific_rebase(struct rebase_options *opts)
 		opts->rebase_cousins ? "t" : "");
 	add_var(&script_snippet, "strategy", opts->strategy);
 	add_var(&script_snippet, "strategy_opts", opts->strategy_opts);
+	add_var(&script_snippet, "rebase_root", opts->root ? "t" : "");
+	add_var(&script_snippet, "squash_onto",
+		opts->squash_onto ? oid_to_hex(opts->squash_onto) : "");
 
 	switch (opts->type) {
 	case REBASE_AM:
@@ -653,6 +657,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	const char *rebase_merges = NULL;
 	int fork_point = -1;
 	struct string_list strategy_options = STRING_LIST_INIT_NODUP;
+	struct object_id squash_onto;
+	char *squash_onto_name = NULL;
 	struct option builtin_rebase_options[] = {
 		OPT_STRING(0, "onto", &options.onto_name,
 			   N_("revision"),
@@ -744,6 +750,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 				N_("option"),
 				N_("pass the argument through to the merge "
 				   "strategy")),
+		OPT_BOOL(0, "root", &options.root,
+			 N_("rebase all reachable commits up to the root(s)")),
 		OPT_END(),
 	};
 
@@ -1021,6 +1029,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		}
 	}
 
+	if (options.root && !options.onto_name)
+		imply_interactive(&options, "--root without --onto");
+
 	switch (options.type) {
 	case REBASE_MERGE:
 	case REBASE_INTERACTIVE:
@@ -1059,8 +1070,22 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		if (!options.upstream)
 			die(_("invalid upstream '%s'"), options.upstream_name);
 		options.upstream_arg = options.upstream_name;
-	} else
-		die("TODO: upstream for --root");
+	} else {
+		if (!options.onto_name) {
+			if (commit_tree("", 0, the_hash_algo->empty_tree, NULL,
+					&squash_onto, NULL, NULL) < 0)
+				die(_("Could not create new root commit"));
+			options.squash_onto = &squash_onto;
+			options.onto_name = squash_onto_name =
+				xstrdup(oid_to_hex(&squash_onto));
+		}
+		options.upstream_name = NULL;
+		options.upstream = NULL;
+		if (argc > 1)
+			usage_with_options(builtin_rebase_usage,
+					   builtin_rebase_options);
+		options.upstream_arg = "--root";
+	}
 
 	/* Make sure the branch to rebase onto is valid. */
 	if (!options.onto_name)
@@ -1208,6 +1233,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	 */
 	if (can_fast_forward(options.onto, &options.orig_head, &merge_base) &&
 	    !is_interactive(&options) && !options.restrict_revision &&
+	    options.upstream &&
 	    !oidcmp(&options.upstream->object.oid, &options.onto->object.oid)) {
 		int flag;
 
@@ -1312,5 +1338,6 @@ cleanup:
 	free(options.head_name);
 	free(options.gpg_sign_opt);
 	free(options.cmd);
+	free(squash_onto_name);
 	return ret;
 }
