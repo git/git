@@ -79,6 +79,7 @@ struct rebase_options {
 	struct commit *onto;
 	const char *onto_name;
 	const char *revisions;
+	const char *switch_to;
 	int root;
 	struct commit *restrict_revision;
 	int dont_finish_rebase;
@@ -186,6 +187,8 @@ static int run_specific_rebase(struct rebase_options *opts)
 		opts->flags & REBASE_DIFFSTAT ? "t" : "");
 	add_var(&script_snippet, "force_rebase",
 		opts->flags & REBASE_FORCE ? "t" : "");
+	if (opts->switch_to)
+		add_var(&script_snippet, "switch_to", opts->switch_to);
 
 	switch (opts->type) {
 	case REBASE_AM:
@@ -564,9 +567,23 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	 * orig_head -- commit object name of tip of the branch before rebasing
 	 * head_name -- refs/heads/<that-branch> or NULL (detached HEAD)
 	 */
-	if (argc > 0)
-		 die("TODO: handle switch_to");
-	else {
+	if (argc == 1) {
+		/* Is it "rebase other branchname" or "rebase other commit"? */
+		branch_name = argv[0];
+		options.switch_to = argv[0];
+
+		/* Is it a local branch? */
+		strbuf_reset(&buf);
+		strbuf_addf(&buf, "refs/heads/%s", branch_name);
+		if (!read_ref(buf.buf, &options.orig_head))
+			options.head_name = xstrdup(buf.buf);
+		/* If not is it a valid ref (branch or commit)? */
+		else if (!get_oid(branch_name, &options.orig_head))
+			options.head_name = NULL;
+		else
+			die(_("fatal: no such branch/commit '%s'"),
+			    branch_name);
+	} else if (argc == 0) {
 		/* Do not need to switch branches, we are already on it. */
 		options.head_name =
 			xstrdup_or_null(resolve_ref_unsafe("HEAD", 0, NULL,
@@ -585,7 +602,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		}
 		if (get_oid("HEAD", &options.orig_head))
 			die(_("Could not resolve HEAD to a revision"));
-	}
+	} else
+		BUG("unexpected number of arguments left to parse");
 
 	if (read_index(the_repository->index) < 0)
 		die(_("could not read index"));
@@ -612,6 +630,28 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		int flag;
 
 		if (!(options.flags & REBASE_FORCE)) {
+			/* Lazily switch to the target branch if needed... */
+			if (options.switch_to) {
+				struct object_id oid;
+
+				if (get_oid(options.switch_to, &oid) < 0) {
+					ret = !!error(_("could not parse '%s'"),
+						      options.switch_to);
+					goto cleanup;
+				}
+
+				strbuf_reset(&buf);
+				strbuf_addf(&buf, "rebase: checkout %s",
+					    options.switch_to);
+				if (reset_head(&oid, "checkout",
+					       options.head_name, 0) < 0) {
+					ret = !!error(_("could not switch to "
+							"%s"),
+						      options.switch_to);
+					goto cleanup;
+				}
+			}
+
 			if (!(options.flags & REBASE_NO_QUIET))
 				; /* be quiet */
 			else if (!strcmp(branch_name, "HEAD") &&
