@@ -86,6 +86,7 @@ struct rebase_options {
 		REBASE_NO_QUIET = 1<<0,
 		REBASE_VERBOSE = 1<<1,
 		REBASE_DIFFSTAT = 1<<2,
+		REBASE_FORCE = 1<<3,
 	} flags;
 	struct strbuf git_am_opt;
 };
@@ -181,6 +182,8 @@ static int run_specific_rebase(struct rebase_options *opts)
 		opts->flags & REBASE_VERBOSE ? "t" : "");
 	add_var(&script_snippet, "diffstat",
 		opts->flags & REBASE_DIFFSTAT ? "t" : "");
+	add_var(&script_snippet, "force_rebase",
+		opts->flags & REBASE_FORCE ? "t" : "");
 
 	switch (opts->type) {
 	case REBASE_AM:
@@ -409,6 +412,12 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		{OPTION_NEGBIT, 'n', "no-stat", &options.flags, NULL,
 			N_("do not show diffstat of what changed upstream"),
 			PARSE_OPT_NOARG, NULL, REBASE_DIFFSTAT },
+		OPT_BIT('f', "force-rebase", &options.flags,
+			N_("cherry-pick all commits, even if unchanged"),
+			REBASE_FORCE),
+		OPT_BIT(0, "no-ff", &options.flags,
+			N_("cherry-pick all commits, even if unchanged"),
+			REBASE_FORCE),
 		OPT_END(),
 	};
 
@@ -551,7 +560,18 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	    !oidcmp(&options.upstream->object.oid, &options.onto->object.oid)) {
 		int flag;
 
-		if (!(options.flags & REBASE_NO_QUIET))
+		if (!(options.flags & REBASE_FORCE)) {
+			if (!(options.flags & REBASE_NO_QUIET))
+				; /* be quiet */
+			else if (!strcmp(branch_name, "HEAD") &&
+				 resolve_ref_unsafe("HEAD", 0, NULL, &flag))
+				puts(_("HEAD is up to date."));
+			else
+				printf(_("Current branch %s is up to date.\n"),
+				       branch_name);
+			ret = !!finish_rebase(&options);
+			goto cleanup;
+		} else if (!(options.flags & REBASE_NO_QUIET))
 			; /* be quiet */
 		else if (!strcmp(branch_name, "HEAD") &&
 			 resolve_ref_unsafe("HEAD", 0, NULL, &flag))
