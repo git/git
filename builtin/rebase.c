@@ -632,6 +632,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	struct string_list whitespace = STRING_LIST_INIT_NODUP;
 	struct string_list exec = STRING_LIST_INIT_NODUP;
 	const char *rebase_merges = NULL;
+	int fork_point = -1;
 	struct option builtin_rebase_options[] = {
 		OPT_STRING(0, "onto", &options.onto_name,
 			   N_("revision"),
@@ -715,6 +716,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			N_("mode"),
 			N_("try to rebase merges instead of skipping them"),
 			PARSE_OPT_OPTARG, NULL, (intptr_t)""},
+		OPT_BOOL(0, "fork-point", &fork_point,
+			 N_("use 'merge-base --fork-point' to refine upstream")),
 		OPT_END(),
 	};
 
@@ -1062,6 +1065,14 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			die(_("Could not resolve HEAD to a revision"));
 	} else
 		BUG("unexpected number of arguments left to parse");
+
+	if (fork_point > 0) {
+		struct commit *head =
+			lookup_commit_reference(the_repository,
+						&options.orig_head);
+		options.restrict_revision =
+			get_fork_point(options.upstream_name, head);
+	}
 
 	if (read_index(the_repository->index) < 0)
 		die(_("could not read index"));
