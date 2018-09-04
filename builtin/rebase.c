@@ -87,6 +87,7 @@ struct rebase_options {
 		REBASE_VERBOSE = 1<<1,
 		REBASE_DIFFSTAT = 1<<2,
 		REBASE_FORCE = 1<<3,
+		REBASE_INTERACTIVE_EXPLICIT = 1<<4,
 	} flags;
 	struct strbuf git_am_opt;
 };
@@ -392,10 +393,11 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		.git_am_opt = STRBUF_INIT,
 	};
 	const char *branch_name;
-	int ret, flags;
+	int ret, flags, in_progress = 0;
 	int ok_to_skip_pre_rebase = 0;
 	struct strbuf msg = STRBUF_INIT;
 	struct strbuf revisions = STRBUF_INIT;
+	struct strbuf buf = STRBUF_INIT;
 	struct object_id merge_base;
 	struct option builtin_rebase_options[] = {
 		OPT_STRING(0, "onto", &options.onto_name,
@@ -447,6 +449,30 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
 	git_config(rebase_config, &options);
 
+	if (is_directory(apply_dir())) {
+		options.type = REBASE_AM;
+		options.state_dir = apply_dir();
+	} else if (is_directory(merge_dir())) {
+		strbuf_reset(&buf);
+		strbuf_addf(&buf, "%s/rewritten", merge_dir());
+		if (is_directory(buf.buf)) {
+			options.type = REBASE_PRESERVE_MERGES;
+			options.flags |= REBASE_INTERACTIVE_EXPLICIT;
+		} else {
+			strbuf_reset(&buf);
+			strbuf_addf(&buf, "%s/interactive", merge_dir());
+			if(file_exists(buf.buf)) {
+				options.type = REBASE_INTERACTIVE;
+				options.flags |= REBASE_INTERACTIVE_EXPLICIT;
+			} else
+				options.type = REBASE_MERGE;
+		}
+		options.state_dir = merge_dir();
+	}
+
+	if (options.type != REBASE_UNSPECIFIED)
+		in_progress = 1;
+
 	argc = parse_options(argc, argv, prefix,
 			     builtin_rebase_options,
 			     builtin_rebase_usage, 0);
@@ -454,6 +480,26 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	if (argc > 2)
 		usage_with_options(builtin_rebase_usage,
 				   builtin_rebase_options);
+
+	/* Make sure no rebase is in progress */
+	if (in_progress) {
+		const char *last_slash = strrchr(options.state_dir, '/');
+		const char *state_dir_base =
+			last_slash ? last_slash + 1 : options.state_dir;
+		const char *cmd_live_rebase =
+			"git rebase (--continue | --abort | --skip)";
+		strbuf_reset(&buf);
+		strbuf_addf(&buf, "rm -fr \"%s\"", options.state_dir);
+		die(_("It seems that there is already a %s directory, and\n"
+		      "I wonder if you are in the middle of another rebase.  "
+		      "If that is the\n"
+		      "case, please try\n\t%s\n"
+		      "If that is not the case, please\n\t%s\n"
+		      "and run me again.  I am stopping in case you still "
+		      "have something\n"
+		      "valuable there.\n"),
+		    state_dir_base, cmd_live_rebase, buf.buf);
+	}
 
 	if (!(options.flags & REBASE_NO_QUIET))
 		strbuf_addstr(&options.git_am_opt, " -q");
