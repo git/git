@@ -95,12 +95,30 @@ struct rebase_options {
 	const char *action;
 	int signoff;
 	int allow_rerere_autoupdate;
+	int keep_empty;
 };
 
 static int is_interactive(struct rebase_options *opts)
 {
 	return opts->type == REBASE_INTERACTIVE ||
 		opts->type == REBASE_PRESERVE_MERGES;
+}
+
+static void imply_interactive(struct rebase_options *opts, const char *option)
+{
+	switch (opts->type) {
+	case REBASE_AM:
+		die(_("%s requires an interactive rebase"), option);
+		break;
+	case REBASE_INTERACTIVE:
+	case REBASE_PRESERVE_MERGES:
+		break;
+	case REBASE_MERGE:
+		/* we silently *upgrade* --merge to --interactive if needed */
+	default:
+		opts->type = REBASE_INTERACTIVE; /* implied */
+		break;
+	}
 }
 
 /* Returns the filename prefixed by the state_dir */
@@ -276,6 +294,7 @@ static int run_specific_rebase(struct rebase_options *opts)
 		opts->allow_rerere_autoupdate < 0 ? "" :
 		opts->allow_rerere_autoupdate ?
 		"--rerere-autoupdate" : "--no-rerere-autoupdate");
+	add_var(&script_snippet, "keep_empty", opts->keep_empty ? "yes" : "");
 
 	switch (opts->type) {
 	case REBASE_AM:
@@ -588,6 +607,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			 &options.allow_rerere_autoupdate,
 			 N_("allow rerere to update index  with resolved "
 			    "conflict")),
+		OPT_BOOL('k', "keep-empty", &options.keep_empty,
+			 N_("preserve empty commits during rebase")),
 		OPT_END(),
 	};
 
@@ -786,6 +807,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		strbuf_addstr(&options.git_am_opt, " --ignore-date");
 		options.flags |= REBASE_FORCE;
 	}
+
+	if (options.keep_empty)
+		imply_interactive(&options, "--keep-empty");
 
 	switch (options.type) {
 	case REBASE_MERGE:
