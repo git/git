@@ -14,7 +14,7 @@ static const char * const git_update_ref_usage[] = {
 };
 
 static char line_termination = '\n';
-static int update_flags;
+static unsigned int update_flags;
 static unsigned create_reflog_flag;
 static const char *msg;
 
