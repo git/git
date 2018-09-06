@@ -243,13 +243,16 @@ test_expect_success 'no phantom error when switching trees' '
 '
 
 test_expect_success 'switching trees does not invalidate shared index' '
-	git update-index --split-index &&
-	>split &&
-	git add split &&
-	test-tool dump-split-index .git/index | grep -v ^own >before &&
-	git commit -m "as-is" &&
-	test-tool dump-split-index .git/index | grep -v ^own >after &&
-	test_cmp before after
+	(
+		sane_unset GIT_TEST_SPLIT_INDEX &&
+		git update-index --split-index &&
+		>split &&
+		git add split &&
+		test-tool dump-split-index .git/index | grep -v ^own >before &&
+		git commit -m "as-is" &&
+		test-tool dump-split-index .git/index | grep -v ^own >after &&
+		test_cmp before after
+	)
 '
 
 test_done
