@@ -724,6 +724,19 @@ static void wt_status_collect_untracked(struct wt_status *s)
 		s->untracked_in_ms = (getnanotime() - t_begin) / 1000000;
 }
 
+static int has_unmerged(struct wt_status *s)
+{
+	int i;
+
+	for (i = 0; i < s->change.nr; i++) {
+		struct wt_status_change_data *d;
+		d = s->change.items[i].util;
+		if (d->stagemask)
+			return 1;
+	}
+	return 0;
+}
+
 void wt_status_collect(struct wt_status *s)
 {
 	wt_status_collect_changes_worktree(s);
@@ -1061,19 +1074,6 @@ static void wt_longstatus_print_tracking(struct wt_status *s)
 	else
 		fputs("\n", s->fp);
 	strbuf_release(&sb);
-}
-
-static int has_unmerged(struct wt_status *s)
-{
-	int i;
-
-	for (i = 0; i < s->change.nr; i++) {
-		struct wt_status_change_data *d;
-		d = s->change.items[i].util;
-		if (d->stagemask)
-			return 1;
-	}
-	return 0;
 }
 
 static void show_merge_in_progress(struct wt_status *s,
