@@ -540,10 +540,12 @@ static void wt_status_collect_updated_cb(struct diff_queue_struct *q,
 			/* Leave {mode,oid}_head zero for an add. */
 			d->mode_index = p->two->mode;
 			oidcpy(&d->oid_index, &p->two->oid);
+			s->committable = 1;
 			break;
 		case DIFF_STATUS_DELETED:
 			d->mode_head = p->one->mode;
 			oidcpy(&d->oid_head, &p->one->oid);
+			s->committable = 1;
 			/* Leave {mode,oid}_index zero for a delete. */
 			break;
 
@@ -561,6 +563,7 @@ static void wt_status_collect_updated_cb(struct diff_queue_struct *q,
 			d->mode_index = p->two->mode;
 			oidcpy(&d->oid_head, &p->one->oid);
 			oidcpy(&d->oid_index, &p->two->oid);
+			s->committable = 1;
 			break;
 		case DIFF_STATUS_UNMERGED:
 			d->stagemask = unmerged_mask(p->two->path);
@@ -665,11 +668,13 @@ static void wt_status_collect_changes_initial(struct wt_status *s)
 			 * code will output the stage values directly and not use the
 			 * values in these fields.
 			 */
+			s->committable = 1;
 		} else {
 			d->index_status = DIFF_STATUS_ADDED;
 			/* Leave {mode,oid}_head zero for adds. */
 			d->mode_index = ce->ce_mode;
 			oidcpy(&d->oid_index, &ce->oid);
+			s->committable = 1;
 		}
 	}
 }
@@ -739,6 +744,7 @@ static int has_unmerged(struct wt_status *s)
 
 void wt_status_collect(struct wt_status *s)
 {
+	struct wt_status_state state;
 	wt_status_collect_changes_worktree(s);
 
 	if (s->is_initial)
@@ -746,6 +752,11 @@ void wt_status_collect(struct wt_status *s)
 	else
 		wt_status_collect_changes_index(s);
 	wt_status_collect_untracked(s);
+
+	memset(&state, 0, sizeof(state));
+	wt_status_get_state(&state, s->branch && !strcmp(s->branch, "HEAD"));
+	if (state.merge_in_progress && !has_unmerged(s))
+		s->committable = 1;
 }
 
 static void wt_longstatus_print_unmerged(struct wt_status *s)
@@ -786,7 +797,6 @@ static void wt_longstatus_print_updated(struct wt_status *s)
 			continue;
 		if (!shown_header) {
 			wt_longstatus_print_cached_header(s);
-			s->committable = 1;
 			shown_header = 1;
 		}
 		wt_longstatus_print_change_data(s, WT_STATUS_UPDATED, it);
@@ -1089,7 +1099,6 @@ static void show_merge_in_progress(struct wt_status *s,
 					 _("  (use \"git merge --abort\" to abort the merge)"));
 		}
 	} else {
-		s-> committable = 1;
 		status_printf_ln(s, color,
 			_("All conflicts fixed but you are still merging."));
 		if (s->hints)
