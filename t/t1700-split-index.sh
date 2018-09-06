@@ -57,7 +57,7 @@ test_expect_success 'disable split index' '
 	EOF
 	test_cmp ls-files.expect ls-files.actual &&
 
-	BASE=$(test-tool dump-split-index .git/index | grep "^own" | sed "s/own/base/") &&
+	BASE=$(test-tool dump-split-index .git/index | sed -n "s/^own/base/p") &&
 	test-tool dump-split-index .git/index | sed "/^own/d" >actual &&
 	cat >expect <<-EOF &&
 	not a split index
