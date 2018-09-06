@@ -682,4 +682,10 @@ test_expect_success '--dry-run with conflicts fixed from a merge' '
 	git commit -m "conflicts fixed from merge."
 '
 
+test_expect_failure '--dry-run --short' '
+	>test-file &&
+	git add test-file &&
+	git commit --dry-run --short
+'
+
 test_done
