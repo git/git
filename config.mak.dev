@@ -2,6 +2,7 @@ ifeq ($(filter no-error,$(DEVOPTS)),)
 CFLAGS += -Werror
 endif
 CFLAGS += -Wdeclaration-after-statement
+CFLAGS += -Wformat-security
 CFLAGS += -Wno-format-zero-length
 CFLAGS += -Wold-style-definition
 CFLAGS += -Woverflow
