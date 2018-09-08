@@ -127,8 +127,6 @@ int submodule_move_head(const char *path,
 			const char *new_head,
 			unsigned flags);
 
-void submodule_unset_core_worktree(const struct submodule *sub);
-
 /*
  * Prepare the "env_array" parameter of a "struct child_process" for executing
  * a submodule by clearing any repo-specific environment variables, but
