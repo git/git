@@ -55,7 +55,7 @@ test_expect_success 'setup' '
 '
 
 test_expect_success 'untracked cache is empty' '
-	test-dump-untracked-cache >../actual &&
+	test-tool dump-untracked-cache >../actual &&
 	cat >../expect-empty <<EOF &&
 info/exclude 0000000000000000000000000000000000000000
 core.excludesfile 0000000000000000000000000000000000000000
@@ -106,7 +106,7 @@ EOF
 '
 
 test_expect_success 'untracked cache after first status' '
-	test-dump-untracked-cache >../actual &&
+	test-tool dump-untracked-cache >../actual &&
 	test_cmp ../dump.expect ../actual
 '
 
@@ -126,7 +126,7 @@ EOF
 '
 
 test_expect_success 'untracked cache after second status' '
-	test-dump-untracked-cache >../actual &&
+	test-tool dump-untracked-cache >../actual &&
 	test_cmp ../dump.expect ../actual
 '
 
@@ -157,7 +157,7 @@ EOF
 '
 
 test_expect_success 'verify untracked cache dump' '
-	test-dump-untracked-cache >../actual &&
+	test-tool dump-untracked-cache >../actual &&
 	cat >../expect <<EOF &&
 info/exclude $EMPTY_BLOB
 core.excludesfile 0000000000000000000000000000000000000000
@@ -204,7 +204,7 @@ EOF
 '
 
 test_expect_success 'verify untracked cache dump' '
-	test-dump-untracked-cache >../actual &&
+	test-tool dump-untracked-cache >../actual &&
 	cat >../expect <<EOF &&
 info/exclude $EMPTY_BLOB
 core.excludesfile 0000000000000000000000000000000000000000
@@ -248,7 +248,7 @@ EOF
 '
 
 test_expect_success 'verify untracked cache dump' '
-	test-dump-untracked-cache >../actual &&
+	test-tool dump-untracked-cache >../actual &&
 	cat >../expect <<EOF &&
 info/exclude 13263c0978fb9fad16b2d580fb800b6d811c3ff0
 core.excludesfile 0000000000000000000000000000000000000000
@@ -267,7 +267,7 @@ EOF
 
 test_expect_success 'move two from tracked to untracked' '
 	git rm --cached two &&
-	test-dump-untracked-cache >../actual &&
+	test-tool dump-untracked-cache >../actual &&
 	cat >../expect <<EOF &&
 info/exclude 13263c0978fb9fad16b2d580fb800b6d811c3ff0
 core.excludesfile 0000000000000000000000000000000000000000
@@ -304,7 +304,7 @@ EOF
 '
 
 test_expect_success 'verify untracked cache dump' '
-	test-dump-untracked-cache >../actual &&
+	test-tool dump-untracked-cache >../actual &&
 	cat >../expect <<EOF &&
 info/exclude 13263c0978fb9fad16b2d580fb800b6d811c3ff0
 core.excludesfile 0000000000000000000000000000000000000000
@@ -324,7 +324,7 @@ EOF
 
 test_expect_success 'move two from untracked to tracked' '
 	git add two &&
-	test-dump-untracked-cache >../actual &&
+	test-tool dump-untracked-cache >../actual &&
 	cat >../expect <<EOF &&
 info/exclude 13263c0978fb9fad16b2d580fb800b6d811c3ff0
 core.excludesfile 0000000000000000000000000000000000000000
@@ -361,7 +361,7 @@ EOF
 '
 
 test_expect_success 'verify untracked cache dump' '
-	test-dump-untracked-cache >../actual &&
+	test-tool dump-untracked-cache >../actual &&
 	cat >../expect <<EOF &&
 info/exclude 13263c0978fb9fad16b2d580fb800b6d811c3ff0
 core.excludesfile 0000000000000000000000000000000000000000
@@ -405,7 +405,7 @@ EOF
 '
 
 test_expect_success 'untracked cache correct after commit' '
-	test-dump-untracked-cache >../actual &&
+	test-tool dump-untracked-cache >../actual &&
 	cat >../expect <<EOF &&
 info/exclude 13263c0978fb9fad16b2d580fb800b6d811c3ff0
 core.excludesfile 0000000000000000000000000000000000000000
@@ -464,7 +464,7 @@ EOF
 '
 
 test_expect_success 'untracked cache correct after status' '
-	test-dump-untracked-cache >../actual &&
+	test-tool dump-untracked-cache >../actual &&
 	cat >../expect <<EOF &&
 info/exclude 13263c0978fb9fad16b2d580fb800b6d811c3ff0
 core.excludesfile 0000000000000000000000000000000000000000
@@ -532,7 +532,7 @@ EOF
 '
 
 test_expect_success 'verify untracked cache dump (sparse/subdirs)' '
-	test-dump-untracked-cache >../actual &&
+	test-tool dump-untracked-cache >../actual &&
 	cat >../expect-from-test-dump <<EOF &&
 info/exclude 13263c0978fb9fad16b2d580fb800b6d811c3ff0
 core.excludesfile 0000000000000000000000000000000000000000
@@ -598,66 +598,66 @@ EOF
 
 test_expect_success '--no-untracked-cache removes the cache' '
 	git update-index --no-untracked-cache &&
-	test-dump-untracked-cache >../actual &&
+	test-tool dump-untracked-cache >../actual &&
 	echo "no untracked cache" >../expect-no-uc &&
 	test_cmp ../expect-no-uc ../actual
 '
 
 test_expect_success 'git status does not change anything' '
 	git status &&
-	test-dump-untracked-cache >../actual &&
+	test-tool dump-untracked-cache >../actual &&
 	test_cmp ../expect-no-uc ../actual
 '
 
 test_expect_success 'setting core.untrackedCache to true and using git status creates the cache' '
 	git config core.untrackedCache true &&
-	test-dump-untracked-cache >../actual &&
+	test-tool dump-untracked-cache >../actual &&
 	test_cmp ../expect-no-uc ../actual &&
 	git status &&
-	test-dump-untracked-cache >../actual &&
+	test-tool dump-untracked-cache >../actual &&
 	test_cmp ../expect-from-test-dump ../actual
 '
 
 test_expect_success 'using --no-untracked-cache does not fail when core.untrackedCache is true' '
 	git update-index --no-untracked-cache &&
-	test-dump-untracked-cache >../actual &&
+	test-tool dump-untracked-cache >../actual &&
 	test_cmp ../expect-no-uc ../actual &&
 	git update-index --untracked-cache &&
-	test-dump-untracked-cache >../actual &&
+	test-tool dump-untracked-cache >../actual &&
 	test_cmp ../expect-empty ../actual
 '
 
 test_expect_success 'setting core.untrackedCache to false and using git status removes the cache' '
 	git config core.untrackedCache false &&
-	test-dump-untracked-cache >../actual &&
+	test-tool dump-untracked-cache >../actual &&
 	test_cmp ../expect-empty ../actual &&
 	git status &&
-	test-dump-untracked-cache >../actual &&
+	test-tool dump-untracked-cache >../actual &&
 	test_cmp ../expect-no-uc ../actual
 '
 
 test_expect_success 'using --untracked-cache does not fail when core.untrackedCache is false' '
 	git update-index --untracked-cache &&
-	test-dump-untracked-cache >../actual &&
+	test-tool dump-untracked-cache >../actual &&
 	test_cmp ../expect-empty ../actual
 '
 
 test_expect_success 'setting core.untrackedCache to keep' '
 	git config core.untrackedCache keep &&
 	git update-index --untracked-cache &&
-	test-dump-untracked-cache >../actual &&
+	test-tool dump-untracked-cache >../actual &&
 	test_cmp ../expect-empty ../actual &&
 	git status &&
-	test-dump-untracked-cache >../actual &&
+	test-tool dump-untracked-cache >../actual &&
 	test_cmp ../expect-from-test-dump ../actual &&
 	git update-index --no-untracked-cache &&
-	test-dump-untracked-cache >../actual &&
+	test-tool dump-untracked-cache >../actual &&
 	test_cmp ../expect-no-uc ../actual &&
 	git update-index --force-untracked-cache &&
-	test-dump-untracked-cache >../actual &&
+	test-tool dump-untracked-cache >../actual &&
 	test_cmp ../expect-empty ../actual &&
 	git status &&
-	test-dump-untracked-cache >../actual &&
+	test-tool dump-untracked-cache >../actual &&
 	test_cmp ../expect-from-test-dump ../actual
 '
 
@@ -671,23 +671,23 @@ test_expect_success 'test ident field is working' '
 
 test_expect_success 'untracked cache survives a checkout' '
 	git commit --allow-empty -m empty &&
-	test-dump-untracked-cache >../before &&
+	test-tool dump-untracked-cache >../before &&
 	test_when_finished  "git checkout master" &&
 	git checkout -b other_branch &&
-	test-dump-untracked-cache >../after &&
+	test-tool dump-untracked-cache >../after &&
 	test_cmp ../before ../after &&
 	test_commit test &&
-	test-dump-untracked-cache >../before &&
+	test-tool dump-untracked-cache >../before &&
 	git checkout master &&
-	test-dump-untracked-cache >../after &&
+	test-tool dump-untracked-cache >../after &&
 	test_cmp ../before ../after
 '
 
 test_expect_success 'untracked cache survives a commit' '
-	test-dump-untracked-cache >../before &&
+	test-tool dump-untracked-cache >../before &&
 	git add done/two &&
 	git commit -m commit &&
-	test-dump-untracked-cache >../after &&
+	test-tool dump-untracked-cache >../after &&
 	test_cmp ../before ../after
 '
 
@@ -751,7 +751,7 @@ test_expect_success '"status" after file replacement should be clean with UC=tru
 	git checkout master &&
 	avoid_racy &&
 	status_is_clean &&
-	test-dump-untracked-cache >../actual &&
+	test-tool dump-untracked-cache >../actual &&
 	grep -F "recurse valid" ../actual >../actual.grep &&
 	cat >../expect.grep <<EOF &&
 / 0000000000000000000000000000000000000000 recurse valid

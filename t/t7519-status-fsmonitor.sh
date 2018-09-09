@@ -333,7 +333,7 @@ test_expect_success UNTRACKED_CACHE 'ignore .git changes when invalidating UNTR'
 		git update-index --fsmonitor &&
 		GIT_TRACE_UNTRACKED_STATS="$TRASH_DIRECTORY/trace-before" \
 		git status &&
-		test-dump-untracked-cache >../before
+		test-tool dump-untracked-cache >../before
 	) &&
 	cat >>dot-git/.git/hooks/fsmonitor-test <<-\EOF &&
 	printf ".git\0"
@@ -345,7 +345,7 @@ test_expect_success UNTRACKED_CACHE 'ignore .git changes when invalidating UNTR'
 		cd dot-git &&
 		GIT_TRACE_UNTRACKED_STATS="$TRASH_DIRECTORY/trace-after" \
 		git status &&
-		test-dump-untracked-cache >../after
+		test-tool dump-untracked-cache >../after
 	) &&
 	grep "directory invalidation" trace-before >>before &&
 	grep "directory invalidation" trace-after >>after &&
