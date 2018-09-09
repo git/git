@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "test-tool.h"
 #include "pkt-line.h"
 
 static void pack_line(const char *line)
@@ -79,7 +80,7 @@ static void unpack_sideband(void)
 	}
 }
 
-int cmd_main(int argc, const char **argv)
+int cmd__pkt_line(int argc, const char **argv)
 {
 	if (argc < 2)
 		die("too few arguments");
