@@ -14,6 +14,7 @@ static struct test_cmd cmds[] = {
 	{ "delta", cmd__delta },
 	{ "drop-caches", cmd__drop_caches },
 	{ "dump-cache-tree", cmd__dump_cache_tree },
+	{ "dump-fsmonitor", cmd__dump_fsmonitor },
 	{ "dump-split-index", cmd__dump_split_index },
 	{ "dump-untracked-cache", cmd__dump_untracked_cache },
 	{ "example-decorate", cmd__example_decorate },

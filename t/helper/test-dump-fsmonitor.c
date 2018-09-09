@@ -1,6 +1,7 @@
+#include "test-tool.h"
 #include "cache.h"
 
-int cmd_main(int ac, const char **av)
+int cmd__dump_fsmonitor(int ac, const char **av)
 {
 	struct index_state *istate = &the_index;
 	int i;
