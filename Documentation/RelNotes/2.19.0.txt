@@ -126,9 +126,6 @@ Performance, Internal Implementation, Development Support etc.
  * Build and test procedure for netrc credential helper (in contrib/)
    has been updated.
 
- * The conversion to pass "the_repository" and then "a_repository"
-   throughout the object access API continues.
-
  * Remove unused function definitions and declarations from ewah
    bitmap subsystem.
 
@@ -315,11 +312,6 @@ Fixes since v2.18
    during a fetch with --recurse-submodules got confused when the path
    to the submodule was changed in the range of commits in the
    superproject, sometimes showing "(null)".  This has been corrected.
-
- * "git submodule" did not correctly adjust core.worktree setting that
-   indicates whether/where a submodule repository has its associated
-   working tree across various state transitions, which has been
-   corrected.
 
  * Bugfix for "rebase -i" corner case regression.
    (merge a9279c6785 pw/rebase-i-keep-reword-after-conflict later to maint).
