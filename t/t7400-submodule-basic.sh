@@ -984,11 +984,6 @@ test_expect_success 'submodule deinit should remove the whole submodule section 
 	rmdir init
 '
 
-test_expect_success 'submodule deinit should unset core.worktree' '
-	test_path_is_file .git/modules/example/config &&
-	test_must_fail git config -f .git/modules/example/config core.worktree
-'
-
 test_expect_success 'submodule deinit from subdirectory' '
 	git submodule update --init &&
 	git config submodule.example.foo bar &&
