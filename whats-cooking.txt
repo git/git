@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Sep 2018, #01; Tue, 4)
-X-master-at: c05048d43925ab8edcb36663752c2b4541911231
-X-next-at: 5ba43deb5a82c56b2533ebd026d15666a2ce5c5a
+Subject: What's cooking in git.git (Sep 2018, #02; Tue, 11)
+X-master-at: 1d4361b0f344188ab5eec6dcea01f61a3a3a1670
+X-next-at: e8095fc6352aeb4e2deee7c9f2e1aeda5253cc31
 
-What's cooking in git.git (Sep 2018, #01; Tue, 4)
+What's cooking in git.git (Sep 2018, #02; Tue, 11)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,8 +12,10 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-Git 2.19-rc2 is out.  Hopefully the tip of 'master' is more or less
-identical to the final one without needing much updates.
+Git 2.19 is out.  The tip of 'next' has not been rewound yet; it is
+a rare occasion for topics that would want to restart from a clean
+slate to do so, so please raise your hand if you think that a topic
+that is in 'next' should be ejected and given a chance to restart.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -21,82 +23,168 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
+[New Topics]
 
-* ab/portable (2018-08-27) 6 commits
-  (merged to 'next' on 2018-08-27 at 37640e66ef)
- + tests: fix and add lint for non-portable grep --file
- + tests: fix version-specific portability issue in Perl JSON
- + tests: use shorter labels in chainlint.sed for AIX sed
- + tests: fix comment syntax in chainlint.sed for AIX sed
- + tests: fix and add lint for non-portable seq
- + tests: fix and add lint for non-portable head -c N
- (this branch is used by ab/portable-more.)
-
- Portability fix.
+* ab/commit-graph-progress (2018-09-11) 2 commits
+ - commit-graph verify: add progress output
+ - commit-graph write: add progress output
 
 
-* ab/portable-more (2018-08-29) 2 commits
-  (merged to 'next' on 2018-08-31 at d7b44993e4)
- + tests: fix non-portable iconv invocation
- + tests: fix non-portable "${var:-"str"}" construct
- (this branch uses ab/portable.)
-
- Portability fix.
+* bw/protocol-v2 (2018-09-10) 1 commit
+ - config: document value 2 for protocol.version
 
 
-* ds/commit-graph-lockfile-fix (2018-08-30) 1 commit
-  (merged to 'next' on 2018-09-04 at 0876e6ddcc)
- + commit: don't use generation numbers if not needed
-
- "git merge-base" in 2.19-rc1 has performance regression when the
- (experimental) commit-graph feature is in use, which has been
- mitigated.
+* en/double-semicolon-fix (2018-09-05) 1 commit
+ - Remove superfluous trailing semicolons
 
 
-* en/directory-renames-nothanks (2018-08-30) 3 commits
-  (merged to 'next' on 2018-08-31 at 91d663d688)
- + am: avoid directory rename detection when calling recursive merge machinery
- + merge-recursive: add ability to turn off directory rename detection
- + t3401: add another directory rename testcase for rebase and am
-
- Recent addition of "directory rename" heuristics to the
- merge-recursive backend makes the command susceptible to false
- positives and false negatives.  In the context of "git am -3",
- which does not know about surrounding unmodified paths and thus
- cannot inform the merge machinery about the full trees involved,
- this risk is particularly severe.  As such, the heuristic is
- disabled for "git am -3" to keep the machinery "more stupid but
- predictable".
+* en/rerere-multi-stage-1-fix (2018-09-11) 2 commits
+ - rerere: avoid buffer overrun
+ - t4200: demonstrate rerere segfault on specially crafted merge
 
 
-* es/chain-lint-more (2018-08-29) 1 commit
-  (merged to 'next' on 2018-08-31 at d456090b62)
- + chainlint: match "quoted" here-doc tags
-
- The test linter code has learned that the end of here-doc mark
- "EOF" can be quoted in a double-quote pair, not just in a
- single-quote pair.
+* jc/wt-status-state-cleanup (2018-09-07) 1 commit
+ - WIP: roll wt_status_state into wt_status and populate in the collect phase
+ (this branch uses ss/wt-status-committable.)
 
 
-* es/freebsd-iconv-portability (2018-08-31) 1 commit
-  (merged to 'next' on 2018-09-04 at 52baa37dd7)
- + config.mak.uname: resolve FreeBSD iconv-related compilation warning
-
- Build fix.
+* jk/dev-build-format-security (2018-09-11) 1 commit
+ - config.mak.dev: add -Wformat-security
 
 
-* pw/rebase-i-author-script-fix (2018-08-07) 2 commits
-  (merged to 'next' on 2018-08-31 at 7b9f485407)
- + sequencer: fix quoting in write_author_script
- + sequencer: handle errors from read_author_ident()
+* jk/reopen-tempfile-truncate (2018-09-05) 1 commit
+ - reopen_tempfile(): truncate opened file
 
- Recent "git rebase -i" update started to write bogusly formatted
- author-script, with a matching broken reading code.  These are
- fixed.
+
+* jn/http-backend-content-length (2018-09-11) 2 commits
+ - SQUASH???? perhaps after reflowing
+ - http-backend: treat empty CONTENT_LENGTH as zero
+
+
+* js/mingw-o-append (2018-09-11) 2 commits
+ - mingw: fix mingw_open_append to work with named pipes
+ - t0051: test GIT_TRACE to a windows named pipe
+
+
+* mk/http-backend-content-length (2018-09-11) 1 commit
+  (merged to 'next' on 2018-09-11 at e8095fc635)
+ + http-backend test: make empty CONTENT_LENGTH test more realistic
+
+
+* nd/test-tool (2018-09-11) 6 commits
+ - Makefile: add a hint about TEST_BUILTINS_OBJS
+ - t/helper: merge test-dump-fsmonitor into test-tool
+ - t/helper: merge test-parse-options into test-tool
+ - t/helper: merge test-pkt-line into test-tool
+ - t/helper: merge test-dump-untracked-cache into test-tool
+ - t/helper: keep test-tool command list sorted
+
+
+* sb/diff-color-move-more (2018-09-11) 1 commit
+ - diff: fix --color-moved-ws=allow-indentation-change
+
+
+* sb/string-list-remove-unused (2018-09-11) 1 commit
+ - string-list: remove unused function print_string_list
+
+
+* sg/t3701-tighten-trace (2018-09-11) 1 commit
+ - t3701-add-interactive: tighten the check of trace output
+
+
+* ss/wt-status-committable (2018-09-07) 4 commits
+ - wt-status.c: set the committable flag in the collect phase
+ - t7501: add test of "commit --dry-run --short"
+ - wt-status: rename commitable to committable
+ - wt-status.c: move has_unmerged earlier in the file
+ (this branch is used by jc/wt-status-state-cleanup.)
+
+
+* tz/t5551-with-curl-7.61.1 (2018-09-11) 1 commit
+ - t5551-http-fetch-smart.sh: sort cookies before comparing
 
 --------------------------------------------------
-[New Topics]
+[Stalled]
+
+* sl/commit-dry-run-with-short-output-fix (2018-07-30) 4 commits
+ . commit: fix exit code when doing a dry run
+ . wt-status: teach wt_status_collect about merges in progress
+ . wt-status: rename commitable to committable
+ . t7501: add coverage for flags which imply dry runs
+
+ "git commit --dry-run" gave a correct exit status even during a
+ conflict resolution toward a merge, but it did not with the
+ "--short" option, which has been corrected.
+
+ Seems to break 7512, 3404 and 7060 in 'pu'.
+
+
+* ma/wrapped-info (2018-05-28) 2 commits
+ - usage: prefix all lines in `vreportf()`, not just the first
+ - usage: extract `prefix_suffix_lines()` from `advise()`
+
+ An attempt to help making multi-line messages fed to warning(),
+ error(), and friends more easily translatable.
+
+ Will discard and wait for a cleaned-up rewrite.
+ cf. <20180529213957.GF7964@sigill.intra.peff.net>
+
+
+* hn/bisect-first-parent (2018-04-21) 1 commit
+ - bisect: create 'bisect_flags' parameter in find_bisection()
+ (this branch is used by tb/bisect-first-parent.)
+
+ Preliminary code update to allow passing more flags down the
+ bisection codepath in the future.
+
+ We do not add random code that does not have real users to our
+ codebase, so let's have it wait until such a real code materializes
+ before too long.
+
+
+* pb/bisect-helper-2 (2018-07-23) 8 commits
+ - t6030: make various test to pass GETTEXT_POISON tests
+ - bisect--helper: `bisect_start` shell function partially in C
+ - bisect--helper: `get_terms` & `bisect_terms` shell function in C
+ - bisect--helper: `bisect_next_check` shell function in C
+ - bisect--helper: `check_and_set_terms` shell function in C
+ - wrapper: move is_empty_file() and rename it as is_empty_or_missing_file()
+ - bisect--helper: `bisect_write` shell function in C
+ - bisect--helper: `bisect_reset` shell function in C
+
+ Expecting a reroll.
+ cf. <0102015f5e5ee171-f30f4868-886f-47a1-a4e4-b4936afc545d-000000@eu-west-1.amazonses.com>
+
+ I just rebased the topic to a newer base as it did not build
+ standalone with the base I originally queued the topic on, but
+ otherwise there is no update to address any of the review comments
+ in the thread above---we are still waiting for a reroll.
+
+
+* jk/drop-ancient-curl (2017-08-09) 5 commits
+ - http: #error on too-old curl
+ - curl: remove ifdef'd code never used with curl >=7.19.4
+ - http: drop support for curl < 7.19.4
+ - http: drop support for curl < 7.16.0
+ - http: drop support for curl < 7.11.1
+
+ Some code in http.c that has bitrot is being removed.
+
+ Expecting a reroll.
+
+
+* mk/use-size-t-in-zlib (2017-08-10) 1 commit
+ . zlib.c: use size_t for size
+
+ The wrapper to call into zlib followed our long tradition to use
+ "unsigned long" for sizes of regions in memory, which have been
+ updated to use "size_t".
+
+ Needs resurrecting by making sure the fix is good and still applies
+ (or adjusted to today's codebase).
+
+--------------------------------------------------
+[Cooking]
 
 * ab/fetch-tags-noclobber (2018-08-31) 9 commits
  - fetch: stop clobbering existing tags without --force
@@ -120,7 +208,8 @@ of the repositories listed at
  still need to be treated carefully.
 
 
-* es/worktree-forced-ops-fix (2018-08-30) 9 commits
+* es/worktree-forced-ops-fix (2018-09-05) 10 commits
+ - doc-diff: force worktree add
  - worktree: delete .git/worktrees if empty after 'remove'
  - worktree: teach 'remove' to override lock when --force given twice
  - worktree: teach 'move' to override lock when --force given twice
@@ -131,8 +220,12 @@ of the repositories listed at
  - worktree: move delete_git_dir() earlier in file for upcoming new callers
  - worktree: don't die() in library function find_worktree()
 
- Various subcommands of "git worktree" take '--force' but did not
- behave sensibly, which has been corrected.
+ Fix a bug in which the same path could be registered under multiple
+ worktree entries if the path was missing (for instance, was removed
+ manually).  Also, as a convenience, expand the number of cases in
+ which --force is applicable.
+
+ Will merge to 'next'.
 
 
 * jk/patch-corrupted-delta-fix (2018-08-30) 6 commits
@@ -148,11 +241,6 @@ of the repositories listed at
  reporting an error, which has been fixed.
 
  Will merge to 'next'.
-
-
-* jc/rebase-in-c-9-fixes (2018-09-04) 1 commit
- - rebase: re-add forgotten -k that stands for --keep-empty
- (this branch uses ag/rebase-i-in-c, js/rebase-in-c-5.5-work-with-rebase-i-in-c, pk/rebase-in-c, pk/rebase-in-c-2-basic, pk/rebase-in-c-3-acts, pk/rebase-in-c-4-opts, pk/rebase-in-c-5-test and pk/rebase-in-c-6-final.)
 
 
 * jk/pack-objects-with-bitmap-fix (2018-09-04) 4 commits
@@ -202,103 +290,6 @@ of the repositories listed at
 
  Will merge to 'next'.
 
---------------------------------------------------
-[Stalled]
-
-* sl/commit-dry-run-with-short-output-fix (2018-07-30) 4 commits
- . commit: fix exit code when doing a dry run
- . wt-status: teach wt_status_collect about merges in progress
- . wt-status: rename commitable to committable
- . t7501: add coverage for flags which imply dry runs
-
- "git commit --dry-run" gave a correct exit status even during a
- conflict resolution toward a merge, but it did not with the
- "--short" option, which has been corrected.
-
- Seems to break 7512, 3404 and 7060 in 'pu'.
-
-
-* ma/wrapped-info (2018-05-28) 2 commits
- - usage: prefix all lines in `vreportf()`, not just the first
- - usage: extract `prefix_suffix_lines()` from `advise()`
-
- An attempt to help making multi-line messages fed to warning(),
- error(), and friends more easily translatable.
-
- Will discard and wait for a cleaned-up rewrite.
- cf. <20180529213957.GF7964@sigill.intra.peff.net>
-
-
-* hn/bisect-first-parent (2018-04-21) 1 commit
- - bisect: create 'bisect_flags' parameter in find_bisection()
- (this branch is used by tb/bisect-first-parent.)
-
- Preliminary code update to allow passing more flags down the
- bisection codepath in the future.
-
- We do not add random code that does not have real users to our
- codebase, so let's have it wait until such a real code materializes
- before too long.
-
-
-* av/fsmonitor-updates (2018-01-04) 6 commits
- - fsmonitor: use fsmonitor data in `git diff`
- - fsmonitor: remove debugging lines from t/t7519-status-fsmonitor.sh
- - fsmonitor: make output of test-dump-fsmonitor more concise
- - fsmonitor: update helper tool, now that flags are filled later
- - fsmonitor: stop inline'ing mark_fsmonitor_valid / _invalid
- - dir.c: update comments to match argument name
-
- Code clean-up on fsmonitor integration, plus optional utilization
- of the fsmonitor data in diff-files.
-
- Waiting for an update.
- cf. <alpine.DEB.2.21.1.1801042335130.32@MININT-6BKU6QN.europe.corp.microsoft.com>
-
-
-* pb/bisect-helper-2 (2018-07-23) 8 commits
- - t6030: make various test to pass GETTEXT_POISON tests
- - bisect--helper: `bisect_start` shell function partially in C
- - bisect--helper: `get_terms` & `bisect_terms` shell function in C
- - bisect--helper: `bisect_next_check` shell function in C
- - bisect--helper: `check_and_set_terms` shell function in C
- - wrapper: move is_empty_file() and rename it as is_empty_or_missing_file()
- - bisect--helper: `bisect_write` shell function in C
- - bisect--helper: `bisect_reset` shell function in C
-
- Expecting a reroll.
- cf. <0102015f5e5ee171-f30f4868-886f-47a1-a4e4-b4936afc545d-000000@eu-west-1.amazonses.com>
-
- I just rebased the topic to a newer base as it did not build
- standalone with the base I originally queued the topic on, but
- otherwise there is no update to address any of the review comments
- in the thread above---we are still waiting for a reroll.
-
-
-* jk/drop-ancient-curl (2017-08-09) 5 commits
- - http: #error on too-old curl
- - curl: remove ifdef'd code never used with curl >=7.19.4
- - http: drop support for curl < 7.19.4
- - http: drop support for curl < 7.16.0
- - http: drop support for curl < 7.11.1
-
- Some code in http.c that has bitrot is being removed.
-
- Expecting a reroll.
-
-
-* mk/use-size-t-in-zlib (2017-08-10) 1 commit
- . zlib.c: use size_t for size
-
- The wrapper to call into zlib followed our long tradition to use
- "unsigned long" for sizes of regions in memory, which have been
- updated to use "size_t".
-
- Needs resurrecting by making sure the fix is good and still applies
- (or adjusted to today's codebase).
-
---------------------------------------------------
-[Cooking]
 
 * ds/format-commit-graph-docs (2018-08-21) 2 commits
  - commit-graph.txt: improve formatting for asciidoc
@@ -352,10 +343,10 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* js/rebase-in-c-5.5-work-with-rebase-i-in-c (2018-08-29) 2 commits
+* js/rebase-in-c-5.5-work-with-rebase-i-in-c (2018-09-06) 2 commits
  - builtin rebase: prepare for builtin rebase -i
  - Merge branch 'ag/rebase-i-in-c' into js/rebase-in-c-5.5-work-with-rebase-i-in-c
- (this branch is used by jc/rebase-in-c-9-fixes and pk/rebase-in-c-6-final; uses ag/rebase-i-in-c, pk/rebase-in-c, pk/rebase-in-c-2-basic, pk/rebase-in-c-3-acts, pk/rebase-in-c-4-opts and pk/rebase-in-c-5-test.)
+ (this branch is used by pk/rebase-in-c-6-final; uses ag/rebase-i-in-c, pk/rebase-in-c, pk/rebase-in-c-2-basic, pk/rebase-in-c-3-acts, pk/rebase-in-c-4-opts and pk/rebase-in-c-5-test.)
 
  "rebase" that has been rewritten learns the new calling convention
  used by "rebase -i" that was rewritten in C, tying the loose end
@@ -444,10 +435,7 @@ of the repositories listed at
  - submodule.c: warn about missing submodule git directories
  - t2013: add test for missing but active submodule
 
- A corner case in switching to a branch that needs to "check out" a
- submodule is handled a bit better now.
-
- Expecting a reroll.
+ cf. <20180905191849.GB120842@aiede.svl.corp.google.com>
 
 
 * tg/conflict-marker-size (2018-08-29) 1 commit
@@ -554,7 +542,7 @@ of the repositories listed at
  obviously the author cared enough to write a patch, so...
 
 
-* pk/rebase-in-c-2-basic (2018-08-10) 11 commits
+* pk/rebase-in-c-2-basic (2018-09-06) 11 commits
  - builtin rebase: support `git rebase <upstream> <switch-to>`
  - builtin rebase: only store fully-qualified refs in `options.head_name`
  - builtin rebase: start a new rebase only if none is in progress
@@ -563,13 +551,13 @@ of the repositories listed at
  - builtin rebase: require a clean worktree
  - builtin rebase: support the `verbose` and `diffstat` options
  - builtin rebase: support --quiet
- - builtin rebase: handle the pre-rebase hook (and add --no-verify)
+ - builtin rebase: handle the pre-rebase hook and --no-verify
  - builtin rebase: support `git rebase --onto A...B`
  - builtin rebase: support --onto
- (this branch is used by jc/rebase-in-c-9-fixes, js/rebase-in-c-5.5-work-with-rebase-i-in-c, pk/rebase-in-c-3-acts, pk/rebase-in-c-4-opts, pk/rebase-in-c-5-test and pk/rebase-in-c-6-final; uses pk/rebase-in-c.)
+ (this branch is used by js/rebase-in-c-5.5-work-with-rebase-i-in-c, pk/rebase-in-c-3-acts, pk/rebase-in-c-4-opts, pk/rebase-in-c-5-test and pk/rebase-in-c-6-final; uses pk/rebase-in-c.)
 
 
-* pk/rebase-in-c-3-acts (2018-08-10) 7 commits
+* pk/rebase-in-c-3-acts (2018-09-06) 7 commits
  - builtin rebase: stop if `git am` is in progress
  - builtin rebase: actions require a rebase in progress
  - builtin rebase: support --edit-todo and --show-current-patch
@@ -577,10 +565,10 @@ of the repositories listed at
  - builtin rebase: support --abort
  - builtin rebase: support --skip
  - builtin rebase: support --continue
- (this branch is used by jc/rebase-in-c-9-fixes, js/rebase-in-c-5.5-work-with-rebase-i-in-c, pk/rebase-in-c-4-opts, pk/rebase-in-c-5-test and pk/rebase-in-c-6-final; uses pk/rebase-in-c and pk/rebase-in-c-2-basic.)
+ (this branch is used by js/rebase-in-c-5.5-work-with-rebase-i-in-c, pk/rebase-in-c-4-opts, pk/rebase-in-c-5-test and pk/rebase-in-c-6-final; uses pk/rebase-in-c and pk/rebase-in-c-2-basic.)
 
 
-* pk/rebase-in-c-4-opts (2018-08-10) 18 commits
+* pk/rebase-in-c-4-opts (2018-09-06) 18 commits
  - builtin rebase: support --root
  - builtin rebase: add support for custom merge strategies
  - builtin rebase: support `fork-point` option
@@ -599,22 +587,22 @@ of the repositories listed at
  - builtin rebase: support --rerere-autoupdate
  - builtin rebase: support --signoff
  - builtin rebase: allow selecting the rebase "backend"
- (this branch is used by jc/rebase-in-c-9-fixes, js/rebase-in-c-5.5-work-with-rebase-i-in-c, pk/rebase-in-c-5-test and pk/rebase-in-c-6-final; uses pk/rebase-in-c, pk/rebase-in-c-2-basic and pk/rebase-in-c-3-acts.)
+ (this branch is used by js/rebase-in-c-5.5-work-with-rebase-i-in-c, pk/rebase-in-c-5-test and pk/rebase-in-c-6-final; uses pk/rebase-in-c, pk/rebase-in-c-2-basic and pk/rebase-in-c-3-acts.)
 
 
-* pk/rebase-in-c-5-test (2018-08-10) 6 commits
+* pk/rebase-in-c-5-test (2018-09-06) 6 commits
  - builtin rebase: error out on incompatible option/mode combinations
  - builtin rebase: use no-op editor when interactive is "implied"
  - builtin rebase: show progress when connected to a terminal
  - builtin rebase: fast-forward to onto if it is a proper descendant
  - builtin rebase: optionally pass custom reflogs to reset_head()
  - builtin rebase: optionally auto-detect the upstream
- (this branch is used by jc/rebase-in-c-9-fixes, js/rebase-in-c-5.5-work-with-rebase-i-in-c and pk/rebase-in-c-6-final; uses pk/rebase-in-c, pk/rebase-in-c-2-basic, pk/rebase-in-c-3-acts and pk/rebase-in-c-4-opts.)
+ (this branch is used by js/rebase-in-c-5.5-work-with-rebase-i-in-c and pk/rebase-in-c-6-final; uses pk/rebase-in-c, pk/rebase-in-c-2-basic, pk/rebase-in-c-3-acts and pk/rebase-in-c-4-opts.)
 
 
-* pk/rebase-in-c-6-final (2018-08-29) 1 commit
+* pk/rebase-in-c-6-final (2018-09-06) 1 commit
  - rebase: default to using the builtin rebase
- (this branch is used by jc/rebase-in-c-9-fixes; uses ag/rebase-i-in-c, js/rebase-in-c-5.5-work-with-rebase-i-in-c, pk/rebase-in-c, pk/rebase-in-c-2-basic, pk/rebase-in-c-3-acts, pk/rebase-in-c-4-opts and pk/rebase-in-c-5-test.)
+ (this branch uses ag/rebase-i-in-c, js/rebase-in-c-5.5-work-with-rebase-i-in-c, pk/rebase-in-c, pk/rebase-in-c-2-basic, pk/rebase-in-c-3-acts, pk/rebase-in-c-4-opts and pk/rebase-in-c-5-test.)
 
 
 * ps/stash-in-c (2018-08-31) 20 commits
@@ -881,7 +869,7 @@ of the repositories listed at
  - editor: add a function to launch the sequence editor
  - rebase -i: rewrite append_todo_help() in C
  - sequencer: make three functions and an enum from sequencer.c public
- (this branch is used by jc/rebase-in-c-9-fixes, js/rebase-in-c-5.5-work-with-rebase-i-in-c and pk/rebase-in-c-6-final.)
+ (this branch is used by js/rebase-in-c-5.5-work-with-rebase-i-in-c and pk/rebase-in-c-6-final.)
 
  Rewrite of the remaining "rebase -i" machinery in C.
 
@@ -900,7 +888,7 @@ of the repositories listed at
  - builtin/rebase: support running "git rebase <upstream>"
  - rebase: refactor common shell functions into their own file
  - rebase: start implementing it as a builtin
- (this branch is used by jc/rebase-in-c-9-fixes, js/rebase-in-c-5.5-work-with-rebase-i-in-c, pk/rebase-in-c-2-basic, pk/rebase-in-c-3-acts, pk/rebase-in-c-4-opts, pk/rebase-in-c-5-test and pk/rebase-in-c-6-final.)
+ (this branch is used by js/rebase-in-c-5.5-work-with-rebase-i-in-c, pk/rebase-in-c-2-basic, pk/rebase-in-c-3-acts, pk/rebase-in-c-4-opts, pk/rebase-in-c-5-test and pk/rebase-in-c-6-final.)
 
  Rewrite of the "rebase" machinery in C.
 
@@ -1036,3 +1024,31 @@ of the repositories listed at
  . structured-logging: design document
 
  Being rerolled with an updated tracing API.
+
+
+* av/fsmonitor-updates (2018-01-04) 6 commits
+ . fsmonitor: use fsmonitor data in `git diff`
+ . fsmonitor: remove debugging lines from t/t7519-status-fsmonitor.sh
+ . fsmonitor: make output of test-dump-fsmonitor more concise
+ . fsmonitor: update helper tool, now that flags are filled later
+ . fsmonitor: stop inline'ing mark_fsmonitor_valid / _invalid
+ . dir.c: update comments to match argument name
+
+ Code clean-up on fsmonitor integration, plus optional utilization
+ of the fsmonitor data in diff-files.
+
+ Tired of waiting for an update.
+ cf. <alpine.DEB.2.21.1.1801042335130.32@MININT-6BKU6QN.europe.corp.microsoft.com>
+
+ Also there were backward incompatible API changes brought by other
+ topics in flight; having to keep up with those disruptive changes
+ is not worth the maintenance effort for a stale topic.
+
+
+* jc/rebase-in-c-9-fixes (2018-09-04) 1 commit
+ . rebase: re-add forgotten -k that stands for --keep-empty
+ (this branch uses ag/rebase-i-in-c, js/rebase-in-c-5.5-work-with-rebase-i-in-c, pk/rebase-in-c, pk/rebase-in-c-2-basic, pk/rebase-in-c-3-acts, pk/rebase-in-c-4-opts, pk/rebase-in-c-5-test and pk/rebase-in-c-6-final.)
+
+ The fix has been rolled into the original topic that introduced the
+ issue, hence this topic is no longer necessary.
+ 
