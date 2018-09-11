@@ -599,7 +599,7 @@ test_expect_success 'setup simple stage 1 handling' '
 	)
 '
 
-test_expect_failure 'test simple stage 1 handling' '
+test_expect_success 'test simple stage 1 handling' '
 	(
 		cd stage_1_handling &&
 
