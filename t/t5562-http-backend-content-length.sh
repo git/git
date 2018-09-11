@@ -155,8 +155,8 @@ test_expect_success 'CONTENT_LENGTH overflow ssite_t' '
 
 test_expect_success 'empty CONTENT_LENGTH' '
 	env \
-		QUERY_STRING=/repo.git/HEAD \
-		PATH_TRANSLATED="$PWD"/.git/HEAD \
+		QUERY_STRING="service=git-receive-pack" \
+		PATH_TRANSLATED="$PWD"/.git/info/refs \
 		GIT_HTTP_EXPORT_ALL=TRUE \
 		REQUEST_METHOD=GET \
 		CONTENT_LENGTH="" \
