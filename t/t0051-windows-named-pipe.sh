@@ -4,7 +4,7 @@ test_description='Windows named pipes'
 
 . ./test-lib.sh
 
-test_expect_failure MINGW 'o_append write to named pipe' '
+test_expect_success MINGW 'o_append write to named pipe' '
 	GIT_TRACE="$(pwd)/expect" git status >/dev/null 2>&1 &&
 	{ test-tool windows-named-pipe t0051 >actual 2>&1 & } &&
 	pid=$! &&
