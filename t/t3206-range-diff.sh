@@ -142,4 +142,9 @@ test_expect_success 'changed message' '
 	test_cmp expected actual
 '
 
+test_expect_success 'amend and check' '
+	git commit --amend -m "new message" &&
+	git range-diff changed-message HEAD~1 HEAD
+'
+
 test_done
