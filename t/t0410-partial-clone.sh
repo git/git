@@ -170,6 +170,18 @@ test_expect_success 'fetching of missing objects' '
 	git verify-pack --verbose "$IDX" | grep "$HASH"
 '
 
+test_expect_success 'fetching of missing objects works with ref-in-want enabled' '
+	# ref-in-want requires protocol version 2
+	git -C server config protocol.version 2 &&
+	git -C server config uploadpack.allowrefinwant 1 &&
+	git -C repo config protocol.version 2 &&
+
+	rm -rf repo/.git/objects/* &&
+	rm -f trace &&
+	GIT_TRACE_PACKET="$(pwd)/trace" git -C repo cat-file -p "$HASH" &&
+	grep "git< fetch=.*ref-in-want" trace
+'
+
 test_expect_success 'rev-list stops traversal at missing and promised commit' '
 	rm -rf repo &&
 	test_create_repo repo &&

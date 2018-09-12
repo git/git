@@ -32,6 +32,7 @@ void fetch_objects(const char *remote_name, const struct object_id *oids,
 	for (i = 0; i < oid_nr; i++) {
 		struct ref *new_ref = alloc_ref(oid_to_hex(&oids[i]));
 		oidcpy(&new_ref->old_oid, &oids[i]);
+		new_ref->exact_oid = 1;
 		new_ref->next = ref;
 		ref = new_ref;
 	}
