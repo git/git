@@ -157,12 +157,10 @@ struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local
 
 		cur_pack_name += strlen(cur_pack_name) + 1;
 
-		if (i && strcmp(m->pack_names[i], m->pack_names[i - 1]) <= 0) {
-			error(_("multi-pack-index pack names out of order: '%s' before '%s'"),
+		if (i && strcmp(m->pack_names[i], m->pack_names[i - 1]) <= 0)
+			die(_("multi-pack-index pack names out of order: '%s' before '%s'"),
 			      m->pack_names[i - 1],
 			      m->pack_names[i]);
-			goto cleanup_fail;
-		}
 	}
 
 	return m;

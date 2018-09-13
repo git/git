@@ -181,6 +181,11 @@ MIDX_BYTE_CHUNK_COUNT=6
 MIDX_HEADER_SIZE=12
 MIDX_BYTE_CHUNK_ID=$MIDX_HEADER_SIZE
 MIDX_BYTE_CHUNK_OFFSET=$(($MIDX_HEADER_SIZE + 4))
+MIDX_NUM_CHUNKS=5
+MIDX_CHUNK_LOOKUP_WIDTH=12
+MIDX_OFFSET_PACKNAMES=$(($MIDX_HEADER_SIZE + \
+			 $MIDX_NUM_CHUNKS * $MIDX_CHUNK_LOOKUP_WIDTH))
+MIDX_BYTE_PACKNAME_ORDER=$(($MIDX_OFFSET_PACKNAMES + 2))
 
 test_expect_success 'verify bad version' '
 	corrupt_midx_and_verify $MIDX_BYTE_VERSION "\00" $objdir \
@@ -210,6 +215,11 @@ test_expect_success 'verify missing required chunk' '
 test_expect_success 'verify invalid chunk offset' '
 	corrupt_midx_and_verify $MIDX_BYTE_CHUNK_OFFSET "\01" $objdir \
 		"invalid chunk offset (too large)"
+'
+
+test_expect_success 'verify packnames out of order' '
+	corrupt_midx_and_verify $MIDX_BYTE_PACKNAME_ORDER "z" $objdir \
+		"pack names out of order"
 '
 
 test_expect_success 'repack removes multi-pack-index' '
