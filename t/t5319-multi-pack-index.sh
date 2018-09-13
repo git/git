@@ -178,6 +178,9 @@ test_expect_success 'verify bad signature' '
 MIDX_BYTE_VERSION=4
 MIDX_BYTE_OID_VERSION=5
 MIDX_BYTE_CHUNK_COUNT=6
+MIDX_HEADER_SIZE=12
+MIDX_BYTE_CHUNK_ID=$MIDX_HEADER_SIZE
+MIDX_BYTE_CHUNK_OFFSET=$(($MIDX_HEADER_SIZE + 4))
 
 test_expect_success 'verify bad version' '
 	corrupt_midx_and_verify $MIDX_BYTE_VERSION "\00" $objdir \
@@ -197,6 +200,16 @@ test_expect_success 'verify truncated chunk count' '
 test_expect_success 'verify extended chunk count' '
 	corrupt_midx_and_verify $MIDX_BYTE_CHUNK_COUNT "\07" $objdir \
 		"terminating multi-pack-index chunk id appears earlier than expected"
+'
+
+test_expect_success 'verify missing required chunk' '
+	corrupt_midx_and_verify $MIDX_BYTE_CHUNK_ID "\01" $objdir \
+		"missing required"
+'
+
+test_expect_success 'verify invalid chunk offset' '
+	corrupt_midx_and_verify $MIDX_BYTE_CHUNK_OFFSET "\01" $objdir \
+		"invalid chunk offset (too large)"
 '
 
 test_expect_success 'repack removes multi-pack-index' '

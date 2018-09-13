@@ -100,6 +100,9 @@ struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local
 		uint64_t chunk_offset = get_be64(m->data + MIDX_HEADER_SIZE + 4 +
 						 MIDX_CHUNKLOOKUP_WIDTH * i);
 
+		if (chunk_offset >= m->data_len)
+			die(_("invalid chunk offset (too large)"));
+
 		switch (chunk_id) {
 			case MIDX_CHUNKID_PACKNAMES:
 				m->chunk_pack_names = m->data + chunk_offset;
