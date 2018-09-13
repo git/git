@@ -197,7 +197,8 @@ int prepare_midx_pack(struct multi_pack_index *m, uint32_t pack_int_id)
 	struct strbuf pack_name = STRBUF_INIT;
 
 	if (pack_int_id >= m->num_packs)
-		BUG("bad pack-int-id");
+		die(_("bad pack-int-id: %u (%u total packs"),
+		    pack_int_id, m->num_packs);
 
 	if (m->packs[pack_int_id])
 		return 0;
@@ -968,6 +969,32 @@ int verify_midx_file(const char *object_dir)
 		if (oidcmp(&oid1, &oid2) >= 0)
 			midx_report(_("oid lookup out of order: oid[%d] = %s >= %s = oid[%d]"),
 				    i, oid_to_hex(&oid1), oid_to_hex(&oid2), i + 1);
+	}
+
+	for (i = 0; i < m->num_objects; i++) {
+		struct object_id oid;
+		struct pack_entry e;
+		off_t m_offset, p_offset;
+
+		nth_midxed_object_oid(&oid, m, i);
+		if (!fill_midx_entry(&oid, &e, m)) {
+			midx_report(_("failed to load pack entry for oid[%d] = %s"),
+				    i, oid_to_hex(&oid));
+			continue;
+		}
+
+		if (open_pack_index(e.p)) {
+			midx_report(_("failed to load pack-index for packfile %s"),
+				    e.p->pack_name);
+			break;
+		}
+
+		m_offset = e.offset;
+		p_offset = find_pack_entry_one(oid.hash, e.p);
+
+		if (m_offset != p_offset)
+			midx_report(_("incorrect object offset for oid[%d] = %s: %"PRIx64" != %"PRIx64),
+				    i, oid_to_hex(&oid), m_offset, p_offset);
 	}
 
 	return verify_midx_error;
