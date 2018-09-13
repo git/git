@@ -150,6 +150,10 @@ test_expect_success 'write midx with twelve packs' '
 
 compare_results_with_midx "twelve packs"
 
+test_expect_success 'verify multi-pack-index success' '
+	git multi-pack-index verify --object-dir=$objdir
+'
+
 test_expect_success 'repack removes multi-pack-index' '
 	test_path_is_file $objdir/pack/multi-pack-index &&
 	git repack -adf &&
@@ -212,6 +216,10 @@ test_expect_success 'force some 64-bit offsets with pack-objects' '
 	corrupt_data $idx64 2999 "\02" &&
 	midx64=$(git multi-pack-index --object-dir=objects64 write) &&
 	midx_read_expect 1 63 5 objects64 " large-offsets"
+'
+
+test_expect_success 'verify multi-pack-index with 64-bit offsets' '
+	git multi-pack-index verify --object-dir=objects64
 '
 
 test_done

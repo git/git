@@ -928,3 +928,16 @@ void clear_midx_file(const char *object_dir)
 
 	free(midx);
 }
+
+static int verify_midx_error;
+
+int verify_midx_file(const char *object_dir)
+{
+	struct multi_pack_index *m = load_multi_pack_index(object_dir, 1);
+	verify_midx_error = 0;
+
+	if (!m)
+		return 0;
+
+	return verify_midx_error;
+}
