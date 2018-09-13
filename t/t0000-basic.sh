@@ -821,6 +821,43 @@ test_expect_success 'tests clean up even on failures' "
 	EOF
 "
 
+test_expect_success 'test_oid setup' '
+	test_oid_init
+'
+
+test_expect_success 'test_oid provides sane info by default' '
+	test_oid zero >actual &&
+	grep "^00*\$" actual &&
+	rawsz="$(test_oid rawsz)" &&
+	hexsz="$(test_oid hexsz)" &&
+	test "$hexsz" -eq $(wc -c <actual) &&
+	test $(( $rawsz * 2)) -eq "$hexsz"
+'
+
+test_expect_success 'test_oid can look up data for SHA-1' '
+	test_when_finished "test_detect_hash" &&
+	test_set_hash sha1 &&
+	test_oid zero >actual &&
+	grep "^00*\$" actual &&
+	rawsz="$(test_oid rawsz)" &&
+	hexsz="$(test_oid hexsz)" &&
+	test $(wc -c <actual) -eq 40 &&
+	test "$rawsz" -eq 20 &&
+	test "$hexsz" -eq 40
+'
+
+test_expect_success 'test_oid can look up data for SHA-256' '
+	test_when_finished "test_detect_hash" &&
+	test_set_hash sha256 &&
+	test_oid zero >actual &&
+	grep "^00*\$" actual &&
+	rawsz="$(test_oid rawsz)" &&
+	hexsz="$(test_oid hexsz)" &&
+	test $(wc -c <actual) -eq 64 &&
+	test "$rawsz" -eq 32 &&
+	test "$hexsz" -eq 64
+'
+
 ################################################################
 # Basics of the basics
 
