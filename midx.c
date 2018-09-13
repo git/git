@@ -7,6 +7,7 @@
 #include "object-store.h"
 #include "sha1-lookup.h"
 #include "midx.h"
+#include "progress.h"
 
 #define MIDX_SIGNATURE 0x4d494458 /* "MIDX" */
 #define MIDX_VERSION 1
@@ -940,6 +941,7 @@ static void midx_report(const char *fmt, ...)
 int verify_midx_file(const char *object_dir)
 {
 	uint32_t i;
+	struct progress *progress = NULL;
 	struct multi_pack_index *m = load_multi_pack_index(object_dir, 1);
 	verify_midx_error = 0;
 
@@ -971,6 +973,7 @@ int verify_midx_file(const char *object_dir)
 				    i, oid_to_hex(&oid1), oid_to_hex(&oid2), i + 1);
 	}
 
+	progress = start_progress(_("Verifying object offsets"), m->num_objects);
 	for (i = 0; i < m->num_objects; i++) {
 		struct object_id oid;
 		struct pack_entry e;
@@ -995,7 +998,10 @@ int verify_midx_file(const char *object_dir)
 		if (m_offset != p_offset)
 			midx_report(_("incorrect object offset for oid[%d] = %s: %"PRIx64" != %"PRIx64),
 				    i, oid_to_hex(&oid), m_offset, p_offset);
+
+		display_progress(progress, i + 1);
 	}
+	stop_progress(&progress);
 
 	return verify_midx_error;
 }
