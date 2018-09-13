@@ -160,12 +160,17 @@ corrupt_midx_and_verify() {
 	DATA="${2:-\0}" &&
 	OBJDIR=$3 &&
 	GREPSTR="$4" &&
+	COMMAND="$5" &&
+	if test -z "$COMMAND"
+	then
+		COMMAND="git multi-pack-index verify --object-dir=$OBJDIR"
+	fi &&
 	FILE=$OBJDIR/pack/multi-pack-index &&
 	chmod a+w $FILE &&
 	test_when_finished mv midx-backup $FILE &&
 	cp $FILE midx-backup &&
 	printf "$DATA" | dd of="$FILE" bs=1 seek="$POS" conv=notrunc &&
-	test_must_fail git multi-pack-index verify --object-dir=$OBJDIR 2>test_err &&
+	test_must_fail $COMMAND 2>test_err &&
 	grep -v "^+" test_err >err &&
 	test_i18ngrep "$GREPSTR" err
 }
@@ -256,6 +261,12 @@ test_expect_success 'verify incorrect pack-int-id' '
 test_expect_success 'verify incorrect offset' '
 	corrupt_midx_and_verify $MIDX_BYTE_OFFSET "\07" $objdir \
 		"incorrect object offset"
+'
+
+test_expect_success 'git-fsck incorrect offset' '
+	corrupt_midx_and_verify $MIDX_BYTE_OFFSET "\07" $objdir \
+		"incorrect object offset" \
+		"git -c core.multipackindex=true fsck"
 '
 
 test_expect_success 'repack removes multi-pack-index' '
