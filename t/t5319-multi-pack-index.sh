@@ -175,6 +175,7 @@ test_expect_success 'verify bad signature' '
 		"multi-pack-index signature"
 '
 
+HASH_LEN=20
 MIDX_BYTE_VERSION=4
 MIDX_BYTE_OID_VERSION=5
 MIDX_BYTE_CHUNK_COUNT=6
@@ -189,6 +190,8 @@ MIDX_BYTE_PACKNAME_ORDER=$(($MIDX_OFFSET_PACKNAMES + 2))
 MIDX_OFFSET_OID_FANOUT=$(($MIDX_OFFSET_PACKNAMES + 652))
 MIDX_OID_FANOUT_WIDTH=4
 MIDX_BYTE_OID_FANOUT_ORDER=$((MIDX_OFFSET_OID_FANOUT + 250 * $MIDX_OID_FANOUT_WIDTH + 1))
+MIDX_OFFSET_OID_LOOKUP=$(($MIDX_OFFSET_OID_FANOUT + 256 * $MIDX_OID_FANOUT_WIDTH))
+MIDX_BYTE_OID_LOOKUP=$(($MIDX_OFFSET_OID_LOOKUP + 16 * $HASH_LEN))
 
 test_expect_success 'verify bad version' '
 	corrupt_midx_and_verify $MIDX_BYTE_VERSION "\00" $objdir \
@@ -233,6 +236,11 @@ test_expect_success 'verify packnames out of order' '
 test_expect_success 'verify oid fanout out of order' '
 	corrupt_midx_and_verify $MIDX_BYTE_OID_FANOUT_ORDER "\01" $objdir \
 		"oid fanout out of order"
+'
+
+test_expect_success 'verify oid lookup out of order' '
+	corrupt_midx_and_verify $MIDX_BYTE_OID_LOOKUP "\00" $objdir \
+		"oid lookup out of order"
 '
 
 test_expect_success 'repack removes multi-pack-index' '

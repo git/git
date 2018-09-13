@@ -959,5 +959,16 @@ int verify_midx_file(const char *object_dir)
 				    i, oid_fanout1, oid_fanout2, i + 1);
 	}
 
+	for (i = 0; i < m->num_objects - 1; i++) {
+		struct object_id oid1, oid2;
+
+		nth_midxed_object_oid(&oid1, m, i);
+		nth_midxed_object_oid(&oid2, m, i + 1);
+
+		if (oidcmp(&oid1, &oid2) >= 0)
+			midx_report(_("oid lookup out of order: oid[%d] = %s >= %s = oid[%d]"),
+				    i, oid_to_hex(&oid1), oid_to_hex(&oid2), i + 1);
+	}
+
 	return verify_midx_error;
 }
