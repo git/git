@@ -76,24 +76,18 @@ struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local
 	m->local = local;
 
 	m->signature = get_be32(m->data);
-	if (m->signature != MIDX_SIGNATURE) {
-		error(_("multi-pack-index signature 0x%08x does not match signature 0x%08x"),
+	if (m->signature != MIDX_SIGNATURE)
+		die(_("multi-pack-index signature 0x%08x does not match signature 0x%08x"),
 		      m->signature, MIDX_SIGNATURE);
-		goto cleanup_fail;
-	}
 
 	m->version = m->data[MIDX_BYTE_FILE_VERSION];
-	if (m->version != MIDX_VERSION) {
-		error(_("multi-pack-index version %d not recognized"),
+	if (m->version != MIDX_VERSION)
+		die(_("multi-pack-index version %d not recognized"),
 		      m->version);
-		goto cleanup_fail;
-	}
 
 	hash_version = m->data[MIDX_BYTE_HASH_VERSION];
-	if (hash_version != MIDX_HASH_VERSION) {
-		error(_("hash version %u does not match"), hash_version);
-		goto cleanup_fail;
-	}
+	if (hash_version != MIDX_HASH_VERSION)
+		die(_("hash version %u does not match"), hash_version);
 	m->hash_len = MIDX_HASH_LEN;
 
 	m->num_chunks = m->data[MIDX_BYTE_NUM_CHUNKS];

@@ -154,6 +154,51 @@ test_expect_success 'verify multi-pack-index success' '
 	git multi-pack-index verify --object-dir=$objdir
 '
 
+# usage: corrupt_midx_and_verify <pos> <data> <objdir> <string>
+corrupt_midx_and_verify() {
+	POS=$1 &&
+	DATA="${2:-\0}" &&
+	OBJDIR=$3 &&
+	GREPSTR="$4" &&
+	FILE=$OBJDIR/pack/multi-pack-index &&
+	chmod a+w $FILE &&
+	test_when_finished mv midx-backup $FILE &&
+	cp $FILE midx-backup &&
+	printf "$DATA" | dd of="$FILE" bs=1 seek="$POS" conv=notrunc &&
+	test_must_fail git multi-pack-index verify --object-dir=$OBJDIR 2>test_err &&
+	grep -v "^+" test_err >err &&
+	test_i18ngrep "$GREPSTR" err
+}
+
+test_expect_success 'verify bad signature' '
+	corrupt_midx_and_verify 0 "\00" $objdir \
+		"multi-pack-index signature"
+'
+
+MIDX_BYTE_VERSION=4
+MIDX_BYTE_OID_VERSION=5
+MIDX_BYTE_CHUNK_COUNT=6
+
+test_expect_success 'verify bad version' '
+	corrupt_midx_and_verify $MIDX_BYTE_VERSION "\00" $objdir \
+		"multi-pack-index version"
+'
+
+test_expect_success 'verify bad OID version' '
+	corrupt_midx_and_verify $MIDX_BYTE_OID_VERSION "\02" $objdir \
+		"hash version"
+'
+
+test_expect_success 'verify truncated chunk count' '
+	corrupt_midx_and_verify $MIDX_BYTE_CHUNK_COUNT "\01" $objdir \
+		"missing required"
+'
+
+test_expect_success 'verify extended chunk count' '
+	corrupt_midx_and_verify $MIDX_BYTE_CHUNK_COUNT "\07" $objdir \
+		"terminating multi-pack-index chunk id appears earlier than expected"
+'
+
 test_expect_success 'repack removes multi-pack-index' '
 	test_path_is_file $objdir/pack/multi-pack-index &&
 	git repack -adf &&
@@ -190,7 +235,6 @@ test_expect_success 'multi-pack-index in an alternate' '
 '
 
 compare_results_with_midx "with alternate (remote midx)"
-
 
 # usage: corrupt_data <file> <pos> [<data>]
 corrupt_data () {
