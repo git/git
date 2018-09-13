@@ -222,6 +222,11 @@ test_expect_success 'verify packnames out of order' '
 		"pack names out of order"
 '
 
+test_expect_success 'verify packnames out of order' '
+	corrupt_midx_and_verify $MIDX_BYTE_PACKNAME_ORDER "a" $objdir \
+		"failed to load pack"
+'
+
 test_expect_success 'repack removes multi-pack-index' '
 	test_path_is_file $objdir/pack/multi-pack-index &&
 	git repack -adf &&

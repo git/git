@@ -926,13 +926,29 @@ void clear_midx_file(const char *object_dir)
 
 static int verify_midx_error;
 
+static void midx_report(const char *fmt, ...)
+{
+	va_list ap;
+	verify_midx_error = 1;
+	va_start(ap, fmt);
+	vfprintf(stderr, fmt, ap);
+	fprintf(stderr, "\n");
+	va_end(ap);
+}
+
 int verify_midx_file(const char *object_dir)
 {
+	uint32_t i;
 	struct multi_pack_index *m = load_multi_pack_index(object_dir, 1);
 	verify_midx_error = 0;
 
 	if (!m)
 		return 0;
+
+	for (i = 0; i < m->num_packs; i++) {
+		if (prepare_midx_pack(m, i))
+			midx_report("failed to load pack in position %d", i);
+	}
 
 	return verify_midx_error;
 }
