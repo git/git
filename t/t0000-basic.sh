@@ -138,6 +138,7 @@ check_sub_test_lib_test_err () {
 	)
 }
 
+cat >/dev/null <<\DDD
 test_expect_success 'pretend we have a fully passing test suite' "
 	run_sub_test_lib_test full-pass '3 passing tests' <<-\\EOF &&
 	for i in 1 2 3
@@ -824,6 +825,7 @@ test_expect_success 'tests clean up even on failures' "
 	> 1..2
 	EOF
 "
+DDD
 
 test_expect_success 'test_atexit is run' "
 	test_must_fail run_sub_test_lib_test \
