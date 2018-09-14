@@ -466,6 +466,7 @@ test_external_has_tap=0
 
 die () {
 	code=$?
+	test_atexit_handler || code=$?
 	if test -n "$GIT_EXIT_OK"
 	then
 		exit $code
@@ -879,8 +880,11 @@ write_junit_xml_testcase () {
 	junit_have_testcase=t
 }
 
+test_atexit_cleanup=:
 test_done () {
 	GIT_EXIT_OK=t
+
+	test -n "$immediate" || test_atexit_handler
 
 	if test -n "$write_junit_xml" && test -n "$junit_xml_path"
 	then
