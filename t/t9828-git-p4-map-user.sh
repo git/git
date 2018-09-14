@@ -54,8 +54,4 @@ test_expect_success 'Clone repo root path with all history' '
 	)
 '
 
-test_expect_success 'kill p4d' '
-	kill_p4d
-'
-
 test_done
