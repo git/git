@@ -300,9 +300,4 @@ test_expect_success 'use --git-dir option and GIT_DIR' '
 	test_path_is_file "$git"/cli_file2.t
 '
 
-
-test_expect_success 'kill p4d' '
-	kill_p4d
-'
-
 test_done
