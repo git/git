@@ -675,6 +675,7 @@ static int run_argv(int *argcp, const char ***argv)
 {
 	int done_alias = 0;
 	struct string_list cmd_list = STRING_LIST_INIT_NODUP;
+	struct string_list_item *seen;
 
 	while (1) {
 		/*
@@ -692,9 +693,21 @@ static int run_argv(int *argcp, const char ***argv)
 		/* .. then try the external ones */
 		execv_dashed_external(*argv);
 
-		if (unsorted_string_list_has_string(&cmd_list, *argv[0])) {
+		seen = unsorted_string_list_lookup(&cmd_list, *argv[0]);
+		if (seen) {
+			int i;
+			struct strbuf sb = STRBUF_INIT;
+			for (i = 0; i < cmd_list.nr; i++) {
+				struct string_list_item *item = &cmd_list.items[i];
+
+				strbuf_addf(&sb, "\n  %s", item->string);
+				if (item == seen)
+					strbuf_addstr(&sb, " <==");
+				else if (i == cmd_list.nr - 1)
+					strbuf_addstr(&sb, " ==>");
+			}
 			die(_("alias loop detected: expansion of '%s' does"
-			      " not terminate"), cmd_list.items[0].string);
+			      " not terminate:%s"), cmd_list.items[0].string, sb.buf);
 		}
 
 		string_list_append(&cmd_list, *argv[0]);
