@@ -82,6 +82,11 @@ struct rev_info {
 	 */
 	int rev_input_given;
 
+	/*
+	 * Whether we read from stdin due to the --stdin option.
+	 */
+	int read_from_stdin;
+
 	/* topo-sort */
 	enum rev_sort_order sort_order;
 

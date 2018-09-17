@@ -2318,7 +2318,7 @@ static void NORETURN diagnose_missing_default(const char *def)
  */
 int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct setup_revision_opt *opt)
 {
-	int i, flags, left, seen_dashdash, read_from_stdin, got_rev_arg = 0, revarg_opt;
+	int i, flags, left, seen_dashdash, got_rev_arg = 0, revarg_opt;
 	struct argv_array prune_data = ARGV_ARRAY_INIT;
 	const char *submodule = NULL;
 
@@ -2348,7 +2348,6 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 	revarg_opt = opt ? opt->revarg_opt : 0;
 	if (seen_dashdash)
 		revarg_opt |= REVARG_CANNOT_BE_FILENAME;
-	read_from_stdin = 0;
 	for (left = i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 		if (*arg == '-') {
@@ -2367,7 +2366,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 					argv[left++] = arg;
 					continue;
 				}
-				if (read_from_stdin++)
+				if (revs->read_from_stdin++)
 					die("--stdin given twice?");
 				read_revisions_from_stdin(revs, &prune_data);
 				continue;
