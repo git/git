@@ -1,1 +1,112 @@
-Documentation/RelNotes/2.19.0.txt
+Git Release Notes
+=================
+
+Backward Compatibility Notes
+----------------------------
+
+ * "git branch -l <foo>" used to be a way to ask a reflog to be
+   created while creating a new branch, but that is no longer the
+   case.  It is a short-hand for "git branch --list <foo>" now.
+
+ * "git push" into refs/tags/* hierarchy is rejected without getting
+   forced, but "git fetch" (misguidedly) used the "fast forwarding"
+   rule used for the refs/heads/* hierarchy; this has been corrected,
+   which means some fetches of tags that did not fail with older
+   version of Git will fail without "--force" with this version.
+
+
+Updates since v2.19
+-------------------
+
+UI, Workflows & Features
+
+ * Running "git clone" against a project that contain two files with
+   pathnames that differ only in cases on a case insensitive
+   filesystem would result in one of the files lost because the
+   underlying filesystem is incapable of holding both at the same
+   time.  An attempt is made to detect such a case and warn.
+
+ * "git checkout -b newbranch [HEAD]" should not have to do as much as
+   checking out a commit different from HEAD.  An attempt is made to
+   optimize this special case.
+
+ * "git rev-list --stdin </dev/null" used to be an error; it now shows
+   no output without an error.  "git rev-list --stdin --default HEAD"
+   still falls back to the given default when nothing is given on the
+   standard input.
+
+ * Lift code from GitHub to restrict delta computation so that an
+   object that exists in one fork is not made into a delta against
+   another object that does not appear in the same forked repository.
+
+ * "git format-patch" learned new "--interdiff" and "--range-diff"
+   options to explain the difference between this version and the
+   previous attempt in the cover letter (or after the tree-dashes as
+   a comment).
+
+ * "git mailinfo" used in "git am" learned to make a best-effort
+   recovery of a patch corrupted by MUA that sends text/plain with
+   format=flawed option.
+   (merge 3aa4d81f88 rs/mailinfo-format-flowed later to maint).
+
+ * The rules used by "git push" and "git fetch" to determine if a ref
+   can or cannot be updated were inconsistent; specifically, fetching
+   to update existing tags were allowed even though tags are supposed
+   to be unmoving anchoring points.  "git fetch" was taught to forbid
+   updates to existing tags without the "--force" option.
+
+
+Performance, Internal Implementation, Development Support etc.
+
+ * When there are too many packfiles in a repository (which is not
+   recommended), looking up an object in these would require
+   consulting many pack .idx files; a new mechanism to have a single
+   file that consolidates all of these .idx files is introduced.
+
+ * "git submodule update" is getting rewritten piece-by-piece into C.
+
+ * The code for computing history reachability has been shuffled,
+   obtained a bunch of new tests to cover them, and then being
+   improved.
+
+ * The unpack_trees() API used in checking out a branch and merging
+   walks one or more trees along with the index.  When the cache-tree
+   in the index tells us that we are walking a tree whose flattened
+   contents is known (i.e. matches a span in the index), as linearly
+   scanning a span in the index is much more efficient than having to
+   open tree objects recursively and listing their entries, the walk
+   can be optimized, which has been done.
+
+ * When creating a thin pack, which allows objects to be made into a
+   delta against another object that is not in the resulting pack but
+   is known to be present on the receiving end, the code learned to
+   take advantage of the reachability bitmap; this allows the server
+   to send a delta against a base beyond the "boundary" commit.
+
+ * spatch transformation to replace boolean uses of !hashcmp() to
+   newly introduced oideq() is added, and applied, to regain
+   performance lost due to support of multiple hash algorithms.
+
+ * Fix a bug in which the same path could be registered under multiple
+   worktree entries if the path was missing (for instance, was removed
+   manually).  Also, as a convenience, expand the number of cases in
+   which --force is applicable.
+
+
+Fixes since v2.19
+-----------------
+
+ * "git interpret-trailers" and its underlying machinery had a buggy
+   code that attempted to ignore patch text after commit log message,
+   which triggered in various codepaths that will always get the log
+   message alone and never get such an input.
+   (merge 66e83d9b41 jk/trailer-fixes later to maint).
+
+ * Malformed or crafted data in packstream can make our code attempt
+   to read or write past the allocated buffer and abort, instead of
+   reporting an error, which has been fixed.
+
+ * Code cleanup, docfix, build fix, etc.
+   (merge 96a7501aad ts/doc-build-manpage-xsl-quietly later to maint).
+   (merge b9b07efdb2 tg/conflict-marker-size later to maint).
+   (merge fa0aeea770 sg/doc-trace-appends later to maint).
