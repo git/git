@@ -34,6 +34,7 @@
 #include "mailmap.h"
 #include "help.h"
 #include "commit-reach.h"
+#include "commit-graph.h"
 
 static const char * const builtin_commit_usage[] = {
 	N_("git commit [<options>] [--] <pathspec>..."),
@@ -1651,6 +1652,9 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		die(_("repository has been updated, but unable to write\n"
 		      "new_index file. Check that disk is not full and quota is\n"
 		      "not exceeded, and then \"git reset HEAD\" to recover."));
+
+	if (git_env_bool(GIT_TEST_COMMIT_GRAPH, 0))
+		write_commit_graph_reachable(get_object_directory(), 0);
 
 	rerere(0);
 	run_command_v_opt(argv_gc_auto, RUN_GIT_CMD);

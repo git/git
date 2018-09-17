@@ -323,6 +323,10 @@ GIT_TEST_VALIDATE_INDEX_CACHE_ENTRIES=<boolean> checks that cache-tree
 records are valid when the index is written out or after a merge. This
 is mostly to catch missing invalidation. Default is true.
 
+GIT_TEST_COMMIT_GRAPH=<boolean>, when true, forces the commit-graph to
+be written after every 'git commit' command, and overrides the
+'core.commitGraph' setting to true.
+
 Naming Tests
 ------------
 

@@ -213,8 +213,9 @@ static int prepare_commit_graph(struct repository *r)
 		return !!r->objects->commit_graph;
 	r->objects->commit_graph_attempted = 1;
 
-	if (repo_config_get_bool(r, "core.commitgraph", &config_value) ||
-	    !config_value)
+	if (!git_env_bool(GIT_TEST_COMMIT_GRAPH, 0) &&
+	    (repo_config_get_bool(r, "core.commitgraph", &config_value) ||
+	    !config_value))
 		/*
 		 * This repository is not configured to use commit graphs, so
 		 * do not load one. (But report commit_graph_attempted anyway
