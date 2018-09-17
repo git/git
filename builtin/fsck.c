@@ -740,7 +740,7 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 			struct progress *progress = NULL;
 
 			if (show_progress) {
-				for (p = get_packed_git(the_repository); p;
+				for (p = get_all_packs(the_repository); p;
 				     p = p->next) {
 					if (open_pack_index(p))
 						continue;
@@ -749,7 +749,7 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 
 				progress = start_progress(_("Checking objects"), total);
 			}
-			for (p = get_packed_git(the_repository); p;
+			for (p = get_all_packs(the_repository); p;
 			     p = p->next) {
 				/* verify gives error messages itself */
 				if (verify_pack(p, fsck_obj_buffer,

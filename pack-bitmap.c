@@ -335,7 +335,7 @@ static int open_pack_bitmap(struct bitmap_index *bitmap_git)
 
 	assert(!bitmap_git->map && !bitmap_git->loaded);
 
-	for (p = get_packed_git(the_repository); p; p = p->next) {
+	for (p = get_all_packs(the_repository); p; p = p->next) {
 		if (open_pack_bitmap_1(bitmap_git, p) == 0)
 			ret = 0;
 	}
