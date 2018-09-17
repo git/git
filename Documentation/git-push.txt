@@ -74,22 +74,57 @@ without any `<refspec>` on the command line.  Otherwise, missing
 `:<dst>` means to update the same ref as the `<src>`.
 +
 The object referenced by <src> is used to update the <dst> reference
-on the remote side.  By default this is only allowed if <dst> is not
-a tag (annotated or lightweight), and then only if it can fast-forward
-<dst>.  By having the optional leading `+`, you can tell Git to update
-the <dst> ref even if it is not allowed by default (e.g., it is not a
-fast-forward.)  This does *not* attempt to merge <src> into <dst>.  See
-EXAMPLES below for details.
+on the remote side. Whether this is allowed depends on where in
+`refs/*` the <dst> reference lives as described in detail below, in
+those sections "update" means any modifications except deletes, which
+as noted after the next few sections are treated differently.
 +
-`tag <tag>` means the same as `refs/tags/<tag>:refs/tags/<tag>`.
+The `refs/heads/*` namespace will only accept commit objects, and
+updates only if they can be fast-forwarded.
 +
-Pushing an empty <src> allows you to delete the <dst> ref from
-the remote repository.
+The `refs/tags/*` namespace will accept any kind of object (as
+commits, trees and blobs can be tagged), and any updates to them will
+be rejected.
++
+It's possible to push any type of object to any namespace outside of
+`refs/{tags,heads}/*`. In the case of tags and commits, these will be
+treated as if they were the commits inside `refs/heads/*` for the
+purposes of whether the update is allowed.
++
+I.e. a fast-forward of commits and tags outside `refs/{tags,heads}/*`
+is allowed, even in cases where what's being fast-forwarded is not a
+commit, but a tag object which happens to point to a new commit which
+is a fast-forward of the commit the last tag (or commit) it's
+replacing. Replacing a tag with an entirely different tag is also
+allowed, if it points to the same commit, as well as pushing a peeled
+tag, i.e. pushing the commit that existing tag object points to, or a
+new tag object which an existing commit points to.
++
+Tree and blob objects outside of `refs/{tags,heads}/*` will be treated
+the same way as if they were inside `refs/tags/*`, any update of them
+will be rejected.
++
+All of the rules described above about what's not allowed as an update
+can be overridden by adding an the optional leading `+` to a refspec
+(or using `--force` command line option). The only exception to this
+is that no amount of forcing will make the `refs/heads/*` namespace
+accept a non-commit object. Hooks and configuration can also override
+or amend these rules, see e.g. `receive.denyNonFastForwards` in
+linkgit:git-config[1] and`pre-receive` and `update` in
+linkgit:githooks[5].
++
+Pushing an empty <src> allows you to delete the <dst> ref from the
+remote repository. Deletions are always accepted without a leading `+`
+in the refspec (or `--force`), except when forbidden by configuration
+or hooks. See `receive.denyDeletes` in linkgit:git-config[1] and
+`pre-receive` and `update` in linkgit:githooks[5].
 +
 The special refspec `:` (or `+:` to allow non-fast-forward updates)
 directs Git to push "matching" branches: for every branch that exists on
 the local side, the remote side is updated if a branch of the same name
 already exists on the remote side.
++
+`tag <tag>` means the same as `refs/tags/<tag>:refs/tags/<tag>`.
 
 --all::
 	Push all branches (i.e. refs under `refs/heads/`); cannot be

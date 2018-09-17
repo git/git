@@ -115,7 +115,7 @@ static struct option builtin_fetch_options[] = {
 		 N_("append to .git/FETCH_HEAD instead of overwriting")),
 	OPT_STRING(0, "upload-pack", &upload_pack, N_("path"),
 		   N_("path to upload pack on remote end")),
-	OPT__FORCE(&force, N_("force overwrite of local branch"), 0),
+	OPT__FORCE(&force, N_("force overwrite of local reference"), 0),
 	OPT_BOOL('m', "multiple", &multiple,
 		 N_("fetch from multiple remotes")),
 	OPT_SET_INT('t', "tags", &tags,
@@ -668,12 +668,18 @@ static int update_local_ref(struct ref *ref,
 
 	if (!is_null_oid(&ref->old_oid) &&
 	    starts_with(ref->name, "refs/tags/")) {
-		int r;
-		r = s_update_ref("updating tag", ref, 0);
-		format_display(display, r ? '!' : 't', _("[tag update]"),
-			       r ? _("unable to update local ref") : NULL,
-			       remote, pretty_ref, summary_width);
-		return r;
+		if (force || ref->force) {
+			int r;
+			r = s_update_ref("updating tag", ref, 0);
+			format_display(display, r ? '!' : 't', _("[tag update]"),
+				       r ? _("unable to update local ref") : NULL,
+				       remote, pretty_ref, summary_width);
+			return r;
+		} else {
+			format_display(display, '!', _("[rejected]"), _("would clobber existing tag"),
+				       remote, pretty_ref, summary_width);
+			return 1;
+		}
 	}
 
 	current = lookup_commit_reference_gently(the_repository,

@@ -969,7 +969,7 @@ test_force_push_tag () {
 	tag_type_description=$1
 	tag_args=$2
 
-	test_expect_success 'force pushing required to update lightweight tag' "
+	test_expect_success "force pushing required to update $tag_type_description" "
 		mk_test testrepo heads/master &&
 		mk_child testrepo child1 &&
 		mk_child testrepo child2 &&
@@ -1009,7 +1009,32 @@ test_force_push_tag () {
 }
 
 test_force_push_tag "lightweight tag" "-f"
-test_force_push_tag "annotated tag" "-f -a -m'msg'"
+test_force_push_tag "annotated tag" "-f -a -m'tag message'"
+
+test_force_fetch_tag () {
+	tag_type_description=$1
+	tag_args=$2
+
+	test_expect_success "fetch will not clobber an existing $tag_type_description without --force" "
+		mk_test testrepo heads/master &&
+		mk_child testrepo child1 &&
+		mk_child testrepo child2 &&
+		(
+			cd testrepo &&
+			git tag testTag &&
+			git -C ../child1 fetch origin tag testTag &&
+			>file1 &&
+			git add file1 &&
+			git commit -m 'file1' &&
+			git tag $tag_args testTag &&
+			test_must_fail git -C ../child1 fetch origin tag testTag &&
+			git -C ../child1 fetch origin '+refs/tags/*:refs/tags/*'
+		)
+	"
+}
+
+test_force_fetch_tag "lightweight tag" "-f"
+test_force_fetch_tag "annotated tag" "-f -a -m'tag message'"
 
 test_expect_success 'push --porcelain' '
 	mk_empty testrepo &&

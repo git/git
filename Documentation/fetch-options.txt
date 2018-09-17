@@ -68,11 +68,16 @@ endif::git-pull[]
 
 -f::
 --force::
-	When 'git fetch' is used with `<rbranch>:<lbranch>`
-	refspec, it refuses to update the local branch
-	`<lbranch>` unless the remote branch `<rbranch>` it
-	fetches is a descendant of `<lbranch>`.  This option
-	overrides that check.
+	When 'git fetch' is used with `<src>:<dst>` refspec it may
+	refuse to update the local branch as discussed
+ifdef::git-pull[]
+	in the `<refspec>` part of the linkgit:git-fetch[1]
+	documentation.
+endif::git-pull[]
+ifndef::git-pull[]
+	in the `<refspec>` part below.
+endif::git-pull[]
+	This option overrides that check.
 
 -k::
 --keep::
