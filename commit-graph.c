@@ -922,6 +922,7 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g)
 	int generation_zero = 0;
 	struct hashfile *f;
 	int devnull;
+	struct progress *progress = NULL;
 
 	if (!g) {
 		graph_report("no commit-graph file loaded");
@@ -989,11 +990,14 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g)
 	if (verify_commit_graph_error & ~VERIFY_COMMIT_GRAPH_ERROR_HASH)
 		return verify_commit_graph_error;
 
+	progress = start_progress(_("Verifying commits in commit graph"),
+				  g->num_commits);
 	for (i = 0; i < g->num_commits; i++) {
 		struct commit *graph_commit, *odb_commit;
 		struct commit_list *graph_parents, *odb_parents;
 		uint32_t max_generation = 0;
 
+		display_progress(progress, i + 1);
 		hashcpy(cur_oid.hash, g->chunk_oid_lookup + g->hash_len * i);
 
 		graph_commit = lookup_commit(r, &cur_oid);
@@ -1070,6 +1074,7 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g)
 				     graph_commit->date,
 				     odb_commit->date);
 	}
+	stop_progress(&progress);
 
 	return verify_commit_graph_error;
 }
