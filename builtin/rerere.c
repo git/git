@@ -75,7 +75,7 @@ int cmd_rerere(int argc, const char **argv, const char *prefix)
 	if (!strcmp(argv[0], "forget")) {
 		struct pathspec pathspec;
 		if (argc < 2)
-			warning("'git rerere forget' without paths is deprecated");
+			warning(_("'git rerere forget' without paths is deprecated"));
 		parse_pathspec(&pathspec, 0, PATHSPEC_PREFER_CWD,
 			       prefix, argv + 1);
 		return rerere_forget(&pathspec);
@@ -107,7 +107,7 @@ int cmd_rerere(int argc, const char **argv, const char *prefix)
 			const char *path = merge_rr.items[i].string;
 			const struct rerere_id *id = merge_rr.items[i].util;
 			if (diff_two(rerere_path(id, "preimage"), path, path, path))
-				die("unable to generate diff for %s", rerere_path(id, NULL));
+				die(_("unable to generate diff for '%s'"), rerere_path(id, NULL));
 		}
 	} else
 		usage_with_options(rerere_usage, options);
