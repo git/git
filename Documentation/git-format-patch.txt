@@ -24,6 +24,7 @@ SYNOPSIS
 		   [--to=<email>] [--cc=<email>]
 		   [--[no-]cover-letter] [--quiet] [--notes[=<ref>]]
 		   [--interdiff=<previous>]
+		   [--range-diff=<previous> [--creation-factor=<percent>]]
 		   [--progress]
 		   [<common diff options>]
 		   [ <since> | <revision range> ]
@@ -237,6 +238,24 @@ feeding the result to `git send-email`.
 	naming the tip of the previous series which shares a common base with
 	the series being formatted (for example `git format-patch
 	--cover-letter --interdiff=feature/v1 -3 feature/v2`).
+
+--range-diff=<previous>::
+	As a reviewer aid, insert a range-diff (see linkgit:git-range-diff[1])
+	into the cover letter, or as commentary of the lone patch of a
+	1-patch series, showing the differences between the previous
+	version of the patch series and the series currently being formatted.
+	`previous` can be a single revision naming the tip of the previous
+	series if it shares a common base with the series being formatted (for
+	example `git format-patch --cover-letter --range-diff=feature/v1 -3
+	feature/v2`), or a revision range if the two versions of the series are
+	disjoint (for example `git format-patch --cover-letter
+	--range-diff=feature/v1~3..feature/v1 -3 feature/v2`).
+
+--creation-factor=<percent>::
+	Used with `--range-diff`, tweak the heuristic which matches up commits
+	between the previous and current series of patches by adjusting the
+	creation/deletion cost fudge factor. See linkgit:git-range-diff[1])
+	for details.
 
 --notes[=<ref>]::
 	Append the notes (see linkgit:git-notes[1]) for the commit

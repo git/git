@@ -224,6 +224,12 @@ struct rev_info {
 	const struct object_id *idiff_oid2;
 	const char *idiff_title;
 
+	/* range-diff */
+	const char *rdiff1;
+	const char *rdiff2;
+	int creation_factor;
+	const char *rdiff_title;
+
 	/* commit counts */
 	int count_left;
 	int count_right;

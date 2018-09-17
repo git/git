@@ -181,4 +181,16 @@ test_expect_success 'dual-coloring' '
 	test_cmp expect actual
 '
 
+for prev in topic master..topic
+do
+	test_expect_success "format-patch --range-diff=$prev" '
+		git format-patch --stdout --cover-letter --range-diff=$prev \
+			master..unmodified >actual &&
+		grep "= 1: .* s/5/A" actual &&
+		grep "= 2: .* s/4/A" actual &&
+		grep "= 3: .* s/11/B" actual &&
+		grep "= 4: .* s/12/B" actual
+	'
+done
+
 test_done

@@ -16,6 +16,7 @@
 #include "line-log.h"
 #include "help.h"
 #include "interdiff.h"
+#include "range-diff.h"
 
 static struct decoration name_decoration = { "object names" };
 static int decoration_loaded;
@@ -748,6 +749,20 @@ void show_log(struct rev_info *opt)
 		next_commentary_block(opt, NULL);
 		fprintf_ln(opt->diffopt.file, "%s", opt->idiff_title);
 		show_interdiff(opt, 2);
+
+		memcpy(&diff_queued_diff, &dq, sizeof(diff_queued_diff));
+	}
+
+	if (cmit_fmt_is_mail(ctx.fmt) && opt->rdiff1) {
+		struct diff_queue_struct dq;
+
+		memcpy(&dq, &diff_queued_diff, sizeof(diff_queued_diff));
+		DIFF_QUEUE_CLEAR(&diff_queued_diff);
+
+		next_commentary_block(opt, NULL);
+		fprintf_ln(opt->diffopt.file, "%s", opt->rdiff_title);
+		show_range_diff(opt->rdiff1, opt->rdiff2,
+				opt->creation_factor, 1, &opt->diffopt);
 
 		memcpy(&diff_queued_diff, &dq, sizeof(diff_queued_diff));
 	}

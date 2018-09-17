@@ -11,14 +11,9 @@ N_("git range-diff [<options>] <base> <old-tip> <new-tip>"),
 NULL
 };
 
-static struct strbuf *output_prefix_cb(struct diff_options *opt, void *data)
-{
-	return data;
-}
-
 int cmd_range_diff(int argc, const char **argv, const char *prefix)
 {
-	int creation_factor = 60;
+	int creation_factor = RANGE_DIFF_CREATION_FACTOR_DEFAULT;
 	struct diff_options diffopt = { NULL };
 	int simple_color = -1;
 	struct option options[] = {
@@ -29,17 +24,11 @@ int cmd_range_diff(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 	int i, j, res = 0;
-	struct strbuf four_spaces = STRBUF_INIT;
 	struct strbuf range1 = STRBUF_INIT, range2 = STRBUF_INIT;
 
 	git_config(git_diff_ui_config, NULL);
 
 	diff_setup(&diffopt);
-	diffopt.output_format = DIFF_FORMAT_PATCH;
-	diffopt.flags.suppress_diff_headers = 1;
-	diffopt.output_prefix = output_prefix_cb;
-	strbuf_addstr(&four_spaces, "    ");
-	diffopt.output_prefix_data = &four_spaces;
 
 	argc = parse_options(argc, argv, NULL, options,
 			     builtin_range_diff_usage, PARSE_OPT_KEEP_UNKNOWN |
@@ -63,12 +52,9 @@ int cmd_range_diff(int argc, const char **argv, const char *prefix)
 			     options + ARRAY_SIZE(options) - 1, /* OPT_END */
 			     builtin_range_diff_usage, 0);
 
-	if (simple_color < 1) {
-		if (!simple_color)
-			/* force color when --dual-color was used */
-			diffopt.use_color = 1;
-		diffopt.flags.dual_color_diffed_diffs = 1;
-	}
+	/* force color when --dual-color was used */
+	if (!simple_color)
+		diffopt.use_color = 1;
 
 	if (argc == 2) {
 		if (!strstr(argv[0], ".."))
@@ -106,11 +92,10 @@ int cmd_range_diff(int argc, const char **argv, const char *prefix)
 	}
 
 	res = show_range_diff(range1.buf, range2.buf, creation_factor,
-			      &diffopt);
+			      simple_color < 1, &diffopt);
 
 	strbuf_release(&range1);
 	strbuf_release(&range2);
-	strbuf_release(&four_spaces);
 
 	return res;
 }
