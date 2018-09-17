@@ -181,3 +181,22 @@ struct object_entry *packlist_alloc(struct packing_data *pdata,
 
 	return new_entry;
 }
+
+void oe_set_delta_ext(struct packing_data *pdata,
+		      struct object_entry *delta,
+		      const unsigned char *sha1)
+{
+	struct object_entry *base;
+
+	ALLOC_GROW(pdata->ext_bases, pdata->nr_ext + 1, pdata->alloc_ext);
+	base = &pdata->ext_bases[pdata->nr_ext++];
+	memset(base, 0, sizeof(*base));
+	hashcpy(base->idx.oid.hash, sha1);
+
+	/* These flags mark that we are not part of the actual pack output. */
+	base->preferred_base = 1;
+	base->filled = 1;
+
+	delta->ext_base = 1;
+	delta->delta_idx = base - pdata->ext_bases + 1;
+}

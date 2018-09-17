@@ -179,8 +179,8 @@ exit $ret' >&3 2>&4
 	return "$eval_ret"
 }
 
-
-test_perf () {
+test_wrapper_ () {
+	test_wrapper_func_=$1; shift
 	test_start_
 	test "$#" = 3 && { test_prereq=$1; shift; } || test_prereq=
 	test "$#" = 2 ||
@@ -191,35 +191,57 @@ test_perf () {
 		base=$(basename "$0" .sh)
 		echo "$test_count" >>"$perf_results_dir"/$base.subtests
 		echo "$1" >"$perf_results_dir"/$base.$test_count.descr
-		if test -z "$verbose"; then
-			printf "%s" "perf $test_count - $1:"
-		else
-			echo "perf $test_count - $1:"
-		fi
-		for i in $(test_seq 1 $GIT_PERF_REPEAT_COUNT); do
-			say >&3 "running: $2"
-			if test_run_perf_ "$2"
-			then
-				if test -z "$verbose"; then
-					printf " %s" "$i"
-				else
-					echo "* timing run $i/$GIT_PERF_REPEAT_COUNT:"
-				fi
-			else
-				test -z "$verbose" && echo
-				test_failure_ "$@"
-				break
-			fi
-		done
-		if test -z "$verbose"; then
-			echo " ok"
-		else
-			test_ok_ "$1"
-		fi
 		base="$perf_results_dir"/"$perf_results_prefix$(basename "$0" .sh)"."$test_count"
-		"$TEST_DIRECTORY"/perf/min_time.perl test_time.* >"$base".times
+		"$test_wrapper_func_" "$@"
 	fi
+
 	test_finish_
+}
+
+test_perf_ () {
+	if test -z "$verbose"; then
+		printf "%s" "perf $test_count - $1:"
+	else
+		echo "perf $test_count - $1:"
+	fi
+	for i in $(test_seq 1 $GIT_PERF_REPEAT_COUNT); do
+		say >&3 "running: $2"
+		if test_run_perf_ "$2"
+		then
+			if test -z "$verbose"; then
+				printf " %s" "$i"
+			else
+				echo "* timing run $i/$GIT_PERF_REPEAT_COUNT:"
+			fi
+		else
+			test -z "$verbose" && echo
+			test_failure_ "$@"
+			break
+		fi
+	done
+	if test -z "$verbose"; then
+		echo " ok"
+	else
+		test_ok_ "$1"
+	fi
+	"$TEST_DIRECTORY"/perf/min_time.perl test_time.* >"$base".times
+}
+
+test_perf () {
+	test_wrapper_ test_perf_ "$@"
+}
+
+test_size_ () {
+	say >&3 "running: $2"
+	if test_eval_ "$2" 3>"$base".size; then
+		test_ok_ "$1"
+	else
+		test_failure_ "$@"
+	fi
+}
+
+test_size () {
+	test_wrapper_ test_size_ "$@"
 }
 
 # We extend test_done to print timings at the end (./run disables this
