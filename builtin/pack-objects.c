@@ -24,6 +24,7 @@
 #include "streaming.h"
 #include "thread-utils.h"
 #include "pack-bitmap.h"
+#include "delta-islands.h"
 #include "reachable.h"
 #include "sha1-array.h"
 #include "argv-array.h"
@@ -62,6 +63,7 @@ static struct packing_data to_pack;
 static struct pack_idx_entry **written_list;
 static uint32_t nr_result, nr_written, nr_seen;
 static struct bitmap_index *bitmap_git;
+static uint32_t write_layer;
 
 static int non_empty;
 static int reuse_delta = 1, reuse_object = 1;
@@ -96,6 +98,8 @@ static int write_bitmap_index;
 static uint16_t write_bitmap_options;
 
 static int exclude_promisor_objects;
+
+static int use_delta_islands;
 
 static unsigned long delta_cache_size = 0;
 static unsigned long max_delta_cache_size = DEFAULT_DELTA_CACHE_SIZE;
@@ -616,7 +620,7 @@ static inline void add_to_write_order(struct object_entry **wo,
 			       unsigned int *endp,
 			       struct object_entry *e)
 {
-	if (e->filled)
+	if (e->filled || oe_layer(&to_pack, e) != write_layer)
 		return;
 	wo[(*endp)++] = e;
 	e->filled = 1;
@@ -676,9 +680,58 @@ static void add_family_to_write_order(struct object_entry **wo,
 	add_descendants_to_write_order(wo, endp, root);
 }
 
+static void compute_layer_order(struct object_entry **wo, unsigned int *wo_end)
+{
+	unsigned int i, last_untagged;
+	struct object_entry *objects = to_pack.objects;
+
+	for (i = 0; i < to_pack.nr_objects; i++) {
+		if (objects[i].tagged)
+			break;
+		add_to_write_order(wo, wo_end, &objects[i]);
+	}
+	last_untagged = i;
+
+	/*
+	 * Then fill all the tagged tips.
+	 */
+	for (; i < to_pack.nr_objects; i++) {
+		if (objects[i].tagged)
+			add_to_write_order(wo, wo_end, &objects[i]);
+	}
+
+	/*
+	 * And then all remaining commits and tags.
+	 */
+	for (i = last_untagged; i < to_pack.nr_objects; i++) {
+		if (oe_type(&objects[i]) != OBJ_COMMIT &&
+		    oe_type(&objects[i]) != OBJ_TAG)
+			continue;
+		add_to_write_order(wo, wo_end, &objects[i]);
+	}
+
+	/*
+	 * And then all the trees.
+	 */
+	for (i = last_untagged; i < to_pack.nr_objects; i++) {
+		if (oe_type(&objects[i]) != OBJ_TREE)
+			continue;
+		add_to_write_order(wo, wo_end, &objects[i]);
+	}
+
+	/*
+	 * Finally all the rest in really tight order
+	 */
+	for (i = last_untagged; i < to_pack.nr_objects; i++) {
+		if (!objects[i].filled && oe_layer(&to_pack, &objects[i]) == write_layer)
+			add_family_to_write_order(wo, wo_end, &objects[i]);
+	}
+}
+
 static struct object_entry **compute_write_order(void)
 {
-	unsigned int i, wo_end, last_untagged;
+	uint32_t max_layers = 1;
+	unsigned int i, wo_end;
 
 	struct object_entry **wo;
 	struct object_entry *objects = to_pack.objects;
@@ -709,52 +762,14 @@ static struct object_entry **compute_write_order(void)
 	 */
 	for_each_tag_ref(mark_tagged, NULL);
 
-	/*
-	 * Give the objects in the original recency order until
-	 * we see a tagged tip.
-	 */
+	if (use_delta_islands)
+		max_layers = compute_pack_layers(&to_pack);
+
 	ALLOC_ARRAY(wo, to_pack.nr_objects);
-	for (i = wo_end = 0; i < to_pack.nr_objects; i++) {
-		if (objects[i].tagged)
-			break;
-		add_to_write_order(wo, &wo_end, &objects[i]);
-	}
-	last_untagged = i;
+	wo_end = 0;
 
-	/*
-	 * Then fill all the tagged tips.
-	 */
-	for (; i < to_pack.nr_objects; i++) {
-		if (objects[i].tagged)
-			add_to_write_order(wo, &wo_end, &objects[i]);
-	}
-
-	/*
-	 * And then all remaining commits and tags.
-	 */
-	for (i = last_untagged; i < to_pack.nr_objects; i++) {
-		if (oe_type(&objects[i]) != OBJ_COMMIT &&
-		    oe_type(&objects[i]) != OBJ_TAG)
-			continue;
-		add_to_write_order(wo, &wo_end, &objects[i]);
-	}
-
-	/*
-	 * And then all the trees.
-	 */
-	for (i = last_untagged; i < to_pack.nr_objects; i++) {
-		if (oe_type(&objects[i]) != OBJ_TREE)
-			continue;
-		add_to_write_order(wo, &wo_end, &objects[i]);
-	}
-
-	/*
-	 * Finally all the rest in really tight order
-	 */
-	for (i = last_untagged; i < to_pack.nr_objects; i++) {
-		if (!objects[i].filled)
-			add_family_to_write_order(wo, &wo_end, &objects[i]);
-	}
+	for (; write_layer < max_layers; ++write_layer)
+		compute_layer_order(wo, &wo_end);
 
 	if (wo_end != to_pack.nr_objects)
 		die(_("ordered %u objects, expected %"PRIu32),
@@ -1544,7 +1559,8 @@ static void check_object(struct object_entry *entry)
 		if (base_ref && (
 		    (base_entry = packlist_find(&to_pack, base_ref, NULL)) ||
 		    (thin &&
-		     bitmap_has_sha1_in_uninteresting(bitmap_git, base_ref)))) {
+		     bitmap_has_sha1_in_uninteresting(bitmap_git, base_ref))) &&
+		    in_same_island(&entry->idx.oid, &base_entry->idx.oid)) {
 			/*
 			 * If base_ref was set above that means we wish to
 			 * reuse delta data, and either we found that object in
@@ -1867,6 +1883,11 @@ static int type_size_sort(const void *_a, const void *_b)
 		return -1;
 	if (a->preferred_base < b->preferred_base)
 		return 1;
+	if (use_delta_islands) {
+		int island_cmp = island_delta_cmp(&a->idx.oid, &b->idx.oid);
+		if (island_cmp)
+			return island_cmp;
+	}
 	if (a_size > b_size)
 		return -1;
 	if (a_size < b_size)
@@ -2025,6 +2046,9 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 	if (sizediff >= max_size)
 		return 0;
 	if (trg_size < src_size / 32)
+		return 0;
+
+	if (!in_same_island(&trg->entry->idx.oid, &src->entry->idx.oid))
 		return 0;
 
 	/* Load data if not already done */
@@ -2569,6 +2593,9 @@ static void prepare_pack(int window, int depth)
 	uint32_t i, nr_deltas;
 	unsigned n;
 
+	if (use_delta_islands)
+		resolve_tree_islands(progress, &to_pack);
+
 	get_object_details();
 
 	/*
@@ -2732,6 +2759,9 @@ static void show_commit(struct commit *commit, void *data)
 
 	if (write_bitmap_index)
 		index_commit_for_bitmap(commit);
+
+	if (use_delta_islands)
+		propagate_island_marks(commit);
 }
 
 static void show_object(struct object *obj, const char *name, void *data)
@@ -2739,6 +2769,19 @@ static void show_object(struct object *obj, const char *name, void *data)
 	add_preferred_base_object(name);
 	add_object_entry(&obj->oid, obj->type, name, 0);
 	obj->flags |= OBJECT_ADDED;
+
+	if (use_delta_islands) {
+		const char *p;
+		unsigned depth = 0;
+		struct object_entry *ent;
+
+		for (p = strchr(name, '/'); p; p = strchr(p + 1, '/'))
+			depth++;
+
+		ent = packlist_find(&to_pack, obj->oid.hash, NULL);
+		if (ent && depth > oe_tree_depth(&to_pack, ent))
+			oe_set_tree_depth(&to_pack, ent, depth);
+	}
 }
 
 static void show_object__ma_allow_any(struct object *obj, const char *name, void *data)
@@ -3064,6 +3107,9 @@ static void get_object_list(int ac, const char **av)
 	if (use_bitmap_index && !get_object_list_from_bitmap(&revs))
 		return;
 
+	if (use_delta_islands)
+		load_delta_islands();
+
 	if (prepare_revision_walk(&revs))
 		die(_("revision walk setup failed"));
 	mark_edges_uninteresting(&revs, show_edge);
@@ -3242,6 +3288,8 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		  option_parse_missing_action },
 		OPT_BOOL(0, "exclude-promisor-objects", &exclude_promisor_objects,
 			 N_("do not pack objects in promisor packfiles")),
+		OPT_BOOL(0, "delta-islands", &use_delta_islands,
+			 N_("respect islands during delta compression")),
 		OPT_END(),
 	};
 
@@ -3367,6 +3415,9 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 
 	if (pack_to_stdout || !rev_list_all)
 		write_bitmap_index = 0;
+
+	if (use_delta_islands)
+		argv_array_push(&rp, "--topo-order");
 
 	if (progress && all_progress_implied)
 		progress = 2;

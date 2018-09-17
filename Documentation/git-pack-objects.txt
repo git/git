@@ -289,6 +289,103 @@ Unexpected missing object will raise an error.
 --unpack-unreachable::
 	Keep unreachable objects in loose form. This implies `--revs`.
 
+--delta-islands::
+	Restrict delta matches based on "islands". See DELTA ISLANDS
+	below.
+
+
+DELTA ISLANDS
+-------------
+
+When possible, `pack-objects` tries to reuse existing on-disk deltas to
+avoid having to search for new ones on the fly. This is an important
+optimization for serving fetches, because it means the server can avoid
+inflating most objects at all and just send the bytes directly from
+disk. This optimization can't work when an object is stored as a delta
+against a base which the receiver does not have (and which we are not
+already sending). In that case the server "breaks" the delta and has to
+find a new one, which has a high CPU cost. Therefore it's important for
+performance that the set of objects in on-disk delta relationships match
+what a client would fetch.
+
+In a normal repository, this tends to work automatically. The objects
+are mostly reachable from the branches and tags, and that's what clients
+fetch. Any deltas we find on the server are likely to be between objects
+the client has or will have.
+
+But in some repository setups, you may have several related but separate
+groups of ref tips, with clients tending to fetch those groups
+independently. For example, imagine that you are hosting several "forks"
+of a repository in a single shared object store, and letting clients
+view them as separate repositories through `GIT_NAMESPACE` or separate
+repos using the alternates mechanism. A naive repack may find that the
+optimal delta for an object is against a base that is only found in
+another fork. But when a client fetches, they will not have the base
+object, and we'll have to find a new delta on the fly.
+
+A similar situation may exist if you have many refs outside of
+`refs/heads/` and `refs/tags/` that point to related objects (e.g.,
+`refs/pull` or `refs/changes` used by some hosting providers). By
+default, clients fetch only heads and tags, and deltas against objects
+found only in those other groups cannot be sent as-is.
+
+Delta islands solve this problem by allowing you to group your refs into
+distinct "islands". Pack-objects computes which objects are reachable
+from which islands, and refuses to make a delta from an object `A`
+against a base which is not present in all of `A`'s islands. This
+results in slightly larger packs (because we miss some delta
+opportunities), but guarantees that a fetch of one island will not have
+to recompute deltas on the fly due to crossing island boundaries.
+
+When repacking with delta islands the delta window tends to get
+clogged with candidates that are forbidden by the config. Repacking
+with a big --window helps (and doesn't take as long as it otherwise
+might because we can reject some object pairs based on islands before
+doing any computation on the content).
+
+Islands are configured via the `pack.island` option, which can be
+specified multiple times. Each value is a left-anchored regular
+expressions matching refnames. For example:
+
+-------------------------------------------
+[pack]
+island = refs/heads/
+island = refs/tags/
+-------------------------------------------
+
+puts heads and tags into an island (whose name is the empty string; see
+below for more on naming). Any refs which do not match those regular
+expressions (e.g., `refs/pull/123`) is not in any island. Any object
+which is reachable only from `refs/pull/` (but not heads or tags) is
+therefore not a candidate to be used as a base for `refs/heads/`.
+
+Refs are grouped into islands based on their "names", and two regexes
+that produce the same name are considered to be in the same
+island. The names are computed from the regexes by concatenating any
+capture groups from the regex, with a '-' dash in between. (And if
+there are no capture groups, then the name is the empty string, as in
+the above example.) This allows you to create arbitrary numbers of
+islands. Only up to 14 such capture groups are supported though.
+
+For example, imagine you store the refs for each fork in
+`refs/virtual/ID`, where `ID` is a numeric identifier. You might then
+configure:
+
+-------------------------------------------
+[pack]
+island = refs/virtual/([0-9]+)/heads/
+island = refs/virtual/([0-9]+)/tags/
+island = refs/virtual/([0-9]+)/(pull)/
+-------------------------------------------
+
+That puts the heads and tags for each fork in their own island (named
+"1234" or similar), and the pull refs for each go into their own
+"1234-pull".
+
+Note that we pick a single island for each regex to go into, using "last
+one wins" ordering (which allows repo-specific config to take precedence
+over user-wide config, and so forth).
+
 SEE ALSO
 --------
 linkgit:git-rev-list[1]

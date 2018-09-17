@@ -2684,6 +2684,21 @@ Note that changing the compression level will not automatically recompress
 all existing objects. You can force recompression by passing the -F option
 to linkgit:git-repack[1].
 
+pack.island::
+	An extended regular expression configuring a set of delta
+	islands. See "DELTA ISLANDS" in linkgit:git-pack-objects[1]
+	for details.
+
+pack.islandCore::
+	Specify an island name which gets to have its objects be
+	packed first. This creates a kind of pseudo-pack at the front
+	of one pack, so that the objects from the specified island are
+	hopefully faster to copy into any pack that should be served
+	to a user requesting these objects. In practice this means
+	that the island specified should likely correspond to what is
+	the most commonly cloned in the repo. See also "DELTA ISLANDS"
+	in linkgit:git-pack-objects[1].
+
 pack.deltaCacheSize::
 	The maximum memory in bytes used for caching deltas in
 	linkgit:git-pack-objects[1] before writing them out to a pack.
@@ -3217,6 +3232,10 @@ repack.packKeptObjects::
 	details. Defaults to `false` normally, but `true` if a bitmap
 	index is being written (either via `--write-bitmap-index` or
 	`repack.writeBitmaps`).
+
+repack.useDeltaIslands::
+	If set to true, makes `git repack` act as if `--delta-islands`
+	was passed. Defaults to `false`.
 
 repack.writeBitmaps::
 	When true, git will write a bitmap index when packing all
