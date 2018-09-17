@@ -194,6 +194,11 @@ struct diff_options {
 	FILE *file;
 	int close_file;
 
+#define OUTPUT_INDICATOR_NEW 0
+#define OUTPUT_INDICATOR_OLD 1
+#define OUTPUT_INDICATOR_CONTEXT 2
+	char output_indicators[3];
+
 	struct pathspec pathspec;
 	pathchange_fn_t pathchange;
 	change_fn_t change;
