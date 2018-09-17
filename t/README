@@ -319,6 +319,10 @@ GIT_TEST_OE_DELTA_SIZE=<n> exercises the uncomon pack-objects code
 path where deltas larger than this limit require extra memory
 allocation for bookkeeping.
 
+GIT_TEST_VALIDATE_INDEX_CACHE_ENTRIES=<boolean> checks that cache-tree
+records are valid when the index is written out or after a merge. This
+is mostly to catch missing invalidation. Default is true.
+
 Naming Tests
 ------------
 
