@@ -80,7 +80,9 @@ GitHub-Travis CI hints section for details.
 
 Do not forget to update the documentation to describe the updated
 behavior and make sure that the resulting documentation set formats
-well. It is currently a liberal mixture of US and UK English norms for
+well (try the Documentation/doc-diff script).
+
+We currently have a liberal mixture of US and UK English norms for
 spelling and grammar, which is somewhat unfortunate.  A huge patch that
 touches the files all over the place only to correct the inconsistency
 is not welcome, though.  Potential clashes with other changes that can
