@@ -34,8 +34,8 @@ int cmd__delta(int argc, const char **argv)
 		return 1;
 	}
 	from_size = st.st_size;
-	from_buf = mmap(NULL, from_size, PROT_READ, MAP_PRIVATE, fd, 0);
-	if (from_buf == MAP_FAILED) {
+	from_buf = xmalloc(from_size);
+	if (read_in_full(fd, from_buf, from_size) < 0) {
 		perror(argv[2]);
 		close(fd);
 		return 1;
@@ -48,8 +48,8 @@ int cmd__delta(int argc, const char **argv)
 		return 1;
 	}
 	data_size = st.st_size;
-	data_buf = mmap(NULL, data_size, PROT_READ, MAP_PRIVATE, fd, 0);
-	if (data_buf == MAP_FAILED) {
+	data_buf = xmalloc(data_size);
+	if (read_in_full(fd, data_buf, data_size) < 0) {
 		perror(argv[3]);
 		close(fd);
 		return 1;
