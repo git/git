@@ -399,6 +399,34 @@ static int check_path(const char *path, int len, struct stat *st, int skiplen)
 	return lstat(path, st);
 }
 
+static void mark_colliding_entries(const struct checkout *state,
+				   struct cache_entry *ce, struct stat *st)
+{
+	int i, trust_ino = check_stat;
+
+#if defined(GIT_WINDOWS_NATIVE)
+	trust_ino = 0;
+#endif
+
+	ce->ce_flags |= CE_MATCHED;
+
+	for (i = 0; i < state->istate->cache_nr; i++) {
+		struct cache_entry *dup = state->istate->cache[i];
+
+		if (dup == ce)
+			break;
+
+		if (dup->ce_flags & (CE_MATCHED | CE_VALID | CE_SKIP_WORKTREE))
+			continue;
+
+		if ((trust_ino && dup->ce_stat_data.sd_ino == st->st_ino) ||
+		    (!trust_ino && !fspathcmp(ce->name, dup->name))) {
+			dup->ce_flags |= CE_MATCHED;
+			break;
+		}
+	}
+}
+
 /*
  * Write the contents from ce out to the working tree.
  *
@@ -455,6 +483,9 @@ int checkout_entry(struct cache_entry *ce,
 					path.buf);
 			return -1;
 		}
+
+		if (state->clone)
+			mark_colliding_entries(state, ce, &st);
 
 		/*
 		 * We unlink the old file, to get the new one with the

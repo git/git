@@ -336,6 +336,46 @@ static struct progress *get_progress(struct unpack_trees_options *o)
 	return start_delayed_progress(_("Checking out files"), total);
 }
 
+static void setup_collided_checkout_detection(struct checkout *state,
+					      struct index_state *index)
+{
+	int i;
+
+	state->clone = 1;
+	for (i = 0; i < index->cache_nr; i++)
+		index->cache[i]->ce_flags &= ~CE_MATCHED;
+}
+
+static void report_collided_checkout(struct index_state *index)
+{
+	struct string_list list = STRING_LIST_INIT_NODUP;
+	int i;
+
+	for (i = 0; i < index->cache_nr; i++) {
+		struct cache_entry *ce = index->cache[i];
+
+		if (!(ce->ce_flags & CE_MATCHED))
+			continue;
+
+		string_list_append(&list, ce->name);
+		ce->ce_flags &= ~CE_MATCHED;
+	}
+
+	list.cmp = fspathcmp;
+	string_list_sort(&list);
+
+	if (list.nr) {
+		warning(_("the following paths have collided (e.g. case-sensitive paths\n"
+			  "on a case-insensitive filesystem) and only one from the same\n"
+			  "colliding group is in the working tree:\n"));
+
+		for (i = 0; i < list.nr; i++)
+			fprintf(stderr, "  '%s'\n", list.items[i].string);
+	}
+
+	string_list_clear(&list, 0);
+}
+
 static int check_updates(struct unpack_trees_options *o)
 {
 	unsigned cnt = 0;
@@ -349,6 +389,9 @@ static int check_updates(struct unpack_trees_options *o)
 	state.quiet = 1;
 	state.refresh_cache = 1;
 	state.istate = index;
+
+	if (o->clone)
+		setup_collided_checkout_detection(&state, index);
 
 	progress = get_progress(o);
 
@@ -414,6 +457,10 @@ static int check_updates(struct unpack_trees_options *o)
 	errs |= finish_delayed_checkout(&state);
 	if (o->update)
 		git_attr_set_direction(GIT_ATTR_CHECKIN);
+
+	if (o->clone)
+		report_collided_checkout(index);
+
 	return errs != 0;
 }
 
