@@ -56,8 +56,9 @@ least one Git-generated or user-configured trailer and consists of at
 least 25% trailers.
 The group must be preceded by one or more empty (or whitespace-only) lines.
 The group must either be at the end of the message or be the last
-non-whitespace lines before a line that starts with '---'. Such three
-minus signs start the patch part of the message.
+non-whitespace lines before a line that starts with '---' (followed by a
+space or the end of the line). Such three minus signs start the patch
+part of the message. See also `--no-divider` below.
 
 When reading trailers, there can be whitespaces after the
 token, the separator and the value. There can also be whitespaces
@@ -124,6 +125,11 @@ OPTIONS
 --parse::
 	A convenience alias for `--only-trailers --only-input
 	--unfold`.
+
+--no-divider::
+	Do not treat `---` as the end of the commit message. Use this
+	when you know your input contains just the commit message itself
+	(and not an email or the output of `git format-patch`).
 
 CONFIGURATION VARIABLES
 -----------------------

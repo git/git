@@ -264,6 +264,8 @@ static int trailers_atom_parser(const struct ref_format *format, struct used_ato
 	struct string_list params = STRING_LIST_INIT_DUP;
 	int i;
 
+	atom->u.contents.trailer_opts.no_divider = 1;
+
 	if (arg) {
 		string_list_split(&params, arg, ',', -1);
 		for (i = 0; i < params.nr; i++) {

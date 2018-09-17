@@ -1426,10 +1426,10 @@ const char *find_commit_header(const char *msg, const char *key, size_t *out_len
  * Returns the number of bytes from the tail to ignore, to be fed as
  * the second parameter to append_signoff().
  */
-int ignore_non_trailer(const char *buf, size_t len)
+size_t ignore_non_trailer(const char *buf, size_t len)
 {
-	int boc = 0;
-	int bol = 0;
+	size_t boc = 0;
+	size_t bol = 0;
 	int in_old_conflicts_block = 0;
 	size_t cutoff = wt_status_locate_end(buf, len);
 

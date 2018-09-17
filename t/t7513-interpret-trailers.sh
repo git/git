@@ -1417,4 +1417,46 @@ test_expect_success 'unfold' '
 	test_cmp expected actual
 '
 
+test_expect_success 'handling of --- lines in input' '
+	echo "real-trailer: just right" >expected &&
+
+	git interpret-trailers --parse >actual <<-\EOF &&
+	subject
+
+	body
+
+	not-a-trailer: too soon
+	------ this is just a line in the commit message with a bunch of
+	------ dashes; it does not have any syntactic meaning.
+
+	real-trailer: just right
+	---
+	below the dashed line may be a patch, etc.
+
+	not-a-trailer: too late
+	EOF
+
+	test_cmp expected actual
+'
+
+test_expect_success 'suppress --- handling' '
+	echo "real-trailer: just right" >expected &&
+
+	git interpret-trailers --parse --no-divider >actual <<-\EOF &&
+	subject
+
+	This commit message has a "---" in it, but because we tell
+	interpret-trailers not to respect that, it has no effect.
+
+	not-a-trailer: too soon
+	---
+
+	This is still the commit message body.
+
+	real-trailer: just right
+	EOF
+
+	test_cmp expected actual
+'
+
 test_done

@@ -715,6 +715,29 @@ test_expect_success 'basic atom: head contents:trailers' '
 	test_cmp expect actual.clean
 '
 
+test_expect_success 'trailer parsing not fooled by --- line' '
+	git commit --allow-empty -F - <<-\EOF &&
+	this is the subject
+
+	This is the body. The message has a "---" line which would confuse a
+	message+patch parser. But here we know we have only a commit message,
+	so we get it right.
+
+	trailer: wrong
+	---
+	This is more body.
+
+	trailer: right
+	EOF
+
+	{
+		echo "trailer: right" &&
+		echo
+	} >expect &&
+	git for-each-ref --format="%(trailers)" refs/heads/master >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'Add symbolic ref for the following tests' '
 	git symbolic-ref refs/heads/sym refs/heads/master
 '

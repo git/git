@@ -90,7 +90,14 @@ int rearrange_squash(void);
 
 extern const char sign_off_header[];
 
-void append_signoff(struct strbuf *msgbuf, int ignore_footer, unsigned flag);
+/*
+ * Append a signoff to the commit message in "msgbuf". The ignore_footer
+ * parameter specifies the number of bytes at the end of msgbuf that should
+ * not be considered at all. I.e., they are not checked for existing trailers,
+ * and the new signoff will be spliced into the buffer before those bytes.
+ */
+void append_signoff(struct strbuf *msgbuf, size_t ignore_footer, unsigned flag);
+
 void append_conflicts_hint(struct strbuf *msgbuf);
 int message_is_empty(const struct strbuf *sb,
 		     enum commit_msg_cleanup_mode cleanup_mode);
