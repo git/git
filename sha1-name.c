@@ -13,6 +13,7 @@
 #include "object-store.h"
 #include "repository.h"
 #include "midx.h"
+#include "commit-reach.h"
 
 static int get_oid_oneline(const char *, struct object_id *, struct commit_list *);
 

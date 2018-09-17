@@ -11,6 +11,7 @@
 #include "pack-bitmap.h"
 #include "sha1-lookup.h"
 #include "pack-objects.h"
+#include "commit-reach.h"
 
 struct bitmapped_commit {
 	struct commit *commit;

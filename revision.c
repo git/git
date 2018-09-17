@@ -24,6 +24,7 @@
 #include "packfile.h"
 #include "worktree.h"
 #include "argv-array.h"
+#include "commit-reach.h"
 
 volatile show_early_output_fn_t show_early_output;
 

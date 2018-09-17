@@ -151,7 +151,6 @@ extern struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
 				    const struct string_list *server_options);
 
 int resolve_remote_symref(struct ref *ref, struct ref *list);
-int ref_newer(const struct object_id *new_oid, const struct object_id *old_oid);
 
 /*
  * Remove and free all but the first of any entries in the input list

@@ -22,6 +22,7 @@
 #include "tempfile.h"
 #include "lockfile.h"
 #include "wt-status.h"
+#include "commit-reach.h"
 
 enum rebase_type {
 	REBASE_INVALID = -1,

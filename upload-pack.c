@@ -24,13 +24,13 @@
 #include "quote.h"
 #include "upload-pack.h"
 #include "serve.h"
+#include "commit-reach.h"
 
 /* Remember to update object flag allocation in object.h */
 #define THEY_HAVE	(1u << 11)
 #define OUR_REF		(1u << 12)
 #define WANTED		(1u << 13)
 #define COMMON_KNOWN	(1u << 14)
-#define REACHABLE	(1u << 15)
 
 #define SHALLOW		(1u << 16)
 #define NOT_SHALLOW	(1u << 17)
@@ -337,64 +337,16 @@ static int got_oid(const char *hex, struct object_id *oid)
 	return 0;
 }
 
-static int reachable(struct commit *want)
-{
-	struct prio_queue work = { compare_commits_by_commit_date };
-
-	prio_queue_put(&work, want);
-	while (work.nr) {
-		struct commit_list *list;
-		struct commit *commit = prio_queue_get(&work);
-
-		if (commit->object.flags & THEY_HAVE) {
-			want->object.flags |= COMMON_KNOWN;
-			break;
-		}
-		if (!commit->object.parsed)
-			parse_object(the_repository, &commit->object.oid);
-		if (commit->object.flags & REACHABLE)
-			continue;
-		commit->object.flags |= REACHABLE;
-		if (commit->date < oldest_have)
-			continue;
-		for (list = commit->parents; list; list = list->next) {
-			struct commit *parent = list->item;
-			if (!(parent->object.flags & REACHABLE))
-				prio_queue_put(&work, parent);
-		}
-	}
-	want->object.flags |= REACHABLE;
-	clear_commit_marks(want, REACHABLE);
-	clear_prio_queue(&work);
-	return (want->object.flags & COMMON_KNOWN);
-}
-
 static int ok_to_give_up(void)
 {
-	int i;
+	uint32_t min_generation = GENERATION_NUMBER_ZERO;
 
 	if (!have_obj.nr)
 		return 0;
 
-	for (i = 0; i < want_obj.nr; i++) {
-		struct object *want = want_obj.objects[i].item;
-
-		if (want->flags & COMMON_KNOWN)
-			continue;
-		want = deref_tag(the_repository, want, "a want line", 0);
-		if (!want || want->type != OBJ_COMMIT) {
-			/* no way to tell if this is reachable by
-			 * looking at the ancestry chain alone, so
-			 * leave a note to ourselves not to worry about
-			 * this object anymore.
-			 */
-			want_obj.objects[i].item->flags |= COMMON_KNOWN;
-			continue;
-		}
-		if (!reachable((struct commit *)want))
-			return 0;
-	}
-	return 1;
+	return can_all_from_reach_with_flag(&want_obj, THEY_HAVE,
+					    COMMON_KNOWN, oldest_have,
+					    min_generation);
 }
 
 static int get_common_commits(void)

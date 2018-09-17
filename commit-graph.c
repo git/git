@@ -233,6 +233,24 @@ static int prepare_commit_graph(struct repository *r)
 	return !!r->objects->commit_graph;
 }
 
+int generation_numbers_enabled(struct repository *r)
+{
+	uint32_t first_generation;
+	struct commit_graph *g;
+	if (!prepare_commit_graph(r))
+	       return 0;
+
+	g = r->objects->commit_graph;
+
+	if (!g->num_commits)
+		return 0;
+
+	first_generation = get_be32(g->chunk_commit_data +
+				    g->hash_len + 8) >> 2;
+
+	return !!first_generation;
+}
+
 static void close_commit_graph(void)
 {
 	free_commit_graph(the_repository->objects->commit_graph);

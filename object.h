@@ -63,12 +63,12 @@ struct object_array {
  * fetch-pack.c:             01
  * negotiator/default.c:       2--5
  * walker.c:                 0-2
- * upload-pack.c:                4       11----------------19
+ * upload-pack.c:                4       11-----14  16-----19
  * builtin/blame.c:                        12-13
  * bisect.c:                                        16
  * bundle.c:                                        16
  * http-push.c:                                     16-----19
- * commit.c:                                        16-----19
+ * commit-reach.c:                                15-------19
  * sha1-name.c:                                              20
  * list-objects-filter.c:                                      21
  * builtin/fsck.c:           0--3
