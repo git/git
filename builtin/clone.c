@@ -900,6 +900,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	struct refspec rs = REFSPEC_INIT_FETCH;
 	struct argv_array ref_prefixes = ARGV_ARRAY_INIT;
 
+	git_config(platform_core_config, NULL);
 	fetch_if_missing = 0;
 
 	packet_trace_identity("clone");
@@ -1166,7 +1167,9 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 			}
 
 		if (!is_local && !complete_refs_before_fetch)
-			transport_fetch_refs(transport, mapped_refs);
+			if (transport_fetch_refs(transport, mapped_refs))
+				die(_("could not fetch refs from %s"),
+				    transport->url);
 
 		remote_head = find_ref_by_name(refs, "HEAD");
 		remote_head_points_at =

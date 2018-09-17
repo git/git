@@ -239,7 +239,7 @@ static int edit_patch(int argc, const char **argv, const char *prefix)
 	rev.diffopt.output_format = DIFF_FORMAT_PATCH;
 	rev.diffopt.use_color = 0;
 	rev.diffopt.flags.ignore_dirty_submodules = 1;
-	out = open(file, O_CREAT | O_WRONLY, 0666);
+	out = open(file, O_CREAT | O_WRONLY | O_TRUNC, 0666);
 	if (out < 0)
 		die(_("Could not open '%s' for writing."), file);
 	rev.diffopt.file = xfdopen(out, "w");
@@ -460,6 +460,10 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 		       prefix, argv);
 
 	die_path_inside_submodule(&the_index, &pathspec);
+
+	enable_fscache(1);
+	/* We do not really re-read the index but update the up-to-date flags */
+	preload_index(&the_index, &pathspec);
 
 	if (add_new_files) {
 		int baselen;

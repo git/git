@@ -1093,7 +1093,7 @@ int git_config_color(char *dest, const char *var, const char *value)
 	return 0;
 }
 
-static int git_default_core_config(const char *var, const char *value)
+static int git_default_core_config(const char *var, const char *value, void *cb)
 {
 	/* This needs a better name */
 	if (!strcmp(var, "core.filemode")) {
@@ -1344,14 +1344,6 @@ static int git_default_core_config(const char *var, const char *value)
 		return 0;
 	}
 
-	if (!strcmp(var, "core.hidedotfiles")) {
-		if (value && !strcasecmp(value, "dotgitonly"))
-			hide_dotfiles = HIDE_DOTFILES_DOTGITONLY;
-		else
-			hide_dotfiles = git_config_bool(var, value);
-		return 0;
-	}
-
 	if (!strcmp(var, "core.partialclonefilter")) {
 		return git_config_string(&core_partial_clone_filter_default,
 					 var, value);
@@ -1363,7 +1355,7 @@ static int git_default_core_config(const char *var, const char *value)
 	}
 
 	/* Add other config variables here and to Documentation/config.txt. */
-	return 0;
+	return platform_core_config(var, value, cb);
 }
 
 static int git_default_i18n_config(const char *var, const char *value)
@@ -1448,13 +1440,13 @@ static int git_default_mailmap_config(const char *var, const char *value)
 	return 0;
 }
 
-int git_default_config(const char *var, const char *value, void *dummy)
+int git_default_config(const char *var, const char *value, void *cb)
 {
 	if (starts_with(var, "core."))
-		return git_default_core_config(var, value);
+		return git_default_core_config(var, value, cb);
 
 	if (starts_with(var, "user."))
-		return git_ident_config(var, value, dummy);
+		return git_ident_config(var, value, cb);
 
 	if (starts_with(var, "i18n."))
 		return git_default_i18n_config(var, value);
@@ -1676,13 +1668,22 @@ static int do_git_config_sequence(const struct config_options *opts,
 
 	if (opts->commondir)
 		repo_config = mkpathdup("%s/config", opts->commondir);
+	else if (opts->git_dir)
+		repo_config = mkpathdup("%s/config", opts->git_dir);
 	else
 		repo_config = NULL;
 
 	current_parsing_scope = CONFIG_SCOPE_SYSTEM;
-	if (git_config_system() && !access_or_die(git_etc_gitconfig(), R_OK, 0))
-		ret += git_config_from_file(fn, git_etc_gitconfig(),
-					    data);
+	if (git_config_system()) {
+		if (git_program_data_config() &&
+		    !access_or_die(git_program_data_config(), R_OK, 0))
+			ret += git_config_from_file(fn,
+						    git_program_data_config(),
+						    data);
+		if (!access_or_die(git_etc_gitconfig(), R_OK, 0))
+			ret += git_config_from_file(fn, git_etc_gitconfig(),
+						    data);
+	}
 
 	current_parsing_scope = CONFIG_SCOPE_GLOBAL;
 	if (xdg_config && !access_or_die(xdg_config, R_OK, ACCESS_EACCES_OK))

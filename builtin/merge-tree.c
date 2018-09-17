@@ -6,6 +6,7 @@
 #include "blob.h"
 #include "exec-cmd.h"
 #include "merge-blobs.h"
+#include "config.h"
 
 static const char merge_tree_usage[] = "git merge-tree <base-tree> <branch1> <branch2>";
 
@@ -369,6 +370,7 @@ int cmd_merge_tree(int argc, const char **argv, const char *prefix)
 	if (argc != 4)
 		usage(merge_tree_usage);
 
+	git_config(git_default_config, NULL);
 	buf1 = get_tree_descriptor(t+0, argv[1]);
 	buf2 = get_tree_descriptor(t+1, argv[2]);
 	buf3 = get_tree_descriptor(t+2, argv[3]);

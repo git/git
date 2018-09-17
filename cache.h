@@ -659,6 +659,7 @@ extern int daemonize(void);
 /* Initialize and use the cache information */
 struct lock_file;
 extern int read_index(struct index_state *);
+extern void preload_index(struct index_state *, const struct pathspec *pathspec);
 extern int read_index_preload(struct index_state *, const struct pathspec *pathspec);
 extern int do_read_index(struct index_state *istate, const char *path,
 			 int must_exist); /* for testting only! */
@@ -900,14 +901,6 @@ int use_optional_locks(void);
  */
 extern char comment_line_char;
 extern int auto_comment_line_char;
-
-/* Windows only */
-enum hide_dotfiles_type {
-	HIDE_DOTFILES_FALSE = 0,
-	HIDE_DOTFILES_TRUE,
-	HIDE_DOTFILES_DOTGITONLY
-};
-extern enum hide_dotfiles_type hide_dotfiles;
 
 enum log_refs_config {
 	LOG_REFS_UNSET = -1,
@@ -1319,6 +1312,7 @@ struct object_context {
 	GET_OID_BLOB)
 
 extern int get_oid(const char *str, struct object_id *oid);
+extern int get_oidf(struct object_id *oid, const char *fmt, ...);
 extern int get_oid_commit(const char *str, struct object_id *oid);
 extern int get_oid_committish(const char *str, struct object_id *oid);
 extern int get_oid_tree(const char *str, struct object_id *oid);
@@ -1472,6 +1466,7 @@ extern const char *fmt_name(const char *name, const char *email);
 extern const char *ident_default_name(void);
 extern const char *ident_default_email(void);
 extern const char *git_editor(void);
+extern const char *git_sequence_editor(void);
 extern const char *git_pager(int stdout_is_tty);
 extern int is_terminal_dumb(void);
 extern int git_ident_config(const char *, const char *, void *);
