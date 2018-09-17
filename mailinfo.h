@@ -22,6 +22,8 @@ struct mailinfo {
 	struct strbuf *content[MAX_BOUNDARIES];
 	struct strbuf **content_top;
 	struct strbuf charset;
+	unsigned int format_flowed:1;
+	unsigned int delsp:1;
 	char *message_id;
 	enum  {
 		TE_DONTCARE, TE_QP, TE_BASE64
