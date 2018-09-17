@@ -217,7 +217,11 @@ struct worktree *find_worktree(struct worktree **list,
 
 	if (prefix)
 		arg = to_free = prefix_filename(prefix, arg);
-	path = real_pathdup(arg, 1);
+	path = real_pathdup(arg, 0);
+	if (!path) {
+		free(to_free);
+		return NULL;
+	}
 	for (; *list; list++)
 		if (!fspathcmp(path, real_path((*list)->path)))
 			break;

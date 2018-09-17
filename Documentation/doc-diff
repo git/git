@@ -75,7 +75,7 @@ fi
 # results that don't differ between the two trees.
 if ! test -d "$tmp/worktree"
 then
-	git worktree add --detach "$tmp/worktree" "$from" &&
+	git worktree add -f --detach "$tmp/worktree" "$from" &&
 	dots=$(echo "$tmp/worktree" | sed 's#[^/]*#..#g') &&
 	ln -s "$dots/config.mak" "$tmp/worktree/config.mak"
 fi

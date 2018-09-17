@@ -120,8 +120,16 @@ OPTIONS
 --force::
 	By default, `add` refuses to create a new working tree when
 	`<commit-ish>` is a branch name and is already checked out by
-	another working tree and `remove` refuses to remove an unclean
-	working tree. This option overrides these safeguards.
+	another working tree, or if `<path>` is already assigned to some
+	working tree but is missing (for instance, if `<path>` was deleted
+	manually). This option overrides these safeguards. To add a missing but
+	locked working tree path, specify `--force` twice.
++
+`move` refuses to move a locked working tree unless `--force` is specified
+twice.
++
+`remove` refuses to remove an unclean working tree unless `--force` is used.
+To remove a locked working tree, specify `--force` twice.
 
 -b <new-branch>::
 -B <new-branch>::

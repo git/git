@@ -552,4 +552,22 @@ test_expect_success '"add" in bare repo invokes post-checkout hook' '
 	test_cmp hook.expect goozy/hook.actual
 '
 
+test_expect_success '"add" an existing but missing worktree' '
+	git worktree add --detach pneu &&
+	test_must_fail git worktree add --detach pneu &&
+	rm -fr pneu &&
+	test_must_fail git worktree add --detach pneu &&
+	git worktree add --force --detach pneu
+'
+
+test_expect_success '"add" an existing locked but missing worktree' '
+	git worktree add --detach gnoo &&
+	git worktree lock gnoo &&
+	test_when_finished "git worktree unlock gnoo || :" &&
+	rm -fr gnoo &&
+	test_must_fail git worktree add --detach gnoo &&
+	test_must_fail git worktree add --force --detach gnoo &&
+	git worktree add --force --force --detach gnoo
+'
+
 test_done
