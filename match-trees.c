@@ -106,7 +106,7 @@ static int score_trees(const struct object_id *hash1, const struct object_id *ha
 			update_tree_entry(&two);
 		} else {
 			/* path appears in both */
-			if (oidcmp(one.entry.oid, two.entry.oid)) {
+			if (!oideq(one.entry.oid, two.entry.oid)) {
 				/* they are different */
 				score += score_differs(one.entry.mode,
 						       two.entry.mode,

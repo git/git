@@ -239,7 +239,7 @@ static int will_fetch(struct ref **head, const unsigned char *sha1)
 {
 	struct ref *rm = *head;
 	while (rm) {
-		if (!hashcmp(rm->old_oid.hash, sha1))
+		if (hasheq(rm->old_oid.hash, sha1))
 			return 1;
 		rm = rm->next;
 	}
@@ -508,7 +508,7 @@ static void adjust_refcol_width(const struct ref *ref)
 	int max, rlen, llen, len;
 
 	/* uptodate lines are only shown on high verbosity level */
-	if (!verbosity && !oidcmp(&ref->peer_ref->old_oid, &ref->old_oid))
+	if (!verbosity && oideq(&ref->peer_ref->old_oid, &ref->old_oid))
 		return;
 
 	max    = term_columns();
@@ -645,7 +645,7 @@ static int update_local_ref(struct ref *ref,
 	if (type < 0)
 		die(_("object %s not found"), oid_to_hex(&ref->new_oid));
 
-	if (!oidcmp(&ref->old_oid, &ref->new_oid)) {
+	if (oideq(&ref->old_oid, &ref->new_oid)) {
 		if (verbosity > 0)
 			format_display(display, '=', _("[up to date]"), NULL,
 				       remote, pretty_ref, summary_width);

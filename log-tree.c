@@ -474,7 +474,7 @@ static int which_parent(const struct object_id *oid, const struct commit *commit
 	const struct commit_list *parent;
 
 	for (nth = 0, parent = commit->parents; parent; parent = parent->next) {
-		if (!oidcmp(&parent->item->object.oid, oid))
+		if (oideq(&parent->item->object.oid, oid))
 			return nth;
 		nth++;
 	}
@@ -508,8 +508,8 @@ static int show_one_mergetag(struct commit *commit,
 	if (parse_tag_buffer(the_repository, tag, extra->value, extra->len))
 		strbuf_addstr(&verify_message, "malformed mergetag\n");
 	else if (is_common_merge(commit) &&
-		 !oidcmp(&tag->tagged->oid,
-			  &commit->parents->next->item->object.oid))
+		 oideq(&tag->tagged->oid,
+		       &commit->parents->next->item->object.oid))
 		strbuf_addf(&verify_message,
 			    "merged tag '%s'\n", tag->tag);
 	else if ((nth = which_parent(&tag->tagged->oid, commit)) < 0)

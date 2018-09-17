@@ -669,7 +669,7 @@ static int unresolve_one(const char *path)
 		ret = -1;
 		goto free_return;
 	}
-	if (!oidcmp(&ce_2->oid, &ce_3->oid) &&
+	if (oideq(&ce_2->oid, &ce_3->oid) &&
 	    ce_2->ce_mode == ce_3->ce_mode) {
 		fprintf(stderr, "%s: identical in both, skipping.\n",
 			path);
@@ -754,7 +754,7 @@ static int do_reupdate(int ac, const char **av,
 			old = read_one_ent(NULL, &head_oid,
 					   ce->name, ce_namelen(ce), 0);
 		if (old && ce->ce_mode == old->ce_mode &&
-		    !oidcmp(&ce->oid, &old->oid)) {
+		    oideq(&ce->oid, &old->oid)) {
 			discard_cache_entry(old);
 			continue; /* unchanged */
 		}

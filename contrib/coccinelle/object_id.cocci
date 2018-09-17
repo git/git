@@ -20,10 +20,10 @@ expression E1;
 identifier f != oid_to_hex;
 expression E1;
 @@
-  f(...) {...
+  f(...) {<...
 - sha1_to_hex(E1->hash)
 + oid_to_hex(E1)
-  ...}
+  ...>}
 
 @@
 expression E1, E2;
@@ -35,10 +35,10 @@ expression E1, E2;
 identifier f != oid_to_hex_r;
 expression E1, E2;
 @@
-   f(...) {...
+   f(...) {<...
 - sha1_to_hex_r(E1, E2->hash)
 + oid_to_hex_r(E1, E2)
-  ...}
+  ...>}
 
 @@
 expression E1;
@@ -50,10 +50,10 @@ expression E1;
 identifier f != oidclr;
 expression E1;
 @@
-  f(...) {...
+  f(...) {<...
 - hashclr(E1->hash)
 + oidclr(E1)
-  ...}
+  ...>}
 
 @@
 expression E1, E2;
@@ -65,10 +65,10 @@ expression E1, E2;
 identifier f != oidcmp;
 expression E1, E2;
 @@
-  f(...) {...
+  f(...) {<...
 - hashcmp(E1->hash, E2->hash)
 + oidcmp(E1, E2)
-  ...}
+  ...>}
 
 @@
 expression E1, E2;
@@ -92,10 +92,10 @@ expression E1, E2;
 identifier f != oidcpy;
 expression E1, E2;
 @@
-  f(...) {...
+  f(...) {<...
 - hashcpy(E1->hash, E2->hash)
 + oidcpy(E1, E2)
-  ...}
+  ...>}
 
 @@
 expression E1, E2;
@@ -108,3 +108,33 @@ expression E1, E2;
 @@
 - hashcpy(E1.hash, E2->hash)
 + oidcpy(&E1, E2)
+
+@@
+expression E1, E2;
+@@
+- oidcmp(E1, E2) == 0
++ oideq(E1, E2)
+
+@@
+identifier f != hasheq;
+expression E1, E2;
+@@
+  f(...) {<...
+- hashcmp(E1, E2) == 0
++ hasheq(E1, E2)
+  ...>}
+
+@@
+expression E1, E2;
+@@
+- oidcmp(E1, E2) != 0
++ !oideq(E1, E2)
+
+@@
+identifier f != hasheq;
+expression E1, E2;
+@@
+  f(...) {<...
+- hashcmp(E1, E2) != 0
++ !hasheq(E1, E2)
+  ...>}

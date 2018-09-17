@@ -719,9 +719,9 @@ static void find_ref_delta_children(const struct object_id *oid,
 		*last_index = -1;
 		return;
 	}
-	while (first > 0 && !oidcmp(&ref_deltas[first - 1].oid, oid))
+	while (first > 0 && oideq(&ref_deltas[first - 1].oid, oid))
 		--first;
-	while (last < end && !oidcmp(&ref_deltas[last + 1].oid, oid))
+	while (last < end && oideq(&ref_deltas[last + 1].oid, oid))
 		++last;
 	*first_index = first;
 	*last_index = last;
@@ -1166,7 +1166,7 @@ static void parse_pack_objects(unsigned char *hash)
 	/* Check pack integrity */
 	flush();
 	the_hash_algo->final_fn(hash, &input_ctx);
-	if (hashcmp(fill(the_hash_algo->rawsz), hash))
+	if (!hasheq(fill(the_hash_algo->rawsz), hash))
 		die(_("pack is corrupted (SHA1 mismatch)"));
 	use(the_hash_algo->rawsz);
 
@@ -1280,7 +1280,7 @@ static void conclude_pack(int fix_thin_pack, const char *curr_pack, unsigned cha
 		fixup_pack_header_footer(output_fd, pack_hash,
 					 curr_pack, nr_objects,
 					 read_hash, consumed_bytes-the_hash_algo->rawsz);
-		if (hashcmp(read_hash, tail_hash) != 0)
+		if (!hasheq(read_hash, tail_hash))
 			die(_("Unexpected tail checksum for %s "
 			      "(disk corruption?)"), curr_pack);
 	}

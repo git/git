@@ -58,7 +58,7 @@ static int should_break(struct diff_filespec *src,
 	}
 
 	if (src->oid_valid && dst->oid_valid &&
-	    !oidcmp(&src->oid, &dst->oid))
+	    oideq(&src->oid, &dst->oid))
 		return 0; /* they are the same */
 
 	if (diff_populate_filespec(src, 0) || diff_populate_filespec(dst, 0))

@@ -272,7 +272,7 @@ static int is_dup_ref(const struct ref_entry *ref1, const struct ref_entry *ref2
 		/* This is impossible by construction */
 		die("Reference directory conflict: %s", ref1->name);
 
-	if (oidcmp(&ref1->u.value.oid, &ref2->u.value.oid))
+	if (!oideq(&ref1->u.value.oid, &ref2->u.value.oid))
 		die("Duplicated ref, and SHA1s don't match: %s", ref1->name);
 
 	warning("Duplicated ref: %s", ref1->name);

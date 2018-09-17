@@ -41,7 +41,7 @@ static void stuff_change(struct diff_options *opt,
 	struct diff_filespec *one, *two;
 
 	if (!is_null_oid(old_oid) && !is_null_oid(new_oid) &&
-	    !oidcmp(old_oid, new_oid) && (old_mode == new_mode))
+	    oideq(old_oid, new_oid) && (old_mode == new_mode))
 		return;
 
 	if (opt->flags.reverse_diff) {

@@ -224,7 +224,7 @@ static int process_dummy_ref(const char *line)
 		return 0;
 	name++;
 
-	return !oidcmp(&null_oid, &oid) && !strcmp(name, "capabilities^{}");
+	return oideq(&null_oid, &oid) && !strcmp(name, "capabilities^{}");
 }
 
 static void check_no_capabilities(const char *line, int len)

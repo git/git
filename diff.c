@@ -2948,16 +2948,11 @@ static void show_dirstat(struct diff_options *options)
 		struct diff_filepair *p = q->queue[i];
 		const char *name;
 		unsigned long copied, added, damage;
-		int content_changed;
 
 		name = p->two->path ? p->two->path : p->one->path;
 
-		if (p->one->oid_valid && p->two->oid_valid)
-			content_changed = oidcmp(&p->one->oid, &p->two->oid);
-		else
-			content_changed = 1;
-
-		if (!content_changed) {
+		if (p->one->oid_valid && p->two->oid_valid &&
+		    oideq(&p->one->oid, &p->two->oid)) {
 			/*
 			 * The SHA1 has not changed, so pre-/post-content is
 			 * identical. We can therefore skip looking at the
@@ -3004,7 +2999,7 @@ static void show_dirstat(struct diff_options *options)
 		 * made to the preimage.
 		 * If the resulting damage is zero, we know that
 		 * diffcore_count_changes() considers the two entries to
-		 * be identical, but since content_changed is true, we
+		 * be identical, but since the oid changed, we
 		 * know that there must have been _some_ kind of change,
 		 * so we force all entries to have damage > 0.
 		 */
@@ -3419,7 +3414,7 @@ static void builtin_diff(const char *name_a,
 		if (!one->data && !two->data &&
 		    S_ISREG(one->mode) && S_ISREG(two->mode) &&
 		    !o->flags.binary) {
-			if (!oidcmp(&one->oid, &two->oid)) {
+			if (oideq(&one->oid, &two->oid)) {
 				if (must_show_header)
 					emit_diff_symbol(o, DIFF_SYMBOL_HEADER,
 							 header.buf, header.len,
@@ -3584,7 +3579,7 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 		return;
 	}
 
-	same_contents = !oidcmp(&one->oid, &two->oid);
+	same_contents = oideq(&one->oid, &two->oid);
 
 	if (diff_filespec_is_binary(one) || diff_filespec_is_binary(two)) {
 		data->is_binary = 1;
@@ -3780,7 +3775,7 @@ static int reuse_worktree_file(const char *name, const struct object_id *oid, in
 	 * This is not the sha1 we are looking for, or
 	 * unreusable because it is not a regular file.
 	 */
-	if (oidcmp(oid, &ce->oid) || !S_ISREG(ce->ce_mode))
+	if (!oideq(oid, &ce->oid) || !S_ISREG(ce->ce_mode))
 		return 0;
 
 	/*
@@ -4185,7 +4180,7 @@ static void fill_metainfo(struct strbuf *msg,
 	default:
 		*must_show_header = 0;
 	}
-	if (one && two && oidcmp(&one->oid, &two->oid)) {
+	if (one && two && !oideq(&one->oid, &two->oid)) {
 		const unsigned hexsz = the_hash_algo->hexsz;
 		int abbrev = o->flags.full_index ? hexsz : DEFAULT_ABBREV;
 
@@ -5347,7 +5342,7 @@ int diff_unmodified_pair(struct diff_filepair *p)
 	 * dealing with a change.
 	 */
 	if (one->oid_valid && two->oid_valid &&
-	    !oidcmp(&one->oid, &two->oid) &&
+	    oideq(&one->oid, &two->oid) &&
 	    !one->dirty_submodule && !two->dirty_submodule)
 		return 1; /* no change */
 	if (!one->oid_valid && !two->oid_valid)
@@ -5481,7 +5476,7 @@ static void diff_resolve_rename_copy(void)
 			else
 				p->status = DIFF_STATUS_RENAMED;
 		}
-		else if (oidcmp(&p->one->oid, &p->two->oid) ||
+		else if (!oideq(&p->one->oid, &p->two->oid) ||
 			 p->one->mode != p->two->mode ||
 			 p->one->dirty_submodule ||
 			 p->two->dirty_submodule ||

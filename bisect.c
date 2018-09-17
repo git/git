@@ -596,7 +596,7 @@ static struct commit_list *skip_away(struct commit_list *list, int count)
 
 	for (i = 0; cur; cur = cur->next, i++) {
 		if (i == index) {
-			if (oidcmp(&cur->item->object.oid, current_bad_oid))
+			if (!oideq(&cur->item->object.oid, current_bad_oid))
 				return cur;
 			if (previous)
 				return previous;
@@ -808,7 +808,7 @@ static void check_merge_bases(int rev_nr, struct commit **rev, int no_checkout)
 
 	for (; result; result = result->next) {
 		const struct object_id *mb = &result->item->object.oid;
-		if (!oidcmp(mb, current_bad_oid)) {
+		if (oideq(mb, current_bad_oid)) {
 			handle_bad_merge_base();
 		} else if (0 <= oid_array_lookup(&good_revs, mb)) {
 			continue;
@@ -989,7 +989,7 @@ int bisect_next_all(const char *prefix, int no_checkout)
 
 	bisect_rev = &revs.commits->item->object.oid;
 
-	if (!oidcmp(bisect_rev, current_bad_oid)) {
+	if (oideq(bisect_rev, current_bad_oid)) {
 		exit_if_skipped_commits(tried, current_bad_oid);
 		printf("%s is the first %s commit\n", oid_to_hex(bisect_rev),
 			term_bad);

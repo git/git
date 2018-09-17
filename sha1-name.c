@@ -46,7 +46,7 @@ static void update_candidates(struct disambiguate_state *ds, const struct object
 		oidcpy(&ds->candidate, current);
 		ds->candidate_exists = 1;
 		return;
-	} else if (!oidcmp(&ds->candidate, current)) {
+	} else if (oideq(&ds->candidate, current)) {
 		/* the same as what we already have seen */
 		return;
 	}

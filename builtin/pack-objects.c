@@ -1248,7 +1248,7 @@ static struct pbase_tree_cache *pbase_tree_get(const struct object_id *oid)
 	 */
 	for (neigh = 0; neigh < 8; neigh++) {
 		ent = pbase_tree_cache[my_ix];
-		if (ent && !oidcmp(&ent->oid, oid)) {
+		if (ent && oideq(&ent->oid, oid)) {
 			ent->ref++;
 			return ent;
 		}
@@ -1430,7 +1430,7 @@ static void add_preferred_base(struct object_id *oid)
 		return;
 
 	for (it = pbase_tree; it; it = it->next) {
-		if (!oidcmp(&it->pcache.oid, &tree_oid)) {
+		if (oideq(&it->pcache.oid, &tree_oid)) {
 			free(data);
 			return;
 		}

@@ -537,7 +537,7 @@ static void show_submodule_header(struct diff_options *o, const char *path,
 			fast_backward = 1;
 	}
 
-	if (!oidcmp(one, two)) {
+	if (oideq(one, two)) {
 		strbuf_release(&sb);
 		return;
 	}

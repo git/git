@@ -717,7 +717,7 @@ int cache_tree_matches_traversal(struct cache_tree *root,
 
 	it = find_cache_tree_from_traversal(root, info);
 	it = cache_tree_find(it, ent->path);
-	if (it && it->entry_count > 0 && !oidcmp(ent->oid, &it->oid))
+	if (it && it->entry_count > 0 && oideq(ent->oid, &it->oid))
 		return it->entry_count;
 	return 0;
 }

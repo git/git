@@ -213,7 +213,7 @@ static int ce_compare_data(const struct cache_entry *ce, struct stat *st)
 	if (fd >= 0) {
 		struct object_id oid;
 		if (!index_fd(&oid, fd, st, OBJ_BLOB, ce->name, 0))
-			match = oidcmp(&oid, &ce->oid);
+			match = !oideq(&oid, &ce->oid);
 		/* index_fd() closed the file descriptor already */
 	}
 	return match;
@@ -254,7 +254,7 @@ static int ce_compare_gitlink(const struct cache_entry *ce)
 	 */
 	if (resolve_gitlink_ref(ce->name, "HEAD", &oid) < 0)
 		return 0;
-	return oidcmp(&oid, &ce->oid);
+	return !oideq(&oid, &ce->oid);
 }
 
 static int ce_modified_check_fs(const struct cache_entry *ce, struct stat *st)
@@ -767,7 +767,7 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 	/* It was suspected to be racily clean, but it turns out to be Ok */
 	was_same = (alias &&
 		    !ce_stage(alias) &&
-		    !oidcmp(&alias->oid, &ce->oid) &&
+		    oideq(&alias->oid, &ce->oid) &&
 		    ce->ce_mode == alias->ce_mode);
 
 	if (pretend)
@@ -1668,7 +1668,7 @@ static int verify_hdr(struct cache_header *hdr, unsigned long size)
 	the_hash_algo->init_fn(&c);
 	the_hash_algo->update_fn(&c, hdr, size - the_hash_algo->rawsz);
 	the_hash_algo->final_fn(hash, &c);
-	if (hashcmp(hash, (unsigned char *)hdr + size - the_hash_algo->rawsz))
+	if (!hasheq(hash, (unsigned char *)hdr + size - the_hash_algo->rawsz))
 		return error("bad index file sha1 signature");
 	return 0;
 }
@@ -2030,7 +2030,7 @@ int read_index_from(struct index_state *istate, const char *path,
 	base_oid_hex = oid_to_hex(&split_index->base_oid);
 	base_path = xstrfmt("%s/sharedindex.%s", gitdir, base_oid_hex);
 	ret = do_read_index(split_index->base, base_path, 1);
-	if (oidcmp(&split_index->base_oid, &split_index->base->oid))
+	if (!oideq(&split_index->base_oid, &split_index->base->oid))
 		die("broken index, expect %s in %s, got %s",
 		    base_oid_hex, base_path,
 		    oid_to_hex(&split_index->base->oid));
@@ -2396,7 +2396,7 @@ static int verify_index_from(const struct index_state *istate, const char *path)
 	if (n != the_hash_algo->rawsz)
 		goto out;
 
-	if (hashcmp(istate->oid.hash, hash))
+	if (!hasheq(istate->oid.hash, hash))
 		goto out;
 
 	close(fd);

@@ -599,7 +599,7 @@ static void filter_refs(struct fetch_pack_args *args,
 			continue;
 		if (parse_oid_hex(ref->name, &oid, &p) ||
 		    *p != '\0' ||
-		    oidcmp(&oid, &ref->old_oid))
+		    !oideq(&oid, &ref->old_oid))
 			continue;
 
 		if ((allow_unadvertised_object_request &

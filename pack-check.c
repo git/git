@@ -79,10 +79,10 @@ static int verify_packfile(struct packed_git *p,
 	} while (offset < pack_sig_ofs);
 	the_hash_algo->final_fn(hash, &ctx);
 	pack_sig = use_pack(p, w_curs, pack_sig_ofs, NULL);
-	if (hashcmp(hash, pack_sig))
+	if (!hasheq(hash, pack_sig))
 		err = error("%s pack checksum mismatch",
 			    p->pack_name);
-	if (hashcmp(index_base + index_size - the_hash_algo->hexsz, pack_sig))
+	if (!hasheq(index_base + index_size - the_hash_algo->hexsz, pack_sig))
 		err = error("%s pack checksum does not match its index",
 			    p->pack_name);
 	unuse_pack(w_curs);
@@ -180,7 +180,7 @@ int verify_pack_index(struct packed_git *p)
 	the_hash_algo->init_fn(&ctx);
 	the_hash_algo->update_fn(&ctx, index_base, (unsigned int)(index_size - the_hash_algo->rawsz));
 	the_hash_algo->final_fn(hash, &ctx);
-	if (hashcmp(hash, index_base + index_size - the_hash_algo->rawsz))
+	if (!hasheq(hash, index_base + index_size - the_hash_algo->rawsz))
 		err = error("Packfile index for %s hash mismatch",
 			    p->pack_name);
 	return err;

@@ -702,7 +702,7 @@ static int write_pseudoref(const char *pseudoref, const struct object_id *oid,
 				    pseudoref);
 			rollback_lock_file(&lock);
 			goto done;
-		} else if (oidcmp(&actual_old_oid, old_oid)) {
+		} else if (!oideq(&actual_old_oid, old_oid)) {
 			strbuf_addf(err, _("unexpected object ID when writing '%s'"),
 				    pseudoref);
 			rollback_lock_file(&lock);
@@ -744,7 +744,7 @@ static int delete_pseudoref(const char *pseudoref, const struct object_id *old_o
 		}
 		if (read_ref(pseudoref, &actual_old_oid))
 			die(_("could not read ref '%s'"), pseudoref);
-		if (oidcmp(&actual_old_oid, old_oid)) {
+		if (!oideq(&actual_old_oid, old_oid)) {
 			error(_("unexpected object ID when deleting '%s'"),
 			      pseudoref);
 			rollback_lock_file(&lock);
@@ -875,13 +875,13 @@ static int read_ref_at_ent(struct object_id *ooid, struct object_id *noid,
 		 */
 		if (!is_null_oid(&cb->ooid)) {
 			oidcpy(cb->oid, noid);
-			if (oidcmp(&cb->ooid, noid))
+			if (!oideq(&cb->ooid, noid))
 				warning(_("log for ref %s has gap after %s"),
 					cb->refname, show_date(cb->date, cb->tz, DATE_MODE(RFC2822)));
 		}
 		else if (cb->date == cb->at_time)
 			oidcpy(cb->oid, noid);
-		else if (oidcmp(noid, cb->oid))
+		else if (!oideq(noid, cb->oid))
 			warning(_("log for ref %s unexpectedly ended on %s"),
 				cb->refname, show_date(cb->date, cb->tz,
 						       DATE_MODE(RFC2822)));

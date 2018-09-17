@@ -149,10 +149,10 @@ static struct cached_object *find_cached_object(const struct object_id *oid)
 	struct cached_object *co = cached_objects;
 
 	for (i = 0; i < cached_object_nr; i++, co++) {
-		if (!oidcmp(&co->oid, oid))
+		if (oideq(&co->oid, oid))
 			return co;
 	}
-	if (!oidcmp(oid, the_hash_algo->empty_tree))
+	if (oideq(oid, the_hash_algo->empty_tree))
 		return &empty_tree;
 	return NULL;
 }
@@ -825,7 +825,7 @@ int check_object_signature(const struct object_id *oid, void *map,
 
 	if (map) {
 		hash_object_file(map, size, type, &real_oid);
-		return oidcmp(oid, &real_oid) ? -1 : 0;
+		return !oideq(oid, &real_oid) ? -1 : 0;
 	}
 
 	st = open_istream(oid, &obj_type, &size, NULL);
@@ -852,7 +852,7 @@ int check_object_signature(const struct object_id *oid, void *map,
 	}
 	the_hash_algo->final_fn(real_oid.hash, &c);
 	close_istream(st);
-	return oidcmp(oid, &real_oid) ? -1 : 0;
+	return !oideq(oid, &real_oid) ? -1 : 0;
 }
 
 int git_open_cloexec(const char *name, int flags)
@@ -1671,7 +1671,7 @@ static int write_loose_object(const struct object_id *oid, char *hdr,
 		die(_("deflateEnd on object %s failed (%d)"), oid_to_hex(oid),
 		    ret);
 	the_hash_algo->final_fn(parano_oid.hash, &c);
-	if (oidcmp(oid, &parano_oid) != 0)
+	if (!oideq(oid, &parano_oid))
 		die(_("confused by unstable object source data for %s"),
 		    oid_to_hex(oid));
 
@@ -2213,7 +2213,7 @@ static int check_stream_sha1(git_zstream *stream,
 	}
 
 	the_hash_algo->final_fn(real_sha1, &c);
-	if (hashcmp(expected_sha1, real_sha1)) {
+	if (!hasheq(expected_sha1, real_sha1)) {
 		error(_("sha1 mismatch for %s (expected %s)"), path,
 		      sha1_to_hex(expected_sha1));
 		return -1;

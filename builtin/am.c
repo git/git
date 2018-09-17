@@ -2078,7 +2078,7 @@ static int safe_to_abort(const struct am_state *state)
 	if (get_oid("HEAD", &head))
 		oidclr(&head);
 
-	if (!oidcmp(&head, &abort_safety))
+	if (oideq(&head, &abort_safety))
 		return 1;
 
 	warning(_("You seem to have moved HEAD since the last 'am' failure.\n"

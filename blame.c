@@ -1457,14 +1457,14 @@ static void pass_blame(struct blame_scoreboard *sb, struct blame_origin *origin,
 			porigin = find(p, origin);
 			if (!porigin)
 				continue;
-			if (!oidcmp(&porigin->blob_oid, &origin->blob_oid)) {
+			if (oideq(&porigin->blob_oid, &origin->blob_oid)) {
 				pass_whole_blame(sb, origin, porigin);
 				blame_origin_decref(porigin);
 				goto finish;
 			}
 			for (j = same = 0; j < i; j++)
 				if (sg_origin[j] &&
-				    !oidcmp(&sg_origin[j]->blob_oid, &porigin->blob_oid)) {
+				    oideq(&sg_origin[j]->blob_oid, &porigin->blob_oid)) {
 					same = 1;
 					break;
 				}
@@ -1832,7 +1832,7 @@ void setup_scoreboard(struct blame_scoreboard *sb,
 
 		sb->revs->children.name = "children";
 		while (c->parents &&
-		       oidcmp(&c->object.oid, &sb->final->object.oid)) {
+		       !oideq(&c->object.oid, &sb->final->object.oid)) {
 			struct commit_list *l = xcalloc(1, sizeof(*l));
 
 			l->item = c;
@@ -1842,7 +1842,7 @@ void setup_scoreboard(struct blame_scoreboard *sb,
 			c = c->parents->item;
 		}
 
-		if (oidcmp(&c->object.oid, &sb->final->object.oid))
+		if (!oideq(&c->object.oid, &sb->final->object.oid))
 			die(_("--reverse --first-parent together require range along first-parent chain"));
 	}
 

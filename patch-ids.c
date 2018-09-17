@@ -28,14 +28,14 @@ int commit_patch_id(struct commit *commit, struct diff_options *options,
 /*
  * When we cannot load the full patch-id for both commits for whatever
  * reason, the function returns -1 (i.e. return error(...)). Despite
- * the "cmp" in the name of this function, the caller only cares about
+ * the "neq" in the name of this function, the caller only cares about
  * the return value being zero (a and b are equivalent) or non-zero (a
  * and b are different), and returning non-zero would keep both in the
  * result, even if they actually were equivalent, in order to err on
  * the side of safety.  The actual value being negative does not have
  * any significance; only that it is non-zero matters.
  */
-static int patch_id_cmp(const void *cmpfn_data,
+static int patch_id_neq(const void *cmpfn_data,
 			const void *entry,
 			const void *entry_or_key,
 			const void *unused_keydata)
@@ -53,7 +53,7 @@ static int patch_id_cmp(const void *cmpfn_data,
 	    commit_patch_id(b->commit, opt, &b->patch_id, 0))
 		return error("Could not get patch ID for %s",
 			oid_to_hex(&b->commit->object.oid));
-	return oidcmp(&a->patch_id, &b->patch_id);
+	return !oideq(&a->patch_id, &b->patch_id);
 }
 
 int init_patch_ids(struct patch_ids *ids)
@@ -63,7 +63,7 @@ int init_patch_ids(struct patch_ids *ids)
 	ids->diffopts.detect_rename = 0;
 	ids->diffopts.flags.recursive = 1;
 	diff_setup_done(&ids->diffopts);
-	hashmap_init(&ids->patches, patch_id_cmp, &ids->diffopts, 256);
+	hashmap_init(&ids->patches, patch_id_neq, &ids->diffopts, 256);
 	return 0;
 }
 

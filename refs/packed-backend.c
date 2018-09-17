@@ -1160,7 +1160,7 @@ static int write_with_updates(struct packed_ref_store *refs,
 						    "reference already exists",
 						    update->refname);
 					goto error;
-				} else if (oidcmp(&update->old_oid, iter->oid)) {
+				} else if (!oideq(&update->old_oid, iter->oid)) {
 					strbuf_addf(err, "cannot update ref '%s': "
 						    "is at %s but expected %s",
 						    update->refname,

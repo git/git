@@ -79,9 +79,9 @@ static struct merge_parent *find_merge_parent(struct merge_parents *table,
 {
 	int i;
 	for (i = 0; i < table->nr; i++) {
-		if (given && oidcmp(&table->item[i].given, given))
+		if (given && !oideq(&table->item[i].given, given))
 			continue;
-		if (commit && oidcmp(&table->item[i].commit, commit))
+		if (commit && !oideq(&table->item[i].commit, commit))
 			continue;
 		return &table->item[i];
 	}
@@ -583,7 +583,7 @@ static void find_merge_parents(struct merge_parents *result,
 	while (parents) {
 		struct commit *cmit = pop_commit(&parents);
 		for (i = 0; i < result->nr; i++)
-			if (!oidcmp(&result->item[i].commit, &cmit->object.oid))
+			if (oideq(&result->item[i].commit, &cmit->object.oid))
 				result->item[i].used = 1;
 	}
 

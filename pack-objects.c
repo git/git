@@ -16,7 +16,7 @@ static uint32_t locate_object_entry_hash(struct packing_data *pdata,
 	while (pdata->index[i] > 0) {
 		uint32_t pos = pdata->index[i] - 1;
 
-		if (!hashcmp(sha1, pdata->objects[pos].idx.oid.hash)) {
+		if (hasheq(sha1, pdata->objects[pos].idx.oid.hash)) {
 			*found = 1;
 			return i;
 		}

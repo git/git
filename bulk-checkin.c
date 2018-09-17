@@ -72,7 +72,7 @@ static int already_written(struct bulk_checkin_state *state, struct object_id *o
 
 	/* Might want to keep the list sorted */
 	for (i = 0; i < state->nr_written; i++)
-		if (!oidcmp(&state->written[i]->oid, oid))
+		if (oideq(&state->written[i]->oid, oid))
 			return 1;
 
 	/* This is a new object we need to keep */

@@ -157,7 +157,7 @@ static struct tree *shift_tree_object(struct tree *one, struct tree *two,
 		shift_tree_by(&one->object.oid, &two->object.oid, &shifted,
 			      subtree_shift);
 	}
-	if (!oidcmp(&two->object.oid, &shifted))
+	if (oideq(&two->object.oid, &shifted))
 		return two;
 	return lookup_tree(the_repository, &shifted);
 }
@@ -180,7 +180,7 @@ static int oid_eq(const struct object_id *a, const struct object_id *b)
 {
 	if (!a && !b)
 		return 2;
-	return a && b && oidcmp(a, b) == 0;
+	return a && b && oideq(a, b);
 }
 
 enum rename_type {

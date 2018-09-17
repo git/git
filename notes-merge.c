@@ -152,7 +152,7 @@ static struct notes_merge_pair *diff_tree_remote(struct notes_merge_options *o,
 		mp = find_notes_merge_pair_pos(changes, len, &obj, 1, &occupied);
 		if (occupied) {
 			/* We've found an addition/deletion pair */
-			assert(!oidcmp(&mp->obj, &obj));
+			assert(oideq(&mp->obj, &obj));
 			if (is_null_oid(&p->one->oid)) { /* addition */
 				assert(is_null_oid(&mp->remote));
 				oidcpy(&mp->remote, &p->two->oid);
@@ -219,7 +219,7 @@ static void diff_tree_local(struct notes_merge_options *o,
 			continue;
 		}
 
-		assert(!oidcmp(&mp->obj, &obj));
+		assert(oideq(&mp->obj, &obj));
 		if (is_null_oid(&p->two->oid)) { /* deletion */
 			/*
 			 * Either this is a true deletion (1), or it is part
@@ -230,7 +230,7 @@ static void diff_tree_local(struct notes_merge_options *o,
 			 * (3) mp->local is uninitialized; set it to null_sha1
 			 *     (will be overwritten by following addition)
 			 */
-			if (!oidcmp(&mp->local, &uninitialized))
+			if (oideq(&mp->local, &uninitialized))
 				oidclr(&mp->local);
 		} else if (is_null_oid(&p->one->oid)) { /* addition */
 			/*
@@ -242,7 +242,7 @@ static void diff_tree_local(struct notes_merge_options *o,
 			 * (3) mp->local is null_sha1;     set to p->two->sha1
 			 */
 			assert(is_null_oid(&mp->local) ||
-			       !oidcmp(&mp->local, &uninitialized));
+			       oideq(&mp->local, &uninitialized));
 			oidcpy(&mp->local, &p->two->oid);
 		} else { /* modification */
 			/*
@@ -250,8 +250,8 @@ static void diff_tree_local(struct notes_merge_options *o,
 			 * match mp->base, and mp->local shall be uninitialized.
 			 * Set mp->local to p->two->sha1.
 			 */
-			assert(!oidcmp(&p->one->oid, &mp->base));
-			assert(!oidcmp(&mp->local, &uninitialized));
+			assert(oideq(&p->one->oid, &mp->base));
+			assert(oideq(&mp->local, &uninitialized));
 			oidcpy(&mp->local, &p->two->oid);
 		}
 		trace_printf("\t\tStored local change for %s: %.7s -> %.7s\n",
@@ -481,14 +481,14 @@ static int merge_changes(struct notes_merge_options *o,
 		       oid_to_hex(&p->local),
 		       oid_to_hex(&p->remote));
 
-		if (!oidcmp(&p->base, &p->remote)) {
+		if (oideq(&p->base, &p->remote)) {
 			/* no remote change; nothing to do */
 			trace_printf("\t\t\tskipping (no remote change)\n");
-		} else if (!oidcmp(&p->local, &p->remote)) {
+		} else if (oideq(&p->local, &p->remote)) {
 			/* same change in local and remote; nothing to do */
 			trace_printf("\t\t\tskipping (local == remote)\n");
-		} else if (!oidcmp(&p->local, &uninitialized) ||
-			   !oidcmp(&p->local, &p->base)) {
+		} else if (oideq(&p->local, &uninitialized) ||
+			   oideq(&p->local, &p->base)) {
 			/* no local change; adopt remote change */
 			trace_printf("\t\t\tno local change, adopted remote\n");
 			if (add_note(t, &p->obj, &p->remote,
@@ -622,14 +622,14 @@ int notes_merge(struct notes_merge_options *o,
 			oid_to_hex(&local->object.oid),
 			oid_to_hex(base_oid));
 
-	if (!oidcmp(&remote->object.oid, base_oid)) {
+	if (oideq(&remote->object.oid, base_oid)) {
 		/* Already merged; result == local commit */
 		if (o->verbosity >= 2)
 			printf("Already up to date!\n");
 		oidcpy(result_oid, &local->object.oid);
 		goto found_result;
 	}
-	if (!oidcmp(&local->object.oid, base_oid)) {
+	if (oideq(&local->object.oid, base_oid)) {
 		/* Fast-forward; result == remote commit */
 		if (o->verbosity >= 2)
 			printf("Fast-forward\n");

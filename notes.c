@@ -147,7 +147,7 @@ static struct leaf_node *note_tree_find(struct notes_tree *t,
 	void **p = note_tree_search(t, &tree, &n, key_sha1);
 	if (GET_PTR_TYPE(*p) == PTR_TYPE_NOTE) {
 		struct leaf_node *l = (struct leaf_node *) CLR_PTR_TYPE(*p);
-		if (!hashcmp(key_sha1, l->key_oid.hash))
+		if (hasheq(key_sha1, l->key_oid.hash))
 			return l;
 	}
 	return NULL;
@@ -206,7 +206,7 @@ static void note_tree_remove(struct notes_tree *t,
 	if (GET_PTR_TYPE(*p) != PTR_TYPE_NOTE)
 		return; /* type mismatch, nothing to remove */
 	l = (struct leaf_node *) CLR_PTR_TYPE(*p);
-	if (oidcmp(&l->key_oid, &entry->key_oid))
+	if (!oideq(&l->key_oid, &entry->key_oid))
 		return; /* key mismatch, nothing to remove */
 
 	/* we have found a matching entry */
@@ -266,9 +266,9 @@ static int note_tree_insert(struct notes_tree *t, struct int_node *tree,
 	case PTR_TYPE_NOTE:
 		switch (type) {
 		case PTR_TYPE_NOTE:
-			if (!oidcmp(&l->key_oid, &entry->key_oid)) {
+			if (oideq(&l->key_oid, &entry->key_oid)) {
 				/* skip concatenation if l == entry */
-				if (!oidcmp(&l->val_oid, &entry->val_oid))
+				if (oideq(&l->val_oid, &entry->val_oid))
 					return 0;
 
 				ret = combine_notes(&l->val_oid,

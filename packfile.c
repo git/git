@@ -550,7 +550,7 @@ static int open_packed_git_1(struct packed_git *p)
 	if (read_result != hashsz)
 		return error("packfile %s signature is unavailable", p->pack_name);
 	idx_hash = ((unsigned char *)p->index_data) + p->index_size - hashsz * 2;
-	if (hashcmp(hash, idx_hash))
+	if (!hasheq(hash, idx_hash))
 		return error("packfile %s does not match index", p->pack_name);
 	return 0;
 }
@@ -1122,7 +1122,7 @@ void mark_bad_packed_object(struct packed_git *p, const unsigned char *sha1)
 {
 	unsigned i;
 	for (i = 0; i < p->num_bad_objects; i++)
-		if (!hashcmp(sha1, p->bad_object_sha1 + GIT_SHA1_RAWSZ * i))
+		if (hasheq(sha1, p->bad_object_sha1 + GIT_SHA1_RAWSZ * i))
 			return;
 	p->bad_object_sha1 = xrealloc(p->bad_object_sha1,
 				      st_mult(GIT_MAX_RAWSZ,
@@ -1138,8 +1138,8 @@ const struct packed_git *has_packed_and_bad(const unsigned char *sha1)
 
 	for (p = the_repository->objects->packed_git; p; p = p->next)
 		for (i = 0; i < p->num_bad_objects; i++)
-			if (!hashcmp(sha1,
-				     p->bad_object_sha1 + the_hash_algo->rawsz * i))
+			if (hasheq(sha1,
+				   p->bad_object_sha1 + the_hash_algo->rawsz * i))
 				return p;
 	return NULL;
 }
@@ -1937,8 +1937,8 @@ static int fill_pack_entry(const struct object_id *oid,
 	if (p->num_bad_objects) {
 		unsigned i;
 		for (i = 0; i < p->num_bad_objects; i++)
-			if (!hashcmp(oid->hash,
-				     p->bad_object_sha1 + the_hash_algo->rawsz * i))
+			if (hasheq(oid->hash,
+				   p->bad_object_sha1 + the_hash_algo->rawsz * i))
 				return 0;
 	}
 

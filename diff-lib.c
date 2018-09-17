@@ -342,7 +342,7 @@ static int show_modified(struct rev_info *revs,
 	}
 
 	if (revs->combine_merges && !cached &&
-	    (oidcmp(oid, &old_entry->oid) || oidcmp(&old_entry->oid, &new_entry->oid))) {
+	    (!oideq(oid, &old_entry->oid) || !oideq(&old_entry->oid, &new_entry->oid))) {
 		struct combine_diff_path *p;
 		int pathlen = ce_namelen(new_entry);
 
@@ -366,7 +366,7 @@ static int show_modified(struct rev_info *revs,
 	}
 
 	oldmode = old_entry->ce_mode;
-	if (mode == oldmode && !oidcmp(oid, &old_entry->oid) && !dirty_submodule &&
+	if (mode == oldmode && oideq(oid, &old_entry->oid) && !dirty_submodule &&
 	    !revs->diffopt.flags.find_copies_harder)
 		return 0;
 

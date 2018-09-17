@@ -679,7 +679,7 @@ static int switch_cache_bottom(struct traverse_info *info)
 
 static inline int are_same_oid(struct name_entry *name_j, struct name_entry *name_k)
 {
-	return name_j->oid && name_k->oid && !oidcmp(name_j->oid, name_k->oid);
+	return name_j->oid && name_k->oid && oideq(name_j->oid, name_k->oid);
 }
 
 static int all_trees_same_as_cache_tree(int n, unsigned long dirmask,
@@ -1678,7 +1678,7 @@ static int same(const struct cache_entry *a, const struct cache_entry *b)
 	if ((a->ce_flags | b->ce_flags) & CE_CONFLICTED)
 		return 0;
 	return a->ce_mode == b->ce_mode &&
-	       !oidcmp(&a->oid, &b->oid);
+	       oideq(&a->oid, &b->oid);
 }
 
 
@@ -1810,7 +1810,7 @@ static int verify_clean_subdirectory(const struct cache_entry *ce,
 		 * If we are not going to update the submodule, then
 		 * we don't care.
 		 */
-		if (!sub_head && !oidcmp(&oid, &ce->oid))
+		if (!sub_head && oideq(&oid, &ce->oid))
 			return 0;
 		return verify_clean_submodule(sub_head ? NULL : oid_to_hex(&oid),
 					      ce, error_type, o);
