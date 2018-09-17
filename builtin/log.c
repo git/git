@@ -32,6 +32,7 @@
 #include "commit-slab.h"
 #include "repository.h"
 #include "commit-reach.h"
+#include "interdiff.h"
 
 #define MAIL_DEFAULT_WRAP 72
 
@@ -999,6 +1000,26 @@ static char *find_branch_name(struct rev_info *rev)
 	return branch;
 }
 
+static void show_diffstat(struct rev_info *rev,
+			  struct commit *origin, struct commit *head)
+{
+	struct diff_options opts;
+
+	memcpy(&opts, &rev->diffopt, sizeof(opts));
+	opts.output_format = DIFF_FORMAT_SUMMARY | DIFF_FORMAT_DIFFSTAT;
+	opts.stat_width = MAIL_DEFAULT_WRAP;
+
+	diff_setup_done(&opts);
+
+	diff_tree_oid(get_commit_tree_oid(origin),
+		      get_commit_tree_oid(head),
+		      "", &opts);
+	diffcore_std(&opts);
+	diff_flush(&opts);
+
+	fprintf(rev->diffopt.file, "\n");
+}
+
 static void make_cover_letter(struct rev_info *rev, int use_stdout,
 			      struct commit *origin,
 			      int nr, struct commit **list,
@@ -1012,7 +1033,6 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 	struct strbuf sb = STRBUF_INIT;
 	int i;
 	const char *encoding = "UTF-8";
-	struct diff_options opts;
 	int need_8bit_cte = 0;
 	struct pretty_print_context pp = {0};
 	struct commit *head = list[0];
@@ -1062,25 +1082,14 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 
 	shortlog_output(&log);
 
-	/*
-	 * We can only do diffstat with a unique reference point
-	 */
-	if (!origin)
-		return;
+	/* We can only do diffstat with a unique reference point */
+	if (origin)
+		show_diffstat(rev, origin, head);
 
-	memcpy(&opts, &rev->diffopt, sizeof(opts));
-	opts.output_format = DIFF_FORMAT_SUMMARY | DIFF_FORMAT_DIFFSTAT;
-	opts.stat_width = MAIL_DEFAULT_WRAP;
-
-	diff_setup_done(&opts);
-
-	diff_tree_oid(get_commit_tree_oid(origin),
-		      get_commit_tree_oid(head),
-		      "", &opts);
-	diffcore_std(&opts);
-	diff_flush(&opts);
-
-	fprintf(rev->diffopt.file, "\n");
+	if (rev->idiff_oid1) {
+		fprintf_ln(rev->diffopt.file, "%s", rev->idiff_title);
+		show_interdiff(rev, 0);
+	}
 }
 
 static const char *clean_message_id(const char *msg_id)
@@ -1420,6 +1429,16 @@ static void print_bases(struct base_tree_info *bases, FILE *file)
 	oidclr(&bases->base_commit);
 }
 
+static const char *diff_title(struct strbuf *sb, int reroll_count,
+		       const char *generic, const char *rerolled)
+{
+	if (reroll_count <= 0)
+		strbuf_addstr(sb, generic);
+	else /* RFC may be v0, so allow -v1 to diff against v0 */
+		strbuf_addf(sb, rerolled, reroll_count - 1);
+	return sb->buf;
+}
+
 int cmd_format_patch(int argc, const char **argv, const char *prefix)
 {
 	struct commit *commit;
@@ -1447,6 +1466,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	struct base_tree_info bases;
 	int show_progress = 0;
 	struct progress *progress = NULL;
+	struct oid_array idiff_prev = OID_ARRAY_INIT;
+	struct strbuf idiff_title = STRBUF_INIT;
 
 	const struct option builtin_format_patch_options[] = {
 		{ OPTION_CALLBACK, 'n', "numbered", &numbered, NULL,
@@ -1520,6 +1541,9 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		OPT__QUIET(&quiet, N_("don't print the patch filenames")),
 		OPT_BOOL(0, "progress", &show_progress,
 			 N_("show progress while generating patches")),
+		OPT_CALLBACK(0, "interdiff", &idiff_prev, N_("rev"),
+			     N_("show changes against <rev> in cover letter or single patch"),
+			     parse_opt_object_name),
 		OPT_END()
 	};
 
@@ -1705,7 +1729,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		if (rev.pending.nr == 2) {
 			struct object_array_entry *o = rev.pending.objects;
 			if (oidcmp(&o[0].item->oid, &o[1].item->oid) == 0)
-				return 0;
+				goto done;
 		}
 		get_patch_ids(&rev, &ids);
 	}
@@ -1729,7 +1753,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	}
 	if (nr == 0)
 		/* nothing to do */
-		return 0;
+		goto done;
 	total = nr;
 	if (cover_letter == -1) {
 		if (config_cover_letter == COVER_AUTO)
@@ -1741,6 +1765,16 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		numbered = 1;
 	if (numbered)
 		rev.total = total + start_number - 1;
+
+	if (idiff_prev.nr) {
+		if (!cover_letter && total != 1)
+			die(_("--interdiff requires --cover-letter or single patch"));
+		rev.idiff_oid1 = &idiff_prev.oid[idiff_prev.nr - 1];
+		rev.idiff_oid2 = get_commit_tree_oid(list[0]);
+		rev.idiff_title = diff_title(&idiff_title, reroll_count,
+					     _("Interdiff:"),
+					     _("Interdiff against v%d:"));
+	}
 
 	if (!signature) {
 		; /* --no-signature inhibits all signatures */
@@ -1779,6 +1813,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		print_signature(rev.diffopt.file);
 		total++;
 		start_number--;
+		/* interdiff in cover-letter; omit from patches */
+		rev.idiff_oid1 = NULL;
 	}
 	rev.add_signoff = do_signoff;
 
@@ -1859,6 +1895,10 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	string_list_clear(&extra_hdr, 0);
 	if (ignore_if_in_upstream)
 		free_patch_ids(&ids);
+
+done:
+	oid_array_clear(&idiff_prev);
+	strbuf_release(&idiff_title);
 	return 0;
 }
 

@@ -219,6 +219,11 @@ struct rev_info {
 	/* notes-specific options: which refs to show */
 	struct display_notes_opt notes_opt;
 
+	/* interdiff */
+	const struct object_id *idiff_oid1;
+	const struct object_id *idiff_oid2;
+	const char *idiff_title;
+
 	/* commit counts */
 	int count_left;
 	int count_right;
