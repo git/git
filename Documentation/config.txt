@@ -1154,6 +1154,14 @@ and by linkgit:git-worktree[1] when 'git worktree add' refers to a
 remote branch. This setting might be used for other checkout-like
 commands or functionality in the future.
 
+checkout.optimizeNewBranch
+	Optimizes the performance of "git checkout -b <new_branch>" when
+	using sparse-checkout.  When set to true, git will not update the
+	repo based on the current sparse-checkout settings.  This means it
+	will not update the skip-worktree bit in the index nor add/remove
+	files in the working directory to reflect the current sparse checkout
+	settings nor will it show the local changes.
+
 clean.requireForce::
 	A boolean to make git-clean do nothing unless given -f,
 	-i or -n.   Defaults to true.
