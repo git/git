@@ -91,8 +91,6 @@ struct bitmap_index {
 
 	/* Version of the bitmap index */
 	unsigned int version;
-
-	unsigned loaded : 1;
 };
 
 static struct ewah_bitmap *lookup_stored_bitmap(struct stored_bitmap *st)
@@ -306,7 +304,7 @@ static int open_pack_bitmap_1(struct bitmap_index *bitmap_git, struct packed_git
 
 static int load_pack_bitmap(struct bitmap_index *bitmap_git)
 {
-	assert(bitmap_git->map && !bitmap_git->loaded);
+	assert(bitmap_git->map);
 
 	bitmap_git->bitmaps = kh_init_sha1();
 	bitmap_git->ext_index.positions = kh_init_sha1_pos();
@@ -321,7 +319,6 @@ static int load_pack_bitmap(struct bitmap_index *bitmap_git)
 	if (load_bitmap_entries_v1(bitmap_git) < 0)
 		goto failed;
 
-	bitmap_git->loaded = 1;
 	return 0;
 
 failed:
@@ -336,7 +333,7 @@ static int open_pack_bitmap(struct bitmap_index *bitmap_git)
 	struct packed_git *p;
 	int ret = -1;
 
-	assert(!bitmap_git->map && !bitmap_git->loaded);
+	assert(!bitmap_git->map);
 
 	for (p = get_all_packs(the_repository); p; p = p->next) {
 		if (open_pack_bitmap_1(bitmap_git, p) == 0)
@@ -738,7 +735,7 @@ struct bitmap_index *prepare_bitmap_walk(struct rev_info *revs)
 	 * from disk. this is the point of no return; after this the rev_list
 	 * becomes invalidated and we must perform the revwalk through bitmaps
 	 */
-	if (!bitmap_git->loaded && load_pack_bitmap(bitmap_git) < 0)
+	if (load_pack_bitmap(bitmap_git) < 0)
 		goto cleanup;
 
 	object_array_clear(&revs->pending);
@@ -848,9 +845,6 @@ void traverse_bitmap_commit_list(struct bitmap_index *bitmap_git,
 		OBJ_TAG, show_reachable);
 
 	show_extended_objects(bitmap_git, show_reachable);
-
-	bitmap_free(bitmap_git->result);
-	bitmap_git->result = NULL;
 }
 
 static uint32_t count_object_type(struct bitmap_index *bitmap_git,
@@ -1128,8 +1122,6 @@ int bitmap_has_sha1_in_uninteresting(struct bitmap_index *bitmap_git,
 
 	if (!bitmap_git)
 		return 0; /* no bitmap loaded */
-	if (!bitmap_git->result)
-		BUG("failed to perform bitmap walk before querying");
 	if (!bitmap_git->haves)
 		return 0; /* walk had no "haves" */
 

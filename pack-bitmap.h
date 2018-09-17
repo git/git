@@ -54,7 +54,7 @@ int rebuild_existing_bitmaps(struct bitmap_index *, struct packing_data *mapping
 void free_bitmap_index(struct bitmap_index *);
 
 /*
- * After a traversal has been performed on the bitmap_index, this can be
+ * After a traversal has been performed by prepare_bitmap_walk(), this can be
  * queried to see if a particular object was reachable from any of the
  * objects flagged as UNINTERESTING.
  */

@@ -342,4 +342,97 @@ test_expect_success 'truncated bitmap fails gracefully' '
 	test_i18ngrep corrupt stderr
 '
 
+# have_delta <obj> <expected_base>
+#
+# Note that because this relies on cat-file, it might find _any_ copy of an
+# object in the repository. The caller is responsible for making sure
+# there's only one (e.g., via "repack -ad", or having just fetched a copy).
+have_delta () {
+	echo $2 >expect &&
+	echo $1 | git cat-file --batch-check="%(deltabase)" >actual &&
+	test_cmp expect actual
+}
+
+# Create a state of history with these properties:
+#
+#  - refs that allow a client to fetch some new history, while sharing some old
+#    history with the server; we use branches delta-reuse-old and
+#    delta-reuse-new here
+#
+#  - the new history contains an object that is stored on the server as a delta
+#    against a base that is in the old history
+#
+#  - the base object is not immediately reachable from the tip of the old
+#    history; finding it would involve digging down through history we know the
+#    other side has
+#
+# This should result in a state where fetching from old->new would not
+# traditionally reuse the on-disk delta (because we'd have to dig to realize
+# that the client has it), but we will do so if bitmaps can tell us cheaply
+# that the other side has it.
+test_expect_success 'set up thin delta-reuse parent' '
+	# This first commit contains the buried base object.
+	test-tool genrandom delta 16384 >file &&
+	git add file &&
+	git commit -m "delta base" &&
+	base=$(git rev-parse --verify HEAD:file) &&
+
+	# These intermediate commits bury the base back in history.
+	# This becomes the "old" state.
+	for i in 1 2 3 4 5
+	do
+		echo $i >file &&
+		git commit -am "intermediate $i" || return 1
+	done &&
+	git branch delta-reuse-old &&
+
+	# And now our new history has a delta against the buried base. Note
+	# that this must be smaller than the original file, since pack-objects
+	# prefers to create deltas from smaller objects to larger.
+	test-tool genrandom delta 16300 >file &&
+	git commit -am "delta result" &&
+	delta=$(git rev-parse --verify HEAD:file) &&
+	git branch delta-reuse-new &&
+
+	# Repack with bitmaps and double check that we have the expected delta
+	# relationship.
+	git repack -adb &&
+	have_delta $delta $base
+'
+
+# Now we can sanity-check the non-bitmap behavior (that the server is not able
+# to reuse the delta). This isn't strictly something we care about, so this
+# test could be scrapped in the future. But it makes sure that the next test is
+# actually triggering the feature we want.
+#
+# Note that our tools for working with on-the-wire "thin" packs are limited. So
+# we actually perform the fetch, retain the resulting pack, and inspect the
+# result.
+test_expect_success 'fetch without bitmaps ignores delta against old base' '
+	test_config pack.usebitmaps false &&
+	test_when_finished "rm -rf client.git" &&
+	git init --bare client.git &&
+	(
+		cd client.git &&
+		git config transfer.unpackLimit 1 &&
+		git fetch .. delta-reuse-old:delta-reuse-old &&
+		git fetch .. delta-reuse-new:delta-reuse-new &&
+		have_delta $delta $ZERO_OID
+	)
+'
+
+# And do the same for the bitmap case, where we do expect to find the delta.
+test_expect_success 'fetch with bitmaps can reuse old base' '
+	test_config pack.usebitmaps true &&
+	test_when_finished "rm -rf client.git" &&
+	git init --bare client.git &&
+	(
+		cd client.git &&
+		git config transfer.unpackLimit 1 &&
+		git fetch .. delta-reuse-old:delta-reuse-old &&
+		git fetch .. delta-reuse-new:delta-reuse-new &&
+		have_delta $delta $base
+	)
+'
+
 test_done
