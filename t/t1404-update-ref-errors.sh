@@ -559,9 +559,9 @@ test_expect_success 'no bogus intermediate values during delete' '
 	{
 		# Note: the following command is intentionally run in the
 		# background. We increase the timeout so that `update-ref`
-		# attempts to acquire the `packed-refs` lock for longer than
-		# it takes for us to do the check then delete it:
-		git -c core.packedrefstimeout=3000 update-ref -d $prefix/foo &
+		# attempts to acquire the `packed-refs` lock for much longer
+		# than it takes for us to do the check then delete it:
+		git -c core.packedrefstimeout=30000 update-ref -d $prefix/foo &
 	} &&
 	pid2=$! &&
 	# Give update-ref plenty of time to get to the point where it tries
