@@ -154,6 +154,7 @@ check_var_migration () {
 
 check_var_migration GIT_FSMONITOR_TEST GIT_TEST_FSMONITOR
 check_var_migration TEST_GIT_INDEX_VERSION GIT_TEST_INDEX_VERSION
+check_var_migration GIT_FORCE_PRELOAD_TEST GIT_TEST_PRELOAD_INDEX
 
 # Use specific version of the index file format
 if test -n "${GIT_TEST_INDEX_VERSION:+isset}"
