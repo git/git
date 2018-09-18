@@ -140,6 +140,26 @@ then
 	export GIT_INDEX_VERSION
 fi
 
+check_var_migration () {
+	old_name=$1 new_name=$2
+	eval "old_isset=\${${old_name}:+isset}"
+	eval "new_isset=\${${new_name}:+isset}"
+	case "$old_isset,$new_isset" in
+	isset,)
+		echo >&2 "warning: $old_name is now $new_name"
+		echo >&2 "hint: set $new_name too during the transition period"
+		eval "$new_name=\$$old_name"
+		;;
+	isset,isset)
+		# do this later
+		# echo >&2 "warning: $old_name is now $new_name"
+		# echo >&2 "hint: remove $old_name"
+		;;
+	esac
+}
+
+check_var_migration GIT_FSMONITOR_TEST GIT_TEST_FSMONITOR
+
 # Add libc MALLOC and MALLOC_PERTURB test
 # only if we are not executing the test with valgrind
 if expr " $GIT_TEST_OPTS " : ".* --valgrind " >/dev/null ||
