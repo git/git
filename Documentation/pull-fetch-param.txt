@@ -45,9 +45,9 @@ rules particular to 'git fetch' are noted below.
 +
 Until Git version 2.20, and unlike when pushing with
 linkgit:git-push[1], any updates to `refs/tags/*` would be accepted
-without `+` in the refspec (or `--force`). The receiving promiscuously
+without `+` in the refspec (or `--force`). When fetching, we promiscuously
 considered all tag updates from a remote to be forced fetches.  Since
-Git version 2.20, fetching to update `refs/tags/*` work the same way
+Git version 2.20, fetching to update `refs/tags/*` works the same way
 as when pushing. I.e. any updates will be rejected without `+` in the
 refspec (or `--force`).
 +
