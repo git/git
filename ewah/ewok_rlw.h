@@ -19,6 +19,8 @@
 #ifndef __EWOK_RLW_H__
 #define __EWOK_RLW_H__
 
+#include "ewok.h"
+
 #define RLW_RUNNING_BITS (sizeof(eword_t) * 4)
 #define RLW_LITERAL_BITS (sizeof(eword_t) * 8 - 1 - RLW_RUNNING_BITS)
 
