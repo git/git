@@ -188,8 +188,8 @@ Valid `<type>`'s include:
 --bool-or-int::
 --path::
 --expiry-date::
-  Historical options for selecting a type specifier. Prefer instead `--type`,
-  (see: above).
+  Historical options for selecting a type specifier. Prefer instead `--type`
+  (see above).
 
 --no-type::
   Un-sets the previously set type specifier (if one was previously set). This
