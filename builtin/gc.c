@@ -647,7 +647,7 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 
 	if (gc_write_commit_graph)
 		write_commit_graph_reachable(get_object_directory(), 0,
-					     !daemonized);
+					     !quiet && !daemonized);
 
 	if (auto_gc && too_many_loose_objects())
 		warning(_("There are too many unreachable loose objects; "
