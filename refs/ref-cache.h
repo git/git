@@ -1,7 +1,10 @@
 #ifndef REFS_REF_CACHE_H
 #define REFS_REF_CACHE_H
 
+#include "cache.h"
+
 struct ref_dir;
+struct ref_store;
 
 /*
  * If this ref_cache is filled lazily, this function is used to load
