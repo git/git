@@ -1366,27 +1366,6 @@ static int merge_file_1(struct merge_options *o,
 	return 0;
 }
 
-static int merge_file_one(struct merge_options *o,
-			  const char *path,
-			  const struct object_id *o_oid, int o_mode,
-			  const struct object_id *a_oid, int a_mode,
-			  const struct object_id *b_oid, int b_mode,
-			  const char *branch1,
-			  const char *branch2,
-			  struct merge_file_info *mfi)
-{
-	struct diff_filespec one, a, b;
-
-	one.path = a.path = b.path = (char *)path;
-	oidcpy(&one.oid, o_oid);
-	one.mode = o_mode;
-	oidcpy(&a.oid, a_oid);
-	a.mode = a_mode;
-	oidcpy(&b.oid, b_oid);
-	b.mode = b_mode;
-	return merge_file_1(o, &one, &a, &b, path, branch1, branch2, mfi);
-}
-
 static int handle_rename_via_dir(struct merge_options *o,
 				 struct diff_filepair *pair,
 				 const char *rename_branch,
@@ -2730,12 +2709,23 @@ static int process_renames(struct merge_options *o,
 				       ren1_dst, branch2);
 				if (o->call_depth) {
 					struct merge_file_info mfi;
-					if (merge_file_one(o, ren1_dst, &null_oid, 0,
-							   &ren1->pair->two->oid,
-							   ren1->pair->two->mode,
-							   &dst_other.oid,
-							   dst_other.mode,
-							   branch1, branch2, &mfi)) {
+					struct diff_filespec one, a, b;
+
+					oidcpy(&one.oid, &null_oid);
+					one.mode = 0;
+					one.path = ren1->pair->two->path;
+
+					oidcpy(&a.oid, &ren1->pair->two->oid);
+					a.mode = ren1->pair->two->mode;
+					a.path = one.path;
+
+					oidcpy(&b.oid, &dst_other.oid);
+					b.mode = dst_other.mode;
+					b.path = one.path;
+
+					if (merge_file_1(o, &one, &a, &b, ren1_dst,
+							 branch1, branch2,
+							 &mfi)) {
 						clean_merge = -1;
 						goto cleanup_and_return;
 					}
