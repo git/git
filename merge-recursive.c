@@ -1366,35 +1366,6 @@ static int merge_file_1(struct merge_options *o,
 	return 0;
 }
 
-static int merge_file_special_markers(struct merge_options *o,
-				      const struct diff_filespec *one,
-				      const struct diff_filespec *a,
-				      const struct diff_filespec *b,
-				      const char *target_filename,
-				      const char *branch1,
-				      const char *filename1,
-				      const char *branch2,
-				      const char *filename2,
-				      struct merge_file_info *mfi)
-{
-	char *side1 = NULL;
-	char *side2 = NULL;
-	int ret;
-
-	if (filename1)
-		side1 = xstrfmt("%s:%s", branch1, filename1);
-	if (filename2)
-		side2 = xstrfmt("%s:%s", branch2, filename2);
-
-	ret = merge_file_1(o, one, a, b, target_filename,
-			   side1 ? side1 : branch1,
-			   side2 ? side2 : branch2, mfi);
-
-	free(side1);
-	free(side2);
-	return ret;
-}
-
 static int merge_file_one(struct merge_options *o,
 			  const char *path,
 			  const struct object_id *o_oid, int o_mode,
@@ -1729,14 +1700,10 @@ static int handle_rename_rename_2to1(struct merge_options *o,
 
 	path_side_1_desc = xstrfmt("%s (was %s)", path, a->path);
 	path_side_2_desc = xstrfmt("%s (was %s)", path, b->path);
-	if (merge_file_special_markers(o, a, c1, &ci->ren1_other,
-				       path_side_1_desc,
-				       o->branch1, c1->path,
-				       o->branch2, ci->ren1_other.path, &mfi_c1) ||
-	    merge_file_special_markers(o, b, &ci->ren2_other, c2,
-				       path_side_2_desc,
-				       o->branch1, ci->ren2_other.path,
-				       o->branch2, c2->path, &mfi_c2))
+	if (merge_file_1(o, a, c1, &ci->ren1_other, path_side_1_desc,
+			 o->branch1, o->branch2, &mfi_c1) ||
+	    merge_file_1(o, b, &ci->ren2_other, c2, path_side_2_desc,
+			 o->branch1, o->branch2, &mfi_c2))
 		return -1;
 	free(path_side_1_desc);
 	free(path_side_2_desc);
@@ -3059,14 +3026,16 @@ static int merge_content(struct merge_options *o,
 		path2 = (rename_conflict_info->pair2 ||
 			 o->branch2 == rename_conflict_info->branch1) ?
 			pair1->two->path : pair1->one->path;
+		one.path = pair1->one->path;
+		a.path = (char *)path1;
+		b.path = (char *)path2;
 
 		if (dir_in_way(path, !o->call_depth,
 			       S_ISGITLINK(pair1->two->mode)))
 			df_conflict_remains = 1;
 	}
-	if (merge_file_special_markers(o, &one, &a, &b, path,
-				       o->branch1, path1,
-				       o->branch2, path2, &mfi))
+	if (merge_file_1(o, &one, &a, &b, path,
+			 o->branch1, o->branch2, &mfi))
 		return -1;
 
 	/*
