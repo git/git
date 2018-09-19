@@ -1,6 +1,8 @@
 #ifndef REFS_PACKED_BACKEND_H
 #define REFS_PACKED_BACKEND_H
 
+struct ref_transaction;
+
 /*
  * Support for storing references in a `packed-refs` file.
  *
