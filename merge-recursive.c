@@ -1274,14 +1274,14 @@ static int merge_submodule(struct merge_options *o,
 	return 0;
 }
 
-static int merge_file_1(struct merge_options *o,
-			const struct diff_filespec *one,
-			const struct diff_filespec *a,
-			const struct diff_filespec *b,
-			const char *filename,
-			const char *branch1,
-			const char *branch2,
-			struct merge_file_info *result)
+static int merge_mode_and_contents(struct merge_options *o,
+				   const struct diff_filespec *one,
+				   const struct diff_filespec *a,
+				   const struct diff_filespec *b,
+				   const char *filename,
+				   const char *branch1,
+				   const char *branch2,
+				   struct merge_file_info *result)
 {
 	result->merge = 0;
 	result->clean = 1;
@@ -1609,8 +1609,8 @@ static int handle_rename_rename_1to2(struct merge_options *o,
 		struct merge_file_info mfi;
 		struct diff_filespec other;
 		struct diff_filespec *add;
-		if (merge_file_1(o, one, a, b, one->path,
-				 ci->branch1, ci->branch2, &mfi))
+		if (merge_mode_and_contents(o, one, a, b, one->path,
+					    ci->branch1, ci->branch2, &mfi))
 			return -1;
 
 		/*
@@ -1676,10 +1676,10 @@ static int handle_rename_rename_2to1(struct merge_options *o,
 
 	path_side_1_desc = xstrfmt("%s (was %s)", path, a->path);
 	path_side_2_desc = xstrfmt("%s (was %s)", path, b->path);
-	if (merge_file_1(o, a, c1, &ci->ren1_other, path_side_1_desc,
-			 o->branch1, o->branch2, &mfi_c1) ||
-	    merge_file_1(o, b, &ci->ren2_other, c2, path_side_2_desc,
-			 o->branch1, o->branch2, &mfi_c2))
+	if (merge_mode_and_contents(o, a, c1, &ci->ren1_other, path_side_1_desc,
+				    o->branch1, o->branch2, &mfi_c1) ||
+	    merge_mode_and_contents(o, b, &ci->ren2_other, c2, path_side_2_desc,
+				    o->branch1, o->branch2, &mfi_c2))
 		return -1;
 	free(path_side_1_desc);
 	free(path_side_2_desc);
@@ -2723,9 +2723,9 @@ static int process_renames(struct merge_options *o,
 					b.mode = dst_other.mode;
 					b.path = one.path;
 
-					if (merge_file_1(o, &one, &a, &b, ren1_dst,
-							 branch1, branch2,
-							 &mfi)) {
+					if (merge_mode_and_contents(o, &one, &a, &b, ren1_dst,
+								    branch1, branch2,
+								    &mfi)) {
 						clean_merge = -1;
 						goto cleanup_and_return;
 					}
@@ -2975,13 +2975,13 @@ static int handle_modify_delete(struct merge_options *o,
 				    _("modify"), _("modified"));
 }
 
-static int merge_content(struct merge_options *o,
-			 const char *path,
-			 int is_dirty,
-			 struct object_id *o_oid, int o_mode,
-			 struct object_id *a_oid, int a_mode,
-			 struct object_id *b_oid, int b_mode,
-			 struct rename_conflict_info *rename_conflict_info)
+static int handle_content_merge(struct merge_options *o,
+				const char *path,
+				int is_dirty,
+				struct object_id *o_oid, int o_mode,
+				struct object_id *a_oid, int a_mode,
+				struct object_id *b_oid, int b_mode,
+				struct rename_conflict_info *rename_conflict_info)
 {
 	const char *reason = _("content");
 	const char *path1 = NULL, *path2 = NULL;
@@ -3021,8 +3021,8 @@ static int merge_content(struct merge_options *o,
 			       S_ISGITLINK(pair1->two->mode)))
 			df_conflict_remains = 1;
 	}
-	if (merge_file_1(o, &one, &a, &b, path,
-			 o->branch1, o->branch2, &mfi))
+	if (merge_mode_and_contents(o, &one, &a, &b, path,
+				    o->branch1, o->branch2, &mfi))
 		return -1;
 
 	/*
@@ -3113,9 +3113,9 @@ static int handle_rename_normal(struct merge_options *o,
 				struct rename_conflict_info *ci)
 {
 	/* Merge the content and write it out */
-	return merge_content(o, path, was_dirty(o, path),
-			     o_oid, o_mode, a_oid, a_mode, b_oid, b_mode,
-			     ci);
+	return handle_content_merge(o, path, was_dirty(o, path),
+				    o_oid, o_mode, a_oid, a_mode, b_oid, b_mode,
+				    ci);
 }
 
 /* Per entry merge function */
@@ -3239,9 +3239,11 @@ static int process_entry(struct merge_options *o,
 		/* Case C: Added in both (check for same permissions) and */
 		/* case D: Modified in both, but differently. */
 		int is_dirty = 0; /* unpack_trees would have bailed if dirty */
-		clean_merge = merge_content(o, path, is_dirty,
-					    o_oid, o_mode, a_oid, a_mode, b_oid, b_mode,
-					    NULL);
+		clean_merge = handle_content_merge(o, path, is_dirty,
+						   o_oid, o_mode,
+						   a_oid, a_mode,
+						   b_oid, b_mode,
+						   NULL);
 	} else if (!o_oid && !a_oid && !b_oid) {
 		/*
 		 * this entry was deleted altogether. a_mode == 0 means
