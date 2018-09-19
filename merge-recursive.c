@@ -1630,10 +1630,7 @@ static int handle_rename_rename_1to2(struct merge_options *o,
 		struct merge_file_info mfi;
 		struct diff_filespec other;
 		struct diff_filespec *add;
-		if (merge_file_one(o, one->path,
-				 &one->oid, one->mode,
-				 &a->oid, a->mode,
-				 &b->oid, b->mode,
+		if (merge_file_1(o, one, a, b, one->path,
 				 ci->branch1, ci->branch2, &mfi))
 			return -1;
 
