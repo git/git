@@ -1,7 +1,11 @@
 #ifndef REFS_REFS_INTERNAL_H
 #define REFS_REFS_INTERNAL_H
 
+#include "cache.h"
+#include "refs.h"
 #include "iterator.h"
+
+struct ref_transaction;
 
 /*
  * Data structures and functions for the internal use of the refs
