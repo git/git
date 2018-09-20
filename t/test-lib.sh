@@ -135,9 +135,17 @@ GIT_TRACE_BARE=1
 export GIT_TRACE_BARE
 
 check_var_migration () {
+	# the warnings and hints given from this helper depends
+	# on end-user settings, which will disrupt the self-test
+	# done on the test framework itself.
+	case "$GIT_TEST_FRAMEWORK_SELFTEST" in
+	t)	return ;;
+	esac
+
 	old_name=$1 new_name=$2
 	eval "old_isset=\${${old_name}:+isset}"
 	eval "new_isset=\${${new_name}:+isset}"
+
 	case "$old_isset,$new_isset" in
 	isset,)
 		echo >&2 "warning: $old_name is now $new_name"
