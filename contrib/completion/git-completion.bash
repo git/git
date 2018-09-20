@@ -943,6 +943,7 @@ __git_complete_remote_or_refspec ()
 			*) ;;
 			esac
 			;;
+		--multiple) no_complete_refspec=1; break ;;
 		-*) ;;
 		*) remote="$i"; break ;;
 		esac
