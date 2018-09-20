@@ -1159,7 +1159,7 @@ and by linkgit:git-worktree[1] when 'git worktree add' refers to a
 remote branch. This setting might be used for other checkout-like
 commands or functionality in the future.
 
-checkout.optimizeNewBranch
+checkout.optimizeNewBranch::
 	Optimizes the performance of "git checkout -b <new_branch>" when
 	using sparse-checkout.  When set to true, git will not update the
 	repo based on the current sparse-checkout settings.  This means it
