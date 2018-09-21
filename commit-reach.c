@@ -626,6 +626,11 @@ cleanup:
 		clear_commit_marks(list[i], RESULT);
 		clear_commit_marks(list[i], assign_flag);
 	}
+	free(list);
+
+	for (i = 0; i < from->nr; i++)
+		from->objects[i].item->flags &= ~assign_flag;
+
 	return result;
 }
 
