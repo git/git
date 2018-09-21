@@ -574,7 +574,7 @@ parse_lines(struct repository *r, struct commit *commit,
 		long begin = 0, end = 0;
 		long anchor;
 
-		name_part = skip_range_arg(item->string);
+		name_part = skip_range_arg(item->string, r->index);
 		if (!name_part || *name_part != ':' || !name_part[1])
 			die("-L argument not 'start,end:file' or ':funcname:file': %s",
 			    item->string);
@@ -599,7 +599,7 @@ parse_lines(struct repository *r, struct commit *commit,
 
 		if (parse_range_arg(range_part, nth_line, &cb_data,
 				    lines, anchor, &begin, &end,
-				    full_name))
+				    full_name, r->index))
 			die("malformed -L argument '%s'", range_part);
 		if ((!lines && (begin || end)) || lines < begin)
 			die("file %s has only %lu lines", name_part, lines);
