@@ -2122,7 +2122,7 @@ int unmerged_index(const struct index_state *istate)
 	return 0;
 }
 
-int index_has_changes(const struct index_state *istate,
+int index_has_changes(struct index_state *istate,
 		      struct tree *tree,
 		      struct strbuf *sb)
 {
