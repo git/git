@@ -280,7 +280,7 @@ void put_revision_mark(const struct rev_info *revs,
 		       const struct commit *commit);
 
 void mark_parents_uninteresting(struct commit *commit);
-void mark_tree_uninteresting(struct tree *tree);
+void mark_tree_uninteresting(struct repository *r, struct tree *tree);
 
 void show_object_with_name(FILE *, struct object *, const char *);
 
