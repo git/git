@@ -2989,7 +2989,7 @@ static void get_object_list(int ac, const char **av)
 	char line[1000];
 	int flags = 0;
 
-	init_revisions(&revs, NULL);
+	repo_init_revisions(the_repository, &revs, NULL);
 	save_commit_buffer = 0;
 	setup_revisions(ac, av, &revs, NULL);
 

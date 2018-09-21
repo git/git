@@ -877,7 +877,7 @@ static void cherry_pick_list(struct commit_list *list, struct rev_info *revs)
 		return;
 
 	left_first = left_count < right_count;
-	init_patch_ids(the_repository, &ids);
+	init_patch_ids(revs->repo, &ids);
 	ids.diffopts.pathspec = revs->diffopt.pathspec;
 
 	/* Compute patch-ids for one side */
@@ -1370,8 +1370,8 @@ void add_index_objects_to_pending(struct rev_info *revs, unsigned int flags)
 {
 	struct worktree **worktrees, **p;
 
-	read_cache();
-	do_add_index_objects_to_pending(revs, &the_index);
+	read_index(revs->repo->index);
+	do_add_index_objects_to_pending(revs, revs->repo->index);
 
 	if (revs->single_worktree)
 		return;
@@ -1439,10 +1439,13 @@ static int add_parents_only(struct rev_info *revs, const char *arg_, int flags,
 	return 1;
 }
 
-void init_revisions(struct rev_info *revs, const char *prefix)
+void repo_init_revisions(struct repository *r,
+			 struct rev_info *revs,
+			 const char *prefix)
 {
 	memset(revs, 0, sizeof(*revs));
 
+	revs->repo = r;
 	revs->abbrev = DEFAULT_ABBREV;
 	revs->ignore_merges = 1;
 	revs->simplify_history = 1;
@@ -1464,11 +1467,11 @@ void init_revisions(struct rev_info *revs, const char *prefix)
 	revs->commit_format = CMIT_FMT_DEFAULT;
 	revs->expand_tabs_in_log_default = 8;
 
-	init_grep_defaults(the_repository);
-	grep_init(&revs->grep_filter, the_repository, prefix);
+	init_grep_defaults(revs->repo);
+	grep_init(&revs->grep_filter, revs->repo, prefix);
 	revs->grep_filter.status_only = 1;
 
-	repo_diff_setup(the_repository, &revs->diffopt);
+	repo_diff_setup(revs->repo, &revs->diffopt);
 	if (prefix && !revs->diffopt.prefix) {
 		revs->diffopt.prefix = prefix;
 		revs->diffopt.prefix_length = strlen(prefix);
@@ -1496,6 +1499,7 @@ static void prepare_show_merge(struct rev_info *revs)
 	struct object_id oid;
 	const char **prune = NULL;
 	int i, prune_num = 1; /* counting terminating NULL */
+	struct index_state *istate = revs->repo->index;
 
 	if (get_oid("HEAD", &oid))
 		die("--merge without HEAD?");
@@ -1511,20 +1515,20 @@ static void prepare_show_merge(struct rev_info *revs)
 	free_commit_list(bases);
 	head->object.flags |= SYMMETRIC_LEFT;
 
-	if (!active_nr)
-		read_cache();
-	for (i = 0; i < active_nr; i++) {
-		const struct cache_entry *ce = active_cache[i];
+	if (!istate->cache_nr)
+		read_index(istate);
+	for (i = 0; i < istate->cache_nr; i++) {
+		const struct cache_entry *ce = istate->cache[i];
 		if (!ce_stage(ce))
 			continue;
-		if (ce_path_match(&the_index, ce, &revs->prune_data, NULL)) {
+		if (ce_path_match(istate, ce, &revs->prune_data, NULL)) {
 			prune_num++;
 			REALLOC_ARRAY(prune, prune_num);
 			prune[prune_num-2] = ce->name;
 			prune[prune_num-1] = NULL;
 		}
-		while ((i+1 < active_nr) &&
-		       ce_same_name(ce, active_cache[i+1]))
+		while ((i+1 < istate->cache_nr) &&
+		       ce_same_name(ce, istate->cache[i+1]))
 			i++;
 	}
 	clear_pathspec(&revs->prune_data);

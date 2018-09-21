@@ -28,8 +28,9 @@
 #define DECORATE_SHORT_REFS	1
 #define DECORATE_FULL_REFS	2
 
-struct rev_info;
 struct log_info;
+struct repository;
+struct rev_info;
 struct string_list;
 struct saved_parents;
 define_shared_commit_slab(revision_sources, char *);
@@ -60,6 +61,7 @@ struct rev_info {
 	/* Starting list */
 	struct commit_list *commits;
 	struct object_array pending;
+	struct repository *repo;
 
 	/* Parents of shown commits */
 	struct object_array boundary_commits;
@@ -248,12 +250,17 @@ extern volatile show_early_output_fn_t show_early_output;
 struct setup_revision_opt {
 	const char *def;
 	void (*tweak)(struct rev_info *, struct setup_revision_opt *);
-	const char *submodule;
+	const char *submodule;	/* TODO: drop this and use rev_info->repo */
 	int assume_dashdash;
 	unsigned revarg_opt;
 };
 
-void init_revisions(struct rev_info *revs, const char *prefix);
+#ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
+#define init_revisions(revs, prefix) repo_init_revisions(the_repository, revs, prefix)
+#endif
+void repo_init_revisions(struct repository *r,
+			 struct rev_info *revs,
+			 const char *prefix);
 int setup_revisions(int argc, const char **argv, struct rev_info *revs,
 		    struct setup_revision_opt *);
 void parse_revision_opt(struct rev_info *revs, struct parse_opt_ctx_t *ctx,

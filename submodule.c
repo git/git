@@ -428,7 +428,7 @@ static int prepare_submodule_summary(struct rev_info *rev, const char *path,
 {
 	struct commit_list *list;
 
-	init_revisions(rev, NULL);
+	repo_init_revisions(the_repository, rev, NULL);
 	setup_revisions(0, NULL, rev, NULL);
 	rev->left_right = 1;
 	rev->first_parent_only = 1;
@@ -773,7 +773,7 @@ static void collect_changed_submodules(struct index_state *istate,
 	struct rev_info rev;
 	const struct commit *commit;
 
-	init_revisions(&rev, NULL);
+	repo_init_revisions(the_repository, &rev, NULL);
 	setup_revisions(argv->argc, argv->argv, &rev, NULL);
 	if (prepare_revision_walk(&rev))
 		die("revision walk setup failed");
@@ -784,7 +784,7 @@ static void collect_changed_submodules(struct index_state *istate,
 		data.changed = changed;
 		data.commit_oid = &commit->object.oid;
 
-		init_revisions(&diff_rev, NULL);
+		repo_init_revisions(the_repository, &diff_rev, NULL);
 		diff_rev.diffopt.output_format |= DIFF_FORMAT_CALLBACK;
 		diff_rev.diffopt.format_callback = collect_changed_submodules_cb;
 		diff_rev.diffopt.format_callback_data = &data;

@@ -184,7 +184,7 @@ struct commit_list *get_shallow_commits_by_rev_list(int ac, const char **av,
 
 	is_repository_shallow(the_repository); /* make sure shallows are read */
 
-	init_revisions(&revs, NULL);
+	repo_init_revisions(the_repository, &revs, NULL);
 	save_commit_buffer = 0;
 	setup_revisions(ac, av, &revs, NULL);
 

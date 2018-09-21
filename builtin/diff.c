@@ -318,7 +318,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	git_config(git_diff_ui_config, NULL);
 	precompose_argv(argc, argv);
 
-	init_revisions(&rev, prefix);
+	repo_init_revisions(the_repository, &rev, prefix);
 
 	if (no_index && argc != i + 2) {
 		if (no_index == DIFF_NO_INDEX_IMPLICIT) {
