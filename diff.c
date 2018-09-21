@@ -4252,7 +4252,7 @@ static void run_diff_cmd(const char *pgm,
 		fprintf(o->file, "* Unmerged path %s\n", name);
 }
 
-static void diff_fill_oid_info(struct diff_filespec *one)
+static void diff_fill_oid_info(struct diff_filespec *one, struct index_state *istate)
 {
 	if (DIFF_FILE_VALID(one)) {
 		if (!one->oid_valid) {
@@ -4263,7 +4263,7 @@ static void diff_fill_oid_info(struct diff_filespec *one)
 			}
 			if (lstat(one->path, &st) < 0)
 				die_errno("stat '%s'", one->path);
-			if (index_path(&one->oid, one->path, &st, 0))
+			if (index_path(istate, &one->oid, one->path, &st, 0))
 				die("cannot hash %s", one->path);
 		}
 	}
@@ -4311,8 +4311,8 @@ static void run_diff(struct diff_filepair *p, struct diff_options *o)
 		return;
 	}
 
-	diff_fill_oid_info(one);
-	diff_fill_oid_info(two);
+	diff_fill_oid_info(one, o->repo->index);
+	diff_fill_oid_info(two, o->repo->index);
 
 	if (!pgm &&
 	    DIFF_FILE_VALID(one) && DIFF_FILE_VALID(two) &&
@@ -4359,8 +4359,8 @@ static void run_diffstat(struct diff_filepair *p, struct diff_options *o,
 	if (o->prefix_length)
 		strip_prefix(o->prefix_length, &name, &other);
 
-	diff_fill_oid_info(p->one);
-	diff_fill_oid_info(p->two);
+	diff_fill_oid_info(p->one, o->repo->index);
+	diff_fill_oid_info(p->two, o->repo->index);
 
 	builtin_diffstat(name, other, p->one, p->two,
 			 diffstat, o, p);
@@ -4384,8 +4384,8 @@ static void run_checkdiff(struct diff_filepair *p, struct diff_options *o)
 	if (o->prefix_length)
 		strip_prefix(o->prefix_length, &name, &other);
 
-	diff_fill_oid_info(p->one);
-	diff_fill_oid_info(p->two);
+	diff_fill_oid_info(p->one, o->repo->index);
+	diff_fill_oid_info(p->two, o->repo->index);
 
 	builtin_checkdiff(name, other, attr_path, p->one, p->two, o);
 }
@@ -5685,8 +5685,8 @@ static int diff_get_patch_id(struct diff_options *options, struct object_id *oid
 		if (DIFF_PAIR_UNMERGED(p))
 			continue;
 
-		diff_fill_oid_info(p->one);
-		diff_fill_oid_info(p->two);
+		diff_fill_oid_info(p->one, options->repo->index);
+		diff_fill_oid_info(p->two, options->repo->index);
 
 		len1 = remove_space(p->one->path, strlen(p->one->path));
 		len2 = remove_space(p->two->path, strlen(p->two->path));

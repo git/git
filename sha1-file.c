@@ -1813,7 +1813,8 @@ static void check_tag(const void *buf, size_t size)
 		die(_("corrupt tag"));
 }
 
-static int index_mem(struct object_id *oid, void *buf, size_t size,
+static int index_mem(struct index_state *istate,
+		     struct object_id *oid, void *buf, size_t size,
 		     enum object_type type,
 		     const char *path, unsigned flags)
 {
@@ -1828,7 +1829,7 @@ static int index_mem(struct object_id *oid, void *buf, size_t size,
 	 */
 	if ((type == OBJ_BLOB) && path) {
 		struct strbuf nbuf = STRBUF_INIT;
-		if (convert_to_git(&the_index, path, buf, size, &nbuf,
+		if (convert_to_git(istate, path, buf, size, &nbuf,
 				   get_conv_flags(flags))) {
 			buf = strbuf_detach(&nbuf, &size);
 			re_allocated = 1;
@@ -1852,17 +1853,20 @@ static int index_mem(struct object_id *oid, void *buf, size_t size,
 	return ret;
 }
 
-static int index_stream_convert_blob(struct object_id *oid, int fd,
-				     const char *path, unsigned flags)
+static int index_stream_convert_blob(struct index_state *istate,
+				     struct object_id *oid,
+				     int fd,
+				     const char *path,
+				     unsigned flags)
 {
 	int ret;
 	const int write_object = flags & HASH_WRITE_OBJECT;
 	struct strbuf sbuf = STRBUF_INIT;
 
 	assert(path);
-	assert(would_convert_to_git_filter_fd(&the_index, path));
+	assert(would_convert_to_git_filter_fd(istate, path));
 
-	convert_to_git_filter_fd(&the_index, path, fd, &sbuf,
+	convert_to_git_filter_fd(istate, path, fd, &sbuf,
 				 get_conv_flags(flags));
 
 	if (write_object)
@@ -1875,14 +1879,15 @@ static int index_stream_convert_blob(struct object_id *oid, int fd,
 	return ret;
 }
 
-static int index_pipe(struct object_id *oid, int fd, enum object_type type,
+static int index_pipe(struct index_state *istate, struct object_id *oid,
+		      int fd, enum object_type type,
 		      const char *path, unsigned flags)
 {
 	struct strbuf sbuf = STRBUF_INIT;
 	int ret;
 
 	if (strbuf_read(&sbuf, fd, 4096) >= 0)
-		ret = index_mem(oid, sbuf.buf, sbuf.len, type, path, flags);
+		ret = index_mem(istate, oid, sbuf.buf, sbuf.len, type, path, flags);
 	else
 		ret = -1;
 	strbuf_release(&sbuf);
@@ -1891,14 +1896,15 @@ static int index_pipe(struct object_id *oid, int fd, enum object_type type,
 
 #define SMALL_FILE_SIZE (32*1024)
 
-static int index_core(struct object_id *oid, int fd, size_t size,
+static int index_core(struct index_state *istate,
+		      struct object_id *oid, int fd, size_t size,
 		      enum object_type type, const char *path,
 		      unsigned flags)
 {
 	int ret;
 
 	if (!size) {
-		ret = index_mem(oid, "", size, type, path, flags);
+		ret = index_mem(istate, oid, "", size, type, path, flags);
 	} else if (size <= SMALL_FILE_SIZE) {
 		char *buf = xmalloc(size);
 		ssize_t read_result = read_in_full(fd, buf, size);
@@ -1909,11 +1915,11 @@ static int index_core(struct object_id *oid, int fd, size_t size,
 			ret = error(_("short read while indexing %s"),
 				    path ? path : "<unknown>");
 		else
-			ret = index_mem(oid, buf, size, type, path, flags);
+			ret = index_mem(istate, oid, buf, size, type, path, flags);
 		free(buf);
 	} else {
 		void *buf = xmmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
-		ret = index_mem(oid, buf, size, type, path, flags);
+		ret = index_mem(istate, oid, buf, size, type, path, flags);
 		munmap(buf, size);
 	}
 	return ret;
@@ -1941,7 +1947,8 @@ static int index_stream(struct object_id *oid, int fd, size_t size,
 	return index_bulk_checkin(oid, fd, size, type, path, flags);
 }
 
-int index_fd(struct object_id *oid, int fd, struct stat *st,
+int index_fd(struct index_state *istate, struct object_id *oid,
+	     int fd, struct stat *st,
 	     enum object_type type, const char *path, unsigned flags)
 {
 	int ret;
@@ -1950,14 +1957,14 @@ int index_fd(struct object_id *oid, int fd, struct stat *st,
 	 * Call xsize_t() only when needed to avoid potentially unnecessary
 	 * die() for large files.
 	 */
-	if (type == OBJ_BLOB && path && would_convert_to_git_filter_fd(&the_index, path))
-		ret = index_stream_convert_blob(oid, fd, path, flags);
+	if (type == OBJ_BLOB && path && would_convert_to_git_filter_fd(istate, path))
+		ret = index_stream_convert_blob(istate, oid, fd, path, flags);
 	else if (!S_ISREG(st->st_mode))
-		ret = index_pipe(oid, fd, type, path, flags);
+		ret = index_pipe(istate, oid, fd, type, path, flags);
 	else if (st->st_size <= big_file_threshold || type != OBJ_BLOB ||
-		 (path && would_convert_to_git(&the_index, path)))
-		ret = index_core(oid, fd, xsize_t(st->st_size), type, path,
-				 flags);
+		 (path && would_convert_to_git(istate, path)))
+		ret = index_core(istate, oid, fd, xsize_t(st->st_size),
+				 type, path, flags);
 	else
 		ret = index_stream(oid, fd, xsize_t(st->st_size), type, path,
 				   flags);
@@ -1965,7 +1972,8 @@ int index_fd(struct object_id *oid, int fd, struct stat *st,
 	return ret;
 }
 
-int index_path(struct object_id *oid, const char *path, struct stat *st, unsigned flags)
+int index_path(struct index_state *istate, struct object_id *oid,
+	       const char *path, struct stat *st, unsigned flags)
 {
 	int fd;
 	struct strbuf sb = STRBUF_INIT;
@@ -1976,7 +1984,7 @@ int index_path(struct object_id *oid, const char *path, struct stat *st, unsigne
 		fd = open(path, O_RDONLY);
 		if (fd < 0)
 			return error_errno("open(\"%s\")", path);
-		if (index_fd(oid, fd, st, OBJ_BLOB, path, flags) < 0)
+		if (index_fd(istate, oid, fd, st, OBJ_BLOB, path, flags) < 0)
 			return error(_("%s: failed to insert into database"),
 				     path);
 		break;

@@ -205,14 +205,16 @@ void fill_stat_cache_info(struct cache_entry *ce, struct stat *st)
 	}
 }
 
-static int ce_compare_data(const struct cache_entry *ce, struct stat *st)
+static int ce_compare_data(struct index_state *istate,
+			   const struct cache_entry *ce,
+			   struct stat *st)
 {
 	int match = -1;
 	int fd = git_open_cloexec(ce->name, O_RDONLY);
 
 	if (fd >= 0) {
 		struct object_id oid;
-		if (!index_fd(&oid, fd, st, OBJ_BLOB, ce->name, 0))
+		if (!index_fd(istate, &oid, fd, st, OBJ_BLOB, ce->name, 0))
 			match = oidcmp(&oid, &ce->oid);
 		/* index_fd() closed the file descriptor already */
 	}
@@ -257,11 +259,13 @@ static int ce_compare_gitlink(const struct cache_entry *ce)
 	return oidcmp(&oid, &ce->oid);
 }
 
-static int ce_modified_check_fs(const struct cache_entry *ce, struct stat *st)
+static int ce_modified_check_fs(struct index_state *istate,
+				const struct cache_entry *ce,
+				struct stat *st)
 {
 	switch (st->st_mode & S_IFMT) {
 	case S_IFREG:
-		if (ce_compare_data(ce, st))
+		if (ce_compare_data(istate, ce, st))
 			return DATA_CHANGED;
 		break;
 	case S_IFLNK:
@@ -407,7 +411,7 @@ int ie_match_stat(struct index_state *istate,
 		if (assume_racy_is_modified)
 			changed |= DATA_CHANGED;
 		else
-			changed |= ce_modified_check_fs(ce, st);
+			changed |= ce_modified_check_fs(istate, ce, st);
 	}
 
 	return changed;
@@ -447,7 +451,7 @@ int ie_modified(struct index_state *istate,
 	    (S_ISGITLINK(ce->ce_mode) || ce->ce_stat_data.sd_size != 0))
 		return changed;
 
-	changed_fs = ce_modified_check_fs(ce, st);
+	changed_fs = ce_modified_check_fs(istate, ce, st);
 	if (changed_fs)
 		return changed | changed_fs;
 	return 0;
@@ -753,7 +757,7 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 		}
 	}
 	if (!intent_only) {
-		if (index_path(&ce->oid, path, st, newflags)) {
+		if (index_path(istate, &ce->oid, path, st, newflags)) {
 			discard_cache_entry(ce);
 			return error("unable to index file %s", path);
 		}
@@ -2230,7 +2234,8 @@ static int ce_flush(git_hash_ctx *context, int fd, unsigned char *hash)
 	return (write_in_full(fd, write_buffer, left) < 0) ? -1 : 0;
 }
 
-static void ce_smudge_racily_clean_entry(struct cache_entry *ce)
+static void ce_smudge_racily_clean_entry(struct index_state *istate,
+					 struct cache_entry *ce)
 {
 	/*
 	 * The only thing we care about in this function is to smudge the
@@ -2249,7 +2254,7 @@ static void ce_smudge_racily_clean_entry(struct cache_entry *ce)
 		return;
 	if (ce_match_stat_basic(ce, &st))
 		return;
-	if (ce_modified_check_fs(ce, &st)) {
+	if (ce_modified_check_fs(istate, ce, &st)) {
 		/* This is "racily clean"; smudge it.  Note that this
 		 * is a tricky code.  At first glance, it may appear
 		 * that it can break with this sequence:
@@ -2494,7 +2499,7 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 		if (ce->ce_flags & CE_REMOVE)
 			continue;
 		if (!ce_uptodate(ce) && is_racy_timestamp(istate, ce))
-			ce_smudge_racily_clean_entry(ce);
+			ce_smudge_racily_clean_entry(istate, ce);
 		if (is_null_oid(&ce->oid)) {
 			static const char msg[] = "cache entry has null sha1: %s";
 			static int allow = -1;
