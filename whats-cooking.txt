@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Sep 2018, #03; Fri, 14)
-X-master-at: 1d4361b0f344188ab5eec6dcea01f61a3a3a1670
-X-next-at: 18242da7ef2827fb2713d17d95e46d20630f67d2
+Subject: What's cooking in git.git (Sep 2018, #04; Thu, 20)
+X-master-at: 150f307afc13961b0322ad0e7205a7b193368586
+X-next-at: 22e244bd67aa2e7d6da808dd00093b071f3ffd7c
 
-What's cooking in git.git (Sep 2018, #03; Fri, 14)
+What's cooking in git.git (Sep 2018, #04; Thu, 20)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,17 +12,12 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-The tip of 'next' hasn't been rewound yet, but the states of many
-topics that were marked to "Cook in 'next'" read "Will merge to
-'master'" now.  I'll probably start merging a handful of topics that
-have been in 'next' down to 'master' tonight (they appear at the
-bottom of "log --first-parent master..pu" output).
-
-The three GSoC "rewrite in C" topics are still unclassified in this
-"What's cooking" report, but I am hoping that we can have them in
-'next' sooner rather than later.  I got an impression that Dscho
-wanted a chance for the final clean-up on some of them, so I am not
-doing anything hasty yet at this moment, though.
+The tip of 'next' hasn't been rewound yet.  The three GSoC "rewrite
+in C" topics are still unclassified in this "What's cooking" report,
+but I am hoping that we can have them in 'next' sooner rather than
+later.  I got an impression that Dscho wanted a chance for the final
+clean-up on some of them, so I am not doing anything hasty yet at
+this moment, though.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -30,216 +25,587 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
+[Graduated to "master"]
+
+* ab/fetch-tags-noclobber (2018-08-31) 11 commits
+  (merged to 'next' on 2018-09-20 at 3e950afa0f)
+ + fetch doc: correct grammar in --force docs
+ + push doc: add spacing between two words
+  (merged to 'next' on 2018-09-14 at 0384a7a8b4)
+ + fetch: stop clobbering existing tags without --force
+ + fetch: document local ref updates with/without --force
+ + push doc: correct lies about how push refspecs work
+ + push doc: move mention of "tag <tag>" later in the prose
+ + push doc: remove confusing mention of remote merger
+ + fetch tests: add a test for clobbering tag behavior
+ + push tests: use spaces in interpolated string
+ + push tests: make use of unused $1 in test description
+ + fetch: change "branch" to "reference" in --force -h output
+
+ The rules used by "git push" and "git fetch" to determine if a ref
+ can or cannot be updated were inconsistent; specifically, fetching
+ to update existing tags were allowed even though tags are supposed
+ to be unmoving anchoring points.  "git fetch" was taught to forbid
+ updates to existing tags without the "--force" option.
+ This is a backward incompatible change but in a good way; it may
+ still need to be treated carefully.
+
+
+* bp/checkout-new-branch-optim (2018-08-16) 1 commit
+  (merged to 'next' on 2018-09-20 at 329edd4960)
+ + config doc: add missing list separator for checkout.optimizeNewBranch
+  (merged to 'next' on 2018-08-27 at e69bfd115f)
+ + checkout: optimize "git checkout -b <new_branch>"
+
+ "git checkout -b newbranch [HEAD]" should not have to do as much as
+ checking out a commit different from HEAD.  An attempt is made to
+ optimize this special case.
+
+
+* cc/delta-islands (2018-08-16) 7 commits
+  (merged to 'next' on 2018-08-27 at cf3d7bd93f)
+ + pack-objects: move 'layer' into 'struct packing_data'
+ + pack-objects: move tree_depth into 'struct packing_data'
+ + t5320: tests for delta islands
+ + repack: add delta-islands support
+ + pack-objects: add delta-islands support
+ + pack-objects: refactor code into compute_layer_order()
+ + Add delta-islands.{c,h}
+
+ Lift code from GitHub to restrict delta computation so that an
+ object that exists in one fork is not made into a delta against
+ another object that does not appear in the same forked repository.
+
+
+* ds/commit-graph-tests (2018-08-29) 1 commit
+  (merged to 'next' on 2018-09-14 at d072a0ee3e)
+ + commit-graph: define GIT_TEST_COMMIT_GRAPH
+
+ We can now optionally run tests with commit-graph enabled.
+
+
+* ds/multi-pack-index (2018-08-20) 33 commits
+  (merged to 'next' on 2018-08-21 at d15e8cadd4)
+ + pack-objects: consider packs in multi-pack-index
+ + midx: test a few commands that use get_all_packs
+ + treewide: use get_all_packs
+ + packfile: add all_packs list
+ + midx: fix bug that skips midx with alternates
+ + midx: stop reporting garbage
+ + midx: mark bad packed objects
+ + multi-pack-index: store local property
+ + multi-pack-index: provide more helpful usage info
+ + Sync 'ds/multi-pack-index' to v2.19.0-rc0
+  (merged to 'next' on 2018-08-08 at 1a56c52967)
+ + midx: clear midx on repack
+ + packfile: skip loading index if in multi-pack-index
+ + midx: prevent duplicate packfile loads
+ + midx: use midx in approximate_object_count
+ + midx: use existing midx when writing new one
+ + midx: use midx in abbreviation calculations
+ + midx: read objects from multi-pack-index
+ + config: create core.multiPackIndex setting
+ + midx: write object offsets
+ + midx: write object id fanout chunk
+ + midx: write object ids in a chunk
+ + midx: sort and deduplicate objects from packfiles
+ + midx: read pack names into array
+ + multi-pack-index: write pack names in chunk
+ + multi-pack-index: read packfile list
+ + packfile: generalize pack directory list
+ + t5319: expand test data
+ + multi-pack-index: load into memory
+ + midx: write header information to lockfile
+ + multi-pack-index: add 'write' verb
+ + multi-pack-index: add builtin
+ + multi-pack-index: add format details
+ + multi-pack-index: add design document
+ (this branch is used by ds/multi-pack-verify.)
+
+ When there are too many packfiles in a repository (which is not
+ recommended), looking up an object in these would require
+ consulting many pack .idx files; a new mechanism to have a single
+ file that consolidates all of these .idx files is introduced.
+
+
+* ds/reachable (2018-08-28) 19 commits
+  (merged to 'next' on 2018-08-28 at b1634b371d)
+ + commit-reach: correct accidental #include of C file
+  (merged to 'next' on 2018-08-22 at 17f3275afb)
+ + commit-reach: use can_all_from_reach
+ + commit-reach: make can_all_from_reach... linear
+ + commit-reach: replace ref_newer logic
+ + test-reach: test commit_contains
+ + test-reach: test can_all_from_reach_with_flags
+ + test-reach: test reduce_heads
+ + test-reach: test get_merge_bases_many
+ + test-reach: test is_descendant_of
+ + test-reach: test in_merge_bases
+ + test-reach: create new test tool for ref_newer
+ + commit-reach: move can_all_from_reach_with_flags
+ + upload-pack: generalize commit date cutoff
+ + upload-pack: refactor ok_to_give_up()
+ + upload-pack: make reachable() more generic
+ + commit-reach: move commit_contains from ref-filter
+ + commit-reach: move ref_newer from remote.c
+ + commit.h: remove method declarations
+ + commit-reach: move walk methods from commit.c
+
+ The code for computing history reachability has been shuffled,
+ obtained a bunch of new tests to cover them, and then being
+ improved.
+
+
+* es/format-patch-interdiff (2018-07-23) 6 commits
+  (merged to 'next' on 2018-08-31 at 63927e0227)
+ + format-patch: allow --interdiff to apply to a lone-patch
+ + log-tree: show_log: make commentary block delimiting reusable
+ + interdiff: teach show_interdiff() to indent interdiff
+ + format-patch: teach --interdiff to respect -v/--reroll-count
+ + format-patch: add --interdiff option to embed diff in cover letter
+ + format-patch: allow additional generated content in make_cover_letter()
+ (this branch is used by ds/format-patch-range-diff-test and es/format-patch-rangediff.)
+
+ "git format-patch" learned a new "--interdiff" option to explain
+ the difference between this version and the previous atttempt in
+ the cover letter (or after the tree-dashes as a comment).
+
+
+* es/format-patch-rangediff (2018-08-14) 10 commits
+  (merged to 'next' on 2018-08-31 at 65627afece)
+ + format-patch: allow --range-diff to apply to a lone-patch
+ + format-patch: add --creation-factor tweak for --range-diff
+ + format-patch: teach --range-diff to respect -v/--reroll-count
+ + format-patch: extend --range-diff to accept revision range
+ + format-patch: add --range-diff option to embed diff in cover letter
+ + range-diff: relieve callers of low-level configuration burden
+ + range-diff: publish default creation factor
+ + range-diff: respect diff_option.file rather than assuming 'stdout'
+ + Merge branch 'es/format-patch-interdiff' into es/format-patch-rangediff
+ + Merge branch 'js/range-diff' into es/format-patch-rangediff
+ (this branch is used by ds/format-patch-range-diff-test; uses es/format-patch-interdiff.)
+
+ "git format-patch" learned a new "--range-diff" option to explain
+ the difference between this version and the previous attempt in
+ the cover letter (or after the tree-dashes as a comment).
+
+
+* es/worktree-forced-ops-fix (2018-09-05) 10 commits
+  (merged to 'next' on 2018-09-14 at 1a0cc3204d)
+ + doc-diff: force worktree add
+ + worktree: delete .git/worktrees if empty after 'remove'
+ + worktree: teach 'remove' to override lock when --force given twice
+ + worktree: teach 'move' to override lock when --force given twice
+ + worktree: teach 'add' to respect --force for registered but missing path
+ + worktree: disallow adding same path multiple times
+ + worktree: prepare for more checks of whether path can become worktree
+ + worktree: generalize delete_git_dir() to reduce code duplication
+ + worktree: move delete_git_dir() earlier in file for upcoming new callers
+ + worktree: don't die() in library function find_worktree()
+
+ Fix a bug in which the same path could be registered under multiple
+ worktree entries if the path was missing (for instance, was removed
+ manually).  Also, as a convenience, expand the number of cases in
+ which --force is applicable.
+
+
+* jk/branch-l-1-repurpose (2018-08-30) 2 commits
+  (merged to 'next' on 2018-08-31 at cfa73bbfcb)
+ + doc/git-branch: remove obsolete "-l" references
+  (merged to 'next' on 2018-08-08 at d2a08dd08e)
+ + branch: make "-l" a synonym for "--list"
+
+ Updated plan to repurpose the "-l" option to "git branch".
+
+
+* jk/cocci (2018-08-29) 9 commits
+  (merged to 'next' on 2018-08-31 at 914b4f17ce)
+ + show_dirstat: simplify same-content check
+ + read-cache: use oideq() in ce_compare functions
+ + convert hashmap comparison functions to oideq()
+ + convert "hashcmp() != 0" to "!hasheq()"
+ + convert "oidcmp() != 0" to "!oideq()"
+ + convert "hashcmp() == 0" to hasheq()
+ + convert "oidcmp() == 0" to oideq()
+ + introduce hasheq() and oideq()
+ + coccinelle: use <...> for function exclusion
+
+ spatch transformation to replace boolean uses of !hashcmp() to
+ newly introduced oideq() is added, and applied, to regain
+ performance lost due to support of multiple hash algorithms.
+
+
+* jk/diff-rendered-docs (2018-08-31) 5 commits
+  (merged to 'next' on 2018-09-14 at 9b43d5a568)
+ + doc/Makefile: drop doc-diff worktree and temporary files on "make clean"
+ + doc-diff: add --clean mode to remove temporary working gunk
+ + doc-diff: fix non-portable 'man' invocation
+ + doc-diff: always use oids inside worktree
+  (merged to 'next' on 2018-08-22 at dd7a2b71cd)
+ + SubmittingPatches: mention doc-diff
+
+ Dev doc update.
+
+
+* jk/pack-delta-reuse-with-bitmap (2018-08-21) 6 commits
+  (merged to 'next' on 2018-08-22 at fc50b59dab)
+ + pack-objects: reuse on-disk deltas for thin "have" objects
+ + pack-bitmap: save "have" bitmap from walk
+ + t/perf: add perf tests for fetches from a bitmapped server
+ + t/perf: add infrastructure for measuring sizes
+ + t/perf: factor out percent calculations
+ + t/perf: factor boilerplate out of test_perf
+ (this branch is used by jk/pack-objects-with-bitmap-fix.)
+
+ When creating a thin pack, which allows objects to be made into a
+ delta against another object that is not in the resulting pack but
+ is known to be present on the receiving end, the code learned to
+ take advantage of the reachability bitmap; this allows the server
+ to send a delta against a base beyond the "boundary" commit.
+
+
+* jk/pack-objects-with-bitmap-fix (2018-09-04) 4 commits
+  (merged to 'next' on 2018-09-14 at 392eb2abb1)
+ + pack-bitmap: drop "loaded" flag
+ + traverse_bitmap_commit_list(): don't free result
+ + t5310: test delta reuse with bitmaps
+ + bitmap_has_sha1_in_uninteresting(): drop BUG check
+ (this branch uses jk/pack-delta-reuse-with-bitmap.)
+
+ Hotfix of the base topic.
+
+
+* jk/patch-corrupted-delta-fix (2018-08-30) 6 commits
+  (merged to 'next' on 2018-09-14 at 7517309cb0)
+ + t5303: use printf to generate delta bases
+ + patch-delta: handle truncated copy parameters
+ + patch-delta: consistently report corruption
+ + patch-delta: fix oob read
+ + t5303: test some corrupt deltas
+ + test-delta: read input into a heap buffer
+
+ Malformed or crafted data in packstream can make our code attempt
+ to read or write past the allocated buffer and abort, instead of
+ reporting an error, which has been fixed.
+
+
+* jk/rev-list-stdin-noop-is-ok (2018-08-22) 1 commit
+  (merged to 'next' on 2018-08-27 at d5916f7bc1)
+ + rev-list: make empty --stdin not an error
+
+ "git rev-list --stdin </dev/null" used to be an error; it now shows
+ no output without an error.  "git rev-list --stdin --default HEAD"
+ still falls back to the given default when nothing is given on the
+ standard input.
+
+
+* jk/trailer-fixes (2018-08-23) 8 commits
+  (merged to 'next' on 2018-08-27 at 93b671b8c6)
+ + append_signoff: use size_t for string offsets
+ + sequencer: ignore "---" divider when parsing trailers
+ + pretty, ref-filter: format %(trailers) with no_divider option
+ + interpret-trailers: allow suppressing "---" divider
+ + interpret-trailers: tighten check for "---" patch boundary
+ + trailer: pass process_trailer_opts to trailer_info_get()
+ + trailer: use size_t for iterating trailer list
+ + trailer: use size_t for string offsets
+
+ "git interpret-trailers" and its underlying machinery had a buggy
+ code that attempted to ignore patch text after commit log message,
+ which triggered in various codepaths that will always get the log
+ message alone and never get such an input.
+
+
+* mk/http-backend-content-length (2018-09-11) 1 commit
+  (merged to 'next' on 2018-09-11 at e8095fc635)
+ + http-backend test: make empty CONTENT_LENGTH test more realistic
+
+ Test update.
+
+
+* nd/bisect-show-list-fix (2018-09-04) 1 commit
+  (merged to 'next' on 2018-09-14 at 18242da7ef)
+ + bisect.c: make show_list() build again
+
+ Debugging aid update.
+
+
+* nd/clone-case-smashing-warning (2018-08-17) 1 commit
+  (merged to 'next' on 2018-08-22 at eedae40a8d)
+ + clone: report duplicate entries on case-insensitive filesystems
+
+ Running "git clone" against a project that contain two files with
+ pathnames that differ only in cases on a case insensitive
+ filesystem would result in one of the files lost because the
+ underlying filesystem is incapable of holding both at the same
+ time.  An attempt is made to detect such a case and warn.
+
+
+* nd/unpack-trees-with-cache-tree (2018-08-27) 8 commits
+  (merged to 'next' on 2018-08-27 at b1d841d034)
+ + Document update for nd/unpack-trees-with-cache-tree
+  (merged to 'next' on 2018-08-22 at 138b902673)
+ + cache-tree: verify valid cache-tree in the test suite
+ + unpack-trees: add missing cache invalidation
+ + unpack-trees: reuse (still valid) cache-tree from src_index
+ + unpack-trees: reduce malloc in cache-tree walk
+ + unpack-trees: optimize walking same trees with cache-tree
+ + unpack-trees: add performance tracing
+ + trace.h: support nested performance tracing
+
+ The unpack_trees() API used in checking out a branch and merging
+ walks one or more trees along with the index.  When the cache-tree
+ in the index tells us that we are walking a tree whose flattened
+ contents is known (i.e. matches a span in the index), as linearly
+ scanning a span in the index is much more efficient than having to
+ open tree objects recursively and listing their entries, the walk
+ can be optimized, which is done in this topic.
+
+
+* rs/mailinfo-format-flowed (2018-08-29) 1 commit
+  (merged to 'next' on 2018-08-31 at 9e8b92176c)
+ + mailinfo: support format=flowed
+
+ "git mailinfo" used in "git am" learned to make a best-effort
+ recovery of a patch corrupted by MUA that sends text/plain with
+ format=flawed option.
+
+
+* sb/range-diff-colors (2018-08-20) 11 commits
+  (merged to 'next' on 2018-08-22 at eb7ed4fca3)
+ + range-diff: indent special lines as context
+ + range-diff: make use of different output indicators
+ + diff.c: add --output-indicator-{new, old, context}
+ + diff.c: rewrite emit_line_0 more understandably
+ + diff.c: omit check for line prefix in emit_line_0
+ + diff: use emit_line_0 once per line
+ + diff.c: add set_sign to emit_line_0
+ + diff.c: reorder arguments for emit_line_ws_markup
+ + diff.c: simplify caller of emit_line_0
+ + t3206: add color test for range-diff --dual-color
+ + test_decode_color: understand FAINT and ITALIC
+
+ The color output support for recently introduced "range-diff"
+ command got tweaked a bit.
+
+
+* sb/submodule-update-in-c (2018-08-14) 7 commits
+  (merged to 'next' on 2018-08-17 at 23c81e5ff7)
+ + submodule--helper: introduce new update-module-mode helper
+ + submodule--helper: replace connect-gitdir-workingtree by ensure-core-worktree
+ + builtin/submodule--helper: factor out method to update a single submodule
+ + builtin/submodule--helper: store update_clone information in a struct
+ + builtin/submodule--helper: factor out submodule updating
+ + git-submodule.sh: rename unused variables
+ + git-submodule.sh: align error reporting for update mode to use path
+
+ "git submodule update" is getting rewritten piece-by-piece into C.
+
+
+* sg/doc-trace-appends (2018-09-04) 1 commit
+  (merged to 'next' on 2018-09-14 at 6d82abb8bf)
+ + Documentation/git.txt: clarify that GIT_TRACE=/path appends
+
+ Docfix.
+
+
+* sg/t1404-update-ref-test-timeout (2018-08-01) 1 commit
+  (merged to 'next' on 2018-08-22 at f3cd37b5ea)
+ + t1404: increase core.packedRefsTimeout to avoid occasional test failure
+
+ An attempt to unflake a test a bit.
+
+
+* tg/conflict-marker-size (2018-08-29) 1 commit
+  (merged to 'next' on 2018-08-31 at 12099161f0)
+ + .gitattributes: add conflict-marker-size for relevant files
+
+ Developer aid.
+
+
+* tg/rerere (2018-08-06) 11 commits
+  (merged to 'next' on 2018-08-17 at 919a958cdc)
+ + rerere: recalculate conflict ID when unresolved conflict is committed
+ + rerere: teach rerere to handle nested conflicts
+ + rerere: return strbuf from handle path
+ + rerere: factor out handle_conflict function
+ + rerere: only return whether a path has conflicts or not
+ + rerere: fix crash with files rerere can't handle
+ + rerere: add documentation for conflict normalization
+ + rerere: mark strings for translation
+ + rerere: wrap paths in output in sq
+ + rerere: lowercase error messages
+ + rerere: unify error messages when read_cache fails
+ (this branch is used by tg/rerere-doc-updates.)
+
+ Fixes to "git rerere" corner cases, especially when conflict
+ markers cannot be parsed in the file.
+
+
+* tg/rerere-doc-updates (2018-08-29) 2 commits
+  (merged to 'next' on 2018-08-31 at ce4fef1a97)
+ + rerere: add note about files with existing conflict markers
+ + rerere: mention caveat about unmatched conflict markers
+ (this branch uses tg/rerere.)
+
+ Clarify a part of technical documentation for rerere.
+
+
+* ts/doc-build-manpage-xsl-quietly (2018-08-29) 1 commit
+  (merged to 'next' on 2018-08-31 at 7527e0f8d3)
+ + Documentation/Makefile: make manpage-base-url.xsl generation quieter
+
+ Build tweak.
+
+--------------------------------------------------
 [New Topics]
 
-* ab/fsck-skiplist (2018-09-12) 10 commits
- - fsck: support comments & empty lines in skipList
- - fsck: use oidset instead of oid_array for skipList
- - fsck: use strbuf_getline() to read skiplist file
- - fsck: add a performance test for skipList
- - fsck: add a performance test
- - fsck: document that skipList input must be unabbreviated
- - fsck: document and test commented & empty line skipList input
- - fsck: document and test sorted skipList input
- - fsck tests: add a test for no skipList input
- - fsck tests: setup of bogus commit object
-
- Update fsck.skipList implementation and documentation.
-
- Will merge to 'next'.
-
-
-* bc/hash-independent-tests (2018-09-13) 12 commits
- - t5318: use test_oid for HASH_LEN
- - t1407: make hash size independent
- - t1406: make hash-size independent
- - t1405: make hash size independent
- - t1400: switch hard-coded object ID to variable
- - t1006: make hash size independent
- - t0064: make hash size independent
- - t0027: make hash size independent
- - t0002: abstract away SHA-1 specific constants
- - t0000: update tests for SHA-256
- - t0000: use hash translation table
- - t: add test functions to translate hash-related values
-
- Various tests have been updated to make it easier to swap the
- hash function used for object identification.
-
- Will merge to 'next'.
-
-
-* bp/mv-submodules-with-fsmonitor (2018-09-12) 1 commit
- - git-mv: allow submodules and fsmonitor to work together
-
- When fsmonitor is in use, after operation on submodules updates
- .gitmodules, we lost track of the fact that we did so and relied on
- stale fsmonitor data.
-
- Will merge to 'next'.
-
-
-* bp/read-cache-parallel (2018-09-13) 6 commits
- - SQUASH???
- - read-cache: clean up casting and byte decoding
- - read-cache.c: optimize reading index format v4
- - read-cache: load cache entries on worker threads
- - read-cache: load cache extensions on a worker thread
- - eoie: add End of Index Entry (EOIE) extension
-
- A new extension to the index file has been introduced, which allows
- the file to be read in parallel.
-
- Will merge to 'next' after squashing the fix in.
-
-
-* ds/coverage-diff (2018-09-12) 1 commit
- - contrib: add coverage-diff script
-
- The result of coverage test can be combined with "git blame" to
- check the test coverage of code introduced recently with a new
- 'coverage-diff' tool (in contrib/).
-
- Expecting a reroll.
-
-
-* ds/format-patch-range-diff-test (2018-09-12) 1 commit
- - t3206-range-diff.sh: cover single-patch case
- (this branch uses es/format-patch-interdiff and es/format-patch-rangediff.)
-
- Will merge to 'next'.
-
-
-* ds/multi-pack-verify (2018-09-13) 11 commits
- - fsck: verify multi-pack-index
- - multi-pack-index: report progress during 'verify'
- - multi-pack-index: verify object offsets
- - multi-pack-index: fix 32-bit vs 64-bit size check
- - multi-pack-index: verify oid lookup order
- - multi-pack-index: verify oid fanout order
- - multi-pack-index: verify missing pack
- - multi-pack-index: verify packname order
- - multi-pack-index: verify corrupt chunk lookup table
- - multi-pack-index: verify bad header
- - multi-pack-index: add 'verify' verb
- (this branch uses ds/multi-pack-index.)
-
- "git multi-pack-index" learned to detect corruption in the .midx
- file it uses, and this feature has been integrated into "git fsck".
-
- Will merge to 'next'.
-
-
-* en/sequencer-empty-edit-result-aborts (2018-09-13) 1 commit
- - sequencer: fix --allow-empty-message behavior, make it smarter
-
- "git rebase" etc. in Git 2.19 fails to abort when given an empty
- commit log message as result of editing, which has been corrected.
-
- Will merge to 'next'.
-
-
-* en/update-ref-no-deref-stdin (2018-09-12) 2 commits
- - update-ref: allow --no-deref with --stdin
- - update-ref: fix type of update_flags variable to match its usage
-
- "git update-ref" learned to make both "--no-deref" and "--stdin"
- work at the same time.
-
- Will merge to 'next'.
-
-
-* jt/lazy-object-fetch-fix (2018-09-13) 2 commits
- - fetch-object: set exact_oid when fetching
- - fetch-object: unify fetch_object[s] functions
-
- The code to backfill objects in lazily cloned repository did not
- work correctly, which has been corrected.
-
- Will merge to 'next'.
-
-
-* ms/remote-error-message-update (2018-09-14) 1 commit
- - builtin/remote: quote remote name on error to display empty name
-
- Update error messages given by "git remote" and make them consistent.
-
- Will merge to 'next'.
-
-
-* nd/config-split (2018-09-12) 11 commits
- - config.txt: move submodule part out to a separate file
- - config.txt: move sequence.editor out of "core" part
- - config.txt: move sendemail part out to a separate file
- - config.txt: move receive part out to a separate file
- - config.txt: move push part out to a separate file
- - config.txt: move pull part out to a separate file
- - config.txt: move gui part out to a separate file
- - config.txt: move gitcvs part out to a separate file
- - config.txt: move format part out to a separate file
- - config.txt: move fetch part out to a separate file
- - config.txt: follow camelCase naming
-
- Split Documentation/config.txt for easier maintenance.
-
- Will merge to 'next'.
-
-
-* sb/submodule-recursive-fetch-gets-the-tip (2018-09-12) 9 commits
- - builtin/fetch: check for submodule updates for non branch fetches
- - fetch: retry fetching submodules if sha1 were not fetched
- - submodule: fetch in submodules git directory instead of in worktree
- - submodule.c: do not copy around submodule list
- - submodule: move global changed_submodule_names into fetch submodule struct
- - submodule.c: sort changed_submodule_names before searching it
- - submodule.c: fix indentation
- - sha1-array: provide oid_array_filter
- - string-list: add string_list_{pop, last} functions
-
- "git fetch --recurse-submodules" may not fetch the necessary commit
- that is bound to the superproject, which is getting corrected.
-
- Expecting a reroll.
- cf. <CAGZ79kbavjVbTqXsmtjW6=jhkq47_p3mc6=92xOp4_mfhqDtvw@mail.gmail.com>
- cf. <b16af8c0-0435-0de4-ed6c-53888d6190af@ramsayjones.plus.com>
- cf. <CAGZ79kZKKf9N8yx9EuCRZhrZS_mA2218PouEG7aHDhK2bJGEdA@mail.gmail.com>
-
-
-* sg/split-index-test (2018-09-12) 2 commits
- - t0090: disable GIT_TEST_SPLIT_INDEX for the test checking split index
- - t1700-split-index: drop unnecessary 'grep'
-
- Test updates.
-
- Will merge to 'next'.
-
-
-* tb/void-check-attr (2018-09-12) 1 commit
- - Make git_check_attr() a void function
+* jn/gc-auto-prep (2018-07-17) 2 commits
+ - gc: exit with status 128 on failure
+ - gc: improve handling of errors reading gc.log
+ (this branch is used by jn/gc-auto.)
 
  Code clean-up.
 
  Will merge to 'next'.
 
 
-* tg/range-diff-corner-case-fix (2018-09-14) 1 commit
- - linear-assignment: fix potential out of bounds memory access
+* nd/status-refresh-progress (2018-09-17) 1 commit
+ - status: show progress bar if refreshing the index takes too long
 
- Recently added "range-diff" had a corner-case bug to cause it
- segfault, which has been corrected.
+ "git status" learns to show progress bar when refreshing the index
+ takes a long time.
 
  Will merge to 'next'.
 
 
-* bp/rename-test-env-var (2018-09-14) 5 commits
- - preload-index: update GIT_FORCE_PRELOAD_TEST support
- - read-cache: update TEST_GIT_INDEX_VERSION support
- - fsmonitor: update GIT_TEST_FSMONITOR support
- - preload-index: teach GIT_FORCE_PRELOAD_TEST to take a boolean
- - correct typo/spelling error in t/README
+* nd/the-index (2018-09-17) 23 commits
+ - revision.c: reduce implicit dependency the_repository
+ - revision.c: remove implicit dependency on the_index
+ - ws.c: remove implicit dependency on the_index
+ - tree-diff.c: remove implicit dependency on the_index
+ - submodule.c: remove implicit dependency on the_index
+ - line-range.c: remove implicit dependency on the_index
+ - userdiff.c: remove implicit dependency on the_index
+ - rerere.c: remove implicit dependency on the_index
+ - sha1-file.c: remove implicit dependency on the_index
+ - patch-ids.c: remove implicit dependency on the_index
+ - merge.c: remove implicit dependency on the_index
+ - merge-blobs.c: remove implicit dependency on the_index
+ - ll-merge.c: remove implicit dependency on the_index
+ - diff-lib.c: remove implicit dependency on the_index
+ - read-cache.c: remove implicit dependency on the_index
+ - diff.c: remove implicit dependency on the_index
+ - grep.c: remove implicit dependency on the_index
+ - diff.c: remove the_index dependency in textconv() functions
+ - blame.c: rename "repo" argument to "r"
+ - combine-diff.c: remove implicit dependency on the_index
+ - diff.c: reduce implicit dependency on the_index
+ - read-cache.c: remove 'const' from index_has_changes()
+ - archive.c: remove implicit dependency the_repository
 
- Some environment variables that control the runtime options of Git
- used during tests are getting renamed for consistency.
+ Various codepaths in the core-ish part learn to work on an
+ arbitrary in-core index structure, not necessarily the default
+ instance "the_index".
+
+ Will merge to 'next'.
+
+ As expected, this has close to irritating amount of textual conflicts
+ with the topics in-flight.  Hopefully we can minimize the pain by
+ letting it pass through quickly?
+
+
+* tq/refs-internal-comment-fix (2018-09-17) 1 commit
+ - refs: docstring typo
+
+ Fix for typo in a sample code in comment.
+
+ Will merge to 'next'.
+
+
+* ts/alias-of-alias (2018-09-17) 3 commits
+ - t0014: introduce an alias testing suite
+ - alias: show the call history when an alias is looping
+ - alias: add support for aliases of an alias
+
+ An alias that expands to another alias has so far been forbidden,
+ but now it is allowed to create such an alias.
+
+ Will merge to 'next'.
+
+
+* ds/reachable-topo-order (2018-09-20) 8 commits
+ - revision.c: refactor basic topo-order logic
+ - commit/revisions: bookkeeping before refactoring
+ - revision.c: begin refactoring --topo-order logic
+ - fixup! test-reach: add rev-list tests
+ - test-reach: add rev-list tests
+ - fixup! test-reach: add run_three_modes method
+ - test-reach: add run_three_modes method
+ - prio-queue: add 'peek' operation
+
+ The revision walker machinery learned to take advantage of the
+ commit generation numbers stored in the commit-graph file.
+
+
+* en/merge-cleanup (2018-09-20) 4 commits
+ - merge-recursive: rename merge_file_1() and merge_content()
+ - merge-recursive: remove final remaining caller of merge_file_one()
+ - merge-recursive: avoid wrapper function when unnecessary and wasteful
+ - merge-recursive: set paths correctly when three-way merging content
+
+ Code clean-up.
+
+ Will merge to 'next'.
+
+
+* jk/delta-islands-with-bitmap-reuse-delta-fix (2018-09-19) 1 commit
+ - pack-objects: handle island check for "external" delta base
+
+ Fix interactions between two recent topics.
+
+ Will merge to 'next'.
+
+
+* jn/mailmap-update (2018-09-19) 1 commit
+ - mailmap: consistently normalize brian m. carlson's name
+
+ The mailmap file update.
+
+ Will merge to 'next'.
+
+
+* ma/config-doc-update (2018-09-20) 2 commits
+ - git-config.txt: fix 'see: above' note
+ - Doc: use `--type=bool` instead of `--bool`
+
+ Doc update.
+
+ Will merge to 'next'.
+
+
+* nd/attr-pathspec-fix (2018-09-20) 2 commits
+ - fixup! add: do not accept pathspec magic 'attr'
+ - add: do not accept pathspec magic 'attr'
+
+ "git add ':(attr:foo)'" is not supported and is supposed to be
+ rejected while the command line arguments are parsed, but we fail
+ to reject such a command line upfront.
+
+ Will merge to 'next'.
+
+
+* rj/header-check (2018-09-20) 8 commits
+ - delta-islands.h: add missing forward declarations (hdr-check)
+ - midx.h: add missing forward declarations (hdr-check)
+ - refs/refs-internal.h: add missing declarations (hdr-check)
+ - refs/packed-backend.h: add missing declaration (hdr-check)
+ - refs/ref-cache.h: add missing declarations (hdr-check)
+ - ewah/ewok_rlw.h: add missing include (hdr-check)
+ - json-writer.h: add missing include (hdr-check)
+ - Makefile: add a hdr-check target
+
+ Header files clean-up.
 
  Will merge to 'next'.
 
@@ -358,113 +724,340 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* ab/commit-graph-progress (2018-09-11) 2 commits
- - commit-graph verify: add progress output
- - commit-graph write: add progress output
+* ab/fsck-skiplist (2018-09-12) 10 commits
+  (merged to 'next' on 2018-09-17 at dc9094ba9b)
+ + fsck: support comments & empty lines in skipList
+ + fsck: use oidset instead of oid_array for skipList
+ + fsck: use strbuf_getline() to read skiplist file
+ + fsck: add a performance test for skipList
+ + fsck: add a performance test
+ + fsck: document that skipList input must be unabbreviated
+ + fsck: document and test commented & empty line skipList input
+ + fsck: document and test sorted skipList input
+ + fsck tests: add a test for no skipList input
+ + fsck tests: setup of bogus commit object
+
+ Update fsck.skipList implementation and documentation.
+
+ Will merge to 'master'.
+
+
+* bc/hash-independent-tests (2018-09-17) 11 commits
+  (merged to 'next' on 2018-09-17 at 9e94794d05)
+ + t5318: use test_oid for HASH_LEN
+ + t1407: make hash size independent
+ + t1406: make hash-size independent
+ + t1405: make hash size independent
+ + t1400: switch hard-coded object ID to variable
+ + t1006: make hash size independent
+ + t0064: make hash size independent
+ + t0002: abstract away SHA-1 specific constants
+ + t0000: update tests for SHA-256
+ + t0000: use hash translation table
+ + t: add test functions to translate hash-related values
+
+ Various tests have been updated to make it easier to swap the
+ hash function used for object identification.
+
+ Will merge to 'master'.
+
+
+* bp/mv-submodules-with-fsmonitor (2018-09-12) 1 commit
+  (merged to 'next' on 2018-09-17 at 61c3dc4ebe)
+ + git-mv: allow submodules and fsmonitor to work together
+
+ When fsmonitor is in use, after operation on submodules updates
+ .gitmodules, we lost track of the fact that we did so and relied on
+ stale fsmonitor data.
+
+ Will merge to 'master'.
+
+
+* bp/read-cache-parallel (2018-09-17) 5 commits
+ - read-cache: clean up casting and byte decoding
+ - read-cache.c: optimize reading index format v4
+ - read-cache: load cache entries on worker threads
+ - read-cache: load cache extensions on a worker thread
+ - eoie: add End of Index Entry (EOIE) extension
+
+ A new extension to the index file has been introduced, which allows
+ the file to be read in parallel.
+
+ Expecting a reroll.
+ cf. <78f62979-18a7-2fc1-6f26-c4f84e19424f@gmail.com>
+
+
+* ds/coverage-diff (2018-09-12) 1 commit
+ - contrib: add coverage-diff script
+
+ The result of coverage test can be combined with "git blame" to
+ check the test coverage of code introduced recently with a new
+ 'coverage-diff' tool (in contrib/).
+
+ Expecting a reroll.
+
+
+* ds/format-patch-range-diff-test (2018-09-12) 1 commit
+  (merged to 'next' on 2018-09-17 at bd99e0e88c)
+ + t3206-range-diff.sh: cover single-patch case
+
+ Will merge to 'master'.
+
+
+* ds/multi-pack-verify (2018-09-17) 11 commits
+  (merged to 'next' on 2018-09-17 at f27244f302)
+ + fsck: verify multi-pack-index
+ + multi-pack-index: report progress during 'verify'
+ + multi-pack-index: verify object offsets
+ + multi-pack-index: fix 32-bit vs 64-bit size check
+ + multi-pack-index: verify oid lookup order
+ + multi-pack-index: verify oid fanout order
+ + multi-pack-index: verify missing pack
+ + multi-pack-index: verify packname order
+ + multi-pack-index: verify corrupt chunk lookup table
+ + multi-pack-index: verify bad header
+ + multi-pack-index: add 'verify' verb
+
+ "git multi-pack-index" learned to detect corruption in the .midx
+ file it uses, and this feature has been integrated into "git fsck".
+
+ Will merge to 'master'.
+
+
+* en/sequencer-empty-edit-result-aborts (2018-09-13) 1 commit
+  (merged to 'next' on 2018-09-17 at 768dcf3cab)
+ + sequencer: fix --allow-empty-message behavior, make it smarter
+
+ "git rebase" etc. in Git 2.19 fails to abort when given an empty
+ commit log message as result of editing, which has been corrected.
+
+ Will merge to 'master'.
+
+
+* en/update-ref-no-deref-stdin (2018-09-12) 2 commits
+  (merged to 'next' on 2018-09-17 at a56c0a3003)
+ + update-ref: allow --no-deref with --stdin
+ + update-ref: fix type of update_flags variable to match its usage
+
+ "git update-ref" learned to make both "--no-deref" and "--stdin"
+ work at the same time.
+
+ Will merge to 'master'.
+
+
+* jt/lazy-object-fetch-fix (2018-09-13) 2 commits
+  (merged to 'next' on 2018-09-17 at 321602b284)
+ + fetch-object: set exact_oid when fetching
+ + fetch-object: unify fetch_object[s] functions
+
+ The code to backfill objects in lazily cloned repository did not
+ work correctly, which has been corrected.
+
+ Will merge to 'master'.
+
+
+* ms/remote-error-message-update (2018-09-14) 1 commit
+  (merged to 'next' on 2018-09-17 at d37a215b62)
+ + builtin/remote: quote remote name on error to display empty name
+
+ Update error messages given by "git remote" and make them consistent.
+
+ Will merge to 'master'.
+
+
+* nd/config-split (2018-09-12) 11 commits
+  (merged to 'next' on 2018-09-17 at 33e6cb8f48)
+ + config.txt: move submodule part out to a separate file
+ + config.txt: move sequence.editor out of "core" part
+ + config.txt: move sendemail part out to a separate file
+ + config.txt: move receive part out to a separate file
+ + config.txt: move push part out to a separate file
+ + config.txt: move pull part out to a separate file
+ + config.txt: move gui part out to a separate file
+ + config.txt: move gitcvs part out to a separate file
+ + config.txt: move format part out to a separate file
+ + config.txt: move fetch part out to a separate file
+ + config.txt: follow camelCase naming
+
+ Split Documentation/config.txt for easier maintenance.
+
+ Will merge to 'master'.
+
+
+* sb/submodule-recursive-fetch-gets-the-tip (2018-09-12) 9 commits
+ - builtin/fetch: check for submodule updates for non branch fetches
+ - fetch: retry fetching submodules if sha1 were not fetched
+ - submodule: fetch in submodules git directory instead of in worktree
+ - submodule.c: do not copy around submodule list
+ - submodule: move global changed_submodule_names into fetch submodule struct
+ - submodule.c: sort changed_submodule_names before searching it
+ - submodule.c: fix indentation
+ - sha1-array: provide oid_array_filter
+ - string-list: add string_list_{pop, last} functions
+
+ "git fetch --recurse-submodules" may not fetch the necessary commit
+ that is bound to the superproject, which is getting corrected.
+
+ Expecting a reroll.
+ cf. <CAGZ79kbavjVbTqXsmtjW6=jhkq47_p3mc6=92xOp4_mfhqDtvw@mail.gmail.com>
+ cf. <b16af8c0-0435-0de4-ed6c-53888d6190af@ramsayjones.plus.com>
+ cf. <CAGZ79kZKKf9N8yx9EuCRZhrZS_mA2218PouEG7aHDhK2bJGEdA@mail.gmail.com>
+
+
+* sg/split-index-test (2018-09-12) 2 commits
+  (merged to 'next' on 2018-09-17 at aed95d1bb5)
+ + t0090: disable GIT_TEST_SPLIT_INDEX for the test checking split index
+ + t1700-split-index: drop unnecessary 'grep'
+
+ Test updates.
+
+ Will merge to 'master'.
+
+
+* tb/void-check-attr (2018-09-12) 1 commit
+  (merged to 'next' on 2018-09-17 at 92f5473ff4)
+ + Make git_check_attr() a void function
+
+ Code clean-up.
+
+ Will merge to 'master'.
+
+
+* tg/range-diff-corner-case-fix (2018-09-14) 1 commit
+  (merged to 'next' on 2018-09-17 at b5cf2541e7)
+ + linear-assignment: fix potential out of bounds memory access
+
+ Recently added "range-diff" had a corner-case bug to cause it
+ segfault, which has been corrected.
+
+ Will merge to 'master'.
+
+
+* bp/rename-test-env-var (2018-09-20) 6 commits
+ - t0000: do not get self-test disrupted by environment warnings
+ - preload-index: update GIT_FORCE_PRELOAD_TEST support
+ - read-cache: update TEST_GIT_INDEX_VERSION support
+ - fsmonitor: update GIT_TEST_FSMONITOR support
+ - preload-index: use git_env_bool() not getenv() for customization
+ - t/README: correct spelling of "uncommon"
+
+ Some environment variables that control the runtime options of Git
+ used during tests are getting renamed for consistency.
+
+ Waiting for review of the fix-up at the tip.
+
+
+* ab/commit-graph-progress (2018-09-20) 3 commits
+  (merged to 'next' on 2018-09-20 at 24ca94b1d4)
+ + gc: fix regression in 7b0f229222 impacting --quiet
+  (merged to 'next' on 2018-09-17 at 6f82c695e4)
+ + commit-graph verify: add progress output
+ + commit-graph write: add progress output
 
  Generation of (expermental) commit-graph files have so far been
  fairly silent, even though it takes noticeable amount of time in a
  meaningfully large repository.  The users will now see progress
  output.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * bw/protocol-v2 (2018-09-10) 1 commit
- - config: document value 2 for protocol.version
+  (merged to 'next' on 2018-09-17 at 973a67bf55)
+ + config: document value 2 for protocol.version
 
  Doc fix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * en/double-semicolon-fix (2018-09-05) 1 commit
- - Remove superfluous trailing semicolons
+  (merged to 'next' on 2018-09-17 at dc3847b728)
+ + Remove superfluous trailing semicolons
 
  Code clean-up.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * en/rerere-multi-stage-1-fix (2018-09-11) 2 commits
- - rerere: avoid buffer overrun
- - t4200: demonstrate rerere segfault on specially crafted merge
+  (merged to 'next' on 2018-09-17 at 07b9b319ab)
+ + rerere: avoid buffer overrun
+ + t4200: demonstrate rerere segfault on specially crafted merge
 
  A corner case bugfix in "git rerere" code.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/dev-build-format-security (2018-09-11) 1 commit
- - config.mak.dev: add -Wformat-security
+  (merged to 'next' on 2018-09-17 at 36fbb6a88b)
+ + config.mak.dev: add -Wformat-security
 
  Build tweak to help developers.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/reopen-tempfile-truncate (2018-09-05) 1 commit
- - reopen_tempfile(): truncate opened file
+  (merged to 'next' on 2018-09-17 at 7c7a0608e0)
+ + reopen_tempfile(): truncate opened file
 
  Fix for a long-standing bug that leaves the index file corrupt when
  it shrinks during a partial commit.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * js/mingw-o-append (2018-09-11) 2 commits
- - mingw: fix mingw_open_append to work with named pipes
- - t0051: test GIT_TRACE to a windows named pipe
+  (merged to 'next' on 2018-09-17 at 5b6e9be48e)
+ + mingw: fix mingw_open_append to work with named pipes
+ + t0051: test GIT_TRACE to a windows named pipe
 
  Further fix for O_APPEND emulation on Windows
-
- Will merge to 'next'.
-
-
-* mk/http-backend-content-length (2018-09-11) 1 commit
-  (merged to 'next' on 2018-09-11 at e8095fc635)
- + http-backend test: make empty CONTENT_LENGTH test more realistic
-
- Test update.
 
  Will merge to 'master'.
 
 
 * nd/test-tool (2018-09-11) 6 commits
- - Makefile: add a hint about TEST_BUILTINS_OBJS
- - t/helper: merge test-dump-fsmonitor into test-tool
- - t/helper: merge test-parse-options into test-tool
- - t/helper: merge test-pkt-line into test-tool
- - t/helper: merge test-dump-untracked-cache into test-tool
- - t/helper: keep test-tool command list sorted
+  (merged to 'next' on 2018-09-17 at decbf86eeb)
+ + Makefile: add a hint about TEST_BUILTINS_OBJS
+ + t/helper: merge test-dump-fsmonitor into test-tool
+ + t/helper: merge test-parse-options into test-tool
+ + t/helper: merge test-pkt-line into test-tool
+ + t/helper: merge test-dump-untracked-cache into test-tool
+ + t/helper: keep test-tool command list sorted
 
  Test helper binaries clean-up.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * sb/diff-color-move-more (2018-09-11) 1 commit
- - diff: fix --color-moved-ws=allow-indentation-change
+  (merged to 'next' on 2018-09-17 at 70c8d0fea8)
+ + diff: fix --color-moved-ws=allow-indentation-change
 
  Bugfix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * sb/string-list-remove-unused (2018-09-11) 1 commit
- - string-list: remove unused function print_string_list
+  (merged to 'next' on 2018-09-17 at 9ecdec31d9)
+ + string-list: remove unused function print_string_list
 
  Code clean-up.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * sg/t3701-tighten-trace (2018-09-11) 1 commit
- - t3701-add-interactive: tighten the check of trace output
+  (merged to 'next' on 2018-09-17 at a3ed2d4df1)
+ + t3701-add-interactive: tighten the check of trace output
 
  Test update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ss/wt-status-committable (2018-09-07) 4 commits
@@ -484,114 +1077,26 @@ of the repositories listed at
  - WIP: roll wt_status_state into wt_status and populate in the collect phase
  (this branch uses ss/wt-status-committable.)
 
+ 
 
 
-* tz/t5551-with-curl-7.61.1 (2018-09-11) 1 commit
- - t5551-http-fetch-smart.sh: sort cookies before comparing
+* tz/t5551-with-curl-7.61.1 (2018-09-17) 1 commit
+  (merged to 'next' on 2018-09-17 at a13e27d99e)
+ + t5551-http-fetch-smart.sh: sort cookies before comparing
 
  Test fix.
-
- Will merge to 'next'.
-
-
-* ab/fetch-tags-noclobber (2018-08-31) 9 commits
-  (merged to 'next' on 2018-09-14 at 0384a7a8b4)
- + fetch: stop clobbering existing tags without --force
- + fetch: document local ref updates with/without --force
- + push doc: correct lies about how push refspecs work
- + push doc: move mention of "tag <tag>" later in the prose
- + push doc: remove confusing mention of remote merger
- + fetch tests: add a test for clobbering tag behavior
- + push tests: use spaces in interpolated string
- + push tests: make use of unused $1 in test description
- + fetch: change "branch" to "reference" in --force -h output
-
- The rules used by "git push" and "git fetch" to determine if a ref
- can or cannot be updated were inconsistent; specifically, fetching
- to update existing tags were allowed even though tags are supposed
- to be unmoving anchoring points.  "git fetch" was taught to forbid
- updates to existing tags without the "--force" option.
-
- Will merge to 'master'.
- This is a backward incompatible change but in a good way; it may
- still need to be treated carefully.
-
-
-* es/worktree-forced-ops-fix (2018-09-05) 10 commits
-  (merged to 'next' on 2018-09-14 at 1a0cc3204d)
- + doc-diff: force worktree add
- + worktree: delete .git/worktrees if empty after 'remove'
- + worktree: teach 'remove' to override lock when --force given twice
- + worktree: teach 'move' to override lock when --force given twice
- + worktree: teach 'add' to respect --force for registered but missing path
- + worktree: disallow adding same path multiple times
- + worktree: prepare for more checks of whether path can become worktree
- + worktree: generalize delete_git_dir() to reduce code duplication
- + worktree: move delete_git_dir() earlier in file for upcoming new callers
- + worktree: don't die() in library function find_worktree()
-
- Fix a bug in which the same path could be registered under multiple
- worktree entries if the path was missing (for instance, was removed
- manually).  Also, as a convenience, expand the number of cases in
- which --force is applicable.
-
- Will merge to 'master'.
-
-
-* jk/patch-corrupted-delta-fix (2018-08-30) 6 commits
-  (merged to 'next' on 2018-09-14 at 7517309cb0)
- + t5303: use printf to generate delta bases
- + patch-delta: handle truncated copy parameters
- + patch-delta: consistently report corruption
- + patch-delta: fix oob read
- + t5303: test some corrupt deltas
- + test-delta: read input into a heap buffer
-
- Malformed or crafted data in packstream can make our code attempt
- to read or write past the allocated buffer and abort, instead of
- reporting an error, which has been fixed.
-
- Will merge to 'master'.
-
-
-* jk/pack-objects-with-bitmap-fix (2018-09-04) 4 commits
-  (merged to 'next' on 2018-09-14 at 392eb2abb1)
- + pack-bitmap: drop "loaded" flag
- + traverse_bitmap_commit_list(): don't free result
- + t5310: test delta reuse with bitmaps
- + bitmap_has_sha1_in_uninteresting(): drop BUG check
- (this branch uses jk/pack-delta-reuse-with-bitmap.)
-
- Hotfix of the base topic.
 
  Will merge to 'master'.
 
 
 * js/rebase-i-autosquash-fix (2018-09-04) 2 commits
- - rebase -i: be careful to wrap up fixup/squash chains
- - rebase -i --autosquash: demonstrate a problem skipping the last squash
+  (merged to 'next' on 2018-09-17 at cec540d24b)
+ + rebase -i: be careful to wrap up fixup/squash chains
+ + rebase -i --autosquash: demonstrate a problem skipping the last squash
 
  "git rebase -i" did not clear the state files correctly when a run
  of "squash/fixup" is aborted and then the user manually amended the
  commit instead, which has been corrected.
-
- Will merge to 'next'.
-
-
-* nd/bisect-show-list-fix (2018-09-04) 1 commit
-  (merged to 'next' on 2018-09-14 at 18242da7ef)
- + bisect.c: make show_list() build again
-
- Debugging aid update.
-
- Will merge to 'master'.
-
-
-* sg/doc-trace-appends (2018-09-04) 1 commit
-  (merged to 'next' on 2018-09-14 at 6d82abb8bf)
- + Documentation/git.txt: clarify that GIT_TRACE=/path appends
-
- Docfix.
 
  Will merge to 'master'.
 
@@ -608,51 +1113,6 @@ of the repositories listed at
  output over the text source.  Opinions?
 
 
-* jk/diff-rendered-docs (2018-08-31) 5 commits
-  (merged to 'next' on 2018-09-14 at 9b43d5a568)
- + doc/Makefile: drop doc-diff worktree and temporary files on "make clean"
- + doc-diff: add --clean mode to remove temporary working gunk
- + doc-diff: fix non-portable 'man' invocation
- + doc-diff: always use oids inside worktree
-  (merged to 'next' on 2018-08-22 at dd7a2b71cd)
- + SubmittingPatches: mention doc-diff
-
- Dev doc update.
-
- Will merge to 'master'.
-
-
-* jk/pack-delta-reuse-with-bitmap (2018-08-21) 6 commits
-  (merged to 'next' on 2018-08-22 at fc50b59dab)
- + pack-objects: reuse on-disk deltas for thin "have" objects
- + pack-bitmap: save "have" bitmap from walk
- + t/perf: add perf tests for fetches from a bitmapped server
- + t/perf: add infrastructure for measuring sizes
- + t/perf: factor out percent calculations
- + t/perf: factor boilerplate out of test_perf
- (this branch is used by jk/pack-objects-with-bitmap-fix.)
-
- When creating a thin pack, which allows objects to be made into a
- delta against another object that is not in the resulting pack but
- is known to be present on the receiving end, the code learned to
- take advantage of the reachability bitmap; this allows the server
- to send a delta against a base beyond the "boundary" commit.
-
- Will merge to 'master'.
-
-
-* jk/rev-list-stdin-noop-is-ok (2018-08-22) 1 commit
-  (merged to 'next' on 2018-08-27 at d5916f7bc1)
- + rev-list: make empty --stdin not an error
-
- "git rev-list --stdin </dev/null" used to be an error; it now shows
- no output without an error.  "git rev-list --stdin --default HEAD"
- still falls back to the given default when nothing is given on the
- standard input.
-
- Will merge to 'master'.
-
-
 * js/rebase-in-c-5.5-work-with-rebase-i-in-c (2018-09-06) 2 commits
  - builtin rebase: prepare for builtin rebase -i
  - Merge branch 'ag/rebase-i-in-c' into js/rebase-in-c-5.5-work-with-rebase-i-in-c
@@ -661,64 +1121,6 @@ of the repositories listed at
  "rebase" that has been rewritten learns the new calling convention
  used by "rebase -i" that was rewritten in C, tying the loose end
  between two GSoC topics that stomped on each other's toes.
-
-
-* jk/trailer-fixes (2018-08-23) 8 commits
-  (merged to 'next' on 2018-08-27 at 93b671b8c6)
- + append_signoff: use size_t for string offsets
- + sequencer: ignore "---" divider when parsing trailers
- + pretty, ref-filter: format %(trailers) with no_divider option
- + interpret-trailers: allow suppressing "---" divider
- + interpret-trailers: tighten check for "---" patch boundary
- + trailer: pass process_trailer_opts to trailer_info_get()
- + trailer: use size_t for iterating trailer list
- + trailer: use size_t for string offsets
-
- "git interpret-trailers" and its underlying machinery had a buggy
- code that attempted to ignore patch text after commit log message,
- which triggered in various codepaths that will always get the log
- message alone and never get such an input.
-
- Will merge to 'master'.
-
-
-* tg/rerere-doc-updates (2018-08-29) 2 commits
-  (merged to 'next' on 2018-08-31 at ce4fef1a97)
- + rerere: add note about files with existing conflict markers
- + rerere: mention caveat about unmatched conflict markers
- (this branch uses tg/rerere.)
-
- Clarify a part of technical documentation for rerere.
-
- Will merge to 'master'.
-
-
-* ds/commit-graph-tests (2018-08-29) 1 commit
-  (merged to 'next' on 2018-09-14 at d072a0ee3e)
- + commit-graph: define GIT_TEST_COMMIT_GRAPH
-
- We can now optionally run tests with commit-graph enabled.
-
- Will merge to 'master'.
-
-
-* jk/cocci (2018-08-29) 9 commits
-  (merged to 'next' on 2018-08-31 at 914b4f17ce)
- + show_dirstat: simplify same-content check
- + read-cache: use oideq() in ce_compare functions
- + convert hashmap comparison functions to oideq()
- + convert "hashcmp() != 0" to "!hasheq()"
- + convert "oidcmp() != 0" to "!oideq()"
- + convert "hashcmp() == 0" to hasheq()
- + convert "oidcmp() == 0" to oideq()
- + introduce hasheq() and oideq()
- + coccinelle: use <...> for function exclusion
-
- spatch transformation to replace boolean uses of !hashcmp() to
- newly introduced oideq() is added, and applied, to regain
- performance lost due to support of multiple hash algorithms.
-
- Will merge to 'master'.
 
 
 * js/add-i-coalesce-after-editing-hunk (2018-08-28) 1 commit
@@ -731,52 +1133,14 @@ of the repositories listed at
  cf. <e5b2900a-0558-d3bf-8ea1-d526b078bbc2@talktalk.net>
 
 
-* rs/mailinfo-format-flowed (2018-08-29) 1 commit
-  (merged to 'next' on 2018-08-31 at 9e8b92176c)
- + mailinfo: support format=flowed
-
- "git mailinfo" used in "git am" learned to make a best-effort
- recovery of a patch corrupted by MUA that sends text/plain with
- format=flawed option.
-
- Will merge to 'master'.
-
-
-* tg/conflict-marker-size (2018-08-29) 1 commit
-  (merged to 'next' on 2018-08-31 at 12099161f0)
- + .gitattributes: add conflict-marker-size for relevant files
-
- Developer aid.
-
- Will merge to 'master'.
-
-
-* ts/doc-build-manpage-xsl-quietly (2018-08-29) 1 commit
-  (merged to 'next' on 2018-08-31 at 7527e0f8d3)
- + Documentation/Makefile: make manpage-base-url.xsl generation quieter
-
- Build tweak.
-
- Will merge to 'master'.
-
-
-* bp/checkout-new-branch-optim (2018-08-16) 1 commit
-  (merged to 'next' on 2018-08-27 at e69bfd115f)
- + checkout: optimize "git checkout -b <new_branch>"
-
- "git checkout -b newbranch [HEAD]" should not have to do as much as
- checking out a commit different from HEAD.  An attempt is made to
- optimize this special case.
-
- Will merge to 'master'.
-
-
-* ao/submodule-wo-gitmodules-checked-out (2018-08-14) 7 commits
- - submodule: support reading .gitmodules even when it's not checked out
+* ao/submodule-wo-gitmodules-checked-out (2018-09-17) 9 commits
+ - submodule: support reading .gitmodules when it's not in the working tree
+ - submodule: add a helper to check if it is safe to write to .gitmodules
  - t7506: clean up .gitmodules properly before setting up new scenario
  - submodule: use the 'submodule--helper config' command
  - submodule--helper: add a new 'config' subcommand
  - t7411: be nicer to future tests and really clean things up
+ - t7411: merge tests 5 and 6
  - submodule: factor out a config_set_in_gitmodules_file_gently function
  - submodule: add a print_config_from_gitmodules() helper
 
@@ -784,43 +1148,25 @@ of the repositories listed at
  HEAD:.gitmodules when the .gitmodules file is missing from the
  working tree.
 
- Expecting a reroll.
-
- I find the design a bit iffy in that our usual "missing in the
- working tree?  let's use the latest blob" fallback is to take it
- from the index, not from the HEAD.
-
-
-* cc/delta-islands (2018-08-16) 7 commits
-  (merged to 'next' on 2018-08-27 at cf3d7bd93f)
- + pack-objects: move 'layer' into 'struct packing_data'
- + pack-objects: move tree_depth into 'struct packing_data'
- + t5320: tests for delta islands
- + repack: add delta-islands support
- + pack-objects: add delta-islands support
- + pack-objects: refactor code into compute_layer_order()
- + Add delta-islands.{c,h}
-
- Lift code from GitHub to restrict delta computation so that an
- object that exists in one fork is not made into a delta against
- another object that does not appear in the same forked repository.
-
- Will merge to 'master'.
+ Object-store access needs to be protected from multi-threading.
+ cf. <20180918171257.GC27036@localhost>
+ cf. <20180920173552.6109014827a062dcf3821632@ao2.it>
 
 
 * md/filter-trees (2018-09-14) 7 commits
- - list-objects-filter: implement filter tree:0
- - list-objects-filter: use BUG rather than die
- - revision: mark non-user-given objects instead
- - rev-list: handle missing tree objects properly
- - list-objects: always parse trees gently
- - list-objects: refactor to process_tree_contents
- - list-objects: store common func args in struct
+  (merged to 'next' on 2018-09-17 at ad07a3ebcf)
+ + list-objects-filter: implement filter tree:0
+ + list-objects-filter: use BUG rather than die
+ + revision: mark non-user-given objects instead
+ + rev-list: handle missing tree objects properly
+ + list-objects: always parse trees gently
+ + list-objects: refactor to process_tree_contents
+ + list-objects: store common func args in struct
 
  The "rev-list --filter" feature learned to exclude all trees via
  "tree:0" filter.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  The test scripts need to be cleaned up.
 
 
@@ -910,71 +1256,6 @@ of the repositories listed at
  - sha1-name.c: add `get_oidf()` which acts like `get_oid()`
 
 
-* nd/clone-case-smashing-warning (2018-08-17) 1 commit
-  (merged to 'next' on 2018-08-22 at eedae40a8d)
- + clone: report duplicate entries on case-insensitive filesystems
-
- Running "git clone" against a project that contain two files with
- pathnames that differ only in cases on a case insensitive
- filesystem would result in one of the files lost because the
- underlying filesystem is incapable of holding both at the same
- time.  An attempt is made to detect such a case and warn.
-
- Will merge to 'master'.
-
-
-* nd/unpack-trees-with-cache-tree (2018-08-27) 8 commits
-  (merged to 'next' on 2018-08-27 at b1d841d034)
- + Document update for nd/unpack-trees-with-cache-tree
-  (merged to 'next' on 2018-08-22 at 138b902673)
- + cache-tree: verify valid cache-tree in the test suite
- + unpack-trees: add missing cache invalidation
- + unpack-trees: reuse (still valid) cache-tree from src_index
- + unpack-trees: reduce malloc in cache-tree walk
- + unpack-trees: optimize walking same trees with cache-tree
- + unpack-trees: add performance tracing
- + trace.h: support nested performance tracing
-
- The unpack_trees() API used in checking out a branch and merging
- walks one or more trees along with the index.  When the cache-tree
- in the index tells us that we are walking a tree whose flattened
- contents is known (i.e. matches a span in the index), as linearly
- scanning a span in the index is much more efficient than having to
- open tree objects recursively and listing their entries, the walk
- can be optimized, which is done in this topic.
-
- Will merge to 'master'.
-
-
-* sb/range-diff-colors (2018-08-20) 11 commits
-  (merged to 'next' on 2018-08-22 at eb7ed4fca3)
- + range-diff: indent special lines as context
- + range-diff: make use of different output indicators
- + diff.c: add --output-indicator-{new, old, context}
- + diff.c: rewrite emit_line_0 more understandably
- + diff.c: omit check for line prefix in emit_line_0
- + diff: use emit_line_0 once per line
- + diff.c: add set_sign to emit_line_0
- + diff.c: reorder arguments for emit_line_ws_markup
- + diff.c: simplify caller of emit_line_0
- + t3206: add color test for range-diff --dual-color
- + test_decode_color: understand FAINT and ITALIC
-
- The color output support for recently introduced "range-diff"
- command got tweaked a bit.
-
- Will merge to 'master'.
-
-
-* sg/t1404-update-ref-test-timeout (2018-08-01) 1 commit
-  (merged to 'next' on 2018-08-22 at f3cd37b5ea)
- + t1404: increase core.packedRefsTimeout to avoid occasional test failure
-
- An attempt to unflake a test a bit.
-
- Will merge to 'master'.
-
-
 * pw/add-p-select (2018-07-26) 4 commits
  - add -p: optimize line selection for short hunks
  - add -p: allow line selection to be inverted
@@ -1007,81 +1288,12 @@ of the repositories listed at
  based on its use (and updating existing commit-graph) when these
  incompatible features are in use in the repository.
 
- Replaced with a newer version.
+ Will merge to 'next'.
 
 
-* ds/reachable (2018-08-28) 19 commits
-  (merged to 'next' on 2018-08-28 at b1634b371d)
- + commit-reach: correct accidental #include of C file
-  (merged to 'next' on 2018-08-22 at 17f3275afb)
- + commit-reach: use can_all_from_reach
- + commit-reach: make can_all_from_reach... linear
- + commit-reach: replace ref_newer logic
- + test-reach: test commit_contains
- + test-reach: test can_all_from_reach_with_flags
- + test-reach: test reduce_heads
- + test-reach: test get_merge_bases_many
- + test-reach: test is_descendant_of
- + test-reach: test in_merge_bases
- + test-reach: create new test tool for ref_newer
- + commit-reach: move can_all_from_reach_with_flags
- + upload-pack: generalize commit date cutoff
- + upload-pack: refactor ok_to_give_up()
- + upload-pack: make reachable() more generic
- + commit-reach: move commit_contains from ref-filter
- + commit-reach: move ref_newer from remote.c
- + commit.h: remove method declarations
- + commit-reach: move walk methods from commit.c
-
- The code for computing history reachability has been shuffled,
- obtained a bunch of new tests to cover them, and then being
- improved.
-
- Will merge to 'master'.
-
-
-* es/format-patch-interdiff (2018-07-23) 6 commits
-  (merged to 'next' on 2018-08-31 at 63927e0227)
- + format-patch: allow --interdiff to apply to a lone-patch
- + log-tree: show_log: make commentary block delimiting reusable
- + interdiff: teach show_interdiff() to indent interdiff
- + format-patch: teach --interdiff to respect -v/--reroll-count
- + format-patch: add --interdiff option to embed diff in cover letter
- + format-patch: allow additional generated content in make_cover_letter()
- (this branch is used by ds/format-patch-range-diff-test and es/format-patch-rangediff.)
-
- "git format-patch" learned a new "--interdiff" option to explain
- the difference between this version and the previous atttempt in
- the cover letter (or after the tree-dashes as a comment).
-
- Will merge to 'master'.
-
-
-* es/format-patch-rangediff (2018-08-14) 10 commits
-  (merged to 'next' on 2018-08-31 at 65627afece)
- + format-patch: allow --range-diff to apply to a lone-patch
- + format-patch: add --creation-factor tweak for --range-diff
- + format-patch: teach --range-diff to respect -v/--reroll-count
- + format-patch: extend --range-diff to accept revision range
- + format-patch: add --range-diff option to embed diff in cover letter
- + range-diff: relieve callers of low-level configuration burden
- + range-diff: publish default creation factor
- + range-diff: respect diff_option.file rather than assuming 'stdout'
- + Merge branch 'es/format-patch-interdiff' into es/format-patch-rangediff
- + Merge branch 'js/range-diff' into es/format-patch-rangediff
- (this branch is used by ds/format-patch-range-diff-test; uses es/format-patch-interdiff.)
-
- "git format-patch" learned a new "--range-diff" option to explain
- the difference between this version and the previous attempt in
- the cover letter (or after the tree-dashes as a comment).
-
- Will merge to 'master'.
-
-
-* jn/gc-auto (2018-07-17) 3 commits
+* jn/gc-auto (2018-07-17) 1 commit
  - gc: do not return error for prior errors in daemonized mode
- - gc: exit with status 128 on failure
- - gc: improve handling of errors reading gc.log
+ (this branch uses jn/gc-auto-prep.)
 
  "gc --auto" ended up calling exit(-1) upon error, which has been
  corrected to use exit(1).  Also the error reporting behaviour when
@@ -1090,44 +1302,7 @@ of the repositories listed at
  point running gc to improve the situation); we used to exit with
  failure in such a case.
 
- What's the donness of this one?
- cf. <20180717201348.GD26218@sigill.intra.peff.net>
-
-
-* sb/submodule-update-in-c (2018-08-14) 7 commits
-  (merged to 'next' on 2018-08-17 at 23c81e5ff7)
- + submodule--helper: introduce new update-module-mode helper
- + submodule--helper: replace connect-gitdir-workingtree by ensure-core-worktree
- + builtin/submodule--helper: factor out method to update a single submodule
- + builtin/submodule--helper: store update_clone information in a struct
- + builtin/submodule--helper: factor out submodule updating
- + git-submodule.sh: rename unused variables
- + git-submodule.sh: align error reporting for update mode to use path
-
- "git submodule update" is getting rewritten piece-by-piece into C.
-
- Will merge to 'master'.
-
-
-* tg/rerere (2018-08-06) 11 commits
-  (merged to 'next' on 2018-08-17 at 919a958cdc)
- + rerere: recalculate conflict ID when unresolved conflict is committed
- + rerere: teach rerere to handle nested conflicts
- + rerere: return strbuf from handle path
- + rerere: factor out handle_conflict function
- + rerere: only return whether a path has conflicts or not
- + rerere: fix crash with files rerere can't handle
- + rerere: add documentation for conflict normalization
- + rerere: mark strings for translation
- + rerere: wrap paths in output in sq
- + rerere: lowercase error messages
- + rerere: unify error messages when read_cache fails
- (this branch is used by tg/rerere-doc-updates.)
-
- Fixes to "git rerere" corner cases, especially when conflict
- markers cannot be parsed in the file.
-
- Will merge to 'master'.
+ cf. <20180917182639.GB140909@aiede.svl.corp.google.com>
 
 
 * ag/rebase-i-in-c (2018-08-29) 20 commits
@@ -1173,63 +1348,6 @@ of the repositories listed at
  (this branch is used by js/rebase-in-c-5.5-work-with-rebase-i-in-c, pk/rebase-in-c-2-basic, pk/rebase-in-c-3-acts, pk/rebase-in-c-4-opts, pk/rebase-in-c-5-test and pk/rebase-in-c-6-final.)
 
  Rewrite of the "rebase" machinery in C.
-
-
-* jk/branch-l-1-repurpose (2018-08-30) 2 commits
-  (merged to 'next' on 2018-08-31 at cfa73bbfcb)
- + doc/git-branch: remove obsolete "-l" references
-  (merged to 'next' on 2018-08-08 at d2a08dd08e)
- + branch: make "-l" a synonym for "--list"
-
- Updated plan to repurpose the "-l" option to "git branch".
-
- Will merge to 'master'.
-
-
-* ds/multi-pack-index (2018-08-20) 33 commits
-  (merged to 'next' on 2018-08-21 at d15e8cadd4)
- + pack-objects: consider packs in multi-pack-index
- + midx: test a few commands that use get_all_packs
- + treewide: use get_all_packs
- + packfile: add all_packs list
- + midx: fix bug that skips midx with alternates
- + midx: stop reporting garbage
- + midx: mark bad packed objects
- + multi-pack-index: store local property
- + multi-pack-index: provide more helpful usage info
- + Sync 'ds/multi-pack-index' to v2.19.0-rc0
-  (merged to 'next' on 2018-08-08 at 1a56c52967)
- + midx: clear midx on repack
- + packfile: skip loading index if in multi-pack-index
- + midx: prevent duplicate packfile loads
- + midx: use midx in approximate_object_count
- + midx: use existing midx when writing new one
- + midx: use midx in abbreviation calculations
- + midx: read objects from multi-pack-index
- + config: create core.multiPackIndex setting
- + midx: write object offsets
- + midx: write object id fanout chunk
- + midx: write object ids in a chunk
- + midx: sort and deduplicate objects from packfiles
- + midx: read pack names into array
- + multi-pack-index: write pack names in chunk
- + multi-pack-index: read packfile list
- + packfile: generalize pack directory list
- + t5319: expand test data
- + multi-pack-index: load into memory
- + midx: write header information to lockfile
- + multi-pack-index: add 'write' verb
- + multi-pack-index: add builtin
- + multi-pack-index: add format details
- + multi-pack-index: add design document
- (this branch is used by ds/multi-pack-verify.)
-
- When there are too many packfiles in a repository (which is not
- recommended), looking up an object in these would require
- consulting many pack .idx files; a new mechanism to have a single
- file that consolidates all of these .idx files is introduced.
-
- Will merge to 'master'.
 
 --------------------------------------------------
 [Discarded]
