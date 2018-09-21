@@ -1741,7 +1741,7 @@ static int fill_textconv_grep(struct userdiff_driver *driver,
 	 * structure.
 	 */
 	grep_read_lock();
-	size = fill_textconv(driver, df, &buf);
+	size = fill_textconv(the_repository, driver, df, &buf);
 	grep_read_unlock();
 	free_filespec(df);
 
