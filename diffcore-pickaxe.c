@@ -139,8 +139,8 @@ static int pickaxe_match(struct diff_filepair *p, struct diff_options *o,
 		return 0;
 
 	if (o->flags.allow_textconv) {
-		textconv_one = get_textconv(p->one);
-		textconv_two = get_textconv(p->two);
+		textconv_one = get_textconv(o->repo->index, p->one);
+		textconv_two = get_textconv(o->repo->index, p->two);
 	}
 
 	/*
