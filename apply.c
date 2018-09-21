@@ -4630,7 +4630,7 @@ static int write_out_results(struct apply_state *state, struct patch *list)
 		}
 		string_list_clear(&cpath, 0);
 
-		rerere(0);
+		repo_rerere(state->repo, 0);
 	}
 
 	return errs;

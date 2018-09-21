@@ -1856,7 +1856,7 @@ static int do_pick_commit(enum todo_command command, struct commit *commit,
 		      : _("could not apply %s... %s"),
 		      short_commit_name(commit), msg.subject);
 		print_advice(res == 1, opts);
-		rerere(opts->allow_rerere_auto);
+		repo_rerere(the_repository, opts->allow_rerere_auto);
 		goto leave;
 	}
 
@@ -3175,7 +3175,7 @@ static int do_merge(struct commit *commit, const char *arg, int arg_len,
 
 	rollback_lock_file(&lock);
 	if (ret)
-		rerere(opts->allow_rerere_auto);
+		repo_rerere(the_repository, opts->allow_rerere_auto);
 	else
 		/*
 		 * In case of problems, we now want to return a positive
