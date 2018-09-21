@@ -478,7 +478,7 @@ static int handle_file(const char *path, unsigned char *sha1, const char *output
 {
 	int hunk_no = 0;
 	struct rerere_io_file io;
-	int marker_size = ll_merge_marker_size(path);
+	int marker_size = ll_merge_marker_size(&the_index, path);
 
 	memset(&io, 0, sizeof(io));
 	io.io.getline = rerere_file_getline;
@@ -641,7 +641,8 @@ static int try_merge(const struct rerere_id *id, const char *path,
 		 * A three-way merge. Note that this honors user-customizable
 		 * low-level merge driver settings.
 		 */
-		ret = ll_merge(result, path, &base, NULL, cur, "", &other, "", NULL);
+		ret = ll_merge(result, path, &base, NULL, cur, "", &other, "",
+			       &the_index, NULL);
 
 	free(base.ptr);
 	free(other.ptr);
@@ -960,7 +961,7 @@ static int handle_cache(const char *path, unsigned char *sha1, const char *outpu
 	const struct cache_entry *ce;
 	int pos, len, i, hunk_no;
 	struct rerere_io_mem io;
-	int marker_size = ll_merge_marker_size(path);
+	int marker_size = ll_merge_marker_size(&the_index, path);
 
 	/*
 	 * Reproduce the conflicted merge in-core
@@ -995,7 +996,8 @@ static int handle_cache(const char *path, unsigned char *sha1, const char *outpu
 	 */
 	ll_merge(&result, path, &mmfile[0], NULL,
 		 &mmfile[1], "ours",
-		 &mmfile[2], "theirs", NULL);
+		 &mmfile[2], "theirs",
+		 &the_index, NULL);
 	for (i = 0; i < 3; i++)
 		free(mmfile[i].ptr);
 

@@ -1083,7 +1083,8 @@ static int merge_3way(struct merge_options *o,
 	read_mmblob(&src2, &b->oid);
 
 	merge_status = ll_merge(result_buf, a->path, &orig, base_name,
-				&src1, name1, &src2, name2, &ll_opts);
+				&src1, name1, &src2, name2,
+				&the_index, &ll_opts);
 
 	free(base_name);
 	free(name1);

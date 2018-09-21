@@ -208,7 +208,8 @@ static int checkout_merged(int pos, const struct checkout *state)
 	 * merge.renormalize set, too
 	 */
 	status = ll_merge(&result_buf, path, &ancestor, "base",
-			  &ours, "ours", &theirs, "theirs", NULL);
+			  &ours, "ours", &theirs, "theirs",
+			  state->istate, NULL);
 	free(ancestor.ptr);
 	free(ours.ptr);
 	free(theirs.ptr);
