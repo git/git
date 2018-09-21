@@ -18,6 +18,7 @@ struct userdiff_driver;
 struct oid_array;
 struct commit;
 struct combine_diff_path;
+struct repository;
 
 typedef int (*pathchange_fn_t)(struct diff_options *options,
 		 struct combine_diff_path *path);
@@ -220,6 +221,8 @@ struct diff_options {
 	/* XDF_WHITESPACE_FLAGS regarding block detection are set at 2, 3, 4 */
 	#define COLOR_MOVED_WS_ALLOW_INDENTATION_CHANGE (1<<5)
 	int color_moved_ws_handling;
+
+	struct repository *repo;
 };
 
 void diff_emit_submodule_del(struct diff_options *o, const char *line);
