@@ -1361,7 +1361,7 @@ static void prepare_bases(struct base_tree_info *bases,
 		return;
 
 	init_commit_base(&commit_base);
-	diff_setup(&diffopt);
+	repo_diff_setup(the_repository, &diffopt);
 	diffopt.flags.recursive = 1;
 	diff_setup_done(&diffopt);
 
