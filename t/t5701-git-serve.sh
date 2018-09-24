@@ -15,13 +15,13 @@ test_expect_success 'test capability advertisement' '
 	EOF
 
 	git serve --advertise-capabilities >out &&
-	test-pkt-line unpack <out >actual &&
+	test-tool pkt-line unpack <out >actual &&
 	test_cmp actual expect
 '
 
 test_expect_success 'stateless-rpc flag does not list capabilities' '
 	# Empty request
-	test-pkt-line pack >in <<-EOF &&
+	test-tool pkt-line pack >in <<-EOF &&
 	0000
 	EOF
 	git serve --stateless-rpc >out <in &&
@@ -33,7 +33,7 @@ test_expect_success 'stateless-rpc flag does not list capabilities' '
 '
 
 test_expect_success 'request invalid capability' '
-	test-pkt-line pack >in <<-EOF &&
+	test-tool pkt-line pack >in <<-EOF &&
 	foobar
 	0000
 	EOF
@@ -42,7 +42,7 @@ test_expect_success 'request invalid capability' '
 '
 
 test_expect_success 'request with no command' '
-	test-pkt-line pack >in <<-EOF &&
+	test-tool pkt-line pack >in <<-EOF &&
 	agent=git/test
 	0000
 	EOF
@@ -51,7 +51,7 @@ test_expect_success 'request with no command' '
 '
 
 test_expect_success 'request invalid command' '
-	test-pkt-line pack >in <<-EOF &&
+	test-tool pkt-line pack >in <<-EOF &&
 	command=foo
 	agent=git/test
 	0000
@@ -71,7 +71,7 @@ test_expect_success 'setup some refs and tags' '
 '
 
 test_expect_success 'basics of ls-refs' '
-	test-pkt-line pack >in <<-EOF &&
+	test-tool pkt-line pack >in <<-EOF &&
 	command=ls-refs
 	0000
 	EOF
@@ -88,12 +88,12 @@ test_expect_success 'basics of ls-refs' '
 	EOF
 
 	git serve --stateless-rpc <in >out &&
-	test-pkt-line unpack <out >actual &&
+	test-tool pkt-line unpack <out >actual &&
 	test_cmp actual expect
 '
 
 test_expect_success 'basic ref-prefixes' '
-	test-pkt-line pack >in <<-EOF &&
+	test-tool pkt-line pack >in <<-EOF &&
 	command=ls-refs
 	0001
 	ref-prefix refs/heads/master
@@ -108,12 +108,12 @@ test_expect_success 'basic ref-prefixes' '
 	EOF
 
 	git serve --stateless-rpc <in >out &&
-	test-pkt-line unpack <out >actual &&
+	test-tool pkt-line unpack <out >actual &&
 	test_cmp actual expect
 '
 
 test_expect_success 'refs/heads prefix' '
-	test-pkt-line pack >in <<-EOF &&
+	test-tool pkt-line pack >in <<-EOF &&
 	command=ls-refs
 	0001
 	ref-prefix refs/heads/
@@ -128,12 +128,12 @@ test_expect_success 'refs/heads prefix' '
 	EOF
 
 	git serve --stateless-rpc <in >out &&
-	test-pkt-line unpack <out >actual &&
+	test-tool pkt-line unpack <out >actual &&
 	test_cmp actual expect
 '
 
 test_expect_success 'peel parameter' '
-	test-pkt-line pack >in <<-EOF &&
+	test-tool pkt-line pack >in <<-EOF &&
 	command=ls-refs
 	0001
 	peel
@@ -149,12 +149,12 @@ test_expect_success 'peel parameter' '
 	EOF
 
 	git serve --stateless-rpc <in >out &&
-	test-pkt-line unpack <out >actual &&
+	test-tool pkt-line unpack <out >actual &&
 	test_cmp actual expect
 '
 
 test_expect_success 'symrefs parameter' '
-	test-pkt-line pack >in <<-EOF &&
+	test-tool pkt-line pack >in <<-EOF &&
 	command=ls-refs
 	0001
 	symrefs
@@ -170,12 +170,12 @@ test_expect_success 'symrefs parameter' '
 	EOF
 
 	git serve --stateless-rpc <in >out &&
-	test-pkt-line unpack <out >actual &&
+	test-tool pkt-line unpack <out >actual &&
 	test_cmp actual expect
 '
 
 test_expect_success 'sending server-options' '
-	test-pkt-line pack >in <<-EOF &&
+	test-tool pkt-line pack >in <<-EOF &&
 	command=ls-refs
 	server-option=hello
 	server-option=world
@@ -190,14 +190,14 @@ test_expect_success 'sending server-options' '
 	EOF
 
 	git serve --stateless-rpc <in >out &&
-	test-pkt-line unpack <out >actual &&
+	test-tool pkt-line unpack <out >actual &&
 	test_cmp actual expect
 '
 
 test_expect_success 'unexpected lines are not allowed in fetch request' '
 	git init server &&
 
-	test-pkt-line pack >in <<-EOF &&
+	test-tool pkt-line pack >in <<-EOF &&
 	command=fetch
 	0001
 	this-is-not-a-command

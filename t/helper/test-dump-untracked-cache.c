@@ -1,3 +1,4 @@
+#include "test-tool.h"
 #include "cache.h"
 #include "dir.h"
 
@@ -38,7 +39,7 @@ static void dump(struct untracked_cache_dir *ucd, struct strbuf *base)
 	strbuf_setlen(base, len);
 }
 
-int cmd_main(int ac, const char **av)
+int cmd__dump_untracked_cache(int ac, const char **av)
 {
 	struct untracked_cache *uc;
 	struct strbuf base = STRBUF_INIT;
