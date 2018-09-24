@@ -7,6 +7,7 @@
 #include "object-store.h"
 #include "sha1-lookup.h"
 #include "midx.h"
+#include "progress.h"
 
 #define MIDX_SIGNATURE 0x4d494458 /* "MIDX" */
 #define MIDX_VERSION 1
@@ -76,24 +77,18 @@ struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local
 	m->local = local;
 
 	m->signature = get_be32(m->data);
-	if (m->signature != MIDX_SIGNATURE) {
-		error(_("multi-pack-index signature 0x%08x does not match signature 0x%08x"),
+	if (m->signature != MIDX_SIGNATURE)
+		die(_("multi-pack-index signature 0x%08x does not match signature 0x%08x"),
 		      m->signature, MIDX_SIGNATURE);
-		goto cleanup_fail;
-	}
 
 	m->version = m->data[MIDX_BYTE_FILE_VERSION];
-	if (m->version != MIDX_VERSION) {
-		error(_("multi-pack-index version %d not recognized"),
+	if (m->version != MIDX_VERSION)
+		die(_("multi-pack-index version %d not recognized"),
 		      m->version);
-		goto cleanup_fail;
-	}
 
 	hash_version = m->data[MIDX_BYTE_HASH_VERSION];
-	if (hash_version != MIDX_HASH_VERSION) {
-		error(_("hash version %u does not match"), hash_version);
-		goto cleanup_fail;
-	}
+	if (hash_version != MIDX_HASH_VERSION)
+		die(_("hash version %u does not match"), hash_version);
 	m->hash_len = MIDX_HASH_LEN;
 
 	m->num_chunks = m->data[MIDX_BYTE_NUM_CHUNKS];
@@ -105,6 +100,9 @@ struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local
 					     MIDX_CHUNKLOOKUP_WIDTH * i);
 		uint64_t chunk_offset = get_be64(m->data + MIDX_HEADER_SIZE + 4 +
 						 MIDX_CHUNKLOOKUP_WIDTH * i);
+
+		if (chunk_offset >= m->data_len)
+			die(_("invalid chunk offset (too large)"));
 
 		switch (chunk_id) {
 			case MIDX_CHUNKID_PACKNAMES:
@@ -160,12 +158,10 @@ struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local
 
 		cur_pack_name += strlen(cur_pack_name) + 1;
 
-		if (i && strcmp(m->pack_names[i], m->pack_names[i - 1]) <= 0) {
-			error(_("multi-pack-index pack names out of order: '%s' before '%s'"),
+		if (i && strcmp(m->pack_names[i], m->pack_names[i - 1]) <= 0)
+			die(_("multi-pack-index pack names out of order: '%s' before '%s'"),
 			      m->pack_names[i - 1],
 			      m->pack_names[i]);
-			goto cleanup_fail;
-		}
 	}
 
 	return m;
@@ -202,7 +198,8 @@ int prepare_midx_pack(struct multi_pack_index *m, uint32_t pack_int_id)
 	struct strbuf pack_name = STRBUF_INIT;
 
 	if (pack_int_id >= m->num_packs)
-		BUG("bad pack-int-id");
+		die(_("bad pack-int-id: %u (%u total packs"),
+		    pack_int_id, m->num_packs);
 
 	if (m->packs[pack_int_id])
 		return 0;
@@ -241,7 +238,7 @@ static off_t nth_midxed_offset(struct multi_pack_index *m, uint32_t pos)
 	offset32 = get_be32(offset_data + sizeof(uint32_t));
 
 	if (m->chunk_large_offsets && offset32 & MIDX_LARGE_OFFSET_NEEDED) {
-		if (sizeof(offset32) < sizeof(uint64_t))
+		if (sizeof(off_t) < sizeof(uint64_t))
 			die(_("multi-pack-index stores a 64-bit offset, but off_t is too small"));
 
 		offset32 ^= MIDX_LARGE_OFFSET_NEEDED;
@@ -927,4 +924,84 @@ void clear_midx_file(const char *object_dir)
 	}
 
 	free(midx);
+}
+
+static int verify_midx_error;
+
+static void midx_report(const char *fmt, ...)
+{
+	va_list ap;
+	verify_midx_error = 1;
+	va_start(ap, fmt);
+	vfprintf(stderr, fmt, ap);
+	fprintf(stderr, "\n");
+	va_end(ap);
+}
+
+int verify_midx_file(const char *object_dir)
+{
+	uint32_t i;
+	struct progress *progress = NULL;
+	struct multi_pack_index *m = load_multi_pack_index(object_dir, 1);
+	verify_midx_error = 0;
+
+	if (!m)
+		return 0;
+
+	for (i = 0; i < m->num_packs; i++) {
+		if (prepare_midx_pack(m, i))
+			midx_report("failed to load pack in position %d", i);
+	}
+
+	for (i = 0; i < 255; i++) {
+		uint32_t oid_fanout1 = ntohl(m->chunk_oid_fanout[i]);
+		uint32_t oid_fanout2 = ntohl(m->chunk_oid_fanout[i + 1]);
+
+		if (oid_fanout1 > oid_fanout2)
+			midx_report(_("oid fanout out of order: fanout[%d] = %"PRIx32" > %"PRIx32" = fanout[%d]"),
+				    i, oid_fanout1, oid_fanout2, i + 1);
+	}
+
+	for (i = 0; i < m->num_objects - 1; i++) {
+		struct object_id oid1, oid2;
+
+		nth_midxed_object_oid(&oid1, m, i);
+		nth_midxed_object_oid(&oid2, m, i + 1);
+
+		if (oidcmp(&oid1, &oid2) >= 0)
+			midx_report(_("oid lookup out of order: oid[%d] = %s >= %s = oid[%d]"),
+				    i, oid_to_hex(&oid1), oid_to_hex(&oid2), i + 1);
+	}
+
+	progress = start_progress(_("Verifying object offsets"), m->num_objects);
+	for (i = 0; i < m->num_objects; i++) {
+		struct object_id oid;
+		struct pack_entry e;
+		off_t m_offset, p_offset;
+
+		nth_midxed_object_oid(&oid, m, i);
+		if (!fill_midx_entry(&oid, &e, m)) {
+			midx_report(_("failed to load pack entry for oid[%d] = %s"),
+				    i, oid_to_hex(&oid));
+			continue;
+		}
+
+		if (open_pack_index(e.p)) {
+			midx_report(_("failed to load pack-index for packfile %s"),
+				    e.p->pack_name);
+			break;
+		}
+
+		m_offset = e.offset;
+		p_offset = find_pack_entry_one(oid.hash, e.p);
+
+		if (m_offset != p_offset)
+			midx_report(_("incorrect object offset for oid[%d] = %s: %"PRIx64" != %"PRIx64),
+				    i, oid_to_hex(&oid), m_offset, p_offset);
+
+		display_progress(progress, i + 1);
+	}
+	stop_progress(&progress);
+
+	return verify_midx_error;
 }
