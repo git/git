@@ -510,6 +510,7 @@ static int clone_submodule(const char *path, const char *gitdir, const char *url
 	if (gitdir && *gitdir)
 		argv_array_pushl(&cp.args, "--separate-git-dir", gitdir, NULL);
 
+	argv_array_push(&cp.args, "--");
 	argv_array_push(&cp.args, url);
 	argv_array_push(&cp.args, path);
 
