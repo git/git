@@ -211,5 +211,4 @@ test_expect_success FAKENC 'hostname interpolation works after LF-stripping' '
 	test_cmp expect actual
 '
 
-stop_git_daemon
 test_done
