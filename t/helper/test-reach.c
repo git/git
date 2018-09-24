@@ -31,6 +31,7 @@ int cmd__reach(int ac, const char **av)
 	struct object_id oid_A, oid_B;
 	struct commit *A, *B;
 	struct commit_list *X, *Y;
+	struct object_array X_obj = OBJECT_ARRAY_INIT;
 	struct commit **X_array;
 	int X_nr, X_alloc;
 	struct strbuf buf = STRBUF_INIT;
@@ -49,7 +50,8 @@ int cmd__reach(int ac, const char **av)
 
 	while (strbuf_getline(&buf, stdin) != EOF) {
 		struct object_id oid;
-		struct object *o;
+		struct object *orig;
+		struct object *peeled;
 		struct commit *c;
 		if (buf.len < 3)
 			continue;
@@ -57,14 +59,14 @@ int cmd__reach(int ac, const char **av)
 		if (get_oid_committish(buf.buf + 2, &oid))
 			die("failed to resolve %s", buf.buf + 2);
 
-		o = parse_object(r, &oid);
-		o = deref_tag_noverify(o);
+		orig = parse_object(r, &oid);
+		peeled = deref_tag_noverify(orig);
 
-		if (!o)
+		if (!peeled)
 			die("failed to load commit for input %s resulting in oid %s\n",
 			    buf.buf, oid_to_hex(&oid));
 
-		c = object_as_type(r, o, OBJ_COMMIT, 0);
+		c = object_as_type(r, peeled, OBJ_COMMIT, 0);
 
 		if (!c)
 			die("failed to load commit for input %s resulting in oid %s\n",
@@ -85,6 +87,7 @@ int cmd__reach(int ac, const char **av)
 				commit_list_insert(c, &X);
 				ALLOC_GROW(X_array, X_nr + 1, X_alloc);
 				X_array[X_nr++] = c;
+				add_object_array(orig, NULL, &X_obj);
 				break;
 
 			case 'Y':
@@ -113,6 +116,15 @@ int cmd__reach(int ac, const char **av)
 		print_sorted_commit_ids(list);
 	} else if (!strcmp(av[1], "can_all_from_reach")) {
 		printf("%s(X,Y):%d\n", av[1], can_all_from_reach(X, Y, 1));
+	} else if (!strcmp(av[1], "can_all_from_reach_with_flag")) {
+		struct commit_list *iter = Y;
+
+		while (iter) {
+			iter->item->object.flags |= 2;
+			iter = iter->next;
+		}
+
+		printf("%s(X,_,_,0,0):%d\n", av[1], can_all_from_reach_with_flag(&X_obj, 2, 4, 0, 0));
 	} else if (!strcmp(av[1], "commit_contains")) {
 		struct ref_filter filter;
 		struct contains_cache cache;

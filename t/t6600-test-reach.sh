@@ -31,7 +31,8 @@ test_expect_success 'setup' '
 	for i in $(test_seq 1 10)
 	do
 		test_commit "1-$i" &&
-		git branch -f commit-1-$i
+		git branch -f commit-1-$i &&
+		git tag -a -m "1-$i" tag-1-$i commit-1-$i
 	done &&
 	for j in $(test_seq 1 9)
 	do
@@ -39,11 +40,13 @@ test_expect_success 'setup' '
 		x=$(($j + 1)) &&
 		test_commit "$x-1" &&
 		git branch -f commit-$x-1 &&
+		git tag -a -m "$x-1" tag-$x-1 commit-$x-1 &&
 
 		for i in $(test_seq 2 10)
 		do
 			git merge commit-$j-$i -m "$x-$i" &&
-			git branch -f commit-$x-$i
+			git branch -f commit-$x-$i &&
+			git tag -a -m "$x-$i" tag-$x-$i commit-$x-$i
 		done
 	done &&
 	git commit-graph write --reachable &&
@@ -203,6 +206,29 @@ test_expect_success 'can_all_from_reach:miss' '
 	EOF
 	echo "can_all_from_reach(X,Y):0" >expect &&
 	test_three_modes can_all_from_reach
+'
+
+test_expect_success 'can_all_from_reach_with_flag: tags case' '
+	cat >input <<-\EOF &&
+	X:tag-2-10
+	X:tag-3-9
+	X:tag-4-8
+	X:commit-5-7
+	X:commit-6-6
+	X:commit-7-5
+	X:commit-8-4
+	X:commit-9-3
+	Y:tag-1-9
+	Y:tag-2-8
+	Y:tag-3-7
+	Y:commit-4-6
+	Y:commit-5-5
+	Y:commit-6-4
+	Y:commit-7-3
+	Y:commit-8-1
+	EOF
+	echo "can_all_from_reach_with_flag(X,_,_,0,0):1" >expect &&
+	test_three_modes can_all_from_reach_with_flag
 '
 
 test_expect_success 'commit_contains:hit' '
