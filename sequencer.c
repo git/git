@@ -3611,9 +3611,20 @@ static int commit_staged_changes(struct replay_opts *opts,
 		 * the commit message and if there was a squash, let the user
 		 * edit it.
 		 */
-		if (is_clean && oideq(&head, &to_amend) &&
-		    opts->current_fixup_count > 0 &&
-		    file_exists(rebase_path_stopped_sha())) {
+		if (!is_clean || !opts->current_fixup_count)
+			; /* this is not the final fixup */
+		else if (!oideq(&head, &to_amend) ||
+			 !file_exists(rebase_path_stopped_sha())) {
+			/* was a final fixup or squash done manually? */
+			if (!is_fixup(peek_command(todo_list, 0))) {
+				unlink(rebase_path_fixup_msg());
+				unlink(rebase_path_squash_msg());
+				unlink(rebase_path_current_fixups());
+				strbuf_reset(&opts->current_fixups);
+				opts->current_fixup_count = 0;
+			}
+		} else {
+			/* we are in a fixup/squash chain */
 			const char *p = opts->current_fixups.buf;
 			int len = opts->current_fixups.len;
 
