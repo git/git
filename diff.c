@@ -980,8 +980,13 @@ static void pmb_advance_or_null_multi_match(struct diff_options *o,
 			/* Carry the white space delta forward */
 			pmb[i]->next_line->wsd = pmb[i]->wsd;
 			pmb[i] = pmb[i]->next_line;
-		} else
+		} else {
+			if (pmb[i]->wsd) {
+				free(pmb[i]->wsd->string);
+				FREE_AND_NULL(pmb[i]->wsd);
+			}
 			pmb[i] = NULL;
+		}
 	}
 }
 
@@ -1002,10 +1007,6 @@ static int shrink_potential_moved_blocks(struct moved_entry **pmb,
 
 		if (lp < pmb_nr && rp > -1 && lp < rp) {
 			pmb[lp] = pmb[rp];
-			if (pmb[rp]->wsd) {
-				free(pmb[rp]->wsd->string);
-				FREE_AND_NULL(pmb[rp]->wsd);
-			}
 			pmb[rp] = NULL;
 			rp--;
 			lp++;
