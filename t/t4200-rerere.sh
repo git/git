@@ -642,4 +642,33 @@ test_expect_success 'rerere with inner conflict markers' '
 	test_cmp expect actual
 '
 
+test_expect_success 'setup simple stage 1 handling' '
+	test_create_repo stage_1_handling &&
+	(
+		cd stage_1_handling &&
+
+		test_seq 1 10 >original &&
+		git add original &&
+		git commit -m original &&
+
+		git checkout -b A master &&
+		git mv original A &&
+		git commit -m "rename to A" &&
+
+		git checkout -b B master &&
+		git mv original B &&
+		git commit -m "rename to B"
+	)
+'
+
+test_expect_success 'test simple stage 1 handling' '
+	(
+		cd stage_1_handling &&
+
+		git config rerere.enabled true &&
+		git checkout A^0 &&
+		test_must_fail git merge B^0
+	)
+'
+
 test_done
