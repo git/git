@@ -1143,9 +1143,9 @@ static void collect_some_attrs(const struct index_state *istate,
 	fill(path, pathlen, basename_offset, check->stack, check->all_attrs, rem);
 }
 
-int git_check_attr(const struct index_state *istate,
-		   const char *path,
-		   struct attr_check *check)
+void git_check_attr(const struct index_state *istate,
+		    const char *path,
+		    struct attr_check *check)
 {
 	int i;
 
@@ -1158,8 +1158,6 @@ int git_check_attr(const struct index_state *istate,
 			value = ATTR__UNSET;
 		check->items[i].value = value;
 	}
-
-	return 0;
 }
 
 void git_all_attrs(const struct index_state *istate,

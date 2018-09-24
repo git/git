@@ -1297,6 +1297,7 @@ static void convert_attrs(const struct index_state *istate,
 			  struct conv_attrs *ca, const char *path)
 {
 	static struct attr_check *check;
+	struct attr_check_item *ccheck = NULL;
 
 	if (!check) {
 		check = attr_check_initl("crlf", "ident", "filter",
@@ -1306,30 +1307,25 @@ static void convert_attrs(const struct index_state *istate,
 		git_config(read_convert_config, NULL);
 	}
 
-	if (!git_check_attr(istate, path, check)) {
-		struct attr_check_item *ccheck = check->items;
-		ca->crlf_action = git_path_check_crlf(ccheck + 4);
-		if (ca->crlf_action == CRLF_UNDEFINED)
-			ca->crlf_action = git_path_check_crlf(ccheck + 0);
-		ca->ident = git_path_check_ident(ccheck + 1);
-		ca->drv = git_path_check_convert(ccheck + 2);
-		if (ca->crlf_action != CRLF_BINARY) {
-			enum eol eol_attr = git_path_check_eol(ccheck + 3);
-			if (ca->crlf_action == CRLF_AUTO && eol_attr == EOL_LF)
-				ca->crlf_action = CRLF_AUTO_INPUT;
-			else if (ca->crlf_action == CRLF_AUTO && eol_attr == EOL_CRLF)
-				ca->crlf_action = CRLF_AUTO_CRLF;
-			else if (eol_attr == EOL_LF)
-				ca->crlf_action = CRLF_TEXT_INPUT;
-			else if (eol_attr == EOL_CRLF)
-				ca->crlf_action = CRLF_TEXT_CRLF;
-		}
-		ca->working_tree_encoding = git_path_check_encoding(ccheck + 5);
-	} else {
-		ca->drv = NULL;
-		ca->crlf_action = CRLF_UNDEFINED;
-		ca->ident = 0;
+	git_check_attr(istate, path, check);
+	ccheck = check->items;
+	ca->crlf_action = git_path_check_crlf(ccheck + 4);
+	if (ca->crlf_action == CRLF_UNDEFINED)
+		ca->crlf_action = git_path_check_crlf(ccheck + 0);
+	ca->ident = git_path_check_ident(ccheck + 1);
+	ca->drv = git_path_check_convert(ccheck + 2);
+	if (ca->crlf_action != CRLF_BINARY) {
+		enum eol eol_attr = git_path_check_eol(ccheck + 3);
+		if (ca->crlf_action == CRLF_AUTO && eol_attr == EOL_LF)
+			ca->crlf_action = CRLF_AUTO_INPUT;
+		else if (ca->crlf_action == CRLF_AUTO && eol_attr == EOL_CRLF)
+			ca->crlf_action = CRLF_AUTO_CRLF;
+		else if (eol_attr == EOL_LF)
+			ca->crlf_action = CRLF_TEXT_INPUT;
+		else if (eol_attr == EOL_CRLF)
+			ca->crlf_action = CRLF_TEXT_CRLF;
 	}
+	ca->working_tree_encoding = git_path_check_encoding(ccheck + 5);
 
 	/* Save attr and make a decision for action */
 	ca->attr_action = ca->crlf_action;
