@@ -19,6 +19,12 @@ void compute_assignment(int column_count, int row_count, int *cost,
 	int *free_row, free_count = 0, saved_free_count, *pred, *col;
 	int i, j, phase;
 
+	if (column_count < 2) {
+		memset(column2row, 0, sizeof(int) * column_count);
+		memset(row2column, 0, sizeof(int) * row_count);
+		return;
+	}
+
 	memset(column2row, -1, sizeof(int) * column_count);
 	memset(row2column, -1, sizeof(int) * row_count);
 	ALLOC_ARRAY(v, column_count);

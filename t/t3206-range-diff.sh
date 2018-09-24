@@ -122,6 +122,11 @@ test_expect_success 'changed commit' '
 	test_cmp expected actual
 '
 
+test_expect_success 'no commits on one side' '
+	git commit --amend -m "new message" &&
+	git range-diff master HEAD@{1} HEAD
+'
+
 test_expect_success 'changed message' '
 	git range-diff --no-color topic...changed-message >actual &&
 	sed s/Z/\ /g >expected <<-EOF &&
