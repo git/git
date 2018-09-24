@@ -14,7 +14,8 @@ static const char * const git_update_ref_usage[] = {
 };
 
 static char line_termination = '\n';
-static int update_flags;
+static unsigned int update_flags;
+static unsigned int default_flags;
 static unsigned create_reflog_flag;
 static const char *msg;
 
@@ -205,7 +206,7 @@ static const char *parse_cmd_update(struct ref_transaction *transaction,
 				   msg, &err))
 		die("%s", err.buf);
 
-	update_flags = 0;
+	update_flags = default_flags;
 	free(refname);
 	strbuf_release(&err);
 
@@ -237,7 +238,7 @@ static const char *parse_cmd_create(struct ref_transaction *transaction,
 				   msg, &err))
 		die("%s", err.buf);
 
-	update_flags = 0;
+	update_flags = default_flags;
 	free(refname);
 	strbuf_release(&err);
 
@@ -273,7 +274,7 @@ static const char *parse_cmd_delete(struct ref_transaction *transaction,
 				   update_flags, msg, &err))
 		die("%s", err.buf);
 
-	update_flags = 0;
+	update_flags = default_flags;
 	free(refname);
 	strbuf_release(&err);
 
@@ -302,7 +303,7 @@ static const char *parse_cmd_verify(struct ref_transaction *transaction,
 				   update_flags, &err))
 		die("%s", err.buf);
 
-	update_flags = 0;
+	update_flags = default_flags;
 	free(refname);
 	strbuf_release(&err);
 
@@ -357,7 +358,6 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 	const char *refname, *oldval;
 	struct object_id oid, oldoid;
 	int delete = 0, no_deref = 0, read_stdin = 0, end_null = 0;
-	unsigned int flags = 0;
 	int create_reflog = 0;
 	struct option options[] = {
 		OPT_STRING( 'm', NULL, &msg, N_("reason"), N_("reason of the update")),
@@ -378,6 +378,11 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 
 	create_reflog_flag = create_reflog ? REF_FORCE_CREATE_REFLOG : 0;
 
+	if (no_deref) {
+		default_flags = REF_NO_DEREF;
+		update_flags = default_flags;
+	}
+
 	if (read_stdin) {
 		struct strbuf err = STRBUF_INIT;
 		struct ref_transaction *transaction;
@@ -385,7 +390,7 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 		transaction = ref_transaction_begin(&err);
 		if (!transaction)
 			die("%s", err.buf);
-		if (delete || no_deref || argc > 0)
+		if (delete || argc > 0)
 			usage_with_options(git_update_ref_usage, options);
 		if (end_null)
 			line_termination = '\0';
@@ -427,8 +432,6 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 			die("%s: not a valid old SHA1", oldval);
 	}
 
-	if (no_deref)
-		flags = REF_NO_DEREF;
 	if (delete)
 		/*
 		 * For purposes of backwards compatibility, we treat
@@ -436,9 +439,9 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 		 */
 		return delete_ref(msg, refname,
 				  (oldval && !is_null_oid(&oldoid)) ? &oldoid : NULL,
-				  flags);
+				  default_flags);
 	else
 		return update_ref(msg, refname, &oid, oldval ? &oldoid : NULL,
-				  flags | create_reflog_flag,
+				  default_flags | create_reflog_flag,
 				  UPDATE_REFS_DIE_ON_ERR);
 }
