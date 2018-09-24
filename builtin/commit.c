@@ -1654,7 +1654,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		      "not exceeded, and then \"git reset HEAD\" to recover."));
 
 	if (git_env_bool(GIT_TEST_COMMIT_GRAPH, 0))
-		write_commit_graph_reachable(get_object_directory(), 0);
+		write_commit_graph_reachable(get_object_directory(), 0, 0);
 
 	rerere(0);
 	run_command_v_opt(argv_gc_auto, RUN_GIT_CMD);
