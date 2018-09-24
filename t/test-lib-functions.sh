@@ -914,6 +914,35 @@ test_when_finished () {
 		} && (exit \"\$eval_ret\"); eval_ret=\$?; $test_cleanup"
 }
 
+# This function can be used to schedule some commands to be run
+# unconditionally at the end of the test script, e.g. to stop a daemon:
+#
+#	test_expect_success 'test git daemon' '
+#		git daemon &
+#		daemon_pid=$! &&
+#		test_atexit "kill $daemon_pid" &&
+#		hello world
+#	'
+
+test_atexit () {
+	# We cannot detect when we are in a subshell in general, but by
+	# doing so on Bash is better than nothing (the test will
+	# silently pass on other shells).
+	test "${BASH_SUBSHELL-0}" = 0 ||
+	error "bug in test script: test_atexit does nothing in a subshell"
+	test_atexit_cleanup="{ $*
+		} && (exit \"\$eval_ret\"); eval_ret=\$?; $test_atexit_cleanup"
+}
+
+test_atexit_handler () {
+	test : != "$test_atexit_cleanup" || return 0
+
+	setup_malloc_check
+	test_eval_ "$test_atexit_cleanup"
+	test_atexit_cleanup=:
+	teardown_malloc_check
+}
+
 # Most tests can use the created repository, but some may need to create more.
 # Usage: test_create_repo <directory>
 test_create_repo () {
