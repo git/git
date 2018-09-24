@@ -2856,6 +2856,8 @@ protocol.version::
 * `1` - the original wire protocol with the addition of a version string
   in the initial response from the server.
 
+* `2` - link:technical/protocol-v2.html[wire protocol version 2].
+
 --
 
 pull.ff::
