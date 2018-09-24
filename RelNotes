@@ -106,7 +106,62 @@ Fixes since v2.19
    to read or write past the allocated buffer and abort, instead of
    reporting an error, which has been fixed.
 
+ * "git rebase -i" did not clear the state files correctly when a run
+   of "squash/fixup" is aborted and then the user manually amended the
+   commit instead, which has been corrected.
+   (merge 10d2f35436 js/rebase-i-autosquash-fix later to maint).
+
+ * When fsmonitor is in use, after operation on submodules updates
+   .gitmodules, we lost track of the fact that we did so and relied on
+   stale fsmonitor data.
+   (merge 43f1180814 bp/mv-submodules-with-fsmonitor later to maint).
+
+ * Fix for a long-standing bug that leaves the index file corrupt when
+   it shrinks during a partial commit.
+   (merge 6c003d6ffb jk/reopen-tempfile-truncate later to maint).
+
+ * Further fix for O_APPEND emulation on Windows
+   (merge eeaf7ddac7 js/mingw-o-append later to maint).
+
+ * A corner case bugfix in "git rerere" code.
+   (merge ad2bf0d9b4 en/rerere-multi-stage-1-fix later to maint).
+
+ * "git add ':(attr:foo)'" is not supported and is supposed to be
+   rejected while the command line arguments are parsed, but we fail
+   to reject such a command line upfront.
+   (merge 84d938b732 nd/attr-pathspec-fix later to maint).
+
+ * Recent update broke the reachability algorithm when refs (e.g.
+   tags) that point at objects that are not commit were involved,
+   which has been fixed.
+
+ * "git rebase" etc. in Git 2.19 fails to abort when given an empty
+   commit log message as result of editing, which has been corrected.
+   (merge a3ec9eaf38 en/sequencer-empty-edit-result-aborts later to maint).
+
+ * The code to backfill objects in lazily cloned repository did not
+   work correctly, which has been corrected.
+   (merge e68302011c jt/lazy-object-fetch-fix later to maint).
+
+ * Update error messages given by "git remote" and make them consistent.
+   (merge 5025425dff ms/remote-error-message-update later to maint).
+
+ * "git update-ref" learned to make both "--no-deref" and "--stdin"
+   work at the same time.
+   (merge d345e9fbe7 en/update-ref-no-deref-stdin later to maint).
+
+ * Recently added "range-diff" had a corner-case bug to cause it
+   segfault, which has been corrected.
+   (merge e467a90c7a tg/range-diff-corner-case-fix later to maint).
+
  * Code cleanup, docfix, build fix, etc.
    (merge 96a7501aad ts/doc-build-manpage-xsl-quietly later to maint).
    (merge b9b07efdb2 tg/conflict-marker-size later to maint).
    (merge fa0aeea770 sg/doc-trace-appends later to maint).
+   (merge d64324cb60 tb/void-check-attr later to maint).
+   (merge c3b9bc94b9 en/double-semicolon-fix later to maint).
+   (merge 79336116f5 sg/t3701-tighten-trace later to maint).
+   (merge 801fa63a90 jk/dev-build-format-security later to maint).
+   (merge 0597dd62ba sb/string-list-remove-unused later to maint).
+   (merge db2d36fad8 bw/protocol-v2 later to maint).
+   (merge 456d7cd3a9 sg/split-index-test later to maint).
