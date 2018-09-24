@@ -367,6 +367,12 @@ static void warn_multiple_config(const unsigned char *treeish_name,
 			commit_string, name, option);
 }
 
+static void warn_command_line_option(const char *var, const char *value)
+{
+	warning(_("ignoring '%s' which may be interpreted as"
+		  " a command-line option: %s"), var, value);
+}
+
 struct parse_config_parameter {
 	struct submodule_cache *cache;
 	const unsigned char *treeish_name;
@@ -432,6 +438,8 @@ static int parse_config(const char *var, const char *value, void *data)
 	} else if (!strcmp(item.buf, "url")) {
 		if (!value) {
 			ret = config_error_nonbool(var);
+		} else if (looks_like_command_line_option(value)) {
+			warn_command_line_option(var, value);
 		} else if (!me->overwrite && submodule->url) {
 			warn_multiple_config(me->treeish_name, submodule->name,
 					"url");
