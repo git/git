@@ -133,6 +133,34 @@ committer Bugs Bunny <bugs@bun.ni> 1234567890 +0000
 This commit object intentionally broken
 EOF
 
+test_expect_success 'setup bogus commit' '
+	commit="$(git hash-object -t commit -w --stdin <bogus-commit)"
+'
+
+test_expect_success 'fsck with no skipList input' '
+	test_must_fail git fsck 2>err &&
+	test_i18ngrep "missingEmail" err
+'
+
+test_expect_success 'setup sorted and unsorted skipLists' '
+	cat >SKIP.unsorted <<-EOF &&
+	0000000000000000000000000000000000000004
+	0000000000000000000000000000000000000002
+	$commit
+	0000000000000000000000000000000000000001
+	0000000000000000000000000000000000000003
+	EOF
+	sort SKIP.unsorted >SKIP.sorted
+'
+
+test_expect_success 'fsck with sorted skipList' '
+	git -c fsck.skipList=SKIP.sorted fsck
+'
+
+test_expect_success 'fsck with unsorted skipList' '
+	git -c fsck.skipList=SKIP.unsorted fsck
+'
+
 test_expect_success 'fsck with invalid or bogus skipList input' '
 	git -c fsck.skipList=/dev/null -c fsck.missingEmail=ignore fsck &&
 	test_must_fail git -c fsck.skipList=does-not-exist -c fsck.missingEmail=ignore fsck 2>err &&
@@ -141,8 +169,47 @@ test_expect_success 'fsck with invalid or bogus skipList input' '
 	test_i18ngrep "Invalid SHA-1: \[core\]" err
 '
 
+test_expect_success 'fsck with other accepted skipList input (comments & empty lines)' '
+	cat >SKIP.with-comment <<-EOF &&
+	# Some bad commit
+	0000000000000000000000000000000000000001
+	EOF
+	test_must_fail git -c fsck.skipList=SKIP.with-comment fsck 2>err-with-comment &&
+	test_i18ngrep "missingEmail" err-with-comment &&
+	cat >SKIP.with-empty-line <<-EOF &&
+	0000000000000000000000000000000000000001
+
+	0000000000000000000000000000000000000002
+	EOF
+	test_must_fail git -c fsck.skipList=SKIP.with-empty-line fsck 2>err-with-empty-line &&
+	test_i18ngrep "missingEmail" err-with-empty-line
+'
+
+test_expect_success 'fsck no garbage output from comments & empty lines errors' '
+	test_line_count = 1 err-with-comment &&
+	test_line_count = 1 err-with-empty-line
+'
+
+test_expect_success 'fsck with invalid abbreviated skipList input' '
+	echo $commit | test_copy_bytes 20 >SKIP.abbreviated &&
+	test_must_fail git -c fsck.skipList=SKIP.abbreviated fsck 2>err-abbreviated &&
+	test_i18ngrep "^fatal: Invalid SHA-1: " err-abbreviated
+'
+
+test_expect_success 'fsck with exhaustive accepted skipList input (various types of comments etc.)' '
+	>SKIP.exhaustive &&
+	echo "# A commented line" >>SKIP.exhaustive &&
+	echo "" >>SKIP.exhaustive &&
+	echo " " >>SKIP.exhaustive &&
+	echo " # Comment after whitespace" >>SKIP.exhaustive &&
+	echo "$commit # Our bad commit (with leading whitespace and trailing comment)" >>SKIP.exhaustive &&
+	echo "# Some bad commit (leading whitespace)" >>SKIP.exhaustive &&
+	echo "  0000000000000000000000000000000000000001" >>SKIP.exhaustive &&
+	git -c fsck.skipList=SKIP.exhaustive fsck 2>err &&
+	test_must_be_empty err
+'
+
 test_expect_success 'push with receive.fsck.skipList' '
-	commit="$(git hash-object -t commit -w --stdin <bogus-commit)" &&
 	git push . $commit:refs/heads/bogus &&
 	rm -rf dst &&
 	git init dst &&
@@ -169,7 +236,6 @@ test_expect_success 'push with receive.fsck.skipList' '
 '
 
 test_expect_success 'fetch with fetch.fsck.skipList' '
-	commit="$(git hash-object -t commit -w --stdin <bogus-commit)" &&
 	refspec=refs/heads/bogus:refs/heads/bogus &&
 	git push . $commit:refs/heads/bogus &&
 	rm -rf dst &&
@@ -204,7 +270,6 @@ test_expect_success 'fsck.<unknownmsg-id> dies' '
 '
 
 test_expect_success 'push with receive.fsck.missingEmail=warn' '
-	commit="$(git hash-object -t commit -w --stdin <bogus-commit)" &&
 	git push . $commit:refs/heads/bogus &&
 	rm -rf dst &&
 	git init dst &&
@@ -232,7 +297,6 @@ test_expect_success 'push with receive.fsck.missingEmail=warn' '
 '
 
 test_expect_success 'fetch with fetch.fsck.missingEmail=warn' '
-	commit="$(git hash-object -t commit -w --stdin <bogus-commit)" &&
 	refspec=refs/heads/bogus:refs/heads/bogus &&
 	git push . $commit:refs/heads/bogus &&
 	rm -rf dst &&
