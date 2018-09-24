@@ -569,16 +569,15 @@ test_expect_success '--continue tries to commit, even for "edit"' '
 '
 
 test_expect_success 'aborted --continue does not squash commits after "edit"' '
-	test_when_finished "git rebase --abort" &&
 	old=$(git rev-parse HEAD) &&
 	test_tick &&
 	set_fake_editor &&
 	FAKE_LINES="edit 1" git rebase -i HEAD^ &&
 	echo "edited again" > file7 &&
 	git add file7 &&
-	echo all the things >>conflict &&
-	test_must_fail git rebase --continue &&
-	test $old = $(git rev-parse HEAD)
+	test_must_fail env FAKE_COMMIT_MESSAGE=" " git rebase --continue &&
+	test $old = $(git rev-parse HEAD) &&
+	git rebase --abort
 '
 
 test_expect_success 'auto-amend only edited commits after "edit"' '

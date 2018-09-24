@@ -903,7 +903,7 @@ static int run_git_commit(const char *defmsg, struct replay_opts *opts,
 	if ((flags & ALLOW_EMPTY))
 		argv_array_push(&cmd.args, "--allow-empty");
 
-	if (opts->allow_empty_message)
+	if (!(flags & EDIT_MSG))
 		argv_array_push(&cmd.args, "--allow-empty-message");
 
 	if (cmd.err == -1) {
@@ -1317,7 +1317,7 @@ static int try_to_commit(struct strbuf *msg, const char *author,
 
 	if (cleanup != COMMIT_MSG_CLEANUP_NONE)
 		strbuf_stripspace(msg, cleanup == COMMIT_MSG_CLEANUP_ALL);
-	if (!opts->allow_empty_message && message_is_empty(msg, cleanup)) {
+	if ((flags & EDIT_MSG) && message_is_empty(msg, cleanup)) {
 		res = 1; /* run 'git commit' to display error message */
 		goto out;
 	}
