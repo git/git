@@ -13,7 +13,6 @@
 #
 #	test_expect_success ...
 #
-#	stop_git_daemon
 #	test_done
 
 test_tristate GIT_TEST_GIT_DAEMON
@@ -43,7 +42,7 @@ start_git_daemon() {
 
 	mkdir -p "$GIT_DAEMON_DOCUMENT_ROOT_PATH"
 
-	trap 'code=$?; stop_git_daemon; (exit $code); die' EXIT
+	test_atexit 'stop_git_daemon'
 
 	say >&3 "Starting git daemon ..."
 	mkfifo git_daemon_output

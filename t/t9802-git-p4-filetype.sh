@@ -333,8 +333,4 @@ test_expect_success SYMLINKS 'empty symlink target' '
 	)
 '
 
-test_expect_success 'kill p4d' '
-	kill_p4d
-'
-
 test_done
