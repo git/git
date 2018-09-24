@@ -2240,7 +2240,7 @@ static struct dir_rename_entry *check_dir_renamed(const char *path,
 {
 	char *temp = xstrdup(path);
 	char *end;
-	struct dir_rename_entry *entry = NULL;;
+	struct dir_rename_entry *entry = NULL;
 
 	while ((end = strrchr(temp, '/'))) {
 		*end = '\0';
