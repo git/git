@@ -236,8 +236,8 @@ extern int close_tempfile_gently(struct tempfile *tempfile);
  *   it (and nobody else) to inspect or even modify the file's
  *   contents.
  *
- * * `reopen_tempfile()` to reopen the temporary file. Make further
- *   updates to the contents.
+ * * `reopen_tempfile()` to reopen the temporary file, truncating the existing
+ *   contents. Write out the new contents.
  *
  * * `rename_tempfile()` to move the file to its permanent location.
  */

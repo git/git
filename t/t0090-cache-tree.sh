@@ -161,6 +161,24 @@ test_expect_success PERL 'commit --interactive gives cache-tree on partial commi
 	test_cache_tree
 '
 
+test_expect_success PERL 'commit -p with shrinking cache-tree' '
+	mkdir -p deep/subdir &&
+	echo content >deep/subdir/file &&
+	git add deep &&
+	git commit -m add &&
+	git rm -r deep &&
+
+	before=$(wc -c <.git/index) &&
+	git commit -m delete -p &&
+	after=$(wc -c <.git/index) &&
+
+	# double check that the index shrank
+	test $before -gt $after &&
+
+	# and that our index was not corrupted
+	git fsck
+'
+
 test_expect_success 'commit in child dir has cache-tree' '
 	mkdir dir &&
 	>dir/child.t &&
