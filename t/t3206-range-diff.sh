@@ -193,4 +193,9 @@ do
 	'
 done
 
+test_expect_success 'format-patch --range-diff as commentary' '
+	git format-patch --stdout --range-diff=HEAD~1 HEAD~1 >actual &&
+	test_i18ngrep "^Range-diff:$" actual
+'
+
 test_done
