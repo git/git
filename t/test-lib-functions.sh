@@ -1157,3 +1157,72 @@ depacketize () {
 		}
 	'
 }
+
+# Set the hash algorithm in use to $1.  Only useful when testing the testsuite.
+test_set_hash () {
+	test_hash_algo="$1"
+}
+
+# Detect the hash algorithm in use.
+test_detect_hash () {
+	# Currently we only support SHA-1, but in the future this function will
+	# actually detect the algorithm in use.
+	test_hash_algo='sha1'
+}
+
+# Load common hash metadata and common placeholder object IDs for use with
+# test_oid.
+test_oid_init () {
+	test -n "$test_hash_algo" || test_detect_hash &&
+	test_oid_cache <"$TEST_DIRECTORY/oid-info/hash-info" &&
+	test_oid_cache <"$TEST_DIRECTORY/oid-info/oid"
+}
+
+# Load key-value pairs from stdin suitable for use with test_oid.  Blank lines
+# and lines starting with "#" are ignored.  Keys must be shell identifier
+# characters.
+#
+# Examples:
+# rawsz sha1:20
+# rawsz sha256:32
+test_oid_cache () {
+	local tag rest k v &&
+
+	{ test -n "$test_hash_algo" || test_detect_hash; } &&
+	while read tag rest
+	do
+		case $tag in
+		\#*)
+			continue;;
+		?*)
+			# non-empty
+			;;
+		*)
+			# blank line
+			continue;;
+		esac &&
+
+		k="${rest%:*}" &&
+		v="${rest#*:}" &&
+
+		if ! expr "$k" : '[a-z0-9][a-z0-9]*$' >/dev/null
+		then
+			error 'bug in the test script: bad hash algorithm'
+		fi &&
+		eval "test_oid_${k}_$tag=\"\$v\""
+	done
+}
+
+# Look up a per-hash value based on a key ($1).  The value must have been loaded
+# by test_oid_init or test_oid_cache.
+test_oid () {
+	local var="test_oid_${test_hash_algo}_$1" &&
+
+	# If the variable is unset, we must be missing an entry for this
+	# key-hash pair, so exit with an error.
+	if eval "test -z \"\${$var+set}\""
+	then
+		error "bug in the test script: undefined key '$1'" >&2
+	fi &&
+	eval "printf '%s' \"\${$var}\""
+}
