@@ -398,6 +398,8 @@ static int parse_config(const char *var, const char *value, void *data)
 	if (!strcmp(item.buf, "path")) {
 		if (!value)
 			ret = config_error_nonbool(var);
+		else if (looks_like_command_line_option(value))
+			warn_command_line_option(var, value);
 		else if (!me->overwrite && submodule->path)
 			warn_multiple_config(me->treeish_name, submodule->name,
 					"path");
