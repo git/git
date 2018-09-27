@@ -252,8 +252,18 @@ static int connect_setup(struct transport *transport, int for_push)
 	return 0;
 }
 
-static struct ref *get_refs_via_connect(struct transport *transport, int for_push,
-					const struct argv_array *ref_prefixes)
+/*
+ * Obtains the protocol version from the transport and writes it to
+ * transport->data->version, first connecting if not already connected.
+ *
+ * If the protocol version is one that allows skipping the listing of remote
+ * refs, and must_list_refs is 0, the listing of remote refs is skipped and
+ * this function returns NULL. Otherwise, this function returns the list of
+ * remote refs.
+ */
+static struct ref *handshake(struct transport *transport, int for_push,
+			     const struct argv_array *ref_prefixes,
+			     int must_list_refs)
 {
 	struct git_transport_data *data = transport->data;
 	struct ref *refs = NULL;
@@ -268,8 +278,10 @@ static struct ref *get_refs_via_connect(struct transport *transport, int for_pus
 	data->version = discover_version(&reader);
 	switch (data->version) {
 	case protocol_v2:
-		get_remote_refs(data->fd[1], &reader, &refs, for_push,
-				ref_prefixes, transport->server_options);
+		if (must_list_refs)
+			get_remote_refs(data->fd[1], &reader, &refs, for_push,
+					ref_prefixes,
+					transport->server_options);
 		break;
 	case protocol_v1:
 	case protocol_v0:
@@ -283,7 +295,16 @@ static struct ref *get_refs_via_connect(struct transport *transport, int for_pus
 	}
 	data->got_remote_heads = 1;
 
+	if (reader.line_peeked)
+		BUG("buffer must be empty at the end of handshake()");
+
 	return refs;
+}
+
+static struct ref *get_refs_via_connect(struct transport *transport, int for_push,
+					const struct argv_array *ref_prefixes)
+{
+	return handshake(transport, for_push, ref_prefixes, 1);
 }
 
 static int fetch_refs_via_pack(struct transport *transport,
