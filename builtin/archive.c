@@ -27,16 +27,19 @@ static int run_remote_archiver(int argc, const char **argv,
 			       const char *remote, const char *exec,
 			       const char *name_hint)
 {
-	char *buf;
 	int fd[2], i, rv;
 	struct transport *transport;
 	struct remote *_remote;
+	struct packet_reader reader;
+	enum packet_read_status status;
 
 	_remote = remote_get(remote);
 	if (!_remote->url[0])
 		die(_("git archive: Remote with no URL"));
 	transport = transport_get(_remote, _remote->url[0]);
 	transport_connect(transport, "git-upload-archive", exec, fd);
+
+	packet_reader_init(&reader, fd[0], NULL, 0, PACKET_READ_CHOMP_NEWLINE);
 
 	/*
 	 * Inject a fake --format field at the beginning of the
@@ -53,18 +56,20 @@ static int run_remote_archiver(int argc, const char **argv,
 		packet_write_fmt(fd[1], "argument %s\n", argv[i]);
 	packet_flush(fd[1]);
 
-	buf = packet_read_line(fd[0], NULL);
-	if (!buf)
+	status = packet_reader_read(&reader);
+
+	if (status != PACKET_READ_NORMAL || reader.pktlen <= 0)
 		die(_("git archive: expected ACK/NAK, got a flush packet"));
-	if (strcmp(buf, "ACK")) {
-		if (starts_with(buf, "NACK "))
-			die(_("git archive: NACK %s"), buf + 5);
-		if (starts_with(buf, "ERR "))
-			die(_("remote error: %s"), buf + 4);
+	if (strcmp(reader.line, "ACK")) {
+		if (starts_with(reader.line, "NACK "))
+			die(_("git archive: NACK %s"), reader.line + 5);
+		if (starts_with(reader.line, "ERR "))
+			die(_("remote error: %s"), reader.line + 4);
 		die(_("git archive: protocol error"));
 	}
 
-	if (packet_read_line(fd[0], NULL))
+	status = packet_reader_read(&reader);
+	if (status == PACKET_READ_NORMAL && reader.pktlen > 0)
 		die(_("git archive: expected a flush"));
 
 	/* Now, start reading from fd[0] and spit it out to stdout */
