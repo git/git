@@ -1030,8 +1030,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		OPT_BOOL(0, "autosquash", &options.autosquash,
 			 N_("move commits that begin with "
 			    "squash!/fixup! under -i")),
-		OPT_STRING('S', "gpg-sign", &gpg_sign,
-			   N_("gpg-sign?"), N_("GPG-sign commits")),
+		{ OPTION_STRING, 'S', "gpg-sign", &gpg_sign, N_("key-id"),
+			N_("GPG-sign commits"),
+			PARSE_OPT_OPTARG, NULL, (intptr_t) "" },
 		OPT_STRING_LIST(0, "whitespace", &whitespace,
 				N_("whitespace"), N_("passed to 'git apply'")),
 		OPT_SET_INT('C', 0, &opt_c, N_("passed to 'git apply'"),
