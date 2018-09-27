@@ -1530,6 +1530,7 @@ int refresh_index(struct index_state *istate, unsigned int flags,
 	typechange_fmt = in_porcelain ? "T\t%s\n" : "%s: needs update\n";
 	added_fmt      = in_porcelain ? "A\t%s\n" : "%s: needs update\n";
 	unmerged_fmt   = in_porcelain ? "U\t%s\n" : "%s: needs merge\n";
+	enable_fscache(1);
 	/*
 	 * Use the multi-threaded preload_index() to refresh most of the
 	 * cache entries quickly then in the single threaded loop below,
@@ -1607,6 +1608,7 @@ int refresh_index(struct index_state *istate, unsigned int flags,
 		stop_progress(&progress);
 	}
 	trace_performance_leave("refresh index");
+	enable_fscache(0);
 	return has_errors;
 }
 
