@@ -24,7 +24,7 @@ test_expect_success 'setup' '
 	git index-pack --stdin <ab.pack
 '
 
-test_expect_failure 'repack large deltas' '
+test_expect_success 'repack large deltas' '
 	printf "%s\\n" $A $B |
 	GIT_TEST_OE_DELTA_SIZE=2 git pack-objects tmp-pack
 '
