@@ -87,7 +87,17 @@ static int run_remote_archiver(int argc, const char **argv,
 		status = packet_reader_read(&reader);
 		if (status == PACKET_READ_NORMAL && reader.pktlen > 0)
 			die(_("git archive: expected a flush"));
-	}
+	} else if (version == protocol_v2 &&
+		   (starts_with(transport->url, "http://") ||
+		    starts_with(transport->url, "https://")))
+		/*
+		 * Commands over HTTP require two requests, so there's an
+		 * additional server response to parse. We do only basic sanity
+		 * checking here that the versions presented match across
+		 * requests.
+		 */
+		if (version != discover_version(&reader))
+			die(_("git archive: received different protocol versions in subsequent requests"));
 
 	/* Now, start reading from fd[0] and spit it out to stdout */
 	rv = recv_sideband("archive", fd[0], 1);

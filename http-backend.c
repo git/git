@@ -32,6 +32,7 @@ struct rpc_service {
 static struct rpc_service rpc_service[] = {
 	{ "upload-pack", "uploadpack", 1, 1 },
 	{ "receive-pack", "receivepack", 0, -1 },
+	{ "upload-archive", "uploadarchive", 1, 1 },
 };
 
 static struct string_list *get_parameters(void)
@@ -637,6 +638,15 @@ static void service_rpc(struct strbuf *hdr, char *service_name)
 	struct rpc_service *svc = select_service(hdr, service_name);
 	struct strbuf buf = STRBUF_INIT;
 
+	if (!strcmp(service_name, "git-upload-archive")) {
+		/*
+		 * git-upload-archive doesn't need --stateless-rpc, because it
+		 * always handles only a single request.
+		 */
+		argv[1] = ".";
+		argv[2] = NULL;
+	}
+
 	strbuf_reset(&buf);
 	strbuf_addf(&buf, "application/x-git-%s-request", svc->name);
 	check_content_type(hdr, buf.buf);
@@ -713,7 +723,8 @@ static struct service_cmd {
 	{"GET", "/objects/pack/pack-[0-9a-f]{40}\\.idx$", get_idx_file},
 
 	{"POST", "/git-upload-pack$", service_rpc},
-	{"POST", "/git-receive-pack$", service_rpc}
+	{"POST", "/git-receive-pack$", service_rpc},
+	{"POST", "/git-upload-archive$", service_rpc},
 };
 
 static int bad_request(struct strbuf *hdr, const struct service_cmd *c)
