@@ -73,7 +73,7 @@ $ git commit-graph write
 ------------------------------------------------
 
 * Write a graph file, extending the current graph file using commits
-* in <pack-index>.
+  in <pack-index>.
 +
 ------------------------------------------------
 $ echo <pack-index> | git commit-graph write --stdin-packs
@@ -86,7 +86,7 @@ $ git show-ref -s | git commit-graph write --stdin-commits
 ------------------------------------------------
 
 * Write a graph file containing all commits in the current
-* commit-graph file along with those reachable from HEAD.
+  commit-graph file along with those reachable from HEAD.
 +
 ------------------------------------------------
 $ git rev-parse HEAD | git commit-graph write --stdin-commits --append
