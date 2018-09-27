@@ -286,6 +286,10 @@ test_expect_success 'dynamically fetch missing object' '
 	grep "version 2" trace
 '
 
+test_expect_success 'when dynamically fetching missing object, do not list refs' '
+	! grep "git> command=ls-refs" trace
+'
+
 test_expect_success 'partial fetch' '
 	rm -rf client "$(pwd)/trace" &&
 	git init client &&

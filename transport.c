@@ -341,8 +341,17 @@ static int fetch_refs_via_pack(struct transport *transport,
 	args.server_options = transport->server_options;
 	args.negotiation_tips = data->options.negotiation_tips;
 
-	if (!data->got_remote_heads)
-		refs_tmp = get_refs_via_connect(transport, 0, NULL);
+	if (!data->got_remote_heads) {
+		int i;
+		int must_list_refs = 0;
+		for (i = 0; i < nr_heads; i++) {
+			if (!to_fetch[i]->exact_oid) {
+				must_list_refs = 1;
+				break;
+			}
+		}
+		refs_tmp = handshake(transport, 0, NULL, must_list_refs);
+	}
 
 	switch (data->version) {
 	case protocol_v2:

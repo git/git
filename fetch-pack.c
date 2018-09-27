@@ -1598,7 +1598,7 @@ struct ref *fetch_pack(struct fetch_pack_args *args,
 	if (nr_sought)
 		nr_sought = remove_duplicates_in_refs(sought, nr_sought);
 
-	if (!ref) {
+	if (version != protocol_v2 && !ref) {
 		packet_flush(fd[1]);
 		die(_("no matching remote head"));
 	}
