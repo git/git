@@ -79,6 +79,19 @@ test_expect_success 'fetch with git:// using protocol v2' '
 	grep "fetch< version 2" log
 '
 
+test_expect_success 'fetch by hash without tag following with protocol v2 does not list refs' '
+	test_when_finished "rm -f log" &&
+
+	test_commit -C "$daemon_parent" two_a &&
+	git -C "$daemon_parent" rev-parse two_a >two_a_hash &&
+
+	GIT_TRACE_PACKET="$(pwd)/log" git -C daemon_child -c protocol.version=2 \
+		fetch --no-tags origin $(cat two_a_hash) &&
+
+	grep "fetch< version 2" log &&
+	! grep "fetch> command=ls-refs" log
+'
+
 test_expect_success 'pull with git:// using protocol v2' '
 	test_when_finished "rm -f log" &&
 
