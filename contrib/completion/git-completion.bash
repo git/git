@@ -2567,6 +2567,9 @@ _git_stash ()
 		drop,--*)
 			__gitcomp "--quiet"
 			;;
+		list,--*)
+			__gitcomp "--name-status --oneline --patch-with-stat"
+			;;
 		show,--*|branch,--*)
 			;;
 		branch,*)
