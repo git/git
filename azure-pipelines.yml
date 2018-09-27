@@ -10,7 +10,7 @@ phases:
     name: Hosted Ubuntu 1604
   steps:
   - bash: |
-       test -z "$GITFILESHAREPWD" || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
+       test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
 
        sudo apt-get update &&
        sudo rm /var/lib/apt/lists/lock &&
@@ -24,7 +24,7 @@ phases:
            exit 1
        }
 
-       test -z "$GITFILESHAREPWD" || sudo umount "$HOME/test-cache" || exit 1
+       test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || sudo umount "$HOME/test-cache" || exit 1
     displayName: 'ci/run-build-and-tests.sh'
     env:
       GITFILESHAREPWD: $(gitfileshare.pwd)
@@ -44,7 +44,7 @@ phases:
     name: Hosted Ubuntu 1604
   steps:
   - bash: |
-       test -z "$GITFILESHAREPWD" || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
+       test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
 
        sudo apt-get update &&
        sudo rm /var/lib/apt/lists/lock &&
@@ -56,7 +56,7 @@ phases:
            exit 1
        }
 
-       test -z "$GITFILESHAREPWD" || sudo umount "$HOME/test-cache" || exit 1
+       test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || sudo umount "$HOME/test-cache" || exit 1
     displayName: 'ci/run-build-and-tests.sh'
     env:
       GITFILESHAREPWD: $(gitfileshare.pwd)
@@ -76,7 +76,7 @@ phases:
     name: Hosted macOS
   steps:
   - bash: |
-       test -z "$GITFILESHAREPWD" || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
+       test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
 
        export CC=clang
 
@@ -86,7 +86,7 @@ phases:
            exit 1
        }
 
-       test -z "$GITFILESHAREPWD" || umount "$HOME/test-cache" || exit 1
+       test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || umount "$HOME/test-cache" || exit 1
     displayName: 'ci/run-build-and-tests.sh'
     env:
       GITFILESHAREPWD: $(gitfileshare.pwd)
@@ -106,7 +106,7 @@ phases:
     name: Hosted macOS
   steps:
   - bash: |
-       test -z "$GITFILESHAREPWD" || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
+       test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
 
        ci/install-dependencies.sh
        ci/run-build-and-tests.sh || {
@@ -114,7 +114,7 @@ phases:
            exit 1
        }
 
-       test -z "$GITFILESHAREPWD" || umount "$HOME/test-cache" || exit 1
+       test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || umount "$HOME/test-cache" || exit 1
     displayName: 'ci/run-build-and-tests.sh'
     env:
       GITFILESHAREPWD: $(gitfileshare.pwd)
@@ -134,7 +134,7 @@ phases:
     name: Hosted Ubuntu 1604
   steps:
   - bash: |
-       test -z "$GITFILESHAREPWD" || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
+       test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
 
        sudo apt-get update &&
        sudo rm /var/lib/apt/lists/lock &&
@@ -147,7 +147,7 @@ phases:
            exit 1
        }
 
-       test -z "$GITFILESHAREPWD" || sudo umount "$HOME/test-cache" || exit 1
+       test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || sudo umount "$HOME/test-cache" || exit 1
     displayName: 'ci/run-build-and-tests.sh'
     env:
       GITFILESHAREPWD: $(gitfileshare.pwd)
@@ -171,7 +171,7 @@ phases:
        # Helper to check the error level of the latest command (exit with error when appropriate)
        function c() { if (!$?) { exit(1) } }
 
-       if ("$GITFILESHAREPWD" -ne "") {
+       if ("$GITFILESHAREPWD" -ne "" -and "$GITFILESHAREPWD" -ne "`$`(gitfileshare.pwd)") {
          net use s: \\gitfileshare.file.core.windows.net\test-cache "$GITFILESHAREPWD" /user:AZURE\gitfileshare /persistent:no; c
          cmd /c mklink /d "$(Build.SourcesDirectory)\test-cache" S:\; c
        }
@@ -223,7 +223,7 @@ phases:
        "@
        c
 
-       if ("$GITFILESHAREPWD" -ne "") {
+       if ("$GITFILESHAREPWD" -ne "" -and "$GITFILESHAREPWD" -ne "`$`(gitfileshare.pwd)") {
          cmd /c rmdir "$(Build.SourcesDirectory)\test-cache"
        }
     displayName: 'build & test'
@@ -245,7 +245,7 @@ phases:
     name: Hosted Ubuntu 1604
   steps:
   - bash: |
-       test -z "$GITFILESHAREPWD" || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
+       test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
 
        sudo apt-get update &&
        sudo rm /var/lib/apt/lists/lock &&
@@ -266,7 +266,7 @@ phases:
 
        sudo chmod a+r t/out/TEST-*.xml
 
-       test -z "$GITFILESHAREPWD" || sudo umount "$HOME/test-cache" || exit 1
+       test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || sudo umount "$HOME/test-cache" || exit 1
     displayName: 'ci/run-linux32-docker.sh'
     env:
       GITFILESHAREPWD: $(gitfileshare.pwd)
@@ -286,7 +286,7 @@ phases:
     name: Hosted Ubuntu 1604
   steps:
   - bash: |
-       test -z "$GITFILESHAREPWD" || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
+       test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
 
        sudo apt-get update &&
        sudo rm /var/lib/apt/lists/lock &&
@@ -296,7 +296,7 @@ phases:
 
        ci/run-static-analysis.sh || exit 1
 
-       test -z "$GITFILESHAREPWD" || sudo umount "$HOME/test-cache" || exit 1
+       test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || sudo umount "$HOME/test-cache" || exit 1
     displayName: 'ci/run-static-analysis.sh'
     env:
       GITFILESHAREPWD: $(gitfileshare.pwd)
@@ -308,7 +308,7 @@ phases:
     name: Hosted Ubuntu 1604
   steps:
   - bash: |
-       test -z "$GITFILESHAREPWD" || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
+       test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
 
        sudo apt-get update &&
        sudo rm /var/lib/apt/lists/lock &&
@@ -319,7 +319,7 @@ phases:
 
        ci/test-documentation.sh || exit 1
 
-       test -z "$GITFILESHAREPWD" || sudo umount "$HOME/test-cache" || exit 1
+       test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || sudo umount "$HOME/test-cache" || exit 1
     displayName: 'ci/test-documentation.sh'
     env:
       GITFILESHAREPWD: $(gitfileshare.pwd)
