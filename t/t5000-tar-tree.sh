@@ -138,6 +138,13 @@ test_expect_success \
 
 test_expect_success 'extract archive' 'check_tar b'
 
+test_expect_success 'protocol v2 for remote' '
+	GIT_PROTOCOL="version=2" GIT_TRACE_PACKET="$(pwd)/log" git archive \
+		--remote=. HEAD >v2_remote.tar &&
+	grep "version 2" log
+'
+test_expect_success 'extract v2 archive' 'check_tar v2_remote'
+
 test_expect_success 'git archive --prefix=prefix/' '
 	git archive --prefix=prefix/ HEAD >with_prefix.tar
 '

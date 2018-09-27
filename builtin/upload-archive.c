@@ -5,6 +5,8 @@
 #include "builtin.h"
 #include "archive.h"
 #include "pkt-line.h"
+#include "protocol.h"
+#include "serve.h"
 #include "sideband.h"
 #include "run-command.h"
 #include "argv-array.h"
@@ -76,9 +78,23 @@ static ssize_t process_input(int child_fd, int band)
 int cmd_upload_archive(int argc, const char **argv, const char *prefix)
 {
 	struct child_process writer = { argv };
+	enum protocol_version version = determine_protocol_version_server();
 
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage(upload_archive_usage);
+
+	if (version == protocol_v2) {
+		struct serve_options options = SERVE_OPTIONS_INIT;
+
+		/* Send "version 2" message and capabilities. */
+		options.advertise_capabilities = 1;
+		serve(&options);
+
+		/* Process command request and validate client capabilities. */
+		options.advertise_capabilities = 0;
+		options.stateless_rpc = 1;
+		serve(&options);
+	}
 
 	/*
 	 * Set up sideband subprocess.
@@ -92,12 +108,17 @@ int cmd_upload_archive(int argc, const char **argv, const char *prefix)
 	writer.git_cmd = 1;
 	if (start_command(&writer)) {
 		int err = errno;
-		packet_write_fmt(1, "NACK unable to spawn subprocess\n");
+		if (version == protocol_v0 || version == protocol_v1)
+			packet_write_fmt(1, "NACK unable to spawn subprocess\n");
+		else if (version == protocol_v2)
+			error_clnt("unable to spawn subprocess\n");
 		die("upload-archive: %s", strerror(err));
 	}
 
-	packet_write_fmt(1, "ACK\n");
-	packet_flush(1);
+	if (version == protocol_v0 || version == protocol_v1) {
+		packet_write_fmt(1, "ACK\n");
+		packet_flush(1);
+	}
 
 	while (1) {
 		struct pollfd pfd[2];

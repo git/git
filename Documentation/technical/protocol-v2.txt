@@ -77,7 +77,8 @@ A v2 server would reply:
    S: <capability-advertisement>
 
 Subsequent requests are then made directly to the service
-`$GIT_URL/git-upload-pack`. (This works the same for git-receive-pack).
+`$GIT_URL/git-upload-pack`. (This works the same for git-receive-pack or
+git-upload-archive).
 
  Capability Advertisement
 --------------------------
@@ -167,6 +168,24 @@ printable ASCII characters except space (i.e., the byte range 32 < x <
 "git/1.8.3.1"). The agent strings are purely informative for statistics
 and debugging purposes, and MUST NOT be used to programmatically assume
 the presence or absence of particular features.
+
+ archive
+~~~~~~~~~
+
+`archive` is the command to request an archive (such as a tarball) from a server
+over v2.
+
+archive takes the following optional arguments:
+
+    argument <arg>
+       This specifies that <arg> should be passed as an argument to the
+       underlying archive writer.  This option can be repeated to pass
+       additional arguments to the archive writer.
+
+See linkgit:git-archive[1] for allowed values of `<arg>`.
+
+The output of archive is a packet-line stream of the resulting archive, with
+error messages transferred over the sideband channel.
 
  ls-refs
 ~~~~~~~~~
