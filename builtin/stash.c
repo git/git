@@ -414,18 +414,19 @@ static int do_apply_stash(const char *prefix, struct stash_info *info,
 
 			if (diff_tree_binary(&out, &info->w_commit)) {
 				strbuf_release(&out);
-				return -1;
+				return error(_("Could not generate diff %s^!."),
+					     oid_to_hex(&info->w_commit));
 			}
 
 			ret = apply_cached(&out);
 			strbuf_release(&out);
 			if (ret)
-				return -1;
+				return error(_("Conflicts in index. Try without --index."));
 
 			discard_cache();
 			read_cache();
 			if (write_cache_as_tree(&index_tree, 0, NULL))
-				return -1;
+				return error(_("Could not save index tree"));
 
 			reset_head();
 		}
