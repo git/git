@@ -67,6 +67,8 @@ static struct oidset gitmodules_done = OIDSET_INIT;
 	FUNC(GITMODULES_LARGE, ERROR) \
 	FUNC(GITMODULES_NAME, ERROR) \
 	FUNC(GITMODULES_SYMLINK, ERROR) \
+	FUNC(GITMODULES_URL, ERROR) \
+	FUNC(GITMODULES_PATH, ERROR) \
 	/* warnings */ \
 	FUNC(BAD_FILEMODE, WARN) \
 	FUNC(EMPTY_NAME, WARN) \
@@ -992,6 +994,18 @@ static int fsck_gitmodules_fn(const char *var, const char *value, void *vdata)
 				    FSCK_MSG_GITMODULES_NAME,
 				    "disallowed submodule name: %s",
 				    name);
+	if (!strcmp(key, "url") && value &&
+	    looks_like_command_line_option(value))
+		data->ret |= report(data->options, data->obj,
+				    FSCK_MSG_GITMODULES_URL,
+				    "disallowed submodule url: %s",
+				    value);
+	if (!strcmp(key, "path") && value &&
+	    looks_like_command_line_option(value))
+		data->ret |= report(data->options, data->obj,
+				    FSCK_MSG_GITMODULES_PATH,
+				    "disallowed submodule path: %s",
+				    value);
 	free(name);
 
 	return 0;
