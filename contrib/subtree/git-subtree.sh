@@ -541,6 +541,7 @@ copy_or_skip () {
 	nonidentical=
 	p=
 	gotparents=
+	copycommit=
 	for parent in $newparents
 	do
 		ptree=$(toptree_for_commit $parent) || exit $?
@@ -548,7 +549,24 @@ copy_or_skip () {
 		if test "$ptree" = "$tree"
 		then
 			# an identical parent could be used in place of this rev.
-			identical="$parent"
+			if test -n "$identical"
+			then
+				# if a previous identical parent was found, check whether
+				# one is already an ancestor of the other
+				mergebase=$(git merge-base $identical $parent)
+				if test "$identical" = "$mergebase"
+				then
+					# current identical commit is an ancestor of parent
+					identical="$parent"
+				elif test "$parent" != "$mergebase"
+				then
+					# no common history; commit must be copied
+					copycommit=1
+				fi
+			else
+				# first identical parent detected
+				identical="$parent"
+			fi
 		else
 			nonidentical="$parent"
 		fi
@@ -571,7 +589,6 @@ copy_or_skip () {
 		fi
 	done
 
-	copycommit=
 	if test -n "$identical" && test -n "$nonidentical"
 	then
 		extras=$(git rev-list --count $identical..$nonidentical)
