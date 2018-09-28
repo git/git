@@ -231,12 +231,14 @@ cache_miss () {
 }
 
 check_parents () {
-	missed=$(cache_miss "$@")
+	missed=$(cache_miss "$1")
+	local indent=$(($2 + 1))
 	for miss in $missed
 	do
 		if ! test -r "$cachedir/notree/$miss"
 		then
 			debug "  incorrect order: $miss"
+			process_split_commit "$miss" "" "$indent"
 		fi
 	done
 }
@@ -606,8 +608,20 @@ ensure_valid_ref_format () {
 process_split_commit () {
 	local rev="$1"
 	local parents="$2"
-	revcount=$(($revcount + 1))
-	progress "$revcount/$revmax ($createcount)"
+	local indent=$3
+
+	if test $indent -eq 0
+	then
+		revcount=$(($revcount + 1))
+	else
+		# processing commit without normal parent information;
+		# fetch from repo
+		parents=$(git show -s --pretty=%P "$rev")
+		extracount=$(($extracount + 1))
+	fi
+
+	progress "$revcount/$revmax ($createcount) [$extracount]"
+
 	debug "Processing commit: $rev"
 	exists=$(cache_get "$rev")
 	if test -n "$exists"
@@ -617,13 +631,12 @@ process_split_commit () {
 	fi
 	createcount=$(($createcount + 1))
 	debug "  parents: $parents"
+	check_parents "$parents" "$indent"
 	newparents=$(cache_get $parents)
 	debug "  newparents: $newparents"
 
 	tree=$(subtree_for_commit "$rev" "$dir")
 	debug "  tree is: $tree"
-
-	check_parents $parents
 
 	# ugly.  is there no better way to tell if this is a subtree
 	# vs. a mainline commit?  Does it matter?
@@ -744,10 +757,11 @@ cmd_split () {
 	revmax=$(eval "$grl" | wc -l)
 	revcount=0
 	createcount=0
+	extracount=0
 	eval "$grl" |
 	while read rev parents
 	do
-		process_split_commit "$rev" "$parents"
+		process_split_commit "$rev" "$parents" 0
 	done || exit $?
 
 	latest_new=$(cache_get latest_new)
