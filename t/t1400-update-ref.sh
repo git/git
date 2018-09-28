@@ -366,7 +366,7 @@ test_expect_success 'Query master@{2005-05-25} (before history)' '
 	test_when_finished "rm -f o e" &&
 	git rev-parse --verify master@{2005-05-25} >o 2>e &&
 	test $C = $(cat o) &&
-	echo test "warning: Log for '\''master'\'' only goes back to $ed." = "$(cat e)"
+	test "warning: Log for '\''master'\'' only goes back to $ed." = "$(cat e)"
 '
 test_expect_success 'Query "master@{May 26 2005 23:31:59}" (1 second before history)' '
 	test_when_finished "rm -f o e" &&
