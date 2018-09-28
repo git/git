@@ -6,6 +6,9 @@ test_description='split index mode tests'
 
 # We need total control of index splitting here
 sane_unset GIT_TEST_SPLIT_INDEX
+# A couple of tests expect the index to have a specific checksum,
+# but the presence of the optional FSMN extension would interfere
+# with those checks, so disable it in this test script.
 sane_unset GIT_FSMONITOR_TEST
 
 test_expect_success 'enable split index' '
