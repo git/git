@@ -598,6 +598,47 @@ ensure_valid_ref_format () {
 		die "'$1' does not look like a ref"
 }
 
+process_split_commit () {
+	local rev="$1"
+	local parents="$2"
+	revcount=$(($revcount + 1))
+	progress "$revcount/$revmax ($createcount)"
+	debug "Processing commit: $rev"
+	exists=$(cache_get "$rev")
+	if test -n "$exists"
+	then
+		debug "  prior: $exists"
+		return
+	fi
+	createcount=$(($createcount + 1))
+	debug "  parents: $parents"
+	newparents=$(cache_get $parents)
+	debug "  newparents: $newparents"
+
+	tree=$(subtree_for_commit "$rev" "$dir")
+	debug "  tree is: $tree"
+
+	check_parents $parents
+
+	# ugly.  is there no better way to tell if this is a subtree
+	# vs. a mainline commit?  Does it matter?
+	if test -z "$tree"
+	then
+		set_notree "$rev"
+		if test -n "$newparents"
+		then
+			cache_set "$rev" "$rev"
+		fi
+		return
+	fi
+
+	newrev=$(copy_or_skip "$rev" "$tree" "$newparents") || exit $?
+	debug "  newrev is: $newrev"
+	cache_set "$rev" "$newrev"
+	cache_set latest_new "$newrev"
+	cache_set latest_old "$rev"
+}
+
 cmd_add () {
 	if test -e "$dir"
 	then
@@ -706,42 +747,7 @@ cmd_split () {
 	eval "$grl" |
 	while read rev parents
 	do
-		revcount=$(($revcount + 1))
-		progress "$revcount/$revmax ($createcount)"
-		debug "Processing commit: $rev"
-		exists=$(cache_get "$rev")
-		if test -n "$exists"
-		then
-			debug "  prior: $exists"
-			continue
-		fi
-		createcount=$(($createcount + 1))
-		debug "  parents: $parents"
-		newparents=$(cache_get $parents)
-		debug "  newparents: $newparents"
-
-		tree=$(subtree_for_commit "$rev" "$dir")
-		debug "  tree is: $tree"
-
-		check_parents $parents
-
-		# ugly.  is there no better way to tell if this is a subtree
-		# vs. a mainline commit?  Does it matter?
-		if test -z "$tree"
-		then
-			set_notree "$rev"
-			if test -n "$newparents"
-			then
-				cache_set "$rev" "$rev"
-			fi
-			continue
-		fi
-
-		newrev=$(copy_or_skip "$rev" "$tree" "$newparents") || exit $?
-		debug "  newrev is: $newrev"
-		cache_set "$rev" "$newrev"
-		cache_set latest_new "$newrev"
-		cache_set latest_old "$rev"
+		process_split_commit "$rev" "$parents"
 	done || exit $?
 
 	latest_new=$(cache_get latest_new)
