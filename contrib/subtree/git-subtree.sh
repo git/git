@@ -340,7 +340,12 @@ find_existing_splits () {
 	revs="$2"
 	main=
 	sub=
-	git log --grep="^git-subtree-dir: $dir/*\$" \
+	local grep_format="^git-subtree-dir: $dir/*\$"
+	if test -n "$ignore_joins"
+	then
+		grep_format="^Add '$dir/' from commit '"
+	fi
+	git log --grep="$grep_format" \
 		--no-show-signature --pretty=format:'START %H%n%s%n%n%b%nEND%n' $revs |
 	while read a b junk
 	do
@@ -730,12 +735,7 @@ cmd_split () {
 		done
 	fi
 
-	if test -n "$ignore_joins"
-	then
-		unrevs=
-	else
-		unrevs="$(find_existing_splits "$dir" "$revs")"
-	fi
+	unrevs="$(find_existing_splits "$dir" "$revs")"
 
 	# We can't restrict rev-list to only $dir here, because some of our
 	# parents have the $dir contents the root, and those won't match.
