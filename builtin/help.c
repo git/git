@@ -38,7 +38,7 @@ static const char *html_path;
 static int show_all = 0;
 static int show_guides = 0;
 static int show_config;
-static int verbose;
+static int verbose = 1;
 static unsigned int colopts;
 static enum help_format help_format = HELP_FORMAT_NONE;
 static int exclude_guides;

@@ -8,7 +8,7 @@ git-help - Display help information about Git
 SYNOPSIS
 --------
 [verse]
-'git help' [-a|--all [--verbose]] [-g|--guide]
+'git help' [-a|--all [--[no-]verbose]] [-g|--guide]
 	   [-i|--info|-m|--man|-w|--web] [COMMAND|GUIDE]
 
 DESCRIPTION
@@ -42,8 +42,10 @@ OPTIONS
 --all::
 	Prints all the available commands on the standard output. This
 	option overrides any given command or guide name.
-	When used with `--verbose` print description for all recognized
-	commands.
+
+--verbose::
+	When used with `--all` print description for all recognized
+	commands. This is the default.
 
 -c::
 --config::
