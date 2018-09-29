@@ -646,7 +646,7 @@ enum ref_type ref_type(const char *refname)
 		return REF_TYPE_PER_WORKTREE;
 	if (is_pseudoref_syntax(refname))
 		return REF_TYPE_PSEUDOREF;
-       return REF_TYPE_NORMAL;
+	return REF_TYPE_NORMAL;
 }
 
 long get_files_ref_lock_timeout_ms(void)
