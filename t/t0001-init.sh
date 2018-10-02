@@ -308,10 +308,20 @@ test_expect_success 'init prefers command line to GIT_DIR' '
 	test_path_is_missing otherdir/refs
 '
 
+downcase_on_case_insensitive_fs () {
+	test false = "$(git config --get core.filemode)" || return 0
+	for f
+	do
+		tr A-Z a-z <"$f" >"$f".downcased &&
+		mv -f "$f".downcased "$f" || return 1
+	done
+}
+
 test_expect_success 'init with separate gitdir' '
 	rm -rf newdir &&
 	git init --separate-git-dir realgitdir newdir &&
 	echo "gitdir: $(pwd)/realgitdir" >expected &&
+	downcase_on_case_insensitive_fs expected newdir/.git &&
 	test_cmp expected newdir/.git &&
 	test_path_is_dir realgitdir/refs
 '
@@ -366,6 +376,7 @@ test_expect_success 're-init to update git link' '
 	git init --separate-git-dir ../surrealgitdir
 	) &&
 	echo "gitdir: $(pwd)/surrealgitdir" >expected &&
+	downcase_on_case_insensitive_fs expected newdir/.git &&
 	test_cmp expected newdir/.git &&
 	test_path_is_dir surrealgitdir/refs &&
 	test_path_is_missing realgitdir/refs
@@ -379,6 +390,7 @@ test_expect_success 're-init to move gitdir' '
 	git init --separate-git-dir ../realgitdir
 	) &&
 	echo "gitdir: $(pwd)/realgitdir" >expected &&
+	downcase_on_case_insensitive_fs expected newdir/.git &&
 	test_cmp expected newdir/.git &&
 	test_path_is_dir realgitdir/refs
 '
