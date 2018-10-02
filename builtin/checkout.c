@@ -497,7 +497,8 @@ static int skip_merge_working_tree(const struct checkout_opts *opts,
 	 * We must do the merge if we are actually moving to a new commit.
 	 */
 	if (!old_branch_info->commit || !new_branch_info->commit ||
-		oidcmp(&old_branch_info->commit->object.oid, &new_branch_info->commit->object.oid))
+		!oideq(&old_branch_info->commit->object.oid,
+		       &new_branch_info->commit->object.oid))
 		return 0;
 
 	/*

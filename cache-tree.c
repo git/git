@@ -781,7 +781,7 @@ static void verify_one(struct index_state *istate,
 		strbuf_add(&tree_buf, oid->hash, the_hash_algo->rawsz);
 	}
 	hash_object_file(tree_buf.buf, tree_buf.len, tree_type, &new_oid);
-	if (oidcmp(&new_oid, &it->oid))
+	if (!oideq(&new_oid, &it->oid))
 		BUG("cache-tree for path %.*s does not match. "
 		    "Expected %s got %s", len, path->buf,
 		    oid_to_hex(&new_oid), oid_to_hex(&it->oid));
