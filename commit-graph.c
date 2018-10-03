@@ -720,7 +720,7 @@ void write_commit_graph(const char *obj_dir,
 	struct progress *progress = NULL;
 
 	oids.nr = 0;
-	oids.alloc = approximate_object_count() / 4;
+	oids.alloc = approximate_object_count() / 32;
 	oids.progress = NULL;
 	oids.progress_done = 0;
 
