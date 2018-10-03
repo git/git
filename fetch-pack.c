@@ -1615,6 +1615,20 @@ struct ref *fetch_pack(struct fetch_pack_args *args,
 	if (nr_sought)
 		nr_sought = remove_duplicates_in_refs(sought, nr_sought);
 
+	if (args->no_dependents && !args->filter_options.choice) {
+		/*
+		 * The protocol does not support requesting that only the
+		 * wanted objects be sent, so approximate this by setting a
+		 * "blob:none" filter if no filter is already set. This works
+		 * for all object types: note that wanted blobs will still be
+		 * sent because they are directly specified as a "want".
+		 *
+		 * NEEDSWORK: Add an option in the protocol to request that
+		 * only the wanted objects be sent, and implement it.
+		 */
+		parse_list_objects_filter(&args->filter_options, "blob:none");
+	}
+
 	if (!ref) {
 		packet_flush(fd[1]);
 		die(_("no matching remote head"));
