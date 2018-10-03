@@ -693,11 +693,12 @@ static int add_ref_to_list(const char *refname,
 void write_commit_graph_reachable(const char *obj_dir, int append,
 				  int report_progress)
 {
-	struct string_list list;
+	struct string_list list = STRING_LIST_INIT_DUP;
 
-	string_list_init(&list, 1);
 	for_each_ref(add_ref_to_list, &list);
 	write_commit_graph(obj_dir, NULL, &list, append, report_progress);
+
+	string_list_clear(&list, 0);
 }
 
 void write_commit_graph(const char *obj_dir,
@@ -764,6 +765,7 @@ void write_commit_graph(const char *obj_dir,
 				die(_("error opening index for %s"), packname.buf);
 			for_each_object_in_pack(p, add_packed_commits, &oids, 0);
 			close_pack(p);
+			free(p);
 		}
 		stop_progress(&oids.progress);
 		strbuf_release(&packname);
@@ -846,9 +848,11 @@ void write_commit_graph(const char *obj_dir,
 	compute_generation_numbers(&commits, report_progress);
 
 	graph_name = get_commit_graph_filename(obj_dir);
-	if (safe_create_leading_directories(graph_name))
+	if (safe_create_leading_directories(graph_name)) {
+		UNLEAK(graph_name);
 		die_errno(_("unable to create leading directories of %s"),
 			  graph_name);
+	}
 
 	hold_lock_file_for_update(&lk, graph_name, LOCK_DIE_ON_ERROR);
 	f = hashfd(lk.tempfile->fd, lk.tempfile->filename.buf);
@@ -893,9 +897,9 @@ void write_commit_graph(const char *obj_dir,
 	finalize_hashfile(f, NULL, CSUM_HASH_IN_STREAM | CSUM_FSYNC);
 	commit_lock_file(&lk);
 
+	free(graph_name);
+	free(commits.list);
 	free(oids.list);
-	oids.alloc = 0;
-	oids.nr = 0;
 }
 
 #define VERIFY_COMMIT_GRAPH_ERROR_HASH 2
