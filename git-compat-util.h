@@ -1568,6 +1568,10 @@ static inline int is_missing_file_error(int errno_)
  * data or even file content without the need to synchronize with the file
  * system.
  */
+
+ /* opaque fscache structure */
+struct fscache;
+
 #ifndef enable_fscache
 #define enable_fscache(x) /* noop */
 #endif
@@ -1582,6 +1586,14 @@ static inline int is_missing_file_error(int errno_)
 
 #ifndef flush_fscache
 #define flush_fscache() /* noop */
+#endif
+
+#ifndef getcache_fscache
+#define getcache_fscache() (NULL) /* noop */
+#endif
+
+#ifndef merge_fscache
+#define merge_fscache(dest) /* noop */
 #endif
 
 int cmd_main(int, const char **);
