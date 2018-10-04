@@ -20,6 +20,8 @@
 #include "trace2.h"
 #include "config.h"
 
+static struct fscache *fscache;
+
 /*
  * Mostly randomly chosen maximum thread counts: we
  * cap the parallelism to 20 threads, and we want
@@ -57,6 +59,7 @@ static void *preload_thread(void *_data)
 		nr = index->cache_nr - p->offset;
 	last_nr = nr;
 
+	enable_fscache(nr);
 	do {
 		struct cache_entry *ce = *cep++;
 		struct stat st;
@@ -100,6 +103,7 @@ static void *preload_thread(void *_data)
 		pthread_mutex_unlock(&pd->mutex);
 	}
 	cache_def_clear(&cache);
+	merge_fscache(fscache);
 	return NULL;
 }
 
@@ -118,6 +122,7 @@ void preload_index(struct index_state *index,
 	if (!HAVE_THREADS || !core_preload_index)
 		return;
 
+	fscache = getcache_fscache();
 	threads = index->cache_nr / THREAD_COST;
 	if ((index->cache_nr > 1) && (threads < 2) && git_env_bool("GIT_TEST_PRELOAD_INDEX", 0))
 		threads = 2;
@@ -141,7 +146,6 @@ void preload_index(struct index_state *index,
 		pthread_mutex_init(&pd.mutex, NULL);
 	}
 
-	enable_fscache(index->cache_nr);
 	for (i = 0; i < threads; i++) {
 		struct thread_data *p = data+i;
 		int err;
@@ -177,8 +181,6 @@ void preload_index(struct index_state *index,
 
 	trace2_data_intmax("index", NULL, "preload/sum_lstat", t2_sum_lstat);
 	trace2_region_leave("index", "preload", NULL);
-
-	disable_fscache();
 }
 
 int repo_read_index_preload(struct repository *repo,
