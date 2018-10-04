@@ -776,7 +776,6 @@ struct moved_entry {
 	struct hashmap_entry ent;
 	const struct emitted_diff_symbol *es;
 	struct moved_entry *next_line;
-	struct ws_delta *wsd;
 };
 
 /**
@@ -792,6 +791,17 @@ struct ws_delta {
 	unsigned int current_longer : 1;
 };
 #define WS_DELTA_INIT { NULL, 0 }
+
+struct moved_block {
+	struct moved_entry *match;
+	struct ws_delta wsd;
+};
+
+static void moved_block_clear(struct moved_block *b)
+{
+	FREE_AND_NULL(b->wsd.string);
+	b->match = NULL;
+}
 
 static int compute_ws_delta(const struct emitted_diff_symbol *a,
 			     const struct emitted_diff_symbol *b,
@@ -810,7 +820,7 @@ static int compute_ws_delta(const struct emitted_diff_symbol *a,
 static int cmp_in_block_with_wsd(const struct diff_options *o,
 				 const struct moved_entry *cur,
 				 const struct moved_entry *match,
-				 struct moved_entry *pmb,
+				 struct moved_block *pmb,
 				 int n)
 {
 	struct emitted_diff_symbol *l = &o->emitted_symbols->buf[n];
@@ -830,16 +840,15 @@ static int cmp_in_block_with_wsd(const struct diff_options *o,
 	if (strcmp(a, b))
 		return 1;
 
-	if (!pmb->wsd)
+	if (!pmb->wsd.string)
 		/*
-		 * No white space delta was carried forward? This can happen
-		 * when we exit early in this function and do not carry
-		 * forward ws.
+		 * The white space delta is not active? This can happen
+		 * when we exit early in this function.
 		 */
 		return 1;
 
 	/*
-	 * The indent changes of the block are known and carried forward in
+	 * The indent changes of the block are known and stored in
 	 * pmb->wsd; however we need to check if the indent changes of the
 	 * current line are still the same as before.
 	 *
@@ -847,8 +856,8 @@ static int cmp_in_block_with_wsd(const struct diff_options *o,
 	 * one of them for the white spaces, depending which was longer.
 	 */
 
-	wslen = strlen(pmb->wsd->string);
-	if (pmb->wsd->current_longer) {
+	wslen = strlen(pmb->wsd.string);
+	if (pmb->wsd.current_longer) {
 		c += wslen;
 		cl -= wslen;
 	} else {
@@ -898,7 +907,6 @@ static struct moved_entry *prepare_entry(struct diff_options *o,
 	ret->ent.hash = xdiff_hash_string(l->line, l->len, flags);
 	ret->es = l;
 	ret->next_line = NULL;
-	ret->wsd = NULL;
 
 	return ret;
 }
@@ -938,18 +946,18 @@ static void add_lines_to_move_detection(struct diff_options *o,
 static void pmb_advance_or_null(struct diff_options *o,
 				struct moved_entry *match,
 				struct hashmap *hm,
-				struct moved_entry **pmb,
+				struct moved_block *pmb,
 				int pmb_nr)
 {
 	int i;
 	for (i = 0; i < pmb_nr; i++) {
-		struct moved_entry *prev = pmb[i];
+		struct moved_entry *prev = pmb[i].match;
 		struct moved_entry *cur = (prev && prev->next_line) ?
 				prev->next_line : NULL;
 		if (cur && !hm->cmpfn(o, cur, match, NULL)) {
-			pmb[i] = cur;
+			pmb[i].match = cur;
 		} else {
-			pmb[i] = NULL;
+			pmb[i].match = NULL;
 		}
 	}
 }
@@ -957,7 +965,7 @@ static void pmb_advance_or_null(struct diff_options *o,
 static void pmb_advance_or_null_multi_match(struct diff_options *o,
 					    struct moved_entry *match,
 					    struct hashmap *hm,
-					    struct moved_entry **pmb,
+					    struct moved_block *pmb,
 					    int pmb_nr, int n)
 {
 	int i;
@@ -965,49 +973,45 @@ static void pmb_advance_or_null_multi_match(struct diff_options *o,
 
 	for (; match; match = hashmap_get_next(hm, match)) {
 		for (i = 0; i < pmb_nr; i++) {
-			struct moved_entry *prev = pmb[i];
+			struct moved_entry *prev = pmb[i].match;
 			struct moved_entry *cur = (prev && prev->next_line) ?
 					prev->next_line : NULL;
 			if (!cur)
 				continue;
-			if (!cmp_in_block_with_wsd(o, cur, match, pmb[i], n))
+			if (!cmp_in_block_with_wsd(o, cur, match, &pmb[i], n))
 				got_match[i] |= 1;
 		}
 	}
 
 	for (i = 0; i < pmb_nr; i++) {
 		if (got_match[i]) {
-			/* Carry the white space delta forward */
-			pmb[i]->next_line->wsd = pmb[i]->wsd;
-			pmb[i] = pmb[i]->next_line;
+			/* Advance to the next line */
+			pmb[i].match = pmb[i].match->next_line;
 		} else {
-			if (pmb[i]->wsd) {
-				free(pmb[i]->wsd->string);
-				FREE_AND_NULL(pmb[i]->wsd);
-			}
-			pmb[i] = NULL;
+			moved_block_clear(&pmb[i]);
 		}
 	}
 }
 
-static int shrink_potential_moved_blocks(struct moved_entry **pmb,
+static int shrink_potential_moved_blocks(struct moved_block *pmb,
 					 int pmb_nr)
 {
 	int lp, rp;
 
 	/* Shrink the set of potential block to the remaining running */
 	for (lp = 0, rp = pmb_nr - 1; lp <= rp;) {
-		while (lp < pmb_nr && pmb[lp])
+		while (lp < pmb_nr && pmb[lp].match)
 			lp++;
 		/* lp points at the first NULL now */
 
-		while (rp > -1 && !pmb[rp])
+		while (rp > -1 && !pmb[rp].match)
 			rp--;
 		/* rp points at the last non-NULL */
 
 		if (lp < pmb_nr && rp > -1 && lp < rp) {
 			pmb[lp] = pmb[rp];
-			pmb[rp] = NULL;
+			pmb[rp].match = NULL;
+			pmb[rp].wsd.string = NULL;
 			rp--;
 			lp++;
 		}
@@ -1054,7 +1058,7 @@ static void mark_color_as_moved(struct diff_options *o,
 				struct hashmap *add_lines,
 				struct hashmap *del_lines)
 {
-	struct moved_entry **pmb = NULL; /* potentially moved blocks */
+	struct moved_block *pmb = NULL; /* potentially moved blocks */
 	int pmb_nr = 0, pmb_alloc = 0;
 	int n, flipped_block = 1, block_length = 0;
 
@@ -1083,7 +1087,11 @@ static void mark_color_as_moved(struct diff_options *o,
 		}
 
 		if (!match) {
+			int i;
+
 			adjust_last_block(o, n, block_length);
+			for(i = 0; i < pmb_nr; i++)
+				moved_block_clear(&pmb[i]);
 			pmb_nr = 0;
 			block_length = 0;
 			continue;
@@ -1111,14 +1119,12 @@ static void mark_color_as_moved(struct diff_options *o,
 				ALLOC_GROW(pmb, pmb_nr + 1, pmb_alloc);
 				if (o->color_moved_ws_handling &
 				    COLOR_MOVED_WS_ALLOW_INDENTATION_CHANGE) {
-					struct ws_delta *wsd = xmalloc(sizeof(*match->wsd));
-					if (compute_ws_delta(l, match->es, wsd)) {
-						match->wsd = wsd;
-						pmb[pmb_nr++] = match;
-					} else
-						free(wsd);
+					if (compute_ws_delta(l, match->es,
+							     &pmb[pmb_nr].wsd))
+						pmb[pmb_nr++].match = match;
 				} else {
-					pmb[pmb_nr++] = match;
+					pmb[pmb_nr].wsd.string = NULL;
+					pmb[pmb_nr++].match = match;
 				}
 			}
 
@@ -1135,6 +1141,8 @@ static void mark_color_as_moved(struct diff_options *o,
 	}
 	adjust_last_block(o, n, block_length);
 
+	for(n = 0; n < pmb_nr; n++)
+		moved_block_clear(&pmb[n]);
 	free(pmb);
 }
 
