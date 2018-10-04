@@ -623,7 +623,11 @@ proc git_write {args} {
 }
 
 proc githook_read {hook_name args} {
-	set pchook [gitdir hooks $hook_name]
+	if {[package vcompare $::_git_version 2.5.0] >= 0} {
+		set pchook [git rev-parse --git-path "hooks/$hook_name"]
+	} else {
+		set pchook [gitdir hooks $hook_name]
+	}
 	lappend args 2>@1
 
 	# On Windows [file executable] might lie so we need to ask
