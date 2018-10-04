@@ -15,6 +15,8 @@ void preload_index(struct index_state *index, const struct pathspec *pathspec)
 
 #include <pthread.h>
 
+struct fscache *fscache;
+
 /*
  * Mostly randomly chosen maximum thread counts: we
  * cap the parallelism to 20 threads, and we want
@@ -43,6 +45,7 @@ static void *preload_thread(void *_data)
 	if (nr + p->offset > index->cache_nr)
 		nr = index->cache_nr - p->offset;
 
+	enable_fscache(nr);
 	do {
 		struct cache_entry *ce = *cep++;
 		struct stat st;
@@ -69,6 +72,7 @@ static void *preload_thread(void *_data)
 		mark_fsmonitor_valid(ce);
 	} while (--nr > 0);
 	cache_def_clear(&cache);
+	merge_fscache(fscache);
 	return NULL;
 }
 
@@ -81,6 +85,7 @@ void preload_index(struct index_state *index, const struct pathspec *pathspec)
 	if (!core_preload_index)
 		return;
 
+	fscache = getcache_fscache();
 	threads = index->cache_nr / THREAD_COST;
 	if ((index->cache_nr > 1) && (threads < 2) && getenv("GIT_FORCE_PRELOAD_TEST"))
 		threads = 2;
@@ -91,7 +96,6 @@ void preload_index(struct index_state *index, const struct pathspec *pathspec)
 	offset = 0;
 	work = DIV_ROUND_UP(index->cache_nr, threads);
 	memset(&data, 0, sizeof(data));
-	enable_fscache(index->cache_nr);
 	for (i = 0; i < threads; i++) {
 		struct thread_data *p = data+i;
 		p->index = index;
@@ -109,7 +113,6 @@ void preload_index(struct index_state *index, const struct pathspec *pathspec)
 			die("unable to join threaded lstat");
 	}
 	trace_performance_since(start, "preload index");
-	disable_fscache();
 }
 #endif
 
