@@ -865,7 +865,7 @@ static int cmp_in_block_with_wsd(const struct diff_options *o,
 		al -= wslen;
 	}
 
-	if (strcmp(a, c))
+	if (al != cl || memcmp(a, c, al))
 		return 1;
 
 	return 0;
