@@ -994,6 +994,8 @@ static void pmb_advance_or_null_multi_match(struct diff_options *o,
 			moved_block_clear(&pmb[i]);
 		}
 	}
+
+	free(got_match);
 }
 
 static int shrink_potential_moved_blocks(struct moved_block *pmb,
