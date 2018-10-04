@@ -543,6 +543,16 @@ static int tip_oids_contain(struct oidset *tip_oids,
 	return oidset_contains(tip_oids, id);
 }
 
+static int is_unmatched_ref(const struct ref *ref)
+{
+	struct object_id oid;
+	const char *p;
+	return	ref->match_status == REF_NOT_MATCHED &&
+		!parse_oid_hex(ref->name, &oid, &p) &&
+		*p == '\0' &&
+		oideq(&oid, &ref->old_oid);
+}
+
 static void filter_refs(struct fetch_pack_args *args,
 			struct ref **refs,
 			struct ref **sought, int nr_sought)
@@ -591,15 +601,8 @@ static void filter_refs(struct fetch_pack_args *args,
 
 	/* Append unmatched requests to the list */
 	for (i = 0; i < nr_sought; i++) {
-		struct object_id oid;
-		const char *p;
-
 		ref = sought[i];
-		if (ref->match_status != REF_NOT_MATCHED)
-			continue;
-		if (parse_oid_hex(ref->name, &oid, &p) ||
-		    *p != '\0' ||
-		    !oideq(&oid, &ref->old_oid))
+		if (!is_unmatched_ref(ref))
 			continue;
 
 		if ((allow_unadvertised_object_request &
