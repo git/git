@@ -811,10 +811,13 @@ static int compute_ws_delta(const struct emitted_diff_symbol *a,
 	const struct emitted_diff_symbol *shorter = a->len > b->len ? b : a;
 	int d = longer->len - shorter->len;
 
+	if (strncmp(longer->line + d, shorter->line, shorter->len))
+		return 0;
+
 	out->string = xmemdupz(longer->line, d);
 	out->current_longer = (a == longer);
 
-	return !strncmp(longer->line + d, shorter->line, shorter->len);
+	return 1;
 }
 
 static int cmp_in_block_with_wsd(const struct diff_options *o,
