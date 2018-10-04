@@ -1035,7 +1035,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			PARSE_OPT_OPTARG, NULL, (intptr_t) "" },
 		OPT_STRING_LIST(0, "whitespace", &whitespace,
 				N_("whitespace"), N_("passed to 'git apply'")),
-		OPT_SET_INT('C', 0, &opt_c, N_("passed to 'git apply'"),
+		OPT_SET_INT('C', NULL, &opt_c, N_("passed to 'git apply'"),
 			    REBASE_AM),
 		OPT_BOOL(0, "autostash", &options.autostash,
 			 N_("automatically stash/stash pop before and after")),
