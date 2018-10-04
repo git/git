@@ -1,6 +1,13 @@
 #include "cache.h"
 #include "oidset.h"
 
+void oidset_init(struct oidset *set, size_t initial_size)
+{
+	memset(&set->set, 0, sizeof(set->set));
+	if (initial_size)
+		kh_resize_oid(&set->set, initial_size);
+}
+
 int oidset_contains(const struct oidset *set, const struct object_id *oid)
 {
 	khiter_t pos = kh_get_oid(&set->set, *oid);

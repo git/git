@@ -38,12 +38,13 @@ struct oidset {
 #define OIDSET_INIT { { 0 } }
 
 
-static inline void oidset_init(struct oidset *set, size_t initial_size)
-{
-	memset(&set->set, 0, sizeof(set->set));
-	if (initial_size)
-		kh_resize_oid(&set->set, initial_size);
-}
+/**
+ * Initialize the oidset structure `set`.
+ *
+ * If `initial_size` is bigger than 0 then preallocate to allow inserting
+ * the specified number of elements without further allocations.
+ */
+void oidset_init(struct oidset *set, size_t initial_size);
 
 /**
  * Returns true iff `set` contains `oid`.
