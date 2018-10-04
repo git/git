@@ -425,6 +425,9 @@ GIT_TEST_DEFAULT_HASH=<hash-algo> specifies which hash algorithm to
 use in the test scripts. Recognized values for <hash-algo> are "sha1"
 and "sha256".
 
+GIT_TEST_FSCACHE=<boolean> exercises the uncommon fscache code path
+which adds a cache below mingw's lstat and dirent implementations.
+
 Naming Tests
 ------------
 
