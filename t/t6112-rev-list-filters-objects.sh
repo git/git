@@ -230,6 +230,21 @@ test_expect_success 'rev-list W/ --missing=print and --missing=allow-any for tre
 	test_must_be_empty rev_list_err
 '
 
+# Test tree:0 filter.
+
+test_expect_success 'verify tree:0 includes trees in "filtered" output' '
+	git -C r3 rev-list --quiet --objects --filter-print-omitted \
+		--filter=tree:0 HEAD >revs &&
+
+	awk -f print_1.awk revs |
+	sed s/~// |
+	xargs -n1 git -C r3 cat-file -t >unsorted_filtered_types &&
+
+	sort -u unsorted_filtered_types >filtered_types &&
+	printf "blob\ntree\n" >expected &&
+	test_cmp expected filtered_types
+'
+
 # Delete some loose objects and use rev-list, but WITHOUT any filtering.
 # This models previously omitted objects that we did not receive.
 

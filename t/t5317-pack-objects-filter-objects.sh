@@ -72,6 +72,34 @@ test_expect_success 'get an error for missing tree object' '
 	grep -q "bad tree object" bad_tree
 '
 
+test_expect_success 'setup for tests of tree:0' '
+	mkdir r1/subtree &&
+	echo "This is a file in a subtree" >r1/subtree/file &&
+	git -C r1 add subtree/file &&
+	git -C r1 commit -m subtree
+'
+
+test_expect_success 'verify tree:0 packfile has no blobs or trees' '
+	git -C r1 pack-objects --rev --stdout --filter=tree:0 >commitsonly.pack <<-EOF &&
+	HEAD
+	EOF
+	git -C r1 index-pack ../commitsonly.pack &&
+	git -C r1 verify-pack -v ../commitsonly.pack >objs &&
+	! grep -E "tree|blob" objs
+'
+
+test_expect_success 'grab tree directly when using tree:0' '
+	# We should get the tree specified directly but not its blobs or subtrees.
+	git -C r1 pack-objects --rev --stdout --filter=tree:0 >commitsonly.pack <<-EOF &&
+	HEAD:
+	EOF
+	git -C r1 index-pack ../commitsonly.pack &&
+	git -C r1 verify-pack -v ../commitsonly.pack >objs &&
+	awk "/tree|blob/{print \$1}" objs >trees_and_blobs &&
+	git -C r1 rev-parse HEAD: >expected &&
+	test_cmp expected trees_and_blobs
+'
+
 # Test blob:limit=<n>[kmg] filter.
 # We boundary test around the size parameter.  The filter is strictly less than
 # the value, so size 500 and 1000 should have the same results, but 1001 should
