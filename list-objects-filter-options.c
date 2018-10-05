@@ -30,7 +30,6 @@ static int gently_parse_list_objects_filter(
 
 	if (filter_options->choice) {
 		if (errbuf) {
-			strbuf_init(errbuf, 0);
 			strbuf_addstr(
 				errbuf,
 				_("multiple filter-specs cannot be combined"));
@@ -71,10 +70,9 @@ static int gently_parse_list_objects_filter(
 		return 0;
 	}
 
-	if (errbuf) {
-		strbuf_init(errbuf, 0);
+	if (errbuf)
 		strbuf_addf(errbuf, "invalid filter-spec '%s'", arg);
-	}
+
 	memset(filter_options, 0, sizeof(*filter_options));
 	return 1;
 }
