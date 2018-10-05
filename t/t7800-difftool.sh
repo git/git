@@ -557,7 +557,7 @@ test_expect_success SYMLINKS 'difftool --dir-diff --symlink without unstaged cha
 	EOF
 	git difftool --dir-diff --symlink \
 		--extcmd "./.git/CHECK_SYMLINKS" branch HEAD &&
-	test_cmp actual expect
+	test_cmp expect actual
 '
 
 write_script modify-right-file <<\EOF

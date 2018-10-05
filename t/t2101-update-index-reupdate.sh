@@ -73,7 +73,7 @@ test_expect_success 'update-index --update from subdir' '
 	100644 $(git hash-object dir1/file3) 0	dir1/file3
 	100644 $file2 0	file2
 	EOF
-	test_cmp current expected
+	test_cmp expected current
 '
 
 test_expect_success 'update-index --update with pathspec' '

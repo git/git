@@ -29,7 +29,7 @@ test_expect_success 'verify blob:none omits all 5 blobs' '
 	sed "s/~//" |
 	sort >observed &&
 
-	test_cmp observed expected
+	test_cmp expected observed
 '
 
 test_expect_success 'verify emitted+omitted == all' '
@@ -42,7 +42,7 @@ test_expect_success 'verify emitted+omitted == all' '
 	sed "s/~//" |
 	sort >observed &&
 
-	test_cmp observed expected
+	test_cmp expected observed
 '
 
 
@@ -71,7 +71,7 @@ test_expect_success 'verify blob:limit=500 omits all blobs' '
 	sed "s/~//" |
 	sort >observed &&
 
-	test_cmp observed expected
+	test_cmp expected observed
 '
 
 test_expect_success 'verify emitted+omitted == all' '
@@ -84,7 +84,7 @@ test_expect_success 'verify emitted+omitted == all' '
 	sed "s/~//" |
 	sort >observed &&
 
-	test_cmp observed expected
+	test_cmp expected observed
 '
 
 test_expect_success 'verify blob:limit=1000' '
@@ -97,7 +97,7 @@ test_expect_success 'verify blob:limit=1000' '
 	sed "s/~//" |
 	sort >observed &&
 
-	test_cmp observed expected
+	test_cmp expected observed
 '
 
 test_expect_success 'verify blob:limit=1001' '
@@ -110,7 +110,7 @@ test_expect_success 'verify blob:limit=1001' '
 	sed "s/~//" |
 	sort >observed &&
 
-	test_cmp observed expected
+	test_cmp expected observed
 '
 
 test_expect_success 'verify blob:limit=1k' '
@@ -123,7 +123,7 @@ test_expect_success 'verify blob:limit=1k' '
 	sed "s/~//" |
 	sort >observed &&
 
-	test_cmp observed expected
+	test_cmp expected observed
 '
 
 test_expect_success 'verify blob:limit=1m' '
@@ -165,7 +165,7 @@ test_expect_success 'verify sparse:path=pattern1 omits top-level files' '
 	sed "s/~//" |
 	sort >observed &&
 
-	test_cmp observed expected
+	test_cmp expected observed
 '
 
 test_expect_success 'verify sparse:path=pattern2 omits both sparse2 files' '
@@ -178,7 +178,7 @@ test_expect_success 'verify sparse:path=pattern2 omits both sparse2 files' '
 	sed "s/~//" |
 	sort >observed &&
 
-	test_cmp observed expected
+	test_cmp expected observed
 '
 
 # Test sparse:oid=<oid-ish> filter.
@@ -203,7 +203,7 @@ test_expect_success 'verify sparse:oid=OID omits top-level files' '
 	sed "s/~//" |
 	sort >observed &&
 
-	test_cmp observed expected
+	test_cmp expected observed
 '
 
 test_expect_success 'verify sparse:oid=oid-ish omits top-level files' '
@@ -216,7 +216,7 @@ test_expect_success 'verify sparse:oid=oid-ish omits top-level files' '
 	sed "s/~//" |
 	sort >observed &&
 
-	test_cmp observed expected
+	test_cmp expected observed
 '
 
 # Delete some loose objects and use rev-list, but WITHOUT any filtering.
@@ -237,7 +237,7 @@ test_expect_success 'rev-list W/ --missing=print' '
 	sed "s/?//" |
 	sort >observed &&
 
-	test_cmp observed expected
+	test_cmp expected observed
 '
 
 test_expect_success 'rev-list W/O --missing fails' '

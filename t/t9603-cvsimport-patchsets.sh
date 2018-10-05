@@ -29,11 +29,11 @@ test_expect_failure PERL 'import with criss cross times on revisions' '
 Rev 3
 Rev 2
 Rev 1" > expect-master &&
-    test_cmp actual-master expect-master &&
+    test_cmp expect-master actual-master &&
 
     echo "Rev 5 Branch A Wed Mar 11 19:09:10 2009 +0000
 Rev 4 Branch A Wed Mar 11 19:03:52 2009 +0000" > expect-A &&
-    test_cmp actual-A expect-A
+    test_cmp expect-A actual-A
 '
 
 test_done

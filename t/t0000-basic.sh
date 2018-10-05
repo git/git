@@ -1018,7 +1018,7 @@ test_expect_success SHA1 'validate git diff-files output for a know cache/work t
 :120000 120000 6649a1ebe9e9f1c553b66f5a6e74136a07ccc57c 0000000000000000000000000000000000000000 M	path3/subp3/file3sym
 EOF
 	git diff-files >current &&
-	test_cmp current expected
+	test_cmp expected current
 '
 
 test_expect_success 'git update-index --refresh should succeed' '

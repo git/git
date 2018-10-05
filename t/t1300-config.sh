@@ -1001,7 +1001,7 @@ EOF
 
 test_expect_success 'value continued on next line' '
 	git config --list > result &&
-	test_cmp result expect
+	test_cmp expect result
 '
 
 cat > .git/config <<\EOF
@@ -1882,7 +1882,7 @@ test_expect_success '--replace-all does not invent newlines' '
 	Qkey = b
 	EOF
 	git config --replace-all abc.key b &&
-	test_cmp .git/config expect
+	test_cmp expect .git/config
 '
 
 test_done

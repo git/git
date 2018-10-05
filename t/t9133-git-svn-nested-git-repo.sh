@@ -45,7 +45,7 @@ test_expect_success 'update git svn-cloned repo' '
 		git svn rebase &&
 		echo a > expect &&
 		echo b >> expect &&
-		test_cmp a expect &&
+		test_cmp expect a &&
 		rm expect
 	)
 '
@@ -69,7 +69,7 @@ test_expect_success 'update git svn-cloned repo' '
 		git svn rebase &&
 		echo a > expect &&
 		echo b >> expect &&
-		test_cmp a expect &&
+		test_cmp expect a &&
 		rm expect
 	)
 '
@@ -93,7 +93,7 @@ test_expect_success 'update git svn-cloned repo again' '
 		echo a > expect &&
 		echo b >> expect &&
 		echo c >> expect &&
-		test_cmp a expect &&
+		test_cmp expect a &&
 		rm expect
 	)
 '

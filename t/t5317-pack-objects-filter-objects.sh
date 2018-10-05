@@ -34,7 +34,7 @@ test_expect_success 'verify blob count in normal packfile' '
 	awk -f print_1.awk |
 	sort >observed &&
 
-	test_cmp observed expected
+	test_cmp expected observed
 '
 
 test_expect_success 'verify blob:none packfile has no blobs' '
@@ -63,7 +63,7 @@ test_expect_success 'verify normal and blob:none packfiles have same commits/tre
 	awk -f print_1.awk |
 	sort >observed &&
 
-	test_cmp observed expected
+	test_cmp expected observed
 '
 
 # Test blob:limit=<n>[kmg] filter.
@@ -96,7 +96,7 @@ test_expect_success 'verify blob count in normal packfile' '
 	awk -f print_1.awk |
 	sort >observed &&
 
-	test_cmp observed expected
+	test_cmp expected observed
 '
 
 test_expect_success 'verify blob:limit=500 omits all blobs' '
@@ -144,7 +144,7 @@ test_expect_success 'verify blob:limit=1001' '
 	awk -f print_1.awk |
 	sort >observed &&
 
-	test_cmp observed expected
+	test_cmp expected observed
 '
 
 test_expect_success 'verify blob:limit=10001' '
@@ -162,7 +162,7 @@ test_expect_success 'verify blob:limit=10001' '
 	awk -f print_1.awk |
 	sort >observed &&
 
-	test_cmp observed expected
+	test_cmp expected observed
 '
 
 test_expect_success 'verify blob:limit=1k' '
@@ -180,7 +180,7 @@ test_expect_success 'verify blob:limit=1k' '
 	awk -f print_1.awk |
 	sort >observed &&
 
-	test_cmp observed expected
+	test_cmp expected observed
 '
 
 test_expect_success 'verify explicitly specifying oversized blob in input' '
@@ -199,7 +199,7 @@ test_expect_success 'verify explicitly specifying oversized blob in input' '
 	awk -f print_1.awk |
 	sort >observed &&
 
-	test_cmp observed expected
+	test_cmp expected observed
 '
 
 test_expect_success 'verify blob:limit=1m' '
@@ -217,7 +217,7 @@ test_expect_success 'verify blob:limit=1m' '
 	awk -f print_1.awk |
 	sort >observed &&
 
-	test_cmp observed expected
+	test_cmp expected observed
 '
 
 test_expect_success 'verify normal and blob:limit packfiles have same commits/trees' '
@@ -231,7 +231,7 @@ test_expect_success 'verify normal and blob:limit packfiles have same commits/tr
 	awk -f print_1.awk |
 	sort >observed &&
 
-	test_cmp observed expected
+	test_cmp expected observed
 '
 
 # Test sparse:path=<path> filter.
@@ -269,7 +269,7 @@ test_expect_success 'verify blob count in normal packfile' '
 	awk -f print_1.awk |
 	sort >observed &&
 
-	test_cmp observed expected
+	test_cmp expected observed
 '
 
 test_expect_success 'verify sparse:path=pattern1' '
@@ -287,7 +287,7 @@ test_expect_success 'verify sparse:path=pattern1' '
 	awk -f print_1.awk |
 	sort >observed &&
 
-	test_cmp observed expected
+	test_cmp expected observed
 '
 
 test_expect_success 'verify normal and sparse:path=pattern1 packfiles have same commits/trees' '
@@ -301,7 +301,7 @@ test_expect_success 'verify normal and sparse:path=pattern1 packfiles have same 
 	awk -f print_1.awk |
 	sort >observed &&
 
-	test_cmp observed expected
+	test_cmp expected observed
 '
 
 test_expect_success 'verify sparse:path=pattern2' '
@@ -319,7 +319,7 @@ test_expect_success 'verify sparse:path=pattern2' '
 	awk -f print_1.awk |
 	sort >observed &&
 
-	test_cmp observed expected
+	test_cmp expected observed
 '
 
 test_expect_success 'verify normal and sparse:path=pattern2 packfiles have same commits/trees' '
@@ -333,7 +333,7 @@ test_expect_success 'verify normal and sparse:path=pattern2 packfiles have same 
 	awk -f print_1.awk |
 	sort >observed &&
 
-	test_cmp observed expected
+	test_cmp expected observed
 '
 
 # Test sparse:oid=<oid-ish> filter.
@@ -370,7 +370,7 @@ test_expect_success 'verify blob count in normal packfile' '
 	awk -f print_1.awk |
 	sort >observed &&
 
-	test_cmp observed expected
+	test_cmp expected observed
 '
 
 test_expect_success 'verify sparse:oid=OID' '
@@ -389,7 +389,7 @@ test_expect_success 'verify sparse:oid=OID' '
 	awk -f print_1.awk |
 	sort >observed &&
 
-	test_cmp observed expected
+	test_cmp expected observed
 '
 
 test_expect_success 'verify sparse:oid=oid-ish' '
@@ -407,7 +407,7 @@ test_expect_success 'verify sparse:oid=oid-ish' '
 	awk -f print_1.awk |
 	sort >observed &&
 
-	test_cmp observed expected
+	test_cmp expected observed
 '
 
 # Delete some loose objects and use pack-objects, but WITHOUT any filtering.

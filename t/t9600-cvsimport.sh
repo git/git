@@ -148,7 +148,7 @@ test_expect_success PERL 'import from a CVS working tree' '
 		git cvsimport -a -z0 &&
 		echo 1 >expect &&
 		git log -1 --pretty=format:%s%n >actual &&
-		test_cmp actual expect
+		test_cmp expect actual
 	)
 
 '

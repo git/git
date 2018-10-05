@@ -221,7 +221,7 @@ tree d667270a1f7b109f5eb3aaea21ede14b56bfdd6e
 tree 8f51f74cf0163afc9ad68a4b1537288c4558b5a4
 EOF
 
-test_expect_success POSIXPERM,SYMLINKS "$name" "test_cmp a expected"
+test_expect_success POSIXPERM,SYMLINKS "$name" "test_cmp expected a"
 
 test_expect_success 'exit if remote refs are ambigious' '
         git config --add svn-remote.svn.fetch \
