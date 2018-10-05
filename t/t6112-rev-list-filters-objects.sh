@@ -30,6 +30,18 @@ test_expect_success 'verify blob:none omits all 5 blobs' '
 	test_cmp observed expected
 '
 
+test_expect_success 'specify blob explicitly prevents filtering' '
+	file_3=$(git -C r1 ls-files -s file.3 |
+		 awk -f print_2.awk) &&
+
+	file_4=$(git -C r1 ls-files -s file.4 |
+		 awk -f print_2.awk) &&
+
+	git -C r1 rev-list --objects --filter=blob:none HEAD $file_3 >observed &&
+	grep -q "$file_3" observed &&
+	test_must_fail grep -q "$file_4" observed
+'
+
 test_expect_success 'verify emitted+omitted == all' '
 	git -C r1 rev-list HEAD --objects \
 		| awk -f print_1.awk \
