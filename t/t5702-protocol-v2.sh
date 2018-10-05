@@ -271,7 +271,7 @@ test_expect_success 'partial clone' '
 	grep "version 2" trace &&
 
 	# Ensure that the old version of the file is missing
-	git -C client rev-list master --quiet --objects --missing=print \
+	git -C client rev-list --quiet --objects --missing=print master \
 		>observed.oids &&
 	grep "$(git -C server rev-parse message1:a.txt)" observed.oids &&
 
@@ -297,7 +297,7 @@ test_expect_success 'partial fetch' '
 	grep "version 2" trace &&
 
 	# Ensure that the old version of the file is missing
-	git -C client rev-list other --quiet --objects --missing=print \
+	git -C client rev-list --quiet --objects --missing=print other \
 		>observed.oids &&
 	grep "$(git -C server rev-parse message1:a.txt)" observed.oids &&
 
