@@ -82,29 +82,21 @@ Submodule name: 'a' for path 'b'
 Submodule name: 'submodule' for path 'submodule'
 EOF
 
-test_expect_success 'error in one submodule config lets continue' '
+test_expect_success 'error in history of one submodule config lets continue, stderr message contains blob ref' '
 	(cd super &&
 		cp .gitmodules .gitmodules.bak &&
 		echo "	value = \"" >>.gitmodules &&
 		git add .gitmodules &&
 		mv .gitmodules.bak .gitmodules &&
 		git commit -m "add error" &&
-		test-tool submodule-config \
-			HEAD b \
-			HEAD submodule \
-				>actual &&
-		test_cmp expect_error actual
-	)
-'
-
-test_expect_success 'error message contains blob reference' '
-	(cd super &&
 		sha1=$(git rev-parse HEAD) &&
 		test-tool submodule-config \
 			HEAD b \
 			HEAD submodule \
-				2>actual_err &&
-		test_i18ngrep "submodule-blob $sha1:.gitmodules" actual_err >/dev/null
+				>actual \
+				2>actual_stderr &&
+		test_cmp expect_error actual &&
+		test_i18ngrep "submodule-blob $sha1:.gitmodules" actual_stderr >/dev/null
 	)
 '
 
