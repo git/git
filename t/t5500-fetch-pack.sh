@@ -50,8 +50,11 @@ pull_to_client () {
 			case "$heads" in *B*)
 			    git update-ref refs/heads/B "$BTIP";;
 			esac &&
-			git symbolic-ref HEAD refs/heads/$(echo $heads \
-				| sed -e "s/^\(.\).*$/\1/") &&
+
+			git symbolic-ref HEAD refs/heads/$(
+				echo $heads |
+				sed -e "s/^\(.\).*$/\1/"
+			) &&
 
 			git fsck --full &&
 

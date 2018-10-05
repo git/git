@@ -1770,8 +1770,9 @@ test_expect_success '--show-origin stdin with file include' '
 	cat >expect <<-EOF &&
 		file:$INCLUDE_DIR/stdin.include	include
 	EOF
-	echo "[include]path=\"$INCLUDE_DIR\"/stdin.include" \
-		| git config --show-origin --includes --file - user.stdin >output &&
+	echo "[include]path=\"$INCLUDE_DIR\"/stdin.include" |
+	git config --show-origin --includes --file - user.stdin >output &&
+
 	test_cmp expect output
 '
 
