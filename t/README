@@ -474,6 +474,33 @@ And here are the "don'ts:"
    platform commands; just use '! cmd'.  We are not in the business
    of verifying that the world given to us sanely works.
 
+ - Don't feed the output of a git command to a pipe, as in:
+
+     git -C repo ls-files |
+     xargs -n 1 basename |
+     grep foo
+
+   which will discard git's exit code and may mask a crash. In the
+   above example, all exit codes are ignored except grep's.
+
+   Instead, write the output of that command to a temporary
+   file with ">" or assign it to a variable with "x=$(git ...)" rather
+   than pipe it.
+
+ - Don't use command substitution in a way that discards git's exit
+   code. When assigning to a variable, the exit code is not discarded,
+   e.g.:
+
+     x=$(git cat-file -p $sha) &&
+     ...
+
+   is OK because a crash in "git cat-file" will cause the "&&" chain
+   to fail, but:
+
+     test "refs/heads/foo" = "$(git symbolic-ref HEAD)"
+
+   is not OK and a crash in git could go undetected.
+
  - Don't use perl without spelling it as "$PERL_PATH". This is to help
    our friends on Windows where the platform Perl often adds CR before
    the end of line, and they bundle Git with a version of Perl that
