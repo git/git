@@ -35,8 +35,8 @@ test_expect_success 'setup bare clone for server' '
 test_expect_success 'do partial clone 1' '
 	git clone --no-checkout --filter=blob:none "file://$(pwd)/srv.bare" pc1 &&
 
-	git -C pc1 rev-list HEAD --quiet --objects --missing=print |
-	awk -f print_1.awk |
+	git -C pc1 rev-list HEAD --quiet --objects --missing=print >revs &&
+	awk -f print_1.awk revs |
 	sed "s/?//" |
 	sort >observed.oids &&
 
@@ -133,16 +133,18 @@ test_expect_success 'push new commits to server for file.3.txt' '
 test_expect_success 'manual prefetch of missing objects' '
 	git -C pc1 fetch --filter=blob:none origin &&
 
-	git -C pc1 rev-list master..origin/master --quiet --objects --missing=print |
-	awk -f print_1.awk |
+	git -C pc1 rev-list master..origin/master --quiet --objects --missing=print \
+		>revs &&
+	awk -f print_1.awk revs |
 	sed "s/?//" |
 	sort >observed.oids &&
 
 	test_line_count = 6 observed.oids &&
 	git -C pc1 fetch-pack --stdin "file://$(pwd)/srv.bare" <observed.oids &&
 
-	git -C pc1 rev-list master..origin/master --quiet --objects --missing=print |
-	awk -f print_1.awk |
+	git -C pc1 rev-list master..origin/master --quiet --objects --missing=print \
+		>revs &&
+	awk -f print_1.awk revs |
 	sed "s/?//" |
 	sort >observed.oids &&
 

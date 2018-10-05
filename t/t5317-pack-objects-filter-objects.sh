@@ -20,8 +20,9 @@ test_expect_success 'setup r1' '
 '
 
 test_expect_success 'verify blob count in normal packfile' '
-	git -C r1 ls-files -s file.1 file.2 file.3 file.4 file.5 |
-	awk -f print_2.awk |
+	git -C r1 ls-files -s file.1 file.2 file.3 file.4 file.5 \
+		>ls_files_result &&
+	awk -f print_2.awk ls_files_result |
 	sort >expected &&
 
 	git -C r1 pack-objects --rev --stdout >all.pack <<-EOF &&
@@ -29,8 +30,8 @@ test_expect_success 'verify blob count in normal packfile' '
 	EOF
 	git -C r1 index-pack ../all.pack &&
 
-	git -C r1 verify-pack -v ../all.pack |
-	grep blob |
+	git -C r1 verify-pack -v ../all.pack >verify_result &&
+	grep blob verify_result |
 	awk -f print_1.awk |
 	sort >observed &&
 
@@ -43,8 +44,8 @@ test_expect_success 'verify blob:none packfile has no blobs' '
 	EOF
 	git -C r1 index-pack ../filter.pack &&
 
-	git -C r1 verify-pack -v ../filter.pack |
-	grep blob |
+	git -C r1 verify-pack -v ../filter.pack >verify_result &&
+	grep blob verify_result |
 	awk -f print_1.awk |
 	sort >observed &&
 
@@ -53,13 +54,13 @@ test_expect_success 'verify blob:none packfile has no blobs' '
 '
 
 test_expect_success 'verify normal and blob:none packfiles have same commits/trees' '
-	git -C r1 verify-pack -v ../all.pack |
-	grep -E "commit|tree" |
+	git -C r1 verify-pack -v ../all.pack >verify_result &&
+	grep -E "commit|tree" verify_result |
 	awk -f print_1.awk |
 	sort >expected &&
 
-	git -C r1 verify-pack -v ../filter.pack |
-	grep -E "commit|tree" |
+	git -C r1 verify-pack -v ../filter.pack >verify_result &&
+	grep -E "commit|tree" verify_result |
 	awk -f print_1.awk |
 	sort >observed &&
 
@@ -82,8 +83,8 @@ test_expect_success 'setup r2' '
 '
 
 test_expect_success 'verify blob count in normal packfile' '
-	git -C r2 ls-files -s large.1000 large.10000 |
-	awk -f print_2.awk |
+	git -C r2 ls-files -s large.1000 large.10000 >ls_files_result &&
+	awk -f print_2.awk ls_files_result |
 	sort >expected &&
 
 	git -C r2 pack-objects --rev --stdout >all.pack <<-EOF &&
@@ -91,8 +92,8 @@ test_expect_success 'verify blob count in normal packfile' '
 	EOF
 	git -C r2 index-pack ../all.pack &&
 
-	git -C r2 verify-pack -v ../all.pack |
-	grep blob |
+	git -C r2 verify-pack -v ../all.pack >verify_result &&
+	grep blob verify_result |
 	awk -f print_1.awk |
 	sort >observed &&
 
@@ -105,8 +106,8 @@ test_expect_success 'verify blob:limit=500 omits all blobs' '
 	EOF
 	git -C r2 index-pack ../filter.pack &&
 
-	git -C r2 verify-pack -v ../filter.pack |
-	grep blob |
+	git -C r2 verify-pack -v ../filter.pack >verify_result &&
+	grep blob verify_result |
 	awk -f print_1.awk |
 	sort >observed &&
 
@@ -120,8 +121,8 @@ test_expect_success 'verify blob:limit=1000' '
 	EOF
 	git -C r2 index-pack ../filter.pack &&
 
-	git -C r2 verify-pack -v ../filter.pack |
-	grep blob |
+	git -C r2 verify-pack -v ../filter.pack >verify_result &&
+	grep blob verify_result |
 	awk -f print_1.awk |
 	sort >observed &&
 
@@ -130,8 +131,8 @@ test_expect_success 'verify blob:limit=1000' '
 '
 
 test_expect_success 'verify blob:limit=1001' '
-	git -C r2 ls-files -s large.1000 |
-	awk -f print_2.awk |
+	git -C r2 ls-files -s large.1000 >ls_files_result &&
+	awk -f print_2.awk ls_files_result |
 	sort >expected &&
 
 	git -C r2 pack-objects --rev --stdout --filter=blob:limit=1001 >filter.pack <<-EOF &&
@@ -139,8 +140,8 @@ test_expect_success 'verify blob:limit=1001' '
 	EOF
 	git -C r2 index-pack ../filter.pack &&
 
-	git -C r2 verify-pack -v ../filter.pack |
-	grep blob |
+	git -C r2 verify-pack -v ../filter.pack >verify_result &&
+	grep blob verify_result |
 	awk -f print_1.awk |
 	sort >observed &&
 
@@ -148,8 +149,8 @@ test_expect_success 'verify blob:limit=1001' '
 '
 
 test_expect_success 'verify blob:limit=10001' '
-	git -C r2 ls-files -s large.1000 large.10000 |
-	awk -f print_2.awk |
+	git -C r2 ls-files -s large.1000 large.10000 >ls_files_result &&
+	awk -f print_2.awk ls_files_result |
 	sort >expected &&
 
 	git -C r2 pack-objects --rev --stdout --filter=blob:limit=10001 >filter.pack <<-EOF &&
@@ -157,8 +158,8 @@ test_expect_success 'verify blob:limit=10001' '
 	EOF
 	git -C r2 index-pack ../filter.pack &&
 
-	git -C r2 verify-pack -v ../filter.pack |
-	grep blob |
+	git -C r2 verify-pack -v ../filter.pack >verify_result &&
+	grep blob verify_result |
 	awk -f print_1.awk |
 	sort >observed &&
 
@@ -166,8 +167,8 @@ test_expect_success 'verify blob:limit=10001' '
 '
 
 test_expect_success 'verify blob:limit=1k' '
-	git -C r2 ls-files -s large.1000 |
-	awk -f print_2.awk |
+	git -C r2 ls-files -s large.1000 >ls_files_result &&
+	awk -f print_2.awk ls_files_result |
 	sort >expected &&
 
 	git -C r2 pack-objects --rev --stdout --filter=blob:limit=1k >filter.pack <<-EOF &&
@@ -175,8 +176,8 @@ test_expect_success 'verify blob:limit=1k' '
 	EOF
 	git -C r2 index-pack ../filter.pack &&
 
-	git -C r2 verify-pack -v ../filter.pack |
-	grep blob |
+	git -C r2 verify-pack -v ../filter.pack >verify_result &&
+	grep blob verify_result |
 	awk -f print_1.awk |
 	sort >observed &&
 
@@ -184,8 +185,8 @@ test_expect_success 'verify blob:limit=1k' '
 '
 
 test_expect_success 'verify explicitly specifying oversized blob in input' '
-	git -C r2 ls-files -s large.1000 large.10000 |
-	awk -f print_2.awk |
+	git -C r2 ls-files -s large.1000 large.10000 >ls_files_result &&
+	awk -f print_2.awk ls_files_result |
 	sort >expected &&
 
 	git -C r2 pack-objects --rev --stdout --filter=blob:limit=1k >filter.pack <<-EOF &&
@@ -194,8 +195,8 @@ test_expect_success 'verify explicitly specifying oversized blob in input' '
 	EOF
 	git -C r2 index-pack ../filter.pack &&
 
-	git -C r2 verify-pack -v ../filter.pack |
-	grep blob |
+	git -C r2 verify-pack -v ../filter.pack >verify_result &&
+	grep blob verify_result |
 	awk -f print_1.awk |
 	sort >observed &&
 
@@ -203,8 +204,8 @@ test_expect_success 'verify explicitly specifying oversized blob in input' '
 '
 
 test_expect_success 'verify blob:limit=1m' '
-	git -C r2 ls-files -s large.1000 large.10000 |
-	awk -f print_2.awk |
+	git -C r2 ls-files -s large.1000 large.10000 >ls_files_result &&
+	awk -f print_2.awk ls_files_result |
 	sort >expected &&
 
 	git -C r2 pack-objects --rev --stdout --filter=blob:limit=1m >filter.pack <<-EOF &&
@@ -212,8 +213,8 @@ test_expect_success 'verify blob:limit=1m' '
 	EOF
 	git -C r2 index-pack ../filter.pack &&
 
-	git -C r2 verify-pack -v ../filter.pack |
-	grep blob |
+	git -C r2 verify-pack -v ../filter.pack >verify_result &&
+	grep blob verify_result |
 	awk -f print_1.awk |
 	sort >observed &&
 
@@ -221,13 +222,13 @@ test_expect_success 'verify blob:limit=1m' '
 '
 
 test_expect_success 'verify normal and blob:limit packfiles have same commits/trees' '
-	git -C r2 verify-pack -v ../all.pack |
-	grep -E "commit|tree" |
+	git -C r2 verify-pack -v ../all.pack >verify_result &&
+	grep -E "commit|tree" verify_result |
 	awk -f print_1.awk |
 	sort >expected &&
 
-	git -C r2 verify-pack -v ../filter.pack |
-	grep -E "commit|tree" |
+	git -C r2 verify-pack -v ../filter.pack >verify_result &&
+	grep -E "commit|tree" verify_result |
 	awk -f print_1.awk |
 	sort >observed &&
 
@@ -255,8 +256,9 @@ test_expect_success 'setup r3' '
 '
 
 test_expect_success 'verify blob count in normal packfile' '
-	git -C r3 ls-files -s sparse1 sparse2 dir1/sparse1 dir1/sparse2 |
-	awk -f print_2.awk |
+	git -C r3 ls-files -s sparse1 sparse2 dir1/sparse1 dir1/sparse2 \
+		>ls_files_result &&
+	awk -f print_2.awk ls_files_result |
 	sort >expected &&
 
 	git -C r3 pack-objects --rev --stdout >all.pack <<-EOF &&
@@ -264,8 +266,8 @@ test_expect_success 'verify blob count in normal packfile' '
 	EOF
 	git -C r3 index-pack ../all.pack &&
 
-	git -C r3 verify-pack -v ../all.pack |
-	grep blob |
+	git -C r3 verify-pack -v ../all.pack >verify_result &&
+	grep blob verify_result |
 	awk -f print_1.awk |
 	sort >observed &&
 
@@ -273,8 +275,8 @@ test_expect_success 'verify blob count in normal packfile' '
 '
 
 test_expect_success 'verify sparse:path=pattern1' '
-	git -C r3 ls-files -s dir1/sparse1 dir1/sparse2 |
-	awk -f print_2.awk |
+	git -C r3 ls-files -s dir1/sparse1 dir1/sparse2 >ls_files_result &&
+	awk -f print_2.awk ls_files_result |
 	sort >expected &&
 
 	git -C r3 pack-objects --rev --stdout --filter=sparse:path=../pattern1 >filter.pack <<-EOF &&
@@ -282,8 +284,8 @@ test_expect_success 'verify sparse:path=pattern1' '
 	EOF
 	git -C r3 index-pack ../filter.pack &&
 
-	git -C r3 verify-pack -v ../filter.pack |
-	grep blob |
+	git -C r3 verify-pack -v ../filter.pack >verify_result &&
+	grep blob verify_result |
 	awk -f print_1.awk |
 	sort >observed &&
 
@@ -291,13 +293,13 @@ test_expect_success 'verify sparse:path=pattern1' '
 '
 
 test_expect_success 'verify normal and sparse:path=pattern1 packfiles have same commits/trees' '
-	git -C r3 verify-pack -v ../all.pack |
-	grep -E "commit|tree" |
+	git -C r3 verify-pack -v ../all.pack >verify_result &&
+	grep -E "commit|tree" verify_result |
 	awk -f print_1.awk |
 	sort >expected &&
 
-	git -C r3 verify-pack -v ../filter.pack |
-	grep -E "commit|tree" |
+	git -C r3 verify-pack -v ../filter.pack >verify_result &&
+	grep -E "commit|tree" verify_result |
 	awk -f print_1.awk |
 	sort >observed &&
 
@@ -305,8 +307,8 @@ test_expect_success 'verify normal and sparse:path=pattern1 packfiles have same 
 '
 
 test_expect_success 'verify sparse:path=pattern2' '
-	git -C r3 ls-files -s sparse1 dir1/sparse1 |
-	awk -f print_2.awk |
+	git -C r3 ls-files -s sparse1 dir1/sparse1 >ls_files_result &&
+	awk -f print_2.awk ls_files_result |
 	sort >expected &&
 
 	git -C r3 pack-objects --rev --stdout --filter=sparse:path=../pattern2 >filter.pack <<-EOF &&
@@ -314,8 +316,8 @@ test_expect_success 'verify sparse:path=pattern2' '
 	EOF
 	git -C r3 index-pack ../filter.pack &&
 
-	git -C r3 verify-pack -v ../filter.pack |
-	grep blob |
+	git -C r3 verify-pack -v ../filter.pack >verify_result &&
+	grep blob verify_result |
 	awk -f print_1.awk |
 	sort >observed &&
 
@@ -323,13 +325,13 @@ test_expect_success 'verify sparse:path=pattern2' '
 '
 
 test_expect_success 'verify normal and sparse:path=pattern2 packfiles have same commits/trees' '
-	git -C r3 verify-pack -v ../all.pack |
-	grep -E "commit|tree" |
+	git -C r3 verify-pack -v ../all.pack >verify_result &&
+	grep -E "commit|tree" verify_result |
 	awk -f print_1.awk |
 	sort >expected &&
 
-	git -C r3 verify-pack -v ../filter.pack |
-	grep -E "commit|tree" |
+	git -C r3 verify-pack -v ../filter.pack >verify_result &&
+	grep -E "commit|tree" verify_result |
 	awk -f print_1.awk |
 	sort >observed &&
 
@@ -356,8 +358,9 @@ test_expect_success 'setup r4' '
 '
 
 test_expect_success 'verify blob count in normal packfile' '
-	git -C r4 ls-files -s pattern sparse1 sparse2 dir1/sparse1 dir1/sparse2 |
-	awk -f print_2.awk |
+	git -C r4 ls-files -s pattern sparse1 sparse2 dir1/sparse1 dir1/sparse2 \
+		>ls_files_result &&
+	awk -f print_2.awk ls_files_result |
 	sort >expected &&
 
 	git -C r4 pack-objects --rev --stdout >all.pack <<-EOF &&
@@ -365,8 +368,8 @@ test_expect_success 'verify blob count in normal packfile' '
 	EOF
 	git -C r4 index-pack ../all.pack &&
 
-	git -C r4 verify-pack -v ../all.pack |
-	grep blob |
+	git -C r4 verify-pack -v ../all.pack >verify_result &&
+	grep blob verify_result |
 	awk -f print_1.awk |
 	sort >observed &&
 
@@ -374,8 +377,8 @@ test_expect_success 'verify blob count in normal packfile' '
 '
 
 test_expect_success 'verify sparse:oid=OID' '
-	git -C r4 ls-files -s dir1/sparse1 dir1/sparse2 |
-	awk -f print_2.awk |
+	git -C r4 ls-files -s dir1/sparse1 dir1/sparse2 >ls_files_result &&
+	awk -f print_2.awk ls_files_result |
 	sort >expected &&
 
 	oid=$(git -C r4 ls-files -s pattern | awk -f print_2.awk) &&
@@ -384,8 +387,8 @@ test_expect_success 'verify sparse:oid=OID' '
 	EOF
 	git -C r4 index-pack ../filter.pack &&
 
-	git -C r4 verify-pack -v ../filter.pack |
-	grep blob |
+	git -C r4 verify-pack -v ../filter.pack >verify_result &&
+	grep blob verify_result |
 	awk -f print_1.awk |
 	sort >observed &&
 
@@ -393,8 +396,8 @@ test_expect_success 'verify sparse:oid=OID' '
 '
 
 test_expect_success 'verify sparse:oid=oid-ish' '
-	git -C r4 ls-files -s dir1/sparse1 dir1/sparse2 |
-	awk -f print_2.awk |
+	git -C r4 ls-files -s dir1/sparse1 dir1/sparse2 >ls_files_result &&
+	awk -f print_2.awk ls_files_result |
 	sort >expected &&
 
 	git -C r4 pack-objects --rev --stdout --filter=sparse:oid=master:pattern >filter.pack <<-EOF &&
@@ -402,8 +405,8 @@ test_expect_success 'verify sparse:oid=oid-ish' '
 	EOF
 	git -C r4 index-pack ../filter.pack &&
 
-	git -C r4 verify-pack -v ../filter.pack |
-	grep blob |
+	git -C r4 verify-pack -v ../filter.pack >verify_result &&
+	grep blob verify_result |
 	awk -f print_1.awk |
 	sort >observed &&
 
@@ -414,8 +417,9 @@ test_expect_success 'verify sparse:oid=oid-ish' '
 # This models previously omitted objects that we did not receive.
 
 test_expect_success 'setup r1 - delete loose blobs' '
-	git -C r1 ls-files -s file.1 file.2 file.3 file.4 file.5 |
-	awk -f print_2.awk |
+	git -C r1 ls-files -s file.1 file.2 file.3 file.4 file.5 \
+		>ls_files_result &&
+	awk -f print_2.awk ls_files_result |
 	sort >expected &&
 
 	for id in `cat expected | sed "s|..|&/|"`
