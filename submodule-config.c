@@ -707,6 +707,18 @@ int print_config_from_gitmodules(struct repository *repo, const char *key)
 	return 0;
 }
 
+int config_set_in_gitmodules_file_gently(const char *key, const char *value)
+{
+	int ret;
+
+	ret = git_config_set_in_file_gently(GITMODULES_FILE, key, value);
+	if (ret < 0)
+		/* Maybe the user already did that, don't error out here */
+		warning(_("Could not update .gitmodules entry %s"), key);
+
+	return ret;
+}
+
 struct fetch_config {
 	int *max_children;
 	int *recurse_submodules;
