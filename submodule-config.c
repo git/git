@@ -682,6 +682,31 @@ void submodule_free(struct repository *r)
 		submodule_cache_clear(r->submodule_cache);
 }
 
+static int config_print_callback(const char *var, const char *value, void *cb_data)
+{
+	char *wanted_key = cb_data;
+
+	if (!strcmp(wanted_key, var))
+		printf("%s\n", value);
+
+	return 0;
+}
+
+int print_config_from_gitmodules(struct repository *repo, const char *key)
+{
+	int ret;
+	char *store_key;
+
+	ret = git_config_parse_key(key, &store_key, NULL);
+	if (ret < 0)
+		return CONFIG_INVALID_KEY;
+
+	config_from_gitmodules(config_print_callback, repo, store_key);
+
+	free(store_key);
+	return 0;
+}
+
 struct fetch_config {
 	int *max_children;
 	int *recurse_submodules;
