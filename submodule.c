@@ -51,6 +51,24 @@ int is_gitmodules_unmerged(const struct index_state *istate)
 }
 
 /*
+ * Check if the .gitmodules file is safe to write.
+ *
+ * Writing to the .gitmodules file requires that the file exists in the
+ * working tree or, if it doesn't, that a brand new .gitmodules file is going
+ * to be created (i.e. it's neither in the index nor in the current branch).
+ *
+ * It is not safe to write to .gitmodules if it's not in the working tree but
+ * it is in the index or in the current branch, because writing new values
+ * (and staging them) would blindly overwrite ALL the old content.
+ */
+int is_writing_gitmodules_ok(void)
+{
+	struct object_id oid;
+	return file_exists(GITMODULES_FILE) ||
+		(get_oid(GITMODULES_INDEX, &oid) < 0 && get_oid(GITMODULES_HEAD, &oid) < 0);
+}
+
+/*
  * Check if the .gitmodules file has unstaged modifications.  This must be
  * checked before allowing modifications to the .gitmodules file with the
  * intention to stage them later, because when continuing we would stage the

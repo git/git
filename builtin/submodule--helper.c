@@ -2005,6 +2005,28 @@ static int check_name(int argc, const char **argv, const char *prefix)
 
 static int module_config(int argc, const char **argv, const char *prefix)
 {
+	enum {
+		CHECK_WRITEABLE = 1
+	} command = 0;
+
+	struct option module_config_options[] = {
+		OPT_CMDMODE(0, "check-writeable", &command,
+			    N_("check if it is safe to write to the .gitmodules file"),
+			    CHECK_WRITEABLE),
+		OPT_END()
+	};
+	const char *const git_submodule_helper_usage[] = {
+		N_("git submodule--helper config name [value]"),
+		N_("git submodule--helper config --check-writeable"),
+		NULL
+	};
+
+	argc = parse_options(argc, argv, prefix, module_config_options,
+			     git_submodule_helper_usage, PARSE_OPT_KEEP_ARGV0);
+
+	if (argc == 1 && command == CHECK_WRITEABLE)
+		return is_writing_gitmodules_ok() ? 0 : -1;
+
 	/* Equivalent to ACTION_GET in builtin/config.c */
 	if (argc == 2)
 		return print_config_from_gitmodules(the_repository, argv[1]);
@@ -2013,7 +2035,7 @@ static int module_config(int argc, const char **argv, const char *prefix)
 	if (argc == 3)
 		return config_set_in_gitmodules_file_gently(argv[1], argv[2]);
 
-	die("submodule--helper config takes 1 or 2 arguments: name [value]");
+	usage_with_options(git_submodule_helper_usage, module_config_options);
 }
 
 #define SUPPORT_SUPER_PREFIX (1<<0)

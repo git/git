@@ -161,4 +161,35 @@ test_expect_success 'overwriting unstaged submodules config with "submodule--hel
 	)
 '
 
+test_expect_success 'writeable .gitmodules when it is in the working tree' '
+	git -C super submodule--helper config --check-writeable
+'
+
+test_expect_success 'writeable .gitmodules when it is nowhere in the repository' '
+	ORIG=$(git -C super rev-parse HEAD) &&
+	test_when_finished "git -C super reset --hard $ORIG" &&
+	(cd super &&
+		git rm .gitmodules &&
+		git commit -m "remove .gitmodules from the current branch" &&
+		git submodule--helper config --check-writeable
+	)
+'
+
+test_expect_success 'non-writeable .gitmodules when it is in the index but not in the working tree' '
+	test_when_finished "git -C super checkout .gitmodules" &&
+	(cd super &&
+		rm -f .gitmodules &&
+		test_must_fail git submodule--helper config --check-writeable
+	)
+'
+
+test_expect_success 'non-writeable .gitmodules when it is in the current branch but not in the index' '
+	ORIG=$(git -C super rev-parse HEAD) &&
+	test_when_finished "git -C super reset --hard $ORIG" &&
+	(cd super &&
+		git rm .gitmodules &&
+		test_must_fail git submodule--helper config --check-writeable
+	)
+'
+
 test_done
