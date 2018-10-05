@@ -196,6 +196,28 @@ test_expect_success 'verify sparse:oid=oid-ish omits top-level files' '
 	test_cmp observed expected
 '
 
+test_expect_success 'rev-list W/ --missing=print and --missing=allow-any for trees' '
+	TREE=$(git -C r3 rev-parse HEAD:dir1) &&
+
+	# Create a spare repo because we will be deleting objects from this one.
+	git clone r3 r3.b &&
+
+	rm r3.b/.git/objects/$(echo $TREE | sed "s|^..|&/|") &&
+
+	git -C r3.b rev-list --quiet --missing=print --objects HEAD \
+		>missing_objs 2>rev_list_err &&
+	echo "?$TREE" >expected &&
+	test_cmp expected missing_objs &&
+
+	# do not complain when a missing tree cannot be parsed
+	test_must_be_empty rev_list_err &&
+
+	git -C r3.b rev-list --missing=allow-any --objects HEAD \
+		>objs 2>rev_list_err &&
+	! grep $TREE objs &&
+	test_must_be_empty rev_list_err
+'
+
 # Delete some loose objects and use rev-list, but WITHOUT any filtering.
 # This models previously omitted objects that we did not receive.
 
