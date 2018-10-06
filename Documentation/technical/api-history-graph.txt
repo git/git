@@ -115,7 +115,6 @@ struct commit *commit;
 struct git_graph *graph = graph_init(opts);
 
 while ((commit = get_revision(opts)) != NULL) {
-	graph_update(graph, commit);
 	while (!graph_is_commit_finished(graph))
 	{
 		struct strbuf sb;
