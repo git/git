@@ -1336,7 +1336,7 @@ static void read_alternate_refs(const char *path,
 	cmd.git_cmd = 1;
 	argv_array_pushf(&cmd.args, "--git-dir=%s", path);
 	argv_array_push(&cmd.args, "for-each-ref");
-	argv_array_push(&cmd.args, "--format=%(objectname) %(refname)");
+	argv_array_push(&cmd.args, "--format=%(objectname)");
 	cmd.env = local_repo_env;
 	cmd.out = -1;
 
@@ -1348,13 +1348,13 @@ static void read_alternate_refs(const char *path,
 		struct object_id oid;
 
 		if (get_oid_hex(line.buf, &oid) ||
-		    line.buf[GIT_SHA1_HEXSZ] != ' ') {
+		    line.buf[GIT_SHA1_HEXSZ]) {
 			warning(_("invalid line while parsing alternate refs: %s"),
 				line.buf);
 			break;
 		}
 
-		cb(line.buf + GIT_SHA1_HEXSZ + 1, &oid, data);
+		cb(&oid, data);
 	}
 
 	fclose(fh);
