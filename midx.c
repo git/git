@@ -190,7 +190,7 @@ static void close_midx(struct multi_pack_index *m)
 	for (i = 0; i < m->num_packs; i++) {
 		if (m->packs[i]) {
 			close_pack(m->packs[i]);
-			free(m->packs);
+			free(m->packs[i]);
 		}
 	}
 	FREE_AND_NULL(m->packs);
