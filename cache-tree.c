@@ -326,6 +326,7 @@ static int update_one(struct cache_tree *it,
 		unsigned mode;
 		int expected_missing = 0;
 		int contains_ita = 0;
+		int ce_missing_ok;
 
 		path = ce->name;
 		pathlen = ce_namelen(ce);
@@ -355,8 +356,11 @@ static int update_one(struct cache_tree *it,
 			i++;
 		}
 
+		ce_missing_ok = mode == S_IFGITLINK || missing_ok ||
+			(repository_format_partial_clone &&
+			 ce_skip_worktree(ce));
 		if (is_null_oid(oid) ||
-		    (mode != S_IFGITLINK && !missing_ok && !has_object_file(oid))) {
+		    (!ce_missing_ok && !has_object_file(oid))) {
 			strbuf_release(&buffer);
 			if (expected_missing)
 				return -1;
