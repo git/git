@@ -10,6 +10,8 @@ struct replace_object {
 	struct object_id replacement;
 };
 
+void prepare_replace_object(struct repository *r);
+
 /*
  * This internal function is only declared here for the benefit of
  * lookup_replace_object().  Please do not call it directly.

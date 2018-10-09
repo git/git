@@ -277,6 +277,16 @@ typedef int each_ref_fn(const char *refname,
 			const struct object_id *oid, int flags, void *cb_data);
 
 /*
+ * The same as each_ref_fn, but also with a repository argument that
+ * contains the repository associated with the callback.
+ */
+typedef int each_repo_ref_fn(struct repository *r,
+			     const char *refname,
+			     const struct object_id *oid,
+			     int flags,
+			     void *cb_data);
+
+/*
  * The following functions invoke the specified callback function for
  * each reference indicated.  If the function ever returns a nonzero
  * value, stop the iteration and return that value.  Please note that
@@ -309,7 +319,7 @@ int for_each_fullref_in(const char *prefix, each_ref_fn fn, void *cb_data,
 int for_each_tag_ref(each_ref_fn fn, void *cb_data);
 int for_each_branch_ref(each_ref_fn fn, void *cb_data);
 int for_each_remote_ref(each_ref_fn fn, void *cb_data);
-int for_each_replace_ref(struct repository *r, each_ref_fn fn, void *cb_data);
+int for_each_replace_ref(struct repository *r, each_repo_ref_fn fn, void *cb_data);
 int for_each_glob_ref(each_ref_fn fn, const char *pattern, void *cb_data);
 int for_each_glob_ref_in(each_ref_fn fn, const char *pattern,
 			 const char *prefix, void *cb_data);
