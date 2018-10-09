@@ -282,7 +282,7 @@ int refs_rename_ref_available(struct ref_store *refs,
  *
  *             // Access information about the current reference:
  *             if (!(iter->flags & REF_ISSYMREF))
- *                     printf("%s is %s\n", iter->refname, oid_to_hex(&iter->oid));
+ *                     printf("%s is %s\n", iter->refname, oid_to_hex(iter->oid));
  *
  *             // If you need to peel the reference:
  *             ref_iterator_peel(iter, &oid);
