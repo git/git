@@ -420,7 +420,8 @@ idea unless you know what you are doing (see BUGS below).
 --exec <cmd>::
 	Append "exec <cmd>" after each line creating a commit in the
 	final history. <cmd> will be interpreted as one or more shell
-	commands.
+	commands. Any command that fails will interrupt the rebase,
+	with exit code 1.
 +
 You may execute several commands by either using one instance of `--exec`
 with several commands:
