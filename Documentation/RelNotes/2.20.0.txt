@@ -55,6 +55,9 @@ UI, Workflows & Features
    to be unmoving anchoring points.  "git fetch" was taught to forbid
    updates to existing tags without the "--force" option.
 
+ * "git multi-pack-index" learned to detect corruption in the .midx
+   file it uses, and this feature has been integrated into "git fsck".
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -91,6 +94,19 @@ Performance, Internal Implementation, Development Support etc.
    worktree entries if the path was missing (for instance, was removed
    manually).  Also, as a convenience, expand the number of cases in
    which --force is applicable.
+
+ * Split Documentation/config.txt for easier maintenance.
+   (merge 6014363f0b nd/config-split later to maint).
+
+ * Test helper binaries clean-up.
+   (merge c9a1f4161f nd/test-tool later to maint).
+
+ * Various tests have been updated to make it easier to swap the
+   hash function used for object identification.
+   (merge ae0c89d41b bc/hash-independent-tests later to maint).
+
+ * Update fsck.skipList implementation and documentation.
+   (merge 371a655074 ab/fsck-skiplist later to maint).
 
 
 Fixes since v2.19
