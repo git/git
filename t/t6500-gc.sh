@@ -138,7 +138,7 @@ test_expect_success 'background auto gc does not run if gc.log is present and re
 	test_config gc.autodetach true &&
 	echo fleem >.git/gc.log &&
 	test_must_fail git gc --auto 2>err &&
-	test_i18ngrep "^error:" err &&
+	test_i18ngrep "^fatal:" err &&
 	test_config gc.logexpiry 5.days &&
 	test-tool chmtime =-345600 .git/gc.log &&
 	test_must_fail git gc --auto &&
