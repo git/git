@@ -1,0 +1,65 @@
+fetch.recurseSubmodules::
+	This option can be either set to a boolean value or to 'on-demand'.
+	Setting it to a boolean changes the behavior of fetch and pull to
+	unconditionally recurse into submodules when set to true or to not
+	recurse at all when set to false. When set to 'on-demand' (the default
+	value), fetch and pull will only recurse into a populated submodule
+	when its superproject retrieves a commit that updates the submodule's
+	reference.
+
+fetch.fsckObjects::
+	If it is set to true, git-fetch-pack will check all fetched
+	objects. See `transfer.fsckObjects` for what's
+	checked. Defaults to false. If not set, the value of
+	`transfer.fsckObjects` is used instead.
+
+fetch.fsck.<msg-id>::
+	Acts like `fsck.<msg-id>`, but is used by
+	linkgit:git-fetch-pack[1] instead of linkgit:git-fsck[1]. See
+	the `fsck.<msg-id>` documentation for details.
+
+fetch.fsck.skipList::
+	Acts like `fsck.skipList`, but is used by
+	linkgit:git-fetch-pack[1] instead of linkgit:git-fsck[1]. See
+	the `fsck.skipList` documentation for details.
+
+fetch.unpackLimit::
+	If the number of objects fetched over the Git native
+	transfer is below this
+	limit, then the objects will be unpacked into loose object
+	files. However if the number of received objects equals or
+	exceeds this limit then the received pack will be stored as
+	a pack, after adding any missing delta bases.  Storing the
+	pack from a push can make the push operation complete faster,
+	especially on slow filesystems.  If not set, the value of
+	`transfer.unpackLimit` is used instead.
+
+fetch.prune::
+	If true, fetch will automatically behave as if the `--prune`
+	option was given on the command line.  See also `remote.<name>.prune`
+	and the PRUNING section of linkgit:git-fetch[1].
+
+fetch.pruneTags::
+	If true, fetch will automatically behave as if the
+	`refs/tags/*:refs/tags/*` refspec was provided when pruning,
+	if not set already. This allows for setting both this option
+	and `fetch.prune` to maintain a 1=1 mapping to upstream
+	refs. See also `remote.<name>.pruneTags` and the PRUNING
+	section of linkgit:git-fetch[1].
+
+fetch.output::
+	Control how ref update status is printed. Valid values are
+	`full` and `compact`. Default value is `full`. See section
+	OUTPUT in linkgit:git-fetch[1] for detail.
+
+fetch.negotiationAlgorithm::
+	Control how information about the commits in the local repository is
+	sent when negotiating the contents of the packfile to be sent by the
+	server. Set to "skipping" to use an algorithm that skips commits in an
+	effort to converge faster, but may result in a larger-than-necessary
+	packfile; The default is "default" which instructs Git to use the default algorithm
+	that never skips commits (unless the server has acknowledged it or one
+	of its descendants).
+	Unknown values will cause 'git fetch' to error out.
++
+See also the `--negotiation-tip` option for linkgit:git-fetch[1].
