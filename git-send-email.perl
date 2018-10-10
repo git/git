@@ -1694,6 +1694,11 @@ sub process_file {
 				next if $suppress_cc{'sob'} and $what =~ /Signed-off-by/i;
 				next if $suppress_cc{'bodycc'} and $what =~ /Cc/i;
 			}
+			if ($c !~ /.+@.+|<.+>/) {
+				printf("(body) Ignoring %s from line '%s'\n",
+					$what, $_) unless $quiet;
+				next;
+			}
 			push @cc, $c;
 			printf(__("(body) Adding cc: %s from line '%s'\n"),
 				$c, $_) unless $quiet;
