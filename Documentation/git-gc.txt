@@ -17,7 +17,8 @@ Runs a number of housekeeping tasks within the current repository,
 such as compressing file revisions (to reduce disk space and increase
 performance), removing unreachable objects which may have been
 created from prior invocations of 'git add', packing refs, pruning
-reflog, rerere metadata or stale working trees.
+reflog, rerere metadata or stale working trees. May also update ancillary
+indexes such as the commit-graph.
 
 Users are encouraged to run this task on a regular basis within
 each repository to maintain good disk space utilization and good
