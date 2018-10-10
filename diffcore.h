@@ -7,6 +7,8 @@
 #include "cache.h"
 
 struct diff_options;
+struct repository;
+struct userdiff_driver;
 
 /* This header file is internal between diff.c and its diff transformers
  * (e.g. diffcore-rename, diffcore-pickaxe).  Never include this header
@@ -25,8 +27,6 @@ struct diff_options;
 #define DEFAULT_MERGE_SCORE  36000 /* maximum for break-merge to happen (60%) */
 
 #define MINIMUM_BREAK_SIZE     400 /* do not break a file smaller than this */
-
-struct userdiff_driver;
 
 struct diff_filespec {
 	struct object_id oid;
@@ -61,10 +61,10 @@ void fill_filespec(struct diff_filespec *, const struct object_id *,
 
 #define CHECK_SIZE_ONLY 1
 #define CHECK_BINARY    2
-int diff_populate_filespec(struct diff_filespec *, unsigned int);
+int diff_populate_filespec(struct repository *, struct diff_filespec *, unsigned int);
 void diff_free_filespec_data(struct diff_filespec *);
 void diff_free_filespec_blob(struct diff_filespec *);
-int diff_filespec_is_binary(struct diff_filespec *);
+int diff_filespec_is_binary(struct repository *, struct diff_filespec *);
 
 struct diff_filepair {
 	struct diff_filespec *one;
@@ -111,7 +111,7 @@ struct diff_filepair *diff_queue(struct diff_queue_struct *,
 				 struct diff_filespec *);
 void diff_q(struct diff_queue_struct *, struct diff_filepair *);
 
-void diffcore_break(int);
+void diffcore_break(struct repository *, int);
 void diffcore_rename(struct diff_options *);
 void diffcore_merge_broken(void);
 void diffcore_pickaxe(struct diff_options *);
@@ -142,7 +142,8 @@ void diff_debug_queue(const char *, struct diff_queue_struct *);
 #define diff_debug_queue(a,b) do { /* nothing */ } while (0)
 #endif
 
-int diffcore_count_changes(struct diff_filespec *src,
+int diffcore_count_changes(struct repository *r,
+			   struct diff_filespec *src,
 			   struct diff_filespec *dst,
 			   void **src_count_p,
 			   void **dst_count_p,

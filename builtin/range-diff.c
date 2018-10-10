@@ -28,7 +28,7 @@ int cmd_range_diff(int argc, const char **argv, const char *prefix)
 
 	git_config(git_diff_ui_config, NULL);
 
-	diff_setup(&diffopt);
+	repo_diff_setup(the_repository, &diffopt);
 
 	argc = parse_options(argc, argv, NULL, options,
 			     builtin_range_diff_usage, PARSE_OPT_KEEP_UNKNOWN |

@@ -102,13 +102,16 @@ int add_submodule_odb(const char *path);
  * Checks if there are submodule changes in a..b. If a is the null OID,
  * checks b and all its ancestors instead.
  */
-int submodule_touches_in_range(struct object_id *a,
+int submodule_touches_in_range(struct index_state *istate,
+			       struct object_id *a,
 			       struct object_id *b);
-int find_unpushed_submodules(struct oid_array *commits,
+int find_unpushed_submodules(struct index_state *istate,
+			     struct oid_array *commits,
 			     const char *remotes_name,
 			     struct string_list *needs_pushing);
 struct refspec;
-int push_unpushed_submodules(struct oid_array *commits,
+int push_unpushed_submodules(struct index_state *istate,
+			     struct oid_array *commits,
 			     const struct remote *remote,
 			     const struct refspec *rs,
 			     const struct string_list *push_options,

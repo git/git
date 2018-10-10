@@ -643,7 +643,7 @@ int fmt_merge_msg(struct strbuf *in, struct strbuf *out,
 		struct rev_info rev;
 
 		head = lookup_commit_or_die(&head_oid, "HEAD");
-		init_revisions(&rev, NULL);
+		repo_init_revisions(the_repository, &rev, NULL);
 		rev.commit_format = CMIT_FMT_ONELINE;
 		rev.ignore_merges = 1;
 		rev.limited = 1;
