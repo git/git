@@ -1,3 +1,4 @@
+#include "test-tool.h"
 #include "cache.h"
 #include "parse-options.h"
 #include "string-list.h"
@@ -94,11 +95,11 @@ static void show(struct string_list *expect, int *status, const char *fmt, ...)
 	strbuf_release(&buf);
 }
 
-int cmd_main(int argc, const char **argv)
+int cmd__parse_options(int argc, const char **argv)
 {
 	const char *prefix = "prefix/";
 	const char *usage[] = {
-		"test-parse-options <options>",
+		"test-tool parse-options <options>",
 		"",
 		"A helper function for the parse-options API.",
 		NULL

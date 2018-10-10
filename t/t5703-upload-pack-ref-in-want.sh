@@ -9,14 +9,14 @@ get_actual_refs () {
 		/wanted-refs/d
 		/0001/d
 		p
-		}' <out | test-pkt-line unpack >actual_refs
+		}' <out | test-tool pkt-line unpack >actual_refs
 }
 
 get_actual_commits () {
 	sed -n -e '/packfile/,/0000/{
 		/packfile/d
 		p
-		}' <out | test-pkt-line unpack-sideband >o.pack &&
+		}' <out | test-tool pkt-line unpack-sideband >o.pack &&
 	git index-pack o.pack &&
 	git verify-pack -v o.idx | grep commit | cut -c-40 | sort >actual_commits
 }
@@ -61,7 +61,7 @@ test_expect_success 'config controls ref-in-want advertisement' '
 '
 
 test_expect_success 'invalid want-ref line' '
-	test-pkt-line pack >in <<-EOF &&
+	test-tool pkt-line pack >in <<-EOF &&
 	command=fetch
 	0001
 	no-progress
@@ -80,7 +80,7 @@ test_expect_success 'basic want-ref' '
 	EOF
 	git rev-parse f | sort >expected_commits &&
 
-	test-pkt-line pack >in <<-EOF &&
+	test-tool pkt-line pack >in <<-EOF &&
 	command=fetch
 	0001
 	no-progress
@@ -101,7 +101,7 @@ test_expect_success 'multiple want-ref lines' '
 	EOF
 	git rev-parse c d | sort >expected_commits &&
 
-	test-pkt-line pack >in <<-EOF &&
+	test-tool pkt-line pack >in <<-EOF &&
 	command=fetch
 	0001
 	no-progress
@@ -122,7 +122,7 @@ test_expect_success 'mix want and want-ref' '
 	EOF
 	git rev-parse e f | sort >expected_commits &&
 
-	test-pkt-line pack >in <<-EOF &&
+	test-tool pkt-line pack >in <<-EOF &&
 	command=fetch
 	0001
 	no-progress
@@ -143,7 +143,7 @@ test_expect_success 'want-ref with ref we already have commit for' '
 	EOF
 	>expected_commits &&
 
-	test-pkt-line pack >in <<-EOF &&
+	test-tool pkt-line pack >in <<-EOF &&
 	command=fetch
 	0001
 	no-progress

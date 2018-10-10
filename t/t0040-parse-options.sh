@@ -8,7 +8,7 @@ test_description='our own option parser'
 . ./test-lib.sh
 
 cat >expect <<\EOF
-usage: test-parse-options <options>
+usage: test-tool parse-options <options>
 
     A helper function for the parse-options API.
 
@@ -52,7 +52,7 @@ Standard options
 EOF
 
 test_expect_success 'test help' '
-	test_must_fail test-parse-options -h >output 2>output.err &&
+	test_must_fail test-tool parse-options -h >output 2>output.err &&
 	test_must_be_empty output.err &&
 	test_i18ncmp expect output
 '
@@ -64,7 +64,7 @@ check () {
 	shift &&
 	expect="$1" &&
 	shift &&
-	test-parse-options --expect="$what $expect" "$@"
+	test-tool parse-options --expect="$what $expect" "$@"
 }
 
 check_unknown_i18n() {
@@ -75,7 +75,7 @@ check_unknown_i18n() {
 		echo error: unknown switch \`${1#-}\' >expect ;;
 	esac &&
 	cat expect.err >>expect &&
-	test_must_fail test-parse-options $* >output 2>output.err &&
+	test_must_fail test-tool parse-options $* >output 2>output.err &&
 	test_must_be_empty output &&
 	test_i18ncmp expect output.err
 }
@@ -133,7 +133,7 @@ file: prefix/my.file
 EOF
 
 test_expect_success 'short options' '
-	test-parse-options -s123 -b -i 1729 -m 16k -b -vv -n -F my.file \
+	test-tool parse-options -s123 -b -i 1729 -m 16k -b -vv -n -F my.file \
 	>output 2>output.err &&
 	test_cmp expect output &&
 	test_must_be_empty output.err
@@ -153,7 +153,7 @@ file: prefix/fi.le
 EOF
 
 test_expect_success 'long options' '
-	test-parse-options --boolean --integer 1729 --magnitude 16k \
+	test-tool parse-options --boolean --integer 1729 --magnitude 16k \
 		--boolean --string2=321 --verbose --verbose --no-dry-run \
 		--abbrev=10 --file fi.le --obsolete \
 		>output 2>output.err &&
@@ -162,9 +162,9 @@ test_expect_success 'long options' '
 '
 
 test_expect_success 'missing required value' '
-	test_expect_code 129 test-parse-options -s &&
-	test_expect_code 129 test-parse-options --string &&
-	test_expect_code 129 test-parse-options --file
+	test_expect_code 129 test-tool parse-options -s &&
+	test_expect_code 129 test-tool parse-options --string &&
+	test_expect_code 129 test-tool parse-options --file
 '
 
 cat >expect <<\EOF
@@ -184,7 +184,7 @@ arg 02: --boolean
 EOF
 
 test_expect_success 'intermingled arguments' '
-	test-parse-options a1 --string 123 b1 --boolean -j 13 -- --boolean \
+	test-tool parse-options a1 --string 123 b1 --boolean -j 13 -- --boolean \
 		>output 2>output.err &&
 	test_must_be_empty output.err &&
 	test_cmp expect output
@@ -204,21 +204,21 @@ file: (not set)
 EOF
 
 test_expect_success 'unambiguously abbreviated option' '
-	test-parse-options --int 2 --boolean --no-bo >output 2>output.err &&
+	test-tool parse-options --int 2 --boolean --no-bo >output 2>output.err &&
 	test_must_be_empty output.err &&
 	test_cmp expect output
 '
 
 test_expect_success 'unambiguously abbreviated option with "="' '
-	test-parse-options --expect="integer: 2" --int=2
+	test-tool parse-options --expect="integer: 2" --int=2
 '
 
 test_expect_success 'ambiguously abbreviated option' '
-	test_expect_code 129 test-parse-options --strin 123
+	test_expect_code 129 test-tool parse-options --strin 123
 '
 
 test_expect_success 'non ambiguous option (after two options it abbreviates)' '
-	test-parse-options --expect="string: 123" --st 123
+	test-tool parse-options --expect="string: 123" --st 123
 '
 
 cat >typo.err <<\EOF
@@ -226,7 +226,7 @@ error: did you mean `--boolean` (with two dashes ?)
 EOF
 
 test_expect_success 'detect possible typos' '
-	test_must_fail test-parse-options -boolean >output 2>output.err &&
+	test_must_fail test-tool parse-options -boolean >output 2>output.err &&
 	test_must_be_empty output &&
 	test_cmp typo.err output.err
 '
@@ -236,13 +236,13 @@ error: did you mean `--ambiguous` (with two dashes ?)
 EOF
 
 test_expect_success 'detect possible typos' '
-	test_must_fail test-parse-options -ambiguous >output 2>output.err &&
+	test_must_fail test-tool parse-options -ambiguous >output 2>output.err &&
 	test_must_be_empty output &&
 	test_cmp typo.err output.err
 '
 
 test_expect_success 'keep some options as arguments' '
-	test-parse-options --expect="arg 00: --quux" --quux
+	test-tool parse-options --expect="arg 00: --quux" --quux
 '
 
 cat >expect <<\EOF
@@ -260,7 +260,7 @@ arg 00: foo
 EOF
 
 test_expect_success 'OPT_DATE() works' '
-	test-parse-options -t "1970-01-01 00:00:01 +0000" \
+	test-tool parse-options -t "1970-01-01 00:00:01 +0000" \
 		foo -q >output 2>output.err &&
 	test_must_be_empty output.err &&
 	test_cmp expect output
@@ -281,13 +281,13 @@ file: (not set)
 EOF
 
 test_expect_success 'OPT_CALLBACK() and OPT_BIT() work' '
-	test-parse-options --length=four -b -4 >output 2>output.err &&
+	test-tool parse-options --length=four -b -4 >output 2>output.err &&
 	test_must_be_empty output.err &&
 	test_cmp expect output
 '
 
 test_expect_success 'OPT_CALLBACK() and callback errors work' '
-	test_must_fail test-parse-options --no-length >output 2>output.err &&
+	test_must_fail test-tool parse-options --no-length >output 2>output.err &&
 	test_must_be_empty output &&
 	test_must_be_empty output.err
 '
@@ -306,31 +306,31 @@ file: (not set)
 EOF
 
 test_expect_success 'OPT_BIT() and OPT_SET_INT() work' '
-	test-parse-options --set23 -bbbbb --no-or4 >output 2>output.err &&
+	test-tool parse-options --set23 -bbbbb --no-or4 >output 2>output.err &&
 	test_must_be_empty output.err &&
 	test_cmp expect output
 '
 
 test_expect_success 'OPT_NEGBIT() and OPT_SET_INT() work' '
-	test-parse-options --set23 -bbbbb --neg-or4 >output 2>output.err &&
+	test-tool parse-options --set23 -bbbbb --neg-or4 >output 2>output.err &&
 	test_must_be_empty output.err &&
 	test_cmp expect output
 '
 
 test_expect_success 'OPT_BIT() works' '
-	test-parse-options --expect="boolean: 6" -bb --or4
+	test-tool parse-options --expect="boolean: 6" -bb --or4
 '
 
 test_expect_success 'OPT_NEGBIT() works' '
-	test-parse-options --expect="boolean: 6" -bb --no-neg-or4
+	test-tool parse-options --expect="boolean: 6" -bb --no-neg-or4
 '
 
 test_expect_success 'OPT_COUNTUP() with PARSE_OPT_NODASH works' '
-	test-parse-options --expect="boolean: 6" + + + + + +
+	test-tool parse-options --expect="boolean: 6" + + + + + +
 '
 
 test_expect_success 'OPT_NUMBER_CALLBACK() works' '
-	test-parse-options --expect="integer: 12345" -12345
+	test-tool parse-options --expect="integer: 12345" -12345
 '
 
 cat >expect <<\EOF
@@ -347,7 +347,7 @@ file: (not set)
 EOF
 
 test_expect_success 'negation of OPT_NONEG flags is not ambiguous' '
-	test-parse-options --no-ambig >output 2>output.err &&
+	test-tool parse-options --no-ambig >output 2>output.err &&
 	test_must_be_empty output.err &&
 	test_cmp expect output
 '
@@ -358,38 +358,38 @@ list: bar
 list: baz
 EOF
 test_expect_success '--list keeps list of strings' '
-	test-parse-options --list foo --list=bar --list=baz >output &&
+	test-tool parse-options --list foo --list=bar --list=baz >output &&
 	test_cmp expect output
 '
 
 test_expect_success '--no-list resets list' '
-	test-parse-options --list=other --list=irrelevant --list=options \
+	test-tool parse-options --list=other --list=irrelevant --list=options \
 		--no-list --list=foo --list=bar --list=baz >output &&
 	test_cmp expect output
 '
 
 test_expect_success 'multiple quiet levels' '
-	test-parse-options --expect="quiet: 3" -q -q -q
+	test-tool parse-options --expect="quiet: 3" -q -q -q
 '
 
 test_expect_success 'multiple verbose levels' '
-	test-parse-options --expect="verbose: 3" -v -v -v
+	test-tool parse-options --expect="verbose: 3" -v -v -v
 '
 
 test_expect_success '--no-quiet sets --quiet to 0' '
-	test-parse-options --expect="quiet: 0" --no-quiet
+	test-tool parse-options --expect="quiet: 0" --no-quiet
 '
 
 test_expect_success '--no-quiet resets multiple -q to 0' '
-	test-parse-options --expect="quiet: 0" -q -q -q --no-quiet
+	test-tool parse-options --expect="quiet: 0" -q -q -q --no-quiet
 '
 
 test_expect_success '--no-verbose sets verbose to 0' '
-	test-parse-options --expect="verbose: 0" --no-verbose
+	test-tool parse-options --expect="verbose: 0" --no-verbose
 '
 
 test_expect_success '--no-verbose resets multiple verbose to 0' '
-	test-parse-options --expect="verbose: 0" -v -v -v --no-verbose
+	test-tool parse-options --expect="verbose: 0" -v -v -v --no-verbose
 '
 
 test_done

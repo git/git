@@ -334,7 +334,7 @@ test_expect_success 'even with handcrafted request, filter does not work if not 
 	git -C server config uploadpack.allowfilter 0 &&
 
 	# Custom request that tries to filter even though it is not advertised.
-	test-pkt-line pack >in <<-EOF &&
+	test-tool pkt-line pack >in <<-EOF &&
 	command=fetch
 	0001
 	want $(git -C server rev-parse master)

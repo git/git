@@ -84,21 +84,21 @@ test_expect_success 'setup' '
 
 # test that the fsmonitor extension is off by default
 test_expect_success 'fsmonitor extension is off by default' '
-	test-dump-fsmonitor >actual &&
+	test-tool dump-fsmonitor >actual &&
 	grep "^no fsmonitor" actual
 '
 
 # test that "update-index --fsmonitor" adds the fsmonitor extension
 test_expect_success 'update-index --fsmonitor" adds the fsmonitor extension' '
 	git update-index --fsmonitor &&
-	test-dump-fsmonitor >actual &&
+	test-tool dump-fsmonitor >actual &&
 	grep "^fsmonitor last update" actual
 '
 
 # test that "update-index --no-fsmonitor" removes the fsmonitor extension
 test_expect_success 'update-index --no-fsmonitor" removes the fsmonitor extension' '
 	git update-index --no-fsmonitor &&
-	test-dump-fsmonitor >actual &&
+	test-tool dump-fsmonitor >actual &&
 	grep "^no fsmonitor" actual
 '
 
@@ -307,9 +307,9 @@ test_expect_success 'splitting the index results in the same state' '
 	dirty_repo &&
 	git update-index --fsmonitor  &&
 	git ls-files -f >expect &&
-	test-dump-fsmonitor >&2 && echo &&
+	test-tool dump-fsmonitor >&2 && echo &&
 	git update-index --fsmonitor --split-index &&
-	test-dump-fsmonitor >&2 && echo &&
+	test-tool dump-fsmonitor >&2 && echo &&
 	git ls-files -f >actual &&
 	test_cmp expect actual
 '
@@ -333,7 +333,7 @@ test_expect_success UNTRACKED_CACHE 'ignore .git changes when invalidating UNTR'
 		git update-index --fsmonitor &&
 		GIT_TRACE_UNTRACKED_STATS="$TRASH_DIRECTORY/trace-before" \
 		git status &&
-		test-dump-untracked-cache >../before
+		test-tool dump-untracked-cache >../before
 	) &&
 	cat >>dot-git/.git/hooks/fsmonitor-test <<-\EOF &&
 	printf ".git\0"
@@ -345,7 +345,7 @@ test_expect_success UNTRACKED_CACHE 'ignore .git changes when invalidating UNTR'
 		cd dot-git &&
 		GIT_TRACE_UNTRACKED_STATS="$TRASH_DIRECTORY/trace-after" \
 		git status &&
-		test-dump-untracked-cache >../after
+		test-tool dump-untracked-cache >../after
 	) &&
 	grep "directory invalidation" trace-before >>before &&
 	grep "directory invalidation" trace-after >>after &&
