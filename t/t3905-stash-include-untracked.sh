@@ -142,7 +142,7 @@ test_expect_success 'stash save --include-untracked removed files' '
 	rm -f file &&
 	git stash save --include-untracked &&
 	echo 1 > expect &&
-	test_cmp file expect
+	test_cmp expect file
 '
 
 rm -f expect

@@ -36,7 +36,7 @@ EOF
 test_expect_success 'parents of stash' '
 	test $(git rev-parse stash^) = $(git rev-parse HEAD) &&
 	git diff stash^2..stash > output &&
-	test_cmp output expect
+	test_cmp expect output
 '
 
 test_expect_success 'applying bogus stash does nothing' '
@@ -210,9 +210,9 @@ test_expect_success 'stash branch' '
 	test refs/heads/stashbranch = $(git symbolic-ref HEAD) &&
 	test $(git rev-parse HEAD) = $(git rev-parse master^) &&
 	git diff --cached > output &&
-	test_cmp output expect &&
+	test_cmp expect output &&
 	git diff > output &&
-	test_cmp output expect1 &&
+	test_cmp expect1 output &&
 	git add file &&
 	git commit -m alternate\ second &&
 	git diff master..stashbranch > output &&
@@ -710,7 +710,7 @@ test_expect_success 'stash where working directory contains "HEAD" file' '
 	git diff-index --cached --quiet HEAD &&
 	test "$(git rev-parse stash^)" = "$(git rev-parse HEAD)" &&
 	git diff stash^..stash > output &&
-	test_cmp output expect
+	test_cmp expect output
 '
 
 test_expect_success 'store called with invalid commit' '

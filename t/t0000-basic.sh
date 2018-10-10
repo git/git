@@ -1097,7 +1097,7 @@ test_expect_success 'validate git diff-files output for a know cache/work tree s
 :120000 120000 $(test_oid subp3s) $ZERO_OID M	path3/subp3/file3sym
 EOF
 	git diff-files >current &&
-	test_cmp current expected
+	test_cmp expected current
 '
 
 test_expect_success 'git update-index --refresh should succeed' '

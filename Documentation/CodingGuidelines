@@ -118,6 +118,24 @@ For shell scripts specifically (not exhaustive):
 		do this
 	fi
 
+ - If a command sequence joined with && or || or | spans multiple
+   lines, put each command on a separate line and put && and || and |
+   operators at the end of each line, rather than the start. This
+   means you don't need to use \ to join lines, since the above
+   operators imply the sequence isn't finished.
+
+	(incorrect)
+	grep blob verify_pack_result \
+	| awk -f print_1.awk \
+	| sort >actual &&
+	...
+
+	(correct)
+	grep blob verify_pack_result |
+	awk -f print_1.awk |
+	sort >actual &&
+	...
+
  - We prefer "test" over "[ ... ]".
 
  - We do not write the noiseword "function" in front of shell

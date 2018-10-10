@@ -313,9 +313,9 @@ test_expect_success 'applying beyond EOF requires one non-blank context line' '
 	{ echo a; echo; } >one &&
 	cp one expect &&
 	test_must_fail git apply --whitespace=fix patch &&
-	test_cmp one expect &&
+	test_cmp expect one &&
 	test_must_fail git apply --ignore-space-change --whitespace=fix patch &&
-	test_cmp one expect
+	test_cmp expect one
 '
 
 test_expect_success 'tons of blanks at EOF should not apply' '
@@ -342,10 +342,10 @@ test_expect_success 'missing blank line at end with --whitespace=fix' '
 	cp one saved-one &&
 	test_must_fail git apply patch &&
 	git apply --whitespace=fix patch &&
-	test_cmp one expect &&
+	test_cmp expect one &&
 	mv saved-one one &&
 	git apply --ignore-space-change --whitespace=fix patch &&
-	test_cmp one expect
+	test_cmp expect one
 '
 
 test_expect_success 'two missing blank lines at end with --whitespace=fix' '
@@ -360,11 +360,11 @@ test_expect_success 'two missing blank lines at end with --whitespace=fix' '
 	cp no-blank-lines one &&
 	test_must_fail git apply patch &&
 	git apply --whitespace=fix patch &&
-	test_cmp one expect &&
+	test_cmp expect one &&
 	mv no-blank-lines one &&
 	test_must_fail git apply patch &&
 	git apply --ignore-space-change --whitespace=fix patch &&
-	test_cmp one expect
+	test_cmp expect one
 '
 
 test_expect_success 'missing blank line at end, insert before end, --whitespace=fix' '
@@ -376,7 +376,7 @@ test_expect_success 'missing blank line at end, insert before end, --whitespace=
 	echo a >one &&
 	test_must_fail git apply patch &&
 	git apply --whitespace=fix patch &&
-	test_cmp one expect
+	test_cmp expect one
 '
 
 test_expect_success 'shrink file with tons of missing blanks at end of file' '
@@ -392,10 +392,10 @@ test_expect_success 'shrink file with tons of missing blanks at end of file' '
 	cp no-blank-lines one &&
 	test_must_fail git apply patch &&
 	git apply --whitespace=fix patch &&
-	test_cmp one expect &&
+	test_cmp expect one &&
 	mv no-blank-lines one &&
 	git apply --ignore-space-change --whitespace=fix patch &&
-	test_cmp one expect
+	test_cmp expect one
 '
 
 test_expect_success 'missing blanks at EOF must only match blank lines' '
@@ -427,7 +427,7 @@ test_expect_success 'missing blank line should match context line with spaces' '
 	git add one &&
 
 	git apply --whitespace=fix patch &&
-	test_cmp one expect
+	test_cmp expect one
 '
 
 sed -e's/Z//' >one <<EOF
@@ -447,7 +447,7 @@ test_expect_success 'same, but with the --ignore-space-option' '
 
 	git checkout-index -f one &&
 	git apply --ignore-space-change --whitespace=fix patch &&
-	test_cmp one expect
+	test_cmp expect one
 '
 
 test_expect_success 'same, but with CR-LF line endings && cr-at-eol set' '
@@ -464,7 +464,7 @@ test_expect_success 'same, but with CR-LF line endings && cr-at-eol set' '
 	mv save-one one &&
 
 	git apply --ignore-space-change --whitespace=fix patch &&
-	test_cmp one expect
+	test_cmp expect one
 '
 
 test_expect_success 'CR-LF line endings && add line && text=auto' '
@@ -478,7 +478,7 @@ test_expect_success 'CR-LF line endings && add line && text=auto' '
 	mv save-one one &&
 	echo "one text=auto" >.gitattributes &&
 	git apply patch &&
-	test_cmp one expect
+	test_cmp expect one
 '
 
 test_expect_success 'CR-LF line endings && change line && text=auto' '
@@ -491,7 +491,7 @@ test_expect_success 'CR-LF line endings && change line && text=auto' '
 	mv save-one one &&
 	echo "one text=auto" >.gitattributes &&
 	git apply patch &&
-	test_cmp one expect
+	test_cmp expect one
 '
 
 test_expect_success 'LF in repo, CRLF in worktree && change line && text=auto' '
@@ -503,7 +503,7 @@ test_expect_success 'LF in repo, CRLF in worktree && change line && text=auto' '
 	echo "one text=auto" >.gitattributes &&
 	git -c core.eol=CRLF apply patch &&
 	printf "b\r\n" >expect &&
-	test_cmp one expect
+	test_cmp expect one
 '
 
 test_expect_success 'whitespace=fix to expand' '

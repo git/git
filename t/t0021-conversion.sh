@@ -166,10 +166,10 @@ test_expect_success expanded_in_repo '
 	rm -f expanded-keywords expanded-keywords-crlf &&
 
 	git checkout -- expanded-keywords &&
-	test_cmp expanded-keywords expected-output &&
+	test_cmp expected-output expanded-keywords &&
 
 	git checkout -- expanded-keywords-crlf &&
-	test_cmp expanded-keywords-crlf expected-output-crlf
+	test_cmp expected-output-crlf expanded-keywords-crlf
 '
 
 # The use of %f in a filter definition is expanded to the path to

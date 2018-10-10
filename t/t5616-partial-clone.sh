@@ -34,10 +34,12 @@ test_expect_success 'setup bare clone for server' '
 # confirm partial clone was registered in the local config.
 test_expect_success 'do partial clone 1' '
 	git clone --no-checkout --filter=blob:none "file://$(pwd)/srv.bare" pc1 &&
-	git -C pc1 rev-list HEAD --quiet --objects --missing=print \
-		| awk -f print_1.awk \
-		| sed "s/?//" \
-		| sort >observed.oids &&
+
+	git -C pc1 rev-list --quiet --objects --missing=print HEAD >revs &&
+	awk -f print_1.awk revs |
+	sed "s/?//" |
+	sort >observed.oids &&
+
 	test_cmp expect_1.oids observed.oids &&
 	test "$(git -C pc1 config --local core.repositoryformatversion)" = "1" &&
 	test "$(git -C pc1 config --local extensions.partialclone)" = "origin" &&
@@ -46,10 +48,10 @@ test_expect_success 'do partial clone 1' '
 
 # checkout master to force dynamic object fetch of blobs at HEAD.
 test_expect_success 'verify checkout with dynamic object fetch' '
-	git -C pc1 rev-list HEAD --quiet --objects --missing=print >observed &&
+	git -C pc1 rev-list --quiet --objects --missing=print HEAD >observed &&
 	test_line_count = 4 observed &&
 	git -C pc1 checkout master &&
-	git -C pc1 rev-list HEAD --quiet --objects --missing=print >observed &&
+	git -C pc1 rev-list --quiet --objects --missing=print HEAD >observed &&
 	test_line_count = 0 observed
 '
 
@@ -72,7 +74,8 @@ test_expect_success 'push new commits to server' '
 # have the new blobs.
 test_expect_success 'partial fetch inherits filter settings' '
 	git -C pc1 fetch origin &&
-	git -C pc1 rev-list master..origin/master --quiet --objects --missing=print >observed &&
+	git -C pc1 rev-list --quiet --objects --missing=print \
+		master..origin/master >observed &&
 	test_line_count = 5 observed
 '
 
@@ -80,7 +83,8 @@ test_expect_success 'partial fetch inherits filter settings' '
 # we should only get 1 new blob (for the file in origin/master).
 test_expect_success 'verify diff causes dynamic object fetch' '
 	git -C pc1 diff master..origin/master -- file.1.txt &&
-	git -C pc1 rev-list master..origin/master --quiet --objects --missing=print >observed &&
+	git -C pc1 rev-list --quiet --objects --missing=print \
+		 master..origin/master >observed &&
 	test_line_count = 4 observed
 '
 
@@ -89,7 +93,8 @@ test_expect_success 'verify diff causes dynamic object fetch' '
 test_expect_success 'verify blame causes dynamic object fetch' '
 	git -C pc1 blame origin/master -- file.1.txt >observed.blame &&
 	test_cmp expect.blame observed.blame &&
-	git -C pc1 rev-list master..origin/master --quiet --objects --missing=print >observed &&
+	git -C pc1 rev-list --quiet --objects --missing=print \
+		master..origin/master >observed &&
 	test_line_count = 0 observed
 '
 
@@ -109,7 +114,8 @@ test_expect_success 'push new commits to server for file.2.txt' '
 # Verify we have all the new blobs.
 test_expect_success 'override inherited filter-spec using --no-filter' '
 	git -C pc1 fetch --no-filter origin &&
-	git -C pc1 rev-list master..origin/master --quiet --objects --missing=print >observed &&
+	git -C pc1 rev-list --quiet --objects --missing=print \
+		master..origin/master >observed &&
 	test_line_count = 0 observed
 '
 
@@ -130,16 +136,22 @@ test_expect_success 'push new commits to server for file.3.txt' '
 # perhaps combined with a command in dry-run mode.
 test_expect_success 'manual prefetch of missing objects' '
 	git -C pc1 fetch --filter=blob:none origin &&
-	git -C pc1 rev-list master..origin/master --quiet --objects --missing=print \
-		| awk -f print_1.awk \
-		| sed "s/?//" \
-		| sort >observed.oids &&
+
+	git -C pc1 rev-list --quiet --objects --missing=print \
+		 master..origin/master >revs &&
+	awk -f print_1.awk revs |
+	sed "s/?//" |
+	sort >observed.oids &&
+
 	test_line_count = 6 observed.oids &&
 	git -C pc1 fetch-pack --stdin "file://$(pwd)/srv.bare" <observed.oids &&
-	git -C pc1 rev-list master..origin/master --quiet --objects --missing=print \
-		| awk -f print_1.awk \
-		| sed "s/?//" \
-		| sort >observed.oids &&
+
+	git -C pc1 rev-list --quiet --objects --missing=print \
+		master..origin/master >revs &&
+	awk -f print_1.awk revs |
+	sed "s/?//" |
+	sort >observed.oids &&
+
 	test_line_count = 0 observed.oids
 '
 
@@ -194,7 +206,7 @@ test_expect_success 'upon cloning, check that all refs point to objects' '
 
 	# Craft a packfile not including that blob.
 	git -C "$SERVER" rev-parse HEAD |
-		git -C "$SERVER" pack-objects --stdout >incomplete.pack &&
+	git -C "$SERVER" pack-objects --stdout >incomplete.pack &&
 
 	# Replace the existing packfile with the crafted one. The protocol
 	# requires that the packfile be sent in sideband 1, hence the extra

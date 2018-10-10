@@ -401,13 +401,13 @@ This test harness library does the following things:
    consistently when command line arguments --verbose (or -v),
    --debug (or -d), and --immediate (or -i) is given.
 
-Do's, don'ts & things to keep in mind
--------------------------------------
+Do's & don'ts
+-------------
 
 Here are a few examples of things you probably should and shouldn't do
 when writing tests.
 
-Do:
+Here are the "do's:"
 
  - Put all code inside test_expect_success and other assertions.
 
@@ -452,16 +452,21 @@ Do:
    Windows, where the shell (MSYS bash) mangles absolute path names.
    For details, see the commit message of 4114156ae9.
 
-Don't:
+ - Remember that inside the <script> part, the standard output and
+   standard error streams are discarded, and the test harness only
+   reports "ok" or "not ok" to the end user running the tests. Under
+   --verbose, they are shown to help debug the tests.
 
- - exit() within a <script> part.
+And here are the "don'ts:"
+
+ - Don't exit() within a <script> part.
 
    The harness will catch this as a programming error of the test.
    Use test_done instead if you need to stop the tests early (see
    "Skipping tests" below).
 
- - use '! git cmd' when you want to make sure the git command exits
-   with failure in a controlled way by calling "die()".  Instead,
+ - Don't use '! git cmd' when you want to make sure the git command
+   exits with failure in a controlled way by calling "die()".  Instead,
    use 'test_must_fail git cmd'.  This will signal a failure if git
    dies in an unexpected way (e.g. segfault).
 
@@ -469,8 +474,35 @@ Don't:
    platform commands; just use '! cmd'.  We are not in the business
    of verifying that the world given to us sanely works.
 
- - use perl without spelling it as "$PERL_PATH". This is to help our
-   friends on Windows where the platform Perl often adds CR before
+ - Don't feed the output of a git command to a pipe, as in:
+
+     git -C repo ls-files |
+     xargs -n 1 basename |
+     grep foo
+
+   which will discard git's exit code and may mask a crash. In the
+   above example, all exit codes are ignored except grep's.
+
+   Instead, write the output of that command to a temporary
+   file with ">" or assign it to a variable with "x=$(git ...)" rather
+   than pipe it.
+
+ - Don't use command substitution in a way that discards git's exit
+   code. When assigning to a variable, the exit code is not discarded,
+   e.g.:
+
+     x=$(git cat-file -p $sha) &&
+     ...
+
+   is OK because a crash in "git cat-file" will cause the "&&" chain
+   to fail, but:
+
+     test "refs/heads/foo" = "$(git symbolic-ref HEAD)"
+
+   is not OK and a crash in git could go undetected.
+
+ - Don't use perl without spelling it as "$PERL_PATH". This is to help
+   our friends on Windows where the platform Perl often adds CR before
    the end of line, and they bundle Git with a version of Perl that
    does not do so, whose path is specified with $PERL_PATH. Note that we
    provide a "perl" function which uses $PERL_PATH under the hood, so
@@ -478,17 +510,17 @@ Don't:
    (but you do, for example, on a shebang line or in a sub script
    created via "write_script").
 
- - use sh without spelling it as "$SHELL_PATH", when the script can
-   be misinterpreted by broken platform shell (e.g. Solaris).
+ - Don't use sh without spelling it as "$SHELL_PATH", when the script
+   can be misinterpreted by broken platform shell (e.g. Solaris).
 
- - chdir around in tests.  It is not sufficient to chdir to
+ - Don't chdir around in tests.  It is not sufficient to chdir to
    somewhere and then chdir back to the original location later in
    the test, as any intermediate step can fail and abort the test,
    causing the next test to start in an unexpected directory.  Do so
    inside a subshell if necessary.
 
- - save and verify the standard error of compound commands, i.e. group
-   commands, subshells, and shell functions (except test helper
+ - Don't save and verify the standard error of compound commands, i.e.
+   group commands, subshells, and shell functions (except test helper
    functions like 'test_must_fail') like this:
 
      ( cd dir && git cmd ) 2>error &&
@@ -503,7 +535,7 @@ Don't:
      ( cd dir && git cmd 2>../error ) &&
      test_cmp expect error
 
- - Break the TAP output
+ - Don't break the TAP output
 
    The raw output from your test may be interpreted by a TAP harness. TAP
    harnesses will ignore everything they don't know about, but don't step
@@ -522,13 +554,6 @@ Don't:
    (see https://metacpan.org/pod/TAP::Parser::Grammar#TAP-GRAMMAR)
    but the best indication is to just run the tests with prove(1),
    it'll complain if anything is amiss.
-
-Keep in mind:
-
- - Inside the <script> part, the standard output and standard error
-   streams are discarded, and the test harness only reports "ok" or
-   "not ok" to the end user running the tests. Under --verbose, they
-   are shown to help debugging the tests.
 
 
 Skipping tests
