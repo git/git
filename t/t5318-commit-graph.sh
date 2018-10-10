@@ -8,7 +8,8 @@ test_expect_success 'setup full repo' '
 	cd "$TRASH_DIRECTORY/full" &&
 	git init &&
 	git config core.commitGraph true &&
-	objdir=".git/objects"
+	objdir=".git/objects" &&
+	test_oid_init
 '
 
 test_expect_success 'verify graph with no graph file' '
@@ -273,7 +274,7 @@ test_expect_success 'git commit-graph verify' '
 
 NUM_COMMITS=9
 NUM_OCTOPUS_EDGES=2
-HASH_LEN=20
+HASH_LEN="$(test_oid rawsz)"
 GRAPH_BYTE_VERSION=4
 GRAPH_BYTE_HASH=5
 GRAPH_BYTE_CHUNK_COUNT=6
