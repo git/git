@@ -848,5 +848,23 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 		}
 	}
 
+	if (!git_config_get_bool("core.multipackindex", &i) && i) {
+		struct child_process midx_verify = CHILD_PROCESS_INIT;
+		const char *midx_argv[] = { "multi-pack-index", "verify", NULL, NULL, NULL };
+
+		midx_verify.argv = midx_argv;
+		midx_verify.git_cmd = 1;
+		if (run_command(&midx_verify))
+			errors_found |= ERROR_COMMIT_GRAPH;
+
+		prepare_alt_odb(the_repository);
+		for (alt =  the_repository->objects->alt_odb_list; alt; alt = alt->next) {
+			midx_argv[2] = "--object-dir";
+			midx_argv[3] = alt->path;
+			if (run_command(&midx_verify))
+				errors_found |= ERROR_COMMIT_GRAPH;
+		}
+	}
+
 	return errors_found;
 }

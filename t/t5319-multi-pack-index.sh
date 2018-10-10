@@ -150,6 +150,125 @@ test_expect_success 'write midx with twelve packs' '
 
 compare_results_with_midx "twelve packs"
 
+test_expect_success 'verify multi-pack-index success' '
+	git multi-pack-index verify --object-dir=$objdir
+'
+
+# usage: corrupt_midx_and_verify <pos> <data> <objdir> <string>
+corrupt_midx_and_verify() {
+	POS=$1 &&
+	DATA="${2:-\0}" &&
+	OBJDIR=$3 &&
+	GREPSTR="$4" &&
+	COMMAND="$5" &&
+	if test -z "$COMMAND"
+	then
+		COMMAND="git multi-pack-index verify --object-dir=$OBJDIR"
+	fi &&
+	FILE=$OBJDIR/pack/multi-pack-index &&
+	chmod a+w $FILE &&
+	test_when_finished mv midx-backup $FILE &&
+	cp $FILE midx-backup &&
+	printf "$DATA" | dd of="$FILE" bs=1 seek="$POS" conv=notrunc &&
+	test_must_fail $COMMAND 2>test_err &&
+	grep -v "^+" test_err >err &&
+	test_i18ngrep "$GREPSTR" err
+}
+
+test_expect_success 'verify bad signature' '
+	corrupt_midx_and_verify 0 "\00" $objdir \
+		"multi-pack-index signature"
+'
+
+HASH_LEN=20
+NUM_OBJECTS=74
+MIDX_BYTE_VERSION=4
+MIDX_BYTE_OID_VERSION=5
+MIDX_BYTE_CHUNK_COUNT=6
+MIDX_HEADER_SIZE=12
+MIDX_BYTE_CHUNK_ID=$MIDX_HEADER_SIZE
+MIDX_BYTE_CHUNK_OFFSET=$(($MIDX_HEADER_SIZE + 4))
+MIDX_NUM_CHUNKS=5
+MIDX_CHUNK_LOOKUP_WIDTH=12
+MIDX_OFFSET_PACKNAMES=$(($MIDX_HEADER_SIZE + \
+			 $MIDX_NUM_CHUNKS * $MIDX_CHUNK_LOOKUP_WIDTH))
+MIDX_BYTE_PACKNAME_ORDER=$(($MIDX_OFFSET_PACKNAMES + 2))
+MIDX_OFFSET_OID_FANOUT=$(($MIDX_OFFSET_PACKNAMES + 652))
+MIDX_OID_FANOUT_WIDTH=4
+MIDX_BYTE_OID_FANOUT_ORDER=$((MIDX_OFFSET_OID_FANOUT + 250 * $MIDX_OID_FANOUT_WIDTH + 1))
+MIDX_OFFSET_OID_LOOKUP=$(($MIDX_OFFSET_OID_FANOUT + 256 * $MIDX_OID_FANOUT_WIDTH))
+MIDX_BYTE_OID_LOOKUP=$(($MIDX_OFFSET_OID_LOOKUP + 16 * $HASH_LEN))
+MIDX_OFFSET_OBJECT_OFFSETS=$(($MIDX_OFFSET_OID_LOOKUP + $NUM_OBJECTS * $HASH_LEN))
+MIDX_OFFSET_WIDTH=8
+MIDX_BYTE_PACK_INT_ID=$(($MIDX_OFFSET_OBJECT_OFFSETS + 16 * $MIDX_OFFSET_WIDTH + 2))
+MIDX_BYTE_OFFSET=$(($MIDX_OFFSET_OBJECT_OFFSETS + 16 * $MIDX_OFFSET_WIDTH + 6))
+
+test_expect_success 'verify bad version' '
+	corrupt_midx_and_verify $MIDX_BYTE_VERSION "\00" $objdir \
+		"multi-pack-index version"
+'
+
+test_expect_success 'verify bad OID version' '
+	corrupt_midx_and_verify $MIDX_BYTE_OID_VERSION "\02" $objdir \
+		"hash version"
+'
+
+test_expect_success 'verify truncated chunk count' '
+	corrupt_midx_and_verify $MIDX_BYTE_CHUNK_COUNT "\01" $objdir \
+		"missing required"
+'
+
+test_expect_success 'verify extended chunk count' '
+	corrupt_midx_and_verify $MIDX_BYTE_CHUNK_COUNT "\07" $objdir \
+		"terminating multi-pack-index chunk id appears earlier than expected"
+'
+
+test_expect_success 'verify missing required chunk' '
+	corrupt_midx_and_verify $MIDX_BYTE_CHUNK_ID "\01" $objdir \
+		"missing required"
+'
+
+test_expect_success 'verify invalid chunk offset' '
+	corrupt_midx_and_verify $MIDX_BYTE_CHUNK_OFFSET "\01" $objdir \
+		"invalid chunk offset (too large)"
+'
+
+test_expect_success 'verify packnames out of order' '
+	corrupt_midx_and_verify $MIDX_BYTE_PACKNAME_ORDER "z" $objdir \
+		"pack names out of order"
+'
+
+test_expect_success 'verify packnames out of order' '
+	corrupt_midx_and_verify $MIDX_BYTE_PACKNAME_ORDER "a" $objdir \
+		"failed to load pack"
+'
+
+test_expect_success 'verify oid fanout out of order' '
+	corrupt_midx_and_verify $MIDX_BYTE_OID_FANOUT_ORDER "\01" $objdir \
+		"oid fanout out of order"
+'
+
+test_expect_success 'verify oid lookup out of order' '
+	corrupt_midx_and_verify $MIDX_BYTE_OID_LOOKUP "\00" $objdir \
+		"oid lookup out of order"
+'
+
+test_expect_success 'verify incorrect pack-int-id' '
+	corrupt_midx_and_verify $MIDX_BYTE_PACK_INT_ID "\07" $objdir \
+		"bad pack-int-id"
+'
+
+test_expect_success 'verify incorrect offset' '
+	corrupt_midx_and_verify $MIDX_BYTE_OFFSET "\07" $objdir \
+		"incorrect object offset"
+'
+
+test_expect_success 'git-fsck incorrect offset' '
+	corrupt_midx_and_verify $MIDX_BYTE_OFFSET "\07" $objdir \
+		"incorrect object offset" \
+		"git -c core.multipackindex=true fsck"
+'
+
 test_expect_success 'repack removes multi-pack-index' '
 	test_path_is_file $objdir/pack/multi-pack-index &&
 	git repack -adf &&
@@ -187,7 +306,6 @@ test_expect_success 'multi-pack-index in an alternate' '
 
 compare_results_with_midx "with alternate (remote midx)"
 
-
 # usage: corrupt_data <file> <pos> [<data>]
 corrupt_data () {
 	file=$1
@@ -212,6 +330,22 @@ test_expect_success 'force some 64-bit offsets with pack-objects' '
 	corrupt_data $idx64 2999 "\02" &&
 	midx64=$(git multi-pack-index --object-dir=objects64 write) &&
 	midx_read_expect 1 63 5 objects64 " large-offsets"
+'
+
+test_expect_success 'verify multi-pack-index with 64-bit offsets' '
+	git multi-pack-index verify --object-dir=objects64
+'
+
+NUM_OBJECTS=63
+MIDX_OFFSET_OID_FANOUT=$((MIDX_OFFSET_PACKNAMES + 54))
+MIDX_OFFSET_OID_LOOKUP=$((MIDX_OFFSET_OID_FANOUT + 256 * $MIDX_OID_FANOUT_WIDTH))
+MIDX_OFFSET_OBJECT_OFFSETS=$(($MIDX_OFFSET_OID_LOOKUP + $NUM_OBJECTS * $HASH_LEN))
+MIDX_OFFSET_LARGE_OFFSETS=$(($MIDX_OFFSET_OBJECT_OFFSETS + $NUM_OBJECTS * $MIDX_OFFSET_WIDTH))
+MIDX_BYTE_LARGE_OFFSET=$(($MIDX_OFFSET_LARGE_OFFSETS + 3))
+
+test_expect_success 'verify incorrect 64-bit offset' '
+	corrupt_midx_and_verify $MIDX_BYTE_LARGE_OFFSET "\07" objects64 \
+		"incorrect object offset"
 '
 
 test_done

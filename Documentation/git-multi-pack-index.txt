@@ -27,6 +27,10 @@ write::
 	When given as the verb, write a new MIDX file to
 	`<dir>/packs/multi-pack-index`.
 
+verify::
+	When given as the verb, verify the contents of the MIDX file
+	at `<dir>/packs/multi-pack-index`.
+
 
 EXAMPLES
 --------
@@ -41,6 +45,12 @@ $ git multi-pack-index write
 +
 -----------------------------------------------
 $ git multi-pack-index --object-dir <alt> write
+-----------------------------------------------
+
+* Verify the MIDX file for the packfiles in the current .git folder.
++
+-----------------------------------------------
+$ git multi-pack-index verify
 -----------------------------------------------
 
 
