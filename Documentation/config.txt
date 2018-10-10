@@ -1643,7 +1643,8 @@ gc.writeCommitGraph::
 	for details.
 
 gc.logExpiry::
-	If the file gc.log exists, then `git gc --auto` won't run
+	If the file gc.log exists, then `git gc --auto` will print
+	its content and exit with status zero instead of running
 	unless that file is more than 'gc.logExpiry' old.  Default is
 	"1.day".  See `gc.pruneExpire` for more ways to specify its
 	value.
