@@ -6,7 +6,12 @@ test_description='split index mode tests'
 
 # We need total control of index splitting here
 sane_unset GIT_TEST_SPLIT_INDEX
+
+# Testing a hard coded SHA against an index with an extension
+# that can vary from run to run is problematic so we disable
+# those extensions.
 sane_unset GIT_FSMONITOR_TEST
+sane_unset GIT_TEST_INDEX_THREADS
 
 test_expect_success 'enable split index' '
 	git config splitIndex.maxPercentChange 100 &&
