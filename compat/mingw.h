@@ -296,17 +296,9 @@ int mingw_gethostname(char *host, int namelen);
 struct hostent *mingw_gethostbyname(const char *host);
 #define gethostbyname mingw_gethostbyname
 
-void mingw_freeaddrinfo(struct addrinfo *res);
-#define freeaddrinfo mingw_freeaddrinfo
-
 int mingw_getaddrinfo(const char *node, const char *service,
 		      const struct addrinfo *hints, struct addrinfo **res);
 #define getaddrinfo mingw_getaddrinfo
-
-int mingw_getnameinfo(const struct sockaddr *sa, socklen_t salen,
-		      char *host, DWORD hostlen, char *serv, DWORD servlen,
-		      int flags);
-#define getnameinfo mingw_getnameinfo
 
 int mingw_socket(int domain, int type, int protocol);
 #define socket mingw_socket
@@ -583,6 +575,16 @@ int main(int argc, const char **argv) \
 	return mingw_main(__argc, (void *)__argv); \
 } \
 static int mingw_main(c,v)
+
+/*
+ * For debugging: if a problem occurs, say, in a Git process that is spawned
+ * from another Git process which in turn is spawned from yet another Git
+ * process, it can be quite daunting to figure out what is going on.
+ *
+ * Call this function to open a new MinTTY (this assumes you are in Git for
+ * Windows' SDK) with a GDB that attaches to the current process right away.
+ */
+extern void open_in_gdb(void);
 
 /*
  * Used by Pthread API implementation for Windows
