@@ -31,10 +31,23 @@ REM ================================================================
 
 	SETLOCAL EnableDelayedExpansion
 
+	SET arch=%1
+	IF NOT DEFINED arch (
+		echo defaulting to 'x64-windows`. Invoke %0 with 'x86-windows', 'x64-windows', or 'arm64-windows'
+		set arch=x64-windows
+	)
+
 	@FOR /F "delims=" %%D IN ("%~dp0") DO @SET cwd=%%~fD
 	cd %cwd%
 
 	dir vcpkg\vcpkg.exe >nul 2>nul && GOTO :install_libraries
+
+	git.exe version 2>nul
+	IF ERRORLEVEL 1 (
+	echo "***"
+	echo "Git not found. Please adjust your CMD path or Git install option."
+	echo "***"
+	EXIT /B 1 )
 
 	echo Fetching vcpkg in %cwd%vcpkg
 	git.exe clone https://github.com/Microsoft/vcpkg vcpkg
@@ -48,9 +61,8 @@ REM ================================================================
 	echo Successfully installed %cwd%vcpkg\vcpkg.exe
 
 :install_libraries
-	SET arch=x64-windows
 
-	echo Installing third-party libraries...
+	echo Installing third-party libraries(%arch%)...
 	FOR %%i IN (zlib expat libiconv openssl libssh2 curl) DO (
 	    cd %cwd%vcpkg
 	    IF NOT EXIST "packages\%%i_%arch%" CALL :sub__install_one %%i
@@ -73,8 +85,47 @@ REM ================================================================
 :sub__install_one
 	echo     Installing package %1...
 
-	.\vcpkg.exe install %1:%arch%
+	call :%1_features
+
+	REM vcpkg may not be reliable on slow, intermittent or proxy
+	REM connections, see e.g.
+	REM https://social.msdn.microsoft.com/Forums/windowsdesktop/en-US/4a8f7be5-5e15-4213-a7bb-ddf424a954e6/winhttpsendrequest-ends-with-12002-errorhttptimeout-after-21-seconds-no-matter-what-timeout?forum=windowssdk
+	REM which explains the hidden 21 second timeout
+	REM (last post by Dave : Microsoft - Windows Networking team)
+
+	.\vcpkg.exe install %1%features%:%arch%
 	IF ERRORLEVEL 1 ( EXIT /B 1 )
 
 	echo     Finished %1
 	goto :EOF
+
+::
+:: features for each vcpkg to install
+:: there should be an entry here for each package to install
+:: 'set features=' means use the default otherwise
+:: 'set features=[comma-delimited-feature-set]' is the syntax
+::
+
+:zlib_features
+set features=
+goto :EOF
+
+:expat_features
+set features=
+goto :EOF
+
+:libiconv_features
+set features=
+goto :EOF
+
+:openssl_features
+set features=
+goto :EOF
+
+:libssh2_features
+set features=
+goto :EOF
+
+:curl_features
+set features=[core,openssl,schannel]
+goto :EOF
