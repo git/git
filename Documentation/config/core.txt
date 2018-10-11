@@ -559,6 +559,12 @@ core.unsetenvvars::
 	Defaults to `PERL5LIB` to account for the fact that Git for
 	Windows insists on using its own Perl interpreter.
 
+core.restrictinheritedhandles::
+	Windows-only: override whether spawned processes inherit only standard
+	file handles (`stdin`, `stdout` and `stderr`) or all handles. Can be
+	`auto`, `true` or `false`. Defaults to `auto`, which means `true` on
+	Windows 7 and later, and `false` on older Windows versions.
+
 core.createObject::
 	You can set this to 'link', in which case a hardlink followed by
 	a delete of the source are used to make sure that object creation

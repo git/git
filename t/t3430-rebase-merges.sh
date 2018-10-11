@@ -468,4 +468,10 @@ test_expect_success '--rebase-merges with strategies' '
 	test_cmp expect G.t
 '
 
+test_expect_success '--rebase-merges with commit that can generate bad characters for filename' '
+	git checkout -b colon-in-label E &&
+	git merge -m "colon: this should work" G &&
+	git rebase --rebase-merges --force-rebase E
+'
+
 test_done
