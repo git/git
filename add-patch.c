@@ -6,15 +6,218 @@
 #include "pathspec.h"
 #include "color.h"
 #include "diff.h"
+#include "compat/terminal.h"
 
 enum prompt_mode_type {
-	PROMPT_MODE_CHANGE = 0, PROMPT_DELETION, PROMPT_HUNK
+	PROMPT_MODE_CHANGE = 0, PROMPT_DELETION, PROMPT_HUNK,
+	PROMPT_MODE_MAX, /* must be last */
 };
 
-static const char *prompt_mode[] = {
-	N_("Stage mode change [y,n,a,q,d%s,?]? "),
-	N_("Stage deletion [y,n,a,q,d%s,?]? "),
-	N_("Stage this hunk [y,n,a,q,d%s,?]? ")
+struct patch_mode {
+	/*
+	 * The magic constant 4 is chosen such that all patch modes
+	 * provide enough space for three command-line arguments followed by a
+	 * trailing `NULL`.
+	 */
+	const char *diff_cmd[4], *apply_args[4], *apply_check_args[4];
+	unsigned is_reverse:1, index_only:1, apply_for_checkout:1;
+	const char *prompt_mode[PROMPT_MODE_MAX];
+	const char *edit_hunk_hint, *help_patch_text;
+};
+
+static struct patch_mode patch_mode_add = {
+	.diff_cmd = { "diff-files", NULL },
+	.apply_args = { "--cached", NULL },
+	.apply_check_args = { "--cached", NULL },
+	.prompt_mode = {
+		N_("Stage mode change [y,n,q,a,d%s,?]? "),
+		N_("Stage deletion [y,n,q,a,d%s,?]? "),
+		N_("Stage this hunk [y,n,q,a,d%s,?]? ")
+	},
+	.edit_hunk_hint = N_("If the patch applies cleanly, the edited hunk "
+			     "will immediately be marked for staging."),
+	.help_patch_text =
+		N_("y - stage this hunk\n"
+		   "n - do not stage this hunk\n"
+		   "q - quit; do not stage this hunk or any of the remaining "
+			"ones\n"
+		   "a - stage this hunk and all later hunks in the file\n"
+		   "d - do not stage this hunk or any of the later hunks in "
+			"the file\n")
+};
+
+static struct patch_mode patch_mode_stash = {
+	.diff_cmd = { "diff-index", "HEAD", NULL },
+	.apply_args = { "--cached", NULL },
+	.apply_check_args = { "--cached", NULL },
+	.prompt_mode = {
+		N_("Stash mode change [y,n,q,a,d%s,?]? "),
+		N_("Stash deletion [y,n,q,a,d%s,?]? "),
+		N_("Stash this hunk [y,n,q,a,d%s,?]? "),
+	},
+	.edit_hunk_hint = N_("If the patch applies cleanly, the edited hunk "
+			     "will immediately be marked for stashing."),
+	.help_patch_text =
+		N_("y - stash this hunk\n"
+		   "n - do not stash this hunk\n"
+		   "q - quit; do not stash this hunk or any of the remaining "
+			"ones\n"
+		   "a - stash this hunk and all later hunks in the file\n"
+		   "d - do not stash this hunk or any of the later hunks in "
+			"the file\n"),
+};
+
+static struct patch_mode patch_mode_reset_head = {
+	.diff_cmd = { "diff-index", "--cached", NULL },
+	.apply_args = { "-R", "--cached", NULL },
+	.apply_check_args = { "-R", "--cached", NULL },
+	.is_reverse = 1,
+	.index_only = 1,
+	.prompt_mode = {
+		N_("Unstage mode change [y,n,q,a,d%s,?]? "),
+		N_("Unstage deletion [y,n,q,a,d%s,?]? "),
+		N_("Unstage this hunk [y,n,q,a,d%s,?]? "),
+	},
+	.edit_hunk_hint = N_("If the patch applies cleanly, the edited hunk "
+			     "will immediately be marked for unstaging."),
+	.help_patch_text =
+		N_("y - unstage this hunk\n"
+		   "n - do not unstage this hunk\n"
+		   "q - quit; do not unstage this hunk or any of the remaining "
+			"ones\n"
+		   "a - unstage this hunk and all later hunks in the file\n"
+		   "d - do not unstage this hunk or any of the later hunks in "
+			"the file\n"),
+};
+
+static struct patch_mode patch_mode_reset_nothead = {
+	.diff_cmd = { "diff-index", "-R", "--cached", NULL },
+	.apply_args = { "--cached", NULL },
+	.apply_check_args = { "--cached", NULL },
+	.index_only = 1,
+	.prompt_mode = {
+		N_("Apply mode change to index [y,n,q,a,d%s,?]? "),
+		N_("Apply deletion to index [y,n,q,a,d%s,?]? "),
+		N_("Apply this hunk to index [y,n,q,a,d%s,?]? "),
+	},
+	.edit_hunk_hint = N_("If the patch applies cleanly, the edited hunk "
+			     "will immediately be marked for applying."),
+	.help_patch_text =
+		N_("y - apply this hunk to index\n"
+		   "n - do not apply this hunk to index\n"
+		   "q - quit; do not apply this hunk or any of the remaining "
+			"ones\n"
+		   "a - apply this hunk and all later hunks in the file\n"
+		   "d - do not apply this hunk or any of the later hunks in "
+			"the file\n"),
+};
+
+static struct patch_mode patch_mode_checkout_index = {
+	.diff_cmd = { "diff-files", NULL },
+	.apply_args = { "-R", NULL },
+	.apply_check_args = { "-R", NULL },
+	.is_reverse = 1,
+	.prompt_mode = {
+		N_("Discard mode change from worktree [y,n,q,a,d%s,?]? "),
+		N_("Discard deletion from worktree [y,n,q,a,d%s,?]? "),
+		N_("Discard this hunk from worktree [y,n,q,a,d%s,?]? "),
+	},
+	.edit_hunk_hint = N_("If the patch applies cleanly, the edited hunk "
+			     "will immediately be marked for discarding."),
+	.help_patch_text =
+		N_("y - discard this hunk from worktree\n"
+		   "n - do not discard this hunk from worktree\n"
+		   "q - quit; do not discard this hunk or any of the remaining "
+			"ones\n"
+		   "a - discard this hunk and all later hunks in the file\n"
+		   "d - do not discard this hunk or any of the later hunks in "
+			"the file\n"),
+};
+
+static struct patch_mode patch_mode_checkout_head = {
+	.diff_cmd = { "diff-index", NULL },
+	.apply_for_checkout = 1,
+	.apply_check_args = { "-R", NULL },
+	.is_reverse = 1,
+	.prompt_mode = {
+		N_("Discard mode change from index and worktree [y,n,q,a,d%s,?]? "),
+		N_("Discard deletion from index and worktree [y,n,q,a,d%s,?]? "),
+		N_("Discard this hunk from index and worktree [y,n,q,a,d%s,?]? "),
+	},
+	.edit_hunk_hint = N_("If the patch applies cleanly, the edited hunk "
+			     "will immediately be marked for discarding."),
+	.help_patch_text =
+		N_("y - discard this hunk from index and worktree\n"
+		   "n - do not discard this hunk from index and worktree\n"
+		   "q - quit; do not discard this hunk or any of the remaining "
+			"ones\n"
+		   "a - discard this hunk and all later hunks in the file\n"
+		   "d - do not discard this hunk or any of the later hunks in "
+			"the file\n"),
+};
+
+static struct patch_mode patch_mode_checkout_nothead = {
+	.diff_cmd = { "diff-index", "-R", NULL },
+	.apply_for_checkout = 1,
+	.apply_check_args = { NULL },
+	.prompt_mode = {
+		N_("Apply mode change to index and worktree [y,n,q,a,d%s,?]? "),
+		N_("Apply deletion to index and worktree [y,n,q,a,d%s,?]? "),
+		N_("Apply this hunk to index and worktree [y,n,q,a,d%s,?]? "),
+	},
+	.edit_hunk_hint = N_("If the patch applies cleanly, the edited hunk "
+			     "will immediately be marked for applying."),
+	.help_patch_text =
+		N_("y - apply this hunk to index and worktree\n"
+		   "n - do not apply this hunk to index and worktree\n"
+		   "q - quit; do not apply this hunk or any of the remaining "
+			"ones\n"
+		   "a - apply this hunk and all later hunks in the file\n"
+		   "d - do not apply this hunk or any of the later hunks in "
+			"the file\n"),
+};
+
+static struct patch_mode patch_mode_worktree_head = {
+	.diff_cmd = { "diff-index", NULL },
+	.apply_args = { "-R", NULL },
+	.apply_check_args = { "-R", NULL },
+	.is_reverse = 1,
+	.prompt_mode = {
+		N_("Discard mode change from index and worktree [y,n,q,a,d%s,?]? "),
+		N_("Discard deletion from index and worktree [y,n,q,a,d%s,?]? "),
+		N_("Discard this hunk from index and worktree [y,n,q,a,d%s,?]? "),
+	},
+	.edit_hunk_hint = N_("If the patch applies cleanly, the edited hunk "
+			     "will immediately be marked for discarding."),
+	.help_patch_text =
+		N_("y - discard this hunk from worktree\n"
+		   "n - do not discard this hunk from worktree\n"
+		   "q - quit; do not discard this hunk or any of the remaining "
+			"ones\n"
+		   "a - discard this hunk and all later hunks in the file\n"
+		   "d - do not discard this hunk or any of the later hunks in "
+			"the file\n"),
+};
+
+static struct patch_mode patch_mode_worktree_nothead = {
+	.diff_cmd = { "diff-index", "-R", NULL },
+	.apply_args = { NULL },
+	.apply_check_args = { NULL },
+	.prompt_mode = {
+		N_("Apply mode change to index and worktree [y,n,q,a,d%s,?]? "),
+		N_("Apply deletion to index and worktree [y,n,q,a,d%s,?]? "),
+		N_("Apply this hunk to index and worktree [y,n,q,a,d%s,?]? "),
+	},
+	.edit_hunk_hint = N_("If the patch applies cleanly, the edited hunk "
+			     "will immediately be marked for applying."),
+	.help_patch_text =
+		N_("y - apply this hunk to worktree\n"
+		   "n - do not apply this hunk to worktree\n"
+		   "q - quit; do not apply this hunk or any of the remaining "
+			"ones\n"
+		   "a - apply this hunk and all later hunks in the file\n"
+		   "d - do not apply this hunk or any of the later hunks in "
+			"the file\n"),
 };
 
 struct hunk_header {
@@ -47,6 +250,10 @@ struct add_p_state {
 		unsigned deleted:1, mode_change:1,binary:1;
 	} *file_diff;
 	size_t file_diff_nr;
+
+	/* patch mode */
+	struct patch_mode *mode;
+	const char *revision;
 };
 
 static void err(struct add_p_state *s, const char *fmt, ...)
@@ -154,6 +361,7 @@ static int is_octal(const char *p, size_t len)
 static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 {
 	struct argv_array args = ARGV_ARRAY_INIT;
+	const char *diff_algorithm = s->s.interactive_diff_algorithm;
 	struct strbuf *plain = &s->plain, *colored = NULL;
 	struct child_process cp = CHILD_PROCESS_INIT;
 	char *p, *pend, *colored_p = NULL, *colored_pend = NULL, marker = '\0';
@@ -162,9 +370,20 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 	struct hunk *hunk = NULL;
 	int res;
 
+	argv_array_pushv(&args, s->mode->diff_cmd);
+	if (diff_algorithm)
+		argv_array_pushf(&args, "--diff-algorithm=%s", diff_algorithm);
+	if (s->revision) {
+		struct object_id oid;
+		argv_array_push(&args,
+				/* could be on an unborn branch */
+				!strcmp("HEAD", s->revision) &&
+				get_oid("HEAD", &oid) ?
+				empty_tree_oid_hex() : s->revision);
+	}
+	color_arg_index = args.argc;
 	/* Use `--no-color` explicitly, just in case `diff.color = always`. */
-	argv_array_pushl(&args, "diff-files", "-p", "--no-color", "--", NULL);
-	color_arg_index = args.argc - 2;
+	argv_array_pushl(&args, "--no-color", "-p", "--", NULL);
 	for (i = 0; i < ps->nr; i++)
 		argv_array_push(&args, ps->items[i].original);
 
@@ -183,6 +402,7 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 
 	if (want_color_fd(1, -1)) {
 		struct child_process colored_cp = CHILD_PROCESS_INIT;
+		const char *diff_filter = s->s.interactive_diff_filter;
 
 		setup_child_process(s, &colored_cp, NULL);
 		xsnprintf((char *)args.argv[color_arg_index], 8, "--color");
@@ -192,6 +412,24 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 		argv_array_clear(&args);
 		if (res)
 			return error(_("could not parse colored diff"));
+
+		if (diff_filter) {
+			struct child_process filter_cp = CHILD_PROCESS_INIT;
+
+			setup_child_process(s, &filter_cp,
+					    diff_filter, NULL);
+			filter_cp.git_cmd = 0;
+			filter_cp.use_shell = 1;
+			strbuf_reset(&s->buf);
+			if (pipe_command(&filter_cp,
+					 colored->buf, colored->len,
+					 &s->buf, colored->len,
+					 NULL, 0) < 0)
+				return error(_("failed to run '%s'"),
+					     diff_filter);
+			strbuf_swap(colored, &s->buf);
+		}
+
 		strbuf_complete_line(colored);
 		colored_p = colored->buf;
 		colored_pend = colored_p + colored->len;
@@ -316,6 +554,9 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 						   colored_pend - colored_p);
 			if (colored_eol)
 				colored_p = colored_eol + 1;
+			else if (p != pend)
+				/* colored shorter than non-colored? */
+				goto mismatched_output;
 			else
 				colored_p = colored_pend;
 
@@ -339,6 +580,15 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 		 * to the file, so there are no trailing context lines).
 		 */
 		hunk->splittable_into++;
+
+	/* non-colored shorter than colored? */
+	if (colored_p != colored_pend) {
+mismatched_output:
+		error(_("mismatched output from interactive.diffFilter"));
+		advise(_("Your filter must maintain a one-to-one correspondence\n"
+			 "between its input and output lines."));
+		return -1;
+	}
 
 	return 0;
 }
@@ -382,7 +632,10 @@ static void render_hunk(struct add_p_state *s, struct hunk *hunk,
 				- header->colored_extra_start;
 		}
 
-		new_offset += delta;
+		if (s->mode->is_reverse)
+			old_offset -= delta;
+		else
+			new_offset += delta;
 
 		strbuf_addf(out, "@@ -%lu,%lu +%lu,%lu @@",
 			    old_offset, header->old_count,
@@ -805,11 +1058,10 @@ static int edit_hunk_manually(struct add_p_state *s, struct hunk *hunk)
 				"(context).\n"
 				"To remove '%c' lines, delete them.\n"
 				"Lines starting with %c will be removed.\n"),
-			      '-', '+', comment_line_char);
-	strbuf_commented_addf(&s->buf,
-			      _("If the patch applies cleanly, the edited hunk "
-				"will immediately be\n"
-				"marked for staging.\n"));
+			      s->mode->is_reverse ? '+' : '-',
+			      s->mode->is_reverse ? '-' : '+',
+			      comment_line_char);
+	strbuf_commented_addf(&s->buf, "%s", _(s->mode->edit_hunk_hint));
 	/*
 	 * TRANSLATORS: 'it' refers to the patch mentioned in the previous
 	 * messages.
@@ -890,10 +1142,25 @@ static int run_apply_check(struct add_p_state *s,
 	reassemble_patch(s, file_diff, 1, &s->buf);
 
 	setup_child_process(s, &cp,
-			    "apply", "--cached", "--check", NULL);
+			    "apply", "--check", NULL);
+	argv_array_pushv(&cp.args, s->mode->apply_check_args);
 	if (pipe_command(&cp, s->buf.buf, s->buf.len, NULL, 0, NULL, 0))
 		return error(_("'git apply --cached' failed"));
 
+	return 0;
+}
+
+static int read_single_character(struct add_p_state *s)
+{
+	if (s->s.use_single_key) {
+		int res = read_key_without_echo(&s->answer);
+		printf("%s\n", res == EOF ? "" : s->answer.buf);
+		return res;
+	}
+
+	if (strbuf_getline(&s->answer, stdin) == EOF)
+		return EOF;
+	strbuf_trim_trailing_newline(&s->answer);
 	return 0;
 }
 
@@ -902,9 +1169,8 @@ static int prompt_yesno(struct add_p_state *s, const char *prompt)
 	for (;;) {
 		color_fprintf(stdout, s->s.prompt_color, "%s", _(prompt));
 		fflush(stdout);
-		if (strbuf_getline(&s->answer, stdin) == EOF)
+		if (read_single_character(s) == EOF)
 			return -1;
-		strbuf_trim_trailing_newline(&s->answer);
 		switch (tolower(s->answer.buf[0])) {
 		case 'n': return 0;
 		case 'y': return 1;
@@ -957,6 +1223,57 @@ static int edit_hunk_loop(struct add_p_state *s,
 	}
 }
 
+static int apply_for_checkout(struct add_p_state *s, struct strbuf *diff,
+			      int is_reverse)
+{
+	const char *reverse = is_reverse ? "-R" : NULL;
+	struct child_process check_index = CHILD_PROCESS_INIT;
+	struct child_process check_worktree = CHILD_PROCESS_INIT;
+	struct child_process apply_index = CHILD_PROCESS_INIT;
+	struct child_process apply_worktree = CHILD_PROCESS_INIT;
+	int applies_index, applies_worktree;
+
+	setup_child_process(s, &check_index,
+			    "apply", "--cached", "--check", reverse, NULL);
+	applies_index = !pipe_command(&check_index, diff->buf, diff->len,
+				      NULL, 0, NULL, 0);
+
+	setup_child_process(s, &check_worktree,
+			    "apply", "--check", reverse, NULL);
+	applies_worktree = !pipe_command(&check_worktree, diff->buf, diff->len,
+					 NULL, 0, NULL, 0);
+
+	if (applies_worktree && applies_index) {
+		setup_child_process(s, &apply_index,
+				    "apply", "--cached", reverse, NULL);
+		pipe_command(&apply_index, diff->buf, diff->len,
+			     NULL, 0, NULL, 0);
+
+		setup_child_process(s, &apply_worktree,
+				    "apply", reverse, NULL);
+		pipe_command(&apply_worktree, diff->buf, diff->len,
+			     NULL, 0, NULL, 0);
+
+		return 1;
+	}
+
+	if (!applies_index) {
+		err(s, _("The selected hunks do not apply to the index!"));
+		if (prompt_yesno(s, _("Apply them to the worktree "
+					  "anyway? ")) > 0) {
+			setup_child_process(s, &apply_worktree,
+					    "apply", reverse, NULL);
+			return pipe_command(&apply_worktree, diff->buf,
+					    diff->len, NULL, 0, NULL, 0);
+		}
+		err(s, _("Nothing was applied.\n"));
+	} else
+		/* As a last resort, show the diff to the user */
+		fwrite(diff->buf, diff->len, 1, stderr);
+
+	return 0;
+}
+
 #define SUMMARY_HEADER_WIDTH 20
 #define SUMMARY_LINE_WIDTH 80
 static void summarize_hunk(struct add_p_state *s, struct hunk *hunk,
@@ -1004,13 +1321,6 @@ static size_t display_hunks(struct add_p_state *s,
 
 	return end_index;
 }
-
-static const char help_patch_text[] =
-N_("y - stage this hunk\n"
-   "n - do not stage this hunk\n"
-   "q - quit; do not stage this hunk or any of the remaining ones\n"
-   "a - stage this and all the remaining hunks\n"
-   "d - do not stage this hunk nor any of the remaining hunks\n");
 
 static const char help_patch_remainder[] =
 N_("j - leave this hunk undecided, see next undecided hunk\n"
@@ -1097,11 +1407,11 @@ static int patch_update_file(struct add_p_state *s,
 			      (uintmax_t)hunk_index + 1,
 			      (uintmax_t)file_diff->hunk_nr);
 		color_fprintf(stdout, s->s.prompt_color,
-			      _(prompt_mode[prompt_mode_type]), s->buf.buf);
+			      _(s->mode->prompt_mode[prompt_mode_type]),
+			      s->buf.buf);
 		fflush(stdout);
-		if (strbuf_getline(&s->answer, stdin) == EOF)
+		if (read_single_character(s) == EOF)
 			break;
-		strbuf_trim_trailing_newline(&s->answer);
 
 		if (!s->answer.len)
 			continue;
@@ -1254,7 +1564,7 @@ soft_increment:
 			const char *p = _(help_patch_remainder), *eol = p;
 
 			color_fprintf(stdout, s->s.help_color, "%s",
-				      _(help_patch_text));
+				      _(s->mode->help_patch_text));
 
 			/*
 			 * Show only those lines of the remainder that are
@@ -1288,10 +1598,16 @@ soft_increment:
 		reassemble_patch(s, file_diff, 0, &s->buf);
 
 		discard_index(s->s.r->index);
-		setup_child_process(s, &cp, "apply", "--cached", NULL);
-		if (pipe_command(&cp, s->buf.buf, s->buf.len,
-				 NULL, 0, NULL, 0))
-			error(_("'git apply --cached' failed"));
+		if (s->mode->apply_for_checkout)
+			apply_for_checkout(s, &s->buf,
+					   s->mode->is_reverse);
+		else {
+			setup_child_process(s, &cp, "apply", NULL);
+			argv_array_pushv(&cp.args, s->mode->apply_args);
+			if (pipe_command(&cp, s->buf.buf, s->buf.len,
+					 NULL, 0, NULL, 0))
+				error(_("'git apply' failed"));
+		}
 		if (!repo_read_index(s->s.r))
 			repo_refresh_and_write_index(s->s.r, REFRESH_QUIET, 0,
 						     1, NULL, NULL, NULL);
@@ -1301,7 +1617,8 @@ soft_increment:
 	return quit;
 }
 
-int run_add_p(struct repository *r, const struct pathspec *ps)
+int run_add_p(struct repository *r, enum add_p_mode mode,
+	      const char *revision, const struct pathspec *ps)
 {
 	struct add_p_state s = {
 		{ r }, STRBUF_INIT, STRBUF_INIT, STRBUF_INIT, STRBUF_INIT
@@ -1310,12 +1627,39 @@ int run_add_p(struct repository *r, const struct pathspec *ps)
 
 	init_add_i_state(&s.s, r);
 
+	if (mode == ADD_P_STASH)
+		s.mode = &patch_mode_stash;
+	else if (mode == ADD_P_RESET) {
+		if (!revision || !strcmp(revision, "HEAD"))
+			s.mode = &patch_mode_reset_head;
+		else
+			s.mode = &patch_mode_reset_nothead;
+	} else if (mode == ADD_P_CHECKOUT) {
+		if (!revision)
+			s.mode = &patch_mode_checkout_index;
+		else if (!strcmp(revision, "HEAD"))
+			s.mode = &patch_mode_checkout_head;
+		else
+			s.mode = &patch_mode_checkout_nothead;
+	} else if (mode == ADD_P_WORKTREE) {
+		if (!revision)
+			s.mode = &patch_mode_checkout_index;
+		else if (!strcmp(revision, "HEAD"))
+			s.mode = &patch_mode_worktree_head;
+		else
+			s.mode = &patch_mode_worktree_nothead;
+	} else
+		s.mode = &patch_mode_add;
+	s.revision = revision;
+
 	if (discard_index(r->index) < 0 || repo_read_index(r) < 0 ||
-	    repo_refresh_and_write_index(r, REFRESH_QUIET, 0, 1,
-					 NULL, NULL, NULL) < 0 ||
+	    (!s.mode->index_only &&
+	     repo_refresh_and_write_index(r, REFRESH_QUIET, 0, 1,
+					  NULL, NULL, NULL) < 0) ||
 	    parse_diff(&s, ps) < 0) {
 		strbuf_release(&s.plain);
 		strbuf_release(&s.colored);
+		clear_add_i_state(&s.s);
 		return -1;
 	}
 
@@ -1334,5 +1678,6 @@ int run_add_p(struct repository *r, const struct pathspec *ps)
 	strbuf_release(&s.buf);
 	strbuf_release(&s.plain);
 	strbuf_release(&s.colored);
+	clear_add_i_state(&s.s);
 	return 0;
 }
