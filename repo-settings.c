@@ -2,6 +2,8 @@
 #include "config.h"
 #include "repository.h"
 #include "midx.h"
+#include "fsmonitor-ipc.h"
+#include "fsmonitor-settings.h"
 
 static void repo_cfg_bool(struct repository *r, const char *key, int *dest,
 			  int def)
@@ -35,6 +37,29 @@ void prepare_repo_settings(struct repository *r)
 	/* Defaults modified by feature.* */
 	if (experimental) {
 		r->settings.fetch_negotiation_algorithm = FETCH_NEGOTIATION_SKIPPING;
+
+		/*
+		 * Force enable the builtin FSMonitor (unless the repo
+		 * is incompatible or they've already selected it or
+		 * the hook version).  But only if they haven't
+		 * explicitly turned it off -- so only if our config
+		 * value is UNSET.
+		 *
+		 * lookup_fsmonitor_settings() and check_for_ipc() do
+		 * not distinguish between explicitly set FALSE and
+		 * UNSET, so we re-test for an UNSET config key here.
+		 *
+		 * I'm not sure I want to fix fsmonitor-settings.c to
+		 * have more than one _DISABLED state since our usage
+		 * here is only to support this experimental period
+		 * (and I don't want to overload the _reason field
+		 * because it describes incompabilities).
+		 */
+		if (manyfiles &&
+		    fsmonitor_ipc__is_supported()  &&
+		    fsm_settings__get_mode(r) == FSMONITOR_MODE_DISABLED &&
+		    repo_config_get_bool(r, "core.usebuiltinfsmonitor", &value))
+			fsm_settings__set_ipc(r);
 	}
 	if (manyfiles) {
 		r->settings.index_version = 4;
@@ -63,6 +88,8 @@ void prepare_repo_settings(struct repository *r)
 	/*
 	 * Non-boolean config
 	 */
+	r->settings.fsmonitor = NULL; /* lazy loaded */
+
 	if (!repo_config_get_int(r, "index.version", &value))
 		r->settings.index_version = value;
 
