@@ -15,6 +15,8 @@
 #include "remote.h"
 #include "trace2.h"
 #include "odb.h"
+#include "transport.h"
+#include "url.h"
 
 static struct {
 	enum bundle_list_heuristic heuristic;
@@ -890,10 +892,58 @@ cleanup:
 	return result;
 }
 
+/* protocol of 'uri', or "file" if it has none (bare/UNC/relative path) */
+static void bundle_uri_protocol(const char *uri, struct strbuf *out)
+{
+	const char *p = uri;
+
+	while (is_urlschemechar(p == uri, *p))
+		p++;
+	strbuf_reset(out);
+	if (p > uri && starts_with(p, "://"))
+		strbuf_add(out, uri, p - uri);
+	else
+		strbuf_addstr(out, "file");
+}
+
+/* Drop advertised URIs whose protocol is not allowed (see protocol.*.allow). */
+static void sanitize_bundle_list(struct bundle_list *list)
+{
+	struct remote_bundle_info **skipped;
+	size_t nr = 0, i;
+	struct remote_bundle_info *info;
+	struct hashmap_iter iter;
+	struct strbuf proto = STRBUF_INIT;
+
+	ALLOC_ARRAY(skipped, hashmap_get_size(&list->bundles));
+	hashmap_for_each_entry(&list->bundles, &iter, info, ent) {
+		if (!info->uri)
+			continue;
+		bundle_uri_protocol(info->uri, &proto);
+		/* advertised URIs are not user-provided */
+		if (!is_transport_allowed(proto.buf, 0)) {
+			warning(_("skipping bundle URI '%s': protocol '%s' "
+				  "is not allowed"), info->uri, proto.buf);
+			skipped[nr++] = info;
+		}
+	}
+	strbuf_release(&proto);
+
+	for (i = 0; i < nr; i++) {
+		hashmap_remove(&list->bundles, &skipped[i]->ent, NULL);
+		clear_remote_bundle_info(skipped[i], NULL);
+		free(skipped[i]);
+	}
+
+	free(skipped);
+}
+
 int fetch_bundle_list(struct repository *r, struct bundle_list *list)
 {
 	int result;
 	struct bundle_list global_list;
+
+	sanitize_bundle_list(list);
 
 	/*
 	 * If the creationToken heuristic is used, then the URIs

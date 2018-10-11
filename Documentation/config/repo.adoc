@@ -1,0 +1,11 @@
+repo.structure.*::
+	These variables adjust the default behavior of the
+	`git repo structure` command.
++
+--
+	top::
+		This integer value implies `--top=<N>`, specifying the
+		number of largest paths to report in each detail table.
+		Must be non-negative; defaults to `0`, which disables the
+		detail tables.
+--

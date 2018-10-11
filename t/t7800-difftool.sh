@@ -668,6 +668,15 @@ run_dir_diff_test 'difftool --dir-diff with no diff' '
 	git difftool -d main main
 '
 
+test_expect_success 'difftool --dir-diff errors out on an invalid path' '
+	blob=$(echo content | git hash-object -w --stdin) &&
+	tree=$(printf "100644 blob %s\t.git\n" "$blob" | git mktree) &&
+	commit=$(git commit-tree -m "tree with a .git entry" "$tree") &&
+	test_must_fail git difftool --dir-diff --no-symlinks \
+		--extcmd true "$commit" HEAD 2>err &&
+	test_grep "invalid path" err
+'
+
 write_script modify-file <<\EOF
 echo "new content" >file
 EOF

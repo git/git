@@ -951,6 +951,35 @@ void read_gitfile_error_die(int error_code, const char *path)
 	}
 }
 
+#if (defined _WIN32 || defined __WIN32__)
+static int ensure_valid_ownership(const char *gitfile,
+				  const char *worktree, const char *gitdir,
+				  struct strbuf *report);
+
+static int is_invalid_dotgit_path(const char *gitfile, const char *potential_gitdir)
+{
+	WCHAR wpath[MAX_PATH];
+	struct strbuf dir = STRBUF_INIT;
+	int ret;
+
+	if (xutftowcs_path(wpath, potential_gitdir) < 0)
+		return 1;
+
+	/* Do not leak NTLM hashes, UNC paths etc. are generally problematic */
+	if (wpath[0] != L'\\' || is_valid_windows_path_element(wpath[1]))
+		return 0;
+
+	strbuf_addstr(&dir, gitfile);
+	strbuf_strip_file_from_path(&dir);
+
+	ret = ensure_valid_ownership(gitfile, dir.buf, potential_gitdir, NULL) ? 0 : 1;
+
+	strbuf_release(&dir);
+
+	return ret;
+}
+#endif
+
 /*
  * Try to read the location of the git directory from the .git file,
  * return path to git directory if found. The return value comes from
@@ -979,11 +1008,21 @@ const char *read_gitfile_gently(const char *path, int *return_error_code)
 		strbuf_addstr(&contents, dir);
 		free(dir);
 	}
+#if (defined _WIN32 || defined __WIN32__)
+	if (is_dir_sep(contents.buf[0]) &&
+	    is_invalid_dotgit_path(path, contents.buf)) {
+		strbuf_reset(&realpath);
+		strbuf_add(&realpath, contents.buf, contents.len);
+		path = realpath.buf;
+		goto cleanup_return;
+	}
+#endif
 	if (!is_git_directory(contents.buf)) {
 		error_code = READ_GITFILE_ERR_NOT_A_REPO;
 		goto cleanup_return;
 	}
 
+	strbuf_reset(&realpath);
 	strbuf_realpath(&realpath, contents.buf, 1);
 
 cleanup_return:
@@ -1980,10 +2019,19 @@ static void repo_discover(struct repo_discovery *discovery, int *nongit_ok)
 		break;
 	case GIT_DIR_INVALID_OWNERSHIP:
 		if (!nongit_ok) {
+			struct strbuf prequoted = STRBUF_INIT;
 			struct strbuf quoted = STRBUF_INIT;
 
 			strbuf_complete(&report, '\n');
-			sq_quote_buf_pretty(&quoted, dir.buf);
+
+#ifdef __MINGW32__
+			if (dir.buf[0] == '/')
+				strbuf_addstr(&prequoted, "%(prefix)/");
+#endif
+
+			strbuf_add(&prequoted, dir.buf, dir.len);
+			sq_quote_buf_pretty(&quoted, prequoted.buf);
+
 			die(_("detected dubious ownership in repository at '%s'\n"
 			      "%s"
 			      "To add an exception for this directory, call:\n"
@@ -2359,7 +2407,7 @@ static void copy_templates_1(struct repository *repo,
 			if (strbuf_readlink(&lnk, template_path->buf,
 					    st_template.st_size) < 0)
 				die_errno(_("cannot readlink '%s'"), template_path->buf);
-			if (symlink(lnk.buf, path->buf))
+			if (create_symlink(NULL, lnk.buf, path->buf))
 				die_errno(_("cannot symlink '%s' '%s'"),
 					  lnk.buf, path->buf);
 			strbuf_release(&lnk);
@@ -2645,7 +2693,7 @@ static int create_default_files(struct repository *repo,
 		repo_git_path_replace(repo, &path, "tXXXXXX");
 		if (!close(xmkstemp(path.buf)) &&
 		    !unlink(path.buf) &&
-		    !symlink("testing", path.buf) &&
+		    !create_symlink(NULL, "testing", path.buf) &&
 		    !lstat(path.buf, &st1) &&
 		    S_ISLNK(st1.st_mode))
 			unlink(path.buf); /* good */

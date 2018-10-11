@@ -350,8 +350,26 @@ static inline int git_has_dir_sep(const char *path)
 #define has_dir_sep(path) git_has_dir_sep(path)
 #endif
 
+#ifndef is_mount_point
+#define is_mount_point is_mount_point_via_stat
+#endif
+
+#ifndef create_symlink
+struct index_state;
+static inline int git_create_symlink(struct index_state *index UNUSED,
+				     const char *target, const char *link)
+{
+	return symlink(target, link);
+}
+#define create_symlink git_create_symlink
+#endif
+
 #ifndef query_user_email
 #define query_user_email() NULL
+#endif
+
+#ifndef platform_strbuf_realpath
+#define platform_strbuf_realpath(resolved, path) NULL
 #endif
 
 #ifdef __TANDEM
@@ -601,16 +619,22 @@ static inline bool strip_suffix(const char *str, const char *suffix,
    * the stack overflow can occur.
    */
 #define DEFAULT_MAX_ALLOWED_TREE_DEPTH 512
-#elif defined(GIT_WINDOWS_NATIVE) && defined(__clang__) && defined(__aarch64__)
+#elif defined(GIT_WINDOWS_NATIVE) && defined(__clang__)
   /*
-   * Similar to Visual C, it seems that on Windows/ARM64 the clang-based
-   * builds have a smaller stack space available. When running out of
-   * that stack space, a `STATUS_STACK_OVERFLOW` is produced. When the
+   * Similar to Visual C, it seems that clang-based builds on Windows
+   * have a smaller stack space available. When running out of that
+   * stack space, a `STATUS_STACK_OVERFLOW` is produced. When the
    * Git command was run from an MSYS2 Bash, this unfortunately results
    * in an exit code 127. Let's prevent that by lowering the maximal
-   * tree depth; This value seems to be low enough.
+   * tree depth; Unfortunately, it seems that the exact limit differs
+   * for aarch64 vs x86_64, and the difference is too large to simply
+   * use a single limit.
    */
+#if defined(__aarch64__)
 #define DEFAULT_MAX_ALLOWED_TREE_DEPTH 1280
+#else
+#define DEFAULT_MAX_ALLOWED_TREE_DEPTH 1152
+#endif
 #else
 #define DEFAULT_MAX_ALLOWED_TREE_DEPTH 2048
 #endif
@@ -668,15 +692,6 @@ static inline size_t st_left_shift(size_t a, unsigned shift)
 		die("size_t overflow: %"PRIuMAX" << %u",
 		    (uintmax_t)a, shift);
 	return a << shift;
-}
-
-static inline unsigned long cast_size_t_to_ulong(size_t a)
-{
-	if (a != (unsigned long)a)
-		die("object too large to read on this platform: %"
-		    PRIuMAX" is cut off to %lu",
-		    (uintmax_t)a, (unsigned long)a);
-	return (unsigned long)a;
 }
 
 static inline uint32_t cast_size_t_to_uint32_t(size_t a)

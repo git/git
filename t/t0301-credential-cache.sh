@@ -12,7 +12,7 @@ test -z "$NO_UNIX_SOCKETS" || {
 if test_have_prereq MINGW
 then
 	service_running=$(sc query afunix | grep "4  RUNNING")
-	test -z "$service_running" || {
+	test -n "$service_running" || {
 		skip_all='skipping credential-cache tests, unix sockets not available'
 		test_done
 	}

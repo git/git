@@ -202,11 +202,9 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 
 	case 'c':
 	{
-		unsigned long size_ul = 0;
 		int textconv_ret = textconv_object(the_repository, path,
 						   obj_context.mode, &oid, 1,
-						   &buf, &size_ul);
-		size = size_ul;
+						   &buf, &size);
 		if (textconv_ret)
 			break;
 	}
@@ -457,12 +455,9 @@ static void print_object_or_die(struct batch_options *opt, struct expand_data *d
 					    oid_to_hex(oid), data->rest);
 			} else if (opt->transform_mode == 'c') {
 				enum object_type type;
-				unsigned long size_ul = 0;
-				if (textconv_object(the_repository,
-						    data->rest, 0100644, oid,
-						    1, &contents, &size_ul))
-					size = size_ul;
-				else
+				if (!textconv_object(the_repository,
+						     data->rest, 0100644, oid,
+						     1, &contents, &size))
 					contents = odb_read_object(the_repository->objects,
 								   oid, &type, &size);
 				if (!contents)
