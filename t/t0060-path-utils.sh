@@ -476,6 +476,7 @@ test_expect_success MINGW 'is_valid_path() on Windows' '
 		C:\\git \
 		comm \
 		conout.c \
+		com0.c \
 		lptN \
 		\
 		--not \
@@ -488,9 +489,48 @@ test_expect_success MINGW 'is_valid_path() on Windows' '
 		"AUX.c" \
 		"abc/conOut\$  .xyz/test" \
 		lpt8 \
+		com9.c \
 		"lpt*" \
 		Nul \
 		"PRN./abc"
+'
+
+test_expect_success MINGW 'MSYSTEM/PATH is adjusted if necessary' '
+	mkdir -p "$HOME"/bin pretend/mingw64/bin \
+		pretend/mingw64/libexec/git-core pretend/usr/bin &&
+	cp "$GIT_EXEC_PATH"/git.exe pretend/mingw64/bin/ &&
+	cp "$GIT_EXEC_PATH"/git.exe pretend/mingw64/libexec/git-core/ &&
+	echo "env | grep MSYSTEM=" | write_script "$HOME"/bin/git-test-home &&
+	echo "echo mingw64" | write_script pretend/mingw64/bin/git-test-bin &&
+	echo "echo usr" | write_script pretend/usr/bin/git-test-bin2 &&
+
+	(
+		MSYSTEM= &&
+		GIT_EXEC_PATH= &&
+		pretend/mingw64/libexec/git-core/git.exe test-home >actual &&
+		pretend/mingw64/libexec/git-core/git.exe test-bin >>actual &&
+		pretend/mingw64/bin/git.exe test-bin2 >>actual
+	) &&
+	test_write_lines MSYSTEM=$MSYSTEM mingw64 usr >expect &&
+	test_cmp expect actual
+'
+
+test_lazy_prereq RUNTIME_PREFIX '
+	test true = "$RUNTIME_PREFIX"
+'
+
+test_lazy_prereq CAN_EXEC_IN_PWD '
+	cp "$GIT_EXEC_PATH"/git$X ./ &&
+	./git rev-parse
+'
+
+test_expect_success RUNTIME_PREFIX,CAN_EXEC_IN_PWD 'RUNTIME_PREFIX works' '
+	mkdir -p pretend/git pretend/libexec/git-core &&
+	echo "echo HERE" | write_script pretend/libexec/git-core/git-here &&
+	cp "$GIT_EXEC_PATH"/git$X pretend/git/ &&
+	GIT_EXEC_PATH= ./pretend/git/git here >actual &&
+	echo HERE >expect &&
+	test_cmp expect actual
 '
 
 test_done
