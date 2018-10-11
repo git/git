@@ -131,13 +131,15 @@ enum http_follow_config http_follow_config = HTTP_FOLLOW_INITIAL;
 
 static struct credential cert_auth = CREDENTIAL_INIT;
 static int ssl_cert_password_required;
-static unsigned long http_auth_methods = CURLAUTH_ANY;
+static unsigned long http_auth_any = CURLAUTH_ANY & ~CURLAUTH_NTLM;
+static unsigned long http_auth_methods;
 static int http_auth_methods_restricted;
 /* Modes for which empty_auth cannot actually help us. */
 static unsigned long empty_auth_useless =
 	CURLAUTH_BASIC
 	| CURLAUTH_DIGEST_IE
 	| CURLAUTH_DIGEST;
+static int empty_auth_try_negotiate;
 
 static struct curl_slist *pragma_header;
 static struct string_list extra_http_headers = STRING_LIST_INIT_DUP;
@@ -150,7 +152,12 @@ static char *cached_accept_language;
 
 static char *http_ssl_backend;
 
-static int http_schannel_check_revoke = 1;
+static long http_schannel_check_revoke_mode =
+#ifdef CURLSSLOPT_REVOKE_BEST_EFFORT
+	CURLSSLOPT_REVOKE_BEST_EFFORT;
+#else
+	CURLSSLOPT_NO_REVOKE;
+#endif
 
 static long http_retry_after = 0;
 static long http_max_retries = 0;
@@ -162,6 +169,8 @@ static long http_max_retry_time = 300;
  * by default.
  */
 static int http_schannel_use_ssl_cainfo;
+
+static int http_auto_client_cert;
 
 static int always_auth_proactively(void)
 {
@@ -429,13 +438,39 @@ static int http_options(const char *var, const char *value,
 		return 0;
 	}
 
+	if (!strcmp("http.allowntlmauth", var)) {
+		if (git_config_bool(var, value)) {
+			http_auth_any |= CURLAUTH_NTLM;
+		} else {
+			http_auth_any &= ~CURLAUTH_NTLM;
+		}
+		return 0;
+	}
+
 	if (!strcmp("http.schannelcheckrevoke", var)) {
-		http_schannel_check_revoke = git_config_bool(var, value);
+		if (value && !strcmp(value, "best-effort")) {
+			http_schannel_check_revoke_mode =
+#ifdef CURLSSLOPT_REVOKE_BEST_EFFORT
+				CURLSSLOPT_REVOKE_BEST_EFFORT;
+#else
+				CURLSSLOPT_NO_REVOKE;
+			warning(_("%s=%s unsupported by current cURL"),
+				var, value);
+#endif
+		} else
+			http_schannel_check_revoke_mode =
+				(git_config_bool(var, value) ?
+				 0 : CURLSSLOPT_NO_REVOKE);
 		return 0;
 	}
 
 	if (!strcmp("http.schannelusesslcainfo", var)) {
 		http_schannel_use_ssl_cainfo = git_config_bool(var, value);
+		return 0;
+	}
+
+	if (!strcmp("http.sslautoclientcert", var)) {
+		http_auto_client_cert = git_config_bool(var, value);
 		return 0;
 	}
 
@@ -650,6 +685,11 @@ static void init_curl_http_auth(CURL *result)
 
 	credential_fill(the_repository, &http_auth, 1);
 
+	if (http_auth.ntlm_allow && !(http_auth_methods & CURLAUTH_NTLM)) {
+		http_auth_methods |= CURLAUTH_NTLM;
+		curl_easy_setopt(result, CURLOPT_HTTPAUTH, http_auth_methods);
+	}
+
 	if (http_auth.password) {
 		if (always_auth_proactively()) {
 			/*
@@ -663,6 +703,22 @@ static void init_curl_http_auth(CURL *result)
 		curl_easy_setopt(result, CURLOPT_USERNAME, http_auth.username);
 		curl_easy_setopt(result, CURLOPT_PASSWORD, http_auth.password);
 	}
+}
+
+void http_reauth_prepare(int all_capabilities)
+{
+	/*
+	 * If we deferred stripping Negotiate to give empty auth a
+	 * chance (auto mode), skip credential_fill on this retry so
+	 * that init_curl_http_auth() sends empty credentials and
+	 * libcurl can attempt Negotiate with the system ticket cache.
+	 */
+	if (empty_auth_try_negotiate &&
+	    !http_auth.password && !http_auth.credential &&
+	    (http_auth_methods & CURLAUTH_GSSNEGOTIATE))
+		return;
+
+	credential_fill(the_repository, &http_auth, all_capabilities);
 }
 
 /* *var must be free-able */
@@ -709,11 +765,11 @@ static void init_curl_proxy_auth(CURL *result)
 		if (i == ARRAY_SIZE(proxy_authmethods)) {
 			warning("unsupported proxy authentication method %s: using anyauth",
 					http_proxy_authmethod);
-			curl_easy_setopt(result, CURLOPT_PROXYAUTH, CURLAUTH_ANY);
+			curl_easy_setopt(result, CURLOPT_PROXYAUTH, http_auth_any);
 		}
 	}
 	else
-		curl_easy_setopt(result, CURLOPT_PROXYAUTH, CURLAUTH_ANY);
+		curl_easy_setopt(result, CURLOPT_PROXYAUTH, http_auth_any);
 }
 
 static int has_cert_password(void)
@@ -1060,7 +1116,7 @@ static CURL *get_curl_handle(void)
     }
 
 	curl_easy_setopt(result, CURLOPT_NETRC, CURL_NETRC_OPTIONAL);
-	curl_easy_setopt(result, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
+	curl_easy_setopt(result, CURLOPT_HTTPAUTH, http_auth_any);
 
 #ifdef CURLGSSAPI_DELEGATION_FLAG
 	if (curl_deleg) {
@@ -1078,9 +1134,20 @@ static CURL *get_curl_handle(void)
 	}
 #endif
 
-	if (http_ssl_backend && !strcmp("schannel", http_ssl_backend) &&
-	    !http_schannel_check_revoke) {
-		curl_easy_setopt(result, CURLOPT_SSL_OPTIONS, (long)CURLSSLOPT_NO_REVOKE);
+	if (http_ssl_backend && !strcmp("schannel", http_ssl_backend)) {
+		long ssl_options = 0;
+		if (http_schannel_check_revoke_mode) {
+			ssl_options |= http_schannel_check_revoke_mode;
+		}
+
+		if (http_auto_client_cert) {
+#ifdef GIT_CURL_HAVE_CURLSSLOPT_AUTO_CLIENT_CERT
+			ssl_options |= CURLSSLOPT_AUTO_CLIENT_CERT;
+#endif
+		}
+
+		if (ssl_options)
+			curl_easy_setopt(result, CURLOPT_SSL_OPTIONS, ssl_options);
 	}
 
 	if (http_proactive_auth != PROACTIVE_AUTH_NONE)
@@ -1447,6 +1514,8 @@ void http_init(struct remote *remote, const char *url, int proactive_auth)
 	set_long_from_env(&http_retry_after, "GIT_HTTP_RETRY_AFTER");
 	set_long_from_env(&http_max_retries, "GIT_HTTP_MAX_RETRIES");
 	set_long_from_env(&http_max_retry_time, "GIT_HTTP_MAX_RETRY_TIME");
+
+	http_auth_methods = http_auth_any;
 
 	curl_default = get_curl_handle();
 }
@@ -1879,6 +1948,8 @@ static int handle_curl_result(struct slot_results *results)
 	} else if (missing_target(results))
 		return HTTP_MISSING_TARGET;
 	else if (results->http_code == 401) {
+		http_auth.ntlm_suppressed = (results->auth_avail & CURLAUTH_NTLM) &&
+					    !(http_auth_any & CURLAUTH_NTLM);
 		if ((http_auth.username && http_auth.password) ||\
 		    (http_auth.authtype && http_auth.credential)) {
 			if (http_auth.multistage) {
@@ -1888,9 +1959,30 @@ static int handle_curl_result(struct slot_results *results)
 			credential_reject(the_repository, &http_auth);
 			if (always_auth_proactively())
 				http_proactive_auth = PROACTIVE_AUTH_NONE;
+			if (http_auth.ntlm_suppressed) {
+				warning(_("Due to its cryptographic weaknesses, "
+					  "NTLM authentication has been\n"
+					  "disabled in Git by default. You can "
+					  "re-enable it for trusted servers\n"
+					  "by running:\n\n"
+					  "git config set "
+					  "http.%s://%s.allowNTLMAuth true"),
+					http_auth.protocol, http_auth.host);
+			}
 			return HTTP_NOAUTH;
 		} else {
-			http_auth_methods &= ~CURLAUTH_GSSNEGOTIATE;
+			if (curl_empty_auth == -1 &&
+			    !empty_auth_try_negotiate &&
+			    (results->auth_avail & CURLAUTH_GSSNEGOTIATE)) {
+				/*
+				 * In auto mode, give Negotiate a chance via
+				 * empty auth before stripping it. If it fails,
+				 * we will strip it on the next 401.
+				 */
+				empty_auth_try_negotiate = 1;
+			} else {
+				http_auth_methods &= ~CURLAUTH_GSSNEGOTIATE;
+			}
 			if (results->auth_avail) {
 				http_auth_methods &= results->auth_avail;
 				http_auth_methods_restricted = 1;
@@ -2398,8 +2490,15 @@ static int http_request_recoverable(const char *url,
 				sleep(retry_delay);
 			}
 		} else if (ret == HTTP_REAUTH) {
-			credential_fill(the_repository, &http_auth, 1);
+			http_reauth_prepare(1);
 		}
+
+		/*
+		 * Re-enable NTLM auth if the helper allows it and we would
+		 * otherwise suppress authentication via NTLM.
+		 */
+		if (http_auth.ntlm_suppressed && http_auth.ntlm_allow)
+			http_auth_methods |= CURLAUTH_NTLM;
 
 		ret = http_request(url, result, target, options);
 	}
