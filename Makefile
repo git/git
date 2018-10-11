@@ -2509,6 +2509,13 @@ compat/nedmalloc/nedmalloc.sp compat/nedmalloc/nedmalloc.o: EXTRA_CPPFLAGS = \
 compat/nedmalloc/nedmalloc.sp: SP_EXTRA_FLAGS += -Wno-non-pointer-null
 endif
 
+headless-git.o: compat/win32/headless.c
+	$(QUIET_CC)$(CC) $(ALL_CFLAGS) $(COMPAT_CFLAGS) \
+		-fno-stack-protector -o $@ -c -Wall -Wwrite-strings $<
+
+headless-git$X: headless-git.o git.res
+	$(QUIET_LINK)$(CC) $(ALL_LDFLAGS) -mwindows $(COMPAT_CFLAGS) -o $@ $^
+
 git-%$X: %.o GIT-LDFLAGS $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(LIBS)
 
@@ -2772,6 +2779,11 @@ ifdef GIT_TEST_INDEX_VERSION
 endif
 ifdef GIT_TEST_PERL_FATAL_WARNINGS
 	@echo GIT_TEST_PERL_FATAL_WARNINGS=\''$(subst ','\'',$(subst ','\'',$(GIT_TEST_PERL_FATAL_WARNINGS)))'\' >>$@+
+endif
+ifdef RUNTIME_PREFIX
+	@echo RUNTIME_PREFIX=\'true\' >>$@+
+else
+	@echo RUNTIME_PREFIX=\'false\' >>$@+
 endif
 	@if cmp $@+ $@ >/dev/null 2>&1; then $(RM) $@+; else mv $@+ $@; fi
 
