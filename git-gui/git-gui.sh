@@ -623,7 +623,11 @@ proc git_write {args} {
 }
 
 proc githook_read {hook_name args} {
-	set pchook [gitdir hooks $hook_name]
+	if {[package vcompare $::_git_version 2.5.0] >= 0} {
+		set pchook [git rev-parse --git-path "hooks/$hook_name"]
+	} else {
+		set pchook [gitdir hooks $hook_name]
+	}
 	lappend args 2>@1
 
 	# On Windows [file executable] might lie so we need to ask
@@ -1229,6 +1233,12 @@ set have_tk85 [expr {[package vcompare $tk_version "8.5"] >= 0}]
 # Suggest our implementation of askpass, if none is set
 if {![info exists env(SSH_ASKPASS)]} {
 	set env(SSH_ASKPASS) [gitexec git-gui--askpass]
+}
+if {![info exists env(GIT_ASKPASS)]} {
+	set env(GIT_ASKPASS) [gitexec git-gui--askpass]
+}
+if {![info exists env(GIT_ASK_YESNO)]} {
+	set env(GIT_ASK_YESNO) [gitexec git-gui--askyesno]
 }
 
 ######################################################################
