@@ -168,6 +168,7 @@ prepare_httpd() {
 	install_script apply-one-time-script.sh
 	install_script nph-custom-auth.sh
 	install_script http-429.sh
+	install_script ntlm-handshake.sh
 
 	ln -s "$LIB_HTTPD_MODULE_PATH" "$HTTPD_ROOT_PATH/modules"
 
