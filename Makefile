@@ -464,6 +464,11 @@ include shared.mak
 #
 #     CURL_LDFLAGS=-lcurl
 #
+# Define LAZYLOAD_LIBCURL to dynamically load the libcurl; This can be useful
+# if Multiple libcurl versions exist (with different file names) that link to
+# various SSL/TLS backends, to support the `http.sslBackend` runtime switch in
+# such a scenario.
+#
 # === Optional library: libpcre2 ===
 #
 # Define USE_LIBPCRE if you have and want to use libpcre. Various
@@ -1325,6 +1330,7 @@ BUILTIN_OBJS += builtin/write-tree.o
 # upstream unnecessarily (making merging in future changes easier).
 THIRD_PARTY_SOURCES += compat/inet_ntop.c
 THIRD_PARTY_SOURCES += compat/inet_pton.c
+THIRD_PARTY_SOURCES += compat/mimalloc/%
 THIRD_PARTY_SOURCES += compat/nedmalloc/%
 THIRD_PARTY_SOURCES += compat/obstack.%
 THIRD_PARTY_SOURCES += compat/poll/%
@@ -1598,10 +1604,23 @@ else
 		CURL_LIBCURL =
 	endif
 
-	ifndef CURL_LDFLAGS
-		CURL_LDFLAGS = $(eval CURL_LDFLAGS := $$(shell $$(CURL_CONFIG) --libs))$(CURL_LDFLAGS)
+	ifdef LAZYLOAD_LIBCURL
+		LAZYLOAD_LIBCURL_OBJ = compat/lazyload-curl.o
+		OBJECTS += $(LAZYLOAD_LIBCURL_OBJ)
+		# The `CURL_STATICLIB` constant must be defined to avoid seeing the functions
+		# declared as DLL imports
+		CURL_CFLAGS = -DCURL_STATICLIB
+ifneq ($(uname_S),MINGW)
+ifneq ($(uname_S),Windows)
+		CURL_LIBCURL = -ldl
+endif
+endif
+	else
+		ifndef CURL_LDFLAGS
+			CURL_LDFLAGS = $(eval CURL_LDFLAGS := $$(shell $$(CURL_CONFIG) --libs))$(CURL_LDFLAGS)
+		endif
+		CURL_LIBCURL += $(CURL_LDFLAGS)
 	endif
-	CURL_LIBCURL += $(CURL_LDFLAGS)
 
 	ifndef CURL_CFLAGS
 		CURL_CFLAGS = $(eval CURL_CFLAGS := $$(shell $$(CURL_CONFIG) --cflags))$(CURL_CFLAGS)
@@ -1622,7 +1641,7 @@ else
 	endif
 	ifdef USE_CURL_FOR_IMAP_SEND
 		BASIC_CFLAGS += -DUSE_CURL_FOR_IMAP_SEND
-		IMAP_SEND_BUILDDEPS = http.o
+		IMAP_SEND_BUILDDEPS = http.o $(LAZYLOAD_LIBCURL_OBJ)
 		IMAP_SEND_LDFLAGS += $(CURL_LIBCURL)
 	endif
 	ifndef NO_EXPAT
@@ -2051,6 +2070,41 @@ ifdef USE_NED_ALLOCATOR
 	COMPAT_CFLAGS += -Icompat/nedmalloc
 	COMPAT_OBJS += compat/nedmalloc/nedmalloc.o
 	OVERRIDE_STRDUP = YesPlease
+endif
+
+ifdef USE_MIMALLOC
+	MIMALLOC_OBJS = \
+		compat/mimalloc/alloc-aligned.o \
+		compat/mimalloc/alloc.o \
+		compat/mimalloc/arena.o \
+		compat/mimalloc/bitmap.o \
+		compat/mimalloc/heap.o \
+		compat/mimalloc/init.o \
+		compat/mimalloc/options.o \
+		compat/mimalloc/os.o \
+		compat/mimalloc/page.o \
+		compat/mimalloc/random.o \
+		compat/mimalloc/segment.o \
+		compat/mimalloc/segment-cache.o \
+		compat/mimalloc/stats.o
+
+	COMPAT_CFLAGS += -Icompat/mimalloc -DMI_DEBUG=0 -DUSE_MIMALLOC --std=gnu11
+	COMPAT_OBJS += $(MIMALLOC_OBJS)
+
+$(MIMALLOC_OBJS): COMPAT_CFLAGS += -DBANNED_H
+
+$(MIMALLOC_OBJS): COMPAT_CFLAGS += \
+	-Wno-attributes \
+	-Wno-unknown-pragmas \
+	-Wno-array-bounds
+
+ifdef DEVELOPER
+$(MIMALLOC_OBJS): COMPAT_CFLAGS += \
+	-Wno-pedantic \
+	-Wno-declaration-after-statement \
+	-Wno-old-style-definition \
+	-Wno-missing-prototypes
+endif
 endif
 
 ifdef OVERRIDE_STRDUP
@@ -2779,6 +2833,13 @@ compat/nedmalloc/nedmalloc.sp compat/nedmalloc/nedmalloc.o: EXTRA_CPPFLAGS = \
 compat/nedmalloc/nedmalloc.sp: SP_EXTRA_FLAGS += -Wno-non-pointer-null
 endif
 
+headless-git.o: compat/win32/headless.c GIT-CFLAGS
+	$(QUIET_CC)$(CC) $(ALL_CFLAGS) $(COMPAT_CFLAGS) \
+		-fno-stack-protector -o $@ -c -Wall -Wwrite-strings $<
+
+headless-git$X: headless-git.o git.res GIT-LDFLAGS
+	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) $(ALL_LDFLAGS) -mwindows -o $@ $< git.res
+
 git-%$X: %.o GIT-LDFLAGS $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(LIBS)
 
@@ -2786,10 +2847,10 @@ git-imap-send$X: imap-send.o $(IMAP_SEND_BUILDDEPS) GIT-LDFLAGS $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(IMAP_SEND_LDFLAGS) $(LIBS)
 
-git-http-fetch$X: http.o http-walker.o http-fetch.o GIT-LDFLAGS $(GITLIBS)
+git-http-fetch$X: http.o http-walker.o http-fetch.o $(LAZYLOAD_LIBCURL_OBJ) GIT-LDFLAGS $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(CURL_LIBCURL) $(LIBS)
-git-http-push$X: http.o http-push.o GIT-LDFLAGS $(GITLIBS)
+git-http-push$X: http.o http-push.o $(LAZYLOAD_LIBCURL_OBJ) GIT-LDFLAGS $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(CURL_LIBCURL) $(EXPAT_LIBEXPAT) $(LIBS)
 
@@ -2799,7 +2860,7 @@ $(REMOTE_CURL_ALIASES): $(REMOTE_CURL_PRIMARY)
 	ln -s $< $@ 2>/dev/null || \
 	cp $< $@
 
-$(REMOTE_CURL_PRIMARY): remote-curl.o http.o http-walker.o GIT-LDFLAGS $(GITLIBS)
+$(REMOTE_CURL_PRIMARY): remote-curl.o http.o http-walker.o $(LAZYLOAD_LIBCURL_OBJ) GIT-LDFLAGS $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(CURL_LIBCURL) $(EXPAT_LIBEXPAT) $(LIBS)
 
@@ -3652,6 +3713,7 @@ clean: profile-clean coverage-clean cocciclean
 	$(RM) po/git.pot po/git-core.pot
 	$(RM) git.res
 	$(RM) $(OBJECTS)
+	$(RM) headless-git.o
 	$(RM) $(LIB_FILE) $(XDIFF_LIB) $(REFTABLE_LIB) $(REFTABLE_TEST_LIB)
 	$(RM) $(ALL_PROGRAMS) $(SCRIPT_LIB) $(BUILT_INS) $(OTHER_PROGRAMS)
 	$(RM) $(TEST_PROGRAMS)
@@ -3680,13 +3742,17 @@ endif
 	$(RM) GIT-SCRIPT-DEFINES GIT-PERL-DEFINES GIT-PERL-HEADER GIT-PYTHON-VARS
 ifdef MSVC
 	$(RM) $(patsubst %.o,%.o.pdb,$(OBJECTS))
+	$(RM) headless-git.o.pdb
 	$(RM) $(patsubst %.exe,%.pdb,$(OTHER_PROGRAMS))
+	$(RM) $(patsubst %.exe,%.ilk,$(OTHER_PROGRAMS))
 	$(RM) $(patsubst %.exe,%.iobj,$(OTHER_PROGRAMS))
 	$(RM) $(patsubst %.exe,%.ipdb,$(OTHER_PROGRAMS))
 	$(RM) $(patsubst %.exe,%.pdb,$(PROGRAMS))
+	$(RM) $(patsubst %.exe,%.ilk,$(PROGRAMS))
 	$(RM) $(patsubst %.exe,%.iobj,$(PROGRAMS))
 	$(RM) $(patsubst %.exe,%.ipdb,$(PROGRAMS))
 	$(RM) $(patsubst %.exe,%.pdb,$(TEST_PROGRAMS))
+	$(RM) $(patsubst %.exe,%.ilk,$(TEST_PROGRAMS))
 	$(RM) $(patsubst %.exe,%.iobj,$(TEST_PROGRAMS))
 	$(RM) $(patsubst %.exe,%.ipdb,$(TEST_PROGRAMS))
 	$(RM) compat/vcbuild/MSVC-DEFS-GEN

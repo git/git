@@ -507,6 +507,8 @@ include::config/safe.txt[]
 
 include::config/sendemail.txt[]
 
+include::config/sendpack.txt[]
+
 include::config/sequencer.txt[]
 
 include::config/showbranch.txt[]
@@ -542,5 +544,7 @@ include::config/user.txt[]
 include::config/versionsort.txt[]
 
 include::config/web.txt[]
+
+include::config/windows.txt[]
 
 include::config/worktree.txt[]
