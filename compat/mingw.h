@@ -11,6 +11,9 @@ typedef _sigset_t sigset_t;
 #undef _POSIX_THREAD_SAFE_FUNCTIONS
 #endif
 
+extern int mingw_core_config(const char *var, const char *value, void *cb);
+#define platform_core_config mingw_core_config
+
 /*
  * things that are not available in header files
  */
@@ -390,6 +393,9 @@ int mingw_raise(int sig);
 int winansi_isatty(int fd);
 #define isatty winansi_isatty
 
+int winansi_dup2(int oldfd, int newfd);
+#define dup2 winansi_dup2
+
 void winansi_init(void);
 HANDLE winansi_get_osfhandle(int fd);
 
@@ -424,6 +430,8 @@ static inline void convert_slashes(char *path)
 int mingw_offset_1st_component(const char *path);
 #define offset_1st_component mingw_offset_1st_component
 #define PATH_SEP ';'
+extern char *mingw_query_user_email(void);
+#define query_user_email mingw_query_user_email
 #if !defined(__MINGW64_VERSION_MAJOR) && (!defined(_MSC_VER) || _MSC_VER < 1800)
 #define PRIuMAX "I64u"
 #define PRId64 "I64d"

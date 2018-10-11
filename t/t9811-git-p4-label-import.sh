@@ -259,9 +259,4 @@ test_expect_success 'importing labels with missing revisions' '
 	)
 '
 
-
-test_expect_success 'kill p4d' '
-	kill_p4d
-'
-
 test_done
