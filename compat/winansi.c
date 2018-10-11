@@ -573,6 +573,9 @@ static void detect_msys_tty(int fd)
 	if (!NT_SUCCESS(NtQueryObject(h, ObjectNameInformation,
 			buffer, sizeof(buffer) - 2, &result)))
 		return;
+	if (result < sizeof(*nameinfo) || !nameinfo->Name.Buffer ||
+		!nameinfo->Name.Length)
+		return;
 	name = nameinfo->Name.Buffer;
 	name[nameinfo->Name.Length / sizeof(*name)] = 0;
 
@@ -590,6 +593,38 @@ static void detect_msys_tty(int fd)
 }
 
 #endif
+
+static HANDLE std_console_handle;
+static DWORD std_console_mode;
+
+static void reset_std_console_mode(void)
+{
+	SetConsoleMode(std_console_handle, std_console_mode);
+}
+
+static int enable_virtual_processing(void)
+{
+	std_console_handle = GetStdHandle(STD_OUTPUT_HANDLE);
+	if (std_console_handle == INVALID_HANDLE_VALUE ||
+	    !GetConsoleMode(std_console_handle, &std_console_mode)) {
+		std_console_handle = GetStdHandle(STD_ERROR_HANDLE);
+		if (std_console_handle == INVALID_HANDLE_VALUE ||
+		    !GetConsoleMode(std_console_handle, &std_console_mode))
+		return 0;
+	}
+
+	if (std_console_mode & ENABLE_VIRTUAL_TERMINAL_PROCESSING)
+		return 1;
+
+	if (!SetConsoleMode(std_console_handle,
+			    std_console_mode |
+			    ENABLE_PROCESSED_OUTPUT |
+			    ENABLE_VIRTUAL_TERMINAL_PROCESSING))
+		return 0;
+
+	atexit(reset_std_console_mode);
+	return 1;
+}
 
 /*
  * Wrapper for isatty().  Most calls in the main git code
@@ -628,6 +663,9 @@ void winansi_init(void)
 #endif
 		return;
 	}
+
+	if (enable_virtual_processing())
+		return;
 
 	/* create a named pipe to communicate with the console thread */
 	if (swprintf(name, ARRAY_SIZE(name) - 1, L"\\\\.\\pipe\\winansi%lu",

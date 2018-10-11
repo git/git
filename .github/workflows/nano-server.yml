@@ -1,0 +1,76 @@
+name: Windows Nano Server tests
+
+on:
+  workflow_dispatch:
+
+env:
+  DEVELOPER: 1
+
+jobs:
+  test-nano-server:
+    runs-on: windows-2022
+    env:
+      WINDBG_DIR: "C:/Program Files (x86)/Windows Kits/10/Debuggers/x64"
+      IMAGE: mcr.microsoft.com/powershell:nanoserver-ltsc2022
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: git-for-windows/setup-git-for-windows-sdk@v1
+      - name: build Git
+        shell: bash
+        run: make -j15
+      - name: pull nanoserver image
+        shell: bash
+        run: docker pull $IMAGE
+      - name: run nano-server test
+        shell: bash
+        run: |
+          docker run \
+            --user "ContainerAdministrator" \
+            -v "$WINDBG_DIR:C:/dbg" \
+            -v "$(cygpath -aw /mingw64/bin):C:/mingw64-bin" \
+            -v "$(cygpath -aw .):C:/test" \
+            $IMAGE pwsh.exe -Command '
+              # Extend the PATH to include the `.dll` files in /mingw64/bin/
+              $env:PATH += ";C:\mingw64-bin"
+
+              # For each executable to test pick some no-operation set of
+              # flags/subcommands or something that should quickly result in an
+              # error with known exit code that is not a negative 32-bit
+              # number, and set the expected return code appropriately.
+              #
+              # Only test executables that could be expected to run in a UI
+              # less environment.
+              #
+              # ( Executable path, arguments, expected return code )
+              # also note space is required before close parenthesis (a
+              # powershell quirk when defining nested arrays like this)
+
+              $executables_to_test = @(
+                  ("C:\test\git.exe", "", 1 ),
+                  ("C:\test\scalar.exe", "version", 0 )
+              )
+
+              foreach ($executable in $executables_to_test)
+              {
+                  Write-Output "Now testing $($executable[0])"
+                  &$executable[0] $executable[1]
+                  if ($LASTEXITCODE -ne $executable[2]) {
+                      # if we failed, run the debugger to find out what function
+                      # or DLL could not be found and then exit the script with
+                      # failure The missing DLL or EXE will be referenced near
+                      # the end of the output
+
+                      # Set a flag to have the debugger show loader stub
+                      # diagnostics. This requires running as administrator,
+                      # otherwise the flag will be ignored.
+                      C:\dbg\gflags -i $executable[0] +SLS
+
+                      C:\dbg\cdb.exe -c "g" -c "q" $executable[0] $executable[1]
+
+                      exit 1
+                  }
+              }
+
+              exit 0
+            '
