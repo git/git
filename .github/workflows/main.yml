@@ -81,44 +81,21 @@ jobs:
     if: needs.ci-config.outputs.enabled == 'yes'
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v1
-    - name: download git-sdk-64-minimal
-      shell: bash
-      run: |
-        ## Get artifact
-        urlbase=https://dev.azure.com/git-for-windows/git/_apis/build/builds
-        id=$(curl "$urlbase?definitions=22&statusFilter=completed&resultFilter=succeeded&\$top=1" |
-          jq -r ".value[] | .id")
-        download_url="$(curl "$urlbase/$id/artifacts" |
-          jq -r '.value[] | select(.name == "git-sdk-64-minimal").resource.downloadUrl')"
-        curl --connect-timeout 10 --retry 5 --retry-delay 0 --retry-max-time 240 \
-          -o artifacts.zip "$download_url"
-
-        ## Unzip and remove the artifact
-        unzip artifacts.zip
-        rm artifacts.zip
+    - uses: actions/checkout@v2
+    - uses: git-for-windows/setup-git-for-windows-sdk@v1
     - name: build
-      shell: powershell
+      shell: bash
       env:
         HOME: ${{runner.workspace}}
-        MSYSTEM: MINGW64
         NO_PERL: 1
-      run: |
-        & .\git-sdk-64-minimal\usr\bin\bash.exe -lc @"
-        printf '%s\n' /git-sdk-64-minimal/ >>.git/info/exclude
-
-          ci/make-test-artifacts.sh artifacts
-        "@
-    - name: upload build artifacts
-      uses: actions/upload-artifact@v1
+      run: ci/make-test-artifacts.sh artifacts
+    - name: zip up tracked files
+      run: git archive -o artifacts/tracked.tar.gz HEAD
+    - name: upload tracked files and build artifacts
+      uses: actions/upload-artifact@v2
       with:
         name: windows-artifacts
         path: artifacts
-    - name: upload git-sdk-64-minimal
-      uses: actions/upload-artifact@v1
-      with:
-        name: git-sdk-64-minimal
-        path: git-sdk-64-minimal
   windows-test:
     runs-on: windows-latest
     needs: [windows-build]
@@ -127,37 +104,25 @@ jobs:
       matrix:
         nr: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     steps:
-    - uses: actions/checkout@v1
-    - name: download build artifacts
-      uses: actions/download-artifact@v1
+    - name: download tracked files and build artifacts
+      uses: actions/download-artifact@v2
       with:
         name: windows-artifacts
         path: ${{github.workspace}}
-    - name: extract build artifacts
+    - name: extract tracked files and build artifacts
       shell: bash
-      run: tar xf artifacts.tar.gz
-    - name: download git-sdk-64-minimal
-      uses: actions/download-artifact@v1
-      with:
-        name: git-sdk-64-minimal
-        path: ${{github.workspace}}/git-sdk-64-minimal/
+      run: tar xf artifacts.tar.gz && tar xf tracked.tar.gz
+    - uses: git-for-windows/setup-git-for-windows-sdk@v1
     - name: test
-      shell: powershell
-      run: |
-        & .\git-sdk-64-minimal\usr\bin\bash.exe -lc @"
-          # Let Git ignore the SDK
-          printf '%s\n' /git-sdk-64-minimal/ >>.git/info/exclude
-
-          ci/run-test-slice.sh ${{matrix.nr}} 10
-        "@
+      shell: bash
+      run: ci/run-test-slice.sh ${{matrix.nr}} 10
     - name: ci/print-test-failures.sh
       if: failure()
-      shell: powershell
-      run: |
-        & .\git-sdk-64-minimal\usr\bin\bash.exe -lc ci/print-test-failures.sh
+      shell: bash
+      run: ci/print-test-failures.sh
     - name: Upload failed tests' directories
       if: failure() && env.FAILED_TEST_ARTIFACTS != ''
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v2
       with:
         name: failed-tests-windows
         path: ${{env.FAILED_TEST_ARTIFACTS}}
@@ -165,113 +130,82 @@ jobs:
     needs: ci-config
     if: needs.ci-config.outputs.enabled == 'yes'
     env:
-      MSYSTEM: MINGW64
       NO_PERL: 1
       GIT_CONFIG_PARAMETERS: "'user.name=CI' 'user.email=ci@git'"
     runs-on: windows-latest
+    strategy:
+      matrix:
+        arch: [x64, arm64]
     steps:
-    - uses: actions/checkout@v1
-    - name: download git-sdk-64-minimal
-      shell: bash
-      run: |
-        ## Get artifact
-        urlbase=https://dev.azure.com/git-for-windows/git/_apis/build/builds
-        id=$(curl "$urlbase?definitions=22&statusFilter=completed&resultFilter=succeeded&\$top=1" |
-          jq -r ".value[] | .id")
-        download_url="$(curl "$urlbase/$id/artifacts" |
-          jq -r '.value[] | select(.name == "git-sdk-64-minimal").resource.downloadUrl')"
-        curl --connect-timeout 10 --retry 5 --retry-delay 0 --retry-max-time 240 \
-          -o artifacts.zip "$download_url"
-
-        ## Unzip and remove the artifact
-        unzip artifacts.zip
-        rm artifacts.zip
+    - uses: actions/checkout@v2
+    - uses: git-for-windows/setup-git-for-windows-sdk@v1
     - name: initialize vcpkg
       uses: actions/checkout@v2
       with:
         repository: 'microsoft/vcpkg'
         path: 'compat/vcbuild/vcpkg'
     - name: download vcpkg artifacts
-      shell: powershell
-      run: |
-        $urlbase = "https://dev.azure.com/git/git/_apis/build/builds"
-        $id = ((Invoke-WebRequest -UseBasicParsing "${urlbase}?definitions=9&statusFilter=completed&resultFilter=succeeded&`$top=1").content | ConvertFrom-JSON).value[0].id
-        $downloadUrl = ((Invoke-WebRequest -UseBasicParsing "${urlbase}/$id/artifacts").content | ConvertFrom-JSON).value[0].resource.downloadUrl
-        (New-Object Net.WebClient).DownloadFile($downloadUrl, "compat.zip")
-        Expand-Archive compat.zip -DestinationPath . -Force
-        Remove-Item compat.zip
+      uses: git-for-windows/get-azure-pipelines-artifact@v0
+      with:
+        repository: git/git
+        definitionId: 9
     - name: add msbuild to PATH
       uses: microsoft/setup-msbuild@v1
     - name: copy dlls to root
-      shell: powershell
-      run: |
-        & compat\vcbuild\vcpkg_copy_dlls.bat release
-        if (!$?) { exit(1) }
+      shell: cmd
+      run: compat\vcbuild\vcpkg_copy_dlls.bat release ${{ matrix.arch }}-windows
     - name: generate Visual Studio solution
       shell: bash
       run: |
-        cmake `pwd`/contrib/buildsystems/ -DCMAKE_PREFIX_PATH=`pwd`/compat/vcbuild/vcpkg/installed/x64-windows \
-        -DMSGFMT_EXE=`pwd`/git-sdk-64-minimal/mingw64/bin/msgfmt.exe -DPERL_TESTS=OFF -DPYTHON_TESTS=OFF -DCURL_NO_CURL_CMAKE=ON
+        cmake `pwd`/contrib/buildsystems/ -DCMAKE_PREFIX_PATH=`pwd`/compat/vcbuild/vcpkg/installed/${{ matrix.arch }}-windows \
+        -DNO_GETTEXT=YesPlease -DPERL_TESTS=OFF -DPYTHON_TESTS=OFF -DCURL_NO_CURL_CMAKE=ON -DCMAKE_GENERATOR_PLATFORM=${{ matrix.arch }} -DVCPKG_ARCH=${{ matrix.arch }}-windows
     - name: MSBuild
-      run: msbuild git.sln -property:Configuration=Release -property:Platform=x64 -maxCpuCount:4 -property:PlatformToolset=v142
+      run: msbuild git.sln -property:Configuration=Release -property:Platform=${{ matrix.arch }} -maxCpuCount:4 -property:PlatformToolset=v142
     - name: bundle artifact tar
-      shell: powershell
+      shell: bash
       env:
         MSVC: 1
         VCPKG_ROOT: ${{github.workspace}}\compat\vcbuild\vcpkg
       run: |
-        & git-sdk-64-minimal\usr\bin\bash.exe -lc @"
-          mkdir -p artifacts &&
-          eval \"`$(make -n artifacts-tar INCLUDE_DLLS_IN_ARTIFACTS=YesPlease ARTIFACTS_DIRECTORY=artifacts 2>&1 | grep ^tar)\"
-        "@
-    - name: upload build artifacts
-      uses: actions/upload-artifact@v1
+        mkdir -p artifacts &&
+        eval "$(make -n artifacts-tar INCLUDE_DLLS_IN_ARTIFACTS=YesPlease ARTIFACTS_DIRECTORY=artifacts 2>&1 | grep ^tar)"
+    - name: zip up tracked files
+      run: git archive -o artifacts/tracked.tar.gz HEAD
+    - name: upload tracked files and build artifacts
+      uses: actions/upload-artifact@v2
       with:
-        name: vs-artifacts
+        name: vs-artifacts-${{ matrix.arch }}
         path: artifacts
   vs-test:
     runs-on: windows-latest
-    needs: [vs-build, windows-build]
+    needs: vs-build
     strategy:
       fail-fast: false
       matrix:
         nr: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     steps:
-    - uses: actions/checkout@v1
-    - name: download git-sdk-64-minimal
-      uses: actions/download-artifact@v1
+    - uses: git-for-windows/setup-git-for-windows-sdk@v1
+    - name: download tracked files and build artifacts
+      uses: actions/download-artifact@v2
       with:
-        name: git-sdk-64-minimal
-        path: ${{github.workspace}}/git-sdk-64-minimal/
-    - name: download build artifacts
-      uses: actions/download-artifact@v1
-      with:
-        name: vs-artifacts
+        name: vs-artifacts-x64
         path: ${{github.workspace}}
-    - name: extract build artifacts
+    - name: extract tracked files and build artifacts
       shell: bash
-      run: tar xf artifacts.tar.gz
+      run: tar xf artifacts.tar.gz && tar xf tracked.tar.gz
     - name: test
-      shell: powershell
+      shell: bash
       env:
-        MSYSTEM: MINGW64
         NO_SVN_TESTS: 1
         GIT_TEST_SKIP_REBASE_P: 1
-      run: |
-        & .\git-sdk-64-minimal\usr\bin\bash.exe -lc @"
-          # Let Git ignore the SDK and the test-cache
-          printf '%s\n' /git-sdk-64-minimal/ /test-cache/ >>.git/info/exclude
-
-          ci/run-test-slice.sh ${{matrix.nr}} 10
-        "@
+      run: ci/run-test-slice.sh ${{matrix.nr}} 10
     - name: ci/print-test-failures.sh
       if: failure()
-      shell: powershell
-      run: |
-        & .\git-sdk-64-minimal\usr\bin\bash.exe -lc ci/print-test-failures.sh
+      shell: bash
+      run: ci/print-test-failures.sh
     - name: Upload failed tests' directories
       if: failure() && env.FAILED_TEST_ARTIFACTS != ''
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v2
       with:
         name: failed-tests-windows
         path: ${{env.FAILED_TEST_ARTIFACTS}}
@@ -302,14 +236,14 @@ jobs:
       jobname: ${{matrix.vector.jobname}}
     runs-on: ${{matrix.vector.pool}}
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - run: ci/install-dependencies.sh
     - run: ci/run-build-and-tests.sh
     - run: ci/print-test-failures.sh
       if: failure()
     - name: Upload failed tests' directories
       if: failure() && env.FAILED_TEST_ARTIFACTS != ''
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v2
       with:
         name: failed-tests-${{matrix.vector.jobname}}
         path: ${{env.FAILED_TEST_ARTIFACTS}}
@@ -336,7 +270,7 @@ jobs:
       if: failure()
     - name: Upload failed tests' directories
       if: failure() && env.FAILED_TEST_ARTIFACTS != ''
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v2
       with:
         name: failed-tests-${{matrix.vector.jobname}}
         path: ${{env.FAILED_TEST_ARTIFACTS}}
@@ -347,7 +281,7 @@ jobs:
       jobname: StaticAnalysis
     runs-on: ubuntu-18.04
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - run: ci/install-dependencies.sh
     - run: ci/run-static-analysis.sh
   documentation:
@@ -357,6 +291,6 @@ jobs:
       jobname: Documentation
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - run: ci/install-dependencies.sh
     - run: ci/test-documentation.sh
