@@ -189,11 +189,13 @@ http.sslBackend::
 
 http.schannelCheckRevoke::
 	Used to enforce or disable certificate revocation checks in cURL
-	when http.sslBackend is set to "schannel". Defaults to `true` if
-	unset. Only necessary to disable this if Git consistently errors
-	and the message is about checking the revocation status of a
-	certificate. This option is ignored if cURL lacks support for
-	setting the relevant SSL option at runtime.
+	when http.sslBackend is set to "schannel" via "true" and "false",
+	respectively. Another accepted value is "best-effort" (the default)
+	in which case revocation checks are performed, but errors due to
+	revocation list distribution points that are offline are silently
+	ignored, as well as errors due to certificates missing revocation
+	list distribution points. This option is ignored if cURL lacks
+	support for setting the relevant SSL option at runtime.
 
 http.schannelUseSSLCAInfo::
 	As of cURL v7.60.0, the Secure Channel backend can use the
@@ -202,6 +204,11 @@ http.schannelUseSSLCAInfo::
 	by default, Git will tell cURL not to use that bundle by default
 	when the `schannel` backend was configured via `http.sslBackend`,
 	unless `http.schannelUseSSLCAInfo` overrides this behavior.
+
+http.sslAutoClientCert::
+	As of cURL v7.77.0, the Secure Channel backend won't automatically
+	send client certificates from the Windows Certificate Store anymore.
+	To opt in to the old behavior, http.sslAutoClientCert can be set.
 
 http.pinnedPubkey::
 	Public key of the https service. It may either be the filename of
