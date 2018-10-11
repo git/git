@@ -495,7 +495,7 @@ int send_pack(struct send_pack_args *args,
 	int need_pack_data = 0;
 	int allow_deleting_refs = 0;
 	int status_report = 0;
-	int use_sideband = 0;
+	int use_sideband = 1;
 	int quiet_supported = 0;
 	int agent_supported = 0;
 	int advertise_sid = 0;
@@ -519,6 +519,7 @@ int send_pack(struct send_pack_args *args,
 		goto out;
 	}
 
+	git_config_get_bool("sendpack.sideband", &use_sideband);
 	git_config_get_bool("push.negotiate", &push_negotiate);
 	if (push_negotiate) {
 		trace2_region_enter("send_pack", "push_negotiate", the_repository);
@@ -540,8 +541,7 @@ int send_pack(struct send_pack_args *args,
 		allow_deleting_refs = 1;
 	if (server_supports("ofs-delta"))
 		args->use_ofs_delta = 1;
-	if (server_supports("side-band-64k"))
-		use_sideband = 1;
+	use_sideband = use_sideband && server_supports("side-band-64k");
 	if (server_supports("quiet"))
 		quiet_supported = 1;
 	if (server_supports("agent"))
