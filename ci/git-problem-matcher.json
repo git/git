@@ -1,0 +1,16 @@
+{
+    "problemMatcher": [
+        {
+            "owner": "git-test-suite",
+            "pattern": [
+                {
+                    "regexp": "^([^ :]+\\.sh):(\\d+): (error|warning|info):\\s+(.*)$",
+                    "file": 1,
+                    "line": 2,
+                    "severity": 3,
+                    "message": 4
+                }
+            ]
+        }
+    ]
+}

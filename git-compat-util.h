@@ -389,8 +389,16 @@ static inline char *git_find_last_dir_sep(const char *path)
 #define find_last_dir_sep git_find_last_dir_sep
 #endif
 
+#ifndef is_mount_point
+#define is_mount_point is_mount_point_via_stat
+#endif
+
 #ifndef query_user_email
 #define query_user_email() NULL
+#endif
+
+#ifndef platform_strbuf_realpath
+#define platform_strbuf_realpath(resolved, path) NULL
 #endif
 
 #ifdef __TANDEM
