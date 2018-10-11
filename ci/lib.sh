@@ -161,6 +161,12 @@ then
 	MAKEFLAGS="$MAKEFLAGS --jobs=10"
 	test windows_nt != "$CI_OS_NAME" ||
 	GIT_TEST_OPTS="--no-chain-lint --no-bin-wrappers $GIT_TEST_OPTS"
+	case "$CI_OS_NAME" in
+	linux) runs_on_pool=ubuntu-latest;;
+	macos|osx) runs_on_pool=macos-latest;;
+	windows_nt) runs_on_pool=windows-latest;;
+	*) echo "Unhandled OS: $CI_OS_NAME" >&2; exit 1;;
+	esac
 elif test true = "$GITHUB_ACTIONS"
 then
 	CI_TYPE=github-actions
