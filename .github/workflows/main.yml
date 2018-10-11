@@ -114,7 +114,7 @@ jobs:
       group: windows-build-${{ github.ref }}
       cancel-in-progress: ${{ needs.ci-config.outputs.skip_concurrent == 'yes' }}
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - uses: git-for-windows/setup-git-for-windows-sdk@v2
     - name: Install GCC-compatible Rust target
       shell: bash
@@ -195,14 +195,17 @@ jobs:
       NO_PERL: 1
       GIT_CONFIG_PARAMETERS: "'user.name=CI' 'user.email=ci@git'"
     runs-on: windows-latest
+    strategy:
+      matrix:
+        arch: [x64, arm64]
     concurrency:
-      group: vs-build-${{ github.ref }}
+      group: vs-build-${{ github.ref }}-${{ matrix.arch }}
       cancel-in-progress: ${{ needs.ci-config.outputs.skip_concurrent == 'yes' }}
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - uses: git-for-windows/setup-git-for-windows-sdk@v2
     - name: initialize vcpkg
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         repository: 'microsoft/vcpkg'
         path: 'compat/vcbuild/vcpkg'
@@ -215,14 +218,16 @@ jobs:
       uses: microsoft/setup-msbuild@v3
     - name: copy dlls to root
       shell: cmd
-      run: compat\vcbuild\vcpkg_copy_dlls.bat release
+      run: compat\vcbuild\vcpkg_copy_dlls.bat release ${{ matrix.arch }}-windows
     - name: generate Visual Studio solution
       shell: bash
       run: |
-        cmake `pwd`/contrib/buildsystems/ -DCMAKE_PREFIX_PATH=`pwd`/compat/vcbuild/vcpkg/installed/x64-windows \
-        -DNO_GETTEXT=YesPlease -DPERL_TESTS=OFF -DPYTHON_TESTS=OFF -DCURL_NO_CURL_CMAKE=ON
+        cmake `pwd`/contrib/buildsystems/ -DCMAKE_PREFIX_PATH=`pwd`/compat/vcbuild/vcpkg/installed/${{ matrix.arch }}-windows \
+        -DNO_GETTEXT=YesPlease -DPERL_TESTS=OFF -DPYTHON_TESTS=OFF -DCURL_NO_CURL_CMAKE=ON -DCMAKE_GENERATOR_PLATFORM=${{ matrix.arch }} -DVCPKG_ARCH=${{ matrix.arch }}-windows -DHOST_CPU=${{ matrix.arch }}
     - name: MSBuild
-      run: msbuild git.sln -property:Configuration=Release -property:Platform=x64 -maxCpuCount:4 -property:PlatformToolset=v142
+      run: |
+        $sln = if (Test-Path git.slnx) { 'git.slnx' } else { 'git.sln' }
+        msbuild $sln -property:Configuration=Release -property:Platform=${{ matrix.arch }} -maxCpuCount:4
     - name: bundle artifact tar
       shell: bash
       env:
@@ -236,7 +241,7 @@ jobs:
     - name: upload tracked files and build artifacts
       uses: actions/upload-artifact@v7
       with:
-        name: vs-artifacts
+        name: vs-artifacts-${{ matrix.arch }}
         path: artifacts
   vs-test:
     name: win+VS test
@@ -254,7 +259,7 @@ jobs:
     - name: download tracked files and build artifacts
       uses: actions/download-artifact@v8
       with:
-        name: vs-artifacts
+        name: vs-artifacts-x64
         path: ${{github.workspace}}
     - name: extract tracked files and build artifacts
       shell: bash
@@ -284,7 +289,7 @@ jobs:
       group: windows-meson-build-${{ github.ref }}
       cancel-in-progress: ${{ needs.ci-config.outputs.skip_concurrent == 'yes' }}
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - uses: actions/setup-python@v6
     - name: Set up dependencies
       shell: pwsh
@@ -312,7 +317,7 @@ jobs:
       group: windows-meson-test-${{ matrix.nr }}-${{ github.ref }}
       cancel-in-progress: ${{ needs.ci-config.outputs.skip_concurrent == 'yes' }}
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - uses: actions/setup-python@v6
     - name: Set up dependencies
       shell: pwsh
@@ -367,7 +372,7 @@ jobs:
       TEST_OUTPUT_DIRECTORY: ${{github.workspace}}/t
     runs-on: ${{matrix.vector.pool}}
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - run: ci/install-dependencies.sh
     - run: ci/run-build-and-tests.sh
     - name: print test failures
@@ -388,7 +393,7 @@ jobs:
       CI_JOB_IMAGE: ubuntu-latest
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - run: ci/install-dependencies.sh
     - run: ci/run-build-and-minimal-fuzzers.sh
   dockerized:
@@ -467,7 +472,7 @@ jobs:
         else
           apt-get -q update && apt-get -q -y install git
         fi
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - run: ci/install-dependencies.sh
     - run: useradd builder --create-home
     - run: chown -R builder .
@@ -492,7 +497,7 @@ jobs:
       group: static-analysis-${{ github.ref }}
       cancel-in-progress: ${{ needs.ci-config.outputs.skip_concurrent == 'yes' }}
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - run: ci/install-dependencies.sh
     - run: ci/run-static-analysis.sh
     - run: ci/check-directional-formatting.bash
@@ -508,7 +513,7 @@ jobs:
       group: rust-analysis-${{ github.ref }}
       cancel-in-progress: ${{ needs.ci-config.outputs.skip_concurrent == 'yes' }}
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - run: ci/install-dependencies.sh
     - run: ci/run-rust-checks.sh
   sparse:
@@ -522,7 +527,7 @@ jobs:
       group: sparse-${{ github.ref }}
       cancel-in-progress: ${{ needs.ci-config.outputs.skip_concurrent == 'yes' }}
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - name: Install other dependencies
       run: ci/install-dependencies.sh
     - run: make sparse
@@ -538,6 +543,6 @@ jobs:
       CI_JOB_IMAGE: ubuntu-latest
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - run: ci/install-dependencies.sh
     - run: ci/test-documentation.sh

@@ -36,9 +36,16 @@ static inline void convert_slashes(char *path)
 		if (*path == '\\')
 			*path = '/';
 }
+struct strbuf;
+int mingw_is_mount_point(struct strbuf *path);
+#define is_mount_point mingw_is_mount_point
+#define CAN_UNLINK_MOUNT_POINTS 1
 #define PATH_SEP ';'
 char *mingw_query_user_email(void);
 #define query_user_email mingw_query_user_email
+struct strbuf;
+char *mingw_strbuf_realpath(struct strbuf *resolved, const char *path);
+#define platform_strbuf_realpath mingw_strbuf_realpath
 
 /**
  * Verifies that the specified path is owned by the user running the
@@ -46,6 +53,7 @@ char *mingw_query_user_email(void);
  */
 int is_path_owned_by_current_sid(const char *path, struct strbuf *report);
 #define is_path_owned_by_current_user is_path_owned_by_current_sid
+int is_valid_windows_path_element(wchar_t ch);
 
 /**
  * Verifies that the given path is a valid one on Windows.
@@ -216,3 +224,8 @@ int mingw_have_unix_sockets(void);
 #undef have_unix_sockets
 #define have_unix_sockets mingw_have_unix_sockets
 #endif
+
+/*
+ * Check current process is inside Windows Container.
+ */
+int is_inside_windows_container(void);

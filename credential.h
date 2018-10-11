@@ -177,6 +177,9 @@ struct credential {
 	struct credential_capability capa_authtype;
 	struct credential_capability capa_state;
 
+	unsigned ntlm_suppressed:1,
+		 ntlm_allow:1;
+
 	char *username;
 	char *password;
 	char *credential;

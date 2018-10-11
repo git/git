@@ -349,7 +349,7 @@ int for_each_commit_graft(each_commit_graft_fn fn, void *cb_data)
 
 struct commit_buffer {
 	void *buffer;
-	unsigned long size;
+	size_t size;
 };
 define_commit_slab(buffer_slab, struct commit_buffer);
 
@@ -366,7 +366,8 @@ void free_commit_buffer_slab(struct buffer_slab *bs)
 	free(bs);
 }
 
-void set_commit_buffer(struct repository *r, struct commit *commit, void *buffer, unsigned long size)
+void set_commit_buffer(struct repository *r, struct commit *commit,
+		       void *buffer, size_t size)
 {
 	struct commit_buffer *v = buffer_slab_at(
 		r->parsed_objects->buffer_slab, commit);
@@ -374,7 +375,9 @@ void set_commit_buffer(struct repository *r, struct commit *commit, void *buffer
 	v->size = size;
 }
 
-const void *get_cached_commit_buffer(struct repository *r, const struct commit *commit, unsigned long *sizep)
+const void *get_cached_commit_buffer(struct repository *r,
+				     const struct commit *commit,
+				     size_t *sizep)
 {
 	struct commit_buffer *v = buffer_slab_peek(
 		r->parsed_objects->buffer_slab, commit);
@@ -390,7 +393,7 @@ const void *get_cached_commit_buffer(struct repository *r, const struct commit *
 
 const void *repo_get_commit_buffer(struct repository *r,
 				   const struct commit *commit,
-				   unsigned long *sizep)
+				   size_t *sizep)
 {
 	const void *ret = get_cached_commit_buffer(r, commit, sizep);
 	if (!ret) {
@@ -404,7 +407,7 @@ const void *repo_get_commit_buffer(struct repository *r,
 			die("expected commit for %s, got %s",
 			    oid_to_hex(&commit->object.oid), type_name(type));
 		if (sizep)
-			*sizep = cast_size_t_to_ulong(size);
+			*sizep = size;
 	}
 	return ret;
 }
@@ -1185,7 +1188,7 @@ int parse_signed_commit(const struct commit *commit,
 			struct strbuf *payload, struct strbuf *signature,
 			const struct git_hash_algo *algop)
 {
-	unsigned long size;
+	size_t size;
 	const char *buffer = repo_get_commit_buffer(the_repository, commit,
 						    &size);
 	int ret = parse_buffer_signed_by_header(buffer, size, payload, signature, algop);
@@ -1358,7 +1361,7 @@ int verify_commit_buffer(const char *buffer, size_t size,
 
 int check_commit_signature(const struct commit *commit, struct signature_check *sigc)
 {
-	unsigned long size;
+	size_t size;
 	const char *buffer = repo_get_commit_buffer(the_repository, commit, &size);
 	int ret = verify_commit_buffer(buffer, size, sigc);
 
@@ -1455,7 +1458,7 @@ struct commit_extra_header *read_commit_extra_headers(struct commit *commit,
 						      const char **exclude)
 {
 	struct commit_extra_header *extra = NULL;
-	unsigned long size;
+	size_t size;
 	const char *buffer = repo_get_commit_buffer(the_repository, commit,
 						    &size);
 	extra = read_commit_extra_header_lines(buffer, size, exclude);

@@ -479,6 +479,11 @@ include shared.mak
 #
 #     CURL_LDFLAGS=-lcurl
 #
+# Define LAZYLOAD_LIBCURL to dynamically load the libcurl; This can be useful
+# if Multiple libcurl versions exist (with different file names) that link to
+# various SSL/TLS backends, to support the `http.sslBackend` runtime switch in
+# such a scenario.
+#
 # === Optional library: libpcre2 ===
 #
 # Define USE_LIBPCRE if you have and want to use libpcre. Various
@@ -1503,6 +1508,7 @@ BUILTIN_OBJS += builtin/sparse-checkout.o
 BUILTIN_OBJS += builtin/stash.o
 BUILTIN_OBJS += builtin/stripspace.o
 BUILTIN_OBJS += builtin/submodule--helper.o
+BUILTIN_OBJS += builtin/survey.o
 BUILTIN_OBJS += builtin/symbolic-ref.o
 BUILTIN_OBJS += builtin/tag.o
 BUILTIN_OBJS += builtin/unpack-file.o
@@ -1542,6 +1548,7 @@ CLAR_TEST_SUITES += u-hash
 CLAR_TEST_SUITES += u-hashmap
 CLAR_TEST_SUITES += u-list-objects-filter-options
 CLAR_TEST_SUITES += u-mem-pool
+CLAR_TEST_SUITES += u-mingw
 CLAR_TEST_SUITES += u-odb-inmemory
 CLAR_TEST_SUITES += u-oid-array
 CLAR_TEST_SUITES += u-oidmap
@@ -1804,10 +1811,23 @@ else
 		CURL_LIBCURL =
         endif
 
-        ifndef CURL_LDFLAGS
-		CURL_LDFLAGS = $(eval CURL_LDFLAGS := $$(shell $$(CURL_CONFIG) --libs))$(CURL_LDFLAGS)
+        ifdef LAZYLOAD_LIBCURL
+		LAZYLOAD_LIBCURL_OBJ = compat/lazyload-curl.o
+		OBJECTS += $(LAZYLOAD_LIBCURL_OBJ)
+		# The `CURL_STATICLIB` constant must be defined to avoid seeing the functions
+		# declared as DLL imports
+		CURL_CFLAGS = -DCURL_STATICLIB
+ifneq ($(uname_S),MINGW)
+ifneq ($(uname_S),Windows)
+		CURL_LIBCURL = -ldl
+endif
+endif
+        else
+                ifndef CURL_LDFLAGS
+			CURL_LDFLAGS = $(eval CURL_LDFLAGS := $$(shell $$(CURL_CONFIG) --libs))$(CURL_LDFLAGS)
+                endif
+		CURL_LIBCURL += $(CURL_LDFLAGS)
         endif
-	CURL_LIBCURL += $(CURL_LDFLAGS)
 
         ifndef CURL_CFLAGS
 		CURL_CFLAGS = $(eval CURL_CFLAGS := $$(shell $$(CURL_CONFIG) --cflags))$(CURL_CFLAGS)
@@ -1828,7 +1848,7 @@ else
         endif
         ifdef USE_CURL_FOR_IMAP_SEND
 		BASIC_CFLAGS += -DUSE_CURL_FOR_IMAP_SEND
-		IMAP_SEND_BUILDDEPS = http.o
+		IMAP_SEND_BUILDDEPS = http.o $(LAZYLOAD_LIBCURL_OBJ)
 		IMAP_SEND_LDFLAGS += $(CURL_LIBCURL)
         endif
         ifndef NO_EXPAT
@@ -3012,10 +3032,10 @@ git-imap-send$X: imap-send.o $(IMAP_SEND_BUILDDEPS) GIT-LDFLAGS $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(IMAP_SEND_LDFLAGS) $(LIBS)
 
-git-http-fetch$X: http.o http-walker.o http-fetch.o GIT-LDFLAGS $(GITLIBS)
+git-http-fetch$X: http.o http-walker.o http-fetch.o $(LAZYLOAD_LIBCURL_OBJ) GIT-LDFLAGS $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(CURL_LIBCURL) $(LIBS)
-git-http-push$X: http.o http-push.o GIT-LDFLAGS $(GITLIBS)
+git-http-push$X: http.o http-push.o $(LAZYLOAD_LIBCURL_OBJ) GIT-LDFLAGS $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(CURL_LIBCURL) $(EXPAT_LIBEXPAT) $(LIBS)
 
@@ -3025,7 +3045,7 @@ $(REMOTE_CURL_ALIASES): $(REMOTE_CURL_PRIMARY)
 	ln -s $< $@ 2>/dev/null || \
 	cp $< $@
 
-$(REMOTE_CURL_PRIMARY): remote-curl.o http.o http-walker.o GIT-LDFLAGS $(GITLIBS)
+$(REMOTE_CURL_PRIMARY): remote-curl.o http.o http-walker.o $(LAZYLOAD_LIBCURL_OBJ) GIT-LDFLAGS $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(CURL_LIBCURL) $(EXPAT_LIBEXPAT) $(LIBS)
 
@@ -3944,12 +3964,15 @@ ifdef MSVC
 	$(RM) $(patsubst %.o,%.o.pdb,$(OBJECTS))
 	$(RM) headless-git.o.pdb
 	$(RM) $(patsubst %.exe,%.pdb,$(OTHER_PROGRAMS))
+	$(RM) $(patsubst %.exe,%.ilk,$(OTHER_PROGRAMS))
 	$(RM) $(patsubst %.exe,%.iobj,$(OTHER_PROGRAMS))
 	$(RM) $(patsubst %.exe,%.ipdb,$(OTHER_PROGRAMS))
 	$(RM) $(patsubst %.exe,%.pdb,$(PROGRAMS))
+	$(RM) $(patsubst %.exe,%.ilk,$(PROGRAMS))
 	$(RM) $(patsubst %.exe,%.iobj,$(PROGRAMS))
 	$(RM) $(patsubst %.exe,%.ipdb,$(PROGRAMS))
 	$(RM) $(patsubst %.exe,%.pdb,$(TEST_PROGRAMS))
+	$(RM) $(patsubst %.exe,%.ilk,$(TEST_PROGRAMS))
 	$(RM) $(patsubst %.exe,%.iobj,$(TEST_PROGRAMS))
 	$(RM) $(patsubst %.exe,%.ipdb,$(TEST_PROGRAMS))
 	$(RM) compat/vcbuild/MSVC-DEFS-GEN
