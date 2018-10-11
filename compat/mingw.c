@@ -7,6 +7,7 @@
 #include "../cache.h"
 #include "win32/lazyload.h"
 #include "../config.h"
+#include "dir.h"
 
 #define HCAST(type, handle) ((type)(intptr_t)handle)
 
@@ -1039,7 +1040,7 @@ char *mingw_getcwd(char *pointer, int len)
  * See "Parsing C++ Command-Line Arguments" at Microsoft's Docs:
  * https://docs.microsoft.com/en-us/cpp/cpp/parsing-cpp-command-line-arguments
  */
-static const char *quote_arg(const char *arg)
+static const char *quote_arg_msvc(const char *arg)
 {
 	/* count chars to quote */
 	int len = 0, n = 0;
@@ -1092,6 +1093,37 @@ static const char *quote_arg(const char *arg)
 	*d++ = '"';
 	*d++ = 0;
 	return q;
+}
+
+#include "quote.h"
+
+static const char *quote_arg_msys2(const char *arg)
+{
+	struct strbuf buf = STRBUF_INIT;
+	const char *p2 = arg, *p;
+
+	for (p = arg; *p; p++) {
+		int ws = isspace(*p);
+		if (!ws && *p != '\\' && *p != '"' && *p != '{')
+			continue;
+		if (!buf.len)
+			strbuf_addch(&buf, '"');
+		if (p != p2)
+			strbuf_add(&buf, p2, p - p2);
+		if (!ws && *p != '{')
+			strbuf_addch(&buf, '\\');
+		p2 = p;
+	}
+
+	if (p == arg)
+		strbuf_addch(&buf, '"');
+	else if (!buf.len)
+		return arg;
+	else
+		strbuf_add(&buf, p2, p - p2),
+
+	strbuf_addch(&buf, '"');
+	return strbuf_detach(&buf, 0);
 }
 
 static const char *parse_interpreter(const char *cmd)
@@ -1332,6 +1364,47 @@ struct pinfo_t {
 static struct pinfo_t *pinfo = NULL;
 CRITICAL_SECTION pinfo_cs;
 
+/* Used to match and chomp off path components */
+static inline int match_last_path_component(const char *path, size_t *len,
+					    const char *component)
+{
+	size_t component_len = strlen(component);
+	if (*len < component_len + 1 ||
+	    !is_dir_sep(path[*len - component_len - 1]) ||
+	    fspathncmp(path + *len - component_len, component, component_len))
+		return 0;
+	*len -= component_len + 1;
+	/* chomp off repeated dir separators */
+	while (*len > 0 && is_dir_sep(path[*len - 1]))
+		(*len)--;
+	return 1;
+}
+
+static int is_msys2_sh(const char *cmd)
+{
+	if (cmd && !strcmp(cmd, "sh")) {
+		static int ret = -1;
+		char *p;
+
+		if (ret >= 0)
+			return ret;
+
+		p = path_lookup(cmd, 0);
+		if (!p)
+			ret = 0;
+		else {
+			size_t len = strlen(p);
+
+			ret = match_last_path_component(p, &len, "sh.exe") &&
+				match_last_path_component(p, &len, "bin") &&
+				match_last_path_component(p, &len, "usr");
+			free(p);
+		}
+		return ret;
+	}
+	return 0;
+}
+
 static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaenv,
 			      const char *dir,
 			      int prepend_cmd, int fhin, int fhout, int fherr)
@@ -1343,6 +1416,8 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 	unsigned flags = CREATE_UNICODE_ENVIRONMENT;
 	BOOL ret;
 	HANDLE cons;
+	const char *(*quote_arg)(const char *arg) =
+		is_msys2_sh(*argv) ? quote_arg_msys2 : quote_arg_msvc;
 
 	do_unset_environment_variables();
 
