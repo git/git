@@ -674,4 +674,40 @@ do
 	'
 done
 
+# The following test is not necessarily a permanent choice, but since we do not
+# have a "name hash version" bit in the .bitmap file format, we cannot write the
+# full-name hash values into the .bitmap file without risking breakage later.
+#
+# TODO: Make these compatible in the future and replace this test with the
+# expected behavior when both are specified.
+test_expect_success '--full-name-hash and --write-bitmap-index are incompatible' '
+	test_must_fail git pack-objects base --all \
+		--full-name-hash --write-bitmap-index 2>err &&
+	grep incompatible err &&
+
+	# --stdout option silently removes --write-bitmap-index
+	git pack-objects --stdout --all --full-name-hash --write-bitmap-index >out
+'
+
+# Basic "repack everything" test
+test_expect_success '--path-walk pack everything' '
+	git -C server rev-parse HEAD >in &&
+	GIT_PROGRESS_DELAY=0 git -C server pack-objects \
+		--stdout --revs --path-walk --progress <in >out.pack 2>err &&
+	grep "Compressing objects by path" err &&
+	git -C server index-pack --stdin <out.pack
+'
+
+# Basic "thin pack" test
+test_expect_success '--path-walk thin pack' '
+	cat >in <<-EOF &&
+	$(git -C server rev-parse HEAD)
+	^$(git -C server rev-parse HEAD~2)
+	EOF
+	GIT_PROGRESS_DELAY=0 git -C server pack-objects \
+		--thin --stdout --revs --path-walk --progress <in >out.pack 2>err &&
+	grep "Compressing objects by path" err &&
+	git -C server index-pack --fix-thin --stdin <out.pack
+'
+
 test_done
