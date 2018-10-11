@@ -14,3 +14,4 @@
 /Documentation/gitk.txt conflict-marker-size=32
 /Documentation/user-manual.txt conflict-marker-size=32
 /t/t????-*.sh conflict-marker-size=32
+/t/oid-info/* eol=lf
