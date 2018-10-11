@@ -7,6 +7,7 @@
 #include <wingdi.h>
 #include <winreg.h>
 #include "win32.h"
+#include "win32/lazyload.h"
 
 static int fd_is_interactive[3] = { 0, 0, 0 };
 #define FD_CONSOLE 0x1
@@ -41,26 +42,21 @@ typedef struct _CONSOLE_FONT_INFOEX {
 #endif
 #endif
 
-typedef BOOL (WINAPI *PGETCURRENTCONSOLEFONTEX)(HANDLE, BOOL,
-		PCONSOLE_FONT_INFOEX);
-
 static void warn_if_raster_font(void)
 {
 	DWORD fontFamily = 0;
-	PGETCURRENTCONSOLEFONTEX pGetCurrentConsoleFontEx;
+	DECLARE_PROC_ADDR(kernel32.dll, BOOL, GetCurrentConsoleFontEx,
+			HANDLE, BOOL, PCONSOLE_FONT_INFOEX);
 
 	/* don't bother if output was ascii only */
 	if (!non_ascii_used)
 		return;
 
 	/* GetCurrentConsoleFontEx is available since Vista */
-	pGetCurrentConsoleFontEx = (PGETCURRENTCONSOLEFONTEX) GetProcAddress(
-			GetModuleHandle("kernel32.dll"),
-			"GetCurrentConsoleFontEx");
-	if (pGetCurrentConsoleFontEx) {
+	if (INIT_PROC_ADDR(GetCurrentConsoleFontEx)) {
 		CONSOLE_FONT_INFOEX cfi;
 		cfi.cbSize = sizeof(cfi);
-		if (pGetCurrentConsoleFontEx(console, 0, &cfi))
+		if (GetCurrentConsoleFontEx(console, 0, &cfi))
 			fontFamily = cfi.FontFamily;
 	} else {
 		/* pre-Vista: check default console font in registry */
@@ -544,7 +540,20 @@ static HANDLE swap_osfhnd(int fd, HANDLE new_handle)
 #ifdef DETECT_MSYS_TTY
 
 #include <winternl.h>
+
+#if defined(_MSC_VER)
+
+typedef struct _OBJECT_NAME_INFORMATION
+{
+	UNICODE_STRING Name;
+	WCHAR NameBuffer[FLEX_ARRAY];
+} OBJECT_NAME_INFORMATION, *POBJECT_NAME_INFORMATION;
+
+#define ObjectNameInformation 1
+
+#else
 #include <ntstatus.h>
+#endif
 
 static void detect_msys_tty(int fd)
 {
@@ -599,7 +608,7 @@ int winansi_isatty(int fd)
 void winansi_init(void)
 {
 	int con1, con2;
-	char name[32];
+	wchar_t name[32];
 
 	/* check if either stdout or stderr is a console output screen buffer */
 	con1 = is_console(1);
@@ -619,13 +628,15 @@ void winansi_init(void)
 	}
 
 	/* create a named pipe to communicate with the console thread */
-	xsnprintf(name, sizeof(name), "\\\\.\\pipe\\winansi%lu", GetCurrentProcessId());
-	hwrite = CreateNamedPipe(name, PIPE_ACCESS_OUTBOUND,
+	if (swprintf(name, ARRAY_SIZE(name) - 1, L"\\\\.\\pipe\\winansi%lu",
+		     GetCurrentProcessId()) < 0)
+		die("Could not initialize winansi pipe name");
+	hwrite = CreateNamedPipeW(name, PIPE_ACCESS_OUTBOUND,
 		PIPE_TYPE_BYTE | PIPE_WAIT, 1, BUFFER_SIZE, 0, 0, NULL);
 	if (hwrite == INVALID_HANDLE_VALUE)
 		die_lasterr("CreateNamedPipe failed");
 
-	hread = CreateFile(name, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
+	hread = CreateFileW(name, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
 	if (hread == INVALID_HANDLE_VALUE)
 		die_lasterr("CreateFile for named pipe failed");
 

@@ -767,7 +767,7 @@ static int parse_key_value_squoted(char *buf, struct string_list *list)
  *	GIT_AUTHOR_DATE='$author_date'
  *
  * where $author_name, $author_email and $author_date are quoted. We are strict
- * with our parsing, as the file was meant to be eval'd in the old
+ * with our parsing, as the file was meant to be eval'd in the now-removed
  * git-am.sh/git-rebase--interactive.sh scripts, and thus if the file differs
  * from what this function expects, it is better to bail out than to do
  * something that the user does not expect.
@@ -3401,6 +3401,10 @@ static int do_merge(struct repository *r,
 		rollback_lock_file(&lock);
 		ret = fast_forward_to(r, &commit->object.oid,
 				      &head_commit->object.oid, 0, opts);
+		if (flags & TODO_EDIT_MERGE_MSG) {
+			run_commit_flags |= AMEND_MSG;
+			goto fast_forward_edit;
+		}
 		goto leave_merge;
 	}
 
@@ -3504,6 +3508,7 @@ static int do_merge(struct repository *r,
 		 * value (a negative one would indicate that the `merge`
 		 * command needs to be rescheduled).
 		 */
+	fast_forward_edit:
 		ret = !!run_git_commit(r, git_path_merge_msg(r), opts,
 				       run_commit_flags);
 
