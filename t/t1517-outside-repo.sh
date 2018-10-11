@@ -120,7 +120,7 @@ do
 	merge-octopus | merge-one-file | merge-resolve | mergetool | \
 	mktag | p4 | p4.py | pickaxe | remote-ftp | remote-ftps | \
 	remote-http | remote-https | replay | send-email | \
-	sh-i18n--envsubst | shell | show | stage | submodule | svn | \
+	sh-i18n--envsubst | shell | show | stage | submodule | survey | svn | \
 	upload-archive--writer | upload-pack | web--browse | whatchanged)
 		expect_outcome=expect_failure ;;
 	*)
