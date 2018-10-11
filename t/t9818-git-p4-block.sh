@@ -146,8 +146,4 @@ test_expect_success 'Clone repo with self-sizing block size' '
 	test_line_count \> 10 log
 '
 
-test_expect_success 'kill p4d' '
-	kill_p4d
-'
-
 test_done
