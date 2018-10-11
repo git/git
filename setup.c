@@ -1551,10 +1551,19 @@ const char *setup_git_directory_gently(int *nongit_ok)
 		break;
 	case GIT_DIR_INVALID_OWNERSHIP:
 		if (!nongit_ok) {
+			struct strbuf prequoted = STRBUF_INIT;
 			struct strbuf quoted = STRBUF_INIT;
 
 			strbuf_complete(&report, '\n');
-			sq_quote_buf_pretty(&quoted, dir.buf);
+
+#ifdef __MINGW32__
+			if (dir.buf[0] == '/')
+				strbuf_addstr(&prequoted, "%(prefix)/");
+#endif
+
+			strbuf_add(&prequoted, dir.buf, dir.len);
+			sq_quote_buf_pretty(&quoted, prequoted.buf);
+
 			die(_("detected dubious ownership in repository at '%s'\n"
 			      "%s"
 			      "To add an exception for this directory, call:\n"
@@ -2224,7 +2233,7 @@ int init_db(const char *git_dir, const char *real_git_dir,
 	startup_info->have_repository = 1;
 
 	/* Ensure `core.hidedotfiles` is processed */
-	git_config(platform_core_config, NULL);
+	git_config(git_default_core_config, NULL);
 
 	safe_create_dir(git_dir, 0);
 
