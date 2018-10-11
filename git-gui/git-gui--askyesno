@@ -29,8 +29,8 @@ if {$argc < 1} {
 }
 
 ${NS}::frame .t
-${NS}::label .t.m -text $prompt -justify center -width 40
-.t.m configure -wraplength 400
+${NS}::label .t.m -text $prompt -justify center -width 400px
+.t.m configure -wraplength 400px
 pack .t.m -side top -fill x -padx 20 -pady 20 -expand 1
 pack .t -side top -fill x -ipadx 20 -ipady 20 -expand 1
 
@@ -46,6 +46,18 @@ pack .b -side bottom -fill x -ipadx 20 -ipady 15
 
 bind . <Key-Return> {exit 0}
 bind . <Key-Escape> {exit 1}
+
+if {$::tcl_platform(platform) eq {windows}} {
+	set icopath [file dirname [file normalize $argv0]]
+	if {[file tail $icopath] eq {git-core}} {
+		set icopath [file dirname $icopath]
+	}
+	set icopath [file dirname $icopath]
+	set icopath [file join $icopath share git git-for-windows.ico]
+	if {[file exists $icopath]} {
+		wm iconbitmap . -default $icopath
+	}
+}
 
 if {$::tcl_platform(platform) eq {windows}} {
 	set icopath [file dirname [file normalize $argv0]]
