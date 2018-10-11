@@ -6,6 +6,7 @@
 *.pm text eol=lf diff=perl
 *.py text eol=lf diff=python
 *.bat text eol=crlf
+*.png binary
 CODE_OF_CONDUCT.md -whitespace
 /Documentation/**/*.txt text eol=lf
 /command-list.txt text eol=lf
