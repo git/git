@@ -470,4 +470,15 @@ test_expect_success CASE_INSENSITIVE_FS 'path is case-insensitive' '
 	git add "$downcased"
 '
 
+test_expect_success MINGW 'can add files via NTFS junctions' '
+	test_when_finished "cmd //c rmdir junction && rm -rf target" &&
+	test_create_repo target &&
+	cmd //c "mklink /j junction target" &&
+	>target/via-junction &&
+	git -C junction add "$(pwd)/junction/via-junction" &&
+	echo via-junction >expect &&
+	git -C target diff --cached --name-only >actual &&
+	test_cmp expect actual
+'
+
 test_done
