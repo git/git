@@ -29,9 +29,6 @@
 
 #include <sys/types.h>
 
-/* Specification.  */
-#include <poll.h>
-
 #include <errno.h>
 #include <limits.h>
 #include <assert.h>
@@ -54,6 +51,9 @@
 # endif
 # include <unistd.h>
 #endif
+
+/* Specification.  */
+#include "poll.h"
 
 #ifdef HAVE_SYS_IOCTL_H
 # include <sys/ioctl.h>
