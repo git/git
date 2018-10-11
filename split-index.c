@@ -188,6 +188,30 @@ void merge_base_index(struct index_state *istate)
 	si->saved_cache_nr = 0;
 }
 
+/*
+ * Compare most of the fields in two cache entries, i.e. all except the
+ * hashmap_entry and the name.
+ */
+static int compare_ce_content(struct cache_entry *a, struct cache_entry *b)
+{
+	const unsigned int ondisk_flags = CE_STAGEMASK | CE_VALID |
+					  CE_EXTENDED_FLAGS;
+	unsigned int ce_flags = a->ce_flags;
+	unsigned int base_flags = b->ce_flags;
+	int ret;
+
+	/* only on-disk flags matter */
+	a->ce_flags &= ondisk_flags;
+	b->ce_flags &= ondisk_flags;
+	ret = memcmp(&a->ce_stat_data, &b->ce_stat_data,
+		     offsetof(struct cache_entry, name) -
+		     offsetof(struct cache_entry, ce_stat_data));
+	a->ce_flags = ce_flags;
+	b->ce_flags = base_flags;
+
+	return ret;
+}
+
 void prepare_to_write_split_index(struct index_state *istate)
 {
 	struct split_index *si = init_split_index(istate);
@@ -207,13 +231,28 @@ void prepare_to_write_split_index(struct index_state *istate)
 		 */
 		for (i = 0; i < istate->cache_nr; i++) {
 			struct cache_entry *base;
-			/* namelen is checked separately */
-			const unsigned int ondisk_flags =
-				CE_STAGEMASK | CE_VALID | CE_EXTENDED_FLAGS;
-			unsigned int ce_flags, base_flags, ret;
 			ce = istate->cache[i];
-			if (!ce->index)
+			if (!ce->index) {
+				/*
+				 * During simple update index operations this
+				 * is a cache entry that is not present in
+				 * the shared index.  It will be added to the
+				 * split index.
+				 *
+				 * However, it might also represent a file
+				 * that already has a cache entry in the
+				 * shared index, but a new index has just
+				 * been constructed by unpack_trees(), and
+				 * this entry now refers to different content
+				 * than what was recorded in the original
+				 * index, e.g. during 'read-tree -m HEAD^' or
+				 * 'checkout HEAD^'.  In this case the
+				 * original entry in the shared index will be
+				 * marked as deleted, and this entry will be
+				 * added to the split index.
+				 */
 				continue;
+			}
 			if (ce->index > si->base->cache_nr) {
 				ce->index = 0;
 				continue;
@@ -227,18 +266,34 @@ void prepare_to_write_split_index(struct index_state *istate)
 				ce->index = 0;
 				continue;
 			}
-			ce_flags = ce->ce_flags;
-			base_flags = base->ce_flags;
-			/* only on-disk flags matter */
-			ce->ce_flags   &= ondisk_flags;
-			base->ce_flags &= ondisk_flags;
-			ret = memcmp(&ce->ce_stat_data, &base->ce_stat_data,
-				     offsetof(struct cache_entry, name) -
-				     offsetof(struct cache_entry, ce_stat_data));
-			ce->ce_flags = ce_flags;
-			base->ce_flags = base_flags;
-			if (ret)
-				ce->ce_flags |= CE_UPDATE_IN_BASE;
+			/*
+			 * This is the copy of a cache entry that is present
+			 * in the shared index, created by unpack_trees()
+			 * while it constructed a new index.
+			 */
+			if (ce->ce_flags & CE_UPDATE_IN_BASE) {
+				/*
+				 * Already marked for inclusion in the split
+				 * index, either because the corresponding
+				 * file was modified and the cached stat data
+				 * was refreshed, or because the original
+				 * entry already had a replacement entry in
+				 * the split index.
+				 * Nothing to do.
+				 */
+			} else {
+				/*
+				 * Thoroughly compare the cached data to see
+				 * whether it should be marked for inclusion
+				 * in the split index.
+				 *
+				 * This comparison might be unnecessary, as
+				 * code paths modifying the cached data do
+				 * set CE_UPDATE_IN_BASE as well.
+				 */
+				if (compare_ce_content(ce, base))
+					ce->ce_flags |= CE_UPDATE_IN_BASE;
+			}
 			discard_cache_entry(base);
 			si->base->cache[ce->index - 1] = ce;
 		}
