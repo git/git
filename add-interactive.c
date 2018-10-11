@@ -52,6 +52,24 @@ void init_add_i_state(struct add_i_state *s, struct repository *r)
 		diff_get_color(s->use_color, DIFF_FILE_OLD));
 	init_color(r, s, "new", s->file_new_color,
 		diff_get_color(s->use_color, DIFF_FILE_NEW));
+
+	FREE_AND_NULL(s->interactive_diff_filter);
+	git_config_get_string("interactive.difffilter",
+			      &s->interactive_diff_filter);
+
+	FREE_AND_NULL(s->interactive_diff_algorithm);
+	git_config_get_string("diff.algorithm",
+			      &s->interactive_diff_algorithm);
+
+	git_config_get_bool("interactive.singlekey", &s->use_single_key);
+}
+
+void clear_add_i_state(struct add_i_state *s)
+{
+	FREE_AND_NULL(s->interactive_diff_filter);
+	FREE_AND_NULL(s->interactive_diff_algorithm);
+	memset(s, 0, sizeof(*s));
+	s->use_color = -1;
 }
 
 /*
@@ -326,7 +344,10 @@ static ssize_t list_and_choose(struct add_i_state *s,
 				if (endp == p + sep)
 					to = from + 1;
 				else if (*endp == '-') {
-					to = strtoul(++endp, &endp, 10);
+					if (isdigit(*(++endp)))
+						to = strtoul(endp, &endp, 10);
+					else
+						to = items->items.nr;
 					/* extra characters after the range? */
 					if (endp != p + sep)
 						from = -1;
@@ -913,7 +934,7 @@ static int run_patch(struct add_i_state *s, const struct pathspec *ps,
 
 	opts->prompt = N_("Patch update");
 	count = list_and_choose(s, files, opts);
-	if (count >= 0) {
+	if (count > 0) {
 		struct argv_array args = ARGV_ARRAY_INIT;
 		struct pathspec ps_selected = { 0 };
 
@@ -924,7 +945,7 @@ static int run_patch(struct add_i_state *s, const struct pathspec *ps,
 		parse_pathspec(&ps_selected,
 			       PATHSPEC_ALL_MAGIC & ~PATHSPEC_LITERAL,
 			       PATHSPEC_LITERAL_PATH, "", args.argv);
-		res = run_add_p(s->r, &ps_selected);
+		res = run_add_p(s->r, ADD_P_ADD, NULL, &ps_selected);
 		argv_array_clear(&args);
 		clear_pathspec(&ps_selected);
 	}
@@ -954,7 +975,7 @@ static int run_diff(struct add_i_state *s, const struct pathspec *ps,
 	opts->flags = IMMEDIATE;
 	count = list_and_choose(s, files, opts);
 	opts->flags = 0;
-	if (count >= 0) {
+	if (count > 0) {
 		struct argv_array args = ARGV_ARRAY_INIT;
 
 		argv_array_pushl(&args, "git", "diff", "-p", "--cached",
@@ -1149,6 +1170,7 @@ int run_add_i(struct repository *r, const struct pathspec *ps)
 	strbuf_release(&print_file_item_data.worktree);
 	strbuf_release(&header);
 	prefix_item_list_clear(&commands);
+	clear_add_i_state(&s);
 
 	return res;
 }
