@@ -58,8 +58,8 @@ sub createProject {
     my $uuid = generate_guid($name);
     $$build_structure{"$prefix${target}_GUID"} = $uuid;
     my $vcxproj = $target;
-    $vcxproj =~ s/(.*\/)?(.*)/$&\/$2.vcxproj/;
-    $vcxproj =~ s/([^\/]*)(\/lib)\/(lib.vcxproj)/$1$2\/$1_$3/;
+    $vcxproj =~ s/(.*\/)?(.*)/$&.proj\/$2.vcxproj/;
+    $vcxproj =~ s/([^\/]*)(\/lib\.proj)\/(lib.vcxproj)/$1$2\/$1_$3/;
     $$build_structure{"$prefix${target}_VCXPROJ"} = $vcxproj;
 
     my @srcs = sort(map("$rel_dir\\$_", @{$$build_structure{"$prefix${name}_SOURCES"}}));
@@ -89,7 +89,9 @@ sub createProject {
     $defines =~ s/>/&gt;/g;
     $defines =~ s/\'//g;
 
-    die "Could not create the directory $target for $label project!\n" unless (-d "$target" || mkdir "$target");
+    my $dir = $vcxproj;
+    $dir =~ s/\/[^\/]*$//;
+    die "Could not create the directory $dir for $label project!\n" unless (-d "$dir" || mkdir "$dir");
 
     open F, ">$vcxproj" or die "Could not open $vcxproj for writing!\n";
     binmode F, ":crlf :utf8";
@@ -114,12 +116,21 @@ sub createProject {
       <Configuration>Release</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|ARM64">
+      <Configuration>Debug</Configuration>
+      <Platform>ARM64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|ARM64">
+      <Configuration>Release</Configuration>
+      <Platform>ARM64</Platform>
+    </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>$uuid</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <VCPKGArch Condition="'\$(Platform)'=='Win32'">x86-windows</VCPKGArch>
-    <VCPKGArch Condition="'\$(Platform)'!='Win32'">x64-windows</VCPKGArch>
+    <VCPKGArch Condition="'\$(Platform)'=='x64'">x64-windows</VCPKGArch>
+    <VCPKGArch Condition="'\$(Platform)'=='ARM64'">arm64-windows</VCPKGArch>
     <VCPKGArchDirectory>$cdup\\compat\\vcbuild\\vcpkg\\installed\\\$(VCPKGArch)</VCPKGArchDirectory>
     <VCPKGBinDirectory Condition="'\$(Configuration)'=='Debug'">\$(VCPKGArchDirectory)\\debug\\bin</VCPKGBinDirectory>
     <VCPKGLibDirectory Condition="'\$(Configuration)'=='Debug'">\$(VCPKGArchDirectory)\\debug\\lib</VCPKGLibDirectory>
@@ -140,7 +151,7 @@ sub createProject {
   </PropertyGroup>
   <PropertyGroup>
     <ConfigurationType>$config_type</ConfigurationType>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <!-- <CharacterSet>UTF-8</CharacterSet> -->
     <OutDir>..\\</OutDir>
     <!-- <IntDir>\$(ProjectDir)\$(Configuration)\\</IntDir> -->
@@ -184,7 +195,7 @@ EOM
     <PreBuildEvent Condition="!Exists('$cdup\\compat\\vcbuild\\vcpkg\\installed\\\$(VCPKGArch)\\include\\openssl\\ssl.h')">
       <Message>Initialize VCPKG</Message>
       <Command>del "$cdup\\compat\\vcbuild\\vcpkg"</Command>
-      <Command>call "$cdup\\compat\\vcbuild\\vcpkg_install.bat"</Command>
+      <Command>call "$cdup\\compat\\vcbuild\\vcpkg_install.bat" \$(VCPKGArch)</Command>
     </PreBuildEvent>
 EOM
     }
@@ -236,14 +247,14 @@ EOM
 
       print F << "EOM";
   <ItemGroup>
-    <ProjectReference Include="$cdup\\libgit\\libgit.vcxproj">
+    <ProjectReference Include="$cdup\\libgit.proj\\libgit.vcxproj">
       <Project>$uuid_libgit</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
 EOM
       if (!($name =~ 'xdiff')) {
         print F << "EOM";
-    <ProjectReference Include="$cdup\\xdiff\\lib\\xdiff_lib.vcxproj">
+    <ProjectReference Include="$cdup\\xdiff\\lib.proj\\xdiff_lib.vcxproj">
       <Project>$uuid_xdiff_lib</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
@@ -252,7 +263,7 @@ EOM
       if ($name =~ /(test-(line-buffer|svn-fe)|^git-remote-testsvn)\.exe$/) {
         my $uuid_vcs_svn_lib = $$build_structure{"LIBS_vcs-svn/lib_GUID"};
         print F << "EOM";
-    <ProjectReference Include="$cdup\\vcs-svn\\lib\\vcs-svn_lib.vcxproj">
+    <ProjectReference Include="$cdup\\vcs-svn\\lib.proj\\vcs-svn_lib.vcxproj">
       <Project>$uuid_vcs_svn_lib</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
@@ -329,7 +340,7 @@ sub createGlueProject {
 	my $vcxproj = $build_structure{"APPS_${appname}_VCXPROJ"};
 	$vcxproj =~ s/\//\\/g;
         $appname =~ s/.*\///;
-        print F "\"${appname}\", \"${vcxproj}\", \"${uuid}\"";
+        print F "\"${appname}.proj\", \"${vcxproj}\", \"${uuid}\"";
         print F "$SLN_POST";
     }
     foreach (@libs) {
@@ -339,15 +350,17 @@ sub createGlueProject {
         my $vcxproj = $build_structure{"LIBS_${libname}_VCXPROJ"};
 	$vcxproj =~ s/\//\\/g;
         $libname =~ s/\//_/g;
-        print F "\"${libname}\", \"${vcxproj}\", \"${uuid}\"";
+        print F "\"${libname}.proj\", \"${vcxproj}\", \"${uuid}\"";
         print F "$SLN_POST";
     }
 
     print F << "EOM";
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|ARM64 = Debug|ARM64
 		Debug|x64 = Debug|x64
 		Debug|x86 = Debug|x86
+		Release|ARM64 = Release|ARM64
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
 	EndGlobalSection
@@ -358,10 +371,14 @@ EOM
     foreach (@apps) {
         my $appname = $_;
         my $uuid = $build_structure{"APPS_${appname}_GUID"};
+        print F "\t\t${uuid}.Debug|ARM64.ActiveCfg = Debug|ARM64\n";
+        print F "\t\t${uuid}.Debug|ARM64.Build.0 = Debug|ARM64\n";
         print F "\t\t${uuid}.Debug|x64.ActiveCfg = Debug|x64\n";
         print F "\t\t${uuid}.Debug|x64.Build.0 = Debug|x64\n";
         print F "\t\t${uuid}.Debug|x86.ActiveCfg = Debug|Win32\n";
         print F "\t\t${uuid}.Debug|x86.Build.0 = Debug|Win32\n";
+        print F "\t\t${uuid}.Release|ARM64.ActiveCfg = Release|ARM64\n";
+        print F "\t\t${uuid}.Release|ARM64.Build.0 = Release|ARM64\n";
         print F "\t\t${uuid}.Release|x64.ActiveCfg = Release|x64\n";
         print F "\t\t${uuid}.Release|x64.Build.0 = Release|x64\n";
         print F "\t\t${uuid}.Release|x86.ActiveCfg = Release|Win32\n";
@@ -370,10 +387,14 @@ EOM
     foreach (@libs) {
         my $libname = $_;
         my $uuid = $build_structure{"LIBS_${libname}_GUID"};
+        print F "\t\t${uuid}.Debug|ARM64.ActiveCfg = Debug|ARM64\n";
+        print F "\t\t${uuid}.Debug|ARM64.Build.0 = Debug|ARM64\n";
         print F "\t\t${uuid}.Debug|x64.ActiveCfg = Debug|x64\n";
         print F "\t\t${uuid}.Debug|x64.Build.0 = Debug|x64\n";
         print F "\t\t${uuid}.Debug|x86.ActiveCfg = Debug|Win32\n";
         print F "\t\t${uuid}.Debug|x86.Build.0 = Debug|Win32\n";
+        print F "\t\t${uuid}.Release|ARM64.ActiveCfg = Release|ARM64\n";
+        print F "\t\t${uuid}.Release|ARM64.Build.0 = Release|ARM64\n";
         print F "\t\t${uuid}.Release|x64.ActiveCfg = Release|x64\n";
         print F "\t\t${uuid}.Release|x64.Build.0 = Release|x64\n";
         print F "\t\t${uuid}.Release|x86.ActiveCfg = Release|Win32\n";
