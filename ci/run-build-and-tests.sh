@@ -26,6 +26,7 @@ linux-TEST-vars)
 	export GIT_TEST_NO_WRITE_REV_INDEX=1
 	export GIT_TEST_CHECKOUT_WORKERS=2
 	export GIT_TEST_PACK_USE_BITMAP_BOUNDARY_TRAVERSAL=1
+	export GIT_TEST_PACK_PATH_WALK=1
 	;;
 linux-clang)
 	export GIT_TEST_DEFAULT_HASH=sha1
@@ -70,6 +71,10 @@ case "$jobname" in
 		handle_failed_tests
 	fi
 	;;
+esac
+
+case " $MAKE_TARGETS " in
+*" all "*) make -C contrib/subtree test;;
 esac
 
 check_unignored_build_artifacts
