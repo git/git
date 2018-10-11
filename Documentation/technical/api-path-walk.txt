@@ -1,0 +1,82 @@
+Path-Walk API
+=============
+
+The path-walk API is used to walk reachable objects, but to visit objects
+in batches based on a common path they appear in, or by type.
+
+For example, all reachable commits are visited in a group. All tags are
+visited in a group. Then, all root trees are visited. At some point, all
+blobs reachable via a path `my/dir/to/A` are visited. When there are
+multiple paths possible to reach the same object, then only one of those
+paths is used to visit the object.
+
+When walking a range of commits with some `UNINTERESTING` objects, the
+objects with the `UNINTERESTING` flag are included in these batches. In
+order to walk `UNINTERESTING` objects, the `--boundary` option must be
+used in the commit walk in order to visit `UNINTERESTING` commits.
+
+Basics
+------
+
+To use the path-walk API, include `path-walk.h` and call
+`walk_objects_by_path()` with a customized `path_walk_info` struct. The
+struct is used to set all of the options for how the walk should proceed.
+Let's dig into the different options and their use.
+
+`path_fn` and `path_fn_data`::
+	The most important option is the `path_fn` option, which is a
+	function pointer to the callback that can execute logic on the
+	object IDs for objects grouped by type and path. This function
+	also receives a `data` value that corresponds to the
+	`path_fn_data` member, for providing custom data structures to
+	this callback function.
+
+`revs`::
+	To configure the exact details of the reachable set of objects,
+	use the `revs` member and initialize it using the revision
+	machinery in `revision.h`. Initialize `revs` using calls such as
+	`setup_revisions()` or `parse_revision_opt()`. Do not call
+	`prepare_revision_walk()`, as that will be called within
+	`walk_objects_by_path()`.
++
+It is also important that you do not specify the `--objects` flag for the
+`revs` struct. The revision walk should only be used to walk commits, and
+the objects will be walked in a separate way based on those starting
+commits.
++
+If you want the path-walk API to emit `UNINTERESTING` objects based on the
+commit walk's boundary, be sure to set `revs.boundary` so the boundary
+commits are emitted.
+
+`commits`, `blobs`, `trees`, `tags`::
+	By default, these members are enabled and signal that the path-walk
+	API should call the `path_fn` on objects of these types. Specialized
+	applications could disable some options to make it simpler to walk
+	the objects or to have fewer calls to `path_fn`.
++
+While it is possible to walk only commits in this way, consumers would be
+better off using the revision walk API instead.
+
+`prune_all_uninteresting`::
+	By default, all reachable paths are emitted by the path-walk API.
+	This option allows consumers to declare that they are not
+	interested in paths where all included objects are marked with the
+	`UNINTERESTING` flag. This requires using the `boundary` option in
+	the revision walk so that the walk emits commits marked with the
+	`UNINTERESTING` flag.
+
+`pl`::
+	This pattern list pointer allows focusing the path-walk search to
+	a set of patterns, only emitting paths that match the given
+	patterns. See linkgit:gitignore[5] or
+	linkgit:git-sparse-checkout[1] for details about pattern lists.
+	When the pattern list uses cone-mode patterns, then the path-walk
+	API can prune the set of paths it walks to improve performance.
+
+Examples
+--------
+
+See example usages in:
+	`t/helper/test-path-walk.c`,
+	`builtin/backfill.c`,
+	`builtin/pack-objects.c`

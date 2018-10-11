@@ -120,6 +120,7 @@ int cmd_am(int argc, const char **argv, const char *prefix, struct repository *r
 int cmd_annotate(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_apply(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_archive(int argc, const char **argv, const char *prefix, struct repository *repo);
+int cmd_backfill(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_bisect(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_blame(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_branch(int argc, const char **argv, const char *prefix, struct repository *repo);
@@ -230,6 +231,7 @@ int cmd_sparse_checkout(int argc, const char **argv, const char *prefix, struct 
 int cmd_status(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_stash(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_stripspace(int argc, const char **argv, const char *prefix, struct repository *repo);
+int cmd_survey(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_submodule__helper(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_switch(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_symbolic_ref(int argc, const char **argv, const char *prefix, struct repository *repo);
