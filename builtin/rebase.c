@@ -741,7 +741,7 @@ static int finish_rebase(struct rebase_options *opts)
 
 	delete_ref(NULL, "REBASE_HEAD", NULL, REF_NO_DEREF);
 	apply_autostash(opts);
-	close_all_packs(the_repository->objects);
+	close_object_store(the_repository->objects);
 	/*
 	 * We ignore errors in 'gc --auto', since the
 	 * user should see them.
@@ -1153,10 +1153,6 @@ static int run_specific_rebase(struct rebase_options *opts, enum action action)
 	}
 
 	switch (opts->type) {
-	case REBASE_AM:
-		backend = "git-rebase--am";
-		backend_func = "git_rebase__am";
-		break;
 	case REBASE_PRESERVE_MERGES:
 		backend = "git-rebase--preserve-merges";
 		backend_func = "git_rebase__preserve_merges";
@@ -1167,8 +1163,7 @@ static int run_specific_rebase(struct rebase_options *opts, enum action action)
 	}
 
 	strbuf_addf(&script_snippet,
-		    ". git-sh-setup && . git-rebase--common &&"
-		    " . %s && %s", backend, backend_func);
+		    ". git-sh-setup && . %s && %s", backend, backend_func);
 	argv[0] = script_snippet.buf;
 
 	status = run_command_v_opt(argv, RUN_USING_SHELL);
