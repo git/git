@@ -365,6 +365,7 @@ static struct ref_store *reftable_be_init(struct repository *repo,
 	mask = umask(0);
 	umask(mask);
 
+	reftable_set_alloc(malloc, realloc, free);
 	base_ref_store_init(&refs->base, repo, gitdir, &refs_be_reftable);
 	strmap_init(&refs->worktree_backends);
 	refs->store_flags = store_flags;
