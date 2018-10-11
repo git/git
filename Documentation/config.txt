@@ -7,7 +7,9 @@ the Git commands' behavior. The files `.git/config` and optionally
 repository are used to store the configuration for that repository, and
 `$HOME/.gitconfig` is used to store a per-user configuration as
 fallback values for the `.git/config` file. The file `/etc/gitconfig`
-can be used to store a system-wide default configuration.
+can be used to store a system-wide default configuration. On Windows,
+configuration can also be stored in `C:\ProgramData\Git\config`; This
+file will be used also by libgit2-based software.
 
 The configuration variables are used by both the Git plumbing
 and the porcelains. The variables are divided into sections, wherein
@@ -405,6 +407,8 @@ include::config/rerere.txt[]
 include::config/reset.txt[]
 
 include::config/sendemail.txt[]
+
+include::config/sendpack.txt[]
 
 include::config/sequencer.txt[]
 
