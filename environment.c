@@ -102,7 +102,19 @@ int max_allowed_tree_depth =
 	 */
 	1280;
 #else
+#if defined(GIT_WINDOWS_NATIVE) && defined(__clang__) && defined(__aarch64__)
+	/*
+	 * Similar to Visual C, it seems that on Windows/ARM64 the clang-based
+	 * builds have a smaller stack space available. When running out of
+	 * that stack space, a `STATUS_STACK_OVERFLOW` is produced. When the
+	 * Git command was run from an MSYS2 Bash, this unfortunately results
+	 * in an exit code 127. Let's prevent that by lowering the maximal
+	 * tree depth; This value seems to be low enough.
+	 */
+	1280;
+#else
 	2048;
+#endif
 #endif
 
 #ifndef PROTECT_HFS_DEFAULT
@@ -324,8 +336,8 @@ next_name:
 	return (current & ~negative) | positive;
 }
 
-static int git_default_core_config(const char *var, const char *value,
-				   const struct config_context *ctx, void *cb)
+int git_default_core_config(const char *var, const char *value,
+			    const struct config_context *ctx, void *cb)
 {
 	/* This needs a better name */
 	if (!strcmp(var, "core.filemode")) {
