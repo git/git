@@ -1259,6 +1259,7 @@ BUILTIN_OBJS += builtin/write-tree.o
 # upstream unnecessarily (making merging in future changes easier).
 THIRD_PARTY_SOURCES += compat/inet_ntop.c
 THIRD_PARTY_SOURCES += compat/inet_pton.c
+THIRD_PARTY_SOURCES += compat/mimalloc/%
 THIRD_PARTY_SOURCES += compat/nedmalloc/%
 THIRD_PARTY_SOURCES += compat/obstack.%
 THIRD_PARTY_SOURCES += compat/poll/%
@@ -1939,6 +1940,39 @@ ifdef USE_NED_ALLOCATOR
 	COMPAT_CFLAGS += -Icompat/nedmalloc
 	COMPAT_OBJS += compat/nedmalloc/nedmalloc.o
 	OVERRIDE_STRDUP = YesPlease
+endif
+
+ifdef USE_MIMALLOC
+	MIMALLOC_OBJS = \
+		compat/mimalloc/alloc-aligned.o \
+		compat/mimalloc/alloc.o \
+		compat/mimalloc/arena.o \
+		compat/mimalloc/bitmap.o \
+		compat/mimalloc/heap.o \
+		compat/mimalloc/init.o \
+		compat/mimalloc/options.o \
+		compat/mimalloc/os.o \
+		compat/mimalloc/page.o \
+		compat/mimalloc/random.o \
+		compat/mimalloc/segment.o \
+		compat/mimalloc/segment-cache.o \
+		compat/mimalloc/stats.o
+
+	COMPAT_CFLAGS += -Icompat/mimalloc -DMI_DEBUG=0 -DUSE_MIMALLOC --std=gnu11
+	COMPAT_OBJS += $(MIMALLOC_OBJS)
+
+$(MIMALLOC_OBJS): COMPAT_CFLAGS += -DBANNED_H
+
+ifdef DEVELOPER
+$(MIMALLOC_OBJS): COMPAT_CFLAGS += \
+	-Wno-attributes \
+	-Wno-pedantic \
+	-Wno-unknown-pragmas \
+	-Wno-declaration-after-statement \
+	-Wno-old-style-definition \
+	-Wno-missing-prototypes \
+	-Wno-array-bounds
+endif
 endif
 
 ifdef OVERRIDE_STRDUP
@@ -2664,6 +2698,13 @@ compat/nedmalloc/nedmalloc.sp compat/nedmalloc/nedmalloc.o: EXTRA_CPPFLAGS = \
 	-DNDEBUG -DREPLACE_SYSTEM_ALLOCATOR
 compat/nedmalloc/nedmalloc.sp: SP_EXTRA_FLAGS += -Wno-non-pointer-null
 endif
+
+headless-git.o: compat/win32/headless.c GIT-CFLAGS
+	$(QUIET_CC)$(CC) $(ALL_CFLAGS) $(COMPAT_CFLAGS) \
+		-fno-stack-protector -o $@ -c -Wall -Wwrite-strings $<
+
+headless-git$X: headless-git.o git.res GIT-LDFLAGS
+	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) $(ALL_LDFLAGS) -mwindows -o $@ $< git.res
 
 git-%$X: %.o GIT-LDFLAGS $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(LIBS)
@@ -3454,6 +3495,7 @@ clean: profile-clean coverage-clean cocciclean
 	$(RM) po/git.pot po/git-core.pot
 	$(RM) git.res
 	$(RM) $(OBJECTS)
+	$(RM) headless-git.o
 	$(RM) $(LIB_FILE) $(XDIFF_LIB) $(REFTABLE_LIB) $(REFTABLE_TEST_LIB)
 	$(RM) $(ALL_PROGRAMS) $(SCRIPT_LIB) $(BUILT_INS) $(OTHER_PROGRAMS)
 	$(RM) $(TEST_PROGRAMS)
@@ -3482,13 +3524,17 @@ endif
 	$(RM) GIT-SCRIPT-DEFINES GIT-PERL-DEFINES GIT-PERL-HEADER GIT-PYTHON-VARS
 ifdef MSVC
 	$(RM) $(patsubst %.o,%.o.pdb,$(OBJECTS))
+	$(RM) headless-git.o.pdb
 	$(RM) $(patsubst %.exe,%.pdb,$(OTHER_PROGRAMS))
+	$(RM) $(patsubst %.exe,%.ilk,$(OTHER_PROGRAMS))
 	$(RM) $(patsubst %.exe,%.iobj,$(OTHER_PROGRAMS))
 	$(RM) $(patsubst %.exe,%.ipdb,$(OTHER_PROGRAMS))
 	$(RM) $(patsubst %.exe,%.pdb,$(PROGRAMS))
+	$(RM) $(patsubst %.exe,%.ilk,$(PROGRAMS))
 	$(RM) $(patsubst %.exe,%.iobj,$(PROGRAMS))
 	$(RM) $(patsubst %.exe,%.ipdb,$(PROGRAMS))
 	$(RM) $(patsubst %.exe,%.pdb,$(TEST_PROGRAMS))
+	$(RM) $(patsubst %.exe,%.ilk,$(TEST_PROGRAMS))
 	$(RM) $(patsubst %.exe,%.iobj,$(TEST_PROGRAMS))
 	$(RM) $(patsubst %.exe,%.ipdb,$(TEST_PROGRAMS))
 	$(RM) compat/vcbuild/MSVC-DEFS-GEN
