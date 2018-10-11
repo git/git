@@ -4,6 +4,7 @@
 *.perl eol=lf diff=perl
 *.pl eof=lf diff=perl
 *.pm eol=lf diff=perl
+*.png binary
 *.py eol=lf diff=python
 *.bat eol=crlf
 CODE_OF_CONDUCT.md -whitespace
