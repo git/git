@@ -534,9 +534,9 @@ out:
 }
 
 static void hash_object_body(const struct git_hash_algo *algo, struct git_hash_ctx *c,
-			     const void *buf, unsigned long len,
+			     const void *buf, size_t len,
 			     struct object_id *oid,
-			     char *hdr, int *hdrlen)
+			     char *hdr, size_t *hdrlen)
 {
 	algo->init_fn(c);
 	git_hash_update(c, hdr, *hdrlen);
@@ -545,16 +545,16 @@ static void hash_object_body(const struct git_hash_algo *algo, struct git_hash_c
 }
 
 static void write_object_file_prepare(const struct git_hash_algo *algo,
-				      const void *buf, unsigned long len,
+				      const void *buf, size_t len,
 				      enum object_type type, struct object_id *oid,
-				      char *hdr, int *hdrlen)
+				      char *hdr, size_t *hdrlen)
 {
 	struct git_hash_ctx c;
 
 	/* Generate the header */
 	*hdrlen = format_object_header(hdr, *hdrlen, type, len);
 
-	/* Sha1.. */
+	/* Hash (function pointers) computation */
 	hash_object_body(algo, &c, buf, len, oid, hdr, hdrlen);
 }
 
@@ -690,11 +690,11 @@ out:
 }
 
 void hash_object_file(const struct git_hash_algo *algo, const void *buf,
-		      unsigned long len, enum object_type type,
+		      size_t len, enum object_type type,
 		      struct object_id *oid)
 {
 	char hdr[MAX_HEADER_LEN];
-	int hdrlen = sizeof(hdr);
+	size_t hdrlen = sizeof(hdr);
 
 	write_object_file_prepare(algo, buf, len, type, oid, hdr, &hdrlen);
 }
@@ -1135,7 +1135,7 @@ cleanup:
 }
 
 int odb_source_loose_write_object(struct odb_source *source,
-				  const void *buf, unsigned long len,
+				  const void *buf, size_t len,
 				  enum object_type type, struct object_id *oid,
 				  struct object_id *compat_oid_in, unsigned flags)
 {
@@ -1143,7 +1143,7 @@ int odb_source_loose_write_object(struct odb_source *source,
 	const struct git_hash_algo *compat = source->odb->repo->compat_hash_algo;
 	struct object_id compat_oid;
 	char hdr[MAX_HEADER_LEN];
-	int hdrlen = sizeof(hdr);
+	size_t hdrlen = sizeof(hdr);
 
 	/* Generate compat_oid */
 	if (compat) {
