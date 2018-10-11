@@ -381,8 +381,6 @@ ifeq ($(uname_S),Windows)
 	NO_PYTHON = YesPlease
 	BLK_SHA1 = YesPlease
 	ETAGS_TARGET = ETAGS
-	NO_INET_PTON = YesPlease
-	NO_INET_NTOP = YesPlease
 	NO_POSIX_GOODIES = UnfortunatelyYes
 	NATIVE_CRLF = YesPlease
 	DEFAULT_HELP_FORMAT = html
@@ -529,8 +527,6 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_REGEX = YesPlease
 	NO_PYTHON = YesPlease
 	ETAGS_TARGET = ETAGS
-	NO_INET_PTON = YesPlease
-	NO_INET_NTOP = YesPlease
 	NO_POSIX_GOODIES = UnfortunatelyYes
 	DEFAULT_HELP_FORMAT = html
 	COMPAT_CFLAGS += -DNOGDI -Icompat -Icompat/win32
