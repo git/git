@@ -60,6 +60,7 @@ git-annotate                            ancillaryinterrogators
 git-apply                               plumbingmanipulators            complete
 git-archimport                          foreignscminterface
 git-archive                             mainporcelain
+git-backfill                            mainporcelain           history
 git-bisect                              mainporcelain           info
 git-blame                               ancillaryinterrogators          complete
 git-branch                              mainporcelain           history
@@ -186,6 +187,7 @@ git-stash                               mainporcelain
 git-status                              mainporcelain           info
 git-stripspace                          purehelpers
 git-submodule                           mainporcelain
+git-survey                              mainporcelain
 git-svn                                 foreignscminterface
 git-switch                              mainporcelain           history
 git-symbolic-ref                        plumbingmanipulators

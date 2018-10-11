@@ -166,7 +166,7 @@ struct strbuf;
 /* Approximation of the length of the decimal representation of this type. */
 #define decimal_length(x)	((int)(sizeof(x) * 2.56 + 0.5) + 1)
 
-#ifdef __MINGW64__
+#if defined(__MINGW32__) || defined(__MINGW64__)
 #define _POSIX_C_SOURCE 1
 #elif defined(__sun__)
  /*
@@ -191,7 +191,9 @@ struct strbuf;
 #define _ALL_SOURCE 1
 #define _GNU_SOURCE 1
 #define _BSD_SOURCE 1
+#ifndef _DEFAULT_SOURCE
 #define _DEFAULT_SOURCE 1
+#endif
 #define _NETBSD_SOURCE 1
 #define _SGI_SOURCE 1
 
@@ -431,6 +433,16 @@ char *gitdirname(char *);
 # include <sys/sysinfo.h>
 #endif
 
+#ifdef USE_MIMALLOC
+#include "mimalloc.h"
+#define malloc mi_malloc
+#define calloc mi_calloc
+#define realloc mi_realloc
+#define free mi_free
+#define strdup mi_strdup
+#define strndup mi_strndup
+#endif
+
 /* On most systems <netdb.h> would have given us this, but
  * not on some systems (e.g. z/OS).
  */
@@ -527,6 +539,13 @@ static inline int git_offset_1st_component(const char *path)
 #define fspathncmp git_fspathncmp
 #endif
 
+#ifndef warn_about_git_lfs_on_windows7
+static inline void warn_about_git_lfs_on_windows7(int exit_code UNUSED,
+						  const char *argv0 UNUSED)
+{
+}
+#endif
+
 #ifndef is_valid_path
 #define is_valid_path(path) 1
 #endif
@@ -616,8 +635,16 @@ static inline int git_has_dir_sep(const char *path)
 #define has_dir_sep(path) git_has_dir_sep(path)
 #endif
 
+#ifndef is_mount_point
+#define is_mount_point is_mount_point_via_stat
+#endif
+
 #ifndef query_user_email
 #define query_user_email() NULL
+#endif
+
+#ifndef platform_strbuf_realpath
+#define platform_strbuf_realpath(resolved, path) NULL
 #endif
 
 #ifdef __TANDEM
