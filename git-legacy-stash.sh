@@ -207,13 +207,13 @@ create_stash () {
 
 		# find out what the user wants
 		GIT_INDEX_FILE="$TMP-index" \
-			git add--interactive --patch=stash -- "$@" &&
+			git add --legacy-stash-p -- "$@" &&
 
 		# state of the working tree
 		w_tree=$(GIT_INDEX_FILE="$TMP-index" git write-tree) ||
 		die "$(gettext "Cannot save the current worktree state")"
 
-		git diff-tree -p HEAD $w_tree -- >"$TMP-patch" &&
+		git diff-tree -p -U1 HEAD $w_tree -- >"$TMP-patch" &&
 		test -s "$TMP-patch" ||
 		die "$(gettext "No changes selected")"
 
