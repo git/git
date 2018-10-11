@@ -254,8 +254,8 @@ void prepare_to_write_split_index(struct index_state *istate)
 				continue;
 			}
 			if (ce->index > si->base->cache_nr) {
-				ce->index = 0;
-				continue;
+				BUG("ce refers to a shared ce at %d, which is beyond the shared index size %d",
+				    ce->index, si->base->cache_nr);
 			}
 			ce->ce_flags |= CE_MATCHED; /* or "shared" */
 			base = si->base->cache[ce->index - 1];
