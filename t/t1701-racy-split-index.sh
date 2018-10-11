@@ -148,7 +148,7 @@ done
 
 for trial in $trials
 do
-	test_expect_failure "update the split index when a racily clean cache entry is stored only in the shared index $trial" '
+	test_expect_success "update the split index when a racily clean cache entry is stored only in the shared index #$trial" '
 		rm -f .git/index .git/sharedindex.* &&
 
 		# The next three commands must be run within the same
@@ -170,8 +170,6 @@ do
 		# entry of racy-file is only stored in the shared index.
 		# A corresponding replacement cache entry with smudged
 		# stat data should be added to the new split index.
-		#
-		# Alas, such a smudged replacement entry is not added!
 		git update-index --add other-file &&
 
 		# Subsequent git commands should notice the smudged
@@ -182,7 +180,7 @@ done
 
 for trial in $trials
 do
-	test_expect_failure "update the split index after unpack trees() copied a racily clean cache entry from the shared index $trial" '
+	test_expect_success "update the split index after unpack trees() copied a racily clean cache entry from the shared index #$trial" '
 		rm -f .git/index .git/sharedindex.* &&
 
 		# The next three commands must be run within the same
@@ -205,8 +203,6 @@ do
 		# index.  A corresponding replacement cache entry
 		# with smudged stat data should be added to the new
 		# split index.
-		#
-		# Alas, such a smudged replacement entry is not added!
 		git read-tree -m HEAD &&
 
 		# Subsequent git commands should notice the smudged
