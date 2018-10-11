@@ -442,6 +442,10 @@ static inline void convert_slashes(char *path)
 		if (*path == '\\')
 			*path = '/';
 }
+struct strbuf;
+int mingw_is_mount_point(struct strbuf *path);
+#define is_mount_point mingw_is_mount_point
+#define CAN_UNLINK_MOUNT_POINTS 1
 #define PATH_SEP ';'
 char *mingw_query_user_email(void);
 #define query_user_email mingw_query_user_email
@@ -461,10 +465,17 @@ char *mingw_query_user_email(void);
  *
  * - contain any of the reserved characters, e.g. `:`, `;`, `*`, etc
  *
+ * - correspond to reserved names (such as `AUX`, `PRN`, etc)
+ *
+ * The `allow_literal_nul` parameter controls whether the path `NUL` should
+ * be considered valid (this makes sense e.g. before opening files, as it is
+ * perfectly legitimate to open `NUL` on Windows, just as it is to open
+ * `/dev/null` on Unix/Linux).
+ *
  * Returns 1 upon success, otherwise 0.
  */
-int is_valid_win32_path(const char *path);
-#define is_valid_path(path) is_valid_win32_path(path)
+int is_valid_win32_path(const char *path, int allow_literal_nul);
+#define is_valid_path(path) is_valid_win32_path(path, 0)
 
 /**
  * Converts UTF-8 encoded string to UTF-16LE.
@@ -590,6 +601,16 @@ extern CRITICAL_SECTION pinfo_cs;
  */
 int wmain(int argc, const wchar_t **w_argv);
 int main(int argc, const char **argv);
+
+/*
+ * For debugging: if a problem occurs, say, in a Git process that is spawned
+ * from another Git process which in turn is spawned from yet another Git
+ * process, it can be quite daunting to figure out what is going on.
+ *
+ * Call this function to open a new MinTTY (this assumes you are in Git for
+ * Windows' SDK) with a GDB that attaches to the current process right away.
+ */
+extern void open_in_gdb(void);
 
 /*
  * Used by Pthread API implementation for Windows
