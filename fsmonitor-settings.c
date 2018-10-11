@@ -9,8 +9,69 @@
  */
 struct fsmonitor_settings {
 	enum fsmonitor_mode mode;
+	enum fsmonitor_reason reason;
 	char *hook_path;
 };
+
+static void set_incompatible(struct repository *r,
+			     enum fsmonitor_reason reason)
+{
+	struct fsmonitor_settings *s = r->settings.fsmonitor;
+
+	s->mode = FSMONITOR_MODE_INCOMPATIBLE;
+	s->reason = reason;
+}
+
+static int check_for_incompatible(struct repository *r)
+{
+	if (!r->worktree) {
+		/*
+		 * Bare repositories don't have a working directory and
+		 * therefore have nothing to watch.
+		 */
+		set_incompatible(r, FSMONITOR_REASON_BARE);
+		return 1;
+	}
+
+#ifdef HAVE_FSMONITOR_OS_SETTINGS
+	{
+		enum fsmonitor_reason reason;
+
+		reason = fsm_os__incompatible(r);
+		if (reason != FSMONITOR_REASON_OK) {
+			set_incompatible(r, reason);
+			return 1;
+		}
+	}
+#endif
+
+	return 0;
+}
+
+static int check_deprecated_builtin_config(struct repository *r)
+{
+	int core_use_builtin_fsmonitor = 0;
+
+	/*
+	 * If 'core.useBuiltinFSMonitor' is set, print a deprecation warning
+	 * suggesting the use of 'core.fsmonitor' instead. If the config is
+	 * set to true, set the appropriate mode and return 1 indicating that
+	 * the check resulted the config being set by this (deprecated) setting.
+	 */
+	if(!repo_config_get_bool(r, "core.useBuiltinFSMonitor", &core_use_builtin_fsmonitor) &&
+	   core_use_builtin_fsmonitor) {
+		if (!git_env_bool("GIT_SUPPRESS_USEBUILTINFSMONITOR_ADVICE", 0)) {
+			advise_if_enabled(ADVICE_USE_CORE_FSMONITOR_CONFIG,
+					  _("core.useBuiltinFSMonitor will be deprecated "
+					    "soon; use core.fsmonitor instead"));
+			setenv("GIT_SUPPRESS_USEBUILTINFSMONITOR_ADVICE", "1", 1);
+		}
+		fsm_settings__set_ipc(r);
+		return 1;
+	}
+
+	return 0;
+}
 
 static void lookup_fsmonitor_settings(struct repository *r)
 {
@@ -23,6 +84,7 @@ static void lookup_fsmonitor_settings(struct repository *r)
 
 	CALLOC_ARRAY(s, 1);
 	s->mode = FSMONITOR_MODE_DISABLED;
+	s->reason = FSMONITOR_REASON_OK;
 
 	r->settings.fsmonitor = s;
 
@@ -41,12 +103,16 @@ static void lookup_fsmonitor_settings(struct repository *r)
 		return;
 
 	case 1: /* config value was unset */
+		if (check_deprecated_builtin_config(r))
+			return;
+
 		const_str = getenv("GIT_TEST_FSMONITOR");
 		break;
 
 	case -1: /* config value set to an arbitrary string */
-		if (repo_config_get_pathname(r, "core.fsmonitor", &const_str))
-			return; /* should not happen */
+		if (check_deprecated_builtin_config(r) ||
+		    repo_config_get_pathname(r, "core.fsmonitor", &const_str))
+			return;
 		break;
 
 	default: /* should not happen */
@@ -86,6 +152,9 @@ void fsm_settings__set_ipc(struct repository *r)
 
 	lookup_fsmonitor_settings(r);
 
+	if (check_for_incompatible(r))
+		return;
+
 	r->settings.fsmonitor->mode = FSMONITOR_MODE_IPC;
 	FREE_AND_NULL(r->settings.fsmonitor->hook_path);
 }
@@ -96,6 +165,9 @@ void fsm_settings__set_hook(struct repository *r, const char *path)
 		r = the_repository;
 
 	lookup_fsmonitor_settings(r);
+
+	if (check_for_incompatible(r))
+		return;
 
 	r->settings.fsmonitor->mode = FSMONITOR_MODE_HOOK;
 	FREE_AND_NULL(r->settings.fsmonitor->hook_path);
@@ -110,5 +182,54 @@ void fsm_settings__set_disabled(struct repository *r)
 	lookup_fsmonitor_settings(r);
 
 	r->settings.fsmonitor->mode = FSMONITOR_MODE_DISABLED;
+	r->settings.fsmonitor->reason = FSMONITOR_REASON_OK;
 	FREE_AND_NULL(r->settings.fsmonitor->hook_path);
+}
+
+enum fsmonitor_reason fsm_settings__get_reason(struct repository *r)
+{
+	if (!r)
+		r = the_repository;
+
+	lookup_fsmonitor_settings(r);
+
+	return r->settings.fsmonitor->reason;
+}
+
+int fsm_settings__error_if_incompatible(struct repository *r)
+{
+	enum fsmonitor_reason reason = fsm_settings__get_reason(r);
+
+	switch (reason) {
+	case FSMONITOR_REASON_OK:
+		return 0;
+
+	case FSMONITOR_REASON_BARE:
+		error(_("bare repository '%s' is incompatible with fsmonitor"),
+		      xgetcwd());
+		return 1;
+
+	case FSMONITOR_REASON_ERROR:
+		error(_("repository '%s' is incompatible with fsmonitor due to errors"),
+		      r->worktree);
+		return 1;
+
+	case FSMONITOR_REASON_REMOTE:
+		error(_("remote repository '%s' is incompatible with fsmonitor"),
+		      r->worktree);
+		return 1;
+
+	case FSMONITOR_REASON_VFS4GIT:
+		error(_("virtual repository '%s' is incompatible with fsmonitor"),
+		      r->worktree);
+		return 1;
+
+	case FSMONITOR_REASON_NOSOCKETS:
+		error(_("repository '%s' is incompatible with fsmonitor due to lack of Unix sockets"),
+		      r->worktree);
+		return 1;
+	}
+
+	BUG("Unhandled case in fsm_settings__error_if_incompatible: '%d'",
+	    reason);
 }

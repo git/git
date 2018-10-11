@@ -14,6 +14,11 @@ Note: Visual Studio also has the option of opening `CMakeLists.txt`
 directly; Using this option, Visual Studio will not find the source code,
 though, therefore the `File>Open>Folder...` option is preferred.
 
+Visual Studio does not produce a .sln solution file nor the .vcxproj files
+that may be required by VS extension tools.
+
+To generate the .sln/.vcxproj files run CMake manually, as described below.
+
 Instructions to run CMake manually:
 
     mkdir -p contrib/buildsystems/out
@@ -22,7 +27,7 @@ Instructions to run CMake manually:
 
 This will build the git binaries in contrib/buildsystems/out
 directory (our top-level .gitignore file knows to ignore contents of
-this directory).
+this directory). The project .sln and .vcxproj files are also generated.
 
 Possible build configurations(-DCMAKE_BUILD_TYPE) with corresponding
 compiler flags
@@ -35,16 +40,15 @@ empty(default) :
 NOTE: -DCMAKE_BUILD_TYPE is optional. For multi-config generators like Visual Studio
 this option is ignored
 
-This process generates a Makefile(Linux/*BSD/MacOS) , Visual Studio solution(Windows) by default.
+This process generates a Makefile(Linux/*BSD/MacOS), Visual Studio solution(Windows) by default.
 Run `make` to build Git on Linux/*BSD/MacOS.
 Open git.sln on Windows and build Git.
 
-NOTE: By default CMake uses Makefile as the build tool on Linux and Visual Studio in Windows,
-to use another tool say `ninja` add this to the command line when configuring.
-`-G Ninja`
-
 NOTE: By default CMake will install vcpkg locally to your source tree on configuration,
 to avoid this, add `-DNO_VCPKG=TRUE` to the command line when configuring.
+
+The Visual Studio default generator changed in v16.6 from its Visual Studio
+implemenation to `Ninja` This required changes to many CMake scripts.
 
 ]]
 cmake_minimum_required(VERSION 3.14)
@@ -59,15 +63,29 @@ endif()
 
 if(NOT DEFINED CMAKE_EXPORT_COMPILE_COMMANDS)
 	set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
+	message("settting CMAKE_EXPORT_COMPILE_COMMANDS: ${CMAKE_EXPORT_COMPILE_COMMANDS}")
 endif()
 
 if(USE_VCPKG)
 	set(VCPKG_DIR "${CMAKE_SOURCE_DIR}/compat/vcbuild/vcpkg")
+	message("WIN32: ${WIN32}") # show its underlying text values
+	message("VCPKG_DIR: ${VCPKG_DIR}")
+	message("VCPKG_ARCH: ${VCPKG_ARCH}") # maybe unset
+	message("MSVC: ${MSVC}")
+	message("CMAKE_GENERATOR: ${CMAKE_GENERATOR}")
+	message("CMAKE_CXX_COMPILER_ID: ${CMAKE_CXX_COMPILER_ID}")
+	message("CMAKE_GENERATOR_PLATFORM: ${CMAKE_GENERATOR_PLATFORM}")
+	message("CMAKE_EXPORT_COMPILE_COMMANDS: ${CMAKE_EXPORT_COMPILE_COMMANDS}")
+	message("ENV(CMAKE_EXPORT_COMPILE_COMMANDS): $ENV{CMAKE_EXPORT_COMPILE_COMMANDS}")
 	if(NOT EXISTS ${VCPKG_DIR})
 		message("Initializing vcpkg and building the Git's dependencies (this will take a while...)")
-		execute_process(COMMAND ${CMAKE_SOURCE_DIR}/compat/vcbuild/vcpkg_install.bat)
+		execute_process(COMMAND ${CMAKE_SOURCE_DIR}/compat/vcbuild/vcpkg_install.bat ${VCPKG_ARCH})
 	endif()
-	list(APPEND CMAKE_PREFIX_PATH "${VCPKG_DIR}/installed/x64-windows")
+	if(NOT EXISTS ${VCPKG_ARCH})
+		message("VCPKG_ARCH: unset, using 'x64-windows'")
+		set(VCPKG_ARCH "x64-windows") # default from vcpkg_install.bat
+	endif()
+	list(APPEND CMAKE_PREFIX_PATH "${VCPKG_DIR}/installed/${VCPKG_ARCH}")
 
 	# In the vcpkg edition, we need this to be able to link to libcurl
 	set(CURL_NO_CURL_CMAKE ON)
@@ -213,7 +231,14 @@ endif()
 
 #default behaviour
 include_directories(${CMAKE_SOURCE_DIR})
-add_compile_definitions(GIT_HOST_CPU="${CMAKE_SYSTEM_PROCESSOR}")
+
+# When cross-compiling, define HOST_CPU as the canonical name of the CPU on
+# which the built Git will run (for instance "x86_64").
+if(NOT HOST_CPU)
+	add_compile_definitions(GIT_HOST_CPU="${CMAKE_SYSTEM_PROCESSOR}")
+else()
+	add_compile_definitions(GIT_HOST_CPU="${HOST_CPU}")
+endif()
 add_compile_definitions(SHA256_BLK INTERNAL_QSORT RUNTIME_PREFIX)
 add_compile_definitions(NO_OPENSSL SHA1_DC SHA1DC_NO_STANDARD_INCLUDES
 			SHA1DC_INIT_SAFE_HASH_DEFAULT=0
@@ -297,9 +322,17 @@ if(SUPPORTS_SIMPLE_IPC)
 	if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 		add_compile_definitions(HAVE_FSMONITOR_DAEMON_BACKEND)
 		list(APPEND compat_SOURCES compat/fsmonitor/fsm-listen-win32.c)
+		list(APPEND compat_SOURCES compat/fsmonitor/fsm-health-win32.c)
+
+		add_compile_definitions(HAVE_FSMONITOR_OS_SETTINGS)
+		list(APPEND compat_SOURCES compat/fsmonitor/fsm-settings-win32.c)
 	elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 		add_compile_definitions(HAVE_FSMONITOR_DAEMON_BACKEND)
 		list(APPEND compat_SOURCES compat/fsmonitor/fsm-listen-darwin.c)
+		list(APPEND compat_SOURCES compat/fsmonitor/fsm-health-darwin.c)
+
+		add_compile_definitions(HAVE_FSMONITOR_OS_SETTINGS)
+		list(APPEND compat_SOURCES compat/fsmonitor/fsm-settings-darwin.c)
 	endif()
 endif()
 
@@ -712,6 +745,15 @@ if(WIN32)
 	else()
 		message(FATAL_ERROR "Unhandled compiler: ${CMAKE_C_COMPILER_ID}")
 	endif()
+
+	add_executable(headless-git ${CMAKE_SOURCE_DIR}/compat/win32/headless.c)
+	if(CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
+		target_link_options(headless-git PUBLIC -municode -Wl,-subsystem,windows)
+	elseif(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
+		target_link_options(headless-git PUBLIC /NOLOGO /ENTRY:wWinMainCRTStartup /SUBSYSTEM:WINDOWS)
+	else()
+		message(FATAL_ERROR "Unhandled compiler: ${CMAKE_C_COMPILER_ID}")
+	endif()
 elseif(UNIX)
 	target_link_libraries(common-main pthread rt)
 endif()
@@ -1039,7 +1081,7 @@ file(APPEND ${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS "RUNTIME_PREFIX='${RUNTIME_PRE
 file(APPEND ${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS "NO_PYTHON='${NO_PYTHON}'\n")
 file(APPEND ${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS "SUPPORTS_SIMPLE_IPC='${SUPPORTS_SIMPLE_IPC}'\n")
 if(USE_VCPKG)
-	file(APPEND ${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS "PATH=\"$PATH:$TEST_DIRECTORY/../compat/vcbuild/vcpkg/installed/x64-windows/bin\"\n")
+	file(APPEND ${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS "PATH=\"$PATH:$TEST_DIRECTORY/../compat/vcbuild/vcpkg/installed/${VCPKG_ARCH}/bin\"\n")
 endif()
 
 #Make the tests work when building out of the source tree

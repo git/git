@@ -464,8 +464,16 @@ static inline int git_has_dir_sep(const char *path)
 #define has_dir_sep(path) git_has_dir_sep(path)
 #endif
 
+#ifndef is_mount_point
+#define is_mount_point is_mount_point_via_stat
+#endif
+
 #ifndef query_user_email
 #define query_user_email() NULL
+#endif
+
+#ifndef platform_strbuf_realpath
+#define platform_strbuf_realpath(resolved, path) NULL
 #endif
 
 #ifdef __TANDEM
@@ -1273,10 +1281,12 @@ __attribute__((format (printf, 3, 4))) NORETURN
 void BUG_fl(const char *file, int line, const char *fmt, ...);
 #define BUG(...) BUG_fl(__FILE__, __LINE__, __VA_ARGS__)
 
+#ifndef FSYNC_METHOD_DEFAULT
 #ifdef __APPLE__
 #define FSYNC_METHOD_DEFAULT FSYNC_METHOD_WRITEOUT_ONLY
 #else
 #define FSYNC_METHOD_DEFAULT FSYNC_METHOD_FSYNC
+#endif
 #endif
 
 enum fsync_action {
