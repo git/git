@@ -1093,10 +1093,6 @@ static void invalidate_directory(struct untracked_cache *uc,
 		dir->dirs[i]->recurse = 0;
 }
 
-static int add_patterns_from_buffer(char *buf, size_t size,
-				    const char *base, int baselen,
-				    struct pattern_list *pl);
-
 /* Flags for add_patterns() */
 #define PATTERN_NOFOLLOW (1<<0)
 
@@ -1186,9 +1182,9 @@ static int add_patterns(const char *fname, const char *base, int baselen,
 	return 0;
 }
 
-static int add_patterns_from_buffer(char *buf, size_t size,
-				    const char *base, int baselen,
-				    struct pattern_list *pl)
+int add_patterns_from_buffer(char *buf, size_t size,
+			     const char *base, int baselen,
+			     struct pattern_list *pl)
 {
 	char *orig = buf;
 	int i, lineno = 1;
