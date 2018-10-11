@@ -1,0 +1,83 @@
+git-survey(1)
+=============
+
+NAME
+----
+git-survey - EXPERIMENTAL: Measure various repository dimensions of scale
+
+SYNOPSIS
+--------
+[verse]
+(EXPERIMENTAL!) 'git survey' <options>
+
+DESCRIPTION
+-----------
+
+Survey the repository and measure various dimensions of scale.
+
+As repositories grow to "monorepo" size, certain data shapes can cause
+performance problems.  `git-survey` attempts to measure and report on
+known problem areas.
+
+Ref Selection and Reachable Objects
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In this first analysis phase, `git survey` will iterate over the set of
+requested branches, tags, and other refs and treewalk over all of the
+reachable commits, trees, and blobs and generate various statistics.
+
+OPTIONS
+-------
+
+--progress::
+	Show progress.  This is automatically enabled when interactive.
+
+Ref Selection
+~~~~~~~~~~~~~
+
+The following options control the set of refs that `git survey` will examine.
+By default, `git survey` will look at tags, local branches, and remote refs.
+If any of the following options are given, the default set is cleared and
+only refs for the given options are added.
+
+--all-refs::
+	Use all refs.  This includes local branches, tags, remote refs,
+	notes, and stashes.  This option overrides all of the following.
+
+--branches::
+	Add local branches (`refs/heads/`) to the set.
+
+--tags::
+	Add tags (`refs/tags/`) to the set.
+
+--remotes::
+	Add remote branches (`refs/remote/`) to the set.
+
+--detached::
+	Add HEAD to the set.
+
+--other::
+	Add notes (`refs/notes/`) and stashes (`refs/stash/`) to the set.
+
+OUTPUT
+------
+
+By default, `git survey` will print information about the repository in a
+human-readable format that includes overviews and tables.
+
+References Summary
+~~~~~~~~~~~~~~~~~~
+
+The references summary includes a count of each kind of reference,
+including branches, remote refs, and tags (split by "all" and
+"annotated").
+
+Reachable Object Summary
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+The reachable object summary shows the total number of each kind of Git
+object, including tags, commits, trees, and blobs.
+
+GIT
+---
+Part of the linkgit:git[1] suite
