@@ -354,21 +354,17 @@ static void index_commit_for_bitmap(struct commit *commit)
 
 static void *get_delta(struct object_entry *entry)
 {
-	unsigned long size, base_size;
-	size_t delta_size;
+	size_t size, base_size, delta_size;
 	void *buf, *base_buf, *delta_buf;
 	enum object_type type;
-	size_t size_st = 0, base_size_st = 0;
 
 	buf = odb_read_object(the_repository->objects, &entry->idx.oid,
-			      &type, &size_st);
-	size = cast_size_t_to_ulong(size_st);
+			      &type, &size);
 	if (!buf)
 		die(_("unable to read %s"), oid_to_hex(&entry->idx.oid));
 	base_buf = odb_read_object(the_repository->objects,
 				   &DELTA(entry)->idx.oid, &type,
-				   &base_size_st);
-	base_size = cast_size_t_to_ulong(base_size_st);
+				   &base_size);
 	if (!base_buf)
 		die("unable to read %s",
 		    oid_to_hex(&DELTA(entry)->idx.oid));
@@ -386,11 +382,11 @@ static void *get_delta(struct object_entry *entry)
 	return delta_buf;
 }
 
-static unsigned long do_compress(void **pptr, unsigned long size)
+static size_t do_compress(void **pptr, size_t size)
 {
 	git_zstream stream;
 	void *in, *out;
-	unsigned long maxsize;
+	size_t maxsize;
 	struct repo_config_values *cfg = repo_config_values(the_repository);
 
 	git_deflate_init(&stream, cfg->pack_compression_level);
@@ -516,7 +512,7 @@ static inline int oe_size_greater_than(struct packing_data *pack,
 static unsigned long write_no_reuse_object(struct hashfile *f, struct object_entry *entry,
 					   unsigned long limit, int usable_delta)
 {
-	unsigned long size, datalen;
+	size_t size, datalen;
 	unsigned char header[MAX_PACK_OBJECT_HEADER],
 		      dheader[MAX_PACK_OBJECT_HEADER];
 	unsigned hdrlen;
@@ -535,11 +531,9 @@ static unsigned long write_no_reuse_object(struct hashfile *f, struct object_ent
 			type = st->type;
 			size = st->size;
 		} else {
-			size_t size_st = 0;
 			buf = odb_read_object(the_repository->objects,
 					      &entry->idx.oid, &type,
-					      &size_st);
-			size = cast_size_t_to_ulong(size_st);
+					      &size);
 			if (!buf)
 				die(_("unable to read %s"),
 				    oid_to_hex(&entry->idx.oid));
@@ -1921,7 +1915,7 @@ struct pbase_tree_cache {
 	int ref;
 	int temporary;
 	void *tree_data;
-	unsigned long tree_size;
+	size_t tree_size;
 };
 
 static struct pbase_tree_cache *(pbase_tree_cache[256]);
@@ -1948,8 +1942,7 @@ static struct pbase_tree_cache *pbase_tree_get(const struct object_id *oid)
 {
 	struct pbase_tree_cache *ent, *nent;
 	void *data;
-	unsigned long size;
-	size_t size_st = 0;
+	size_t size;
 	enum object_type type;
 	int neigh;
 	int my_ix = pbase_tree_cache_ix(oid);
@@ -1977,8 +1970,7 @@ static struct pbase_tree_cache *pbase_tree_get(const struct object_id *oid)
 	/* Did not find one.  Either we got a bogus request or
 	 * we need to read and perhaps cache.
 	 */
-	data = odb_read_object(the_repository->objects, oid, &type, &size_st);
-	size = cast_size_t_to_ulong(size_st);
+	data = odb_read_object(the_repository->objects, oid, &type, &size);
 	if (!data)
 		return NULL;
 	if (type != OBJ_TREE) {
@@ -2132,16 +2124,14 @@ static void add_preferred_base(struct object_id *oid)
 {
 	struct pbase_tree *it;
 	void *data;
-	unsigned long size;
-	size_t size_st = 0;
+	size_t size;
 	struct object_id tree_oid;
 
 	if (window <= num_preferred_base++)
 		return;
 
 	data = odb_read_object_peeled(the_repository->objects, oid,
-				      OBJ_TREE, &size_st, &tree_oid);
-	size = cast_size_t_to_ulong(size_st);
+				      OBJ_TREE, &size, &tree_oid);
 	if (!data)
 		return;
 
@@ -2810,8 +2800,7 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 {
 	struct object_entry *trg_entry = trg->entry;
 	struct object_entry *src_entry = src->entry;
-	unsigned long trg_size, src_size, sizediff, max_size, sz;
-	size_t delta_size;
+	size_t trg_size, src_size, delta_size, sizediff, max_size, sz;
 	unsigned ref_depth;
 	enum object_type type;
 	void *delta_buf;
@@ -2864,12 +2853,10 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 
 	/* Load data if not already done */
 	if (!trg->data) {
-		size_t sz_st = 0;
 		packing_data_lock(&to_pack);
 		trg->data = odb_read_object(the_repository->objects,
 					    &trg_entry->idx.oid, &type,
-					    &sz_st);
-		sz = cast_size_t_to_ulong(sz_st);
+					    &sz);
 		packing_data_unlock(&to_pack);
 		if (!trg->data)
 			die(_("object %s cannot be read"),
@@ -2881,12 +2868,10 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 		*mem_usage += sz;
 	}
 	if (!src->data) {
-		size_t sz_st = 0;
 		packing_data_lock(&to_pack);
 		src->data = odb_read_object(the_repository->objects,
 					    &src_entry->idx.oid, &type,
-					    &sz_st);
-		sz = cast_size_t_to_ulong(sz_st);
+					    &sz);
 		packing_data_unlock(&to_pack);
 		if (!src->data) {
 			if (src_entry->preferred_base) {

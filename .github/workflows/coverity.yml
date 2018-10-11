@@ -37,8 +37,9 @@ jobs:
       COVERITY_PROJECT: ${{ vars.COVERITY_PROJECT || 'git' }}
       COVERITY_LANGUAGE: cxx
       COVERITY_PLATFORM: overridden-below
+      NO_RUST: Yup
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: install minimal Git for Windows SDK
         if: contains(matrix.os, 'windows')
         uses: git-for-windows/setup-git-for-windows-sdk@v2

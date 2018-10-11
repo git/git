@@ -4,11 +4,13 @@
 #include "git-compat-util.h"
 #include "abspath.h"
 #include "alloc.h"
+#include "attr.h"
 #include "config.h"
 #include "dir.h"
 #include "environment.h"
 #include "repository.h"
 #include "gettext.h"
+#include "repository.h"
 #include "run-command.h"
 #include "strbuf.h"
 #include "symlinks.h"
@@ -16,7 +18,9 @@
 #include "win32.h"
 #include "win32/exit-process.h"
 #include "win32/lazyload.h"
+#include "win32/wsl.h"
 #include "wrapper.h"
+#include "write-or-die.h"
 #include <aclapi.h>
 #include <conio.h>
 #include <sddl.h>
@@ -449,6 +453,54 @@ static void process_phantom_symlinks(void)
 	LeaveCriticalSection(&phantom_symlinks_cs);
 }
 
+static int create_phantom_symlink(wchar_t *wtarget, wchar_t *wlink)
+{
+	int len;
+
+	/* create file symlink */
+	if (!CreateSymbolicLinkW(wlink, wtarget, symlink_file_flags)) {
+		errno = err_win_to_posix(GetLastError());
+		return -1;
+	}
+
+	/* convert to directory symlink if target exists */
+	switch (process_phantom_symlink(wtarget, wlink)) {
+	case PHANTOM_SYMLINK_RETRY: {
+		/* if target doesn't exist, add to phantom symlinks list */
+		wchar_t wfullpath[MAX_LONG_PATH];
+		struct phantom_symlink_info *psi;
+
+		/* convert to absolute path to be independent of cwd */
+		len = GetFullPathNameW(wlink, MAX_LONG_PATH, wfullpath, NULL);
+		if (!len || len >= MAX_LONG_PATH) {
+			errno = err_win_to_posix(GetLastError());
+			return -1;
+		}
+
+		/* over-allocate and fill phantom_symlink_info structure */
+		psi = xmalloc(sizeof(struct phantom_symlink_info) +
+			      sizeof(wchar_t) * (len + wcslen(wtarget) + 2));
+		psi->wlink = (wchar_t *)(psi + 1);
+		wcscpy(psi->wlink, wfullpath);
+		psi->wtarget = psi->wlink + len + 1;
+		wcscpy(psi->wtarget, wtarget);
+
+		EnterCriticalSection(&phantom_symlinks_cs);
+		psi->next = phantom_symlinks;
+		phantom_symlinks = psi;
+		LeaveCriticalSection(&phantom_symlinks_cs);
+		break;
+	}
+	case PHANTOM_SYMLINK_DIRECTORY:
+		/* if we created a dir symlink, process other phantom symlinks */
+		process_phantom_symlinks();
+		break;
+	default:
+		break;
+	}
+	return 0;
+}
+
 /* Normalizes NT paths as returned by some low-level APIs. */
 static wchar_t *normalize_ntpath(wchar_t *wbuf)
 {
@@ -834,6 +886,7 @@ static int is_local_named_pipe_path(const char *filename)
 
 int mingw_open (const char *filename, int oflags, ...)
 {
+	static int append_atomically = -1;
 	typedef int (*open_fn_t)(wchar_t const *wfilename, int oflags, ...);
 	va_list args;
 	unsigned mode;
@@ -853,7 +906,16 @@ int mingw_open (const char *filename, int oflags, ...)
 		return -1;
 	}
 
-	if ((oflags & O_APPEND) && !is_local_named_pipe_path(filename))
+	/*
+	 * Only set append_atomically to default value(1) when repo is initialized
+	 * and fail to get config value
+	 */
+	if ((oflags & O_APPEND) && append_atomically < 0 && the_repository && the_repository->commondir &&
+		repo_config_get_bool(the_repository, "windows.appendatomically", &append_atomically))
+		append_atomically = 1;
+
+	if (append_atomically && (oflags & O_APPEND) &&
+		!is_local_named_pipe_path(filename))
 		open_fn = mingw_open_append;
 	else if (!(oflags & ~(O_ACCMODE | O_NOINHERIT)))
 		open_fn = mingw_open_existing;
@@ -895,6 +957,11 @@ int mingw_open (const char *filename, int oflags, ...)
 	if (fd < 0 && create && GetLastError() == ERROR_ACCESS_DENIED &&
 	    INIT_PROC_ADDR(RtlGetLastNtStatus) && RtlGetLastNtStatus() == STATUS_DELETE_PENDING)
 		errno = EEXIST;
+	else if ((oflags & O_CREAT) && fd >= 0 && are_wsl_compatible_mode_bits_enabled()) {
+		_mode_t wsl_mode = S_IFREG | (mode&0777);
+		set_wsl_mode_bits_by_handle((HANDLE)_get_osfhandle(fd), wsl_mode);
+	}
+
 	if (fd < 0 && (oflags & O_ACCMODE) != O_RDONLY && errno == EACCES) {
 		DWORD attrs = GetFileAttributesW(wfilename);
 		if (attrs != INVALID_FILE_ATTRIBUTES && (attrs & FILE_ATTRIBUTE_DIRECTORY))
@@ -1027,14 +1094,33 @@ ssize_t mingw_write(int fd, const void *buf, size_t len)
 {
 	ssize_t result = write(fd, buf, len);
 
-	if (result < 0 && (errno == EINVAL || errno == ENOSPC) && buf) {
+	if (result < 0 && (errno == EINVAL || errno == EBADF || errno == ENOSPC) && buf) {
 		int orig = errno;
 
 		/* check if fd is a pipe */
 		HANDLE h = (HANDLE) _get_osfhandle(fd);
-		if (GetFileType(h) != FILE_TYPE_PIPE)
+		if (GetFileType(h) != FILE_TYPE_PIPE) {
+			if (orig == EINVAL) {
+				wchar_t path[MAX_PATH];
+				DWORD ret = GetFinalPathNameByHandleW(h, path,
+								ARRAY_SIZE(path), 0);
+				UINT drive_type = ret > 0 && ret < ARRAY_SIZE(path) ?
+					GetDriveTypeW(path) : DRIVE_UNKNOWN;
+
+				/*
+				 * The default atomic append causes such an error on
+				 * network file systems, in such a case, it should be
+				 * turned off via config.
+				 *
+				 * `drive_type` of UNC path: DRIVE_NO_ROOT_DIR
+				 */
+				if (DRIVE_NO_ROOT_DIR == drive_type || DRIVE_REMOTE == drive_type)
+					warning("invalid write operation detected; you may try:\n"
+						"\n\tgit config windows.appendAtomically false");
+			}
+
 			errno = orig;
-		else if (orig == EINVAL)
+		} else if (orig == EINVAL || errno == EBADF)
 			errno = EPIPE;
 		else {
 			DWORD buf_size;
@@ -1269,13 +1355,18 @@ int mingw_lstat(const char *file_name, struct stat *buf)
 		buf->st_uid = 0;
 		buf->st_nlink = 1;
 		buf->st_mode = file_attr_to_st_mode(fdata.dwFileAttributes,
-				reparse_tag);
+				reparse_tag, file_name);
 		buf->st_size = S_ISLNK(buf->st_mode) ? link_len :
 			fdata.nFileSizeLow | (((off_t) fdata.nFileSizeHigh) << 32);
 		buf->st_dev = buf->st_rdev = 0; /* not used by Git */
 		filetime_to_timespec(&(fdata.ftLastAccessTime), &(buf->st_atim));
 		filetime_to_timespec(&(fdata.ftLastWriteTime), &(buf->st_mtim));
 		filetime_to_timespec(&(fdata.ftCreationTime), &(buf->st_ctim));
+		if (S_ISREG(buf->st_mode) &&
+		    are_wsl_compatible_mode_bits_enabled()) {
+			copy_wsl_mode_bits_from_disk(wfilename, -1,
+						     &buf->st_mode);
+		}
 		return 0;
 	}
 
@@ -1318,13 +1409,15 @@ static int get_file_info_by_handle(HANDLE hnd, struct stat *buf)
 	buf->st_gid = 0;
 	buf->st_uid = 0;
 	buf->st_nlink = 1;
-	buf->st_mode = file_attr_to_st_mode(fdata.dwFileAttributes, 0);
+	buf->st_mode = file_attr_to_st_mode(fdata.dwFileAttributes, 0, NULL);
 	buf->st_size = fdata.nFileSizeLow |
 		(((off_t)fdata.nFileSizeHigh)<<32);
 	buf->st_dev = buf->st_rdev = 0; /* not used by Git */
 	filetime_to_timespec(&(fdata.ftLastAccessTime), &(buf->st_atim));
 	filetime_to_timespec(&(fdata.ftLastWriteTime), &(buf->st_mtim));
 	filetime_to_timespec(&(fdata.ftCreationTime), &(buf->st_ctim));
+	if (are_wsl_compatible_mode_bits_enabled())
+	    get_wsl_mode_bits_by_handle(hnd, &buf->st_mode);
 	return 0;
 }
 
@@ -1545,6 +1638,82 @@ struct tm *localtime_r(const time_t *timep, struct tm *result)
 }
 #endif
 
+char *mingw_strbuf_realpath(struct strbuf *resolved, const char *path)
+{
+	wchar_t wpath[MAX_PATH];
+	HANDLE h;
+	DWORD ret;
+	int len;
+	const char *last_component = NULL;
+	char *append = NULL;
+
+	if (xutftowcs_path(wpath, path) < 0)
+		return NULL;
+
+	h = CreateFileW(wpath, 0,
+			FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL,
+			OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+
+	/*
+	 * strbuf_realpath() allows the last path component to not exist. If
+	 * that is the case, now it's time to try without last component.
+	 */
+	if (h == INVALID_HANDLE_VALUE &&
+	    GetLastError() == ERROR_FILE_NOT_FOUND) {
+		/* cut last component off of `wpath` */
+		wchar_t *p = wpath + wcslen(wpath);
+
+		while (p != wpath)
+			if (*(--p) == L'/' || *p == L'\\')
+				break; /* found start of last component */
+
+		if (p != wpath && (last_component = find_last_dir_sep(path))) {
+			append = xstrdup(last_component + 1); /* skip directory separator */
+			/*
+			 * Do not strip the trailing slash at the drive root, otherwise
+			 * the path would be e.g. `C:` (which resolves to the
+			 * _current_ directory on that drive).
+			 */
+			if (p[-1] == L':')
+				p[1] = L'\0';
+			else
+				*p = L'\0';
+			h = CreateFileW(wpath, 0, FILE_SHARE_READ |
+					FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+					NULL, OPEN_EXISTING,
+					FILE_FLAG_BACKUP_SEMANTICS, NULL);
+		}
+	}
+
+	if (h == INVALID_HANDLE_VALUE) {
+realpath_failed:
+		FREE_AND_NULL(append);
+		return NULL;
+	}
+
+	ret = GetFinalPathNameByHandleW(h, wpath, ARRAY_SIZE(wpath), 0);
+	CloseHandle(h);
+	if (!ret || ret >= ARRAY_SIZE(wpath))
+		goto realpath_failed;
+
+	len = wcslen(wpath) * 3;
+	strbuf_grow(resolved, len);
+	len = xwcstoutf(resolved->buf, normalize_ntpath(wpath), len);
+	if (len < 0)
+		goto realpath_failed;
+	resolved->len = len;
+
+	if (append) {
+		/* Use forward-slash, like `normalize_ntpath()` */
+		strbuf_complete(resolved, '/');
+		strbuf_addstr(resolved, append);
+		FREE_AND_NULL(append);
+	}
+
+	return resolved->buf;
+
+}
+
 char *mingw_getcwd(char *pointer, int len)
 {
 	wchar_t cwd[MAX_PATH], wpointer[MAX_PATH];
@@ -1561,8 +1730,13 @@ char *mingw_getcwd(char *pointer, int len)
 	if (hnd != INVALID_HANDLE_VALUE) {
 		ret = GetFinalPathNameByHandleW(hnd, wpointer, ARRAY_SIZE(wpointer), 0);
 		CloseHandle(hnd);
-		if (!ret || ret >= ARRAY_SIZE(wpointer))
-			return NULL;
+		if (!ret || ret >= ARRAY_SIZE(wpointer)) {
+			ret = GetLongPathNameW(cwd, wpointer, ARRAY_SIZE(wpointer));
+			if (!ret || ret >= ARRAY_SIZE(wpointer)) {
+				errno = ret ? ENAMETOOLONG : err_win_to_posix(GetLastError());
+				return NULL;
+			}
+		}
 		if (xwcstoutf(pointer, normalize_ntpath(wpointer), len) < 0)
 			return NULL;
 		return pointer;
@@ -1673,7 +1847,7 @@ static const char *quote_arg_msys2(const char *arg)
 
 static const char *parse_interpreter(const char *cmd)
 {
-	static char buf[100];
+	static char buf[MAX_PATH];
 	char *p, *opt;
 	ssize_t n; /* read() can return negative values */
 	int fd;
@@ -2419,18 +2593,235 @@ static void ensure_socket_initialization(void)
 	initialized = 1;
 }
 
+static int winsock_error_to_errno(DWORD err)
+{
+	switch (err) {
+	case WSAEINTR: return EINTR;
+	case WSAEBADF: return EBADF;
+	case WSAEACCES: return EACCES;
+	case WSAEFAULT: return EFAULT;
+	case WSAEINVAL: return EINVAL;
+	case WSAEMFILE: return EMFILE;
+	case WSAEWOULDBLOCK: return EWOULDBLOCK;
+	case WSAEINPROGRESS: return EINPROGRESS;
+	case WSAEALREADY: return EALREADY;
+	case WSAENOTSOCK: return ENOTSOCK;
+	case WSAEDESTADDRREQ: return EDESTADDRREQ;
+	case WSAEMSGSIZE: return EMSGSIZE;
+	case WSAEPROTOTYPE: return EPROTOTYPE;
+	case WSAENOPROTOOPT: return ENOPROTOOPT;
+	case WSAEPROTONOSUPPORT: return EPROTONOSUPPORT;
+	case WSAEOPNOTSUPP: return EOPNOTSUPP;
+	case WSAEAFNOSUPPORT: return EAFNOSUPPORT;
+	case WSAEADDRINUSE: return EADDRINUSE;
+	case WSAEADDRNOTAVAIL: return EADDRNOTAVAIL;
+	case WSAENETDOWN: return ENETDOWN;
+	case WSAENETUNREACH: return ENETUNREACH;
+	case WSAENETRESET: return ENETRESET;
+	case WSAECONNABORTED: return ECONNABORTED;
+	case WSAECONNRESET: return ECONNRESET;
+	case WSAENOBUFS: return ENOBUFS;
+	case WSAEISCONN: return EISCONN;
+	case WSAENOTCONN: return ENOTCONN;
+	case WSAETIMEDOUT: return ETIMEDOUT;
+	case WSAECONNREFUSED: return ECONNREFUSED;
+	case WSAELOOP: return ELOOP;
+	case WSAENAMETOOLONG: return ENAMETOOLONG;
+	case WSAEHOSTUNREACH: return EHOSTUNREACH;
+	case WSAENOTEMPTY: return ENOTEMPTY;
+	/* No errno equivalent; default to EIO */
+	case WSAESOCKTNOSUPPORT:
+	case WSAEPFNOSUPPORT:
+	case WSAESHUTDOWN:
+	case WSAETOOMANYREFS:
+	case WSAEHOSTDOWN:
+	case WSAEPROCLIM:
+	case WSAEUSERS:
+	case WSAEDQUOT:
+	case WSAESTALE:
+	case WSAEREMOTE:
+	case WSASYSNOTREADY:
+	case WSAVERNOTSUPPORTED:
+	case WSANOTINITIALISED:
+	case WSAEDISCON:
+	case WSAENOMORE:
+	case WSAECANCELLED:
+	case WSAEINVALIDPROCTABLE:
+	case WSAEINVALIDPROVIDER:
+	case WSAEPROVIDERFAILEDINIT:
+	case WSASYSCALLFAILURE:
+	case WSASERVICE_NOT_FOUND:
+	case WSATYPE_NOT_FOUND:
+	case WSA_E_NO_MORE:
+	case WSA_E_CANCELLED:
+	case WSAEREFUSED:
+	case WSAHOST_NOT_FOUND:
+	case WSATRY_AGAIN:
+	case WSANO_RECOVERY:
+	case WSANO_DATA:
+	case WSA_QOS_RECEIVERS:
+	case WSA_QOS_SENDERS:
+	case WSA_QOS_NO_SENDERS:
+	case WSA_QOS_NO_RECEIVERS:
+	case WSA_QOS_REQUEST_CONFIRMED:
+	case WSA_QOS_ADMISSION_FAILURE:
+	case WSA_QOS_POLICY_FAILURE:
+	case WSA_QOS_BAD_STYLE:
+	case WSA_QOS_BAD_OBJECT:
+	case WSA_QOS_TRAFFIC_CTRL_ERROR:
+	case WSA_QOS_GENERIC_ERROR:
+	case WSA_QOS_ESERVICETYPE:
+	case WSA_QOS_EFLOWSPEC:
+	case WSA_QOS_EPROVSPECBUF:
+	case WSA_QOS_EFILTERSTYLE:
+	case WSA_QOS_EFILTERTYPE:
+	case WSA_QOS_EFILTERCOUNT:
+	case WSA_QOS_EOBJLENGTH:
+	case WSA_QOS_EFLOWCOUNT:
+#ifndef _MSC_VER
+	case WSA_QOS_EUNKNOWNPSOBJ:
+#endif
+	case WSA_QOS_EPOLICYOBJ:
+	case WSA_QOS_EFLOWDESC:
+	case WSA_QOS_EPSFLOWSPEC:
+	case WSA_QOS_EPSFILTERSPEC:
+	case WSA_QOS_ESDMODEOBJ:
+	case WSA_QOS_ESHAPERATEOBJ:
+	case WSA_QOS_RESERVED_PETYPE:
+	default: return EIO;
+	}
+}
+
+/*
+ * On Windows, `errno` is a global macro to a function call.
+ * This makes it difficult to debug and single-step our mappings.
+ */
+static inline void set_wsa_errno(void)
+{
+	DWORD wsa = WSAGetLastError();
+	int e = winsock_error_to_errno(wsa);
+	errno = e;
+
+#ifdef DEBUG_WSA_ERRNO
+	fprintf(stderr, "winsock error: %d -> %d\n", wsa, e);
+	fflush(stderr);
+#endif
+}
+
+static inline int winsock_return(int ret)
+{
+	if (ret < 0)
+		set_wsa_errno();
+
+	return ret;
+}
+
+#define WINSOCK_RETURN(x) do { return winsock_return(x); } while (0)
+
+#undef strerror
+char *mingw_strerror(int errnum)
+{
+	static char buf[41] ="";
+	switch (errnum) {
+		case EWOULDBLOCK:
+			xsnprintf(buf, 41, "%s", "Operation would block");
+			break;
+		case EINPROGRESS:
+			xsnprintf(buf, 41, "%s", "Operation now in progress");
+			break;
+		case EALREADY:
+			xsnprintf(buf, 41, "%s", "Operation already in progress");
+			break;
+		case ENOTSOCK:
+			xsnprintf(buf, 41, "%s", "Socket operation on non-socket");
+			break;
+		case EDESTADDRREQ:
+			xsnprintf(buf, 41, "%s", "Destination address required");
+			break;
+		case EMSGSIZE:
+			xsnprintf(buf, 41, "%s", "Message too long");
+			break;
+		case EPROTOTYPE:
+			xsnprintf(buf, 41, "%s", "Protocol wrong type for socket");
+			break;
+		case ENOPROTOOPT:
+			xsnprintf(buf, 41, "%s", "Protocol not available");
+			break;
+		case EPROTONOSUPPORT:
+			xsnprintf(buf, 41, "%s", "Protocol not supported");
+			break;
+		case EOPNOTSUPP:
+			xsnprintf(buf, 41, "%s", "Operation not supported");
+			break;
+		case EAFNOSUPPORT:
+			xsnprintf(buf, 41, "%s", "Address family not supported by protocol");
+			break;
+		case EADDRINUSE:
+			xsnprintf(buf, 41, "%s", "Address already in use");
+			break;
+		case EADDRNOTAVAIL:
+			xsnprintf(buf, 41, "%s", "Cannot assign requested address");
+			break;
+		case ENETDOWN:
+			xsnprintf(buf, 41, "%s", "Network is down");
+			break;
+		case ENETUNREACH:
+			xsnprintf(buf, 41, "%s", "Network is unreachable");
+			break;
+		case ENETRESET:
+			xsnprintf(buf, 41, "%s", "Network dropped connection on reset");
+			break;
+		case ECONNABORTED:
+			xsnprintf(buf, 41, "%s", "Software caused connection abort");
+			break;
+		case ECONNRESET:
+			xsnprintf(buf, 41, "%s", "Connection reset by peer");
+			break;
+		case ENOBUFS:
+			xsnprintf(buf, 41, "%s", "No buffer space available");
+			break;
+		case EISCONN:
+			xsnprintf(buf, 41, "%s", "Transport endpoint is already connected");
+			break;
+		case ENOTCONN:
+			xsnprintf(buf, 41, "%s", "Transport endpoint is not connected");
+			break;
+		case ETIMEDOUT:
+			xsnprintf(buf, 41, "%s", "Connection timed out");
+			break;
+		case ECONNREFUSED:
+			xsnprintf(buf, 41, "%s", "Connection refused");
+			break;
+		case ELOOP:
+			xsnprintf(buf, 41, "%s", "Too many levels of symbolic links");
+			break;
+		case EHOSTUNREACH:
+			xsnprintf(buf, 41, "%s", "No route to host");
+			break;
+		default: return strerror(errnum);
+	}
+	return buf;
+}
+
 #undef gethostname
 int mingw_gethostname(char *name, int namelen)
 {
-    ensure_socket_initialization();
-    return gethostname(name, namelen);
+	ensure_socket_initialization();
+	WINSOCK_RETURN(gethostname(name, namelen));
 }
 
 #undef gethostbyname
 struct hostent *mingw_gethostbyname(const char *host)
 {
+	struct hostent *ret;
+
 	ensure_socket_initialization();
-	return gethostbyname(host);
+
+	ret = gethostbyname(host);
+	if (!ret)
+		set_wsa_errno();
+
+	return ret;
 }
 
 #undef getaddrinfo
@@ -2438,7 +2829,7 @@ int mingw_getaddrinfo(const char *node, const char *service,
 		      const struct addrinfo *hints, struct addrinfo **res)
 {
 	ensure_socket_initialization();
-	return getaddrinfo(node, service, hints, res);
+	WINSOCK_RETURN(getaddrinfo(node, service, hints, res));
 }
 
 int mingw_socket(int domain, int type, int protocol)
@@ -2449,16 +2840,7 @@ int mingw_socket(int domain, int type, int protocol)
 	ensure_socket_initialization();
 	s = WSASocket(domain, type, protocol, NULL, 0, 0);
 	if (s == INVALID_SOCKET) {
-		/*
-		 * WSAGetLastError() values are regular BSD error codes
-		 * biased by WSABASEERR.
-		 * However, strerror() does not know about networking
-		 * specific errors, which are values beginning at 38 or so.
-		 * Therefore, we choose to leave the biased error code
-		 * in errno so that _if_ someone looks up the code somewhere,
-		 * then it is at least the number that are usually listed.
-		 */
-		errno = WSAGetLastError();
+		set_wsa_errno();
 		return -1;
 	}
 	/* convert into a file descriptor */
@@ -2474,35 +2856,35 @@ int mingw_socket(int domain, int type, int protocol)
 int mingw_connect(int sockfd, struct sockaddr *sa, size_t sz)
 {
 	SOCKET s = (SOCKET)_get_osfhandle(sockfd);
-	return connect(s, sa, sz);
+	WINSOCK_RETURN(connect(s, sa, sz));
 }
 
 #undef bind
 int mingw_bind(int sockfd, struct sockaddr *sa, size_t sz)
 {
 	SOCKET s = (SOCKET)_get_osfhandle(sockfd);
-	return bind(s, sa, sz);
+	WINSOCK_RETURN(bind(s, sa, sz));
 }
 
 #undef setsockopt
 int mingw_setsockopt(int sockfd, int lvl, int optname, void *optval, int optlen)
 {
 	SOCKET s = (SOCKET)_get_osfhandle(sockfd);
-	return setsockopt(s, lvl, optname, (const char*)optval, optlen);
+	WINSOCK_RETURN(setsockopt(s, lvl, optname, (const char*)optval, optlen));
 }
 
 #undef shutdown
 int mingw_shutdown(int sockfd, int how)
 {
 	SOCKET s = (SOCKET)_get_osfhandle(sockfd);
-	return shutdown(s, how);
+	WINSOCK_RETURN(shutdown(s, how));
 }
 
 #undef listen
 int mingw_listen(int sockfd, int backlog)
 {
 	SOCKET s = (SOCKET)_get_osfhandle(sockfd);
-	return listen(s, backlog);
+	WINSOCK_RETURN(listen(s, backlog));
 }
 
 #undef accept
@@ -2512,6 +2894,11 @@ int mingw_accept(int sockfd1, struct sockaddr *sa, socklen_t *sz)
 
 	SOCKET s1 = (SOCKET)_get_osfhandle(sockfd1);
 	SOCKET s2 = accept(s1, sa, sz);
+
+	if (s2 == INVALID_SOCKET) {
+		set_wsa_errno();
+		return -1;
+	}
 
 	/* convert into a file descriptor */
 	if ((sockfd2 = _open_osfhandle(s2, O_RDWR|O_BINARY)) < 0) {
@@ -2527,7 +2914,7 @@ int mingw_accept(int sockfd1, struct sockaddr *sa, socklen_t *sz)
 int mingw_rename(const char *pold, const char *pnew)
 {
 	static int supports_file_rename_info_ex = 1;
-	DWORD attrs = INVALID_FILE_ATTRIBUTES, gle;
+	DWORD attrs = INVALID_FILE_ATTRIBUTES, gle, attrsold;
 	int tries = 0;
 	wchar_t wpold[MAX_PATH], wpnew[MAX_PATH];
 	int wpnew_len;
@@ -2617,6 +3004,26 @@ repeat:
 				MOVEFILE_REPLACE_EXISTING | MOVEFILE_COPY_ALLOWED))
 			return 0;
 		gle = GetLastError();
+	}
+
+	if (gle == ERROR_ACCESS_DENIED) {
+		if (is_inside_windows_container()) {
+			/* Fall back to copy to destination & remove source */
+			if (CopyFileW(wpold, wpnew, FALSE) && !mingw_unlink(pold, 1))
+				return 0;
+			gle = GetLastError();
+		} else if ((attrsold = GetFileAttributesW(wpold)) & FILE_ATTRIBUTE_READONLY) {
+			/* if file is read-only, change and retry */
+			SetFileAttributesW(wpold, attrsold & ~FILE_ATTRIBUTE_READONLY);
+			if (MoveFileExW(wpold, wpnew,
+					MOVEFILE_REPLACE_EXISTING | MOVEFILE_COPY_ALLOWED)) {
+				SetFileAttributesW(wpnew, attrsold);
+				return 0;
+			}
+			gle = GetLastError();
+			/* revert attribute change on failure */
+			SetFileAttributesW(wpold, attrsold);
+		}
 	}
 
 	/* revert file attributes on failure */
@@ -2932,7 +3339,38 @@ int link(const char *oldpath, const char *newpath)
 	return 0;
 }
 
-int symlink(const char *target, const char *link)
+enum symlink_type {
+	SYMLINK_TYPE_UNSPECIFIED = 0,
+	SYMLINK_TYPE_FILE,
+	SYMLINK_TYPE_DIRECTORY,
+};
+
+static enum symlink_type check_symlink_attr(struct index_state *index, const char *link)
+{
+	static struct attr_check *check;
+	const char *value;
+
+	if (!index)
+		return SYMLINK_TYPE_UNSPECIFIED;
+
+	if (!check)
+		check = attr_check_initl("symlink", NULL);
+
+	git_check_attr(index, link, check);
+
+	value = check->items[0].value;
+	if (ATTR_UNSET(value))
+		return SYMLINK_TYPE_UNSPECIFIED;
+	if (!strcmp(value, "file"))
+		return SYMLINK_TYPE_FILE;
+	if (!strcmp(value, "dir") || !strcmp(value, "directory"))
+		return SYMLINK_TYPE_DIRECTORY;
+
+	warning(_("ignoring invalid symlink type '%s' for '%s'"), value, link);
+	return SYMLINK_TYPE_UNSPECIFIED;
+}
+
+int mingw_create_symlink(struct index_state *index, const char *target, const char *link)
 {
 	wchar_t wtarget[MAX_PATH], wlink[MAX_PATH];
 	int len;
@@ -2952,48 +3390,31 @@ int symlink(const char *target, const char *link)
 		if (wtarget[len] == '/')
 			wtarget[len] = '\\';
 
-	/* create file symlink */
-	if (!CreateSymbolicLinkW(wlink, wtarget, symlink_file_flags)) {
-		errno = err_win_to_posix(GetLastError());
-		return -1;
-	}
-
-	/* convert to directory symlink if target exists */
-	switch (process_phantom_symlink(wtarget, wlink)) {
-	case PHANTOM_SYMLINK_RETRY:	{
-		/* if target doesn't exist, add to phantom symlinks list */
-		wchar_t wfullpath[MAX_PATH];
-		struct phantom_symlink_info *psi;
-
-		/* convert to absolute path to be independent of cwd */
-		len = GetFullPathNameW(wlink, MAX_PATH, wfullpath, NULL);
-		if (!len || len >= MAX_PATH) {
-			errno = err_win_to_posix(GetLastError());
-			return -1;
-		}
-
-		/* over-allocate and fill phantom_symlink_info structure */
-		psi = xmalloc(sizeof(struct phantom_symlink_info)
-			+ sizeof(wchar_t) * (len + wcslen(wtarget) + 2));
-		psi->wlink = (wchar_t *)(psi + 1);
-		wcscpy(psi->wlink, wfullpath);
-		psi->wtarget = psi->wlink + len + 1;
-		wcscpy(psi->wtarget, wtarget);
-
-		EnterCriticalSection(&phantom_symlinks_cs);
-		psi->next = phantom_symlinks;
-		phantom_symlinks = psi;
-		LeaveCriticalSection(&phantom_symlinks_cs);
-		break;
-	}
-	case PHANTOM_SYMLINK_DIRECTORY:
-		/* if we created a dir symlink, process other phantom symlinks */
+	switch (check_symlink_attr(index, link)) {
+	case SYMLINK_TYPE_UNSPECIFIED:
+		/* Create a phantom symlink: it is initially created as a file
+		 * symlink, but may change to a directory symlink later if/when
+		 * the target exists. */
+		return create_phantom_symlink(wtarget, wlink);
+	case SYMLINK_TYPE_FILE:
+		if (!CreateSymbolicLinkW(wlink, wtarget, symlink_file_flags))
+			break;
+		return 0;
+	case SYMLINK_TYPE_DIRECTORY:
+		if (!CreateSymbolicLinkW(wlink, wtarget,
+					 symlink_directory_flags))
+			break;
+		/* There may be dangling phantom symlinks that point at this
+		 * one, which should now morph into directory symlinks. */
 		process_phantom_symlinks();
-		break;
+		return 0;
 	default:
-		break;
+		BUG("unhandled symlink type");
 	}
-	return 0;
+
+	/* CreateSymbolicLinkW failed. */
+	errno = err_win_to_posix(GetLastError());
+	return -1;
 }
 
 int readlink(const char *path, char *buf, size_t bufsiz)
@@ -3070,6 +3491,28 @@ pid_t waitpid(pid_t pid, int *status, int options)
 
 	errno = EINVAL;
 	return -1;
+}
+
+int mingw_is_mount_point(struct strbuf *path)
+{
+	WIN32_FIND_DATAW findbuf = { 0 };
+	HANDLE handle;
+	wchar_t wfilename[MAX_PATH];
+	int wlen = xutftowcs_path(wfilename, path->buf);
+	if (wlen < 0)
+		die(_("could not get long path for '%s'"), path->buf);
+
+	/* remove trailing slash, if any */
+	if (wlen > 0 && wfilename[wlen - 1] == L'/')
+		wfilename[--wlen] = L'\0';
+
+	handle = FindFirstFileW(wfilename, &findbuf);
+	if (handle == INVALID_HANDLE_VALUE)
+		return 0;
+	FindClose(handle);
+
+	return (findbuf.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) &&
+		(findbuf.dwReserved0 == IO_REPARSE_TAG_MOUNT_POINT);
 }
 
 int xutftowcsn(wchar_t *wcs, const char *utfs, size_t wcslen, int utflen)
@@ -3196,6 +3639,18 @@ static size_t append_system_bin_dirs(char *path, size_t size)
 #endif
 #endif
 
+static int is_system32_path(const char *path)
+{
+	WCHAR system32[MAX_PATH], wpath[MAX_PATH];
+
+	if (xutftowcs_path(wpath, path) < 0 ||
+	    !GetSystemDirectoryW(system32, ARRAY_SIZE(system32)) ||
+	    _wcsicmp(system32, wpath))
+		return 0;
+
+	return 1;
+}
+
 static void setup_windows_environment(void)
 {
 	char *tmp = getenv("TMPDIR");
@@ -3220,9 +3675,20 @@ static void setup_windows_environment(void)
 		convert_slashes(tmp);
 	}
 
-	/* simulate TERM to enable auto-color (see color.c) */
-	if (!getenv("TERM"))
-		setenv("TERM", "cygwin", 1);
+
+	/*
+	 * Make sure TERM is set up correctly to enable auto-color
+	 * (see color.c .) Use "cygwin" for older OS releases which
+	 * works correctly with MSYS2 utilities on older consoles.
+	 */
+	if (!getenv("TERM")) {
+		if ((GetVersion() >> 16) < 15063)
+			setenv("TERM", "cygwin", 0);
+		else {
+			setenv("TERM", "xterm-256color", 0);
+			setenv("COLORTERM", "truecolor", 0);
+		}
+	}
 
 	/* calculate HOME if not set */
 	if (!getenv("HOME")) {
@@ -3236,7 +3702,8 @@ static void setup_windows_environment(void)
 			strbuf_addstr(&buf, tmp);
 			if ((tmp = getenv("HOMEPATH"))) {
 				strbuf_addstr(&buf, tmp);
-				if (is_directory(buf.buf))
+				if (!is_system32_path(buf.buf) &&
+				    is_directory(buf.buf))
 					setenv("HOME", buf.buf, 1);
 				else
 					tmp = NULL; /* use $USERPROFILE */
@@ -3374,6 +3841,30 @@ static int acls_supported(const char *path)
 	return 0;
 }
 
+int is_valid_windows_path_element(wchar_t ch)
+{
+	// cf. https://learn.microsoft.com/en-us/windows/win32/fileio/naming-a-file
+	// Windows disallows ASCII control characters 0x00–0x1F
+	if (ch < 0x1F)
+		return false;
+
+	// Windows reserved path characters
+	switch (ch) {
+	case L'<':
+	case L'>':
+	case L':':
+	case L'"':
+	case L'/':
+	case L'\\':
+	case L'|':
+	case L'?':
+	case L'*':
+		return 0;
+	default:
+		return 1;
+	}
+}
+
 int is_path_owned_by_current_sid(const char *path, struct strbuf *report)
 {
 	WCHAR wpath[MAX_PATH];
@@ -3402,15 +3893,22 @@ int is_path_owned_by_current_sid(const char *path, struct strbuf *report)
 	if (!wcsicmp(wpath, home))
 		return 1;
 
+	/* Do not leak NTLM hashes, UNC paths etc. are generally problematic */
+	if (wpath[0] == L'\\' && !is_valid_windows_path_element(wpath[1])) {
+		if (report)
+			strbuf_addf(report,
+				    "'%s' may refer to a non-local directory",
+				    path);
+		return 0;
+	}
+
 	/* Get the owner SID */
 	err = GetNamedSecurityInfoW(wpath, SE_FILE_OBJECT,
 				    OWNER_SECURITY_INFORMATION |
 				    DACL_SECURITY_INFORMATION,
 				    &sid, NULL, NULL, NULL, &descriptor);
 
-	if (err != ERROR_SUCCESS)
-		error(_("failed to get owner for '%s' (%ld)"), path, err);
-	else if (sid && IsValidSid(sid)) {
+	if (err == ERROR_SUCCESS && sid && IsValidSid(sid)) {
 		/* Now, verify that the SID matches the current user's */
 		static PSID current_user_sid;
 		static HANDLE linked_token;
@@ -3769,6 +4267,7 @@ int wmain(int argc, const wchar_t **wargv)
 
 	maybe_redirect_std_handles();
 	adjust_symlink_flags();
+	fsync_object_files = 1;
 
 	/* determine size of argv and environ conversion buffer */
 	maxlen = wcslen(wargv[0]);
@@ -3853,3 +4352,62 @@ int mingw_have_unix_sockets(void)
 	return ret;
 }
 #endif
+
+/*
+ * Based on https://stackoverflow.com/questions/43002803
+ *
+ * [HKLM\SYSTEM\CurrentControlSet\Services\cexecsvc]
+ * "DisplayName"="@%systemroot%\\system32\\cexecsvc.exe,-100"
+ * "ErrorControl"=dword:00000001
+ * "ImagePath"=hex(2):25,00,73,00,79,00,73,00,74,00,65,00,6d,00,72,00,6f,00,
+ *    6f,00,74,00,25,00,5c,00,73,00,79,00,73,00,74,00,65,00,6d,00,33,00,32,00,
+ *    5c,00,63,00,65,00,78,00,65,00,63,00,73,00,76,00,63,00,2e,00,65,00,78,00,
+ *    65,00,00,00
+ * "Start"=dword:00000002
+ * "Type"=dword:00000010
+ * "Description"="@%systemroot%\\system32\\cexecsvc.exe,-101"
+ * "ObjectName"="LocalSystem"
+ * "ServiceSidType"=dword:00000001
+ */
+int is_inside_windows_container(void)
+{
+	static int inside_container = -1; /* -1 uninitialized */
+	const char *key = "SYSTEM\\CurrentControlSet\\Services\\cexecsvc";
+	HKEY handle = NULL;
+
+	if (inside_container != -1)
+		return inside_container;
+
+	inside_container = ERROR_SUCCESS ==
+		RegOpenKeyExA(HKEY_LOCAL_MACHINE, key, 0, KEY_READ, &handle);
+	RegCloseKey(handle);
+
+	return inside_container;
+}
+
+int file_attr_to_st_mode (DWORD attr, DWORD tag, const char *path)
+{
+	int fMode = S_IREAD;
+	if ((attr & FILE_ATTRIBUTE_REPARSE_POINT) &&
+	    tag == IO_REPARSE_TAG_SYMLINK) {
+		int flag = S_IFLNK;
+		char buf[MAX_LONG_PATH];
+
+		/*
+		 * Windows containers' mapped volumes are marked as reparse
+		 * points and look like symbolic links, but they are not.
+		 */
+		if (path && is_inside_windows_container() &&
+		    readlink(path, buf, sizeof(buf)) > 27 &&
+		    starts_with(buf, "/ContainerMappedDirectories/"))
+			flag = S_IFDIR;
+
+		fMode |= flag;
+	} else if (attr & FILE_ATTRIBUTE_DIRECTORY)
+		fMode |= S_IFDIR;
+	else
+		fMode |= S_IFREG;
+	if (!(attr & FILE_ATTRIBUTE_READONLY))
+		fMode |= S_IWRITE;
+	return fMode;
+}

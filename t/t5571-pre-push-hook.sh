@@ -138,4 +138,16 @@ test_expect_success 'sigpipe does not cause pre-push hook failure' '
 	git push parent1 "refs/heads/b/*:refs/heads/b/*"
 '
 
+test_expect_success 'can write to stderr' '
+	test_hook --clobber pre-push <<-\EOF &&
+	echo foo >/dev/stderr &&
+	exit 0
+	EOF
+
+	test_commit third &&
+	echo foo >expect &&
+	git push --quiet parent1 HEAD 2>actual &&
+	test_cmp expect actual
+'
+
 test_done
