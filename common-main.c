@@ -76,6 +76,13 @@ static void check_bug_if_BUG(void)
 int common_exit(const char *file, int line, int code)
 {
 	/*
+	 *  Windows Filtering Platform driver provided by the security software
+	 * may change buffer type of stdout from _IONBF to _IOFBF.
+	 * It will no output without fflush manually.
+	 */
+	fflush(stdout);
+
+	/*
 	 * For non-POSIX systems: Take the lowest 8 bits of the "code"
 	 * to e.g. turn -1 into 255. On a POSIX system this is
 	 * redundant, see exit(3) and wait(2), but as it doesn't harm
