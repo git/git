@@ -5,11 +5,6 @@
 
 . ${0%/*}/lib.sh
 
-case "$CI_OS_NAME" in
-windows*) cmd //c mklink //j t\\.prove "$(cygpath -aw "$cache_dir/.prove")";;
-*) ln -s "$cache_dir/.prove" t/.prove;;
-esac
-
 run_tests=t
 
 case "$jobname" in
@@ -51,5 +46,9 @@ then
 	handle_failed_tests
 fi
 check_unignored_build_artifacts
+
+case " $MAKE_TARGETS " in
+*" all "*) make -C contrib/subtree test;;
+esac
 
 save_good_tree
