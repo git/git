@@ -3245,6 +3245,7 @@ int msc_startup(int argc, wchar_t **w_argv, wchar_t **w_env)
 
 	maybe_redirect_std_handles();
 	adjust_symlink_flags();
+	fsync_object_files = 1;
 
 	/* determine size of argv conversion buffer */
 	maxlen = wcslen(_wpgmptr);
@@ -3312,6 +3313,7 @@ void mingw_startup(void)
 
 	maybe_redirect_std_handles();
 	adjust_symlink_flags();
+	fsync_object_files = 1;
 
 	/* get wide char arguments and environment */
 	si.newmode = 0;
