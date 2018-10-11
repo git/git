@@ -1833,9 +1833,10 @@ static int git_config_from_blob_ref(config_fn_t fn,
 char *git_system_config(void)
 {
 	char *system_config = xstrdup_or_null(getenv("GIT_CONFIG_SYSTEM"));
-	if (system_config)
-		return system_config;
-	return system_path(ETC_GITCONFIG);
+	if (!system_config)
+		system_config = system_path(ETC_GITCONFIG);
+	normalize_path_copy(system_config, system_config);
+	return system_config;
 }
 
 void git_global_config(char **user_out, char **xdg_out)
@@ -2516,9 +2517,14 @@ int git_config_get_max_percent_split_change(void)
 	return -1; /* default value */
 }
 
-int git_config_get_fsmonitor(void)
+int repo_config_get_fsmonitor(struct repository *r)
 {
-	if (git_config_get_pathname("core.fsmonitor", &core_fsmonitor))
+	if (r->settings.use_builtin_fsmonitor > 0) {
+		core_fsmonitor = "(built-in daemon)";
+		return 1;
+	}
+
+	if (repo_config_get_pathname(r, "core.fsmonitor", &core_fsmonitor))
 		core_fsmonitor = getenv("GIT_TEST_FSMONITOR");
 
 	if (core_fsmonitor && !*core_fsmonitor)
