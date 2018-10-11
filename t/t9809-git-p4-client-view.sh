@@ -836,8 +836,4 @@ test_expect_success 'quotes on both sides' '
 	git_verify "cdir 1/file11" "cdir 1/file12"
 '
 
-test_expect_success 'kill p4d' '
-	kill_p4d
-'
-
 test_done
