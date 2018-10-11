@@ -188,6 +188,7 @@ git-stash                               mainporcelain
 git-status                              mainporcelain           info
 git-stripspace                          purehelpers
 git-submodule                           mainporcelain
+git-survey                              mainporcelain
 git-svn                                 foreignscminterface
 git-switch                              mainporcelain           history
 git-symbolic-ref                        plumbingmanipulators
