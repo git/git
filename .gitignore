@@ -165,6 +165,7 @@
 /git-submodule
 /git-submodule--helper
 /git-subtree
+/git-survey
 /git-svn
 /git-switch
 /git-symbolic-ref
@@ -251,5 +252,6 @@ Release/
 /git.VC.db
 *.dSYM
 /contrib/buildsystems/out
+CMakeSettings.json
 /contrib/libgit-rs/target
 /contrib/libgit-sys/target

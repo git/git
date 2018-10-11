@@ -311,6 +311,11 @@ int mingw_socket(int domain, int type, int protocol);
 int mingw_connect(int sockfd, struct sockaddr *sa, size_t sz);
 #define connect mingw_connect
 
+char *mingw_strerror(int errnum);
+#ifndef _UCRT
+#define strerror mingw_strerror
+#endif
+
 int mingw_bind(int sockfd, struct sockaddr *sa, size_t sz);
 #define bind mingw_bind
 
@@ -454,9 +459,16 @@ static inline void convert_slashes(char *path)
 		if (*path == '\\')
 			*path = '/';
 }
+struct strbuf;
+int mingw_is_mount_point(struct strbuf *path);
+#define is_mount_point mingw_is_mount_point
+#define CAN_UNLINK_MOUNT_POINTS 1
 #define PATH_SEP ';'
 char *mingw_query_user_email(void);
 #define query_user_email mingw_query_user_email
+struct strbuf;
+char *mingw_strbuf_realpath(struct strbuf *resolved, const char *path);
+#define platform_strbuf_realpath mingw_strbuf_realpath
 #if !defined(__MINGW64_VERSION_MAJOR) && (!defined(_MSC_VER) || _MSC_VER < 1800)
 #define PRIuMAX "I64u"
 #define PRId64 "I64d"
