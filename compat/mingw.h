@@ -6,6 +6,25 @@ typedef _sigset_t sigset_t;
 #include <winsock2.h>
 #include <ws2tcpip.h>
 
+#ifdef __MINGW64_VERSION_MAJOR
+/*
+ * In Git for Windows, we cannot rely on `uname -m` to report the correct
+ * architecture: /usr/bin/uname.exe will report the architecture with which the
+ * current MSYS2 runtime was built, not the architecture for which we are
+ * currently compiling (both 32-bit and 64-bit `git.exe` is built in the 64-bit
+ * Git for Windows SDK).
+ */
+#undef GIT_HOST_CPU
+/* This was figured out by looking at `cpp -dM </dev/null`'s output */
+#if defined(__x86_64__)
+#define GIT_HOST_CPU "x86_64"
+#elif defined(__i686__)
+#define GIT_HOST_CPU "i686"
+#else
+#error "Unknown architecture"
+#endif
+#endif
+
 /* MinGW-w64 reports to have flockfile, but it does not actually have it. */
 #ifdef __MINGW64_VERSION_MAJOR
 #undef _POSIX_THREAD_SAFE_FUNCTIONS
@@ -296,17 +315,9 @@ int mingw_gethostname(char *host, int namelen);
 struct hostent *mingw_gethostbyname(const char *host);
 #define gethostbyname mingw_gethostbyname
 
-void mingw_freeaddrinfo(struct addrinfo *res);
-#define freeaddrinfo mingw_freeaddrinfo
-
 int mingw_getaddrinfo(const char *node, const char *service,
 		      const struct addrinfo *hints, struct addrinfo **res);
 #define getaddrinfo mingw_getaddrinfo
-
-int mingw_getnameinfo(const struct sockaddr *sa, socklen_t salen,
-		      char *host, DWORD hostlen, char *serv, DWORD servlen,
-		      int flags);
-#define getnameinfo mingw_getnameinfo
 
 int mingw_socket(int domain, int type, int protocol);
 #define socket mingw_socket
@@ -583,6 +594,16 @@ int main(int argc, const char **argv) \
 	return mingw_main(__argc, (void *)__argv); \
 } \
 static int mingw_main(c,v)
+
+/*
+ * For debugging: if a problem occurs, say, in a Git process that is spawned
+ * from another Git process which in turn is spawned from yet another Git
+ * process, it can be quite daunting to figure out what is going on.
+ *
+ * Call this function to open a new MinTTY (this assumes you are in Git for
+ * Windows' SDK) with a GDB that attaches to the current process right away.
+ */
+extern void open_in_gdb(void);
 
 /*
  * Used by Pthread API implementation for Windows

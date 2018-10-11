@@ -13,6 +13,19 @@
 
 static const int delay[] = { 0, 1, 10, 20, 40 };
 
+void open_in_gdb(void)
+{
+	static struct child_process cp = CHILD_PROCESS_INIT;
+	extern char *_pgmptr;
+
+	argv_array_pushl(&cp.args, "mintty", "gdb", NULL);
+	argv_array_pushf(&cp.args, "--pid=%d", getpid());
+	cp.clean_on_exit = 1;
+	if (start_command(&cp) < 0)
+		die_errno("Could not start gdb");
+	sleep(1);
+}
+
 int err_win_to_posix(DWORD winerr)
 {
 	int error = ENOSYS;
@@ -929,11 +942,19 @@ unsigned int sleep (unsigned int seconds)
 char *mingw_mktemp(char *template)
 {
 	wchar_t wtemplate[MAX_PATH];
+	int offset = 0;
+
 	if (xutftowcs_path(wtemplate, template) < 0)
 		return NULL;
+
+	if (is_dir_sep(template[0]) && !is_dir_sep(template[1]) &&
+	    iswalpha(wtemplate[0]) && wtemplate[1] == L':') {
+		/* We have an absolute path missing the drive prefix */
+		offset = 2;
+	}
 	if (!_wmktemp(wtemplate))
 		return NULL;
-	if (xwcstoutf(template, wtemplate, strlen(template) + 1) < 0)
+	if (xwcstoutf(template, wtemplate + offset, strlen(template) + 1) < 0)
 		return NULL;
 	return template;
 }
@@ -1161,14 +1182,21 @@ static char *lookup_prog(const char *dir, int dirlen, const char *cmd,
 			 int isexe, int exe_only)
 {
 	char path[MAX_PATH];
+	wchar_t wpath[MAX_PATH];
 	snprintf(path, sizeof(path), "%.*s\\%s.exe", dirlen, dir, cmd);
 
-	if (!isexe && access(path, F_OK) == 0)
+	if (xutftowcs_path(wpath, path) < 0)
+		return NULL;
+
+	if (!isexe && _waccess(wpath, F_OK) == 0)
 		return xstrdup(path);
-	path[strlen(path)-4] = '\0';
-	if ((!exe_only || isexe) && access(path, F_OK) == 0)
-		if (!(GetFileAttributes(path) & FILE_ATTRIBUTE_DIRECTORY))
+	wpath[wcslen(wpath)-4] = '\0';
+	if ((!exe_only || isexe) && _waccess(wpath, F_OK) == 0) {
+		if (!(GetFileAttributesW(wpath) & FILE_ATTRIBUTE_DIRECTORY)) {
+			path[strlen(path)-4] = '\0';
 			return xstrdup(path);
+		}
+	}
 	return NULL;
 }
 
@@ -1705,142 +1733,10 @@ int mingw_putenv(const char *namevalue)
 	return result ? 0 : -1;
 }
 
-/*
- * Note, this isn't a complete replacement for getaddrinfo. It assumes
- * that service contains a numerical port, or that it is null. It
- * does a simple search using gethostbyname, and returns one IPv4 host
- * if one was found.
- */
-static int WSAAPI getaddrinfo_stub(const char *node, const char *service,
-				   const struct addrinfo *hints,
-				   struct addrinfo **res)
-{
-	struct hostent *h = NULL;
-	struct addrinfo *ai;
-	struct sockaddr_in *sin;
-
-	if (node) {
-		h = gethostbyname(node);
-		if (!h)
-			return WSAGetLastError();
-	}
-
-	ai = xmalloc(sizeof(struct addrinfo));
-	*res = ai;
-	ai->ai_flags = 0;
-	ai->ai_family = AF_INET;
-	ai->ai_socktype = hints ? hints->ai_socktype : 0;
-	switch (ai->ai_socktype) {
-	case SOCK_STREAM:
-		ai->ai_protocol = IPPROTO_TCP;
-		break;
-	case SOCK_DGRAM:
-		ai->ai_protocol = IPPROTO_UDP;
-		break;
-	default:
-		ai->ai_protocol = 0;
-		break;
-	}
-	ai->ai_addrlen = sizeof(struct sockaddr_in);
-	if (hints && (hints->ai_flags & AI_CANONNAME))
-		ai->ai_canonname = h ? xstrdup(h->h_name) : NULL;
-	else
-		ai->ai_canonname = NULL;
-
-	sin = xcalloc(1, ai->ai_addrlen);
-	sin->sin_family = AF_INET;
-	/* Note: getaddrinfo is supposed to allow service to be a string,
-	 * which should be looked up using getservbyname. This is
-	 * currently not implemented */
-	if (service)
-		sin->sin_port = htons(atoi(service));
-	if (h)
-		sin->sin_addr = *(struct in_addr *)h->h_addr;
-	else if (hints && (hints->ai_flags & AI_PASSIVE))
-		sin->sin_addr.s_addr = INADDR_ANY;
-	else
-		sin->sin_addr.s_addr = INADDR_LOOPBACK;
-	ai->ai_addr = (struct sockaddr *)sin;
-	ai->ai_next = NULL;
-	return 0;
-}
-
-static void WSAAPI freeaddrinfo_stub(struct addrinfo *res)
-{
-	free(res->ai_canonname);
-	free(res->ai_addr);
-	free(res);
-}
-
-static int WSAAPI getnameinfo_stub(const struct sockaddr *sa, socklen_t salen,
-				   char *host, DWORD hostlen,
-				   char *serv, DWORD servlen, int flags)
-{
-	const struct sockaddr_in *sin = (const struct sockaddr_in *)sa;
-	if (sa->sa_family != AF_INET)
-		return EAI_FAMILY;
-	if (!host && !serv)
-		return EAI_NONAME;
-
-	if (host && hostlen > 0) {
-		struct hostent *ent = NULL;
-		if (!(flags & NI_NUMERICHOST))
-			ent = gethostbyaddr((const char *)&sin->sin_addr,
-					    sizeof(sin->sin_addr), AF_INET);
-
-		if (ent)
-			snprintf(host, hostlen, "%s", ent->h_name);
-		else if (flags & NI_NAMEREQD)
-			return EAI_NONAME;
-		else
-			snprintf(host, hostlen, "%s", inet_ntoa(sin->sin_addr));
-	}
-
-	if (serv && servlen > 0) {
-		struct servent *ent = NULL;
-		if (!(flags & NI_NUMERICSERV))
-			ent = getservbyport(sin->sin_port,
-					    flags & NI_DGRAM ? "udp" : "tcp");
-
-		if (ent)
-			snprintf(serv, servlen, "%s", ent->s_name);
-		else
-			snprintf(serv, servlen, "%d", ntohs(sin->sin_port));
-	}
-
-	return 0;
-}
-
-static HMODULE ipv6_dll = NULL;
-static void (WSAAPI *ipv6_freeaddrinfo)(struct addrinfo *res);
-static int (WSAAPI *ipv6_getaddrinfo)(const char *node, const char *service,
-				      const struct addrinfo *hints,
-				      struct addrinfo **res);
-static int (WSAAPI *ipv6_getnameinfo)(const struct sockaddr *sa, socklen_t salen,
-				      char *host, DWORD hostlen,
-				      char *serv, DWORD servlen, int flags);
-/*
- * gai_strerror is an inline function in the ws2tcpip.h header, so we
- * don't need to try to load that one dynamically.
- */
-
-static void socket_cleanup(void)
-{
-	WSACleanup();
-	if (ipv6_dll)
-		FreeLibrary(ipv6_dll);
-	ipv6_dll = NULL;
-	ipv6_freeaddrinfo = freeaddrinfo_stub;
-	ipv6_getaddrinfo = getaddrinfo_stub;
-	ipv6_getnameinfo = getnameinfo_stub;
-}
-
 static void ensure_socket_initialization(void)
 {
 	WSADATA wsa;
 	static int initialized = 0;
-	const char *libraries[] = { "ws2_32.dll", "wship6.dll", NULL };
-	const char **name;
 
 	if (initialized)
 		return;
@@ -1849,35 +1745,7 @@ static void ensure_socket_initialization(void)
 		die("unable to initialize winsock subsystem, error %d",
 			WSAGetLastError());
 
-	for (name = libraries; *name; name++) {
-		ipv6_dll = LoadLibraryExA(*name, NULL,
-					  LOAD_LIBRARY_SEARCH_SYSTEM32);
-		if (!ipv6_dll)
-			continue;
-
-		ipv6_freeaddrinfo = (void (WSAAPI *)(struct addrinfo *))
-			GetProcAddress(ipv6_dll, "freeaddrinfo");
-		ipv6_getaddrinfo = (int (WSAAPI *)(const char *, const char *,
-						   const struct addrinfo *,
-						   struct addrinfo **))
-			GetProcAddress(ipv6_dll, "getaddrinfo");
-		ipv6_getnameinfo = (int (WSAAPI *)(const struct sockaddr *,
-						   socklen_t, char *, DWORD,
-						   char *, DWORD, int))
-			GetProcAddress(ipv6_dll, "getnameinfo");
-		if (!ipv6_freeaddrinfo || !ipv6_getaddrinfo || !ipv6_getnameinfo) {
-			FreeLibrary(ipv6_dll);
-			ipv6_dll = NULL;
-		} else
-			break;
-	}
-	if (!ipv6_freeaddrinfo || !ipv6_getaddrinfo || !ipv6_getnameinfo) {
-		ipv6_freeaddrinfo = freeaddrinfo_stub;
-		ipv6_getaddrinfo = getaddrinfo_stub;
-		ipv6_getnameinfo = getnameinfo_stub;
-	}
-
-	atexit(socket_cleanup);
+	atexit((void(*)(void)) WSACleanup);
 	initialized = 1;
 }
 
@@ -1895,24 +1763,12 @@ struct hostent *mingw_gethostbyname(const char *host)
 	return gethostbyname(host);
 }
 
-void mingw_freeaddrinfo(struct addrinfo *res)
-{
-	ipv6_freeaddrinfo(res);
-}
-
+#undef getaddrinfo
 int mingw_getaddrinfo(const char *node, const char *service,
 		      const struct addrinfo *hints, struct addrinfo **res)
 {
 	ensure_socket_initialization();
-	return ipv6_getaddrinfo(node, service, hints, res);
-}
-
-int mingw_getnameinfo(const struct sockaddr *sa, socklen_t salen,
-		      char *host, DWORD hostlen, char *serv, DWORD servlen,
-		      int flags)
-{
-	ensure_socket_initialization();
-	return ipv6_getnameinfo(sa, salen, host, hostlen, serv, servlen, flags);
+	return getaddrinfo(node, service, hints, res);
 }
 
 int mingw_socket(int domain, int type, int protocol)
