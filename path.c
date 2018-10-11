@@ -1224,6 +1224,45 @@ char *strip_path_suffix(const char *path, const char *suffix)
 	return offset == -1 ? NULL : xstrndup(path, offset);
 }
 
+int is_mount_point_via_stat(struct strbuf *path)
+{
+	size_t len = path->len;
+	unsigned int current_dev;
+	struct stat st;
+
+	if (!strcmp("/", path->buf))
+		return 1;
+
+	strbuf_addstr(path, "/.");
+	if (lstat(path->buf, &st)) {
+		/*
+		 * If we cannot access the current directory, we cannot say
+		 * that it is a bind mount.
+		 */
+		strbuf_setlen(path, len);
+		return 0;
+	}
+	current_dev = st.st_dev;
+
+	/* Now look at the parent directory */
+	strbuf_addch(path, '.');
+	if (lstat(path->buf, &st)) {
+		/*
+		 * If we cannot access the parent directory, we cannot say
+		 * that it is a bind mount.
+		 */
+		strbuf_setlen(path, len);
+		return 0;
+	}
+	strbuf_setlen(path, len);
+
+	/*
+	 * If the device ID differs between current and parent directory,
+	 * then it is a bind mount.
+	 */
+	return current_dev != st.st_dev;
+}
+
 int daemon_avoid_alias(const char *p)
 {
 	int sl, ndot;
@@ -1441,6 +1480,7 @@ int looks_like_command_line_option(const char *str)
 char *xdg_config_home_for(const char *subdir, const char *filename)
 {
 	const char *home, *config_home;
+	char *home_config = NULL;
 
 	assert(subdir);
 	assert(filename);
@@ -1449,10 +1489,26 @@ char *xdg_config_home_for(const char *subdir, const char *filename)
 		return mkpathdup("%s/%s/%s", config_home, subdir, filename);
 
 	home = getenv("HOME");
-	if (home)
-		return mkpathdup("%s/.config/%s/%s", home, subdir, filename);
+	if (home && *home)
+		home_config = mkpathdup("%s/.config/%s/%s", home, subdir, filename);
 
-	return NULL;
+	#ifdef WIN32
+	{
+		const char *appdata = getenv("APPDATA");
+		if (appdata && *appdata) {
+			char *appdata_config = mkpathdup("%s/Git/%s", appdata, filename);
+			if (file_exists(appdata_config)) {
+				if (home_config && file_exists(home_config))
+					warning("'%s' was ignored because '%s' exists.", home_config, appdata_config);
+				free(home_config);
+				return appdata_config;
+			}
+			free(appdata_config);
+		}
+	}
+	#endif
+
+	return home_config;
 }
 
 char *xdg_config_home(const char *filename)
