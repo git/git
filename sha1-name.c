@@ -442,6 +442,18 @@ static enum get_oid_result get_short_oid(const char *name, int len,
 	find_short_packed_object(&ds);
 	status = finish_object_disambiguation(&ds, oid);
 
+	/*
+	 * If we didn't find it, do the usual reprepare() slow-path,
+	 * since the object may have recently been added to the repository
+	 * or migrated from loose to packed.
+	 */
+	if (status == MISSING_OBJECT) {
+		reprepare_packed_git(the_repository);
+		find_short_object_filename(&ds);
+		find_short_packed_object(&ds);
+		status = finish_object_disambiguation(&ds, oid);
+	}
+
 	if (!quietly && (status == SHORT_NAME_AMBIGUOUS)) {
 		struct oid_array collect = OID_ARRAY_INIT;
 
@@ -1518,6 +1530,25 @@ int get_oid(const char *name, struct object_id *oid)
 	return get_oid_with_context(the_repository, name, 0, oid, &unused);
 }
 
+/*
+ * This returns a non-zero value if the string (built using printf
+ * format and the given arguments) is not a valid object.
+ */
+int get_oidf(struct object_id *oid, const char *fmt, ...)
+{
+	va_list ap;
+	int ret;
+	struct strbuf sb = STRBUF_INIT;
+
+	va_start(ap, fmt);
+	strbuf_vaddf(&sb, fmt, ap);
+	va_end(ap);
+
+	ret = get_oid(sb.buf, oid);
+	strbuf_release(&sb);
+
+	return ret;
+}
 
 /*
  * Many callers know that the user meant to name a commit-ish by
