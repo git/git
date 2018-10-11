@@ -582,7 +582,8 @@ proc apply_or_revert_hunk {x y revert} {
 	if {$current_diff_side eq $ui_index} {
 		set failed_msg [mc "Failed to unstage selected hunk."]
 		lappend apply_cmd --reverse --cached
-		if {[string index $mi 0] ne {M}} {
+		set file_state [string index $mi 0]
+		if {$file_state ne {M} && $file_state ne {A}} {
 			unlock_index
 			return
 		}
@@ -595,7 +596,8 @@ proc apply_or_revert_hunk {x y revert} {
 			lappend apply_cmd --cached
 		}
 
-		if {[string index $mi 1] ne {M}} {
+		set file_state [string index $mi 1]
+		if {$file_state ne {M} && $file_state ne {A}} {
 			unlock_index
 			return
 		}
@@ -687,7 +689,8 @@ proc apply_or_revert_range_or_line {x y revert} {
 		set failed_msg [mc "Failed to unstage selected line."]
 		set to_context {+}
 		lappend apply_cmd --reverse --cached
-		if {[string index $mi 0] ne {M}} {
+		set file_state [string index $mi 0]
+		if {$file_state ne {M} && $file_state ne {A}} {
 			unlock_index
 			return
 		}
@@ -702,7 +705,8 @@ proc apply_or_revert_range_or_line {x y revert} {
 			lappend apply_cmd --cached
 		}
 
-		if {[string index $mi 1] ne {M}} {
+		set file_state [string index $mi 1]
+		if {$file_state ne {M} && $file_state ne {A}} {
 			unlock_index
 			return
 		}
