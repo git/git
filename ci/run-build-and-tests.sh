@@ -27,13 +27,13 @@ linux-gcc)
 	export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
 	export GIT_TEST_WRITE_REV_INDEX=1
 	export GIT_TEST_CHECKOUT_WORKERS=2
-	make test
+	make test && make -C contrib/subtree test || exit 1
 	;;
 linux-clang)
 	export GIT_TEST_DEFAULT_HASH=sha1
 	make test
 	export GIT_TEST_DEFAULT_HASH=sha256
-	make test
+	make test && make -C contrib/subtree test || exit 1
 	;;
 linux-gcc-4.8)
 	# Don't run the tests; we only care about whether Git can be
@@ -41,7 +41,7 @@ linux-gcc-4.8)
 	# constructs that newer compilers seem to quietly accept.
 	;;
 *)
-	make test
+	make test && make -C contrib/subtree test || exit 1
 	;;
 esac
 
