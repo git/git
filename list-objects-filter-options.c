@@ -30,7 +30,6 @@ static int gently_parse_list_objects_filter(
 
 	if (filter_options->choice) {
 		if (errbuf) {
-			strbuf_init(errbuf, 0);
 			strbuf_addstr(
 				errbuf,
 				_("multiple filter-specs cannot be combined"));
@@ -49,6 +48,19 @@ static int gently_parse_list_objects_filter(
 			filter_options->choice = LOFC_BLOB_LIMIT;
 			return 0;
 		}
+
+	} else if (skip_prefix(arg, "tree:", &v0)) {
+		unsigned long depth;
+		if (!git_parse_ulong(v0, &depth) || depth != 0) {
+			if (errbuf) {
+				strbuf_addstr(
+					errbuf,
+					_("only 'tree:0' is supported"));
+			}
+			return 1;
+		}
+		filter_options->choice = LOFC_TREE_NONE;
+		return 0;
 
 	} else if (skip_prefix(arg, "sparse:oid=", &v0)) {
 		struct object_context oc;
@@ -71,10 +83,9 @@ static int gently_parse_list_objects_filter(
 		return 0;
 	}
 
-	if (errbuf) {
-		strbuf_init(errbuf, 0);
+	if (errbuf)
 		strbuf_addf(errbuf, "invalid filter-spec '%s'", arg);
-	}
+
 	memset(filter_options, 0, sizeof(*filter_options));
 	return 1;
 }
