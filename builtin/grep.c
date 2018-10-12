@@ -812,6 +812,8 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			GREP_BINARY_NOMATCH),
 		OPT_BOOL(0, "textconv", &opt.allow_textconv,
 			 N_("process binary files with textconv filters")),
+		OPT_SET_INT('r', "recursive", &opt.max_depth,
+			    N_("search in subdirectories (default)"), -1),
 		{ OPTION_INTEGER, 0, "max-depth", &opt.max_depth, N_("depth"),
 			N_("descend at most <depth> levels"), PARSE_OPT_NONEG,
 			NULL, 1 },
