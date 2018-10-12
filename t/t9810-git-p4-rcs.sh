@@ -360,8 +360,4 @@ test_expect_failure 'Add keywords in git which do not match the default p4 value
 	)
 '
 
-test_expect_success 'kill p4d' '
-	kill_p4d
-'
-
 test_done
