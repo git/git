@@ -677,3 +677,8 @@ extern void open_in_gdb(void);
  * Used by Pthread API implementation for Windows
  */
 extern int err_win_to_posix(DWORD winerr);
+
+/*
+ * Check current process is inside Windows Container.
+ */
+extern int is_inside_windows_container(void);
