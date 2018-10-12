@@ -1155,6 +1155,10 @@ static int do_putenv(char **env, const char *name, int size, int free_old);
 static int environ_size = 0;
 /* allocated size of environ array, in bytes */
 static int environ_alloc = 0;
+/* used as a indicator when the environment has been changed outside mingw.c */
+static char **saved_environ;
+
+static void maybe_reinitialize_environ(void);
 
 /*
  * Create environment block suitable for CreateProcess. Merges current
@@ -1164,9 +1168,12 @@ static wchar_t *make_environment_block(char **deltaenv)
 {
 	wchar_t *wenvblk = NULL;
 	char **tmpenv;
-	int i = 0, size = environ_size, wenvsz = 0, wenvpos = 0;
+	int i = 0, size, wenvsz = 0, wenvpos = 0;
 
-	while (deltaenv && deltaenv[i])
+	maybe_reinitialize_environ();
+	size = environ_size;
+
+	while (deltaenv && deltaenv[i] && *deltaenv[i])
 		i++;
 
 	/* copy the environment, leaving space for changes */
@@ -1174,11 +1181,11 @@ static wchar_t *make_environment_block(char **deltaenv)
 	memcpy(tmpenv, environ, size * sizeof(char*));
 
 	/* merge supplied environment changes into the temporary environment */
-	for (i = 0; deltaenv && deltaenv[i]; i++)
+	for (i = 0; deltaenv && deltaenv[i] && *deltaenv[i]; i++)
 		size = do_putenv(tmpenv, deltaenv[i], size, 0);
 
 	/* create environment block from temporary environment */
-	for (i = 0; tmpenv[i]; i++) {
+	for (i = 0; tmpenv[i] && *tmpenv[i]; i++) {
 		size = 2 * strlen(tmpenv[i]) + 2; /* +2 for final \0 */
 		ALLOC_GROW(wenvblk, (wenvpos + size) * sizeof(wchar_t), wenvsz);
 		wenvpos += xutftowcs(&wenvblk[wenvpos], tmpenv[i], size) + 1;
@@ -1530,6 +1537,41 @@ static int compareenv(const void *v1, const void *v2)
 	}
 }
 
+/*
+ * Functions implemented outside Git are able to modify the environment,
+ * too. For example, cURL's curl_global_init() function sets the CHARSET
+ * environment variable (at least in certain circumstances).
+ *
+ * Therefore we need to be *really* careful *not* to assume that we have
+ * sole control over the environment and reinitialize it when necessary.
+ */
+static void maybe_reinitialize_environ(void)
+{
+	int i;
+
+	if (!saved_environ) {
+		warning("MinGW environment not initialized yet");
+		return;
+	}
+
+	if (environ_size <= 0)
+		return;
+
+	if (saved_environ != environ)
+		/* We have *no* idea how much space was allocated outside */
+		environ_alloc = 0;
+	else if (!environ[environ_size - 1])
+		return; /* still consistent */
+
+	for (i = 0; environ[i] && *environ[i]; i++)
+		; /* continue counting */
+	environ[i] = NULL;
+	environ_size = i + 1;
+
+	/* sort environment for O(log n) getenv / putenv */
+	qsort(environ, i, sizeof(char*), compareenv);
+}
+
 static int bsearchenv(char **env, const char *name, size_t size)
 {
 	unsigned low = 0, high = size;
@@ -1553,7 +1595,7 @@ static int bsearchenv(char **env, const char *name, size_t size)
  */
 static int do_putenv(char **env, const char *name, int size, int free_old)
 {
-	int i = bsearchenv(env, name, size - 1);
+	int i = size <= 0 ? -1 : bsearchenv(env, name, size - 1);
 
 	/* optionally free removed / replaced entry */
 	if (i >= 0 && free_old)
@@ -1578,7 +1620,14 @@ static int do_putenv(char **env, const char *name, int size, int free_old)
 char *mingw_getenv(const char *name)
 {
 	char *value;
-	int pos = bsearchenv(environ, name, environ_size - 1);
+	int pos;
+
+	if (environ_size <= 0)
+		return NULL;
+
+	maybe_reinitialize_environ();
+	pos = bsearchenv(environ, name, environ_size - 1);
+
 	if (pos < 0)
 		return NULL;
 	value = strchr(environ[pos], '=');
@@ -1587,7 +1636,9 @@ char *mingw_getenv(const char *name)
 
 int mingw_putenv(const char *namevalue)
 {
+	maybe_reinitialize_environ();
 	ALLOC_GROW(environ, (environ_size + 1) * sizeof(char*), environ_alloc);
+	saved_environ = environ;
 	environ_size = do_putenv(environ, namevalue, environ_size, 1);
 	return 0;
 }
@@ -2558,7 +2609,7 @@ void mingw_startup(void)
 	 */
 	environ_size = i + 1;
 	environ_alloc = alloc_nr(environ_size * sizeof(char*));
-	environ = malloc_startup(environ_alloc);
+	saved_environ = environ = malloc_startup(environ_alloc);
 
 	/* allocate buffer (wchar_t encodes to max 3 UTF-8 bytes) */
 	maxlen = 3 * maxlen + 1;
@@ -2579,6 +2630,17 @@ void mingw_startup(void)
 	setup_windows_environment();
 
 	unset_environment_variables = xstrdup("PERL5LIB");
+
+	/*
+	 * Avoid a segmentation fault when cURL tries to set the CHARSET
+	 * variable and putenv() barfs at our nedmalloc'ed environment.
+	 */
+	if (!getenv("CHARSET")) {
+		struct strbuf buf = STRBUF_INIT;
+		strbuf_addf(&buf, "cp%u", GetACP());
+		setenv("CHARSET", buf.buf, 1);
+		strbuf_release(&buf);
+	}
 
 	/* initialize critical section for waitpid pinfo_t list */
 	InitializeCriticalSection(&pinfo_cs);
