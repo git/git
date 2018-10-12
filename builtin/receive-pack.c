@@ -1834,7 +1834,7 @@ static void prepare_shallow_update(struct command *commands,
 	/*
 	 * keep hooks happy by forcing a temporary shallow file via
 	 * env variable because we can't add --shallow-file to every
-	 * command. check_everything_connected() will be done with
+	 * command. check_connected() will be done with
 	 * true .git/shallow though.
 	 */
 	setenv(GIT_SHALLOW_FILE_ENVIRONMENT, alt_shallow_file, 1);
