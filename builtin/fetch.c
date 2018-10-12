@@ -931,10 +931,11 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
  * everything we are going to fetch already exists and is connected
  * locally.
  */
-static int quickfetch(struct ref *ref_map)
+static int check_exist_and_connected(struct ref *ref_map)
 {
 	struct ref *rm = ref_map;
 	struct check_connected_options opt = CHECK_CONNECTED_INIT;
+	struct ref *r;
 
 	/*
 	 * If we are deepening a shallow clone we already have these
@@ -945,13 +946,23 @@ static int quickfetch(struct ref *ref_map)
 	 */
 	if (deepen)
 		return -1;
+
+	/*
+	 * check_connected() allows objects to merely be promised, but
+	 * we need all direct targets to exist.
+	 */
+	for (r = rm; r; r = r->next) {
+		if (!has_object_file(&r->old_oid))
+			return -1;
+	}
+
 	opt.quiet = 1;
 	return check_connected(iterate_ref_map, &rm, &opt);
 }
 
 static int fetch_refs(struct transport *transport, struct ref *ref_map)
 {
-	int ret = quickfetch(ref_map);
+	int ret = check_exist_and_connected(ref_map);
 	if (ret)
 		ret = transport_fetch_refs(transport, ref_map);
 	if (!ret)
