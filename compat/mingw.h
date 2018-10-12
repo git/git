@@ -11,6 +11,12 @@ typedef _sigset_t sigset_t;
 #undef _POSIX_THREAD_SAFE_FUNCTIONS
 #endif
 
+extern int core_fscache;
+extern int core_long_paths;
+
+extern int mingw_core_config(const char *var, const char *value, void *cb);
+#define platform_core_config mingw_core_config
+
 /*
  * things that are not available in header files
  */
@@ -257,11 +263,35 @@ char *mingw_mktemp(char *template);
 char *mingw_getcwd(char *pointer, int len);
 #define getcwd mingw_getcwd
 
+#ifdef NO_UNSETENV
+#error "NO_UNSETENV is incompatible with the Windows-specific startup code!"
+#endif
+
+/*
+ * We bind *env() routines (even the mingw_ ones) to private mingw_ versions.
+ * These talk to the CRT using UNICODE/wchar_t, but maintain the original
+ * narrow-char API.
+ *
+ * Note that the MSCRT maintains both ANSI (getenv()) and UNICODE (_wgetenv())
+ * routines and stores both versions of each environment variable in parallel
+ * (and secretly updates both when you set one or the other), but it uses CP_ACP
+ * to do the conversion rather than CP_UTF8.
+ *
+ * Since everything in the git code base is UTF8, we define the mingw_ routines
+ * to access the CRT using the UNICODE routines and manually convert them to
+ * UTF8.  This also avoids round-trip problems.
+ *
+ * This also helps with our linkage, since "_wenviron" is publicly exported
+ * from the CRT.  But to access "_environ" we would have to statically link
+ * to the CRT (/MT).
+ *
+ * We require NO_SETENV (and let gitsetenv() call our mingw_putenv).
+ */
+#define getenv       mingw_getenv
+#define putenv       mingw_putenv
+#define unsetenv     mingw_putenv
 char *mingw_getenv(const char *name);
-#define getenv mingw_getenv
-int mingw_putenv(const char *namevalue);
-#define putenv mingw_putenv
-#define unsetenv mingw_putenv
+int   mingw_putenv(const char *name);
 
 int mingw_gethostname(char *host, int namelen);
 #define gethostname mingw_gethostname
@@ -327,18 +357,61 @@ static inline int getrlimit(int resource, struct rlimit *rlp)
 }
 
 /*
- * Use mingw specific stat()/lstat()/fstat() implementations on Windows.
+ * The unit of FILETIME is 100-nanoseconds since January 1, 1601, UTC.
+ * Returns the 100-nanoseconds ("hekto nanoseconds") since the epoch.
+ */
+static inline long long filetime_to_hnsec(const FILETIME *ft)
+{
+	long long winTime = ((long long)ft->dwHighDateTime << 32) + ft->dwLowDateTime;
+	/* Windows to Unix Epoch conversion */
+	return winTime - 116444736000000000LL;
+}
+
+/*
+ * Use mingw specific stat()/lstat()/fstat() implementations on Windows,
+ * including our own struct stat with 64 bit st_size and nanosecond-precision
+ * file times.
  */
 #ifndef __MINGW64_VERSION_MAJOR
 #define off_t off64_t
 #define lseek _lseeki64
+#ifndef _MSC_VER
+struct timespec {
+	time_t tv_sec;
+	long tv_nsec;
+};
+#endif
 #endif
 
-/* use struct stat with 64 bit st_size */
+static inline void filetime_to_timespec(const FILETIME *ft, struct timespec *ts)
+{
+	long long hnsec = filetime_to_hnsec(ft);
+	ts->tv_sec = (time_t)(hnsec / 10000000);
+	ts->tv_nsec = (hnsec % 10000000) * 100;
+}
+
+struct mingw_stat {
+    _dev_t st_dev;
+    _ino_t st_ino;
+    _mode_t st_mode;
+    short st_nlink;
+    short st_uid;
+    short st_gid;
+    _dev_t st_rdev;
+    off64_t st_size;
+    struct timespec st_atim;
+    struct timespec st_mtim;
+    struct timespec st_ctim;
+};
+
+#define st_atime st_atim.tv_sec
+#define st_mtime st_mtim.tv_sec
+#define st_ctime st_ctim.tv_sec
+
 #ifdef stat
 #undef stat
 #endif
-#define stat _stati64
+#define stat mingw_stat
 int mingw_lstat(const char *file_name, struct stat *buf);
 int mingw_stat(const char *file_name, struct stat *buf);
 int mingw_fstat(int fd, struct stat *buf);
@@ -349,15 +422,8 @@ int mingw_fstat(int fd, struct stat *buf);
 #ifdef lstat
 #undef lstat
 #endif
-#define lstat mingw_lstat
+extern int (*lstat)(const char *file_name, struct stat *buf);
 
-#ifndef _stati64
-# define _stati64(x,y) mingw_stat(x,y)
-#elif defined (_USE_32BIT_TIME_T)
-# define _stat32i64(x,y) mingw_stat(x,y)
-#else
-# define _stat64(x,y) mingw_stat(x,y)
-#endif
 
 int mingw_utime(const char *file_name, const struct utimbuf *times);
 #define utime mingw_utime
@@ -389,6 +455,9 @@ int mingw_raise(int sig);
 
 int winansi_isatty(int fd);
 #define isatty winansi_isatty
+
+int winansi_dup2(int oldfd, int newfd);
+#define dup2 winansi_dup2
 
 void winansi_init(void);
 HANDLE winansi_get_osfhandle(int fd);
@@ -424,12 +493,50 @@ static inline void convert_slashes(char *path)
 int mingw_offset_1st_component(const char *path);
 #define offset_1st_component mingw_offset_1st_component
 #define PATH_SEP ';'
+extern char *mingw_query_user_email(void);
+#define query_user_email mingw_query_user_email
 #if !defined(__MINGW64_VERSION_MAJOR) && (!defined(_MSC_VER) || _MSC_VER < 1800)
 #define PRIuMAX "I64u"
 #define PRId64 "I64d"
 #else
 #include <inttypes.h>
 #endif
+
+/**
+ * Max length of long paths (exceeding MAX_PATH). The actual maximum supported
+ * by NTFS is 32,767 (* sizeof(wchar_t)), but we choose an arbitrary smaller
+ * value to limit required stack memory.
+ */
+#define MAX_LONG_PATH 4096
+
+/**
+ * Handles paths that would exceed the MAX_PATH limit of Windows Unicode APIs.
+ *
+ * With expand == false, the function checks for over-long paths and fails
+ * with ENAMETOOLONG. The path parameter is not modified, except if cwd + path
+ * exceeds max_path, but the resulting absolute path doesn't (e.g. due to
+ * eliminating '..' components). The path parameter must point to a buffer
+ * of max_path wide characters.
+ *
+ * With expand == true, an over-long path is automatically converted in place
+ * to an absolute path prefixed with '\\?\', and the new length is returned.
+ * The path parameter must point to a buffer of MAX_LONG_PATH wide characters.
+ *
+ * Parameters:
+ * path: path to check and / or convert
+ * len: size of path on input (number of wide chars without \0)
+ * max_path: max short path length to check (usually MAX_PATH = 260, but just
+ * 248 for CreateDirectoryW)
+ * expand: false to only check the length, true to expand the path to a
+ * '\\?\'-prefixed absolute path
+ *
+ * Return:
+ * length of the resulting path, or -1 on failure
+ *
+ * Errors:
+ * ENAMETOOLONG if path is too long
+ */
+int handle_long_path(wchar_t *path, int len, int max_path, int expand);
 
 /**
  * Converts UTF-8 encoded string to UTF-16LE.
@@ -489,16 +596,44 @@ static inline int xutftowcs(wchar_t *wcs, const char *utf, size_t wcslen)
 }
 
 /**
+ * Simplified file system specific wrapper of xutftowcsn and handle_long_path.
+ * Converts ERANGE to ENAMETOOLONG. If expand is true, wcs must be at least
+ * MAX_LONG_PATH wide chars (see handle_long_path).
+ */
+static inline int xutftowcs_path_ex(wchar_t *wcs, const char *utf,
+		size_t wcslen, int utflen, int max_path, int expand)
+{
+	int result = xutftowcsn(wcs, utf, wcslen, utflen);
+	if (result < 0 && errno == ERANGE)
+		errno = ENAMETOOLONG;
+	if (result >= 0)
+		result = handle_long_path(wcs, result, max_path, expand);
+	return result;
+}
+
+/**
  * Simplified file system specific variant of xutftowcsn, assumes output
  * buffer size is MAX_PATH wide chars and input string is \0-terminated,
- * fails with ENAMETOOLONG if input string is too long.
+ * fails with ENAMETOOLONG if input string is too long. Typically used for
+ * Windows APIs that don't support long paths, e.g. SetCurrentDirectory,
+ * LoadLibrary, CreateProcess...
  */
 static inline int xutftowcs_path(wchar_t *wcs, const char *utf)
 {
-	int result = xutftowcsn(wcs, utf, MAX_PATH, -1);
-	if (result < 0 && errno == ERANGE)
-		errno = ENAMETOOLONG;
-	return result;
+	return xutftowcs_path_ex(wcs, utf, MAX_PATH, -1, MAX_PATH, 0);
+}
+
+/**
+ * Simplified file system specific variant of xutftowcsn for Windows APIs
+ * that support long paths via '\\?\'-prefix, assumes output buffer size is
+ * MAX_LONG_PATH wide chars, fails with ENAMETOOLONG if input string is too
+ * long. The 'core.longpaths' git-config option controls whether the path
+ * is only checked or expanded to a long path.
+ */
+static inline int xutftowcs_long_path(wchar_t *wcs, const char *utf)
+{
+	return xutftowcs_path_ex(wcs, utf, MAX_LONG_PATH, -1, MAX_PATH,
+			core_long_paths);
 }
 
 /**
@@ -543,18 +678,18 @@ int xwcstoutf(char *utf, const wchar_t *wcs, size_t utflen);
 extern CRITICAL_SECTION pinfo_cs;
 
 /*
- * A replacement of main() that adds win32 specific initialization.
+ * Git, like most portable C applications, implements a main() function. On
+ * Windows, this main() function would receive parameters encoded in the
+ * current locale, but Git for Windows would prefer UTF-8 encoded  parameters.
+ *
+ * To make that happen, we still declare main() here, and then declare and
+ * implement wmain() (which is the Unicode variant of main()) and compile with
+ * -municode. This wmain() function reencodes the parameters from UTF-16 to
+ * UTF-8 format, sets up a couple of other things as required on Windows, and
+ * then hands off to the main() function.
  */
-
-void mingw_startup(void);
-#define main(c,v) dummy_decl_mingw_main(void); \
-static int mingw_main(c,v); \
-int main(int argc, const char **argv) \
-{ \
-	mingw_startup(); \
-	return mingw_main(__argc, (void *)__argv); \
-} \
-static int mingw_main(c,v)
+int wmain(int argc, const wchar_t **w_argv);
+int main(int argc, const char **argv);
 
 /*
  * Used by Pthread API implementation for Windows
