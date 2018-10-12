@@ -150,7 +150,7 @@ win32_compute_revents (HANDLE h, int *p_sought)
       if (!once_only)
 	{
 	  NtQueryInformationFile = (PNtQueryInformationFile)
-	    GetProcAddress (GetModuleHandle ("ntdll.dll"),
+	    GetProcAddress (GetModuleHandleA ("ntdll.dll"),
 			    "NtQueryInformationFile");
 	  once_only = TRUE;
 	}
@@ -268,6 +268,20 @@ win32_compute_revents_socket (SOCKET h, int sought, long lNetworkEvents)
 
   return happened;
 }
+
+#include <windows.h>
+#include "compat/win32/lazyload.h"
+
+static ULONGLONG CompatGetTickCount64(void)
+{
+	DECLARE_PROC_ADDR(kernel32.dll, ULONGLONG, GetTickCount64, void);
+
+	if (!INIT_PROC_ADDR(GetTickCount64))
+		return (ULONGLONG)GetTickCount();
+
+	return GetTickCount64();
+}
+#define GetTickCount64 CompatGetTickCount64
 
 #else /* !MinGW */
 

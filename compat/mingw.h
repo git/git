@@ -11,6 +11,9 @@ typedef _sigset_t sigset_t;
 #undef _POSIX_THREAD_SAFE_FUNCTIONS
 #endif
 
+extern int core_fscache;
+extern int core_long_paths;
+
 extern int mingw_core_config(const char *var, const char *value, void *cb);
 #define platform_core_config mingw_core_config
 
@@ -296,17 +299,9 @@ int mingw_gethostname(char *host, int namelen);
 struct hostent *mingw_gethostbyname(const char *host);
 #define gethostbyname mingw_gethostbyname
 
-void mingw_freeaddrinfo(struct addrinfo *res);
-#define freeaddrinfo mingw_freeaddrinfo
-
 int mingw_getaddrinfo(const char *node, const char *service,
 		      const struct addrinfo *hints, struct addrinfo **res);
 #define getaddrinfo mingw_getaddrinfo
-
-int mingw_getnameinfo(const struct sockaddr *sa, socklen_t salen,
-		      char *host, DWORD hostlen, char *serv, DWORD servlen,
-		      int flags);
-#define getnameinfo mingw_getnameinfo
 
 int mingw_socket(int domain, int type, int protocol);
 #define socket mingw_socket
@@ -354,6 +349,17 @@ static inline int getrlimit(int resource, struct rlimit *rlp)
 }
 
 /*
+ * The unit of FILETIME is 100-nanoseconds since January 1, 1601, UTC.
+ * Returns the 100-nanoseconds ("hekto nanoseconds") since the epoch.
+ */
+static inline long long filetime_to_hnsec(const FILETIME *ft)
+{
+	long long winTime = ((long long)ft->dwHighDateTime << 32) + ft->dwLowDateTime;
+	/* Windows to Unix Epoch conversion */
+	return winTime - 116444736000000000LL;
+}
+
+/*
  * Use mingw specific stat()/lstat()/fstat() implementations on Windows,
  * including our own struct stat with 64 bit st_size and nanosecond-precision
  * file times.
@@ -361,11 +367,20 @@ static inline int getrlimit(int resource, struct rlimit *rlp)
 #ifndef __MINGW64_VERSION_MAJOR
 #define off_t off64_t
 #define lseek _lseeki64
+#ifndef _MSC_VER
 struct timespec {
 	time_t tv_sec;
 	long tv_nsec;
 };
 #endif
+#endif
+
+static inline void filetime_to_timespec(const FILETIME *ft, struct timespec *ts)
+{
+	long long hnsec = filetime_to_hnsec(ft);
+	ts->tv_sec = (time_t)(hnsec / 10000000);
+	ts->tv_nsec = (hnsec % 10000000) * 100;
+}
 
 struct mingw_stat {
     _dev_t st_dev;
@@ -399,7 +414,7 @@ int mingw_fstat(int fd, struct stat *buf);
 #ifdef lstat
 #undef lstat
 #endif
-#define lstat mingw_lstat
+extern int (*lstat)(const char *file_name, struct stat *buf);
 
 
 int mingw_utime(const char *file_name, const struct utimbuf *times);
@@ -452,12 +467,50 @@ static inline void convert_slashes(char *path)
 #define PATH_SEP ';'
 extern char *mingw_query_user_email(void);
 #define query_user_email mingw_query_user_email
+extern const char *program_data_config(void);
+#define git_program_data_config program_data_config
 #if !defined(__MINGW64_VERSION_MAJOR) && (!defined(_MSC_VER) || _MSC_VER < 1800)
 #define PRIuMAX "I64u"
 #define PRId64 "I64d"
 #else
 #include <inttypes.h>
 #endif
+
+/**
+ * Max length of long paths (exceeding MAX_PATH). The actual maximum supported
+ * by NTFS is 32,767 (* sizeof(wchar_t)), but we choose an arbitrary smaller
+ * value to limit required stack memory.
+ */
+#define MAX_LONG_PATH 4096
+
+/**
+ * Handles paths that would exceed the MAX_PATH limit of Windows Unicode APIs.
+ *
+ * With expand == false, the function checks for over-long paths and fails
+ * with ENAMETOOLONG. The path parameter is not modified, except if cwd + path
+ * exceeds max_path, but the resulting absolute path doesn't (e.g. due to
+ * eliminating '..' components). The path parameter must point to a buffer
+ * of max_path wide characters.
+ *
+ * With expand == true, an over-long path is automatically converted in place
+ * to an absolute path prefixed with '\\?\', and the new length is returned.
+ * The path parameter must point to a buffer of MAX_LONG_PATH wide characters.
+ *
+ * Parameters:
+ * path: path to check and / or convert
+ * len: size of path on input (number of wide chars without \0)
+ * max_path: max short path length to check (usually MAX_PATH = 260, but just
+ * 248 for CreateDirectoryW)
+ * expand: false to only check the length, true to expand the path to a
+ * '\\?\'-prefixed absolute path
+ *
+ * Return:
+ * length of the resulting path, or -1 on failure
+ *
+ * Errors:
+ * ENAMETOOLONG if path is too long
+ */
+int handle_long_path(wchar_t *path, int len, int max_path, int expand);
 
 /**
  * Converts UTF-8 encoded string to UTF-16LE.
@@ -517,16 +570,44 @@ static inline int xutftowcs(wchar_t *wcs, const char *utf, size_t wcslen)
 }
 
 /**
+ * Simplified file system specific wrapper of xutftowcsn and handle_long_path.
+ * Converts ERANGE to ENAMETOOLONG. If expand is true, wcs must be at least
+ * MAX_LONG_PATH wide chars (see handle_long_path).
+ */
+static inline int xutftowcs_path_ex(wchar_t *wcs, const char *utf,
+		size_t wcslen, int utflen, int max_path, int expand)
+{
+	int result = xutftowcsn(wcs, utf, wcslen, utflen);
+	if (result < 0 && errno == ERANGE)
+		errno = ENAMETOOLONG;
+	if (result >= 0)
+		result = handle_long_path(wcs, result, max_path, expand);
+	return result;
+}
+
+/**
  * Simplified file system specific variant of xutftowcsn, assumes output
  * buffer size is MAX_PATH wide chars and input string is \0-terminated,
- * fails with ENAMETOOLONG if input string is too long.
+ * fails with ENAMETOOLONG if input string is too long. Typically used for
+ * Windows APIs that don't support long paths, e.g. SetCurrentDirectory,
+ * LoadLibrary, CreateProcess...
  */
 static inline int xutftowcs_path(wchar_t *wcs, const char *utf)
 {
-	int result = xutftowcsn(wcs, utf, MAX_PATH, -1);
-	if (result < 0 && errno == ERANGE)
-		errno = ENAMETOOLONG;
-	return result;
+	return xutftowcs_path_ex(wcs, utf, MAX_PATH, -1, MAX_PATH, 0);
+}
+
+/**
+ * Simplified file system specific variant of xutftowcsn for Windows APIs
+ * that support long paths via '\\?\'-prefix, assumes output buffer size is
+ * MAX_LONG_PATH wide chars, fails with ENAMETOOLONG if input string is too
+ * long. The 'core.longpaths' git-config option controls whether the path
+ * is only checked or expanded to a long path.
+ */
+static inline int xutftowcs_long_path(wchar_t *wcs, const char *utf)
+{
+	return xutftowcs_path_ex(wcs, utf, MAX_LONG_PATH, -1, MAX_PATH,
+			core_long_paths);
 }
 
 /**
@@ -571,18 +652,28 @@ int xwcstoutf(char *utf, const wchar_t *wcs, size_t utflen);
 extern CRITICAL_SECTION pinfo_cs;
 
 /*
- * A replacement of main() that adds win32 specific initialization.
+ * Git, like most portable C applications, implements a main() function. On
+ * Windows, this main() function would receive parameters encoded in the
+ * current locale, but Git for Windows would prefer UTF-8 encoded  parameters.
+ *
+ * To make that happen, we still declare main() here, and then declare and
+ * implement wmain() (which is the Unicode variant of main()) and compile with
+ * -municode. This wmain() function reencodes the parameters from UTF-16 to
+ * UTF-8 format, sets up a couple of other things as required on Windows, and
+ * then hands off to the main() function.
  */
+int wmain(int argc, const wchar_t **w_argv);
+int main(int argc, const char **argv);
 
-void mingw_startup(void);
-#define main(c,v) dummy_decl_mingw_main(void); \
-static int mingw_main(c,v); \
-int main(int argc, const char **argv) \
-{ \
-	mingw_startup(); \
-	return mingw_main(__argc, (void *)__argv); \
-} \
-static int mingw_main(c,v)
+/*
+ * For debugging: if a problem occurs, say, in a Git process that is spawned
+ * from another Git process which in turn is spawned from yet another Git
+ * process, it can be quite daunting to figure out what is going on.
+ *
+ * Call this function to open a new MinTTY (this assumes you are in Git for
+ * Windows' SDK) with a GDB that attaches to the current process right away.
+ */
+extern void open_in_gdb(void);
 
 /*
  * Used by Pthread API implementation for Windows
