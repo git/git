@@ -945,7 +945,7 @@ int mingw_lstat(const char *file_name, struct stat *buf)
 		buf->st_uid = 0;
 		buf->st_nlink = 1;
 		buf->st_mode = file_attr_to_st_mode(fdata.dwFileAttributes,
-				findbuf.dwReserved0);
+				findbuf.dwReserved0, file_name);
 		buf->st_size = S_ISLNK(buf->st_mode) ? MAX_LONG_PATH :
 			fdata.nFileSizeLow | (((off_t) fdata.nFileSizeHigh) << 32);
 		buf->st_dev = buf->st_rdev = 0; /* not used by Git */
@@ -996,7 +996,7 @@ static int get_file_info_by_handle(HANDLE hnd, struct stat *buf)
 	buf->st_gid = 0;
 	buf->st_uid = 0;
 	buf->st_nlink = 1;
-	buf->st_mode = file_attr_to_st_mode(fdata.dwFileAttributes, 0);
+	buf->st_mode = file_attr_to_st_mode(fdata.dwFileAttributes, 0, NULL);
 	buf->st_size = fdata.nFileSizeLow |
 		(((off_t)fdata.nFileSizeHigh)<<32);
 	buf->st_dev = buf->st_rdev = 0; /* not used by Git */
@@ -2397,6 +2397,13 @@ repeat:
 		return 0;
 	gle = GetLastError();
 
+	if (gle == ERROR_ACCESS_DENIED && is_inside_windows_container()) {
+		/* Fall back to copy to destination & remove source */
+		if (CopyFileW(wpold, wpnew, FALSE) && !mingw_unlink(pold))
+			return 0;
+		gle = GetLastError();
+	}
+
 	/* revert file attributes on failure */
 	if (attrs != INVALID_FILE_ATTRIBUTES)
 		SetFileAttributesW(wpnew, attrs);
@@ -3546,4 +3553,63 @@ int uname(struct utsname *buf)
 	xsnprintf(buf->version, sizeof(buf->version),
 		  "%u", (v >> 16) & 0x7fff);
 	return 0;
+}
+
+/*
+ * Based on https://stackoverflow.com/questions/43002803
+ *
+ * [HKLM\SYSTEM\CurrentControlSet\Services\cexecsvc]
+ * "DisplayName"="@%systemroot%\\system32\\cexecsvc.exe,-100"
+ * "ErrorControl"=dword:00000001
+ * "ImagePath"=hex(2):25,00,73,00,79,00,73,00,74,00,65,00,6d,00,72,00,6f,00,
+ *    6f,00,74,00,25,00,5c,00,73,00,79,00,73,00,74,00,65,00,6d,00,33,00,32,00,
+ *    5c,00,63,00,65,00,78,00,65,00,63,00,73,00,76,00,63,00,2e,00,65,00,78,00,
+ *    65,00,00,00
+ * "Start"=dword:00000002
+ * "Type"=dword:00000010
+ * "Description"="@%systemroot%\\system32\\cexecsvc.exe,-101"
+ * "ObjectName"="LocalSystem"
+ * "ServiceSidType"=dword:00000001
+ */
+int is_inside_windows_container(void)
+{
+	static int inside_container = -1; /* -1 uninitialized */
+	const char *key = "SYSTEM\\CurrentControlSet\\Services\\cexecsvc";
+	HKEY handle = NULL;
+
+	if (inside_container != -1)
+		return inside_container;
+
+	inside_container = ERROR_SUCCESS ==
+		RegOpenKeyExA(HKEY_LOCAL_MACHINE, key, 0, KEY_READ, &handle);
+	RegCloseKey(handle);
+
+	return inside_container;
+}
+
+int file_attr_to_st_mode (DWORD attr, DWORD tag, const char *path)
+{
+	int fMode = S_IREAD;
+	if ((attr & FILE_ATTRIBUTE_REPARSE_POINT) &&
+	    tag == IO_REPARSE_TAG_SYMLINK) {
+		int flag = S_IFLNK;
+		char buf[MAX_LONG_PATH];
+
+		/*
+		 * Windows containers' mapped volumes are marked as reparse
+		 * points and look like symbolic links, but they are not.
+		 */
+		if (path && is_inside_windows_container() &&
+		    readlink(path, buf, sizeof(buf)) > 27 &&
+		    starts_with(buf, "/ContainerMappedDirectories/"))
+			flag = S_IFDIR;
+
+		fMode |= flag;
+	} else if (attr & FILE_ATTRIBUTE_DIRECTORY)
+		fMode |= S_IFDIR;
+	else
+		fMode |= S_IFREG;
+	if (!(attr & FILE_ATTRIBUTE_READONLY))
+		fMode |= S_IWRITE;
+	return fMode;
 }
