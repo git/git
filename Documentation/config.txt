@@ -616,6 +616,24 @@ core.preferSymlinkRefs::
 	This is sometimes needed to work with old scripts that
 	expect HEAD to be a symbolic link.
 
+core.alternateRefsCommand::
+	When advertising tips of available history from an alternate, use the shell to
+	execute the specified command instead of linkgit:git-for-each-ref[1]. The
+	first argument is the absolute path of the alternate. Output must contain one
+	hex object id per line (i.e., the same as produce by `git for-each-ref
+	--format='%(objectname)'`).
++
+Note that you cannot generally put `git for-each-ref` directly into the config
+value, as it does not take a repository path as an argument (but you can wrap
+the command above in a shell script).
+
+core.alternateRefsPrefixes::
+	When listing references from an alternate, list only references that begin
+	with the given prefix. Prefixes match as if they were given as arguments to
+	linkgit:git-for-each-ref[1]. To list multiple prefixes, separate them with
+	whitespace. If `core.alternateRefsCommand` is set, setting
+	`core.alternateRefsPrefixes` has no effect.
+
 core.bare::
 	If true this repository is assumed to be 'bare' and has no
 	working directory associated with it.  If this is the case a
