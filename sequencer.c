@@ -4146,9 +4146,7 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 			struct object_id *oid = &parent->item->object.oid;
 			if (!oidset_contains(&interesting, oid))
 				continue;
-			if (!oidset_contains(&child_seen, oid))
-				oidset_insert(&child_seen, oid);
-			else
+			if (oidset_insert(&child_seen, oid))
 				label_oid(oid, "branch-point", &state);
 		}
 
