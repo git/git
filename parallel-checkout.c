@@ -642,6 +642,7 @@ static void write_items_sequentially(struct checkout *state)
 {
 	size_t i;
 
+	flush_fscache();
 	for (i = 0; i < parallel_checkout.nr; i++) {
 		struct parallel_checkout_item *pc_item = &parallel_checkout.items[i];
 		write_pc_item(pc_item, state);
