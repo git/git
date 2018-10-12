@@ -381,6 +381,21 @@ test_expect_success 'using fetch command in remote-curl updates refs' '
 	test_cmp expect actual
 '
 
+test_expect_success 'fetch by SHA-1 without tag following' '
+	SERVER="$HTTPD_DOCUMENT_ROOT_PATH/server" &&
+	rm -rf "$SERVER" client &&
+
+	git init "$SERVER" &&
+	test_commit -C "$SERVER" foo &&
+
+	git clone $HTTPD_URL/smart/server client &&
+
+	test_commit -C "$SERVER" bar &&
+	git -C "$SERVER" rev-parse bar >bar_hash &&
+	git -C client -c protocol.version=0 fetch \
+		--no-tags origin $(cat bar_hash)
+'
+
 test_expect_success 'GIT_REDACT_COOKIES redacts cookies' '
 	rm -rf clone &&
 	echo "Set-Cookie: Foo=1" >cookies &&

@@ -1626,7 +1626,7 @@ struct ref *fetch_pack(struct fetch_pack_args *args,
 		parse_list_objects_filter(&args->filter_options, "blob:none");
 	}
 
-	if (!ref) {
+	if (version != protocol_v2 && !ref) {
 		packet_flush(fd[1]);
 		die(_("no matching remote head"));
 	}

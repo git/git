@@ -79,6 +79,19 @@ test_expect_success 'fetch with git:// using protocol v2' '
 	grep "fetch< version 2" log
 '
 
+test_expect_success 'fetch by hash without tag following with protocol v2 does not list refs' '
+	test_when_finished "rm -f log" &&
+
+	test_commit -C "$daemon_parent" two_a &&
+	git -C "$daemon_parent" rev-parse two_a >two_a_hash &&
+
+	GIT_TRACE_PACKET="$(pwd)/log" git -C daemon_child -c protocol.version=2 \
+		fetch --no-tags origin $(cat two_a_hash) &&
+
+	grep "fetch< version 2" log &&
+	! grep "fetch> command=ls-refs" log
+'
+
 test_expect_success 'pull with git:// using protocol v2' '
 	test_when_finished "rm -f log" &&
 
@@ -284,6 +297,10 @@ test_expect_success 'dynamically fetch missing object' '
 	GIT_TRACE_PACKET="$(pwd)/trace" git -C client -c protocol.version=2 \
 		cat-file -p $(git -C server rev-parse message1:a.txt) &&
 	grep "version 2" trace
+'
+
+test_expect_success 'when dynamically fetching missing object, do not list refs' '
+	! grep "git> command=ls-refs" trace
 '
 
 test_expect_success 'partial fetch' '
