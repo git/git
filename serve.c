@@ -52,8 +52,15 @@ struct protocol_capability {
 		       struct packet_reader *request);
 };
 
+static int noop(struct repository *r, struct argv_array *keys,
+		struct packet_reader *request)
+{
+	return 0;
+}
+
 static struct protocol_capability capabilities[] = {
 	{ "agent", agent_advertise, NULL },
+	{ "archive", always_advertise, noop },
 	{ "ls-refs", always_advertise, ls_refs },
 	{ "fetch", upload_pack_advertise, upload_pack_v2 },
 	{ "server-option", always_advertise, NULL },
