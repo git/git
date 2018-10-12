@@ -526,21 +526,14 @@ static void add_refs_to_oidset(struct oidset *oids, struct ref *refs)
 		oidset_insert(oids, &refs->old_oid);
 }
 
-static int tip_oids_contain(struct oidset *tip_oids,
-			    struct ref *unmatched, struct ref *newlist,
-			    const struct object_id *id)
+static int is_unmatched_ref(const struct ref *ref)
 {
-	/*
-	 * Note that this only looks at the ref lists the first time it's
-	 * called. This works out in filter_refs() because even though it may
-	 * add to "newlist" between calls, the additions will always be for
-	 * oids that are already in the set.
-	 */
-	if (!tip_oids->map.map.tablesize) {
-		add_refs_to_oidset(tip_oids, unmatched);
-		add_refs_to_oidset(tip_oids, newlist);
-	}
-	return oidset_contains(tip_oids, id);
+	struct object_id oid;
+	const char *p;
+	return	ref->match_status == REF_NOT_MATCHED &&
+		!parse_oid_hex(ref->name, &oid, &p) &&
+		*p == '\0' &&
+		oideq(&oid, &ref->old_oid);
 }
 
 static void filter_refs(struct fetch_pack_args *args,
@@ -553,6 +546,8 @@ static void filter_refs(struct fetch_pack_args *args,
 	struct ref *ref, *next;
 	struct oidset tip_oids = OIDSET_INIT;
 	int i;
+	int strict = !(allow_unadvertised_object_request &
+		       (ALLOW_TIP_SHA1 | ALLOW_REACHABLE_SHA1));
 
 	i = 0;
 	for (ref = *refs; ref; ref = next) {
@@ -589,23 +584,25 @@ static void filter_refs(struct fetch_pack_args *args,
 		}
 	}
 
+	if (strict) {
+		for (i = 0; i < nr_sought; i++) {
+			ref = sought[i];
+			if (!is_unmatched_ref(ref))
+				continue;
+
+			add_refs_to_oidset(&tip_oids, unmatched);
+			add_refs_to_oidset(&tip_oids, newlist);
+			break;
+		}
+	}
+
 	/* Append unmatched requests to the list */
 	for (i = 0; i < nr_sought; i++) {
-		struct object_id oid;
-		const char *p;
-
 		ref = sought[i];
-		if (ref->match_status != REF_NOT_MATCHED)
-			continue;
-		if (parse_oid_hex(ref->name, &oid, &p) ||
-		    *p != '\0' ||
-		    !oideq(&oid, &ref->old_oid))
+		if (!is_unmatched_ref(ref))
 			continue;
 
-		if ((allow_unadvertised_object_request &
-		     (ALLOW_TIP_SHA1 | ALLOW_REACHABLE_SHA1)) ||
-		    tip_oids_contain(&tip_oids, unmatched, newlist,
-				     &ref->old_oid)) {
+		if (!strict || oidset_contains(&tip_oids, &ref->old_oid)) {
 			ref->match_status = REF_MATCHED;
 			*newtail = copy_ref(ref);
 			newtail = &(*newtail)->next;
