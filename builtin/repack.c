@@ -431,8 +431,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 			char *fname, *fname_old;
 
 			if (!midx_cleared) {
-				/* if we move a packfile, it will invalidated the midx */
-				clear_midx_file(get_object_directory());
+				clear_midx_file(the_repository);
 				midx_cleared = 1;
 			}
 

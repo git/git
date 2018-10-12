@@ -180,9 +180,13 @@ cleanup_fail:
 	return NULL;
 }
 
-static void close_midx(struct multi_pack_index *m)
+void close_midx(struct multi_pack_index *m)
 {
 	uint32_t i;
+
+	if (!m)
+		return;
+
 	munmap((unsigned char *)m->data, m->data_len);
 	close(m->fd);
 	m->fd = -1;
@@ -917,9 +921,14 @@ cleanup:
 	return 0;
 }
 
-void clear_midx_file(const char *object_dir)
+void clear_midx_file(struct repository *r)
 {
-	char *midx = get_midx_filename(object_dir);
+	char *midx = get_midx_filename(r->objects->objectdir);
+
+	if (r->objects && r->objects->multi_pack_index) {
+		close_midx(r->objects->multi_pack_index);
+		r->objects->multi_pack_index = NULL;
+	}
 
 	if (remove_path(midx)) {
 		UNLEAK(midx);
