@@ -1886,7 +1886,7 @@ const char *get_superproject_working_tree(void)
 		 * We're only interested in the name after the tab.
 		 */
 		super_sub = strchr(sb.buf, '\t') + 1;
-		super_sub_len = sb.buf + sb.len - super_sub - 1;
+		super_sub_len = strlen(super_sub);
 
 		if (super_sub_len > cwd_len ||
 		    strcmp(&cwd[cwd_len - super_sub_len], super_sub))
