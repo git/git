@@ -6,7 +6,12 @@ test_description='split index mode tests'
 
 # We need total control of index splitting here
 sane_unset GIT_TEST_SPLIT_INDEX
+
+# Testing a hard coded SHA against an index with an extension
+# that can vary from run to run is problematic so we disable
+# those extensions.
 sane_unset GIT_TEST_FSMONITOR
+sane_unset GIT_TEST_INDEX_THREADS
 
 test_expect_success 'enable split index' '
 	git config splitIndex.maxPercentChange 100 &&
@@ -15,11 +20,11 @@ test_expect_success 'enable split index' '
 	indexversion=$(test-tool index-version <.git/index) &&
 	if test "$indexversion" = "4"
 	then
-		own=432ef4b63f32193984f339431fd50ca796493569
-		base=508851a7f0dfa8691e9f69c7f055865389012491
+		own=3527df833c6c100d3d1d921a9a782d62a8be4b58
+		base=746f7ab2ed44fb839efdfbffcf399d0b113fb4cb
 	else
-		own=8299b0bcd1ac364e5f1d7768efb62fa2da79a339
-		base=39d890139ee5356c7ef572216cebcd27aa41f9df
+		own=5e9b60117ece18da410ddecc8b8d43766a0e4204
+		base=4370042739b31cd17a5c5cd6043a77c9a00df113
 	fi &&
 	cat >expect <<-EOF &&
 	own $own

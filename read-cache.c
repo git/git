@@ -23,6 +23,7 @@
 #include "split-index.h"
 #include "utf8.h"
 #include "fsmonitor.h"
+#include "thread-utils.h"
 
 /* Mask for the name length in ce_flags in the on-disk index */
 
@@ -43,6 +44,8 @@
 #define CACHE_EXT_LINK 0x6c696e6b	  /* "link" */
 #define CACHE_EXT_UNTRACKED 0x554E5452	  /* "UNTR" */
 #define CACHE_EXT_FSMONITOR 0x46534D4E	  /* "FSMN" */
+#define CACHE_EXT_ENDOFINDEXENTRIES 0x454F4945	/* "EOIE" */
+#define CACHE_EXT_INDEXENTRYOFFSETTABLE 0x49454F54 /* "IEOT" */
 
 /* changes that can be kept in $GIT_DIR/index (basically all extensions) */
 #define EXTMASK (RESOLVE_UNDO_CHANGED | CACHE_TREE_CHANGED | \
@@ -1654,7 +1657,7 @@ int verify_index_checksum;
 /* Allow fsck to force verification of the cache entry order. */
 int verify_ce_order;
 
-static int verify_hdr(struct cache_header *hdr, unsigned long size)
+static int verify_hdr(const struct cache_header *hdr, unsigned long size)
 {
 	git_hash_ctx c;
 	unsigned char hash[GIT_MAX_RAWSZ];
@@ -1678,7 +1681,7 @@ static int verify_hdr(struct cache_header *hdr, unsigned long size)
 }
 
 static int read_index_extension(struct index_state *istate,
-				const char *ext, void *data, unsigned long sz)
+				const char *ext, const char *data, unsigned long sz)
 {
 	switch (CACHE_EXT(ext)) {
 	case CACHE_EXT_TREE:
@@ -1696,6 +1699,10 @@ static int read_index_extension(struct index_state *istate,
 		break;
 	case CACHE_EXT_FSMONITOR:
 		read_fsmonitor_extension(istate, data, sz);
+		break;
+	case CACHE_EXT_ENDOFINDEXENTRIES:
+	case CACHE_EXT_INDEXENTRYOFFSETTABLE:
+		/* already handled in do_read_index() */
 		break;
 	default:
 		if (*ext < 'A' || 'Z' < *ext)
@@ -1717,63 +1724,25 @@ int read_index(struct index_state *istate)
 	return read_index_from(istate, get_index_file(), get_git_dir());
 }
 
-static struct cache_entry *cache_entry_from_ondisk(struct mem_pool *mem_pool,
-						   struct ondisk_cache_entry *ondisk,
-						   unsigned int flags,
-						   const char *name,
-						   size_t len)
-{
-	struct cache_entry *ce = mem_pool__ce_alloc(mem_pool, len);
-
-	ce->ce_stat_data.sd_ctime.sec = get_be32(&ondisk->ctime.sec);
-	ce->ce_stat_data.sd_mtime.sec = get_be32(&ondisk->mtime.sec);
-	ce->ce_stat_data.sd_ctime.nsec = get_be32(&ondisk->ctime.nsec);
-	ce->ce_stat_data.sd_mtime.nsec = get_be32(&ondisk->mtime.nsec);
-	ce->ce_stat_data.sd_dev   = get_be32(&ondisk->dev);
-	ce->ce_stat_data.sd_ino   = get_be32(&ondisk->ino);
-	ce->ce_mode  = get_be32(&ondisk->mode);
-	ce->ce_stat_data.sd_uid   = get_be32(&ondisk->uid);
-	ce->ce_stat_data.sd_gid   = get_be32(&ondisk->gid);
-	ce->ce_stat_data.sd_size  = get_be32(&ondisk->size);
-	ce->ce_flags = flags & ~CE_NAMEMASK;
-	ce->ce_namelen = len;
-	ce->index = 0;
-	hashcpy(ce->oid.hash, ondisk->sha1);
-	memcpy(ce->name, name, len);
-	ce->name[len] = '\0';
-	return ce;
-}
-
-/*
- * Adjacent cache entries tend to share the leading paths, so it makes
- * sense to only store the differences in later entries.  In the v4
- * on-disk format of the index, each on-disk cache entry stores the
- * number of bytes to be stripped from the end of the previous name,
- * and the bytes to append to the result, to come up with its name.
- */
-static unsigned long expand_name_field(struct strbuf *name, const char *cp_)
-{
-	const unsigned char *ep, *cp = (const unsigned char *)cp_;
-	size_t len = decode_varint(&cp);
-
-	if (name->len < len)
-		die("malformed name field in the index");
-	strbuf_remove(name, name->len - len, len);
-	for (ep = cp; *ep; ep++)
-		; /* find the end */
-	strbuf_add(name, cp, ep - cp);
-	return (const char *)ep + 1 - cp_;
-}
-
-static struct cache_entry *create_from_disk(struct mem_pool *mem_pool,
+static struct cache_entry *create_from_disk(struct mem_pool *ce_mem_pool,
+					    unsigned int version,
 					    struct ondisk_cache_entry *ondisk,
 					    unsigned long *ent_size,
-					    struct strbuf *previous_name)
+					    const struct cache_entry *previous_ce)
 {
 	struct cache_entry *ce;
 	size_t len;
 	const char *name;
 	unsigned int flags;
+	size_t copy_len;
+	/*
+	 * Adjacent cache entries tend to share the leading paths, so it makes
+	 * sense to only store the differences in later entries.  In the v4
+	 * on-disk format of the index, each on-disk cache entry stores the
+	 * number of bytes to be stripped from the end of the previous name,
+	 * and the bytes to append to the result, to come up with its name.
+	 */
+	int expand_name_field = version == 4;
 
 	/* On-disk flags are just 16 bits */
 	flags = get_be16(&ondisk->flags);
@@ -1793,21 +1762,55 @@ static struct cache_entry *create_from_disk(struct mem_pool *mem_pool,
 	else
 		name = ondisk->name;
 
-	if (!previous_name) {
-		/* v3 and earlier */
-		if (len == CE_NAMEMASK)
-			len = strlen(name);
-		ce = cache_entry_from_ondisk(mem_pool, ondisk, flags, name, len);
+	if (expand_name_field) {
+		const unsigned char *cp = (const unsigned char *)name;
+		size_t strip_len, previous_len;
 
-		*ent_size = ondisk_ce_size(ce);
+		/* If we're at the begining of a block, ignore the previous name */
+		strip_len = decode_varint(&cp);
+		if (previous_ce) {
+			previous_len = previous_ce->ce_namelen;
+			if (previous_len < strip_len)
+				die(_("malformed name field in the index, near path '%s'"),
+					previous_ce->name);
+			copy_len = previous_len - strip_len;
+		} else {
+			copy_len = 0;
+		}
+		name = (const char *)cp;
+	}
+
+	if (len == CE_NAMEMASK) {
+		len = strlen(name);
+		if (expand_name_field)
+			len += copy_len;
+	}
+
+	ce = mem_pool__ce_alloc(ce_mem_pool, len);
+
+	ce->ce_stat_data.sd_ctime.sec = get_be32(&ondisk->ctime.sec);
+	ce->ce_stat_data.sd_mtime.sec = get_be32(&ondisk->mtime.sec);
+	ce->ce_stat_data.sd_ctime.nsec = get_be32(&ondisk->ctime.nsec);
+	ce->ce_stat_data.sd_mtime.nsec = get_be32(&ondisk->mtime.nsec);
+	ce->ce_stat_data.sd_dev   = get_be32(&ondisk->dev);
+	ce->ce_stat_data.sd_ino   = get_be32(&ondisk->ino);
+	ce->ce_mode  = get_be32(&ondisk->mode);
+	ce->ce_stat_data.sd_uid   = get_be32(&ondisk->uid);
+	ce->ce_stat_data.sd_gid   = get_be32(&ondisk->gid);
+	ce->ce_stat_data.sd_size  = get_be32(&ondisk->size);
+	ce->ce_flags = flags & ~CE_NAMEMASK;
+	ce->ce_namelen = len;
+	ce->index = 0;
+	hashcpy(ce->oid.hash, ondisk->sha1);
+
+	if (expand_name_field) {
+		if (copy_len)
+			memcpy(ce->name, previous_ce->name, copy_len);
+		memcpy(ce->name + copy_len, name, len + 1 - copy_len);
+		*ent_size = (name - ((char *)ondisk)) + len + 1 - copy_len;
 	} else {
-		unsigned long consumed;
-		consumed = expand_name_field(previous_name, name);
-		ce = cache_entry_from_ondisk(mem_pool, ondisk, flags,
-					     previous_name->buf,
-					     previous_name->len);
-
-		*ent_size = (name - ((char *)ondisk)) + consumed;
+		memcpy(ce->name, name, len + 1);
+		*ent_size = ondisk_ce_size(ce);
 	}
 	return ce;
 }
@@ -1893,16 +1896,237 @@ static size_t estimate_cache_size(size_t ondisk_size, unsigned int entries)
 	return ondisk_size + entries * per_entry;
 }
 
+struct index_entry_offset
+{
+	/* starting byte offset into index file, count of index entries in this block */
+	int offset, nr;
+};
+
+struct index_entry_offset_table
+{
+	int nr;
+	struct index_entry_offset entries[FLEX_ARRAY];
+};
+
+#ifndef NO_PTHREADS
+static struct index_entry_offset_table *read_ieot_extension(const char *mmap, size_t mmap_size, size_t offset);
+static void write_ieot_extension(struct strbuf *sb, struct index_entry_offset_table *ieot);
+#endif
+
+static size_t read_eoie_extension(const char *mmap, size_t mmap_size);
+static void write_eoie_extension(struct strbuf *sb, git_hash_ctx *eoie_context, size_t offset);
+
+struct load_index_extensions
+{
+#ifndef NO_PTHREADS
+	pthread_t pthread;
+#endif
+	struct index_state *istate;
+	const char *mmap;
+	size_t mmap_size;
+	unsigned long src_offset;
+};
+
+static void *load_index_extensions(void *_data)
+{
+	struct load_index_extensions *p = _data;
+	unsigned long src_offset = p->src_offset;
+
+	while (src_offset <= p->mmap_size - the_hash_algo->rawsz - 8) {
+		/* After an array of active_nr index entries,
+		 * there can be arbitrary number of extended
+		 * sections, each of which is prefixed with
+		 * extension name (4-byte) and section length
+		 * in 4-byte network byte order.
+		 */
+		uint32_t extsize = get_be32(p->mmap + src_offset + 4);
+		if (read_index_extension(p->istate,
+					 p->mmap + src_offset,
+					 p->mmap + src_offset + 8,
+					 extsize) < 0) {
+			munmap((void *)p->mmap, p->mmap_size);
+			die(_("index file corrupt"));
+		}
+		src_offset += 8;
+		src_offset += extsize;
+	}
+
+	return NULL;
+}
+
+/*
+ * A helper function that will load the specified range of cache entries
+ * from the memory mapped file and add them to the given index.
+ */
+static unsigned long load_cache_entry_block(struct index_state *istate,
+			struct mem_pool *ce_mem_pool, int offset, int nr, const char *mmap,
+			unsigned long start_offset, const struct cache_entry *previous_ce)
+{
+	int i;
+	unsigned long src_offset = start_offset;
+
+	for (i = offset; i < offset + nr; i++) {
+		struct ondisk_cache_entry *disk_ce;
+		struct cache_entry *ce;
+		unsigned long consumed;
+
+		disk_ce = (struct ondisk_cache_entry *)(mmap + src_offset);
+		ce = create_from_disk(ce_mem_pool, istate->version, disk_ce, &consumed, previous_ce);
+		set_index_entry(istate, i, ce);
+
+		src_offset += consumed;
+		previous_ce = ce;
+	}
+	return src_offset - start_offset;
+}
+
+static unsigned long load_all_cache_entries(struct index_state *istate,
+			const char *mmap, size_t mmap_size, unsigned long src_offset)
+{
+	unsigned long consumed;
+
+	if (istate->version == 4) {
+		mem_pool_init(&istate->ce_mem_pool,
+				estimate_cache_size_from_compressed(istate->cache_nr));
+	} else {
+		mem_pool_init(&istate->ce_mem_pool,
+				estimate_cache_size(mmap_size, istate->cache_nr));
+	}
+
+	consumed = load_cache_entry_block(istate, istate->ce_mem_pool,
+					0, istate->cache_nr, mmap, src_offset, NULL);
+	return consumed;
+}
+
+#ifndef NO_PTHREADS
+
+/*
+ * Mostly randomly chosen maximum thread counts: we
+ * cap the parallelism to online_cpus() threads, and we want
+ * to have at least 10000 cache entries per thread for it to
+ * be worth starting a thread.
+ */
+
+#define THREAD_COST		(10000)
+
+struct load_cache_entries_thread_data
+{
+	pthread_t pthread;
+	struct index_state *istate;
+	struct mem_pool *ce_mem_pool;
+	int offset;
+	const char *mmap;
+	struct index_entry_offset_table *ieot;
+	int ieot_start;		/* starting index into the ieot array */
+	int ieot_blocks;	/* count of ieot entries to process */
+	unsigned long consumed;	/* return # of bytes in index file processed */
+};
+
+/*
+ * A thread proc to run the load_cache_entries() computation
+ * across multiple background threads.
+ */
+static void *load_cache_entries_thread(void *_data)
+{
+	struct load_cache_entries_thread_data *p = _data;
+	int i;
+
+	/* iterate across all ieot blocks assigned to this thread */
+	for (i = p->ieot_start; i < p->ieot_start + p->ieot_blocks; i++) {
+		p->consumed += load_cache_entry_block(p->istate, p->ce_mem_pool,
+			p->offset, p->ieot->entries[i].nr, p->mmap, p->ieot->entries[i].offset, NULL);
+		p->offset += p->ieot->entries[i].nr;
+	}
+	return NULL;
+}
+
+static unsigned long load_cache_entries_threaded(struct index_state *istate, const char *mmap, size_t mmap_size,
+			unsigned long src_offset, int nr_threads, struct index_entry_offset_table *ieot)
+{
+	int i, offset, ieot_blocks, ieot_start, err;
+	struct load_cache_entries_thread_data *data;
+	unsigned long consumed = 0;
+
+	/* a little sanity checking */
+	if (istate->name_hash_initialized)
+		BUG("the name hash isn't thread safe");
+
+	mem_pool_init(&istate->ce_mem_pool, 0);
+
+	/* ensure we have no more threads than we have blocks to process */
+	if (nr_threads > ieot->nr)
+		nr_threads = ieot->nr;
+	data = xcalloc(nr_threads, sizeof(*data));
+
+	offset = ieot_start = 0;
+	ieot_blocks = DIV_ROUND_UP(ieot->nr, nr_threads);
+	for (i = 0; i < nr_threads; i++) {
+		struct load_cache_entries_thread_data *p = &data[i];
+		int nr, j;
+
+		if (ieot_start + ieot_blocks > ieot->nr)
+			ieot_blocks = ieot->nr - ieot_start;
+
+		p->istate = istate;
+		p->offset = offset;
+		p->mmap = mmap;
+		p->ieot = ieot;
+		p->ieot_start = ieot_start;
+		p->ieot_blocks = ieot_blocks;
+
+		/* create a mem_pool for each thread */
+		nr = 0;
+		for (j = p->ieot_start; j < p->ieot_start + p->ieot_blocks; j++)
+			nr += p->ieot->entries[j].nr;
+		if (istate->version == 4) {
+			mem_pool_init(&p->ce_mem_pool,
+				estimate_cache_size_from_compressed(nr));
+		} else {
+			mem_pool_init(&p->ce_mem_pool,
+				estimate_cache_size(mmap_size, nr));
+		}
+
+		err = pthread_create(&p->pthread, NULL, load_cache_entries_thread, p);
+		if (err)
+			die(_("unable to create load_cache_entries thread: %s"), strerror(err));
+
+		/* increment by the number of cache entries in the ieot block being processed */
+		for (j = 0; j < ieot_blocks; j++)
+			offset += ieot->entries[ieot_start + j].nr;
+		ieot_start += ieot_blocks;
+	}
+
+	for (i = 0; i < nr_threads; i++) {
+		struct load_cache_entries_thread_data *p = &data[i];
+
+		err = pthread_join(p->pthread, NULL);
+		if (err)
+			die(_("unable to join load_cache_entries thread: %s"), strerror(err));
+		mem_pool_combine(istate->ce_mem_pool, p->ce_mem_pool);
+		consumed += p->consumed;
+	}
+
+	free(data);
+
+	return consumed;
+}
+#endif
+
 /* remember to discard_cache() before reading a different cache! */
 int do_read_index(struct index_state *istate, const char *path, int must_exist)
 {
-	int fd, i;
+	int fd;
 	struct stat st;
 	unsigned long src_offset;
-	struct cache_header *hdr;
-	void *mmap;
+	const struct cache_header *hdr;
+	const char *mmap;
 	size_t mmap_size;
-	struct strbuf previous_name_buf = STRBUF_INIT, *previous_name;
+	struct load_index_extensions p;
+	size_t extension_offset = 0;
+#ifndef NO_PTHREADS
+	int nr_threads, cpus;
+	struct index_entry_offset_table *ieot = NULL;
+#endif
 
 	if (istate->initialized)
 		return istate->cache_nr;
@@ -1928,7 +2152,7 @@ int do_read_index(struct index_state *istate, const char *path, int must_exist)
 		die_errno("unable to map index file");
 	close(fd);
 
-	hdr = mmap;
+	hdr = (const struct cache_header *)mmap;
 	if (verify_hdr(hdr, mmap_size) < 0)
 		goto unmap;
 
@@ -1939,55 +2163,74 @@ int do_read_index(struct index_state *istate, const char *path, int must_exist)
 	istate->cache = xcalloc(istate->cache_alloc, sizeof(*istate->cache));
 	istate->initialized = 1;
 
-	if (istate->version == 4) {
-		previous_name = &previous_name_buf;
-		mem_pool_init(&istate->ce_mem_pool,
-			      estimate_cache_size_from_compressed(istate->cache_nr));
-	} else {
-		previous_name = NULL;
-		mem_pool_init(&istate->ce_mem_pool,
-			      estimate_cache_size(mmap_size, istate->cache_nr));
-	}
+	p.istate = istate;
+	p.mmap = mmap;
+	p.mmap_size = mmap_size;
 
 	src_offset = sizeof(*hdr);
-	for (i = 0; i < istate->cache_nr; i++) {
-		struct ondisk_cache_entry *disk_ce;
-		struct cache_entry *ce;
-		unsigned long consumed;
 
-		disk_ce = (struct ondisk_cache_entry *)((char *)mmap + src_offset);
-		ce = create_from_disk(istate->ce_mem_pool, disk_ce, &consumed, previous_name);
-		set_index_entry(istate, i, ce);
+#ifndef NO_PTHREADS
+	nr_threads = git_config_get_index_threads();
 
-		src_offset += consumed;
+	/* TODO: does creating more threads than cores help? */
+	if (!nr_threads) {
+		nr_threads = istate->cache_nr / THREAD_COST;
+		cpus = online_cpus();
+		if (nr_threads > cpus)
+			nr_threads = cpus;
 	}
-	strbuf_release(&previous_name_buf);
+
+	if (nr_threads > 1) {
+		extension_offset = read_eoie_extension(mmap, mmap_size);
+		if (extension_offset) {
+			int err;
+
+			p.src_offset = extension_offset;
+			err = pthread_create(&p.pthread, NULL, load_index_extensions, &p);
+			if (err)
+				die(_("unable to create load_index_extensions thread: %s"), strerror(err));
+
+			nr_threads--;
+		}
+	}
+
+	/*
+	 * Locate and read the index entry offset table so that we can use it
+	 * to multi-thread the reading of the cache entries.
+	 */
+	if (extension_offset && nr_threads > 1)
+		ieot = read_ieot_extension(mmap, mmap_size, extension_offset);
+
+	if (ieot) {
+		src_offset += load_cache_entries_threaded(istate, mmap, mmap_size, src_offset, nr_threads, ieot);
+		free(ieot);
+	} else {
+		src_offset += load_all_cache_entries(istate, mmap, mmap_size, src_offset);
+	}
+#else
+	src_offset += load_all_cache_entries(istate, mmap, mmap_size, src_offset);
+#endif
+
 	istate->timestamp.sec = st.st_mtime;
 	istate->timestamp.nsec = ST_MTIME_NSEC(st);
 
-	while (src_offset <= mmap_size - the_hash_algo->rawsz - 8) {
-		/* After an array of active_nr index entries,
-		 * there can be arbitrary number of extended
-		 * sections, each of which is prefixed with
-		 * extension name (4-byte) and section length
-		 * in 4-byte network byte order.
-		 */
-		uint32_t extsize;
-		memcpy(&extsize, (char *)mmap + src_offset + 4, 4);
-		extsize = ntohl(extsize);
-		if (read_index_extension(istate,
-					 (const char *) mmap + src_offset,
-					 (char *) mmap + src_offset + 8,
-					 extsize) < 0)
-			goto unmap;
-		src_offset += 8;
-		src_offset += extsize;
+	/* if we created a thread, join it otherwise load the extensions on the primary thread */
+#ifndef NO_PTHREADS
+	if (extension_offset) {
+		int ret = pthread_join(p.pthread, NULL);
+		if (ret)
+			die(_("unable to join load_index_extensions thread: %s"), strerror(ret));
 	}
-	munmap(mmap, mmap_size);
+#endif
+	if (!extension_offset) {
+		p.src_offset = src_offset;
+		load_index_extensions(&p);
+	}
+	munmap((void *)mmap, mmap_size);
 	return istate->cache_nr;
 
 unmap:
-	munmap(mmap, mmap_size);
+	munmap((void *)mmap, mmap_size);
 	die("index file corrupt");
 }
 
@@ -2203,11 +2446,15 @@ static int ce_write(git_hash_ctx *context, int fd, void *data, unsigned int len)
 	return 0;
 }
 
-static int write_index_ext_header(git_hash_ctx *context, int fd,
-				  unsigned int ext, unsigned int sz)
+static int write_index_ext_header(git_hash_ctx *context, git_hash_ctx *eoie_context,
+				  int fd, unsigned int ext, unsigned int sz)
 {
 	ext = htonl(ext);
 	sz = htonl(sz);
+	if (eoie_context) {
+		the_hash_algo->update_fn(eoie_context, &ext, 4);
+		the_hash_algo->update_fn(eoie_context, &sz, 4);
+	}
 	return ((ce_write(context, fd, &ext, 4) < 0) ||
 		(ce_write(context, fd, &sz, 4) < 0)) ? -1 : 0;
 }
@@ -2451,7 +2698,7 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 {
 	uint64_t start = getnanotime();
 	int newfd = tempfile->fd;
-	git_hash_ctx c;
+	git_hash_ctx c, eoie_c;
 	struct cache_header hdr;
 	int i, err = 0, removed, extended, hdr_version;
 	struct cache_entry **cache = istate->cache;
@@ -2460,6 +2707,10 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 	struct ondisk_cache_entry_extended ondisk;
 	struct strbuf previous_name_buf = STRBUF_INIT, *previous_name;
 	int drop_cache_tree = istate->drop_cache_tree;
+	off_t offset;
+	int ieot_entries = 1;
+	struct index_entry_offset_table *ieot = NULL;
+	int nr, nr_threads;
 
 	for (i = removed = extended = 0; i < entries; i++) {
 		if (cache[i]->ce_flags & CE_REMOVE)
@@ -2493,6 +2744,46 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 	if (ce_write(&c, newfd, &hdr, sizeof(hdr)) < 0)
 		return -1;
 
+#ifndef NO_PTHREADS
+	nr_threads = git_config_get_index_threads();
+	if (nr_threads != 1) {
+		int ieot_blocks, cpus;
+
+		/*
+		 * ensure default number of ieot blocks maps evenly to the
+		 * default number of threads that will process them leaving
+		 * room for the thread to load the index extensions.
+		 */
+		if (!nr_threads) {
+			ieot_blocks = istate->cache_nr / THREAD_COST;
+			cpus = online_cpus();
+			if (ieot_blocks > cpus - 1)
+				ieot_blocks = cpus - 1;
+		} else {
+			ieot_blocks = nr_threads;
+			if (ieot_blocks > istate->cache_nr)
+				ieot_blocks = istate->cache_nr;
+		}
+
+		/*
+		 * no reason to write out the IEOT extension if we don't
+		 * have enough blocks to utilize multi-threading
+		 */
+		if (ieot_blocks > 1) {
+			ieot = xcalloc(1, sizeof(struct index_entry_offset_table)
+				+ (ieot_blocks * sizeof(struct index_entry_offset)));
+			ieot_entries = DIV_ROUND_UP(entries, ieot_blocks);
+		}
+	}
+#endif
+
+	offset = lseek(newfd, 0, SEEK_CUR);
+	if (offset < 0) {
+		free(ieot);
+		return -1;
+	}
+	offset += write_buffer_len;
+	nr = 0;
 	previous_name = (hdr_version == 4) ? &previous_name_buf : NULL;
 
 	for (i = 0; i < entries; i++) {
@@ -2514,23 +2805,79 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 
 			drop_cache_tree = 1;
 		}
+		if (ieot && i && (i % ieot_entries == 0)) {
+			ieot->entries[ieot->nr].nr = nr;
+			ieot->entries[ieot->nr].offset = offset;
+			ieot->nr++;
+			/*
+			 * If we have a V4 index, set the first byte to an invalid
+			 * character to ensure there is nothing common with the previous
+			 * entry
+			 */
+			if (previous_name)
+				previous_name->buf[0] = 0;
+			nr = 0;
+			offset = lseek(newfd, 0, SEEK_CUR);
+			if (offset < 0) {
+				free(ieot);
+				return -1;
+			}
+			offset += write_buffer_len;
+		}
 		if (ce_write_entry(&c, newfd, ce, previous_name, (struct ondisk_cache_entry *)&ondisk) < 0)
 			err = -1;
 
 		if (err)
 			break;
+		nr++;
+	}
+	if (ieot && nr) {
+		ieot->entries[ieot->nr].nr = nr;
+		ieot->entries[ieot->nr].offset = offset;
+		ieot->nr++;
 	}
 	strbuf_release(&previous_name_buf);
 
-	if (err)
+	if (err) {
+		free(ieot);
 		return err;
+	}
 
 	/* Write extension data here */
+	offset = lseek(newfd, 0, SEEK_CUR);
+	if (offset < 0) {
+		free(ieot);
+		return -1;
+	}
+	offset += write_buffer_len;
+	the_hash_algo->init_fn(&eoie_c);
+
+	/*
+	 * Lets write out CACHE_EXT_INDEXENTRYOFFSETTABLE first so that we
+	 * can minimize the number of extensions we have to scan through to
+	 * find it during load.  Write it out regardless of the
+	 * strip_extensions parameter as we need it when loading the shared
+	 * index.
+	 */
+#ifndef NO_PTHREADS
+	if (ieot) {
+		struct strbuf sb = STRBUF_INIT;
+
+		write_ieot_extension(&sb, ieot);
+		err = write_index_ext_header(&c, &eoie_c, newfd, CACHE_EXT_INDEXENTRYOFFSETTABLE, sb.len) < 0
+			|| ce_write(&c, newfd, sb.buf, sb.len) < 0;
+		strbuf_release(&sb);
+		free(ieot);
+		if (err)
+			return -1;
+	}
+#endif
+
 	if (!strip_extensions && istate->split_index) {
 		struct strbuf sb = STRBUF_INIT;
 
 		err = write_link_extension(&sb, istate) < 0 ||
-			write_index_ext_header(&c, newfd, CACHE_EXT_LINK,
+			write_index_ext_header(&c, &eoie_c, newfd, CACHE_EXT_LINK,
 					       sb.len) < 0 ||
 			ce_write(&c, newfd, sb.buf, sb.len) < 0;
 		strbuf_release(&sb);
@@ -2541,7 +2888,7 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 		struct strbuf sb = STRBUF_INIT;
 
 		cache_tree_write(&sb, istate->cache_tree);
-		err = write_index_ext_header(&c, newfd, CACHE_EXT_TREE, sb.len) < 0
+		err = write_index_ext_header(&c, &eoie_c, newfd, CACHE_EXT_TREE, sb.len) < 0
 			|| ce_write(&c, newfd, sb.buf, sb.len) < 0;
 		strbuf_release(&sb);
 		if (err)
@@ -2551,7 +2898,7 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 		struct strbuf sb = STRBUF_INIT;
 
 		resolve_undo_write(&sb, istate->resolve_undo);
-		err = write_index_ext_header(&c, newfd, CACHE_EXT_RESOLVE_UNDO,
+		err = write_index_ext_header(&c, &eoie_c, newfd, CACHE_EXT_RESOLVE_UNDO,
 					     sb.len) < 0
 			|| ce_write(&c, newfd, sb.buf, sb.len) < 0;
 		strbuf_release(&sb);
@@ -2562,7 +2909,7 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 		struct strbuf sb = STRBUF_INIT;
 
 		write_untracked_extension(&sb, istate->untracked);
-		err = write_index_ext_header(&c, newfd, CACHE_EXT_UNTRACKED,
+		err = write_index_ext_header(&c, &eoie_c, newfd, CACHE_EXT_UNTRACKED,
 					     sb.len) < 0 ||
 			ce_write(&c, newfd, sb.buf, sb.len) < 0;
 		strbuf_release(&sb);
@@ -2573,7 +2920,24 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 		struct strbuf sb = STRBUF_INIT;
 
 		write_fsmonitor_extension(&sb, istate);
-		err = write_index_ext_header(&c, newfd, CACHE_EXT_FSMONITOR, sb.len) < 0
+		err = write_index_ext_header(&c, &eoie_c, newfd, CACHE_EXT_FSMONITOR, sb.len) < 0
+			|| ce_write(&c, newfd, sb.buf, sb.len) < 0;
+		strbuf_release(&sb);
+		if (err)
+			return -1;
+	}
+
+	/*
+	 * CACHE_EXT_ENDOFINDEXENTRIES must be written as the last entry before the SHA1
+	 * so that it can be found and processed before all the index entries are
+	 * read.  Write it out regardless of the strip_extensions parameter as we need it
+	 * when loading the shared index.
+	 */
+	if (offset) {
+		struct strbuf sb = STRBUF_INIT;
+
+		write_eoie_extension(&sb, &eoie_c, offset);
+		err = write_index_ext_header(&c, NULL, newfd, CACHE_EXT_ENDOFINDEXENTRIES, sb.len) < 0
 			|| ce_write(&c, newfd, sb.buf, sb.len) < 0;
 		strbuf_release(&sb);
 		if (err)
@@ -2989,3 +3353,181 @@ int should_validate_cache_entries(void)
 
 	return validate_index_cache_entries;
 }
+
+#define EOIE_SIZE (4 + GIT_SHA1_RAWSZ) /* <4-byte offset> + <20-byte hash> */
+#define EOIE_SIZE_WITH_HEADER (4 + 4 + EOIE_SIZE) /* <4-byte signature> + <4-byte length> + EOIE_SIZE */
+
+static size_t read_eoie_extension(const char *mmap, size_t mmap_size)
+{
+	/*
+	 * The end of index entries (EOIE) extension is guaranteed to be last
+	 * so that it can be found by scanning backwards from the EOF.
+	 *
+	 * "EOIE"
+	 * <4-byte length>
+	 * <4-byte offset>
+	 * <20-byte hash>
+	 */
+	const char *index, *eoie;
+	uint32_t extsize;
+	size_t offset, src_offset;
+	unsigned char hash[GIT_MAX_RAWSZ];
+	git_hash_ctx c;
+
+	/* ensure we have an index big enough to contain an EOIE extension */
+	if (mmap_size < sizeof(struct cache_header) + EOIE_SIZE_WITH_HEADER + the_hash_algo->rawsz)
+		return 0;
+
+	/* validate the extension signature */
+	index = eoie = mmap + mmap_size - EOIE_SIZE_WITH_HEADER - the_hash_algo->rawsz;
+	if (CACHE_EXT(index) != CACHE_EXT_ENDOFINDEXENTRIES)
+		return 0;
+	index += sizeof(uint32_t);
+
+	/* validate the extension size */
+	extsize = get_be32(index);
+	if (extsize != EOIE_SIZE)
+		return 0;
+	index += sizeof(uint32_t);
+
+	/*
+	 * Validate the offset we're going to look for the first extension
+	 * signature is after the index header and before the eoie extension.
+	 */
+	offset = get_be32(index);
+	if (mmap + offset < mmap + sizeof(struct cache_header))
+		return 0;
+	if (mmap + offset >= eoie)
+		return 0;
+	index += sizeof(uint32_t);
+
+	/*
+	 * The hash is computed over extension types and their sizes (but not
+	 * their contents).  E.g. if we have "TREE" extension that is N-bytes
+	 * long, "REUC" extension that is M-bytes long, followed by "EOIE",
+	 * then the hash would be:
+	 *
+	 * SHA-1("TREE" + <binary representation of N> +
+	 *	 "REUC" + <binary representation of M>)
+	 */
+	src_offset = offset;
+	the_hash_algo->init_fn(&c);
+	while (src_offset < mmap_size - the_hash_algo->rawsz - EOIE_SIZE_WITH_HEADER) {
+		/* After an array of active_nr index entries,
+		 * there can be arbitrary number of extended
+		 * sections, each of which is prefixed with
+		 * extension name (4-byte) and section length
+		 * in 4-byte network byte order.
+		 */
+		uint32_t extsize;
+		memcpy(&extsize, mmap + src_offset + 4, 4);
+		extsize = ntohl(extsize);
+
+		/* verify the extension size isn't so large it will wrap around */
+		if (src_offset + 8 + extsize < src_offset)
+			return 0;
+
+		the_hash_algo->update_fn(&c, mmap + src_offset, 8);
+
+		src_offset += 8;
+		src_offset += extsize;
+	}
+	the_hash_algo->final_fn(hash, &c);
+	if (!hasheq(hash, (const unsigned char *)index))
+		return 0;
+
+	/* Validate that the extension offsets returned us back to the eoie extension. */
+	if (src_offset != mmap_size - the_hash_algo->rawsz - EOIE_SIZE_WITH_HEADER)
+		return 0;
+
+	return offset;
+}
+
+static void write_eoie_extension(struct strbuf *sb, git_hash_ctx *eoie_context, size_t offset)
+{
+	uint32_t buffer;
+	unsigned char hash[GIT_MAX_RAWSZ];
+
+	/* offset */
+	put_be32(&buffer, offset);
+	strbuf_add(sb, &buffer, sizeof(uint32_t));
+
+	/* hash */
+	the_hash_algo->final_fn(hash, eoie_context);
+	strbuf_add(sb, hash, the_hash_algo->rawsz);
+}
+
+#ifndef NO_PTHREADS
+#define IEOT_VERSION	(1)
+
+static struct index_entry_offset_table *read_ieot_extension(const char *mmap, size_t mmap_size, size_t offset)
+{
+       const char *index = NULL;
+       uint32_t extsize, ext_version;
+       struct index_entry_offset_table *ieot;
+       int i, nr;
+
+       /* find the IEOT extension */
+       if (!offset)
+	       return NULL;
+       while (offset <= mmap_size - the_hash_algo->rawsz - 8) {
+	       extsize = get_be32(mmap + offset + 4);
+	       if (CACHE_EXT((mmap + offset)) == CACHE_EXT_INDEXENTRYOFFSETTABLE) {
+		       index = mmap + offset + 4 + 4;
+		       break;
+	       }
+	       offset += 8;
+	       offset += extsize;
+       }
+       if (!index)
+	       return NULL;
+
+       /* validate the version is IEOT_VERSION */
+       ext_version = get_be32(index);
+       if (ext_version != IEOT_VERSION) {
+	       error("invalid IEOT version %d", ext_version);
+	       return NULL;
+       }
+       index += sizeof(uint32_t);
+
+       /* extension size - version bytes / bytes per entry */
+       nr = (extsize - sizeof(uint32_t)) / (sizeof(uint32_t) + sizeof(uint32_t));
+       if (!nr) {
+	       error("invalid number of IEOT entries %d", nr);
+	       return NULL;
+       }
+       ieot = xmalloc(sizeof(struct index_entry_offset_table)
+	       + (nr * sizeof(struct index_entry_offset)));
+       ieot->nr = nr;
+       for (i = 0; i < nr; i++) {
+	       ieot->entries[i].offset = get_be32(index);
+	       index += sizeof(uint32_t);
+	       ieot->entries[i].nr = get_be32(index);
+	       index += sizeof(uint32_t);
+       }
+
+       return ieot;
+}
+
+static void write_ieot_extension(struct strbuf *sb, struct index_entry_offset_table *ieot)
+{
+       uint32_t buffer;
+       int i;
+
+       /* version */
+       put_be32(&buffer, IEOT_VERSION);
+       strbuf_add(sb, &buffer, sizeof(uint32_t));
+
+       /* ieot */
+       for (i = 0; i < ieot->nr; i++) {
+
+	       /* offset */
+	       put_be32(&buffer, ieot->entries[i].offset);
+	       strbuf_add(sb, &buffer, sizeof(uint32_t));
+
+	       /* count */
+	       put_be32(&buffer, ieot->entries[i].nr);
+	       strbuf_add(sb, &buffer, sizeof(uint32_t));
+       }
+}
+#endif
