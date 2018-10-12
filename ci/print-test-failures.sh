@@ -3,7 +3,7 @@
 # Print output of failing tests
 #
 
-. ${0%/*}/lib-travisci.sh
+. ${0%/*}/lib.sh
 
 # Tracing executed commands would produce too much noise in the loop below.
 set +x
@@ -69,7 +69,7 @@ do
 	fi
 done
 
-if [ $combined_trash_size -gt 0 ]
+if [ -n "$TRAVIS_JOB_ID" -a $combined_trash_size -gt 0 ]
 then
 	echo "------------------------------------------------------------------------"
 	echo "Trash directories embedded in this log can be extracted by running:"
