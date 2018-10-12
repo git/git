@@ -24,6 +24,7 @@
 #include "utf8.h"
 #include "fsmonitor.h"
 #include "thread-utils.h"
+#include "progress.h"
 
 /* Mask for the name length in ce_flags in the on-disk index */
 
@@ -1483,6 +1484,11 @@ int refresh_index(struct index_state *istate, unsigned int flags,
 	const char *typechange_fmt;
 	const char *added_fmt;
 	const char *unmerged_fmt;
+	struct progress *progress = NULL;
+
+	if (flags & REFRESH_PROGRESS && isatty(2))
+		progress = start_delayed_progress(_("Refresh index"),
+						  istate->cache_nr);
 
 	trace_performance_enter();
 	modified_fmt = (in_porcelain ? "M\t%s\n" : "%s: needs update\n");
@@ -1523,6 +1529,8 @@ int refresh_index(struct index_state *istate, unsigned int flags,
 		new_entry = refresh_cache_ent(istate, ce, options, &cache_errno, &changed);
 		if (new_entry == ce)
 			continue;
+		if (progress)
+			display_progress(progress, i);
 		if (!new_entry) {
 			const char *fmt;
 
@@ -1553,6 +1561,10 @@ int refresh_index(struct index_state *istate, unsigned int flags,
 		}
 
 		replace_index_entry(istate, i, new_entry);
+	}
+	if (progress) {
+		display_progress(progress, istate->cache_nr);
+		stop_progress(&progress);
 	}
 	trace_performance_leave("refresh index");
 	return has_errors;

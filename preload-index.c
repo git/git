@@ -6,10 +6,12 @@
 #include "dir.h"
 #include "fsmonitor.h"
 #include "config.h"
+#include "progress.h"
 
 #ifdef NO_PTHREADS
 static void preload_index(struct index_state *index,
-			  const struct pathspec *pathspec)
+			  const struct pathspec *pathspec,
+			  unsigned int refresh_flags)
 {
 	; /* nothing */
 }
@@ -26,16 +28,23 @@ static void preload_index(struct index_state *index,
 #define MAX_PARALLEL (20)
 #define THREAD_COST (500)
 
+struct progress_data {
+	unsigned long n;
+	struct progress *progress;
+	pthread_mutex_t mutex;
+};
+
 struct thread_data {
 	pthread_t pthread;
 	struct index_state *index;
 	struct pathspec pathspec;
+	struct progress_data *progress;
 	int offset, nr;
 };
 
 static void *preload_thread(void *_data)
 {
-	int nr;
+	int nr, last_nr;
 	struct thread_data *p = _data;
 	struct index_state *index = p->index;
 	struct cache_entry **cep = index->cache + p->offset;
@@ -44,6 +53,7 @@ static void *preload_thread(void *_data)
 	nr = p->nr;
 	if (nr + p->offset > index->cache_nr)
 		nr = index->cache_nr - p->offset;
+	last_nr = nr;
 
 	do {
 		struct cache_entry *ce = *cep++;
@@ -59,6 +69,15 @@ static void *preload_thread(void *_data)
 			continue;
 		if (ce->ce_flags & CE_FSMONITOR_VALID)
 			continue;
+		if (p->progress && !(nr & 31)) {
+			struct progress_data *pd = p->progress;
+
+			pthread_mutex_lock(&pd->mutex);
+			pd->n += last_nr - nr;
+			display_progress(pd->progress, pd->n);
+			pthread_mutex_unlock(&pd->mutex);
+			last_nr = nr;
+		}
 		if (!ce_path_match(index, ce, &p->pathspec, NULL))
 			continue;
 		if (threaded_has_symlink_leading_path(&cache, ce->name, ce_namelen(ce)))
@@ -70,15 +89,24 @@ static void *preload_thread(void *_data)
 		ce_mark_uptodate(ce);
 		mark_fsmonitor_valid(ce);
 	} while (--nr > 0);
+	if (p->progress) {
+		struct progress_data *pd = p->progress;
+
+		pthread_mutex_lock(&pd->mutex);
+		display_progress(pd->progress, pd->n + last_nr);
+		pthread_mutex_unlock(&pd->mutex);
+	}
 	cache_def_clear(&cache);
 	return NULL;
 }
 
 static void preload_index(struct index_state *index,
-			  const struct pathspec *pathspec)
+			  const struct pathspec *pathspec,
+			  unsigned int refresh_flags)
 {
 	int threads, i, work, offset;
 	struct thread_data data[MAX_PARALLEL];
+	struct progress_data pd;
 
 	if (!core_preload_index)
 		return;
@@ -94,6 +122,13 @@ static void preload_index(struct index_state *index,
 	offset = 0;
 	work = DIV_ROUND_UP(index->cache_nr, threads);
 	memset(&data, 0, sizeof(data));
+
+	memset(&pd, 0, sizeof(pd));
+	if (refresh_flags & REFRESH_PROGRESS && isatty(2)) {
+		pd.progress = start_delayed_progress(_("Refreshing index"), index->cache_nr);
+		pthread_mutex_init(&pd.mutex, NULL);
+	}
+
 	for (i = 0; i < threads; i++) {
 		struct thread_data *p = data+i;
 		p->index = index;
@@ -101,6 +136,8 @@ static void preload_index(struct index_state *index,
 			copy_pathspec(&p->pathspec, pathspec);
 		p->offset = offset;
 		p->nr = work;
+		if (pd.progress)
+			p->progress = &pd;
 		offset += work;
 		if (pthread_create(&p->pthread, NULL, preload_thread, p))
 			die("unable to create threaded lstat");
@@ -110,15 +147,18 @@ static void preload_index(struct index_state *index,
 		if (pthread_join(p->pthread, NULL))
 			die("unable to join threaded lstat");
 	}
+	stop_progress(&pd.progress);
+
 	trace_performance_leave("preload index");
 }
 #endif
 
 int read_index_preload(struct index_state *index,
-		       const struct pathspec *pathspec)
+		       const struct pathspec *pathspec,
+		       unsigned int refresh_flags)
 {
 	int retval = read_index(index);
 
-	preload_index(index, pathspec);
+	preload_index(index, pathspec, refresh_flags);
 	return retval;
 }
