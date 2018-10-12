@@ -409,6 +409,9 @@ static int write_entry(struct cache_entry *ce, char *path, struct conv_attrs *ca
 	}
 
 finish:
+	/* Flush cached lstat in fscache after writing to disk. */
+	flush_fscache();
+
 	if (state->refresh_cache) {
 		if (!fstat_done && lstat(ce->name, &st) < 0)
 			return error_errno("unable to stat just-written file %s",
