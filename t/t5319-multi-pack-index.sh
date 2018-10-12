@@ -152,7 +152,7 @@ compare_results_with_midx "twelve packs"
 
 test_expect_success 'repack removes multi-pack-index' '
 	test_path_is_file $objdir/pack/multi-pack-index &&
-	git repack -adf &&
+	GIT_TEST_MULTI_PACK_INDEX=0 git repack -adf &&
 	test_path_is_missing $objdir/pack/multi-pack-index
 '
 

@@ -327,6 +327,10 @@ GIT_TEST_COMMIT_GRAPH=<boolean>, when true, forces the commit-graph to
 be written after every 'git commit' command, and overrides the
 'core.commitGraph' setting to true.
 
+GIT_TEST_MULTI_PACK_INDEX=<boolean>, when true, forces the multi-pack-
+index to be written after every 'git repack' command, and overrides the
+'core.multiPackIndex' setting to true.
+
 Naming Tests
 ------------
 

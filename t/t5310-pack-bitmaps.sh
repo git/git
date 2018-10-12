@@ -191,6 +191,7 @@ test_expect_success 'pack-objects respects --honor-pack-keep (local bitmapped pa
 
 test_expect_success 'pack-objects respects --local (non-local bitmapped pack)' '
 	mv .git/objects/pack/$packbitmap.* alt.git/objects/pack/ &&
+	rm -f .git/objects/pack/multi-pack-index &&
 	test_when_finished "mv alt.git/objects/pack/$packbitmap.* .git/objects/pack/" &&
 	echo HEAD | git pack-objects --local --stdout --revs >3b.pack &&
 	git index-pack 3b.pack &&

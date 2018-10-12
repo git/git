@@ -3,6 +3,8 @@
 
 #include "repository.h"
 
+#define GIT_TEST_MULTI_PACK_INDEX "GIT_TEST_MULTI_PACK_INDEX"
+
 struct multi_pack_index {
 	struct multi_pack_index *next;
 
