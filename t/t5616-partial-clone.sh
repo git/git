@@ -192,7 +192,7 @@ test_expect_success 'use fsck before and after manually fetching a missing subtr
 	xargs -n1 git -C dst cat-file -t >fetched_types &&
 
 	sort -u fetched_types >unique_types.observed &&
-	printf "blob\ncommit\ntree\n" >unique_types.expected &&
+	test_write_lines blob commit tree >unique_types.expected &&
 	test_cmp unique_types.expected unique_types.observed
 '
 

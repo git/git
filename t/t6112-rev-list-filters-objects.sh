@@ -38,8 +38,8 @@ test_expect_success 'specify blob explicitly prevents filtering' '
 		 awk -f print_2.awk) &&
 
 	git -C r1 rev-list --objects --filter=blob:none HEAD $file_3 >observed &&
-	grep -q "$file_3" observed &&
-	test_must_fail grep -q "$file_4" observed
+	grep "$file_3" observed &&
+	! grep "$file_4" observed
 '
 
 test_expect_success 'verify emitted+omitted == all' '
@@ -241,7 +241,7 @@ test_expect_success 'verify tree:0 includes trees in "filtered" output' '
 	xargs -n1 git -C r3 cat-file -t >unsorted_filtered_types &&
 
 	sort -u unsorted_filtered_types >filtered_types &&
-	printf "blob\ntree\n" >expected &&
+	test_write_lines blob tree >expected &&
 	test_cmp expected filtered_types
 '
 

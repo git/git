@@ -69,7 +69,7 @@ test_expect_success 'get an error for missing tree object' '
 	test_must_fail git -C r5 pack-objects --rev --stdout 2>bad_tree <<-EOF &&
 	HEAD
 	EOF
-	grep -q "bad tree object" bad_tree
+	grep "bad tree object" bad_tree
 '
 
 test_expect_success 'setup for tests of tree:0' '
