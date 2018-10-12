@@ -32,6 +32,42 @@ fill () {
 }
 
 
+test_expect_success MINGW 'fscache flush cache' '
+
+	git init fscache-test &&
+	cd fscache-test &&
+	git config core.fscache 1 &&
+	echo A > test.txt &&
+	git add test.txt &&
+	git commit -m A &&
+	echo B >> test.txt &&
+	git checkout . &&
+	test -z "$(git status -s)" &&
+	echo A > expect.txt &&
+	test_cmp expect.txt test.txt &&
+	cd .. &&
+	rm -rf fscache-test
+'
+
+test_expect_success MINGW 'fscache flush cache dir' '
+
+	git init fscache-test &&
+	cd fscache-test &&
+	git config core.fscache 1 &&
+	echo A > test.txt &&
+	git add test.txt &&
+	git commit -m A &&
+	rm test.txt &&
+	mkdir test.txt &&
+	touch test.txt/test.txt &&
+	git checkout . &&
+	test -z "$(git status -s)" &&
+	echo A > expect.txt &&
+	test_cmp expect.txt test.txt &&
+	cd .. &&
+	rm -rf fscache-test
+'
+
 test_expect_success setup '
 
 	fill x y z > same &&
