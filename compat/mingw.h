@@ -728,3 +728,8 @@ int mingw_have_unix_sockets(void);
 #undef have_unix_sockets
 #define have_unix_sockets mingw_have_unix_sockets
 #endif
+
+/*
+ * Check current process is inside Windows Container.
+ */
+int is_inside_windows_container(void);
