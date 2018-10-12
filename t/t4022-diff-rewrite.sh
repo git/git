@@ -6,12 +6,12 @@ test_description='rewrite diff'
 
 test_expect_success setup '
 
-	cat "$TEST_DIRECTORY"/../COPYING >test &&
+	cat "$TEST_DIRECTORY"/diff-lib/COPYING >test &&
 	git add test &&
 	tr \
 	  "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" \
 	  "nopqrstuvwxyzabcdefghijklmNOPQRSTUVWXYZABCDEFGHIJKLM" \
-	  <"$TEST_DIRECTORY"/../COPYING >test &&
+	  <"$TEST_DIRECTORY"/diff-lib/COPYING >test &&
 	echo "to be deleted" >test2 &&
 	blob=$(git hash-object test2) &&
 	blob=$(git rev-parse --short $blob) &&
