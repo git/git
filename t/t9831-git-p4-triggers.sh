@@ -96,8 +96,4 @@ test_expect_success 'submit description with extra info lines from verbose p4 ch
 	)
 '
 
-test_expect_success 'kill p4d' '
-	kill_p4d
-'
-
 test_done
