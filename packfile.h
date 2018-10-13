@@ -164,4 +164,17 @@ extern int has_pack_index(const unsigned char *sha1);
  */
 extern int is_promisor_object(const struct object_id *oid);
 
+/*
+ * Expose a function for fuzz testing.
+ *
+ * load_idx() parses a block of memory as a packfile index and puts the results
+ * into a struct packed_git.
+ *
+ * This function should not be used directly. It is exposed here only so that we
+ * have a convenient entry-point for fuzz testing. For real uses, you should
+ * probably use open_pack_index() or parse_pack_index() instead.
+ */
+extern int load_idx(const char *path, const unsigned int hashsz, void *idx_map,
+		    size_t idx_size, struct packed_git *p);
+
 #endif

@@ -685,6 +685,7 @@ SCRIPTS = $(SCRIPT_SH_INS) \
 ETAGS_TARGET = TAGS
 
 FUZZ_OBJS += fuzz-pack-headers.o
+FUZZ_OBJS += fuzz-pack-idx.o
 
 # Always build fuzz objects even if not testing, to prevent bit-rot.
 all:: $(FUZZ_OBJS)

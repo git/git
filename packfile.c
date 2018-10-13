@@ -80,10 +80,8 @@ void pack_report(void)
 static int check_packed_git_idx(const char *path, struct packed_git *p)
 {
 	void *idx_map;
-	struct pack_idx_header *hdr;
 	size_t idx_size;
-	uint32_t version, nr, i, *index;
-	int fd = git_open(path);
+	int fd = git_open(path), ret;
 	struct stat st;
 	const unsigned int hashsz = the_hash_algo->rawsz;
 
@@ -101,16 +99,32 @@ static int check_packed_git_idx(const char *path, struct packed_git *p)
 	idx_map = xmmap(NULL, idx_size, PROT_READ, MAP_PRIVATE, fd, 0);
 	close(fd);
 
-	hdr = idx_map;
+	ret = load_idx(path, hashsz, idx_map, idx_size, p);
+
+	if (ret)
+		munmap(idx_map, idx_size);
+
+	return ret;
+}
+
+int load_idx(const char *path, const unsigned int hashsz, void *idx_map,
+	     size_t idx_size, struct packed_git *p)
+{
+	struct pack_idx_header *hdr = idx_map;
+	uint32_t version, nr, i, *index;
+
+	if (idx_size < 4 * 256 + hashsz + hashsz)
+		return error("index file %s is too small", path);
+	if (idx_map == NULL)
+		return error("empty data");
+
 	if (hdr->idx_signature == htonl(PACK_IDX_SIGNATURE)) {
 		version = ntohl(hdr->idx_version);
-		if (version < 2 || version > 2) {
-			munmap(idx_map, idx_size);
+		if (version < 2 || version > 2)
 			return error("index file %s is version %"PRIu32
 				     " and is not supported by this binary"
 				     " (try upgrading GIT to a newer version)",
 				     path, version);
-		}
 	} else
 		version = 1;
 
@@ -120,10 +134,8 @@ static int check_packed_git_idx(const char *path, struct packed_git *p)
 		index += 2;  /* skip index header */
 	for (i = 0; i < 256; i++) {
 		uint32_t n = ntohl(index[i]);
-		if (n < nr) {
-			munmap(idx_map, idx_size);
+		if (n < nr)
 			return error("non-monotonic index %s", path);
-		}
 		nr = n;
 	}
 
@@ -135,10 +147,8 @@ static int check_packed_git_idx(const char *path, struct packed_git *p)
 		 *  - hash of the packfile
 		 *  - file checksum
 		 */
-		if (idx_size != 4*256 + nr * (hashsz + 4) + hashsz + hashsz) {
-			munmap(idx_map, idx_size);
+		if (idx_size != 4 * 256 + nr * (hashsz + 4) + hashsz + hashsz)
 			return error("wrong index v1 file size in %s", path);
-		}
 	} else if (version == 2) {
 		/*
 		 * Minimum size:
@@ -157,20 +167,16 @@ static int check_packed_git_idx(const char *path, struct packed_git *p)
 		unsigned long max_size = min_size;
 		if (nr)
 			max_size += (nr - 1)*8;
-		if (idx_size < min_size || idx_size > max_size) {
-			munmap(idx_map, idx_size);
+		if (idx_size < min_size || idx_size > max_size)
 			return error("wrong index v2 file size in %s", path);
-		}
 		if (idx_size != min_size &&
 		    /*
 		     * make sure we can deal with large pack offsets.
 		     * 31-bit signed offset won't be enough, neither
 		     * 32-bit unsigned one will be.
 		     */
-		    (sizeof(off_t) <= 4)) {
-			munmap(idx_map, idx_size);
+		    (sizeof(off_t) <= 4))
 			return error("pack too large for current definition of off_t in %s", path);
-		}
 	}
 
 	p->index_version = version;
