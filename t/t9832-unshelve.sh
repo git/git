@@ -54,8 +54,8 @@ EOF
 		cd "$git" &&
 		change=$(last_shelved_change) &&
 		git p4 unshelve $change &&
-		git show refs/remotes/p4/unshelved/$change | grep -q "Further description" &&
-		git cherry-pick refs/remotes/p4/unshelved/$change &&
+		git show refs/remotes/p4-unshelved/$change | grep -q "Further description" &&
+		git cherry-pick refs/remotes/p4-unshelved/$change &&
 		test_path_is_file file2 &&
 		test_cmp file1 "$cli"/file1 &&
 		test_cmp file2 "$cli"/file2 &&
@@ -88,7 +88,7 @@ EOF
 		cd "$git" &&
 		change=$(last_shelved_change) &&
 		git p4 unshelve $change &&
-		git diff refs/remotes/p4/unshelved/$change.0 refs/remotes/p4/unshelved/$change | grep -q file3
+		git diff refs/remotes/p4-unshelved/$change.0 refs/remotes/p4-unshelved/$change | grep -q file3
 	)
 '
 

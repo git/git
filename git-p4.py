@@ -3956,7 +3956,8 @@ class P4Unshelve(Command):
         ]
         self.verbose = False
         self.noCommit = False
-        self.destbranch = "refs/remotes/p4/unshelved"
+        self.destbranch = "refs/remotes/p4-unshelved"
+        self.origin = "p4/master"
 
     def renameBranch(self, branch_name):
         """ Rename the existing branch to branch_name.N
