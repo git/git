@@ -98,7 +98,7 @@ static void mktree_line(char *buf, size_t len, int nul_term_line, int allow_miss
 
 	*ntr++ = 0; /* now at the beginning of SHA1 */
 
-	path = ntr + 41;  /* at the beginning of name */
+	path = (char *)p + 1;  /* at the beginning of name */
 	if (!nul_term_line && path[0] == '"') {
 		struct strbuf p_uq = STRBUF_INIT;
 		if (unquote_c_style(&p_uq, path, NULL))
