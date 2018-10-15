@@ -223,8 +223,8 @@ struct patch {
 	struct fragment *fragments;
 	char *result;
 	size_t resultsize;
-	char old_sha1_prefix[41];
-	char new_sha1_prefix[41];
+	char old_sha1_prefix[GIT_MAX_HEXSZ + 1];
+	char new_sha1_prefix[GIT_MAX_HEXSZ + 1];
 	struct patch *next;
 
 	/* three-way fallback result */
@@ -1093,9 +1093,10 @@ static int gitdiff_index(struct apply_state *state,
 	 */
 	const char *ptr, *eol;
 	int len;
+	const unsigned hexsz = the_hash_algo->hexsz;
 
 	ptr = strchr(line, '.');
-	if (!ptr || ptr[1] != '.' || 40 < ptr - line)
+	if (!ptr || ptr[1] != '.' || hexsz < ptr - line)
 		return 0;
 	len = ptr - line;
 	memcpy(patch->old_sha1_prefix, line, len);
@@ -1109,7 +1110,7 @@ static int gitdiff_index(struct apply_state *state,
 		ptr = eol;
 	len = ptr - line;
 
-	if (40 < len)
+	if (hexsz < len)
 		return 0;
 	memcpy(patch->new_sha1_prefix, line, len);
 	patch->new_sha1_prefix[len] = 0;
@@ -3142,13 +3143,14 @@ static int apply_binary(struct apply_state *state,
 {
 	const char *name = patch->old_name ? patch->old_name : patch->new_name;
 	struct object_id oid;
+	const unsigned hexsz = the_hash_algo->hexsz;
 
 	/*
 	 * For safety, we require patch index line to contain
-	 * full 40-byte textual SHA1 for old and new, at least for now.
+	 * full hex textual object ID for old and new, at least for now.
 	 */
-	if (strlen(patch->old_sha1_prefix) != 40 ||
-	    strlen(patch->new_sha1_prefix) != 40 ||
+	if (strlen(patch->old_sha1_prefix) != hexsz ||
+	    strlen(patch->new_sha1_prefix) != hexsz ||
 	    get_oid_hex(patch->old_sha1_prefix, &oid) ||
 	    get_oid_hex(patch->new_sha1_prefix, &oid))
 		return error(_("cannot apply binary patch to '%s' "
@@ -4055,7 +4057,7 @@ static int preimage_oid_in_gitlink_patch(struct patch *p, struct object_id *oid)
 	    starts_with(++preimage, heading) &&
 	    /* does it record full SHA-1? */
 	    !get_oid_hex(preimage + sizeof(heading) - 1, oid) &&
-	    preimage[sizeof(heading) + GIT_SHA1_HEXSZ - 1] == '\n' &&
+	    preimage[sizeof(heading) + the_hash_algo->hexsz - 1] == '\n' &&
 	    /* does the abbreviated name on the index line agree with it? */
 	    starts_with(preimage + sizeof(heading) - 1, p->old_sha1_prefix))
 		return 0; /* it all looks fine */
