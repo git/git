@@ -443,6 +443,7 @@ static int do_reachable_revlist(struct child_process *cmd,
 	struct object *o;
 	char namebuf[GIT_MAX_HEXSZ + 2]; /* ^ + hash + LF */
 	int i;
+	const unsigned hexsz = the_hash_algo->hexsz;
 
 	cmd->argv = argv;
 	cmd->git_cmd = 1;
@@ -461,7 +462,7 @@ static int do_reachable_revlist(struct child_process *cmd,
 		goto error;
 
 	namebuf[0] = '^';
-	namebuf[GIT_SHA1_HEXSZ + 1] = '\n';
+	namebuf[hexsz + 1] = '\n';
 	for (i = get_max_object_index(); 0 < i; ) {
 		o = get_indexed_object(--i);
 		if (!o)
@@ -470,11 +471,11 @@ static int do_reachable_revlist(struct child_process *cmd,
 			o->flags &= ~TMP_MARK;
 		if (!is_our_ref(o))
 			continue;
-		memcpy(namebuf + 1, oid_to_hex(&o->oid), GIT_SHA1_HEXSZ);
-		if (write_in_full(cmd->in, namebuf, GIT_SHA1_HEXSZ + 2) < 0)
+		memcpy(namebuf + 1, oid_to_hex(&o->oid), hexsz);
+		if (write_in_full(cmd->in, namebuf, hexsz + 2) < 0)
 			goto error;
 	}
-	namebuf[GIT_SHA1_HEXSZ] = '\n';
+	namebuf[hexsz] = '\n';
 	for (i = 0; i < src->nr; i++) {
 		o = src->objects[i].item;
 		if (is_our_ref(o)) {
@@ -484,8 +485,8 @@ static int do_reachable_revlist(struct child_process *cmd,
 		}
 		if (reachable && o->type == OBJ_COMMIT)
 			o->flags |= TMP_MARK;
-		memcpy(namebuf, oid_to_hex(&o->oid), GIT_SHA1_HEXSZ);
-		if (write_in_full(cmd->in, namebuf, GIT_SHA1_HEXSZ + 1) < 0)
+		memcpy(namebuf, oid_to_hex(&o->oid), hexsz);
+		if (write_in_full(cmd->in, namebuf, hexsz + 1) < 0)
 			goto error;
 	}
 	close(cmd->in);
