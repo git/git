@@ -1,119 +1,127 @@
 @@
-expression E1;
+struct object_id OID;
 @@
-- is_null_sha1(E1.hash)
-+ is_null_oid(&E1)
+- is_null_sha1(OID.hash)
++ is_null_oid(&OID)
 
 @@
-expression E1;
+struct object_id *OIDPTR;
 @@
-- is_null_sha1(E1->hash)
-+ is_null_oid(E1)
+- is_null_sha1(OIDPTR->hash)
++ is_null_oid(OIDPTR)
 
 @@
-expression E1;
+struct object_id OID;
 @@
-- sha1_to_hex(E1.hash)
-+ oid_to_hex(&E1)
+- sha1_to_hex(OID.hash)
++ oid_to_hex(&OID)
 
 @@
 identifier f != oid_to_hex;
-expression E1;
+struct object_id *OIDPTR;
 @@
   f(...) {<...
-- sha1_to_hex(E1->hash)
-+ oid_to_hex(E1)
+- sha1_to_hex(OIDPTR->hash)
++ oid_to_hex(OIDPTR)
   ...>}
 
 @@
-expression E1, E2;
+expression E;
+struct object_id OID;
 @@
-- sha1_to_hex_r(E1, E2.hash)
-+ oid_to_hex_r(E1, &E2)
+- sha1_to_hex_r(E, OID.hash)
++ oid_to_hex_r(E, &OID)
 
 @@
 identifier f != oid_to_hex_r;
-expression E1, E2;
+expression E;
+struct object_id *OIDPTR;
 @@
    f(...) {<...
-- sha1_to_hex_r(E1, E2->hash)
-+ oid_to_hex_r(E1, E2)
+- sha1_to_hex_r(E, OIDPTR->hash)
++ oid_to_hex_r(E, OIDPTR)
   ...>}
 
 @@
-expression E1;
+struct object_id OID;
 @@
-- hashclr(E1.hash)
-+ oidclr(&E1)
+- hashclr(OID.hash)
++ oidclr(&OID)
 
 @@
 identifier f != oidclr;
-expression E1;
+struct object_id *OIDPTR;
 @@
   f(...) {<...
-- hashclr(E1->hash)
-+ oidclr(E1)
+- hashclr(OIDPTR->hash)
++ oidclr(OIDPTR)
   ...>}
 
 @@
-expression E1, E2;
+struct object_id OID1, OID2;
 @@
-- hashcmp(E1.hash, E2.hash)
-+ oidcmp(&E1, &E2)
+- hashcmp(OID1.hash, OID2.hash)
++ oidcmp(&OID1, &OID2)
 
 @@
 identifier f != oidcmp;
-expression E1, E2;
+struct object_id *OIDPTR1, OIDPTR2;
 @@
   f(...) {<...
-- hashcmp(E1->hash, E2->hash)
-+ oidcmp(E1, E2)
+- hashcmp(OIDPTR1->hash, OIDPTR2->hash)
++ oidcmp(OIDPTR1, OIDPTR2)
   ...>}
 
 @@
-expression E1, E2;
+struct object_id *OIDPTR;
+struct object_id OID;
 @@
-- hashcmp(E1->hash, E2.hash)
-+ oidcmp(E1, &E2)
+- hashcmp(OIDPTR->hash, OID.hash)
++ oidcmp(OIDPTR, &OID)
 
 @@
-expression E1, E2;
+struct object_id *OIDPTR;
+struct object_id OID;
 @@
-- hashcmp(E1.hash, E2->hash)
-+ oidcmp(&E1, E2)
+- hashcmp(OID.hash, OIDPTR->hash)
++ oidcmp(&OID, OIDPTR)
 
 @@
-expression E1, E2;
+struct object_id OID1, OID2;
 @@
-- hashcpy(E1.hash, E2.hash)
-+ oidcpy(&E1, &E2)
+- hashcpy(OID1.hash, OID2.hash)
++ oidcpy(&OID1, &OID2)
 
 @@
 identifier f != oidcpy;
-expression E1, E2;
+struct object_id *OIDPTR1;
+struct object_id *OIDPTR2;
 @@
   f(...) {<...
-- hashcpy(E1->hash, E2->hash)
-+ oidcpy(E1, E2)
+- hashcpy(OIDPTR1->hash, OIDPTR2->hash)
++ oidcpy(OIDPTR1, OIDPTR2)
   ...>}
 
 @@
-expression E1, E2;
+struct object_id *OIDPTR;
+struct object_id OID;
 @@
-- hashcpy(E1->hash, E2.hash)
-+ oidcpy(E1, &E2)
+- hashcpy(OIDPTR->hash, OID.hash)
++ oidcpy(OIDPTR, &OID)
 
 @@
-expression E1, E2;
+struct object_id *OIDPTR;
+struct object_id OID;
 @@
-- hashcpy(E1.hash, E2->hash)
-+ oidcpy(&E1, E2)
+- hashcpy(OID.hash, OIDPTR->hash)
++ oidcpy(&OID, OIDPTR)
 
 @@
-expression E1, E2;
+struct object_id *OIDPTR1;
+struct object_id *OIDPTR2;
 @@
-- oidcmp(E1, E2) == 0
-+ oideq(E1, E2)
+- oidcmp(OIDPTR1, OIDPTR2) == 0
++ oideq(OIDPTR1, OIDPTR2)
 
 @@
 identifier f != hasheq;
@@ -125,10 +133,11 @@ expression E1, E2;
   ...>}
 
 @@
-expression E1, E2;
+struct object_id *OIDPTR1;
+struct object_id *OIDPTR2;
 @@
-- oidcmp(E1, E2) != 0
-+ !oideq(E1, E2)
+- oidcmp(OIDPTR1, OIDPTR2) != 0
++ !oideq(OIDPTR1, OIDPTR2)
 
 @@
 identifier f != hasheq;
