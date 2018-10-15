@@ -177,8 +177,8 @@ Unshelving will take a shelved P4 changelist, and produce the equivalent git com
 in the branch refs/remotes/p4-unshelved/<changelist>.
 
 The git commit is created relative to the current origin revision (HEAD by default).
-If the shelved changelist's parent revisions differ, git-p4 will refuse to unshelve;
-you need to be unshelving onto an equivalent tree.
+A parent commit is created based on the origin, and then the unshelve commit is
+created based on that.
 
 The origin revision can be changed with the "--origin" option.
 
