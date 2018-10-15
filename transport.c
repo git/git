@@ -1346,15 +1346,16 @@ static void read_alternate_refs(const char *path,
 	fh = xfdopen(cmd.out, "r");
 	while (strbuf_getline_lf(&line, fh) != EOF) {
 		struct object_id oid;
+		const char *p;
 
-		if (get_oid_hex(line.buf, &oid) ||
-		    line.buf[GIT_SHA1_HEXSZ] != ' ') {
+		if (parse_oid_hex(line.buf, &oid, &p) ||
+		    *p != ' ') {
 			warning(_("invalid line while parsing alternate refs: %s"),
 				line.buf);
 			break;
 		}
 
-		cb(line.buf + GIT_SHA1_HEXSZ + 1, &oid, data);
+		cb(p + 1, &oid, data);
 	}
 
 	fclose(fh);
