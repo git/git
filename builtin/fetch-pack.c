@@ -16,13 +16,14 @@ static void add_sought_entry(struct ref ***sought, int *nr, int *alloc,
 {
 	struct ref *ref;
 	struct object_id oid;
+	const char *p;
 
-	if (!get_oid_hex(name, &oid)) {
-		if (name[GIT_SHA1_HEXSZ] == ' ') {
-			/* <sha1> <ref>, find refname */
-			name += GIT_SHA1_HEXSZ + 1;
-		} else if (name[GIT_SHA1_HEXSZ] == '\0') {
-			; /* <sha1>, leave sha1 as name */
+	if (!parse_oid_hex(name, &oid, &p)) {
+		if (*p == ' ') {
+			/* <oid> <ref>, find refname */
+			name = p + 1;
+		} else if (*p == '\0') {
+			; /* <oid>, leave oid as name */
 		} else {
 			/* <ref>, clear cruft from oid */
 			oidclr(&oid);
