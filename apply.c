@@ -223,8 +223,8 @@ struct patch {
 	struct fragment *fragments;
 	char *result;
 	size_t resultsize;
-	char old_sha1_prefix[GIT_MAX_HEXSZ + 1];
-	char new_sha1_prefix[GIT_MAX_HEXSZ + 1];
+	char old_oid_prefix[GIT_MAX_HEXSZ + 1];
+	char new_oid_prefix[GIT_MAX_HEXSZ + 1];
 	struct patch *next;
 
 	/* three-way fallback result */
@@ -1099,8 +1099,8 @@ static int gitdiff_index(struct apply_state *state,
 	if (!ptr || ptr[1] != '.' || hexsz < ptr - line)
 		return 0;
 	len = ptr - line;
-	memcpy(patch->old_sha1_prefix, line, len);
-	patch->old_sha1_prefix[len] = 0;
+	memcpy(patch->old_oid_prefix, line, len);
+	patch->old_oid_prefix[len] = 0;
 
 	line = ptr + 2;
 	ptr = strchr(line, ' ');
@@ -1112,8 +1112,8 @@ static int gitdiff_index(struct apply_state *state,
 
 	if (hexsz < len)
 		return 0;
-	memcpy(patch->new_sha1_prefix, line, len);
-	patch->new_sha1_prefix[len] = 0;
+	memcpy(patch->new_oid_prefix, line, len);
+	patch->new_oid_prefix[len] = 0;
 	if (*ptr == ' ')
 		return gitdiff_oldmode(state, ptr + 1, patch);
 	return 0;
@@ -2205,7 +2205,7 @@ static void reverse_patches(struct patch *p)
 		SWAP(p->new_mode, p->old_mode);
 		SWAP(p->is_new, p->is_delete);
 		SWAP(p->lines_added, p->lines_deleted);
-		SWAP(p->old_sha1_prefix, p->new_sha1_prefix);
+		SWAP(p->old_oid_prefix, p->new_oid_prefix);
 
 		for (; frag; frag = frag->next) {
 			SWAP(frag->newpos, frag->oldpos);
@@ -3149,10 +3149,10 @@ static int apply_binary(struct apply_state *state,
 	 * For safety, we require patch index line to contain
 	 * full hex textual object ID for old and new, at least for now.
 	 */
-	if (strlen(patch->old_sha1_prefix) != hexsz ||
-	    strlen(patch->new_sha1_prefix) != hexsz ||
-	    get_oid_hex(patch->old_sha1_prefix, &oid) ||
-	    get_oid_hex(patch->new_sha1_prefix, &oid))
+	if (strlen(patch->old_oid_prefix) != hexsz ||
+	    strlen(patch->new_oid_prefix) != hexsz ||
+	    get_oid_hex(patch->old_oid_prefix, &oid) ||
+	    get_oid_hex(patch->new_oid_prefix, &oid))
 		return error(_("cannot apply binary patch to '%s' "
 			       "without full index line"), name);
 
@@ -3162,7 +3162,7 @@ static int apply_binary(struct apply_state *state,
 		 * applies to.
 		 */
 		hash_object_file(img->buf, img->len, blob_type, &oid);
-		if (strcmp(oid_to_hex(&oid), patch->old_sha1_prefix))
+		if (strcmp(oid_to_hex(&oid), patch->old_oid_prefix))
 			return error(_("the patch applies to '%s' (%s), "
 				       "which does not match the "
 				       "current contents."),
@@ -3175,7 +3175,7 @@ static int apply_binary(struct apply_state *state,
 				       "'%s' but it is not empty"), name);
 	}
 
-	get_oid_hex(patch->new_sha1_prefix, &oid);
+	get_oid_hex(patch->new_oid_prefix, &oid);
 	if (is_null_oid(&oid)) {
 		clear_image(img);
 		return 0; /* deletion patch */
@@ -3191,7 +3191,7 @@ static int apply_binary(struct apply_state *state,
 		if (!result)
 			return error(_("the necessary postimage %s for "
 				       "'%s' cannot be read"),
-				     patch->new_sha1_prefix, name);
+				     patch->new_oid_prefix, name);
 		clear_image(img);
 		img->buf = result;
 		img->len = size;
@@ -3207,9 +3207,9 @@ static int apply_binary(struct apply_state *state,
 
 		/* verify that the result matches */
 		hash_object_file(img->buf, img->len, blob_type, &oid);
-		if (strcmp(oid_to_hex(&oid), patch->new_sha1_prefix))
+		if (strcmp(oid_to_hex(&oid), patch->new_oid_prefix))
 			return error(_("binary patch to '%s' creates incorrect result (expecting %s, got %s)"),
-				name, patch->new_sha1_prefix, oid_to_hex(&oid));
+				name, patch->new_oid_prefix, oid_to_hex(&oid));
 	}
 
 	return 0;
@@ -3565,7 +3565,7 @@ static int try_threeway(struct apply_state *state,
 	/* Preimage the patch was prepared for */
 	if (patch->is_new)
 		write_object_file("", 0, blob_type, &pre_oid);
-	else if (get_oid(patch->old_sha1_prefix, &pre_oid) ||
+	else if (get_oid(patch->old_oid_prefix, &pre_oid) ||
 		 read_blob_object(&buf, &pre_oid, patch->old_mode))
 		return error(_("repository lacks the necessary blob to fall back on 3-way merge."));
 
@@ -4059,11 +4059,11 @@ static int preimage_oid_in_gitlink_patch(struct patch *p, struct object_id *oid)
 	    !get_oid_hex(preimage + sizeof(heading) - 1, oid) &&
 	    preimage[sizeof(heading) + the_hash_algo->hexsz - 1] == '\n' &&
 	    /* does the abbreviated name on the index line agree with it? */
-	    starts_with(preimage + sizeof(heading) - 1, p->old_sha1_prefix))
+	    starts_with(preimage + sizeof(heading) - 1, p->old_oid_prefix))
 		return 0; /* it all looks fine */
 
 	/* we may have full object name on the index line */
-	return get_oid_hex(p->old_sha1_prefix, oid);
+	return get_oid_hex(p->old_oid_prefix, oid);
 }
 
 /* Build an index that contains just the files needed for a 3way merge */
@@ -4092,7 +4092,7 @@ static int build_fake_ancestor(struct apply_state *state, struct patch *list)
 			else
 				return error(_("sha1 information is lacking or "
 					       "useless for submodule %s"), name);
-		} else if (!get_oid_blob(patch->old_sha1_prefix, &oid)) {
+		} else if (!get_oid_blob(patch->old_oid_prefix, &oid)) {
 			; /* ok */
 		} else if (!patch->lines_added && !patch->lines_deleted) {
 			/* mode-only change: update the current */
