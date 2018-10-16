@@ -1,6 +1,10 @@
 #ifndef DELTA_ISLANDS_H
 #define DELTA_ISLANDS_H
 
+struct object_id;
+struct packing_data;
+struct commit;
+
 int island_delta_cmp(const struct object_id *a, const struct object_id *b);
 int in_same_island(const struct object_id *, const struct object_id *);
 void resolve_tree_islands(int progress, struct packing_data *to_pack);

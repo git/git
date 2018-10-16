@@ -3,6 +3,9 @@
 
 #include "repository.h"
 
+struct object_id;
+struct pack_entry;
+
 struct multi_pack_index {
 	struct multi_pack_index *next;
 

@@ -42,6 +42,8 @@
  * of the given strings.
  */
 
+#include "strbuf.h"
+
 struct json_writer
 {
 	/*
