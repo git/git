@@ -633,7 +633,7 @@ process_split_commit () {
 	else
 		# processing commit without normal parent information;
 		# fetch from repo
-		parents=$(git show -s --pretty=%P "$rev")
+		parents=$(git rev-parse "$rev^@")
 		extracount=$(($extracount + 1))
 	fi
 
