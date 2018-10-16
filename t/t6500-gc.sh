@@ -137,11 +137,11 @@ test_expect_success 'background auto gc does not run if gc.log is present and re
 	test_config gc.autopacklimit 1 &&
 	test_config gc.autodetach true &&
 	echo fleem >.git/gc.log &&
-	test_must_fail git gc --auto 2>err &&
-	test_i18ngrep "^fatal:" err &&
+	git gc --auto 2>err &&
+	test_i18ngrep "^warning:" err &&
 	test_config gc.logexpiry 5.days &&
 	test-tool chmtime =-345600 .git/gc.log &&
-	test_must_fail git gc --auto &&
+	git gc --auto &&
 	test_config gc.logexpiry 2.days &&
 	run_and_wait_for_auto_gc &&
 	ls .git/objects/pack/pack-*.pack >packs &&

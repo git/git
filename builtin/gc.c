@@ -441,9 +441,15 @@ static const char *lock_repo_for_gc(int force, pid_t* ret_pid)
 	return NULL;
 }
 
-static void report_last_gc_error(void)
+/*
+ * Returns 0 if there was no previous error and gc can proceed, 1 if
+ * gc should not proceed due to an error in the last run. Prints a
+ * message and returns -1 if an error occured while reading gc.log
+ */
+static int report_last_gc_error(void)
 {
 	struct strbuf sb = STRBUF_INIT;
+	int ret = 0;
 	ssize_t len;
 	struct stat st;
 	char *gc_log_path = git_pathdup("gc.log");
@@ -452,7 +458,8 @@ static void report_last_gc_error(void)
 		if (errno == ENOENT)
 			goto done;
 
-		die_errno(_("cannot stat '%s'"), gc_log_path);
+		ret = error_errno(_("cannot stat '%s'"), gc_log_path);
+		goto done;
 	}
 
 	if (st.st_mtime < gc_log_expire_time)
@@ -460,18 +467,26 @@ static void report_last_gc_error(void)
 
 	len = strbuf_read_file(&sb, gc_log_path, 0);
 	if (len < 0)
-		die_errno(_("cannot read '%s'"), gc_log_path);
-	else if (len > 0)
-		die(_("The last gc run reported the following. "
+		ret = error_errno(_("cannot read '%s'"), gc_log_path);
+	else if (len > 0) {
+		/*
+		 * A previous gc failed.  Report the error, and don't
+		 * bother with an automatic gc run since it is likely
+		 * to fail in the same way.
+		 */
+		warning(_("The last gc run reported the following. "
 			       "Please correct the root cause\n"
 			       "and remove %s.\n"
 			       "Automatic cleanup will not be performed "
 			       "until the file is removed.\n\n"
 			       "%s"),
 			    gc_log_path, sb.buf);
+		ret = 1;
+	}
 	strbuf_release(&sb);
 done:
 	free(gc_log_path);
+	return ret;
 }
 
 static void gc_before_repack(void)
@@ -564,7 +579,13 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 			fprintf(stderr, _("See \"git help gc\" for manual housekeeping.\n"));
 		}
 		if (detach_auto) {
-			report_last_gc_error(); /* dies on error */
+			int ret = report_last_gc_error();
+			if (ret < 0)
+				/* an I/O error occured, already reported */
+				exit(128);
+			if (ret == 1)
+				/* Last gc --auto failed. Skip this one. */
+				return 0;
 
 			if (lock_repo_for_gc(force, &pid))
 				return 0;
