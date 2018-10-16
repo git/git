@@ -16,7 +16,7 @@ test_expect_success 'test capability advertisement' '
 
 	git serve --advertise-capabilities >out &&
 	test-tool pkt-line unpack <out >actual &&
-	test_cmp actual expect
+	test_cmp expect actual
 '
 
 test_expect_success 'stateless-rpc flag does not list capabilities' '
@@ -89,7 +89,7 @@ test_expect_success 'basics of ls-refs' '
 
 	git serve --stateless-rpc <in >out &&
 	test-tool pkt-line unpack <out >actual &&
-	test_cmp actual expect
+	test_cmp expect actual
 '
 
 test_expect_success 'basic ref-prefixes' '
@@ -109,7 +109,7 @@ test_expect_success 'basic ref-prefixes' '
 
 	git serve --stateless-rpc <in >out &&
 	test-tool pkt-line unpack <out >actual &&
-	test_cmp actual expect
+	test_cmp expect actual
 '
 
 test_expect_success 'refs/heads prefix' '
@@ -129,7 +129,7 @@ test_expect_success 'refs/heads prefix' '
 
 	git serve --stateless-rpc <in >out &&
 	test-tool pkt-line unpack <out >actual &&
-	test_cmp actual expect
+	test_cmp expect actual
 '
 
 test_expect_success 'peel parameter' '
@@ -150,7 +150,7 @@ test_expect_success 'peel parameter' '
 
 	git serve --stateless-rpc <in >out &&
 	test-tool pkt-line unpack <out >actual &&
-	test_cmp actual expect
+	test_cmp expect actual
 '
 
 test_expect_success 'symrefs parameter' '
@@ -171,7 +171,7 @@ test_expect_success 'symrefs parameter' '
 
 	git serve --stateless-rpc <in >out &&
 	test-tool pkt-line unpack <out >actual &&
-	test_cmp actual expect
+	test_cmp expect actual
 '
 
 test_expect_success 'sending server-options' '
@@ -191,7 +191,7 @@ test_expect_success 'sending server-options' '
 
 	git serve --stateless-rpc <in >out &&
 	test-tool pkt-line unpack <out >actual &&
-	test_cmp actual expect
+	test_cmp expect actual
 '
 
 test_expect_success 'unexpected lines are not allowed in fetch request' '

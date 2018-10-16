@@ -110,10 +110,10 @@ test_expect_success 'add -e' '
 	cp second-part file &&
 	git add -e &&
 	test_cmp second-part file &&
-	test_cmp orig-patch expected-patch &&
+	test_cmp expected-patch orig-patch &&
 	git diff --cached >actual &&
 	grep -v index actual >out &&
-	test_cmp out expected
+	test_cmp expected out
 
 '
 

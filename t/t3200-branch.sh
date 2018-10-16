@@ -1221,7 +1221,7 @@ test_expect_success 'use --edit-description' '
 	EOF
 	EDITOR=./editor git branch --edit-description &&
 	echo "New contents" >expect &&
-	test_cmp EDITOR_OUTPUT expect
+	test_cmp expect EDITOR_OUTPUT
 '
 
 test_expect_success 'detect typo in branch name when using --edit-description' '

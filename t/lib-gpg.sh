@@ -57,9 +57,12 @@ then
 		echo | gpgsm --homedir "${GNUPGHOME}" 2>/dev/null \
 			--passphrase-fd 0 --pinentry-mode loopback \
 			--import "$TEST_DIRECTORY"/lib-gpg/gpgsm_cert.p12 &&
-		gpgsm --homedir "${GNUPGHOME}" 2>/dev/null -K \
-			| grep fingerprint: | cut -d" " -f4 | tr -d '\n' > \
-			${GNUPGHOME}/trustlist.txt &&
+
+		gpgsm --homedir "${GNUPGHOME}" 2>/dev/null -K |
+		grep fingerprint: |
+		cut -d" " -f4 |
+		tr -d '\n' >"${GNUPGHOME}/trustlist.txt" &&
+
 		echo " S relax" >> ${GNUPGHOME}/trustlist.txt &&
 		(gpgconf --kill gpg-agent >/dev/null 2>&1 || : ) &&
 		echo hello | gpgsm --homedir "${GNUPGHOME}" >/dev/null \

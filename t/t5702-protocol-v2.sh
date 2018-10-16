@@ -29,7 +29,7 @@ test_expect_success 'list refs with git:// using protocol v2' '
 	grep "git< version 2" log &&
 
 	git ls-remote --symref "$GIT_DAEMON_URL/parent" >expect &&
-	test_cmp actual expect
+	test_cmp expect actual
 '
 
 test_expect_success 'ref advertisment is filtered with ls-remote using protocol v2' '
@@ -42,7 +42,7 @@ test_expect_success 'ref advertisment is filtered with ls-remote using protocol 
 	$(git -C "$daemon_parent" rev-parse refs/heads/master)$(printf "\t")refs/heads/master
 	EOF
 
-	test_cmp actual expect
+	test_cmp expect actual
 '
 
 test_expect_success 'clone with git:// using protocol v2' '
@@ -138,7 +138,7 @@ test_expect_success 'list refs with file:// using protocol v2' '
 	grep "git< version 2" log &&
 
 	git ls-remote --symref "file://$(pwd)/file_parent" >expect &&
-	test_cmp actual expect
+	test_cmp expect actual
 '
 
 test_expect_success 'ref advertisment is filtered with ls-remote using protocol v2' '
@@ -151,7 +151,7 @@ test_expect_success 'ref advertisment is filtered with ls-remote using protocol 
 	$(git -C file_parent rev-parse refs/heads/master)$(printf "\t")refs/heads/master
 	EOF
 
-	test_cmp actual expect
+	test_cmp expect actual
 '
 
 test_expect_success 'server-options are sent when using ls-remote' '
@@ -164,7 +164,7 @@ test_expect_success 'server-options are sent when using ls-remote' '
 	$(git -C file_parent rev-parse refs/heads/master)$(printf "\t")refs/heads/master
 	EOF
 
-	test_cmp actual expect &&
+	test_cmp expect actual &&
 	grep "server-option=hello" log &&
 	grep "server-option=world" log
 '
@@ -271,7 +271,7 @@ test_expect_success 'partial clone' '
 	grep "version 2" trace &&
 
 	# Ensure that the old version of the file is missing
-	git -C client rev-list master --quiet --objects --missing=print \
+	git -C client rev-list --quiet --objects --missing=print master \
 		>observed.oids &&
 	grep "$(git -C server rev-parse message1:a.txt)" observed.oids &&
 
@@ -297,7 +297,7 @@ test_expect_success 'partial fetch' '
 	grep "version 2" trace &&
 
 	# Ensure that the old version of the file is missing
-	git -C client rev-list other --quiet --objects --missing=print \
+	git -C client rev-list --quiet --objects --missing=print other \
 		>observed.oids &&
 	grep "$(git -C server rev-parse message1:a.txt)" observed.oids &&
 

@@ -160,7 +160,7 @@ test_expect_success 'checkout -m with merge conflict' '
 	git diff master:one :3:uno |
 	sed -e "1,/^@@/d" -e "/^ /d" -e "s/^-/d/" -e "s/^+/a/" >current &&
 	fill d2 aT d7 aS >expect &&
-	test_cmp current expect &&
+	test_cmp expect current &&
 	git diff --cached two >current &&
 	test_must_be_empty current
 '
@@ -174,7 +174,7 @@ test_expect_success 'format of merge conflict from checkout -m' '
 
 	git ls-files >current &&
 	fill same two two two >expect &&
-	test_cmp current expect &&
+	test_cmp expect current &&
 
 	cat <<-EOF >expect &&
 	<<<<<<< simple
