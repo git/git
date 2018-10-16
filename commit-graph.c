@@ -13,6 +13,8 @@
 #include "commit-graph.h"
 #include "object-store.h"
 #include "alloc.h"
+#include "hashmap.h"
+#include "replace-object.h"
 #include "progress.h"
 
 #define GRAPH_SIGNATURE 0x43475048 /* "CGPH" */
@@ -55,6 +57,28 @@ static struct commit_graph *alloc_commit_graph(void)
 	g->graph_fd = -1;
 
 	return g;
+}
+
+extern int read_replace_refs;
+
+static int commit_graph_compatible(struct repository *r)
+{
+	if (!r->gitdir)
+		return 0;
+
+	if (read_replace_refs) {
+		prepare_replace_object(r);
+		if (hashmap_get_size(&r->objects->replace_map->map))
+			return 0;
+	}
+
+	prepare_commit_graft(r);
+	if (r->parsed_objects && r->parsed_objects->grafts_nr)
+		return 0;
+	if (is_repository_shallow(r))
+		return 0;
+
+	return 1;
 }
 
 struct commit_graph *load_commit_graph_one(const char *graph_file)
@@ -225,6 +249,9 @@ static int prepare_commit_graph(struct repository *r)
 		 */
 		return 0;
 
+	if (!commit_graph_compatible(r))
+		return 0;
+
 	obj_dir = r->objects->objectdir;
 	prepare_commit_graph_one(r, obj_dir);
 	prepare_alt_odb(r);
@@ -253,10 +280,10 @@ int generation_numbers_enabled(struct repository *r)
 	return !!first_generation;
 }
 
-static void close_commit_graph(void)
+void close_commit_graph(struct repository *r)
 {
-	free_commit_graph(the_repository->objects->commit_graph);
-	the_repository->objects->commit_graph = NULL;
+	free_commit_graph(r->objects->commit_graph);
+	r->objects->commit_graph = NULL;
 }
 
 static int bsearch_graph(struct commit_graph *g, struct object_id *oid, uint32_t *pos)
@@ -737,6 +764,9 @@ void write_commit_graph(const char *obj_dir,
 	struct commit_list *parent;
 	struct progress *progress = NULL;
 
+	if (!commit_graph_compatible(the_repository))
+		return;
+
 	oids.nr = 0;
 	oids.alloc = approximate_object_count() / 4;
 	oids.progress = NULL;
@@ -908,7 +938,7 @@ void write_commit_graph(const char *obj_dir,
 	write_graph_chunk_data(f, GRAPH_OID_LEN, commits.list, commits.nr);
 	write_graph_chunk_large_edges(f, commits.list, commits.nr);
 
-	close_commit_graph();
+	close_commit_graph(the_repository);
 	finalize_hashfile(f, NULL, CSUM_HASH_IN_STREAM | CSUM_FSYNC);
 	commit_lock_file(&lk);
 

@@ -24,6 +24,7 @@
 #include "quote.h"
 #include "upload-pack.h"
 #include "serve.h"
+#include "commit-graph.h"
 #include "commit-reach.h"
 
 /* Remember to update object flag allocation in object.h */
@@ -692,6 +693,7 @@ static void deepen_by_rev_list(int ac, const char **av,
 {
 	struct commit_list *result;
 
+	close_commit_graph(the_repository);
 	result = get_shallow_commits_by_rev_list(ac, av, SHALLOW, NOT_SHALLOW);
 	send_shallow(result);
 	free_commit_list(result);
