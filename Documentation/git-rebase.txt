@@ -954,7 +954,7 @@ command fails, it is rescheduled immediately, with a helpful message how
 to proceed.
 
 The `reset` command resets the HEAD, index and worktree to the specified
-revision. It is isimilar to an `exec git reset --hard <label>`, but
+revision. It is similar to an `exec git reset --hard <label>`, but
 refuses to overwrite untracked files. If the `reset` command fails, it is
 rescheduled immediately, with a helpful message how to edit the todo list
 (this typically happens when a `reset` command was inserted into the todo
