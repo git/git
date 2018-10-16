@@ -441,10 +441,10 @@ static const char *lock_repo_for_gc(int force, pid_t* ret_pid)
 	return NULL;
 }
 
-static int report_last_gc_error(void)
+static void report_last_gc_error(void)
 {
 	struct strbuf sb = STRBUF_INIT;
-	int ret = 0;
+	ssize_t len;
 	struct stat st;
 	char *gc_log_path = git_pathdup("gc.log");
 
@@ -452,16 +452,17 @@ static int report_last_gc_error(void)
 		if (errno == ENOENT)
 			goto done;
 
-		ret = error_errno(_("Can't stat %s"), gc_log_path);
-		goto done;
+		die_errno(_("cannot stat '%s'"), gc_log_path);
 	}
 
 	if (st.st_mtime < gc_log_expire_time)
 		goto done;
 
-	ret = strbuf_read_file(&sb, gc_log_path, 0);
-	if (ret > 0)
-		ret = error(_("The last gc run reported the following. "
+	len = strbuf_read_file(&sb, gc_log_path, 0);
+	if (len < 0)
+		die_errno(_("cannot read '%s'"), gc_log_path);
+	else if (len > 0)
+		die(_("The last gc run reported the following. "
 			       "Please correct the root cause\n"
 			       "and remove %s.\n"
 			       "Automatic cleanup will not be performed "
@@ -471,20 +472,18 @@ static int report_last_gc_error(void)
 	strbuf_release(&sb);
 done:
 	free(gc_log_path);
-	return ret;
 }
 
-static int gc_before_repack(void)
+static void gc_before_repack(void)
 {
 	if (pack_refs && run_command_v_opt(pack_refs_cmd.argv, RUN_GIT_CMD))
-		return error(FAILED_RUN, pack_refs_cmd.argv[0]);
+		die(FAILED_RUN, pack_refs_cmd.argv[0]);
 
 	if (prune_reflogs && run_command_v_opt(reflog.argv, RUN_GIT_CMD))
-		return error(FAILED_RUN, reflog.argv[0]);
+		die(FAILED_RUN, reflog.argv[0]);
 
 	pack_refs = 0;
 	prune_reflogs = 0;
-	return 0;
 }
 
 int cmd_gc(int argc, const char **argv, const char *prefix)
@@ -565,13 +564,11 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 			fprintf(stderr, _("See \"git help gc\" for manual housekeeping.\n"));
 		}
 		if (detach_auto) {
-			if (report_last_gc_error())
-				return -1;
+			report_last_gc_error(); /* dies on error */
 
 			if (lock_repo_for_gc(force, &pid))
 				return 0;
-			if (gc_before_repack())
-				return -1;
+			gc_before_repack(); /* dies on failure */
 			delete_tempfile(&pidfile);
 
 			/*
@@ -611,13 +608,12 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 		atexit(process_log_file_at_exit);
 	}
 
-	if (gc_before_repack())
-		return -1;
+	gc_before_repack();
 
 	if (!repository_format_precious_objects) {
 		close_all_packs(the_repository->objects);
 		if (run_command_v_opt(repack.argv, RUN_GIT_CMD))
-			return error(FAILED_RUN, repack.argv[0]);
+			die(FAILED_RUN, repack.argv[0]);
 
 		if (prune_expire) {
 			argv_array_push(&prune, prune_expire);
@@ -627,18 +623,18 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 				argv_array_push(&prune,
 						"--exclude-promisor-objects");
 			if (run_command_v_opt(prune.argv, RUN_GIT_CMD))
-				return error(FAILED_RUN, prune.argv[0]);
+				die(FAILED_RUN, prune.argv[0]);
 		}
 	}
 
 	if (prune_worktrees_expire) {
 		argv_array_push(&prune_worktrees, prune_worktrees_expire);
 		if (run_command_v_opt(prune_worktrees.argv, RUN_GIT_CMD))
-			return error(FAILED_RUN, prune_worktrees.argv[0]);
+			die(FAILED_RUN, prune_worktrees.argv[0]);
 	}
 
 	if (run_command_v_opt(rerere.argv, RUN_GIT_CMD))
-		return error(FAILED_RUN, rerere.argv[0]);
+		die(FAILED_RUN, rerere.argv[0]);
 
 	report_garbage = report_pack_garbage;
 	reprepare_packed_git(the_repository);
