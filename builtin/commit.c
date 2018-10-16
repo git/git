@@ -874,6 +874,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		s->use_color = 0;
 		commitable = run_status(s->fp, index_file, prefix, 1, s);
 		s->use_color = saved_color_setting;
+		string_list_clear(&s->change, 1);
 	} else {
 		struct object_id oid;
 		const char *parent = "HEAD";
