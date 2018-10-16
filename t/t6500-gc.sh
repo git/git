@@ -4,6 +4,7 @@ test_description='basic git gc tests
 '
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-terminal.sh
 
 test_expect_success 'setup' '
 	# do not let the amount of physical memory affects gc
@@ -97,6 +98,26 @@ test_expect_success 'auto gc with too many loose objects does not attempt to cre
 	comm -2 -3 existing_packs post_packs >del &&
 	test_line_count = 0 del && # No packs are deleted
 	test_line_count = 2 new # There is one new pack and its .idx
+'
+
+test_expect_success 'gc --no-quiet' '
+	git -c gc.writeCommitGraph=true gc --no-quiet >stdout 2>stderr &&
+	test_must_be_empty stdout &&
+	test_line_count = 1 stderr &&
+	test_i18ngrep "Computing commit graph generation numbers" stderr
+'
+
+test_expect_success TTY 'with TTY: gc --no-quiet' '
+	test_terminal git -c gc.writeCommitGraph=true gc --no-quiet >stdout 2>stderr &&
+	test_must_be_empty stdout &&
+	test_i18ngrep "Enumerating objects" stderr &&
+	test_i18ngrep "Computing commit graph generation numbers" stderr
+'
+
+test_expect_success 'gc --quiet' '
+	git -c gc.writeCommitGraph=true gc --quiet >stdout 2>stderr &&
+	test_must_be_empty stdout &&
+	test_must_be_empty stderr
 '
 
 run_and_wait_for_auto_gc () {

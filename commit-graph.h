@@ -60,11 +60,12 @@ struct commit_graph *load_commit_graph_one(const char *graph_file);
  */
 int generation_numbers_enabled(struct repository *r);
 
-void write_commit_graph_reachable(const char *obj_dir, int append);
+void write_commit_graph_reachable(const char *obj_dir, int append,
+				  int report_progress);
 void write_commit_graph(const char *obj_dir,
 			struct string_list *pack_indexes,
 			struct string_list *commit_hex,
-			int append);
+			int append, int report_progress);
 
 int verify_commit_graph(struct repository *r, struct commit_graph *g);
 

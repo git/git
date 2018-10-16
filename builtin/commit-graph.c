@@ -151,7 +151,7 @@ static int graph_write(int argc, const char **argv)
 		opts.obj_dir = get_object_directory();
 
 	if (opts.reachable) {
-		write_commit_graph_reachable(opts.obj_dir, opts.append);
+		write_commit_graph_reachable(opts.obj_dir, opts.append, 1);
 		return 0;
 	}
 
@@ -171,7 +171,8 @@ static int graph_write(int argc, const char **argv)
 	write_commit_graph(opts.obj_dir,
 			   pack_indexes,
 			   commit_hex,
-			   opts.append);
+			   opts.append,
+			   1);
 
 	string_list_clear(&lines, 0);
 	return 0;
