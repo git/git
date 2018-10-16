@@ -76,7 +76,7 @@ Note that omitting the `=` in `git -c foo.bar ...` is allowed and sets
 `foo.bar` to the boolean true value (just like `[foo]bar` would in a
 config file). Including the equals but with an empty value (like `git -c
 foo.bar= ...`) sets `foo.bar` to the empty string which `git config
---bool` will convert to `false`.
+--type=bool` will convert to `false`.
 
 --exec-path[=<path>]::
 	Path to wherever your core Git programs are installed.

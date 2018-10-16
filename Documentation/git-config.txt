@@ -188,8 +188,8 @@ Valid `<type>`'s include:
 --bool-or-int::
 --path::
 --expiry-date::
-  Historical options for selecting a type specifier. Prefer instead `--type`,
-  (see: above).
+  Historical options for selecting a type specifier. Prefer instead `--type`
+  (see above).
 
 --no-type::
   Un-sets the previously set type specifier (if one was previously set). This
@@ -442,9 +442,9 @@ For URLs in `https://weak.example.com`, `http.sslVerify` is set to
 false, while it is set to `true` for all others:
 
 ------------
-% git config --bool --get-urlmatch http.sslverify https://good.example.com
+% git config --type=bool --get-urlmatch http.sslverify https://good.example.com
 true
-% git config --bool --get-urlmatch http.sslverify https://weak.example.com
+% git config --type=bool --get-urlmatch http.sslverify https://weak.example.com
 false
 % git config --get-urlmatch http https://weak.example.com
 http.cookieFile /tmp/cookie.txt

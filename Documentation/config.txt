@@ -225,7 +225,7 @@ boolean::
 	false;; Boolean false literals are `no`, `off`, `false`,
 		`0` and the empty string.
 +
-When converting value to the canonical form using `--bool` type
+When converting a value to its canonical form using the `--type=bool` type
 specifier, 'git config' will ensure that the output is "true" or
 "false" (spelled in lowercase).
 
