@@ -553,15 +553,15 @@ then
 	# Note: incompatibility with --interactive is just a strong warning;
 	#       git-rebase.txt caveats with "unless you know what you are doing"
 	test -n "$rebase_merges" &&
-		die "$(gettext "error: cannot combine '--preserve_merges' with '--rebase-merges'")"
+		die "$(gettext "error: cannot combine '--preserve-merges' with '--rebase-merges'")"
 fi
 
 if test -n "$rebase_merges"
 then
 	test -n "$strategy_opts" &&
-		die "$(gettext "error: cannot combine '--rebase_merges' with '--strategy-option'")"
+		die "$(gettext "error: cannot combine '--rebase-merges' with '--strategy-option'")"
 	test -n "$strategy" &&
-		die "$(gettext "error: cannot combine '--rebase_merges' with '--strategy'")"
+		die "$(gettext "error: cannot combine '--rebase-merges' with '--strategy'")"
 fi
 
 if test -z "$rebase_root"
