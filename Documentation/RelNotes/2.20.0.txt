@@ -58,6 +58,17 @@ UI, Workflows & Features
  * "git multi-pack-index" learned to detect corruption in the .midx
    file it uses, and this feature has been integrated into "git fsck".
 
+ * Generation of (experimental) commit-graph files have so far been
+   fairly silent, even though it takes noticeable amount of time in a
+   meaningfully large repository.  The users will now see progress
+   output.
+
+ * The minimum version of Windows supported by Windows port fo Git is
+   now set to Vista.
+
+ * The completion script (in contrib/) learned to complete a handful of
+   options "git stash list" command takes.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -107,6 +118,19 @@ Performance, Internal Implementation, Development Support etc.
 
  * Update fsck.skipList implementation and documentation.
    (merge 371a655074 ab/fsck-skiplist later to maint).
+
+ * An alias that expands to another alias has so far been forbidden,
+   but now it is allowed to create such an alias.
+
+ * Various test scripts have been updated for style and also correct
+   handling of exit status of various commands.
+
+ * "gc --auto" ended up calling exit(-1) upon error, which has been
+   corrected to use exit(1).  Also the error reporting behaviour when
+   daemonized has been updated to exit with zero status when stopping
+   due to a previously discovered error (which implies there is no
+   point running gc to improve the situation); we used to exit with
+   failure in such a case.
 
 
 Fixes since v2.19
@@ -170,6 +194,21 @@ Fixes since v2.19
    segfault, which has been corrected.
    (merge e467a90c7a tg/range-diff-corner-case-fix later to maint).
 
+ * The recently introduced commit-graph auxiliary data is incompatible
+   with mechanisms such as replace & grafts that "breaks" immutable
+   nature of the object reference relationship.  Disable optimizations
+   based on its use (and updating existing commit-graph) when these
+   incompatible features are in use in the repository.
+   (merge 829a321569 ds/commit-graph-with-grafts later to maint).
+
+ * The mailmap file update.
+   (merge 255eb03edf jn/mailmap-update later to maint).
+
+ * The code in "git status" sometimes hit an assertion failure.  This
+   was caused by a structure that was reused without cleaning the data
+   used for the first run, which has been corrected.
+   (merge 3e73cc62c0 en/status-multiple-renames-to-the-same-target-fix later to maint).
+
  * Code cleanup, docfix, build fix, etc.
    (merge 96a7501aad ts/doc-build-manpage-xsl-quietly later to maint).
    (merge b9b07efdb2 tg/conflict-marker-size later to maint).
@@ -181,3 +220,14 @@ Fixes since v2.19
    (merge 0597dd62ba sb/string-list-remove-unused later to maint).
    (merge db2d36fad8 bw/protocol-v2 later to maint).
    (merge 456d7cd3a9 sg/split-index-test later to maint).
+   (merge 7b6057c852 tq/refs-internal-comment-fix later to maint).
+   (merge 29e8dc50ad tg/t5551-with-curl-7.61.1 later to maint).
+   (merge 55f6bce2c9 fe/doc-updates later to maint).
+   (merge 7987d2232d jk/check-everything-connected-is-long-gone later to maint).
+   (merge 4ba3c9be47 dz/credential-doc-url-matching-rules later to maint).
+   (merge 4c399442f7 ma/commit-graph-docs later to maint).
+   (merge fc0503b04e ma/t1400-undebug-test later to maint).
+   (merge e56b53553a nd/packobjectshook-doc-fix later to maint).
+   (merge c56170a0c4 ma/mailing-list-address-in-git-help later to maint).
+   (merge 6e8fc70fce rs/sequencer-oidset-insert-avoids-dups later to maint).
+   (merge ad0b8f9575 mw/doc-typofixes later to maint).
