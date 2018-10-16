@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Oct 2018, #02; Sat, 13)
-X-master-at: 5a0cc8aca797dbd7d2be3b67458ff880ed45cddf
-X-next-at: 152ad8e3369ac77026886a2910e3a407c281df35
+Subject: What's cooking in git.git (Oct 2018, #03; Wed, 17)
+X-master-at: a4b8ab5363a32f283a61ef3a962853556d136c0e
+X-next-at: 3377e82b59874c0e626c00f29bf7526a27f29d65
 
-What's cooking in git.git (Oct 2018, #02; Sat, 13)
+What's cooking in git.git (Oct 2018, #03; Wed, 17)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,8 +12,10 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-Quite a lot of topics have been merged to 'next'.  Let's see how
-well they fare.
+Note that "cf. <msg-id>" are not meant as "clear all of these and
+you are home free".  They are primarily to prevent me from merging
+topics that are not ready to 'next' by mistake and remind me where
+to go back to read the last state of the discussion in the archive.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -21,97 +23,363 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[New Topics]
+[Graduated to "master"]
 
-* ab/gc-doc-update (2018-10-11) 1 commit
- - gc doc: mention the commit-graph in the intro
+* ab/commit-graph-progress (2018-09-20) 3 commits
+  (merged to 'next' on 2018-09-24 at 76f2f5c1e3)
+ + gc: fix regression in 7b0f229222 impacting --quiet
+ + commit-graph verify: add progress output
+ + commit-graph write: add progress output
+ (this branch is used by ds/commit-graph-leakfix.)
 
- The documentation of "git gc" has been updated to mention that it
- is no longer limited to "pruning away crufts" but also updates
- ancillary files like commit-graph as a part of repository
- optimization.
+ (Originally merged to 'next' on 2018-09-20 at 24ca94b1d4)
 
- Waiting for reactions.
- cf. <20181010193818.20399-1-avarab@gmail.com>
- The author seems to feel that this might be controversial.
-
-
-* du/branch-show-current (2018-10-12) 2 commits
- - SQUASH???
- - branch: introduce --show-current display option
-
- "git branch" learned a new subcommand "--show-current".
+ Generation of (experimental) commit-graph files have so far been
+ fairly silent, even though it takes noticeable amount of time in a
+ meaningfully large repository.  The users will now see progress
+ output.
 
 
-* du/rev-parse-is-plumbing (2018-10-11) 1 commit
- - doc: move git-rev-parse from porcelain to plumbing
+* ds/commit-graph-with-grafts (2018-08-21) 8 commits
+  (merged to 'next' on 2018-10-09 at 851a457102)
+ + commit-graph: close_commit_graph before shallow walk
+ + commit-graph: not compatible with uninitialized repo
+ + commit-graph: not compatible with grafts
+ + commit-graph: not compatible with replace objects
+ + test-repository: properly init repo
+ + commit-graph: update design document
+ + refs.c: upgrade for_each_replace_ref to be a each_repo_ref_fn callback
+ + refs.c: migrate internal ref iteration to pass thru repository argument
+
+ The recently introduced commit-graph auxiliary data is incompatible
+ with mechanisms such as replace & grafts that "breaks" immutable
+ nature of the object reference relationship.  Disable optimizations
+ based on its use (and updating existing commit-graph) when these
+ incompatible features are in use in the repository.
+
+
+* ds/reachable-final-cleanup (2018-09-25) 1 commit
+  (merged to 'next' on 2018-10-12 at 32c6d5f55a)
+ + commit-reach: cleanups in can_all_from_reach...
+
+ Code already in 'master' is further cleaned-up by this patch.
+
+
+* dz/credential-doc-url-matching-rules (2018-09-27) 1 commit
+  (merged to 'next' on 2018-10-12 at 4547952530)
+ + doc: clarify gitcredentials path component matching
 
  Doc update.
 
- Will merge to 'next'.
 
-
-* mm/doc-no-dashed-git (2018-10-11) 1 commit
- - doc: fix a typo and clarify a sentence
-
- Doc update.
-
- Will merge to 'next'.
-
-
-* ot/ref-filter-plug-leaks (2018-10-11) 3 commits
- . ref-filter: free item->value and item->value->s
- . ls-remote: release memory instead of UNLEAK
- . ref-filter: free memory from used_atom
-
- Plugging a handful of memory leaks in the ref-filter codepath.
-
- Seems to break t6300 standalone and when merged to 'pu'.
-
-
-* rv/send-email-cc-misc-by (2018-10-11) 3 commits
- - send-email: also pick up cc addresses from -by trailers
- - send-email: only consider lines containing @ or <> for automatic Cc'ing
- - Documentation/git-send-email.txt: style fixes
-
- "git send-email" learned to grab address-looking string on any
- trailer whose name ends with "-by"; --suppress-cc=misc-by on the
- command line, or setting sendemail.suppresscc configuration
- variable to "misc-by", can be used to disable this behaviour.
-
- This is a backward-incompatible change that may surprise existing
- users.
-
-
-* du/cherry-is-plumbing (2018-10-12) 1 commit
- - doc: move git-cherry to plumbing
-
- Doc update to mark "git cherry" as a plumbing command.
-
-
-* du/get-tar-commit-id-is-plumbing (2018-10-12) 1 commit
- - doc: move git-get-tar-commit-id to plumbing
-
- Doc update to mark "git get-tar-commit-id" as a plumbing command.
-
- Will merge to 'next'.
-
-
-* lm/range-diff-submodule-fix (2018-10-12) 1 commit
- - range-diff: allow to diff files regardless submodule
-
- "git range-diff" did not work well when the compared ranges had
- changes in submodules and the "--submodule=log" was used.
-
- Will merge to 'next'.
-
-
-* sb/diff-emit-line-ws-markup-cleanup (2018-10-12) 1 commit
- - diff.c: pass sign_index to emit_line_ws_markup
+* en/merge-cleanup (2018-09-20) 4 commits
+  (merged to 'next' on 2018-10-09 at f3a00b506f)
+ + merge-recursive: rename merge_file_1() and merge_content()
+ + merge-recursive: remove final remaining caller of merge_file_one()
+ + merge-recursive: avoid wrapper function when unnecessary and wasteful
+ + merge-recursive: set paths correctly when three-way merging content
+ (this branch is used by en/merge-cleanup-more.)
 
  Code clean-up.
 
+
+* en/status-multiple-renames-to-the-same-target-fix (2018-09-27) 1 commit
+  (merged to 'next' on 2018-10-12 at 4976fc61a0)
+ + commit: fix erroneous BUG, 'multiple renames on the same target? how?'
+
+ The code in "git status" sometimes hit an assertion failure.  This
+ was caused by a structure that was reused without cleaning the data
+ used for the first run, which has been corrected.
+
+
+* fe/doc-updates (2018-09-21) 3 commits
+  (merged to 'next' on 2018-10-10 at 2eea3a88bc)
+ + git-describe.1: clarify that "human readable" is also git-readable
+ + git-column.1: clarify initial description, provide examples
+ + git-archimport.1: specify what kind of Arch we're talking about
+
+ Doc updates.
+
+
+* jk/check-everything-connected-is-long-gone (2018-09-25) 1 commit
+  (merged to 'next' on 2018-10-12 at 4ce30c9a30)
+ + receive-pack: update comment with check_everything_connected
+
+ Comment fix.
+
+
+* jk/delta-islands-with-bitmap-reuse-delta-fix (2018-09-19) 1 commit
+  (merged to 'next' on 2018-10-09 at 10e58be2af)
+ + pack-objects: handle island check for "external" delta base
+
+ Fix interactions between two recent topics.
+
+
+* jk/oideq-hasheq-cleanup (2018-10-04) 1 commit
+  (merged to 'next' on 2018-10-12 at 7c9b5681da)
+ + more oideq/hasheq conversions
+
+ Code clean-up.
+
+
+* jn/gc-auto (2018-07-17) 1 commit
+  (merged to 'next' on 2018-10-10 at 9f0f1f770e)
+ + gc: do not return error for prior errors in daemonized mode
+ (this branch uses jn/gc-auto-prep.)
+
+ "gc --auto" ended up calling exit(-1) upon error, which has been
+ corrected to use exit(1).  Also the error reporting behaviour when
+ daemonized has been updated to exit with zero status when stopping
+ due to a previously discovered error (which implies there is no
+ point running gc to improve the situation); we used to exit with
+ failure in such a case.
+
+
+* jn/gc-auto-prep (2018-07-17) 2 commits
+  (merged to 'next' on 2018-10-10 at 4ab6a62f62)
+ + gc: exit with status 128 on failure
+ + gc: improve handling of errors reading gc.log
+ (this branch is used by jn/gc-auto.)
+
+ Code clean-up.
+
+
+* jn/mailmap-update (2018-09-25) 1 commit
+  (merged to 'next' on 2018-10-10 at fa2b394bd5)
+ + mailmap: consistently normalize brian m. carlson's name
+
+ The mailmap file update.
+
+
+* js/mingw-wants-vista-or-above (2018-10-04) 3 commits
+  (merged to 'next' on 2018-10-12 at 3a174c3d43)
+ + mingw: bump the minimum Windows version to Vista
+ + mingw: set _WIN32_WINNT explicitly for Git for Windows
+ + compat/poll: prepare for targeting Windows Vista
+
+ The minimum version of Windows supported by Windows port fo Git is
+ now set to Vista.
+
+
+* ma/commit-graph-docs (2018-09-27) 4 commits
+  (merged to 'next' on 2018-10-12 at eafaf79b5a)
+ + Doc: refer to the "commit-graph file" with dash
+ + git-commit-graph.txt: refer to "*commit*-graph file"
+ + git-commit-graph.txt: typeset more in monospace
+ + git-commit-graph.txt: fix bullet lists
+
+ Doc update.
+
+
+* ma/config-doc-update (2018-09-20) 2 commits
+  (merged to 'next' on 2018-10-09 at 312a873a2a)
+ + git-config.txt: fix 'see: above' note
+ + Doc: use `--type=bool` instead of `--bool`
+
+ Doc update.
+
+
+* ma/mailing-list-address-in-git-help (2018-09-29) 1 commit
+  (merged to 'next' on 2018-10-12 at 4c3737d234)
+ + git doc: direct bug reporters to mailing list archive
+
+ Doc update.
+
+
+* ma/t1400-undebug-test (2018-09-28) 1 commit
+  (merged to 'next' on 2018-10-12 at d736f83435)
+ + t1400: drop debug `echo` to actually execute `test`
+
+ Test fix.
+
+
+* md/test-cleanup (2018-10-07) 7 commits
+  (merged to 'next' on 2018-10-10 at 7e0bf1b573)
+ + tests: order arguments to git-rev-list properly
+ + t9109: don't swallow Git errors upstream of pipes
+ + tests: don't swallow Git errors upstream of pipes
+ + t/*: fix ordering of expected/observed arguments
+ + tests: standardize pipe placement
+ + Documentation: add shell guidelines
+ + t/README: reformat Do, Don't, Keep in mind lists
+
+ Various test scripts have been updated for style and also correct
+ handling of exit status of various commands.
+
+
+* mw/doc-typofixes (2018-10-07) 3 commits
+  (merged to 'next' on 2018-10-12 at 97297b8ce9)
+ + docs: typo: s/isimilar/similar/
+ + docs: graph: remove unnecessary `graph_update()' call
+ + docs: typo: s/go/to/
+
+ Typofixes.
+
+
+* nd/packobjectshook-doc-fix (2018-09-29) 1 commit
+  (merged to 'next' on 2018-10-12 at 85d75f5219)
+ + config.txt: correct the note about uploadpack.packObjectsHook
+
+ Doc update.
+
+
+* rj/header-check (2018-09-20) 8 commits
+  (merged to 'next' on 2018-10-09 at 7fa9c68ef0)
+ + delta-islands.h: add missing forward declarations (hdr-check)
+ + midx.h: add missing forward declarations (hdr-check)
+ + refs/refs-internal.h: add missing declarations (hdr-check)
+ + refs/packed-backend.h: add missing declaration (hdr-check)
+ + refs/ref-cache.h: add missing declarations (hdr-check)
+ + ewah/ewok_rlw.h: add missing include (hdr-check)
+ + json-writer.h: add missing include (hdr-check)
+ + Makefile: add a hdr-check target
+
+ Header files clean-up.
+
+
+* rs/sequencer-oidset-insert-avoids-dups (2018-10-03) 1 commit
+  (merged to 'next' on 2018-10-12 at b294394711)
+ + sequencer: use return value of oidset_insert()
+
+ Code clean-up.
+
+
+* rt/rebase-typofix (2018-09-28) 1 commit
+  (merged to 'next' on 2018-10-12 at 58691d20df)
+ + git-rebase.sh: fix typos in error messages
+
+ Typofix.
+
+
+* sf/complete-stash-list (2018-10-07) 1 commit
+  (merged to 'next' on 2018-10-12 at ff0e9a0805)
+ + git-completion.bash: add completion for stash list
+
+ The completion script (in contrib/) learned to complete a handful of
+ options "git stash list" command takes.
+
+
+* tg/t5551-with-curl-7.61.1 (2018-09-24) 2 commits
+  (merged to 'next' on 2018-10-10 at 5ada84ed7a)
+ + t5551: compare sorted cookies files
+ + t5551: move setup code inside test_expect blocks
+
+ Test update.
+ Supersedes tz/t5551-with-curl-7.61.1 topic
+
+
+* tq/refs-internal-comment-fix (2018-09-17) 1 commit
+  (merged to 'next' on 2018-10-09 at 422313bbd0)
+ + refs: docstring typo
+
+ Fix for typo in a sample code in comment.
+
+
+* ts/alias-of-alias (2018-09-17) 3 commits
+  (merged to 'next' on 2018-10-09 at ac19b4730b)
+ + t0014: introduce an alias testing suite
+ + alias: show the call history when an alias is looping
+ + alias: add support for aliases of an alias
+
+ An alias that expands to another alias has so far been forbidden,
+ but now it is allowed to create such an alias.
+
+--------------------------------------------------
+[New Topics]
+
+* en/merge-cleanup-more (2018-10-16) 4 commits
+ - merge-recursive: avoid showing conflicts with merge branch before HEAD
+ - merge-recursive: improve auto-merging messages with path collisions
+ - merge-recursive: increase marker length with depth of recursion
+ - t6036: add testcase where virtual merge base contains nested conflicts
+
+ Further clean-up of merge-recursive machinery.
+
+
+* ld/p4-unshelve (2018-10-16) 3 commits
+ - git-p4: fully support unshelving changelists
+ - git-p4: unshelve into refs/remotes/p4-unshelved, not refs/remotes/p4/unshelved
+ - git-p4: do not fail in verbose mode for missing 'fileSize' key
+
+ "git p4 unshelve" improvements.
+
  Will merge to 'next'.
+
+
+* mg/gpg-parse-tighten (2018-10-15) 1 commit
+ - gpg-interface.c: detect and reject multiple signatures on commits
+
+ Detect and reject a signature block that has more than one GPG
+ signature.
+
+ Expecting another round of polishing, which is promising.
+ cf. <1539636266.1014.6.camel@gentoo.org>
+
+
+* bc/sha-256 (2018-10-16) 14 commits
+ - SQUASH???
+ - commit-graph: specify OID version for SHA-256
+ - hash: add an SHA-256 implementation using OpenSSL
+ - sha256: add an SHA-256 implementation using libgcrypt
+ - Add a base implementation of SHA-256 support
+ - commit-graph: convert to using the_hash_algo
+ - t/helper: add a test helper to compute hash speed
+ - sha1-file: add a constant for hash block size
+ - t: make the sha1 test-tool helper generic
+ - t: add basic tests for our SHA-1 implementation
+ - cache: make hashcmp and hasheq work with larger hashes
+ - hex: introduce functions to print arbitrary hashes
+ - sha1-file: provide functions to look up hash algorithms
+ - sha1-file: rename algorithm to "sha1"
+
+ Add sha-256 hash and plug it through the code to allow building Git
+ with the "NewHash".
+
+
+* ds/mingw-default-ident (2018-10-16) 3 commits
+ - mingw: use domain information for default email
+ - getpwuid(mingw): provide a better default for the user name
+ - getpwuid(mingw): initialize the structure only once
+
+ The logic to select the default user name and e-mail on Windows has
+ been improved.
+
+ Will merge to 'next'.
+
+
+* ds/mingw-http-ssl (2018-10-16) 3 commits
+ - http: when using Secure Channel, ignore sslCAInfo by default
+ - http: add support for disabling SSL revocation checks in cURL
+ - http: add support for selecting SSL backends at runtime
+
+ On Windows with recent enough cURL library, the configuration
+ variable http.sslBackend can be used to choose between OpenSSL and
+ Secure Channel at runtime as the SSL backend while talking over
+ the HTTPS protocol.
+
+ Almost there.
+ cf. <CAPig+cQFb3S0Lm+huUZDN4aw9rWwinh0iZp12ss1zVKpJ=2MdA@mail.gmail.com>
+
+
+* js/vsts-ci (2018-10-16) 13 commits
+ - travis: fix skipping tagged releases
+ - README: add a build badge (status of the Azure Pipelines build)
+ - tests: record more stderr with --write-junit-xml in case of failure
+ - tests: include detailed trace logs with --write-junit-xml upon failure
+ - git-p4: use `test_atexit` to kill the daemon
+ - git-daemon: use `test_atexit` in the tests
+ - tests: introduce `test_atexit`
+ - ci: add a build definition for Azure DevOps
+ - ci/lib.sh: add support for Azure Pipelines
+ - tests: optionally write results as JUnit-style .xml
+ - test-date: add a subcommand to measure times in shell scripts
+ - ci/lib.sh: encapsulate Travis-specific things
+ - ci: rename the library of common functions
+
+ Prepare to run test suite on Azure DevOps.
+
+ On hold, monitoring the discussion.
+ cf. <nycvar.QRO.7.76.6.1810151657080.4546@tvgsbejvaqbjf.bet>
 
 --------------------------------------------------
 [Stalled]
@@ -128,41 +396,113 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* mk/use-size-t-in-zlib (2018-10-12) 1 commit
- - zlib.c: use size_t for size
+* ab/gc-doc-update (2018-10-11) 1 commit
+ - gc doc: mention the commit-graph in the intro
 
- The wrapper to call into zlib followed our long tradition to use
- "unsigned long" for sizes of regions in memory, which have been
- updated to use "size_t".
+ The documentation of "git gc" has been updated to mention that it
+ is no longer limited to "pruning away crufts" but also updates
+ ancillary files like commit-graph as a part of repository
+ optimization.
 
-
-* ds/reachable-final-cleanup (2018-09-25) 1 commit
-  (merged to 'next' on 2018-10-12 at 32c6d5f55a)
- + commit-reach: cleanups in can_all_from_reach...
-
- Code already in 'master' is further cleaned-up by this patch.
-
- Will merge to 'master'.
+ Will merge to 'next'.
 
 
-* dz/credential-doc-url-matching-rules (2018-09-27) 1 commit
-  (merged to 'next' on 2018-10-12 at 4547952530)
- + doc: clarify gitcredentials path component matching
+* du/branch-show-current (2018-10-16) 2 commits
+ - SQUASH???
+ - branch: introduce --show-current display option
+
+ "git branch" learned a new subcommand "--show-current".
+
+ Waiting for ack(s) on SQUASH??? fixup.
+ cf. <xmqqk1mizb1c.fsf@gitster-ct.c.googlers.com>
+
+
+* du/rev-parse-is-plumbing (2018-10-11) 1 commit
+  (merged to 'next' on 2018-10-16 at 50aca759e2)
+ + doc: move git-rev-parse from porcelain to plumbing
 
  Doc update.
 
  Will merge to 'master'.
 
 
-* en/status-multiple-renames-to-the-same-target-fix (2018-09-27) 1 commit
-  (merged to 'next' on 2018-10-12 at 4976fc61a0)
- + commit: fix erroneous BUG, 'multiple renames on the same target? how?'
+* mm/doc-no-dashed-git (2018-10-11) 1 commit
+  (merged to 'next' on 2018-10-16 at c26bcd740b)
+ + doc: fix a typo and clarify a sentence
 
- The code in "git status" sometimes hit an assertion failure.  This
- was caused by a structure that was reused without cleaning the data
- used for the first run, which has been corrected.
+ Doc update.
 
  Will merge to 'master'.
+
+
+* ot/ref-filter-plug-leaks (2018-10-11) 3 commits
+ . ref-filter: free item->value and item->value->s
+ . ls-remote: release memory instead of UNLEAK
+ . ref-filter: free memory from used_atom
+
+ Plugging a handful of memory leaks in the ref-filter codepath.
+
+ Seems to break t6300 standalone and when merged to 'pu'.
+
+
+* rv/send-email-cc-misc-by (2018-10-16) 3 commits
+ - send-email: also pick up cc addresses from -by trailers
+ - send-email: only consider lines containing @ or <> for automatic Cc'ing
+ - Documentation/git-send-email.txt: style fixes
+
+ "git send-email" learned to grab address-looking string on any
+ trailer whose name ends with "-by"; --suppress-cc=misc-by on the
+ command line, or setting sendemail.suppresscc configuration
+ variable to "misc-by", can be used to disable this behaviour.
+
+ This is a backward-incompatible change that may surprise existing
+ users.
+
+ Will merge to 'next'.
+
+
+* du/cherry-is-plumbing (2018-10-12) 1 commit
+ - doc: move git-cherry to plumbing
+
+ Doc update to mark "git cherry" as a plumbing command.
+
+ Will merge to 'next'.
+
+
+* du/get-tar-commit-id-is-plumbing (2018-10-12) 1 commit
+  (merged to 'next' on 2018-10-16 at 23e7f018cd)
+ + doc: move git-get-tar-commit-id to plumbing
+
+ Doc update to mark "git get-tar-commit-id" as a plumbing command.
+
+ Will merge to 'master'.
+
+
+* lm/range-diff-submodule-fix (2018-10-12) 1 commit
+  (merged to 'next' on 2018-10-16 at 3e50d7a73b)
+ + range-diff: allow to diff files regardless submodule
+
+ "git range-diff" did not work well when the compared ranges had
+ changes in submodules and the "--submodule=log" was used.
+
+ Will merge to 'master'.
+
+
+* sb/diff-emit-line-ws-markup-cleanup (2018-10-12) 1 commit
+  (merged to 'next' on 2018-10-16 at a68a6f0003)
+ + diff.c: pass sign_index to emit_line_ws_markup
+
+ Code clean-up.
+
+ Will merge to 'master'.
+
+
+* mk/use-size-t-in-zlib (2018-10-15) 1 commit
+ - zlib.c: use size_t for size
+
+ The wrapper to call into zlib followed our long tradition to use
+ "unsigned long" for sizes of regions in memory, which have been
+ updated to use "size_t".
 
 
 * jc/how-to-document-api (2018-09-29) 1 commit
@@ -191,36 +531,6 @@ of the repositories listed at
  of string-list nearby that should be converted at the same time.
 
 
-* jk/check-everything-connected-is-long-gone (2018-09-25) 1 commit
-  (merged to 'next' on 2018-10-12 at 4ce30c9a30)
- + receive-pack: update comment with check_everything_connected
-
- Comment fix.
-
- Will merge to 'master'.
-
-
-* jk/oideq-hasheq-cleanup (2018-10-04) 1 commit
-  (merged to 'next' on 2018-10-12 at 7c9b5681da)
- + more oideq/hasheq conversions
-
- Code clean-up.
-
- Will merge to 'master'.
-
-
-* js/mingw-wants-vista-or-above (2018-10-04) 3 commits
-  (merged to 'next' on 2018-10-12 at 3a174c3d43)
- + mingw: bump the minimum Windows version to Vista
- + mingw: set _WIN32_WINNT explicitly for Git for Windows
- + compat/poll: prepare for targeting Windows Vista
-
- The minimum version of Windows supported by Windows port fo Git is
- now set to Vista.
-
- Will merge to 'master'.
-
-
 * js/rebase-i-break (2018-10-12) 2 commits
  - rebase -i: introduce the 'break' command
  - rebase -i: clarify what happens on a failed `exec`
@@ -245,7 +555,9 @@ of the repositories listed at
  version 2 of the protocol is defined to allow going over http(s) as
  well as Git native transport.
 
- Will merge to 'master'.
+ Will hold.
+ cf. <20181016212008.GA249669@google.com>
+ Breaks interoperability.
 
 
 * jt/non-blob-lazy-fetch (2018-10-04) 2 commits
@@ -263,42 +575,13 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* ma/commit-graph-docs (2018-09-27) 4 commits
-  (merged to 'next' on 2018-10-12 at eafaf79b5a)
- + Doc: refer to the "commit-graph file" with dash
- + git-commit-graph.txt: refer to "*commit*-graph file"
- + git-commit-graph.txt: typeset more in monospace
- + git-commit-graph.txt: fix bullet lists
-
- Doc update.
-
- Will merge to 'master'.
-
-
-* ma/mailing-list-address-in-git-help (2018-09-29) 1 commit
-  (merged to 'next' on 2018-10-12 at 4c3737d234)
- + git doc: direct bug reporters to mailing list archive
-
- Doc update.
-
- Will merge to 'master'.
-
-
-* ma/t1400-undebug-test (2018-09-28) 1 commit
-  (merged to 'next' on 2018-10-12 at d736f83435)
- + t1400: drop debug `echo` to actually execute `test`
-
- Test fix.
-
- Will merge to 'master'.
-
-
 * ma/t7005-bash-workaround (2018-09-28) 1 commit
- - t7005-editor: quote filename to fix whitespace-issue
+  (merged to 'next' on 2018-10-16 at 543e1e6574)
+ + t7005-editor: quote filename to fix whitespace-issue
 
  Test fix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * nd/help-commands-verbose-by-default (2018-10-03) 1 commit
@@ -311,15 +594,6 @@ of the repositories listed at
  verbose output (with "--no-verbose", you can go back to the
  original).  Also "git help -av" now lists aliases and external
  commands, which it did not used to.
-
- Will merge to 'master'.
-
-
-* nd/packobjectshook-doc-fix (2018-09-29) 1 commit
-  (merged to 'next' on 2018-10-12 at 85d75f5219)
- + config.txt: correct the note about uploadpack.packObjectsHook
-
- Doc update.
 
  Will merge to 'master'.
 
@@ -364,24 +638,6 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* rs/sequencer-oidset-insert-avoids-dups (2018-10-03) 1 commit
-  (merged to 'next' on 2018-10-12 at b294394711)
- + sequencer: use return value of oidset_insert()
-
- Code clean-up.
-
- Will merge to 'master'.
-
-
-* rt/rebase-typofix (2018-09-28) 1 commit
-  (merged to 'next' on 2018-10-12 at 58691d20df)
- + git-rebase.sh: fix typos in error messages
-
- Typofix.
-
- Will merge to 'master'.
-
-
 * rv/alias-help (2018-10-11) 3 commits
  - git-help.txt: document "git help cmd" vs "git cmd --help" for aliases
  - git.c: handle_alias: prepend alias info when first argument is -h
@@ -407,23 +663,25 @@ of the repositories listed at
 
  Code clean-up to serve as a BCP example.
 
- What's the status of this one after the discussion thread stopped here?
- cf. <CAGZ79kbV6QjsFKcD2uG_P9j1AvzSNQSi-_jXGQ9w0YU9fjhEGg@mail.gmail.com>
+ Will merge to 'next'.
+ Further clean-up patches may need to follow soon before this
+ change escapes to 'master'.
 
 
 * sg/split-index-racefix (2018-10-12) 7 commits
- - split-index: BUG() when cache entry refers to non-existing shared entry
- - split-index: smudge and add racily clean cache entries to split index
- - split-index: don't compare cached data of entries already marked for split index
- - split-index: count the number of deleted entries
- - t1700-split-index: date back files to avoid racy situations
- - split-index: add tests to demonstrate the racy split index problem
- - t1700-split-index: document why FSMONITOR is disabled in this test script
+  (merged to 'next' on 2018-10-16 at c1d6563c51)
+ + split-index: BUG() when cache entry refers to non-existing shared entry
+ + split-index: smudge and add racily clean cache entries to split index
+ + split-index: don't compare cached data of entries already marked for split index
+ + split-index: count the number of deleted entries
+ + t1700-split-index: date back files to avoid racy situations
+ + split-index: add tests to demonstrate the racy split index problem
+ + t1700-split-index: document why FSMONITOR is disabled in this test script
 
  The codepath to support the experimental split-index mode had
  remaining "racily clean" issues fixed.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * sm/show-superproject-while-conflicted (2018-09-28) 1 commit
@@ -465,16 +723,17 @@ of the repositories listed at
 
 
 * bc/editorconfig (2018-10-09) 2 commits
- - editorconfig: indicate settings should be kept in sync
- - editorconfig: provide editor settings for Git developers
+  (merged to 'next' on 2018-10-16 at 81461ae0fd)
+ + editorconfig: indicate settings should be kept in sync
+ + editorconfig: provide editor settings for Git developers
 
  To help developers, an EditorConfig file that attempts to follow
  the project convention has been added.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* bc/hash-transition-part-15 (2018-10-09) 14 commits
+* bc/hash-transition-part-15 (2018-10-15) 15 commits
  - rerere: convert to use the_hash_algo
  - submodule: make zero-oid comparison hash function agnostic
  - apply: rename new_sha1_prefix and old_sha1_prefix
@@ -487,13 +746,16 @@ of the repositories listed at
  - pack-revindex: express constants in terms of the_hash_algo
  - builtin/fetch-pack: remove constants with parse_oid_hex
  - builtin/mktree: remove hard-coded constant
- - builtin/repack: replace hard-coded constant
+ - builtin/repack: replace hard-coded constants
  - pack-bitmap-write: use GIT_MAX_RAWSZ for allocation
+ - object_id.cocci: match only expressions of type 'struct object_id'
 
  More codepaths are moving away from hardcoded hash sizes.
 
 
-* ch/subtree-build (2018-10-10) 1 commit
+* ch/subtree-build (2018-10-16) 2 commits
+  (merged to 'next' on 2018-10-16 at 919599cc37)
+ + subtree: make install targets depend on build targets
   (merged to 'next' on 2018-10-12 at 4ed9ff6300)
  + subtree: add build targets 'man' and 'html'
 
@@ -507,7 +769,6 @@ of the repositories listed at
  + commit-graph: reduce initial oid allocation
  + builtin/commit-graph.c: UNLEAK variables
  + commit-graph: clean up leaked memory during write
- (this branch uses ab/commit-graph-progress.)
 
  Code clean-up.
 
@@ -525,12 +786,14 @@ of the repositories listed at
  cf. <8b5dbe3d-b382-bf48-b524-d9e8a074ac4d@gmail.com>
 
 
-* js/fuzzer (2018-10-10) 2 commits
- - fuzz: add fuzz testing for packfile indices
- - fuzz: add basic fuzz testing target
+* js/fuzzer (2018-10-15) 2 commits
+ - fuzz: add fuzz testing for packfile indices.
+ - fuzz: add basic fuzz testing target.
 
  An experiment to fuzz test a few areas, hopefully we can gain more
  coverage to various areas.
+
+ Will merge to 'next'.
 
 
 * jt/avoid-ls-refs (2018-10-07) 4 commits
@@ -562,17 +825,6 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* mw/doc-typofixes (2018-10-07) 3 commits
-  (merged to 'next' on 2018-10-12 at 97297b8ce9)
- + docs: typo: s/isimilar/similar/
- + docs: graph: remove unnecessary `graph_update()' call
- + docs: typo: s/go/to/
-
- Typofixes.
-
- Will merge to 'master'.
-
-
 * nd/per-worktree-ref-iteration (2018-10-07) 9 commits
  . SQUASH???
  . reflog expire: cover reflog from all worktrees
@@ -584,21 +836,25 @@ of the repositories listed at
  . Add a place for (not) sharing stuff between worktrees
  . refs.c: indent with tabs, not spaces
 
+ Expecting a reroll.
+ cf. <CACsJy8DNHCxz1cL+6rFxnWvQQz3T7_j8+=5u8=CxjraRzM89mw@mail.gmail.com>
  Ejected for now, as it seems to break t2025 when in 'pu'.
 
 
 * np/log-graph-octopus-fix (2018-10-12) 1 commit
- - log: fix coloring of certain octopus merge shapes
+  (merged to 'next' on 2018-10-16 at aa00813683)
+ + log: fix coloring of certain octopus merge shapes
 
  "git log --graph" showing an octopus merge sometimes miscounted the
  number of display columns it is consuming to show the merge and its
  parent commits, which has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * rs/subtree-fixes (2018-10-12) 5 commits
- - subtree: performance improvement for finding unexpected parent commits
+  (merged to 'next' on 2018-10-16 at be23c9343c)
+ + subtree: performance improvement for finding unexpected parent commits
   (merged to 'next' on 2018-10-12 at 2b47258e04)
  + subtree: improve decision on merges kept in split
  + subtree: use commits before rejoins for splits
@@ -609,16 +865,6 @@ of the repositories listed at
 
  Will merge to 'master'.
  Unless somebody objects, that is.
-
-
-* sf/complete-stash-list (2018-10-07) 1 commit
-  (merged to 'next' on 2018-10-12 at ff0e9a0805)
- + git-completion.bash: add completion for stash list
-
- The completion script (in contrib/) lerned to complete a handful of
- options "git stash list" command takes.
-
- Will merge to 'master'.
 
 
 * tb/filter-alternate-refs (2018-10-09) 4 commits
@@ -641,33 +887,6 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* fe/doc-updates (2018-09-21) 3 commits
-  (merged to 'next' on 2018-10-10 at 2eea3a88bc)
- + git-describe.1: clarify that "human readable" is also git-readable
- + git-column.1: clarify initial description, provide examples
- + git-archimport.1: specify what kind of Arch we're talking about
-
- Doc updates.
-
- Will merge to 'master'.
-
-
-* md/test-cleanup (2018-10-07) 7 commits
-  (merged to 'next' on 2018-10-10 at 7e0bf1b573)
- + tests: order arguments to git-rev-list properly
- + t9109: don't swallow Git errors upstream of pipes
- + tests: don't swallow Git errors upstream of pipes
- + t/*: fix ordering of expected/observed arguments
- + tests: standardize pipe placement
- + Documentation: add shell guidelines
- + t/README: reformat Do, Don't, Keep in mind lists
-
- Various test scripts have been updated for style and also correct
- handling of exit status of various commands.
-
- Will merge to 'master'.
-
-
 * nd/complete-fetch-multiple-args (2018-09-21) 1 commit
   (merged to 'next' on 2018-10-10 at f78e14123c)
  + completion: support "git fetch --multiple"
@@ -686,28 +905,6 @@ of the repositories listed at
  "git fetch $repo $object" in a partial clone did not correctly
  fetch the asked-for object that is referenced by an object in
  promisor packfile, which has been fixed.
-
- Will merge to 'master'.
-
-
-* tg/t5551-with-curl-7.61.1 (2018-09-24) 2 commits
-  (merged to 'next' on 2018-10-10 at 5ada84ed7a)
- + t5551: compare sorted cookies files
- + t5551: move setup code inside test_expect blocks
-
- Test update.
-
- Will merge to 'master'.
- Supersedes tz/t5551-with-curl-7.61.1 topic
-
-
-* jn/gc-auto-prep (2018-07-17) 2 commits
-  (merged to 'next' on 2018-10-10 at 4ab6a62f62)
- + gc: exit with status 128 on failure
- + gc: improve handling of errors reading gc.log
- (this branch is used by jn/gc-auto.)
-
- Code clean-up.
 
  Will merge to 'master'.
 
@@ -756,27 +953,6 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* tq/refs-internal-comment-fix (2018-09-17) 1 commit
-  (merged to 'next' on 2018-10-09 at 422313bbd0)
- + refs: docstring typo
-
- Fix for typo in a sample code in comment.
-
- Will merge to 'master'.
-
-
-* ts/alias-of-alias (2018-09-17) 3 commits
-  (merged to 'next' on 2018-10-09 at ac19b4730b)
- + t0014: introduce an alias testing suite
- + alias: show the call history when an alias is looping
- + alias: add support for aliases of an alias
-
- An alias that expands to another alias has so far been forbidden,
- but now it is allowed to create such an alias.
-
- Will merge to 'master'.
-
-
 * ds/reachable-topo-order (2018-09-21) 7 commits
  - revision.c: refactor basic topo-order logic
  - revision.h: add whitespace in flag definitions
@@ -789,63 +965,8 @@ of the repositories listed at
  The revision walker machinery learned to take advantage of the
  commit generation numbers stored in the commit-graph file.
 
- What's the status of this topic?
-
-
-* en/merge-cleanup (2018-09-20) 4 commits
-  (merged to 'next' on 2018-10-09 at f3a00b506f)
- + merge-recursive: rename merge_file_1() and merge_content()
- + merge-recursive: remove final remaining caller of merge_file_one()
- + merge-recursive: avoid wrapper function when unnecessary and wasteful
- + merge-recursive: set paths correctly when three-way merging content
-
- Code clean-up.
-
- Will merge to 'master'.
-
-
-* jk/delta-islands-with-bitmap-reuse-delta-fix (2018-09-19) 1 commit
-  (merged to 'next' on 2018-10-09 at 10e58be2af)
- + pack-objects: handle island check for "external" delta base
-
- Fix interactions between two recent topics.
-
- Will merge to 'master'.
-
-
-* jn/mailmap-update (2018-09-25) 1 commit
-  (merged to 'next' on 2018-10-10 at fa2b394bd5)
- + mailmap: consistently normalize brian m. carlson's name
-
- The mailmap file update.
-
- Will merge to 'master'.
-
-
-* ma/config-doc-update (2018-09-20) 2 commits
-  (merged to 'next' on 2018-10-09 at 312a873a2a)
- + git-config.txt: fix 'see: above' note
- + Doc: use `--type=bool` instead of `--bool`
-
- Doc update.
-
- Will merge to 'master'.
-
-
-* rj/header-check (2018-09-20) 8 commits
-  (merged to 'next' on 2018-10-09 at 7fa9c68ef0)
- + delta-islands.h: add missing forward declarations (hdr-check)
- + midx.h: add missing forward declarations (hdr-check)
- + refs/refs-internal.h: add missing declarations (hdr-check)
- + refs/packed-backend.h: add missing declaration (hdr-check)
- + refs/ref-cache.h: add missing declarations (hdr-check)
- + ewah/ewok_rlw.h: add missing include (hdr-check)
- + json-writer.h: add missing include (hdr-check)
- + Makefile: add a hdr-check target
-
- Header files clean-up.
-
- Will merge to 'master'.
+ Expecting a reroll.
+ cf. <1c0eb7d3-7f31-9377-d42f-4ac2f36ac26a@gmail.com>
 
 
 * bp/read-cache-parallel (2018-10-11) 7 commits
@@ -865,13 +986,14 @@ of the repositories listed at
 
 
 * ds/coverage-diff (2018-10-10) 1 commit
- - contrib: add coverage-diff script
+  (merged to 'next' on 2018-10-16 at c12b7279d9)
+ + contrib: add coverage-diff script
 
  The result of coverage test can be combined with "git blame" to
  check the test coverage of code introduced recently with a new
  'coverage-diff' tool (in contrib/).
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * sb/submodule-recursive-fetch-gets-the-tip (2018-10-11) 9 commits
@@ -902,23 +1024,6 @@ of the repositories listed at
 
  Some environment variables that control the runtime options of Git
  used during tests are getting renamed for consistency.
-
- Will merge to 'master'.
-
-
-* ab/commit-graph-progress (2018-09-20) 3 commits
-  (merged to 'next' on 2018-09-24 at 76f2f5c1e3)
- + gc: fix regression in 7b0f229222 impacting --quiet
- + commit-graph verify: add progress output
- + commit-graph write: add progress output
- (this branch is used by ds/commit-graph-leakfix.)
-
- (Originally merged to 'next' on 2018-09-20 at 24ca94b1d4)
-
- Generation of (expermental) commit-graph files have so far been
- fairly silent, even though it takes noticeable amount of time in a
- meaningfully large repository.  The users will now see progress
- output.
 
  Will merge to 'master'.
 
@@ -979,7 +1084,9 @@ of the repositories listed at
  cf. <20181010205645.e1529eff9099805029b1d6ef@ao2.it>
 
 
-* md/filter-trees (2018-10-07) 8 commits
+* md/filter-trees (2018-10-15) 9 commits
+  (merged to 'next' on 2018-10-16 at 64d351d342)
+ + filter-trees: code clean-up of tests
   (merged to 'next' on 2018-10-12 at c66e49d4ca)
  + list-objects-filter: implement filter tree:0
  + list-objects-filter-options: do not over-strbuf_init
@@ -1079,7 +1186,7 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* ps/stash-in-c (2018-08-31) 20 commits
+* ps/stash-in-c (2018-10-15) 21 commits
  - stash: replace all `write-tree` child processes with API calls
  - stash: optimize `get_untracked_files()` and `check_changes()`
  - stash: convert `stash--helper.c` into `stash.c`
@@ -1088,23 +1195,24 @@ of the repositories listed at
  - stash: convert push to builtin
  - stash: convert create to builtin
  - stash: convert store to builtin
- - stash: mention options in `show` synopsis
  - stash: convert show to builtin
  - stash: convert list to builtin
  - stash: convert pop to builtin
  - stash: convert branch to builtin
  - stash: convert drop and clear to builtin
  - stash: convert apply to builtin
+ - stash: mention options in `show` synopsis
  - stash: add tests for `git stash show` config
  - stash: rename test cases to be more descriptive
- - stash: update test cases conform to coding guidelines
+ - t3903: modernize style
  - stash: improve option parsing test coverage
+ - strbuf.c: add `strbuf_join_argv()`
  - sha1-name.c: add `get_oidf()` which acts like `get_oid()`
 
  "git stash" rewritten in C.
 
- Expecting a reroll.
- cf. <20181010141841.GA17445@hank.intra.tgummerer.com>
+ Almost there.
+ cf. <20181015221040.GD4883@hank.intra.tgummerer.com>
 
 
 * pw/add-p-select (2018-07-26) 4 commits
@@ -1123,43 +1231,6 @@ of the repositories listed at
  cf. <d622a95b-7302-43d4-4ec9-b2cf3388c653@talktalk.net>
  I found the feature to be hard to explain, and may result in more
  end-user complaints, but let's see.
-
-
-* ds/commit-graph-with-grafts (2018-08-21) 8 commits
-  (merged to 'next' on 2018-10-09 at 851a457102)
- + commit-graph: close_commit_graph before shallow walk
- + commit-graph: not compatible with uninitialized repo
- + commit-graph: not compatible with grafts
- + commit-graph: not compatible with replace objects
- + test-repository: properly init repo
- + commit-graph: update design document
- + refs.c: upgrade for_each_replace_ref to be a each_repo_ref_fn callback
- + refs.c: migrate internal ref iteration to pass thru repository argument
-
- The recently introduced commit-graph auxiliary data is incompatible
- with mechanisms such as replace & grafts that "breaks" immutable
- nature of the object reference relationship.  Disable optimizations
- based on its use (and updating existing commit-graph) when these
- incompatible features are in use in the repository.
-
- Will merge to 'master'.
-
-
-* jn/gc-auto (2018-07-17) 1 commit
-  (merged to 'next' on 2018-10-10 at 9f0f1f770e)
- + gc: do not return error for prior errors in daemonized mode
- (this branch uses jn/gc-auto-prep.)
-
- "gc --auto" ended up calling exit(-1) upon error, which has been
- corrected to use exit(1).  Also the error reporting behaviour when
- daemonized has been updated to exit with zero status when stopping
- due to a previously discovered error (which implies there is no
- point running gc to improve the situation); we used to exit with
- failure in such a case.
-
- Will merge to 'master'.
- cf. <20180917182639.GB140909@aiede.svl.corp.google.com>
- cf. <20181009234502.oxzfwirjcew2sxrm@dcvr>
 
 
 * ag/rebase-i-in-c (2018-10-09) 20 commits
@@ -1199,109 +1270,3 @@ of the repositories listed at
  Rewrite of the "rebase" machinery in C.
 
  Will merge to 'next' together with pk/rebase-i-in-c-6-final.
-
---------------------------------------------------
-[Discarded]
-
-* sb/submodule-move-head-with-corruption (2018-08-28) 2 commits
- . submodule.c: warn about missing submodule git directories
- . t2013: add test for missing but active submodule
-
- Discarded for a cleaned-up rewrite.
- cf. <CAGZ79kYJGMOtroLhPwOdhWewXf3X_b0QOgiUb65pyJ7xJ-whQw@mail.gmail.com>
-
-
-* sb/grep-submodule-cleanup (2018-10-10) 1 commit
- . builtin/grep.c: remove superfluous submodule code
-
- Code clean-up.
-
- Discarded, expecting a future reroll.
- cf. <CAGZ79kYJGMOtroLhPwOdhWewXf3X_b0QOgiUb65pyJ7xJ-whQw@mail.gmail.com>
- cf. <CAGZ79kbZ35OEh=2JiZuOHgG-P3a3PeSP5hgrXX-tQh9feOQsjQ@mail.gmail.com>
-
-
-* jk/drop-ancient-curl (2017-08-09) 5 commits
- . http: #error on too-old curl
- . curl: remove ifdef'd code never used with curl >=7.19.4
- . http: drop support for curl < 7.19.4
- . http: drop support for curl < 7.16.0
- . http: drop support for curl < 7.11.1
-
- Some code in http.c that has bitrot is being removed.
-
-
-* ds/format-commit-graph-docs (2018-08-21) 2 commits
- . commit-graph.txt: improve formatting for asciidoc
- . Docs: Add commit-graph tech docs to Makefile
-
- Design docs for the commit-graph machinery is now made into HTML as
- well as text.
-
-
-* bw/submodule-name-to-dir (2018-08-10) 2 commits
- . submodule: munge paths to submodule git directories
- . submodule: create helper to build paths to submodule gitdirs
-
- In modern repository layout, the real body of a cloned submodule
- repository is held in .git/modules/ of the superproject, indexed by
- the submodule name.  URLencode the submodule name before computing
- the name of the directory to make sure they form a flat namespace.
-
- Discarded, expecting further work on the topic.
- cf. <CAGZ79kYnbjaPoWdda0SM_-_X77mVyYC7JO61OV8nm2yj3Q1OvQ@mail.gmail.com>
-
-
-* ng/status-i-short-for-ignored (2018-08-09) 1 commit
- . status: -i shorthand for --ignored command line option
-
- "git status --ignored" gained a shorthand "git status -i".
-
- Discarded after hearing no strong support.
-
-
-* sl/commit-dry-run-with-short-output-fix (2018-07-30) 4 commits
- . commit: fix exit code when doing a dry run
- . wt-status: teach wt_status_collect about merges in progress
- . wt-status: rename commitable to committable
- . t7501: add coverage for flags which imply dry runs
-
- "git commit --dry-run" gave a correct exit status even during a
- conflict resolution toward a merge, but it did not with the
- "--short" option, which has been corrected.
-
- Seems to break 7512, 3404 and 7060 in 'pu'.
-
-
-* ma/wrapped-info (2018-05-28) 2 commits
- . usage: prefix all lines in `vreportf()`, not just the first
- . usage: extract `prefix_suffix_lines()` from `advise()`
-
- An attempt to help making multi-line messages fed to warning(),
- error(), and friends more easily translatable.
-
- Will discard and wait for a cleaned-up rewrite.
- cf. <20180529213957.GF7964@sigill.intra.peff.net>
-
-
-* hn/bisect-first-parent (2018-04-21) 1 commit
- . bisect: create 'bisect_flags' parameter in find_bisection()
- (this branch is used by tb/bisect-first-parent.)
-
- Preliminary code update to allow passing more flags down the
- bisection codepath in the future.
-
-
-* pb/bisect-helper-2 (2018-07-23) 8 commits
- . t6030: make various test to pass GETTEXT_POISON tests
- . bisect--helper: `bisect_start` shell function partially in C
- . bisect--helper: `get_terms` & `bisect_terms` shell function in C
- . bisect--helper: `bisect_next_check` shell function in C
- . bisect--helper: `check_and_set_terms` shell function in C
- . wrapper: move is_empty_file() and rename it as is_empty_or_missing_file()
- . bisect--helper: `bisect_write` shell function in C
- . bisect--helper: `bisect_reset` shell function in C
-
- cf. <0102015f5e5ee171-f30f4868-886f-47a1-a4e4-b4936afc545d-000000@eu-west-1.amazonses.com>
- ... there is no update to address any of the review comments
- in the thread above.
