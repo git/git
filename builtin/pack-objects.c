@@ -1469,6 +1469,57 @@ static void cleanup_preferred_base(void)
 	done_pbase_paths_num = done_pbase_paths_alloc = 0;
 }
 
+/*
+ * Return 1 iff the object specified by "delta" can be sent
+ * literally as a delta against the base in "base_sha1". If
+ * so, then *base_out will point to the entry in our packing
+ * list, or NULL if we must use the external-base list.
+ *
+ * Depth value does not matter - find_deltas() will
+ * never consider reused delta as the base object to
+ * deltify other objects against, in order to avoid
+ * circular deltas.
+ */
+static int can_reuse_delta(const unsigned char *base_sha1,
+			   struct object_entry *delta,
+			   struct object_entry **base_out)
+{
+	struct object_entry *base;
+
+	if (!base_sha1)
+		return 0;
+
+	/*
+	 * First see if we're already sending the base (or it's explicitly in
+	 * our "excluded" list).
+	 */
+	base = packlist_find(&to_pack, base_sha1, NULL);
+	if (base) {
+		if (!in_same_island(&delta->idx.oid, &base->idx.oid))
+			return 0;
+		*base_out = base;
+		return 1;
+	}
+
+	/*
+	 * Otherwise, reachability bitmaps may tell us if the receiver has it,
+	 * even if it was buried too deep in history to make it into the
+	 * packing list.
+	 */
+	if (thin && bitmap_has_sha1_in_uninteresting(bitmap_git, base_sha1)) {
+		if (use_delta_islands) {
+			struct object_id base_oid;
+			hashcpy(base_oid.hash, base_sha1);
+			if (!in_same_island(&delta->idx.oid, &base_oid))
+				return 0;
+		}
+		*base_out = NULL;
+		return 1;
+	}
+
+	return 0;
+}
+
 static void check_object(struct object_entry *entry)
 {
 	unsigned long canonical_size;
@@ -1555,22 +1606,7 @@ static void check_object(struct object_entry *entry)
 			break;
 		}
 
-		if (base_ref && (
-		    (base_entry = packlist_find(&to_pack, base_ref, NULL)) ||
-		    (thin &&
-		     bitmap_has_sha1_in_uninteresting(bitmap_git, base_ref))) &&
-		    in_same_island(&entry->idx.oid, &base_entry->idx.oid)) {
-			/*
-			 * If base_ref was set above that means we wish to
-			 * reuse delta data, and either we found that object in
-			 * the list of objects we want to pack, or it's one we
-			 * know the receiver has.
-			 *
-			 * Depth value does not matter - find_deltas() will
-			 * never consider reused delta as the base object to
-			 * deltify other objects against, in order to avoid
-			 * circular deltas.
-			 */
+		if (can_reuse_delta(base_ref, entry, &base_entry)) {
 			oe_set_type(entry, entry->in_pack_type);
 			SET_SIZE(entry, in_pack_size); /* delta size */
 			SET_DELTA_SIZE(entry, in_pack_size);
