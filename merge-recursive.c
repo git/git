@@ -1674,8 +1674,8 @@ static int handle_rename_rename_2to1(struct merge_options *o,
 	remove_file(o, 1, a->path, o->call_depth || would_lose_untracked(a->path));
 	remove_file(o, 1, b->path, o->call_depth || would_lose_untracked(b->path));
 
-	path_side_1_desc = xstrfmt("%s (was %s)", path, a->path);
-	path_side_2_desc = xstrfmt("%s (was %s)", path, b->path);
+	path_side_1_desc = xstrfmt("version of %s from %s", path, a->path);
+	path_side_2_desc = xstrfmt("version of %s from %s", path, b->path);
 	if (merge_mode_and_contents(o, a, c1, &ci->ren1_other, path_side_1_desc,
 				    o->branch1, o->branch2, &mfi_c1) ||
 	    merge_mode_and_contents(o, b, &ci->ren2_other, c2, path_side_2_desc,
