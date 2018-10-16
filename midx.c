@@ -282,8 +282,8 @@ static int nth_midxed_pack_entry(struct multi_pack_index *m, struct pack_entry *
 		struct object_id oid;
 		nth_midxed_object_oid(&oid, m, pos);
 		for (i = 0; i < p->num_bad_objects; i++)
-			if (!hashcmp(oid.hash,
-				     p->bad_object_sha1 + the_hash_algo->rawsz * i))
+			if (hasheq(oid.hash,
+				   p->bad_object_sha1 + the_hash_algo->rawsz * i))
 				return 0;
 	}
 
@@ -580,8 +580,8 @@ static struct pack_midx_entry *get_sorted_entries(struct multi_pack_index *m,
 		 * Take only the first duplicate.
 		 */
 		for (cur_object = 0; cur_object < nr_fanout; cur_object++) {
-			if (cur_object && !oidcmp(&entries_by_fanout[cur_object - 1].oid,
-						  &entries_by_fanout[cur_object].oid))
+			if (cur_object && oideq(&entries_by_fanout[cur_object - 1].oid,
+						&entries_by_fanout[cur_object].oid))
 				continue;
 
 			ALLOC_GROW(deduplicated_entries, *nr_objects + 1, alloc_objects);
