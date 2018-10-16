@@ -23,26 +23,26 @@ test_expect_success 'create http-accessible bare repository' '
 
 setup_askpass_helper
 
-cat >exp <<EOF
-> GET /smart/repo.git/info/refs?service=git-upload-pack HTTP/1.1
-> Accept: */*
-> Accept-Encoding: ENCODINGS
-> Pragma: no-cache
-< HTTP/1.1 200 OK
-< Pragma: no-cache
-< Cache-Control: no-cache, max-age=0, must-revalidate
-< Content-Type: application/x-git-upload-pack-advertisement
-> POST /smart/repo.git/git-upload-pack HTTP/1.1
-> Accept-Encoding: ENCODINGS
-> Content-Type: application/x-git-upload-pack-request
-> Accept: application/x-git-upload-pack-result
-> Content-Length: xxx
-< HTTP/1.1 200 OK
-< Pragma: no-cache
-< Cache-Control: no-cache, max-age=0, must-revalidate
-< Content-Type: application/x-git-upload-pack-result
-EOF
 test_expect_success 'clone http repository' '
+	cat >exp <<-\EOF &&
+	> GET /smart/repo.git/info/refs?service=git-upload-pack HTTP/1.1
+	> Accept: */*
+	> Accept-Encoding: ENCODINGS
+	> Pragma: no-cache
+	< HTTP/1.1 200 OK
+	< Pragma: no-cache
+	< Cache-Control: no-cache, max-age=0, must-revalidate
+	< Content-Type: application/x-git-upload-pack-advertisement
+	> POST /smart/repo.git/git-upload-pack HTTP/1.1
+	> Accept-Encoding: ENCODINGS
+	> Content-Type: application/x-git-upload-pack-request
+	> Accept: application/x-git-upload-pack-result
+	> Content-Length: xxx
+	< HTTP/1.1 200 OK
+	< Pragma: no-cache
+	< Cache-Control: no-cache, max-age=0, must-revalidate
+	< Content-Type: application/x-git-upload-pack-result
+	EOF
 	GIT_TRACE_CURL=true git clone --quiet $HTTPD_URL/smart/repo.git clone 2>err &&
 	test_cmp file clone/file &&
 	tr '\''\015'\'' Q <err |
@@ -96,13 +96,13 @@ test_expect_success 'fetch changes via http' '
 	test_cmp file clone/file
 '
 
-cat >exp <<EOF
-GET  /smart/repo.git/info/refs?service=git-upload-pack HTTP/1.1 200
-POST /smart/repo.git/git-upload-pack HTTP/1.1 200
-GET  /smart/repo.git/info/refs?service=git-upload-pack HTTP/1.1 200
-POST /smart/repo.git/git-upload-pack HTTP/1.1 200
-EOF
 test_expect_success 'used upload-pack service' '
+	cat >exp <<-\EOF &&
+	GET  /smart/repo.git/info/refs?service=git-upload-pack HTTP/1.1 200
+	POST /smart/repo.git/git-upload-pack HTTP/1.1 200
+	GET  /smart/repo.git/info/refs?service=git-upload-pack HTTP/1.1 200
+	POST /smart/repo.git/git-upload-pack HTTP/1.1 200
+	EOF
 	check_access_log exp
 '
 
@@ -203,19 +203,19 @@ test_expect_success 'dumb clone via http-backend respects namespace' '
 	test_cmp expect actual
 '
 
-cat >cookies.txt <<EOF
-127.0.0.1	FALSE	/smart_cookies/	FALSE	0	othername	othervalue
-EOF
-cat >expect_cookies.txt <<EOF
-
-127.0.0.1	FALSE	/smart_cookies/	FALSE	0	othername	othervalue
-127.0.0.1	FALSE	/smart_cookies/repo.git/info/	FALSE	0	name	value
-EOF
 test_expect_success 'cookies stored in http.cookiefile when http.savecookies set' '
+	cat >cookies.txt <<-\EOF &&
+	127.0.0.1	FALSE	/smart_cookies/	FALSE	0	othername	othervalue
+	EOF
+	sort >expect_cookies.txt <<-\EOF &&
+
+	127.0.0.1	FALSE	/smart_cookies/	FALSE	0	othername	othervalue
+	127.0.0.1	FALSE	/smart_cookies/repo.git/info/	FALSE	0	name	value
+	EOF
 	git config http.cookiefile cookies.txt &&
 	git config http.savecookies true &&
 	git ls-remote $HTTPD_URL/smart_cookies/repo.git master &&
-	tail -3 cookies.txt >cookies_tail.txt &&
+	tail -3 cookies.txt | sort >cookies_tail.txt &&
 	test_cmp expect_cookies.txt cookies_tail.txt
 '
 
