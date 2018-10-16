@@ -561,7 +561,8 @@ int can_all_from_reach_with_flag(struct object_array *from,
 		from_one = deref_tag(the_repository, from_one,
 				     "a from object", 0);
 		if (!from_one || from_one->type != OBJ_COMMIT) {
-			/* no way to tell if this is reachable by
+			/*
+			 * no way to tell if this is reachable by
 			 * looking at the ancestry chain alone, so
 			 * leave a note to ourselves not to worry about
 			 * this object anymore.
@@ -625,10 +626,7 @@ int can_all_from_reach_with_flag(struct object_array *from,
 	}
 
 cleanup:
-	for (i = 0; i < nr_commits; i++) {
-		clear_commit_marks(list[i], RESULT);
-		clear_commit_marks(list[i], assign_flag);
-	}
+	clear_commit_marks_many(nr_commits, list, RESULT | assign_flag);
 	free(list);
 
 	for (i = 0; i < from->nr; i++)
