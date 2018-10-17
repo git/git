@@ -5,6 +5,12 @@
 #include "parse-options.h"
 #include "run-command.h"
 
+#ifdef WIN32
+#define NO_SUCH_DIR "\\\\.\\GLOBALROOT\\invalid"
+#else
+#define NO_SUCH_DIR "/dev/null"
+#endif
+
 static int run_diff(const char *path1, const char *path2)
 {
 	const char *argv[] = {
@@ -12,8 +18,8 @@ static int run_diff(const char *path1, const char *path2)
 	};
 	const char *env[] = {
 		"GIT_PAGER=cat",
-		"GIT_DIR=/dev/null",
-		"HOME=/dev/null",
+		"GIT_DIR=" NO_SUCH_DIR,
+		"HOME=" NO_SUCH_DIR,
 		NULL
 	};
 
