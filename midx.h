@@ -1,5 +1,5 @@
-#ifndef __MIDX_H__
-#define __MIDX_H__
+#ifndef MIDX_H
+#define MIDX_H
 
 #include "repository.h"
 
