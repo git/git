@@ -941,7 +941,7 @@ static void midx_report(const char *fmt, ...)
 int verify_midx_file(const char *object_dir)
 {
 	uint32_t i;
-	struct progress *progress = NULL;
+	struct progress *progress;
 	struct multi_pack_index *m = load_multi_pack_index(object_dir, 1);
 	verify_midx_error = 0;
 
