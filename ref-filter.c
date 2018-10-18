@@ -1996,6 +1996,10 @@ void ref_array_clear(struct ref_array *array)
 {
 	int i;
 
+	for (i = 0; i < used_atom_cnt; i++)
+		free((char *)used_atom[i].name);
+	FREE_AND_NULL(used_atom);
+	used_atom_cnt = 0;
 	for (i = 0; i < array->nr; i++)
 		free_array_item(array->items[i]);
 	FREE_AND_NULL(array->items);
