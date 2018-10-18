@@ -69,11 +69,11 @@ install: $(GIT_SUBTREE)
 
 install-doc: install-man install-html
 
-install-man: man
+install-man: $(GIT_SUBTREE_DOC)
 	$(INSTALL) -d -m 755 $(DESTDIR)$(man1dir)
 	$(INSTALL) -m 644 $^ $(DESTDIR)$(man1dir)
 
-install-html: html
+install-html: $(GIT_SUBTREE_HTML)
 	$(INSTALL) -d -m 755 $(DESTDIR)$(htmldir)
 	$(INSTALL) -m 644 $^ $(DESTDIR)$(htmldir)
 
@@ -98,4 +98,4 @@ clean:
 	$(RM) $(GIT_SUBTREE)
 	$(RM) *.xml *.html *.1
 
-.PHONY: FORCE man html install-man install-html
+.PHONY: FORCE
