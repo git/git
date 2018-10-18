@@ -102,9 +102,16 @@ static enum list_objects_filter_result filter_trees_none(
 
 	case LOFS_BEGIN_TREE:
 	case LOFS_BLOB:
-		if (filter_data->omits)
+		if (filter_data->omits) {
 			oidset_insert(filter_data->omits, &obj->oid);
-		return LOFR_MARK_SEEN; /* but not LOFR_DO_SHOW (hard omit) */
+			/* _MARK_SEEN but not _DO_SHOW (hard omit) */
+			return LOFR_MARK_SEEN;
+		} else {
+			/*
+			 * Not collecting omits so no need to to traverse tree.
+			 */
+			return LOFR_SKIP_TREE | LOFR_MARK_SEEN;
+		}
 
 	case LOFS_END_TREE:
 		assert(obj->type == OBJ_TREE);
