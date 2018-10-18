@@ -53,7 +53,6 @@ static int no_progress, daemon_mode;
 #define ALLOW_ANY_SHA1	07
 static unsigned int allow_unadvertised_object_request;
 static int shallow_nr;
-static struct object_array have_obj;
 static struct object_array want_obj;
 static struct object_array extra_edge_obj;
 static unsigned int timeout;
@@ -100,7 +99,7 @@ static int write_one_shallow(const struct commit_graft *graft, void *cb_data)
 	return 0;
 }
 
-static void create_pack_file(void)
+static void create_pack_file(const struct object_array *have_obj)
 {
 	struct child_process pack_objects = CHILD_PROCESS_INIT;
 	char data[8193], progress[128];
@@ -165,9 +164,9 @@ static void create_pack_file(void)
 		fprintf(pipe_fd, "%s\n",
 			oid_to_hex(&want_obj.objects[i].item->oid));
 	fprintf(pipe_fd, "--not\n");
-	for (i = 0; i < have_obj.nr; i++)
+	for (i = 0; i < have_obj->nr; i++)
 		fprintf(pipe_fd, "%s\n",
-			oid_to_hex(&have_obj.objects[i].item->oid));
+			oid_to_hex(&have_obj->objects[i].item->oid));
 	for (i = 0; i < extra_edge_obj.nr; i++)
 		fprintf(pipe_fd, "%s\n",
 			oid_to_hex(&extra_edge_obj.objects[i].item->oid));
@@ -304,7 +303,8 @@ static void create_pack_file(void)
 	die("git upload-pack: %s", abort_msg);
 }
 
-static int got_oid(const char *hex, struct object_id *oid)
+static int got_oid(const char *hex, struct object_id *oid,
+		   struct object_array *have_obj)
 {
 	struct object *o;
 	int we_knew_they_have = 0;
@@ -332,17 +332,17 @@ static int got_oid(const char *hex, struct object_id *oid)
 			parents->item->object.flags |= THEY_HAVE;
 	}
 	if (!we_knew_they_have) {
-		add_object_array(o, NULL, &have_obj);
+		add_object_array(o, NULL, have_obj);
 		return 1;
 	}
 	return 0;
 }
 
-static int ok_to_give_up(void)
+static int ok_to_give_up(const struct object_array *have_obj)
 {
 	uint32_t min_generation = GENERATION_NUMBER_ZERO;
 
-	if (!have_obj.nr)
+	if (!have_obj->nr)
 		return 0;
 
 	return can_all_from_reach_with_flag(&want_obj, THEY_HAVE,
@@ -350,7 +350,7 @@ static int ok_to_give_up(void)
 					    min_generation);
 }
 
-static int get_common_commits(void)
+static int get_common_commits(struct object_array *have_obj)
 {
 	struct object_id oid;
 	char last_hex[GIT_MAX_HEXSZ + 1];
@@ -368,11 +368,11 @@ static int get_common_commits(void)
 
 		if (!line) {
 			if (multi_ack == 2 && got_common
-			    && !got_other && ok_to_give_up()) {
+			    && !got_other && ok_to_give_up(have_obj)) {
 				sent_ready = 1;
 				packet_write_fmt(1, "ACK %s ready\n", last_hex);
 			}
-			if (have_obj.nr == 0 || multi_ack)
+			if (have_obj->nr == 0 || multi_ack)
 				packet_write_fmt(1, "NAK\n");
 
 			if (no_done && sent_ready) {
@@ -386,10 +386,10 @@ static int get_common_commits(void)
 			continue;
 		}
 		if (skip_prefix(line, "have ", &arg)) {
-			switch (got_oid(arg, &oid)) {
+			switch (got_oid(arg, &oid, have_obj)) {
 			case -1: /* they have what we do not */
 				got_other = 1;
-				if (multi_ack && ok_to_give_up()) {
+				if (multi_ack && ok_to_give_up(have_obj)) {
 					const char *hex = oid_to_hex(&oid);
 					if (multi_ack == 2) {
 						sent_ready = 1;
@@ -405,14 +405,14 @@ static int get_common_commits(void)
 					packet_write_fmt(1, "ACK %s common\n", last_hex);
 				else if (multi_ack)
 					packet_write_fmt(1, "ACK %s continue\n", last_hex);
-				else if (have_obj.nr == 1)
+				else if (have_obj->nr == 1)
 					packet_write_fmt(1, "ACK %s\n", last_hex);
 				break;
 			}
 			continue;
 		}
 		if (!strcmp(line, "done")) {
-			if (have_obj.nr > 0) {
+			if (have_obj->nr > 0) {
 				if (multi_ack)
 					packet_write_fmt(1, "ACK %s\n", last_hex);
 				return 0;
@@ -1067,8 +1067,9 @@ void upload_pack(struct upload_pack_options *options)
 
 	receive_needs();
 	if (want_obj.nr) {
-		get_common_commits();
-		create_pack_file();
+		struct object_array have_obj = OBJECT_ARRAY_INIT;
+		get_common_commits(&have_obj);
+		create_pack_file(&have_obj);
 	}
 }
 
@@ -1256,7 +1257,8 @@ static void process_args(struct packet_reader *request,
 	}
 }
 
-static int process_haves(struct oid_array *haves, struct oid_array *common)
+static int process_haves(struct oid_array *haves, struct oid_array *common,
+			 struct object_array *have_obj)
 {
 	int i;
 
@@ -1289,13 +1291,14 @@ static int process_haves(struct oid_array *haves, struct oid_array *common)
 				parents->item->object.flags |= THEY_HAVE;
 		}
 		if (!we_knew_they_have)
-			add_object_array(o, NULL, &have_obj);
+			add_object_array(o, NULL, have_obj);
 	}
 
 	return 0;
 }
 
-static int send_acks(struct oid_array *acks, struct strbuf *response)
+static int send_acks(struct oid_array *acks, struct strbuf *response,
+		     const struct object_array *have_obj)
 {
 	int i;
 
@@ -1310,7 +1313,7 @@ static int send_acks(struct oid_array *acks, struct strbuf *response)
 				 oid_to_hex(&acks->oid[i]));
 	}
 
-	if (ok_to_give_up()) {
+	if (ok_to_give_up(have_obj)) {
 		/* Send Ready */
 		packet_buf_write(response, "ready\n");
 		return 1;
@@ -1319,16 +1322,17 @@ static int send_acks(struct oid_array *acks, struct strbuf *response)
 	return 0;
 }
 
-static int process_haves_and_send_acks(struct upload_pack_data *data)
+static int process_haves_and_send_acks(struct upload_pack_data *data,
+				       struct object_array *have_obj)
 {
 	struct oid_array common = OID_ARRAY_INIT;
 	struct strbuf response = STRBUF_INIT;
 	int ret = 0;
 
-	process_haves(&data->haves, &common);
+	process_haves(&data->haves, &common, have_obj);
 	if (data->done) {
 		ret = 1;
-	} else if (send_acks(&common, &response)) {
+	} else if (send_acks(&common, &response, have_obj)) {
 		packet_buf_delim(&response);
 		ret = 1;
 	} else {
@@ -1394,6 +1398,8 @@ int upload_pack_v2(struct repository *r, struct argv_array *keys,
 {
 	enum fetch_state state = FETCH_PROCESS_ARGS;
 	struct upload_pack_data data;
+	/* NEEDSWORK: make this non-static */
+	static struct object_array have_obj;
 
 	git_config(upload_pack_config, NULL);
 
@@ -1425,7 +1431,7 @@ int upload_pack_v2(struct repository *r, struct argv_array *keys,
 			}
 			break;
 		case FETCH_SEND_ACKS:
-			if (process_haves_and_send_acks(&data))
+			if (process_haves_and_send_acks(&data, &have_obj))
 				state = FETCH_SEND_PACK;
 			else
 				state = FETCH_DONE;
@@ -1435,7 +1441,7 @@ int upload_pack_v2(struct repository *r, struct argv_array *keys,
 			send_shallow_info(&data);
 
 			packet_write_fmt(1, "packfile\n");
-			create_pack_file();
+			create_pack_file(&have_obj);
 			state = FETCH_DONE;
 			break;
 		case FETCH_DONE:
