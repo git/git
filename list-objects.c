@@ -11,6 +11,7 @@
 #include "list-objects-filter-options.h"
 #include "packfile.h"
 #include "object-store.h"
+#include "trace.h"
 
 struct traversal_context {
 	struct rev_info *revs;
@@ -184,7 +185,9 @@ static void process_tree(struct traversal_context *ctx,
 	if (base->len)
 		strbuf_addch(base, '/');
 
-	if (!failed_parse)
+	if (r & LOFR_SKIP_TREE)
+		trace_printf("Skipping contents of tree %s...\n", base->buf);
+	else if (!failed_parse)
 		process_tree_contents(ctx, tree, base);
 
 	if ((obj->flags & NOT_USER_GIVEN) && ctx->filter_fn) {

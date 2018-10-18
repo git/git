@@ -245,6 +245,19 @@ test_expect_success 'verify tree:0 includes trees in "filtered" output' '
 	test_cmp expected filtered_types
 '
 
+# Make sure tree:0 does not iterate through any trees.
+
+test_expect_success 'filter a GIANT tree through tree:0' '
+	GIT_TRACE=1 git -C r3 rev-list \
+		--objects --filter=tree:0 HEAD 2>filter_trace &&
+	grep "Skipping contents of tree [.][.][.]" filter_trace >actual &&
+	# One line for each commit traversed.
+	test_line_count = 2 actual &&
+
+	# Make sure no other trees were considered besides the root.
+	! grep "Skipping contents of tree [^.]" filter_trace
+'
+
 # Delete some loose objects and use rev-list, but WITHOUT any filtering.
 # This models previously omitted objects that we did not receive.
 
