@@ -318,6 +318,9 @@ static int handle_alias(int *argcp, const char ***argv)
 	alias_command = (*argv)[0];
 	alias_string = alias_lookup(alias_command);
 	if (alias_string) {
+		if (*argcp > 1 && !strcmp((*argv)[1], "-h"))
+			fprintf_ln(stderr, _("'%s' is aliased to '%s'"),
+				   alias_command, alias_string);
 		if (alias_string[0] == '!') {
 			struct child_process child = CHILD_PROCESS_INIT;
 			int nongit_ok;
