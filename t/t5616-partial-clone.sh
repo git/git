@@ -182,6 +182,23 @@ test_expect_success 'partial clone fetches blobs pointed to by refs even if norm
 	git -C dst fsck
 '
 
+test_expect_success 'fetch what is specified on CLI even if already promised' '
+	rm -rf src dst.git &&
+	git init src &&
+	test_commit -C src foo &&
+	test_config -C src uploadpack.allowfilter 1 &&
+	test_config -C src uploadpack.allowanysha1inwant 1 &&
+
+	git hash-object --stdin <src/foo.t >blob &&
+
+	git clone --bare --filter=blob:none "file://$(pwd)/src" dst.git &&
+	git -C dst.git rev-list --objects --quiet --missing=print HEAD >missing_before &&
+	grep "?$(cat blob)" missing_before &&
+	git -C dst.git fetch origin $(cat blob) &&
+	git -C dst.git rev-list --objects --quiet --missing=print HEAD >missing_after &&
+	! grep "?$(cat blob)" missing_after
+'
+
 . "$TEST_DIRECTORY"/lib-httpd.sh
 start_httpd
 
