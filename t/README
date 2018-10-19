@@ -315,7 +315,7 @@ packs on demand. This normally only happens when the object size is
 over 2GB. This variable forces the code path on any object larger than
 <n> bytes.
 
-GIT_TEST_OE_DELTA_SIZE=<n> exercises the uncomon pack-objects code
+GIT_TEST_OE_DELTA_SIZE=<n> exercises the uncommon pack-objects code
 path where deltas larger than this limit require extra memory
 allocation for bookkeeping.
 
@@ -326,6 +326,17 @@ is mostly to catch missing invalidation. Default is true.
 GIT_TEST_COMMIT_GRAPH=<boolean>, when true, forces the commit-graph to
 be written after every 'git commit' command, and overrides the
 'core.commitGraph' setting to true.
+
+GIT_TEST_FSMONITOR=$PWD/t7519/fsmonitor-all exercises the fsmonitor
+code path for utilizing a file system monitor to speed up detecting
+new or changed files.
+
+GIT_TEST_INDEX_VERSION=<n> exercises the index read/write code path
+for the index version specified.  Can be set to any valid version
+(currently 2, 3, or 4).
+
+GIT_TEST_PRELOAD_INDEX=<boolean> exercises the preload-index code path
+by overriding the minimum number of cache entries required per thread.
 
 Naming Tests
 ------------

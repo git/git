@@ -2278,7 +2278,7 @@ int git_config_get_max_percent_split_change(void)
 int git_config_get_fsmonitor(void)
 {
 	if (git_config_get_pathname("core.fsmonitor", &core_fsmonitor))
-		core_fsmonitor = getenv("GIT_FSMONITOR_TEST");
+		core_fsmonitor = getenv("GIT_TEST_FSMONITOR");
 
 	if (core_fsmonitor && !*core_fsmonitor)
 		core_fsmonitor = NULL;

@@ -5,6 +5,7 @@
 #include "pathspec.h"
 #include "dir.h"
 #include "fsmonitor.h"
+#include "config.h"
 
 #ifdef NO_PTHREADS
 static void preload_index(struct index_state *index,
@@ -83,7 +84,7 @@ static void preload_index(struct index_state *index,
 		return;
 
 	threads = index->cache_nr / THREAD_COST;
-	if ((index->cache_nr > 1) && (threads < 2) && getenv("GIT_FORCE_PRELOAD_TEST"))
+	if ((index->cache_nr > 1) && (threads < 2) && git_env_bool("GIT_TEST_PRELOAD_INDEX", 0))
 		threads = 2;
 	if (threads < 2)
 		return;

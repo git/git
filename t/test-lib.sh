@@ -134,9 +134,40 @@ export EDITOR
 GIT_TRACE_BARE=1
 export GIT_TRACE_BARE
 
-if test -n "${TEST_GIT_INDEX_VERSION:+isset}"
+check_var_migration () {
+	# the warnings and hints given from this helper depends
+	# on end-user settings, which will disrupt the self-test
+	# done on the test framework itself.
+	case "$GIT_TEST_FRAMEWORK_SELFTEST" in
+	t)	return ;;
+	esac
+
+	old_name=$1 new_name=$2
+	eval "old_isset=\${${old_name}:+isset}"
+	eval "new_isset=\${${new_name}:+isset}"
+
+	case "$old_isset,$new_isset" in
+	isset,)
+		echo >&2 "warning: $old_name is now $new_name"
+		echo >&2 "hint: set $new_name too during the transition period"
+		eval "$new_name=\$$old_name"
+		;;
+	isset,isset)
+		# do this later
+		# echo >&2 "warning: $old_name is now $new_name"
+		# echo >&2 "hint: remove $old_name"
+		;;
+	esac
+}
+
+check_var_migration GIT_FSMONITOR_TEST GIT_TEST_FSMONITOR
+check_var_migration TEST_GIT_INDEX_VERSION GIT_TEST_INDEX_VERSION
+check_var_migration GIT_FORCE_PRELOAD_TEST GIT_TEST_PRELOAD_INDEX
+
+# Use specific version of the index file format
+if test -n "${GIT_TEST_INDEX_VERSION:+isset}"
 then
-	GIT_INDEX_VERSION="$TEST_GIT_INDEX_VERSION"
+	GIT_INDEX_VERSION="$GIT_TEST_INDEX_VERSION"
 	export GIT_INDEX_VERSION
 fi
 
