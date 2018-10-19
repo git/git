@@ -441,7 +441,8 @@ See also INCOMPATIBLE OPTIONS below.
 --exec <cmd>::
 	Append "exec <cmd>" after each line creating a commit in the
 	final history. <cmd> will be interpreted as one or more shell
-	commands.
+	commands. Any command that fails will interrupt the rebase,
+	with exit code 1.
 +
 You may execute several commands by either using one instance of `--exec`
 with several commands:
@@ -640,6 +641,9 @@ By replacing the command "pick" with the command "edit", you can tell
 'git rebase' to stop after applying that commit, so that you can edit
 the files and/or the commit message, amend the commit, and continue
 rebasing.
+
+To interrupt the rebase (just like an "edit" command would do, but without
+cherry-picking any commit first), use the "break" command.
 
 If you just want to edit the commit message for a commit, replace the
 command "pick" with the command "reword".
