@@ -1,7 +1,8 @@
 #ifndef OIDSET_H
 #define OIDSET_H
 
-#include "oidmap.h"
+#include "hashmap.h"
+#include "khash.h"
 
 /**
  * This API is similar to sha1-array, in that it maintains a set of object ids
@@ -15,20 +16,35 @@
  *      table overhead.
  */
 
+static inline unsigned int oid_hash(struct object_id oid)
+{
+	return sha1hash(oid.hash);
+}
+
+static inline int oid_equal(struct object_id a, struct object_id b)
+{
+	return oideq(&a, &b);
+}
+
+KHASH_INIT(oid, struct object_id, int, 0, oid_hash, oid_equal)
+
 /**
  * A single oidset; should be zero-initialized (or use OIDSET_INIT).
  */
 struct oidset {
-	struct oidmap map;
+	kh_oid_t set;
 };
 
-#define OIDSET_INIT { OIDMAP_INIT }
+#define OIDSET_INIT { { 0 } }
 
 
-static inline void oidset_init(struct oidset *set, size_t initial_size)
-{
-	oidmap_init(&set->map, initial_size);
-}
+/**
+ * Initialize the oidset structure `set`.
+ *
+ * If `initial_size` is bigger than 0 then preallocate to allow inserting
+ * the specified number of elements without further allocations.
+ */
+void oidset_init(struct oidset *set, size_t initial_size);
 
 /**
  * Returns true iff `set` contains `oid`.
@@ -58,19 +74,24 @@ int oidset_remove(struct oidset *set, const struct object_id *oid);
 void oidset_clear(struct oidset *set);
 
 struct oidset_iter {
-	struct oidmap_iter m_iter;
+	kh_oid_t *set;
+	khiter_t iter;
 };
 
 static inline void oidset_iter_init(struct oidset *set,
 				    struct oidset_iter *iter)
 {
-	oidmap_iter_init(&set->map, &iter->m_iter);
+	iter->set = &set->set;
+	iter->iter = kh_begin(iter->set);
 }
 
 static inline struct object_id *oidset_iter_next(struct oidset_iter *iter)
 {
-	struct oidmap_entry *e = oidmap_iter_next(&iter->m_iter);
-	return e ? &e->oid : NULL;
+	for (; iter->iter != kh_end(iter->set); iter->iter++) {
+		if (kh_exist(iter->set, iter->iter))
+			return &kh_key(iter->set, iter->iter++);
+	}
+	return NULL;
 }
 
 static inline struct object_id *oidset_iter_first(struct oidset *set,
