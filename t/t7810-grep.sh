@@ -309,6 +309,8 @@ do
 			echo ${HC}v:1:vvv
 		} >expected &&
 		git grep --max-depth -1 -n -e vvv $H >actual &&
+		test_cmp expected actual &&
+		git grep --recursive -n -e vvv $H >actual &&
 		test_cmp expected actual
 	'
 
@@ -317,6 +319,8 @@ do
 			echo ${HC}v:1:vvv
 		} >expected &&
 		git grep --max-depth 0 -n -e vvv $H >actual &&
+		test_cmp expected actual &&
+		git grep --no-recursive -n -e vvv $H >actual &&
 		test_cmp expected actual
 	'
 
@@ -327,6 +331,8 @@ do
 			echo ${HC}v:1:vvv
 		} >expected &&
 		git grep --max-depth 0 -n -e vvv $H -- "*" >actual &&
+		test_cmp expected actual &&
+		git grep --no-recursive -n -e vvv $H -- "*" >actual &&
 		test_cmp expected actual
 	'
 
@@ -344,6 +350,8 @@ do
 			echo ${HC}t/v:1:vvv
 		} >expected &&
 		git grep --max-depth 0 -n -e vvv $H -- t >actual &&
+		test_cmp expected actual &&
+		git grep --no-recursive -n -e vvv $H -- t >actual &&
 		test_cmp expected actual
 	'
 
@@ -353,6 +361,8 @@ do
 			echo ${HC}v:1:vvv
 		} >expected &&
 		git grep --max-depth 0 -n -e vvv $H -- . t >actual &&
+		test_cmp expected actual &&
+		git grep --no-recursive -n -e vvv $H -- . t >actual &&
 		test_cmp expected actual
 	'
 
@@ -362,6 +372,8 @@ do
 			echo ${HC}v:1:vvv
 		} >expected &&
 		git grep --max-depth 0 -n -e vvv $H -- t . >actual &&
+		test_cmp expected actual &&
+		git grep --no-recursive -n -e vvv $H -- t . >actual &&
 		test_cmp expected actual
 	'
 	test_expect_success "grep $L with grep.extendedRegexp=false" '
