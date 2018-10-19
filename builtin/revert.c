@@ -174,7 +174,7 @@ static int run_sequencer(int argc, const char **argv, struct replay_opts *opts)
 	} else {
 		struct setup_revision_opt s_r_opt;
 		opts->revs = xmalloc(sizeof(*opts->revs));
-		init_revisions(opts->revs, NULL);
+		repo_init_revisions(the_repository, opts->revs, NULL);
 		opts->revs->no_walk = REVISION_WALK_NO_WALK_UNSORTED;
 		if (argc < 2)
 			usage_with_options(usage_str, options);

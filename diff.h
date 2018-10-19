@@ -18,6 +18,7 @@ struct userdiff_driver;
 struct oid_array;
 struct commit;
 struct combine_diff_path;
+struct repository;
 
 typedef int (*pathchange_fn_t)(struct diff_options *options,
 		 struct combine_diff_path *path);
@@ -225,6 +226,8 @@ struct diff_options {
 	/* XDF_WHITESPACE_FLAGS regarding block detection are set at 2, 3, 4 */
 	#define COLOR_MOVED_WS_ALLOW_INDENTATION_CHANGE (1<<5)
 	int color_moved_ws_handling;
+
+	struct repository *repo;
 };
 
 void diff_emit_submodule_del(struct diff_options *o, const char *line);
@@ -338,7 +341,10 @@ int git_diff_basic_config(const char *var, const char *value, void *cb);
 int git_diff_heuristic_config(const char *var, const char *value, void *cb);
 void init_diff_ui_defaults(void);
 int git_diff_ui_config(const char *var, const char *value, void *cb);
-void diff_setup(struct diff_options *);
+#ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
+#define diff_setup(diffopts) repo_diff_setup(the_repository, diffopts)
+#endif
+void repo_diff_setup(struct repository *, struct diff_options *);
 int diff_opt_parse(struct diff_options *, const char **, int, const char *);
 void diff_setup_done(struct diff_options *);
 int git_config_rename(const char *var, const char *value);
@@ -428,7 +434,7 @@ int diff_flush_patch_id(struct diff_options *, struct object_id *, int);
 
 int diff_result_code(struct diff_options *, int);
 
-void diff_no_index(struct rev_info *, int, const char **);
+void diff_no_index(struct repository *, struct rev_info *, int, const char **);
 
 int index_differs_from(const char *def, const struct diff_flags *flags,
 		       int ita_invisible_in_index);
@@ -444,7 +450,8 @@ int index_differs_from(const char *def, const struct diff_flags *flags,
  * struct. If it is non-NULL, then "outbuf" points to a newly allocated buffer
  * that should be freed by the caller.
  */
-size_t fill_textconv(struct userdiff_driver *driver,
+size_t fill_textconv(struct repository *r,
+		     struct userdiff_driver *driver,
 		     struct diff_filespec *df,
 		     char **outbuf);
 
@@ -453,14 +460,19 @@ size_t fill_textconv(struct userdiff_driver *driver,
  * and only if it has textconv enabled (otherwise return NULL). The result
  * can be passed to fill_textconv().
  */
-struct userdiff_driver *get_textconv(struct diff_filespec *one);
+struct userdiff_driver *get_textconv(struct index_state *istate,
+				     struct diff_filespec *one);
 
 /*
  * Prepare diff_filespec and convert it using diff textconv API
  * if the textconv driver exists.
  * Return 1 if the conversion succeeds, 0 otherwise.
  */
-int textconv_object(const char *path, unsigned mode, const struct object_id *oid, int oid_valid, char **buf, unsigned long *buf_size);
+int textconv_object(struct repository *repo,
+		    const char *path,
+		    unsigned mode,
+		    const struct object_id *oid, int oid_valid,
+		    char **buf, unsigned long *buf_size);
 
 int parse_rename_score(const char **cp_p);
 

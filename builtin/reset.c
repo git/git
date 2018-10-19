@@ -159,6 +159,7 @@ static int read_from_tree(const struct pathspec *pathspec,
 	opt.format_callback = update_index_from_diff;
 	opt.format_callback_data = &intent_to_add;
 	opt.flags.override_submodule_config = 1;
+	opt.repo = the_repository;
 
 	if (do_diff_cache(tree_oid, &opt))
 		return 1;

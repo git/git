@@ -18,8 +18,8 @@ Calling sequence
 ----------------
 
 * Prepare `struct diff_options` to record the set of diff options, and
-  then call `diff_setup()` to initialize this structure.  This sets up
-  the vanilla default.
+  then call `repo_diff_setup()` to initialize this structure.  This
+  sets up the vanilla default.
 
 * Fill in the options structure to specify desired output format, rename
   detection, etc.  `diff_opt_parse()` can be used to parse options given

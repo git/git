@@ -554,14 +554,15 @@ static int count_lines(const char *data, int size)
 	return count;
 }
 
-static int fill_mmfile(mmfile_t *mf, struct diff_filespec *one)
+static int fill_mmfile(struct repository *r, mmfile_t *mf,
+		       struct diff_filespec *one)
 {
 	if (!DIFF_FILE_VALID(one)) {
 		mf->ptr = (char *)""; /* does not matter */
 		mf->size = 0;
 		return 0;
 	}
-	else if (diff_populate_filespec(one, 0))
+	else if (diff_populate_filespec(r, one, 0))
 		return -1;
 
 	mf->ptr = one->data;
@@ -570,11 +571,12 @@ static int fill_mmfile(mmfile_t *mf, struct diff_filespec *one)
 }
 
 /* like fill_mmfile, but only for size, so we can avoid retrieving blob */
-static unsigned long diff_filespec_size(struct diff_filespec *one)
+static unsigned long diff_filespec_size(struct repository *r,
+					struct diff_filespec *one)
 {
 	if (!DIFF_FILE_VALID(one))
 		return 0;
-	diff_populate_filespec(one, CHECK_SIZE_ONLY);
+	diff_populate_filespec(r, one, CHECK_SIZE_ONLY);
 	return one->size;
 }
 
@@ -1714,12 +1716,12 @@ static void emit_rewrite_diff(const char *name_a,
 	quote_two_c_style(&a_name, a_prefix, name_a, 0);
 	quote_two_c_style(&b_name, b_prefix, name_b, 0);
 
-	size_one = fill_textconv(textconv_one, one, &data_one);
-	size_two = fill_textconv(textconv_two, two, &data_two);
+	size_one = fill_textconv(o->repo, textconv_one, one, &data_one);
+	size_two = fill_textconv(o->repo, textconv_two, two, &data_two);
 
 	memset(&ecbdata, 0, sizeof(ecbdata));
 	ecbdata.color_diff = want_color(o->use_color);
-	ecbdata.ws_rule = whitespace_rule(name_b);
+	ecbdata.ws_rule = whitespace_rule(o->repo->index, name_b);
 	ecbdata.opt = o;
 	if (ecbdata.ws_rule & WS_BLANK_AT_EOF) {
 		mmfile_t mf1, mf2;
@@ -2107,23 +2109,25 @@ static void diff_words_flush(struct emit_callback *ecbdata)
 	}
 }
 
-static void diff_filespec_load_driver(struct diff_filespec *one)
+static void diff_filespec_load_driver(struct diff_filespec *one,
+				      struct index_state *istate)
 {
 	/* Use already-loaded driver */
 	if (one->driver)
 		return;
 
 	if (S_ISREG(one->mode))
-		one->driver = userdiff_find_by_path(one->path);
+		one->driver = userdiff_find_by_path(istate, one->path);
 
 	/* Fallback to default settings */
 	if (!one->driver)
 		one->driver = userdiff_find_by_name("default");
 }
 
-static const char *userdiff_word_regex(struct diff_filespec *one)
+static const char *userdiff_word_regex(struct diff_filespec *one,
+				       struct index_state *istate)
 {
-	diff_filespec_load_driver(one);
+	diff_filespec_load_driver(one, istate);
 	return one->driver->word_regex;
 }
 
@@ -2146,9 +2150,9 @@ static void init_diff_words_data(struct emit_callback *ecbdata,
 			xcalloc(1, sizeof(struct emitted_diff_symbols));
 
 	if (!o->word_regex)
-		o->word_regex = userdiff_word_regex(one);
+		o->word_regex = userdiff_word_regex(one, o->repo->index);
 	if (!o->word_regex)
-		o->word_regex = userdiff_word_regex(two);
+		o->word_regex = userdiff_word_regex(two, o->repo->index);
 	if (!o->word_regex)
 		o->word_regex = diff_word_regex_cfg;
 	if (o->word_regex) {
@@ -2976,18 +2980,19 @@ static void show_dirstat(struct diff_options *options)
 		}
 
 		if (DIFF_FILE_VALID(p->one) && DIFF_FILE_VALID(p->two)) {
-			diff_populate_filespec(p->one, 0);
-			diff_populate_filespec(p->two, 0);
-			diffcore_count_changes(p->one, p->two, NULL, NULL,
+			diff_populate_filespec(options->repo, p->one, 0);
+			diff_populate_filespec(options->repo, p->two, 0);
+			diffcore_count_changes(options->repo,
+					       p->one, p->two, NULL, NULL,
 					       &copied, &added);
 			diff_free_filespec_data(p->one);
 			diff_free_filespec_data(p->two);
 		} else if (DIFF_FILE_VALID(p->one)) {
-			diff_populate_filespec(p->one, CHECK_SIZE_ONLY);
+			diff_populate_filespec(options->repo, p->one, CHECK_SIZE_ONLY);
 			copied = added = 0;
 			diff_free_filespec_data(p->one);
 		} else if (DIFF_FILE_VALID(p->two)) {
-			diff_populate_filespec(p->two, CHECK_SIZE_ONLY);
+			diff_populate_filespec(options->repo, p->two, CHECK_SIZE_ONLY);
 			copied = 0;
 			added = p->two->size;
 			diff_free_filespec_data(p->two);
@@ -3261,15 +3266,16 @@ static void emit_binary_diff(struct diff_options *o,
 	emit_binary_diff_body(o, two, one);
 }
 
-int diff_filespec_is_binary(struct diff_filespec *one)
+int diff_filespec_is_binary(struct repository *r,
+			    struct diff_filespec *one)
 {
 	if (one->is_binary == -1) {
-		diff_filespec_load_driver(one);
+		diff_filespec_load_driver(one, r->index);
 		if (one->driver->binary != -1)
 			one->is_binary = one->driver->binary;
 		else {
 			if (!one->data && DIFF_FILE_VALID(one))
-				diff_populate_filespec(one, CHECK_BINARY);
+				diff_populate_filespec(r, one, CHECK_BINARY);
 			if (one->is_binary == -1 && one->data)
 				one->is_binary = buffer_is_binary(one->data,
 						one->size);
@@ -3280,9 +3286,10 @@ int diff_filespec_is_binary(struct diff_filespec *one)
 	return one->is_binary;
 }
 
-static const struct userdiff_funcname *diff_funcname_pattern(struct diff_filespec *one)
+static const struct userdiff_funcname *
+diff_funcname_pattern(struct diff_options *o, struct diff_filespec *one)
 {
-	diff_filespec_load_driver(one);
+	diff_filespec_load_driver(one, o->repo->index);
 	return one->driver->funcname.pattern ? &one->driver->funcname : NULL;
 }
 
@@ -3294,12 +3301,13 @@ void diff_set_mnemonic_prefix(struct diff_options *options, const char *a, const
 		options->b_prefix = b;
 }
 
-struct userdiff_driver *get_textconv(struct diff_filespec *one)
+struct userdiff_driver *get_textconv(struct index_state *istate,
+				     struct diff_filespec *one)
 {
 	if (!DIFF_FILE_VALID(one))
 		return NULL;
 
-	diff_filespec_load_driver(one);
+	diff_filespec_load_driver(one, istate);
 	return userdiff_get_textconv(one->driver);
 }
 
@@ -3349,8 +3357,8 @@ static void builtin_diff(const char *name_a,
 	}
 
 	if (o->flags.allow_textconv) {
-		textconv_one = get_textconv(one);
-		textconv_two = get_textconv(two);
+		textconv_one = get_textconv(o->repo->index, one);
+		textconv_two = get_textconv(o->repo->index, two);
 	}
 
 	/* Never use a non-valid filename anywhere if at all possible */
@@ -3391,13 +3399,13 @@ static void builtin_diff(const char *name_a,
 		if ((one->mode ^ two->mode) & S_IFMT)
 			goto free_ab_and_return;
 		if (complete_rewrite &&
-		    (textconv_one || !diff_filespec_is_binary(one)) &&
-		    (textconv_two || !diff_filespec_is_binary(two))) {
+		    (textconv_one || !diff_filespec_is_binary(o->repo, one)) &&
+		    (textconv_two || !diff_filespec_is_binary(o->repo, two))) {
 			emit_diff_symbol(o, DIFF_SYMBOL_HEADER,
 					 header.buf, header.len, 0);
 			strbuf_reset(&header);
 			emit_rewrite_diff(name_a, name_b, one, two,
-						textconv_one, textconv_two, o);
+					  textconv_one, textconv_two, o);
 			o->found_changes = 1;
 			goto free_ab_and_return;
 		}
@@ -3409,8 +3417,8 @@ static void builtin_diff(const char *name_a,
 		strbuf_reset(&header);
 		goto free_ab_and_return;
 	} else if (!o->flags.text &&
-	    ( (!textconv_one && diff_filespec_is_binary(one)) ||
-	      (!textconv_two && diff_filespec_is_binary(two)) )) {
+		   ( (!textconv_one && diff_filespec_is_binary(o->repo, one)) ||
+		     (!textconv_two && diff_filespec_is_binary(o->repo, two)) )) {
 		struct strbuf sb = STRBUF_INIT;
 		if (!one->data && !two->data &&
 		    S_ISREG(one->mode) && S_ISREG(two->mode) &&
@@ -3431,7 +3439,8 @@ static void builtin_diff(const char *name_a,
 			strbuf_release(&sb);
 			goto free_ab_and_return;
 		}
-		if (fill_mmfile(&mf1, one) < 0 || fill_mmfile(&mf2, two) < 0)
+		if (fill_mmfile(o->repo, &mf1, one) < 0 ||
+		    fill_mmfile(o->repo, &mf2, two) < 0)
 			die("unable to read files to diff");
 		/* Quite common confusing case */
 		if (mf1.size == mf2.size &&
@@ -3468,12 +3477,12 @@ static void builtin_diff(const char *name_a,
 			strbuf_reset(&header);
 		}
 
-		mf1.size = fill_textconv(textconv_one, one, &mf1.ptr);
-		mf2.size = fill_textconv(textconv_two, two, &mf2.ptr);
+		mf1.size = fill_textconv(o->repo, textconv_one, one, &mf1.ptr);
+		mf2.size = fill_textconv(o->repo, textconv_two, two, &mf2.ptr);
 
-		pe = diff_funcname_pattern(one);
+		pe = diff_funcname_pattern(o, one);
 		if (!pe)
-			pe = diff_funcname_pattern(two);
+			pe = diff_funcname_pattern(o, two);
 
 		memset(&xpp, 0, sizeof(xpp));
 		memset(&xecfg, 0, sizeof(xecfg));
@@ -3482,7 +3491,7 @@ static void builtin_diff(const char *name_a,
 			lbl[0] = NULL;
 		ecbdata.label_path = lbl;
 		ecbdata.color_diff = want_color(o->use_color);
-		ecbdata.ws_rule = whitespace_rule(name_b);
+		ecbdata.ws_rule = whitespace_rule(o->repo->index, name_b);
 		if (ecbdata.ws_rule & WS_BLANK_AT_EOF)
 			check_blank_at_eof(&mf1, &mf2, &ecbdata);
 		ecbdata.opt = o;
@@ -3582,20 +3591,21 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 
 	same_contents = oideq(&one->oid, &two->oid);
 
-	if (diff_filespec_is_binary(one) || diff_filespec_is_binary(two)) {
+	if (diff_filespec_is_binary(o->repo, one) ||
+	    diff_filespec_is_binary(o->repo, two)) {
 		data->is_binary = 1;
 		if (same_contents) {
 			data->added = 0;
 			data->deleted = 0;
 		} else {
-			data->added = diff_filespec_size(two);
-			data->deleted = diff_filespec_size(one);
+			data->added = diff_filespec_size(o->repo, two);
+			data->deleted = diff_filespec_size(o->repo, one);
 		}
 	}
 
 	else if (complete_rewrite) {
-		diff_populate_filespec(one, 0);
-		diff_populate_filespec(two, 0);
+		diff_populate_filespec(o->repo, one, 0);
+		diff_populate_filespec(o->repo, two, 0);
 		data->deleted = count_lines(one->data, one->size);
 		data->added = count_lines(two->data, two->size);
 	}
@@ -3605,7 +3615,8 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 		xpparam_t xpp;
 		xdemitconf_t xecfg;
 
-		if (fill_mmfile(&mf1, one) < 0 || fill_mmfile(&mf2, two) < 0)
+		if (fill_mmfile(o->repo, &mf1, one) < 0 ||
+		    fill_mmfile(o->repo, &mf2, two) < 0)
 			die("unable to read files to diff");
 
 		memset(&xpp, 0, sizeof(xpp));
@@ -3640,10 +3651,11 @@ static void builtin_checkdiff(const char *name_a, const char *name_b,
 	data.filename = name_b ? name_b : name_a;
 	data.lineno = 0;
 	data.o = o;
-	data.ws_rule = whitespace_rule(attr_path);
-	data.conflict_marker_size = ll_merge_marker_size(attr_path);
+	data.ws_rule = whitespace_rule(o->repo->index, attr_path);
+	data.conflict_marker_size = ll_merge_marker_size(o->repo->index, attr_path);
 
-	if (fill_mmfile(&mf1, one) < 0 || fill_mmfile(&mf2, two) < 0)
+	if (fill_mmfile(o->repo, &mf1, one) < 0 ||
+	    fill_mmfile(o->repo, &mf2, two) < 0)
 		die("unable to read files to diff");
 
 	/*
@@ -3652,7 +3664,7 @@ static void builtin_checkdiff(const char *name_a, const char *name_b,
 	 * introduced changes, and as long as the "new" side is text, we
 	 * can and should check what it introduces.
 	 */
-	if (diff_filespec_is_binary(two))
+	if (diff_filespec_is_binary(o->repo, two))
 		goto free_and_return;
 	else {
 		/* Crazy xdl interfaces.. */
@@ -3725,7 +3737,10 @@ void fill_filespec(struct diff_filespec *spec, const struct object_id *oid,
  * the work tree has that object contents, return true, so that
  * prepare_temp_file() does not have to inflate and extract.
  */
-static int reuse_worktree_file(const char *name, const struct object_id *oid, int want_file)
+static int reuse_worktree_file(struct index_state *istate,
+			       const char *name,
+			       const struct object_id *oid,
+			       int want_file)
 {
 	const struct cache_entry *ce;
 	struct stat st;
@@ -3744,7 +3759,7 @@ static int reuse_worktree_file(const char *name, const struct object_id *oid, in
 	 * by diff-cache --cached, which does read the cache before
 	 * calling us.
 	 */
-	if (!active_cache)
+	if (!istate->cache)
 		return 0;
 
 	/* We want to avoid the working directory if our caller
@@ -3763,14 +3778,14 @@ static int reuse_worktree_file(const char *name, const struct object_id *oid, in
 	 * Similarly, if we'd have to convert the file contents anyway, that
 	 * makes the optimization not worthwhile.
 	 */
-	if (!want_file && would_convert_to_git(&the_index, name))
+	if (!want_file && would_convert_to_git(istate, name))
 		return 0;
 
 	len = strlen(name);
-	pos = cache_name_pos(name, len);
+	pos = index_name_pos(istate, name, len);
 	if (pos < 0)
 		return 0;
-	ce = active_cache[pos];
+	ce = istate->cache[pos];
 
 	/*
 	 * This is not the sha1 we are looking for, or
@@ -3790,7 +3805,7 @@ static int reuse_worktree_file(const char *name, const struct object_id *oid, in
 	 * If ce matches the file in the work tree, we can reuse it.
 	 */
 	if (ce_uptodate(ce) ||
-	    (!lstat(name, &st) && !ce_match_stat(ce, &st, 0)))
+	    (!lstat(name, &st) && !ie_match_stat(istate, ce, &st, 0)))
 		return 1;
 
 	return 0;
@@ -3823,7 +3838,9 @@ static int diff_populate_gitlink(struct diff_filespec *s, int size_only)
  * grab the data for the blob (or file) for our own in-core comparison.
  * diff_filespec has data and size fields for this purpose.
  */
-int diff_populate_filespec(struct diff_filespec *s, unsigned int flags)
+int diff_populate_filespec(struct repository *r,
+			   struct diff_filespec *s,
+			   unsigned int flags)
 {
 	int size_only = flags & CHECK_SIZE_ONLY;
 	int err = 0;
@@ -3850,7 +3867,7 @@ int diff_populate_filespec(struct diff_filespec *s, unsigned int flags)
 		return diff_populate_gitlink(s, size_only);
 
 	if (!s->oid_valid ||
-	    reuse_worktree_file(s->path, &s->oid, 0)) {
+	    reuse_worktree_file(r->index, s->path, &s->oid, 0)) {
 		struct strbuf buf = STRBUF_INIT;
 		struct stat st;
 		int fd;
@@ -3883,7 +3900,7 @@ int diff_populate_filespec(struct diff_filespec *s, unsigned int flags)
 		 * point if the path requires us to run the content
 		 * conversion.
 		 */
-		if (size_only && !would_convert_to_git(&the_index, s->path))
+		if (size_only && !would_convert_to_git(r->index, s->path))
 			return 0;
 
 		/*
@@ -3910,7 +3927,7 @@ int diff_populate_filespec(struct diff_filespec *s, unsigned int flags)
 		/*
 		 * Convert from working tree format to canonical git format
 		 */
-		if (convert_to_git(&the_index, s->path, s->data, s->size, &buf, conv_flags)) {
+		if (convert_to_git(r->index, s->path, s->data, s->size, &buf, conv_flags)) {
 			size_t size = 0;
 			munmap(s->data, s->size);
 			s->should_munmap = 0;
@@ -3922,8 +3939,7 @@ int diff_populate_filespec(struct diff_filespec *s, unsigned int flags)
 	else {
 		enum object_type type;
 		if (size_only || (flags & CHECK_BINARY)) {
-			type = oid_object_info(the_repository, &s->oid,
-					       &s->size);
+			type = oid_object_info(r, &s->oid, &s->size);
 			if (type < 0)
 				die("unable to read %s",
 				    oid_to_hex(&s->oid));
@@ -3961,7 +3977,8 @@ void diff_free_filespec_data(struct diff_filespec *s)
 	FREE_AND_NULL(s->cnt_data);
 }
 
-static void prep_temp_blob(const char *path, struct diff_tempfile *temp,
+static void prep_temp_blob(struct index_state *istate,
+			   const char *path, struct diff_tempfile *temp,
 			   void *blob,
 			   unsigned long size,
 			   const struct object_id *oid,
@@ -3979,7 +3996,7 @@ static void prep_temp_blob(const char *path, struct diff_tempfile *temp,
 	temp->tempfile = mks_tempfile_ts(tempfile.buf, strlen(base) + 1);
 	if (!temp->tempfile)
 		die_errno("unable to create temp-file");
-	if (convert_to_working_tree(&the_index, path,
+	if (convert_to_working_tree(istate, path,
 			(const char *)blob, (size_t)size, &buf)) {
 		blob = buf.buf;
 		size = buf.len;
@@ -3995,8 +4012,9 @@ static void prep_temp_blob(const char *path, struct diff_tempfile *temp,
 	free(path_dup);
 }
 
-static struct diff_tempfile *prepare_temp_file(const char *name,
-		struct diff_filespec *one)
+static struct diff_tempfile *prepare_temp_file(struct repository *r,
+					       const char *name,
+					       struct diff_filespec *one)
 {
 	struct diff_tempfile *temp = claim_diff_tempfile();
 
@@ -4013,7 +4031,7 @@ static struct diff_tempfile *prepare_temp_file(const char *name,
 
 	if (!S_ISGITLINK(one->mode) &&
 	    (!one->oid_valid ||
-	     reuse_worktree_file(name, &one->oid, 1))) {
+	     reuse_worktree_file(r->index, name, &one->oid, 1))) {
 		struct stat st;
 		if (lstat(name, &st) < 0) {
 			if (errno == ENOENT)
@@ -4024,7 +4042,7 @@ static struct diff_tempfile *prepare_temp_file(const char *name,
 			struct strbuf sb = STRBUF_INIT;
 			if (strbuf_readlink(&sb, name, st.st_size) < 0)
 				die_errno("readlink(%s)", name);
-			prep_temp_blob(name, temp, sb.buf, sb.len,
+			prep_temp_blob(r->index, name, temp, sb.buf, sb.len,
 				       (one->oid_valid ?
 					&one->oid : &null_oid),
 				       (one->oid_valid ?
@@ -4049,19 +4067,21 @@ static struct diff_tempfile *prepare_temp_file(const char *name,
 		return temp;
 	}
 	else {
-		if (diff_populate_filespec(one, 0))
+		if (diff_populate_filespec(r, one, 0))
 			die("cannot read data blob for %s", one->path);
-		prep_temp_blob(name, temp, one->data, one->size,
+		prep_temp_blob(r->index, name, temp,
+			       one->data, one->size,
 			       &one->oid, one->mode);
 	}
 	return temp;
 }
 
-static void add_external_diff_name(struct argv_array *argv,
+static void add_external_diff_name(struct repository *r,
+				   struct argv_array *argv,
 				   const char *name,
 				   struct diff_filespec *df)
 {
-	struct diff_tempfile *temp = prepare_temp_file(name, df);
+	struct diff_tempfile *temp = prepare_temp_file(r, name, df);
 	argv_array_push(argv, temp->name);
 	argv_array_push(argv, temp->hex);
 	argv_array_push(argv, temp->mode);
@@ -4090,11 +4110,11 @@ static void run_external_diff(const char *pgm,
 	argv_array_push(&argv, name);
 
 	if (one && two) {
-		add_external_diff_name(&argv, name, one);
+		add_external_diff_name(o->repo, &argv, name, one);
 		if (!other)
-			add_external_diff_name(&argv, name, two);
+			add_external_diff_name(o->repo, &argv, name, two);
 		else {
-			add_external_diff_name(&argv, other, two);
+			add_external_diff_name(o->repo, &argv, other, two);
 			argv_array_push(&argv, other);
 			argv_array_push(&argv, xfrm_msg);
 		}
@@ -4187,8 +4207,10 @@ static void fill_metainfo(struct strbuf *msg,
 
 		if (o->flags.binary) {
 			mmfile_t mf;
-			if ((!fill_mmfile(&mf, one) && diff_filespec_is_binary(one)) ||
-			    (!fill_mmfile(&mf, two) && diff_filespec_is_binary(two)))
+			if ((!fill_mmfile(o->repo, &mf, one) &&
+			     diff_filespec_is_binary(o->repo, one)) ||
+			    (!fill_mmfile(o->repo, &mf, two) &&
+			     diff_filespec_is_binary(o->repo, two)))
 				abbrev = hexsz;
 		}
 		strbuf_addf(msg, "%s%sindex %s..%s", line_prefix, set,
@@ -4216,7 +4238,9 @@ static void run_diff_cmd(const char *pgm,
 
 
 	if (o->flags.allow_external) {
-		struct userdiff_driver *drv = userdiff_find_by_path(attr_path);
+		struct userdiff_driver *drv;
+
+		drv = userdiff_find_by_path(o->repo->index, attr_path);
 		if (drv && drv->external)
 			pgm = drv->external;
 	}
@@ -4245,7 +4269,7 @@ static void run_diff_cmd(const char *pgm,
 		fprintf(o->file, "* Unmerged path %s\n", name);
 }
 
-static void diff_fill_oid_info(struct diff_filespec *one)
+static void diff_fill_oid_info(struct diff_filespec *one, struct index_state *istate)
 {
 	if (DIFF_FILE_VALID(one)) {
 		if (!one->oid_valid) {
@@ -4256,7 +4280,7 @@ static void diff_fill_oid_info(struct diff_filespec *one)
 			}
 			if (lstat(one->path, &st) < 0)
 				die_errno("stat '%s'", one->path);
-			if (index_path(&one->oid, one->path, &st, 0))
+			if (index_path(istate, &one->oid, one->path, &st, 0))
 				die("cannot hash %s", one->path);
 		}
 	}
@@ -4304,8 +4328,8 @@ static void run_diff(struct diff_filepair *p, struct diff_options *o)
 		return;
 	}
 
-	diff_fill_oid_info(one);
-	diff_fill_oid_info(two);
+	diff_fill_oid_info(one, o->repo->index);
+	diff_fill_oid_info(two, o->repo->index);
 
 	if (!pgm &&
 	    DIFF_FILE_VALID(one) && DIFF_FILE_VALID(two) &&
@@ -4316,7 +4340,8 @@ static void run_diff(struct diff_filepair *p, struct diff_options *o)
 		 */
 		struct diff_filespec *null = alloc_filespec(two->path);
 		run_diff_cmd(NULL, name, other, attr_path,
-			     one, null, &msg, o, p);
+			     one, null, &msg,
+			     o, p);
 		free(null);
 		strbuf_release(&msg);
 
@@ -4340,7 +4365,8 @@ static void run_diffstat(struct diff_filepair *p, struct diff_options *o,
 
 	if (DIFF_PAIR_UNMERGED(p)) {
 		/* unmerged */
-		builtin_diffstat(p->one->path, NULL, NULL, NULL, diffstat, o, p);
+		builtin_diffstat(p->one->path, NULL, NULL, NULL,
+				 diffstat, o, p);
 		return;
 	}
 
@@ -4350,10 +4376,11 @@ static void run_diffstat(struct diff_filepair *p, struct diff_options *o,
 	if (o->prefix_length)
 		strip_prefix(o->prefix_length, &name, &other);
 
-	diff_fill_oid_info(p->one);
-	diff_fill_oid_info(p->two);
+	diff_fill_oid_info(p->one, o->repo->index);
+	diff_fill_oid_info(p->two, o->repo->index);
 
-	builtin_diffstat(name, other, p->one, p->two, diffstat, o, p);
+	builtin_diffstat(name, other, p->one, p->two,
+			 diffstat, o, p);
 }
 
 static void run_checkdiff(struct diff_filepair *p, struct diff_options *o)
@@ -4374,17 +4401,18 @@ static void run_checkdiff(struct diff_filepair *p, struct diff_options *o)
 	if (o->prefix_length)
 		strip_prefix(o->prefix_length, &name, &other);
 
-	diff_fill_oid_info(p->one);
-	diff_fill_oid_info(p->two);
+	diff_fill_oid_info(p->one, o->repo->index);
+	diff_fill_oid_info(p->two, o->repo->index);
 
 	builtin_checkdiff(name, other, attr_path, p->one, p->two, o);
 }
 
-void diff_setup(struct diff_options *options)
+void repo_diff_setup(struct repository *r, struct diff_options *options)
 {
 	memcpy(options, &default_diff_options, sizeof(*options));
 
 	options->file = stdout;
+	options->repo = r;
 
 	options->output_indicators[OUTPUT_INDICATOR_NEW] = '+';
 	options->output_indicators[OUTPUT_INDICATOR_OLD] = '-';
@@ -5683,8 +5711,8 @@ static int diff_get_patch_id(struct diff_options *options, struct object_id *oid
 		if (DIFF_PAIR_UNMERGED(p))
 			continue;
 
-		diff_fill_oid_info(p->one);
-		diff_fill_oid_info(p->two);
+		diff_fill_oid_info(p->one, options->repo->index);
+		diff_fill_oid_info(p->two, options->repo->index);
 
 		len1 = remove_space(p->one->path, strlen(p->one->path));
 		len2 = remove_space(p->two->path, strlen(p->two->path));
@@ -5716,12 +5744,12 @@ static int diff_get_patch_id(struct diff_options *options, struct object_id *oid
 		if (diff_header_only)
 			continue;
 
-		if (fill_mmfile(&mf1, p->one) < 0 ||
-		    fill_mmfile(&mf2, p->two) < 0)
+		if (fill_mmfile(options->repo, &mf1, p->one) < 0 ||
+		    fill_mmfile(options->repo, &mf2, p->two) < 0)
 			return error("unable to read files to diff");
 
-		if (diff_filespec_is_binary(p->one) ||
-		    diff_filespec_is_binary(p->two)) {
+		if (diff_filespec_is_binary(options->repo, p->one) ||
+		    diff_filespec_is_binary(options->repo, p->two)) {
 			git_SHA1_Update(&ctx, oid_to_hex(&p->one->oid),
 					GIT_SHA1_HEXSZ);
 			git_SHA1_Update(&ctx, oid_to_hex(&p->two->oid),
@@ -6024,19 +6052,21 @@ static void diffcore_apply_filter(struct diff_options *options)
 }
 
 /* Check whether two filespecs with the same mode and size are identical */
-static int diff_filespec_is_identical(struct diff_filespec *one,
+static int diff_filespec_is_identical(struct repository *r,
+				      struct diff_filespec *one,
 				      struct diff_filespec *two)
 {
 	if (S_ISGITLINK(one->mode))
 		return 0;
-	if (diff_populate_filespec(one, 0))
+	if (diff_populate_filespec(r, one, 0))
 		return 0;
-	if (diff_populate_filespec(two, 0))
+	if (diff_populate_filespec(r, two, 0))
 		return 0;
 	return !memcmp(one->data, two->data, one->size);
 }
 
-static int diff_filespec_check_stat_unmatch(struct diff_filepair *p)
+static int diff_filespec_check_stat_unmatch(struct repository *r,
+					    struct diff_filepair *p)
 {
 	if (p->done_skip_stat_unmatch)
 		return p->skip_stat_unmatch_result;
@@ -6060,10 +6090,10 @@ static int diff_filespec_check_stat_unmatch(struct diff_filepair *p)
 	    !DIFF_FILE_VALID(p->two) ||
 	    (p->one->oid_valid && p->two->oid_valid) ||
 	    (p->one->mode != p->two->mode) ||
-	    diff_populate_filespec(p->one, CHECK_SIZE_ONLY) ||
-	    diff_populate_filespec(p->two, CHECK_SIZE_ONLY) ||
+	    diff_populate_filespec(r, p->one, CHECK_SIZE_ONLY) ||
+	    diff_populate_filespec(r, p->two, CHECK_SIZE_ONLY) ||
 	    (p->one->size != p->two->size) ||
-	    !diff_filespec_is_identical(p->one, p->two)) /* (2) */
+	    !diff_filespec_is_identical(r, p->one, p->two)) /* (2) */
 		p->skip_stat_unmatch_result = 1;
 	return p->skip_stat_unmatch_result;
 }
@@ -6078,7 +6108,7 @@ static void diffcore_skip_stat_unmatch(struct diff_options *diffopt)
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
 
-		if (diff_filespec_check_stat_unmatch(p))
+		if (diff_filespec_check_stat_unmatch(diffopt->repo, p))
 			diff_q(&outq, p);
 		else {
 			/*
@@ -6120,7 +6150,8 @@ void diffcore_std(struct diff_options *options)
 	if (!options->found_follow) {
 		/* See try_to_follow_renames() in tree-diff.c */
 		if (options->break_opt != -1)
-			diffcore_break(options->break_opt);
+			diffcore_break(options->repo,
+				       options->break_opt);
 		if (options->detect_rename)
 			diffcore_rename(options);
 		if (options->break_opt != -1)
@@ -6271,7 +6302,7 @@ void diff_change(struct diff_options *options,
 		return;
 
 	if (options->flags.quick && options->skip_stat_unmatch &&
-	    !diff_filespec_check_stat_unmatch(p))
+	    !diff_filespec_check_stat_unmatch(options->repo, p))
 		return;
 
 	options->flags.has_changes = 1;
@@ -6293,8 +6324,10 @@ struct diff_filepair *diff_unmerge(struct diff_options *options, const char *pat
 	return pair;
 }
 
-static char *run_textconv(const char *pgm, struct diff_filespec *spec,
-		size_t *outsize)
+static char *run_textconv(struct repository *r,
+			  const char *pgm,
+			  struct diff_filespec *spec,
+			  size_t *outsize)
 {
 	struct diff_tempfile *temp;
 	const char *argv[3];
@@ -6303,7 +6336,7 @@ static char *run_textconv(const char *pgm, struct diff_filespec *spec,
 	struct strbuf buf = STRBUF_INIT;
 	int err = 0;
 
-	temp = prepare_temp_file(spec->path, spec);
+	temp = prepare_temp_file(r, spec->path, spec);
 	*arg++ = pgm;
 	*arg++ = temp->name;
 	*arg = NULL;
@@ -6330,7 +6363,8 @@ static char *run_textconv(const char *pgm, struct diff_filespec *spec,
 	return strbuf_detach(&buf, outsize);
 }
 
-size_t fill_textconv(struct userdiff_driver *driver,
+size_t fill_textconv(struct repository *r,
+		     struct userdiff_driver *driver,
 		     struct diff_filespec *df,
 		     char **outbuf)
 {
@@ -6341,7 +6375,7 @@ size_t fill_textconv(struct userdiff_driver *driver,
 			*outbuf = "";
 			return 0;
 		}
-		if (diff_populate_filespec(df, 0))
+		if (diff_populate_filespec(r, df, 0))
 			die("unable to read files to diff");
 		*outbuf = df->data;
 		return df->size;
@@ -6358,7 +6392,7 @@ size_t fill_textconv(struct userdiff_driver *driver,
 			return size;
 	}
 
-	*outbuf = run_textconv(driver->textconv, df, &size);
+	*outbuf = run_textconv(r, driver->textconv, df, &size);
 	if (!*outbuf)
 		die("unable to read files to diff");
 
@@ -6378,7 +6412,8 @@ size_t fill_textconv(struct userdiff_driver *driver,
 	return size;
 }
 
-int textconv_object(const char *path,
+int textconv_object(struct repository *r,
+		    const char *path,
 		    unsigned mode,
 		    const struct object_id *oid,
 		    int oid_valid,
@@ -6390,13 +6425,13 @@ int textconv_object(const char *path,
 
 	df = alloc_filespec(path);
 	fill_filespec(df, oid, oid_valid, mode);
-	textconv = get_textconv(df);
+	textconv = get_textconv(r->index, df);
 	if (!textconv) {
 		free_filespec(df);
 		return 0;
 	}
 
-	*buf_size = fill_textconv(textconv, df, buf);
+	*buf_size = fill_textconv(r, textconv, df, buf);
 	free_filespec(df);
 	return 1;
 }

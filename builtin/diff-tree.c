@@ -110,7 +110,7 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 		usage(diff_tree_usage);
 
 	git_config(git_diff_basic_config, NULL); /* no "diff" UI options */
-	init_revisions(opt, prefix);
+	repo_init_revisions(the_repository, opt, prefix);
 	if (read_cache() < 0)
 		die(_("index file corrupt"));
 	opt->abbrev = 0;

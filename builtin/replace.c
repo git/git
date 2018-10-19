@@ -295,7 +295,7 @@ static int import_object(struct object_id *oid, enum object_type type,
 			close(fd);
 			return -1;
 		}
-		if (index_fd(oid, fd, &st, type, NULL, flags) < 0)
+		if (index_fd(&the_index, oid, fd, &st, type, NULL, flags) < 0)
 			return error(_("unable to write object to database"));
 		/* index_fd close()s fd for us */
 	}

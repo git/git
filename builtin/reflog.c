@@ -567,7 +567,7 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 	 * from reflog if the repository was pruned with older git.
 	 */
 	if (cb.cmd.stalefix) {
-		init_revisions(&cb.cmd.revs, prefix);
+		repo_init_revisions(the_repository, &cb.cmd.revs, prefix);
 		if (flags & EXPIRE_REFLOGS_VERBOSE)
 			printf("Marking reachable objects...");
 		mark_reachable_objects(&cb.cmd.revs, 0, 0, NULL);

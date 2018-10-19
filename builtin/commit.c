@@ -983,7 +983,7 @@ static const char *find_author_by_nickname(const char *name)
 	const char *av[20];
 	int ac = 0;
 
-	init_revisions(&revs, NULL);
+	repo_init_revisions(the_repository, &revs, NULL);
 	strbuf_addf(&buf, "--author=%s", name);
 	av[++ac] = "--all";
 	av[++ac] = "-i";
@@ -1657,7 +1657,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	if (git_env_bool(GIT_TEST_COMMIT_GRAPH, 0))
 		write_commit_graph_reachable(get_object_directory(), 0, 0);
 
-	rerere(0);
+	repo_rerere(the_repository, 0);
 	run_command_v_opt(argv_gc_auto, RUN_GIT_CMD);
 	run_commit_hook(use_editor, get_index_file(), "post-commit", NULL);
 	if (amend && !no_post_rewrite) {
