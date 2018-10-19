@@ -14,6 +14,9 @@ Backward Compatibility Notes
    which means some fetches of tags that did not fail with older
    version of Git will fail without "--force" with this version.
 
+ * "git help -a" now gives verbose output (same as "git help -av").
+   Those who want the old output may say "git help --no-verbose -a"..
+
 
 Updates since v2.19
 -------------------
@@ -68,6 +71,35 @@ UI, Workflows & Features
 
  * The completion script (in contrib/) learned to complete a handful of
    options "git stash list" command takes.
+
+ * The completion script (in contrib/) learned that "git fetch
+   --multiple" only takes remote names as arguments and no refspecs.
+
+ * "git status" learns to show progress bar when refreshing the index
+   takes a long time.
+   (merge ae9af12287 nd/status-refresh-progress later to maint).
+
+ * "git help -a" and "git help -av" give different pieces of
+   information, and generally the "verbose" version is more friendly
+   to the new users.  "git help -a" by default now uses the more
+   verbose output (with "--no-verbose", you can go back to the
+   original).  Also "git help -av" now lists aliases and external
+   commands, which it did not used to.
+
+ * Unlike "grep", "git grep" by default recurses to the whole tree.
+   The command learned "git grep --recursive" option, so that "git
+   grep --no-recursive" can serve as a synonym to setting the
+   max-depth to 0.
+
+ * When pushing into a repository that borrows its objects from an
+   alternate object store, "git receive-pack" that responds to the
+   push request on the other side lists the tips of refs in the
+   alternate to reduce the amount of objects transferred.  This
+   sometimes is detrimental when the number of refs in the alternate
+   is absurdly large, in which case the bandwidth saved in potentially
+   fewer objects transferred is wasted in excessively large ref
+   advertisement.  The alternate refs that are advertised are now
+   configurable with a pair of configuration variables.
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -131,6 +163,38 @@ Performance, Internal Implementation, Development Support etc.
    due to a previously discovered error (which implies there is no
    point running gc to improve the situation); we used to exit with
    failure in such a case.
+
+ * Various codepaths in the core-ish part learned to work on an
+   arbitrary in-core index structure, not necessarily the default
+   instance "the_index".
+   (merge b3c7eef9b0 nd/the-index later to maint).
+
+ * Code clean-up in the internal machinery used by "git status" and
+   "git commit --dry-run".
+   (merge 73ba5d78b4 ss/wt-status-committable later to maint).
+
+ * Some environment variables that control the runtime options of Git
+   used during tests are getting renamed for consistency.
+   (merge 4231d1ba99 bp/rename-test-env-var later to maint).
+
+ * A new extension to the index file has been introduced, which allows
+   the index file to be read in parallel for performance.
+
+ * The oidset API was built on top of the oidmap API which in turn is
+   on the hashmap API.  Replace the implementation to build on top of
+   the khash API and gain performance.
+
+ * Over some transports, fetching objects with an exact commit object
+   name can be done without first seeing the ref advertisements.  The
+   code has been optimized to exploit this.
+
+ * In a partial clone that will lazily be hydrated from the
+   originating repository, we generally want to avoid "does this
+   object exist (locally)?" on objects that we deliberately omitted
+   when we created the clone.  The cache-tree codepath (which is used
+   to write a tree object out of the index) however insisted that the
+   object exists, even for paths that are outside of the partial
+   checkout area.  The code has been updated to avoid such a check.
 
 
 Fixes since v2.19
@@ -209,6 +273,23 @@ Fixes since v2.19
    used for the first run, which has been corrected.
    (merge 3e73cc62c0 en/status-multiple-renames-to-the-same-target-fix later to maint).
 
+ * "git fetch $repo $object" in a partial clone did not correctly
+   fetch the asked-for object that is referenced by an object in
+   promisor packfile, which has been fixed.
+
+ * A corner-case bugfix.
+   (merge c5cbb27cb5 sm/show-superproject-while-conflicted later to maint).
+
+ * Various fixes to "diff --color-moved-ws".
+
+ * A partial clone that is configured to lazily fetch missing objects
+   will on-demand issue a "git fetch" request to the originating
+   repository to fill not-yet-obtained objects.  The request has been
+   optimized for requesting a tree object (and not the leaf blob
+   objects contained in it) by telling the originating repository that
+   no blobs are needed.
+   (merge 4c7f9567ea jt/non-blob-lazy-fetch later to maint).
+
  * Code cleanup, docfix, build fix, etc.
    (merge 96a7501aad ts/doc-build-manpage-xsl-quietly later to maint).
    (merge b9b07efdb2 tg/conflict-marker-size later to maint).
@@ -231,3 +312,4 @@ Fixes since v2.19
    (merge c56170a0c4 ma/mailing-list-address-in-git-help later to maint).
    (merge 6e8fc70fce rs/sequencer-oidset-insert-avoids-dups later to maint).
    (merge ad0b8f9575 mw/doc-typofixes later to maint).
+   (merge d9f079ad1a jc/how-to-document-api later to maint).
