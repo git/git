@@ -253,8 +253,10 @@ static int find_common(struct fetch_negotiator *negotiator,
 	if (args->stateless_rpc && multi_ack == 1)
 		die(_("--stateless-rpc requires multi_ack_detailed"));
 
-	mark_tips(negotiator, args->negotiation_tips);
-	for_each_cached_alternate(negotiator, insert_one_alternate_object);
+	if (!args->no_dependents) {
+		mark_tips(negotiator, args->negotiation_tips);
+		for_each_cached_alternate(negotiator, insert_one_alternate_object);
+	}
 
 	fetching = 0;
 	for ( ; refs ; refs = refs->next) {
@@ -271,8 +273,12 @@ static int find_common(struct fetch_negotiator *negotiator,
 		 * We use lookup_object here because we are only
 		 * interested in the case we *know* the object is
 		 * reachable and we have already scanned it.
+		 *
+		 * Do this only if args->no_dependents is false (if it is true,
+		 * we cannot trust the object flags).
 		 */
-		if (((o = lookup_object(the_repository, remote->hash)) != NULL) &&
+		if (!args->no_dependents &&
+		    ((o = lookup_object(the_repository, remote->hash)) != NULL) &&
 				(o->flags & COMPLETE)) {
 			continue;
 		}
@@ -707,31 +713,29 @@ static void mark_complete_and_common_ref(struct fetch_negotiator *negotiator,
 
 	oidset_clear(&loose_oid_set);
 
-	if (!args->no_dependents) {
-		if (!args->deepen) {
-			for_each_ref(mark_complete_oid, NULL);
-			for_each_cached_alternate(NULL, mark_alternate_complete);
-			commit_list_sort_by_date(&complete);
-			if (cutoff)
-				mark_recent_complete_commits(args, cutoff);
-		}
+	if (!args->deepen) {
+		for_each_ref(mark_complete_oid, NULL);
+		for_each_cached_alternate(NULL, mark_alternate_complete);
+		commit_list_sort_by_date(&complete);
+		if (cutoff)
+			mark_recent_complete_commits(args, cutoff);
+	}
 
-		/*
-		 * Mark all complete remote refs as common refs.
-		 * Don't mark them common yet; the server has to be told so first.
-		 */
-		for (ref = *refs; ref; ref = ref->next) {
-			struct object *o = deref_tag(the_repository,
-						     lookup_object(the_repository,
-						     ref->old_oid.hash),
-						     NULL, 0);
+	/*
+	 * Mark all complete remote refs as common refs.
+	 * Don't mark them common yet; the server has to be told so first.
+	 */
+	for (ref = *refs; ref; ref = ref->next) {
+		struct object *o = deref_tag(the_repository,
+					     lookup_object(the_repository,
+					     ref->old_oid.hash),
+					     NULL, 0);
 
-			if (!o || o->type != OBJ_COMMIT || !(o->flags & COMPLETE))
-				continue;
+		if (!o || o->type != OBJ_COMMIT || !(o->flags & COMPLETE))
+			continue;
 
-			negotiator->known_common(negotiator,
-						 (struct commit *)o);
-		}
+		negotiator->known_common(negotiator,
+					 (struct commit *)o);
 	}
 
 	save_commit_buffer = old_save_commit_buffer;
@@ -987,11 +991,15 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 	if (!server_supports("deepen-relative") && args->deepen_relative)
 		die(_("Server does not support --deepen"));
 
-	mark_complete_and_common_ref(&negotiator, args, &ref);
-	filter_refs(args, &ref, sought, nr_sought);
-	if (everything_local(args, &ref)) {
-		packet_flush(fd[1]);
-		goto all_done;
+	if (!args->no_dependents) {
+		mark_complete_and_common_ref(&negotiator, args, &ref);
+		filter_refs(args, &ref, sought, nr_sought);
+		if (everything_local(args, &ref)) {
+			packet_flush(fd[1]);
+			goto all_done;
+		}
+	} else {
+		filter_refs(args, &ref, sought, nr_sought);
 	}
 	if (find_common(&negotiator, args, fd, &oid, ref) < 0)
 		if (!args->keep_pack)
@@ -1037,7 +1045,7 @@ static void add_shallow_requests(struct strbuf *req_buf,
 	}
 }
 
-static void add_wants(const struct ref *wants, struct strbuf *req_buf)
+static void add_wants(int no_dependents, const struct ref *wants, struct strbuf *req_buf)
 {
 	int use_ref_in_want = server_supports_feature("fetch", "ref-in-want", 0);
 
@@ -1054,8 +1062,12 @@ static void add_wants(const struct ref *wants, struct strbuf *req_buf)
 		 * We use lookup_object here because we are only
 		 * interested in the case we *know* the object is
 		 * reachable and we have already scanned it.
+		 *
+		 * Do this only if args->no_dependents is false (if it is true,
+		 * we cannot trust the object flags).
 		 */
-		if (((o = lookup_object(the_repository, remote->hash)) != NULL) &&
+		if (!no_dependents &&
+		    ((o = lookup_object(the_repository, remote->hash)) != NULL) &&
 		    (o->flags & COMPLETE)) {
 			continue;
 		}
@@ -1152,7 +1164,7 @@ static int send_fetch_request(struct fetch_negotiator *negotiator, int fd_out,
 	}
 
 	/* add wants */
-	add_wants(wants, &req_buf);
+	add_wants(args->no_dependents, wants, &req_buf);
 
 	if (args->no_dependents) {
 		packet_buf_write(&req_buf, "done");
@@ -1343,16 +1355,21 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 				args->deepen = 1;
 
 			/* Filter 'ref' by 'sought' and those that aren't local */
-			mark_complete_and_common_ref(&negotiator, args, &ref);
-			filter_refs(args, &ref, sought, nr_sought);
-			if (everything_local(args, &ref))
-				state = FETCH_DONE;
-			else
-				state = FETCH_SEND_REQUEST;
+			if (!args->no_dependents) {
+				mark_complete_and_common_ref(&negotiator, args, &ref);
+				filter_refs(args, &ref, sought, nr_sought);
+				if (everything_local(args, &ref))
+					state = FETCH_DONE;
+				else
+					state = FETCH_SEND_REQUEST;
 
-			mark_tips(&negotiator, args->negotiation_tips);
-			for_each_cached_alternate(&negotiator,
-						  insert_one_alternate_object);
+				mark_tips(&negotiator, args->negotiation_tips);
+				for_each_cached_alternate(&negotiator,
+							  insert_one_alternate_object);
+			} else {
+				filter_refs(args, &ref, sought, nr_sought);
+				state = FETCH_SEND_REQUEST;
+			}
 			break;
 		case FETCH_SEND_REQUEST:
 			if (send_fetch_request(&negotiator, fd[1], args, ref,
@@ -1594,6 +1611,20 @@ struct ref *fetch_pack(struct fetch_pack_args *args,
 	fetch_pack_setup();
 	if (nr_sought)
 		nr_sought = remove_duplicates_in_refs(sought, nr_sought);
+
+	if (args->no_dependents && !args->filter_options.choice) {
+		/*
+		 * The protocol does not support requesting that only the
+		 * wanted objects be sent, so approximate this by setting a
+		 * "blob:none" filter if no filter is already set. This works
+		 * for all object types: note that wanted blobs will still be
+		 * sent because they are directly specified as a "want".
+		 *
+		 * NEEDSWORK: Add an option in the protocol to request that
+		 * only the wanted objects be sent, and implement it.
+		 */
+		parse_list_objects_filter(&args->filter_options, "blob:none");
+	}
 
 	if (!ref) {
 		packet_flush(fd[1]);

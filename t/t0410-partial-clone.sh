@@ -182,6 +182,47 @@ test_expect_success 'fetching of missing objects works with ref-in-want enabled'
 	grep "git< fetch=.*ref-in-want" trace
 '
 
+test_expect_success 'fetching of missing blobs works' '
+	rm -rf server repo &&
+	test_create_repo server &&
+	test_commit -C server foo &&
+	git -C server repack -a -d --write-bitmap-index &&
+
+	git clone "file://$(pwd)/server" repo &&
+	git hash-object repo/foo.t >blobhash &&
+	rm -rf repo/.git/objects/* &&
+
+	git -C server config uploadpack.allowanysha1inwant 1 &&
+	git -C server config uploadpack.allowfilter 1 &&
+	git -C repo config core.repositoryformatversion 1 &&
+	git -C repo config extensions.partialclone "origin" &&
+
+	git -C repo cat-file -p $(cat blobhash)
+'
+
+test_expect_success 'fetching of missing trees does not fetch blobs' '
+	rm -rf server repo &&
+	test_create_repo server &&
+	test_commit -C server foo &&
+	git -C server repack -a -d --write-bitmap-index &&
+
+	git clone "file://$(pwd)/server" repo &&
+	git -C repo rev-parse foo^{tree} >treehash &&
+	git hash-object repo/foo.t >blobhash &&
+	rm -rf repo/.git/objects/* &&
+
+	git -C server config uploadpack.allowanysha1inwant 1 &&
+	git -C server config uploadpack.allowfilter 1 &&
+	git -C repo config core.repositoryformatversion 1 &&
+	git -C repo config extensions.partialclone "origin" &&
+	git -C repo cat-file -p $(cat treehash) &&
+
+	# Ensure that the tree, but not the blob, is fetched
+	git -C repo rev-list --objects --missing=print $(cat treehash) >objects &&
+	grep "^$(cat treehash)" objects &&
+	grep "^[?]$(cat blobhash)" objects
+'
+
 test_expect_success 'rev-list stops traversal at missing and promised commit' '
 	rm -rf repo &&
 	test_create_repo repo &&
