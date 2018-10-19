@@ -64,6 +64,7 @@ static int graph_verify(int argc, const char **argv)
 	if (!graph)
 		return 0;
 
+	UNLEAK(graph);
 	return verify_commit_graph(the_repository, graph);
 }
 
@@ -89,10 +90,8 @@ static int graph_read(int argc, const char **argv)
 	graph_name = get_commit_graph_filename(opts.obj_dir);
 	graph = load_commit_graph_one(graph_name);
 
-	if (!graph) {
-		UNLEAK(graph_name);
+	if (!graph)
 		die("graph file %s does not exist", graph_name);
-	}
 
 	FREE_AND_NULL(graph_name);
 
@@ -115,7 +114,7 @@ static int graph_read(int argc, const char **argv)
 		printf(" large_edges");
 	printf("\n");
 
-	free_commit_graph(graph);
+	UNLEAK(graph);
 
 	return 0;
 }
@@ -170,6 +169,8 @@ static int graph_write(int argc, const char **argv)
 			pack_indexes = &lines;
 		if (opts.stdin_commits)
 			commit_hex = &lines;
+
+		UNLEAK(buf);
 	}
 
 	write_commit_graph(opts.obj_dir,
@@ -178,7 +179,7 @@ static int graph_write(int argc, const char **argv)
 			   opts.append,
 			   1);
 
-	string_list_clear(&lines, 0);
+	UNLEAK(lines);
 	return 0;
 }
 
