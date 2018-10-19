@@ -1341,17 +1341,6 @@ _git_checkout ()
 	esac
 }
 
-_git_cherry ()
-{
-	case "$cur" in
-	--*)
-		__gitcomp_builtin cherry
-		return
-	esac
-
-	__git_complete_refs
-}
-
 __git_cherry_pick_inprogress_options="--continue --quit --abort"
 
 _git_cherry_pick ()
