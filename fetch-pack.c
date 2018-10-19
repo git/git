@@ -1248,6 +1248,18 @@ static int process_acks(struct fetch_negotiator *negotiator,
 	    reader->status != PACKET_READ_DELIM)
 		die(_("error processing acks: %d"), reader->status);
 
+	/*
+	 * If an "acknowledgments" section is sent, a packfile is sent if and
+	 * only if "ready" was sent in this section. The other sections
+	 * ("shallow-info" and "wanted-refs") are sent only if a packfile is
+	 * sent. Therefore, a DELIM is expected if "ready" is sent, and a FLUSH
+	 * otherwise.
+	 */
+	if (received_ready && reader->status != PACKET_READ_DELIM)
+		die(_("expected packfile to be sent after 'ready'"));
+	if (!received_ready && reader->status != PACKET_READ_FLUSH)
+		die(_("expected no other sections to be sent after no 'ready'"));
+
 	/* return 0 if no common, 1 if there are common, or 2 if ready */
 	return received_ready ? 2 : (received_ack ? 1 : 0);
 }
