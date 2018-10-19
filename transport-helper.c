@@ -1105,6 +1105,7 @@ static struct ref *get_refs_list(struct transport *transport, int for_push,
 }
 
 static struct transport_vtable vtable = {
+	0,
 	set_helper_option,
 	get_refs_list,
 	fetch,

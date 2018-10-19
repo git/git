@@ -1186,6 +1186,7 @@ static int do_fetch(struct transport *transport,
 	int retcode = 0;
 	const struct ref *remote_refs;
 	struct argv_array ref_prefixes = ARGV_ARRAY_INIT;
+	int must_list_refs = 1;
 
 	if (tags == TAGS_DEFAULT) {
 		if (transport->remote->fetch_tags == 2)
@@ -1201,17 +1202,36 @@ static int do_fetch(struct transport *transport,
 			goto cleanup;
 	}
 
-	if (rs->nr)
+	if (rs->nr) {
+		int i;
+
 		refspec_ref_prefixes(rs, &ref_prefixes);
-	else if (transport->remote && transport->remote->fetch.nr)
+
+		/*
+		 * We can avoid listing refs if all of them are exact
+		 * OIDs
+		 */
+		must_list_refs = 0;
+		for (i = 0; i < rs->nr; i++) {
+			if (!rs->items[i].exact_sha1) {
+				must_list_refs = 1;
+				break;
+			}
+		}
+	} else if (transport->remote && transport->remote->fetch.nr)
 		refspec_ref_prefixes(&transport->remote->fetch, &ref_prefixes);
 
-	if (ref_prefixes.argc &&
-	    (tags == TAGS_SET || (tags == TAGS_DEFAULT))) {
-		argv_array_push(&ref_prefixes, "refs/tags/");
+	if (tags == TAGS_SET || tags == TAGS_DEFAULT) {
+		must_list_refs = 1;
+		if (ref_prefixes.argc)
+			argv_array_push(&ref_prefixes, "refs/tags/");
 	}
 
-	remote_refs = transport_get_remote_refs(transport, &ref_prefixes);
+	if (must_list_refs)
+		remote_refs = transport_get_remote_refs(transport, &ref_prefixes);
+	else
+		remote_refs = NULL;
+
 	argv_array_clear(&ref_prefixes);
 
 	ref_map = get_ref_map(transport->remote, remote_refs, rs,
