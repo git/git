@@ -30,4 +30,50 @@ test_expect_success 'refs/worktree are per-worktree' '
 	( cd wt2 && test_cmp_rev worktree/foo wt2 )
 '
 
+test_expect_success 'resolve main-worktree/HEAD' '
+	test_cmp_rev main-worktree/HEAD initial &&
+	( cd wt1 && test_cmp_rev main-worktree/HEAD initial ) &&
+	( cd wt2 && test_cmp_rev main-worktree/HEAD initial )
+'
+
+test_expect_success 'ambiguous main-worktree/HEAD' '
+	mkdir -p .git/refs/heads/main-worktree &&
+	test_when_finished rm -f .git/refs/heads/main-worktree/HEAD &&
+	cp .git/HEAD .git/refs/heads/main-worktree/HEAD &&
+	git rev-parse main-worktree/HEAD 2>warn &&
+	grep "main-worktree/HEAD.*ambiguous" warn
+'
+
+test_expect_success 'resolve worktrees/xx/HEAD' '
+	test_cmp_rev worktrees/wt1/HEAD wt1 &&
+	( cd wt1 && test_cmp_rev worktrees/wt1/HEAD wt1 ) &&
+	( cd wt2 && test_cmp_rev worktrees/wt1/HEAD wt1 )
+'
+
+test_expect_success 'ambiguous worktrees/xx/HEAD' '
+	mkdir -p .git/refs/heads/worktrees/wt1 &&
+	test_when_finished rm -f .git/refs/heads/worktrees/wt1/HEAD &&
+	cp .git/HEAD .git/refs/heads/worktrees/wt1/HEAD &&
+	git rev-parse worktrees/wt1/HEAD 2>warn &&
+	grep "worktrees/wt1/HEAD.*ambiguous" warn
+'
+
+test_expect_success 'reflog of main-worktree/HEAD' '
+	git reflog HEAD | sed "s/HEAD/main-worktree\/HEAD/" >expected &&
+	git reflog main-worktree/HEAD >actual &&
+	test_cmp expected actual &&
+	git -C wt1 reflog main-worktree/HEAD >actual.wt1 &&
+	test_cmp expected actual.wt1
+'
+
+test_expect_success 'reflog of worktrees/xx/HEAD' '
+	git -C wt2 reflog HEAD | sed "s/HEAD/worktrees\/wt2\/HEAD/" >expected &&
+	git reflog worktrees/wt2/HEAD >actual &&
+	test_cmp expected actual &&
+	git -C wt1 reflog worktrees/wt2/HEAD >actual.wt1 &&
+	test_cmp expected actual.wt1 &&
+	git -C wt2 reflog worktrees/wt2/HEAD >actual.wt2 &&
+	test_cmp expected actual.wt2
+'
+
 test_done
