@@ -402,6 +402,20 @@ void setup_work_tree(void)
 	initialized = 1;
 }
 
+static int read_worktree_config(const char *var, const char *value, void *vdata)
+{
+	struct repository_format *data = vdata;
+
+	if (strcmp(var, "core.bare") == 0) {
+		data->is_bare = git_config_bool(var, value);
+	} else if (strcmp(var, "core.worktree") == 0) {
+		if (!value)
+			return config_error_nonbool(var);
+		data->work_tree = xstrdup(value);
+	}
+	return 0;
+}
+
 static int check_repo_format(const char *var, const char *value, void *vdata)
 {
 	struct repository_format *data = vdata;
@@ -423,16 +437,13 @@ static int check_repo_format(const char *var, const char *value, void *vdata)
 			if (!value)
 				return config_error_nonbool(var);
 			data->partial_clone = xstrdup(value);
-		} else
+		} else if (!strcmp(ext, "worktreeconfig"))
+			data->worktree_config = git_config_bool(var, value);
+		else
 			string_list_append(&data->unknown_extensions, ext);
-	} else if (strcmp(var, "core.bare") == 0) {
-		data->is_bare = git_config_bool(var, value);
-	} else if (strcmp(var, "core.worktree") == 0) {
-		if (!value)
-			return config_error_nonbool(var);
-		data->work_tree = xstrdup(value);
 	}
-	return 0;
+
+	return read_worktree_config(var, value, vdata);
 }
 
 static int check_repository_format_gently(const char *gitdir, struct repository_format *candidate, int *nongit_ok)
@@ -466,7 +477,20 @@ static int check_repository_format_gently(const char *gitdir, struct repository_
 
 	repository_format_precious_objects = candidate->precious_objects;
 	repository_format_partial_clone = candidate->partial_clone;
+	repository_format_worktree_config = candidate->worktree_config;
 	string_list_clear(&candidate->unknown_extensions, 0);
+
+	if (repository_format_worktree_config) {
+		/*
+		 * pick up core.bare and core.worktree from per-worktree
+		 * config if present
+		 */
+		strbuf_addf(&sb, "%s/config.worktree", gitdir);
+		git_config_from_file(read_worktree_config, sb.buf, candidate);
+		strbuf_release(&sb);
+		has_common = 0;
+	}
+
 	if (!has_common) {
 		if (candidate->is_bare != -1) {
 			is_bare_repository_cfg = candidate->is_bare;

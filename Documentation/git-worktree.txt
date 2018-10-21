@@ -204,6 +204,36 @@ working trees, it can be used to identify worktrees. For example if
 you only have two working trees, at "/abc/def/ghi" and "/abc/def/ggg",
 then "ghi" or "def/ghi" is enough to point to the former working tree.
 
+CONFIGURATION FILE
+------------------
+By default, the repository "config" file is shared across all working
+trees. If the config variables `core.bare` or `core.worktree` are
+already present in the config file, they will be applied to the main
+working trees only.
+
+In order to have configuration specific to working trees, you can turn
+on "worktreeConfig" extension, e.g.:
+
+------------
+$ git config extensions.worktreeConfig true
+------------
+
+In this mode, specific configuration stays in the path pointed by `git
+rev-parse --git-path config.worktree`. You can add or update
+configuration in this file with `git config --worktree`. Older Git
+versions will refuse to access repositories with this extension.
+
+Note that in this file, the exception for `core.bare` and `core.worktree`
+is gone. If you have them in $GIT_DIR/config before, you must move
+them to the `config.worktree` of the main working tree. You may also
+take this opportunity to review and move other configuration that you
+do not want to share to all working trees:
+
+ - `core.worktree` and `core.bare` should never be shared
+
+ - `core.sparseCheckout` is recommended per working tree, unless you
+   are sure you always use sparse checkout for all working trees.
+
 DETAILS
 -------
 Each linked working tree has a private sub-directory in the repository's
@@ -252,6 +282,9 @@ to `/path/main/.git/worktrees/test-next` then a file named
 `/path/main/.git/worktrees/test-next/locked` will prevent the
 `test-next` entry from being pruned.  See
 linkgit:gitrepository-layout[5] for details.
+
+When extensions.worktreeConfig is enabled, the config file
+`.git/worktrees/<id>/config.worktree` is read after `.git/config` is.
 
 LIST OUTPUT FORMAT
 ------------------
