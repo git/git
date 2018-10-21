@@ -368,4 +368,19 @@ test_expect_success 'continue walking past root commits' '
 	)
 '
 
+test_expect_success 'expire with multiple worktrees' '
+	git init main-wt &&
+	(
+		cd main-wt &&
+		test_tick &&
+		test_commit foo &&
+		git  worktree add link-wt &&
+		test_tick &&
+		test_commit -C link-wt foobar &&
+		test_tick &&
+		git reflog expire --verbose --all --expire=$test_tick &&
+		test_must_be_empty .git/worktrees/link-wt/logs/HEAD
+	)
+'
+
 test_done
