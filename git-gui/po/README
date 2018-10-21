@@ -4,7 +4,7 @@ Localizing git-gui for your language
 This short note is to help you, who reads and writes English and your
 own language, help us getting git-gui localized for more languages.  It
 does not try to be a comprehensive manual of GNU gettext, which is the
-i18n framework we use, but tries to help you get started by covering the
+i18n framework we use but tries to help you get started by covering them
 basics and how it is used in this project.
 
 1. Getting started.
@@ -21,9 +21,9 @@ them.
 You would then need to clone the git-gui project repository and create
 a feature branch to begin working:
 
-	$ git clone git://repo.or.cz/git-gui.git
-	$ cd git-gui.git
-	$ git checkout -b my-translation
+    $ git clone git://repo.or.cz/git-gui.git
+    $ cd git-gui.git
+    $ git checkout -b my-translation
 
 The "git checkout" command creates a new branch to keep your work
 isolated and to make it simple to post your patch series when
@@ -37,9 +37,9 @@ files whose names end with ".po".  Is there a file that has messages
 in your language?
 
 If you do not know what your language should be named, you need to find
-it.  This currently follows ISO 639-1 two letter codes:
+it.  This currently follows ISO 639-1 two-letter codes:
 
-	http://www.loc.gov/standards/iso639-2/php/code_list.php
+    http://www.loc.gov/standards/iso639-2/php/code_list.php
 
 For example, if you are preparing a translation for Afrikaans, the
 language code is "af".  If there already is a translation for your
@@ -73,19 +73,18 @@ look something like this:
 
 You will find many pairs of a "msgid" line followed by a "msgstr" line.
 These pairs define how messages in git-gui application are translated to
-your language.  Your primarily job is to fill in the empty double quote
+your language.  Your primary job is to fill in the empty double quote
 pairs on msgstr lines with the translation of the strings on their
 matching msgid lines.  A few tips:
 
  - Control characters, such as newlines, are written in backslash
-   sequence similar to string literals in the C programming language.
+   a sequence similar to string literals in the C programming language.
    When the string given on a msgid line has such a backslash sequence,
    you would typically want to have corresponding ones in the string on
    your msgstr line.
 
  - Some messages contain an optional context indicator at the end,
-   for example "@@noun" or "@@verb".  This indicator allows the
-   software to select the correct translation depending upon the use.
+   for example, "@@noun" or "@@verb".  This indicator allows the software to select the correct translation depending upon the use.
    The indicator is not actually part of the message and will not
    be shown to the end-user.
 
@@ -98,30 +97,26 @@ matching msgid lines.  A few tips:
 
    When you have to change the order of words, you can add "<number>$"
    between '%' and the conversion ('s', 'd', etc.) to say "<number>-th
-   parameter to the format string is used at this point".  For example,
+   a parameter to the format string is used at this point".  For example,
    if the original message is like this:
 
-	"Length is %d, Weight is %d"
+    "Length is %d, Weight is %d"
 
    and if for whatever reason your translation needs to say weight first
    and then length, you can say something like:
 
-	"WEIGHT IS %2$d, LENGTH IS %1$d"
+    "WEIGHT IS %2$d, LENGTH IS %1$d"
 
-   A format specification with a '*' (asterisk) refers to *two* arguments
-   instead of one, hence the succeeding argument number is two higher
-   instead of one. So, a message like this
+   A format specification with a '*' (asterisk) refers to *two* arguments instead of one, hence the succeeding argument number is two higher instead of one. So, a message like this
 
-	"%s ... %*i of %*i %s (%3i%%)"
+    "%s ... %*i of %*i %s (%3i%%)"
 
    is equivalent to
 
-	"%1$s ... %2$*i of %4$*i %6$s (%7$3i%%)"
+    "%1$s ... %2$*i of %4$*i %6$s (%7$3i%%)"
 
  - A long message can be split across multiple lines by ending the
-   string with a double quote, and starting another string on the next
-   line with another double quote.  They will be concatenated in the
-   result.  For example:
+   string with a double quote, and starting another string on the next line with another double quote.  They will be concatenated in the result.  For example:
 
    #: lib/remote_branch_delete.tcl:189
    #, tcl-format
@@ -136,26 +131,26 @@ You can test your translation by running "make install", which would
 create po/af.msg file and installs the result, and then running the
 resulting git-gui under your locale:
 
-	$ make install
-	$ LANG=af git-gui
+    $ make install
+    $ LANG=af git-gui
 
 There is a trick to test your translation without first installing:
 
-	$ make
-	$ LANG=af ./git-gui.sh
+    $ make
+    $ LANG=af ./git-gui.sh
 
 When you are satisfied with your translation, commit your changes then submit
 your patch series to the maintainer and the Git mailing list:
 
-	$ edit po/af.po
-	... be sure to update Last-Translator: and
-	... PO-Revision-Date: lines.
-	$ git add po/af.po
-	$ git commit -s -m 'git-gui: added Afrikaans translation.'
-	$ git send-email --to 'git@vger.kernel.org' \
-	   --cc 'Pat Thoyts <patthoyts@users.sourceforge.net>' \
-	   --subject 'git-gui: Afrikaans translation' \
-	   master..
+    $ edit po/af.po
+    ... be sure to update Last-Translator: and
+    ... PO-Revision-Date: lines.
+    $ git add po/af.po
+    $ git commit -s -m 'git-gui: added Afrikaans translation.'
+    $ git send-email --to 'git@vger.kernel.org' \
+       --cc 'Pat Thoyts <patthoyts@users.sourceforge.net>' \
+       --subject 'git-gui: Afrikaans translation' \
+       master..
 
 
 3. Updating your translation.
@@ -167,8 +162,8 @@ itself was updated and there are new messages that need translation.
 
 In any case, make sure you are up to date before starting your work:
 
-	$ git checkout master
-	$ git pull
+    $ git checkout master
+    $ git pull
 
 In the former case, you will edit po/af.po (again, replace "af" with
 your language code), and after testing and updating the Last-Translator:
@@ -180,7 +175,7 @@ po/af.po file, you can tell if there are new messages that need to be
 translated.  You would need the GNU gettext package to perform this
 step.
 
-	$ msgmerge -U po/af.po po/git-gui.pot
+    $ msgmerge -U po/af.po po/git-gui.pot
 
 This updates po/af.po (again, replace "af" with your language
 code) so that it contains msgid lines (i.e. the original) that
