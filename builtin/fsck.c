@@ -19,6 +19,7 @@
 #include "packfile.h"
 #include "object-store.h"
 #include "run-command.h"
+#include "worktree.h"
 
 #define REACHABLE 0x0001
 #define SEEN      0x0002
@@ -444,7 +445,11 @@ static int fsck_handle_reflog_ent(struct object_id *ooid, struct object_id *noid
 static int fsck_handle_reflog(const char *logname, const struct object_id *oid,
 			      int flag, void *cb_data)
 {
-	for_each_reflog_ent(logname, fsck_handle_reflog_ent, (void *)logname);
+	struct strbuf refname = STRBUF_INIT;
+
+	strbuf_worktree_ref(cb_data, &refname, logname);
+	for_each_reflog_ent(refname.buf, fsck_handle_reflog_ent, refname.buf);
+	strbuf_release(&refname);
 	return 0;
 }
 
@@ -482,20 +487,34 @@ static int fsck_handle_ref(const char *refname, const struct object_id *oid,
 	return 0;
 }
 
-static int fsck_head_link(const char **head_points_at,
+static int fsck_head_link(const char *head_ref_name,
+			  const char **head_points_at,
 			  struct object_id *head_oid);
 
 static void get_default_heads(void)
 {
+	struct worktree **worktrees, **p;
 	const char *head_points_at;
 	struct object_id head_oid;
 
-	fsck_head_link(&head_points_at, &head_oid);
-	if (head_points_at && !is_null_oid(&head_oid))
-		fsck_handle_ref("HEAD", &head_oid, 0, NULL);
 	for_each_rawref(fsck_handle_ref, NULL);
-	if (include_reflogs)
-		for_each_reflog(fsck_handle_reflog, NULL);
+
+	worktrees = get_worktrees(0);
+	for (p = worktrees; *p; p++) {
+		struct worktree *wt = *p;
+		struct strbuf ref = STRBUF_INIT;
+
+		strbuf_worktree_ref(wt, &ref, "HEAD");
+		fsck_head_link(ref.buf, &head_points_at, &head_oid);
+		if (head_points_at && !is_null_oid(&head_oid))
+			fsck_handle_ref(ref.buf, &head_oid, 0, NULL);
+		strbuf_release(&ref);
+
+		if (include_reflogs)
+			refs_for_each_reflog(get_worktree_ref_store(wt),
+					     fsck_handle_reflog, wt);
+	}
+	free_worktrees(worktrees);
 
 	/*
 	 * Not having any default heads isn't really fatal, but
@@ -584,34 +603,36 @@ static void fsck_object_dir(const char *path)
 	stop_progress(&progress);
 }
 
-static int fsck_head_link(const char **head_points_at,
+static int fsck_head_link(const char *head_ref_name,
+			  const char **head_points_at,
 			  struct object_id *head_oid)
 {
 	int null_is_error = 0;
 
 	if (verbose)
-		fprintf(stderr, "Checking HEAD link\n");
+		fprintf(stderr, "Checking %s link\n", head_ref_name);
 
-	*head_points_at = resolve_ref_unsafe("HEAD", 0, head_oid, NULL);
+	*head_points_at = resolve_ref_unsafe(head_ref_name, 0, head_oid, NULL);
 	if (!*head_points_at) {
 		errors_found |= ERROR_REFS;
-		return error("Invalid HEAD");
+		return error("Invalid %s", head_ref_name);
 	}
-	if (!strcmp(*head_points_at, "HEAD"))
+	if (!strcmp(*head_points_at, head_ref_name))
 		/* detached HEAD */
 		null_is_error = 1;
 	else if (!starts_with(*head_points_at, "refs/heads/")) {
 		errors_found |= ERROR_REFS;
-		return error("HEAD points to something strange (%s)",
-			     *head_points_at);
+		return error("%s points to something strange (%s)",
+			     head_ref_name, *head_points_at);
 	}
 	if (is_null_oid(head_oid)) {
 		if (null_is_error) {
 			errors_found |= ERROR_REFS;
-			return error("HEAD: detached HEAD points at nothing");
+			return error("%s: detached HEAD points at nothing",
+				     head_ref_name);
 		}
-		fprintf(stderr, "notice: HEAD points to an unborn branch (%s)\n",
-			*head_points_at + 11);
+		fprintf(stderr, "notice: %s points to an unborn branch (%s)\n",
+			head_ref_name, *head_points_at + 11);
 	}
 	return 0;
 }
