@@ -36,8 +36,6 @@ static int check_strict;
 static int keep_cache_objects;
 static struct fsck_options fsck_walk_options = FSCK_OPTIONS_DEFAULT;
 static struct fsck_options fsck_obj_options = FSCK_OPTIONS_DEFAULT;
-static struct object_id head_oid;
-static const char *head_points_at;
 static int errors_found;
 static int write_lost_and_found;
 static int verbose;
@@ -484,8 +482,15 @@ static int fsck_handle_ref(const char *refname, const struct object_id *oid,
 	return 0;
 }
 
+static int fsck_head_link(const char **head_points_at,
+			  struct object_id *head_oid);
+
 static void get_default_heads(void)
 {
+	const char *head_points_at;
+	struct object_id head_oid;
+
+	fsck_head_link(&head_points_at, &head_oid);
 	if (head_points_at && !is_null_oid(&head_oid))
 		fsck_handle_ref("HEAD", &head_oid, 0, NULL);
 	for_each_rawref(fsck_handle_ref, NULL);
@@ -579,33 +584,34 @@ static void fsck_object_dir(const char *path)
 	stop_progress(&progress);
 }
 
-static int fsck_head_link(void)
+static int fsck_head_link(const char **head_points_at,
+			  struct object_id *head_oid)
 {
 	int null_is_error = 0;
 
 	if (verbose)
 		fprintf(stderr, "Checking HEAD link\n");
 
-	head_points_at = resolve_ref_unsafe("HEAD", 0, &head_oid, NULL);
-	if (!head_points_at) {
+	*head_points_at = resolve_ref_unsafe("HEAD", 0, head_oid, NULL);
+	if (!*head_points_at) {
 		errors_found |= ERROR_REFS;
 		return error("Invalid HEAD");
 	}
-	if (!strcmp(head_points_at, "HEAD"))
+	if (!strcmp(*head_points_at, "HEAD"))
 		/* detached HEAD */
 		null_is_error = 1;
-	else if (!starts_with(head_points_at, "refs/heads/")) {
+	else if (!starts_with(*head_points_at, "refs/heads/")) {
 		errors_found |= ERROR_REFS;
 		return error("HEAD points to something strange (%s)",
-			     head_points_at);
+			     *head_points_at);
 	}
-	if (is_null_oid(&head_oid)) {
+	if (is_null_oid(head_oid)) {
 		if (null_is_error) {
 			errors_found |= ERROR_REFS;
 			return error("HEAD: detached HEAD points at nothing");
 		}
 		fprintf(stderr, "notice: HEAD points to an unborn branch (%s)\n",
-			head_points_at + 11);
+			*head_points_at + 11);
 	}
 	return 0;
 }
@@ -720,7 +726,6 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 
 	git_config(fsck_config, NULL);
 
-	fsck_head_link();
 	if (connectivity_only) {
 		for_each_loose_object(mark_loose_for_connectivity, NULL, 0);
 		for_each_packed_object(mark_packed_for_connectivity, NULL, 0);
