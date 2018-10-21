@@ -1277,13 +1277,14 @@ static int handle_one_reflog_ent(struct object_id *ooid, struct object_id *noid,
 	return 0;
 }
 
-static int handle_one_reflog(const char *path, const struct object_id *oid,
+static int handle_one_reflog(const char *refname,
+			     const struct object_id *oid,
 			     int flag, void *cb_data)
 {
 	struct all_refs_cb *cb = cb_data;
 	cb->warned_bad_reflog = 0;
-	cb->name_for_errormsg = path;
-	refs_for_each_reflog_ent(cb->refs, path,
+	cb->name_for_errormsg = refname;
+	refs_for_each_reflog_ent(cb->refs, refname,
 				 handle_one_reflog_ent, cb_data);
 	return 0;
 }
