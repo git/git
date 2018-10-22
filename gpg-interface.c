@@ -74,6 +74,7 @@ void signature_check_clear(struct signature_check *sigc)
 	FREE_AND_NULL(sigc->signer);
 	FREE_AND_NULL(sigc->key);
 	FREE_AND_NULL(sigc->fingerprint);
+	FREE_AND_NULL(sigc->primary_key_fingerprint);
 }
 
 /* An exclusive status -- only one of them can appear in output */
@@ -108,7 +109,7 @@ static void parse_gpg_output(struct signature_check *sigc)
 {
 	const char *buf = sigc->gpg_status;
 	const char *line, *next;
-	int i;
+	int i, j;
 	int seen_exclusive_status = 0;
 
 	/* Iterate over all lines */
@@ -147,6 +148,18 @@ static void parse_gpg_output(struct signature_check *sigc)
 					next = strchrnul(line, ' ');
 					free(sigc->fingerprint);
 					sigc->fingerprint = xmemdupz(line, next - line);
+
+					/* Skip interim fields */
+					for (j = 9; j > 0; j--) {
+						if (!*next)
+							break;
+						line = next + 1;
+						next = strchrnul(line, ' ');
+					}
+
+					next = strchrnul(line, '\n');
+					free(sigc->primary_key_fingerprint);
+					sigc->primary_key_fingerprint = xmemdupz(line, next - line);
 				}
 
 				break;
@@ -165,6 +178,7 @@ found_duplicate_status:
 	 */
 	sigc->result = 'E';
 	/* Clear partial data to avoid confusion */
+	FREE_AND_NULL(sigc->primary_key_fingerprint);
 	FREE_AND_NULL(sigc->fingerprint);
 	FREE_AND_NULL(sigc->signer);
 	FREE_AND_NULL(sigc->key);
