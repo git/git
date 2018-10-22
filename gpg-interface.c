@@ -77,20 +77,27 @@ void signature_check_clear(struct signature_check *sigc)
 
 /* An exclusive status -- only one of them can appear in output */
 #define GPG_STATUS_EXCLUSIVE	(1<<0)
+/* The status includes key identifier */
+#define GPG_STATUS_KEYID	(1<<1)
+/* The status includes user identifier */
+#define GPG_STATUS_UID		(1<<2)
+
+/* Short-hand for standard exclusive *SIG status with keyid & UID */
+#define GPG_STATUS_STDSIG	(GPG_STATUS_EXCLUSIVE|GPG_STATUS_KEYID|GPG_STATUS_UID)
 
 static struct {
 	char result;
 	const char *check;
 	unsigned int flags;
 } sigcheck_gpg_status[] = {
-	{ 'G', "GOODSIG ", GPG_STATUS_EXCLUSIVE },
-	{ 'B', "BADSIG ", GPG_STATUS_EXCLUSIVE },
+	{ 'G', "GOODSIG ", GPG_STATUS_STDSIG },
+	{ 'B', "BADSIG ", GPG_STATUS_STDSIG },
 	{ 'U', "TRUST_NEVER", 0 },
 	{ 'U', "TRUST_UNDEFINED", 0 },
-	{ 'E', "ERRSIG ", GPG_STATUS_EXCLUSIVE },
-	{ 'X', "EXPSIG ", GPG_STATUS_EXCLUSIVE },
-	{ 'Y', "EXPKEYSIG ", GPG_STATUS_EXCLUSIVE },
-	{ 'R', "REVKEYSIG ", GPG_STATUS_EXCLUSIVE },
+	{ 'E', "ERRSIG ", GPG_STATUS_EXCLUSIVE|GPG_STATUS_KEYID },
+	{ 'X', "EXPSIG ", GPG_STATUS_STDSIG },
+	{ 'Y', "EXPKEYSIG ", GPG_STATUS_STDSIG },
+	{ 'R', "REVKEYSIG ", GPG_STATUS_STDSIG },
 };
 
 static void parse_gpg_output(struct signature_check *sigc)
@@ -117,13 +124,13 @@ static void parse_gpg_output(struct signature_check *sigc)
 				}
 
 				sigc->result = sigcheck_gpg_status[i].result;
-				/* The trust messages are not followed by key/signer information */
-				if (sigc->result != 'U') {
+				/* Do we have key information? */
+				if (sigcheck_gpg_status[i].flags & GPG_STATUS_KEYID) {
 					next = strchrnul(line, ' ');
 					free(sigc->key);
 					sigc->key = xmemdupz(line, next - line);
-					/* The ERRSIG message is not followed by signer information */
-					if (*next && sigc->result != 'E') {
+					/* Do we have signer information? */
+					if (*next && (sigcheck_gpg_status[i].flags & GPG_STATUS_UID)) {
 						line = next + 1;
 						next = strchrnul(line, '\n');
 						free(sigc->signer);
