@@ -1376,7 +1376,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			if (safe_create_leading_directories_const(autostash))
 				die(_("Could not create directory for '%s'"),
 				    options.state_dir);
-			write_file(autostash, "%s", buf.buf);
+			write_file(autostash, "%s", oid_to_hex(&oid));
 			printf(_("Created autostash: %s\n"), buf.buf);
 			if (reset_head(&head->object.oid, "reset --hard",
 				       NULL, 0, NULL, NULL) < 0)
