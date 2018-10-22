@@ -24,6 +24,7 @@ struct signature_check {
 	char *signer;
 	char *key;
 	char *fingerprint;
+	char *primary_key_fingerprint;
 };
 
 void signature_check_clear(struct signature_check *sigc);
