@@ -73,6 +73,7 @@ void signature_check_clear(struct signature_check *sigc)
 	FREE_AND_NULL(sigc->gpg_status);
 	FREE_AND_NULL(sigc->signer);
 	FREE_AND_NULL(sigc->key);
+	FREE_AND_NULL(sigc->fingerprint);
 }
 
 /* An exclusive status -- only one of them can appear in output */
@@ -81,6 +82,8 @@ void signature_check_clear(struct signature_check *sigc)
 #define GPG_STATUS_KEYID	(1<<1)
 /* The status includes user identifier */
 #define GPG_STATUS_UID		(1<<2)
+/* The status includes key fingerprints */
+#define GPG_STATUS_FINGERPRINT	(1<<3)
 
 /* Short-hand for standard exclusive *SIG status with keyid & UID */
 #define GPG_STATUS_STDSIG	(GPG_STATUS_EXCLUSIVE|GPG_STATUS_KEYID|GPG_STATUS_UID)
@@ -98,6 +101,7 @@ static struct {
 	{ 'X', "EXPSIG ", GPG_STATUS_STDSIG },
 	{ 'Y', "EXPKEYSIG ", GPG_STATUS_STDSIG },
 	{ 'R', "REVKEYSIG ", GPG_STATUS_STDSIG },
+	{ 0, "VALIDSIG ", GPG_STATUS_FINGERPRINT },
 };
 
 static void parse_gpg_output(struct signature_check *sigc)
@@ -123,7 +127,8 @@ static void parse_gpg_output(struct signature_check *sigc)
 						goto found_duplicate_status;
 				}
 
-				sigc->result = sigcheck_gpg_status[i].result;
+				if (sigcheck_gpg_status[i].result)
+					sigc->result = sigcheck_gpg_status[i].result;
 				/* Do we have key information? */
 				if (sigcheck_gpg_status[i].flags & GPG_STATUS_KEYID) {
 					next = strchrnul(line, ' ');
@@ -136,6 +141,12 @@ static void parse_gpg_output(struct signature_check *sigc)
 						free(sigc->signer);
 						sigc->signer = xmemdupz(line, next - line);
 					}
+				}
+				/* Do we have fingerprint? */
+				if (sigcheck_gpg_status[i].flags & GPG_STATUS_FINGERPRINT) {
+					next = strchrnul(line, ' ');
+					free(sigc->fingerprint);
+					sigc->fingerprint = xmemdupz(line, next - line);
 				}
 
 				break;
@@ -154,6 +165,7 @@ found_duplicate_status:
 	 */
 	sigc->result = 'E';
 	/* Clear partial data to avoid confusion */
+	FREE_AND_NULL(sigc->fingerprint);
 	FREE_AND_NULL(sigc->signer);
 	FREE_AND_NULL(sigc->key);
 }
