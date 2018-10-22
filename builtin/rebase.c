@@ -250,7 +250,7 @@ static int apply_autostash(struct rebase_options *opts)
 	if (!file_exists(path))
 		return 0;
 
-	if (read_one(state_dir_path("autostash", opts), &autostash))
+	if (read_one(path, &autostash))
 		return error(_("Could not read '%s'"), path);
 	argv_array_pushl(&stash_apply.args,
 			 "stash", "apply", autostash.buf, NULL);
