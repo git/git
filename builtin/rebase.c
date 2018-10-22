@@ -252,6 +252,8 @@ static int apply_autostash(struct rebase_options *opts)
 
 	if (read_one(path, &autostash))
 		return error(_("Could not read '%s'"), path);
+	/* Ensure that the hash is not mistaken for a number */
+	strbuf_addstr(&autostash, "^0");
 	argv_array_pushl(&stash_apply.args,
 			 "stash", "apply", autostash.buf, NULL);
 	stash_apply.git_cmd = 1;
