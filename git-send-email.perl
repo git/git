@@ -82,8 +82,11 @@ git send-email --dump-aliases
                                      Pass an empty string to disable certificate
                                      verification.
     --smtp-domain           <str>  * The domain name sent to HELO/EHLO handshake
-    --smtp-auth             <str>  * Space-separated list of allowed AUTH mechanisms.
+    --smtp-auth             <str>  * Space-separated list of allowed AUTH mechanisms, or
+                                     "none" to disable authentication.
                                      This setting forces to use one of the listed mechanisms.
+    --no-smtp-auth                   Disable SMTP authentication. Shorthand for
+                                     `--smtp-auth=none`
     --smtp-debug            <0|1>  * Disable, enable Net::SMTP debug.
 
     --batch-size            <int>  * send max <int> message per connection.
@@ -341,6 +344,7 @@ $rc = GetOptions(
 		    "smtp-debug:i" => \$debug_net_smtp,
 		    "smtp-domain:s" => \$smtp_domain,
 		    "smtp-auth=s" => \$smtp_auth,
+		    "no-smtp-auth" => sub {$smtp_auth = 'none'},
 		    "identity=s" => \$identity,
 		    "annotate!" => \$annotate,
 		    "no-annotate" => sub {$annotate = 0},
@@ -1241,7 +1245,7 @@ sub smtp_host_string {
 # (smtp_user was not specified), and 0 otherwise.
 
 sub smtp_auth_maybe {
-	if (!defined $smtp_authuser || $auth) {
+	if (!defined $smtp_authuser || $auth || (defined $smtp_auth && $smtp_auth eq "none")) {
 		return 1;
 	}
 
