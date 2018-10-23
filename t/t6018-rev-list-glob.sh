@@ -141,6 +141,18 @@ test_expect_success 'rev-parse accumulates multiple --exclude' '
 	compare rev-parse "--exclude=refs/remotes/* --exclude=refs/tags/* --all" --branches
 '
 
+test_expect_success 'rev-parse --branches clears --exclude' '
+	compare rev-parse "--exclude=* --branches --branches" "--branches"
+'
+
+test_expect_success 'rev-parse --tags clears --exclude' '
+	compare rev-parse "--exclude=* --tags --tags" "--tags"
+'
+
+test_expect_success 'rev-parse --all clears --exclude' '
+	compare rev-parse "--exclude=* --all --all" "--all"
+'
+
 test_expect_success 'rev-list --glob=refs/heads/subspace/*' '
 
 	compare rev-list "subspace/one subspace/two" "--glob=refs/heads/subspace/*"
