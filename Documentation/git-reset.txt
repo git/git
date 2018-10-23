@@ -95,7 +95,10 @@ OPTIONS
 
 -q::
 --quiet::
-	Be quiet, only report errors.
+--no-quiet::
+	Be quiet, only report errors. The default behavior is set by the
+	`reset.quiet` config option. `--quiet` and `--no-quiet` will
+	override the default behavior.
 
 
 EXAMPLES
