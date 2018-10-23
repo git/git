@@ -206,7 +206,8 @@ static struct fsentry *fsentry_create_list(const struct fsentry *dir,
 	pattern[wlen] = 0;
 
 	/* open find handle */
-	h = FindFirstFileW(pattern, &fdata);
+	h = FindFirstFileExW(pattern, FindExInfoBasic, &fdata, FindExSearchNameMatch,
+		NULL, FIND_FIRST_EX_LARGE_FETCH);
 	if (h == INVALID_HANDLE_VALUE) {
 		err = GetLastError();
 		*dir_not_found = 1; /* or empty directory */
