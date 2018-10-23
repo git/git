@@ -227,6 +227,11 @@
 *.user
 *.idb
 *.pdb
+*.ilk
+*.iobj
+*.ipdb
+*.dll
+.vs/
 /Debug/
 /Release/
 *.dSYM
