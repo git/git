@@ -1580,7 +1580,10 @@ static int try_shell_exec(const char *cmd, char *const *argv)
 	prog = path_lookup(interpr, 1);
 	if (prog) {
 		int argc = 0;
-		const char **argv2;
+#ifndef _MSC_VER
+		const
+#endif
+		char **argv2;
 		while (argv[argc]) argc++;
 		ALLOC_ARRAY(argv2, argc + 1);
 		argv2[0] = (char *)cmd;	/* full path to the script file */
@@ -2135,8 +2138,34 @@ int mingw_raise(int sig)
 			sigint_fn(SIGINT);
 		return 0;
 
+#if defined(_MSC_VER)
+		/*
+		 * <signal.h> in the CRT defines 8 signals as being
+		 * supported on the platform.  Anything else causes
+		 * an "Invalid signal or error" (which in DEBUG builds
+		 * causes the Abort/Retry/Ignore dialog).  We by-pass
+		 * the CRT for things we already know will fail.
+		 */
+		/*case SIGINT:*/
+	case SIGILL:
+	case SIGFPE:
+	case SIGSEGV:
+	case SIGTERM:
+	case SIGBREAK:
+	case SIGABRT:
+	case SIGABRT_COMPAT:
+		return raise(sig);
+	default:
+		errno = EINVAL;
+		return -1;
+
+#else
+
 	default:
 		return raise(sig);
+
+#endif
+
 	}
 }
 
@@ -2320,18 +2349,13 @@ static void setup_windows_environment(void)
 		setenv("TERM", "cygwin", 1);
 }
 
+#if !defined(_MSC_VER)
 /*
  * Disable MSVCRT command line wildcard expansion (__getmainargs called from
  * mingw startup code, see init.c in mingw runtime).
  */
 int _CRT_glob = 0;
-
-typedef struct {
-	int newmode;
-} _startupinfo;
-
-extern int __wgetmainargs(int *argc, wchar_t ***argv, wchar_t ***env, int glob,
-		_startupinfo *si);
+#endif
 
 static NORETURN void die_startup(void)
 {
@@ -2409,19 +2433,38 @@ static void maybe_redirect_std_handles(void)
 				  GENERIC_WRITE, FILE_FLAG_NO_BUFFERING);
 }
 
-void mingw_startup(void)
+#ifdef _MSC_VER
+#ifdef _DEBUG
+#include <crtdbg.h>
+#endif
+#endif
+
+/*
+ * We implement wmain() and compile with -municode, which would
+ * normally ignore main(), but we call the latter from the former
+ * so that we can handle non-ASCII command-line parameters
+ * appropriately.
+ *
+ * To be more compatible with the core git code, we convert
+ * argv into UTF8 and pass them directly to main().
+ */
+int wmain(int argc, const wchar_t **wargv)
 {
-	int i, maxlen, argc;
-	char *buffer;
-	wchar_t **wenv, **wargv;
-	_startupinfo si;
+	int i, maxlen, exit_status;
+	char *buffer, **save;
+	const char **argv;
+
+#ifdef _MSC_VER
+#ifdef _DEBUG
+	_CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_DEBUG);
+#endif
+
+#ifdef USE_MSVC_CRTDBG
+	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+#endif
+#endif
 
 	maybe_redirect_std_handles();
-
-	/* get wide char arguments and environment */
-	si.newmode = 0;
-	if (__wgetmainargs(&argc, &wargv, &wenv, _CRT_glob, &si) < 0)
-		die_startup();
 
 	/* determine size of argv and environ conversion buffer */
 	maxlen = wcslen(wargv[0]);
@@ -2432,9 +2475,16 @@ void mingw_startup(void)
 	maxlen = 3 * maxlen + 1;
 	buffer = malloc_startup(maxlen);
 
-	/* convert command line arguments and environment to UTF-8 */
+	/*
+	 * Create a UTF-8 version of w_argv. Also create a "save" copy
+	 * to remember all the string pointers because parse_options()
+	 * will remove claimed items from the argv that we pass down.
+	 */
+	ALLOC_ARRAY(argv, argc + 1);
+	ALLOC_ARRAY(save, argc + 1);
 	for (i = 0; i < argc; i++)
-		__argv[i] = wcstoutfdup_startup(buffer, wargv[i], maxlen);
+		argv[i] = save[i] = wcstoutfdup_startup(buffer, wargv[i], maxlen);
+	argv[i] = save[i] = NULL;
 	free(buffer);
 
 	/* fix Windows specific environment settings */
@@ -2453,6 +2503,16 @@ void mingw_startup(void)
 
 	/* initialize Unicode console */
 	winansi_init();
+
+	/* invoke the real main() using our utf8 version of argv. */
+	exit_status = main(argc, argv);
+
+	for (i = 0; i < argc; i++)
+		free(save[i]);
+	free(save);
+	free(argv);
+
+	return exit_status;
 }
 
 int uname(struct utsname *buf)
