@@ -474,7 +474,8 @@ test_expect_success MINGW 'redirect std handles' '
 		GIT_REDIRECT_STDERR="2>&1" \
 		git rev-parse --git-dir --verify refs/invalid &&
 	printf ".git\nfatal: Needed a single revision\n" >expect &&
-	test_cmp expect output.txt
+	sort <output.txt >output.sorted &&
+	test_cmp expect output.sorted
 '
 
 test_done
