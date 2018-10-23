@@ -1,6 +1,9 @@
 #!/bin/sh
 
-accept_rerere="--rerere-autoupdate" generate=no update= diff= edit= stop_at_cut=
+accept_rerere="--rerere-autoupdate"
+generate=no
+exec=:
+update= diff= edit= stop_at_cut= skip_cocci=
 while case "$#,$1" in 0,*) break;; *,-*) ;; esac
 do
 	case "$1" in
@@ -15,6 +18,9 @@ do
 	-u)	update=${2?"update what?"}
 		generate=yes
 		shift ;;
+	-x)	exec=${2?exec}; shift ;;
+	-x?*)	exec=${1#-x} ;;
+	-ss)	skip_cocci=t ;;
 	*)	generate=yes
 		break ;;
 	esac
@@ -29,7 +35,7 @@ annotate_merge () {
 			s/^\s*//;
 			if (/^Will (?:\S+ ){0,2}(fast-track|hold|keep|merge|drop|discard|cook|kick|defer|eject|be re-?rolled|wait)[,. ]/ ||
 			    /^Not urgent/ || /^Not ready/ || /^Waiting for / ||
-			    /^Can wait in / || /^Still / ||
+			    /^Can wait in / || /^Still / || /^Stuck / ||
 			    /^Needs? / || /^Expecting / || /^May want to /) {
 				return 1;
 			}
@@ -108,6 +114,8 @@ annotate_merge () {
 	' "$1"
 }
 
+cocci_mark="treewide: apply cocci patch"
+
 case "$generate" in
 no)
 	accept_rerere () {
@@ -151,6 +159,23 @@ no)
 				count_since_last_cut=0
 			fi
 			continue ;;
+		'#cocci')
+			if test -n "$skip_cocci" && test -n "$eh"
+			then
+				git cherry-pick --no-commit "$eh"
+			else
+				rm -f contrib/coccinelle/*.patch
+				Meta/Make -j8 coccicheck
+				cat contrib/coccinelle/*.patch | git apply --index ||
+				exit
+				git diff --quiet HEAD && continue
+			fi
+			git commit -m "$cocci_mark" || exit
+
+			mark_cut
+
+			continue
+			;;
 		'#'* | '')
 			continue ;;
 		esac
@@ -198,6 +223,8 @@ no)
 			git cherry-pick "$branch" || exit ;;
 		*) echo >&2 "Eh? $branch $eh"; exit ;;
 		esac
+
+		eval "$exec" || exit
 	done
 	exit
 esac
@@ -269,6 +296,9 @@ generate () {
 			if other=$(git rev-parse -q --verify "$commit^2")
 			then
 				show_merge
+			elif test "$msg" = "$cocci_mark"
+			then
+				merged="#cocci "$(git rev-parse "$commit^0")
 			else
 				show_pick
 			fi
