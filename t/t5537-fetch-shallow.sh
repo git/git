@@ -186,7 +186,7 @@ EOF
 	test_cmp expect actual
 '
 
-test_expect_failure '.git/shallow is edited by repack' '
+test_expect_success '.git/shallow is edited by repack' '
 	git init shallow-server &&
 	test_commit -C shallow-server A &&
 	test_commit -C shallow-server B &&
