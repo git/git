@@ -243,6 +243,8 @@ do
 		test -z "$HARNESS_ACTIVE" && quiet=t; shift ;;
 	--with-dashes)
 		with_dashes=t; shift ;;
+	--no-bin-wrappers)
+		no_bin_wrappers=t; shift ;;
 	--no-color)
 		color=; shift ;;
 	--va|--val|--valg|--valgr|--valgri|--valgrin|--valgrind)
@@ -929,16 +931,21 @@ then
 	PATH=$GIT_TEST_INSTALLED:$GIT_BUILD_DIR:$PATH
 	GIT_EXEC_PATH=${GIT_TEST_EXEC_PATH:-$GIT_EXEC_PATH}
 else # normal case, use ../bin-wrappers only unless $with_dashes:
-	git_bin_dir="$GIT_BUILD_DIR/bin-wrappers"
-	if ! test -x "$git_bin_dir/git"
+	if test -n "$no_bin_wrappers"
 	then
-		if test -z "$with_dashes"
-		then
-			say "$git_bin_dir/git is not executable; using GIT_EXEC_PATH"
-		fi
 		with_dashes=t
+	else
+		git_bin_dir="$GIT_BUILD_DIR/bin-wrappers"
+		if ! test -x "$git_bin_dir/git"
+		then
+			if test -z "$with_dashes"
+			then
+				say "$git_bin_dir/git is not executable; using GIT_EXEC_PATH"
+			fi
+			with_dashes=t
+		fi
+		PATH="$git_bin_dir:$PATH"
 	fi
-	PATH="$git_bin_dir:$PATH"
 	GIT_EXEC_PATH=$GIT_BUILD_DIR
 	if test -n "$with_dashes"
 	then
