@@ -13,8 +13,12 @@ cat >hello-script <<-EOF
 EOF
 >empty
 
-test_expect_success 'start_command reports ENOENT' '
+test_expect_success 'start_command reports ENOENT (slash)' '
 	test-run-command start-command-ENOENT ./does-not-exist
+'
+
+test_expect_success 'start_command reports ENOENT (no slash)' '
+	test-run-command start-command-ENOENT does-not-exist
 '
 
 test_expect_success 'run_command can run a command' '
@@ -24,6 +28,13 @@ test_expect_success 'run_command can run a command' '
 
 	test_cmp hello-script actual &&
 	test_cmp empty err
+'
+
+test_expect_success 'run_command is restricted to PATH' '
+	write_script should-not-run <<-\EOF &&
+	echo yikes
+	EOF
+	test_must_fail test-run-command run-command should-not-run
 '
 
 test_expect_success !MINGW 'run_command can run a script without a #! line' '
