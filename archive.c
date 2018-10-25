@@ -29,6 +29,12 @@ void register_archiver(struct archiver *ar)
 	archivers[nr_archivers++] = ar;
 }
 
+void init_archivers(void)
+{
+	init_tar_archiver();
+	init_zip_archiver();
+}
+
 static void format_subst(const struct commit *commit,
                          const char *src, size_t len,
                          struct strbuf *buf)
@@ -530,9 +536,6 @@ int write_archive(int argc, const char **argv, const char *prefix,
 
 	git_config_get_bool("uploadarchive.allowunreachable", &remote_allow_unreachable);
 	git_config(git_default_config, NULL);
-
-	init_tar_archiver();
-	init_zip_archiver();
 
 	args.repo = repo;
 	argc = parse_archive_args(argc, argv, &ar, &args, name_hint, remote);

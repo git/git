@@ -97,6 +97,8 @@ int cmd_archive(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix, local_opts, NULL,
 			     PARSE_OPT_KEEP_ALL);
 
+	init_archivers();
+
 	if (output)
 		create_output_file(output);
 
