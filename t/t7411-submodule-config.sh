@@ -216,4 +216,38 @@ test_expect_success 'reading submodules config from the current branch when .git
 	)
 '
 
+test_expect_success 'reading nested submodules config' '
+	(cd super &&
+		git init submodule/nested_submodule &&
+		echo "a" >submodule/nested_submodule/a &&
+		git -C submodule/nested_submodule add a &&
+		git -C submodule/nested_submodule commit -m "add a" &&
+		git -C submodule submodule add ./nested_submodule &&
+		git -C submodule add nested_submodule &&
+		git -C submodule commit -m "added nested_submodule" &&
+		git add submodule &&
+		git commit -m "updated submodule" &&
+		echo "./nested_submodule" >expect &&
+		test-tool submodule-nested-repo-config \
+			submodule submodule.nested_submodule.url >actual &&
+		test_cmp expect actual
+	)
+'
+
+# When this test eventually passes, before turning it into
+# test_expect_success, remember to replace the test_i18ngrep below with
+# a "test_must_be_empty warning" to be sure that the warning is actually
+# removed from the code.
+test_expect_failure 'reading nested submodules config when .gitmodules is not in the working tree' '
+	test_when_finished "git -C super/submodule checkout .gitmodules" &&
+	(cd super &&
+		echo "./nested_submodule" >expect &&
+		rm submodule/.gitmodules &&
+		test-tool submodule-nested-repo-config \
+			submodule submodule.nested_submodule.url >actual 2>warning &&
+		test_i18ngrep "nested submodules without %s in the working tree are not supported yet" warning &&
+		test_cmp expect actual
+	)
+'
+
 test_done
