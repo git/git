@@ -443,6 +443,21 @@ static void print_ref_list(struct ref_filter *filter, struct ref_sorting *sortin
 	free(to_free);
 }
 
+static void print_current_branch_name(void)
+{
+	int flags;
+	const char *refname = resolve_ref_unsafe("HEAD", 0, NULL, &flags);
+	const char *shortname;
+	if (!refname)
+		die(_("could not resolve HEAD"));
+	else if (!(flags & REF_ISSYMREF))
+		return;
+	else if (skip_prefix(refname, "refs/heads/", &shortname))
+		puts(shortname);
+	else
+		die(_("HEAD (%s) points outside of refs/heads/"), refname);
+}
+
 static void reject_rebase_or_bisect_branch(const char *target)
 {
 	struct worktree **worktrees = get_worktrees(0);
@@ -581,6 +596,7 @@ static int edit_branch_description(const char *branch_name)
 int cmd_branch(int argc, const char **argv, const char *prefix)
 {
 	int delete = 0, rename = 0, copy = 0, force = 0, list = 0;
+	int show_current = 0;
 	int reflog = 0, edit_description = 0;
 	int quiet = 0, unset_upstream = 0;
 	const char *new_upstream = NULL;
@@ -620,6 +636,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		OPT_BIT('c', "copy", &copy, N_("copy a branch and its reflog"), 1),
 		OPT_BIT('C', NULL, &copy, N_("copy a branch, even if target exists"), 2),
 		OPT_BOOL('l', "list", &list, N_("list branch names")),
+		OPT_BOOL(0, "show-current", &show_current, N_("show current branch name")),
 		OPT_BOOL(0, "create-reflog", &reflog, N_("create the branch's reflog")),
 		OPT_BOOL(0, "edit-description", &edit_description,
 			 N_("edit the description for the branch")),
@@ -662,14 +679,15 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix, options, builtin_branch_usage,
 			     0);
 
-	if (!delete && !rename && !copy && !edit_description && !new_upstream && !unset_upstream && argc == 0)
+	if (!delete && !rename && !copy && !edit_description && !new_upstream &&
+	    !show_current && !unset_upstream && argc == 0)
 		list = 1;
 
 	if (filter.with_commit || filter.merge != REF_FILTER_MERGED_NONE || filter.points_at.nr ||
 	    filter.no_commit)
 		list = 1;
 
-	if (!!delete + !!rename + !!copy + !!new_upstream +
+	if (!!delete + !!rename + !!copy + !!new_upstream + !!show_current +
 	    list + unset_upstream > 1)
 		usage_with_options(builtin_branch_usage, options);
 
@@ -697,6 +715,9 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		if (!argc)
 			die(_("branch name required"));
 		return delete_branches(argc, argv, delete > 1, filter.kind, quiet);
+	} else if (show_current) {
+		print_current_branch_name();
+		return 0;
 	} else if (list) {
 		/*  git branch --local also shows HEAD when it is detached */
 		if ((filter.kind & FILTER_REFS_BRANCHES) && filter.detached)
