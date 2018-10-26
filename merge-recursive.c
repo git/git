@@ -228,7 +228,26 @@ static inline void setup_rename_conflict_info(enum rename_type rename_type,
 					      struct stage_data *src_entry1,
 					      struct stage_data *src_entry2)
 {
-	struct rename_conflict_info *ci = xcalloc(1, sizeof(struct rename_conflict_info));
+	struct rename_conflict_info *ci;
+
+	/*
+	 * When we have two renames involved, it's easiest to get the
+	 * correct things into stage 2 and 3, and to make sure that the
+	 * content merge puts HEAD before the other branch if we just
+	 * ensure that branch1 == o->branch1.  So, simply flip arguments
+	 * around if we don't have that.
+	 */
+	if (dst_entry2 && branch1 != o->branch1) {
+		setup_rename_conflict_info(rename_type,
+					   pair2,      pair1,
+					   branch2,    branch1,
+					   dst_entry2, dst_entry1,
+					   o,
+					   src_entry2, src_entry1);
+		return;
+	}
+
+	ci = xcalloc(1, sizeof(struct rename_conflict_info));
 	ci->rename_type = rename_type;
 	ci->pair1 = pair1;
 	ci->branch1 = branch1;
@@ -1284,6 +1303,17 @@ static int merge_mode_and_contents(struct merge_options *o,
 				   const char *branch2,
 				   struct merge_file_info *result)
 {
+	if (o->branch1 != branch1) {
+		/*
+		 * It's weird getting a reverse merge with HEAD on the bottom
+		 * side of the conflict markers and the other branch on the
+		 * top.  Fix that.
+		 */
+		return merge_mode_and_contents(o, one, b, a,
+					       filename,
+					       branch2, branch1, result);
+	}
+
 	result->merge = 0;
 	result->clean = 1;
 
@@ -1675,8 +1705,8 @@ static int handle_rename_rename_2to1(struct merge_options *o,
 	remove_file(o, 1, a->path, o->call_depth || would_lose_untracked(a->path));
 	remove_file(o, 1, b->path, o->call_depth || would_lose_untracked(b->path));
 
-	path_side_1_desc = xstrfmt("%s (was %s)", path, a->path);
-	path_side_2_desc = xstrfmt("%s (was %s)", path, b->path);
+	path_side_1_desc = xstrfmt("version of %s from %s", path, a->path);
+	path_side_2_desc = xstrfmt("version of %s from %s", path, b->path);
 	if (merge_mode_and_contents(o, a, c1, &ci->ren1_other, path_side_1_desc,
 				    o->branch1, o->branch2, &mfi_c1) ||
 	    merge_mode_and_contents(o, b, &ci->ren2_other, c2, path_side_2_desc,

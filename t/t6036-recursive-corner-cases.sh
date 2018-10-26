@@ -230,13 +230,13 @@ test_expect_success 'git detects differently handled merges conflict' '
 			:2:new_a :3:new_a &&
 		test_cmp expect actual &&
 
-		git cat-file -p B:new_a >ours &&
-		git cat-file -p C:new_a >theirs &&
+		git cat-file -p C:new_a >ours &&
+		git cat-file -p B:new_a >theirs &&
 		>empty &&
 		test_must_fail git merge-file \
-			-L "Temporary merge branch 2" \
-			-L "" \
 			-L "Temporary merge branch 1" \
+			-L "" \
+			-L "Temporary merge branch 2" \
 			ours empty theirs &&
 		sed -e "s/^\([<=>]\)/\1\1\1/" ours >expect &&
 		git cat-file -p :1:new_a >actual &&
