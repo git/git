@@ -10,6 +10,7 @@
 #include "../config.h"
 #include "dir.h"
 #include "win32/fscache.h"
+#include "../attr.h"
 
 #define HCAST(type, handle) ((type)(intptr_t)handle)
 
@@ -2758,6 +2759,37 @@ int link(const char *oldpath, const char *newpath)
 	return 0;
 }
 
+enum symlink_type {
+	SYMLINK_TYPE_UNSPECIFIED = 0,
+	SYMLINK_TYPE_FILE,
+	SYMLINK_TYPE_DIRECTORY,
+};
+
+static enum symlink_type check_symlink_attr(struct index_state *index, const char *link)
+{
+	static struct attr_check *check;
+	const char *value;
+
+	if (!index)
+		return SYMLINK_TYPE_UNSPECIFIED;
+
+	if (!check)
+		check = attr_check_initl("symlink", NULL);
+
+	git_check_attr(index, link, check);
+
+	value = check->items[0].value;
+	if (ATTR_UNSET(value))
+		return SYMLINK_TYPE_UNSPECIFIED;
+	if (!strcmp(value, "file"))
+		return SYMLINK_TYPE_FILE;
+	if (!strcmp(value, "dir") || !strcmp(value, "directory"))
+		return SYMLINK_TYPE_DIRECTORY;
+
+	warning(_("ignoring invalid symlink type '%s' for '%s'"), value, link);
+	return SYMLINK_TYPE_UNSPECIFIED;
+}
+
 int mingw_create_symlink(struct index_state *index, const char *target, const char *link)
 {
 	wchar_t wtarget[MAX_LONG_PATH], wlink[MAX_LONG_PATH];
@@ -2778,7 +2810,31 @@ int mingw_create_symlink(struct index_state *index, const char *target, const ch
 		if (wtarget[len] == '/')
 			wtarget[len] = '\\';
 
-	return create_phantom_symlink(wtarget, wlink);
+	switch (check_symlink_attr(index, link)) {
+	case SYMLINK_TYPE_UNSPECIFIED:
+		/* Create a phantom symlink: it is initially created as a file
+		 * symlink, but may change to a directory symlink later if/when
+		 * the target exists. */
+		return create_phantom_symlink(wtarget, wlink);
+	case SYMLINK_TYPE_FILE:
+		if (!CreateSymbolicLinkW(wlink, wtarget, symlink_file_flags))
+			break;
+		return 0;
+	case SYMLINK_TYPE_DIRECTORY:
+		if (!CreateSymbolicLinkW(wlink, wtarget,
+					 symlink_directory_flags))
+			break;
+		/* There may be dangling phantom symlinks that point at this
+		 * one, which should now morph into directory symlinks. */
+		process_phantom_symlinks();
+		return 0;
+	default:
+		BUG("unhandled symlink type");
+	}
+
+	/* CreateSymbolicLinkW failed. */
+	errno = err_win_to_posix(GetLastError());
+	return -1;
 }
 
 #ifndef _WINNT_H
