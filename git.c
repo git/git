@@ -681,12 +681,43 @@ static void execv_dashed_external(const char **argv)
 		exit(128);
 }
 
+static void init_cmd_history(struct strbuf *env, struct string_list *cmd_list)
+{
+	const char *old = getenv(COMMAND_HISTORY_ENVIRONMENT);
+	struct strbuf **cmd_history, **ptr;
+
+	if (!old || !*old)
+		return;
+
+	strbuf_addstr(env, old);
+	strbuf_rtrim(env);
+
+	cmd_history = strbuf_split_buf(old, strlen(old), ' ', 0);
+	for (ptr = cmd_history; *ptr; ptr++) {
+		strbuf_rtrim(*ptr);
+		string_list_append(cmd_list, (*ptr)->buf);
+	}
+	strbuf_list_free(cmd_history);
+}
+
+static void add_cmd_history(struct strbuf *env, struct string_list *cmd_list,
+			    const char *cmd)
+{
+	string_list_append(cmd_list, cmd);
+	if (env->len)
+		strbuf_addch(env, ' ');
+	strbuf_addstr(env, cmd);
+	setenv(COMMAND_HISTORY_ENVIRONMENT, env->buf, 1);
+}
+
 static int run_argv(int *argcp, const char ***argv)
 {
 	int done_alias = 0;
-	struct string_list cmd_list = STRING_LIST_INIT_NODUP;
+	struct string_list cmd_list = STRING_LIST_INIT_DUP;
 	struct string_list_item *seen;
+	struct strbuf env = STRBUF_INIT;
 
+	init_cmd_history(&env, &cmd_list);
 	while (1) {
 		/*
 		 * If we tried alias and futzed with our environment,
@@ -720,7 +751,7 @@ static int run_argv(int *argcp, const char ***argv)
 			      " not terminate:%s"), cmd_list.items[0].string, sb.buf);
 		}
 
-		string_list_append(&cmd_list, *argv[0]);
+		add_cmd_history(&env, &cmd_list, *argv[0]);
 
 		/*
 		 * It could be an alias -- this works around the insanity
@@ -733,6 +764,7 @@ static int run_argv(int *argcp, const char ***argv)
 	}
 
 	string_list_clear(&cmd_list, 0);
+	strbuf_release(&env);
 
 	return done_alias;
 }

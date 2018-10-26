@@ -27,14 +27,11 @@ test_expect_success 'looping aliases - internal execution' '
 	test_i18ngrep "^fatal: alias loop detected: expansion of" output
 '
 
-# This test is disabled until external loops are fixed, because would block
-# the test suite for a full minute.
-#
-#test_expect_failure 'looping aliases - mixed execution' '
-#	git config alias.loop-mixed-1 loop-mixed-2 &&
-#	git config alias.loop-mixed-2 "!git loop-mixed-1" &&
-#	test_must_fail git loop-mixed-1 2>output &&
-#	test_i18ngrep "^fatal: alias loop detected: expansion of" output
-#'
+test_expect_success 'looping aliases - mixed execution' '
+	git config alias.loop-mixed-1 loop-mixed-2 &&
+	git config alias.loop-mixed-2 "!git loop-mixed-1" &&
+	test_must_fail git loop-mixed-1 2>output &&
+	test_i18ngrep "^fatal: alias loop detected: expansion of" output
+'
 
 test_done
