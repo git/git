@@ -550,6 +550,12 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		if (!po_args.quiet && isatty(2))
 			opts |= PRUNE_PACKED_VERBOSE;
 		prune_packed_objects(opts);
+
+		if (!keep_unreachable &&
+		    (!(pack_everything & LOOSEN_UNREACHABLE) ||
+		     unpack_unreachable) &&
+		    is_repository_shallow(the_repository))
+			prune_shallow(PRUNE_QUICK);
 	}
 
 	if (!no_update_server_info)
