@@ -34,7 +34,6 @@ ifeq ($(filter extra-all,$(DEVOPTS)),)
 CFLAGS += -Wno-empty-body
 CFLAGS += -Wno-missing-field-initializers
 CFLAGS += -Wno-sign-compare
-CFLAGS += -Wno-unused-function
 CFLAGS += -Wno-unused-parameter
 endif
 endif
