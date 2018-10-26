@@ -412,6 +412,8 @@ static inline char *git_find_last_dir_sep(const char *path)
 #define LAST_ARG_MUST_BE_NULL
 #endif
 
+#define MAYBE_UNUSED __attribute__((__unused__))
+
 #include "compat/bswap.h"
 
 #include "wildmatch.h"

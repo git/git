@@ -1,10 +1,10 @@
 #ifndef COMMIT_SLAB_IMPL_H
 #define COMMIT_SLAB_IMPL_H
 
-#define MAYBE_UNUSED __attribute__((__unused__))
+#include "git-compat-util.h"
 
 #define implement_static_commit_slab(slabname, elemtype) \
-	implement_commit_slab(slabname, elemtype, static MAYBE_UNUSED)
+	implement_commit_slab(slabname, elemtype, MAYBE_UNUSED static)
 
 #define implement_shared_commit_slab(slabname, elemtype) \
 	implement_commit_slab(slabname, elemtype, )
