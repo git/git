@@ -63,6 +63,12 @@ merge.tool::
 	Any other value is treated as a custom merge tool and requires
 	that a corresponding mergetool.<tool>.cmd variable is defined.
 
+merge.guitool::
+	Controls which merge tool is used by linkgit:git-mergetool[1] when the
+	-g/--gui flag is specified. The list below shows the valid built-in values.
+	Any other value is treated as a custom merge tool and requires that a
+	corresponding mergetool.<guitool>.cmd variable is defined.
+
 include::mergetools-merge.txt[]
 
 merge.verbosity::

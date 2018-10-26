@@ -350,17 +350,23 @@ guess_merge_tool () {
 }
 
 get_configured_merge_tool () {
-	# Diff mode first tries diff.tool and falls back to merge.tool.
-	# Merge mode only checks merge.tool
+	# If first argument is true, find the guitool instead
+	if test "$1" = true
+	then
+		gui_prefix=gui
+	fi
+
+	# Diff mode first tries diff.(gui)tool and falls back to merge.(gui)tool.
+	# Merge mode only checks merge.(gui)tool
 	if diff_mode
 	then
-		merge_tool=$(git config diff.tool || git config merge.tool)
+		merge_tool=$(git config diff.${gui_prefix}tool || git config merge.${gui_prefix}tool)
 	else
-		merge_tool=$(git config merge.tool)
+		merge_tool=$(git config merge.${gui_prefix}tool)
 	fi
 	if test -n "$merge_tool" && ! valid_tool "$merge_tool"
 	then
-		echo >&2 "git config option $TOOL_MODE.tool set to unknown tool: $merge_tool"
+		echo >&2 "git config option $TOOL_MODE.${gui_prefix}tool set to unknown tool: $merge_tool"
 		echo >&2 "Resetting to default..."
 		return 1
 	fi
