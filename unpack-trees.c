@@ -380,7 +380,7 @@ static int check_updates(struct unpack_trees_options *o)
 {
 	unsigned cnt = 0;
 	int errs = 0;
-	struct progress *progress = NULL;
+	struct progress *progress;
 	struct index_state *index = &o->result;
 	struct checkout state = CHECKOUT_INIT;
 	int i;
