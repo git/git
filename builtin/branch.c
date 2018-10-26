@@ -809,11 +809,6 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		git_config_set_multivar(buf.buf, NULL, NULL, 1);
 		strbuf_release(&buf);
 	} else if (argc > 0 && argc <= 2) {
-		struct branch *branch = branch_get(argv[0]);
-
-		if (!branch)
-			die(_("no such branch '%s'"), argv[0]);
-
 		if (filter.kind != FILTER_REFS_BRANCHES)
 			die(_("-a and -r options to 'git branch' do not make sense with a branch name"));
 
