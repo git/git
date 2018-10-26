@@ -17,6 +17,12 @@ Backward Compatibility Notes
  * "git help -a" now gives verbose output (same as "git help -av").
    Those who want the old output may say "git help --no-verbose -a"..
 
+ * "git cpn --help", when "cpn" is an alias to, say, "cherry-pick -n",
+   reported only the alias expansion of "cpn" in earlier versions of
+   Git.  It now runs "git cherry-pick --help" to show the manual page
+   of the command, while sending the alias expansion to the standard
+   error stream.
+
 
 Updates since v2.19
 -------------------
@@ -100,6 +106,22 @@ UI, Workflows & Features
    fewer objects transferred is wasted in excessively large ref
    advertisement.  The alternate refs that are advertised are now
    configurable with a pair of configuration variables.
+
+ * "git cmd --help" when "cmd" is aliased used to only say "cmd is
+   aliased to ...".  Now it shows that to the standard error stream
+   and runs "git $cmd --help" where $cmd is the first word of the
+   alias expansion.
+
+ * The documentation of "git gc" has been updated to mention that it
+   is no longer limited to "pruning away crufts" but also updates
+   ancillary files like commit-graph as a part of repository
+   optimization.
+
+ * "git p4 unshelve" improvements.
+
+ * The logic to select the default user name and e-mail on Windows has
+   been improved.
+   (merge 501afcb8b0 js/mingw-default-ident later to maint).
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -196,6 +218,18 @@ Performance, Internal Implementation, Development Support etc.
    object exists, even for paths that are outside of the partial
    checkout area.  The code has been updated to avoid such a check.
 
+ * To help developers, an EditorConfig file that attempts to follow
+   the project convention has been added.
+   (merge b548d698a0 bc/editorconfig later to maint).
+
+ * The result of coverage test can be combined with "git blame" to
+   check the test coverage of code introduced recently with a new
+   'coverage-diff' tool (in contrib/).
+   (merge 783faedd65 ds/coverage-diff later to maint).
+
+ * An experiment to fuzz test a few areas, hopefully we can gain more
+   coverage to various areas.
+
 
 Fixes since v2.19
 -----------------
@@ -290,6 +324,15 @@ Fixes since v2.19
    no blobs are needed.
    (merge 4c7f9567ea jt/non-blob-lazy-fetch later to maint).
 
+ * The codepath to support the experimental split-index mode had
+   remaining "racily clean" issues fixed.
+   (merge 4c490f3d32 sg/split-index-racefix later to maint).
+
+ * "git log --graph" showing an octopus merge sometimes miscounted the
+   number of display columns it is consuming to show the merge and its
+   parent commits, which has been corrected.
+   (merge 04005834ed np/log-graph-octopus-fix later to maint).
+
  * Code cleanup, docfix, build fix, etc.
    (merge 96a7501aad ts/doc-build-manpage-xsl-quietly later to maint).
    (merge b9b07efdb2 tg/conflict-marker-size later to maint).
@@ -313,3 +356,8 @@ Fixes since v2.19
    (merge 6e8fc70fce rs/sequencer-oidset-insert-avoids-dups later to maint).
    (merge ad0b8f9575 mw/doc-typofixes later to maint).
    (merge d9f079ad1a jc/how-to-document-api later to maint).
+   (merge b1492bf315 ma/t7005-bash-workaround later to maint).
+   (merge ac1f98a0df du/rev-parse-is-plumbing later to maint).
+   (merge ca8ed443a5 mm/doc-no-dashed-git later to maint).
+   (merge ce366a8144 du/get-tar-commit-id-is-plumbing later to maint).
+   (merge 61018fe9e0 du/cherry-is-plumbing later to maint).
