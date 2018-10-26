@@ -377,7 +377,7 @@ static inline unsigned long oe_delta_size(struct packing_data *pack,
 		return e->delta_size_;
 
 	/*
-	 * pack->detla_size[] can't be NULL because oe_set_delta_size()
+	 * pack->delta_size[] can't be NULL because oe_set_delta_size()
 	 * must have been called when a new delta is saved with
 	 * oe_set_delta().
 	 * If oe_delta() returns NULL (i.e. default state, which means
