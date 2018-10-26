@@ -72,10 +72,10 @@ two blob objects, or changes between two files on disk.
 	This form is to view the changes on the branch containing
 	and up to the second <commit>, starting at a common ancestor
 	of both <commit>.  "git diff A\...B" is equivalent to
-	"git diff $(git-merge-base A B) B".  You can omit any one
+	"git diff $(git merge-base A B) B".  You can omit any one
 	of <commit>, which has the same effect as using HEAD instead.
 
-Just in case if you are doing something exotic, it should be
+Just in case you are doing something exotic, it should be
 noted that all of the <commit> in the above description, except
 in the last two forms that use ".." notations, can be any
 <tree>.
