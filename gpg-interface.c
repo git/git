@@ -124,7 +124,7 @@ static void parse_gpg_output(struct signature_check *sigc)
 		for (i = 0; i < ARRAY_SIZE(sigcheck_gpg_status); i++) {
 			if (skip_prefix(line, sigcheck_gpg_status[i].check, &line)) {
 				if (sigcheck_gpg_status[i].flags & GPG_STATUS_EXCLUSIVE) {
-					if (++seen_exclusive_status > 1)
+					if (seen_exclusive_status++)
 						goto found_duplicate_status;
 				}
 
