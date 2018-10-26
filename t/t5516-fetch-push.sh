@@ -1577,7 +1577,13 @@ test_expect_success 'receive.denyCurrentBranch = updateInstead' '
 		test $(git -C .. rev-parse master) = $(git rev-parse HEAD) &&
 		git diff --quiet &&
 		git diff --cached --quiet
-	)
+	) &&
+
+	# (6) updateInstead intervened by fast-forward check
+	test_must_fail git push void master^:master &&
+	test $(git -C void rev-parse HEAD) = $(git rev-parse master) &&
+	git -C void diff --quiet &&
+	git -C void diff --cached --quiet
 '
 
 test_expect_success 'updateInstead with push-to-checkout hook' '
