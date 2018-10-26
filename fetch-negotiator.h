@@ -1,5 +1,5 @@
-#ifndef FETCH_NEGOTIATOR
-#define FETCH_NEGOTIATOR
+#ifndef FETCH_NEGOTIATOR_H
+#define FETCH_NEGOTIATOR_H
 
 struct commit;
 
