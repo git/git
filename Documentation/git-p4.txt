@@ -174,21 +174,21 @@ $ git p4 submit --update-shelve 1234 --update-shelve 2345
 Unshelve
 ~~~~~~~~
 Unshelving will take a shelved P4 changelist, and produce the equivalent git commit
-in the branch refs/remotes/p4/unshelved/<changelist>.
+in the branch refs/remotes/p4-unshelved/<changelist>.
 
 The git commit is created relative to the current origin revision (HEAD by default).
-If the shelved changelist's parent revisions differ, git-p4 will refuse to unshelve;
-you need to be unshelving onto an equivalent tree.
+A parent commit is created based on the origin, and then the unshelve commit is
+created based on that.
 
 The origin revision can be changed with the "--origin" option.
 
-If the target branch in refs/remotes/p4/unshelved already exists, the old one will
+If the target branch in refs/remotes/p4-unshelved already exists, the old one will
 be renamed.
 
 ----
 $ git p4 sync
 $ git p4 unshelve 12345
-$ git show refs/remotes/p4/unshelved/12345
+$ git show p4-unshelved/12345
 <submit more changes via p4 to the same files>
 $ git p4 unshelve 12345
 <refuses to unshelve until git is in sync with p4 again>
