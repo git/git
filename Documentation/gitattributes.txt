@@ -388,6 +388,36 @@ sign `$` upon checkout.  Any byte sequence that begins with
 with `$Id$` upon check-in.
 
 
+`symlink`
+^^^^^^^^^
+
+On Windows, symbolic links have a type: a "file symlink" must point at
+a file, and a "directory symlink" must point at a directory. If the
+type of symlink does not match its target, it doesn't work.
+
+Git does not record the type of symlink in the index or in a tree. On
+checkout it'll guess the type, which only works if the target exists
+at the time the symlink is created. This may often not be the case,
+for example when the link points at a directory inside a submodule.
+
+The `symlink` attribute allows you to explicitly set the type of symlink
+to `file` or `dir`, so Git doesn't have to guess. If you have a set of
+symlinks that point at other files, you can do:
+
+------------------------
+*.gif 	symlink=file
+------------------------
+
+To tell Git that a symlink points at a directory, use:
+
+------------------------
+tools_folder 	symlink=dir
+------------------------
+
+The `symlink` attribute is ignored on platforms other than Windows,
+since they don't distinguish between different types of symlinks.
+
+
 `filter`
 ^^^^^^^^
 
