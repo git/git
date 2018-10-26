@@ -5,7 +5,7 @@
 
 test_description='git commit
 
-Tests for selected commit options.'
+Tests for template, signoff, squash and -F functions.'
 
 . ./test-lib.sh
 
