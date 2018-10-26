@@ -151,6 +151,6 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 	}
 
 	UNLEAK(sorting);
-	UNLEAK(ref_array);
+	ref_array_clear(&ref_array);
 	return status;
 }
