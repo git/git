@@ -187,6 +187,12 @@ This option is only applicable when listing tags without annotation lines.
 	`--create-reflog`, but currently does not negate the setting of
 	`core.logAllRefUpdates`.
 
+--format=<format>::
+	A string that interpolates `%(fieldname)` from a tag ref being shown
+	and the object it points at.  The format is the same as
+	that of linkgit:git-for-each-ref[1].  When unspecified,
+	defaults to `%(refname:strip=2)`.
+
 <tagname>::
 	The name of the tag to create, delete, or describe.
 	The new tag name must pass all checks defined by
@@ -197,12 +203,6 @@ This option is only applicable when listing tags without annotation lines.
 <object>::
 	The object that the new tag will refer to, usually a commit.
 	Defaults to HEAD.
-
-<format>::
-	A string that interpolates `%(fieldname)` from a tag ref being shown
-	and the object it points at.  The format is the same as
-	that of linkgit:git-for-each-ref[1].  When unspecified,
-	defaults to `%(refname:strip=2)`.
 
 CONFIGURATION
 -------------

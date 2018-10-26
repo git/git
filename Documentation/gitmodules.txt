@@ -67,7 +67,8 @@ submodule.<name>.fetchRecurseSubmodules::
 submodule.<name>.ignore::
 	Defines under what circumstances "git status" and the diff family show
 	a submodule as modified. The following values are supported:
-
++
+--
 	all;; The submodule will never be considered modified (but will
 	    nonetheless show up in the output of status and commit when it has
 	    been staged).
@@ -84,12 +85,14 @@ submodule.<name>.ignore::
 	    differences, and modifications to tracked and untracked files are
 	    shown. This is the default option.
 
-	If this option is also present in the submodules entry in .git/config
-	of the superproject, the setting there will override the one found in
-	.gitmodules.
-	Both settings can be overridden on the command line by using the
-	"--ignore-submodule" option. The 'git submodule' commands are not
-	affected by this setting.
+If this option is also present in the submodules entry in .git/config
+of the superproject, the setting there will override the one found in
+.gitmodules.
+
+Both settings can be overridden on the command line by using the
+"--ignore-submodule" option. The 'git submodule' commands are not
+affected by this setting.
+--
 
 submodule.<name>.shallow::
 	When set to true, a clone of this submodule will be performed as a
