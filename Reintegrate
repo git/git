@@ -3,7 +3,7 @@
 accept_rerere="--rerere-autoupdate"
 generate=no
 exec=:
-update= diff= edit= stop_at_cut= skip_cocci=
+update= diff= edit= stop_at_cut= skip_cocci= force_cocci= no_cocci=
 while case "$#,$1" in 0,*) break;; *,-*) ;; esac
 do
 	case "$1" in
@@ -21,6 +21,8 @@ do
 	-x)	exec=${2?exec}; shift ;;
 	-x?*)	exec=${1#-x} ;;
 	-ss)	skip_cocci=t ;;
+	-fs)	force_cocci=t ;;
+	-ns)	no_cocci=t ;;
 	*)	generate=yes
 		break ;;
 	esac
@@ -139,7 +141,7 @@ no)
 		prev_cut=
 	}
 
-	cut_seen=0 prev_cut= count_since_last_cut=0
+	cut_seen=0 prev_cut= count_since_last_cut=0 cocci_count=0
 	while read branch eh
 	do
 		case "$branch" in '###') cut_seen=$(( $cut_seen + 1 )) ;; esac
@@ -160,6 +162,14 @@ no)
 			fi
 			continue ;;
 		'#cocci')
+			if test -n "$no_cocci"
+			then
+				continue
+			elif test 0 = "$cocci_count" && test -z "$force_cocci"
+			then
+				continue
+			fi
+
 			if test -n "$skip_cocci" && test -n "$eh"
 			then
 				git cherry-pick --no-commit "$eh"
@@ -173,7 +183,6 @@ no)
 			git commit -m "$cocci_mark" || exit
 
 			mark_cut
-
 			continue
 			;;
 		'#'* | '')
@@ -192,6 +201,7 @@ no)
 			test "$mb" = "$tip" && continue
 
 			mark_cut
+			cocci_count=$(( $cocci_count + 1 ))
 
 			rebuild=$(git config "branch.$branch.rebuild" || :)
 
