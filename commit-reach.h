@@ -1,12 +1,13 @@
 #ifndef __COMMIT_REACH_H__
 #define __COMMIT_REACH_H__
 
+#include "commit.h"
 #include "commit-slab.h"
 
-struct commit;
 struct commit_list;
-struct contains_cache;
 struct ref_filter;
+struct object_id;
+struct object_array;
 
 struct commit_list *get_merge_bases_many(struct commit *one,
 					 int n,
