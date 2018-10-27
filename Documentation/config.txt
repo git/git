@@ -371,7 +371,7 @@ include::config/mailmap.txt[]
 
 include::config/man.txt[]
 
-include::merge-config.txt[]
+include::config/merge.txt[]
 
 mergetool.<tool>.path::
 	Override the path for the given tool.  This is useful in case
