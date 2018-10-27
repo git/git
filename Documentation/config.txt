@@ -395,9 +395,7 @@ include::config/receive.txt[]
 
 include::config/remote.txt[]
 
-remotes.<group>::
-	The list of remotes which are fetched by "git remote update
-	<group>".  See linkgit:git-remote[1].
+include::config/remotes.txt[]
 
 repack.useDeltaBaseOffset::
 	By default, linkgit:git-repack[1] creates packs that use
