@@ -391,7 +391,7 @@ include::config/push.txt[]
 
 include::config/rebase.txt[]
 
-include::receive-config.txt[]
+include::config/receive.txt[]
 
 remote.pushDefault::
 	The remote to push to by default.  Overrides
