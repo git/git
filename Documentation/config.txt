@@ -385,7 +385,7 @@ include::config/pretty.txt[]
 
 include::config/protocol.txt[]
 
-include::pull-config.txt[]
+include::config/pull.txt[]
 
 include::push-config.txt[]
 
