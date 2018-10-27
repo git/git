@@ -325,7 +325,7 @@ include::config/difftool.txt[]
 
 include::config/fastimport.txt[]
 
-include::fetch-config.txt[]
+include::config/fetch.txt[]
 
 include::format-config.txt[]
 
