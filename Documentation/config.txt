@@ -387,7 +387,7 @@ include::config/protocol.txt[]
 
 include::config/pull.txt[]
 
-include::push-config.txt[]
+include::config/push.txt[]
 
 include::rebase-config.txt[]
 
