@@ -329,15 +329,7 @@ include::config/fetch.txt[]
 
 include::format-config.txt[]
 
-filter.<driver>.clean::
-	The command which is used to convert the content of a worktree
-	file to a blob upon checkin.  See linkgit:gitattributes[5] for
-	details.
-
-filter.<driver>.smudge::
-	The command which is used to convert the content of a blob
-	object to a worktree file upon checkout.  See
-	linkgit:gitattributes[5] for details.
+include::config/filter.txt[]
 
 fsck.<msg-id>::
 	During fsck git may find issues with legacy data which
