@@ -327,7 +327,7 @@ include::config/fastimport.txt[]
 
 include::config/fetch.txt[]
 
-include::format-config.txt[]
+include::config/format.txt[]
 
 include::config/filter.txt[]
 
