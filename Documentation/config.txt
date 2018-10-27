@@ -353,9 +353,7 @@ include::config/http.txt[]
 
 include::config/i18n.txt[]
 
-imap::
-	The configuration variables in the 'imap' section are described
-	in linkgit:git-imap-send[1].
+include::config/imap.txt[]
 
 index.threads::
 	Specifies the number of threads to spawn when loading the index.
