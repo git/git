@@ -317,13 +317,7 @@ include::config/commit.txt[]
 
 include::config/credential.txt[]
 
-completion.commands::
-	This is only used by git-completion.bash to add or remove
-	commands from the list of completed commands. Normally only
-	porcelain commands and a few select others are completed. You
-	can add more commands, separated by space, in this
-	variable. Prefixing the command with '-' will remove it from
-	the existing list.
+include::config/completion.txt[]
 
 include::diff-config.txt[]
 
