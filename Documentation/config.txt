@@ -407,9 +407,7 @@ include::config/sendemail.txt[]
 
 include::config/sequencer.txt[]
 
-showBranch.default::
-	The default set of branches for linkgit:git-show-branch[1].
-	See linkgit:git-show-branch[1].
+include::config/showbranch.txt[]
 
 splitIndex.maxPercentChange::
 	When the split index feature is used, this specifies the
