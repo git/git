@@ -343,7 +343,7 @@ include::config/grep.txt[]
 
 include::config/gpg.txt[]
 
-include::gui-config.txt[]
+include::config/gui.txt[]
 
 guitool.<name>.cmd::
 	Specifies the shell command line to execute when the corresponding item
