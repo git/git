@@ -30,7 +30,7 @@ merge.verifySignatures::
 	If true, this is equivalent to the --verify-signatures command
 	line option. See linkgit:git-merge[1] for details.
 
-include::fmt-merge-msg-config.txt[]
+include::config/fmt-merge-msg.txt[]
 
 merge.renameLimit::
 	The number of files to consider when performing rename detection
