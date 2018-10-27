@@ -129,7 +129,8 @@ full pathname may have special meaning:
    matches zero or more directories. For example, "`a/**/b`"
    matches "`a/b`", "`a/x/b`", "`a/x/y/b`" and so on.
 
- - Other consecutive asterisks are considered invalid.
+ - Other consecutive asterisks are considered regular asterisks and
+   will match according to the previous rules.
 
 NOTES
 -----
