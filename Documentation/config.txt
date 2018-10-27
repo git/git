@@ -335,7 +335,7 @@ include::config/fsck.txt[]
 
 include::config/gc.txt[]
 
-include::gitcvs-config.txt[]
+include::config/gitcvs.txt[]
 
 gitweb.category::
 gitweb.description::
