@@ -307,9 +307,7 @@ include::config/browser.txt[]
 
 include::config/checkout.txt[]
 
-clean.requireForce::
-	A boolean to make git-clean do nothing unless given -f,
-	-i or -n.   Defaults to true.
+include::config/clean.txt[]
 
 color.advice::
 	A boolean to enable/disable color in hints (e.g. when a push
