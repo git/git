@@ -177,7 +177,7 @@ diff.tool::
 	Any other value is treated as a custom diff tool and requires
 	that a corresponding difftool.<tool>.cmd variable is defined.
 
-include::mergetools-diff.txt[]
+include::../mergetools-diff.txt[]
 
 diff.indentHeuristic::
 	Set this option to `true` to enable experimental heuristics

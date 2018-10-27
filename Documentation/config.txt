@@ -319,7 +319,7 @@ include::config/credential.txt[]
 
 include::config/completion.txt[]
 
-include::diff-config.txt[]
+include::config/diff.txt[]
 
 difftool.<tool>.path::
 	Override the path for the given tool.  This is useful in case
