@@ -433,10 +433,7 @@ include::config/user.txt[]
 
 include::config/versionsort.txt[]
 
-web.browser::
-	Specify a web browser that may be used by some commands.
-	Currently only linkgit:git-instaweb[1] and linkgit:git-help[1]
-	may use it.
+include::config/web.txt[]
 
 worktree.guessRemote::
 	With `add`, if no branch argument, and neither of `-b` nor
