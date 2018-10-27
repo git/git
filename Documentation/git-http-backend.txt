@@ -192,16 +192,16 @@ ScriptAlias /git/ /var/www/cgi-bin/gitweb.cgi/
 
 Lighttpd::
 	Ensure that `mod_cgi`, `mod_alias`, `mod_auth`, `mod_setenv` are
-	loaded, then set `GIT_PROJECT_ROOT` appropriately and redirect
-	all requests to the CGI:
+	loaded, then set path to git-http-backend, set `GIT_PROJECT_ROOT`
+	appropriately, and redirect all requests to the CGI:
 +
 ----------------------------------------------------------------
-alias.url += ( "/git" => "/usr/lib/git-core/git-http-backend" )
 $HTTP["url"] =~ "^/git" {
+	alias.url += ("/git" => "/usr/libexec/git-core/git-http-backend")
 	cgi.assign = ("" => "")
 	setenv.add-environment = (
 		"GIT_PROJECT_ROOT" => "/var/www/git",
-		"GIT_HTTP_EXPORT_ALL" => ""
+		"GIT_HTTP_EXPORT_ALL" => "1"
 	)
 }
 ----------------------------------------------------------------
