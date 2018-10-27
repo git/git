@@ -403,7 +403,7 @@ include::config/rerere.txt[]
 
 include::config/reset.txt[]
 
-include::sendemail-config.txt[]
+include::config/sendemail.txt[]
 
 sequence.editor::
 	Text editor used by `git rebase -i` for editing the rebase instruction file.
