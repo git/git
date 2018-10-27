@@ -401,8 +401,7 @@ include::config/repack.txt[]
 
 include::config/rerere.txt[]
 
-reset.quiet::
-	When set to true, 'git reset' will default to the '--quiet' option.
+include::config/reset.txt[]
 
 include::sendemail-config.txt[]
 
