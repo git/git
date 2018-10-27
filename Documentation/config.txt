@@ -417,7 +417,7 @@ include::config/status.txt[]
 
 include::config/stash.txt[]
 
-include::submodule-config.txt[]
+include::config/submodule.txt[]
 
 tag.forceSignAnnotated::
 	A boolean to specify whether annotated tags created should be GPG signed.
