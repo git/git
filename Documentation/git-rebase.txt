@@ -203,7 +203,7 @@ Alternatively, you can undo the 'git rebase' with
 CONFIGURATION
 -------------
 
-include::rebase-config.txt[]
+include::config/rebase.txt[]
 
 OPTIONS
 -------
