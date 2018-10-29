@@ -2297,8 +2297,8 @@ int read_index_from(struct index_state *istate, const char *path,
 	freshen_shared_index(base_path, 0);
 	merge_base_index(istate);
 	post_read_index_from(istate);
-	free(base_path);
 	trace_performance_leave("read cache %s", base_path);
+	free(base_path);
 	return ret;
 }
 
