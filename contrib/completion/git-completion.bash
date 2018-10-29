@@ -400,7 +400,7 @@ __gitcomp_builtin ()
 	if [ -z "$options" ]; then
 		# leading and trailing spaces are significant to make
 		# option removal work correctly.
-		options=" $(__git ${cmd/_/ } --git-completion-helper) $incl "
+		options=" $incl $(__git ${cmd/_/ } --git-completion-helper) "
 		for i in $excl; do
 			options="${options/ $i / }"
 		done
