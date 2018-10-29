@@ -1496,6 +1496,12 @@ int refresh_index(struct index_state *istate, unsigned int flags,
 	typechange_fmt = (in_porcelain ? "T\t%s\n" : "%s needs update\n");
 	added_fmt = (in_porcelain ? "A\t%s\n" : "%s needs update\n");
 	unmerged_fmt = (in_porcelain ? "U\t%s\n" : "%s: needs merge\n");
+	/*
+	 * Use the multi-threaded preload_index() to refresh most of the
+	 * cache entries quickly then in the single threaded loop below,
+	 * we only have to do the special cases that are left.
+	 */
+	preload_index(istate, pathspec, 0);
 	for (i = 0; i < istate->cache_nr; i++) {
 		struct cache_entry *ce, *new_entry;
 		int cache_errno = 0;
