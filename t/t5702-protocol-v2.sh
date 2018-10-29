@@ -446,6 +446,31 @@ test_expect_success 'fetch supports include-tag and tag following' '
 	git -C client cat-file -e $(git -C client rev-parse annotated_tag)
 '
 
+test_expect_success 'upload-pack respects client shallows' '
+	rm -rf server client trace &&
+
+	git init server &&
+	test_commit -C server base &&
+	test_commit -C server client_has &&
+
+	git clone --depth=1 "file://$(pwd)/server" client &&
+
+	# Add extra commits to the client so that the whole fetch takes more
+	# than 1 request (due to negotiation)
+	for i in $(test_seq 1 32)
+	do
+		test_commit -C client c$i
+	done &&
+
+	git -C server checkout -b newbranch base &&
+	test_commit -C server client_wants &&
+
+	GIT_TRACE_PACKET="$(pwd)/trace" git -C client -c protocol.version=2 \
+		fetch origin newbranch &&
+	# Ensure that protocol v2 is used
+	grep "fetch< version 2" trace
+'
+
 # Test protocol v2 with 'http://' transport
 #
 . "$TEST_DIRECTORY"/lib-httpd.sh
