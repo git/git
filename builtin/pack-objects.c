@@ -3107,6 +3107,7 @@ static void get_object_list(int ac, const char **av)
 
 	repo_init_revisions(the_repository, &revs, NULL);
 	save_commit_buffer = 0;
+	revs.allow_exclude_promisor_objects_opt = 1;
 	setup_revisions(ac, av, &revs, NULL);
 
 	/* make sure shallows are read */

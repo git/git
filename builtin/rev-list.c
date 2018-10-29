@@ -374,6 +374,7 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	git_config(git_default_config, NULL);
 	repo_init_revisions(the_repository, &revs, prefix);
 	revs.abbrev = DEFAULT_ABBREV;
+	revs.allow_exclude_promisor_objects_opt = 1;
 	revs.commit_format = CMIT_FMT_UNSPECIFIED;
 	revs.do_not_die_on_missing_tree = 1;
 
