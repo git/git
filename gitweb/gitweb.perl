@@ -3302,7 +3302,7 @@ sub git_get_remotes_list {
 		next if $wanted and not $remote eq $wanted;
 		my ($url, $key) = ($1, $2);
 
-		$remotes{$remote} ||= { 'heads' => () };
+		$remotes{$remote} ||= { 'heads' => [] };
 		$remotes{$remote}{$key} = $url;
 	}
 	close $fd or return;
