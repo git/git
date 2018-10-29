@@ -1172,7 +1172,7 @@ int transport_push(struct transport *transport,
 					oid_array_append(&commits,
 							  &ref->new_oid);
 
-			if (!push_unpushed_submodules(&the_index,
+			if (!push_unpushed_submodules(the_repository,
 						      &commits,
 						      transport->remote,
 						      rs,
@@ -1197,7 +1197,7 @@ int transport_push(struct transport *transport,
 					oid_array_append(&commits,
 							  &ref->new_oid);
 
-			if (find_unpushed_submodules(&the_index,
+			if (find_unpushed_submodules(the_repository,
 						     &commits,
 						     transport->remote->name,
 						     &needs_pushing)) {
