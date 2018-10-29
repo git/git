@@ -333,6 +333,10 @@ advice.*::
 	commitBeforeMerge::
 		Advice shown when linkgit:git-merge[1] refuses to
 		merge to avoid overwriting local changes.
+	resetQuiet::
+		Advice to consider using the `--quiet` option to linkgit:git-reset[1]
+		when the command takes more than 2 seconds to enumerate unstaged
+		changes after reset.
 	resolveConflict::
 		Advice shown by various commands when conflicts
 		prevent the operation from being performed.
@@ -2773,6 +2777,9 @@ rerere.enabled::
 	enabled if there is an `rr-cache` directory under the
 	`$GIT_DIR`, e.g. if "rerere" was previously used in the
 	repository.
+
+reset.quiet::
+	When set to true, 'git reset' will default to the '--quiet' option.
 
 include::sendemail-config.txt[]
 
