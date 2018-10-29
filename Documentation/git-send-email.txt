@@ -190,7 +190,9 @@ $ git send-email --smtp-auth="PLAIN LOGIN GSSAPI" ...
 If at least one of the specified mechanisms matches the ones advertised by the
 SMTP server and if it is supported by the utilized SASL library, the mechanism
 is used for authentication. If neither 'sendemail.smtpAuth' nor `--smtp-auth`
-is specified, all mechanisms supported by the SASL library can be used.
+is specified, all mechanisms supported by the SASL library can be used. The
+special value 'none' maybe specified to completely disable authentication
+independently of `--smtp-user`
 
 --smtp-pass[=<password>]::
 	Password for SMTP-AUTH. The argument is optional: If no
@@ -203,6 +205,9 @@ or on the command line. If a username has been specified (with
 `--smtp-user` or a `sendemail.smtpUser`), but no password has been
 specified (with `--smtp-pass` or `sendemail.smtpPass`), then
 a password is obtained using 'git-credential'.
+
+--no-smtp-auth::
+	Disable SMTP authentication. Short hand for `--smtp-auth=none`
 
 --smtp-server=<host>::
 	If set, specifies the outgoing SMTP server to use (e.g.
