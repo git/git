@@ -584,6 +584,26 @@ static int module_foreach(int argc, const char **argv, const char *prefix)
 	return 0;
 }
 
+static char *compute_submodule_clone_url(const char *rel_url)
+{
+	char *remoteurl, *relurl;
+	char *remote = get_default_remote();
+	struct strbuf remotesb = STRBUF_INIT;
+
+	strbuf_addf(&remotesb, "remote.%s.url", remote);
+	if (git_config_get_string(remotesb.buf, &remoteurl)) {
+		warning(_("could not look up configuration '%s'. Assuming this repository is its own authoritative upstream."), remotesb.buf);
+		remoteurl = xgetcwd();
+	}
+	relurl = relative_url(remoteurl, rel_url, NULL);
+
+	free(remote);
+	free(remoteurl);
+	strbuf_release(&remotesb);
+
+	return relurl;
+}
+
 struct init_cb {
 	const char *prefix;
 	unsigned int flags;
@@ -634,21 +654,9 @@ static void init_submodule(const char *path, const char *prefix,
 		/* Possibly a url relative to parent */
 		if (starts_with_dot_dot_slash(url) ||
 		    starts_with_dot_slash(url)) {
-			char *remoteurl, *relurl;
-			char *remote = get_default_remote();
-			struct strbuf remotesb = STRBUF_INIT;
-			strbuf_addf(&remotesb, "remote.%s.url", remote);
-			free(remote);
-
-			if (git_config_get_string(remotesb.buf, &remoteurl)) {
-				warning(_("could not lookup configuration '%s'. Assuming this repository is its own authoritative upstream."), remotesb.buf);
-				remoteurl = xgetcwd();
-			}
-			relurl = relative_url(remoteurl, url, NULL);
-			strbuf_release(&remotesb);
-			free(remoteurl);
-			free(url);
-			url = relurl;
+			char *oldurl = url;
+			url = compute_submodule_clone_url(oldurl);
+			free(oldurl);
 		}
 
 		if (git_config_set_gently(sb.buf, url))
@@ -1582,6 +1590,7 @@ static int prepare_to_clone_next_submodule(const struct cache_entry *ce,
 	struct strbuf sb = STRBUF_INIT;
 	const char *displaypath = NULL;
 	int needs_cloning = 0;
+	int need_free_url = 0;
 
 	if (ce_stage(ce)) {
 		if (suc->recursive_prefix)
@@ -1630,8 +1639,14 @@ static int prepare_to_clone_next_submodule(const struct cache_entry *ce,
 
 	strbuf_reset(&sb);
 	strbuf_addf(&sb, "submodule.%s.url", sub->name);
-	if (repo_config_get_string_const(the_repository, sb.buf, &url))
-		url = sub->url;
+	if (repo_config_get_string_const(the_repository, sb.buf, &url)) {
+		if (starts_with_dot_slash(sub->url) ||
+		    starts_with_dot_dot_slash(sub->url)) {
+			url = compute_submodule_clone_url(sub->url);
+			need_free_url = 1;
+		} else
+			url = sub->url;
+	}
 
 	strbuf_reset(&sb);
 	strbuf_addf(&sb, "%s/.git", ce->name);
@@ -1677,6 +1692,8 @@ static int prepare_to_clone_next_submodule(const struct cache_entry *ce,
 cleanup:
 	strbuf_reset(&displaypath_sb);
 	strbuf_reset(&sb);
+	if (need_free_url)
+		free((void*)url);
 
 	return needs_cloning;
 }
