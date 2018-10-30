@@ -1,5 +1,5 @@
-#ifndef __COMMIT_REACH_H__
-#define __COMMIT_REACH_H__
+#ifndef COMMIT_REACH_H
+#define COMMIT_REACH_H
 
 #include "commit-slab.h"
 

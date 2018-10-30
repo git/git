@@ -1,5 +1,5 @@
-#ifndef __TEST_TOOL_H__
-#define __TEST_TOOL_H__
+#ifndef TEST_TOOL_H
+#define TEST_TOOL_H
 
 #include "git-compat-util.h"
 
