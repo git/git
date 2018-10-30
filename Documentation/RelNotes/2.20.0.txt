@@ -23,6 +23,12 @@ Backward Compatibility Notes
    of the command, while sending the alias expansion to the standard
    error stream.
 
+ * "git send-email" learned to grab address-looking string on any
+   trailer whose name ends with "-by". This is a backward-incompatible
+   change.  Adding "--suppress-cc=misc-by" on the command line, or
+   setting sendemail.suppresscc configuration variable to "misc-by",
+   can be used to disable this behaviour.
+
 
 Updates since v2.19
 -------------------
@@ -122,6 +128,22 @@ UI, Workflows & Features
  * The logic to select the default user name and e-mail on Windows has
    been improved.
    (merge 501afcb8b0 js/mingw-default-ident later to maint).
+
+ * The "rev-list --filter" feature learned to exclude all trees via
+   "tree:0" filter.
+
+ * "git send-email" learned to grab address-looking string on any
+   trailer whose name ends with "-by"; --suppress-cc=misc-by on the
+   command line, or setting sendemail.suppresscc configuration
+   variable to "misc-by", can be used to disable this behaviour.
+
+ * Developer builds now uses -Wunused-function compilation option.
+
+ * One of our CI tests to run with "unusual/experimental/random"
+   settings now also uses commit-graph and midx.
+
+ * "git mergetool" learned to take the "--[no-]gui" option, just like
+   "git difftool" does.
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -230,6 +252,16 @@ Performance, Internal Implementation, Development Support etc.
  * An experiment to fuzz test a few areas, hopefully we can gain more
    coverage to various areas.
 
+ * More codepaths are moving away from hardcoded hash sizes.
+
+ * The way the Windows port figures out the current directory has been
+   improved.
+
+ * The way DLLs are loaded on the Windows port has been improved.
+
+ * Some tests have been reorganized and renamed; "ls t/" now gives a
+   better overview of what is tested for these scripts than before.
+
 
 Fixes since v2.19
 -----------------
@@ -333,6 +365,29 @@ Fixes since v2.19
    parent commits, which has been corrected.
    (merge 04005834ed np/log-graph-octopus-fix later to maint).
 
+ * "git range-diff" did not work well when the compared ranges had
+   changes in submodules and the "--submodule=log" was used.
+
+ * The implementation of run_command() API on the UNIX platforms had a
+   bug that caused a command not on $PATH to be found in the current
+   directory.
+   (merge f67b980771 jk/run-command-notdot later to maint).
+
+ * A mutex used in "git pack-objects" were not correctly initialized
+   and this caused "git repack" to dump core on Windows.
+   (merge 34204c8166 js/pack-objects-mutex-init-fix later to maint).
+
+ * Under certain circumstances, "git diff D:/a/b/c D:/a/b/d" on
+   Windows would strip initial parts from the paths because they
+   were not recognized as absolute, which has been corrected.
+   (merge ffd04e92e2 js/diff-notice-has-drive-prefix later to maint).
+
+ * The receive.denyCurrentBranch=updateInstead codepath kicked in even
+   when the push should have been rejected due to other reasons, such
+   as it does not fast-forward or the update-hook rejects it, which
+   has been corrected.
+   (merge b072a25fad jc/receive-deny-current-branch-fix later to maint).
+
  * Code cleanup, docfix, build fix, etc.
    (merge 96a7501aad ts/doc-build-manpage-xsl-quietly later to maint).
    (merge b9b07efdb2 tg/conflict-marker-size later to maint).
@@ -361,3 +416,11 @@ Fixes since v2.19
    (merge ca8ed443a5 mm/doc-no-dashed-git later to maint).
    (merge ce366a8144 du/get-tar-commit-id-is-plumbing later to maint).
    (merge 61018fe9e0 du/cherry-is-plumbing later to maint).
+   (merge c7e5fe79b9 sb/strbuf-h-update later to maint).
+   (merge 8d2008196b tq/branch-create-wo-branch-get later to maint).
+   (merge 2e3c894f4b tq/branch-style-fix later to maint).
+   (merge c5d844af9c sg/doc-show-branch-typofix later to maint).
+   (merge 081d91618b ah/doc-updates later to maint).
+   (merge b84c783882 jc/cocci-preincr later to maint).
+   (merge 5e495f8122 uk/merge-subtree-doc-update later to maint).
+   (merge aaaa881822 jk/uploadpack-packobjectshook-fix later to maint).
