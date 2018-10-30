@@ -311,9 +311,9 @@ branch refers to a specific commit. Let's look at a repo with three
 commits, one of them tagged, and with branch 'master' checked out:
 
 ------------
-	   HEAD (refers to branch 'master')
-	    |
-	    v
+           HEAD (refers to branch 'master')
+            |
+            v
 a---b---c  branch 'master' (refers to commit 'c')
     ^
     |
@@ -329,9 +329,9 @@ to commit 'd':
 ------------
 $ edit; git add; git commit
 
-	       HEAD (refers to branch 'master')
-		|
-		v
+               HEAD (refers to branch 'master')
+                |
+                v
 a---b---c---d  branch 'master' (refers to commit 'd')
     ^
     |
@@ -398,7 +398,7 @@ at what happens when we then checkout master:
 ------------
 $ git checkout master
 
-	       HEAD (refers to branch 'master')
+               HEAD (refers to branch 'master')
       e---f     |
      /          v
 a---b---c---d  branch 'master' (refers to commit 'd')

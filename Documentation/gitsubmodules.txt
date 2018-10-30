@@ -169,11 +169,15 @@ ACTIVE SUBMODULES
 
 A submodule is considered active,
 
-  (a) if `submodule.<name>.active` is set to `true`
-     or
-  (b) if the submodule's path matches the pathspec in `submodule.active`
-     or
-  (c) if `submodule.<name>.url` is set.
+  a. if `submodule.<name>.active` is set to `true`
++
+or
+
+  b. if the submodule's path matches the pathspec in `submodule.active`
++
+or
+
+  c. if `submodule.<name>.url` is set.
 
 and these are evaluated in this order.
 

@@ -303,21 +303,21 @@ number of pitfalls:
   attribute. If you decide to use the `working-tree-encoding` attribute
   in your repository, then it is strongly recommended to ensure that all
   clients working with the repository support it.
-
-  For example, Microsoft Visual Studio resources files (`*.rc`) or
-  PowerShell script files (`*.ps1`) are sometimes encoded in UTF-16.
-  If you declare `*.ps1` as files as UTF-16 and you add `foo.ps1` with
-  a `working-tree-encoding` enabled Git client, then `foo.ps1` will be
-  stored as UTF-8 internally. A client without `working-tree-encoding`
-  support will checkout `foo.ps1` as UTF-8 encoded file. This will
-  typically cause trouble for the users of this file.
-
-  If a Git client, that does not support the `working-tree-encoding`
-  attribute, adds a new file `bar.ps1`, then `bar.ps1` will be
-  stored "as-is" internally (in this example probably as UTF-16).
-  A client with `working-tree-encoding` support will interpret the
-  internal contents as UTF-8 and try to convert it to UTF-16 on checkout.
-  That operation will fail and cause an error.
++
+For example, Microsoft Visual Studio resources files (`*.rc`) or
+PowerShell script files (`*.ps1`) are sometimes encoded in UTF-16.
+If you declare `*.ps1` as files as UTF-16 and you add `foo.ps1` with
+a `working-tree-encoding` enabled Git client, then `foo.ps1` will be
+stored as UTF-8 internally. A client without `working-tree-encoding`
+support will checkout `foo.ps1` as UTF-8 encoded file. This will
+typically cause trouble for the users of this file.
++
+If a Git client, that does not support the `working-tree-encoding`
+attribute, adds a new file `bar.ps1`, then `bar.ps1` will be
+stored "as-is" internally (in this example probably as UTF-16).
+A client with `working-tree-encoding` support will interpret the
+internal contents as UTF-8 and try to convert it to UTF-16 on checkout.
+That operation will fail and cause an error.
 
 - Reencoding content to non-UTF encodings can cause errors as the
   conversion might not be UTF-8 round trip safe. If you suspect your

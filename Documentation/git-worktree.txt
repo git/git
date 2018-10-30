@@ -270,8 +270,8 @@ Porcelain Format
 The porcelain format has a line per attribute.  Attributes are listed with a
 label and value separated by a single space.  Boolean attributes (like 'bare'
 and 'detached') are listed as a label only, and are only present if and only
-if the value is true.  An empty line indicates the end of a worktree.  For
-example:
+if the value is true.  The first attribute of a worktree is always `worktree`,
+an empty line indicates the end of the record.  For example:
 
 ------------
 $ git worktree list --porcelain
