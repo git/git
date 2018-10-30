@@ -10,12 +10,12 @@ struct worktree {
 	char *path;
 	char *id;
 	char *head_ref;		/* NULL if HEAD is broken or detached */
-	char *lock_reason;	/* internal use */
+	char *lock_reason;	/* private - use is_worktree_locked */
 	struct object_id head_oid;
 	int is_detached;
 	int is_bare;
 	int is_current;
-	int lock_reason_valid;
+	int lock_reason_valid; /* private */
 };
 
 /* Functions for acting on the information about worktrees. */
