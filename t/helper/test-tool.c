@@ -55,13 +55,23 @@ static struct test_cmd cmds[] = {
 	{ "write-cache", cmd__write_cache },
 };
 
+static NORETURN void die_usage(void)
+{
+	size_t i;
+
+	fprintf(stderr, "usage: test-tool <toolname> [args]\n");
+	for (i = 0; i < ARRAY_SIZE(cmds); i++)
+		fprintf(stderr, "  %s\n", cmds[i].name);
+	exit(128);
+}
+
 int cmd_main(int argc, const char **argv)
 {
 	int i;
 
 	BUG_exit_code = 99;
 	if (argc < 2)
-		die("I need a test name!");
+		die_usage();
 
 	for (i = 0; i < ARRAY_SIZE(cmds); i++) {
 		if (!strcmp(cmds[i].name, argv[1])) {
@@ -70,5 +80,6 @@ int cmd_main(int argc, const char **argv)
 			return cmds[i].fn(argc, argv);
 		}
 	}
-	die("There is no test named '%s'", argv[1]);
+	error("there is no tool named '%s'", argv[1]);
+	die_usage();
 }
