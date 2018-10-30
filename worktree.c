@@ -235,7 +235,7 @@ int is_main_worktree(const struct worktree *wt)
 	return !wt->id;
 }
 
-const char *is_worktree_locked(struct worktree *wt)
+const char *worktree_lock_reason(struct worktree *wt)
 {
 	assert(!is_main_worktree(wt));
 
