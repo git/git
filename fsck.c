@@ -479,7 +479,7 @@ static int fsck_walk_commit(struct commit *commit, void *data, struct fsck_optio
 		if (name) {
 			struct object *obj = &parents->item->object;
 
-			if (++counter > 1)
+			if (counter++)
 				put_object_name(options, obj, "%s^%d",
 					name, counter);
 			else if (generation > 0)
