@@ -2399,7 +2399,6 @@ static void init_threaded_search(void)
 	pthread_mutex_init(&cache_mutex, NULL);
 	pthread_mutex_init(&progress_mutex, NULL);
 	pthread_cond_init(&progress_cond, NULL);
-	pthread_mutex_init(&to_pack.lock, NULL);
 	old_try_to_free_routine = set_try_to_free_routine(try_to_free_from_threads);
 }
 
