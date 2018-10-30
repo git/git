@@ -529,8 +529,8 @@ int commit_contains(struct ref_filter *filter, struct commit *commit,
 
 static int compare_commits_by_gen(const void *_a, const void *_b)
 {
-	const struct commit *a = (const struct commit *)_a;
-	const struct commit *b = (const struct commit *)_b;
+	const struct commit *a = *(const struct commit * const *)_a;
+	const struct commit *b = *(const struct commit * const *)_b;
 
 	if (a->generation < b->generation)
 		return -1;
