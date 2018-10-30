@@ -636,13 +636,13 @@ test_expect_success 'fsck detects trailing loose garbage (commit)' '
 	test_i18ngrep "garbage.*$commit" out
 '
 
-test_expect_success 'fsck detects trailing loose garbage (blob)' '
+test_expect_success 'fsck detects trailing loose garbage (large blob)' '
 	blob=$(echo trailing | git hash-object -w --stdin) &&
 	file=$(sha1_file $blob) &&
 	test_when_finished "remove_object $blob" &&
 	chmod +w "$file" &&
 	echo garbage >>"$file" &&
-	test_must_fail git fsck 2>out &&
+	test_must_fail git -c core.bigfilethreshold=5 fsck 2>out &&
 	test_i18ngrep "garbage.*$blob" out
 '
 
