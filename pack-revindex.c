@@ -122,13 +122,14 @@ static void create_pack_revindex(struct packed_git *p)
 	unsigned num_ent = p->num_objects;
 	unsigned i;
 	const char *index = p->index_data;
+	const unsigned hashsz = the_hash_algo->rawsz;
 
 	ALLOC_ARRAY(p->revindex, num_ent + 1);
 	index += 4 * 256;
 
 	if (p->index_version > 1) {
 		const uint32_t *off_32 =
-			(uint32_t *)(index + 8 + p->num_objects * (20 + 4));
+			(uint32_t *)(index + 8 + p->num_objects * (hashsz + 4));
 		const uint32_t *off_64 = off_32 + p->num_objects;
 		for (i = 0; i < num_ent; i++) {
 			uint32_t off = ntohl(*off_32++);
@@ -142,16 +143,17 @@ static void create_pack_revindex(struct packed_git *p)
 		}
 	} else {
 		for (i = 0; i < num_ent; i++) {
-			uint32_t hl = *((uint32_t *)(index + 24 * i));
+			uint32_t hl = *((uint32_t *)(index + (hashsz + 4) * i));
 			p->revindex[i].offset = ntohl(hl);
 			p->revindex[i].nr = i;
 		}
 	}
 
-	/* This knows the pack format -- the 20-byte trailer
+	/*
+	 * This knows the pack format -- the hash trailer
 	 * follows immediately after the last object data.
 	 */
-	p->revindex[num_ent].offset = p->pack_size - 20;
+	p->revindex[num_ent].offset = p->pack_size - hashsz;
 	p->revindex[num_ent].nr = -1;
 	sort_revindex(p->revindex, num_ent, p->pack_size);
 }
