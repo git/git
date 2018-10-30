@@ -1457,7 +1457,6 @@ static void determine_submodule_update_strategy(struct repository *r,
 	key = xstrfmt("submodule.%s.update", sub->name);
 
 	if (update) {
-		trace_printf("parsing update");
 		if (parse_submodule_update_strategy(update, out) < 0)
 			die(_("Invalid update mode '%s' for submodule path '%s'"),
 				update, path);
@@ -1466,7 +1465,6 @@ static void determine_submodule_update_strategy(struct repository *r,
 			die(_("Invalid update mode '%s' configured for submodule path '%s'"),
 				val, path);
 	} else if (sub->update_strategy.type != SM_UPDATE_UNSPECIFIED) {
-		trace_printf("loaded thing");
 		out->type = sub->update_strategy.type;
 		out->command = sub->update_strategy.command;
 	} else
