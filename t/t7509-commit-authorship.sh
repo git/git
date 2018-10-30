@@ -3,7 +3,7 @@
 # Copyright (c) 2009 Erick Mattos
 #
 
-test_description='git commit --reset-author'
+test_description='commit tests of various authorhip options. '
 
 . ./test-lib.sh
 
