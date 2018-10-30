@@ -321,16 +321,19 @@ Automating
 	auto-cc of:
 +
 --
-- 'author' will avoid including the patch author
-- 'self' will avoid including the sender
+- 'author' will avoid including the patch author.
+- 'self' will avoid including the sender.
 - 'cc' will avoid including anyone mentioned in Cc lines in the patch header
   except for self (use 'self' for that).
 - 'bodycc' will avoid including anyone mentioned in Cc lines in the
   patch body (commit message) except for self (use 'self' for that).
 - 'sob' will avoid including anyone mentioned in Signed-off-by lines except
-   for self (use 'self' for that).
+  for self (use 'self' for that).
+- 'misc-by' will avoid including anyone mentioned in Acked-by,
+  Reviewed-by, Tested-by and other "-by" lines in the patch body,
+  except Signed-off-by (use 'sob' for that).
 - 'cccmd' will avoid running the --cc-cmd.
-- 'body' is equivalent to 'sob' + 'bodycc'
+- 'body' is equivalent to 'sob' + 'bodycc' + 'misc-by'.
 - 'all' will suppress all auto cc values.
 --
 +
