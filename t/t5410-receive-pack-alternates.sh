@@ -23,7 +23,7 @@ test_expect_success 'with core.alternateRefsCommand' '
 			--format="%(objectname)" \
 			refs/heads/public/
 	EOF
-	test_config -C fork core.alternateRefsCommand alternate-refs &&
+	test_config -C fork core.alternateRefsCommand ./alternate-refs &&
 	git rev-parse public/branch >expect &&
 	printf "0000" | git receive-pack fork >actual &&
 	extract_haves <actual >actual.haves &&
