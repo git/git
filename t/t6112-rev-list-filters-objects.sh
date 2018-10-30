@@ -34,6 +34,18 @@ test_expect_success 'verify blob:none omits all 5 blobs' '
 	test_cmp expected observed
 '
 
+test_expect_success 'specify blob explicitly prevents filtering' '
+	file_3=$(git -C r1 ls-files -s file.3 |
+		 awk -f print_2.awk) &&
+
+	file_4=$(git -C r1 ls-files -s file.4 |
+		 awk -f print_2.awk) &&
+
+	git -C r1 rev-list --objects --filter=blob:none HEAD $file_3 >observed &&
+	grep "$file_3" observed &&
+	! grep "$file_4" observed
+'
+
 test_expect_success 'verify emitted+omitted == all' '
 	git -C r1 rev-list --objects HEAD >revs &&
 	awk -f print_1.awk revs |
@@ -230,6 +242,56 @@ test_expect_success 'verify sparse:oid=oid-ish omits top-level files' '
 	sort >observed &&
 
 	test_cmp expected observed
+'
+
+test_expect_success 'rev-list W/ --missing=print and --missing=allow-any for trees' '
+	TREE=$(git -C r3 rev-parse HEAD:dir1) &&
+
+	# Create a spare repo because we will be deleting objects from this one.
+	git clone r3 r3.b &&
+
+	rm r3.b/.git/objects/$(echo $TREE | sed "s|^..|&/|") &&
+
+	git -C r3.b rev-list --quiet --missing=print --objects HEAD \
+		>missing_objs 2>rev_list_err &&
+	echo "?$TREE" >expected &&
+	test_cmp expected missing_objs &&
+
+	# do not complain when a missing tree cannot be parsed
+	test_must_be_empty rev_list_err &&
+
+	git -C r3.b rev-list --missing=allow-any --objects HEAD \
+		>objs 2>rev_list_err &&
+	! grep $TREE objs &&
+	test_must_be_empty rev_list_err
+'
+
+# Test tree:0 filter.
+
+test_expect_success 'verify tree:0 includes trees in "filtered" output' '
+	git -C r3 rev-list --quiet --objects --filter-print-omitted \
+		--filter=tree:0 HEAD >revs &&
+
+	awk -f print_1.awk revs |
+	sed s/~// |
+	xargs -n1 git -C r3 cat-file -t >unsorted_filtered_types &&
+
+	sort -u unsorted_filtered_types >filtered_types &&
+	test_write_lines blob tree >expected &&
+	test_cmp expected filtered_types
+'
+
+# Make sure tree:0 does not iterate through any trees.
+
+test_expect_success 'filter a GIANT tree through tree:0' '
+	GIT_TRACE=1 git -C r3 rev-list \
+		--objects --filter=tree:0 HEAD 2>filter_trace &&
+	grep "Skipping contents of tree [.][.][.]" filter_trace >actual &&
+	# One line for each commit traversed.
+	test_line_count = 2 actual &&
+
+	# Make sure no other trees were considered besides the root.
+	! grep "Skipping contents of tree [^.]" filter_trace
 '
 
 # Delete some loose objects and use rev-list, but WITHOUT any filtering.

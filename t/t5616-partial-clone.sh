@@ -166,6 +166,48 @@ test_expect_success 'partial clone with transfer.fsckobjects=1 uses index-pack -
 	grep "git index-pack.*--fsck-objects" trace
 '
 
+test_expect_success 'use fsck before and after manually fetching a missing subtree' '
+	# push new commit so server has a subtree
+	mkdir src/dir &&
+	echo "in dir" >src/dir/file.txt &&
+	git -C src add dir/file.txt &&
+	git -C src commit -m "file in dir" &&
+	git -C src push -u srv master &&
+	SUBTREE=$(git -C src rev-parse HEAD:dir) &&
+
+	rm -rf dst &&
+	git clone --no-checkout --filter=tree:0 "file://$(pwd)/srv.bare" dst &&
+	git -C dst fsck &&
+
+	# Make sure we only have commits, and all trees and blobs are missing.
+	git -C dst rev-list --missing=allow-any --objects master \
+		>fetched_objects &&
+	awk -f print_1.awk fetched_objects |
+	xargs -n1 git -C dst cat-file -t >fetched_types &&
+
+	sort -u fetched_types >unique_types.observed &&
+	echo commit >unique_types.expected &&
+	test_cmp unique_types.expected unique_types.observed &&
+
+	# Auto-fetch a tree with cat-file.
+	git -C dst cat-file -p $SUBTREE >tree_contents &&
+	grep file.txt tree_contents &&
+
+	# fsck still works after an auto-fetch of a tree.
+	git -C dst fsck &&
+
+	# Auto-fetch all remaining trees and blobs with --missing=error
+	git -C dst rev-list --missing=error --objects master >fetched_objects &&
+	test_line_count = 70 fetched_objects &&
+
+	awk -f print_1.awk fetched_objects |
+	xargs -n1 git -C dst cat-file -t >fetched_types &&
+
+	sort -u fetched_types >unique_types.observed &&
+	test_write_lines blob commit tree >unique_types.expected &&
+	test_cmp unique_types.expected unique_types.observed
+'
+
 test_expect_success 'partial clone fetches blobs pointed to by refs even if normally filtered out' '
 	rm -rf src dst &&
 	git init src &&
