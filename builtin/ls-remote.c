@@ -92,6 +92,11 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 		}
 	}
 
+	if (flags & REF_TAGS)
+		argv_array_push(&ref_prefixes, "refs/tags/");
+	if (flags & REF_HEADS)
+		argv_array_push(&ref_prefixes, "refs/heads/");
+
 	remote = remote_get(dest);
 	if (!remote) {
 		if (dest)
