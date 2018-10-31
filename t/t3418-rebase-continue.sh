@@ -177,6 +177,7 @@ test_expect_success 'setup rerere database' '
 	git checkout master &&
 	test_commit "commit-new-file-F3" F3 3 &&
 	test_config rerere.enabled true &&
+	git update-ref refs/heads/topic commit-new-file-F3-on-topic-branch &&
 	test_must_fail git rebase -m master topic &&
 	echo "Resolved" >F2 &&
 	cp F2 expected-F2 &&
