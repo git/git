@@ -88,15 +88,7 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 		int i;
 		pattern = xcalloc(argc, sizeof(const char *));
 		for (i = 1; i < argc; i++) {
-			const char *glob;
 			pattern[i - 1] = xstrfmt("*/%s", argv[i]);
-
-			glob = strchr(argv[i], '*');
-			if (glob)
-				argv_array_pushf(&ref_prefixes, "%.*s",
-						 (int)(glob - argv[i]), argv[i]);
-			else
-				expand_ref_prefix(&ref_prefixes, argv[i]);
 		}
 	}
 
