@@ -2028,7 +2028,7 @@ static int create_ref_symlink(struct ref_lock *lock, const char *target)
 
 	char *ref_path = get_locked_file_path(&lock->lk);
 	unlink(ref_path);
-	ret = symlink(target, ref_path);
+	ret = create_symlink(NULL, target, ref_path);
 	free(ref_path);
 
 	if (ret)
