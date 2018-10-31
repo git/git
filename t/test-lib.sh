@@ -1268,3 +1268,7 @@ test_lazy_prereq CURL '
 test_lazy_prereq SHA1 '
 	test $(git hash-object /dev/null) = e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 '
+
+test_lazy_prereq REBASE_P '
+	test -z "$GIT_TEST_SKIP_REBASE_P"
+'

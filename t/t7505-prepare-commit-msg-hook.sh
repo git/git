@@ -253,7 +253,7 @@ test_rebase () {
 }
 
 test_rebase success -i
-test_rebase success -p
+test_have_prereq !REBASE_P || test_rebase success -p
 
 test_expect_success 'with hook (cherry-pick)' '
 	test_when_finished "git checkout -f master" &&

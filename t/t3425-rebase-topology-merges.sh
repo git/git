@@ -109,6 +109,11 @@ test_run_rebase success 'd e n o' ''
 test_run_rebase success 'd e n o' -m
 test_run_rebase success 'd n o e' -i
 
+if ! test_have_prereq REBASE_P; then
+	skip_all='skipping git rebase -p tests, as asked for'
+	test_done
+fi
+
 test_expect_success "rebase -p is no-op in non-linear history" "
 	reset_rebase &&
 	git rebase -p d w &&
