@@ -306,7 +306,7 @@ static int parse_key_value_squoted(char *buf, struct string_list *list)
  * script, and thus if the file differs from what this function expects, it is
  * better to bail out than to do something that the user does not expect.
  */
-static int read_author_script(struct am_state *state)
+static int read_am_author_script(struct am_state *state)
 {
 	const char *filename = am_path(state, "author-script");
 	struct strbuf buf = STRBUF_INIT;
@@ -441,7 +441,7 @@ static void am_load(struct am_state *state)
 		BUG("state file 'last' does not exist");
 	state->last = strtol(sb.buf, NULL, 10);
 
-	if (read_author_script(state) < 0)
+	if (read_am_author_script(state) < 0)
 		die(_("could not parse author script"));
 
 	read_commit_msg(state);
