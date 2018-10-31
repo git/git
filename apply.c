@@ -4343,7 +4343,7 @@ static int try_create_file(struct apply_state *state, const char *path,
 		/* Although buf:size is counted string, it also is NUL
 		 * terminated.
 		 */
-		return !!symlink(buf, path);
+		return !!create_symlink(state && state->repo ? state->repo->index : NULL, buf, path);
 
 	fd = open(path, O_CREAT | O_EXCL | O_WRONLY, (mode & 0100) ? 0777 : 0666);
 	if (fd < 0)
