@@ -387,6 +387,7 @@ test_expect_success 'edit ancestor with -p' '
 '
 
 test_expect_success '--continue tries to commit' '
+	git reset --hard D &&
 	test_tick &&
 	set_fake_editor &&
 	test_must_fail git rebase -i --onto new-branch1 HEAD^ &&
@@ -426,7 +427,7 @@ test_expect_success C_LOCALE_OUTPUT 'multi-fixup does not fire up editor' '
 		git rebase -i $base &&
 	test $base = $(git rev-parse HEAD^) &&
 	test 0 = $(git show | grep NEVER | wc -l) &&
-	git checkout to-be-rebased &&
+	git checkout @{-1} &&
 	git branch -D multi-fixup
 '
 
@@ -441,7 +442,7 @@ test_expect_success 'commit message used after conflict' '
 		git rebase --continue &&
 	test $base = $(git rev-parse HEAD^) &&
 	test 1 = $(git show | grep ONCE | wc -l) &&
-	git checkout to-be-rebased &&
+	git checkout @{-1} &&
 	git branch -D conflict-fixup
 '
 
@@ -456,7 +457,7 @@ test_expect_success 'commit message retained after conflict' '
 		git rebase --continue &&
 	test $base = $(git rev-parse HEAD^) &&
 	test 2 = $(git show | grep TWICE | wc -l) &&
-	git checkout to-be-rebased &&
+	git checkout @{-1} &&
 	git branch -D conflict-squash
 '
 
@@ -481,7 +482,7 @@ test_expect_success C_LOCALE_OUTPUT 'squash and fixup generate correct log messa
 		grep "^# This is a combination of 3 commits\."  &&
 	git cat-file commit HEAD@{3} |
 		grep "^# This is a combination of 2 commits\."  &&
-	git checkout to-be-rebased &&
+	git checkout @{-1} &&
 	git branch -D squash-fixup
 '
 
@@ -494,7 +495,7 @@ test_expect_success C_LOCALE_OUTPUT 'squash ignores comments' '
 		git rebase -i $base &&
 	test $base = $(git rev-parse HEAD^) &&
 	test 1 = $(git show | grep ONCE | wc -l) &&
-	git checkout to-be-rebased &&
+	git checkout @{-1} &&
 	git branch -D skip-comments
 '
 
@@ -507,7 +508,7 @@ test_expect_success C_LOCALE_OUTPUT 'squash ignores blank lines' '
 		git rebase -i $base &&
 	test $base = $(git rev-parse HEAD^) &&
 	test 1 = $(git show | grep ONCE | wc -l) &&
-	git checkout to-be-rebased &&
+	git checkout @{-1} &&
 	git branch -D skip-blank-lines
 '
 
@@ -648,7 +649,7 @@ test_expect_success 'rebase with a file named HEAD in worktree' '
 	) &&
 
 	set_fake_editor &&
-	FAKE_LINES="1 squash 2" git rebase -i to-be-rebased &&
+	FAKE_LINES="1 squash 2" git rebase -i @{-1} &&
 	test "$(git show -s --pretty=format:%an)" = "Squashed Away"
 
 '
