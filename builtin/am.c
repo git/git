@@ -318,7 +318,8 @@ static int read_author_script(struct am_state *state)
 	if (fd < 0) {
 		if (errno == ENOENT)
 			return 0;
-		die_errno(_("could not open '%s' for reading"), filename);
+		return error_errno(_("could not open '%s' for reading"),
+				   filename);
 	}
 	strbuf_read(&buf, fd, 0);
 	close(fd);
