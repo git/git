@@ -10,6 +10,15 @@ LFSWHENCE=https://github.com/github/git-lfs/releases/download/v$LINUX_GIT_LFS_VE
 
 case "$jobname" in
 linux-clang|linux-gcc)
+	sudo apt-add-repository -y "ppa:ubuntu-toolchain-r/test"
+	sudo apt-get -q update
+	sudo apt-get -q -y install language-pack-is git-svn apache2
+	case "$jobname" in
+	linux-gcc)
+		sudo apt-get -q -y install gcc-8
+		;;
+	esac
+
 	mkdir --parents "$P4_PATH"
 	pushd "$P4_PATH"
 		wget --quiet "$P4WHENCE/bin.linux26x86_64/p4d"
@@ -32,11 +41,25 @@ osx-clang|osx-gcc)
 	brew link --force gettext
 	brew install caskroom/cask/perforce
 	;;
+StaticAnalysis)
+	sudo apt-get -q update
+	sudo apt-get -q -y install coccinelle
+	;;
+Documentation)
+	sudo apt-get -q update
+	sudo apt-get -q -y install asciidoc xmlto
+	;;
 esac
 
-echo "$(tput setaf 6)Perforce Server Version$(tput sgr0)"
-p4d -V | grep Rev.
-echo "$(tput setaf 6)Perforce Client Version$(tput sgr0)"
-p4 -V | grep Rev.
-echo "$(tput setaf 6)Git-LFS Version$(tput sgr0)"
-git-lfs version
+if type p4d >/dev/null && type p4 >/dev/null
+then
+	echo "$(tput setaf 6)Perforce Server Version$(tput sgr0)"
+	p4d -V | grep Rev.
+	echo "$(tput setaf 6)Perforce Client Version$(tput sgr0)"
+	p4 -V | grep Rev.
+fi
+if type git-lfs >/dev/null
+then
+	echo "$(tput setaf 6)Git-LFS Version$(tput sgr0)"
+	git-lfs version
+fi
