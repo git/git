@@ -49,7 +49,7 @@ set_fake_editor () {
 		case $line in
 		pick|squash|fixup|edit|reword|drop)
 			action="$line";;
-		exec*|break)
+		exec*|break|b)
 			echo "$line" | sed 's/_/ /g' >> "$1";;
 		"#")
 			echo '# comment' >> "$1";;
