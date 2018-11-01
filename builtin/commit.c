@@ -1603,6 +1603,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	wt_status_print(&s);
 	wt_status_collect_free_buffers(&s);
 
+	enable_fscache(0);
 	return 0;
 }
 
