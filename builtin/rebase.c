@@ -689,7 +689,7 @@ static int can_fast_forward(struct commit *onto, struct object_id *head_oid,
 	merge_bases = get_merge_bases(onto, head);
 	if (merge_bases && !merge_bases->next) {
 		oidcpy(merge_base, &merge_bases->item->object.oid);
-		res = !oidcmp(merge_base, &onto->object.oid);
+		res = oideq(merge_base, &onto->object.oid);
 	} else {
 		oidcpy(merge_base, &null_oid);
 		res = 0;
