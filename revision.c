@@ -25,6 +25,7 @@
 #include "worktree.h"
 #include "argv-array.h"
 #include "commit-reach.h"
+#include "commit-graph.h"
 
 volatile show_early_output_fn_t show_early_output;
 
@@ -2454,7 +2455,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 	if (revs->diffopt.objfind)
 		revs->simplify_history = 0;
 
-	if (revs->topo_order)
+	if (revs->topo_order && !generation_numbers_enabled(the_repository))
 		revs->limited = 1;
 
 	if (revs->prune_data.nr) {
@@ -2892,6 +2893,33 @@ static int mark_uninteresting(const struct object_id *oid,
 	return 0;
 }
 
+struct topo_walk_info {};
+
+static void init_topo_walk(struct rev_info *revs)
+{
+	struct topo_walk_info *info;
+	revs->topo_walk_info = xmalloc(sizeof(struct topo_walk_info));
+	info = revs->topo_walk_info;
+	memset(info, 0, sizeof(struct topo_walk_info));
+
+	limit_list(revs);
+	sort_in_topological_order(&revs->commits, revs->sort_order);
+}
+
+static struct commit *next_topo_commit(struct rev_info *revs)
+{
+	return pop_commit(&revs->commits);
+}
+
+static void expand_topo_walk(struct rev_info *revs, struct commit *commit)
+{
+	if (add_parents_to_list(revs, commit, &revs->commits, NULL) < 0) {
+		if (!revs->ignore_missing_links)
+			die("Failed to traverse parents of commit %s",
+			    oid_to_hex(&commit->object.oid));
+	}
+}
+
 int prepare_revision_walk(struct rev_info *revs)
 {
 	int i;
@@ -2928,11 +2956,13 @@ int prepare_revision_walk(struct rev_info *revs)
 		commit_list_sort_by_date(&revs->commits);
 	if (revs->no_walk)
 		return 0;
-	if (revs->limited)
+	if (revs->limited) {
 		if (limit_list(revs) < 0)
 			return -1;
-	if (revs->topo_order)
-		sort_in_topological_order(&revs->commits, revs->sort_order);
+		if (revs->topo_order)
+			sort_in_topological_order(&revs->commits, revs->sort_order);
+	} else if (revs->topo_order)
+		init_topo_walk(revs);
 	if (revs->line_level_traverse)
 		line_log_filter(revs);
 	if (revs->simplify_merges)
@@ -3257,6 +3287,8 @@ static struct commit *get_revision_1(struct rev_info *revs)
 
 		if (revs->reflog_info)
 			commit = next_reflog_entry(revs->reflog_info);
+		else if (revs->topo_walk_info)
+			commit = next_topo_commit(revs);
 		else
 			commit = pop_commit(&revs->commits);
 
@@ -3278,6 +3310,8 @@ static struct commit *get_revision_1(struct rev_info *revs)
 
 			if (revs->reflog_info)
 				try_to_simplify_commit(revs, commit);
+			else if (revs->topo_walk_info)
+				expand_topo_walk(revs, commit);
 			else if (add_parents_to_list(revs, commit, &revs->commits, NULL) < 0) {
 				if (!revs->ignore_missing_links)
 					die("Failed to traverse parents of commit %s",
