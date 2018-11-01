@@ -24,6 +24,8 @@
 #define USER_GIVEN	(1u<<25) /* given directly by the user */
 #define TRACK_LINEAR	(1u<<26)
 #define ALL_REV_FLAGS	(((1u<<11)-1) | USER_GIVEN | TRACK_LINEAR)
+#define TOPO_WALK_EXPLORED	(1u<<27)
+#define TOPO_WALK_INDEGREE	(1u<<28)
 
 #define DECORATE_SHORT_REFS	1
 #define DECORATE_FULL_REFS	2
