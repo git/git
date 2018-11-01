@@ -747,6 +747,29 @@ test_cmp() {
 	$GIT_TEST_CMP "$@"
 }
 
+# Check that the given config key has the expected value.
+#
+#    test_cmp_config [-C <dir>] <expected-value>
+#                    [<git-config-options>...] <config-key>
+#
+# for example to check that the value of core.bar is foo
+#
+#    test_cmp_config foo core.bar
+#
+test_cmp_config() {
+	local GD &&
+	if test "$1" = "-C"
+	then
+		shift &&
+		GD="-C $1" &&
+		shift
+	fi &&
+	printf "%s\n" "$1" >expect.config &&
+	shift &&
+	git $GD config "$@" >actual.config &&
+	test_cmp expect.config actual.config
+}
+
 # test_cmp_bin - helper to compare binary files
 
 test_cmp_bin() {

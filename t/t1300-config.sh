@@ -76,15 +76,11 @@ EOF
 test_expect_success 'non-match result' 'test_cmp expect .git/config'
 
 test_expect_success 'find mixed-case key by canonical name' '
-	echo Second >expect &&
-	git config cores.whatever >actual &&
-	test_cmp expect actual
+	test_cmp_config Second cores.whatever
 '
 
 test_expect_success 'find mixed-case key by non-canonical name' '
-	echo Second >expect &&
-	git config CoReS.WhAtEvEr >actual &&
-	test_cmp expect actual
+	test_cmp_config Second CoReS.WhAtEvEr
 '
 
 test_expect_success 'subsections are not canonicalized by git-config' '
@@ -94,12 +90,8 @@ test_expect_success 'subsections are not canonicalized by git-config' '
 	[section "SubSection"]
 	key = two
 	EOF
-	echo one >expect &&
-	git config section.subsection.key >actual &&
-	test_cmp expect actual &&
-	echo two >expect &&
-	git config section.SubSection.key >actual &&
-	test_cmp expect actual
+	test_cmp_config one section.subsection.key &&
+	test_cmp_config two section.SubSection.key
 '
 
 cat > .git/config <<\EOF
@@ -212,9 +204,7 @@ test_expect_success 'really really mean test' '
 '
 
 test_expect_success 'get value' '
-	echo alpha >expect &&
-	git config beta.haha >actual &&
-	test_cmp expect actual
+	test_cmp_config alpha beta.haha
 '
 
 cat > expect << EOF
@@ -251,15 +241,11 @@ test_expect_success 'non-match' '
 '
 
 test_expect_success 'non-match value' '
-	echo wow >expect &&
-	git config --get nextsection.nonewline !for >actual &&
-	test_cmp expect actual
+	test_cmp_config wow --get nextsection.nonewline !for
 '
 
 test_expect_success 'multi-valued get returns final one' '
-	echo "wow2 for me" >expect &&
-	git config --get nextsection.nonewline >actual &&
-	test_cmp expect actual
+	test_cmp_config "wow2 for me" --get nextsection.nonewline
 '
 
 test_expect_success 'multi-valued get-all returns all' '
@@ -520,21 +506,11 @@ test_expect_success 'editing stdin is an error' '
 
 test_expect_success 'refer config from subdirectory' '
 	mkdir x &&
-	(
-		cd x &&
-		echo strasse >expect &&
-		git config --get --file ../other-config ein.bahn >actual &&
-		test_cmp expect actual
-	)
-
+	test_cmp_config -C x strasse --get --file ../other-config ein.bahn
 '
 
 test_expect_success 'refer config from subdirectory via --file' '
-	(
-		cd x &&
-		git config --file=../other-config --get ein.bahn >actual &&
-		test_cmp expect actual
-	)
+	test_cmp_config -C x strasse --file=../other-config --get ein.bahn
 '
 
 cat > expect << EOF
@@ -688,16 +664,13 @@ test_expect_success numbers '
 
 test_expect_success '--int is at least 64 bits' '
 	git config giga.watts 121g &&
-	echo 129922760704 >expect &&
-	git config --int --get giga.watts >actual &&
-	test_cmp expect actual
+	echo  >expect &&
+	test_cmp_config 129922760704 --int --get giga.watts
 '
 
 test_expect_success 'invalid unit' '
 	git config aninvalid.unit "1auto" &&
-	echo 1auto >expect &&
-	git config aninvalid.unit >actual &&
-	test_cmp expect actual &&
+	test_cmp_config 1auto aninvalid.unit &&
 	test_must_fail git config --int --get aninvalid.unit 2>actual &&
 	test_i18ngrep "bad numeric config value .1auto. for .aninvalid.unit. in file .git/config: invalid unit" actual
 '
@@ -1039,9 +1012,7 @@ test_expect_success '--null --get-regexp' '
 
 test_expect_success 'inner whitespace kept verbatim' '
 	git config section.val "foo 	  bar" &&
-	echo "foo 	  bar" >expect &&
-	git config section.val >actual &&
-	test_cmp expect actual
+	test_cmp_config "foo 	  bar" section.val
 '
 
 test_expect_success SYMLINKS 'symlinked configuration' '
@@ -1809,21 +1780,15 @@ big = 1M
 EOF
 
 test_expect_success 'identical modern --type specifiers are allowed' '
-	git config --type=int --type=int core.big >actual &&
-	echo 1048576 >expect &&
-	test_cmp expect actual
+	test_cmp_config 1048576 --type=int --type=int core.big
 '
 
 test_expect_success 'identical legacy --type specifiers are allowed' '
-	git config --int --int core.big >actual &&
-	echo 1048576 >expect &&
-	test_cmp expect actual
+	test_cmp_config 1048576 --int --int core.big
 '
 
 test_expect_success 'identical mixed --type specifiers are allowed' '
-	git config --int --type=int core.big >actual &&
-	echo 1048576 >expect &&
-	test_cmp expect actual
+	test_cmp_config 1048576 --int --type=int core.big
 '
 
 test_expect_success 'non-identical modern --type specifiers are not allowed' '
@@ -1842,21 +1807,15 @@ test_expect_success 'non-identical mixed --type specifiers are not allowed' '
 '
 
 test_expect_success '--type allows valid type specifiers' '
-	echo "true" >expect &&
-	git config --type=bool core.foo >actual &&
-	test_cmp expect actual
+	test_cmp_config true  --type=bool core.foo
 '
 
 test_expect_success '--no-type unsets type specifiers' '
-	echo "10" >expect &&
-	git config --type=bool --no-type core.number >actual &&
-	test_cmp expect actual
+	test_cmp_config 10 --type=bool --no-type core.number
 '
 
 test_expect_success 'unset type specifiers may be reset to conflicting ones' '
-	echo 1048576 >expect &&
-	git config --type=bool --no-type --type=int core.big >actual &&
-	test_cmp expect actual
+	test_cmp_config 1048576 --type=bool --no-type --type=int core.big
 '
 
 test_expect_success '--type rejects unknown specifiers' '

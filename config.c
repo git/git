@@ -1695,6 +1695,17 @@ static int do_git_config_sequence(const struct config_options *opts,
 	if (repo_config && !access_or_die(repo_config, R_OK, 0))
 		ret += git_config_from_file(fn, repo_config, data);
 
+	/*
+	 * Note: this should have a new scope, CONFIG_SCOPE_WORKTREE.
+	 * But let's not complicate things before it's actually needed.
+	 */
+	if (repository_format_worktree_config) {
+		char *path = git_pathdup("config.worktree");
+		if (!access_or_die(path, R_OK, 0))
+			ret += git_config_from_file(fn, path, data);
+		free(path);
+	}
+
 	current_parsing_scope = CONFIG_SCOPE_CMDLINE;
 	if (git_config_from_parameters(fn, data) < 0)
 		die(_("unable to parse command-line config"));
