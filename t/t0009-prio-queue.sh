@@ -47,4 +47,18 @@ test_expect_success 'notice empty queue' '
 	test_cmp expect actual
 '
 
+cat >expect <<'EOF'
+3
+2
+6
+4
+5
+1
+8
+EOF
+test_expect_success 'stack order' '
+	test-tool prio-queue stack 8 1 5 4 6 2 3 dump >actual &&
+	test_cmp expect actual
+'
+
 test_done
