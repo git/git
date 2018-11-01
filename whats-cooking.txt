@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Oct 2018, #06; Tue, 30)
+Subject: What's cooking in git.git (Nov 2018, #01; Thu, 1)
 X-master-at: 4ede3d42dfb57f9a41ac96a1f216c62eb7566cc2
-X-next-at: 53cd27f688b0bae2a5f2d8f5cea6ba63c6e4a781
+X-next-at: 0c4a18a71f0e8e4f10970951c5f8875f429eaef7
 
-What's cooking in git.git (Oct 2018, #06; Tue, 30)
+What's cooking in git.git (Nov 2018, #01; Thu, 1)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,11 +12,11 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-Quite a few topics have graduated to 'master'.  At seventh batch,
-'master' now has 530+ patches since v2.19 and 'next' has additional
-100+ patches pending.  I am hoping that the topics involved in
-rewriting "rebase" and "rebase -i" in C can hit 'master' in the next
-batch, which would happen later this week.
+Two groups of "rewrite rebase/rebase-i in C" topics, together with a
+handful of associated fix-up topics to them, will all be merged to
+'master' tomorrow.  Some of them haven't spent as much time as usual
+in 'next', so there still may be rough edges, but let's make sure we
+find them and smooth them out before the release.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -349,14 +349,18 @@ of the repositories listed at
  object into account (e.g. a tag object would want to go under
  refs/tags/).
 
+ The last few steps are questionable.
+ cf. <87in1lkw54.fsf@evledraar.gmail.com>
+
 
 * cb/printf-empty-format (2018-10-27) 1 commit
- - sequencer: cleanup for gcc warning in non developer mode
+  (merged to 'next' on 2018-11-01 at 9fcb05f22c)
+ + sequencer: cleanup for gcc warning in non developer mode
  (this branch uses ag/rebase-i-in-c; is tangled with ag/sequencer-reduce-rewriting-todo, js/rebase-autostash-fix, js/rebase-i-break, js/rebase-i-shortopt, js/rebase-in-c-5.5-work-with-rebase-i-in-c and pk/rebase-in-c-6-final.)
 
  Build fix for a topic in flight.
 
- Will follow ag/rebase-i-in-c.
+ Will merge to 'master' together with pk/rebase-in-c-6-final.
 
 
 * md/list-lazy-objects-fix (2018-10-29) 1 commit
@@ -407,24 +411,26 @@ of the repositories listed at
 
 
 * nd/wildmatch-double-asterisk (2018-10-29) 1 commit
- - wildmatch: change behavior of "foo**bar" in WM_PATHNAME mode
+  (merged to 'next' on 2018-11-01 at 627186d020)
+ + wildmatch: change behavior of "foo**bar" in WM_PATHNAME mode
 
  A pattern with '**' that does not have a slash on either side used
  to be an invalid one, but the code now treats such double-asterisks
  the same way as two normal asterisks that happen to be adjacent to
  each other.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * rj/header-cleanup (2018-10-29) 3 commits
- - commit-reach.h: add missing declarations (hdr-check)
- - ewok_rlw.h: add missing 'inline' to function definition
- - fetch-object.h: add missing declaration (hdr-check)
+  (merged to 'next' on 2018-11-01 at 975e56048f)
+ + commit-reach.h: add missing declarations (hdr-check)
+ + ewok_rlw.h: add missing 'inline' to function definition
+ + fetch-object.h: add missing declaration (hdr-check)
 
  Code cleanup.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * js/mingw-ns-filetime (2018-10-24) 3 commits
@@ -439,20 +445,117 @@ of the repositories listed at
 
 
 * bp/refresh-index-using-preload (2018-10-30) 1 commit
- - speed up refresh_index() by utilizing preload_index()
+  (merged to 'next' on 2018-11-01 at 289e6bcece)
+ + speed up refresh_index() by utilizing preload_index()
 
  The helper function to refresh the cached stat information in the
  in-core index has learned to perform the lstat() part of the
  operation in parallel on multi-core platforms.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * sg/test-verbose-log (2018-10-30) 1 commit
- - test-lib: introduce the '-V' short option for '--verbose-log'
+  (merged to 'next' on 2018-11-01 at 0c4a18a71f)
+ + test-lib: introduce the '-V' short option for '--verbose-log'
 
  Our test scripts can now take the '-V' option as a synonym for the
  '--verbose-log' option.
+
+ Will merge to 'master'.
+
+
+* ab/pack-tests-cleanup (2018-10-31) 3 commits
+ - index-pack tests: don't leave test repo dirty at end
+ - pack-objects tests: don't leave test .git corrupt at end
+ - pack-objects test: modernize style
+
+ A couple of tests used to leave the repository in a state that is
+ deliberately corrupt, which have been corrected.
+
+ Will merge to 'next'.
+
+
+* jk/detect-truncated-zlib-input (2018-10-31) 4 commits
+ - Adjust for 2.19.x series
+ - cat-file: handle streaming failures consistently
+ - check_stream_sha1(): handle input underflow
+ - t1450: check large blob in trailing-garbage test
+
+ A regression in Git 2.12 era made "git fsck" fall into an infinite
+ loop while processing truncated loose objects.
+
+ Will merge to 'next'.
+
+
+* jk/proto-v2-ref-prefix-fix (2018-10-31) 2 commits
+ - ls-remote: pass heads/tags prefixes to transport
+ - ls-remote: do not send ref prefixes for patterns
+
+ "git ls-remote $there foo" was broken by recent update for the
+ protocol v2 and stopped showing refs that match 'foo' that are not
+ refs/{heads,tags}/foo, which has been fixed.
+
+ Will merge to 'next'.
+
+
+* jk/stream-pack-non-delta-clarification (2018-10-31) 1 commit
+ - read_istream_pack_non_delta(): document input handling
+
+ Additional comment on a tricky piece of code to help developers.
+
+ Will merge to 'next'.
+
+
+* js/mingw-isatty-and-dup2 (2018-10-31) 1 commit
+ - mingw: fix isatty() after dup2()
+
+ Windows fix.
+
+ Will merge to 'next'.
+
+
+* js/mingw-perl5lib (2018-10-31) 4 commits
+ - mingw: unset PERL5LIB by default
+ - config: move Windows-specific config settings into compat/mingw.c
+ - config: allow for platform-specific core.* config settings
+ - config: rename `dummy` parameter to `cb` in git_default_config()
+
+ Windows fix.
+
+ Will merge to 'next'.
+
+
+* js/mingw-utf8-env (2018-10-31) 2 commits
+ - mingw: reencode environment variables on the fly (UTF-16 <-> UTF-8)
+ - t7800: fix quoting
+
+ Windows fix.
+
+ Will merge to 'next'.
+
+
+* ma/sequencer-do-reset-saner-loop-termination (2018-10-31) 1 commit
+ - sequencer: break out of loop explicitly
+
+ Code readability fix.
+
+ Will merge to 'next'.
+
+
+* nb/worktree-api-doc (2018-10-31) 2 commits
+ - worktree: rename is_worktree_locked to worktree_lock_reason
+ - worktree: update documentation for lock_reason and lock_reason_valid
+
+ Code readability fix.
+
+ Will merge to 'next'.
+
+
+* sh/mingw-safer-compat-poll (2018-11-01) 1 commit
+ - poll: use GetTickCount64() to avoid wrap-around issues
+
+ Windows fix.
 
  Will merge to 'next'.
 
@@ -494,8 +597,11 @@ of the repositories listed at
 
  The in-core repository instances are passed through more codepaths.
 
+ On hold.
  Not quite correct?
  cf. <20181025091406.GK30222@szeder.dev>
+ Reroll being worked on.
+ cf. <20181030220817.61691-1-sbeller@google.com>
 
 
 * en/merge-path-collision (2018-10-22) 8 commits
@@ -509,15 +615,19 @@ of the repositories listed at
  - Add testcases for consistency in file collision conflict handling
  (this branch uses en/merge-cleanup-more.)
 
+ Updates for corner cases in merge-recursive.
 
-* jt/tighten-fetch-proto-v2-response (2018-10-22) 2 commits
- - SQUASH???
+ Expecting a reroll.
+ cf. <CABPp-BGq1YDdzZ6CqzCp9QXPZy6XxV8sujyRxwBc-EnS+ygSrg@mail.gmail.com>
+
+
+* jt/tighten-fetch-proto-v2-response (2018-11-01) 1 commit
  - fetch-pack: be more precise in parsing v2 response
 
  "git fetch" was a bit loose in parsing resposes from the other side
  when talking over the protocol v2.
 
- Will squash the fix and merge to 'next'.
+ Will merge to 'next'.
 
 
 * nd/complete-format-patch (2018-10-22) 1 commit
@@ -631,8 +741,9 @@ of the repositories listed at
 
 
 * nd/per-worktree-config (2018-10-22) 2 commits
- - worktree: add per-worktree config files
- - t1300: extract and use test_cmp_config()
+  (merged to 'next' on 2018-11-01 at 3746343ca8)
+ + worktree: add per-worktree config files
+ + t1300: extract and use test_cmp_config()
 
  A fourth class of configuration files (in addition to the
  traditional "system wide", "per user in the $HOME directory" and
@@ -640,7 +751,7 @@ of the repositories listed at
  that different worktrees that share the same repository (hence the
  same $GIT_DIR/config file) can use different customization.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * nd/submodule-unused-vars (2018-10-22) 1 commit
@@ -661,8 +772,7 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* ag/rev-parse-all-exclude-fix (2018-10-29) 2 commits
- - SQUASH???
+* ag/rev-parse-all-exclude-fix (2018-11-01) 1 commit
  - rev-parse: clear --exclude list after 'git rev-parse --all'
 
  "git rev-parse --exclude=* --branches --branches"  (i.e. first
@@ -671,7 +781,7 @@ of the repositories listed at
  worked as expected, but "--exclude=* --all --all" did not work the
  same way, which has been fixed.
 
- Will merge to 'next' after squashing the tests in.
+ Will merge to 'next'.
 
 
 * bp/reset-quiet (2018-10-24) 3 commits
@@ -781,36 +891,40 @@ of the repositories listed at
 
 
 * js/rebase-i-shortopt (2018-10-26) 1 commit
- - rebase -i: recognize short commands without arguments
+  (merged to 'next' on 2018-11-01 at 4e9da19145)
+ + rebase -i: recognize short commands without arguments
  (this branch uses ag/rebase-i-in-c and js/rebase-i-break; is tangled with ag/sequencer-reduce-rewriting-todo, cb/printf-empty-format, js/rebase-autostash-fix, js/rebase-in-c-5.5-work-with-rebase-i-in-c and pk/rebase-in-c-6-final.)
 
  "git rebase -i" learned to take 'b' as the short form of 'break'
  option in the todo list.
 
- Will merge to 'next'.
+ Will merge to 'master' together with pk/rebase-in-c-6-final.
 
 
 * sg/test-rebase-editor-fix (2018-10-29) 1 commit
- - t3404-rebase-interactive: test abbreviated commands
+  (merged to 'next' on 2018-11-01 at 271e0fc663)
+ + t3404-rebase-interactive: test abbreviated commands
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ss/travis-ci-force-vm-mode (2018-10-26) 1 commit
- - travis-ci: no longer use containers
+  (merged to 'next' on 2018-11-01 at 8596bb2a65)
+ + travis-ci: no longer use containers
 
  The "container" mode of TravisCI is going away.  Our .travis.yml
  file is getting prepared for the transition.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * tb/char-may-be-unsigned (2018-10-26) 1 commit
- - path.c: char is not (always) signed
+  (merged to 'next' on 2018-11-01 at 9e14f289f8)
+ + path.c: char is not (always) signed
 
  Build portability fix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jt/upload-pack-v2-fix-shallow (2018-10-19) 3 commits
@@ -827,15 +941,17 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* pw/am-rebase-read-author-script (2018-10-19) 5 commits
+* pw/am-rebase-read-author-script (2018-11-01) 5 commits
  - sequencer: use read_author_script()
  - add read_author_script() to libgit
  - am: rename read_author_script()
  - am: improve author-script error reporting
  - am: don't die in read_author_script()
 
- Expecting a reroll.
- cf. <55a2a458-c71e-0018-5fd7-b66e349ddb3d@talktalk.net>
+ Unify code to read the author-script used in "git am" and the
+ commands that use the sequencer machinery, e.g. "git rebase -i".
+
+ Will merge to 'next'.
 
 
 * sb/submodule-url-to-absolute (2018-10-18) 1 commit
@@ -887,6 +1003,9 @@ of the repositories listed at
 
  Add sha-256 hash and plug it through the code to allow building Git
  with the "NewHash".
+
+ Expecting a reroll.
+ cf. <20181031225521.GA573515@genre.crustytoothpaste.net>
 
 
 * js/mingw-http-ssl (2018-10-26) 3 commits
@@ -950,17 +1069,16 @@ of the repositories listed at
 
  Typofix.
 
- Will merge to 'master' together with pk/rebase-i-in-c-6-final.
+ Will merge to 'master' together with pk/rebase-in-c-6-final.
 
 
-* jc/war-on-string-list (2018-10-27) 2 commits
- - SQUASH???
+* jc/war-on-string-list (2018-11-01) 1 commit
  - fetch: replace string-list used as a look-up table with a hashmap
 
  Replace three string-list instances used as look-up tables in "git
  fetch" with hashmaps.
 
- Will merge to 'next' after squashing the update in.
+ Will merge to 'next'.
 
 
 * js/rebase-i-break (2018-10-12) 2 commits
@@ -973,7 +1091,7 @@ of the repositories listed at
  insert in the to-do list.  Upon hitting it, the command returns
  control back to the user.
 
- Will merge to 'master' after 'pk/rebase-in-c-6-final'.
+ Will merge to 'master' together with pk/rebase-in-c-6-final.
 
 
 * js/remote-archive-v2 (2018-09-28) 4 commits
@@ -1049,6 +1167,7 @@ of the repositories listed at
  consider per-worktree refs of other worktrees as starting points to
  prevent data loss.
 
+ Will merge to 'next'.
 
 
 * ds/reachable-topo-order (2018-10-18) 7 commits
@@ -1066,7 +1185,7 @@ of the repositories listed at
  cf. <pull.25.v4.git.gitgitgadget@gmail.com>
 
 
-* sb/submodule-recursive-fetch-gets-the-tip (2018-10-26) 11 commits
+* sb/submodule-recursive-fetch-gets-the-tip (2018-10-31) 11 commits
  - builtin/fetch: check for submodule updates in any ref update
  - fetch: try fetching submodules if needed objects were not fetched
  - submodule.c: fetch in submodules git directory instead of in worktree
@@ -1097,7 +1216,7 @@ of the repositories listed at
  used by "rebase -i" that was rewritten in C, tying the loose end
  between two GSoC topics that stomped on each other's toes.
 
- Will merge to 'master' together with pk/rebase-i-in-c-6-final.
+ Will merge to 'master' together with pk/rebase-in-c-6-final.
 
 
 * js/add-i-coalesce-after-editing-hunk (2018-08-28) 1 commit
@@ -1110,7 +1229,7 @@ of the repositories listed at
  cf. <e5b2900a-0558-d3bf-8ea1-d526b078bbc2@talktalk.net>
 
 
-* ao/submodule-wo-gitmodules-checked-out (2018-10-26) 10 commits
+* ao/submodule-wo-gitmodules-checked-out (2018-10-31) 10 commits
  - t/helper: add test-submodule-nested-repo-config
  - submodule: support reading .gitmodules when it's not in the working tree
  - submodule: add a helper to check if it is safe to write to .gitmodules
@@ -1127,8 +1246,7 @@ of the repositories listed at
  HEAD:.gitmodules when the .gitmodules file is missing from the
  working tree.
 
- Expecting a reroll.
- cf. <20181010205645.e1529eff9099805029b1d6ef@ao2.it>
+ Will merge to 'next'.
 
 
 * pk/rebase-in-c-2-basic (2018-09-06) 11 commits
@@ -1148,7 +1266,7 @@ of the repositories listed at
 
  Rewrite "git rebase" in C.
 
- Will merge to 'master' together with pk/rebase-i-in-c-6-final.
+ Will merge to 'master' together with pk/rebase-in-c-6-final.
 
 
 * pk/rebase-in-c-3-acts (2018-09-06) 7 commits
@@ -1164,7 +1282,7 @@ of the repositories listed at
 
  Rewrite "git rebase" in C.
 
- Will merge to 'master' together with pk/rebase-i-in-c-6-final.
+ Will merge to 'master' together with pk/rebase-in-c-6-final.
 
 
 * pk/rebase-in-c-4-opts (2018-10-11) 18 commits
@@ -1191,7 +1309,7 @@ of the repositories listed at
 
  Rewrite "git rebase" in C.
 
- Will merge to 'master' together with pk/rebase-i-in-c-6-final.
+ Will merge to 'master' together with pk/rebase-in-c-6-final.
 
 
 * pk/rebase-in-c-5-test (2018-10-11) 6 commits
@@ -1206,7 +1324,7 @@ of the repositories listed at
 
  Rewrite "git rebase" in C.
 
- Will merge to 'master' together with pk/rebase-i-in-c-6-final.
+ Will merge to 'master' together with pk/rebase-in-c-6-final.
 
 
 * pk/rebase-in-c-6-final (2018-10-11) 1 commit
@@ -1292,7 +1410,7 @@ of the repositories listed at
 
  Rewrite of the remaining "rebase -i" machinery in C.
 
- Will merge to 'master' together with pk/rebase-i-in-c-6-final.
+ Will merge to 'master' together with pk/rebase-in-c-6-final.
 
 
 * pk/rebase-in-c (2018-08-06) 3 commits
@@ -1304,8 +1422,7 @@ of the repositories listed at
 
  Rewrite of the "rebase" machinery in C.
 
- Will merge to 'master' together with pk/rebase-i-in-c-6-final.
-
+ Will merge to 'master' together with pk/rebase-in-c-6-final.
 
 --------------------------------------------------
 [Discarded]
@@ -1320,5 +1437,3 @@ of the repositories listed at
  Discarded.
  Reverted out of 'next'.
  cf. <87sh0slvxm.fsf@evledraar.gmail.com>
-
-
