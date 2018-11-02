@@ -245,7 +245,9 @@ unset GIT_SEQUENCE_EDITOR
 
 test_expect_success 'the todo command "break" works' '
 	rm -f execed &&
-	FAKE_LINES="break exec_>execed" git rebase -i HEAD &&
+	FAKE_LINES="break b exec_>execed" git rebase -i HEAD &&
+	test_path_is_missing execed &&
+	git rebase --continue &&
 	test_path_is_missing execed &&
 	git rebase --continue &&
 	test_path_is_file execed
