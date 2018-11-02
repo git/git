@@ -5607,10 +5607,6 @@ static void patch_id_consume(void *priv, char *line, unsigned long len)
 	struct patch_id_t *data = priv;
 	int new_len;
 
-	/* Ignore line numbers when computing the SHA1 of the patch */
-	if (starts_with(line, "@@ -"))
-		return;
-
 	new_len = remove_space(line, len);
 
 	git_SHA1_Update(data->ctx, line, new_len);
@@ -5712,8 +5708,8 @@ static int diff_get_patch_id(struct diff_options *options, struct object_id *oid
 		xpp.flags = 0;
 		xecfg.ctxlen = 3;
 		xecfg.flags = 0;
-		if (xdi_diff_outf(&mf1, &mf2, NULL, patch_id_consume,
-				  &data, &xpp, &xecfg))
+		if (xdi_diff_outf(&mf1, &mf2, discard_hunk_line,
+				  patch_id_consume, &data, &xpp, &xecfg))
 			return error("unable to generate patch-id diff for %s",
 				     p->one->path);
 	}
