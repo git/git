@@ -241,5 +241,14 @@ test_rerere_autoupdate -m
 GIT_SEQUENCE_EDITOR=: && export GIT_SEQUENCE_EDITOR
 test_rerere_autoupdate -i
 test_rerere_autoupdate --preserve-merges
+unset GIT_SEQUENCE_EDITOR
+
+test_expect_success 'the todo command "break" works' '
+	rm -f execed &&
+	FAKE_LINES="break exec_>execed" git rebase -i HEAD &&
+	test_path_is_missing execed &&
+	git rebase --continue &&
+	test_path_is_file execed
+'
 
 test_done
