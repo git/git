@@ -3101,6 +3101,15 @@ static int is_conflict_marker(const char *line, int marker_size, unsigned long l
 	return 1;
 }
 
+static void checkdiff_consume_hunk(void *priv,
+				   long ob, long on, long nb, long nn,
+				   const char *func, long funclen)
+
+{
+	struct checkdiff_t *data = priv;
+	data->lineno = nb - 1;
+}
+
 static void checkdiff_consume(void *priv, char *line, unsigned long len)
 {
 	struct checkdiff_t *data = priv;
@@ -3136,12 +3145,6 @@ static void checkdiff_consume(void *priv, char *line, unsigned long len)
 			      data->o->file, set, reset, ws);
 	} else if (line[0] == ' ') {
 		data->lineno++;
-	} else if (line[0] == '@') {
-		char *plus = strchr(line, '+');
-		if (plus)
-			data->lineno = strtol(plus, NULL, 10) - 1;
-		else
-			die("invalid diff");
 	}
 }
 
@@ -3650,8 +3653,9 @@ static void builtin_checkdiff(const char *name_a, const char *name_b,
 		memset(&xecfg, 0, sizeof(xecfg));
 		xecfg.ctxlen = 1; /* at least one context line */
 		xpp.flags = 0;
-		if (xdi_diff_outf(&mf1, &mf2, NULL, checkdiff_consume,
-				  &data, &xpp, &xecfg))
+		if (xdi_diff_outf(&mf1, &mf2, checkdiff_consume_hunk,
+				  checkdiff_consume, &data,
+				  &xpp, &xecfg))
 			die("unable to generate checkdiff for %s", one->path);
 
 		if (data.ws_rule & WS_BLANK_AT_EOF) {
