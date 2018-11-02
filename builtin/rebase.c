@@ -251,8 +251,10 @@ static int apply_autostash(struct rebase_options *opts)
 	if (!file_exists(path))
 		return 0;
 
-	if (read_one(state_dir_path("autostash", opts), &autostash))
+	if (read_one(path, &autostash))
 		return error(_("Could not read '%s'"), path);
+	/* Ensure that the hash is not mistaken for a number */
+	strbuf_addstr(&autostash, "^0");
 	argv_array_pushl(&stash_apply.args,
 			 "stash", "apply", autostash.buf, NULL);
 	stash_apply.git_cmd = 1;
@@ -1349,7 +1351,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			update_index_if_able(&the_index, &lock_file);
 		rollback_lock_file(&lock_file);
 
-		if (has_unstaged_changes(0) || has_uncommitted_changes(0)) {
+		if (has_unstaged_changes(1) || has_uncommitted_changes(1)) {
 			const char *autostash =
 				state_dir_path("autostash", &options);
 			struct child_process stash = CHILD_PROCESS_INIT;
@@ -1375,7 +1377,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			if (safe_create_leading_directories_const(autostash))
 				die(_("Could not create directory for '%s'"),
 				    options.state_dir);
-			write_file(autostash, "%s", buf.buf);
+			write_file(autostash, "%s", oid_to_hex(&oid));
 			printf(_("Created autostash: %s\n"), buf.buf);
 			if (reset_head(&head->object.oid, "reset --hard",
 				       NULL, 0, NULL, NULL) < 0)
