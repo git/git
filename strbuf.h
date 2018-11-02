@@ -582,9 +582,11 @@ void strbuf_add_unique_abbrev(struct strbuf *sb,
  * run in. If the buffer is NULL the editor is launched as usual but the
  * file's contents are not read into the buffer upon completion.
  */
-int launch_editor(const char *path,
-		  struct strbuf *buffer,
+int launch_editor(const char *path, struct strbuf *buffer,
 		  const char *const *env);
+
+int launch_sequence_editor(const char *path, struct strbuf *buffer,
+			   const char *const *env);
 
 void strbuf_add_lines(struct strbuf *sb,
 		      const char *prefix,
