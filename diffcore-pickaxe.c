@@ -62,7 +62,7 @@ static int diff_grep(mmfile_t *one, mmfile_t *two,
 	ecbdata.hit = 0;
 	xecfg.ctxlen = o->context;
 	xecfg.interhunkctxlen = o->interhunkcontext;
-	if (xdi_diff_outf(one, two, diffgrep_consume, &ecbdata, &xpp, &xecfg))
+	if (xdi_diff_outf(one, two, NULL, diffgrep_consume, &ecbdata, &xpp, &xecfg))
 		return 0;
 	return ecbdata.hit;
 }

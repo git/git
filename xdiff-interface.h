@@ -11,11 +11,17 @@
  */
 #define MAX_XDIFF_SIZE (1024UL * 1024 * 1023)
 
-typedef void (*xdiff_emit_consume_fn)(void *, char *, unsigned long);
+typedef void (*xdiff_emit_line_fn)(void *, char *, unsigned long);
+typedef void (*xdiff_emit_hunk_fn)(void *data,
+				   long old_begin, long old_nr,
+				   long new_begin, long new_nr,
+				   const char *func, long funclen);
 
 int xdi_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp, xdemitconf_t const *xecfg, xdemitcb_t *ecb);
 int xdi_diff_outf(mmfile_t *mf1, mmfile_t *mf2,
-		  xdiff_emit_consume_fn fn, void *consume_callback_data,
+		  xdiff_emit_hunk_fn hunk_fn,
+		  xdiff_emit_line_fn line_fn,
+		  void *consume_callback_data,
 		  xpparam_t const *xpp, xdemitconf_t const *xecfg);
 int parse_hunk_header(char *line, int len,
 		      int *ob, int *on,

@@ -9,7 +9,8 @@
 #include "xdiff/xutils.h"
 
 struct xdiff_emit_state {
-	xdiff_emit_consume_fn consume;
+	xdiff_emit_hunk_fn hunk_fn;
+	xdiff_emit_line_fn line_fn;
 	void *consume_callback_data;
 	struct strbuf remainder;
 };
@@ -59,6 +60,22 @@ int parse_hunk_header(char *line, int len,
 	return -!!memcmp(cp, " @@", 3);
 }
 
+static int xdiff_out_hunk(void *priv_,
+			  long old_begin, long old_nr,
+			  long new_begin, long new_nr,
+			  const char *func, long funclen)
+{
+	struct xdiff_emit_state *priv = priv_;
+
+	if (priv->remainder.len)
+		BUG("xdiff emitted hunk in the middle of a line");
+
+	priv->hunk_fn(priv->consume_callback_data,
+		      old_begin, old_nr, new_begin, new_nr,
+		      func, funclen);
+	return 0;
+}
+
 static void consume_one(void *priv_, char *s, unsigned long size)
 {
 	struct xdiff_emit_state *priv = priv_;
@@ -67,7 +84,7 @@ static void consume_one(void *priv_, char *s, unsigned long size)
 		unsigned long this_size;
 		ep = memchr(s, '\n', size);
 		this_size = (ep == NULL) ? size : (ep - s + 1);
-		priv->consume(priv->consume_callback_data, s, this_size);
+		priv->line_fn(priv->consume_callback_data, s, this_size);
 		size -= this_size;
 		s += this_size;
 	}
@@ -141,7 +158,9 @@ int xdi_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp, xdemitconf_t co
 }
 
 int xdi_diff_outf(mmfile_t *mf1, mmfile_t *mf2,
-		  xdiff_emit_consume_fn fn, void *consume_callback_data,
+		  xdiff_emit_hunk_fn hunk_fn,
+		  xdiff_emit_line_fn line_fn,
+		  void *consume_callback_data,
 		  xpparam_t const *xpp, xdemitconf_t const *xecfg)
 {
 	int ret;
@@ -149,9 +168,12 @@ int xdi_diff_outf(mmfile_t *mf1, mmfile_t *mf2,
 	xdemitcb_t ecb;
 
 	memset(&state, 0, sizeof(state));
-	state.consume = fn;
+	state.hunk_fn = hunk_fn;
+	state.line_fn = line_fn;
 	state.consume_callback_data = consume_callback_data;
 	memset(&ecb, 0, sizeof(ecb));
+	if (hunk_fn)
+		ecb.out_hunk = xdiff_out_hunk;
 	ecb.out_line = xdiff_outf;
 	ecb.priv = &state;
 	strbuf_init(&state.remainder, 0);

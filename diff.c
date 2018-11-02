@@ -2045,8 +2045,8 @@ static void diff_words_show(struct diff_words_data *diff_words)
 	xpp.flags = 0;
 	/* as only the hunk header will be parsed, we need a 0-context */
 	xecfg.ctxlen = 0;
-	if (xdi_diff_outf(&minus, &plus, fn_out_diff_words_aux, diff_words,
-			  &xpp, &xecfg))
+	if (xdi_diff_outf(&minus, &plus, NULL, fn_out_diff_words_aux,
+			  diff_words, &xpp, &xecfg))
 		die("unable to generate word diff");
 	free(minus.ptr);
 	free(plus.ptr);
@@ -3495,8 +3495,8 @@ static void builtin_diff(const char *name_a,
 			xecfg.ctxlen = strtoul(v, NULL, 10);
 		if (o->word_diff)
 			init_diff_words_data(&ecbdata, o, one, two);
-		if (xdi_diff_outf(&mf1, &mf2, fn_out_consume, &ecbdata,
-				  &xpp, &xecfg))
+		if (xdi_diff_outf(&mf1, &mf2, NULL, fn_out_consume,
+				  &ecbdata, &xpp, &xecfg))
 			die("unable to generate diff for %s", one->path);
 		if (o->word_diff)
 			free_diff_words_data(&ecbdata);
@@ -3604,8 +3604,8 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 		xpp.anchors_nr = o->anchors_nr;
 		xecfg.ctxlen = o->context;
 		xecfg.interhunkctxlen = o->interhunkcontext;
-		if (xdi_diff_outf(&mf1, &mf2, diffstat_consume, diffstat,
-				  &xpp, &xecfg))
+		if (xdi_diff_outf(&mf1, &mf2, NULL, diffstat_consume,
+				  diffstat, &xpp, &xecfg))
 			die("unable to generate diffstat for %s", one->path);
 	}
 
@@ -3652,8 +3652,8 @@ static void builtin_checkdiff(const char *name_a, const char *name_b,
 		memset(&xecfg, 0, sizeof(xecfg));
 		xecfg.ctxlen = 1; /* at least one context line */
 		xpp.flags = 0;
-		if (xdi_diff_outf(&mf1, &mf2, checkdiff_consume, &data,
-				  &xpp, &xecfg))
+		if (xdi_diff_outf(&mf1, &mf2, NULL, checkdiff_consume,
+				  &data, &xpp, &xecfg))
 			die("unable to generate checkdiff for %s", one->path);
 
 		if (data.ws_rule & WS_BLANK_AT_EOF) {
@@ -5712,8 +5712,8 @@ static int diff_get_patch_id(struct diff_options *options, struct object_id *oid
 		xpp.flags = 0;
 		xecfg.ctxlen = 3;
 		xecfg.flags = 0;
-		if (xdi_diff_outf(&mf1, &mf2, patch_id_consume, &data,
-				  &xpp, &xecfg))
+		if (xdi_diff_outf(&mf1, &mf2, NULL, patch_id_consume,
+				  &data, &xpp, &xecfg))
 			return error("unable to generate patch-id diff for %s",
 				     p->one->path);
 	}
