@@ -1483,7 +1483,7 @@ int refresh_index(struct index_state *istate, unsigned int flags,
 	typechange_fmt = (in_porcelain ? "T\t%s\n" : "%s needs update\n");
 	added_fmt = (in_porcelain ? "A\t%s\n" : "%s needs update\n");
 	unmerged_fmt = (in_porcelain ? "U\t%s\n" : "%s: needs merge\n");
-	enable_fscache(1);
+	enable_fscache(0);
 	for (i = 0; i < istate->cache_nr; i++) {
 		struct cache_entry *ce, *new_entry;
 		int cache_errno = 0;
@@ -1548,7 +1548,7 @@ int refresh_index(struct index_state *istate, unsigned int flags,
 
 		replace_index_entry(istate, i, new_entry);
 	}
-	enable_fscache(0);
+	disable_fscache();
 	trace_performance_since(start, "refresh index");
 	return has_errors;
 }
