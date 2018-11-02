@@ -2003,6 +2003,27 @@ http.sslCAPath::
 	with when fetching or pushing over HTTPS. Can be overridden
 	by the `GIT_SSL_CAPATH` environment variable.
 
+http.sslBackend::
+	Name of the SSL backend to use (e.g. "openssl" or "schannel").
+	This option is ignored if cURL lacks support for choosing the SSL
+	backend at runtime.
+
+http.schannelCheckRevoke::
+	Used to enforce or disable certificate revocation checks in cURL
+	when http.sslBackend is set to "schannel". Defaults to `true` if
+	unset. Only necessary to disable this if Git consistently errors
+	and the message is about checking the revocation status of a
+	certificate. This option is ignored if cURL lacks support for
+	setting the relevant SSL option at runtime.
+
+http.schannelUseSSLCAInfo::
+	As of cURL v7.60.0, the Secure Channel backend can use the
+	certificate bundle provided via `http.sslCAInfo`, but that would
+	override the Windows Certificate Store. Since this is not desirable
+	by default, Git will tell cURL not to use that bundle by default
+	when the `schannel` backend was configured via `http.sslBackend`,
+	unless `http.schannelUseSSLCAInfo` overrides this behavior.
+
 http.pinnedpubkey::
 	Public key of the https service. It may either be the filename of
 	a PEM or DER encoded public key file or a string starting with
