@@ -145,6 +145,10 @@ UI, Workflows & Features
  * "git mergetool" learned to take the "--[no-]gui" option, just like
    "git difftool" does.
 
+ * "git rebase -i" learned a new insn, 'break', that the user can
+   insert in the to-do list.  Upon hitting it, the command returns
+   control back to the user.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -261,6 +265,8 @@ Performance, Internal Implementation, Development Support etc.
 
  * Some tests have been reorganized and renamed; "ls t/" now gives a
    better overview of what is tested for these scripts than before.
+
+ * "git rebase" and "git rebase -i" have been reimplemented in C.
 
 
 Fixes since v2.19
