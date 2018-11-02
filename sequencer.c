@@ -2375,7 +2375,7 @@ int write_basic_state(struct replay_opts *opts, const char *head_name,
 		write_file(rebase_path_quiet(), "\n");
 
 	if (opts->verbose)
-		write_file(rebase_path_verbose(), "");
+		write_file(rebase_path_verbose(), "%s", "");
 	if (opts->strategy)
 		write_file(rebase_path_strategy(), "%s\n", opts->strategy);
 	if (opts->xopts_nr > 0)
