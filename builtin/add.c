@@ -460,7 +460,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	die_in_unpopulated_submodule(the_repository->index, prefix);
 	die_path_inside_submodule(the_repository->index, &pathspec);
 
-	enable_fscache(1);
+	enable_fscache(0);
 	/* We do not really re-read the index but update the up-to-date flags */
 	preload_index(the_repository->index, &pathspec, 0);
 
