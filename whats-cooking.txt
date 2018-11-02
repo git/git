@@ -1,22 +1,16 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Nov 2018, #01; Thu, 1)
-X-master-at: 4ede3d42dfb57f9a41ac96a1f216c62eb7566cc2
-X-next-at: 0c4a18a71f0e8e4f10970951c5f8875f429eaef7
+Subject: What's cooking in git.git (Nov 2018, #02; Fri, 2)
+X-master-at: d582ea202b626dcc6c3b01e1e11a296d9badd730
+X-next-at: 96ac06677ac950c97d331f0ef4892125027eff39
 
-What's cooking in git.git (Nov 2018, #01; Thu, 1)
+What's cooking in git.git (Nov 2018, #02; Fri, 2)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
-
-Two groups of "rewrite rebase/rebase-i in C" topics, together with a
-handful of associated fix-up topics to them, will all be merged to
-'master' tomorrow.  Some of them haven't spent as much time as usual
-in 'next', so there still may be rough edges, but let's make sure we
-find them and smooth them out before the release.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -26,310 +20,221 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ah/doc-updates (2018-10-23) 6 commits
-  (merged to 'next' on 2018-10-26 at b0bb46a602)
- + doc: fix formatting in git-update-ref
- + doc: fix indentation of listing blocks in gitweb.conf.txt
- + doc: fix descripion for 'git tag --format'
- + doc: fix inappropriate monospace formatting
- + doc: fix ASCII art tab spacing
- + doc: clarify boundaries of 'git worktree list --porcelain'
-
- Doc updates.
-
-
-* bc/hash-transition-part-15 (2018-10-15) 15 commits
-  (merged to 'next' on 2018-10-26 at 4ff8111b4b)
- + rerere: convert to use the_hash_algo
- + submodule: make zero-oid comparison hash function agnostic
- + apply: rename new_sha1_prefix and old_sha1_prefix
- + apply: replace hard-coded constants
- + tag: express constant in terms of the_hash_algo
- + transport: use parse_oid_hex instead of a constant
- + upload-pack: express constants in terms of the_hash_algo
- + refs/packed-backend: express constants using the_hash_algo
- + packfile: express constants in terms of the_hash_algo
- + pack-revindex: express constants in terms of the_hash_algo
- + builtin/fetch-pack: remove constants with parse_oid_hex
- + builtin/mktree: remove hard-coded constant
- + builtin/repack: replace hard-coded constants
- + pack-bitmap-write: use GIT_MAX_RAWSZ for allocation
- + object_id.cocci: match only expressions of type 'struct object_id'
-
- More codepaths are moving away from hardcoded hash sizes.
-
-
-* cb/compat-mmap-is-private-read-only (2018-10-25) 1 commit
-  (merged to 'next' on 2018-10-26 at d3bfab3034)
- + compat: make sure git_mmap is not expected to write
-
- Code tightening.
-
-
-* cb/khash-maybe-unused-function (2018-10-24) 2 commits
-  (merged to 'next' on 2018-10-26 at 17fc4e55a0)
- + khash: silence -Wunused-function for delta-islands
- + commit-slabs: move MAYBE_UNUSED out
-
- Build fix.
-
-
-* cb/remove-dead-init (2018-10-19) 2 commits
-  (merged to 'next' on 2018-10-26 at ba725a64ad)
- + multi-pack-index: avoid dead store for struct progress
- + unpack-trees: avoid dead store for struct progress
-
- Code clean-up.
-
-
-* ch/subtree-build (2018-10-18) 3 commits
-  (merged to 'next' on 2018-10-18 at f89fd5e6aa)
- + Revert "subtree: make install targets depend on build targets"
-  (merged to 'next' on 2018-10-16 at 919599cc37)
- + subtree: make install targets depend on build targets
-  (merged to 'next' on 2018-10-12 at 4ed9ff6300)
- + subtree: add build targets 'man' and 'html'
-
- Build update for "git subtree" (in contrib/) documentation pages.
-
-
-* dl/mergetool-gui-option (2018-10-25) 3 commits
-  (merged to 'next' on 2018-10-26 at 2c46355e81)
- + doc: document diff/merge.guitool config keys
- + completion: support `git mergetool --[no-]gui`
- + mergetool: accept -g/--[no-]gui as arguments
-
- "git mergetool" learned to take the "--[no-]gui" option, just like
- "git difftool" does.
-
-
-* ds/ci-commit-graph-and-midx (2018-10-19) 1 commit
-  (merged to 'next' on 2018-10-26 at a13664e49a)
- + ci: add optional test variables
-
- One of our CI tests to run with "unusual/experimental/random"
- settings now also uses commit-graph and midx.
-
-
-* ds/reachable (2018-10-23) 1 commit
-  (merged to 'next' on 2018-10-26 at 76b5fc9a46)
- + commit-reach: fix cast in compare_commits_by_gen()
-
- Trivial bugfix.
-
-
-* ds/reachable-first-parent-fix (2018-10-19) 1 commit
-  (merged to 'next' on 2018-10-26 at 076442d512)
- + commit-reach: fix first-parent heuristic
-
- Correct performance regression in commit ancestry computation when
- generation numbers are involved.
-
-
-* jc/cocci-preincr (2018-10-24) 2 commits
-  (merged to 'next' on 2018-10-26 at cbd98b44e2)
- + fsck: s/++i > 1/i++/
- + cocci: simplify "if (++u > 1)" to "if (u++)"
-
- Code cleanup.
-
-
-* jc/receive-deny-current-branch-fix (2018-10-19) 1 commit
-  (merged to 'next' on 2018-10-26 at 2975c42215)
- + receive: denyCurrentBranch=updateinstead should not blindly update
-
- The receive.denyCurrentBranch=updateInstead codepath kicked in even
- when the push should have been rejected due to other reasons, such
- as it does not fast-forward or the update-hook rejects it, which
- has been corrected.
-
-
-* jk/run-command-notdot (2018-10-25) 2 commits
-  (merged to 'next' on 2018-10-26 at 9d9335b23f)
- + t0061: adjust to test-tool transition
- + run-command: mark path lookup errors with ENOENT
-
- The implementation of run_command() API on the UNIX platforms had a
- bug that caused a command not on $PATH to be found in the current
- directory.
-
-
-* jk/test-tool-help (2018-10-18) 1 commit
-  (merged to 'next' on 2018-10-26 at ed32bae21b)
- + test-tool: show tool list on error
-
- Developer support.
-
-
-* jk/unused-function (2018-10-19) 1 commit
-  (merged to 'next' on 2018-10-26 at c8c3fbb432)
- + config.mak.dev: enable -Wunused-function
-
- Developer support.
-
-
-* jk/uploadpack-packobjectshook-fix (2018-10-26) 1 commit
-  (merged to 'next' on 2018-10-26 at 95c93b1199)
- + upload-pack: fix broken if/else chain in config callback
-
- Code clean-up that results in a small bugfix.
-
-
-* js/diff-notice-has-drive-prefix (2018-10-22) 1 commit
-  (merged to 'next' on 2018-10-26 at 6b2d004194)
- + diff: don't attempt to strip prefix from absolute Windows paths
-
- Under certain circumstances, "git diff D:/a/b/c D:/a/b/d" on
- Windows would strip initial parts from the paths because they
- were not recognized as absolute, which has been corrected.
-
-
-* js/mingw-getcwd (2018-10-24) 2 commits
-  (merged to 'next' on 2018-10-26 at f31abc8d8f)
- + mingw: fix getcwd when the parent directory cannot be queried
- + mingw: ensure `getcwd()` reports the correct case
-
- The way the Windows port figures out the current directory has been
- improved.
-
-
-* js/mingw-load-sys-dll (2018-10-24) 1 commit
-  (merged to 'next' on 2018-10-26 at 1f458a7e04)
- + mingw: load system libraries the recommended way
-
- The way DLLs are loaded on the Windows port has been improved.
-
-
-* js/pack-objects-mutex-init-fix (2018-10-19) 3 commits
-  (merged to 'next' on 2018-10-26 at 7516dcc6e4)
- + pack-objects (mingw): initialize `packing_data` mutex in the correct spot
- + pack-objects (mingw): demonstrate a segmentation fault with large deltas
- + pack-objects: fix typo 'detla' -> 'delta'
-
- A mutex used in "git pack-objects" were not correctly initialized
- and this caused "git repack" to dump core on Windows.
-
-
-* lm/range-diff-submodule-fix (2018-10-25) 1 commit
-  (merged to 'next' on 2018-10-25 at af387d8978)
- + range-diff: allow to diff files regardless of submodule config
-
- "git range-diff" did not work well when the compared ranges had
- changes in submodules and the "--submodule=log" was used.
-
-
-* md/filter-trees (2018-10-18) 10 commits
-  (merged to 'next' on 2018-10-18 at 55be2fded9)
- + list-objects: support for skipping tree traversal
-  (merged to 'next' on 2018-10-16 at 64d351d342)
- + filter-trees: code clean-up of tests
-  (merged to 'next' on 2018-10-12 at c66e49d4ca)
- + list-objects-filter: implement filter tree:0
- + list-objects-filter-options: do not over-strbuf_init
- + list-objects-filter: use BUG rather than die
- + revision: mark non-user-given objects instead
- + rev-list: handle missing tree objects properly
- + list-objects: always parse trees gently
- + list-objects: refactor to process_tree_contents
- + list-objects: store common func args in struct
-
- The "rev-list --filter" feature learned to exclude all trees via
- "tree:0" filter.
-
-
-* ot/ref-filter-plug-leaks (2018-10-19) 3 commits
-  (merged to 'next' on 2018-10-26 at a475cb6568)
- + ref-filter: free item->value and item->value->s
- + ls-remote: release memory instead of UNLEAK
- + ref-filter: free memory from used_atom
-
- Plugging a handful of memory leaks in the ref-filter codepath.
-
-
-* rj/header-guards (2018-10-18) 1 commit
-  (merged to 'next' on 2018-10-26 at c767be34df)
- + headers: normalize the spelling of some header guards
-
- Code clean-up.
-
-
-* rv/send-email-cc-misc-by (2018-10-16) 3 commits
-  (merged to 'next' on 2018-10-19 at 2c1e5f75af)
- + send-email: also pick up cc addresses from -by trailers
- + send-email: only consider lines containing @ or <> for automatic Cc'ing
- + Documentation/git-send-email.txt: style fixes
-
- "git send-email" learned to grab address-looking string on any
- trailer whose name ends with "-by"; --suppress-cc=misc-by on the
- command line, or setting sendemail.suppresscc configuration
- variable to "misc-by", can be used to disable this behaviour.
-
-
-* sb/strbuf-h-update (2018-09-29) 1 commit
-  (merged to 'next' on 2018-10-26 at e4ad935cb0)
- + strbuf.h: format according to coding guidelines
-
- Code clean-up to serve as a BCP example.
- Further clean-up patches may want to follow soon.
-
-
-* sb/submodule-helper-remove-cruft (2018-10-18) 1 commit
-  (merged to 'next' on 2018-10-26 at 5719bc5d7e)
- + builtin/submodule--helper: remove debugging leftover tracing
-
- Code clean-up.
-
-
-* sg/doc-show-branch-typofix (2018-10-18) 1 commit
-  (merged to 'next' on 2018-10-26 at 9444be6a99)
- + doc: fix small typo in git show-branch
-
- Docfix.
-
-
-* ss/rename-tests (2018-10-23) 5 commits
-  (merged to 'next' on 2018-10-26 at e4929c2ece)
- + t7501: rename commit test to comply with naming convention
- + t7500: rename commit tests script to comply with naming convention
- + t7502: rename commit test script to comply with naming convention
- + t7509: cleanup description and filename
- + t2000: rename and combine checkout clash tests
-
- Reorganize some tests and rename them; "ls t/" now gives a better
- overview of what is tested for these scripts than before.
-
-
-* tb/filter-alternate-refs (2018-10-25) 2 commits
-  (merged to 'next' on 2018-10-26 at 887a7779a3)
- + t5410: use longer path for sample script
- + Documentation/config.txt: fix typo in core.alternateRefsCommand
-
- Test fix.
-
-
-* tq/branch-create-wo-branch-get (2018-10-18) 1 commit
-  (merged to 'next' on 2018-10-26 at fe522704b7)
- + builtin/branch.c: remove useless branch_get
-
- Code clean-up.
-
-
-* tq/branch-style-fix (2018-10-18) 1 commit
-  (merged to 'next' on 2018-10-26 at 6e79291d55)
- + branch: trivial style fix
-
- Code clean-up.
-
-
-* uk/merge-subtree-doc-update (2018-10-25) 1 commit
-  (merged to 'next' on 2018-10-26 at 7ab4fc8ab1)
- + howto/using-merge-subtree: mention --allow-unrelated-histories
-
- Belated documentation update to adjust to a new world order that
- happened a yew years ago.
+* ag/rebase-i-in-c (2018-10-09) 20 commits
+  (merged to 'next' on 2018-10-19 at 1b24712d46)
+ + rebase -i: move rebase--helper modes to rebase--interactive
+ + rebase -i: remove git-rebase--interactive.sh
+ + rebase--interactive2: rewrite the submodes of interactive rebase in C
+ + rebase -i: implement the main part of interactive rebase as a builtin
+ + rebase -i: rewrite init_basic_state() in C
+ + rebase -i: rewrite write_basic_state() in C
+ + rebase -i: rewrite the rest of init_revisions_and_shortrevisions() in C
+ + rebase -i: implement the logic to initialize $revisions in C
+ + rebase -i: remove unused modes and functions
+ + rebase -i: rewrite complete_action() in C
+ + t3404: todo list with commented-out commands only aborts
+ + sequencer: change the way skip_unnecessary_picks() returns its result
+ + sequencer: refactor append_todo_help() to write its message to a buffer
+ + rebase -i: rewrite checkout_onto() in C
+ + rebase -i: rewrite setup_reflog_action() in C
+ + sequencer: add a new function to silence a command, except if it fails
+ + rebase -i: rewrite the edit-todo functionality in C
+ + editor: add a function to launch the sequence editor
+ + rebase -i: rewrite append_todo_help() in C
+ + sequencer: make three functions and an enum from sequencer.c public
+ (this branch is used by ag/sequencer-reduce-rewriting-todo, cb/printf-empty-format, js/rebase-autostash-fix, js/rebase-i-break, js/rebase-i-shortopt, js/rebase-in-c-5.5-work-with-rebase-i-in-c and pk/rebase-in-c-6-final.)
+
+ Rewrite of the remaining "rebase -i" machinery in C.
+
+
+* cb/printf-empty-format (2018-10-27) 1 commit
+  (merged to 'next' on 2018-11-01 at 9fcb05f22c)
+ + sequencer: cleanup for gcc warning in non developer mode
+ (this branch uses ag/rebase-i-in-c; is tangled with ag/sequencer-reduce-rewriting-todo, js/rebase-autostash-fix, js/rebase-i-break, js/rebase-i-shortopt, js/rebase-in-c-5.5-work-with-rebase-i-in-c and pk/rebase-in-c-6-final.)
+
+ Build fix for a topic in flight.
+
+
+* jc/rebase-in-c-5-test-typofix (2018-10-11) 1 commit
+  (merged to 'next' on 2018-10-19 at 08c9d86ffd)
+ + rebase: fix typoes in error messages
+ (this branch uses pk/rebase-in-c, pk/rebase-in-c-2-basic, pk/rebase-in-c-3-acts, pk/rebase-in-c-4-opts and pk/rebase-in-c-5-test; is tangled with js/rebase-autostash-fix, js/rebase-in-c-5.5-work-with-rebase-i-in-c and pk/rebase-in-c-6-final.)
+
+ Typofix.
+
+
+* js/rebase-autostash-fix (2018-10-24) 5 commits
+  (merged to 'next' on 2018-10-29 at 680e648001)
+ + rebase --autostash: fix issue with dirty submodules
+ + rebase --autostash: demonstrate a problem with dirty submodules
+ + rebase (autostash): use an explicit OID to apply the stash
+ + rebase (autostash): store the full OID in <state-dir>/autostash
+ + rebase (autostash): avoid duplicate call to state_dir_path()
+ (this branch uses ag/rebase-i-in-c, js/rebase-in-c-5.5-work-with-rebase-i-in-c, pk/rebase-in-c, pk/rebase-in-c-2-basic, pk/rebase-in-c-3-acts, pk/rebase-in-c-4-opts, pk/rebase-in-c-5-test and pk/rebase-in-c-6-final; is tangled with ag/sequencer-reduce-rewriting-todo, cb/printf-empty-format, jc/rebase-in-c-5-test-typofix, js/rebase-i-break and js/rebase-i-shortopt.)
+
+ "git rebase" that has recently been rewritten in C had a few issues
+ in its "--autstash" feature, which have been corrected.
+
+
+* js/rebase-i-break (2018-10-12) 2 commits
+  (merged to 'next' on 2018-10-19 at 6db9b14495)
+ + rebase -i: introduce the 'break' command
+ + rebase -i: clarify what happens on a failed `exec`
+ (this branch is used by js/rebase-i-shortopt; uses ag/rebase-i-in-c; is tangled with ag/sequencer-reduce-rewriting-todo, cb/printf-empty-format, js/rebase-autostash-fix, js/rebase-in-c-5.5-work-with-rebase-i-in-c and pk/rebase-in-c-6-final.)
+
+ "git rebase -i" learned a new insn, 'break', that the user can
+ insert in the to-do list.  Upon hitting it, the command returns
+ control back to the user.
+
+
+* js/rebase-i-shortopt (2018-10-26) 1 commit
+  (merged to 'next' on 2018-11-01 at 4e9da19145)
+ + rebase -i: recognize short commands without arguments
+ (this branch uses ag/rebase-i-in-c and js/rebase-i-break; is tangled with ag/sequencer-reduce-rewriting-todo, cb/printf-empty-format, js/rebase-autostash-fix, js/rebase-in-c-5.5-work-with-rebase-i-in-c and pk/rebase-in-c-6-final.)
+
+ "git rebase -i" learned to take 'b' as the short form of 'break'
+ option in the todo list.
+
+
+* js/rebase-in-c-5.5-work-with-rebase-i-in-c (2018-10-11) 2 commits
+  (merged to 'next' on 2018-10-19 at b734d81006)
+ + builtin rebase: prepare for builtin rebase -i
+ + Merge branch 'ag/rebase-i-in-c' into js/rebase-in-c-5.5-work-with-rebase-i-in-c
+ (this branch is used by js/rebase-autostash-fix and pk/rebase-in-c-6-final; uses ag/rebase-i-in-c, pk/rebase-in-c, pk/rebase-in-c-2-basic, pk/rebase-in-c-3-acts, pk/rebase-in-c-4-opts and pk/rebase-in-c-5-test; is tangled with ag/sequencer-reduce-rewriting-todo, cb/printf-empty-format, jc/rebase-in-c-5-test-typofix, js/rebase-i-break and js/rebase-i-shortopt.)
+
+ "rebase" that has been rewritten learns the new calling convention
+ used by "rebase -i" that was rewritten in C, tying the loose end
+ between two GSoC topics that stomped on each other's toes.
+
+
+* pk/rebase-in-c (2018-08-06) 3 commits
+  (merged to 'next' on 2018-10-19 at 26c29ace53)
+ + builtin/rebase: support running "git rebase <upstream>"
+ + rebase: refactor common shell functions into their own file
+ + rebase: start implementing it as a builtin
+ (this branch is used by jc/rebase-in-c-5-test-typofix, js/rebase-autostash-fix, js/rebase-in-c-5.5-work-with-rebase-i-in-c, pk/rebase-in-c-2-basic, pk/rebase-in-c-3-acts, pk/rebase-in-c-4-opts, pk/rebase-in-c-5-test and pk/rebase-in-c-6-final.)
+
+ Rewrite of the "rebase" machinery in C.
+
+
+* pk/rebase-in-c-2-basic (2018-09-06) 11 commits
+  (merged to 'next' on 2018-10-19 at c2a0046e52)
+ + builtin rebase: support `git rebase <upstream> <switch-to>`
+ + builtin rebase: only store fully-qualified refs in `options.head_name`
+ + builtin rebase: start a new rebase only if none is in progress
+ + builtin rebase: support --force-rebase
+ + builtin rebase: try to fast forward when possible
+ + builtin rebase: require a clean worktree
+ + builtin rebase: support the `verbose` and `diffstat` options
+ + builtin rebase: support --quiet
+ + builtin rebase: handle the pre-rebase hook and --no-verify
+ + builtin rebase: support `git rebase --onto A...B`
+ + builtin rebase: support --onto
+ (this branch is used by jc/rebase-in-c-5-test-typofix, js/rebase-autostash-fix, js/rebase-in-c-5.5-work-with-rebase-i-in-c, pk/rebase-in-c-3-acts, pk/rebase-in-c-4-opts, pk/rebase-in-c-5-test and pk/rebase-in-c-6-final; uses pk/rebase-in-c.)
+
+ Rewrite "git rebase" in C.
+
+
+* pk/rebase-in-c-3-acts (2018-09-06) 7 commits
+  (merged to 'next' on 2018-10-19 at 9275677430)
+ + builtin rebase: stop if `git am` is in progress
+ + builtin rebase: actions require a rebase in progress
+ + builtin rebase: support --edit-todo and --show-current-patch
+ + builtin rebase: support --quit
+ + builtin rebase: support --abort
+ + builtin rebase: support --skip
+ + builtin rebase: support --continue
+ (this branch is used by jc/rebase-in-c-5-test-typofix, js/rebase-autostash-fix, js/rebase-in-c-5.5-work-with-rebase-i-in-c, pk/rebase-in-c-4-opts, pk/rebase-in-c-5-test and pk/rebase-in-c-6-final; uses pk/rebase-in-c and pk/rebase-in-c-2-basic.)
+
+ Rewrite "git rebase" in C.
+
+
+* pk/rebase-in-c-4-opts (2018-10-11) 18 commits
+  (merged to 'next' on 2018-10-19 at 2770b2f5d5)
+ + builtin rebase: support --root
+ + builtin rebase: add support for custom merge strategies
+ + builtin rebase: support `fork-point` option
+ + merge-base --fork-point: extract libified function
+ + builtin rebase: support --rebase-merges[=[no-]rebase-cousins]
+ + builtin rebase: support `--allow-empty-message` option
+ + builtin rebase: support `--exec`
+ + builtin rebase: support `--autostash` option
+ + builtin rebase: support `-C` and `--whitespace=<type>`
+ + builtin rebase: support `--gpg-sign` option
+ + builtin rebase: support `--autosquash`
+ + builtin rebase: support `keep-empty` option
+ + builtin rebase: support `ignore-date` option
+ + builtin rebase: support `ignore-whitespace` option
+ + builtin rebase: support --committer-date-is-author-date
+ + builtin rebase: support --rerere-autoupdate
+ + builtin rebase: support --signoff
+ + builtin rebase: allow selecting the rebase "backend"
+ (this branch is used by jc/rebase-in-c-5-test-typofix, js/rebase-autostash-fix, js/rebase-in-c-5.5-work-with-rebase-i-in-c, pk/rebase-in-c-5-test and pk/rebase-in-c-6-final; uses pk/rebase-in-c, pk/rebase-in-c-2-basic and pk/rebase-in-c-3-acts.)
+
+ Rewrite "git rebase" in C.
+
+
+* pk/rebase-in-c-5-test (2018-10-11) 6 commits
+  (merged to 'next' on 2018-10-19 at 0e48bc8243)
+ + builtin rebase: error out on incompatible option/mode combinations
+ + builtin rebase: use no-op editor when interactive is "implied"
+ + builtin rebase: show progress when connected to a terminal
+ + builtin rebase: fast-forward to onto if it is a proper descendant
+ + builtin rebase: optionally pass custom reflogs to reset_head()
+ + builtin rebase: optionally auto-detect the upstream
+ (this branch is used by jc/rebase-in-c-5-test-typofix, js/rebase-autostash-fix, js/rebase-in-c-5.5-work-with-rebase-i-in-c and pk/rebase-in-c-6-final; uses pk/rebase-in-c, pk/rebase-in-c-2-basic, pk/rebase-in-c-3-acts and pk/rebase-in-c-4-opts.)
+
+ Rewrite "git rebase" in C.
+
+
+* pk/rebase-in-c-6-final (2018-10-11) 1 commit
+  (merged to 'next' on 2018-10-19 at 52f1dadf69)
+ + rebase: default to using the builtin rebase
+ (this branch is used by js/rebase-autostash-fix; uses ag/rebase-i-in-c, js/rebase-in-c-5.5-work-with-rebase-i-in-c, pk/rebase-in-c, pk/rebase-in-c-2-basic, pk/rebase-in-c-3-acts, pk/rebase-in-c-4-opts and pk/rebase-in-c-5-test; is tangled with ag/sequencer-reduce-rewriting-todo, cb/printf-empty-format, jc/rebase-in-c-5-test-typofix, js/rebase-i-break and js/rebase-i-shortopt.)
+
+ The final step of rewriting "rebase -i" in C.
 
 --------------------------------------------------
 [New Topics]
+
+* ab/dynamic-gettext-poison (2018-11-02) 1 commit
+ - i18n: make GETTEXT_POISON a runtime option
+
+
+* js/rebase-p-tests (2018-11-02) 3 commits
+ - tests: optionally skip `git rebase -p` tests
+ - t3418: decouple test cases from a previous `rebase -p` test case
+ - t3404: decouple some test cases from outcomes of previous test cases
+
+ In preparation to the day when we can deprecate and remove the
+ "rebase -p", make sure we can skip and later remove tests for
+ it.
+
+ Will merge to 'next'.
+
+
+* sg/travis-install-dependencies (2018-11-02) 1 commit
+ - travis-ci: install packages in 'ci/install-dependencies.sh'
+ (this branch uses ss/travis-ci-force-vm-mode.)
+
+ The procedure to install dependencies before testing at Travis CI
+ is getting revamped for both simplicity and flexibility, taking
+ advantage of the recent move to the vm-based environment.
+
+--------------------------------------------------
+[Stalled]
+
+* lt/date-human (2018-07-09) 1 commit
+ - Add 'human' date format
+
+ A new date format "--date=human" that morphs its output depending
+ on how far the time is from the current time has been introduced.
+ "--date=auto" can be used to use this new format when the output is
+ goint to the pager or to the terminal and otherwise the default
+ format.
+
+--------------------------------------------------
+[Cooking]
 
 * ab/push-dwim-dst (2018-10-29) 9 commits
  - SQUASH???
@@ -351,16 +256,6 @@ of the repositories listed at
 
  The last few steps are questionable.
  cf. <87in1lkw54.fsf@evledraar.gmail.com>
-
-
-* cb/printf-empty-format (2018-10-27) 1 commit
-  (merged to 'next' on 2018-11-01 at 9fcb05f22c)
- + sequencer: cleanup for gcc warning in non developer mode
- (this branch uses ag/rebase-i-in-c; is tangled with ag/sequencer-reduce-rewriting-todo, js/rebase-autostash-fix, js/rebase-i-break, js/rebase-i-shortopt, js/rebase-in-c-5.5-work-with-rebase-i-in-c and pk/rebase-in-c-6-final.)
-
- Build fix for a topic in flight.
-
- Will merge to 'master' together with pk/rebase-in-c-6-final.
 
 
 * md/list-lazy-objects-fix (2018-10-29) 1 commit
@@ -559,20 +454,6 @@ of the repositories listed at
 
  Will merge to 'next'.
 
---------------------------------------------------
-[Stalled]
-
-* lt/date-human (2018-07-09) 1 commit
- - Add 'human' date format
-
- A new date format "--date=human" that morphs its output depending
- on how far the time is from the current time has been introduced.
- "--date=auto" can be used to use this new format when the output is
- goint to the pager or to the terminal and otherwise the default
- format.
-
---------------------------------------------------
-[Cooking]
 
 * sb/more-repo-in-api (2018-10-19) 19 commits
  - submodule: don't add submodule as odb for push
@@ -797,21 +678,6 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* js/rebase-autostash-fix (2018-10-24) 5 commits
-  (merged to 'next' on 2018-10-29 at 680e648001)
- + rebase --autostash: fix issue with dirty submodules
- + rebase --autostash: demonstrate a problem with dirty submodules
- + rebase (autostash): use an explicit OID to apply the stash
- + rebase (autostash): store the full OID in <state-dir>/autostash
- + rebase (autostash): avoid duplicate call to state_dir_path()
- (this branch uses ag/rebase-i-in-c, js/rebase-in-c-5.5-work-with-rebase-i-in-c, pk/rebase-in-c, pk/rebase-in-c-2-basic, pk/rebase-in-c-3-acts, pk/rebase-in-c-4-opts, pk/rebase-in-c-5-test and pk/rebase-in-c-6-final; is tangled with ag/sequencer-reduce-rewriting-todo, cb/printf-empty-format, jc/rebase-in-c-5-test-typofix, js/rebase-i-break and js/rebase-i-shortopt.)
-
- "git rebase" that has recently been rewritten in C had a few issues
- in its "--autstash" feature, which have been corrected.
-
- Will merge to 'master'.
-
-
 * js/remote-archive-dwimfix (2018-10-26) 1 commit
   (merged to 'next' on 2018-10-26 at f5bf6946bd)
  + archive: initialize archivers earlier
@@ -884,21 +750,10 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* sd/stash-wo-user-name (2018-10-26) 1 commit
- - t3903-stash: test without configured user name
+* sd/stash-wo-user-name (2018-11-02) 1 commit
+ - t3903-stash: test without configured user.name and user.email
 
  An early part of a wip.
-
-
-* js/rebase-i-shortopt (2018-10-26) 1 commit
-  (merged to 'next' on 2018-11-01 at 4e9da19145)
- + rebase -i: recognize short commands without arguments
- (this branch uses ag/rebase-i-in-c and js/rebase-i-break; is tangled with ag/sequencer-reduce-rewriting-todo, cb/printf-empty-format, js/rebase-autostash-fix, js/rebase-in-c-5.5-work-with-rebase-i-in-c and pk/rebase-in-c-6-final.)
-
- "git rebase -i" learned to take 'b' as the short form of 'break'
- option in the todo list.
-
- Will merge to 'master' together with pk/rebase-in-c-6-final.
 
 
 * sg/test-rebase-editor-fix (2018-10-29) 1 commit
@@ -911,6 +766,7 @@ of the repositories listed at
 * ss/travis-ci-force-vm-mode (2018-10-26) 1 commit
   (merged to 'next' on 2018-11-01 at 8596bb2a65)
  + travis-ci: no longer use containers
+ (this branch is used by sg/travis-install-dependencies.)
 
  The "container" mode of TravisCI is going away.  Our .travis.yml
  file is getting prepared for the transition.
@@ -1062,16 +918,6 @@ of the repositories listed at
  updated to use "size_t".
 
 
-* jc/rebase-in-c-5-test-typofix (2018-10-11) 1 commit
-  (merged to 'next' on 2018-10-19 at 08c9d86ffd)
- + rebase: fix typoes in error messages
- (this branch uses pk/rebase-in-c, pk/rebase-in-c-2-basic, pk/rebase-in-c-3-acts, pk/rebase-in-c-4-opts and pk/rebase-in-c-5-test; is tangled with js/rebase-autostash-fix, js/rebase-in-c-5.5-work-with-rebase-i-in-c and pk/rebase-in-c-6-final.)
-
- Typofix.
-
- Will merge to 'master' together with pk/rebase-in-c-6-final.
-
-
 * jc/war-on-string-list (2018-11-01) 1 commit
  - fetch: replace string-list used as a look-up table with a hashmap
 
@@ -1079,19 +925,6 @@ of the repositories listed at
  fetch" with hashmaps.
 
  Will merge to 'next'.
-
-
-* js/rebase-i-break (2018-10-12) 2 commits
-  (merged to 'next' on 2018-10-19 at 6db9b14495)
- + rebase -i: introduce the 'break' command
- + rebase -i: clarify what happens on a failed `exec`
- (this branch is used by js/rebase-i-shortopt; uses ag/rebase-i-in-c; is tangled with ag/sequencer-reduce-rewriting-todo, cb/printf-empty-format, js/rebase-autostash-fix, js/rebase-in-c-5.5-work-with-rebase-i-in-c and pk/rebase-in-c-6-final.)
-
- "git rebase -i" learned a new insn, 'break', that the user can
- insert in the to-do list.  Upon hitting it, the command returns
- control back to the user.
-
- Will merge to 'master' together with pk/rebase-in-c-6-final.
 
 
 * js/remote-archive-v2 (2018-09-28) 4 commits
@@ -1128,7 +961,6 @@ of the repositories listed at
  . sequencer: make the todo_list structure public
  . sequencer: clear the number of items of a todo_list before parsing
  . Merge branch 'ag/rebase-i-in-c' into ag/sequencer-reduce-rewriting-todo
- (this branch uses ag/rebase-i-in-c; is tangled with cb/printf-empty-format, js/rebase-autostash-fix, js/rebase-i-break, js/rebase-i-shortopt, js/rebase-in-c-5.5-work-with-rebase-i-in-c and pk/rebase-in-c-6-final.)
 
  The scripted version of "git rebase -i" wrote and rewrote the todo
  list many times during a single step of its operation, and the
@@ -1170,7 +1002,7 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* ds/reachable-topo-order (2018-10-18) 7 commits
+* ds/reachable-topo-order (2018-11-02) 7 commits
  - t6012: make rev-list tests more interesting
  - revision.c: generation-based topo-order algorithm
  - commit/revisions: bookkeeping before refactoring
@@ -1181,8 +1013,6 @@ of the repositories listed at
 
  The revision walker machinery learned to take advantage of the
  commit generation numbers stored in the commit-graph file.
-
- cf. <pull.25.v4.git.gitgitgadget@gmail.com>
 
 
 * sb/submodule-recursive-fetch-gets-the-tip (2018-10-31) 11 commits
@@ -1204,19 +1034,6 @@ of the repositories listed at
 
  On hold, monitoring the discussion.
  cf. <20181025233231.102245-1-sbeller@google.com>
-
-
-* js/rebase-in-c-5.5-work-with-rebase-i-in-c (2018-10-11) 2 commits
-  (merged to 'next' on 2018-10-19 at b734d81006)
- + builtin rebase: prepare for builtin rebase -i
- + Merge branch 'ag/rebase-i-in-c' into js/rebase-in-c-5.5-work-with-rebase-i-in-c
- (this branch is used by js/rebase-autostash-fix and pk/rebase-in-c-6-final; uses ag/rebase-i-in-c, pk/rebase-in-c, pk/rebase-in-c-2-basic, pk/rebase-in-c-3-acts, pk/rebase-in-c-4-opts and pk/rebase-in-c-5-test; is tangled with ag/sequencer-reduce-rewriting-todo, cb/printf-empty-format, jc/rebase-in-c-5-test-typofix, js/rebase-i-break and js/rebase-i-shortopt.)
-
- "rebase" that has been rewritten learns the new calling convention
- used by "rebase -i" that was rewritten in C, tying the loose end
- between two GSoC topics that stomped on each other's toes.
-
- Will merge to 'master' together with pk/rebase-in-c-6-final.
 
 
 * js/add-i-coalesce-after-editing-hunk (2018-08-28) 1 commit
@@ -1247,94 +1064,6 @@ of the repositories listed at
  working tree.
 
  Will merge to 'next'.
-
-
-* pk/rebase-in-c-2-basic (2018-09-06) 11 commits
-  (merged to 'next' on 2018-10-19 at c2a0046e52)
- + builtin rebase: support `git rebase <upstream> <switch-to>`
- + builtin rebase: only store fully-qualified refs in `options.head_name`
- + builtin rebase: start a new rebase only if none is in progress
- + builtin rebase: support --force-rebase
- + builtin rebase: try to fast forward when possible
- + builtin rebase: require a clean worktree
- + builtin rebase: support the `verbose` and `diffstat` options
- + builtin rebase: support --quiet
- + builtin rebase: handle the pre-rebase hook and --no-verify
- + builtin rebase: support `git rebase --onto A...B`
- + builtin rebase: support --onto
- (this branch is used by jc/rebase-in-c-5-test-typofix, js/rebase-autostash-fix, js/rebase-in-c-5.5-work-with-rebase-i-in-c, pk/rebase-in-c-3-acts, pk/rebase-in-c-4-opts, pk/rebase-in-c-5-test and pk/rebase-in-c-6-final; uses pk/rebase-in-c.)
-
- Rewrite "git rebase" in C.
-
- Will merge to 'master' together with pk/rebase-in-c-6-final.
-
-
-* pk/rebase-in-c-3-acts (2018-09-06) 7 commits
-  (merged to 'next' on 2018-10-19 at 9275677430)
- + builtin rebase: stop if `git am` is in progress
- + builtin rebase: actions require a rebase in progress
- + builtin rebase: support --edit-todo and --show-current-patch
- + builtin rebase: support --quit
- + builtin rebase: support --abort
- + builtin rebase: support --skip
- + builtin rebase: support --continue
- (this branch is used by jc/rebase-in-c-5-test-typofix, js/rebase-autostash-fix, js/rebase-in-c-5.5-work-with-rebase-i-in-c, pk/rebase-in-c-4-opts, pk/rebase-in-c-5-test and pk/rebase-in-c-6-final; uses pk/rebase-in-c and pk/rebase-in-c-2-basic.)
-
- Rewrite "git rebase" in C.
-
- Will merge to 'master' together with pk/rebase-in-c-6-final.
-
-
-* pk/rebase-in-c-4-opts (2018-10-11) 18 commits
-  (merged to 'next' on 2018-10-19 at 2770b2f5d5)
- + builtin rebase: support --root
- + builtin rebase: add support for custom merge strategies
- + builtin rebase: support `fork-point` option
- + merge-base --fork-point: extract libified function
- + builtin rebase: support --rebase-merges[=[no-]rebase-cousins]
- + builtin rebase: support `--allow-empty-message` option
- + builtin rebase: support `--exec`
- + builtin rebase: support `--autostash` option
- + builtin rebase: support `-C` and `--whitespace=<type>`
- + builtin rebase: support `--gpg-sign` option
- + builtin rebase: support `--autosquash`
- + builtin rebase: support `keep-empty` option
- + builtin rebase: support `ignore-date` option
- + builtin rebase: support `ignore-whitespace` option
- + builtin rebase: support --committer-date-is-author-date
- + builtin rebase: support --rerere-autoupdate
- + builtin rebase: support --signoff
- + builtin rebase: allow selecting the rebase "backend"
- (this branch is used by jc/rebase-in-c-5-test-typofix, js/rebase-autostash-fix, js/rebase-in-c-5.5-work-with-rebase-i-in-c, pk/rebase-in-c-5-test and pk/rebase-in-c-6-final; uses pk/rebase-in-c, pk/rebase-in-c-2-basic and pk/rebase-in-c-3-acts.)
-
- Rewrite "git rebase" in C.
-
- Will merge to 'master' together with pk/rebase-in-c-6-final.
-
-
-* pk/rebase-in-c-5-test (2018-10-11) 6 commits
-  (merged to 'next' on 2018-10-19 at 0e48bc8243)
- + builtin rebase: error out on incompatible option/mode combinations
- + builtin rebase: use no-op editor when interactive is "implied"
- + builtin rebase: show progress when connected to a terminal
- + builtin rebase: fast-forward to onto if it is a proper descendant
- + builtin rebase: optionally pass custom reflogs to reset_head()
- + builtin rebase: optionally auto-detect the upstream
- (this branch is used by jc/rebase-in-c-5-test-typofix, js/rebase-autostash-fix, js/rebase-in-c-5.5-work-with-rebase-i-in-c and pk/rebase-in-c-6-final; uses pk/rebase-in-c, pk/rebase-in-c-2-basic, pk/rebase-in-c-3-acts and pk/rebase-in-c-4-opts.)
-
- Rewrite "git rebase" in C.
-
- Will merge to 'master' together with pk/rebase-in-c-6-final.
-
-
-* pk/rebase-in-c-6-final (2018-10-11) 1 commit
-  (merged to 'next' on 2018-10-19 at 52f1dadf69)
- + rebase: default to using the builtin rebase
- (this branch is used by js/rebase-autostash-fix; uses ag/rebase-i-in-c, js/rebase-in-c-5.5-work-with-rebase-i-in-c, pk/rebase-in-c, pk/rebase-in-c-2-basic, pk/rebase-in-c-3-acts, pk/rebase-in-c-4-opts and pk/rebase-in-c-5-test; is tangled with ag/sequencer-reduce-rewriting-todo, cb/printf-empty-format, jc/rebase-in-c-5-test-typofix, js/rebase-i-break and js/rebase-i-shortopt.)
-
- The final step of rewriting "rebase -i" in C.
-
- Will merge to 'master'.
 
 
 * ps/stash-in-c (2018-10-15) 21 commits
@@ -1382,47 +1111,6 @@ of the repositories listed at
  cf. <d622a95b-7302-43d4-4ec9-b2cf3388c653@talktalk.net>
  I found the feature to be hard to explain, and may result in more
  end-user complaints, but let's see.
-
-
-* ag/rebase-i-in-c (2018-10-09) 20 commits
-  (merged to 'next' on 2018-10-19 at 1b24712d46)
- + rebase -i: move rebase--helper modes to rebase--interactive
- + rebase -i: remove git-rebase--interactive.sh
- + rebase--interactive2: rewrite the submodes of interactive rebase in C
- + rebase -i: implement the main part of interactive rebase as a builtin
- + rebase -i: rewrite init_basic_state() in C
- + rebase -i: rewrite write_basic_state() in C
- + rebase -i: rewrite the rest of init_revisions_and_shortrevisions() in C
- + rebase -i: implement the logic to initialize $revisions in C
- + rebase -i: remove unused modes and functions
- + rebase -i: rewrite complete_action() in C
- + t3404: todo list with commented-out commands only aborts
- + sequencer: change the way skip_unnecessary_picks() returns its result
- + sequencer: refactor append_todo_help() to write its message to a buffer
- + rebase -i: rewrite checkout_onto() in C
- + rebase -i: rewrite setup_reflog_action() in C
- + sequencer: add a new function to silence a command, except if it fails
- + rebase -i: rewrite the edit-todo functionality in C
- + editor: add a function to launch the sequence editor
- + rebase -i: rewrite append_todo_help() in C
- + sequencer: make three functions and an enum from sequencer.c public
- (this branch is used by ag/sequencer-reduce-rewriting-todo, cb/printf-empty-format, js/rebase-autostash-fix, js/rebase-i-break, js/rebase-i-shortopt, js/rebase-in-c-5.5-work-with-rebase-i-in-c and pk/rebase-in-c-6-final.)
-
- Rewrite of the remaining "rebase -i" machinery in C.
-
- Will merge to 'master' together with pk/rebase-in-c-6-final.
-
-
-* pk/rebase-in-c (2018-08-06) 3 commits
-  (merged to 'next' on 2018-10-19 at 26c29ace53)
- + builtin/rebase: support running "git rebase <upstream>"
- + rebase: refactor common shell functions into their own file
- + rebase: start implementing it as a builtin
- (this branch is used by jc/rebase-in-c-5-test-typofix, js/rebase-autostash-fix, js/rebase-in-c-5.5-work-with-rebase-i-in-c, pk/rebase-in-c-2-basic, pk/rebase-in-c-3-acts, pk/rebase-in-c-4-opts, pk/rebase-in-c-5-test and pk/rebase-in-c-6-final.)
-
- Rewrite of the "rebase" machinery in C.
-
- Will merge to 'master' together with pk/rebase-in-c-6-final.
 
 --------------------------------------------------
 [Discarded]
