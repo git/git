@@ -15,51 +15,6 @@ struct xdiff_emit_state {
 	struct strbuf remainder;
 };
 
-static int parse_num(char **cp_p, int *num_p)
-{
-	char *cp = *cp_p;
-	int num = 0;
-
-	while ('0' <= *cp && *cp <= '9')
-		num = num * 10 + *cp++ - '0';
-	if (!(cp - *cp_p))
-		return -1;
-	*cp_p = cp;
-	*num_p = num;
-	return 0;
-}
-
-int parse_hunk_header(char *line, int len,
-		      int *ob, int *on,
-		      int *nb, int *nn)
-{
-	char *cp;
-	cp = line + 4;
-	if (parse_num(&cp, ob)) {
-	bad_line:
-		return error("malformed diff output: %s", line);
-	}
-	if (*cp == ',') {
-		cp++;
-		if (parse_num(&cp, on))
-			goto bad_line;
-	}
-	else
-		*on = 1;
-	if (*cp++ != ' ' || *cp++ != '+')
-		goto bad_line;
-	if (parse_num(&cp, nb))
-		goto bad_line;
-	if (*cp == ',') {
-		cp++;
-		if (parse_num(&cp, nn))
-			goto bad_line;
-	}
-	else
-		*nn = 1;
-	return -!!memcmp(cp, " @@", 3);
-}
-
 static int xdiff_out_hunk(void *priv_,
 			  long old_begin, long old_nr,
 			  long new_begin, long new_nr,
