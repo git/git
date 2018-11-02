@@ -99,6 +99,7 @@ struct rebase_options {
 	int allow_empty_message;
 	int rebase_merges, rebase_cousins;
 	char *strategy, *strategy_opts;
+	struct strbuf git_format_patch_opt;
 };
 
 static int is_interactive(struct rebase_options *opts)
@@ -380,6 +381,15 @@ static int run_specific_rebase(struct rebase_options *opts)
 	add_var(&script_snippet, "rebase_root", opts->root ? "t" : "");
 	add_var(&script_snippet, "squash_onto",
 		opts->squash_onto ? oid_to_hex(opts->squash_onto) : "");
+	add_var(&script_snippet, "git_format_patch_opt",
+		opts->git_format_patch_opt.buf);
+
+	if (is_interactive(opts) &&
+	    !(opts->flags & REBASE_INTERACTIVE_EXPLICIT)) {
+		strbuf_addstr(&script_snippet,
+			      "GIT_EDITOR=:; export GIT_EDITOR; ");
+		opts->autosquash = 0;
+	}
 
 	switch (opts->type) {
 	case REBASE_AM:
@@ -432,7 +442,8 @@ static int run_specific_rebase(struct rebase_options *opts)
 #define GIT_REFLOG_ACTION_ENVIRONMENT "GIT_REFLOG_ACTION"
 
 static int reset_head(struct object_id *oid, const char *action,
-		      const char *switch_to_branch, int detach_head)
+		      const char *switch_to_branch, int detach_head,
+		      const char *reflog_orig_head, const char *reflog_head)
 {
 	struct object_id head_oid;
 	struct tree_desc desc;
@@ -507,20 +518,26 @@ static int reset_head(struct object_id *oid, const char *action,
 		old_orig = &oid_old_orig;
 	if (!get_oid("HEAD", &oid_orig)) {
 		orig = &oid_orig;
-		strbuf_addstr(&msg, "updating ORIG_HEAD");
-		update_ref(msg.buf, "ORIG_HEAD", orig, old_orig, 0,
+		if (!reflog_orig_head) {
+			strbuf_addstr(&msg, "updating ORIG_HEAD");
+			reflog_orig_head = msg.buf;
+		}
+		update_ref(reflog_orig_head, "ORIG_HEAD", orig, old_orig, 0,
 			   UPDATE_REFS_MSG_ON_ERR);
 	} else if (old_orig)
 		delete_ref(NULL, "ORIG_HEAD", old_orig, 0);
-	strbuf_setlen(&msg, prefix_len);
-	strbuf_addstr(&msg, "updating HEAD");
+	if (!reflog_head) {
+		strbuf_setlen(&msg, prefix_len);
+		strbuf_addstr(&msg, "updating HEAD");
+		reflog_head = msg.buf;
+	}
 	if (!switch_to_branch)
-		ret = update_ref(msg.buf, "HEAD", oid, orig, REF_NO_DEREF,
+		ret = update_ref(reflog_head, "HEAD", oid, orig, REF_NO_DEREF,
 				 UPDATE_REFS_MSG_ON_ERR);
 	else {
 		ret = create_symref("HEAD", switch_to_branch, msg.buf);
 		if (!ret)
-			ret = update_ref(msg.buf, "HEAD", oid, NULL, 0,
+			ret = update_ref(reflog_head, "HEAD", oid, NULL, 0,
 					 UPDATE_REFS_MSG_ON_ERR);
 	}
 
@@ -623,6 +640,36 @@ static int parse_opt_interactive(const struct option *opt, const char *arg,
 	return 0;
 }
 
+static void NORETURN error_on_missing_default_upstream(void)
+{
+	struct branch *current_branch = branch_get(NULL);
+
+	printf(_("%s\n"
+		 "Please specify which branch you want to rebase against.\n"
+		 "See git-rebase(1) for details.\n"
+		 "\n"
+		 "    git rebase '<branch>'\n"
+		 "\n"),
+		current_branch ? _("There is no tracking information for "
+			"the current branch.") :
+			_("You are not currently on a branch."));
+
+	if (current_branch) {
+		const char *remote = current_branch->remote_name;
+
+		if (!remote)
+			remote = _("<remote>");
+
+		printf(_("If you wish to set tracking information for this "
+			 "branch you can do so with:\n"
+			 "\n"
+			 "    git branch --set-upstream-to=%s/<branch> %s\n"
+			 "\n"),
+		       remote, current_branch->name);
+	}
+	exit(1);
+}
+
 int cmd_rebase(int argc, const char **argv, const char *prefix)
 {
 	struct rebase_options options = {
@@ -631,6 +678,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		.git_am_opt = STRBUF_INIT,
 		.allow_rerere_autoupdate  = -1,
 		.allow_empty_message = 1,
+		.git_format_patch_opt = STRBUF_INIT,
 	};
 	const char *branch_name;
 	int ret, flags, total_argc, in_progress = 0;
@@ -871,7 +919,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		rerere_clear(&merge_rr);
 		string_list_clear(&merge_rr, 1);
 
-		if (reset_head(NULL, "reset", NULL, 0) < 0)
+		if (reset_head(NULL, "reset", NULL, 0, NULL, NULL) < 0)
 			die(_("could not discard worktree changes"));
 		if (read_basic_state(&options))
 			exit(1);
@@ -887,7 +935,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		if (read_basic_state(&options))
 			exit(1);
 		if (reset_head(&options.orig_head, "reset",
-			       options.head_name, 0) < 0)
+			       options.head_name, 0, NULL, NULL) < 0)
 			die(_("could not move back to %s"),
 			    oid_to_hex(&options.orig_head));
 		ret = finish_rebase(&options);
@@ -1033,6 +1081,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	if (options.root && !options.onto_name)
 		imply_interactive(&options, "--root without --onto");
 
+	if (isatty(2) && options.flags & REBASE_NO_QUIET)
+		strbuf_addstr(&options.git_format_patch_opt, " --progress");
+
 	switch (options.type) {
 	case REBASE_MERGE:
 	case REBASE_INTERACTIVE:
@@ -1049,6 +1100,28 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		break;
 	}
 
+	if (options.git_am_opt.len) {
+		const char *p;
+
+		/* all am options except -q are compatible only with --am */
+		strbuf_reset(&buf);
+		strbuf_addbuf(&buf, &options.git_am_opt);
+		strbuf_addch(&buf, ' ');
+		while ((p = strstr(buf.buf, " -q ")))
+			strbuf_splice(&buf, p - buf.buf, 4, " ", 1);
+		strbuf_trim(&buf);
+
+		if (is_interactive(&options) && buf.len)
+			die(_("error: cannot combine interactive options "
+			      "(--interactive, --exec, --rebase-merges, "
+			      "--preserve-merges, --keep-empty, --root + "
+			      "--onto) with am options (%s)"), buf.buf);
+		if (options.type == REBASE_MERGE && buf.len)
+			die(_("error: cannot combine merge options (--merge, "
+			      "--strategy, --strategy-option) with am options "
+			      "(%s)"), buf.buf);
+	}
+
 	if (options.signoff) {
 		if (options.type == REBASE_PRESERVE_MERGES)
 			die("cannot combine '--signoff' with "
@@ -1057,10 +1130,37 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		options.flags |= REBASE_FORCE;
 	}
 
+	if (options.type == REBASE_PRESERVE_MERGES)
+		/*
+		 * Note: incompatibility with --signoff handled in signoff block above
+		 * Note: incompatibility with --interactive is just a strong warning;
+		 *       git-rebase.txt caveats with "unless you know what you are doing"
+		 */
+		if (options.rebase_merges)
+			die(_("error: cannot combine '--preserve_merges' with "
+			      "'--rebase-merges'"));
+
+	if (options.rebase_merges) {
+		if (strategy_options.nr)
+			die(_("error: cannot combine '--rebase_merges' with "
+			      "'--strategy-option'"));
+		if (options.strategy)
+			die(_("error: cannot combine '--rebase_merges' with "
+			      "'--strategy'"));
+	}
+
 	if (!options.root) {
-		if (argc < 1)
-			die("TODO: handle @{upstream}");
-		else {
+		if (argc < 1) {
+			struct branch *branch;
+
+			branch = branch_get(NULL);
+			options.upstream_name = branch_get_upstream(branch,
+								    NULL);
+			if (!options.upstream_name)
+				error_on_missing_default_upstream();
+			if (fork_point < 0)
+				fork_point = 1;
+		} else {
 			options.upstream_name = argv[0];
 			argc--;
 			argv++;
@@ -1199,7 +1299,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			write_file(autostash, "%s", buf.buf);
 			printf(_("Created autostash: %s\n"), buf.buf);
 			if (reset_head(&head->object.oid, "reset --hard",
-				       NULL, 0) < 0)
+				       NULL, 0, NULL, NULL) < 0)
 				die(_("could not reset --hard"));
 			printf(_("HEAD is now at %s"),
 			       find_unique_abbrev(&head->object.oid,
@@ -1253,7 +1353,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 				strbuf_addf(&buf, "rebase: checkout %s",
 					    options.switch_to);
 				if (reset_head(&oid, "checkout",
-					       options.head_name, 0) < 0) {
+					       options.head_name, 0,
+					       NULL, NULL) < 0) {
 					ret = !!error(_("could not switch to "
 							"%s"),
 						      options.switch_to);
@@ -1318,9 +1419,28 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			 "it...\n"));
 
 	strbuf_addf(&msg, "rebase: checkout %s", options.onto_name);
-	if (reset_head(&options.onto->object.oid, "checkout", NULL, 1))
+	if (reset_head(&options.onto->object.oid, "checkout", NULL, 1,
+	    NULL, msg.buf))
 		die(_("Could not detach HEAD"));
 	strbuf_release(&msg);
+
+	/*
+	 * If the onto is a proper descendant of the tip of the branch, then
+	 * we just fast-forwarded.
+	 */
+	strbuf_reset(&msg);
+	if (!oidcmp(&merge_base, &options.orig_head)) {
+		printf(_("Fast-forwarded %s to %s. \n"),
+			branch_name, options.onto_name);
+		strbuf_addf(&msg, "rebase finished: %s onto %s",
+			options.head_name ? options.head_name : "detached HEAD",
+			oid_to_hex(&options.onto->object.oid));
+		reset_head(NULL, "Fast-forwarded", options.head_name, 0,
+			   "HEAD", msg.buf);
+		strbuf_release(&msg);
+		ret = !!finish_rebase(&options);
+		goto cleanup;
+	}
 
 	strbuf_addf(&revisions, "%s..%s",
 		    options.root ? oid_to_hex(&options.onto->object.oid) :
