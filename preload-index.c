@@ -91,7 +91,7 @@ void preload_index(struct index_state *index, const struct pathspec *pathspec)
 	offset = 0;
 	work = DIV_ROUND_UP(index->cache_nr, threads);
 	memset(&data, 0, sizeof(data));
-	enable_fscache(1);
+	enable_fscache(index->cache_nr);
 	for (i = 0; i < threads; i++) {
 		struct thread_data *p = data+i;
 		p->index = index;
@@ -109,7 +109,7 @@ void preload_index(struct index_state *index, const struct pathspec *pathspec)
 			die("unable to join threaded lstat");
 	}
 	trace_performance_since(start, "preload index");
-	enable_fscache(0);
+	disable_fscache();
 }
 #endif
 
