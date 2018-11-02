@@ -327,12 +327,92 @@ static void add_var(struct strbuf *buf, const char *name, const char *value)
 	}
 }
 
+static const char *resolvemsg =
+N_("Resolve all conflicts manually, mark them as resolved with\n"
+"\"git add/rm <conflicted_files>\", then run \"git rebase --continue\".\n"
+"You can instead skip this commit: run \"git rebase --skip\".\n"
+"To abort and get back to the state before \"git rebase\", run "
+"\"git rebase --abort\".");
+
 static int run_specific_rebase(struct rebase_options *opts)
 {
 	const char *argv[] = { NULL, NULL };
 	struct strbuf script_snippet = STRBUF_INIT;
 	int status;
 	const char *backend, *backend_func;
+
+	if (opts->type == REBASE_INTERACTIVE) {
+		/* Run builtin interactive rebase */
+		struct child_process child = CHILD_PROCESS_INIT;
+
+		argv_array_pushf(&child.env_array, "GIT_CHERRY_PICK_HELP=%s",
+				 resolvemsg);
+		if (!(opts->flags & REBASE_INTERACTIVE_EXPLICIT)) {
+			argv_array_push(&child.env_array, "GIT_EDITOR=:");
+			opts->autosquash = 0;
+		}
+
+		child.git_cmd = 1;
+		argv_array_push(&child.args, "rebase--interactive");
+
+		if (opts->action)
+			argv_array_pushf(&child.args, "--%s", opts->action);
+		if (opts->keep_empty)
+			argv_array_push(&child.args, "--keep-empty");
+		if (opts->rebase_merges)
+			argv_array_push(&child.args, "--rebase-merges");
+		if (opts->rebase_cousins)
+			argv_array_push(&child.args, "--rebase-cousins");
+		if (opts->autosquash)
+			argv_array_push(&child.args, "--autosquash");
+		if (opts->flags & REBASE_VERBOSE)
+			argv_array_push(&child.args, "--verbose");
+		if (opts->flags & REBASE_FORCE)
+			argv_array_push(&child.args, "--no-ff");
+		if (opts->restrict_revision)
+			argv_array_pushf(&child.args,
+					 "--restrict-revision=^%s",
+					 oid_to_hex(&opts->restrict_revision->object.oid));
+		if (opts->upstream)
+			argv_array_pushf(&child.args, "--upstream=%s",
+					 oid_to_hex(&opts->upstream->object.oid));
+		if (opts->onto)
+			argv_array_pushf(&child.args, "--onto=%s",
+					 oid_to_hex(&opts->onto->object.oid));
+		if (opts->squash_onto)
+			argv_array_pushf(&child.args, "--squash-onto=%s",
+					 oid_to_hex(opts->squash_onto));
+		if (opts->onto_name)
+			argv_array_pushf(&child.args, "--onto-name=%s",
+					 opts->onto_name);
+		argv_array_pushf(&child.args, "--head-name=%s",
+				 opts->head_name ?
+				 opts->head_name : "detached HEAD");
+		if (opts->strategy)
+			argv_array_pushf(&child.args, "--strategy=%s",
+					 opts->strategy);
+		if (opts->strategy_opts)
+			argv_array_pushf(&child.args, "--strategy-opts=%s",
+					 opts->strategy_opts);
+		if (opts->switch_to)
+			argv_array_pushf(&child.args, "--switch-to=%s",
+					 opts->switch_to);
+		if (opts->cmd)
+			argv_array_pushf(&child.args, "--cmd=%s", opts->cmd);
+		if (opts->allow_empty_message)
+			argv_array_push(&child.args, "--allow-empty-message");
+		if (opts->allow_rerere_autoupdate > 0)
+			argv_array_push(&child.args, "--rerere-autoupdate");
+		else if (opts->allow_rerere_autoupdate == 0)
+			argv_array_push(&child.args, "--no-rerere-autoupdate");
+		if (opts->gpg_sign_opt)
+			argv_array_push(&child.args, opts->gpg_sign_opt);
+		if (opts->signoff)
+			argv_array_push(&child.args, "--signoff");
+
+		status = run_command(&child);
+		goto finished_rebase;
+	}
 
 	add_var(&script_snippet, "GIT_DIR", absolute_path(get_git_dir()));
 	add_var(&script_snippet, "state_dir", opts->state_dir);
@@ -396,10 +476,6 @@ static int run_specific_rebase(struct rebase_options *opts)
 		backend = "git-rebase--am";
 		backend_func = "git_rebase__am";
 		break;
-	case REBASE_INTERACTIVE:
-		backend = "git-rebase--interactive";
-		backend_func = "git_rebase__interactive";
-		break;
 	case REBASE_MERGE:
 		backend = "git-rebase--merge";
 		backend_func = "git_rebase__merge";
@@ -419,8 +495,11 @@ static int run_specific_rebase(struct rebase_options *opts)
 	argv[0] = script_snippet.buf;
 
 	status = run_command_v_opt(argv, RUN_USING_SHELL);
+finished_rebase:
 	if (opts->dont_finish_rebase)
 		; /* do nothing */
+	else if (opts->type == REBASE_INTERACTIVE)
+		; /* interactive rebase cleans up after itself */
 	else if (status == 0) {
 		if (!file_exists(state_dir_path("stopped-sha", opts)))
 			finish_rebase(opts);
