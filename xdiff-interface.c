@@ -95,6 +95,9 @@ static int xdiff_outf(void *priv_, mmbuffer_t *mb, int nbuf)
 	struct xdiff_emit_state *priv = priv_;
 	int i;
 
+	if (!priv->line_fn)
+		return 0;
+
 	for (i = 0; i < nbuf; i++) {
 		if (mb[i].ptr[mb[i].size-1] != '\n') {
 			/* Incomplete line */

@@ -1883,18 +1883,16 @@ static int color_words_output_graph_prefix(struct diff_words_data *diff_words)
 	}
 }
 
-static void fn_out_diff_words_aux(void *priv, char *line, unsigned long len)
+static void fn_out_diff_words_aux(void *priv,
+				  long minus_first, long minus_len,
+				  long plus_first, long plus_len,
+				  const char *func, long funclen)
 {
 	struct diff_words_data *diff_words = priv;
 	struct diff_words_style *style = diff_words->style;
-	int minus_first, minus_len, plus_first, plus_len;
 	const char *minus_begin, *minus_end, *plus_begin, *plus_end;
 	struct diff_options *opt = diff_words->opt;
 	const char *line_prefix;
-
-	if (line[0] != '@' || parse_hunk_header(line, len,
-			&minus_first, &minus_len, &plus_first, &plus_len))
-		return;
 
 	assert(opt);
 	line_prefix = diff_line_prefix(opt);
@@ -2045,7 +2043,7 @@ static void diff_words_show(struct diff_words_data *diff_words)
 	xpp.flags = 0;
 	/* as only the hunk header will be parsed, we need a 0-context */
 	xecfg.ctxlen = 0;
-	if (xdi_diff_outf(&minus, &plus, NULL, fn_out_diff_words_aux,
+	if (xdi_diff_outf(&minus, &plus, fn_out_diff_words_aux, NULL,
 			  diff_words, &xpp, &xecfg))
 		die("unable to generate word diff");
 	free(minus.ptr);
