@@ -3,6 +3,7 @@
 #include "../win32.h"
 #include "fscache.h"
 #include "config.h"
+#include "../../mem-pool.h"
 
 static volatile long initialized;
 static DWORD dwTlsIndex;
@@ -17,6 +18,7 @@ static CRITICAL_SECTION mutex;
 struct fscache {
 	volatile long enabled;
 	struct hashmap map;
+	struct mem_pool *mem_pool;
 	unsigned int lstat_requests;
 	unsigned int opendir_requests;
 	unsigned int fscache_requests;
@@ -116,11 +118,12 @@ static void fsentry_init(struct fsentry *fse, struct fsentry *list,
 /*
  * Allocate an fsentry structure on the heap.
  */
-static struct fsentry *fsentry_alloc(struct fsentry *list, const char *name,
+static struct fsentry *fsentry_alloc(struct fscache *cache, struct fsentry *list, const char *name,
 		size_t len)
 {
 	/* overallocate fsentry and copy the name to the end */
-	struct fsentry *fse = xmalloc(sizeof(struct fsentry) + len + 1);
+	struct fsentry *fse =
+		mem_pool_alloc(cache->mem_pool, sizeof(*fse) + len + 1);
 	/* init the rest of the structure */
 	fsentry_init(fse, list, name, len);
 	fse->next = NULL;
@@ -140,27 +143,21 @@ inline static void fsentry_addref(struct fsentry *fse)
 }
 
 /*
- * Release the reference to an fsentry, frees the memory if its the last ref.
+ * Release the reference to an fsentry.
  */
 static void fsentry_release(struct fsentry *fse)
 {
 	if (fse->list)
 		fse = fse->list;
 
-	if (InterlockedDecrement(&(fse->u.refcnt)))
-		return;
-
-	while (fse) {
-		struct fsentry *next = fse->next;
-		free(fse);
-		fse = next;
-	}
+	InterlockedDecrement(&(fse->u.refcnt));
 }
 
 /*
  * Allocate and initialize an fsentry from a WIN32_FIND_DATA structure.
  */
-static struct fsentry *fseentry_create_entry(struct fsentry *list,
+static struct fsentry *fseentry_create_entry(struct fscache *cache,
+					     struct fsentry *list,
 					     const WIN32_FIND_DATAW *fdata)
 {
 	char buf[MAX_PATH * 3];
@@ -168,7 +165,7 @@ static struct fsentry *fseentry_create_entry(struct fsentry *list,
 	struct fsentry *fse;
 	len = xwcstoutf(buf, fdata->cFileName, ARRAY_SIZE(buf));
 
-	fse = fsentry_alloc(list, buf, len);
+	fse = fsentry_alloc(cache, list, buf, len);
 
 	fse->st_mode = file_attr_to_st_mode(fdata->dwFileAttributes);
 	fse->dirent.d_type = S_ISDIR(fse->st_mode) ? DT_DIR : DT_REG;
@@ -186,7 +183,7 @@ static struct fsentry *fseentry_create_entry(struct fsentry *list,
  * Dir should not contain trailing '/'. Use an empty string for the current
  * directory (not "."!).
  */
-static struct fsentry *fsentry_create_list(const struct fsentry *dir,
+static struct fsentry *fsentry_create_list(struct fscache *cache, const struct fsentry *dir,
 					   int *dir_not_found)
 {
 	wchar_t pattern[MAX_PATH + 2]; /* + 2 for '/' '*' */
@@ -225,14 +222,14 @@ static struct fsentry *fsentry_create_list(const struct fsentry *dir,
 	}
 
 	/* allocate object to hold directory listing */
-	list = fsentry_alloc(NULL, dir->dirent.d_name, dir->len);
+	list = fsentry_alloc(cache, NULL, dir->dirent.d_name, dir->len);
 	list->st_mode = S_IFDIR;
 	list->dirent.d_type = DT_DIR;
 
 	/* walk directory and build linked list of fsentry structures */
 	phead = &list->next;
 	do {
-		*phead = fseentry_create_entry(list, &fdata);
+		*phead = fseentry_create_entry(cache, list, &fdata);
 		phead = &(*phead)->next;
 	} while (FindNextFileW(h, &fdata));
 
@@ -244,7 +241,7 @@ static struct fsentry *fsentry_create_list(const struct fsentry *dir,
 	if (err == ERROR_NO_MORE_FILES)
 		return list;
 
-	/* otherwise free the list and return error */
+	/* otherwise release the list and return error */
 	fsentry_release(list);
 	errno = err_win_to_posix(err);
 	return NULL;
@@ -267,7 +264,10 @@ static void fscache_add(struct fscache *cache, struct fsentry *fse)
  */
 static void fscache_clear(struct fscache *cache)
 {
-	hashmap_free_entries(&cache->map, struct fsentry, ent);
+	mem_pool_discard(cache->mem_pool, 0);
+	cache->mem_pool = NULL;
+	mem_pool_init(&cache->mem_pool, 0);
+	hashmap_free(&cache->map);
 	hashmap_init(&cache->map, (hashmap_cmp_fn)fsentry_cmp, NULL, 0);
 	cache->lstat_requests = cache->opendir_requests = 0;
 	cache->fscache_misses = cache->fscache_requests = 0;
@@ -320,7 +320,7 @@ static struct fsentry *fscache_get(struct fscache *cache, struct fsentry *key)
 	}
 
 	/* create the directory listing */
-	fse = fsentry_create_list(key->list ? key->list : key, &dir_not_found);
+	fse = fsentry_create_list(cache, key->list ? key->list : key, &dir_not_found);
 
 	/* leave on error (errno set by fsentry_create_list) */
 	if (!fse) {
@@ -330,7 +330,7 @@ static struct fsentry *fscache_get(struct fscache *cache, struct fsentry *key)
 			 * empty, which for all practical matters is the same
 			 * thing as far as fscache is concerned).
 			 */
-			fse = fsentry_alloc(key->list->list,
+			fse = fsentry_alloc(cache, key->list->list,
 					    key->list->dirent.d_name,
 					    key->list->len);
 			fse->st_mode = 0;
@@ -409,6 +409,7 @@ int fscache_enable(size_t initial_size)
 		 * '4' was determined empirically by testing several repos
 		 */
 		hashmap_init(&cache->map, (hashmap_cmp_fn)fsentry_cmp, NULL, initial_size * 4);
+		mem_pool_init(&cache->mem_pool, 0);
 		if (!TlsSetValue(dwTlsIndex, cache))
 			BUG("TlsSetValue error");
 	}
@@ -440,7 +441,8 @@ void fscache_disable(void)
 			"total requests/misses %u/%u\n",
 			cache->lstat_requests, cache->opendir_requests,
 			cache->fscache_requests, cache->fscache_misses);
-		fscache_clear(cache);
+		mem_pool_discard(cache->mem_pool, 0);
+		hashmap_free(&cache->map);
 		free(cache);
 	}
 
@@ -622,6 +624,8 @@ void fscache_merge(struct fscache *dest)
 	hashmap_iter_init(&cache->map, &iter);
 	while ((e = hashmap_iter_next(&iter)))
 		hashmap_add(&dest->map, e);
+
+	mem_pool_combine(dest->mem_pool, cache->mem_pool);
 
 	dest->lstat_requests += cache->lstat_requests;
 	dest->opendir_requests += cache->opendir_requests;
