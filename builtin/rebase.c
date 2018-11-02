@@ -1216,15 +1216,15 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		 *       git-rebase.txt caveats with "unless you know what you are doing"
 		 */
 		if (options.rebase_merges)
-			die(_("error: cannot combine '--preserve_merges' with "
+			die(_("error: cannot combine '--preserve-merges' with "
 			      "'--rebase-merges'"));
 
 	if (options.rebase_merges) {
 		if (strategy_options.nr)
-			die(_("error: cannot combine '--rebase_merges' with "
+			die(_("error: cannot combine '--rebase-merges' with "
 			      "'--strategy-option'"));
 		if (options.strategy)
-			die(_("error: cannot combine '--rebase_merges' with "
+			die(_("error: cannot combine '--rebase-merges' with "
 			      "'--strategy'"));
 	}
 
