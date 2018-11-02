@@ -445,11 +445,6 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 		return 0;
 	}
 
-	if (read_cache() < 0)
-		die(_("index file corrupt"));
-
-	die_in_unpopulated_submodule(&the_index, prefix);
-
 	/*
 	 * Check the "pathspec '%s' did not match any files" block
 	 * below before enabling new magic.
@@ -459,6 +454,10 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 		       PATHSPEC_SYMLINK_LEADING_PATH,
 		       prefix, argv);
 
+	if (read_cache_preload(&pathspec) < 0)
+		die(_("index file corrupt"));
+
+	die_in_unpopulated_submodule(&the_index, prefix);
 	die_path_inside_submodule(&the_index, &pathspec);
 
 	if (add_new_files) {
