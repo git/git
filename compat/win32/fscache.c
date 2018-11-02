@@ -403,7 +403,7 @@ static struct fsentry *fscache_get(struct fsentry *key)
  * Enables or disables the cache. Note that the cache is read-only, changes to
  * the working directory are NOT reflected in the cache while enabled.
  */
-int fscache_enable(int enable)
+int fscache_enable(int enable, size_t initial_size)
 {
 	int result;
 
@@ -419,7 +419,11 @@ int fscache_enable(int enable)
 		InitializeCriticalSection(&mutex);
 		lstat_requests = opendir_requests = 0;
 		fscache_misses = fscache_requests = 0;
-		hashmap_init(&map, (hashmap_cmp_fn) fsentry_cmp, NULL, 0);
+		/*
+		 * avoid having to rehash by leaving room for the parent dirs.
+		 * '4' was determined empirically by testing several repos
+		 */
+		hashmap_init(&map, (hashmap_cmp_fn) fsentry_cmp, NULL, initial_size * 4);
 		initialized = 1;
 	}
 
