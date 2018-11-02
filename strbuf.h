@@ -190,6 +190,9 @@ void strbuf_ltrim(struct strbuf *sb);
 /* Strip trailing directory separators */
 void strbuf_trim_trailing_dir_sep(struct strbuf *sb);
 
+/* Strip trailing LF or CR/LF */
+void strbuf_trim_trailing_newline(struct strbuf *sb);
+
 /**
  * Replace the contents of the strbuf with a reencoded form.  Returns -1
  * on error, 0 on success.
