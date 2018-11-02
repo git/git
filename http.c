@@ -834,8 +834,7 @@ static CURL *get_curl_handle(void)
 #if LIBCURL_VERSION_NUM >= 0x072c00
 		curl_easy_setopt(result, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NO_REVOKE);
 #else
-		warning("CURLSSLOPT_NO_REVOKE not applied to curl SSL options because\n"
-			"your curl version is too old (< 7.44.0)");
+		warning(_("CURLSSLOPT_NO_REVOKE not suported with cURL < 7.44.0"));
 #endif
 	}
 
@@ -908,8 +907,7 @@ static CURL *get_curl_handle(void)
 	curl_easy_setopt(result, CURLOPT_PROTOCOLS,
 			 get_curl_allowed_protocols(-1));
 #else
-	warning("protocol restrictions not applied to curl redirects because\n"
-		"your curl version is too old (>= 7.19.4)");
+	warning(_("Protocol restrictions not supported with cURL < 7.19.4"));
 #endif
 	if (getenv("GIT_CURL_VERBOSE"))
 		curl_easy_setopt(result, CURLOPT_VERBOSE, 1L);
