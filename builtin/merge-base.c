@@ -111,54 +111,12 @@ static int handle_is_ancestor(int argc, const char **argv)
 		return 1;
 }
 
-struct rev_collect {
-	struct commit **commit;
-	int nr;
-	int alloc;
-	unsigned int initial : 1;
-};
-
-static void add_one_commit(struct object_id *oid, struct rev_collect *revs)
-{
-	struct commit *commit;
-
-	if (is_null_oid(oid))
-		return;
-
-	commit = lookup_commit(the_repository, oid);
-	if (!commit ||
-	    (commit->object.flags & TMP_MARK) ||
-	    parse_commit(commit))
-		return;
-
-	ALLOC_GROW(revs->commit, revs->nr + 1, revs->alloc);
-	revs->commit[revs->nr++] = commit;
-	commit->object.flags |= TMP_MARK;
-}
-
-static int collect_one_reflog_ent(struct object_id *ooid, struct object_id *noid,
-				  const char *ident, timestamp_t timestamp,
-				  int tz, const char *message, void *cbdata)
-{
-	struct rev_collect *revs = cbdata;
-
-	if (revs->initial) {
-		revs->initial = 0;
-		add_one_commit(ooid, revs);
-	}
-	add_one_commit(noid, revs);
-	return 0;
-}
-
 static int handle_fork_point(int argc, const char **argv)
 {
 	struct object_id oid;
 	char *refname;
+	struct commit *derived, *fork_point;
 	const char *commitname;
-	struct rev_collect revs;
-	struct commit *derived;
-	struct commit_list *bases;
-	int i, ret = 0;
 
 	switch (dwim_ref(argv[0], strlen(argv[0]), &oid, &refname)) {
 	case 0:
@@ -174,41 +132,14 @@ static int handle_fork_point(int argc, const char **argv)
 		die("Not a valid object name: '%s'", commitname);
 
 	derived = lookup_commit_reference(the_repository, &oid);
-	memset(&revs, 0, sizeof(revs));
-	revs.initial = 1;
-	for_each_reflog_ent(refname, collect_one_reflog_ent, &revs);
 
-	if (!revs.nr && !get_oid(refname, &oid))
-		add_one_commit(&oid, &revs);
+	fork_point = get_fork_point(refname, derived);
 
-	for (i = 0; i < revs.nr; i++)
-		revs.commit[i]->object.flags &= ~TMP_MARK;
+	if (!fork_point)
+		return 1;
 
-	bases = get_merge_bases_many_dirty(derived, revs.nr, revs.commit);
-
-	/*
-	 * There should be one and only one merge base, when we found
-	 * a common ancestor among reflog entries.
-	 */
-	if (!bases || bases->next) {
-		ret = 1;
-		goto cleanup_return;
-	}
-
-	/* And the found one must be one of the reflog entries */
-	for (i = 0; i < revs.nr; i++)
-		if (&bases->item->object == &revs.commit[i]->object)
-			break; /* found */
-	if (revs.nr <= i) {
-		ret = 1; /* not found */
-		goto cleanup_return;
-	}
-
-	printf("%s\n", oid_to_hex(&bases->item->object.oid));
-
-cleanup_return:
-	free_commit_list(bases);
-	return ret;
+	printf("%s\n", oid_to_hex(&fork_point->object.oid));
+	return 0;
 }
 
 int cmd_merge_base(int argc, const char **argv, const char *prefix)
