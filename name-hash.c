@@ -7,6 +7,7 @@
  */
 #define NO_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
+#include "thread-utils.h"
 
 struct dir_entry {
 	struct hashmap_entry ent;
@@ -130,22 +131,6 @@ static int cache_entry_cmp(const void *unused_cmp_data,
 
 static int lazy_try_threaded = 1;
 static int lazy_nr_dir_threads;
-
-#ifdef NO_PTHREADS
-
-static inline int lookup_lazy_params(struct index_state *istate)
-{
-	return 0;
-}
-
-static inline void threaded_lazy_init_name_hash(
-	struct index_state *istate)
-{
-}
-
-#else
-
-#include "thread-utils.h"
 
 /*
  * Set a minimum number of cache_entries that we will handle per
@@ -516,6 +501,9 @@ static void threaded_lazy_init_name_hash(
 	struct lazy_dir_thread_data *td_dir;
 	struct lazy_name_thread_data *td_name;
 
+	if (!HAVE_THREADS)
+		return;
+
 	k_start = 0;
 	nr_each = DIV_ROUND_UP(istate->cache_nr, lazy_nr_dir_threads);
 
@@ -573,8 +561,6 @@ static void threaded_lazy_init_name_hash(
 	free(td_dir);
 	free(lazy_entries);
 }
-
-#endif
 
 static void lazy_init_name_hash(struct index_state *istate)
 {
