@@ -537,6 +537,56 @@ test_expect_success 'push with http:// and a config of v2 does not request v2' '
 	! grep "git< version 2" log
 '
 
+test_expect_success 'when server sends "ready", expect DELIM' '
+	rm -rf "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" http_child &&
+
+	git init "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" &&
+	test_commit -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" one &&
+
+	git clone "$HTTPD_URL/smart/http_parent" http_child &&
+
+	test_commit -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" two &&
+
+	# After "ready" in the acknowledgments section, pretend that a FLUSH
+	# (0000) was sent instead of a DELIM (0001).
+	printf "/ready/,$ s/0001/0000/" \
+		>"$HTTPD_ROOT_PATH/one-time-sed" &&
+
+	test_must_fail git -C http_child -c protocol.version=2 \
+		fetch "$HTTPD_URL/one_time_sed/http_parent" 2> err &&
+	test_i18ngrep "expected packfile to be sent after .ready." err
+'
+
+test_expect_success 'when server does not send "ready", expect FLUSH' '
+	rm -rf "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" http_child log &&
+
+	git init "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" &&
+	test_commit -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" one &&
+
+	git clone "$HTTPD_URL/smart/http_parent" http_child &&
+
+	test_commit -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" two &&
+
+	# Create many commits to extend the negotiation phase across multiple
+	# requests, so that the server does not send "ready" in the first
+	# request.
+	for i in $(test_seq 1 32)
+	do
+		test_commit -C http_child c$i
+	done &&
+
+	# After the acknowledgments section, pretend that a DELIM
+	# (0001) was sent instead of a FLUSH (0000).
+	printf "/acknowledgments/,$ s/0000/0001/" \
+		>"$HTTPD_ROOT_PATH/one-time-sed" &&
+
+	test_must_fail env GIT_TRACE_PACKET="$(pwd)/log" git -C http_child \
+		-c protocol.version=2 \
+		fetch "$HTTPD_URL/one_time_sed/http_parent" 2> err &&
+	grep "fetch< acknowledgments" log &&
+	! grep "fetch< ready" log &&
+	test_i18ngrep "expected no other sections to be sent after no .ready." err
+'
 
 stop_httpd
 
