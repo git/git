@@ -1920,19 +1920,15 @@ struct index_entry_offset_table
 	struct index_entry_offset entries[FLEX_ARRAY];
 };
 
-#ifndef NO_PTHREADS
 static struct index_entry_offset_table *read_ieot_extension(const char *mmap, size_t mmap_size, size_t offset);
 static void write_ieot_extension(struct strbuf *sb, struct index_entry_offset_table *ieot);
-#endif
 
 static size_t read_eoie_extension(const char *mmap, size_t mmap_size);
 static void write_eoie_extension(struct strbuf *sb, git_hash_ctx *eoie_context, size_t offset);
 
 struct load_index_extensions
 {
-#ifndef NO_PTHREADS
 	pthread_t pthread;
-#endif
 	struct index_state *istate;
 	const char *mmap;
 	size_t mmap_size;
@@ -2009,8 +2005,6 @@ static unsigned long load_all_cache_entries(struct index_state *istate,
 					0, istate->cache_nr, mmap, src_offset, NULL);
 	return consumed;
 }
-
-#ifndef NO_PTHREADS
 
 /*
  * Mostly randomly chosen maximum thread counts: we
@@ -2122,7 +2116,6 @@ static unsigned long load_cache_entries_threaded(struct index_state *istate, con
 
 	return consumed;
 }
-#endif
 
 /* remember to discard_cache() before reading a different cache! */
 int do_read_index(struct index_state *istate, const char *path, int must_exist)
@@ -2135,10 +2128,8 @@ int do_read_index(struct index_state *istate, const char *path, int must_exist)
 	size_t mmap_size;
 	struct load_index_extensions p;
 	size_t extension_offset = 0;
-#ifndef NO_PTHREADS
 	int nr_threads, cpus;
 	struct index_entry_offset_table *ieot = NULL;
-#endif
 
 	if (istate->initialized)
 		return istate->cache_nr;
@@ -2181,7 +2172,7 @@ int do_read_index(struct index_state *istate, const char *path, int must_exist)
 
 	src_offset = sizeof(*hdr);
 
-#ifndef NO_PTHREADS
+	if (HAVE_THREADS) {
 	nr_threads = git_config_get_index_threads();
 
 	/* TODO: does creating more threads than cores help? */
@@ -2219,21 +2210,19 @@ int do_read_index(struct index_state *istate, const char *path, int must_exist)
 	} else {
 		src_offset += load_all_cache_entries(istate, mmap, mmap_size, src_offset);
 	}
-#else
-	src_offset += load_all_cache_entries(istate, mmap, mmap_size, src_offset);
-#endif
+	} else {
+		src_offset += load_all_cache_entries(istate, mmap, mmap_size, src_offset);
+	}
 
 	istate->timestamp.sec = st.st_mtime;
 	istate->timestamp.nsec = ST_MTIME_NSEC(st);
 
 	/* if we created a thread, join it otherwise load the extensions on the primary thread */
-#ifndef NO_PTHREADS
-	if (extension_offset) {
+	if (HAVE_THREADS && extension_offset) {
 		int ret = pthread_join(p.pthread, NULL);
 		if (ret)
 			die(_("unable to join load_index_extensions thread: %s"), strerror(ret));
 	}
-#endif
 	if (!extension_offset) {
 		p.src_offset = src_offset;
 		load_index_extensions(&p);
@@ -2756,8 +2745,9 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 	if (ce_write(&c, newfd, &hdr, sizeof(hdr)) < 0)
 		return -1;
 
-#ifndef NO_PTHREADS
-	nr_threads = git_config_get_index_threads();
+	if (HAVE_THREADS) {
+		nr_threads = git_config_get_index_threads();
+
 	if (nr_threads != 1) {
 		int ieot_blocks, cpus;
 
@@ -2787,7 +2777,7 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 			ieot_entries = DIV_ROUND_UP(entries, ieot_blocks);
 		}
 	}
-#endif
+	}
 
 	offset = lseek(newfd, 0, SEEK_CUR);
 	if (offset < 0) {
@@ -2871,8 +2861,7 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 	 * strip_extensions parameter as we need it when loading the shared
 	 * index.
 	 */
-#ifndef NO_PTHREADS
-	if (ieot) {
+	if (HAVE_THREADS && ieot) {
 		struct strbuf sb = STRBUF_INIT;
 
 		write_ieot_extension(&sb, ieot);
@@ -2883,7 +2872,6 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 		if (err)
 			return -1;
 	}
-#endif
 
 	if (!strip_extensions && istate->split_index) {
 		struct strbuf sb = STRBUF_INIT;
@@ -3469,7 +3457,6 @@ static void write_eoie_extension(struct strbuf *sb, git_hash_ctx *eoie_context, 
 	strbuf_add(sb, hash, the_hash_algo->rawsz);
 }
 
-#ifndef NO_PTHREADS
 #define IEOT_VERSION	(1)
 
 static struct index_entry_offset_table *read_ieot_extension(const char *mmap, size_t mmap_size, size_t offset)
@@ -3542,4 +3529,3 @@ static void write_ieot_extension(struct strbuf *sb, struct index_entry_offset_ta
 	       strbuf_add(sb, &buffer, sizeof(uint32_t));
        }
 }
-#endif
