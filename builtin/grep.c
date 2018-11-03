@@ -34,7 +34,6 @@ static int recurse_submodules;
 #define GREP_NUM_THREADS_DEFAULT 8
 static int num_threads;
 
-#ifndef NO_PTHREADS
 static pthread_t *threads;
 
 /* We use one producer thread and THREADS consumer
@@ -234,6 +233,9 @@ static int wait_all(void)
 	int hit = 0;
 	int i;
 
+	if (!HAVE_THREADS)
+		return 0;
+
 	grep_lock();
 	all_work_added = 1;
 
@@ -265,13 +267,6 @@ static int wait_all(void)
 
 	return hit;
 }
-#else /* !NO_PTHREADS */
-
-static int wait_all(void)
-{
-	return 0;
-}
-#endif
 
 static int grep_cmd_config(const char *var, const char *value, void *cb)
 {
@@ -284,8 +279,7 @@ static int grep_cmd_config(const char *var, const char *value, void *cb)
 		if (num_threads < 0)
 			die(_("invalid number of threads specified (%d) for %s"),
 			    num_threads, var);
-#ifdef NO_PTHREADS
-		else if (num_threads && num_threads != 1) {
+		else if (!HAVE_THREADS && num_threads && num_threads != 1) {
 			/*
 			 * TRANSLATORS: %s is the configuration
 			 * variable for tweaking threads, currently
@@ -294,7 +288,6 @@ static int grep_cmd_config(const char *var, const char *value, void *cb)
 			warning(_("no threads support, ignoring %s"), var);
 			num_threads = 0;
 		}
-#endif
 	}
 
 	if (!strcmp(var, "submodule.recurse"))
@@ -330,17 +323,14 @@ static int grep_oid(struct grep_opt *opt, const struct object_id *oid,
 	grep_source_init(&gs, GREP_SOURCE_OID, pathbuf.buf, path, oid);
 	strbuf_release(&pathbuf);
 
-#ifndef NO_PTHREADS
-	if (num_threads) {
+	if (HAVE_THREADS && num_threads) {
 		/*
 		 * add_work() copies gs and thus assumes ownership of
 		 * its fields, so do not call grep_source_clear()
 		 */
 		add_work(opt, &gs);
 		return 0;
-	} else
-#endif
-	{
+	} else {
 		int hit;
 
 		hit = grep_source(opt, &gs);
@@ -363,17 +353,14 @@ static int grep_file(struct grep_opt *opt, const char *filename)
 	grep_source_init(&gs, GREP_SOURCE_FILE, buf.buf, filename, filename);
 	strbuf_release(&buf);
 
-#ifndef NO_PTHREADS
-	if (num_threads) {
+	if (HAVE_THREADS && num_threads) {
 		/*
 		 * add_work() copies gs and thus assumes ownership of
 		 * its fields, so do not call grep_source_clear()
 		 */
 		add_work(opt, &gs);
 		return 0;
-	} else
-#endif
-	{
+	} else {
 		int hit;
 
 		hit = grep_source(opt, &gs);
@@ -1038,20 +1025,20 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	pathspec.recursive = 1;
 	pathspec.recurse_submodules = !!recurse_submodules;
 
-#ifndef NO_PTHREADS
-	if (list.nr || cached || show_in_pager)
+	if (HAVE_THREADS) {
+		if (list.nr || cached || show_in_pager)
+			num_threads = 0;
+		else if (num_threads == 0)
+			num_threads = GREP_NUM_THREADS_DEFAULT;
+		else if (num_threads < 0)
+			die(_("invalid number of threads specified (%d)"), num_threads);
+		if (num_threads == 1)
+			num_threads = 0;
+	} else {
+		if (num_threads)
+			warning(_("no threads support, ignoring --threads"));
 		num_threads = 0;
-	else if (num_threads == 0)
-		num_threads = GREP_NUM_THREADS_DEFAULT;
-	else if (num_threads < 0)
-		die(_("invalid number of threads specified (%d)"), num_threads);
-	if (num_threads == 1)
-		num_threads = 0;
-#else
-	if (num_threads)
-		warning(_("no threads support, ignoring --threads"));
-	num_threads = 0;
-#endif
+	}
 
 	if (!num_threads)
 		/*
@@ -1062,15 +1049,13 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		 */
 		compile_grep_patterns(&opt);
 
-#ifndef NO_PTHREADS
-	if (num_threads) {
+	if (HAVE_THREADS && num_threads) {
 		if (!(opt.name_only || opt.unmatch_name_only || opt.count)
 		    && (opt.pre_context || opt.post_context ||
 			opt.file_break || opt.funcbody))
 			skip_first_line = 1;
 		start_threads(&opt);
 	}
-#endif
 
 	if (show_in_pager && (cached || list.nr))
 		die(_("--open-files-in-pager only works on the worktree"));
