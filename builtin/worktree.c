@@ -245,7 +245,7 @@ static void validate_worktree_add(const char *path, const struct add_opts *opts)
 	if (!wt)
 		goto done;
 
-	locked = !!is_worktree_locked(wt);
+	locked = !!worktree_lock_reason(wt);
 	if ((!locked && opts->force) || (locked && opts->force > 1)) {
 		if (delete_git_dir(wt->id))
 		    die(_("unable to re-add worktree '%s'"), path);
@@ -682,7 +682,7 @@ static int lock_worktree(int ac, const char **av, const char *prefix)
 	if (is_main_worktree(wt))
 		die(_("The main working tree cannot be locked or unlocked"));
 
-	old_reason = is_worktree_locked(wt);
+	old_reason = worktree_lock_reason(wt);
 	if (old_reason) {
 		if (*old_reason)
 			die(_("'%s' is already locked, reason: %s"),
@@ -714,7 +714,7 @@ static int unlock_worktree(int ac, const char **av, const char *prefix)
 		die(_("'%s' is not a working tree"), av[0]);
 	if (is_main_worktree(wt))
 		die(_("The main working tree cannot be locked or unlocked"));
-	if (!is_worktree_locked(wt))
+	if (!worktree_lock_reason(wt))
 		die(_("'%s' is not locked"), av[0]);
 	ret = unlink_or_warn(git_common_path("worktrees/%s/locked", wt->id));
 	free_worktrees(worktrees);
@@ -787,7 +787,7 @@ static int move_worktree(int ac, const char **av, const char *prefix)
 	validate_no_submodules(wt);
 
 	if (force < 2)
-		reason = is_worktree_locked(wt);
+		reason = worktree_lock_reason(wt);
 	if (reason) {
 		if (*reason)
 			die(_("cannot move a locked working tree, lock reason: %s\nuse 'move -f -f' to override or unlock first"),
@@ -900,7 +900,7 @@ static int remove_worktree(int ac, const char **av, const char *prefix)
 	if (is_main_worktree(wt))
 		die(_("'%s' is a main working tree"), av[0]);
 	if (force < 2)
-		reason = is_worktree_locked(wt);
+		reason = worktree_lock_reason(wt);
 	if (reason) {
 		if (*reason)
 			die(_("cannot remove a locked working tree, lock reason: %s\nuse 'remove -f -f' to override or unlock first"),
