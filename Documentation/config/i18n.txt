@@ -1,0 +1,10 @@
+i18n.commitEncoding::
+	Character encoding the commit messages are stored in; Git itself
+	does not care per se, but this information is necessary e.g. when
+	importing commits from emails or in the gitk graphical history
+	browser (and possibly at other places in the future or in other
+	porcelains). See e.g. linkgit:git-mailinfo[1]. Defaults to 'utf-8'.
+
+i18n.logOutputEncoding::
+	Character encoding the commit messages are converted to when
+	running 'git log' and friends.

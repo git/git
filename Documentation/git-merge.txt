@@ -342,7 +342,7 @@ include::merge-strategies.txt[]
 
 CONFIGURATION
 -------------
-include::merge-config.txt[]
+include::config/merge.txt[]
 
 branch.<name>.mergeOptions::
 	Sets default options for merging into branch <name>. The syntax and
