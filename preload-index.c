@@ -121,6 +121,8 @@ static void preload_index(struct index_state *index,
 
 	for (i = 0; i < threads; i++) {
 		struct thread_data *p = data+i;
+		int err;
+
 		p->index = index;
 		if (pathspec)
 			copy_pathspec(&p->pathspec, pathspec);
@@ -129,8 +131,10 @@ static void preload_index(struct index_state *index,
 		if (pd.progress)
 			p->progress = &pd;
 		offset += work;
-		if (pthread_create(&p->pthread, NULL, preload_thread, p))
-			die("unable to create threaded lstat");
+		err = pthread_create(&p->pthread, NULL, preload_thread, p);
+
+		if (err)
+			die(_("unable to create threaded lstat: %s"), strerror(err));
 	}
 	for (i = 0; i < threads; i++) {
 		struct thread_data *p = data+i;

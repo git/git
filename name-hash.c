@@ -494,6 +494,7 @@ static inline void lazy_update_dir_ref_counts(
 static void threaded_lazy_init_name_hash(
 	struct index_state *istate)
 {
+	int err;
 	int nr_each;
 	int k_start;
 	int t;
@@ -526,8 +527,9 @@ static void threaded_lazy_init_name_hash(
 		if (k_start > istate->cache_nr)
 			k_start = istate->cache_nr;
 		td_dir_t->k_end = k_start;
-		if (pthread_create(&td_dir_t->pthread, NULL, lazy_dir_thread_proc, td_dir_t))
-			die("unable to create lazy_dir_thread");
+		err = pthread_create(&td_dir_t->pthread, NULL, lazy_dir_thread_proc, td_dir_t);
+		if (err)
+			die(_("unable to create lazy_dir thread: %s"), strerror(err));
 	}
 	for (t = 0; t < lazy_nr_dir_threads; t++) {
 		struct lazy_dir_thread_data *td_dir_t = td_dir + t;
@@ -547,13 +549,15 @@ static void threaded_lazy_init_name_hash(
 	 */
 	td_name->istate = istate;
 	td_name->lazy_entries = lazy_entries;
-	if (pthread_create(&td_name->pthread, NULL, lazy_name_thread_proc, td_name))
-		die("unable to create lazy_name_thread");
+	err = pthread_create(&td_name->pthread, NULL, lazy_name_thread_proc, td_name);
+	if (err)
+		die(_("unable to create lazy_name thread: %s"), strerror(err));
 
 	lazy_update_dir_ref_counts(istate, lazy_entries);
 
-	if (pthread_join(td_name->pthread, NULL))
-		die("unable to join lazy_name_thread");
+	err = pthread_join(td_name->pthread, NULL);
+	if (err)
+		die(_("unable to join lazy_name thread: %s"), strerror(err));
 
 	cleanup_dir_mutex();
 
