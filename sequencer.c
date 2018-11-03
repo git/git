@@ -2890,7 +2890,7 @@ static int do_reset(const char *name, int len, struct replay_opts *opts)
 	struct tree_desc desc;
 	struct tree *tree;
 	struct unpack_trees_options unpack_tree_opts;
-	int ret = 0, i;
+	int ret = 0;
 
 	if (hold_locked_index(&lock, LOCK_REPORT_ON_ERROR) < 0)
 		return -1;
@@ -2910,10 +2910,13 @@ static int do_reset(const char *name, int len, struct replay_opts *opts)
 		}
 		oidcpy(&oid, &opts->squash_onto);
 	} else {
+		int i;
+
 		/* Determine the length of the label */
 		for (i = 0; i < len; i++)
 			if (isspace(name[i]))
-				len = i;
+				break;
+		len = i;
 
 		strbuf_addf(&ref_name, "refs/rewritten/%.*s", len, name);
 		if (get_oid(ref_name.buf, &oid) &&
