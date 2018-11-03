@@ -130,6 +130,9 @@ int prepare_branch_to_be_rebased(struct replay_opts *opts, const char *commit);
 #define SUMMARY_SHOW_AUTHOR_DATE (1 << 1)
 void print_commit_summary(const char *prefix, const struct object_id *oid,
 			  unsigned int flags);
+
+int read_author_script(const char *path, char **name, char **email, char **date,
+		       int allow_missing);
 #endif
 
 void parse_strategy_opts(struct replay_opts *opts, char *raw_opts);

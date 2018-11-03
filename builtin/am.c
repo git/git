@@ -261,32 +261,6 @@ static int read_state_file(struct strbuf *sb, const struct am_state *state,
 }
 
 /**
- * Take a series of KEY='VALUE' lines where VALUE part is
- * sq-quoted, and append <KEY, VALUE> at the end of the string list
- */
-static int parse_key_value_squoted(char *buf, struct string_list *list)
-{
-	while (*buf) {
-		struct string_list_item *item;
-		char *np;
-		char *cp = strchr(buf, '=');
-		if (!cp)
-			return -1;
-		np = strchrnul(cp, '\n');
-		*cp++ = '\0';
-		item = string_list_append(list, buf);
-
-		buf = np + (*np == '\n');
-		*np = '\0';
-		cp = sq_dequote(cp);
-		if (!cp)
-			return -1;
-		item->util = xstrdup(cp);
-	}
-	return 0;
-}
-
-/**
  * Reads and parses the state directory's "author-script" file, and sets
  * state->author_name, state->author_email and state->author_date accordingly.
  * Returns 0 on success, -1 if the file could not be parsed.
@@ -302,42 +276,16 @@ static int parse_key_value_squoted(char *buf, struct string_list *list)
  * script, and thus if the file differs from what this function expects, it is
  * better to bail out than to do something that the user does not expect.
  */
-static int read_author_script(struct am_state *state)
+static int read_am_author_script(struct am_state *state)
 {
 	const char *filename = am_path(state, "author-script");
-	struct strbuf buf = STRBUF_INIT;
-	struct string_list kv = STRING_LIST_INIT_DUP;
-	int retval = -1; /* assume failure */
-	int fd;
 
 	assert(!state->author_name);
 	assert(!state->author_email);
 	assert(!state->author_date);
 
-	fd = open(filename, O_RDONLY);
-	if (fd < 0) {
-		if (errno == ENOENT)
-			return 0;
-		die_errno(_("could not open '%s' for reading"), filename);
-	}
-	strbuf_read(&buf, fd, 0);
-	close(fd);
-	if (parse_key_value_squoted(buf.buf, &kv))
-		goto finish;
-
-	if (kv.nr != 3 ||
-	    strcmp(kv.items[0].string, "GIT_AUTHOR_NAME") ||
-	    strcmp(kv.items[1].string, "GIT_AUTHOR_EMAIL") ||
-	    strcmp(kv.items[2].string, "GIT_AUTHOR_DATE"))
-		goto finish;
-	state->author_name = kv.items[0].util;
-	state->author_email = kv.items[1].util;
-	state->author_date = kv.items[2].util;
-	retval = 0;
-finish:
-	string_list_clear(&kv, !!retval);
-	strbuf_release(&buf);
-	return retval;
+	return read_author_script(filename, &state->author_name,
+				  &state->author_email, &state->author_date, 1);
 }
 
 /**
@@ -411,7 +359,7 @@ static void am_load(struct am_state *state)
 		BUG("state file 'last' does not exist");
 	state->last = strtol(sb.buf, NULL, 10);
 
-	if (read_author_script(state) < 0)
+	if (read_am_author_script(state) < 0)
 		die(_("could not parse author script"));
 
 	read_commit_msg(state);
