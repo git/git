@@ -1246,6 +1246,15 @@ int finish_async(struct async *async)
 #endif
 }
 
+int async_with_fork(void)
+{
+#ifdef NO_PTHREADS
+	return 1;
+#else
+	return 0;
+#endif
+}
+
 const char *find_hook(const char *name)
 {
 	static struct strbuf path = STRBUF_INIT;
