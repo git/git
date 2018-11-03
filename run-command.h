@@ -1,9 +1,7 @@
 #ifndef RUN_COMMAND_H
 #define RUN_COMMAND_H
 
-#ifndef NO_PTHREADS
-#include <pthread.h>
-#endif
+#include "thread-utils.h"
 
 #include "argv-array.h"
 
