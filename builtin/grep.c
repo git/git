@@ -69,13 +69,11 @@ static pthread_mutex_t grep_mutex;
 
 static inline void grep_lock(void)
 {
-	assert(num_threads);
 	pthread_mutex_lock(&grep_mutex);
 }
 
 static inline void grep_unlock(void)
 {
-	assert(num_threads);
 	pthread_mutex_unlock(&grep_mutex);
 }
 
@@ -234,7 +232,7 @@ static int wait_all(void)
 	int i;
 
 	if (!HAVE_THREADS)
-		return 0;
+		BUG("Never call this function unless you have started threads");
 
 	grep_lock();
 	all_work_added = 1;
@@ -279,14 +277,14 @@ static int grep_cmd_config(const char *var, const char *value, void *cb)
 		if (num_threads < 0)
 			die(_("invalid number of threads specified (%d) for %s"),
 			    num_threads, var);
-		else if (!HAVE_THREADS && num_threads && num_threads != 1) {
+		else if (!HAVE_THREADS && num_threads > 1) {
 			/*
 			 * TRANSLATORS: %s is the configuration
 			 * variable for tweaking threads, currently
 			 * grep.threads
 			 */
 			warning(_("no threads support, ignoring %s"), var);
-			num_threads = 0;
+			num_threads = 1;
 		}
 	}
 
@@ -323,7 +321,7 @@ static int grep_oid(struct grep_opt *opt, const struct object_id *oid,
 	grep_source_init(&gs, GREP_SOURCE_OID, pathbuf.buf, path, oid);
 	strbuf_release(&pathbuf);
 
-	if (HAVE_THREADS && num_threads) {
+	if (num_threads > 1) {
 		/*
 		 * add_work() copies gs and thus assumes ownership of
 		 * its fields, so do not call grep_source_clear()
@@ -353,7 +351,7 @@ static int grep_file(struct grep_opt *opt, const char *filename)
 	grep_source_init(&gs, GREP_SOURCE_FILE, buf.buf, filename, filename);
 	strbuf_release(&buf);
 
-	if (HAVE_THREADS && num_threads) {
+	if (num_threads > 1) {
 		/*
 		 * add_work() copies gs and thus assumes ownership of
 		 * its fields, so do not call grep_source_clear()
@@ -1025,36 +1023,34 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	pathspec.recursive = 1;
 	pathspec.recurse_submodules = !!recurse_submodules;
 
-	if (HAVE_THREADS) {
-		if (list.nr || cached || show_in_pager)
-			num_threads = 0;
-		else if (num_threads == 0)
-			num_threads = GREP_NUM_THREADS_DEFAULT;
-		else if (num_threads < 0)
-			die(_("invalid number of threads specified (%d)"), num_threads);
-		if (num_threads == 1)
-			num_threads = 0;
-	} else {
-		if (num_threads)
-			warning(_("no threads support, ignoring --threads"));
-		num_threads = 0;
-	}
+	if (list.nr || cached || show_in_pager) {
+		if (num_threads > 1)
+			warning(_("invalid option combination, ignoring --threads"));
+		num_threads = 1;
+	} else if (!HAVE_THREADS && num_threads > 1) {
+		warning(_("no threads support, ignoring --threads"));
+		num_threads = 1;
+	} else if (num_threads < 0)
+		die(_("invalid number of threads specified (%d)"), num_threads);
+	else if (num_threads == 0)
+		num_threads = HAVE_THREADS ? GREP_NUM_THREADS_DEFAULT : 1;
 
-	if (!num_threads)
-		/*
-		 * The compiled patterns on the main path are only
-		 * used when not using threading. Otherwise
-		 * start_threads() below calls compile_grep_patterns()
-		 * for each thread.
-		 */
-		compile_grep_patterns(&opt);
-
-	if (HAVE_THREADS && num_threads) {
+	if (num_threads > 1) {
+		if (!HAVE_THREADS)
+			BUG("Somebody got num_threads calculation wrong!");
 		if (!(opt.name_only || opt.unmatch_name_only || opt.count)
 		    && (opt.pre_context || opt.post_context ||
 			opt.file_break || opt.funcbody))
 			skip_first_line = 1;
 		start_threads(&opt);
+	} else {
+		/*
+		 * The compiled patterns on the main path are only
+		 * used when not using threading. Otherwise
+		 * start_threads() above calls compile_grep_patterns()
+		 * for each thread.
+		 */
+		compile_grep_patterns(&opt);
 	}
 
 	if (show_in_pager && (cached || list.nr))
@@ -1106,7 +1102,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		hit = grep_objects(&opt, &pathspec, &list);
 	}
 
-	if (num_threads)
+	if (num_threads > 1)
 		hit |= wait_all();
 	if (hit && show_in_pager)
 		run_pager(&opt, prefix);
