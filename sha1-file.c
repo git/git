@@ -2199,7 +2199,8 @@ static int check_stream_sha1(git_zstream *stream,
 	 * see the comment in unpack_sha1_rest for details.
 	 */
 	while (total_read <= size &&
-	       (status == Z_OK || status == Z_BUF_ERROR)) {
+	       (status == Z_OK ||
+		(status == Z_BUF_ERROR && !stream->avail_out))) {
 		stream->next_out = buf;
 		stream->avail_out = sizeof(buf);
 		if (size - total_read < stream->avail_out)
