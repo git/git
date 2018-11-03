@@ -7,17 +7,7 @@
 #include "fsmonitor.h"
 #include "config.h"
 #include "progress.h"
-
-#ifdef NO_PTHREADS
-static void preload_index(struct index_state *index,
-			  const struct pathspec *pathspec,
-			  unsigned int refresh_flags)
-{
-	; /* nothing */
-}
-#else
-
-#include <pthread.h>
+#include "thread-utils.h"
 
 /*
  * Mostly randomly chosen maximum thread counts: we
@@ -108,7 +98,7 @@ static void preload_index(struct index_state *index,
 	struct thread_data data[MAX_PARALLEL];
 	struct progress_data pd;
 
-	if (!core_preload_index)
+	if (!HAVE_THREADS || !core_preload_index)
 		return;
 
 	threads = index->cache_nr / THREAD_COST;
@@ -151,7 +141,6 @@ static void preload_index(struct index_state *index,
 
 	trace_performance_leave("preload index");
 }
-#endif
 
 int read_index_preload(struct index_state *index,
 		       const struct pathspec *pathspec,
