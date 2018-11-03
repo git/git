@@ -2172,7 +2172,6 @@ int do_read_index(struct index_state *istate, const char *path, int must_exist)
 
 	src_offset = sizeof(*hdr);
 
-	if (HAVE_THREADS) {
 	nr_threads = git_config_get_index_threads();
 
 	/* TODO: does creating more threads than cores help? */
@@ -2182,6 +2181,9 @@ int do_read_index(struct index_state *istate, const char *path, int must_exist)
 		if (nr_threads > cpus)
 			nr_threads = cpus;
 	}
+
+	if (!HAVE_THREADS)
+		nr_threads = 1;
 
 	if (nr_threads > 1) {
 		extension_offset = read_eoie_extension(mmap, mmap_size);
@@ -2210,20 +2212,16 @@ int do_read_index(struct index_state *istate, const char *path, int must_exist)
 	} else {
 		src_offset += load_all_cache_entries(istate, mmap, mmap_size, src_offset);
 	}
-	} else {
-		src_offset += load_all_cache_entries(istate, mmap, mmap_size, src_offset);
-	}
 
 	istate->timestamp.sec = st.st_mtime;
 	istate->timestamp.nsec = ST_MTIME_NSEC(st);
 
 	/* if we created a thread, join it otherwise load the extensions on the primary thread */
-	if (HAVE_THREADS && extension_offset) {
+	if (extension_offset) {
 		int ret = pthread_join(p.pthread, NULL);
 		if (ret)
 			die(_("unable to join load_index_extensions thread: %s"), strerror(ret));
-	}
-	if (!extension_offset) {
+	} else {
 		p.src_offset = src_offset;
 		load_index_extensions(&p);
 	}
@@ -2745,8 +2743,10 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 	if (ce_write(&c, newfd, &hdr, sizeof(hdr)) < 0)
 		return -1;
 
-	if (HAVE_THREADS) {
+	if (HAVE_THREADS)
 		nr_threads = git_config_get_index_threads();
+	else
+		nr_threads = 1;
 
 	if (nr_threads != 1) {
 		int ieot_blocks, cpus;
@@ -2776,7 +2776,6 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 				+ (ieot_blocks * sizeof(struct index_entry_offset)));
 			ieot_entries = DIV_ROUND_UP(entries, ieot_blocks);
 		}
-	}
 	}
 
 	offset = lseek(newfd, 0, SEEK_CUR);
@@ -2861,7 +2860,7 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 	 * strip_extensions parameter as we need it when loading the shared
 	 * index.
 	 */
-	if (HAVE_THREADS && ieot) {
+	if (ieot) {
 		struct strbuf sb = STRBUF_INIT;
 
 		write_ieot_extension(&sb, ieot);
