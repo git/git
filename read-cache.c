@@ -1746,7 +1746,7 @@ static struct cache_entry *create_from_disk(struct mem_pool *ce_mem_pool,
 	size_t len;
 	const char *name;
 	unsigned int flags;
-	size_t copy_len;
+	size_t copy_len = 0;
 	/*
 	 * Adjacent cache entries tend to share the leading paths, so it makes
 	 * sense to only store the differences in later entries.  In the v4
@@ -1786,8 +1786,6 @@ static struct cache_entry *create_from_disk(struct mem_pool *ce_mem_pool,
 				die(_("malformed name field in the index, near path '%s'"),
 					previous_ce->name);
 			copy_len = previous_len - strip_len;
-		} else {
-			copy_len = 0;
 		}
 		name = (const char *)cp;
 	}
