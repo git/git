@@ -345,6 +345,11 @@ void close_all_packs(struct raw_object_store *o)
 			BUG("want to close pack marked 'do-not-close'");
 		else
 			close_pack(p);
+
+	if (o->multi_pack_index) {
+		close_midx(o->multi_pack_index);
+		o->multi_pack_index = NULL;
+	}
 }
 
 /*
