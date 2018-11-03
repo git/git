@@ -302,4 +302,22 @@ test_expect_success 'ls-remote works outside repository' '
 	nongit git ls-remote dst.git
 '
 
+test_expect_success 'ls-remote patterns work with all protocol versions' '
+	git for-each-ref --format="%(objectname)	%(refname)" \
+		refs/heads/master refs/remotes/origin/master >expect &&
+	git -c protocol.version=1 ls-remote . master >actual.v1 &&
+	test_cmp expect actual.v1 &&
+	git -c protocol.version=2 ls-remote . master >actual.v2 &&
+	test_cmp expect actual.v2
+'
+
+test_expect_success 'ls-remote prefixes work with all protocol versions' '
+	git for-each-ref --format="%(objectname)	%(refname)" \
+		refs/heads/ refs/tags/ >expect &&
+	git -c protocol.version=1 ls-remote --heads --tags . >actual.v1 &&
+	test_cmp expect actual.v1 &&
+	git -c protocol.version=2 ls-remote --heads --tags . >actual.v2 &&
+	test_cmp expect actual.v2
+'
+
 test_done
