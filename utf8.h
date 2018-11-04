@@ -80,9 +80,13 @@ void strbuf_utf8_align(struct strbuf *buf, align_type position, unsigned int wid
 /*
  * If a data stream is declared as UTF-16BE or UTF-16LE, then a UTF-16
  * BOM must not be used [1]. The same applies for the UTF-32 equivalents.
- * The function returns true if this rule is violated.
+ * The function returns true if this rule is violated (except for same BOM).
  *
  * [1] http://unicode.org/faq/utf_bom.html#bom10
+ *
+ * As an exception, we allow same BOM in case users may require using it, since
+ * otherwise their only option is to declare the data stream without endianness,
+ * and the data stream encoding could change after Git's conversion operations.
  */
 int has_prohibited_utf_bom(const char *enc, const char *data, size_t len);
 

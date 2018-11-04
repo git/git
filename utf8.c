@@ -573,17 +573,17 @@ static const char utf32_le_bom[] = {'\xFF', '\xFE', '\0', '\0'};
 
 int has_prohibited_utf_bom(const char *enc, const char *data, size_t len)
 {
-	return (
-	  (same_utf_encoding("UTF-16BE", enc) ||
-	   same_utf_encoding("UTF-16LE", enc)) &&
-	  (has_bom_prefix(data, len, utf16_be_bom, sizeof(utf16_be_bom)) ||
-	   has_bom_prefix(data, len, utf16_le_bom, sizeof(utf16_le_bom)))
-	) || (
-	  (same_utf_encoding("UTF-32BE",  enc) ||
-	   same_utf_encoding("UTF-32LE", enc)) &&
-	  (has_bom_prefix(data, len, utf32_be_bom, sizeof(utf32_be_bom)) ||
-	   has_bom_prefix(data, len, utf32_le_bom, sizeof(utf32_le_bom)))
-	);
+	if (same_utf_encoding("UTF-16BE", enc)) {
+		return has_bom_prefix(data, len, utf16_le_bom, sizeof(utf16_le_bom));
+	} else if (same_utf_encoding("UTF-16LE", enc)) {
+		return has_bom_prefix(data, len, utf16_be_bom, sizeof(utf16_be_bom));
+	} else if (same_utf_encoding("UTF-32BE", enc)) {
+		return has_bom_prefix(data, len, utf32_le_bom, sizeof(utf32_le_bom));
+	} else if (same_utf_encoding("UTF-32LE", enc)) {
+		return has_bom_prefix(data, len, utf32_be_bom, sizeof(utf32_be_bom));
+	} else {
+		return 0;
+	}
 }
 
 int is_missing_required_utf_bom(const char *enc, const char *data, size_t len)
