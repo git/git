@@ -197,9 +197,9 @@ test_expect_success GPG 'show bad signature with custom format' '
 test_expect_success GPG 'show untrusted signature with custom format' '
 	cat >expect <<-\EOF &&
 	U
-	61092E85B7227189
+	65A0EEA02E30CAD7
 	Eris Discordia <discord@example.net>
-	D4BE22311AD3131E5EDA29A461092E85B7227189
+	F8364A59E07FFE9F4D63005A65A0EEA02E30CAD7
 	D4BE22311AD3131E5EDA29A461092E85B7227189
 	EOF
 	git log -1 --format="%G?%n%GK%n%GS%n%GF%n%GP" eighth-signed-alt >actual &&
@@ -209,7 +209,7 @@ test_expect_success GPG 'show untrusted signature with custom format' '
 test_expect_success GPG 'show unknown signature with custom format' '
 	cat >expect <<-\EOF &&
 	E
-	61092E85B7227189
+	65A0EEA02E30CAD7
 
 
 
