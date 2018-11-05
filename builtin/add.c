@@ -615,6 +615,7 @@ finish:
 			       COMMIT_LOCK | SKIP_IF_UNCHANGED))
 		die(_("Unable to write new index file"));
 
+	enable_fscache(0);
 	UNLEAK(pathspec);
 	UNLEAK(dir);
 	return exit_status;
