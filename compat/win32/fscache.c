@@ -3,6 +3,7 @@
 #include "../win32.h"
 #include "fscache.h"
 #include "../../dir.h"
+#include "config.h"
 
 static int initialized;
 static volatile long enabled;
@@ -399,7 +400,11 @@ int fscache_enable(int enable)
 	int result;
 
 	if (!initialized) {
+		int fscache = git_env_bool("GIT_TEST_FSCACHE", -1);
+
 		/* allow the cache to be disabled entirely */
+		if (fscache != -1)
+			core_fscache = fscache;
 		if (!core_fscache)
 			return 0;
 
