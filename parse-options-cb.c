@@ -28,13 +28,6 @@ int parse_opt_abbrev_cb(const struct option *opt, const char *arg, int unset)
 	return 0;
 }
 
-int parse_opt_approxidate_cb(const struct option *opt, const char *arg,
-			     int unset)
-{
-	*(timestamp_t *)(opt->value) = approxidate(arg);
-	return 0;
-}
-
 int parse_opt_expiry_date_cb(const struct option *opt, const char *arg,
 			     int unset)
 {

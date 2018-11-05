@@ -183,10 +183,6 @@ There are some macros to easily define options:
 	scale the provided value by 1024, 1024^2 or 1024^3 respectively.
 	The scaled value is put into `unsigned_long_var`.
 
-`OPT_DATE(short, long, &timestamp_t_var, description)`::
-	Introduce an option with date argument, see `approxidate()`.
-	The timestamp is put into `timestamp_t_var`.
-
 `OPT_EXPIRY_DATE(short, long, &timestamp_t_var, description)`::
 	Introduce an option with expiry date argument, see `parse_expiry_date()`.
 	The timestamp is put into `timestamp_t_var`.
