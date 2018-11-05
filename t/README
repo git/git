@@ -466,6 +466,9 @@ explicitly providing repositories when accessing submodule objects is
 complete or needs to be abandoned for whatever reason (in which case the
 migrated codepaths still retain their performance benefits).
 
+GIT_TEST_FSCACHE=<boolean> exercises the uncommon fscache code path
+which adds a cache below mingw's lstat and dirent implementations.
+
 Naming Tests
 ------------
 
