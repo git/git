@@ -1410,6 +1410,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 		s.prefix = prefix;
 
 	wt_status_print(&s);
+	enable_fscache(0);
 	return 0;
 }
 
