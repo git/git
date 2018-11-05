@@ -197,6 +197,12 @@ static void diffsize_consume(void *data, char *line, unsigned long len)
 	(*(int *)data)++;
 }
 
+static void diffsize_hunk(void *data, long ob, long on, long nb, long nn,
+			  const char *funcline, long funclen)
+{
+	diffsize_consume(data, NULL, 0);
+}
+
 static int diffsize(const char *a, const char *b)
 {
 	xpparam_t pp = { 0 };
@@ -210,7 +216,9 @@ static int diffsize(const char *a, const char *b)
 	mf2.size = strlen(b);
 
 	cfg.ctxlen = 3;
-	if (!xdi_diff_outf(&mf1, &mf2, diffsize_consume, &count, &pp, &cfg))
+	if (!xdi_diff_outf(&mf1, &mf2,
+			   diffsize_hunk, diffsize_consume, &count,
+			   &pp, &cfg))
 		return count;
 
 	error(_("failed to generate diff"));

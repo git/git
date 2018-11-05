@@ -1912,18 +1912,16 @@ static int color_words_output_graph_prefix(struct diff_words_data *diff_words)
 	}
 }
 
-static void fn_out_diff_words_aux(void *priv, char *line, unsigned long len)
+static void fn_out_diff_words_aux(void *priv,
+				  long minus_first, long minus_len,
+				  long plus_first, long plus_len,
+				  const char *func, long funclen)
 {
 	struct diff_words_data *diff_words = priv;
 	struct diff_words_style *style = diff_words->style;
-	int minus_first, minus_len, plus_first, plus_len;
 	const char *minus_begin, *minus_end, *plus_begin, *plus_end;
 	struct diff_options *opt = diff_words->opt;
 	const char *line_prefix;
-
-	if (line[0] != '@' || parse_hunk_header(line, len,
-			&minus_first, &minus_len, &plus_first, &plus_len))
-		return;
 
 	assert(opt);
 	line_prefix = diff_line_prefix(opt);
@@ -2074,8 +2072,8 @@ static void diff_words_show(struct diff_words_data *diff_words)
 	xpp.flags = 0;
 	/* as only the hunk header will be parsed, we need a 0-context */
 	xecfg.ctxlen = 0;
-	if (xdi_diff_outf(&minus, &plus, fn_out_diff_words_aux, diff_words,
-			  &xpp, &xecfg))
+	if (xdi_diff_outf(&minus, &plus, fn_out_diff_words_aux, NULL,
+			  diff_words, &xpp, &xecfg))
 		die("unable to generate word diff");
 	free(minus.ptr);
 	free(plus.ptr);
@@ -3130,6 +3128,15 @@ static int is_conflict_marker(const char *line, int marker_size, unsigned long l
 	return 1;
 }
 
+static void checkdiff_consume_hunk(void *priv,
+				   long ob, long on, long nb, long nn,
+				   const char *func, long funclen)
+
+{
+	struct checkdiff_t *data = priv;
+	data->lineno = nb - 1;
+}
+
 static void checkdiff_consume(void *priv, char *line, unsigned long len)
 {
 	struct checkdiff_t *data = priv;
@@ -3165,12 +3172,6 @@ static void checkdiff_consume(void *priv, char *line, unsigned long len)
 			      data->o->file, set, reset, ws);
 	} else if (line[0] == ' ') {
 		data->lineno++;
-	} else if (line[0] == '@') {
-		char *plus = strchr(line, '+');
-		if (plus)
-			data->lineno = strtol(plus, NULL, 10) - 1;
-		else
-			die("invalid diff");
 	}
 }
 
@@ -3526,8 +3527,8 @@ static void builtin_diff(const char *name_a,
 			xecfg.ctxlen = strtoul(v, NULL, 10);
 		if (o->word_diff)
 			init_diff_words_data(&ecbdata, o, one, two);
-		if (xdi_diff_outf(&mf1, &mf2, fn_out_consume, &ecbdata,
-				  &xpp, &xecfg))
+		if (xdi_diff_outf(&mf1, &mf2, NULL, fn_out_consume,
+				  &ecbdata, &xpp, &xecfg))
 			die("unable to generate diff for %s", one->path);
 		if (o->word_diff)
 			free_diff_words_data(&ecbdata);
@@ -3637,8 +3638,8 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 		xpp.anchors_nr = o->anchors_nr;
 		xecfg.ctxlen = o->context;
 		xecfg.interhunkctxlen = o->interhunkcontext;
-		if (xdi_diff_outf(&mf1, &mf2, diffstat_consume, diffstat,
-				  &xpp, &xecfg))
+		if (xdi_diff_outf(&mf1, &mf2, discard_hunk_line,
+				  diffstat_consume, diffstat, &xpp, &xecfg))
 			die("unable to generate diffstat for %s", one->path);
 	}
 
@@ -3686,7 +3687,8 @@ static void builtin_checkdiff(const char *name_a, const char *name_b,
 		memset(&xecfg, 0, sizeof(xecfg));
 		xecfg.ctxlen = 1; /* at least one context line */
 		xpp.flags = 0;
-		if (xdi_diff_outf(&mf1, &mf2, checkdiff_consume, &data,
+		if (xdi_diff_outf(&mf1, &mf2, checkdiff_consume_hunk,
+				  checkdiff_consume, &data,
 				  &xpp, &xecfg))
 			die("unable to generate checkdiff for %s", one->path);
 
@@ -5666,10 +5668,6 @@ static void patch_id_consume(void *priv, char *line, unsigned long len)
 	struct patch_id_t *data = priv;
 	int new_len;
 
-	/* Ignore line numbers when computing the SHA1 of the patch */
-	if (starts_with(line, "@@ -"))
-		return;
-
 	new_len = remove_space(line, len);
 
 	git_SHA1_Update(data->ctx, line, new_len);
@@ -5771,8 +5769,8 @@ static int diff_get_patch_id(struct diff_options *options, struct object_id *oid
 		xpp.flags = 0;
 		xecfg.ctxlen = 3;
 		xecfg.flags = 0;
-		if (xdi_diff_outf(&mf1, &mf2, patch_id_consume, &data,
-				  &xpp, &xecfg))
+		if (xdi_diff_outf(&mf1, &mf2, discard_hunk_line,
+				  patch_id_consume, &data, &xpp, &xecfg))
 			return error("unable to generate patch-id diff for %s",
 				     p->one->path);
 	}

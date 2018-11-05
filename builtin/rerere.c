@@ -41,7 +41,8 @@ static int diff_two(const char *file1, const char *label1,
 	xpp.flags = 0;
 	memset(&xecfg, 0, sizeof(xecfg));
 	xecfg.ctxlen = 3;
-	ecb.outf = outf;
+	ecb.out_hunk = NULL;
+	ecb.out_line = outf;
 	ret = xdi_diff(&minus, &plus, &xpp, &xecfg, &ecb);
 
 	free(minus.ptr);
