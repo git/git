@@ -499,6 +499,9 @@ GIT_TEST_FULL_NAME_HASH=<boolean>, when true, sets the default name-hash
 function in 'git pack-objects' to be the one used by the --full-name-hash
 option.
 
+GIT_TEST_FSCACHE=<boolean> exercises the uncommon fscache code path
+which adds a cache below mingw's lstat and dirent implementations.
+
 Naming Tests
 ------------
 
