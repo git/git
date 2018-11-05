@@ -191,6 +191,20 @@ extern int opterror(const struct option *opt, const char *reason, int flags);
 #define opterror(o,r,f) (opterror((o),(r),(f)), const_error())
 #endif
 
+/*
+ * Use these assertions for callbacks that expect to be called with NONEG and
+ * NOARG respectively, and do not otherwise handle the "unset" and "arg"
+ * parameters.
+ */
+#define BUG_ON_OPT_NEG(unset) do { \
+	if ((unset)) \
+		BUG("option callback does not expect negation"); \
+} while (0)
+#define BUG_ON_OPT_ARG(arg) do { \
+	if ((arg)) \
+		BUG("option callback does not expect an argument"); \
+} while (0)
+
 /*----- incremental advanced APIs -----*/
 
 enum {

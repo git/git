@@ -475,6 +475,8 @@ static int option_parse_exclude(const struct option *opt,
 {
 	struct string_list *exclude_list = opt->value;
 
+	BUG_ON_OPT_NEG(unset);
+
 	exc_given = 1;
 	string_list_append(exclude_list, arg);
 
@@ -486,6 +488,8 @@ static int option_parse_exclude_from(const struct option *opt,
 {
 	struct dir_struct *dir = opt->value;
 
+	BUG_ON_OPT_NEG(unset);
+
 	exc_given = 1;
 	add_excludes_from_file(dir, arg);
 
@@ -496,6 +500,9 @@ static int option_parse_exclude_standard(const struct option *opt,
 					 const char *arg, int unset)
 {
 	struct dir_struct *dir = opt->value;
+
+	BUG_ON_OPT_NEG(unset);
+	BUG_ON_OPT_ARG(arg);
 
 	exc_given = 1;
 	setup_standard_excludes(dir);

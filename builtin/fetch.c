@@ -98,6 +98,8 @@ static int git_fetch_config(const char *k, const char *v, void *cb)
 
 static int parse_refmap_arg(const struct option *opt, const char *arg, int unset)
 {
+	BUG_ON_OPT_NEG(unset);
+
 	/*
 	 * "git fetch --refmap='' origin foo"
 	 * can be used to tell the command not to store anywhere

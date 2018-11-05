@@ -161,6 +161,9 @@ static int opt_parse_m(const struct option *opt, const char *arg, int unset)
 static int opt_parse_rename_score(const struct option *opt, const char *arg, int unset)
 {
 	const char **value = opt->value;
+
+	BUG_ON_OPT_NEG(unset);
+
 	if (arg != NULL && *arg == '=')
 		arg = arg + 1;
 

@@ -4772,6 +4772,9 @@ static int apply_option_parse_exclude(const struct option *opt,
 				      const char *arg, int unset)
 {
 	struct apply_state *state = opt->value;
+
+	BUG_ON_OPT_NEG(unset);
+
 	add_name_limit(state, arg, 1);
 	return 0;
 }
@@ -4780,6 +4783,9 @@ static int apply_option_parse_include(const struct option *opt,
 				      const char *arg, int unset)
 {
 	struct apply_state *state = opt->value;
+
+	BUG_ON_OPT_NEG(unset);
+
 	add_name_limit(state, arg, 0);
 	state->has_include = 1;
 	return 0;
@@ -4790,6 +4796,9 @@ static int apply_option_parse_p(const struct option *opt,
 				int unset)
 {
 	struct apply_state *state = opt->value;
+
+	BUG_ON_OPT_NEG(unset);
+
 	state->p_value = atoi(arg);
 	state->p_value_known = 1;
 	return 0;
@@ -4799,6 +4808,9 @@ static int apply_option_parse_space_change(const struct option *opt,
 					   const char *arg, int unset)
 {
 	struct apply_state *state = opt->value;
+
+	BUG_ON_OPT_ARG(arg);
+
 	if (unset)
 		state->ws_ignore_action = ignore_ws_none;
 	else
@@ -4810,6 +4822,9 @@ static int apply_option_parse_whitespace(const struct option *opt,
 					 const char *arg, int unset)
 {
 	struct apply_state *state = opt->value;
+
+	BUG_ON_OPT_NEG(unset);
+
 	state->whitespace_option = arg;
 	if (parse_whitespace_option(state, arg))
 		return -1;
@@ -4820,6 +4835,9 @@ static int apply_option_parse_directory(const struct option *opt,
 					const char *arg, int unset)
 {
 	struct apply_state *state = opt->value;
+
+	BUG_ON_OPT_NEG(unset);
+
 	strbuf_reset(&state->root);
 	strbuf_addstr(&state->root, arg);
 	strbuf_complete(&state->root, '/');

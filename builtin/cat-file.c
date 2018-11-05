@@ -595,6 +595,8 @@ static int batch_option_callback(const struct option *opt,
 {
 	struct batch_options *bo = opt->value;
 
+	BUG_ON_OPT_NEG(unset);
+
 	if (bo->enabled) {
 		return error(_("only one batch option may be specified"));
 	}
