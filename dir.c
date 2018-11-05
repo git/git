@@ -281,8 +281,15 @@ static int match_attrs(const struct index_state *istate,
 		       const struct pathspec_item *item)
 {
 	int i;
+	char *to_free = NULL;
+
+	if (name[namelen])
+		name = to_free = xmemdupz(name, namelen);
 
 	git_check_attr(istate, name, item->attr_check);
+
+	free(to_free);
+
 	for (i = 0; i < item->attr_match_nr; i++) {
 		const char *value;
 		int matched;

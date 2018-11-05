@@ -1327,13 +1327,14 @@ void add_reflogs_to_pending(struct rev_info *revs, unsigned flags)
 }
 
 static void add_cache_tree(struct cache_tree *it, struct rev_info *revs,
-			   struct strbuf *path)
+			   struct strbuf *path, unsigned int flags)
 {
 	size_t baselen = path->len;
 	int i;
 
 	if (it->entry_count >= 0) {
 		struct tree *tree = lookup_tree(revs->repo, &it->oid);
+		tree->object.flags |= flags;
 		add_pending_object_with_path(revs, &tree->object, "",
 					     040000, path->buf);
 	}
@@ -1341,14 +1342,15 @@ static void add_cache_tree(struct cache_tree *it, struct rev_info *revs,
 	for (i = 0; i < it->subtree_nr; i++) {
 		struct cache_tree_sub *sub = it->down[i];
 		strbuf_addf(path, "%s%s", baselen ? "/" : "", sub->name);
-		add_cache_tree(sub->cache_tree, revs, path);
+		add_cache_tree(sub->cache_tree, revs, path, flags);
 		strbuf_setlen(path, baselen);
 	}
 
 }
 
 static void do_add_index_objects_to_pending(struct rev_info *revs,
-					    struct index_state *istate)
+					    struct index_state *istate,
+					    unsigned int flags)
 {
 	int i;
 
@@ -1362,13 +1364,14 @@ static void do_add_index_objects_to_pending(struct rev_info *revs,
 		blob = lookup_blob(revs->repo, &ce->oid);
 		if (!blob)
 			die("unable to add index blob to traversal");
+		blob->object.flags |= flags;
 		add_pending_object_with_path(revs, &blob->object, "",
 					     ce->ce_mode, ce->name);
 	}
 
 	if (istate->cache_tree) {
 		struct strbuf path = STRBUF_INIT;
-		add_cache_tree(istate->cache_tree, revs, &path);
+		add_cache_tree(istate->cache_tree, revs, &path, flags);
 		strbuf_release(&path);
 	}
 }
@@ -1378,7 +1381,7 @@ void add_index_objects_to_pending(struct rev_info *revs, unsigned int flags)
 	struct worktree **worktrees, **p;
 
 	read_index(revs->repo->index);
-	do_add_index_objects_to_pending(revs, revs->repo->index);
+	do_add_index_objects_to_pending(revs, revs->repo->index, flags);
 
 	if (revs->single_worktree)
 		return;
@@ -1394,7 +1397,7 @@ void add_index_objects_to_pending(struct rev_info *revs, unsigned int flags)
 		if (read_index_from(&istate,
 				    worktree_git_path(wt, "index"),
 				    get_worktree_git_dir(wt)) > 0)
-			do_add_index_objects_to_pending(revs, &istate);
+			do_add_index_objects_to_pending(revs, &istate, flags);
 		discard_index(&istate);
 	}
 	free_worktrees(worktrees);
