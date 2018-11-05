@@ -75,4 +75,17 @@ int can_all_from_reach_with_flag(struct object_array *from,
 int can_all_from_reach(struct commit_list *from, struct commit_list *to,
 		       int commit_date_cutoff);
 
+
+/*
+ * Return a list of commits containing the commits in the 'to' array
+ * that are reachable from at least one commit in the 'from' array.
+ * Also add the given 'flag' to each of the commits in the returned list.
+ *
+ * This method uses the PARENT1 and PARENT2 flags during its operation,
+ * so be sure these flags are not set before calling the method.
+ */
+struct commit_list *get_reachable_subset(struct commit **from, int nr_from,
+					 struct commit **to, int nr_to,
+					 unsigned int reachable_flag);
+
 #endif
