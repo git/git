@@ -1107,7 +1107,7 @@ enum interesting tree_entry_interesting(const struct name_entry *entry,
 	 *   5  |  file |    1     |    1     |   0
 	 *   6  |  file |    1     |    2     |   0
 	 *   7  |  file |    2     |   -1     |   2
-	 *   8  |  file |    2     |    0     |   2
+	 *   8  |  file |    2     |    0     |   1
 	 *   9  |  file |    2     |    1     |   0
 	 *  10  |  file |    2     |    2     |  -1
 	 * -----+-------+----------+----------+-------
@@ -1118,7 +1118,7 @@ enum interesting tree_entry_interesting(const struct name_entry *entry,
 	 *  15  |  dir  |    1     |    1     |   1 (*)
 	 *  16  |  dir  |    1     |    2     |   0
 	 *  17  |  dir  |    2     |   -1     |   2
-	 *  18  |  dir  |    2     |    0     |   2
+	 *  18  |  dir  |    2     |    0     |   1
 	 *  19  |  dir  |    2     |    1     |   1 (*)
 	 *  20  |  dir  |    2     |    2     |  -1
 	 *
@@ -1134,7 +1134,12 @@ enum interesting tree_entry_interesting(const struct name_entry *entry,
 
 	negative = do_match(entry, base, base_offset, ps, 1);
 
-	/* #3, #4, #7, #8, #13, #14, #17, #18 */
+	/* #8, #18 */
+	if (positive == all_entries_interesting &&
+	    negative == entry_not_interesting)
+		return entry_interesting;
+
+	/* #3, #4, #7, #13, #14, #17 */
 	if (negative <= entry_not_interesting)
 		return positive;
 
