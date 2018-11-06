@@ -247,6 +247,7 @@ static void check_shallow_file_for_update(struct repository *r)
 
 #define SEEN_ONLY 1
 #define VERBOSE   2
+#define QUICK 4
 
 struct write_shallow_data {
 	struct strbuf *out;
@@ -261,7 +262,10 @@ static int write_one_shallow(const struct commit_graft *graft, void *cb_data)
 	const char *hex = oid_to_hex(&graft->oid);
 	if (graft->nr_parent != -1)
 		return 0;
-	if (data->flags & SEEN_ONLY) {
+	if (data->flags & QUICK) {
+		if (!has_object_file(&graft->oid))
+			return 0;
+	} else if (data->flags & SEEN_ONLY) {
 		struct commit *c = lookup_commit(the_repository, &graft->oid);
 		if (!c || !(c->object.flags & SEEN)) {
 			if (data->flags & VERBOSE)
@@ -371,16 +375,23 @@ void advertise_shallow_grafts(int fd)
 
 /*
  * mark_reachable_objects() should have been run prior to this and all
- * reachable commits marked as "SEEN".
+ * reachable commits marked as "SEEN", except when quick_prune is non-zero,
+ * in which case lines are excised from the shallow file if they refer to
+ * commits that do not exist (any longer).
  */
-void prune_shallow(int show_only)
+void prune_shallow(unsigned options)
 {
 	struct lock_file shallow_lock = LOCK_INIT;
 	struct strbuf sb = STRBUF_INIT;
+	unsigned flags = SEEN_ONLY;
 	int fd;
 
-	if (show_only) {
-		write_shallow_commits_1(&sb, 0, NULL, SEEN_ONLY | VERBOSE);
+	if (options & PRUNE_QUICK)
+		flags |= QUICK;
+
+	if (options & PRUNE_SHOW_ONLY) {
+		flags |= VERBOSE;
+		write_shallow_commits_1(&sb, 0, NULL, flags);
 		strbuf_release(&sb);
 		return;
 	}
@@ -388,7 +399,7 @@ void prune_shallow(int show_only)
 				       git_path_shallow(the_repository),
 				       LOCK_DIE_ON_ERROR);
 	check_shallow_file_for_update(the_repository);
-	if (write_shallow_commits_1(&sb, 0, NULL, SEEN_ONLY)) {
+	if (write_shallow_commits_1(&sb, 0, NULL, flags)) {
 		if (write_in_full(fd, sb.buf, sb.len) < 0)
 			die_errno("failed to write to %s",
 				  get_lock_file_path(&shallow_lock));

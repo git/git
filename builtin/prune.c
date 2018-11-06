@@ -161,7 +161,7 @@ int cmd_prune(int argc, const char **argv, const char *prefix)
 	free(s);
 
 	if (is_repository_shallow(the_repository))
-		prune_shallow(show_only);
+		prune_shallow(show_only ? PRUNE_SHOW_ONLY : 0);
 
 	return 0;
 }
