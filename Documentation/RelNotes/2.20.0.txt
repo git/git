@@ -56,7 +56,7 @@ UI, Workflows & Features
 
  * "git format-patch" learned new "--interdiff" and "--range-diff"
    options to explain the difference between this version and the
-   previous attempt in the cover letter (or after the tree-dashes as
+   previous attempt in the cover letter (or after the three-dashes as
    a comment).
 
  * "git mailinfo" used in "git am" learned to make a best-effort
@@ -78,7 +78,7 @@ UI, Workflows & Features
    meaningfully large repository.  The users will now see progress
    output.
 
- * The minimum version of Windows supported by Windows port fo Git is
+ * The minimum version of Windows supported by Windows port of Git is
    now set to Vista.
 
  * The completion script (in contrib/) learned to complete a handful of
@@ -148,6 +148,18 @@ UI, Workflows & Features
  * "git rebase -i" learned a new insn, 'break', that the user can
    insert in the to-do list.  Upon hitting it, the command returns
    control back to the user.
+
+ * New "--pretty=format:" placeholders %GF and %GP that show the GPG
+   key fingerprints have been invented.
+
+ * On platforms with recent cURL library, http.sslBackend configuration
+   variable can be used to choose a different SSL backend at runtime.
+   The Windows port uses this mechanism to switch between OpenSSL and
+   Secure Channel while talking over the HTTPS protocol.
+
+ * "git send-email" learned to disable SMTP authentication via the
+   "--smtp-auth=none" option, even when the smtp username is given
+   (which turns the authentication on by default).
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -267,6 +279,8 @@ Performance, Internal Implementation, Development Support etc.
    better overview of what is tested for these scripts than before.
 
  * "git rebase" and "git rebase -i" have been reimplemented in C.
+
+ * Windows port learned to use nano-second resolution file timestamps.
 
 
 Fixes since v2.19
@@ -394,6 +408,45 @@ Fixes since v2.19
    has been corrected.
    (merge b072a25fad jc/receive-deny-current-branch-fix later to maint).
 
+ * The logic to determine the archive type "git archive" uses did not
+   correctly kick in for "git archive --remote", which has been
+   corrected.
+
+ * "git repack" in a shallow clone did not correctly update the
+   shallow points in the repository, leading to a repository that
+   does not pass fsck.
+   (merge 5dcfbf564c js/shallow-and-fetch-prune later to maint).
+
+ * Some codepaths failed to form a proper URL when .gitmodules record
+   the URL to a submodule repository as relative to the repository of
+   superproject, which has been corrected.
+   (merge e0a862fdaf sb/submodule-url-to-absolute later to maint).
+
+ * "git fetch" over protocol v2 into a shallow repository failed to
+   fetch full history behind a new tip of history that was diverged
+   before the cut-off point of the history that was previously fetched
+   shallowly.
+
+ * The command line completion machinery (in contrib/) has been
+   updated to allow the completion script to tweak the list of options
+   that are reported by the parse-options machinery correctly.
+   (merge 276b49ff34 nd/completion-negation later to maint).
+
+ * Operations on promisor objects make sense in the context of only a
+   small subset of the commands that internally use the revisions
+   machinery, but the "--exclude-promisor-objects" option were taken
+   and led to nonsense results by commands like "log", to which it
+   didn't make much sense.  This has been corrected.
+   (merge 669b1d2aae md/exclude-promisor-objects-fix later to maint).
+
+ * The "container" mode of TravisCI is going away.  Our .travis.yml
+   file is getting prepared for the transition.
+   (merge 32ee384be8 ss/travis-ci-force-vm-mode later to maint).
+
+ * Our test scripts can now take the '-V' option as a synonym for the
+   '--verbose-log' option.
+   (merge a5f52c6dab sg/test-verbose-log later to maint).
+
  * Code cleanup, docfix, build fix, etc.
    (merge 96a7501aad ts/doc-build-manpage-xsl-quietly later to maint).
    (merge b9b07efdb2 tg/conflict-marker-size later to maint).
@@ -430,3 +483,5 @@ Fixes since v2.19
    (merge b84c783882 jc/cocci-preincr later to maint).
    (merge 5e495f8122 uk/merge-subtree-doc-update later to maint).
    (merge aaaa881822 jk/uploadpack-packobjectshook-fix later to maint).
+   (merge 3063477445 tb/char-may-be-unsigned later to maint).
+   (merge 8c64bc9420 sg/test-rebase-editor-fix later to maint).
