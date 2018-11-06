@@ -206,6 +206,12 @@ test_expect_success 'git archive with --output, override inferred format' '
 	test_cmp_bin b.tar d4.zip
 '
 
+test_expect_success GZIP 'git archive with --output and --remote creates .tgz' '
+	git archive --output=d5.tgz --remote=. HEAD &&
+	gzip -d -c <d5.tgz >d5.tar &&
+	test_cmp_bin b.tar d5.tar
+'
+
 test_expect_success 'git archive --list outside of a git repo' '
 	nongit git archive --list
 '
