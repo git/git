@@ -67,7 +67,7 @@ case "$GIT_TEST_TEE_STARTED, $* " in
 done,*)
 	# do not redirect again
 	;;
-*' --tee '*|*' --va'*|*' --verbose-log '*)
+*' --tee '*|*' --va'*|*' -V '*|*' --verbose-log '*)
 	mkdir -p "$TEST_OUTPUT_DIRECTORY/test-results"
 	BASE="$TEST_OUTPUT_DIRECTORY/test-results/$(basename "$0" .sh)"
 
@@ -316,7 +316,7 @@ do
 			echo >&2 "warning: ignoring -x; '$0' is untraceable without BASH_XTRACEFD"
 		fi
 		shift ;;
-	--verbose-log)
+	-V|--verbose-log)
 		verbose_log=t
 		shift ;;
 	*)
