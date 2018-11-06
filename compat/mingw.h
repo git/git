@@ -578,6 +578,16 @@ int wmain(int argc, const wchar_t **w_argv);
 int main(int argc, const char **argv);
 
 /*
+ * For debugging: if a problem occurs, say, in a Git process that is spawned
+ * from another Git process which in turn is spawned from yet another Git
+ * process, it can be quite daunting to figure out what is going on.
+ *
+ * Call this function to open a new MinTTY (this assumes you are in Git for
+ * Windows' SDK) with a GDB that attaches to the current process right away.
+ */
+extern void open_in_gdb(void);
+
+/*
  * Used by Pthread API implementation for Windows
  */
 int err_win_to_posix(DWORD winerr);
