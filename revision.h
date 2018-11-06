@@ -156,6 +156,7 @@ struct rev_info {
 			do_not_die_on_missing_tree:1,
 
 			/* for internal use only */
+			allow_exclude_promisor_objects_opt:1,
 			exclude_promisor_objects:1;
 
 	/* Diff flags */

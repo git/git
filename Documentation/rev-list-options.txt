@@ -761,7 +761,6 @@ Unexpected missing objects will raise an error.
 +
 The form '--missing=print' is like 'allow-any', but will also print a
 list of the missing objects.  Object IDs are prefixed with a ``?'' character.
-endif::git-rev-list[]
 
 --exclude-promisor-objects::
 	(For internal use only.)  Prefilter object traversal at
@@ -769,6 +768,7 @@ endif::git-rev-list[]
 	stronger than `--missing=allow-promisor` because it limits the
 	traversal, rather than just silencing errors about missing
 	objects.
+endif::git-rev-list[]
 
 --no-walk[=(sorted|unsorted)]::
 	Only show the given commits, but do not traverse their ancestors.
