@@ -103,4 +103,11 @@ test_expect_success GPG 'merge commit with bad signature with merge.verifySignat
 	git merge --no-verify-signatures $(cat forged.commit)
 '
 
+test_expect_success GPG 'merge unsigned commit into unborn branch' '
+	test_when_finished "git checkout initial" &&
+	git checkout --orphan unborn &&
+	test_must_fail git merge --verify-signatures side-unsigned 2>mergeerror &&
+	test_i18ngrep "does not have a GPG signature" mergeerror
+'
+
 test_done
