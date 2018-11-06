@@ -230,7 +230,7 @@ GIT_COMMON_DIR/worktrees/foo/HEAD and
 GIT_COMMON_DIR/worktrees/bar/refs/bisect/bad.
 
 To access refs, it's best not to look inside GIT_DIR directly. Instead
-use commands such as linkgit:git-revparse[1] or linkgit:git-update-ref[1]
+use commands such as linkgit:git-rev-parse[1] or linkgit:git-update-ref[1]
 which will handle refs correctly.
 
 CONFIGURATION FILE
