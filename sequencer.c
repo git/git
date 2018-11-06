@@ -4899,7 +4899,7 @@ int complete_action(struct replay_opts *opts, unsigned flags,
 
 	if (checkout_onto(opts, onto_name, oid_to_hex(&oid), orig_head))
 		return -1;
-;
+
 	if (require_clean_work_tree("rebase", "", 1, 1))
 		return -1;
 
