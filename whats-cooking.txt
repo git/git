@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Nov 2018, #02; Fri, 2)
-X-master-at: d582ea202b626dcc6c3b01e1e11a296d9badd730
-X-next-at: 96ac06677ac950c97d331f0ef4892125027eff39
+Subject: What's cooking in git.git (Nov 2018, #03; Wed, 7)
+X-master-at: 8858448bb49332d353febc078ce4a3abcc962efe
+X-next-at: 8438c0b2453a7207c9c45756f5e37dfe283db602
 
-What's cooking in git.git (Nov 2018, #02; Fri, 2)
+What's cooking in git.git (Nov 2018, #03; Wed, 7)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -20,206 +20,360 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ag/rebase-i-in-c (2018-10-09) 20 commits
-  (merged to 'next' on 2018-10-19 at 1b24712d46)
- + rebase -i: move rebase--helper modes to rebase--interactive
- + rebase -i: remove git-rebase--interactive.sh
- + rebase--interactive2: rewrite the submodes of interactive rebase in C
- + rebase -i: implement the main part of interactive rebase as a builtin
- + rebase -i: rewrite init_basic_state() in C
- + rebase -i: rewrite write_basic_state() in C
- + rebase -i: rewrite the rest of init_revisions_and_shortrevisions() in C
- + rebase -i: implement the logic to initialize $revisions in C
- + rebase -i: remove unused modes and functions
- + rebase -i: rewrite complete_action() in C
- + t3404: todo list with commented-out commands only aborts
- + sequencer: change the way skip_unnecessary_picks() returns its result
- + sequencer: refactor append_todo_help() to write its message to a buffer
- + rebase -i: rewrite checkout_onto() in C
- + rebase -i: rewrite setup_reflog_action() in C
- + sequencer: add a new function to silence a command, except if it fails
- + rebase -i: rewrite the edit-todo functionality in C
- + editor: add a function to launch the sequence editor
- + rebase -i: rewrite append_todo_help() in C
- + sequencer: make three functions and an enum from sequencer.c public
- (this branch is used by ag/sequencer-reduce-rewriting-todo, cb/printf-empty-format, js/rebase-autostash-fix, js/rebase-i-break, js/rebase-i-shortopt, js/rebase-in-c-5.5-work-with-rebase-i-in-c and pk/rebase-in-c-6-final.)
+* en/merge-cleanup-more (2018-10-18) 2 commits
+  (merged to 'next' on 2018-10-26 at c706319c26)
+ + merge-recursive: avoid showing conflicts with merge branch before HEAD
+ + merge-recursive: improve auto-merging messages with path collisions
+ (this branch is used by en/merge-path-collision.)
 
- Rewrite of the remaining "rebase -i" machinery in C.
+ Further clean-up of merge-recursive machinery.
 
 
-* cb/printf-empty-format (2018-10-27) 1 commit
-  (merged to 'next' on 2018-11-01 at 9fcb05f22c)
- + sequencer: cleanup for gcc warning in non developer mode
- (this branch uses ag/rebase-i-in-c; is tangled with ag/sequencer-reduce-rewriting-todo, js/rebase-autostash-fix, js/rebase-i-break, js/rebase-i-shortopt, js/rebase-in-c-5.5-work-with-rebase-i-in-c and pk/rebase-in-c-6-final.)
+* jc/http-curlver-warnings (2018-10-26) 1 commit
+  (merged to 'next' on 2018-10-26 at 870e125cec)
+ + http: give curl version warnings consistently
+ (this branch uses js/mingw-http-ssl; is tangled with nd/config-split.)
 
- Build fix for a topic in flight.
-
-
-* jc/rebase-in-c-5-test-typofix (2018-10-11) 1 commit
-  (merged to 'next' on 2018-10-19 at 08c9d86ffd)
- + rebase: fix typoes in error messages
- (this branch uses pk/rebase-in-c, pk/rebase-in-c-2-basic, pk/rebase-in-c-3-acts, pk/rebase-in-c-4-opts and pk/rebase-in-c-5-test; is tangled with js/rebase-autostash-fix, js/rebase-in-c-5.5-work-with-rebase-i-in-c and pk/rebase-in-c-6-final.)
-
- Typofix.
+ Warning message fix.
 
 
-* js/rebase-autostash-fix (2018-10-24) 5 commits
-  (merged to 'next' on 2018-10-29 at 680e648001)
- + rebase --autostash: fix issue with dirty submodules
- + rebase --autostash: demonstrate a problem with dirty submodules
- + rebase (autostash): use an explicit OID to apply the stash
- + rebase (autostash): store the full OID in <state-dir>/autostash
- + rebase (autostash): avoid duplicate call to state_dir_path()
- (this branch uses ag/rebase-i-in-c, js/rebase-in-c-5.5-work-with-rebase-i-in-c, pk/rebase-in-c, pk/rebase-in-c-2-basic, pk/rebase-in-c-3-acts, pk/rebase-in-c-4-opts, pk/rebase-in-c-5-test and pk/rebase-in-c-6-final; is tangled with ag/sequencer-reduce-rewriting-todo, cb/printf-empty-format, jc/rebase-in-c-5-test-typofix, js/rebase-i-break and js/rebase-i-shortopt.)
+* js/mingw-http-ssl (2018-10-26) 3 commits
+  (merged to 'next' on 2018-10-26 at 318e82e101)
+ + http: when using Secure Channel, ignore sslCAInfo by default
+ + http: add support for disabling SSL revocation checks in cURL
+ + http: add support for selecting SSL backends at runtime
+ (this branch is used by jc/http-curlver-warnings and nd/config-split.)
 
- "git rebase" that has recently been rewritten in C had a few issues
- in its "--autstash" feature, which have been corrected.
-
-
-* js/rebase-i-break (2018-10-12) 2 commits
-  (merged to 'next' on 2018-10-19 at 6db9b14495)
- + rebase -i: introduce the 'break' command
- + rebase -i: clarify what happens on a failed `exec`
- (this branch is used by js/rebase-i-shortopt; uses ag/rebase-i-in-c; is tangled with ag/sequencer-reduce-rewriting-todo, cb/printf-empty-format, js/rebase-autostash-fix, js/rebase-in-c-5.5-work-with-rebase-i-in-c and pk/rebase-in-c-6-final.)
-
- "git rebase -i" learned a new insn, 'break', that the user can
- insert in the to-do list.  Upon hitting it, the command returns
- control back to the user.
+ On platforms with recent cURL library, http.sslBackend configuration
+ variable can be used to choose a different SSL backend at runtime.
+ The Windows port uses this mechanism to switch between OpenSSL and
+ Secure Channel while talking over the HTTPS protocol.
 
 
-* js/rebase-i-shortopt (2018-10-26) 1 commit
-  (merged to 'next' on 2018-11-01 at 4e9da19145)
- + rebase -i: recognize short commands without arguments
- (this branch uses ag/rebase-i-in-c and js/rebase-i-break; is tangled with ag/sequencer-reduce-rewriting-todo, cb/printf-empty-format, js/rebase-autostash-fix, js/rebase-in-c-5.5-work-with-rebase-i-in-c and pk/rebase-in-c-6-final.)
+* js/mingw-ns-filetime (2018-10-24) 3 commits
+  (merged to 'next' on 2018-10-29 at 4563a0d9d0)
+ + mingw: implement nanosecond-precision file times
+ + mingw: replace MSVCRT's fstat() with a Win32-based implementation
+ + mingw: factor out code to set stat() data
 
- "git rebase -i" learned to take 'b' as the short form of 'break'
- option in the todo list.
-
-
-* js/rebase-in-c-5.5-work-with-rebase-i-in-c (2018-10-11) 2 commits
-  (merged to 'next' on 2018-10-19 at b734d81006)
- + builtin rebase: prepare for builtin rebase -i
- + Merge branch 'ag/rebase-i-in-c' into js/rebase-in-c-5.5-work-with-rebase-i-in-c
- (this branch is used by js/rebase-autostash-fix and pk/rebase-in-c-6-final; uses ag/rebase-i-in-c, pk/rebase-in-c, pk/rebase-in-c-2-basic, pk/rebase-in-c-3-acts, pk/rebase-in-c-4-opts and pk/rebase-in-c-5-test; is tangled with ag/sequencer-reduce-rewriting-todo, cb/printf-empty-format, jc/rebase-in-c-5-test-typofix, js/rebase-i-break and js/rebase-i-shortopt.)
-
- "rebase" that has been rewritten learns the new calling convention
- used by "rebase -i" that was rewritten in C, tying the loose end
- between two GSoC topics that stomped on each other's toes.
+ Windows port learned to use nano-second resolution file timestamps.
 
 
-* pk/rebase-in-c (2018-08-06) 3 commits
-  (merged to 'next' on 2018-10-19 at 26c29ace53)
- + builtin/rebase: support running "git rebase <upstream>"
- + rebase: refactor common shell functions into their own file
- + rebase: start implementing it as a builtin
- (this branch is used by jc/rebase-in-c-5-test-typofix, js/rebase-autostash-fix, js/rebase-in-c-5.5-work-with-rebase-i-in-c, pk/rebase-in-c-2-basic, pk/rebase-in-c-3-acts, pk/rebase-in-c-4-opts, pk/rebase-in-c-5-test and pk/rebase-in-c-6-final.)
+* js/remote-archive-dwimfix (2018-10-26) 1 commit
+  (merged to 'next' on 2018-10-26 at f5bf6946bd)
+ + archive: initialize archivers earlier
 
- Rewrite of the "rebase" machinery in C.
-
-
-* pk/rebase-in-c-2-basic (2018-09-06) 11 commits
-  (merged to 'next' on 2018-10-19 at c2a0046e52)
- + builtin rebase: support `git rebase <upstream> <switch-to>`
- + builtin rebase: only store fully-qualified refs in `options.head_name`
- + builtin rebase: start a new rebase only if none is in progress
- + builtin rebase: support --force-rebase
- + builtin rebase: try to fast forward when possible
- + builtin rebase: require a clean worktree
- + builtin rebase: support the `verbose` and `diffstat` options
- + builtin rebase: support --quiet
- + builtin rebase: handle the pre-rebase hook and --no-verify
- + builtin rebase: support `git rebase --onto A...B`
- + builtin rebase: support --onto
- (this branch is used by jc/rebase-in-c-5-test-typofix, js/rebase-autostash-fix, js/rebase-in-c-5.5-work-with-rebase-i-in-c, pk/rebase-in-c-3-acts, pk/rebase-in-c-4-opts, pk/rebase-in-c-5-test and pk/rebase-in-c-6-final; uses pk/rebase-in-c.)
-
- Rewrite "git rebase" in C.
+ The logic to determine the archive type "git archive" uses did not
+ correctly kick in for "git archive --remote", which has been
+ corrected.
 
 
-* pk/rebase-in-c-3-acts (2018-09-06) 7 commits
-  (merged to 'next' on 2018-10-19 at 9275677430)
- + builtin rebase: stop if `git am` is in progress
- + builtin rebase: actions require a rebase in progress
- + builtin rebase: support --edit-todo and --show-current-patch
- + builtin rebase: support --quit
- + builtin rebase: support --abort
- + builtin rebase: support --skip
- + builtin rebase: support --continue
- (this branch is used by jc/rebase-in-c-5-test-typofix, js/rebase-autostash-fix, js/rebase-in-c-5.5-work-with-rebase-i-in-c, pk/rebase-in-c-4-opts, pk/rebase-in-c-5-test and pk/rebase-in-c-6-final; uses pk/rebase-in-c and pk/rebase-in-c-2-basic.)
+* js/shallow-and-fetch-prune (2018-10-25) 3 commits
+  (merged to 'next' on 2018-10-26 at 93b7196560)
+ + repack -ad: prune the list of shallow commits
+ + shallow: offer to prune only non-existing entries
+ + repack: point out a bug handling stale shallow info
 
- Rewrite "git rebase" in C.
+ "git repack" in a shallow clone did not correctly update the
+ shallow points in the repository, leading to a repository that
+ does not pass fsck.
 
 
-* pk/rebase-in-c-4-opts (2018-10-11) 18 commits
-  (merged to 'next' on 2018-10-19 at 2770b2f5d5)
- + builtin rebase: support --root
- + builtin rebase: add support for custom merge strategies
- + builtin rebase: support `fork-point` option
- + merge-base --fork-point: extract libified function
- + builtin rebase: support --rebase-merges[=[no-]rebase-cousins]
- + builtin rebase: support `--allow-empty-message` option
- + builtin rebase: support `--exec`
- + builtin rebase: support `--autostash` option
- + builtin rebase: support `-C` and `--whitespace=<type>`
- + builtin rebase: support `--gpg-sign` option
- + builtin rebase: support `--autosquash`
- + builtin rebase: support `keep-empty` option
- + builtin rebase: support `ignore-date` option
- + builtin rebase: support `ignore-whitespace` option
- + builtin rebase: support --committer-date-is-author-date
- + builtin rebase: support --rerere-autoupdate
- + builtin rebase: support --signoff
- + builtin rebase: allow selecting the rebase "backend"
- (this branch is used by jc/rebase-in-c-5-test-typofix, js/rebase-autostash-fix, js/rebase-in-c-5.5-work-with-rebase-i-in-c, pk/rebase-in-c-5-test and pk/rebase-in-c-6-final; uses pk/rebase-in-c, pk/rebase-in-c-2-basic and pk/rebase-in-c-3-acts.)
+* jt/upload-pack-v2-fix-shallow (2018-10-19) 3 commits
+  (merged to 'next' on 2018-10-29 at d9010b3c7b)
+ + upload-pack: clear flags before each v2 request
+ + upload-pack: make want_obj not global
+ + upload-pack: make have_obj not global
 
- Rewrite "git rebase" in C.
+ "git fetch" over protocol v2 into a shallow repository failed to
+ fetch full history behind a new tip of history that was diverged
+ before the cut-off point of the history that was previously fetched
+ shallowly.
 
 
-* pk/rebase-in-c-5-test (2018-10-11) 6 commits
-  (merged to 'next' on 2018-10-19 at 0e48bc8243)
- + builtin rebase: error out on incompatible option/mode combinations
- + builtin rebase: use no-op editor when interactive is "implied"
- + builtin rebase: show progress when connected to a terminal
- + builtin rebase: fast-forward to onto if it is a proper descendant
- + builtin rebase: optionally pass custom reflogs to reset_head()
- + builtin rebase: optionally auto-detect the upstream
- (this branch is used by jc/rebase-in-c-5-test-typofix, js/rebase-autostash-fix, js/rebase-in-c-5.5-work-with-rebase-i-in-c and pk/rebase-in-c-6-final; uses pk/rebase-in-c, pk/rebase-in-c-2-basic, pk/rebase-in-c-3-acts and pk/rebase-in-c-4-opts.)
+* jw/send-email-no-auth (2018-10-23) 1 commit
+  (merged to 'next' on 2018-10-29 at a3fbbdb889)
+ + send-email: explicitly disable authentication
 
- Rewrite "git rebase" in C.
+ "git send-email" learned to disable SMTP authentication via the
+ "--smtp-auth=none" option, even when the smtp username is given
+ (which turns the authentication on by default).
 
 
-* pk/rebase-in-c-6-final (2018-10-11) 1 commit
-  (merged to 'next' on 2018-10-19 at 52f1dadf69)
- + rebase: default to using the builtin rebase
- (this branch is used by js/rebase-autostash-fix; uses ag/rebase-i-in-c, js/rebase-in-c-5.5-work-with-rebase-i-in-c, pk/rebase-in-c, pk/rebase-in-c-2-basic, pk/rebase-in-c-3-acts, pk/rebase-in-c-4-opts and pk/rebase-in-c-5-test; is tangled with ag/sequencer-reduce-rewriting-todo, cb/printf-empty-format, jc/rebase-in-c-5-test-typofix, js/rebase-i-break and js/rebase-i-shortopt.)
+* md/exclude-promisor-objects-fix (2018-10-23) 2 commits
+  (merged to 'next' on 2018-10-29 at fb36a5dcbe)
+ + exclude-promisor-objects: declare when option is allowed
+ + Documentation/git-log.txt: do not show --exclude-promisor-objects
 
- The final step of rewriting "rebase -i" in C.
+ Operations on promisor objects make sense in the context of only a
+ small subset of the commands that internally use the revisions
+ machinery, but the "--exclude-promisor-objects" option were taken
+ and led to nonsense results by commands like "log", to which it
+ didn't make much sense.  This has been corrected.
+
+
+* mg/gpg-fingerprint (2018-10-23) 3 commits
+  (merged to 'next' on 2018-10-26 at 1e219cb754)
+ + gpg-interface.c: obtain primary key fingerprint as well
+ + gpg-interface.c: support getting key fingerprint via %GF format
+ + gpg-interface.c: use flags to determine key/signer info presence
+ (this branch uses mg/gpg-parse-tighten; is tangled with jc/gpg-cocci-preincr.)
+
+ New "--pretty=format:" placeholders %GF and %GP that show the GPG
+ key fingerprints have been invented.
+
+
+* mg/gpg-parse-tighten (2018-10-22) 1 commit
+  (merged to 'next' on 2018-10-26 at efdec77193)
+ + gpg-interface.c: detect and reject multiple signatures on commits
+ (this branch is used by jc/gpg-cocci-preincr and mg/gpg-fingerprint.)
+
+ Detect and reject a signature block that has more than one GPG
+ signature.
+
+
+* nd/completion-negation (2018-10-22) 1 commit
+  (merged to 'next' on 2018-10-29 at 87e73b0c72)
+ + completion: fix __gitcomp_builtin no longer consider extra options
+
+ The command line completion machinery (in contrib/) has been
+ updated to allow the completion script to tweak the list of options
+ that are reported by the parse-options machinery correctly.
+
+
+* nd/submodule-unused-vars (2018-10-22) 1 commit
+  (merged to 'next' on 2018-10-29 at 33641dcc89)
+ + submodule.c: remove some of the_repository references
+
+ Code clean-up.
+
+
+* nd/unpack-trees-with-cache-tree (2018-10-22) 1 commit
+  (merged to 'next' on 2018-10-29 at de51b606da)
+ + read-cache: use of memory after it is freed
+
+ Trivial bugfix.
+
+
+* rj/header-cleanup (2018-10-29) 3 commits
+  (merged to 'next' on 2018-11-01 at 975e56048f)
+ + commit-reach.h: add missing declarations (hdr-check)
+ + ewok_rlw.h: add missing 'inline' to function definition
+ + fetch-object.h: add missing declaration (hdr-check)
+
+ Code cleanup.
+
+
+* sb/submodule-url-to-absolute (2018-10-18) 1 commit
+  (merged to 'next' on 2018-10-29 at 4264c150cb)
+ + submodule helper: convert relative URL to absolute URL if needed
+
+ Some codepaths failed to form a proper URL when .gitmodules record
+ the URL to a submodule repository as relative to the repository of
+ superproject, which has been corrected.
+
+
+* sg/test-rebase-editor-fix (2018-10-29) 1 commit
+  (merged to 'next' on 2018-11-01 at 271e0fc663)
+ + t3404-rebase-interactive: test abbreviated commands
+
+
+* sg/test-verbose-log (2018-10-30) 1 commit
+  (merged to 'next' on 2018-11-01 at 0c4a18a71f)
+ + test-lib: introduce the '-V' short option for '--verbose-log'
+
+ Our test scripts can now take the '-V' option as a synonym for the
+ '--verbose-log' option.
+
+
+* ss/travis-ci-force-vm-mode (2018-10-26) 1 commit
+  (merged to 'next' on 2018-11-01 at 8596bb2a65)
+ + travis-ci: no longer use containers
+ (this branch is used by sg/travis-install-dependencies.)
+
+ The "container" mode of TravisCI is going away.  Our .travis.yml
+ file is getting prepared for the transition.
+
+
+* tb/char-may-be-unsigned (2018-10-26) 1 commit
+  (merged to 'next' on 2018-11-01 at 9e14f289f8)
+ + path.c: char is not (always) signed
+
+ Build portability fix.
 
 --------------------------------------------------
 [New Topics]
 
-* ab/dynamic-gettext-poison (2018-11-02) 1 commit
- - i18n: make GETTEXT_POISON a runtime option
+* jk/misc-unused-fixes (2018-11-07) 4 commits
+  (merged to 'next' on 2018-11-07 at 8438c0b245)
+ + approxidate: fix NULL dereference in date_time()
+  (merged to 'next' on 2018-11-05 at 03429f23c4)
+ + pathspec: handle non-terminated strings with :(attr)
+ + approxidate: handle pending number for "specials"
+ + rev-list: handle flags for --indexed-objects
+
+ Assorted fixes for bugs found while auditing -Wunused-parameter
+ warnings.
+
+ Will merge to 'master'.
 
 
-* js/rebase-p-tests (2018-11-02) 3 commits
- - tests: optionally skip `git rebase -p` tests
- - t3418: decouple test cases from a previous `rebase -p` test case
- - t3404: decouple some test cases from outcomes of previous test cases
+* jk/xdiff-interface (2018-11-05) 9 commits
+  (merged to 'next' on 2018-11-05 at 0edd69cdad)
+ + xdiff-interface: drop parse_hunk_header()
+ + range-diff: use a hunk callback
+ + diff: convert --check to use a hunk callback
+ + combine-diff: use an xdiff hunk callback
+ + diff: use hunk callback for word-diff
+ + diff: discard hunk headers for patch-ids earlier
+ + diff: avoid generating unused hunk header lines
+ + xdiff-interface: provide a separate consume callback for hunks
+ + xdiff: provide a separate emit callback for hunks
 
- In preparation to the day when we can deprecate and remove the
- "rebase -p", make sure we can skip and later remove tests for
- it.
+ The interface into "xdiff" library used to discover the offset and
+ size of a generated patch hunk by first formatting it into the
+ textual hunk header "@@ -n,m +k,l @@" and then parsing the numbers
+ out.  A new interface has been introduced to allow callers a more
+ direct access to them.
+
+ Will merge to 'master'.
+
+
+* al/send-email-auto-cte-fixup (2018-11-02) 1 commit
+  (merged to 'next' on 2018-11-05 at 4ecb1133ce)
+ + send-email: avoid empty transfer encoding header
+
+ "git send-email --transfer-encoding=..." in recent versions of Git
+ sometimes produced an empty "Content-Transfer-Encoding:" header,
+ which has been corrected.
+
+ Will merge to 'master'.
+
+
+* bp/add-diff-files-optim (2018-11-03) 1 commit
+  (merged to 'next' on 2018-11-06 at cdaeb7924a)
+ + add: speed up cmd_add() by utilizing read_cache_preload()
+
+ "git add" needs to internally run "diff-files" equivalent, and the
+ codepath learned the same optimization as "diff-files" has to run
+ lstat(2) in parallel to find which paths have been updated in the
+ working tree.
+
+ Will merge to 'master'.
+
+
+* ds/add-missing-tags (2018-11-03) 3 commits
+  (merged to 'next' on 2018-11-05 at 8388baf76d)
+ + remote: make add_missing_tags() linear
+ + test-reach: test get_reachable_subset
+ + commit-reach: implement get_reachable_subset
+
+ The history traversal used to implement the tag-following has been
+ optimized by introducing a new helper.
+
+ Will merge to 'master'.
+
+
+* ag/rebase-i-in-c (2018-11-05) 1 commit
+  (merged to 'next' on 2018-11-06 at 8fa9d64898)
+ + sequencer.c: remove a stray semicolon
+
+ Code clean-up for a topic already in 'master'.
+
+ Will merge to 'master'.
+
+
+* jk/curl-ldflags (2018-11-05) 1 commit
+ - build: link with curl-defined linker flags
+
+ The way -lcurl library gets linked has been simplified by taking
+ advantage of the fact that we can just ask curl-config command how.
 
  Will merge to 'next'.
 
 
-* sg/travis-install-dependencies (2018-11-02) 1 commit
- - travis-ci: install packages in 'ci/install-dependencies.sh'
- (this branch uses ss/travis-ci-force-vm-mode.)
+* mg/gpg-fingerprint-test (2018-11-05) 2 commits
+ - t/t7510-signed-commit.sh: add signing subkey to Eris Discordia key
+ - t/t7510-signed-commit.sh: Add %GP to custom format checks
 
- The procedure to install dependencies before testing at Travis CI
- is getting revamped for both simplicity and flexibility, taking
- advantage of the recent move to the vm-based environment.
+ Add a few tests for a topic already in 'master'.
+
+ Will merge to 'next'.
+
+
+* nd/tree-walk-path-exclusion (2018-11-05) 1 commit
+  (merged to 'next' on 2018-11-06 at 6499b2d327)
+ + tree-walk.c: fix overoptimistic inclusion in :(exclude) matching
+
+ Pathspec matching against a tree object were buggy when negative
+ pathspec elements were involved, which has been fixed.
+
+ Will merge to 'master'.
+
+
+* sb/diff-color-moved-config-option-fixup (2018-11-05) 1 commit
+ - diff: differentiate error handling in parse_color_moved_ws
+
+
+* ab/range-diff-no-patch (2018-11-07) 1 commit
+ - range-diff: add a --no-patch option to show a summary
+
+ "range-diff" learns the "--no-patch" option, which can be used to
+ get a high-level overview without the actual line-by-line patch
+ difference shown.
+
+ Will merge to 'next'.
+
+
+* jk/unused-parameter-fixes (2018-11-06) 14 commits
+ - midx: double-check large object write loop
+ - assert NOARG/NONEG behavior of parse-options callbacks
+ - parse-options: drop OPT_DATE()
+ - apply: return -1 from option callback instead of calling exit(1)
+ - cat-file: report an error on multiple --batch options
+ - tag: mark "--message" option with NONEG
+ - show-branch: mark --reflog option as NONEG
+ - format-patch: mark "--no-numbered" option with NONEG
+ - status: mark --find-renames option with NONEG
+ - cat-file: mark batch options with NONEG
+ - pack-objects: mark index-version option as NONEG
+ - ls-files: mark exclude options as NONEG
+ - am: handle --no-patch-format option
+ - apply: mark include/exclude options as NONEG
+
+ Various functions have been audited for "-Wunused-parameter" warnings
+ and bugs in them got fixed.
+
+ Will merge to 'next'.
+
+
+* ds/push-squelch-ambig-warning (2018-11-07) 1 commit
+ - pack-objects: ignore ambiguous object warnings
+
+ "git push" used to check ambiguities between object-names and
+ refnames while processing the list of refs' old and new values,
+ which was unnecessary (as it knew that it is feeding raw object
+ names).  This has been optimized out.
+
+
+* jk/verify-sig-merge-into-void (2018-11-07) 3 commits
+ - pull: handle --verify-signatures for unborn branch
+ - merge: handle --verify-signatures for unborn branch
+ - merge: extract verify_merge_signature() helper
+
+ "git merge" and "git pull" that merges into an unborn branch used
+ to completely ignore "--verify-signatures", which has been
+ corrected.
+
+ Will merge to 'next'.
+
+
+* js/mingw-res-rebuild (2018-11-07) 1 commit
+ - Windows: force-recompile git.res for differing architectures
+
+ Windows build update.
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -235,6 +389,37 @@ of the repositories listed at
 
 --------------------------------------------------
 [Cooking]
+
+* ab/dynamic-gettext-poison (2018-11-02) 1 commit
+ - i18n: make GETTEXT_POISON a runtime option
+
+ On hold.
+ cf. <20181102163725.GY30222@szeder.dev>
+
+
+* js/rebase-p-tests (2018-11-02) 3 commits
+  (merged to 'next' on 2018-11-03 at fc8d97465f)
+ + tests: optionally skip `git rebase -p` tests
+ + t3418: decouple test cases from a previous `rebase -p` test case
+ + t3404: decouple some test cases from outcomes of previous test cases
+
+ In preparation to the day when we can deprecate and remove the
+ "rebase -p", make sure we can skip and later remove tests for
+ it.
+
+ Will merge to 'master'.
+
+
+* sg/travis-install-dependencies (2018-11-02) 1 commit
+  (merged to 'next' on 2018-11-06 at b86e3a2792)
+ + travis-ci: install packages in 'ci/install-dependencies.sh'
+
+ The procedure to install dependencies before testing at Travis CI
+ is getting revamped for both simplicity and flexibility, taking
+ advantage of the recent move to the vm-based environment.
+
+ Will merge to 'master'.
+
 
 * ab/push-dwim-dst (2018-10-29) 9 commits
  - SQUASH???
@@ -270,15 +455,19 @@ of the repositories listed at
  diagnosed as an error, not swept under the rug silently.
 
 
-* nd/i18n (2018-10-29) 12 commits
+* nd/i18n (2018-11-06) 16 commits
  - fsck: mark strings for translation
+ - fsck: reduce word legos to help i18n
  - parse-options.c: mark more strings for translation
+ - parse-options.c: turn some die() to BUG()
  - parse-options: replace opterror() with optname()
  - repack: mark more strings for translation
  - remote.c: mark messages for translation
+ - remote.c: turn some error() or die() to BUG()
  - reflog: mark strings for translation
  - read-cache.c: add missing colon separators
  - read-cache.c: mark more strings for translation
+ - read-cache.c: turn die("internal error") to BUG()
  - attr.c: mark more string for translation
  - archive.c: mark more strings for translation
  - alias.c: mark split_cmdline_strerror() strings for translation
@@ -286,23 +475,26 @@ of the repositories listed at
 
  More _("i18n") markings.
 
- Some changes seem not to be mere mechanical convesions and needs
- a careful review.
 
-
-* nd/pthreads (2018-10-29) 10 commits
- - read-cache.c: initialize copy_len to shut up gcc 8
+* nd/pthreads (2018-11-05) 14 commits
  - Clean up pthread_create() error handling
+ - read-cache.c: initialize copy_len to shut up gcc 8
+ - read-cache.c: reduce branching based on HAVE_THREADS
  - read-cache.c: remove #ifdef NO_PTHREADS
  - pack-objects: remove #ifdef NO_PTHREADS
  - preload-index.c: remove #ifdef NO_PTHREADS
+ - grep: clean up num_threads handling
  - grep: remove #ifdef NO_PTHREADS
  - attr.c: remove #ifdef NO_PTHREADS
  - name-hash.c: remove #ifdef NO_PTHREADS
  - index-pack: remove #ifdef NO_PTHREADS
+ - send-pack.c: move async's #ifdef NO_PTHREADS back to run-command.c
+ - run-command.h: include thread-utils.h instead of pthread.h
  - thread-utils: macros to unconditionally compile pthreads API
 
  The codebase has been cleaned up to reduce "#ifndef NO_PTHREADS".
+
+ Will merge to 'next'.
 
 
 * nd/wildmatch-double-asterisk (2018-10-29) 1 commit
@@ -317,29 +509,9 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* rj/header-cleanup (2018-10-29) 3 commits
-  (merged to 'next' on 2018-11-01 at 975e56048f)
- + commit-reach.h: add missing declarations (hdr-check)
- + ewok_rlw.h: add missing 'inline' to function definition
- + fetch-object.h: add missing declaration (hdr-check)
-
- Code cleanup.
-
- Will merge to 'master'.
-
-
-* js/mingw-ns-filetime (2018-10-24) 3 commits
-  (merged to 'next' on 2018-10-29 at 4563a0d9d0)
- + mingw: implement nanosecond-precision file times
- + mingw: replace MSVCRT's fstat() with a Win32-based implementation
- + mingw: factor out code to set stat() data
-
- Windows port learned to use nano-second resolution file timestamps.
-
- Will merge to 'master'.
-
-
-* bp/refresh-index-using-preload (2018-10-30) 1 commit
+* bp/refresh-index-using-preload (2018-11-06) 2 commits
+  (merged to 'next' on 2018-11-06 at d9b9d8f559)
+ + refresh_index: remove unnecessary calls to preload_index()
   (merged to 'next' on 2018-11-01 at 289e6bcece)
  + speed up refresh_index() by utilizing preload_index()
 
@@ -350,109 +522,109 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* sg/test-verbose-log (2018-10-30) 1 commit
-  (merged to 'next' on 2018-11-01 at 0c4a18a71f)
- + test-lib: introduce the '-V' short option for '--verbose-log'
-
- Our test scripts can now take the '-V' option as a synonym for the
- '--verbose-log' option.
-
- Will merge to 'master'.
-
-
 * ab/pack-tests-cleanup (2018-10-31) 3 commits
- - index-pack tests: don't leave test repo dirty at end
- - pack-objects tests: don't leave test .git corrupt at end
- - pack-objects test: modernize style
+  (merged to 'next' on 2018-11-03 at b4a39595bb)
+ + index-pack tests: don't leave test repo dirty at end
+ + pack-objects tests: don't leave test .git corrupt at end
+ + pack-objects test: modernize style
 
  A couple of tests used to leave the repository in a state that is
  deliberately corrupt, which have been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/detect-truncated-zlib-input (2018-10-31) 4 commits
- - Adjust for 2.19.x series
- - cat-file: handle streaming failures consistently
- - check_stream_sha1(): handle input underflow
- - t1450: check large blob in trailing-garbage test
+  (merged to 'next' on 2018-11-03 at 4952b4412b)
+ + Adjust for 2.19.x series
+ + cat-file: handle streaming failures consistently
+ + check_stream_sha1(): handle input underflow
+ + t1450: check large blob in trailing-garbage test
 
  A regression in Git 2.12 era made "git fsck" fall into an infinite
  loop while processing truncated loose objects.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/proto-v2-ref-prefix-fix (2018-10-31) 2 commits
- - ls-remote: pass heads/tags prefixes to transport
- - ls-remote: do not send ref prefixes for patterns
+  (merged to 'next' on 2018-11-03 at 3a203db692)
+ + ls-remote: pass heads/tags prefixes to transport
+ + ls-remote: do not send ref prefixes for patterns
 
  "git ls-remote $there foo" was broken by recent update for the
  protocol v2 and stopped showing refs that match 'foo' that are not
  refs/{heads,tags}/foo, which has been fixed.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/stream-pack-non-delta-clarification (2018-10-31) 1 commit
- - read_istream_pack_non_delta(): document input handling
+  (merged to 'next' on 2018-11-03 at bd386692c8)
+ + read_istream_pack_non_delta(): document input handling
 
  Additional comment on a tricky piece of code to help developers.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * js/mingw-isatty-and-dup2 (2018-10-31) 1 commit
- - mingw: fix isatty() after dup2()
+  (merged to 'next' on 2018-11-03 at 0616899d9e)
+ + mingw: fix isatty() after dup2()
 
  Windows fix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * js/mingw-perl5lib (2018-10-31) 4 commits
- - mingw: unset PERL5LIB by default
- - config: move Windows-specific config settings into compat/mingw.c
- - config: allow for platform-specific core.* config settings
- - config: rename `dummy` parameter to `cb` in git_default_config()
+  (merged to 'next' on 2018-11-03 at 2fa516f3ae)
+ + mingw: unset PERL5LIB by default
+ + config: move Windows-specific config settings into compat/mingw.c
+ + config: allow for platform-specific core.* config settings
+ + config: rename `dummy` parameter to `cb` in git_default_config()
 
  Windows fix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * js/mingw-utf8-env (2018-10-31) 2 commits
- - mingw: reencode environment variables on the fly (UTF-16 <-> UTF-8)
- - t7800: fix quoting
+  (merged to 'next' on 2018-11-03 at f6c5a8b609)
+ + mingw: reencode environment variables on the fly (UTF-16 <-> UTF-8)
+ + t7800: fix quoting
 
  Windows fix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ma/sequencer-do-reset-saner-loop-termination (2018-10-31) 1 commit
- - sequencer: break out of loop explicitly
+  (merged to 'next' on 2018-11-03 at 99da78997d)
+ + sequencer: break out of loop explicitly
 
  Code readability fix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * nb/worktree-api-doc (2018-10-31) 2 commits
- - worktree: rename is_worktree_locked to worktree_lock_reason
- - worktree: update documentation for lock_reason and lock_reason_valid
+  (merged to 'next' on 2018-11-03 at de9befb1f3)
+ + worktree: rename is_worktree_locked to worktree_lock_reason
+ + worktree: update documentation for lock_reason and lock_reason_valid
 
  Code readability fix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* sh/mingw-safer-compat-poll (2018-11-01) 1 commit
- - poll: use GetTickCount64() to avoid wrap-around issues
+* sh/mingw-safer-compat-poll (2018-11-05) 1 commit
+  (merged to 'next' on 2018-11-05 at 933a940a68)
+ + poll: use GetTickCount64() to avoid wrap-around issues
 
  Windows fix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * sb/more-repo-in-api (2018-10-19) 19 commits
@@ -485,7 +657,9 @@ of the repositories listed at
  cf. <20181030220817.61691-1-sbeller@google.com>
 
 
-* en/merge-path-collision (2018-10-22) 8 commits
+* en/merge-path-collision (2018-11-05) 10 commits
+ - fixup! merge-recursive: improve rename/rename(1to2)/add[/add] handling
+ - fixup! merge-recursive: fix rename/add conflict handling
  - merge-recursive: improve rename/rename(1to2)/add[/add] handling
  - merge-recursive: use handle_file_collision for add/add conflicts
  - merge-recursive: improve handling for rename/rename(2to1) conflicts
@@ -494,127 +668,118 @@ of the repositories listed at
  - merge-recursive: increase marker length with depth of recursion
  - t6036, t6042: testcases for rename collision of already conflicting files
  - Add testcases for consistency in file collision conflict handling
- (this branch uses en/merge-cleanup-more.)
 
  Updates for corner cases in merge-recursive.
 
- Expecting a reroll.
- cf. <CABPp-BGq1YDdzZ6CqzCp9QXPZy6XxV8sujyRxwBc-EnS+ygSrg@mail.gmail.com>
-
 
 * jt/tighten-fetch-proto-v2-response (2018-11-01) 1 commit
- - fetch-pack: be more precise in parsing v2 response
+  (merged to 'next' on 2018-11-03 at 310fe3f2c3)
+ + fetch-pack: be more precise in parsing v2 response
 
  "git fetch" was a bit loose in parsing resposes from the other side
  when talking over the protocol v2.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* nd/complete-format-patch (2018-10-22) 1 commit
- . completion: use __gitcomp_builtin for format-patch
+* nd/complete-format-patch (2018-11-06) 1 commit
+  (merged to 'next' on 2018-11-06 at 7f4c58c9d0)
+ + completion: use __gitcomp_builtin for format-patch
 
- Expecting a reroll.
-
-
-* nd/completion-negation (2018-10-22) 1 commit
-  (merged to 'next' on 2018-10-29 at 87e73b0c72)
- + completion: fix __gitcomp_builtin no longer consider extra options
-
- The command line completion machinery (in contrib/) has been
- updated to allow the completion script to tweak the list of options
- that are reported by the parse-options machinery correctly.
+ The support for format-patch (and send-email) by the command-line
+ completion script (in contrib/) has been simplified a bit.
 
  Will merge to 'master'.
 
 
 * nd/config-split (2018-10-29) 79 commits
- - config.txt: remove config/dummy.txt
- - config.txt: move worktree.* to a separate file
- - config.txt: move web.* to a separate file
- - config.txt: move versionsort.* to a separate file
- - config.txt: move user.* to a separate file
- - config.txt: move url.* to a separate file
- - config.txt: move uploadpack.* to a separate file
- - config.txt: move uploadarchive.* to a separate file
- - config.txt: move transfer.* to a separate file
- - config.txt: move tag.* to a separate file
- - config.txt: move submodule.* to a separate file
- - config.txt: move stash.* to a separate file
- - config.txt: move status.* to a separate file
- - config.txt: move splitIndex.* to a separate file
- - config.txt: move showBranch.* to a separate file
- - config.txt: move sequencer.* to a separate file
- - config.txt: move sendemail-config.txt to config/
- - config.txt: move reset.* to a separate file
- - config.txt: move rerere.* to a separate file
- - config.txt: move repack.* to a separate file
- - config.txt: move remotes.* to a separate file
- - config.txt: move remote.* to a separate file
- - config.txt: move receive-config.txt to config/
- - config.txt: move rebase-config.txt to config/
- - config.txt: move push-config.txt to config/
- - config.txt: move pull-config.txt to config/
- - config.txt: move protocol.* to a separate file
- - config.txt: move pretty.* to a separate file
- - config.txt: move pager.* to a separate file
- - config.txt: move pack.* to a separate file
- - config.txt: move notes.* to a separate file
- - config.txt: move mergetool.* to a separate file
- - config.txt: move merge-config.txt to config/
- - config.txt: move man.* to a separate file
- - config.txt: move mailmap.* to a separate file
- - config.txt: move mailinfo.* to a separate file
- - config.txt: move log.* to a separate file
- - config.txt: move interactive.* to a separate file
- - config.txt: move instaweb.* to a separate file
- - config.txt: move init.* to a separate file
- - config.txt: move index.* to a separate file
- - git-imap-send.txt: move imap.* to a separate file
- - config.txt: move i18n.* to a separate file
- - config.txt: move http.* to a separate file
- - config.txt: move ssh.* to a separate file
- - config.txt: move help.* to a separate file
- - config.txt: move guitool.* to a separate file
- - config.txt: move gui-config.txt to config/
- - config.txt: move gpg.* to a separate file
- - config.txt: move grep.* to a separate file
- - config.txt: move gitweb.* to a separate file
- - config.txt: move gitcvs-config.txt to config/
- - config.txt: move gc.* to a separate file
- - config.txt: move fsck.* to a separate file
- - config.txt: move fmt-merge-msg-config.txt to config/
- - config.txt: move format-config.txt to config/
- - config.txt: move filter.* to a separate file
- - config.txt: move fetch-config.txt to config/
- - config.txt: move fastimport.* to a separate file
- - config.txt: move difftool.* to a separate file
- - config.txt: move diff-config.txt to config/
- - config.txt: move completion.* to a separate file
- - config.txt: move credential.* to a separate file
- - config.txt: move commit.* to a separate file
- - config.txt: move column.* to a separate file
- - config.txt: move color.* to a separate file
- - config.txt: move clean.* to a separate file
- - config.txt: move checkout.* to a separate file
- - config.txt: move browser.* to a separate file
- - config.txt: move branch.* to a separate file
- - config.txt: move blame.* to a separate file
- - config.txt: move apply.* to a separate file
- - config.txt: move am.* to a separate file
- - config.txt: move alias.* to a separate file
- - config.txt: move add.* to a separate file
- - config.txt: move core.* to a separate file
- - config.txt: move advice.* to a separate file
- - Update makefile in preparation for Documentation/config/*.txt
- - Merge branches 'bp/reset-quiet' and 'js/mingw-http-ssl' into nd/config-split
- (this branch uses bp/reset-quiet and js/mingw-http-ssl; is tangled with jc/http-curlver-warnings.)
+  (merged to 'next' on 2018-11-03 at a336559101)
+ + config.txt: remove config/dummy.txt
+ + config.txt: move worktree.* to a separate file
+ + config.txt: move web.* to a separate file
+ + config.txt: move versionsort.* to a separate file
+ + config.txt: move user.* to a separate file
+ + config.txt: move url.* to a separate file
+ + config.txt: move uploadpack.* to a separate file
+ + config.txt: move uploadarchive.* to a separate file
+ + config.txt: move transfer.* to a separate file
+ + config.txt: move tag.* to a separate file
+ + config.txt: move submodule.* to a separate file
+ + config.txt: move stash.* to a separate file
+ + config.txt: move status.* to a separate file
+ + config.txt: move splitIndex.* to a separate file
+ + config.txt: move showBranch.* to a separate file
+ + config.txt: move sequencer.* to a separate file
+ + config.txt: move sendemail-config.txt to config/
+ + config.txt: move reset.* to a separate file
+ + config.txt: move rerere.* to a separate file
+ + config.txt: move repack.* to a separate file
+ + config.txt: move remotes.* to a separate file
+ + config.txt: move remote.* to a separate file
+ + config.txt: move receive-config.txt to config/
+ + config.txt: move rebase-config.txt to config/
+ + config.txt: move push-config.txt to config/
+ + config.txt: move pull-config.txt to config/
+ + config.txt: move protocol.* to a separate file
+ + config.txt: move pretty.* to a separate file
+ + config.txt: move pager.* to a separate file
+ + config.txt: move pack.* to a separate file
+ + config.txt: move notes.* to a separate file
+ + config.txt: move mergetool.* to a separate file
+ + config.txt: move merge-config.txt to config/
+ + config.txt: move man.* to a separate file
+ + config.txt: move mailmap.* to a separate file
+ + config.txt: move mailinfo.* to a separate file
+ + config.txt: move log.* to a separate file
+ + config.txt: move interactive.* to a separate file
+ + config.txt: move instaweb.* to a separate file
+ + config.txt: move init.* to a separate file
+ + config.txt: move index.* to a separate file
+ + git-imap-send.txt: move imap.* to a separate file
+ + config.txt: move i18n.* to a separate file
+ + config.txt: move http.* to a separate file
+ + config.txt: move ssh.* to a separate file
+ + config.txt: move help.* to a separate file
+ + config.txt: move guitool.* to a separate file
+ + config.txt: move gui-config.txt to config/
+ + config.txt: move gpg.* to a separate file
+ + config.txt: move grep.* to a separate file
+ + config.txt: move gitweb.* to a separate file
+ + config.txt: move gitcvs-config.txt to config/
+ + config.txt: move gc.* to a separate file
+ + config.txt: move fsck.* to a separate file
+ + config.txt: move fmt-merge-msg-config.txt to config/
+ + config.txt: move format-config.txt to config/
+ + config.txt: move filter.* to a separate file
+ + config.txt: move fetch-config.txt to config/
+ + config.txt: move fastimport.* to a separate file
+ + config.txt: move difftool.* to a separate file
+ + config.txt: move diff-config.txt to config/
+ + config.txt: move completion.* to a separate file
+ + config.txt: move credential.* to a separate file
+ + config.txt: move commit.* to a separate file
+ + config.txt: move column.* to a separate file
+ + config.txt: move color.* to a separate file
+ + config.txt: move clean.* to a separate file
+ + config.txt: move checkout.* to a separate file
+ + config.txt: move browser.* to a separate file
+ + config.txt: move branch.* to a separate file
+ + config.txt: move blame.* to a separate file
+ + config.txt: move apply.* to a separate file
+ + config.txt: move am.* to a separate file
+ + config.txt: move alias.* to a separate file
+ + config.txt: move add.* to a separate file
+ + config.txt: move core.* to a separate file
+ + config.txt: move advice.* to a separate file
+ + Update makefile in preparation for Documentation/config/*.txt
+ + Merge branches 'bp/reset-quiet' and 'js/mingw-http-ssl' into nd/config-split
+ (this branch uses bp/reset-quiet.)
 
  Split the overly large Documentation/config.txt file into million
  little pieces.  This potentially allows each individual piece
  included into the manual page of the command it affects more easily.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
  This is a painful conversions while many other topics in flight
  wants to add to or edit the documentation of configuration
@@ -635,26 +800,9 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* nd/submodule-unused-vars (2018-10-22) 1 commit
-  (merged to 'next' on 2018-10-29 at 33641dcc89)
- + submodule.c: remove some of the_repository references
-
- Code clean-up.
-
- Will merge to 'master'.
-
-
-* nd/unpack-trees-with-cache-tree (2018-10-22) 1 commit
-  (merged to 'next' on 2018-10-29 at de51b606da)
- + read-cache: use of memory after it is freed
-
- Trivial bugfix.
-
- Will merge to 'master'.
-
-
 * ag/rev-parse-all-exclude-fix (2018-11-01) 1 commit
- - rev-parse: clear --exclude list after 'git rev-parse --all'
+  (merged to 'next' on 2018-11-03 at 49730558fa)
+ + rev-parse: clear --exclude list after 'git rev-parse --all'
 
  "git rev-parse --exclude=* --branches --branches"  (i.e. first
  saying "add only things that do not match '*' out of all branches"
@@ -662,7 +810,7 @@ of the repositories listed at
  worked as expected, but "--exclude=* --all --all" did not work the
  same way, which has been fixed.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * bp/reset-quiet (2018-10-24) 3 commits
@@ -678,172 +826,27 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* js/remote-archive-dwimfix (2018-10-26) 1 commit
-  (merged to 'next' on 2018-10-26 at f5bf6946bd)
- + archive: initialize archivers earlier
-
- The logic to determine the archive type "git archive" uses did not
- correctly kick in for "git archive --remote", which has been
- corrected.
-
- Will merge to 'master'.
-
-
-* js/shallow-and-fetch-prune (2018-10-25) 3 commits
-  (merged to 'next' on 2018-10-26 at 93b7196560)
- + repack -ad: prune the list of shallow commits
- + shallow: offer to prune only non-existing entries
- + repack: point out a bug handling stale shallow info
-
- "git repack" in a shallow clone did not correctly update the
- shallow points in the repository, leading to a repository that
- does not pass fsck.
-
- Will merge to 'master'.
-
-
-* jw/send-email-no-auth (2018-10-23) 1 commit
-  (merged to 'next' on 2018-10-29 at a3fbbdb889)
- + send-email: explicitly disable authentication
-
- "git send-email" learned to disable SMTP authentication via the
- "--smtp-auth=none" option, even when the smtp username is given
- (which turns the authentication on by default).
-
- Will merge to 'master'.
-
-
-* md/exclude-promisor-objects-fix (2018-10-23) 2 commits
-  (merged to 'next' on 2018-10-29 at fb36a5dcbe)
- + exclude-promisor-objects: declare when option is allowed
- + Documentation/git-log.txt: do not show --exclude-promisor-objects
-
- Operations on promisor objects make sense in the context of only a
- small subset of the commands that internally use the revisions
- machinery, but the "--exclude-promisor-objects" option were taken
- and led to nonsense results by commands like "log", to which it
- didn't make much sense.  This has been corrected.
-
- Will merge to 'master'.
-
-
-* mg/gpg-fingerprint (2018-10-23) 3 commits
-  (merged to 'next' on 2018-10-26 at 1e219cb754)
- + gpg-interface.c: obtain primary key fingerprint as well
- + gpg-interface.c: support getting key fingerprint via %GF format
- + gpg-interface.c: use flags to determine key/signer info presence
- (this branch uses mg/gpg-parse-tighten; is tangled with jc/gpg-cocci-preincr.)
-
- New "--pretty=format:" placeholders %GF and %GP that show the GPG
- key fingerprints have been invented.
-
- Will merge to 'master'.
-
-
-* jc/http-curlver-warnings (2018-10-26) 1 commit
-  (merged to 'next' on 2018-10-26 at 870e125cec)
- + http: give curl version warnings consistently
- (this branch uses js/mingw-http-ssl; is tangled with nd/config-split.)
-
- Warning message fix.
-
- Will merge to 'master'.
-
-
 * sd/stash-wo-user-name (2018-11-02) 1 commit
  - t3903-stash: test without configured user.name and user.email
 
  An early part of a wip.
 
 
-* sg/test-rebase-editor-fix (2018-10-29) 1 commit
-  (merged to 'next' on 2018-11-01 at 271e0fc663)
- + t3404-rebase-interactive: test abbreviated commands
-
- Will merge to 'master'.
-
-
-* ss/travis-ci-force-vm-mode (2018-10-26) 1 commit
-  (merged to 'next' on 2018-11-01 at 8596bb2a65)
- + travis-ci: no longer use containers
- (this branch is used by sg/travis-install-dependencies.)
-
- The "container" mode of TravisCI is going away.  Our .travis.yml
- file is getting prepared for the transition.
-
- Will merge to 'master'.
-
-
-* tb/char-may-be-unsigned (2018-10-26) 1 commit
-  (merged to 'next' on 2018-11-01 at 9e14f289f8)
- + path.c: char is not (always) signed
-
- Build portability fix.
-
- Will merge to 'master'.
-
-
-* jt/upload-pack-v2-fix-shallow (2018-10-19) 3 commits
-  (merged to 'next' on 2018-10-29 at d9010b3c7b)
- + upload-pack: clear flags before each v2 request
- + upload-pack: make want_obj not global
- + upload-pack: make have_obj not global
-
- "git fetch" over protocol v2 into a shallow repository failed to
- fetch full history behind a new tip of history that was diverged
- before the cut-off point of the history that was previously fetched
- shallowly.
-
- Will merge to 'master'.
-
-
 * pw/am-rebase-read-author-script (2018-11-01) 5 commits
- - sequencer: use read_author_script()
- - add read_author_script() to libgit
- - am: rename read_author_script()
- - am: improve author-script error reporting
- - am: don't die in read_author_script()
+  (merged to 'next' on 2018-11-03 at bb6c32fe16)
+ + sequencer: use read_author_script()
+ + add read_author_script() to libgit
+ + am: rename read_author_script()
+ + am: improve author-script error reporting
+ + am: don't die in read_author_script()
 
  Unify code to read the author-script used in "git am" and the
  commands that use the sequencer machinery, e.g. "git rebase -i".
 
- Will merge to 'next'.
-
-
-* sb/submodule-url-to-absolute (2018-10-18) 1 commit
-  (merged to 'next' on 2018-10-29 at 4264c150cb)
- + submodule helper: convert relative URL to absolute URL if needed
-
- Some codepaths failed to form a proper URL when .gitmodules record
- the URL to a submodule repository as relative to the repository of
- superproject, which has been corrected.
-
  Will merge to 'master'.
 
 
-* en/merge-cleanup-more (2018-10-18) 2 commits
-  (merged to 'next' on 2018-10-26 at c706319c26)
- + merge-recursive: avoid showing conflicts with merge branch before HEAD
- + merge-recursive: improve auto-merging messages with path collisions
- (this branch is used by en/merge-path-collision.)
-
- Further clean-up of merge-recursive machinery.
-
- Will merge to 'master'.
-
-
-* mg/gpg-parse-tighten (2018-10-22) 1 commit
-  (merged to 'next' on 2018-10-26 at efdec77193)
- + gpg-interface.c: detect and reject multiple signatures on commits
- (this branch is used by jc/gpg-cocci-preincr and mg/gpg-fingerprint.)
-
- Detect and reject a signature block that has more than one GPG
- signature.
-
- Will merge to 'master'.
-
-
-* bc/sha-256 (2018-10-25) 12 commits
+* bc/sha-256 (2018-11-05) 12 commits
  - hash: add an SHA-256 implementation using OpenSSL
  - sha256: add an SHA-256 implementation using libgcrypt
  - Add a base implementation of SHA-256 support
@@ -859,24 +862,6 @@ of the repositories listed at
 
  Add sha-256 hash and plug it through the code to allow building Git
  with the "NewHash".
-
- Expecting a reroll.
- cf. <20181031225521.GA573515@genre.crustytoothpaste.net>
-
-
-* js/mingw-http-ssl (2018-10-26) 3 commits
-  (merged to 'next' on 2018-10-26 at 318e82e101)
- + http: when using Secure Channel, ignore sslCAInfo by default
- + http: add support for disabling SSL revocation checks in cURL
- + http: add support for selecting SSL backends at runtime
- (this branch is used by jc/http-curlver-warnings and nd/config-split.)
-
- On platforms with recent cURL library, http.sslBackend configuration
- variable can be used to choose a different SSL backend at runtime.
- The Windows port uses this mechanism to switch between OpenSSL and
- Secure Channel while talking over the HTTPS protocol.
-
- Will merge to 'master'.
 
 
 * js/vsts-ci (2018-10-16) 13 commits
@@ -919,12 +904,13 @@ of the repositories listed at
 
 
 * jc/war-on-string-list (2018-11-01) 1 commit
- - fetch: replace string-list used as a look-up table with a hashmap
+  (merged to 'next' on 2018-11-03 at 2ff65073f1)
+ + fetch: replace string-list used as a look-up table with a hashmap
 
  Replace three string-list instances used as look-up tables in "git
  fetch" with hashmaps.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * js/remote-archive-v2 (2018-09-28) 4 commits
@@ -974,32 +960,36 @@ of the repositories listed at
 
 
 * ds/test-multi-pack-index (2018-10-26) 4 commits
- - packfile: close multi-pack-index in close_all_packs
- - multi-pack-index: define GIT_TEST_MULTI_PACK_INDEX
- - midx: close multi-pack-index on repack
- - midx: fix broken free() in close_midx()
+  (merged to 'next' on 2018-11-03 at 624c415a45)
+ + packfile: close multi-pack-index in close_all_packs
+ + multi-pack-index: define GIT_TEST_MULTI_PACK_INDEX
+ + midx: close multi-pack-index on repack
+ + midx: fix broken free() in close_midx()
 
  Tests for the recently introduced multi-pack index machinery.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* nd/per-worktree-ref-iteration (2018-10-22) 8 commits
- - reflog expire: cover reflog from all worktrees
- - fsck: check HEAD and reflog from other worktrees
- - fsck: move fsck_head_link() to get_default_heads() to avoid some globals
- - revision.c: better error reporting on ref from different worktrees
- - revision.c: correct a parameter name
- - refs: new ref types to make per-worktree refs visible to all worktrees
- - Add a place for (not) sharing stuff between worktrees
- - refs.c: indent with tabs, not spaces
+* nd/per-worktree-ref-iteration (2018-11-05) 9 commits
+  (merged to 'next' on 2018-11-06 at 53803cedf3)
+ + git-worktree.txt: correct linkgit command name
+  (merged to 'next' on 2018-11-03 at 4cbe49a704)
+ + reflog expire: cover reflog from all worktrees
+ + fsck: check HEAD and reflog from other worktrees
+ + fsck: move fsck_head_link() to get_default_heads() to avoid some globals
+ + revision.c: better error reporting on ref from different worktrees
+ + revision.c: correct a parameter name
+ + refs: new ref types to make per-worktree refs visible to all worktrees
+ + Add a place for (not) sharing stuff between worktrees
+ + refs.c: indent with tabs, not spaces
 
  The code to traverse objects for reachability, used to decide what
  objects are unreferenced and expendable, have been taught to also
  consider per-worktree refs of other worktrees as starting points to
  prevent data loss.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ds/reachable-topo-order (2018-11-02) 7 commits
@@ -1013,6 +1003,8 @@ of the repositories listed at
 
  The revision walker machinery learned to take advantage of the
  commit generation numbers stored in the commit-graph file.
+
+ Will merge to 'next'.
 
 
 * sb/submodule-recursive-fetch-gets-the-tip (2018-10-31) 11 commits
@@ -1047,23 +1039,24 @@ of the repositories listed at
 
 
 * ao/submodule-wo-gitmodules-checked-out (2018-10-31) 10 commits
- - t/helper: add test-submodule-nested-repo-config
- - submodule: support reading .gitmodules when it's not in the working tree
- - submodule: add a helper to check if it is safe to write to .gitmodules
- - t7506: clean up .gitmodules properly before setting up new scenario
- - submodule: use the 'submodule--helper config' command
- - submodule--helper: add a new 'config' subcommand
- - t7411: be nicer to future tests and really clean things up
- - t7411: merge tests 5 and 6
- - submodule: factor out a config_set_in_gitmodules_file_gently function
- - submodule: add a print_config_from_gitmodules() helper
+  (merged to 'next' on 2018-11-03 at 00c3377ef0)
+ + t/helper: add test-submodule-nested-repo-config
+ + submodule: support reading .gitmodules when it's not in the working tree
+ + submodule: add a helper to check if it is safe to write to .gitmodules
+ + t7506: clean up .gitmodules properly before setting up new scenario
+ + submodule: use the 'submodule--helper config' command
+ + submodule--helper: add a new 'config' subcommand
+ + t7411: be nicer to future tests and really clean things up
+ + t7411: merge tests 5 and 6
+ + submodule: factor out a config_set_in_gitmodules_file_gently function
+ + submodule: add a print_config_from_gitmodules() helper
  (this branch is used by sb/submodule-recursive-fetch-gets-the-tip.)
 
  The submodule support has been updated to read from the blob at
  HEAD:.gitmodules when the .gitmodules file is missing from the
  working tree.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ps/stash-in-c (2018-10-15) 21 commits
