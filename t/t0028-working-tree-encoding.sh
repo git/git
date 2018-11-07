@@ -11,7 +11,10 @@ test_expect_success 'setup test files' '
 
 	text="hallo there!\ncan you read me?" &&
 	echo "*.utf16 text working-tree-encoding=utf-16" >.gitattributes &&
+	echo "*bebom.utf16be text working-tree-encoding=utf-16be" >>.gitattributes &&
+	echo "*lebom.utf16le text working-tree-encoding=utf-16le" >>.gitattributes &&
 	printf "$text" >test.utf8.raw &&
+	printf "\xEF\xBB\xBF$text" >test.bom.utf8.raw && # To deal w/BOM files
 	printf "$text" | iconv -f UTF-8 -t UTF-16 >test.utf16.raw &&
 	printf "$text" | iconv -f UTF-8 -t UTF-32 >test.utf32.raw &&
 
@@ -29,26 +32,49 @@ test_expect_success 'setup test files' '
 	printf "\0\0\376\777\0\0\0a\0\0\0b\0\0\0c" >bebom.utf32be.raw &&
 	printf "\777\376\0\0a\0\0\0b\0\0\0c\0\0\0" >lebom.utf32le.raw &&
 
-	# Add only UTF-16 file, we will add the UTF-32 file later
+	# Add only UTF-16 files, we will add the UTF-32 file later
 	cp test.utf16.raw test.utf16 &&
+
+	# Check the endianness of first data file, and copy it to BE/LE w/BOM files
+	if [[ "$(file -b --mime-encoding test.utf16)" = "utf-16be" ]]
+	then
+		iconv -f UTF-16BE -t UTF-16BE test.utf16 > bebom.utf16be.raw &&
+		iconv -f UTF-16BE -t UTF-16LE test.utf16 > lebom.utf16le.raw
+	else
+		iconv -f UTF-16LE -t UTF-16BE test.utf16 > bebom.utf16be.raw &&
+		iconv -f UTF-16LE -t UTF-16LE test.utf16 > lebom.utf16le.raw
+	fi &&
+
+	cp bebom.utf16be.raw bebom.utf16be &&
+	cp lebom.utf16le.raw lebom.utf16le &&
 	cp test.utf32.raw test.utf32 &&
-	git add .gitattributes test.utf16 &&
+	git add .gitattributes test.utf16 bebom.utf16be lebom.utf16le &&
 	git commit -m initial
 '
 
 test_expect_success 'ensure UTF-8 is stored in Git' '
-	test_when_finished "rm -f test.utf16.git" &&
+	test_when_finished "rm -f test.utf16.git bebom.utf16be.git lebom.utf16le.git" &&
 
 	git cat-file -p :test.utf16 >test.utf16.git &&
-	test_cmp_bin test.utf8.raw test.utf16.git
+	git cat-file -p :bebom.utf16be >bebom.utf16be.git &&
+	git cat-file -p :lebom.utf16le >lebom.utf16le.git &&
+	test_cmp_bin test.utf8.raw test.utf16.git &&
+	test_cmp_bin test.bom.utf8.raw bebom.utf16be.git &&
+	test_cmp_bin test.bom.utf8.raw lebom.utf16le.git
 '
 
 test_expect_success 're-encode to UTF-16 on checkout' '
 	test_when_finished "rm -f test.utf16.raw" &&
 
 	rm test.utf16 &&
-	git checkout test.utf16 &&
-	test_cmp_bin test.utf16.raw test.utf16
+	rm bebom.utf16be &&
+	rm lebom.utf16le &&
+	git checkout test.utf16 bebom.utf16be lebom.utf16le &&
+	test_cmp_bin test.utf16.raw test.utf16 &&
+
+	# Note: Git stored internally UTF-8 w/BOM for these files, which also have it
+	test_cmp_bin bebom.utf16be.raw bebom.utf16be &&
+	test_cmp_bin lebom.utf16le.raw lebom.utf16le
 '
 
 test_expect_success 'check $GIT_DIR/info/attributes support' '
@@ -72,11 +98,9 @@ do
 
 		# Here we add a UTF-16 (resp. UTF-32) files with BOM (big/little-endian)
 		# but we tell Git to treat it as UTF-16BE/UTF-16LE (resp. UTF-32).
-		# In these cases the BOM is prohibited.
+		# Only in the case where BOM differs it is prohibited.
 		cp bebom.utf${i}be.raw bebom.utf${i}be &&
-		test_must_fail git add bebom.utf${i}be 2>err.out &&
-		test_i18ngrep "fatal: BOM is prohibited .* utf-${i}be" err.out &&
-		test_i18ngrep "use UTF-${i} as working-tree-encoding" err.out &&
+		git add bebom.utf${i}be 2>err.out &&
 
 		cp lebom.utf${i}le.raw lebom.utf${i}be &&
 		test_must_fail git add lebom.utf${i}be 2>err.out &&
@@ -89,9 +113,7 @@ do
 		test_i18ngrep "use UTF-${i} as working-tree-encoding" err.out &&
 
 		cp lebom.utf${i}le.raw lebom.utf${i}le &&
-		test_must_fail git add lebom.utf${i}le 2>err.out &&
-		test_i18ngrep "fatal: BOM is prohibited .* utf-${i}LE" err.out &&
-		test_i18ngrep "use UTF-${i} as working-tree-encoding" err.out
+		git add lebom.utf${i}le 2>err.out
 	'
 
 	test_expect_success "check required UTF-${i} BOM" '
@@ -208,7 +230,8 @@ test_lazy_prereq ICONV_SHIFT_JIS '
 '
 
 test_expect_success ICONV_SHIFT_JIS 'check roundtrip encoding' '
-	test_when_finished "rm -f roundtrip.shift roundtrip.utf16" &&
+	test_when_finished "rm -f roundtrip.shift roundtrip.utf16 \
+		roundtrip.bebom.utf16be roundtrip.lebom.utf16le" &&
 	test_when_finished "git reset --hard HEAD" &&
 
 	text="hallo there!\nroundtrip test here!" &&
@@ -243,6 +266,32 @@ test_expect_success ICONV_SHIFT_JIS 'check roundtrip encoding' '
 	GIT_TRACE=1 git -c core.checkRoundtripEncoding="UTF-32, utf-16" \
 		add roundtrip.utf16 2>&1 |
 		grep "Checking roundtrip encoding for utf-16" &&
+	git reset &&
+
+	# Create UTF-16BE and UTF-16LE files with BOM for roundtrip test
+	cp bebom.utf16be roundtrip.bebom.utf16be &&
+	cp lebom.utf16le roundtrip.lebom.utf16le &&
+
+	# UTF-16BE encoded files should not be round-trip checked by default...
+	! GIT_TRACE=1 git add roundtrip.bebom.utf16be 2>&1 |
+		grep "Checking roundtrip encoding for UTF-16BE" &&
+	git reset &&
+
+	# ... unless we tell Git to check it!
+	GIT_TRACE=1 git -c core.checkRoundtripEncoding="UTF-16BE, UTF-32BE" \
+		add roundtrip.bebom.utf16be 2>&1 |
+		grep "Checking roundtrip encoding for utf-16be" &&
+	git reset &&
+
+	# UTF-16LE encoded files should not be round-trip checked by default...
+	! GIT_TRACE=1 git add roundtrip.lebom.utf16le 2>&1 |
+		grep "Checking roundtrip encoding for UTF-16LE" &&
+	git reset &&
+
+	# ... unless we tell Git to check it!
+	GIT_TRACE=1 git -c core.checkRoundtripEncoding="UTF-16LE, UTF-32LE" \
+		add roundtrip.lebom.utf16le 2>&1 |
+		grep "Checking roundtrip encoding for utf-16le" &&
 	git reset
 '
 
