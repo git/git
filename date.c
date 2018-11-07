@@ -929,7 +929,7 @@ static void date_yesterday(struct tm *tm, struct tm *now, int *num)
 static void date_time(struct tm *tm, struct tm *now, int hour)
 {
 	if (tm->tm_hour < hour)
-		date_yesterday(tm, now, NULL);
+		update_tm(tm, now, 24*60*60);
 	tm->tm_hour = hour;
 	tm->tm_min = 0;
 	tm->tm_sec = 0;
