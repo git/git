@@ -128,13 +128,18 @@ objecttype::
 
 objectsize::
 	The size of the object (the same as 'git cat-file -s' reports).
-
+	Append `:disk` to get the size, in bytes, that the object takes up on
+	disk. See the note about on-disk sizes in the `CAVEATS` section below.
 objectname::
 	The object name (aka SHA-1).
 	For a non-ambiguous abbreviation of the object name append `:short`.
 	For an abbreviation of the object name with desired length append
 	`:short=<length>`, where the minimum length is MINIMUM_ABBREV. The
 	length may be exceeded to ensure unique object names.
+deltabase::
+	If the object is stored as a delta on-disk, this expands to the 40-hex
+	sha1 of the delta base object. Otherwise, expands to the null sha1
+	(40 zeroes). See `CAVEATS` section below.
 
 upstream::
 	The name of a local ref which can be considered ``upstream''
@@ -360,6 +365,20 @@ This prints the authorname, if present.
 ------------
 git for-each-ref --format="%(refname)%(if)%(authorname)%(then) Authored by: %(authorname)%(end)"
 ------------
+
+CAVEATS
+-------
+
+Note that the sizes of objects on disk are reported accurately, but care
+should be taken in drawing conclusions about which refs or objects are
+responsible for disk usage. The size of a packed non-delta object may be
+much larger than the size of objects which delta against it, but the
+choice of which object is the base and which is the delta is arbitrary
+and is subject to change during a repack.
+
+Note also that multiple copies of an object may be present in the object
+database; in this case, it is undefined which copy's size or delta base
+will be reported.
 
 SEE ALSO
 --------
