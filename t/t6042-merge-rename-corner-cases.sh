@@ -1099,4 +1099,122 @@ test_conflicts_with_adds_and_renames rename add    failure
 test_conflicts_with_adds_and_renames add    rename failure
 test_conflicts_with_adds_and_renames add    add    success
 
+# Setup:
+#          L
+#         / \
+#   master   ?
+#         \ /
+#          R
+#
+# Where:
+#   master has two files, named 'one' and 'two'.
+#   branches L and R both modify 'one', in conflicting ways.
+#   branches L and R both modify 'two', in conflicting ways.
+#   branch L also renames 'one' to 'three'.
+#   branch R also renames 'two' to 'three'.
+#
+#   So, we have four different conflicting files that all end up at path
+#   'three'.
+test_expect_success 'setup nested conflicts from rename/rename(2to1)' '
+	test_create_repo nested_conflicts_from_rename_rename &&
+	(
+		cd nested_conflicts_from_rename_rename &&
+
+		# Create some related files now
+		for i in $(test_seq 1 10)
+		do
+			echo Random base content line $i
+		done >file_v1 &&
+
+		cp file_v1 file_v2 &&
+		cp file_v1 file_v3 &&
+		cp file_v1 file_v4 &&
+		cp file_v1 file_v5 &&
+		cp file_v1 file_v6 &&
+
+		echo one  >>file_v1 &&
+		echo uno  >>file_v2 &&
+		echo eins >>file_v3 &&
+
+		echo two  >>file_v4 &&
+		echo dos  >>file_v5 &&
+		echo zwei >>file_v6 &&
+
+		# Setup original commit (or merge-base), consisting of
+		# files named "one" and "two".
+		mv file_v1 one &&
+		mv file_v4 two &&
+		git add one two &&
+		test_tick && git commit -m english &&
+
+		git branch L &&
+		git branch R &&
+
+		# Handle the left side
+		git checkout L &&
+		git mv one three &&
+		mv -f file_v2 three &&
+		mv -f file_v5 two &&
+		git add two three &&
+		test_tick && git commit -m spanish &&
+
+		# Handle the right side
+		git checkout R &&
+		git mv two three &&
+		mv -f file_v3 one &&
+		mv -f file_v6 three &&
+		git add one three &&
+		test_tick && git commit -m german
+	)
+'
+
+test_expect_failure 'check nested conflicts from rename/rename(2to1)' '
+	(
+		cd nested_conflicts_from_rename_rename &&
+
+		git checkout L^0 &&
+
+		# Merge must fail; there is a conflict
+		test_must_fail git merge -s recursive R^0 &&
+
+		# Make sure the index has the right number of entries
+		git ls-files -s >out &&
+		test_line_count = 2 out &&
+		git ls-files -u >out &&
+		test_line_count = 2 out &&
+		# Ensure we have the correct number of untracked files
+		git ls-files -o >out &&
+		test_line_count = 1 out &&
+
+		# Compare :2:three to expected values
+		git cat-file -p master:one >base &&
+		git cat-file -p L:three >ours &&
+		git cat-file -p R:one >theirs &&
+		test_must_fail git merge-file    \
+			-L "HEAD:three"  -L ""  -L "R^0:one" \
+			ours             base   theirs &&
+		sed -e "s/^\([<=>]\)/\1\1/" ours >L-three &&
+		git cat-file -p :2:three >expect &&
+		test_cmp expect L-three &&
+
+		# Compare :2:three to expected values
+		git cat-file -p master:two >base &&
+		git cat-file -p L:two >ours &&
+		git cat-file -p R:three >theirs &&
+		test_must_fail git merge-file    \
+			-L "HEAD:two"  -L ""  -L "R^0:three" \
+			ours           base   theirs &&
+		sed -e "s/^\([<=>]\)/\1\1/" ours >R-three &&
+		git cat-file -p :3:three >expect &&
+		test_cmp expect R-three &&
+
+		# Compare three to expected contents
+		>empty &&
+		test_must_fail git merge-file    \
+			-L "HEAD"  -L ""  -L "R^0" \
+			L-three    empty  R-three &&
+		test_cmp three L-three
+	)
+'
+
 test_done

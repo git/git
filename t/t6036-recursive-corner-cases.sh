@@ -1402,4 +1402,198 @@ test_expect_failure 'check conflicting modes for regular file' '
 	)
 '
 
+# Setup:
+#          L1---L2
+#         /  \ /  \
+#   master    X    ?
+#         \  / \  /
+#          R1---R2
+#
+# Where:
+#   master has two files, named 'b' and 'a'
+#   branches L1 and R1 both modify each of the two files in conflicting ways
+#
+#   L2 is a merge of R1 into L1; more on it later.
+#   R2 is a merge of L1 into R1; more on it later.
+#
+#   X is an auto-generated merge-base used when merging L2 and R2.
+#   since X is a merge of L1 and R1, it has conflicting versions of each file
+#
+#   More about L2 and R2:
+#     - both resolve the conflicts in 'b' and 'a' differently
+#     - L2 renames 'b' to 'm'
+#     - R2 renames 'a' to 'm'
+#
+#   In the end, in file 'm' we have four different conflicting files (from
+#   two versions of 'b' and two of 'a').  In addition, if
+#   merge.conflictstyle is diff3, then the base version also has
+#   conflict markers of its own, leading to a total of three levels of
+#   conflict markers.  This is a pretty weird corner case, but we just want
+#   to ensure that we handle it as well as practical.
+
+test_expect_success 'setup nested conflicts' '
+	test_create_repo nested_conflicts &&
+	(
+		cd nested_conflicts &&
+
+		# Create some related files now
+		for i in $(test_seq 1 10)
+		do
+			echo Random base content line $i
+		done >initial &&
+
+		cp initial b_L1 &&
+		cp initial b_R1 &&
+		cp initial b_L2 &&
+		cp initial b_R2 &&
+		cp initial a_L1 &&
+		cp initial a_R1 &&
+		cp initial a_L2 &&
+		cp initial a_R2 &&
+
+		test_write_lines b b_L1 >>b_L1 &&
+		test_write_lines b b_R1 >>b_R1 &&
+		test_write_lines b b_L2 >>b_L2 &&
+		test_write_lines b b_R2 >>b_R2 &&
+		test_write_lines a a_L1 >>a_L1 &&
+		test_write_lines a a_R1 >>a_R1 &&
+		test_write_lines a a_L2 >>a_L2 &&
+		test_write_lines a a_R2 >>a_R2 &&
+
+		# Setup original commit (or merge-base), consisting of
+		# files named "b" and "a"
+		cp initial b &&
+		cp initial a &&
+		echo b >>b &&
+		echo a >>a &&
+		git add b a &&
+		test_tick && git commit -m initial &&
+
+		git branch L &&
+		git branch R &&
+
+		# Handle the left side
+		git checkout L &&
+		mv -f b_L1 b &&
+		mv -f a_L1 a &&
+		git add b a &&
+		test_tick && git commit -m "version L1 of files" &&
+		git tag L1 &&
+
+		# Handle the right side
+		git checkout R &&
+		mv -f b_R1 b &&
+		mv -f a_R1 a &&
+		git add b a &&
+		test_tick && git commit -m "verson R1 of files" &&
+		git tag R1 &&
+
+		# Create first merge on left side
+		git checkout L &&
+		test_must_fail git merge R1 &&
+		mv -f b_L2 b &&
+		mv -f a_L2 a &&
+		git add b a &&
+		git mv b m &&
+		test_tick && git commit -m "left merge, rename b->m" &&
+		git tag L2 &&
+
+		# Create first merge on right side
+		git checkout R &&
+		test_must_fail git merge L1 &&
+		mv -f b_R2 b &&
+		mv -f a_R2 a &&
+		git add b a &&
+		git mv a m &&
+		test_tick && git commit -m "right merge, rename a->m" &&
+		git tag R2
+	)
+'
+
+test_expect_failure 'check nested conflicts' '
+	(
+		cd nested_conflicts &&
+
+		git clean -f &&
+		git checkout L2^0 &&
+
+		# Merge must fail; there is a conflict
+		test_must_fail git -c merge.conflictstyle=diff3 merge -s recursive R2^0 &&
+
+		# Make sure the index has the right number of entries
+		git ls-files -s >out &&
+		test_line_count = 2 out &&
+		git ls-files -u >out &&
+		test_line_count = 2 out &&
+		# Ensure we have the correct number of untracked files
+		git ls-files -o >out &&
+		test_line_count = 1 out &&
+
+		# Create a and b from virtual merge base X
+		git cat-file -p master:a >base &&
+		git cat-file -p L1:a >ours &&
+		git cat-file -p R1:a >theirs &&
+		test_must_fail git merge-file --diff3 \
+			-L "Temporary merge branch 1" \
+			-L "merged common ancestors"  \
+			-L "Temporary merge branch 2" \
+			ours  \
+			base  \
+			theirs &&
+		sed -e "s/^\([<|=>]\)/\1\1/" ours >vmb_a &&
+
+		git cat-file -p master:b >base &&
+		git cat-file -p L1:b >ours &&
+		git cat-file -p R1:b >theirs &&
+		test_must_fail git merge-file --diff3 \
+			-L "Temporary merge branch 1" \
+			-L "merged common ancestors"  \
+			-L "Temporary merge branch 2" \
+			ours  \
+			base  \
+			theirs &&
+		sed -e "s/^\([<|=>]\)/\1\1/" ours >vmb_b &&
+
+		# Compare :2:m to expected values
+		git cat-file -p L2:m >ours &&
+		git cat-file -p R2:b >theirs &&
+		test_must_fail git merge-file --diff3  \
+			-L "HEAD:m"                    \
+			-L "merged common ancestors:b" \
+			-L "R2^0:b"                    \
+			ours                           \
+			vmb_b                          \
+			theirs                         &&
+		sed -e "s/^\([<|=>]\)/\1\1/" ours >m_stage_2 &&
+		git cat-file -p :2:m >actual &&
+		test_cmp m_stage_2 actual &&
+
+		# Compare :3:m to expected values
+		git cat-file -p L2:a >ours &&
+		git cat-file -p R2:m >theirs &&
+		test_must_fail git merge-file --diff3  \
+			-L "HEAD:a"                    \
+			-L "merged common ancestors:a" \
+			-L "R2^0:m"                    \
+			ours                           \
+			vmb_a                          \
+			theirs                         &&
+		sed -e "s/^\([<|=>]\)/\1\1/" ours >m_stage_3 &&
+		git cat-file -p :3:m >actual &&
+		test_cmp m_stage_3 actual &&
+
+		# Compare m to expected contents
+		>empty &&
+		cp -a m_stage_2 expected_final_m &&
+		test_must_fail git merge-file --diff3 \
+			-L "HEAD"                     \
+			-L "merged common ancestors"  \
+			-L "R2^0"                     \
+			expected_final_m              \
+			empty                         \
+			m_stage_3                     &&
+		test_cmp expected_final_m m
+	)
+'
+
 test_done
