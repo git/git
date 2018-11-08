@@ -3355,14 +3355,27 @@ static int process_entry(struct merge_options *o,
 				clean_merge = -1;
 		}
 	} else if (a_oid && b_oid) {
-		/* Case C: Added in both (check for same permissions) and */
-		/* case D: Modified in both, but differently. */
-		int is_dirty = 0; /* unpack_trees would have bailed if dirty */
-		clean_merge = handle_content_merge(o, path, is_dirty,
-						   o_oid, o_mode,
-						   a_oid, a_mode,
-						   b_oid, b_mode,
-						   NULL);
+		if (!o_oid) {
+			/* Case C: Added in both (check for same permissions) */
+			output(o, 1,
+			       _("CONFLICT (add/add): Merge conflict in %s"),
+			       path);
+			clean_merge = handle_file_collision(o,
+							    path, NULL, NULL,
+							    o->branch1,
+							    o->branch2,
+							    a_oid, a_mode,
+							    b_oid, b_mode);
+		} else {
+			/* case D: Modified in both, but differently. */
+			int is_dirty = 0; /* unpack_trees would have bailed if dirty */
+			clean_merge = handle_content_merge(o, path,
+							   is_dirty,
+							   o_oid, o_mode,
+							   a_oid, a_mode,
+							   b_oid, b_mode,
+							   NULL);
+		}
 	} else if (!o_oid && !a_oid && !b_oid) {
 		/*
 		 * this entry was deleted altogether. a_mode == 0 means
