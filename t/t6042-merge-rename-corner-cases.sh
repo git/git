@@ -1095,8 +1095,8 @@ test_conflicts_with_adds_and_renames() {
 }
 
 test_conflicts_with_adds_and_renames rename rename failure
-test_conflicts_with_adds_and_renames rename add    failure
-test_conflicts_with_adds_and_renames add    rename failure
+test_conflicts_with_adds_and_renames rename add    success
+test_conflicts_with_adds_and_renames add    rename success
 test_conflicts_with_adds_and_renames add    add    success
 
 # Setup:

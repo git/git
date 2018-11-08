@@ -185,7 +185,7 @@ test_expect_success 'setup differently handled merges of rename/add conflict' '
 		git branch B &&
 		git checkout -b C &&
 		echo 10 >>a &&
-		echo "other content" >>new_a &&
+		test_write_lines 0 1 2 3 4 5 6 7 foobar >new_a &&
 		git add a new_a &&
 		test_tick && git commit -m C &&
 
@@ -195,14 +195,14 @@ test_expect_success 'setup differently handled merges of rename/add conflict' '
 
 		git checkout B^0 &&
 		test_must_fail git merge C &&
-		git clean -f &&
+		git show :2:new_a >new_a &&
+		git add new_a &&
 		test_tick && git commit -m D &&
 		git tag D &&
 
 		git checkout C^0 &&
 		test_must_fail git merge B &&
-		rm new_a~HEAD new_a &&
-		printf "Incorrectly merged content" >>new_a &&
+		test_write_lines 0 1 2 3 4 5 6 7 bad_merge >new_a &&
 		git add -u &&
 		test_tick && git commit -m E &&
 		git tag E
@@ -225,21 +225,23 @@ test_expect_success 'git detects differently handled merges conflict' '
 		test_line_count = 1 out &&
 
 		git rev-parse >expect       \
-			D:new_a  E:new_a &&
+			C:new_a  D:new_a  E:new_a &&
 		git rev-parse   >actual     \
-			:2:new_a :3:new_a &&
+			:1:new_a :2:new_a :3:new_a &&
 		test_cmp expect actual &&
 
-		git cat-file -p C:new_a >ours &&
-		git cat-file -p B:new_a >theirs &&
+		# Test that the two-way merge in new_a is as expected
+		git cat-file -p D:new_a >ours &&
+		git cat-file -p E:new_a >theirs &&
 		>empty &&
 		test_must_fail git merge-file \
-			-L "Temporary merge branch 1" \
+			-L "HEAD" \
 			-L "" \
-			-L "Temporary merge branch 2" \
+			-L "E^0" \
 			ours empty theirs &&
 		sed -e "s/^\([<=>]\)/\1\1\1/" ours >expect &&
-		git cat-file -p :1:new_a >actual &&
+		git hash-object new_a >actual &&
+		git hash-object ours  >expect &&
 		test_cmp expect actual
 	)
 '
