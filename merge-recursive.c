@@ -1709,6 +1709,27 @@ static int handle_rename_add(struct merge_options *o,
 				     ci->dst_entry1->stages[other_stage].mode);
 }
 
+static char *find_path_for_conflict(struct merge_options *o,
+				    const char *path,
+				    const char *branch1,
+				    const char *branch2)
+{
+	char *new_path = NULL;
+	if (dir_in_way(path, !o->call_depth, 0)) {
+		new_path = unique_path(o, path, branch1);
+		output(o, 1, _("%s is a directory in %s adding "
+			       "as %s instead"),
+		       path, branch2, new_path);
+	} else if (would_lose_untracked(path)) {
+		new_path = unique_path(o, path, branch1);
+		output(o, 1, _("Refusing to lose untracked file"
+			       " at %s; adding as %s instead"),
+		       path, new_path);
+	}
+
+	return new_path;
+}
+
 static int handle_rename_rename_1to2(struct merge_options *o,
 				     struct rename_conflict_info *ci)
 {
@@ -1783,19 +1804,9 @@ static int handle_rename_rename_1to2(struct merge_options *o,
 						  &add->oid, add->mode) < 0)
 				return -1;
 		} else {
-			char *new_path = NULL;
-			if (dir_in_way(a->path, !o->call_depth, 0)) {
-				new_path = unique_path(o, a->path, ci->branch1);
-				output(o, 1, _("%s is a directory in %s adding "
-					       "as %s instead"),
-				       a->path, ci->branch2, new_path);
-			} else if (would_lose_untracked(a->path)) {
-				new_path = unique_path(o, a->path, ci->branch1);
-				output(o, 1, _("Refusing to lose untracked file"
-					       " at %s; adding as %s instead"),
-				       a->path, new_path);
-			}
-
+			char *new_path = find_path_for_conflict(o, a->path,
+								ci->branch1,
+								ci->branch2);
 			if (update_file(o, 0, &mfi.oid, mfi.mode, new_path ? new_path : a->path))
 				return -1;
 			free(new_path);
@@ -1812,19 +1823,9 @@ static int handle_rename_rename_1to2(struct merge_options *o,
 						  &mfi.oid, mfi.mode) < 0)
 				return -1;
 		} else {
-			char *new_path = NULL;
-			if (dir_in_way(b->path, !o->call_depth, 0)) {
-				new_path = unique_path(o, b->path, ci->branch2);
-				output(o, 1, _("%s is a directory in %s adding "
-					       "as %s instead"),
-				       b->path, ci->branch1, new_path);
-			} else if (would_lose_untracked(b->path)) {
-				new_path = unique_path(o, b->path, ci->branch2);
-				output(o, 1, _("Refusing to lose untracked file"
-					       " at %s; adding as %s instead"),
-				       b->path, new_path);
-			}
-
+			char *new_path = find_path_for_conflict(o, b->path,
+								ci->branch2,
+								ci->branch1);
 			if (update_file(o, 0, &mfi.oid, mfi.mode, new_path ? new_path : b->path))
 				return -1;
 			free(new_path);
