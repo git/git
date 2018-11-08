@@ -1596,4 +1596,155 @@ test_expect_failure 'check nested conflicts' '
 	)
 '
 
+# Setup:
+#          L1---L2---L3
+#         /  \ /  \ /  \
+#   master    X1   X2   ?
+#         \  / \  / \  /
+#          R1---R2---R3
+#
+# Where:
+#   master has one file named 'content'
+#   branches L1 and R1 both modify each of the two files in conflicting ways
+#
+#   L<n> (n>1) is a merge of R<n-1> into L<n-1>
+#   R<n> (n>1) is a merge of L<n-1> into R<n-1>
+#   L<n> and R<n> resolve the conflicts differently.
+#
+#   X<n> is an auto-generated merge-base used when merging L<n+1> and R<n+1>.
+#   By construction, X1 has conflict markers due to conflicting versions.
+#   X2, due to using merge.conflictstyle=3, has nested conflict markers.
+#
+#   So, merging R3 into L3 using merge.conflictstyle=3 should show the
+#   nested conflict markers from X2 in the base version -- that means we
+#   have three levels of conflict markers.  Can we distinguish all three?
+
+test_expect_success 'setup virtual merge base with nested conflicts' '
+	test_create_repo virtual_merge_base_has_nested_conflicts &&
+	(
+		cd virtual_merge_base_has_nested_conflicts &&
+
+		# Create some related files now
+		for i in $(test_seq 1 10)
+		do
+			echo Random base content line $i
+		done >content &&
+
+		# Setup original commit
+		git add content &&
+		test_tick && git commit -m initial &&
+
+		git branch L &&
+		git branch R &&
+
+		# Create L1
+		git checkout L &&
+		echo left >>content &&
+		git add content &&
+		test_tick && git commit -m "version L1 of content" &&
+		git tag L1 &&
+
+		# Create R1
+		git checkout R &&
+		echo right >>content &&
+		git add content &&
+		test_tick && git commit -m "verson R1 of content" &&
+		git tag R1 &&
+
+		# Create L2
+		git checkout L &&
+		test_must_fail git -c merge.conflictstyle=diff3 merge R1 &&
+		git checkout L1 content &&
+		test_tick && git commit -m "version L2 of content" &&
+		git tag L2 &&
+
+		# Create R2
+		git checkout R &&
+		test_must_fail git -c merge.conflictstyle=diff3 merge L1 &&
+		git checkout R1 content &&
+		test_tick && git commit -m "version R2 of content" &&
+		git tag R2 &&
+
+		# Create L3
+		git checkout L &&
+		test_must_fail git -c merge.conflictstyle=diff3 merge R2 &&
+		git checkout L1 content &&
+		test_tick && git commit -m "version L3 of content" &&
+		git tag L3 &&
+
+		# Create R3
+		git checkout R &&
+		test_must_fail git -c merge.conflictstyle=diff3 merge L2 &&
+		git checkout R1 content &&
+		test_tick && git commit -m "version R3 of content" &&
+		git tag R3
+	)
+'
+
+test_expect_success 'check virtual merge base with nested conflicts' '
+	(
+		cd virtual_merge_base_has_nested_conflicts &&
+
+		git checkout L3^0 &&
+
+		# Merge must fail; there is a conflict
+		test_must_fail git -c merge.conflictstyle=diff3 merge -s recursive R3^0 &&
+
+		# Make sure the index has the right number of entries
+		git ls-files -s >out &&
+		test_line_count = 3 out &&
+		git ls-files -u >out &&
+		test_line_count = 3 out &&
+		# Ensure we have the correct number of untracked files
+		git ls-files -o >out &&
+		test_line_count = 1 out &&
+
+		# Compare :[23]:content to expected values
+		git rev-parse L1:content R1:content >expect &&
+		git rev-parse :2:content :3:content >actual &&
+		test_cmp expect actual &&
+
+		# Imitate X1 merge base, except without long enough conflict
+		# markers because a subsequent sed will modify them.  Put
+		# result into vmb.
+		git cat-file -p master:content >base &&
+		git cat-file -p L:content >left &&
+		git cat-file -p R:content >right &&
+		cp left merged-once &&
+		test_must_fail git merge-file --diff3 \
+			-L "Temporary merge branch 1" \
+			-L "merged common ancestors"  \
+			-L "Temporary merge branch 2" \
+			merged-once \
+			base        \
+			right       &&
+		sed -e "s/^\([<|=>]\)/\1\1\1/" merged-once >vmb &&
+
+		# Imitate X2 merge base, overwriting vmb.  Note that we
+		# extend both sets of conflict markers to make them longer
+		# with the sed command.
+		cp left merged-twice &&
+		test_must_fail git merge-file --diff3 \
+			-L "Temporary merge branch 1" \
+			-L "merged common ancestors"  \
+			-L "Temporary merge branch 2" \
+			merged-twice \
+			vmb          \
+			right        &&
+		sed -e "s/^\([<|=>]\)/\1\1\1/" merged-twice >vmb &&
+
+		# Compare :1:content to expected value
+		git cat-file -p :1:content >actual &&
+		test_cmp vmb actual &&
+
+		# Determine expected content in final outer merge, compare to
+		# what the merge generated.
+		cp -f left expect &&
+		test_must_fail git merge-file --diff3                      \
+			-L "HEAD"  -L "merged common ancestors"  -L "R3^0" \
+			expect     vmb                           right     &&
+		test_cmp expect content
+	)
+'
+
 test_done

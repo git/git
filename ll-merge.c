@@ -384,7 +384,9 @@ int ll_merge(mmbuffer_t *result_buf,
 	if (opts->virtual_ancestor) {
 		if (driver->recursive)
 			driver = find_ll_merge_driver(driver->recursive);
-		marker_size += 2;
+	}
+	if (opts->extra_marker_size) {
+		marker_size += opts->extra_marker_size;
 	}
 	return driver->fn(driver, result_buf, path, ancestor, ancestor_label,
 			  ours, our_label, theirs, their_label,
