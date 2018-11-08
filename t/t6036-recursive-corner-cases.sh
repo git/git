@@ -240,6 +240,57 @@ test_expect_success 'git detects differently handled merges conflict' '
 	)
 '
 
+# Repeat the above testcase with precisely the same setup, other than with
+# the two merge bases having different orderings of commit timestamps so
+# that they are reversed in the order they are provided to merge-recursive,
+# so that we can improve code coverage.
+test_expect_success 'git detects differently handled merges conflict, swapped' '
+	(
+		cd rename-add &&
+
+		# Difference #1: Do cleanup from previous testrun
+		git reset --hard &&
+		git clean -fdqx &&
+
+		# Difference #2: Change commit timestamps
+		btime=$(git log --no-walk --date=raw --format=%cd B | awk "{print \$1}") &&
+		ctime=$(git log --no-walk --date=raw --format=%cd C | awk "{print \$1}") &&
+		newctime=$(($btime+1)) &&
+		git fast-export --no-data --all | sed -e s/$ctime/$newctime/ | git fast-import --force --quiet &&
+		# End of differences; rest is copy-paste of last test
+
+		git checkout D^0 &&
+		test_must_fail git merge -s recursive E^0 &&
+
+		git ls-files -s >out &&
+		test_line_count = 3 out &&
+		git ls-files -u >out &&
+		test_line_count = 3 out &&
+		git ls-files -o >out &&
+		test_line_count = 1 out &&
+
+		git rev-parse >expect       \
+			C:new_a  D:new_a  E:new_a &&
+		git rev-parse   >actual     \
+			:1:new_a :2:new_a :3:new_a &&
+		test_cmp expect actual &&
+
+		# Test that the two-way merge in new_a is as expected
+		git cat-file -p D:new_a >ours &&
+		git cat-file -p E:new_a >theirs &&
+		>empty &&
+		test_must_fail git merge-file \
+			-L "HEAD" \
+			-L "" \
+			-L "E^0" \
+			ours empty theirs &&
+		sed -e "s/^\([<=>]\)/\1\1\1/" ours >expect &&
+		git hash-object new_a >actual &&
+		git hash-object ours  >expect &&
+		test_cmp expect actual
+	)
+'
+
 #
 # criss-cross + modify/delete:
 #

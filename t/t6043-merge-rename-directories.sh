@@ -3163,6 +3163,43 @@ test_expect_success '10c-check: Overwrite untracked with dir rename/rename(1to2)
 	)
 '
 
+test_expect_success '10c-check: Overwrite untracked with dir rename/rename(1to2), other direction' '
+	(
+		cd 10c &&
+
+		git reset --hard &&
+		git clean -fdqx &&
+
+		git checkout B^0 &&
+		mkdir y &&
+		echo important >y/c &&
+
+		test_must_fail git merge -s recursive A^0 >out 2>err &&
+		test_i18ngrep "CONFLICT (rename/rename)" out &&
+		test_i18ngrep "Refusing to lose untracked file at y/c; adding as y/c~HEAD instead" out &&
+
+		git ls-files -s >out &&
+		test_line_count = 6 out &&
+		git ls-files -u >out &&
+		test_line_count = 3 out &&
+		git ls-files -o >out &&
+		test_line_count = 3 out &&
+
+		git rev-parse >actual \
+			:0:y/a :0:y/b :0:x/d :1:x/c :3:w/c :2:y/c &&
+		git rev-parse >expect \
+			 O:z/a  O:z/b  O:x/d  O:x/c  O:x/c  O:x/c &&
+		test_cmp expect actual &&
+
+		git hash-object y/c~HEAD >actual &&
+		git rev-parse O:x/c >expect &&
+		test_cmp expect actual &&
+
+		echo important >expect &&
+		test_cmp expect y/c
+	)
+'
+
 # Testcase 10d, Delete untracked w/ dir rename/rename(2to1)
 #   Commit O: z/{a,b,c_1},        x/{d,e,f_2}
 #   Commit A: y/{a,b},            x/{d,e,f_2,wham_1} + untracked y/wham
