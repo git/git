@@ -937,4 +937,166 @@ test_expect_failure 'mod6-check: chains of rename/rename(1to2) and rename/rename
 	)
 '
 
+test_conflicts_with_adds_and_renames() {
+	sideL=$1
+	sideR=$2
+	expect=$3
+
+	# Setup:
+	#          L
+	#         / \
+	#   master   ?
+	#         \ /
+	#          R
+	#
+	# Where:
+	#   Both L and R have files named 'three' which collide.  Each of
+	#   the colliding files could have been involved in a rename, in
+	#   which case there was a file named 'one' or 'two' that was
+	#   modified on the opposite side of history and renamed into the
+	#   collision on this side of history.
+	#
+	# Questions:
+	#   1) The index should contain both a stage 2 and stage 3 entry
+	#      for the colliding file.  Does it?
+	#   2) When renames are involved, the content merges are clean, so
+	#      the index should reflect the content merges, not merely the
+	#      version of the colliding file from the prior commit.  Does
+	#      it?
+	#   3) There should be a file in the worktree named 'three'
+	#      containing the two-way merged contents of the content-merged
+	#      versions of 'three' from each of the two colliding
+	#      files.  Is it present?
+	#   4) There should not be any three~* files in the working
+	#      tree
+	test_expect_success "setup simple $sideL/$sideR conflict" '
+		test_create_repo simple_${sideL}_${sideR} &&
+		(
+			cd simple_${sideL}_${sideR} &&
+
+			# Create some related files now
+			for i in $(test_seq 1 10)
+			do
+				echo Random base content line $i
+			done >file_v1 &&
+			cp file_v1 file_v2 &&
+			echo modification >>file_v2 &&
+
+			cp file_v1 file_v3 &&
+			echo more stuff >>file_v3 &&
+			cp file_v3 file_v4 &&
+			echo yet more stuff >>file_v4 &&
+
+			# Use a tag to record both these files for simple
+			# access, and clean out these untracked files
+			git tag file_v1 $(git hash-object -w file_v1) &&
+			git tag file_v2 $(git hash-object -w file_v2) &&
+			git tag file_v3 $(git hash-object -w file_v3) &&
+			git tag file_v4 $(git hash-object -w file_v4) &&
+			git clean -f &&
+
+			# Setup original commit (or merge-base), consisting of
+			# files named "one" and "two" if renames were involved.
+			touch irrelevant_file &&
+			git add irrelevant_file &&
+			if [ $sideL = "rename" ]
+			then
+				git show file_v1 >one &&
+				git add one
+			fi &&
+			if [ $sideR = "rename" ]
+			then
+				git show file_v3 >two &&
+				git add two
+			fi &&
+			test_tick && git commit -m initial &&
+
+			git branch L &&
+			git branch R &&
+
+			# Handle the left side
+			git checkout L &&
+			if [ $sideL = "rename" ]
+			then
+				git mv one three
+			else
+				git show file_v2 >three &&
+				git add three
+			fi &&
+			if [ $sideR = "rename" ]
+			then
+				git show file_v4 >two &&
+				git add two
+			fi &&
+			test_tick && git commit -m L &&
+
+			# Handle the right side
+			git checkout R &&
+			if [ $sideL = "rename" ]
+			then
+				git show file_v2 >one &&
+				git add one
+			fi &&
+			if [ $sideR = "rename" ]
+			then
+				git mv two three
+			else
+				git show file_v4 >three &&
+				git add three
+			fi &&
+			test_tick && git commit -m R
+		)
+	'
+
+	test_expect_$expect "check simple $sideL/$sideR conflict" '
+		(
+			cd simple_${sideL}_${sideR} &&
+
+			git checkout L^0 &&
+
+			# Merge must fail; there is a conflict
+			test_must_fail git merge -s recursive R^0 &&
+
+			# Make sure the index has the right number of entries
+			git ls-files -s >out &&
+			test_line_count = 3 out &&
+			git ls-files -u >out &&
+			test_line_count = 2 out &&
+			# Ensure we have the correct number of untracked files
+			git ls-files -o >out &&
+			test_line_count = 1 out &&
+
+			# Nothing should have touched irrelevant_file
+			git rev-parse >actual      \
+				:0:irrelevant_file \
+				:2:three           \
+				:3:three           &&
+			git rev-parse >expected        \
+				master:irrelevant_file \
+				file_v2                \
+				file_v4                &&
+			test_cmp expected actual &&
+
+			# Make sure we have the correct merged contents for
+			# three
+			git show file_v1 >expected &&
+			cat <<-\EOF >>expected &&
+			<<<<<<< HEAD
+			modification
+			=======
+			more stuff
+			yet more stuff
+			>>>>>>> R^0
+			EOF
+
+			test_cmp expected three
+		)
+	'
+}
+
+test_conflicts_with_adds_and_renames rename rename failure
+test_conflicts_with_adds_and_renames rename add    failure
+test_conflicts_with_adds_and_renames add    rename failure
+test_conflicts_with_adds_and_renames add    add    success
+
 test_done
