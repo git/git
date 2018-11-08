@@ -64,15 +64,12 @@ test_expect_success 'merge simple rename+criss-cross with no modifications' '
 		git ls-files -u >out &&
 		test_line_count = 2 out &&
 		git ls-files -o >out &&
-		test_line_count = 3 out &&
+		test_line_count = 1 out &&
 
 		git rev-parse >expect       \
-			L2:three   R2:three \
 			L2:three   R2:three &&
 		git rev-parse   >actual     \
 			:2:three   :3:three &&
-		git hash-object >>actual    \
-			three~HEAD three~R2^0 &&
 		test_cmp expect actual
 	)
 '
@@ -140,15 +137,12 @@ test_expect_success 'merge criss-cross + rename merges with basic modification' 
 		git ls-files -u >out &&
 		test_line_count = 2 out &&
 		git ls-files -o >out &&
-		test_line_count = 3 out &&
+		test_line_count = 1 out &&
 
 		git rev-parse >expect       \
-			L2:three   R2:three \
 			L2:three   R2:three &&
 		git rev-parse   >actual     \
 			:2:three   :3:three &&
-		git hash-object >>actual    \
-			three~HEAD three~R2^0 &&
 		test_cmp expect actual
 	)
 '
@@ -1512,7 +1506,7 @@ test_expect_success 'setup nested conflicts' '
 	)
 '
 
-test_expect_failure 'check nested conflicts' '
+test_expect_success 'check nested conflicts' '
 	(
 		cd nested_conflicts &&
 

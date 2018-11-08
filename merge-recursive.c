@@ -696,27 +696,6 @@ static int update_stages(struct merge_options *opt, const char *path,
 	return 0;
 }
 
-static int update_stages_for_stage_data(struct merge_options *opt,
-					const char *path,
-					const struct stage_data *stage_data)
-{
-	struct diff_filespec o, a, b;
-
-	o.mode = stage_data->stages[1].mode;
-	oidcpy(&o.oid, &stage_data->stages[1].oid);
-
-	a.mode = stage_data->stages[2].mode;
-	oidcpy(&a.oid, &stage_data->stages[2].oid);
-
-	b.mode = stage_data->stages[3].mode;
-	oidcpy(&b.oid, &stage_data->stages[3].oid);
-
-	return update_stages(opt, path,
-			     is_null_oid(&o.oid) ? NULL : &o,
-			     is_null_oid(&a.oid) ? NULL : &a,
-			     is_null_oid(&b.oid) ? NULL : &b);
-}
-
 static void update_entry(struct stage_data *entry,
 			 struct diff_filespec *o,
 			 struct diff_filespec *a,
@@ -1870,7 +1849,6 @@ static int handle_rename_rename_2to1(struct merge_options *o,
 	char *path_side_2_desc;
 	struct merge_file_info mfi_c1;
 	struct merge_file_info mfi_c2;
-	int ret;
 
 	output(o, 1, _("CONFLICT (rename/rename): "
 	       "Rename %s->%s in %s. "
@@ -1878,81 +1856,22 @@ static int handle_rename_rename_2to1(struct merge_options *o,
 	       a->path, c1->path, ci->branch1,
 	       b->path, c2->path, ci->branch2);
 
-	remove_file(o, 1, a->path, o->call_depth || would_lose_untracked(a->path));
-	remove_file(o, 1, b->path, o->call_depth || would_lose_untracked(b->path));
-
 	path_side_1_desc = xstrfmt("version of %s from %s", path, a->path);
 	path_side_2_desc = xstrfmt("version of %s from %s", path, b->path);
 	if (merge_mode_and_contents(o, a, c1, &ci->ren1_other, path_side_1_desc,
 				    o->branch1, o->branch2,
-				    o->call_depth * 2, &mfi_c1) ||
+				    1 + o->call_depth * 2, &mfi_c1) ||
 	    merge_mode_and_contents(o, b, &ci->ren2_other, c2, path_side_2_desc,
 				    o->branch1, o->branch2,
-				    o->call_depth * 2, &mfi_c2))
+				    1 + o->call_depth * 2, &mfi_c2))
 		return -1;
 	free(path_side_1_desc);
 	free(path_side_2_desc);
 
-	if (o->call_depth) {
-		/*
-		 * If mfi_c1.clean && mfi_c2.clean, then it might make
-		 * sense to do a two-way merge of those results.  But, I
-		 * think in all cases, it makes sense to have the virtual
-		 * merge base just undo the renames; they can be detected
-		 * again later for the non-recursive merge.
-		 */
-		remove_file(o, 0, path, 0);
-		ret = update_file(o, 0, &mfi_c1.oid, mfi_c1.mode, a->path);
-		if (!ret)
-			ret = update_file(o, 0, &mfi_c2.oid, mfi_c2.mode,
-					  b->path);
-	} else {
-		char *new_path1 = unique_path(o, path, ci->branch1);
-		char *new_path2 = unique_path(o, path, ci->branch2);
-		output(o, 1, _("Renaming %s to %s and %s to %s instead"),
-		       a->path, new_path1, b->path, new_path2);
-		if (was_dirty(o, path))
-			output(o, 1, _("Refusing to lose dirty file at %s"),
-			       path);
-		else if (would_lose_untracked(path))
-			/*
-			 * Only way we get here is if both renames were from
-			 * a directory rename AND user had an untracked file
-			 * at the location where both files end up after the
-			 * two directory renames.  See testcase 10d of t6043.
-			 */
-			output(o, 1, _("Refusing to lose untracked file at "
-				       "%s, even though it's in the way."),
-			       path);
-		else
-			remove_file(o, 0, path, 0);
-		ret = update_file(o, 0, &mfi_c1.oid, mfi_c1.mode, new_path1);
-		if (!ret)
-			ret = update_file(o, 0, &mfi_c2.oid, mfi_c2.mode,
-					  new_path2);
-		/*
-		 * unpack_trees() actually populates the index for us for
-		 * "normal" rename/rename(2to1) situtations so that the
-		 * correct entries are at the higher stages, which would
-		 * make the call below to update_stages_for_stage_data
-		 * unnecessary.  However, if either of the renames came
-		 * from a directory rename, then unpack_trees() will not
-		 * have gotten the right data loaded into the index, so we
-		 * need to do so now.  (While it'd be tempting to move this
-		 * call to update_stages_for_stage_data() to
-		 * apply_directory_rename_modifications(), that would break
-		 * our intermediate calls to would_lose_untracked() since
-		 * those rely on the current in-memory index.  See also the
-		 * big "NOTE" in update_stages()).
-		 */
-		if (update_stages_for_stage_data(o, path, ci->dst_entry1))
-			ret = -1;
-
-		free(new_path2);
-		free(new_path1);
-	}
-
-	return ret;
+	return handle_file_collision(o, path, a->path, b->path,
+				     ci->branch1, ci->branch2,
+				     &mfi_c1.oid, mfi_c1.mode,
+				     &mfi_c2.oid, mfi_c2.mode);
 }
 
 /*
@@ -3361,9 +3280,14 @@ static int process_entry(struct merge_options *o,
 				clean_merge = -1;
 			break;
 		case RENAME_TWO_FILES_TO_ONE:
-			clean_merge = 0;
-			if (handle_rename_rename_2to1(o, conflict_info))
-				clean_merge = -1;
+			/*
+			 * Probably unclean merge, but if the two renamed
+			 * files merge cleanly and the two resulting files
+			 * can then be two-way merged cleanly, I guess it's
+			 * a clean merge?
+			 */
+			clean_merge = handle_rename_rename_2to1(o,
+								conflict_info);
 			break;
 		default:
 			entry->processed = 0;

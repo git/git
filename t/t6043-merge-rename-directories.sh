@@ -278,7 +278,7 @@ test_expect_success '1d-check: Directory renames cause a rename/rename(2to1) con
 		git ls-files -u >out &&
 		test_line_count = 2 out &&
 		git ls-files -o >out &&
-		test_line_count = 3 out &&
+		test_line_count = 1 out &&
 
 		git rev-parse >actual \
 			:0:x/b :0:x/c :0:x/d :0:x/e :0:x/m :0:x/n &&
@@ -293,15 +293,16 @@ test_expect_success '1d-check: Directory renames cause a rename/rename(2to1) con
 			 A:y/wham  B:z/wham &&
 		test_cmp expect actual &&
 
-		test_path_is_missing x/wham &&
-		test_path_is_file x/wham~HEAD &&
-		test_path_is_file x/wham~B^0 &&
-
-		git hash-object >actual \
-			x/wham~HEAD x/wham~B^0 &&
-		git rev-parse >expect \
-			A:y/wham    B:z/wham &&
-		test_cmp expect actual
+		# Test that the two-way merge in x/wham is as expected
+		git cat-file -p :2:x/wham >expect &&
+		git cat-file -p :3:x/wham >other &&
+		>empty &&
+		test_must_fail git merge-file \
+			-L "HEAD" \
+			-L "" \
+			-L "B^0" \
+			expect empty other &&
+		test_cmp expect x/wham
 	)
 '
 
@@ -1670,7 +1671,7 @@ test_expect_success '7b-check: rename/rename(2to1), but only due to transitive r
 		git ls-files -u >out &&
 		test_line_count = 2 out &&
 		git ls-files -o >out &&
-		test_line_count = 3 out &&
+		test_line_count = 1 out &&
 
 		git rev-parse >actual \
 			:0:y/b :0:y/c :2:y/d :3:y/d &&
@@ -1678,15 +1679,16 @@ test_expect_success '7b-check: rename/rename(2to1), but only due to transitive r
 			 O:z/b  O:z/c  O:w/d  O:x/d &&
 		test_cmp expect actual &&
 
-		test_path_is_missing y/d &&
-		test_path_is_file y/d~HEAD &&
-		test_path_is_file y/d~B^0 &&
-
-		git hash-object >actual \
-			y/d~HEAD y/d~B^0 &&
-		git rev-parse >expect \
-			O:w/d    O:x/d &&
-		test_cmp expect actual
+		# Test that the two-way merge in y/d is as expected
+		git cat-file -p :2:y/d >expect &&
+		git cat-file -p :3:y/d >other &&
+		>empty &&
+		test_must_fail git merge-file \
+			-L "HEAD" \
+			-L "" \
+			-L "B^0" \
+			expect empty other &&
+		test_cmp expect y/d
 	)
 '
 
@@ -3165,7 +3167,7 @@ test_expect_success '10c-check: Overwrite untracked with dir rename/rename(1to2)
 #   Commit O: z/{a,b,c_1},        x/{d,e,f_2}
 #   Commit A: y/{a,b},            x/{d,e,f_2,wham_1} + untracked y/wham
 #   Commit B: z/{a,b,c_1,wham_2}, y/{d,e}
-#   Expected: Failed Merge; y/{a,b,d,e} + untracked y/{wham,wham~B^0,wham~HEAD}+
+#   Expected: Failed Merge; y/{a,b,d,e} + untracked y/{wham,wham~merged}+
 #             CONFLICT(rename/rename) z/c_1 vs x/f_2 -> y/wham
 #             ERROR_MSG(Refusing to lose untracked file at y/wham)
 
@@ -3219,7 +3221,7 @@ test_expect_success '10d-check: Delete untracked with dir rename/rename(2to1)' '
 		git ls-files -u >out &&
 		test_line_count = 2 out &&
 		git ls-files -o >out &&
-		test_line_count = 4 out &&
+		test_line_count = 3 out &&
 
 		git rev-parse >actual \
 			:0:y/a :0:y/b :0:y/d :0:y/e :2:y/wham :3:y/wham &&
@@ -3232,11 +3234,16 @@ test_expect_success '10d-check: Delete untracked with dir rename/rename(2to1)' '
 		echo important >expect &&
 		test_cmp expect y/wham &&
 
-		git hash-object >actual \
-			y/wham~B^0 y/wham~HEAD &&
-		git rev-parse >expect \
-			O:x/f      O:z/c &&
-		test_cmp expect actual
+		# Test that the two-way merge in y/wham~merged is as expected
+		git cat-file -p :2:y/wham >expect &&
+		git cat-file -p :3:y/wham >other &&
+		>empty &&
+		test_must_fail git merge-file \
+			-L "HEAD" \
+			-L "" \
+			-L "B^0" \
+			expect empty other &&
+		test_cmp expect y/wham~merged
 	)
 '
 
@@ -3689,7 +3696,7 @@ test_expect_success '11e-check: Avoid deleting not-uptodate with dir rename/rena
 #   Commit O: z/{a,b},        x/{c_1,d_2}
 #   Commit A: y/{a,b,wham_1}, x/d_2, except y/wham has uncommitted mods
 #   Commit B: z/{a,b,wham_2}, x/c_1
-#   Expected: Failed Merge; y/{a,b} + untracked y/{wham~B^0,wham~B^HEAD} +
+#   Expected: Failed Merge; y/{a,b} + untracked y/{wham~merged} +
 #             y/wham with dirty changes from before merge +
 #             CONFLICT(rename/rename) x/c vs x/d -> y/wham
 #             ERROR_MSG(Refusing to lose dirty file at y/wham)
@@ -3741,24 +3748,30 @@ test_expect_success '11f-check: Avoid deleting not-uptodate with dir rename/rena
 		git ls-files -u >out &&
 		test_line_count = 2 out &&
 		git ls-files -o >out &&
-		test_line_count = 4 out &&
+		test_line_count = 3 out &&
 
 		test_seq 1 10 >expected &&
 		echo important >>expected &&
 		test_cmp expected y/wham &&
 
 		test_must_fail git rev-parse :1:y/wham &&
-		git hash-object >actual \
-			y/wham~B^0 y/wham~HEAD &&
-		git rev-parse >expect \
-			O:x/d      O:x/c &&
-		test_cmp expect actual &&
 
 		git rev-parse >actual \
 			:0:y/a :0:y/b :2:y/wham :3:y/wham &&
 		git rev-parse >expect \
 			 O:z/a  O:z/b  O:x/c     O:x/d &&
-		test_cmp expect actual
+		test_cmp expect actual &&
+
+		# Test that the two-way merge in y/wham~merged is as expected
+		git cat-file -p :2:y/wham >expect &&
+		git cat-file -p :3:y/wham >other &&
+		>empty &&
+		test_must_fail git merge-file \
+			-L "HEAD" \
+			-L "" \
+			-L "B^0" \
+			expect empty other &&
+		test_cmp expect y/wham~merged
 	)
 '
 

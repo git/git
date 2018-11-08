@@ -464,17 +464,28 @@ test_expect_success 'handle rename/rename (2to1) conflict correctly' '
 		git ls-files -u c >out &&
 		test_line_count = 2 out &&
 		git ls-files -o >out &&
-		test_line_count = 3 out &&
+		test_line_count = 1 out &&
 
 		test_path_is_missing a &&
 		test_path_is_missing b &&
-		test_path_is_file c~HEAD &&
-		test_path_is_file c~C^0 &&
 
-		git rev-parse >expect   \
-			C:a     B:b     &&
-		git hash-object >actual \
-			c~HEAD  c~C^0   &&
+		git rev-parse >expect  \
+			C:a     B:b    &&
+		git rev-parse >actual  \
+			:2:c    :3:c   &&
+		test_cmp expect actual &&
+
+		# Test that the two-way merge in new_a is as expected
+		git cat-file -p :2:c >>ours &&
+		git cat-file -p :3:c >>theirs &&
+		>empty &&
+		test_must_fail git merge-file \
+			-L "HEAD" \
+			-L "" \
+			-L "C^0" \
+			ours empty theirs &&
+		git hash-object c >actual &&
+		git hash-object ours >expect &&
 		test_cmp expect actual
 	)
 '
@@ -940,7 +951,6 @@ test_expect_failure 'mod6-check: chains of rename/rename(1to2) and rename/rename
 test_conflicts_with_adds_and_renames() {
 	sideL=$1
 	sideR=$2
-	expect=$3
 
 	# Setup:
 	#          L
@@ -1048,7 +1058,7 @@ test_conflicts_with_adds_and_renames() {
 		)
 	'
 
-	test_expect_$expect "check simple $sideL/$sideR conflict" '
+	test_expect_success "check simple $sideL/$sideR conflict" '
 		(
 			cd simple_${sideL}_${sideR} &&
 
@@ -1094,10 +1104,10 @@ test_conflicts_with_adds_and_renames() {
 	'
 }
 
-test_conflicts_with_adds_and_renames rename rename failure
-test_conflicts_with_adds_and_renames rename add    success
-test_conflicts_with_adds_and_renames add    rename success
-test_conflicts_with_adds_and_renames add    add    success
+test_conflicts_with_adds_and_renames rename rename
+test_conflicts_with_adds_and_renames rename add
+test_conflicts_with_adds_and_renames add    rename
+test_conflicts_with_adds_and_renames add    add
 
 # Setup:
 #          L
@@ -1168,7 +1178,7 @@ test_expect_success 'setup nested conflicts from rename/rename(2to1)' '
 	)
 '
 
-test_expect_failure 'check nested conflicts from rename/rename(2to1)' '
+test_expect_success 'check nested conflicts from rename/rename(2to1)' '
 	(
 		cd nested_conflicts_from_rename_rename &&
 
