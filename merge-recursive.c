@@ -1709,80 +1709,17 @@ static int handle_rename_add(struct merge_options *o,
 				     ci->dst_entry1->stages[other_stage].mode);
 }
 
-static int handle_file(struct merge_options *o,
-			struct diff_filespec *rename,
-			int stage,
-			struct rename_conflict_info *ci)
-{
-	char *dst_name = rename->path;
-	struct stage_data *dst_entry;
-	const char *cur_branch, *other_branch;
-	struct diff_filespec other;
-	struct diff_filespec *add;
-	int ret;
-
-	if (stage == 2) {
-		dst_entry = ci->dst_entry1;
-		cur_branch = ci->branch1;
-		other_branch = ci->branch2;
-	} else {
-		dst_entry = ci->dst_entry2;
-		cur_branch = ci->branch2;
-		other_branch = ci->branch1;
-	}
-
-	add = filespec_from_entry(&other, dst_entry, stage ^ 1);
-	if (add) {
-		int ren_src_was_dirty = was_dirty(o, rename->path);
-		char *add_name = unique_path(o, rename->path, other_branch);
-		if (update_file(o, 0, &add->oid, add->mode, add_name))
-			return -1;
-
-		if (ren_src_was_dirty) {
-			output(o, 1, _("Refusing to lose dirty file at %s"),
-			       rename->path);
-		}
-		/*
-		 * Because the double negatives somehow keep confusing me...
-		 *    1) update_wd iff !ren_src_was_dirty.
-		 *    2) no_wd iff !update_wd
-		 *    3) so, no_wd == !!ren_src_was_dirty == ren_src_was_dirty
-		 */
-		remove_file(o, 0, rename->path, ren_src_was_dirty);
-		dst_name = unique_path(o, rename->path, cur_branch);
-	} else {
-		if (dir_in_way(rename->path, !o->call_depth, 0)) {
-			dst_name = unique_path(o, rename->path, cur_branch);
-			output(o, 1, _("%s is a directory in %s adding as %s instead"),
-			       rename->path, other_branch, dst_name);
-		} else if (!o->call_depth &&
-			   would_lose_untracked(rename->path)) {
-			dst_name = unique_path(o, rename->path, cur_branch);
-			output(o, 1, _("Refusing to lose untracked file at %s; "
-				       "adding as %s instead"),
-			       rename->path, dst_name);
-		}
-	}
-	if ((ret = update_file(o, 0, &rename->oid, rename->mode, dst_name)))
-		; /* fall through, do allow dst_name to be released */
-	else if (stage == 2)
-		ret = update_stages(o, rename->path, NULL, rename, add);
-	else
-		ret = update_stages(o, rename->path, NULL, add, rename);
-
-	if (dst_name != rename->path)
-		free(dst_name);
-
-	return ret;
-}
-
 static int handle_rename_rename_1to2(struct merge_options *o,
 				     struct rename_conflict_info *ci)
 {
 	/* One file was renamed in both branches, but to different names. */
+	struct merge_file_info mfi;
+	struct diff_filespec other;
+	struct diff_filespec *add;
 	struct diff_filespec *one = ci->pair1->one;
 	struct diff_filespec *a = ci->pair1->two;
 	struct diff_filespec *b = ci->pair2->two;
+	char *path_desc;
 
 	output(o, 1, _("CONFLICT (rename/rename): "
 	       "Rename \"%s\"->\"%s\" in branch \"%s\" "
@@ -1790,15 +1727,16 @@ static int handle_rename_rename_1to2(struct merge_options *o,
 	       one->path, a->path, ci->branch1,
 	       one->path, b->path, ci->branch2,
 	       o->call_depth ? _(" (left unresolved)") : "");
-	if (o->call_depth) {
-		struct merge_file_info mfi;
-		struct diff_filespec other;
-		struct diff_filespec *add;
-		if (merge_mode_and_contents(o, one, a, b, one->path,
-					    ci->branch1, ci->branch2,
-					    o->call_depth * 2, &mfi))
-			return -1;
 
+	path_desc = xstrfmt("%s and %s, both renamed from %s",
+			    a->path, b->path, one->path);
+	if (merge_mode_and_contents(o, one, a, b, path_desc,
+				    ci->branch1, ci->branch2,
+				    o->call_depth * 2, &mfi))
+		return -1;
+	free(path_desc);
+
+	if (o->call_depth) {
 		/*
 		 * FIXME: For rename/add-source conflicts (if we could detect
 		 * such), this is wrong.  We should instead find a unique
@@ -1830,8 +1768,70 @@ static int handle_rename_rename_1to2(struct merge_options *o,
 		}
 		else
 			remove_file_from_cache(b->path);
-	} else if (handle_file(o, a, 2, ci) || handle_file(o, b, 3, ci))
-		return -1;
+	} else {
+		/*
+		 * For each destination path, we need to see if there is a
+		 * rename/add collision.  If not, we can write the file out
+		 * to the specified location.
+		 */
+		add = filespec_from_entry(&other, ci->dst_entry1, 2 ^ 1);
+		if (add) {
+			if (handle_file_collision(o, a->path,
+						  NULL, NULL,
+						  ci->branch1, ci->branch2,
+						  &mfi.oid, mfi.mode,
+						  &add->oid, add->mode) < 0)
+				return -1;
+		} else {
+			char *new_path = NULL;
+			if (dir_in_way(a->path, !o->call_depth, 0)) {
+				new_path = unique_path(o, a->path, ci->branch1);
+				output(o, 1, _("%s is a directory in %s adding "
+					       "as %s instead"),
+				       a->path, ci->branch2, new_path);
+			} else if (would_lose_untracked(a->path)) {
+				new_path = unique_path(o, a->path, ci->branch1);
+				output(o, 1, _("Refusing to lose untracked file"
+					       " at %s; adding as %s instead"),
+				       a->path, new_path);
+			}
+
+			if (update_file(o, 0, &mfi.oid, mfi.mode, new_path ? new_path : a->path))
+				return -1;
+			free(new_path);
+			if (update_stages(o, a->path, NULL, a, NULL))
+				return -1;
+		}
+
+		add = filespec_from_entry(&other, ci->dst_entry2, 3 ^ 1);
+		if (add) {
+			if (handle_file_collision(o, b->path,
+						  NULL, NULL,
+						  ci->branch1, ci->branch2,
+						  &add->oid, add->mode,
+						  &mfi.oid, mfi.mode) < 0)
+				return -1;
+		} else {
+			char *new_path = NULL;
+			if (dir_in_way(b->path, !o->call_depth, 0)) {
+				new_path = unique_path(o, b->path, ci->branch2);
+				output(o, 1, _("%s is a directory in %s adding "
+					       "as %s instead"),
+				       b->path, ci->branch1, new_path);
+			} else if (would_lose_untracked(b->path)) {
+				new_path = unique_path(o, b->path, ci->branch2);
+				output(o, 1, _("Refusing to lose untracked file"
+					       " at %s; adding as %s instead"),
+				       b->path, new_path);
+			}
+
+			if (update_file(o, 0, &mfi.oid, mfi.mode, new_path ? new_path : b->path))
+				return -1;
+			free(new_path);
+			if (update_stages(o, b->path, NULL, NULL, b))
+				return -1;
+		}
+	}
 
 	return 0;
 }

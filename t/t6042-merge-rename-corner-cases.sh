@@ -684,7 +684,7 @@ test_expect_success 'rename/rename/add-dest merge still knows about conflicting 
 		git ls-files -u c >out &&
 		test_line_count = 2 out &&
 		git ls-files -o >out &&
-		test_line_count = 5 out &&
+		test_line_count = 1 out &&
 
 		git rev-parse >expect               \
 			A:a   C:b   B:b   C:c   B:c &&
@@ -692,14 +692,27 @@ test_expect_success 'rename/rename/add-dest merge still knows about conflicting 
 			:1:a  :2:b  :3:b  :2:c  :3:c &&
 		test_cmp expect actual &&
 
-		git rev-parse >expect               \
-			C:c     B:c     C:b     B:b &&
-		git hash-object >actual                \
-			c~HEAD  c~B\^0  b~HEAD  b~B\^0 &&
-		test_cmp expect actual &&
+		# Record some contents for re-doing merges
+		git cat-file -p A:a >stuff &&
+		git cat-file -p C:b >important_info &&
+		git cat-file -p B:c >precious_data &&
+		>empty &&
 
-		test_path_is_missing b &&
-		test_path_is_missing c
+		# Test the merge in b
+		test_must_fail git merge-file \
+			-L "HEAD" \
+			-L "" \
+			-L "B^0" \
+			important_info empty stuff &&
+		test_cmp important_info b &&
+
+		# Test the merge in c
+		test_must_fail git merge-file \
+			-L "HEAD" \
+			-L "" \
+			-L "B^0" \
+			stuff empty precious_data &&
+		test_cmp stuff c
 	)
 '
 

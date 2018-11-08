@@ -1078,7 +1078,7 @@ test_expect_success '5c-check: Transitive rename would cause rename/rename/renam
 		git ls-files -u >out &&
 		test_line_count = 6 out &&
 		git ls-files -o >out &&
-		test_line_count = 3 out &&
+		test_line_count = 1 out &&
 
 		git rev-parse >actual \
 			:0:y/b :0:y/c :0:y/e &&
@@ -1094,9 +1094,9 @@ test_expect_success '5c-check: Transitive rename would cause rename/rename/renam
 		test_cmp expect actual &&
 
 		git hash-object >actual \
-			w/d~HEAD w/d~B^0 z/d &&
+			z/d &&
 		git rev-parse >expect \
-			O:x/d    B:w/d   O:x/d &&
+			O:x/d &&
 		test_cmp expect actual &&
 		test_path_is_missing x/d &&
 		test_path_is_file y/d &&
@@ -3672,7 +3672,7 @@ test_expect_success '11e-check: Avoid deleting not-uptodate with dir rename/rena
 		git ls-files -u >out &&
 		test_line_count = 4 out &&
 		git ls-files -o >out &&
-		test_line_count = 4 out &&
+		test_line_count = 3 out &&
 
 		echo different >expected &&
 		echo mods >>expected &&
@@ -3684,11 +3684,17 @@ test_expect_success '11e-check: Avoid deleting not-uptodate with dir rename/rena
 			 O:z/a  O:z/b  O:x/d  O:x/c  O:x/c  A:y/c  O:x/c &&
 		test_cmp expect actual &&
 
-		git hash-object >actual \
-			y/c~B^0 y/c~HEAD &&
-		git rev-parse >expect \
-			O:x/c   A:y/c &&
-		test_cmp expect actual
+		# See if y/c~merged has expected contents; requires manually
+		# doing the expected file merge
+		git cat-file -p A:y/c >c1 &&
+		git cat-file -p B:z/c >c2 &&
+		>empty &&
+		test_must_fail git merge-file \
+			-L "HEAD" \
+			-L "" \
+			-L "B^0" \
+			c1 empty c2 &&
+		test_cmp c1 y/c~merged
 	)
 '
 
