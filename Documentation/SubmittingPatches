@@ -75,7 +75,7 @@ sure that the entire test suite passes.
 
 If you have an account at GitHub (and you can get one for free to work
 on open source projects), you can use their Travis CI integration to
-test your changes on Linux, Mac (and hopefully soon Windows).  See
+test your changes on Linux, Mac and Windows.  See
 GitHub-Travis CI hints section for details.
 
 Do not forget to update the documentation to describe the updated
@@ -440,7 +440,7 @@ their trees themselves.
 
 With an account at GitHub (you can get one for free to work on open
 source projects), you can use Travis CI to test your changes on Linux,
-Mac (and hopefully soon Windows).  You can find a successful example
+Mac and Windows.  You can find a successful example
 test build here: https://travis-ci.org/git/git/builds/120473209
 
 Follow these steps for the initial setup:
