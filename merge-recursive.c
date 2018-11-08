@@ -1559,6 +1559,127 @@ static struct diff_filespec *filespec_from_entry(struct diff_filespec *target,
 	return target;
 }
 
+#if 0 // #if-0-ing avoids unused function warning; will make live in next commit
+static int handle_file_collision(struct merge_options *o,
+				 const char *collide_path,
+				 const char *prev_path1,
+				 const char *prev_path2,
+				 const char *branch1, const char *branch2,
+				 const struct object_id *a_oid,
+				 unsigned int a_mode,
+				 const struct object_id *b_oid,
+				 unsigned int b_mode)
+{
+	struct merge_file_info mfi;
+	struct diff_filespec null, a, b;
+	char *alt_path = NULL;
+	const char *update_path = collide_path;
+
+	/*
+	 * In the recursive case, we just opt to undo renames
+	 */
+	if (o->call_depth && (prev_path1 || prev_path2)) {
+		/* Put first file (a_oid, a_mode) in its original spot */
+		if (prev_path1) {
+			if (update_file(o, 1, a_oid, a_mode, prev_path1))
+				return -1;
+		} else {
+			if (update_file(o, 1, a_oid, a_mode, collide_path))
+				return -1;
+		}
+
+		/* Put second file (b_oid, b_mode) in its original spot */
+		if (prev_path2) {
+			if (update_file(o, 1, b_oid, b_mode, prev_path2))
+				return -1;
+		} else {
+			if (update_file(o, 1, b_oid, b_mode, collide_path))
+				return -1;
+		}
+
+		/* Don't leave something at collision path if unrenaming both */
+		if (prev_path1 && prev_path2)
+			remove_file(o, 1, collide_path, 0);
+
+		return 0;
+	}
+
+	/* Remove rename sources if rename/add or rename/rename(2to1) */
+	if (prev_path1)
+		remove_file(o, 1, prev_path1,
+			    o->call_depth || would_lose_untracked(prev_path1));
+	if (prev_path2)
+		remove_file(o, 1, prev_path2,
+			    o->call_depth || would_lose_untracked(prev_path2));
+
+	/*
+	 * Remove the collision path, if it wouldn't cause dirty contents
+	 * or an untracked file to get lost.  We'll either overwrite with
+	 * merged contents, or just write out to differently named files.
+	 */
+	if (was_dirty(o, collide_path)) {
+		output(o, 1, _("Refusing to lose dirty file at %s"),
+		       collide_path);
+		update_path = alt_path = unique_path(o, collide_path, "merged");
+	} else if (would_lose_untracked(collide_path)) {
+		/*
+		 * Only way we get here is if both renames were from
+		 * a directory rename AND user had an untracked file
+		 * at the location where both files end up after the
+		 * two directory renames.  See testcase 10d of t6043.
+		 */
+		output(o, 1, _("Refusing to lose untracked file at "
+			       "%s, even though it's in the way."),
+		       collide_path);
+		update_path = alt_path = unique_path(o, collide_path, "merged");
+	} else {
+		/*
+		 * FIXME: It's possible that the two files are identical
+		 * and that the current working copy happens to match, in
+		 * which case we are unnecessarily touching the working
+		 * tree file.  It's not a likely enough scenario that I
+		 * want to code up the checks for it and a better fix is
+		 * available if we restructure how unpack_trees() and
+		 * merge-recursive interoperate anyway, so punting for
+		 * now...
+		 */
+		remove_file(o, 0, collide_path, 0);
+	}
+
+	/* Store things in diff_filespecs for functions that need it */
+	memset(&a, 0, sizeof(struct diff_filespec));
+	memset(&b, 0, sizeof(struct diff_filespec));
+	null.path = a.path = b.path = (char *)collide_path;
+	oidcpy(&null.oid, &null_oid);
+	null.mode = 0;
+	oidcpy(&a.oid, a_oid);
+	a.mode = a_mode;
+	a.oid_valid = 1;
+	oidcpy(&b.oid, b_oid);
+	b.mode = b_mode;
+	b.oid_valid = 1;
+
+	if (merge_mode_and_contents(o, &null, &a, &b, collide_path,
+				    branch1, branch2, o->call_depth * 2, &mfi))
+		return -1;
+	mfi.clean &= !alt_path;
+	if (update_file(o, mfi.clean, &mfi.oid, mfi.mode, update_path))
+		return -1;
+	if (!mfi.clean && !o->call_depth &&
+	    update_stages(o, collide_path, NULL, &a, &b))
+		return -1;
+	free(alt_path);
+	/*
+	 * FIXME: If both a & b both started with conflicts (only possible
+	 * if they came from a rename/rename(2to1)), but had IDENTICAL
+	 * contents including those conflicts, then in the next line we claim
+	 * it was clean.  If someone cares about this case, we should have the
+	 * caller notify us if we started with conflicts.
+	 */
+	return mfi.clean;
+}
+#endif
+
 static int handle_file(struct merge_options *o,
 			struct diff_filespec *rename,
 			int stage,
