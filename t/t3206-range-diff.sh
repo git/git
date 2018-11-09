@@ -122,6 +122,59 @@ test_expect_success 'changed commit' '
 	test_cmp expected actual
 '
 
+test_expect_success 'changed commit with --no-patch diff option' '
+	git range-diff --no-color --no-patch topic...changed >actual &&
+	cat >expected <<-EOF &&
+	1:  4de457d = 1:  a4b3333 s/5/A/
+	2:  fccce22 = 2:  f51d370 s/4/A/
+	3:  147e64e ! 3:  0559556 s/11/B/
+	4:  a63e992 ! 4:  d966c5c s/12/B/
+	EOF
+	test_cmp expected actual
+'
+
+test_expect_success 'changed commit with --stat diff option' '
+	four_spaces="    " &&
+	git range-diff --no-color --stat topic...changed >actual &&
+	cat >expected <<-EOF &&
+	1:  4de457d = 1:  a4b3333 s/5/A/
+	     a => b | 0
+	     1 file changed, 0 insertions(+), 0 deletions(-)
+	$four_spaces
+	2:  fccce22 = 2:  f51d370 s/4/A/
+	     a => b | 0
+	     1 file changed, 0 insertions(+), 0 deletions(-)
+	$four_spaces
+	3:  147e64e ! 3:  0559556 s/11/B/
+	     a => b | 0
+	     1 file changed, 0 insertions(+), 0 deletions(-)
+	$four_spaces
+	    @@ -10,7 +10,7 @@
+	      9
+	      10
+	     -11
+	    -+B
+	    ++BB
+	      12
+	      13
+	      14
+	4:  a63e992 ! 4:  d966c5c s/12/B/
+	     a => b | 0
+	     1 file changed, 0 insertions(+), 0 deletions(-)
+	$four_spaces
+	    @@ -8,7 +8,7 @@
+	     @@
+	      9
+	      10
+	    - B
+	    + BB
+	     -12
+	     +B
+	      13
+	EOF
+	test_cmp expected actual
+'
+
 test_expect_success 'changed message' '
 	git range-diff --no-color topic...changed-message >actual &&
 	sed s/Z/\ /g >expected <<-EOF &&
