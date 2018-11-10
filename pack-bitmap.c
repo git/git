@@ -328,14 +328,15 @@ failed:
 	return -1;
 }
 
-static int open_pack_bitmap(struct bitmap_index *bitmap_git)
+static int open_pack_bitmap(struct repository *r,
+			    struct bitmap_index *bitmap_git)
 {
 	struct packed_git *p;
 	int ret = -1;
 
 	assert(!bitmap_git->map);
 
-	for (p = get_all_packs(the_repository); p; p = p->next) {
+	for (p = get_all_packs(r); p; p = p->next) {
 		if (open_pack_bitmap_1(bitmap_git, p) == 0)
 			ret = 0;
 	}
@@ -343,11 +344,11 @@ static int open_pack_bitmap(struct bitmap_index *bitmap_git)
 	return ret;
 }
 
-struct bitmap_index *prepare_bitmap_git(void)
+struct bitmap_index *prepare_bitmap_git(struct repository *r)
 {
 	struct bitmap_index *bitmap_git = xcalloc(1, sizeof(*bitmap_git));
 
-	if (!open_pack_bitmap(bitmap_git) && !load_pack_bitmap(bitmap_git))
+	if (!open_pack_bitmap(r, bitmap_git) && !load_pack_bitmap(bitmap_git))
 		return bitmap_git;
 
 	free_bitmap_index(bitmap_git);
@@ -690,7 +691,7 @@ struct bitmap_index *prepare_bitmap_walk(struct rev_info *revs)
 	struct bitmap_index *bitmap_git = xcalloc(1, sizeof(*bitmap_git));
 	/* try to open a bitmapped pack, but don't parse it yet
 	 * because we may not need to use it */
-	if (open_pack_bitmap(bitmap_git) < 0)
+	if (open_pack_bitmap(revs->repo, bitmap_git) < 0)
 		goto cleanup;
 
 	for (i = 0; i < revs->pending.nr; ++i) {
@@ -955,7 +956,7 @@ void test_bitmap_walk(struct rev_info *revs)
 	struct bitmap_test_data tdata;
 	struct bitmap_index *bitmap_git;
 
-	if (!(bitmap_git = prepare_bitmap_git()))
+	if (!(bitmap_git = prepare_bitmap_git(revs->repo)))
 		die("failed to load bitmap indexes");
 
 	if (revs->pending.nr != 1)

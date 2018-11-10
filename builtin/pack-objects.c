@@ -3481,7 +3481,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		}
 	}
 
-	prepare_packing_data(&to_pack);
+	prepare_packing_data(the_repository, &to_pack);
 
 	if (progress)
 		progress_state = start_progress(_("Enumerating objects"), 0);
