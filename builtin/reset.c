@@ -400,7 +400,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 			print_new_head_line(lookup_commit_reference(the_repository, &oid));
 	}
 	if (!pathspec.nr)
-		remove_branch_state();
+		remove_branch_state(the_repository);
 
 	return update_ref_status;
 }

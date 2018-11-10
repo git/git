@@ -242,7 +242,8 @@ N_("\n"
 "will track its remote counterpart, you may want to use\n"
 "\"git push -u\" to set the upstream config as you push.");
 
-void create_branch(const char *name, const char *start_name,
+void create_branch(struct repository *r,
+		   const char *name, const char *start_name,
 		   int force, int clobber_head_ok, int reflog,
 		   int quiet, enum branch_track track)
 {
@@ -300,7 +301,7 @@ void create_branch(const char *name, const char *start_name,
 		break;
 	}
 
-	if ((commit = lookup_commit_reference(the_repository, &oid)) == NULL)
+	if ((commit = lookup_commit_reference(r, &oid)) == NULL)
 		die(_("Not a valid branch point: '%s'."), start_name);
 	oidcpy(&oid, &commit->object.oid);
 
@@ -336,15 +337,15 @@ void create_branch(const char *name, const char *start_name,
 	free(real_ref);
 }
 
-void remove_branch_state(void)
+void remove_branch_state(struct repository *r)
 {
-	unlink(git_path_cherry_pick_head(the_repository));
-	unlink(git_path_revert_head(the_repository));
-	unlink(git_path_merge_head(the_repository));
-	unlink(git_path_merge_rr(the_repository));
-	unlink(git_path_merge_msg(the_repository));
-	unlink(git_path_merge_mode(the_repository));
-	unlink(git_path_squash_msg(the_repository));
+	unlink(git_path_cherry_pick_head(r));
+	unlink(git_path_revert_head(r));
+	unlink(git_path_merge_head(r));
+	unlink(git_path_merge_rr(r));
+	unlink(git_path_merge_msg(r));
+	unlink(git_path_merge_mode(r));
+	unlink(git_path_squash_msg(r));
 }
 
 void die_if_checked_out(const char *branch, int ignore_current_worktree)

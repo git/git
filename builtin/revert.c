@@ -195,7 +195,7 @@ static int run_sequencer(int argc, const char **argv, struct replay_opts *opts)
 	if (cmd == 'q') {
 		int ret = sequencer_remove_state(opts);
 		if (!ret)
-			remove_branch_state();
+			remove_branch_state(the_repository);
 		return ret;
 	}
 	if (cmd == 'c')
