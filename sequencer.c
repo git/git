@@ -2773,7 +2773,7 @@ static int do_exec(const char *command_line)
 	if (discard_cache() < 0 || read_cache() < 0)
 		return error(_("could not read index"));
 
-	dirty = require_clean_work_tree("rebase", NULL, 1, 1);
+	dirty = require_clean_work_tree(the_repository, "rebase", NULL, 1, 1);
 
 	if (status) {
 		warning(_("execution failed: %s\n%s"
@@ -3714,10 +3714,10 @@ static int commit_staged_changes(struct replay_opts *opts,
 	unsigned int flags = ALLOW_EMPTY | EDIT_MSG;
 	unsigned int final_fixup = 0, is_clean;
 
-	if (has_unstaged_changes(1))
+	if (has_unstaged_changes(the_repository, 1))
 		return error(_("cannot rebase: You have unstaged changes."));
 
-	is_clean = !has_uncommitted_changes(0);
+	is_clean = !has_uncommitted_changes(the_repository, 0);
 
 	if (file_exists(rebase_path_amend())) {
 		struct strbuf rev = STRBUF_INIT;
@@ -4847,7 +4847,7 @@ int complete_action(struct replay_opts *opts, unsigned flags,
 	if (checkout_onto(opts, onto_name, oid_to_hex(&oid), orig_head))
 		return -1;
 ;
-	if (require_clean_work_tree("rebase", "", 1, 1))
+	if (require_clean_work_tree(the_repository, "rebase", "", 1, 1))
 		return -1;
 
 	return sequencer_continue(opts);

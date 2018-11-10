@@ -983,7 +983,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 					     &lock_file);
 		rollback_lock_file(&lock_file);
 
-		if (has_unstaged_changes(1)) {
+		if (has_unstaged_changes(the_repository, 1)) {
 			puts(_("You must edit all merge conflicts and then\n"
 			       "mark them as resolved using git add"));
 			exit(1);
@@ -1351,7 +1351,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			update_index_if_able(&the_index, &lock_file);
 		rollback_lock_file(&lock_file);
 
-		if (has_unstaged_changes(1) || has_uncommitted_changes(1)) {
+		if (has_unstaged_changes(the_repository, 1) ||
+		    has_uncommitted_changes(the_repository, 1)) {
 			const char *autostash =
 				state_dir_path("autostash", &options);
 			struct child_process stash = CHILD_PROCESS_INIT;
@@ -1397,7 +1398,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		}
 	}
 
-	if (require_clean_work_tree("rebase",
+	if (require_clean_work_tree(the_repository, "rebase",
 				    _("Please commit or stash them."), 1, 1)) {
 		ret = 1;
 		goto cleanup;
