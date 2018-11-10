@@ -114,7 +114,8 @@ static int do_interactive_rebase(struct replay_opts *opts, unsigned flags,
 		error(_("could not generate todo list"));
 	else {
 		discard_cache();
-		ret = complete_action(opts, flags, shortrevisions, onto_name, onto,
+		ret = complete_action(the_repository, opts, flags,
+				      shortrevisions, onto_name, onto,
 				      head_hash, cmd, autosquash);
 	}
 
@@ -252,16 +253,16 @@ int cmd_rebase__interactive(int argc, const char **argv, const char *prefix)
 	}
 	case SHORTEN_OIDS:
 	case EXPAND_OIDS:
-		ret = transform_todos(flags);
+		ret = transform_todos(the_repository, flags);
 		break;
 	case CHECK_TODO_LIST:
-		ret = check_todo_list();
+		ret = check_todo_list(the_repository);
 		break;
 	case REARRANGE_SQUASH:
-		ret = rearrange_squash();
+		ret = rearrange_squash(the_repository);
 		break;
 	case ADD_EXEC:
-		ret = sequencer_add_exec_commands(cmd);
+		ret = sequencer_add_exec_commands(the_repository, cmd);
 		break;
 	default:
 		BUG("invalid command '%d'", command);

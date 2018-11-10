@@ -201,7 +201,7 @@ static int run_sequencer(int argc, const char **argv, struct replay_opts *opts)
 	if (cmd == 'c')
 		return sequencer_continue(the_repository, opts);
 	if (cmd == 'a')
-		return sequencer_rollback(opts);
+		return sequencer_rollback(the_repository, opts);
 	return sequencer_pick_revisions(the_repository, opts);
 }
 

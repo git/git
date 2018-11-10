@@ -78,7 +78,7 @@ void sequencer_init_config(struct replay_opts *opts);
 int sequencer_pick_revisions(struct repository *repo,
 			     struct replay_opts *opts);
 int sequencer_continue(struct repository *repo, struct replay_opts *opts);
-int sequencer_rollback(struct replay_opts *opts);
+int sequencer_rollback(struct repository *repo, struct replay_opts *opts);
 int sequencer_remove_state(struct replay_opts *opts);
 
 #define TODO_LIST_KEEP_EMPTY (1U << 0)
@@ -95,15 +95,15 @@ int sequencer_make_script(struct repository *repo, FILE *out,
 			  int argc, const char **argv,
 			  unsigned flags);
 
-int sequencer_add_exec_commands(const char *command);
-int transform_todos(unsigned flags);
+int sequencer_add_exec_commands(struct repository *r, const char *command);
+int transform_todos(struct repository *r, unsigned flags);
 enum missing_commit_check_level get_missing_commit_check_level(void);
-int check_todo_list(void);
-int complete_action(struct replay_opts *opts, unsigned flags,
+int check_todo_list(struct repository *r);
+int complete_action(struct repository *r, struct replay_opts *opts, unsigned flags,
 		    const char *shortrevisions, const char *onto_name,
 		    const char *onto, const char *orig_head, const char *cmd,
 		    unsigned autosquash);
-int rearrange_squash(void);
+int rearrange_squash(struct repository *r);
 
 extern const char sign_off_header[];
 
