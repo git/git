@@ -316,7 +316,7 @@ static int ce_match_stat_basic(const struct cache_entry *ce, struct stat *st)
 			changed |= DATA_CHANGED;
 		return changed;
 	default:
-		die("internal error: ce_mode is %o", ce->ce_mode);
+		BUG("unsupported ce_mode: %o", ce->ce_mode);
 	}
 
 	changed |= match_stat_data(&ce->ce_stat_data, st);
@@ -2356,14 +2356,14 @@ void validate_cache_entries(const struct index_state *istate)
 
 	for (i = 0; i < istate->cache_nr; i++) {
 		if (!istate) {
-			die("internal error: cache entry is not allocated from expected memory pool");
+			BUG("cache entry is not allocated from expected memory pool");
 		} else if (!istate->ce_mem_pool ||
 			!mem_pool_contains(istate->ce_mem_pool, istate->cache[i])) {
 			if (!istate->split_index ||
 				!istate->split_index->base ||
 				!istate->split_index->base->ce_mem_pool ||
 				!mem_pool_contains(istate->split_index->base->ce_mem_pool, istate->cache[i])) {
-				die("internal error: cache entry is not allocated from expected memory pool");
+				BUG("cache entry is not allocated from expected memory pool");
 			}
 		}
 	}
