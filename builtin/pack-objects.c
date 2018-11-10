@@ -2628,7 +2628,7 @@ static void prepare_pack(int window, int depth)
 	unsigned n;
 
 	if (use_delta_islands)
-		resolve_tree_islands(progress, &to_pack);
+		resolve_tree_islands(the_repository, progress, &to_pack);
 
 	get_object_details();
 
@@ -3143,7 +3143,7 @@ static void get_object_list(int ac, const char **av)
 		return;
 
 	if (use_delta_islands)
-		load_delta_islands();
+		load_delta_islands(the_repository);
 
 	if (prepare_revision_walk(&revs))
 		die(_("revision walk setup failed"));
