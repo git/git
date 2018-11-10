@@ -199,10 +199,10 @@ static int run_sequencer(int argc, const char **argv, struct replay_opts *opts)
 		return ret;
 	}
 	if (cmd == 'c')
-		return sequencer_continue(opts);
+		return sequencer_continue(the_repository, opts);
 	if (cmd == 'a')
 		return sequencer_rollback(opts);
-	return sequencer_pick_revisions(opts);
+	return sequencer_pick_revisions(the_repository, opts);
 }
 
 int cmd_revert(int argc, const char **argv, const char *prefix)

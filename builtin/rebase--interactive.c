@@ -105,7 +105,7 @@ static int do_interactive_rebase(struct replay_opts *opts, unsigned flags,
 	if (restrict_revision)
 		argv_array_push(&make_script_args, restrict_revision);
 
-	ret = sequencer_make_script(todo_list,
+	ret = sequencer_make_script(the_repository, todo_list,
 				    make_script_args.argc, make_script_args.argv,
 				    flags);
 	fclose(todo_list);
@@ -235,7 +235,7 @@ int cmd_rebase__interactive(int argc, const char **argv, const char *prefix)
 		rerere_clear(&merge_rr);
 		/* fallthrough */
 	case CONTINUE:
-		ret = sequencer_continue(&opts);
+		ret = sequencer_continue(the_repository, &opts);
 		break;
 	}
 	case EDIT_TODO:

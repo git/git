@@ -1679,7 +1679,8 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 			flags |= SUMMARY_INITIAL_COMMIT;
 		if (author_date_is_interesting())
 			flags |= SUMMARY_SHOW_AUTHOR_DATE;
-		print_commit_summary(prefix, &oid, flags);
+		print_commit_summary(the_repository, prefix,
+				     &oid, flags);
 	}
 
 	UNLEAK(err);
