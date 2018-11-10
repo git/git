@@ -997,7 +997,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
 		options.action = "skip";
 
-		rerere_clear(&merge_rr);
+		rerere_clear(the_repository, &merge_rr);
 		string_list_clear(&merge_rr, 1);
 
 		if (reset_head(NULL, "reset", NULL, 0, NULL, NULL) < 0)
@@ -1010,7 +1010,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		struct string_list merge_rr = STRING_LIST_INIT_DUP;
 		options.action = "abort";
 
-		rerere_clear(&merge_rr);
+		rerere_clear(the_repository, &merge_rr);
 		string_list_clear(&merge_rr, 1);
 
 		if (read_basic_state(&options))

@@ -233,7 +233,7 @@ int cmd_rebase__interactive(int argc, const char **argv, const char *prefix)
 	case SKIP: {
 		struct string_list merge_rr = STRING_LIST_INIT_DUP;
 
-		rerere_clear(&merge_rr);
+		rerere_clear(the_repository, &merge_rr);
 		/* fallthrough */
 	case CONTINUE:
 		ret = sequencer_continue(the_repository, &opts);
