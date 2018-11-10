@@ -908,7 +908,8 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 			if (ignore_submodule_arg &&
 			    !strcmp(ignore_submodule_arg, "all"))
 				flags.ignore_submodules = 1;
-			committable = index_differs_from(parent, &flags, 1);
+			committable = index_differs_from(the_repository,
+							 parent, &flags, 1);
 		}
 	}
 	strbuf_release(&committer_ident);

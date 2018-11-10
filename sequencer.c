@@ -1713,7 +1713,7 @@ static int do_pick_commit(struct repository *r,
 			unborn = 1;
 		} else if (unborn)
 			oidcpy(&head, the_hash_algo->empty_tree);
-		if (index_differs_from(unborn ? empty_tree_oid_hex() : "HEAD",
+		if (index_differs_from(r, unborn ? empty_tree_oid_hex() : "HEAD",
 				       NULL, 0))
 			return error_dirty_index(r->index, opts);
 	}
@@ -3915,7 +3915,7 @@ int sequencer_continue(struct repository *r, struct replay_opts *opts)
 			if (res)
 				goto release_todo_list;
 		}
-		if (index_differs_from("HEAD", NULL, 0)) {
+		if (index_differs_from(r, "HEAD", NULL, 0)) {
 			res = error_dirty_index(r->index, opts);
 			goto release_todo_list;
 		}
