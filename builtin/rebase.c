@@ -582,7 +582,7 @@ static int reset_head(struct object_id *oid, const char *action,
 	}
 
 	tree = parse_tree_indirect(oid);
-	prime_cache_tree(the_repository->index, tree);
+	prime_cache_tree(the_repository, the_repository->index, tree);
 
 	if (write_locked_index(the_repository->index, &lock, COMMIT_LOCK) < 0)
 		ret = error(_("could not write index"));

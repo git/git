@@ -93,7 +93,7 @@ static int reset_index(const struct object_id *oid, int reset_type, int quiet)
 
 	if (reset_type == MIXED || reset_type == HARD) {
 		tree = parse_tree_indirect(oid);
-		prime_cache_tree(&the_index, tree);
+		prime_cache_tree(the_repository, the_repository->index, tree);
 	}
 
 	ret = 0;

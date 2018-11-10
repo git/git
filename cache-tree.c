@@ -659,7 +659,9 @@ out:
 	return ret;
 }
 
-static void prime_cache_tree_rec(struct cache_tree *it, struct tree *tree)
+static void prime_cache_tree_rec(struct repository *r,
+				 struct cache_tree *it,
+				 struct tree *tree)
 {
 	struct tree_desc desc;
 	struct name_entry entry;
@@ -673,24 +675,25 @@ static void prime_cache_tree_rec(struct cache_tree *it, struct tree *tree)
 			cnt++;
 		else {
 			struct cache_tree_sub *sub;
-			struct tree *subtree = lookup_tree(the_repository,
-							   entry.oid);
+			struct tree *subtree = lookup_tree(r, entry.oid);
 			if (!subtree->object.parsed)
 				parse_tree(subtree);
 			sub = cache_tree_sub(it, entry.path);
 			sub->cache_tree = cache_tree();
-			prime_cache_tree_rec(sub->cache_tree, subtree);
+			prime_cache_tree_rec(r, sub->cache_tree, subtree);
 			cnt += sub->cache_tree->entry_count;
 		}
 	}
 	it->entry_count = cnt;
 }
 
-void prime_cache_tree(struct index_state *istate, struct tree *tree)
+void prime_cache_tree(struct repository *r,
+		      struct index_state *istate,
+		      struct tree *tree)
 {
 	cache_tree_free(&istate->cache_tree);
 	istate->cache_tree = cache_tree();
-	prime_cache_tree_rec(istate->cache_tree, tree);
+	prime_cache_tree_rec(r, istate->cache_tree, tree);
 	istate->cache_changed |= CACHE_TREE_CHANGED;
 }
 
@@ -726,7 +729,8 @@ int cache_tree_matches_traversal(struct cache_tree *root,
 	return 0;
 }
 
-static void verify_one(struct index_state *istate,
+static void verify_one(struct repository *r,
+		       struct index_state *istate,
 		       struct cache_tree *it,
 		       struct strbuf *path)
 {
@@ -736,13 +740,13 @@ static void verify_one(struct index_state *istate,
 
 	for (i = 0; i < it->subtree_nr; i++) {
 		strbuf_addf(path, "%s/", it->down[i]->name);
-		verify_one(istate, it->down[i]->cache_tree, path);
+		verify_one(r, istate, it->down[i]->cache_tree, path);
 		strbuf_setlen(path, len);
 	}
 
 	if (it->entry_count < 0 ||
 	    /* no verification on tests (t7003) that replace trees */
-	    lookup_replace_object(the_repository, &it->oid) != &it->oid)
+	    lookup_replace_object(r, &it->oid) != &it->oid)
 		return;
 
 	if (path->len) {
@@ -793,12 +797,12 @@ static void verify_one(struct index_state *istate,
 	strbuf_release(&tree_buf);
 }
 
-void cache_tree_verify(struct index_state *istate)
+void cache_tree_verify(struct repository *r, struct index_state *istate)
 {
 	struct strbuf path = STRBUF_INIT;
 
 	if (!istate->cache_tree)
 		return;
-	verify_one(istate, istate->cache_tree, &path);
+	verify_one(r, istate, istate->cache_tree, &path);
 	strbuf_release(&path);
 }
