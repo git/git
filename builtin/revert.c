@@ -69,7 +69,8 @@ static int option_parse_m(const struct option *opt,
 
 	replay->mainline = strtol(arg, &end, 10);
 	if (*end || replay->mainline <= 0)
-		return opterror(opt, "expects a number greater than zero", 0);
+		return error(_("option `%s' expects a number greater than zero"),
+			     opt->long_name);
 
 	return 0;
 }
