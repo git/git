@@ -461,7 +461,7 @@ size_t fill_textconv(struct repository *r,
  * and only if it has textconv enabled (otherwise return NULL). The result
  * can be passed to fill_textconv().
  */
-struct userdiff_driver *get_textconv(struct index_state *istate,
+struct userdiff_driver *get_textconv(struct repository *r,
 				     struct diff_filespec *one);
 
 /*
