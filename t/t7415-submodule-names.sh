@@ -154,7 +154,7 @@ test_expect_success 'fsck detects symlinked .gitmodules file' '
 		# symlink detector; this grep string comes from the config
 		# variable name and will not be translated.
 		test_must_fail git fsck 2>output &&
-		grep gitmodulesSymlink output
+		test_i18ngrep gitmodulesSymlink output
 	)
 '
 
@@ -172,7 +172,7 @@ test_expect_success 'fsck detects non-blob .gitmodules' '
 		git ls-tree HEAD | sed s/subdir/.gitmodules/ | git mktree &&
 
 		test_must_fail git fsck 2>output &&
-		grep gitmodulesBlob output
+		test_i18ngrep gitmodulesBlob output
 	)
 '
 
@@ -186,7 +186,7 @@ test_expect_success 'fsck detects corrupt .gitmodules' '
 		git commit -m "broken gitmodules" &&
 
 		git fsck 2>output &&
-		grep gitmodulesParse output &&
+		test_i18ngrep gitmodulesParse output &&
 		test_i18ngrep ! "bad config" output
 	)
 '
