@@ -754,7 +754,7 @@ test_expect_success 'detect corrupt index file in fsck' '
 	test_when_finished "mv .git/index.backup .git/index" &&
 	corrupt_index_checksum &&
 	test_must_fail git fsck --cache 2>errors &&
-	grep "bad index file" errors
+	test_i18ngrep "bad index file" errors
 '
 
 test_done
