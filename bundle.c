@@ -127,7 +127,9 @@ static int list_refs(struct ref_list *r, int argc, const char **argv)
 /* Remember to update object flag allocation in object.h */
 #define PREREQ_MARK (1u<<16)
 
-int verify_bundle(struct bundle_header *header, int verbose)
+int verify_bundle(struct repository *r,
+		  struct bundle_header *header,
+		  int verbose)
 {
 	/*
 	 * Do fast check, then if any prereqs are missing then go line by line
@@ -140,10 +142,10 @@ int verify_bundle(struct bundle_header *header, int verbose)
 	int i, ret = 0, req_nr;
 	const char *message = _("Repository lacks these prerequisite commits:");
 
-	repo_init_revisions(the_repository, &revs, NULL);
+	repo_init_revisions(r, &revs, NULL);
 	for (i = 0; i < p->nr; i++) {
 		struct ref_list_entry *e = p->list + i;
-		struct object *o = parse_object(the_repository, &e->oid);
+		struct object *o = parse_object(r, &e->oid);
 		if (o) {
 			o->flags |= PREREQ_MARK;
 			add_pending_object(&revs, o, e->name);
@@ -168,7 +170,7 @@ int verify_bundle(struct bundle_header *header, int verbose)
 
 	for (i = 0; i < p->nr; i++) {
 		struct ref_list_entry *e = p->list + i;
-		struct object *o = parse_object(the_repository, &e->oid);
+		struct object *o = parse_object(r, &e->oid);
 		assert(o); /* otherwise we'd have returned early */
 		if (o->flags & SHOWN)
 			continue;
@@ -180,7 +182,7 @@ int verify_bundle(struct bundle_header *header, int verbose)
 	/* Clean up objects used, as they will be reused. */
 	for (i = 0; i < p->nr; i++) {
 		struct ref_list_entry *e = p->list + i;
-		commit = lookup_commit_reference_gently(the_repository, &e->oid, 1);
+		commit = lookup_commit_reference_gently(r, &e->oid, 1);
 		if (commit)
 			clear_commit_marks(commit, ALL_REV_FLAGS);
 	}
@@ -375,8 +377,7 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 			 * in terms of a tag (e.g. v2.0 from the range
 			 * "v1.0..v2.0")?
 			 */
-			struct commit *one = lookup_commit_reference(the_repository,
-								     &oid);
+			struct commit *one = lookup_commit_reference(revs->repo, &oid);
 			struct object *obj;
 
 			if (e->item == &(one->object)) {
@@ -409,8 +410,8 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 	return ref_count;
 }
 
-int create_bundle(struct bundle_header *header, const char *path,
-		  int argc, const char **argv)
+int create_bundle(struct repository *r, struct bundle_header *header,
+		  const char *path, int argc, const char **argv)
 {
 	struct lock_file lock = LOCK_INIT;
 	int bundle_fd = -1;
@@ -441,7 +442,7 @@ int create_bundle(struct bundle_header *header, const char *path,
 
 	/* init revs to list objects for pack-objects later */
 	save_commit_buffer = 0;
-	repo_init_revisions(the_repository, &revs, NULL);
+	repo_init_revisions(r, &revs, NULL);
 
 	/* write prerequisites */
 	if (compute_and_write_prerequisites(bundle_fd, &revs, argc, argv))
@@ -482,7 +483,8 @@ err:
 	return -1;
 }
 
-int unbundle(struct bundle_header *header, int bundle_fd, int flags)
+int unbundle(struct repository *r, struct bundle_header *header,
+	     int bundle_fd, int flags)
 {
 	const char *argv_index_pack[] = {"index-pack",
 					 "--fix-thin", "--stdin", NULL, NULL};
@@ -491,7 +493,7 @@ int unbundle(struct bundle_header *header, int bundle_fd, int flags)
 	if (flags & BUNDLE_VERBOSE)
 		argv_index_pack[3] = "-v";
 
-	if (verify_bundle(header, 0))
+	if (verify_bundle(r, header, 0))
 		return -1;
 	ip.argv = argv_index_pack;
 	ip.in = bundle_fd;
