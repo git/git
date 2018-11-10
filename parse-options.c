@@ -197,7 +197,7 @@ static int get_value(struct parse_opt_ctx_t *p,
 		return 0;
 
 	default:
-		die("should not happen, someone must be hit on the forehead");
+		BUG("opt->type %d should not happen", opt->type);
 	}
 }
 
@@ -424,7 +424,7 @@ void parse_options_start(struct parse_opt_ctx_t *ctx,
 	ctx->flags = flags;
 	if ((flags & PARSE_OPT_KEEP_UNKNOWN) &&
 	    (flags & PARSE_OPT_STOP_AT_NON_OPTION))
-		die("STOP_AT_NON_OPTION and KEEP_UNKNOWN don't go together");
+		BUG("STOP_AT_NON_OPTION and KEEP_UNKNOWN don't go together");
 	parse_options_check(options);
 }
 
