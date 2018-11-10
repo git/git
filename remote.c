@@ -620,7 +620,7 @@ static void handle_duplicate(struct ref *ref1, struct ref *ref2)
 			 * FETCH_HEAD_IGNORE entries always appear at
 			 * the end of the list.
 			 */
-			die(_("Internal error"));
+			BUG("Internal error");
 		}
 	}
 	free(ref2->peer_ref);
@@ -707,7 +707,7 @@ static void query_refspecs_multiple(struct refspec *rs,
 	int find_src = !query->src;
 
 	if (find_src && !query->dst)
-		error("query_refspecs_multiple: need either src or dst");
+		BUG("query_refspecs_multiple: need either src or dst");
 
 	for (i = 0; i < rs->nr; i++) {
 		struct refspec_item *refspec = &rs->items[i];
@@ -735,7 +735,7 @@ int query_refspecs(struct refspec *rs, struct refspec_item *query)
 	char **result = find_src ? &query->src : &query->dst;
 
 	if (find_src && !query->dst)
-		return error("query_refspecs: need either src or dst");
+		BUG("query_refspecs: need either src or dst");
 
 	for (i = 0; i < rs->nr; i++) {
 		struct refspec_item *refspec = &rs->items[i];
