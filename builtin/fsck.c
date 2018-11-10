@@ -52,16 +52,24 @@ static int name_objects;
 
 static const char *describe_object(struct object *obj)
 {
-	static struct strbuf buf = STRBUF_INIT;
-	char *name = name_objects ?
-		lookup_decoration(fsck_walk_options.object_names, obj) : NULL;
+	static struct strbuf bufs[] = {
+		STRBUF_INIT, STRBUF_INIT, STRBUF_INIT, STRBUF_INIT
+	};
+	static int b = 0;
+	struct strbuf *buf;
+	char *name = NULL;
 
-	strbuf_reset(&buf);
-	strbuf_addstr(&buf, oid_to_hex(&obj->oid));
+	if (name_objects)
+		name = lookup_decoration(fsck_walk_options.object_names, obj);
+
+	buf = bufs + b;
+	b = (b + 1) % ARRAY_SIZE(bufs);
+	strbuf_reset(buf);
+	strbuf_addstr(buf, oid_to_hex(&obj->oid));
 	if (name)
-		strbuf_addf(&buf, " (%s)", name);
+		strbuf_addf(buf, " (%s)", name);
 
-	return buf.buf;
+	return buf->buf;
 }
 
 static const char *printable_type(struct object *obj)
@@ -105,25 +113,29 @@ static int fsck_config(const char *var, const char *value, void *cb)
 	return git_default_config(var, value, cb);
 }
 
-static void objreport(struct object *obj, const char *msg_type,
-			const char *err)
-{
-	fprintf(stderr, "%s in %s %s: %s\n",
-		msg_type, printable_type(obj), describe_object(obj), err);
-}
-
 static int objerror(struct object *obj, const char *err)
 {
 	errors_found |= ERROR_OBJECT;
-	objreport(obj, "error", err);
+	fprintf_ln(stderr, "error in %s %s: %s",
+		   printable_type(obj), describe_object(obj), err);
 	return -1;
 }
 
 static int fsck_error_func(struct fsck_options *o,
 	struct object *obj, int type, const char *message)
 {
-	objreport(obj, (type == FSCK_WARN) ? "warning" : "error", message);
-	return (type == FSCK_WARN) ? 0 : 1;
+	switch (type) {
+	case FSCK_WARN:
+		fprintf_ln(stderr, "warning in %s %s: %s",
+			   printable_type(obj), describe_object(obj), message);
+		return 0;
+	case FSCK_ERROR:
+		fprintf_ln(stderr, "error in %s %s: %s",
+			   printable_type(obj), describe_object(obj), message);
+		return 1;
+	default:
+		BUG("%d (FSCK_IGNORE?) should never trigger this callback", type);
+	}
 }
 
 static struct object_array pending;
@@ -165,10 +177,12 @@ static int mark_object(struct object *obj, int type, void *data, struct fsck_opt
 
 	if (!(obj->flags & HAS_OBJ)) {
 		if (parent && !has_object_file(&obj->oid)) {
-			printf("broken link from %7s %s\n",
-				 printable_type(parent), describe_object(parent));
-			printf("              to %7s %s\n",
-				 printable_type(obj), describe_object(obj));
+			printf_ln("broken link from %7s %s\n"
+				  "              to %7s %s",
+				  printable_type(parent),
+				  describe_object(parent),
+				  printable_type(obj),
+				  describe_object(obj));
 			errors_found |= ERROR_REACHABLE;
 		}
 		return 1;
@@ -371,10 +385,11 @@ static int fsck_obj(struct object *obj, void *buffer, unsigned long size)
 		struct tag *tag = (struct tag *) obj;
 
 		if (show_tags && tag->tagged) {
-			printf("tagged %s %s", printable_type(tag->tagged),
-				describe_object(tag->tagged));
-			printf(" (%s) in %s\n", tag->tag,
-				describe_object(&tag->object));
+			printf_ln("tagged %s %s (%s) in %s",
+				  printable_type(tag->tagged),
+				  describe_object(tag->tagged),
+				  tag->tag,
+				  describe_object(&tag->object));
 		}
 	}
 
