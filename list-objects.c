@@ -123,7 +123,7 @@ static void process_tree_contents(struct traversal_context *ctx,
 		}
 
 		if (S_ISDIR(entry.mode)) {
-			struct tree *t = lookup_tree(the_repository, entry.oid);
+			struct tree *t = lookup_tree(ctx->revs->repo, entry.oid);
 			t->object.flags |= NOT_USER_GIVEN;
 			process_tree(ctx, t, base, entry.path);
 		}
@@ -131,7 +131,7 @@ static void process_tree_contents(struct traversal_context *ctx,
 			process_gitlink(ctx, entry.oid->hash,
 					base, entry.path);
 		else {
-			struct blob *b = lookup_blob(the_repository, entry.oid);
+			struct blob *b = lookup_blob(ctx->revs->repo, entry.oid);
 			b->object.flags |= NOT_USER_GIVEN;
 			process_blob(ctx, b, base, entry.path);
 		}
