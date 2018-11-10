@@ -1069,8 +1069,6 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 
 	memcpy(&opts, &rev->diffopt, sizeof(opts));
 	opts.output_format = DIFF_FORMAT_SUMMARY | DIFF_FORMAT_DIFFSTAT;
-	opts.stat_width = MAIL_DEFAULT_WRAP;
-
 	diff_setup_done(&opts);
 
 	diff_tree_oid(get_commit_tree_oid(origin),
