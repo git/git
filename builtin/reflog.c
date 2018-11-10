@@ -13,11 +13,15 @@
 
 /* NEEDSWORK: switch to using parse_options */
 static const char reflog_expire_usage[] =
-"git reflog expire [--expire=<time>] [--expire-unreachable=<time>] [--rewrite] [--updateref] [--stale-fix] [--dry-run | -n] [--verbose] [--all] <refs>...";
+N_("git reflog expire [--expire=<time>] "
+   "[--expire-unreachable=<time>] "
+   "[--rewrite] [--updateref] [--stale-fix] [--dry-run | -n] "
+   "[--verbose] [--all] <refs>...");
 static const char reflog_delete_usage[] =
-"git reflog delete [--rewrite] [--updateref] [--dry-run | -n] [--verbose] <refs>...";
+N_("git reflog delete [--rewrite] [--updateref] "
+   "[--dry-run | -n] [--verbose] <refs>...");
 static const char reflog_exists_usage[] =
-"git reflog exists <ref>";
+N_("git reflog exists <ref>");
 
 static timestamp_t default_reflog_expire;
 static timestamp_t default_reflog_expire_unreachable;
@@ -556,7 +560,7 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 			break;
 		}
 		else if (arg[0] == '-')
-			usage(reflog_expire_usage);
+			usage(_(reflog_expire_usage));
 		else
 			break;
 	}
@@ -569,7 +573,7 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 	if (cb.cmd.stalefix) {
 		repo_init_revisions(the_repository, &cb.cmd.revs, prefix);
 		if (flags & EXPIRE_REFLOGS_VERBOSE)
-			printf("Marking reachable objects...");
+			printf(_("Marking reachable objects..."));
 		mark_reachable_objects(&cb.cmd.revs, 0, 0, NULL);
 		if (flags & EXPIRE_REFLOGS_VERBOSE)
 			putchar('\n');
@@ -598,7 +602,7 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 		char *ref;
 		struct object_id oid;
 		if (!dwim_log(argv[i], strlen(argv[i]), &oid, &ref)) {
-			status |= error("%s points nowhere!", argv[i]);
+			status |= error(_("%s points nowhere!"), argv[i]);
 			continue;
 		}
 		set_reflog_expiry_param(&cb.cmd, explicit_expiry, ref);
@@ -644,13 +648,13 @@ static int cmd_reflog_delete(int argc, const char **argv, const char *prefix)
 			break;
 		}
 		else if (arg[0] == '-')
-			usage(reflog_delete_usage);
+			usage(_(reflog_delete_usage));
 		else
 			break;
 	}
 
 	if (argc - i < 1)
-		return error("Nothing to delete?");
+		return error(_("no reflog specified to delete"));
 
 	for ( ; i < argc; i++) {
 		const char *spec = strstr(argv[i], "@{");
@@ -659,12 +663,12 @@ static int cmd_reflog_delete(int argc, const char **argv, const char *prefix)
 		int recno;
 
 		if (!spec) {
-			status |= error("Not a reflog: %s", argv[i]);
+			status |= error(_("not a reflog: %s"), argv[i]);
 			continue;
 		}
 
 		if (!dwim_log(argv[i], spec - argv[i], &oid, &ref)) {
-			status |= error("no reflog for '%s'", argv[i]);
+			status |= error(_("no reflog for '%s'"), argv[i]);
 			continue;
 		}
 
@@ -699,7 +703,7 @@ static int cmd_reflog_exists(int argc, const char **argv, const char *prefix)
 			break;
 		}
 		else if (arg[0] == '-')
-			usage(reflog_exists_usage);
+			usage(_(reflog_exists_usage));
 		else
 			break;
 	}
@@ -707,10 +711,10 @@ static int cmd_reflog_exists(int argc, const char **argv, const char *prefix)
 	start = i;
 
 	if (argc - start != 1)
-		usage(reflog_exists_usage);
+		usage(_(reflog_exists_usage));
 
 	if (check_refname_format(argv[start], REFNAME_ALLOW_ONELEVEL))
-		die("invalid ref format: %s", argv[start]);
+		die(_("invalid ref format: %s"), argv[start]);
 	return !reflog_exists(argv[start]);
 }
 
@@ -719,12 +723,12 @@ static int cmd_reflog_exists(int argc, const char **argv, const char *prefix)
  */
 
 static const char reflog_usage[] =
-"git reflog [ show | expire | delete | exists ]";
+N_("git reflog [ show | expire | delete | exists ]");
 
 int cmd_reflog(int argc, const char **argv, const char *prefix)
 {
 	if (argc > 1 && !strcmp(argv[1], "-h"))
-		usage(reflog_usage);
+		usage(_(reflog_usage));
 
 	/* With no command, we default to showing it. */
 	if (argc < 2 || *argv[1] == '-')
