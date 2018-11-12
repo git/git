@@ -97,6 +97,7 @@ static void find_short_object_filename(struct disambiguate_state *ds)
 	int subdir_nr = ds->bin_pfx.hash[0];
 	struct object_directory *odb;
 	static struct object_directory *fakeent;
+	struct strbuf buf = STRBUF_INIT;
 
 	if (!fakeent) {
 		/*
@@ -114,8 +115,9 @@ static void find_short_object_filename(struct disambiguate_state *ds)
 		int pos;
 
 		if (!odb->loose_objects_subdir_seen[subdir_nr]) {
-			struct strbuf *buf = alt_scratch_buf(odb);
-			for_each_file_in_obj_subdir(subdir_nr, buf,
+			strbuf_reset(&buf);
+			strbuf_addstr(&buf, odb->path);
+			for_each_file_in_obj_subdir(subdir_nr, &buf,
 						    append_loose_object,
 						    NULL, NULL,
 						    &odb->loose_objects_cache);
@@ -134,6 +136,8 @@ static void find_short_object_filename(struct disambiguate_state *ds)
 			pos++;
 		}
 	}
+
+	strbuf_release(&buf);
 }
 
 static int match_sha(unsigned len, const unsigned char *a, const unsigned char *b)

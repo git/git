@@ -10,10 +10,6 @@
 struct object_directory {
 	struct object_directory *next;
 
-	/* see alt_scratch_buf() */
-	struct strbuf scratch;
-	size_t base_len;
-
 	/*
 	 * Used to store the results of readdir(3) calls when searching
 	 * for unique abbreviated hashes.  This cache is never
@@ -53,14 +49,6 @@ void add_to_alternates_file(const char *dir);
  * file.
  */
 void add_to_alternates_memory(const char *dir);
-
-/*
- * Returns a scratch strbuf pre-filled with the alternate object directory,
- * including a trailing slash, which can be used to access paths in the
- * alternate. Always use this over direct access to alt->scratch, as it
- * cleans up any previous use of the scratch buffer.
- */
-struct strbuf *alt_scratch_buf(struct object_directory *odb);
 
 struct packed_git {
 	struct packed_git *next;
@@ -157,7 +145,7 @@ void raw_object_store_clear(struct raw_object_store *o);
  * Put in `buf` the name of the file in the local object database that
  * would be used to store a loose object with the specified sha1.
  */
-void loose_object_path(struct repository *r, struct strbuf *buf, const unsigned char *sha1);
+const char *loose_object_path(struct repository *r, struct strbuf *buf, const unsigned char *sha1);
 
 void *map_sha1_file(struct repository *r, const unsigned char *sha1, unsigned long *size);
 

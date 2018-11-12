@@ -346,27 +346,20 @@ static void fill_sha1_path(struct strbuf *buf, const unsigned char *sha1)
 	}
 }
 
-void loose_object_path(struct repository *r, struct strbuf *buf,
-		       const unsigned char *sha1)
+static const char *odb_loose_path(const char *path, struct strbuf *buf,
+				  const unsigned char *sha1)
 {
 	strbuf_reset(buf);
-	strbuf_addstr(buf, r->objects->objectdir);
+	strbuf_addstr(buf, path);
 	strbuf_addch(buf, '/');
 	fill_sha1_path(buf, sha1);
-}
-
-struct strbuf *alt_scratch_buf(struct object_directory *odb)
-{
-	strbuf_setlen(&odb->scratch, odb->base_len);
-	return &odb->scratch;
-}
-
-static const char *alt_sha1_path(struct object_directory *odb,
-				 const unsigned char *sha1)
-{
-	struct strbuf *buf = alt_scratch_buf(odb);
-	fill_sha1_path(buf, sha1);
 	return buf->buf;
+}
+
+const char *loose_object_path(struct repository *r, struct strbuf *buf,
+			      const unsigned char *sha1)
+{
+	return odb_loose_path(r->objects->objectdir, buf, sha1);
 }
 
 /*
@@ -547,9 +540,6 @@ struct object_directory *alloc_alt_odb(const char *dir)
 	struct object_directory *ent;
 
 	FLEX_ALLOC_STR(ent, path, dir);
-	strbuf_init(&ent->scratch, 0);
-	strbuf_addf(&ent->scratch, "%s/", dir);
-	ent->base_len = ent->scratch.len;
 
 	return ent;
 }
@@ -745,10 +735,12 @@ static int check_and_freshen_local(const struct object_id *oid, int freshen)
 static int check_and_freshen_nonlocal(const struct object_id *oid, int freshen)
 {
 	struct object_directory *odb;
+	static struct strbuf path = STRBUF_INIT;
+
 	prepare_alt_odb(the_repository);
 	for (odb = the_repository->objects->alt_odb_list; odb; odb = odb->next) {
-		const char *path = alt_sha1_path(odb, oid->hash);
-		if (check_and_freshen_file(path, freshen))
+		odb_loose_path(odb->path, &path, oid->hash);
+		if (check_and_freshen_file(path.buf, freshen))
 			return 1;
 	}
 	return 0;
@@ -889,7 +881,7 @@ int git_open_cloexec(const char *name, int flags)
  *
  * The "path" out-parameter will give the path of the object we found (if any).
  * Note that it may point to static storage and is only valid until another
- * call to loose_object_path(), etc.
+ * call to stat_sha1_file().
  */
 static int stat_sha1_file(struct repository *r, const unsigned char *sha1,
 			  struct stat *st, const char **path)
@@ -897,16 +889,14 @@ static int stat_sha1_file(struct repository *r, const unsigned char *sha1,
 	struct object_directory *odb;
 	static struct strbuf buf = STRBUF_INIT;
 
-	loose_object_path(r, &buf, sha1);
-	*path = buf.buf;
-
+	*path = loose_object_path(r, &buf, sha1);
 	if (!lstat(*path, st))
 		return 0;
 
 	prepare_alt_odb(r);
 	errno = ENOENT;
 	for (odb = r->objects->alt_odb_list; odb; odb = odb->next) {
-		*path = alt_sha1_path(odb, sha1);
+		*path = odb_loose_path(odb->path, &buf, sha1);
 		if (!lstat(*path, st))
 			return 0;
 	}
@@ -926,9 +916,7 @@ static int open_sha1_file(struct repository *r,
 	int most_interesting_errno;
 	static struct strbuf buf = STRBUF_INIT;
 
-	loose_object_path(r, &buf, sha1);
-	*path = buf.buf;
-
+	*path = loose_object_path(r, &buf, sha1);
 	fd = git_open(*path);
 	if (fd >= 0)
 		return fd;
@@ -936,7 +924,7 @@ static int open_sha1_file(struct repository *r,
 
 	prepare_alt_odb(r);
 	for (odb = r->objects->alt_odb_list; odb; odb = odb->next) {
-		*path = alt_sha1_path(odb, sha1);
+		*path = odb_loose_path(odb->path, &buf, sha1);
 		fd = git_open(*path);
 		if (fd >= 0)
 			return fd;
