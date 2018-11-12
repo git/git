@@ -841,6 +841,9 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 
 		prepare_alt_odb(the_repository);
 		for (alt =  the_repository->objects->alt_odb_list; alt; alt = alt->next) {
+			child_process_init(&commit_graph_verify);
+			commit_graph_verify.argv = verify_argv;
+			commit_graph_verify.git_cmd = 1;
 			verify_argv[2] = "--object-dir";
 			verify_argv[3] = alt->path;
 			if (run_command(&commit_graph_verify))
@@ -859,6 +862,9 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 
 		prepare_alt_odb(the_repository);
 		for (alt =  the_repository->objects->alt_odb_list; alt; alt = alt->next) {
+			child_process_init(&midx_verify);
+			midx_verify.argv = midx_argv;
+			midx_verify.git_cmd = 1;
 			midx_argv[2] = "--object-dir";
 			midx_argv[3] = alt->path;
 			if (run_command(&midx_verify))
