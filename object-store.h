@@ -13,6 +13,7 @@ struct object_directory {
 	/*
 	 * Used to store the results of readdir(3) calls when we are OK
 	 * sacrificing accuracy due to races for speed. That includes
+	 * object existence with OBJECT_INFO_QUICK, as well as
 	 * our search for unique abbreviated hashes. Don't use it for tasks
 	 * requiring greater accuracy!
 	 *

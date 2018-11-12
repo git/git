@@ -921,6 +921,24 @@ static int open_sha1_file(struct repository *r,
 	return -1;
 }
 
+static int quick_has_loose(struct repository *r,
+			   const unsigned char *sha1)
+{
+	int subdir_nr = sha1[0];
+	struct object_id oid;
+	struct object_directory *odb;
+
+	hashcpy(oid.hash, sha1);
+
+	prepare_alt_odb(r);
+	for (odb = r->objects->odb; odb; odb = odb->next) {
+		odb_load_loose_cache(odb, subdir_nr);
+		if (oid_array_lookup(&odb->loose_objects_cache, &oid) >= 0)
+			return 1;
+	}
+	return 0;
+}
+
 /*
  * Map the loose object at "path" if it is not NULL, or the path found by
  * searching for a loose object named "sha1".
@@ -1171,6 +1189,8 @@ static int sha1_loose_object_info(struct repository *r,
 	if (!oi->typep && !oi->type_name && !oi->sizep && !oi->contentp) {
 		const char *path;
 		struct stat st;
+		if (!oi->disk_sizep && (flags & OBJECT_INFO_QUICK))
+			return quick_has_loose(r, sha1) ? 0 : -1;
 		if (stat_sha1_file(r, sha1, &st, &path) < 0)
 			return -1;
 		if (oi->disk_sizep)
