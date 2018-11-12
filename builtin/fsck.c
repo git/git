@@ -725,13 +725,8 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 		for_each_loose_object(mark_loose_for_connectivity, NULL, 0);
 		for_each_packed_object(mark_packed_for_connectivity, NULL, 0);
 	} else {
-		struct object_directory *alt_odb_list;
-
-		fsck_object_dir(get_object_directory());
-
 		prepare_alt_odb(the_repository);
-		alt_odb_list = the_repository->objects->alt_odb_list;
-		for (odb = alt_odb_list; odb; odb = odb->next)
+		for (odb = the_repository->objects->odb; odb; odb = odb->next)
 			fsck_object_dir(odb->path);
 
 		if (check_full) {
@@ -834,13 +829,8 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 		struct child_process commit_graph_verify = CHILD_PROCESS_INIT;
 		const char *verify_argv[] = { "commit-graph", "verify", NULL, NULL, NULL };
 
-		commit_graph_verify.argv = verify_argv;
-		commit_graph_verify.git_cmd = 1;
-		if (run_command(&commit_graph_verify))
-			errors_found |= ERROR_COMMIT_GRAPH;
-
 		prepare_alt_odb(the_repository);
-		for (odb = the_repository->objects->alt_odb_list; odb; odb = odb->next) {
+		for (odb = the_repository->objects->odb; odb; odb = odb->next) {
 			child_process_init(&commit_graph_verify);
 			commit_graph_verify.argv = verify_argv;
 			commit_graph_verify.git_cmd = 1;
@@ -855,13 +845,8 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 		struct child_process midx_verify = CHILD_PROCESS_INIT;
 		const char *midx_argv[] = { "multi-pack-index", "verify", NULL, NULL, NULL };
 
-		midx_verify.argv = midx_argv;
-		midx_verify.git_cmd = 1;
-		if (run_command(&midx_verify))
-			errors_found |= ERROR_COMMIT_GRAPH;
-
 		prepare_alt_odb(the_repository);
-		for (odb = the_repository->objects->alt_odb_list; odb; odb = odb->next) {
+		for (odb = the_repository->objects->odb; odb; odb = odb->next) {
 			child_process_init(&midx_verify);
 			midx_verify.argv = midx_argv;
 			midx_verify.git_cmd = 1;

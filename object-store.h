@@ -24,18 +24,13 @@ struct object_directory {
 	 * Path to the alternative object store. If this is a relative path,
 	 * it is relative to the current working directory.
 	 */
-	char path[FLEX_ARRAY];
+	char *path;
 };
+
 void prepare_alt_odb(struct repository *r);
 char *compute_alternate_path(const char *path, struct strbuf *err);
 typedef int alt_odb_fn(struct object_directory *, void *);
 int foreach_alt_odb(alt_odb_fn, void*);
-
-/*
- * Allocate a "struct alternate_object_database" but do _not_ actually
- * add it to the list of alternates.
- */
-struct object_directory *alloc_alt_odb(const char *dir);
 
 /*
  * Add the directory to the on-disk alternates file; the new entry will also
@@ -80,16 +75,20 @@ struct multi_pack_index;
 
 struct raw_object_store {
 	/*
-	 * Path to the repository's object store.
-	 * Cannot be NULL after initialization.
+	 * Set of all object directories; the main directory is first (and
+	 * cannot be NULL after initialization). Subsequent directories are
+	 * alternates.
 	 */
-	char *objectdir;
+	struct object_directory *odb;
+	struct object_directory **odb_tail;
+	int loaded_alternates;
 
-	/* Path to extra alternate object database if not NULL */
+	/*
+	 * A list of alternate object directories loaded from the environment;
+	 * this should not generally need to be accessed directly, but will
+	 * populate the "odb" list when prepare_alt_odb() is run.
+	 */
 	char *alternate_db;
-
-	struct object_directory *alt_odb_list;
-	struct object_directory **alt_odb_tail;
 
 	/*
 	 * Objects that should be substituted by other objects

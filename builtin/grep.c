@@ -441,7 +441,7 @@ static int grep_submodule(struct grep_opt *opt, struct repository *superproject,
 	 * object.
 	 */
 	grep_read_lock();
-	add_to_alternates_memory(submodule.objects->objectdir);
+	add_to_alternates_memory(submodule.objects->odb->path);
 	grep_read_unlock();
 
 	if (oid) {

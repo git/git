@@ -970,12 +970,12 @@ static void prepare_packed_git(struct repository *r)
 
 	if (r->objects->packed_git_initialized)
 		return;
-	prepare_multi_pack_index_one(r, r->objects->objectdir, 1);
-	prepare_packed_git_one(r, r->objects->objectdir, 1);
+
 	prepare_alt_odb(r);
-	for (odb = r->objects->alt_odb_list; odb; odb = odb->next) {
-		prepare_multi_pack_index_one(r, odb->path, 0);
-		prepare_packed_git_one(r, odb->path, 0);
+	for (odb = r->objects->odb; odb; odb = odb->next) {
+		int local = (odb == r->objects->odb);
+		prepare_multi_pack_index_one(r, odb->path, local);
+		prepare_packed_git_one(r, odb->path, local);
 	}
 	rearrange_packed_git(r);
 

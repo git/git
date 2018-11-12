@@ -231,7 +231,6 @@ static void prepare_commit_graph_one(struct repository *r, const char *obj_dir)
 static int prepare_commit_graph(struct repository *r)
 {
 	struct object_directory *odb;
-	char *obj_dir;
 	int config_value;
 
 	if (r->objects->commit_graph_attempted)
@@ -252,10 +251,8 @@ static int prepare_commit_graph(struct repository *r)
 	if (!commit_graph_compatible(r))
 		return 0;
 
-	obj_dir = r->objects->objectdir;
-	prepare_commit_graph_one(r, obj_dir);
 	prepare_alt_odb(r);
-	for (odb = r->objects->alt_odb_list;
+	for (odb = r->objects->odb;
 	     !r->objects->commit_graph && odb;
 	     odb = odb->next)
 		prepare_commit_graph_one(r, odb->path);

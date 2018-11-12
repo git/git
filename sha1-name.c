@@ -96,22 +96,11 @@ static void find_short_object_filename(struct disambiguate_state *ds)
 {
 	int subdir_nr = ds->bin_pfx.hash[0];
 	struct object_directory *odb;
-	static struct object_directory *fakeent;
 	struct strbuf buf = STRBUF_INIT;
 
-	if (!fakeent) {
-		/*
-		 * Create a "fake" alternate object database that
-		 * points to our own object database, to make it
-		 * easier to get a temporary working space in
-		 * alt->name/alt->base while iterating over the
-		 * object databases including our own.
-		 */
-		fakeent = alloc_alt_odb(get_object_directory());
-	}
-	fakeent->next = the_repository->objects->alt_odb_list;
-
-	for (odb = fakeent; odb && !ds->ambiguous; odb = odb->next) {
+	for (odb = the_repository->objects->odb;
+	     odb && !ds->ambiguous;
+	     odb = odb->next) {
 		int pos;
 
 		if (!odb->loose_objects_subdir_seen[subdir_nr]) {
