@@ -542,13 +542,15 @@ static int reset_head(struct object_id *oid, const char *action,
 	if (switch_to_branch && !starts_with(switch_to_branch, "refs/"))
 		BUG("Not a fully qualified branch: '%s'", switch_to_branch);
 
-	if (hold_locked_index(&lock, LOCK_REPORT_ON_ERROR) < 0)
-		return -1;
+	if (hold_locked_index(&lock, LOCK_REPORT_ON_ERROR) < 0) {
+		ret = -1;
+		goto leave_reset_head;
+	}
 
 	if (!oid) {
 		if (get_oid("HEAD", &head_oid)) {
-			rollback_lock_file(&lock);
-			return error(_("could not determine HEAD revision"));
+			ret = error(_("could not determine HEAD revision"));
+			goto leave_reset_head;
 		}
 		oid = &head_oid;
 	}
@@ -565,32 +567,27 @@ static int reset_head(struct object_id *oid, const char *action,
 		unpack_tree_opts.reset = 1;
 
 	if (read_index_unmerged(the_repository->index) < 0) {
-		rollback_lock_file(&lock);
-		return error(_("could not read index"));
+		ret = error(_("could not read index"));
+		goto leave_reset_head;
 	}
 
 	if (!fill_tree_descriptor(&desc, oid)) {
-		error(_("failed to find tree of %s"), oid_to_hex(oid));
-		rollback_lock_file(&lock);
-		free((void *)desc.buffer);
-		return -1;
+		ret = error(_("failed to find tree of %s"), oid_to_hex(oid));
+		goto leave_reset_head;
 	}
 
 	if (unpack_trees(1, &desc, &unpack_tree_opts)) {
-		rollback_lock_file(&lock);
-		free((void *)desc.buffer);
-		return -1;
+		ret = -1;
+		goto leave_reset_head;
 	}
 
 	tree = parse_tree_indirect(oid);
 	prime_cache_tree(the_repository->index, tree);
 
-	if (write_locked_index(the_repository->index, &lock, COMMIT_LOCK) < 0)
+	if (write_locked_index(the_repository->index, &lock, COMMIT_LOCK) < 0) {
 		ret = error(_("could not write index"));
-	free((void *)desc.buffer);
-
-	if (ret)
-		return ret;
+		goto leave_reset_head;
+	}
 
 	reflog_action = getenv(GIT_REFLOG_ACTION_ENVIRONMENT);
 	strbuf_addf(&msg, "%s: ", reflog_action ? reflog_action : "rebase");
@@ -624,7 +621,10 @@ static int reset_head(struct object_id *oid, const char *action,
 					 UPDATE_REFS_MSG_ON_ERR);
 	}
 
+leave_reset_head:
 	strbuf_release(&msg);
+	rollback_lock_file(&lock);
+	free((void *)desc.buffer);
 	return ret;
 }
 
