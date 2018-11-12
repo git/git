@@ -7,8 +7,8 @@
 #include "sha1-array.h"
 #include "strbuf.h"
 
-struct alternate_object_database {
-	struct alternate_object_database *next;
+struct object_directory {
+	struct object_directory *next;
 
 	/* see alt_scratch_buf() */
 	struct strbuf scratch;
@@ -32,14 +32,14 @@ struct alternate_object_database {
 };
 void prepare_alt_odb(struct repository *r);
 char *compute_alternate_path(const char *path, struct strbuf *err);
-typedef int alt_odb_fn(struct alternate_object_database *, void *);
+typedef int alt_odb_fn(struct object_directory *, void *);
 int foreach_alt_odb(alt_odb_fn, void*);
 
 /*
  * Allocate a "struct alternate_object_database" but do _not_ actually
  * add it to the list of alternates.
  */
-struct alternate_object_database *alloc_alt_odb(const char *dir);
+struct object_directory *alloc_alt_odb(const char *dir);
 
 /*
  * Add the directory to the on-disk alternates file; the new entry will also
@@ -60,7 +60,7 @@ void add_to_alternates_memory(const char *dir);
  * alternate. Always use this over direct access to alt->scratch, as it
  * cleans up any previous use of the scratch buffer.
  */
-struct strbuf *alt_scratch_buf(struct alternate_object_database *alt);
+struct strbuf *alt_scratch_buf(struct object_directory *odb);
 
 struct packed_git {
 	struct packed_git *next;
@@ -100,8 +100,8 @@ struct raw_object_store {
 	/* Path to extra alternate object database if not NULL */
 	char *alternate_db;
 
-	struct alternate_object_database *alt_odb_list;
-	struct alternate_object_database **alt_odb_tail;
+	struct object_directory *alt_odb_list;
+	struct object_directory **alt_odb_tail;
 
 	/*
 	 * Objects that should be substituted by other objects

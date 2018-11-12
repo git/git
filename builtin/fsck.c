@@ -688,7 +688,7 @@ static struct option fsck_opts[] = {
 int cmd_fsck(int argc, const char **argv, const char *prefix)
 {
 	int i;
-	struct alternate_object_database *alt;
+	struct object_directory *odb;
 
 	/* fsck knows how to handle missing promisor objects */
 	fetch_if_missing = 0;
@@ -725,14 +725,14 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 		for_each_loose_object(mark_loose_for_connectivity, NULL, 0);
 		for_each_packed_object(mark_packed_for_connectivity, NULL, 0);
 	} else {
-		struct alternate_object_database *alt_odb_list;
+		struct object_directory *alt_odb_list;
 
 		fsck_object_dir(get_object_directory());
 
 		prepare_alt_odb(the_repository);
 		alt_odb_list = the_repository->objects->alt_odb_list;
-		for (alt = alt_odb_list; alt; alt = alt->next)
-			fsck_object_dir(alt->path);
+		for (odb = alt_odb_list; odb; odb = odb->next)
+			fsck_object_dir(odb->path);
 
 		if (check_full) {
 			struct packed_git *p;
@@ -840,12 +840,12 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 			errors_found |= ERROR_COMMIT_GRAPH;
 
 		prepare_alt_odb(the_repository);
-		for (alt =  the_repository->objects->alt_odb_list; alt; alt = alt->next) {
+		for (odb = the_repository->objects->alt_odb_list; odb; odb = odb->next) {
 			child_process_init(&commit_graph_verify);
 			commit_graph_verify.argv = verify_argv;
 			commit_graph_verify.git_cmd = 1;
 			verify_argv[2] = "--object-dir";
-			verify_argv[3] = alt->path;
+			verify_argv[3] = odb->path;
 			if (run_command(&commit_graph_verify))
 				errors_found |= ERROR_COMMIT_GRAPH;
 		}
@@ -861,12 +861,12 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 			errors_found |= ERROR_COMMIT_GRAPH;
 
 		prepare_alt_odb(the_repository);
-		for (alt =  the_repository->objects->alt_odb_list; alt; alt = alt->next) {
+		for (odb = the_repository->objects->alt_odb_list; odb; odb = odb->next) {
 			child_process_init(&midx_verify);
 			midx_verify.argv = midx_argv;
 			midx_verify.git_cmd = 1;
 			midx_argv[2] = "--object-dir";
-			midx_argv[3] = alt->path;
+			midx_argv[3] = odb->path;
 			if (run_command(&midx_verify))
 				errors_found |= ERROR_COMMIT_GRAPH;
 		}

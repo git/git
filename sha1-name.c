@@ -95,8 +95,8 @@ static int match_sha(unsigned, const unsigned char *, const unsigned char *);
 static void find_short_object_filename(struct disambiguate_state *ds)
 {
 	int subdir_nr = ds->bin_pfx.hash[0];
-	struct alternate_object_database *alt;
-	static struct alternate_object_database *fakeent;
+	struct object_directory *odb;
+	static struct object_directory *fakeent;
 
 	if (!fakeent) {
 		/*
@@ -110,24 +110,24 @@ static void find_short_object_filename(struct disambiguate_state *ds)
 	}
 	fakeent->next = the_repository->objects->alt_odb_list;
 
-	for (alt = fakeent; alt && !ds->ambiguous; alt = alt->next) {
+	for (odb = fakeent; odb && !ds->ambiguous; odb = odb->next) {
 		int pos;
 
-		if (!alt->loose_objects_subdir_seen[subdir_nr]) {
-			struct strbuf *buf = alt_scratch_buf(alt);
+		if (!odb->loose_objects_subdir_seen[subdir_nr]) {
+			struct strbuf *buf = alt_scratch_buf(odb);
 			for_each_file_in_obj_subdir(subdir_nr, buf,
 						    append_loose_object,
 						    NULL, NULL,
-						    &alt->loose_objects_cache);
-			alt->loose_objects_subdir_seen[subdir_nr] = 1;
+						    &odb->loose_objects_cache);
+			odb->loose_objects_subdir_seen[subdir_nr] = 1;
 		}
 
-		pos = oid_array_lookup(&alt->loose_objects_cache, &ds->bin_pfx);
+		pos = oid_array_lookup(&odb->loose_objects_cache, &ds->bin_pfx);
 		if (pos < 0)
 			pos = -1 - pos;
-		while (!ds->ambiguous && pos < alt->loose_objects_cache.nr) {
+		while (!ds->ambiguous && pos < odb->loose_objects_cache.nr) {
 			const struct object_id *oid;
-			oid = alt->loose_objects_cache.oid + pos;
+			oid = odb->loose_objects_cache.oid + pos;
 			if (!match_sha(ds->len, ds->bin_pfx.hash, oid->hash))
 				break;
 			update_candidates(ds, oid);

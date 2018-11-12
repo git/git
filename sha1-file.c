@@ -353,16 +353,16 @@ void sha1_file_name(struct repository *r, struct strbuf *buf, const unsigned cha
 	fill_sha1_path(buf, sha1);
 }
 
-struct strbuf *alt_scratch_buf(struct alternate_object_database *alt)
+struct strbuf *alt_scratch_buf(struct object_directory *odb)
 {
-	strbuf_setlen(&alt->scratch, alt->base_len);
-	return &alt->scratch;
+	strbuf_setlen(&odb->scratch, odb->base_len);
+	return &odb->scratch;
 }
 
-static const char *alt_sha1_path(struct alternate_object_database *alt,
+static const char *alt_sha1_path(struct object_directory *odb,
 				 const unsigned char *sha1)
 {
-	struct strbuf *buf = alt_scratch_buf(alt);
+	struct strbuf *buf = alt_scratch_buf(odb);
 	fill_sha1_path(buf, sha1);
 	return buf->buf;
 }
@@ -374,7 +374,7 @@ static int alt_odb_usable(struct raw_object_store *o,
 			  struct strbuf *path,
 			  const char *normalized_objdir)
 {
-	struct alternate_object_database *alt;
+	struct object_directory *odb;
 
 	/* Detect cases where alternate disappeared */
 	if (!is_directory(path->buf)) {
@@ -388,8 +388,8 @@ static int alt_odb_usable(struct raw_object_store *o,
 	 * Prevent the common mistake of listing the same
 	 * thing twice, or object directory itself.
 	 */
-	for (alt = o->alt_odb_list; alt; alt = alt->next) {
-		if (!fspathcmp(path->buf, alt->path))
+	for (odb = o->alt_odb_list; odb; odb = odb->next) {
+		if (!fspathcmp(path->buf, odb->path))
 			return 0;
 	}
 	if (!fspathcmp(path->buf, normalized_objdir))
@@ -402,7 +402,7 @@ static int alt_odb_usable(struct raw_object_store *o,
  * Prepare alternate object database registry.
  *
  * The variable alt_odb_list points at the list of struct
- * alternate_object_database.  The elements on this list come from
+ * object_directory.  The elements on this list come from
  * non-empty elements from colon separated ALTERNATE_DB_ENVIRONMENT
  * environment variable, and $GIT_OBJECT_DIRECTORY/info/alternates,
  * whose contents is similar to that environment variable but can be
@@ -419,7 +419,7 @@ static void read_info_alternates(struct repository *r,
 static int link_alt_odb_entry(struct repository *r, const char *entry,
 	const char *relative_base, int depth, const char *normalized_objdir)
 {
-	struct alternate_object_database *ent;
+	struct object_directory *ent;
 	struct strbuf pathbuf = STRBUF_INIT;
 
 	if (!is_absolute_path(entry) && relative_base) {
@@ -540,9 +540,9 @@ static void read_info_alternates(struct repository *r,
 	free(path);
 }
 
-struct alternate_object_database *alloc_alt_odb(const char *dir)
+struct object_directory *alloc_alt_odb(const char *dir)
 {
-	struct alternate_object_database *ent;
+	struct object_directory *ent;
 
 	FLEX_ALLOC_STR(ent, path, dir);
 	strbuf_init(&ent->scratch, 0);
@@ -684,7 +684,7 @@ out:
 
 int foreach_alt_odb(alt_odb_fn fn, void *cb)
 {
-	struct alternate_object_database *ent;
+	struct object_directory *ent;
 	int r = 0;
 
 	prepare_alt_odb(the_repository);
@@ -743,10 +743,10 @@ static int check_and_freshen_local(const struct object_id *oid, int freshen)
 
 static int check_and_freshen_nonlocal(const struct object_id *oid, int freshen)
 {
-	struct alternate_object_database *alt;
+	struct object_directory *odb;
 	prepare_alt_odb(the_repository);
-	for (alt = the_repository->objects->alt_odb_list; alt; alt = alt->next) {
-		const char *path = alt_sha1_path(alt, oid->hash);
+	for (odb = the_repository->objects->alt_odb_list; odb; odb = odb->next) {
+		const char *path = alt_sha1_path(odb, oid->hash);
 		if (check_and_freshen_file(path, freshen))
 			return 1;
 	}
@@ -893,7 +893,7 @@ int git_open_cloexec(const char *name, int flags)
 static int stat_sha1_file(struct repository *r, const unsigned char *sha1,
 			  struct stat *st, const char **path)
 {
-	struct alternate_object_database *alt;
+	struct object_directory *odb;
 	static struct strbuf buf = STRBUF_INIT;
 
 	strbuf_reset(&buf);
@@ -905,8 +905,8 @@ static int stat_sha1_file(struct repository *r, const unsigned char *sha1,
 
 	prepare_alt_odb(r);
 	errno = ENOENT;
-	for (alt = r->objects->alt_odb_list; alt; alt = alt->next) {
-		*path = alt_sha1_path(alt, sha1);
+	for (odb = r->objects->alt_odb_list; odb; odb = odb->next) {
+		*path = alt_sha1_path(odb, sha1);
 		if (!lstat(*path, st))
 			return 0;
 	}
@@ -922,7 +922,7 @@ static int open_sha1_file(struct repository *r,
 			  const unsigned char *sha1, const char **path)
 {
 	int fd;
-	struct alternate_object_database *alt;
+	struct object_directory *odb;
 	int most_interesting_errno;
 	static struct strbuf buf = STRBUF_INIT;
 
@@ -936,8 +936,8 @@ static int open_sha1_file(struct repository *r,
 	most_interesting_errno = errno;
 
 	prepare_alt_odb(r);
-	for (alt = r->objects->alt_odb_list; alt; alt = alt->next) {
-		*path = alt_sha1_path(alt, sha1);
+	for (odb = r->objects->alt_odb_list; odb; odb = odb->next) {
+		*path = alt_sha1_path(odb, sha1);
 		fd = git_open(*path);
 		if (fd >= 0)
 			return fd;
@@ -2139,14 +2139,14 @@ struct loose_alt_odb_data {
 	void *data;
 };
 
-static int loose_from_alt_odb(struct alternate_object_database *alt,
+static int loose_from_alt_odb(struct object_directory *odb,
 			      void *vdata)
 {
 	struct loose_alt_odb_data *data = vdata;
 	struct strbuf buf = STRBUF_INIT;
 	int r;
 
-	strbuf_addstr(&buf, alt->path);
+	strbuf_addstr(&buf, odb->path);
 	r = for_each_loose_file_in_objdir_buf(&buf,
 					      data->cb, NULL, NULL,
 					      data->data);

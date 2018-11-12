@@ -1433,7 +1433,7 @@ struct alternate_refs_data {
 	void *data;
 };
 
-static int refs_from_alternate_cb(struct alternate_object_database *e,
+static int refs_from_alternate_cb(struct object_directory *e,
 				  void *data)
 {
 	struct strbuf path = STRBUF_INIT;

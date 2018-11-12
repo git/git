@@ -230,7 +230,7 @@ static void prepare_commit_graph_one(struct repository *r, const char *obj_dir)
  */
 static int prepare_commit_graph(struct repository *r)
 {
-	struct alternate_object_database *alt;
+	struct object_directory *odb;
 	char *obj_dir;
 	int config_value;
 
@@ -255,10 +255,10 @@ static int prepare_commit_graph(struct repository *r)
 	obj_dir = r->objects->objectdir;
 	prepare_commit_graph_one(r, obj_dir);
 	prepare_alt_odb(r);
-	for (alt = r->objects->alt_odb_list;
-	     !r->objects->commit_graph && alt;
-	     alt = alt->next)
-		prepare_commit_graph_one(r, alt->path);
+	for (odb = r->objects->alt_odb_list;
+	     !r->objects->commit_graph && odb;
+	     odb = odb->next)
+		prepare_commit_graph_one(r, odb->path);
 	return !!r->objects->commit_graph;
 }
 

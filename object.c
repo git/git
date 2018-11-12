@@ -482,17 +482,17 @@ struct raw_object_store *raw_object_store_new(void)
 	return o;
 }
 
-static void free_alt_odb(struct alternate_object_database *alt)
+static void free_alt_odb(struct object_directory *odb)
 {
-	strbuf_release(&alt->scratch);
-	oid_array_clear(&alt->loose_objects_cache);
-	free(alt);
+	strbuf_release(&odb->scratch);
+	oid_array_clear(&odb->loose_objects_cache);
+	free(odb);
 }
 
 static void free_alt_odbs(struct raw_object_store *o)
 {
 	while (o->alt_odb_list) {
-		struct alternate_object_database *next;
+		struct object_directory *next;
 
 		next = o->alt_odb_list->next;
 		free_alt_odb(o->alt_odb_list);
