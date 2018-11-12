@@ -157,7 +157,7 @@ void raw_object_store_clear(struct raw_object_store *o);
  * Put in `buf` the name of the file in the local object database that
  * would be used to store a loose object with the specified sha1.
  */
-void sha1_file_name(struct repository *r, struct strbuf *buf, const unsigned char *sha1);
+void loose_object_path(struct repository *r, struct strbuf *buf, const unsigned char *sha1);
 
 void *map_sha1_file(struct repository *r, const unsigned char *sha1, unsigned long *size);
 

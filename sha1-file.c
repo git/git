@@ -346,8 +346,10 @@ static void fill_sha1_path(struct strbuf *buf, const unsigned char *sha1)
 	}
 }
 
-void sha1_file_name(struct repository *r, struct strbuf *buf, const unsigned char *sha1)
+void loose_object_path(struct repository *r, struct strbuf *buf,
+		       const unsigned char *sha1)
 {
+	strbuf_reset(buf);
 	strbuf_addstr(buf, r->objects->objectdir);
 	strbuf_addch(buf, '/');
 	fill_sha1_path(buf, sha1);
@@ -735,8 +737,7 @@ static int check_and_freshen_local(const struct object_id *oid, int freshen)
 {
 	static struct strbuf buf = STRBUF_INIT;
 
-	strbuf_reset(&buf);
-	sha1_file_name(the_repository, &buf, oid->hash);
+	loose_object_path(the_repository, &buf, oid->hash);
 
 	return check_and_freshen_file(buf.buf, freshen);
 }
@@ -888,7 +889,7 @@ int git_open_cloexec(const char *name, int flags)
  *
  * The "path" out-parameter will give the path of the object we found (if any).
  * Note that it may point to static storage and is only valid until another
- * call to sha1_file_name(), etc.
+ * call to loose_object_path(), etc.
  */
 static int stat_sha1_file(struct repository *r, const unsigned char *sha1,
 			  struct stat *st, const char **path)
@@ -896,8 +897,7 @@ static int stat_sha1_file(struct repository *r, const unsigned char *sha1,
 	struct object_directory *odb;
 	static struct strbuf buf = STRBUF_INIT;
 
-	strbuf_reset(&buf);
-	sha1_file_name(r, &buf, sha1);
+	loose_object_path(r, &buf, sha1);
 	*path = buf.buf;
 
 	if (!lstat(*path, st))
@@ -926,8 +926,7 @@ static int open_sha1_file(struct repository *r,
 	int most_interesting_errno;
 	static struct strbuf buf = STRBUF_INIT;
 
-	strbuf_reset(&buf);
-	sha1_file_name(r, &buf, sha1);
+	loose_object_path(r, &buf, sha1);
 	*path = buf.buf;
 
 	fd = git_open(*path);
@@ -1626,8 +1625,7 @@ static int write_loose_object(const struct object_id *oid, char *hdr,
 	static struct strbuf tmp_file = STRBUF_INIT;
 	static struct strbuf filename = STRBUF_INIT;
 
-	strbuf_reset(&filename);
-	sha1_file_name(the_repository, &filename, oid->hash);
+	loose_object_path(the_repository, &filename, oid->hash);
 
 	fd = create_tmpfile(&tmp_file, filename.buf);
 	if (fd < 0) {
