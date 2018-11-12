@@ -147,51 +147,51 @@ test_expect_success 'rev-parse accumulates multiple --exclude' '
 	compare rev-parse "--exclude=refs/remotes/* --exclude=refs/tags/* --all" --branches
 '
 
-test_expect_failure 'rev-parse --exclude=glob with --branches=glob' '
+test_expect_success 'rev-parse --exclude=glob with --branches=glob' '
 	compare rev-parse "--exclude=subspace-* --branches=sub*" "subspace/one subspace/two"
 '
 
-test_expect_failure 'rev-parse --exclude=glob with --tags=glob' '
+test_expect_success 'rev-parse --exclude=glob with --tags=glob' '
 	compare rev-parse "--exclude=qux/? --tags=qux/*" "qux/one qux/two"
 '
 
-test_expect_failure 'rev-parse --exclude=glob with --remotes=glob' '
+test_expect_success 'rev-parse --exclude=glob with --remotes=glob' '
 	compare rev-parse "--exclude=upstream/? --remotes=upstream/*" "upstream/one upstream/two"
 '
 
-test_expect_failure 'rev-parse --exclude=ref with --branches=glob' '
+test_expect_success 'rev-parse --exclude=ref with --branches=glob' '
 	compare rev-parse "--exclude=subspace-x --branches=sub*" "subspace/one subspace/two"
 '
 
-test_expect_failure 'rev-parse --exclude=ref with --tags=glob' '
+test_expect_success 'rev-parse --exclude=ref with --tags=glob' '
 	compare rev-parse "--exclude=qux/x --tags=qux/*" "qux/one qux/two"
 '
 
-test_expect_failure 'rev-parse --exclude=ref with --remotes=glob' '
+test_expect_success 'rev-parse --exclude=ref with --remotes=glob' '
 	compare rev-parse "--exclude=upstream/x --remotes=upstream/*" "upstream/one upstream/two"
 '
 
-test_expect_failure 'rev-list --exclude=glob with --branches=glob' '
+test_expect_success 'rev-list --exclude=glob with --branches=glob' '
 	compare rev-list "--exclude=subspace-* --branches=sub*" "subspace/one subspace/two"
 '
 
-test_expect_failure 'rev-list --exclude=glob with --tags=glob' '
+test_expect_success 'rev-list --exclude=glob with --tags=glob' '
 	compare rev-list "--exclude=qux/? --tags=qux/*" "qux/one qux/two"
 '
 
-test_expect_failure 'rev-list --exclude=glob with --remotes=glob' '
+test_expect_success 'rev-list --exclude=glob with --remotes=glob' '
 	compare rev-list "--exclude=upstream/? --remotes=upstream/*" "upstream/one upstream/two"
 '
 
-test_expect_failure 'rev-list --exclude=ref with --branches=glob' '
+test_expect_success 'rev-list --exclude=ref with --branches=glob' '
 	compare rev-list "--exclude=subspace-x --branches=sub*" "subspace/one subspace/two"
 '
 
-test_expect_failure 'rev-list --exclude=ref with --tags=glob' '
+test_expect_success 'rev-list --exclude=ref with --tags=glob' '
 	compare rev-list "--exclude=qux/x --tags=qux/*" "qux/one qux/two"
 '
 
-test_expect_failure 'rev-list --exclude=ref with --remotes=glob' '
+test_expect_success 'rev-list --exclude=ref with --remotes=glob' '
 	compare rev-list "--exclude=upstream/x --remotes=upstream/*" "upstream/one upstream/two"
 '
 

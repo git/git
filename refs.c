@@ -217,6 +217,7 @@ char *resolve_refdup(const char *refname, int resolve_flags,
 /* The argument to filter_refs */
 struct ref_filter {
 	const char *pattern;
+	const char *prefix;
 	each_ref_fn *fn;
 	void *cb_data;
 };
@@ -296,6 +297,8 @@ static int filter_refs(const char *refname, const struct object_id *oid,
 
 	if (wildmatch(filter->pattern, refname, 0))
 		return 0;
+	if (filter->prefix)
+		skip_prefix(refname, filter->prefix, &refname);
 	return filter->fn(refname, oid, flags, filter->cb_data);
 }
 
@@ -458,6 +461,7 @@ int for_each_glob_ref_in(each_ref_fn fn, const char *pattern,
 	}
 
 	filter.pattern = real_pattern.buf;
+	filter.prefix = prefix;
 	filter.fn = fn;
 	filter.cb_data = cb_data;
 	ret = for_each_ref(filter_refs, &filter);
