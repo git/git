@@ -23,6 +23,7 @@
 #include "revision.h"
 #include "commit-reach.h"
 #include "rerere.h"
+#include "branch.h"
 
 static char const * const builtin_rebase_usage[] = {
 	N_("git rebase [-i] [options] [--exec <cmd>] [--onto <newbase>] "
@@ -1002,6 +1003,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
 		if (reset_head(NULL, "reset", NULL, 0, NULL, NULL) < 0)
 			die(_("could not discard worktree changes"));
+		remove_branch_state();
 		if (read_basic_state(&options))
 			exit(1);
 		goto run_rebase;
@@ -1019,6 +1021,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			       options.head_name, 0, NULL, NULL) < 0)
 			die(_("could not move back to %s"),
 			    oid_to_hex(&options.orig_head));
+		remove_branch_state();
 		ret = finish_rebase(&options);
 		goto cleanup;
 	}
