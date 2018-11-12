@@ -523,10 +523,13 @@ finished_rebase:
 
 #define GIT_REFLOG_ACTION_ENVIRONMENT "GIT_REFLOG_ACTION"
 
+#define RESET_HEAD_DETACH (1<<0)
+
 static int reset_head(struct object_id *oid, const char *action,
-		      const char *switch_to_branch, int detach_head,
+		      const char *switch_to_branch, unsigned flags,
 		      const char *reflog_orig_head, const char *reflog_head)
 {
+	unsigned detach_head = flags & RESET_HEAD_DETACH;
 	struct object_id head_oid;
 	struct tree_desc desc;
 	struct lock_file lock = LOCK_INIT;
@@ -1502,8 +1505,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			 "it...\n"));
 
 	strbuf_addf(&msg, "rebase: checkout %s", options.onto_name);
-	if (reset_head(&options.onto->object.oid, "checkout", NULL, 1,
-	    NULL, msg.buf))
+	if (reset_head(&options.onto->object.oid, "checkout", NULL,
+		       RESET_HEAD_DETACH, NULL, msg.buf))
 		die(_("Could not detach HEAD"));
 	strbuf_release(&msg);
 
