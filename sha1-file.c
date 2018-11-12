@@ -2125,6 +2125,32 @@ int for_each_loose_object(each_loose_object_fn cb, void *data,
 	return 0;
 }
 
+static int append_loose_object(const struct object_id *oid, const char *path,
+			       void *data)
+{
+	oid_array_append(data, oid);
+	return 0;
+}
+
+void odb_load_loose_cache(struct object_directory *odb, int subdir_nr)
+{
+	struct strbuf buf = STRBUF_INIT;
+
+	if (subdir_nr < 0 ||
+	    subdir_nr >= ARRAY_SIZE(odb->loose_objects_subdir_seen))
+		BUG("subdir_nr out of range");
+
+	if (odb->loose_objects_subdir_seen[subdir_nr])
+		return;
+
+	strbuf_addstr(&buf, odb->path);
+	for_each_file_in_obj_subdir(subdir_nr, &buf,
+				    append_loose_object,
+				    NULL, NULL,
+				    &odb->loose_objects_cache);
+	odb->loose_objects_subdir_seen[subdir_nr] = 1;
+}
+
 static int check_stream_sha1(git_zstream *stream,
 			     const char *hdr,
 			     unsigned long size,

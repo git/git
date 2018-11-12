@@ -11,11 +11,12 @@ struct object_directory {
 	struct object_directory *next;
 
 	/*
-	 * Used to store the results of readdir(3) calls when searching
-	 * for unique abbreviated hashes.  This cache is never
-	 * invalidated, thus it's racy and not necessarily accurate.
-	 * That's fine for its purpose; don't use it for tasks requiring
-	 * greater accuracy!
+	 * Used to store the results of readdir(3) calls when we are OK
+	 * sacrificing accuracy due to races for speed. That includes
+	 * our search for unique abbreviated hashes. Don't use it for tasks
+	 * requiring greater accuracy!
+	 *
+	 * Be sure to call odb_load_loose_cache() before using.
 	 */
 	char loose_objects_subdir_seen[256];
 	struct oid_array loose_objects_cache;
@@ -44,6 +45,13 @@ void add_to_alternates_file(const char *dir);
  * file.
  */
 void add_to_alternates_memory(const char *dir);
+
+/*
+ * Populate an odb's loose object cache for one particular subdirectory (i.e.,
+ * the one that corresponds to the first byte of objects you're interested in,
+ * from 0 to 255 inclusive).
+ */
+void odb_load_loose_cache(struct object_directory *odb, int subdir_nr);
 
 struct packed_git {
 	struct packed_git *next;

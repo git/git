@@ -83,36 +83,19 @@ static void update_candidates(struct disambiguate_state *ds, const struct object
 	/* otherwise, current can be discarded and candidate is still good */
 }
 
-static int append_loose_object(const struct object_id *oid, const char *path,
-			       void *data)
-{
-	oid_array_append(data, oid);
-	return 0;
-}
-
 static int match_sha(unsigned, const unsigned char *, const unsigned char *);
 
 static void find_short_object_filename(struct disambiguate_state *ds)
 {
 	int subdir_nr = ds->bin_pfx.hash[0];
 	struct object_directory *odb;
-	struct strbuf buf = STRBUF_INIT;
 
 	for (odb = the_repository->objects->odb;
 	     odb && !ds->ambiguous;
 	     odb = odb->next) {
 		int pos;
 
-		if (!odb->loose_objects_subdir_seen[subdir_nr]) {
-			strbuf_reset(&buf);
-			strbuf_addstr(&buf, odb->path);
-			for_each_file_in_obj_subdir(subdir_nr, &buf,
-						    append_loose_object,
-						    NULL, NULL,
-						    &odb->loose_objects_cache);
-			odb->loose_objects_subdir_seen[subdir_nr] = 1;
-		}
-
+		odb_load_loose_cache(odb, subdir_nr);
 		pos = oid_array_lookup(&odb->loose_objects_cache, &ds->bin_pfx);
 		if (pos < 0)
 			pos = -1 - pos;
@@ -125,8 +108,6 @@ static void find_short_object_filename(struct disambiguate_state *ds)
 			pos++;
 		}
 	}
-
-	strbuf_release(&buf);
 }
 
 static int match_sha(unsigned len, const unsigned char *a, const unsigned char *b)
