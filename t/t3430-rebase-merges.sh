@@ -396,7 +396,7 @@ test_expect_success 'with --autosquash and --exec' '
 	grep "G: +G" actual
 '
 
-test_expect_failure '--continue after resolving conflicts after a merge' '
+test_expect_success '--continue after resolving conflicts after a merge' '
 	git checkout -b already-has-g E &&
 	git cherry-pick E..G &&
 	test_commit H2 &&
