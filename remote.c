@@ -1049,12 +1049,22 @@ static int match_explicit(struct ref *src, struct ref *dst,
 			matched_dst = make_linked_ref(dst_guess, dst_tail);
 			free(dst_guess);
 		} else {
-			error(_("unable to push to unqualified destination: %s\n"
-				"The destination refspec neither matches an "
-				"existing ref on the remote nor\n"
-				"begins with refs/, and we are unable to "
-				"guess a prefix based on the source ref."),
-			      dst_value);
+			/*
+			 * TRANSLATORS: "matches '%s'%" is the <dst>
+			 * part of "git push <remote> <src>:<dst>"
+			 * push, and "being pushed ('%s')" is the
+			 * <src>.
+			 */
+			error(_("The destination you provided is not a full refname (i.e.,\n"
+				"starting with \"refs/\"). We tried to guess what you meant by:\n"
+				"\n"
+				"- Looking for a ref that matches '%s' on the remote side.\n"
+				"- Checking if the <src> being pushed ('%s')\n"
+				"  is a ref in \"refs/{heads,tags}/\". If so we add a corresponding\n"
+				"  refs/{heads,tags}/ prefix on the remote side.\n"
+				"\n"
+				"Neither worked, so we gave up. You must fully qualify the ref."),
+			      dst_value, matched_src->name);
 		}
 		break;
 	default:
