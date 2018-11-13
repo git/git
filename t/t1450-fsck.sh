@@ -673,14 +673,33 @@ test_expect_success 'fsck detects trailing loose garbage (commit)' '
 	test_i18ngrep "garbage.*$commit" out
 '
 
-test_expect_success 'fsck detects trailing loose garbage (blob)' '
+test_expect_success 'fsck detects trailing loose garbage (large blob)' '
 	blob=$(echo trailing | git hash-object -w --stdin) &&
 	file=$(sha1_file $blob) &&
 	test_when_finished "remove_object $blob" &&
 	chmod +w "$file" &&
 	echo garbage >>"$file" &&
-	test_must_fail git fsck 2>out &&
+	test_must_fail git -c core.bigfilethreshold=5 fsck 2>out &&
 	test_i18ngrep "garbage.*$blob" out
+'
+
+test_expect_success 'fsck detects truncated loose object' '
+	# make it big enough that we know we will truncate in the data
+	# portion, not the header
+	test-tool genrandom truncate 4096 >file &&
+	blob=$(git hash-object -w file) &&
+	file=$(sha1_file $blob) &&
+	test_when_finished "remove_object $blob" &&
+	test_copy_bytes 1024 <"$file" >tmp &&
+	rm "$file" &&
+	mv -f tmp "$file" &&
+
+	# check both regular and streaming code paths
+	test_must_fail git fsck 2>out &&
+	test_i18ngrep corrupt.*$blob out &&
+
+	test_must_fail git -c core.bigfilethreshold=128 fsck 2>out &&
+	test_i18ngrep corrupt.*$blob out
 '
 
 # for each of type, we have one version which is referenced by another object
