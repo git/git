@@ -2316,6 +2316,8 @@ int parse_opt_merge_filter(const struct option *opt, const char *arg, int unset)
 	struct object_id oid;
 	int no_merged = starts_with(opt->long_name, "no");
 
+	BUG_ON_OPT_NEG(unset);
+
 	if (rf->merge) {
 		if (no_merged) {
 			return opterror(opt, "is incompatible with --merged", 0);

@@ -703,6 +703,9 @@ static int parse_opt_merge(const struct option *opt, const char *arg, int unset)
 {
 	struct rebase_options *opts = opt->value;
 
+	BUG_ON_OPT_NEG(unset);
+	BUG_ON_OPT_ARG(arg);
+
 	if (!is_interactive(opts))
 		opts->type = REBASE_MERGE;
 
@@ -714,6 +717,9 @@ static int parse_opt_interactive(const struct option *opt, const char *arg,
 				 int unset)
 {
 	struct rebase_options *opts = opt->value;
+
+	BUG_ON_OPT_NEG(unset);
+	BUG_ON_OPT_ARG(arg);
 
 	opts->type = REBASE_INTERACTIVE;
 	opts->flags |= REBASE_INTERACTIVE_EXPLICIT;

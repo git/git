@@ -790,12 +790,16 @@ static int refresh(struct refresh_params *o, unsigned int flag)
 static int refresh_callback(const struct option *opt,
 				const char *arg, int unset)
 {
+	BUG_ON_OPT_NEG(unset);
+	BUG_ON_OPT_ARG(arg);
 	return refresh(opt->value, 0);
 }
 
 static int really_refresh_callback(const struct option *opt,
 				const char *arg, int unset)
 {
+	BUG_ON_OPT_NEG(unset);
+	BUG_ON_OPT_ARG(arg);
 	return refresh(opt->value, REFRESH_REALLY);
 }
 
@@ -803,6 +807,7 @@ static int chmod_callback(const struct option *opt,
 				const char *arg, int unset)
 {
 	char *flip = opt->value;
+	BUG_ON_OPT_NEG(unset);
 	if ((arg[0] != '-' && arg[0] != '+') || arg[1] != 'x' || arg[2])
 		return error("option 'chmod' expects \"+x\" or \"-x\"");
 	*flip = arg[0];
@@ -812,6 +817,8 @@ static int chmod_callback(const struct option *opt,
 static int resolve_undo_clear_callback(const struct option *opt,
 				const char *arg, int unset)
 {
+	BUG_ON_OPT_NEG(unset);
+	BUG_ON_OPT_ARG(arg);
 	resolve_undo_clear();
 	return 0;
 }
@@ -847,6 +854,8 @@ static int cacheinfo_callback(struct parse_opt_ctx_t *ctx,
 	unsigned int mode;
 	const char *path;
 
+	BUG_ON_OPT_NEG(unset);
+
 	if (!parse_new_style_cacheinfo(ctx->argv[1], &mode, &oid, &path)) {
 		if (add_cacheinfo(mode, &oid, path, 0))
 			die("git update-index: --cacheinfo cannot add %s", path);
@@ -869,6 +878,8 @@ static int stdin_cacheinfo_callback(struct parse_opt_ctx_t *ctx,
 {
 	int *nul_term_line = opt->value;
 
+	BUG_ON_OPT_NEG(unset);
+
 	if (ctx->argc != 1)
 		return error("option '%s' must be the last argument", opt->long_name);
 	allow_add = allow_replace = allow_remove = 1;
@@ -881,6 +892,8 @@ static int stdin_callback(struct parse_opt_ctx_t *ctx,
 {
 	int *read_from_stdin = opt->value;
 
+	BUG_ON_OPT_NEG(unset);
+
 	if (ctx->argc != 1)
 		return error("option '%s' must be the last argument", opt->long_name);
 	*read_from_stdin = 1;
@@ -888,10 +901,12 @@ static int stdin_callback(struct parse_opt_ctx_t *ctx,
 }
 
 static int unresolve_callback(struct parse_opt_ctx_t *ctx,
-				const struct option *opt, int flags)
+				const struct option *opt, int unset)
 {
 	int *has_errors = opt->value;
 	const char *prefix = startup_info->prefix;
+
+	BUG_ON_OPT_NEG(unset);
 
 	/* consume remaining arguments. */
 	*has_errors = do_unresolve(ctx->argc, ctx->argv,
@@ -905,10 +920,12 @@ static int unresolve_callback(struct parse_opt_ctx_t *ctx,
 }
 
 static int reupdate_callback(struct parse_opt_ctx_t *ctx,
-				const struct option *opt, int flags)
+				const struct option *opt, int unset)
 {
 	int *has_errors = opt->value;
 	const char *prefix = startup_info->prefix;
+
+	BUG_ON_OPT_NEG(unset);
 
 	/* consume remaining arguments. */
 	setup_work_tree();

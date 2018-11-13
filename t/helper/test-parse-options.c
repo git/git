@@ -36,6 +36,7 @@ static int length_callback(const struct option *opt, const char *arg, int unset)
 
 static int number_callback(const struct option *opt, const char *arg, int unset)
 {
+	BUG_ON_OPT_NEG(unset);
 	*(int *)opt->value = strtol(arg, NULL, 10);
 	return 0;
 }
@@ -119,7 +120,6 @@ int cmd__parse_options(int argc, const char **argv)
 		OPT_INTEGER('j', NULL, &integer, "get a integer, too"),
 		OPT_MAGNITUDE('m', "magnitude", &magnitude, "get a magnitude"),
 		OPT_SET_INT(0, "set23", &integer, "set integer to 23", 23),
-		OPT_DATE('t', NULL, &timestamp, "get timestamp of <time>"),
 		OPT_CALLBACK('L', "length", &integer, "str",
 			"get length of <str>", length_callback),
 		OPT_FILENAME('F', "file", &file, "set file to <file>"),

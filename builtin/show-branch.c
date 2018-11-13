@@ -604,6 +604,7 @@ static int parse_reflog_param(const struct option *opt, const char *arg,
 {
 	char *ep;
 	const char **base = (const char **)opt->value;
+	BUG_ON_OPT_NEG(unset);
 	if (!arg)
 		arg = "";
 	reflog = strtoul(arg, &ep, 10);
@@ -674,7 +675,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 		{ OPTION_CALLBACK, 'g', "reflog", &reflog_base, N_("<n>[,<base>]"),
 			    N_("show <n> most recent ref-log entries starting at "
 			       "base"),
-			    PARSE_OPT_OPTARG,
+			    PARSE_OPT_OPTARG | PARSE_OPT_NONEG,
 			    parse_reflog_param },
 		OPT_END()
 	};

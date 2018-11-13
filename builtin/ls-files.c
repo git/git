@@ -475,6 +475,8 @@ static int option_parse_exclude(const struct option *opt,
 {
 	struct string_list *exclude_list = opt->value;
 
+	BUG_ON_OPT_NEG(unset);
+
 	exc_given = 1;
 	string_list_append(exclude_list, arg);
 
@@ -486,6 +488,8 @@ static int option_parse_exclude_from(const struct option *opt,
 {
 	struct dir_struct *dir = opt->value;
 
+	BUG_ON_OPT_NEG(unset);
+
 	exc_given = 1;
 	add_excludes_from_file(dir, arg);
 
@@ -496,6 +500,9 @@ static int option_parse_exclude_standard(const struct option *opt,
 					 const char *arg, int unset)
 {
 	struct dir_struct *dir = opt->value;
+
+	BUG_ON_OPT_NEG(unset);
+	BUG_ON_OPT_ARG(arg);
 
 	exc_given = 1;
 	setup_standard_excludes(dir);
@@ -548,15 +555,16 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 			    N_("show resolve-undo information")),
 		{ OPTION_CALLBACK, 'x', "exclude", &exclude_list, N_("pattern"),
 			N_("skip files matching pattern"),
-			0, option_parse_exclude },
+			PARSE_OPT_NONEG, option_parse_exclude },
 		{ OPTION_CALLBACK, 'X', "exclude-from", &dir, N_("file"),
 			N_("exclude patterns are read from <file>"),
-			0, option_parse_exclude_from },
+			PARSE_OPT_NONEG, option_parse_exclude_from },
 		OPT_STRING(0, "exclude-per-directory", &dir.exclude_per_dir, N_("file"),
 			N_("read additional per-directory exclude patterns in <file>")),
 		{ OPTION_CALLBACK, 0, "exclude-standard", &dir, NULL,
 			N_("add the standard git exclusions"),
-			PARSE_OPT_NOARG, option_parse_exclude_standard },
+			PARSE_OPT_NOARG | PARSE_OPT_NONEG,
+			option_parse_exclude_standard },
 		OPT_SET_INT_F(0, "full-name", &prefix_len,
 			      N_("make the output relative to the project top directory"),
 			      0, PARSE_OPT_NONEG),
