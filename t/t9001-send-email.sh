@@ -492,6 +492,21 @@ do
 			--validate \
 			$patches longline.patch
 	'
+
+done
+
+for enc in 7bit 8bit quoted-printable base64
+do
+	test_expect_success $PREREQ "--transfer-encoding=$enc produces correct header" '
+		clean_fake_sendmail &&
+		git send-email \
+			--from="Example <nobody@example.com>" \
+			--to=nobody@example.com \
+			--smtp-server="$(pwd)/fake.sendmail" \
+			--transfer-encoding=$enc \
+			$patches &&
+		grep "Content-Transfer-Encoding: $enc" msgtxt1
+	'
 done
 
 test_expect_success $PREREQ 'Invalid In-Reply-To' '
