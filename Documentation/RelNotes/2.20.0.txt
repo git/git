@@ -161,6 +161,18 @@ UI, Workflows & Features
    "--smtp-auth=none" option, even when the smtp username is given
    (which turns the authentication on by default).
 
+ * A fourth class of configuration files (in addition to the
+   traditional "system wide", "per user in the $HOME directory" and
+   "per repository in the $GIT_DIR/config") has been introduced so
+   that different worktrees that share the same repository (hence the
+   same $GIT_DIR/config file) can use different customization.
+
+ * A pattern with '**' that does not have a slash on either side used
+   to be an invalid one, but the code now treats such double-asterisks
+   the same way as two normal asterisks that happen to be adjacent to
+   each other.
+   (merge e5bbe09e88 nd/wildmatch-double-asterisk later to maint).
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -281,6 +293,44 @@ Performance, Internal Implementation, Development Support etc.
  * "git rebase" and "git rebase -i" have been reimplemented in C.
 
  * Windows port learned to use nano-second resolution file timestamps.
+
+ * The overly large Documentation/config.txt file have been split into
+   million little pieces.  This potentially allows each individual piece
+   included into the manual page of the command it affects more easily.
+
+ * Replace three string-list instances used as look-up tables in "git
+   fetch" with hashmaps.
+
+ * Unify code to read the author-script used in "git am" and the
+   commands that use the sequencer machinery, e.g. "git rebase -i".
+
+ * In preparation to the day when we can deprecate and remove the
+   "rebase -p", make sure we can skip and later remove tests for
+   it.
+
+ * The history traversal used to implement the tag-following has been
+   optimized by introducing a new helper.
+
+ * The helper function to refresh the cached stat information in the
+   in-core index has learned to perform the lstat() part of the
+   operation in parallel on multi-core platforms.
+
+ * The code to traverse objects for reachability, used to decide what
+   objects are unreferenced and expendable, have been taught to also
+   consider per-worktree refs of other worktrees as starting points to
+   prevent data loss.
+
+ * "git add" needs to internally run "diff-files" equivalent, and the
+   codepath learned the same optimization as "diff-files" has to run
+   lstat(2) in parallel to find which paths have been updated in the
+   working tree.
+
+ * The procedure to install dependencies before testing at Travis CI
+   is getting revamped for both simplicity and flexibility, taking
+   advantage of the recent move to the vm-based environment.
+
+ * The support for format-patch (and send-email) by the command-line
+   completion script (in contrib/) has been simplified a bit.
 
 
 Fixes since v2.19
@@ -447,6 +497,53 @@ Fixes since v2.19
    '--verbose-log' option.
    (merge a5f52c6dab sg/test-verbose-log later to maint).
 
+ * A regression in Git 2.12 era made "git fsck" fall into an infinite
+   loop while processing truncated loose objects.
+   (merge 18ad13e5b2 jk/detect-truncated-zlib-input later to maint).
+
+ * "git ls-remote $there foo" was broken by recent update for the
+   protocol v2 and stopped showing refs that match 'foo' that are not
+   refs/{heads,tags}/foo, which has been fixed.
+   (merge 6a139cdd74 jk/proto-v2-ref-prefix-fix later to maint).
+
+ * Additional comment on a tricky piece of code to help developers.
+   (merge 0afbe3e806 jk/stream-pack-non-delta-clarification later to maint).
+
+ * A couple of tests used to leave the repository in a state that is
+   deliberately corrupt, which have been corrected.
+   (merge aa984dbe5e ab/pack-tests-cleanup later to maint).
+
+ * The submodule support has been updated to read from the blob at
+   HEAD:.gitmodules when the .gitmodules file is missing from the
+   working tree.
+   (merge 2b1257e463 ao/submodule-wo-gitmodules-checked-out later to maint).
+
+ * "git fetch" was a bit loose in parsing responses from the other side
+   when talking over the protocol v2.
+
+ * "git rev-parse --exclude=* --branches --branches"  (i.e. first
+   saying "add only things that do not match '*' out of all branches"
+   and then adding all branches, without any exclusion this time")
+   worked as expected, but "--exclude=* --all --all" did not work the
+   same way, which has been fixed.
+   (merge 5221048092 ag/rev-parse-all-exclude-fix later to maint).
+
+ * "git send-email --transfer-encoding=..." in recent versions of Git
+   sometimes produced an empty "Content-Transfer-Encoding:" header,
+   which has been corrected.
+   (merge 3c88e46f1a al/send-email-auto-cte-fixup later to maint).
+
+ * The interface into "xdiff" library used to discover the offset and
+   size of a generated patch hunk by first formatting it into the
+   textual hunk header "@@ -n,m +k,l @@" and then parsing the numbers
+   out.  A new interface has been introduced to allow callers a more
+   direct access to them.
+   (merge 5eade0746e jk/xdiff-interface later to maint).
+
+ * Pathspec matching against a tree object were buggy when negative
+   pathspec elements were involved, which has been fixed.
+   (merge b7845cebc0 nd/tree-walk-path-exclusion later to maint).
+
  * Code cleanup, docfix, build fix, etc.
    (merge 96a7501aad ts/doc-build-manpage-xsl-quietly later to maint).
    (merge b9b07efdb2 tg/conflict-marker-size later to maint).
@@ -485,3 +582,4 @@ Fixes since v2.19
    (merge aaaa881822 jk/uploadpack-packobjectshook-fix later to maint).
    (merge 3063477445 tb/char-may-be-unsigned later to maint).
    (merge 8c64bc9420 sg/test-rebase-editor-fix later to maint).
+   (merge 71571cd7d6 ma/sequencer-do-reset-saner-loop-termination later to maint).
