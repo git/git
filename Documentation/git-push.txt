@@ -73,6 +73,26 @@ be omitted--such a push will update a ref that `<src>` normally updates
 without any `<refspec>` on the command line.  Otherwise, missing
 `:<dst>` means to update the same ref as the `<src>`.
 +
+If <dst> doesn't start with `refs/` (e.g. `refs/heads/master`) we will
+try to infer where in `refs/*` on the destination <repository> it
+belongs based on the the type of <src> being pushed and whether <dst>
+is ambiguous.
++
+--
+* If <dst> unambiguously refers to a ref on the <repository> remote,
+  then push to that ref.
+
+* If <src> resolves to a ref starting with refs/heads/ or refs/tags/,
+  then prepend that to <dst>.
+
+* Other ambiguity resolutions might be added in the future, but for
+  now any other cases will error out with an error indicating what we
+  tried, and depending on the `advice.pushUnqualifiedRefname`
+  configuration (see linkgit:git-config[1]) suggest what refs/
+  namespace you may have wanted to push to.
+
+--
++
 The object referenced by <src> is used to update the <dst> reference
 on the remote side. Whether this is allowed depends on where in
 `refs/*` the <dst> reference lives as described in detail below, in
@@ -590,6 +610,9 @@ the ones in the examples below) can be configured as the default for
 	to update the ref that matches `satellite/master` (most probably
 	`refs/remotes/satellite/master`) in the `mothership` repository;
 	do the same for `dev` and `satellite/dev`.
++
+See the section describing `<refspec>...` above for a discussion of
+the matching semantics.
 +
 This is to emulate `git fetch` run on the `mothership` using `git
 push` that is run in the opposite direction in order to integrate
