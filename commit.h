@@ -340,6 +340,14 @@ void record_author_date(struct author_date_slab *author_date,
 			struct commit *commit);
 
 int compare_commits_by_author_date(const void *a_, const void *b_, void *unused);
+
+/*
+ * Verify a single commit with check_commit_signature() and die() if it is not
+ * a good signature. This isn't really suitable for general use, but is a
+ * helper to implement consistent logic for pull/merge --verify-signatures.
+ */
+void verify_merge_signature(struct commit *commit, int verbose);
+
 int compare_commits_by_commit_date(const void *a_, const void *b_, void *unused);
 int compare_commits_by_gen_then_commit_date(const void *a_, const void *b_, void *unused);
 
