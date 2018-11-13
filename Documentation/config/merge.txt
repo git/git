@@ -30,7 +30,7 @@ merge.verifySignatures::
 	If true, this is equivalent to the --verify-signatures command
 	line option. See linkgit:git-merge[1] for details.
 
-include::fmt-merge-msg-config.txt[]
+include::fmt-merge-msg.txt[]
 
 merge.renameLimit::
 	The number of files to consider when performing rename detection
@@ -69,7 +69,7 @@ merge.guitool::
 	Any other value is treated as a custom merge tool and requires that a
 	corresponding mergetool.<guitool>.cmd variable is defined.
 
-include::mergetools-merge.txt[]
+include::../mergetools-merge.txt[]
 
 merge.verbosity::
 	Controls the amount of output shown by the recursive merge

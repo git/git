@@ -51,7 +51,7 @@ OPTIONS
 
 CONFIGURATION
 -------------
-include::fmt-merge-msg-config.txt[]
+include::config/fmt-merge-msg.txt[]
 
 merge.summary::
 	Synonym to `merge.log`; this is deprecated and will be removed in

@@ -185,7 +185,7 @@ diff.guitool::
 	and requires that a corresponding difftool.<guitool>.cmd variable
 	is defined.
 
-include::mergetools-diff.txt[]
+include::../mergetools-diff.txt[]
 
 diff.indentHeuristic::
 	Set this option to `true` to enable experimental heuristics
