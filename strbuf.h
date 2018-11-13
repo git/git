@@ -288,8 +288,8 @@ extern void strbuf_addbuf(struct strbuf *sb, const struct strbuf *sb2);
  * Join the arguments into a buffer. `delim` is put between every
  * two arguments.
  */
-extern const char *strbuf_join_argv(struct strbuf *buf, int argc,
-				    const char **argv, char delim);
+const char *strbuf_join_argv(struct strbuf *buf, int argc,
+			     const char **argv, char delim);
 
 /**
  * This function can be used to expand a format string containing
