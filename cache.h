@@ -661,6 +661,9 @@ extern int daemonize(void);
 /* Initialize and use the cache information */
 struct lock_file;
 extern int read_index(struct index_state *);
+extern void preload_index(struct index_state *index,
+			  const struct pathspec *pathspec,
+			  unsigned int refresh_flags);
 extern int read_index_preload(struct index_state *,
 			      const struct pathspec *pathspec,
 			      unsigned int refresh_flags);
