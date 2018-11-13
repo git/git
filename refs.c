@@ -624,6 +624,7 @@ int dwim_log(const char *str, int len, struct object_id *oid, char **log)
 static int is_per_worktree_ref(const char *refname)
 {
 	return !strcmp(refname, "HEAD") ||
+		starts_with(refname, "refs/worktree/") ||
 		starts_with(refname, "refs/bisect/") ||
 		starts_with(refname, "refs/rewritten/");
 }
@@ -640,13 +641,34 @@ static int is_pseudoref_syntax(const char *refname)
 	return 1;
 }
 
+static int is_main_pseudoref_syntax(const char *refname)
+{
+	return skip_prefix(refname, "main-worktree/", &refname) &&
+		*refname &&
+		is_pseudoref_syntax(refname);
+}
+
+static int is_other_pseudoref_syntax(const char *refname)
+{
+	if (!skip_prefix(refname, "worktrees/", &refname))
+		return 0;
+	refname = strchr(refname, '/');
+	if (!refname || !refname[1])
+		return 0;
+	return is_pseudoref_syntax(refname + 1);
+}
+
 enum ref_type ref_type(const char *refname)
 {
 	if (is_per_worktree_ref(refname))
 		return REF_TYPE_PER_WORKTREE;
 	if (is_pseudoref_syntax(refname))
 		return REF_TYPE_PSEUDOREF;
-       return REF_TYPE_NORMAL;
+	if (is_main_pseudoref_syntax(refname))
+		return REF_TYPE_MAIN_PSEUDOREF;
+	if (is_other_pseudoref_syntax(refname))
+		return REF_TYPE_OTHER_PSEUDOREF;
+	return REF_TYPE_NORMAL;
 }
 
 long get_files_ref_lock_timeout_ms(void)

@@ -95,8 +95,10 @@ refs::
 	References are stored in subdirectories of this
 	directory.  The 'git prune' command knows to preserve
 	objects reachable from refs found in this directory and
-	its subdirectories. This directory is ignored if $GIT_COMMON_DIR
-	is set and "$GIT_COMMON_DIR/refs" will be used instead.
+	its subdirectories.
+	This directory is ignored (except refs/bisect and
+	refs/worktree) if $GIT_COMMON_DIR is set and
+	"$GIT_COMMON_DIR/refs" will be used instead.
 
 refs/heads/`name`::
 	records tip-of-the-tree commit objects of branch `name`
@@ -170,6 +172,11 @@ hooks::
 	each hook. This directory is ignored if $GIT_COMMON_DIR is set
 	and "$GIT_COMMON_DIR/hooks" will be used instead.
 
+common::
+	When multiple working trees are used, most of files in
+	$GIT_DIR are per-worktree with a few known exceptions. All
+	files under 'common' however will be shared between all
+	working trees.
 
 index::
 	The current index file for the repository.  It is

@@ -714,9 +714,11 @@ int parse_hide_refs_config(const char *var, const char *value, const char *);
 int ref_is_hidden(const char *, const char *);
 
 enum ref_type {
-	REF_TYPE_PER_WORKTREE,
-	REF_TYPE_PSEUDOREF,
-	REF_TYPE_NORMAL,
+	REF_TYPE_PER_WORKTREE,	  /* refs inside refs/ but not shared       */
+	REF_TYPE_PSEUDOREF,	  /* refs outside refs/ in current worktree */
+	REF_TYPE_MAIN_PSEUDOREF,  /* pseudo refs from the main worktree     */
+	REF_TYPE_OTHER_PSEUDOREF, /* pseudo refs from other worktrees       */
+	REF_TYPE_NORMAL,	  /* normal/shared refs inside refs/        */
 };
 
 enum ref_type ref_type(const char *refname);

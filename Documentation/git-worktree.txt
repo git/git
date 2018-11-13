@@ -204,6 +204,35 @@ working trees, it can be used to identify worktrees. For example if
 you only have two working trees, at "/abc/def/ghi" and "/abc/def/ggg",
 then "ghi" or "def/ghi" is enough to point to the former working tree.
 
+REFS
+----
+In multiple working trees, some refs may be shared between all working
+trees, some refs are local. One example is HEAD is different for all
+working trees. This section is about the sharing rules and how to access
+refs of one working tree from another.
+
+In general, all pseudo refs are per working tree and all refs starting
+with "refs/" are shared. Pseudo refs are ones like HEAD which are
+directly under GIT_DIR instead of inside GIT_DIR/refs. There are one
+exception to this: refs inside refs/bisect and refs/worktree is not
+shared.
+
+Refs that are per working tree can still be accessed from another
+working tree via two special paths, main-worktree and worktrees. The
+former gives access to per-worktree refs of the main working tree,
+while the latter to all linked working trees.
+
+For example, main-worktree/HEAD or main-worktree/refs/bisect/good
+resolve to the same value as the main working tree's HEAD and
+refs/bisect/good respectively. Similarly, worktrees/foo/HEAD or
+worktrees/bar/refs/bisect/bad are the same as
+GIT_COMMON_DIR/worktrees/foo/HEAD and
+GIT_COMMON_DIR/worktrees/bar/refs/bisect/bad.
+
+To access refs, it's best not to look inside GIT_DIR directly. Instead
+use commands such as linkgit:git-rev-parse[1] or linkgit:git-update-ref[1]
+which will handle refs correctly.
+
 CONFIGURATION FILE
 ------------------
 By default, the repository "config" file is shared across all working
@@ -258,7 +287,8 @@ linked working tree `git rev-parse --git-path HEAD` returns
 `/path/other/test-next/.git/HEAD` or `/path/main/.git/HEAD`) while `git
 rev-parse --git-path refs/heads/master` uses
 $GIT_COMMON_DIR and returns `/path/main/.git/refs/heads/master`,
-since refs are shared across all working trees.
+since refs are shared across all working trees, except refs/bisect and
+refs/worktree.
 
 See linkgit:gitrepository-layout[5] for more information. The rule of
 thumb is do not make any assumption about whether a path belongs to

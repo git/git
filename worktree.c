@@ -487,6 +487,75 @@ int submodule_uses_worktrees(const char *path)
 	return ret;
 }
 
+int parse_worktree_ref(const char *worktree_ref, const char **name,
+		       int *name_length, const char **ref)
+{
+	if (skip_prefix(worktree_ref, "main-worktree/", &worktree_ref)) {
+		if (!*worktree_ref)
+			return -1;
+		if (name)
+			*name = NULL;
+		if (name_length)
+			*name_length = 0;
+		if (ref)
+			*ref = worktree_ref;
+		return 0;
+	}
+	if (skip_prefix(worktree_ref, "worktrees/", &worktree_ref)) {
+		const char *slash = strchr(worktree_ref, '/');
+
+		if (!slash || slash == worktree_ref || !slash[1])
+			return -1;
+		if (name)
+			*name = worktree_ref;
+		if (name_length)
+			*name_length = slash - worktree_ref;
+		if (ref)
+			*ref = slash + 1;
+		return 0;
+	}
+	return -1;
+}
+
+void strbuf_worktree_ref(const struct worktree *wt,
+			 struct strbuf *sb,
+			 const char *refname)
+{
+	switch (ref_type(refname)) {
+	case REF_TYPE_PSEUDOREF:
+	case REF_TYPE_PER_WORKTREE:
+		if (wt && !wt->is_current) {
+			if (is_main_worktree(wt))
+				strbuf_addstr(sb, "main-worktree/");
+			else
+				strbuf_addf(sb, "worktrees/%s/", wt->id);
+		}
+		break;
+
+	case REF_TYPE_MAIN_PSEUDOREF:
+	case REF_TYPE_OTHER_PSEUDOREF:
+		break;
+
+	case REF_TYPE_NORMAL:
+		/*
+		 * For shared refs, don't prefix worktrees/ or
+		 * main-worktree/. It's not necessary and
+		 * files-backend.c can't handle it anyway.
+		 */
+		break;
+	}
+	strbuf_addstr(sb, refname);
+}
+
+const char *worktree_ref(const struct worktree *wt, const char *refname)
+{
+	static struct strbuf sb = STRBUF_INIT;
+
+	strbuf_reset(&sb);
+	strbuf_worktree_ref(wt, &sb, refname);
+	return sb.buf;
+}
+
 int other_head_refs(each_ref_fn fn, void *cb_data)
 {
 	struct worktree **worktrees, **p;
@@ -495,13 +564,17 @@ int other_head_refs(each_ref_fn fn, void *cb_data)
 	worktrees = get_worktrees(0);
 	for (p = worktrees; *p; p++) {
 		struct worktree *wt = *p;
-		struct ref_store *refs;
+		struct object_id oid;
+		int flag;
 
 		if (wt->is_current)
 			continue;
 
-		refs = get_worktree_ref_store(wt);
-		ret = refs_head_ref(refs, fn, cb_data);
+		if (!refs_read_ref_full(get_main_ref_store(the_repository),
+					worktree_ref(wt, "HEAD"),
+					RESOLVE_REF_READING,
+					&oid, &flag))
+			ret = fn(worktree_ref(wt, "HEAD"), &oid, flag, cb_data);
 		if (ret)
 			break;
 	}
