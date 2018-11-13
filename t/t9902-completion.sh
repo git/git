@@ -1434,7 +1434,8 @@ test_expect_success 'double dash "git checkout"' '
 	--ignore-other-worktrees Z
 	--recurse-submodules Z
 	--progress Z
-	--no-quiet Z
+	--guess Z
+	--no-guess Z
 	--no-... Z
 	EOF
 '

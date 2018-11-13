@@ -276,6 +276,10 @@ section of linkgit:git-add[1] to learn how to operate the `--patch` mode.
 	Just like linkgit:git-submodule[1], this will detach the
 	submodules HEAD.
 
+--no-guess::
+	Do not attempt to create a branch if a remote tracking branch
+	of the same name exists.
+
 <branch>::
 	Branch to checkout; if it refers to a branch (i.e., a name that,
 	when prepended with "refs/heads/", is a valid ref), then that
