@@ -1005,6 +1005,26 @@ static int match_explicit_lhs(struct ref *src,
 	}
 }
 
+static void show_push_unqualified_ref_name_error(const char *dst_value,
+						 const char *matched_src_name)
+{
+	/*
+	 * TRANSLATORS: "matches '%s'%" is the <dst> part of "git push
+	 * <remote> <src>:<dst>" push, and "being pushed ('%s')" is
+	 * the <src>.
+	 */
+	error(_("The destination you provided is not a full refname (i.e.,\n"
+		"starting with \"refs/\"). We tried to guess what you meant by:\n"
+		"\n"
+		"- Looking for a ref that matches '%s' on the remote side.\n"
+		"- Checking if the <src> being pushed ('%s')\n"
+		"  is a ref in \"refs/{heads,tags}/\". If so we add a corresponding\n"
+		"  refs/{heads,tags}/ prefix on the remote side.\n"
+		"\n"
+		"Neither worked, so we gave up. You must fully qualify the ref."),
+	      dst_value, matched_src_name);
+}
+
 static int match_explicit(struct ref *src, struct ref *dst,
 			  struct ref ***dst_tail,
 			  struct refspec_item *rs)
@@ -1049,22 +1069,8 @@ static int match_explicit(struct ref *src, struct ref *dst,
 			matched_dst = make_linked_ref(dst_guess, dst_tail);
 			free(dst_guess);
 		} else {
-			/*
-			 * TRANSLATORS: "matches '%s'%" is the <dst>
-			 * part of "git push <remote> <src>:<dst>"
-			 * push, and "being pushed ('%s')" is the
-			 * <src>.
-			 */
-			error(_("The destination you provided is not a full refname (i.e.,\n"
-				"starting with \"refs/\"). We tried to guess what you meant by:\n"
-				"\n"
-				"- Looking for a ref that matches '%s' on the remote side.\n"
-				"- Checking if the <src> being pushed ('%s')\n"
-				"  is a ref in \"refs/{heads,tags}/\". If so we add a corresponding\n"
-				"  refs/{heads,tags}/ prefix on the remote side.\n"
-				"\n"
-				"Neither worked, so we gave up. You must fully qualify the ref."),
-			      dst_value, matched_src->name);
+			show_push_unqualified_ref_name_error(dst_value,
+							     matched_src->name);
 		}
 		break;
 	default:
