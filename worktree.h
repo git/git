@@ -10,12 +10,12 @@ struct worktree {
 	char *path;
 	char *id;
 	char *head_ref;		/* NULL if HEAD is broken or detached */
-	char *lock_reason;	/* internal use */
+	char *lock_reason;	/* private - use worktree_lock_reason */
 	struct object_id head_oid;
 	int is_detached;
 	int is_bare;
 	int is_current;
-	int lock_reason_valid;
+	int lock_reason_valid; /* private */
 };
 
 /* Functions for acting on the information about worktrees. */
@@ -60,7 +60,7 @@ extern int is_main_worktree(const struct worktree *wt);
  * Return the reason string if the given worktree is locked or NULL
  * otherwise.
  */
-extern const char *is_worktree_locked(struct worktree *wt);
+extern const char *worktree_lock_reason(struct worktree *wt);
 
 #define WT_VALIDATE_WORKTREE_MISSING_OK (1 << 0)
 
