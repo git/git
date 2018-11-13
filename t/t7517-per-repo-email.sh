@@ -72,12 +72,14 @@ test_expect_success 'noop interactive rebase does not care about ident' '
 	git rebase -i HEAD^
 '
 
-test_expect_success 'fast-forward rebase does not care about ident (preserve)' '
+test_expect_success REBASE_P \
+	'fast-forward rebase does not care about ident (preserve)' '
 	git checkout -B tmp side-without-commit &&
 	git rebase -p master
 '
 
-test_expect_success 'non-fast-forward rebase refuses to write commits (preserve)' '
+test_expect_success REBASE_P \
+	'non-fast-forward rebase refuses to write commits (preserve)' '
 	test_when_finished "git rebase --abort || true" &&
 	git checkout -B tmp side-with-commit &&
 	test_must_fail git rebase -p master

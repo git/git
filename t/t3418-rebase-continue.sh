@@ -106,7 +106,7 @@ test_expect_success 'rebase -i --continue handles merge strategy and options' '
 	test -f funny.was.run
 '
 
-test_expect_success 'rebase passes merge strategy options correctly' '
+test_expect_success REBASE_P 'rebase passes merge strategy options correctly' '
 	rm -fr .git/rebase-* &&
 	git reset --hard commit-new-file-F3-on-topic-branch &&
 	test_commit theirs-to-merge &&
@@ -177,6 +177,7 @@ test_expect_success 'setup rerere database' '
 	git checkout master &&
 	test_commit "commit-new-file-F3" F3 3 &&
 	test_config rerere.enabled true &&
+	git update-ref refs/heads/topic commit-new-file-F3-on-topic-branch &&
 	test_must_fail git rebase -m master topic &&
 	echo "Resolved" >F2 &&
 	cp F2 expected-F2 &&
@@ -240,7 +241,7 @@ test_rerere_autoupdate
 test_rerere_autoupdate -m
 GIT_SEQUENCE_EDITOR=: && export GIT_SEQUENCE_EDITOR
 test_rerere_autoupdate -i
-test_rerere_autoupdate --preserve-merges
+test_have_prereq !REBASE_P || test_rerere_autoupdate --preserve-merges
 unset GIT_SEQUENCE_EDITOR
 
 test_expect_success 'the todo command "break" works' '
