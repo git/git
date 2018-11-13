@@ -430,8 +430,6 @@ ifeq ($(uname_S),Minix)
 	NO_NSEC = YesPlease
 	NEEDS_LIBGEN =
 	NEEDS_CRYPTO_WITH_SSL = YesPlease
-	NEEDS_IDN_WITH_CURL = YesPlease
-	NEEDS_SSL_WITH_CURL = YesPlease
 	NEEDS_RESOLV =
 	NO_HSTRERROR = YesPlease
 	NO_MMAP = YesPlease
@@ -457,7 +455,6 @@ ifeq ($(uname_S),NONSTOP_KERNEL)
 	# Missdetected, hence commented out, see below.
 	#NO_CURL = YesPlease
 	# Added manually, see above.
-	NEEDS_SSL_WITH_CURL = YesPlease
 	HAVE_LIBCHARSET_H = YesPlease
 	HAVE_STRINGS_H = YesPlease
 	NEEDS_LIBICONV = YesPlease
