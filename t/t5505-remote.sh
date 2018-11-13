@@ -1249,5 +1249,32 @@ test_expect_success 'unqualified <dst> refspec DWIM and advice' '
 	)
 '
 
+test_expect_success 'refs/remotes/* <src> refspec and unqualified <dst> DWIM and advice' '
+	(
+		cd two &&
+		git tag -a -m "Some tag" my-tag master &&
+		git update-ref refs/trees/my-head-tree HEAD^{tree} &&
+		git update-ref refs/blobs/my-file-blob HEAD:file
+	) &&
+	(
+		cd test &&
+		git config --add remote.two.fetch "+refs/tags/*:refs/remotes/tags-from-two/*" &&
+		git config --add remote.two.fetch "+refs/trees/*:refs/remotes/trees-from-two/*" &&
+		git config --add remote.two.fetch "+refs/blobs/*:refs/remotes/blobs-from-two/*" &&
+		git fetch --no-tags two &&
+
+		test_must_fail git push origin refs/remotes/two/another:dst 2>err &&
+		test_i18ngrep "error: The destination you" err &&
+
+		test_must_fail git push origin refs/remotes/tags-from-two/my-tag:dst-tag 2>err &&
+		test_i18ngrep "error: The destination you" err &&
+
+		test_must_fail git push origin refs/remotes/trees-from-two/my-head-tree:dst-tree 2>err &&
+		test_i18ngrep "error: The destination you" err &&
+
+		test_must_fail git push origin refs/remotes/blobs-from-two/my-file-blob:dst-blob 2>err &&
+		test_i18ngrep "error: The destination you" err
+	)
+'
 
 test_done
