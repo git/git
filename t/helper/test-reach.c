@@ -32,8 +32,8 @@ int cmd__reach(int ac, const char **av)
 	struct commit *A, *B;
 	struct commit_list *X, *Y;
 	struct object_array X_obj = OBJECT_ARRAY_INIT;
-	struct commit **X_array;
-	int X_nr, X_alloc;
+	struct commit **X_array, **Y_array;
+	int X_nr, X_alloc, Y_nr, Y_alloc;
 	struct strbuf buf = STRBUF_INIT;
 	struct repository *r = the_repository;
 
@@ -44,9 +44,10 @@ int cmd__reach(int ac, const char **av)
 
 	A = B = NULL;
 	X = Y = NULL;
-	X_nr = 0;
-	X_alloc = 16;
+	X_nr = Y_nr = 0;
+	X_alloc = Y_alloc = 16;
 	ALLOC_ARRAY(X_array, X_alloc);
+	ALLOC_ARRAY(Y_array, Y_alloc);
 
 	while (strbuf_getline(&buf, stdin) != EOF) {
 		struct object_id oid;
@@ -92,6 +93,8 @@ int cmd__reach(int ac, const char **av)
 
 			case 'Y':
 				commit_list_insert(c, &Y);
+				ALLOC_GROW(Y_array, Y_nr + 1, Y_alloc);
+				Y_array[Y_nr++] = c;
 				break;
 
 			default:
@@ -136,6 +139,29 @@ int cmd__reach(int ac, const char **av)
 			filter.with_commit_tag_algo = 0;
 
 		printf("%s(_,A,X,_):%d\n", av[1], commit_contains(&filter, A, X, &cache));
+	} else if (!strcmp(av[1], "get_reachable_subset")) {
+		const int reachable_flag = 1;
+		int i, count = 0;
+		struct commit_list *current;
+		struct commit_list *list = get_reachable_subset(X_array, X_nr,
+								Y_array, Y_nr,
+								reachable_flag);
+		printf("get_reachable_subset(X,Y)\n");
+		for (current = list; current; current = current->next) {
+			if (!(list->item->object.flags & reachable_flag))
+				die(_("commit %s is not marked reachable"),
+				    oid_to_hex(&list->item->object.oid));
+			count++;
+		}
+		for (i = 0; i < Y_nr; i++) {
+			if (Y_array[i]->object.flags & reachable_flag)
+				count--;
+		}
+
+		if (count < 0)
+			die(_("too many commits marked reachable"));
+
+		print_sorted_commit_ids(list);
 	}
 
 	exit(0);

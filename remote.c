@@ -1205,9 +1205,36 @@ static void add_missing_tags(struct ref *src, struct ref **dst, struct ref ***ds
 	 * sent to the other side.
 	 */
 	if (sent_tips.nr) {
+		const int reachable_flag = 1;
+		struct commit_list *found_commits;
+		struct commit **src_commits;
+		int nr_src_commits = 0, alloc_src_commits = 16;
+		ALLOC_ARRAY(src_commits, alloc_src_commits);
+
 		for_each_string_list_item(item, &src_tag) {
 			struct ref *ref = item->util;
+			struct commit *commit;
+
+			if (is_null_oid(&ref->new_oid))
+				continue;
+			commit = lookup_commit_reference_gently(the_repository,
+								&ref->new_oid,
+								1);
+			if (!commit)
+				/* not pushing a commit, which is not an error */
+				continue;
+
+			ALLOC_GROW(src_commits, nr_src_commits + 1, alloc_src_commits);
+			src_commits[nr_src_commits++] = commit;
+		}
+
+		found_commits = get_reachable_subset(sent_tips.tip, sent_tips.nr,
+						     src_commits, nr_src_commits,
+						     reachable_flag);
+
+		for_each_string_list_item(item, &src_tag) {
 			struct ref *dst_ref;
+			struct ref *ref = item->util;
 			struct commit *commit;
 
 			if (is_null_oid(&ref->new_oid))
@@ -1223,7 +1250,7 @@ static void add_missing_tags(struct ref *src, struct ref **dst, struct ref ***ds
 			 * Is this tag, which they do not have, reachable from
 			 * any of the commits we are sending?
 			 */
-			if (!in_merge_bases_many(commit, sent_tips.nr, sent_tips.tip))
+			if (!(commit->object.flags & reachable_flag))
 				continue;
 
 			/* Add it in */
@@ -1231,7 +1258,12 @@ static void add_missing_tags(struct ref *src, struct ref **dst, struct ref ***ds
 			oidcpy(&dst_ref->new_oid, &ref->new_oid);
 			dst_ref->peer_ref = copy_ref(ref);
 		}
+
+		clear_commit_marks_many(nr_src_commits, src_commits, reachable_flag);
+		free(src_commits);
+		free_commit_list(found_commits);
 	}
+
 	string_list_clear(&src_tag, 0);
 	free(sent_tips.tip);
 }
