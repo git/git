@@ -422,11 +422,23 @@ static int grep_submodule(struct grep_opt *opt, struct repository *superproject,
 	struct repository submodule;
 	int hit;
 
-	if (!is_submodule_active(superproject, path))
-		return 0;
+	/*
+	 * NEEDSWORK: submodules functions need to be protected because they
+	 * access the object store via config_from_gitmodules(): the latter
+	 * uses get_oid() which, for now, relies on the global the_repository
+	 * object.
+	 */
+	grep_read_lock();
 
-	if (repo_submodule_init(&submodule, superproject, path))
+	if (!is_submodule_active(superproject, path)) {
+		grep_read_unlock();
 		return 0;
+	}
+
+	if (repo_submodule_init(&submodule, superproject, path)) {
+		grep_read_unlock();
+		return 0;
+	}
 
 	repo_read_gitmodules(&submodule);
 
@@ -440,7 +452,6 @@ static int grep_submodule(struct grep_opt *opt, struct repository *superproject,
 	 * store is no longer global and instead is a member of the repository
 	 * object.
 	 */
-	grep_read_lock();
 	add_to_alternates_memory(submodule.objects->objectdir);
 	grep_read_unlock();
 

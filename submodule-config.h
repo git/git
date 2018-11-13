@@ -48,6 +48,8 @@ const struct submodule *submodule_from_path(struct repository *r,
 					    const struct object_id *commit_or_tree,
 					    const char *path);
 void submodule_free(struct repository *r);
+int print_config_from_gitmodules(struct repository *repo, const char *key);
+int config_set_in_gitmodules_file_gently(const char *key, const char *value);
 
 /*
  * Returns 0 if the name is syntactically acceptable as a submodule "name"
