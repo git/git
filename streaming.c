@@ -408,6 +408,15 @@ static read_method_decl(pack_non_delta)
 			st->z_state = z_done;
 			break;
 		}
+
+		/*
+		 * Unlike the loose object case, we do not have to worry here
+		 * about running out of input bytes and spinning infinitely. If
+		 * we get Z_BUF_ERROR due to too few input bytes, then we'll
+		 * replenish them in the next use_pack() call when we loop. If
+		 * we truly hit the end of the pack (i.e., because it's corrupt
+		 * or truncated), then use_pack() catches that and will die().
+		 */
 		if (status != Z_OK && status != Z_BUF_ERROR) {
 			git_inflate_end(&st->z);
 			st->z_state = z_error;
