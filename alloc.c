@@ -116,7 +116,7 @@ void *alloc_commit_node(struct repository *r)
 
 static void report(const char *name, unsigned int count, size_t size)
 {
-	fprintf(stderr, "%10s: %8u (%"PRIuMAX" kB)\n",
+	fprintf(stderr, "\n%10s: %8u (%"PRIuMAX" kB)\n",
 			name, count, (uintmax_t) size);
 }
 
