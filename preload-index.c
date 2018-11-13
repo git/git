@@ -7,17 +7,7 @@
 #include "fsmonitor.h"
 #include "config.h"
 #include "progress.h"
-
-#ifdef NO_PTHREADS
-void preload_index(struct index_state *index,
-			  const struct pathspec *pathspec,
-			  unsigned int refresh_flags)
-{
-	; /* nothing */
-}
-#else
-
-#include <pthread.h>
+#include "thread-utils.h"
 
 /*
  * Mostly randomly chosen maximum thread counts: we
@@ -108,7 +98,7 @@ void preload_index(struct index_state *index,
 	struct thread_data data[MAX_PARALLEL];
 	struct progress_data pd;
 
-	if (!core_preload_index)
+	if (!HAVE_THREADS || !core_preload_index)
 		return;
 
 	threads = index->cache_nr / THREAD_COST;
@@ -131,6 +121,8 @@ void preload_index(struct index_state *index,
 
 	for (i = 0; i < threads; i++) {
 		struct thread_data *p = data+i;
+		int err;
+
 		p->index = index;
 		if (pathspec)
 			copy_pathspec(&p->pathspec, pathspec);
@@ -139,8 +131,10 @@ void preload_index(struct index_state *index,
 		if (pd.progress)
 			p->progress = &pd;
 		offset += work;
-		if (pthread_create(&p->pthread, NULL, preload_thread, p))
-			die("unable to create threaded lstat");
+		err = pthread_create(&p->pthread, NULL, preload_thread, p);
+
+		if (err)
+			die(_("unable to create threaded lstat: %s"), strerror(err));
 	}
 	for (i = 0; i < threads; i++) {
 		struct thread_data *p = data+i;
@@ -151,7 +145,6 @@ void preload_index(struct index_state *index,
 
 	trace_performance_leave("preload index");
 }
-#endif
 
 int read_index_preload(struct index_state *index,
 		       const struct pathspec *pathspec,

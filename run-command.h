@@ -1,9 +1,7 @@
 #ifndef RUN_COMMAND_H
 #define RUN_COMMAND_H
 
-#ifndef NO_PTHREADS
-#include <pthread.h>
-#endif
+#include "thread-utils.h"
 
 #include "argv-array.h"
 
@@ -143,6 +141,7 @@ struct async {
 int start_async(struct async *async);
 int finish_async(struct async *async);
 int in_async(void);
+int async_with_fork(void);
 void check_pipe(int err);
 
 /**

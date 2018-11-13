@@ -145,9 +145,7 @@ struct packing_data {
 	struct packed_git **in_pack_by_idx;
 	struct packed_git **in_pack;
 
-#ifndef NO_PTHREADS
 	pthread_mutex_t lock;
-#endif
 
 	/*
 	 * This list contains entries for bases which we know the other side
@@ -169,15 +167,11 @@ void prepare_packing_data(struct packing_data *pdata);
 
 static inline void packing_data_lock(struct packing_data *pdata)
 {
-#ifndef NO_PTHREADS
 	pthread_mutex_lock(&pdata->lock);
-#endif
 }
 static inline void packing_data_unlock(struct packing_data *pdata)
 {
-#ifndef NO_PTHREADS
 	pthread_mutex_unlock(&pdata->lock);
-#endif
 }
 
 struct object_entry *packlist_alloc(struct packing_data *pdata,

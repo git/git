@@ -229,7 +229,6 @@ int grep_source(struct grep_opt *opt, struct grep_source *gs);
 extern struct grep_opt *grep_opt_dup(const struct grep_opt *opt);
 extern int grep_threads_ok(const struct grep_opt *opt);
 
-#ifndef NO_PTHREADS
 /*
  * Mutex used around access to the attributes machinery if
  * opt->use_threads.  Must be initialized/destroyed by callers!
@@ -249,10 +248,5 @@ static inline void grep_read_unlock(void)
 	if (grep_use_locks)
 		pthread_mutex_unlock(&grep_read_mutex);
 }
-
-#else
-#define grep_read_lock()
-#define grep_read_unlock()
-#endif
 
 #endif
