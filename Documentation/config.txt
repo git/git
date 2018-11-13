@@ -2,8 +2,9 @@ CONFIGURATION FILE
 ------------------
 
 The Git configuration file contains a number of variables that affect
-the Git commands' behavior. The `.git/config` file in each repository
-is used to store the configuration for that repository, and
+the Git commands' behavior. The files `.git/config` and optionally
+`config.worktree` (see `extensions.worktreeConfig` below) in each
+repository are used to store the configuration for that repository, and
 `$HOME/.gitconfig` is used to store a per-user configuration as
 fallback values for the `.git/config` file. The file `/etc/gitconfig`
 can be used to store a system-wide default configuration.
@@ -290,6 +291,13 @@ other popular tools, and describe them in your documentation.
 include::config/advice.txt[]
 
 include::config/core.txt[]
+
+extensions.worktreeConfig::
+	If set, by default "git config" reads from both "config" and
+	"config.worktree" file from GIT_DIR in that order. In
+	multiple working directory mode, "config" file is shared while
+	"config.worktree" is per-working directory (i.e., it's in
+	GIT_COMMON_DIR/worktrees/<id>/config.worktree)
 
 include::config/add.txt[]
 

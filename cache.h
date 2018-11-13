@@ -962,11 +962,13 @@ extern int grafts_replace_parents;
 extern int repository_format_precious_objects;
 extern char *repository_format_partial_clone;
 extern const char *core_partial_clone_filter_default;
+extern int repository_format_worktree_config;
 
 struct repository_format {
 	int version;
 	int precious_objects;
 	char *partial_clone; /* value of extensions.partialclone */
+	int worktree_config;
 	int is_bare;
 	int hash_algo;
 	char *work_tree;
