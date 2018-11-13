@@ -887,20 +887,49 @@ static time_t update_tm(struct tm *tm, struct tm *now, time_t sec)
 	return n;
 }
 
+/*
+ * Do we have a pending number at the end, or when
+ * we see a new one? Let's assume it's a month day,
+ * as in "Dec 6, 1992"
+ */
+static void pending_number(struct tm *tm, int *num)
+{
+	int number = *num;
+
+	if (number) {
+		*num = 0;
+		if (tm->tm_mday < 0 && number < 32)
+			tm->tm_mday = number;
+		else if (tm->tm_mon < 0 && number < 13)
+			tm->tm_mon = number-1;
+		else if (tm->tm_year < 0) {
+			if (number > 1969 && number < 2100)
+				tm->tm_year = number - 1900;
+			else if (number > 69 && number < 100)
+				tm->tm_year = number;
+			else if (number < 38)
+				tm->tm_year = 100 + number;
+			/* We screw up for number = 00 ? */
+		}
+	}
+}
+
 static void date_now(struct tm *tm, struct tm *now, int *num)
 {
+	*num = 0;
 	update_tm(tm, now, 0);
 }
 
 static void date_yesterday(struct tm *tm, struct tm *now, int *num)
 {
+	*num = 0;
 	update_tm(tm, now, 24*60*60);
 }
 
 static void date_time(struct tm *tm, struct tm *now, int hour)
 {
 	if (tm->tm_hour < hour)
-		date_yesterday(tm, now, NULL);
+		update_tm(tm, now, 24*60*60);
 	tm->tm_hour = hour;
 	tm->tm_min = 0;
 	tm->tm_sec = 0;
@@ -908,16 +937,19 @@ static void date_time(struct tm *tm, struct tm *now, int hour)
 
 static void date_midnight(struct tm *tm, struct tm *now, int *num)
 {
+	pending_number(tm, num);
 	date_time(tm, now, 0);
 }
 
 static void date_noon(struct tm *tm, struct tm *now, int *num)
 {
+	pending_number(tm, num);
 	date_time(tm, now, 12);
 }
 
 static void date_tea(struct tm *tm, struct tm *now, int *num)
 {
+	pending_number(tm, num);
 	date_time(tm, now, 17);
 }
 
@@ -953,6 +985,7 @@ static void date_never(struct tm *tm, struct tm *now, int *num)
 {
 	time_t n = 0;
 	localtime_r(&n, tm);
+	*num = 0;
 }
 
 static const struct special {
@@ -1108,33 +1141,6 @@ static const char *approxidate_digit(const char *date, struct tm *tm, int *num,
 	if (date[0] != '0' || end - date <= 2)
 		*num = number;
 	return end;
-}
-
-/*
- * Do we have a pending number at the end, or when
- * we see a new one? Let's assume it's a month day,
- * as in "Dec 6, 1992"
- */
-static void pending_number(struct tm *tm, int *num)
-{
-	int number = *num;
-
-	if (number) {
-		*num = 0;
-		if (tm->tm_mday < 0 && number < 32)
-			tm->tm_mday = number;
-		else if (tm->tm_mon < 0 && number < 13)
-			tm->tm_mon = number-1;
-		else if (tm->tm_year < 0) {
-			if (number > 1969 && number < 2100)
-				tm->tm_year = number - 1900;
-			else if (number > 69 && number < 100)
-				tm->tm_year = number;
-			else if (number < 38)
-				tm->tm_year = 100 + number;
-			/* We screw up for number = 00 ? */
-		}
-	}
 }
 
 static timestamp_t approxidate_str(const char *date,
