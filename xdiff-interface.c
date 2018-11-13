@@ -9,54 +9,26 @@
 #include "xdiff/xutils.h"
 
 struct xdiff_emit_state {
-	xdiff_emit_consume_fn consume;
+	xdiff_emit_hunk_fn hunk_fn;
+	xdiff_emit_line_fn line_fn;
 	void *consume_callback_data;
 	struct strbuf remainder;
 };
 
-static int parse_num(char **cp_p, int *num_p)
+static int xdiff_out_hunk(void *priv_,
+			  long old_begin, long old_nr,
+			  long new_begin, long new_nr,
+			  const char *func, long funclen)
 {
-	char *cp = *cp_p;
-	int num = 0;
+	struct xdiff_emit_state *priv = priv_;
 
-	while ('0' <= *cp && *cp <= '9')
-		num = num * 10 + *cp++ - '0';
-	if (!(cp - *cp_p))
-		return -1;
-	*cp_p = cp;
-	*num_p = num;
+	if (priv->remainder.len)
+		BUG("xdiff emitted hunk in the middle of a line");
+
+	priv->hunk_fn(priv->consume_callback_data,
+		      old_begin, old_nr, new_begin, new_nr,
+		      func, funclen);
 	return 0;
-}
-
-int parse_hunk_header(char *line, int len,
-		      int *ob, int *on,
-		      int *nb, int *nn)
-{
-	char *cp;
-	cp = line + 4;
-	if (parse_num(&cp, ob)) {
-	bad_line:
-		return error("malformed diff output: %s", line);
-	}
-	if (*cp == ',') {
-		cp++;
-		if (parse_num(&cp, on))
-			goto bad_line;
-	}
-	else
-		*on = 1;
-	if (*cp++ != ' ' || *cp++ != '+')
-		goto bad_line;
-	if (parse_num(&cp, nb))
-		goto bad_line;
-	if (*cp == ',') {
-		cp++;
-		if (parse_num(&cp, nn))
-			goto bad_line;
-	}
-	else
-		*nn = 1;
-	return -!!memcmp(cp, " @@", 3);
 }
 
 static void consume_one(void *priv_, char *s, unsigned long size)
@@ -67,7 +39,7 @@ static void consume_one(void *priv_, char *s, unsigned long size)
 		unsigned long this_size;
 		ep = memchr(s, '\n', size);
 		this_size = (ep == NULL) ? size : (ep - s + 1);
-		priv->consume(priv->consume_callback_data, s, this_size);
+		priv->line_fn(priv->consume_callback_data, s, this_size);
 		size -= this_size;
 		s += this_size;
 	}
@@ -77,6 +49,9 @@ static int xdiff_outf(void *priv_, mmbuffer_t *mb, int nbuf)
 {
 	struct xdiff_emit_state *priv = priv_;
 	int i;
+
+	if (!priv->line_fn)
+		return 0;
 
 	for (i = 0; i < nbuf; i++) {
 		if (mb[i].ptr[mb[i].size-1] != '\n') {
@@ -140,8 +115,16 @@ int xdi_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp, xdemitconf_t co
 	return xdl_diff(&a, &b, xpp, xecfg, xecb);
 }
 
+void discard_hunk_line(void *priv,
+		       long ob, long on, long nb, long nn,
+		       const char *func, long funclen)
+{
+}
+
 int xdi_diff_outf(mmfile_t *mf1, mmfile_t *mf2,
-		  xdiff_emit_consume_fn fn, void *consume_callback_data,
+		  xdiff_emit_hunk_fn hunk_fn,
+		  xdiff_emit_line_fn line_fn,
+		  void *consume_callback_data,
 		  xpparam_t const *xpp, xdemitconf_t const *xecfg)
 {
 	int ret;
@@ -149,10 +132,13 @@ int xdi_diff_outf(mmfile_t *mf1, mmfile_t *mf2,
 	xdemitcb_t ecb;
 
 	memset(&state, 0, sizeof(state));
-	state.consume = fn;
+	state.hunk_fn = hunk_fn;
+	state.line_fn = line_fn;
 	state.consume_callback_data = consume_callback_data;
 	memset(&ecb, 0, sizeof(ecb));
-	ecb.outf = xdiff_outf;
+	if (hunk_fn)
+		ecb.out_hunk = xdiff_out_hunk;
+	ecb.out_line = xdiff_outf;
 	ecb.priv = &state;
 	strbuf_init(&state.remainder, 0);
 	ret = xdi_diff(mf1, mf2, xpp, xecfg, &ecb);

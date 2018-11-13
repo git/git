@@ -110,7 +110,8 @@ static void show_diff(struct merge_list *entry)
 	xpp.flags = 0;
 	memset(&xecfg, 0, sizeof(xecfg));
 	xecfg.ctxlen = 3;
-	ecb.outf = show_outf;
+	ecb.out_hunk = NULL;
+	ecb.out_line = show_outf;
 	ecb.priv = NULL;
 
 	src.ptr = origin(entry, &size);
