@@ -566,7 +566,7 @@ msgstr "è già in corso un'operazione di cherry-pick o di revert"
 
 #: sequencer.c:740
 msgid "try \"git cherry-pick (--continue | --quit | --abort)\""
-msgstr "prova \"git cherry-pick (--continue | --quit | -- abort)\""
+msgstr "prova \"git cherry-pick (--continue | --quit | --abort)\""
 
 #: sequencer.c:744
 #, c-format
