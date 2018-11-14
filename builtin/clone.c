@@ -548,7 +548,7 @@ static struct ref *find_remote_branch(const struct ref *refs, const char *branch
 }
 
 static struct ref *wanted_peer_refs(const struct ref *refs,
-		struct refspec_item *refspec)
+		struct refspec *refspec)
 {
 	struct ref *head = copy_ref(find_ref_by_name(refs, "HEAD"));
 	struct ref *local_refs = head;
@@ -569,13 +569,19 @@ static struct ref *wanted_peer_refs(const struct ref *refs,
 			warning(_("Could not find remote branch %s to clone."),
 				option_branch);
 		else {
-			get_fetch_map(remote_head, refspec, &tail, 0);
+			int i;
+			for (i = 0; i < refspec->nr; i++)
+				get_fetch_map(remote_head, &refspec->items[i],
+					      &tail, 0);
 
 			/* if --branch=tag, pull the requested tag explicitly */
 			get_fetch_map(remote_head, tag_refspec, &tail, 0);
 		}
-	} else
-		get_fetch_map(refs, refspec, &tail, 0);
+	} else {
+		int i;
+		for (i = 0; i < refspec->nr; i++)
+			get_fetch_map(refs, &refspec->items[i], &tail, 0);
+	}
 
 	if (!option_mirror && !option_single_branch && !option_no_tags)
 		get_fetch_map(refs, tag_refspec, &tail, 0);
@@ -898,7 +904,6 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	int err = 0, complete_refs_before_fetch = 1;
 	int submodule_progress;
 
-	struct refspec rs = REFSPEC_INIT_FETCH;
 	struct argv_array ref_prefixes = ARGV_ARRAY_INIT;
 
 	fetch_if_missing = 0;
@@ -1080,11 +1085,12 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	if (option_required_reference.nr || option_optional_reference.nr)
 		setup_reference();
 
+	remote = remote_get(option_origin);
+
 	strbuf_addf(&default_refspec, "+%s*:%s*", src_ref_prefix,
 		    branch_top.buf);
-	refspec_append(&rs, default_refspec.buf);
+	refspec_append(&remote->fetch, default_refspec.buf);
 
-	remote = remote_get(option_origin);
 	transport = transport_get(remote, remote->url[0]);
 	transport_set_verbosity(transport, option_verbosity, option_progress);
 	transport->family = family;
@@ -1139,7 +1145,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 
 
 	argv_array_push(&ref_prefixes, "HEAD");
-	refspec_ref_prefixes(&rs, &ref_prefixes);
+	refspec_ref_prefixes(&remote->fetch, &ref_prefixes);
 	if (option_branch)
 		expand_ref_prefix(&ref_prefixes, option_branch);
 	if (!option_no_tags)
@@ -1148,7 +1154,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	refs = transport_get_remote_refs(transport, &ref_prefixes);
 
 	if (refs) {
-		mapped_refs = wanted_peer_refs(refs, &rs.items[0]);
+		mapped_refs = wanted_peer_refs(refs, &remote->fetch);
 		/*
 		 * transport_get_remote_refs() may return refs with null sha-1
 		 * in mapped_refs (see struct transport->get_refs_list
@@ -1242,7 +1248,6 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	strbuf_release(&default_refspec);
 	junk_mode = JUNK_LEAVE_ALL;
 
-	refspec_clear(&rs);
 	argv_array_clear(&ref_prefixes);
 	return err;
 }
