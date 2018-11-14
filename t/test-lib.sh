@@ -51,10 +51,15 @@ export LSAN_OPTIONS
 
 ################################################################
 # It appears that people try to run tests without building...
-"$GIT_BUILD_DIR/git" >/dev/null
+"${GIT_TEST_INSTALLED:-$GIT_BUILD_DIR}/git" >/dev/null
 if test $? != 1
 then
-	echo >&2 'error: you do not seem to have built git yet.'
+	if test -n "$GIT_TEST_INSTALLED"
+	then
+		echo >&2 "error: there is no working Git at '$GIT_TEST_INSTALLED'"
+	else
+		echo >&2 'error: you do not seem to have built git yet.'
+	fi
 	exit 1
 fi
 
