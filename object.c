@@ -540,7 +540,7 @@ void parsed_object_pool_clear(struct parsed_object_pool *o)
 		if (obj->type == OBJ_TREE)
 			free_tree_buffer((struct tree*)obj);
 		else if (obj->type == OBJ_COMMIT)
-			release_commit_memory((struct commit*)obj);
+			release_commit_memory(o, (struct commit*)obj);
 		else if (obj->type == OBJ_TAG)
 			release_tag_memory((struct tag*)obj);
 	}
