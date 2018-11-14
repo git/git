@@ -90,3 +90,20 @@ expression G;
 - get_merge_bases_many_dirty(
 + repo_get_merge_bases_many_dirty(the_repository,
   E, F, G);
+
+@@
+expression E;
+expression F;
+@@
+- in_merge_bases(
++ repo_in_merge_bases(the_repository,
+  E, F);
+
+@@
+expression E;
+expression F;
+expression G;
+@@
+- in_merge_bases_many(
++ repo_in_merge_bases_many(the_repository,
+  E, F, G);
