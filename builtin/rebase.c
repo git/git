@@ -1064,12 +1064,22 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	}
 
 	for (i = 0; i < options.git_am_opts.argc; i++) {
-		const char *option = options.git_am_opts.argv[i];
+		const char *option = options.git_am_opts.argv[i], *p;
 		if (!strcmp(option, "--committer-date-is-author-date") ||
 		    !strcmp(option, "--ignore-date") ||
 		    !strcmp(option, "--whitespace=fix") ||
 		    !strcmp(option, "--whitespace=strip"))
 			options.flags |= REBASE_FORCE;
+		else if (skip_prefix(option, "-C", &p)) {
+			while (*p)
+				if (!isdigit(*(p++)))
+					die(_("switch `C' expects a "
+					      "numerical value"));
+		} else if (skip_prefix(option, "--whitespace=", &p)) {
+			if (*p && strcmp(p, "warn") && strcmp(p, "nowarn") &&
+			    strcmp(p, "error") && strcmp(p, "error-all"))
+				die("Invalid whitespace option: '%s'", p);
+		}
 	}
 
 	if (!(options.flags & REBASE_NO_QUIET))
