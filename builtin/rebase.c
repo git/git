@@ -87,7 +87,7 @@ struct rebase_options {
 		REBASE_FORCE = 1<<3,
 		REBASE_INTERACTIVE_EXPLICIT = 1<<4,
 	} flags;
-	struct strbuf git_am_opt;
+	struct argv_array git_am_opts;
 	const char *action;
 	int signoff;
 	int allow_rerere_autoupdate;
@@ -339,7 +339,7 @@ N_("Resolve all conflicts manually, mark them as resolved with\n"
 static int run_specific_rebase(struct rebase_options *opts)
 {
 	const char *argv[] = { NULL, NULL };
-	struct strbuf script_snippet = STRBUF_INIT;
+	struct strbuf script_snippet = STRBUF_INIT, buf = STRBUF_INIT;
 	int status;
 	const char *backend, *backend_func;
 
@@ -433,7 +433,9 @@ static int run_specific_rebase(struct rebase_options *opts)
 		oid_to_hex(&opts->restrict_revision->object.oid) : NULL);
 	add_var(&script_snippet, "GIT_QUIET",
 		opts->flags & REBASE_NO_QUIET ? "" : "t");
-	add_var(&script_snippet, "git_am_opt", opts->git_am_opt.buf);
+	sq_quote_argv_pretty(&buf, opts->git_am_opts.argv);
+	add_var(&script_snippet, "git_am_opt", buf.buf);
+	strbuf_release(&buf);
 	add_var(&script_snippet, "verbose",
 		opts->flags & REBASE_VERBOSE ? "t" : "");
 	add_var(&script_snippet, "diffstat",
@@ -756,7 +758,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	struct rebase_options options = {
 		.type = REBASE_UNSPECIFIED,
 		.flags = REBASE_NO_QUIET,
-		.git_am_opt = STRBUF_INIT,
+		.git_am_opts = ARGV_ARRAY_INIT,
 		.allow_rerere_autoupdate  = -1,
 		.allow_empty_message = 1,
 		.git_format_patch_opt = STRBUF_INIT,
@@ -777,12 +779,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		ACTION_EDIT_TODO,
 		ACTION_SHOW_CURRENT_PATCH,
 	} action = NO_ACTION;
-	int committer_date_is_author_date = 0;
-	int ignore_date = 0;
-	int ignore_whitespace = 0;
 	const char *gpg_sign = NULL;
-	int opt_c = -1;
-	struct string_list whitespace = STRING_LIST_INIT_NODUP;
 	struct string_list exec = STRING_LIST_INIT_NODUP;
 	const char *rebase_merges = NULL;
 	int fork_point = -1;
@@ -804,15 +801,20 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		{OPTION_NEGBIT, 'n', "no-stat", &options.flags, NULL,
 			N_("do not show diffstat of what changed upstream"),
 			PARSE_OPT_NOARG, NULL, REBASE_DIFFSTAT },
-		OPT_BOOL(0, "ignore-whitespace", &ignore_whitespace,
-			 N_("passed to 'git apply'")),
 		OPT_BOOL(0, "signoff", &options.signoff,
 			 N_("add a Signed-off-by: line to each commit")),
-		OPT_BOOL(0, "committer-date-is-author-date",
-			 &committer_date_is_author_date,
-			 N_("passed to 'git am'")),
-		OPT_BOOL(0, "ignore-date", &ignore_date,
-			 N_("passed to 'git am'")),
+		OPT_PASSTHRU_ARGV(0, "ignore-whitespace", &options.git_am_opts,
+				  NULL, N_("passed to 'git am'"),
+				  PARSE_OPT_NOARG),
+		OPT_PASSTHRU_ARGV(0, "committer-date-is-author-date",
+				  &options.git_am_opts, NULL,
+				  N_("passed to 'git am'"), PARSE_OPT_NOARG),
+		OPT_PASSTHRU_ARGV(0, "ignore-date", &options.git_am_opts, NULL,
+				  N_("passed to 'git am'"), PARSE_OPT_NOARG),
+		OPT_PASSTHRU_ARGV('C', NULL, &options.git_am_opts, N_("n"),
+				  N_("passed to 'git apply'"), 0),
+		OPT_PASSTHRU_ARGV(0, "whitespace", &options.git_am_opts,
+				  N_("action"), N_("passed to 'git apply'"), 0),
 		OPT_BIT('f', "force-rebase", &options.flags,
 			N_("cherry-pick all commits, even if unchanged"),
 			REBASE_FORCE),
@@ -856,10 +858,6 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		{ OPTION_STRING, 'S', "gpg-sign", &gpg_sign, N_("key-id"),
 			N_("GPG-sign commits"),
 			PARSE_OPT_OPTARG, NULL, (intptr_t) "" },
-		OPT_STRING_LIST(0, "whitespace", &whitespace,
-				N_("whitespace"), N_("passed to 'git apply'")),
-		OPT_SET_INT('C', NULL, &opt_c, N_("passed to 'git apply'"),
-			    REBASE_AM),
 		OPT_BOOL(0, "autostash", &options.autostash,
 			 N_("automatically stash/stash pop before and after")),
 		OPT_STRING_LIST('x', "exec", &exec, N_("exec"),
@@ -884,6 +882,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			 N_("rebase all reachable commits up to the root(s)")),
 		OPT_END(),
 	};
+	int i;
 
 	/*
 	 * NEEDSWORK: Once the builtin rebase has been tested enough
@@ -1064,22 +1063,17 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		    state_dir_base, cmd_live_rebase, buf.buf);
 	}
 
+	for (i = 0; i < options.git_am_opts.argc; i++) {
+		const char *option = options.git_am_opts.argv[i];
+		if (!strcmp(option, "--committer-date-is-author-date") ||
+		    !strcmp(option, "--ignore-date") ||
+		    !strcmp(option, "--whitespace=fix") ||
+		    !strcmp(option, "--whitespace=strip"))
+			options.flags |= REBASE_FORCE;
+	}
+
 	if (!(options.flags & REBASE_NO_QUIET))
-		strbuf_addstr(&options.git_am_opt, " -q");
-
-	if (committer_date_is_author_date) {
-		strbuf_addstr(&options.git_am_opt,
-			      " --committer-date-is-author-date");
-		options.flags |= REBASE_FORCE;
-	}
-
-	if (ignore_whitespace)
-		strbuf_addstr(&options.git_am_opt, " --ignore-whitespace");
-
-	if (ignore_date) {
-		strbuf_addstr(&options.git_am_opt, " --ignore-date");
-		options.flags |= REBASE_FORCE;
-	}
+		argv_array_push(&options.git_am_opts, "-q");
 
 	if (options.keep_empty)
 		imply_interactive(&options, "--keep-empty");
@@ -1087,23 +1081,6 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	if (gpg_sign) {
 		free(options.gpg_sign_opt);
 		options.gpg_sign_opt = xstrfmt("-S%s", gpg_sign);
-	}
-
-	if (opt_c >= 0)
-		strbuf_addf(&options.git_am_opt, " -C%d", opt_c);
-
-	if (whitespace.nr) {
-		int i;
-
-		for (i = 0; i < whitespace.nr; i++) {
-			const char *item = whitespace.items[i].string;
-
-			strbuf_addf(&options.git_am_opt, " --whitespace=%s",
-				    item);
-
-			if ((!strcmp(item, "fix")) || (!strcmp(item, "strip")))
-				options.flags |= REBASE_FORCE;
-		}
 	}
 
 	if (exec.nr) {
@@ -1181,23 +1158,18 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		break;
 	}
 
-	if (options.git_am_opt.len) {
-		const char *p;
-
+	if (options.git_am_opts.argc) {
 		/* all am options except -q are compatible only with --am */
-		strbuf_reset(&buf);
-		strbuf_addbuf(&buf, &options.git_am_opt);
-		strbuf_addch(&buf, ' ');
-		while ((p = strstr(buf.buf, " -q ")))
-			strbuf_splice(&buf, p - buf.buf, 4, " ", 1);
-		strbuf_trim(&buf);
+		for (i = options.git_am_opts.argc - 1; i >= 0; i--)
+			if (strcmp(options.git_am_opts.argv[i], "-q"))
+				break;
 
-		if (is_interactive(&options) && buf.len)
+		if (is_interactive(&options) && i >= 0)
 			die(_("error: cannot combine interactive options "
 			      "(--interactive, --exec, --rebase-merges, "
 			      "--preserve-merges, --keep-empty, --root + "
 			      "--onto) with am options (%s)"), buf.buf);
-		if (options.type == REBASE_MERGE && buf.len)
+		if (options.type == REBASE_MERGE && i >= 0)
 			die(_("error: cannot combine merge options (--merge, "
 			      "--strategy, --strategy-option) with am options "
 			      "(%s)"), buf.buf);
@@ -1207,7 +1179,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		if (options.type == REBASE_PRESERVE_MERGES)
 			die("cannot combine '--signoff' with "
 			    "'--preserve-merges'");
-		strbuf_addstr(&options.git_am_opt, " --signoff");
+		argv_array_push(&options.git_am_opts, "--signoff");
 		options.flags |= REBASE_FORCE;
 	}
 
