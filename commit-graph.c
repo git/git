@@ -20,15 +20,10 @@
 #define GRAPH_CHUNKID_DATA 0x43444154 /* "CDAT" */
 #define GRAPH_CHUNKID_LARGEEDGES 0x45444745 /* "EDGE" */
 
-#define GRAPH_DATA_WIDTH 36
+#define GRAPH_DATA_WIDTH (the_hash_algo->rawsz + 16)
 
 #define GRAPH_VERSION_1 0x1
 #define GRAPH_VERSION GRAPH_VERSION_1
-
-#define GRAPH_OID_VERSION_SHA1 1
-#define GRAPH_OID_LEN_SHA1 GIT_SHA1_RAWSZ
-#define GRAPH_OID_VERSION GRAPH_OID_VERSION_SHA1
-#define GRAPH_OID_LEN GRAPH_OID_LEN_SHA1
 
 #define GRAPH_OCTOPUS_EDGES_NEEDED 0x80000000
 #define GRAPH_PARENT_MISSING 0x7fffffff
@@ -41,11 +36,16 @@
 #define GRAPH_FANOUT_SIZE (4 * 256)
 #define GRAPH_CHUNKLOOKUP_WIDTH 12
 #define GRAPH_MIN_SIZE (GRAPH_HEADER_SIZE + 4 * GRAPH_CHUNKLOOKUP_WIDTH \
-			+ GRAPH_FANOUT_SIZE + GRAPH_OID_LEN)
+			+ GRAPH_FANOUT_SIZE + the_hash_algo->rawsz)
 
 char *get_commit_graph_filename(const char *obj_dir)
 {
 	return xstrfmt("%s/info/commit-graph", obj_dir);
+}
+
+static uint8_t oid_version(void)
+{
+	return 1;
 }
 
 static struct commit_graph *alloc_commit_graph(void)
@@ -100,15 +100,15 @@ struct commit_graph *load_commit_graph_one(const char *graph_file)
 	}
 
 	hash_version = *(unsigned char*)(data + 5);
-	if (hash_version != GRAPH_OID_VERSION) {
+	if (hash_version != oid_version()) {
 		error(_("hash version %X does not match version %X"),
-		      hash_version, GRAPH_OID_VERSION);
+		      hash_version, oid_version());
 		goto cleanup_fail;
 	}
 
 	graph = alloc_commit_graph();
 
-	graph->hash_len = GRAPH_OID_LEN;
+	graph->hash_len = the_hash_algo->rawsz;
 	graph->num_chunks = *(unsigned char*)(data + 6);
 	graph->graph_fd = fd;
 	graph->data = graph_map;
@@ -124,7 +124,7 @@ struct commit_graph *load_commit_graph_one(const char *graph_file)
 
 		chunk_lookup += GRAPH_CHUNKLOOKUP_WIDTH;
 
-		if (chunk_offset > graph_size - GIT_MAX_RAWSZ) {
+		if (chunk_offset > graph_size - the_hash_algo->rawsz) {
 			error(_("improper chunk offset %08x%08x"), (uint32_t)(chunk_offset >> 32),
 			      (uint32_t)chunk_offset);
 			goto cleanup_fail;
@@ -711,6 +711,7 @@ void write_commit_graph(const char *obj_dir,
 	int num_chunks;
 	int num_extra_edges;
 	struct commit_list *parent;
+	const unsigned hashsz = the_hash_algo->rawsz;
 
 	oids.nr = 0;
 	oids.alloc = approximate_object_count() / 4;
@@ -831,7 +832,7 @@ void write_commit_graph(const char *obj_dir,
 	hashwrite_be32(f, GRAPH_SIGNATURE);
 
 	hashwrite_u8(f, GRAPH_VERSION);
-	hashwrite_u8(f, GRAPH_OID_VERSION);
+	hashwrite_u8(f, oid_version());
 	hashwrite_u8(f, num_chunks);
 	hashwrite_u8(f, 0); /* unused padding byte */
 
@@ -846,8 +847,8 @@ void write_commit_graph(const char *obj_dir,
 
 	chunk_offsets[0] = 8 + (num_chunks + 1) * GRAPH_CHUNKLOOKUP_WIDTH;
 	chunk_offsets[1] = chunk_offsets[0] + GRAPH_FANOUT_SIZE;
-	chunk_offsets[2] = chunk_offsets[1] + GRAPH_OID_LEN * commits.nr;
-	chunk_offsets[3] = chunk_offsets[2] + (GRAPH_OID_LEN + 16) * commits.nr;
+	chunk_offsets[2] = chunk_offsets[1] + hashsz * commits.nr;
+	chunk_offsets[3] = chunk_offsets[2] + (hashsz + 16) * commits.nr;
 	chunk_offsets[4] = chunk_offsets[3] + 4 * num_extra_edges;
 
 	for (i = 0; i <= num_chunks; i++) {
@@ -860,8 +861,8 @@ void write_commit_graph(const char *obj_dir,
 	}
 
 	write_graph_chunk_fanout(f, commits.list, commits.nr);
-	write_graph_chunk_oids(f, GRAPH_OID_LEN, commits.list, commits.nr);
-	write_graph_chunk_data(f, GRAPH_OID_LEN, commits.list, commits.nr);
+	write_graph_chunk_oids(f, hashsz, commits.list, commits.nr);
+	write_graph_chunk_data(f, hashsz, commits.list, commits.nr);
 	write_graph_chunk_large_edges(f, commits.list, commits.nr);
 
 	close_commit_graph();
