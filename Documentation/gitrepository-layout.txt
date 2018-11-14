@@ -290,6 +290,8 @@ worktrees/<id>/locked::
 worktrees/<id>/config.worktree::
 	Working directory specific configuration file.
 
+include::technical/repository-version.txt[]
+
 SEE ALSO
 --------
 linkgit:git-init[1],
