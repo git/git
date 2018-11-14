@@ -179,6 +179,10 @@ all::
 # in one call to the platform's SHA1_Update(). e.g. APPLE_COMMON_CRYPTO
 # wants 'SHA1_MAX_BLOCK_SIZE=1024L*1024L*1024L' defined.
 #
+# Define BLK_SHA256 to use the built-in SHA-256 routines.
+#
+# Define GCRYPT_SHA256 to use the SHA-256 routines in libgcrypt.
+#
 # Define NEEDS_CRYPTO_WITH_SSL if you need -lcrypto when using -lssl (Darwin).
 #
 # Define NEEDS_SSL_WITH_CRYPTO if you need -lssl when using -lcrypto (Darwin).
@@ -1634,8 +1638,13 @@ endif
 endif
 endif
 
-LIB_OBJS += sha256/block/sha256.o
-BASIC_CFLAGS += -DSHA256_BLK
+ifdef GCRYPT_SHA256
+	BASIC_CFLAGS += -DSHA256_GCRYPT
+	EXTLIBS += -lgcrypt
+else
+	LIB_OBJS += sha256/block/sha256.o
+	BASIC_CFLAGS += -DSHA256_BLK
+endif
 
 ifdef SHA1_MAX_BLOCK_SIZE
 	LIB_OBJS += compat/sha1-chunked.o

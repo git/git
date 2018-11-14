@@ -15,7 +15,11 @@
 #include "block-sha1/sha1.h"
 #endif
 
+#if defined(SHA256_GCRYPT)
+#include "sha256/gcrypt.h"
+#else
 #include "sha256/block/sha256.h"
+#endif
 
 #ifndef platform_SHA_CTX
 /*
