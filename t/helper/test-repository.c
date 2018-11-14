@@ -17,6 +17,11 @@ static void test_parse_commit_in_graph(const char *gitdir, const char *worktree,
 
 	setup_git_env(gitdir);
 
+	memset(the_repository, 0, sizeof(*the_repository));
+
+	/* TODO: Needed for temporary hack in hashcmp, see 183a638b7da. */
+	repo_set_hash_algo(the_repository, GIT_HASH_SHA1);
+
 	if (repo_init(&r, gitdir, worktree))
 		die("Couldn't init repo");
 
@@ -42,6 +47,11 @@ static void test_get_commit_tree_in_graph(const char *gitdir,
 	struct tree *tree;
 
 	setup_git_env(gitdir);
+
+	memset(the_repository, 0, sizeof(*the_repository));
+
+	/* TODO: Needed for temporary hack in hashcmp, see 183a638b7da. */
+	repo_set_hash_algo(the_repository, GIT_HASH_SHA1);
 
 	if (repo_init(&r, gitdir, worktree))
 		die("Couldn't init repo");
