@@ -3,6 +3,7 @@
 #include "parse-options.h"
 #include "cache.h"
 #include "bundle.h"
+#include "config.h"
 
 /*
  * Basic handler for bundle files to connect repositories via sneakernet.
@@ -110,6 +111,7 @@ static int cmd_bundle_verify(int argc, const char **argv, const char *prefix) {
 	};
 	char *bundle_file;
 
+	git_config(git_default_config, NULL);
 	argc = parse_options_cmd_bundle(argc, argv, prefix,
 			builtin_bundle_verify_usage, options, &bundle_file);
 	/* bundle internals use argv[1] as further parameters */
