@@ -6,6 +6,7 @@
 #include "tar.h"
 #include "builtin.h"
 #include "quote.h"
+#include "config.h"
 
 static const char builtin_get_tar_commit_id_usage[] =
 "git get-tar-commit-id";
@@ -27,6 +28,7 @@ int cmd_get_tar_commit_id(int argc, const char **argv, const char *prefix)
 	if (argc != 1)
 		usage(builtin_get_tar_commit_id_usage);
 
+	git_config(git_default_config, NULL);
 	n = read_in_full(0, buffer, HEADERSIZE);
 	if (n < 0)
 		die_errno("git get-tar-commit-id: read error");
