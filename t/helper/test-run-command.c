@@ -20,13 +20,14 @@
 #include "wildmatch.h"
 
 static int number_callbacks;
+static int max_callbacks = 4;
 static int parallel_next(struct child_process *cp,
 			 struct strbuf *err,
 			 void *cb,
 			 void **task_cb)
 {
 	struct child_process *d = cb;
-	if (number_callbacks >= 4)
+	if (number_callbacks >= max_callbacks)
 		return 0;
 
 	strvec_pushv(&cp->args, d->args.v);
@@ -195,6 +196,7 @@ static int testsuite(int argc, const char **argv)
 		OPT_END()
 	};
 	struct run_process_parallel_opts opts = {
+		.no_stdin_pipe = 1,
 		.get_next_task = next_test,
 		.start_failure = test_failed,
 		.feed_pipe = test_stdin_pipe_feed,
@@ -442,6 +444,16 @@ static int inherit_handle_child(void)
 int cmd__run_command(int argc, const char **argv)
 {
 	struct child_process proc = CHILD_PROCESS_INIT;
+	const char * const parallel_usage[] = {
+		"test-tool run-command <parallel-mode> [<options>] "
+		"<jobs> <command> [<args>...]",
+		NULL
+	};
+	struct option parallel_options[] = {
+		OPT_INTEGER_F(0, "tasks", &max_callbacks,
+			      "number of tasks to generate", PARSE_OPT_NONEG),
+		OPT_END()
+	};
 	int jobs;
 	int ret;
 	struct run_process_parallel_opts opts = {
@@ -495,17 +507,28 @@ int cmd__run_command(int argc, const char **argv)
 		opts.ungroup = 1;
 	}
 
+	argc = parse_options(argc - 1, argv + 1, NULL, parallel_options,
+			     parallel_usage, PARSE_OPT_STOP_AT_NON_OPTION |
+			     PARSE_OPT_KEEP_ARGV0);
+	if (argc < 3)
+		usage_with_options(parallel_usage, parallel_options);
+	if (max_callbacks < 0)
+		die("--tasks cannot be negative");
+
 	jobs = atoi(argv[2]);
 	strvec_clear(&proc.args);
 	strvec_pushv(&proc.args, (const char **)argv + 3);
 
 	if (!strcmp(argv[1], "run-command-parallel")) {
+		opts.no_stdin_pipe = 1;
 		opts.get_next_task = parallel_next;
 		opts.task_finished = task_finished_quiet;
 	} else if (!strcmp(argv[1], "run-command-abort")) {
+		opts.no_stdin_pipe = 1;
 		opts.get_next_task = parallel_next;
 		opts.task_finished = task_finished;
 	} else if (!strcmp(argv[1], "run-command-no-jobs")) {
+		opts.no_stdin_pipe = 1;
 		opts.get_next_task = no_job;
 		opts.task_finished = task_finished;
 	} else if (!strcmp(argv[1], "run-command-stdin")) {
