@@ -398,12 +398,9 @@ ifeq ($(uname_S),Windows)
 	NO_MKDTEMP = YesPlease
 	NO_INTTYPES_H = YesPlease
 	# VS2015 with UCRT claims that snprintf and friends are C99 compliant,
-	# so we don't need this.
+	# so we don't need this:
 	#
-	# TODO If we want to support older compilers, we need to make this
-	# TODO conditional on the compiler version.
-	#
-	# SNPRINTF_RETURNS_BOGUS = YesPlease
+	#   SNPRINTF_RETURNS_BOGUS = YesPlease
 	NO_SVN_TESTS = YesPlease
 	RUNTIME_PREFIX = YesPlease
 	HAVE_WPGMPTR = YesWeDo
@@ -587,6 +584,7 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	ETAGS_TARGET = ETAGS
 	NO_POSIX_GOODIES = UnfortunatelyYes
 	DEFAULT_HELP_FORMAT = html
+	BASIC_LDFLAGS += -municode
 	COMPAT_CFLAGS += -DNOGDI -Icompat -Icompat/win32
 	COMPAT_CFLAGS += -DSTRIP_EXTENSION=\".exe\"
 	COMPAT_OBJS += compat/mingw.o compat/winansi.o \

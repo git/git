@@ -70,7 +70,7 @@ sub createProject {
     }
     my $defines = join(";", sort(@{$$build_structure{"$prefix${name}_DEFINES"}}));
     my $includes= join(";", sort(map { s/^-I//; s/\//\\/g; File::Spec->file_name_is_absolute($_) ? $_ : "$rel_dir\\$_" } @{$$build_structure{"$prefix${name}_INCLUDES"}}));
-    my $cflags = join(" ", sort(map { s/^-[GLMOZ].*//; s/.* .*/"$&"/; $_; } @{$$build_structure{"$prefix${name}_CFLAGS"}}));
+    my $cflags = join(" ", sort(map { s/^-[GLMOWZ].*//; s/.* .*/"$&"/; $_; } @{$$build_structure{"$prefix${name}_CFLAGS"}}));
     $cflags =~ s/</&lt;/g;
     $cflags =~ s/>/&gt;/g;
 
@@ -179,10 +179,10 @@ sub createProject {
 EOM
     if ($target eq 'libgit') {
         print F << "EOM";
-    <PreBuildEvent Condition="!Exists('$cdup\\compat\\vcbuild\\vcpkg') OR (!Exists('$cdup\\compat\\vcbuild\\vcpkg\\installed\\x64-windows\\include\\openssl\\ssl.h') AND !Exists('$cdup\\compat\\vcbuild\\vcpkg\\installed\\x86-windows\\include\\openssl\\ssl.h'))">
+    <PreBuildEvent Condition="!Exists('$cdup\\compat\\vcbuild\\vcpkg\\installed\\\$(VCPKGArch)\\include\\openssl\\ssl.h')">
       <Message>Initialize VCPKG</Message>
       <Command>del "$cdup\\compat\\vcbuild\\vcpkg"</Command>
-      <Command>call "$cdup\\compat\\vcbuild\\vcpkg_install.bat" </Command>
+      <Command>call "$cdup\\compat\\vcbuild\\vcpkg_install.bat"</Command>
     </PreBuildEvent>
 EOM
     }

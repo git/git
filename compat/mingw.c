@@ -8,9 +8,9 @@
 #include "../cache.h"
 #include "win32/exit-process.h"
 #include "win32/lazyload.h"
-#include "../config.h"
 #include "../string-list.h"
 #include "../attr.h"
+#include "../config.h"
 
 #define HCAST(type, handle) ((type)(intptr_t)handle)
 
@@ -819,13 +819,11 @@ static int current_directory_len = 0;
 int mingw_chdir(const char *dirname)
 {
 	int result;
-	DECLARE_PROC_ADDR(kernel32.dll, DWORD, GetFinalPathNameByHandleW,
-			  HANDLE, LPWSTR, DWORD, DWORD);
 	wchar_t wdirname[MAX_LONG_PATH];
 	if (xutftowcs_long_path(wdirname, dirname) < 0)
 		return -1;
 
-	if (has_symlinks && INIT_PROC_ADDR(GetFinalPathNameByHandleW)) {
+	if (has_symlinks) {
 		HANDLE hnd = CreateFileW(wdirname, 0,
 				FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL,
 				OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
@@ -962,12 +960,15 @@ static int get_file_info_by_handle(HANDLE hnd, struct stat *buf)
 		errno = err_win_to_posix(GetLastError());
 		return -1;
 	}
+
 	buf->st_ino = 0;
-	buf->st_dev = buf->st_rdev = 0; /* not used by Git */
-	buf->st_gid = buf->st_uid = 0;
+	buf->st_gid = 0;
+	buf->st_uid = 0;
 	buf->st_nlink = 1;
 	buf->st_mode = file_attr_to_st_mode(fdata.dwFileAttributes, 0, NULL);
-	buf->st_size = fdata.nFileSizeLow | (((off_t) fdata.nFileSizeHigh) << 32);
+	buf->st_size = fdata.nFileSizeLow |
+		(((off_t)fdata.nFileSizeHigh)<<32);
+	buf->st_dev = buf->st_rdev = 0; /* not used by Git */
 	filetime_to_timespec(&(fdata.ftLastAccessTime), &(buf->st_atim));
 	filetime_to_timespec(&(fdata.ftLastWriteTime), &(buf->st_mtim));
 	filetime_to_timespec(&(fdata.ftCreationTime), &(buf->st_ctim));
@@ -1176,8 +1177,6 @@ struct tm *localtime_r(const time_t *timep, struct tm *result)
 char *mingw_getcwd(char *pointer, int len)
 {
 	wchar_t cwd[MAX_PATH], wpointer[MAX_PATH];
-	DECLARE_PROC_ADDR(kernel32.dll, DWORD, GetFinalPathNameByHandleW,
-			  HANDLE, LPWSTR, DWORD, DWORD);
 	DWORD ret = GetCurrentDirectoryW(ARRAY_SIZE(cwd), cwd);
 
 	if (!ret || ret >= ARRAY_SIZE(cwd)) {
@@ -1185,8 +1184,7 @@ char *mingw_getcwd(char *pointer, int len)
 		return NULL;
 	}
 	ret = GetLongPathNameW(cwd, wpointer, ARRAY_SIZE(wpointer));
-	if (!ret && GetLastError() == ERROR_ACCESS_DENIED &&
-		INIT_PROC_ADDR(GetFinalPathNameByHandleW)) {
+	if (!ret && GetLastError() == ERROR_ACCESS_DENIED) {
 		HANDLE hnd = CreateFileW(cwd, 0,
 			FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL,
 			OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
@@ -1452,33 +1450,36 @@ static char *path_lookup(const char *cmd, int exe_only)
 	return prog;
 }
 
-#if defined(_MSC_VER)
-
-/* We need a stable sort */
-#ifndef INTERNAL_QSORT
-#include "qsort.c"
-#endif
+static const wchar_t *wcschrnul(const wchar_t *s, wchar_t c)
+{
+	while (*s && *s != c)
+		s++;
+	return s;
+}
 
 /* Compare only keys */
 static int wenvcmp(const void *a, const void *b)
 {
 	wchar_t *p = *(wchar_t **)a, *q = *(wchar_t **)b;
 	size_t p_len, q_len;
-	int ret;
 
-	/* Find end of keys */
-	for (p_len = 0; p[p_len] && p[p_len] != L'='; p_len++)
-		; /* do nothing */
-	for (q_len = 0; q[q_len] && q[q_len] != L'='; q_len++)
-		; /* do nothing */
+	/* Find the keys */
+	p_len = wcschrnul(p, L'=') - p;
+	q_len = wcschrnul(q, L'=') - q;
 
-		  /* Are keys identical (modulo case)? */
-	if (p_len == q_len && !_wcsnicmp(p, q, p_len))
-		return 0;
+	/* If the length differs, include the shorter key's NUL */
+	if (p_len < q_len)
+		p_len++;
+	else if (p_len > q_len)
+		p_len = q_len + 1;
 
-	ret = _wcsnicmp(p, q, p_len < q_len ? p_len : q_len);
-	return ret ? ret : (p_len < q_len ? -1 : +1);
+	return _wcsnicmp(p, q, p_len);
 }
+
+/* We need a stable sort to convert the environment between UTF-16 <-> UTF-8 */
+#ifndef INTERNAL_QSORT
+#include "qsort.c"
+#endif
 
 /*
  * Build an environment block combining the inherited environment
@@ -1494,25 +1495,15 @@ static int wenvcmp(const void *a, const void *b)
  */
 static wchar_t *make_environment_block(char **deltaenv)
 {
-	/*
-	 * The CRT (at least as of UCRT) secretly declares "_wenviron"
-	 * as a function that returns a pointer to a mostly static table.
-	 * Grab the pointer and cache it for the duration of our loop.
-	 */
-	const wchar_t *wenv = GetEnvironmentStringsW(), *p;
-	size_t delta_size = 0, size = 1; /* for extra NUL at the end */
+	wchar_t *wenv = GetEnvironmentStringsW(), *wdeltaenv, *result, *p;
+	size_t wlen, s, delta_size, size;
 
 	wchar_t **array = NULL;
 	size_t alloc = 0, nr = 0, i;
 
-	const char *p2;
-	wchar_t *wdeltaenv;
+	size = 1; /* for extra NUL at the end */
 
-	wchar_t *result, *p3;
-
-	/*
-	 * If there is no deltaenv to apply, simply return a copy
-	 */
+	/* If there is no deltaenv to apply, simply return a copy. */
 	if (!deltaenv || !*deltaenv) {
 		for (p = wenv; p && *p; ) {
 			size_t s = wcslen(p) + 1;
@@ -1531,115 +1522,50 @@ static wchar_t *make_environment_block(char **deltaenv)
 	 * sort them using the stable git_qsort() and then copy, skipping
 	 * duplicate keys
 	 */
-
 	for (p = wenv; p && *p; ) {
-		size_t s = wcslen(p) + 1;
-		size += s;
 		ALLOC_GROW(array, nr + 1, alloc);
+		s = wcslen(p) + 1;
 		array[nr++] = p;
 		p += s;
+		size += s;
 	}
 
 	/* (over-)assess size needed for wchar version of deltaenv */
-	for (i = 0; deltaenv[i]; i++) {
-		size_t s = strlen(deltaenv[i]) + 1;
-		delta_size += s;
-	}
-
+	for (delta_size = 0, i = 0; deltaenv[i]; i++)
+		delta_size += strlen(deltaenv[i]) * 2 + 1;
 	ALLOC_ARRAY(wdeltaenv, delta_size);
 
 	/* convert the deltaenv, appending to array */
-	for (i = 0, p3 = wdeltaenv; deltaenv[i]; i++) {
-		size_t s = strlen(deltaenv[i]) + 1, wlen;
-		wlen = xutftowcs(p3, deltaenv[i], s * 2);
-
+	for (i = 0, p = wdeltaenv; deltaenv[i]; i++) {
 		ALLOC_GROW(array, nr + 1, alloc);
-		array[nr++] = p3;
-
-		p3 += wlen + 1;
+		wlen = xutftowcs(p, deltaenv[i], wdeltaenv + delta_size - p);
+		array[nr++] = p;
+		p += wlen + 1;
 	}
 
 	git_qsort(array, nr, sizeof(*array), wenvcmp);
 	ALLOC_ARRAY(result, size + delta_size);
 
-	for (p3 = result, i = 0; i < nr; i++) {
-		wchar_t *equal = wcschr(array[i], L'=');;
+	for (p = result, i = 0; i < nr; i++) {
+		/* Skip any duplicate keys; last one wins */
+		while (i + 1 < nr && !wenvcmp(array + i, array + i + 1))
+		       i++;
 
 		/* Skip "to delete" entry */
-		if (!equal)
+		if (!wcschr(array[i], L'='))
 			continue;
 
-		p = array[i];
-
-		/* Skip any duplicate */
-		if (i + 1 < nr) {
-			wchar_t *next = array[i + 1];
-			size_t n = equal - p;
-
-			if (!_wcsnicmp(p, next, n) && (!next[n] || next[n] == L'='))
-				continue;
-		}
-
-		size = wcslen(p) + 1;
-		memcpy(p3, p, size * sizeof(*p));
-		p3 += size;
+		size = wcslen(array[i]) + 1;
+		memcpy(p, array[i], size * sizeof(*p));
+		p += size;
 	}
-	*p3 = L'\0';
+	*p = L'\0';
 
 	free(array);
+	free(wdeltaenv);
 	FreeEnvironmentStringsW(wenv);
 	return result;
 }
-
-#else
-
-static int do_putenv(char **env, const char *name, int size, int free_old);
-
-/* used number of elements of environ array, including terminating NULL */
-static int environ_size = 0;
-/* allocated size of environ array, in bytes */
-static int environ_alloc = 0;
-/* used as a indicator when the environment has been changed outside mingw.c */
-static char **saved_environ;
-
-static void maybe_reinitialize_environ(void);
-
-/*
- * Create environment block suitable for CreateProcess. Merges current
- * process environment and the supplied environment changes.
- */
-static wchar_t *make_environment_block(char **deltaenv)
-{
-	wchar_t *wenvblk = NULL;
-	char **tmpenv;
-	int i = 0, size, wenvsz = 0, wenvpos = 0;
-
-	maybe_reinitialize_environ();
-	size = environ_size;
-
-	while (deltaenv && deltaenv[i] && *deltaenv[i])
-		i++;
-
-	/* copy the environment, leaving space for changes */
-	ALLOC_ARRAY(tmpenv, size + i);
-	memcpy(tmpenv, environ, size * sizeof(char*));
-
-	/* merge supplied environment changes into the temporary environment */
-	for (i = 0; deltaenv && deltaenv[i] && *deltaenv[i]; i++)
-		size = do_putenv(tmpenv, deltaenv[i], size, 0);
-
-	/* create environment block from temporary environment */
-	for (i = 0; tmpenv[i] && *tmpenv[i]; i++) {
-		size = 2 * strlen(tmpenv[i]) + 2; /* +2 for final \0 */
-		ALLOC_GROW(wenvblk, (wenvpos + size) * sizeof(wchar_t), wenvsz);
-		wenvpos += xutftowcs(&wenvblk[wenvpos], tmpenv[i], size) + 1;
-	}
-	/* add final \0 terminator */
-	wenvblk[wenvpos] = 0;
-	free(tmpenv);
-	return wenvblk;
-}
-#endif
 
 static void do_unset_environment_variables(void)
 {
@@ -2141,131 +2067,83 @@ int msc_putenv(const char *name)
 #else
 
 /*
- * Compare environment entries by key (i.e. stopping at '=' or '\0').
+ * UTF-8 versions of getenv(), putenv() and unsetenv().
+ * Internally, they use the CRT's stock UNICODE routines
+ * to avoid data loss.
  */
-static int compareenv(const void *v1, const void *v2)
-{
-	const char *e1 = *(const char**)v1;
-	const char *e2 = *(const char**)v2;
-
-	for (;;) {
-		int c1 = *e1++;
-		int c2 = *e2++;
-		c1 = (c1 == '=') ? 0 : tolower(c1);
-		c2 = (c2 == '=') ? 0 : tolower(c2);
-		if (c1 > c2)
-			return 1;
-		if (c1 < c2)
-			return -1;
-		if (c1 == 0)
-			return 0;
-	}
-}
-
-/*
- * Functions implemented outside Git are able to modify the environment,
- * too. For example, cURL's curl_global_init() function sets the CHARSET
- * environment variable (at least in certain circumstances).
- *
- * Therefore we need to be *really* careful *not* to assume that we have
- * sole control over the environment and reinitialize it when necessary.
- */
-static void maybe_reinitialize_environ(void)
-{
-	int i;
-
-	if (!saved_environ) {
-		warning("MinGW environment not initialized yet");
-		return;
-	}
-
-	if (environ_size <= 0)
-		return;
-
-	if (saved_environ != environ)
-		/* We have *no* idea how much space was allocated outside */
-		environ_alloc = 0;
-	else if (!environ[environ_size - 1])
-		return; /* still consistent */
-
-	for (i = 0; environ[i] && *environ[i]; i++)
-		; /* continue counting */
-	environ[i] = NULL;
-	environ_size = i + 1;
-
-	/* sort environment for O(log n) getenv / putenv */
-	qsort(environ, i, sizeof(char*), compareenv);
-}
-
-static int bsearchenv(char **env, const char *name, size_t size)
-{
-	unsigned low = 0, high = size;
-	while (low < high) {
-		unsigned mid = low + ((high - low) >> 1);
-		int cmp = compareenv(&env[mid], &name);
-		if (cmp < 0)
-			low = mid + 1;
-		else if (cmp > 0)
-			high = mid;
-		else
-			return mid;
-	}
-	return ~low; /* not found, return 1's complement of insert position */
-}
-
-/*
- * If name contains '=', then sets the variable, otherwise it unsets it
- * Size includes the terminating NULL. Env must have room for size + 1 entries
- * (in case of insert). Returns the new size. Optionally frees removed entries.
- */
-static int do_putenv(char **env, const char *name, int size, int free_old)
-{
-	int i = size <= 0 ? -1 : bsearchenv(env, name, size - 1);
-
-	/* optionally free removed / replaced entry */
-	if (i >= 0 && free_old)
-		free(env[i]);
-
-	if (strchr(name, '=')) {
-		/* if new value ('key=value') is specified, insert or replace entry */
-		if (i < 0) {
-			i = ~i;
-			memmove(&env[i + 1], &env[i], (size - i) * sizeof(char*));
-			size++;
-		}
-		env[i] = (char*) name;
-	} else if (i >= 0) {
-		/* otherwise ('key') remove existing entry */
-		size--;
-		memmove(&env[i], &env[i + 1], (size - i) * sizeof(char*));
-	}
-	return size;
-}
-
 char *mingw_getenv(const char *name)
 {
+#define GETENV_MAX_RETAIN 30
+	static char *values[GETENV_MAX_RETAIN];
+	static int value_counter;
+	int len_key, len_value;
+	wchar_t *w_key;
 	char *value;
-	int pos;
+	wchar_t w_value[32768];
 
-	if (environ_size <= 0)
+	if (!name || !*name)
 		return NULL;
 
-	maybe_reinitialize_environ();
-	pos = bsearchenv(environ, name, environ_size - 1);
-
-	if (pos < 0)
+	len_key = strlen(name) + 1;
+	/* We cannot use xcalloc() here because that uses getenv() itself */
+	w_key = calloc(len_key, sizeof(wchar_t));
+	if (!w_key)
+		die("Out of memory, (tried to allocate %u wchar_t's)", len_key);
+	xutftowcs(w_key, name, len_key);
+	len_value = GetEnvironmentVariableW(w_key, w_value, ARRAY_SIZE(w_value));
+	if (!len_value && GetLastError() == ERROR_ENVVAR_NOT_FOUND) {
+		free(w_key);
 		return NULL;
-	value = strchr(environ[pos], '=');
-	return value ? &value[1] : NULL;
+	}
+	free(w_key);
+
+	len_value = len_value * 3 + 1;
+	/* We cannot use xcalloc() here because that uses getenv() itself */
+	value = calloc(len_value, sizeof(char));
+	if (!value)
+		die("Out of memory, (tried to allocate %u bytes)", len_value);
+	xwcstoutf(value, w_value, len_value);
+
+	/*
+	 * We return `value` which is an allocated value and the caller is NOT
+	 * expecting to have to free it, so we keep a round-robin array,
+	 * invalidating the buffer after GETENV_MAX_RETAIN getenv() calls.
+	 */
+	free(values[value_counter]);
+	values[value_counter++] = value;
+	if (value_counter >= ARRAY_SIZE(values))
+		value_counter = 0;
+
+	return value;
 }
 
 int mingw_putenv(const char *namevalue)
 {
-	maybe_reinitialize_environ();
-	ALLOC_GROW(environ, (environ_size + 1) * sizeof(char*), environ_alloc);
-	saved_environ = environ;
-	environ_size = do_putenv(environ, namevalue, environ_size, 1);
-	return 0;
+	int size;
+	wchar_t *wide, *equal;
+	BOOL result;
+
+	if (!namevalue || !*namevalue)
+		return 0;
+
+	size = strlen(namevalue) * 2 + 1;
+	wide = calloc(size, sizeof(wchar_t));
+	if (!wide)
+		die("Out of memory, (tried to allocate %u wchar_t's)", size);
+	xutftowcs(wide, namevalue, size);
+	equal = wcschr(wide, L'=');
+	if (!equal)
+		result = SetEnvironmentVariableW(wide, NULL);
+	else {
+		*equal = L'\0';
+		result = SetEnvironmentVariableW(wide, equal + 1);
+	}
+	free(wide);
+
+	if (!result)
+		errno = err_win_to_posix(GetLastError());
+
+	return result ? 0 : -1;
 }
 
 #endif
@@ -3284,42 +3162,35 @@ static BOOL WINAPI handle_ctrl_c(DWORD ctrl_type)
 	return TRUE; /* we did handle this */
 }
 
-#if defined(_MSC_VER)
-
+#ifdef _MSC_VER
 #ifdef _DEBUG
 #include <crtdbg.h>
 #endif
+#endif
 
 /*
- * This routine sits between wmain() and "main" in git.exe.
- * We receive UNICODE (wchar_t) values for argv and env.
+ * We implement wmain() and compile with -municode, which would
+ * normally ignore main(), but we call the latter from the former
+ * so that we can handle non-ASCII command-line parameters
+ * appropriately.
  *
  * To be more compatible with the core git code, we convert
- * argv into UTF8 and pass them directly to the "main" routine.
- *
- * We don't bother converting the given UNICODE env vector,
- * but rather leave them in the CRT.  We replaced the various
- * getenv/putenv routines to pull them directly from the CRT.
- *
- * This is unlike the MINGW version:
- * [] It does the UNICODE-2-UTF8 conversion on both sets and
- *    stuffs the values back into the CRT using exported symbols.
- * [] It also maintains a private copy of the environment and
- *    tries to track external changes to it.
+ * argv into UTF8 and pass them directly to main().
  */
-int msc_startup(int argc, wchar_t **w_argv, wchar_t **w_env)
+int wmain(int argc, const wchar_t **wargv)
 {
-	char **my_utf8_argv = NULL, **save = NULL;
-	char *buffer = NULL;
-	int maxlen;
-	int k, exit_status;
+	int i, maxlen, exit_status;
+	char *buffer, **save;
+	const char **argv;
 
+#ifdef _MSC_VER
 #ifdef _DEBUG
 	_CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_DEBUG);
 #endif
 
 #ifdef USE_MSVC_CRTDBG
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+#endif
 #endif
 
 	SetConsoleCtrlHandler(handle_ctrl_c, TRUE);
@@ -3328,10 +3199,10 @@ int msc_startup(int argc, wchar_t **w_argv, wchar_t **w_env)
 	adjust_symlink_flags();
 	fsync_object_files = 1;
 
-	/* determine size of argv conversion buffer */
-	maxlen = wcslen(_wpgmptr);
-	for (k = 1; k < argc; k++)
-		maxlen = max(maxlen, wcslen(w_argv[k]));
+	/* determine size of argv and environ conversion buffer */
+	maxlen = wcslen(wargv[0]);
+	for (i = 1; i < argc; i++)
+		maxlen = max(maxlen, wcslen(wargv[i]));
 
 	/* allocate buffer (wchar_t encodes to max 3 UTF-8 bytes) */
 	maxlen = 3 * maxlen + 1;
@@ -3342,13 +3213,11 @@ int msc_startup(int argc, wchar_t **w_argv, wchar_t **w_env)
 	 * to remember all the string pointers because parse_options()
 	 * will remove claimed items from the argv that we pass down.
 	 */
-	ALLOC_ARRAY(my_utf8_argv, argc + 1);
+	ALLOC_ARRAY(argv, argc + 1);
 	ALLOC_ARRAY(save, argc + 1);
-	save[0] = my_utf8_argv[0] = wcstoutfdup_startup(buffer, _wpgmptr, maxlen);
-	for (k = 1; k < argc; k++)
-		save[k] = my_utf8_argv[k] = wcstoutfdup_startup(buffer, w_argv[k], maxlen);
-	save[k] = my_utf8_argv[k] = NULL;
-
+	for (i = 0; i < argc; i++)
+		argv[i] = save[i] = wcstoutfdup_startup(buffer, wargv[i], maxlen);
+	argv[i] = save[i] = NULL;
 	free(buffer);
 
 	/* fix Windows specific environment settings */
@@ -3373,101 +3242,15 @@ int msc_startup(int argc, wchar_t **w_argv, wchar_t **w_env)
 	current_directory_len = GetCurrentDirectoryW(0, NULL);
 
 	/* invoke the real main() using our utf8 version of argv. */
-	exit_status = msc_main(argc, my_utf8_argv);
+	exit_status = main(argc, argv);
 
-	for (k = 0; k < argc; k++)
-		free(save[k]);
+	for (i = 0; i < argc; i++)
+		free(save[i]);
 	free(save);
-	free(my_utf8_argv);
+	free(argv);
 
 	return exit_status;
 }
-
-#else
-
-void mingw_startup(void)
-{
-	int i, maxlen, argc;
-	char *buffer;
-	wchar_t **wenv, **wargv;
-	_startupinfo si;
-
-	SetConsoleCtrlHandler(handle_ctrl_c, TRUE);
-
-	maybe_redirect_std_handles();
-	adjust_symlink_flags();
-	fsync_object_files = 1;
-
-	/* get wide char arguments and environment */
-	si.newmode = 0;
-	if (__wgetmainargs(&argc, &wargv, &wenv, _CRT_glob, &si) < 0)
-		die_startup();
-
-	/* determine size of argv and environ conversion buffer */
-	maxlen = wcslen(wargv[0]);
-	for (i = 1; i < argc; i++)
-		maxlen = max(maxlen, wcslen(wargv[i]));
-	for (i = 0; wenv[i]; i++)
-		maxlen = max(maxlen, wcslen(wenv[i]));
-
-	/*
-	 * nedmalloc can't free CRT memory, allocate resizable environment
-	 * list. Note that xmalloc / xmemdupz etc. call getenv, so we cannot
-	 * use it while initializing the environment itself.
-	 */
-	environ_size = i + 1;
-	environ_alloc = alloc_nr(environ_size * sizeof(char*));
-	saved_environ = environ = malloc_startup(environ_alloc);
-
-	/* allocate buffer (wchar_t encodes to max 3 UTF-8 bytes) */
-	maxlen = 3 * maxlen + 1;
-	buffer = malloc_startup(maxlen);
-
-	/* convert command line arguments and environment to UTF-8 */
-	for (i = 0; i < argc; i++)
-		__argv[i] = wcstoutfdup_startup(buffer, wargv[i], maxlen);
-	for (i = 0; wenv[i]; i++)
-		environ[i] = wcstoutfdup_startup(buffer, wenv[i], maxlen);
-	environ[i] = NULL;
-	free(buffer);
-
-	/* sort environment for O(log n) getenv / putenv */
-	qsort(environ, i, sizeof(char*), compareenv);
-
-	/* fix Windows specific environment settings */
-	setup_windows_environment();
-
-	unset_environment_variables = xstrdup("PERL5LIB");
-
-	/*
-	 * Avoid a segmentation fault when cURL tries to set the CHARSET
-	 * variable and putenv() barfs at our nedmalloc'ed environment.
-	 */
-	if (!getenv("CHARSET")) {
-		struct strbuf buf = STRBUF_INIT;
-		strbuf_addf(&buf, "cp%u", GetACP());
-		setenv("CHARSET", buf.buf, 1);
-		strbuf_release(&buf);
-	}
-
-	/* initialize critical section for waitpid pinfo_t list */
-	InitializeCriticalSection(&pinfo_cs);
-	InitializeCriticalSection(&phantom_symlinks_cs);
-
-	/* set up default file mode and file modes for stdin/out/err */
-	_fmode = _O_BINARY;
-	_setmode(_fileno(stdin), _O_BINARY);
-	_setmode(_fileno(stdout), _O_BINARY);
-	_setmode(_fileno(stderr), _O_BINARY);
-
-	/* initialize Unicode console */
-	winansi_init();
-
-	/* init length of current directory for handle_long_path */
-	current_directory_len = GetCurrentDirectoryW(0, NULL);
-}
-
-#endif
 
 int uname(struct utsname *buf)
 {
