@@ -120,6 +120,7 @@ void preload_index(struct index_state *index,
 		pthread_mutex_init(&pd.mutex, NULL);
 	}
 
+	enable_fscache(1);
 	for (i = 0; i < threads; i++) {
 		struct thread_data *p = data+i;
 		int err;
@@ -145,6 +146,7 @@ void preload_index(struct index_state *index,
 	stop_progress(&pd.progress);
 
 	trace_performance_leave("preload index");
+	enable_fscache(0);
 }
 
 int repo_read_index_preload(struct repository *repo,
