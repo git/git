@@ -479,6 +479,9 @@ GIT_TEST_NAME_HASH_VERSION=<int>, when set, causes 'git pack-objects' to
 assume '--name-hash-version=<n>'.
 
 
+GIT_TEST_FSCACHE=<boolean> exercises the uncommon fscache code path
+which adds a cache below mingw's lstat and dirent implementations.
+
 Naming Tests
 ------------
 
