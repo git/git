@@ -84,6 +84,7 @@ int cmd_mktag(int argc, const char **argv, const char *prefix)
 			     builtin_mktag_options,
 			     builtin_mktag_usage, 0);
 
+	git_config(git_default_config, NULL);
 	if (strbuf_read(&buf, 0, 0) < 0)
 		die_errno(_("could not read from stdin"));
 
