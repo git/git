@@ -64,6 +64,9 @@ all advice messages.
 		set their identity configuration.
 	mergeConflict::
 		Shown when various commands stop because of conflicts.
+	nameTooLong::
+		Advice shown if a filepath operation is attempted where the
+		path was too long.
 	nestedTag::
 		Shown when a user attempts to recursively tag a tag object.
 	pushAlreadyExists::
