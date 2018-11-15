@@ -4,6 +4,7 @@
 #include "ref-filter.h"
 #include "remote.h"
 #include "refs.h"
+#include "config.h"
 
 static const char * const ls_remote_usage[] = {
 	N_("git ls-remote [--heads] [--tags] [--refs] [--upload-pack=<exec>]\n"
@@ -86,6 +87,7 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 
 	packet_trace_identity("ls-remote");
 
+	git_config(git_default_config, NULL);
 	if (argc > 1) {
 		int i;
 		CALLOC_ARRAY(pattern, argc);
