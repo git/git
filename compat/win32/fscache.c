@@ -7,6 +7,7 @@
 #include "../../trace.h"
 #include "config.h"
 #include "../../mem-pool.h"
+#include "ntifs.h"
 
 static volatile long initialized;
 static DWORD dwTlsIndex;
@@ -26,6 +27,13 @@ struct fscache {
 	unsigned int opendir_requests;
 	unsigned int fscache_requests;
 	unsigned int fscache_misses;
+	/*
+	 * 32k wide characters translates to 64kB, which is the maximum that
+	 * Windows 8.1 and earlier can handle. On network drives, not only
+	 * the client's Windows version matters, but also the server's,
+	 * therefore we need to keep this to 64kB.
+	 */
+	WCHAR buffer[32 * 1024];
 };
 static struct trace_key trace_fscache = TRACE_KEY_INIT(FSCACHE);
 
@@ -161,27 +169,44 @@ static void fsentry_release(struct fsentry *fse)
 	InterlockedDecrement(&(fse->u.refcnt));
 }
 
+static int xwcstoutfn(char *utf, int utflen, const wchar_t *wcs, int wcslen)
+{
+	if (!wcs || !utf || utflen < 1) {
+		errno = EINVAL;
+		return -1;
+	}
+	utflen = WideCharToMultiByte(CP_UTF8, 0, wcs, wcslen, utf, utflen, NULL, NULL);
+	if (utflen)
+		return utflen;
+	errno = ERANGE;
+	return -1;
+}
+
 /*
- * Allocate and initialize an fsentry from a WIN32_FIND_DATA structure.
+ * Allocate and initialize an fsentry from a FILE_FULL_DIR_INFORMATION structure.
  */
 static struct fsentry *fseentry_create_entry(struct fscache *cache,
 					     struct fsentry *list,
-					     const WIN32_FIND_DATAW *fdata)
+					     PFILE_FULL_DIR_INFORMATION fdata)
 {
 	char buf[MAX_PATH * 3];
 	int len;
 	struct fsentry *fse;
-	len = xwcstoutf(buf, fdata->cFileName, ARRAY_SIZE(buf));
+
+	len = xwcstoutfn(buf, ARRAY_SIZE(buf), fdata->FileName, fdata->FileNameLength / sizeof(wchar_t));
 
 	fse = fsentry_alloc(cache, list, buf, len);
 
-	fse->st_mode = file_attr_to_st_mode(fdata->dwFileAttributes);
+	fse->st_mode = file_attr_to_st_mode(fdata->FileAttributes);
 	fse->dirent.d_type = S_ISDIR(fse->st_mode) ? DT_DIR : DT_REG;
-	fse->u.s.st_size = (((off64_t) (fdata->nFileSizeHigh)) << 32)
-			| fdata->nFileSizeLow;
-	filetime_to_timespec(&(fdata->ftLastAccessTime), &(fse->u.s.st_atim));
-	filetime_to_timespec(&(fdata->ftLastWriteTime), &(fse->u.s.st_mtim));
-	filetime_to_timespec(&(fdata->ftCreationTime), &(fse->u.s.st_ctim));
+	fse->u.s.st_size = fdata->EndOfFile.LowPart |
+		(((off_t)fdata->EndOfFile.HighPart) << 32);
+	filetime_to_timespec((FILETIME *)&(fdata->LastAccessTime),
+			     &(fse->u.s.st_atim));
+	filetime_to_timespec((FILETIME *)&(fdata->LastWriteTime),
+			     &(fse->u.s.st_mtim));
+	filetime_to_timespec((FILETIME *)&(fdata->CreationTime),
+			     &(fse->u.s.st_ctim));
 
 	return fse;
 }
@@ -194,8 +219,10 @@ static struct fsentry *fseentry_create_entry(struct fscache *cache,
 static struct fsentry *fsentry_create_list(struct fscache *cache, const struct fsentry *dir,
 					   int *dir_not_found)
 {
-	wchar_t pattern[MAX_PATH + 2]; /* + 2 for '/' '*' */
-	WIN32_FIND_DATAW fdata;
+	wchar_t pattern[MAX_PATH];
+	NTSTATUS status;
+	IO_STATUS_BLOCK iosb;
+	PFILE_FULL_DIR_INFORMATION di;
 	HANDLE h;
 	int wlen;
 	struct fsentry *list, **phead;
@@ -211,15 +238,18 @@ static struct fsentry *fsentry_create_list(struct fscache *cache, const struct f
 		return NULL;
 	}
 
-	/* append optional '/' and wildcard '*' */
-	if (wlen)
-		pattern[wlen++] = '/';
-	pattern[wlen++] = '*';
-	pattern[wlen] = 0;
+	/* handle CWD */
+	if (!wlen) {
+		wlen = GetCurrentDirectoryW(ARRAY_SIZE(pattern), pattern);
+		if (!wlen || wlen >= ARRAY_SIZE(pattern)) {
+			errno = wlen ? ENAMETOOLONG : err_win_to_posix(GetLastError());
+			return NULL;
+		}
+	}
 
-	/* open find handle */
-	h = FindFirstFileExW(pattern, FindExInfoBasic, &fdata, FindExSearchNameMatch,
-		NULL, FIND_FIRST_EX_LARGE_FETCH);
+	h = CreateFileW(pattern, FILE_LIST_DIRECTORY,
+		FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+		NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
 	if (h == INVALID_HANDLE_VALUE) {
 		err = GetLastError();
 		*dir_not_found = 1; /* or empty directory */
@@ -236,22 +266,55 @@ static struct fsentry *fsentry_create_list(struct fscache *cache, const struct f
 
 	/* walk directory and build linked list of fsentry structures */
 	phead = &list->next;
-	do {
-		*phead = fseentry_create_entry(cache, list, &fdata);
+	status = NtQueryDirectoryFile(h, NULL, 0, 0, &iosb, cache->buffer,
+		sizeof(cache->buffer), FileFullDirectoryInformation, FALSE, NULL, FALSE);
+	if (!NT_SUCCESS(status)) {
+		/*
+		 * NtQueryDirectoryFile returns STATUS_INVALID_PARAMETER when
+		 * asked to enumerate an invalid directory (ie it is a file
+		 * instead of a directory).  Verify that is the actual cause
+		 * of the error.
+		*/
+		if (status == STATUS_INVALID_PARAMETER) {
+			DWORD attributes = GetFileAttributesW(pattern);
+			if (!(attributes & FILE_ATTRIBUTE_DIRECTORY))
+				status = ERROR_DIRECTORY;
+		}
+		goto Error;
+	}
+	di = (PFILE_FULL_DIR_INFORMATION)(cache->buffer);
+	for (;;) {
+
+		*phead = fseentry_create_entry(cache, list, di);
 		phead = &(*phead)->next;
-	} while (FindNextFileW(h, &fdata));
 
-	/* remember result of last FindNextFile, then close find handle */
-	err = GetLastError();
-	FindClose(h);
+		/* If there is no offset in the entry, the buffer has been exhausted. */
+		if (di->NextEntryOffset == 0) {
+			status = NtQueryDirectoryFile(h, NULL, 0, 0, &iosb, cache->buffer,
+				sizeof(cache->buffer), FileFullDirectoryInformation, FALSE, NULL, FALSE);
+			if (!NT_SUCCESS(status)) {
+				if (status == STATUS_NO_MORE_FILES)
+					break;
+				goto Error;
+			}
 
-	/* return the list if we've got all the files */
-	if (err == ERROR_NO_MORE_FILES)
-		return list;
+			di = (PFILE_FULL_DIR_INFORMATION)(cache->buffer);
+			continue;
+		}
 
-	/* otherwise release the list and return error */
+		/* Advance to the next entry. */
+		di = (PFILE_FULL_DIR_INFORMATION)(((PUCHAR)di) + di->NextEntryOffset);
+	}
+
+	CloseHandle(h);
+	return list;
+
+Error:
+	trace_printf_key(&trace_fscache,
+			 "fscache: status(%ld) unable to query directory "
+			 "contents '%s'\n", status, dir->dirent.d_name);
+	CloseHandle(h);
 	fsentry_release(list);
-	errno = err_win_to_posix(err);
 	return NULL;
 }
 
