@@ -11,6 +11,8 @@ typedef _sigset_t sigset_t;
 #undef _POSIX_THREAD_SAFE_FUNCTIONS
 #endif
 
+extern int core_fscache;
+
 struct config_context;
 int mingw_core_config(const char *var, const char *value,
 		      const struct config_context *ctx, void *cb);
@@ -357,6 +359,17 @@ static inline int getrlimit(int resource, struct rlimit *rlp)
 }
 
 /*
+ * The unit of FILETIME is 100-nanoseconds since January 1, 1601, UTC.
+ * Returns the 100-nanoseconds ("hekto nanoseconds") since the epoch.
+ */
+static inline long long filetime_to_hnsec(const FILETIME *ft)
+{
+	long long winTime = ((long long)ft->dwHighDateTime << 32) + ft->dwLowDateTime;
+	/* Windows to Unix Epoch conversion */
+	return winTime - 116444736000000000LL;
+}
+
+/*
  * Use mingw specific stat()/lstat()/fstat() implementations on Windows,
  * including our own struct stat with 64 bit st_size and nanosecond-precision
  * file times.
@@ -371,6 +384,13 @@ struct timespec {
 };
 #endif
 #endif
+
+static inline void filetime_to_timespec(const FILETIME *ft, struct timespec *ts)
+{
+	long long hnsec = filetime_to_hnsec(ft);
+	ts->tv_sec = (time_t)(hnsec / 10000000);
+	ts->tv_nsec = (hnsec % 10000000) * 100;
+}
 
 struct mingw_stat {
     _dev_t st_dev;
@@ -404,7 +424,7 @@ int mingw_fstat(int fd, struct stat *buf);
 #ifdef lstat
 #undef lstat
 #endif
-#define lstat mingw_lstat
+extern int (*lstat)(const char *file_name, struct stat *buf);
 
 
 int mingw_utime(const char *file_name, const struct utimbuf *times);
