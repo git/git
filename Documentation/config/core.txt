@@ -685,6 +685,12 @@ relatively high IO latencies.  When enabled, Git will do the
 index comparison to the filesystem data in parallel, allowing
 overlapping IO's.  Defaults to true.
 
+core.fscache::
+	Enable additional caching of file system data for some operations.
++
+Git for Windows uses this to bulk-read and cache lstat data of entire
+directories (instead of doing lstat file by file).
+
 core.unsetenvvars::
 	Windows-only: comma-separated list of environment variables'
 	names that need to be unset before spawning any other process.
