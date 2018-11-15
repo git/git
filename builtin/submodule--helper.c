@@ -2281,6 +2281,7 @@ static struct cmd_struct commands[] = {
 int cmd_submodule__helper(int argc, const char **argv, const char *prefix)
 {
 	int i;
+	git_config(git_default_config, NULL);
 	if (argc < 2 || !strcmp(argv[1], "-h"))
 		usage("git submodule--helper <command>");
 
