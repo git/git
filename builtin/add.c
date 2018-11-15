@@ -575,11 +575,15 @@ int cmd_add(int argc,
 		 (!(addremove || take_worktree_changes)
 		  ? ADD_CACHE_IGNORE_REMOVAL : 0));
 
+	enable_fscache(0);
 	if (repo_read_index_preload(repo, &pathspec, 0) < 0)
 		die(_("index file corrupt"));
 
 	die_in_unpopulated_submodule(repo->index, prefix);
 	die_path_inside_submodule(repo->index, &pathspec);
+
+	/* We do not really re-read the index but update the up-to-date flags */
+	preload_index(repo->index, &pathspec, 0);
 
 	if (add_new_files) {
 		int baselen;
@@ -695,5 +699,6 @@ finish:
 	free(ps_matched);
 	dir_clear(&dir);
 	clear_pathspec(&pathspec);
+	disable_fscache();
 	return exit_status;
 }

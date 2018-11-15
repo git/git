@@ -647,6 +647,7 @@ static void write_items_sequentially(struct checkout *state)
 {
 	size_t i;
 
+	flush_fscache();
 	for (i = 0; i < parallel_checkout.nr; i++) {
 		struct parallel_checkout_item *pc_item = &parallel_checkout.items[i];
 		write_pc_item(pc_item, state);
@@ -669,6 +670,13 @@ int run_parallel_checkout(struct checkout *state, int num_workers, int threshold
 
 	if (parallel_checkout.nr < num_workers)
 		num_workers = parallel_checkout.nr;
+
+	/*
+	 * gather_results_from_workers() polls one pipe per worker, so the
+	 * worker count must stay within what poll() can wait on.
+	 */
+	if (num_workers > POLL_MAX_DESCRIPTORS)
+		num_workers = POLL_MAX_DESCRIPTORS;
 
 	if (num_workers <= 1 || parallel_checkout.nr < threshold) {
 		write_items_sequentially(state);
