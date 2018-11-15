@@ -407,6 +407,7 @@ static int checkout_worktree(const struct checkout_opts *opts,
 	if (pc_workers > 1)
 		init_parallel_checkout();
 
+	enable_fscache(the_repository->index->cache_nr);
 	for (pos = 0; pos < the_repository->index->cache_nr; pos++) {
 		struct cache_entry *ce = the_repository->index->cache[pos];
 		if (ce->ce_flags & CE_MATCHED) {
@@ -432,6 +433,7 @@ static int checkout_worktree(const struct checkout_opts *opts,
 		errs |= run_parallel_checkout(&state, pc_workers, pc_threshold,
 					      NULL, NULL);
 	mem_pool_discard(&ce_mem_pool, should_validate_cache_entries());
+	disable_fscache();
 	remove_marked_cache_entries(the_repository->index, 1);
 	remove_scheduled_dirs();
 	errs |= finish_delayed_checkout(&state, opts->show_progress);
