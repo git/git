@@ -1375,41 +1375,10 @@ test_expect_success GPG \
 	'test_config user.signingkey BobTheMouse &&
 	test_must_fail git tag -s -m tail tag-gpg-failure'
 
-# try to produce invalid signature
-test_expect_success GPG \
-	'git tag -s fails if gpg is misconfigured (bad signature format)' \
-	'test_config gpg.program echo &&
-	 test_must_fail git tag -s -m tail tag-gpg-failure'
-
-# try to produce invalid signature
-test_expect_success GPG 'git verifies tag is valid with double signature' '
-	git tag -s -m tail tag-gpg-double-sig &&
-	git cat-file tag tag-gpg-double-sig >tag &&
-	othersigheader=$(test_oid othersigheader) &&
-	sed -ne "/^\$/q;p" tag >new-tag &&
-	cat <<-EOM >>new-tag &&
-	$othersigheader -----BEGIN PGP SIGNATURE-----
-	 someinvaliddata
-	 -----END PGP SIGNATURE-----
-	EOM
-	sed -e "1,/^tagger/d" tag >>new-tag &&
-	new_tag=$(git hash-object -t tag -w new-tag) &&
-	git update-ref refs/tags/tag-gpg-double-sig $new_tag &&
-	git verify-tag tag-gpg-double-sig &&
-	git fsck
-'
-
 # try to sign with bad user.signingkey
 test_expect_success GPGSM \
 	'git tag -s fails if gpgsm is misconfigured (bad key)' \
 	'test_config user.signingkey BobTheMouse &&
-	 test_config gpg.format x509 &&
-	 test_must_fail git tag -s -m tail tag-gpg-failure'
-
-# try to produce invalid signature
-test_expect_success GPGSM \
-	'git tag -s fails if gpgsm is misconfigured (bad signature format)' \
-	'test_config gpg.x509.program echo &&
 	 test_config gpg.format x509 &&
 	 test_must_fail git tag -s -m tail tag-gpg-failure'
 
