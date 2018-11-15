@@ -5,6 +5,7 @@
 #include "../strbuf.h"
 #include "../run-command.h"
 #include "../cache.h"
+#include "../config.h"
 
 #define HCAST(type, handle) ((type)(intptr_t)handle)
 
@@ -200,6 +201,41 @@ static int ask_yes_no_if_possible(const char *format, ...)
 		fprintf(stderr, "Sorry, I did not understand your answer. "
 				"Please type 'y' or 'n'\n");
 	}
+}
+
+/* Windows only */
+enum hide_dotfiles_type {
+	HIDE_DOTFILES_FALSE = 0,
+	HIDE_DOTFILES_TRUE,
+	HIDE_DOTFILES_DOTGITONLY
+};
+
+static enum hide_dotfiles_type hide_dotfiles = HIDE_DOTFILES_DOTGITONLY;
+static char *unset_environment_variables;
+int core_fscache;
+
+int mingw_core_config(const char *var, const char *value, void *cb)
+{
+	if (!strcmp(var, "core.hidedotfiles")) {
+		if (value && !strcasecmp(value, "dotgitonly"))
+			hide_dotfiles = HIDE_DOTFILES_DOTGITONLY;
+		else
+			hide_dotfiles = git_config_bool(var, value);
+		return 0;
+	}
+
+	if (!strcmp(var, "core.fscache")) {
+		core_fscache = git_config_bool(var, value);
+		return 0;
+	}
+
+	if (!strcmp(var, "core.unsetenvvars")) {
+		free(unset_environment_variables);
+		unset_environment_variables = xstrdup(value);
+		return 0;
+	}
+
+	return 0;
 }
 
 /* Normalizes NT paths as returned by some low-level APIs. */
@@ -576,24 +612,6 @@ int mingw_chmod(const char *filename, int mode)
 	return _wchmod(wfilename, mode);
 }
 
-/*
- * The unit of FILETIME is 100-nanoseconds since January 1, 1601, UTC.
- * Returns the 100-nanoseconds ("hekto nanoseconds") since the epoch.
- */
-static inline long long filetime_to_hnsec(const FILETIME *ft)
-{
-	long long winTime = ((long long)ft->dwHighDateTime << 32) + ft->dwLowDateTime;
-	/* Windows to Unix Epoch conversion */
-	return winTime - 116444736000000000LL;
-}
-
-static inline void filetime_to_timespec(const FILETIME *ft, struct timespec *ts)
-{
-	long long hnsec = filetime_to_hnsec(ft);
-	ts->tv_sec = (time_t)(hnsec / 10000000);
-	ts->tv_nsec = (hnsec % 10000000) * 100;
-}
-
 /**
  * Verifies that safe_create_leading_directories() would succeed.
  */
@@ -732,6 +750,8 @@ static int do_stat_internal(int follow, const char *file_name, struct stat *buf)
 	alt_name[namelen] = 0;
 	return do_lstat(follow, alt_name, buf);
 }
+
+int (*lstat)(const char *file_name, struct stat *buf) = mingw_lstat;
 
 static int get_file_info_by_handle(HANDLE hnd, struct stat *buf)
 {
@@ -1227,6 +1247,27 @@ static wchar_t *make_environment_block(char **deltaenv)
 	return result;
 }
 
+static void do_unset_environment_variables(void)
+{
+	static int done;
+	char *p = unset_environment_variables;
+
+	if (done || !p)
+		return;
+	done = 1;
+
+	for (;;) {
+		char *comma = strchr(p, ',');
+
+		if (comma)
+			*comma = '\0';
+		unsetenv(p);
+		if (!comma)
+			break;
+		p = comma + 1;
+	}
+}
+
 struct pinfo_t {
 	struct pinfo_t *next;
 	pid_t pid;
@@ -1245,9 +1286,12 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 	wchar_t wcmd[MAX_PATH], wdir[MAX_PATH], *wargs, *wenvblk = NULL;
 	unsigned flags = CREATE_UNICODE_ENVIRONMENT;
 	BOOL ret;
+	HANDLE cons;
+
+	do_unset_environment_variables();
 
 	/* Determine whether or not we are associated to a console */
-	HANDLE cons = CreateFile("CONOUT$", GENERIC_WRITE,
+	cons = CreateFile("CONOUT$", GENERIC_WRITE,
 			FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
 			FILE_ATTRIBUTE_NORMAL, NULL);
 	if (cons == INVALID_HANDLE_VALUE) {
@@ -2475,6 +2519,8 @@ int wmain(int argc, const wchar_t **wargv)
 
 	/* fix Windows specific environment settings */
 	setup_windows_environment();
+
+	unset_environment_variables = xstrdup("PERL5LIB");
 
 	/* initialize critical section for waitpid pinfo_t list */
 	InitializeCriticalSection(&pinfo_cs);
