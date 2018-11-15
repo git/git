@@ -361,4 +361,12 @@ test_expect_success 'autostash with dirty submodules' '
 	git rebase -i --autostash HEAD
 '
 
+test_expect_success 'branch is left alone when possible' '
+	git checkout -b unchanged-branch &&
+	echo changed >file0 &&
+	git rebase --autostash unchanged-branch &&
+	test changed = "$(cat file0)" &&
+	test unchanged-branch = "$(git rev-parse --abbrev-ref HEAD)"
+'
+
 test_done
