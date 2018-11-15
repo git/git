@@ -425,6 +425,7 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 	struct option *opts = NULL;
 	int onb = 0, osz = 0, unb = 0, usz = 0;
 
+	git_config(git_default_config, NULL);
 	strbuf_addstr(&parsed, "set --");
 	argc = parse_options(argc, argv, prefix, parseopt_opts, parseopt_usage,
 	                     PARSE_OPT_KEEP_DASHDASH);
