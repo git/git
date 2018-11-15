@@ -419,6 +419,55 @@ static int getchar_with_timeout(int timeout)
 	return getchar();
 }
 
+static char *shell_prompt(const char *prompt, int echo)
+{
+	const char *read_input[] = {
+		/* Note: call 'bash' explicitly, as 'read -s' is bash-specific */
+		"bash", "-c", echo ?
+		"cat >/dev/tty && read -r line </dev/tty && echo \"$line\"" :
+		"cat >/dev/tty && read -r -s line </dev/tty && echo \"$line\" && echo >/dev/tty",
+		NULL
+	};
+	struct child_process child = CHILD_PROCESS_INIT;
+	static struct strbuf buffer = STRBUF_INIT;
+	int prompt_len = strlen(prompt), len = -1, code;
+
+	strvec_pushv(&child.args, read_input);
+	child.in = -1;
+	child.out = -1;
+	child.silent_exec_failure = 1;
+
+	if (start_command(&child))
+		return NULL;
+
+	if (write_in_full(child.in, prompt, prompt_len) != prompt_len) {
+		error("could not write to prompt script");
+		close(child.in);
+		goto ret;
+	}
+	close(child.in);
+
+	strbuf_reset(&buffer);
+	len = strbuf_read(&buffer, child.out, 1024);
+	if (len < 0) {
+		error("could not read from prompt script");
+		goto ret;
+	}
+
+	strbuf_strip_suffix(&buffer, "\n");
+	strbuf_strip_suffix(&buffer, "\r");
+
+ret:
+	close(child.out);
+	code = finish_command(&child);
+	if (code) {
+		error("failed to execute prompt script (exit code %d)", code);
+		return NULL;
+	}
+
+	return len < 0 ? NULL : buffer.buf;
+}
+
 #endif
 
 #ifndef FORCE_TEXT
@@ -430,6 +479,15 @@ char *git_terminal_prompt(const char *prompt, int echo)
 	static struct strbuf buf = STRBUF_INIT;
 	int r;
 	FILE *input_fh, *output_fh;
+
+#ifdef GIT_WINDOWS_NATIVE
+
+	/* try shell_prompt first, fall back to CONIN/OUT if bash is missing */
+	char *result = shell_prompt(prompt, echo);
+	if (result)
+		return result;
+
+#endif
 
 	input_fh = fopen(INPUT_PATH, "r" FORCE_TEXT);
 	if (!input_fh)
