@@ -766,6 +766,7 @@ N_("git reflog [ show | expire | delete | exists ]");
 
 int cmd_reflog(int argc, const char **argv, const char *prefix)
 {
+	git_config(git_default_config, NULL);
 	if (argc > 1 && !strcmp(argv[1], "-h"))
 		usage(_(reflog_usage));
 
