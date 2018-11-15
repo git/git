@@ -8,6 +8,7 @@
 #include "strbuf.h"
 #include "mailinfo.h"
 #include "parse-options.h"
+#include "config.h"
 
 static const char * const mailinfo_usage[] = {
 	/* TRANSLATORS: keep <> in "<" mail ">" info. */
@@ -78,6 +79,7 @@ int cmd_mailinfo(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
+	git_config(git_default_config, NULL);
 	setup_mailinfo(&mi);
 	meta_charset.policy = CHARSET_DEFAULT;
 
