@@ -7,6 +7,7 @@
 #include "utf8.h"
 #include "strbuf.h"
 #include "mailinfo.h"
+#include "config.h"
 
 static const char mailinfo_usage[] =
 	"git mailinfo [-k | -b] [-m | --message-id] [-u | --encoding=<encoding> | -n] [--scissors | --no-scissors] <msg> <patch> < mail >info";
@@ -18,6 +19,7 @@ int cmd_mailinfo(int argc, const char **argv, const char *prefix)
 	int status;
 	char *msgfile, *patchfile;
 
+	git_config(git_default_config, NULL);
 	setup_mailinfo(&mi);
 
 	def_charset = get_commit_output_encoding();
