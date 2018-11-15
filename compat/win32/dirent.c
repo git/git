@@ -1,15 +1,18 @@
 #include "../../git-compat-util.h"
 
-struct DIR {
-	struct dirent dd_dir; /* includes d_type */
+typedef struct dirent_DIR {
+	struct DIR base_dir;  /* extend base struct DIR */
 	HANDLE dd_handle;     /* FindFirstFile handle */
 	int dd_stat;          /* 0-based index */
-};
+	struct dirent dd_dir; /* includes d_type */
+} dirent_DIR;
+
+DIR *(*opendir)(const char *dirname) = dirent_opendir;
 
 static inline void finddata2dirent(struct dirent *ent, WIN32_FIND_DATAW *fdata)
 {
-	/* convert UTF-16 name to UTF-8 */
-	xwcstoutf(ent->d_name, fdata->cFileName, sizeof(ent->d_name));
+	/* convert UTF-16 name to UTF-8 (d_name points to dirent_DIR.dd_name) */
+	xwcstoutf(ent->d_name, fdata->cFileName, MAX_PATH * 3);
 
 	/* Set file type, based on WIN32_FIND_DATA */
 	if (fdata->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
@@ -18,41 +21,7 @@ static inline void finddata2dirent(struct dirent *ent, WIN32_FIND_DATAW *fdata)
 		ent->d_type = DT_REG;
 }
 
-DIR *opendir(const char *name)
-{
-	wchar_t pattern[MAX_PATH + 2]; /* + 2 for '/' '*' */
-	WIN32_FIND_DATAW fdata;
-	HANDLE h;
-	int len;
-	DIR *dir;
-
-	/* convert name to UTF-16 and check length < MAX_PATH */
-	if ((len = xutftowcs_path(pattern, name)) < 0)
-		return NULL;
-
-	/* append optional '/' and wildcard '*' */
-	if (len && !is_dir_sep(pattern[len - 1]))
-		pattern[len++] = '/';
-	pattern[len++] = '*';
-	pattern[len] = 0;
-
-	/* open find handle */
-	h = FindFirstFileW(pattern, &fdata);
-	if (h == INVALID_HANDLE_VALUE) {
-		DWORD err = GetLastError();
-		errno = (err == ERROR_DIRECTORY) ? ENOTDIR : err_win_to_posix(err);
-		return NULL;
-	}
-
-	/* initialize DIR structure and copy first dir entry */
-	dir = xmalloc(sizeof(DIR));
-	dir->dd_handle = h;
-	dir->dd_stat = 0;
-	finddata2dirent(&dir->dd_dir, &fdata);
-	return dir;
-}
-
-struct dirent *readdir(DIR *dir)
+static struct dirent *dirent_readdir(dirent_DIR *dir)
 {
 	if (!dir) {
 		errno = EBADF; /* No set_errno for mingw */
@@ -79,7 +48,7 @@ struct dirent *readdir(DIR *dir)
 	return &dir->dd_dir;
 }
 
-int closedir(DIR *dir)
+static int dirent_closedir(dirent_DIR *dir)
 {
 	if (!dir) {
 		errno = EBADF;
@@ -89,4 +58,40 @@ int closedir(DIR *dir)
 	FindClose(dir->dd_handle);
 	free(dir);
 	return 0;
+}
+
+DIR *dirent_opendir(const char *name)
+{
+	wchar_t pattern[MAX_PATH + 2]; /* + 2 for '/' '*' */
+	WIN32_FIND_DATAW fdata;
+	HANDLE h;
+	int len;
+	dirent_DIR *dir;
+
+	/* convert name to UTF-16 and check length < MAX_PATH */
+	if ((len = xutftowcs_path(pattern, name)) < 0)
+		return NULL;
+
+	/* append optional '/' and wildcard '*' */
+	if (len && !is_dir_sep(pattern[len - 1]))
+		pattern[len++] = '/';
+	pattern[len++] = '*';
+	pattern[len] = 0;
+
+	/* open find handle */
+	h = FindFirstFileW(pattern, &fdata);
+	if (h == INVALID_HANDLE_VALUE) {
+		DWORD err = GetLastError();
+		errno = (err == ERROR_DIRECTORY) ? ENOTDIR : err_win_to_posix(err);
+		return NULL;
+	}
+
+	/* initialize DIR structure and copy first dir entry */
+	dir = xmalloc(sizeof(dirent_DIR) + MAX_LONG_PATH);
+	dir->base_dir.preaddir = (struct dirent *(*)(DIR *dir)) dirent_readdir;
+	dir->base_dir.pclosedir = (int (*)(DIR *dir)) dirent_closedir;
+	dir->dd_handle = h;
+	dir->dd_stat = 0;
+	finddata2dirent(&dir->dd_dir, &fdata);
+	return (DIR*) dir;
 }
