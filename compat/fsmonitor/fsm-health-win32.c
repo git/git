@@ -34,7 +34,7 @@ struct fsm_health_data
 
 	struct wt_moved
 	{
-		wchar_t wpath[MAX_PATH + 1];
+		wchar_t wpath[MAX_LONG_PATH + 1];
 		BY_HANDLE_FILE_INFORMATION bhfi;
 	} wt_moved;
 };
@@ -143,8 +143,8 @@ static int has_worktree_moved(struct fsmonitor_daemon_state *state,
 		return 0;
 
 	case CTX_INIT:
-		if (xutftowcs_path(data->wt_moved.wpath,
-				   state->path_worktree_watch.buf) < 0) {
+		if (xutftowcs_long_path(data->wt_moved.wpath,
+					state->path_worktree_watch.buf) < 0) {
 			error(_("could not convert to wide characters: '%s'"),
 			      state->path_worktree_watch.buf);
 			return -1;
