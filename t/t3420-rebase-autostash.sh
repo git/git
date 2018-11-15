@@ -351,4 +351,14 @@ test_expect_success 'autostash is saved on editor failure with conflict' '
 	test_cmp expected file0
 '
 
+test_expect_success 'autostash with dirty submodules' '
+	test_when_finished "git reset --hard && git checkout master" &&
+	git checkout -b with-submodule &&
+	git submodule add ./ sub &&
+	test_tick &&
+	git commit -m add-submodule &&
+	echo changed >sub/file0 &&
+	git rebase -i --autostash HEAD
+'
+
 test_done
