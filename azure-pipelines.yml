@@ -164,7 +164,7 @@ phases:
   displayName: Windows
   condition: succeeded()
   queue:
-    name: Hosted VS2017
+    name: Hosted
     timeoutInMinutes: 240
   steps:
   - powershell: |
@@ -215,7 +215,7 @@ phases:
          . ci/lib.sh
 
          make -j10 DEVELOPER=1 NO_PERL=1 || exit 1
-         NO_PERL=1 NO_SVN_TESTS=1 GIT_TEST_OPTS=\"--quiet --write-junit-xml\" time make -j15 -k DEVELOPER=1 test || {
+         NO_PERL=1 NO_SVN_TESTS=1 GIT_TEST_OPTS=\"--no-chain-lint --no-bin-wrappers --quiet --write-junit-xml\" time make -j15 -k DEVELOPER=1 test || {
            NO_PERL=1 NO_SVN_TESTS=1 GIT_TEST_OPTS=\"-i -v -x\" make -k -C t failed; exit 1
          }
 
