@@ -187,6 +187,22 @@ static int get_object_mark(struct object *object)
 	return ptr_to_mark(decoration);
 }
 
+static struct commit *rewrite_commit(struct commit *p)
+{
+	for (;;) {
+		if (p->parents && p->parents->next)
+			break;
+		if (p->object.flags & UNINTERESTING)
+			break;
+		if (!(p->object.flags & TREESAME))
+			break;
+		if (!p->parents)
+			return NULL;
+		p = p->parents->item;
+	}
+	return p;
+}
+
 static void show_progress(void)
 {
 	static int counter = 0;
@@ -767,21 +783,12 @@ static void handle_tag(const char *name, struct tag *tag)
 				    oid_to_hex(&tag->object.oid),
 				    type_name(tagged->type));
 			}
-			p = (struct commit *)tagged;
-			for (;;) {
-				if (p->parents && p->parents->next)
-					break;
-				if (p->object.flags & UNINTERESTING)
-					break;
-				if (!(p->object.flags & TREESAME))
-					break;
-				if (!p->parents) {
-					printf("reset %s\nfrom %s\n\n",
-					       name, oid_to_hex(&null_oid));
-					free(buf);
-					return;
-				}
-				p = p->parents->item;
+			p = rewrite_commit((struct commit *)tagged);
+			if (!p) {
+				printf("reset %s\nfrom %s\n\n",
+				       name, oid_to_hex(&null_oid));
+				free(buf);
+				return;
 			}
 			tagged_mark = get_object_mark(&p->object);
 		}
