@@ -5,6 +5,7 @@
 #include "cache.h"
 #include "mem-pool.h"
 
+static struct trace_key trace_mem_pool = TRACE_KEY_INIT(MEMPOOL);
 #define BLOCK_GROWTH_SIZE 1024*1024 - sizeof(struct mp_block);
 
 /*
@@ -48,12 +49,16 @@ void mem_pool_init(struct mem_pool **mem_pool, size_t initial_size)
 		mem_pool_alloc_block(pool, initial_size, NULL);
 
 	*mem_pool = pool;
+	trace_printf_key(&trace_mem_pool, "mem_pool (%p): init (%"PRIuMAX") initial size\n",
+		pool, (uintmax_t)initial_size);
 }
 
 void mem_pool_discard(struct mem_pool *mem_pool, int invalidate_memory)
 {
 	struct mp_block *block, *block_to_free;
 
+	trace_printf_key(&trace_mem_pool, "mem_pool (%p): discard (%"PRIuMAX") unused\n",
+		mem_pool, (uintmax_t)(mem_pool->mp_block->end - mem_pool->mp_block->next_free));
 	block = mem_pool->mp_block;
 	while (block)
 	{
