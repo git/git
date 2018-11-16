@@ -382,6 +382,9 @@ static void check_smart_http(struct discovery *d, const char *service,
 		 */
 		d->proto_git = 1;
 
+	} else if (skip_prefix(line, "ERR ", &p)) {
+		die(_("remote error: %s"), p);
+
 	} else {
 		die("invalid server response; got '%s'", line);
 	}
