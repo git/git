@@ -675,7 +675,7 @@ static void mark_complete_and_common_ref(struct fetch_negotiator *negotiator,
 	save_commit_buffer = 0;
 
 	trace2_region_enter("fetch-pack", "parse_remote_refs_and_find_cutoff", NULL);
-	enable_fscache(1);
+	enable_fscache(0);
 	for (ref = *refs; ref; ref = ref->next) {
 		struct object *o;
 
@@ -698,7 +698,7 @@ static void mark_complete_and_common_ref(struct fetch_negotiator *negotiator,
 				cutoff = commit->date;
 		}
 	}
-	enable_fscache(0);
+	disable_fscache();
 	trace2_region_leave("fetch-pack", "parse_remote_refs_and_find_cutoff", NULL);
 
 	/*
