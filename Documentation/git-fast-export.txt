@@ -122,6 +122,13 @@ marks the same across runs.
 	repository which already contains the necessary parent
 	commits.
 
+--show-original-ids::
+	Add an extra directive to the output for commits and blobs,
+	`original-oid <SHA1SUM>`.  While such directives will likely be
+	ignored by importers such as git-fast-import, it may be useful
+	for intermediary filters (e.g. for rewriting commit messages
+	which refer to older commits, or for stripping blobs by id).
+
 --refspec::
 	Apply the specified refspec to each ref exported. Multiple of them can
 	be specified.

@@ -77,6 +77,23 @@ test_expect_success 'fast-export --reference-excluded-parents master~2..master' 
 		 test $MASTER = $(git rev-parse --verify refs/heads/rewrite))
 '
 
+test_expect_success 'fast-export --show-original-ids' '
+
+	git fast-export --show-original-ids master >output &&
+	grep ^original-oid output| sed -e s/^original-oid.// | sort >actual &&
+	git rev-list --objects master muss >objects-and-names &&
+	awk "{print \$1}" objects-and-names | sort >commits-trees-blobs &&
+	comm -23 actual commits-trees-blobs >unfound &&
+	test_must_be_empty unfound
+'
+
+test_expect_success 'fast-export --show-original-ids | git fast-import' '
+
+	git fast-export --show-original-ids master muss | git fast-import --quiet &&
+	test $MASTER = $(git rev-parse --verify refs/heads/master) &&
+	test $MUSS = $(git rev-parse --verify refs/tags/muss)
+'
+
 test_expect_success 'iso-8859-1' '
 
 	git config i18n.commitencoding ISO8859-1 &&

@@ -1814,6 +1814,13 @@ static void parse_mark(void)
 		next_mark = 0;
 }
 
+static void parse_original_identifier(void)
+{
+	const char *v;
+	if (skip_prefix(command_buf.buf, "original-oid ", &v))
+		read_next_command();
+}
+
 static int parse_data(struct strbuf *sb, uintmax_t limit, uintmax_t *len_res)
 {
 	const char *data;
@@ -1956,6 +1963,7 @@ static void parse_new_blob(void)
 {
 	read_next_command();
 	parse_mark();
+	parse_original_identifier();
 	parse_and_store_blob(&last_blob, NULL, next_mark);
 }
 
@@ -2579,6 +2587,7 @@ static void parse_new_commit(const char *arg)
 
 	read_next_command();
 	parse_mark();
+	parse_original_identifier();
 	if (skip_prefix(command_buf.buf, "author ", &v)) {
 		author = parse_ident(v);
 		read_next_command();
@@ -2710,6 +2719,9 @@ static void parse_new_tag(const char *arg)
 	} else
 		die("Invalid ref name or SHA1 expression: %s", from);
 	read_next_command();
+
+	/* original-oid ... */
+	parse_original_identifier();
 
 	/* tagger ... */
 	if (skip_prefix(command_buf.buf, "tagger ", &v)) {
