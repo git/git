@@ -119,7 +119,8 @@ marks the same across runs.
 	'git rev-list', that specifies the specific objects and references
 	to export.  For example, `master~10..master` causes the
 	current master reference to be exported along with all objects
-	added since its 10th ancestor commit.
+	added since its 10th ancestor commit and all files common to
+	master{tilde}9 and master{tilde}10.
 
 EXAMPLES
 --------
