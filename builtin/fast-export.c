@@ -38,6 +38,7 @@ static int use_done_feature;
 static int no_data;
 static int full_tree;
 static struct string_list extra_refs = STRING_LIST_INIT_NODUP;
+static struct string_list tag_refs = STRING_LIST_INIT_NODUP;
 static struct refspec refspecs = REFSPEC_INIT_FETCH;
 static int anonymize;
 static struct revision_sources revision_sources;
@@ -612,6 +613,13 @@ static void handle_commit(struct commit *commit, struct rev_info *rev,
 			export_blob(&diff_queued_diff.queue[i]->two->oid);
 
 	refname = *revision_sources_at(&revision_sources, commit);
+	/*
+	 * FIXME: string_list_remove() below for each ref is overall
+	 * O(N^2).  Compared to a history walk and diffing trees, this is
+	 * just lost in the noise in practice.  However, theoretically a
+	 * repo may have enough refs for this to become slow.
+	 */
+	string_list_remove(&extra_refs, refname, 0);
 	if (anonymize) {
 		refname = anonymize_refname(refname);
 		anonymize_ident_line(&committer, &committer_end);
@@ -815,7 +823,7 @@ static struct commit *get_commit(struct rev_cmdline_entry *e, char *full_name)
 		/* handle nested tags */
 		while (tag && tag->object.type == OBJ_TAG) {
 			parse_object(the_repository, &tag->object.oid);
-			string_list_append(&extra_refs, full_name)->util = tag;
+			string_list_append(&tag_refs, full_name)->util = tag;
 			tag = (struct tag *)tag->tagged;
 		}
 		if (!tag)
@@ -874,25 +882,30 @@ static void get_tags_and_duplicates(struct rev_cmdline_info *info)
 		}
 
 		/*
-		 * This ref will not be updated through a commit, lets make
-		 * sure it gets properly updated eventually.
+		 * Make sure this ref gets properly updated eventually, whether
+		 * through a commit or manually at the end.
 		 */
-		if (*revision_sources_at(&revision_sources, commit) ||
-		    commit->object.flags & SHOWN)
+		if (e->item->type != OBJ_TAG)
 			string_list_append(&extra_refs, full_name)->util = commit;
+
 		if (!*revision_sources_at(&revision_sources, commit))
 			*revision_sources_at(&revision_sources, commit) = full_name;
 	}
+
+	string_list_sort(&extra_refs);
+	string_list_remove_duplicates(&extra_refs, 0);
 }
 
-static void handle_tags_and_duplicates(void)
+static void handle_tags_and_duplicates(struct string_list *extras)
 {
 	struct commit *commit;
 	int i;
 
-	for (i = extra_refs.nr - 1; i >= 0; i--) {
-		const char *name = extra_refs.items[i].string;
-		struct object *object = extra_refs.items[i].util;
+	for (i = extras->nr - 1; i >= 0; i--) {
+		const char *name = extras->items[i].string;
+		struct object *object = extras->items[i].util;
+		int mark;
+
 		switch (object->type) {
 		case OBJ_TAG:
 			handle_tag(name, (struct tag *)object);
@@ -913,8 +926,24 @@ static void handle_tags_and_duplicates(void)
 				       name, oid_to_hex(&null_oid));
 				continue;
 			}
-			printf("reset %s\nfrom :%d\n\n", name,
-			       get_object_mark(&commit->object));
+
+			mark = get_object_mark(&commit->object);
+			if (!mark) {
+				/*
+				 * Getting here means we have a commit which
+				 * was excluded by a negative refspec (e.g.
+				 * fast-export ^master master).  If the user
+				 * wants the branch exported but every commit
+				 * in its history to be deleted, that sounds
+				 * like a ref deletion to me.
+				 */
+				printf("reset %s\nfrom %s\n\n",
+				       name, oid_to_hex(&null_oid));
+				continue;
+			}
+
+			printf("reset %s\nfrom :%d\n\n", name, mark
+			       );
 			show_progress();
 			break;
 		}
@@ -1102,7 +1131,8 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 		}
 	}
 
-	handle_tags_and_duplicates();
+	handle_tags_and_duplicates(&extra_refs);
+	handle_tags_and_duplicates(&tag_refs);
 	handle_deletes();
 
 	if (export_filename && lastimportid != last_idnum)
