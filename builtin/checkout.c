@@ -360,7 +360,7 @@ static int checkout_paths(const struct checkout_opts *opts,
 	state.istate = &the_index;
 
 	enable_delayed_checkout(&state);
-	enable_fscache(1);
+	enable_fscache(active_nr);
 	for (pos = 0; pos < active_nr; pos++) {
 		struct cache_entry *ce = active_cache[pos];
 		if (ce->ce_flags & CE_MATCHED) {
@@ -375,7 +375,7 @@ static int checkout_paths(const struct checkout_opts *opts,
 			pos = skip_same_name(ce, pos) - 1;
 		}
 	}
-	enable_fscache(0);
+	disable_fscache();
 	errs |= finish_delayed_checkout(&state);
 
 	if (write_locked_index(&the_index, &lock_file, COMMIT_LOCK))
