@@ -382,6 +382,26 @@ test_expect_success 'path limiting with import-marks does not lose unmodified fi
 	grep file0 actual
 '
 
+test_expect_success 'avoid corrupt stream with non-existent mark' '
+	test_create_repo avoid_non_existent_mark &&
+	(
+		cd avoid_non_existent_mark &&
+
+		test_commit important-path &&
+
+		test_commit ignored &&
+
+		git branch A &&
+		git branch B &&
+
+		echo foo >>important-path.t &&
+		git add important-path.t &&
+		test_commit more changes &&
+
+		git fast-export --all -- important-path.t | git fast-import --force
+	)
+'
+
 test_expect_success 'full-tree re-shows unmodified files'        '
 	git checkout -f simple &&
 	git fast-export --full-tree simple >actual &&
