@@ -15,26 +15,28 @@ test_expect_success 'setup' '
 test_stat_and_patch () {
 	if test "<unset>" = "$1"
 	then
-		test_might_fail git config --unset stash.showStat
+		test_unconfig stash.showStat
 	else
 		test_config stash.showStat "$1"
 	fi &&
 
 	if test "<unset>" = "$2"
 	then
-		test_might_fail git config --unset stash.showPatch
+		test_unconfig stash.showPatch
 	else
 		test_config stash.showPatch "$2"
 	fi &&
 
-	shift &&
-	shift &&
+	shift 2 &&
 	echo 2 >file.t &&
-	git diff "$@" >expect &&
+	if test $# != 0
+	then
+		git diff "$@" >expect
+	fi &&
 	git stash &&
 	git stash show >actual &&
 
-	if test -z "$1"
+	if test $# = 0
 	then
 		test_must_be_empty actual
 	else

@@ -259,6 +259,8 @@ do
 		test -z "$HARNESS_ACTIVE" && quiet=t; shift ;;
 	--with-dashes)
 		with_dashes=t; shift ;;
+	--no-bin-wrappers)
+		no_bin_wrappers=t; shift ;;
 	--no-color)
 		color=; shift ;;
 	--va|--val|--valg|--valgr|--valgri|--valgrin|--valgrind)
@@ -1069,20 +1071,25 @@ then
 	PATH=$GIT_TEST_INSTALLED$PATH_SEP$GIT_BUILD_DIR/t/helper$PATH_SEP$PATH
 	GIT_EXEC_PATH=${GIT_TEST_EXEC_PATH:-$GIT_EXEC_PATH}
 else # normal case, use ../bin-wrappers only unless $with_dashes:
-	git_bin_dir="$GIT_BUILD_DIR/bin-wrappers"
-	if ! test -x "$git_bin_dir/git"
+	if test -n "$no_bin_wrappers"
 	then
-		if test -z "$with_dashes"
-		then
-			say "$git_bin_dir/git is not executable; using GIT_EXEC_PATH"
-		fi
 		with_dashes=t
+	else
+		git_bin_dir="$GIT_BUILD_DIR/bin-wrappers"
+		if ! test -x "$git_bin_dir/git"
+		then
+			if test -z "$with_dashes"
+			then
+				say "$git_bin_dir/git is not executable; using GIT_EXEC_PATH"
+			fi
+			with_dashes=t
+		fi
+		PATH="$git_bin_dir$PATH_SEP$PATH"
 	fi
-	PATH="$git_bin_dir$PATH_SEP$PATH"
 	GIT_EXEC_PATH=$GIT_BUILD_DIR
 	if test -n "$with_dashes"
 	then
-		PATH="$GIT_BUILD_DIR$PATH_SEP$PATH"
+		PATH="$GIT_BUILD_DIR$PATH_SEP$GIT_BUILD_DIR/t/helper$PATH_SEP$PATH"
 	fi
 fi
 GIT_TEMPLATE_DIR="$GIT_BUILD_DIR"/templates/blt
@@ -1106,7 +1113,7 @@ test -d "$GIT_BUILD_DIR"/templates/blt || {
 	error "You haven't built things yet, have you?"
 }
 
-if ! test -x "$GIT_BUILD_DIR"/t/helper/test-tool
+if ! test -x "$GIT_BUILD_DIR"/t/helper/test-tool$X
 then
 	echo >&2 'You need to build test-tool:'
 	echo >&2 'Run "make t/helper/test-tool" in the source (toplevel) directory'

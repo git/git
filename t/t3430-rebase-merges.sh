@@ -396,4 +396,20 @@ test_expect_success 'with --autosquash and --exec' '
 	grep "G: +G" actual
 '
 
+test_expect_success '--continue after resolving conflicts after a merge' '
+	git checkout -b already-has-g E &&
+	git cherry-pick E..G &&
+	test_commit H2 &&
+
+	git checkout -b conflicts-in-merge H &&
+	test_commit H2 H2.t conflicts H2-conflict &&
+	test_must_fail git rebase -r already-has-g &&
+	grep conflicts H2.t &&
+	echo resolved >H2.t &&
+	git add -u &&
+	git rebase --continue &&
+	test_must_fail git rev-parse --verify HEAD^2 &&
+	test_path_is_missing .git/MERGE_HEAD
+'
+
 test_done

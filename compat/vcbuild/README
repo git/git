@@ -1,7 +1,7 @@
 The Steps to Build Git with VS2015 or VS2017 from the command line.
 
 1. Install the "vcpkg" open source package manager and build essential
-   third-party libaries.  The steps for this have been captured in a
+   third-party libraries.  The steps for this have been captured in a
    set of convenience scripts.  These can be run from a stock Command
    Prompt or from an SDK bash window:
 
@@ -45,7 +45,7 @@ Note that this will automatically add and commit the generated
 .sln and .vcxproj files to the repo.  You may want to drop this
 commit before submitting a Pull Request....
 
-Or maybe we should put the .sln/.vcxproj files in the .gitignores
+Or maybe we should put the .sln/.vcxproj files in the .gitignore file
 and not do this.  I'm not sure.
 
 ================================================================

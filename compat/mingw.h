@@ -262,12 +262,11 @@ char *mingw_getcwd(char *pointer, int len);
 #define getcwd mingw_getcwd
 
 #ifdef NO_UNSETENV
-#error "NO_UNSETENV is incompatible with the MinGW startup code!"
+#error "NO_UNSETENV is incompatible with the Windows-specific startup code!"
 #endif
 
-#if defined(_MSC_VER)
 /*
- * We bind *env() routines (even the mingw_ ones) to private msc_ versions.
+ * We bind *env() routines (even the mingw_ ones) to private mingw_ versions.
  * These talk to the CRT using UNICODE/wchar_t, but maintain the original
  * narrow-char API.
  *
@@ -276,7 +275,7 @@ char *mingw_getcwd(char *pointer, int len);
  * (and secretly updates both when you set one or the other), but it uses CP_ACP
  * to do the conversion rather than CP_UTF8.
  *
- * Since everything in the git code base is UTF8, we define the msc_ routines
+ * Since everything in the git code base is UTF8, we define the mingw_ routines
  * to access the CRT using the UNICODE routines and manually convert them to
  * UTF8.  This also avoids round-trip problems.
  *
@@ -284,33 +283,13 @@ char *mingw_getcwd(char *pointer, int len);
  * from the CRT.  But to access "_environ" we would have to statically link
  * to the CRT (/MT).
  *
- * We also use "wmain(argc,argv,env)" and get the initial UNICODE setup for us.
- * This avoids the need for the msc_startup() to import and convert the
- * inherited environment.
- *
- * We require NO_SETENV (and let gitsetenv() call our msc_putenv).
+ * We require NO_SETENV (and let gitsetenv() call our mingw_putenv).
  */
-#define getenv       msc_getenv
-#define putenv       msc_putenv
-#define unsetenv     msc_putenv
-#define mingw_getenv msc_getenv
-#define mingw_putenv msc_putenv
-char *msc_getenv(const char *name);
-int   msc_putenv(const char *name);
-
-#ifndef NO_SETENV
-#error "NO_SETENV is required for MSC startup code!"
-#endif
-
-#else
-
+#define getenv       mingw_getenv
+#define putenv       mingw_putenv
+#define unsetenv     mingw_putenv
 char *mingw_getenv(const char *name);
-#define getenv mingw_getenv
-int mingw_putenv(const char *namevalue);
-#define putenv mingw_putenv
-#define unsetenv mingw_putenv
-
-#endif
+int   mingw_putenv(const char *name);
 
 int mingw_gethostname(char *host, int namelen);
 #define gethostname mingw_gethostname
@@ -687,39 +666,18 @@ int xwcstoutf(char *utf, const wchar_t *wcs, size_t utflen);
 extern CRITICAL_SECTION pinfo_cs;
 
 /*
- * A replacement of main() that adds win32 specific initialization.
+ * Git, like most portable C applications, implements a main() function. On
+ * Windows, this main() function would receive parameters encoded in the
+ * current locale, but Git for Windows would prefer UTF-8 encoded  parameters.
  *
- * Note that the end of these macros are unterminated so that the
- * brace group following the use of the macro is the body of the
- * function.
+ * To make that happen, we still declare main() here, and then declare and
+ * implement wmain() (which is the Unicode variant of main()) and compile with
+ * -municode. This wmain() function reencodes the parameters from UTF-16 to
+ * UTF-8 format, sets up a couple of other things as required on Windows, and
+ * then hands off to the main() function.
  */
-#if defined(_MSC_VER)
-
-int msc_startup(int argc, wchar_t **w_argv, wchar_t **w_env);
-extern int msc_main(int argc, const char **argv);
-
-#define main(c,v) dummy_decl_msc_main(void);				\
-int wmain(int my_argc,									\
-		  wchar_t **my_w_argv,							\
-		  wchar_t **my_w_env)							\
-{														\
-	return msc_startup(my_argc, my_w_argv, my_w_env);	\
-}														\
-int msc_main(c, v)
-
-#else
-
-void mingw_startup(void);
-#define main(c,v) dummy_decl_mingw_main(void); \
-static int mingw_main(c,v); \
-int main(int argc, const char **argv) \
-{ \
-	mingw_startup(); \
-	return mingw_main(__argc, (void *)__argv); \
-} \
-static int mingw_main(c,v)
-
-#endif
+int wmain(int argc, const wchar_t **w_argv);
+int main(int argc, const char **argv);
 
 /*
  * For debugging: if a problem occurs, say, in a Git process that is spawned
