@@ -8,6 +8,10 @@ static int initialized;
 static volatile long enabled;
 static struct hashmap map;
 static CRITICAL_SECTION mutex;
+static unsigned int lstat_requests;
+static unsigned int opendir_requests;
+static unsigned int fscache_requests;
+static unsigned int fscache_misses;
 static struct trace_key trace_fscache = TRACE_KEY_INIT(FSCACHE);
 
 /*
@@ -257,6 +261,8 @@ static void fscache_clear(void)
 {
 	hashmap_free_entries(&map, struct fsentry, ent);
 	hashmap_init(&map, (hashmap_cmp_fn)fsentry_cmp, NULL, 0);
+	lstat_requests = opendir_requests = 0;
+	fscache_misses = fscache_requests = 0;
 }
 
 /*
@@ -303,6 +309,7 @@ static struct fsentry *fscache_get(struct fsentry *key)
 	int dir_not_found;
 
 	EnterCriticalSection(&mutex);
+	fscache_requests++;
 	/* check if entry is in cache */
 	fse = fscache_get_wait(key);
 	if (fse) {
@@ -366,6 +373,7 @@ static struct fsentry *fscache_get(struct fsentry *key)
 	}
 
 	/* add directory listing to the cache */
+	fscache_misses++;
 	fscache_add(fse);
 
 	/* lookup file entry if requested (fse already points to directory) */
@@ -403,6 +411,8 @@ int fscache_enable(int enable)
 			return 0;
 
 		InitializeCriticalSection(&mutex);
+		lstat_requests = opendir_requests = 0;
+		fscache_misses = fscache_requests = 0;
 		hashmap_init(&map, (hashmap_cmp_fn) fsentry_cmp, NULL, 0);
 		initialized = 1;
 	}
@@ -419,6 +429,10 @@ int fscache_enable(int enable)
 		opendir = dirent_opendir;
 		lstat = mingw_lstat;
 		EnterCriticalSection(&mutex);
+		trace_printf_key(&trace_fscache, "fscache: lstat %u, opendir %u, "
+						 "total requests/misses %u/%u\n",
+				lstat_requests, opendir_requests,
+				fscache_requests, fscache_misses);
 		fscache_clear();
 		LeaveCriticalSection(&mutex);
 	}
@@ -451,6 +465,7 @@ int fscache_lstat(const char *filename, struct stat *st)
 	if (!fscache_enabled(filename))
 		return mingw_lstat(filename, st);
 
+	lstat_requests++;
 	/* split filename into path + name */
 	len = strlen(filename);
 	if (len && is_dir_sep(filename[len - 1]))
@@ -530,6 +545,7 @@ DIR *fscache_opendir(const char *dirname)
 	if (!fscache_enabled(dirname))
 		return dirent_opendir(dirname);
 
+	opendir_requests++;
 	/* prepare name (strip trailing '/', replace '.') */
 	len = strlen(dirname);
 	if ((len == 1 && dirname[0] == '.') ||
