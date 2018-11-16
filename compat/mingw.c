@@ -17,6 +17,7 @@
 #include "trace2.h"
 #include "win32.h"
 #include "win32/exit-process.h"
+#include "win32/fscache.h"
 #include "win32/lazyload.h"
 #include "win32/wsl.h"
 #include "wrapper.h"
@@ -4288,6 +4289,9 @@ int wmain(int argc, const wchar_t **wargv)
 	/* initialize critical section for waitpid pinfo_t list */
 	InitializeCriticalSection(&pinfo_cs);
 	InitializeCriticalSection(&phantom_symlinks_cs);
+
+	/* initialize critical section for fscache */
+	InitializeCriticalSection(&fscache_cs);
 
 	/* set up default file mode and file modes for stdin/out/err */
 	_fmode = _O_BINARY;
