@@ -775,9 +775,12 @@ static void handle_tag(const char *name, struct tag *tag)
 					break;
 				if (!(p->object.flags & TREESAME))
 					break;
-				if (!p->parents)
-					die("can't find replacement commit for tag %s",
-					     oid_to_hex(&tag->object.oid));
+				if (!p->parents) {
+					printf("reset %s\nfrom %s\n\n",
+					       name, oid_to_hex(&null_oid));
+					free(buf);
+					return;
+				}
 				p = p->parents->item;
 			}
 			tagged_mark = get_object_mark(&p->object);

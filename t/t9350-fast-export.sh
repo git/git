@@ -325,6 +325,22 @@ test_expect_success 'rewriting tag of filtered out object' '
 )
 '
 
+test_expect_success 'rewrite tag predating pathspecs to nothing' '
+	test_create_repo rewrite_tag_predating_pathspecs &&
+	(
+		cd rewrite_tag_predating_pathspecs &&
+
+		test_commit initial &&
+
+		git tag -a -m "Some old tag" v0.0.0.0.0.0.1 &&
+
+		test_commit bar &&
+
+		git fast-export --tag-of-filtered-object=rewrite --all -- bar.t >output &&
+		grep from.$ZERO_OID output
+	)
+'
+
 cat > limit-by-paths/expected << EOF
 blob
 mark :1
