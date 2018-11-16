@@ -6,6 +6,8 @@
  * for each thread where caching is desired.
  */
 
+extern CRITICAL_SECTION fscache_cs;
+
 int fscache_enable(size_t initial_size);
 #define enable_fscache(initial_size) fscache_enable(initial_size)
 
