@@ -243,7 +243,7 @@ static void export_blob(const struct object_id *oid)
 		if (!buf)
 			die("could not read blob %s", oid_to_hex(oid));
 		if (check_object_signature(oid, buf, size, type_name(type)) < 0)
-			die("sha1 mismatch in blob %s", oid_to_hex(oid));
+			die("oid mismatch in blob %s", oid_to_hex(oid));
 		object = parse_object_buffer(the_repository, oid, type,
 					     size, buf, &eaten);
 	}
@@ -330,17 +330,18 @@ static void print_path(const char *path)
 
 static void *generate_fake_oid(const void *old, size_t *len)
 {
-	static uint32_t counter = 1; /* avoid null sha1 */
-	unsigned char *out = xcalloc(GIT_SHA1_RAWSZ, 1);
-	put_be32(out + GIT_SHA1_RAWSZ - 4, counter++);
+	static uint32_t counter = 1; /* avoid null oid */
+	const unsigned hashsz = the_hash_algo->rawsz;
+	unsigned char *out = xcalloc(hashsz, 1);
+	put_be32(out + hashsz - 4, counter++);
 	return out;
 }
 
-static const unsigned char *anonymize_sha1(const struct object_id *oid)
+static const struct object_id *anonymize_oid(const struct object_id *oid)
 {
-	static struct hashmap sha1s;
-	size_t len = GIT_SHA1_RAWSZ;
-	return anonymize_mem(&sha1s, generate_fake_oid, oid, &len);
+	static struct hashmap objs;
+	size_t len = the_hash_algo->rawsz;
+	return anonymize_mem(&objs, generate_fake_oid, oid, &len);
 }
 
 static void show_filemodify(struct diff_queue_struct *q,
@@ -399,9 +400,9 @@ static void show_filemodify(struct diff_queue_struct *q,
 			 */
 			if (no_data || S_ISGITLINK(spec->mode))
 				printf("M %06o %s ", spec->mode,
-				       sha1_to_hex(anonymize ?
-						   anonymize_sha1(&spec->oid) :
-						   spec->oid.hash));
+				       oid_to_hex(anonymize ?
+						  anonymize_oid(&spec->oid) :
+						  &spec->oid));
 			else {
 				struct object *object = lookup_object(the_repository,
 								      spec->oid.hash);
@@ -988,7 +989,7 @@ static void handle_deletes(void)
 			continue;
 
 		printf("reset %s\nfrom %s\n\n",
-				refspec->dst, sha1_to_hex(null_sha1));
+				refspec->dst, oid_to_hex(&null_oid));
 	}
 }
 
