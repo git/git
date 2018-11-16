@@ -66,6 +66,17 @@ test_expect_success 'fast-export master~2..master' '
 
 '
 
+test_expect_success 'fast-export --reference-excluded-parents master~2..master' '
+
+	git fast-export --reference-excluded-parents master~2..master >actual &&
+	grep commit.refs/heads/master actual >commit-count &&
+	test_line_count = 2 commit-count &&
+	sed "s/master/rewrite/" actual |
+		(cd new &&
+		 git fast-import &&
+		 test $MASTER = $(git rev-parse --verify refs/heads/rewrite))
+'
+
 test_expect_success 'iso-8859-1' '
 
 	git config i18n.commitencoding ISO8859-1 &&

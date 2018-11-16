@@ -37,6 +37,7 @@ static int fake_missing_tagger;
 static int use_done_feature;
 static int no_data;
 static int full_tree;
+static int reference_excluded_commits;
 static struct string_list extra_refs = STRING_LIST_INIT_NODUP;
 static struct string_list tag_refs = STRING_LIST_INIT_NODUP;
 static struct refspec refspecs = REFSPEC_INIT_FETCH;
@@ -597,7 +598,8 @@ static void handle_commit(struct commit *commit, struct rev_info *rev,
 		message += 2;
 
 	if (commit->parents &&
-	    get_object_mark(&commit->parents->item->object) != 0 &&
+	    (get_object_mark(&commit->parents->item->object) != 0 ||
+	     reference_excluded_commits) &&
 	    !full_tree) {
 		parse_commit_or_die(commit->parents->item);
 		diff_tree_oid(get_commit_tree_oid(commit->parents->item),
@@ -645,13 +647,21 @@ static void handle_commit(struct commit *commit, struct rev_info *rev,
 	unuse_commit_buffer(commit, commit_buffer);
 
 	for (i = 0, p = commit->parents; p; p = p->next) {
-		int mark = get_object_mark(&p->item->object);
-		if (!mark)
+		struct object *obj = &p->item->object;
+		int mark = get_object_mark(obj);
+
+		if (!mark && !reference_excluded_commits)
 			continue;
 		if (i == 0)
-			printf("from :%d\n", mark);
+			printf("from ");
 		else
-			printf("merge :%d\n", mark);
+			printf("merge ");
+		if (mark)
+			printf(":%d\n", mark);
+		else
+			printf("%s\n", oid_to_hex(anonymize ?
+						  anonymize_oid(&obj->oid) :
+						  &obj->oid));
 		i++;
 	}
 
@@ -932,13 +942,22 @@ static void handle_tags_and_duplicates(struct string_list *extras)
 				/*
 				 * Getting here means we have a commit which
 				 * was excluded by a negative refspec (e.g.
-				 * fast-export ^master master).  If the user
+				 * fast-export ^master master).  If we are
+				 * referencing excluded commits, set the ref
+				 * to the exact commit.  Otherwise, the user
 				 * wants the branch exported but every commit
-				 * in its history to be deleted, that sounds
-				 * like a ref deletion to me.
+				 * in its history to be deleted, which basically
+				 * just means deletion of the ref.
 				 */
-				printf("reset %s\nfrom %s\n\n",
-				       name, oid_to_hex(&null_oid));
+				if (!reference_excluded_commits) {
+					/* delete the ref */
+					printf("reset %s\nfrom %s\n\n",
+					       name, oid_to_hex(&null_oid));
+					continue;
+				}
+				/* set ref to commit using oid, not mark */
+				printf("reset %s\nfrom %s\n\n", name,
+				       oid_to_hex(&commit->object.oid));
 				continue;
 			}
 
@@ -1075,6 +1094,9 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 		OPT_STRING_LIST(0, "refspec", &refspecs_list, N_("refspec"),
 			     N_("Apply refspec to exported refs")),
 		OPT_BOOL(0, "anonymize", &anonymize, N_("anonymize output")),
+		OPT_BOOL(0, "reference-excluded-parents",
+			 &reference_excluded_commits, N_("Reference parents which are not in fast-export stream by object id")),
+
 		OPT_END()
 	};
 
