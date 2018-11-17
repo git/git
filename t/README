@@ -339,6 +339,10 @@ for the index version specified.  Can be set to any valid version
 GIT_TEST_PRELOAD_INDEX=<boolean> exercises the preload-index code path
 by overriding the minimum number of cache entries required per thread.
 
+GIT_TEST_REBASE_USE_BUILTIN=<boolean>, when false, disables the
+builtin version of git-rebase. See 'rebase.useBuiltin' in
+git-config(1).
+
 GIT_TEST_INDEX_THREADS=<n> enables exercising the multi-threaded loading
 of the index for the whole test suite by bypassing the default number of
 cache entries and thread minimums. Setting this to 1 will make the
