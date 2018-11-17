@@ -62,9 +62,11 @@ check_tar() {
 	dir=$1
 	dir_with_prefix=$dir/$2
 
-	(mkdir $dir && cd $dir && "$TAR" xf -) <$tarfile &&
+	test_expect_success ' extract tar archive' '
+		(mkdir $dir && cd $dir && "$TAR" xf -) <$tarfile
+	'
 
-	if test_have_prereq TAR_NEEDS_PAX_FALLBACK ; then
+	test_expect_success TAR_NEEDS_PAX_FALLBACK ' interpret pax headers' '
 		(
 			cd $dir &&
 			for header in *.paxheader
@@ -80,11 +82,16 @@ check_tar() {
 				fi
 			done
 		)
-	fi &&
+	'
 
-	(cd ${dir_with_prefix}a && find .) | sort >$listfile &&
-	test_cmp a.lst $listfile &&
-	diff -r a ${dir_with_prefix}a
+	test_expect_success ' validate filenames' '
+		(cd ${dir_with_prefix}a && find .) | sort >$listfile &&
+		test_cmp a.lst $listfile
+	'
+
+	test_expect_success ' validate file contents' '
+		diff -r a ${dir_with_prefix}a
+	'
 }
 
 test_expect_success \
@@ -136,27 +143,19 @@ test_expect_success \
     'git archive' \
     'git archive HEAD >b.tar'
 
-test_expect_success 'extract archive' 'check_tar b'
-
-test_expect_success 'protocol v2 for remote' '
-	GIT_PROTOCOL="version=2" GIT_TRACE_PACKET="$(pwd)/log" git archive \
-		--remote=. HEAD >v2_remote.tar &&
-	grep "version 2" log
-'
-test_expect_success 'extract v2 archive' 'check_tar v2_remote'
+check_tar b
 
 test_expect_success 'git archive --prefix=prefix/' '
 	git archive --prefix=prefix/ HEAD >with_prefix.tar
 '
 
-test_expect_success 'extract with prefix' 'check_tar with_prefix prefix/'
+check_tar with_prefix prefix/
 
 test_expect_success 'git-archive --prefix=olde-' '
 	git archive --prefix=olde- HEAD >with_olde-prefix.tar
 '
 
-test_expect_success 'extract with olde- prefix' \
-	'check_tar with_olde-prefix olde-'
+check_tar with_olde-prefix olde-
 
 test_expect_success 'git archive on large files' '
     test_config core.bigfilethreshold 1 &&
