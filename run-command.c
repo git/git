@@ -1226,7 +1226,7 @@ int start_async(struct async *async)
 	{
 		int err = pthread_create(&async->tid, NULL, run_thread, async);
 		if (err) {
-			error_errno("cannot create thread");
+			error(_("cannot create async thread: %s"), strerror(err));
 			goto error;
 		}
 	}
@@ -1256,6 +1256,15 @@ int finish_async(struct async *async)
 	if (pthread_join(async->tid, &ret))
 		error("pthread_join failed");
 	return (int)(intptr_t)ret;
+#endif
+}
+
+int async_with_fork(void)
+{
+#ifdef NO_PTHREADS
+	return 1;
+#else
+	return 0;
 #endif
 }
 

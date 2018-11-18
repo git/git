@@ -7,6 +7,7 @@
  */
 #define NO_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
+#include "thread-utils.h"
 
 struct dir_entry {
 	struct hashmap_entry ent;
@@ -130,22 +131,6 @@ static int cache_entry_cmp(const void *unused_cmp_data,
 
 static int lazy_try_threaded = 1;
 static int lazy_nr_dir_threads;
-
-#ifdef NO_PTHREADS
-
-static inline int lookup_lazy_params(struct index_state *istate)
-{
-	return 0;
-}
-
-static inline void threaded_lazy_init_name_hash(
-	struct index_state *istate)
-{
-}
-
-#else
-
-#include "thread-utils.h"
 
 /*
  * Set a minimum number of cache_entries that we will handle per
@@ -509,12 +494,16 @@ static inline void lazy_update_dir_ref_counts(
 static void threaded_lazy_init_name_hash(
 	struct index_state *istate)
 {
+	int err;
 	int nr_each;
 	int k_start;
 	int t;
 	struct lazy_entry *lazy_entries;
 	struct lazy_dir_thread_data *td_dir;
 	struct lazy_name_thread_data *td_name;
+
+	if (!HAVE_THREADS)
+		return;
 
 	k_start = 0;
 	nr_each = DIV_ROUND_UP(istate->cache_nr, lazy_nr_dir_threads);
@@ -538,8 +527,9 @@ static void threaded_lazy_init_name_hash(
 		if (k_start > istate->cache_nr)
 			k_start = istate->cache_nr;
 		td_dir_t->k_end = k_start;
-		if (pthread_create(&td_dir_t->pthread, NULL, lazy_dir_thread_proc, td_dir_t))
-			die("unable to create lazy_dir_thread");
+		err = pthread_create(&td_dir_t->pthread, NULL, lazy_dir_thread_proc, td_dir_t);
+		if (err)
+			die(_("unable to create lazy_dir thread: %s"), strerror(err));
 	}
 	for (t = 0; t < lazy_nr_dir_threads; t++) {
 		struct lazy_dir_thread_data *td_dir_t = td_dir + t;
@@ -559,13 +549,15 @@ static void threaded_lazy_init_name_hash(
 	 */
 	td_name->istate = istate;
 	td_name->lazy_entries = lazy_entries;
-	if (pthread_create(&td_name->pthread, NULL, lazy_name_thread_proc, td_name))
-		die("unable to create lazy_name_thread");
+	err = pthread_create(&td_name->pthread, NULL, lazy_name_thread_proc, td_name);
+	if (err)
+		die(_("unable to create lazy_name thread: %s"), strerror(err));
 
 	lazy_update_dir_ref_counts(istate, lazy_entries);
 
-	if (pthread_join(td_name->pthread, NULL))
-		die("unable to join lazy_name_thread");
+	err = pthread_join(td_name->pthread, NULL);
+	if (err)
+		die(_("unable to join lazy_name thread: %s"), strerror(err));
 
 	cleanup_dir_mutex();
 
@@ -573,8 +565,6 @@ static void threaded_lazy_init_name_hash(
 	free(td_dir);
 	free(lazy_entries);
 }
-
-#endif
 
 static void lazy_init_name_hash(struct index_state *istate)
 {
