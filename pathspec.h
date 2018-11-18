@@ -111,5 +111,8 @@ void add_pathspec_matches_against_index(const struct pathspec *pathspec,
 					char *seen);
 char *find_pathspecs_matching_against_index(const struct pathspec *pathspec,
 					    const struct index_state *istate);
+int match_pathspec_attrs(const struct index_state *istate,
+			 const char *name, int namelen,
+			 const struct pathspec_item *item);
 
 #endif /* PATHSPEC_H */
