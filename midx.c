@@ -721,12 +721,18 @@ static size_t write_midx_object_offsets(struct hashfile *f, int large_offset_nee
 static size_t write_midx_large_offsets(struct hashfile *f, uint32_t nr_large_offset,
 				       struct pack_midx_entry *objects, uint32_t nr_objects)
 {
-	struct pack_midx_entry *list = objects;
+	struct pack_midx_entry *list = objects, *end = objects + nr_objects;
 	size_t written = 0;
 
 	while (nr_large_offset) {
-		struct pack_midx_entry *obj = list++;
-		uint64_t offset = obj->offset;
+		struct pack_midx_entry *obj;
+		uint64_t offset;
+
+		if (list >= end)
+			BUG("too many large-offset objects");
+
+		obj = list++;
+		offset = obj->offset;
 
 		if (!(offset >> 31))
 			continue;

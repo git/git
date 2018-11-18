@@ -2113,7 +2113,9 @@ static int parse_opt_patchformat(const struct option *opt, const char *arg, int 
 {
 	int *opt_value = opt->value;
 
-	if (!strcmp(arg, "mbox"))
+	if (unset)
+		*opt_value = PATCH_FORMAT_UNKNOWN;
+	else if (!strcmp(arg, "mbox"))
 		*opt_value = PATCH_FORMAT_MBOX;
 	else if (!strcmp(arg, "stgit"))
 		*opt_value = PATCH_FORMAT_STGIT;

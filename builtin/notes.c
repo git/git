@@ -215,6 +215,8 @@ static int parse_msg_arg(const struct option *opt, const char *arg, int unset)
 {
 	struct note_data *d = opt->value;
 
+	BUG_ON_OPT_NEG(unset);
+
 	strbuf_grow(&d->buf, strlen(arg) + 2);
 	if (d->buf.len)
 		strbuf_addch(&d->buf, '\n');
@@ -228,6 +230,8 @@ static int parse_msg_arg(const struct option *opt, const char *arg, int unset)
 static int parse_file_arg(const struct option *opt, const char *arg, int unset)
 {
 	struct note_data *d = opt->value;
+
+	BUG_ON_OPT_NEG(unset);
 
 	if (d->buf.len)
 		strbuf_addch(&d->buf, '\n');
@@ -249,6 +253,8 @@ static int parse_reuse_arg(const struct option *opt, const char *arg, int unset)
 	struct object_id object;
 	enum object_type type;
 	unsigned long len;
+
+	BUG_ON_OPT_NEG(unset);
 
 	if (d->buf.len)
 		strbuf_addch(&d->buf, '\n');
@@ -273,6 +279,7 @@ static int parse_reuse_arg(const struct option *opt, const char *arg, int unset)
 static int parse_reedit_arg(const struct option *opt, const char *arg, int unset)
 {
 	struct note_data *d = opt->value;
+	BUG_ON_OPT_NEG(unset);
 	d->use_editor = 1;
 	return parse_reuse_arg(opt, arg, unset);
 }

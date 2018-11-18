@@ -132,6 +132,8 @@ static const char * const builtin_checkout_index_usage[] = {
 static int option_parse_stage(const struct option *opt,
 			      const char *arg, int unset)
 {
+	BUG_ON_OPT_NEG(unset);
+
 	if (!strcmp(arg, "all")) {
 		to_tempfile = 1;
 		checkout_stage = CHECKOUT_ALL;

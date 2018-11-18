@@ -150,9 +150,6 @@ struct option {
 				      (h), 0, &parse_opt_string_list }
 #define OPT_UYN(s, l, v, h)         { OPTION_CALLBACK, (s), (l), (v), NULL, \
 				      (h), PARSE_OPT_NOARG, &parse_opt_tertiary }
-#define OPT_DATE(s, l, v, h) \
-	{ OPTION_CALLBACK, (s), (l), (v), N_("time"),(h), 0,	\
-	  parse_opt_approxidate_cb }
 #define OPT_EXPIRY_DATE(s, l, v, h) \
 	{ OPTION_CALLBACK, (s), (l), (v), N_("expiry-date"),(h), 0,	\
 	  parse_opt_expiry_date_cb }
@@ -194,6 +191,20 @@ extern int opterror(const struct option *opt, const char *reason, int flags);
 #define opterror(o,r,f) (opterror((o),(r),(f)), const_error())
 #endif
 
+/*
+ * Use these assertions for callbacks that expect to be called with NONEG and
+ * NOARG respectively, and do not otherwise handle the "unset" and "arg"
+ * parameters.
+ */
+#define BUG_ON_OPT_NEG(unset) do { \
+	if ((unset)) \
+		BUG("option callback does not expect negation"); \
+} while (0)
+#define BUG_ON_OPT_ARG(arg) do { \
+	if ((arg)) \
+		BUG("option callback does not expect an argument"); \
+} while (0)
+
 /*----- incremental advanced APIs -----*/
 
 enum {
@@ -232,7 +243,6 @@ extern struct option *parse_options_concat(struct option *a, struct option *b);
 
 /*----- some often used options -----*/
 extern int parse_opt_abbrev_cb(const struct option *, const char *, int);
-extern int parse_opt_approxidate_cb(const struct option *, const char *, int);
 extern int parse_opt_expiry_date_cb(const struct option *, const char *, int);
 extern int parse_opt_color_flag_cb(const struct option *, const char *, int);
 extern int parse_opt_verbosity_cb(const struct option *, const char *, int);

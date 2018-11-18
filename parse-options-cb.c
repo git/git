@@ -28,13 +28,6 @@ int parse_opt_abbrev_cb(const struct option *opt, const char *arg, int unset)
 	return 0;
 }
 
-int parse_opt_approxidate_cb(const struct option *opt, const char *arg,
-			     int unset)
-{
-	*(timestamp_t *)(opt->value) = approxidate(arg);
-	return 0;
-}
-
 int parse_opt_expiry_date_cb(const struct option *opt, const char *arg,
 			     int unset)
 {
@@ -65,6 +58,8 @@ int parse_opt_verbosity_cb(const struct option *opt, const char *arg,
 {
 	int *target = opt->value;
 
+	BUG_ON_OPT_ARG(arg);
+
 	if (unset)
 		/* --no-quiet, --no-verbose */
 		*target = 0;
@@ -86,6 +81,8 @@ int parse_opt_commits(const struct option *opt, const char *arg, int unset)
 {
 	struct object_id oid;
 	struct commit *commit;
+
+	BUG_ON_OPT_NEG(unset);
 
 	if (!arg)
 		return -1;
@@ -117,6 +114,9 @@ int parse_opt_object_name(const struct option *opt, const char *arg, int unset)
 int parse_opt_tertiary(const struct option *opt, const char *arg, int unset)
 {
 	int *target = opt->value;
+
+	BUG_ON_OPT_ARG(arg);
+
 	*target = unset ? 2 : 1;
 	return 0;
 }
