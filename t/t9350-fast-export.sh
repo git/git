@@ -66,6 +66,34 @@ test_expect_success 'fast-export master~2..master' '
 
 '
 
+test_expect_success 'fast-export --reference-excluded-parents master~2..master' '
+
+	git fast-export --reference-excluded-parents master~2..master >actual &&
+	grep commit.refs/heads/master actual >commit-count &&
+	test_line_count = 2 commit-count &&
+	sed "s/master/rewrite/" actual |
+		(cd new &&
+		 git fast-import &&
+		 test $MASTER = $(git rev-parse --verify refs/heads/rewrite))
+'
+
+test_expect_success 'fast-export --show-original-ids' '
+
+	git fast-export --show-original-ids master >output &&
+	grep ^original-oid output| sed -e s/^original-oid.// | sort >actual &&
+	git rev-list --objects master muss >objects-and-names &&
+	awk "{print \$1}" objects-and-names | sort >commits-trees-blobs &&
+	comm -23 actual commits-trees-blobs >unfound &&
+	test_must_be_empty unfound
+'
+
+test_expect_success 'fast-export --show-original-ids | git fast-import' '
+
+	git fast-export --show-original-ids master muss | git fast-import --quiet &&
+	test $MASTER = $(git rev-parse --verify refs/heads/master) &&
+	test $MUSS = $(git rev-parse --verify refs/tags/muss)
+'
+
 test_expect_success 'iso-8859-1' '
 
 	git config i18n.commitencoding ISO8859-1 &&
@@ -325,6 +353,22 @@ test_expect_success 'rewriting tag of filtered out object' '
 )
 '
 
+test_expect_success 'rewrite tag predating pathspecs to nothing' '
+	test_create_repo rewrite_tag_predating_pathspecs &&
+	(
+		cd rewrite_tag_predating_pathspecs &&
+
+		test_commit initial &&
+
+		git tag -a -m "Some old tag" v0.0.0.0.0.0.1 &&
+
+		test_commit bar &&
+
+		git fast-export --tag-of-filtered-object=rewrite --all -- bar.t >output &&
+		grep from.$ZERO_OID output
+	)
+'
+
 cat > limit-by-paths/expected << EOF
 blob
 mark :1
@@ -364,6 +408,26 @@ test_expect_success 'path limiting with import-marks does not lose unmodified fi
 	git commit -mnext file &&
 	git fast-export --import-marks=marks simple -- file file0 >actual &&
 	grep file0 actual
+'
+
+test_expect_success 'avoid corrupt stream with non-existent mark' '
+	test_create_repo avoid_non_existent_mark &&
+	(
+		cd avoid_non_existent_mark &&
+
+		test_commit important-path &&
+
+		test_commit ignored &&
+
+		git branch A &&
+		git branch B &&
+
+		echo foo >>important-path.t &&
+		git add important-path.t &&
+		test_commit more changes &&
+
+		git fast-export --all -- important-path.t | git fast-import --force
+	)
 '
 
 test_expect_success 'full-tree re-shows unmodified files'        '
@@ -508,10 +572,20 @@ test_expect_success 'use refspec' '
 	test_cmp expected actual
 '
 
-test_expect_success 'delete refspec' '
+test_expect_success 'delete ref because entire history excluded' '
 	git branch to-delete &&
-	git fast-export --refspec :refs/heads/to-delete to-delete ^to-delete > actual &&
-	cat > expected <<-EOF &&
+	git fast-export to-delete ^to-delete >actual &&
+	cat >expected <<-EOF &&
+	reset refs/heads/to-delete
+	from 0000000000000000000000000000000000000000
+
+	EOF
+	test_cmp expected actual
+'
+
+test_expect_success 'delete refspec' '
+	git fast-export --refspec :refs/heads/to-delete >actual &&
+	cat >expected <<-EOF &&
 	reset refs/heads/to-delete
 	from 0000000000000000000000000000000000000000
 

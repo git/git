@@ -1,157 +1,3 @@
-/*
-(See Documentation/git-fast-import.txt for maintained documentation.)
-Format of STDIN stream:
-
-  stream ::= cmd*;
-
-  cmd ::= new_blob
-        | new_commit
-        | new_tag
-        | reset_branch
-        | checkpoint
-        | progress
-        ;
-
-  new_blob ::= 'blob' lf
-    mark?
-    file_content;
-  file_content ::= data;
-
-  new_commit ::= 'commit' sp ref_str lf
-    mark?
-    ('author' (sp name)? sp '<' email '>' sp when lf)?
-    'committer' (sp name)? sp '<' email '>' sp when lf
-    commit_msg
-    ('from' sp commit-ish lf)?
-    ('merge' sp commit-ish lf)*
-    (file_change | ls)*
-    lf?;
-  commit_msg ::= data;
-
-  ls ::= 'ls' sp '"' quoted(path) '"' lf;
-
-  file_change ::= file_clr
-    | file_del
-    | file_rnm
-    | file_cpy
-    | file_obm
-    | file_inm;
-  file_clr ::= 'deleteall' lf;
-  file_del ::= 'D' sp path_str lf;
-  file_rnm ::= 'R' sp path_str sp path_str lf;
-  file_cpy ::= 'C' sp path_str sp path_str lf;
-  file_obm ::= 'M' sp mode sp (hexsha1 | idnum) sp path_str lf;
-  file_inm ::= 'M' sp mode sp 'inline' sp path_str lf
-    data;
-  note_obm ::= 'N' sp (hexsha1 | idnum) sp commit-ish lf;
-  note_inm ::= 'N' sp 'inline' sp commit-ish lf
-    data;
-
-  new_tag ::= 'tag' sp tag_str lf
-    'from' sp commit-ish lf
-    ('tagger' (sp name)? sp '<' email '>' sp when lf)?
-    tag_msg;
-  tag_msg ::= data;
-
-  reset_branch ::= 'reset' sp ref_str lf
-    ('from' sp commit-ish lf)?
-    lf?;
-
-  checkpoint ::= 'checkpoint' lf
-    lf?;
-
-  progress ::= 'progress' sp not_lf* lf
-    lf?;
-
-     # note: the first idnum in a stream should be 1 and subsequent
-     # idnums should not have gaps between values as this will cause
-     # the stream parser to reserve space for the gapped values.  An
-     # idnum can be updated in the future to a new object by issuing
-     # a new mark directive with the old idnum.
-     #
-  mark ::= 'mark' sp idnum lf;
-  data ::= (delimited_data | exact_data)
-    lf?;
-
-    # note: delim may be any string but must not contain lf.
-    # data_line may contain any data but must not be exactly
-    # delim.
-  delimited_data ::= 'data' sp '<<' delim lf
-    (data_line lf)*
-    delim lf;
-
-     # note: declen indicates the length of binary_data in bytes.
-     # declen does not include the lf preceding the binary data.
-     #
-  exact_data ::= 'data' sp declen lf
-    binary_data;
-
-     # note: quoted strings are C-style quoting supporting \c for
-     # common escapes of 'c' (e..g \n, \t, \\, \") or \nnn where nnn
-     # is the signed byte value in octal.  Note that the only
-     # characters which must actually be escaped to protect the
-     # stream formatting is: \, " and LF.  Otherwise these values
-     # are UTF8.
-     #
-  commit-ish  ::= (ref_str | hexsha1 | sha1exp_str | idnum);
-  ref_str     ::= ref;
-  sha1exp_str ::= sha1exp;
-  tag_str     ::= tag;
-  path_str    ::= path    | '"' quoted(path)    '"' ;
-  mode        ::= '100644' | '644'
-                | '100755' | '755'
-                | '120000'
-                ;
-
-  declen ::= # unsigned 32 bit value, ascii base10 notation;
-  bigint ::= # unsigned integer value, ascii base10 notation;
-  binary_data ::= # file content, not interpreted;
-
-  when         ::= raw_when | rfc2822_when;
-  raw_when     ::= ts sp tz;
-  rfc2822_when ::= # Valid RFC 2822 date and time;
-
-  sp ::= # ASCII space character;
-  lf ::= # ASCII newline (LF) character;
-
-     # note: a colon (':') must precede the numerical value assigned to
-     # an idnum.  This is to distinguish it from a ref or tag name as
-     # GIT does not permit ':' in ref or tag strings.
-     #
-  idnum   ::= ':' bigint;
-  path    ::= # GIT style file path, e.g. "a/b/c";
-  ref     ::= # GIT ref name, e.g. "refs/heads/MOZ_GECKO_EXPERIMENT";
-  tag     ::= # GIT tag name, e.g. "FIREFOX_1_5";
-  sha1exp ::= # Any valid GIT SHA1 expression;
-  hexsha1 ::= # SHA1 in hexadecimal format;
-
-     # note: name and email are UTF8 strings, however name must not
-     # contain '<' or lf and email must not contain any of the
-     # following: '<', '>', lf.
-     #
-  name  ::= # valid GIT author/committer name;
-  email ::= # valid GIT author/committer email;
-  ts    ::= # time since the epoch in seconds, ascii base10 notation;
-  tz    ::= # GIT style timezone;
-
-     # note: comments, get-mark, ls-tree, and cat-blob requests may
-     # appear anywhere in the input, except within a data command. Any
-     # form of the data command always escapes the related input from
-     # comment processing.
-     #
-     # In case it is not clear, the '#' that starts the comment
-     # must be the first character on that line (an lf
-     # preceded it).
-     #
-
-  get_mark ::= 'get-mark' sp idnum lf;
-  cat_blob ::= 'cat-blob' sp (hexsha1 | idnum) lf;
-  ls_tree  ::= 'ls' sp (hexsha1 | idnum) sp path_str lf;
-
-  comment ::= '#' not_lf* lf;
-  not_lf  ::= # Any byte that is not ASCII newline (LF);
-*/
-
 #include "builtin.h"
 #include "cache.h"
 #include "repository.h"
@@ -1968,6 +1814,13 @@ static void parse_mark(void)
 		next_mark = 0;
 }
 
+static void parse_original_identifier(void)
+{
+	const char *v;
+	if (skip_prefix(command_buf.buf, "original-oid ", &v))
+		read_next_command();
+}
+
 static int parse_data(struct strbuf *sb, uintmax_t limit, uintmax_t *len_res)
 {
 	const char *data;
@@ -2110,6 +1963,7 @@ static void parse_new_blob(void)
 {
 	read_next_command();
 	parse_mark();
+	parse_original_identifier();
 	parse_and_store_blob(&last_blob, NULL, next_mark);
 }
 
@@ -2733,6 +2587,7 @@ static void parse_new_commit(const char *arg)
 
 	read_next_command();
 	parse_mark();
+	parse_original_identifier();
 	if (skip_prefix(command_buf.buf, "author ", &v)) {
 		author = parse_ident(v);
 		read_next_command();
@@ -2864,6 +2719,9 @@ static void parse_new_tag(const char *arg)
 	} else
 		die("Invalid ref name or SHA1 expression: %s", from);
 	read_next_command();
+
+	/* original-oid ... */
+	parse_original_identifier();
 
 	/* tagger ... */
 	if (skip_prefix(command_buf.buf, "tagger ", &v)) {
