@@ -557,6 +557,17 @@ static int run_fetch(const char *repo, const char **refspecs)
 static int pull_into_void(const struct object_id *merge_head,
 		const struct object_id *curr_head)
 {
+	if (opt_verify_signatures) {
+		struct commit *commit;
+
+		commit = lookup_commit(the_repository, merge_head);
+		if (!commit)
+			die(_("unable to access commit %s"),
+			    oid_to_hex(merge_head));
+
+		verify_merge_signature(commit, opt_verbosity);
+	}
+
 	/*
 	 * Two-way merge: we treat the index as based on an empty tree,
 	 * and try to fast-forward to HEAD. This ensures we will not lose
