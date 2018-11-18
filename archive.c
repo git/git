@@ -391,12 +391,12 @@ static void parse_treeish_arg(const char **argv,
 		int refnamelen = colon - name;
 
 		if (!dwim_ref(name, refnamelen, &oid, &ref))
-			die("no such ref: %.*s", refnamelen, name);
+			die(_("no such ref: %.*s"), refnamelen, name);
 		free(ref);
 	}
 
 	if (get_oid(name, &oid))
-		die("Not a valid object name");
+		die(_("not a valid object name: %s"), name);
 
 	commit = lookup_commit_reference_gently(ar_args->repo, &oid, 1);
 	if (commit) {
@@ -409,7 +409,7 @@ static void parse_treeish_arg(const char **argv,
 
 	tree = parse_tree_indirect(&oid);
 	if (tree == NULL)
-		die("not a tree object");
+		die(_("not a tree object: %s"), oid_to_hex(&oid));
 
 	if (prefix) {
 		struct object_id tree_oid;
@@ -419,7 +419,7 @@ static void parse_treeish_arg(const char **argv,
 		err = get_tree_entry(&tree->object.oid, prefix, &tree_oid,
 				     &mode);
 		if (err || !S_ISDIR(mode))
-			die("current working directory is untracked");
+			die(_("current working directory is untracked"));
 
 		tree = parse_tree_indirect(&tree_oid);
 	}

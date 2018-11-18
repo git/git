@@ -208,7 +208,7 @@ test_expect_success 'server is initially ahead - no ref in want' '
 	cp -r "$LOCAL_PRISTINE" local &&
 	inconsistency master 1234567890123456789012345678901234567890 &&
 	test_must_fail git -C local fetch 2>err &&
-	grep "ERR upload-pack: not our ref" err
+	test_i18ngrep "ERR upload-pack: not our ref" err
 '
 
 test_expect_success 'server is initially ahead - ref in want' '
@@ -254,7 +254,7 @@ test_expect_success 'server loses a ref - ref in want' '
 	echo "s/master/raster/" >"$HTTPD_ROOT_PATH/one-time-sed" &&
 	test_must_fail git -C local fetch 2>err &&
 
-	grep "ERR unknown ref refs/heads/raster" err
+	test_i18ngrep "ERR unknown ref refs/heads/raster" err
 '
 
 stop_httpd

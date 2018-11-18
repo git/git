@@ -32,7 +32,7 @@ static int get_arg(struct parse_opt_ctx_t *p, const struct option *opt,
 		p->argc--;
 		*arg = *++p->argv;
 	} else
-		return opterror(opt, "requires a value", flags);
+		return error(_("%s requires a value"), optname(opt, flags));
 	return 0;
 }
 
@@ -49,7 +49,6 @@ static int opt_command_mode_error(const struct option *opt,
 				  int flags)
 {
 	const struct option *that;
-	struct strbuf message = STRBUF_INIT;
 	struct strbuf that_name = STRBUF_INIT;
 
 	/*
@@ -67,13 +66,13 @@ static int opt_command_mode_error(const struct option *opt,
 			strbuf_addf(&that_name, "--%s", that->long_name);
 		else
 			strbuf_addf(&that_name, "-%c", that->short_name);
-		strbuf_addf(&message, ": incompatible with %s", that_name.buf);
+		error(_("%s is incompatible with %s"),
+		      optname(opt, flags), that_name.buf);
 		strbuf_release(&that_name);
-		opterror(opt, message.buf, flags);
-		strbuf_release(&message);
 		return -1;
 	}
-	return opterror(opt, ": incompatible with something else", flags);
+	return error(_("%s : incompatible with something else"),
+		     optname(opt, flags));
 }
 
 static int get_value(struct parse_opt_ctx_t *p,
@@ -86,11 +85,11 @@ static int get_value(struct parse_opt_ctx_t *p,
 	int err;
 
 	if (unset && p->opt)
-		return opterror(opt, "takes no value", flags);
+		return error(_("%s takes no value"), optname(opt, flags));
 	if (unset && (opt->flags & PARSE_OPT_NONEG))
-		return opterror(opt, "isn't available", flags);
+		return error(_("%s isn't available"), optname(opt, flags));
 	if (!(flags & OPT_SHORT) && p->opt && (opt->flags & PARSE_OPT_NOARG))
-		return opterror(opt, "takes no value", flags);
+		return error(_("%s takes no value"), optname(opt, flags));
 
 	switch (opt->type) {
 	case OPTION_LOWLEVEL_CALLBACK:
@@ -176,7 +175,8 @@ static int get_value(struct parse_opt_ctx_t *p,
 			return -1;
 		*(int *)opt->value = strtol(arg, (char **)&s, 10);
 		if (*s)
-			return opterror(opt, "expects a numerical value", flags);
+			return error(_("%s expects a numerical value"),
+				     optname(opt, flags));
 		return 0;
 
 	case OPTION_MAGNITUDE:
@@ -191,13 +191,13 @@ static int get_value(struct parse_opt_ctx_t *p,
 		if (get_arg(p, opt, flags, &arg))
 			return -1;
 		if (!git_parse_ulong(arg, opt->value))
-			return opterror(opt,
-				"expects a non-negative integer value with an optional k/m/g suffix",
-				flags);
+			return error(_("%s expects a non-negative integer value"
+				       " with an optional k/m/g suffix"),
+				     optname(opt, flags));
 		return 0;
 
 	default:
-		die("should not happen, someone must be hit on the forehead");
+		BUG("opt->type %d should not happen", opt->type);
 	}
 }
 
@@ -257,7 +257,8 @@ again:
 			if (!rest)
 				continue;
 			if (*rest == '=')
-				return opterror(options, "takes no value", flags);
+				return error(_("%s takes no value"),
+					     optname(options, flags));
 			if (*rest)
 				continue;
 			p->out[p->cpidx++] = arg - 2;
@@ -318,8 +319,8 @@ is_abbreviated:
 	}
 
 	if (ambiguous_option) {
-		error("Ambiguous option: %s "
-			"(could be --%s%s or --%s%s)",
+		error(_("ambiguous option: %s "
+			"(could be --%s%s or --%s%s)"),
 			arg,
 			(ambiguous_flags & OPT_UNSET) ?  "no-" : "",
 			ambiguous_option->long_name,
@@ -352,7 +353,7 @@ static void check_typos(const char *arg, const struct option *options)
 		return;
 
 	if (starts_with(arg, "no-")) {
-		error ("did you mean `--%s` (with two dashes ?)", arg);
+		error(_("did you mean `--%s` (with two dashes ?)"), arg);
 		exit(129);
 	}
 
@@ -360,7 +361,7 @@ static void check_typos(const char *arg, const struct option *options)
 		if (!options->long_name)
 			continue;
 		if (starts_with(options->long_name, arg)) {
-			error ("did you mean `--%s` (with two dashes ?)", arg);
+			error(_("did you mean `--%s` (with two dashes ?)"), arg);
 			exit(129);
 		}
 	}
@@ -423,7 +424,7 @@ void parse_options_start(struct parse_opt_ctx_t *ctx,
 	ctx->flags = flags;
 	if ((flags & PARSE_OPT_KEEP_UNKNOWN) &&
 	    (flags & PARSE_OPT_STOP_AT_NON_OPTION))
-		die("STOP_AT_NON_OPTION and KEEP_UNKNOWN don't go together");
+		BUG("STOP_AT_NON_OPTION and KEEP_UNKNOWN don't go together");
 	parse_options_check(options);
 }
 
@@ -643,11 +644,11 @@ int parse_options(int argc, const char **argv, const char *prefix,
 		break;
 	default: /* PARSE_OPT_UNKNOWN */
 		if (ctx.argv[0][1] == '-') {
-			error("unknown option `%s'", ctx.argv[0] + 2);
+			error(_("unknown option `%s'"), ctx.argv[0] + 2);
 		} else if (isascii(*ctx.opt)) {
-			error("unknown switch `%c'", *ctx.opt);
+			error(_("unknown switch `%c'"), *ctx.opt);
 		} else {
-			error("unknown non-ascii option in string: `%s'",
+			error(_("unknown non-ascii option in string: `%s'"),
 			      ctx.argv[0]);
 		}
 		usage_with_options(usagestr, options);
@@ -773,12 +774,17 @@ void NORETURN usage_msg_opt(const char *msg,
 	usage_with_options(usagestr, options);
 }
 
-#undef opterror
-int opterror(const struct option *opt, const char *reason, int flags)
+const char *optname(const struct option *opt, int flags)
 {
+	static struct strbuf sb = STRBUF_INIT;
+
+	strbuf_reset(&sb);
 	if (flags & OPT_SHORT)
-		return error("switch `%c' %s", opt->short_name, reason);
-	if (flags & OPT_UNSET)
-		return error("option `no-%s' %s", opt->long_name, reason);
-	return error("option `%s' %s", opt->long_name, reason);
+		strbuf_addf(&sb, "switch `%c'", opt->short_name);
+	else if (flags & OPT_UNSET)
+		strbuf_addf(&sb, "option `no-%s'", opt->long_name);
+	else
+		strbuf_addf(&sb, "option `%s'", opt->long_name);
+
+	return sb.buf;
 }

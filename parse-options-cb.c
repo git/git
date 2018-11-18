@@ -18,7 +18,8 @@ int parse_opt_abbrev_cb(const struct option *opt, const char *arg, int unset)
 	} else {
 		v = strtol(arg, (char **)&arg, 10);
 		if (*arg)
-			return opterror(opt, "expects a numerical value", 0);
+			return error(_("option `%s' expects a numerical value"),
+				     opt->long_name);
 		if (v && v < MINIMUM_ABBREV)
 			v = MINIMUM_ABBREV;
 		else if (v > 40)
@@ -47,8 +48,8 @@ int parse_opt_color_flag_cb(const struct option *opt, const char *arg,
 		arg = unset ? "never" : (const char *)opt->defval;
 	value = git_config_colorbool(NULL, arg);
 	if (value < 0)
-		return opterror(opt,
-			"expects \"always\", \"auto\", or \"never\"", 0);
+		return error(_("option `%s' expects \"always\", \"auto\", or \"never\""),
+			     opt->long_name);
 	*(int *)opt->value = value;
 	return 0;
 }

@@ -2324,9 +2324,11 @@ int parse_opt_merge_filter(const struct option *opt, const char *arg, int unset)
 
 	if (rf->merge) {
 		if (no_merged) {
-			return opterror(opt, "is incompatible with --merged", 0);
+			return error(_("option `%s' is incompatible with --merged"),
+				     opt->long_name);
 		} else {
-			return opterror(opt, "is incompatible with --no-merged", 0);
+			return error(_("option `%s' is incompatible with --no-merged"),
+				     opt->long_name);
 		}
 	}
 
@@ -2340,7 +2342,7 @@ int parse_opt_merge_filter(const struct option *opt, const char *arg, int unset)
 	rf->merge_commit = lookup_commit_reference_gently(the_repository,
 							  &oid, 0);
 	if (!rf->merge_commit)
-		return opterror(opt, "must point to a commit", 0);
+		return error(_("option `%s' must point to a commit"), opt->long_name);
 
 	return 0;
 }

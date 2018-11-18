@@ -20,12 +20,12 @@ check_have () {
 }
 
 check_fsck () {
-	output=$(git fsck --full)
+	git fsck --full >fsck.output
 	case "$1" in
 	'')
-		test -z "$output" ;;
+		test_must_be_empty fsck.output ;;
 	*)
-		echo "$output" | grep "$1" ;;
+		test_i18ngrep "$1" fsck.output ;;
 	esac
 }
 
