@@ -794,6 +794,7 @@ static int traverse_trees_recursive(int n, unsigned long dirmask,
 				    struct name_entry *names,
 				    struct traverse_info *info)
 {
+	struct unpack_trees_options *o = info->data;
 	int i, ret, bottom;
 	int nr_buf = 0;
 	struct tree_desc t[MAX_UNPACK_TREES];
@@ -804,7 +805,6 @@ static int traverse_trees_recursive(int n, unsigned long dirmask,
 
 	nr_entries = all_trees_same_as_cache_tree(n, dirmask, names, info);
 	if (nr_entries > 0) {
-		struct unpack_trees_options *o = info->data;
 		int pos = index_pos_by_traverse_info(names, info);
 
 		if (!o->merge || df_conflicts)
@@ -863,7 +863,7 @@ static int traverse_trees_recursive(int n, unsigned long dirmask,
 	}
 
 	bottom = switch_cache_bottom(&newinfo);
-	ret = traverse_trees(n, t, &newinfo);
+	ret = traverse_trees(o->src_index, n, t, &newinfo);
 	restore_cache_bottom(&newinfo, bottom);
 
 	for (i = 0; i < nr_buf; i++)
@@ -1550,7 +1550,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 		}
 
 		trace_performance_enter();
-		ret = traverse_trees(len, t, &info);
+		ret = traverse_trees(o->src_index, len, t, &info);
 		trace_performance_leave("traverse_trees");
 		if (ret < 0)
 			goto return_failed;

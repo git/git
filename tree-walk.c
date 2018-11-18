@@ -365,7 +365,8 @@ static void free_extended_entry(struct tree_desc_x *t)
 	}
 }
 
-static inline int prune_traversal(struct name_entry *e,
+static inline int prune_traversal(struct index_state *istate,
+				  struct name_entry *e,
 				  struct traverse_info *info,
 				  struct strbuf *base,
 				  int still_interesting)
@@ -374,10 +375,13 @@ static inline int prune_traversal(struct name_entry *e,
 		return 2;
 	if (still_interesting < 0)
 		return still_interesting;
-	return tree_entry_interesting(e, base, 0, info->pathspec);
+	return tree_entry_interesting(istate, e, base,
+				      0, info->pathspec);
 }
 
-int traverse_trees(int n, struct tree_desc *t, struct traverse_info *info)
+int traverse_trees(struct index_state *istate,
+		   int n, struct tree_desc *t,
+		   struct traverse_info *info)
 {
 	int error = 0;
 	struct name_entry *entry = xmalloc(n*sizeof(*entry));
@@ -461,7 +465,7 @@ int traverse_trees(int n, struct tree_desc *t, struct traverse_info *info)
 		}
 		if (!mask)
 			break;
-		interesting = prune_traversal(e, info, &base, interesting);
+		interesting = prune_traversal(istate, e, info, &base, interesting);
 		if (interesting < 0)
 			break;
 		if (interesting) {
@@ -928,7 +932,8 @@ static int match_wildcard_base(const struct pathspec_item *item,
  * Pre-condition: either baselen == base_offset (i.e. empty path)
  * or base[baselen-1] == '/' (i.e. with trailing slash).
  */
-static enum interesting do_match(const struct name_entry *entry,
+static enum interesting do_match(struct index_state *istate,
+				 const struct name_entry *entry,
 				 struct strbuf *base, int base_offset,
 				 const struct pathspec *ps,
 				 int exclude)
@@ -1090,12 +1095,13 @@ match_wildcards:
  * Pre-condition: either baselen == base_offset (i.e. empty path)
  * or base[baselen-1] == '/' (i.e. with trailing slash).
  */
-enum interesting tree_entry_interesting(const struct name_entry *entry,
+enum interesting tree_entry_interesting(struct index_state *istate,
+					const struct name_entry *entry,
 					struct strbuf *base, int base_offset,
 					const struct pathspec *ps)
 {
 	enum interesting positive, negative;
-	positive = do_match(entry, base, base_offset, ps, 0);
+	positive = do_match(istate, entry, base, base_offset, ps, 0);
 
 	/*
 	 * case | entry | positive | negative | result
@@ -1132,7 +1138,7 @@ enum interesting tree_entry_interesting(const struct name_entry *entry,
 	    positive <= entry_not_interesting) /* #1, #2, #11, #12 */
 		return positive;
 
-	negative = do_match(entry, base, base_offset, ps, 1);
+	negative = do_match(istate, entry, base, base_offset, ps, 1);
 
 	/* #8, #18 */
 	if (positive == all_entries_interesting &&
