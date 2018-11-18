@@ -534,6 +534,10 @@ static int parse_ref_filter_atom(const struct ref_format *format,
 	if (ARRAY_SIZE(valid_atom) <= i)
 		return strbuf_addf_ret(err, -1, _("unknown field name: %.*s"),
 				       (int)(ep-atom), atom);
+	if (valid_atom[i].source != SOURCE_NONE && !have_git_dir())
+		return strbuf_addf_ret(err, -1,
+				       _("not a git repository, but the field '%.*s' requires access to object data"),
+				       (int)(ep-atom), atom);
 
 	/* Add it in, including the deref prefix */
 	at = used_atom_cnt;
