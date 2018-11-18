@@ -1748,7 +1748,7 @@ static int parse_fragment(struct apply_state *state,
 	}
 	if (oldlines || newlines)
 		return -1;
-	if (!deleted && !added)
+	if (!patch->recount && !deleted && !added)
 		return -1;
 
 	fragment->leading = leading;
