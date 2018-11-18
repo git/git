@@ -1,5 +1,5 @@
-Git Release Notes
-=================
+Git 2.20 Release Notes
+======================
 
 Backward Compatibility Notes
 ----------------------------
