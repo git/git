@@ -429,5 +429,10 @@ test_expect_success 'GIT_TRACE_CURL_NO_DATA prevents data from being traced' '
 	! grep "=> Send data" err
 '
 
+test_expect_success 'server-side error detected' '
+	test_must_fail git clone $HTTPD_URL/error_smart/repo.git 2>actual &&
+	grep "server-side error" actual
+'
+
 stop_httpd
 test_done
