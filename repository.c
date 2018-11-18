@@ -63,8 +63,14 @@ void repo_set_gitdir(struct repository *repo,
 	free(old_gitdir);
 
 	repo_set_commondir(repo, o->commondir);
-	expand_base_dir(&repo->objects->objectdir, o->object_dir,
+
+	if (!repo->objects->odb) {
+		repo->objects->odb = xcalloc(1, sizeof(*repo->objects->odb));
+		repo->objects->odb_tail = &repo->objects->odb->next;
+	}
+	expand_base_dir(&repo->objects->odb->path, o->object_dir,
 			repo->commondir, "objects");
+
 	free(repo->objects->alternate_db);
 	repo->objects->alternate_db = xstrdup_or_null(o->alternate_db);
 	expand_base_dir(&repo->graft_file, o->graft_file,

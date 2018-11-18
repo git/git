@@ -482,27 +482,26 @@ struct raw_object_store *raw_object_store_new(void)
 	return o;
 }
 
-static void free_alt_odb(struct alternate_object_database *alt)
+static void free_object_directory(struct object_directory *odb)
 {
-	strbuf_release(&alt->scratch);
-	oid_array_clear(&alt->loose_objects_cache);
-	free(alt);
+	free(odb->path);
+	oid_array_clear(&odb->loose_objects_cache);
+	free(odb);
 }
 
-static void free_alt_odbs(struct raw_object_store *o)
+static void free_object_directories(struct raw_object_store *o)
 {
-	while (o->alt_odb_list) {
-		struct alternate_object_database *next;
+	while (o->odb) {
+		struct object_directory *next;
 
-		next = o->alt_odb_list->next;
-		free_alt_odb(o->alt_odb_list);
-		o->alt_odb_list = next;
+		next = o->odb->next;
+		free_object_directory(o->odb);
+		o->odb = next;
 	}
 }
 
 void raw_object_store_clear(struct raw_object_store *o)
 {
-	FREE_AND_NULL(o->objectdir);
 	FREE_AND_NULL(o->alternate_db);
 
 	oidmap_free(o->replace_map, 1);
@@ -512,8 +511,9 @@ void raw_object_store_clear(struct raw_object_store *o)
 	o->commit_graph = NULL;
 	o->commit_graph_attempted = 0;
 
-	free_alt_odbs(o);
-	o->alt_odb_tail = NULL;
+	free_object_directories(o);
+	o->odb_tail = NULL;
+	o->loaded_alternates = 0;
 
 	INIT_LIST_HEAD(&o->packed_git_mru);
 	close_all_packs(o);

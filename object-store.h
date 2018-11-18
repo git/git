@@ -7,19 +7,17 @@
 #include "sha1-array.h"
 #include "strbuf.h"
 
-struct alternate_object_database {
-	struct alternate_object_database *next;
-
-	/* see alt_scratch_buf() */
-	struct strbuf scratch;
-	size_t base_len;
+struct object_directory {
+	struct object_directory *next;
 
 	/*
-	 * Used to store the results of readdir(3) calls when searching
-	 * for unique abbreviated hashes.  This cache is never
-	 * invalidated, thus it's racy and not necessarily accurate.
-	 * That's fine for its purpose; don't use it for tasks requiring
-	 * greater accuracy!
+	 * Used to store the results of readdir(3) calls when we are OK
+	 * sacrificing accuracy due to races for speed. That includes
+	 * object existence with OBJECT_INFO_QUICK, as well as
+	 * our search for unique abbreviated hashes. Don't use it for tasks
+	 * requiring greater accuracy!
+	 *
+	 * Be sure to call odb_load_loose_cache() before using.
 	 */
 	char loose_objects_subdir_seen[256];
 	struct oid_array loose_objects_cache;
@@ -28,18 +26,13 @@ struct alternate_object_database {
 	 * Path to the alternative object store. If this is a relative path,
 	 * it is relative to the current working directory.
 	 */
-	char path[FLEX_ARRAY];
+	char *path;
 };
+
 void prepare_alt_odb(struct repository *r);
 char *compute_alternate_path(const char *path, struct strbuf *err);
-typedef int alt_odb_fn(struct alternate_object_database *, void *);
+typedef int alt_odb_fn(struct object_directory *, void *);
 int foreach_alt_odb(alt_odb_fn, void*);
-
-/*
- * Allocate a "struct alternate_object_database" but do _not_ actually
- * add it to the list of alternates.
- */
-struct alternate_object_database *alloc_alt_odb(const char *dir);
 
 /*
  * Add the directory to the on-disk alternates file; the new entry will also
@@ -55,12 +48,11 @@ void add_to_alternates_file(const char *dir);
 void add_to_alternates_memory(const char *dir);
 
 /*
- * Returns a scratch strbuf pre-filled with the alternate object directory,
- * including a trailing slash, which can be used to access paths in the
- * alternate. Always use this over direct access to alt->scratch, as it
- * cleans up any previous use of the scratch buffer.
+ * Populate an odb's loose object cache for one particular subdirectory (i.e.,
+ * the one that corresponds to the first byte of objects you're interested in,
+ * from 0 to 255 inclusive).
  */
-struct strbuf *alt_scratch_buf(struct alternate_object_database *alt);
+void odb_load_loose_cache(struct object_directory *odb, int subdir_nr);
 
 struct packed_git {
 	struct packed_git *next;
@@ -92,16 +84,20 @@ struct multi_pack_index;
 
 struct raw_object_store {
 	/*
-	 * Path to the repository's object store.
-	 * Cannot be NULL after initialization.
+	 * Set of all object directories; the main directory is first (and
+	 * cannot be NULL after initialization). Subsequent directories are
+	 * alternates.
 	 */
-	char *objectdir;
+	struct object_directory *odb;
+	struct object_directory **odb_tail;
+	int loaded_alternates;
 
-	/* Path to extra alternate object database if not NULL */
+	/*
+	 * A list of alternate object directories loaded from the environment;
+	 * this should not generally need to be accessed directly, but will
+	 * populate the "odb" list when prepare_alt_odb() is run.
+	 */
 	char *alternate_db;
-
-	struct alternate_object_database *alt_odb_list;
-	struct alternate_object_database **alt_odb_tail;
 
 	/*
 	 * Objects that should be substituted by other objects
@@ -157,7 +153,7 @@ void raw_object_store_clear(struct raw_object_store *o);
  * Put in `buf` the name of the file in the local object database that
  * would be used to store a loose object with the specified sha1.
  */
-void sha1_file_name(struct repository *r, struct strbuf *buf, const unsigned char *sha1);
+const char *loose_object_path(struct repository *r, struct strbuf *buf, const unsigned char *sha1);
 
 void *map_sha1_file(struct repository *r, const unsigned char *sha1, unsigned long *size);
 
