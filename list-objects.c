@@ -55,7 +55,8 @@ static void process_blob(struct traversal_context *ctx,
 	pathlen = path->len;
 	strbuf_addstr(path, name);
 	if ((obj->flags & NOT_USER_GIVEN) && ctx->filter_fn)
-		r = ctx->filter_fn(LOFS_BLOB, obj,
+		r = ctx->filter_fn(ctx->revs->repo,
+				   LOFS_BLOB, obj,
 				   path->buf, &path->buf[pathlen],
 				   ctx->filter_data);
 	if (r & LOFR_MARK_SEEN)
@@ -122,7 +123,7 @@ static void process_tree_contents(struct traversal_context *ctx,
 		}
 
 		if (S_ISDIR(entry.mode)) {
-			struct tree *t = lookup_tree(the_repository, entry.oid);
+			struct tree *t = lookup_tree(ctx->revs->repo, entry.oid);
 			t->object.flags |= NOT_USER_GIVEN;
 			process_tree(ctx, t, base, entry.path);
 		}
@@ -130,7 +131,7 @@ static void process_tree_contents(struct traversal_context *ctx,
 			process_gitlink(ctx, entry.oid->hash,
 					base, entry.path);
 		else {
-			struct blob *b = lookup_blob(the_repository, entry.oid);
+			struct blob *b = lookup_blob(ctx->revs->repo, entry.oid);
 			b->object.flags |= NOT_USER_GIVEN;
 			process_blob(ctx, b, base, entry.path);
 		}
@@ -175,7 +176,8 @@ static void process_tree(struct traversal_context *ctx,
 
 	strbuf_addstr(base, name);
 	if ((obj->flags & NOT_USER_GIVEN) && ctx->filter_fn)
-		r = ctx->filter_fn(LOFS_BEGIN_TREE, obj,
+		r = ctx->filter_fn(ctx->revs->repo,
+				   LOFS_BEGIN_TREE, obj,
 				   base->buf, &base->buf[baselen],
 				   ctx->filter_data);
 	if (r & LOFR_MARK_SEEN)
@@ -191,7 +193,8 @@ static void process_tree(struct traversal_context *ctx,
 		process_tree_contents(ctx, tree, base);
 
 	if ((obj->flags & NOT_USER_GIVEN) && ctx->filter_fn) {
-		r = ctx->filter_fn(LOFS_END_TREE, obj,
+		r = ctx->filter_fn(ctx->revs->repo,
+				   LOFS_END_TREE, obj,
 				   base->buf, &base->buf[baselen],
 				   ctx->filter_data);
 		if (r & LOFR_MARK_SEEN)

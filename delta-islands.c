@@ -190,13 +190,15 @@ static void set_island_marks(struct object *obj, struct island_bitmap *marks)
 	island_bitmap_or(b, marks);
 }
 
-static void mark_remote_island_1(struct remote_island *rl, int is_core_island)
+static void mark_remote_island_1(struct repository *r,
+				 struct remote_island *rl,
+				 int is_core_island)
 {
 	uint32_t i;
 
 	for (i = 0; i < rl->oids.nr; ++i) {
 		struct island_bitmap *marks;
-		struct object *obj = parse_object(the_repository, &rl->oids.oid[i]);
+		struct object *obj = parse_object(r, &rl->oids.oid[i]);
 
 		if (!obj)
 			continue;
@@ -211,7 +213,7 @@ static void mark_remote_island_1(struct remote_island *rl, int is_core_island)
 		while (obj && obj->type == OBJ_TAG) {
 			obj = ((struct tag *)obj)->tagged;
 			if (obj) {
-				parse_object(the_repository, &obj->oid);
+				parse_object(r, &obj->oid);
 				marks = create_or_get_island_marks(obj);
 				island_bitmap_set(marks, island_counter);
 			}
@@ -237,7 +239,9 @@ static int tree_depth_compare(const void *a, const void *b)
 	return todo_a->depth - todo_b->depth;
 }
 
-void resolve_tree_islands(int progress, struct packing_data *to_pack)
+void resolve_tree_islands(struct repository *r,
+			  int progress,
+			  struct packing_data *to_pack)
 {
 	struct progress *progress_state = NULL;
 	struct tree_islands_todo *todo;
@@ -281,7 +285,7 @@ void resolve_tree_islands(int progress, struct packing_data *to_pack)
 
 		root_marks = kh_value(island_marks, pos);
 
-		tree = lookup_tree(the_repository, &ent->idx.oid);
+		tree = lookup_tree(r, &ent->idx.oid);
 		if (!tree || parse_tree(tree) < 0)
 			die(_("bad tree object %s"), oid_to_hex(&ent->idx.oid));
 
@@ -292,7 +296,7 @@ void resolve_tree_islands(int progress, struct packing_data *to_pack)
 			if (S_ISGITLINK(entry.mode))
 				continue;
 
-			obj = lookup_object(the_repository, entry.oid->hash);
+			obj = lookup_object(r, entry.oid->hash);
 			if (!obj)
 				continue;
 
@@ -415,7 +419,7 @@ static struct remote_island *get_core_island(void)
 	return NULL;
 }
 
-static void deduplicate_islands(void)
+static void deduplicate_islands(struct repository *r)
 {
 	struct remote_island *island, *core = NULL, **list;
 	unsigned int island_count, dst, src, ref, i = 0;
@@ -444,20 +448,20 @@ static void deduplicate_islands(void)
 	core = get_core_island();
 
 	for (i = 0; i < island_count; ++i) {
-		mark_remote_island_1(list[i], core && list[i]->hash == core->hash);
+		mark_remote_island_1(r, list[i], core && list[i]->hash == core->hash);
 	}
 
 	free(list);
 }
 
-void load_delta_islands(void)
+void load_delta_islands(struct repository *r)
 {
 	island_marks = kh_init_sha1();
 	remote_islands = kh_init_str();
 
 	git_config(island_config_callback, NULL);
 	for_each_ref(find_island_for_ref, NULL);
-	deduplicate_islands();
+	deduplicate_islands(r);
 
 	fprintf(stderr, _("Marked %d islands, done.\n"), island_counter);
 }

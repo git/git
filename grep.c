@@ -1805,7 +1805,7 @@ static int grep_source_1(struct grep_opt *opt, struct grep_source *gs, int colle
 		 * is not thread-safe.
 		 */
 		grep_attr_lock();
-		textconv = userdiff_get_textconv(gs->driver);
+		textconv = userdiff_get_textconv(opt->repo, gs->driver);
 		grep_attr_unlock();
 	}
 

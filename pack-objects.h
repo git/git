@@ -5,6 +5,8 @@
 #include "thread-utils.h"
 #include "pack.h"
 
+struct repository;
+
 #define DEFAULT_DELTA_CACHE_SIZE (256 * 1024 * 1024)
 
 #define OE_DFS_STATE_BITS	2
@@ -127,6 +129,7 @@ struct object_entry {
 };
 
 struct packing_data {
+	struct repository *repo;
 	struct object_entry *objects;
 	uint32_t nr_objects, nr_alloc;
 
@@ -163,7 +166,7 @@ struct packing_data {
 	unsigned char *layer;
 };
 
-void prepare_packing_data(struct packing_data *pdata);
+void prepare_packing_data(struct repository *r, struct packing_data *pdata);
 
 static inline void packing_data_lock(struct packing_data *pdata)
 {

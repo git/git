@@ -996,7 +996,7 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 	if (!userdiff)
 		userdiff = userdiff_find_by_name("default");
 	if (opt->flags.allow_textconv)
-		textconv = userdiff_get_textconv(userdiff);
+		textconv = userdiff_get_textconv(opt->repo, userdiff);
 
 	/* Read the result of merge first */
 	if (!working_tree_file)

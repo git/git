@@ -7,6 +7,7 @@
 #include "pathspec.h"
 #include "remote.h"
 
+struct repository;
 struct worktree;
 
 enum color_wt_status {
@@ -83,6 +84,7 @@ struct wt_status_state {
 };
 
 struct wt_status {
+	struct repository *repo;
 	int is_initial;
 	char *branch;
 	const char *reference;
@@ -128,11 +130,13 @@ struct wt_status {
 
 size_t wt_status_locate_end(const char *s, size_t len);
 void wt_status_add_cut_line(FILE *fp);
-void wt_status_prepare(struct wt_status *s);
+void wt_status_prepare(struct repository *r, struct wt_status *s);
 void wt_status_print(struct wt_status *s);
 void wt_status_collect(struct wt_status *s);
 void wt_status_collect_free_buffers(struct wt_status *s);
-void wt_status_get_state(struct wt_status_state *state, int get_detached_from);
+void wt_status_get_state(struct repository *repo,
+			 struct wt_status_state *state,
+			 int get_detached_from);
 int wt_status_check_rebase(const struct worktree *wt,
 			   struct wt_status_state *state);
 int wt_status_check_bisect(const struct worktree *wt,
@@ -144,9 +148,14 @@ __attribute__((format (printf, 3, 4)))
 void status_printf(struct wt_status *s, const char *color, const char *fmt, ...);
 
 /* The following functions expect that the caller took care of reading the index. */
-int has_unstaged_changes(int ignore_submodules);
-int has_uncommitted_changes(int ignore_submodules);
-int require_clean_work_tree(const char *action, const char *hint,
-	int ignore_submodules, int gently);
+int has_unstaged_changes(struct repository *repo,
+			 int ignore_submodules);
+int has_uncommitted_changes(struct repository *repo,
+			    int ignore_submodules);
+int require_clean_work_tree(struct repository *repo,
+			    const char *action,
+			    const char *hint,
+			    int ignore_submodules,
+			    int gently);
 
 #endif /* STATUS_H */

@@ -3118,7 +3118,7 @@ int write_locked_index(struct index_state *istate, struct lock_file *lock,
 	struct split_index *si = istate->split_index;
 
 	if (git_env_bool("GIT_TEST_CHECK_CACHE_TREE", 0))
-		cache_tree_verify(istate);
+		cache_tree_verify(the_repository, istate);
 
 	if ((flags & SKIP_IF_UNCHANGED) && !istate->cache_changed) {
 		if (flags & COMMIT_LOCK)
