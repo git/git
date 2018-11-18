@@ -173,6 +173,15 @@ UI, Workflows & Features
    each other.
    (merge e5bbe09e88 nd/wildmatch-double-asterisk later to maint).
 
+ * The "--no-patch" option, which can be used to get a high-level
+   overview without the actual line-by-line patch difference shown, of
+   the "range-diff" command was earlier broken, which has been
+   corrected.
+
+ * The recently merged "rebase in C" has an escape hatch to use the
+   scripted version when necessary, but it hasn't been documented,
+   which has been corrected.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -331,6 +340,27 @@ Performance, Internal Implementation, Development Support etc.
 
  * The support for format-patch (and send-email) by the command-line
    completion script (in contrib/) has been simplified a bit.
+
+ * The revision walker machinery learned to take advantage of the
+   commit generation numbers stored in the commit-graph file.
+
+ * The codebase has been cleaned up to reduce "#ifndef NO_PTHREADS".
+
+ * The way -lcurl library gets linked has been simplified by taking
+   advantage of the fact that we can just ask curl-config command how.
+
+ * Various functions have been audited for "-Wunused-parameter" warnings
+   and bugs in them got fixed.
+
+ * A sanity check for start-up sequence has been added in the config
+   API codepath.
+
+ * The build procedure to link for fuzzing test has been made
+   customizable with a new Makefile variable.
+
+ * The way "git rebase" parses and forwards the command line options
+   meant for underlying "git am" has been revamped, which fixed for
+   options with parameters that were not passed correctly.
 
 
 Fixes since v2.19
@@ -544,6 +574,37 @@ Fixes since v2.19
    pathspec elements were involved, which has been fixed.
    (merge b7845cebc0 nd/tree-walk-path-exclusion later to maint).
 
+ * "git merge" and "git pull" that merges into an unborn branch used
+   to completely ignore "--verify-signatures", which has been
+   corrected.
+   (merge 01a31f3bca jk/verify-sig-merge-into-void later to maint).
+
+ * "git rebase --autostash" did not correctly re-attach the HEAD at times.
+
+ * "rev-parse --exclude=<pattern> --branches=<pattern>" etc. did not
+   quite work, which has been corrected.
+   (merge 9ab9b5df0e ra/rev-parse-exclude-glob later to maint).
+
+ * When editing a patch in a "git add -i" session, a hunk could be
+   made to no-op.  The "git apply" program used to reject a patch with
+   such a no-op hunk to catch user mistakes, but it is now updated to
+   explicitly allow a no-op hunk in an edited patch.
+   (merge 22cb3835b9 js/apply-recount-allow-noop later to maint).
+
+ * The URL to an MSDN page in a comment has been updated.
+   (merge 2ef2ae2917 js/mingw-msdn-url later to maint).
+
+ * "git ls-remote --sort=<thing>" can feed an object that is not yet
+   available into the comparison machinery and segfault, which has
+   been corrected to check such a request upfront and reject it.
+
+ * When "git bundle" aborts due to an empty commit ranges
+   (i.e. resulting in an empty pack), it left a file descriptor to an
+   lockfile open, which resulted in leftover lockfile on Windows where
+   you cannot remove a file with an open file descriptor.  This has
+   been corrected.
+   (merge 2c8ee1f53c jk/close-duped-fd-before-unlock-for-bundle later to maint).
+
  * Code cleanup, docfix, build fix, etc.
    (merge 96a7501aad ts/doc-build-manpage-xsl-quietly later to maint).
    (merge b9b07efdb2 tg/conflict-marker-size later to maint).
@@ -583,3 +644,4 @@ Fixes since v2.19
    (merge 3063477445 tb/char-may-be-unsigned later to maint).
    (merge 8c64bc9420 sg/test-rebase-editor-fix later to maint).
    (merge 71571cd7d6 ma/sequencer-do-reset-saner-loop-termination later to maint).
+   (merge 9a4cb8781e cb/notes-freeing-always-null-fix later to maint).
