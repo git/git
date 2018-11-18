@@ -789,6 +789,12 @@ AC_CHECK_HEADER([sys/select.h],
 [NO_SYS_SELECT_H=UnfortunatelyYes])
 GIT_CONF_SUBST([NO_SYS_SELECT_H])
 #
+# Define NO_POLL_H if you don't have poll.h
+AC_CHECK_HEADER([poll.h],
+[NO_POLL_H=],
+[NO_POLL_H=UnfortunatelyYes])
+GIT_CONF_SUBST([NO_POLL_H])
+#
 # Define NO_SYS_POLL_H if you don't have sys/poll.h
 AC_CHECK_HEADER([sys/poll.h],
 [NO_SYS_POLL_H=],
