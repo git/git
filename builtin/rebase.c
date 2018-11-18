@@ -522,12 +522,17 @@ finished_rebase:
 
 #define GIT_REFLOG_ACTION_ENVIRONMENT "GIT_REFLOG_ACTION"
 
+#define RESET_HEAD_DETACH (1<<0)
+#define RESET_HEAD_HARD (1<<1)
+
 static int reset_head(struct object_id *oid, const char *action,
-		      const char *switch_to_branch, int detach_head,
+		      const char *switch_to_branch, unsigned flags,
 		      const char *reflog_orig_head, const char *reflog_head)
 {
+	unsigned detach_head = flags & RESET_HEAD_DETACH;
+	unsigned reset_hard = flags & RESET_HEAD_HARD;
 	struct object_id head_oid;
-	struct tree_desc desc;
+	struct tree_desc desc[2] = { { NULL }, { NULL } };
 	struct lock_file lock = LOCK_INIT;
 	struct unpack_trees_options unpack_tree_opts;
 	struct tree *tree;
@@ -536,60 +541,62 @@ static int reset_head(struct object_id *oid, const char *action,
 	size_t prefix_len;
 	struct object_id *orig = NULL, oid_orig,
 		*old_orig = NULL, oid_old_orig;
-	int ret = 0;
+	int ret = 0, nr = 0;
 
 	if (switch_to_branch && !starts_with(switch_to_branch, "refs/"))
 		BUG("Not a fully qualified branch: '%s'", switch_to_branch);
 
-	if (hold_locked_index(&lock, LOCK_REPORT_ON_ERROR) < 0)
-		return -1;
-
-	if (!oid) {
-		if (get_oid("HEAD", &head_oid)) {
-			rollback_lock_file(&lock);
-			return error(_("could not determine HEAD revision"));
-		}
-		oid = &head_oid;
+	if (hold_locked_index(&lock, LOCK_REPORT_ON_ERROR) < 0) {
+		ret = -1;
+		goto leave_reset_head;
 	}
+
+	if ((!oid || !reset_hard) && get_oid("HEAD", &head_oid)) {
+		ret = error(_("could not determine HEAD revision"));
+		goto leave_reset_head;
+	}
+
+	if (!oid)
+		oid = &head_oid;
 
 	memset(&unpack_tree_opts, 0, sizeof(unpack_tree_opts));
 	setup_unpack_trees_porcelain(&unpack_tree_opts, action);
 	unpack_tree_opts.head_idx = 1;
 	unpack_tree_opts.src_index = the_repository->index;
 	unpack_tree_opts.dst_index = the_repository->index;
-	unpack_tree_opts.fn = oneway_merge;
+	unpack_tree_opts.fn = reset_hard ? oneway_merge : twoway_merge;
 	unpack_tree_opts.update = 1;
 	unpack_tree_opts.merge = 1;
 	if (!detach_head)
 		unpack_tree_opts.reset = 1;
 
 	if (read_index_unmerged(the_repository->index) < 0) {
-		rollback_lock_file(&lock);
-		return error(_("could not read index"));
+		ret = error(_("could not read index"));
+		goto leave_reset_head;
 	}
 
-	if (!fill_tree_descriptor(&desc, oid)) {
-		error(_("failed to find tree of %s"), oid_to_hex(oid));
-		rollback_lock_file(&lock);
-		free((void *)desc.buffer);
-		return -1;
+	if (!reset_hard && !fill_tree_descriptor(&desc[nr++], &head_oid)) {
+		ret = error(_("failed to find tree of %s"), oid_to_hex(oid));
+		goto leave_reset_head;
 	}
 
-	if (unpack_trees(1, &desc, &unpack_tree_opts)) {
-		rollback_lock_file(&lock);
-		free((void *)desc.buffer);
-		return -1;
+	if (!fill_tree_descriptor(&desc[nr++], oid)) {
+		ret = error(_("failed to find tree of %s"), oid_to_hex(oid));
+		goto leave_reset_head;
+	}
+
+	if (unpack_trees(nr, desc, &unpack_tree_opts)) {
+		ret = -1;
+		goto leave_reset_head;
 	}
 
 	tree = parse_tree_indirect(oid);
 	prime_cache_tree(the_repository->index, tree);
 
-	if (write_locked_index(the_repository->index, &lock, COMMIT_LOCK) < 0)
+	if (write_locked_index(the_repository->index, &lock, COMMIT_LOCK) < 0) {
 		ret = error(_("could not write index"));
-	free((void *)desc.buffer);
-
-	if (ret)
-		return ret;
+		goto leave_reset_head;
+	}
 
 	reflog_action = getenv(GIT_REFLOG_ACTION_ENVIRONMENT);
 	strbuf_addf(&msg, "%s: ", reflog_action ? reflog_action : "rebase");
@@ -623,7 +630,11 @@ static int reset_head(struct object_id *oid, const char *action,
 					 UPDATE_REFS_MSG_ON_ERR);
 	}
 
+leave_reset_head:
 	strbuf_release(&msg);
+	rollback_lock_file(&lock);
+	while (nr)
+		free((void *)desc[--nr].buffer);
 	return ret;
 }
 
@@ -1007,7 +1018,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		rerere_clear(&merge_rr);
 		string_list_clear(&merge_rr, 1);
 
-		if (reset_head(NULL, "reset", NULL, 0, NULL, NULL) < 0)
+		if (reset_head(NULL, "reset", NULL, RESET_HEAD_HARD,
+			       NULL, NULL) < 0)
 			die(_("could not discard worktree changes"));
 		if (read_basic_state(&options))
 			exit(1);
@@ -1023,7 +1035,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		if (read_basic_state(&options))
 			exit(1);
 		if (reset_head(&options.orig_head, "reset",
-			       options.head_name, 0, NULL, NULL) < 0)
+			       options.head_name, RESET_HEAD_HARD,
+			       NULL, NULL) < 0)
 			die(_("could not move back to %s"),
 			    oid_to_hex(&options.orig_head));
 		ret = finish_rebase(&options);
@@ -1387,7 +1400,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			write_file(autostash, "%s", oid_to_hex(&oid));
 			printf(_("Created autostash: %s\n"), buf.buf);
 			if (reset_head(&head->object.oid, "reset --hard",
-				       NULL, 0, NULL, NULL) < 0)
+				       NULL, RESET_HEAD_HARD, NULL, NULL) < 0)
 				die(_("could not reset --hard"));
 			printf(_("HEAD is now at %s"),
 			       find_unique_abbrev(&head->object.oid,
@@ -1507,8 +1520,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			 "it...\n"));
 
 	strbuf_addf(&msg, "rebase: checkout %s", options.onto_name);
-	if (reset_head(&options.onto->object.oid, "checkout", NULL, 1,
-	    NULL, msg.buf))
+	if (reset_head(&options.onto->object.oid, "checkout", NULL,
+		       RESET_HEAD_DETACH, NULL, msg.buf))
 		die(_("Could not detach HEAD"));
 	strbuf_release(&msg);
 
