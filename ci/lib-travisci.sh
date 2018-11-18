@@ -123,7 +123,7 @@ osx-clang|osx-gcc)
 	# Travis CI OS X
 	export GIT_SKIP_TESTS="t9810 t9816"
 	;;
-GETTEXT_POISON)
-	export GETTEXT_POISON=YesPlease
+GIT_TEST_GETTEXT_POISON)
+	export GIT_TEST_GETTEXT_POISON=YesPlease
 	;;
 esac
