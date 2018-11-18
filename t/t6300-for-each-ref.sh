@@ -83,6 +83,8 @@ test_atom head push:strip=1 remotes/myfork/master
 test_atom head push:strip=-1 master
 test_atom head objecttype commit
 test_atom head objectsize 171
+test_atom head objectsize:disk 138
+test_atom head deltabase 0000000000000000000000000000000000000000
 test_atom head objectname $(git rev-parse refs/heads/master)
 test_atom head objectname:short $(git rev-parse --short refs/heads/master)
 test_atom head objectname:short=1 $(git rev-parse --short=1 refs/heads/master)
@@ -124,6 +126,10 @@ test_atom tag upstream ''
 test_atom tag push ''
 test_atom tag objecttype tag
 test_atom tag objectsize 154
+test_atom tag objectsize:disk 138
+test_atom tag '*objectsize:disk' 138
+test_atom tag deltabase 0000000000000000000000000000000000000000
+test_atom tag '*deltabase' 0000000000000000000000000000000000000000
 test_atom tag objectname $(git rev-parse refs/tags/testtag)
 test_atom tag objectname:short $(git rev-parse --short refs/tags/testtag)
 test_atom head objectname:short=1 $(git rev-parse --short=1 refs/heads/master)

@@ -231,12 +231,30 @@ static int objecttype_atom_parser(const struct ref_format *format, struct used_a
 static int objectsize_atom_parser(const struct ref_format *format, struct used_atom *atom,
 				  const char *arg, struct strbuf *err)
 {
+	if (!arg) {
+		if (*atom->name == '*')
+			oi_deref.info.sizep = &oi_deref.size;
+		else
+			oi.info.sizep = &oi.size;
+	} else if (!strcmp(arg, "disk")) {
+		if (*atom->name == '*')
+			oi_deref.info.disk_sizep = &oi_deref.disk_size;
+		else
+			oi.info.disk_sizep = &oi.disk_size;
+	} else
+		return strbuf_addf_ret(err, -1, _("unrecognized %%(objectsize) argument: %s"), arg);
+	return 0;
+}
+
+static int deltabase_atom_parser(const struct ref_format *format, struct used_atom *atom,
+				 const char *arg, struct strbuf *err)
+{
 	if (arg)
-		return strbuf_addf_ret(err, -1, _("%%(objectsize) does not take arguments"));
+		return strbuf_addf_ret(err, -1, _("%%(deltabase) does not take arguments"));
 	if (*atom->name == '*')
-		oi_deref.info.sizep = &oi_deref.size;
+		oi_deref.info.delta_base_sha1 = oi_deref.delta_base_oid.hash;
 	else
-		oi.info.sizep = &oi.size;
+		oi.info.delta_base_sha1 = oi.delta_base_oid.hash;
 	return 0;
 }
 
@@ -431,6 +449,7 @@ static struct {
 	{ "objecttype", SOURCE_OTHER, FIELD_STR, objecttype_atom_parser },
 	{ "objectsize", SOURCE_OTHER, FIELD_ULONG, objectsize_atom_parser },
 	{ "objectname", SOURCE_OTHER, FIELD_STR, objectname_atom_parser },
+	{ "deltabase", SOURCE_OTHER, FIELD_STR, deltabase_atom_parser },
 	{ "tree", SOURCE_OBJ },
 	{ "parent", SOURCE_OBJ },
 	{ "numparent", SOURCE_OBJ, FIELD_ULONG },
@@ -880,10 +899,14 @@ static void grab_common_values(struct atom_value *val, int deref, struct expand_
 			name++;
 		if (!strcmp(name, "objecttype"))
 			v->s = xstrdup(type_name(oi->type));
-		else if (!strcmp(name, "objectsize")) {
+		else if (!strcmp(name, "objectsize:disk")) {
+			v->value = oi->disk_size;
+			v->s = xstrfmt("%lld", (long long)oi->disk_size);
+		} else if (!strcmp(name, "objectsize")) {
 			v->value = oi->size;
 			v->s = xstrfmt("%"PRIuMAX , (uintmax_t)oi->size);
-		}
+		} else if (!strcmp(name, "deltabase"))
+			v->s = xstrdup(oid_to_hex(&oi->delta_base_oid));
 		else if (deref)
 			grab_objectname(name, &oi->oid, v, &used_atom[i]);
 	}
