@@ -176,8 +176,9 @@ test_expect_success GPG 'show good signature with custom format' '
 	13B6F51ECDDE430D
 	C O Mitter <committer@example.com>
 	73D758744BE721698EC54E8713B6F51ECDDE430D
+	73D758744BE721698EC54E8713B6F51ECDDE430D
 	EOF
-	git log -1 --format="%G?%n%GK%n%GS%n%GF" sixth-signed >actual &&
+	git log -1 --format="%G?%n%GK%n%GS%n%GF%n%GP" sixth-signed >actual &&
 	test_cmp expect actual
 '
 
@@ -187,30 +188,33 @@ test_expect_success GPG 'show bad signature with custom format' '
 	13B6F51ECDDE430D
 	C O Mitter <committer@example.com>
 
+
 	EOF
-	git log -1 --format="%G?%n%GK%n%GS%n%GF" $(cat forged1.commit) >actual &&
+	git log -1 --format="%G?%n%GK%n%GS%n%GF%n%GP" $(cat forged1.commit) >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success GPG 'show untrusted signature with custom format' '
 	cat >expect <<-\EOF &&
 	U
-	61092E85B7227189
+	65A0EEA02E30CAD7
 	Eris Discordia <discord@example.net>
+	F8364A59E07FFE9F4D63005A65A0EEA02E30CAD7
 	D4BE22311AD3131E5EDA29A461092E85B7227189
 	EOF
-	git log -1 --format="%G?%n%GK%n%GS%n%GF" eighth-signed-alt >actual &&
+	git log -1 --format="%G?%n%GK%n%GS%n%GF%n%GP" eighth-signed-alt >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success GPG 'show unknown signature with custom format' '
 	cat >expect <<-\EOF &&
 	E
-	61092E85B7227189
+	65A0EEA02E30CAD7
+
 
 
 	EOF
-	GNUPGHOME="$GNUPGHOME_NOT_USED" git log -1 --format="%G?%n%GK%n%GS%n%GF" eighth-signed-alt >actual &&
+	GNUPGHOME="$GNUPGHOME_NOT_USED" git log -1 --format="%G?%n%GK%n%GS%n%GF%n%GP" eighth-signed-alt >actual &&
 	test_cmp expect actual
 '
 
@@ -220,8 +224,9 @@ test_expect_success GPG 'show lack of signature with custom format' '
 
 
 
+
 	EOF
-	git log -1 --format="%G?%n%GK%n%GS%n%GF" seventh-unsigned >actual &&
+	git log -1 --format="%G?%n%GK%n%GS%n%GF%n%GP" seventh-unsigned >actual &&
 	test_cmp expect actual
 '
 
@@ -261,8 +266,9 @@ test_expect_success GPG 'show double signature with custom format' '
 
 
 
+
 	EOF
-	git log -1 --format="%G?%n%GK%n%GS%n%GF" $(cat double-commit.commit) >actual &&
+	git log -1 --format="%G?%n%GK%n%GS%n%GF%n%GP" $(cat double-commit.commit) >actual &&
 	test_cmp expect actual
 '
 
