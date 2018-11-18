@@ -882,7 +882,7 @@ static void grab_common_values(struct atom_value *val, int deref, struct expand_
 			v->s = xstrdup(type_name(oi->type));
 		else if (!strcmp(name, "objectsize")) {
 			v->value = oi->size;
-			v->s = xstrfmt("%lu", oi->size);
+			v->s = xstrfmt("%"PRIuMAX , (uintmax_t)oi->size);
 		}
 		else if (deref)
 			grab_objectname(name, &oi->oid, v, &used_atom[i]);
