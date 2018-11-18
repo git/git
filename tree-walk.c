@@ -949,7 +949,8 @@ static enum interesting do_match(struct index_state *istate,
 		       PATHSPEC_LITERAL |
 		       PATHSPEC_GLOB |
 		       PATHSPEC_ICASE |
-		       PATHSPEC_EXCLUDE);
+		       PATHSPEC_EXCLUDE |
+		       PATHSPEC_ATTR);
 
 	if (!ps->nr) {
 		if (!ps->recursive ||
@@ -981,14 +982,20 @@ static enum interesting do_match(struct index_state *istate,
 
 			if (!ps->recursive ||
 			    !(ps->magic & PATHSPEC_MAXDEPTH) ||
-			    ps->max_depth == -1)
-				return all_entries_interesting;
+			    ps->max_depth == -1) {
+				if (!item->attr_match_nr)
+					return all_entries_interesting;
+				else
+					goto interesting;
+			}
 
-			return within_depth(base_str + matchlen + 1,
-					    baselen - matchlen - 1,
-					    !!S_ISDIR(entry->mode),
-					    ps->max_depth) ?
-				entry_interesting : entry_not_interesting;
+			if (within_depth(base_str + matchlen + 1,
+					 baselen - matchlen - 1,
+					 !!S_ISDIR(entry->mode),
+					 ps->max_depth))
+				goto interesting;
+			else
+				return entry_not_interesting;
 		}
 
 		/* Either there must be no base, or the base must match. */
@@ -996,12 +1003,12 @@ static enum interesting do_match(struct index_state *istate,
 			if (match_entry(item, entry, pathlen,
 					match + baselen, matchlen - baselen,
 					&never_interesting))
-				return entry_interesting;
+				goto interesting;
 
 			if (item->nowildcard_len < item->len) {
 				if (!git_fnmatch(item, match + baselen, entry->path,
 						 item->nowildcard_len - baselen))
-					return entry_interesting;
+					goto interesting;
 
 				/*
 				 * Match all directories. We'll try to
@@ -1022,7 +1029,7 @@ static enum interesting do_match(struct index_state *istate,
 				    !ps_strncmp(item, match + baselen,
 						entry->path,
 						item->nowildcard_len - baselen))
-					return entry_interesting;
+					goto interesting;
 			}
 
 			continue;
@@ -1057,7 +1064,7 @@ match_wildcards:
 		if (!git_fnmatch(item, match, base->buf + base_offset,
 				 item->nowildcard_len)) {
 			strbuf_setlen(base, base_offset + baselen);
-			return entry_interesting;
+			goto interesting;
 		}
 
 		/*
@@ -1071,7 +1078,7 @@ match_wildcards:
 		    !ps_strncmp(item, match, base->buf + base_offset,
 				item->nowildcard_len)) {
 			strbuf_setlen(base, base_offset + baselen);
-			return entry_interesting;
+			goto interesting;
 		}
 
 		strbuf_setlen(base, base_offset + baselen);
@@ -1085,6 +1092,38 @@ match_wildcards:
 		 */
 		if (ps->recursive && S_ISDIR(entry->mode))
 			return entry_interesting;
+		continue;
+interesting:
+		if (item->attr_match_nr) {
+			int ret;
+
+			/*
+			 * Must not return all_entries_not_interesting
+			 * prematurely. We do not know if all entries do not
+			 * match some attributes with current attr API.
+			 */
+			never_interesting = entry_not_interesting;
+
+			/*
+			 * Consider all directories interesting (because some
+			 * of those files inside may match some attributes
+			 * even though the parent dir does not)
+			 *
+			 * FIXME: attributes _can_ match directories and we
+			 * can probably return all_entries_interesting or
+			 * all_entries_not_interesting here if matched.
+			 */
+			if (S_ISDIR(entry->mode))
+				return entry_interesting;
+
+			strbuf_add(base, entry->path, pathlen);
+			ret = match_pathspec_attrs(istate, base->buf + base_offset,
+						   base->len - base_offset, item);
+			strbuf_setlen(base, base_offset + baselen);
+			if (!ret)
+				continue;
+		}
+		return entry_interesting;
 	}
 	return never_interesting; /* No matches */
 }

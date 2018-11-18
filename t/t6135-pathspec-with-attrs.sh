@@ -31,7 +31,7 @@ test_expect_success 'setup a tree' '
 	mkdir sub &&
 	while read path
 	do
-		: >$path &&
+		echo content >$path &&
 		git add $path || return 1
 	done <expect &&
 	git commit -m "initial commit" &&
@@ -46,6 +46,10 @@ test_expect_success 'pathspec with no attr' '
 test_expect_success 'pathspec with labels and non existent .gitattributes' '
 	git ls-files ":(attr:label)" >actual &&
 	test_must_be_empty actual
+'
+
+test_expect_success 'pathspec with labels and non existent .gitattributes (2)' '
+	test_must_fail git grep content HEAD -- ":(attr:label)"
 '
 
 test_expect_success 'setup .gitattributes' '
@@ -74,12 +78,30 @@ test_expect_success 'check specific set attr' '
 	test_cmp expect actual
 '
 
+test_expect_success 'check specific set attr (2)' '
+	cat <<-\EOF >expect &&
+	HEAD:fileSetLabel
+	HEAD:sub/fileSetLabel
+	EOF
+	git grep -l content HEAD ":(attr:label)" >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'check specific unset attr' '
 	cat <<-\EOF >expect &&
 	fileUnsetLabel
 	sub/fileUnsetLabel
 	EOF
 	git ls-files ":(attr:-label)" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'check specific unset attr (2)' '
+	cat <<-\EOF >expect &&
+	HEAD:fileUnsetLabel
+	HEAD:sub/fileUnsetLabel
+	EOF
+	git grep -l content HEAD ":(attr:-label)" >actual &&
 	test_cmp expect actual
 '
 
@@ -92,6 +114,16 @@ test_expect_success 'check specific value attr' '
 	test_cmp expect actual &&
 	git ls-files ":(attr:label=bar)" >actual &&
 	test_must_be_empty actual
+'
+
+test_expect_success 'check specific value attr (2)' '
+	cat <<-\EOF >expect &&
+	HEAD:fileValue
+	HEAD:sub/fileValue
+	EOF
+	git grep -l content HEAD ":(attr:label=foo)" >actual &&
+	test_cmp expect actual &&
+	test_must_fail git grep -l content HEAD ":(attr:label=bar)"
 '
 
 test_expect_success 'check unspecified attr' '
@@ -115,6 +147,30 @@ test_expect_success 'check unspecified attr' '
 	sub/fileWrongLabel
 	EOF
 	git ls-files ":(attr:!label)" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'check unspecified attr (2)' '
+	cat <<-\EOF >expect &&
+	HEAD:.gitattributes
+	HEAD:fileA
+	HEAD:fileAB
+	HEAD:fileAC
+	HEAD:fileB
+	HEAD:fileBC
+	HEAD:fileC
+	HEAD:fileNoLabel
+	HEAD:fileWrongLabel
+	HEAD:sub/fileA
+	HEAD:sub/fileAB
+	HEAD:sub/fileAC
+	HEAD:sub/fileB
+	HEAD:sub/fileBC
+	HEAD:sub/fileC
+	HEAD:sub/fileNoLabel
+	HEAD:sub/fileWrongLabel
+	EOF
+	git grep -l ^ HEAD ":(attr:!label)" >actual &&
 	test_cmp expect actual
 '
 
