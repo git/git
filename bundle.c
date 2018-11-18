@@ -243,7 +243,7 @@ out:
 }
 
 
-/* Write the pack data to bundle_fd, then close it if it is > 1. */
+/* Write the pack data to bundle_fd */
 static int write_pack_data(int bundle_fd, struct rev_info *revs)
 {
 	struct child_process pack_objects = CHILD_PROCESS_INIT;
@@ -256,6 +256,20 @@ static int write_pack_data(int bundle_fd, struct rev_info *revs)
 	pack_objects.in = -1;
 	pack_objects.out = bundle_fd;
 	pack_objects.git_cmd = 1;
+
+	/*
+	 * start_command() will close our descriptor if it's >1. Duplicate it
+	 * to avoid surprising the caller.
+	 */
+	if (pack_objects.out > 1) {
+		pack_objects.out = dup(pack_objects.out);
+		if (pack_objects.out < 0) {
+			error_errno(_("unable to dup bundle descriptor"));
+			child_process_clear(&pack_objects);
+			return -1;
+		}
+	}
+
 	if (start_command(&pack_objects))
 		return error(_("Could not spawn pack-objects"));
 
@@ -421,20 +435,9 @@ int create_bundle(struct bundle_header *header, const char *path,
 	bundle_to_stdout = !strcmp(path, "-");
 	if (bundle_to_stdout)
 		bundle_fd = 1;
-	else {
+	else
 		bundle_fd = hold_lock_file_for_update(&lock, path,
 						      LOCK_DIE_ON_ERROR);
-
-		/*
-		 * write_pack_data() will close the fd passed to it,
-		 * but commit_lock_file() will also try to close the
-		 * lockfile's fd. So make a copy of the file
-		 * descriptor to avoid trying to close it twice.
-		 */
-		bundle_fd = dup(bundle_fd);
-		if (bundle_fd < 0)
-			die_errno("unable to dup file descriptor");
-	}
 
 	/* write signature */
 	write_or_die(bundle_fd, bundle_signature, strlen(bundle_signature));
@@ -463,10 +466,8 @@ int create_bundle(struct bundle_header *header, const char *path,
 		goto err;
 
 	/* write pack */
-	if (write_pack_data(bundle_fd, &revs)) {
-		bundle_fd = -1; /* already closed by the above call */
+	if (write_pack_data(bundle_fd, &revs))
 		goto err;
-	}
 
 	if (!bundle_to_stdout) {
 		if (commit_lock_file(&lock))
@@ -474,11 +475,7 @@ int create_bundle(struct bundle_header *header, const char *path,
 	}
 	return 0;
 err:
-	if (!bundle_to_stdout) {
-		if (0 <= bundle_fd)
-			close(bundle_fd);
-		rollback_lock_file(&lock);
-	}
+	rollback_lock_file(&lock);
 	return -1;
 }
 
