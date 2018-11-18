@@ -3244,10 +3244,6 @@ static int do_merge(struct commit *commit, const char *arg, int arg_len,
 	}
 
 	merge_commit = to_merge->item;
-	write_message(oid_to_hex(&merge_commit->object.oid), GIT_SHA1_HEXSZ,
-		      git_path_merge_head(the_repository), 0);
-	write_message("no-ff", 5, git_path_merge_mode(the_repository), 0);
-
 	bases = get_merge_bases(head_commit, merge_commit);
 	if (bases && oideq(&merge_commit->object.oid,
 			   &bases->item->object.oid)) {
@@ -3255,6 +3251,10 @@ static int do_merge(struct commit *commit, const char *arg, int arg_len,
 		/* skip merging an ancestor of HEAD */
 		goto leave_merge;
 	}
+
+	write_message(oid_to_hex(&merge_commit->object.oid), GIT_SHA1_HEXSZ,
+		      git_path_merge_head(the_repository), 0);
+	write_message("no-ff", 5, git_path_merge_mode(the_repository), 0);
 
 	for (j = bases; j; j = j->next)
 		commit_list_insert(j->item, &reversed);
@@ -3512,6 +3512,7 @@ static int pick_commits(struct todo_list *todo_list, struct replay_opts *opts)
 			unlink(rebase_path_author_script());
 			unlink(rebase_path_stopped_sha());
 			unlink(rebase_path_amend());
+			unlink(git_path_merge_head(the_repository));
 			delete_ref(NULL, "REBASE_HEAD", NULL, REF_NO_DEREF);
 
 			if (item->command == TODO_BREAK)
@@ -3882,6 +3883,7 @@ static int commit_staged_changes(struct replay_opts *opts,
 			   opts, flags))
 		return error(_("could not commit staged changes."));
 	unlink(rebase_path_amend());
+	unlink(git_path_merge_head(the_repository));
 	if (final_fixup) {
 		unlink(rebase_path_fixup_msg());
 		unlink(rebase_path_squash_msg());
