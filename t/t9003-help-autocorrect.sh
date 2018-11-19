@@ -14,7 +14,7 @@ test_expect_success 'setup' '
 		echo distimdistim was called
 	EOF
 
-	PATH="$PATH:." &&
+	PATH="$PATH$PATH_SEP." &&
 	export PATH &&
 
 	git commit --allow-empty -m "a single log entry" &&
