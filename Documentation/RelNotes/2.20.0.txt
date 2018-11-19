@@ -362,6 +362,31 @@ Performance, Internal Implementation, Development Support etc.
    meant for underlying "git am" has been revamped, which fixed for
    options with parameters that were not passed correctly.
 
+ * Our testing framework uses a special i18n "poisoned localization"
+   feature to find messages that ought to stay constant but are
+   incorrectly marked to be translated.  This feature has been made
+   into a runtime option (it used to be a compile-time option).
+
+ * "git push" used to check ambiguities between object-names and
+   refnames while processing the list of refs' old and new values,
+   which was unnecessary (as it knew that it is feeding raw object
+   names).  This has been optimized out.
+
+ * The xcurl_off_t() helper function is used to cast size_t to
+   curl_off_t, but some compilers gave warnings against the code to
+   ensure the casting is done without wraparound, when size_t is
+   narrower than curl_off_t.  This warning has been squelched.
+
+ * Code preparation to replace ulong vars with size_t vars where
+   appropriate continues.
+
+ * The "test installed Git" mode of our test suite has been updated to
+   work better.
+
+ * A coding convention around the Coccinelle semantic patches to have
+   two classes to ease code migration process has been proposed and
+   its support has been added to the Makefile.
+
 
 Fixes since v2.19
 -----------------
@@ -604,6 +629,10 @@ Fixes since v2.19
    you cannot remove a file with an open file descriptor.  This has
    been corrected.
    (merge 2c8ee1f53c jk/close-duped-fd-before-unlock-for-bundle later to maint).
+
+ * "git format-patch --stat=<width>" can be used to specify the width
+   used by the diffstat (shown in the cover letter).
+   (merge 284aeb7e60 nd/format-patch-cover-letter-stat-width later to maint).
 
  * Code cleanup, docfix, build fix, etc.
    (merge 96a7501aad ts/doc-build-manpage-xsl-quietly later to maint).
