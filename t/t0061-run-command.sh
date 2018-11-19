@@ -69,7 +69,7 @@ test_expect_success 'run_command does not try to execute a directory' '
 	cat bin2/greet
 	EOF
 
-	PATH=$PWD/bin1:$PWD/bin2:$PATH \
+	PATH=$PWD/bin1$PATH_SEP$PWD/bin2$PATH_SEP$PATH \
 		test-tool run-command run-command greet >actual 2>err &&
 	test_cmp bin2/greet actual &&
 	test_must_be_empty err
@@ -86,7 +86,7 @@ test_expect_success POSIXPERM 'run_command passes over non-executable file' '
 	cat bin2/greet
 	EOF
 
-	PATH=$PWD/bin1:$PWD/bin2:$PATH \
+	PATH=$PWD/bin1$PATH_SEP$PWD/bin2$PATH_SEP$PATH \
 		test-tool run-command run-command greet >actual 2>err &&
 	test_cmp bin2/greet actual &&
 	test_must_be_empty err
@@ -106,7 +106,7 @@ test_expect_success POSIXPERM,SANITY 'unreadable directory in PATH' '
 	git config alias.nitfol "!echo frotz" &&
 	chmod a-rx local-command &&
 	(
-		PATH=./local-command:$PATH &&
+		PATH=./local-command$PATH_SEP$PATH &&
 		git nitfol >actual
 	) &&
 	echo frotz >expect &&
