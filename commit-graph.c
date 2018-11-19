@@ -289,7 +289,8 @@ static int bsearch_graph(struct commit_graph *g, struct object_id *oid, uint32_t
 			    g->chunk_oid_lookup, g->hash_len, pos);
 }
 
-static struct commit_list **insert_parent_or_die(struct commit_graph *g,
+static struct commit_list **insert_parent_or_die(struct repository *r,
+						 struct commit_graph *g,
 						 uint64_t pos,
 						 struct commit_list **pptr)
 {
@@ -300,7 +301,7 @@ static struct commit_list **insert_parent_or_die(struct commit_graph *g,
 		die("invalid parent position %"PRIu64, pos);
 
 	hashcpy(oid.hash, g->chunk_oid_lookup + g->hash_len * pos);
-	c = lookup_commit(the_repository, &oid);
+	c = lookup_commit(r, &oid);
 	if (!c)
 		die(_("could not find commit %s"), oid_to_hex(&oid));
 	c->graph_pos = pos;
@@ -314,7 +315,9 @@ static void fill_commit_graph_info(struct commit *item, struct commit_graph *g, 
 	item->generation = get_be32(commit_data + g->hash_len + 8) >> 2;
 }
 
-static int fill_commit_in_graph(struct commit *item, struct commit_graph *g, uint32_t pos)
+static int fill_commit_in_graph(struct repository *r,
+				struct commit *item,
+				struct commit_graph *g, uint32_t pos)
 {
 	uint32_t edge_value;
 	uint32_t *parent_data_ptr;
@@ -338,13 +341,13 @@ static int fill_commit_in_graph(struct commit *item, struct commit_graph *g, uin
 	edge_value = get_be32(commit_data + g->hash_len);
 	if (edge_value == GRAPH_PARENT_NONE)
 		return 1;
-	pptr = insert_parent_or_die(g, edge_value, pptr);
+	pptr = insert_parent_or_die(r, g, edge_value, pptr);
 
 	edge_value = get_be32(commit_data + g->hash_len + 4);
 	if (edge_value == GRAPH_PARENT_NONE)
 		return 1;
 	if (!(edge_value & GRAPH_OCTOPUS_EDGES_NEEDED)) {
-		pptr = insert_parent_or_die(g, edge_value, pptr);
+		pptr = insert_parent_or_die(r, g, edge_value, pptr);
 		return 1;
 	}
 
@@ -352,7 +355,7 @@ static int fill_commit_in_graph(struct commit *item, struct commit_graph *g, uin
 			  4 * (uint64_t)(edge_value & GRAPH_EDGE_LAST_MASK));
 	do {
 		edge_value = get_be32(parent_data_ptr);
-		pptr = insert_parent_or_die(g,
+		pptr = insert_parent_or_die(r, g,
 					    edge_value & GRAPH_EDGE_LAST_MASK,
 					    pptr);
 		parent_data_ptr++;
@@ -371,7 +374,9 @@ static int find_commit_in_graph(struct commit *item, struct commit_graph *g, uin
 	}
 }
 
-static int parse_commit_in_graph_one(struct commit_graph *g, struct commit *item)
+static int parse_commit_in_graph_one(struct repository *r,
+				     struct commit_graph *g,
+				     struct commit *item)
 {
 	uint32_t pos;
 
@@ -379,7 +384,7 @@ static int parse_commit_in_graph_one(struct commit_graph *g, struct commit *item
 		return 1;
 
 	if (find_commit_in_graph(item, g, &pos))
-		return fill_commit_in_graph(item, g, pos);
+		return fill_commit_in_graph(r, item, g, pos);
 
 	return 0;
 }
@@ -388,7 +393,7 @@ int parse_commit_in_graph(struct repository *r, struct commit *item)
 {
 	if (!prepare_commit_graph(r))
 		return 0;
-	return parse_commit_in_graph_one(r->objects->commit_graph, item);
+	return parse_commit_in_graph_one(r, r->objects->commit_graph, item);
 }
 
 void load_commit_graph_info(struct repository *r, struct commit *item)
@@ -400,19 +405,22 @@ void load_commit_graph_info(struct repository *r, struct commit *item)
 		fill_commit_graph_info(item, r->objects->commit_graph, pos);
 }
 
-static struct tree *load_tree_for_commit(struct commit_graph *g, struct commit *c)
+static struct tree *load_tree_for_commit(struct repository *r,
+					 struct commit_graph *g,
+					 struct commit *c)
 {
 	struct object_id oid;
 	const unsigned char *commit_data = g->chunk_commit_data +
 					   GRAPH_DATA_WIDTH * (c->graph_pos);
 
 	hashcpy(oid.hash, commit_data);
-	c->maybe_tree = lookup_tree(the_repository, &oid);
+	c->maybe_tree = lookup_tree(r, &oid);
 
 	return c->maybe_tree;
 }
 
-static struct tree *get_commit_tree_in_graph_one(struct commit_graph *g,
+static struct tree *get_commit_tree_in_graph_one(struct repository *r,
+						 struct commit_graph *g,
 						 const struct commit *c)
 {
 	if (c->maybe_tree)
@@ -420,12 +428,12 @@ static struct tree *get_commit_tree_in_graph_one(struct commit_graph *g,
 	if (c->graph_pos == COMMIT_NOT_FROM_GRAPH)
 		BUG("get_commit_tree_in_graph_one called from non-commit-graph commit");
 
-	return load_tree_for_commit(g, (struct commit *)c);
+	return load_tree_for_commit(r, g, (struct commit *)c);
 }
 
 struct tree *get_commit_tree_in_graph(struct repository *r, const struct commit *c)
 {
-	return get_commit_tree_in_graph_one(r->objects->commit_graph, c);
+	return get_commit_tree_in_graph_one(r, r->objects->commit_graph, c);
 }
 
 static void write_graph_chunk_fanout(struct hashfile *f,
@@ -1022,7 +1030,7 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g)
 		}
 
 		graph_commit = lookup_commit(r, &cur_oid);
-		if (!parse_commit_in_graph_one(g, graph_commit))
+		if (!parse_commit_in_graph_one(r, g, graph_commit))
 			graph_report("failed to parse %s from commit-graph",
 				     oid_to_hex(&cur_oid));
 	}
@@ -1058,7 +1066,7 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g)
 			continue;
 		}
 
-		if (!oideq(&get_commit_tree_in_graph_one(g, graph_commit)->object.oid,
+		if (!oideq(&get_commit_tree_in_graph_one(r, g, graph_commit)->object.oid,
 			   get_commit_tree_oid(odb_commit)))
 			graph_report("root tree OID for commit %s in commit-graph is %s != %s",
 				     oid_to_hex(&cur_oid),

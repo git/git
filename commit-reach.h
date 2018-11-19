@@ -9,21 +9,35 @@ struct ref_filter;
 struct object_id;
 struct object_array;
 
-struct commit_list *get_merge_bases_many(struct commit *one,
-					 int n,
-					 struct commit **twos);
-struct commit_list *get_merge_bases_many_dirty(struct commit *one,
-					       int n,
-					       struct commit **twos);
-struct commit_list *get_merge_bases(struct commit *one, struct commit *two);
+struct commit_list *repo_get_merge_bases(struct repository *r,
+					 struct commit *rev1,
+					 struct commit *rev2);
+struct commit_list *repo_get_merge_bases_many(struct repository *r,
+					      struct commit *one, int n,
+					      struct commit **twos);
+/* To be used only when object flags after this call no longer matter */
+struct commit_list *repo_get_merge_bases_many_dirty(struct repository *r,
+						    struct commit *one, int n,
+						    struct commit **twos);
+#ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
+#define get_merge_bases(r1, r2)           repo_get_merge_bases(the_repository, r1, r2)
+#define get_merge_bases_many(one, n, two) repo_get_merge_bases_many(the_repository, one, n, two)
+#define get_merge_bases_many_dirty(one, n, twos) repo_get_merge_bases_many_dirty(the_repository, one, n, twos)
+#endif
+
 struct commit_list *get_octopus_merge_bases(struct commit_list *in);
 
-/* To be used only when object flags after this call no longer matter */
-struct commit_list *get_merge_bases_many_dirty(struct commit *one, int n, struct commit **twos);
-
 int is_descendant_of(struct commit *commit, struct commit_list *with_commit);
-int in_merge_bases_many(struct commit *commit, int nr_reference, struct commit **reference);
-int in_merge_bases(struct commit *commit, struct commit *reference);
+int repo_in_merge_bases(struct repository *r,
+			struct commit *commit,
+			struct commit *reference);
+int repo_in_merge_bases_many(struct repository *r,
+			     struct commit *commit,
+			     int nr_reference, struct commit **reference);
+#ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
+#define in_merge_bases(c1, c2) repo_in_merge_bases(the_repository, c1, c2)
+#define in_merge_bases_many(c1, n, cs) repo_in_merge_bases_many(the_repository, c1, n, cs)
+#endif
 
 /*
  * Takes a list of commits and returns a new list where those

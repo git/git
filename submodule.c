@@ -457,7 +457,7 @@ static int prepare_submodule_summary(struct rev_info *rev, const char *path,
 	return prepare_revision_walk(rev);
 }
 
-static void print_submodule_summary(struct rev_info *rev, struct diff_options *o)
+static void print_submodule_summary(struct repository *r, struct rev_info *rev, struct diff_options *o)
 {
 	static const char format[] = "  %m %s";
 	struct strbuf sb = STRBUF_INIT;
@@ -468,7 +468,8 @@ static void print_submodule_summary(struct rev_info *rev, struct diff_options *o
 		ctx.date_mode = rev->date_mode;
 		ctx.output_encoding = get_log_output_encoding();
 		strbuf_setlen(&sb, 0);
-		format_commit_message(commit, format, &sb, &ctx);
+		repo_format_commit_message(r, commit, format, &sb,
+				      &ctx);
 		strbuf_addch(&sb, '\n');
 		if (commit->object.flags & SYMMETRIC_LEFT)
 			diff_emit_submodule_del(o, sb.buf);
@@ -495,14 +496,44 @@ void prepare_submodule_repo_env(struct argv_array *out)
 			 DEFAULT_GIT_DIR_ENVIRONMENT);
 }
 
-/* Helper function to display the submodule header line prior to the full
- * summary output. If it can locate the submodule objects directory it will
- * attempt to lookup both the left and right commits and put them into the
- * left and right pointers.
+/*
+ * Initialize 'out' based on the provided submodule path.
+ *
+ * Unlike repo_submodule_init, this tolerates submodules not present
+ * in .gitmodules. This function exists only to preserve historical behavior,
+ *
+ * Returns 0 on success, -1 when the submodule is not present.
  */
-static void show_submodule_header(struct diff_options *o, const char *path,
+static struct repository *open_submodule(const char *path)
+{
+	struct strbuf sb = STRBUF_INIT;
+	struct repository *out = xmalloc(sizeof(*out));
+
+	if (submodule_to_gitdir(&sb, path) || repo_init(out, sb.buf, NULL)) {
+		strbuf_release(&sb);
+		free(out);
+		return NULL;
+	}
+
+	out->submodule_prefix = xstrdup(path);
+
+	strbuf_release(&sb);
+	return out;
+}
+
+/*
+ * Helper function to display the submodule header line prior to the full
+ * summary output.
+ *
+ * If it can locate the submodule git directory it will create a repository
+ * handle for the submodule and lookup both the left and right commits and
+ * put them into the left and right pointers.
+ */
+static void show_submodule_header(struct diff_options *o,
+		const char *path,
 		struct object_id *one, struct object_id *two,
 		unsigned dirty_submodule,
+		struct repository *sub,
 		struct commit **left, struct commit **right,
 		struct commit_list **merge_bases)
 {
@@ -521,7 +552,7 @@ static void show_submodule_header(struct diff_options *o, const char *path,
 	else if (is_null_oid(two))
 		message = "(submodule deleted)";
 
-	if (add_submodule_odb(path)) {
+	if (!sub) {
 		if (!message)
 			message = "(commits not present)";
 		goto output_header;
@@ -531,8 +562,8 @@ static void show_submodule_header(struct diff_options *o, const char *path,
 	 * Attempt to lookup the commit references, and determine if this is
 	 * a fast forward or fast backwards update.
 	 */
-	*left = lookup_commit_reference(the_repository, one);
-	*right = lookup_commit_reference(the_repository, two);
+	*left = lookup_commit_reference(sub, one);
+	*right = lookup_commit_reference(sub, two);
 
 	/*
 	 * Warn about missing commits in the submodule project, but only if
@@ -542,7 +573,7 @@ static void show_submodule_header(struct diff_options *o, const char *path,
 	     (!is_null_oid(two) && !*right))
 		message = "(commits not present)";
 
-	*merge_bases = get_merge_bases(*left, *right);
+	*merge_bases = repo_get_merge_bases(sub, *left, *right);
 	if (*merge_bases) {
 		if ((*merge_bases)->item == *left)
 			fast_forward = 1;
@@ -576,16 +607,18 @@ void show_submodule_summary(struct diff_options *o, const char *path,
 	struct rev_info rev;
 	struct commit *left = NULL, *right = NULL;
 	struct commit_list *merge_bases = NULL;
+	struct repository *sub;
 
+	sub = open_submodule(path);
 	show_submodule_header(o, path, one, two, dirty_submodule,
-			      &left, &right, &merge_bases);
+			      sub, &left, &right, &merge_bases);
 
 	/*
 	 * If we don't have both a left and a right pointer, there is no
 	 * reason to try and display a summary. The header line should contain
 	 * all the information the user needs.
 	 */
-	if (!left || !right)
+	if (!left || !right || !sub)
 		goto out;
 
 	/* Treat revision walker failure the same as missing commits */
@@ -594,13 +627,17 @@ void show_submodule_summary(struct diff_options *o, const char *path,
 		goto out;
 	}
 
-	print_submodule_summary(&rev, o);
+	print_submodule_summary(sub, &rev, o);
 
 out:
 	if (merge_bases)
 		free_commit_list(merge_bases);
 	clear_commit_marks(left, ~0);
 	clear_commit_marks(right, ~0);
+	if (sub) {
+		repo_clear(sub);
+		free(sub);
+	}
 }
 
 void show_submodule_inline_diff(struct diff_options *o, const char *path,
@@ -612,9 +649,11 @@ void show_submodule_inline_diff(struct diff_options *o, const char *path,
 	struct commit_list *merge_bases = NULL;
 	struct child_process cp = CHILD_PROCESS_INIT;
 	struct strbuf sb = STRBUF_INIT;
+	struct repository *sub;
 
+	sub = open_submodule(path);
 	show_submodule_header(o, path, one, two, dirty_submodule,
-			      &left, &right, &merge_bases);
+			      sub, &left, &right, &merge_bases);
 
 	/* We need a valid left and right commit to display a difference */
 	if (!(left || is_null_oid(one)) ||
@@ -675,6 +714,10 @@ done:
 		clear_commit_marks(left, ~0);
 	if (right)
 		clear_commit_marks(right, ~0);
+	if (sub) {
+		repo_clear(sub);
+		free(sub);
+	}
 }
 
 int should_update_submodules(void)
@@ -999,9 +1042,6 @@ static int push_submodule(const char *path,
 			  const struct string_list *push_options,
 			  int dry_run)
 {
-	if (add_submodule_odb(path))
-		return 1;
-
 	if (for_each_remote_ref_submodule(path, has_remote, NULL) > 0) {
 		struct child_process cp = CHILD_PROCESS_INIT;
 		argv_array_push(&cp.args, "push");
