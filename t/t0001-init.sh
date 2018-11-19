@@ -319,14 +319,14 @@ test_lazy_prereq GETCWD_IGNORES_PERMS '
 	base=GETCWD_TEST_BASE_DIR &&
 	mkdir -p $base/dir &&
 	chmod 100 $base ||
-	error "bug in test script: cannot prepare $base"
+	BUG "cannot prepare $base"
 
 	(cd $base/dir && /bin/pwd -P)
 	status=$?
 
 	chmod 700 $base &&
 	rm -rf $base ||
-	error "bug in test script: cannot clean $base"
+	BUG "cannot clean $base"
 	return $status
 '
 

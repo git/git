@@ -402,6 +402,10 @@ error () {
 	exit 1
 }
 
+BUG () {
+	error >&7 "bug in the test script: $*"
+}
+
 say () {
 	say_color info "$*"
 }
@@ -729,7 +733,7 @@ test_run_ () {
 		if $(printf '%s\n' "$1" | sed -f "$GIT_BUILD_DIR/t/chainlint.sed" | grep -q '?![A-Z][A-Z]*?!') ||
 			test "OK-117" != "$(test_eval_ "(exit 117) && $1${LF}${LF}echo OK-\$?" 3>&1)"
 		then
-			error "bug in the test script: broken &&-chain or run-away HERE-DOC: $1"
+			BUG "broken &&-chain or run-away HERE-DOC: $1"
 		fi
 		trace=$trace_tmp
 	fi
@@ -1231,7 +1235,7 @@ test_lazy_prereq SANITY '
 	chmod -w SANETESTD.1 &&
 	chmod -r SANETESTD.1/x &&
 	chmod -rx SANETESTD.2 ||
-	error "bug in test sript: cannot prepare SANETESTD"
+	BUG "cannot prepare SANETESTD"
 
 	! test -r SANETESTD.1/x &&
 	! rm SANETESTD.1/x && ! test -f SANETESTD.2/x
@@ -1239,7 +1243,7 @@ test_lazy_prereq SANITY '
 
 	chmod +rwx SANETESTD.1 SANETESTD.2 &&
 	rm -rf SANETESTD.1 SANETESTD.2 ||
-	error "bug in test sript: cannot clean SANETESTD"
+	BUG "cannot clean SANETESTD"
 	return $status
 '
 
