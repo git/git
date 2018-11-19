@@ -617,10 +617,11 @@ static int probe_rpc(struct rpc_state *rpc, struct slot_results *results)
 	return err;
 }
 
-static curl_off_t xcurl_off_t(ssize_t len) {
-	if (len > maximum_signed_value_of_type(curl_off_t))
+static curl_off_t xcurl_off_t(size_t len) {
+	uintmax_t size = len;
+	if (size > maximum_signed_value_of_type(curl_off_t))
 		die("cannot handle pushes this big");
-	return (curl_off_t) len;
+	return (curl_off_t)size;
 }
 
 static int post_rpc(struct rpc_state *rpc)
