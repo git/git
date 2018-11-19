@@ -854,9 +854,23 @@ test_must_be_empty () {
 
 # Tests that its two parameters refer to the same revision
 test_cmp_rev () {
-	git rev-parse --verify "$1" >expect.rev &&
-	git rev-parse --verify "$2" >actual.rev &&
-	test_cmp expect.rev actual.rev
+	if test $# != 2
+	then
+		error "bug in the test script: test_cmp_rev requires two revisions, but got $#"
+	else
+		local r1 r2
+		r1=$(git rev-parse --verify "$1") &&
+		r2=$(git rev-parse --verify "$2") &&
+		if test "$r1" != "$r2"
+		then
+			cat >&4 <<-EOF
+			error: two revisions point to different objects:
+			  '$1': $r1
+			  '$2': $r2
+			EOF
+			return 1
+		fi
+	fi
 }
 
 # Print a sequence of integers in increasing order, either with
