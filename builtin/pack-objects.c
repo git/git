@@ -3084,6 +3084,7 @@ static void get_object_list(int ac, const char **av)
 	struct rev_info revs;
 	char line[1000];
 	int flags = 0;
+	int save_warning;
 
 	repo_init_revisions(the_repository, &revs, NULL);
 	save_commit_buffer = 0;
@@ -3092,6 +3093,9 @@ static void get_object_list(int ac, const char **av)
 
 	/* make sure shallows are read */
 	is_repository_shallow(the_repository);
+
+	save_warning = warn_on_object_refname_ambiguity;
+	warn_on_object_refname_ambiguity = 0;
 
 	while (fgets(line, sizeof(line), stdin) != NULL) {
 		int len = strlen(line);
@@ -3118,6 +3122,8 @@ static void get_object_list(int ac, const char **av)
 		if (handle_revision_arg(line, &revs, flags, REVARG_CANNOT_BE_FILENAME))
 			die(_("bad revision '%s'"), line);
 	}
+
+	warn_on_object_refname_ambiguity = save_warning;
 
 	if (use_bitmap_index && !get_object_list_from_bitmap(&revs))
 		return;
