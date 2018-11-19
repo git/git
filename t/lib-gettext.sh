@@ -12,7 +12,7 @@ export GIT_TEXTDOMAINDIR GIT_PO_PATH
 
 . "$GIT_BUILD_DIR"/git-sh-i18n
 
-if test_have_prereq GETTEXT && ! test_have_prereq GETTEXT_POISON
+if test_have_prereq GETTEXT && test_have_prereq C_LOCALE_OUTPUT
 then
 	# is_IS.UTF-8 on Solaris and FreeBSD, is_IS.utf8 on Debian
 	is_IS_locale=$(locale -a 2>/dev/null |
