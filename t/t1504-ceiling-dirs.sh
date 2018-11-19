@@ -85,9 +85,9 @@ then
 	GIT_CEILING_DIRECTORIES="$TRASH_ROOT/top/"
 	test_fail subdir_ceil_at_top_slash
 
-	GIT_CEILING_DIRECTORIES=":$TRASH_ROOT/top"
+	GIT_CEILING_DIRECTORIES="$PATH_SEP$TRASH_ROOT/top"
 	test_prefix subdir_ceil_at_top_no_resolve "sub/dir/"
-	GIT_CEILING_DIRECTORIES=":$TRASH_ROOT/top/"
+	GIT_CEILING_DIRECTORIES="$PATH_SEP$TRASH_ROOT/top/"
 	test_prefix subdir_ceil_at_top_slash_no_resolve "sub/dir/"
 fi
 
@@ -117,13 +117,13 @@ GIT_CEILING_DIRECTORIES="$TRASH_ROOT/subdi"
 test_prefix subdir_ceil_at_subdi_slash "sub/dir/"
 
 
-GIT_CEILING_DIRECTORIES="/foo:$TRASH_ROOT/sub"
+GIT_CEILING_DIRECTORIES="/foo$PATH_SEP$TRASH_ROOT/sub"
 test_fail second_of_two
 
-GIT_CEILING_DIRECTORIES="$TRASH_ROOT/sub:/bar"
+GIT_CEILING_DIRECTORIES="$TRASH_ROOT/sub$PATH_SEP/bar"
 test_fail first_of_two
 
-GIT_CEILING_DIRECTORIES="/foo:$TRASH_ROOT/sub:/bar"
+GIT_CEILING_DIRECTORIES="/foo$PATH_SEP$TRASH_ROOT/sub$PATH_SEP/bar"
 test_fail second_of_three
 
 
