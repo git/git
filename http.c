@@ -835,7 +835,7 @@ static CURL *get_curl_handle(void)
 		curl_easy_setopt(result, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NO_REVOKE);
 #else
 		warning("CURLSSLOPT_NO_REVOKE not applied to curl SSL options because\n"
-			"your curl version is too old (>= 7.44.0)");
+			"your curl version is too old (< 7.44.0)");
 #endif
 	}
 
