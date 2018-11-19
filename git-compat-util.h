@@ -180,9 +180,12 @@
 #include <regex.h>
 #include <utime.h>
 #include <syslog.h>
-#ifndef NO_SYS_POLL_H
+#if !defined(NO_POLL_H)
+#include <poll.h>
+#elif !defined(NO_SYS_POLL_H)
 #include <sys/poll.h>
 #else
+/* Pull the compat stuff */
 #include <poll.h>
 #endif
 #ifdef HAVE_BSD_SYSCTL

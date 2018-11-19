@@ -210,10 +210,12 @@ all::
 # Define MMAP_PREVENTS_DELETE if a file that is currently mmapped cannot be
 # deleted or cannot be replaced using rename().
 #
+# Define NO_POLL_H if you don't have poll.h.
+#
 # Define NO_SYS_POLL_H if you don't have sys/poll.h.
 #
 # Define NO_POLL if you do not have or don't want to use poll().
-# This also implies NO_SYS_POLL_H.
+# This also implies NO_POLL_H and NO_SYS_POLL_H.
 #
 # Define NEEDS_SYS_PARAM_H if you need to include sys/param.h to compile,
 # *PLEASE* REPORT to git@vger.kernel.org if your platform needs this;
@@ -1456,6 +1458,7 @@ ifdef NO_GETTEXT
 	USE_GETTEXT_SCHEME ?= fallthrough
 endif
 ifdef NO_POLL
+	NO_POLL_H = YesPlease
 	NO_SYS_POLL_H = YesPlease
 	COMPAT_CFLAGS += -DNO_POLL -Icompat/poll
 	COMPAT_OBJS += compat/poll/poll.o
@@ -1493,6 +1496,9 @@ ifdef NO_UNSETENV
 endif
 ifdef NO_SYS_SELECT_H
 	BASIC_CFLAGS += -DNO_SYS_SELECT_H
+endif
+ifdef NO_POLL_H
+	BASIC_CFLAGS += -DNO_POLL_H
 endif
 ifdef NO_SYS_POLL_H
 	BASIC_CFLAGS += -DNO_SYS_POLL_H
