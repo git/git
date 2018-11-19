@@ -52,7 +52,7 @@ test_expect_success SIMPLEPAGER 'git grep -O' '
 	EOF
 	echo grep.h >expect.notless &&
 
-	PATH=.:$PATH git grep -O GREP_PATTERN >out &&
+	PATH=.$PATH_SEP$PATH git grep -O GREP_PATTERN >out &&
 	{
 		test_cmp expect.less pager-args ||
 		test_cmp expect.notless pager-args
