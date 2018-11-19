@@ -10,12 +10,7 @@ GIT_TEXTDOMAINDIR="$GIT_BUILD_DIR/po/build/locale"
 GIT_PO_PATH="$GIT_BUILD_DIR/po"
 export GIT_TEXTDOMAINDIR GIT_PO_PATH
 
-if test -n "$GIT_TEST_INSTALLED"
-then
-	. "$(git --exec-path)"/git-sh-i18n
-else
-	. "$GIT_BUILD_DIR"/git-sh-i18n
-fi
+. "$GIT_BUILD_DIR"/git-sh-i18n
 
 if test_have_prereq GETTEXT && ! test_have_prereq GETTEXT_POISON
 then
