@@ -100,7 +100,7 @@ static int show_tree(const struct object_id *oid, struct strbuf *base,
 						  "BAD");
 				else
 					xsnprintf(size_text, sizeof(size_text),
-						  "%lu", size);
+						  "%"PRIuMAX, (uintmax_t)size);
 			} else
 				xsnprintf(size_text, sizeof(size_text), "-");
 			printf("%06o %s %s %7s\t", mode, type,

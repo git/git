@@ -424,7 +424,8 @@ static void *unpack_entry_data(off_t offset, unsigned long size,
 	int hdrlen;
 
 	if (!is_delta_type(type)) {
-		hdrlen = xsnprintf(hdr, sizeof(hdr), "%s %lu", type_name(type), size) + 1;
+		hdrlen = xsnprintf(hdr, sizeof(hdr), "%s %"PRIuMAX,
+				   type_name(type),(uintmax_t)size) + 1;
 		the_hash_algo->init_fn(&c);
 		the_hash_algo->update_fn(&c, hdr, hdrlen);
 	} else
@@ -1597,10 +1598,10 @@ static void show_pack_info(int stat_only)
 			chain_histogram[obj_stat[i].delta_depth - 1]++;
 		if (stat_only)
 			continue;
-		printf("%s %-6s %lu %lu %"PRIuMAX,
+		printf("%s %-6s %"PRIuMAX" %"PRIuMAX" %"PRIuMAX,
 		       oid_to_hex(&obj->idx.oid),
-		       type_name(obj->real_type), obj->size,
-		       (unsigned long)(obj[1].idx.offset - obj->idx.offset),
+		       type_name(obj->real_type), (uintmax_t)obj->size,
+		       (uintmax_t)(obj[1].idx.offset - obj->idx.offset),
 		       (uintmax_t)obj->idx.offset);
 		if (is_delta_type(obj->type)) {
 			struct object_entry *bobj = &objects[obj_stat[i].base_object_no];

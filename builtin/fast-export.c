@@ -253,7 +253,7 @@ static void export_blob(const struct object_id *oid)
 
 	mark_next_object(object);
 
-	printf("blob\nmark :%"PRIu32"\ndata %lu\n", last_idnum, size);
+	printf("blob\nmark :%"PRIu32"\ndata %"PRIuMAX"\n", last_idnum, (uintmax_t)size);
 	if (size && fwrite(buf, size, 1, stdout) != 1)
 		die_errno("could not write blob '%s'", oid_to_hex(oid));
 	printf("\n");

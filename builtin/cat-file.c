@@ -99,7 +99,7 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 		oi.sizep = &size;
 		if (oid_object_info_extended(the_repository, &oid, &oi, flags) < 0)
 			die("git cat-file: could not get object info");
-		printf("%lu\n", size);
+		printf("%"PRIuMAX"\n", (uintmax_t)size);
 		return 0;
 
 	case 'e':
@@ -245,7 +245,7 @@ static void expand_atom(struct strbuf *sb, const char *atom, int len,
 		if (data->mark_query)
 			data->info.sizep = &data->size;
 		else
-			strbuf_addf(sb, "%lu", data->size);
+			strbuf_addf(sb, "%"PRIuMAX , (uintmax_t)data->size);
 	} else if (is_atom("objectsize:disk", atom, len)) {
 		if (data->mark_query)
 			data->info.disk_sizep = &data->disk_size;
