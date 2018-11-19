@@ -34,17 +34,6 @@ typedef int pthread_mutexattr_t;
 
 #define pthread_cond_t CONDITION_VARIABLE
 
-WINBASEAPI VOID WINAPI
-InitializeConditionVariable(PCONDITION_VARIABLE ConditionVariable);
-WINBASEAPI VOID WINAPI
-WakeConditionVariable(PCONDITION_VARIABLE ConditionVariable);
-WINBASEAPI VOID WINAPI
-WakeAllConditionVariable(PCONDITION_VARIABLE ConditionVariable);
-WINBASEAPI BOOL WINAPI
-SleepConditionVariableCS(PCONDITION_VARIABLE ConditionVariable,
-                         PCRITICAL_SECTION CriticalSection,
-                         DWORD dwMilliseconds);
-
 #define pthread_cond_init(a,b) InitializeConditionVariable((a))
 #define pthread_cond_destroy(a) do {} while (0)
 #define pthread_cond_wait(a,b) return_0(SleepConditionVariableCS((a), (b), INFINITE))
