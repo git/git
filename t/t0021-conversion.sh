@@ -8,7 +8,7 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-terminal.sh
 
-PATH=$PWD:$PATH
+PATH=$PWD$PATH_SEP$PATH
 TEST_ROOT="$(pwd)"
 
 write_script <<\EOF "$TEST_ROOT/rot13.sh"
