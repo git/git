@@ -55,6 +55,20 @@ untracked_files () {
 	git ls-files -o $z $excl_opt -- "$@"
 }
 
+prepare_fallback_ident () {
+	if ! git -c user.useconfigonly=yes var GIT_COMMITTER_IDENT >/dev/null 2>&1
+	then
+		GIT_AUTHOR_NAME="git stash"
+		GIT_AUTHOR_EMAIL=git@stash
+		GIT_COMMITTER_NAME="git stash"
+		GIT_COMMITTER_EMAIL=git@stash
+		export GIT_AUTHOR_NAME
+		export GIT_AUTHOR_EMAIL
+		export GIT_COMMITTER_NAME
+		export GIT_COMMITTER_EMAIL
+	fi
+}
+
 clear_stash () {
 	if test $# != 0
 	then
@@ -67,6 +81,9 @@ clear_stash () {
 }
 
 create_stash () {
+
+	prepare_fallback_ident
+
 	stash_msg=
 	untracked=
 	while test $# != 0
