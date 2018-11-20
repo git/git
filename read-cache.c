@@ -2176,7 +2176,8 @@ int do_read_index(struct index_state *istate, const char *path, int must_exist)
 
 	src_offset = sizeof(*hdr);
 
-	nr_threads = git_config_get_index_threads();
+	if (git_config_get_index_threads(&nr_threads))
+		nr_threads = 1;
 
 	/* TODO: does creating more threads than cores help? */
 	if (!nr_threads) {
@@ -2695,7 +2696,13 @@ static int record_eoie(void)
 
 	if (!git_config_get_bool("index.recordendofindexentries", &val))
 		return val;
-	return 0;
+
+	/*
+	 * As a convenience, the end of index entries extension
+	 * used for threading is written by default if the user
+	 * explicitly requested threaded index reads.
+	 */
+	return !git_config_get_index_threads(&val) && val != 1;
 }
 
 static int record_ieot(void)
@@ -2704,7 +2711,13 @@ static int record_ieot(void)
 
 	if (!git_config_get_bool("index.recordoffsettable", &val))
 		return val;
-	return 0;
+
+	/*
+	 * As a convenience, the offset table used for threading is
+	 * written by default if the user explicitly requested
+	 * threaded index reads.
+	 */
+	return !git_config_get_index_threads(&val) && val != 1;
 }
 
 /*
@@ -2765,9 +2778,7 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 	if (ce_write(&c, newfd, &hdr, sizeof(hdr)) < 0)
 		return -1;
 
-	if (HAVE_THREADS)
-		nr_threads = git_config_get_index_threads();
-	else
+	if (!HAVE_THREADS || git_config_get_index_threads(&nr_threads))
 		nr_threads = 1;
 
 	if (nr_threads != 1 && record_ieot()) {
