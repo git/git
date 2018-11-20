@@ -2698,6 +2698,15 @@ static int record_eoie(void)
 	return 0;
 }
 
+static int record_ieot(void)
+{
+	int val;
+
+	if (!git_config_get_bool("index.recordoffsettable", &val))
+		return val;
+	return 0;
+}
+
 /*
  * On success, `tempfile` is closed. If it is the temporary file
  * of a `struct lock_file`, we will therefore effectively perform
@@ -2761,7 +2770,7 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 	else
 		nr_threads = 1;
 
-	if (nr_threads != 1) {
+	if (nr_threads != 1 && record_ieot()) {
 		int ieot_blocks, cpus;
 
 		/*
