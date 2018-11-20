@@ -24,6 +24,7 @@ int advice_add_embedded_repo = 1;
 int advice_ignored_hook = 1;
 int advice_waiting_for_editor = 1;
 int advice_graft_file_deprecated = 1;
+int advice_unknown_index_extension = 1;
 int advice_checkout_ambiguous_remote_branch_name = 1;
 
 static int advice_use_color = -1;
@@ -78,6 +79,7 @@ static struct {
 	{ "ignoredHook", &advice_ignored_hook },
 	{ "waitingForEditor", &advice_waiting_for_editor },
 	{ "graftFileDeprecated", &advice_graft_file_deprecated },
+	{ "unknownIndexExtension", &advice_unknown_index_extension },
 	{ "checkoutAmbiguousRemoteBranchName", &advice_checkout_ambiguous_remote_branch_name },
 
 	/* make this an alias for backward compatibility */
