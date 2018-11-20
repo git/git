@@ -1726,7 +1726,7 @@ static int read_index_extension(struct index_state *istate,
 		if (*ext < 'A' || 'Z' < *ext)
 			return error("index uses %.4s extension, which we do not understand",
 				     ext);
-		fprintf(stderr, "ignoring %.4s extension\n", ext);
+		trace_printf("ignoring %.4s extension\n", ext);
 		break;
 	}
 	return 0;
