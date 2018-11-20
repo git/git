@@ -25,14 +25,17 @@ test_expect_success 'enable split index' '
 	git update-index --split-index &&
 	test-tool dump-split-index .git/index >actual &&
 	indexversion=$(test-tool index-version <.git/index) &&
+
+	# NEEDSWORK: Stop hard-coding checksums.
 	if test "$indexversion" = "4"
 	then
-		own=3527df833c6c100d3d1d921a9a782d62a8be4b58
-		base=746f7ab2ed44fb839efdfbffcf399d0b113fb4cb
+		own=432ef4b63f32193984f339431fd50ca796493569
+		base=508851a7f0dfa8691e9f69c7f055865389012491
 	else
-		own=5e9b60117ece18da410ddecc8b8d43766a0e4204
-		base=4370042739b31cd17a5c5cd6043a77c9a00df113
+		own=8299b0bcd1ac364e5f1d7768efb62fa2da79a339
+		base=39d890139ee5356c7ef572216cebcd27aa41f9df
 	fi &&
+
 	cat >expect <<-EOF &&
 	own $own
 	base $base

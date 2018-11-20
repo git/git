@@ -2689,6 +2689,15 @@ void update_index_if_able(struct index_state *istate, struct lock_file *lockfile
 		rollback_lock_file(lockfile);
 }
 
+static int record_eoie(void)
+{
+	int val;
+
+	if (!git_config_get_bool("index.recordendofindexentries", &val))
+		return val;
+	return 0;
+}
+
 /*
  * On success, `tempfile` is closed. If it is the temporary file
  * of a `struct lock_file`, we will therefore effectively perform
@@ -2936,7 +2945,7 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 	 * read.  Write it out regardless of the strip_extensions parameter as we need it
 	 * when loading the shared index.
 	 */
-	if (offset) {
+	if (offset && record_eoie()) {
 		struct strbuf sb = STRBUF_INIT;
 
 		write_eoie_extension(&sb, &eoie_c, offset);
