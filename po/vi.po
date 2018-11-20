@@ -13663,7 +13663,7 @@ msgstr "Đánh số các đối tượng"
 #: builtin/pack-objects.c:3382
 #, c-format
 msgid "Total %<PRIu32> (delta %<PRIu32>), reused %<PRIu32> (delta %<PRIu32>)"
-msgstr "Tỏng %<PRIu32> (delta %<PRIu32>), dùng lại %<PRIu32> (delta %<PRIu32>)"
+msgstr "Tổng %<PRIu32> (delta %<PRIu32>), dùng lại %<PRIu32> (delta %<PRIu32>)"
 
 #: builtin/pack-refs.c:7
 msgid "git pack-refs [<options>]"
