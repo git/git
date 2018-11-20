@@ -337,6 +337,11 @@ do
 		fix|strip)
 			force_rebase=t
 			;;
+		warn|nowarn|error|error-all)
+			;; # okay, known whitespace option
+		*)
+			die "fatal: Invalid whitespace option: '${1#*=}'"
+			;;
 		esac
 		;;
 	--ignore-whitespace)
@@ -351,6 +356,9 @@ do
 	--committer-date-is-author-date|--ignore-date)
 		git_am_opt="$git_am_opt $1"
 		force_rebase=t
+		;;
+	-C*[!0-9]*)
+		die "fatal: switch \`C' expects a numerical value"
 		;;
 	-C*)
 		git_am_opt="$git_am_opt $1"
