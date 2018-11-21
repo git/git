@@ -154,6 +154,7 @@ appropriately before running "make".
 	As the names depend on the tests' file names, it is safe to
 	run the tests with this option in parallel.
 
+-V::
 --verbose-log::
 	Write verbose output to the same logfile as `--tee`, but do
 	_not_ write it to stdout. Unlike `--tee --verbose`, this option
