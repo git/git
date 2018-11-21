@@ -11,6 +11,7 @@ SYNOPSIS
 [verse]
 'git-upload-pack' [--[no-]strict] [--timeout=<n>] [--stateless-rpc]
 		  [--advertise-refs] <directory>
+
 DESCRIPTION
 -----------
 Invoked by 'git fetch-pack', learns what

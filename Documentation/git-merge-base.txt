@@ -154,13 +154,13 @@ topic origin/master`, the history of remote-tracking branch
 `origin/master` may have been rewound and rebuilt, leading to a
 history of this shape:
 
-			 o---B2
+	                 o---B2
 	                /
 	---o---o---B1--o---o---o---B (origin/master)
 	        \
-		 B0
+	         B0
 	          \
-		   D0---D1---D (topic)
+	           D0---D1---D (topic)
 
 where `origin/master` used to point at commits B0, B1, B2 and now it
 points at B, and your `topic` branch was started on top of it back

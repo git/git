@@ -633,11 +633,11 @@ and so at step 3) we compute f(X).
 Let's take the following graph as an example:
 
 -------------
-	    G-H-I-J
-	   /       \
+            G-H-I-J
+           /       \
 A-B-C-D-E-F         O
-	   \       /
-	    K-L-M-N
+           \       /
+            K-L-M-N
 -------------
 
 If we compute the following non optimal function on it:
@@ -649,25 +649,25 @@ g(X) = min(number_of_ancestors(X), number_of_descendants(X))
 we get:
 
 -------------
-	    4 3 2 1
-	    G-H-I-J
+            4 3 2 1
+            G-H-I-J
 1 2 3 4 5 6/       \0
 A-B-C-D-E-F         O
-	   \       /
-	    K-L-M-N
-	    4 3 2 1
+           \       /
+            K-L-M-N
+            4 3 2 1
 -------------
 
 but with the algorithm used by git bisect we get:
 
 -------------
-	    7 7 6 5
-	    G-H-I-J
+            7 7 6 5
+            G-H-I-J
 1 2 3 4 5 6/       \0
 A-B-C-D-E-F         O
-	   \       /
-	    K-L-M-N
-	    7 7 6 5
+           \       /
+            K-L-M-N
+            7 7 6 5
 -------------
 
 So we chose G, H, K or L as the best bisection point, which is better
@@ -773,7 +773,7 @@ forked of the main branch at a commit named "D" like this:
 -------------
 A-B-C-D-E-F-G  <--main
        \
-	H-I-J  <--dev
+        H-I-J  <--dev
 -------------
 
 The commit "D" is called a "merge base" for branch "main" and "dev"

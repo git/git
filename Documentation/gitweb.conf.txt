@@ -19,10 +19,12 @@ end of a line is ignored.  See *perlsyn*(1) for details.
 
 An example:
 
-    # gitweb configuration file for http://git.example.org
-    #
-    our $projectroot = "/srv/git"; # FHS recommendation
-    our $site_name = 'Example.org >> Repos';
+------------------------------------------------
+# gitweb configuration file for http://git.example.org
+#
+our $projectroot = "/srv/git"; # FHS recommendation
+our $site_name = 'Example.org >> Repos';
+------------------------------------------------
 
 
 The configuration file is used to override the default settings that
@@ -357,6 +359,7 @@ $home_link_str::
 +
 For example, the following setting produces a breadcrumb trail like
 "home / dev / projects / ..." where "projects" is the home link.
++
 ----------------------------------------------------------------------------
     our @extra_breadcrumbs = (
       [ 'home' => 'https://www.example.org/' ],
@@ -901,14 +904,16 @@ To enable blame, pickaxe search, and snapshot support (allowing "tar.gz" and
 "zip" snapshots), while allowing individual projects to turn them off, put
 the following in your GITWEB_CONFIG file:
 
-	$feature{'blame'}{'default'} = [1];
-	$feature{'blame'}{'override'} = 1;
+--------------------------------------------------------------------------------
+$feature{'blame'}{'default'} = [1];
+$feature{'blame'}{'override'} = 1;
 
-	$feature{'pickaxe'}{'default'} = [1];
-	$feature{'pickaxe'}{'override'} = 1;
+$feature{'pickaxe'}{'default'} = [1];
+$feature{'pickaxe'}{'override'} = 1;
 
-	$feature{'snapshot'}{'default'} = ['zip', 'tgz'];
-	$feature{'snapshot'}{'override'} = 1;
+$feature{'snapshot'}{'default'} = ['zip', 'tgz'];
+$feature{'snapshot'}{'override'} = 1;
+--------------------------------------------------------------------------------
 
 If you allow overriding for the snapshot feature, you can specify which
 snapshot formats are globally disabled. You can also add any command-line
