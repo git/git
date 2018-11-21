@@ -7,6 +7,7 @@ CFLAGS += -pedantic
 CFLAGS += -DUSE_PARENS_AROUND_GETTEXT_N=0
 endif
 CFLAGS += -Wdeclaration-after-statement
+CFLAGS += -Wformat-security
 CFLAGS += -Wno-format-zero-length
 CFLAGS += -Wold-style-definition
 CFLAGS += -Woverflow
