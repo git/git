@@ -142,4 +142,9 @@ test_expect_success 'changed message' '
 	test_cmp expected actual
 '
 
+test_expect_success 'no commits on one side' '
+	git commit --amend -m "new message" &&
+	git range-diff master HEAD@{1} HEAD
+'
+
 test_done
