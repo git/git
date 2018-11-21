@@ -278,8 +278,7 @@ struct userdiff_driver *userdiff_find_by_path(const char *path)
 		check = attr_check_initl("diff", NULL);
 	if (!path)
 		return NULL;
-	if (git_check_attr(&the_index, path, check))
-		return NULL;
+	git_check_attr(&the_index, path, check);
 
 	if (ATTR_TRUE(check->items[0].value))
 		return &driver_true;

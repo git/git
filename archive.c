@@ -110,7 +110,8 @@ static const struct attr_check *get_archive_attrs(struct index_state *istate,
 	static struct attr_check *check;
 	if (!check)
 		check = attr_check_initl("export-ignore", "export-subst", NULL);
-	return git_check_attr(istate, path, check) ? NULL : check;
+	git_check_attr(istate, path, check);
+	return check;
 }
 
 static int check_attr_export_ignore(const struct attr_check *check)
