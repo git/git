@@ -3179,7 +3179,8 @@ int write_locked_index(struct index_state *istate, struct lock_file *lock,
 		struct tempfile *temp;
 		int saved_errno;
 
-		temp = mks_tempfile(git_path("sharedindex_XXXXXX"));
+		/* Same initial permissions as the main .git/index file */
+		temp = mks_tempfile_sm(git_path("sharedindex_XXXXXX"), 0, 0666);
 		if (!temp) {
 			oidclr(&si->base_oid);
 			ret = do_write_locked_index(istate, lock, flags);
