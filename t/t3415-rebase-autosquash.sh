@@ -330,4 +330,23 @@ test_expect_success 'wrapped original subject' '
 	test $base = $parent
 '
 
+test_expect_success 'abort last squash' '
+	test_when_finished "test_might_fail git rebase --abort" &&
+	test_when_finished "git checkout master" &&
+
+	git checkout -b some-squashes &&
+	git commit --allow-empty -m first &&
+	git commit --allow-empty --squash HEAD &&
+	git commit --allow-empty -m second &&
+	git commit --allow-empty --squash HEAD &&
+
+	test_must_fail git -c core.editor="grep -q ^pick" \
+		rebase -ki --autosquash HEAD~4 &&
+	: do not finish the squash, but resolve it manually &&
+	git commit --allow-empty --amend -m edited-first &&
+	git rebase --skip &&
+	git show >actual &&
+	! grep first actual
+'
+
 test_done
