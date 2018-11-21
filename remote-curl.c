@@ -178,7 +178,7 @@ static int set_option(const char *name, const char *value)
 		options.no_dependents = 1;
 		return 0;
 	} else if (!strcmp(name, "filter")) {
-		options.filter = xstrdup(value);;
+		options.filter = xstrdup(value);
 		return 0;
 	} else {
 		return 1 /* unsupported */;
