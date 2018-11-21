@@ -359,4 +359,27 @@ test_expect_success 'new line found before status message in commit template' '
 	test_i18ncmp expected-template editor-input
 '
 
+test_expect_success 'setup empty commit with unstaged rename and copy' '
+	test_create_repo unstaged_rename_and_copy &&
+	(
+		cd unstaged_rename_and_copy &&
+
+		echo content >orig &&
+		git add orig &&
+		test_commit orig &&
+
+		cp orig new_copy &&
+		mv orig new_rename &&
+		git add -N new_copy new_rename
+	)
+'
+
+test_expect_success 'check commit with unstaged rename and copy' '
+	(
+		cd unstaged_rename_and_copy &&
+
+		test_must_fail git -c diff.renames=copy commit
+	)
+'
+
 test_done
