@@ -380,7 +380,7 @@ static void child_err_spew(struct child_process *cmd, struct child_err *cerr)
 	set_error_routine(old_errfn);
 }
 
-static void prepare_cmd(struct argv_array *out, const struct child_process *cmd)
+static int prepare_cmd(struct argv_array *out, const struct child_process *cmd)
 {
 	if (!cmd->argv[0])
 		BUG("command is empty");
@@ -403,16 +403,22 @@ static void prepare_cmd(struct argv_array *out, const struct child_process *cmd)
 	/*
 	 * If there are no '/' characters in the command then perform a path
 	 * lookup and use the resolved path as the command to exec.  If there
-	 * are no '/' characters or if the command wasn't found in the path,
-	 * have exec attempt to invoke the command directly.
+	 * are '/' characters, we have exec attempt to invoke the command
+	 * directly.
 	 */
 	if (!strchr(out->argv[1], '/')) {
 		char *program = locate_in_PATH(out->argv[1]);
 		if (program) {
 			free((char *)out->argv[1]);
 			out->argv[1] = program;
+		} else {
+			argv_array_clear(out);
+			errno = ENOENT;
+			return -1;
 		}
 	}
+
+	return 0;
 }
 
 static char **prep_childenv(const char *const *deltaenv)
@@ -719,6 +725,12 @@ fail_pipe:
 	struct child_err cerr;
 	struct atfork_state as;
 
+	if (prepare_cmd(&argv, cmd) < 0) {
+		failed_errno = errno;
+		cmd->pid = -1;
+		goto end_of_spawn;
+	}
+
 	if (pipe(notify_pipe))
 		notify_pipe[0] = notify_pipe[1] = -1;
 
@@ -729,7 +741,6 @@ fail_pipe:
 		set_cloexec(null_fd);
 	}
 
-	prepare_cmd(&argv, cmd);
 	childenv = prep_childenv(cmd->env);
 	atfork_prepare(&as);
 
@@ -857,6 +868,8 @@ fail_pipe:
 	argv_array_clear(&argv);
 	free(childenv);
 }
+end_of_spawn:
+
 #else
 {
 	int fhin = 0, fhout = 1, fherr = 2;
