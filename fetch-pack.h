@@ -43,6 +43,13 @@ struct fetch_pack_args {
 	unsigned from_promisor:1;
 
 	/*
+	 * Attempt to fetch only the wanted objects, and not any objects
+	 * referred to by them. Due to protocol limitations, extraneous
+	 * objects may still be included. (When fetching non-blob
+	 * objects, only blobs are excluded; when fetching a blob, the
+	 * blob itself will still be sent. The client does not need to
+	 * know whether a wanted object is a blob or not.)
+	 *
 	 * If 1, fetch_pack() will also not modify any object flags.
 	 * This allows fetch_pack() to safely be called by any function,
 	 * regardless of which object flags it uses (if any).
