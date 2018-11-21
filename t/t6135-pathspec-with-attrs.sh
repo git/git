@@ -166,7 +166,7 @@ test_expect_success 'fail if attr magic is used places not implemented' '
 	# though, but git-add is convenient as it has its own internal pathspec
 	# parsing.
 	test_must_fail git add ":(attr:labelB)" 2>actual &&
-	test_i18ngrep "unsupported magic" actual
+	test_i18ngrep "magic not supported" actual
 '
 
 test_expect_success 'abort on giving invalid label on the command line' '
