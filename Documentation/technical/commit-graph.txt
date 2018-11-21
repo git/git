@@ -15,13 +15,13 @@ There are two main costs here:
 1. Decompressing and parsing commits.
 2. Walking the entire graph to satisfy topological order constraints.
 
-The commit graph file is a supplemental data structure that accelerates
+The commit-graph file is a supplemental data structure that accelerates
 commit graph walks. If a user downgrades or disables the 'core.commitGraph'
 config setting, then the existing ODB is sufficient. The file is stored
 as "commit-graph" either in the .git/objects/info directory or in the info
 directory of an alternate.
 
-The commit graph file stores the commit graph structure along with some
+The commit-graph file stores the commit graph structure along with some
 extra metadata to speed up graph walks. By listing commit OIDs in lexi-
 cographic order, we can identify an integer position for each commit and
 refer to the parents of a commit using those integer positions. We use
@@ -103,7 +103,7 @@ that of a parent.
 Design Details
 --------------
 
-- The commit graph file is stored in a file named 'commit-graph' in the
+- The commit-graph file is stored in a file named 'commit-graph' in the
   .git/objects/info directory. This could be stored in the info directory
   of an alternate.
 
@@ -139,7 +139,7 @@ Future Work
     - 'log --topo-order'
     - 'tag --merged'
 
-- A server could provide a commit graph file as part of the network protocol
+- A server could provide a commit-graph file as part of the network protocol
   to avoid extra calculations by clients. This feature is only of benefit if
   the user is willing to trust the file, because verifying the file is correct
   is as hard as computing it from scratch.
