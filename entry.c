@@ -404,7 +404,7 @@ static void mark_colliding_entries(const struct checkout *state,
 {
 	int i, trust_ino = check_stat;
 
-#if defined(GIT_WINDOWS_NATIVE)
+#if defined(GIT_WINDOWS_NATIVE) || defined(__CYGWIN__)
 	trust_ino = 0;
 #endif
 
@@ -419,7 +419,7 @@ static void mark_colliding_entries(const struct checkout *state,
 		if (dup->ce_flags & (CE_MATCHED | CE_VALID | CE_SKIP_WORKTREE))
 			continue;
 
-		if ((trust_ino && dup->ce_stat_data.sd_ino == st->st_ino) ||
+		if ((trust_ino && !match_stat_data(&dup->ce_stat_data, st)) ||
 		    (!trust_ino && !fspathcmp(ce->name, dup->name))) {
 			dup->ce_flags |= CE_MATCHED;
 			break;
