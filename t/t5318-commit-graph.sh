@@ -259,6 +259,66 @@ test_expect_success 'check that gc computes commit-graph' '
 	test_cmp_bin commit-graph-after-gc $objdir/info/commit-graph
 '
 
+test_expect_success 'replace-objects invalidates commit-graph' '
+	cd "$TRASH_DIRECTORY" &&
+	test_when_finished rm -rf replace &&
+	git clone full replace &&
+	(
+		cd replace &&
+		git commit-graph write --reachable &&
+		test_path_is_file .git/objects/info/commit-graph &&
+		git replace HEAD~1 HEAD~2 &&
+		git -c core.commitGraph=false log >expect &&
+		git -c core.commitGraph=true log >actual &&
+		test_cmp expect actual &&
+		git commit-graph write --reachable &&
+		git -c core.commitGraph=false --no-replace-objects log >expect &&
+		git -c core.commitGraph=true --no-replace-objects log >actual &&
+		test_cmp expect actual &&
+		rm -rf .git/objects/info/commit-graph &&
+		git commit-graph write --reachable &&
+		test_path_is_file .git/objects/info/commit-graph
+	)
+'
+
+test_expect_success 'commit grafts invalidate commit-graph' '
+	cd "$TRASH_DIRECTORY" &&
+	test_when_finished rm -rf graft &&
+	git clone full graft &&
+	(
+		cd graft &&
+		git commit-graph write --reachable &&
+		test_path_is_file .git/objects/info/commit-graph &&
+		H1=$(git rev-parse --verify HEAD~1) &&
+		H3=$(git rev-parse --verify HEAD~3) &&
+		echo "$H1 $H3" >.git/info/grafts &&
+		git -c core.commitGraph=false log >expect &&
+		git -c core.commitGraph=true log >actual &&
+		test_cmp expect actual &&
+		git commit-graph write --reachable &&
+		git -c core.commitGraph=false --no-replace-objects log >expect &&
+		git -c core.commitGraph=true --no-replace-objects log >actual &&
+		test_cmp expect actual &&
+		rm -rf .git/objects/info/commit-graph &&
+		git commit-graph write --reachable &&
+		test_path_is_missing .git/objects/info/commit-graph
+	)
+'
+
+test_expect_success 'replace-objects invalidates commit-graph' '
+	cd "$TRASH_DIRECTORY" &&
+	test_when_finished rm -rf shallow &&
+	git clone --depth 2 "file://$TRASH_DIRECTORY/full" shallow &&
+	(
+		cd shallow &&
+		git commit-graph write --reachable &&
+		test_path_is_missing .git/objects/info/commit-graph &&
+		git fetch origin --unshallow &&
+		git commit-graph write --reachable &&
+		test_path_is_file .git/objects/info/commit-graph
+	)
+'
+
 # the verify tests below expect the commit-graph to contain
 # exactly the commits reachable from the commits/8 branch.
 # If the file changes the set of commits in the list, then the

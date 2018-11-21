@@ -120,6 +120,8 @@ static int graph_read(int argc, const char **argv)
 	return 0;
 }
 
+extern int read_replace_refs;
+
 static int graph_write(int argc, const char **argv)
 {
 	struct string_list *pack_indexes = NULL;
@@ -149,6 +151,8 @@ static int graph_write(int argc, const char **argv)
 		die(_("use at most one of --reachable, --stdin-commits, or --stdin-packs"));
 	if (!opts.obj_dir)
 		opts.obj_dir = get_object_directory();
+
+	read_replace_refs = 0;
 
 	if (opts.reachable) {
 		write_commit_graph_reachable(opts.obj_dir, opts.append);

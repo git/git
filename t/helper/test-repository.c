@@ -15,7 +15,10 @@ static void test_parse_commit_in_graph(const char *gitdir, const char *worktree,
 	struct commit *c;
 	struct commit_list *parent;
 
-	repo_init(&r, gitdir, worktree);
+	setup_git_env(gitdir);
+
+	if (repo_init(&r, gitdir, worktree))
+		die("Couldn't init repo");
 
 	c = lookup_commit(&r, commit_oid);
 
@@ -38,7 +41,10 @@ static void test_get_commit_tree_in_graph(const char *gitdir,
 	struct commit *c;
 	struct tree *tree;
 
-	repo_init(&r, gitdir, worktree);
+	setup_git_env(gitdir);
+
+	if (repo_init(&r, gitdir, worktree))
+		die("Couldn't init repo");
 
 	c = lookup_commit(&r, commit_oid);
 

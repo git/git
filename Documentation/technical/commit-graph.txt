@@ -112,11 +112,23 @@ Design Details
 - The file format includes parameters for the object ID hash function,
   so a future change of hash algorithm does not require a change in format.
 
+- Commit grafts and replace objects can change the shape of the commit
+  history. The latter can also be enabled/disabled on the fly using
+  `--no-replace-objects`. This leads to difficultly storing both possible
+  interpretations of a commit id, especially when computing generation
+  numbers. The commit-graph will not be read or written when
+  replace-objects or grafts are present.
+
+- Shallow clones create grafts of commits by dropping their parents. This
+  leads the commit-graph to think those commits have generation number 1.
+  If and when those commits are made unshallow, those generation numbers
+  become invalid. Since shallow clones are intended to restrict the commit
+  history to a very small set of commits, the commit-graph feature is less
+  helpful for these clones, anyway. The commit-graph will not be read or
+  written when shallow commits are present.
+
 Future Work
 -----------
-
-- The commit graph feature currently does not honor commit grafts. This can
-  be remedied by duplicating or refactoring the current graft logic.
 
 - After computing and storing generation numbers, we must make graph
   walks aware of generation numbers to gain the performance benefits they
