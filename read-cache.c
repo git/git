@@ -2176,7 +2176,8 @@ int do_read_index(struct index_state *istate, const char *path, int must_exist)
 
 	src_offset = sizeof(*hdr);
 
-	nr_threads = git_config_get_index_threads();
+	if (git_config_get_index_threads(&nr_threads))
+		nr_threads = 1;
 
 	/* TODO: does creating more threads than cores help? */
 	if (!nr_threads) {
@@ -2689,6 +2690,36 @@ void update_index_if_able(struct index_state *istate, struct lock_file *lockfile
 		rollback_lock_file(lockfile);
 }
 
+static int record_eoie(void)
+{
+	int val;
+
+	if (!git_config_get_bool("index.recordendofindexentries", &val))
+		return val;
+
+	/*
+	 * As a convenience, the end of index entries extension
+	 * used for threading is written by default if the user
+	 * explicitly requested threaded index reads.
+	 */
+	return !git_config_get_index_threads(&val) && val != 1;
+}
+
+static int record_ieot(void)
+{
+	int val;
+
+	if (!git_config_get_bool("index.recordoffsettable", &val))
+		return val;
+
+	/*
+	 * As a convenience, the offset table used for threading is
+	 * written by default if the user explicitly requested
+	 * threaded index reads.
+	 */
+	return !git_config_get_index_threads(&val) && val != 1;
+}
+
 /*
  * On success, `tempfile` is closed. If it is the temporary file
  * of a `struct lock_file`, we will therefore effectively perform
@@ -2747,12 +2778,10 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 	if (ce_write(&c, newfd, &hdr, sizeof(hdr)) < 0)
 		return -1;
 
-	if (HAVE_THREADS)
-		nr_threads = git_config_get_index_threads();
-	else
+	if (!HAVE_THREADS || git_config_get_index_threads(&nr_threads))
 		nr_threads = 1;
 
-	if (nr_threads != 1) {
+	if (nr_threads != 1 && record_ieot()) {
 		int ieot_blocks, cpus;
 
 		/*
@@ -2936,7 +2965,7 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 	 * read.  Write it out regardless of the strip_extensions parameter as we need it
 	 * when loading the shared index.
 	 */
-	if (offset) {
+	if (offset && record_eoie()) {
 		struct strbuf sb = STRBUF_INIT;
 
 		write_eoie_extension(&sb, &eoie_c, offset);
