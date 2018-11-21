@@ -186,6 +186,33 @@ EOF
 	test_cmp expect actual
 '
 
+test_expect_success '.git/shallow is edited by repack' '
+	git init shallow-server &&
+	test_commit -C shallow-server A &&
+	test_commit -C shallow-server B &&
+	git -C shallow-server checkout -b branch &&
+	test_commit -C shallow-server C &&
+	test_commit -C shallow-server E &&
+	test_commit -C shallow-server D &&
+	d="$(git -C shallow-server rev-parse --verify D^0)" &&
+	git -C shallow-server checkout master &&
+
+	git clone --depth=1 --no-tags --no-single-branch \
+		"file://$PWD/shallow-server" shallow-client &&
+
+	: now remove the branch and fetch with prune &&
+	git -C shallow-server branch -D branch &&
+	git -C shallow-client fetch --prune --depth=1 \
+		origin "+refs/heads/*:refs/remotes/origin/*" &&
+	git -C shallow-client repack -adfl &&
+	test_must_fail git -C shallow-client rev-parse --verify $d^0 &&
+	! grep $d shallow-client/.git/shallow &&
+
+	git -C shallow-server branch branch-orig $d &&
+	git -C shallow-client fetch --prune --depth=2 \
+		origin "+refs/heads/*:refs/remotes/origin/*"
+'
+
 . "$TEST_DIRECTORY"/lib-httpd.sh
 start_httpd
 
