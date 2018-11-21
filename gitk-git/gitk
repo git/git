@@ -3829,6 +3829,7 @@ proc show_line_source {} {
     global nullid nullid2 gitdir cdup
 
     set from_index {}
+    set id {}
     if {$cmitmode eq "tree"} {
 	set id $currentid
 	set line [expr {$diff_menu_line - $diff_menu_filebase}]
@@ -3856,7 +3857,7 @@ proc show_line_source {} {
 	    } elseif {$parents($curview,$currentid) eq $nullid2} {
 		# need to do the blame from the index
 		if {[catch {
-		    set from_index [index_sha1 $flist_menu_file]
+		    set from_index [index_sha1 [file join $cdup $flist_menu_file]]
 		} err]} {
 		    error_popup [mc "Error reading index: %s" $err]
 		    return
@@ -3876,8 +3877,11 @@ proc show_line_source {} {
     lappend blameargs | git blame -p -L$line,+1
     if {$from_index ne {}} {
 	lappend blameargs --contents -
-    } else {
+    } elseif {$id ne {}} {
 	lappend blameargs $id
+    } else {
+        error_popup [mc "No associated commit for selected file `%s' and it is not in the index. This may be a bug/unsupported." $flist_menu_file]
+        return
     }
     lappend blameargs -- [file join $cdup $flist_menu_file]
     if {[catch {
