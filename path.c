@@ -1369,7 +1369,7 @@ only_spaces_and_periods:
 			saw_tilde = 1;
 		} else if (i >= 6)
 			return 0;
-		else if (name[i] < 0) {
+		else if (name[i] & 0x80) {
 			/*
 			 * We know our needles contain only ASCII, so we clamp
 			 * here to make the results of tolower() sane.
