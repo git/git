@@ -2786,9 +2786,11 @@ static void show_object(struct object *obj, const char *name, void *data)
 
 	if (use_delta_islands) {
 		const char *p;
-		unsigned depth = 0;
+		unsigned depth;
 		struct object_entry *ent;
 
+		/* the empty string is a root tree, which is depth 0 */
+		depth = *name ? 1 : 0;
 		for (p = strchr(name, '/'); p; p = strchr(p + 1, '/'))
 			depth++;
 
