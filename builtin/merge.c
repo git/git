@@ -37,6 +37,7 @@
 #include "tag.h"
 #include "alias.h"
 #include "commit-reach.h"
+#include "wt-status.h"
 
 #define DEFAULT_TWOHEAD (1<<0)
 #define DEFAULT_OCTOPUS (1<<1)
@@ -96,6 +97,9 @@ enum ff_type {
 };
 
 static enum ff_type fast_forward = FF_ALLOW;
+
+static const char *cleanup_arg;
+static int put_scissors;
 
 static int option_parse_message(const struct option *opt,
 				const char *arg, int unset)
@@ -245,6 +249,7 @@ static struct option builtin_merge_options[] = {
 		N_("perform a commit if the merge succeeds (default)")),
 	OPT_BOOL('e', "edit", &option_edit,
 		N_("edit message before committing")),
+	OPT_STRING(0, "cleanup", &cleanup_arg, N_("default"), N_("how to strip spaces and #comments from message")),
 	OPT_SET_INT(0, "ff", &fast_forward, N_("allow fast-forward (default)"), FF_ALLOW),
 	OPT_SET_INT_F(0, "ff-only", &fast_forward,
 		      N_("abort if fast-forward is not possible"),
@@ -608,6 +613,8 @@ static int git_merge_config(const char *k, const char *v, void *cb)
 		return git_config_string(&pull_twohead, k, v);
 	else if (!strcmp(k, "pull.octopus"))
 		return git_config_string(&pull_octopus, k, v);
+	else if (!strcmp(k, "commit.cleanup"))
+		return git_config_string(&cleanup_arg, k, v);
 	else if (!strcmp(k, "merge.renormalize"))
 		option_renormalize = git_config_bool(k, v);
 	else if (!strcmp(k, "merge.ff")) {
@@ -896,6 +903,13 @@ static int suggest_conflicts(void)
 
 	filename = git_path_merge_msg(the_repository);
 	fp = xfopen(filename, "a");
+
+	if (put_scissors) {
+	    fputc('\n', fp);
+	    wt_status_add_cut_line(fp);
+	    /* comments out the newline from append_conflicts_hint */
+	    fputc(comment_line_char, fp);
+	}
 
 	append_conflicts_hint(&the_index, &msgbuf);
 	fputs(msgbuf.buf, fp);
@@ -1384,6 +1398,8 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 
 	if (option_edit < 0)
 		option_edit = default_edit_option();
+
+	put_scissors = cleanup_arg && !strcmp(cleanup_arg, "scissors");
 
 	if (!use_strategies) {
 		if (!remoteheads)
