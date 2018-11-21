@@ -1317,7 +1317,7 @@ int oid_object_info_extended(struct repository *r, const struct object_id *oid,
 			 * TODO Pass a repository struct through fetch_object,
 			 * such that arbitrary repositories work.
 			 */
-			fetch_object(repository_format_partial_clone, real->hash);
+			fetch_objects(repository_format_partial_clone, real, 1);
 			already_retried = 1;
 			continue;
 		}
