@@ -9,3 +9,7 @@
 /command-list.txt eol=lf
 /GIT-VERSION-GEN eol=lf
 /mergetools/* eol=lf
+/Documentation/git-merge.txt conflict-marker-size=32
+/Documentation/gitk.txt conflict-marker-size=32
+/Documentation/user-manual.txt conflict-marker-size=32
+/t/t????-*.sh conflict-marker-size=32
