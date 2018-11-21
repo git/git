@@ -415,7 +415,7 @@ static inline void oe_set_tree_depth(struct packing_data *pack,
 				     unsigned int tree_depth)
 {
 	if (!pack->tree_depth)
-		ALLOC_ARRAY(pack->tree_depth, pack->nr_objects);
+		CALLOC_ARRAY(pack->tree_depth, pack->nr_alloc);
 	pack->tree_depth[e - pack->objects] = tree_depth;
 }
 
@@ -432,7 +432,7 @@ static inline void oe_set_layer(struct packing_data *pack,
 				unsigned char layer)
 {
 	if (!pack->layer)
-		ALLOC_ARRAY(pack->layer, pack->nr_objects);
+		CALLOC_ARRAY(pack->layer, pack->nr_alloc);
 	pack->layer[e - pack->objects] = layer;
 }
 
