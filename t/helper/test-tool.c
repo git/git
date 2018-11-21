@@ -43,6 +43,9 @@ static struct test_cmd cmds[] = {
 	{ "subprocess", cmd__subprocess },
 	{ "urlmatch-normalization", cmd__urlmatch_normalization },
 	{ "wildmatch", cmd__wildmatch },
+#ifdef GIT_WINDOWS_NATIVE
+	{ "windows-named-pipe", cmd__windows_named_pipe },
+#endif
 	{ "write-cache", cmd__write_cache },
 };
 
