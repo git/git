@@ -599,8 +599,8 @@ trace messages into this file descriptor.
 +
 Alternatively, if the variable is set to an absolute path
 (starting with a '/' character), Git will interpret this
-as a file path and will try to write the trace messages
-into it.
+as a file path and will try to append the trace messages
+to it.
 +
 Unsetting the variable, or setting it to empty, "0" or
 "false" (case insensitive) disables trace messages.
