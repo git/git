@@ -127,6 +127,7 @@ struct rev_info {
 			tree_blobs_in_commit_order:1,
 
 			/* for internal use only */
+			allow_exclude_promisor_objects_opt:1,
 			exclude_promisor_objects:1;
 
 	/* Diff flags */
