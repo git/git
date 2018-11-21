@@ -1249,7 +1249,7 @@ test_expect_success 'teardown after ref completion' '
 
 test_path_completion ()
 {
-	test $# = 2 || error "bug in the test script: not 2 parameters to test_path_completion"
+	test $# = 2 || BUG "not 2 parameters to test_path_completion"
 
 	local cur="$1" expected="$2"
 	echo "$expected" >expected &&

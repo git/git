@@ -82,7 +82,7 @@ test_perf_do_repo_symlink_config_ () {
 
 test_perf_create_repo_from () {
 	test "$#" = 2 ||
-	error "bug in the test script: not 2 parameters to test-create-repo"
+	BUG "not 2 parameters to test-create-repo"
 	repo="$1"
 	source="$2"
 	source_git="$("$MODERN_GIT" -C "$source" rev-parse --git-dir)"
@@ -184,7 +184,7 @@ test_wrapper_ () {
 	test_start_
 	test "$#" = 3 && { test_prereq=$1; shift; } || test_prereq=
 	test "$#" = 2 ||
-	error "bug in the test script: not 2 or 3 parameters to test-expect-success"
+	BUG "not 2 or 3 parameters to test-expect-success"
 	export test_prereq
 	if ! test_skip "$@"
 	then

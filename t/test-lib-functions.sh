@@ -418,14 +418,14 @@ test_declared_prereq () {
 test_verify_prereq () {
 	test -z "$test_prereq" ||
 	expr >/dev/null "$test_prereq" : '[A-Z0-9_,!]*$' ||
-	error "bug in the test script: '$test_prereq' does not look like a prereq"
+	BUG "'$test_prereq' does not look like a prereq"
 }
 
 test_expect_failure () {
 	test_start_
 	test "$#" = 3 && { test_prereq=$1; shift; } || test_prereq=
 	test "$#" = 2 ||
-	error "bug in the test script: not 2 or 3 parameters to test-expect-failure"
+	BUG "not 2 or 3 parameters to test-expect-failure"
 	test_verify_prereq
 	export test_prereq
 	if ! test_skip "$@"
@@ -445,7 +445,7 @@ test_expect_success () {
 	test_start_
 	test "$#" = 3 && { test_prereq=$1; shift; } || test_prereq=
 	test "$#" = 2 ||
-	error "bug in the test script: not 2 or 3 parameters to test-expect-success"
+	BUG "not 2 or 3 parameters to test-expect-success"
 	test_verify_prereq
 	export test_prereq
 	if ! test_skip "$@"
@@ -472,7 +472,7 @@ test_expect_success () {
 test_external () {
 	test "$#" = 4 && { test_prereq=$1; shift; } || test_prereq=
 	test "$#" = 3 ||
-	error >&5 "bug in the test script: not 3 or 4 parameters to test_external"
+	BUG "not 3 or 4 parameters to test_external"
 	descr="$1"
 	shift
 	test_verify_prereq
@@ -613,7 +613,7 @@ test_path_is_missing () {
 test_line_count () {
 	if test $# != 3
 	then
-		error "bug in the test script: not 3 parameters to test_line_count"
+		BUG "not 3 parameters to test_line_count"
 	elif ! test $(wc -l <"$3") "$1" "$2"
 	then
 		echo "test_line_count: line count for $3 !$1 $2"
@@ -793,13 +793,12 @@ test_i18ngrep () {
 	eval "last_arg=\${$#}"
 
 	test -f "$last_arg" ||
-	error "bug in the test script: test_i18ngrep requires a file" \
-	      "to read as the last parameter"
+	BUG "test_i18ngrep requires a file to read as the last parameter"
 
 	if test $# -lt 2 ||
 	   { test "x!" = "x$1" && test $# -lt 3 ; }
 	then
-		error "bug in the test script: too few parameters to test_i18ngrep"
+		BUG "too few parameters to test_i18ngrep"
 	fi
 
 	if test_have_prereq !C_LOCALE_OUTPUT
@@ -885,7 +884,7 @@ test_seq () {
 	case $# in
 	1)	set 1 "$@" ;;
 	2)	;;
-	*)	error "bug in the test script: not 1 or 2 parameters to test_seq" ;;
+	*)	BUG "not 1 or 2 parameters to test_seq" ;;
 	esac
 	test_seq_counter__=$1
 	while test "$test_seq_counter__" -le "$2"
@@ -923,7 +922,7 @@ test_when_finished () {
 	# doing so on Bash is better than nothing (the test will
 	# silently pass on other shells).
 	test "${BASH_SUBSHELL-0}" = 0 ||
-	error "bug in test script: test_when_finished does nothing in a subshell"
+	BUG "test_when_finished does nothing in a subshell"
 	test_cleanup="{ $*
 		} && (exit \"\$eval_ret\"); eval_ret=\$?; $test_cleanup"
 }
@@ -932,7 +931,7 @@ test_when_finished () {
 # Usage: test_create_repo <directory>
 test_create_repo () {
 	test "$#" = 1 ||
-	error "bug in the test script: not 1 parameter to test-create-repo"
+	BUG "not 1 parameter to test-create-repo"
 	repo="$1"
 	mkdir -p "$repo"
 	(
@@ -1245,7 +1244,7 @@ test_oid_cache () {
 
 		if ! expr "$k" : '[a-z0-9][a-z0-9]*$' >/dev/null
 		then
-			error 'bug in the test script: bad hash algorithm'
+			BUG 'bad hash algorithm'
 		fi &&
 		eval "test_oid_${k}_$tag=\"\$v\""
 	done
@@ -1260,7 +1259,7 @@ test_oid () {
 	# key-hash pair, so exit with an error.
 	if eval "test -z \"\${$var+set}\""
 	then
-		error "bug in the test script: undefined key '$1'" >&2
+		BUG "undefined key '$1'"
 	fi &&
 	eval "printf '%s' \"\${$var}\""
 }
