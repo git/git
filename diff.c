@@ -4256,12 +4256,12 @@ static void diff_fill_oid_info(struct diff_filespec *one)
 static void strip_prefix(int prefix_length, const char **namep, const char **otherp)
 {
 	/* Strip the prefix but do not molest /dev/null and absolute paths */
-	if (*namep && **namep != '/') {
+	if (*namep && !is_absolute_path(*namep)) {
 		*namep += prefix_length;
 		if (**namep == '/')
 			++*namep;
 	}
-	if (*otherp && **otherp != '/') {
+	if (*otherp && !is_absolute_path(*otherp)) {
 		*otherp += prefix_length;
 		if (**otherp == '/')
 			++*otherp;

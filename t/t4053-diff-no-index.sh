@@ -127,4 +127,14 @@ test_expect_success 'diff --no-index from repo subdir respects config (implicit)
 	test_cmp expect actual.head
 '
 
+test_expect_success 'diff --no-index from repo subdir with absolute paths' '
+	cat <<-EOF >expect &&
+	1	1	$(pwd)/non/git/{a => b}
+	EOF
+	test_expect_code 1 \
+		git -C repo/sub diff --numstat \
+		"$(pwd)/non/git/a" "$(pwd)/non/git/b" >actual &&
+	test_cmp expect actual
+'
+
 test_done
