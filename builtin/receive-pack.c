@@ -1025,6 +1025,7 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 	const char *ret;
 	struct object_id *old_oid = &cmd->old_oid;
 	struct object_id *new_oid = &cmd->new_oid;
+	int do_update_worktree = 0;
 
 	/* only refs/... are allowed */
 	if (!starts_with(name, "refs/") || check_refname_format(name + 5, 0)) {
@@ -1050,9 +1051,8 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 				refuse_unconfigured_deny();
 			return "branch is currently checked out";
 		case DENY_UPDATE_INSTEAD:
-			ret = update_worktree(new_oid->hash);
-			if (ret)
-				return ret;
+			/* pass -- let other checks intervene first */
+			do_update_worktree = 1;
 			break;
 		}
 	}
@@ -1115,6 +1115,12 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 	if (run_update_hook(cmd)) {
 		rp_error("hook declined to update %s", name);
 		return "hook declined";
+	}
+
+	if (do_update_worktree) {
+		ret = update_worktree(new_oid->hash);
+		if (ret)
+			return ret;
 	}
 
 	if (is_null_oid(new_oid)) {
