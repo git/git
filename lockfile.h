@@ -263,8 +263,8 @@ static inline int close_lock_file_gently(struct lock_file *lk)
  *   nobody else) to inspect the contents you wrote, while still
  *   holding the lock yourself.
  *
- * * `reopen_lock_file()` to reopen the lockfile. Make further updates
- *   to the contents.
+ * * `reopen_lock_file()` to reopen the lockfile, truncating the existing
+ *   contents. Write out the new contents.
  *
  * * `commit_lock_file()` to make the final version permanent.
  */
