@@ -517,6 +517,22 @@ Myfooter: x" &&
 	test_cmp expected actual
 '
 
+test_expect_success 'signoff not confused by ---' '
+	cat >expected <<-EOF &&
+		subject
+
+		body
+		---
+		these dashes confuse the parser!
+
+		Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>
+	EOF
+	# should be a noop, since we already signed
+	git commit --allow-empty --signoff -F expected &&
+	git log -1 --pretty=format:%B >actual &&
+	test_cmp expected actual
+'
+
 test_expect_success 'multiple -m' '
 
 	>negative &&
