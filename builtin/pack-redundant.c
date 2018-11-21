@@ -247,11 +247,14 @@ static struct pack_list * pack_list_difference(const struct pack_list *A,
 	return ret;
 }
 
+// because smaller packs are in the left of the list, we could just
+// remove the redundant objects in the right pack, after cmp finished,
+// the left packs whose unique_objects size is zero is redundant packs.
 static void cmp_two_packs(struct pack_list *p1, struct pack_list *p2)
 {
 	unsigned long p1_off = 0, p2_off = 0, p1_step, p2_step;
 	const unsigned char *p1_base, *p2_base;
-	struct llist_item *p1_hint = NULL, *p2_hint = NULL;
+	struct llist_item *p2_hint = NULL;
 	const unsigned int hashsz = the_hash_algo->rawsz;
 
 	p1_base = p1->pack->index_data;
@@ -267,9 +270,6 @@ static void cmp_two_packs(struct pack_list *p1, struct pack_list *p2)
 		int cmp = hashcmp(p1_base + p1_off, p2_base + p2_off);
 		/* cmp ~ p1 - p2 */
 		if (cmp == 0) {
-			p1_hint = llist_sorted_remove(p1->unique_objects,
-					(const struct object_id *)(p1_base + p1_off),
-					p1_hint);
 			p2_hint = llist_sorted_remove(p2->unique_objects,
 					(const struct object_id *)(p1_base + p1_off),
 					p2_hint);
@@ -600,6 +600,50 @@ static void load_all(void)
 	}
 }
 
+static int sort_packs_size(const void *a_, const void *b_)
+{
+	struct pack_list *a = *((struct pack_list **)a_);
+	struct pack_list *b = *((struct pack_list **)b_);
+
+	size_t a_size = a->pack->index_size + (size_t)a->pack->pack_size;
+	size_t b_size = b->pack->index_size + (size_t)b->pack->pack_size;
+
+	// let the smaller packet sorted to the left
+	if (a_size == b_size)
+		return 0;
+	else if (a_size < b_size)
+		return -1;
+
+	return 1;
+}
+
+// to remove the redundant pack which contains more redundant objects, we should
+// sort the smaller ones to left
+static void rearrange_local_packs(void)
+{
+	struct pack_list **ary, *p;
+	int i;
+
+	size_t n = pack_list_size(local_packs);
+	if (n < 2)
+		return;
+
+	/* prepare an array of packed_list for easier sorting */
+	ary = xcalloc(n, sizeof(struct pack_list *));
+	for (n = 0, p = local_packs; p; p = p->next)
+		ary[n++] = p;
+
+	QSORT(ary, n, sort_packs_size);
+
+	/* link them back again */
+	for (i = 0; i < n - 1; i++)
+		ary[i]->next = ary[i + 1];
+	ary[n - 1]->next = NULL;
+	local_packs = ary[0];
+
+	free(ary);
+}
+
 int cmd_pack_redundant(int argc, const char **argv, const char *prefix)
 {
 	int i;
@@ -643,6 +687,9 @@ int cmd_pack_redundant(int argc, const char **argv, const char *prefix)
 
 	if (local_packs == NULL)
 		die("Zero packs found!");
+
+	// here we sort the packs by the pack size and index size
+	rearrange_local_packs();
 
 	load_all_objects();
 
