@@ -628,7 +628,7 @@ test_expect_success 'clone on case-insensitive fs' '
 	)
 '
 
-test_expect_success !MINGW,CASE_INSENSITIVE_FS 'colliding file detection' '
+test_expect_success CASE_INSENSITIVE_FS 'colliding file detection' '
 	grep X icasefs/warning &&
 	grep x icasefs/warning &&
 	test_i18ngrep "the following paths have collided" icasefs/warning
