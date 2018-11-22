@@ -2169,6 +2169,7 @@ void odb_load_loose_cache(struct object_directory *odb, int subdir_nr)
 				    NULL, NULL,
 				    &odb->loose_objects_cache);
 	odb->loose_objects_subdir_seen[subdir_nr] = 1;
+	strbuf_release(&buf);
 }
 
 static int check_stream_sha1(git_zstream *stream,
