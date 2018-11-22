@@ -146,11 +146,16 @@ for prev in topic master..topic
 do
 	test_expect_success "format-patch --range-diff=$prev" '
 		git format-patch --stdout --cover-letter --range-diff=$prev \
-			master..unmodified >actual &&
-		grep "= 1: .* s/5/A" actual &&
-		grep "= 2: .* s/4/A" actual &&
-		grep "= 3: .* s/11/B" actual &&
-		grep "= 4: .* s/12/B" actual
+			master..unmodified >actual.raw &&
+		sed -e "s|^:||" -e "s|:$||" >expect <<-\EOF &&
+		:1:  4de457d = 1:  35b9b25 s/5/A/
+		:2:  fccce22 = 2:  de345ab s/4/A/
+		:3:  147e64e = 3:  9af6654 s/11/B/
+		:4:  a63e992 = 4:  2901f77 s/12/B/
+		:-- :
+		EOF
+		sed -ne "/^1:/,/^--/p" <actual.raw >actual &&
+		test_cmp expect actual
 	'
 done
 
