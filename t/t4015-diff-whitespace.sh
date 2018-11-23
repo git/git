@@ -1901,10 +1901,20 @@ test_expect_success 'compare whitespace delta incompatible with other space opti
 	test_i18ngrep allow-indentation-change err
 '
 
+EMPTY=''
 test_expect_success 'compare mixed whitespace delta across moved blocks' '
 
 	git reset --hard &&
 	tr Q_ "\t " <<-EOF >text.txt &&
+	${EMPTY}
+	____too short without
+	${EMPTY}
+	___being grouped across blank line
+	${EMPTY}
+	context
+	lines
+	to
+	anchor
 	____Indented text to
 	_Q____be further indented by four spaces across
 	____Qseveral lines
@@ -1918,9 +1928,18 @@ test_expect_success 'compare mixed whitespace delta across moved blocks' '
 	git commit -m "add text.txt" &&
 
 	tr Q_ "\t " <<-EOF >text.txt &&
+	context
+	lines
+	to
+	anchor
 	QIndented text to
 	QQbe further indented by four spaces across
 	Q____several lines
+	${EMPTY}
+	QQtoo short without
+	${EMPTY}
+	Q_______being grouped across blank line
+	${EMPTY}
 	Q_QThese two lines have had their
 	indentation reduced by four spaces
 	QQdifferent indentation change
@@ -1937,7 +1956,16 @@ test_expect_success 'compare mixed whitespace delta across moved blocks' '
 	<BOLD>diff --git a/text.txt b/text.txt<RESET>
 	<BOLD>--- a/text.txt<RESET>
 	<BOLD>+++ b/text.txt<RESET>
-	<CYAN>@@ -1,7 +1,7 @@<RESET>
+	<CYAN>@@ -1,16 +1,16 @@<RESET>
+	<BOLD;MAGENTA>-<RESET>
+	<BOLD;MAGENTA>-<RESET><BOLD;MAGENTA>    too short without<RESET>
+	<BOLD;MAGENTA>-<RESET>
+	<BOLD;MAGENTA>-<RESET><BOLD;MAGENTA>   being grouped across blank line<RESET>
+	<BOLD;MAGENTA>-<RESET>
+	 <RESET>context<RESET>
+	 <RESET>lines<RESET>
+	 <RESET>to<RESET>
+	 <RESET>anchor<RESET>
 	<BOLD;MAGENTA>-<RESET><BOLD;MAGENTA>    Indented text to<RESET>
 	<BOLD;MAGENTA>-<RESET><BRED> <RESET>	<BOLD;MAGENTA>    be further indented by four spaces across<RESET>
 	<BOLD;MAGENTA>-<RESET><BRED>    <RESET>	<BOLD;MAGENTA>several lines<RESET>
@@ -1948,9 +1976,14 @@ test_expect_success 'compare mixed whitespace delta across moved blocks' '
 	<BOLD;CYAN>+<RESET>	<BOLD;CYAN>Indented text to<RESET>
 	<BOLD;CYAN>+<RESET>		<BOLD;CYAN>be further indented by four spaces across<RESET>
 	<BOLD;CYAN>+<RESET>	<BOLD;CYAN>    several lines<RESET>
-	<BOLD;YELLOW>+<RESET>	<BRED> <RESET>	<BOLD;YELLOW>These two lines have had their<RESET>
-	<BOLD;YELLOW>+<RESET><BOLD;YELLOW>indentation reduced by four spaces<RESET>
-	<BOLD;CYAN>+<RESET>		<BOLD;CYAN>different indentation change<RESET>
+	<BOLD;YELLOW>+<RESET>
+	<BOLD;YELLOW>+<RESET>		<BOLD;YELLOW>too short without<RESET>
+	<BOLD;YELLOW>+<RESET>
+	<BOLD;YELLOW>+<RESET>	<BOLD;YELLOW>       being grouped across blank line<RESET>
+	<BOLD;YELLOW>+<RESET>
+	<BOLD;CYAN>+<RESET>	<BRED> <RESET>	<BOLD;CYAN>These two lines have had their<RESET>
+	<BOLD;CYAN>+<RESET><BOLD;CYAN>indentation reduced by four spaces<RESET>
+	<BOLD;YELLOW>+<RESET>		<BOLD;YELLOW>different indentation change<RESET>
 	<GREEN>+<RESET><BRED>  <RESET>	<GREEN>too short<RESET>
 	EOF
 

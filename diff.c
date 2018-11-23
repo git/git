@@ -794,9 +794,11 @@ static void moved_block_clear(struct moved_block *b)
 	memset(b, 0, sizeof(*b));
 }
 
+#define INDENT_BLANKLINE INT_MIN
+
 static void fill_es_indent_data(struct emitted_diff_symbol *es)
 {
-	unsigned int off = 0;
+	unsigned int off = 0, i;
 	int width = 0, tab_width = es->flags & WS_TAB_WIDTH_MASK;
 	const char *s = es->line;
 	const int len = es->len;
@@ -820,8 +822,18 @@ static void fill_es_indent_data(struct emitted_diff_symbol *es)
 		}
 	}
 
-	es->indent_off = off;
-	es->indent_width = width;
+	/* check if this line is blank */
+	for (i = off; i < len; i++)
+		if (!isspace(s[i]))
+		    break;
+
+	if (i == len) {
+		es->indent_width = INDENT_BLANKLINE;
+		es->indent_off = len;
+	} else {
+		es->indent_off = off;
+		es->indent_width = width;
+	}
 }
 
 static int compute_ws_delta(const struct emitted_diff_symbol *a,
@@ -835,6 +847,11 @@ static int compute_ws_delta(const struct emitted_diff_symbol *a,
 	    b_off = b->indent_off,
 	    b_width = b->indent_width;
 	int delta;
+
+	if (a_width == INDENT_BLANKLINE && b_width == INDENT_BLANKLINE) {
+		*out = INDENT_BLANKLINE;
+		return 1;
+	}
 
 	if (a->s == DIFF_SYMBOL_PLUS)
 		delta = a_width - b_width;
@@ -879,6 +896,10 @@ static int cmp_in_block_with_wsd(const struct diff_options *o,
 	if (al != bl)
 		return 1;
 
+	/* If 'l' and 'cur' are both blank then they match. */
+	if (a_width == INDENT_BLANKLINE && c_width == INDENT_BLANKLINE)
+		return 0;
+
 	/*
 	 * The indent changes of the block are known and stored in pmb->wsd;
 	 * however we need to check if the indent changes of the current line
@@ -889,6 +910,13 @@ static int cmp_in_block_with_wsd(const struct diff_options *o,
 		delta = a_width - c_width;
 	else
 		delta = c_width - a_width;
+
+	/*
+	 * If the previous lines of this block were all blank then set its
+	 * whitespace delta.
+	 */
+	if (pmb->wsd == INDENT_BLANKLINE)
+		pmb->wsd = delta;
 
 	return !(delta == pmb->wsd && al - a_off == cl - c_off &&
 		 !memcmp(a, b, al) && !
