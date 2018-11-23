@@ -1901,4 +1901,60 @@ test_expect_success 'compare whitespace delta incompatible with other space opti
 	test_i18ngrep allow-indentation-change err
 '
 
+test_expect_success 'compare mixed whitespace delta across moved blocks' '
+
+	git reset --hard &&
+	tr Q_ "\t " <<-EOF >text.txt &&
+	____Indented text to
+	_Q____be further indented by four spaces across
+	____Qseveral lines
+	QQ____These two lines have had their
+	____indentation reduced by four spaces
+	Qdifferent indentation change
+	____too short
+	EOF
+
+	git add text.txt &&
+	git commit -m "add text.txt" &&
+
+	tr Q_ "\t " <<-EOF >text.txt &&
+	QIndented text to
+	QQbe further indented by four spaces across
+	Q____several lines
+	Q_QThese two lines have had their
+	indentation reduced by four spaces
+	QQdifferent indentation change
+	__Qtoo short
+	EOF
+
+	git -c color.diff.whitespace="normal red" \
+		-c core.whitespace=space-before-tab \
+		diff --color --color-moved --ws-error-highlight=all \
+		--color-moved-ws=allow-indentation-change >actual.raw &&
+	grep -v "index" actual.raw | test_decode_color >actual &&
+
+	cat <<-\EOF >expected &&
+	<BOLD>diff --git a/text.txt b/text.txt<RESET>
+	<BOLD>--- a/text.txt<RESET>
+	<BOLD>+++ b/text.txt<RESET>
+	<CYAN>@@ -1,7 +1,7 @@<RESET>
+	<BOLD;MAGENTA>-<RESET><BOLD;MAGENTA>    Indented text to<RESET>
+	<BOLD;MAGENTA>-<RESET><BRED> <RESET>	<BOLD;MAGENTA>    be further indented by four spaces across<RESET>
+	<BOLD;MAGENTA>-<RESET><BRED>    <RESET>	<BOLD;MAGENTA>several lines<RESET>
+	<BOLD;BLUE>-<RESET>		<BOLD;BLUE>    These two lines have had their<RESET>
+	<BOLD;BLUE>-<RESET><BOLD;BLUE>    indentation reduced by four spaces<RESET>
+	<BOLD;MAGENTA>-<RESET>	<BOLD;MAGENTA>different indentation change<RESET>
+	<RED>-<RESET><RED>    too short<RESET>
+	<BOLD;CYAN>+<RESET>	<BOLD;CYAN>Indented text to<RESET>
+	<BOLD;CYAN>+<RESET>		<BOLD;CYAN>be further indented by four spaces across<RESET>
+	<BOLD;CYAN>+<RESET>	<BOLD;CYAN>    several lines<RESET>
+	<BOLD;YELLOW>+<RESET>	<BRED> <RESET>	<BOLD;YELLOW>These two lines have had their<RESET>
+	<BOLD;YELLOW>+<RESET><BOLD;YELLOW>indentation reduced by four spaces<RESET>
+	<BOLD;CYAN>+<RESET>		<BOLD;CYAN>different indentation change<RESET>
+	<GREEN>+<RESET><BRED>  <RESET>	<GREEN>too short<RESET>
+	EOF
+
+	test_cmp expected actual
+'
+
 test_done

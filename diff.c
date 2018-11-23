@@ -752,6 +752,8 @@ struct emitted_diff_symbol {
 	const char *line;
 	int len;
 	int flags;
+	int indent_off;   /* Offset to first non-whitespace character */
+	int indent_width; /* The visual width of the indentation */
 	enum diff_symbol s;
 };
 #define EMITTED_DIFF_SYMBOL_INIT {NULL}
@@ -782,44 +784,68 @@ struct moved_entry {
 	struct moved_entry *next_line;
 };
 
-/**
- * The struct ws_delta holds white space differences between moved lines, i.e.
- * between '+' and '-' lines that have been detected to be a move.
- * The string contains the difference in leading white spaces, before the
- * rest of the line is compared using the white space config for move
- * coloring. The current_longer indicates if the first string in the
- * comparision is longer than the second.
- */
-struct ws_delta {
-	char *string;
-	unsigned int current_longer : 1;
-};
-#define WS_DELTA_INIT { NULL, 0 }
-
 struct moved_block {
 	struct moved_entry *match;
-	struct ws_delta wsd;
+	int wsd; /* The whitespace delta of this block */
 };
 
 static void moved_block_clear(struct moved_block *b)
 {
-	FREE_AND_NULL(b->wsd.string);
-	b->match = NULL;
+	memset(b, 0, sizeof(*b));
+}
+
+static void fill_es_indent_data(struct emitted_diff_symbol *es)
+{
+	unsigned int off = 0;
+	int width = 0, tab_width = es->flags & WS_TAB_WIDTH_MASK;
+	const char *s = es->line;
+	const int len = es->len;
+
+	/* skip any \v \f \r at start of indentation */
+	while (s[off] == '\f' || s[off] == '\v' ||
+	       (s[off] == '\r' && off < len - 1))
+		off++;
+
+	/* calculate the visual width of indentation */
+	while(1) {
+		if (s[off] == ' ') {
+			width++;
+			off++;
+		} else if (s[off] == '\t') {
+			width += tab_width - (width % tab_width);
+			while (s[++off] == '\t')
+				width += tab_width;
+		} else {
+			break;
+		}
+	}
+
+	es->indent_off = off;
+	es->indent_width = width;
 }
 
 static int compute_ws_delta(const struct emitted_diff_symbol *a,
-			     const struct emitted_diff_symbol *b,
-			     struct ws_delta *out)
+			    const struct emitted_diff_symbol *b,
+			    int *out)
 {
-	const struct emitted_diff_symbol *longer =  a->len > b->len ? a : b;
-	const struct emitted_diff_symbol *shorter = a->len > b->len ? b : a;
-	int d = longer->len - shorter->len;
+	int a_len = a->len,
+	    b_len = b->len,
+	    a_off = a->indent_off,
+	    a_width = a->indent_width,
+	    b_off = b->indent_off,
+	    b_width = b->indent_width;
+	int delta;
 
-	if (strncmp(longer->line + d, shorter->line, shorter->len))
+	if (a->s == DIFF_SYMBOL_PLUS)
+		delta = a_width - b_width;
+	else
+		delta = b_width - a_width;
+
+	if (a_len - a_off != b_len - b_off ||
+	    memcmp(a->line + a_off, b->line + b_off, a_len - a_off))
 		return 0;
 
-	out->string = xmemdupz(longer->line, d);
-	out->current_longer = (a == longer);
+	*out = delta;
 
 	return 1;
 }
@@ -835,8 +861,11 @@ static int cmp_in_block_with_wsd(const struct diff_options *o,
 	const char *a = cur->es->line,
 		   *b = match->es->line,
 		   *c = l->line;
-	const char *orig_a = a;
-	int wslen;
+	int a_off = cur->es->indent_off,
+	    a_width = cur->es->indent_width,
+	    c_off = l->indent_off,
+	    c_width = l->indent_width;
+	int delta;
 
 	/*
 	 * We need to check if 'cur' is equal to 'match'.  As those
@@ -850,35 +879,20 @@ static int cmp_in_block_with_wsd(const struct diff_options *o,
 	if (al != bl)
 		return 1;
 
-	if (!pmb->wsd.string)
-		/*
-		 * The white space delta is not active? This can happen
-		 * when we exit early in this function.
-		 */
-		return 1;
-
 	/*
-	 * The indent changes of the block are known and stored in
-	 * pmb->wsd; however we need to check if the indent changes of the
-	 * current line are still the same as before.
-	 *
-	 * To do so we need to compare 'l' to 'cur', adjusting the
-	 * one of them for the white spaces, depending which was longer.
+	 * The indent changes of the block are known and stored in pmb->wsd;
+	 * however we need to check if the indent changes of the current line
+	 * match those of the current block and that the text of 'l' and 'cur'
+	 * after the indentation match.
 	 */
+	if (cur->es->s == DIFF_SYMBOL_PLUS)
+		delta = a_width - c_width;
+	else
+		delta = c_width - a_width;
 
-	wslen = strlen(pmb->wsd.string);
-	if (pmb->wsd.current_longer) {
-		c += wslen;
-		cl -= wslen;
-	} else {
-		a += wslen;
-		al -= wslen;
-	}
-
-	if (al != cl || memcmp(orig_a, b, bl) || memcmp(a, c, al))
-		return 1;
-
-	return 0;
+	return !(delta == pmb->wsd && al - a_off == cl - c_off &&
+		 !memcmp(a, b, al) && !
+		 memcmp(a + a_off, c + c_off, al - a_off));
 }
 
 static int moved_entry_cmp(const void *hashmap_cmp_fn_data,
@@ -944,6 +958,9 @@ static void add_lines_to_move_detection(struct diff_options *o,
 			continue;
 		}
 
+		if (o->color_moved_ws_handling &
+		    COLOR_MOVED_WS_ALLOW_INDENTATION_CHANGE)
+			fill_es_indent_data(&o->emitted_symbols->buf[n]);
 		key = prepare_entry(o, n);
 		if (prev_line && prev_line->es->s == o->emitted_symbols->buf[n].s)
 			prev_line->next_line = key;
@@ -1022,8 +1039,7 @@ static int shrink_potential_moved_blocks(struct moved_block *pmb,
 
 		if (lp < pmb_nr && rp > -1 && lp < rp) {
 			pmb[lp] = pmb[rp];
-			pmb[rp].match = NULL;
-			pmb[rp].wsd.string = NULL;
+			memset(&pmb[rp], 0, sizeof(pmb[rp]));
 			rp--;
 			lp++;
 		}
@@ -1143,7 +1159,7 @@ static void mark_color_as_moved(struct diff_options *o,
 							     &pmb[pmb_nr].wsd))
 						pmb[pmb_nr++].match = match;
 				} else {
-					pmb[pmb_nr].wsd.string = NULL;
+					pmb[pmb_nr].wsd = 0;
 					pmb[pmb_nr++].match = match;
 				}
 			}
@@ -1507,7 +1523,7 @@ static void emit_diff_symbol_from_struct(struct diff_options *o,
 static void emit_diff_symbol(struct diff_options *o, enum diff_symbol s,
 			     const char *line, int len, unsigned flags)
 {
-	struct emitted_diff_symbol e = {line, len, flags, s};
+	struct emitted_diff_symbol e = {line, len, flags, 0, 0, s};
 
 	if (o->emitted_symbols)
 		append_emitted_diff_symbol(o, &e);
