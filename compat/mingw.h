@@ -297,6 +297,10 @@ int mingw_gethostname(char *host, int namelen);
 struct hostent *mingw_gethostbyname(const char *host);
 #define gethostbyname mingw_gethostbyname
 
+int mingw_getaddrinfo(const char *node, const char *service,
+		      const struct addrinfo *hints, struct addrinfo **res);
+#define getaddrinfo mingw_getaddrinfo
+
 int mingw_socket(int domain, int type, int protocol);
 #define socket mingw_socket
 
