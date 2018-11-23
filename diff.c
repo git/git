@@ -304,7 +304,9 @@ static int parse_color_moved_ws(const char *arg)
 		strbuf_addstr(&sb, i->string);
 		strbuf_trim(&sb);
 
-		if (!strcmp(sb.buf, "ignore-space-change"))
+		if (!strcmp(sb.buf, "no"))
+			ret = 0;
+		else if (!strcmp(sb.buf, "ignore-space-change"))
 			ret |= XDF_IGNORE_WHITESPACE_CHANGE;
 		else if (!strcmp(sb.buf, "ignore-space-at-eol"))
 			ret |= XDF_IGNORE_WHITESPACE_AT_EOL;
@@ -5036,6 +5038,8 @@ int diff_opt_parse(struct diff_options *options,
 		if (cm < 0)
 			die("bad --color-moved argument: %s", arg);
 		options->color_moved = cm;
+	} else if (!strcmp(arg, "--no-color-moved-ws")) {
+		options->color_moved_ws_handling = 0;
 	} else if (skip_prefix(arg, "--color-moved-ws=", &arg)) {
 		options->color_moved_ws_handling = parse_color_moved_ws(arg);
 	} else if (skip_to_optional_arg_default(arg, "--color-words", &options->word_regex, NULL)) {

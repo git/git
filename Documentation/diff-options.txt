@@ -306,6 +306,8 @@ endif::git-diff[]
 	These modes can be given as a comma separated list:
 +
 --
+no::
+	Do not ignore whitespace when performing move detection.
 ignore-space-at-eol::
 	Ignore changes in whitespace at EOL.
 ignore-space-change::
@@ -321,6 +323,11 @@ allow-indentation-change::
 	whitespace is the same per line. This is incompatible with the
 	other modes.
 --
+
+--no-color-moved-ws::
+	Do not ignore whitespace when performing move detection. This can be
+	used to override configuration settings. It is the same as
+	`--color-moved-ws=no`.
 
 --word-diff[=<mode>]::
 	Show a word diff, using the <mode> to delimit changed words.
