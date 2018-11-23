@@ -2143,6 +2143,14 @@ struct hostent *mingw_gethostbyname(const char *host)
 	return gethostbyname(host);
 }
 
+#undef getaddrinfo
+int mingw_getaddrinfo(const char *node, const char *service,
+		      const struct addrinfo *hints, struct addrinfo **res)
+{
+	ensure_socket_initialization();
+	return getaddrinfo(node, service, hints, res);
+}
+
 int mingw_socket(int domain, int type, int protocol)
 {
 	int sockfd;
