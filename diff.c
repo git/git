@@ -1040,14 +1040,17 @@ static int shrink_potential_moved_blocks(struct moved_block *pmb,
  * The last block consists of the (n - block_length)'th line up to but not
  * including the nth line.
  *
+ * Returns 0 if the last block is empty or is unset by this function, non zero
+ * otherwise.
+ *
  * NEEDSWORK: This uses the same heuristic as blame_entry_score() in blame.c.
  * Think of a way to unify them.
  */
-static void adjust_last_block(struct diff_options *o, int n, int block_length)
+static int adjust_last_block(struct diff_options *o, int n, int block_length)
 {
 	int i, alnum_count = 0;
 	if (o->color_moved == COLOR_MOVED_PLAIN)
-		return;
+		return block_length;
 	for (i = 1; i < block_length + 1; i++) {
 		const char *c = o->emitted_symbols->buf[n - i].line;
 		for (; *c; c++) {
@@ -1055,11 +1058,12 @@ static void adjust_last_block(struct diff_options *o, int n, int block_length)
 				continue;
 			alnum_count++;
 			if (alnum_count >= COLOR_MOVED_MIN_ALNUM_COUNT)
-				return;
+				return 1;
 		}
 	}
 	for (i = 1; i < block_length + 1; i++)
 		o->emitted_symbols->buf[n - i].flags &= ~DIFF_SYMBOL_MOVED_LINE;
+	return 0;
 }
 
 /* Find blocks of moved code, delegate actual coloring decision to helper */
@@ -1069,7 +1073,7 @@ static void mark_color_as_moved(struct diff_options *o,
 {
 	struct moved_block *pmb = NULL; /* potentially moved blocks */
 	int pmb_nr = 0, pmb_alloc = 0;
-	int n, flipped_block = 1, block_length = 0;
+	int n, flipped_block = 0, block_length = 0;
 
 
 	for (n = 0; n < o->emitted_symbols->nr; n++) {
@@ -1077,6 +1081,7 @@ static void mark_color_as_moved(struct diff_options *o,
 		struct moved_entry *key;
 		struct moved_entry *match = NULL;
 		struct emitted_diff_symbol *l = &o->emitted_symbols->buf[n];
+		enum diff_symbol last_symbol = 0;
 
 		switch (l->s) {
 		case DIFF_SYMBOL_PLUS:
@@ -1092,7 +1097,7 @@ static void mark_color_as_moved(struct diff_options *o,
 			free(key);
 			break;
 		default:
-			flipped_block = 1;
+			flipped_block = 0;
 		}
 
 		if (!match) {
@@ -1103,10 +1108,13 @@ static void mark_color_as_moved(struct diff_options *o,
 				moved_block_clear(&pmb[i]);
 			pmb_nr = 0;
 			block_length = 0;
+			flipped_block = 0;
+			last_symbol = l->s;
 			continue;
 		}
 
 		if (o->color_moved == COLOR_MOVED_PLAIN) {
+			last_symbol = l->s;
 			l->flags |= DIFF_SYMBOL_MOVED_LINE;
 			continue;
 		}
@@ -1137,19 +1145,22 @@ static void mark_color_as_moved(struct diff_options *o,
 				}
 			}
 
-			flipped_block = (flipped_block + 1) % 2;
+			if (adjust_last_block(o, n, block_length) &&
+			    pmb_nr && last_symbol != l->s)
+				flipped_block = (flipped_block + 1) % 2;
+			else
+				flipped_block = 0;
 
-			adjust_last_block(o, n, block_length);
 			block_length = 0;
 		}
 
 		if (pmb_nr) {
 			block_length++;
-
 			l->flags |= DIFF_SYMBOL_MOVED_LINE;
 			if (flipped_block && o->color_moved != COLOR_MOVED_BLOCKS)
 				l->flags |= DIFF_SYMBOL_MOVED_LINE_ALT;
 		}
+		last_symbol = l->s;
 	}
 	adjust_last_block(o, n, block_length);
 

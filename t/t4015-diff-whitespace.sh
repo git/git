@@ -1802,14 +1802,14 @@ test_expect_success 'only move detection ignores white spaces' '
 	<BOLD;MAGENTA>-a long line to exceed per-line minimum<RESET>
 	<BOLD;MAGENTA>-another long line to exceed per-line minimum<RESET>
 	<RED>-original file<RESET>
-	<BOLD;YELLOW>+<RESET>Q<BOLD;YELLOW>a long line to exceed per-line minimum<RESET>
-	<BOLD;YELLOW>+<RESET>Q<BOLD;YELLOW>another long line to exceed per-line minimum<RESET>
+	<BOLD;CYAN>+<RESET>Q<BOLD;CYAN>a long line to exceed per-line minimum<RESET>
+	<BOLD;CYAN>+<RESET>Q<BOLD;CYAN>another long line to exceed per-line minimum<RESET>
 	<GREEN>+<RESET><GREEN>new file<RESET>
 	EOF
 	test_cmp expected actual
 '
 
-test_expect_failure 'compare whitespace delta across moved blocks' '
+test_expect_success 'compare whitespace delta across moved blocks' '
 
 	git reset --hard &&
 	q_to_tab <<-\EOF >text.txt &&
