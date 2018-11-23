@@ -293,6 +293,10 @@ dimmed-zebra::
 	`dimmed_zebra` is a deprecated synonym.
 --
 
+--no-color-moved::
+	Turn off move detection. This can be used to override configuration
+	settings. It is the same as `--color-moved=no`.
+
 --color-moved-ws=<modes>::
 	This configures how white spaces are ignored when performing the
 	move detection for `--color-moved`.
