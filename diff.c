@@ -1106,10 +1106,10 @@ static void mark_color_as_moved(struct diff_options *o,
 			continue;
 		}
 
-		l->flags |= DIFF_SYMBOL_MOVED_LINE;
-
-		if (o->color_moved == COLOR_MOVED_PLAIN)
+		if (o->color_moved == COLOR_MOVED_PLAIN) {
+			l->flags |= DIFF_SYMBOL_MOVED_LINE;
 			continue;
+		}
 
 		if (o->color_moved_ws_handling &
 		    COLOR_MOVED_WS_ALLOW_INDENTATION_CHANGE)
@@ -1143,10 +1143,13 @@ static void mark_color_as_moved(struct diff_options *o,
 			block_length = 0;
 		}
 
-		block_length++;
+		if (pmb_nr) {
+			block_length++;
 
-		if (flipped_block && o->color_moved != COLOR_MOVED_BLOCKS)
-			l->flags |= DIFF_SYMBOL_MOVED_LINE_ALT;
+			l->flags |= DIFF_SYMBOL_MOVED_LINE;
+			if (flipped_block && o->color_moved != COLOR_MOVED_BLOCKS)
+				l->flags |= DIFF_SYMBOL_MOVED_LINE_ALT;
+		}
 	}
 	adjust_last_block(o, n, block_length);
 
