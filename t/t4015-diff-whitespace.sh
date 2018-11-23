@@ -1809,7 +1809,7 @@ test_expect_success 'only move detection ignores white spaces' '
 	test_cmp expected actual
 '
 
-test_expect_success 'compare whitespace delta across moved blocks' '
+test_expect_failure 'compare whitespace delta across moved blocks' '
 
 	git reset --hard &&
 	q_to_tab <<-\EOF >text.txt &&
@@ -1827,6 +1827,7 @@ test_expect_success 'compare whitespace delta across moved blocks' '
 	QQQthat has similar lines
 	QQQto previous blocks, but with different indent
 	QQQYetQAnotherQoutlierQ
+	QLine with internal w h i t e s p a c e change
 	EOF
 
 	git add text.txt &&
@@ -1847,6 +1848,7 @@ test_expect_success 'compare whitespace delta across moved blocks' '
 	QQthat has similar lines
 	QQto previous blocks, but with different indent
 	QQYetQAnotherQoutlier
+	QLine with internal whitespace change
 	EOF
 
 	git diff --color --color-moved --color-moved-ws=allow-indentation-change >actual.raw &&
@@ -1856,7 +1858,7 @@ test_expect_success 'compare whitespace delta across moved blocks' '
 		<BOLD>diff --git a/text.txt b/text.txt<RESET>
 		<BOLD>--- a/text.txt<RESET>
 		<BOLD>+++ b/text.txt<RESET>
-		<CYAN>@@ -1,14 +1,14 @@<RESET>
+		<CYAN>@@ -1,15 +1,15 @@<RESET>
 		<BOLD;MAGENTA>-QIndented<RESET>
 		<BOLD;MAGENTA>-QText across<RESET>
 		<BOLD;MAGENTA>-Qsome lines<RESET>
@@ -1871,6 +1873,7 @@ test_expect_success 'compare whitespace delta across moved blocks' '
 		<BOLD;MAGENTA>-QQQthat has similar lines<RESET>
 		<BOLD;MAGENTA>-QQQto previous blocks, but with different indent<RESET>
 		<RED>-QQQYetQAnotherQoutlierQ<RESET>
+		<RED>-QLine with internal w h i t e s p a c e change<RESET>
 		<BOLD;CYAN>+<RESET>QQ<BOLD;CYAN>Indented<RESET>
 		<BOLD;CYAN>+<RESET>QQ<BOLD;CYAN>Text across<RESET>
 		<BOLD;CYAN>+<RESET>QQ<BOLD;CYAN>some lines<RESET>
@@ -1885,6 +1888,7 @@ test_expect_success 'compare whitespace delta across moved blocks' '
 		<BOLD;CYAN>+<RESET>QQ<BOLD;CYAN>that has similar lines<RESET>
 		<BOLD;CYAN>+<RESET>QQ<BOLD;CYAN>to previous blocks, but with different indent<RESET>
 		<GREEN>+<RESET>QQ<GREEN>YetQAnotherQoutlier<RESET>
+		<GREEN>+<RESET>Q<GREEN>Line with internal whitespace change<RESET>
 	EOF
 
 	test_cmp expected actual
