@@ -831,20 +831,23 @@ static int cmp_in_block_with_wsd(const struct diff_options *o,
 				 int n)
 {
 	struct emitted_diff_symbol *l = &o->emitted_symbols->buf[n];
-	int al = cur->es->len, cl = l->len;
+	int al = cur->es->len, bl = match->es->len, cl = l->len;
 	const char *a = cur->es->line,
 		   *b = match->es->line,
 		   *c = l->line;
-
+	const char *orig_a = a;
 	int wslen;
 
 	/*
-	 * We need to check if 'cur' is equal to 'match'.
-	 * As those are from the same (+/-) side, we do not need to adjust for
-	 * indent changes. However these were found using fuzzy matching
-	 * so we do have to check if they are equal.
+	 * We need to check if 'cur' is equal to 'match'.  As those
+	 * are from the same (+/-) side, we do not need to adjust for
+	 * indent changes. However these were found using fuzzy
+	 * matching so we do have to check if they are equal. Here we
+	 * just check the lengths. We delay calling memcmp() to check
+	 * the contents until later as if the length comparison for a
+	 * and c fails we can avoid the call all together.
 	 */
-	if (strcmp(a, b))
+	if (al != bl)
 		return 1;
 
 	if (!pmb->wsd.string)
@@ -872,7 +875,7 @@ static int cmp_in_block_with_wsd(const struct diff_options *o,
 		al -= wslen;
 	}
 
-	if (al != cl || memcmp(a, c, al))
+	if (al != cl || memcmp(orig_a, b, bl) || memcmp(a, c, al))
 		return 1;
 
 	return 0;
