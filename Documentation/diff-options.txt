@@ -298,7 +298,7 @@ dimmed-zebra::
 	settings. It is the same as `--color-moved=no`.
 
 --color-moved-ws=<modes>::
-	This configures how white spaces are ignored when performing the
+	This configures how whitespace is ignored when performing the
 	move detection for `--color-moved`.
 ifdef::git-diff[]
 	It can be set by the `diff.colorMovedWS` configuration setting.
@@ -316,7 +316,7 @@ ignore-all-space::
 	Ignore whitespace when comparing lines. This ignores differences
 	even if one line has whitespace where the other line has none.
 allow-indentation-change::
-	Initially ignore any white spaces in the move detection, then
+	Initially ignore any whitespace in the move detection, then
 	group the moved code blocks only into a block if the change in
 	whitespace is the same per line. This is incompatible with the
 	other modes.

@@ -320,7 +320,7 @@ static int parse_color_moved_ws(const char *arg)
 
 	if ((ret & COLOR_MOVED_WS_ALLOW_INDENTATION_CHANGE) &&
 	    (ret & XDF_WHITESPACE_FLAGS))
-		die(_("color-moved-ws: allow-indentation-change cannot be combined with other white space modes"));
+		die(_("color-moved-ws: allow-indentation-change cannot be combined with other whitespace modes"));
 
 	string_list_clear(&l, 0);
 
