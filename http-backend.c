@@ -486,6 +486,8 @@ static void run_service(const char **argv, int buffer_input)
 	if (buffer_input || gzipped_request || req_len >= 0)
 		cld.in = -1;
 	cld.git_cmd = 1;
+	cld.clean_on_exit = 1;
+	cld.wait_after_clean = 1;
 	if (start_command(&cld))
 		exit(1);
 
