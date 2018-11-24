@@ -26,12 +26,12 @@ line per changed file.
 An output line is formatted this way:
 
 ------------------------------------------------
-in-place edit  :100644 100644 bcd1234... 0123456... M file0
-copy-edit      :100644 100644 abcd123... 1234567... C68 file1 file2
-rename-edit    :100644 100644 abcd123... 1234567... R86 file1 file3
-create         :000000 100644 0000000... 1234567... A file4
-delete         :100644 000000 1234567... 0000000... D file5
-unmerged       :000000 000000 0000000... 0000000... U file6
+in-place edit  :100644 100644 bcd1234 0123456 M file0
+copy-edit      :100644 100644 abcd123 1234567 C68 file1 file2
+rename-edit    :100644 100644 abcd123 1234567 R86 file1 file3
+create         :000000 100644 0000000 1234567 A file4
+delete         :100644 000000 1234567 0000000 D file5
+unmerged       :000000 000000 0000000 0000000 U file6
 ------------------------------------------------
 
 That is, from the left to the right:
@@ -75,7 +75,7 @@ and it is out of sync with the index.
 Example:
 
 ------------------------------------------------
-:100644 100644 5be4a4...... 000000...... M file.c
+:100644 100644 5be4a4a 0000000 M file.c
 ------------------------------------------------
 
 Without the `-z` option, pathnames with "unusual" characters are
@@ -100,7 +100,7 @@ from the format described above in the following way:
 Example:
 
 ------------------------------------------------
-::100644 100644 100644 fabadb8... cc95eb0... 4866510... MM	describe.c
+::100644 100644 100644 fabadb8 cc95eb0 4866510 MM	describe.c
 ------------------------------------------------
 
 Note that 'combined diff' lists only files which were modified from
