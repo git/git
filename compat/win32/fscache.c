@@ -7,7 +7,7 @@
 
 static volatile long initialized;
 static DWORD dwTlsIndex;
-static CRITICAL_SECTION mutex;
+CRITICAL_SECTION fscache_cs;
 
 /*
  * Store one fscache per thread to avoid thread contention and locking.
@@ -381,12 +381,12 @@ int fscache_enable(size_t initial_size)
 	 * opendir and lstat function pointers are redirected if
 	 * any threads are using the fscache.
 	 */
+	EnterCriticalSection(&fscache_cs);
 	if (!initialized) {
-		InitializeCriticalSection(&mutex);
 		if (!dwTlsIndex) {
 			dwTlsIndex = TlsAlloc();
 			if (dwTlsIndex == TLS_OUT_OF_INDEXES) {
-				LeaveCriticalSection(&mutex);
+				LeaveCriticalSection(&fscache_cs);
 				return 0;
 			}
 		}
@@ -395,12 +395,13 @@ int fscache_enable(size_t initial_size)
 		opendir = fscache_opendir;
 		lstat = fscache_lstat;
 	}
-	InterlockedIncrement(&initialized);
+	initialized++;
+	LeaveCriticalSection(&fscache_cs);
 
 	/* refcount the thread specific initialization */
 	cache = fscache_getcache();
 	if (cache) {
-		InterlockedIncrement(&cache->enabled);
+		cache->enabled++;
 	} else {
 		cache = (struct fscache *)xcalloc(1, sizeof(*cache));
 		cache->enabled = 1;
@@ -434,7 +435,7 @@ void fscache_disable(void)
 		BUG("fscache_disable() called on a thread where fscache has not been initialized");
 	if (!cache->enabled)
 		BUG("fscache_disable() called on an fscache that is already disabled");
-	InterlockedDecrement(&cache->enabled);
+	cache->enabled--;
 	if (!cache->enabled) {
 		TlsSetValue(dwTlsIndex, NULL);
 		trace_printf_key(&trace_fscache, "fscache_disable: lstat %u, opendir %u, "
@@ -447,12 +448,14 @@ void fscache_disable(void)
 	}
 
 	/* update the global fscache initialization */
-	InterlockedDecrement(&initialized);
+	EnterCriticalSection(&fscache_cs);
+	initialized--;
 	if (!initialized) {
 		/* reset opendir and lstat to the original implementations */
 		opendir = dirent_opendir;
 		lstat = mingw_lstat;
 	}
+	LeaveCriticalSection(&fscache_cs);
 
 	trace_printf_key(&trace_fscache, "fscache: disable\n");
 	return;
@@ -619,7 +622,7 @@ void fscache_merge(struct fscache *dest)
 	 * isn't being used so the critical section only needs to prevent
 	 * the the child threads from stomping on each other.
 	 */
-	EnterCriticalSection(&mutex);
+	EnterCriticalSection(&fscache_cs);
 
 	hashmap_iter_init(&cache->map, &iter);
 	while ((e = hashmap_iter_next(&iter)))
@@ -631,9 +634,9 @@ void fscache_merge(struct fscache *dest)
 	dest->opendir_requests += cache->opendir_requests;
 	dest->fscache_requests += cache->fscache_requests;
 	dest->fscache_misses += cache->fscache_misses;
-	LeaveCriticalSection(&mutex);
+	initialized--;
+	LeaveCriticalSection(&fscache_cs);
 
 	free(cache);
 
-	InterlockedDecrement(&initialized);
 }
