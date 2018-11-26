@@ -180,7 +180,8 @@ static void files_reflog_path(struct files_ref_store *refs,
 		break;
 	case REF_TYPE_OTHER_PSEUDOREF:
 	case REF_TYPE_MAIN_PSEUDOREF:
-		return files_reflog_path_other_worktrees(refs, sb, refname);
+		files_reflog_path_other_worktrees(refs, sb, refname);
+		break;
 	case REF_TYPE_NORMAL:
 		strbuf_addf(sb, "%s/logs/%s", refs->gitcommondir, refname);
 		break;
