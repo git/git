@@ -1407,7 +1407,7 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 	do_unset_environment_variables();
 
 	/* Determine whether or not we are associated to a console */
-	cons = CreateFile("CONOUT$", GENERIC_WRITE,
+	cons = CreateFileA("CONOUT$", GENERIC_WRITE,
 			FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
 			FILE_ATTRIBUTE_NORMAL, NULL);
 	if (cons == INVALID_HANDLE_VALUE) {
@@ -2115,7 +2115,7 @@ struct passwd *getpwuid(int uid)
 		return p;
 
 	len = sizeof(user_name);
-	if (!GetUserName(user_name, &len)) {
+	if (!GetUserNameA(user_name, &len)) {
 		initialized = 1;
 		return NULL;
 	}
