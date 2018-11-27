@@ -599,7 +599,7 @@ int winansi_isatty(int fd)
 void winansi_init(void)
 {
 	int con1, con2;
-	char name[32];
+	wchar_t name[32];
 
 	/* check if either stdout or stderr is a console output screen buffer */
 	con1 = is_console(1);
@@ -619,13 +619,15 @@ void winansi_init(void)
 	}
 
 	/* create a named pipe to communicate with the console thread */
-	xsnprintf(name, sizeof(name), "\\\\.\\pipe\\winansi%lu", GetCurrentProcessId());
-	hwrite = CreateNamedPipe(name, PIPE_ACCESS_OUTBOUND,
+	if (swprintf(name, ARRAY_SIZE(name) - 1, L"\\\\.\\pipe\\winansi%lu",
+		     GetCurrentProcessId()) < 0)
+		die("Could not initialize winansi pipe name");
+	hwrite = CreateNamedPipeW(name, PIPE_ACCESS_OUTBOUND,
 		PIPE_TYPE_BYTE | PIPE_WAIT, 1, BUFFER_SIZE, 0, 0, NULL);
 	if (hwrite == INVALID_HANDLE_VALUE)
 		die_lasterr("CreateNamedPipe failed");
 
-	hread = CreateFile(name, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
+	hread = CreateFileW(name, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
 	if (hread == INVALID_HANDLE_VALUE)
 		die_lasterr("CreateFile for named pipe failed");
 
