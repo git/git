@@ -3270,7 +3270,7 @@ int is_inside_windows_container(void)
 		return inside_container;
 
 	inside_container = ERROR_SUCCESS ==
-		RegOpenKeyEx(HKEY_LOCAL_MACHINE, key, 0, KEY_READ, &handle);
+		RegOpenKeyExA(HKEY_LOCAL_MACHINE, key, 0, KEY_READ, &handle);
 	RegCloseKey(handle);
 
 	return inside_container;
