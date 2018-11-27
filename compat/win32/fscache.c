@@ -158,6 +158,15 @@ static struct fsentry *fseentry_create_entry(struct fscache *cache, struct fsent
 
 	fse = fsentry_alloc(cache, list, buf, len);
 
+	/*
+	 * On certain Windows versions, host directories mapped into
+	 * Windows Containers ("Volumes", see https://docs.docker.com/storage/volumes/)
+	 * look like symbolic links, but their targets are paths that
+	 * are valid only in kernel mode.
+	 *
+	 * Let's work around this by detecting that situation and
+	 * telling Git that these are *not* symbolic links.
+	 */
 	if (fdata->dwReserved0 == IO_REPARSE_TAG_SYMLINK &&
 	    sizeof(buf) > (list ? list->len + 1 : 0) + fse->len + 1 &&
 	    is_inside_windows_container()) {
