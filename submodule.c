@@ -494,6 +494,12 @@ void prepare_submodule_repo_env(struct argv_array *out)
 			 DEFAULT_GIT_DIR_ENVIRONMENT);
 }
 
+static void prepare_submodule_repo_env_in_gitdir(struct argv_array *out)
+{
+	prepare_submodule_repo_env_no_git_dir(out);
+	argv_array_pushf(out, "%s=.", GIT_DIR_ENVIRONMENT);
+}
+
 /* Helper function to display the submodule header line prior to the full
  * summary output. If it can locate the submodule objects directory it will
  * attempt to lookup both the left and right commits and put them into the
@@ -1327,8 +1333,8 @@ static int get_next_submodule(struct child_process *cp,
 		repo = get_submodule_repo_for(spf->r, submodule);
 		if (repo) {
 			child_process_init(cp);
-			cp->dir = xstrdup(repo->worktree);
-			prepare_submodule_repo_env(&cp->env_array);
+			cp->dir = xstrdup(repo->gitdir);
+			prepare_submodule_repo_env_in_gitdir(&cp->env_array);
 			cp->git_cmd = 1;
 			if (!spf->quiet)
 				strbuf_addf(err, "Fetching submodule %s%s\n",
