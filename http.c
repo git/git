@@ -834,7 +834,7 @@ static CURL *get_curl_handle(void)
 #if LIBCURL_VERSION_NUM >= 0x072c00
 		curl_easy_setopt(result, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NO_REVOKE);
 #else
-		warning(_("CURLSSLOPT_NO_REVOKE not suported with cURL < 7.44.0"));
+		warning(_("CURLSSLOPT_NO_REVOKE not supported with cURL < 7.44.0"));
 #endif
 	}
 

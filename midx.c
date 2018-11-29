@@ -202,7 +202,7 @@ int prepare_midx_pack(struct multi_pack_index *m, uint32_t pack_int_id)
 	struct strbuf pack_name = STRBUF_INIT;
 
 	if (pack_int_id >= m->num_packs)
-		die(_("bad pack-int-id: %u (%u total packs"),
+		die(_("bad pack-int-id: %u (%u total packs)"),
 		    pack_int_id, m->num_packs);
 
 	if (m->packs[pack_int_id])
