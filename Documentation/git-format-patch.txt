@@ -250,6 +250,11 @@ feeding the result to `git send-email`.
 	feature/v2`), or a revision range if the two versions of the series are
 	disjoint (for example `git format-patch --cover-letter
 	--range-diff=feature/v1~3..feature/v1 -3 feature/v2`).
++
+Note that diff options passed to the command affect how the primary
+product of `format-patch` is generated, and they are not passed to
+the underlying `range-diff` machinery used to generate the cover-letter
+material (this may change in the future).
 
 --creation-factor=<percent>::
 	Used with `--range-diff`, tweak the heuristic which matches up commits
