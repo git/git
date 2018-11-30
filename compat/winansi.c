@@ -633,12 +633,12 @@ void winansi_init(void)
 
 	/* create a named pipe to communicate with the console thread */
 	xsnprintf(name, sizeof(name), "\\\\.\\pipe\\winansi%lu", GetCurrentProcessId());
-	hwrite = CreateNamedPipe(name, PIPE_ACCESS_OUTBOUND,
+	hwrite = CreateNamedPipeA(name, PIPE_ACCESS_OUTBOUND,
 		PIPE_TYPE_BYTE | PIPE_WAIT, 1, BUFFER_SIZE, 0, 0, NULL);
 	if (hwrite == INVALID_HANDLE_VALUE)
 		die_lasterr("CreateNamedPipe failed");
 
-	hread = CreateFile(name, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
+	hread = CreateFileA(name, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
 	if (hread == INVALID_HANDLE_VALUE)
 		die_lasterr("CreateFile for named pipe failed");
 
