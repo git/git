@@ -117,4 +117,14 @@ test_expect_success 'GIT_REFLOG_ACTION' '
 	test_cmp expect actual
 '
 
+test_expect_success 'rebase -i onto unrelated history' '
+	git init unrelated &&
+	test_commit -C unrelated 1 &&
+	git -C unrelated remote add -f origin "$PWD" &&
+	git -C unrelated branch --set-upstream-to=origin/master &&
+	git -C unrelated -c core.editor=true rebase -i -v --stat >actual &&
+	test_i18ngrep "Changes to " actual &&
+	test_i18ngrep "5 files changed" actual
+'
+
 test_done
