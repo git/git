@@ -91,4 +91,30 @@ test_expect_success 'error out early upon -C<n> or --whitespace=<bad>' '
 	test_i18ngrep "Invalid whitespace option" err
 '
 
+test_expect_success 'GIT_REFLOG_ACTION' '
+	git checkout start &&
+	test_commit reflog-onto &&
+	git checkout -b reflog-topic start &&
+	test_commit reflog-to-rebase &&
+
+	git rebase reflog-onto &&
+	git log -g --format=%gs -3 >actual &&
+	cat >expect <<-\EOF &&
+	rebase finished: returning to refs/heads/reflog-topic
+	rebase: reflog-to-rebase
+	rebase: checkout reflog-onto
+	EOF
+	test_cmp expect actual &&
+
+	git checkout -b reflog-prefix reflog-to-rebase &&
+	GIT_REFLOG_ACTION=change-the-reflog git rebase reflog-onto &&
+	git log -g --format=%gs -3 >actual &&
+	cat >expect <<-\EOF &&
+	rebase finished: returning to refs/heads/reflog-prefix
+	change-the-reflog: reflog-to-rebase
+	change-the-reflog: checkout reflog-onto
+	EOF
+	test_cmp expect actual
+'
+
 test_done
