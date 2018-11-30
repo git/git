@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Nov 2018, #06; Wed, 21)
-X-master-at: bb75be6cb916297f271c846f2f9caa3daaaec718
-X-next-at: 68bc7959f8dc2d629c09be1a52f1b95b977b3a13
+Subject: What's cooking in git.git (Nov 2018, #07; Fri, 30)
+X-master-at: 7068cbc4abac53d9c3675dfba81c1e97d25e8eeb
+X-next-at: a9faaff8c120bf4783cb892c157871fe524b3608
 
-What's cooking in git.git (Nov 2018, #06; Wed, 21)
+What's cooking in git.git (Nov 2018, #07; Fri, 30)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,356 +12,242 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
+The road to the upcoming 2.20 turned out to be a bit rockier as we
+had a couple of subcommands with larger importance (rebase and
+rebase-i) reimplemented, together with some new and exciting
+commands (like range-diff and its integration into format-patch),
+each with a few loose ends we needed to tie until the last minute.
+I've let -rc1 and -rc2 slip for a few days to make sure we get
+closer to a stable point, and I am hoping that a few topics that are
+at the bottom of master..pu chain with today's pushout merged to the
+'master' branch, I should be able to cut a 2.20-rc2 that is in a
+reasonable shape.
+
 You can find the changes described here in the integration branches
 of the repositories listed at
 
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
+[New Topics]
 
-* ab/dynamic-gettext-poison (2018-11-09) 2 commits
-  (merged to 'next' on 2018-11-18 at 13247a3be6)
- + Makefile: ease dynamic-gettext-poison transition
- + i18n: make GETTEXT_POISON a runtime option
+* gh/diff-raw-has-no-ellipses (2018-11-26) 1 commit
+  (merged to 'next' on 2018-11-29 at 24a7536f15)
+ + doc: update diff-format.txt for removed ellipses in --raw
 
- Our testing framework uses a special i18n "poisoned localization"
- feature to find messages that ought to stay constant but are
- incorrectly marked to be translated.  This feature has been made
- into a runtime option (it used to be a compile-time option).
+ "git diff --raw" lost ellipses to adjust the output columns for
+ some time now, but the documentation still showed them.
 
-
-* ab/range-diff-no-patch (2018-11-14) 3 commits
-  (merged to 'next' on 2018-11-17 at c42e0891d0)
- + range-diff: make diff option behavior (e.g. --stat) consistent
- + range-diff: fix regression in passing along diff options
- + range-diff doc: add a section about output stability
-
- The "--no-patch" option, which can be used to get a high-level
- overview without the actual line-by-line patch difference shown, of
- the "range-diff" command was earlier broken, which has been
- corrected.
+ Will cook in 'next'.
 
 
-* ab/rebase-in-c-escape-hatch (2018-11-16) 2 commits
-  (merged to 'next' on 2018-11-17 at a01be221c7)
- + tests: add a special setup where rebase.useBuiltin is off
- + rebase doc: document rebase.useBuiltin
+* mk/http-backend-kill-children-before-exit (2018-11-26) 1 commit
+  (merged to 'next' on 2018-11-29 at bf2d45062f)
+ + http-backend: enable cleaning up forked upload/receive-pack on exit
 
- The recently merged "rebase in C" has an escape hatch to use the
- scripted version when necessary, but it hasn't been documented,
+ The http-backend CGI process did not correctly clean up the child
+ processes it spawns to run upload-pack etc. when it dies itself,
  which has been corrected.
 
-
-* ag/p3400-force-checkout (2018-11-12) 1 commit
-  (merged to 'next' on 2018-11-17 at 87ff48d52a)
- + p3400: replace calls to `git checkout -b' by `git checkout -B'
-
- Perf test tweak.
+ Will cook in 'next'.
 
 
-* cb/notes-freeing-always-null-fix (2018-11-13) 1 commit
-  (merged to 'next' on 2018-11-17 at 47aeec5fc9)
- + builtin/notes: remove unnecessary free
+* ab/replace-graft-with-replace-advice (2018-11-29) 1 commit
+  (merged to 'next' on 2018-11-30 at c5d658e075)
+ + advice: don't pointlessly suggest --convert-graft-file
 
- Code cleanup.
+ The advice message to tell the user to migrate an existing graft
+ file to the replace system when a graft file was read was shown
+ even when "git replace --convert-graft-file" command, which is the
+ way the message suggests to use, was running, which made little
+ sense.
 
-
-* dd/poll-dot-h (2018-11-14) 1 commit
-  (merged to 'next' on 2018-11-18 at b6745f3308)
- + git-compat-util: prefer poll.h to sys/poll.h
-
- A build update.
-
-
-* ds/push-squelch-ambig-warning (2018-11-07) 1 commit
-  (merged to 'next' on 2018-11-18 at 5e8b3db129)
- + pack-objects: ignore ambiguous object warnings
-
- "git push" used to check ambiguities between object-names and
- refnames while processing the list of refs' old and new values,
- which was unnecessary (as it knew that it is feeding raw object
- names).  This has been optimized out.
+ Will merge to 'master'.
 
 
-* ds/reachable-topo-order (2018-11-02) 7 commits
-  (merged to 'next' on 2018-11-13 at 4155d01aee)
- + t6012: make rev-list tests more interesting
- + revision.c: generation-based topo-order algorithm
- + commit/revisions: bookkeeping before refactoring
- + revision.c: begin refactoring --topo-order logic
- + test-reach: add rev-list tests
- + test-reach: add run_three_modes method
- + prio-queue: add 'peek' operation
+* ma/reset-doc-rendering-fix (2018-11-29) 2 commits
+  (merged to 'next' on 2018-11-30 at be718c19e2)
+ + git-reset.txt: render literal examples as monospace
+ + git-reset.txt: render tables correctly under Asciidoctor
 
- The revision walker machinery learned to take advantage of the
- commit generation numbers stored in the commit-graph file.
+ Doc updates.
+
+ Will merge to 'master'.
 
 
-* jk/close-duped-fd-before-unlock-for-bundle (2018-11-17) 1 commit
-  (merged to 'next' on 2018-11-17 at 2fe598284e)
- + bundle: dup() output descriptor closer to point-of-use
+* sg/daemon-test-signal-fix (2018-11-27) 1 commit
+  (merged to 'next' on 2018-11-30 at b3f7fdf727)
+ + t/lib-git-daemon: fix signal checking
 
- When "git bundle" aborts due to an empty commit ranges
- (i.e. resulting in an empty pack), it left a file descriptor to an
- lockfile open, which resulted in leftover lockfile on Windows where
- you cannot remove a file with an open file descriptor.  This has
+ Test fix.
+
+ Will merge to 'master'.
+
+
+* tb/log-G-binary (2018-11-29) 1 commit
+ - log -G: ignore binary files
+
+ "git log -G<regex>" looked for a hunk in the "git log -p" patch
+ output that contained a string that matches the given pattern.
+ Optimize this code to ignore binary files, which by default will
+ not show any hunk that would match any pattern (unless textconv or
+ the --text option is in effect, that is).
+
+ Expecting an update to the tests.
+
+
+* jc/format-patch-range-diff-fix (2018-11-30) 1 commit
+  (merged to 'next' on 2018-11-30 at 26290b1ec1)
+ + format-patch: do not let its diff-options affect --range-diff
+
+ "git format-patch --range-diff" by mistake passed the diff options
+ used to generate the primary output of the command to the
+ range-diff machinery, which caused the range-diff in the cover
+ letter to include fairly useless "--stat" output.  This has been
+ corrected by forcing a non-customizable default formatting options
+ on the range-diff machinery when driven by format-patch.
+
+ Will merge to 'master'.
+
+
+* js/rebase-reflog-action-fix (2018-11-30) 1 commit
+  (merged to 'next' on 2018-11-30 at 93fd2fb920)
+ + rebase: fix GIT_REFLOG_ACTION regression
+
+ "git rebase" reimplemented recently in C accidentally changed the
+ way reflog entries are recorded (earlier "rebase -i" identified the
+ entries it leaves with "rebase -i", but the new version always
+ marks them with "rebase").  This has been corrected.
+
+ Will merge to 'master'.
+
+
+* js/rebase-stat-unrelated-fix (2018-11-30) 1 commit
+  (merged to 'next' on 2018-11-30 at a9faaff8c1)
+ + rebase --stat: fix when rebasing to an unrelated history
+
+ "git rebase --stat" to transplant a piece of history onto a totally
+ unrelated history were not working before and silently showed wrong
+ result.  With the recent reimplementation in C, it started to instead
+ die with an error message, as the original logic was not prepared
+ to cope with this case.  This has now been fixed.
+
+ Will merge to 'master'.
+
+--------------------------------------------------
+[Graduated to "master"]
+
+* cc/delta-islands (2018-11-21) 3 commits
+  (merged to 'next' on 2018-11-21 at 3bac399f83)
+ + pack-objects: fix off-by-one in delta-island tree-depth computation
+ + pack-objects: zero-initialize tree_depth/layer arrays
+ + pack-objects: fix tree_depth and layer invariants
+
+ A few issues in the implementation of "delta-islands" feature has
  been corrected.
 
 
-* jk/curl-ldflags (2018-11-05) 1 commit
-  (merged to 'next' on 2018-11-13 at d1387a3aa0)
- + build: link with curl-defined linker flags
+* cc/shared-index-permbits (2018-11-19) 1 commit
+  (merged to 'next' on 2018-11-19 at 79df716844)
+ + read-cache: make the split index obey umask settings
 
- The way -lcurl library gets linked has been simplified by taking
- advantage of the fact that we can just ask curl-config command how.
-
-
-* jk/unused-parameter-fixes (2018-11-06) 14 commits
-  (merged to 'next' on 2018-11-13 at 8d3625b4ae)
- + midx: double-check large object write loop
- + assert NOARG/NONEG behavior of parse-options callbacks
- + parse-options: drop OPT_DATE()
- + apply: return -1 from option callback instead of calling exit(1)
- + cat-file: report an error on multiple --batch options
- + tag: mark "--message" option with NONEG
- + show-branch: mark --reflog option as NONEG
- + format-patch: mark "--no-numbered" option with NONEG
- + status: mark --find-renames option with NONEG
- + cat-file: mark batch options with NONEG
- + pack-objects: mark index-version option as NONEG
- + ls-files: mark exclude options as NONEG
- + am: handle --no-patch-format option
- + apply: mark include/exclude options as NONEG
-
- Various functions have been audited for "-Wunused-parameter" warnings
- and bugs in them got fixed.
+ The way .git/index and .git/sharedindex* files were initially
+ created gave these files different perm bits until they were
+ adjusted for shared repository settings.  This was made consistent.
 
 
-* jk/verify-sig-merge-into-void (2018-11-07) 3 commits
-  (merged to 'next' on 2018-11-13 at a207be60ed)
- + pull: handle --verify-signatures for unborn branch
- + merge: handle --verify-signatures for unborn branch
- + merge: extract verify_merge_signature() helper
+* jk/t5562-perl-path-fix (2018-11-24) 1 commit
+  (merged to 'next' on 2018-11-24 at 2d8dca3544)
+ + t5562: fix perl path
 
- "git merge" and "git pull" that merges into an unborn branch used
- to completely ignore "--verify-signatures", which has been
+ Hotfix for test breakage on platforms whose Perl is not at
+ /usr/bin/perl
+
+
+* jn/eoie-ieot (2018-11-21) 3 commits
+  (merged to 'next' on 2018-11-21 at 9eb98a38f0)
+ + index: make index.threads=true enable ieot and eoie
+ + ieot: default to not writing IEOT section
+ + eoie: default to not writing EOIE section
+ (this branch is used by jn/unknown-index-extensions.)
+
+ As the warning message shown by existing versions of Git for
+ unknown index extensions is a bit too alarming, two new extensions
+ are held back and not written by default for the upcoming release.
+
+
+* js/builtin-rebase-perf-fix-err-fix (2018-11-21) 1 commit
+  (merged to 'next' on 2018-11-21 at 9c351cfc4a)
+ + rebase: warn about the correct tree's OID
+
+ The object name of the tree reported in a recently added error
+ message was wrong, which has been corrected.
+
+
+* js/rebase-am-options-fix (2018-11-21) 1 commit
+  (merged to 'next' on 2018-11-21 at 4da85e17c2)
+ + legacy-rebase: backport -C<n> and --whitespace=<option> checks
+
+ Recently, built-in "rebase" tightened the error checking for a few
+ options that are passed to underlying "am", but we forgot to make
+ the matching change to the scripted version, which has been
  corrected.
 
 
-* js/apply-recount-allow-noop (2018-11-13) 1 commit
-  (merged to 'next' on 2018-11-17 at e413fa105f)
- + apply --recount: allow "no-op hunks"
+* nd/clone-case-smashing-warning (2018-11-21) 1 commit
+  (merged to 'next' on 2018-11-21 at 68bc7959f8)
+ + clone: fix colliding file detection on APFS
 
- When editing a patch in a "git add -i" session, a hunk could be
- made to no-op.  The "git apply" program used to reject a patch with
- such a no-op hunk to catch user mistakes, but it is now updated to
- explicitly allow a no-op hunk in an edited patch.
+ Recently added check for case smashing filesystems did not
+ correctly utilize the cached stat information, leading to false
+ breakage detected by our test suite, which has been corrected.
 
 
-* js/builtin-rebase-perf-fix (2018-11-13) 3 commits
-  (merged to 'next' on 2018-11-17 at 9e9db8c8e1)
- + built-in rebase: reinstate `checkout -q` behavior where appropriate
- + rebase: prepare reset_head() for more flags
- + rebase: consolidate clean-up code before leaving reset_head()
+* nd/per-worktree-ref-iteration (2018-11-26) 1 commit
+  (merged to 'next' on 2018-11-26 at b7c39e5946)
+ + files-backend.c: fix build error on Solaris
 
- Code clean-up with correction to make the reimplemented "git
- rebase" a more faithful rewrite of the original, which also regains
- performance.
+ Build fix.
 
 
-* js/config-sequence (2018-11-16) 1 commit
-  (merged to 'next' on 2018-11-17 at fefca0bbe8)
- + config: report a bug if git_dir exists without commondir
+* tb/clone-case-smashing-warning-test (2018-11-24) 1 commit
+  (merged to 'next' on 2018-11-24 at 37f0d3b920)
+ + t5601-99: Enable colliding file detection for MINGW
 
- A sanity check for start-up sequence has been added in the config
- API codepath.
+ The code recently added to "git clone" to see if the platform's
+ filesystem is adequate to check out and use the project code
+ correctly (e.g. a case smashing filesystem cannot be used for a
+ project with two files whose paths are different only in case) was
+ meant to help Windows users, but the test for it was not enabled
+ for that platform, which has been corrected.
 
 
-* js/fuzz-cxxflags (2018-11-16) 1 commit
-  (merged to 'next' on 2018-11-17 at 5e589a5237)
- + Makefile: use FUZZ_CXXFLAGS for linking fuzzers
+* tz/build-tech-midx-doc (2018-11-21) 1 commit
+  (merged to 'next' on 2018-11-21 at 15dd462db0)
+ + Documentation: build technical/multi-pack-index
 
- The build procedure to link for fuzzing test has been made
- customizable with a new Makefile variable.
-
-
-* js/mailmap (2018-11-12) 1 commit
-  (merged to 'next' on 2018-11-17 at 673bfc4cfa)
- + Update .mailmap
-
- Update the mailmap to unify multiple entries for the authors with
- commits since v2.10.
-
-
-* js/mingw-create-hard-link (2018-11-14) 1 commit
-  (merged to 'next' on 2018-11-17 at 27f866db16)
- + mingw: use `CreateHardLink()` directly
-
- Windows update.
-
-
-* js/mingw-msdn-url (2018-11-16) 1 commit
-  (merged to 'next' on 2018-11-17 at a6a9afddbf)
- + mingw: replace an obsolete link with the superseding one
-
- The URL to an MSDN page in a comment has been updated.
-
-
-* js/mingw-res-rebuild (2018-11-07) 1 commit
-  (merged to 'next' on 2018-11-13 at fb736827d1)
- + Windows: force-recompile git.res for differing architectures
-
- Windows build update.
-
-
-* js/rebase-am-options (2018-11-16) 2 commits
-  (merged to 'next' on 2018-11-17 at f956d9b948)
- + rebase: validate -C<n> and --whitespace=<mode> parameters early
- + rebase: really just passthru the `git am` options
-
- The way "git rebase" parses and forwards the command line options
- meant for underlying "git am" has been revamped, which fixed for
- options with parameters that were not passed correctly.
-
-
-* js/rebase-autostash-detach-fix (2018-11-08) 2 commits
-  (merged to 'next' on 2018-11-17 at 15957b4a5a)
- + built-in rebase --autostash: leave the current branch alone if possible
- + built-in rebase: demonstrate regression with --autostash
-
- "git rebase --autostash" did not correctly re-attach the HEAD at times.
-
-
-* js/rebase-r-and-merge-head (2018-11-13) 5 commits
-  (merged to 'next' on 2018-11-17 at 6bb27df7b1)
- + status: rebase and merge can be in progress at the same time
- + built-in rebase --skip/--abort: clean up stale .git/<name> files
- + rebase -i: include MERGE_HEAD into files to clean up
- + rebase -r: do not write MERGE_HEAD unless needed
- + rebase -r: demonstrate bug with conflicting merges
-
- Bugfix for the recently graduated "git rebase --rebase-merges".
-
-
-* js/test-git-installed (2018-11-16) 5 commits
-  (merged to 'next' on 2018-11-18 at 61474ba19e)
- + tests: explicitly use `git.exe` on Windows
- + tests: do not require Git to be built when testing an installed Git
- + t/lib-gettext: test installed git-sh-i18n if GIT_TEST_INSTALLED is set
- + tests: respect GIT_TEST_INSTALLED when initializing repositories
- + tests: fix GIT_TEST_INSTALLED's PATH to include t/helper/
-
- Update the "test installed Git" mode of our test suite to work better.
-
-
-* lj/mingw-pthread-cond (2018-11-14) 1 commit
-  (merged to 'next' on 2018-11-17 at 46abe4100d)
- + win32: replace pthread_cond_*() with much simpler code
-
- Code simplification.
-
-
-* mg/gpg-fingerprint-test (2018-11-05) 2 commits
-  (merged to 'next' on 2018-11-13 at 71f11020c4)
- + t/t7510-signed-commit.sh: add signing subkey to Eris Discordia key
- + t/t7510-signed-commit.sh: Add %GP to custom format checks
-
- Add a few tests for a topic already in 'master'.
-
-
-* nd/command-list-gen-fix (2018-11-12) 1 commit
-  (merged to 'next' on 2018-11-17 at a6ff6baa0b)
- + build: fix broken command-list.h generation with core.autocrlf
-
- Build tweak.
-
-
-* nd/doc-extensions (2018-11-16) 1 commit
-  (merged to 'next' on 2018-11-17 at 09306064d5)
- + doc: move extensions.worktreeConfig to the right place
-
- Doc update.
-
-
-* nd/format-patch-cover-letter-stat-width (2018-11-13) 1 commit
-  (merged to 'next' on 2018-11-18 at 65a464977d)
- + format-patch: respect --stat in cover letter's diffstat
-
- "git format-patch --stat=<width>" can be used to specify the width
- used by the diffstat (shown in the cover letter).
-
-
-* nd/pthreads (2018-11-05) 14 commits
-  (merged to 'next' on 2018-11-13 at bb6914b3f8)
- + Clean up pthread_create() error handling
- + read-cache.c: initialize copy_len to shut up gcc 8
- + read-cache.c: reduce branching based on HAVE_THREADS
- + read-cache.c: remove #ifdef NO_PTHREADS
- + pack-objects: remove #ifdef NO_PTHREADS
- + preload-index.c: remove #ifdef NO_PTHREADS
- + grep: clean up num_threads handling
- + grep: remove #ifdef NO_PTHREADS
- + attr.c: remove #ifdef NO_PTHREADS
- + name-hash.c: remove #ifdef NO_PTHREADS
- + index-pack: remove #ifdef NO_PTHREADS
- + send-pack.c: move async's #ifdef NO_PTHREADS back to run-command.c
- + run-command.h: include thread-utils.h instead of pthread.h
- + thread-utils: macros to unconditionally compile pthreads API
-
- The codebase has been cleaned up to reduce "#ifndef NO_PTHREADS".
-
-
-* ra/rev-parse-exclude-glob (2018-11-13) 2 commits
-  (merged to 'next' on 2018-11-17 at 396dd7a2c2)
- + refs: fix some exclude patterns being ignored
- + refs: show --exclude failure with --branches/tags/remotes=glob
-
- "rev-parse --exclude=<pattern> --branches=<pattern>" etc. did not
- quite work, which has been corrected.
-
-
-* sb/cocci-pending (2018-11-14) 1 commit
-  (merged to 'next' on 2018-11-18 at dd271722d3)
- + coccicheck: introduce 'pending' semantic patches
-
- A coding convention around the Coccinelle semantic patches to have
- two classes to ease code migration process has been proposed and
- its support has been added to the Makefile.
-
-
-* sg/ref-filter-wo-repository (2018-11-16) 1 commit
-  (merged to 'next' on 2018-11-17 at c0bec63990)
- + ref-filter: don't look for objects when outside of a repository
-
- "git ls-remote --sort=<thing>" can feed an object that is not yet
- available into the comparison machinery and segfault, which has
- been corrected to check such a request upfront and reject it.
-
-
-* tb/print-size-t-with-uintmax-format (2018-11-12) 1 commit
-  (merged to 'next' on 2018-11-18 at 752e51c7ed)
- + Upcast size_t variables to uintmax_t when printing
-
- Code preparation to replace ulong vars with size_t vars where
- appropriate.
-
-
-* tb/xcurl-off-t (2018-11-12) 1 commit
-  (merged to 'next' on 2018-11-18 at ac2a4bc14a)
- + remote-curl.c: xcurl_off_t is not portable (on 32 bit platfoms)
-
- The xcurl_off_t() helper function is used to cast size_t to
- curl_off_t, but some compilers gave warnings against the code to
- ensure the casting is done without wraparound, when size_t is
- narrower than curl_off_t.  This warning has been squelched.
+ A documentation page that is referred to by other pages was not
+ built by mistake, which has been corrected.
 
 --------------------------------------------------
-[New Topics]
+[Stalled]
+
+* lt/date-human (2018-07-09) 1 commit
+ - Add 'human' date format
+
+ A new date format "--date=human" that morphs its output depending
+ on how far the time is from the current time has been introduced.
+ "--date=auto" can be used to use this new format when the output is
+ goint to the pager or to the terminal and otherwise the default
+ format.
+
+--------------------------------------------------
+[Cooking]
 
 * dl/merge-cleanup-scissors-fix (2018-11-21) 2 commits
- - merge: add scissors line on merge conflict
- - t7600: clean up 'merge --squash c3 with c7' test
+  (merged to 'next' on 2018-11-21 at 217be06acb)
+ + merge: add scissors line on merge conflict
+ + t7600: clean up 'merge --squash c3 with c7' test
 
  The list of conflicted paths shown in the editor while concluding a
  conflicted merge was shown above the scissors line when the
@@ -369,7 +255,7 @@ of the repositories listed at
  out just like the list of updated paths and other information to
  help the user explain the merge better.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * aw/pretty-trailers (2018-11-19) 5 commits
@@ -401,124 +287,43 @@ of the repositories listed at
 
 
 * sg/test-BUG (2018-11-20) 1 commit
- - tests: send "bug in the test script" errors to the script's stderr
+  (merged to 'next' on 2018-11-21 at bb81013952)
+ + tests: send "bug in the test script" errors to the script's stderr
 
  test framework has been updated to make a bug in the test script
  (as opposed to bugs in Git that are discovered by running the
  tests) stand out more prominently.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * sg/test-cmp-rev (2018-11-20) 1 commit
- - test-lib-functions: make 'test_cmp_rev' more informative on failure
+  (merged to 'next' on 2018-11-21 at 5d65cb2a76)
+ + test-lib-functions: make 'test_cmp_rev' more informative on failure
 
  Test framework update.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * ss/msvc-strcasecmp (2018-11-20) 1 commit
- - msvc: directly use MS version (_stricmp) of strcasecmp
+  (merged to 'next' on 2018-11-21 at 9e45649e6e)
+ + msvc: directly use MS version (_stricmp) of strcasecmp
 
  MSVC update.
 
- Will merge to 'next'.
-
-
-* cc/delta-islands (2018-11-21) 3 commits
-  (merged to 'next' on 2018-11-21 at 3bac399f83)
- + pack-objects: fix off-by-one in delta-island tree-depth computation
- + pack-objects: zero-initialize tree_depth/layer arrays
- + pack-objects: fix tree_depth and layer invariants
-
- A few issues in the implementation of "delta-islands" feature has
- been corrected.
-
- Will merge to 'master'.
-
-
-* jn/eoie-ieot (2018-11-21) 3 commits
-  (merged to 'next' on 2018-11-21 at 9eb98a38f0)
- + index: make index.threads=true enable ieot and eoie
- + ieot: default to not writing IEOT section
- + eoie: default to not writing EOIE section
- (this branch is used by jn/unknown-index-extensions.)
-
- As the warning message shown by existing versions of Git for
- unknown index extensions is a bit too alarming, two new extensions
- are held back and not written by default for the upcoming release.
-
- Will merge to 'master'.
+ Will cook in 'next'.
 
 
 * jn/unknown-index-extensions (2018-11-21) 2 commits
  - index: offer advice for unknown index extensions
  - index: do not warn about unrecognized extensions
- (this branch uses jn/eoie-ieot.)
 
  A bit too alarming warning given when unknown index extensions
  exist is getting revamped.
 
  Expecting a reroll.
 
-
-* js/builtin-rebase-perf-fix-err-fix (2018-11-21) 1 commit
-  (merged to 'next' on 2018-11-21 at 9c351cfc4a)
- + rebase: warn about the correct tree's OID
-
- The object name of the tree reported in a recently added error
- message was wrong, which has been corrected.
-
- Will merge to 'master'.
-
-
-* js/rebase-am-options-fix (2018-11-21) 1 commit
-  (merged to 'next' on 2018-11-21 at 4da85e17c2)
- + legacy-rebase: backport -C<n> and --whitespace=<option> checks
-
- Recently, built-in "rebase" tightened the error checking for a few
- options that are passed to underlying "am", but we forgot to make
- the matching change to the scripted version, which has been
- corrected.
-
- Will merge to 'master'.
-
-
-* nd/clone-case-smashing-warning (2018-11-21) 1 commit
-  (merged to 'next' on 2018-11-21 at 68bc7959f8)
- + clone: fix colliding file detection on APFS
-
- Recently added check for case smashing filesystems did not
- correctly utilize the cached stat information, leading to false
- breakage detected by our test suite, which has been corrected.
-
- Will merge to 'master'.
-
-
-* tz/build-tech-midx-doc (2018-11-21) 1 commit
-  (merged to 'next' on 2018-11-21 at 15dd462db0)
- + Documentation: build technical/multi-pack-index
-
- A documentation page that is referred to by other pages was not
- built by mistake, which has been corrected.
-
- Will merge to 'master'.
-
---------------------------------------------------
-[Stalled]
-
-* lt/date-human (2018-07-09) 1 commit
- - Add 'human' date format
-
- A new date format "--date=human" that morphs its output depending
- on how far the time is from the current time has been introduced.
- "--date=auto" can be used to use this new format when the output is
- goint to the pager or to the terminal and otherwise the default
- format.
-
---------------------------------------------------
-[Cooking]
 
 * ab/push-example-in-doc (2018-11-14) 1 commit
   (merged to 'next' on 2018-11-18 at 8fd935a19c)
@@ -586,17 +391,6 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* cc/shared-index-permbits (2018-11-19) 1 commit
-  (merged to 'next' on 2018-11-19 at 79df716844)
- + read-cache: make the split index obey umask settings
-
- The way .git/index and .git/sharedindex* files were initially
- created gave these files different perm bits until they were
- adjusted for shared repository settings.  This was made consistent.
-
- Will merge to 'master'.
-
-
 * en/rebase-merge-on-sequencer (2018-11-08) 2 commits
  - rebase: implement --merge via git-rebase--interactive
  - git-rebase, sequencer: extend --quiet option for the interactive machinery
@@ -624,7 +418,9 @@ of the repositories listed at
  the URL field with a new value.
 
 
-* jk/loose-object-cache (2018-11-13) 9 commits
+* jk/loose-object-cache (2018-11-24) 10 commits
+  (merged to 'next' on 2018-11-24 at 5f4f22707d)
+ + odb_load_loose_cache: fix strbuf leak
   (merged to 'next' on 2018-11-18 at 276691a21b)
  + fetch-pack: drop custom loose object cache
  + sha1-file: use loose object cache for quick existence check
@@ -706,7 +502,9 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* ot/ref-filter-object-info (2018-11-12) 5 commits
+* ot/ref-filter-object-info (2018-11-24) 6 commits
+  (merged to 'next' on 2018-11-24 at f8505762e3)
+ + ref-filter: replace unportable `%lld` format with %PRIdMAX
   (merged to 'next' on 2018-11-18 at ad4c086678)
  + ref-filter: add docs for new options
  + ref-filter: add tests for deltabase
@@ -962,7 +760,7 @@ of the repositories listed at
  cf. <e5b2900a-0558-d3bf-8ea1-d526b078bbc2@talktalk.net>
 
 
-* ps/stash-in-c (2018-10-15) 21 commits
+* ps/stash-in-c (2018-11-26) 22 commits
  . stash: replace all `write-tree` child processes with API calls
  . stash: optimize `get_untracked_files()` and `check_changes()`
  . stash: convert `stash--helper.c` into `stash.c`
@@ -982,14 +780,15 @@ of the repositories listed at
  . stash: rename test cases to be more descriptive
  . t3903: modernize style
  . stash: improve option parsing test coverage
+ . strbuf.c: add `strbuf_insertf()` and `strbuf_vinsertf()`
  . strbuf.c: add `strbuf_join_argv()`
  . sha1-name.c: add `get_oidf()` which acts like `get_oid()`
 
  "git stash" rewritten in C.
 
  Expecting a reroll, probably on top of the sd/stash-wo-user-name
- topic after it stabilizes.  The series is almost there.
- cf. <20181015221040.GD4883@hank.intra.tgummerer.com>
+ topic after it stabilizes, with an escape hatch like the one in
+ "rebase in C".
 
 
 * pw/add-p-select (2018-07-26) 4 commits
@@ -1044,3 +843,25 @@ of the repositories listed at
 
  Retracted; reverted out of next.
  cf. <20181114195142.GI126896@google.com>
+
+
+* ab/format-patch-rangediff-not-stat (2018-11-24) 1 commit
+  (merged to 'next' on 2018-11-26 at d9c84916b3)
+ + format-patch: don't include --stat with --range-diff output
+
+ The "--rangediff" option recently added to "format-patch"
+ interspersed a bogus and useless "--stat" information by mistake,
+ which is being corrected.
+
+ Reverted out of 'next'.
+
+
+* jc/postpone-rebase-in-c (2018-11-26) 1 commit
+  (merged to 'next' on 2018-11-26 at c6ae45110f)
+ + rebase: mark the C reimplementation as an experimental opt-in feature
+
+ People seem to be still finding latent bugs in the "rebase in C"
+ reimplementation.  For the upcoming release, use the scripted
+ version by default and adjust the documentation accordingly.
+
+ Reverted out of 'next'.
