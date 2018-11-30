@@ -56,7 +56,7 @@ Fixes since v2.8.2
    already enabled for the MinGW and plain Windows builds.  It also
    has been used in Cygwin packaged versions of Git for quite a while.
    See http://thread.gmane.org/gmane.comp.version-control.git/291853
-   and http://thread.gmane.org/gmane.comp.version-control.git/275680.
+   and https://www.mail-archive.com/git@vger.kernel.org/msg75625.html.
 
  * "git replace -e" did not honour "core.editor" configuration.
 
