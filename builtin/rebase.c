@@ -888,7 +888,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			       "them"), REBASE_PRESERVE_MERGES),
 		OPT_BOOL(0, "rerere-autoupdate",
 			 &options.allow_rerere_autoupdate,
-			 N_("allow rerere to update index  with resolved "
+			 N_("allow rerere to update index with resolved "
 			    "conflict")),
 		OPT_BOOL('k', "keep-empty", &options.keep_empty,
 			 N_("preserve empty commits during rebase")),
@@ -1549,7 +1549,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	 */
 	strbuf_reset(&msg);
 	if (!oidcmp(&merge_base, &options.orig_head)) {
-		printf(_("Fast-forwarded %s to %s. \n"),
+		printf(_("Fast-forwarded %s to %s.\n"),
 			branch_name, options.onto_name);
 		strbuf_addf(&msg, "rebase finished: %s onto %s",
 			options.head_name ? options.head_name : "detached HEAD",
