@@ -639,6 +639,22 @@ Fixes since v2.19
    adjusted for shared repository settings.  This was made consistent.
    (merge c9d6c78870 cc/shared-index-permbits later to maint).
 
+ * "git rebase --stat" to transplant a piece of history onto a totally
+   unrelated history were not working before and silently showed wrong
+   result.  With the recent reimplementation in C, it started to instead
+   die with an error message, as the original logic was not prepared
+   to cope with this case.  This has now been fixed.
+
+ * The advice message to tell the user to migrate an existing graft
+   file to the replace system when a graft file was read was shown
+   even when "git replace --convert-graft-file" command, which is the
+   way the message suggests to use, was running, which made little
+   sense.
+   (merge 8821e90a09 ab/replace-graft-with-replace-advice later to maint).
+
+ * "git diff --raw" lost ellipses to adjust the output columns for
+   some time now, but the documentation still showed them.
+
  * Code cleanup, docfix, build fix, etc.
    (merge 96a7501aad ts/doc-build-manpage-xsl-quietly later to maint).
    (merge b9b07efdb2 tg/conflict-marker-size later to maint).
@@ -679,3 +695,6 @@ Fixes since v2.19
    (merge 8c64bc9420 sg/test-rebase-editor-fix later to maint).
    (merge 71571cd7d6 ma/sequencer-do-reset-saner-loop-termination later to maint).
    (merge 9a4cb8781e cb/notes-freeing-always-null-fix later to maint).
+   (merge 3006f5ee16 ma/reset-doc-rendering-fix later to maint).
+   (merge 4c2eb06419 sg/daemon-test-signal-fix later to maint).
+   (merge d27525e519 ss/msvc-strcasecmp later to maint).
