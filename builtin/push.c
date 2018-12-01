@@ -173,10 +173,10 @@ static NORETURN int die_push_simple(struct branch *branch, struct remote *remote
 	      "\n"
 	      "To push to the branch of the same name on the remote, use\n"
 	      "\n"
-	      "    git push %s %s\n"
+	      "    git push %s HEAD\n"
 	      "%s"),
 	    remote->name, short_upstream,
-	    remote->name, branch->name, advice_maybe);
+	    remote->name, advice_maybe);
 }
 
 static const char message_detached_head_die[] =
