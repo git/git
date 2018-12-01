@@ -291,6 +291,9 @@ $GIT_DIR/config::
 $GIT_DIR/config.worktree::
 	This is optional and is only searched when
 	`extensions.worktreeConfig` is present in $GIT_DIR/config.
+	
+.gitconfig::
+	Project-specific configuration file.	
 
 If no further options are given, all reading options will read all of these
 files that are available. If the global or the system-wide configuration
