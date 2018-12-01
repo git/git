@@ -129,7 +129,7 @@ do
 		case "$magic" in
 		noellipses) ;;
 		*)
-			die "bug in t4103: unknown magic $magic" ;;
+			BUG "unknown magic $magic" ;;
 		esac ;;
 	*)
 		cmd="$magic $cmd" magic=

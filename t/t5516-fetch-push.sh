@@ -95,7 +95,7 @@ mk_child() {
 
 check_push_result () {
 	test $# -ge 3 ||
-	error "bug in the test script: check_push_result requires at least 3 parameters"
+	BUG "check_push_result requires at least 3 parameters"
 
 	repo_name="$1"
 	shift
