@@ -1631,7 +1631,7 @@ test_expect_success 'check nested conflicts' '
 
 		# Compare m to expected contents
 		>empty &&
-		cp -a m_stage_2 expected_final_m &&
+		cp m_stage_2 expected_final_m &&
 		test_must_fail git merge-file --diff3 \
 			-L "HEAD"                     \
 			-L "merged common ancestors"  \
