@@ -1503,10 +1503,15 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	if (options.flags & REBASE_DIFFSTAT) {
 		struct diff_options opts;
 
-		if (options.flags & REBASE_VERBOSE)
-			printf(_("Changes from %s to %s:\n"),
-				oid_to_hex(&merge_base),
-				oid_to_hex(&options.onto->object.oid));
+		if (options.flags & REBASE_VERBOSE) {
+			if (is_null_oid(&merge_base))
+				printf(_("Changes to %s:\n"),
+				       oid_to_hex(&options.onto->object.oid));
+			else
+				printf(_("Changes from %s to %s:\n"),
+				       oid_to_hex(&merge_base),
+				       oid_to_hex(&options.onto->object.oid));
+		}
 
 		/* We want color (if set), but no pager */
 		diff_setup(&opts);
@@ -1516,8 +1521,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			DIFF_FORMAT_SUMMARY | DIFF_FORMAT_DIFFSTAT;
 		opts.detect_rename = DIFF_DETECT_RENAME;
 		diff_setup_done(&opts);
-		diff_tree_oid(&merge_base, &options.onto->object.oid,
-			      "", &opts);
+		diff_tree_oid(is_null_oid(&merge_base) ?
+			      the_hash_algo->empty_tree : &merge_base,
+			      &options.onto->object.oid, "", &opts);
 		diffcore_std(&opts);
 		diff_flush(&opts);
 	}
