@@ -762,7 +762,7 @@ void show_log(struct rev_info *opt)
 		next_commentary_block(opt, NULL);
 		fprintf_ln(opt->diffopt.file, "%s", opt->rdiff_title);
 		show_range_diff(opt->rdiff1, opt->rdiff2,
-				opt->creation_factor, 1, &opt->diffopt);
+				opt->creation_factor, 1, NULL);
 
 		memcpy(&diff_queued_diff, &dq, sizeof(diff_queued_diff));
 	}

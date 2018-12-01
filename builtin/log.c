@@ -1096,7 +1096,7 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 	if (rev->rdiff1) {
 		fprintf_ln(rev->diffopt.file, "%s", rev->rdiff_title);
 		show_range_diff(rev->rdiff1, rev->rdiff2,
-				rev->creation_factor, 1, &rev->diffopt);
+				rev->creation_factor, 1, NULL);
 	}
 }
 
