@@ -257,7 +257,7 @@ static int write_basic_state(struct rebase_options *opts)
 	write_file(state_dir_path("quiet", opts), "%s",
 		   opts->flags & REBASE_NO_QUIET ? "" : "t");
 	if (opts->flags & REBASE_VERBOSE)
-		write_file(state_dir_path("verbose", opts), "");
+		write_file(state_dir_path("verbose", opts), "%s", "");
 	if (opts->strategy)
 		write_file(state_dir_path("strategy", opts), "%s",
 			   opts->strategy);
@@ -486,17 +486,24 @@ leave_reset_head:
 
 static int move_to_original_branch(struct rebase_options *opts)
 {
-	struct strbuf buf = STRBUF_INIT;
+	struct strbuf orig_head_reflog = STRBUF_INIT, head_reflog = STRBUF_INIT;
 	int ret;
 
-	if (opts->head_name && opts->onto)
-		strbuf_addf(&buf, "rebase finished: %s onto %s",
-			    opts->head_name,
-			    oid_to_hex(&opts->onto->object.oid));
-	ret = reset_head(NULL, "checkout", opts->head_name, 0,
-			 "HEAD", buf.buf);
+	if (!opts->head_name)
+		return 0; /* nothing to move back to */
 
-	strbuf_release(&buf);
+	if (!opts->onto)
+		BUG("move_to_original_branch without onto");
+
+	strbuf_addf(&orig_head_reflog, "rebase finished: %s onto %s",
+		    opts->head_name, oid_to_hex(&opts->onto->object.oid));
+	strbuf_addf(&head_reflog, "rebase finished: returning to %s",
+		    opts->head_name);
+	ret = reset_head(NULL, "checkout", opts->head_name, 0,
+			 orig_head_reflog.buf, head_reflog.buf);
+
+	strbuf_release(&orig_head_reflog);
+	strbuf_release(&head_reflog);
 	return ret;
 }
 
@@ -553,7 +560,8 @@ static int run_am(struct rebase_options *opts)
 		    oid_to_hex(&opts->orig_head));
 
 	rebased_patches = xstrdup(git_path("rebased-patches"));
-	format_patch.out = open(rebased_patches, O_WRONLY | O_CREAT, 0666);
+	format_patch.out = open(rebased_patches,
+				O_WRONLY | O_CREAT | O_TRUNC, 0666);
 	if (format_patch.out < 0) {
 		status = error_errno(_("could not write '%s'"),
 				     rebased_patches);
