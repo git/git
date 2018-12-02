@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2018-12-01 16:14+0800\n"
-"PO-Revision-Date: 2018-12-01 13:33-0500\n"
+"POT-Creation-Date: 2018-12-02 10:55+0800\n"
+"PO-Revision-Date: 2018-12-01 23:16-0500\n"
 "Last-Translator: christopher.diaz.riv@gmail.com\n"
 "Language-Team: CodeLabora <codelabora@gmail.com>\n"
 "Language: es\n"
@@ -140,7 +140,7 @@ msgstr "No se puede preparar una marca de tiempo para la expresión regular %s"
 #: apply.c:835
 #, c-format
 msgid "regexec returned %d for input: %s"
-msgstr "regexec retornó %d para la entrada: %s"
+msgstr "regexec devolvió %d para la entrada: %s"
 
 #: apply.c:909
 #, c-format
@@ -152,27 +152,27 @@ msgstr ""
 #, c-format
 msgid "git apply: bad git-diff - expected /dev/null, got %s on line %d"
 msgstr ""
-"git apply: mal git-diff - se esperaba /dev/null, se encontró %s en la línea "
-"%d"
+"git apply: git-diff erróneo - se esperaba /dev/null, se encontró %s en "
+"lalínea %d"
 
 #: apply.c:953
 #, c-format
 msgid "git apply: bad git-diff - inconsistent new filename on line %d"
 msgstr ""
-"git apply: mal git-diff - nuevo nombre de archivo inconsistente en la línea "
-"%d"
+"git apply: git-diff erróneo - nuevo nombre de archivo inconsistente en "
+"lalínea %d"
 
 #: apply.c:954
 #, c-format
 msgid "git apply: bad git-diff - inconsistent old filename on line %d"
 msgstr ""
-"git apply: mal git-diff - viejo nombre de archivo inconsistente en la línea "
-"%d"
+"git apply: git-diff erróneo - viejo nombre de archivo inconsistente en "
+"lalínea %d"
 
 #: apply.c:959
 #, c-format
 msgid "git apply: bad git-diff - expected /dev/null on line %d"
-msgstr "git apply: mal git-diff - se esperaba /dev/null en la línea %d"
+msgstr "git apply: git-diff erróneo - se esperaba /dev/null en la línea %d"
 
 #: apply.c:988
 #, c-format
@@ -204,10 +204,10 @@ msgid_plural ""
 "components (line %d)"
 msgstr[0] ""
 "al header de git diff carece de información del nombre del archivo %d cuando "
-"lo remueve de la ruta principal componente (línea %d)"
+"lo elimina de la ruta principal componente (línea %d)"
 msgstr[1] ""
 "los headers de git diff carecen de información de los nombres de los "
-"archivos %d cuando los remueven de la ruta principal componentes (línea %d)"
+"archivos %d cuando los eliminan de la ruta principal componentes (línea %d)"
 
 #: apply.c:1581
 #, c-format
@@ -241,7 +241,7 @@ msgstr "el archivo borrado %s todavía tiene contenido"
 #: apply.c:1847
 #, c-format
 msgid "** warning: file %s becomes empty but is not deleted"
-msgstr "** peligro: el archivo %s esta vacío pero no es borrado"
+msgstr "** peligro: el archivo %s está vacío pero no es borrado"
 
 #: apply.c:1994
 #, c-format
@@ -271,7 +271,7 @@ msgstr "no es posible abrir o leer %s"
 #: apply.c:2942
 #, c-format
 msgid "invalid start of line: '%c'"
-msgstr "comienzo invalido de línea: '%c'"
+msgstr "comienzo inválido de línea: '%c'"
 
 #: apply.c:3063
 #, c-format
@@ -423,7 +423,7 @@ msgstr "%s tiene tipo %o, se esperaba %o"
 #: apply.c:3881 apply.c:3883
 #, c-format
 msgid "invalid path '%s'"
-msgstr "ruta invalida '%s'"
+msgstr "ruta inválida '%s'"
 
 #: apply.c:3939
 #, c-format
@@ -448,7 +448,7 @@ msgstr "nuevo modo (%o) de %s no concuerda con el viejo modo (%o) de %s"
 #: apply.c:3987
 #, c-format
 msgid "affected file '%s' is beyond a symbolic link"
-msgstr "archivo afectado '%s' esta tras un enlace simbólico"
+msgstr "archivo afectado '%s' está tras un enlace simbólico"
 
 #: apply.c:3991
 #, c-format
@@ -493,7 +493,7 @@ msgstr "no se pudo escribir un índice temporal para %s"
 #: apply.c:4265
 #, c-format
 msgid "unable to remove %s from index"
-msgstr "no se puede remover %s del índice"
+msgstr "no se puede eliminar %s del índice"
 
 #: apply.c:4299
 #, c-format
@@ -635,7 +635,7 @@ msgstr "num"
 
 #: apply.c:4965
 msgid "remove <num> leading slashes from traditional diff paths"
-msgstr "remover <num> slashes iniciales de las rutas diff tradicionales"
+msgstr "eliminar <num> slashes iniciales de las rutas diff tradicionales"
 
 #: apply.c:4968
 msgid "ignore additions made by the patch"
@@ -696,7 +696,7 @@ msgstr "asegure que por lo menos <n> líneas del contexto concuerden"
 
 #: apply.c:4999 builtin/am.c:2197 builtin/interpret-trailers.c:97
 #: builtin/interpret-trailers.c:99 builtin/interpret-trailers.c:101
-#: builtin/pack-objects.c:3312 builtin/rebase.c:840
+#: builtin/pack-objects.c:3312 builtin/rebase.c:857
 msgid "action"
 msgstr "acción"
 
@@ -938,7 +938,7 @@ msgstr "Revisa las comillas en el archivo '%s': %s"
 #: bisect.c:676
 #, c-format
 msgid "We cannot bisect more!\n"
-msgstr "No podemos bisecar mas!\n"
+msgstr "¡No podemos biseccionar más!\n"
 
 #: bisect.c:730
 #, c-format
@@ -951,7 +951,7 @@ msgid ""
 "The merge base %s is bad.\n"
 "This means the bug has been fixed between %s and [%s].\n"
 msgstr ""
-"La base de fisión %s esta mal.\n"
+"La base de fisión %s está mal.\n"
 "Esto quiere decir que el bug ha sido arreglado entre %s y [%s].\n"
 
 #: bisect.c:759
@@ -970,7 +970,7 @@ msgid ""
 "This means the first '%s' commit is between %s and [%s].\n"
 msgstr ""
 "La base de fisión %s es %s.\n"
-"Esto quiere decir que el primer '%s' commit esta entre %s y [%s].\n"
+"Esto quiere decir que el primer '%s' commit está entre %s y [%s].\n"
 
 #: bisect.c:772
 #, c-format
@@ -991,13 +991,13 @@ msgid ""
 "We continue anyway."
 msgstr ""
 "la base de fusión entre %s y [%s] tiene que ser saltada.\n"
-"Así que no podemos estar seguros que el primer %s commit esta entre%s y %s.\n"
+"Así que no podemos estar seguros que el primer %s commit está entre%s y %s.\n"
 "Vamos a continuar de todas maneras."
 
 #: bisect.c:818
 #, c-format
 msgid "Bisecting: a merge base must be tested\n"
-msgstr "Bisectando: una base de fisión debe ser probada\n"
+msgstr "Biseccionando: una base de fisión debe ser probada\n"
 
 #: bisect.c:858
 #, c-format
@@ -1046,8 +1046,8 @@ msgstr[1] "(aproximadamente %d pasos)"
 #, c-format
 msgid "Bisecting: %d revision left to test after this %s\n"
 msgid_plural "Bisecting: %d revisions left to test after this %s\n"
-msgstr[0] "Bisectando: falta %d revisión por probar después de esto %s\n"
-msgstr[1] "Bisectando: faltan %d revisiones por probar después de esto %s\n"
+msgstr[0] "Biseccionando: falta %d revisión por probar después de esto %s\n"
+msgstr[1] "Biseccionando: faltan %d revisiones por probar después de esto %s\n"
 
 #: blame.c:1787
 msgid "--contents and --reverse do not blend well."
@@ -1202,7 +1202,7 @@ msgid ""
 "\"git push -u\" to set the upstream config as you push."
 msgstr ""
 "\n"
-"Si estas planeando basar tu trabajo en una rama upstream\n"
+"Si estás planeando basar tu trabajo en una rama upstream\n"
 "que ya existe en el remoto, tal vez necesites ejecutar\n"
 "\"git fetch\" para recibirla.\n"
 "\n"
@@ -1234,7 +1234,7 @@ msgstr "'%s' ya ha sido marcado en '%s'"
 #: branch.c:381
 #, c-format
 msgid "HEAD of working tree %s is not updated"
-msgstr "HEAD del árbol de trabajo %s no esta actualizada"
+msgstr "HEAD del árbol de trabajo %s no está actualizada"
 
 #: bundle.c:36
 #, c-format
@@ -1342,7 +1342,7 @@ msgid ""
 "\"git config advice.graftFileDeprecated false\""
 msgstr ""
 "El soporte para <GIT_DIR>/info/grafts ha sido deprecado\n"
-"y será removido en una versión futura de Git.\n"
+"y será eliminado en una versión futura de Git.\n"
 "\n"
 "Por favor use \"git replace --convert-graft-file\"\n"
 "para convertir los grafts en refs.\n"
@@ -1513,7 +1513,7 @@ msgstr "llave no contiene el nombre de variable: %s"
 #: config.c:378 sequencer.c:2296
 #, c-format
 msgid "invalid key: %s"
-msgstr "llave invalida: %s"
+msgstr "llave inválida: %s"
 
 #: config.c:384
 #, c-format
@@ -1566,7 +1566,7 @@ msgstr "fuera de rango"
 
 #: config.c:952
 msgid "invalid unit"
-msgstr "unidad invalida"
+msgstr "unidad inválida"
 
 #: config.c:958
 #, c-format
@@ -1623,7 +1623,7 @@ msgstr "largo de abreviatura fuera de rango: %d"
 #: config.c:1187 config.c:1198
 #, c-format
 msgid "bad zlib compression level %d"
-msgstr "mala compresión zlib en nivel %d"
+msgstr "nivel de compresión de zlib erróneo %d"
 
 #: config.c:1290
 msgid "core.commentChar should only be one character"
@@ -1632,7 +1632,7 @@ msgstr "core.commentChar debería tener solo un caracter"
 #: config.c:1323
 #, c-format
 msgid "invalid mode for object creation: %s"
-msgstr "modo invalido de creación de objetos: %s"
+msgstr "modo inválido de creación de objetos: %s"
 
 #: config.c:1395
 #, c-format
@@ -1651,7 +1651,7 @@ msgstr "debe ser uno de nothing, matching, simple, upstream o current"
 #: config.c:1481 builtin/pack-objects.c:3391
 #, c-format
 msgid "bad pack compression level %d"
-msgstr "mala compresión pack en el nivel %d"
+msgstr "nivel de compresión de pack erróneo %d"
 
 #: config.c:1602
 #, c-format
@@ -2315,7 +2315,7 @@ msgstr "falló al conseguir la información y nombre del kernel"
 
 #: dir.c:2246
 msgid "untracked cache is disabled on this system or location"
-msgstr "untracked cache esta desactivado en este sistema o ubicación"
+msgstr "untracked cache está desactivado en este sistema o ubicación"
 
 #: dir.c:3047
 #, c-format
@@ -2385,7 +2385,7 @@ msgstr "--stateless-rpc requiere multi_ack_detailed"
 #: fetch-pack.c:347 fetch-pack.c:1277
 #, c-format
 msgid "invalid shallow line: %s"
-msgstr "línea poco profunda invalida: %s"
+msgstr "línea poco profunda inválida: %s"
 
 #: fetch-pack.c:353 fetch-pack.c:1283
 #, c-format
@@ -2451,7 +2451,7 @@ msgstr "fetch-pack: no se puede extraer un demultiplexor de banda lateral"
 
 #: fetch-pack.c:811
 msgid "protocol error: bad pack header"
-msgstr "error de protocolo: mal paquete de header"
+msgstr "error de protocolo: paquete de header erróneo"
 
 #: fetch-pack.c:879
 #, c-format
@@ -2469,43 +2469,43 @@ msgstr "error en demultiplexor de banda lateral"
 
 #: fetch-pack.c:926
 msgid "Server does not support shallow clients"
-msgstr "Servidor no soporta clientes superficiales"
+msgstr "El servidor no soporta clientes superficiales"
 
 #: fetch-pack.c:930
 msgid "Server supports multi_ack_detailed"
-msgstr "Servidor soporta ulti_ack_detailed"
+msgstr "El servidor soporta ulti_ack_detailed"
 
 #: fetch-pack.c:933
 msgid "Server supports no-done"
-msgstr "Servidor soporta no-done"
+msgstr "El servidor soporta no-done"
 
 #: fetch-pack.c:939
 msgid "Server supports multi_ack"
-msgstr "Servidor soporta multi_ack"
+msgstr "El servidor soporta multi_ack"
 
 #: fetch-pack.c:943
 msgid "Server supports side-band-64k"
-msgstr "Servidor soporta side-band-64k"
+msgstr "El servidor soporta side-band-64k"
 
 #: fetch-pack.c:947
 msgid "Server supports side-band"
-msgstr "Servidor soporta side-band"
+msgstr "El servidor soporta side-band"
 
 #: fetch-pack.c:951
 msgid "Server supports allow-tip-sha1-in-want"
-msgstr "Servidor soporta allow-tip-sha1-in-want"
+msgstr "El servidor soporta allow-tip-sha1-in-want"
 
 #: fetch-pack.c:955
 msgid "Server supports allow-reachable-sha1-in-want"
-msgstr "Servidor soporta allow-reachable-sha1-in-want"
+msgstr "El servidor soporta allow-reachable-sha1-in-want"
 
 #: fetch-pack.c:965
 msgid "Server supports ofs-delta"
-msgstr "Servidor soporta ofs-delta"
+msgstr "El servidor soporta ofs-delta"
 
 #: fetch-pack.c:971 fetch-pack.c:1158
 msgid "Server supports filter"
-msgstr "Servidor soporta filtro"
+msgstr "El servidor soporta filtro"
 
 #: fetch-pack.c:979
 #, c-format
@@ -2514,15 +2514,15 @@ msgstr "Versión de servidor es %.*s"
 
 #: fetch-pack.c:985
 msgid "Server does not support --shallow-since"
-msgstr "Servidor no soporta --shalow-since"
+msgstr "El servidor no soporta --shalow-since"
 
 #: fetch-pack.c:989
 msgid "Server does not support --shallow-exclude"
-msgstr "Servidor no soporta --shalow-exclude"
+msgstr "El servidor no soporta --shalow-exclude"
 
 #: fetch-pack.c:991
 msgid "Server does not support --deepen"
-msgstr "Servidor no soporta --deepen"
+msgstr "El servidor no soporta --deepen"
 
 #: fetch-pack.c:1008
 msgid "no common commits"
@@ -2534,7 +2534,7 @@ msgstr "git fetch-pack: fetch falló."
 
 #: fetch-pack.c:1153
 msgid "Server does not support shallow requests"
-msgstr "Servidor no soporta peticiones superficiales"
+msgstr "El servidor no soporta peticiones superficiales"
 
 #: fetch-pack.c:1199
 #, c-format
@@ -2600,7 +2600,7 @@ msgstr "no existe ref remota %s"
 #: fetch-pack.c:1689
 #, c-format
 msgid "Server does not allow request for unadvertised object %s"
-msgstr "Servidor no permite solicitudes de objetos inadvertidos %s"
+msgstr "El servidor no permite solicitudes de objetos inadvertidos %s"
 
 #: gpg-interface.c:318
 msgid "gpg failed to sign the data"
@@ -2618,7 +2618,7 @@ msgstr "falló al escribir la firma separada para '%s'"
 #: graph.c:97
 #, c-format
 msgid "ignore invalid color '%.*s' in log.graphColors"
-msgstr "ignora color invalido '%.*s' en log.graphColors"
+msgstr "ignora color inválido '%.*s' en log.graphColors"
 
 #: grep.c:2113
 #, c-format
@@ -2787,10 +2787,10 @@ msgid_plural ""
 "Did you mean one of these?"
 msgstr[0] ""
 "\n"
-"Quisiste decir esto?"
+"¿Quisiste decir esto?"
 msgstr[1] ""
 "\n"
-"Quisiste decir alguno de estos?"
+"¿Quisiste decir alguno de estos?"
 
 #: ident.c:345
 msgid ""
@@ -2820,7 +2820,7 @@ msgstr ""
 
 #: ident.c:369
 msgid "no email was given and auto-detection is disabled"
-msgstr "no se entrego ningún email y la detección automática esta desactivada"
+msgstr "no se entrego ningún email y la detección automática está desactivada"
 
 #: ident.c:374
 #, c-format
@@ -2829,7 +2829,7 @@ msgstr "no es posible auto-detectar la dirección de correo (se obtuvo '%s')"
 
 #: ident.c:384
 msgid "no name was given and auto-detection is disabled"
-msgstr "no se entrego ningún nombre y la detección automática esta desactivada"
+msgstr "no se entrego ningún nombre y la detección automática está desactivada"
 
 #: ident.c:390
 #, c-format
@@ -2849,7 +2849,7 @@ msgstr "el nombre consiste solo de caracteres no permitidos: %s"
 #: ident.c:419 builtin/commit.c:606
 #, c-format
 msgid "invalid date format: %s"
-msgstr "formato de fecha invalido: %s"
+msgstr "formato de fecha inválido: %s"
 
 #: list-objects-filter-options.c:35
 msgid "multiple filter-specs cannot be combined"
@@ -2899,7 +2899,7 @@ msgstr "no es posible escribir el archivo índice"
 
 #: merge-recursive.c:323
 msgid "(bad commit)\n"
-msgstr "(mal commit)\n"
+msgstr "(commit erróneo)\n"
 
 #: merge-recursive.c:345
 #, c-format
@@ -3463,7 +3463,7 @@ msgstr ""
 #: notes-utils.c:104
 #, c-format
 msgid "Bad notes.rewriteMode value: '%s'"
-msgstr "Mal valor para notes.rewriteMode: '%s'"
+msgstr "Valor erróneo para notes.rewriteMode: '%s'"
 
 #: notes-utils.c:114
 #, c-format
@@ -3477,7 +3477,7 @@ msgstr "Rehusando reescribir notas en %s (fuera de refs/notes/)"
 #: notes-utils.c:144
 #, c-format
 msgid "Bad %s value: '%s'"
-msgstr "Mal valor para %s: '%s'"
+msgstr "Valor erróneo para %s: '%s'"
 
 #: object.c:54
 #, c-format
@@ -3577,7 +3577,7 @@ msgstr "especificación attr no puede estar vacía"
 #: pathspec.c:193
 #, c-format
 msgid "invalid attribute name %s"
-msgstr "nombre de atributo %s invalido"
+msgstr "nombre de atributo %s inválido"
 
 #: pathspec.c:258
 msgid "global 'glob' and 'noglob' pathspec settings are incompatible"
@@ -3782,7 +3782,7 @@ msgstr "no es posible abrir el directorio de git: %s"
 #: read-cache.c:3080
 #, c-format
 msgid "unable to unlink: %s"
-msgstr "no es posible remover el vinculo: %s"
+msgstr "no es posible eliminar el vinculo: %s"
 
 #: rebase-interactive.c:10
 msgid ""
@@ -3815,7 +3815,7 @@ msgstr ""
 "este commit\n"
 "x, exec <commit> = ejecuta comando ( el resto de la línea) usando un shell\n"
 "b, break = parar aquí (continuar rebase luego con 'git rebase --continue')\n"
-"d, drop <commit> = remover commit\n"
+"d, drop <commit> = eliminar commit\n"
 "l, label <label> = poner label al HEAD actual con un nombre\n"
 "t, reset <label> = reiniciar HEAD a el label\n"
 "m, merge [-C <commit> | -c <commit>] <label> [# <oneline>]\n"
@@ -3976,7 +3976,7 @@ msgstr "no se puede procesar '%s' y '%s' al mismo tiempo"
 #: refs/files-backend.c:1228
 #, c-format
 msgid "could not remove reference %s"
-msgstr "no se pudo remover la referencia %s"
+msgstr "no se pudo eliminar la referencia %s"
 
 #: refs/files-backend.c:1242 refs/packed-backend.c:1532
 #: refs/packed-backend.c:1542
@@ -4188,7 +4188,7 @@ msgstr "(no hay rama, rebasando con HEAD desacoplado %s)"
 #: ref-filter.c:1430
 #, c-format
 msgid "(no branch, bisect started on %s)"
-msgstr "(no hay rama, comenzando bisecado en %s)"
+msgstr "(no hay rama, comenzando biseccón en  %s)"
 
 #. TRANSLATORS: make sure this matches "HEAD
 #. detached at " in wt-status.c
@@ -4305,7 +4305,7 @@ msgstr "no se puede resolver push 'simple' para un destino único"
 #: remote.c:1935
 #, c-format
 msgid "Your branch is based on '%s', but the upstream is gone.\n"
-msgstr "Tu rama esta basada en '%s', pero upstream ha desaparecido.\n"
+msgstr "Tu rama está basada en '%s', pero upstream ha desaparecido.\n"
 
 #: remote.c:1939
 msgid "  (use \"git branch --unset-upstream\" to fixup)\n"
@@ -4900,7 +4900,7 @@ msgstr "El mensaje del commit #%d será saltado:"
 
 #: sequencer.c:1732
 msgid "your index file is unmerged."
-msgstr "tu archivo índice no esta fusionado."
+msgstr "tu archivo índice no está fusionado."
 
 #: sequencer.c:1739
 msgid "cannot fixup root commit"
@@ -4909,7 +4909,7 @@ msgstr "no se puede arreglar el commit raíz"
 #: sequencer.c:1758
 #, c-format
 msgid "commit %s is a merge but no -m option was given."
-msgstr "el commit %s es una fusión pero no se entrego la opción -m."
+msgstr "el commit %s es una fusión pero no se proporcionó la opción -m."
 
 #: sequencer.c:1766
 #, c-format
@@ -5002,7 +5002,7 @@ msgstr "no se puede realizar un revert durante un cherry-pick."
 #: sequencer.c:2299
 #, c-format
 msgid "invalid value for %s: %s"
-msgstr "valor invalido para %s: %s"
+msgstr "valor inválido para %s: %s"
 
 #: sequencer.c:2380
 msgid "unusable squash-onto"
@@ -5019,7 +5019,7 @@ msgstr "conjunto de commits vacío entregado"
 
 #: sequencer.c:2487
 msgid "a cherry-pick or revert is already in progress"
-msgstr "un cherry-pick o revert ya esta en progreso"
+msgstr "un cherry-pick o revert ya está en progreso"
 
 #: sequencer.c:2488
 msgid "try \"git cherry-pick (--continue | --quit | --abort)\""
@@ -5063,7 +5063,7 @@ msgstr "final de archivo inesperado"
 #: sequencer.c:2594
 #, c-format
 msgid "stored pre-cherry-pick HEAD file '%s' is corrupt"
-msgstr "archivo HEAD de pre-cherry-pick guardado '%s' esta corrupto"
+msgstr "archivo HEAD de pre-cherry-pick guardado '%s' está corrupto"
 
 #: sequencer.c:2605
 msgid "You seem to have moved HEAD. Not rewinding, check your HEAD!"
@@ -5117,8 +5117,8 @@ msgstr "No se pudo fusionar %.*s"
 msgid "could not copy '%s' to '%s'"
 msgstr "no se pudo copiar '%s' a '%s'"
 
-#: sequencer.c:2824 sequencer.c:3242 builtin/rebase.c:580 builtin/rebase.c:1000
-#: builtin/rebase.c:1351 builtin/rebase.c:1405
+#: sequencer.c:2824 sequencer.c:3242 builtin/rebase.c:580 builtin/rebase.c:1019
+#: builtin/rebase.c:1372 builtin/rebase.c:1426
 msgid "could not read index"
 msgstr "no se pudo leer índice"
 
@@ -5318,7 +5318,7 @@ msgstr "no se puede arreglar un commit no existente"
 #: sequencer.c:3783
 #, c-format
 msgid "invalid file: '%s'"
-msgstr "archivo invalido: '%s'"
+msgstr "archivo inválido: '%s'"
 
 #: sequencer.c:3785
 #, c-format
@@ -5343,7 +5343,7 @@ msgstr "no se pudo escribir el archivo: '%s'"
 
 #: sequencer.c:3877
 msgid "could not remove CHERRY_PICK_HEAD"
-msgstr "no se puede remover CHERRY_PICK_HEAD"
+msgstr "no se puede eliminar CHERRY_PICK_HEAD"
 
 #: sequencer.c:3884
 msgid "could not commit staged changes."
@@ -5357,7 +5357,7 @@ msgstr "%s: no se puede aplicar cherry-pick a un %s"
 #: sequencer.c:3986
 #, c-format
 msgid "%s: bad revision"
-msgstr "%s: mala revision"
+msgstr "%s: revisión errónea"
 
 #: sequencer.c:4021
 msgid "can't revert as initial commit"
@@ -5402,7 +5402,7 @@ msgid ""
 "The possible behaviours are: ignore, warn, error.\n"
 "\n"
 msgstr ""
-"Para evitar este mensaje, use \"drop\" para remover de forma explícita un "
+"Para evitar este mensaje, use \"drop\" para eliminar de forma explícita un "
 "commit.\n"
 "\n"
 "Use 'git config rebase.missingCommitsCheck' para cambiar el nivel de "
@@ -5909,7 +5909,7 @@ msgstr "No se pudo encontrar la sección en .gitmodules donde path=%s"
 #: submodule.c:156
 #, c-format
 msgid "Could not remove .gitmodules entry for %s"
-msgstr "No se pudo remover la entrada %s de .gitmodules"
+msgstr "No se pudo eliminar la entrada %s de .gitmodules"
 
 #: submodule.c:167
 msgid "staging updated .gitmodules failed"
@@ -5995,7 +5995,7 @@ msgstr "no se pudo comenzar ls-files en .."
 #: submodule.c:1933
 #, c-format
 msgid "ls-tree returned unexpected return code %d"
-msgstr "ls-tree retornó un código %d inesperado"
+msgstr "ls-tree devolvió un código %d inesperado"
 
 #: submodule-config.c:232
 #, c-format
@@ -6426,7 +6426,7 @@ msgid ""
 "%%sPlease move or remove them before you switch branches."
 msgstr ""
 "Los siguientes archivos sin seguimiento en el árbol de trabajo serán "
-"removidos al actualizar el árbol de trabajo:\n"
+"eliminados al actualizar el árbol de trabajo:\n"
 "%%sPor favor, muévelos o elimínalos antes de intercambiar ramas."
 
 #: unpack-trees.c:135
@@ -6435,8 +6435,8 @@ msgid ""
 "The following untracked working tree files would be removed by checkout:\n"
 "%%s"
 msgstr ""
-"Los siguientes archivos sin seguimiento del árbol de trabajo serán removidos "
-"al actualizar el árbol de trabajo:\n"
+"Los siguientes archivos sin seguimiento del árbol de trabajo serán "
+"eliminadosal actualizar el árbol de trabajo:\n"
 "%%s"
 
 #: unpack-trees.c:138
@@ -6446,7 +6446,7 @@ msgid ""
 "%%sPlease move or remove them before you merge."
 msgstr ""
 "Los siguientes archivos sin seguimiento en el árbol de trabajo serán "
-"removidos al fusionar:\n"
+"eliminados al fusionar:\n"
 "%%sPor favor, muévelos o elimínalos antes de fusionar."
 
 #: unpack-trees.c:140
@@ -6455,8 +6455,8 @@ msgid ""
 "The following untracked working tree files would be removed by merge:\n"
 "%%s"
 msgstr ""
-"Los siguientes archivos sin seguimiento de árbol de trabajo serán removidos "
-"al fusionar:\n"
+"Los siguientes archivos sin seguimiento de árbol de trabajo serán "
+"eliminadosal fusionar:\n"
 "%%s"
 
 #: unpack-trees.c:143
@@ -6466,7 +6466,7 @@ msgid ""
 "%%sPlease move or remove them before you %s."
 msgstr ""
 "Los siguientes archivos sin seguimiento en el árbol de trabajo serán "
-"removidos al %s:\n"
+"eliminados al %s:\n"
 "%%sPor favor, muévelos o elimínalos antes de %s."
 
 #: unpack-trees.c:145
@@ -6476,7 +6476,7 @@ msgid ""
 "%%s"
 msgstr ""
 "Los siguientes archivos sin seguimiento en el árbol de trabajo serán "
-"removidos al ejecutar %s:\n"
+"eliminados al ejecutar %s:\n"
 "%%s"
 
 #: unpack-trees.c:151
@@ -6537,8 +6537,8 @@ msgid ""
 "The following untracked working tree files would be overwritten by %s:\n"
 "%%s"
 msgstr ""
-"Los siguientes archivos no rastreados en el árbol de trabajo serán removidos "
-"por %s:\n"
+"Los siguientes archivos no rastreados en el árbol de trabajo serán "
+"eliminadospor %s:\n"
 "%%s"
 
 #: unpack-trees.c:171
@@ -6574,7 +6574,7 @@ msgid ""
 "update:\n"
 "%s"
 msgstr ""
-"Los siguientes archivos del árbol de trabajo serán removidos por la "
+"Los siguientes archivos del árbol de trabajo serán eliminados por la "
 "actualización sparse checkout:\n"
 "%s"
 
@@ -6608,12 +6608,12 @@ msgstr ""
 
 #: urlmatch.c:163
 msgid "invalid URL scheme name or missing '://' suffix"
-msgstr "nombre de URL invalido o sufijo '://' faltante"
+msgstr "nombre de URL inválido o sufijo '://' faltante"
 
 #: urlmatch.c:187 urlmatch.c:346 urlmatch.c:405
 #, c-format
 msgid "invalid %XX escape sequence"
-msgstr "secuencia de escape %XX invalida"
+msgstr "secuencia de escape %XX inválida"
 
 #: urlmatch.c:215
 msgid "missing host and scheme is not 'file:'"
@@ -6629,11 +6629,11 @@ msgstr "carácter inválido en el nombre del host"
 
 #: urlmatch.c:292 urlmatch.c:303
 msgid "invalid port number"
-msgstr "numero de puerto invalido"
+msgstr "numero de puerto inválido"
 
 #: urlmatch.c:371
 msgid "invalid '..' path segment"
-msgstr "segmento de ruta '..' invalido"
+msgstr "segmento de ruta '..' inválido"
 
 #: worktree.c:249 builtin/am.c:2100
 #, c-format
@@ -6840,7 +6840,7 @@ msgid ""
 "Everything below it will be ignored."
 msgstr ""
 "No modifique o borre la línea de encima.\n"
-"Todo lo que este por abajo será removido."
+"Todo lo que este por abajo será eliminado."
 
 #: wt-status.c:1097
 msgid "You have unmerged paths."
@@ -6868,7 +6868,7 @@ msgstr "Estás en medio de una sesión am."
 
 #: wt-status.c:1121
 msgid "The current patch is empty."
-msgstr "El parche actual esta vacío."
+msgstr "El parche actual está vacío."
 
 #: wt-status.c:1125
 msgid "  (fix conflicts and then run \"git am --continue\")"
@@ -6884,7 +6884,7 @@ msgstr "  (usa \"git am --abort\" para restaurar la rama original)"
 
 #: wt-status.c:1260
 msgid "git-rebase-todo is missing."
-msgstr "git-rebase-todo no esta presente."
+msgstr "git-rebase-todo no está presente."
 
 #: wt-status.c:1262
 msgid "No commands done."
@@ -7143,7 +7143,7 @@ msgstr ""
 #: wt-status.c:1709
 #, c-format
 msgid "nothing to commit, working tree clean\n"
-msgstr "nada para hacer commit, el árbol de trabajo esta limpio\n"
+msgstr "nada para hacer commit, el árbol de trabajo está limpio\n"
 
 #: wt-status.c:1822
 msgid "No commits yet on "
@@ -7196,7 +7196,7 @@ msgstr "falló la actualización de carpetas"
 #: builtin/add.c:98
 #, c-format
 msgid "remove '%s'\n"
-msgstr "remover '%s'\n"
+msgstr "eliminar '%s'\n"
 
 #: builtin/add.c:173
 msgid "Unstaged changes after refreshing the index:"
@@ -7324,7 +7324,7 @@ msgstr ""
 "\n"
 "\tgit submodule add <url> %s\n"
 "\n"
-"Si se agrego esta ruta por error, puede removerla desde el índice \n"
+"Si se agrego esta ruta por error, puede eliminar desde el índice \n"
 "usando:\n"
 "\n"
 "\tgit rm --cached %s\n"
@@ -7402,11 +7402,11 @@ msgstr "Solo un parche StGIT puede ser aplicado de una vez"
 
 #: builtin/am.c:852
 msgid "invalid timestamp"
-msgstr "timestamp invalido"
+msgstr "timestamp inválido"
 
 #: builtin/am.c:857 builtin/am.c:869
 msgid "invalid Date line"
-msgstr "línea Date invalida"
+msgstr "línea Date inválida"
 
 #: builtin/am.c:864
 msgid "invalid timezone offset"
@@ -7454,7 +7454,7 @@ msgstr ""
 
 #: builtin/am.c:1224
 msgid "Patch is empty."
-msgstr "El parche esta vacío."
+msgstr "El parche está vacío."
 
 #: builtin/am.c:1290
 #, c-format
@@ -7584,7 +7584,7 @@ msgstr ""
 #: builtin/am.c:2129
 #, c-format
 msgid "Invalid value for --patch-format: %s"
-msgstr "Valor invalido para --patch-format: %s"
+msgstr "Valor inválido para --patch-format: %s"
 
 #: builtin/am.c:2165
 msgid "git am [<options>] [(<mbox> | <Maildir>)...]"
@@ -7652,7 +7652,7 @@ msgstr "pasarlo a través de git-apply"
 
 #: builtin/am.c:2215 builtin/commit.c:1340 builtin/fmt-merge-msg.c:671
 #: builtin/fmt-merge-msg.c:674 builtin/grep.c:868 builtin/merge.c:239
-#: builtin/pull.c:151 builtin/pull.c:209 builtin/rebase.c:837
+#: builtin/pull.c:151 builtin/pull.c:209 builtin/rebase.c:854
 #: builtin/repack.c:317 builtin/repack.c:321 builtin/repack.c:323
 #: builtin/show-branch.c:651 builtin/show-ref.c:171 builtin/tag.c:386
 #: parse-options.h:144 parse-options.h:146 parse-options.h:268
@@ -7660,7 +7660,7 @@ msgid "n"
 msgstr "n"
 
 #: builtin/am.c:2221 builtin/branch.c:637 builtin/for-each-ref.c:38
-#: builtin/replace.c:543 builtin/tag.c:422 builtin/verify-tag.c:39
+#: builtin/replace.c:544 builtin/tag.c:422 builtin/verify-tag.c:39
 msgid "format"
 msgstr "formato"
 
@@ -7705,12 +7705,12 @@ msgid "use current timestamp for author date"
 msgstr "usar el timestamp actual para la fecha del autor"
 
 #: builtin/am.c:2253 builtin/commit.c:1483 builtin/merge.c:273
-#: builtin/pull.c:184 builtin/rebase.c:881 builtin/rebase--interactive.c:183
+#: builtin/pull.c:184 builtin/rebase.c:898 builtin/rebase--interactive.c:183
 #: builtin/revert.c:113 builtin/tag.c:402
 msgid "key-id"
 msgstr "key-id"
 
-#: builtin/am.c:2254 builtin/rebase.c:882 builtin/rebase--interactive.c:184
+#: builtin/am.c:2254 builtin/rebase.c:899 builtin/rebase--interactive.c:184
 msgid "GPG-sign commits"
 msgstr "Commits con firma GPG"
 
@@ -7865,7 +7865,7 @@ msgstr "tiene que terminar con un color"
 #: builtin/blame.c:700
 #, c-format
 msgid "invalid color '%s' in color.blame.repeatedLines"
-msgstr "color invalido '%s' en color.blame.repeatedLines"
+msgstr "color inválido '%s' en color.blame.repeatedLines"
 
 #: builtin/blame.c:718
 msgid "invalid value for blame.coloring"
@@ -8138,7 +8138,7 @@ msgstr "no se puede renombrar la rama actual mientras no se está en ninguna."
 #: builtin/branch.c:492
 #, c-format
 msgid "Invalid branch name: '%s'"
-msgstr "Nombre de rama invalido: '%s'"
+msgstr "Nombre de rama inválido: '%s'"
 
 #: builtin/branch.c:519
 msgid "Branch rename failed"
@@ -8248,7 +8248,7 @@ msgstr "borrar ramas totalmente fusionadas"
 
 #: builtin/branch.c:617
 msgid "delete branch (even if not merged)"
-msgstr "borrar rama (incluso si no esta fusionada)"
+msgstr "borrar rama (incluso si no está fusionada)"
 
 #: builtin/branch.c:618
 msgid "move/rename a branch and its reflog"
@@ -8816,7 +8816,7 @@ msgstr "solo una referencia esperada, %d entregadas."
 #: builtin/checkout.c:1107 builtin/worktree.c:289 builtin/worktree.c:444
 #, c-format
 msgid "invalid reference: %s"
-msgstr "referencia invalida: %s"
+msgstr "referencia inválida: %s"
 
 #: builtin/checkout.c:1136
 #, c-format
@@ -8937,7 +8937,7 @@ msgstr "falta nombre de rama; prueba -b"
 
 #: builtin/checkout.c:1357
 msgid "invalid path specification"
-msgstr "especificación de ruta invalida"
+msgstr "especificación de ruta inválida"
 
 #: builtin/checkout.c:1364
 #, c-format
@@ -9112,8 +9112,8 @@ msgstr "Ahora que"
 #: builtin/clean.c:828
 msgid "Would remove the following item:"
 msgid_plural "Would remove the following items:"
-msgstr[0] "Se removerá el siguiente objeto:"
-msgstr[1] "Se removerán los siguientes objetos:"
+msgstr[0] "Se eliminará el siguiente objeto:"
+msgstr[1] "Se eliminarán los siguientes objetos:"
 
 #: builtin/clean.c:844
 msgid "No more files to clean, exiting."
@@ -9230,7 +9230,7 @@ msgstr "repositorio de referencia"
 #: builtin/clone.c:116 builtin/submodule--helper.c:1377
 #: builtin/submodule--helper.c:1858
 msgid "use --reference only while cloning"
-msgstr "usa--reference  solamente si estas clonado"
+msgstr "usa--reference  solamente si estás clonado"
 
 #: builtin/clone.c:117 builtin/column.c:27 builtin/merge-file.c:46
 #: builtin/pack-objects.c:3301 builtin/repack.c:329
@@ -9267,7 +9267,7 @@ msgid "create a shallow clone since a specific time"
 msgstr "crear un clon superficial desde el tiempo específico"
 
 #: builtin/clone.c:127 builtin/fetch.c:146 builtin/fetch.c:169
-#: builtin/rebase.c:814
+#: builtin/rebase.c:831
 msgid "revision"
 msgstr "revision"
 
@@ -9548,7 +9548,7 @@ msgid ""
 "remove the commit entirely with \"git reset HEAD^\".\n"
 msgstr ""
 "Has solicitado un amend en tu commit mas reciente, pero hacerlo lo \n"
-"vaciaría. Puedes repetir el comando con --alow-empty, o puedes remover \n"
+"vaciaría. Puedes repetir el comando con --alow-empty, o puedes eliminar\n"
 "el commit completamente con \"git reset HEAD^\".\n"
 
 #: builtin/commit.c:55
@@ -9559,7 +9559,7 @@ msgid ""
 "    git commit --allow-empty\n"
 "\n"
 msgstr ""
-"El cherry-pick anterior ahora esta vacío, posiblemente por un conflicto de "
+"El cherry-pick anterior ahora está vacío, posiblemente por un conflicto de "
 "resolución.\n"
 "Si desea realizar un commit de todas maneras, use:\n"
 "\n"
@@ -9689,7 +9689,7 @@ msgid ""
 "and try again.\n"
 msgstr ""
 "\n"
-"Parece que estas haciendo un commit con una fusión dentro.\n"
+"Parece que estás haciendo un commit con una fusión dentro.\n"
 "Si esto no es correcto, por favor remueve el archivo\n"
 "\t%s\n"
 "y vuelve a intentar.\n"
@@ -9728,7 +9728,7 @@ msgid ""
 msgstr ""
 "Por favor ingrese el mensaje del commit para sus cambios. Las líneas que "
 "comiencen\n"
-"con '%c' serán guardadas; puede removerlas usted mismo si desea.\n"
+"con '%c' serán guardadas; puede eliminarlas usted mismo si desea.\n"
 "Un mensaje vacío aborta el commit.\n"
 
 #: builtin/commit.c:854
@@ -9824,7 +9824,7 @@ msgstr "No hay rutas con --include/--only no tiene sentido."
 #: builtin/commit.c:1180 builtin/tag.c:546
 #, c-format
 msgid "Invalid cleanup mode %s"
-msgstr "Modo cleanup invalido %s"
+msgstr "Modo cleanup inválido %s"
 
 #: builtin/commit.c:1185
 msgid "Paths with -a does not make sense."
@@ -9864,7 +9864,7 @@ msgid "terminate entries with NUL"
 msgstr "terminar entradas con NUL"
 
 #: builtin/commit.c:1327 builtin/commit.c:1331 builtin/commit.c:1509
-#: builtin/fast-export.c:1007 builtin/fast-export.c:1010 builtin/rebase.c:893
+#: builtin/fast-export.c:1007 builtin/fast-export.c:1010 builtin/rebase.c:910
 #: builtin/tag.c:400
 msgid "mode"
 msgstr "modo"
@@ -11011,7 +11011,7 @@ msgid ""
 " 'git remote prune %s' to remove any old, conflicting branches"
 msgstr ""
 "algunos refs locales no pudieron ser actualizados; intente ejecutar\n"
-" 'git remote prune %s' para remover cualquier rama vieja o conflictiva"
+" 'git remote prune %s' para eliminar cualquier rama vieja o conflictiva"
 
 #: builtin/fetch.c:1055
 #, c-format
@@ -11283,7 +11283,7 @@ msgid ""
 msgstr ""
 "El último gc reportó lo siguiente. Por favor corrige la causa\n"
 "y remueva %s.\n"
-"Limpieza automática no se realizará hasta que el archivo sea removido.\n"
+"Limpieza automática no se realizará hasta que el archivo sea eliminado.\n"
 "\n"
 "%s"
 
@@ -11347,7 +11347,7 @@ msgid ""
 "There are too many unreachable loose objects; run 'git prune' to remove them."
 msgstr ""
 "Hay muchos objetos sueltos inalcanzables; ejecute 'git prune' para "
-"removerlos."
+"eliminarlos."
 
 #: builtin/grep.c:28
 msgid "git grep [<options>] [-e] <pattern> [<rev>...] [[--] <path>...]"
@@ -11847,7 +11847,7 @@ msgstr "paquete tiene un mal objeto en el offset %<PRIuMAX>: %s"
 #: builtin/index-pack.c:457
 #, c-format
 msgid "inflate returned %d"
-msgstr "inflate retornó %d"
+msgstr "inflate devolvió %d"
 
 #: builtin/index-pack.c:506
 msgid "offset value overflow for delta base object"
@@ -12778,7 +12778,7 @@ msgstr ""
 msgid "do not print remote URL"
 msgstr "no mostrar el URL remoto"
 
-#: builtin/ls-remote.c:60 builtin/ls-remote.c:62 builtin/rebase.c:886
+#: builtin/ls-remote.c:60 builtin/ls-remote.c:62 builtin/rebase.c:903
 msgid "exec"
 msgstr "ejecutar"
 
@@ -12926,7 +12926,7 @@ msgid "verify that the named commit has a valid GPG signature"
 msgstr "verificar que el commit nombrado tiene una firma GPG válida"
 
 #: builtin/merge.c:255 builtin/notes.c:784 builtin/pull.c:177
-#: builtin/rebase.c:899 builtin/rebase--interactive.c:186 builtin/revert.c:110
+#: builtin/rebase.c:916 builtin/rebase--interactive.c:186 builtin/revert.c:110
 msgid "strategy"
 msgstr "estrategia"
 
@@ -13082,7 +13082,7 @@ msgstr "No hay rama de rastreo remoto para %s de %s"
 #: builtin/merge.c:1010
 #, c-format
 msgid "Bad value '%s' in environment '%s'"
-msgstr "Mal valor '%s' en el entorno '%s'"
+msgstr "Valor erróneo '%s' en el entorno '%s'"
 
 #: builtin/merge.c:1113
 #, c-format
@@ -13884,7 +13884,7 @@ msgstr "El objeto %s no tiene notas\n"
 
 #: builtin/notes.c:909
 msgid "attempt to remove non-existent note is not an error"
-msgstr "intentar remover una nota no existente no es un error"
+msgstr "intentar eliminar una nota no existente no es un error"
 
 #: builtin/notes.c:912
 msgid "read object names from the standard input"
@@ -13892,7 +13892,7 @@ msgstr "leer nombres de objetos de standard input"
 
 #: builtin/notes.c:950 builtin/prune.c:108 builtin/worktree.c:164
 msgid "do not remove, show only"
-msgstr "no remover, solo mostrar"
+msgstr "no eliminar, solo mostrar"
 
 #: builtin/notes.c:951
 msgid "report pruned notes"
@@ -14565,18 +14565,18 @@ msgid ""
 "\n"
 "To push to the branch of the same name on the remote, use\n"
 "\n"
-"    git push %s %s\n"
+"    git push %s HEAD\n"
 "%s"
 msgstr ""
 "La rama upstream de tu rama actual no concuerda\n"
 "con el nombre de tu rama actual. Para hacer un push a la rama upstream\n"
 "en el remoto, ejecuta\n"
 "\n"
-"\tgit push %s HEAD:%s\n"
+"    git push %s HEAD:%s\n"
 "\n"
 "Para hacer un push a la rama del mismo nombre en el remoto, ejecuta\n"
 "\n"
-"\tgit push %s %s\n"
+"    git push %s HEAD\n"
 "%s"
 
 #: builtin/push.c:183
@@ -14637,7 +14637,7 @@ msgid ""
 "'git pull ...') before pushing again.\n"
 "See the 'Note about fast-forwards' in 'git push --help' for details."
 msgstr ""
-"Actualizaciones fueron rechazadas porque la punta de tu rama actual esta\n"
+"Actualizaciones fueron rechazadas porque la punta de tu rama actual está\n"
 "detrás de su contraparte remota. Integra los cambios remotos (es decir\n"
 "'git pull ...') antes de hacer push de nuevo.\n"
 "Mira 'Note about fast-forwards' en 'git push --help' para mas detalles."
@@ -15029,149 +15029,149 @@ msgstr ""
 "    git branch --set-upstream-to=%s/<rama> %s\n"
 "\n"
 
-#: builtin/rebase.c:815
+#: builtin/rebase.c:832
 msgid "rebase onto given branch instead of upstream"
 msgstr "haciendo rebase hacia rama dada en lugar de upstream"
 
-#: builtin/rebase.c:817
+#: builtin/rebase.c:834
 msgid "allow pre-rebase hook to run"
 msgstr "permitir ejecutar hook pre-rebase"
 
-#: builtin/rebase.c:819
+#: builtin/rebase.c:836
 msgid "be quiet. implies --no-stat"
 msgstr "ser silencioso implica --no-stat"
 
-#: builtin/rebase.c:822
+#: builtin/rebase.c:839
 msgid "display a diffstat of what changed upstream"
 msgstr "mostrar un diffstat de lo que cambió en upstream"
 
-#: builtin/rebase.c:825
+#: builtin/rebase.c:842
 msgid "do not show diffstat of what changed upstream"
 msgstr "no mostrar un diffstat de lo que cambió en upstream"
 
-#: builtin/rebase.c:828
+#: builtin/rebase.c:845
 msgid "add a Signed-off-by: line to each commit"
 msgstr "agregar una línea \"Firmado-por\" al mensaje de cada commit"
 
-#: builtin/rebase.c:830 builtin/rebase.c:834 builtin/rebase.c:836
+#: builtin/rebase.c:847 builtin/rebase.c:851 builtin/rebase.c:853
 msgid "passed to 'git am'"
 msgstr "pasado a 'git am'"
 
-#: builtin/rebase.c:838 builtin/rebase.c:840
+#: builtin/rebase.c:855 builtin/rebase.c:857
 msgid "passed to 'git apply'"
 msgstr "pasado a 'git-apply'"
 
-#: builtin/rebase.c:842 builtin/rebase.c:845
+#: builtin/rebase.c:859 builtin/rebase.c:862
 msgid "cherry-pick all commits, even if unchanged"
 msgstr "cherry-pick todos los commits, incluso si no han cambiado"
 
-#: builtin/rebase.c:847
+#: builtin/rebase.c:864
 msgid "continue"
 msgstr "continuar"
 
-#: builtin/rebase.c:850
+#: builtin/rebase.c:867
 msgid "skip current patch and continue"
 msgstr "saltar el parche y continuar"
 
-#: builtin/rebase.c:852
+#: builtin/rebase.c:869
 msgid "abort and check out the original branch"
 msgstr "aborta y revisa la rama original"
 
-#: builtin/rebase.c:855
+#: builtin/rebase.c:872
 msgid "abort but keep HEAD where it is"
 msgstr "aborta pero mantiene HEAD donde está"
 
-#: builtin/rebase.c:856
+#: builtin/rebase.c:873
 msgid "edit the todo list during an interactive rebase"
 msgstr "editar la lista de pendientes durante el rebase interactivo"
 
-#: builtin/rebase.c:859
+#: builtin/rebase.c:876
 msgid "show the patch file being applied or merged"
 msgstr "muestra el archivo parche siendo aplicado o fusionado"
 
-#: builtin/rebase.c:862
+#: builtin/rebase.c:879
 msgid "use merging strategies to rebase"
 msgstr "usar estrategias de fusión para el rebase"
 
-#: builtin/rebase.c:866
+#: builtin/rebase.c:883
 msgid "let the user edit the list of commits to rebase"
 msgstr "permitir al usuario editar la lista de commits para rebasar"
 
-#: builtin/rebase.c:870
+#: builtin/rebase.c:887
 msgid "try to recreate merges instead of ignoring them"
 msgstr "intentar recrear merges en lugar de ignorarlos"
 
-#: builtin/rebase.c:874
-msgid "allow rerere to update index  with resolved conflict"
-msgstr "permitir rerere actualizar index  con conflicto resuelto"
+#: builtin/rebase.c:891
+msgid "allow rerere to update index with resolved conflict"
+msgstr "permitir rerere actualizar index con conflictos resueltos"
 
-#: builtin/rebase.c:877
+#: builtin/rebase.c:894
 msgid "preserve empty commits during rebase"
 msgstr "preservar commits vacíos durante el rebase"
 
-#: builtin/rebase.c:879
+#: builtin/rebase.c:896
 msgid "move commits that begin with squash!/fixup! under -i"
 msgstr "mover commits que comienzan con squash!/fixup! bajo -i"
 
-#: builtin/rebase.c:885
+#: builtin/rebase.c:902
 msgid "automatically stash/stash pop before and after"
 msgstr "ejecutar automáticamente stash/stash pop antes y después"
 
-#: builtin/rebase.c:887
+#: builtin/rebase.c:904
 msgid "add exec lines after each commit of the editable list"
 msgstr "agregar líneas exec tras cada acommit de la lista editable"
 
-#: builtin/rebase.c:891
+#: builtin/rebase.c:908
 msgid "allow rebasing commits with empty messages"
 msgstr "permitir rebase commits con mensajes vacíos"
 
-#: builtin/rebase.c:894
+#: builtin/rebase.c:911
 msgid "try to rebase merges instead of skipping them"
 msgstr "intentar fusiones por rebase en lugar de saltarlas"
 
-#: builtin/rebase.c:897
+#: builtin/rebase.c:914
 msgid "use 'merge-base --fork-point' to refine upstream"
 msgstr "use 'merge-base --fork-point' para refinar upstream"
 
-#: builtin/rebase.c:899
+#: builtin/rebase.c:916
 msgid "use the given merge strategy"
 msgstr "usar la estrategia de merge dada"
 
-#: builtin/rebase.c:901 builtin/revert.c:111
+#: builtin/rebase.c:918 builtin/revert.c:111
 msgid "option"
 msgstr "opción"
 
-#: builtin/rebase.c:902
+#: builtin/rebase.c:919
 msgid "pass the argument through to the merge strategy"
 msgstr "pasar el argumento para la estrategia de fusión"
 
-#: builtin/rebase.c:905
+#: builtin/rebase.c:922
 msgid "rebase all reachable commits up to the root(s)"
 msgstr "hacer rebase a todos los commits alcanzables hasta la raíz(raíces)"
 
-#: builtin/rebase.c:921
+#: builtin/rebase.c:938
 #, c-format
 msgid "could not exec %s"
 msgstr "no se pudo ejecutar %s"
 
-#: builtin/rebase.c:939 git-legacy-rebase.sh:213
+#: builtin/rebase.c:956 git-legacy-rebase.sh:213
 msgid "It looks like 'git am' is in progress. Cannot rebase."
 msgstr "Parece que 'git am' está en progreso. No se puede rebasar."
 
-#: builtin/rebase.c:980 git-legacy-rebase.sh:395
+#: builtin/rebase.c:997 git-legacy-rebase.sh:395
 msgid "No rebase in progress?"
 msgstr "No hay rebase en progreso?"
 
-#: builtin/rebase.c:983 git-legacy-rebase.sh:406
+#: builtin/rebase.c:1001 git-legacy-rebase.sh:406
 msgid "The --edit-todo action can only be used during interactive rebase."
 msgstr ""
 "La acción --edit-todo sólo puede ser usada al rebasar interactivamente."
 
-#: builtin/rebase.c:996 git-legacy-rebase.sh:413
+#: builtin/rebase.c:1015 git-legacy-rebase.sh:413
 msgid "Cannot read HEAD"
 msgstr "No se puede leer el HEAD"
 
-#: builtin/rebase.c:1009 git-legacy-rebase.sh:416
+#: builtin/rebase.c:1028 git-legacy-rebase.sh:416
 msgid ""
 "You must edit all merge conflicts and then\n"
 "mark them as resolved using git add"
@@ -15179,21 +15179,21 @@ msgstr ""
 "Tienes que editar todos los conflictos de fusión y luego\n"
 "marcarlos como resueltos usando git add"
 
-#: builtin/rebase.c:1027
+#: builtin/rebase.c:1047
 msgid "could not discard worktree changes"
 msgstr "no se pudo descartar los cambios del árbol de trabajo"
 
-#: builtin/rebase.c:1045
+#: builtin/rebase.c:1066
 #, c-format
 msgid "could not move back to %s"
 msgstr "No se puede regresar a %s"
 
-#: builtin/rebase.c:1056 builtin/rm.c:368
+#: builtin/rebase.c:1077 builtin/rm.c:368
 #, c-format
 msgid "could not remove '%s'"
-msgstr "no se pudo remover '%s'"
+msgstr "no se pudo eliminar'%s'"
 
-#: builtin/rebase.c:1082
+#: builtin/rebase.c:1103
 #, c-format
 msgid ""
 "It seems that there is already a %s directory, and\n"
@@ -15214,20 +15214,20 @@ msgstr ""
 "y ejecúteme nuevamente. Me estoy deteniendo en caso de que tenga\n"
 "algo de valor ahí.\n"
 
-#: builtin/rebase.c:1103
+#: builtin/rebase.c:1124
 msgid "switch `C' expects a numerical value"
 msgstr "switch `C' espera un valor numérico"
 
-#: builtin/rebase.c:1140
+#: builtin/rebase.c:1161
 #, c-format
 msgid "Unknown mode: %s"
 msgstr "Modo desconocido: %s"
 
-#: builtin/rebase.c:1162
+#: builtin/rebase.c:1183
 msgid "--strategy requires --merge or --interactive"
 msgstr "--strategy requiere --merge o --interactive"
 
-#: builtin/rebase.c:1205
+#: builtin/rebase.c:1226
 #, c-format
 msgid ""
 "error: cannot combine interactive options (--interactive, --exec, --rebase-"
@@ -15238,7 +15238,7 @@ msgstr ""
 "rebase-merges, --preserve-merges, --keep-empty, --root + --onto) con "
 "opciones (%s)"
 
-#: builtin/rebase.c:1210
+#: builtin/rebase.c:1231
 #, c-format
 msgid ""
 "error: cannot combine merge options (--merge, --strategy, --strategy-option) "
@@ -15247,138 +15247,143 @@ msgstr ""
 "error: no se puede combinar opciones de merge (--merge, --strategy, --"
 "strategy-option) con opciones de am (%s)"
 
-#: builtin/rebase.c:1230 git-legacy-rebase.sh:536
+#: builtin/rebase.c:1251 git-legacy-rebase.sh:536
 msgid "error: cannot combine '--preserve-merges' with '--rebase-merges'"
 msgstr "error: no se puede combinar '--preserve-merges' con '--rebase-merges'"
 
-#: builtin/rebase.c:1235 git-legacy-rebase.sh:542
+#: builtin/rebase.c:1256 git-legacy-rebase.sh:542
 msgid "error: cannot combine '--rebase-merges' with '--strategy-option'"
 msgstr "error: no se puede combinar '--rebase-merges' con '--strategy-option'"
 
-#: builtin/rebase.c:1238 git-legacy-rebase.sh:544
+#: builtin/rebase.c:1259 git-legacy-rebase.sh:544
 msgid "error: cannot combine '--rebase-merges' with '--strategy'"
 msgstr "error: no se puede combinar '--rebase-merges' con '--strategy'"
 
-#: builtin/rebase.c:1262
+#: builtin/rebase.c:1283
 #, c-format
 msgid "invalid upstream '%s'"
 msgstr "upstream inválido '%s'"
 
-#: builtin/rebase.c:1268
+#: builtin/rebase.c:1289
 msgid "Could not create new root commit"
 msgstr "No se pudo crear commit raíz nuevo"
 
-#: builtin/rebase.c:1286
+#: builtin/rebase.c:1307
 #, c-format
 msgid "'%s': need exactly one merge base"
 msgstr "'%s': necesita exactamente una base de fusión"
 
-#: builtin/rebase.c:1293
+#: builtin/rebase.c:1314
 #, c-format
 msgid "Does not point to a valid commit '%s'"
 msgstr "No apunta a un commit válido '%s'"
 
-#: builtin/rebase.c:1318
+#: builtin/rebase.c:1339
 #, c-format
 msgid "fatal: no such branch/commit '%s'"
 msgstr "fatal: no existe la rama/commit: '%s'"
 
-#: builtin/rebase.c:1326 builtin/submodule--helper.c:37
+#: builtin/rebase.c:1347 builtin/submodule--helper.c:37
 #: builtin/submodule--helper.c:1930
 #, c-format
 msgid "No such ref: %s"
 msgstr "No existe ref: %s"
 
-#: builtin/rebase.c:1338
+#: builtin/rebase.c:1359
 msgid "Could not resolve HEAD to a revision"
 msgstr "no se pudo resolver HEAD a una revisión"
 
-#: builtin/rebase.c:1378 git-legacy-rebase.sh:665
+#: builtin/rebase.c:1399 git-legacy-rebase.sh:665
 msgid "Cannot autostash"
 msgstr "No se puede ejecutar autostash"
 
-#: builtin/rebase.c:1381
+#: builtin/rebase.c:1402
 #, c-format
 msgid "Unexpected stash response: '%s'"
 msgstr "Respuesta de stash inesperada: '%s'"
 
-#: builtin/rebase.c:1387
+#: builtin/rebase.c:1408
 #, c-format
 msgid "Could not create directory for '%s'"
 msgstr "No se pudo crear el directorio para '%s'"
 
-#: builtin/rebase.c:1390
+#: builtin/rebase.c:1411
 #, c-format
 msgid "Created autostash: %s\n"
 msgstr "Autostash creado: %s\n"
 
-#: builtin/rebase.c:1393
+#: builtin/rebase.c:1414
 msgid "could not reset --hard"
 msgstr "no se pudo reset --hard"
 
-#: builtin/rebase.c:1394 builtin/reset.c:113
+#: builtin/rebase.c:1415 builtin/reset.c:113
 #, c-format
 msgid "HEAD is now at %s"
 msgstr "HEAD está ahora en %s"
 
-#: builtin/rebase.c:1410 git-legacy-rebase.sh:674
+#: builtin/rebase.c:1431 git-legacy-rebase.sh:674
 msgid "Please commit or stash them."
 msgstr "Por favor, confírmalos o guárdalos."
 
-#: builtin/rebase.c:1437
+#: builtin/rebase.c:1458
 #, c-format
 msgid "could not parse '%s'"
 msgstr "no se puede analizar '%s'"
 
-#: builtin/rebase.c:1448
+#: builtin/rebase.c:1470
 #, c-format
 msgid "could not switch to %s"
 msgstr "no se pudo cambiar a %s"
 
-#: builtin/rebase.c:1459 git-legacy-rebase.sh:697
+#: builtin/rebase.c:1481 git-legacy-rebase.sh:697
 #, sh-format
 msgid "HEAD is up to date."
 msgstr "HEAD está actualizado."
 
-#: builtin/rebase.c:1461
+#: builtin/rebase.c:1483
 #, c-format
 msgid "Current branch %s is up to date.\n"
 msgstr "La rama actual %s está actualizada.\n"
 
-#: builtin/rebase.c:1469 git-legacy-rebase.sh:707
+#: builtin/rebase.c:1491 git-legacy-rebase.sh:707
 #, sh-format
 msgid "HEAD is up to date, rebase forced."
 msgstr "HEAD está actualizado, rebase forzado."
 
-#: builtin/rebase.c:1471
+#: builtin/rebase.c:1493
 #, c-format
 msgid "Current branch %s is up to date, rebase forced.\n"
 msgstr "Rama actual %s está actualizada, rebase forzado.\n"
 
-#: builtin/rebase.c:1479 git-legacy-rebase.sh:208
+#: builtin/rebase.c:1501 git-legacy-rebase.sh:208
 msgid "The pre-rebase hook refused to rebase."
 msgstr "El hook pre-rebase rechazó el rebase."
 
-#: builtin/rebase.c:1485
+#: builtin/rebase.c:1508
+#, c-format
+msgid "Changes to %s:\n"
+msgstr "Cambios a %s:\n"
+
+#: builtin/rebase.c:1511
 #, c-format
 msgid "Changes from %s to %s:\n"
 msgstr "Cambios desde %s a %s:\n"
 
-#: builtin/rebase.c:1508
+#: builtin/rebase.c:1536
 #, c-format
 msgid "First, rewinding head to replay your work on top of it...\n"
 msgstr ""
 "En primer lugar, rebobinando HEAD para después reproducir tus cambios encima "
 "de ésta...\n"
 
-#: builtin/rebase.c:1514
+#: builtin/rebase.c:1543
 msgid "Could not detach HEAD"
 msgstr "No se puede desacoplar HEAD"
 
-#: builtin/rebase.c:1523
+#: builtin/rebase.c:1552
 #, c-format
-msgid "Fast-forwarded %s to %s. \n"
-msgstr "Avance rápido %s a %s.\n"
+msgid "Fast-forwarded %s to %s.\n"
+msgstr "Avance rápido de %s a %s.\n"
 
 #: builtin/rebase--interactive.c:24
 msgid "no HEAD?"
@@ -15837,7 +15842,7 @@ msgstr " rastreada"
 
 #: builtin/remote.c:922
 msgid " stale (use 'git remote prune' to remove)"
-msgstr " viejo ( use 'git remote prune' para remover)"
+msgstr " viejo ( use 'git remote prune' para eliminar)"
 
 #: builtin/remote.c:924
 msgid " ???"
@@ -15846,7 +15851,7 @@ msgstr " ???"
 #: builtin/remote.c:965
 #, c-format
 msgid "invalid branch.%s.merge; cannot rebase onto > 1 branch"
-msgstr "invalido branch.%s.merge; no se puede rebasar en > 1 rama"
+msgstr "inválido branch.%s.merge; no se puede rebasar en > 1 rama"
 
 #: builtin/remote.c:974
 #, c-format
@@ -16145,7 +16150,7 @@ msgstr "lo mismo que -a, y pierde objetos inaccesibles"
 
 #: builtin/repack.c:299
 msgid "remove redundant packs, and run git-prune-packed"
-msgstr "remover paquetes redundantes, y ejecutar git-prune-packed"
+msgstr "eliminar paquetes redundantes, y ejecutar git-prune-packed"
 
 #: builtin/repack.c:301
 msgid "pass --no-reuse-delta to git-pack-objects"
@@ -16228,7 +16233,7 @@ msgstr "--keep-unreachable y -A son incompatibles"
 #: builtin/repack.c:527
 #, c-format
 msgid "failed to remove '%s'"
-msgstr "falló al remover '%s'"
+msgstr "falló al eliminar'%s'"
 
 #: builtin/replace.c:22
 msgid "git replace [-f] <object> <replacement>"
@@ -16327,7 +16332,7 @@ msgstr "mktree reportó un error"
 
 #: builtin/replace.c:285
 msgid "mktree did not return an object name"
-msgstr "mktree no retornó un nombre de objeto"
+msgstr "mktree no devolvió un nombre de objeto"
 
 #: builtin/replace.c:294
 #, c-format
@@ -16401,7 +16406,7 @@ msgstr "graft para '%s' innecesario"
 msgid "new commit is the same as the old one: '%s'"
 msgstr "nuevo commit es le mismo que el antiguo: '%s'"
 
-#: builtin/replace.c:514
+#: builtin/replace.c:515
 #, c-format
 msgid ""
 "could not convert the following graft(s):\n"
@@ -16410,71 +16415,71 @@ msgstr ""
 "no se pudo convertir el siguiente graft(s):\n"
 "%s"
 
-#: builtin/replace.c:535
+#: builtin/replace.c:536
 msgid "list replace refs"
 msgstr "listar replace refs"
 
-#: builtin/replace.c:536
+#: builtin/replace.c:537
 msgid "delete replace refs"
 msgstr "borrar replace refs"
 
-#: builtin/replace.c:537
+#: builtin/replace.c:538
 msgid "edit existing object"
 msgstr "editar objeto existente"
 
-#: builtin/replace.c:538
+#: builtin/replace.c:539
 msgid "change a commit's parents"
 msgstr "cambiar un padre de commit"
 
-#: builtin/replace.c:539
+#: builtin/replace.c:540
 msgid "convert existing graft file"
 msgstr "convertir archivo graft existente"
 
-#: builtin/replace.c:540
+#: builtin/replace.c:541
 msgid "replace the ref if it exists"
 msgstr "reemplazar el ref si este existe"
 
-#: builtin/replace.c:542
+#: builtin/replace.c:543
 msgid "do not pretty-print contents for --edit"
 msgstr "no se puede imprimir contenidos para --edit"
 
-#: builtin/replace.c:543
+#: builtin/replace.c:544
 msgid "use this format"
 msgstr "usar este formato"
 
-#: builtin/replace.c:556
+#: builtin/replace.c:557
 msgid "--format cannot be used when not listing"
 msgstr "--format no puede ser usado cuando no se hace listing"
 
-#: builtin/replace.c:564
+#: builtin/replace.c:565
 msgid "-f only makes sense when writing a replacement"
 msgstr "-f solo tiene sentido cuando se escribe un reemplazo"
 
-#: builtin/replace.c:568
+#: builtin/replace.c:569
 msgid "--raw only makes sense with --edit"
 msgstr "--raw solo tiene sentido con --edit"
 
-#: builtin/replace.c:574
+#: builtin/replace.c:575
 msgid "-d needs at least one argument"
 msgstr "-d necesita al menos un argumento"
 
-#: builtin/replace.c:580
+#: builtin/replace.c:581
 msgid "bad number of arguments"
 msgstr "mal número de argumentos"
 
-#: builtin/replace.c:586
+#: builtin/replace.c:587
 msgid "-e needs exactly one argument"
 msgstr "-e necesita exactamente un argumento"
 
-#: builtin/replace.c:592
+#: builtin/replace.c:593
 msgid "-g needs at least one argument"
 msgstr "-g necesita al menos un argumento"
 
-#: builtin/replace.c:598
+#: builtin/replace.c:599
 msgid "--convert-graft-file takes no argument"
 msgstr "--convert-graft-file no toma argumentos"
 
-#: builtin/replace.c:604
+#: builtin/replace.c:605
 msgid "only one pattern can be given with -l"
 msgstr "solo se puede dar un patrón con -l"
 
@@ -16809,11 +16814,11 @@ msgstr[1] "los siguientes archivos tienen modificaciones locales:"
 
 #: builtin/rm.c:241
 msgid "do not list removed files"
-msgstr "no listar archivos removidos"
+msgstr "no listar archivos eliminado"
 
 #: builtin/rm.c:242
 msgid "only remove from the index"
-msgstr "solo remover del índice"
+msgstr "solo eliminar del índice"
 
 #: builtin/rm.c:243
 msgid "override the up-to-date check"
@@ -16821,7 +16826,7 @@ msgstr "sobrescribir el check de actualizado"
 
 #: builtin/rm.c:244
 msgid "allow recursive removal"
-msgstr "permitir remover de forma recursiva"
+msgstr "permitir eliminar de forma recursiva"
 
 #: builtin/rm.c:246
 msgid "exit with a zero status even if nothing matched"
@@ -16841,7 +16846,7 @@ msgstr "no removiendo '%s' de manera recursiva sin -r"
 #: builtin/rm.c:345
 #, c-format
 msgid "git rm: unable to remove %s"
-msgstr "git rm: no es posible remover %s"
+msgstr "git rm: no es posible eliminar %s"
 
 #: builtin/send-pack.c:20
 msgid ""
@@ -17154,7 +17159,7 @@ msgid ""
 "run_command returned non-zero status for %s\n"
 "."
 msgstr ""
-"run_command retornó estado no-cero para %s\n"
+"run_command devolvió estado no-cero para %s\n"
 "."
 
 #: builtin/submodule--helper.c:545
@@ -17164,7 +17169,7 @@ msgid ""
 "submodules of %s\n"
 "."
 msgstr ""
-"run_command retornó estado no-cero mientras cursaba en los submódulos "
+"run_command devolvió estado no-cero mientras cursaba en los submódulos "
 "anidados de %s\n"
 "."
 
@@ -17294,7 +17299,7 @@ msgid ""
 "really want to remove it including all of its history)"
 msgstr ""
 "El árbol de trabajo del submódulo '%s' contiene un directorio .git (use 'rm -"
-"rf' si realmente quiere removerlo incluyendo todo en su historia)"
+"rf' si realmente quiere eliminarlo incluyendo todo en su historia)"
 
 #: builtin/submodule--helper.c:1119
 #, c-format
@@ -17891,7 +17896,7 @@ msgstr ""
 #: builtin/update-index.c:1008
 msgid "remove named paths even if present in worktree"
 msgstr ""
-"remover rutas nombradas incluso si están presentes en el árbol de trabajo"
+"eliminar rutas nombradas incluso si están presentes en el árbol de trabajo"
 
 #: builtin/update-index.c:1010
 msgid "with --stdin: input lines are terminated by null bytes"
@@ -18310,7 +18315,7 @@ msgstr "'%s' no está bloqueado"
 #: builtin/worktree.c:743
 msgid "working trees containing submodules cannot be moved or removed"
 msgstr ""
-"árboles de trabajo conteniendo submódulos no puede ser movidos o removidos"
+"árboles de trabajo conteniendo submódulos no puede ser movidos o eliminado"
 
 #: builtin/worktree.c:751
 msgid "force move even if worktree is dirty or locked"
@@ -18383,7 +18388,7 @@ msgid ""
 "cannot remove a locked working tree, lock reason: %s\n"
 "use 'remove -f -f' to override or unlock first"
 msgstr ""
-"no se pueden remover árbol de trabajo bloqueado, razón del bloqueo: %s\n"
+"no se pueden eliminar árbol de trabajo bloqueado, razón del bloqueo: %s\n"
 "use 'remove -f -f' para sobreescribir o desbloquear primero"
 
 #: builtin/worktree.c:908
@@ -18391,13 +18396,13 @@ msgid ""
 "cannot remove a locked working tree;\n"
 "use 'remove -f -f' to override or unlock first"
 msgstr ""
-"no se pueden remover árbol de trabajo bloqueado;\n"
+"no se pueden eliminar árbol de trabajo bloqueado;\n"
 "use 'remove -f -f' para sobreescribir o desbloquear primero"
 
 #: builtin/worktree.c:911
 #, c-format
 msgid "validation failed, cannot remove working tree: %s"
-msgstr "falló validación, no se puede remover árbol de trabajo: %s"
+msgstr "falló validación, no se puede eliminar árbol de trabajo: %s"
 
 #: builtin/write-tree.c:14
 msgid "git write-tree [--missing-ok] [--prefix=<prefix>/]"
@@ -19551,18 +19556,23 @@ msgstr "La rama actual $branch_name está actualizada."
 msgid "Current branch $branch_name is up to date, rebase forced."
 msgstr "Rama actual $branch_name está actualizada, rebase forzado."
 
-#: git-legacy-rebase.sh:721
+#: git-legacy-rebase.sh:723
+#, sh-format
+msgid "Changes to $onto:"
+msgstr "Cambios hacia $onto:"
+
+#: git-legacy-rebase.sh:725
 #, sh-format
 msgid "Changes from $mb to $onto:"
 msgstr "Cambios desde $mb a $onto:"
 
-#: git-legacy-rebase.sh:730
+#: git-legacy-rebase.sh:736
 msgid "First, rewinding head to replay your work on top of it..."
 msgstr ""
 "En primer lugar, rebobinando HEAD para después reproducir tus cambios encima "
 "de ésta..."
 
-#: git-legacy-rebase.sh:740
+#: git-legacy-rebase.sh:746
 #, sh-format
 msgid "Fast-forwarded $branch_name to $onto_name."
 msgstr "Avance rápido de $branch_name a $onto_name."
@@ -19593,7 +19603,7 @@ msgstr "Sin cambios seleccionados"
 
 #: git-stash.sh:178
 msgid "Cannot remove temporary index (can't happen)"
-msgstr "No se puede remover el índice temporal (no puede suceder)"
+msgstr "No se puede eliminar el índice temporal (no puede suceder)"
 
 #: git-stash.sh:191
 msgid "Cannot record working tree state"
@@ -19632,7 +19642,7 @@ msgstr "Directorio de trabajo guardado y estado de índice $stash_msg"
 
 #: git-stash.sh:342
 msgid "Cannot remove worktree changes"
-msgstr "No se pueden remover cambios del árbol de trabajo"
+msgstr "No se pueden eliminar cambios del árbol de trabajo"
 
 #: git-stash.sh:490
 #, sh-format
@@ -19947,7 +19957,7 @@ msgstr ""
 "f, fixup <commit> = como \"squash\", pero descarta el mensaje del log de "
 "este commit\n"
 "x, exec <commit> = ejecuta comando ( el resto de la línea) usando un shell\n"
-"d, drop <commit> = remover commit\n"
+"d, drop <commit> = eliminar commit\n"
 "l, label <label> = poner label al HEAD actual con un nombre\n"
 "t, reset <label> = reiniciar HEAD a el label\n"
 "m, merge [-C <commit> | -c <commit>] <label> [# <oneline>]\n"
@@ -20136,7 +20146,7 @@ msgstr "$head_name rebasado y actualizado satisfactoriamente."
 
 #: git-rebase--preserve-merges.sh:757
 msgid "Could not remove CHERRY_PICK_HEAD"
-msgstr "No se pudo remover CHERRY_PICK_HEAD"
+msgstr "No se pudo eliminar CHERRY_PICK_HEAD"
 
 #: git-rebase--preserve-merges.sh:762
 #, sh-format
@@ -20421,8 +20431,8 @@ msgid ""
 "Lines starting with %s will be removed.\n"
 msgstr ""
 "---\n"
-"Para remover '%s' líneas, haga de ellas líneas  ' '  (contexto).\n"
-"Para remover '%s' líneas, bórrelas.\n"
+"Para eliminar '%s' líneas, haga de ellas líneas  ' '  (contexto).\n"
+"Para eliminar '%s' líneas, bórrelas.\n"
 "Lineas comenzando con  %s serán removidas.\n"
 
 #. TRANSLATORS: 'it' refers to the patch mentioned in the previous messages.
@@ -20726,7 +20736,7 @@ msgstr "a que hunk ir? "
 #: git-add--interactive.perl:1540
 #, perl-format
 msgid "Invalid number: '%s'\n"
-msgstr "Numero invalido: '%s'\n"
+msgstr "Numero inválido: '%s'\n"
 
 #: git-add--interactive.perl:1545
 #, perl-format
@@ -20815,7 +20825,7 @@ msgstr "modo --patch desconocido: %s"
 #: git-add--interactive.perl:1769 git-add--interactive.perl:1775
 #, perl-format
 msgid "invalid argument %s, expecting --"
-msgstr "argumento invalido %s, se esperaba --"
+msgstr "argumento inválido %s, se esperaba --"
 
 #: git-send-email.perl:138
 msgid "local zone differs from GMT by a non-minute interval\n"
@@ -20946,7 +20956,7 @@ msgid ""
 msgstr ""
 "Lineas que comienzan en \"GIT:\" serán removidas.\n"
 "Considere incluir un diffstat global o una tabla de contenidos\n"
-"para el parche que esta escribiendo.\n"
+"para el parche que está escribiendo.\n"
 "\n"
 "Limpiar el contenido de body si usted no desea mandar un resumen.\n"
 
@@ -20962,7 +20972,7 @@ msgstr "Falló al abrir %s.final: %s"
 
 #: git-send-email.perl:790
 msgid "Summary email is empty, skipping it\n"
-msgstr "Archivo de resumen esta vacío, saltando al siguiente\n"
+msgstr "Archivo de resumen está vacío, saltando al siguiente\n"
 
 #. TRANSLATORS: please keep [y/N] as is.
 #: git-send-email.perl:825
@@ -21070,7 +21080,7 @@ msgstr "El servidor SMTP no esta definido adecuadamente."
 #: git-send-email.perl:1505
 #, perl-format
 msgid "Server does not support STARTTLS! %s"
-msgstr "Servidor no soporta STARTTLS! %s"
+msgstr "El servidor no soporta STARTTLS! %s"
 
 #: git-send-email.perl:1510 git-send-email.perl:1514
 #, perl-format
@@ -21160,7 +21170,7 @@ msgstr "no se puede mandar mensaje como 7bit"
 
 #: git-send-email.perl:1880
 msgid "invalid transfer encoding"
-msgstr "codificación de transferencia invalida"
+msgstr "codificación de transferencia inválida"
 
 #: git-send-email.perl:1921 git-send-email.perl:1973 git-send-email.perl:1983
 #, perl-format
@@ -21211,7 +21221,7 @@ msgstr "Realmente deseas mandar %s?[y|N]: "
 #~ msgstr "no se puede mover un árbol de trabajo encerrado"
 
 #~ msgid "cannot remove a locked working tree"
-#~ msgstr "no se puede remover árbol de trabajo encerrado"
+#~ msgstr "no se puede eliminar árbol de trabajo encerrado"
 
 #~ msgid "Applied autostash."
 #~ msgstr "Autostash aplicado."
@@ -21250,7 +21260,7 @@ msgstr "Realmente deseas mandar %s?[y|N]: "
 
 #~ msgid "Stopping at '$displaypath'; script returned non-zero status."
 #~ msgstr ""
-#~ "Deteniendo en '$displaypath'; script retornó un status distinto de cero."
+#~ "Deteniendo en '$displaypath'; script devolvió un status distinto de cero."
 
 #~ msgid "Everyday Git With 20 Commands Or So"
 #~ msgstr "Git diario con 20 comandos o algo así"
