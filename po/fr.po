@@ -74,8 +74,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2018-11-20 10:05+0800\n"
-"PO-Revision-Date: 2018-11-28 20:44+0100\n"
+"POT-Creation-Date: 2018-12-02 10:55+0800\n"
+"PO-Revision-Date: 2018-12-02 10:24+0100\n"
 "Last-Translator: Jean-Noël Avila <jn.avila@free.fr>\n"
 "Language-Team: Jean-Noël Avila <jn.avila@free.fr>\n"
 "Language: fr\n"
@@ -767,7 +767,7 @@ msgstr "s'assurer d'au moins <n> lignes de correspondance de contexte"
 
 #: apply.c:4999 builtin/am.c:2197 builtin/interpret-trailers.c:97
 #: builtin/interpret-trailers.c:99 builtin/interpret-trailers.c:101
-#: builtin/pack-objects.c:3310 builtin/rebase.c:839
+#: builtin/pack-objects.c:3312 builtin/rebase.c:857
 msgid "action"
 msgstr "action"
 
@@ -1137,7 +1137,7 @@ msgstr ""
 #: blame.c:1831 bundle.c:162 ref-filter.c:2046 sequencer.c:1963
 #: sequencer.c:4002 builtin/commit.c:1001 builtin/log.c:377 builtin/log.c:932
 #: builtin/log.c:1407 builtin/log.c:1783 builtin/log.c:2072 builtin/merge.c:406
-#: builtin/pack-objects.c:3135 builtin/pack-objects.c:3150
+#: builtin/pack-objects.c:3137 builtin/pack-objects.c:3152
 #: builtin/shortlog.c:192
 msgid "revision walk setup failed"
 msgstr "échec de la préparation du parcours des révisions"
@@ -1730,7 +1730,7 @@ msgstr "valeur mal formée pour %s : %s"
 msgid "must be one of nothing, matching, simple, upstream or current"
 msgstr "doit être parmi nothing, matching, simple, upstream ou current"
 
-#: config.c:1481 builtin/pack-objects.c:3389
+#: config.c:1481 builtin/pack-objects.c:3391
 #, c-format
 msgid "bad pack compression level %d"
 msgstr "niveau de compression du paquet %d"
@@ -1782,89 +1782,89 @@ msgstr ""
 "la valeur '%d' de splitIndex.maxPercentChange devrait se situer entre 0 et "
 "100"
 
-#: config.c:2319
+#: config.c:2322
 #, c-format
 msgid "unable to parse '%s' from command-line config"
 msgstr ""
 "impossible d'analyser '%s' depuis le configuration en ligne de commande"
 
-#: config.c:2321
+#: config.c:2324
 #, c-format
 msgid "bad config variable '%s' in file '%s' at line %d"
 msgstr ""
 "variable de configuration '%s' incorrecte dans le fichier '%s' à la ligne %d"
 
-#: config.c:2402
+#: config.c:2405
 #, c-format
 msgid "invalid section name '%s'"
 msgstr "nom de section invalide '%s'"
 
-#: config.c:2434
+#: config.c:2437
 #, c-format
 msgid "%s has multiple values"
 msgstr "%s a des valeurs multiples"
 
-#: config.c:2463
+#: config.c:2466
 #, c-format
 msgid "failed to write new configuration file %s"
 msgstr "impossible d'écrire le fichier de configuration %s"
 
-#: config.c:2714 config.c:3038
+#: config.c:2717 config.c:3041
 #, c-format
 msgid "could not lock config file %s"
 msgstr "impossible de verrouiller le fichier de configuration %s"
 
-#: config.c:2725
+#: config.c:2728
 #, c-format
 msgid "opening %s"
 msgstr "ouverture de %s"
 
-#: config.c:2760 builtin/config.c:327
+#: config.c:2763 builtin/config.c:327
 #, c-format
 msgid "invalid pattern: %s"
 msgstr "motif invalide : %s"
 
-#: config.c:2785
+#: config.c:2788
 #, c-format
 msgid "invalid config file %s"
 msgstr "fichier de configuration invalide %s"
 
-#: config.c:2798 config.c:3051
+#: config.c:2801 config.c:3054
 #, c-format
 msgid "fstat on %s failed"
 msgstr "échec de fstat sur %s"
 
-#: config.c:2809
+#: config.c:2812
 #, c-format
 msgid "unable to mmap '%s'"
 msgstr "impossible d réaliser un map de '%s'"
 
-#: config.c:2818 config.c:3056
+#: config.c:2821 config.c:3059
 #, c-format
 msgid "chmod on %s failed"
 msgstr "échec de chmod sur %s"
 
-#: config.c:2903 config.c:3153
+#: config.c:2906 config.c:3156
 #, c-format
 msgid "could not write config file %s"
 msgstr "impossible d'écrire le fichier de configuration %s"
 
-#: config.c:2937
+#: config.c:2940
 #, c-format
 msgid "could not set '%s' to '%s'"
 msgstr "impossible de régler '%s' à '%s'"
 
-#: config.c:2939 builtin/remote.c:782
+#: config.c:2942 builtin/remote.c:782
 #, c-format
 msgid "could not unset '%s'"
 msgstr "impossible de désinitialiser '%s'"
 
-#: config.c:3029
+#: config.c:3032
 #, c-format
 msgid "invalid section name: %s"
 msgstr "nom de section invalide : %s"
 
-#: config.c:3196
+#: config.c:3199
 #, c-format
 msgid "missing value for '%s'"
 msgstr "valeur manquante pour '%s'"
@@ -2266,7 +2266,9 @@ msgstr "impossible de charger la regex île pour '%s' : %s"
 #: delta-islands.c:386
 #, c-format
 msgid "island regex from config has too many capture groups (max=%d)"
-msgstr "l'expression rationnelle depuis la configuration a trop de groupes de capture (max=%d)"
+msgstr ""
+"l'expression rationnelle depuis la configuration a trop de groupes de "
+"capture (max=%d)"
 
 #: delta-islands.c:462
 #, c-format
@@ -2807,7 +2809,9 @@ msgstr "Les guides Git populaires sont :"
 
 #: help.c:517
 msgid "See 'git help <command>' to read about a specific subcommand"
-msgstr "Référez-vous à 'git help <commande>' pour des informations sur une sous-commande spécifique"
+msgstr ""
+"Référez-vous à 'git help <commande>' pour des informations sur une sous-"
+"commande spécifique"
 
 #: help.c:522
 msgid "External commands"
@@ -3408,7 +3412,9 @@ msgstr "le fichier d'index multi-paquet %s est trop petit"
 #: midx.c:81
 #, c-format
 msgid "multi-pack-index signature 0x%08x does not match signature 0x%08x"
-msgstr "la signature de d'index multi-paquet 0x%08x ne correspond pas à la signature 0x%08x"
+msgstr ""
+"la signature de d'index multi-paquet 0x%08x ne correspond pas à la signature "
+"0x%08x"
 
 #: midx.c:86
 #, c-format
@@ -3426,7 +3432,9 @@ msgstr "décalage de section invalide (trop grand)"
 
 #: midx.c:129
 msgid "terminating multi-pack-index chunk id appears earlier than expected"
-msgstr "identifiant de terminaison de tronçon d'index multi-paquet terminant apparaît plus tôt qu'attendu"
+msgstr ""
+"identifiant de terminaison de tronçon d'index multi-paquet terminant "
+"apparaît plus tôt qu'attendu"
 
 #: midx.c:142
 msgid "multi-pack-index missing required pack-name chunk"
@@ -3447,16 +3455,18 @@ msgstr "index multi-paquet manque de tronçon de décalage d'objet"
 #: midx.c:162
 #, c-format
 msgid "multi-pack-index pack names out of order: '%s' before '%s'"
-msgstr "index multi-paquet les noms de paquets sont en désordre : '%s' avant '%s'"
+msgstr ""
+"index multi-paquet les noms de paquets sont en désordre : '%s' avant '%s'"
 
 #: midx.c:205
 #, c-format
-msgid "bad pack-int-id: %u (%u total packs"
+msgid "bad pack-int-id: %u (%u total packs)"
 msgstr "mauvais pack-int-id : %u (%u paquets au total)"
 
 #: midx.c:246
 msgid "multi-pack-index stores a 64-bit offset, but off_t is too small"
-msgstr "multi-pack-index stock un décalage en 64-bit, mais off_t est trop petit"
+msgstr ""
+"multi-pack-index stock un décalage en 64-bit, mais off_t est trop petit"
 
 #: midx.c:271
 msgid "error preparing packfile from multi-pack-index"
@@ -3486,7 +3496,9 @@ msgstr "échec du nettoyage de l'index de multi-paquet à %s"
 #, c-format
 msgid ""
 "oid fanout out of order: fanout[%d] = %<PRIx32> > %<PRIx32> = fanout[%d]"
-msgstr "étalement oid en désordre : étalement[%d] = %<PRIx32> > %<PRIx32> = étalement[%d]"
+msgstr ""
+"étalement oid en désordre : étalement[%d] = %<PRIx32> > %<PRIx32> = "
+"étalement[%d]"
 
 #: midx.c:992
 #, c-format
@@ -3846,32 +3858,32 @@ msgstr "impossible de créer le fil load_cache_entries : %s"
 msgid "unable to join load_cache_entries thread: %s"
 msgstr "impossible de joindre le fil load_cach_entries : %s"
 
-#: read-cache.c:2200
+#: read-cache.c:2201
 #, c-format
 msgid "unable to create load_index_extensions thread: %s"
 msgstr "impossible de créer le fil load_index_extensions : %s"
 
-#: read-cache.c:2227
+#: read-cache.c:2228
 #, c-format
 msgid "unable to join load_index_extensions thread: %s"
 msgstr "impossible de joindre le fil load_index_extensions : %s"
 
-#: read-cache.c:2953 sequencer.c:4727 wrapper.c:658 builtin/merge.c:1086
+#: read-cache.c:2982 sequencer.c:4727 wrapper.c:658 builtin/merge.c:1086
 #, c-format
 msgid "could not close '%s'"
 msgstr "impossible de fermer '%s'"
 
-#: read-cache.c:3026 sequencer.c:2203 sequencer.c:3592
+#: read-cache.c:3055 sequencer.c:2203 sequencer.c:3592
 #, c-format
 msgid "could not stat '%s'"
 msgstr "stat impossible de '%s'"
 
-#: read-cache.c:3039
+#: read-cache.c:3068
 #, c-format
 msgid "unable to open git dir: %s"
 msgstr "impossible d'ouvrir le répertoire git : %s"
 
-#: read-cache.c:3051
+#: read-cache.c:3080
 #, c-format
 msgid "unable to unlink: %s"
 msgstr "échec lors de l'unlink : %s"
@@ -3902,10 +3914,12 @@ msgstr ""
 " p, pick <commit> = utiliser le commit\n"
 " r, reword <commit> = utiliser le commit, mais reformuler son message\n"
 " e, edit <commit> = utiliser le commit, mais s'arrêter pour le modifier\n"
-" s, squash <commit> = utiliser le commit, mais le fusionner avec le précédent\n"
+" s, squash <commit> = utiliser le commit, mais le fusionner avec le "
+"précédent\n"
 " f, fixup <commit> = comme \"squash\", mais en éliminant son message\n"
 " x, exec <commit> = lancer la commande (reste de la ligne) dans un shell\n"
-" b, break = s'arrêter ici (on peut continuer ensuite avec 'git rebase --contine')\n"
+" b, break = s'arrêter ici (on peut continuer ensuite avec 'git rebase --"
+"contine')\n"
 " d, drop <commit> = supprimer le commit\n"
 " l, label <label> = étiqueter la HEAD courante avec un nom\n"
 " t, reset <label> = réinitialiser HEAD à label\n"
@@ -4065,18 +4079,18 @@ msgstr "'%s' existe ; impossible de créer '%s'"
 msgid "cannot process '%s' and '%s' at the same time"
 msgstr "impossible de traiter '%s' et '%s' en même temps"
 
-#: refs/files-backend.c:1227
+#: refs/files-backend.c:1228
 #, c-format
 msgid "could not remove reference %s"
 msgstr "impossible de supprimer la référence %s"
 
-#: refs/files-backend.c:1241 refs/packed-backend.c:1532
+#: refs/files-backend.c:1242 refs/packed-backend.c:1532
 #: refs/packed-backend.c:1542
 #, c-format
 msgid "could not delete reference %s: %s"
 msgstr "Impossible de supprimer la référence %s : %s"
 
-#: refs/files-backend.c:1244 refs/packed-backend.c:1545
+#: refs/files-backend.c:1245 refs/packed-backend.c:1545
 #, c-format
 msgid "could not delete references: %s"
 msgstr "impossible de supprimer les références : %s"
@@ -4220,7 +4234,8 @@ msgstr "nom de champ inconnu : %.*s"
 #, c-format
 msgid ""
 "not a git repository, but the field '%.*s' requires access to object data"
-msgstr "pas un dépôt git, mais le champ '%.*s' nécessite l'accès au données d'objet"
+msgstr ""
+"pas un dépôt git, mais le champ '%.*s' nécessite l'accès au données d'objet"
 
 #: ref-filter.c:663
 #, c-format
@@ -5220,8 +5235,8 @@ msgstr "Impossible de fusionner %.*s"
 msgid "could not copy '%s' to '%s'"
 msgstr "impossible de copier '%s' vers '%s'"
 
-#: sequencer.c:2824 sequencer.c:3242 builtin/rebase.c:580 builtin/rebase.c:999
-#: builtin/rebase.c:1350 builtin/rebase.c:1404
+#: sequencer.c:2824 sequencer.c:3242 builtin/rebase.c:580 builtin/rebase.c:1019
+#: builtin/rebase.c:1372 builtin/rebase.c:1426
 msgid "could not read index"
 msgstr "impossible de lire l'index"
 
@@ -5274,12 +5289,12 @@ msgstr "écriture d'un commit racine bidon"
 msgid "writing squash-onto"
 msgstr "écriture de 'écraser-sur'"
 
-#: sequencer.c:2997 builtin/rebase.c:585 builtin/rebase.c:590
+#: sequencer.c:2997 builtin/rebase.c:585 builtin/rebase.c:591
 #, c-format
 msgid "failed to find tree of %s"
 msgstr "impossible de trouver l'arbre de %s"
 
-#: sequencer.c:3015 builtin/rebase.c:603
+#: sequencer.c:3015 builtin/rebase.c:604
 msgid "could not write index"
 msgstr "impossible d'écrire l'index"
 
@@ -6117,7 +6132,9 @@ msgstr "les valeurs négatives ne sont pas permises pour submodule.fetchJobs"
 #: submodule-config.c:390
 #, c-format
 msgid "ignoring '%s' which may be interpreted as a command-line option: %s"
-msgstr "'%s' ignoré et qui peut être interprété comme une option de ligne de commande : %s"
+msgstr ""
+"'%s' ignoré et qui peut être interprété comme une option de ligne de "
+"commande : %s"
 
 #: submodule-config.c:479
 #, c-format
@@ -7558,7 +7575,9 @@ msgstr ""
 
 #: builtin/am.c:1196
 msgid "Patch sent with format=flowed; space at the end of lines might be lost."
-msgstr "Rustine envoyée avec format=flowed ; les espaces en fin de ligne peuvent être perdus."
+msgstr ""
+"Rustine envoyée avec format=flowed ; les espaces en fin de ligne peuvent "
+"être perdus."
 
 #: builtin/am.c:1224
 msgid "Patch is empty."
@@ -7764,7 +7783,7 @@ msgstr "le passer jusqu'à git-apply"
 
 #: builtin/am.c:2215 builtin/commit.c:1340 builtin/fmt-merge-msg.c:671
 #: builtin/fmt-merge-msg.c:674 builtin/grep.c:868 builtin/merge.c:239
-#: builtin/pull.c:151 builtin/pull.c:209 builtin/rebase.c:836
+#: builtin/pull.c:151 builtin/pull.c:209 builtin/rebase.c:854
 #: builtin/repack.c:317 builtin/repack.c:321 builtin/repack.c:323
 #: builtin/show-branch.c:651 builtin/show-ref.c:171 builtin/tag.c:386
 #: parse-options.h:144 parse-options.h:146 parse-options.h:268
@@ -7772,7 +7791,7 @@ msgid "n"
 msgstr "n"
 
 #: builtin/am.c:2221 builtin/branch.c:637 builtin/for-each-ref.c:38
-#: builtin/replace.c:543 builtin/tag.c:422 builtin/verify-tag.c:39
+#: builtin/replace.c:544 builtin/tag.c:422 builtin/verify-tag.c:39
 msgid "format"
 msgstr "format"
 
@@ -7818,12 +7837,12 @@ msgid "use current timestamp for author date"
 msgstr "utiliser l'horodatage actuel pour la date d'auteur"
 
 #: builtin/am.c:2253 builtin/commit.c:1483 builtin/merge.c:273
-#: builtin/pull.c:184 builtin/rebase.c:880 builtin/rebase--interactive.c:183
+#: builtin/pull.c:184 builtin/rebase.c:898 builtin/rebase--interactive.c:183
 #: builtin/revert.c:113 builtin/tag.c:402
 msgid "key-id"
 msgstr "id-clé"
 
-#: builtin/am.c:2254 builtin/rebase.c:881 builtin/rebase--interactive.c:184
+#: builtin/am.c:2254 builtin/rebase.c:899 builtin/rebase--interactive.c:184
 msgid "GPG-sign commits"
 msgstr "signer les commits avec GPG"
 
@@ -9368,7 +9387,7 @@ msgid "use --reference only while cloning"
 msgstr "utiliser seulement --reference pour cloner"
 
 #: builtin/clone.c:117 builtin/column.c:27 builtin/merge-file.c:46
-#: builtin/pack-objects.c:3299 builtin/repack.c:329
+#: builtin/pack-objects.c:3301 builtin/repack.c:329
 msgid "name"
 msgstr "nom"
 
@@ -9393,7 +9412,7 @@ msgstr "profondeur"
 msgid "create a shallow clone of that depth"
 msgstr "créer un clone superficiel de cette profondeur"
 
-#: builtin/clone.c:125 builtin/fetch.c:144 builtin/pack-objects.c:3290
+#: builtin/clone.c:125 builtin/fetch.c:144 builtin/pack-objects.c:3292
 msgid "time"
 msgstr "heure"
 
@@ -9402,7 +9421,7 @@ msgid "create a shallow clone since a specific time"
 msgstr "créer un clone superficiel depuis une date spécifique"
 
 #: builtin/clone.c:127 builtin/fetch.c:146 builtin/fetch.c:169
-#: builtin/rebase.c:813
+#: builtin/rebase.c:831
 msgid "revision"
 msgstr "révision"
 
@@ -10010,7 +10029,7 @@ msgid "terminate entries with NUL"
 msgstr "terminer les éléments par NUL"
 
 #: builtin/commit.c:1327 builtin/commit.c:1331 builtin/commit.c:1509
-#: builtin/fast-export.c:1007 builtin/fast-export.c:1010 builtin/rebase.c:892
+#: builtin/fast-export.c:1007 builtin/fast-export.c:1010 builtin/rebase.c:910
 #: builtin/tag.c:400
 msgid "mode"
 msgstr "mode"
@@ -10537,7 +10556,8 @@ msgid ""
 msgstr ""
 "--worktree ne peut pas être utilisé avec des arbres de travail multiples\n"
 "à moins que l'extension worktreeConfig soit configuré. Veuillez lire\n"
-"la section \"CONFIGURATION FILE\" de \"git help worktree\" pour plus de détails"
+"la section \"CONFIGURATION FILE\" de \"git help worktree\" pour plus de "
+"détails"
 
 #: builtin/config.c:687
 msgid "--get-color and variable type are incoherent"
@@ -11767,7 +11787,7 @@ msgstr "impossible de résoudre la révision : %s"
 msgid "invalid option combination, ignoring --threads"
 msgstr "option de combinaison invalide, ignore --threads"
 
-#: builtin/grep.c:1054 builtin/pack-objects.c:3395
+#: builtin/grep.c:1054 builtin/pack-objects.c:3397
 msgid "no threads support, ignoring --threads"
 msgstr "pas de support des fils, ignore --threads"
 
@@ -12730,11 +12750,15 @@ msgstr "rév"
 
 #: builtin/log.c:1586
 msgid "show changes against <rev> in cover letter or single patch"
-msgstr "afficher les modifications par rapport à <rév> dans la première page ou une rustine"
+msgstr ""
+"afficher les modifications par rapport à <rév> dans la première page ou une "
+"rustine"
 
 #: builtin/log.c:1589
 msgid "show changes against <refspec> in cover letter or single patch"
-msgstr "afficher les modifications par rapport à <refspec> dans la première page ou une rustine"
+msgstr ""
+"afficher les modifications par rapport à <refspec> dans la première page ou "
+"une rustine"
 
 #: builtin/log.c:1591
 msgid "percentage by which creation is weighted"
@@ -12950,7 +12974,7 @@ msgstr ""
 msgid "do not print remote URL"
 msgstr "ne pas afficher les URL distantes"
 
-#: builtin/ls-remote.c:60 builtin/ls-remote.c:62 builtin/rebase.c:885
+#: builtin/ls-remote.c:60 builtin/ls-remote.c:62 builtin/rebase.c:903
 msgid "exec"
 msgstr "exécutable"
 
@@ -13101,7 +13125,7 @@ msgid "verify that the named commit has a valid GPG signature"
 msgstr "vérifier que le commit nommé a une signature GPG valide"
 
 #: builtin/merge.c:255 builtin/notes.c:784 builtin/pull.c:177
-#: builtin/rebase.c:898 builtin/rebase--interactive.c:186 builtin/revert.c:110
+#: builtin/rebase.c:916 builtin/rebase--interactive.c:186 builtin/revert.c:110
 msgid "strategy"
 msgstr "stratégie"
 
@@ -13527,7 +13551,9 @@ msgstr "git multi-pack-index [--object-dir=<dir>] (write|verify)"
 
 #: builtin/multi-pack-index.c:21
 msgid "object directory containing set of packfile and pack-index pairs"
-msgstr "répertoire objet contenant un ensemble de paires de fichiers paquet et d'index de paquet"
+msgstr ""
+"répertoire objet contenant un ensemble de paires de fichiers paquet et "
+"d'index de paquet"
 
 #: builtin/multi-pack-index.c:39
 msgid "too many arguments"
@@ -14200,7 +14226,8 @@ msgstr "l'objet %s ne peut être lu"
 #: builtin/pack-objects.c:2086 builtin/pack-objects.c:2113
 #, c-format
 msgid "object %s inconsistent object length (%<PRIuMAX> vs %<PRIuMAX>)"
-msgstr "objet %s longueur de l'objet inconsistante (%<PRIuMAX> contre %<PRIuMAX>)"
+msgstr ""
+"objet %s longueur de l'objet inconsistante (%<PRIuMAX> contre %<PRIuMAX>)"
 
 #: builtin/pack-objects.c:2123
 msgid "suboptimal pack - out of memory"
@@ -14242,244 +14269,244 @@ msgstr ""
 "ID d'objet attendu, reçu des données illisibles :\n"
 "%s"
 
-#: builtin/pack-objects.c:2855
+#: builtin/pack-objects.c:2857
 msgid "invalid value for --missing"
 msgstr "valeur invalide pour --missing"
 
-#: builtin/pack-objects.c:2914 builtin/pack-objects.c:3022
+#: builtin/pack-objects.c:2916 builtin/pack-objects.c:3024
 msgid "cannot open pack index"
 msgstr "impossible d'ouvrir l'index de paquet"
 
-#: builtin/pack-objects.c:2945
+#: builtin/pack-objects.c:2947
 #, c-format
 msgid "loose object at %s could not be examined"
 msgstr "l'objet libre à %s n'a pas pu être examiné"
 
-#: builtin/pack-objects.c:3030
+#: builtin/pack-objects.c:3032
 msgid "unable to force loose object"
 msgstr "impossible de forcer l'objet libre"
 
-#: builtin/pack-objects.c:3120
+#: builtin/pack-objects.c:3122
 #, c-format
 msgid "not a rev '%s'"
 msgstr "'%s' n'est pas une révision"
 
-#: builtin/pack-objects.c:3123
+#: builtin/pack-objects.c:3125
 #, c-format
 msgid "bad revision '%s'"
 msgstr "mauvaise révision '%s'"
 
-#: builtin/pack-objects.c:3148
+#: builtin/pack-objects.c:3150
 msgid "unable to add recent objects"
 msgstr "impossible d'ajouter les objets récents"
 
-#: builtin/pack-objects.c:3201
+#: builtin/pack-objects.c:3203
 #, c-format
 msgid "unsupported index version %s"
 msgstr "version d'index non supportée %s"
 
-#: builtin/pack-objects.c:3205
+#: builtin/pack-objects.c:3207
 #, c-format
 msgid "bad index version '%s'"
 msgstr "mauvaise version d'index '%s'"
 
-#: builtin/pack-objects.c:3235
+#: builtin/pack-objects.c:3237
 msgid "do not show progress meter"
 msgstr "ne pas afficher la barre de progression"
 
-#: builtin/pack-objects.c:3237
+#: builtin/pack-objects.c:3239
 msgid "show progress meter"
 msgstr "afficher la barre de progression"
 
-#: builtin/pack-objects.c:3239
+#: builtin/pack-objects.c:3241
 msgid "show progress meter during object writing phase"
 msgstr "afficher la barre de progression durant la phase d'écrite des objets"
 
-#: builtin/pack-objects.c:3242
+#: builtin/pack-objects.c:3244
 msgid "similar to --all-progress when progress meter is shown"
 msgstr "similaire à --all-progress quand la barre de progression est affichée"
 
-#: builtin/pack-objects.c:3243
+#: builtin/pack-objects.c:3245
 msgid "<version>[,<offset>]"
 msgstr "<version>[,<décalage>]"
 
-#: builtin/pack-objects.c:3244
+#: builtin/pack-objects.c:3246
 msgid "write the pack index file in the specified idx format version"
 msgstr ""
 "écrire le fichier d'index du paquet dans le format d'index de version "
 "spécifié"
 
-#: builtin/pack-objects.c:3247
+#: builtin/pack-objects.c:3249
 msgid "maximum size of each output pack file"
 msgstr "taille maximum de chaque fichier paquet en sortie"
 
-#: builtin/pack-objects.c:3249
+#: builtin/pack-objects.c:3251
 msgid "ignore borrowed objects from alternate object store"
 msgstr "ignorer les objets empruntés à un autre magasin d'objets"
 
-#: builtin/pack-objects.c:3251
+#: builtin/pack-objects.c:3253
 msgid "ignore packed objects"
 msgstr "ignorer les objets empaquetés"
 
-#: builtin/pack-objects.c:3253
+#: builtin/pack-objects.c:3255
 msgid "limit pack window by objects"
 msgstr "limiter la fenêtre d'empaquetage par objets"
 
-#: builtin/pack-objects.c:3255
+#: builtin/pack-objects.c:3257
 msgid "limit pack window by memory in addition to object limit"
 msgstr ""
 "limiter la fenêtre d'empaquetage par mémoire en plus de la limite d'objets"
 
-#: builtin/pack-objects.c:3257
+#: builtin/pack-objects.c:3259
 msgid "maximum length of delta chain allowed in the resulting pack"
 msgstr ""
 "longueur maximum de la chaîne de delta autorisée dans le paquet résultant"
 
-#: builtin/pack-objects.c:3259
+#: builtin/pack-objects.c:3261
 msgid "reuse existing deltas"
 msgstr "réutiliser les deltas existants"
 
-#: builtin/pack-objects.c:3261
+#: builtin/pack-objects.c:3263
 msgid "reuse existing objects"
 msgstr "réutiliser les objets existants"
 
-#: builtin/pack-objects.c:3263
+#: builtin/pack-objects.c:3265
 msgid "use OFS_DELTA objects"
 msgstr "utiliser les objets OFS_DELTA"
 
-#: builtin/pack-objects.c:3265
+#: builtin/pack-objects.c:3267
 msgid "use threads when searching for best delta matches"
 msgstr ""
 "utiliser des fils lors de la recherche pour une meilleurs correspondance des "
 "deltas"
 
-#: builtin/pack-objects.c:3267
+#: builtin/pack-objects.c:3269
 msgid "do not create an empty pack output"
 msgstr "ne pas créer un paquet vide"
 
-#: builtin/pack-objects.c:3269
+#: builtin/pack-objects.c:3271
 msgid "read revision arguments from standard input"
 msgstr "lire les paramètres de révision depuis l'entrée standard"
 
-#: builtin/pack-objects.c:3271
+#: builtin/pack-objects.c:3273
 msgid "limit the objects to those that are not yet packed"
 msgstr "limiter les objets à ceux qui ne sont pas encore empaquetés"
 
-#: builtin/pack-objects.c:3274
+#: builtin/pack-objects.c:3276
 msgid "include objects reachable from any reference"
 msgstr "inclure les objets accessibles depuis toute référence"
 
-#: builtin/pack-objects.c:3277
+#: builtin/pack-objects.c:3279
 msgid "include objects referred by reflog entries"
 msgstr "inclure les objets référencés par les éléments de reflog"
 
-#: builtin/pack-objects.c:3280
+#: builtin/pack-objects.c:3282
 msgid "include objects referred to by the index"
 msgstr "inclure les objets référencés par l'index"
 
-#: builtin/pack-objects.c:3283
+#: builtin/pack-objects.c:3285
 msgid "output pack to stdout"
 msgstr "afficher l'empaquetage sur la sortie standard"
 
-#: builtin/pack-objects.c:3285
+#: builtin/pack-objects.c:3287
 msgid "include tag objects that refer to objects to be packed"
 msgstr "inclure les objets d'étiquettes qui réfèrent à des objets à empaqueter"
 
-#: builtin/pack-objects.c:3287
+#: builtin/pack-objects.c:3289
 msgid "keep unreachable objects"
 msgstr "garder les objets inaccessibles"
 
-#: builtin/pack-objects.c:3289
+#: builtin/pack-objects.c:3291
 msgid "pack loose unreachable objects"
 msgstr "empaqueter les objets inaccessibles détachés"
 
-#: builtin/pack-objects.c:3291
+#: builtin/pack-objects.c:3293
 msgid "unpack unreachable objects newer than <time>"
 msgstr "dépaqueter les objets inaccessibles plus récents que <heure>"
 
-#: builtin/pack-objects.c:3294
+#: builtin/pack-objects.c:3296
 msgid "create thin packs"
 msgstr "créer des paquets légers"
 
-#: builtin/pack-objects.c:3296
+#: builtin/pack-objects.c:3298
 msgid "create packs suitable for shallow fetches"
 msgstr "créer des paquets permettant des récupérations superficielles"
 
-#: builtin/pack-objects.c:3298
+#: builtin/pack-objects.c:3300
 msgid "ignore packs that have companion .keep file"
 msgstr "ignorer les paquets qui ont un fichier .keep"
 
-#: builtin/pack-objects.c:3300
+#: builtin/pack-objects.c:3302
 msgid "ignore this pack"
 msgstr "ignorer ce paquet"
 
-#: builtin/pack-objects.c:3302
+#: builtin/pack-objects.c:3304
 msgid "pack compression level"
 msgstr "niveau de compression du paquet"
 
-#: builtin/pack-objects.c:3304
+#: builtin/pack-objects.c:3306
 msgid "do not hide commits by grafts"
 msgstr "ne pas cacher les validations par greffes"
 
-#: builtin/pack-objects.c:3306
+#: builtin/pack-objects.c:3308
 msgid "use a bitmap index if available to speed up counting objects"
 msgstr ""
 "utiliser un index en bitmap si disponible pour accélerer le décompte des "
 "objets"
 
-#: builtin/pack-objects.c:3308
+#: builtin/pack-objects.c:3310
 msgid "write a bitmap index together with the pack index"
 msgstr "écrire un index en bitmap associé à l'index de paquet"
 
-#: builtin/pack-objects.c:3311
+#: builtin/pack-objects.c:3313
 msgid "handling for missing objects"
 msgstr "gestion des objets manquants"
 
-#: builtin/pack-objects.c:3314
+#: builtin/pack-objects.c:3316
 msgid "do not pack objects in promisor packfiles"
 msgstr "ne pas empaqueter les objets dans les fichiers paquets prometteurs"
 
-#: builtin/pack-objects.c:3316
+#: builtin/pack-objects.c:3318
 msgid "respect islands during delta compression"
 msgstr "respecter les îlots pendant la compression des deltas"
 
-#: builtin/pack-objects.c:3340
+#: builtin/pack-objects.c:3342
 #, c-format
 msgid "delta chain depth %d is too deep, forcing %d"
 msgstr "la profondeur %d de chaîne de delta est trop grande, forcée à %d"
 
-#: builtin/pack-objects.c:3345
+#: builtin/pack-objects.c:3347
 #, c-format
 msgid "pack.deltaCacheLimit is too high, forcing %d"
 msgstr "pack.deltaCacheLimit est trop grand, forcé à %d"
 
-#: builtin/pack-objects.c:3399
+#: builtin/pack-objects.c:3401
 msgid "--max-pack-size cannot be used to build a pack for transfer"
 msgstr ""
 "--max-pack-size ne peut pas être utilisé pour construire un paquet à "
 "transférer"
 
-#: builtin/pack-objects.c:3401
+#: builtin/pack-objects.c:3403
 msgid "minimum pack size limit is 1 MiB"
 msgstr "la taille limite minimale d'un paquet est 1 MiB"
 
-#: builtin/pack-objects.c:3406
+#: builtin/pack-objects.c:3408
 msgid "--thin cannot be used to build an indexable pack"
 msgstr "--thin ne peut pas être utilisé pour construire un paquet indexable"
 
-#: builtin/pack-objects.c:3409
+#: builtin/pack-objects.c:3411
 msgid "--keep-unreachable and --unpack-unreachable are incompatible"
 msgstr "--keep-unreachable et --unpack-unreachable sont incompatibles"
 
-#: builtin/pack-objects.c:3415
+#: builtin/pack-objects.c:3417
 msgid "cannot use --filter without --stdout"
 msgstr "impossible d'utiliser --filter sans --stdout"
 
-#: builtin/pack-objects.c:3474
+#: builtin/pack-objects.c:3476
 msgid "Enumerating objects"
 msgstr "Énumération des objets"
 
-#: builtin/pack-objects.c:3493
+#: builtin/pack-objects.c:3495
 #, c-format
 msgid "Total %<PRIu32> (delta %<PRIu32>), reused %<PRIu32> (delta %<PRIu32>)"
 msgstr ""
@@ -14606,7 +14633,7 @@ msgstr ""
 "configuration\n"
 "pour la branche actuelle, vous devez spécifier la branche avec la commande."
 
-#: builtin/pull.c:432 builtin/rebase.c:760 git-parse-remote.sh:73
+#: builtin/pull.c:432 builtin/rebase.c:761 git-parse-remote.sh:73
 msgid "You are not currently on a branch."
 msgstr "Vous n'êtes actuellement sur aucune branche."
 
@@ -14623,16 +14650,16 @@ msgid "See git-pull(1) for details."
 msgstr "Référez-vous à git-pull(1) pour de plus amples détails."
 
 #: builtin/pull.c:439 builtin/pull.c:445 builtin/pull.c:454
-#: builtin/rebase.c:766 git-parse-remote.sh:64
+#: builtin/rebase.c:767 git-parse-remote.sh:64
 msgid "<remote>"
 msgstr "<distant>"
 
 #: builtin/pull.c:439 builtin/pull.c:454 builtin/pull.c:459
-#: git-legacy-rebase.sh:548 git-parse-remote.sh:65
+#: git-legacy-rebase.sh:556 git-parse-remote.sh:65
 msgid "<branch>"
 msgstr "<branche>"
 
-#: builtin/pull.c:447 builtin/rebase.c:758 git-parse-remote.sh:75
+#: builtin/pull.c:447 builtin/rebase.c:759 git-parse-remote.sh:75
 msgid "There is no tracking information for the current branch."
 msgstr "Pas d'information de suivi distant pour la branche actuelle."
 
@@ -14754,7 +14781,7 @@ msgid ""
 "\n"
 "To push to the branch of the same name on the remote, use\n"
 "\n"
-"    git push %s %s\n"
+"    git push %s HEAD\n"
 "%s"
 msgstr ""
 "La branche amont de votre branche courante ne correspond pas\n"
@@ -14765,7 +14792,7 @@ msgstr ""
 "\n"
 "Pour pousser vers la branche du même nom sur le serveur distant, utilisez\n"
 "\n"
-"    git push %s %s\n"
+"    git push %s HEAD\n"
 "%s"
 
 #: builtin/push.c:183
@@ -15142,12 +15169,16 @@ msgstr "déboguer unpack-trees"
 msgid ""
 "git rebase [-i] [options] [--exec <cmd>] [--onto <newbase>] [<upstream>] "
 "[<branch>]"
-msgstr "git rebase [-i] [options] [--exec <cmd>] [--onto <nouvelle-base>] [<amont>] [<branche>]"
+msgstr ""
+"git rebase [-i] [options] [--exec <cmd>] [--onto <nouvelle-base>] [<amont>] "
+"[<branche>]"
 
 #: builtin/rebase.c:31
 msgid ""
 "git rebase [-i] [options] [--exec <cmd>] [--onto <newbase>] --root [<branch>]"
-msgstr "git rebase [-i] [options] [--exec <cmd>] [--onto <nouvelle-base>] --root [<branche>]"
+msgstr ""
+"git rebase [-i] [options] [--exec <cmd>] [--onto <nouvelle-base>] --root "
+"[<branche>]"
 
 #: builtin/rebase.c:33
 msgid "git rebase --continue | --abort | --skip | --edit-todo"
@@ -15201,7 +15232,7 @@ msgstr ""
 msgid "could not determine HEAD revision"
 msgstr "impossible de déterminer la révision HEAD"
 
-#: builtin/rebase.c:752
+#: builtin/rebase.c:753
 #, c-format
 msgid ""
 "%s\n"
@@ -15218,7 +15249,7 @@ msgstr ""
 "    git rebase '<branche>'\n"
 "\n"
 
-#: builtin/rebase.c:768
+#: builtin/rebase.c:769
 #, c-format
 msgid ""
 "If you wish to set tracking information for this branch you can do so with:\n"
@@ -15226,155 +15257,156 @@ msgid ""
 "    git branch --set-upstream-to=%s/<branch> %s\n"
 "\n"
 msgstr ""
-"Si vous souhaitez indiquer l'information de suivi distant pour cette branche, vous pouvez le faire avec :\n"
+"Si vous souhaitez indiquer l'information de suivi distant pour cette "
+"branche, vous pouvez le faire avec :\n"
 "\n"
 "    git branch --set-upstream-to=%s/<branche> %s\n"
 "\n"
 
-#: builtin/rebase.c:814
+#: builtin/rebase.c:832
 msgid "rebase onto given branch instead of upstream"
 msgstr "rebaser sur la branche %s au lieu de la branche amont"
 
-#: builtin/rebase.c:816
+#: builtin/rebase.c:834
 msgid "allow pre-rebase hook to run"
 msgstr "permettre le lancement du crochet pre-rebase"
 
-#: builtin/rebase.c:818
+#: builtin/rebase.c:836
 msgid "be quiet. implies --no-stat"
 msgstr "être silencieux. implique --no-stat"
 
-#: builtin/rebase.c:821
+#: builtin/rebase.c:839
 msgid "display a diffstat of what changed upstream"
 msgstr "afficher un diffstat de ce qui a changé en amont"
 
-#: builtin/rebase.c:824
+#: builtin/rebase.c:842
 msgid "do not show diffstat of what changed upstream"
 msgstr "ne pas afficher un diffstat de ce qui a changé en amont"
 
-#: builtin/rebase.c:827
+#: builtin/rebase.c:845
 msgid "add a Signed-off-by: line to each commit"
 msgstr "ajouter une ligne Signed-off-by à chaque message de validation"
 
-#: builtin/rebase.c:829 builtin/rebase.c:833 builtin/rebase.c:835
+#: builtin/rebase.c:847 builtin/rebase.c:851 builtin/rebase.c:853
 msgid "passed to 'git am'"
 msgstr "passé à 'git am'"
 
-#: builtin/rebase.c:837 builtin/rebase.c:839
+#: builtin/rebase.c:855 builtin/rebase.c:857
 msgid "passed to 'git apply'"
 msgstr "passé jusqu'à git-apply"
 
-#: builtin/rebase.c:841 builtin/rebase.c:844
+#: builtin/rebase.c:859 builtin/rebase.c:862
 msgid "cherry-pick all commits, even if unchanged"
 msgstr "picorer tous les commits, même sans modifiant"
 
-#: builtin/rebase.c:846
+#: builtin/rebase.c:864
 msgid "continue"
 msgstr "continuer"
 
-#: builtin/rebase.c:849
+#: builtin/rebase.c:867
 msgid "skip current patch and continue"
 msgstr "sauter le patch courant et continuer"
 
-#: builtin/rebase.c:851
+#: builtin/rebase.c:869
 msgid "abort and check out the original branch"
 msgstr "abandonner et extraire la branche d'origine"
 
-#: builtin/rebase.c:854
+#: builtin/rebase.c:872
 msgid "abort but keep HEAD where it is"
 msgstr "abandonne mais garde HEAD où il est"
 
-#: builtin/rebase.c:855
+#: builtin/rebase.c:873
 msgid "edit the todo list during an interactive rebase"
 msgstr "éditer la liste à faire lors d'un rebasage interactif"
 
-#: builtin/rebase.c:858
+#: builtin/rebase.c:876
 msgid "show the patch file being applied or merged"
 msgstr "afficher le patch en cours d'application ou de fusion"
 
-#: builtin/rebase.c:861
+#: builtin/rebase.c:879
 msgid "use merging strategies to rebase"
 msgstr "utiliser des stratégies de fusion pour rebaser"
 
-#: builtin/rebase.c:865
+#: builtin/rebase.c:883
 msgid "let the user edit the list of commits to rebase"
 msgstr "laisser l'utilisateur éditer la liste des commits à rebaser"
 
-#: builtin/rebase.c:869
+#: builtin/rebase.c:887
 msgid "try to recreate merges instead of ignoring them"
 msgstr "essayer de recréer les fusions au lieu de les ignorer"
 
-#: builtin/rebase.c:873
-msgid "allow rerere to update index  with resolved conflict"
+#: builtin/rebase.c:891
+msgid "allow rerere to update index with resolved conflict"
 msgstr "permettre à rerere à mettre à jour l'index avec des conflits résolus"
 
-#: builtin/rebase.c:876
+#: builtin/rebase.c:894
 msgid "preserve empty commits during rebase"
 msgstr "préserver les validations vides pendant le rebasage"
 
-#: builtin/rebase.c:878
+#: builtin/rebase.c:896
 msgid "move commits that begin with squash!/fixup! under -i"
 msgstr "déplace les commits qui commencent par squash!/fixup! sous -i"
 
-#: builtin/rebase.c:884
+#: builtin/rebase.c:902
 msgid "automatically stash/stash pop before and after"
 msgstr "remiser et réappliquer automatiquement avant et après"
 
-#: builtin/rebase.c:886
+#: builtin/rebase.c:904
 msgid "add exec lines after each commit of the editable list"
 msgstr "ajouter les lignes exec après chaque commit de la liste éditable"
 
-#: builtin/rebase.c:890
+#: builtin/rebase.c:908
 msgid "allow rebasing commits with empty messages"
 msgstr "autoriser les commits de rebasage avec des messages vides"
 
-#: builtin/rebase.c:893
+#: builtin/rebase.c:911
 msgid "try to rebase merges instead of skipping them"
 msgstr "essayer de rebaser les fusions au lieu de les garder"
 
-#: builtin/rebase.c:896
+#: builtin/rebase.c:914
 msgid "use 'merge-base --fork-point' to refine upstream"
 msgstr "utiliser 'merge-base --fork-point' pour raffiner l'amont"
 
-#: builtin/rebase.c:898
+#: builtin/rebase.c:916
 msgid "use the given merge strategy"
 msgstr "utiliser la stratégie de fusion indiquée"
 
-#: builtin/rebase.c:900 builtin/revert.c:111
+#: builtin/rebase.c:918 builtin/revert.c:111
 msgid "option"
 msgstr "option"
 
-#: builtin/rebase.c:901
+#: builtin/rebase.c:919
 msgid "pass the argument through to the merge strategy"
 msgstr "passer les arguments jusqu'à la stratégie de fusion"
 
-#: builtin/rebase.c:904
+#: builtin/rebase.c:922
 msgid "rebase all reachable commits up to the root(s)"
 msgstr "rebaser tous les objets inatteignables depuis les racines"
 
-#: builtin/rebase.c:920
+#: builtin/rebase.c:938
 #, c-format
 msgid "could not exec %s"
 msgstr "impossible d'exécuter %s"
 
-#: builtin/rebase.c:938 git-legacy-rebase.sh:213
+#: builtin/rebase.c:956 git-legacy-rebase.sh:213
 msgid "It looks like 'git am' is in progress. Cannot rebase."
 msgstr "Il semble que 'git-am' soit en cours. Impossible de rebaser."
 
-#: builtin/rebase.c:979 git-legacy-rebase.sh:387
+#: builtin/rebase.c:997 git-legacy-rebase.sh:395
 msgid "No rebase in progress?"
 msgstr "Pas de rebasage en cours ?"
 
-#: builtin/rebase.c:982 git-legacy-rebase.sh:398
+#: builtin/rebase.c:1001 git-legacy-rebase.sh:406
 msgid "The --edit-todo action can only be used during interactive rebase."
 msgstr ""
 "L'action --edit-todo peut seulement être utilisée lors d'un rebasage "
 "interactif."
 
-#: builtin/rebase.c:995 git-legacy-rebase.sh:405
+#: builtin/rebase.c:1015 git-legacy-rebase.sh:413
 msgid "Cannot read HEAD"
 msgstr "Impossible de lire HEAD"
 
-#: builtin/rebase.c:1008 git-legacy-rebase.sh:408
+#: builtin/rebase.c:1028 git-legacy-rebase.sh:416
 msgid ""
 "You must edit all merge conflicts and then\n"
 "mark them as resolved using git add"
@@ -15382,21 +15414,21 @@ msgstr ""
 "Vous devez éditer tous les conflits de fusion et\n"
 "les marquer comme résolus avec git add"
 
-#: builtin/rebase.c:1026
+#: builtin/rebase.c:1047
 msgid "could not discard worktree changes"
 msgstr "Impossible de supprimer les changements de l'arbre de travail"
 
-#: builtin/rebase.c:1044
+#: builtin/rebase.c:1066
 #, c-format
 msgid "could not move back to %s"
 msgstr "Impossible de revenir à %s"
 
-#: builtin/rebase.c:1055 builtin/rm.c:368
+#: builtin/rebase.c:1077 builtin/rm.c:368
 #, c-format
 msgid "could not remove '%s'"
 msgstr "impossible de supprimer '%s'"
 
-#: builtin/rebase.c:1081
+#: builtin/rebase.c:1103
 #, c-format
 msgid ""
 "It seems that there is already a %s directory, and\n"
@@ -15414,166 +15446,181 @@ msgstr ""
 "\t%s\n"
 "Sinon, essayez\n"
 "\t%s\n"
-"puis relancez-moi à nouveau.  Je m'arrête au cas où vous auriez quelque chose\n"
+"puis relancez-moi à nouveau.  Je m'arrête au cas où vous auriez quelque "
+"chose\n"
 "d'important ici.\n"
 
-#: builtin/rebase.c:1102
+#: builtin/rebase.c:1124
 msgid "switch `C' expects a numerical value"
 msgstr "l'option `C' attend un valeur numérique"
 
-#: builtin/rebase.c:1139
+#: builtin/rebase.c:1161
 #, c-format
 msgid "Unknown mode: %s"
 msgstr "mode inconnu : %s"
 
-#: builtin/rebase.c:1161
+#: builtin/rebase.c:1183
 msgid "--strategy requires --merge or --interactive"
 msgstr "--stratégie requiert --merge ou --interactive"
 
-#: builtin/rebase.c:1204
+#: builtin/rebase.c:1226
 #, c-format
 msgid ""
 "error: cannot combine interactive options (--interactive, --exec, --rebase-"
 "merges, --preserve-merges, --keep-empty, --root + --onto) with am options "
 "(%s)"
-msgstr "erreur: impossible de combiner des options interactive (--interactive, --exec, --rebase-merges, --preserve-merges, --keep-empty, --root + --onto) avec les options am (%s)"
+msgstr ""
+"erreur: impossible de combiner des options interactive (--interactive, --"
+"exec, --rebase-merges, --preserve-merges, --keep-empty, --root + --onto) "
+"avec les options am (%s)"
 
-#: builtin/rebase.c:1209
+#: builtin/rebase.c:1231
 #, c-format
 msgid ""
 "error: cannot combine merge options (--merge, --strategy, --strategy-option) "
 "with am options (%s)"
-msgstr "erreur : impossible de combiner les options de fusion (--merge, --strategy, --strategy-option) avec les options am (%s)"
+msgstr ""
+"erreur : impossible de combiner les options de fusion (--merge, --strategy, "
+"--strategy-option) avec les options am (%s)"
 
-#: builtin/rebase.c:1229 git-legacy-rebase.sh:528
+#: builtin/rebase.c:1251 git-legacy-rebase.sh:536
 msgid "error: cannot combine '--preserve-merges' with '--rebase-merges'"
-msgstr "erreur : impossible de combiner '--preserve-merges' avec '--rebase-merges'"
+msgstr ""
+"erreur : impossible de combiner '--preserve-merges' avec '--rebase-merges'"
 
-#: builtin/rebase.c:1234 git-legacy-rebase.sh:534
+#: builtin/rebase.c:1256 git-legacy-rebase.sh:542
 msgid "error: cannot combine '--rebase-merges' with '--strategy-option'"
-msgstr "erreur : impossible de combiner '--rebase-merges' avec '--strategy-option'"
+msgstr ""
+"erreur : impossible de combiner '--rebase-merges' avec '--strategy-option'"
 
-#: builtin/rebase.c:1237 git-legacy-rebase.sh:536
+#: builtin/rebase.c:1259 git-legacy-rebase.sh:544
 msgid "error: cannot combine '--rebase-merges' with '--strategy'"
 msgstr "erreur : impossible de combiner '--rebase-merges' avec '--strategy'"
 
-#: builtin/rebase.c:1261
+#: builtin/rebase.c:1283
 #, c-format
 msgid "invalid upstream '%s'"
 msgstr "amont invalide '%s'"
 
-#: builtin/rebase.c:1267
+#: builtin/rebase.c:1289
 msgid "Could not create new root commit"
 msgstr "Impossible de créer un nouveau commit racine"
 
-#: builtin/rebase.c:1285
+#: builtin/rebase.c:1307
 #, c-format
 msgid "'%s': need exactly one merge base"
 msgstr "'%s': exactement une base de fusion nécessaire"
 
-#: builtin/rebase.c:1292
+#: builtin/rebase.c:1314
 #, c-format
 msgid "Does not point to a valid commit '%s'"
 msgstr "ne pointe pas sur une validation valide : '%s'"
 
-#: builtin/rebase.c:1317
+#: builtin/rebase.c:1339
 #, c-format
 msgid "fatal: no such branch/commit '%s'"
 msgstr "fatal : pas de branche ou commit '%s'"
 
-#: builtin/rebase.c:1325 builtin/submodule--helper.c:37
+#: builtin/rebase.c:1347 builtin/submodule--helper.c:37
 #: builtin/submodule--helper.c:1930
 #, c-format
 msgid "No such ref: %s"
 msgstr "Référence inexistante : %s"
 
-#: builtin/rebase.c:1337
+#: builtin/rebase.c:1359
 msgid "Could not resolve HEAD to a revision"
 msgstr "Impossible de résoudre le commit HEAD vers un révision"
 
-#: builtin/rebase.c:1377 git-legacy-rebase.sh:657
+#: builtin/rebase.c:1399 git-legacy-rebase.sh:665
 msgid "Cannot autostash"
 msgstr "Autoremisage impossible"
 
-#: builtin/rebase.c:1380
+#: builtin/rebase.c:1402
 #, c-format
 msgid "Unexpected stash response: '%s'"
 msgstr "réponse de remisage inattendue : '%s'"
 
-#: builtin/rebase.c:1386
+#: builtin/rebase.c:1408
 #, c-format
 msgid "Could not create directory for '%s'"
 msgstr "Impossible de créer le répertoire pour '%s'"
 
-#: builtin/rebase.c:1389
+#: builtin/rebase.c:1411
 #, c-format
 msgid "Created autostash: %s\n"
 msgstr "Autoremisage créé : %s\n"
 
-#: builtin/rebase.c:1392
+#: builtin/rebase.c:1414
 msgid "could not reset --hard"
 msgstr "impossible de réinitialiser --hard"
 
-#: builtin/rebase.c:1393 builtin/reset.c:113
+#: builtin/rebase.c:1415 builtin/reset.c:113
 #, c-format
 msgid "HEAD is now at %s"
 msgstr "HEAD est maintenant à %s"
 
-#: builtin/rebase.c:1409 git-legacy-rebase.sh:666
+#: builtin/rebase.c:1431 git-legacy-rebase.sh:674
 msgid "Please commit or stash them."
 msgstr "Veuillez les valider ou les remiser."
 
-#: builtin/rebase.c:1436
+#: builtin/rebase.c:1458
 #, c-format
 msgid "could not parse '%s'"
 msgstr "impossible d'analyser '%s'"
 
-#: builtin/rebase.c:1447
+#: builtin/rebase.c:1470
 #, c-format
 msgid "could not switch to %s"
 msgstr "Impossible de basculer vers %s"
 
-#: builtin/rebase.c:1458 git-legacy-rebase.sh:689
+#: builtin/rebase.c:1481 git-legacy-rebase.sh:697
 #, sh-format
 msgid "HEAD is up to date."
 msgstr "HEAD est à jour."
 
-#: builtin/rebase.c:1460
+#: builtin/rebase.c:1483
 #, c-format
 msgid "Current branch %s is up to date.\n"
 msgstr "La branche courante %s est à jour.\n"
 
-#: builtin/rebase.c:1468 git-legacy-rebase.sh:699
+#: builtin/rebase.c:1491 git-legacy-rebase.sh:707
 #, sh-format
 msgid "HEAD is up to date, rebase forced."
 msgstr "HEAD est à jour, rebasage forcé."
 
-#: builtin/rebase.c:1470
+#: builtin/rebase.c:1493
 #, c-format
 msgid "Current branch %s is up to date, rebase forced.\n"
 msgstr "La branche courante %s est à jour, rebasage forcé.\n"
 
-#: builtin/rebase.c:1478 git-legacy-rebase.sh:208
+#: builtin/rebase.c:1501 git-legacy-rebase.sh:208
 msgid "The pre-rebase hook refused to rebase."
 msgstr "Le crochet pre-rebase a refusé de rebaser."
 
-#: builtin/rebase.c:1484
+#: builtin/rebase.c:1508
+#, c-format
+msgid "Changes to %s:\n"
+msgstr "Changements vers %s :\n"
+
+#: builtin/rebase.c:1511
 #, c-format
 msgid "Changes from %s to %s:\n"
 msgstr "Changements de %s sur %s :\n"
 
-#: builtin/rebase.c:1507
+#: builtin/rebase.c:1536
 #, c-format
 msgid "First, rewinding head to replay your work on top of it...\n"
-msgstr "Rembobinage préalable de head pour pouvoir rejouer votre travail par-dessus...\n"
+msgstr ""
+"Rembobinage préalable de head pour pouvoir rejouer votre travail par-"
+"dessus...\n"
 
-#: builtin/rebase.c:1513
+#: builtin/rebase.c:1543
 msgid "Could not detach HEAD"
 msgstr "Impossible de détacher HEAD"
 
-#: builtin/rebase.c:1522
+#: builtin/rebase.c:1552
 #, c-format
-msgid "Fast-forwarded %s to %s. \n"
+msgid "Fast-forwarded %s to %s.\n"
 msgstr "Avance rapide de %s sur %s.\n"
 
 #: builtin/rebase--interactive.c:24
@@ -16601,7 +16648,7 @@ msgstr "graft pour '%s' non nécessaire"
 msgid "new commit is the same as the old one: '%s'"
 msgstr "le nouveau commit est identique à l'ancien : '%s'"
 
-#: builtin/replace.c:514
+#: builtin/replace.c:515
 #, c-format
 msgid ""
 "could not convert the following graft(s):\n"
@@ -16610,71 +16657,71 @@ msgstr ""
 "impossible de convertir la(les) greffe(s) suivante(s) :\n"
 "%s"
 
-#: builtin/replace.c:535
+#: builtin/replace.c:536
 msgid "list replace refs"
 msgstr "afficher les références de remplacement"
 
-#: builtin/replace.c:536
+#: builtin/replace.c:537
 msgid "delete replace refs"
 msgstr "supprimer les références de remplacement"
 
-#: builtin/replace.c:537
+#: builtin/replace.c:538
 msgid "edit existing object"
 msgstr "éditer l'objet existant"
 
-#: builtin/replace.c:538
+#: builtin/replace.c:539
 msgid "change a commit's parents"
 msgstr "Modifier les parents d'un commit"
 
-#: builtin/replace.c:539
+#: builtin/replace.c:540
 msgid "convert existing graft file"
 msgstr "convertir le fichier de greffe existant"
 
-#: builtin/replace.c:540
+#: builtin/replace.c:541
 msgid "replace the ref if it exists"
 msgstr "remplacer la référence si elle existe"
 
-#: builtin/replace.c:542
+#: builtin/replace.c:543
 msgid "do not pretty-print contents for --edit"
 msgstr "afficher sans mise en forme pour --edit"
 
-#: builtin/replace.c:543
+#: builtin/replace.c:544
 msgid "use this format"
 msgstr "utiliser ce format"
 
-#: builtin/replace.c:556
+#: builtin/replace.c:557
 msgid "--format cannot be used when not listing"
 msgstr "--format ne peut pas être utilisé sans lister"
 
-#: builtin/replace.c:564
+#: builtin/replace.c:565
 msgid "-f only makes sense when writing a replacement"
 msgstr "-f n'a de sens qu'en écrivant un remplacement"
 
-#: builtin/replace.c:568
+#: builtin/replace.c:569
 msgid "--raw only makes sense with --edit"
 msgstr "--raw n'a de sens qu'avec l'option --edit"
 
-#: builtin/replace.c:574
+#: builtin/replace.c:575
 msgid "-d needs at least one argument"
 msgstr "-d requiert au moins un argument"
 
-#: builtin/replace.c:580
+#: builtin/replace.c:581
 msgid "bad number of arguments"
 msgstr "mauvais nombre d'arguments"
 
-#: builtin/replace.c:586
+#: builtin/replace.c:587
 msgid "-e needs exactly one argument"
 msgstr "-e requiert un seul argument"
 
-#: builtin/replace.c:592
+#: builtin/replace.c:593
 msgid "-g needs at least one argument"
 msgstr "-g requiert au moins un argument"
 
-#: builtin/replace.c:598
+#: builtin/replace.c:599
 msgid "--convert-graft-file takes no argument"
 msgstr "--convert-graft-file ne supporte aucun argument"
 
-#: builtin/replace.c:604
+#: builtin/replace.c:605
 msgid "only one pattern can be given with -l"
 msgstr "-l n'accepte qu'un motifs"
 
@@ -16821,8 +16868,10 @@ msgid ""
 "to make this the default.\n"
 msgstr ""
 "\n"
-"Les modifications non-indexées on pris %.2f secondes à énumerer après reset.\n"
-"Vous pouvez utiliser '--quiet' pour éviter ce message. Réglez le paramètre de\n"
+"Les modifications non-indexées on pris %.2f secondes à énumerer après "
+"reset.\n"
+"Vous pouvez utiliser '--quiet' pour éviter ce message. Réglez le paramètre "
+"de\n"
 "config reset.quiet à true pour avoir ce comportement en permanence.\n"
 
 #: builtin/reset.c:400
@@ -17400,7 +17449,9 @@ msgstr "git submodule--helper foreach [--quiet] [--recursive] <chemin>"
 msgid ""
 "could not look up configuration '%s'. Assuming this repository is its own "
 "authoritative upstream."
-msgstr "impossible de trouver la configuration '%s'. Ce dépôt est considéré comme son propre amont d'autorité."
+msgstr ""
+"impossible de trouver la configuration '%s'. Ce dépôt est considéré comme "
+"son propre amont d'autorité."
 
 #: builtin/submodule--helper.c:663
 #, c-format
@@ -17626,7 +17677,8 @@ msgstr "mode de mise à jour '%s' invalide pour le chemin de sous-module '%s'"
 #: builtin/submodule--helper.c:1473
 #, c-format
 msgid "Invalid update mode '%s' configured for submodule path '%s'"
-msgstr "Mode de mise à jour '%s'invalide configuré pour le chemin de sous-module '%s'"
+msgstr ""
+"Mode de mise à jour '%s'invalide configuré pour le chemin de sous-module '%s'"
 
 #: builtin/submodule--helper.c:1566
 #, c-format
@@ -17731,7 +17783,8 @@ msgstr "git submodule--helper config --check-writeable"
 #: builtin/submodule--helper.c:2175 git-submodule.sh:169
 #, sh-format
 msgid "please make sure that the .gitmodules file is in the working tree"
-msgstr "veuillez vous assurer que le fichier .gitmodules dans l'arbre de travail"
+msgstr ""
+"veuillez vous assurer que le fichier .gitmodules dans l'arbre de travail"
 
 #: builtin/submodule--helper.c:2225
 #, c-format
@@ -18433,7 +18486,8 @@ msgid ""
 "use 'add -f -f' to override, or 'unlock' and 'prune' or 'remove' to clear"
 msgstr ""
 "'%s' est un arbre de travail manquant mais verrouillé ;\n"
-"utilisez 'add -f -f' pour passer outre, ou 'unlock' et 'prune' ou 'remove' pour corriger"
+"utilisez 'add -f -f' pour passer outre, ou 'unlock' et 'prune' ou 'remove' "
+"pour corriger"
 
 #: builtin/worktree.c:258
 #, c-format
@@ -18548,7 +18602,8 @@ msgstr ""
 
 #: builtin/worktree.c:751
 msgid "force move even if worktree is dirty or locked"
-msgstr "forcer le déplacement même si l'arbre de travail est sale ou verrouillé"
+msgstr ""
+"forcer le déplacement même si l'arbre de travail est sale ou verrouillé"
 
 #: builtin/worktree.c:774 builtin/worktree.c:901
 #, c-format
@@ -18571,7 +18626,8 @@ msgid ""
 "cannot move a locked working tree, lock reason: %s\n"
 "use 'move -f -f' to override or unlock first"
 msgstr ""
-"impossible de déplacer un arbre de travail verrouillé, raison du verrouillage : %s\n"
+"impossible de déplacer un arbre de travail verrouillé, raison du "
+"verrouillage : %s\n"
 "utilisez 'move -f -f' pour outrepasser ou déverrouiller avant"
 
 #: builtin/worktree.c:795
@@ -18609,7 +18665,8 @@ msgstr "impossible de lancer 'git status' sur '%s', code %d"
 
 #: builtin/worktree.c:883
 msgid "force removal even if worktree is dirty or locked"
-msgstr "forcer la suppression même si l'arbre de travail est sale ou verrouillé"
+msgstr ""
+"forcer la suppression même si l'arbre de travail est sale ou verrouillé"
 
 #: builtin/worktree.c:906
 #, c-format
@@ -18617,7 +18674,8 @@ msgid ""
 "cannot remove a locked working tree, lock reason: %s\n"
 "use 'remove -f -f' to override or unlock first"
 msgstr ""
-"impossible de supprimer un arbre de travail verrouillé, raison du verrouillage : %s\n"
+"impossible de supprimer un arbre de travail verrouillé, raison du "
+"verrouillage : %s\n"
 "utilisez 'move -f -f' pour outrepasser ou déverrouiller avant"
 
 #: builtin/worktree.c:908
@@ -18769,7 +18827,7 @@ msgid "Public key pinning not supported with cURL < 7.44.0"
 msgstr "L'épinglage de clé publique n'est pas supporté avec cuRL < 7.44.0"
 
 #: http.c:837
-msgid "CURLSSLOPT_NO_REVOKE not suported with cURL < 7.44.0"
+msgid "CURLSSLOPT_NO_REVOKE not supported with cURL < 7.44.0"
 msgstr "CURLSSLOPT_NO_REMOVE n'est pas supporté avec cuRL < 7.44.0"
 
 #: http.c:910
@@ -18784,7 +18842,9 @@ msgstr "Dorsale SSL '%s' non supportée. Dorsales SSL supportées :"
 #: http.c:1053
 #, c-format
 msgid "Could not set SSL backend to '%s': cURL was built without SSL backends"
-msgstr "Impossible de régler la dorsale SSL à '%s' : cURL a été construit sans dorsale SSL"
+msgstr ""
+"Impossible de régler la dorsale SSL à '%s' : cURL a été construit sans "
+"dorsale SSL"
 
 #: http.c:1057
 #, c-format
@@ -19731,12 +19791,12 @@ msgstr "Essai de fusion simple avec $pretty_name"
 msgid "Simple merge did not work, trying automatic merge."
 msgstr "La fusion simple a échoué, essai avec la fusion automatique."
 
-#: git-legacy-rebase.sh:426
+#: git-legacy-rebase.sh:434
 #, sh-format
 msgid "Could not move back to $head_name"
 msgstr "Impossible de revenir à $head_name"
 
-#: git-legacy-rebase.sh:452
+#: git-legacy-rebase.sh:460
 #, sh-format
 msgid ""
 "It seems that there is already a $state_dir_base directory, and\n"
@@ -19758,62 +19818,67 @@ msgstr ""
 "chose\n"
 "d'important ici."
 
-#: git-legacy-rebase.sh:517
+#: git-legacy-rebase.sh:525
 msgid "error: cannot combine '--signoff' with '--preserve-merges'"
 msgstr "erreur : '--signoff' et '--preserve-merges' sont incompatibles"
 
-#: git-legacy-rebase.sh:562
+#: git-legacy-rebase.sh:570
 #, sh-format
 msgid "invalid upstream '$upstream_name'"
 msgstr "invalide '$upstream_name' en amont"
 
-#: git-legacy-rebase.sh:586
+#: git-legacy-rebase.sh:594
 #, sh-format
 msgid "$onto_name: there are more than one merge bases"
 msgstr "$onto_name : il y a plus d'une base de fusion"
 
-#: git-legacy-rebase.sh:589 git-legacy-rebase.sh:593
+#: git-legacy-rebase.sh:597 git-legacy-rebase.sh:601
 #, sh-format
 msgid "$onto_name: there is no merge base"
 msgstr "$onto_name : il n'y a pas de base de fusion"
 
-#: git-legacy-rebase.sh:598
+#: git-legacy-rebase.sh:606
 #, sh-format
 msgid "Does not point to a valid commit: $onto_name"
 msgstr "Ne pointe pas sur une validation valide : $onto_name"
 
-#: git-legacy-rebase.sh:624
+#: git-legacy-rebase.sh:632
 #, sh-format
 msgid "fatal: no such branch/commit '$branch_name'"
 msgstr "fatal : pas de branche ou commit '$branch_name'"
 
-#: git-legacy-rebase.sh:662
+#: git-legacy-rebase.sh:670
 #, sh-format
 msgid "Created autostash: $stash_abbrev"
 msgstr "Autoremisage créé : $stash_abbrev"
 
-#: git-legacy-rebase.sh:691
+#: git-legacy-rebase.sh:699
 #, sh-format
 msgid "Current branch $branch_name is up to date."
 msgstr "La branche courante $branch_name est à jour."
 
-#: git-legacy-rebase.sh:701
+#: git-legacy-rebase.sh:709
 #, sh-format
 msgid "Current branch $branch_name is up to date, rebase forced."
 msgstr "La branche courante $branch_name est à jour, rebasage forcé."
 
-#: git-legacy-rebase.sh:713
+#: git-legacy-rebase.sh:723
+#, sh-format
+msgid "Changes to $onto:"
+msgstr "Changements sur $onto :"
+
+#: git-legacy-rebase.sh:725
 #, sh-format
 msgid "Changes from $mb to $onto:"
 msgstr "Changements de $mb sur $onto :"
 
-#: git-legacy-rebase.sh:722
+#: git-legacy-rebase.sh:736
 msgid "First, rewinding head to replay your work on top of it..."
 msgstr ""
 "Rembobinage préalable de head pour pouvoir rejouer votre travail par-"
 "dessus..."
 
-#: git-legacy-rebase.sh:732
+#: git-legacy-rebase.sh:746
 #, sh-format
 msgid "Fast-forwarded $branch_name to $onto_name."
 msgstr "$branch_name mise à jour en avance rapide sur $onto_name."
