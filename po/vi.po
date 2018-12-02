@@ -6,10 +6,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: git v2.20.0 round 2\n"
+"Project-Id-Version: git v2.20.0 round 3\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2018-12-01 16:14+0800\n"
-"PO-Revision-Date: 2018-12-02 08:59+0700\n"
+"POT-Creation-Date: 2018-12-02 10:55+0800\n"
+"PO-Revision-Date: 2018-12-02 14:12+0700\n"
 "Last-Translator: Trần Ngọc Quân <vnwildman@gmail.com>\n"
 "Language-Team: Vietnamese <translation-team-vi@lists.sourceforge.net>\n"
 "Language: vi\n"
@@ -694,7 +694,7 @@ msgstr "đảm bảo rằng có ít nhất <n> dòng nội dung khớp"
 
 #: apply.c:4999 builtin/am.c:2197 builtin/interpret-trailers.c:97
 #: builtin/interpret-trailers.c:99 builtin/interpret-trailers.c:101
-#: builtin/pack-objects.c:3312 builtin/rebase.c:840
+#: builtin/pack-objects.c:3312 builtin/rebase.c:857
 msgid "action"
 msgstr "hành động"
 
@@ -5095,8 +5095,8 @@ msgstr "Không hòa trộn %.*s"
 msgid "could not copy '%s' to '%s'"
 msgstr "không thể chép “%s” sang “%s”"
 
-#: sequencer.c:2824 sequencer.c:3242 builtin/rebase.c:580 builtin/rebase.c:1000
-#: builtin/rebase.c:1351 builtin/rebase.c:1405
+#: sequencer.c:2824 sequencer.c:3242 builtin/rebase.c:580 builtin/rebase.c:1019
+#: builtin/rebase.c:1372 builtin/rebase.c:1426
 msgid "could not read index"
 msgstr "không thể đọc bảng mục lục"
 
@@ -7642,7 +7642,7 @@ msgstr "chuyển nó qua git-apply"
 
 #: builtin/am.c:2215 builtin/commit.c:1340 builtin/fmt-merge-msg.c:671
 #: builtin/fmt-merge-msg.c:674 builtin/grep.c:868 builtin/merge.c:239
-#: builtin/pull.c:151 builtin/pull.c:209 builtin/rebase.c:837
+#: builtin/pull.c:151 builtin/pull.c:209 builtin/rebase.c:854
 #: builtin/repack.c:317 builtin/repack.c:321 builtin/repack.c:323
 #: builtin/show-branch.c:651 builtin/show-ref.c:171 builtin/tag.c:386
 #: parse-options.h:144 parse-options.h:146 parse-options.h:268
@@ -7650,7 +7650,7 @@ msgid "n"
 msgstr "n"
 
 #: builtin/am.c:2221 builtin/branch.c:637 builtin/for-each-ref.c:38
-#: builtin/replace.c:543 builtin/tag.c:422 builtin/verify-tag.c:39
+#: builtin/replace.c:544 builtin/tag.c:422 builtin/verify-tag.c:39
 msgid "format"
 msgstr "định dạng"
 
@@ -7695,12 +7695,12 @@ msgid "use current timestamp for author date"
 msgstr "dùng dấu thời gian hiện tại cho ngày tác giả"
 
 #: builtin/am.c:2253 builtin/commit.c:1483 builtin/merge.c:273
-#: builtin/pull.c:184 builtin/rebase.c:881 builtin/rebase--interactive.c:183
+#: builtin/pull.c:184 builtin/rebase.c:898 builtin/rebase--interactive.c:183
 #: builtin/revert.c:113 builtin/tag.c:402
 msgid "key-id"
 msgstr "mã-số-khóa"
 
-#: builtin/am.c:2254 builtin/rebase.c:882 builtin/rebase--interactive.c:184
+#: builtin/am.c:2254 builtin/rebase.c:899 builtin/rebase--interactive.c:184
 msgid "GPG-sign commits"
 msgstr "lần chuyển giao ký-GPG"
 
@@ -9248,7 +9248,7 @@ msgid "create a shallow clone since a specific time"
 msgstr "tạo bản sao không đầy đủ từ thời điểm đã cho"
 
 #: builtin/clone.c:127 builtin/fetch.c:146 builtin/fetch.c:169
-#: builtin/rebase.c:814
+#: builtin/rebase.c:831
 msgid "revision"
 msgstr "điểm xét duyệt"
 
@@ -9863,7 +9863,7 @@ msgid "terminate entries with NUL"
 msgstr "chấm dứt các mục bằng NUL"
 
 #: builtin/commit.c:1327 builtin/commit.c:1331 builtin/commit.c:1509
-#: builtin/fast-export.c:1007 builtin/fast-export.c:1010 builtin/rebase.c:893
+#: builtin/fast-export.c:1007 builtin/fast-export.c:1010 builtin/rebase.c:910
 #: builtin/tag.c:400
 msgid "mode"
 msgstr "chế độ"
@@ -12780,7 +12780,7 @@ msgstr ""
 msgid "do not print remote URL"
 msgstr "không hiển thị URL máy chủ"
 
-#: builtin/ls-remote.c:60 builtin/ls-remote.c:62 builtin/rebase.c:886
+#: builtin/ls-remote.c:60 builtin/ls-remote.c:62 builtin/rebase.c:903
 msgid "exec"
 msgstr "thực thi"
 
@@ -12925,7 +12925,7 @@ msgid "verify that the named commit has a valid GPG signature"
 msgstr "thẩm tra xem lần chuyển giao có tên đó có chữ ký GPG hợp lệ hay không"
 
 #: builtin/merge.c:255 builtin/notes.c:784 builtin/pull.c:177
-#: builtin/rebase.c:899 builtin/rebase--interactive.c:186 builtin/revert.c:110
+#: builtin/rebase.c:916 builtin/rebase--interactive.c:186 builtin/revert.c:110
 msgid "strategy"
 msgstr "chiến lược"
 
@@ -14566,18 +14566,18 @@ msgid ""
 "\n"
 "To push to the branch of the same name on the remote, use\n"
 "\n"
-"    git push %s %s\n"
+"    git push %s HEAD\n"
 "%s"
 msgstr ""
 "Nhánh thượng nguồn của nhánh hiện tại của bạn không khớp\n"
-"với tên của nhánh hiện tại của bạn.  Để đẩy lên đến nhánh thượng nguồn\n"
-"trên máy chủ, sử dụng\n"
+"với tên của nhánh hiện tại của bạn.  Để đẩy lên đến nhánh\n"
+"thượng nguồn trên máy chủ, sử dụng\n"
 "\n"
 "    git push %s HEAD:%s\n"
 "\n"
-"Để push tới nhánh cùng tên trên máy chủ, sử dụng\n"
+"Để đẩy tới nhánh cùng tên trên máy chủ, sử dụng\n"
 "\n"
-"    git push %s %s\n"
+"    git push %s HEAD\n"
 "%s"
 
 #: builtin/push.c:183
@@ -15037,153 +15037,153 @@ msgstr ""
 "    git branch --set-upstream-to=%s/<nhánh> %s\n"
 "\n"
 
-#: builtin/rebase.c:815
+#: builtin/rebase.c:832
 msgid "rebase onto given branch instead of upstream"
 msgstr "cải tổ vào nhánh đã cho thay cho thượng nguồn."
 
-#: builtin/rebase.c:817
+#: builtin/rebase.c:834
 msgid "allow pre-rebase hook to run"
 msgstr "cho phép móc (hook) pre-rebase được chạy"
 
-#: builtin/rebase.c:819
+#: builtin/rebase.c:836
 msgid "be quiet. implies --no-stat"
 msgstr "hãy im lặng. ý là --no-stat"
 
-#: builtin/rebase.c:822
+#: builtin/rebase.c:839
 msgid "display a diffstat of what changed upstream"
 msgstr "hiển thị một diffstat của những thay đổi thượng nguồn"
 
-#: builtin/rebase.c:825
+#: builtin/rebase.c:842
 msgid "do not show diffstat of what changed upstream"
 msgstr "đừng hiển thị diffstat của những thay đổi thượng nguồn"
 
-#: builtin/rebase.c:828
+#: builtin/rebase.c:845
 msgid "add a Signed-off-by: line to each commit"
 msgstr "thêm dòng Signed-off-by: cho từng lần chuyển giao"
 
-#: builtin/rebase.c:830 builtin/rebase.c:834 builtin/rebase.c:836
+#: builtin/rebase.c:847 builtin/rebase.c:851 builtin/rebase.c:853
 msgid "passed to 'git am'"
 msgstr "chuyển cho “git am”"
 
-#: builtin/rebase.c:838 builtin/rebase.c:840
+#: builtin/rebase.c:855 builtin/rebase.c:857
 msgid "passed to 'git apply'"
 msgstr "chuyển cho “git apply”"
 
-#: builtin/rebase.c:842 builtin/rebase.c:845
+#: builtin/rebase.c:859 builtin/rebase.c:862
 msgid "cherry-pick all commits, even if unchanged"
 msgstr ""
 "cherry-pick tất cả các lần chuyển giao, ngay cả khi không có thay đổi gì"
 
-#: builtin/rebase.c:847
+#: builtin/rebase.c:864
 msgid "continue"
 msgstr "tiếp tục"
 
-#: builtin/rebase.c:850
+#: builtin/rebase.c:867
 msgid "skip current patch and continue"
 msgstr "bỏ qua miếng vá hiện hành và tiếp tục"
 
-#: builtin/rebase.c:852
+#: builtin/rebase.c:869
 msgid "abort and check out the original branch"
 msgstr "bãi bỏ và lấy ra nhánh nguyên thủy"
 
-#: builtin/rebase.c:855
+#: builtin/rebase.c:872
 msgid "abort but keep HEAD where it is"
 msgstr "bãi bỏ nhưng vẫn vẫn giữ HEAD chỉ đến nó"
 
-#: builtin/rebase.c:856
+#: builtin/rebase.c:873
 msgid "edit the todo list during an interactive rebase"
 msgstr "sửa danh sách cần làm trong quá trình “rebase” (cải tổ) tương tác"
 
-#: builtin/rebase.c:859
+#: builtin/rebase.c:876
 msgid "show the patch file being applied or merged"
 msgstr "hiển thị miếng vá đã được áp dụng hay hòa trộn"
 
-#: builtin/rebase.c:862
+#: builtin/rebase.c:879
 msgid "use merging strategies to rebase"
 msgstr "dùng chiến lược hòa trộn để cải tổ"
 
-#: builtin/rebase.c:866
+#: builtin/rebase.c:883
 msgid "let the user edit the list of commits to rebase"
 msgstr "để người dùng sửa danh sách các lần chuyển giao muốn cải tổ"
 
-#: builtin/rebase.c:870
+#: builtin/rebase.c:887
 msgid "try to recreate merges instead of ignoring them"
 msgstr "thử khôi phục lại các hòa trộn thay vì bỏ qua chúng"
 
-#: builtin/rebase.c:874
-msgid "allow rerere to update index  with resolved conflict"
+#: builtin/rebase.c:891
+msgid "allow rerere to update index with resolved conflict"
 msgstr ""
-"cho phép rerere để cập nhật bảng mục lục với các xung đột đã được giải quyết"
+"cho phép rerere cập nhật bảng mục lục với các xung đột đã được giải quyết"
 
-#: builtin/rebase.c:877
+#: builtin/rebase.c:894
 msgid "preserve empty commits during rebase"
 msgstr "ngăn cấm các lần chuyển giao trống rỗng trong suốt quá trình cải tổ"
 
-#: builtin/rebase.c:879
+#: builtin/rebase.c:896
 msgid "move commits that begin with squash!/fixup! under -i"
 msgstr "di chuyển các lần chuyển giao mà bắt đầu bằng squash!/fixup! dưới -i"
 
-#: builtin/rebase.c:885
+#: builtin/rebase.c:902
 msgid "automatically stash/stash pop before and after"
 msgstr "tự động stash/stash pop trước và sau"
 
-#: builtin/rebase.c:887
+#: builtin/rebase.c:904
 msgid "add exec lines after each commit of the editable list"
 msgstr "thêm các dòng thực thi sau từng lần chuyển giao của danh sách sửa được"
 
-#: builtin/rebase.c:891
+#: builtin/rebase.c:908
 msgid "allow rebasing commits with empty messages"
 msgstr "chấp nhận cải tổ các chuyển giao mà không ghi chú gì"
 
-#: builtin/rebase.c:894
+#: builtin/rebase.c:911
 msgid "try to rebase merges instead of skipping them"
 msgstr "cố thử cải tổ các hòa trộn thay vì bỏ qua chúng"
 
-#: builtin/rebase.c:897
+#: builtin/rebase.c:914
 msgid "use 'merge-base --fork-point' to refine upstream"
 msgstr "dùng “merge-base --fork-point” để định nghĩa lại thượng nguồn"
 
-#: builtin/rebase.c:899
+#: builtin/rebase.c:916
 msgid "use the given merge strategy"
 msgstr "dùng chiến lược hòa trộn đã cho"
 
-#: builtin/rebase.c:901 builtin/revert.c:111
+#: builtin/rebase.c:918 builtin/revert.c:111
 msgid "option"
 msgstr "tùy chọn"
 
-#: builtin/rebase.c:902
+#: builtin/rebase.c:919
 msgid "pass the argument through to the merge strategy"
 msgstr "chuyển thao số đến chiến lược hòa trộn"
 
-#: builtin/rebase.c:905
+#: builtin/rebase.c:922
 msgid "rebase all reachable commits up to the root(s)"
 msgstr "cải tổ tất các các lần chuyển giao cho đến root"
 
-#: builtin/rebase.c:921
+#: builtin/rebase.c:938
 #, c-format
 msgid "could not exec %s"
 msgstr "không thể thực thi %s"
 
-#: builtin/rebase.c:939 git-legacy-rebase.sh:213
+#: builtin/rebase.c:956 git-legacy-rebase.sh:213
 msgid "It looks like 'git am' is in progress. Cannot rebase."
 msgstr ""
 "Hình như đang trong quá trình thực hiện lệnh “git-am”. Không thể rebase."
 
-#: builtin/rebase.c:980 git-legacy-rebase.sh:395
+#: builtin/rebase.c:997 git-legacy-rebase.sh:395
 msgid "No rebase in progress?"
 msgstr "Không có tiến trình rebase nào phải không?"
 
-#: builtin/rebase.c:983 git-legacy-rebase.sh:406
+#: builtin/rebase.c:1001 git-legacy-rebase.sh:406
 msgid "The --edit-todo action can only be used during interactive rebase."
 msgstr ""
 "Hành động “--edit-todo” chỉ có thể dùng trong quá trình “rebase” (sửa lịch "
 "sử) tương tác."
 
-#: builtin/rebase.c:996 git-legacy-rebase.sh:413
+#: builtin/rebase.c:1015 git-legacy-rebase.sh:413
 msgid "Cannot read HEAD"
 msgstr "Không thể đọc HEAD"
 
-#: builtin/rebase.c:1009 git-legacy-rebase.sh:416
+#: builtin/rebase.c:1028 git-legacy-rebase.sh:416
 msgid ""
 "You must edit all merge conflicts and then\n"
 "mark them as resolved using git add"
@@ -15191,21 +15191,21 @@ msgstr ""
 "Bạn phải sửa tất cả các lần hòa trộn xung đột và sau\n"
 "đó đánh dấu chúng là cần xử lý sử dụng lệnh git add"
 
-#: builtin/rebase.c:1027
+#: builtin/rebase.c:1047
 msgid "could not discard worktree changes"
 msgstr "không thể loại bỏ các thay đổi cây-làm-việc"
 
-#: builtin/rebase.c:1045
+#: builtin/rebase.c:1066
 #, c-format
 msgid "could not move back to %s"
 msgstr "không thể quay trở lại %s"
 
-#: builtin/rebase.c:1056 builtin/rm.c:368
+#: builtin/rebase.c:1077 builtin/rm.c:368
 #, c-format
 msgid "could not remove '%s'"
 msgstr "không thể gỡ bỏ “%s”"
 
-#: builtin/rebase.c:1082
+#: builtin/rebase.c:1103
 #, c-format
 msgid ""
 "It seems that there is already a %s directory, and\n"
@@ -15226,20 +15226,20 @@ msgstr ""
 "và chạy TÔI lần nữa. TÔI dừng lại trong trường hợp bạn vẫn\n"
 "có một số thứ quý giá ở đây.\n"
 
-#: builtin/rebase.c:1103
+#: builtin/rebase.c:1124
 msgid "switch `C' expects a numerical value"
 msgstr "tùy chọn “%c” cần một giá trị bằng số"
 
-#: builtin/rebase.c:1140
+#: builtin/rebase.c:1161
 #, c-format
 msgid "Unknown mode: %s"
 msgstr "Không hiểu chế độ: %s"
 
-#: builtin/rebase.c:1162
+#: builtin/rebase.c:1183
 msgid "--strategy requires --merge or --interactive"
 msgstr "--strategy cần --merge hay --interactive"
 
-#: builtin/rebase.c:1205
+#: builtin/rebase.c:1226
 #, c-format
 msgid ""
 "error: cannot combine interactive options (--interactive, --exec, --rebase-"
@@ -15250,7 +15250,7 @@ msgstr ""
 "rebase-merges, --preserve-merges, --keep-empty, --root + --onto) với các tùy "
 "chọn am (%s)"
 
-#: builtin/rebase.c:1210
+#: builtin/rebase.c:1231
 #, c-format
 msgid ""
 "error: cannot combine merge options (--merge, --strategy, --strategy-option) "
@@ -15259,137 +15259,142 @@ msgstr ""
 "lỗi: không thể kết hợp các tùy chọn hòa trộn (--merge, --strategy, --"
 "strategy-option) với một tùy chọn am (%s)"
 
-#: builtin/rebase.c:1230 git-legacy-rebase.sh:536
+#: builtin/rebase.c:1251 git-legacy-rebase.sh:536
 msgid "error: cannot combine '--preserve-merges' with '--rebase-merges'"
 msgstr "lỗi: không thể kết hợp “--preserve_merges” với “--rebase-merges”"
 
-#: builtin/rebase.c:1235 git-legacy-rebase.sh:542
+#: builtin/rebase.c:1256 git-legacy-rebase.sh:542
 msgid "error: cannot combine '--rebase-merges' with '--strategy-option'"
 msgstr "lỗi: không thể kết hợp “--rebase_merges” với “--strategy-option”"
 
-#: builtin/rebase.c:1238 git-legacy-rebase.sh:544
+#: builtin/rebase.c:1259 git-legacy-rebase.sh:544
 msgid "error: cannot combine '--rebase-merges' with '--strategy'"
 msgstr "lỗi: không thể kết hợp “--rebase-merges” với “--strategy”"
 
-#: builtin/rebase.c:1262
+#: builtin/rebase.c:1283
 #, c-format
 msgid "invalid upstream '%s'"
 msgstr "thượng nguồn không hợp lệ “%s”"
 
-#: builtin/rebase.c:1268
+#: builtin/rebase.c:1289
 msgid "Could not create new root commit"
 msgstr "Không thể tạo lần chuyển giao gốc mới"
 
-#: builtin/rebase.c:1286
+#: builtin/rebase.c:1307
 #, c-format
 msgid "'%s': need exactly one merge base"
 msgstr "“%s”: cần chính xác một cơ sở hòa trộn"
 
-#: builtin/rebase.c:1293
+#: builtin/rebase.c:1314
 #, c-format
 msgid "Does not point to a valid commit '%s'"
 msgstr "Không chỉ đến một lần chuyển giao không hợp lệ “%s”"
 
-#: builtin/rebase.c:1318
+#: builtin/rebase.c:1339
 #, c-format
 msgid "fatal: no such branch/commit '%s'"
 msgstr "nghiêm trọng: không có nhánh/lần chuyển giao “%s” như thế"
 
-#: builtin/rebase.c:1326 builtin/submodule--helper.c:37
+#: builtin/rebase.c:1347 builtin/submodule--helper.c:37
 #: builtin/submodule--helper.c:1930
 #, c-format
 msgid "No such ref: %s"
 msgstr "Không có tham chiếu nào như thế: %s"
 
-#: builtin/rebase.c:1338
+#: builtin/rebase.c:1359
 msgid "Could not resolve HEAD to a revision"
 msgstr "Không thể phân giải lần chuyển giao HEAD đến một điểm xét duyệt"
 
-#: builtin/rebase.c:1378 git-legacy-rebase.sh:665
+#: builtin/rebase.c:1399 git-legacy-rebase.sh:665
 msgid "Cannot autostash"
 msgstr "Không thể autostash"
 
-#: builtin/rebase.c:1381
+#: builtin/rebase.c:1402
 #, c-format
 msgid "Unexpected stash response: '%s'"
 msgstr "Gặp đáp ứng stash không cần: “%s”"
 
-#: builtin/rebase.c:1387
+#: builtin/rebase.c:1408
 #, c-format
 msgid "Could not create directory for '%s'"
 msgstr "Không thể tạo thư mục cho “%s”"
 
-#: builtin/rebase.c:1390
+#: builtin/rebase.c:1411
 #, c-format
 msgid "Created autostash: %s\n"
 msgstr "Đã tạo autostash: %s\n"
 
-#: builtin/rebase.c:1393
+#: builtin/rebase.c:1414
 msgid "could not reset --hard"
 msgstr "không thể reset --hard"
 
-#: builtin/rebase.c:1394 builtin/reset.c:113
+#: builtin/rebase.c:1415 builtin/reset.c:113
 #, c-format
 msgid "HEAD is now at %s"
 msgstr "HEAD hiện giờ tại %s"
 
-#: builtin/rebase.c:1410 git-legacy-rebase.sh:674
+#: builtin/rebase.c:1431 git-legacy-rebase.sh:674
 msgid "Please commit or stash them."
 msgstr "Xin hãy chuyển giao hoặc tạm cất (stash) chúng."
 
-#: builtin/rebase.c:1437
+#: builtin/rebase.c:1458
 #, c-format
 msgid "could not parse '%s'"
 msgstr "không thể phân tích cú pháp “%s”"
 
-#: builtin/rebase.c:1448
+#: builtin/rebase.c:1470
 #, c-format
 msgid "could not switch to %s"
 msgstr "không thể chuyển đến %s"
 
-#: builtin/rebase.c:1459 git-legacy-rebase.sh:697
+#: builtin/rebase.c:1481 git-legacy-rebase.sh:697
 #, sh-format
 msgid "HEAD is up to date."
 msgstr "HEAD đã cập nhật."
 
-#: builtin/rebase.c:1461
+#: builtin/rebase.c:1483
 #, c-format
 msgid "Current branch %s is up to date.\n"
 msgstr "Nhánh hiện tại %s đã được cập nhật rồi.\n"
 
-#: builtin/rebase.c:1469 git-legacy-rebase.sh:707
+#: builtin/rebase.c:1491 git-legacy-rebase.sh:707
 #, sh-format
 msgid "HEAD is up to date, rebase forced."
 msgstr "HEAD hiện đã được cập nhật rồi, bị ép buộc rebase."
 
-#: builtin/rebase.c:1471
+#: builtin/rebase.c:1493
 #, c-format
 msgid "Current branch %s is up to date, rebase forced.\n"
 msgstr "Nhánh hiện tại %s đã được cập nhật rồi, lệnh rebase ép buộc.\n"
 
-#: builtin/rebase.c:1479 git-legacy-rebase.sh:208
+#: builtin/rebase.c:1501 git-legacy-rebase.sh:208
 msgid "The pre-rebase hook refused to rebase."
 msgstr "Móc (hook) pre-rebase từ chối rebase."
 
-#: builtin/rebase.c:1485
+#: builtin/rebase.c:1508
+#, c-format
+msgid "Changes to %s:\n"
+msgstr "Thay đổi thành %s:\n"
+
+#: builtin/rebase.c:1511
 #, c-format
 msgid "Changes from %s to %s:\n"
 msgstr "Thay đổi từ %s thành %s:\n"
 
-#: builtin/rebase.c:1508
+#: builtin/rebase.c:1536
 #, c-format
 msgid "First, rewinding head to replay your work on top of it...\n"
 msgstr ""
 "Trước tiên, di chuyển head để xem lại các công việc trên đỉnh của nó…\n"
 
-#: builtin/rebase.c:1514
+#: builtin/rebase.c:1543
 msgid "Could not detach HEAD"
 msgstr "Không thể tách rời HEAD"
 
-#: builtin/rebase.c:1523
+#: builtin/rebase.c:1552
 #, c-format
-msgid "Fast-forwarded %s to %s. \n"
-msgstr "Chuyển-tiếp-nhanh %s đến %s. \n"
+msgid "Fast-forwarded %s to %s.\n"
+msgstr "Chuyển-tiếp-nhanh %s đến %s.\n"
 
 #: builtin/rebase--interactive.c:24
 msgid "no HEAD?"
@@ -16399,7 +16404,7 @@ msgstr "graft cho “%s” không cần thiết"
 msgid "new commit is the same as the old one: '%s'"
 msgstr "lần chuyển giao mới là giống với cái cũ: “%s”"
 
-#: builtin/replace.c:514
+#: builtin/replace.c:515
 #, c-format
 msgid ""
 "could not convert the following graft(s):\n"
@@ -16408,71 +16413,71 @@ msgstr ""
 "Không thể chuyển đổi các graft sau đây:\n"
 "%s"
 
-#: builtin/replace.c:535
+#: builtin/replace.c:536
 msgid "list replace refs"
 msgstr "liệt kê các refs thay thế"
 
-#: builtin/replace.c:536
+#: builtin/replace.c:537
 msgid "delete replace refs"
 msgstr "xóa tham chiếu thay thế"
 
-#: builtin/replace.c:537
+#: builtin/replace.c:538
 msgid "edit existing object"
 msgstr "sửa đối tượng sẵn có"
 
-#: builtin/replace.c:538
+#: builtin/replace.c:539
 msgid "change a commit's parents"
 msgstr "thay đổi cha mẹ của lần chuyển giao"
 
-#: builtin/replace.c:539
+#: builtin/replace.c:540
 msgid "convert existing graft file"
 msgstr "chuyển đổi các tập tin graft sẵn có"
 
-#: builtin/replace.c:540
+#: builtin/replace.c:541
 msgid "replace the ref if it exists"
 msgstr "thay thế tham chiếu nếu nó đã sẵn có"
 
-#: builtin/replace.c:542
+#: builtin/replace.c:543
 msgid "do not pretty-print contents for --edit"
 msgstr "đừng in đẹp các nội dung cho --edit"
 
-#: builtin/replace.c:543
+#: builtin/replace.c:544
 msgid "use this format"
 msgstr "dùng định dạng này"
 
-#: builtin/replace.c:556
+#: builtin/replace.c:557
 msgid "--format cannot be used when not listing"
 msgstr "--format không thể được dùng khi không liệt kê gì"
 
-#: builtin/replace.c:564
+#: builtin/replace.c:565
 msgid "-f only makes sense when writing a replacement"
 msgstr "-f chỉ hợp lý khi ghi một cái thay thế"
 
-#: builtin/replace.c:568
+#: builtin/replace.c:569
 msgid "--raw only makes sense with --edit"
 msgstr "--raw chỉ hợp lý với --edit"
 
-#: builtin/replace.c:574
+#: builtin/replace.c:575
 msgid "-d needs at least one argument"
 msgstr "-d cần ít nhất một tham số"
 
-#: builtin/replace.c:580
+#: builtin/replace.c:581
 msgid "bad number of arguments"
 msgstr "số đối số không đúng"
 
-#: builtin/replace.c:586
+#: builtin/replace.c:587
 msgid "-e needs exactly one argument"
 msgstr "-e cần chính các là một đối số"
 
-#: builtin/replace.c:592
+#: builtin/replace.c:593
 msgid "-g needs at least one argument"
 msgstr "-q cần ít nhất một tham số"
 
-#: builtin/replace.c:598
+#: builtin/replace.c:599
 msgid "--convert-graft-file takes no argument"
 msgstr "--convert-graft-file không nhận đối số"
 
-#: builtin/replace.c:604
+#: builtin/replace.c:605
 msgid "only one pattern can be given with -l"
 msgstr "chỉ một mẫu được chỉ ra với tùy chọn -l"
 
@@ -19536,16 +19541,21 @@ msgstr "Nhánh hiện tại $branch_name đã được cập nhật rồi."
 msgid "Current branch $branch_name is up to date, rebase forced."
 msgstr "Nhánh hiện tại $branch_name đã được cập nhật rồi, lệnh rebase ép buộc."
 
-#: git-legacy-rebase.sh:721
+#: git-legacy-rebase.sh:723
+#, sh-format
+msgid "Changes to $onto:"
+msgstr "Thay đổi thành $onto:"
+
+#: git-legacy-rebase.sh:725
 #, sh-format
 msgid "Changes from $mb to $onto:"
 msgstr "Thay đổi từ $mb thành $onto:"
 
-#: git-legacy-rebase.sh:730
+#: git-legacy-rebase.sh:736
 msgid "First, rewinding head to replay your work on top of it..."
 msgstr "Trước tiên, di chuyển head để xem lại các công việc trên đỉnh của nó…"
 
-#: git-legacy-rebase.sh:740
+#: git-legacy-rebase.sh:746
 #, sh-format
 msgid "Fast-forwarded $branch_name to $onto_name."
 msgstr "Chuyển-tiếp-nhanh $branch_name thành $onto_name."
