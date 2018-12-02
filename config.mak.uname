@@ -233,6 +233,7 @@ ifeq ($(uname_S),OpenBSD)
 	HAVE_BSD_SYSCTL = YesPlease
 	HAVE_BSD_KERN_PROC_SYSCTL = YesPlease
 	PROCFS_EXECUTABLE_PATH = /proc/curproc/file
+	FREAD_READS_DIRECTORIES = UnfortunatelyYes
 endif
 ifeq ($(uname_S),MirBSD)
 	NO_STRCASESTR = YesPlease
