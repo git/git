@@ -137,11 +137,6 @@ UI, Workflows & Features
    command line, or setting sendemail.suppresscc configuration
    variable to "misc-by", can be used to disable this behaviour.
 
- * Developer builds now uses -Wunused-function compilation option.
-
- * One of our CI tests to run with "unusual/experimental/random"
-   settings now also uses commit-graph and midx.
-
  * "git mergetool" learned to take the "--[no-]gui" option, just like
    "git difftool" does.
 
@@ -184,6 +179,11 @@ UI, Workflows & Features
 
 
 Performance, Internal Implementation, Development Support etc.
+
+ * Developer builds now use -Wunused-function compilation option.
+
+ * One of our CI tests to run with "unusual/experimental/random"
+   settings now also uses commit-graph and midx.
 
  * When there are too many packfiles in a repository (which is not
    recommended), looking up an object in these would require
@@ -387,6 +387,14 @@ Performance, Internal Implementation, Development Support etc.
    two classes to ease code migration process has been proposed and
    its support has been added to the Makefile.
 
+ * The "container" mode of TravisCI is going away.  Our .travis.yml
+   file is getting prepared for the transition.
+   (merge 32ee384be8 ss/travis-ci-force-vm-mode later to maint).
+
+ * Our test scripts can now take the '-V' option as a synonym for the
+   '--verbose-log' option.
+   (merge a5f52c6dab sg/test-verbose-log later to maint).
+
 
 Fixes since v2.19
 -----------------
@@ -543,14 +551,6 @@ Fixes since v2.19
    and led to nonsense results by commands like "log", to which it
    didn't make much sense.  This has been corrected.
    (merge 669b1d2aae md/exclude-promisor-objects-fix later to maint).
-
- * The "container" mode of TravisCI is going away.  Our .travis.yml
-   file is getting prepared for the transition.
-   (merge 32ee384be8 ss/travis-ci-force-vm-mode later to maint).
-
- * Our test scripts can now take the '-V' option as a synonym for the
-   '--verbose-log' option.
-   (merge a5f52c6dab sg/test-verbose-log later to maint).
 
  * A regression in Git 2.12 era made "git fsck" fall into an infinite
    loop while processing truncated loose objects.
