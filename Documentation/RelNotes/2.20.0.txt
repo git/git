@@ -305,7 +305,7 @@ Performance, Internal Implementation, Development Support etc.
 
  * The overly large Documentation/config.txt file have been split into
    million little pieces.  This potentially allows each individual piece
-   included into the manual page of the command it affects more easily.
+   to be included into the manual page of the command it affects more easily.
 
  * Replace three string-list instances used as look-up tables in "git
    fetch" with hashmaps.
