@@ -124,7 +124,6 @@ struct rev_info {
 			tree_blobs_in_commit_order:1,
 
 			/* for internal use only */
-			allow_exclude_promisor_objects_opt:1,
 			exclude_promisor_objects:1;
 
 	/* Diff flags */
@@ -245,7 +244,8 @@ struct setup_revision_opt {
 	const char *def;
 	void (*tweak)(struct rev_info *, struct setup_revision_opt *);
 	const char *submodule;
-	int assume_dashdash;
+	unsigned int	assume_dashdash:1,
+			allow_exclude_promisor_objects:1;
 	unsigned revarg_opt;
 };
 
