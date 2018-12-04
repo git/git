@@ -550,24 +550,28 @@ Other incompatible flag pairs:
 BEHAVIORAL DIFFERENCES
 -----------------------
 
- * empty commits:
+There are some subtle differences how the backends behave.
 
-    am-based rebase will drop any "empty" commits, whether the
-    commit started empty (had no changes relative to its parent to
-    start with) or ended empty (all changes were already applied
-    upstream in other commits).
+Empty commits
+~~~~~~~~~~~~~
 
-    merge-based rebase does the same.
+The am backend drops any "empty" commits, regardless of whether the
+commit started empty (had no changes relative to its parent to
+start with) or ended empty (all changes were already applied
+upstream in other commits).
 
-    interactive-based rebase will by default drop commits that
-    started empty and halt if it hits a commit that ended up empty.
-    The `--keep-empty` option exists for interactive rebases to allow
-    it to keep commits that started empty.
+The merge backend does the same.
 
-  * directory rename detection:
+The interactive backend drops commits by default that
+started empty and halts if it hits a commit that ended up empty.
+The `--keep-empty` option exists for the interactive backend to allow
+it to keep commits that started empty.
 
-    merge-based and interactive-based rebases work fine with
-    directory rename detection.  am-based rebases sometimes do not.
+Directory rename detection
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The merge and interactive backends work fine with
+directory rename detection.  The am backend sometimes does not.
 
 include::merge-strategies.txt[]
 
