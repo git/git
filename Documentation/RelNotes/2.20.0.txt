@@ -137,11 +137,6 @@ UI, Workflows & Features
    command line, or setting sendemail.suppresscc configuration
    variable to "misc-by", can be used to disable this behaviour.
 
- * Developer builds now uses -Wunused-function compilation option.
-
- * One of our CI tests to run with "unusual/experimental/random"
-   settings now also uses commit-graph and midx.
-
  * "git mergetool" learned to take the "--[no-]gui" option, just like
    "git difftool" does.
 
@@ -184,6 +179,11 @@ UI, Workflows & Features
 
 
 Performance, Internal Implementation, Development Support etc.
+
+ * Developer builds now use -Wunused-function compilation option.
+
+ * One of our CI tests to run with "unusual/experimental/random"
+   settings now also uses commit-graph and midx.
 
  * When there are too many packfiles in a repository (which is not
    recommended), looking up an object in these would require
@@ -305,7 +305,7 @@ Performance, Internal Implementation, Development Support etc.
 
  * The overly large Documentation/config.txt file have been split into
    million little pieces.  This potentially allows each individual piece
-   included into the manual page of the command it affects more easily.
+   to be included into the manual page of the command it affects more easily.
 
  * Replace three string-list instances used as look-up tables in "git
    fetch" with hashmaps.
@@ -386,6 +386,14 @@ Performance, Internal Implementation, Development Support etc.
  * A coding convention around the Coccinelle semantic patches to have
    two classes to ease code migration process has been proposed and
    its support has been added to the Makefile.
+
+ * The "container" mode of TravisCI is going away.  Our .travis.yml
+   file is getting prepared for the transition.
+   (merge 32ee384be8 ss/travis-ci-force-vm-mode later to maint).
+
+ * Our test scripts can now take the '-V' option as a synonym for the
+   '--verbose-log' option.
+   (merge a5f52c6dab sg/test-verbose-log later to maint).
 
 
 Fixes since v2.19
@@ -544,14 +552,6 @@ Fixes since v2.19
    didn't make much sense.  This has been corrected.
    (merge 669b1d2aae md/exclude-promisor-objects-fix later to maint).
 
- * The "container" mode of TravisCI is going away.  Our .travis.yml
-   file is getting prepared for the transition.
-   (merge 32ee384be8 ss/travis-ci-force-vm-mode later to maint).
-
- * Our test scripts can now take the '-V' option as a synonym for the
-   '--verbose-log' option.
-   (merge a5f52c6dab sg/test-verbose-log later to maint).
-
  * A regression in Git 2.12 era made "git fsck" fall into an infinite
    loop while processing truncated loose objects.
    (merge 18ad13e5b2 jk/detect-truncated-zlib-input later to maint).
@@ -578,7 +578,7 @@ Fixes since v2.19
 
  * "git rev-parse --exclude=* --branches --branches"  (i.e. first
    saying "add only things that do not match '*' out of all branches"
-   and then adding all branches, without any exclusion this time")
+   and then adding all branches, without any exclusion this time)
    worked as expected, but "--exclude=* --all --all" did not work the
    same way, which has been fixed.
    (merge 5221048092 ag/rev-parse-all-exclude-fix later to maint).
