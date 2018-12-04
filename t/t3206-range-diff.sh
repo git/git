@@ -248,18 +248,24 @@ test_expect_success 'dual-coloring' '
 for prev in topic master..topic
 do
 	test_expect_success "format-patch --range-diff=$prev" '
-		git format-patch --stdout --cover-letter --range-diff=$prev \
+		git format-patch --cover-letter --range-diff=$prev \
 			master..unmodified >actual &&
-		grep "= 1: .* s/5/A" actual &&
-		grep "= 2: .* s/4/A" actual &&
-		grep "= 3: .* s/11/B" actual &&
-		grep "= 4: .* s/12/B" actual
+		test_when_finished "rm 000?-*" &&
+		test_line_count = 5 actual &&
+		test_i18ngrep "^Range-diff:$" 0000-* &&
+		grep "= 1: .* s/5/A" 0000-* &&
+		grep "= 2: .* s/4/A" 0000-* &&
+		grep "= 3: .* s/11/B" 0000-* &&
+		grep "= 4: .* s/12/B" 0000-*
 	'
 done
 
 test_expect_success 'format-patch --range-diff as commentary' '
-	git format-patch --stdout --range-diff=HEAD~1 HEAD~1 >actual &&
-	test_i18ngrep "^Range-diff:$" actual
+	git format-patch --range-diff=HEAD~1 HEAD~1 >actual &&
+	test_when_finished "rm 0001-*" &&
+	test_line_count = 1 actual &&
+	test_i18ngrep "^Range-diff:$" 0001-* &&
+	grep "> 1: .* new message" 0001-*
 '
 
 test_done
