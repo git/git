@@ -448,7 +448,7 @@ int cache_tree_update(struct index_state *istate, int flags)
 }
 
 static void write_one(struct strbuf *buffer, struct cache_tree *it,
-                      const char *path, int pathlen)
+		      const char *path, int pathlen)
 {
 	int i;
 

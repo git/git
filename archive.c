@@ -36,8 +36,8 @@ void init_archivers(void)
 }
 
 static void format_subst(const struct commit *commit,
-                         const char *src, size_t len,
-                         struct strbuf *buf)
+			 const char *src, size_t len,
+			 struct strbuf *buf)
 {
 	char *to_free = NULL;
 	struct strbuf fmt = STRBUF_INIT;
