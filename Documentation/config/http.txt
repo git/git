@@ -68,6 +68,15 @@ http.saveCookies::
 	If set, store cookies received during requests to the file specified by
 	http.cookieFile. Has no effect if http.cookieFile is unset.
 
+http.version::
+	Use the specified HTTP protocol version when communicating with a server.
+	If you want to force the default. The available and default version depend
+	on libcurl. Actually the possible values of
+	this option are:
+
+	- HTTP/2
+	- HTTP/1.1
+
 http.sslVersion::
 	The SSL version to use when negotiating an SSL connection, if you
 	want to force the default.  The available and default version
