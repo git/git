@@ -34,6 +34,8 @@ static const char *msg_remove = N_("Removing %s\n");
 static const char *msg_would_remove = N_("Would remove %s\n");
 static const char *msg_skip_git_dir = N_("Skipping repository %s\n");
 static const char *msg_would_skip_git_dir = N_("Would skip repository %s\n");
+static const char *msg_skip_mount_point = N_("Skipping mount point %s\n");
+static const char *msg_would_skip_mount_point = N_("Would skip mount point %s\n");
 static const char *msg_warn_remove_failed = N_("failed to remove %s");
 static const char *msg_warn_lstat_failed = N_("could not lstat %s\n");
 
@@ -168,6 +170,18 @@ static int remove_dirs(struct strbuf *path, const char *prefix, int force_flag,
 		}
 
 		*dir_gone = 0;
+		goto out;
+	}
+
+	if (is_mount_point(path)) {
+		if (!quiet) {
+			quote_path_relative(path->buf, prefix, &quoted);
+			printf(dry_run ?
+			       _(msg_would_skip_mount_point) :
+			       _(msg_skip_mount_point), quoted.buf);
+		}
+		*dir_gone = 0;
+
 		goto out;
 	}
 
