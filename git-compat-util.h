@@ -415,6 +415,10 @@ static inline int git_create_symlink(struct index_state *index, const char *targ
 #define create_symlink git_create_symlink
 #endif
 
+#ifndef is_mount_point
+#define is_mount_point is_mount_point_via_stat
+#endif
+
 #ifndef query_user_email
 #define query_user_email() NULL
 #endif
