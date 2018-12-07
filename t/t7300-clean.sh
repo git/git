@@ -801,4 +801,13 @@ test_expect_success 'traverse into directories that may have ignored entries' '
 	)
 '
 
+test_expect_success MINGW 'clean does not traverse mount points' '
+	mkdir target &&
+	>target/dont-clean-me &&
+	git init with-mountpoint &&
+	cmd //c "mklink /j with-mountpoint\\mountpoint target" &&
+	git -C with-mountpoint clean -dfx &&
+	test_path_is_file target/dont-clean-me
+'
+
 test_done
