@@ -684,7 +684,7 @@ compressed tar archive) and "zip"; please consult gitweb sources for
 a definitive list.  By default only "tgz" is offered.
 +
 This feature can be configured on a per-repository basis via
-repository's `gitweb.blame` configuration variable, which contains
+repository's `gitweb.snapshot` configuration variable, which contains
 a comma separated list of formats or "none" to disable snapshots.
 Unknown values are ignored.
 
