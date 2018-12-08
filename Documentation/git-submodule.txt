@@ -124,7 +124,7 @@ If you really want to remove a submodule from the repository and commit
 that use linkgit:git-rm[1] instead. See linkgit:gitsubmodules[7] for removal
 options.
 
-update [--init] [--remote] [-N|--no-fetch] [--[no-]recommend-shallow] [-f|--force] [--checkout|--rebase|--merge] [--reference <repository>] [--depth <depth>] [--recursive] [--jobs <n>] [--] [<path>...]::
+update [--init] [--remote] [-N|--no-fetch] [--[no-]recommend-shallow] [-f|--force] [--checkout|--rebase|--merge|--reset-hard] [--reference <repository>] [--depth <depth>] [--recursive] [--jobs <n>] [--] [<path>...]::
 +
 --
 Update the registered submodules to match what the superproject
@@ -357,6 +357,16 @@ the submodule itself.
 	to resolve these failures with linkgit:git-rebase[1].
 	If the key `submodule.$name.update` is set to `rebase`, this option is
 	implicit.
+
+--reset-hard::
+	This option is only valid for the update command.
+	Hard reset current state to the commit recorded in the	superproject.
+	If this option is given, the submodule's HEAD will not get detached
+	if it was not detached before. Note that, like with a regular
+	`git reset --hard` no safe-guards are in place to prevent jumping
+	to a commit which was never part of the current branch.
+	If the key `submodule.$name.update` is set to `reset-hard`, this
+	option is implicit.
 
 --init::
 	This option is only valid for the update command.

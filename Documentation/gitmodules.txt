@@ -43,8 +43,8 @@ submodule.<name>.update::
 	command in the superproject. This is only used by `git
 	submodule init` to initialize the configuration variable of
 	the same name. Allowed values here are 'checkout', 'rebase',
-	'merge' or 'none'. See description of 'update' command in
-	linkgit:git-submodule[1] for their meaning. Note that the
+	'merge', 'reset-hard' or 'none'. See description of 'update' command
+	in linkgit:git-submodule[1] for their meaning. Note that the
 	'!command' form is intentionally ignored here for security
 	reasons.
 

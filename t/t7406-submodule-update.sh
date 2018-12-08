@@ -6,7 +6,8 @@
 test_description='Test updating submodules
 
 This test verifies that "git submodule update" detaches the HEAD of the
-submodule and "git submodule update --rebase/--merge" does not detach the HEAD.
+submodule and "git submodule update --rebase/--merge/--reset-hard" does
+not detach the HEAD.
 '
 
 . ./test-lib.sh
@@ -300,6 +301,20 @@ test_expect_success 'submodule update --merge staying on master' '
 	  compare_head
 	 ) &&
 	 git submodule update --merge submodule &&
+	 cd submodule &&
+	 compare_head
+	)
+'
+
+test_expect_success 'submodule update --reset-hard staying on master' '
+	(cd super/submodule &&
+	  git reset --hard HEAD~1
+	) &&
+	(cd super &&
+	 (cd submodule &&
+	  compare_head
+	 ) &&
+	 git submodule update --reset-hard submodule &&
 	 cd submodule &&
 	 compare_head
 	)

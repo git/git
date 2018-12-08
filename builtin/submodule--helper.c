@@ -1481,6 +1481,7 @@ static void determine_submodule_update_strategy(struct repository *r,
 	if (just_cloned &&
 	    (out->type == SM_UPDATE_MERGE ||
 	     out->type == SM_UPDATE_REBASE ||
+	     out->type == SM_UPDATE_RESET_HARD ||
 	     out->type == SM_UPDATE_NONE))
 		out->type = SM_UPDATE_CHECKOUT;
 
@@ -1851,7 +1852,7 @@ static int update_clone(int argc, const char **argv, const char *prefix)
 			      "submodule boundaries")),
 		OPT_STRING(0, "update", &update,
 			   N_("string"),
-			   N_("rebase, merge, checkout or none")),
+			   N_("rebase, merge, checkout, reset-hard or none")),
 		OPT_STRING_LIST(0, "reference", &suc.references, N_("repo"),
 			   N_("reference repository")),
 		OPT_BOOL(0, "dissociate", &suc.dissociate,

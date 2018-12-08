@@ -373,6 +373,8 @@ enum submodule_update_type parse_submodule_update_type(const char *value)
 		return SM_UPDATE_REBASE;
 	else if (!strcmp(value, "merge"))
 		return SM_UPDATE_MERGE;
+	else if (!strcmp(value, "reset-hard"))
+		return SM_UPDATE_RESET_HARD;
 	else if (*value == '!')
 		return SM_UPDATE_COMMAND;
 	else
@@ -406,6 +408,8 @@ const char *submodule_strategy_to_string(const struct submodule_update_strategy 
 		return "checkout";
 	case SM_UPDATE_MERGE:
 		return "merge";
+	case SM_UPDATE_RESET_HARD:
+		return "reset-hard";
 	case SM_UPDATE_REBASE:
 		return "rebase";
 	case SM_UPDATE_NONE:
