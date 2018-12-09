@@ -407,8 +407,8 @@ static int do_apply_stash(const char *prefix, struct stash_info *info,
 		return error(_("cannot apply a stash in the middle of a merge"));
 
 	if (index) {
-		if (!oidcmp(&info->b_tree, &info->i_tree) ||
-		    !oidcmp(&c_tree, &info->i_tree)) {
+		if (oideq(&info->b_tree, &info->i_tree) ||
+		    oideq(&c_tree, &info->i_tree)) {
 			has_index = 0;
 		} else {
 			struct strbuf out = STRBUF_INIT;
@@ -442,7 +442,7 @@ static int do_apply_stash(const char *prefix, struct stash_info *info,
 	o.branch1 = "Updated upstream";
 	o.branch2 = "Stashed changes";
 
-	if (!oidcmp(&info->b_tree, &c_tree))
+	if (oideq(&info->b_tree, &c_tree))
 		o.branch1 = "Version stash was based on";
 
 	if (quiet)
