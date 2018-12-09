@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Nov 2018, #07; Fri, 30)
-X-master-at: 7068cbc4abac53d9c3675dfba81c1e97d25e8eeb
-X-next-at: a9faaff8c120bf4783cb892c157871fe524b3608
+Subject: What's cooking in git.git (Dec 2018, #01; Sun, 9)
+X-master-at: 5d826e972970a784bd7a7bdf587512510097b8c7
+X-next-at: bc1bbc6f855c3b5ef7fcbd0f688f647c4e5b208b
 
-What's cooking in git.git (Nov 2018, #07; Fri, 30)
+What's cooking in git.git (Dec 2018, #01; Sun, 9)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,44 +12,20 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-The road to the upcoming 2.20 turned out to be a bit rockier as we
-had a couple of subcommands with larger importance (rebase and
-rebase-i) reimplemented, together with some new and exciting
-commands (like range-diff and its integration into format-patch),
-each with a few loose ends we needed to tie until the last minute.
-I've let -rc1 and -rc2 slip for a few days to make sure we get
-closer to a stable point, and I am hoping that a few topics that are
-at the bottom of master..pu chain with today's pushout merged to the
-'master' branch, I should be able to cut a 2.20-rc2 that is in a
-reasonable shape.
-
 You can find the changes described here in the integration branches
 of the repositories listed at
 
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[New Topics]
+[Graduated to "master"]
 
-* gh/diff-raw-has-no-ellipses (2018-11-26) 1 commit
-  (merged to 'next' on 2018-11-29 at 24a7536f15)
- + doc: update diff-format.txt for removed ellipses in --raw
+* ab/push-example-in-doc (2018-11-14) 1 commit
+  (merged to 'next' on 2018-11-18 at 8fd935a19c)
+ + push: change needlessly ambiguous example in error
 
- "git diff --raw" lost ellipses to adjust the output columns for
- some time now, but the documentation still showed them.
-
- Will cook in 'next'.
-
-
-* mk/http-backend-kill-children-before-exit (2018-11-26) 1 commit
-  (merged to 'next' on 2018-11-29 at bf2d45062f)
- + http-backend: enable cleaning up forked upload/receive-pack on exit
-
- The http-backend CGI process did not correctly clean up the child
- processes it spawns to run upload-pack etc. when it dies itself,
- which has been corrected.
-
- Will cook in 'next'.
+ An error message that sugggests how to give correct arguments to
+ "git push" has been updated.
 
 
 * ab/replace-graft-with-replace-advice (2018-11-29) 1 commit
@@ -62,38 +38,13 @@ of the repositories listed at
  way the message suggests to use, was running, which made little
  sense.
 
- Will merge to 'master'.
 
+* gh/diff-raw-has-no-ellipses (2018-11-26) 1 commit
+  (merged to 'next' on 2018-11-29 at 24a7536f15)
+ + doc: update diff-format.txt for removed ellipses in --raw
 
-* ma/reset-doc-rendering-fix (2018-11-29) 2 commits
-  (merged to 'next' on 2018-11-30 at be718c19e2)
- + git-reset.txt: render literal examples as monospace
- + git-reset.txt: render tables correctly under Asciidoctor
-
- Doc updates.
-
- Will merge to 'master'.
-
-
-* sg/daemon-test-signal-fix (2018-11-27) 1 commit
-  (merged to 'next' on 2018-11-30 at b3f7fdf727)
- + t/lib-git-daemon: fix signal checking
-
- Test fix.
-
- Will merge to 'master'.
-
-
-* tb/log-G-binary (2018-11-29) 1 commit
- - log -G: ignore binary files
-
- "git log -G<regex>" looked for a hunk in the "git log -p" patch
- output that contained a string that matches the given pattern.
- Optimize this code to ignore binary files, which by default will
- not show any hunk that would match any pattern (unless textconv or
- the --text option is in effect, that is).
-
- Expecting an update to the tests.
+ "git diff --raw" lost ellipses to adjust the output columns for
+ some time now, but the documentation still showed them.
 
 
 * jc/format-patch-range-diff-fix (2018-11-30) 1 commit
@@ -107,8 +58,6 @@ of the repositories listed at
  corrected by forcing a non-customizable default formatting options
  on the range-diff machinery when driven by format-patch.
 
- Will merge to 'master'.
-
 
 * js/rebase-reflog-action-fix (2018-11-30) 1 commit
   (merged to 'next' on 2018-11-30 at 93fd2fb920)
@@ -118,8 +67,6 @@ of the repositories listed at
  way reflog entries are recorded (earlier "rebase -i" identified the
  entries it leaves with "rebase -i", but the new version always
  marks them with "rebase").  This has been corrected.
-
- Will merge to 'master'.
 
 
 * js/rebase-stat-unrelated-fix (2018-11-30) 1 commit
@@ -132,102 +79,176 @@ of the repositories listed at
  die with an error message, as the original logic was not prepared
  to cope with this case.  This has now been fixed.
 
- Will merge to 'master'.
+
+* ma/reset-doc-rendering-fix (2018-11-29) 2 commits
+  (merged to 'next' on 2018-11-30 at be718c19e2)
+ + git-reset.txt: render literal examples as monospace
+ + git-reset.txt: render tables correctly under Asciidoctor
+
+ Doc updates.
+
+
+* rt/rebase-in-c-message-fix (2018-12-01) 1 commit
+  (merged to 'next' on 2018-12-01 at 4428c15a66)
+ + builtin/rebase.c: remove superfluous space in messages
+
+
+* sg/daemon-test-signal-fix (2018-11-27) 1 commit
+  (merged to 'next' on 2018-11-30 at b3f7fdf727)
+ + t/lib-git-daemon: fix signal checking
+
+ Test fix.
+
+
+* sg/test-BUG (2018-11-20) 1 commit
+  (merged to 'next' on 2018-11-21 at bb81013952)
+ + tests: send "bug in the test script" errors to the script's stderr
+
+ test framework has been updated to make a bug in the test script
+ (as opposed to bugs in Git that are discovered by running the
+ tests) stand out more prominently.
+
+
+* sg/test-cmp-rev (2018-11-20) 1 commit
+  (merged to 'next' on 2018-11-21 at 5d65cb2a76)
+ + test-lib-functions: make 'test_cmp_rev' more informative on failure
+
+ Test framework update.
+
+
+* ss/msvc-strcasecmp (2018-11-20) 1 commit
+  (merged to 'next' on 2018-11-21 at 9e45649e6e)
+ + msvc: directly use MS version (_stricmp) of strcasecmp
+
+ MSVC update.
 
 --------------------------------------------------
-[Graduated to "master"]
+[New Topics]
 
-* cc/delta-islands (2018-11-21) 3 commits
-  (merged to 'next' on 2018-11-21 at 3bac399f83)
- + pack-objects: fix off-by-one in delta-island tree-depth computation
- + pack-objects: zero-initialize tree_depth/layer arrays
- + pack-objects: fix tree_depth and layer invariants
+* cb/openbsd-allows-reading-directory (2018-12-03) 1 commit
+ - config.mak.uname: OpenBSD uses BSD semantics with fread for directories
 
- A few issues in the implementation of "delta-islands" feature has
+ BSD port update.
+
+ Will merge to 'next'.
+
+
+* cb/t5004-empty-tar-archive-fix (2018-12-03) 1 commit
+ - t5004: avoid using tar for empty packages
+
+ BSD port update.
+
+ Will merge to 'next'.
+
+
+* cb/test-lint-cp-a (2018-12-03) 1 commit
+ - tests: add lint for non portable cp -a
+
+ BSD port update.
+
+ Will merge to 'next'.
+
+
+* hb/t0061-dot-in-path-fix (2018-12-03) 1 commit
+ - t0061: do not fail test if '.' is part of $PATH
+
+ Test update.
+
+ Will merge to 'next'.
+
+
+* hn/highlight-sideband-keywords (2018-12-04) 1 commit
+ - sideband: color lines with keyword only
+
+ Lines that begin with a certain keyword that come over the wire, as
+ well as lines that consist only of one of these keywords, ought to
+ be painted in color for easier eyeballing, but the latter was
+ broken ever since the feature was introduced in 2.19, which has
  been corrected.
 
-
-* cc/shared-index-permbits (2018-11-19) 1 commit
-  (merged to 'next' on 2018-11-19 at 79df716844)
- + read-cache: make the split index obey umask settings
-
- The way .git/index and .git/sharedindex* files were initially
- created gave these files different perm bits until they were
- adjusted for shared repository settings.  This was made consistent.
+ Will merge to 'next'.
 
 
-* jk/t5562-perl-path-fix (2018-11-24) 1 commit
-  (merged to 'next' on 2018-11-24 at 2d8dca3544)
- + t5562: fix perl path
+* js/commit-graph-chunk-table-fix (2018-12-09) 4 commits
+ - SQUASH???
+ - Makefile: correct example fuzz build
+ - commit-graph: fix buffer read-overflow
+ - commit-graph, fuzz: add fuzzer for commit-graph
 
- Hotfix for test breakage on platforms whose Perl is not at
- /usr/bin/perl
-
-
-* jn/eoie-ieot (2018-11-21) 3 commits
-  (merged to 'next' on 2018-11-21 at 9eb98a38f0)
- + index: make index.threads=true enable ieot and eoie
- + ieot: default to not writing IEOT section
- + eoie: default to not writing EOIE section
- (this branch is used by jn/unknown-index-extensions.)
-
- As the warning message shown by existing versions of Git for
- unknown index extensions is a bit too alarming, two new extensions
- are held back and not written by default for the upcoming release.
+ The codepath to read from the commit-graph file attempted to read
+ past the end of it when the file's table-of-contents was corrupt.
 
 
-* js/builtin-rebase-perf-fix-err-fix (2018-11-21) 1 commit
-  (merged to 'next' on 2018-11-21 at 9c351cfc4a)
- + rebase: warn about the correct tree's OID
+* jt/get-reference-with-commit-graph (2018-12-06) 1 commit
+ - revision: use commit graph in get_reference()
+ (this branch uses sb/more-repo-in-api.)
 
- The object name of the tree reported in a recently added error
- message was wrong, which has been corrected.
+ Micro-optimize the code that prepares commit objects to be walked
+ by "git rev-list" when the commit-graph is available.
 
-
-* js/rebase-am-options-fix (2018-11-21) 1 commit
-  (merged to 'next' on 2018-11-21 at 4da85e17c2)
- + legacy-rebase: backport -C<n> and --whitespace=<option> checks
-
- Recently, built-in "rebase" tightened the error checking for a few
- options that are passed to underlying "am", but we forgot to make
- the matching change to the scripted version, which has been
- corrected.
+ Will merge to 'next'.
 
 
-* nd/clone-case-smashing-warning (2018-11-21) 1 commit
-  (merged to 'next' on 2018-11-21 at 68bc7959f8)
- + clone: fix colliding file detection on APFS
+* md/exclude-promisor-objects-fix-cleanup (2018-12-06) 1 commit
+ - revision.c: put promisor option in specialized struct
 
- Recently added check for case smashing filesystems did not
- correctly utilize the cached stat information, leading to false
- breakage detected by our test suite, which has been corrected.
+ Code clean-up.
 
-
-* nd/per-worktree-ref-iteration (2018-11-26) 1 commit
-  (merged to 'next' on 2018-11-26 at b7c39e5946)
- + files-backend.c: fix build error on Solaris
-
- Build fix.
+ Will merge to 'next'.
 
 
-* tb/clone-case-smashing-warning-test (2018-11-24) 1 commit
-  (merged to 'next' on 2018-11-24 at 37f0d3b920)
- + t5601-99: Enable colliding file detection for MINGW
+* bw/mailmap (2018-12-09) 1 commit
+ - mailmap: update Brandon Williams's email address
 
- The code recently added to "git clone" to see if the platform's
- filesystem is adequate to check out and use the project code
- correctly (e.g. a case smashing filesystem cannot be used for a
- project with two files whose paths are different only in case) was
- meant to help Windows users, but the test for it was not enabled
- for that platform, which has been corrected.
+ Will merge to 'next'.
 
 
-* tz/build-tech-midx-doc (2018-11-21) 1 commit
-  (merged to 'next' on 2018-11-21 at 15dd462db0)
- + Documentation: build technical/multi-pack-index
+* do/gitweb-strict-export-conf-doc (2018-12-09) 1 commit
+ - docs: fix $strict_export text in gitweb.conf.txt
 
- A documentation page that is referred to by other pages was not
- built by mistake, which has been corrected.
+ Doc update.
+
+ Will merge to 'next'.
+
+
+* en/directory-renames-nothanks-doc-update (2018-12-09) 1 commit
+ - git-rebase.txt: update note about directory rename detection and am
+
+ Doc update.
+
+ Will merge to 'next'.
+
+
+* fd/gitweb-snapshot-conf-doc-fix (2018-12-09) 1 commit
+ - docs/gitweb.conf: config variable typo
+
+ Doc update.
+
+ Will merge to 'next'.
+
+
+* km/rebase-doc-typofix (2018-12-09) 1 commit
+ - rebase docs: drop stray word in merge command description
+
+ Doc update.
+
+ Will merge to 'next'.
+
+
+* nd/indentation-fix (2018-12-09) 1 commit
+ - Indent code with TABs
+
+ Code cleanup.
+
+ Will merge to 'next'.
+
+
+* tb/use-common-win32-pathfuncs-on-cygwin (2018-12-09) 1 commit
+ - git clone <url> C:\cygwin\home\USER\repo' is working (again)
+
+ Cygwin update.
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -244,6 +265,29 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* mk/http-backend-kill-children-before-exit (2018-11-26) 1 commit
+  (merged to 'next' on 2018-11-29 at bf2d45062f)
+ + http-backend: enable cleaning up forked upload/receive-pack on exit
+
+ The http-backend CGI process did not correctly clean up the child
+ processes it spawns to run upload-pack etc. when it dies itself,
+ which has been corrected.
+
+ Will cook in 'next'.
+
+
+* tb/log-G-binary (2018-11-29) 1 commit
+ - log -G: ignore binary files
+
+ "git log -G<regex>" looked for a hunk in the "git log -p" patch
+ output that contained a string that matches the given pattern.
+ Optimize this code to ignore binary files, which by default will
+ not show any hunk that would match any pattern (unless textconv or
+ the --text option is in effect, that is).
+
+ Expecting an update to the tests.
+
+
 * dl/merge-cleanup-scissors-fix (2018-11-21) 2 commits
   (merged to 'next' on 2018-11-21 at 217be06acb)
  + merge: add scissors line on merge conflict
@@ -258,16 +302,20 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* aw/pretty-trailers (2018-11-19) 5 commits
+* aw/pretty-trailers (2018-12-09) 7 commits
  - pretty: add support for separator option in %(trailers)
  - strbuf: separate callback for strbuf_expand:ing literals
  - pretty: add support for "valueonly" option in %(trailers)
  - pretty: allow showing specific trailers
  - pretty: single return path in %(trailers) handling
+ - pretty: allow %(trailers) options with explicit value
+ - doc: group pretty-format.txt placeholders descriptions
 
  The %(trailers) formatter in "git log --format=..."  now allows to
  optionally pick trailers selectively by keyword, show only values,
  etc.
+
+ How's the doneness of this one?
 
 
 * nd/attr-pathspec-in-tree-walk (2018-11-19) 5 commits
@@ -281,38 +329,13 @@ of the repositories listed at
  ":(attr:label)" pathspec match, which has been implemented only for
  enumerating paths on the filesystem.
 
+ Will merge to 'next'.
+
 
 * ab/commit-graph-progress-fix (2018-11-20) 1 commit
  - commit-graph: split up close_reachable() progress output
 
-
-* sg/test-BUG (2018-11-20) 1 commit
-  (merged to 'next' on 2018-11-21 at bb81013952)
- + tests: send "bug in the test script" errors to the script's stderr
-
- test framework has been updated to make a bug in the test script
- (as opposed to bugs in Git that are discovered by running the
- tests) stand out more prominently.
-
- Will cook in 'next'.
-
-
-* sg/test-cmp-rev (2018-11-20) 1 commit
-  (merged to 'next' on 2018-11-21 at 5d65cb2a76)
- + test-lib-functions: make 'test_cmp_rev' more informative on failure
-
- Test framework update.
-
- Will cook in 'next'.
-
-
-* ss/msvc-strcasecmp (2018-11-20) 1 commit
-  (merged to 'next' on 2018-11-21 at 9e45649e6e)
- + msvc: directly use MS version (_stricmp) of strcasecmp
-
- MSVC update.
-
- Will cook in 'next'.
+ Will merge to 'next'.
 
 
 * jn/unknown-index-extensions (2018-11-21) 2 commits
@@ -323,16 +346,6 @@ of the repositories listed at
  exist is getting revamped.
 
  Expecting a reroll.
-
-
-* ab/push-example-in-doc (2018-11-14) 1 commit
-  (merged to 'next' on 2018-11-18 at 8fd935a19c)
- + push: change needlessly ambiguous example in error
-
- An error message that sugggests how to give correct arguments to
- "git push" has been updated.
-
- Will cook in 'next'.
 
 
 * en/fast-export-import (2018-11-17) 11 commits
@@ -378,6 +391,8 @@ of the repositories listed at
  which gives it the same degree of noisy-ness as the case in which
  the command checks out a branch.
 
+ Will merge to 'next'.
+
 
 * sg/clone-initial-fetch-configuration (2018-11-16) 3 commits
   (merged to 'next' on 2018-11-18 at cae0f3985b)
@@ -398,6 +413,9 @@ of the repositories listed at
  "git rebase --merge" as been reimplemented by reusing the internal
  machinery used for "git rebase -i".
 
+ Expecting a reroll.
+ cf. <CABPp-BF8RupyfP69iqAVTXxEhBGyzVd-wUgp3y0pf+CbBFAQeg@mail.gmail.com>
+
 
 * fc/http-version (2018-11-09) 1 commit
   (merged to 'next' on 2018-11-18 at 42f5155095)
@@ -416,6 +434,8 @@ of the repositories listed at
  "git remote set-url" learned a new option that moves existing value
  of the URL field to pushURL field of the remote before replacing
  the URL field with a new value.
+
+ I am personally not yet quite convinced if this is worth pursuing.
 
 
 * jk/loose-object-cache (2018-11-24) 10 commits
@@ -445,6 +465,8 @@ of the repositories listed at
  used can be negotiated between the parties, by the initiator
  listing the protocol versions it is willing to talk, and the other
  side choosing from one of them.
+
+ How's the doneness of this one?
 
 
 * js/smart-http-detect-remote-error (2018-11-17) 3 commits
@@ -522,6 +544,10 @@ of the repositories listed at
 * sb/diff-color-moved-config-option-fixup (2018-11-14) 1 commit
  - diff: align move detection error handling with other options
 
+ Minor inconsistency fix.
+
+ Will merge to 'next'.
+
 
 * ab/push-dwim-dst (2018-11-14) 7 commits
   (merged to 'next' on 2018-11-18 at 36567023be)
@@ -543,16 +569,14 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* md/list-lazy-objects-fix (2018-10-29) 1 commit
+* md/list-lazy-objects-fix (2018-12-06) 1 commit
  - list-objects.c: don't segfault for missing cmdline objects
 
  "git rev-list --exclude-promissor-objects" had to take an object
  that does not exist locally (and is lazily available) from the
  command line without barfing, but the code dereferenced NULL.
 
- That sympotom may be worth addressing, but I think the "fix" is
- overly broad and is wrong.  Giving a missing object should be
- diagnosed as an error, not swept under the rug silently.
+ Will merge to 'next'.
 
 
 * nd/i18n (2018-11-12) 16 commits
@@ -604,6 +628,7 @@ of the repositories listed at
  + object-store: allow read_object_file_extended to read from any repo
  + packfile: allow has_packed_and_bad to handle arbitrary repositories
  + sha1_file: allow read_object to read objects in arbitrary repositories
+ (this branch is used by jt/get-reference-with-commit-graph.)
 
  The in-core repository instances are passed through more codepaths.
 
@@ -611,7 +636,9 @@ of the repositories listed at
  cf. <20181115221254.45373-1-jonathantanmy@google.com>
 
 
-* en/merge-path-collision (2018-11-08) 10 commits
+* en/merge-path-collision (2018-12-01) 11 commits
+  (merged to 'next' on 2018-12-01 at 24492e61f1)
+ + t6036: avoid non-portable "cp -a"
   (merged to 'next' on 2018-11-18 at 3ec9286e0b)
  + merge-recursive: combine error handling
  + t6036, t6043: increase code coverage for file collision handling
@@ -691,7 +718,7 @@ of the repositories listed at
 
  "git branch" learned a new subcommand "--show-current".
 
- Is the discussion on this topic over?  What was the outcome?
+ I am personally not yet quite convinced if this is worth pursuing.
 
 
 * mk/use-size-t-in-zlib (2018-10-15) 1 commit
@@ -731,9 +758,8 @@ of the repositories listed at
  this need to wait giving precedence to other topics that fix bugs.
 
 
-* sb/submodule-recursive-fetch-gets-the-tip (2018-10-31) 11 commits
- - builtin/fetch: check for submodule updates in any ref update
- - fetch: try fetching submodules if needed objects were not fetched
+* sb/submodule-recursive-fetch-gets-the-tip (2018-12-09) 9 commits
+ - fetch: ensure submodule objects fetched
  - submodule.c: fetch in submodules git directory instead of in worktree
  - submodule: migrate get_next_submodule to use repository structs
  - repository: repo_submodule_init to take a submodule struct
@@ -742,12 +768,11 @@ of the repositories listed at
  - submodule.c: sort changed_submodule_names before searching it
  - submodule.c: fix indentation
  - sha1-array: provide oid_array_filter
- - Merge branch 'ao/submodule-wo-gitmodules-checked-out' into sb/submodule-recursive-fetch-gets-the-tip
 
  "git fetch --recurse-submodules" may not fetch the necessary commit
  that is bound to the superproject, which is getting corrected.
 
- Is the discussion on this topic over?  What was the outcome?
+ Ready?
 
 
 * js/add-i-coalesce-after-editing-hunk (2018-08-28) 1 commit
