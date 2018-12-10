@@ -501,6 +501,11 @@ See also INCOMPATIBLE OPTIONS below.
 	with care: the final stash application after a successful
 	rebase might result in non-trivial conflicts.
 
+--reschedule-failed-exec::
+--no-reschedule-failed-exec::
+	Automatically reschedule `exec` commands that failed. This only makes
+	sense in interactive mode (or when an `--exec` option was provided).
+
 INCOMPATIBLE OPTIONS
 --------------------
 

@@ -48,6 +48,7 @@ skip!              skip current patch and continue
 edit-todo!         edit the todo list during an interactive rebase
 quit!              abort but keep HEAD where it is
 show-current-patch! show the patch file being applied or merged
+reschedule-failed-exec automatically reschedule failed exec commands
 "
 . git-sh-setup
 set_reflog_action rebase
@@ -92,6 +93,7 @@ autosquash=
 keep_empty=
 allow_empty_message=--allow-empty-message
 signoff=
+reschedule_failed_exec=
 test "$(git config --bool rebase.autosquash)" = "true" && autosquash=t
 case "$(git config --bool commit.gpgsign)" in
 true)	gpg_sign_opt=-S ;;
@@ -126,6 +128,8 @@ read_basic_state () {
 		signoff="$(cat "$state_dir"/signoff)"
 		force_rebase=t
 	}
+	test -f "$state_dir"/reschedule-failed-exec &&
+		reschedule_failed_exec=t
 }
 
 finish_rebase () {
@@ -163,7 +167,8 @@ run_interactive () {
 		"$allow_empty_message" "$autosquash" "$verbose" \
 		"$force_rebase" "$onto_name" "$head_name" "$strategy" \
 		"$strategy_opts" "$cmd" "$switch_to" \
-		"$allow_rerere_autoupdate" "$gpg_sign_opt" "$signoff"
+		"$allow_rerere_autoupdate" "$gpg_sign_opt" "$signoff" \
+		"$reschedule_failed_exec"
 }
 
 run_specific_rebase () {
@@ -378,6 +383,12 @@ do
 	--gpg-sign=*)
 		gpg_sign_opt="-S${1#--gpg-sign=}"
 		;;
+	--reschedule-failed-exec)
+		reschedule_failed_exec=--reschedule-failed-exec
+		;;
+	--no-reschedule-failed-exec)
+		reschedule_failed_exec=
+		;;
 	--)
 		shift
 		break
@@ -534,6 +545,9 @@ then
 	#       git-rebase.txt caveats with "unless you know what you are doing"
 	test -n "$rebase_merges" &&
 		die "$(gettext "error: cannot combine '--preserve-merges' with '--rebase-merges'")"
+
+	test -n "$reschedule_failed_exec" &&
+		die "$(gettext "error: cannot combine '--preserve-merges' with '--reschedule-failed-exec'")"
 fi
 
 if test -n "$rebase_merges"

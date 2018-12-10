@@ -19,6 +19,7 @@ write_basic_state () {
 		"$state_dir"/allow_rerere_autoupdate
 	test -n "$gpg_sign_opt" && echo "$gpg_sign_opt" > "$state_dir"/gpg_sign_opt
 	test -n "$signoff" && echo "$signoff" >"$state_dir"/signoff
+	test -n "$reschedule_failed_exec" && : > "$state_dir"/reschedule-failed-exec
 }
 
 apply_autostash () {

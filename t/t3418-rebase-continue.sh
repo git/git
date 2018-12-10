@@ -254,4 +254,10 @@ test_expect_success 'the todo command "break" works' '
 	test_path_is_file execed
 '
 
+test_expect_success '--reschedule-failed-exec' '
+	test_when_finished "git rebase --abort" &&
+	test_must_fail git rebase -x false --reschedule-failed-exec HEAD^ &&
+	grep "^exec false" .git/rebase-merge/git-rebase-todo
+'
+
 test_done

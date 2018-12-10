@@ -104,6 +104,7 @@ struct rebase_options {
 	int rebase_merges, rebase_cousins;
 	char *strategy, *strategy_opts;
 	struct strbuf git_format_patch_opt;
+	int reschedule_failed_exec;
 };
 
 static int is_interactive(struct rebase_options *opts)
@@ -415,6 +416,8 @@ static int run_specific_rebase(struct rebase_options *opts)
 			argv_array_push(&child.args, opts->gpg_sign_opt);
 		if (opts->signoff)
 			argv_array_push(&child.args, "--signoff");
+		if (opts->reschedule_failed_exec)
+			argv_array_push(&child.args, "--reschedule-failed-exec");
 
 		status = run_command(&child);
 		goto finished_rebase;
@@ -920,6 +923,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 				   "strategy")),
 		OPT_BOOL(0, "root", &options.root,
 			 N_("rebase all reachable commits up to the root(s)")),
+		OPT_BOOL(0, "reschedule-failed-exec",
+			 &options.reschedule_failed_exec,
+			 N_("automatically re-schedule any `exec` that fails")),
 		OPT_END(),
 	};
 	int i;
@@ -1216,6 +1222,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		break;
 	}
 
+	if (options.reschedule_failed_exec && !is_interactive(&options))
+		die(_("--reschedule-failed-exec requires an interactive rebase"));
+
 	if (options.git_am_opts.argc) {
 		/* all am options except -q are compatible only with --am */
 		for (i = options.git_am_opts.argc - 1; i >= 0; i--)
@@ -1241,7 +1250,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		options.flags |= REBASE_FORCE;
 	}
 
-	if (options.type == REBASE_PRESERVE_MERGES)
+	if (options.type == REBASE_PRESERVE_MERGES) {
 		/*
 		 * Note: incompatibility with --signoff handled in signoff block above
 		 * Note: incompatibility with --interactive is just a strong warning;
@@ -1250,6 +1259,11 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		if (options.rebase_merges)
 			die(_("error: cannot combine '--preserve-merges' with "
 			      "'--rebase-merges'"));
+
+		if (options.reschedule_failed_exec)
+			die(_("error: cannot combine '--preserve-merges' with "
+			      "'--reschedule-failed-exec'"));
+	}
 
 	if (options.rebase_merges) {
 		if (strategy_options.nr)

@@ -192,6 +192,8 @@ int cmd_rebase__interactive(int argc, const char **argv, const char *prefix)
 		OPT_STRING(0, "onto-name", &onto_name, N_("onto-name"), N_("onto name")),
 		OPT_STRING(0, "cmd", &cmd, N_("cmd"), N_("the command to run")),
 		OPT_RERERE_AUTOUPDATE(&opts.allow_rerere_auto),
+		OPT_BOOL(0, "reschedule-failed-exec", &opts.reschedule_failed_exec,
+			 N_("automatically re-schedule any `exec` that fails")),
 		OPT_END()
 	};
 
