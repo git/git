@@ -99,6 +99,8 @@ case "$(git config --bool commit.gpgsign)" in
 true)	gpg_sign_opt=-S ;;
 *)	gpg_sign_opt= ;;
 esac
+test "$(git config --bool rebase.reschedulefailedexec)" = "true" &&
+reschedule_failed_exec=--reschedule-failed-exec
 . git-rebase--common
 
 read_basic_state () {
