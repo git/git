@@ -1194,6 +1194,17 @@ test_expect_success 'remote set-url --delete baz' '
 	cmp expect actual
 '
 
+test_expect_success 'remote set-url --save-to-push bbb' '
+	git remote set-url --save-to-push someremote bbb &&
+	echo bbb >expect &&
+	echo "YYY" >>expect &&
+	echo ccc >>expect &&
+	git config --get-all remote.someremote.url >actual &&
+	echo "YYY" >>actual &&
+	git config --get-all remote.someremote.pushurl >>actual &&
+	cmp expect actual
+'
+
 test_expect_success 'extra args: setup' '
 	# add a dummy origin so that this does not trigger failure
 	git remote add origin .
