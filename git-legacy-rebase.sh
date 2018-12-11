@@ -508,13 +508,13 @@ if test -n "$git_am_opt"; then
 	then
 		if test -n "$incompatible_opts"
 		then
-			die "$(gettext "fatal: cannot combine interactive options (--interactive, --exec, --rebase-merges, --preserve-merges, --keep-empty, --root + --onto) with am options ($incompatible_opts)")"
+			die "$(gettext "fatal: cannot combine am options with interactive options")"
 		fi
 	fi
 	if test -n "$do_merge"; then
 		if test -n "$incompatible_opts"
 		then
-			die "$(gettext "fatal: cannot combine merge options (--merge, --strategy, --strategy-option) with am options ($incompatible_opts)")"
+			die "$(gettext "fatal: cannot combine am options with merge options")"
 		fi
 	fi
 fi

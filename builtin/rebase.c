@@ -1223,14 +1223,10 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 				break;
 
 		if (is_interactive(&options) && i >= 0)
-			die(_("cannot combine interactive options "
-			      "(--interactive, --exec, --rebase-merges, "
-			      "--preserve-merges, --keep-empty, --root + "
-			      "--onto) with am options (%s)"), buf.buf);
+			die(_("cannot combine am options "
+			      "with interactive options"));
 		if (options.type == REBASE_MERGE && i >= 0)
-			die(_("cannot combine merge options (--merge, "
-			      "--strategy, --strategy-option) with am options "
-			      "(%s)"), buf.buf);
+			die(_("cannot combine am options with merge options "));
 	}
 
 	if (options.signoff) {
