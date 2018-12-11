@@ -9,3 +9,4 @@
 /command-list.txt eol=lf
 /GIT-VERSION-GEN eol=lf
 /mergetools/* eol=lf
+/t/oid-info/* eol=lf
