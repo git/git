@@ -1040,6 +1040,7 @@ int cmd_clean(int argc,
 
 	if (repo_read_index(the_repository) < 0)
 		die(_("index file corrupt"));
+	enable_fscache(the_repository->index->cache_nr);
 
 	pl = add_pattern_list(&dir, EXC_CMDL, "--exclude option");
 	for (i = 0; i < exclude_list.nr; i++)
@@ -1114,6 +1115,7 @@ int cmd_clean(int argc,
 		}
 	}
 
+	disable_fscache();
 	strbuf_release(&abs_path);
 	strbuf_release(&buf);
 	string_list_clear(&del_list, 0);
