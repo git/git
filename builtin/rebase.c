@@ -122,7 +122,7 @@ static void imply_interactive(struct rebase_options *opts, const char *option)
 	case REBASE_PRESERVE_MERGES:
 		break;
 	case REBASE_MERGE:
-		/* we silently *upgrade* --merge to --interactive if needed */
+		/* we now implement --merge via --interactive */
 	default:
 		opts->type = REBASE_INTERACTIVE; /* implied */
 		break;
@@ -480,10 +480,6 @@ static int run_specific_rebase(struct rebase_options *opts)
 	case REBASE_AM:
 		backend = "git-rebase--am";
 		backend_func = "git_rebase__am";
-		break;
-	case REBASE_MERGE:
-		backend = "git-rebase--merge";
-		backend_func = "git_rebase__merge";
 		break;
 	case REBASE_PRESERVE_MERGES:
 		backend = "git-rebase--preserve-merges";
@@ -1191,6 +1187,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		}
 	}
 
+	if (options.type == REBASE_MERGE)
+		imply_interactive(&options, "--merge");
+
 	if (options.root && !options.onto_name)
 		imply_interactive(&options, "--root without --onto");
 
@@ -1220,10 +1219,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 				break;
 
 		if (is_interactive(&options) && i >= 0)
-			die(_("cannot combine am options "
-			      "with interactive options"));
-		if (options.type == REBASE_MERGE && i >= 0)
-			die(_("cannot combine am options with merge options "));
+			die(_("cannot combine am options with either "
+			      "interactive or merge options"));
 	}
 
 	if (options.signoff) {

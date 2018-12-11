@@ -124,7 +124,6 @@
 /git-rebase--am
 /git-rebase--common
 /git-rebase--interactive
-/git-rebase--merge
 /git-rebase--preserve-merges
 /git-receive-pack
 /git-reflog

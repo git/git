@@ -218,6 +218,7 @@ then
 	state_dir="$apply_dir"
 elif test -d "$merge_dir"
 then
+	type=interactive
 	if test -d "$merge_dir"/rewritten
 	then
 		type=preserve-merges
@@ -225,10 +226,7 @@ then
 		preserve_merges=t
 	elif test -f "$merge_dir"/interactive
 	then
-		type=interactive
 		interactive_rebase=explicit
-	else
-		type=merge
 	fi
 	state_dir="$merge_dir"
 fi
@@ -477,6 +475,7 @@ then
 	test -z "$interactive_rebase" && interactive_rebase=implied
 fi
 
+actually_interactive=
 if test -n "$interactive_rebase"
 then
 	if test -z "$preserve_merges"
@@ -485,11 +484,12 @@ then
 	else
 		type=preserve-merges
 	fi
-
+	actually_interactive=t
 	state_dir="$merge_dir"
 elif test -n "$do_merge"
 then
-	type=merge
+	interactive_rebase=implied
+	type=interactive
 	state_dir="$merge_dir"
 else
 	type=am
@@ -505,13 +505,9 @@ incompatible_opts=$(echo " $git_am_opt " | \
 		    sed -e 's/ -q / /g' -e 's/^ \(.*\) $/\1/')
 if test -n "$incompatible_opts"
 then
-	if test -n "$interactive_rebase"
+	if test -n "$actually_interactive" || test "$do_merge"
 	then
-		die "$(gettext "fatal: cannot combine am options with interactive options")"
-	fi
-	if test -n "$do_merge"
-	then
-		die "$(gettext "fatal: cannot combine am options with merge options")"
+		die "$(gettext "fatal: cannot combine am options with either interactive or merge options")"
 	fi
 fi
 
@@ -676,7 +672,7 @@ require_clean_work_tree "rebase" "$(gettext "Please commit or stash them.")"
 # but this should be done only when upstream and onto are the same
 # and if this is not an interactive rebase.
 mb=$(git merge-base "$onto" "$orig_head")
-if test -z "$interactive_rebase" && test "$upstream" = "$onto" &&
+if test -z "$actually_interactive" && test "$upstream" = "$onto" &&
 	test "$mb" = "$onto" && test -z "$restrict_revision" &&
 	# linear history?
 	! (git rev-list --parents "$onto".."$orig_head" | sane_grep " .* ") > /dev/null
@@ -726,6 +722,19 @@ then
 	GIT_PAGER='' git diff --stat --summary "$mb_tree" "$onto"
 fi
 
+if test -z "$actually_interactive" && test "$mb" = "$orig_head"
+then
+	say "$(eval_gettext "Fast-forwarded \$branch_name to \$onto_name.")"
+	GIT_REFLOG_ACTION="$GIT_REFLOG_ACTION: checkout $onto_name" \
+		git checkout -q "$onto^0" || die "could not detach HEAD"
+	# If the $onto is a proper descendant of the tip of the branch, then
+	# we just fast-forwarded.
+	git update-ref ORIG_HEAD $orig_head
+	move_to_original_branch
+	finish_rebase
+	exit 0
+fi
+
 test -n "$interactive_rebase" && run_specific_rebase
 
 # Detach HEAD and reset the tree
@@ -734,16 +743,6 @@ say "$(gettext "First, rewinding head to replay your work on top of it...")"
 GIT_REFLOG_ACTION="$GIT_REFLOG_ACTION: checkout $onto_name" \
 	git checkout -q "$onto^0" || die "could not detach HEAD"
 git update-ref ORIG_HEAD $orig_head
-
-# If the $onto is a proper descendant of the tip of the branch, then
-# we just fast-forwarded.
-if test "$mb" = "$orig_head"
-then
-	say "$(eval_gettext "Fast-forwarded \$branch_name to \$onto_name.")"
-	move_to_original_branch
-	finish_rebase
-	exit 0
-fi
 
 if test -n "$rebase_root"
 then
