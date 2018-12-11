@@ -25,7 +25,7 @@
 #   unset            |  desassignar
 #   upstream         |  font
 #
-# Alguns termes que són comandes específiques del git i d'àmbit molt tècnic
+# Alguns termes que són ordres específiques del git i d'àmbit molt tècnic
 # hem decidit no traduir-los per facilitar-ne la compressió a l'usuari i perquè
 # no tenen una transcendència al gran públic. Es tracta de casos similars
 # a «ping» en l'àmbit de xarxes.
@@ -2000,32 +2000,32 @@ msgid "illegal crlf_action %d"
 msgstr ""
 
 #: convert.c:207
-#, fuzzy, c-format
+#, c-format
 msgid "CRLF would be replaced by LF in %s"
-msgstr "LF reemplaçaria CRLF en %s."
+msgstr "CRLF es reemplaçà per LF en %s."
 
 #: convert.c:209
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "CRLF will be replaced by LF in %s.\n"
 "The file will have its original line endings in your working directory"
 msgstr ""
-"LF reemplaçarà CRLF en %s.\n"
+"CRLF serà reemplaçat per LF en %s.\n"
 "El fitxer tindrà els seus terminadors de línia originals en el vostre "
 "directori de treball."
 
 #: convert.c:217
 #, c-format
 msgid "LF would be replaced by CRLF in %s"
-msgstr "CRLF reemplaçaria LF en %s"
+msgstr "LF es reemplaçà per LF en %s"
 
 #: convert.c:219
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "LF will be replaced by CRLF in %s.\n"
 "The file will have its original line endings in your working directory"
 msgstr ""
-"CRLF reemplaçarà LF en %s.\n"
+"LF serà reemplaçat per CRLF en %s.\n"
 "El fitxer tindrà els seus terminadors de línia originals en el vostre "
 "directori de treball."
 
@@ -2054,24 +2054,24 @@ msgid ""
 msgstr ""
 
 #: convert.c:425 convert.c:496
-#, fuzzy, c-format
+#, c-format
 msgid "failed to encode '%s' from %s to %s"
-msgstr "s'ha produït un error en copiar les notes de «%s» a «%s»"
+msgstr "s'ha produït un error en codificar «%s» des de %s a %s"
 
 #: convert.c:468
 #, c-format
 msgid "encoding '%s' from %s to %s and back is not the same"
-msgstr ""
+msgstr "codificar «%s» des de %s a %s i cap enrere no és el mateix"
 
 #: convert.c:674
-#, fuzzy, c-format
+#, c-format
 msgid "cannot fork to run external filter '%s'"
-msgstr "No es pot obrir el fitxer de paquet existent «%s»"
+msgstr "no es pot bifurcar per a executar el filtre extern «%s»"
 
 #: convert.c:694
-#, fuzzy, c-format
+#, c-format
 msgid "cannot feed the input to external filter '%s'"
-msgstr "no es poden llegir els continguts actuals de «%s»"
+msgstr "no es pot alimentar l'entrada al filtre extern «%s»"
 
 #: convert.c:701
 #, c-format
@@ -2089,9 +2089,8 @@ msgid "external filter '%s' failed"
 msgstr "el filtre extern «%s» ha fallat"
 
 #: convert.c:844
-#, fuzzy
 msgid "unexpected filter type"
-msgstr "final de fitxer inesperat"
+msgstr "tipus de filtre inesperat"
 
 #: convert.c:855
 msgid "path name too long for external filter"
@@ -2999,29 +2998,29 @@ msgid "do not know what to do with %06o %s '%s'"
 msgstr "no se sap què fer amb %06o %s «%s»"
 
 #: merge-recursive.c:1212
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to merge submodule %s (not checked out)"
-msgstr "S'ha produït un error en registrar el submòdul '$sm_path'"
+msgstr "S'ha produït un error en fusionar el submòdul %s (no està agafat)"
 
 #: merge-recursive.c:1219
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to merge submodule %s (commits not present)"
-msgstr "S'ha produït un error en registrar el submòdul '$sm_path'"
+msgstr "S'ha produït un error en fusionar el submòdul %s (no hi ha comissions)"
 
 #: merge-recursive.c:1226
 #, c-format
 msgid "Failed to merge submodule %s (commits don't follow merge-base)"
-msgstr ""
+msgstr "S'ha produït un error en fusionar el submòdul %s (les comissions no segueixen merge-base)"
 
 #: merge-recursive.c:1234 merge-recursive.c:1246
 #, c-format
 msgid "Fast-forwarding submodule %s to the following commit:"
-msgstr ""
+msgstr "Avançament ràpid del submòdul %s a la següent comissió:"
 
 #: merge-recursive.c:1237 merge-recursive.c:1249
-#, fuzzy, c-format
+#, c-format
 msgid "Fast-forwarding submodule %s"
-msgstr "Avanç ràpid a $sha1"
+msgstr "Avançament ràpid al submòdul %s"
 
 #: merge-recursive.c:1271
 #, c-format
@@ -3029,13 +3028,13 @@ msgid "Failed to merge submodule %s (merge following commits not found)"
 msgstr ""
 
 #: merge-recursive.c:1275
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to merge submodule %s (not fast-forward)"
-msgstr "S'ha produït un error en registrar el submòdul '$sm_path'"
+msgstr "S'ha produït un error en fusionar el submòdul %s (sense avançament ràpid)"
 
 #: merge-recursive.c:1276
 msgid "Found a possible merge resolution for the submodule:\n"
-msgstr ""
+msgstr "S'ha trobat una possible resolució de fusió pel submòdul:\n"
 
 #: merge-recursive.c:1279
 #, c-format
@@ -3051,7 +3050,7 @@ msgstr ""
 #: merge-recursive.c:1288
 #, c-format
 msgid "Failed to merge submodule %s (multiple merges found)"
-msgstr ""
+msgstr "S'ha produït un error en fusionar el submòdul %s (s'han trobat múltiples fusions)"
 
 #: merge-recursive.c:1358
 msgid "Failed to execute internal merge"
@@ -3285,14 +3284,13 @@ msgid "Adding %s"
 msgstr "S'està afegint %s"
 
 #: merge-recursive.c:3300
-#, fuzzy, c-format
+#y, c-format
 msgid ""
 "Your local changes to the following files would be overwritten by merge:\n"
 "  %s"
 msgstr ""
-"Els vostres canvis locals als fitxers següents se sobreescriurien per "
-"fusionar:\n"
-"%%s"
+"Els canvis locals als fitxers següents se sobreescriuran per la fusió:\n"
+"  %s"
 
 #: merge-recursive.c:3311
 msgid "Already up to date!"
@@ -3495,19 +3493,19 @@ msgid "Bad %s value: '%s'"
 msgstr "Valor erroni de %s: «%s»"
 
 #: object.c:54
-#, fuzzy, c-format
+#, c-format
 msgid "invalid object type \"%s\""
-msgstr "objecte de blob no vàlid %s"
+msgstr "tipus d'objecte «%s» no vàlid"
 
 #: object.c:173
-#, fuzzy, c-format
+#, c-format
 msgid "object %s is a %s, not a %s"
-msgstr "l'objecte %s no és un blob"
+msgstr "l'objecte %s és %s, no pas %s"
 
 #: object.c:233
-#, fuzzy, c-format
+#, c-format
 msgid "object %s has unknown type id %d"
-msgstr "L'objecte %s no té cap nota\n"
+msgstr "l'objecte %s té un identificador de tipus %d desconegut"
 
 #: object.c:246
 #, c-format
@@ -3562,14 +3560,14 @@ msgid "-NUM"
 msgstr "-NUM"
 
 #: parse-options-cb.c:37
-#, fuzzy, c-format
+#, c-format
 msgid "malformed expiration date '%s'"
-msgstr "full d'opcions mal format: «%s»"
+msgstr "data de venciment «%s» mal formada"
 
 #: parse-options-cb.c:109
 #, c-format
 msgid "malformed object name '%s'"
-msgstr "nom d'objecte mal format «%s»"
+msgstr "nom d'objecte «%s» mal format"
 
 #: path.c:894
 #, c-format
@@ -3712,14 +3710,12 @@ msgid "unable to parse --pretty format"
 msgstr "no s'ha pogut analitzar el format --pretty"
 
 #: range-diff.c:56
-#, fuzzy
 msgid "could not start `log`"
-msgstr "no s'ha pogut fer stat a %s"
+msgstr "no s'ha pogut iniciar «log»"
 
 #: range-diff.c:59
-#, fuzzy
 msgid "could not read `log` output"
-msgstr "no s'ha pogut llegir la sortida de 'show'"
+msgstr "no s'ha pogut llegir la sortida de «log»"
 
 #: range-diff.c:74 sequencer.c:4764
 #, c-format
@@ -3727,19 +3723,17 @@ msgid "could not parse commit '%s'"
 msgstr "no s'ha pogut analitzar la comissió «%s»"
 
 #: range-diff.c:224
-#, fuzzy
 msgid "failed to generate diff"
-msgstr "s'ha produït un error en executar «%s»"
+msgstr "s'ha produït un error en generar el diff"
 
 #: range-diff.c:455 range-diff.c:457
-#, fuzzy, c-format
+#, c-format
 msgid "could not parse log for '%s'"
-msgstr "no s'ha pogut llegir el fitxer de registre «%s»"
+msgstr "no s'ha pogut llegir el fitxer de registre per «%s»"
 
 #: read-cache.c:1490
-#, fuzzy
 msgid "Refresh index"
-msgstr "no s'ha pogut actualitzar l'índex"
+msgstr "Actualitza l'índex"
 
 #: read-cache.c:1604
 #, c-format
@@ -3915,24 +3909,24 @@ msgid "ignoring broken ref %s"
 msgstr "s'està ignorant la referència trencada %s"
 
 #: refs.c:711
-#, fuzzy, c-format
+#, c-format
 msgid "could not open '%s' for writing: %s"
-msgstr "no s'ha pogut obrir «%s» per a escriptura"
+msgstr "no s'ha pogut obrir «%s» per a escriptura: %s"
 
 #: refs.c:721 refs.c:772
-#, fuzzy, c-format
+#,  c-format
 msgid "could not read ref '%s'"
-msgstr "No s'ha pogut llegir la referència %s"
+msgstr "no s'ha pogut llegir la referència %s"
 
 #: refs.c:727
-#, fuzzy, c-format
+#, c-format
 msgid "ref '%s' already exists"
-msgstr "«%s» ja existeix"
+msgstr "la referència «%s» ja existeix"
 
 #: refs.c:732
 #, c-format
 msgid "unexpected object ID when writing '%s'"
-msgstr ""
+msgstr "ID d'objecte no esperat en escriure «%s»"
 
 #: refs.c:740 sequencer.c:394 sequencer.c:2510 sequencer.c:2636
 #: sequencer.c:2650 sequencer.c:2877 sequencer.c:4725 sequencer.c:4788
@@ -3950,7 +3944,7 @@ msgstr "no s'ha pogut obrir «%s» per a escriptura"
 #: refs.c:774
 #, c-format
 msgid "unexpected object ID when deleting '%s'"
-msgstr ""
+msgstr "ID d'objecte no esperat en suprimir «%s»"
 
 #: refs.c:905
 #, c-format
@@ -3968,9 +3962,9 @@ msgid "log for %s is empty"
 msgstr ""
 
 #: refs.c:1061
-#, fuzzy, c-format
+#, c-format
 msgid "refusing to update ref with bad name '%s'"
-msgstr "s'està ignorant la referència amb nom malmès %s"
+msgstr "s'està refusant la referència amb nom malmès %s"
 
 #: refs.c:1137
 #, fuzzy, c-format
@@ -4695,32 +4689,32 @@ msgstr "no s'ha pogut obrir «%s» per a lectura"
 
 #: sequencer.c:742
 msgid "'GIT_AUTHOR_NAME' already given"
-msgstr ""
+msgstr "Ja s'ha donat «GIT_AUTHOR_NAME»"
 
 #: sequencer.c:747
 msgid "'GIT_AUTHOR_EMAIL' already given"
-msgstr ""
+msgstr "Ja s'ha donat «GIT_AUTHOR_EMAIL»"
 
 #: sequencer.c:752
 msgid "'GIT_AUTHOR_DATE' already given"
-msgstr ""
+msgstr "Ja s'ha donat «GIT_AUTHOR_DATE»"
 
 #: sequencer.c:756
-#, fuzzy, c-format
+#, c-format
 msgid "unknown variable '%s'"
-msgstr "Format d'arxiu desconegut «%s»"
+msgstr "variable  «%s» desconeguda"
 
 #: sequencer.c:761
 msgid "missing 'GIT_AUTHOR_NAME'"
-msgstr ""
+msgstr "falta «GIT_AUTHOR_NAME»"
 
 #: sequencer.c:763
 msgid "missing 'GIT_AUTHOR_EMAIL'"
-msgstr ""
+msgstr "falta «GIT_AUTHOR_EMAIL»"
 
 #: sequencer.c:765
 msgid "missing 'GIT_AUTHOR_DATE'"
-msgstr ""
+msgstr "falta «GIT_AUTHOR_DATE»"
 
 #: sequencer.c:825
 #, fuzzy, c-format
@@ -5109,7 +5103,7 @@ msgid "cannot read HEAD"
 msgstr "No es pot llegir HEAD"
 
 #: sequencer.c:2762
-#, fuzzy, c-format
+#, c-format
 msgid "unable to copy '%s' to '%s'"
 msgstr "no s'ha pogut copiar «%s» a «%s»"
 
@@ -5240,9 +5234,9 @@ msgid "could not get commit message of '%s'"
 msgstr "no s'ha pogut llegir el missatge de comissió: %s"
 
 #: sequencer.c:3274
-#, fuzzy, c-format
+#, c-format
 msgid "could not even attempt to merge '%.*s'"
-msgstr "no s'ha pogut obrir o llegir «%s»"
+msgstr "no s'ha pogut fusionar «%.*s»"
 
 #: sequencer.c:3290
 #, fuzzy
@@ -5456,19 +5450,17 @@ msgstr[0] "Rebasa $shortrevisions sobre $shortonto ($todocount ordre)"
 msgstr[1] "Rebasa $shortrevisions sobre $shortonto ($todocount ordres)"
 
 #: sequencer.c:4864
-#, fuzzy, c-format
+#, c-format
 msgid "could not copy '%s' to '%s'."
-msgstr "no s'ha pogut copiar «%s» a «%s»"
+msgstr "no s'ha pogut copiar «%s» a «%s»."
 
 #: sequencer.c:4868 sequencer.c:4897
-#, fuzzy
 msgid "could not transform the todo list"
-msgstr "no s'ha pogut escriure la llista per a fer"
+msgstr "no s'ha pogut transformar la llista per a fer"
 
 #: sequencer.c:4900
-#, fuzzy
 msgid "could not skip unnecessary pick commands"
-msgstr "omet els «picks» no necessaris"
+msgstr "no s'han pogut ometre les ordres «picks» no necessàries"
 
 #: sequencer.c:4983
 msgid "the script was already rearranged."
@@ -5702,14 +5694,13 @@ msgid "attempting to mmap %<PRIuMAX> over limit %<PRIuMAX>"
 msgstr ""
 
 #: sha1-file.c:806
-#, fuzzy
 msgid "mmap failed"
-msgstr "%s ha fallat"
+msgstr "mmap ha fallat"
 
 #: sha1-file.c:973
-#, fuzzy, c-format
+#, c-format
 msgid "object file %s is empty"
-msgstr "tipus d'objecte"
+msgstr "el tipus d'objecte %s és buit"
 
 #: sha1-file.c:1093 sha1-file.c:2215
 #, fuzzy, c-format
@@ -9938,13 +9929,12 @@ msgid "list untracked files in columns"
 msgstr "mostra els fitxers no seguits en columnes"
 
 #: builtin/commit.c:1338
-#, fuzzy
 msgid "do not detect renames"
-msgstr "no consultis els remots"
+msgstr "no detectis canvis de noms"
 
 #: builtin/commit.c:1340
 msgid "detect renames, optionally set similarity index"
-msgstr ""
+msgstr "detecta canvis de noms, i opcionalment estableix un índex de semblança"
 
 #: builtin/commit.c:1360
 msgid "Unsupported combination of ignored and untracked-files arguments"
@@ -10123,16 +10113,15 @@ msgid "Aborting commit; you did not edit the message.\n"
 msgstr "S'està avortant la comissió; no heu editat el missatge.\n"
 
 #: builtin/commit.c:1665
-#, fuzzy
 msgid ""
 "repository has been updated, but unable to write\n"
 "new_index file. Check that disk is not full and quota is\n"
 "not exceeded, and then \"git reset HEAD\" to recover."
 msgstr ""
-"S'ha actualitzat el dipòsit, però no es pot escriure el\n"
+"s'ha actualitzat el dipòsit, però no es pot escriure el\n"
 "fitxer new_index. Comproveu que el disc no estigui ple i\n"
-"que la quota no estigui excedida, i després\n"
-"«git reset HEAD» per a recuperar."
+"que no s'hagi excedit la quota, i després feu \n"
+"«git reset HEAD» per a recuperar-ho."
 
 #: builtin/commit-graph.c:10
 msgid "git commit-graph [--object-dir <objdir>]"
@@ -10188,14 +10177,13 @@ msgid "git config [<options>]"
 msgstr "git config [<opcions>]"
 
 #: builtin/config.c:103
-#, fuzzy, c-format
+#, c-format
 msgid "unrecognized --type argument, %s"
-msgstr "paràmetre no reconegut: %s"
+msgstr "paràmetre --type no reconegut, %s"
 
 #: builtin/config.c:115
-#, fuzzy
 msgid "only one type at a time"
-msgstr "emet només coincidències exactes"
+msgstr "només un tipus cada cop"
 
 #: builtin/config.c:124
 msgid "Config file location"
@@ -10214,9 +10202,8 @@ msgid "use repository config file"
 msgstr "usa el fitxer de configuració del dipòsit"
 
 #: builtin/config.c:128
-#, fuzzy
 msgid "use per-worktree config file"
-msgstr "usa el fitxer de configuració del dipòsit"
+msgstr "usa un fitxer de configuració per dipòsit"
 
 #: builtin/config.c:129
 msgid "use given config file"
@@ -10298,7 +10285,7 @@ msgstr "Tipus"
 #: builtin/config.c:147
 #, fuzzy
 msgid "value is given this type"
-msgstr "el valor és una data de venciment"
+msgstr "el valor té aquest tipus"
 
 #: builtin/config.c:148
 msgid "value is \"true\" or \"false\""
