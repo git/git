@@ -143,7 +143,7 @@ write_basic_state
 rm -f "$(git rev-parse --git-path REBASE_HEAD)"
 
 msgnum=0
-for cmt in $(git rev-list --reverse --no-merges "$revisions")
+for cmt in $(git rev-list --topo-order --reverse --no-merges "$revisions")
 do
 	msgnum=$(($msgnum + 1))
 	echo "$cmt" > "$state_dir/cmt.$msgnum"
