@@ -48,6 +48,7 @@ struct protocol_capability {
 	 * This field should be NULL for capabilities which are not commands.
 	 */
 	int (*command)(struct repository *r,
+		       const char *config_context,
 		       struct argv_array *keys,
 		       struct packet_reader *request);
 };
@@ -158,7 +159,7 @@ enum request_state {
 	PROCESS_REQUEST_DONE,
 };
 
-static int process_request(void)
+static int process_request(struct serve_options *opts)
 {
 	enum request_state state = PROCESS_REQUEST_KEYS;
 	struct packet_reader reader;
@@ -222,7 +223,7 @@ static int process_request(void)
 	if (!command)
 		die("no command requested");
 
-	command->command(the_repository, &keys, &reader);
+	command->command(the_repository, opts->config_context, &keys, &reader);
 
 	argv_array_clear(&keys);
 	return 0;
@@ -249,10 +250,10 @@ void serve(struct serve_options *options)
 	 * a single request/response exchange
 	 */
 	if (options->stateless_rpc) {
-		process_request();
+		process_request(options);
 	} else {
 		for (;;)
-			if (process_request())
+			if (process_request(options))
 				break;
 	}
 }

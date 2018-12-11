@@ -69,7 +69,9 @@ static int send_ref(const char *refname, const struct object_id *oid,
 	return 0;
 }
 
-int ls_refs(struct repository *r, struct argv_array *keys,
+int ls_refs(struct repository *r,
+	    const char *config_section,
+	    struct argv_array *keys,
 	    struct packet_reader *request)
 {
 	struct ls_refs_data data;
