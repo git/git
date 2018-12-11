@@ -2686,6 +2686,8 @@ pid_t waitpid(pid_t pid, int *status, int options)
 	return -1;
 }
 
+int (*win32_is_mount_point)(struct strbuf *path) = mingw_is_mount_point;
+
 int mingw_is_mount_point(struct strbuf *path)
 {
 	WIN32_FIND_DATAW findbuf = { 0 };
