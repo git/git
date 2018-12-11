@@ -501,21 +501,17 @@ then
 	git_format_patch_opt="$git_format_patch_opt --progress"
 fi
 
-if test -n "$git_am_opt"; then
-	incompatible_opts=$(echo " $git_am_opt " | \
-			    sed -e 's/ -q / /g' -e 's/^ \(.*\) $/\1/')
+incompatible_opts=$(echo " $git_am_opt " | \
+		    sed -e 's/ -q / /g' -e 's/^ \(.*\) $/\1/')
+if test -n "$incompatible_opts"
+then
 	if test -n "$interactive_rebase"
 	then
-		if test -n "$incompatible_opts"
-		then
-			die "$(gettext "fatal: cannot combine am options with interactive options")"
-		fi
+		die "$(gettext "fatal: cannot combine am options with interactive options")"
 	fi
-	if test -n "$do_merge"; then
-		if test -n "$incompatible_opts"
-		then
-			die "$(gettext "fatal: cannot combine am options with merge options")"
-		fi
+	if test -n "$do_merge"
+	then
+		die "$(gettext "fatal: cannot combine am options with merge options")"
 	fi
 fi
 
