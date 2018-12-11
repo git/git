@@ -83,8 +83,9 @@ static void print_command_list(const struct cmdname_help *cmds,
 
 	for (i = 0; cmds[i].name; i++) {
 		if (cmds[i].category & mask) {
+			size_t len = strlen(cmds[i].name);
 			printf("   %s   ", cmds[i].name);
-			mput_char(' ', longest - strlen(cmds[i].name));
+			mput_char(' ', longest > len ? longest - len : 1);
 			puts(_(cmds[i].help));
 		}
 	}
@@ -526,6 +527,13 @@ void list_all_cmds_help(void)
 
 	git_config(get_alias, &alias_list);
 	string_list_sort(&alias_list);
+
+	for (i = 0; i < alias_list.nr; i++) {
+		size_t len = strlen(alias_list.items[i].string);
+		if (longest < len)
+			longest = len;
+	}
+
 	if (alias_list.nr) {
 		printf("\n%s\n", _("Command aliases"));
 		ALLOC_ARRAY(aliases, alias_list.nr + 1);
