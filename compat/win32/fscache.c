@@ -41,6 +41,7 @@ static struct trace_key trace_fscache = TRACE_KEY_INIT(FSCACHE);
 struct fsentry {
 	struct hashmap_entry ent;
 	mode_t st_mode;
+	ULONG reparse_tag;
 	/* Length of name. */
 	unsigned short len;
 	/*
@@ -180,6 +181,10 @@ static struct fsentry *fseentry_create_entry(struct fscache *cache, struct fsent
 
 	fse = fsentry_alloc(cache, list, buf, len);
 
+	fse->reparse_tag =
+		fdata->FileAttributes & FILE_ATTRIBUTE_REPARSE_POINT ?
+		fdata->EaSize : 0;
+
 	/*
 	 * On certain Windows versions, host directories mapped into
 	 * Windows Containers ("Volumes", see https://docs.docker.com/storage/volumes/)
@@ -189,8 +194,7 @@ static struct fsentry *fseentry_create_entry(struct fscache *cache, struct fsent
 	 * Let's work around this by detecting that situation and
 	 * telling Git that these are *not* symbolic links.
 	 */
-	if (fdata->FileAttributes & FILE_ATTRIBUTE_REPARSE_POINT &&
-	    fdata->EaSize == IO_REPARSE_TAG_SYMLINK &&
+	if (fse->reparse_tag == IO_REPARSE_TAG_SYMLINK &&
 	    sizeof(buf) > (list ? list->len + 1 : 0) + fse->len + 1 &&
 	    is_inside_windows_container()) {
 		size_t off = 0;
