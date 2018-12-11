@@ -185,10 +185,7 @@ static int read_basic_state(struct rebase_options *opts)
 	if (get_oid(buf.buf, &opts->orig_head))
 		return error(_("invalid orig-head: '%s'"), buf.buf);
 
-	strbuf_reset(&buf);
-	if (read_one(state_dir_path("quiet", opts), &buf))
-		return -1;
-	if (buf.len)
+	if (file_exists(state_dir_path("quiet", opts)))
 		opts->flags &= ~REBASE_NO_QUIET;
 	else
 		opts->flags |= REBASE_NO_QUIET;

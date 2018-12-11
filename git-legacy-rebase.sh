@@ -113,7 +113,7 @@ read_basic_state () {
 	else
 		orig_head=$(cat "$state_dir"/head)
 	fi &&
-	GIT_QUIET=$(cat "$state_dir"/quiet) &&
+	test -f "$state_dir"/quiet && GIT_QUIET=t
 	test -f "$state_dir"/verbose && verbose=t
 	test -f "$state_dir"/strategy && strategy="$(cat "$state_dir"/strategy)"
 	test -f "$state_dir"/strategy_opts &&

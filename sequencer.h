@@ -39,6 +39,7 @@ struct replay_opts {
 	int allow_empty_message;
 	int keep_redundant_commits;
 	int verbose;
+	int quiet;
 
 	int mainline;
 
