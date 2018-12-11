@@ -22,6 +22,7 @@ void fscache_flush(void);
 
 DIR *fscache_opendir(const char *dir);
 int fscache_lstat(const char *file_name, struct stat *buf);
+int fscache_is_mount_point(struct strbuf *path);
 
 /* opaque fscache structure */
 struct fscache;
