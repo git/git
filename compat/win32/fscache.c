@@ -46,6 +46,7 @@ static struct trace_key trace_fscache = TRACE_KEY_INIT(FSCACHE);
 struct fsentry {
 	struct hashmap_entry ent;
 	mode_t st_mode;
+	ULONG reparse_tag;
 	/* Pointer to the directory listing, or NULL for the listing itself. */
 	struct fsentry *list;
 	/* Pointer to the next file entry of the list. */
@@ -196,6 +197,10 @@ static struct fsentry *fseentry_create_entry(struct fscache *cache,
 	len = xwcstoutfn(buf, ARRAY_SIZE(buf), fdata->FileName, fdata->FileNameLength / sizeof(wchar_t));
 
 	fse = fsentry_alloc(cache, list, buf, len);
+
+	fse->reparse_tag =
+		fdata->FileAttributes & FILE_ATTRIBUTE_REPARSE_POINT ?
+		fdata->EaSize : 0;
 
 	fse->st_mode = file_attr_to_st_mode(fdata->FileAttributes);
 	fse->dirent.d_type = S_ISDIR(fse->st_mode) ? DT_DIR : DT_REG;
