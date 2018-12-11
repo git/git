@@ -1223,12 +1223,12 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 				break;
 
 		if (is_interactive(&options) && i >= 0)
-			die(_("error: cannot combine interactive options "
+			die(_("cannot combine interactive options "
 			      "(--interactive, --exec, --rebase-merges, "
 			      "--preserve-merges, --keep-empty, --root + "
 			      "--onto) with am options (%s)"), buf.buf);
 		if (options.type == REBASE_MERGE && i >= 0)
-			die(_("error: cannot combine merge options (--merge, "
+			die(_("cannot combine merge options (--merge, "
 			      "--strategy, --strategy-option) with am options "
 			      "(%s)"), buf.buf);
 	}
@@ -1248,15 +1248,15 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		 *       git-rebase.txt caveats with "unless you know what you are doing"
 		 */
 		if (options.rebase_merges)
-			die(_("error: cannot combine '--preserve-merges' with "
+			die(_("cannot combine '--preserve-merges' with "
 			      "'--rebase-merges'"));
 
 	if (options.rebase_merges) {
 		if (strategy_options.nr)
-			die(_("error: cannot combine '--rebase-merges' with "
+			die(_("cannot combine '--rebase-merges' with "
 			      "'--strategy-option'"));
 		if (options.strategy)
-			die(_("error: cannot combine '--rebase-merges' with "
+			die(_("cannot combine '--rebase-merges' with "
 			      "'--strategy'"));
 	}
 
