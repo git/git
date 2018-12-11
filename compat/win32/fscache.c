@@ -41,6 +41,7 @@ static struct trace_key trace_fscache = TRACE_KEY_INIT(FSCACHE);
 struct fsentry {
 	struct hashmap_entry ent;
 	mode_t st_mode;
+	ULONG reparse_tag;
 	/* Length of name. */
 	unsigned short len;
 	/*
@@ -179,6 +180,10 @@ static struct fsentry *fseentry_create_entry(struct fscache *cache, struct fsent
 	len = xwcstoutfn(buf, ARRAY_SIZE(buf), fdata->FileName, fdata->FileNameLength / sizeof(wchar_t));
 
 	fse = fsentry_alloc(cache, list, buf, len);
+
+	fse->reparse_tag =
+		fdata->FileAttributes & FILE_ATTRIBUTE_REPARSE_POINT ?
+		fdata->EaSize : 0;
 
 	fse->st_mode = file_attr_to_st_mode(fdata->FileAttributes);
 	fse->u.s.st_size = fdata->EndOfFile.LowPart | (((off_t)fdata->EndOfFile.HighPart) << 32);
