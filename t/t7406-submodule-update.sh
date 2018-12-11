@@ -21,6 +21,17 @@ compare_head()
     test "$sha_master" = "$sha_head"
 }
 
+record_submodules_status()
+{
+	git submodule status --recursive >expect
+}
+
+compare_submodules_status()
+{
+	git submodule status --recursive >actual &&
+	test_i18ncmp expect actual
+}
+
 
 test_expect_success 'setup a submodule tree' '
 	echo file > file &&
@@ -294,7 +305,7 @@ test_expect_success 'submodule update --rebase staying on master' '
 
 test_expect_success 'submodule update --merge staying on master' '
 	(cd super/submodule &&
-	  git reset --hard HEAD~1
+	 git reset --hard HEAD~1
 	) &&
 	(cd super &&
 	 (cd submodule &&
@@ -307,16 +318,28 @@ test_expect_success 'submodule update --merge staying on master' '
 '
 
 test_expect_success 'submodule update --reset-hard staying on master' '
-	(cd super/submodule &&
-	  git reset --hard HEAD~1
-	) &&
 	(cd super &&
+	 record_submodules_status &&
 	 (cd submodule &&
-	  compare_head
+	  git reset --hard HEAD~1
 	 ) &&
+	 ! compare_submodules_status &&
 	 git submodule update --reset-hard submodule &&
-	 cd submodule &&
-	 compare_head
+	 compare_submodules_status
+	)
+'
+
+test_expect_success 'submodule update --reset-hard in nested submodule' '
+	(cd recursivesuper &&
+	 git submodule update --init --recursive &&
+	 record_submodules_status &&
+	 (cd super/submodule &&
+	  echo 123 >> file &&
+	  git commit -m "new commit" file
+	 ) &&
+	 ! compare_submodules_status &&
+	 git submodule update --reset-hard --recursive &&
+	 compare_submodules_status
 	)
 '
 
