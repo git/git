@@ -445,6 +445,7 @@ static inline void convert_slashes(char *path)
 struct strbuf;
 int mingw_is_mount_point(struct strbuf *path);
 #define is_mount_point mingw_is_mount_point
+#define CAN_UNLINK_MOUNT_POINTS 1
 #define PATH_SEP ';'
 char *mingw_query_user_email(void);
 #define query_user_email mingw_query_user_email
