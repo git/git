@@ -5,6 +5,7 @@
 #include "argv-array.h"
 #include "ls-refs.h"
 #include "pkt-line.h"
+#include "config.h"
 
 /*
  * Check if one of the prefixes is a prefix of the ref.
@@ -40,6 +41,9 @@ static int send_ref(const char *refname, const struct object_id *oid,
 	const char *refname_nons = strip_namespace(refname);
 	struct strbuf refline = STRBUF_INIT;
 
+	if (ref_is_hidden(refname_nons, refname))
+		return 0;
+
 	if (!ref_match(&data->prefixes, refname))
 		return 0;
 
@@ -69,6 +73,12 @@ static int send_ref(const char *refname, const struct object_id *oid,
 	return 0;
 }
 
+static int ls_refs_config(const char *var, const char *value,
+			  void *config_context)
+{
+	return parse_hide_refs_config(var, value, config_context);
+}
+
 int ls_refs(struct repository *r,
 	    const char *config_section,
 	    struct argv_array *keys,
@@ -77,6 +87,8 @@ int ls_refs(struct repository *r,
 	struct ls_refs_data data;
 
 	memset(&data, 0, sizeof(data));
+
+	git_config(ls_refs_config, (void *)config_section);
 
 	while (packet_reader_read(request) != PACKET_READ_FLUSH) {
 		const char *arg = request->line;
