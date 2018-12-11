@@ -78,6 +78,7 @@ test_expect_success 'git rebase --skip' '
 	git rebase --continue &&
 	echo rebase >expected.args &&
 	cat >expected.data <<-EOF &&
+	$(git rev-parse C) $(git rev-parse HEAD^)
 	$(git rev-parse D) $(git rev-parse HEAD)
 	EOF
 	verify_hook_input
@@ -91,6 +92,7 @@ test_expect_success 'git rebase --skip the last one' '
 	echo rebase >expected.args &&
 	cat >expected.data <<-EOF &&
 	$(git rev-parse E) $(git rev-parse HEAD)
+	$(git rev-parse F) $(git rev-parse HEAD)
 	EOF
 	verify_hook_input
 '
@@ -120,6 +122,7 @@ test_expect_success 'git rebase -m --skip' '
 	git rebase --continue &&
 	echo rebase >expected.args &&
 	cat >expected.data <<-EOF &&
+	$(git rev-parse C) $(git rev-parse HEAD^)
 	$(git rev-parse D) $(git rev-parse HEAD)
 	EOF
 	verify_hook_input

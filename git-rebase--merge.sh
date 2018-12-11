@@ -121,6 +121,8 @@ continue)
 skip)
 	read_state
 	git rerere clear
+	cmt="$(cat "$state_dir/cmt.$msgnum")"
+	echo "$cmt $(git rev-parse HEAD^0)" >> "$state_dir/rewritten"
 	msgnum=$(($msgnum + 1))
 	while test "$msgnum" -le "$end"
 	do
