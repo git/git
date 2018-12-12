@@ -175,6 +175,12 @@ phases:
          net use s: \\gitfileshare.file.core.windows.net\test-cache "$GITFILESHAREPWD" /user:AZURE\gitfileshare /persistent:no; c
          cmd /c mklink /d "$(Build.SourcesDirectory)\test-cache" S:\; c
        }
+    displayName: 'mount test-cache'
+    env:
+      GITFILESHAREPWD: $(gitfileshare.pwd)
+  - powershell: |
+       # Helper to check the error level of the latest command (exit with error when appropriate)
+       function c() { if (!$?) { exit(1) } }
 
        # Add build agent's MinGit to PATH
        $env:PATH = $env:AGENT_HOMEDIRECTORY +"\externals\\git\cmd;" +$env:PATH
@@ -206,6 +212,10 @@ phases:
        $sdk_path = "$(Build.SourcesDirectory)\git-sdk-64"
        init "$sdk_path" "https://dev.azure.com/git-for-windows/git-sdk-64/_git/git-sdk-64" 0
        init usr\src\build-extra https://github.com/git-for-windows/build-extra 1
+    displayName: 'initialize the Git for Windows SDK'
+  - powershell: |
+       # Helper to check the error level of the latest command (exit with error when appropriate)
+       function c() { if (!$?) { exit(1) } }
 
        cd "$(Build.SourcesDirectory)"; c
 
@@ -222,11 +232,12 @@ phases:
          save_good_tree
        "@
        c
-
+    displayName: 'build & test'
+  - powershell: |
        if ("$GITFILESHAREPWD" -ne "" -and "$GITFILESHAREPWD" -ne "`$`(gitfileshare.pwd)") {
          cmd /c rmdir "$(Build.SourcesDirectory)\test-cache"
        }
-    displayName: 'build & test'
+    displayName: 'unmount test-cache'
     env:
       GITFILESHAREPWD: $(gitfileshare.pwd)
   - task: PublishTestResults@2
