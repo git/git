@@ -894,10 +894,10 @@ xml_attr_encode () {
 	printf '%s\n' "$@" |
 	sed -e 's/&/\&amp;/g' -e "s/'/\&apos;/g" -e 's/"/\&quot;/g' \
 		-e 's/</\&lt;/g' -e 's/>/\&gt;/g' \
-		-e "s/$(printf \\x1c)/\\&#1c;/g" \
-		-e "s/$(printf \\x1d)/\\&#1d;/g" \
-		-e "s/$(printf \\x1e)/\\&#1d;/g" \
-		-e "s/$(printf \\x1f)/\\&#1f;/g" \
+		-e "s/$(printf \\x1c)/\\&#x1c;/g" \
+		-e "s/$(printf \\x1d)/\\&#x1d;/g" \
+		-e "s/$(printf \\x1e)/\\&#x1d;/g" \
+		-e "s/$(printf \\x1f)/\\&#x1f;/g" \
 		-e 's/	/\&#x09;/g' -e 's/$/\&#x0a;/' -e '$s/&#x0a;$//' |
 	tr -d '\012\015'
 }
