@@ -171,7 +171,7 @@ phases:
          net use s: \\gitfileshare.file.core.windows.net\test-cache "$GITFILESHAREPWD" /user:AZURE\gitfileshare /persistent:no
          cmd /c mklink /d "$(Build.SourcesDirectory)\test-cache" S:\
        }
-    displayName: 'mount test-cache'
+    displayName: 'Mount test-cache'
     env:
       GITFILESHAREPWD: $(gitfileshare.pwd)
   - powershell: |
@@ -231,7 +231,7 @@ phases:
          }
        "@
        c
-    displayName: 'build & test'
+    displayName: 'Build & Test'
     env:
       HOME: $(Build.SourcesDirectory)
       MSYSTEM: MINGW64
@@ -239,7 +239,7 @@ phases:
        if ("$GITFILESHAREPWD" -ne "" -and "$GITFILESHAREPWD" -ne "`$`(gitfileshare.pwd)") {
          cmd /c rmdir "$(Build.SourcesDirectory)\test-cache"
        }
-    displayName: 'unmount test-cache'
+    displayName: 'Unmount test-cache'
     condition: true
     env:
       GITFILESHAREPWD: $(gitfileshare.pwd)
