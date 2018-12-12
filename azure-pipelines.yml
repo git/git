@@ -215,8 +215,6 @@ phases:
 
        cd "$(Build.SourcesDirectory)"; c
 
-       $env:HOME = "$(Build.SourcesDirectory)"
-       $env:MSYSTEM = "MINGW64"
        git-sdk-64\git-cmd --command=usr\\bin\\bash.exe -lc @"
          . ci/lib.sh
 
@@ -229,6 +227,9 @@ phases:
        "@
        c
     displayName: 'build & test'
+    env:
+      HOME: $(Build.SourcesDirectory)
+      MSYSTEM: MINGW64
   - powershell: |
        if ("$GITFILESHAREPWD" -ne "" -and "$GITFILESHAREPWD" -ne "`$`(gitfileshare.pwd)") {
          cmd /c rmdir "$(Build.SourcesDirectory)\test-cache"
