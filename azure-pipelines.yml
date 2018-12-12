@@ -162,7 +162,6 @@ phases:
 
 - phase: windows
   displayName: Windows
-  condition: succeeded()
   queue:
     name: Hosted
     timeoutInMinutes: 240
