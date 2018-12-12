@@ -219,8 +219,6 @@ phases:
        cd "$(Build.SourcesDirectory)"; c
 
        git-sdk-64\git-cmd --command=usr\\bin\\bash.exe -lc @"
-         . ci/lib.sh
-
          export MAKEFLAGS=-j10
          export DEVELOPER=1
          export NO_PERL=1
