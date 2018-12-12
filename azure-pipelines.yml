@@ -218,12 +218,16 @@ phases:
        git-sdk-64\git-cmd --command=usr\\bin\\bash.exe -lc @"
          . ci/lib.sh
 
-         make -j10 DEVELOPER=1 NO_PERL=1 || exit 1
-         NO_PERL=1 NO_SVN_TESTS=1 GIT_TEST_SKIP_REBASE_P=1 GIT_TEST_OPTS=\"--no-chain-lint --no-bin-wrappers --quiet --write-junit-xml\" time make -j15 -k DEVELOPER=1 test || {
-           NO_PERL=1 NO_SVN_TESTS=1 GIT_TEST_SKIP_REBASE_P=1 GIT_TEST_OPTS=\"-i -v -x\" make -k -C t failed; exit 1
-         }
+         export MAKEFLAGS=-j10
+         export DEVELOPER=1
+         export NO_PERL=1
+         export NO_SVN_TESTS=1
+         export GIT_TEST_SKIP_REBASE_P=1
 
-         save_good_tree
+         ci/run-build-and-tests.sh || {
+           ci/print-test-failures.sh
+           exit 1
+         }
        "@
        c
     displayName: 'build & test'
