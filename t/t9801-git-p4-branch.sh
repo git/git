@@ -610,4 +610,8 @@ test_expect_success 'Update a file in git side and submit to P4 using client vie
 	)
 '
 
+test_expect_success 'kill p4d' '
+	kill_p4d
+'
+
 test_done

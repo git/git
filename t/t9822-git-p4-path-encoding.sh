@@ -67,4 +67,8 @@ test_expect_success 'Delete iso8859-1 encoded paths and clone' '
 	)
 '
 
+test_expect_success 'kill p4d' '
+	kill_p4d
+'
+
 test_done
