@@ -167,12 +167,9 @@ phases:
     timeoutInMinutes: 240
   steps:
   - powershell: |
-       # Helper to check the error level of the latest command (exit with error when appropriate)
-       function c() { if (!$?) { exit(1) } }
-
        if ("$GITFILESHAREPWD" -ne "" -and "$GITFILESHAREPWD" -ne "`$`(gitfileshare.pwd)") {
-         net use s: \\gitfileshare.file.core.windows.net\test-cache "$GITFILESHAREPWD" /user:AZURE\gitfileshare /persistent:no; c
-         cmd /c mklink /d "$(Build.SourcesDirectory)\test-cache" S:\; c
+         net use s: \\gitfileshare.file.core.windows.net\test-cache "$GITFILESHAREPWD" /user:AZURE\gitfileshare /persistent:no
+         cmd /c mklink /d "$(Build.SourcesDirectory)\test-cache" S:\
        }
     displayName: 'mount test-cache'
     env:
