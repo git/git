@@ -505,7 +505,8 @@ static int move_to_original_branch(struct rebase_options *opts)
 		    opts->head_name, oid_to_hex(&opts->onto->object.oid));
 	strbuf_addf(&head_reflog, "rebase finished: returning to %s",
 		    opts->head_name);
-	ret = reset_head(NULL, "checkout", opts->head_name, 0,
+	ret = reset_head(NULL, "checkout", opts->head_name,
+			 RESET_HEAD_REFS_ONLY,
 			 orig_head_reflog.buf, head_reflog.buf);
 
 	strbuf_release(&orig_head_reflog);
