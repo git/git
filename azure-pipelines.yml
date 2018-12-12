@@ -242,6 +242,7 @@ phases:
          cmd /c rmdir "$(Build.SourcesDirectory)\test-cache"
        }
     displayName: 'unmount test-cache'
+    condition: true
     env:
       GITFILESHAREPWD: $(gitfileshare.pwd)
   - task: PublishTestResults@2
