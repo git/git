@@ -16978,7 +16978,7 @@ msgstr "无法为子模组 '%s' 注册 url"
 #: builtin/submodule--helper.c:667
 #, c-format
 msgid "Submodule '%s' (%s) registered for path '%s'\n"
-msgstr "子模组 '%s'（%s）未对路径 '%s' 注册\n"
+msgstr "子模组 '%s'（%s）已对路径 '%s' 注册\n"
 
 #
 #: builtin/submodule--helper.c:677
