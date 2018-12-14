@@ -61,7 +61,11 @@ test_expect_success 'cherry-pick mid-cherry-pick-sequence' '
 
 test_expect_success 'cherry-pick persists opts correctly' '
 	pristine_detach initial &&
-	test_expect_code 128 git cherry-pick -s -m 1 --strategy=recursive -X patience -X ours initial..anotherpick &&
+	# to make sure that the session to cherry-pick a sequence
+	# gets interrupted, use a high-enough number that is larger
+	# than the number of parents of any commit we have created
+	mainline=4 &&
+	test_expect_code 128 git cherry-pick -s -m $mainline --strategy=recursive -X patience -X ours initial..anotherpick &&
 	test_path_is_dir .git/sequencer &&
 	test_path_is_file .git/sequencer/head &&
 	test_path_is_file .git/sequencer/todo &&
@@ -69,7 +73,7 @@ test_expect_success 'cherry-pick persists opts correctly' '
 	echo "true" >expect &&
 	git config --file=.git/sequencer/opts --get-all options.signoff >actual &&
 	test_cmp expect actual &&
-	echo "1" >expect &&
+	echo "$mainline" >expect &&
 	git config --file=.git/sequencer/opts --get-all options.mainline >actual &&
 	test_cmp expect actual &&
 	echo "recursive" >expect &&
