@@ -1131,6 +1131,8 @@ static void deinit_submodule(const char *path, const char *prefix,
 		if (!(flags & OPT_QUIET))
 			printf(format, displaypath);
 
+		submodule_unset_core_worktree(sub);
+
 		strbuf_release(&sb_rm);
 	}
 
