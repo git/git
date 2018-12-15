@@ -1086,6 +1086,8 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 		case PARSE_OPT_HELP:
 		case PARSE_OPT_ERROR:
 			exit(129);
+		case PARSE_OPT_COMPLETE:
+			exit(0);
 		case PARSE_OPT_NON_OPTION:
 		case PARSE_OPT_DONE:
 		{

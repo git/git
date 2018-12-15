@@ -15,7 +15,7 @@ struct cmdnames {
 
 static inline void mput_char(char c, unsigned int num)
 {
-	while(num--)
+	while (num--)
 		putchar(c);
 }
 
