@@ -1,0 +1,22 @@
+Git 2.21 Release Notes
+======================
+
+Backward Compatibility Notes
+----------------------------
+
+
+Updates since v2.20
+-------------------
+
+UI, Workflows & Features
+
+
+
+Performance, Internal Implementation, Development Support etc.
+
+
+
+Fixes since v2.20
+-----------------
+
+ * Code cleanup, docfix, build fix, etc.
