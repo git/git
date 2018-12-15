@@ -728,6 +728,8 @@ fail_pipe:
 	if (prepare_cmd(&argv, cmd) < 0) {
 		failed_errno = errno;
 		cmd->pid = -1;
+		if (!cmd->silent_exec_failure)
+			error_errno("cannot run %s", cmd->argv[0]);
 		goto end_of_spawn;
 	}
 
