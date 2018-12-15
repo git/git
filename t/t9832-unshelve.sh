@@ -174,5 +174,8 @@ test_expect_success 'unshelve specifying the origin' '
 		test_path_is_file file_to_shelve
 	)
 '
+test_expect_success 'kill p4d' '
+	kill_p4d
+'
 
 test_done

@@ -481,7 +481,6 @@ test_external_has_tap=0
 
 die () {
 	code=$?
-	test_atexit_handler || code=$?
 	if test -n "$GIT_EXIT_OK"
 	then
 		exit $code
@@ -514,35 +513,21 @@ test_ok_ () {
 test_failure_ () {
 	if test -n "$write_junit_xml"
 	then
-		if test -z "$GIT_TEST_TEE_OUTPUT_FILE"
-		then
-			# clean up
-			test_atexit_handler
-
-			# re-run with --verbose-log
-			echo "# Re-running: $junit_rerun_options_sq" >&2
-
-			cd "$TEST_DIRECTORY" &&
-			eval "${TEST_SHELL_PATH}" "$junit_rerun_options_sq" \
-				>/dev/null 2>&1
-			status=$?
-
-			say_color "" "$(test 0 = $status ||
-				echo "not ")ok $test_count - (re-ran with trace)"
-			say "1..$test_count"
-			GIT_EXIT_OK=t
-			exit $status
-		fi
-
 		junit_insert="<failure message=\"not ok $test_count -"
 		junit_insert="$junit_insert $(xml_attr_encode "$1")\">"
 		junit_insert="$junit_insert $(xml_attr_encode \
-			"$(cat "$GIT_TEST_TEE_OUTPUT_FILE")")"
-		>"$GIT_TEST_TEE_OUTPUT_FILE"
+			"$(if test -n "$GIT_TEST_TEE_OUTPUT_FILE"
+			   then
+				cut -c "$GIT_TEST_TEE_OFFSET-" <"$GIT_TEST_TEE_OUTPUT_FILE"
+			   else
+				printf '%s\n' "$@" | sed 1d
+			   fi)")"
 		junit_insert="$junit_insert</failure>"
-		junit_insert="$junit_insert<system-err>$(xml_attr_encode \
-			"$(cat "$GIT_TEST_TEE_OUTPUT_FILE.err")")</system-err>"
-		>"$GIT_TEST_TEE_OUTPUT_FILE.err"
+		if test -n "$GIT_TEST_TEE_OUTPUT_FILE"
+		then
+			junit_insert="$junit_insert<system-err>$(xml_attr_encode \
+				"$(cat "$GIT_TEST_TEE_OUTPUT_FILE")")</system-err>"
+		fi
 		write_junit_xml_testcase "$1" "      $junit_insert"
 	fi
 	test_failure=$(($test_failure + 1))
@@ -831,13 +816,6 @@ test_start_ () {
 	if test -n "$write_junit_xml"
 	then
 		junit_start=$(test-tool date getnanos)
-
-		# append to future <system-err>; truncate output
-		test -z "$GIT_TEST_TEE_OUTPUT_FILE" || {
-			cat "$GIT_TEST_TEE_OUTPUT_FILE" \
-				>>"$GIT_TEST_TEE_OUTPUT_FILE.err"
-			>"$GIT_TEST_TEE_OUTPUT_FILE"
-		}
 	fi
 }
 
@@ -916,6 +894,10 @@ xml_attr_encode () {
 	printf '%s\n' "$@" |
 	sed -e 's/&/\&amp;/g' -e "s/'/\&apos;/g" -e 's/"/\&quot;/g' \
 		-e 's/</\&lt;/g' -e 's/>/\&gt;/g' \
+		-e "s/$(printf \\x1c)/\\&#xfffd;/g" \
+		-e "s/$(printf \\x1d)/\\&#xfffd;/g" \
+		-e "s/$(printf \\x1e)/\\&#xfffd;/g" \
+		-e "s/$(printf \\x1f)/\\&#xfffd;/g" \
 		-e 's/	/\&#x09;/g' -e 's/$/\&#x0a;/' -e '$s/&#x0a;$//' |
 	tr -d '\012\015'
 }
@@ -929,13 +911,14 @@ write_junit_xml_testcase () {
 	write_junit_xml "$(printf '%s\n' \
 		"    <testcase $junit_attrs>" "$@" "    </testcase>")"
 	junit_have_testcase=t
+	if test -n "$GIT_TEST_TEE_OUTPUT_FILE"
+	then
+		GIT_TEST_TEE_OFFSET=$(perl -e 'print -s $ARGV[0]' "$GIT_TEST_TEE_OUTPUT_FILE")
+	fi
 }
 
-test_atexit_cleanup=:
 test_done () {
 	GIT_EXIT_OK=t
-
-	test -n "$immediate" || test_atexit_handler
 
 	if test -n "$write_junit_xml" && test -n "$junit_xml_path"
 	then
@@ -1015,7 +998,11 @@ test_done () {
 			error "Tests passed but trash directory already removed before test cleanup; aborting"
 
 			cd "$TRASH_DIRECTORY/.." &&
-			rm -fr "$TRASH_DIRECTORY" ||
+			rm -fr "$TRASH_DIRECTORY" || {
+				# try again in a bit
+				sleep 5;
+				rm -fr "$TRASH_DIRECTORY"
+			} ||
 			error "Tests passed but test cleanup failed; aborting"
 		fi
 		test_at_end_hook_
@@ -1218,6 +1205,11 @@ then
 		date +%Y-%m-%dT%H:%M:%S)\""
 	write_junit_xml --truncate "<testsuites>" "  <testsuite $junit_attrs>"
 	junit_suite_start=$(test-tool date getnanos)
+	if test -n "$GIT_TEST_TEE_OUTPUT_FILE"
+	then
+		GIT_TEST_TEE_OFFSET=0
+		GIT_TEST_TEE_ERR_OFFSET=0
+	fi
 fi
 
 # Provide an implementation of the 'yes' utility

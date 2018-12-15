@@ -138,4 +138,8 @@ test_expect_success 'not preserving user with mixed authorship' '
 	)
 '
 
+test_expect_success 'kill p4d' '
+	kill_p4d
+'
+
 test_done

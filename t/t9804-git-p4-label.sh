@@ -108,4 +108,8 @@ test_expect_failure 'two labels on the same changelist' '
 	)
 '
 
+test_expect_success 'kill p4d' '
+	kill_p4d
+'
+
 test_done

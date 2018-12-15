@@ -64,4 +64,8 @@ test_expect_success 'clone, then sync with exclude' '
 	)
 '
 
+test_expect_success 'kill p4d' '
+	kill_p4d
+'
+
 test_done

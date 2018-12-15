@@ -185,4 +185,8 @@ test_expect_success 'Run git p4 submit in repo configured with large file system
 	)
 '
 
+test_expect_success 'kill p4d' '
+	kill_p4d
+'
+
 test_done

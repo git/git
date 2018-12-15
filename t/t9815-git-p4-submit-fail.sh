@@ -422,4 +422,8 @@ test_expect_success 'cleanup chmod after submit cancel' '
 	)
 '
 
+test_expect_success 'kill p4d' '
+	kill_p4d
+'
+
 test_done
