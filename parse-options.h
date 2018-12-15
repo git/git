@@ -205,6 +205,7 @@ const char *optname(const struct option *opt, int flags);
 /*----- incremental advanced APIs -----*/
 
 enum {
+	PARSE_OPT_COMPLETE = -2,
 	PARSE_OPT_HELP = -1,
 	PARSE_OPT_DONE,
 	PARSE_OPT_NON_OPTION,

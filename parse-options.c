@@ -517,7 +517,7 @@ static int show_gitcomp(struct parse_opt_ctx_t *ctx,
 	show_negated_gitcomp(original_opts, -1);
 	show_negated_gitcomp(original_opts, nr_noopts);
 	fputc('\n', stdout);
-	exit(0);
+	return PARSE_OPT_COMPLETE;
 }
 
 static int usage_with_options_internal(struct parse_opt_ctx_t *,
@@ -639,6 +639,8 @@ int parse_options(int argc, const char **argv, const char *prefix,
 	case PARSE_OPT_HELP:
 	case PARSE_OPT_ERROR:
 		exit(129);
+	case PARSE_OPT_COMPLETE:
+		exit(0);
 	case PARSE_OPT_NON_OPTION:
 	case PARSE_OPT_DONE:
 		break;
