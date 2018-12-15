@@ -328,10 +328,10 @@ void repo_unuse_commit_buffer(struct repository *r,
 		free((void *)buffer);
 }
 
-void free_commit_buffer(struct commit *commit)
+void free_commit_buffer(struct parsed_object_pool *pool, struct commit *commit)
 {
 	struct commit_buffer *v = buffer_slab_peek(
-		the_repository->parsed_objects->buffer_slab, commit);
+		pool->buffer_slab, commit);
 	if (v) {
 		FREE_AND_NULL(v->buffer);
 		v->size = 0;
@@ -354,13 +354,12 @@ struct object_id *get_commit_tree_oid(const struct commit *commit)
 	return &get_commit_tree(commit)->object.oid;
 }
 
-void release_commit_memory(struct commit *c)
+void release_commit_memory(struct parsed_object_pool *pool, struct commit *c)
 {
 	c->maybe_tree = NULL;
 	c->index = 0;
-	free_commit_buffer(c);
+	free_commit_buffer(pool, c);
 	free_commit_list(c->parents);
-	/* TODO: what about commit->util? */
 
 	c->object.parsed = 0;
 }
