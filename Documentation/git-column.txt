@@ -47,7 +47,7 @@ OPTIONS
 	The number of spaces between columns. One space by default.
 
 EXAMPLES
-------
+--------
 
 Format data by columns:
 ------------
