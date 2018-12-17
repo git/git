@@ -421,14 +421,52 @@ static inline off_t pack_set_bytecount(struct pack_list *pl)
 	return ret;
 }
 
-static void minimize(struct pack_list **min)
+static int cmp_pack_list(const void *a_, const void *b_)
 {
-	struct pack_list *pl, *unique = NULL,
-		*non_unique = NULL, *min_perm = NULL;
-	struct pll *perm, *perm_all, *perm_ok = NULL, *new_perm;
-	struct llist *missing;
-	off_t min_perm_size = 0, perm_size;
-	int n;
+	struct pack_list *a = *((struct pack_list **)a_);
+	struct pack_list *b = *((struct pack_list **)b_);
+	size_t a_size = a->all_objects->size;
+	size_t b_size = b->all_objects->size;
+
+	// let the pack with smaller all_objects size sorted to the right
+	if (a_size == b_size)
+		return 0;
+	else if (a_size < b_size)
+		return 1;
+
+	return -1;
+}
+
+static void sort_pack_list_by_size(struct pack_list **pl)
+{
+	struct pack_list **ary, *p;
+	int i;
+
+	size_t n = pack_list_size(*pl);
+	if (n < 2)
+		return;
+
+	/* prepare an array of packed_list for easier sorting */
+	ary = xcalloc(n, sizeof(struct pack_list *));
+	for (n = 0, p = *pl; p; p = p->next)
+		ary[n++] = p;
+
+	QSORT(ary, n, cmp_pack_list);
+
+	/* link them back again */
+	for (i = 0; i < n - 1; i++)
+		ary[i]->next = ary[i + 1];
+	ary[n - 1]->next = NULL;
+	*pl = ary[0];
+
+	free(ary);
+}
+
+
+static void minimize(struct pack_list **min, struct llist *ignore)
+{
+	struct pack_list *pl, *unique = NULL, *non_unique = NULL;
+	struct llist *missing, *unique_pack_objects;
 
 	pl = local_packs;
 	while (pl) {
@@ -446,48 +484,45 @@ static void minimize(struct pack_list **min)
 		pl = pl->next;
 	}
 
+	*min = unique;
 	/* return if there are no objects missing from the unique set */
 	if (missing->size == 0) {
-		*min = unique;
 		free(missing);
 		return;
 	}
 
-	/* find the permutations which contain all missing objects */
-	for (n = 1; n <= pack_list_size(non_unique) && !perm_ok; n++) {
-		perm_all = perm = get_permutations(non_unique, n);
-		while (perm) {
-			if (is_superset(perm->pl, missing)) {
-				new_perm = xmalloc(sizeof(struct pll));
-				memcpy(new_perm, perm, sizeof(struct pll));
-				new_perm->next = perm_ok;
-				perm_ok = new_perm;
-			}
-			perm = perm->next;
-		}
-		if (perm_ok)
-			break;
-		pll_free(perm_all);
-	}
-	if (perm_ok == NULL)
-		die("Internal error: No complete sets found!");
+	unique_pack_objects = llist_copy(all_objects);
+	llist_sorted_difference_inplace(unique_pack_objects, missing);
 
-	/* find the permutation with the smallest size */
-	perm = perm_ok;
-	while (perm) {
-		perm_size = pack_set_bytecount(perm->pl);
-		if (!min_perm_size || min_perm_size > perm_size) {
-			min_perm_size = perm_size;
-			min_perm = perm->pl;
-		}
-		perm = perm->next;
-	}
-	*min = min_perm;
-	/* add the unique packs to the list */
-	pl = unique;
+	/* remove all the ignored objects and unique pack objects from the non_unique packs */
+	pl = non_unique;
 	while (pl) {
-		pack_list_insert(min, pl);
+		llist_sorted_difference_inplace(pl->all_objects, ignore);
+		llist_sorted_difference_inplace(pl->all_objects, unique_pack_objects);
 		pl = pl->next;
+	}
+
+	while (non_unique) {
+		/* sort the non_unique packs by all_objects's size, the one with max size move to left */
+		sort_pack_list_by_size(&non_unique);
+		if (non_unique->all_objects->size == 0) {
+			break;
+		}
+
+		pack_list_insert(min, non_unique);
+		pl = non_unique->next;
+		while (pl) {
+			/* remove the pack with zero size all_objects from non_unique */
+			if (pl->next && pl->next->all_objects->size == 0) {
+				pl->next = NULL;
+			}
+
+			/* delete the objects of the pack in the left from other packs */
+			llist_sorted_difference_inplace(pl->all_objects, non_unique->all_objects);
+			pl = pl->next;
+		}
+
+		non_unique = non_unique->next;
 	}
 }
 
@@ -603,7 +638,7 @@ static void load_all(void)
 int cmd_pack_redundant(int argc, const char **argv, const char *prefix)
 {
 	int i;
-	struct pack_list *min, *red, *pl;
+	struct pack_list *min = NULL, *red, *pl;
 	struct llist *ignore;
 	struct object_id *oid;
 	char buf[GIT_MAX_HEXSZ + 2]; /* hex hash + \n + \0 */
@@ -667,7 +702,7 @@ int cmd_pack_redundant(int argc, const char **argv, const char *prefix)
 		pl = pl->next;
 	}
 
-	minimize(&min);
+	minimize(&min, ignore);
 
 	if (verbose) {
 		fprintf(stderr, "There are %lu packs available in alt-odbs.\n",
