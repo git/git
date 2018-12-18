@@ -489,6 +489,35 @@ test_expect_success 'ensure that multiple fetches in same process from a shallow
 	grep "fetch< version 2" trace
 '
 
+test_expect_success 'deepen-relative' '
+	rm -rf server client trace &&
+
+	test_create_repo server &&
+	test_commit -C server one &&
+	test_commit -C server two &&
+	test_commit -C server three &&
+	git clone --depth 1 "file://$(pwd)/server" client &&
+	test_commit -C server four &&
+
+	# Sanity check that only "three" is downloaded
+	git -C client log --pretty=tformat:%s master >actual &&
+	echo three >expected &&
+	test_cmp expected actual &&
+
+	GIT_TRACE_PACKET="$(pwd)/trace" git -C client -c protocol.version=2 \
+		fetch --deepen=1 origin &&
+	# Ensure that protocol v2 is used
+	grep "fetch< version 2" trace &&
+
+	git -C client log --pretty=tformat:%s origin/master >actual &&
+	cat >expected <<-\EOF &&
+	four
+	three
+	two
+	EOF
+	test_cmp expected actual
+'
+
 # Test protocol v2 with 'http://' transport
 #
 . "$TEST_DIRECTORY"/lib-httpd.sh

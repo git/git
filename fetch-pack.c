@@ -1007,6 +1007,8 @@ static void add_shallow_requests(struct strbuf *req_buf,
 			packet_buf_write(req_buf, "deepen-not %s", s->string);
 		}
 	}
+	if (args->deepen_relative)
+		packet_buf_write(req_buf, "deepen-relative\n");
 }
 
 static void add_wants(int no_dependents, const struct ref *wants, struct strbuf *req_buf)
