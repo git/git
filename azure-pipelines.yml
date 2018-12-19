@@ -200,7 +200,6 @@ jobs:
       # Initialize Git for Windows' SDK
       $sdk_path = "$(Build.SourcesDirectory)\git-sdk-64"
       init "$sdk_path" "https://dev.azure.com/git-for-windows/git-sdk-64/_git/git-sdk-64" 0
-      init usr\src\build-extra https://github.com/git-for-windows/build-extra 1
 
       # Let Git ignore the SDK and the test-cache
       "/git-sdk-64/`n/test-cache/`n" | Out-File -NoNewLine -Encoding ascii -Append "$(Build.SourcesDirectory)\.git\info\exclude"
