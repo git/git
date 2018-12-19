@@ -2,12 +2,11 @@ resources:
 - repo: self
   fetchDepth: 1
 
-phases:
-- phase: linux_clang
+jobs:
+- job: linux_clang
   displayName: linux-clang
   condition: succeeded()
-  queue:
-    name: Hosted Ubuntu 1604
+  pool: Hosted Ubuntu 1604
   steps:
   - bash: |
        test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
@@ -37,11 +36,10 @@ phases:
       publishRunAttachments: false
     condition: succeededOrFailed()
 
-- phase: linux_gcc
+- job: linux_gcc
   displayName: linux-gcc
   condition: succeeded()
-  queue:
-    name: Hosted Ubuntu 1604
+  pool: Hosted Ubuntu 1604
   steps:
   - bash: |
        test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
@@ -69,11 +67,10 @@ phases:
       publishRunAttachments: false
     condition: succeededOrFailed()
 
-- phase: osx_clang
+- job: osx_clang
   displayName: osx-clang
   condition: succeeded()
-  queue:
-    name: Hosted macOS
+  pool: Hosted macOS
   steps:
   - bash: |
        test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
@@ -99,11 +96,10 @@ phases:
       publishRunAttachments: false
     condition: succeededOrFailed()
 
-- phase: osx_gcc
+- job: osx_gcc
   displayName: osx-gcc
   condition: succeeded()
-  queue:
-    name: Hosted macOS
+  pool: Hosted macOS
   steps:
   - bash: |
        test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
@@ -127,11 +123,10 @@ phases:
       publishRunAttachments: false
     condition: succeededOrFailed()
 
-- phase: gettext_poison
+- job: gettext_poison
   displayName: GETTEXT_POISON
   condition: succeeded()
-  queue:
-    name: Hosted Ubuntu 1604
+  pool: Hosted Ubuntu 1604
   steps:
   - bash: |
        test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
@@ -160,11 +155,10 @@ phases:
       publishRunAttachments: false
     condition: succeededOrFailed()
 
-- phase: windows
+- job: windows
   displayName: Windows
-  queue:
-    name: Hosted
-    timeoutInMinutes: 240
+  pool: Hosted
+  timeoutInMinutes: 240
   steps:
   - powershell: |
       if ("$GITFILESHAREPWD" -ne "" -and "$GITFILESHAREPWD" -ne "`$`(gitfileshare.pwd)") {
@@ -247,11 +241,10 @@ phases:
       publishRunAttachments: false
     condition: succeededOrFailed()
 
-- phase: linux32
+- job: linux32
   displayName: Linux32
   condition: succeeded()
-  queue:
-    name: Hosted Ubuntu 1604
+  pool: Hosted Ubuntu 1604
   steps:
   - bash: |
        test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
@@ -273,11 +266,10 @@ phases:
       publishRunAttachments: false
     condition: succeededOrFailed()
 
-- phase: static_analysis
+- job: static_analysis
   displayName: StaticAnalysis
   condition: succeeded()
-  queue:
-    name: Hosted Ubuntu 1604
+  pool: Hosted Ubuntu 1604
   steps:
   - bash: |
        test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
@@ -295,11 +287,10 @@ phases:
     env:
       GITFILESHAREPWD: $(gitfileshare.pwd)
 
-- phase: documentation
+- job: documentation
   displayName: Documentation
   condition: succeeded()
-  queue:
-    name: Hosted Ubuntu 1604
+  pool: Hosted Ubuntu 1604
   steps:
   - bash: |
        test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
