@@ -392,7 +392,7 @@ static int check_updates(struct unpack_trees_options *o)
 				unlink_entry(ce);
 		}
 	}
-	remove_marked_cache_entries(index);
+	remove_marked_cache_entries(index, 0);
 	remove_scheduled_dirs();
 
 	if (should_update_submodules() && o->update && !o->dry_run)
