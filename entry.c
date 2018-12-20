@@ -441,6 +441,17 @@ int checkout_entry(struct cache_entry *ce,
 	static struct strbuf path = STRBUF_INIT;
 	struct stat st;
 
+	if (ce->ce_flags & CE_WT_REMOVE) {
+		if (topath)
+			/*
+			 * No content and thus no path to create, so we have
+			 * no pathname to return.
+			 */
+			BUG("Can't remove entry to a path");
+		unlink_entry(ce);
+		return 0;
+	}
+
 	if (topath)
 		return write_entry(ce, topath, state, 1);
 
