@@ -183,19 +183,6 @@ test_expect_success 'hostname cannot break out of directory' '
 		git ls-remote "$GIT_DAEMON_URL/escape.git"
 '
 
-test_expect_success 'daemon log records all attributes' '
-	cat >expect <<-\EOF &&
-	Extended attribute "host": localhost
-	Extended attribute "protocol": version=1
-	EOF
-	>daemon.log &&
-	GIT_OVERRIDE_VIRTUAL_HOST=localhost \
-		git -c protocol.version=1 \
-			ls-remote "$GIT_DAEMON_URL/interp.git" &&
-	grep -i extended.attribute daemon.log | cut -d" " -f2- >actual &&
-	test_cmp expect actual
-'
-
 test_expect_success FAKENC 'hostname interpolation works after LF-stripping' '
 	{
 		printf "git-upload-pack /interp.git\n\0host=localhost" | packetize
