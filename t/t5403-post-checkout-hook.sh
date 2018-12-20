@@ -9,6 +9,8 @@ test_description='Test the post-checkout hook.'
 test_expect_success setup '
 	test_commit one &&
 	test_commit two &&
+	test_commit rebase-on-me &&
+	git reset --hard HEAD^ &&
 	test_commit three three &&
 	mv .git/hooks-disabled .git/hooks
 '
@@ -50,6 +52,22 @@ test_expect_success 'post-checkout receives the right args when not switching br
 	git checkout master -- three &&
 	read old new flag < .git/post-checkout.args &&
 	test $old = $new && test $flag = 0
+'
+
+test_expect_success 'post-checkout is triggered on rebase' '
+	git checkout -b rebase-test master &&
+	rm -f .git/post-checkout.args &&
+	git rebase rebase-on-me &&
+	read old new flag < .git/post-checkout.args &&
+	test $old != $new && test $flag = 1
+'
+
+test_expect_success 'post-checkout is triggered on rebase with fast-forward' '
+	git checkout -b ff-rebase-test rebase-on-me^ &&
+	rm -f .git/post-checkout.args &&
+	git rebase rebase-on-me &&
+	read old new flag < .git/post-checkout.args &&
+	test $old != $new && test $flag = 1
 '
 
 if test "$(git config --bool core.filemode)" = true; then
