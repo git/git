@@ -245,6 +245,15 @@ void strbuf_addchars(struct strbuf *sb, int c, size_t n);
 void strbuf_insert(struct strbuf *sb, size_t pos, const void *, size_t);
 
 /**
+ * Insert data to the given position of the buffer giving a printf format
+ * string. The contents will be shifted, not overwritten.
+ */
+void strbuf_vinsertf(struct strbuf *sb, size_t pos, const char *fmt,
+		     va_list ap);
+
+void strbuf_insertf(struct strbuf *sb, size_t pos, const char *fmt, ...);
+
+/**
  * Remove given amount of data from a given position of the buffer.
  */
 void strbuf_remove(struct strbuf *sb, size_t pos, size_t len);
