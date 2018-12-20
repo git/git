@@ -304,10 +304,10 @@ static int checkout_paths(const struct checkout_opts *opts,
 			continue;
 		if (opts->source_tree && !(ce->ce_flags & CE_UPDATE))
 			/*
-			 * "git checkout tree-ish -- path", but this entry
-			 * is in the original index; it will not be checked
-			 * out to the working tree and it does not matter
-			 * if pathspec matched this entry.  We will not do
+			 * "git checkout tree-ish -- path" and this entry
+			 * is in the original index, but is not in tree-ish
+			 * or does not match the pathspec; it will not be
+			 * checked out to the working tree.  We will not do
 			 * anything to this entry at all.
 			 */
 			continue;
