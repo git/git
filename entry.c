@@ -508,3 +508,18 @@ int checkout_entry(struct cache_entry *ce,
 	create_directories(path.buf, path.len, state);
 	return write_entry(ce, path.buf, state, 0);
 }
+
+void unlink_entry(const struct cache_entry *ce)
+{
+	const struct submodule *sub = submodule_from_ce(ce);
+	if (sub) {
+		/* state.force is set at the caller. */
+		submodule_move_head(ce->name, "HEAD", NULL,
+				    SUBMODULE_MOVE_HEAD_FORCE);
+	}
+	if (!check_leading_path(ce->name, ce_namelen(ce)))
+		return;
+	if (remove_or_warn(ce->ce_mode, ce->name))
+		return;
+	schedule_dir_for_removal(ce->name, ce_namelen(ce));
+}
