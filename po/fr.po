@@ -3413,7 +3413,7 @@ msgstr "le fichier d'index multi-paquet %s est trop petit"
 #, c-format
 msgid "multi-pack-index signature 0x%08x does not match signature 0x%08x"
 msgstr ""
-"la signature de d'index multi-paquet 0x%08x ne correspond pas à la signature "
+"la signature de l'index multi-paquet 0x%08x ne correspond pas à la signature "
 "0x%08x"
 
 #: midx.c:86
@@ -3919,7 +3919,7 @@ msgstr ""
 " f, fixup <commit> = comme \"squash\", mais en éliminant son message\n"
 " x, exec <commit> = lancer la commande (reste de la ligne) dans un shell\n"
 " b, break = s'arrêter ici (on peut continuer ensuite avec 'git rebase --"
-"contine')\n"
+"continue')\n"
 " d, drop <commit> = supprimer le commit\n"
 " l, label <label> = étiqueter la HEAD courante avec un nom\n"
 " t, reset <label> = réinitialiser HEAD à label\n"
@@ -4235,7 +4235,7 @@ msgstr "nom de champ inconnu : %.*s"
 msgid ""
 "not a git repository, but the field '%.*s' requires access to object data"
 msgstr ""
-"pas un dépôt git, mais le champ '%.*s' nécessite l'accès au données d'objet"
+"pas un dépôt git, mais le champ '%.*s' nécessite l'accès aux données d'objet"
 
 #: ref-filter.c:663
 #, c-format
@@ -15470,7 +15470,7 @@ msgid ""
 "merges, --preserve-merges, --keep-empty, --root + --onto) with am options "
 "(%s)"
 msgstr ""
-"erreur: impossible de combiner des options interactive (--interactive, --"
+"erreur: impossible de combiner des options interactives (--interactive, --"
 "exec, --rebase-merges, --preserve-merges, --keep-empty, --root + --onto) "
 "avec les options am (%s)"
 
@@ -16868,7 +16868,7 @@ msgid ""
 "to make this the default.\n"
 msgstr ""
 "\n"
-"Les modifications non-indexées on pris %.2f secondes à énumerer après "
+"Les modifications non-indexées ont pris %.2f secondes à énumérer après "
 "reset.\n"
 "Vous pouvez utiliser '--quiet' pour éviter ce message. Réglez le paramètre "
 "de\n"
@@ -17784,7 +17784,7 @@ msgstr "git submodule--helper config --check-writeable"
 #, sh-format
 msgid "please make sure that the .gitmodules file is in the working tree"
 msgstr ""
-"veuillez vous assurer que le fichier .gitmodules dans l'arbre de travail"
+"veuillez vous assurer que le fichier .gitmodules est dans l'arbre de travail"
 
 #: builtin/submodule--helper.c:2225
 #, c-format
