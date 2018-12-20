@@ -5,6 +5,7 @@
 #include "builtin.h"
 #include "archive.h"
 #include "pkt-line.h"
+#include "protocol.h"
 #include "sideband.h"
 #include "run-command.h"
 #include "argv-array.h"
@@ -81,6 +82,8 @@ int cmd_upload_archive(int argc, const char **argv, const char *prefix)
 
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage(upload_archive_usage);
+
+	register_allowed_protocol_version(protocol_v0);
 
 	/*
 	 * Set up sideband subprocess.

@@ -1,5 +1,6 @@
 #include "builtin.h"
 #include "cache.h"
+#include "protocol.h"
 #include "transport.h"
 #include "ref-filter.h"
 #include "remote.h"
@@ -79,6 +80,10 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 	};
 
 	memset(&ref_array, 0, sizeof(ref_array));
+
+	register_allowed_protocol_version(protocol_v2);
+	register_allowed_protocol_version(protocol_v1);
+	register_allowed_protocol_version(protocol_v0);
 
 	argc = parse_options(argc, argv, prefix, options, ls_remote_usage,
 			     PARSE_OPT_STOP_AT_NON_OPTION);

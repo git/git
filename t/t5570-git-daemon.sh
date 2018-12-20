@@ -186,7 +186,7 @@ test_expect_success 'hostname cannot break out of directory' '
 test_expect_success 'daemon log records all attributes' '
 	cat >expect <<-\EOF &&
 	Extended attribute "host": localhost
-	Extended attribute "protocol": version=1
+	Extended attribute "protocol": version=1:version=2:version=0
 	EOF
 	>daemon.log &&
 	GIT_OVERRIDE_VIRTUAL_HOST=localhost \

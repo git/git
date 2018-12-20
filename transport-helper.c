@@ -105,6 +105,7 @@ static struct child_process *get_helper(struct transport *transport)
 {
 	struct helper_data *data = transport->data;
 	struct strbuf buf = STRBUF_INIT;
+	struct strbuf version_advert = STRBUF_INIT;
 	struct child_process *helper;
 	int duped;
 	int code;
@@ -126,6 +127,11 @@ static struct child_process *get_helper(struct transport *transport)
 	if (have_git_dir())
 		argv_array_pushf(&helper->env_array, "%s=%s",
 				 GIT_DIR_ENVIRONMENT, get_git_dir());
+
+	get_client_protocol_version_advertisement(&version_advert);
+	if (version_advert.len > 0)
+		argv_array_pushf(&helper->env_array, "%s=%s",
+				 GIT_PROTOCOL_ENVIRONMENT, version_advert.buf);
 
 	code = start_command(helper);
 	if (code < 0 && errno == ENOENT)

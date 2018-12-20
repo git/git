@@ -29,6 +29,7 @@ test_expect_success 'clone http repository' '
 	> Accept: */*
 	> Accept-Encoding: ENCODINGS
 	> Pragma: no-cache
+	> Git-Protocol: version=0
 	< HTTP/1.1 200 OK
 	< Pragma: no-cache
 	< Cache-Control: no-cache, max-age=0, must-revalidate
