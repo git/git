@@ -247,6 +247,40 @@ static int checkout_merged(int pos, const struct checkout *state)
 	return status;
 }
 
+static void mark_ce_for_checkout(struct cache_entry *ce,
+				 char *ps_matched,
+				 const struct checkout_opts *opts)
+{
+	ce->ce_flags &= ~CE_MATCHED;
+	if (!opts->ignore_skipworktree && ce_skip_worktree(ce))
+		return;
+	if (opts->source_tree && !(ce->ce_flags & CE_UPDATE))
+		/*
+		 * "git checkout tree-ish -- path", but this entry
+		 * is in the original index but is not in tree-ish
+		 * or does not match the pathspec; it will not be
+		 * checked out to the working tree.  We will not do
+		 * anything to this entry at all.
+		 */
+		return;
+	/*
+	 * Either this entry came from the tree-ish we are
+	 * checking the paths out of, or we are checking out
+	 * of the index.
+	 *
+	 * If it comes from the tree-ish, we already know it
+	 * matches the pathspec and could just stamp
+	 * CE_MATCHED to it from update_some(). But we still
+	 * need ps_matched and read_tree_recursive (and
+	 * eventually tree_entry_interesting) cannot fill
+	 * ps_matched yet. Once it can, we can avoid calling
+	 * match_pathspec() for _all_ entries when
+	 * opts->source_tree != NULL.
+	 */
+	if (ce_path_match(&the_index, ce, &opts->pathspec, ps_matched))
+		ce->ce_flags |= CE_MATCHED;
+}
+
 static int checkout_paths(const struct checkout_opts *opts,
 			  const char *revision)
 {
@@ -297,37 +331,8 @@ static int checkout_paths(const struct checkout_opts *opts,
 	 * Make sure all pathspecs participated in locating the paths
 	 * to be checked out.
 	 */
-	for (pos = 0; pos < active_nr; pos++) {
-		struct cache_entry *ce = active_cache[pos];
-		ce->ce_flags &= ~CE_MATCHED;
-		if (!opts->ignore_skipworktree && ce_skip_worktree(ce))
-			continue;
-		if (opts->source_tree && !(ce->ce_flags & CE_UPDATE))
-			/*
-			 * "git checkout tree-ish -- path" and this entry
-			 * is in the original index, but is not in tree-ish
-			 * or does not match the pathspec; it will not be
-			 * checked out to the working tree.  We will not do
-			 * anything to this entry at all.
-			 */
-			continue;
-		/*
-		 * Either this entry came from the tree-ish we are
-		 * checking the paths out of, or we are checking out
-		 * of the index.
-		 *
-		 * If it comes from the tree-ish, we already know it
-		 * matches the pathspec and could just stamp
-		 * CE_MATCHED to it from update_some(). But we still
-		 * need ps_matched and read_tree_recursive (and
-		 * eventually tree_entry_interesting) cannot fill
-		 * ps_matched yet. Once it can, we can avoid calling
-		 * match_pathspec() for _all_ entries when
-		 * opts->source_tree != NULL.
-		 */
-		if (ce_path_match(&the_index, ce, &opts->pathspec, ps_matched))
-			ce->ce_flags |= CE_MATCHED;
-	}
+	for (pos = 0; pos < active_nr; pos++)
+		mark_ce_for_checkout(active_cache[pos], ps_matched, opts);
 
 	if (report_path_error(ps_matched, &opts->pathspec, opts->prefix)) {
 		free(ps_matched);
