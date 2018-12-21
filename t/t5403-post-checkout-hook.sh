@@ -7,68 +7,67 @@ test_description='Test the post-checkout hook.'
 . ./test-lib.sh
 
 test_expect_success setup '
-	echo Data for commit0. >a &&
-	echo Data for commit0. >b &&
-	git update-index --add a &&
-	git update-index --add b &&
-	tree0=$(git write-tree) &&
-	commit0=$(echo setup | git commit-tree $tree0) &&
-	git update-ref refs/heads/master $commit0 &&
-	git clone ./. clone1 &&
-	git clone ./. clone2 &&
-	GIT_DIR=clone2/.git git branch new2 &&
-	echo Data for commit1. >clone2/b &&
-	GIT_DIR=clone2/.git git add clone2/b &&
-	GIT_DIR=clone2/.git git commit -m new2
+	test_commit one &&
+	test_commit two &&
+	test_commit rebase-on-me &&
+	git reset --hard HEAD^ &&
+	test_commit three three &&
+	mv .git/hooks-disabled .git/hooks
 '
 
-for clone in 1 2; do
-    cat >clone${clone}/.git/hooks/post-checkout <<'EOF'
+cat >.git/hooks/post-checkout <<'EOF'
 #!/bin/sh
-echo $@ > $GIT_DIR/post-checkout.args
+echo $@ > .git/post-checkout.args
 EOF
-    chmod u+x clone${clone}/.git/hooks/post-checkout
-done
+chmod u+x .git/hooks/post-checkout
 
 test_expect_success 'post-checkout runs as expected ' '
-	GIT_DIR=clone1/.git git checkout master &&
-	test -e clone1/.git/post-checkout.args
+	git checkout master &&
+	test -e .git/post-checkout.args
 '
 
 test_expect_success 'post-checkout receives the right arguments with HEAD unchanged ' '
-	old=$(awk "{print \$1}" clone1/.git/post-checkout.args) &&
-	new=$(awk "{print \$2}" clone1/.git/post-checkout.args) &&
-	flag=$(awk "{print \$3}" clone1/.git/post-checkout.args) &&
+	read old new flag < .git/post-checkout.args &&
 	test $old = $new && test $flag = 1
 '
 
 test_expect_success 'post-checkout runs as expected ' '
-	GIT_DIR=clone1/.git git checkout master &&
-	test -e clone1/.git/post-checkout.args
+	git checkout master &&
+	test -e .git/post-checkout.args
 '
 
 test_expect_success 'post-checkout args are correct with git checkout -b ' '
-	GIT_DIR=clone1/.git git checkout -b new1 &&
-	old=$(awk "{print \$1}" clone1/.git/post-checkout.args) &&
-	new=$(awk "{print \$2}" clone1/.git/post-checkout.args) &&
-	flag=$(awk "{print \$3}" clone1/.git/post-checkout.args) &&
+	git checkout -b new1 &&
+	read old new flag < .git/post-checkout.args &&
 	test $old = $new && test $flag = 1
 '
 
 test_expect_success 'post-checkout receives the right args with HEAD changed ' '
-	GIT_DIR=clone2/.git git checkout new2 &&
-	old=$(awk "{print \$1}" clone2/.git/post-checkout.args) &&
-	new=$(awk "{print \$2}" clone2/.git/post-checkout.args) &&
-	flag=$(awk "{print \$3}" clone2/.git/post-checkout.args) &&
+	git checkout two &&
+	read old new flag < .git/post-checkout.args &&
 	test $old != $new && test $flag = 1
 '
 
 test_expect_success 'post-checkout receives the right args when not switching branches ' '
-	GIT_DIR=clone2/.git git checkout master b &&
-	old=$(awk "{print \$1}" clone2/.git/post-checkout.args) &&
-	new=$(awk "{print \$2}" clone2/.git/post-checkout.args) &&
-	flag=$(awk "{print \$3}" clone2/.git/post-checkout.args) &&
+	git checkout master -- three &&
+	read old new flag < .git/post-checkout.args &&
 	test $old = $new && test $flag = 0
+'
+
+test_expect_success 'post-checkout is triggered on rebase' '
+	git checkout -b rebase-test master &&
+	rm -f .git/post-checkout.args &&
+	git rebase rebase-on-me &&
+	read old new flag < .git/post-checkout.args &&
+	test $old != $new && test $flag = 1
+'
+
+test_expect_success 'post-checkout is triggered on rebase with fast-forward' '
+	git checkout -b ff-rebase-test rebase-on-me^ &&
+	rm -f .git/post-checkout.args &&
+	git rebase rebase-on-me &&
+	read old new flag < .git/post-checkout.args &&
+	test $old != $new && test $flag = 1
 '
 
 if test "$(git config --bool core.filemode)" = true; then
