@@ -888,18 +888,7 @@ write_junit_xml () {
 }
 
 xml_attr_encode () {
-	# We do not translate CR to &#x0d; because BSD sed does not handle
-	# \r in the regex. In practice, the output should not even have any
-	# carriage returns.
-	printf '%s\n' "$@" |
-	sed -e 's/&/\&amp;/g' -e "s/'/\&apos;/g" -e 's/"/\&quot;/g' \
-		-e 's/</\&lt;/g' -e 's/>/\&gt;/g' \
-		-e "s/$(printf \\x1c)/\\&#xfffd;/g" \
-		-e "s/$(printf \\x1d)/\\&#xfffd;/g" \
-		-e "s/$(printf \\x1e)/\\&#xfffd;/g" \
-		-e "s/$(printf \\x1f)/\\&#xfffd;/g" \
-		-e 's/	/\&#x09;/g' -e 's/$/\&#x0a;/' -e '$s/&#x0a;$//' |
-	tr -d '\012\015'
+	printf '%s\n' "$@" | test-tool xml-encode
 }
 
 write_junit_xml_testcase () {
