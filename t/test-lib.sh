@@ -902,7 +902,8 @@ write_junit_xml_testcase () {
 	junit_have_testcase=t
 	if test -n "$GIT_TEST_TEE_OUTPUT_FILE"
 	then
-		GIT_TEST_TEE_OFFSET=$(perl -e 'print -s $ARGV[0]' "$GIT_TEST_TEE_OUTPUT_FILE")
+		GIT_TEST_TEE_OFFSET=$(test-tool path-utils file-size \
+			"$GIT_TEST_TEE_OUTPUT_FILE")
 	fi
 }
 
