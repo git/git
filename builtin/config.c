@@ -126,7 +126,7 @@ static struct option builtin_config_options[] = {
 	OPT_BOOL(0, "system", &use_system_config, N_("use system config file")),
 	OPT_BOOL(0, "local", &use_local_config, N_("use repository config file")),
 	OPT_BOOL(0, "worktree", &use_worktree_config, N_("use per-worktree config file")),
-	OPT_STRING('f', "file", &given_config_source.file, N_("file"), N_("use given config file")),
+	OPT_FILENAME('f', "file", &given_config_source.file, N_("use given config file")),
 	OPT_STRING(0, "blob", &given_config_source.blob, N_("blob-id"), N_("read config from given blob object")),
 	OPT_GROUP(N_("Action")),
 	OPT_BIT(0, "get", &actions, N_("get value: name [value-regex]"), ACTION_GET),
@@ -657,10 +657,6 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 			      "extension worktreeConfig is enabled. "
 			      "Please read \"CONFIGURATION FILE\"\n"
 			      "section in \"git help worktree\" for details"));
-	} else if (given_config_source.file) {
-		if (!is_absolute_path(given_config_source.file) && prefix)
-			given_config_source.file =
-				prefix_filename(prefix, given_config_source.file);
 	}
 
 	if (respect_includes_opt == -1)
