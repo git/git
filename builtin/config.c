@@ -71,6 +71,64 @@ static int show_origin;
 
 static NORETURN void usage_builtin_config(void);
 
+static void set_config_source_file(void)
+{
+	int nongit = !startup_info->have_repository;
+
+	if (use_global_config + use_system_config + use_local_config +
+	    use_worktree_config +
+	    !!given_config_source.file + !!given_config_source.blob > 1)
+		die(_("only one config file at a time"));
+
+	if (use_local_config && nongit)
+		die(_("--local can only be used inside a git repository"));
+
+	if (given_config_source.blob && nongit)
+		die(_("--blob can only be used inside a git repository"));
+
+	if (given_config_source.file &&
+			!strcmp(given_config_source.file, "-")) {
+		given_config_source.file = NULL;
+		given_config_source.use_stdin = 1;
+	}
+
+	if (use_global_config) {
+		char *user_config = expand_user_path("~/.gitconfig", 0);
+		char *xdg_config = xdg_config_home("config");
+
+		if (!user_config)
+			/*
+			 * It is unknown if HOME/.gitconfig exists, so
+			 * we do not know if we should write to XDG
+			 * location; error out even if XDG_CONFIG_HOME
+			 * is set and points at a sane location.
+			 */
+			die(_("$HOME not set"));
+
+		if (access_or_warn(user_config, R_OK, 0) &&
+		    xdg_config && !access_or_warn(xdg_config, R_OK, 0)) {
+			given_config_source.file = xdg_config;
+			free(user_config);
+		} else {
+			given_config_source.file = user_config;
+			free(xdg_config);
+		}
+	}
+	else if (use_system_config)
+		given_config_source.file = git_etc_gitconfig();
+	else if (use_local_config)
+		given_config_source.file = git_pathdup("config");
+	else if (use_worktree_config) {
+		given_config_source.file = get_worktree_config(the_repository);
+		if (!given_config_source.file)
+			die(_("--worktree cannot be used with multiple "
+			      "working trees unless the config\n"
+			      "extension worktreeConfig is enabled. "
+			      "Please read \"CONFIGURATION FILE\"\n"
+			      "section in \"git help worktree\" for details"));
+	}
+}
+
 static int option_parse_type(const struct option *opt, const char *arg,
 			     int unset)
 {
@@ -604,60 +662,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 			     builtin_config_usage,
 			     PARSE_OPT_STOP_AT_NON_OPTION);
 
-	if (use_global_config + use_system_config + use_local_config +
-	    use_worktree_config +
-	    !!given_config_source.file + !!given_config_source.blob > 1) {
-		error(_("only one config file at a time"));
-		usage_builtin_config();
-	}
-
-	if (use_local_config && nongit)
-		die(_("--local can only be used inside a git repository"));
-
-	if (given_config_source.blob && nongit)
-		die(_("--blob can only be used inside a git repository"));
-
-	if (given_config_source.file &&
-			!strcmp(given_config_source.file, "-")) {
-		given_config_source.file = NULL;
-		given_config_source.use_stdin = 1;
-	}
-
-	if (use_global_config) {
-		char *user_config = expand_user_path("~/.gitconfig", 0);
-		char *xdg_config = xdg_config_home("config");
-
-		if (!user_config)
-			/*
-			 * It is unknown if HOME/.gitconfig exists, so
-			 * we do not know if we should write to XDG
-			 * location; error out even if XDG_CONFIG_HOME
-			 * is set and points at a sane location.
-			 */
-			die(_("$HOME not set"));
-
-		if (access_or_warn(user_config, R_OK, 0) &&
-		    xdg_config && !access_or_warn(xdg_config, R_OK, 0)) {
-			given_config_source.file = xdg_config;
-			free(user_config);
-		} else {
-			given_config_source.file = user_config;
-			free(xdg_config);
-		}
-	}
-	else if (use_system_config)
-		given_config_source.file = git_etc_gitconfig();
-	else if (use_local_config)
-		given_config_source.file = git_pathdup("config");
-	else if (use_worktree_config) {
-		given_config_source.file = get_worktree_config(the_repository);
-		if (!given_config_source.file)
-			die(_("--worktree cannot be used with multiple "
-			      "working trees unless the config\n"
-			      "extension worktreeConfig is enabled. "
-			      "Please read \"CONFIGURATION FILE\"\n"
-			      "section in \"git help worktree\" for details"));
-	}
+	set_config_source_file();
 
 	if (respect_includes_opt == -1)
 		config_options.respect_includes = !given_config_source.file;
