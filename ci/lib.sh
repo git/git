@@ -19,7 +19,7 @@ then
 	BREW_INSTALL_PACKAGES="git-lfs gettext"
 	export GIT_PROVE_OPTS="--timer --jobs 3 --state=failed,slow,save"
 	export GIT_TEST_OPTS="--verbose-log -x --immediate"
-elif test -n "$SYSTEM_TASKDEFINITIONSURI"
+elif test -n "$SYSTEM_COLLECTIONURI" || test -n "$SYSTEM_TASKDEFINITIONSURI"
 then
 	# We are running in Azure Pipelines
 	CI_BRANCH="$BUILD_SOURCEBRANCH"
