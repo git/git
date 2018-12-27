@@ -581,3 +581,19 @@ int other_head_refs(each_ref_fn fn, void *cb_data)
 	free_worktrees(worktrees);
 	return ret;
 }
+
+char *get_worktree_config(struct repository *r)
+{
+	struct worktree **worktrees = get_worktrees(0);
+	char *path;
+
+	if (repository_format_worktree_config)
+		path = repo_git_path(r, "config.worktree");
+	else if (worktrees[0] && worktrees[1])
+		path = NULL;
+	else
+		path = repo_git_path(r, "config");
+
+	free_worktrees(worktrees);
+	return path;
+}

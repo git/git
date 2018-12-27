@@ -650,18 +650,13 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 	else if (use_local_config)
 		given_config_source.file = git_pathdup("config");
 	else if (use_worktree_config) {
-		struct worktree **worktrees = get_worktrees(0);
-		if (repository_format_worktree_config)
-			given_config_source.file = git_pathdup("config.worktree");
-		else if (worktrees[0] && worktrees[1])
+		given_config_source.file = get_worktree_config(the_repository);
+		if (!given_config_source.file)
 			die(_("--worktree cannot be used with multiple "
 			      "working trees unless the config\n"
 			      "extension worktreeConfig is enabled. "
 			      "Please read \"CONFIGURATION FILE\"\n"
 			      "section in \"git help worktree\" for details"));
-		else
-			given_config_source.file = git_pathdup("config");
-		free_worktrees(worktrees);
 	} else if (given_config_source.file) {
 		if (!is_absolute_path(given_config_source.file) && prefix)
 			given_config_source.file =
