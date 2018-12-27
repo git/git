@@ -1628,6 +1628,21 @@ struct pinfo_t {
 static struct pinfo_t *pinfo = NULL;
 CRITICAL_SECTION pinfo_cs;
 
+/* Used to match and chomp off path components */
+static inline int match_last_path_component(const char *path, size_t *len,
+					    const char *component)
+{
+	size_t component_len = strlen(component);
+	if (*len < component_len + 1 ||
+	    !is_dir_sep(path[*len - component_len - 1]) ||
+	    strncasecmp(path + *len - component_len, component, component_len))
+		return 0;
+	*len -= component_len + 1;
+	while (*len > 0 && is_dir_sep(path[*len - 1]))
+		(*len)--;
+	return 1;
+}
+
 static int is_msys2_sh(const char *cmd)
 {
 	if (cmd && !strcmp(cmd, "sh")) {
@@ -1642,13 +1657,10 @@ static int is_msys2_sh(const char *cmd)
 			ret = 0;
 		else {
 			size_t len = strlen(p);
-			ret = len > 15 &&
-				is_dir_sep(p[len - 15]) &&
-				!strncasecmp(p + len - 14, "usr", 3) &&
-				is_dir_sep(p[len - 11]) &&
-				!strncasecmp(p + len - 10, "bin", 3) &&
-				is_dir_sep(p[len - 7]) &&
-				!strcasecmp(p + len - 6, "sh.exe");
+
+			ret = match_last_path_component(p, &len, "sh.exe") &&
+				match_last_path_component(p, &len, "bin") &&
+				match_last_path_component(p, &len, "usr");
 			free(p);
 		}
 		return ret;
