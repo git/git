@@ -19,6 +19,7 @@
 #include "utf8.h"
 #include "dir.h"
 #include "color.h"
+#include "worktree.h"
 
 struct config_source {
 	struct config_source *prev;
@@ -2137,6 +2138,39 @@ int repo_config_get_pathname(struct repository *repo,
 	return ret;
 }
 
+int repo_config_set_gently(struct repository *r,
+			   const char *key, const char *value)
+{
+	char *path = repo_git_path(r, "config");
+	int ret = git_config_set_multivar_in_file_gently(path, key, value, NULL, 0);
+	free(path);
+	return ret;
+}
+
+void repo_config_set(struct repository *r, const char *key, const char *value)
+{
+	if (!repo_config_set_gently(r, key, value))
+		return;
+	if (value)
+		die(_("could not set '%s' to '%s'"), key, value);
+	else
+		die(_("could not unset '%s'"), key);
+}
+
+int repo_config_set_worktree_gently(struct repository *r,
+				    const char *key, const char *value)
+{
+	char *path;
+	int ret;
+
+	path = get_worktree_config(r);
+	if (!path)
+		return CONFIG_INVALID_FILE;
+	ret = git_config_set_multivar_in_file_gently(path, key, value, NULL, 0);
+	free(path);
+	return ret;
+}
+
 /* Functions used historically to read configuration from 'the_repository' */
 void git_config(config_fn_t fn, void *data)
 {
@@ -2912,7 +2946,12 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 
 	ret = 0;
 
-	/* Invalidate the config cache */
+	/*
+	 * Invalidate the config cache
+	 *
+	 * NEEDSWORK: invalidate _all_ existing config caches, not
+	 * just one from the_repository
+	 */
 	git_config_clear();
 
 out_free:
