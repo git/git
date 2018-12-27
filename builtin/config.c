@@ -26,6 +26,7 @@ static char term = '\n';
 
 static int use_global_config, use_system_config, use_local_config;
 static int use_worktree_config;
+static struct git_config_source move_source;
 static struct git_config_source given_config_source;
 static int actions, type;
 static char *default_value;
@@ -50,6 +51,9 @@ static int show_origin;
 #define ACTION_GET_COLOR (1<<13)
 #define ACTION_GET_COLORBOOL (1<<14)
 #define ACTION_GET_URLMATCH (1<<15)
+#define ACTION_MOVE (1<<16)
+#define ACTION_MOVE_REGEXP (1<<17)
+#define ACTION_MOVE_GLOB (1<<18)
 
 /*
  * The actions "ACTION_LIST | ACTION_GET_*" which may produce more than
@@ -178,6 +182,25 @@ static int option_parse_type(const struct option *opt, const char *arg,
 	return 0;
 }
 
+static int option_move_cb(const struct option *opt,
+			  const char *arg, int unset)
+{
+	BUG_ON_OPT_NEG(unset);
+	BUG_ON_OPT_ARG(arg);
+
+	set_config_source_file();
+	memcpy(&move_source, &given_config_source, sizeof(move_source));
+
+	memset(&given_config_source, 0, sizeof(given_config_source));
+	use_global_config = 0;
+	use_system_config = 0;
+	use_local_config = 0;
+	use_worktree_config = 0;
+
+	actions = opt->defval;
+	return 0;
+}
+
 static struct option builtin_config_options[] = {
 	OPT_GROUP(N_("Config file location")),
 	OPT_BOOL(0, "global", &use_global_config, N_("use global config file")),
@@ -197,6 +220,18 @@ static struct option builtin_config_options[] = {
 	OPT_BIT(0, "unset-all", &actions, N_("remove all matches: name [value-regex]"), ACTION_UNSET_ALL),
 	OPT_BIT(0, "rename-section", &actions, N_("rename section: old-name new-name"), ACTION_RENAME_SECTION),
 	OPT_BIT(0, "remove-section", &actions, N_("remove a section: name"), ACTION_REMOVE_SECTION),
+	{ OPTION_CALLBACK, 0, "move-to", NULL, NULL,
+	  N_("move a variable to a different config file"),
+	  PARSE_OPT_NONEG | PARSE_OPT_NOARG,
+	  option_move_cb, ACTION_MOVE },
+	{ OPTION_CALLBACK, 0, "move-regexp-to", NULL, NULL,
+	  N_("move matching variables to a different config file"),
+	  PARSE_OPT_NONEG | PARSE_OPT_NOARG,
+	  option_move_cb, ACTION_MOVE_REGEXP },
+	{ OPTION_CALLBACK, 0, "move-glob-to", NULL, NULL,
+	  N_("move matching variables to a different config file"),
+	  PARSE_OPT_NONEG | PARSE_OPT_NOARG,
+	  option_move_cb, ACTION_MOVE_GLOB },
 	OPT_BIT('l', "list", &actions, N_("list all"), ACTION_LIST),
 	OPT_BIT('e', "edit", &actions, N_("open an editor"), ACTION_EDIT),
 	OPT_BIT(0, "get-color", &actions, N_("find the color configured: slot [default]"), ACTION_GET_COLOR),
@@ -423,6 +458,84 @@ free_strings:
 		free(regexp);
 	}
 
+	return ret;
+}
+
+struct move_config_cb {
+	struct string_list keys;
+	const char *key;
+	regex_t key_re;
+};
+
+static int collect_move_config(const char *key, const char *value, void *cb)
+{
+	struct move_config_cb *data = cb;
+
+	switch (actions) {
+	case ACTION_MOVE:
+		if (strcasecmp(data->key, key))
+			return 0;
+		break;
+	case ACTION_MOVE_REGEXP:
+		if (regexec(&data->key_re, key, 0, NULL, 0))
+			return 0;
+		break;
+	case ACTION_MOVE_GLOB:
+		if (wildmatch(data->key, key, WM_CASEFOLD))
+			return 0;
+		break;
+	default:
+		BUG("action %d cannot get here", actions);
+	}
+
+	string_list_append(&data->keys, key)->util = xstrdup(value);
+	return 0;
+}
+
+static int move_config(const char *key)
+{
+	struct move_config_cb cb;
+	int i, ret = 0;
+
+	config_options.respect_includes = 0;
+	if (!move_source.file && !move_source.use_stdin && !move_source.blob)
+		die(_("unknown config source"));
+
+	string_list_init(&cb.keys, 1);
+	cb.key = key;
+	if (actions == ACTION_MOVE_REGEXP &&
+	    regcomp(&cb.key_re, key, REG_EXTENDED | REG_ICASE))
+		die(_("invalid key pattern: %s"), key);
+
+	config_with_options(collect_move_config, &cb,
+			    &move_source, &config_options);
+
+	for (i = 0; i < cb.keys.nr && !ret; i++) {
+		const char *key = cb.keys.items[i].string;
+		const char *value = cb.keys.items[i].util;
+		const char *dest = given_config_source.file;
+
+		ret = git_config_set_multivar_in_file_gently(
+			dest, key, value, CONFIG_REGEX_NONE, 0);
+	}
+
+	/*
+	 * OK all keys have been copied successfully, time to delete
+	 * old ones
+	 */
+	if (!ret && move_source.file) {
+		for (i = 0; i < cb.keys.nr; i++) {
+			const char *key = cb.keys.items[i].string;
+			const char *src = move_source.file;
+
+			git_config_set_multivar_in_file_gently(
+				src, key, NULL, NULL, 1);
+		}
+	}
+
+	string_list_clear(&cb.keys, 1);
+	if (actions == ACTION_MOVE_REGEXP)
+		regfree(&cb.key_re);
 	return ret;
 }
 
@@ -861,6 +974,13 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		if (argc == 2)
 			color_stdout_is_tty = git_config_bool("command line", argv[1]);
 		return get_colorbool(argv[0], argc == 2);
+	}
+	else if (actions == ACTION_MOVE ||
+		 actions == ACTION_MOVE_REGEXP ||
+		 actions == ACTION_MOVE_GLOB) {
+		check_write();
+		check_argc(argc, 1, 1);
+		return move_config(argv[0]);
 	}
 
 	return 0;
