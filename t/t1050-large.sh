@@ -8,7 +8,7 @@ test_description='adding and checking out large blobs'
 # This should be moved to test-lib.sh together with the
 # copy in t0021 after both topics have graduated to 'master'.
 file_size () {
-	perl -e 'print -s $ARGV[0]' "$1"
+	test-tool path-utils file-size "$1"
 }
 
 test_expect_success setup '
