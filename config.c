@@ -1665,6 +1665,7 @@ static int do_git_config_sequence(const struct config_options *opts,
 	char *xdg_config = xdg_config_home("config");
 	char *user_config = expand_user_path("~/.gitconfig", 0);
 	char *repo_config;
+	char *worktree_config;
 
 	if (opts->commondir)
 		repo_config = mkpathdup("%s/config", opts->commondir);
@@ -1672,6 +1673,10 @@ static int do_git_config_sequence(const struct config_options *opts,
 		BUG("git_dir without commondir");
 	else
 		repo_config = NULL;
+	if (repository_format_worktree_config)
+		worktree_config = mkpathdup("%s/config.worktree", opts->git_dir);
+	else
+		worktree_config = NULL;
 
 	current_parsing_scope = CONFIG_SCOPE_SYSTEM;
 	if (git_config_system() && !access_or_die(git_etc_gitconfig(), R_OK, 0))
@@ -1693,12 +1698,8 @@ static int do_git_config_sequence(const struct config_options *opts,
 	 * Note: this should have a new scope, CONFIG_SCOPE_WORKTREE.
 	 * But let's not complicate things before it's actually needed.
 	 */
-	if (repository_format_worktree_config) {
-		char *path = git_pathdup("config.worktree");
-		if (!access_or_die(path, R_OK, 0))
-			ret += git_config_from_file(fn, path, data);
-		free(path);
-	}
+	if (worktree_config && !access_or_die(worktree_config, R_OK, 0))
+		ret += git_config_from_file(fn, worktree_config, data);
 
 	current_parsing_scope = CONFIG_SCOPE_CMDLINE;
 	if (git_config_from_parameters(fn, data) < 0)
@@ -1708,6 +1709,7 @@ static int do_git_config_sequence(const struct config_options *opts,
 	free(xdg_config);
 	free(user_config);
 	free(repo_config);
+	free(worktree_config);
 	return ret;
 }
 
