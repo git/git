@@ -4,6 +4,7 @@
 #include "notes-cache.h"
 
 struct index_state;
+struct repository;
 
 struct userdiff_funcname {
 	const char *pattern;
@@ -30,6 +31,7 @@ struct userdiff_driver *userdiff_find_by_path(struct index_state *istate,
  * Initialize any textconv-related fields in the driver and return it, or NULL
  * if it does not have textconv enabled at all.
  */
-struct userdiff_driver *userdiff_get_textconv(struct userdiff_driver *driver);
+struct userdiff_driver *userdiff_get_textconv(struct repository *r,
+					      struct userdiff_driver *driver);
 
 #endif /* USERDIFF */

@@ -105,7 +105,7 @@ static int do_interactive_rebase(struct replay_opts *opts, unsigned flags,
 	if (restrict_revision)
 		argv_array_push(&make_script_args, restrict_revision);
 
-	ret = sequencer_make_script(todo_list,
+	ret = sequencer_make_script(the_repository, todo_list,
 				    make_script_args.argc, make_script_args.argv,
 				    flags);
 	fclose(todo_list);
@@ -114,7 +114,8 @@ static int do_interactive_rebase(struct replay_opts *opts, unsigned flags,
 		error(_("could not generate todo list"));
 	else {
 		discard_cache();
-		ret = complete_action(opts, flags, shortrevisions, onto_name, onto,
+		ret = complete_action(the_repository, opts, flags,
+				      shortrevisions, onto_name, onto,
 				      head_hash, cmd, autosquash);
 	}
 
@@ -232,14 +233,14 @@ int cmd_rebase__interactive(int argc, const char **argv, const char *prefix)
 	case SKIP: {
 		struct string_list merge_rr = STRING_LIST_INIT_DUP;
 
-		rerere_clear(&merge_rr);
+		rerere_clear(the_repository, &merge_rr);
 		/* fallthrough */
 	case CONTINUE:
-		ret = sequencer_continue(&opts);
+		ret = sequencer_continue(the_repository, &opts);
 		break;
 	}
 	case EDIT_TODO:
-		ret = edit_todo_list(flags);
+		ret = edit_todo_list(the_repository, flags);
 		break;
 	case SHOW_CURRENT_PATCH: {
 		struct child_process cmd = CHILD_PROCESS_INIT;
@@ -252,16 +253,16 @@ int cmd_rebase__interactive(int argc, const char **argv, const char *prefix)
 	}
 	case SHORTEN_OIDS:
 	case EXPAND_OIDS:
-		ret = transform_todos(flags);
+		ret = transform_todos(the_repository, flags);
 		break;
 	case CHECK_TODO_LIST:
-		ret = check_todo_list();
+		ret = check_todo_list(the_repository);
 		break;
 	case REARRANGE_SQUASH:
-		ret = rearrange_squash();
+		ret = rearrange_squash(the_repository);
 		break;
 	case ADD_EXEC:
-		ret = sequencer_add_exec_commands(cmd);
+		ret = sequencer_add_exec_commands(the_repository, cmd);
 		break;
 	default:
 		BUG("invalid command '%d'", command);

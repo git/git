@@ -48,7 +48,8 @@ int check_pack_crc(struct packed_git *p, struct pack_window **w_curs,
 	return data_crc != ntohl(*index_crc);
 }
 
-static int verify_packfile(struct packed_git *p,
+static int verify_packfile(struct repository *r,
+			   struct packed_git *p,
 			   struct pack_window **w_curs,
 			   verify_fn fn,
 			   struct progress *progress, uint32_t base_count)
@@ -135,7 +136,7 @@ static int verify_packfile(struct packed_git *p,
 			data = NULL;
 			data_valid = 0;
 		} else {
-			data = unpack_entry(the_repository, p, entries[i].offset, &type, &size);
+			data = unpack_entry(r, p, entries[i].offset, &type, &size);
 			data_valid = 1;
 		}
 
@@ -186,7 +187,7 @@ int verify_pack_index(struct packed_git *p)
 	return err;
 }
 
-int verify_pack(struct packed_git *p, verify_fn fn,
+int verify_pack(struct repository *r, struct packed_git *p, verify_fn fn,
 		struct progress *progress, uint32_t base_count)
 {
 	int err = 0;
@@ -196,7 +197,7 @@ int verify_pack(struct packed_git *p, verify_fn fn,
 	if (!p->index_data)
 		return -1;
 
-	err |= verify_packfile(p, &w_curs, fn, progress, base_count);
+	err |= verify_packfile(r, p, &w_curs, fn, progress, base_count);
 	unuse_pack(&w_curs);
 
 	return err;

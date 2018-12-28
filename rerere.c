@@ -198,10 +198,10 @@ static struct rerere_id *new_rerere_id(unsigned char *sha1)
  * work on (i.e. what is left by the previous invocation of "git
  * rerere" during the current conflict resolution session).
  */
-static void read_rr(struct string_list *rr)
+static void read_rr(struct repository *r, struct string_list *rr)
 {
 	struct strbuf buf = STRBUF_INIT;
-	FILE *in = fopen_or_warn(git_path_merge_rr(the_repository), "r");
+	FILE *in = fopen_or_warn(git_path_merge_rr(r), "r");
 
 	if (!in)
 		return;
@@ -593,7 +593,7 @@ int rerere_remaining(struct repository *r, struct string_list *merge_rr)
 {
 	int i;
 
-	if (setup_rerere(merge_rr, RERERE_READONLY))
+	if (setup_rerere(r, merge_rr, RERERE_READONLY))
 		return 0;
 	if (read_index(r->index) < 0)
 		return error(_("index file corrupt"));
@@ -882,7 +882,7 @@ static int is_rerere_enabled(void)
 	return 1;
 }
 
-int setup_rerere(struct string_list *merge_rr, int flags)
+int setup_rerere(struct repository *r, struct string_list *merge_rr, int flags)
 {
 	int fd;
 
@@ -896,9 +896,9 @@ int setup_rerere(struct string_list *merge_rr, int flags)
 		fd = 0;
 	else
 		fd = hold_lock_file_for_update(&write_lock,
-					       git_path_merge_rr(the_repository),
+					       git_path_merge_rr(r),
 					       LOCK_DIE_ON_ERROR);
-	read_rr(merge_rr);
+	read_rr(r, merge_rr);
 	return fd;
 }
 
@@ -912,7 +912,7 @@ int repo_rerere(struct repository *r, int flags)
 	struct string_list merge_rr = STRING_LIST_INIT_DUP;
 	int fd, status;
 
-	fd = setup_rerere(&merge_rr, flags);
+	fd = setup_rerere(r, &merge_rr, flags);
 	if (fd < 0)
 		return 0;
 	status = do_plain_rerere(r, &merge_rr, fd);
@@ -1110,7 +1110,7 @@ int rerere_forget(struct repository *r, struct pathspec *pathspec)
 	if (read_index(r->index) < 0)
 		return error(_("index file corrupt"));
 
-	fd = setup_rerere(&merge_rr, RERERE_NOAUTOUPDATE);
+	fd = setup_rerere(r, &merge_rr, RERERE_NOAUTOUPDATE);
 	if (fd < 0)
 		return 0;
 
@@ -1178,7 +1178,7 @@ static void prune_one(struct rerere_id *id,
 		unlink_rr_item(id);
 }
 
-void rerere_gc(struct string_list *rr)
+void rerere_gc(struct repository *r, struct string_list *rr)
 {
 	struct string_list to_remove = STRING_LIST_INIT_DUP;
 	DIR *dir;
@@ -1188,7 +1188,7 @@ void rerere_gc(struct string_list *rr)
 	timestamp_t cutoff_noresolve = now - 15 * 86400;
 	timestamp_t cutoff_resolve = now - 60 * 86400;
 
-	if (setup_rerere(rr, 0) < 0)
+	if (setup_rerere(r, rr, 0) < 0)
 		return;
 
 	git_config_get_expiry_in_days("gc.rerereresolved", &cutoff_resolve, now);
@@ -1236,11 +1236,11 @@ void rerere_gc(struct string_list *rr)
  *
  * NEEDSWORK: shouldn't we be calling this from "reset --hard"?
  */
-void rerere_clear(struct string_list *merge_rr)
+void rerere_clear(struct repository *r, struct string_list *merge_rr)
 {
 	int i;
 
-	if (setup_rerere(merge_rr, 0) < 0)
+	if (setup_rerere(r, merge_rr, 0) < 0)
 		return;
 
 	for (i = 0; i < merge_rr->nr; i++) {
@@ -1250,6 +1250,6 @@ void rerere_clear(struct string_list *merge_rr)
 			rmdir(rerere_path(id, NULL));
 		}
 	}
-	unlink_or_warn(git_path_merge_rr(the_repository));
+	unlink_or_warn(git_path_merge_rr(r));
 	rollback_lock_file(&write_lock);
 }
