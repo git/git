@@ -197,7 +197,8 @@ static void finish_commit(struct commit *commit, void *data)
 		free_commit_list(commit->parents);
 		commit->parents = NULL;
 	}
-	free_commit_buffer(commit);
+	free_commit_buffer(the_repository->parsed_objects,
+			   commit);
 }
 
 static inline void finish_object__ma(struct object *obj)
