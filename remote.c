@@ -13,6 +13,7 @@
 #include "mergesort.h"
 #include "argv-array.h"
 #include "commit-reach.h"
+#include "advice.h"
 
 enum map_direction { FROM_SRC, FROM_DST };
 
@@ -968,12 +969,13 @@ static char *guess_ref(const char *name, struct ref *peer)
 	if (!r)
 		return NULL;
 
-	if (starts_with(r, "refs/heads/"))
+	if (starts_with(r, "refs/heads/")) {
 		strbuf_addstr(&buf, "refs/heads/");
-	else if (starts_with(r, "refs/tags/"))
+	} else if (starts_with(r, "refs/tags/")) {
 		strbuf_addstr(&buf, "refs/tags/");
-	else
+	} else {
 		return NULL;
+	}
 
 	strbuf_addstr(&buf, name);
 	return strbuf_detach(&buf, NULL);
@@ -1001,6 +1003,62 @@ static int match_explicit_lhs(struct ref *src,
 		return 0;
 	default:
 		return error(_("src refspec %s matches more than one"), rs->src);
+	}
+}
+
+static void show_push_unqualified_ref_name_error(const char *dst_value,
+						 const char *matched_src_name)
+{
+	struct object_id oid;
+	enum object_type type;
+
+	/*
+	 * TRANSLATORS: "matches '%s'%" is the <dst> part of "git push
+	 * <remote> <src>:<dst>" push, and "being pushed ('%s')" is
+	 * the <src>.
+	 */
+	error(_("The destination you provided is not a full refname (i.e.,\n"
+		"starting with \"refs/\"). We tried to guess what you meant by:\n"
+		"\n"
+		"- Looking for a ref that matches '%s' on the remote side.\n"
+		"- Checking if the <src> being pushed ('%s')\n"
+		"  is a ref in \"refs/{heads,tags}/\". If so we add a corresponding\n"
+		"  refs/{heads,tags}/ prefix on the remote side.\n"
+		"\n"
+		"Neither worked, so we gave up. You must fully qualify the ref."),
+	      dst_value, matched_src_name);
+
+	if (!advice_push_unqualified_ref_name)
+		return;
+
+	if (get_oid(matched_src_name, &oid))
+		BUG("'%s' is not a valid object, "
+		    "match_explicit_lhs() should catch this!",
+		    matched_src_name);
+	type = oid_object_info(the_repository, &oid, NULL);
+	if (type == OBJ_COMMIT) {
+		advise(_("The <src> part of the refspec is a commit object.\n"
+			 "Did you mean to create a new branch by pushing to\n"
+			 "'%s:refs/heads/%s'?"),
+		       matched_src_name, dst_value);
+	} else if (type == OBJ_TAG) {
+		advise(_("The <src> part of the refspec is a tag object.\n"
+			 "Did you mean to create a new tag by pushing to\n"
+			 "'%s:refs/tags/%s'?"),
+		       matched_src_name, dst_value);
+	} else if (type == OBJ_TREE) {
+		advise(_("The <src> part of the refspec is a tree object.\n"
+			 "Did you mean to tag a new tree by pushing to\n"
+			 "'%s:refs/tags/%s'?"),
+		       matched_src_name, dst_value);
+	} else if (type == OBJ_BLOB) {
+		advise(_("The <src> part of the refspec is a blob object.\n"
+			 "Did you mean to tag a new blob by pushing to\n"
+			 "'%s:refs/tags/%s'?"),
+		       matched_src_name, dst_value);
+	} else {
+		BUG("'%s' should be commit/tag/tree/blob, is '%d'",
+		    matched_src_name, type);
 	}
 }
 
@@ -1038,21 +1096,18 @@ static int match_explicit(struct ref *src, struct ref *dst,
 	case 1:
 		break;
 	case 0:
-		if (starts_with(dst_value, "refs/"))
+		if (starts_with(dst_value, "refs/")) {
 			matched_dst = make_linked_ref(dst_value, dst_tail);
-		else if (is_null_oid(&matched_src->new_oid))
+		} else if (is_null_oid(&matched_src->new_oid)) {
 			error(_("unable to delete '%s': remote ref does not exist"),
 			      dst_value);
-		else if ((dst_guess = guess_ref(dst_value, matched_src))) {
+		} else if ((dst_guess = guess_ref(dst_value, matched_src))) {
 			matched_dst = make_linked_ref(dst_guess, dst_tail);
 			free(dst_guess);
-		} else
-			error(_("unable to push to unqualified destination: %s\n"
-				"The destination refspec neither matches an "
-				"existing ref on the remote nor\n"
-				"begins with refs/, and we are unable to "
-				"guess a prefix based on the source ref."),
-			      dst_value);
+		} else {
+			show_push_unqualified_ref_name_error(dst_value,
+							     matched_src->name);
+		}
 		break;
 	default:
 		matched_dst = NULL;
