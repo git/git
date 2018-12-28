@@ -186,10 +186,7 @@ extern NORETURN void usage_msg_opt(const char *msg,
 				   const struct option *options);
 
 extern int optbug(const struct option *opt, const char *reason);
-extern int opterror(const struct option *opt, const char *reason, int flags);
-#if defined(__GNUC__)
-#define opterror(o,r,f) (opterror((o),(r),(f)), const_error())
-#endif
+const char *optname(const struct option *opt, int flags);
 
 /*
  * Use these assertions for callbacks that expect to be called with NONEG and
