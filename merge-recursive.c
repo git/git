@@ -186,6 +186,7 @@ static int oid_eq(const struct object_id *a, const struct object_id *b)
 enum rename_type {
 	RENAME_NORMAL = 0,
 	RENAME_VIA_DIR,
+	RENAME_ADD,
 	RENAME_DELETE,
 	RENAME_ONE_FILE_TO_ONE,
 	RENAME_ONE_FILE_TO_TWO,
@@ -228,6 +229,7 @@ static inline void setup_rename_conflict_info(enum rename_type rename_type,
 					      struct stage_data *src_entry1,
 					      struct stage_data *src_entry2)
 {
+	int ostage1 = 0, ostage2;
 	struct rename_conflict_info *ci;
 
 	/*
@@ -264,18 +266,22 @@ static inline void setup_rename_conflict_info(enum rename_type rename_type,
 		dst_entry2->rename_conflict_info = ci;
 	}
 
-	if (rename_type == RENAME_TWO_FILES_TO_ONE) {
-		/*
-		 * For each rename, there could have been
-		 * modifications on the side of history where that
-		 * file was not renamed.
-		 */
-		int ostage1 = o->branch1 == branch1 ? 3 : 2;
-		int ostage2 = ostage1 ^ 1;
+	/*
+	 * For each rename, there could have been
+	 * modifications on the side of history where that
+	 * file was not renamed.
+	 */
+	if (rename_type == RENAME_ADD ||
+	    rename_type == RENAME_TWO_FILES_TO_ONE) {
+		ostage1 = o->branch1 == branch1 ? 3 : 2;
 
 		ci->ren1_other.path = pair1->one->path;
 		oidcpy(&ci->ren1_other.oid, &src_entry1->stages[ostage1].oid);
 		ci->ren1_other.mode = src_entry1->stages[ostage1].mode;
+	}
+
+	if (rename_type == RENAME_TWO_FILES_TO_ONE) {
+		ostage2 = ostage1 ^ 1;
 
 		ci->ren2_other.path = pair2->one->path;
 		oidcpy(&ci->ren2_other.oid, &src_entry2->stages[ostage2].oid);
@@ -690,27 +696,6 @@ static int update_stages(struct merge_options *opt, const char *path,
 	return 0;
 }
 
-static int update_stages_for_stage_data(struct merge_options *opt,
-					const char *path,
-					const struct stage_data *stage_data)
-{
-	struct diff_filespec o, a, b;
-
-	o.mode = stage_data->stages[1].mode;
-	oidcpy(&o.oid, &stage_data->stages[1].oid);
-
-	a.mode = stage_data->stages[2].mode;
-	oidcpy(&a.oid, &stage_data->stages[2].oid);
-
-	b.mode = stage_data->stages[3].mode;
-	oidcpy(&b.oid, &stage_data->stages[3].oid);
-
-	return update_stages(opt, path,
-			     is_null_oid(&o.oid) ? NULL : &o,
-			     is_null_oid(&a.oid) ? NULL : &a,
-			     is_null_oid(&b.oid) ? NULL : &b);
-}
-
 static void update_entry(struct stage_data *entry,
 			 struct diff_filespec *o,
 			 struct diff_filespec *a,
@@ -1058,7 +1043,8 @@ static int merge_3way(struct merge_options *o,
 		      const struct diff_filespec *a,
 		      const struct diff_filespec *b,
 		      const char *branch1,
-		      const char *branch2)
+		      const char *branch2,
+		      const int extra_marker_size)
 {
 	mmfile_t orig, src1, src2;
 	struct ll_merge_options ll_opts = {0};
@@ -1066,6 +1052,7 @@ static int merge_3way(struct merge_options *o,
 	int merge_status;
 
 	ll_opts.renormalize = o->renormalize;
+	ll_opts.extra_marker_size = extra_marker_size;
 	ll_opts.xdl_opts = o->xdl_opts;
 
 	if (o->call_depth) {
@@ -1301,6 +1288,7 @@ static int merge_mode_and_contents(struct merge_options *o,
 				   const char *filename,
 				   const char *branch1,
 				   const char *branch2,
+				   const int extra_marker_size,
 				   struct merge_file_info *result)
 {
 	if (o->branch1 != branch1) {
@@ -1311,7 +1299,8 @@ static int merge_mode_and_contents(struct merge_options *o,
 		 */
 		return merge_mode_and_contents(o, one, b, a,
 					       filename,
-					       branch2, branch1, result);
+					       branch2, branch1,
+					       extra_marker_size, result);
 	}
 
 	result->merge = 0;
@@ -1352,7 +1341,8 @@ static int merge_mode_and_contents(struct merge_options *o,
 			int ret = 0, merge_status;
 
 			merge_status = merge_3way(o, &result_buf, one, a, b,
-						  branch1, branch2);
+						  branch1, branch2,
+						  extra_marker_size);
 
 			if ((merge_status < 0) || !result_buf.ptr)
 				ret = err(o, _("Failed to execute internal merge"));
@@ -1555,80 +1545,203 @@ static struct diff_filespec *filespec_from_entry(struct diff_filespec *target,
 	return target;
 }
 
-static int handle_file(struct merge_options *o,
-			struct diff_filespec *rename,
-			int stage,
-			struct rename_conflict_info *ci)
+static int handle_file_collision(struct merge_options *o,
+				 const char *collide_path,
+				 const char *prev_path1,
+				 const char *prev_path2,
+				 const char *branch1, const char *branch2,
+				 const struct object_id *a_oid,
+				 unsigned int a_mode,
+				 const struct object_id *b_oid,
+				 unsigned int b_mode)
 {
-	char *dst_name = rename->path;
-	struct stage_data *dst_entry;
-	const char *cur_branch, *other_branch;
-	struct diff_filespec other;
-	struct diff_filespec *add;
-	int ret;
+	struct merge_file_info mfi;
+	struct diff_filespec null, a, b;
+	char *alt_path = NULL;
+	const char *update_path = collide_path;
 
-	if (stage == 2) {
-		dst_entry = ci->dst_entry1;
-		cur_branch = ci->branch1;
-		other_branch = ci->branch2;
-	} else {
-		dst_entry = ci->dst_entry2;
-		cur_branch = ci->branch2;
-		other_branch = ci->branch1;
+	/*
+	 * It's easiest to get the correct things into stage 2 and 3, and
+	 * to make sure that the content merge puts HEAD before the other
+	 * branch if we just ensure that branch1 == o->branch1.  So, simply
+	 * flip arguments around if we don't have that.
+	 */
+	if (branch1 != o->branch1) {
+		return handle_file_collision(o, collide_path,
+					     prev_path2, prev_path1,
+					     branch2, branch1,
+					     b_oid, b_mode,
+					     a_oid, a_mode);
 	}
 
-	add = filespec_from_entry(&other, dst_entry, stage ^ 1);
-	if (add) {
-		int ren_src_was_dirty = was_dirty(o, rename->path);
-		char *add_name = unique_path(o, rename->path, other_branch);
-		if (update_file(o, 0, &add->oid, add->mode, add_name))
-			return -1;
-
-		if (ren_src_was_dirty) {
-			output(o, 1, _("Refusing to lose dirty file at %s"),
-			       rename->path);
+	/*
+	 * In the recursive case, we just opt to undo renames
+	 */
+	if (o->call_depth && (prev_path1 || prev_path2)) {
+		/* Put first file (a_oid, a_mode) in its original spot */
+		if (prev_path1) {
+			if (update_file(o, 1, a_oid, a_mode, prev_path1))
+				return -1;
+		} else {
+			if (update_file(o, 1, a_oid, a_mode, collide_path))
+				return -1;
 		}
+
+		/* Put second file (b_oid, b_mode) in its original spot */
+		if (prev_path2) {
+			if (update_file(o, 1, b_oid, b_mode, prev_path2))
+				return -1;
+		} else {
+			if (update_file(o, 1, b_oid, b_mode, collide_path))
+				return -1;
+		}
+
+		/* Don't leave something at collision path if unrenaming both */
+		if (prev_path1 && prev_path2)
+			remove_file(o, 1, collide_path, 0);
+
+		return 0;
+	}
+
+	/* Remove rename sources if rename/add or rename/rename(2to1) */
+	if (prev_path1)
+		remove_file(o, 1, prev_path1,
+			    o->call_depth || would_lose_untracked(prev_path1));
+	if (prev_path2)
+		remove_file(o, 1, prev_path2,
+			    o->call_depth || would_lose_untracked(prev_path2));
+
+	/*
+	 * Remove the collision path, if it wouldn't cause dirty contents
+	 * or an untracked file to get lost.  We'll either overwrite with
+	 * merged contents, or just write out to differently named files.
+	 */
+	if (was_dirty(o, collide_path)) {
+		output(o, 1, _("Refusing to lose dirty file at %s"),
+		       collide_path);
+		update_path = alt_path = unique_path(o, collide_path, "merged");
+	} else if (would_lose_untracked(collide_path)) {
 		/*
-		 * Because the double negatives somehow keep confusing me...
-		 *    1) update_wd iff !ren_src_was_dirty.
-		 *    2) no_wd iff !update_wd
-		 *    3) so, no_wd == !!ren_src_was_dirty == ren_src_was_dirty
+		 * Only way we get here is if both renames were from
+		 * a directory rename AND user had an untracked file
+		 * at the location where both files end up after the
+		 * two directory renames.  See testcase 10d of t6043.
 		 */
-		remove_file(o, 0, rename->path, ren_src_was_dirty);
-		dst_name = unique_path(o, rename->path, cur_branch);
+		output(o, 1, _("Refusing to lose untracked file at "
+			       "%s, even though it's in the way."),
+		       collide_path);
+		update_path = alt_path = unique_path(o, collide_path, "merged");
 	} else {
-		if (dir_in_way(rename->path, !o->call_depth, 0)) {
-			dst_name = unique_path(o, rename->path, cur_branch);
-			output(o, 1, _("%s is a directory in %s adding as %s instead"),
-			       rename->path, other_branch, dst_name);
-		} else if (!o->call_depth &&
-			   would_lose_untracked(rename->path)) {
-			dst_name = unique_path(o, rename->path, cur_branch);
-			output(o, 1, _("Refusing to lose untracked file at %s; "
-				       "adding as %s instead"),
-			       rename->path, dst_name);
-		}
+		/*
+		 * FIXME: It's possible that the two files are identical
+		 * and that the current working copy happens to match, in
+		 * which case we are unnecessarily touching the working
+		 * tree file.  It's not a likely enough scenario that I
+		 * want to code up the checks for it and a better fix is
+		 * available if we restructure how unpack_trees() and
+		 * merge-recursive interoperate anyway, so punting for
+		 * now...
+		 */
+		remove_file(o, 0, collide_path, 0);
 	}
-	if ((ret = update_file(o, 0, &rename->oid, rename->mode, dst_name)))
-		; /* fall through, do allow dst_name to be released */
-	else if (stage == 2)
-		ret = update_stages(o, rename->path, NULL, rename, add);
-	else
-		ret = update_stages(o, rename->path, NULL, add, rename);
 
-	if (dst_name != rename->path)
-		free(dst_name);
+	/* Store things in diff_filespecs for functions that need it */
+	memset(&a, 0, sizeof(struct diff_filespec));
+	memset(&b, 0, sizeof(struct diff_filespec));
+	null.path = a.path = b.path = (char *)collide_path;
+	oidcpy(&null.oid, &null_oid);
+	null.mode = 0;
+	oidcpy(&a.oid, a_oid);
+	a.mode = a_mode;
+	a.oid_valid = 1;
+	oidcpy(&b.oid, b_oid);
+	b.mode = b_mode;
+	b.oid_valid = 1;
 
-	return ret;
+	if (merge_mode_and_contents(o, &null, &a, &b, collide_path,
+				    branch1, branch2, o->call_depth * 2, &mfi))
+		return -1;
+	mfi.clean &= !alt_path;
+	if (update_file(o, mfi.clean, &mfi.oid, mfi.mode, update_path))
+		return -1;
+	if (!mfi.clean && !o->call_depth &&
+	    update_stages(o, collide_path, NULL, &a, &b))
+		return -1;
+	free(alt_path);
+	/*
+	 * FIXME: If both a & b both started with conflicts (only possible
+	 * if they came from a rename/rename(2to1)), but had IDENTICAL
+	 * contents including those conflicts, then in the next line we claim
+	 * it was clean.  If someone cares about this case, we should have the
+	 * caller notify us if we started with conflicts.
+	 */
+	return mfi.clean;
+}
+
+static int handle_rename_add(struct merge_options *o,
+			     struct rename_conflict_info *ci)
+{
+	/* a was renamed to c, and a separate c was added. */
+	struct diff_filespec *a = ci->pair1->one;
+	struct diff_filespec *c = ci->pair1->two;
+	char *path = c->path;
+	char *prev_path_desc;
+	struct merge_file_info mfi;
+
+	int other_stage = (ci->branch1 == o->branch1 ? 3 : 2);
+
+	output(o, 1, _("CONFLICT (rename/add): "
+	       "Rename %s->%s in %s.  Added %s in %s"),
+	       a->path, c->path, ci->branch1,
+	       c->path, ci->branch2);
+
+	prev_path_desc = xstrfmt("version of %s from %s", path, a->path);
+	if (merge_mode_and_contents(o, a, c, &ci->ren1_other, prev_path_desc,
+				    o->branch1, o->branch2,
+				    1 + o->call_depth * 2, &mfi))
+		return -1;
+	free(prev_path_desc);
+
+	return handle_file_collision(o,
+				     c->path, a->path, NULL,
+				     ci->branch1, ci->branch2,
+				     &mfi.oid, mfi.mode,
+				     &ci->dst_entry1->stages[other_stage].oid,
+				     ci->dst_entry1->stages[other_stage].mode);
+}
+
+static char *find_path_for_conflict(struct merge_options *o,
+				    const char *path,
+				    const char *branch1,
+				    const char *branch2)
+{
+	char *new_path = NULL;
+	if (dir_in_way(path, !o->call_depth, 0)) {
+		new_path = unique_path(o, path, branch1);
+		output(o, 1, _("%s is a directory in %s adding "
+			       "as %s instead"),
+		       path, branch2, new_path);
+	} else if (would_lose_untracked(path)) {
+		new_path = unique_path(o, path, branch1);
+		output(o, 1, _("Refusing to lose untracked file"
+			       " at %s; adding as %s instead"),
+		       path, new_path);
+	}
+
+	return new_path;
 }
 
 static int handle_rename_rename_1to2(struct merge_options *o,
 				     struct rename_conflict_info *ci)
 {
 	/* One file was renamed in both branches, but to different names. */
+	struct merge_file_info mfi;
+	struct diff_filespec other;
+	struct diff_filespec *add;
 	struct diff_filespec *one = ci->pair1->one;
 	struct diff_filespec *a = ci->pair1->two;
 	struct diff_filespec *b = ci->pair2->two;
+	char *path_desc;
 
 	output(o, 1, _("CONFLICT (rename/rename): "
 	       "Rename \"%s\"->\"%s\" in branch \"%s\" "
@@ -1636,14 +1749,16 @@ static int handle_rename_rename_1to2(struct merge_options *o,
 	       one->path, a->path, ci->branch1,
 	       one->path, b->path, ci->branch2,
 	       o->call_depth ? _(" (left unresolved)") : "");
-	if (o->call_depth) {
-		struct merge_file_info mfi;
-		struct diff_filespec other;
-		struct diff_filespec *add;
-		if (merge_mode_and_contents(o, one, a, b, one->path,
-					    ci->branch1, ci->branch2, &mfi))
-			return -1;
 
+	path_desc = xstrfmt("%s and %s, both renamed from %s",
+			    a->path, b->path, one->path);
+	if (merge_mode_and_contents(o, one, a, b, path_desc,
+				    ci->branch1, ci->branch2,
+				    o->call_depth * 2, &mfi))
+		return -1;
+	free(path_desc);
+
+	if (o->call_depth) {
 		/*
 		 * FIXME: For rename/add-source conflicts (if we could detect
 		 * such), this is wrong.  We should instead find a unique
@@ -1675,8 +1790,50 @@ static int handle_rename_rename_1to2(struct merge_options *o,
 		}
 		else
 			remove_file_from_cache(b->path);
-	} else if (handle_file(o, a, 2, ci) || handle_file(o, b, 3, ci))
-		return -1;
+	} else {
+		/*
+		 * For each destination path, we need to see if there is a
+		 * rename/add collision.  If not, we can write the file out
+		 * to the specified location.
+		 */
+		add = filespec_from_entry(&other, ci->dst_entry1, 2 ^ 1);
+		if (add) {
+			if (handle_file_collision(o, a->path,
+						  NULL, NULL,
+						  ci->branch1, ci->branch2,
+						  &mfi.oid, mfi.mode,
+						  &add->oid, add->mode) < 0)
+				return -1;
+		} else {
+			char *new_path = find_path_for_conflict(o, a->path,
+								ci->branch1,
+								ci->branch2);
+			if (update_file(o, 0, &mfi.oid, mfi.mode, new_path ? new_path : a->path))
+				return -1;
+			free(new_path);
+			if (update_stages(o, a->path, NULL, a, NULL))
+				return -1;
+		}
+
+		add = filespec_from_entry(&other, ci->dst_entry2, 3 ^ 1);
+		if (add) {
+			if (handle_file_collision(o, b->path,
+						  NULL, NULL,
+						  ci->branch1, ci->branch2,
+						  &add->oid, add->mode,
+						  &mfi.oid, mfi.mode) < 0)
+				return -1;
+		} else {
+			char *new_path = find_path_for_conflict(o, b->path,
+								ci->branch2,
+								ci->branch1);
+			if (update_file(o, 0, &mfi.oid, mfi.mode, new_path ? new_path : b->path))
+				return -1;
+			free(new_path);
+			if (update_stages(o, b->path, NULL, NULL, b))
+				return -1;
+		}
+	}
 
 	return 0;
 }
@@ -1694,7 +1851,6 @@ static int handle_rename_rename_2to1(struct merge_options *o,
 	char *path_side_2_desc;
 	struct merge_file_info mfi_c1;
 	struct merge_file_info mfi_c2;
-	int ret;
 
 	output(o, 1, _("CONFLICT (rename/rename): "
 	       "Rename %s->%s in %s. "
@@ -1702,79 +1858,22 @@ static int handle_rename_rename_2to1(struct merge_options *o,
 	       a->path, c1->path, ci->branch1,
 	       b->path, c2->path, ci->branch2);
 
-	remove_file(o, 1, a->path, o->call_depth || would_lose_untracked(a->path));
-	remove_file(o, 1, b->path, o->call_depth || would_lose_untracked(b->path));
-
 	path_side_1_desc = xstrfmt("version of %s from %s", path, a->path);
 	path_side_2_desc = xstrfmt("version of %s from %s", path, b->path);
 	if (merge_mode_and_contents(o, a, c1, &ci->ren1_other, path_side_1_desc,
-				    o->branch1, o->branch2, &mfi_c1) ||
+				    o->branch1, o->branch2,
+				    1 + o->call_depth * 2, &mfi_c1) ||
 	    merge_mode_and_contents(o, b, &ci->ren2_other, c2, path_side_2_desc,
-				    o->branch1, o->branch2, &mfi_c2))
+				    o->branch1, o->branch2,
+				    1 + o->call_depth * 2, &mfi_c2))
 		return -1;
 	free(path_side_1_desc);
 	free(path_side_2_desc);
 
-	if (o->call_depth) {
-		/*
-		 * If mfi_c1.clean && mfi_c2.clean, then it might make
-		 * sense to do a two-way merge of those results.  But, I
-		 * think in all cases, it makes sense to have the virtual
-		 * merge base just undo the renames; they can be detected
-		 * again later for the non-recursive merge.
-		 */
-		remove_file(o, 0, path, 0);
-		ret = update_file(o, 0, &mfi_c1.oid, mfi_c1.mode, a->path);
-		if (!ret)
-			ret = update_file(o, 0, &mfi_c2.oid, mfi_c2.mode,
-					  b->path);
-	} else {
-		char *new_path1 = unique_path(o, path, ci->branch1);
-		char *new_path2 = unique_path(o, path, ci->branch2);
-		output(o, 1, _("Renaming %s to %s and %s to %s instead"),
-		       a->path, new_path1, b->path, new_path2);
-		if (was_dirty(o, path))
-			output(o, 1, _("Refusing to lose dirty file at %s"),
-			       path);
-		else if (would_lose_untracked(path))
-			/*
-			 * Only way we get here is if both renames were from
-			 * a directory rename AND user had an untracked file
-			 * at the location where both files end up after the
-			 * two directory renames.  See testcase 10d of t6043.
-			 */
-			output(o, 1, _("Refusing to lose untracked file at "
-				       "%s, even though it's in the way."),
-			       path);
-		else
-			remove_file(o, 0, path, 0);
-		ret = update_file(o, 0, &mfi_c1.oid, mfi_c1.mode, new_path1);
-		if (!ret)
-			ret = update_file(o, 0, &mfi_c2.oid, mfi_c2.mode,
-					  new_path2);
-		/*
-		 * unpack_trees() actually populates the index for us for
-		 * "normal" rename/rename(2to1) situtations so that the
-		 * correct entries are at the higher stages, which would
-		 * make the call below to update_stages_for_stage_data
-		 * unnecessary.  However, if either of the renames came
-		 * from a directory rename, then unpack_trees() will not
-		 * have gotten the right data loaded into the index, so we
-		 * need to do so now.  (While it'd be tempting to move this
-		 * call to update_stages_for_stage_data() to
-		 * apply_directory_rename_modifications(), that would break
-		 * our intermediate calls to would_lose_untracked() since
-		 * those rely on the current in-memory index.  See also the
-		 * big "NOTE" in update_stages()).
-		 */
-		if (update_stages_for_stage_data(o, path, ci->dst_entry1))
-			ret = -1;
-
-		free(new_path2);
-		free(new_path1);
-	}
-
-	return ret;
+	return handle_file_collision(o, path, a->path, b->path,
+				     ci->branch1, ci->branch2,
+				     &mfi_c1.oid, mfi_c1.mode,
+				     &mfi_c2.oid, mfi_c2.mode);
 }
 
 /*
@@ -2732,47 +2831,23 @@ static int process_renames(struct merge_options *o,
 						      0  /* update_wd    */))
 					clean_merge = -1;
 			} else if (!oid_eq(&dst_other.oid, &null_oid)) {
-				clean_merge = 0;
-				try_merge = 1;
-				output(o, 1, _("CONFLICT (rename/add): Rename %s->%s in %s. "
-				       "%s added in %s"),
-				       ren1_src, ren1_dst, branch1,
-				       ren1_dst, branch2);
-				if (o->call_depth) {
-					struct merge_file_info mfi;
-					struct diff_filespec one, a, b;
-
-					oidcpy(&one.oid, &null_oid);
-					one.mode = 0;
-					one.path = ren1->pair->two->path;
-
-					oidcpy(&a.oid, &ren1->pair->two->oid);
-					a.mode = ren1->pair->two->mode;
-					a.path = one.path;
-
-					oidcpy(&b.oid, &dst_other.oid);
-					b.mode = dst_other.mode;
-					b.path = one.path;
-
-					if (merge_mode_and_contents(o, &one, &a, &b, ren1_dst,
-								    branch1, branch2,
-								    &mfi)) {
-						clean_merge = -1;
-						goto cleanup_and_return;
-					}
-					output(o, 1, _("Adding merged %s"), ren1_dst);
-					if (update_file(o, 0, &mfi.oid,
-							mfi.mode, ren1_dst))
-						clean_merge = -1;
-					try_merge = 0;
-				} else {
-					char *new_path = unique_path(o, ren1_dst, branch2);
-					output(o, 1, _("Adding as %s instead"), new_path);
-					if (update_file(o, 0, &dst_other.oid,
-							dst_other.mode, new_path))
-						clean_merge = -1;
-					free(new_path);
-				}
+				/*
+				 * Probably not a clean merge, but it's
+				 * premature to set clean_merge to 0 here,
+				 * because if the rename merges cleanly and
+				 * the merge exactly matches the newly added
+				 * file, then the merge will be clean.
+				 */
+				setup_rename_conflict_info(RENAME_ADD,
+							   ren1->pair,
+							   NULL,
+							   branch1,
+							   branch2,
+							   ren1->dst_entry,
+							   NULL,
+							   o,
+							   ren1->src_entry,
+							   NULL);
 			} else
 				try_merge = 1;
 
@@ -3053,7 +3128,8 @@ static int handle_content_merge(struct merge_options *o,
 			df_conflict_remains = 1;
 	}
 	if (merge_mode_and_contents(o, &one, &a, &b, path,
-				    o->branch1, o->branch2, &mfi))
+				    o->branch1, o->branch2,
+				    o->call_depth * 2, &mfi))
 		return -1;
 
 	/*
@@ -3183,6 +3259,15 @@ static int process_entry(struct merge_options *o,
 						  conflict_info->branch2))
 				clean_merge = -1;
 			break;
+		case RENAME_ADD:
+			/*
+			 * Probably unclean merge, but if the renamed file
+			 * merges cleanly and the result can then be
+			 * two-way merged cleanly with the added file, I
+			 * guess it's a clean merge?
+			 */
+			clean_merge = handle_rename_add(o, conflict_info);
+			break;
 		case RENAME_DELETE:
 			clean_merge = 0;
 			if (handle_rename_delete(o,
@@ -3197,9 +3282,14 @@ static int process_entry(struct merge_options *o,
 				clean_merge = -1;
 			break;
 		case RENAME_TWO_FILES_TO_ONE:
-			clean_merge = 0;
-			if (handle_rename_rename_2to1(o, conflict_info))
-				clean_merge = -1;
+			/*
+			 * Probably unclean merge, but if the two renamed
+			 * files merge cleanly and the two resulting files
+			 * can then be two-way merged cleanly, I guess it's
+			 * a clean merge?
+			 */
+			clean_merge = handle_rename_rename_2to1(o,
+								conflict_info);
 			break;
 		default:
 			entry->processed = 0;
@@ -3267,14 +3357,27 @@ static int process_entry(struct merge_options *o,
 				clean_merge = -1;
 		}
 	} else if (a_oid && b_oid) {
-		/* Case C: Added in both (check for same permissions) and */
-		/* case D: Modified in both, but differently. */
-		int is_dirty = 0; /* unpack_trees would have bailed if dirty */
-		clean_merge = handle_content_merge(o, path, is_dirty,
-						   o_oid, o_mode,
-						   a_oid, a_mode,
-						   b_oid, b_mode,
-						   NULL);
+		if (!o_oid) {
+			/* Case C: Added in both (check for same permissions) */
+			output(o, 1,
+			       _("CONFLICT (add/add): Merge conflict in %s"),
+			       path);
+			clean_merge = handle_file_collision(o,
+							    path, NULL, NULL,
+							    o->branch1,
+							    o->branch2,
+							    a_oid, a_mode,
+							    b_oid, b_mode);
+		} else {
+			/* case D: Modified in both, but differently. */
+			int is_dirty = 0; /* unpack_trees would have bailed if dirty */
+			clean_merge = handle_content_merge(o, path,
+							   is_dirty,
+							   o_oid, o_mode,
+							   a_oid, a_mode,
+							   b_oid, b_mode,
+							   NULL);
+		}
 	} else if (!o_oid && !a_oid && !b_oid) {
 		/*
 		 * this entry was deleted altogether. a_mode == 0 means
