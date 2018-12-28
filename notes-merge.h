@@ -6,6 +6,7 @@
 
 struct commit;
 struct object_id;
+struct repository;
 
 #define NOTES_MERGE_WORKTREE "NOTES_MERGE_WORKTREE"
 
@@ -15,6 +16,7 @@ enum notes_merge_verbosity {
 };
 
 struct notes_merge_options {
+	struct repository *repo;
 	const char *local_ref;
 	const char *remote_ref;
 	struct strbuf commit_msg;
@@ -23,7 +25,8 @@ struct notes_merge_options {
 	unsigned has_worktree:1;
 };
 
-void init_notes_merge_options(struct notes_merge_options *o);
+void init_notes_merge_options(struct repository *r,
+			      struct notes_merge_options *o);
 
 /*
  * Merge notes from o->remote_ref into o->local_ref

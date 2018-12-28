@@ -223,7 +223,8 @@ void transport_set_verbosity(struct transport *transport, int verbosity,
 #define REJECT_FETCH_FIRST     0x08
 #define REJECT_NEEDS_FORCE     0x10
 
-int transport_push(struct transport *connection,
+int transport_push(struct repository *repo,
+		   struct transport *connection,
 		   struct refspec *rs, int flags,
 		   unsigned int * reject_reasons);
 

@@ -598,7 +598,7 @@ static int reset_head(struct object_id *oid, const char *action,
 	}
 
 	tree = parse_tree_indirect(oid);
-	prime_cache_tree(the_repository->index, tree);
+	prime_cache_tree(the_repository, the_repository->index, tree);
 
 	if (write_locked_index(the_repository->index, &lock, COMMIT_LOCK) < 0) {
 		ret = error(_("could not write index"));
@@ -1024,7 +1024,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 					     &lock_file);
 		rollback_lock_file(&lock_file);
 
-		if (has_unstaged_changes(1)) {
+		if (has_unstaged_changes(the_repository, 1)) {
 			puts(_("You must edit all merge conflicts and then\n"
 			       "mark them as resolved using git add"));
 			exit(1);
@@ -1039,13 +1039,13 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		options.action = "skip";
 		set_reflog_action(&options);
 
-		rerere_clear(&merge_rr);
+		rerere_clear(the_repository, &merge_rr);
 		string_list_clear(&merge_rr, 1);
 
 		if (reset_head(NULL, "reset", NULL, RESET_HEAD_HARD,
 			       NULL, NULL) < 0)
 			die(_("could not discard worktree changes"));
-		remove_branch_state();
+		remove_branch_state(the_repository);
 		if (read_basic_state(&options))
 			exit(1);
 		goto run_rebase;
@@ -1055,7 +1055,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		options.action = "abort";
 		set_reflog_action(&options);
 
-		rerere_clear(&merge_rr);
+		rerere_clear(the_repository, &merge_rr);
 		string_list_clear(&merge_rr, 1);
 
 		if (read_basic_state(&options))
@@ -1065,7 +1065,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			       NULL, NULL) < 0)
 			die(_("could not move back to %s"),
 			    oid_to_hex(&options.orig_head));
-		remove_branch_state();
+		remove_branch_state(the_repository);
 		ret = finish_rebase(&options);
 		goto cleanup;
 	}
@@ -1381,7 +1381,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			update_index_if_able(&the_index, &lock_file);
 		rollback_lock_file(&lock_file);
 
-		if (has_unstaged_changes(1) || has_uncommitted_changes(1)) {
+		if (has_unstaged_changes(the_repository, 1) ||
+		    has_uncommitted_changes(the_repository, 1)) {
 			const char *autostash =
 				state_dir_path("autostash", &options);
 			struct child_process stash = CHILD_PROCESS_INIT;
@@ -1427,7 +1428,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		}
 	}
 
-	if (require_clean_work_tree("rebase",
+	if (require_clean_work_tree(the_repository, "rebase",
 				    _("Please commit or stash them."), 1, 1)) {
 		ret = 1;
 		goto cleanup;

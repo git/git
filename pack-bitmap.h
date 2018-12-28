@@ -6,6 +6,7 @@
 #include "pack-objects.h"
 
 struct commit;
+struct repository;
 struct rev_info;
 
 struct bitmap_disk_header {
@@ -39,7 +40,7 @@ typedef int (*show_reachable_fn)(
 
 struct bitmap_index;
 
-struct bitmap_index *prepare_bitmap_git(void);
+struct bitmap_index *prepare_bitmap_git(struct repository *r);
 void count_bitmap_commit_list(struct bitmap_index *, uint32_t *commits,
 			      uint32_t *trees, uint32_t *blobs, uint32_t *tags);
 void traverse_bitmap_commit_list(struct bitmap_index *,

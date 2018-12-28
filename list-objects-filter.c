@@ -34,6 +34,7 @@ struct filter_blobs_none_data {
 };
 
 static enum list_objects_filter_result filter_blobs_none(
+	struct repository *r,
 	enum list_objects_filter_situation filter_situation,
 	struct object *obj,
 	const char *pathname,
@@ -88,6 +89,7 @@ struct filter_trees_none_data {
 };
 
 static enum list_objects_filter_result filter_trees_none(
+	struct repository *r,
 	enum list_objects_filter_situation filter_situation,
 	struct object *obj,
 	const char *pathname,
@@ -144,6 +146,7 @@ struct filter_blobs_limit_data {
 };
 
 static enum list_objects_filter_result filter_blobs_limit(
+	struct repository *r,
 	enum list_objects_filter_situation filter_situation,
 	struct object *obj,
 	const char *pathname,
@@ -171,7 +174,7 @@ static enum list_objects_filter_result filter_blobs_limit(
 		assert(obj->type == OBJ_BLOB);
 		assert((obj->flags & SEEN) == 0);
 
-		t = oid_object_info(the_repository, &obj->oid, &object_length);
+		t = oid_object_info(r, &obj->oid, &object_length);
 		if (t != OBJ_BLOB) { /* probably OBJ_NONE */
 			/*
 			 * We DO NOT have the blob locally, so we cannot
@@ -249,6 +252,7 @@ struct filter_sparse_data {
 };
 
 static enum list_objects_filter_result filter_sparse(
+	struct repository *r,
 	enum list_objects_filter_situation filter_situation,
 	struct object *obj,
 	const char *pathname,
@@ -268,7 +272,7 @@ static enum list_objects_filter_result filter_sparse(
 		dtype = DT_DIR;
 		val = is_excluded_from_list(pathname, strlen(pathname),
 					    filename, &dtype, &filter_data->el,
-					    &the_index);
+					    r->index);
 		if (val < 0)
 			val = filter_data->array_frame[filter_data->nr].defval;
 
@@ -331,7 +335,7 @@ static enum list_objects_filter_result filter_sparse(
 		dtype = DT_REG;
 		val = is_excluded_from_list(pathname, strlen(pathname),
 					    filename, &dtype, &filter_data->el,
-					    &the_index);
+					    r->index);
 		if (val < 0)
 			val = frame->defval;
 		if (val > 0) {

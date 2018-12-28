@@ -797,7 +797,8 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 			for (p = get_all_packs(the_repository); p;
 			     p = p->next) {
 				/* verify gives error messages itself */
-				if (verify_pack(p, fsck_obj_buffer,
+				if (verify_pack(the_repository,
+						p, fsck_obj_buffer,
 						progress, count))
 					errors_found |= ERROR_PACK;
 				count += p->num_objects;
