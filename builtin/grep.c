@@ -437,7 +437,7 @@ static int grep_submodule(struct grep_opt *opt, struct repository *superproject,
 	 * store is no longer global and instead is a member of the repository
 	 * object.
 	 */
-	add_to_alternates_memory(submodule.objects->objectdir);
+	add_to_alternates_memory(submodule.objects->odb->path);
 	grep_read_unlock();
 
 	if (oid) {
