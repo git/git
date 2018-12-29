@@ -354,7 +354,8 @@ static int ok_to_give_up(const struct object_array *have_obj,
 					    min_generation);
 }
 
-static int get_common_commits(struct object_array *have_obj,
+static int get_common_commits(struct packet_reader *reader,
+			      struct object_array *have_obj,
 			      struct object_array *want_obj)
 {
 	struct object_id oid;
@@ -366,12 +367,11 @@ static int get_common_commits(struct object_array *have_obj,
 	save_commit_buffer = 0;
 
 	for (;;) {
-		char *line = packet_read_line(0, NULL);
 		const char *arg;
 
 		reset_timeout();
 
-		if (!line) {
+		if (packet_reader_read(reader) != PACKET_READ_NORMAL) {
 			if (multi_ack == 2 && got_common
 			    && !got_other && ok_to_give_up(have_obj, want_obj)) {
 				sent_ready = 1;
@@ -390,7 +390,7 @@ static int get_common_commits(struct object_array *have_obj,
 			got_other = 0;
 			continue;
 		}
-		if (skip_prefix(line, "have ", &arg)) {
+		if (skip_prefix(reader->line, "have ", &arg)) {
 			switch (got_oid(arg, &oid, have_obj)) {
 			case -1: /* they have what we do not */
 				got_other = 1;
@@ -416,7 +416,7 @@ static int get_common_commits(struct object_array *have_obj,
 			}
 			continue;
 		}
-		if (!strcmp(line, "done")) {
+		if (!strcmp(reader->line, "done")) {
 			if (have_obj->nr > 0) {
 				if (multi_ack)
 					packet_write_fmt(1, "ACK %s\n", last_hex);
@@ -425,7 +425,7 @@ static int get_common_commits(struct object_array *have_obj,
 			packet_write_fmt(1, "NAK\n");
 			return -1;
 		}
-		die("git upload-pack: expected SHA1 list, got '%s'", line);
+		die("git upload-pack: expected SHA1 list, got '%s'", reader->line);
 	}
 }
 
@@ -826,7 +826,7 @@ static int process_deepen_not(const char *line, struct string_list *deepen_not, 
 	return 0;
 }
 
-static void receive_needs(struct object_array *want_obj)
+static void receive_needs(struct packet_reader *reader, struct object_array *want_obj)
 {
 	struct object_array shallows = OBJECT_ARRAY_INIT;
 	struct string_list deepen_not = STRING_LIST_INIT_DUP;
@@ -840,33 +840,32 @@ static void receive_needs(struct object_array *want_obj)
 		struct object *o;
 		const char *features;
 		struct object_id oid_buf;
-		char *line = packet_read_line(0, NULL);
 		const char *arg;
 
 		reset_timeout();
-		if (!line)
+		if (packet_reader_read(reader) != PACKET_READ_NORMAL)
 			break;
 
-		if (process_shallow(line, &shallows))
+		if (process_shallow(reader->line, &shallows))
 			continue;
-		if (process_deepen(line, &depth))
+		if (process_deepen(reader->line, &depth))
 			continue;
-		if (process_deepen_since(line, &deepen_since, &deepen_rev_list))
+		if (process_deepen_since(reader->line, &deepen_since, &deepen_rev_list))
 			continue;
-		if (process_deepen_not(line, &deepen_not, &deepen_rev_list))
+		if (process_deepen_not(reader->line, &deepen_not, &deepen_rev_list))
 			continue;
 
-		if (skip_prefix(line, "filter ", &arg)) {
+		if (skip_prefix(reader->line, "filter ", &arg)) {
 			if (!filter_capability_requested)
 				die("git upload-pack: filtering capability not negotiated");
 			parse_list_objects_filter(&filter_options, arg);
 			continue;
 		}
 
-		if (!skip_prefix(line, "want ", &arg) ||
+		if (!skip_prefix(reader->line, "want ", &arg) ||
 		    parse_oid_hex(arg, &oid_buf, &features))
 			die("git upload-pack: protocol error, "
-			    "expected to get object ID, not '%s'", line);
+			    "expected to get object ID, not '%s'", reader->line);
 
 		if (parse_feature_request(features, "deepen-relative"))
 			deepen_relative = 1;
@@ -1055,6 +1054,7 @@ void upload_pack(struct upload_pack_options *options)
 {
 	struct string_list symref = STRING_LIST_INIT_DUP;
 	struct object_array want_obj = OBJECT_ARRAY_INIT;
+	struct packet_reader reader;
 
 	stateless_rpc = options->stateless_rpc;
 	timeout = options->timeout;
@@ -1078,10 +1078,12 @@ void upload_pack(struct upload_pack_options *options)
 	if (options->advertise_refs)
 		return;
 
-	receive_needs(&want_obj);
+	packet_reader_init(&reader, 0, NULL, 0, PACKET_READ_CHOMP_NEWLINE);
+
+	receive_needs(&reader, &want_obj);
 	if (want_obj.nr) {
 		struct object_array have_obj = OBJECT_ARRAY_INIT;
-		get_common_commits(&have_obj, &want_obj);
+		get_common_commits(&reader, &have_obj, &want_obj);
 		create_pack_file(&have_obj, &want_obj);
 	}
 }

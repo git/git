@@ -409,28 +409,36 @@ static struct discovery *discover_refs(const char *service, int for_push)
 	if (maybe_smart &&
 	    (5 <= last->len && last->buf[4] == '#') &&
 	    !strbuf_cmp(&exp, &type)) {
-		char *line;
+		struct packet_reader reader;
+		packet_reader_init(&reader, -1, last->buf, last->len,
+				   PACKET_READ_CHOMP_NEWLINE);
 
 		/*
 		 * smart HTTP response; validate that the service
 		 * pkt-line matches our request.
 		 */
-		line = packet_read_line_buf(&last->buf, &last->len, NULL);
-		if (!line)
+		if (packet_reader_read(&reader) != PACKET_READ_NORMAL)
 			die("invalid server response; expected service, got flush packet");
 
 		strbuf_reset(&exp);
 		strbuf_addf(&exp, "# service=%s", service);
-		if (strcmp(line, exp.buf))
-			die("invalid server response; got '%s'", line);
+		if (strcmp(reader.line, exp.buf))
+			die("invalid server response; got '%s'", reader.line);
 		strbuf_release(&exp);
 
 		/* The header can include additional metadata lines, up
 		 * until a packet flush marker.  Ignore these now, but
 		 * in the future we might start to scan them.
 		 */
-		while (packet_read_line_buf(&last->buf, &last->len, NULL))
-			;
+		for (;;) {
+			packet_reader_read(&reader);
+			if (reader.pktlen <= 0) {
+				break;
+			}
+		}
+
+		last->buf = reader.src_buffer;
+		last->len = reader.src_len;
 
 		last->proto_git = 1;
 	} else if (maybe_smart &&

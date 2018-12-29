@@ -135,38 +135,42 @@ enum ack_type {
 	ACK_ready
 };
 
-static void consume_shallow_list(struct fetch_pack_args *args, int fd)
+static void consume_shallow_list(struct fetch_pack_args *args,
+				 struct packet_reader *reader)
 {
 	if (args->stateless_rpc && args->deepen) {
 		/* If we sent a depth we will get back "duplicate"
 		 * shallow and unshallow commands every time there
 		 * is a block of have lines exchanged.
 		 */
-		char *line;
-		while ((line = packet_read_line(fd, NULL))) {
-			if (starts_with(line, "shallow "))
+		while (packet_reader_read(reader) == PACKET_READ_NORMAL) {
+			if (starts_with(reader->line, "shallow "))
 				continue;
-			if (starts_with(line, "unshallow "))
+			if (starts_with(reader->line, "unshallow "))
 				continue;
 			die(_("git fetch-pack: expected shallow list"));
 		}
+		if (reader->status != PACKET_READ_FLUSH)
+			die(_("git fetch-pack: expected a flush packet after shallow list"));
 	}
 }
 
-static enum ack_type get_ack(int fd, struct object_id *result_oid)
+static enum ack_type get_ack(struct packet_reader *reader,
+			     struct object_id *result_oid)
 {
 	int len;
-	char *line = packet_read_line(fd, &len);
 	const char *arg;
 
-	if (!line)
+	if (packet_reader_read(reader) != PACKET_READ_NORMAL)
 		die(_("git fetch-pack: expected ACK/NAK, got a flush packet"));
-	if (!strcmp(line, "NAK"))
+	len = reader->pktlen;
+
+	if (!strcmp(reader->line, "NAK"))
 		return NAK;
-	if (skip_prefix(line, "ACK ", &arg)) {
+	if (skip_prefix(reader->line, "ACK ", &arg)) {
 		if (!get_oid_hex(arg, result_oid)) {
 			arg += 40;
-			len -= arg - line;
+			len -= arg - reader->line;
 			if (len < 1)
 				return ACK;
 			if (strstr(arg, "continue"))
@@ -178,9 +182,9 @@ static enum ack_type get_ack(int fd, struct object_id *result_oid)
 			return ACK;
 		}
 	}
-	if (skip_prefix(line, "ERR ", &arg))
+	if (skip_prefix(reader->line, "ERR ", &arg))
 		die(_("remote error: %s"), arg);
-	die(_("git fetch-pack: expected ACK/NAK, got '%s'"), line);
+	die(_("git fetch-pack: expected ACK/NAK, got '%s'"), reader->line);
 }
 
 static void send_request(struct fetch_pack_args *args,
@@ -248,9 +252,13 @@ static int find_common(struct fetch_negotiator *negotiator,
 	int got_ready = 0;
 	struct strbuf req_buf = STRBUF_INIT;
 	size_t state_len = 0;
+	struct packet_reader reader;
 
 	if (args->stateless_rpc && multi_ack == 1)
 		die(_("--stateless-rpc requires multi_ack_detailed"));
+
+	packet_reader_init(&reader, fd[0], NULL, 0,
+			   PACKET_READ_CHOMP_NEWLINE);
 
 	if (!args->no_dependents) {
 		mark_tips(negotiator, args->negotiation_tips);
@@ -336,31 +344,30 @@ static int find_common(struct fetch_negotiator *negotiator,
 	state_len = req_buf.len;
 
 	if (args->deepen) {
-		char *line;
 		const char *arg;
 		struct object_id oid;
 
 		send_request(args, fd[1], &req_buf);
-		while ((line = packet_read_line(fd[0], NULL))) {
-			if (skip_prefix(line, "shallow ", &arg)) {
+		while (packet_reader_read(&reader) == PACKET_READ_NORMAL) {
+			if (skip_prefix(reader.line, "shallow ", &arg)) {
 				if (get_oid_hex(arg, &oid))
-					die(_("invalid shallow line: %s"), line);
+					die(_("invalid shallow line: %s"), reader.line);
 				register_shallow(the_repository, &oid);
 				continue;
 			}
-			if (skip_prefix(line, "unshallow ", &arg)) {
+			if (skip_prefix(reader.line, "unshallow ", &arg)) {
 				if (get_oid_hex(arg, &oid))
-					die(_("invalid unshallow line: %s"), line);
+					die(_("invalid unshallow line: %s"), reader.line);
 				if (!lookup_object(the_repository, oid.hash))
-					die(_("object not found: %s"), line);
+					die(_("object not found: %s"), reader.line);
 				/* make sure that it is parsed as shallow */
 				if (!parse_object(the_repository, &oid))
-					die(_("error in object: %s"), line);
+					die(_("error in object: %s"), reader.line);
 				if (unregister_shallow(&oid))
-					die(_("no shallow found: %s"), line);
+					die(_("no shallow found: %s"), reader.line);
 				continue;
 			}
-			die(_("expected shallow/unshallow, got %s"), line);
+			die(_("expected shallow/unshallow, got %s"), reader.line);
 		}
 	} else if (!args->stateless_rpc)
 		send_request(args, fd[1], &req_buf);
@@ -397,9 +404,9 @@ static int find_common(struct fetch_negotiator *negotiator,
 			if (!args->stateless_rpc && count == INITIAL_FLUSH)
 				continue;
 
-			consume_shallow_list(args, fd[0]);
+			consume_shallow_list(args, &reader);
 			do {
-				ack = get_ack(fd[0], result_oid);
+				ack = get_ack(&reader, result_oid);
 				if (ack)
 					print_verbose(args, _("got %s %d %s"), "ack",
 						      ack, oid_to_hex(result_oid));
@@ -469,9 +476,9 @@ done:
 	strbuf_release(&req_buf);
 
 	if (!got_ready || !no_done)
-		consume_shallow_list(args, fd[0]);
+		consume_shallow_list(args, &reader);
 	while (flushes || multi_ack) {
-		int ack = get_ack(fd[0], result_oid);
+		int ack = get_ack(&reader, result_oid);
 		if (ack) {
 			print_verbose(args, _("got %s (%d) %s"), "ack",
 				      ack, oid_to_hex(result_oid));
