@@ -182,8 +182,6 @@ static enum ack_type get_ack(struct packet_reader *reader,
 			return ACK;
 		}
 	}
-	if (skip_prefix(reader->line, "ERR ", &arg))
-		die(_("remote error: %s"), arg);
 	die(_("git fetch-pack: expected ACK/NAK, got '%s'"), reader->line);
 }
 
@@ -258,7 +256,8 @@ static int find_common(struct fetch_negotiator *negotiator,
 		die(_("--stateless-rpc requires multi_ack_detailed"));
 
 	packet_reader_init(&reader, fd[0], NULL, 0,
-			   PACKET_READ_CHOMP_NEWLINE);
+			   PACKET_READ_CHOMP_NEWLINE |
+			   PACKET_READ_DIE_ON_ERR_PACKET);
 
 	if (!args->no_dependents) {
 		mark_tips(negotiator, args->negotiation_tips);
@@ -1358,7 +1357,8 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 	struct fetch_negotiator negotiator;
 	fetch_negotiator_init(&negotiator, negotiation_algorithm);
 	packet_reader_init(&reader, fd[0], NULL, 0,
-			   PACKET_READ_CHOMP_NEWLINE);
+			   PACKET_READ_CHOMP_NEWLINE |
+			   PACKET_READ_DIE_ON_ERR_PACKET);
 
 	while (state != FETCH_DONE) {
 		switch (state) {

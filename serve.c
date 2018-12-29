@@ -167,7 +167,8 @@ static int process_request(void)
 
 	packet_reader_init(&reader, 0, NULL, 0,
 			   PACKET_READ_CHOMP_NEWLINE |
-			   PACKET_READ_GENTLE_ON_EOF);
+			   PACKET_READ_GENTLE_ON_EOF |
+			   PACKET_READ_DIE_ON_ERR_PACKET);
 
 	/*
 	 * Check to see if the client closed their end before sending another
@@ -175,7 +176,7 @@ static int process_request(void)
 	 */
 	if (packet_reader_peek(&reader) == PACKET_READ_EOF)
 		return 1;
-	reader.options = PACKET_READ_CHOMP_NEWLINE;
+	reader.options &= ~PACKET_READ_GENTLE_ON_EOF;
 
 	while (state != PROCESS_REQUEST_DONE) {
 		switch (packet_reader_peek(&reader)) {

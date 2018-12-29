@@ -558,7 +558,9 @@ int send_pack(struct send_pack_args *args,
 		in = demux.out;
 	}
 
-	packet_reader_init(&reader, in, NULL, 0, PACKET_READ_CHOMP_NEWLINE);
+	packet_reader_init(&reader, in, NULL, 0,
+			   PACKET_READ_CHOMP_NEWLINE |
+			   PACKET_READ_DIE_ON_ERR_PACKET);
 
 	if (need_pack_data && cmds_sent) {
 		if (pack_objects(out, remote_refs, extra_have, args) < 0) {

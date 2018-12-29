@@ -204,7 +204,8 @@ static struct ref *parse_git_refs(struct discovery *heads, int for_push)
 
 	packet_reader_init(&reader, -1, heads->buf, heads->len,
 			   PACKET_READ_CHOMP_NEWLINE |
-			   PACKET_READ_GENTLE_ON_EOF);
+			   PACKET_READ_GENTLE_ON_EOF |
+			   PACKET_READ_DIE_ON_ERR_PACKET);
 
 	heads->version = discover_version(&reader);
 	switch (heads->version) {
@@ -411,7 +412,8 @@ static struct discovery *discover_refs(const char *service, int for_push)
 	    !strbuf_cmp(&exp, &type)) {
 		struct packet_reader reader;
 		packet_reader_init(&reader, -1, last->buf, last->len,
-				   PACKET_READ_CHOMP_NEWLINE);
+				   PACKET_READ_CHOMP_NEWLINE |
+				   PACKET_READ_DIE_ON_ERR_PACKET);
 
 		/*
 		 * smart HTTP response; validate that the service
@@ -1182,7 +1184,8 @@ static void proxy_state_init(struct proxy_state *p, const char *service_name,
 		p->headers = curl_slist_append(p->headers, buf.buf);
 
 	packet_reader_init(&p->reader, p->in, NULL, 0,
-			   PACKET_READ_GENTLE_ON_EOF);
+			   PACKET_READ_GENTLE_ON_EOF |
+			   PACKET_READ_DIE_ON_ERR_PACKET);
 
 	strbuf_release(&buf);
 }

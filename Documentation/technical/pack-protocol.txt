@@ -22,6 +22,16 @@ protocol-common.txt. When the grammar indicate `PKT-LINE(...)`, unless
 otherwise noted the usual pkt-line LF rules apply: the sender SHOULD
 include a LF, but the receiver MUST NOT complain if it is not present.
 
+An error packet is a special pkt-line that contains an error string.
+
+----
+  error-line     =  PKT-LINE("ERR" SP explanation-text)
+----
+
+Throughout the protocol, where `PKT-LINE(...)` is expected, an error packet MAY
+be sent. Once this packet is sent by a client or a server, the data transfer
+process defined in this protocol is terminated.
+
 Transports
 ----------
 There are three transports over which the packfile protocol is
@@ -88,13 +98,6 @@ process on the server side over the Git protocol is this:
    $ echo -e -n \
      "0039git-upload-pack /schacon/gitbook.git\0host=example.com\0" |
      nc -v example.com 9418
-
-If the server refuses the request for some reasons, it could abort
-gracefully with an error message.
-
-----
-  error-line     =  PKT-LINE("ERR" SP explanation-text)
-----
 
 
 SSH Transport
@@ -398,12 +401,11 @@ from the client).
 Then the server will start sending its packfile data.
 
 ----
-  server-response = *ack_multi ack / nak / error-line
+  server-response = *ack_multi ack / nak
   ack_multi       = PKT-LINE("ACK" SP obj-id ack_status)
   ack_status      = "continue" / "common" / "ready"
   ack             = PKT-LINE("ACK" SP obj-id)
   nak             = PKT-LINE("NAK")
-  error-line     =  PKT-LINE("ERR" SP explanation-text)
 ----
 
 A simple clone may look like this (with no 'have' lines):

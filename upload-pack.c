@@ -1078,7 +1078,9 @@ void upload_pack(struct upload_pack_options *options)
 	if (options->advertise_refs)
 		return;
 
-	packet_reader_init(&reader, 0, NULL, 0, PACKET_READ_CHOMP_NEWLINE);
+	packet_reader_init(&reader, 0, NULL, 0,
+			   PACKET_READ_CHOMP_NEWLINE |
+			   PACKET_READ_DIE_ON_ERR_PACKET);
 
 	receive_needs(&reader, &want_obj);
 	if (want_obj.nr) {

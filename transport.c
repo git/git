@@ -273,7 +273,8 @@ static struct ref *handshake(struct transport *transport, int for_push,
 
 	packet_reader_init(&reader, data->fd[0], NULL, 0,
 			   PACKET_READ_CHOMP_NEWLINE |
-			   PACKET_READ_GENTLE_ON_EOF);
+			   PACKET_READ_GENTLE_ON_EOF |
+			   PACKET_READ_DIE_ON_ERR_PACKET);
 
 	data->version = discover_version(&reader);
 	switch (data->version) {
