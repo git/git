@@ -13,6 +13,8 @@ test_expect_success setup '
 	EOF
 	test_commit one &&
 	test_commit two &&
+	test_commit rebase-on-me &&
+	git reset --hard HEAD^ &&
 	test_commit three
 '
 
@@ -42,6 +44,24 @@ test_expect_success 'post-checkout receives the right args when not switching br
 	git checkout master -- three.t &&
 	read old new flag <.git/post-checkout.args &&
 	test $old = $new && test $flag = 0
+'
+
+test_expect_success 'post-checkout is triggered on rebase' '
+	test_when_finished "rm -f .git/post-checkout.args" &&
+	git checkout -b rebase-test master &&
+	rm -f .git/post-checkout.args &&
+	git rebase rebase-on-me &&
+	read old new flag <.git/post-checkout.args &&
+	test $old != $new && test $flag = 1
+'
+
+test_expect_success 'post-checkout is triggered on rebase with fast-forward' '
+	test_when_finished "rm -f .git/post-checkout.args" &&
+	git checkout -b ff-rebase-test rebase-on-me^ &&
+	rm -f .git/post-checkout.args &&
+	git rebase rebase-on-me &&
+	read old new flag <.git/post-checkout.args &&
+	test $old != $new && test $flag = 1
 '
 
 test_expect_success 'post-checkout hook is triggered by clone' '
