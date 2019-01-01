@@ -1515,8 +1515,8 @@ test_expect_success 'show completes all refs' '
 
 test_expect_success '<ref>: completes paths' '
 	test_completion "git show mytag:f" <<-\EOF
-	file1 Z
-	file2 Z
+	file1Z
+	file2Z
 	EOF
 '
 
@@ -1525,7 +1525,7 @@ test_expect_success 'complete tree filename with spaces' '
 	git add "name with spaces" &&
 	git commit -m spaces &&
 	test_completion "git show HEAD:nam" <<-\EOF
-	name with spaces Z
+	name with spacesZ
 	EOF
 '
 
@@ -1534,8 +1534,8 @@ test_expect_success 'complete tree filename with metacharacters' '
 	git add "name with \${meta}" &&
 	git commit -m meta &&
 	test_completion "git show HEAD:nam" <<-\EOF
-	name with ${meta} Z
-	name with spaces Z
+	name with ${meta}Z
+	name with spacesZ
 	EOF
 '
 

@@ -855,7 +855,7 @@ __git_compute_merge_strategies ()
 
 __git_complete_revlist_file ()
 {
-	local pfx ls ref cur_="$cur"
+	local dequoted_word pfx ls ref cur_="$cur"
 	case "$cur_" in
 	*..?*:*)
 		return
@@ -863,14 +863,18 @@ __git_complete_revlist_file ()
 	?*:*)
 		ref="${cur_%%:*}"
 		cur_="${cur_#*:}"
-		case "$cur_" in
+
+		__git_dequote "$cur_"
+
+		case "$dequoted_word" in
 		?*/*)
-			pfx="${cur_%/*}"
-			cur_="${cur_##*/}"
+			pfx="${dequoted_word%/*}"
+			cur_="${dequoted_word##*/}"
 			ls="$ref:$pfx"
 			pfx="$pfx/"
 			;;
 		*)
+			cur_="$dequoted_word"
 			ls="$ref"
 			;;
 		esac
@@ -880,21 +884,10 @@ __git_complete_revlist_file ()
 		*)   pfx="$ref:$pfx" ;;
 		esac
 
-		__gitcomp_nl "$(__git ls-tree "$ls" \
-				| sed '/^100... blob /{
-				           s,^.*	,,
-				           s,$, ,
-				       }
-				       /^120000 blob /{
-				           s,^.*	,,
-				           s,$, ,
-				       }
-				       /^040000 tree /{
-				           s,^.*	,,
-				           s,$,/,
-				       }
-				       s/^.*	//')" \
-			"$pfx" "$cur_" ""
+		__gitcomp_file "$(__git ls-tree "$ls" \
+				| sed 's/^.*	//
+				       s/$//')" \
+			"$pfx" "$cur_"
 		;;
 	*...*)
 		pfx="${cur_%...*}..."
