@@ -7,6 +7,7 @@
 #include "argv-array.h"
 #include "run-command.h"
 #include "prompt.h"
+#include "quote.h"
 
 static GIT_PATH_FUNC(git_path_bisect_terms, "BISECT_TERMS")
 static GIT_PATH_FUNC(git_path_bisect_expected_rev, "BISECT_EXPECTED_REV")
@@ -14,6 +15,8 @@ static GIT_PATH_FUNC(git_path_bisect_ancestors_ok, "BISECT_ANCESTORS_OK")
 static GIT_PATH_FUNC(git_path_bisect_start, "BISECT_START")
 static GIT_PATH_FUNC(git_path_bisect_head, "BISECT_HEAD")
 static GIT_PATH_FUNC(git_path_bisect_log, "BISECT_LOG")
+static GIT_PATH_FUNC(git_path_head_name, "head-name")
+static GIT_PATH_FUNC(git_path_bisect_names, "BISECT_NAMES")
 
 static const char * const git_bisect_helper_usage[] = {
 	N_("git bisect--helper --next-all [--no-checkout]"),
@@ -24,6 +27,8 @@ static const char * const git_bisect_helper_usage[] = {
 	N_("git bisect--helper --bisect-check-and-set-terms <command> <good_term> <bad_term>"),
 	N_("git bisect--helper --bisect-next-check <good_term> <bad_term> [<term>]"),
 	N_("git bisect--helper --bisect-terms [--term-good | --term-old | --term-bad | --term-new]"),
+	N_("git bisect--helper --bisect-start [--term-{old,good}=<term> --term-{new,bad}=<term>]"
+					     "[--no-checkout] [<bad> [<good>...]] [--] [<paths>...]"),
 	NULL
 };
 
@@ -389,6 +394,219 @@ static int bisect_terms(struct bisect_terms *terms, const char *option)
 	return 0;
 }
 
+static int bisect_append_log_quoted(const char **argv)
+{
+	int retval = 0;
+	FILE *fp = fopen(git_path_bisect_log(), "a");
+	struct strbuf orig_args = STRBUF_INIT;
+
+	if (!fp)
+		return -1;
+
+	if (fprintf(fp, "git bisect start") < 1) {
+		retval = -1;
+		goto finish;
+	}
+
+	sq_quote_argv(&orig_args, argv);
+	if (fprintf(fp, "%s\n", orig_args.buf) < 1)
+		retval = -1;
+
+finish:
+	fclose(fp);
+	strbuf_release(&orig_args);
+	return retval;
+}
+
+static int bisect_start(struct bisect_terms *terms, int no_checkout,
+			const char **argv, int argc)
+{
+	int i, has_double_dash = 0, must_write_terms = 0, bad_seen = 0;
+	int flags, pathspec_pos, retval = 0;
+	struct string_list revs = STRING_LIST_INIT_DUP;
+	struct string_list states = STRING_LIST_INIT_DUP;
+	struct strbuf start_head = STRBUF_INIT;
+	struct strbuf bisect_names = STRBUF_INIT;
+	struct object_id head_oid;
+	struct object_id oid;
+	const char *head;
+
+	if (is_bare_repository())
+		no_checkout = 1;
+
+	/*
+	 * Check for one bad and then some good revisions
+	 */
+	for (i = 0; i < argc; i++) {
+		if (!strcmp(argv[i], "--")) {
+			has_double_dash = 1;
+			break;
+		}
+	}
+
+	for (i = 0; i < argc; i++) {
+		const char *arg = argv[i];
+		if (!strcmp(argv[i], "--")) {
+			break;
+		} else if (!strcmp(arg, "--no-checkout")) {
+			no_checkout = 1;
+		} else if (!strcmp(arg, "--term-good") ||
+			 !strcmp(arg, "--term-old")) {
+			must_write_terms = 1;
+			free((void *) terms->term_good);
+			terms->term_good = xstrdup(argv[++i]);
+		} else if (skip_prefix(arg, "--term-good=", &arg) ||
+			   skip_prefix(arg, "--term-old=", &arg)) {
+			must_write_terms = 1;
+			free((void *) terms->term_good);
+			terms->term_good = xstrdup(arg);
+		} else if (!strcmp(arg, "--term-bad") ||
+			 !strcmp(arg, "--term-new")) {
+			must_write_terms = 1;
+			free((void *) terms->term_bad);
+			terms->term_bad = xstrdup(argv[++i]);
+		} else if (skip_prefix(arg, "--term-bad=", &arg) ||
+			   skip_prefix(arg, "--term-new=", &arg)) {
+			must_write_terms = 1;
+			free((void *) terms->term_bad);
+			terms->term_bad = xstrdup(arg);
+		} else if (starts_with(arg, "--") &&
+			 !one_of(arg, "--term-good", "--term-bad", NULL)) {
+			return error(_("unrecognized option: '%s'"), arg);
+		} else {
+			char *commit_id = xstrfmt("%s^{commit}", arg);
+			if (get_oid(commit_id, &oid) && has_double_dash)
+				die(_("'%s' does not appear to be a valid "
+				      "revision"), arg);
+
+			string_list_append(&revs, oid_to_hex(&oid));
+			free(commit_id);
+		}
+	}
+	pathspec_pos = i;
+
+	/*
+	 * The user ran "git bisect start <sha1> <sha1>", hence did not
+	 * explicitly specify the terms, but we are already starting to
+	 * set references named with the default terms, and won't be able
+	 * to change afterwards.
+	 */
+	if (revs.nr)
+		must_write_terms = 1;
+	for (i = 0; i < revs.nr; i++) {
+		if (bad_seen) {
+			string_list_append(&states, terms->term_good);
+		} else {
+			bad_seen = 1;
+			string_list_append(&states, terms->term_bad);
+		}
+	}
+
+	/*
+	 * Verify HEAD
+	 */
+	head = resolve_ref_unsafe("HEAD", 0, &head_oid, &flags);
+	if (!head)
+		if (get_oid("HEAD", &head_oid))
+			return error(_("bad HEAD - I need a HEAD"));
+
+	/*
+	 * Check if we are bisecting
+	 */
+	if (!is_empty_or_missing_file(git_path_bisect_start())) {
+		/* Reset to the rev from where we started */
+		strbuf_read_file(&start_head, git_path_bisect_start(), 0);
+		strbuf_trim(&start_head);
+		if (!no_checkout) {
+			struct argv_array argv = ARGV_ARRAY_INIT;
+
+			argv_array_pushl(&argv, "checkout", start_head.buf,
+					 "--", NULL);
+			if (run_command_v_opt(argv.argv, RUN_GIT_CMD)) {
+				retval = error(_("checking out '%s' failed."
+						 " Try 'git bisect start "
+						 "<valid-branch>'."),
+					       start_head.buf);
+				goto finish;
+			}
+		}
+	} else {
+		/* Get the rev from where we start. */
+		if (!get_oid(head, &head_oid) &&
+		    !starts_with(head, "refs/heads/")) {
+			strbuf_reset(&start_head);
+			strbuf_addstr(&start_head, oid_to_hex(&head_oid));
+		} else if (!get_oid(head, &head_oid) &&
+			   skip_prefix(head, "refs/heads/", &head)) {
+			/*
+			 * This error message should only be triggered by
+			 * cogito usage, and cogito users should understand
+			 * it relates to cg-seek.
+			 */
+			if (!is_empty_or_missing_file(git_path_head_name()))
+				return error(_("won't bisect on cg-seek'ed tree"));
+			strbuf_addstr(&start_head, head);
+		} else {
+			return error(_("bad HEAD - strange symbolic ref"));
+		}
+	}
+
+	/*
+	 * Get rid of any old bisect state.
+	 */
+	if (bisect_clean_state())
+		return -1;
+
+	/*
+	 * In case of mistaken revs or checkout error, or signals received,
+	 * "bisect_auto_next" below may exit or misbehave.
+	 * We have to trap this to be able to clean up using
+	 * "bisect_clean_state".
+	 */
+
+	/*
+	 * Write new start state
+	 */
+	write_file(git_path_bisect_start(), "%s\n", start_head.buf);
+
+	if (no_checkout) {
+		get_oid(start_head.buf, &oid);
+		if (update_ref(NULL, "BISECT_HEAD", &oid, NULL, 0,
+			       UPDATE_REFS_MSG_ON_ERR)) {
+			retval = -1;
+			goto finish;
+		}
+	}
+
+	if (pathspec_pos < argc - 1)
+		sq_quote_argv(&bisect_names, argv + pathspec_pos);
+	write_file(git_path_bisect_names(), "%s\n", bisect_names.buf);
+
+	for (i = 0; i < states.nr; i++)
+		if (bisect_write(states.items[i].string,
+				 revs.items[i].string, terms, 1)) {
+			retval = -1;
+			goto finish;
+		}
+
+	if (must_write_terms && write_terms(terms->term_bad,
+					    terms->term_good)) {
+		retval = -1;
+		goto finish;
+	}
+
+	retval = bisect_append_log_quoted(argv);
+	if (retval)
+		retval = -1;
+
+finish:
+	string_list_clear(&revs, 0);
+	string_list_clear(&states, 0);
+	strbuf_release(&start_head);
+	strbuf_release(&bisect_names);
+	return retval;
+}
+
 int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 {
 	enum {
@@ -400,7 +618,8 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 		BISECT_WRITE,
 		CHECK_AND_SET_TERMS,
 		BISECT_NEXT_CHECK,
-		BISECT_TERMS
+		BISECT_TERMS,
+		BISECT_START
 	} cmdmode = 0;
 	int no_checkout = 0, res = 0, nolog = 0;
 	struct option options[] = {
@@ -422,6 +641,8 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 			 N_("check whether bad or good terms exist"), BISECT_NEXT_CHECK),
 		OPT_CMDMODE(0, "bisect-terms", &cmdmode,
 			 N_("print out the bisect terms"), BISECT_TERMS),
+		OPT_CMDMODE(0, "bisect-start", &cmdmode,
+			 N_("start the bisect session"), BISECT_START),
 		OPT_BOOL(0, "no-checkout", &no_checkout,
 			 N_("update BISECT_HEAD instead of checking out the current commit")),
 		OPT_BOOL(0, "no-log", &nolog,
@@ -431,7 +652,8 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 	struct bisect_terms terms = { .term_good = NULL, .term_bad = NULL };
 
 	argc = parse_options(argc, argv, prefix, options,
-			     git_bisect_helper_usage, PARSE_OPT_KEEP_UNKNOWN);
+			     git_bisect_helper_usage,
+			     PARSE_OPT_KEEP_DASHDASH | PARSE_OPT_KEEP_UNKNOWN);
 
 	if (!cmdmode)
 		usage_with_options(git_bisect_helper_usage, options);
@@ -476,6 +698,10 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 		if (argc > 1)
 			return error(_("--bisect-terms requires 0 or 1 argument"));
 		res = bisect_terms(&terms, argc == 1 ? argv[0] : NULL);
+		break;
+	case BISECT_START:
+		set_terms(&terms, "bad", "good");
+		res = bisect_start(&terms, no_checkout, argv, argc);
 		break;
 	default:
 		return error("BUG: unknown subcommand '%d'", cmdmode);
