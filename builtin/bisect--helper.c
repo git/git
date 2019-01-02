@@ -23,6 +23,7 @@ static const char * const git_bisect_helper_usage[] = {
 	N_("git bisect--helper --bisect-write [--no-log] <state> <revision> <good_term> <bad_term>"),
 	N_("git bisect--helper --bisect-check-and-set-terms <command> <good_term> <bad_term>"),
 	N_("git bisect--helper --bisect-next-check <good_term> <bad_term> [<term>]"),
+	N_("git bisect--helper --bisect-terms [--term-good | --term-old | --term-bad | --term-new]"),
 	NULL
 };
 
@@ -339,6 +340,55 @@ finish:
 	return retval;
 }
 
+static int get_terms(struct bisect_terms *terms)
+{
+	struct strbuf str = STRBUF_INIT;
+	FILE *fp = NULL;
+	int res = 0;
+
+	fp = fopen(git_path_bisect_terms(), "r");
+	if (!fp) {
+		res = -1;
+		goto finish;
+	}
+
+	free_terms(terms);
+	strbuf_getline_lf(&str, fp);
+	terms->term_bad = strbuf_detach(&str, NULL);
+	strbuf_getline_lf(&str, fp);
+	terms->term_good = strbuf_detach(&str, NULL);
+
+finish:
+	if (fp)
+		fclose(fp);
+	strbuf_release(&str);
+	return res;
+}
+
+static int bisect_terms(struct bisect_terms *terms, const char *option)
+{
+	if (get_terms(terms))
+		return error(_("no terms defined"));
+
+	if (option == NULL) {
+		printf(_("Your current terms are %s for the old state\n"
+			 "and %s for the new state.\n"),
+		       terms->term_good, terms->term_bad);
+		return 0;
+	}
+	if (one_of(option, "--term-good", "--term-old", NULL))
+		printf("%s\n", terms->term_good);
+	else if (one_of(option, "--term-bad", "--term-new", NULL))
+		printf("%s\n", terms->term_bad);
+	else
+		return error(_("invalid argument %s for 'git bisect terms'.\n"
+			       "Supported options are: "
+			       "--term-good|--term-old and "
+			       "--term-bad|--term-new."), option);
+
+	return 0;
+}
+
 int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 {
 	enum {
@@ -349,7 +399,8 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 		BISECT_RESET,
 		BISECT_WRITE,
 		CHECK_AND_SET_TERMS,
-		BISECT_NEXT_CHECK
+		BISECT_NEXT_CHECK,
+		BISECT_TERMS
 	} cmdmode = 0;
 	int no_checkout = 0, res = 0, nolog = 0;
 	struct option options[] = {
@@ -369,6 +420,8 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 			 N_("check and set terms in a bisection state"), CHECK_AND_SET_TERMS),
 		OPT_CMDMODE(0, "bisect-next-check", &cmdmode,
 			 N_("check whether bad or good terms exist"), BISECT_NEXT_CHECK),
+		OPT_CMDMODE(0, "bisect-terms", &cmdmode,
+			 N_("print out the bisect terms"), BISECT_TERMS),
 		OPT_BOOL(0, "no-checkout", &no_checkout,
 			 N_("update BISECT_HEAD instead of checking out the current commit")),
 		OPT_BOOL(0, "no-log", &nolog,
@@ -378,7 +431,7 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 	struct bisect_terms terms = { .term_good = NULL, .term_bad = NULL };
 
 	argc = parse_options(argc, argv, prefix, options,
-			     git_bisect_helper_usage, 0);
+			     git_bisect_helper_usage, PARSE_OPT_KEEP_UNKNOWN);
 
 	if (!cmdmode)
 		usage_with_options(git_bisect_helper_usage, options);
@@ -418,6 +471,11 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 			return error(_("--bisect-next-check requires 2 or 3 arguments"));
 		set_terms(&terms, argv[1], argv[0]);
 		res = bisect_next_check(&terms, argc == 3 ? argv[2] : NULL);
+		break;
+	case BISECT_TERMS:
+		if (argc > 1)
+			return error(_("--bisect-terms requires 0 or 1 argument"));
+		res = bisect_terms(&terms, argc == 1 ? argv[0] : NULL);
 		break;
 	default:
 		return error("BUG: unknown subcommand '%d'", cmdmode);
