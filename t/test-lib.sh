@@ -270,12 +270,12 @@ do
 		# this test is marked as such, and ignore '-x' if it
 		# isn't executed with a suitable Bash version.
 		if test -z "$test_untraceable" || {
-		     test -n "$BASH_VERSION" && {
+		     test -n "$BASH_VERSION" && eval '
 		       test ${BASH_VERSINFO[0]} -gt 4 || {
 			 test ${BASH_VERSINFO[0]} -eq 4 &&
 			 test ${BASH_VERSINFO[1]} -ge 1
 		       }
-		     }
+		     '
 		   }
 		then
 			trace=t
