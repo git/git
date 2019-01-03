@@ -1225,7 +1225,7 @@ static int udt_do_read(struct unidirectional_transfer *t)
 		return 0;	/* No space for more. */
 
 	transfer_debug("%s is readable", t->src_name);
-	bytes = read(t->src, t->buf + t->bufuse, BUFFERSIZE - t->bufuse);
+	bytes = xread(t->src, t->buf + t->bufuse, BUFFERSIZE - t->bufuse);
 	if (bytes < 0 && errno != EWOULDBLOCK && errno != EAGAIN &&
 		errno != EINTR) {
 		error_errno(_("read(%s) failed"), t->src_name);
