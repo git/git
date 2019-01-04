@@ -207,8 +207,8 @@ subsection on linkgit:gitweb[1] manpage.
 
 $strict_export::
 	Only allow viewing of repositories also shown on the overview page.
-	This for example makes `$gitweb_export_ok` file decide if repository is
-	available and not only if it is shown.  If `$gitweb_list` points to
+	This for example makes `$export_ok` file decide if repository is
+	available and not only if it is shown.  If `$projects_list` points to
 	file with list of project, only those repositories listed would be
 	available for gitweb.  Can be set during building gitweb via
 	`GITWEB_STRICT_EXPORT`.  By default this variable is not set, which
