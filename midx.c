@@ -931,7 +931,7 @@ cleanup:
 
 void clear_midx_file(struct repository *r)
 {
-	char *midx = get_midx_filename(r->objects->objectdir);
+	char *midx = get_midx_filename(r->objects->odb->path);
 
 	if (r->objects && r->objects->multi_pack_index) {
 		close_midx(r->objects->multi_pack_index);

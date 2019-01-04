@@ -637,23 +637,6 @@ struct loose_object_iter {
 };
 
 /*
- *  If the number of refs is not larger than the number of loose objects,
- *  this function stops inserting.
- */
-static int add_loose_objects_to_set(const struct object_id *oid,
-				    const char *path,
-				    void *data)
-{
-	struct loose_object_iter *iter = data;
-	oidset_insert(iter->loose_object_set, oid);
-	if (iter->refs == NULL)
-		return 1;
-
-	iter->refs = iter->refs->next;
-	return 0;
-}
-
-/*
  * Mark recent commits available locally and reachable from a local ref as
  * COMPLETE. If args->no_dependents is false, also mark COMPLETE remote refs as
  * COMMON_REF (otherwise, we are not planning to participate in negotiation, and
@@ -670,30 +653,14 @@ static void mark_complete_and_common_ref(struct fetch_negotiator *negotiator,
 	struct ref *ref;
 	int old_save_commit_buffer = save_commit_buffer;
 	timestamp_t cutoff = 0;
-	struct oidset loose_oid_set = OIDSET_INIT;
-	int use_oidset = 0;
-	struct loose_object_iter iter = {&loose_oid_set, *refs};
-
-	/* Enumerate all loose objects or know refs are not so many. */
-	use_oidset = !for_each_loose_object(add_loose_objects_to_set,
-					    &iter, 0);
 
 	save_commit_buffer = 0;
 
 	for (ref = *refs; ref; ref = ref->next) {
 		struct object *o;
-		unsigned int flags = OBJECT_INFO_QUICK;
 
-		if (use_oidset &&
-		    !oidset_contains(&loose_oid_set, &ref->old_oid)) {
-			/*
-			 * I know this does not exist in the loose form,
-			 * so check if it exists in a non-loose form.
-			 */
-			flags |= OBJECT_INFO_IGNORE_LOOSE;
-		}
-
-		if (!has_object_file_with_flags(&ref->old_oid, flags))
+		if (!has_object_file_with_flags(&ref->old_oid,
+						OBJECT_INFO_QUICK))
 			continue;
 		o = parse_object(the_repository, &ref->old_oid);
 		if (!o)
@@ -709,8 +676,6 @@ static void mark_complete_and_common_ref(struct fetch_negotiator *negotiator,
 				cutoff = commit->date;
 		}
 	}
-
-	oidset_clear(&loose_oid_set);
 
 	if (!args->deepen) {
 		for_each_ref(mark_complete_oid, NULL);
