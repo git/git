@@ -10,13 +10,57 @@ Updates since v2.20
 
 UI, Workflows & Features
 
+ * The "http.version" configuration variable can be used with recent
+   enough cURL library to force the version of HTTP used to talk when
+   fetching and pushing.
+
+ * Small fixes and features for fast-export and fast-import, mostly on
+   the fast-export side.
+
+ * "git push $there $src:$dst" rejects when $dst is not a fully
+   qualified refname and not clear what the end user meant.  The
+   codepath has been taught to give a clearer error message, and also
+   guess where the push should go by taking the type of the pushed
+   object into account (e.g. a tag object would want to go under
+   refs/tags/).
 
 
 Performance, Internal Implementation, Development Support etc.
 
+ * Code clean-up with optimization for the codepath that checks
+   (non-)existence of loose objects.
+
+ * More codepaths become aware of working with in-core repository
+   instance other than the default "the_repository".
 
 
 Fixes since v2.20
 -----------------
+
+ * Updates for corner cases in merge-recursive.
+   (merge cc4cb0902c en/merge-path-collision later to maint).
+
+ * "git checkout frotz" (without any double-dash) avoids ambiguity by
+   making sure 'frotz' cannot be interpreted as a revision and as a
+   path at the same time.  This safety has been updated to check also
+   a unique remote-tracking branch 'frotz' in a remote, when dwimming
+   to create a local branch 'frotz' out of a remote-tracking branch
+   'frotz' from a remote.
+   (merge be4908f103 nd/checkout-dwim-fix later to maint).
+
+ * Refspecs configured with "git -c var=val clone" did not propagate
+   to the resulting repository, which has been corrected.
+   (merge 7eae4a3ac4 sg/clone-initial-fetch-configuration later to maint).
+
+ * A properly configured username/email is required under
+   user.useConfigOnly in order to create commits; now "git stash"
+   (even though it creates commit objects to represent stash entries)
+   command is exempt from the requirement.
+   (merge 3bc2111fc2 sd/stash-wo-user-name later to maint).
+
+ * The http-backend CGI process did not correctly clean up the child
+   processes it spawns to run upload-pack etc. when it dies itself,
+   which has been corrected.
+   (merge 02818a98d7 mk/http-backend-kill-children-before-exit later to maint).
 
  * Code cleanup, docfix, build fix, etc.
