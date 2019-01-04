@@ -161,7 +161,6 @@ struct rev_info {
 			do_not_die_on_missing_tree:1,
 
 			/* for internal use only */
-			allow_exclude_promisor_objects_opt:1,
 			exclude_promisor_objects:1;
 
 	/* Diff flags */
@@ -297,7 +296,8 @@ struct setup_revision_opt {
 	const char *def;
 	void (*tweak)(struct rev_info *, struct setup_revision_opt *);
 	const char *submodule;	/* TODO: drop this and use rev_info->repo */
-	int assume_dashdash;
+	unsigned int	assume_dashdash:1,
+			allow_exclude_promisor_objects:1;
 	unsigned revarg_opt;
 };
 
