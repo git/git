@@ -185,5 +185,6 @@ int cmd_ls_tree(int argc, const char **argv, const char *prefix)
 	tree = parse_tree_indirect(&oid);
 	if (!tree)
 		die("not a tree object");
-	return !!read_tree_recursive(tree, "", 0, 0, &pathspec, show_tree, NULL);
+	return !!read_tree_recursive(the_repository, tree, "", 0, 0,
+				     &pathspec, show_tree, NULL);
 }

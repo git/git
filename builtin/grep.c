@@ -553,7 +553,8 @@ static int grep_tree(struct grep_opt *opt, const struct pathspec *pathspec,
 
 		if (match != all_entries_interesting) {
 			strbuf_addstr(&name, base->buf + tn_len);
-			match = tree_entry_interesting(&entry, &name,
+			match = tree_entry_interesting(repo->index,
+						       &entry, &name,
 						       0, pathspec);
 			strbuf_setlen(&name, name_base_len);
 

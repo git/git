@@ -114,7 +114,8 @@ static void process_tree_contents(struct traversal_context *ctx,
 
 	while (tree_entry(&desc, &entry)) {
 		if (match != all_entries_interesting) {
-			match = tree_entry_interesting(&entry, base, 0,
+			match = tree_entry_interesting(ctx->revs->repo->index,
+						       &entry, base, 0,
 						       &ctx->revs->diffopt.pathspec);
 			if (match == all_entries_not_interesting)
 				break;

@@ -469,7 +469,8 @@ static void get_files_dirs(struct merge_options *o, struct tree *tree)
 {
 	struct pathspec match_all;
 	memset(&match_all, 0, sizeof(match_all));
-	read_tree_recursive(tree, "", 0, 0, &match_all, save_files_dirs, o);
+	read_tree_recursive(the_repository, tree, "", 0, 0,
+			    &match_all, save_files_dirs, o);
 }
 
 static int get_tree_entry_if_blob(const struct object_id *tree,

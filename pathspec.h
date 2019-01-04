@@ -80,13 +80,13 @@ struct pathspec {
  * Any arguments used are copied. It is safe for the caller to modify
  * or free 'prefix' and 'args' after calling this function.
  */
-extern void parse_pathspec(struct pathspec *pathspec,
-			   unsigned magic_mask,
-			   unsigned flags,
-			   const char *prefix,
-			   const char **args);
-extern void copy_pathspec(struct pathspec *dst, const struct pathspec *src);
-extern void clear_pathspec(struct pathspec *);
+void parse_pathspec(struct pathspec *pathspec,
+		    unsigned magic_mask,
+		    unsigned flags,
+		    const char *prefix,
+		    const char **args);
+void copy_pathspec(struct pathspec *dst, const struct pathspec *src);
+void clear_pathspec(struct pathspec *);
 
 static inline int ps_strncmp(const struct pathspec_item *item,
 			     const char *s1, const char *s2, size_t n)
@@ -106,10 +106,13 @@ static inline int ps_strcmp(const struct pathspec_item *item,
 		return strcmp(s1, s2);
 }
 
-extern void add_pathspec_matches_against_index(const struct pathspec *pathspec,
-					       const struct index_state *istate,
-					       char *seen);
-extern char *find_pathspecs_matching_against_index(const struct pathspec *pathspec,
-						   const struct index_state *istate);
+void add_pathspec_matches_against_index(const struct pathspec *pathspec,
+					const struct index_state *istate,
+					char *seen);
+char *find_pathspecs_matching_against_index(const struct pathspec *pathspec,
+					    const struct index_state *istate);
+int match_pathspec_attrs(const struct index_state *istate,
+			 const char *name, int namelen,
+			 const struct pathspec_item *item);
 
 #endif /* PATHSPEC_H */
