@@ -1048,6 +1048,8 @@ static int stash_working_tree(struct stash_info *info, struct pathspec ps)
 	struct strbuf diff_output = STRBUF_INIT;
 	struct index_state istate = { NULL };
 
+	init_revisions(&rev, NULL);
+
 	set_alternate_index_output(stash_index_path.buf);
 	if (reset_tree(&info->i_tree, 0, 0)) {
 		ret = -1;
@@ -1055,7 +1057,6 @@ static int stash_working_tree(struct stash_info *info, struct pathspec ps)
 	}
 	set_alternate_index_output(NULL);
 
-	init_revisions(&rev, NULL);
 	rev.prune_data = ps;
 	rev.diffopt.output_format = DIFF_FORMAT_CALLBACK;
 	rev.diffopt.format_callback = add_diff_to_buf;
