@@ -1496,8 +1496,8 @@ void repo_init_revisions(struct repository *r,
 }
 
 static void add_pending_commit_list(struct rev_info *revs,
-                                    struct commit_list *commit_list,
-                                    unsigned int flags)
+				    struct commit_list *commit_list,
+				    unsigned int flags)
 {
 	while (commit_list) {
 		struct object *object = &commit_list->item->object;

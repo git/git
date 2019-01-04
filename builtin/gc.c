@@ -317,7 +317,7 @@ static void add_repack_all_option(struct string_list *keep_pack)
 
 static void add_repack_incremental_option(void)
 {
-       argv_array_push(&repack, "--no-write-bitmap-index");
+	argv_array_push(&repack, "--no-write-bitmap-index");
 }
 
 static int need_to_gc(void)

@@ -722,7 +722,7 @@ extern const char *githstrerror(int herror);
 #ifdef NO_MEMMEM
 #define memmem gitmemmem
 void *gitmemmem(const void *haystack, size_t haystacklen,
-                const void *needle, size_t needlelen);
+		const void *needle, size_t needlelen);
 #endif
 
 #ifdef OVERRIDE_STRDUP
