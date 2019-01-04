@@ -40,9 +40,10 @@ OPTIONS
 	not contain the old commit).
 
 --quiet::
-	Disable all non-fatal output, making fast-import silent when it
-	is successful.  This option disables the output shown by
-	--stats.
+	Disable the output shown by --stats, making fast-import usually
+	be silent when it is successful.  However, if the import stream
+	has directives intended to show user output (e.g. `progress`
+	directives), the corresponding messages will still be shown.
 
 --stats::
 	Display some basic statistics about the objects fast-import has
@@ -384,6 +385,7 @@ change to the project.
 ....
 	'commit' SP <ref> LF
 	mark?
+	original-oid?
 	('author' (SP <name>)? SP LT <email> GT SP <when> LF)?
 	'committer' (SP <name>)? SP LT <email> GT SP <when> LF
 	data
@@ -740,6 +742,19 @@ New marks are created automatically.  Existing marks can be moved
 to another object simply by reusing the same `<idnum>` in another
 `mark` command.
 
+`original-oid`
+~~~~~~~~~~~~~~
+Provides the name of the object in the original source control system.
+fast-import will simply ignore this directive, but filter processes
+which operate on and modify the stream before feeding to fast-import
+may have uses for this information
+
+....
+	'original-oid' SP <object-identifier> LF
+....
+
+where `<object-identifer>` is any string not containing LF.
+
 `tag`
 ~~~~~
 Creates an annotated tag referring to a specific commit.  To create
@@ -748,6 +763,7 @@ lightweight (non-annotated) tags see the `reset` command below.
 ....
 	'tag' SP <name> LF
 	'from' SP <commit-ish> LF
+	original-oid?
 	'tagger' (SP <name>)? SP LT <email> GT SP <when> LF
 	data
 ....
@@ -822,6 +838,7 @@ assigned mark.
 ....
 	'blob' LF
 	mark?
+	original-oid?
 	data
 ....
 
