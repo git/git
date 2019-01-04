@@ -281,7 +281,7 @@ test_expect_success 'upon cloning, check that all refs point to objects' '
 	test_must_fail git -c protocol.version=2 clone \
 		--filter=blob:none $HTTPD_URL/one_time_sed/server repo 2>err &&
 
-	grep "did not send all necessary objects" err &&
+	test_i18ngrep "did not send all necessary objects" err &&
 
 	# Ensure that the one-time-sed script was used.
 	! test -e "$HTTPD_ROOT_PATH/one-time-sed"

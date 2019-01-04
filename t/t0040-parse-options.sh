@@ -227,7 +227,7 @@ EOF
 test_expect_success 'detect possible typos' '
 	test_must_fail test-tool parse-options -boolean >output 2>output.err &&
 	test_must_be_empty output &&
-	test_cmp typo.err output.err
+	test_i18ncmp typo.err output.err
 '
 
 cat >typo.err <<\EOF
@@ -237,7 +237,7 @@ EOF
 test_expect_success 'detect possible typos' '
 	test_must_fail test-tool parse-options -ambiguous >output 2>output.err &&
 	test_must_be_empty output &&
-	test_cmp typo.err output.err
+	test_i18ncmp typo.err output.err
 '
 
 test_expect_success 'keep some options as arguments' '
