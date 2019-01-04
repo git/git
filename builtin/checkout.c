@@ -44,6 +44,7 @@ struct checkout_opts {
 	int ignore_skipworktree;
 	int ignore_other_worktrees;
 	int show_progress;
+	int count_checkout_paths;
 	/*
 	 * If new checkout options are added, skip_merge_working_tree
 	 * should be updated accordingly.
@@ -166,12 +167,13 @@ static int check_stages(unsigned stages, const struct cache_entry *ce, int pos)
 }
 
 static int checkout_stage(int stage, const struct cache_entry *ce, int pos,
-			  const struct checkout *state)
+			  const struct checkout *state, int *nr_checkouts)
 {
 	while (pos < active_nr &&
 	       !strcmp(active_cache[pos]->name, ce->name)) {
 		if (ce_stage(active_cache[pos]) == stage)
-			return checkout_entry(active_cache[pos], state, NULL);
+			return checkout_entry(active_cache[pos], state,
+					      NULL, nr_checkouts);
 		pos++;
 	}
 	if (stage == 2)
@@ -180,7 +182,7 @@ static int checkout_stage(int stage, const struct cache_entry *ce, int pos,
 		return error(_("path '%s' does not have their version"), ce->name);
 }
 
-static int checkout_merged(int pos, const struct checkout *state)
+static int checkout_merged(int pos, const struct checkout *state, int *nr_checkouts)
 {
 	struct cache_entry *ce = active_cache[pos];
 	const char *path = ce->name;
@@ -243,7 +245,7 @@ static int checkout_merged(int pos, const struct checkout *state)
 	ce = make_transient_cache_entry(mode, &oid, path, 2);
 	if (!ce)
 		die(_("make_cache_entry failed for path '%s'"), path);
-	status = checkout_entry(ce, state, NULL);
+	status = checkout_entry(ce, state, NULL, nr_checkouts);
 	discard_cache_entry(ce);
 	return status;
 }
@@ -258,6 +260,7 @@ static int checkout_paths(const struct checkout_opts *opts,
 	struct commit *head;
 	int errs = 0;
 	struct lock_file lock_file = LOCK_INIT;
+	int nr_checkouts = 0;
 
 	if (opts->track != BRANCH_TRACK_UNSPECIFIED)
 		die(_("'%s' cannot be used with updating paths"), "--track");
@@ -372,17 +375,36 @@ static int checkout_paths(const struct checkout_opts *opts,
 		struct cache_entry *ce = active_cache[pos];
 		if (ce->ce_flags & CE_MATCHED) {
 			if (!ce_stage(ce)) {
-				errs |= checkout_entry(ce, &state, NULL);
+				errs |= checkout_entry(ce, &state,
+						       NULL, &nr_checkouts);
 				continue;
 			}
 			if (opts->writeout_stage)
-				errs |= checkout_stage(opts->writeout_stage, ce, pos, &state);
+				errs |= checkout_stage(opts->writeout_stage,
+						       ce, pos,
+						       &state, &nr_checkouts);
 			else if (opts->merge)
-				errs |= checkout_merged(pos, &state);
+				errs |= checkout_merged(pos, &state,
+							&nr_checkouts);
 			pos = skip_same_name(ce, pos) - 1;
 		}
 	}
-	errs |= finish_delayed_checkout(&state);
+	errs |= finish_delayed_checkout(&state, &nr_checkouts);
+
+	if (opts->count_checkout_paths) {
+		if (opts->source_tree)
+			fprintf_ln(stderr, Q_("Checked out %d path out of %s",
+					      "Checked out %d paths out of %s",
+					      nr_checkouts),
+				   nr_checkouts,
+				   find_unique_abbrev(&opts->source_tree->object.oid,
+						      DEFAULT_ABBREV));
+		else
+			fprintf_ln(stderr, Q_("Checked out %d path out of the index",
+					      "Checked out %d paths out of the index",
+					      nr_checkouts),
+				   nr_checkouts);
+	}
 
 	if (write_locked_index(&the_index, &lock_file, COMMIT_LOCK))
 		die(_("unable to write new index file"));
@@ -1066,6 +1088,7 @@ static int parse_branchname_arg(int argc, const char **argv,
 		has_dash_dash = 1; /* case (3) or (1) */
 	else if (dash_dash_pos >= 2)
 		die(_("only one reference expected, %d given."), dash_dash_pos);
+	opts->count_checkout_paths = !opts->quiet && !has_dash_dash;
 
 	if (!strcmp(arg, "-"))
 		arg = "@{-1}";

@@ -323,7 +323,7 @@ static int checkout_path(unsigned mode, struct object_id *oid,
 	int ret;
 
 	ce = make_transient_cache_entry(mode, oid, path, 0);
-	ret = checkout_entry(ce, state, NULL);
+	ret = checkout_entry(ce, state, NULL, NULL);
 
 	discard_cache_entry(ce);
 	return ret;
