@@ -278,4 +278,35 @@ test_expect_success 'loosely defined local base branch is reported correctly' '
 	test_cmp expect actual
 '
 
+test_expect_success 'reject when arg could be part of dwim branch' '
+	git remote add foo file://non-existent-place &&
+	git update-ref refs/remotes/foo/dwim-arg HEAD &&
+	echo foo >dwim-arg &&
+	git add dwim-arg &&
+	echo bar >dwim-arg &&
+	test_must_fail git checkout dwim-arg &&
+	test_must_fail git rev-parse refs/heads/dwim-arg -- &&
+	grep bar dwim-arg
+'
+
+test_expect_success 'disambiguate dwim branch and checkout path (1)' '
+	git update-ref refs/remotes/foo/dwim-arg1 HEAD &&
+	echo foo >dwim-arg1 &&
+	git add dwim-arg1 &&
+	echo bar >dwim-arg1 &&
+	git checkout -- dwim-arg1 &&
+	test_must_fail git rev-parse refs/heads/dwim-arg1 -- &&
+	grep foo dwim-arg1
+'
+
+test_expect_success 'disambiguate dwim branch and checkout path (2)' '
+	git update-ref refs/remotes/foo/dwim-arg2 HEAD &&
+	echo foo >dwim-arg2 &&
+	git add dwim-arg2 &&
+	echo bar >dwim-arg2 &&
+	git checkout dwim-arg2 -- &&
+	git rev-parse refs/heads/dwim-arg2 -- &&
+	grep bar dwim-arg2
+'
+
 test_done
