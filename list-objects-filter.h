@@ -4,6 +4,7 @@
 struct list_objects_filter_options;
 struct object;
 struct oidset;
+struct repository;
 
 /*
  * During list-object traversal we allow certain objects to be
@@ -60,6 +61,7 @@ enum list_objects_filter_situation {
 };
 
 typedef enum list_objects_filter_result (*filter_object_fn)(
+	struct repository *r,
 	enum list_objects_filter_situation filter_situation,
 	struct object *obj,
 	const char *pathname,

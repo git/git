@@ -99,7 +99,7 @@ static void prepare_in_pack_by_idx(struct packing_data *pdata)
 	 * (i.e. in_pack_idx also zero) should return NULL.
 	 */
 	mapping[cnt++] = NULL;
-	for (p = get_all_packs(the_repository); p; p = p->next, cnt++) {
+	for (p = get_all_packs(pdata->repo); p; p = p->next, cnt++) {
 		if (cnt == nr) {
 			free(mapping);
 			return;
@@ -133,8 +133,10 @@ void oe_map_new_pack(struct packing_data *pack,
 }
 
 /* assume pdata is already zero'd by caller */
-void prepare_packing_data(struct packing_data *pdata)
+void prepare_packing_data(struct repository *r, struct packing_data *pdata)
 {
+	pdata->repo = r;
+
 	if (git_env_bool("GIT_TEST_FULL_IN_PACK_ARRAY", 0)) {
 		/*
 		 * do not initialize in_pack_by_idx[] to force the

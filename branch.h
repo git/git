@@ -1,6 +1,7 @@
 #ifndef BRANCH_H
 #define BRANCH_H
 
+struct repository;
 struct strbuf;
 
 enum branch_track {
@@ -18,6 +19,8 @@ extern enum branch_track git_branch_track;
 
 /*
  * Creates a new branch, where:
+ *
+ *   - r is the repository to add a branch to
  *
  *   - name is the new branch name
  *
@@ -37,7 +40,8 @@ extern enum branch_track git_branch_track;
  *     that start_name is a tracking branch for (if any).
  *
  */
-void create_branch(const char *name, const char *start_name,
+void create_branch(struct repository *r,
+		   const char *name, const char *start_name,
 		   int force, int clobber_head_ok,
 		   int reflog, int quiet, enum branch_track track);
 
@@ -60,7 +64,7 @@ extern int validate_new_branchname(const char *name, struct strbuf *ref, int for
  * Remove information about the state of working on the current
  * branch. (E.g., MERGE_HEAD)
  */
-void remove_branch_state(void);
+void remove_branch_state(struct repository *r);
 
 /*
  * Configure local branch "local" as downstream to branch "remote"

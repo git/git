@@ -5,6 +5,7 @@
 #include "strbuf.h"
 
 struct commit;
+struct repository;
 
 const char *git_path_commit_editmsg(void);
 const char *git_path_seq_dir(void);
@@ -74,9 +75,10 @@ int write_message(const void *buf, size_t len, const char *filename,
 
 /* Call this to setup defaults before parsing command line options */
 void sequencer_init_config(struct replay_opts *opts);
-int sequencer_pick_revisions(struct replay_opts *opts);
-int sequencer_continue(struct replay_opts *opts);
-int sequencer_rollback(struct replay_opts *opts);
+int sequencer_pick_revisions(struct repository *repo,
+			     struct replay_opts *opts);
+int sequencer_continue(struct repository *repo, struct replay_opts *opts);
+int sequencer_rollback(struct repository *repo, struct replay_opts *opts);
 int sequencer_remove_state(struct replay_opts *opts);
 
 #define TODO_LIST_KEEP_EMPTY (1U << 0)
@@ -89,18 +91,19 @@ int sequencer_remove_state(struct replay_opts *opts);
  * commits should be rebased onto the new base, this flag needs to be passed.
  */
 #define TODO_LIST_REBASE_COUSINS (1U << 4)
-int sequencer_make_script(FILE *out, int argc, const char **argv,
+int sequencer_make_script(struct repository *repo, FILE *out,
+			  int argc, const char **argv,
 			  unsigned flags);
 
-int sequencer_add_exec_commands(const char *command);
-int transform_todos(unsigned flags);
+int sequencer_add_exec_commands(struct repository *r, const char *command);
+int transform_todos(struct repository *r, unsigned flags);
 enum missing_commit_check_level get_missing_commit_check_level(void);
-int check_todo_list(void);
-int complete_action(struct replay_opts *opts, unsigned flags,
+int check_todo_list(struct repository *r);
+int complete_action(struct repository *r, struct replay_opts *opts, unsigned flags,
 		    const char *shortrevisions, const char *onto_name,
 		    const char *onto, const char *orig_head, const char *cmd,
 		    unsigned autosquash);
-int rearrange_squash(void);
+int rearrange_squash(struct repository *r);
 
 extern const char sign_off_header[];
 
@@ -112,7 +115,7 @@ extern const char sign_off_header[];
  */
 void append_signoff(struct strbuf *msgbuf, size_t ignore_footer, unsigned flag);
 
-void append_conflicts_hint(struct strbuf *msgbuf);
+void append_conflicts_hint(struct index_state *istate, struct strbuf *msgbuf);
 int message_is_empty(const struct strbuf *sb,
 		     enum commit_msg_cleanup_mode cleanup_mode);
 int template_untouched(const struct strbuf *sb, const char *template_file,
@@ -128,7 +131,9 @@ int prepare_branch_to_be_rebased(struct replay_opts *opts, const char *commit);
 
 #define SUMMARY_INITIAL_COMMIT   (1 << 0)
 #define SUMMARY_SHOW_AUTHOR_DATE (1 << 1)
-void print_commit_summary(const char *prefix, const struct object_id *oid,
+void print_commit_summary(struct repository *repo,
+			  const char *prefix,
+			  const struct object_id *oid,
 			  unsigned int flags);
 
 int read_author_script(const char *path, char **name, char **email, char **date,

@@ -77,7 +77,7 @@ void bitmap_writer_build_type_index(struct packing_data *to_pack,
 			break;
 
 		default:
-			real_type = oid_object_info(the_repository,
+			real_type = oid_object_info(to_pack->repo,
 						    &entry->idx.oid, NULL);
 			break;
 		}
@@ -262,7 +262,7 @@ void bitmap_writer_build(struct packing_data *to_pack)
 	if (writer.show_progress)
 		writer.progress = start_progress("Building bitmaps", writer.selected_nr);
 
-	repo_init_revisions(the_repository, &revs, NULL);
+	repo_init_revisions(to_pack->repo, &revs, NULL);
 	revs.tag_objects = 1;
 	revs.tree_objects = 1;
 	revs.blob_objects = 1;
@@ -363,7 +363,7 @@ static int date_compare(const void *_a, const void *_b)
 void bitmap_writer_reuse_bitmaps(struct packing_data *to_pack)
 {
 	struct bitmap_index *bitmap_git;
-	if (!(bitmap_git = prepare_bitmap_git()))
+	if (!(bitmap_git = prepare_bitmap_git(to_pack->repo)))
 		return;
 
 	writer.reused = kh_init_sha1();
