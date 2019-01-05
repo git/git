@@ -53,14 +53,7 @@ time_in_seconds () {
 	(cd / && "$PYTHON_PATH" -c 'import time; print(int(time.time()))')
 }
 
-# Try to pick a unique port: guess a large number, then hope
-# no more than one of each test is running.
-#
-# This does not handle the case where somebody else is running the
-# same tests and has chosen the same ports.
-testid=${this_test#t}
-git_p4_test_start=9800
-P4DPORT=$((10669 + ($testid - $git_p4_test_start)))
+test_set_port P4DPORT
 
 P4PORT=localhost:$P4DPORT
 P4CLIENT=client
