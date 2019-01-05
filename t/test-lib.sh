@@ -160,6 +160,10 @@ then
 	test -z "$verbose_log" && verbose=t
 fi
 
+TEST_NAME="$(basename "$0" .sh)"
+TEST_RESULTS_DIR="$TEST_OUTPUT_DIRECTORY/test-results"
+TEST_RESULTS_BASE="$TEST_RESULTS_DIR/$TEST_NAME"
+
 # if --tee was passed, write the output not only to the terminal, but
 # additionally to the file test-results/$BASENAME.out, too.
 if test "$GIT_TEST_TEE_STARTED" = "done"
@@ -167,12 +171,11 @@ then
 	: # do not redirect again
 elif test -n "$tee"
 then
-	mkdir -p "$TEST_OUTPUT_DIRECTORY/test-results"
-	BASE="$TEST_OUTPUT_DIRECTORY/test-results/$(basename "$0" .sh)"
+	mkdir -p "$TEST_RESULTS_DIR"
 
 	# Make this filename available to the sub-process in case it is using
 	# --verbose-log.
-	GIT_TEST_TEE_OUTPUT_FILE=$BASE.out
+	GIT_TEST_TEE_OUTPUT_FILE=$TEST_RESULTS_BASE.out
 	export GIT_TEST_TEE_OUTPUT_FILE
 
 	# Truncate before calling "tee -a" to get rid of the results
@@ -180,8 +183,8 @@ then
 	>"$GIT_TEST_TEE_OUTPUT_FILE"
 
 	(GIT_TEST_TEE_STARTED=done ${TEST_SHELL_PATH} "$0" "$@" 2>&1;
-	 echo $? >"$BASE.exit") | tee -a "$GIT_TEST_TEE_OUTPUT_FILE"
-	test "$(cat "$BASE.exit")" = 0
+	 echo $? >"$TEST_RESULTS_BASE.exit") | tee -a "$GIT_TEST_TEE_OUTPUT_FILE"
+	test "$(cat "$TEST_RESULTS_BASE.exit")" = 0
 	exit
 fi
 
@@ -840,12 +843,9 @@ test_done () {
 
 	if test -z "$HARNESS_ACTIVE"
 	then
-		test_results_dir="$TEST_OUTPUT_DIRECTORY/test-results"
-		mkdir -p "$test_results_dir"
-		base=${0##*/}
-		test_results_path="$test_results_dir/${base%.sh}.counts"
+		mkdir -p "$TEST_RESULTS_DIR"
 
-		cat >"$test_results_path" <<-EOF
+		cat >"$TEST_RESULTS_BASE.counts" <<-EOF
 		total $test_count
 		success $test_success
 		fixed $test_fixed
@@ -1051,7 +1051,7 @@ then
 fi
 
 # Test repository
-TRASH_DIRECTORY="trash directory.$(basename "$0" .sh)"
+TRASH_DIRECTORY="trash directory.$TEST_NAME"
 test -n "$root" && TRASH_DIRECTORY="$root/$TRASH_DIRECTORY"
 case "$TRASH_DIRECTORY" in
 /*) ;; # absolute path is good
