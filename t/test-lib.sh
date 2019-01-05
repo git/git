@@ -317,24 +317,7 @@ do
 		GIT_TEST_CHAIN_LINT=0
 		shift ;;
 	-x)
-		# Some test scripts can't be reliably traced  with '-x',
-		# unless the test is run with a Bash version supporting
-		# BASH_XTRACEFD (introduced in Bash v4.1).  Check whether
-		# this test is marked as such, and ignore '-x' if it
-		# isn't executed with a suitable Bash version.
-		if test -z "$test_untraceable" || {
-		     test -n "$BASH_VERSION" && eval '
-		       test ${BASH_VERSINFO[0]} -gt 4 || {
-			 test ${BASH_VERSINFO[0]} -eq 4 &&
-			 test ${BASH_VERSINFO[1]} -ge 1
-		       }
-		     '
-		   }
-		then
-			trace=t
-		else
-			echo >&2 "warning: ignoring -x; '$0' is untraceable without BASH_XTRACEFD"
-		fi
+		trace=t
 		shift ;;
 	-V|--verbose-log)
 		verbose_log=t
@@ -353,6 +336,24 @@ then
 	test -z "$verbose_log" && verbose=t
 fi
 
+if test -n "$trace" && test -n "$test_untraceable"
+then
+	# '-x' tracing requested, but this test script can't be reliably
+	# traced, unless it is run with a Bash version supporting
+	# BASH_XTRACEFD (introduced in Bash v4.1).
+	if test -n "$BASH_VERSION" && eval '
+	     test ${BASH_VERSINFO[0]} -gt 4 || {
+	       test ${BASH_VERSINFO[0]} -eq 4 &&
+	       test ${BASH_VERSINFO[1]} -ge 1
+	     }
+	   '
+	then
+		: Executed by a Bash version supporting BASH_XTRACEFD.  Good.
+	else
+		echo >&2 "warning: ignoring -x; '$0' is untraceable without BASH_XTRACEFD"
+		trace=
+	fi
+fi
 if test -n "$trace" && test -z "$verbose_log"
 then
 	verbose=t
