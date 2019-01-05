@@ -1288,8 +1288,6 @@ test_set_port () {
 			# root-only port, use a larger one instead.
 			port=$(($port + 10000))
 		fi
-
-		eval $var=$port
 		;;
 	*[^0-9]*|0*)
 		error >&7 "invalid port number: $port"
@@ -1298,4 +1296,9 @@ test_set_port () {
 		# The user has specified the port.
 		;;
 	esac
+
+	# Make sure that parallel '--stress' test jobs get different
+	# ports.
+	port=$(($port + ${GIT_TEST_STRESS_JOB_NR:-0}))
+	eval $var=$port
 }
