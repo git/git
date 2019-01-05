@@ -71,13 +71,102 @@ then
 	exit 1
 fi
 
+# Parse options while taking care to leave $@ intact, so we will still
+# have all the original command line options when executing the test
+# script again for '--tee' and '--verbose-log' below.
+store_arg_to=
+prev_opt=
+for opt
+do
+	if test -n "$store_arg_to"
+	then
+		eval $store_arg_to=\$opt
+		store_arg_to=
+		prev_opt=
+		continue
+	fi
+
+	case "$opt" in
+	-d|--d|--de|--deb|--debu|--debug)
+		debug=t ;;
+	-i|--i|--im|--imm|--imme|--immed|--immedi|--immedia|--immediat|--immediate)
+		immediate=t ;;
+	-l|--l|--lo|--lon|--long|--long-|--long-t|--long-te|--long-tes|--long-test|--long-tests)
+		GIT_TEST_LONG=t; export GIT_TEST_LONG ;;
+	-r)
+		store_arg_to=run_list
+		;;
+	--run=*)
+		run_list=${opt#--*=} ;;
+	-h|--h|--he|--hel|--help)
+		help=t ;;
+	-v|--v|--ve|--ver|--verb|--verbo|--verbos|--verbose)
+		verbose=t ;;
+	--verbose-only=*)
+		verbose_only=${opt#--*=}
+		;;
+	-q|--q|--qu|--qui|--quie|--quiet)
+		# Ignore --quiet under a TAP::Harness. Saying how many tests
+		# passed without the ok/not ok details is always an error.
+		test -z "$HARNESS_ACTIVE" && quiet=t ;;
+	--with-dashes)
+		with_dashes=t ;;
+	--no-color)
+		color= ;;
+	--va|--val|--valg|--valgr|--valgri|--valgrin|--valgrind)
+		valgrind=memcheck
+		tee=t
+		;;
+	--valgrind=*)
+		valgrind=${opt#--*=}
+		tee=t
+		;;
+	--valgrind-only=*)
+		valgrind_only=${opt#--*=}
+		tee=t
+		;;
+	--tee)
+		tee=t ;;
+	--root=*)
+		root=${opt#--*=} ;;
+	--chain-lint)
+		GIT_TEST_CHAIN_LINT=1 ;;
+	--no-chain-lint)
+		GIT_TEST_CHAIN_LINT=0 ;;
+	-x)
+		trace=t ;;
+	-V|--verbose-log)
+		verbose_log=t
+		tee=t
+		;;
+	*)
+		echo "error: unknown test option '$opt'" >&2; exit 1 ;;
+	esac
+
+	prev_opt=$opt
+done
+if test -n "$store_arg_to"
+then
+	echo "error: $prev_opt requires an argument" >&2
+	exit 1
+fi
+
+if test -n "$valgrind_only"
+then
+	test -z "$valgrind" && valgrind=memcheck
+	test -z "$verbose" && verbose_only="$valgrind_only"
+elif test -n "$valgrind"
+then
+	test -z "$verbose_log" && verbose=t
+fi
+
 # if --tee was passed, write the output not only to the terminal, but
 # additionally to the file test-results/$BASENAME.out, too.
-case "$GIT_TEST_TEE_STARTED, $* " in
-done,*)
-	# do not redirect again
-	;;
-*' --tee '*|*' --va'*|*' -V '*|*' --verbose-log '*)
+if test "$GIT_TEST_TEE_STARTED" = "done"
+then
+	: # do not redirect again
+elif test -n "$tee"
+then
 	mkdir -p "$TEST_OUTPUT_DIRECTORY/test-results"
 	BASE="$TEST_OUTPUT_DIRECTORY/test-results/$(basename "$0" .sh)"
 
@@ -94,8 +183,35 @@ done,*)
 	 echo $? >"$BASE.exit") | tee -a "$GIT_TEST_TEE_OUTPUT_FILE"
 	test "$(cat "$BASE.exit")" = 0
 	exit
-	;;
-esac
+fi
+
+if test -n "$trace" && test -n "$test_untraceable"
+then
+	# '-x' tracing requested, but this test script can't be reliably
+	# traced, unless it is run with a Bash version supporting
+	# BASH_XTRACEFD (introduced in Bash v4.1).
+	#
+	# Perform this version check _after_ the test script was
+	# potentially re-executed with $TEST_SHELL_PATH for '--tee' or
+	# '--verbose-log', so the right shell is checked and the
+	# warning is issued only once.
+	if test -n "$BASH_VERSION" && eval '
+	     test ${BASH_VERSINFO[0]} -gt 4 || {
+	       test ${BASH_VERSINFO[0]} -eq 4 &&
+	       test ${BASH_VERSINFO[1]} -ge 1
+	     }
+	   '
+	then
+		: Executed by a Bash version supporting BASH_XTRACEFD.  Good.
+	else
+		echo >&2 "warning: ignoring -x; '$0' is untraceable without BASH_XTRACEFD"
+		trace=
+	fi
+fi
+if test -n "$trace" && test -z "$verbose_log"
+then
+	verbose=t
+fi
 
 # For repeatability, reset the environment to known value.
 # TERM is sanitized below, after saving color control sequences.
@@ -193,7 +309,7 @@ fi
 
 # Add libc MALLOC and MALLOC_PERTURB test
 # only if we are not executing the test with valgrind
-if expr " $GIT_TEST_OPTS " : ".* --valgrind " >/dev/null ||
+if test -n "$valgrind" ||
    test -n "$TEST_NO_MALLOC_CHECK"
 then
 	setup_malloc_check () {
@@ -263,107 +379,6 @@ test "x$TERM" != "xdumb" && (
 		tput sgr0 >/dev/null 2>&1
 	) &&
 	color=t
-
-store_arg_to=
-prev_opt=
-for opt
-do
-	if test -n "$store_arg_to"
-	then
-		eval $store_arg_to=\$opt
-		store_arg_to=
-		prev_opt=
-		continue
-	fi
-
-	case "$opt" in
-	-d|--d|--de|--deb|--debu|--debug)
-		debug=t ;;
-	-i|--i|--im|--imm|--imme|--immed|--immedi|--immedia|--immediat|--immediate)
-		immediate=t ;;
-	-l|--l|--lo|--lon|--long|--long-|--long-t|--long-te|--long-tes|--long-test|--long-tests)
-		GIT_TEST_LONG=t; export GIT_TEST_LONG ;;
-	-r)
-		store_arg_to=run_list
-		;;
-	--run=*)
-		run_list=${opt#--*=} ;;
-	-h|--h|--he|--hel|--help)
-		help=t ;;
-	-v|--v|--ve|--ver|--verb|--verbo|--verbos|--verbose)
-		verbose=t ;;
-	--verbose-only=*)
-		verbose_only=${opt#--*=}
-		;;
-	-q|--q|--qu|--qui|--quie|--quiet)
-		# Ignore --quiet under a TAP::Harness. Saying how many tests
-		# passed without the ok/not ok details is always an error.
-		test -z "$HARNESS_ACTIVE" && quiet=t ;;
-	--with-dashes)
-		with_dashes=t ;;
-	--no-color)
-		color= ;;
-	--va|--val|--valg|--valgr|--valgri|--valgrin|--valgrind)
-		valgrind=memcheck ;;
-	--valgrind=*)
-		valgrind=${opt#--*=} ;;
-	--valgrind-only=*)
-		valgrind_only=${opt#--*=} ;;
-	--tee)
-		;; # was handled already
-	--root=*)
-		root=${opt#--*=} ;;
-	--chain-lint)
-		GIT_TEST_CHAIN_LINT=1 ;;
-	--no-chain-lint)
-		GIT_TEST_CHAIN_LINT=0 ;;
-	-x)
-		trace=t ;;
-	-V|--verbose-log)
-		verbose_log=t ;;
-	*)
-		echo "error: unknown test option '$opt'" >&2; exit 1 ;;
-	esac
-
-	prev_opt=$opt
-done
-if test -n "$store_arg_to"
-then
-	echo "error: $prev_opt requires an argument" >&2
-	exit 1
-fi
-
-if test -n "$valgrind_only"
-then
-	test -z "$valgrind" && valgrind=memcheck
-	test -z "$verbose" && verbose_only="$valgrind_only"
-elif test -n "$valgrind"
-then
-	test -z "$verbose_log" && verbose=t
-fi
-
-if test -n "$trace" && test -n "$test_untraceable"
-then
-	# '-x' tracing requested, but this test script can't be reliably
-	# traced, unless it is run with a Bash version supporting
-	# BASH_XTRACEFD (introduced in Bash v4.1).
-	if test -n "$BASH_VERSION" && eval '
-	     test ${BASH_VERSINFO[0]} -gt 4 || {
-	       test ${BASH_VERSINFO[0]} -eq 4 &&
-	       test ${BASH_VERSINFO[1]} -ge 1
-	     }
-	   '
-	then
-		: Executed by a Bash version supporting BASH_XTRACEFD.  Good.
-	else
-		echo >&2 "warning: ignoring -x; '$0' is untraceable without BASH_XTRACEFD"
-		trace=
-	fi
-fi
-if test -n "$trace" && test -z "$verbose_log"
-then
-	verbose=t
-fi
 
 if test -n "$color"
 then
