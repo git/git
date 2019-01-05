@@ -264,68 +264,74 @@ test "x$TERM" != "xdumb" && (
 	) &&
 	color=t
 
-while test "$#" -ne 0
+store_arg_to=
+prev_opt=
+for opt
 do
-	case "$1" in
+	if test -n "$store_arg_to"
+	then
+		eval $store_arg_to=\$opt
+		store_arg_to=
+		prev_opt=
+		continue
+	fi
+
+	case "$opt" in
 	-d|--d|--de|--deb|--debu|--debug)
-		debug=t; shift ;;
+		debug=t ;;
 	-i|--i|--im|--imm|--imme|--immed|--immedi|--immedia|--immediat|--immediate)
-		immediate=t; shift ;;
+		immediate=t ;;
 	-l|--l|--lo|--lon|--long|--long-|--long-t|--long-te|--long-tes|--long-test|--long-tests)
-		GIT_TEST_LONG=t; export GIT_TEST_LONG; shift ;;
+		GIT_TEST_LONG=t; export GIT_TEST_LONG ;;
 	-r)
-		shift; test "$#" -ne 0 || {
-			echo 'error: -r requires an argument' >&2;
-			exit 1;
-		}
-		run_list=$1; shift ;;
+		store_arg_to=run_list
+		;;
 	--run=*)
-		run_list=${1#--*=}; shift ;;
+		run_list=${opt#--*=} ;;
 	-h|--h|--he|--hel|--help)
-		help=t; shift ;;
+		help=t ;;
 	-v|--v|--ve|--ver|--verb|--verbo|--verbos|--verbose)
-		verbose=t; shift ;;
+		verbose=t ;;
 	--verbose-only=*)
-		verbose_only=${1#--*=}
-		shift ;;
+		verbose_only=${opt#--*=}
+		;;
 	-q|--q|--qu|--qui|--quie|--quiet)
 		# Ignore --quiet under a TAP::Harness. Saying how many tests
 		# passed without the ok/not ok details is always an error.
-		test -z "$HARNESS_ACTIVE" && quiet=t; shift ;;
+		test -z "$HARNESS_ACTIVE" && quiet=t ;;
 	--with-dashes)
-		with_dashes=t; shift ;;
+		with_dashes=t ;;
 	--no-color)
-		color=; shift ;;
+		color= ;;
 	--va|--val|--valg|--valgr|--valgri|--valgrin|--valgrind)
-		valgrind=memcheck
-		shift ;;
+		valgrind=memcheck ;;
 	--valgrind=*)
-		valgrind=${1#--*=}
-		shift ;;
+		valgrind=${opt#--*=} ;;
 	--valgrind-only=*)
-		valgrind_only=${1#--*=}
-		shift ;;
+		valgrind_only=${opt#--*=} ;;
 	--tee)
-		shift ;; # was handled already
+		;; # was handled already
 	--root=*)
-		root=${1#--*=}
-		shift ;;
+		root=${opt#--*=} ;;
 	--chain-lint)
-		GIT_TEST_CHAIN_LINT=1
-		shift ;;
+		GIT_TEST_CHAIN_LINT=1 ;;
 	--no-chain-lint)
-		GIT_TEST_CHAIN_LINT=0
-		shift ;;
+		GIT_TEST_CHAIN_LINT=0 ;;
 	-x)
-		trace=t
-		shift ;;
+		trace=t ;;
 	-V|--verbose-log)
-		verbose_log=t
-		shift ;;
+		verbose_log=t ;;
 	*)
-		echo "error: unknown test option '$1'" >&2; exit 1 ;;
+		echo "error: unknown test option '$opt'" >&2; exit 1 ;;
 	esac
+
+	prev_opt=$opt
 done
+if test -n "$store_arg_to"
+then
+	echo "error: $prev_opt requires an argument" >&2
+	exit 1
+fi
 
 if test -n "$valgrind_only"
 then
