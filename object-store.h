@@ -61,6 +61,9 @@ void odb_load_loose_cache(struct object_directory *odb, int subdir_nr);
 struct oid_array *odb_loose_cache(struct object_directory *odb,
 				  const struct object_id *oid);
 
+/* Empty the loose object cache for the specified object directory. */
+void odb_clear_loose_cache(struct object_directory *odb);
+
 struct packed_git {
 	struct packed_git *next;
 	struct list_head mru;

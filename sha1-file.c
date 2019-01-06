@@ -2178,6 +2178,13 @@ void odb_load_loose_cache(struct object_directory *odb, int subdir_nr)
 	strbuf_release(&buf);
 }
 
+void odb_clear_loose_cache(struct object_directory *odb)
+{
+	oid_array_clear(&odb->loose_objects_cache);
+	memset(&odb->loose_objects_subdir_seen, 0,
+	       sizeof(odb->loose_objects_subdir_seen));
+}
+
 static int check_stream_sha1(git_zstream *stream,
 			     const char *hdr,
 			     unsigned long size,
