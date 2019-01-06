@@ -211,7 +211,7 @@ static int cmd_update_ref(struct ref_store *refs, const char **argv)
 {
 	const char *msg = notnull(*argv++, "msg");
 	const char *refname = notnull(*argv++, "refname");
-	const char *new_sha1_buf = notnull(*argv++, "old-sha1");
+	const char *new_sha1_buf = notnull(*argv++, "new-sha1");
 	const char *old_sha1_buf = notnull(*argv++, "old-sha1");
 	unsigned int flags = arg_flags(*argv++, "flags");
 	unsigned char old_sha1[20];
