@@ -2155,7 +2155,7 @@ struct oid_array *odb_loose_cache(struct object_directory *odb,
 {
 	int subdir_nr = oid->hash[0];
 	odb_load_loose_cache(odb, subdir_nr);
-	return &odb->loose_objects_cache;
+	return &odb->loose_objects_cache[subdir_nr];
 }
 
 void odb_load_loose_cache(struct object_directory *odb, int subdir_nr)
@@ -2173,14 +2173,17 @@ void odb_load_loose_cache(struct object_directory *odb, int subdir_nr)
 	for_each_file_in_obj_subdir(subdir_nr, &buf,
 				    append_loose_object,
 				    NULL, NULL,
-				    &odb->loose_objects_cache);
+				    &odb->loose_objects_cache[subdir_nr]);
 	odb->loose_objects_subdir_seen[subdir_nr] = 1;
 	strbuf_release(&buf);
 }
 
 void odb_clear_loose_cache(struct object_directory *odb)
 {
-	oid_array_clear(&odb->loose_objects_cache);
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(odb->loose_objects_cache); i++)
+		oid_array_clear(&odb->loose_objects_cache[i]);
 	memset(&odb->loose_objects_subdir_seen, 0,
 	       sizeof(odb->loose_objects_subdir_seen));
 }

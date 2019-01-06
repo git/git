@@ -20,7 +20,7 @@ struct object_directory {
 	 * Be sure to call odb_load_loose_cache() before using.
 	 */
 	char loose_objects_subdir_seen[256];
-	struct oid_array loose_objects_cache;
+	struct oid_array loose_objects_cache[256];
 
 	/*
 	 * Path to the alternative object store. If this is a relative path,
