@@ -54,6 +54,13 @@ void add_to_alternates_memory(const char *dir);
  */
 void odb_load_loose_cache(struct object_directory *odb, int subdir_nr);
 
+/*
+ * Populate and return the loose object cache array corresponding to the
+ * given object ID.
+ */
+struct oid_array *odb_loose_cache(struct object_directory *odb,
+				  const struct object_id *oid);
+
 struct packed_git {
 	struct packed_git *next;
 	struct list_head mru;
