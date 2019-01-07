@@ -1552,9 +1552,9 @@ int hash_object_file(const void *buf, unsigned long len, const char *type,
 static void close_loose_object(int fd)
 {
 	if (fsync_object_files)
-		fsync_or_die(fd, "sha1 file");
+		fsync_or_die(fd, "loose object file");
 	if (close(fd) != 0)
-		die_errno(_("error when closing sha1 file"));
+		die_errno(_("error when closing loose object file"));
 }
 
 /* Size of directory component, including the ending '/' */
@@ -1645,7 +1645,7 @@ static int write_loose_object(const struct object_id *oid, char *hdr,
 		ret = git_deflate(&stream, Z_FINISH);
 		the_hash_algo->update_fn(&c, in0, stream.next_in - in0);
 		if (write_buffer(fd, compressed, stream.next_out - compressed) < 0)
-			die(_("unable to write sha1 file"));
+			die(_("unable to write loose object file"));
 		stream.next_out = compressed;
 		stream.avail_out = sizeof(compressed);
 	} while (ret == Z_OK);
