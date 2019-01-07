@@ -131,7 +131,7 @@ static int fill_active_slot(struct walker *walker)
 	list_for_each_safe(pos, tmp, head) {
 		obj_req = list_entry(pos, struct object_request, node);
 		if (obj_req->state == WAITING) {
-			if (has_sha1_file(obj_req->oid.hash))
+			if (has_object_file(&obj_req->oid))
 				obj_req->state = COMPLETE;
 			else {
 				start_object_request(walker, obj_req);
@@ -489,7 +489,7 @@ static int fetch_object(struct walker *walker, unsigned char *sha1)
 	if (obj_req == NULL)
 		return error("Couldn't find request for %s in the queue", hex);
 
-	if (has_sha1_file(obj_req->oid.hash)) {
+	if (has_object_file(&obj_req->oid)) {
 		if (obj_req->req != NULL)
 			abort_http_object_request(obj_req->req);
 		abort_object_request(obj_req);

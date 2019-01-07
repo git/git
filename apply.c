@@ -3183,7 +3183,7 @@ static int apply_binary(struct apply_state *state,
 		return 0; /* deletion patch */
 	}
 
-	if (has_sha1_file(oid.hash)) {
+	if (has_object_file(&oid)) {
 		/* We already have the postimage */
 		enum object_type type;
 		unsigned long size;

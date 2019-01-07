@@ -67,7 +67,7 @@ static int already_written(struct bulk_checkin_state *state, struct object_id *o
 	int i;
 
 	/* The object may already exist in the repository */
-	if (has_sha1_file(oid->hash))
+	if (has_object_file(oid))
 		return 1;
 
 	/* Might want to keep the list sorted */

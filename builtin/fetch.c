@@ -317,8 +317,7 @@ static void find_non_local_tags(const struct ref *refs,
 			    !has_object_file_with_flags(&ref->old_oid,
 							OBJECT_INFO_QUICK) &&
 			    !will_fetch(head, ref->old_oid.hash) &&
-			    !has_sha1_file_with_flags(item->oid.hash,
-						      OBJECT_INFO_QUICK) &&
+			    !has_object_file_with_flags(&item->oid, OBJECT_INFO_QUICK) &&
 			    !will_fetch(head, item->oid.hash))
 				oidclr(&item->oid);
 			item = NULL;
@@ -332,7 +331,7 @@ static void find_non_local_tags(const struct ref *refs,
 		 * fetch.
 		 */
 		if (item &&
-		    !has_sha1_file_with_flags(item->oid.hash, OBJECT_INFO_QUICK) &&
+		    !has_object_file_with_flags(&item->oid, OBJECT_INFO_QUICK) &&
 		    !will_fetch(head, item->oid.hash))
 			oidclr(&item->oid);
 
@@ -353,7 +352,7 @@ static void find_non_local_tags(const struct ref *refs,
 	 * checked to see if it needs fetching.
 	 */
 	if (item &&
-	    !has_sha1_file_with_flags(item->oid.hash, OBJECT_INFO_QUICK) &&
+	    !has_object_file_with_flags(&item->oid, OBJECT_INFO_QUICK) &&
 	    !will_fetch(head, item->oid.hash))
 		oidclr(&item->oid);
 

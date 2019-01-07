@@ -225,7 +225,7 @@ int cache_tree_fully_valid(struct cache_tree *it)
 	int i;
 	if (!it)
 		return 0;
-	if (it->entry_count < 0 || !has_sha1_file(it->oid.hash))
+	if (it->entry_count < 0 || !has_object_file(&it->oid))
 		return 0;
 	for (i = 0; i < it->subtree_nr; i++) {
 		if (!cache_tree_fully_valid(it->down[i]->cache_tree))
@@ -253,7 +253,7 @@ static int update_one(struct cache_tree *it,
 
 	*skip_count = 0;
 
-	if (0 <= it->entry_count && has_sha1_file(it->oid.hash))
+	if (0 <= it->entry_count && has_object_file(&it->oid))
 		return it->entry_count;
 
 	/*
