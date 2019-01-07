@@ -202,19 +202,15 @@ int read_loose_object(const char *path,
 		      void **contents);
 
 /*
- * Convenience for sha1_object_info_extended() with a NULL struct
+ * Convenience for oid_object_info_extended() with a NULL struct
  * object_info. OBJECT_INFO_SKIP_CACHED is automatically set; pass
  * nonzero flags to also set other flags.
  */
-extern int has_sha1_file_with_flags(const unsigned char *sha1, int flags);
-static inline int has_sha1_file(const unsigned char *sha1)
+int has_object_file_with_flags(const struct object_id *oid, int flags);
+static inline int has_object_file(const struct object_id *oid)
 {
-	return has_sha1_file_with_flags(sha1, 0);
+	return has_object_file_with_flags(oid, 0);
 }
-
-/* Same as the above, except for struct object_id. */
-extern int has_object_file(const struct object_id *oid);
-extern int has_object_file_with_flags(const struct object_id *oid, int flags);
 
 /*
  * Return true iff an alternate object database has a loose object

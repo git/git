@@ -1752,24 +1752,12 @@ int force_object_loose(const struct object_id *oid, time_t mtime)
 	return ret;
 }
 
-int has_sha1_file_with_flags(const unsigned char *sha1, int flags)
-{
-	struct object_id oid;
-	if (!startup_info->have_repository)
-		return 0;
-	hashcpy(oid.hash, sha1);
-	return oid_object_info_extended(the_repository, &oid, NULL,
-					flags | OBJECT_INFO_SKIP_CACHED) >= 0;
-}
-
-int has_object_file(const struct object_id *oid)
-{
-	return has_sha1_file(oid->hash);
-}
-
 int has_object_file_with_flags(const struct object_id *oid, int flags)
 {
-	return has_sha1_file_with_flags(oid->hash, flags);
+	if (!startup_info->have_repository)
+		return 0;
+	return oid_object_info_extended(the_repository, oid, NULL,
+					flags | OBJECT_INFO_SKIP_CACHED) >= 0;
 }
 
 static void check_tree(const void *buf, size_t size)
