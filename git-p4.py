@@ -332,6 +332,8 @@ def p4_check_access(min_expiration=1):
             die_bad_access("p4 error: {0}".format(data))
         else:
             die_bad_access("unknown error")
+    elif code == "info":
+        return
     else:
         die_bad_access("unknown error code {0}".format(code))
 
