@@ -2218,7 +2218,7 @@ static int check_stream_oid(git_zstream *stream,
 
 	the_hash_algo->final_fn(real_oid.hash, &c);
 	if (!oideq(expected_oid, &real_oid)) {
-		error(_("sha1 mismatch for %s (expected %s)"), path,
+		error(_("hash mismatch for %s (expected %s)"), path,
 		      oid_to_hex(expected_oid));
 		return -1;
 	}
@@ -2270,7 +2270,7 @@ int read_loose_object(const char *path,
 		}
 		if (check_object_signature(expected_oid, *contents,
 					 *size, type_name(*type))) {
-			error(_("sha1 mismatch for %s (expected %s)"), path,
+			error(_("hash mismatch for %s (expected %s)"), path,
 			      oid_to_hex(expected_oid));
 			free(*contents);
 			goto out;

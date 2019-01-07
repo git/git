@@ -263,7 +263,7 @@ struct object *parse_object(struct repository *r, const struct object_id *oid)
 	    (!obj && has_object_file(oid) &&
 	     oid_object_info(r, oid, NULL) == OBJ_BLOB)) {
 		if (check_object_signature(repl, NULL, 0, NULL) < 0) {
-			error(_("sha1 mismatch %s"), oid_to_hex(oid));
+			error(_("hash mismatch %s"), oid_to_hex(oid));
 			return NULL;
 		}
 		parse_blob_buffer(lookup_blob(r, oid), NULL, 0);
@@ -274,7 +274,7 @@ struct object *parse_object(struct repository *r, const struct object_id *oid)
 	if (buffer) {
 		if (check_object_signature(repl, buffer, size, type_name(type)) < 0) {
 			free(buffer);
-			error(_("sha1 mismatch %s"), oid_to_hex(repl));
+			error(_("hash mismatch %s"), oid_to_hex(repl));
 			return NULL;
 		}
 
