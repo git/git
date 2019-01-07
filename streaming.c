@@ -342,12 +342,12 @@ static open_method_decl(loose)
 					      oid, &st->u.loose.mapsize);
 	if (!st->u.loose.mapped)
 		return -1;
-	if ((unpack_sha1_header(&st->z,
-				st->u.loose.mapped,
-				st->u.loose.mapsize,
-				st->u.loose.hdr,
-				sizeof(st->u.loose.hdr)) < 0) ||
-	    (parse_sha1_header(st->u.loose.hdr, &st->size) < 0)) {
+	if ((unpack_loose_header(&st->z,
+				 st->u.loose.mapped,
+				 st->u.loose.mapsize,
+				 st->u.loose.hdr,
+				 sizeof(st->u.loose.hdr)) < 0) ||
+	    (parse_loose_header(st->u.loose.hdr, &st->size) < 0)) {
 		git_inflate_end(&st->z);
 		munmap(st->u.loose.mapped, st->u.loose.mapsize);
 		return -1;
