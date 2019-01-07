@@ -922,16 +922,13 @@ static int open_loose_object(struct repository *r,
 }
 
 static int quick_has_loose(struct repository *r,
-			   const unsigned char *sha1)
+			   const struct object_id *oid)
 {
-	struct object_id oid;
 	struct object_directory *odb;
-
-	hashcpy(oid.hash, sha1);
 
 	prepare_alt_odb(r);
 	for (odb = r->objects->odb; odb; odb = odb->next) {
-		if (oid_array_lookup(odb_loose_cache(odb, &oid), &oid) >= 0)
+		if (oid_array_lookup(odb_loose_cache(odb, oid), oid) >= 0)
 			return 1;
 	}
 	return 0;
@@ -1191,7 +1188,7 @@ static int loose_object_info(struct repository *r,
 		const char *path;
 		struct stat st;
 		if (!oi->disk_sizep && (flags & OBJECT_INFO_QUICK))
-			return quick_has_loose(r, oid->hash) ? 0 : -1;
+			return quick_has_loose(r, oid) ? 0 : -1;
 		if (stat_loose_object(r, oid, &st, &path) < 0)
 			return -1;
 		if (oi->disk_sizep)
@@ -1355,19 +1352,16 @@ int oid_object_info(struct repository *r,
 	return type;
 }
 
-static void *read_object(const unsigned char *sha1, enum object_type *type,
+static void *read_object(const struct object_id *oid, enum object_type *type,
 			 unsigned long *size)
 {
-	struct object_id oid;
 	struct object_info oi = OBJECT_INFO_INIT;
 	void *content;
 	oi.typep = type;
 	oi.sizep = size;
 	oi.contentp = &content;
 
-	hashcpy(oid.hash, sha1);
-
-	if (oid_object_info_extended(the_repository, &oid, &oi, 0) < 0)
+	if (oid_object_info_extended(the_repository, oid, &oi, 0) < 0)
 		return NULL;
 	return content;
 }
@@ -1408,7 +1402,7 @@ void *read_object_file_extended(const struct object_id *oid,
 		lookup_replace_object(the_repository, oid) : oid;
 
 	errno = 0;
-	data = read_object(repl->hash, type, size);
+	data = read_object(repl, type, size);
 	if (data)
 		return data;
 
@@ -1748,7 +1742,7 @@ int force_object_loose(const struct object_id *oid, time_t mtime)
 
 	if (has_loose_object(oid))
 		return 0;
-	buf = read_object(oid->hash, &type, &len);
+	buf = read_object(oid, &type, &len);
 	if (!buf)
 		return error(_("cannot read sha1_file for %s"), oid_to_hex(oid));
 	hdrlen = xsnprintf(hdr, sizeof(hdr), "%s %"PRIuMAX , type_name(type), (uintmax_t)len) + 1;
