@@ -36,14 +36,19 @@ MAN7_TXT += gittutorial-2.txt
 MAN7_TXT += gittutorial.txt
 MAN7_TXT += gitworkflows.txt
 
+ifdef MAN_FILTER
+MAN_TXT = $(filter $(MAN_FILTER),$(MAN1_TXT) $(MAN5_TXT) $(MAN7_TXT))
+else
 MAN_TXT = $(MAN1_TXT) $(MAN5_TXT) $(MAN7_TXT)
+MAN_FILTER = $(MAN_TXT)
+endif
+
 MAN_XML = $(patsubst %.txt,%.xml,$(MAN_TXT))
 MAN_HTML = $(patsubst %.txt,%.html,$(MAN_TXT))
 GIT_MAN_REF = master
 
 OBSOLETE_HTML += everyday.html
 OBSOLETE_HTML += git-remote-helpers.html
-DOC_HTML = $(MAN_HTML) $(OBSOLETE_HTML)
 
 ARTICLES += howto-index
 ARTICLES += git-tools
@@ -89,11 +94,13 @@ TECH_DOCS += technical/trivial-merge
 SP_ARTICLES += $(TECH_DOCS)
 SP_ARTICLES += technical/api-index
 
-DOC_HTML += $(patsubst %,%.html,$(ARTICLES) $(SP_ARTICLES))
+ARTICLES_HTML += $(patsubst %,%.html,$(ARTICLES) $(SP_ARTICLES))
+HTML_FILTER ?= $(ARTICLES_HTML) $(OBSOLETE_HTML)
+DOC_HTML = $(MAN_HTML) $(filter $(HTML_FILTER),$(ARTICLES_HTML) $(OBSOLETE_HTML))
 
-DOC_MAN1 = $(patsubst %.txt,%.1,$(MAN1_TXT))
-DOC_MAN5 = $(patsubst %.txt,%.5,$(MAN5_TXT))
-DOC_MAN7 = $(patsubst %.txt,%.7,$(MAN7_TXT))
+DOC_MAN1 = $(patsubst %.txt,%.1,$(filter $(MAN_FILTER),$(MAN1_TXT)))
+DOC_MAN5 = $(patsubst %.txt,%.5,$(filter $(MAN_FILTER),$(MAN5_TXT)))
+DOC_MAN7 = $(patsubst %.txt,%.7,$(filter $(MAN_FILTER),$(MAN7_TXT)))
 
 prefix ?= $(HOME)
 bindir ?= $(prefix)/bin
@@ -456,5 +463,10 @@ print-man1:
 
 lint-docs::
 	$(QUIET_LINT)$(PERL_PATH) lint-gitlink.perl
+
+ifeq ($(wildcard po/Makefile),po/Makefile)
+doc-l10n install-l10n::
+	$(MAKE) -C po $@
+endif
 
 .PHONY: FORCE
