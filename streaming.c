@@ -338,8 +338,8 @@ static struct stream_vtbl loose_vtbl = {
 
 static open_method_decl(loose)
 {
-	st->u.loose.mapped = map_sha1_file(the_repository,
-					   oid->hash, &st->u.loose.mapsize);
+	st->u.loose.mapped = map_loose_object(the_repository,
+					      oid, &st->u.loose.mapsize);
 	if (!st->u.loose.mapped)
 		return -1;
 	if ((unpack_sha1_header(&st->z,
