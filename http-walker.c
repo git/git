@@ -58,7 +58,7 @@ static void start_object_request(struct walker *walker,
 	struct active_request_slot *slot;
 	struct http_object_request *req;
 
-	req = new_http_object_request(obj_req->repo->base, obj_req->oid.hash);
+	req = new_http_object_request(obj_req->repo->base, &obj_req->oid);
 	if (req == NULL) {
 		obj_req->state = ABORTED;
 		return;
@@ -543,11 +543,11 @@ static int fetch_object(struct walker *walker, unsigned char *sha1)
 	} else if (req->zret != Z_STREAM_END) {
 		walker->corrupt_object_found++;
 		ret = error("File %s (%s) corrupt", hex, req->url);
-	} else if (!hasheq(obj_req->oid.hash, req->real_sha1)) {
+	} else if (!oideq(&obj_req->oid, &req->real_oid)) {
 		ret = error("File %s has bad hash", hex);
 	} else if (req->rename < 0) {
 		struct strbuf buf = STRBUF_INIT;
-		loose_object_path(the_repository, &buf, req->sha1);
+		loose_object_path(the_repository, &buf, req->oid.hash);
 		ret = error("unable to write sha1 filename %s", buf.buf);
 		strbuf_release(&buf);
 	}
