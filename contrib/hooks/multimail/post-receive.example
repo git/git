@@ -30,7 +30,6 @@ script's behavior could be changed or customized.
 """
 
 import sys
-import os
 
 # If necessary, add the path to the directory containing
 # git_multimail.py to the Python path as follows.  (This is not
@@ -86,6 +85,7 @@ mailer = git_multimail.choose_mailer(config, environment)
 
 # Use Python's smtplib to send emails.  Both arguments are required.
 #mailer = git_multimail.SMTPMailer(
+#    environment=environment,
 #    envelopesender='git-repo@example.com',
 #    # The smtpserver argument can also include a port number; e.g.,
 #    #     smtpserver='mail.example.com:25'
