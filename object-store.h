@@ -48,13 +48,6 @@ void add_to_alternates_file(const char *dir);
 void add_to_alternates_memory(const char *dir);
 
 /*
- * Populate an odb's loose object cache for one particular subdirectory (i.e.,
- * the one that corresponds to the first byte of objects you're interested in,
- * from 0 to 255 inclusive).
- */
-void odb_load_loose_cache(struct object_directory *odb, int subdir_nr);
-
-/*
  * Populate and return the loose object cache array corresponding to the
  * given object ID.
  */
