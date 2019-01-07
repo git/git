@@ -1642,7 +1642,7 @@ static void check_object(struct object_entry *entry)
 
 		/*
 		 * No choice but to fall back to the recursive delta walk
-		 * with sha1_object_info() to find about the object type
+		 * with oid_object_info() to find about the object type
 		 * at this point...
 		 */
 		give_up:
@@ -1718,7 +1718,7 @@ static void drop_reused_delta(struct object_entry *entry)
 	if (packed_object_info(the_repository, IN_PACK(entry), entry->in_pack_offset, &oi) < 0) {
 		/*
 		 * We failed to get the info from this pack for some reason;
-		 * fall back to sha1_object_info, which may find another copy.
+		 * fall back to oid_object_info, which may find another copy.
 		 * And if that fails, the error will be recorded in oe_type(entry)
 		 * and dealt with in prepare_pack().
 		 */

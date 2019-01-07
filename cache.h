@@ -1592,7 +1592,7 @@ extern int odb_mkstemp(struct strbuf *temp_filename, const char *pattern);
 extern int odb_pack_keep(const char *name);
 
 /*
- * Set this to 0 to prevent sha1_object_info_extended() from fetching missing
+ * Set this to 0 to prevent oid_object_info_extended() from fetching missing
  * blobs. This has a difference only if extensions.partialClone is set.
  *
  * Its default value is 1.

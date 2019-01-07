@@ -209,14 +209,14 @@ struct expand_data {
 
 	/*
 	 * After a mark_query run, this object_info is set up to be
-	 * passed to sha1_object_info_extended. It will point to the data
+	 * passed to oid_object_info_extended. It will point to the data
 	 * elements above, so you can retrieve the response from there.
 	 */
 	struct object_info info;
 
 	/*
 	 * This flag will be true if the requested batch format and options
-	 * don't require us to call sha1_object_info, which can then be
+	 * don't require us to call oid_object_info, which can then be
 	 * optimized out.
 	 */
 	unsigned skip_object_info : 1;
@@ -490,7 +490,7 @@ static int batch_objects(struct batch_options *opt)
 
 	/*
 	 * Expand once with our special mark_query flag, which will prime the
-	 * object_info to be handed to sha1_object_info_extended for each
+	 * object_info to be handed to oid_object_info_extended for each
 	 * object.
 	 */
 	memset(&data, 0, sizeof(data));
