@@ -1521,7 +1521,7 @@ int finalize_object_file(const char *tmpfile, const char *filename)
 	unlink_or_warn(tmpfile);
 	if (ret) {
 		if (ret != EEXIST) {
-			return error_errno(_("unable to write sha1 filename %s"), filename);
+			return error_errno(_("unable to write file %s"), filename);
 		}
 		/* FIXME!!! Collision check here ? */
 	}
@@ -1744,7 +1744,7 @@ int force_object_loose(const struct object_id *oid, time_t mtime)
 		return 0;
 	buf = read_object(oid, &type, &len);
 	if (!buf)
-		return error(_("cannot read sha1_file for %s"), oid_to_hex(oid));
+		return error(_("cannot read object for %s"), oid_to_hex(oid));
 	hdrlen = xsnprintf(hdr, sizeof(hdr), "%s %"PRIuMAX , type_name(type), (uintmax_t)len) + 1;
 	ret = write_loose_object(oid, hdr, hdrlen, buf, len, mtime);
 	free(buf);
