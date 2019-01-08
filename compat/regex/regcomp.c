@@ -17,6 +17,14 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
+#if defined __TANDEM
+ /* This is currently duplicated from git-compat-utils.h */
+# ifdef NO_INTPTR_T
+ typedef long intptr_t;
+ typedef unsigned long uintptr_t;
+# endif
+#endif
+
 static reg_errcode_t re_compile_internal (regex_t *preg, const char * pattern,
 					  size_t length, reg_syntax_t syntax);
 static void re_compile_fastmap_iter (regex_t *bufp,
