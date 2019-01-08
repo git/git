@@ -558,7 +558,8 @@ struct commit_list *filter_skipped(struct commit_list *list,
  * is increased by one between each call, but that should not matter
  * for this application.
  */
-static unsigned get_prn(unsigned count) {
+static unsigned get_prn(unsigned count)
+{
 	count = count * 1103515245 + 12345;
 	return (count/65536) % PRN_MODULO;
 }

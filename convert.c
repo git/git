@@ -778,7 +778,8 @@ static int start_multi_file_filter_fn(struct subprocess_entry *subprocess)
 
 static void handle_filter_error(const struct strbuf *filter_status,
 				struct cmd2process *entry,
-				const unsigned int wanted_capability) {
+				const unsigned int wanted_capability)
+{
 	if (!strcmp(filter_status->buf, "error"))
 		; /* The filter signaled a problem with the file. */
 	else if (!strcmp(filter_status->buf, "abort") && wanted_capability) {

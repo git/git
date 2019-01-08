@@ -98,7 +98,8 @@ static int list_cmds(const char *spec)
 	return 0;
 }
 
-static void commit_pager_choice(void) {
+static void commit_pager_choice(void)
+{
 	switch (use_pager) {
 	case 0:
 		setenv("GIT_PAGER", "cat", 1);

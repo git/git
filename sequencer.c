@@ -1689,7 +1689,8 @@ static int update_squash_messages(struct repository *r,
 	return res;
 }
 
-static void flush_rewritten_pending(void) {
+static void flush_rewritten_pending(void)
+{
 	struct strbuf buf = STRBUF_INIT;
 	struct object_id newoid;
 	FILE *out;
@@ -1714,7 +1715,8 @@ static void flush_rewritten_pending(void) {
 }
 
 static void record_in_rewritten(struct object_id *oid,
-		enum todo_command next_command) {
+		enum todo_command next_command)
+{
 	FILE *out = fopen_or_warn(rebase_path_rewritten_pending(), "a");
 
 	if (!out)
