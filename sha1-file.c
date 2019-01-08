@@ -924,7 +924,6 @@ static int open_sha1_file(struct repository *r,
 static int quick_has_loose(struct repository *r,
 			   const unsigned char *sha1)
 {
-	int subdir_nr = sha1[0];
 	struct object_id oid;
 	struct object_directory *odb;
 
@@ -932,8 +931,7 @@ static int quick_has_loose(struct repository *r,
 
 	prepare_alt_odb(r);
 	for (odb = r->objects->odb; odb; odb = odb->next) {
-		odb_load_loose_cache(odb, subdir_nr);
-		if (oid_array_lookup(&odb->loose_objects_cache, &oid) >= 0)
+		if (oid_array_lookup(odb_loose_cache(odb, &oid), &oid) >= 0)
 			return 1;
 	}
 	return 0;
@@ -2152,8 +2150,10 @@ static int append_loose_object(const struct object_id *oid, const char *path,
 	return 0;
 }
 
-void odb_load_loose_cache(struct object_directory *odb, int subdir_nr)
+struct oid_array *odb_loose_cache(struct object_directory *odb,
+				  const struct object_id *oid)
 {
+	int subdir_nr = oid->hash[0];
 	struct strbuf buf = STRBUF_INIT;
 
 	if (subdir_nr < 0 ||
@@ -2161,15 +2161,26 @@ void odb_load_loose_cache(struct object_directory *odb, int subdir_nr)
 		BUG("subdir_nr out of range");
 
 	if (odb->loose_objects_subdir_seen[subdir_nr])
-		return;
+		return &odb->loose_objects_cache[subdir_nr];
 
 	strbuf_addstr(&buf, odb->path);
 	for_each_file_in_obj_subdir(subdir_nr, &buf,
 				    append_loose_object,
 				    NULL, NULL,
-				    &odb->loose_objects_cache);
+				    &odb->loose_objects_cache[subdir_nr]);
 	odb->loose_objects_subdir_seen[subdir_nr] = 1;
 	strbuf_release(&buf);
+	return &odb->loose_objects_cache[subdir_nr];
+}
+
+void odb_clear_loose_cache(struct object_directory *odb)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(odb->loose_objects_cache); i++)
+		oid_array_clear(&odb->loose_objects_cache[i]);
+	memset(&odb->loose_objects_subdir_seen, 0,
+	       sizeof(odb->loose_objects_subdir_seen));
 }
 
 static int check_stream_sha1(git_zstream *stream,

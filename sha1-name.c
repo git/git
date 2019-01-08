@@ -87,21 +87,21 @@ static int match_sha(unsigned, const unsigned char *, const unsigned char *);
 
 static void find_short_object_filename(struct disambiguate_state *ds)
 {
-	int subdir_nr = ds->bin_pfx.hash[0];
 	struct object_directory *odb;
 
 	for (odb = the_repository->objects->odb;
 	     odb && !ds->ambiguous;
 	     odb = odb->next) {
 		int pos;
+		struct oid_array *loose_objects;
 
-		odb_load_loose_cache(odb, subdir_nr);
-		pos = oid_array_lookup(&odb->loose_objects_cache, &ds->bin_pfx);
+		loose_objects = odb_loose_cache(odb, &ds->bin_pfx);
+		pos = oid_array_lookup(loose_objects, &ds->bin_pfx);
 		if (pos < 0)
 			pos = -1 - pos;
-		while (!ds->ambiguous && pos < odb->loose_objects_cache.nr) {
+		while (!ds->ambiguous && pos < loose_objects->nr) {
 			const struct object_id *oid;
-			oid = odb->loose_objects_cache.oid + pos;
+			oid = loose_objects->oid + pos;
 			if (!match_sha(ds->len, ds->bin_pfx.hash, oid->hash))
 				break;
 			update_candidates(ds, oid);

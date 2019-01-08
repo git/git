@@ -20,7 +20,7 @@ struct object_directory {
 	 * Be sure to call odb_load_loose_cache() before using.
 	 */
 	char loose_objects_subdir_seen[256];
-	struct oid_array loose_objects_cache;
+	struct oid_array loose_objects_cache[256];
 
 	/*
 	 * Path to the alternative object store. If this is a relative path,
@@ -48,11 +48,14 @@ void add_to_alternates_file(const char *dir);
 void add_to_alternates_memory(const char *dir);
 
 /*
- * Populate an odb's loose object cache for one particular subdirectory (i.e.,
- * the one that corresponds to the first byte of objects you're interested in,
- * from 0 to 255 inclusive).
+ * Populate and return the loose object cache array corresponding to the
+ * given object ID.
  */
-void odb_load_loose_cache(struct object_directory *odb, int subdir_nr);
+struct oid_array *odb_loose_cache(struct object_directory *odb,
+				  const struct object_id *oid);
+
+/* Empty the loose object cache for the specified object directory. */
+void odb_clear_loose_cache(struct object_directory *odb);
 
 struct packed_git {
 	struct packed_git *next;
