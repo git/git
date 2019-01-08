@@ -38,8 +38,6 @@ the repository to another place if --separate-git-dir is given).
 OPTIONS
 -------
 
---
-
 -q::
 --quiet::
 
@@ -110,8 +108,6 @@ into it.
 
 If you provide a 'directory', the command is run inside it. If this directory
 does not exist, it will be created.
-
---
 
 TEMPLATE DIRECTORY
 ------------------
