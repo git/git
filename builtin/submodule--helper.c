@@ -1552,7 +1552,7 @@ struct submodule_update_clone {
 #define SUBMODULE_UPDATE_CLONE_INIT {0, MODULE_LIST_INIT, 0, \
 	SUBMODULE_UPDATE_STRATEGY_INIT, 0, 0, -1, STRING_LIST_INIT_DUP, 0, \
 	NULL, NULL, NULL, \
-	NULL, 0, 0, 0, NULL, 0, 0, 0}
+	NULL, 0, 0, 0, NULL, 0, 0, 1}
 
 
 static void next_submodule_warn_missing(struct submodule_update_clone *suc,
