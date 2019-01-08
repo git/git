@@ -2,6 +2,7 @@
 #define LIST_OBJECTS_FILTER_OPTIONS_H
 
 #include "parse-options.h"
+#include "strbuf.h"
 
 /*
  * The list of defined filters for list-objects.
@@ -20,8 +21,9 @@ struct list_objects_filter_options {
 	/*
 	 * 'filter_spec' is the raw argument value given on the command line
 	 * or protocol request.  (The part after the "--keyword=".)  For
-	 * commands that launch filtering sub-processes, this value should be
-	 * passed to them as received by the current process.
+	 * commands that launch filtering sub-processes, or for communication
+	 * over the network, don't use this value; use the result of
+	 * expand_list_objects_filter_spec() instead.
 	 */
 	char *filter_spec;
 
@@ -61,6 +63,17 @@ int opt_parse_list_objects_filter(const struct option *opt,
 	{ OPTION_CALLBACK, 0, CL_ARG__FILTER, fo, N_("args"), \
 	  N_("object filtering"), 0, \
 	  opt_parse_list_objects_filter }
+
+/*
+ * Translates abbreviated numbers in the filter's filter_spec into their
+ * fully-expanded forms (e.g., "limit:blob=1k" becomes "limit:blob=1024").
+ *
+ * This form should be used instead of the raw filter_spec field when
+ * communicating with a remote process or subprocess.
+ */
+void expand_list_objects_filter_spec(
+	const struct list_objects_filter_options *filter,
+	struct strbuf *expanded_spec);
 
 void list_objects_filter_release(
 	struct list_objects_filter_options *filter_options);

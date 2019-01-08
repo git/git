@@ -444,4 +444,21 @@ test_expect_success 'rev-list W/ missing=allow-any' '
 	git -C r1 rev-list --quiet --missing=allow-any --objects HEAD
 '
 
+# Test expansion of filter specs.
+
+test_expect_success 'expand blob limit in protocol' '
+	git -C r2 config --local uploadpack.allowfilter 1 &&
+	GIT_TRACE_PACKET="$(pwd)/trace" git -c protocol.version=2 clone \
+		--filter=blob:limit=1k "file://$(pwd)/r2" limit &&
+	! grep "blob:limit=1k" trace &&
+	grep "blob:limit=1024" trace
+'
+
+test_expect_success 'expand tree depth limit in protocol' '
+	GIT_TRACE_PACKET="$(pwd)/tree_trace" git -c protocol.version=2 clone \
+		--filter=tree:0k "file://$(pwd)/r2" tree &&
+	! grep "tree:0k" tree_trace &&
+	grep "tree:0" tree_trace
+'
+
 test_done
