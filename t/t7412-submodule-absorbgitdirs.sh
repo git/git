@@ -75,7 +75,12 @@ test_expect_success 're-setup nested submodule' '
 	GIT_WORK_TREE=../../../nested git -C sub1/.git/modules/nested config \
 		core.worktree "../../../nested" &&
 	# make sure this re-setup is correct
-	git status --ignore-submodules=none
+	git status --ignore-submodules=none &&
+
+	# also make sure this old setup does not regress
+	git submodule update --init --recursive >out 2>err &&
+	test_must_be_empty out &&
+	test_must_be_empty err
 '
 
 test_expect_success 'absorb the git dir in a nested submodule' '
