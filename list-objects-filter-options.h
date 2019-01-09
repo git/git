@@ -10,7 +10,7 @@ enum list_objects_filter_choice {
 	LOFC_DISABLED = 0,
 	LOFC_BLOB_NONE,
 	LOFC_BLOB_LIMIT,
-	LOFC_TREE_NONE,
+	LOFC_TREE_DEPTH,
 	LOFC_SPARSE_OID,
 	LOFC_SPARSE_PATH,
 	LOFC__COUNT /* must be last */
@@ -44,6 +44,7 @@ struct list_objects_filter_options {
 	struct object_id *sparse_oid_value;
 	char *sparse_path_value;
 	unsigned long blob_limit_value;
+	unsigned long tree_exclude_depth;
 };
 
 /* Normalized command line arguments */

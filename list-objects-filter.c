@@ -10,6 +10,7 @@
 #include "list-objects.h"
 #include "list-objects-filter.h"
 #include "list-objects-filter-options.h"
+#include "oidmap.h"
 #include "oidset.h"
 #include "object-store.h"
 
@@ -84,11 +85,43 @@ static void *filter_blobs_none__init(
  * A filter for list-objects to omit ALL trees and blobs from the traversal.
  * Can OPTIONALLY collect a list of the omitted OIDs.
  */
-struct filter_trees_none_data {
+struct filter_trees_depth_data {
 	struct oidset *omits;
+
+	/*
+	 * Maps trees to the minimum depth at which they were seen. It is not
+	 * necessary to re-traverse a tree at deeper or equal depths than it has
+	 * already been traversed.
+	 *
+	 * We can't use LOFR_MARK_SEEN for tree objects since this will prevent
+	 * it from being traversed at shallower depths.
+	 */
+	struct oidmap seen_at_depth;
+
+	unsigned long exclude_depth;
+	unsigned long current_depth;
 };
 
-static enum list_objects_filter_result filter_trees_none(
+struct seen_map_entry {
+	struct oidmap_entry base;
+	size_t depth;
+};
+
+static void filter_trees_update_omits(
+	struct object *obj,
+	struct filter_trees_depth_data *filter_data,
+	int include_it)
+{
+	if (!filter_data->omits)
+		return;
+
+	if (include_it)
+		oidset_remove(filter_data->omits, &obj->oid);
+	else
+		oidset_insert(filter_data->omits, &obj->oid);
+}
+
+static enum list_objects_filter_result filter_trees_depth(
 	struct repository *r,
 	enum list_objects_filter_situation filter_situation,
 	struct object *obj,
@@ -96,43 +129,86 @@ static enum list_objects_filter_result filter_trees_none(
 	const char *filename,
 	void *filter_data_)
 {
-	struct filter_trees_none_data *filter_data = filter_data_;
+	struct filter_trees_depth_data *filter_data = filter_data_;
+	struct seen_map_entry *seen_info;
+	int include_it = filter_data->current_depth <
+		filter_data->exclude_depth;
+	int filter_res;
+	int already_seen;
+
+	/*
+	 * Note that we do not use _MARK_SEEN in order to allow re-traversal in
+	 * case we encounter a tree or blob again at a shallower depth.
+	 */
 
 	switch (filter_situation) {
 	default:
 		BUG("unknown filter_situation: %d", filter_situation);
 
-	case LOFS_BEGIN_TREE:
-	case LOFS_BLOB:
-		if (filter_data->omits) {
-			oidset_insert(filter_data->omits, &obj->oid);
-			/* _MARK_SEEN but not _DO_SHOW (hard omit) */
-			return LOFR_MARK_SEEN;
-		} else {
-			/*
-			 * Not collecting omits so no need to to traverse tree.
-			 */
-			return LOFR_SKIP_TREE | LOFR_MARK_SEEN;
-		}
-
 	case LOFS_END_TREE:
 		assert(obj->type == OBJ_TREE);
+		filter_data->current_depth--;
 		return LOFR_ZERO;
 
+	case LOFS_BLOB:
+		filter_trees_update_omits(obj, filter_data, include_it);
+		return include_it ? LOFR_MARK_SEEN | LOFR_DO_SHOW : LOFR_ZERO;
+
+	case LOFS_BEGIN_TREE:
+		seen_info = oidmap_get(
+			&filter_data->seen_at_depth, &obj->oid);
+		if (!seen_info) {
+			seen_info = xcalloc(1, sizeof(*seen_info));
+			oidcpy(&seen_info->base.oid, &obj->oid);
+			seen_info->depth = filter_data->current_depth;
+			oidmap_put(&filter_data->seen_at_depth, seen_info);
+			already_seen = 0;
+		} else {
+			already_seen =
+				filter_data->current_depth >= seen_info->depth;
+		}
+
+		if (already_seen) {
+			filter_res = LOFR_SKIP_TREE;
+		} else {
+			seen_info->depth = filter_data->current_depth;
+			filter_trees_update_omits(obj, filter_data, include_it);
+
+			if (include_it)
+				filter_res = LOFR_DO_SHOW;
+			else if (filter_data->omits)
+				filter_res = LOFR_ZERO;
+			else
+				filter_res = LOFR_SKIP_TREE;
+		}
+
+		filter_data->current_depth++;
+		return filter_res;
 	}
 }
 
-static void* filter_trees_none__init(
+static void filter_trees_free(void *filter_data) {
+	struct filter_trees_depth_data *d = filter_data;
+	if (!d)
+		return;
+	oidmap_free(&d->seen_at_depth, 1);
+	free(d);
+}
+
+static void *filter_trees_depth__init(
 	struct oidset *omitted,
 	struct list_objects_filter_options *filter_options,
 	filter_object_fn *filter_fn,
 	filter_free_fn *filter_free_fn)
 {
-	struct filter_trees_none_data *d = xcalloc(1, sizeof(*d));
+	struct filter_trees_depth_data *d = xcalloc(1, sizeof(*d));
 	d->omits = omitted;
+	oidmap_init(&d->seen_at_depth, 0);
+	d->exclude_depth = filter_options->tree_exclude_depth;
+	d->current_depth = 0;
 
-	*filter_fn = filter_trees_none;
-	*filter_free_fn = free;
+	*filter_fn = filter_trees_depth;
+	*filter_free_fn = filter_trees_free;
 	return d;
 }
 
@@ -430,7 +506,7 @@ static filter_init_fn s_filters[] = {
 	NULL,
 	filter_blobs_none__init,
 	filter_blobs_limit__init,
-	filter_trees_none__init,
+	filter_trees_depth__init,
 	filter_sparse_oid__init,
 	filter_sparse_path__init,
 };
