@@ -37,8 +37,8 @@ OPTIONS
 
 	Show the HEAD reference, even if it would normally be filtered out.
 
---tags::
 --heads::
+--tags::
 
 	Limit to "refs/heads" and "refs/tags", respectively.  These options
 	are not mutually exclusive; when given both, references stored in
