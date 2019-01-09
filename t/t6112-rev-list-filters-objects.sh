@@ -283,7 +283,7 @@ test_expect_success 'verify tree:0 includes trees in "filtered" output' '
 
 # Make sure tree:0 does not iterate through any trees.
 
-test_expect_success 'filter a GIANT tree through tree:0' '
+test_expect_success 'verify skipping tree iteration when not collecting omits' '
 	GIT_TRACE=1 git -C r3 rev-list \
 		--objects --filter=tree:0 HEAD 2>filter_trace &&
 	grep "Skipping contents of tree [.][.][.]" filter_trace >actual &&
@@ -375,6 +375,15 @@ test_expect_success 'test tree:# filter provisional omit for blob and tree' '
 		HEAD >actual &&
 	expect_has_with_different_name r4 filt/foo &&
 	expect_has_with_different_name r4 filt/subdir
+'
+
+test_expect_success 'verify skipping tree iteration when collecting omits' '
+	GIT_TRACE=1 git -C r4 rev-list --filter-print-omitted \
+		--objects --filter=tree:0 HEAD 2>filter_trace &&
+	grep "^Skipping contents of tree " filter_trace >actual &&
+
+	echo "Skipping contents of tree subdir/..." >expect &&
+	test_cmp expect actual
 '
 
 # Test tree:<depth> where a tree is iterated to twice - once where a subentry is
