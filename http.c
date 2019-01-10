@@ -1837,8 +1837,6 @@ static int http_request(const char *url,
 	strbuf_addstr(&buf, "Pragma:");
 	if (options && options->no_cache)
 		strbuf_addstr(&buf, " no-cache");
-	if (options && options->keep_error)
-		curl_easy_setopt(slot->curl, CURLOPT_FAILONERROR, 0);
 	if (options && options->initial_request &&
 	    http_follow_config == HTTP_FOLLOW_INITIAL)
 		curl_easy_setopt(slot->curl, CURLOPT_FOLLOWLOCATION, 1);
@@ -1856,6 +1854,7 @@ static int http_request(const char *url,
 	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, headers);
 	curl_easy_setopt(slot->curl, CURLOPT_ENCODING, "");
+	curl_easy_setopt(slot->curl, CURLOPT_FAILONERROR, 0);
 
 	ret = run_one_slot(slot, &results);
 
@@ -1950,29 +1949,26 @@ static int http_request_reauth(const char *url,
 		return ret;
 
 	/*
-	 * If we are using KEEP_ERROR, the previous request may have
-	 * put cruft into our output stream; we should clear it out before
-	 * making our next request.
+	 * The previous request may have put cruft into our output stream; we
+	 * should clear it out before making our next request.
 	 */
-	if (options && options->keep_error) {
-		switch (target) {
-		case HTTP_REQUEST_STRBUF:
-			strbuf_reset(result);
-			break;
-		case HTTP_REQUEST_FILE:
-			if (fflush(result)) {
-				error_errno("unable to flush a file");
-				return HTTP_START_FAILED;
-			}
-			rewind(result);
-			if (ftruncate(fileno(result), 0) < 0) {
-				error_errno("unable to truncate a file");
-				return HTTP_START_FAILED;
-			}
-			break;
-		default:
-			BUG("Unknown http_request target");
+	switch (target) {
+	case HTTP_REQUEST_STRBUF:
+		strbuf_reset(result);
+		break;
+	case HTTP_REQUEST_FILE:
+		if (fflush(result)) {
+			error_errno("unable to flush a file");
+			return HTTP_START_FAILED;
 		}
+		rewind(result);
+		if (ftruncate(fileno(result), 0) < 0) {
+			error_errno("unable to truncate a file");
+			return HTTP_START_FAILED;
+		}
+		break;
+	default:
+		BUG("Unknown http_request target");
 	}
 
 	credential_fill(&http_auth);
