@@ -547,6 +547,7 @@ static curlioerr rpc_ioctl(CURL *handle, int cmd, void *clientp)
 
 struct rpc_in_data {
 	struct rpc_state *rpc;
+	struct active_request_slot *slot;
 };
 
 /*
@@ -558,6 +559,13 @@ static size_t rpc_in(char *ptr, size_t eltsize,
 {
 	size_t size = eltsize * nmemb;
 	struct rpc_in_data *data = buffer_;
+	long response_code;
+
+	if (curl_easy_getinfo(data->slot->curl, CURLINFO_RESPONSE_CODE,
+			      &response_code) != CURLE_OK)
+		return size;
+	if (response_code >= 300)
+		return size;
 	if (size)
 		data->rpc->any_written = 1;
 	write_or_die(data->rpc->in, ptr, size);
@@ -774,7 +782,9 @@ retry:
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, headers);
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, rpc_in);
 	rpc_in_data.rpc = rpc;
+	rpc_in_data.slot = slot;
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, &rpc_in_data);
+	curl_easy_setopt(slot->curl, CURLOPT_FAILONERROR, 0);
 
 
 	rpc->any_written = 0;
