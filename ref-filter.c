@@ -897,7 +897,7 @@ static void grab_common_values(struct atom_value *val, int deref, struct expand_
 			v->s = xstrdup(type_name(oi->type));
 		else if (!strcmp(name, "objectsize:disk")) {
 			v->value = oi->disk_size;
-			v->s = xstrfmt("%"PRIuMAX, (intmax_t)oi->disk_size);
+			v->s = xstrfmt("%"PRIuMAX, (uintmax_t)oi->disk_size);
 		} else if (!strcmp(name, "objectsize")) {
 			v->value = oi->size;
 			v->s = xstrfmt("%lu", oi->size);
