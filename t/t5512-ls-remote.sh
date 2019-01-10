@@ -204,12 +204,6 @@ test_expect_success 'overrides work between mixed transfer/upload-pack hideRefs'
 	grep refs/tags/magic actual
 '
 
-test_expect_success 'protocol v2 supports hiderefs' '
-	test_config uploadpack.hiderefs refs/tags &&
-	git -c protocol.version=2 ls-remote . >actual &&
-	! grep refs/tags actual
-'
-
 test_expect_success 'ls-remote --symref' '
 	git fetch origin &&
 	cat >expect <<-EOF &&

@@ -13,8 +13,8 @@ void upload_pack(struct upload_pack_options *options);
 struct repository;
 struct argv_array;
 struct packet_reader;
-extern int upload_pack_v2(struct repository *r, const char *config_context,
-			  struct argv_array *keys, struct packet_reader *request);
+extern int upload_pack_v2(struct repository *r, struct argv_array *keys,
+			  struct packet_reader *request);
 
 struct strbuf;
 extern int upload_pack_advertise(struct repository *r,

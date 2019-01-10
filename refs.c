@@ -1267,8 +1267,7 @@ int parse_hide_refs_config(const char *var, const char *value, const char *secti
 {
 	const char *key;
 	if (!strcmp("transfer.hiderefs", var) ||
-	    (section &&
-	     !parse_config_key(var, section, NULL, NULL, &key) &&
+	    (!parse_config_key(var, section, NULL, NULL, &key) &&
 	     !strcmp(key, "hiderefs"))) {
 		char *ref;
 		int len;

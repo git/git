@@ -1413,8 +1413,8 @@ enum fetch_state {
 	FETCH_DONE,
 };
 
-int upload_pack_v2(struct repository *r, const char *config_context,
-		   struct argv_array *keys, struct packet_reader *request)
+int upload_pack_v2(struct repository *r, struct argv_array *keys,
+		   struct packet_reader *request)
 {
 	enum fetch_state state = FETCH_PROCESS_ARGS;
 	struct upload_pack_data data;
