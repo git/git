@@ -3444,7 +3444,7 @@ static void builtin_diff(const char *name_a,
 		o->found_changes = 1;
 	} else {
 		/* Crazy xdl interfaces.. */
-		const char *diffopts = getenv("GIT_DIFF_OPTS");
+		const char *diffopts;
 		const char *v;
 		xpparam_t xpp;
 		xdemitconf_t xecfg;
@@ -3487,12 +3487,15 @@ static void builtin_diff(const char *name_a,
 			xecfg.flags |= XDL_EMIT_FUNCCONTEXT;
 		if (pe)
 			xdiff_set_find_func(&xecfg, pe->pattern, pe->cflags);
+
+		diffopts = getenv("GIT_DIFF_OPTS");
 		if (!diffopts)
 			;
 		else if (skip_prefix(diffopts, "--unified=", &v))
 			xecfg.ctxlen = strtoul(v, NULL, 10);
 		else if (skip_prefix(diffopts, "-u", &v))
 			xecfg.ctxlen = strtoul(v, NULL, 10);
+
 		if (o->word_diff)
 			init_diff_words_data(&ecbdata, o, one, two);
 		if (xdi_diff_outf(&mf1, &mf2, fn_out_consume, &ecbdata,
