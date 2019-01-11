@@ -107,7 +107,7 @@ char *git_work_tree_cfg;
 
 static char *git_namespace;
 
-static const char *super_prefix;
+static char *super_prefix;
 
 /*
  * Repository-local GIT_* environment variables; see cache.h for details.
@@ -240,7 +240,7 @@ const char *get_super_prefix(void)
 {
 	static int initialized;
 	if (!initialized) {
-		super_prefix = getenv(GIT_SUPER_PREFIX_ENVIRONMENT);
+		super_prefix = xstrdup_or_null(getenv(GIT_SUPER_PREFIX_ENVIRONMENT));
 		initialized = 1;
 	}
 	return super_prefix;
