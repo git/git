@@ -146,7 +146,8 @@ static int err(struct merge_options *o, const char *err, ...)
 	return -1;
 }
 
-static struct tree *shift_tree_object(struct tree *one, struct tree *two,
+static struct tree *shift_tree_object(struct repository *repo,
+				      struct tree *one, struct tree *two,
 				      const char *subtree_shift)
 {
 	struct object_id shifted;
@@ -159,12 +160,14 @@ static struct tree *shift_tree_object(struct tree *one, struct tree *two,
 	}
 	if (oideq(&two->object.oid, &shifted))
 		return two;
-	return lookup_tree(the_repository, &shifted);
+	return lookup_tree(repo, &shifted);
 }
 
-static struct commit *make_virtual_commit(struct tree *tree, const char *comment)
+static struct commit *make_virtual_commit(struct repository *repo,
+					  struct tree *tree,
+					  const char *comment)
 {
-	struct commit *commit = alloc_commit_node(the_repository);
+	struct commit *commit = alloc_commit_node(repo);
 
 	set_merge_remote_desc(commit, comment, (struct object *)commit);
 	commit->maybe_tree = tree;
@@ -445,7 +448,7 @@ struct tree *write_tree_from_memory(struct merge_options *o)
 		return NULL;
 	}
 
-	result = lookup_tree(the_repository, &istate->cache_tree->oid);
+	result = lookup_tree(o->repo, &istate->cache_tree->oid);
 
 	return result;
 }
@@ -1208,9 +1211,9 @@ static int merge_submodule(struct merge_options *o,
 		return 0;
 	}
 
-	if (!(commit_base = lookup_commit_reference(the_repository, base)) ||
-	    !(commit_a = lookup_commit_reference(the_repository, a)) ||
-	    !(commit_b = lookup_commit_reference(the_repository, b))) {
+	if (!(commit_base = lookup_commit_reference(o->repo, base)) ||
+	    !(commit_a = lookup_commit_reference(o->repo, a)) ||
+	    !(commit_b = lookup_commit_reference(o->repo, b))) {
 		output(o, 1, _("Failed to merge submodule %s (commits not present)"), path);
 		return 0;
 	}
@@ -3416,8 +3419,8 @@ int merge_trees(struct merge_options *o,
 	}
 
 	if (o->subtree_shift) {
-		merge = shift_tree_object(head, merge, o->subtree_shift);
-		common = shift_tree_object(head, common, o->subtree_shift);
+		merge = shift_tree_object(o->repo, head, merge, o->subtree_shift);
+		common = shift_tree_object(o->repo, head, common, o->subtree_shift);
 	}
 
 	if (oid_eq(&common->object.oid, &merge->object.oid)) {
@@ -3553,8 +3556,8 @@ int merge_recursive(struct merge_options *o,
 		/* if there is no common ancestor, use an empty tree */
 		struct tree *tree;
 
-		tree = lookup_tree(the_repository, the_repository->hash_algo->empty_tree);
-		merged_common_ancestors = make_virtual_commit(tree, "ancestor");
+		tree = lookup_tree(o->repo, o->repo->hash_algo->empty_tree);
+		merged_common_ancestors = make_virtual_commit(o->repo, tree, "ancestor");
 	}
 
 	for (iter = ca; iter; iter = iter->next) {
@@ -3598,7 +3601,7 @@ int merge_recursive(struct merge_options *o,
 	}
 
 	if (o->call_depth) {
-		*result = make_virtual_commit(mrtree, "merged tree");
+		*result = make_virtual_commit(o->repo, mrtree, "merged tree");
 		commit_list_insert(h1, &(*result)->parents);
 		commit_list_insert(h2, &(*result)->parents->next);
 	}
@@ -3611,17 +3614,17 @@ int merge_recursive(struct merge_options *o,
 	return clean;
 }
 
-static struct commit *get_ref(const struct object_id *oid, const char *name)
+static struct commit *get_ref(struct repository *repo, const struct object_id *oid,
+			      const char *name)
 {
 	struct object *object;
 
-	object = deref_tag(the_repository, parse_object(the_repository, oid),
-			   name,
-			   strlen(name));
+	object = deref_tag(repo, parse_object(repo, oid),
+			   name, strlen(name));
 	if (!object)
 		return NULL;
 	if (object->type == OBJ_TREE)
-		return make_virtual_commit((struct tree*)object, name);
+		return make_virtual_commit(repo, (struct tree*)object, name);
 	if (object->type != OBJ_COMMIT)
 		return NULL;
 	if (parse_commit((struct commit *)object))
@@ -3638,15 +3641,15 @@ int merge_recursive_generic(struct merge_options *o,
 {
 	int clean;
 	struct lock_file lock = LOCK_INIT;
-	struct commit *head_commit = get_ref(head, o->branch1);
-	struct commit *next_commit = get_ref(merge, o->branch2);
+	struct commit *head_commit = get_ref(o->repo, head, o->branch1);
+	struct commit *next_commit = get_ref(o->repo, merge, o->branch2);
 	struct commit_list *ca = NULL;
 
 	if (base_list) {
 		int i;
 		for (i = 0; i < num_base_list; ++i) {
 			struct commit *base;
-			if (!(base = get_ref(base_list[i], oid_to_hex(base_list[i]))))
+			if (!(base = get_ref(o->repo, base_list[i], oid_to_hex(base_list[i]))))
 				return err(o, _("Could not parse object '%s'"),
 					   oid_to_hex(base_list[i]));
 			commit_list_insert(base, &ca);
