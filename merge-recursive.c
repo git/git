@@ -3412,7 +3412,7 @@ int merge_trees(struct merge_options *o,
 	int code, clean;
 	struct strbuf sb = STRBUF_INIT;
 
-	if (!o->call_depth && index_has_changes(istate, head, &sb)) {
+	if (!o->call_depth && repo_index_has_changes(o->repo, head, &sb)) {
 		err(o, _("Your local changes to the following files would be overwritten by merge:\n  %s"),
 		    sb.buf);
 		return -1;
