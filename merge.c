@@ -37,7 +37,7 @@ int try_merge_command(struct repository *r,
 	argv_array_clear(&args);
 
 	discard_index(r->index);
-	if (read_index(r->index) < 0)
+	if (repo_read_index(r) < 0)
 		die(_("failed to read the cache"));
 	resolve_undo_clear_index(r->index);
 

@@ -2278,7 +2278,7 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 	/* Ensure a valid committer ident can be constructed */
 	git_committer_info(IDENT_STRICT);
 
-	if (read_index_preload(&the_index, NULL, 0) < 0)
+	if (repo_read_index_preload(the_repository, NULL, 0) < 0)
 		die(_("failed to read the index"));
 
 	if (in_progress) {

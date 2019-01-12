@@ -1367,7 +1367,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	if (status_format != STATUS_FORMAT_PORCELAIN &&
 	    status_format != STATUS_FORMAT_PORCELAIN_V2)
 		progress_flag = REFRESH_PROGRESS;
-	read_index(&the_index);
+	repo_read_index(the_repository);
 	refresh_index(&the_index,
 		      REFRESH_QUIET|REFRESH_UNMERGED|progress_flag,
 		      &s.pathspec, NULL, NULL);

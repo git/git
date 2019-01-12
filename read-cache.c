@@ -1733,11 +1733,6 @@ static int read_index_extension(struct index_state *istate,
 	return 0;
 }
 
-int read_index(struct index_state *istate)
-{
-	return read_index_from(istate, get_index_file(), get_git_dir());
-}
-
 static struct cache_entry *create_from_disk(struct mem_pool *ce_mem_pool,
 					    unsigned int version,
 					    struct ondisk_cache_entry *ondisk,
@@ -3218,12 +3213,14 @@ out:
  * state can call this and check its return value, instead of calling
  * read_cache().
  */
-int read_index_unmerged(struct index_state *istate)
+int repo_read_index_unmerged(struct repository *repo)
 {
+	struct index_state *istate;
 	int i;
 	int unmerged = 0;
 
-	read_index(istate);
+	repo_read_index(repo);
+	istate = repo->index;
 	for (i = 0; i < istate->cache_nr; i++) {
 		struct cache_entry *ce = istate->cache[i];
 		struct cache_entry *new_ce;

@@ -446,9 +446,9 @@ static struct tree *empty_tree(struct repository *r)
 	return lookup_tree(r, the_hash_algo->empty_tree);
 }
 
-static int error_dirty_index(struct index_state *istate, struct replay_opts *opts)
+static int error_dirty_index(struct repository *repo, struct replay_opts *opts)
 {
-	if (read_index_unmerged(istate))
+	if (repo_read_index_unmerged(repo))
 		return error_resolve_conflict(_(action_name(opts)));
 
 	error(_("your local changes would be overwritten by %s."),
@@ -483,7 +483,7 @@ static int fast_forward_to(struct repository *r,
 	struct strbuf sb = STRBUF_INIT;
 	struct strbuf err = STRBUF_INIT;
 
-	read_index(r->index);
+	repo_read_index(r);
 	if (checkout_fast_forward(r, from, to, 1))
 		return -1; /* the callee should have complained already */
 
@@ -543,7 +543,7 @@ static int do_recursive_merge(struct repository *r,
 	if (repo_hold_locked_index(r, &index_lock, LOCK_REPORT_ON_ERROR) < 0)
 		return -1;
 
-	read_index(r->index);
+	repo_read_index(r);
 
 	init_merge_options(&o);
 	o.ancestor = base ? base_label : "(empty tree)";
@@ -1766,7 +1766,7 @@ static int do_pick_commit(struct repository *r,
 			oidcpy(&head, the_hash_algo->empty_tree);
 		if (index_differs_from(r, unborn ? empty_tree_oid_hex() : "HEAD",
 				       NULL, 0))
-			return error_dirty_index(r->index, opts);
+			return error_dirty_index(r, opts);
 	}
 	discard_index(r->index);
 
@@ -2854,7 +2854,7 @@ static int do_exec(struct repository *r, const char *command_line)
 					  child_env.argv);
 
 	/* force re-reading of the cache */
-	if (discard_index(r->index) < 0 || read_index(r->index) < 0)
+	if (discard_index(r->index) < 0 || repo_read_index(r) < 0)
 		return error(_("could not read index"));
 
 	dirty = require_clean_work_tree(r, "rebase", NULL, 1, 1);
@@ -3023,7 +3023,7 @@ static int do_reset(struct repository *r,
 	unpack_tree_opts.merge = 1;
 	unpack_tree_opts.update = 1;
 
-	if (read_index_unmerged(r->index)) {
+	if (repo_read_index_unmerged(r)) {
 		rollback_lock_file(&lock);
 		strbuf_release(&ref_name);
 		return error_resolve_conflict(_(action_name(opts)));
@@ -3277,7 +3277,7 @@ static int do_merge(struct repository *r,
 
 		/* force re-reading of the cache */
 		if (!ret && (discard_index(r->index) < 0 ||
-			     read_index(r->index) < 0))
+			     repo_read_index(r) < 0))
 			ret = error(_("could not read index"));
 		goto leave_merge;
 	}
@@ -3299,7 +3299,7 @@ static int do_merge(struct repository *r,
 		commit_list_insert(j->item, &reversed);
 	free_commit_list(bases);
 
-	read_index(r->index);
+	repo_read_index(r);
 	init_merge_options(&o);
 	o.branch1 = "HEAD";
 	o.branch2 = ref_name.buf;
@@ -3972,7 +3972,7 @@ int sequencer_continue(struct repository *r, struct replay_opts *opts)
 				goto release_todo_list;
 		}
 		if (index_differs_from(r, "HEAD", NULL, 0)) {
-			res = error_dirty_index(r->index, opts);
+			res = error_dirty_index(r, opts);
 			goto release_todo_list;
 		}
 		todo_list.current++;

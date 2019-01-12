@@ -408,11 +408,11 @@ void validate_cache_entries(const struct index_state *istate);
 #define active_cache_changed (the_index.cache_changed)
 #define active_cache_tree (the_index.cache_tree)
 
-#define read_cache() read_index(&the_index)
+#define read_cache() repo_read_index(the_repository)
 #define read_cache_from(path) read_index_from(&the_index, (path), (get_git_dir()))
-#define read_cache_preload(pathspec) read_index_preload(&the_index, (pathspec), 0)
+#define read_cache_preload(pathspec) repo_read_index_preload(the_repository, (pathspec), 0)
 #define is_cache_unborn() is_index_unborn(&the_index)
-#define read_cache_unmerged() read_index_unmerged(&the_index)
+#define read_cache_unmerged() repo_read_index_unmerged(the_repository)
 #define discard_cache() discard_index(&the_index)
 #define unmerged_cache() unmerged_index(&the_index)
 #define cache_name_pos(name, namelen) index_name_pos(&the_index,(name),(namelen))
@@ -661,19 +661,14 @@ extern int daemonize(void);
 
 /* Initialize and use the cache information */
 struct lock_file;
-extern int read_index(struct index_state *);
 extern void preload_index(struct index_state *index,
 			  const struct pathspec *pathspec,
 			  unsigned int refresh_flags);
-extern int read_index_preload(struct index_state *,
-			      const struct pathspec *pathspec,
-			      unsigned int refresh_flags);
 extern int do_read_index(struct index_state *istate, const char *path,
 			 int must_exist); /* for testting only! */
 extern int read_index_from(struct index_state *, const char *path,
 			   const char *gitdir);
 extern int is_index_unborn(struct index_state *);
-extern int read_index_unmerged(struct index_state *);
 
 /* For use with `write_locked_index()`. */
 #define COMMIT_LOCK		(1 << 0)

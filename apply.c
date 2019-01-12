@@ -4019,7 +4019,7 @@ static int read_apply_cache(struct apply_state *state)
 		return read_index_from(state->repo->index, state->index_file,
 				       get_git_dir());
 	else
-		return read_index(state->repo->index);
+		return repo_read_index(state->repo);
 }
 
 /* This function tries to read the object name from the current index */

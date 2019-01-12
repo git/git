@@ -1384,7 +1384,7 @@ void add_index_objects_to_pending(struct rev_info *revs, unsigned int flags)
 {
 	struct worktree **worktrees, **p;
 
-	read_index(revs->repo->index);
+	repo_read_index(revs->repo);
 	do_add_index_objects_to_pending(revs, revs->repo->index, flags);
 
 	if (revs->single_worktree)
@@ -1530,7 +1530,7 @@ static void prepare_show_merge(struct rev_info *revs)
 	head->object.flags |= SYMMETRIC_LEFT;
 
 	if (!istate->cache_nr)
-		read_index(istate);
+		repo_read_index(revs->repo);
 	for (i = 0; i < istate->cache_nr; i++) {
 		const struct cache_entry *ce = istate->cache[i];
 		if (!ce_stage(ce))

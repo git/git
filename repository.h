@@ -7,6 +7,7 @@ struct config_set;
 struct git_hash_algo;
 struct index_state;
 struct lock_file;
+struct pathspec;
 struct raw_object_store;
 struct submodule_cache;
 
@@ -134,5 +135,10 @@ int repo_read_index(struct repository *repo);
 int repo_hold_locked_index(struct repository *repo,
 			   struct lock_file *lf,
 			   int flags);
+
+int repo_read_index_preload(struct repository *,
+			    const struct pathspec *pathspec,
+			    unsigned refresh_flags);
+int repo_read_index_unmerged(struct repository *);
 
 #endif /* REPOSITORY_H */

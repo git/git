@@ -3576,7 +3576,7 @@ int merge_recursive(struct merge_options *o,
 
 	discard_cache();
 	if (!o->call_depth)
-		read_cache();
+		repo_read_index(the_repository);
 
 	o->ancestor = "merged common ancestors";
 	clean = merge_trees(o, get_commit_tree(h1), get_commit_tree(h2),

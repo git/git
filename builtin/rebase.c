@@ -576,7 +576,7 @@ static int reset_head(struct object_id *oid, const char *action,
 	if (!detach_head)
 		unpack_tree_opts.reset = 1;
 
-	if (read_index_unmerged(the_repository->index) < 0) {
+	if (repo_read_index_unmerged(the_repository) < 0) {
 		ret = error(_("could not read index"));
 		goto leave_reset_head;
 	}
@@ -1015,7 +1015,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			die(_("Cannot read HEAD"));
 
 		fd = hold_locked_index(&lock_file, 0);
-		if (read_index(the_repository->index) < 0)
+		if (repo_read_index(the_repository) < 0)
 			die(_("could not read index"));
 		refresh_index(the_repository->index, REFRESH_QUIET, NULL, NULL,
 			      NULL);
@@ -1368,7 +1368,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			get_fork_point(options.upstream_name, head);
 	}
 
-	if (read_index(the_repository->index) < 0)
+	if (repo_read_index(the_repository) < 0)
 		die(_("could not read index"));
 
 	if (options.autostash) {
@@ -1423,7 +1423,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			putchar('\n');
 
 			if (discard_index(the_repository->index) < 0 ||
-				read_index(the_repository->index) < 0)
+				repo_read_index(the_repository) < 0)
 				die(_("could not read index"));
 		}
 	}
