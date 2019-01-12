@@ -1115,7 +1115,8 @@ static int run_rewrite_hook(const struct object_id *oldoid,
 	return finish_command(&proc);
 }
 
-void commit_post_rewrite(const struct commit *old_head,
+void commit_post_rewrite(struct repository *r,
+			 const struct commit *old_head,
 			 const struct object_id *new_head)
 {
 	struct notes_rewrite_cfg *cfg;
@@ -1124,7 +1125,7 @@ void commit_post_rewrite(const struct commit *old_head,
 	if (cfg) {
 		/* we are amending, so old_head is not NULL */
 		copy_note_for_rewrite(cfg, &old_head->object.oid, new_head);
-		finish_copy_notes_for_rewrite(cfg, "Notes added by 'git commit --amend'");
+		finish_copy_notes_for_rewrite(r, cfg, "Notes added by 'git commit --amend'");
 	}
 	run_rewrite_hook(&old_head->object.oid, new_head);
 }
@@ -1405,7 +1406,7 @@ static int try_to_commit(struct repository *r,
 	}
 
 	if (flags & AMEND_MSG)
-		commit_post_rewrite(current_head, oid);
+		commit_post_rewrite(r, current_head, oid);
 
 out:
 	free_commit_extra_headers(extra);

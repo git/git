@@ -527,7 +527,7 @@ static int copy_notes_for_rebase(const struct am_state *state)
 	}
 
 finish:
-	finish_copy_notes_for_rewrite(c, msg);
+	finish_copy_notes_for_rewrite(the_repository, c, msg);
 	fclose(fp);
 	strbuf_release(&sb);
 	return ret;

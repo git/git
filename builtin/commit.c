@@ -1674,7 +1674,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	run_command_v_opt(argv_gc_auto, RUN_GIT_CMD);
 	run_commit_hook(use_editor, get_index_file(), "post-commit", NULL);
 	if (amend && !no_post_rewrite) {
-		commit_post_rewrite(current_head, &oid);
+		commit_post_rewrite(the_repository, current_head, &oid);
 	}
 	if (!quiet) {
 		unsigned int flags = 0;

@@ -330,10 +330,10 @@ static int notes_copy_from_stdin(int force, const char *rewrite_cmd)
 	}
 
 	if (!rewrite_cmd) {
-		commit_notes(t, msg);
+		commit_notes(the_repository, t, msg);
 		free_notes(t);
 	} else {
-		finish_copy_notes_for_rewrite(c, msg);
+		finish_copy_notes_for_rewrite(the_repository, c, msg);
 	}
 	strbuf_release(&buf);
 	return ret;
@@ -469,12 +469,14 @@ static int add(int argc, const char **argv, const char *prefix)
 		write_note_data(&d, &new_note);
 		if (add_note(t, &object, &new_note, combine_notes_overwrite))
 			BUG("combine_notes_overwrite failed");
-		commit_notes(t, "Notes added by 'git notes add'");
+		commit_notes(the_repository, t,
+			     "Notes added by 'git notes add'");
 	} else {
 		fprintf(stderr, _("Removing note for object %s\n"),
 			oid_to_hex(&object));
 		remove_note(t, object.hash);
-		commit_notes(t, "Notes removed by 'git notes add'");
+		commit_notes(the_repository, t,
+			     "Notes removed by 'git notes add'");
 	}
 
 	free_note_data(&d);
@@ -552,7 +554,8 @@ static int copy(int argc, const char **argv, const char *prefix)
 
 	if (add_note(t, &object, from_note, combine_notes_overwrite))
 		BUG("combine_notes_overwrite failed");
-	commit_notes(t, "Notes added by 'git notes copy'");
+	commit_notes(the_repository, t,
+		     "Notes added by 'git notes copy'");
 out:
 	free_notes(t);
 	return retval;
@@ -636,7 +639,7 @@ static int append_edit(int argc, const char **argv, const char *prefix)
 		remove_note(t, object.hash);
 		logmsg = xstrfmt("Notes removed by 'git notes %s'", argv[0]);
 	}
-	commit_notes(t, logmsg);
+	commit_notes(the_repository, t, logmsg);
 
 	free(logmsg);
 	free_note_data(&d);
@@ -937,7 +940,8 @@ static int remove_cmd(int argc, const char **argv, const char *prefix)
 		strbuf_release(&sb);
 	}
 	if (!retval)
-		commit_notes(t, "Notes removed by 'git notes remove'");
+		commit_notes(the_repository, t,
+			     "Notes removed by 'git notes remove'");
 	free_notes(t);
 	return retval;
 }
@@ -965,7 +969,8 @@ static int prune(int argc, const char **argv, const char *prefix)
 	prune_notes(t, (verbose ? NOTES_PRUNE_VERBOSE : 0) |
 		(show_only ? NOTES_PRUNE_VERBOSE|NOTES_PRUNE_DRYRUN : 0) );
 	if (!show_only)
-		commit_notes(t, "Notes removed by 'git notes prune'");
+		commit_notes(the_repository, t,
+			     "Notes removed by 'git notes prune'");
 	free_notes(t);
 	return 0;
 }
