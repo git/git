@@ -540,7 +540,7 @@ static int do_recursive_merge(struct repository *r,
 	char **xopt;
 	struct lock_file index_lock = LOCK_INIT;
 
-	if (hold_locked_index(&index_lock, LOCK_REPORT_ON_ERROR) < 0)
+	if (repo_hold_locked_index(r, &index_lock, LOCK_REPORT_ON_ERROR) < 0)
 		return -1;
 
 	read_index(r->index);
@@ -1992,8 +1992,8 @@ static int read_and_refresh_cache(struct repository *r,
 				  struct replay_opts *opts)
 {
 	struct lock_file index_lock = LOCK_INIT;
-	int index_fd = hold_locked_index(&index_lock, 0);
-	if (read_index(r->index) < 0) {
+	int index_fd = repo_hold_locked_index(r, &index_lock, 0);
+	if (repo_read_index(r) < 0) {
 		rollback_lock_file(&index_lock);
 		return error(_("git %s: failed to read the index"),
 			_(action_name(opts)));
@@ -2978,7 +2978,7 @@ static int do_reset(struct repository *r,
 	struct unpack_trees_options unpack_tree_opts;
 	int ret = 0;
 
-	if (hold_locked_index(&lock, LOCK_REPORT_ON_ERROR) < 0)
+	if (repo_hold_locked_index(r, &lock, LOCK_REPORT_ON_ERROR) < 0)
 		return -1;
 
 	if (len == 10 && !strncmp("[new root]", name, len)) {
@@ -3096,7 +3096,7 @@ static int do_merge(struct repository *r,
 	static struct lock_file lock;
 	const char *p;
 
-	if (hold_locked_index(&lock, LOCK_REPORT_ON_ERROR) < 0) {
+	if (repo_hold_locked_index(r, &lock, LOCK_REPORT_ON_ERROR) < 0) {
 		ret = -1;
 		goto leave_merge;
 	}

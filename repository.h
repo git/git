@@ -6,6 +6,7 @@
 struct config_set;
 struct git_hash_algo;
 struct index_state;
+struct lock_file;
 struct raw_object_store;
 struct submodule_cache;
 
@@ -130,5 +131,8 @@ void repo_clear(struct repository *repo);
  * populated then the number of entries will simply be returned.
  */
 int repo_read_index(struct repository *repo);
+int repo_hold_locked_index(struct repository *repo,
+			   struct lock_file *lf,
+			   int flags);
 
 #endif /* REPOSITORY_H */
