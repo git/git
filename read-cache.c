@@ -2654,9 +2654,9 @@ out:
 	return 0;
 }
 
-static int verify_index(const struct index_state *istate)
+static int repo_verify_index(struct repository *repo)
 {
-	return verify_index_from(istate, get_index_file());
+	return verify_index_from(repo->index, repo->index_file);
 }
 
 static int has_racy_timestamp(struct index_state *istate)
@@ -2672,11 +2672,13 @@ static int has_racy_timestamp(struct index_state *istate)
 	return 0;
 }
 
-void update_index_if_able(struct index_state *istate, struct lock_file *lockfile)
+void repo_update_index_if_able(struct repository *repo,
+			       struct lock_file *lockfile)
 {
-	if ((istate->cache_changed || has_racy_timestamp(istate)) &&
-	    verify_index(istate))
-		write_locked_index(istate, lockfile, COMMIT_LOCK);
+	if ((repo->index->cache_changed ||
+	     has_racy_timestamp(repo->index)) &&
+	    repo_verify_index(repo))
+		write_locked_index(repo->index, lockfile, COMMIT_LOCK);
 	else
 		rollback_lock_file(lockfile);
 }

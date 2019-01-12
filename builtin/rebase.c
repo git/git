@@ -1020,8 +1020,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		refresh_index(the_repository->index, REFRESH_QUIET, NULL, NULL,
 			      NULL);
 		if (0 <= fd)
-			update_index_if_able(the_repository->index,
-					     &lock_file);
+			repo_update_index_if_able(the_repository, &lock_file);
 		rollback_lock_file(&lock_file);
 
 		if (has_unstaged_changes(the_repository, 1)) {
@@ -1378,7 +1377,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		fd = hold_locked_index(&lock_file, 0);
 		refresh_cache(REFRESH_QUIET);
 		if (0 <= fd)
-			update_index_if_able(&the_index, &lock_file);
+			repo_update_index_if_able(the_repository, &lock_file);
 		rollback_lock_file(&lock_file);
 
 		if (has_unstaged_changes(the_repository, 1) ||

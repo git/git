@@ -140,5 +140,11 @@ int repo_read_index_preload(struct repository *,
 			    const struct pathspec *pathspec,
 			    unsigned refresh_flags);
 int repo_read_index_unmerged(struct repository *);
+/*
+ * Opportunistically update the index but do not complain if we can't.
+ * The lockfile is always committed or rolled back.
+ */
+void repo_update_index_if_able(struct repository *, struct lock_file *);
+
 
 #endif /* REPOSITORY_H */
