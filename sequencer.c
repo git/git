@@ -545,7 +545,7 @@ static int do_recursive_merge(struct repository *r,
 
 	repo_read_index(r);
 
-	init_merge_options(&o);
+	init_merge_options(&o, r);
 	o.ancestor = base ? base_label : "(empty tree)";
 	o.branch1 = "HEAD";
 	o.branch2 = next ? next_label : "(empty tree)";
@@ -3300,7 +3300,7 @@ static int do_merge(struct repository *r,
 	free_commit_list(bases);
 
 	repo_read_index(r);
-	init_merge_options(&o);
+	init_merge_options(&o, r);
 	o.branch1 = "HEAD";
 	o.branch2 = ref_name.buf;
 	o.buffer_output = 2;

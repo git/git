@@ -670,7 +670,7 @@ static int merge_working_tree(const struct checkout_opts *opts,
 			 * a pain; plumb in an option to set
 			 * o.renormalize?
 			 */
-			init_merge_options(&o);
+			init_merge_options(&o, the_repository);
 			o.verbosity = 0;
 			work = write_tree_from_memory(&o);
 
