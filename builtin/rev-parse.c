@@ -933,7 +933,8 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 			name++;
 			type = REVERSED;
 		}
-		if (!get_oid_with_context(name, flags, &oid, &unused)) {
+		if (!get_oid_with_context(the_repository, name,
+					  flags, &oid, &unused)) {
 			if (verify)
 				revs_count++;
 			else
