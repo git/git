@@ -5,6 +5,7 @@
 #include "string-list.h"
 
 struct object_id;
+struct repository;
 
 /* git_config_parse_key() returns these negated: */
 #define CONFIG_INVALID_KEY 1
@@ -215,7 +216,6 @@ extern int git_configset_get_maybe_bool(struct config_set *cs, const char *key, 
 extern int git_configset_get_pathname(struct config_set *cs, const char *key, const char **dest);
 
 /* Functions for reading a repository's config */
-struct repository;
 extern void repo_config(struct repository *repo, config_fn_t fn, void *data);
 extern int repo_config_get_value(struct repository *repo,
 				 const char *key, const char **value);
