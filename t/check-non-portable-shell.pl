@@ -35,6 +35,7 @@ while (<>) {
 		chomp;
 	}
 
+	/\bcp\s+-a/ and err 'cp -a is not portable';
 	/\bsed\s+-i/ and err 'sed -i is not portable';
 	/\becho\s+-[neE]/ and err 'echo with option is not portable (use printf)';
 	/^\s*declare\s+/ and err 'arrays/declare not portable';
