@@ -349,7 +349,7 @@ test_expect_success 'rev-list stops traversal at promisor commit, tree, and blob
 	grep $(git -C repo rev-parse bar) out  # sanity check that some walking was done
 '
 
-test_expect_success 'rev-list accepts missing and promised objects on command line' '
+test_expect_success 'rev-list dies for missing objects on cmd line' '
 	rm -rf repo &&
 	test_create_repo repo &&
 	test_commit -C repo foo &&
@@ -366,7 +366,19 @@ test_expect_success 'rev-list accepts missing and promised objects on command li
 
 	git -C repo config core.repositoryformatversion 1 &&
 	git -C repo config extensions.partialclone "arbitrary string" &&
-	git -C repo rev-list --exclude-promisor-objects --objects "$COMMIT" "$TREE" "$BLOB"
+
+	for OBJ in "$COMMIT" "$TREE" "$BLOB"; do
+		test_must_fail git -C repo rev-list --objects \
+			--exclude-promisor-objects "$OBJ" &&
+		test_must_fail git -C repo rev-list --objects-edge-aggressive \
+			--exclude-promisor-objects "$OBJ" &&
+
+		# Do not die or crash when --ignore-missing is passed.
+		git -C repo rev-list --ignore-missing --objects \
+			--exclude-promisor-objects "$OBJ" &&
+		git -C repo rev-list --ignore-missing --objects-edge-aggressive \
+			--exclude-promisor-objects "$OBJ"
+	done
 '
 
 test_expect_success 'gc repacks promisor objects separately from non-promisor objects' '

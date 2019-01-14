@@ -1729,6 +1729,8 @@ int handle_revision_arg(const char *arg_, struct rev_info *revs, int flags, unsi
 	if (!cant_be_filename)
 		verify_non_filename(revs->prefix, arg);
 	object = get_reference(revs, arg, &oid, flags ^ local_flags);
+	if (!object)
+		return revs->ignore_missing ? 0 : -1;
 	add_rev_cmdline(revs, object, arg_, REV_CMD_REV, flags ^ local_flags);
 	add_pending_object_with_path(revs, object, arg, oc.mode, oc.path);
 	free(oc.path);
