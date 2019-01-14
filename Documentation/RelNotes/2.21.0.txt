@@ -24,6 +24,11 @@ UI, Workflows & Features
    object into account (e.g. a tag object would want to go under
    refs/tags/).
 
+ * "git checkout [<tree-ish>] path..." learned to report the number of
+   paths that have been checked out of the index or the tree-ish,
+   which gives it the same degree of noisy-ness as the case in which
+   the command checks out a branch.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -63,4 +68,41 @@ Fixes since v2.20
    which has been corrected.
    (merge 02818a98d7 mk/http-backend-kill-children-before-exit later to maint).
 
+ * "git rev-list --exclude-promisor-objects" had to take an object
+   that does not exist locally (and is lazily available) from the
+   command line without barfing, but the code dereferenced NULL.
+   (merge 4cf67869b2 md/list-lazy-objects-fix later to maint).
+
+ * The traversal over tree objects has learned to honor
+   ":(attr:label)" pathspec match, which has been implemented only for
+   enumerating paths on the filesystem.
+   (merge 5a0b97b34c nd/attr-pathspec-in-tree-walk later to maint).
+
+ * BSD port updates.
+   (merge 4e3ecbd439 cb/openbsd-allows-reading-directory later to maint).
+   (merge b6bdc2a0f5 cb/t5004-empty-tar-archive-fix later to maint).
+   (merge 82cbc8cde2 cb/test-lint-cp-a later to maint).
+
+ * Lines that begin with a certain keyword that come over the wire, as
+   well as lines that consist only of one of these keywords, ought to
+   be painted in color for easier eyeballing, but the latter was
+   broken ever since the feature was introduced in 2.19, which has
+   been corrected.
+   (merge 1f67290450 hn/highlight-sideband-keywords later to maint).
+
+ * "git log -G<regex>" looked for a hunk in the "git log -p" patch
+   output that contained a string that matches the given pattern.
+   Optimize this code to ignore binary files, which by default will
+   not show any hunk that would match any pattern (unless textconv or
+   the --text option is in effect, that is).
+   (merge e0e7cb8080 tb/log-G-binary later to maint).
+
  * Code cleanup, docfix, build fix, etc.
+   (merge 89ba9a79ae hb/t0061-dot-in-path-fix later to maint).
+   (merge d173e799ea sb/diff-color-moved-config-option-fixup later to maint).
+   (merge a8f5a59067 en/directory-renames-nothanks-doc-update later to maint).
+   (merge ec36c42a63 nd/indentation-fix later to maint).
+   (merge f116ee21cd do/gitweb-strict-export-conf-doc later to maint).
+   (merge 112ea42663 fd/gitweb-snapshot-conf-doc-fix later to maint).
+   (merge 1cadad6f65 tb/use-common-win32-pathfuncs-on-cygwin later to maint).
+   (merge 57e9dcaa65 km/rebase-doc-typofix later to maint).
