@@ -404,6 +404,8 @@ these forms:
 - "`!ATTR`" requires that the attribute `ATTR` be
   unspecified.
 +
+Note that when matching against a tree object, attributes are still
+obtained from working tree, not from the given tree object.
 
 exclude;;
 	After a path matches any non-exclude pathspec, it will be run

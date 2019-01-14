@@ -1,6 +1,7 @@
 #ifndef TREE_WALK_H
 #define TREE_WALK_H
 
+struct index_state;
 struct strbuf;
 
 struct name_entry {
@@ -48,7 +49,7 @@ void *fill_tree_descriptor(struct tree_desc *desc, const struct object_id *oid);
 
 struct traverse_info;
 typedef int (*traverse_callback_t)(int n, unsigned long mask, unsigned long dirmask, struct name_entry *entry, struct traverse_info *);
-int traverse_trees(int n, struct tree_desc *t, struct traverse_info *info);
+int traverse_trees(struct index_state *istate, int n, struct tree_desc *t, struct traverse_info *info);
 
 enum follow_symlinks_result {
 	FOUND = 0, /* This includes out-of-tree links */
@@ -98,8 +99,9 @@ enum interesting {
 	all_entries_interesting = 2 /* yes, and all subsequent entries will be */
 };
 
-extern enum interesting tree_entry_interesting(const struct name_entry *,
-					       struct strbuf *, int,
-					       const struct pathspec *ps);
+enum interesting tree_entry_interesting(struct index_state *istate,
+					const struct name_entry *,
+					struct strbuf *, int,
+					const struct pathspec *ps);
 
 #endif

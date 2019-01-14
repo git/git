@@ -1463,6 +1463,7 @@ void repo_init_revisions(struct repository *r,
 	revs->abbrev = DEFAULT_ABBREV;
 	revs->ignore_merges = 1;
 	revs->simplify_history = 1;
+	revs->pruning.repo = r;
 	revs->pruning.flags.recursive = 1;
 	revs->pruning.flags.quick = 1;
 	revs->pruning.add_remove = file_add_remove;
