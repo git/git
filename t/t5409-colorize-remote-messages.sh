@@ -17,6 +17,7 @@ test_expect_success 'setup' '
 	echo " " "error: leading space"
 	echo "    "
 	echo Err
+	echo SUCCESS
 	exit 0
 	EOF
 	echo 1 >file &&
@@ -35,6 +36,7 @@ test_expect_success 'keywords' '
 	grep "<BOLD;RED>error<RESET>: error" decoded &&
 	grep "<YELLOW>hint<RESET>:" decoded &&
 	grep "<BOLD;GREEN>success<RESET>:" decoded &&
+	grep "<BOLD;GREEN>SUCCESS<RESET>" decoded &&
 	grep "<BOLD;YELLOW>warning<RESET>:" decoded
 '
 

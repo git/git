@@ -87,7 +87,7 @@ static void maybe_colorize_sideband(struct strbuf *dest, const char *src, int n)
 		struct keyword_entry *p = keywords + i;
 		int len = strlen(p->keyword);
 
-		if (n <= len)
+		if (n < len)
 			continue;
 		/*
 		 * Match case insensitively, so we colorize output from existing
@@ -95,7 +95,8 @@ static void maybe_colorize_sideband(struct strbuf *dest, const char *src, int n)
 		 * messages. We only highlight the word precisely, so
 		 * "successful" stays uncolored.
 		 */
-		if (!strncasecmp(p->keyword, src, len) && !isalnum(src[len])) {
+		if (!strncasecmp(p->keyword, src, len) &&
+		    (len == n || !isalnum(src[len]))) {
 			strbuf_addstr(dest, p->color);
 			strbuf_add(dest, src, len);
 			strbuf_addstr(dest, GIT_COLOR_RESET);
