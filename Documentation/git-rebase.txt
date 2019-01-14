@@ -979,7 +979,7 @@ when the merge operation did not even start), it is rescheduled immediately.
 
 At this time, the `merge` command will *always* use the `recursive`
 merge strategy for regular merges, and `octopus` for octopus merges,
-strategy, with no way to choose a different one. To work around
+with no way to choose a different one. To work around
 this, an `exec` command can be used to call `git merge` explicitly,
 using the fact that the labels are worktree-local refs (the ref
 `refs/rewritten/onto` would correspond to the label `onto`, for example).
