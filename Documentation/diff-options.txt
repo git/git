@@ -524,6 +524,8 @@ struct), and want to know the history of that block since it first
 came into being: use the feature iteratively to feed the interesting
 block in the preimage back into `-S`, and keep going until you get the
 very first version of the block.
++
+Binary files are searched as well.
 
 -G<regex>::
 	Look for differences whose patch text contains added/removed
@@ -542,6 +544,9 @@ file:
 While `git log -G"regexec\(regexp"` will show this commit, `git log
 -S"regexec\(regexp" --pickaxe-regex` will not (because the number of
 occurrences of that string did not change).
++
+Unless `--text` is supplied patches of binary files without a textconv
+filter will be ignored.
 +
 See the 'pickaxe' entry in linkgit:gitdiffcore[7] for more
 information.
