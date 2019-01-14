@@ -3,8 +3,12 @@
 test_description='test corner cases of git-archive'
 . ./test-lib.sh
 
-test_expect_success 'create commit with empty tree' '
-	git commit --allow-empty -m foo
+# the 10knuls.tar file is used to test for an empty git generated tar
+# without having to invoke tar because an otherwise valid empty GNU tar
+# will be considered broken by {Open,Net}BSD tar
+test_expect_success 'create commit with empty tree and fake empty tar' '
+	git commit --allow-empty -m foo &&
+	perl -e "print \"\\0\" x 10240" >10knuls.tar
 '
 
 # Make a dir and clean it up afterwards
@@ -47,7 +51,6 @@ test_expect_success HEADER_ONLY_TAR_OK 'tar archive of commit with empty tree' '
 
 test_expect_success 'tar archive of empty tree is empty' '
 	git archive --format=tar HEAD: >empty.tar &&
-	perl -e "print \"\\0\" x 10240" >10knuls.tar &&
 	test_cmp_bin 10knuls.tar empty.tar
 '
 
@@ -106,16 +109,12 @@ test_expect_success 'create a commit with an empty subtree' '
 
 test_expect_success 'archive empty subtree with no pathspec' '
 	git archive --format=tar $root_tree >subtree-all.tar &&
-	make_dir extract &&
-	"$TAR" xf subtree-all.tar -C extract &&
-	check_dir extract
+	test_cmp_bin 10knuls.tar subtree-all.tar
 '
 
 test_expect_success 'archive empty subtree by direct pathspec' '
 	git archive --format=tar $root_tree -- sub >subtree-path.tar &&
-	make_dir extract &&
-	"$TAR" xf subtree-path.tar -C extract &&
-	check_dir extract
+	test_cmp_bin 10knuls.tar subtree-path.tar
 '
 
 ZIPINFO=zipinfo
