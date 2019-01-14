@@ -1569,30 +1569,29 @@ static void queue_commands_from_cert(struct command **tail,
 	}
 }
 
-static struct command *read_head_info(struct oid_array *shallow)
+static struct command *read_head_info(struct packet_reader *reader,
+				      struct oid_array *shallow)
 {
 	struct command *commands = NULL;
 	struct command **p = &commands;
 	for (;;) {
-		char *line;
-		int len, linelen;
+		int linelen;
 
-		line = packet_read_line(0, &len);
-		if (!line)
+		if (packet_reader_read(reader) != PACKET_READ_NORMAL)
 			break;
 
-		if (len > 8 && starts_with(line, "shallow ")) {
+		if (reader->pktlen > 8 && starts_with(reader->line, "shallow ")) {
 			struct object_id oid;
-			if (get_oid_hex(line + 8, &oid))
+			if (get_oid_hex(reader->line + 8, &oid))
 				die("protocol error: expected shallow sha, got '%s'",
-				    line + 8);
+				    reader->line + 8);
 			oid_array_append(shallow, &oid);
 			continue;
 		}
 
-		linelen = strlen(line);
-		if (linelen < len) {
-			const char *feature_list = line + linelen + 1;
+		linelen = strlen(reader->line);
+		if (linelen < reader->pktlen) {
+			const char *feature_list = reader->line + linelen + 1;
 			if (parse_feature_request(feature_list, "report-status"))
 				report_status = 1;
 			if (parse_feature_request(feature_list, "side-band-64k"))
@@ -1607,28 +1606,32 @@ static struct command *read_head_info(struct oid_array *shallow)
 				use_push_options = 1;
 		}
 
-		if (!strcmp(line, "push-cert")) {
+		if (!strcmp(reader->line, "push-cert")) {
 			int true_flush = 0;
-			char certbuf[1024];
+			int saved_options = reader->options;
+			reader->options &= ~PACKET_READ_CHOMP_NEWLINE;
 
 			for (;;) {
-				len = packet_read(0, NULL, NULL,
-						  certbuf, sizeof(certbuf), 0);
-				if (!len) {
+				packet_reader_read(reader);
+				if (reader->status == PACKET_READ_FLUSH) {
 					true_flush = 1;
 					break;
 				}
-				if (!strcmp(certbuf, "push-cert-end\n"))
+				if (reader->status != PACKET_READ_NORMAL) {
+					die("protocol error: got an unexpected packet");
+				}
+				if (!strcmp(reader->line, "push-cert-end\n"))
 					break; /* end of cert */
-				strbuf_addstr(&push_cert, certbuf);
+				strbuf_addstr(&push_cert, reader->line);
 			}
+			reader->options = saved_options;
 
 			if (true_flush)
 				break;
 			continue;
 		}
 
-		p = queue_command(p, line, linelen);
+		p = queue_command(p, reader->line, linelen);
 	}
 
 	if (push_cert.len)
@@ -1637,18 +1640,14 @@ static struct command *read_head_info(struct oid_array *shallow)
 	return commands;
 }
 
-static void read_push_options(struct string_list *options)
+static void read_push_options(struct packet_reader *reader,
+			      struct string_list *options)
 {
 	while (1) {
-		char *line;
-		int len;
-
-		line = packet_read_line(0, &len);
-
-		if (!line)
+		if (packet_reader_read(reader) != PACKET_READ_NORMAL)
 			break;
 
-		string_list_append(options, line);
+		string_list_append(options, reader->line);
 	}
 }
 
@@ -1924,6 +1923,7 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 	struct oid_array shallow = OID_ARRAY_INIT;
 	struct oid_array ref = OID_ARRAY_INIT;
 	struct shallow_info si;
+	struct packet_reader reader;
 
 	struct option options[] = {
 		OPT__QUIET(&quiet, N_("quiet")),
@@ -1986,12 +1986,16 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 	if (advertise_refs)
 		return 0;
 
-	if ((commands = read_head_info(&shallow)) != NULL) {
+	packet_reader_init(&reader, 0, NULL, 0,
+			   PACKET_READ_CHOMP_NEWLINE |
+			   PACKET_READ_DIE_ON_ERR_PACKET);
+
+	if ((commands = read_head_info(&reader, &shallow)) != NULL) {
 		const char *unpack_status = NULL;
 		struct string_list push_options = STRING_LIST_INIT_DUP;
 
 		if (use_push_options)
-			read_push_options(&push_options);
+			read_push_options(&reader, &push_options);
 		if (!check_cert_push_options(&push_options)) {
 			struct command *cmd;
 			for (cmd = commands; cmd; cmd = cmd->next)

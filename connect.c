@@ -296,7 +296,6 @@ struct ref **get_remote_heads(struct packet_reader *reader,
 	struct ref **orig_list = list;
 	int len = 0;
 	enum get_remote_heads_state state = EXPECTING_FIRST_REF;
-	const char *arg;
 
 	*list = NULL;
 
@@ -306,8 +305,6 @@ struct ref **get_remote_heads(struct packet_reader *reader,
 			die_initial_contact(1);
 		case PACKET_READ_NORMAL:
 			len = reader->pktlen;
-			if (len > 4 && skip_prefix(reader->line, "ERR ", &arg))
-				die(_("remote error: %s"), arg);
 			break;
 		case PACKET_READ_FLUSH:
 			state = EXPECTING_DONE;

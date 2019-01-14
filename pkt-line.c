@@ -346,6 +346,10 @@ enum packet_read_status packet_read_with_status(int fd, char **src_buffer,
 		return PACKET_READ_EOF;
 	}
 
+	if ((options & PACKET_READ_DIE_ON_ERR_PACKET) &&
+	    starts_with(buffer, "ERR "))
+		die(_("remote error: %s"), buffer + 4);
+
 	if ((options & PACKET_READ_CHOMP_NEWLINE) &&
 	    len && buffer[len-1] == '\n')
 		len--;
