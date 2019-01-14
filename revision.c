@@ -1794,7 +1794,8 @@ static void add_message_grep(struct rev_info *revs, const char *pattern)
 }
 
 static int handle_revision_opt(struct rev_info *revs, int argc, const char **argv,
-			       int *unkc, const char **unkv)
+			       int *unkc, const char **unkv,
+			       const struct setup_revision_opt* opt)
 {
 	const char *arg = argv[0];
 	const char *optarg;
@@ -2154,7 +2155,7 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->limited = 1;
 	} else if (!strcmp(arg, "--ignore-missing")) {
 		revs->ignore_missing = 1;
-	} else if (revs->allow_exclude_promisor_objects_opt &&
+	} else if (opt && opt->allow_exclude_promisor_objects &&
 		   !strcmp(arg, "--exclude-promisor-objects")) {
 		if (fetch_if_missing)
 			BUG("exclude_promisor_objects can only be used when fetch_if_missing is 0");
@@ -2176,7 +2177,7 @@ void parse_revision_opt(struct rev_info *revs, struct parse_opt_ctx_t *ctx,
 			const char * const usagestr[])
 {
 	int n = handle_revision_opt(revs, ctx->argc, ctx->argv,
-				    &ctx->cpidx, ctx->out);
+				    &ctx->cpidx, ctx->out, NULL);
 	if (n <= 0) {
 		error("unknown option `%s'", ctx->argv[0]);
 		usage_with_options(usagestr, options);
@@ -2394,7 +2395,8 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 				continue;
 			}
 
-			opts = handle_revision_opt(revs, argc - i, argv + i, &left, argv);
+			opts = handle_revision_opt(revs, argc - i, argv + i,
+						   &left, argv, opt);
 			if (opts > 0) {
 				i += opts - 1;
 				continue;
