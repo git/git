@@ -31,7 +31,15 @@ test_expect_success 'run_command can run a command' '
 	test_must_be_empty err
 '
 
-test_expect_success 'run_command is restricted to PATH' '
+
+test_lazy_prereq RUNS_COMMANDS_FROM_PWD '
+	write_script runs-commands-from-pwd <<-\EOF &&
+	true
+	EOF
+	runs-commands-from-pwd >/dev/null 2>&1
+'
+
+test_expect_success !RUNS_COMMANDS_FROM_PWD 'run_command is restricted to PATH' '
 	write_script should-not-run <<-\EOF &&
 	echo yikes
 	EOF
