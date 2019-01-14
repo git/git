@@ -176,7 +176,7 @@ static void refresh(int verbose, const struct pathspec *pathspec)
 			die(_("pathspec '%s' did not match any files"),
 			    pathspec->items[i].match);
 	}
-        free(seen);
+	free(seen);
 }
 
 int run_add_interactive(const char *revision, const char *patch_mode,

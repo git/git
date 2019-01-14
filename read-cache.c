@@ -3495,71 +3495,71 @@ static void write_eoie_extension(struct strbuf *sb, git_hash_ctx *eoie_context, 
 
 static struct index_entry_offset_table *read_ieot_extension(const char *mmap, size_t mmap_size, size_t offset)
 {
-       const char *index = NULL;
-       uint32_t extsize, ext_version;
-       struct index_entry_offset_table *ieot;
-       int i, nr;
+	const char *index = NULL;
+	uint32_t extsize, ext_version;
+	struct index_entry_offset_table *ieot;
+	int i, nr;
 
-       /* find the IEOT extension */
-       if (!offset)
-	       return NULL;
-       while (offset <= mmap_size - the_hash_algo->rawsz - 8) {
-	       extsize = get_be32(mmap + offset + 4);
-	       if (CACHE_EXT((mmap + offset)) == CACHE_EXT_INDEXENTRYOFFSETTABLE) {
-		       index = mmap + offset + 4 + 4;
-		       break;
-	       }
-	       offset += 8;
-	       offset += extsize;
-       }
-       if (!index)
-	       return NULL;
+	/* find the IEOT extension */
+	if (!offset)
+		return NULL;
+	while (offset <= mmap_size - the_hash_algo->rawsz - 8) {
+		extsize = get_be32(mmap + offset + 4);
+		if (CACHE_EXT((mmap + offset)) == CACHE_EXT_INDEXENTRYOFFSETTABLE) {
+			index = mmap + offset + 4 + 4;
+			break;
+		}
+		offset += 8;
+		offset += extsize;
+	}
+	if (!index)
+		return NULL;
 
-       /* validate the version is IEOT_VERSION */
-       ext_version = get_be32(index);
-       if (ext_version != IEOT_VERSION) {
-	       error("invalid IEOT version %d", ext_version);
-	       return NULL;
-       }
-       index += sizeof(uint32_t);
+	/* validate the version is IEOT_VERSION */
+	ext_version = get_be32(index);
+	if (ext_version != IEOT_VERSION) {
+		error("invalid IEOT version %d", ext_version);
+		return NULL;
+	}
+	index += sizeof(uint32_t);
 
-       /* extension size - version bytes / bytes per entry */
-       nr = (extsize - sizeof(uint32_t)) / (sizeof(uint32_t) + sizeof(uint32_t));
-       if (!nr) {
-	       error("invalid number of IEOT entries %d", nr);
-	       return NULL;
-       }
-       ieot = xmalloc(sizeof(struct index_entry_offset_table)
-	       + (nr * sizeof(struct index_entry_offset)));
-       ieot->nr = nr;
-       for (i = 0; i < nr; i++) {
-	       ieot->entries[i].offset = get_be32(index);
-	       index += sizeof(uint32_t);
-	       ieot->entries[i].nr = get_be32(index);
-	       index += sizeof(uint32_t);
-       }
+	/* extension size - version bytes / bytes per entry */
+	nr = (extsize - sizeof(uint32_t)) / (sizeof(uint32_t) + sizeof(uint32_t));
+	if (!nr) {
+		error("invalid number of IEOT entries %d", nr);
+		return NULL;
+	}
+	ieot = xmalloc(sizeof(struct index_entry_offset_table)
+		       + (nr * sizeof(struct index_entry_offset)));
+	ieot->nr = nr;
+	for (i = 0; i < nr; i++) {
+		ieot->entries[i].offset = get_be32(index);
+		index += sizeof(uint32_t);
+		ieot->entries[i].nr = get_be32(index);
+		index += sizeof(uint32_t);
+	}
 
-       return ieot;
+	return ieot;
 }
 
 static void write_ieot_extension(struct strbuf *sb, struct index_entry_offset_table *ieot)
 {
-       uint32_t buffer;
-       int i;
+	uint32_t buffer;
+	int i;
 
-       /* version */
-       put_be32(&buffer, IEOT_VERSION);
-       strbuf_add(sb, &buffer, sizeof(uint32_t));
+	/* version */
+	put_be32(&buffer, IEOT_VERSION);
+	strbuf_add(sb, &buffer, sizeof(uint32_t));
 
-       /* ieot */
-       for (i = 0; i < ieot->nr; i++) {
+	/* ieot */
+	for (i = 0; i < ieot->nr; i++) {
 
-	       /* offset */
-	       put_be32(&buffer, ieot->entries[i].offset);
-	       strbuf_add(sb, &buffer, sizeof(uint32_t));
+		/* offset */
+		put_be32(&buffer, ieot->entries[i].offset);
+		strbuf_add(sb, &buffer, sizeof(uint32_t));
 
-	       /* count */
-	       put_be32(&buffer, ieot->entries[i].nr);
-	       strbuf_add(sb, &buffer, sizeof(uint32_t));
-       }
+		/* count */
+		put_be32(&buffer, ieot->entries[i].nr);
+		strbuf_add(sb, &buffer, sizeof(uint32_t));
+	}
 }
