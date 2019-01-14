@@ -193,10 +193,11 @@
 #endif
 
 #if defined(__CYGWIN__)
-#include "compat/cygwin.h"
+#include "compat/win32/path-utils.h"
 #endif
 #if defined(__MINGW32__)
 /* pull in Windows compatibility stuff */
+#include "compat/win32/path-utils.h"
 #include "compat/mingw.h"
 #elif defined(_MSC_VER)
 #include "compat/msvc.h"
