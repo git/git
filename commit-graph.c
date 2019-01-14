@@ -638,26 +638,29 @@ static void add_missing_parents(struct packed_oid_list *oids, struct commit *com
 
 static void close_reachable(struct packed_oid_list *oids, int report_progress)
 {
-	int i;
+	int i, j;
 	struct commit *commit;
 	struct progress *progress = NULL;
-	int j = 0;
 
 	if (report_progress)
 		progress = start_delayed_progress(
-			_("Annotating commits in commit graph"), 0);
+			_("Loading known commits in commit graph"), j = 0);
 	for (i = 0; i < oids->nr; i++) {
 		display_progress(progress, ++j);
 		commit = lookup_commit(the_repository, &oids->list[i]);
 		if (commit)
 			commit->object.flags |= UNINTERESTING;
 	}
+	stop_progress(&progress);
 
 	/*
 	 * As this loop runs, oids->nr may grow, but not more
 	 * than the number of missing commits in the reachable
 	 * closure.
 	 */
+	if (report_progress)
+		progress = start_delayed_progress(
+			_("Expanding reachable commits in commit graph"), j = 0);
 	for (i = 0; i < oids->nr; i++) {
 		display_progress(progress, ++j);
 		commit = lookup_commit(the_repository, &oids->list[i]);
@@ -665,7 +668,11 @@ static void close_reachable(struct packed_oid_list *oids, int report_progress)
 		if (commit && !parse_commit(commit))
 			add_missing_parents(oids, commit);
 	}
+	stop_progress(&progress);
 
+	if (report_progress)
+		progress = start_delayed_progress(
+			_("Clearing commit marks in commit graph"), j = 0);
 	for (i = 0; i < oids->nr; i++) {
 		display_progress(progress, ++j);
 		commit = lookup_commit(the_repository, &oids->list[i]);
