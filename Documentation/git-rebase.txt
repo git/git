@@ -570,8 +570,9 @@ it to keep commits that started empty.
 Directory rename detection
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The merge and interactive backends work fine with
-directory rename detection.  The am backend sometimes does not.
+Directory rename heuristics are enabled in the merge and interactive
+backends.  Due to the lack of accurate tree information, directory
+rename detection is disabled in the am backend.
 
 include::merge-strategies.txt[]
 
