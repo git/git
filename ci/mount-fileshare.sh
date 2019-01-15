@@ -23,4 +23,3 @@ Darwin)
 	;;
 esac ||
 die "Could not mount $4"
-
