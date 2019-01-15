@@ -2,7 +2,8 @@
 
 if test true = "$TRAVIS"
 then
-	# We are running within Travis CI
+	# When building a PR, TRAVIS_BRANCH refers to the *target* branch. Not
+	# what we want here. We want the source branch instead.
 	CI_BRANCH="${TRAVIS_PULL_REQUEST_BRANCH:-$TRAVIS_BRANCH}"
 	CI_COMMIT="$TRAVIS_COMMIT"
 	CI_JOB_ID="$TRAVIS_JOB_ID"
