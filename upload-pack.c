@@ -613,13 +613,14 @@ error:
 	}
 }
 
-static void send_shallow(struct commit_list *result)
+static void send_shallow(struct packet_writer *writer,
+			 struct commit_list *result)
 {
 	while (result) {
 		struct object *object = &result->item->object;
 		if (!(object->flags & (CLIENT_SHALLOW|NOT_SHALLOW))) {
-			packet_write_fmt(1, "shallow %s",
-					 oid_to_hex(&object->oid));
+			packet_writer_write(writer, "shallow %s",
+					    oid_to_hex(&object->oid));
 			register_shallow(the_repository, &object->oid);
 			shallow_nr++;
 		}
@@ -627,7 +628,8 @@ static void send_shallow(struct commit_list *result)
 	}
 }
 
-static void send_unshallow(const struct object_array *shallows,
+static void send_unshallow(struct packet_writer *writer,
+			   const struct object_array *shallows,
 			   struct object_array *want_obj)
 {
 	int i;
@@ -636,8 +638,8 @@ static void send_unshallow(const struct object_array *shallows,
 		struct object *object = shallows->objects[i].item;
 		if (object->flags & NOT_SHALLOW) {
 			struct commit_list *parents;
-			packet_write_fmt(1, "unshallow %s",
-					 oid_to_hex(&object->oid));
+			packet_writer_write(writer, "unshallow %s",
+					    oid_to_hex(&object->oid));
 			object->flags &= ~CLIENT_SHALLOW;
 			/*
 			 * We want to _register_ "object" as shallow, but we
@@ -662,7 +664,7 @@ static void send_unshallow(const struct object_array *shallows,
 	}
 }
 
-static void deepen(int depth, int deepen_relative,
+static void deepen(struct packet_writer *writer, int depth, int deepen_relative,
 		   struct object_array *shallows, struct object_array *want_obj)
 {
 	if (depth == INFINITE_DEPTH && !is_repository_shallow(the_repository)) {
@@ -680,7 +682,7 @@ static void deepen(int depth, int deepen_relative,
 		result = get_shallow_commits(&reachable_shallows,
 					     depth + 1,
 					     SHALLOW, NOT_SHALLOW);
-		send_shallow(result);
+		send_shallow(writer, result);
 		free_commit_list(result);
 		object_array_clear(&reachable_shallows);
 	} else {
@@ -688,14 +690,15 @@ static void deepen(int depth, int deepen_relative,
 
 		result = get_shallow_commits(want_obj, depth,
 					     SHALLOW, NOT_SHALLOW);
-		send_shallow(result);
+		send_shallow(writer, result);
 		free_commit_list(result);
 	}
 
-	send_unshallow(shallows, want_obj);
+	send_unshallow(writer, shallows, want_obj);
 }
 
-static void deepen_by_rev_list(int ac, const char **av,
+static void deepen_by_rev_list(struct packet_writer *writer, int ac,
+			       const char **av,
 			       struct object_array *shallows,
 			       struct object_array *want_obj)
 {
@@ -703,13 +706,14 @@ static void deepen_by_rev_list(int ac, const char **av,
 
 	close_commit_graph(the_repository);
 	result = get_shallow_commits_by_rev_list(ac, av, SHALLOW, NOT_SHALLOW);
-	send_shallow(result);
+	send_shallow(writer, result);
 	free_commit_list(result);
-	send_unshallow(shallows, want_obj);
+	send_unshallow(writer, shallows, want_obj);
 }
 
 /* Returns 1 if a shallow list is sent or 0 otherwise */
-static int send_shallow_list(int depth, int deepen_rev_list,
+static int send_shallow_list(struct packet_writer *writer,
+			     int depth, int deepen_rev_list,
 			     timestamp_t deepen_since,
 			     struct string_list *deepen_not,
 			     struct object_array *shallows,
@@ -720,7 +724,7 @@ static int send_shallow_list(int depth, int deepen_rev_list,
 	if (depth > 0 && deepen_rev_list)
 		die("git upload-pack: deepen and deepen-since (or deepen-not) cannot be used together");
 	if (depth > 0) {
-		deepen(depth, deepen_relative, shallows, want_obj);
+		deepen(writer, depth, deepen_relative, shallows, want_obj);
 		ret = 1;
 	} else if (deepen_rev_list) {
 		struct argv_array av = ARGV_ARRAY_INIT;
@@ -741,7 +745,7 @@ static int send_shallow_list(int depth, int deepen_rev_list,
 			struct object *o = want_obj->objects[i].item;
 			argv_array_push(&av, oid_to_hex(&o->oid));
 		}
-		deepen_by_rev_list(av.argc, av.argv, shallows, want_obj);
+		deepen_by_rev_list(writer, av.argc, av.argv, shallows, want_obj);
 		argv_array_clear(&av);
 		ret = 1;
 	} else {
@@ -834,8 +838,10 @@ static void receive_needs(struct packet_reader *reader, struct object_array *wan
 	int has_non_tip = 0;
 	timestamp_t deepen_since = 0;
 	int deepen_rev_list = 0;
+	struct packet_writer writer;
 
 	shallow_nr = 0;
+	packet_writer_init(&writer, 1);
 	for (;;) {
 		struct object *o;
 		const char *features;
@@ -892,9 +898,9 @@ static void receive_needs(struct packet_reader *reader, struct object_array *wan
 
 		o = parse_object(the_repository, &oid_buf);
 		if (!o) {
-			packet_write_fmt(1,
-					 "ERR upload-pack: not our ref %s",
-					 oid_to_hex(&oid_buf));
+			packet_writer_error(&writer,
+					    "upload-pack: not our ref %s",
+					    oid_to_hex(&oid_buf));
 			die("git upload-pack: not our ref %s",
 			    oid_to_hex(&oid_buf));
 		}
@@ -923,7 +929,7 @@ static void receive_needs(struct packet_reader *reader, struct object_array *wan
 	if (depth == 0 && !deepen_rev_list && shallows.nr == 0)
 		return;
 
-	if (send_shallow_list(depth, deepen_rev_list, deepen_since,
+	if (send_shallow_list(&writer, depth, deepen_rev_list, deepen_since,
 			      &deepen_not, &shallows, want_obj))
 		packet_flush(1);
 	object_array_clear(&shallows);
@@ -1102,6 +1108,8 @@ struct upload_pack_data {
 	int deepen_rev_list;
 	int deepen_relative;
 
+	struct packet_writer writer;
+
 	unsigned stateless_rpc : 1;
 
 	unsigned use_thin_pack : 1;
@@ -1125,6 +1133,7 @@ static void upload_pack_data_init(struct upload_pack_data *data)
 	data->haves = haves;
 	data->shallows = shallows;
 	data->deepen_not = deepen_not;
+	packet_writer_init(&data->writer, 1);
 }
 
 static void upload_pack_data_clear(struct upload_pack_data *data)
@@ -1136,7 +1145,8 @@ static void upload_pack_data_clear(struct upload_pack_data *data)
 	string_list_clear(&data->deepen_not, 0);
 }
 
-static int parse_want(const char *line, struct object_array *want_obj)
+static int parse_want(struct packet_writer *writer, const char *line,
+		      struct object_array *want_obj)
 {
 	const char *arg;
 	if (skip_prefix(line, "want ", &arg)) {
@@ -1149,9 +1159,9 @@ static int parse_want(const char *line, struct object_array *want_obj)
 
 		o = parse_object(the_repository, &oid);
 		if (!o) {
-			packet_write_fmt(1,
-					 "ERR upload-pack: not our ref %s",
-					 oid_to_hex(&oid));
+			packet_writer_error(writer,
+					    "upload-pack: not our ref %s",
+					    oid_to_hex(&oid));
 			die("git upload-pack: not our ref %s",
 			    oid_to_hex(&oid));
 		}
@@ -1167,7 +1177,8 @@ static int parse_want(const char *line, struct object_array *want_obj)
 	return 0;
 }
 
-static int parse_want_ref(const char *line, struct string_list *wanted_refs,
+static int parse_want_ref(struct packet_writer *writer, const char *line,
+			  struct string_list *wanted_refs,
 			  struct object_array *want_obj)
 {
 	const char *arg;
@@ -1177,7 +1188,7 @@ static int parse_want_ref(const char *line, struct string_list *wanted_refs,
 		struct object *o;
 
 		if (read_ref(arg, &oid)) {
-			packet_write_fmt(1, "ERR unknown ref %s", arg);
+			packet_writer_error(writer, "unknown ref %s", arg);
 			die("unknown ref %s", arg);
 		}
 
@@ -1220,10 +1231,11 @@ static void process_args(struct packet_reader *request,
 		const char *p;
 
 		/* process want */
-		if (parse_want(arg, want_obj))
+		if (parse_want(&data->writer, arg, want_obj))
 			continue;
 		if (allow_ref_in_want &&
-		    parse_want_ref(arg, &data->wanted_refs, want_obj))
+		    parse_want_ref(&data->writer, arg, &data->wanted_refs,
+				   want_obj))
 			continue;
 		/* process have line */
 		if (parse_have(arg, &data->haves))
@@ -1317,26 +1329,26 @@ static int process_haves(struct oid_array *haves, struct oid_array *common,
 	return 0;
 }
 
-static int send_acks(struct oid_array *acks, struct strbuf *response,
+static int send_acks(struct packet_writer *writer, struct oid_array *acks,
 		     const struct object_array *have_obj,
 		     struct object_array *want_obj)
 {
 	int i;
 
-	packet_buf_write(response, "acknowledgments\n");
+	packet_writer_write(writer, "acknowledgments\n");
 
 	/* Send Acks */
 	if (!acks->nr)
-		packet_buf_write(response, "NAK\n");
+		packet_writer_write(writer, "NAK\n");
 
 	for (i = 0; i < acks->nr; i++) {
-		packet_buf_write(response, "ACK %s\n",
-				 oid_to_hex(&acks->oid[i]));
+		packet_writer_write(writer, "ACK %s\n",
+				    oid_to_hex(&acks->oid[i]));
 	}
 
 	if (ok_to_give_up(have_obj, want_obj)) {
 		/* Send Ready */
-		packet_buf_write(response, "ready\n");
+		packet_writer_write(writer, "ready\n");
 		return 1;
 	}
 
@@ -1348,24 +1360,19 @@ static int process_haves_and_send_acks(struct upload_pack_data *data,
 				       struct object_array *want_obj)
 {
 	struct oid_array common = OID_ARRAY_INIT;
-	struct strbuf response = STRBUF_INIT;
 	int ret = 0;
 
 	process_haves(&data->haves, &common, have_obj);
 	if (data->done) {
 		ret = 1;
-	} else if (send_acks(&common, &response, have_obj, want_obj)) {
-		packet_buf_delim(&response);
+	} else if (send_acks(&data->writer, &common, have_obj, want_obj)) {
+		packet_writer_delim(&data->writer);
 		ret = 1;
 	} else {
 		/* Add Flush */
-		packet_buf_flush(&response);
+		packet_writer_flush(&data->writer);
 		ret = 0;
 	}
-
-	/* Send response */
-	write_or_die(1, response.buf, response.len);
-	strbuf_release(&response);
 
 	oid_array_clear(&data->haves);
 	oid_array_clear(&common);
@@ -1379,15 +1386,15 @@ static void send_wanted_ref_info(struct upload_pack_data *data)
 	if (!data->wanted_refs.nr)
 		return;
 
-	packet_write_fmt(1, "wanted-refs\n");
+	packet_writer_write(&data->writer, "wanted-refs\n");
 
 	for_each_string_list_item(item, &data->wanted_refs) {
-		packet_write_fmt(1, "%s %s\n",
-				 oid_to_hex(item->util),
-				 item->string);
+		packet_writer_write(&data->writer, "%s %s\n",
+				    oid_to_hex(item->util),
+				    item->string);
 	}
 
-	packet_delim(1);
+	packet_writer_delim(&data->writer);
 }
 
 static void send_shallow_info(struct upload_pack_data *data,
@@ -1398,14 +1405,15 @@ static void send_shallow_info(struct upload_pack_data *data,
 	    !is_repository_shallow(the_repository))
 		return;
 
-	packet_write_fmt(1, "shallow-info\n");
+	packet_writer_write(&data->writer, "shallow-info\n");
 
-	if (!send_shallow_list(data->depth, data->deepen_rev_list,
+	if (!send_shallow_list(&data->writer, data->depth,
+			       data->deepen_rev_list,
 			       data->deepen_since, &data->deepen_not,
 			       &data->shallows, want_obj) &&
 	    is_repository_shallow(the_repository))
-		deepen(INFINITE_DEPTH, data->deepen_relative, &data->shallows,
-		       want_obj);
+		deepen(&data->writer, INFINITE_DEPTH, data->deepen_relative,
+		       &data->shallows, want_obj);
 
 	packet_delim(1);
 }
@@ -1467,7 +1475,7 @@ int upload_pack_v2(struct repository *r, struct argv_array *keys,
 			send_wanted_ref_info(&data);
 			send_shallow_info(&data, &want_obj);
 
-			packet_write_fmt(1, "packfile\n");
+			packet_writer_write(&data.writer, "packfile\n");
 			create_pack_file(&have_obj, &want_obj);
 			state = FETCH_DONE;
 			break;

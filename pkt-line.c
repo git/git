@@ -129,12 +129,14 @@ static void set_packet_header(char *buf, const int size)
 	#undef hex
 }
 
-static void format_packet(struct strbuf *out, const char *fmt, va_list args)
+static void format_packet(struct strbuf *out, const char *prefix,
+			  const char *fmt, va_list args)
 {
 	size_t orig_len, n;
 
 	orig_len = out->len;
 	strbuf_addstr(out, "0000");
+	strbuf_addstr(out, prefix);
 	strbuf_vaddf(out, fmt, args);
 	n = out->len - orig_len;
 
@@ -145,13 +147,13 @@ static void format_packet(struct strbuf *out, const char *fmt, va_list args)
 	packet_trace(out->buf + orig_len + 4, n - 4, 1);
 }
 
-static int packet_write_fmt_1(int fd, int gently,
+static int packet_write_fmt_1(int fd, int gently, const char *prefix,
 			      const char *fmt, va_list args)
 {
 	static struct strbuf buf = STRBUF_INIT;
 
 	strbuf_reset(&buf);
-	format_packet(&buf, fmt, args);
+	format_packet(&buf, prefix, fmt, args);
 	if (write_in_full(fd, buf.buf, buf.len) < 0) {
 		if (!gently) {
 			check_pipe(errno);
@@ -168,7 +170,7 @@ void packet_write_fmt(int fd, const char *fmt, ...)
 	va_list args;
 
 	va_start(args, fmt);
-	packet_write_fmt_1(fd, 0, fmt, args);
+	packet_write_fmt_1(fd, 0, "", fmt, args);
 	va_end(args);
 }
 
@@ -178,7 +180,7 @@ int packet_write_fmt_gently(int fd, const char *fmt, ...)
 	va_list args;
 
 	va_start(args, fmt);
-	status = packet_write_fmt_1(fd, 1, fmt, args);
+	status = packet_write_fmt_1(fd, 1, "", fmt, args);
 	va_end(args);
 	return status;
 }
@@ -211,7 +213,7 @@ void packet_buf_write(struct strbuf *buf, const char *fmt, ...)
 	va_list args;
 
 	va_start(args, fmt);
-	format_packet(buf, fmt, args);
+	format_packet(buf, "", fmt, args);
 	va_end(args);
 }
 
@@ -485,4 +487,37 @@ enum packet_read_status packet_reader_peek(struct packet_reader *reader)
 	packet_reader_read(reader);
 	reader->line_peeked = 1;
 	return reader->status;
+}
+
+void packet_writer_init(struct packet_writer *writer, int dest_fd)
+{
+	writer->dest_fd = dest_fd;
+}
+
+void packet_writer_write(struct packet_writer *writer, const char *fmt, ...)
+{
+	va_list args;
+
+	va_start(args, fmt);
+	packet_write_fmt_1(writer->dest_fd, 0, "", fmt, args);
+	va_end(args);
+}
+
+void packet_writer_error(struct packet_writer *writer, const char *fmt, ...)
+{
+	va_list args;
+
+	va_start(args, fmt);
+	packet_write_fmt_1(writer->dest_fd, 0, "ERR ", fmt, args);
+	va_end(args);
+}
+
+void packet_writer_delim(struct packet_writer *writer)
+{
+	packet_delim(writer->dest_fd);
+}
+
+void packet_writer_flush(struct packet_writer *writer)
+{
+	packet_flush(writer->dest_fd);
 }
