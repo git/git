@@ -256,21 +256,6 @@ phases:
   - bash: |
        test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
 
-       sudo apt-get update &&
-       sudo rm /var/lib/apt/lists/lock &&
-       sudo apt-get -y install \
-           apt-transport-https \
-           ca-certificates \
-           curl \
-           software-properties-common &&
-       curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add - &&
-       sudo add-apt-repository \
-          "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
-          $(lsb_release -cs) \
-          stable" &&
-       sudo apt-get update &&
-       sudo apt-get -y install docker-ce &&
-
        sudo AGENT_OS="$AGENT_OS" BUILD_BUILDNUMBER="$BUILD_BUILDNUMBER" BUILD_REPOSITORY_URI="$BUILD_REPOSITORY_URI" BUILD_SOURCEBRANCH="$BUILD_SOURCEBRANCH" BUILD_SOURCEVERSION="$BUILD_SOURCEVERSION" SYSTEM_PHASENAME="$SYSTEM_PHASENAME" SYSTEM_TASKDEFINITIONSURI="$SYSTEM_TASKDEFINITIONSURI" SYSTEM_TEAMPROJECT="$SYSTEM_TEAMPROJECT" CC=$CC MAKEFLAGS=-j3 bash -lxc ci/run-linux32-docker.sh || exit 1
 
        sudo chmod a+r t/out/TEST-*.xml
