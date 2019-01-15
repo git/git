@@ -1,11 +1,14 @@
 #ifndef TREE_WALK_H
 #define TREE_WALK_H
 
+#include "cache.h"
+
 struct strbuf;
 
 struct name_entry {
-	const struct object_id *oid;
+	struct object_id oid;
 	const char *path;
+	int pathlen;
 	unsigned int mode;
 };
 
@@ -19,12 +22,12 @@ static inline const struct object_id *tree_entry_extract(struct tree_desc *desc,
 {
 	*pathp = desc->entry.path;
 	*modep = desc->entry.mode;
-	return desc->entry.oid;
+	return &desc->entry.oid;
 }
 
 static inline int tree_entry_len(const struct name_entry *ne)
 {
-	return (const char *)ne->oid - ne->path - 1;
+	return ne->pathlen;
 }
 
 /*

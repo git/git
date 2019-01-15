@@ -566,7 +566,7 @@ static int grep_tree(struct grep_opt *opt, const struct pathspec *pathspec,
 		strbuf_add(base, entry.path, te_len);
 
 		if (S_ISREG(entry.mode)) {
-			hit |= grep_oid(opt, entry.oid, base->buf, tn_len,
+			hit |= grep_oid(opt, &entry.oid, base->buf, tn_len,
 					 check_attr ? base->buf + tn_len : NULL);
 		} else if (S_ISDIR(entry.mode)) {
 			enum object_type type;
@@ -574,10 +574,10 @@ static int grep_tree(struct grep_opt *opt, const struct pathspec *pathspec,
 			void *data;
 			unsigned long size;
 
-			data = lock_and_read_oid_file(entry.oid, &type, &size);
+			data = lock_and_read_oid_file(&entry.oid, &type, &size);
 			if (!data)
 				die(_("unable to read tree (%s)"),
-				    oid_to_hex(entry.oid));
+				    oid_to_hex(&entry.oid));
 
 			strbuf_addch(base, '/');
 			init_tree_desc(&sub, data, size);
@@ -585,7 +585,7 @@ static int grep_tree(struct grep_opt *opt, const struct pathspec *pathspec,
 					 check_attr, repo);
 			free(data);
 		} else if (recurse_submodules && S_ISGITLINK(entry.mode)) {
-			hit |= grep_submodule(opt, repo, pathspec, entry.oid,
+			hit |= grep_submodule(opt, repo, pathspec, &entry.oid,
 					      base->buf, base->buf + tn_len);
 		}
 

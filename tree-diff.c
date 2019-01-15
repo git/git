@@ -239,7 +239,7 @@ static struct combine_diff_path *emit_path(struct combine_diff_path *p,
 						DIFF_STATUS_ADDED;
 
 			if (tpi_valid) {
-				oid_i = tp[i].entry.oid;
+				oid_i = &tp[i].entry.oid;
 				mode_i = tp[i].entry.mode;
 			}
 			else {
@@ -280,7 +280,7 @@ static struct combine_diff_path *emit_path(struct combine_diff_path *p,
 			/* same rule as in emitthis */
 			int tpi_valid = tp && !(tp[i].entry.mode & S_IFXMIN_NEQ);
 
-			parents_oid[i] = tpi_valid ? tp[i].entry.oid : NULL;
+			parents_oid[i] = tpi_valid ? &tp[i].entry.oid : NULL;
 		}
 
 		strbuf_add(base, path, pathlen);
@@ -491,7 +491,7 @@ static struct combine_diff_path *ll_diff_tree_paths(
 						continue;
 
 					/* diff(t,pi) != ø */
-					if (!oideq(t.entry.oid, tp[i].entry.oid) ||
+					if (!oideq(&t.entry.oid, &tp[i].entry.oid) ||
 					    (t.entry.mode != tp[i].entry.mode))
 						continue;
 

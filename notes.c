@@ -450,7 +450,7 @@ static void load_subtree(struct notes_tree *t, struct leaf_node *subtree,
 
 		l = xcalloc(1, sizeof(*l));
 		oidcpy(&l->key_oid, &object_oid);
-		oidcpy(&l->val_oid, entry.oid);
+		oidcpy(&l->val_oid, &entry.oid);
 		if (note_tree_insert(t, node, n, l, type,
 				     combine_notes_concatenate))
 			die("Failed to load %s %s into notes tree "
@@ -481,7 +481,7 @@ handle_non_note:
 			}
 			strbuf_addstr(&non_note_path, entry.path);
 			add_non_note(t, strbuf_detach(&non_note_path, NULL),
-				     entry.mode, entry.oid->hash);
+				     entry.mode, entry.oid.hash);
 		}
 	}
 	free(buf);

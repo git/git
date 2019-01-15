@@ -48,7 +48,8 @@ static int decode_tree_entry(struct tree_desc *desc, const char *buf, unsigned l
 	/* Initialize the descriptor entry */
 	desc->entry.path = path;
 	desc->entry.mode = canon_mode(mode);
-	desc->entry.oid  = (const struct object_id *)(path + len);
+	desc->entry.pathlen = len - 1;
+	hashcpy(desc->entry.oid.hash, (const unsigned char *)path + len);
 
 	return 0;
 }
@@ -107,7 +108,7 @@ static void entry_extract(struct tree_desc *t, struct name_entry *a)
 static int update_tree_entry_internal(struct tree_desc *desc, struct strbuf *err)
 {
 	const void *buf = desc->buffer;
-	const unsigned char *end = desc->entry.oid->hash + the_hash_algo->rawsz;
+	const unsigned char *end = (const unsigned char *)desc->entry.path + desc->entry.pathlen + 1 + the_hash_algo->rawsz;
 	unsigned long size = desc->size;
 	unsigned long len = end - (const unsigned char *)buf;
 
@@ -175,9 +176,11 @@ void setup_traverse_info(struct traverse_info *info, const char *base)
 		pathlen--;
 	info->pathlen = pathlen ? pathlen + 1 : 0;
 	info->name.path = base;
-	info->name.oid = (void *)(base + pathlen + 1);
-	if (pathlen)
+	info->name.pathlen = pathlen;
+	if (pathlen) {
+		hashcpy(info->name.oid.hash, (const unsigned char *)base + pathlen + 1);
 		info->prev = &dummy;
+	}
 }
 
 char *make_traverse_path(char *path, const struct traverse_info *info, const struct name_entry *n)

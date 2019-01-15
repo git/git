@@ -675,7 +675,7 @@ static void prime_cache_tree_rec(struct repository *r,
 			cnt++;
 		else {
 			struct cache_tree_sub *sub;
-			struct tree *subtree = lookup_tree(r, entry.oid);
+			struct tree *subtree = lookup_tree(r, &entry.oid);
 			if (!subtree->object.parsed)
 				parse_tree(subtree);
 			sub = cache_tree_sub(it, entry.path);
@@ -724,7 +724,7 @@ int cache_tree_matches_traversal(struct cache_tree *root,
 
 	it = find_cache_tree_from_traversal(root, info);
 	it = cache_tree_find(it, ent->path);
-	if (it && it->entry_count > 0 && oideq(ent->oid, &it->oid))
+	if (it && it->entry_count > 0 && oideq(&ent->oid, &it->oid))
 		return it->entry_count;
 	return 0;
 }
