@@ -199,15 +199,16 @@ static int splice_tree(const struct object_id *oid1, const char *prefix,
 	while (desc.size) {
 		const char *name;
 		unsigned mode;
-		const struct object_id *oid;
 
-		oid = tree_entry_extract(&desc, &name, &mode);
+		tree_entry_extract(&desc, &name, &mode);
 		if (strlen(name) == toplen &&
 		    !memcmp(name, prefix, toplen)) {
 			if (!S_ISDIR(mode))
 				die("entry %s in tree %s is not a tree", name,
 				    oid_to_hex(oid1));
-			rewrite_here = (struct object_id *)oid;
+			rewrite_here = (struct object_id *)(desc.entry.path +
+							    strlen(desc.entry.path) +
+							    1);
 			break;
 		}
 		update_tree_entry(&desc);
