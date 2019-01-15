@@ -179,7 +179,7 @@ static int splice_tree(const struct object_id *oid1, const char *prefix,
 	char *buf;
 	unsigned long sz;
 	struct tree_desc desc;
-	struct object_id *rewrite_here;
+	unsigned char *rewrite_here;
 	const struct object_id *rewrite_with;
 	struct object_id subtree;
 	enum object_type type;
@@ -206,9 +206,19 @@ static int splice_tree(const struct object_id *oid1, const char *prefix,
 			if (!S_ISDIR(mode))
 				die("entry %s in tree %s is not a tree", name,
 				    oid_to_hex(oid1));
-			rewrite_here = (struct object_id *)(desc.entry.path +
-							    strlen(desc.entry.path) +
-							    1);
+
+			/*
+			 * We cast here for two reasons:
+			 *
+			 *   - to flip the "char *" (for the path) to "unsigned
+			 *     char *" (for the hash stored after it)
+			 *
+			 *   - to discard the "const"; this is OK because we
+			 *     know it points into our non-const "buf"
+			 */
+			rewrite_here = (unsigned char *)(desc.entry.path +
+							 strlen(desc.entry.path) +
+							 1);
 			break;
 		}
 		update_tree_entry(&desc);
@@ -217,14 +227,16 @@ static int splice_tree(const struct object_id *oid1, const char *prefix,
 		die("entry %.*s not found in tree %s", toplen, prefix,
 		    oid_to_hex(oid1));
 	if (*subpath) {
-		status = splice_tree(rewrite_here, subpath, oid2, &subtree);
+		struct object_id tree_oid;
+		hashcpy(tree_oid.hash, rewrite_here);
+		status = splice_tree(&tree_oid, subpath, oid2, &subtree);
 		if (status)
 			return status;
 		rewrite_with = &subtree;
 	} else {
 		rewrite_with = oid2;
 	}
-	oidcpy(rewrite_here, rewrite_with);
+	hashcpy(rewrite_here, rewrite_with->hash);
 	status = write_object_file(buf, sz, tree_type, result);
 	free(buf);
 	return status;
