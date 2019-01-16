@@ -1327,7 +1327,8 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 	packet_reader_init(&reader, fd[0], NULL, 0,
 			   PACKET_READ_CHOMP_NEWLINE |
 			   PACKET_READ_DIE_ON_ERR_PACKET);
-	if (server_supports_feature("fetch", "sideband-all", 0)) {
+	if (git_env_bool("GIT_TEST_SIDEBAND_ALL", 1) &&
+	    server_supports_feature("fetch", "sideband-all", 0)) {
 		reader.use_sideband = 1;
 		reader.me = "fetch-pack";
 	}

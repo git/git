@@ -1288,7 +1288,9 @@ static void process_args(struct packet_reader *request,
 			continue;
 		}
 
-		if (allow_sideband_all && !strcmp(arg, "sideband-all")) {
+		if ((git_env_bool("GIT_TEST_SIDEBAND_ALL", 0) ||
+		     allow_sideband_all) &&
+		    !strcmp(arg, "sideband-all")) {
 			data->writer.use_sideband = 1;
 			continue;
 		}
@@ -1521,10 +1523,11 @@ int upload_pack_advertise(struct repository *r,
 		    allow_ref_in_want)
 			strbuf_addstr(value, " ref-in-want");
 
-		if (!repo_config_get_bool(the_repository,
-					 "uploadpack.allowsidebandall",
-					 &allow_sideband_all_value) &&
-		    allow_sideband_all_value)
+		if (git_env_bool("GIT_TEST_SIDEBAND_ALL", 0) ||
+		    (!repo_config_get_bool(the_repository,
+					   "uploadpack.allowsidebandall",
+					   &allow_sideband_all_value) &&
+		     allow_sideband_all_value))
 			strbuf_addstr(value, " sideband-all");
 	}
 

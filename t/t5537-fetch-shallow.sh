@@ -243,7 +243,8 @@ test_expect_success 'shallow fetches check connectivity before writing shallow f
 	       "$(git -C "$REPO" rev-parse HEAD)" \
 	       "$(git -C "$REPO" rev-parse HEAD^)" \
 	       >"$HTTPD_ROOT_PATH/one-time-sed" &&
-	test_must_fail git -C client fetch --depth=1 "$HTTPD_URL/one_time_sed/repo" \
+	test_must_fail env GIT_TEST_SIDEBAND_ALL=0 git -C client \
+		fetch --depth=1 "$HTTPD_URL/one_time_sed/repo" \
 		master:a_branch &&
 
 	# Ensure that the one-time-sed script was used.
