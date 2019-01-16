@@ -1090,7 +1090,8 @@ static int add_haves(struct fetch_negotiator *negotiator,
 static int send_fetch_request(struct fetch_negotiator *negotiator, int fd_out,
 			      const struct fetch_pack_args *args,
 			      const struct ref *wants, struct oidset *common,
-			      int *haves_to_send, int *in_vain)
+			      int *haves_to_send, int *in_vain,
+			      int sideband_all)
 {
 	int ret = 0;
 	struct strbuf req_buf = STRBUF_INIT;
@@ -1116,6 +1117,8 @@ static int send_fetch_request(struct fetch_negotiator *negotiator, int fd_out,
 		packet_buf_write(&req_buf, "include-tag");
 	if (prefer_ofs_delta)
 		packet_buf_write(&req_buf, "ofs-delta");
+	if (sideband_all)
+		packet_buf_write(&req_buf, "sideband-all");
 
 	/* Add shallow-info and deepen request */
 	if (server_supports_feature("fetch", "shallow", 0))
@@ -1324,6 +1327,10 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 	packet_reader_init(&reader, fd[0], NULL, 0,
 			   PACKET_READ_CHOMP_NEWLINE |
 			   PACKET_READ_DIE_ON_ERR_PACKET);
+	if (server_supports_feature("fetch", "sideband-all", 0)) {
+		reader.use_sideband = 1;
+		reader.me = "fetch-pack";
+	}
 
 	while (state != FETCH_DONE) {
 		switch (state) {
@@ -1357,7 +1364,8 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 		case FETCH_SEND_REQUEST:
 			if (send_fetch_request(&negotiator, fd[1], args, ref,
 					       &common,
-					       &haves_to_send, &in_vain))
+					       &haves_to_send, &in_vain,
+					       reader.use_sideband))
 				state = FETCH_GET_PACK;
 			else
 				state = FETCH_PROCESS_ACKS;

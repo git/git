@@ -449,7 +449,7 @@ int recv_sideband(const char *me, int in_stream, int out)
 	while (1) {
 		len = packet_read(in_stream, NULL, NULL, buf, LARGE_PACKET_MAX,
 				  0);
-		if (!demultiplex_sideband(me, buf, len, &scratch,
+		if (!demultiplex_sideband(me, buf, len, 0, &scratch,
 					  &sideband_type))
 			continue;
 		switch (sideband_type) {
@@ -475,25 +475,43 @@ void packet_reader_init(struct packet_reader *reader, int fd,
 	reader->buffer = packet_buffer;
 	reader->buffer_size = sizeof(packet_buffer);
 	reader->options = options;
+	reader->me = "git";
 }
 
 enum packet_read_status packet_reader_read(struct packet_reader *reader)
 {
+	struct strbuf scratch = STRBUF_INIT;
+
 	if (reader->line_peeked) {
 		reader->line_peeked = 0;
 		return reader->status;
 	}
 
-	reader->status = packet_read_with_status(reader->fd,
-						 &reader->src_buffer,
-						 &reader->src_len,
-						 reader->buffer,
-						 reader->buffer_size,
-						 &reader->pktlen,
-						 reader->options);
+	/*
+	 * Consume all progress packets until a primary payload packet is
+	 * received
+	 */
+	while (1) {
+		enum sideband_type sideband_type;
+		reader->status = packet_read_with_status(reader->fd,
+							 &reader->src_buffer,
+							 &reader->src_len,
+							 reader->buffer,
+							 reader->buffer_size,
+							 &reader->pktlen,
+							 reader->options);
+		if (!reader->use_sideband)
+			break;
+		if (demultiplex_sideband(reader->me, reader->buffer,
+					 reader->pktlen, 1, &scratch,
+					 &sideband_type))
+			break;
+	}
 
 	if (reader->status == PACKET_READ_NORMAL)
-		reader->line = reader->buffer;
+		/* Skip the sideband designator if sideband is used */
+		reader->line = reader->use_sideband ?
+			reader->buffer + 1 : reader->buffer;
 	else
 		reader->line = NULL;
 
@@ -515,6 +533,7 @@ enum packet_read_status packet_reader_peek(struct packet_reader *reader)
 void packet_writer_init(struct packet_writer *writer, int dest_fd)
 {
 	writer->dest_fd = dest_fd;
+	writer->use_sideband = 0;
 }
 
 void packet_writer_write(struct packet_writer *writer, const char *fmt, ...)
@@ -522,7 +541,8 @@ void packet_writer_write(struct packet_writer *writer, const char *fmt, ...)
 	va_list args;
 
 	va_start(args, fmt);
-	packet_write_fmt_1(writer->dest_fd, 0, "", fmt, args);
+	packet_write_fmt_1(writer->dest_fd, 0,
+			   writer->use_sideband ? "\001" : "", fmt, args);
 	va_end(args);
 }
 
@@ -531,7 +551,8 @@ void packet_writer_error(struct packet_writer *writer, const char *fmt, ...)
 	va_list args;
 
 	va_start(args, fmt);
-	packet_write_fmt_1(writer->dest_fd, 0, "ERR ", fmt, args);
+	packet_write_fmt_1(writer->dest_fd, 0,
+			   writer->use_sideband ? "\003" : "ERR ", fmt, args);
 	va_end(args);
 }
 

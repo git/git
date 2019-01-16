@@ -71,6 +71,8 @@ static int allow_filter;
 static int allow_ref_in_want;
 static struct list_objects_filter_options filter_options;
 
+static int allow_sideband_all;
+
 static void reset_timeout(void)
 {
 	alarm(timeout);
@@ -1046,6 +1048,8 @@ static int upload_pack_config(const char *var, const char *value, void *unused)
 		allow_filter = git_config_bool(var, value);
 	} else if (!strcmp("uploadpack.allowrefinwant", var)) {
 		allow_ref_in_want = git_config_bool(var, value);
+	} else if (!strcmp("uploadpack.allowsidebandall", var)) {
+		allow_sideband_all = git_config_bool(var, value);
 	}
 
 	if (current_config_scope() != CONFIG_SCOPE_REPO) {
@@ -1284,6 +1288,11 @@ static void process_args(struct packet_reader *request,
 			continue;
 		}
 
+		if (allow_sideband_all && !strcmp(arg, "sideband-all")) {
+			data->writer.use_sideband = 1;
+			continue;
+		}
+
 		/* ignore unknown lines maybe? */
 		die("unexpected line: '%s'", arg);
 	}
@@ -1496,6 +1505,7 @@ int upload_pack_advertise(struct repository *r,
 	if (value) {
 		int allow_filter_value;
 		int allow_ref_in_want;
+		int allow_sideband_all_value;
 
 		strbuf_addstr(value, "shallow");
 
@@ -1510,6 +1520,12 @@ int upload_pack_advertise(struct repository *r,
 					 &allow_ref_in_want) &&
 		    allow_ref_in_want)
 			strbuf_addstr(value, " ref-in-want");
+
+		if (!repo_config_get_bool(the_repository,
+					 "uploadpack.allowsidebandall",
+					 &allow_sideband_all_value) &&
+		    allow_sideband_all_value)
+			strbuf_addstr(value, " sideband-all");
 	}
 
 	return 1;

@@ -114,6 +114,7 @@ static void maybe_colorize_sideband(struct strbuf *dest, const char *src, int n)
 #define DUMB_SUFFIX "        "
 
 int demultiplex_sideband(const char *me, char *buf, int len,
+			 int die_on_error,
 			 struct strbuf *scratch,
 			 enum sideband_type *sideband_type)
 {
@@ -144,6 +145,8 @@ int demultiplex_sideband(const char *me, char *buf, int len,
 	len--;
 	switch (band) {
 	case 3:
+		if (die_on_error)
+			die("remote error: %s", buf + 1);
 		strbuf_addf(scratch, "%s%s", scratch->len ? "\n" : "",
 			    DISPLAY_PREFIX);
 		maybe_colorize_sideband(scratch, buf + 1, len);
@@ -195,6 +198,8 @@ int demultiplex_sideband(const char *me, char *buf, int len,
 	}
 
 cleanup:
+	if (die_on_error && *sideband_type == SIDEBAND_PROTOCOL_ERROR)
+		die("%s", scratch->buf);
 	if (scratch->len) {
 		strbuf_addch(scratch, '\n');
 		xwrite(2, scratch->buf, scratch->len);

@@ -162,6 +162,9 @@ struct packet_reader {
 
 	/* indicates if a line has been peeked */
 	int line_peeked;
+
+	unsigned use_sideband : 1;
+	const char *me;
 };
 
 /*
@@ -201,6 +204,7 @@ extern char packet_buffer[LARGE_PACKET_MAX];
 
 struct packet_writer {
 	int dest_fd;
+	unsigned use_sideband : 1;
 };
 
 void packet_writer_init(struct packet_writer *writer, int dest_fd);

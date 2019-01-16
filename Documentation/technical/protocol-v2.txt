@@ -307,6 +307,16 @@ the 'wanted-refs' section in the server's response as explained below.
 	particular ref, where <ref> is the full name of a ref on the
 	server.
 
+If the 'sideband-all' feature is advertised, the following argument can be
+included in the client's request:
+
+    sideband-all
+	Instruct the server to send the whole response multiplexed, not just
+	the packfile section. All non-flush and non-delim PKT-LINE in the
+	response (not only in the packfile section) will then start with a byte
+	indicating its sideband (1, 2, or 3), and the server may send "0005\2"
+	(a PKT-LINE of sideband 2 with no payload) as a keepalive packet.
+
 The response of `fetch` is broken into a number of sections separated by
 delimiter packets (0001), with each section beginning with its section
 header.

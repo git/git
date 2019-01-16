@@ -20,6 +20,7 @@ enum sideband_type {
  * progress messages split across multiple packets.
  */
 int demultiplex_sideband(const char *me, char *buf, int len,
+			 int die_on_error,
 			 struct strbuf *scratch,
 			 enum sideband_type *sideband_type);
 
