@@ -2,23 +2,145 @@ resources:
 - repo: self
   fetchDepth: 1
 
-phases:
-- phase: linux_clang
+jobs:
+- job: windows_build
+  displayName: Windows Build
+  condition: succeeded()
+  pool: Hosted
+  timeoutInMinutes: 240
+  steps:
+  - powershell: |
+      if ("$GITFILESHAREPWD" -ne "" -and "$GITFILESHAREPWD" -ne "`$`(gitfileshare.pwd)") {
+        net use s: \\gitfileshare.file.core.windows.net\test-cache "$GITFILESHAREPWD" /user:AZURE\gitfileshare /persistent:no
+        cmd /c mklink /d "$(Build.SourcesDirectory)\test-cache" S:\
+      }
+    displayName: 'Mount test-cache'
+    env:
+      GITFILESHAREPWD: $(gitfileshare.pwd)
+  - powershell: |
+      $urlbase = "https://dev.azure.com/git-for-windows/git/_apis/build/builds"
+      $id = ((Invoke-WebRequest -UseBasicParsing "${urlbase}?definitions=22&statusFilter=completed&resultFilter=succeeded&`$top=1").content | ConvertFrom-JSON).value[0].id
+      $downloadUrl = ((Invoke-WebRequest -UseBasicParsing "${urlbase}/$id/artifacts").content | ConvertFrom-JSON).value[1].resource.downloadUrl
+      (New-Object Net.WebClient).DownloadFile($downloadUrl,"git-sdk-64-minimal.zip")
+      Expand-Archive git-sdk-64-minimal.zip -DestinationPath . -Force
+      Remove-Item git-sdk-64-minimal.zip
+
+      # Let Git ignore the SDK and the test-cache
+      "/git-sdk-64-minimal/`n/test-cache/`n" | Out-File -NoNewLine -Encoding ascii -Append "$(Build.SourcesDirectory)\.git\info\exclude"
+    displayName: 'Download git-sdk-64-minimal'
+  - powershell: |
+      & git-sdk-64-minimal\usr\bin\bash.exe -lc @"
+        ci/make-test-artifacts.sh artifacts
+      "@
+      if (!$?) { exit(1) }
+    displayName: Build
+    env:
+      HOME: $(Build.SourcesDirectory)
+      MSYSTEM: MINGW64
+      MAKEFLAGS: -j10
+      DEVELOPER: 1
+      NO_PERL: 1
+  - task: PublishPipelineArtifact@0
+    displayName: 'Publish Pipeline Artifact: test artifacts'
+    inputs:
+      artifactName: 'windows-artifacts'
+      targetPath: '$(Build.SourcesDirectory)\artifacts'
+  - task: PublishPipelineArtifact@0
+    displayName: 'Publish Pipeline Artifact: git-sdk-64-minimal'
+    inputs:
+      artifactName: 'git-sdk-64-minimal'
+      targetPath: '$(Build.SourcesDirectory)\git-sdk-64-minimal'
+  - powershell: |
+      if ("$GITFILESHAREPWD" -ne "" -and "$GITFILESHAREPWD" -ne "`$`(gitfileshare.pwd)") {
+        cmd /c rmdir "$(Build.SourcesDirectory)\test-cache"
+      }
+    displayName: 'Unmount test-cache'
+    condition: true
+    env:
+      GITFILESHAREPWD: $(gitfileshare.pwd)
+
+- job: windows_test
+  displayName: Windows Test
+  dependsOn: windows_build
+  condition: succeeded()
+  pool: Hosted
+  timeoutInMinutes: 240
+  strategy:
+    parallel: 10
+  steps:
+  - powershell: |
+      if ("$GITFILESHAREPWD" -ne "" -and "$GITFILESHAREPWD" -ne "`$`(gitfileshare.pwd)") {
+        net use s: \\gitfileshare.file.core.windows.net\test-cache "$GITFILESHAREPWD" /user:AZURE\gitfileshare /persistent:no
+        cmd /c mklink /d "$(Build.SourcesDirectory)\test-cache" S:\
+      }
+    displayName: 'Mount test-cache'
+    env:
+      GITFILESHAREPWD: $(gitfileshare.pwd)
+  - task: DownloadPipelineArtifact@0
+    displayName: 'Download Pipeline Artifact: test artifacts'
+    inputs:
+      artifactName: 'windows-artifacts'
+      targetPath: '$(Build.SourcesDirectory)'
+  - task: DownloadPipelineArtifact@0
+    displayName: 'Download Pipeline Artifact: git-sdk-64-minimal'
+    inputs:
+      artifactName: 'git-sdk-64-minimal'
+      targetPath: '$(Build.SourcesDirectory)\git-sdk-64-minimal'
+  - powershell: |
+      & git-sdk-64-minimal\usr\bin\bash.exe -lc @"
+        test -f artifacts.tar.gz || {
+          echo No test artifacts found\; skipping >&2
+          exit 0
+        }
+        tar xf artifacts.tar.gz || exit 1
+
+        # Let Git ignore the SDK and the test-cache
+        printf '%s\n' /git-sdk-64-minimal/ /test-cache/ >>.git/info/exclude
+
+        ci/run-test-slice.sh `$SYSTEM_JOBPOSITIONINPHASE `$SYSTEM_TOTALJOBSINPHASE || {
+          ci/print-test-failures.sh
+          exit 1
+        }
+      "@
+      if (!$?) { exit(1) }
+    displayName: 'Test (parallel)'
+    env:
+      HOME: $(Build.SourcesDirectory)
+      MSYSTEM: MINGW64
+      MAKEFLAGS: -j10
+      NO_SVN_TESTS: 1
+      GIT_TEST_SKIP_REBASE_P: 1
+  - powershell: |
+      if ("$GITFILESHAREPWD" -ne "" -and "$GITFILESHAREPWD" -ne "`$`(gitfileshare.pwd)") {
+        cmd /c rmdir "$(Build.SourcesDirectory)\test-cache"
+      }
+    displayName: 'Unmount test-cache'
+    condition: true
+    env:
+      GITFILESHAREPWD: $(gitfileshare.pwd)
+  - task: PublishTestResults@2
+    displayName: 'Publish Test Results **/TEST-*.xml'
+    inputs:
+      mergeTestResults: true
+      testRunTitle: 'windows'
+      platform: Windows
+      publishRunAttachments: false
+    condition: succeededOrFailed()
+
+- job: linux_clang
   displayName: linux-clang
   condition: succeeded()
-  queue:
-    name: Hosted Ubuntu 1604
+  pool: Hosted Ubuntu 1604
   steps:
   - bash: |
        test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
 
        sudo apt-get update &&
-       sudo rm /var/lib/apt/lists/lock &&
        sudo apt-get -y install git gcc make libssl-dev libcurl4-openssl-dev libexpat-dev tcl tk gettext git-email zlib1g-dev apache2-bin &&
 
        export CC=clang || exit 1
 
-       ci/install-dependencies.sh
+       ci/install-dependencies.sh || exit 1
        ci/run-build-and-tests.sh || {
            ci/print-test-failures.sh
            exit 1
@@ -37,20 +159,19 @@ phases:
       publishRunAttachments: false
     condition: succeededOrFailed()
 
-- phase: linux_gcc
+- job: linux_gcc
   displayName: linux-gcc
   condition: succeeded()
-  queue:
-    name: Hosted Ubuntu 1604
+  pool: Hosted Ubuntu 1604
   steps:
   - bash: |
        test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
 
+       sudo add-apt-repository ppa:ubuntu-toolchain-r/test &&
        sudo apt-get update &&
-       sudo rm /var/lib/apt/lists/lock &&
-       sudo apt-get -y install git gcc make libssl-dev libcurl4-openssl-dev libexpat-dev tcl tk gettext git-email zlib1g-dev apache2-bin || exit 1
+       sudo apt-get -y install git gcc make libssl-dev libcurl4-openssl-dev libexpat-dev tcl tk gettext git-email zlib1g-dev apache2 language-pack-is git-svn gcc-8 || exit 1
 
-       ci/install-dependencies.sh
+       ci/install-dependencies.sh || exit 1
        ci/run-build-and-tests.sh || {
            ci/print-test-failures.sh
            exit 1
@@ -69,18 +190,17 @@ phases:
       publishRunAttachments: false
     condition: succeededOrFailed()
 
-- phase: osx_clang
+- job: osx_clang
   displayName: osx-clang
   condition: succeeded()
-  queue:
-    name: Hosted macOS
+  pool: Hosted macOS
   steps:
   - bash: |
        test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
 
        export CC=clang
 
-       ci/install-dependencies.sh
+       ci/install-dependencies.sh || exit 1
        ci/run-build-and-tests.sh || {
            ci/print-test-failures.sh
            exit 1
@@ -99,16 +219,15 @@ phases:
       publishRunAttachments: false
     condition: succeededOrFailed()
 
-- phase: osx_gcc
+- job: osx_gcc
   displayName: osx-gcc
   condition: succeeded()
-  queue:
-    name: Hosted macOS
+  pool: Hosted macOS
   steps:
   - bash: |
        test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
 
-       ci/install-dependencies.sh
+       ci/install-dependencies.sh || exit 1
        ci/run-build-and-tests.sh || {
            ci/print-test-failures.sh
            exit 1
@@ -127,17 +246,15 @@ phases:
       publishRunAttachments: false
     condition: succeededOrFailed()
 
-- phase: gettext_poison
+- job: gettext_poison
   displayName: GETTEXT_POISON
   condition: succeeded()
-  queue:
-    name: Hosted Ubuntu 1604
+  pool: Hosted Ubuntu 1604
   steps:
   - bash: |
        test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
 
        sudo apt-get update &&
-       sudo rm /var/lib/apt/lists/lock &&
        sudo apt-get -y install git gcc make libssl-dev libcurl4-openssl-dev libexpat-dev tcl tk gettext git-email zlib1g-dev &&
 
        export jobname=GETTEXT_POISON || exit 1
@@ -160,124 +277,13 @@ phases:
       publishRunAttachments: false
     condition: succeededOrFailed()
 
-- phase: windows
-  displayName: Windows
-  queue:
-    name: Hosted
-    timeoutInMinutes: 240
-  steps:
-  - powershell: |
-       if ("$GITFILESHAREPWD" -ne "" -and "$GITFILESHAREPWD" -ne "`$`(gitfileshare.pwd)") {
-         net use s: \\gitfileshare.file.core.windows.net\test-cache "$GITFILESHAREPWD" /user:AZURE\gitfileshare /persistent:no
-         cmd /c mklink /d "$(Build.SourcesDirectory)\test-cache" S:\
-       }
-    displayName: 'Mount test-cache'
-    env:
-      GITFILESHAREPWD: $(gitfileshare.pwd)
-  - powershell: |
-       # Helper to check the error level of the latest command (exit with error when appropriate)
-       function c() { if (!$?) { exit(1) } }
-
-       # Add build agent's MinGit to PATH
-       $env:PATH = $env:AGENT_HOMEDIRECTORY +"\externals\\git\cmd;" +$env:PATH
-
-       # Helper to initialize (or update) a Git worktree
-       function init ($path, $url, $set_origin) {
-           if (Test-Path $path) {
-               cd $path; c
-               if (Test-Path .git) {
-                   git init; c
-               } else {
-                   git status
-               }
-           } else {
-               git init $path; c
-               cd $path; c
-           }
-           git config core.autocrlf false; c
-           git config core.untrackedCache true; c
-           if (($set_origin -ne 0) -and !(git config remote.origin.url)) {
-               git remote add origin $url; c
-           }
-           git fetch --depth=1 $url master; c
-           git reset --hard FETCH_HEAD; c
-           git clean -df; c
-       }
-
-       # Initialize Git for Windows' SDK
-       $sdk_path = "$(Build.SourcesDirectory)\git-sdk-64"
-       init "$sdk_path" "https://dev.azure.com/git-for-windows/git-sdk-64/_git/git-sdk-64" 0
-       init usr\src\build-extra https://github.com/git-for-windows/build-extra 1
-
-       # Let Git ignore the SDK and the test-cache
-       "/git-sdk-64/`n/test-cache/`n" | Out-File -NoNewLine -Encoding ascii -Append "$(Build.SourcesDirectory)\.git\info\exclude"
-
-       # Help MSYS2 runtime startup by initializing /etc/passwd
-       & "$sdk_path\git-cmd" --command=usr\\bin\\bash.exe -lc "mkpasswd -c >>/etc/passwd"; c
-    displayName: 'Initialize the Git for Windows SDK'
-  - powershell: |
-       # Helper to check the error level of the latest command (exit with error when appropriate)
-       function c() { if (!$?) { exit(1) } }
-
-       cd "$(Build.SourcesDirectory)"; c
-
-       git-sdk-64\git-cmd --command=usr\\bin\\bash.exe -lc @"
-         export MAKEFLAGS=-j10
-         export DEVELOPER=1
-         export NO_PERL=1
-         export NO_SVN_TESTS=1
-         export GIT_TEST_SKIP_REBASE_P=1
-
-         ci/run-build-and-tests.sh || {
-           ci/print-test-failures.sh
-           exit 1
-         }
-       "@
-       c
-    displayName: 'Build & Test'
-    env:
-      HOME: $(Build.SourcesDirectory)
-      MSYSTEM: MINGW64
-  - powershell: |
-       if ("$GITFILESHAREPWD" -ne "" -and "$GITFILESHAREPWD" -ne "`$`(gitfileshare.pwd)") {
-         cmd /c rmdir "$(Build.SourcesDirectory)\test-cache"
-       }
-    displayName: 'Unmount test-cache'
-    condition: true
-    env:
-      GITFILESHAREPWD: $(gitfileshare.pwd)
-  - task: PublishTestResults@2
-    displayName: 'Publish Test Results **/TEST-*.xml'
-    inputs:
-      mergeTestResults: true
-      testRunTitle: 'windows'
-      platform: Windows
-      publishRunAttachments: false
-    condition: succeededOrFailed()
-
-- phase: linux32
+- job: linux32
   displayName: Linux32
   condition: succeeded()
-  queue:
-    name: Hosted Ubuntu 1604
+  pool: Hosted Ubuntu 1604
   steps:
   - bash: |
        test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
-
-       sudo apt-get update &&
-       sudo rm /var/lib/apt/lists/lock &&
-       sudo apt-get -y install \
-           apt-transport-https \
-           ca-certificates \
-           curl \
-           software-properties-common &&
-       curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add - &&
-       sudo add-apt-repository \
-          "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
-          $(lsb_release -cs) \
-          stable" &&
-       sudo apt-get update &&
-       sudo apt-get -y install docker-ce &&
 
        sudo AGENT_OS="$AGENT_OS" BUILD_BUILDNUMBER="$BUILD_BUILDNUMBER" BUILD_REPOSITORY_URI="$BUILD_REPOSITORY_URI" BUILD_SOURCEBRANCH="$BUILD_SOURCEBRANCH" BUILD_SOURCEVERSION="$BUILD_SOURCEVERSION" SYSTEM_PHASENAME="$SYSTEM_PHASENAME" SYSTEM_TASKDEFINITIONSURI="$SYSTEM_TASKDEFINITIONSURI" SYSTEM_TEAMPROJECT="$SYSTEM_TEAMPROJECT" CC=$CC MAKEFLAGS=-j3 bash -lxc ci/run-linux32-docker.sh || exit 1
 
@@ -296,17 +302,15 @@ phases:
       publishRunAttachments: false
     condition: succeededOrFailed()
 
-- phase: static_analysis
+- job: static_analysis
   displayName: StaticAnalysis
   condition: succeeded()
-  queue:
-    name: Hosted Ubuntu 1604
+  pool: Hosted Ubuntu 1604
   steps:
   - bash: |
        test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
 
        sudo apt-get update &&
-       sudo rm /var/lib/apt/lists/lock &&
        sudo apt-get install -y coccinelle &&
 
        export jobname=StaticAnalysis &&
@@ -318,17 +322,15 @@ phases:
     env:
       GITFILESHAREPWD: $(gitfileshare.pwd)
 
-- phase: documentation
+- job: documentation
   displayName: Documentation
   condition: succeeded()
-  queue:
-    name: Hosted Ubuntu 1604
+  pool: Hosted Ubuntu 1604
   steps:
   - bash: |
        test "$GITFILESHAREPWD" = '$(gitfileshare.pwd)' || ci/mount-fileshare.sh //gitfileshare.file.core.windows.net/test-cache gitfileshare "$GITFILESHAREPWD" "$HOME/test-cache" || exit 1
 
        sudo apt-get update &&
-       sudo rm /var/lib/apt/lists/lock &&
        sudo apt-get install -y asciidoc xmlto asciidoctor &&
 
        export ALREADY_HAVE_ASCIIDOCTOR=yes. &&

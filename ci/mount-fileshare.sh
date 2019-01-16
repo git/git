@@ -6,7 +6,7 @@ die () {
 }
 
 test $# = 4 ||
-die "Usage: $0 <share> <username> <password> <mountpoint"
+die "Usage: $0 <share> <username> <password> <mountpoint>"
 
 mkdir -p "$4" || die "Could not create $4"
 
@@ -23,4 +23,3 @@ Darwin)
 	;;
 esac ||
 die "Could not mount $4"
-
