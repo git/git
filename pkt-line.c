@@ -439,6 +439,29 @@ ssize_t read_packetized_to_strbuf(int fd_in, struct strbuf *sb_out)
 	return sb_out->len - orig_len;
 }
 
+int recv_sideband(const char *me, int in_stream, int out)
+{
+	char buf[LARGE_PACKET_MAX + 1];
+	int len;
+	struct strbuf scratch = STRBUF_INIT;
+	enum sideband_type sideband_type;
+
+	while (1) {
+		len = packet_read(in_stream, NULL, NULL, buf, LARGE_PACKET_MAX,
+				  0);
+		if (!demultiplex_sideband(me, buf, len, &scratch,
+					  &sideband_type))
+			continue;
+		switch (sideband_type) {
+		case SIDEBAND_PRIMARY:
+			write_or_die(out, buf + 1, len - 1);
+			break;
+		default: /* errors: message already written */
+			return sideband_type;
+		}
+	}
+}
+
 /* Packet Reader Functions */
 void packet_reader_init(struct packet_reader *reader, int fd,
 			char *src_buffer, size_t src_len,

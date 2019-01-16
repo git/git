@@ -1,7 +1,6 @@
 #include "cache.h"
 #include "color.h"
 #include "config.h"
-#include "pkt-line.h"
 #include "sideband.h"
 #include "help.h"
 
@@ -109,109 +108,99 @@ static void maybe_colorize_sideband(struct strbuf *dest, const char *src, int n)
 }
 
 
-/*
- * Receive multiplexed output stream over git native protocol.
- * in_stream is the input stream from the remote, which carries data
- * in pkt_line format with band designator.  Demultiplex it into out
- * and err and return error appropriately.  Band #1 carries the
- * primary payload.  Things coming over band #2 is not necessarily
- * error; they are usually informative message on the standard error
- * stream, aka "verbose").  A message over band #3 is a signal that
- * the remote died unexpectedly.  A flush() concludes the stream.
- */
-
 #define DISPLAY_PREFIX "remote: "
 
 #define ANSI_SUFFIX "\033[K"
 #define DUMB_SUFFIX "        "
 
-int recv_sideband(const char *me, int in_stream, int out)
+int demultiplex_sideband(const char *me, char *buf, int len,
+			 struct strbuf *scratch,
+			 enum sideband_type *sideband_type)
 {
-	const char *suffix;
-	char buf[LARGE_PACKET_MAX + 1];
-	struct strbuf outbuf = STRBUF_INIT;
-	int retval = 0;
+	static const char *suffix;
+	const char *b, *brk;
+	int band;
 
-	if (isatty(2) && !is_terminal_dumb())
-		suffix = ANSI_SUFFIX;
-	else
-		suffix = DUMB_SUFFIX;
-
-	while (!retval) {
-		const char *b, *brk;
-		int band, len;
-		len = packet_read(in_stream, NULL, NULL, buf, LARGE_PACKET_MAX, 0);
-		if (len == 0)
-			break;
-		if (len < 1) {
-			strbuf_addf(&outbuf,
-				    "%s%s: protocol error: no band designator",
-				    outbuf.len ? "\n" : "", me);
-			retval = SIDEBAND_PROTOCOL_ERROR;
-			break;
-		}
-		band = buf[0] & 0xff;
-		buf[len] = '\0';
-		len--;
-		switch (band) {
-		case 3:
-			strbuf_addf(&outbuf, "%s%s", outbuf.len ? "\n" : "",
-				    DISPLAY_PREFIX);
-			maybe_colorize_sideband(&outbuf, buf + 1, len);
-
-			retval = SIDEBAND_REMOTE_ERROR;
-			break;
-		case 2:
-			b = buf + 1;
-
-			/*
-			 * Append a suffix to each nonempty line to clear the
-			 * end of the screen line.
-			 *
-			 * The output is accumulated in a buffer and
-			 * each line is printed to stderr using
-			 * write(2) to ensure inter-process atomicity.
-			 */
-			while ((brk = strpbrk(b, "\n\r"))) {
-				int linelen = brk - b;
-
-				if (!outbuf.len)
-					strbuf_addstr(&outbuf, DISPLAY_PREFIX);
-				if (linelen > 0) {
-					maybe_colorize_sideband(&outbuf, b, linelen);
-					strbuf_addstr(&outbuf, suffix);
-				}
-
-				strbuf_addch(&outbuf, *brk);
-				xwrite(2, outbuf.buf, outbuf.len);
-				strbuf_reset(&outbuf);
-
-				b = brk + 1;
-			}
-
-			if (*b) {
-				strbuf_addstr(&outbuf, outbuf.len ?
-					    "" : DISPLAY_PREFIX);
-				maybe_colorize_sideband(&outbuf, b, strlen(b));
-			}
-			break;
-		case 1:
-			write_or_die(out, buf + 1, len);
-			break;
-		default:
-			strbuf_addf(&outbuf, "%s%s: protocol error: bad band #%d",
-				    outbuf.len ? "\n" : "", me, band);
-			retval = SIDEBAND_PROTOCOL_ERROR;
-			break;
-		}
+	if (!suffix) {
+		if (isatty(2) && !is_terminal_dumb())
+			suffix = ANSI_SUFFIX;
+		else
+			suffix = DUMB_SUFFIX;
 	}
 
-	if (outbuf.len) {
-		strbuf_addch(&outbuf, '\n');
-		xwrite(2, outbuf.buf, outbuf.len);
+	if (len == 0) {
+		*sideband_type = SIDEBAND_FLUSH;
+		goto cleanup;
 	}
-	strbuf_release(&outbuf);
-	return retval;
+	if (len < 1) {
+		strbuf_addf(scratch,
+			    "%s%s: protocol error: no band designator",
+			    scratch->len ? "\n" : "", me);
+		*sideband_type = SIDEBAND_PROTOCOL_ERROR;
+		goto cleanup;
+	}
+	band = buf[0] & 0xff;
+	buf[len] = '\0';
+	len--;
+	switch (band) {
+	case 3:
+		strbuf_addf(scratch, "%s%s", scratch->len ? "\n" : "",
+			    DISPLAY_PREFIX);
+		maybe_colorize_sideband(scratch, buf + 1, len);
+
+		*sideband_type = SIDEBAND_REMOTE_ERROR;
+		break;
+	case 2:
+		b = buf + 1;
+
+		/*
+		 * Append a suffix to each nonempty line to clear the
+		 * end of the screen line.
+		 *
+		 * The output is accumulated in a buffer and
+		 * each line is printed to stderr using
+		 * write(2) to ensure inter-process atomicity.
+		 */
+		while ((brk = strpbrk(b, "\n\r"))) {
+			int linelen = brk - b;
+
+			if (!scratch->len)
+				strbuf_addstr(scratch, DISPLAY_PREFIX);
+			if (linelen > 0) {
+				maybe_colorize_sideband(scratch, b, linelen);
+				strbuf_addstr(scratch, suffix);
+			}
+
+			strbuf_addch(scratch, *brk);
+			xwrite(2, scratch->buf, scratch->len);
+			strbuf_reset(scratch);
+
+			b = brk + 1;
+		}
+
+		if (*b) {
+			strbuf_addstr(scratch, scratch->len ?
+				    "" : DISPLAY_PREFIX);
+			maybe_colorize_sideband(scratch, b, strlen(b));
+		}
+		return 0;
+	case 1:
+		*sideband_type = SIDEBAND_PRIMARY;
+		break;
+	default:
+		strbuf_addf(scratch, "%s%s: protocol error: bad band #%d",
+			    scratch->len ? "\n" : "", me, band);
+		*sideband_type = SIDEBAND_PROTOCOL_ERROR;
+		break;
+	}
+
+cleanup:
+	if (scratch->len) {
+		strbuf_addch(scratch, '\n');
+		xwrite(2, scratch->buf, scratch->len);
+	}
+	strbuf_release(scratch);
+	return 1;
 }
 
 /*
