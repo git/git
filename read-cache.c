@@ -694,10 +694,10 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 	int intent_only = flags & ADD_CACHE_INTENT;
 	int add_option = (ADD_CACHE_OK_TO_ADD|ADD_CACHE_OK_TO_REPLACE|
 			  (intent_only ? ADD_CACHE_NEW_ONLY : 0));
-	int newflags = HASH_WRITE_OBJECT;
+	int hash_flags = HASH_WRITE_OBJECT;
 
-	if (flags & HASH_RENORMALIZE)
-		newflags |= HASH_RENORMALIZE;
+	if (flags & ADD_CACHE_RENORMALIZE)
+		hash_flags |= HASH_RENORMALIZE;
 
 	if (!S_ISREG(st_mode) && !S_ISLNK(st_mode) && !S_ISDIR(st_mode))
 		return error("%s: can only add regular files, symbolic links or git-directories", path);
@@ -753,7 +753,7 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 		}
 	}
 	if (!intent_only) {
-		if (index_path(&ce->oid, path, st, newflags)) {
+		if (index_path(&ce->oid, path, st, hash_flags)) {
 			discard_cache_entry(ce);
 			return error("unable to index file %s", path);
 		}

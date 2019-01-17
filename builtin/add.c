@@ -137,7 +137,7 @@ static int renormalize_tracked_files(const struct pathspec *pathspec, int flags)
 			continue; /* do not touch non blobs */
 		if (pathspec && !ce_path_match(&the_index, ce, pathspec, NULL))
 			continue;
-		retval |= add_file_to_cache(ce->name, flags | HASH_RENORMALIZE);
+		retval |= add_file_to_cache(ce->name, flags | ADD_CACHE_RENORMALIZE);
 	}
 
 	return retval;
