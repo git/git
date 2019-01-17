@@ -229,3 +229,4 @@
 *.pdb
 /Debug/
 /Release/
+*.dSYM
