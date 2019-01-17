@@ -174,18 +174,18 @@ struct option {
  * for translation with N_().
  * Returns the number of arguments left in argv[].
  */
-extern int parse_options(int argc, const char **argv, const char *prefix,
-			 const struct option *options,
-			 const char * const usagestr[], int flags);
+int parse_options(int argc, const char **argv, const char *prefix,
+		  const struct option *options,
+		  const char * const usagestr[], int flags);
 
-extern NORETURN void usage_with_options(const char * const *usagestr,
-					const struct option *options);
+NORETURN void usage_with_options(const char * const *usagestr,
+				 const struct option *options);
 
-extern NORETURN void usage_msg_opt(const char *msg,
-				   const char * const *usagestr,
-				   const struct option *options);
+NORETURN void usage_msg_opt(const char *msg,
+			    const char * const *usagestr,
+			    const struct option *options);
 
-extern int optbug(const struct option *opt, const char *reason);
+int optbug(const struct option *opt, const char *reason);
 const char *optname(const struct option *opt, int flags);
 
 /*
@@ -227,31 +227,31 @@ struct parse_opt_ctx_t {
 	const char *prefix;
 };
 
-extern void parse_options_start(struct parse_opt_ctx_t *ctx,
-				int argc, const char **argv, const char *prefix,
-				const struct option *options, int flags);
+void parse_options_start(struct parse_opt_ctx_t *ctx,
+			 int argc, const char **argv, const char *prefix,
+			 const struct option *options, int flags);
 
-extern int parse_options_step(struct parse_opt_ctx_t *ctx,
-			      const struct option *options,
-			      const char * const usagestr[]);
+int parse_options_step(struct parse_opt_ctx_t *ctx,
+		       const struct option *options,
+		       const char * const usagestr[]);
 
-extern int parse_options_end(struct parse_opt_ctx_t *ctx);
+int parse_options_end(struct parse_opt_ctx_t *ctx);
 
-extern struct option *parse_options_concat(struct option *a, struct option *b);
+struct option *parse_options_concat(struct option *a, struct option *b);
 
 /*----- some often used options -----*/
-extern int parse_opt_abbrev_cb(const struct option *, const char *, int);
-extern int parse_opt_expiry_date_cb(const struct option *, const char *, int);
-extern int parse_opt_color_flag_cb(const struct option *, const char *, int);
-extern int parse_opt_verbosity_cb(const struct option *, const char *, int);
-extern int parse_opt_object_name(const struct option *, const char *, int);
-extern int parse_opt_commits(const struct option *, const char *, int);
-extern int parse_opt_tertiary(const struct option *, const char *, int);
-extern int parse_opt_string_list(const struct option *, const char *, int);
-extern int parse_opt_noop_cb(const struct option *, const char *, int);
-extern int parse_opt_unknown_cb(const struct option *, const char *, int);
-extern int parse_opt_passthru(const struct option *, const char *, int);
-extern int parse_opt_passthru_argv(const struct option *, const char *, int);
+int parse_opt_abbrev_cb(const struct option *, const char *, int);
+int parse_opt_expiry_date_cb(const struct option *, const char *, int);
+int parse_opt_color_flag_cb(const struct option *, const char *, int);
+int parse_opt_verbosity_cb(const struct option *, const char *, int);
+int parse_opt_object_name(const struct option *, const char *, int);
+int parse_opt_commits(const struct option *, const char *, int);
+int parse_opt_tertiary(const struct option *, const char *, int);
+int parse_opt_string_list(const struct option *, const char *, int);
+int parse_opt_noop_cb(const struct option *, const char *, int);
+int parse_opt_unknown_cb(const struct option *, const char *, int);
+int parse_opt_passthru(const struct option *, const char *, int);
+int parse_opt_passthru_argv(const struct option *, const char *, int);
 
 #define OPT__VERBOSE(var, h)  OPT_COUNTUP('v', "verbose", (var), (h))
 #define OPT__QUIET(var, h)    OPT_COUNTUP('q', "quiet",   (var), (h))
