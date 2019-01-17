@@ -514,6 +514,27 @@ test_expect_success 'fetch with http:// using protocol v2' '
 	grep "git< version 2" log
 '
 
+test_expect_success 'fetch from namespaced repo respects namespaces' '
+	test_when_finished "rm -f log" &&
+
+	git init "$HTTPD_DOCUMENT_ROOT_PATH/nsrepo" &&
+	test_commit -C "$HTTPD_DOCUMENT_ROOT_PATH/nsrepo" one &&
+	test_commit -C "$HTTPD_DOCUMENT_ROOT_PATH/nsrepo" two &&
+	git -C "$HTTPD_DOCUMENT_ROOT_PATH/nsrepo" \
+		update-ref refs/namespaces/ns/refs/heads/master one &&
+
+	GIT_TRACE_PACKET="$(pwd)/log" git -C http_child -c protocol.version=2 \
+		fetch "$HTTPD_URL/smart_namespace/nsrepo" \
+		refs/heads/master:refs/heads/theirs &&
+
+	# Server responded using protocol v2
+	grep "fetch< version 2" log &&
+
+	git -C "$HTTPD_DOCUMENT_ROOT_PATH/nsrepo" rev-parse one >expect &&
+	git -C http_child rev-parse theirs >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'push with http:// and a config of v2 does not request v2' '
 	test_when_finished "rm -f log" &&
 	# Till v2 for push is designed, make sure that if a client has

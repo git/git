@@ -40,7 +40,7 @@ static int send_ref(const char *refname, const struct object_id *oid,
 	const char *refname_nons = strip_namespace(refname);
 	struct strbuf refline = STRBUF_INIT;
 
-	if (!ref_match(&data->prefixes, refname))
+	if (!ref_match(&data->prefixes, refname_nons))
 		return 0;
 
 	strbuf_addf(&refline, "%s %s", oid_to_hex(oid), refname_nons);
