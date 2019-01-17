@@ -56,5 +56,5 @@ linux32 --32bit i386 su -m -l $CI_USER -c '
 	cd /usr/src/git
 	test -n "$cache_dir" && ln -s "$cache_dir/.prove" t/.prove
 	make --jobs=2
-	make --quiet test
+	make test
 '
