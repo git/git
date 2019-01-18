@@ -960,6 +960,7 @@ static void *map_sha1_file_1(struct repository *r, const char *path,
 			if (!*size) {
 				/* mmap() is forbidden on empty files */
 				error(_("object file %s is empty"), path);
+				close(fd);
 				return NULL;
 			}
 			map = xmmap(NULL, *size, PROT_READ, MAP_PRIVATE, fd, 0);
