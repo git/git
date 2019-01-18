@@ -1012,6 +1012,8 @@ static void add_shallow_requests(struct strbuf *req_buf,
 			packet_buf_write(req_buf, "deepen-not %s", s->string);
 		}
 	}
+	if (args->deepen_relative)
+		packet_buf_write(req_buf, "deepen-relative\n");
 }
 
 static void add_wants(int no_dependents, const struct ref *wants, struct strbuf *req_buf)
@@ -1241,6 +1243,8 @@ static int process_acks(struct fetch_negotiator *negotiator,
 static void receive_shallow_info(struct fetch_pack_args *args,
 				 struct packet_reader *reader)
 {
+	int line_received = 0;
+
 	process_section_header(reader, "shallow-info", 0);
 	while (packet_reader_read(reader) == PACKET_READ_NORMAL) {
 		const char *arg;
@@ -1250,6 +1254,7 @@ static void receive_shallow_info(struct fetch_pack_args *args,
 			if (get_oid_hex(arg, &oid))
 				die(_("invalid shallow line: %s"), reader->line);
 			register_shallow(the_repository, &oid);
+			line_received = 1;
 			continue;
 		}
 		if (skip_prefix(reader->line, "unshallow ", &arg)) {
@@ -1262,6 +1267,7 @@ static void receive_shallow_info(struct fetch_pack_args *args,
 				die(_("error in object: %s"), reader->line);
 			if (unregister_shallow(&oid))
 				die(_("no shallow found: %s"), reader->line);
+			line_received = 1;
 			continue;
 		}
 		die(_("expected shallow/unshallow, got %s"), reader->line);
@@ -1271,8 +1277,11 @@ static void receive_shallow_info(struct fetch_pack_args *args,
 	    reader->status != PACKET_READ_DELIM)
 		die(_("error processing shallow info: %d"), reader->status);
 
-	setup_alternate_shallow(&shallow_lock, &alternate_shallow_file, NULL);
-	args->deepen = 1;
+	if (line_received) {
+		setup_alternate_shallow(&shallow_lock, &alternate_shallow_file,
+					NULL);
+		args->deepen = 1;
+	}
 }
 
 static void receive_wanted_refs(struct packet_reader *reader,

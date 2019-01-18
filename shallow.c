@@ -43,6 +43,13 @@ int register_shallow(struct repository *r, const struct object_id *oid)
 
 int is_repository_shallow(struct repository *r)
 {
+	/*
+	 * NEEDSWORK: This function updates
+	 * r->parsed_objects->{is_shallow,shallow_stat} as a side effect but
+	 * there is no corresponding function to clear them when the shallow
+	 * file is updated.
+	 */
+
 	FILE *fp;
 	char buf[1024];
 	const char *path = r->parsed_objects->alternate_shallow_file;

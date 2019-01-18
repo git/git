@@ -43,7 +43,6 @@
 
 static timestamp_t oldest_have;
 
-static int deepen_relative;
 static int multi_ack;
 static int no_done;
 static int use_thin_pack, use_ofs_delta, use_include_tag;
@@ -665,6 +664,9 @@ static void send_unshallow(const struct object_array *shallows,
 	}
 }
 
+static int check_ref(const char *refname_full, const struct object_id *oid,
+		     int flag, void *cb_data);
+
 static void deepen(int depth, int deepen_relative,
 		   struct object_array *shallows, struct object_array *want_obj)
 {
@@ -678,6 +680,13 @@ static void deepen(int depth, int deepen_relative,
 	} else if (deepen_relative) {
 		struct object_array reachable_shallows = OBJECT_ARRAY_INIT;
 		struct commit_list *result;
+
+		/*
+		 * Checking for reachable shallows requires that our refs be
+		 * marked with OUR_REF.
+		 */
+		head_ref_namespaced(check_ref, NULL);
+		for_each_namespaced_ref(check_ref, NULL);
 
 		get_reachable_list(shallows, &reachable_shallows);
 		result = get_shallow_commits(&reachable_shallows,
@@ -715,6 +724,7 @@ static void deepen_by_rev_list(int ac, const char **av,
 static int send_shallow_list(int depth, int deepen_rev_list,
 			     timestamp_t deepen_since,
 			     struct string_list *deepen_not,
+			     int deepen_relative,
 			     struct object_array *shallows,
 			     struct object_array *want_obj)
 {
@@ -837,6 +847,7 @@ static void receive_needs(struct object_array *want_obj)
 	int has_non_tip = 0;
 	timestamp_t deepen_since = 0;
 	int deepen_rev_list = 0;
+	int deepen_relative = 0;
 
 	shallow_nr = 0;
 	for (;;) {
@@ -928,7 +939,8 @@ static void receive_needs(struct object_array *want_obj)
 		return;
 
 	if (send_shallow_list(depth, deepen_rev_list, deepen_since,
-			      &deepen_not, &shallows, want_obj))
+			      &deepen_not, deepen_relative, &shallows,
+			      want_obj))
 		packet_flush(1);
 	object_array_clear(&shallows);
 }
@@ -1401,6 +1413,7 @@ static void send_shallow_info(struct upload_pack_data *data,
 
 	if (!send_shallow_list(data->depth, data->deepen_rev_list,
 			       data->deepen_since, &data->deepen_not,
+			       data->deepen_relative,
 			       &data->shallows, want_obj) &&
 	    is_repository_shallow(the_repository))
 		deepen(INFINITE_DEPTH, data->deepen_relative, &data->shallows,
