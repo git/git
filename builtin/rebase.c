@@ -440,10 +440,11 @@ static int reset_head(struct object_id *oid, const char *action,
 				 detach_head ? REF_NO_DEREF : 0,
 				 UPDATE_REFS_MSG_ON_ERR);
 	else {
-		ret = create_symref("HEAD", switch_to_branch, msg.buf);
+		ret = update_ref(reflog_orig_head, switch_to_branch, oid,
+				 NULL, 0, UPDATE_REFS_MSG_ON_ERR);
 		if (!ret)
-			ret = update_ref(reflog_head, "HEAD", oid, NULL, 0,
-					 UPDATE_REFS_MSG_ON_ERR);
+			ret = create_symref("HEAD", switch_to_branch,
+					    reflog_head);
 	}
 	if (run_hook)
 		run_hook_le(NULL, "post-checkout",
