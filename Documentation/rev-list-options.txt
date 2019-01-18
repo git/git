@@ -13,8 +13,6 @@ has a line that matches `<pattern>`), unless otherwise noted.
 Note that these are applied before commit
 ordering and formatting options, such as `--reverse`.
 
---
-
 -<number>::
 -n <number>::
 --max-count=<number>::
@@ -307,8 +305,6 @@ ifdef::git-rev-list[]
 	Show progress reports on stderr as objects are considered. The
 	`<header>` text will be printed with each progress update.
 endif::git-rev-list[]
-
---
 
 History Simplification
 ~~~~~~~~~~~~~~~~~~~~~~
