@@ -21,3 +21,10 @@ checkout.optimizeNewBranch::
 	will not update the skip-worktree bit in the index nor add/remove
 	files in the working directory to reflect the current sparse checkout
 	settings nor will it show the local changes.
+
+checkout.overlayMode::
+	In the default overlay mode, `git checkout` never
+	removes files from the index or the working tree.  When
+	setting `checkout.overlayMode` to false, files that appear in
+	the index and working tree, but not in <tree-ish> are removed,
+	to make them match <tree-ish> exactly.

@@ -441,6 +441,17 @@ int checkout_entry(struct cache_entry *ce, const struct checkout *state,
 	static struct strbuf path = STRBUF_INIT;
 	struct stat st;
 
+	if (ce->ce_flags & CE_WT_REMOVE) {
+		if (topath)
+			/*
+			 * No content and thus no path to create, so we have
+			 * no pathname to return.
+			 */
+			BUG("Can't remove entry to a path");
+		unlink_entry(ce);
+		return 0;
+	}
+
 	if (topath)
 		return write_entry(ce, topath, state, 1);
 
@@ -509,4 +520,19 @@ int checkout_entry(struct cache_entry *ce, const struct checkout *state,
 	if (nr_checkouts)
 		(*nr_checkouts)++;
 	return write_entry(ce, path.buf, state, 0);
+}
+
+void unlink_entry(const struct cache_entry *ce)
+{
+	const struct submodule *sub = submodule_from_ce(ce);
+	if (sub) {
+		/* state.force is set at the caller. */
+		submodule_move_head(ce->name, "HEAD", NULL,
+				    SUBMODULE_MOVE_HEAD_FORCE);
+	}
+	if (!check_leading_path(ce->name, ce_namelen(ce)))
+		return;
+	if (remove_or_warn(ce->ce_mode, ce->name))
+		return;
+	schedule_dir_for_removal(ce->name, ce_namelen(ce));
 }
