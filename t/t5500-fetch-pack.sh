@@ -439,14 +439,22 @@ test_expect_success 'setup tests for the --stdin parameter' '
 	) >input.dup
 '
 
-test_expect_success 'fetch refs from cmdline' '
-	(
-		cd client &&
-		git fetch-pack --no-progress .. $(cat ../input)
-	) >output &&
-	cut -d " " -f 2 <output | sort >actual &&
-	test_cmp expect actual
+test_expect_success 'setup fetch refs from cmdline v[12]' '
+	cp -r client client1 &&
+	cp -r client client2
 '
+
+for version in '' 1 2
+do
+	test_expect_success "protocol.version=$version fetch refs from cmdline" "
+		(
+			cd client$version &&
+			GIT_TEST_PROTOCOL_VERSION=$version git fetch-pack --no-progress .. \$(cat ../input)
+		) >output &&
+		cut -d ' ' -f 2 <output | sort >actual &&
+		test_cmp expect actual
+	"
+done
 
 test_expect_success 'fetch refs from stdin' '
 	(
