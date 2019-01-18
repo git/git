@@ -398,6 +398,19 @@ static inline char *git_find_last_dir_sep(const char *path)
 #define query_user_email() NULL
 #endif
 
+#ifdef __TANDEM
+#include <floss.h(floss_execl,floss_execlp,floss_execv,floss_execvp)>
+#include <floss.h(floss_getpwuid)>
+#ifndef NSIG
+/*
+ * NonStop NSE and NSX do not provide NSIG. SIGGUARDIAN(99) is the highest
+ * known, by detective work using kill -l as a list is all signals
+ * instead of signal.h where it should be.
+ */
+# define NSIG 100
+#endif
+#endif
+
 #if defined(__HP_cc) && (__HP_cc >= 61000)
 #define NORETURN __attribute__((noreturn))
 #define NORETURN_PTR
