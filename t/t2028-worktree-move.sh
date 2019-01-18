@@ -112,6 +112,26 @@ test_expect_success 'move locked worktree (force)' '
 	git worktree move --force --force flump ploof
 '
 
+test_expect_success 'move a repo with uninitialized submodule' '
+	git init withsub &&
+	(
+		cd withsub &&
+		test_commit initial &&
+		git submodule add "$PWD"/.git sub &&
+		git commit -m withsub &&
+		git worktree add second HEAD &&
+		git worktree move second third
+	)
+'
+
+test_expect_success 'not move a repo with initialized submodule' '
+	(
+		cd withsub &&
+		git -C third submodule update &&
+		test_must_fail git worktree move third forth
+	)
+'
+
 test_expect_success 'remove main worktree' '
 	test_must_fail git worktree remove .
 '
@@ -182,6 +202,23 @@ test_expect_success 'remove cleans up .git/worktrees when empty' '
 		test_path_exists .git/worktrees &&
 		git worktree remove goom &&
 		test_path_is_missing .git/worktrees
+	)
+'
+
+test_expect_success 'remove a repo with uninitialized submodule' '
+	(
+		cd withsub &&
+		git worktree add to-remove HEAD &&
+		git worktree remove to-remove
+	)
+'
+
+test_expect_success 'not remove a repo with initialized submodule' '
+	(
+		cd withsub &&
+		git worktree add to-remove HEAD &&
+		git -C to-remove submodule update &&
+		test_must_fail git worktree remove to-remove
 	)
 '
 
