@@ -87,36 +87,6 @@ struct object_id OID;
 + oidcmp(&OID, OIDPTR)
 
 @@
-struct object_id OID1, OID2;
-@@
-- hashcpy(OID1.hash, OID2.hash)
-+ oidcpy(&OID1, &OID2)
-
-@@
-identifier f != oidcpy;
-struct object_id *OIDPTR1;
-struct object_id *OIDPTR2;
-@@
-  f(...) {<...
-- hashcpy(OIDPTR1->hash, OIDPTR2->hash)
-+ oidcpy(OIDPTR1, OIDPTR2)
-  ...>}
-
-@@
-struct object_id *OIDPTR;
-struct object_id OID;
-@@
-- hashcpy(OIDPTR->hash, OID.hash)
-+ oidcpy(OIDPTR, &OID)
-
-@@
-struct object_id *OIDPTR;
-struct object_id OID;
-@@
-- hashcpy(OID.hash, OIDPTR->hash)
-+ oidcpy(&OID, OIDPTR)
-
-@@
 struct object_id *OIDPTR1;
 struct object_id *OIDPTR2;
 @@

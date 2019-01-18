@@ -86,7 +86,7 @@ static int read_tree_1(struct repository *r,
 				continue;
 		}
 
-		switch (fn(entry.oid, base,
+		switch (fn(&entry.oid, base,
 			   entry.path, entry.mode, stage, context)) {
 		case 0:
 			continue;
@@ -97,19 +97,19 @@ static int read_tree_1(struct repository *r,
 		}
 
 		if (S_ISDIR(entry.mode))
-			oidcpy(&oid, entry.oid);
+			oidcpy(&oid, &entry.oid);
 		else if (S_ISGITLINK(entry.mode)) {
 			struct commit *commit;
 
-			commit = lookup_commit(r, entry.oid);
+			commit = lookup_commit(r, &entry.oid);
 			if (!commit)
 				die("Commit %s in submodule path %s%s not found",
-				    oid_to_hex(entry.oid),
+				    oid_to_hex(&entry.oid),
 				    base->buf, entry.path);
 
 			if (parse_commit(commit))
 				die("Invalid commit %s in submodule path %s%s",
-				    oid_to_hex(entry.oid),
+				    oid_to_hex(&entry.oid),
 				    base->buf, entry.path);
 
 			oidcpy(&oid, get_commit_tree_oid(commit));

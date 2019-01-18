@@ -1084,7 +1084,7 @@ static inline void hashcpy(unsigned char *sha_dst, const unsigned char *sha_src)
 
 static inline void oidcpy(struct object_id *dst, const struct object_id *src)
 {
-	hashcpy(dst->hash, src->hash);
+	memcpy(dst->hash, src->hash, GIT_MAX_RAWSZ);
 }
 
 static inline struct object_id *oiddup(const struct object_id *src)
