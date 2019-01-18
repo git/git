@@ -34,7 +34,6 @@
 #define GRAPH_OID_LEN GRAPH_OID_LEN_SHA1
 
 #define GRAPH_OCTOPUS_EDGES_NEEDED 0x80000000
-#define GRAPH_PARENT_MISSING 0x7fffffff
 #define GRAPH_EDGE_LAST_MASK 0x7fffffff
 #define GRAPH_PARENT_NONE 0x70000000
 
@@ -493,7 +492,9 @@ static void write_graph_chunk_data(struct hashfile *f, int hash_len,
 					      commit_to_sha1);
 
 			if (edge_value < 0)
-				edge_value = GRAPH_PARENT_MISSING;
+				BUG("missing parent %s for commit %s",
+				    oid_to_hex(&parent->item->object.oid),
+				    oid_to_hex(&(*list)->object.oid));
 		}
 
 		hashwrite_be32(f, edge_value);
@@ -511,7 +512,9 @@ static void write_graph_chunk_data(struct hashfile *f, int hash_len,
 					      nr_commits,
 					      commit_to_sha1);
 			if (edge_value < 0)
-				edge_value = GRAPH_PARENT_MISSING;
+				BUG("missing parent %s for commit %s",
+				    oid_to_hex(&parent->item->object.oid),
+				    oid_to_hex(&(*list)->object.oid));
 		}
 
 		hashwrite_be32(f, edge_value);
@@ -564,7 +567,9 @@ static void write_graph_chunk_large_edges(struct hashfile *f,
 						  commit_to_sha1);
 
 			if (edge_value < 0)
-				edge_value = GRAPH_PARENT_MISSING;
+				BUG("missing parent %s for commit %s",
+				    oid_to_hex(&parent->item->object.oid),
+				    oid_to_hex(&(*list)->object.oid));
 			else if (!parent->next)
 				edge_value |= GRAPH_LAST_EDGE;
 
@@ -868,7 +873,7 @@ void write_commit_graph(const char *obj_dir,
 			count_distinct++;
 	}
 
-	if (count_distinct >= GRAPH_PARENT_MISSING)
+	if (count_distinct >= GRAPH_EDGE_LAST_MASK)
 		die(_("the commit graph format cannot write %d commits"), count_distinct);
 
 	commits.nr = 0;
@@ -895,7 +900,7 @@ void write_commit_graph(const char *obj_dir,
 	}
 	num_chunks = num_extra_edges ? 4 : 3;
 
-	if (commits.nr >= GRAPH_PARENT_MISSING)
+	if (commits.nr >= GRAPH_EDGE_LAST_MASK)
 		die(_("too many commits to write graph"));
 
 	compute_generation_numbers(&commits, report_progress);
