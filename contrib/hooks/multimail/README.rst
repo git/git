@@ -1,4 +1,4 @@
-git-multimail version 1.4.0
+git-multimail version 1.5.0
 ===========================
 
 .. image:: https://travis-ci.org/git-multimail/git-multimail.svg?branch=master
@@ -20,8 +20,8 @@ GPLv2 (see the COPYING file for details).
 
 Please note: although, as a convenience, git-multimail may be
 distributed along with the main Git project, development of
-git-multimail takes place in its own, separate project.  See section
-"Getting involved" below for more information.
+git-multimail takes place in its own, separate project.  Please, read
+`<CONTRIBUTING.rst>`__ for more information.
 
 
 By default, for each push received by the repository, git-multimail:
@@ -88,6 +88,10 @@ Requirements
   If this is not the case, set multimailhook.sendmailCommand, or see
   the multimailhook.mailer configuration variable below for how to
   configure git-multimail to send emails via an SMTP server.
+
+* git-multimail is currently tested only on Linux. It may or may not
+  work on other platforms such as Windows and Mac OS. See
+  `<CONTRIBUTING.rst>`__ to improve the situation.
 
 
 Invocation
@@ -369,7 +373,7 @@ multimailhook.mailer
         unset, then the value of multimailhook.from is used.
 
       multimailhook.smtpServerTimeout
-        Timeout in seconds.
+        Timeout in seconds. Default is 10.
 
       multimailhook.smtpEncryption
         Set the security type. Allowed values: ``none``, ``ssl``, ``tls`` (starttls).
@@ -419,8 +423,20 @@ multimailhook.from, multimailhook.fromCommit, multimailhook.fromRefchange
     If config values are unset, the value of the From: header is
     determined as follows:
 
-    1. (gitolite environment only) Parse gitolite.conf, looking for a
-       block of comments that looks like this::
+    1. (gitolite environment only)
+       1.a) If ``multimailhook.MailaddressMap`` is set, and is a path
+       to an existing file (if relative, it is considered relative to
+       the place where ``gitolite.conf`` is located), then this file
+       should contain lines like::
+
+           username Firstname Lastname <email@example.com>
+
+       git-multimail will then look for a line where ``$GL_USER``
+       matches the ``username`` part, and use the rest of the line for
+       the ``From:`` header.
+
+       1.b) Parse gitolite.conf, looking for a block of comments that
+       looks like this::
 
            # BEGIN USER EMAILS
            # username Firstname Lastname <email@example.com>
@@ -435,6 +451,11 @@ multimailhook.from, multimailhook.fromCommit, multimailhook.fromRefchange
        (and the value of user.name, if set).
 
     3. Use the value of multimailhook.envelopeSender.
+
+multimailhook.MailaddressMap
+    (gitolite environment only)
+    File to look for a ``From:`` address based on the user doing the
+    push. Defaults to unset. See ``multimailhook.from`` for details.
 
 multimailhook.administrator
     The name and/or email address of the administrator of the Git
@@ -483,6 +504,11 @@ multimailhook.maxCommitEmails
     summary refchange email is sent.  This can avoid accidental
     mailbombing, for example on an initial push.  To disable commit
     emails limit, set this option to 0.  The default is 500.
+
+multimailhook.excludeMergeRevisions
+    When sending out revision emails, do not consider merge commits (the
+    functional equivalent of `rev-list --no-merges`).
+    The default is `false` (send merge commit emails).
 
 multimailhook.emailStrictUTF8
     If this boolean option is set to `true`, then the main part of the
