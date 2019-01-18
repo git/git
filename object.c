@@ -485,7 +485,7 @@ struct raw_object_store *raw_object_store_new(void)
 static void free_object_directory(struct object_directory *odb)
 {
 	free(odb->path);
-	oid_array_clear(&odb->loose_objects_cache);
+	odb_clear_loose_cache(odb);
 	free(odb);
 }
 

@@ -994,11 +994,8 @@ void reprepare_packed_git(struct repository *r)
 {
 	struct object_directory *odb;
 
-	for (odb = r->objects->odb; odb; odb = odb->next) {
-		oid_array_clear(&odb->loose_objects_cache);
-		memset(&odb->loose_objects_subdir_seen, 0,
-		       sizeof(odb->loose_objects_subdir_seen));
-	}
+	for (odb = r->objects->odb; odb; odb = odb->next)
+		odb_clear_loose_cache(odb);
 
 	r->objects->approximate_object_count_valid = 0;
 	r->objects->packed_git_initialized = 0;
