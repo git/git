@@ -337,14 +337,14 @@ static int handle_config(const char *key, const char *value, void *cb)
 		if (!name)
 			return 0;
 		if (!strcmp(subkey, "insteadof")) {
-			rewrite = make_rewrite(&rewrites, name, namelen);
 			if (!value)
 				return config_error_nonbool(key);
+			rewrite = make_rewrite(&rewrites, name, namelen);
 			add_instead_of(rewrite, xstrdup(value));
 		} else if (!strcmp(subkey, "pushinsteadof")) {
-			rewrite = make_rewrite(&rewrites_push, name, namelen);
 			if (!value)
 				return config_error_nonbool(key);
+			rewrite = make_rewrite(&rewrites_push, name, namelen);
 			add_instead_of(rewrite, xstrdup(value));
 		}
 	}
