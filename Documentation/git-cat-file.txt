@@ -252,6 +252,12 @@ the repository, then `cat-file` will ignore any custom format and print:
 <object> SP missing LF
 ------------
 
+If a name is specified that might refer to more than one object (an ambiguous short sha), then `cat-file` will ignore any custom format and print:
+
+------------
+<object> SP ambiguous LF
+------------
+
 If --follow-symlinks is used, and a symlink in the repository points
 outside the repository, then `cat-file` will ignore any custom format
 and print:
