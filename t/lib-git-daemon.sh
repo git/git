@@ -54,19 +54,11 @@ start_git_daemon() {
 		"$@" "$GIT_DAEMON_DOCUMENT_ROOT_PATH" \
 		>&3 2>git_daemon_output &
 	GIT_DAEMON_PID=$!
-	>daemon.log
 	{
 		read -r line <&7
-		printf "%s\n" "$line"
-		printf >&4 "%s\n" "$line"
-		(
-			while read -r line <&7
-			do
-				printf "%s\n" "$line"
-				printf >&4 "%s\n" "$line"
-			done
-		) &
-	} 7<git_daemon_output >>"$TRASH_DIRECTORY/daemon.log" &&
+		printf "%s\n" "$line" >&4
+		cat <&7 >&4 &
+	} 7<git_daemon_output &&
 
 	# Check expected output
 	if test x"$(expr "$line" : "\[[0-9]*\] \(.*\)")" != x"Ready to rumble"
