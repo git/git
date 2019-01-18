@@ -287,6 +287,14 @@ test_expect_success 'stash an added file' '
 	test new = "$(cat file3)"
 '
 
+test_expect_success 'stash --intent-to-add file' '
+	git reset --hard &&
+	echo new >file4 &&
+	git add --intent-to-add file4 &&
+	test_when_finished "git rm -f file4" &&
+	test_must_fail git stash
+'
+
 test_expect_success 'stash rm then recreate' '
 	git reset --hard &&
 	git rm file &&
