@@ -351,7 +351,7 @@ static const char *prepare_index(int argc, const char **argv, const char *prefix
 		if (write_locked_index(&the_index, &index_lock, 0))
 			die(_("unable to create temporary index"));
 
-		old_index_env = getenv(INDEX_ENVIRONMENT);
+		old_index_env = xstrdup_or_null(getenv(INDEX_ENVIRONMENT));
 		setenv(INDEX_ENVIRONMENT, get_lock_file_path(&index_lock), 1);
 
 		if (interactive_add(argc, argv, prefix, patch_interactive) != 0)
@@ -361,6 +361,7 @@ static const char *prepare_index(int argc, const char **argv, const char *prefix
 			setenv(INDEX_ENVIRONMENT, old_index_env, 1);
 		else
 			unsetenv(INDEX_ENVIRONMENT);
+		FREE_AND_NULL(old_index_env);
 
 		discard_cache();
 		read_cache_from(get_lock_file_path(&index_lock));

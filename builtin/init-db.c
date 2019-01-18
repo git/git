@@ -542,8 +542,8 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 	 * GIT_WORK_TREE makes sense only in conjunction with GIT_DIR
 	 * without --bare.  Catch the error early.
 	 */
-	git_dir = getenv(GIT_DIR_ENVIRONMENT);
-	work_tree = getenv(GIT_WORK_TREE_ENVIRONMENT);
+	git_dir = xstrdup_or_null(getenv(GIT_DIR_ENVIRONMENT));
+	work_tree = xstrdup_or_null(getenv(GIT_WORK_TREE_ENVIRONMENT));
 	if ((!git_dir || is_bare_repository_cfg == 1) && work_tree)
 		die(_("%s (or --work-tree=<directory>) not allowed without "
 			  "specifying %s (or --git-dir=<directory>)"),
@@ -582,6 +582,8 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 	}
 
 	UNLEAK(real_git_dir);
+	UNLEAK(git_dir);
+	UNLEAK(work_tree);
 
 	flags |= INIT_DB_EXIST_OK;
 	return init_db(git_dir, real_git_dir, template_dir, flags);
