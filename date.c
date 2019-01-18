@@ -77,22 +77,16 @@ static struct tm *time_to_tm_local(timestamp_t time)
 }
 
 /*
- * What value of "tz" was in effect back then at "time" in the
- * local timezone?
+ * Fill in the localtime 'struct tm' for the supplied time,
+ * and return the local tz.
  */
-static int local_tzoffset(timestamp_t time)
+static int local_time_tzoffset(time_t t, struct tm *tm)
 {
-	time_t t, t_local;
-	struct tm tm;
+	time_t t_local;
 	int offset, eastwest;
 
-	if (date_overflows(time))
-		die("Timestamp too large for this system: %"PRItime, time);
-
-	t = (time_t)time;
-	localtime_r(&t, &tm);
-	t_local = tm_to_time_t(&tm);
-
+	localtime_r(&t, tm);
+	t_local = tm_to_time_t(tm);
 	if (t_local == -1)
 		return 0; /* error; just use +0000 */
 	if (t_local < t) {
@@ -105,6 +99,20 @@ static int local_tzoffset(timestamp_t time)
 	offset /= 60; /* in minutes */
 	offset = (offset % 60) + ((offset / 60) * 100);
 	return offset * eastwest;
+}
+
+/*
+ * What value of "tz" was in effect back then at "time" in the
+ * local timezone?
+ */
+static int local_tzoffset(timestamp_t time)
+{
+	struct tm tm;
+
+	if (date_overflows(time))
+		die("Timestamp too large for this system: %"PRItime, time);
+
+	return local_time_tzoffset((time_t)time, &tm);
 }
 
 void show_date_relative(timestamp_t time, int tz,
@@ -191,15 +199,95 @@ struct date_mode *date_mode_from_type(enum date_mode_type type)
 	return &mode;
 }
 
+static void show_date_normal(struct strbuf *buf, timestamp_t time, struct tm *tm, int tz, struct tm *human_tm, int human_tz, int local)
+{
+	struct {
+		unsigned int	year:1,
+				date:1,
+				wday:1,
+				time:1,
+				seconds:1,
+				tz:1;
+	} hide = { 0 };
+
+	hide.tz = local || tz == human_tz;
+	hide.year = tm->tm_year == human_tm->tm_year;
+	if (hide.year) {
+		if (tm->tm_mon == human_tm->tm_mon) {
+			if (tm->tm_mday > human_tm->tm_mday) {
+				/* Future date: think timezones */
+			} else if (tm->tm_mday == human_tm->tm_mday) {
+				hide.date = hide.wday = 1;
+			} else if (tm->tm_mday + 5 > human_tm->tm_mday) {
+				/* Leave just weekday if it was a few days ago */
+				hide.date = 1;
+			}
+		}
+	}
+
+	/* Show "today" times as just relative times */
+	if (hide.wday) {
+		struct timeval now;
+		gettimeofday(&now, NULL);
+		show_date_relative(time, tz, &now, buf);
+		return;
+	}
+
+	/*
+	 * Always hide seconds for human-readable.
+	 * Hide timezone if showing date.
+	 * Hide weekday and time if showing year.
+	 *
+	 * The logic here is two-fold:
+	 *  (a) only show details when recent enough to matter
+	 *  (b) keep the maximum length "similar", and in check
+	 */
+	if (human_tm->tm_year) {
+		hide.seconds = 1;
+		hide.tz |= !hide.date;
+		hide.wday = hide.time = !hide.year;
+	}
+
+	if (!hide.wday)
+		strbuf_addf(buf, "%.3s ", weekday_names[tm->tm_wday]);
+	if (!hide.date)
+		strbuf_addf(buf, "%.3s %d ", month_names[tm->tm_mon], tm->tm_mday);
+
+	/* Do we want AM/PM depending on locale? */
+	if (!hide.time) {
+		strbuf_addf(buf, "%02d:%02d", tm->tm_hour, tm->tm_min);
+		if (!hide.seconds)
+			strbuf_addf(buf, ":%02d", tm->tm_sec);
+	} else
+		strbuf_rtrim(buf);
+
+	if (!hide.year)
+		strbuf_addf(buf, " %d", tm->tm_year + 1900);
+
+	if (!hide.tz)
+		strbuf_addf(buf, " %+05d", tz);
+}
+
 const char *show_date(timestamp_t time, int tz, const struct date_mode *mode)
 {
 	struct tm *tm;
+	struct tm human_tm = { 0 };
+	int human_tz = -1;
 	static struct strbuf timebuf = STRBUF_INIT;
 
 	if (mode->type == DATE_UNIX) {
 		strbuf_reset(&timebuf);
 		strbuf_addf(&timebuf, "%"PRItime, time);
 		return timebuf.buf;
+	}
+
+	if (mode->type == DATE_HUMAN) {
+		struct timeval now;
+
+		gettimeofday(&now, NULL);
+
+		/* Fill in the data for "current time" in human_tz and human_tm */
+		human_tz = local_time_tzoffset(now.tv_sec, &human_tm);
 	}
 
 	if (mode->local)
@@ -258,14 +346,7 @@ const char *show_date(timestamp_t time, int tz, const struct date_mode *mode)
 		strbuf_addftime(&timebuf, mode->strftime_fmt, tm, tz,
 				!mode->local);
 	else
-		strbuf_addf(&timebuf, "%.3s %.3s %d %02d:%02d:%02d %d%c%+05d",
-				weekday_names[tm->tm_wday],
-				month_names[tm->tm_mon],
-				tm->tm_mday,
-				tm->tm_hour, tm->tm_min, tm->tm_sec,
-				tm->tm_year + 1900,
-				mode->local ? 0 : ' ',
-				tz);
+		show_date_normal(&timebuf, time, tm, tz, &human_tm, human_tz, mode->local);
 	return timebuf.buf;
 }
 
@@ -802,6 +883,11 @@ int parse_date(const char *date, struct strbuf *result)
 	return 0;
 }
 
+static int auto_date_style(void)
+{
+	return (isatty(1) || pager_in_use()) ? DATE_HUMAN : DATE_NORMAL;
+}
+
 static enum date_mode_type parse_date_type(const char *format, const char **end)
 {
 	if (skip_prefix(format, "relative", end))
@@ -819,6 +905,10 @@ static enum date_mode_type parse_date_type(const char *format, const char **end)
 		return DATE_SHORT;
 	if (skip_prefix(format, "default", end))
 		return DATE_NORMAL;
+	if (skip_prefix(format, "human", end))
+		return DATE_HUMAN;
+	if (skip_prefix(format, "auto", end))
+		return auto_date_style();
 	if (skip_prefix(format, "raw", end))
 		return DATE_RAW;
 	if (skip_prefix(format, "unix", end))
