@@ -246,6 +246,37 @@ static int read_basic_state(struct rebase_options *opts)
 	return 0;
 }
 
+static int write_basic_state(struct rebase_options *opts)
+{
+	write_file(state_dir_path("head-name", opts), "%s",
+		   opts->head_name ? opts->head_name : "detached HEAD");
+	write_file(state_dir_path("onto", opts), "%s",
+		   opts->onto ? oid_to_hex(&opts->onto->object.oid) : "");
+	write_file(state_dir_path("orig-head", opts), "%s",
+		   oid_to_hex(&opts->orig_head));
+	write_file(state_dir_path("quiet", opts), "%s",
+		   opts->flags & REBASE_NO_QUIET ? "" : "t");
+	if (opts->flags & REBASE_VERBOSE)
+		write_file(state_dir_path("verbose", opts), "%s", "");
+	if (opts->strategy)
+		write_file(state_dir_path("strategy", opts), "%s",
+			   opts->strategy);
+	if (opts->strategy_opts)
+		write_file(state_dir_path("strategy_opts", opts), "%s",
+			   opts->strategy_opts);
+	if (opts->allow_rerere_autoupdate >= 0)
+		write_file(state_dir_path("allow_rerere_autoupdate", opts),
+			   "-%s-rerere-autoupdate",
+			   opts->allow_rerere_autoupdate ? "" : "-no");
+	if (opts->gpg_sign_opt)
+		write_file(state_dir_path("gpg_sign_opt", opts), "%s",
+			   opts->gpg_sign_opt);
+	if (opts->signoff)
+		write_file(state_dir_path("strategy", opts), "--signoff");
+
+	return 0;
+}
+
 static int apply_autostash(struct rebase_options *opts)
 {
 	const char *path = state_dir_path("autostash", opts);
@@ -465,12 +496,155 @@ leave_reset_head:
 	return ret;
 }
 
+static int move_to_original_branch(struct rebase_options *opts)
+{
+	struct strbuf orig_head_reflog = STRBUF_INIT, head_reflog = STRBUF_INIT;
+	int ret;
+
+	if (!opts->head_name)
+		return 0; /* nothing to move back to */
+
+	if (!opts->onto)
+		BUG("move_to_original_branch without onto");
+
+	strbuf_addf(&orig_head_reflog, "rebase finished: %s onto %s",
+		    opts->head_name, oid_to_hex(&opts->onto->object.oid));
+	strbuf_addf(&head_reflog, "rebase finished: returning to %s",
+		    opts->head_name);
+	ret = reset_head(NULL, "", opts->head_name, RESET_HEAD_REFS_ONLY,
+			 orig_head_reflog.buf, head_reflog.buf);
+
+	strbuf_release(&orig_head_reflog);
+	strbuf_release(&head_reflog);
+	return ret;
+}
+
 static const char *resolvemsg =
 N_("Resolve all conflicts manually, mark them as resolved with\n"
 "\"git add/rm <conflicted_files>\", then run \"git rebase --continue\".\n"
 "You can instead skip this commit: run \"git rebase --skip\".\n"
 "To abort and get back to the state before \"git rebase\", run "
 "\"git rebase --abort\".");
+
+static int run_am(struct rebase_options *opts)
+{
+	struct child_process am = CHILD_PROCESS_INIT;
+	struct child_process format_patch = CHILD_PROCESS_INIT;
+	struct strbuf revisions = STRBUF_INIT;
+	int status;
+	char *rebased_patches;
+
+	am.git_cmd = 1;
+	argv_array_push(&am.args, "am");
+
+	if (opts->action && !strcmp("continue", opts->action)) {
+		argv_array_push(&am.args, "--resolved");
+		argv_array_pushf(&am.args, "--resolvemsg=%s", resolvemsg);
+		if (opts->gpg_sign_opt)
+			argv_array_push(&am.args, opts->gpg_sign_opt);
+		status = run_command(&am);
+		if (status)
+			return status;
+
+		return move_to_original_branch(opts);
+	}
+	if (opts->action && !strcmp("skip", opts->action)) {
+		argv_array_push(&am.args, "--skip");
+		argv_array_pushf(&am.args, "--resolvemsg=%s", resolvemsg);
+		status = run_command(&am);
+		if (status)
+			return status;
+
+		return move_to_original_branch(opts);
+	}
+	if (opts->action && !strcmp("show-current-patch", opts->action)) {
+		argv_array_push(&am.args, "--show-current-patch");
+		return run_command(&am);
+	}
+
+	strbuf_addf(&revisions, "%s...%s",
+		    oid_to_hex(opts->root ?
+			       /* this is now equivalent to !opts->upstream */
+			       &opts->onto->object.oid :
+			       &opts->upstream->object.oid),
+		    oid_to_hex(&opts->orig_head));
+
+	rebased_patches = xstrdup(git_path("rebased-patches"));
+	format_patch.out = open(rebased_patches,
+				O_WRONLY | O_CREAT | O_TRUNC, 0666);
+	if (format_patch.out < 0) {
+		status = error_errno(_("could not open '%s' for writing"),
+				     rebased_patches);
+		free(rebased_patches);
+		argv_array_clear(&am.args);
+		return status;
+	}
+
+	format_patch.git_cmd = 1;
+	argv_array_pushl(&format_patch.args, "format-patch", "-k", "--stdout",
+			 "--full-index", "--cherry-pick", "--right-only",
+			 "--src-prefix=a/", "--dst-prefix=b/", "--no-renames",
+			 "--no-cover-letter", "--pretty=mboxrd", NULL);
+	if (opts->git_format_patch_opt.len)
+		argv_array_split(&format_patch.args,
+				 opts->git_format_patch_opt.buf);
+	argv_array_push(&format_patch.args, revisions.buf);
+	if (opts->restrict_revision)
+		argv_array_pushf(&format_patch.args, "^%s",
+				 oid_to_hex(&opts->restrict_revision->object.oid));
+
+	status = run_command(&format_patch);
+	if (status) {
+		unlink(rebased_patches);
+		free(rebased_patches);
+		argv_array_clear(&am.args);
+
+		reset_head(&opts->orig_head, "checkout", opts->head_name, 0,
+			   "HEAD", NULL);
+		error(_("\ngit encountered an error while preparing the "
+			"patches to replay\n"
+			"these revisions:\n"
+			"\n    %s\n\n"
+			"As a result, git cannot rebase them."),
+		      opts->revisions);
+
+		strbuf_release(&revisions);
+		return status;
+	}
+	strbuf_release(&revisions);
+
+	am.in = open(rebased_patches, O_RDONLY);
+	if (am.in < 0) {
+		status = error_errno(_("could not open '%s' for reading"),
+				     rebased_patches);
+		free(rebased_patches);
+		argv_array_clear(&am.args);
+		return status;
+	}
+
+	argv_array_pushv(&am.args, opts->git_am_opts.argv);
+	argv_array_push(&am.args, "--rebasing");
+	argv_array_pushf(&am.args, "--resolvemsg=%s", resolvemsg);
+	argv_array_push(&am.args, "--patch-format=mboxrd");
+	if (opts->allow_rerere_autoupdate > 0)
+		argv_array_push(&am.args, "--rerere-autoupdate");
+	else if (opts->allow_rerere_autoupdate == 0)
+		argv_array_push(&am.args, "--no-rerere-autoupdate");
+	if (opts->gpg_sign_opt)
+		argv_array_push(&am.args, opts->gpg_sign_opt);
+	status = run_command(&am);
+	unlink(rebased_patches);
+	free(rebased_patches);
+
+	if (!status) {
+		return move_to_original_branch(opts);
+	}
+
+	if (is_directory(opts->state_dir))
+		write_basic_state(opts);
+
+	return status;
+}
 
 static int run_specific_rebase(struct rebase_options *opts)
 {
@@ -549,6 +723,11 @@ static int run_specific_rebase(struct rebase_options *opts)
 			argv_array_push(&child.args, "--signoff");
 
 		status = run_command(&child);
+		goto finished_rebase;
+	}
+
+	if (opts->type == REBASE_AM) {
+		status = run_am(opts);
 		goto finished_rebase;
 	}
 
