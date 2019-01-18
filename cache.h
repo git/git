@@ -1034,6 +1034,8 @@ static inline int hashcmp(const unsigned char *sha1, const unsigned char *sha2)
 	 *
 	 * This will need to be extended or ripped out when we learn about
 	 * hashes of different sizes.
+	 *
+	 * When ripping this out, see TODO in test-repository.c.
 	 */
 	if (the_hash_algo->rawsz != 20)
 		BUG("hash size not yet supported by hashcmp");

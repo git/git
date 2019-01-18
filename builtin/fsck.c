@@ -401,7 +401,8 @@ out:
 	if (obj->type == OBJ_TREE)
 		free_tree_buffer((struct tree *)obj);
 	if (obj->type == OBJ_COMMIT)
-		free_commit_buffer((struct commit *)obj);
+		free_commit_buffer(the_repository->parsed_objects,
+				   (struct commit *)obj);
 	return err;
 }
 
