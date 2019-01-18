@@ -524,6 +524,8 @@ test_expect_success 'fetching submodules respects parallel settings' '
 	git config fetch.recurseSubmodules true &&
 	(
 		cd downstream &&
+		GIT_TRACE=$(pwd)/trace.out git fetch &&
+		grep "1 tasks" trace.out &&
 		GIT_TRACE=$(pwd)/trace.out git fetch --jobs 7 &&
 		grep "7 tasks" trace.out &&
 		git config submodule.fetchJobs 8 &&
