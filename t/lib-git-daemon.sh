@@ -28,7 +28,7 @@ then
 	test_skip_or_die $GIT_TEST_GIT_DAEMON "file system does not support FIFOs"
 fi
 
-LIB_GIT_DAEMON_PORT=${LIB_GIT_DAEMON_PORT-${this_test#t}}
+test_set_port LIB_GIT_DAEMON_PORT
 
 GIT_DAEMON_PID=
 GIT_DAEMON_DOCUMENT_ROOT_PATH="$PWD"/repo
