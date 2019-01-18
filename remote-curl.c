@@ -380,7 +380,6 @@ static struct discovery *discover_refs(const char *service, int for_push)
 	http_options.extra_headers = &extra_headers;
 	http_options.initial_request = 1;
 	http_options.no_cache = 1;
-	http_options.keep_error = 1;
 
 	http_ret = http_get_strbuf(refs_url.buf, &buffer, &http_options);
 	switch (http_ret) {
@@ -546,14 +545,30 @@ static curlioerr rpc_ioctl(CURL *handle, int cmd, void *clientp)
 }
 #endif
 
+struct rpc_in_data {
+	struct rpc_state *rpc;
+	struct active_request_slot *slot;
+};
+
+/*
+ * A callback for CURLOPT_WRITEFUNCTION. The return value is the bytes consumed
+ * from ptr.
+ */
 static size_t rpc_in(char *ptr, size_t eltsize,
 		size_t nmemb, void *buffer_)
 {
 	size_t size = eltsize * nmemb;
-	struct rpc_state *rpc = buffer_;
+	struct rpc_in_data *data = buffer_;
+	long response_code;
+
+	if (curl_easy_getinfo(data->slot->curl, CURLINFO_RESPONSE_CODE,
+			      &response_code) != CURLE_OK)
+		return size;
+	if (response_code >= 300)
+		return size;
 	if (size)
-		rpc->any_written = 1;
-	write_or_die(rpc->in, ptr, size);
+		data->rpc->any_written = 1;
+	write_or_die(data->rpc->in, ptr, size);
 	return size;
 }
 
@@ -634,6 +649,7 @@ static int post_rpc(struct rpc_state *rpc)
 	size_t gzip_size = 0;
 	int err, large_request = 0;
 	int needs_100_continue = 0;
+	struct rpc_in_data rpc_in_data;
 
 	/* Try to load the entire request, if we can fit it into the
 	 * allocated buffer space we can use HTTP/1.0 and avoid the
@@ -766,7 +782,10 @@ retry:
 
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, headers);
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, rpc_in);
-	curl_easy_setopt(slot->curl, CURLOPT_FILE, rpc);
+	rpc_in_data.rpc = rpc;
+	rpc_in_data.slot = slot;
+	curl_easy_setopt(slot->curl, CURLOPT_FILE, &rpc_in_data);
+	curl_easy_setopt(slot->curl, CURLOPT_FAILONERROR, 0);
 
 
 	rpc->any_written = 0;
