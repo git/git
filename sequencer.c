@@ -158,6 +158,7 @@ static GIT_PATH_FUNC(rebase_path_strategy, "rebase-merge/strategy")
 static GIT_PATH_FUNC(rebase_path_strategy_opts, "rebase-merge/strategy_opts")
 static GIT_PATH_FUNC(rebase_path_allow_rerere_autoupdate, "rebase-merge/allow_rerere_autoupdate")
 static GIT_PATH_FUNC(rebase_path_quiet, "rebase-merge/quiet")
+static GIT_PATH_FUNC(rebase_path_reschedule_failed_exec, "rebase-merge/reschedule-failed-exec")
 
 static int git_sequencer_config(const char *k, const char *v, void *cb)
 {
@@ -2394,6 +2395,9 @@ static int read_populate_opts(struct replay_opts *opts)
 			opts->signoff = 1;
 		}
 
+		if (file_exists(rebase_path_reschedule_failed_exec()))
+			opts->reschedule_failed_exec = 1;
+
 		read_strategy_opts(opts, &buf);
 		strbuf_release(&buf);
 
@@ -2475,6 +2479,8 @@ int write_basic_state(struct replay_opts *opts, const char *head_name,
 		write_file(rebase_path_gpg_sign_opt(), "-S%s\n", opts->gpg_sign);
 	if (opts->signoff)
 		write_file(rebase_path_signoff(), "--signoff\n");
+	if (opts->reschedule_failed_exec)
+		write_file(rebase_path_reschedule_failed_exec(), "%s", "");
 
 	return 0;
 }
@@ -3632,9 +3638,10 @@ static int pick_commits(struct repository *r,
 			*end_of_arg = saved;
 
 			/* Reread the todo file if it has changed. */
-			if (res)
-				; /* fall through */
-			else if (stat(get_todo_path(opts), &st))
+			if (res) {
+				if (opts->reschedule_failed_exec)
+					reschedule = 1;
+			} else if (stat(get_todo_path(opts), &st))
 				res = error_errno(_("could not stat '%s'"),
 						  get_todo_path(opts));
 			else if (match_stat_data(&todo_list->stat, &st)) {
