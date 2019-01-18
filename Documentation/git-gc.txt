@@ -137,7 +137,7 @@ The optional configuration variable `gc.packRefs` determines if
 it within all non-bare repos or it can be set to a boolean value.
 This defaults to true.
 
-The optional configuration variable `gc.commitGraph` determines if
+The optional configuration variable `gc.writeCommitGraph` determines if
 'git gc' should run 'git commit-graph write'. This can be set to a
 boolean value. This defaults to false.
 
