@@ -1471,7 +1471,8 @@ static CURL *setup_curl(struct imap_server_conf *srvc, struct credential *cred)
 }
 
 static int curl_append_msgs_to_imap(struct imap_server_conf *server,
-				    struct strbuf* all_msgs, int total) {
+				    struct strbuf* all_msgs, int total)
+{
 	int ofs = 0;
 	int n = 0;
 	struct buffer msgbuf = { STRBUF_INIT, 0 };

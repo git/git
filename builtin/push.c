@@ -143,7 +143,9 @@ static int push_url_of_remote(struct remote *remote, const char ***url_p)
 	return remote->url_nr;
 }
 
-static NORETURN int die_push_simple(struct branch *branch, struct remote *remote) {
+static NORETURN int die_push_simple(struct branch *branch,
+				    struct remote *remote)
+{
 	/*
 	 * There's no point in using shorten_unambiguous_ref here,
 	 * as the ambiguity would be on the remote side, not what
