@@ -49,9 +49,13 @@ test_expect_success GPG 'create signed commits' '
 	git tag eighth-signed-alt &&
 
 	# commit.gpgsign is still on but this must not be signed
-	git tag ninth-unsigned $(echo 9 | git commit-tree HEAD^{tree}) &&
+	echo 9 | git commit-tree HEAD^{tree} >oid &&
+	test_line_count = 1 oid &&
+	git tag ninth-unsigned $(cat oid) &&
 	# explicit -S of course must sign.
-	git tag tenth-signed $(echo 9 | git commit-tree -S HEAD^{tree})
+	echo 10 | git commit-tree -S HEAD^{tree} >oid &&
+	test_line_count = 1 oid &&
+	git tag tenth-signed $(cat oid)
 '
 
 test_expect_success GPG 'verify and show signatures' '
