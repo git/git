@@ -21,7 +21,7 @@
 #define GRAPH_CHUNKID_OIDFANOUT 0x4f494446 /* "OIDF" */
 #define GRAPH_CHUNKID_OIDLOOKUP 0x4f49444c /* "OIDL" */
 #define GRAPH_CHUNKID_DATA 0x43444154 /* "CDAT" */
-#define GRAPH_CHUNKID_LARGEEDGES 0x45444745 /* "EDGE" */
+#define GRAPH_CHUNKID_EXTRAEDGES 0x45444745 /* "EDGE" */
 
 #define GRAPH_DATA_WIDTH 36
 
@@ -33,7 +33,7 @@
 #define GRAPH_OID_VERSION GRAPH_OID_VERSION_SHA1
 #define GRAPH_OID_LEN GRAPH_OID_LEN_SHA1
 
-#define GRAPH_OCTOPUS_EDGES_NEEDED 0x80000000
+#define GRAPH_EXTRA_EDGES_NEEDED 0x80000000
 #define GRAPH_PARENT_MISSING 0x7fffffff
 #define GRAPH_EDGE_LAST_MASK 0x7fffffff
 #define GRAPH_PARENT_NONE 0x70000000
@@ -177,11 +177,11 @@ struct commit_graph *load_commit_graph_one(const char *graph_file)
 				graph->chunk_commit_data = data + chunk_offset;
 			break;
 
-		case GRAPH_CHUNKID_LARGEEDGES:
-			if (graph->chunk_large_edges)
+		case GRAPH_CHUNKID_EXTRAEDGES:
+			if (graph->chunk_extra_edges)
 				chunk_repeated = 1;
 			else
-				graph->chunk_large_edges = data + chunk_offset;
+				graph->chunk_extra_edges = data + chunk_offset;
 			break;
 		}
 
@@ -343,12 +343,12 @@ static int fill_commit_in_graph(struct commit *item, struct commit_graph *g, uin
 	edge_value = get_be32(commit_data + g->hash_len + 4);
 	if (edge_value == GRAPH_PARENT_NONE)
 		return 1;
-	if (!(edge_value & GRAPH_OCTOPUS_EDGES_NEEDED)) {
+	if (!(edge_value & GRAPH_EXTRA_EDGES_NEEDED)) {
 		pptr = insert_parent_or_die(g, edge_value, pptr);
 		return 1;
 	}
 
-	parent_data_ptr = (uint32_t*)(g->chunk_large_edges +
+	parent_data_ptr = (uint32_t*)(g->chunk_extra_edges +
 			  4 * (uint64_t)(edge_value & GRAPH_EDGE_LAST_MASK));
 	do {
 		edge_value = get_be32(parent_data_ptr);
@@ -504,7 +504,7 @@ static void write_graph_chunk_data(struct hashfile *f, int hash_len,
 		if (!parent)
 			edge_value = GRAPH_PARENT_NONE;
 		else if (parent->next)
-			edge_value = GRAPH_OCTOPUS_EDGES_NEEDED | num_extra_edges;
+			edge_value = GRAPH_EXTRA_EDGES_NEEDED | num_extra_edges;
 		else {
 			edge_value = sha1_pos(parent->item->object.oid.hash,
 					      commits,
@@ -516,7 +516,7 @@ static void write_graph_chunk_data(struct hashfile *f, int hash_len,
 
 		hashwrite_be32(f, edge_value);
 
-		if (edge_value & GRAPH_OCTOPUS_EDGES_NEEDED) {
+		if (edge_value & GRAPH_EXTRA_EDGES_NEEDED) {
 			do {
 				num_extra_edges++;
 				parent = parent->next;
@@ -537,7 +537,7 @@ static void write_graph_chunk_data(struct hashfile *f, int hash_len,
 	}
 }
 
-static void write_graph_chunk_large_edges(struct hashfile *f,
+static void write_graph_chunk_extra_edges(struct hashfile *f,
 					  struct commit **commits,
 					  int nr_commits)
 {
@@ -923,7 +923,7 @@ void write_commit_graph(const char *obj_dir,
 	chunk_ids[1] = GRAPH_CHUNKID_OIDLOOKUP;
 	chunk_ids[2] = GRAPH_CHUNKID_DATA;
 	if (num_extra_edges)
-		chunk_ids[3] = GRAPH_CHUNKID_LARGEEDGES;
+		chunk_ids[3] = GRAPH_CHUNKID_EXTRAEDGES;
 	else
 		chunk_ids[3] = 0;
 	chunk_ids[4] = 0;
@@ -946,7 +946,7 @@ void write_commit_graph(const char *obj_dir,
 	write_graph_chunk_fanout(f, commits.list, commits.nr);
 	write_graph_chunk_oids(f, GRAPH_OID_LEN, commits.list, commits.nr);
 	write_graph_chunk_data(f, GRAPH_OID_LEN, commits.list, commits.nr);
-	write_graph_chunk_large_edges(f, commits.list, commits.nr);
+	write_graph_chunk_extra_edges(f, commits.list, commits.nr);
 
 	close_commit_graph(the_repository);
 	finalize_hashfile(f, NULL, CSUM_HASH_IN_STREAM | CSUM_FSYNC);

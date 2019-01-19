@@ -110,8 +110,8 @@ static int graph_read(int argc, const char **argv)
 		printf(" oid_lookup");
 	if (graph->chunk_commit_data)
 		printf(" commit_metadata");
-	if (graph->chunk_large_edges)
-		printf(" large_edges");
+	if (graph->chunk_extra_edges)
+		printf(" extra_edges");
 	printf("\n");
 
 	UNLEAK(graph);
