@@ -143,7 +143,7 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 		const struct ref_array_item *ref = ref_array.items[i];
 		if (show_symref_target && ref->symref)
 			printf("ref: %s\t%s\n", ref->symref, ref->refname);
-		printf("%s\t%s\n", oid_to_hex(&ref->objectname), ref->refname);
+		printf("%s\t%s\n", oid_to_hex(&ref->oid), ref->refname);
 		status = 0; /* we found something */
 	}
 

@@ -1615,7 +1615,7 @@ static int populate_value(struct ref_array_item *ref, struct strbuf *err)
 				v->s = xstrdup(buf + 1);
 			}
 			continue;
-		} else if (!deref && grab_objectname(name, &ref->objectname, v, atom)) {
+		} else if (!deref && grab_objectname(name, &ref->oid, v, atom)) {
 			continue;
 		} else if (!strcmp(name, "HEAD")) {
 			if (atom->u.head && !strcmp(ref->refname, atom->u.head))
@@ -1661,7 +1661,7 @@ static int populate_value(struct ref_array_item *ref, struct strbuf *err)
 		struct atom_value *v = &ref->value[i];
 		if (v->s == NULL && used_atom[i].source == SOURCE_NONE)
 			return strbuf_addf_ret(err, -1, _("missing object %s for %s"),
-					       oid_to_hex(&ref->objectname), ref->refname);
+					       oid_to_hex(&ref->oid), ref->refname);
 	}
 
 	if (need_tagged)
@@ -1671,7 +1671,7 @@ static int populate_value(struct ref_array_item *ref, struct strbuf *err)
 		return 0;
 
 
-	oi.oid = ref->objectname;
+	oi.oid = ref->oid;
 	if (get_object(ref, 0, &obj, &oi, err))
 		return -1;
 
@@ -1898,7 +1898,7 @@ static struct ref_array_item *new_ref_array_item(const char *refname,
 	struct ref_array_item *ref;
 
 	FLEX_ALLOC_STR(ref, refname, refname);
-	oidcpy(&ref->objectname, oid);
+	oidcpy(&ref->oid, oid);
 
 	return ref;
 }
