@@ -485,6 +485,7 @@ static struct {
 	{ "if", SOURCE_NONE, FIELD_STR, if_atom_parser },
 	{ "then", SOURCE_NONE },
 	{ "else", SOURCE_NONE },
+	{ "rest", SOURCE_NONE },
 };
 
 #define REF_FORMATTING_STATE_INIT  { 0, NULL }
@@ -1622,6 +1623,9 @@ static int populate_value(struct ref_array_item *ref, struct strbuf *err)
 				v->s = xstrdup("*");
 			else
 				v->s = xstrdup(" ");
+			continue;
+		} else if (starts_with(name, "rest")) {
+			v->s = xstrdup(ref->request_rest ? ref->request_rest : "");
 			continue;
 		} else if (starts_with(name, "align")) {
 			v->handler = align_atom_handler;

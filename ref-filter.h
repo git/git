@@ -40,6 +40,7 @@ struct ref_array_item {
 	const char *symref;
 	struct commit *commit;
 	struct atom_value *value;
+	const char *request_rest;
 	char refname[FLEX_ARRAY];
 };
 
