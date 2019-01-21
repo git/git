@@ -883,11 +883,6 @@ int parse_date(const char *date, struct strbuf *result)
 	return 0;
 }
 
-static int auto_date_style(void)
-{
-	return (isatty(1) || pager_in_use()) ? DATE_HUMAN : DATE_NORMAL;
-}
-
 static enum date_mode_type parse_date_type(const char *format, const char **end)
 {
 	if (skip_prefix(format, "relative", end))
@@ -907,8 +902,6 @@ static enum date_mode_type parse_date_type(const char *format, const char **end)
 		return DATE_NORMAL;
 	if (skip_prefix(format, "human", end))
 		return DATE_HUMAN;
-	if (skip_prefix(format, "auto", end))
-		return auto_date_style();
 	if (skip_prefix(format, "raw", end))
 		return DATE_RAW;
 	if (skip_prefix(format, "unix", end))
@@ -922,6 +915,14 @@ static enum date_mode_type parse_date_type(const char *format, const char **end)
 void parse_date_format(const char *format, struct date_mode *mode)
 {
 	const char *p;
+
+	/* "auto:foo" is "if tty/pager, then foo, otherwise normal" */
+	if (skip_prefix(format, "auto:", &p)) {
+		if (isatty(1) || pager_in_use())
+			format = p;
+		else
+			format = "default";
+	}
 
 	/* historical alias */
 	if (!strcmp(format, "local"))
