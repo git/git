@@ -411,6 +411,7 @@ static int read_worktree_config(const char *var, const char *value, void *vdata)
 	} else if (strcmp(var, "core.worktree") == 0) {
 		if (!value)
 			return config_error_nonbool(var);
+		free(data->work_tree);
 		data->work_tree = xstrdup(value);
 	}
 	return 0;
