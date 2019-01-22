@@ -22,7 +22,6 @@ The UI for the protocol is on the 'git fetch-pack' side, and the
 program pair is meant to be used to pull updates from a remote
 repository.  For push operations, see 'git send-pack'.
 
-
 OPTIONS
 -------
 

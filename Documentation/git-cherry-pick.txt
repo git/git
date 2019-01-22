@@ -213,16 +213,16 @@ $ git reset --merge ORIG_HEAD        <3>
 $ git cherry-pick -Xpatience topic^  <4>
 ------------
 <1> apply the change that would be shown by `git show topic^`.
-In this example, the patch does not apply cleanly, so
-information about the conflict is written to the index and
-working tree and no new commit results.
+    In this example, the patch does not apply cleanly, so
+    information about the conflict is written to the index and
+    working tree and no new commit results.
 <2> summarize changes to be reconciled
 <3> cancel the cherry-pick.  In other words, return to the
-pre-cherry-pick state, preserving any local modifications you had in
-the working tree.
+    pre-cherry-pick state, preserving any local modifications
+    you had in the working tree.
 <4> try to apply the change introduced by `topic^` again,
-spending extra time to avoid mistakes based on incorrectly matching
-context lines.
+    spending extra time to avoid mistakes based on incorrectly
+    matching context lines.
 
 SEE ALSO
 --------

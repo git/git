@@ -504,9 +504,9 @@ Toggle it to make sure it is set to `false`. Also, search for
 "mailnews.wraplength" and set the value to 0.
 
 3. Disable the use of format=flowed:
-Edit..Preferences..Advanced..Config Editor.  Search for
-"mailnews.send_plaintext_flowed".
-Toggle it to make sure it is set to `false`.
+   Edit..Preferences..Advanced..Config Editor.  Search for
+   "mailnews.send_plaintext_flowed".
+   Toggle it to make sure it is set to `false`.
 
 After that is done, you should be able to compose email as you
 otherwise would (cut + paste, 'git format-patch' | 'git imap-send', etc),
@@ -629,14 +629,14 @@ EXAMPLES
 --------
 
 * Extract commits between revisions R1 and R2, and apply them on top of
-the current branch using 'git am' to cherry-pick them:
+  the current branch using 'git am' to cherry-pick them:
 +
 ------------
 $ git format-patch -k --stdout R1..R2 | git am -3 -k
 ------------
 
 * Extract all commits which are in the current branch but not in the
-origin branch:
+  origin branch:
 +
 ------------
 $ git format-patch origin
@@ -645,7 +645,7 @@ $ git format-patch origin
 For each commit a separate file is created in the current directory.
 
 * Extract all commits that lead to 'origin' since the inception of the
-project:
+  project:
 +
 ------------
 $ git format-patch --root origin
@@ -664,7 +664,7 @@ Note that non-Git "patch" programs won't understand renaming patches, so
 use it only when you know the recipient uses Git to apply your patch.
 
 * Extract three topmost commits from the current branch and format them
-as e-mailable patches:
+  as e-mailable patches:
 +
 ------------
 $ git format-patch -3

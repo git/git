@@ -115,17 +115,17 @@ $ git pull git://info.example.com/ nitfol  <4>
 ------------
 +
 <1> You are happily working on something, and find the changes
-in these files are in good order.  You do not want to see them
-when you run `git diff`, because you plan to work on other files
-and changes with these files are distracting.
+    in these files are in good order.  You do not want to see them
+    when you run `git diff`, because you plan to work on other files
+    and changes with these files are distracting.
 <2> Somebody asks you to pull, and the changes sound worthy of merging.
 <3> However, you already dirtied the index (i.e. your index does
-not match the `HEAD` commit).  But you know the pull you are going
-to make does not affect `frotz.c` or `filfre.c`, so you revert the
-index changes for these two files.  Your changes in working tree
-remain there.
+    not match the `HEAD` commit).  But you know the pull you are going
+    to make does not affect `frotz.c` or `filfre.c`, so you revert the
+    index changes for these two files.  Your changes in working tree
+    remain there.
 <4> Then you can pull and merge, leaving `frotz.c` and `filfre.c`
-changes still in the working tree.
+    changes still in the working tree.
 
 Undo a commit and redo::
 +
@@ -137,12 +137,12 @@ $ git commit -a -c ORIG_HEAD  <3>
 ------------
 +
 <1> This is most often done when you remembered what you
-just committed is incomplete, or you misspelled your commit
-message, or both.  Leaves working tree as it was before "reset".
+    just committed is incomplete, or you misspelled your commit
+    message, or both.  Leaves working tree as it was before "reset".
 <2> Make corrections to working tree files.
 <3> "reset" copies the old head to `.git/ORIG_HEAD`; redo the
-commit by starting with its log message.  If you do not need to
-edit the message further, you can give `-C` option instead.
+    commit by starting with its log message.  If you do not need to
+    edit the message further, you can give `-C` option instead.
 +
 See also the `--amend` option to linkgit:git-commit[1].
 
@@ -155,9 +155,9 @@ $ git checkout topic/wip   <3>
 ------------
 +
 <1> You have made some commits, but realize they were premature
-to be in the `master` branch.  You want to continue polishing
-them in a topic branch, so create `topic/wip` branch off of the
-current `HEAD`.
+    to be in the `master` branch.  You want to continue polishing
+    them in a topic branch, so create `topic/wip` branch off of the
+    current `HEAD`.
 <2> Rewind the master branch to get rid of those three commits.
 <3> Switch to `topic/wip` branch and keep working.
 
@@ -169,10 +169,10 @@ $ git reset --hard HEAD~3   <1>
 ------------
 +
 <1> The last three commits (`HEAD`, `HEAD^`, and `HEAD~2`) were bad
-and you do not want to ever see them again.  Do *not* do this if
-you have already given these commits to somebody else.  (See the
-"RECOVERING FROM UPSTREAM REBASE" section in linkgit:git-rebase[1] for
-the implications of doing so.)
+    and you do not want to ever see them again.  Do *not* do this if
+    you have already given these commits to somebody else.  (See the
+    "RECOVERING FROM UPSTREAM REBASE" section in linkgit:git-rebase[1]
+    for the implications of doing so.)
 
 Undo a merge or pull::
 +
@@ -189,18 +189,18 @@ $ git reset --hard ORIG_HEAD       <4>
 ------------
 +
 <1> Try to update from the upstream resulted in a lot of
-conflicts; you were not ready to spend a lot of time merging
-right now, so you decide to do that later.
+    conflicts; you were not ready to spend a lot of time merging
+    right now, so you decide to do that later.
 <2> "pull" has not made merge commit, so `git reset --hard`
-which is a synonym for `git reset --hard HEAD` clears the mess
-from the index file and the working tree.
+    which is a synonym for `git reset --hard HEAD` clears the mess
+    from the index file and the working tree.
 <3> Merge a topic branch into the current branch, which resulted
-in a fast-forward.
+    in a fast-forward.
 <4> But you decided that the topic branch is not ready for public
-consumption yet.  "pull" or "merge" always leaves the original
-tip of the current branch in `ORIG_HEAD`, so resetting hard to it
-brings your index file and the working tree back to that state,
-and resets the tip of the branch to that commit.
+    consumption yet.  "pull" or "merge" always leaves the original
+    tip of the current branch in `ORIG_HEAD`, so resetting hard to it
+    brings your index file and the working tree back to that state,
+    and resets the tip of the branch to that commit.
 
 Undo a merge or pull inside a dirty working tree::
 +
@@ -214,14 +214,14 @@ $ git reset --merge ORIG_HEAD      <2>
 ------------
 +
 <1> Even if you may have local modifications in your
-working tree, you can safely say `git pull` when you know
-that the change in the other branch does not overlap with
-them.
+    working tree, you can safely say `git pull` when you know
+    that the change in the other branch does not overlap with
+    them.
 <2> After inspecting the result of the merge, you may find
-that the change in the other branch is unsatisfactory.  Running
-`git reset --hard ORIG_HEAD` will let you go back to where you
-were, but it will discard your local changes, which you do not
-want.  `git reset --merge` keeps your local changes.
+    that the change in the other branch is unsatisfactory.  Running
+    `git reset --hard ORIG_HEAD` will let you go back to where you
+    were, but it will discard your local changes, which you do not
+    want.  `git reset --merge` keeps your local changes.
 
 
 Interrupted workflow::

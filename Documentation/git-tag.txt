@@ -237,16 +237,16 @@ your repository directly), then others will have already seen
 the old tag. In that case you can do one of two things:
 
 . The sane thing.
-Just admit you screwed up, and use a different name. Others have
-already seen one tag-name, and if you keep the same name, you
-may be in the situation that two people both have "version X",
-but they actually have 'different' "X"'s.  So just call it "X.1"
-and be done with it.
+  Just admit you screwed up, and use a different name. Others have
+  already seen one tag-name, and if you keep the same name, you
+  may be in the situation that two people both have "version X",
+  but they actually have 'different' "X"'s.  So just call it "X.1"
+  and be done with it.
 
 . The insane thing.
-You really want to call the new version "X" too, 'even though'
-others have already seen the old one. So just use 'git tag -f'
-again, as if you hadn't already published the old one.
+  You really want to call the new version "X" too, 'even though'
+  others have already seen the old one. So just use 'git tag -f'
+  again, as if you hadn't already published the old one.
 
 However, Git does *not* (and it should not) change tags behind
 users back. So if somebody already got the old tag, doing a
