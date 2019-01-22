@@ -5,6 +5,7 @@
 #include "refs.h"
 #include "commit.h"
 #include "parse-options.h"
+#include "object-store.h"
 
 /* Quoting styles */
 #define QUOTE_NONE 0
@@ -71,6 +72,17 @@ struct ref_filter {
 		lines;
 	int abbrev,
 		verbose;
+};
+
+struct expand_data {
+	struct object_id oid;
+	enum object_type type;
+	unsigned long size;
+	off_t disk_size;
+	struct object_id delta_base_oid;
+	void *content;
+
+	struct object_info info;
 };
 
 struct ref_format {
