@@ -28,9 +28,7 @@ struct batch_options {
 };
 
 static const char *force_path;
-/* Next 3 vars will be deleted at the end of this patch */
-static int mark_query;
-static int skip_object_info;
+/* global rest will be deleted at the end of this patch */
 static const char *rest;
 
 static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
@@ -169,84 +167,29 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 	return 0;
 }
 
-static int is_atom(const char *atom, const char *s, int slen)
-{
-	int alen = strlen(atom);
-	return alen == slen && !memcmp(atom, s, alen);
-}
-
-static void expand_atom(struct strbuf *sb, const char *atom, int len,
-			void *vdata)
-{
-	struct expand_data *data = vdata;
-
-	if (is_atom("objectname", atom, len)) {
-		if (!mark_query)
-			strbuf_addstr(sb, oid_to_hex(&data->oid));
-	} else if (is_atom("objecttype", atom, len)) {
-		if (mark_query)
-			data->info.typep = &data->type;
-		else
-			strbuf_addstr(sb, type_name(data->type));
-	} else if (is_atom("objectsize", atom, len)) {
-		if (mark_query)
-			data->info.sizep = &data->size;
-		else
-			strbuf_addf(sb, "%"PRIuMAX , (uintmax_t)data->size);
-	} else if (is_atom("objectsize:disk", atom, len)) {
-		if (mark_query)
-			data->info.disk_sizep = &data->disk_size;
-		else
-			strbuf_addf(sb, "%"PRIuMAX, (uintmax_t)data->disk_size);
-	} else if (is_atom("rest", atom, len)) {
-		if (rest)
-			strbuf_addstr(sb, rest);
-	} else if (is_atom("deltabase", atom, len)) {
-		if (mark_query)
-			data->info.delta_base_sha1 = data->delta_base_oid.hash;
-		else
-			strbuf_addstr(sb,
-				      oid_to_hex(&data->delta_base_oid));
-	} else
-		die("unknown format element: %.*s", len, atom);
-}
-
-static size_t expand_format(struct strbuf *sb, const char *start, void *data)
-{
-	const char *end;
-
-	if (*start != '(')
-		return 0;
-	end = strchr(start + 1, ')');
-	if (!end)
-		die("format element '%s' does not end in ')'", start);
-
-	expand_atom(sb, start + 1, end - start - 1, data);
-
-	return end - start + 1;
-}
-
 static void batch_object_write(const char *obj_name,
 			       struct strbuf *scratch,
 			       struct batch_options *opt,
 			       struct expand_data *data)
 {
-	if (!skip_object_info &&
-	    oid_object_info_extended(the_repository, &data->oid, &data->info,
-				     OBJECT_INFO_LOOKUP_REPLACE) < 0) {
-		printf("%s missing\n",
-		       obj_name ? obj_name : oid_to_hex(&data->oid));
+	struct strbuf err = STRBUF_INIT;
+	struct ref_array_item item = { data->oid };
+	item.request_rest = rest;
+	item.check_obj = 1;
+	strbuf_reset(scratch);
+
+	if (format_ref_array_item(&item, &opt->format, scratch, &err)) {
+		printf("%s missing\n", obj_name ? obj_name : oid_to_hex(&item.oid));
 		fflush(stdout);
 		return;
 	}
 
-	strbuf_reset(scratch);
-	strbuf_expand(scratch, opt->format.format, expand_format, data);
 	strbuf_addch(scratch, '\n');
 	write_or_die(1, scratch->buf, scratch->len);
+	strbuf_release(&err);
 
 	if (opt->print_contents) {
-		print_object_or_die(data, opt->cmdmode, opt->buffer_output, rest);
+		print_raw_object_or_die(&item, opt->cmdmode, opt->buffer_output);
 		write_or_die(1, "\n", 1);
 	}
 }
@@ -367,30 +310,7 @@ static int batch_objects(struct batch_options *opt)
 	int save_warning;
 	int retval = 0;
 	int is_rest = strstr(opt->format.format, "%(rest)") != NULL || opt->cmdmode;
-
-	/*
-	 * Expand once with our special mark_query flag, which will prime the
-	 * object_info to be handed to oid_object_info_extended for each
-	 * object.
-	 */
 	memset(&data, 0, sizeof(data));
-	mark_query = 1;
-	strbuf_expand(&output, opt->format.format, expand_format, &data);
-	mark_query = 0;
-	strbuf_release(&output);
-
-	if (opt->all_objects) {
-		struct object_info empty = OBJECT_INFO_INIT;
-		if (!memcmp(&data.info, &empty, sizeof(empty)))
-			skip_object_info = 1;
-	}
-
-	/*
-	 * If we are printing out the object, then always fill in the type,
-	 * since we will want to decide whether or not to stream.
-	 */
-	if (opt->print_contents)
-		data.info.typep = &data.type;
 
 	if (opt->all_objects) {
 		struct object_cb_data cb;
@@ -581,6 +501,15 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 
 	if (!batch.format.format)
 		batch.format.format = "%(objectname) %(objecttype) %(objectsize)";
+	if (batch.print_contents) {
+		const char *contents = "%(raw)";
+		char *format = (char *)calloc(strlen(batch.format.format) + strlen(contents) + 1, 1);
+		memcpy(format, batch.format.format, strlen(batch.format.format));
+		memcpy(format + strlen(format), contents, strlen(contents));
+		batch.format.format = format;
+	}
+	if (verify_ref_format(&batch.format))
+		usage_with_options(cat_file_usage, options);
 
 	if (batch.enabled)
 		return batch_objects(&batch);

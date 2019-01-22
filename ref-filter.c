@@ -2231,6 +2231,7 @@ int format_ref_array_item(struct ref_array_item *info,
 {
 	const char *cp, *sp, *ep;
 	struct ref_formatting_state state = REF_FORMATTING_STATE_INIT;
+	struct object_info empty = OBJECT_INFO_INIT;
 
 	state.quote_style = format->quote_style;
 	push_stack_element(&state.stack);
@@ -2253,6 +2254,11 @@ int format_ref_array_item(struct ref_array_item *info,
 		sp = cp + strlen(cp);
 		append_literal(cp, sp, &state);
 	}
+	if (info->check_obj &&
+	    oid_object_info_extended(the_repository, &info->oid, &empty,
+				     OBJECT_INFO_LOOKUP_REPLACE))
+		return strbuf_addf_ret(error_buf, -1, _("%s missing\n"),
+				       oid_to_hex(&info->oid));
 	if (format->need_color_reset_at_eol) {
 		struct atom_value resetv;
 		resetv.s = GIT_COLOR_RESET;
@@ -2381,23 +2387,32 @@ int parse_opt_merge_filter(const struct option *opt, const char *arg, int unset)
 	return 0;
 }
 
-void print_object_or_die(struct expand_data *data, int cmdmode,
-			 int buffered, const char *rest)
+/*
+ * TODO: add support of %(*raw). Need to switch between oi and oi_deref for that.
+ * TODO: split logic and printing (as it is done in format_ref_array_item and
+ * show_ref_array_item).
+ * TODO: rewrite print_object_or_die so that it will reuse result of general
+ * oid_object_info_extended call.
+ * TODO: embed this function into general ref_filter flow, make it static.
+ * That will allow other ref-filter users to print raw file
+ * (now only cat_file can use it).
+ */
+void print_raw_object_or_die(struct ref_array_item *item, int cmdmode, int buffered)
 {
-	const struct object_id *oid = &data->oid;
+	const struct object_id *oid = &oi.oid;
 	unsigned long size;
 	char *contents;
 
-	assert(data->info.typep);
+	assert(oi.info.typep);
 
-	if (data->type != OBJ_BLOB) {
+	if (oi.type != OBJ_BLOB) {
 		enum object_type type;
 		contents = read_object_file(oid, &type, &size);
 		if (!contents)
 			die("object %s disappeared", oid_to_hex(oid));
-		if (type != data->type)
+		if (type != oi.type)
 			die("object %s changed type!?", oid_to_hex(oid));
-		if (data->info.sizep && size != data->size)
+		if (oi.info.sizep && size != oi.size)
 			die("object %s changed size!?", oid_to_hex(oid));
 
 		write_or_die(1, contents, size);
@@ -2413,19 +2428,19 @@ void print_object_or_die(struct expand_data *data, int cmdmode,
 		return;
 	}
 
-	if (!rest)
+	if (!item->request_rest)
 		die("missing path for '%s'", oid_to_hex(oid));
 
 	if (cmdmode == 'w') {
-		if (filter_object(rest, 0100644, oid, &contents, &size))
-			die("could not convert '%s' %s", oid_to_hex(oid), rest);
+		if (filter_object(item->request_rest, 0100644, oid, &contents, &size))
+			die("could not convert '%s' %s", oid_to_hex(oid), item->request_rest);
 	} else if (cmdmode == 'c') {
 		enum object_type type;
-		if (!textconv_object(the_repository, rest, 0100644, oid, 1,
+		if (!textconv_object(the_repository, item->request_rest, 0100644, oid, 1,
 				     &contents, &size))
 			contents = read_object_file(oid, &type, &size);
 		if (!contents)
-			die("could not convert '%s' %s", oid_to_hex(oid), rest);
+			die("could not convert '%s' %s", oid_to_hex(oid), item->request_rest);
 	} else
 		BUG("invalid cmdmode: %c", cmdmode);
 	write_or_die(1, contents, size);

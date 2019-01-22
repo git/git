@@ -42,6 +42,7 @@ struct ref_array_item {
 	struct commit *commit;
 	struct atom_value *value;
 	const char *request_rest;
+	int check_obj;
 	char refname[FLEX_ARRAY];
 };
 
@@ -157,7 +158,6 @@ struct ref_array_item *ref_array_push(struct ref_array *array,
 				      const char *refname,
 				      const struct object_id *oid);
 
-void print_object_or_die(struct expand_data *data, int cmdmode,
-			 int buffered, const char *rest);
+void print_raw_object_or_die(struct ref_array_item *item, int cmdmode, int buffered);
 
 #endif /*  REF_FILTER_H  */
