@@ -202,6 +202,15 @@ const char *optname(const struct option *opt, int flags);
 		BUG("option callback does not expect an argument"); \
 } while (0)
 
+/*
+ * Use this assertion for callbacks that expect to be called with NONEG,
+ * and require an argument be supplied.
+ */
+#define BUG_ON_OPT_NEG_NOARG(unset, arg) do { \
+	if((!unset) && (!arg)) \
+		BUG("option callback does not expect negation and requires an argument"); \
+} while(0)
+
 /*----- incremental advanced APIs -----*/
 
 enum {
