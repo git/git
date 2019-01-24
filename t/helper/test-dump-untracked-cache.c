@@ -1,3 +1,4 @@
+#define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "test-tool.h"
 #include "cache.h"
 #include "dir.h"

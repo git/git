@@ -4,6 +4,7 @@
  * Copyright (c) 2018 Pratik Karki
  */
 
+#define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "builtin.h"
 #include "run-command.h"
 #include "exec-cmd.h"

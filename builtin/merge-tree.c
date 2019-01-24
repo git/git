@@ -1,3 +1,4 @@
+#define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "builtin.h"
 #include "tree-walk.h"
 #include "xdiff-interface.h"
@@ -76,7 +77,8 @@ static void *result(struct merge_list *entry, unsigned long *size)
 	their = NULL;
 	if (entry)
 		their = entry->blob;
-	return merge_blobs(&the_index, path, base, our, their, size);
+	return merge_blobs(the_repository->index, path,
+			   base, our, their, size);
 }
 
 static void *origin(struct merge_list *entry, unsigned long *size)

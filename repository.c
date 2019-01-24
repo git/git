@@ -1,3 +1,8 @@
+/*
+ * not really _using_ the compat macros, just make sure the_index
+ * declaration matches the definition in this file.
+ */
+#define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
 #include "repository.h"
 #include "object-store.h"
@@ -9,6 +14,7 @@
 /* The main repository */
 static struct repository the_repo;
 struct repository *the_repository;
+struct index_state the_index;
 
 void initialize_the_repository(void)
 {

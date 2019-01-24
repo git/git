@@ -4,6 +4,7 @@
  * Copyright (C) 2005 Linus Torvalds
  *
  */
+#define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "builtin.h"
 #include "config.h"
 #include "lockfile.h"

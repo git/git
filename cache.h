@@ -338,8 +338,6 @@ struct index_state {
 	struct mem_pool *ce_mem_pool;
 };
 
-extern struct index_state the_index;
-
 /* Name hashing */
 extern int test_lazy_init_name_hash(struct index_state *istate, int try_threaded);
 extern void add_name_hash(struct index_state *istate, struct cache_entry *ce);
@@ -401,7 +399,9 @@ struct cache_entry *dup_cache_entry(const struct cache_entry *ce, struct index_s
  */
 void validate_cache_entries(const struct index_state *istate);
 
-#ifndef NO_THE_INDEX_COMPATIBILITY_MACROS
+#ifdef USE_THE_INDEX_COMPATIBILITY_MACROS
+extern struct index_state the_index;
+
 #define active_cache (the_index.cache)
 #define active_nr (the_index.cache_nr)
 #define active_alloc (the_index.cache_alloc)

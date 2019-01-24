@@ -7,7 +7,6 @@
  * an insanely large number of attributes.
  */
 
-#define NO_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
 #include "config.h"
 #include "exec-cmd.h"

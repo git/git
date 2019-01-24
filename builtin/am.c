@@ -3,6 +3,7 @@
  *
  * Based on git-am.sh by Junio C Hamano.
  */
+#define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
 #include "config.h"
 #include "builtin.h"
