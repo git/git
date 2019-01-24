@@ -28,8 +28,6 @@ struct batch_options {
 };
 
 static const char *force_path;
-/* global rest will be deleted at the end of this patch */
-static const char *rest;
 
 static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 			int unknown_type)
@@ -170,16 +168,19 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 static void batch_object_write(const char *obj_name,
 			       struct strbuf *scratch,
 			       struct batch_options *opt,
-			       struct expand_data *data)
+			       struct ref_array_item *item)
 {
 	struct strbuf err = STRBUF_INIT;
-	struct ref_array_item item = { data->oid };
-	item.request_rest = rest;
-	item.check_obj = 1;
+	/*
+	 * TODO: get rid of memory leak. The best way is to reuse ref_array
+	 * in batch_objects and then call ref_array_clear.
+	 */
+	item->value = 0;
+	item->check_obj = 1;
 	strbuf_reset(scratch);
 
-	if (format_ref_array_item(&item, &opt->format, scratch, &err)) {
-		printf("%s missing\n", obj_name ? obj_name : oid_to_hex(&item.oid));
+	if (format_ref_array_item(item, &opt->format, scratch, &err)) {
+		printf("%s missing\n", obj_name ? obj_name : oid_to_hex(&item->oid));
 		fflush(stdout);
 		return;
 	}
@@ -189,7 +190,7 @@ static void batch_object_write(const char *obj_name,
 	strbuf_release(&err);
 
 	if (opt->print_contents) {
-		print_raw_object_or_die(&item, opt->cmdmode, opt->buffer_output);
+		print_raw_object_or_die(item, opt->cmdmode, opt->buffer_output);
 		write_or_die(1, "\n", 1);
 	}
 }
@@ -197,14 +198,14 @@ static void batch_object_write(const char *obj_name,
 static void batch_one_object(const char *obj_name,
 			     struct strbuf *scratch,
 			     struct batch_options *opt,
-			     struct expand_data *data)
+			     struct ref_array_item *item)
 {
 	struct object_context ctx;
 	int flags = opt->follow_symlinks ? GET_OID_FOLLOW_SYMLINKS : 0;
 	enum get_oid_result result;
 
 	result = get_oid_with_context(the_repository, obj_name,
-				      flags, &data->oid, &ctx);
+				      flags, &item->oid, &ctx);
 	if (result != FOUND) {
 		switch (result) {
 		case MISSING_OBJECT:
@@ -242,12 +243,12 @@ static void batch_one_object(const char *obj_name,
 		return;
 	}
 
-	batch_object_write(obj_name, scratch, opt, data);
+	batch_object_write(obj_name, scratch, opt, item);
 }
 
 struct object_cb_data {
 	struct batch_options *opt;
-	struct expand_data *expand;
+	struct ref_array_item *item;
 	struct oidset *seen;
 	struct strbuf *scratch;
 };
@@ -255,8 +256,8 @@ struct object_cb_data {
 static int batch_object_cb(const struct object_id *oid, void *vdata)
 {
 	struct object_cb_data *data = vdata;
-	oidcpy(&data->expand->oid, oid);
-	batch_object_write(NULL, data->scratch, data->opt, data->expand);
+	oidcpy(&data->item->oid, oid);
+	batch_object_write(NULL, data->scratch, data->opt, data->item);
 	return 0;
 }
 
@@ -306,20 +307,20 @@ static int batch_objects(struct batch_options *opt)
 {
 	struct strbuf input = STRBUF_INIT;
 	struct strbuf output = STRBUF_INIT;
-	struct expand_data data;
 	int save_warning;
 	int retval = 0;
 	int is_rest = strstr(opt->format.format, "%(rest)") != NULL || opt->cmdmode;
-	memset(&data, 0, sizeof(data));
 
 	if (opt->all_objects) {
 		struct object_cb_data cb;
+		struct ref_array_item item;
+		memset(&item, 0, sizeof(item));
 
 		if (repository_format_partial_clone)
 			warning("This repository has extensions.partialClone set. Some objects may not be loaded.");
 
 		cb.opt = opt;
-		cb.expand = &data;
+		cb.item = &item;
 		cb.scratch = &output;
 
 		if (opt->unordered) {
@@ -358,6 +359,8 @@ static int batch_objects(struct batch_options *opt)
 	warn_on_object_refname_ambiguity = 0;
 
 	while (strbuf_getline(&input, stdin) != EOF) {
+		struct ref_array_item item;
+		memset(&item, 0, sizeof(item));
 		if (is_rest) {
 			/*
 			 * Split at first whitespace, tying off the beginning
@@ -369,10 +372,10 @@ static int batch_objects(struct batch_options *opt)
 				while (*p && strchr(" \t", *p))
 					*p++ = '\0';
 			}
-			rest = p;
+			item.request_rest = p;
 		}
 
-		batch_one_object(input.buf, &output, opt, &data);
+		batch_one_object(input.buf, &output, opt, &item);
 	}
 
 	strbuf_release(&input);

@@ -65,7 +65,16 @@ struct refname_atom {
 	int lstrip, rstrip;
 };
 
-static struct expand_data oi, oi_deref;
+static struct expand_data {
+	struct object_id oid;
+	enum object_type type;
+	unsigned long size;
+	off_t disk_size;
+	struct object_id delta_base_oid;
+	void *content;
+
+	struct object_info info;
+} oi, oi_deref;
 
 /*
  * An atom is a valid field atom listed below, possibly prefixed with
