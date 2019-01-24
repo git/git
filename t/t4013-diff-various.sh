@@ -358,6 +358,7 @@ diff --line-prefix=abc master master^ side
 diff --dirstat master~1 master~2
 diff --dirstat initial rearrange
 diff --dirstat-by-file initial rearrange
+diff --dirstat --cc master~1 master
 # No-index --abbrev and --no-abbrev
 diff --raw initial
 :noellipses diff --raw initial
