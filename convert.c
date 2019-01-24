@@ -591,7 +591,7 @@ static int crlf_to_git(const struct index_state *istate,
 	return 1;
 }
 
-static int crlf_to_worktree(const char *path, const char *src, size_t len,
+static int crlf_to_worktree(const char *src, size_t len,
 			    struct strbuf *buf, enum crlf_action crlf_action)
 {
 	char *to_free = NULL;
@@ -1091,7 +1091,7 @@ static int count_ident(const char *cp, unsigned long size)
 	return cnt;
 }
 
-static int ident_to_git(const char *path, const char *src, size_t len,
+static int ident_to_git(const char *src, size_t len,
 			struct strbuf *buf, int ident)
 {
 	char *dst, *dollar;
@@ -1135,7 +1135,7 @@ static int ident_to_git(const char *path, const char *src, size_t len,
 	return 1;
 }
 
-static int ident_to_worktree(const char *path, const char *src, size_t len,
+static int ident_to_worktree(const char *src, size_t len,
 			     struct strbuf *buf, int ident)
 {
 	struct object_id oid;
@@ -1416,7 +1416,7 @@ int convert_to_git(const struct index_state *istate,
 			len = dst->len;
 		}
 	}
-	return ret | ident_to_git(path, src, len, dst, ca.ident);
+	return ret | ident_to_git(src, len, dst, ca.ident);
 }
 
 void convert_to_git_filter_fd(const struct index_state *istate,
@@ -1434,7 +1434,7 @@ void convert_to_git_filter_fd(const struct index_state *istate,
 
 	encode_to_git(path, dst->buf, dst->len, dst, ca.working_tree_encoding, conv_flags);
 	crlf_to_git(istate, path, dst->buf, dst->len, dst, ca.crlf_action, conv_flags);
-	ident_to_git(path, dst->buf, dst->len, dst, ca.ident);
+	ident_to_git(dst->buf, dst->len, dst, ca.ident);
 }
 
 static int convert_to_working_tree_internal(const struct index_state *istate,
@@ -1447,7 +1447,7 @@ static int convert_to_working_tree_internal(const struct index_state *istate,
 
 	convert_attrs(istate, &ca, path);
 
-	ret |= ident_to_worktree(path, src, len, dst, ca.ident);
+	ret |= ident_to_worktree(src, len, dst, ca.ident);
 	if (ret) {
 		src = dst->buf;
 		len = dst->len;
@@ -1458,7 +1458,7 @@ static int convert_to_working_tree_internal(const struct index_state *istate,
 	 * support smudge).  The filters might expect CRLFs.
 	 */
 	if ((ca.drv && (ca.drv->smudge || ca.drv->process)) || !normalizing) {
-		ret |= crlf_to_worktree(path, src, len, dst, ca.crlf_action);
+		ret |= crlf_to_worktree(src, len, dst, ca.crlf_action);
 		if (ret) {
 			src = dst->buf;
 			len = dst->len;
