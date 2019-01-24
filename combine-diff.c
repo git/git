@@ -1325,6 +1325,7 @@ static const char *path_path(void *obj)
  * Diff stat formats which we always compute solely against the first parent.
  */
 #define STAT_FORMAT_MASK (DIFF_FORMAT_NUMSTAT \
+			  | DIFF_FORMAT_SHORTSTAT \
 			  | DIFF_FORMAT_DIFFSTAT)
 
 /* find set of paths that every parent touches */

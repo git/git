@@ -239,6 +239,7 @@ diff-tree --cc --stat --summary master
 # stat summary should show the diffstat and summary with the first parent
 diff-tree -c --stat --summary side
 diff-tree --cc --stat --summary side
+diff-tree --cc --shortstat master
 # improved by Timo's patch
 diff-tree --cc --patch-with-stat master
 # improved by Timo's patch
