@@ -92,7 +92,7 @@ static void gather_stats(const char *buf, unsigned long size, struct text_stat *
  * The same heuristics as diff.c::mmfile_is_binary()
  * We treat files with bare CR as binary
  */
-static int convert_is_binary(unsigned long size, const struct text_stat *stats)
+static int convert_is_binary(const struct text_stat *stats)
 {
 	if (stats->lonecr)
 		return 1;
@@ -110,7 +110,7 @@ static unsigned int gather_convert_stats(const char *data, unsigned long size)
 	if (!data || !size)
 		return 0;
 	gather_stats(data, size, &stats);
-	if (convert_is_binary(size, &stats))
+	if (convert_is_binary(&stats))
 		ret |= CONVERT_STAT_BITS_BIN;
 	if (stats.crlf)
 		ret |= CONVERT_STAT_BITS_TXT_CRLF;
@@ -245,7 +245,7 @@ static int has_crlf_in_index(const struct index_state *istate, const char *path)
 	return has_crlf;
 }
 
-static int will_convert_lf_to_crlf(size_t len, struct text_stat *stats,
+static int will_convert_lf_to_crlf(struct text_stat *stats,
 				   enum crlf_action crlf_action)
 {
 	if (output_eol(crlf_action) != EOL_CRLF)
@@ -260,7 +260,7 @@ static int will_convert_lf_to_crlf(size_t len, struct text_stat *stats,
 		if (stats->lonecr || stats->crlf)
 			return 0;
 
-		if (convert_is_binary(len, stats))
+		if (convert_is_binary(stats))
 			return 0;
 	}
 	return 1;
@@ -527,7 +527,7 @@ static int crlf_to_git(const struct index_state *istate,
 	convert_crlf_into_lf = !!stats.crlf;
 
 	if (crlf_action == CRLF_AUTO || crlf_action == CRLF_AUTO_INPUT || crlf_action == CRLF_AUTO_CRLF) {
-		if (convert_is_binary(len, &stats))
+		if (convert_is_binary(&stats))
 			return 0;
 		/*
 		 * If the file in the index has any CR in it, do not
@@ -549,7 +549,7 @@ static int crlf_to_git(const struct index_state *istate,
 			new_stats.crlf = 0;
 		}
 		/* simulate "git checkout" */
-		if (will_convert_lf_to_crlf(len, &new_stats, crlf_action)) {
+		if (will_convert_lf_to_crlf(&new_stats, crlf_action)) {
 			new_stats.crlf += new_stats.lonelf;
 			new_stats.lonelf = 0;
 		}
@@ -601,7 +601,7 @@ static int crlf_to_worktree(const char *path, const char *src, size_t len,
 		return 0;
 
 	gather_stats(src, len, &stats);
-	if (!will_convert_lf_to_crlf(len, &stats, crlf_action))
+	if (!will_convert_lf_to_crlf(&stats, crlf_action))
 		return 0;
 
 	/* are we "faking" in place editing ? */
