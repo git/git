@@ -204,13 +204,6 @@ struct expand_data {
 	int mark_query;
 
 	/*
-	 * Whether to split the input on whitespace before feeding it to
-	 * get_sha1; this is decided during the mark_query phase based on
-	 * whether we have a %(rest) token in our format.
-	 */
-	int split_on_whitespace;
-
-	/*
 	 * After a mark_query run, this object_info is set up to be
 	 * passed to oid_object_info_extended. It will point to the data
 	 * elements above, so you can retrieve the response from there.
@@ -255,9 +248,7 @@ static void expand_atom(struct strbuf *sb, const char *atom, int len,
 		else
 			strbuf_addf(sb, "%"PRIuMAX, (uintmax_t)data->disk_size);
 	} else if (is_atom("rest", atom, len)) {
-		if (data->mark_query)
-			data->split_on_whitespace = 1;
-		else if (data->rest)
+		if (data->rest)
 			strbuf_addstr(sb, data->rest);
 	} else if (is_atom("deltabase", atom, len)) {
 		if (data->mark_query)
@@ -491,6 +482,7 @@ static int batch_objects(struct batch_options *opt)
 	struct expand_data data;
 	int save_warning;
 	int retval = 0;
+	int is_rest = strstr(opt->format.format, "%(rest)") != NULL || opt->cmdmode;
 
 	/*
 	 * Expand once with our special mark_query flag, which will prime the
@@ -502,8 +494,6 @@ static int batch_objects(struct batch_options *opt)
 	strbuf_expand(&output, opt->format.format, expand_format, &data);
 	data.mark_query = 0;
 	strbuf_release(&output);
-	if (opt->cmdmode)
-		data.split_on_whitespace = 1;
 
 	if (opt->all_objects) {
 		struct object_info empty = OBJECT_INFO_INIT;
@@ -564,7 +554,7 @@ static int batch_objects(struct batch_options *opt)
 	warn_on_object_refname_ambiguity = 0;
 
 	while (strbuf_getline(&input, stdin) != EOF) {
-		if (data.split_on_whitespace) {
+		if (is_rest) {
 			/*
 			 * Split at first whitespace, tying off the beginning
 			 * of the string and saving the remainder (or NULL) in
