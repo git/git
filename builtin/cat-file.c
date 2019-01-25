@@ -29,6 +29,8 @@ struct batch_options {
 };
 
 static const char *force_path;
+/* Will be deleted at the end of this patch */
+static int mark_query;
 
 static int filter_object(const char *path, unsigned mode,
 			 const struct object_id *oid,
@@ -198,12 +200,6 @@ struct expand_data {
 	struct object_id delta_base_oid;
 
 	/*
-	 * If mark_query is true, we do not expand anything, but rather
-	 * just mark the object_info with items we wish to query.
-	 */
-	int mark_query;
-
-	/*
 	 * After a mark_query run, this object_info is set up to be
 	 * passed to oid_object_info_extended. It will point to the data
 	 * elements above, so you can retrieve the response from there.
@@ -230,20 +226,20 @@ static void expand_atom(struct strbuf *sb, const char *atom, int len,
 	struct expand_data *data = vdata;
 
 	if (is_atom("objectname", atom, len)) {
-		if (!data->mark_query)
+		if (!mark_query)
 			strbuf_addstr(sb, oid_to_hex(&data->oid));
 	} else if (is_atom("objecttype", atom, len)) {
-		if (data->mark_query)
+		if (mark_query)
 			data->info.typep = &data->type;
 		else
 			strbuf_addstr(sb, type_name(data->type));
 	} else if (is_atom("objectsize", atom, len)) {
-		if (data->mark_query)
+		if (mark_query)
 			data->info.sizep = &data->size;
 		else
 			strbuf_addf(sb, "%"PRIuMAX , (uintmax_t)data->size);
 	} else if (is_atom("objectsize:disk", atom, len)) {
-		if (data->mark_query)
+		if (mark_query)
 			data->info.disk_sizep = &data->disk_size;
 		else
 			strbuf_addf(sb, "%"PRIuMAX, (uintmax_t)data->disk_size);
@@ -251,7 +247,7 @@ static void expand_atom(struct strbuf *sb, const char *atom, int len,
 		if (data->rest)
 			strbuf_addstr(sb, data->rest);
 	} else if (is_atom("deltabase", atom, len)) {
-		if (data->mark_query)
+		if (mark_query)
 			data->info.delta_base_sha1 = data->delta_base_oid.hash;
 		else
 			strbuf_addstr(sb,
@@ -490,9 +486,9 @@ static int batch_objects(struct batch_options *opt)
 	 * object.
 	 */
 	memset(&data, 0, sizeof(data));
-	data.mark_query = 1;
+	mark_query = 1;
 	strbuf_expand(&output, opt->format.format, expand_format, &data);
-	data.mark_query = 0;
+	mark_query = 0;
 	strbuf_release(&output);
 
 	if (opt->all_objects) {
