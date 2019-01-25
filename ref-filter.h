@@ -157,4 +157,7 @@ struct ref_array_item *ref_array_push(struct ref_array *array,
 				      const char *refname,
 				      const struct object_id *oid);
 
+void print_object_or_die(struct expand_data *data, int cmdmode,
+			 int buffered, const char *rest);
+
 #endif /*  REF_FILTER_H  */
