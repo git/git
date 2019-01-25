@@ -226,50 +226,17 @@ static size_t expand_format(struct strbuf *sb, const char *start, void *data)
 	return end - start + 1;
 }
 
-static void print_object_or_die(struct batch_options *opt, struct expand_data *data)
+static void print_object_or_die(struct expand_data *data, int cmdmode,
+				int buffered, const char *rest)
 {
 	const struct object_id *oid = &data->oid;
+	unsigned long size;
+	char *contents;
 
 	assert(data->info.typep);
 
-	if (data->type == OBJ_BLOB) {
-		if (opt->buffer_output)
-			fflush(stdout);
-		if (opt->cmdmode) {
-			char *contents;
-			unsigned long size;
-
-			if (!rest)
-				die("missing path for '%s'", oid_to_hex(oid));
-
-			if (opt->cmdmode == 'w') {
-				if (filter_object(rest, 0100644, oid,
-						  &contents, &size))
-					die("could not convert '%s' %s",
-					    oid_to_hex(oid), rest);
-			} else if (opt->cmdmode == 'c') {
-				enum object_type type;
-				if (!textconv_object(the_repository,
-						     rest, 0100644, oid,
-						     1, &contents, &size))
-					contents = read_object_file(oid,
-								    &type,
-								    &size);
-				if (!contents)
-					die("could not convert '%s' %s",
-					    oid_to_hex(oid), rest);
-			} else
-				BUG("invalid cmdmode: %c", opt->cmdmode);
-			write_or_die(1, contents, size);
-			free(contents);
-		} else if (stream_blob_to_fd(1, oid, NULL, 0))
-			die("unable to stream %s to stdout", oid_to_hex(oid));
-	}
-	else {
+	if (data->type != OBJ_BLOB) {
 		enum object_type type;
-		unsigned long size;
-		void *contents;
-
 		contents = read_object_file(oid, &type, &size);
 		if (!contents)
 			die("object %s disappeared", oid_to_hex(oid));
@@ -280,7 +247,34 @@ static void print_object_or_die(struct batch_options *opt, struct expand_data *d
 
 		write_or_die(1, contents, size);
 		free(contents);
+		return;
 	}
+
+	if (buffered)
+		fflush(stdout);
+	if (!cmdmode) {
+		if (stream_blob_to_fd(1, oid, NULL, 0))
+			die("unable to stream %s to stdout", oid_to_hex(oid));
+		return;
+	}
+
+	if (!rest)
+		die("missing path for '%s'", oid_to_hex(oid));
+
+	if (cmdmode == 'w') {
+		if (filter_object(rest, 0100644, oid, &contents, &size))
+			die("could not convert '%s' %s", oid_to_hex(oid), rest);
+	} else if (cmdmode == 'c') {
+		enum object_type type;
+		if (!textconv_object(the_repository, rest, 0100644, oid, 1,
+				     &contents, &size))
+			contents = read_object_file(oid, &type, &size);
+		if (!contents)
+			die("could not convert '%s' %s", oid_to_hex(oid), rest);
+	} else
+		BUG("invalid cmdmode: %c", cmdmode);
+	write_or_die(1, contents, size);
+	free(contents);
 }
 
 static void batch_object_write(const char *obj_name,
@@ -303,7 +297,7 @@ static void batch_object_write(const char *obj_name,
 	write_or_die(1, scratch->buf, scratch->len);
 
 	if (opt->print_contents) {
-		print_object_or_die(opt, data);
+		print_object_or_die(data, opt->cmdmode, opt->buffer_output, rest);
 		write_or_die(1, "\n", 1);
 	}
 }
