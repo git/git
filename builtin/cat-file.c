@@ -56,13 +56,6 @@ static int filter_object(const char *path, unsigned mode,
 	return 0;
 }
 
-static int stream_blob(const struct object_id *oid)
-{
-	if (stream_blob_to_fd(1, oid, NULL, 0))
-		die("unable to stream %s to stdout", oid_to_hex(oid));
-	return 0;
-}
-
 static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 			int unknown_type)
 {
@@ -145,8 +138,11 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 			return cmd_ls_tree(2, ls_args, NULL);
 		}
 
-		if (type == OBJ_BLOB)
-			return stream_blob(&oid);
+		if (type == OBJ_BLOB) {
+			if (stream_blob_to_fd(1, &oid, NULL, 0))
+				die("unable to stream %s to stdout", oid_to_hex(&oid));
+			return 0;
+		}
 		buf = read_object_file(&oid, &type, &size);
 		if (!buf)
 			die("Cannot read object %s", obj_name);
@@ -168,8 +164,11 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 			} else
 				oidcpy(&blob_oid, &oid);
 
-			if (oid_object_info(the_repository, &blob_oid, NULL) == OBJ_BLOB)
-				return stream_blob(&blob_oid);
+			if (oid_object_info(the_repository, &blob_oid, NULL) == OBJ_BLOB) {
+				if (stream_blob_to_fd(1, &blob_oid, NULL, 0))
+					die("unable to stream %s to stdout", oid_to_hex(&blob_oid));
+				return 0;
+			}
 			/*
 			 * we attempted to dereference a tag to a blob
 			 * and failed; there may be new dereference
@@ -295,9 +294,8 @@ static void print_object_or_die(struct batch_options *opt, struct expand_data *d
 				BUG("invalid cmdmode: %c", opt->cmdmode);
 			batch_write(opt, contents, size);
 			free(contents);
-		} else {
-			stream_blob(oid);
-		}
+		} else if (stream_blob_to_fd(1, oid, NULL, 0))
+			die("unable to stream %s to stdout", oid_to_hex(oid));
 	}
 	else {
 		enum object_type type;
