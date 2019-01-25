@@ -145,8 +145,11 @@ struct packing_data {
 	struct packed_git **in_pack_by_idx;
 	struct packed_git **in_pack;
 
-	pthread_mutex_t lock;
-	pthread_mutex_t read_lock;
+	/*
+	 * During packing with multiple threads, protect the in-core
+	 * object database from concurrent accesses.
+	 */
+	pthread_mutex_t odb_lock;
 
 	/*
 	 * This list contains entries for bases which we know the other side
@@ -166,22 +169,14 @@ struct packing_data {
 
 void prepare_packing_data(struct packing_data *pdata);
 
+/* Protect access to object database */
 static inline void packing_data_lock(struct packing_data *pdata)
 {
-	pthread_mutex_lock(&pdata->lock);
+	pthread_mutex_lock(&pdata->odb_lock);
 }
 static inline void packing_data_unlock(struct packing_data *pdata)
 {
-	pthread_mutex_unlock(&pdata->lock);
-}
-
-static inline void packing_data_read_lock(struct packing_data *pdata)
-{
-	pthread_mutex_lock(&pdata->read_lock);
-}
-static inline void packing_data_read_unlock(struct packing_data *pdata)
-{
-	pthread_mutex_unlock(&pdata->read_lock);
+	pthread_mutex_unlock(&pdata->odb_lock);
 }
 
 struct object_entry *packlist_alloc(struct packing_data *pdata,
