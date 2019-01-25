@@ -29,9 +29,10 @@ struct batch_options {
 };
 
 static const char *force_path;
-/* Next 2 vars will be deleted at the end of this patch */
+/* Next 3 vars will be deleted at the end of this patch */
 static int mark_query;
 static int skip_object_info;
+static const char *rest;
 
 static int filter_object(const char *path, unsigned mode,
 			 const struct object_id *oid,
@@ -197,7 +198,6 @@ struct expand_data {
 	enum object_type type;
 	unsigned long size;
 	off_t disk_size;
-	const char *rest;
 	struct object_id delta_base_oid;
 
 	/*
@@ -238,8 +238,8 @@ static void expand_atom(struct strbuf *sb, const char *atom, int len,
 		else
 			strbuf_addf(sb, "%"PRIuMAX, (uintmax_t)data->disk_size);
 	} else if (is_atom("rest", atom, len)) {
-		if (data->rest)
-			strbuf_addstr(sb, data->rest);
+		if (rest)
+			strbuf_addstr(sb, rest);
 	} else if (is_atom("deltabase", atom, len)) {
 		if (mark_query)
 			data->info.delta_base_sha1 = data->delta_base_oid.hash;
@@ -287,25 +287,25 @@ static void print_object_or_die(struct batch_options *opt, struct expand_data *d
 			char *contents;
 			unsigned long size;
 
-			if (!data->rest)
+			if (!rest)
 				die("missing path for '%s'", oid_to_hex(oid));
 
 			if (opt->cmdmode == 'w') {
-				if (filter_object(data->rest, 0100644, oid,
+				if (filter_object(rest, 0100644, oid,
 						  &contents, &size))
 					die("could not convert '%s' %s",
-					    oid_to_hex(oid), data->rest);
+					    oid_to_hex(oid), rest);
 			} else if (opt->cmdmode == 'c') {
 				enum object_type type;
 				if (!textconv_object(the_repository,
-						     data->rest, 0100644, oid,
+						     rest, 0100644, oid,
 						     1, &contents, &size))
 					contents = read_object_file(oid,
 								    &type,
 								    &size);
 				if (!contents)
 					die("could not convert '%s' %s",
-					    oid_to_hex(oid), data->rest);
+					    oid_to_hex(oid), rest);
 			} else
 				BUG("invalid cmdmode: %c", opt->cmdmode);
 			batch_write(opt, contents, size);
@@ -555,7 +555,7 @@ static int batch_objects(struct batch_options *opt)
 				while (*p && strchr(" \t", *p))
 					*p++ = '\0';
 			}
-			data.rest = p;
+			rest = p;
 		}
 
 		batch_one_object(input.buf, &output, opt, &data);
