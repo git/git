@@ -29,8 +29,9 @@ struct batch_options {
 };
 
 static const char *force_path;
-/* Will be deleted at the end of this patch */
+/* Next 2 vars will be deleted at the end of this patch */
 static int mark_query;
+static int skip_object_info;
 
 static int filter_object(const char *path, unsigned mode,
 			 const struct object_id *oid,
@@ -205,13 +206,6 @@ struct expand_data {
 	 * elements above, so you can retrieve the response from there.
 	 */
 	struct object_info info;
-
-	/*
-	 * This flag will be true if the requested batch format and options
-	 * don't require us to call oid_object_info, which can then be
-	 * optimized out.
-	 */
-	unsigned skip_object_info : 1;
 };
 
 static int is_atom(const char *atom, const char *s, int slen)
@@ -343,7 +337,7 @@ static void batch_object_write(const char *obj_name,
 			       struct batch_options *opt,
 			       struct expand_data *data)
 {
-	if (!data->skip_object_info &&
+	if (!skip_object_info &&
 	    oid_object_info_extended(the_repository, &data->oid, &data->info,
 				     OBJECT_INFO_LOOKUP_REPLACE) < 0) {
 		printf("%s missing\n",
@@ -494,7 +488,7 @@ static int batch_objects(struct batch_options *opt)
 	if (opt->all_objects) {
 		struct object_info empty = OBJECT_INFO_INIT;
 		if (!memcmp(&data.info, &empty, sizeof(empty)))
-			data.skip_object_info = 1;
+			skip_object_info = 1;
 	}
 
 	/*
