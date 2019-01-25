@@ -1954,9 +1954,8 @@ static int delta_cacheable(unsigned long src_size, unsigned long trg_size,
 }
 
 /* Protect access to object database */
-static pthread_mutex_t read_mutex;
-#define read_lock()		pthread_mutex_lock(&read_mutex)
-#define read_unlock()		pthread_mutex_unlock(&read_mutex)
+#define read_lock()		packing_data_read_lock(&to_pack)
+#define read_unlock()		packing_data_read_unlock(&to_pack)
 
 /* Protect delta_cache_size */
 static pthread_mutex_t cache_mutex;
@@ -2381,7 +2380,6 @@ static pthread_cond_t progress_cond;
  */
 static void init_threaded_search(void)
 {
-	init_recursive_mutex(&read_mutex);
 	pthread_mutex_init(&cache_mutex, NULL);
 	pthread_mutex_init(&progress_mutex, NULL);
 	pthread_cond_init(&progress_cond, NULL);
@@ -2392,7 +2390,6 @@ static void cleanup_threaded_search(void)
 {
 	set_try_to_free_routine(old_try_to_free_routine);
 	pthread_cond_destroy(&progress_cond);
-	pthread_mutex_destroy(&read_mutex);
 	pthread_mutex_destroy(&cache_mutex);
 	pthread_mutex_destroy(&progress_mutex);
 }

@@ -150,6 +150,7 @@ void prepare_packing_data(struct packing_data *pdata)
 						   1UL << OE_DELTA_SIZE_BITS);
 #ifndef NO_PTHREADS
 	pthread_mutex_init(&pdata->lock, NULL);
+	init_recursive_mutex(&pdata->read_lock);
 #endif
 }
 
