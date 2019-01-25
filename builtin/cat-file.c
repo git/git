@@ -226,15 +226,6 @@ static size_t expand_format(struct strbuf *sb, const char *start, void *data)
 	return end - start + 1;
 }
 
-static void batch_write(struct batch_options *opt, const void *data, int len)
-{
-	if (opt->buffer_output) {
-		if (fwrite(data, 1, len, stdout) != len)
-			die_errno("unable to write to stdout");
-	} else
-		write_or_die(1, data, len);
-}
-
 static void print_object_or_die(struct batch_options *opt, struct expand_data *data)
 {
 	const struct object_id *oid = &data->oid;
@@ -269,7 +260,7 @@ static void print_object_or_die(struct batch_options *opt, struct expand_data *d
 					    oid_to_hex(oid), rest);
 			} else
 				BUG("invalid cmdmode: %c", opt->cmdmode);
-			batch_write(opt, contents, size);
+			write_or_die(1, contents, size);
 			free(contents);
 		} else if (stream_blob_to_fd(1, oid, NULL, 0))
 			die("unable to stream %s to stdout", oid_to_hex(oid));
@@ -287,7 +278,7 @@ static void print_object_or_die(struct batch_options *opt, struct expand_data *d
 		if (data->info.sizep && size != data->size)
 			die("object %s changed size!?", oid_to_hex(oid));
 
-		batch_write(opt, contents, size);
+		write_or_die(1, contents, size);
 		free(contents);
 	}
 }
@@ -309,11 +300,11 @@ static void batch_object_write(const char *obj_name,
 	strbuf_reset(scratch);
 	strbuf_expand(scratch, opt->format.format, expand_format, data);
 	strbuf_addch(scratch, '\n');
-	batch_write(opt, scratch->buf, scratch->len);
+	write_or_die(1, scratch->buf, scratch->len);
 
 	if (opt->print_contents) {
 		print_object_or_die(opt, data);
-		batch_write(opt, "\n", 1);
+		write_or_die(1, "\n", 1);
 	}
 }
 
