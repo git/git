@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2005 Junio C Hamano
  */
+#define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
 #include "config.h"
 #include "tempfile.h"
@@ -6522,6 +6523,28 @@ int textconv_object(struct repository *r,
 	*buf_size = fill_textconv(r, textconv, df, buf);
 	free_filespec(df);
 	return 1;
+}
+
+int filter_object(const char *path, unsigned mode,
+		  const struct object_id *oid,
+		  char **buf, unsigned long *size)
+{
+	enum object_type type;
+
+	*buf = read_object_file(oid, &type, size);
+	if (!*buf)
+		return error(_("cannot read object %s '%s'"),
+			     oid_to_hex(oid), path);
+	if ((type == OBJ_BLOB) && S_ISREG(mode)) {
+		struct strbuf strbuf = STRBUF_INIT;
+		if (convert_to_working_tree(&the_index, path, *buf, *size, &strbuf)) {
+			free(*buf);
+			*size = strbuf.len;
+			*buf = strbuf_detach(&strbuf, NULL);
+		}
+	}
+
+	return 0;
 }
 
 void setup_diff_pager(struct diff_options *opt)

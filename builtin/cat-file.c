@@ -3,7 +3,6 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
-#define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
 #include "config.h"
 #include "builtin.h"
@@ -33,28 +32,6 @@ static const char *force_path;
 static int mark_query;
 static int skip_object_info;
 static const char *rest;
-
-static int filter_object(const char *path, unsigned mode,
-			 const struct object_id *oid,
-			 char **buf, unsigned long *size)
-{
-	enum object_type type;
-
-	*buf = read_object_file(oid, &type, size);
-	if (!*buf)
-		return error(_("cannot read object %s '%s'"),
-			     oid_to_hex(oid), path);
-	if ((type == OBJ_BLOB) && S_ISREG(mode)) {
-		struct strbuf strbuf = STRBUF_INIT;
-		if (convert_to_working_tree(&the_index, path, *buf, *size, &strbuf)) {
-			free(*buf);
-			*size = strbuf.len;
-			*buf = strbuf_detach(&strbuf, NULL);
-		}
-	}
-
-	return 0;
-}
 
 static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 			int unknown_type)

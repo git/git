@@ -476,6 +476,10 @@ int textconv_object(struct repository *repo,
 		    const struct object_id *oid, int oid_valid,
 		    char **buf, unsigned long *buf_size);
 
+int filter_object(const char *path, unsigned mode,
+		  const struct object_id *oid,
+		  char **buf, unsigned long *size);
+
 int parse_rename_score(const char **cp_p);
 
 long parse_algorithm_value(const char *value);
