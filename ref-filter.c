@@ -208,6 +208,15 @@ static int remote_ref_atom_parser(const struct ref_format *format, struct used_a
 	return 0;
 }
 
+static int raw_atom_parser(const struct ref_format *format, struct used_atom *atom,
+			   const char *arg, struct strbuf *err)
+{
+	if (arg)
+		return strbuf_addf_ret(err, -1, _("%%(raw) does not take arguments"));
+	oi.info.typep = &oi.type;
+	return 0;
+}
+
 static int objecttype_atom_parser(const struct ref_format *format, struct used_atom *atom,
 				  const char *arg, struct strbuf *err)
 {
@@ -478,6 +487,7 @@ static struct {
 	{ "then", SOURCE_NONE },
 	{ "else", SOURCE_NONE },
 	{ "rest", SOURCE_NONE },
+	{ "raw", SOURCE_NONE, FIELD_STR, raw_atom_parser },
 };
 
 #define REF_FORMATTING_STATE_INIT  { 0, NULL }
@@ -1618,6 +1628,9 @@ static int populate_value(struct ref_array_item *ref, struct strbuf *err)
 			continue;
 		} else if (starts_with(name, "rest")) {
 			v->s = xstrdup(ref->request_rest ? ref->request_rest : "");
+			continue;
+		} else if (!strcmp(name, "raw")) {
+			v->s = xstrdup("");
 			continue;
 		} else if (starts_with(name, "align")) {
 			v->handler = align_atom_handler;
