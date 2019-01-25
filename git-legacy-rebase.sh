@@ -128,11 +128,22 @@ read_basic_state () {
 	}
 }
 
+remove_rebase_state () {
+  removal_dir=$(mktemp -d -t "git-rebase-state-XXXXXX")
+  if test -d "$removal_dir"
+  then
+    mv "$state_dir" "$removal_dir"
+  else
+    removal_dir="$state_dir"
+  fi
+  rm -rf "$removal_dir"
+}
+
 finish_rebase () {
 	rm -f "$(git rev-parse --git-path REBASE_HEAD)"
 	apply_autostash &&
 	{ git gc --auto || true; } &&
-	rm -rf "$state_dir"
+	remove_rebase_state
 }
 
 run_interactive () {
@@ -194,7 +205,7 @@ run_specific_rebase () {
 	elif test $ret -eq 2 # special exit status for rebase -p
 	then
 		apply_autostash &&
-		rm -rf "$state_dir" &&
+		remove_rebase_state &&
 		die "Nothing to do"
 	fi
 	exit $ret
@@ -439,7 +450,7 @@ abort)
 	exit
 	;;
 quit)
-	exec rm -rf "$state_dir"
+	remove_rebase_state
 	;;
 edit-todo)
 	run_specific_rebase

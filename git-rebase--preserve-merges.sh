@@ -226,7 +226,7 @@ Once you are satisfied with your changes, run
 
 die_abort () {
 	apply_autostash
-	rm -rf "$state_dir"
+	remove_rebase_state
 	die "$1"
 }
 
