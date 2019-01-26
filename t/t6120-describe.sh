@@ -418,4 +418,9 @@ test_expect_success 'describe complains about missing object' '
 	test_must_fail git describe $ZERO_OID
 '
 
+test_expect_success 'describe works from outside repo using --git-dir' ' 
+  git clone --bare "$TRASH_DIRECTORY" "$TRASH_DIRECTORY/bare" &&
+  git --git-dir "$TRASH_DIRECTORY/bare" describe
+'
+
 test_done
