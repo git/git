@@ -145,13 +145,37 @@ check_describe A-* HEAD
 
 check_describe "A-*[0-9a-f]" --dirty
 
+test_expect_success 'describe --dirty with --work-tree' '
+	(
+		cd "$TEST_DIRECTORY" &&
+		git --git-dir "$TRASH_DIRECTORY/.git" --work-tree "$TRASH_DIRECTORY" describe --dirty >"$TRASH_DIRECTORY/out"
+	) &&
+	grep "^A-[1-9][0-9]\?-g[0-9a-f]\+$" out
+'
+
 test_expect_success 'set-up dirty work tree' '
 	echo >>file
 '
 
 check_describe "A-*[0-9a-f]-dirty" --dirty
 
+test_expect_success 'describe --dirty with --work-tree' '
+	(
+		cd "$TEST_DIRECTORY" &&
+		git --git-dir "$TRASH_DIRECTORY/.git" --work-tree "$TRASH_DIRECTORY" describe --dirty >"$TRASH_DIRECTORY/out"
+	) &&
+	grep "^A-[1-9][0-9]\?-g[0-9a-f]\+-dirty$" out
+'
+
 check_describe "A-*[0-9a-f].mod" --dirty=.mod
+
+test_expect_success 'describe --dirty=.mod with --work-tree' '
+	(
+		cd "$TEST_DIRECTORY" &&
+		git --git-dir "$TRASH_DIRECTORY/.git" --work-tree "$TRASH_DIRECTORY" describe --dirty=.mod >"$TRASH_DIRECTORY/out"
+	) &&
+	grep "^A-[1-9][0-9]\?-g[0-9a-f]\+.mod$" out
+'
 
 test_expect_success 'describe --dirty HEAD' '
 	test_must_fail git describe --dirty HEAD
@@ -303,8 +327,17 @@ test_expect_success 'describe chokes on severely broken submodules' '
 	mv .git/modules/sub1/ .git/modules/sub_moved &&
 	test_must_fail git describe --dirty
 '
+
 test_expect_success 'describe ignoring a broken submodule' '
 	git describe --broken >out &&
+	grep broken out
+'
+
+test_expect_success 'describe with --work-tree ignoring a broken submodule' '
+	(
+		cd "$TEST_DIRECTORY" &&
+		git --git-dir "$TRASH_DIRECTORY/.git" --work-tree "$TRASH_DIRECTORY" describe --broken >"$TRASH_DIRECTORY/out"
+	) &&
 	test_when_finished "mv .git/modules/sub_moved .git/modules/sub1" &&
 	grep broken out
 '
