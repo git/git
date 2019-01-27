@@ -4896,6 +4896,8 @@ static void prep_parse_options(struct diff_options *options)
 		OPT_CALLBACK_F('U', "unified", options, N_("<n>"),
 			       N_("generate diffs with <n> lines context"),
 			       PARSE_OPT_NONEG, diff_opt_unified),
+		OPT_BOOL('W', "function-context", &options->flags.funccontext,
+			 N_("generate diffs with <n> lines context")),
 		OPT_END()
 	};
 
@@ -5212,12 +5214,6 @@ int diff_opt_parse(struct diff_options *options,
 	else if (opt_arg(arg, '\0', "inter-hunk-context",
 			 &options->interhunkcontext))
 		;
-	else if (!strcmp(arg, "-W"))
-		options->flags.funccontext = 1;
-	else if (!strcmp(arg, "--function-context"))
-		options->flags.funccontext = 1;
-	else if (!strcmp(arg, "--no-function-context"))
-		options->flags.funccontext = 0;
 	else if ((argcount = parse_long_opt("output", av, &optarg))) {
 		char *path = prefix_filename(prefix, optarg);
 		options->file = xfopen(path, "w");
