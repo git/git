@@ -5,18 +5,17 @@ skip_branch_tip_with_tag () {
 	# at the same commit as the tip of the branch is pushed, and building
 	# both at the same time is a waste.
 	#
-	# Travis gives a tagname e.g. v2.14.0 in $TRAVIS_BRANCH when
-	# the build is triggered by a push to a tag.  Let's see if
-	# $TRAVIS_BRANCH is exactly at a tag, and if so, if it is
-	# different from $TRAVIS_BRANCH.  That way, we can tell if
-	# we are building the tip of a branch that is tagged and
-	# we can skip the build because we won't be skipping a build
-	# of a tag.
+	# When the build is triggered by a push to a tag, $CI_BRANCH will
+	# have that tagname, e.g. v2.14.0.  Let's see if $CI_BRANCH is
+	# exactly at a tag, and if so, if it is different from $CI_BRANCH.
+	# That way, we can tell if we are building the tip of a branch that
+	# is tagged and we can skip the build because we won't be skipping a
+	# build of a tag.
 
-	if TAG=$(git describe --exact-match "$TRAVIS_BRANCH" 2>/dev/null) &&
-		test "$TAG" != "$TRAVIS_BRANCH"
+	if TAG=$(git describe --exact-match "$CI_BRANCH" 2>/dev/null) &&
+		test "$TAG" != "$CI_BRANCH"
 	then
-		echo "$(tput setaf 2)Tip of $TRAVIS_BRANCH is exactly at $TAG$(tput sgr0)"
+		echo "$(tput setaf 2)Tip of $CI_BRANCH is exactly at $TAG$(tput sgr0)"
 		exit 0
 	fi
 }
@@ -80,6 +79,10 @@ check_unignored_build_artifacts ()
 # Set tracing executed commands, primarily setting environment variables
 # and installing dependencies.
 set -ex
+
+# When building a PR, TRAVIS_BRANCH refers to the *target* branch. Not what we
+# want here. We want the source branch instead.
+CI_BRANCH="${TRAVIS_PULL_REQUEST_BRANCH:-$TRAVIS_BRANCH}"
 
 cache_dir="$HOME/travis-cache"
 good_trees_file="$cache_dir/good-trees"
