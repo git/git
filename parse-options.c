@@ -266,7 +266,8 @@ again:
 		}
 		if (!rest) {
 			/* abbreviated? */
-			if (!strncmp(long_name, arg, arg_end - arg)) {
+			if (!(p->flags & PARSE_OPT_KEEP_UNKNOWN) &&
+			    !strncmp(long_name, arg, arg_end - arg)) {
 is_abbreviated:
 				if (abbrev_option) {
 					/*
