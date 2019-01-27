@@ -93,7 +93,7 @@ static int get_value(struct parse_opt_ctx_t *p,
 
 	switch (opt->type) {
 	case OPTION_LOWLEVEL_CALLBACK:
-		return (*(parse_opt_ll_cb *)opt->callback)(p, opt, unset);
+		return opt->ll_callback(p, opt, unset);
 
 	case OPTION_BIT:
 		if (unset)
@@ -408,6 +408,19 @@ static void parse_options_check(const struct option *opts)
 			if ((opts->flags & PARSE_OPT_OPTARG) ||
 			    !(opts->flags & PARSE_OPT_NOARG))
 				err |= optbug(opts, "should not accept an argument");
+			break;
+		case OPTION_CALLBACK:
+			if (!opts->callback)
+				BUG("OPTION_CALLBACK needs a callback");
+			if (opts->ll_callback)
+				BUG("OPTION_CALLBACK needs no ll_callback");
+			break;
+		case OPTION_LOWLEVEL_CALLBACK:
+			if (!opts->ll_callback)
+				BUG("OPTION_LOWLEVEL_CALLBACK needs a callback");
+			if (opts->callback)
+				BUG("OPTION_LOWLEVEL_CALLBACK needs no high level callback");
+			break;
 		default:
 			; /* ok. (usually accepts an argument) */
 		}

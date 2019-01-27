@@ -100,13 +100,16 @@ typedef int parse_opt_ll_cb(struct parse_opt_ctx_t *ctx,
  *			 the option takes optional argument.
  *
  * `callback`::
- *   pointer to the callback to use for OPTION_CALLBACK or
- *   OPTION_LOWLEVEL_CALLBACK.
+ *   pointer to the callback to use for OPTION_CALLBACK
  *
  * `defval`::
  *   default value to fill (*->value) with for PARSE_OPT_OPTARG.
  *   OPTION_{BIT,SET_INT} store the {mask,integer} to put in the value when met.
  *   CALLBACKS can use it like they want.
+ *
+ * `ll_callback`::
+ *   pointer to the callback to use for OPTION_LOWLEVEL_CALLBACK
+ *
  */
 struct option {
 	enum parse_opt_type type;
@@ -119,6 +122,7 @@ struct option {
 	int flags;
 	parse_opt_cb *callback;
 	intptr_t defval;
+	parse_opt_ll_cb *ll_callback;
 	intptr_t extra;
 };
 
@@ -137,7 +141,7 @@ struct option {
 #define OPT_BIT(s, l, v, h, b)      OPT_BIT_F(s, l, v, h, b, 0)
 #define OPT_BITOP(s, l, v, h, set, clear) { OPTION_BITOP, (s), (l), (v), NULL, (h), \
 					    PARSE_OPT_NOARG|PARSE_OPT_NONEG, NULL, \
-					    (set), (clear) }
+					    (set), NULL, (clear) }
 #define OPT_NEGBIT(s, l, v, h, b)   { OPTION_NEGBIT, (s), (l), (v), NULL, \
 				      (h), PARSE_OPT_NOARG, NULL, (b) }
 #define OPT_COUNTUP(s, l, v, h)     OPT_COUNTUP_F(s, l, v, h, 0)
@@ -263,7 +267,7 @@ int parse_opt_commits(const struct option *, const char *, int);
 int parse_opt_tertiary(const struct option *, const char *, int);
 int parse_opt_string_list(const struct option *, const char *, int);
 int parse_opt_noop_cb(const struct option *, const char *, int);
-int parse_opt_unknown_cb(const struct option *, const char *, int);
+int parse_opt_unknown_cb(struct parse_opt_ctx_t *ctx, const struct option *, int);
 int parse_opt_passthru(const struct option *, const char *, int);
 int parse_opt_passthru_argv(const struct option *, const char *, int);
 

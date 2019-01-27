@@ -261,7 +261,7 @@ static struct option builtin_merge_options[] = {
 		option_parse_message),
 	{ OPTION_LOWLEVEL_CALLBACK, 'F', "file", &merge_msg, N_("path"),
 		N_("read message from file"), PARSE_OPT_NONEG,
-		(parse_opt_cb *) option_read_message },
+		NULL, 0, option_read_message },
 	OPT__VERBOSITY(&verbosity),
 	OPT_BOOL(0, "abort", &abort_current_merge,
 		N_("abort the current in-progress merge")),
