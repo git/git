@@ -109,6 +109,13 @@ static int get_value(struct parse_opt_ctx_t *p,
 			*(int *)opt->value &= ~opt->defval;
 		return 0;
 
+	case OPTION_BITOP:
+		if (unset)
+			BUG("BITOP can't have unset form");
+		*(int *)opt->value &= ~opt->extra;
+		*(int *)opt->value |= opt->defval;
+		return 0;
+
 	case OPTION_COUNTUP:
 		if (*(int *)opt->value < 0)
 			*(int *)opt->value = 0;
