@@ -38,6 +38,14 @@ do
 		test_name="${TEST_EXIT%.exit}"
 		test_name="${test_name##*/}"
 		trash_dir="trash directory.$test_name"
+		case "$CI_TYPE" in
+		travis)
+			;;
+		*)
+			echo "Unhandled CI type: $CI_TYPE" >&2
+			exit 1
+			;;
+		esac
 		trash_tgz_b64="trash.$test_name.base64"
 		if [ -d "$trash_dir" ]
 		then
