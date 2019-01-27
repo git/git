@@ -15,6 +15,7 @@ struct diff_filespec;
 struct diff_options;
 struct diff_queue_struct;
 struct oid_array;
+struct option;
 struct repository;
 struct rev_info;
 struct strbuf;
@@ -229,6 +230,7 @@ struct diff_options {
 	unsigned color_moved_ws_handling;
 
 	struct repository *repo;
+	struct option *parseopts;
 };
 
 void diff_emit_submodule_del(struct diff_options *o, const char *line);

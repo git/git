@@ -23,6 +23,7 @@
 #include "argv-array.h"
 #include "graph.h"
 #include "packfile.h"
+#include "parse-options.h"
 #include "help.h"
 
 #ifdef NO_FAST_WORKING_DIRECTORY
@@ -4425,6 +4426,8 @@ static void run_checkdiff(struct diff_filepair *p, struct diff_options *o)
 	builtin_checkdiff(name, other, attr_path, p->one, p->two, o);
 }
 
+static void prep_parse_options(struct diff_options *options);
+
 void repo_diff_setup(struct repository *r, struct diff_options *options)
 {
 	memcpy(options, &default_diff_options, sizeof(*options));
@@ -4466,6 +4469,8 @@ void repo_diff_setup(struct repository *r, struct diff_options *options)
 
 	options->color_moved = diff_color_moved_default;
 	options->color_moved_ws_handling = diff_color_moved_ws_default;
+
+	prep_parse_options(options);
 }
 
 void diff_setup_done(struct diff_options *options)
@@ -4569,6 +4574,8 @@ void diff_setup_done(struct diff_options *options)
 
 	if (!options->use_color || external_diff())
 		options->color_moved = 0;
+
+	FREE_AND_NULL(options->parseopts);
 }
 
 static int opt_arg(const char *arg, int arg_short, const char *arg_long, int *val)
@@ -4860,6 +4867,16 @@ static int parse_objfind_opt(struct diff_options *opt, const char *arg)
 	return 1;
 }
 
+static void prep_parse_options(struct diff_options *options)
+{
+	struct option parseopts[] = {
+		OPT_END()
+	};
+
+	ALLOC_ARRAY(options->parseopts, ARRAY_SIZE(parseopts));
+	memcpy(options->parseopts, parseopts, sizeof(parseopts));
+}
+
 int diff_opt_parse(struct diff_options *options,
 		   const char **av, int ac, const char *prefix)
 {
@@ -4869,6 +4886,16 @@ int diff_opt_parse(struct diff_options *options,
 
 	if (!prefix)
 		prefix = "";
+
+	ac = parse_options(ac, av, prefix, options->parseopts, NULL,
+			   PARSE_OPT_KEEP_DASHDASH |
+			   PARSE_OPT_KEEP_UNKNOWN |
+			   PARSE_OPT_NO_INTERNAL_HELP |
+			   PARSE_OPT_ONE_SHOT |
+			   PARSE_OPT_STOP_AT_NON_OPTION);
+
+	if (ac)
+		return ac;
 
 	/* Output format options */
 	if (!strcmp(arg, "-p") || !strcmp(arg, "-u") || !strcmp(arg, "--patch")
