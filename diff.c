@@ -4870,6 +4870,13 @@ static int parse_objfind_opt(struct diff_options *opt, const char *arg)
 static void prep_parse_options(struct diff_options *options)
 {
 	struct option parseopts[] = {
+		OPT_GROUP(N_("Diff output format options")),
+		OPT_BITOP('p', "patch", &options->output_format,
+			  N_("generate patch"),
+			  DIFF_FORMAT_PATCH, DIFF_FORMAT_NO_OUTPUT),
+		OPT_BITOP('u', NULL, &options->output_format,
+			  N_("generate patch"),
+			  DIFF_FORMAT_PATCH, DIFF_FORMAT_NO_OUTPUT),
 		OPT_END()
 	};
 
@@ -4898,8 +4905,7 @@ int diff_opt_parse(struct diff_options *options,
 		return ac;
 
 	/* Output format options */
-	if (!strcmp(arg, "-p") || !strcmp(arg, "-u") || !strcmp(arg, "--patch")
-	    || opt_arg(arg, 'U', "unified", &options->context))
+	if (opt_arg(arg, 'U', "unified", &options->context))
 		enable_patch_output(&options->output_format);
 	else if (!strcmp(arg, "--raw"))
 		options->output_format |= DIFF_FORMAT_RAW;
