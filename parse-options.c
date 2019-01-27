@@ -20,8 +20,9 @@ int optbug(const struct option *opt, const char *reason)
 	return error("BUG: switch '%c' %s", opt->short_name, reason);
 }
 
-static int get_arg(struct parse_opt_ctx_t *p, const struct option *opt,
-		   int flags, const char **arg)
+static enum parse_opt_result get_arg(struct parse_opt_ctx_t *p,
+				     const struct option *opt,
+				     int flags, const char **arg)
 {
 	if (p->opt) {
 		*arg = p->opt;
@@ -44,9 +45,10 @@ static void fix_filename(const char *prefix, const char **file)
 	*file = prefix_filename(prefix, *file);
 }
 
-static int opt_command_mode_error(const struct option *opt,
-				  const struct option *all_opts,
-				  int flags)
+static enum parse_opt_result opt_command_mode_error(
+	const struct option *opt,
+	const struct option *all_opts,
+	int flags)
 {
 	const struct option *that;
 	struct strbuf that_name = STRBUF_INIT;
@@ -69,16 +71,16 @@ static int opt_command_mode_error(const struct option *opt,
 		error(_("%s is incompatible with %s"),
 		      optname(opt, flags), that_name.buf);
 		strbuf_release(&that_name);
-		return -1;
+		return PARSE_OPT_ERROR;
 	}
 	return error(_("%s : incompatible with something else"),
 		     optname(opt, flags));
 }
 
-static int get_value(struct parse_opt_ctx_t *p,
-		     const struct option *opt,
-		     const struct option *all_opts,
-		     int flags)
+static enum parse_opt_result get_value(struct parse_opt_ctx_t *p,
+				       const struct option *opt,
+				       const struct option *all_opts,
+				       int flags)
 {
 	const char *s, *arg;
 	const int unset = flags & OPT_UNSET;
@@ -208,7 +210,8 @@ static int get_value(struct parse_opt_ctx_t *p,
 	}
 }
 
-static int parse_short_opt(struct parse_opt_ctx_t *p, const struct option *options)
+static enum parse_opt_result parse_short_opt(struct parse_opt_ctx_t *p,
+					     const struct option *options)
 {
 	const struct option *all_opts = options;
 	const struct option *numopt = NULL;
@@ -239,11 +242,12 @@ static int parse_short_opt(struct parse_opt_ctx_t *p, const struct option *optio
 		free(arg);
 		return rc;
 	}
-	return -2;
+	return PARSE_OPT_UNKNOWN;
 }
 
-static int parse_long_opt(struct parse_opt_ctx_t *p, const char *arg,
-			  const struct option *options)
+static enum parse_opt_result parse_long_opt(
+	struct parse_opt_ctx_t *p, const char *arg,
+	const struct option *options)
 {
 	const struct option *all_opts = options;
 	const char *arg_end = strchrnul(arg, '=');
@@ -269,7 +273,7 @@ again:
 			if (*rest)
 				continue;
 			p->out[p->cpidx++] = arg - 2;
-			return 0;
+			return PARSE_OPT_DONE;
 		}
 		if (!rest) {
 			/* abbreviated? */
@@ -334,11 +338,11 @@ is_abbreviated:
 			ambiguous_option->long_name,
 			(abbrev_flags & OPT_UNSET) ?  "no-" : "",
 			abbrev_option->long_name);
-		return -3;
+		return PARSE_OPT_HELP;
 	}
 	if (abbrev_option)
 		return get_value(p, abbrev_option, all_opts, abbrev_flags);
-	return -2;
+	return PARSE_OPT_UNKNOWN;
 }
 
 static int parse_nodash_opt(struct parse_opt_ctx_t *p, const char *arg,
@@ -590,22 +594,28 @@ int parse_options_step(struct parse_opt_ctx_t *ctx,
 		if (arg[1] != '-') {
 			ctx->opt = arg + 1;
 			switch (parse_short_opt(ctx, options)) {
-			case -1:
+			case PARSE_OPT_ERROR:
 				return PARSE_OPT_ERROR;
-			case -2:
+			case PARSE_OPT_UNKNOWN:
 				if (ctx->opt)
 					check_typos(arg + 1, options);
 				if (internal_help && *ctx->opt == 'h')
 					goto show_usage;
 				goto unknown;
+			case PARSE_OPT_NON_OPTION:
+			case PARSE_OPT_HELP:
+			case PARSE_OPT_COMPLETE:
+				BUG("parse_short_opt() cannot return these");
+			case PARSE_OPT_DONE:
+				break;
 			}
 			if (ctx->opt)
 				check_typos(arg + 1, options);
 			while (ctx->opt) {
 				switch (parse_short_opt(ctx, options)) {
-				case -1:
+				case PARSE_OPT_ERROR:
 					return PARSE_OPT_ERROR;
-				case -2:
+				case PARSE_OPT_UNKNOWN:
 					if (internal_help && *ctx->opt == 'h')
 						goto show_usage;
 
@@ -617,6 +627,12 @@ int parse_options_step(struct parse_opt_ctx_t *ctx,
 					ctx->argv[0] = xstrdup(ctx->opt - 1);
 					*(char *)ctx->argv[0] = '-';
 					goto unknown;
+				case PARSE_OPT_NON_OPTION:
+				case PARSE_OPT_COMPLETE:
+				case PARSE_OPT_HELP:
+					BUG("parse_short_opt() cannot return these");
+				case PARSE_OPT_DONE:
+					break;
 				}
 			}
 			continue;
@@ -635,12 +651,17 @@ int parse_options_step(struct parse_opt_ctx_t *ctx,
 		if (internal_help && !strcmp(arg + 2, "help"))
 			goto show_usage;
 		switch (parse_long_opt(ctx, arg + 2, options)) {
-		case -1:
+		case PARSE_OPT_ERROR:
 			return PARSE_OPT_ERROR;
-		case -2:
+		case PARSE_OPT_UNKNOWN:
 			goto unknown;
-		case -3:
+		case PARSE_OPT_HELP:
 			goto show_usage;
+		case PARSE_OPT_NON_OPTION:
+		case PARSE_OPT_COMPLETE:
+			BUG("parse_long_opt() cannot return these");
+		case PARSE_OPT_DONE:
+			break;
 		}
 		continue;
 unknown:
