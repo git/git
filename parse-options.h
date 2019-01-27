@@ -27,7 +27,8 @@ enum parse_opt_flags {
 	PARSE_OPT_STOP_AT_NON_OPTION = 2,
 	PARSE_OPT_KEEP_ARGV0 = 4,
 	PARSE_OPT_KEEP_UNKNOWN = 8,
-	PARSE_OPT_NO_INTERNAL_HELP = 16
+	PARSE_OPT_NO_INTERNAL_HELP = 16,
+	PARSE_OPT_ONE_SHOT = 32
 };
 
 enum parse_opt_option_flags {
@@ -169,10 +170,18 @@ struct option {
 	  N_("no-op (backward compatibility)"),		\
 	  PARSE_OPT_HIDDEN | PARSE_OPT_NOARG, parse_opt_noop_cb }
 
-/* parse_options() will filter out the processed options and leave the
- * non-option arguments in argv[]. usagestr strings should be marked
- * for translation with N_().
+/*
+ * parse_options() will filter out the processed options and leave the
+ * non-option arguments in argv[]. argv0 is assumed program name and
+ * skipped.
+ *
+ * usagestr strings should be marked for translation with N_().
+ *
  * Returns the number of arguments left in argv[].
+ *
+ * In one-shot mode, argv0 is not a program name, argv[] is left
+ * untouched and parse_options() returns the number of options
+ * processed.
  */
 int parse_options(int argc, const char **argv, const char *prefix,
 		  const struct option *options,

@@ -416,15 +416,24 @@ void parse_options_start(struct parse_opt_ctx_t *ctx,
 			 const struct option *options, int flags)
 {
 	memset(ctx, 0, sizeof(*ctx));
-	ctx->argc = ctx->total = argc - 1;
-	ctx->argv = argv + 1;
-	ctx->out  = argv;
+	ctx->argc = argc;
+	ctx->argv = argv;
+	if (!(flags & PARSE_OPT_ONE_SHOT)) {
+		ctx->argc--;
+		ctx->argv++;
+	}
+	ctx->total = ctx->argc;
+	ctx->out   = argv;
 	ctx->prefix = prefix;
 	ctx->cpidx = ((flags & PARSE_OPT_KEEP_ARGV0) != 0);
 	ctx->flags = flags;
 	if ((flags & PARSE_OPT_KEEP_UNKNOWN) &&
-	    (flags & PARSE_OPT_STOP_AT_NON_OPTION))
+	    (flags & PARSE_OPT_STOP_AT_NON_OPTION) &&
+	    !(flags & PARSE_OPT_ONE_SHOT))
 		BUG("STOP_AT_NON_OPTION and KEEP_UNKNOWN don't go together");
+	if ((flags & PARSE_OPT_ONE_SHOT) &&
+	    (flags & PARSE_OPT_KEEP_ARGV0))
+		BUG("Can't keep argv0 if you don't have it");
 	parse_options_check(options);
 }
 
@@ -536,6 +545,10 @@ int parse_options_step(struct parse_opt_ctx_t *ctx,
 	for (; ctx->argc; ctx->argc--, ctx->argv++) {
 		const char *arg = ctx->argv[0];
 
+		if (ctx->flags & PARSE_OPT_ONE_SHOT &&
+		    ctx->argc != ctx->total)
+			break;
+
 		if (*arg != '-' || !arg[1]) {
 			if (parse_nodash_opt(ctx, arg, options) == 0)
 				continue;
@@ -610,6 +623,8 @@ int parse_options_step(struct parse_opt_ctx_t *ctx,
 		}
 		continue;
 unknown:
+		if (ctx->flags & PARSE_OPT_ONE_SHOT)
+			break;
 		if (!(ctx->flags & PARSE_OPT_KEEP_UNKNOWN))
 			return PARSE_OPT_UNKNOWN;
 		ctx->out[ctx->cpidx++] = ctx->argv[0];
@@ -623,6 +638,9 @@ unknown:
 
 int parse_options_end(struct parse_opt_ctx_t *ctx)
 {
+	if (ctx->flags & PARSE_OPT_ONE_SHOT)
+		return ctx->total - ctx->argc;
+
 	MOVE_ARRAY(ctx->out + ctx->cpidx, ctx->argv, ctx->argc);
 	ctx->out[ctx->cpidx + ctx->argc] = NULL;
 	return ctx->cpidx + ctx->argc;
