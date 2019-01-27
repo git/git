@@ -4898,6 +4898,9 @@ static void prep_parse_options(struct diff_options *options)
 			       PARSE_OPT_NONEG, diff_opt_unified),
 		OPT_BOOL('W', "function-context", &options->flags.funccontext,
 			 N_("generate diffs with <n> lines context")),
+		OPT_BIT_F(0, "raw", &options->output_format,
+			  N_("generate the diff in raw format"),
+			  DIFF_FORMAT_RAW, PARSE_OPT_NONEG),
 		OPT_END()
 	};
 
@@ -4926,9 +4929,7 @@ int diff_opt_parse(struct diff_options *options,
 		return ac;
 
 	/* Output format options */
-	if (!strcmp(arg, "--raw"))
-		options->output_format |= DIFF_FORMAT_RAW;
-	else if (!strcmp(arg, "--patch-with-raw")) {
+	if (!strcmp(arg, "--patch-with-raw")) {
 		enable_patch_output(&options->output_format);
 		options->output_format |= DIFF_FORMAT_RAW;
 	} else if (!strcmp(arg, "--numstat"))
