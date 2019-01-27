@@ -4867,6 +4867,22 @@ static int parse_objfind_opt(struct diff_options *opt, const char *arg)
 	return 1;
 }
 
+static int diff_opt_unified(const struct option *opt,
+			    const char *arg, int unset)
+{
+	struct diff_options *options = opt->value;
+	char *s;
+
+	BUG_ON_OPT_NEG(unset);
+
+	options->context = strtol(arg, &s, 10);
+	if (*s)
+		return error(_("%s expects a numerical value"), "--unified");
+	enable_patch_output(&options->output_format);
+
+	return 0;
+}
+
 static void prep_parse_options(struct diff_options *options)
 {
 	struct option parseopts[] = {
@@ -4877,6 +4893,9 @@ static void prep_parse_options(struct diff_options *options)
 		OPT_BITOP('u', NULL, &options->output_format,
 			  N_("generate patch"),
 			  DIFF_FORMAT_PATCH, DIFF_FORMAT_NO_OUTPUT),
+		OPT_CALLBACK_F('U', "unified", options, N_("<n>"),
+			       N_("generate diffs with <n> lines context"),
+			       PARSE_OPT_NONEG, diff_opt_unified),
 		OPT_END()
 	};
 
@@ -4905,9 +4924,7 @@ int diff_opt_parse(struct diff_options *options,
 		return ac;
 
 	/* Output format options */
-	if (opt_arg(arg, 'U', "unified", &options->context))
-		enable_patch_output(&options->output_format);
-	else if (!strcmp(arg, "--raw"))
+	if (!strcmp(arg, "--raw"))
 		options->output_format |= DIFF_FORMAT_RAW;
 	else if (!strcmp(arg, "--patch-with-raw")) {
 		enable_patch_output(&options->output_format);
