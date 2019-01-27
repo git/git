@@ -5,7 +5,10 @@
 
 . ${0%/*}/lib.sh
 
-ln -s "$cache_dir/.prove" t/.prove
+case "$CI_OS_NAME" in
+windows*) cmd //c mklink //j t\\.prove "$(cygpath -aw "$cache_dir/.prove")";;
+*) ln -s "$cache_dir/.prove" t/.prove;;
+esac
 
 make
 make --quiet test
