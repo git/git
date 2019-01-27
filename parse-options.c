@@ -95,7 +95,7 @@ static enum parse_opt_result get_value(struct parse_opt_ctx_t *p,
 
 	switch (opt->type) {
 	case OPTION_LOWLEVEL_CALLBACK:
-		return opt->ll_callback(p, opt, unset);
+		return opt->ll_callback(p, opt, NULL, unset);
 
 	case OPTION_BIT:
 		if (unset)
@@ -161,16 +161,27 @@ static enum parse_opt_result get_value(struct parse_opt_ctx_t *p,
 		return err;
 
 	case OPTION_CALLBACK:
-		if (unset)
-			return (*opt->callback)(opt, NULL, 1) ? (-1) : 0;
-		if (opt->flags & PARSE_OPT_NOARG)
-			return (*opt->callback)(opt, NULL, 0) ? (-1) : 0;
-		if (opt->flags & PARSE_OPT_OPTARG && !p->opt)
-			return (*opt->callback)(opt, NULL, 0) ? (-1) : 0;
-		if (get_arg(p, opt, flags, &arg))
-			return -1;
-		return (*opt->callback)(opt, arg, 0) ? (-1) : 0;
+	{
+		const char *p_arg = NULL;
+		int p_unset;
 
+		if (unset)
+			p_unset = 1;
+		else if (opt->flags & PARSE_OPT_NOARG)
+			p_unset = 0;
+		else if (opt->flags & PARSE_OPT_OPTARG && !p->opt)
+			p_unset = 0;
+		else if (get_arg(p, opt, flags, &arg))
+			return -1;
+		else {
+			p_unset = 0;
+			p_arg = arg;
+		}
+		if (opt->callback)
+			return (*opt->callback)(opt, p_arg, p_unset) ? (-1) : 0;
+		else
+			return (*opt->ll_callback)(p, opt, p_arg, p_unset);
+	}
 	case OPTION_INTEGER:
 		if (unset) {
 			*(int *)opt->value = 0;
@@ -238,7 +249,10 @@ static enum parse_opt_result parse_short_opt(struct parse_opt_ctx_t *p,
 			len++;
 		arg = xmemdupz(p->opt, len);
 		p->opt = p->opt[len] ? p->opt + len : NULL;
-		rc = (*numopt->callback)(numopt, arg, 0) ? (-1) : 0;
+		if (numopt->callback)
+			rc = (*numopt->callback)(numopt, arg, 0) ? (-1) : 0;
+		else
+			rc = (*numopt->ll_callback)(p, numopt, arg, 0);
 		free(arg);
 		return rc;
 	}
@@ -414,10 +428,10 @@ static void parse_options_check(const struct option *opts)
 				err |= optbug(opts, "should not accept an argument");
 			break;
 		case OPTION_CALLBACK:
-			if (!opts->callback)
-				BUG("OPTION_CALLBACK needs a callback");
-			if (opts->ll_callback)
-				BUG("OPTION_CALLBACK needs no ll_callback");
+			if (!opts->callback && !opts->ll_callback)
+				BUG("OPTION_CALLBACK needs one callback");
+			if (opts->callback && opts->ll_callback)
+				BUG("OPTION_CALLBACK can't have two callbacks");
 			break;
 		case OPTION_LOWLEVEL_CALLBACK:
 			if (!opts->ll_callback)

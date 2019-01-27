@@ -171,8 +171,10 @@ int parse_opt_noop_cb(const struct option *opt, const char *arg, int unset)
  * parse_options().
  */
 enum parse_opt_result parse_opt_unknown_cb(struct parse_opt_ctx_t *ctx,
-					   const struct option *opt, int unset)
+					   const struct option *opt,
+					   const char *arg, int unset)
 {
+	BUG_ON_OPT_ARG(arg);
 	return PARSE_OPT_UNKNOWN;
 }
 

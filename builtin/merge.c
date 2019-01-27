@@ -114,11 +114,13 @@ static int option_parse_message(const struct option *opt,
 
 static enum parse_opt_result option_read_message(struct parse_opt_ctx_t *ctx,
 						 const struct option *opt,
+						 const char *arg_not_used,
 						 int unset)
 {
 	struct strbuf *buf = opt->value;
 	const char *arg;
 
+	BUG_ON_OPT_ARG(arg_not_used);
 	if (unset)
 		BUG("-F cannot be negated");
 
