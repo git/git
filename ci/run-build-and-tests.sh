@@ -7,7 +7,7 @@
 
 ln -s "$cache_dir/.prove" t/.prove
 
-make --jobs=2
+make
 make --quiet test
 if test "$jobname" = "linux-gcc"
 then

@@ -5,7 +5,7 @@
 
 . ${0%/*}/lib.sh
 
-make --jobs=2 coccicheck
+make coccicheck
 
 set +x
 

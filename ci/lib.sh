@@ -101,6 +101,7 @@ then
 	BREW_INSTALL_PACKAGES="git-lfs gettext"
 	export GIT_PROVE_OPTS="--timer --jobs 3 --state=failed,slow,save"
 	export GIT_TEST_OPTS="--verbose-log -x --immediate"
+	export MAKEFLAGS="--jobs=2"
 else
 	echo "Could not identify CI type" >&2
 	exit 1
