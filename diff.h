@@ -9,16 +9,16 @@
 #include "object.h"
 #include "oidset.h"
 
-struct rev_info;
+struct combine_diff_path;
+struct commit;
+struct diff_filespec;
 struct diff_options;
 struct diff_queue_struct;
-struct strbuf;
-struct diff_filespec;
-struct userdiff_driver;
 struct oid_array;
-struct commit;
-struct combine_diff_path;
 struct repository;
+struct rev_info;
+struct strbuf;
+struct userdiff_driver;
 
 typedef int (*pathchange_fn_t)(struct diff_options *options,
 		 struct combine_diff_path *path);
