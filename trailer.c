@@ -1150,8 +1150,10 @@ static void format_trailer_info(struct strbuf *out,
 			if (!opts->filter || opts->filter(&tok, opts->filter_data)) {
 				if (opts->unfold)
 					unfold_value(&val);
-
-				strbuf_addf(out, "%s: %s\n", tok.buf, val.buf);
+				if (!opts->value_only)
+					strbuf_addf(out, "%s: ", tok.buf);
+				strbuf_addbuf(out, &val);
+				strbuf_addch(out, '\n');
 			}
 			strbuf_release(&tok);
 			strbuf_release(&val);

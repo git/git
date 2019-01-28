@@ -243,6 +243,8 @@ endif::git-rev-list[]
    option was given. In same way as to for `only` it can be followed
    by an equal sign and explicit value. E.g.,
    `%(trailers:only,unfold=true)` unfolds and shows all trailer lines.
+** 'valueonly[=val]': skip over the key part of the trailer line and only
+   show the value part. Also this optionally allows explicit value.
 
 NOTE: Some placeholders may depend on other options given to the
 revision traversal engine. For example, the `%g*` reflog options will

@@ -1391,7 +1391,8 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 					opts.filter_data = &filter_list;
 					opts.only_trailers = 1;
 				} else if (!match_placeholder_bool_arg(arg, "only", &arg, &opts.only_trailers) &&
-					   !match_placeholder_bool_arg(arg, "unfold", &arg, &opts.unfold))
+					   !match_placeholder_bool_arg(arg, "unfold", &arg, &opts.unfold) &&
+					   !match_placeholder_bool_arg(arg, "valueonly", &arg, &opts.value_only))
 					break;
 			}
 		}
