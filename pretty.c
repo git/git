@@ -1115,6 +1115,19 @@ static int match_placeholder_bool_arg(const char *to_parse, const char *candidat
 	return 1;
 }
 
+static int format_trailer_match_cb(const struct strbuf *key, void *ud)
+{
+	const struct string_list *list = ud;
+	const struct string_list_item *item;
+
+	for_each_string_list_item (item, list) {
+		if (key->len == (uintptr_t)item->util &&
+		    !strncasecmp(item->string, key->buf, key->len))
+			return 1;
+	}
+	return 0;
+}
+
 static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 				const char *placeholder,
 				void *context)
@@ -1353,6 +1366,7 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 
 	if (skip_prefix(placeholder, "(trailers", &arg)) {
 		struct process_trailer_options opts = PROCESS_TRAILER_OPTIONS_INIT;
+		struct string_list filter_list = STRING_LIST_INIT_NODUP;
 		size_t ret = 0;
 
 		opts.no_divider = 1;
@@ -1360,8 +1374,24 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 		if (*arg == ':') {
 			arg++;
 			for (;;) {
-				if (!match_placeholder_bool_arg(arg, "only", &arg, &opts.only_trailers) &&
-				    !match_placeholder_bool_arg(arg, "unfold", &arg, &opts.unfold))
+				const char *argval;
+				size_t arglen;
+
+				if (match_placeholder_arg_value(arg, "key", &arg, &argval, &arglen)) {
+					uintptr_t len = arglen;
+
+					if (!argval)
+						goto trailer_out;
+
+					if (len && argval[len - 1] == ':')
+						len--;
+					string_list_append(&filter_list, argval)->util = (char *)len;
+
+					opts.filter = format_trailer_match_cb;
+					opts.filter_data = &filter_list;
+					opts.only_trailers = 1;
+				} else if (!match_placeholder_bool_arg(arg, "only", &arg, &opts.only_trailers) &&
+					   !match_placeholder_bool_arg(arg, "unfold", &arg, &opts.unfold))
 					break;
 			}
 		}
@@ -1369,6 +1399,8 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 			format_trailers_from_commit(sb, msg + c->subject_off, &opts);
 			ret = arg - placeholder + 1;
 		}
+	trailer_out:
+		string_list_clear(&filter_list, 0);
 		return ret;
 	}
 

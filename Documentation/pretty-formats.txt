@@ -225,6 +225,14 @@ endif::git-rev-list[]
 			  linkgit:git-interpret-trailers[1]. The
 			  `trailers` string may be followed by a colon
 			  and zero or more comma-separated options:
+** 'key=<K>': only show trailers with specified key. Matching is done
+   case-insensitively and trailing colon is optional. If option is
+   given multiple times trailer lines matching any of the keys are
+   shown. This option automatically enables the `only` option so that
+   non-trailer lines in the trailer block are hidden. If that is not
+   desired it can be disabled with `only=false`.  E.g.,
+   `%(trailers:key=Reviewed-by)` shows trailer lines with key
+   `Reviewed-by`.
 ** 'only[=val]': select whether non-trailer lines from the trailer
    block should be included. The `only` keyword may optionally be
    followed by an equal sign and one of `true`, `on`, `yes` to omit or
