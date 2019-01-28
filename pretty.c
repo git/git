@@ -1353,6 +1353,7 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 
 	if (skip_prefix(placeholder, "(trailers", &arg)) {
 		struct process_trailer_options opts = PROCESS_TRAILER_OPTIONS_INIT;
+		size_t ret = 0;
 
 		opts.no_divider = 1;
 
@@ -1366,8 +1367,9 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 		}
 		if (*arg == ')') {
 			format_trailers_from_commit(sb, msg + c->subject_off, &opts);
-			return arg - placeholder + 1;
+			ret = arg - placeholder + 1;
 		}
+		return ret;
 	}
 
 	return 0;	/* unknown placeholder */
