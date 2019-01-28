@@ -125,7 +125,7 @@ test_expect_success '`reset` refuses to overwrite untracked files' '
 	: >dont-overwrite-untracked.t &&
 	echo "reset refs/tags/dont-overwrite-untracked" >script-from-scratch &&
 	test_config sequence.editor \""$PWD"/replace-editor.sh\" &&
-	test_must_fail git rebase -r HEAD &&
+	test_must_fail git rebase -ir HEAD &&
 	git rebase --abort
 '
 
