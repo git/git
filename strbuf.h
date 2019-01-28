@@ -321,6 +321,14 @@ void strbuf_expand(struct strbuf *sb,
 		   void *context);
 
 /**
+ * Used as callback for `strbuf_expand` to only expand literals
+ * (i.e. %n and %xNN). The context argument is ignored.
+ */
+size_t strbuf_expand_literal_cb(struct strbuf *sb,
+				const char *placeholder,
+				void *context);
+
+/**
  * Used as callback for `strbuf_expand()`, expects an array of
  * struct strbuf_expand_dict_entry as context, i.e. pairs of
  * placeholder and replacement string.  The array needs to be

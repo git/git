@@ -1137,9 +1137,13 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 	const char *msg = c->message;
 	struct commit_list *p;
 	const char *arg;
-	int ch;
+	size_t res;
 
 	/* these are independent of the commit */
+	res = strbuf_expand_literal_cb(sb, placeholder, NULL);
+	if (res)
+		return res;
+
 	switch (placeholder[0]) {
 	case 'C':
 		if (starts_with(placeholder + 1, "(auto)")) {
@@ -1158,16 +1162,6 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 			 */
 			return ret;
 		}
-	case 'n':		/* newline */
-		strbuf_addch(sb, '\n');
-		return 1;
-	case 'x':
-		/* %x00 == NUL, %x0a == LF, etc. */
-		ch = hex2chr(placeholder + 1);
-		if (ch < 0)
-			return 0;
-		strbuf_addch(sb, ch);
-		return 3;
 	case 'w':
 		if (placeholder[1] == '(') {
 			unsigned long width = 0, indent1 = 0, indent2 = 0;
