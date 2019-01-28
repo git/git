@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jan 2019, #03; Fri, 18)
+Subject: What's cooking in git.git (Jan 2019, #04; Mon, 28)
 X-master-at: 16a465bc018d09e9d7bbbdc5f40a7fb99c21f8ef
 X-next-at: aa96b0ce6b0fa4fa4cc6870f1a3aff3878967bfa
 
-What's cooking in git.git (Jan 2019, #03; Fri, 18)
+What's cooking in git.git (Jan 2019, #04; Mon, 28)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -18,284 +18,231 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* cy/completion-typofix (2019-01-03) 1 commit
-  (merged to 'next' on 2019-01-08 at 6c6f01a07d)
- + completion: fix typo in git-completion.bash
-
- Typofix.
-
-
-* cy/zsh-completion-SP-in-path (2019-01-03) 2 commits
-  (merged to 'next' on 2019-01-08 at fee27de30b)
- + completion: treat results of git ls-tree as file paths
- + zsh: complete unquoted paths with spaces correctly
-
- With zsh, "git cmd path<TAB>" was completed to "git cmd path name"
- when the completed path has a special character like SP in it,
- without any attempt to keep "path name" a single filename.  This
- has been fixed to complete it to "git cmd path\ name" just like
- Bash completion does.
-
-
-* ds/commit-graph-assert-missing-parents (2019-01-02) 1 commit
-  (merged to 'next' on 2019-01-08 at d141f063e0)
- + commit-graph: writing missing parents is a BUG
-
- Tightening error checking in commit-graph writer.
-
-
-* ds/gc-doc-typofix (2019-01-08) 1 commit
-  (merged to 'next' on 2019-01-08 at f21ffc83e0)
- + git-gc.txt: fix typo about gc.writeCommitGraph
-
- Typofix.
-
-
-* ed/simplify-setup-git-dir (2019-01-03) 1 commit
-  (merged to 'next' on 2019-01-08 at 8722c7c2ef)
- + Simplify handling of setup_git_directory_gently() failure cases.
-
- Code simplification.
-
-
-* en/show-ref-doc-fix (2019-01-10) 1 commit
-  (merged to 'next' on 2019-01-14 at f875bfb9a4)
- + git-show-ref.txt: fix order of flags
-
- Doc update.
-
-
-* es/doc-worktree-guessremote-config (2018-12-28) 1 commit
-  (merged to 'next' on 2019-01-08 at f1dc5e39a6)
- + doc/config: do a better job of introducing 'worktree.guessRemote'
-
- Doc clarification.
-
-
-* ew/ban-strncat (2019-01-02) 1 commit
-  (merged to 'next' on 2019-01-08 at 3bba2ae2bb)
- + banned.h: mark strncat() as banned
-
- The "strncat()" function is now among the banned functions.
-
-
-* jk/dev-build-format-security (2019-01-07) 1 commit
-  (merged to 'next' on 2019-01-08 at 3761ab7026)
- + config.mak.dev: add -Wall, primarily for -Wformat, to help autoconf users
-
- Earlier we added "-Wformat-security" to developer builds, assuming
- that "-Wall" (which includes "-Wformat" which in turn is required
- to use "-Wformat-security") is always in effect.  This is not true
- when config.mak.autogen is in use, unfortunately.  This has been
- fixed by unconditionally adding "-Wall" to developer builds.
-
-
-* jn/stripspace-wo-repository (2018-12-26) 1 commit
-  (merged to 'next' on 2019-01-08 at 81815821c9)
- + stripspace: allow -s/-c outside git repository
-
- "git stripspace" should be usable outside a git repository, but
- under the "-s" or "-c" mode, it didn't.
-
-
-* js/gc-repack-close-before-remove (2019-01-11) 1 commit
-  (merged to 'next' on 2019-01-14 at 9daedfee40)
- + gc/repack: release packs when needed
-
- "git gc" and "git repack" did not close the open packfiles that
- they found unneeded before removing them, which didn't work on a
- platform incapable of removing an open file.  This has been
- corrected.
-
-
-* la/quiltimport-keep-non-patch (2019-01-07) 1 commit
-  (merged to 'next' on 2019-01-08 at 37cb490792)
- + git-quiltimport: add --keep-non-patch option
-
- "git quiltimport" learned "--keep-non-patch" option.
-
-
-* ma/asciidoctor (2018-12-26) 3 commits
-  (merged to 'next' on 2019-01-08 at 3cfd4ad6cb)
- + git-status.txt: render tables correctly under Asciidoctor
- + Documentation: do not nest open blocks
- + git-column.txt: fix section header
-
- Some of the documentation pages formatted incorrectly with
- Asciidoctor, which have been fixed.
-
-
-* mm/multimail-1.5 (2019-01-07) 1 commit
-  (merged to 'next' on 2019-01-08 at 8c872af48e)
- + git-multimail: update to release 1.5.0
-
- Update "git multimail" from the upstream.
-
-
-* nd/style-opening-brace (2018-12-10) 1 commit
-  (merged to 'next' on 2019-01-08 at 80de026e14)
- + style: the opening '{' of a function is in a separate line
-
- Code clean-up.
-
-
-* nd/worktree-remove-with-uninitialized-submodules (2019-01-07) 1 commit
-  (merged to 'next' on 2019-01-08 at e19cfe8741)
- + worktree: allow to (re)move worktrees with uninitialized submodules
-
- "git worktree remove" and "git worktree move" refused to work when
- there is a submodule involved.  This has been loosened to ignore
- uninitialized submodules.
-
-
-* ot/ref-filter-object-info (2019-01-10) 7 commits
-  (merged to 'next' on 2019-01-10 at 9e740568ce)
- + ref-filter: give uintmax_t to format with %PRIuMAX
-  (merged to 'next' on 2019-01-08 at 0a4d4ed36a)
- + ref-filter: add docs for new options
- + ref-filter: add tests for deltabase
- + ref-filter: add deltabase option
- + ref-filter: add tests for objectsize:disk
- + ref-filter: add check for negative file size
- + ref-filter: add objectsize:disk option
-
- The "--format=<placeholder>" option of for-each-ref, branch and tag
- learned to show a few more traits of objects that can be learned by
- the object_info API.
-
-
-* po/git-p4-wo-login (2019-01-07) 1 commit
-  (merged to 'next' on 2019-01-08 at a7cc58d6b9)
- + git-p4: fix problem when p4 login is not necessary
-
- "git p4" update.
-
-
-* rb/hpe (2019-01-03) 5 commits
-  (merged to 'next' on 2019-01-08 at 52d6995399)
- + compat/regex/regcomp.c: define intptr_t and uintptr_t on NonStop
- + git-compat-util.h: add FLOSS headers for HPE NonStop
- + config.mak.uname: support for modern HPE NonStop config.
- + transport-helper: drop read/write errno checks
- + transport-helper: use xread instead of read
-
- Portability updates for the HPE NonStop platform.
-
-
-* rs/loose-object-cache-perffix (2019-01-08) 4 commits
-  (merged to 'next' on 2019-01-08 at 36e355e099)
- + object-store: retire odb_load_loose_cache()
- + object-store: use one oid_array per subdirectory for loose cache
- + object-store: factor out odb_clear_loose_cache()
- + object-store: factor out odb_loose_cache()
- (this branch is used by jk/loose-object-cache-oid.)
-
- The loose object cache used to optimize existence look-up has been
- updated.
-
-
-* rs/sha1-file-close-mapped-file-on-error (2019-01-07) 1 commit
-  (merged to 'next' on 2019-01-08 at 5841cbc153)
- + sha1-file: close fd of empty file in map_sha1_file_1()
-
- Code clean-up.
-
-
-* sb/submodule-fetchjobs-default-to-one (2018-12-14) 1 commit
-  (merged to 'next' on 2019-01-08 at 97a522ef5e)
- + submodule update: run at most one fetch job unless otherwise set
-
- "git submodule update" ought to use a single job unless asked, but
- by mistake used multiple jobs, which has been fixed.
-
-
-* sb/submodule-unset-core-worktree-when-worktree-is-lost (2018-12-26) 4 commits
-  (merged to 'next' on 2019-01-08 at 38f3175a2b)
- + submodule deinit: unset core.worktree
- + submodule--helper: fix BUG message in ensure_core_worktree
- + submodule: unset core.worktree if no working tree is present
- + submodule update: add regression test with old style setups
-
- The core.worktree setting in a submodule repository should not be
- pointing at a directory when the submodule loses its working tree
- (e.g. getting deinit'ed), but the code did not properly maintain
- this invariant.
-
-
-* sg/stress-test (2019-01-07) 8 commits
-  (merged to 'next' on 2019-01-08 at 2a65cea5f9)
- + test-lib: add the '--stress' option to run a test repeatedly under load
- + test-lib-functions: introduce the 'test_set_port' helper function
- + test-lib: set $TRASH_DIRECTORY earlier
- + test-lib: consolidate naming of test-results paths
- + test-lib: parse command line options earlier
- + test-lib: parse options in a for loop to keep $@ intact
- + test-lib: extract Bash version check for '-x' tracing
- + test-lib: translate SIGTERM and SIGHUP to an exit
- (this branch uses sg/test-bash-version-fix.)
-
- Flaky tests can now be repeatedly run under load with the
- "--stress" option.
-
-
-* sg/test-bash-version-fix (2019-01-03) 2 commits
-  (merged to 'next' on 2019-01-08 at f83a0628a0)
- + Merge branch 'sg/test-bash-version-fix'
- + test-lib: check Bash version for '-x' without using shell arrays
- (this branch is used by sg/stress-test.)
-
- The test suite tried to see if it is run under bash, but the check
- itself failed under some other implementations of shell (notably
- under NetBSD).  This has been corrected.
-
-
-* so/cherry-pick-always-allow-m1 (2019-01-07) 4 commits
-  (merged to 'next' on 2019-01-08 at 2b790fec25)
- + t3506: validate '-m 1 -ff' is now accepted for non-merge commits
- + t3502: validate '-m 1' argument is now accepted for non-merge commits
- + cherry-pick: do not error on non-merge commits when '-m 1' is specified
- + t3510: stop using '-m 1' to force failure mid-sequence of cherry-picks
-
- "git cherry-pick -m1" was forbidden when picking a non-merge
- commit, even though there _is_ parent number 1 for such a commit.
- This was done to avoid mistakes back when "cherry-pick" was about
- picking a single commit, but is no longer useful with "cherry-pick"
- that can pick a range of commits.  Now the "-m$num" option is
- allowed when picking any commit, as long as $num names an existing
- parent of the commit.
-
- Technically this is a backward incompatible change; hopefully
- nobody is relying on the error-checking behaviour.
-
-
-* tg/t5570-drop-racy-test (2019-01-07) 2 commits
-  (merged to 'next' on 2019-01-08 at 9fc753bbdc)
- + Revert "t/lib-git-daemon: record daemon log"
- + t5570: drop racy test
-
- An inherently racy test that caused intermittent failures has been
- removed.
-
---------------------------------------------------
 [New Topics]
 
-* ab/commit-graph-write-optim (2019-01-17) 1 commit
+* br/commit-tree-fully-spelled-gpg-sign-option (2019-01-22) 2 commits
+ - commit-tree: add missing --gpg-sign flag
+ - t7510: invoke git as part of &&-chain
+
+ The documentation of "git commit-tree" said that the command
+ understands "--gpg-sign" in addition to "-S", but the command line
+ parser did not know about the longhand, which has been corrected.
+
+ Will merge to 'next'.
+
+
+* dt/cat-file-batch-ambiguous (2019-01-18) 2 commits
+ - t1512: test ambiguous cat-file --batch and --batch-output
+ - Do not print 'dangling' for cat-file in case of ambiguity
+
+ Needswork on the tip commit.
+ cf. <20190123111117.GS840@szeder.dev>
+
+
+* jk/attr-macro-fix (2019-01-22) 1 commit
+ - attr: do not mark queried macros as unset
+
+ Asking "git check-attr" about a macro (e.g. "binary") on a specific
+ path did not work correctly, even though "git check-attr -a" listed
+ such a macro correctly.  This has been corrected.
+
+ Will merge to 'next'.
+
+
+* js/test-git-installed (2019-01-22) 1 commit
+ - tests: explicitly use `test-tool.exe` on Windows
+
+ Test fix for Windows.
+
+ Will merge to 'next'.
+
+
+* ph/pack-objects-mutex-fix (2019-01-28) 2 commits
+ - pack-objects: merge read_lock and lock in packing_data struct
+ - pack-objects: move read mutex to packing_data struct
+
+ "git pack-objects" incorrectly used uninitialized mutex, which has
+ been corrected.
+
+ Will merge to 'next'.
+
+
+* sb/submodule-abort-update-upon-config-failure (2019-01-18) 1 commit
+ - git-submodule: abort if core.worktree could not be set correctly
+
+ "git submodule update" learned to abort early when core.worktree
+ for the submodule is not set correctly to prevent spreading damage.
+
+ Will merge to 'next'.
+
+
+* tb/test-lint-sed-options (2019-01-28) 1 commit
+ - test-lint: only use only sed [-n] [-e command] [-f command_file]
+
+ The test lint learned to catch non-portable "sed" options.
+
+ Will merge to 'next'.
+
+
+* tb/utf-16-le-with-explicit-bom (2019-01-22) 1 commit
+ - Support working-tree-encoding "UTF-16LE-BOM"
+
+ A new encoding UTF-16LE-BOM has been invented to force encoding to
+ UTF-16 with BOM in little endian byte order, which cannot be directly
+ generated by using iconv.
+
+ Will merge to 'next'.
+
+
+* ja/doc-style-fix (2019-01-23) 1 commit
+ - doc: tidy asciidoc style
+
+ Doc typo/stylo fixes.
+
+ Will merge to 'next'.
+
+
+* az/instaweb-py3-http-server (2019-01-28) 1 commit
+ - git-instaweb: add Python builtin http.server support
+
+ "git instaweb" learned to drive http.server that comes with
+ "batteries included" Python installation (both Python2 & 3).
+
+ Will merge to 'next'.
+
+
+* jh/trace2 (2019-01-27) 15 commits
+ - trace2: fix hdr-check warnings
+ - trace2: t/helper/test-trace2, t0210.sh, t0211.sh, t0212.sh
+ - trace2:data: add subverb for rebase
+ - trace2:data: add subverb to reset command
+ - trace2:data: add subverb to checkout command
+ - pack-objects: add trace2 regions
+ - trace2:data: add trace2 instrumentation to index read/write
+ - trace2:data: add trace2 hook classification
+ - trace2:data: add trace2 transport child classification
+ - trace2:data: add trace2 sub-process classification
+ - trace2:data: add editor/pager child classification
+ - trace2:data: add trace2 regions to wt-status
+ - trace2: collect platform-specific process information
+ - trace2: create new combined trace facility
+ - trace2: Documentation/technical/api-trace2.txt
+
+ Expecting a reroll.
+ cf. <e1bd52e3-1ac5-b08c-d1f6-a7fa63ebf0cf@jeffhostetler.com>
+
+
+* jk/diff-cc-stat-fixes (2019-01-24) 6 commits
+ - combine-diff: treat --dirstat like --stat
+ - combine-diff: treat --summary like --stat
+ - combine-diff: treat --shortstat like --stat
+ - combine-diff: factor out stat-format mask
+ - diff: clear emitted_symbols flag after use
+ - t4006: resurrect commented-out tests
+
+ "git diff --color-moved --cc --stat -p" did not work well due to
+ funny interaction between a bug in color-moved and the rest, which
+ has been fixed.
+
+ Will merge to 'next'.
+
+
+* jk/unused-parameter-cleanup (2019-01-24) 8 commits
+ - convert: drop path parameter from actual conversion functions
+ - convert: drop len parameter from conversion checks
+ - config: drop unused parameter from maybe_remove_section()
+ - show_date_relative(): drop unused "tz" parameter
+ - column: drop unused "opts" parameter in item_length()
+ - create_bundle(): drop unused "header" parameter
+ - apply: drop unused "def" parameter from find_name_gnu()
+ - match-trees: drop unused path parameter from score functions
+
+ Code cleanup.
+
+
+* nd/fetch-compact-update (2019-01-27) 1 commit
+ - fetch: prefer suffix substitution in compact fetch.output
+
+ "git fetch" output cleanup.
+
+ Will merge to 'next'.
+
+
+* sg/object-as-type-commit-graph-fix (2019-01-27) 1 commit
+ - object_as_type: initialize commit-graph-related fields of 'struct commit'
+
+ The commit-graph facility did not work when in-core objects that
+ are promoted from unknown type to commit (e.g. a commit that is
+ accessed via a tag that refers to it) were involved, which has been
+ corrected.
+
+ Will merge to 'next'.
+
+
+* sg/strbuf-addbuf-cocci (2019-01-27) 1 commit
+ - strbuf.cocci: suggest strbuf_addbuf() to add one strbuf to an other
+
+ Cocci rule update.
+
+ Will merge to 'next'.
+
+
+* sx/evolve (2019-01-27) 8 commits
+ - evolve: add the 'git change list' command
+ - evolve: implement the 'git change' command
+ - evolve: add support for writing metacommits
+ - evolve: add the change-table structure
+ - evolve: add support for parsing metacommits
+ - ref-filter: add the metas namespace to ref-filter
+ - sha1-array: implement oid_array_readonly_contains()
+ - technical doc: add a design doc for the evolve command
+
+ The beginning of "hg evolve" mimickery.
+
+
+* jk/autocrlf-overrides-eol-doc (2019-01-28) 2 commits
+ - docs/config: clarify "text property" in core.eol
+ - doc/gitattributes: clarify "autocrlf overrides eol"
+
+ Documentation around core.crlf has been updated.
+
+ Will merge to 'next'.
+
+
+* pw/no-editor-in-rebase-i-implicit (2019-01-28) 1 commit
+ - implicit interactive rebase: don't run sequence editor
+
+ When GIT_SEQUENCE_EDITOR is set, the command was incorrectly
+ started when modes of "git rebase" that implicitly uses the
+ machinery for the interactive rebase are run, which has been
+ corrected.
+
+ Will merge to 'next'.
+
+
+* pw/rebase-x-sanity-check (2019-01-28) 1 commit
+ - rebase -x: sanity check command
+
+ "git rebase -x $cmd" did not reject multi-line command, even though
+ the command is incapable of handling such a command.  It now is
+ rejected upfront.
+
+ Will merge to 'next'.
+
+--------------------------------------------------
+[Cooking]
+
+* ab/commit-graph-write-optim (2019-01-22) 1 commit
  - commit-graph write: use pack order when finding commits
- (this branch uses ab/commit-graph-write-progress.)
+ (this branch is used by ab/commit-graph-write-progress and ds/commit-graph-format-v2.)
 
  The codepath to write out commit-graph has been optimized by
  following the usual pattern of visiting objects in in-pack order.
 
- This is taken hostage of the other topic; it may be slightly better
- if the dependency were the other way around, to allow this to
- graduate faster without waiting for the other.
-
- Needs sign-off.
+ Will merge to 'next'.
 
 
-* ab/commit-graph-write-progress (2019-01-17) 9 commits
+* ab/commit-graph-write-progress (2019-01-23) 9 commits
  - commit-graph write: emit a percentage for all progress
  - commit-graph write: add itermediate progress
  - commit-graph write: remove empty line for readability
@@ -303,15 +250,14 @@ of the repositories listed at
  - commit-graph write: show progress for object search
  - commit-graph write: more descriptive "writing out" output
  - commit-graph write: add "Writing out" progress output
- - commit-graph: don't call write_graph_chunk_large_edges() unnecessarily
- - commit-graph: rename 'num_extra_edges' variable to 'num_large_edges'
- (this branch is used by ab/commit-graph-write-optim.)
+ - commit-graph: don't call write_graph_chunk_extra_edges() unnecessarily
+ - commit-graph: rename "large edges" to "extra edges"
+ (this branch is used by ds/commit-graph-format-v2; uses ab/commit-graph-write-optim.)
 
  The codepath to show progress meter while writing out commit-graph
  file has been improved.
 
- Proposed updates for the bottom two have been raised.
- cf. <20190118170549.30403-1-szeder.dev@gmail.com>
+ Will merge to 'next'.
 
 
 * cc/test-ref-store-typofix (2019-01-17) 1 commit
@@ -359,9 +305,9 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* bp/checkout-new-branch-optim (2019-01-18) 2 commits
+* bp/checkout-new-branch-optim (2019-01-23) 2 commits
  - checkout: fix regression in checkout -b on intitial checkout
- - checkout: add test to demonstrate regression with checkout -b on initial commit
+ - checkout: add test demonstrating regression with checkout -b on initial commit
 
  "git checkout -b <new> [HEAD]" to create a new branch from the
  current commit and check it out ought to be a no-op in the index
@@ -371,7 +317,7 @@ of the repositories listed at
  these cases that an earlier optimization kicked in incorrectly,
  which has been fixed.
 
- Seems to break an existing test...
+ Will merge to 'next'.
 
 
 * br/blame-ignore (2019-01-18) 3 commits
@@ -393,69 +339,7 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* nd/diff-parseopt (2019-01-18) 77 commits
- - SQUASH???
- - am: avoid diff_opt_parse()
- - diff --no-index: use parse_options() instead of diff_opt_parse()
- - range-diff: use parse_options() instead of diff_opt_parse()
- - diff.c: allow --no-color-moved-ws
- - diff.c: convert --color-moved-ws
- - diff.c: convert --color-moved
- - diff.c: convert --inter-hunk-context
- - diff.c: convert --no-prefix
- - diff.c: convert --line-prefix
- - diff.c: convert --[src|dst]-prefix
- - diff.c: convert --[no-]abbrev
- - diff.c: convert --diff-filter
- - diff.c: convert --find-object
- - diff.c: convert -O
- - diff.c: convert --pickaxe-all|--pickaxe-regex
- - diff.c: convert -S|-G
- - diff.c: convert -l
- - diff.c: convert -z
- - diff.c: convert --ita-[in]visible-in-index
- - diff.c: convert --ws-error-highlight
- - diff.c: convert --submodule
- - diff.c: convert --ignore-submodules
- - diff.c: convert --textconv
- - diff.c: convert --ext-diff
- - diff.c: convert --quiet
- - diff.c: convert --exit-code
- - diff.c: convert --color-words
- - diff.c: convert --word-diff-regex
- - diff.c: convert --word-diff
- - diff.c: convert --[no-]color
- - diff.c: convert --[no-]follow
- - diff.c: convert -R
- - diff.c: convert -a|--text
- - diff.c: convert --full-index
- - diff.c: convert --binary
- - diff.c: convert --anchored
- - diff.c: convert --diff-algorithm
- - diff.c: convert --histogram
- - diff.c: convert --patience
- - diff.c: convert --[no-]indent-heuristic
- - diff.c: convert --ignore-some-changes
- - diff.c: convert --[no-]minimal
- - diff.c: convert --relative
- - diff.c: convert --no-renames|--[no--rename-empty
- - diff.c: convert --find-copies-harder
- - diff.c: convert -C|--find-copies
- - diff.c: convert -D|--irreversible-delete
- - diff.c: convert -M|--find-renames
- - diff.c: convert -B|--break-rewrites
- - diff.c: convert --output-*
- - diff.c: convert --[no-]compact-summary
- - diff.c: convert --stat*
- - diff.c: convert -s|--no-patch
- - diff.c: convert --name-status
- - diff.c: convert --name-only
- - diff.c: convert --patch-with-stat
- - diff.c: convert --summary
- - diff.c: convert --check
- - diff.c: convert --dirstat and friends
- - diff.c: convert --numstat and --shortstat
- - diff.c: convert --patch-with-raw
+* nd/diff-parseopt (2019-01-27) 14 commits
  - diff.c: convert --raw
  - diff.c: convert -W|--[no-]function-context
  - diff.c: convert -U|--unified
@@ -468,17 +352,14 @@ of the repositories listed at
  - parse-options: stop abusing 'callback' for lowlevel callbacks
  - parse-options: add OPT_BITOP()
  - parse-options: disable option abbreviation with PARSE_OPT_KEEP_UNKNOWN
- - parse-options: allow keep-unknown + stop-at-non-opt combination
  - parse-options: add one-shot mode
  - parse-options.h: remove extern on function prototypes
 
  The diff machinery, one of the oldest parts of the system, which
  long predates the parse-options API, uses fairly long and complex
- handcrafted option parser.  This has been rewritten to use the
+ handcrafted option parser.  This is being rewritten to use the
  parse-options API.
 
---------------------------------------------------
-[Cooking]
 
 * sc/pack-redundant (2019-01-14) 5 commits
  - pack-redundant: consistent sort method
@@ -654,18 +535,17 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* ma/clear-repository-format (2019-01-14) 3 commits
- - setup: add `clear_repository_format()`
- - setup: do not use invalid `repository_format`
+* ma/clear-repository-format (2019-01-23) 2 commits
+ - setup: fix memory leaks with `struct repository_format`
  - setup: free old value before setting `work_tree`
 
  The setup code has been cleaned up to avoid leaks around the
  repository_format structure.
 
- cf. <20190115193112.GE4886@sigill.intra.peff.net>
+ cf. <20190124001450.GR423984@genre.crustytoothpaste.net>
 
 
-* nd/the-index-final (2019-01-14) 11 commits
+* nd/the-index-final (2019-01-24) 11 commits
  - cache.h: flip NO_THE_INDEX_COMPATIBILITY_MACROS switch
  - read-cache.c: remove the_* from index_has_changes()
  - merge-recursive.c: remove implicit dependency on the_repository
@@ -806,10 +686,10 @@ of the repositories listed at
 
 
 * jk/loose-object-cache-oid (2019-01-08) 11 commits
- . prefer "hash mismatch" to "sha1 mismatch"
- . sha1-file: avoid "sha1 file" for generic use in messages
- . sha1-file: prefer "loose object file" to "sha1 file" in messages
- . sha1-file: drop has_sha1_file()
+ - prefer "hash mismatch" to "sha1 mismatch"
+ - sha1-file: avoid "sha1 file" for generic use in messages
+ - sha1-file: prefer "loose object file" to "sha1 file" in messages
+ - sha1-file: drop has_sha1_file()
  - convert has_sha1_file() callers to has_object_file()
  - sha1-file: convert pass-through functions to object_id
  - sha1-file: modernize loose header/stream functions
@@ -820,17 +700,14 @@ of the repositories listed at
 
  Code clean-up.
 
- Later parts of the series crash heavily with sb/more-repo-in-api
- and are left out for now.  I am not sure if keeping that other
- topic is worth keeping to block the clean-up value of this topic
- which is probably more clear.
+ Will merge to 'next'.
 
 
-* lt/date-human (2019-01-18) 5 commits
+* lt/date-human (2019-01-22) 5 commits
  - Add `human` date format tests.
  - Add `human` format to test-tool
  - Add 'human' date format documentation
- - Remove the proposed use of auto as secondary way to specify human
+ - Replace the proposed 'auto' mode with 'auto:'
  - Add 'human' date format
 
  A new date format "--date=human" that morphs its output depending
@@ -839,13 +716,11 @@ of the repositories listed at
  goint to the pager or to the terminal and otherwise the default
  format.
 
- The design around "auto" may need to be rethought.
- The tests need to be updated, too.
- cf. <20190104075034.GA26014@sigill.intra.peff.net>
- cf. <a5412274-028f-3662-e4f5-dbbcad4d9a40@iee.org>
+ Will merge to 'next'.
 
 
-* ds/midx-expire-repack (2019-01-10) 9 commits
+* ds/midx-expire-repack (2019-01-27) 10 commits
+ - midx: add test that 'expire' respects .keep files
  - multi-pack-index: test expire while adding packs
  - midx: implement midx_repack()
  - multi-pack-index: prepare 'repack' subcommand
@@ -955,17 +830,18 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* dl/merge-cleanup-scissors-fix (2018-11-21) 2 commits
+* dl/merge-cleanup-scissors-fix (2019-01-27) 5 commits
+ - init docs: correct a punctuation typo
  - merge: add scissors line on merge conflict
+ - merge: cleanup messages like commit
  - t7600: clean up 'merge --squash c3 with c7' test
+ - commit: extract cleanup_mode functions to sequencer
 
  The list of conflicted paths shown in the editor while concluding a
  conflicted merge was shown above the scissors line when the
  clean-up mode is set to "scissors", even though it was commented
  out just like the list of updated paths and other information to
  help the user explain the merge better.
-
- Ready?
 
 
 * aw/pretty-trailers (2018-12-09) 7 commits
@@ -1041,9 +917,9 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* nb/branch-show-other-worktrees-head (2019-01-15) 3 commits
- - branch: add an extra verbose output displaying worktree path for checked out branch
- - branch: mark and color a branch that is checked out in a linked worktree differently
+* nb/branch-show-other-worktrees-head (2019-01-23) 3 commits
+ - branch: add an extra verbose output displaying worktree path for refs checked out in a linked worktree
+ - branch: mark and color a branch differently if it is checked out in a linked worktree
  - ref-filter: add worktreepath atom
 
  "git branch --list" learned to show branches that are checked out
@@ -1051,10 +927,7 @@ of the repositories listed at
  '+', similar to the way the currently checked out branch is shown
  with '*' in front.
 
- The second one is of dubious value.  The third one requires extra
- "-v" to trigger extra information, but a new feature that improves
- human-readable Porcelain output, it probably shouldn't.  Needs
- sign-off.
+ The second one is of dubious value.  Needs sign-off.
 
 
 * sb/more-repo-in-api (2018-12-28) 23 commits
@@ -1102,6 +975,7 @@ of the repositories listed at
  + hex: introduce functions to print arbitrary hashes
  + sha1-file: provide functions to look up hash algorithms
  + sha1-file: rename algorithm to "sha1"
+ (this branch is used by ds/commit-graph-format-v2.)
 
  Add sha-256 hash and plug it through the code to allow building Git
  with the "NewHash".
@@ -1109,31 +983,32 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* js/vsts-ci (2018-10-16) 13 commits
- . travis: fix skipping tagged releases
- . README: add a build badge (status of the Azure Pipelines build)
- . tests: record more stderr with --write-junit-xml in case of failure
- . tests: include detailed trace logs with --write-junit-xml upon failure
- . git-p4: use `test_atexit` to kill the daemon
- . git-daemon: use `test_atexit` in the tests
- . tests: introduce `test_atexit`
- . ci: add a build definition for Azure DevOps
- . ci/lib.sh: add support for Azure Pipelines
- . tests: optionally write results as JUnit-style .xml
- . test-date: add a subcommand to measure times in shell scripts
- . ci/lib.sh: encapsulate Travis-specific things
- . ci: rename the library of common functions
+* js/vsts-ci (2019-01-28) 21 commits
+ - ci: parallelize testing on Windows
+ - ci: speed up Windows phase
+ - tests: optionally skip bin-wrappers/
+ - t0061: fix with --with-dashes and RUNTIME_PREFIX
+ - tests: add t/helper/ to the PATH with --with-dashes
+ - mingw: try to work around issues with the test cleanup
+ - tests: include detailed trace logs with --write-junit-xml upon failure
+ - tests: avoid calling Perl just to determine file sizes
+ - README: add a build badge (status of the Azure Pipelines build)
+ - mingw: be more generous when wrapping up the setitimer() emulation
+ - ci: use git-sdk-64-minimal build artifact
+ - ci: add a Windows job to the Azure Pipelines definition
+ - Add a build definition for Azure DevOps
+ - ci/lib.sh: add support for Azure Pipelines
+ - tests: optionally write results as JUnit-style .xml
+ - test-date: add a subcommand to measure times in shell scripts
+ - ci: use a junction on Windows instead of a symlink
+ - ci: inherit --jobs via MAKEFLAGS in run-build-and-tests
+ - ci/lib.sh: encapsulate Travis-specific things
+ - ci: rename the library of common functions
+ - travis: fix skipping tagged releases
 
- Prepare to run test suite on Azure DevOps.
+ Prepare to run test suite on Azure Pipeline.
 
- Ejected out of 'pu', as doing so seems to help other topics get
- tested at TravisCI.
-
- https://travis-ci.org/git/git/builds/452713184 is a sample of a
- build whose tests on 4 hang (with this series in).  Ejecting it
- gave us https://travis-ci.org/git/git/builds/452778963 which still
- shows breakages from other topics not yet in 'next', but at least
- the tests do not stall.
+ Will merge to 'next'.
 
 
 * du/branch-show-current (2018-10-26) 1 commit
