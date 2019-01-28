@@ -239,6 +239,15 @@ endif::git-rev-list[]
    `false`, `off`, `no` to show the non-trailer lines. If option is
    given without value it is enabled. If given multiple times the last
    value is used.
+** 'separator=<SEP>': specify a separator inserted between trailer
+   lines. When this option is not given each trailer line is
+   terminated with a line feed character. The string SEP may contain
+   the literal formatting codes described above. To use comma as
+   separator one must use `%x2C` as it would otherwise be parsed as
+   next option. If separator option is given multiple times only the
+   last one is used. E.g., `%(trailers:key=Ticket,separator=%x2C )`
+   shows all trailer lines whose key is "Ticket" separated by a comma
+   and a space.
 ** 'unfold[=val]': make it behave as if interpret-trailer's `--unfold`
    option was given. In same way as to for `only` it can be followed
    by an equal sign and explicit value. E.g.,

@@ -73,6 +73,7 @@ struct process_trailer_options {
 	int unfold;
 	int no_divider;
 	int value_only;
+	const struct strbuf *separator;
 	int (*filter)(const struct strbuf *, void *);
 	void *filter_data;
 };

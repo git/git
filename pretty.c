@@ -1361,6 +1361,7 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 	if (skip_prefix(placeholder, "(trailers", &arg)) {
 		struct process_trailer_options opts = PROCESS_TRAILER_OPTIONS_INIT;
 		struct string_list filter_list = STRING_LIST_INIT_NODUP;
+		struct strbuf sepbuf = STRBUF_INIT;
 		size_t ret = 0;
 
 		opts.no_divider = 1;
@@ -1384,6 +1385,14 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 					opts.filter = format_trailer_match_cb;
 					opts.filter_data = &filter_list;
 					opts.only_trailers = 1;
+				} else if (match_placeholder_arg_value(arg, "separator", &arg, &argval, &arglen)) {
+					char *fmt;
+
+					strbuf_reset(&sepbuf);
+					fmt = xstrndup(argval, arglen);
+					strbuf_expand(&sepbuf, fmt, strbuf_expand_literal_cb, NULL);
+					free(fmt);
+					opts.separator = &sepbuf;
 				} else if (!match_placeholder_bool_arg(arg, "only", &arg, &opts.only_trailers) &&
 					   !match_placeholder_bool_arg(arg, "unfold", &arg, &opts.unfold) &&
 					   !match_placeholder_bool_arg(arg, "valueonly", &arg, &opts.value_only))
@@ -1396,6 +1405,7 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 		}
 	trailer_out:
 		string_list_clear(&filter_list, 0);
+		strbuf_release(&sepbuf);
 		return ret;
 	}
 
