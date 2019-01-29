@@ -164,8 +164,9 @@ void *object_as_type(struct repository *r, struct object *obj, enum object_type 
 		return obj;
 	else if (obj->type == OBJ_NONE) {
 		if (type == OBJ_COMMIT)
-			((struct commit *)obj)->index = alloc_commit_index(r);
-		obj->type = type;
+			init_commit_node(r, (struct commit *) obj);
+		else
+			obj->type = type;
 		return obj;
 	}
 	else {
