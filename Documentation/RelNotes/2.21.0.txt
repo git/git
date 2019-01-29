@@ -51,6 +51,14 @@ UI, Workflows & Features
    learned to show a few more traits of objects that can be learned by
    the object_info API.
 
+ * "git rebase -i" learned to re-execute a command given with 'exec'
+   to run after it failed the last time.
+
+ * "git diff --color-moved-ws" updates.
+
+ * Custom userformat "log --format" learned %S atom that stands for
+   the tip the traversal reached the commit from, i.e. --source.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -76,6 +84,22 @@ Performance, Internal Implementation, Development Support etc.
  * Flaky tests can now be repeatedly run under load with the
    "--stress" option.
    (merge fb7d1e3ac8 sg/stress-test later to maint).
+
+ * Documentation/Makefile is getting prepared for manpage
+   localization.
+
+ * "git fetch-pack" now can talk the version 2 protocol.
+
+ * sha-256 hash has been added and plumbed through the code to allow
+   building Git with the "NewHash".
+
+ * Debugging help for http transport.
+
+ * "git fetch --deepen=<more>" has been corrected to work over v2
+   protocol.
+
+ * The code to walk tree objects has been taught that we may be
+   working with object names that are not computed with SHA-1.
 
 
 Fixes since v2.20
@@ -170,6 +194,33 @@ Fixes since v2.20
    corrected.
    (merge 5bdece0d70 js/gc-repack-close-before-remove later to maint).
 
+ * The code to drive GIT_EXTERNAL_DIFF command relied on the string
+   returned from getenv() to be non-volatile, which is not true, that
+   has been corrected.
+   (merge 6776a84dae kg/external-diff-save-env later to maint).
+
+ * There were many places the code relied on the string returned from
+   getenv() to be non-volatile, which is not true, that have been
+   corrected.
+   (merge 0da0e9268b jk/save-getenv-result later to maint).
+
+ * The v2 upload-pack protocol implementation failed to honor
+   hidden-ref configuration, which has been corrected.
+   (merge e20b4192a3 jk/proto-v2-hidden-refs-fix later to maint).
+
+ * "git fetch --recurse-submodules" may not fetch the necessary commit
+   that is bound to the superproject, which is getting corrected.
+   (merge be76c21282 sb/submodule-recursive-fetch-gets-the-tip later to maint).
+
+ * "git rebase" internally runs "checkout" to switch between branches,
+   and the command used to call the post-checkout hook, but the
+   reimplementation stopped doing so, which is getting fixed.
+
+ * "git add -e" got confused when the change it wants to let the user
+   edit is smaller than the previous change that was left over in a
+   temporary file.
+   (merge fa6f225e01 js/add-e-clear-patch-before-stating later to maint).
+
  * Code cleanup, docfix, build fix, etc.
    (merge 89ba9a79ae hb/t0061-dot-in-path-fix later to maint).
    (merge d173e799ea sb/diff-color-moved-config-option-fixup later to maint).
@@ -186,3 +237,6 @@ Fixes since v2.20
    (merge 0650614982 cy/completion-typofix later to maint).
    (merge 6881925ef5 rs/sha1-file-close-mapped-file-on-error later to maint).
    (merge bd8d6f0def en/show-ref-doc-fix later to maint).
+   (merge 1747125e2c cc/parial-clone-doc-typofix later to maint).
+   (merge e01378753d cc/fetch-error-message-fix later to maint).
+   (merge 54e8c11215 jk/remote-insteadof-cleanup later to maint).
